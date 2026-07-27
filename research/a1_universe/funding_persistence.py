@@ -302,7 +302,7 @@ def median(vals):
 # ------------------------------------------------------ дифференциал ног
 
 def run_grid(series, t_start, t_end, form_days, hold_days,
-             gap_days=0, permute=False):
+             gap_days=0, permute=False, keep_picks=False):
     """Прогон одной конфигурации «формирование → удержание» по всей истории.
 
     Окна удержания непересекающиеся: соседние наблюдения не делят между
@@ -400,6 +400,12 @@ def run_grid(series, t_start, t_end, form_days, hold_days,
         "picked_long_top": dict(sorted(picked_long.items(),
                                        key=lambda kv: -kv[1])[:20]),
         "distinct_picked": len(set(picked_short) | set(picked_long)),
+        # Полные счётчики нужны, чтобы скрестить отбор со ставкой комиссии:
+        # если дорогой тариф сидит именно в дециле, спред дециля надо
+        # сравнивать не со средней комиссией, а с комиссией отобранных.
+        "picked_counts": ({k: picked_short.get(k, 0) + picked_long.get(k, 0)
+                           for k in set(picked_short) | set(picked_long)}
+                          if keep_picks else None),
     }
 
 
@@ -497,7 +503,7 @@ def main():
     for F, H in GRID:
         print(f"дифференциал ног: формирование {F} д → удержание {H} д...",
               file=sys.stderr, flush=True)
-        legs.append(run_grid(by, t_start, t_end, F, H))
+        legs.append(run_grid(by, t_start, t_end, F, H, keep_picks=True))
 
     decay = []
     for gap in DECAY_GAPS:

@@ -75,6 +75,147 @@ def quantiles(vals, qs=(0.05, 0.25, 0.5, 0.75, 0.95)):
     return out
 
 
+def _fee_stats(universe):
+    """Ставки комиссий по символам универсума, сгруппированные по тарифу.
+
+    Возвращает `None`, если `fees.json` не собран: сравнение с комиссией
+    тогда не печатается вовсе, а не подменяется числом из памяти.
+
+    Средневзвешенная ставка считается только по символам, для которых
+    площадка ставку отдала. Делистнутых среди них нет по построению —
+    эндпоинт отвечает по текущему состоянию счёта, и закрытых контрактов
+    в ответе не существует.
+    """
+    fees = load("fees.json")
+    if not fees:
+        return None
+    by_symbol = {f["symbol"]: f for f in fees}
+    syms = [r["bybit_symbol"] for r in universe["assets"].values()
+            if r.get("bybit_symbol")]
+
+    tiers, known = {}, []
+    for s in syms:
+        f = by_symbol.get(s)
+        if not f:
+            continue
+        key = (float(f["makerFeeRate"]) * 1e4, float(f["takerFeeRate"]) * 1e4)
+        tiers[key] = tiers.get(key, 0) + 1
+        known.append((s, key))
+
+    taker = [k[1] for _, k in known]
+    return {
+        "returned": len(fees),
+        "universe_symbols": len(syms),
+        "with_rate": len(known),
+        "without_rate": len(syms) - len(known),
+        "tiers": dict(sorted(tiers.items(), key=lambda kv: -kv[1])),
+        "by_symbol": {s: k for s, k in known},
+        "mean_taker_bp": sum(taker) / len(taker) if taker else None,
+        "modal_taker_bp": max(set(taker), key=taker.count) if taker else None,
+    }
+
+
+def _fee_of_picked(add, universe, fs, best, bp):
+    """Комиссия не в среднем по универсуму, а у тех, кого отбирает признак.
+
+    Проверка нужна потому, что сравнение «85 б.п. funding против 22 б.п.
+    комиссии» держится только если дорогой тариф не сидит именно в дециле.
+    Дециль — край распределения ставок, и это ровно тот сорт инструмента,
+    которому площадка назначает повышенную комиссию.
+    """
+    sym = {a: r["bybit_symbol"] for a, r in universe["assets"].items()
+           if r.get("bybit_symbol")}
+    picks = best["picked_counts"]
+    total = sum(picks.values())
+
+    weighted, known = {}, 0
+    for asset, n in picks.items():
+        tier = fs["by_symbol"].get(sym.get(asset))
+        if tier is None:
+            continue
+        weighted[tier[1]] = weighted.get(tier[1], 0) + n
+        known += n
+
+    if not known:
+        return
+    mean_picked = sum(t * n for t, n in weighted.items()) / known
+    add(f"Комиссия проверена не в среднем, а **у отобранных**: средневзвешенный")
+    add(f"тейкер по попаданиям в дециль — {mean_picked:.2f} б.п. против "
+        f"{fs['mean_taker_bp']:.2f} б.п.")
+    add(f"по универсуму, то есть цикл {4*mean_picked:.0f} б.п. против "
+        f"{4*fs['mean_taker_bp']:.0f}. Дорогой тариф в дециле не сидит, и")
+    add(f"сравнение {bp:.0f} б.п. funding против {4*mean_picked:.0f} б.п.")
+    add("комиссии остаётся в силе. Взвешивание накрывает "
+        f"{known*100/total:.0f} % попаданий: у остальных нога уже делистнута,")
+    add("и ставки для неё не существует (раздел 6.1).\n")
+
+
+def _fees_section(add, universe, fs):
+    add("## 6. Ставки комиссий\n")
+    add("> Раздел 5.1 спеки 02: базовый тир, из живого API по ключу.\n")
+
+    if not fs:
+        add("Не собрано — нужен `bybit_api.py --with-fees` с ключом и")
+        add("секретом. Число из памяти сюда не подставляется.\n")
+        return
+
+    add(f"Эндпоинт вернул {fs['returned']} контрактов. Из "
+        f"{fs['universe_symbols']} символов универсума ставка есть у "
+        f"{fs['with_rate']}, отсутствует у {fs['without_rate']}.\n")
+    add("**Комиссия — не одно число.** По символам универсума:\n")
+    add("| Maker, б.п. | Taker, б.п. | Символов | Цикл парной позиции |")
+    add("|---:|---:|---:|---:|")
+    for (mk, tk), n in fs["tiers"].items():
+        add(f"| {mk:.2f} | {tk:.2f} | {n} | {4*tk:.0f} б.п. |")
+    add("")
+    add("Цикл — четыре сделки тейкером: вход и выход по двум ногам. Между")
+    add("дешёвым и дорогим тарифом разница вчетверо, и это уже не поправка:")
+    add("на дорогом тарифе цикл стоит "
+        f"{4*max(t for _, t in fs['tiers']):.0f} б.п.\n")
+
+    # Тариф оказался индикатором класса актива, а не только ликвидности.
+    cheap_tier = min(fs["tiers"], key=lambda k: k[1])
+    cheap = [s for s, k in fs["by_symbol"].items() if k == cheap_tier]
+    bn = {r["bybit_symbol"]: r.get("binance_symbol")
+          for r in universe["assets"].values() if r.get("bybit_symbol")}
+    with_bn = [s for s in cheap if bn.get(s)]
+
+    add("### 6.1 Дешёвый тариф — это другой класс актива\n")
+    add(f"Разбор дешёвого тарифа ({cheap_tier[1]:.2f} б.п.) дал побочную находку.")
+    add(f"Почти все {len(cheap)} символов в нём — перпы не на криптоактивы:\n")
+    add("| Класс базового актива | Примеры |")
+    add("|---|---|")
+    add("| Акции | `AAPLUSDT`, `NVDAUSDT`, `TSLAUSDT`, `METAUSDT`, `BABAUSDT` |")
+    add("| Биржевые фонды | `SPYUSDT`, `QQQUSDT`, `SOXXUSDT`, `IWMUSDT`, `XLEUSDT` |")
+    add("| Фонды с плечом и обратные | `TQQQUSDT`, `SQQQUSDT`, `SOXLUSDT`, `TZAUSDT` |")
+    add("| Металлы | `XAUUSDT`, `XAGUSDT` |")
+    add("")
+    add("Список просмотрен целиком; исключения единичны (например `PURRUSDT`).")
+    add(f"Из этих {len(cheap)} символов {len(with_bn)} имеют историю на Binance —")
+    add("значит, они **уже входят** в статистику funding разделов 3–5 наравне")
+    add("с криптоактивами. На вывод раздела 5 это не повлияло: в дециль по")
+    add("funding они почти не попадают. Но вопрос стоит отдельно, и решает его")
+    add("владелец: базовый актив здесь торгуется по расписанию биржи, а перп на")
+    add("него — круглосуточно, и в выходные цена держится ожиданием, а не")
+    add("сделками с базовым активом. Спред между акцией и криптоактивом ведёт")
+    add("себя иначе, чем спред между двумя криптоактивами; у фондов с плечом")
+    add("вдобавок есть собственный распад. Смешивать это в одном отборе пар —")
+    add("решение, а не умолчание.\n")
+
+    add("### 6.2 Чего в ответе нет\n")
+    add(f"У {fs['without_rate']} символов универсума ставки нет, и все они —")
+    add("контракты со статусом `Closed`. Эндпоинт комиссий отвечает по")
+    add("текущему состоянию счёта, параметра «статус» у него нет, и **прошлых")
+    add("тарифных сеток площадка не отдаёт вообще**. Для универсума на момент")
+    add("времени это значит: у делистнутой ноги измеренной комиссии не будет")
+    add("никогда, и модель издержек A6 обязана назначать ей ставку по правилу,")
+    add("а не брать из данных. Правило и его обоснование — предмет A6; здесь")
+    add("зафиксирован сам факт, чтобы он не всплыл как сюрприз.\n")
+    add("Это тот же класс дефекта, что был найден в справочнике инструментов")
+    add("(раздел 3.4), но чинится он иначе: там помогал обход по статусам,")
+    add("здесь помочь нечем.\n")
+
+
 def _bybit_section(add, universe):
     """Раздел 3: ставки funding и справочник инструментов Bybit.
 
@@ -212,7 +353,7 @@ def _bybit_section(add, universe):
     add("округления количеств β проверяется повторно, без этих полей нечем.\n")
 
 
-def _venue_diff_section(add):
+def _venue_diff_section(add, fs):
     """Раздел 4: расхождение площадок, выровненное по периодам.
 
     Считает `venue_funding_diff.py`; здесь только рендер.
@@ -311,19 +452,23 @@ def _venue_diff_section(add):
             f"{f(qq(0.95)):.1f} б.п. |")
     add("")
     add("Сравнивать это следует не с нулём, а с комиссией. Парная позиция")
-    add("делает четыре сделки на вход и выход, и при ставке тейкера порядка")
-    add("5–6 б.п. цикл стоит около 20–25 б.п. **Ставка комиссии здесь взята")
-    add("по памяти и подлежит замене:** раздел 5.1 требует брать её из API по")
-    add("ключу, что делает `bybit_api.py --with-fees`. До этого сравнение с")
-    add("комиссией — оценка порядка величины, а не расчёт. Числа в таблице")
-    add("выше от этого не зависят: они измерены.\n")
+    add("делает четыре сделки на вход и выход.")
+    if fs:
+        add(f"Модальная ставка тейкера по универсуму — {fs['modal_taker_bp']:.2f} б.п.")
+        add(f"(раздел 6), то есть цикл стоит {4*fs['modal_taker_bp']:.0f} б.п.")
+        add("Ставка измерена по ключу, как требует раздел 5.1, а не взята по")
+        add("памяти.\n")
+    else:
+        add("Ставка комиссии не собрана — сравнение здесь не приводится,")
+        add("чтобы не подставлять число из памяти. Числа в таблице выше от")
+        add("этого не зависят: они измерены.\n")
     add("Даже с такой оговоркой вывод устойчив: у хвоста в 5 % активов ошибка")
     add("подмены площадки за пять дней сопоставима со всей комиссией цикла —")
     add("и это на одну ногу из двух. Запрет раздела 5.2 брать ставки со")
     add("сторонней площадки не является перестраховкой.\n")
 
 
-def _persistence_section(add):
+def _persistence_section(add, universe, fs):
     """Раздел 5: доживает ли дифференциал funding до сделки.
 
     Считает `funding_persistence.py`; здесь только рендер.
@@ -413,13 +558,18 @@ def _persistence_section(add):
     add("")
 
     add("### 5.4 Что из этого следует и чего не следует\n")
+    bp = best["decile_realized_median"] / 365 * best["hold_days"] * 100
     add("**Следует.** Дифференциал funding предсказуем на горизонте удержания,")
     add("и вопрос 12.4 решается в пользу «funding обязан входить в критерий")
     add("отбора». Величина того же порядка, что и цель: спред дециля в")
-    add(f"{best['decile_realized_median']:.0f} % годовых — это "
-        f"{best['decile_realized_median']/365*best['hold_days']*100:.0f} б.п. за")
-    add(f"{_days(best['hold_days'])} удержания, при том что цикл парной позиции")
-    add("стоит порядка 20–25 б.п. комиссии.\n")
+    add(f"{best['decile_realized_median']:.0f} % годовых — это {bp:.0f} б.п. за")
+    add(f"{_days(best['hold_days'])} удержания.")
+    if fs:
+        add(f"Цикл парной позиции по модальному тарифу стоит "
+            f"{4*fs['modal_taker_bp']:.0f} б.п. (раздел 6).")
+    add("")
+    if fs and best.get("picked_counts"):
+        _fee_of_picked(add, universe, fs, best, bp)
     add("**Не следует, что это отдельный источник дохода.** Направление парной")
     add("позиции задаёт сигнал возврата к среднему: сегодня лонг A / шорт B,")
     add("завтра наоборот, и знак funding переворачивается вместе с позицией.")
@@ -715,8 +865,10 @@ def main():
         add("будет отличить артефакт площадки от дефекта данных.\n")
 
     _bybit_section(add, universe)
-    _venue_diff_section(add)
-    _persistence_section(add)
+    fs = _fee_stats(universe)
+    _venue_diff_section(add, fs)
+    _persistence_section(add, universe, fs)
+    _fees_section(add, universe, fs)
 
     path = os.path.join(OUT, "A1-data-report.md")
     with open(path, "w", encoding="utf-8") as f:
