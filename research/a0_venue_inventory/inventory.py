@@ -11,15 +11,10 @@ A0 — инвентаризация площадок.
 Только stdlib. Все сетевые ответы кэшируются на диск — повторный запуск дешёвый.
 """
 
-import gzip
 import json
 import os
 import re
-import ssl
 import sys
-import time
-import urllib.error
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import sha256
 
@@ -27,95 +22,26 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, "out", "cache")
 OUT = os.path.join(HERE, "out")
 
+sys.path.insert(0, os.path.dirname(HERE))
+from common.venue import fetch as _fetch, normalize  # noqa: E402
+
 BYBIT_ARCHIVE = "https://public.bybit.com/trading/"
 BINANCE_S3 = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
 HYPERLIQUID_API = "https://api.hyperliquid.xyz/info"
 
 WORKERS = 8
-TIMEOUT = 45
-RETRIES = 3
-
-# Множители в тикерах: 1000PEPEUSDT, 10000LADYSUSDT, 1000000MOGUSDT.
-# В логарифмическом спреде постоянный множитель уходит в среднее,
-# поэтому на коинтеграцию он не влияет — но для сопоставления
-# инструментов между площадками его надо снимать.
-#
-# Две ловушки, обе обнаружены проверкой покрытия групп:
-#   1. Множитель бывает и суффиксом: Bybit торгует SHIB1000USDT,
-#      тогда как Binance — 1000SHIBUSDT. Без обработки суффикса SHIB
-#      получал разные базовые активы на разных площадках и молча
-#      выпадал из пересечения.
-#   2. Множители доходят до 10 000 000 (10000000AIDOGEUSDT).
-# Порядок в чередовании — от длинного к короткому, иначе сработает
-# короткий вариант и в базовом активе останутся лишние нули.
-_MULT = r"(10000000|1000000|100000|10000|1000)"
-MULTIPLIER_PREFIX_RE = re.compile(r"^" + _MULT + r"(?=[A-Z])")
-MULTIPLIER_SUFFIX_RE = re.compile(r"(?<=[A-Z])" + _MULT + r"$")
-QUOTE_SUFFIXES = ("USDT", "USDC", "PERP", "USD")
-
-
-def _ctx():
-    c = ssl.create_default_context()
-    bundle = os.environ.get("SSL_CERT_FILE") or os.environ.get("REQUESTS_CA_BUNDLE")
-    if bundle and os.path.exists(bundle):
-        c.load_verify_locations(bundle)
-    return c
-
-
-SSL_CTX = _ctx()
 
 
 def fetch(url, method="GET", body=None, cache_key=None):
-    """HTTP с дисковым кэшем и повторами."""
-    key = cache_key or sha256(f"{method}{url}{body}".encode()).hexdigest()
-    path = os.path.join(CACHE, key + ".gz")
-
-    if os.path.exists(path):
-        with gzip.open(path, "rt", encoding="utf-8", errors="replace") as f:
-            return f.read()
-
-    data = body.encode() if body else None
-    headers = {"User-Agent": "a0-venue-inventory/1.0"}
-    if body:
-        headers["Content-Type"] = "application/json"
-
-    last = None
-    for attempt in range(RETRIES):
-        try:
-            req = urllib.request.Request(url, data=data, headers=headers, method=method)
-            with urllib.request.urlopen(req, timeout=TIMEOUT, context=SSL_CTX) as r:
-                text = r.read().decode("utf-8", errors="replace")
-            os.makedirs(CACHE, exist_ok=True)
-            with gzip.open(path, "wt", encoding="utf-8") as f:
-                f.write(text)
-            return text
-        except Exception as e:  # noqa: BLE001 — сеть, нужен любой сбой
-            last = e
-            if attempt < RETRIES - 1:
-                time.sleep(2 ** attempt)
-    raise RuntimeError(f"fetch failed {url}: {last}")
-
-
-def normalize(symbol):
-    """Тикер площадки -> (базовый актив, котируемый актив, множитель)."""
-    s = symbol.upper()
-    quote = None
-    for suf in QUOTE_SUFFIXES:
-        if s.endswith(suf) and len(s) > len(suf):
-            quote = "USDC" if suf == "PERP" else suf
-            s = s[: -len(suf)]
-            break
-    mult = 1
-    m = MULTIPLIER_PREFIX_RE.match(s)
-    if m:
-        mult = int(m.group(1))
-        s = s[m.end():]
-    else:
-        m = MULTIPLIER_SUFFIX_RE.search(s)
-        if m:
-            mult = int(m.group(1))
-            s = s[: m.start()]
-    return s, quote, mult
+    """HTTP с дисковым кэшем этапа A0. Реализация — `research/common/venue.py`."""
+    return _fetch(
+        url,
+        CACHE,
+        method=method,
+        body=body,
+        cache_key=cache_key,
+        user_agent="a0-venue-inventory/1.0",
+    )
 
 
 # ---------------------------------------------------------------- Hyperliquid

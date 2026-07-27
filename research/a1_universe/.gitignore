@@ -1,0 +1,17 @@
+# Кэш сетевых ответов — воспроизводится повторным запуском
+out/cache/
+out/cache_api/
+out/run.log
+out/run.err
+
+# Ряды funding: объём исследовательских данных, не место для git.
+# Хранилище — предмет этапа A2. В git идёт только сводка.
+out/funding/
+
+# Коммитятся результаты прогона:
+#   out/universe.json, out/A1-universe-report.md,
+#   out/instruments.json, out/funding_summary.json
+
+# Python
+__pycache__/
+*.pyc
