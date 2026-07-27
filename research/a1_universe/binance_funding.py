@@ -109,6 +109,24 @@ def collect_symbol(symbol, months):
     return sorted(set(rows)), absent, bad
 
 
+def months_without_data(rows, months):
+    """Запрошенные месяцы, по которым в ряду нет ни одной записи.
+
+    Причин две, и по одному ряду они неразличимы: месяц физически
+    отсутствует в архиве (проверено прямыми запросами — отдаёт 404) либо
+    инструмент в этом месяце не торговался. Первая — дефект данных, вторая
+    факт об инструменте, и различать их надо по интервалам универсума.
+
+    У BNX ставки начинаются 2023-02 при торговле с 2022-04 не потому, что
+    инструмент стоял, а потому, что десяти файлов нет в архиве.
+    """
+    present = {
+        datetime.fromtimestamp(ts / 1000, timezone.utc).strftime("%Y-%m")
+        for ts, _, _ in rows
+    }
+    return [m for m in months if m not in present]
+
+
 def write_symbol(symbol, rows):
     os.makedirs(RAW, exist_ok=True)
     path = os.path.join(RAW, f"{symbol}.csv.gz")
@@ -183,10 +201,18 @@ def main():
                      int(r[1]), float(r[2]))
                     for r in list(csv.reader(f))[1:]
                 ]
-            absent, bad = [], []
+            bad = []
         else:
-            rows, absent, bad = collect_symbol(sym, months)
+            rows, _, bad = collect_symbol(sym, months)
             write_symbol(sym, rows)
+
+        # Пропущенные месяцы выводятся из самого ряда, а не из того, что
+        # вернула сеть в этом прогоне. Прежняя версия при возобновлении
+        # присваивала пустой список безусловно, и повторный запуск стирал
+        # запись: ряды уже лежали на диске, до запросов дело не доходило.
+        # Отчёт «вылечивался» повторным прогоном, данные — нет. Тот же
+        # дефект был в загрузчике свечей и там уже исправлен.
+        absent = months_without_data(rows, months)
         done[0] += 1
         if done[0] % 50 == 0:
             print(f"  {done[0]}/{len(jobs)}", file=sys.stderr, flush=True)
