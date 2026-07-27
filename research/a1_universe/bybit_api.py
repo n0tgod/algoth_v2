@@ -26,9 +26,14 @@ A1 — сбор того, что доступно только через API v5
 
 Запуск:
 
+    python3 bybit_api.py --symbol BTCUSDT   # смоук-тест на одном символе
     python3 bybit_api.py                    # funding + справочник
     python3 bybit_api.py --with-fees        # ещё и комиссии, нужен ключ
                                             # BYBIT_API_KEY / BYBIT_API_SECRET
+
+Начинать стоит со смоук-теста: пагинация funding написана вслепую, из
+песочницы разработки API недоступен. По BTCUSDT за полный срок жизни
+должно прийти порядка 6–7 тысяч записей с шагом 8 часов без разрывов.
 
 Прогон возобновляемый: готовые символы пропускаются, сеть кэшируется.
 Только stdlib.
@@ -255,6 +260,22 @@ def main():
             date.fromisoformat(rec["last_trading_day"]),
         ))
     targets.sort()
+
+    # Дешёвая проверка перед многочасовым прогоном: пагинация funding
+    # написана вслепую — из песочницы API недоступен, — поэтому убедиться,
+    # что по одному символу приходит связная история, стоит заранее.
+    only = None
+    for i, a in enumerate(sys.argv):
+        if a == "--symbol" and i + 1 < len(sys.argv):
+            only = sys.argv[i + 1].upper()
+    if only:
+        targets = [t for t in targets if t[0] == only]
+        if not targets:
+            raise SystemExit(f"{only} нет в универсуме")
+    elif "--limit" in sys.argv:
+        n = int(sys.argv[sys.argv.index("--limit") + 1])
+        targets = targets[:n]
+
     print(f"funding по {len(targets)} символам...", file=sys.stderr, flush=True)
 
     summary, done = {}, [0]
