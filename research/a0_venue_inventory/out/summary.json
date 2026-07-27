@@ -14,7 +14,7 @@
   "binance_usdt_bases": 786,
   "bybit_archive_dirs": 1816,
   "bybit_usdt_bases": 949,
-  "bybit_x_binance_bases": 721,
+  "bybit_x_binance_bases": 722,
   "bybit_x_binance_x_hl_bases": 204,
   "hyperliquid_delisted": 55,
   "hyperliquid_live": 177,
@@ -458,6 +458,17 @@
    "bybit_first": "2021-10-12",
    "bybit_last": "2025-06-03",
    "bybit_symbol": "OMGUSDT",
+   "hyperliquid_delisted": false,
+   "on_hyperliquid": false
+  },
+  {
+   "base": "SHIB",
+   "binance_first": "2021-05",
+   "binance_symbol": "1000SHIBUSDT",
+   "bybit_days": 1741,
+   "bybit_first": "2021-10-20",
+   "bybit_last": "2026-07-26",
+   "bybit_symbol": "SHIB1000USDT",
    "hyperliquid_delisted": false,
    "on_hyperliquid": false
   },

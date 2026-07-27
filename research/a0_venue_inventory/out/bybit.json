@@ -9,11 +9,11 @@
   "symbol": "0GUSDT"
  },
  "10000000AIDOGEUSDT": {
-  "base": "10000000AIDOGE",
+  "base": "AIDOGE",
   "days_available": 420,
   "first_date": "2024-03-05",
   "last_date": "2025-04-28",
-  "multiplier": 1,
+  "multiplier": 10000000,
   "quote": "USDT",
   "symbol": "10000000AIDOGEUSDT"
  },
@@ -11565,20 +11565,20 @@
   "symbol": "SHELLUSDT"
  },
  "SHIB1000PERP": {
-  "base": "SHIB1000",
+  "base": "SHIB",
   "days_available": 805,
   "first_date": "2024-05-13",
   "last_date": "2026-07-26",
-  "multiplier": 1,
+  "multiplier": 1000,
   "quote": "USDC",
   "symbol": "SHIB1000PERP"
  },
  "SHIB1000USDT": {
-  "base": "SHIB1000",
+  "base": "SHIB",
   "days_available": 1741,
   "first_date": "2021-10-20",
   "last_date": "2026-07-26",
-  "multiplier": 1,
+  "multiplier": 1000,
   "quote": "USDT",
   "symbol": "SHIB1000USDT"
  },

@@ -39,7 +39,18 @@ RETRIES = 3
 # В логарифмическом спреде постоянный множитель уходит в среднее,
 # поэтому на коинтеграцию он не влияет — но для сопоставления
 # инструментов между площадками его надо снимать.
-MULTIPLIER_RE = re.compile(r"^(1000000|100000|10000|1000)(?=[A-Z])")
+#
+# Две ловушки, обе обнаружены проверкой покрытия групп:
+#   1. Множитель бывает и суффиксом: Bybit торгует SHIB1000USDT,
+#      тогда как Binance — 1000SHIBUSDT. Без обработки суффикса SHIB
+#      получал разные базовые активы на разных площадках и молча
+#      выпадал из пересечения.
+#   2. Множители доходят до 10 000 000 (10000000AIDOGEUSDT).
+# Порядок в чередовании — от длинного к короткому, иначе сработает
+# короткий вариант и в базовом активе останутся лишние нули.
+_MULT = r"(10000000|1000000|100000|10000|1000)"
+MULTIPLIER_PREFIX_RE = re.compile(r"^" + _MULT + r"(?=[A-Z])")
+MULTIPLIER_SUFFIX_RE = re.compile(r"(?<=[A-Z])" + _MULT + r"$")
 QUOTE_SUFFIXES = ("USDT", "USDC", "PERP", "USD")
 
 
@@ -95,10 +106,15 @@ def normalize(symbol):
             s = s[: -len(suf)]
             break
     mult = 1
-    m = MULTIPLIER_RE.match(s)
+    m = MULTIPLIER_PREFIX_RE.match(s)
     if m:
         mult = int(m.group(1))
         s = s[m.end():]
+    else:
+        m = MULTIPLIER_SUFFIX_RE.search(s)
+        if m:
+            mult = int(m.group(1))
+            s = s[: m.start()]
     return s, quote, mult
 
 
@@ -304,9 +320,71 @@ def build_summary(hl, bybit, binance, bnc_datasets):
     }
 
 
+def load_datasets_from_summary():
+    """Список наборов данных архива Binance из предыдущего прогона."""
+    path = os.path.join(OUT, "summary.json")
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            return json.load(f).get("binance_datasets", [])
+    return []
+
+
+def renormalize_stored():
+    """Пересчитать производные поля из уже собранных JSON, без сети.
+
+    Нужно после правки normalize(): базовый актив и множитель вычисляются
+    на этапе сбора, поэтому исправление нормализации требует пересчёта —
+    но не повторной загрузки.
+    """
+    loaded = {}
+    for name in ("hyperliquid.json", "bybit.json", "binance.json"):
+        path = os.path.join(OUT, name)
+        if not os.path.exists(path):
+            raise SystemExit(f"нет {path} — сначала обычный прогон")
+        with open(path, encoding="utf-8") as f:
+            loaded[name] = json.load(f)
+
+    changed = 0
+    for name, data in loaded.items():
+        for rec in data.values():
+            base, quote, mult = normalize(rec["symbol"])
+            if name == "hyperliquid.json":
+                base, quote = base or rec["symbol"], "USD"
+            if rec["base"] != base or rec["multiplier"] != mult:
+                changed += 1
+            rec["base"], rec["multiplier"] = base, mult
+            if name != "hyperliquid.json":
+                rec["quote"] = quote
+
+    print(f"пересчитано записей с изменениями: {changed}", file=sys.stderr)
+    return (
+        loaded["hyperliquid.json"],
+        loaded["bybit.json"],
+        loaded["binance.json"],
+    )
+
+
+def write_all(hl, bybit, binance, summary):
+    for name, obj in (
+        ("hyperliquid.json", hl),
+        ("bybit.json", bybit),
+        ("binance.json", binance),
+        ("summary.json", summary),
+    ):
+        with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
+            json.dump(obj, f, ensure_ascii=False, indent=1, sort_keys=True)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(CACHE, exist_ok=True)
+
+    if "--renormalize" in sys.argv:
+        hl, bybit, binance = renormalize_stored()
+        summary = build_summary(hl, bybit, binance, load_datasets_from_summary())
+        write_all(hl, bybit, binance, summary)
+        print(json.dumps(summary["counts"], ensure_ascii=False, indent=2))
+        return
 
     print("Hyperliquid...", file=sys.stderr, flush=True)
     hl = collect_hyperliquid()
@@ -322,15 +400,7 @@ def main():
     datasets = binance_datasets()
 
     summary = build_summary(hl, bybit, binance, datasets)
-
-    for name, obj in (
-        ("hyperliquid.json", hl),
-        ("bybit.json", bybit),
-        ("binance.json", binance),
-        ("summary.json", summary),
-    ):
-        with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
-            json.dump(obj, f, ensure_ascii=False, indent=1, sort_keys=True)
+    write_all(hl, bybit, binance, summary)
 
     print(json.dumps(summary["counts"], ensure_ascii=False, indent=2))
 
