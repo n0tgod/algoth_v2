@@ -10,7 +10,9 @@ out/funding/
 
 # Коммитятся результаты прогона:
 #   out/universe.json, out/A1-universe-report.md,
-#   out/instruments.json, out/funding_summary.json
+#   out/instruments.json, out/funding_summary.json,
+#   out/funding_binance_summary.json, out/funding_venue_diff.json,
+#   out/A1-data-report.md
 
 # Python
 __pycache__/
