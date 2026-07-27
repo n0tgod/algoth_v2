@@ -1,0 +1,13 @@
+# Хранилище — данные исследования, не место для git
+out/parquet/
+out/*.duckdb
+out/*.log
+out/*.err
+
+# Коммитятся: out/A2-hygiene-report.md, out/hygiene.json
+
+__pycache__/
+*.pyc
+
+# Сводка сборки — пересоздаётся прогоном, коммитится только по завершении
+out/build_*.json
