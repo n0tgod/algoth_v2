@@ -54,6 +54,143 @@ def quantiles(vals, qs=(0.05, 0.25, 0.5, 0.75, 0.95)):
     return out
 
 
+def _bybit_section(add, universe):
+    """Раздел 3: ставки funding и справочник инструментов Bybit.
+
+    Собрано `bybit_api.py` с VPS. Из песочницы разработки эти данные
+    недоступны: площадка закрывает API по местоположению.
+    """
+    bybit = load("funding_summary.json")
+    instruments = load("instruments.json")
+
+    add("## 3. Ставки funding Bybit — площадка исполнения\n")
+    add("> Это **и есть издержки** раздела 5.2. Всё, что выше по funding,")
+    add("> служит мерой расхождения площадок; считать удержание позиции")
+    add("> следует по ставкам этого раздела.\n")
+
+    if not bybit:
+        add("Прогон не завершён — `funding_summary.json` отсутствует.\n")
+        return
+
+    F = {s: v for s, v in bybit.items() if v.get("records")}
+    add(f"Символов с данными: {len(F)} из {len(bybit)}. "
+        f"Записей: {sum(v['records'] for v in F.values()):,}".replace(",", " ") + "\n")
+
+    # --- 3.1 частота начисления
+    add("### 3.1 Частота начисления: восемь часов — не константа\n")
+    modes = {}
+    for v in F.values():
+        modes[v["modal_step_hours"]] = modes.get(v["modal_step_hours"], 0) + 1
+    add("| Режим начисления | Символов |")
+    add("|---|---:|")
+    for h, n in sorted(modes.items(), key=lambda x: -x[1]):
+        add(f"| {h:g} ч | {n} |")
+    add("")
+
+    per_day = sorted(v["accruals_per_day"] for v in F.values())
+    med = per_day[len(per_day) // 2]
+    off = sum(1 for p in per_day if abs(p - 3) / 3 > 0.15)
+    switched = sum(1 for v in F.values()
+                   if len([k for k, c in v["step_distribution"].items() if c >= 5]) > 1)
+    add(f"Медиана фактической частоты — **{med:.3f} начислений в сутки**, не три.")
+    add(f"У {off} символов из {len(F)} факт расходится с тремя более чем на 15 %,")
+    add(f"а {switched} символов меняли режим по ходу истории: Bybit переводит")
+    add("инструмент на часовые начисления в периоды высокого базиса и потом")
+    add("возвращает обратно.\n")
+    add("Поэтому годовая ставка ниже считается **по самому ряду** —")
+    add("`(записей − 1) / длина периода`, — а не по объявленному интервалу и не")
+    add("по константе. Прежняя версия сборщика содержала зашитые три начисления")
+    add("в сутки и занижала годовую ставку у четырёхчасовых инструментов ровно")
+    add("вдвое, у часовых — в восемь раз. Реализация общая с рядом Binance,")
+    add("`research/common/funding.py`: два способа счёта дали бы расхождение")
+    add("площадок, которого нет в данных.\n")
+
+    # --- 3.2 средняя ставка
+    ann = {s: v["annualized_mean_pct"] for s, v in F.items()}
+    add("### 3.2 Средняя ставка в пересчёте на год\n")
+    add("| Квантиль | Годовых |")
+    add("|---|---:|")
+    for k, v in quantiles(list(ann.values())).items():
+        add(f"| {int(k*100)} % | {v:+.1f} % |")
+    add("")
+    hi = sorted(ann.items(), key=lambda x: -x[1])[:8]
+    lo = sorted(ann.items(), key=lambda x: x[1])[:8]
+    add("| Самые дорогие для лонга | Годовых | | Самые дорогие для шорта | Годовых |")
+    add("|---|---:|---|---|---:|")
+    for (s1, v1), (s2, v2) in zip(hi, lo):
+        add(f"| {s1} | {v1:+.1f} % | | {s2} | {v2:+.1f} % |")
+    add("")
+    add("Хвост в сотни процентов годовых принадлежит недавно листингованным")
+    add("инструментам с короткой историей и высоким базисом. Это не")
+    add("опечатка, но и не доходность: на таких ставках инструмент обычно")
+    add("непригоден для удержания 1–5 дней, и отбор раздела 8 их отсечёт.\n")
+
+    # --- 3.3 покрытие
+    holed = sorted((v for v in F.values() if v["missing_accruals"]),
+                   key=lambda v: -v["missing_accruals"])
+    total_missing = sum(v["missing_accruals"] for v in holed)
+    total_records = sum(v["records"] for v in F.values())
+    add("### 3.3 Пропуски начислений\n")
+    add("Проверка сетки не может опираться на измеренную частоту: частота")
+    add("выведена из числа записей, поэтому ожидаемое число тождественно равно")
+    add("полученному и покрытие дало бы 100 % даже на ряде с дырой. Сеткой")
+    add("служит режим ряда, дырой — промежуток, превышающий режим более чем")
+    add("в полтора раза. Режим оценивается двумя односторонними окнами, иначе")
+    add("возврат с часовых начислений на восьмичасовые сам выглядит дырой.\n")
+    add(f"Символов с пропусками: {len(holed)} из {len(F)}. "
+        f"Пропущено начислений: {total_missing} из {total_records:,}".replace(",", " ")
+        + f" ({pct(total_missing, total_records)}).\n")
+
+    if holed:
+        iv = {}
+        for a, rec in universe["assets"].items():
+            if rec.get("bybit_symbol"):
+                iv[rec["bybit_symbol"]] = rec.get("intervals") or []
+        add("| Символ | Пропущено | Дыр | Покрытие | Перерыв торговли в универсуме |")
+        add("|---|---:|---:|---:|---|")
+        for v in holed[:10]:
+            breaks = iv.get(v["symbol"], [])
+            mark = "—"
+            if len(breaks) > 1:
+                mark = "; ".join(f"{a[1]} → {b[0]}" for a, b in zip(breaks, breaks[1:]))[:40]
+            add(f"| {v['symbol']} | {v['missing_accruals']} | {v['gaps']} | "
+                f"{v['coverage_pct']:.2f} % | {mark} |")
+        add("")
+        add("Последняя колонка — независимая проверка: интервалы торговли в")
+        add("универсуме построены по свечам Binance, то есть по другому")
+        add("источнику и другой площадке. Там, где дыра в funding совпадает с")
+        add("перерывом торговли, это остановка инструмента, а не дефект")
+        add("загрузки.\n")
+
+    # --- 3.4 справочник
+    add("### 3.4 Справочник инструментов\n")
+    if not instruments:
+        add("Прогон не завершён — `instruments.json` отсутствует.\n")
+        return
+    by_status = {}
+    for v in instruments.values():
+        by_status[v["status"]] = by_status.get(v["status"], 0) + 1
+    add(f"Контрактов: {len(instruments):,}".replace(",", " ") + ".\n")
+    add("| Статус | Контрактов |")
+    add("|---|---:|")
+    for s, n in sorted(by_status.items(), key=lambda x: -x[1]):
+        add(f"| {s} | {n} |")
+    add("")
+    uni_syms = [r["bybit_symbol"] for r in universe["assets"].values()
+                if r.get("bybit_symbol")]
+    absent = [s for s in uni_syms if s not in instruments]
+    noshape = [s for s in uni_syms
+               if s in instruments and not (instruments[s]["tick_size"]
+                                            and instruments[s]["qty_step"])]
+    add(f"Символов универсума: {len(uni_syms)}; нет в справочнике: {len(absent)}; "
+        f"без шага цены или шага объёма: {len(noshape)}.\n")
+    add("Справочник обходится по статусам. Без этого эндпоинт отдаёт только")
+    add("торгуемые сейчас контракты, и делистнутые ноги остаются без шага цены")
+    add("и шага объёма — а для универсума на момент времени это не исключение,")
+    add("а половина выборки. Проверить сайзинг раздела 4 спеки 01, где после")
+    add("округления количеств β проверяется повторно, без этих полей нечем.\n")
+
+
 def main():
     universe = load("universe.json")
     klines = load("klines_inventory_15m.json")
@@ -309,6 +446,8 @@ def main():
         add("Binance. Но перекрёстную проверку раздела 7 на этих отрезках")
         add("провести не удастся, и при расхождении результатов по ним нельзя")
         add("будет отличить артефакт площадки от дефекта данных.\n")
+
+    _bybit_section(add, universe)
 
     path = os.path.join(OUT, "A1-data-report.md")
     with open(path, "w", encoding="utf-8") as f:
