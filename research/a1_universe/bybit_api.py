@@ -49,6 +49,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
 
@@ -59,6 +60,9 @@ CACHE = os.path.join(OUT, "cache_api")
 FUNDING_DIR = os.path.join(OUT, "funding")
 
 sys.path.insert(0, RESEARCH)
+from common.funding import (  # noqa: E402
+    accruals_per_day, annualized_mean_pct, gap_report,
+)
 from common.venue import fetch as _fetch  # noqa: E402
 
 API = "https://api.bybit.com"
@@ -80,13 +84,34 @@ def api_get(path, params, cache_key):
 # ------------------------------------------------------------ справочник
 
 def collect_instruments():
-    """Полный справочник линейных контрактов, включая неторгуемые сейчас."""
+    """Полный справочник линейных контрактов, включая неторгуемые сейчас.
+
+    Обход идёт по статусам. Без параметра `status` эндпоинт отдаёт только
+    торгуемые сейчас — 759 контрактов, тогда как закрытых 921. Первый
+    прогон на VPS собрал именно эти 759, и 156 символов универсума из 722
+    остались без шага цены и шага объёма. Для универсума на момент времени
+    это дыра в главном: делистнутая нога — не исключение, а половина
+    выборки, и проверить сайзинг раздела 4 спеки 01 (повторная проверка β
+    после округления количеств) без её шагов нечем.
+
+    `Settling` эндпоинт не принимает — отвечает `params error`. `Delivering`
+    принимает и сейчас пуст, но оставлен: инструмент в процессе поставки
+    попадёт в него, а не в `Closed`.
+    """
+    out = {}
+    for status in ("Trading", "PreLaunch", "Delivering", "Closed"):
+        out.update(_collect_instruments_status(status))
+    return out
+
+
+def _collect_instruments_status(status):
     out, cursor, page = {}, "", 0
     while True:
-        params = {"category": CATEGORY, "limit": 1000}
+        params = {"category": CATEGORY, "status": status, "limit": 1000}
         if cursor:
             params["cursor"] = cursor
-        res = api_get("/v5/market/instruments-info", params, f"instr_{page}")
+        res = api_get("/v5/market/instruments-info", params,
+                      f"instr_{status.lower()}_{page}")
         for it in res.get("list", []):
             pf = it.get("priceFilter", {})
             lf = it.get("lotSizeFilter", {})
@@ -167,17 +192,38 @@ def summarize(symbol, rows):
     vals = [float(r) for _, r in rows]
     if not vals:
         return {"symbol": symbol, "records": 0}
+
+    ts = [int(datetime.fromisoformat(t).timestamp() * 1000) for t, _ in rows]
+    mean = sum(vals) / len(vals)
+
+    # Число начислений в сутки измеряется по самому ряду. Прежняя версия
+    # содержала зашитое «три раза в сутки», а объявленный интервал у 405 из
+    # 759 контрактов Bybit равен четырём часам — годовая ставка занижалась
+    # ровно вдвое, и это пошло бы из сводки в модель издержек A6. Считать по
+    # `fundingInterval` тоже нельзя: интервал меняется по ходу истории.
+    # Обоснование и общая с Binance реализация — в `common/funding.py`.
+    per_day = accruals_per_day(ts[0], ts[-1], len(vals))
+    gaps = gap_report(ts)
+
     return {
         "symbol": symbol,
         "records": len(vals),
         "first": rows[0][0],
         "last": rows[-1][0],
-        "mean": sum(vals) / len(vals),
+        "mean": mean,
         "min": min(vals),
         "max": max(vals),
-        # Годовая доля при трёх начислениях в сутки — грубый ориентир
-        # порядка величины, а не оценка доходности.
-        "annualized_mean_pct": sum(vals) / len(vals) * 3 * 365 * 100,
+        "accruals_per_day": per_day,
+        # Годовой ориентир порядка величины, а не оценка доходности.
+        "annualized_mean_pct": annualized_mean_pct(mean, per_day),
+        # Пропуски считаются по режиму ряда, а не по измеренной частоте:
+        # частота выведена из числа записей, и покрытие по ней тождественно
+        # дало бы 100 % даже на ряде с дырами.
+        "modal_step_hours": gaps["modal_step_hours"],
+        "step_distribution": gaps["step_distribution"],
+        "gaps": len(gaps["gaps"]),
+        "missing_accruals": gaps["missing_accruals"],
+        "coverage_pct": gaps["coverage_pct"],
     }
 
 
@@ -308,11 +354,19 @@ def main():
                 json.dump(fees, f, ensure_ascii=False, indent=1, sort_keys=True)
 
     empty = [s for s, v in summary.items() if not v["records"]]
+    filled = [v for v in summary.values() if v["records"]]
+    holed = [v for v in filled if v["missing_accruals"]]
+    steps = Counter(v["modal_step_hours"] for v in filled)
     print(json.dumps({
         "instruments": len(instruments),
+        "instruments_by_status": dict(
+            Counter(v["status"] for v in instruments.values()).most_common()),
         "funding_symbols": len(summary),
         "funding_records": sum(v["records"] for v in summary.values()),
         "symbols_without_funding": len(empty),
+        "modal_step_hours_distribution": dict(steps.most_common()),
+        "symbols_with_gaps": len(holed),
+        "missing_accruals_total": sum(v["missing_accruals"] for v in holed),
     }, ensure_ascii=False, indent=2))
     if empty:
         print("без данных funding: " + ", ".join(sorted(empty)[:20]), file=sys.stderr)

@@ -54,7 +54,9 @@ TIMEOUT = 120
 RETRIES = 3
 
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.dirname(HERE))
 from binance_klines import months_between  # noqa: E402
+from common.funding import accruals_per_day, annualized_mean_pct  # noqa: E402
 
 
 def http_bytes(url):
@@ -129,17 +131,11 @@ def summarize(rows):
     intervals = sorted({h for _, h, _ in rows})
 
     # Число начислений в сутки измеряется по самому ряду, а не берётся из
-    # объявленного интервала. Причина: интервал меняется по ходу истории.
-    # Чистые 8 часов только у 226 активов из 720, у 264 — четыре часа, а
-    # примерно у 230 в ряду встречается несколько разных значений (8→4,
-    # 4→1). Любая одна константа — хоть 3 в сутки, хоть максимум из ряда —
-    # даёт систематическую ошибку: у 128 активов расхождение с фактом
-    # превышает 15 %, а местами оно двукратное.
-    span_days = (rows[-1][0] - rows[0][0]) / 86_400_000
-    if span_days > 0:
-        per_day = (len(vals) - 1) / span_days
-    else:
-        per_day = 24 / intervals[-1] if intervals else 3
+    # объявленного интервала: интервал меняется по ходу истории. Обоснование
+    # и числа — в `common/funding.py`. Та же функция считает сводку Bybit,
+    # чтобы расхождение между площадками нельзя было списать на разный
+    # способ подсчёта.
+    per_day = accruals_per_day(rows[0][0], rows[-1][0], len(vals), intervals)
     return {
         "records": len(vals),
         "first": datetime.fromtimestamp(rows[0][0] / 1000, timezone.utc).isoformat(),
@@ -148,7 +144,7 @@ def summarize(rows):
         "mean": mean,
         "min": min(vals),
         "max": max(vals),
-        "annualized_mean_pct": mean * per_day * 365 * 100,
+        "annualized_mean_pct": annualized_mean_pct(mean, per_day),
     }
 
 

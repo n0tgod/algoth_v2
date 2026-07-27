@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""
+Измерение частоты начислений funding по самому ряду.
+
+Вынесено из `research/a1_universe/binance_funding.py`, когда та же логика
+понадобилась сборщику Bybit. Копировать было нельзя ровно по той причине,
+по которой в `venue.py` вынесена `normalize()`: ошибка здесь тихая. Она не
+падает, а занижает годовую ставку в разы, и попадает из сводки в модель
+издержек A6.
+
+**Почему частота измеряется, а не берётся из объявленного интервала.**
+Интервал начисления меняется по ходу истории инструмента. У Binance по
+720 активам: чистые 8 часов только у 226, у 264 — четыре часа, примерно у
+230 в ряду встречается несколько разных значений (8→4, 4→1). У Bybit по
+759 торгуемым контрактам объявленный `fundingInterval` равен 4 часам у
+405 и 8 часам у 316. Любая одна константа даёт систематическую ошибку:
+зашитые «три начисления в сутки» занижают годовую ставку ровно вдвое на
+четырёхчасовом инструменте, а максимум из встреченных интервалов ошибается
+у тех, кто перешёл с 8 часов на 4. Эмпирически у 128 активов Binance
+расхождение с фактом превышало 15 %, местами было двукратным.
+
+Самопроверка на BTCUSDT при объявленных трёх начислениях в сутки: на ряде
+Binance формула даёт 3.0004, на ряде Bybit — ровно 3.0000. Разница не в
+формуле, а в данных: у Bybit все 6 943 промежутка равны точно 8 часам, у
+Binance отметки времени сдвинуты на миллисекунды.
+
+Только stdlib.
+"""
+
+from collections import Counter
+
+MS_PER_DAY = 86_400_000
+DEFAULT_PER_DAY = 3.0
+
+
+def accruals_per_day(first_ms, last_ms, records, intervals_hours=None):
+    """Начислений в сутки по факту: (записей − 1) / длина периода в сутках.
+
+    Границы ряда — момент первого и последнего начисления, поэтому делится
+    на `records - 1` промежутков, а не на `records`.
+
+    `intervals_hours` — запас на случай ряда из одной записи, когда длина
+    периода нулевая и измерять нечего: тогда берётся самый редкий из
+    объявленных интервалов. Для ряда длиной больше одной записи этот
+    аргумент не используется.
+    """
+    span_days = (last_ms - first_ms) / MS_PER_DAY
+    if span_days > 0:
+        return (records - 1) / span_days
+    if intervals_hours:
+        return 24 / max(intervals_hours)
+    return DEFAULT_PER_DAY
+
+
+def annualized_mean_pct(mean_rate, per_day):
+    """Годовой ориентир порядка величины, а не оценка доходности."""
+    return mean_rate * per_day * 365 * 100
+
+
+def step_hours(timestamps_ms):
+    """Промежутки между соседними начислениями, в часах."""
+    return [
+        (b - a) / 3_600_000
+        for a, b in zip(timestamps_ms, timestamps_ms[1:])
+    ]
+
+
+def modal_step_hours(timestamps_ms):
+    """Самый частый промежуток — режим начисления ряда."""
+    steps = step_hours(timestamps_ms)
+    if not steps:
+        return None
+    return Counter(round(s, 4) for s in steps).most_common(1)[0][0]
+
+
+def gap_report(timestamps_ms, window=25, tolerance=1.5):
+    """Пропуски начислений, найденные без опоры на объявленный интервал.
+
+    Ожидаемое число записей нельзя считать по измеренной частоте: она сама
+    выведена из числа записей, и покрытие тождественно даст 100 % даже на
+    ряде с дырами. Поэтому сеткой служит **режим** ряда — самый частый
+    промежуток, — а дырой считается промежуток, превышающий режим более чем
+    в `tolerance` раз.
+
+    Режим оценивается двумя односторонними окнами — по `window` промежуткам
+    строго до точки и строго после неё, — а порог берётся от **большего** из
+    двух. Так сделано из-за смены режима по ходу истории: Bybit переводит
+    инструмент на часовые начисления в периоды высокого базиса и потом
+    возвращает на восьмичасовые. При двустороннем окне такой возврат
+    выглядит дырой: окно длиной 51 запись после перехода 1ч→8ч ещё двадцать
+    пять записей состоит в основном из часовых промежутков, локальный режим
+    остаётся равным одному часу, и каждое законное восьмичасовое начисление
+    объявляется пропуском семи. Именно так BLURUSDT получил 112 ложных
+    пропусков при первом прогоне, а всего таких было 385 из 1 309.
+
+    Почему порог от большего из двух режимов, а не от меньшего: на переходе
+    1ч→8ч промежуток равен восьми часам при режимах 1 и 8, и порог 1.5×8
+    его законно пропускает. Настоящая дыра в часовом ряду даёт промежуток,
+    превышающий и то и другое: режимы 1 и 1, порог 1.5, промежуток 8 —
+    попадает в отчёт.
+    """
+    steps = step_hours(timestamps_ms)
+    if not steps:
+        return {
+            "modal_step_hours": None, "gaps": [], "missing_accruals": 0,
+            "expected_records": len(timestamps_ms), "coverage_pct": 100.0,
+            "step_distribution": {},
+        }
+
+    rounded = [round(s, 4) for s in steps]
+    gaps, missing = [], 0
+
+    def regime(lo, hi):
+        chunk = rounded[max(lo, 0):hi]
+        return Counter(chunk).most_common(1)[0][0] if chunk else None
+
+    for i, s in enumerate(steps):
+        before = regime(i - window, i)
+        after = regime(i + 1, i + 1 + window)
+        local = max(x for x in (before, after) if x is not None)
+        if local > 0 and s > local * tolerance:
+            skipped = max(round(s / local) - 1, 1)
+            missing += skipped
+            gaps.append({
+                "from_ms": timestamps_ms[i],
+                "to_ms": timestamps_ms[i + 1],
+                "step_hours": round(s, 4),
+                "local_step_hours": local,
+                "missing_accruals": skipped,
+            })
+
+    return {
+        "modal_step_hours": Counter(rounded).most_common(1)[0][0],
+        "gaps": gaps,
+        "missing_accruals": missing,
+        "expected_records": len(timestamps_ms) + missing,
+        "coverage_pct": len(timestamps_ms) / (len(timestamps_ms) + missing) * 100,
+        "step_distribution": dict(Counter(rounded).most_common(6)),
+    }
