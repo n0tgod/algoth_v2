@@ -18,3 +18,6 @@ __pycache__/
 
 # Сырые архивы свечей — объём данных, не место для git
 out/klines/
+
+# Ряды funding Binance — объём данных, в git идёт только сводка
+out/funding_binance/
