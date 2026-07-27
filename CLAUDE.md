@@ -63,13 +63,11 @@
 
 - Фаза A, этап **A0 завершён** — `research/a0_venue_inventory/out/A0-report.md`
 - Черновик экономической группировки готов — `research/asset_groups/groups.yaml`, покрытие 74 % рабочих когорт, сокращение пространства поиска на 95.5 %. **Ждёт правки владельцем**: 70 активов не отнесены, группы `smart_contract_l1` и `defi_core` слишком велики
-- Открыто: где запускать сбор данных Bybit — `api.bybit.com` отдаёт 403 из окружения разработки
+- Открыто: где запускать сбор данных Bybit. Проверено повторно — блокировка не обходится сменой домена: `api.bybit.com`, `api.bytick.com`, `api.bybit.nl`, `api.byhkbit.com` и testnet отдают 403 CloudFront с явным «configured to block access from your country». Публичный архив `public.bybit.com` при этом открыт, Binance и Hyperliquid тоже. Значит всё, что доступно только через API v5 — **funding и справочник инструментов** — собирается владельцем оттуда, где Bybit открыт
 - Далее: **A1** — загрузка данных
 
 ### Про git
 
-Репозиторий `n0tgod/algoth_v2` создан, но у сессии нет прав на запись в него (403, `add_repo` не проходит согласование). Пока работа ведётся в ветке **`v2-standalone`** репозитория `n0tgod/algoth_backend` — это ветка-сирота, содержащая только материалы v2. Синхронизация владельцем:
+Проект живёт в `n0tgod/algoth_v2`, ветка `main`. Переезд из временной ветки-сироты `v2-standalone` репозитория `algoth_backend` выполнен, история трёх коммитов сохранена; временная ветка удалена.
 
-```bash
-git fetch https://github.com/n0tgod/algoth_backend.git v2-standalone && git push origin FETCH_HEAD:main
-```
+Репозитории v1 (`algoth_backend`, `algoth_frontend`) к v2 отношения не имеют и остаются только справочным материалом.
