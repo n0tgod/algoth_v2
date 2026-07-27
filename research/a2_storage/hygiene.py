@@ -54,47 +54,95 @@ PAIR_SYMBOLS = 45         # символов для попарного заме�
                           # (даёт ~990 пар)
 PAIR_WINDOW_DAYS = 365    # хвост истории каждого символа для этого замера
 
+# Доля оперативной памяти, отдаваемая движку. Остаток нужен самому Python:
+# замер согласованности ног держит массивы меток времени, и если отдать
+# движку всё, эти два потребителя столкнутся.
+MEMORY_SHARE = 0.55
+TMP = os.path.join(OUT, ".tmp")
+
+
+def memory_limit_mb():
+    total = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+    return max(512, int(total * MEMORY_SHARE / 1024 / 1024))
+
 
 def connect(interval):
     con = duckdb.connect()
     con.execute("PRAGMA threads=4")
+
+    # Промежуточные результаты обязаны выливаться на диск, а не в OOM.
+    # На 1m покрытие считается по 759 млн строк, и `median(abs(ret))` —
+    # агрегат точный, а не приближённый: чтобы взять медиану, движок держит
+    # все значения группы. База in-memory по умолчанию сливать некуда, и
+    # ядро убивает прогон на первом же шаге, через полминуты после старта.
+    # На 15m это не проявлялось: там строк в пятнадцать раз меньше и всё
+    # помещалось в память.
+    #
+    # Приближённая медиана убрала бы симптом и испортила измерение: MAD
+    # служит порогом выброса, и порог не должен зависеть от того, сколько
+    # памяти оказалось на машине.
+    os.makedirs(TMP, exist_ok=True)
+    con.execute(f"PRAGMA temp_directory='{TMP}'")
+    con.execute(f"PRAGMA memory_limit='{memory_limit_mb()}MB'")
     glob = os.path.join(PARQUET, interval, "*.parquet")
     con.execute(f"CREATE VIEW bars AS SELECT * FROM read_parquet('{glob}')")
     return con
 
 
 def per_symbol(con, step_min):
-    """Покрытие, пропуски, мёртвые бары и выбросы по каждому символу."""
-    return con.execute(f"""
-        WITH r AS (
-            SELECT symbol, open_time, close, volume, trades,
-                   ln(close / lag(close) OVER w) AS ret
-            FROM bars
-            WINDOW w AS (PARTITION BY symbol ORDER BY open_time)
-        ),
-        m AS (
-            SELECT symbol, median(abs(ret)) AS mad
-            FROM r WHERE ret IS NOT NULL AND ret <> 0
-            GROUP BY symbol
-        )
-        SELECT r.symbol,
-               count(*)                                        AS bars,
-               -- Метки приводятся к строке в запросе: иначе duckdb тянет
-               -- pytz ради timezone-aware значений, а лишняя зависимость
-               -- на сервере не нужна.
-               CAST(min(r.open_time) AS VARCHAR)               AS first_bar,
-               CAST(max(r.open_time) AS VARCHAR)               AS last_bar,
-               CAST(date_diff('minute', min(r.open_time), max(r.open_time))
-                    / {step_min} + 1 AS BIGINT)                AS expected,
-               sum(CASE WHEN r.trades = 0 THEN 1 ELSE 0 END)   AS no_trade_bars,
-               sum(CASE WHEN r.volume = 0 THEN 1 ELSE 0 END)   AS zero_volume_bars,
-               any_value(m.mad)                                AS mad,
-               sum(CASE WHEN abs(r.ret) > {OUTLIER_MAD} * m.mad
-                        THEN 1 ELSE 0 END)                     AS outliers
-        FROM r JOIN m USING (symbol)
-        GROUP BY r.symbol
-        ORDER BY r.symbol
-    """).fetchall()
+    """Покрытие, пропуски, мёртвые бары и выбросы по каждому символу.
+
+    Обход идёт **по одному символу за запрос**, а не одним запросом по всей
+    таблице. Причина не в стиле, а в том, что одним запросом на 1m это не
+    считается вовсе. Оконная функция `lag` с разбиением по символу требует
+    упорядочить все 759 млн строк, а `median` — агрегат точный, и чтобы
+    взять медиану, движок держит все значения группы. На восьми гигабайтах
+    прогон умирал от OOM через полминуты, а с выливанием на диск съедал
+    27 ГБ временных файлов за минуту и продолжал расти. На 15m этого не
+    было видно: строк в пятнадцать раз меньше, всё помещалось в память.
+
+    Посимвольный обход дёшев именно благодаря раскладке хранилища: символ
+    внутри партиции лежит отдельной row group, и Parquet хранит по группам
+    минимум и максимум колонок, поэтому `WHERE symbol = ?` читает свою
+    группу, а не партицию целиком. Ради этого раскладка и делалась.
+
+    Считаемые величины не меняются: медиана остаётся точной, порог выброса
+    не должен зависеть от того, сколько памяти оказалось на машине.
+    """
+    symbols = [r[0] for r in con.execute(
+        "SELECT DISTINCT symbol FROM bars ORDER BY symbol").fetchall()]
+
+    out = []
+    for sym in symbols:
+        row = con.execute(f"""
+            WITH r AS (
+                SELECT open_time, close, volume, trades,
+                       ln(close / lag(close) OVER (ORDER BY open_time)) AS ret
+                FROM bars WHERE symbol = ?
+            ),
+            m AS (
+                SELECT median(abs(ret)) AS mad
+                FROM r WHERE ret IS NOT NULL AND ret <> 0
+            )
+            SELECT count(*)                                     AS bars,
+                   -- Метки приводятся к строке в запросе: иначе duckdb
+                   -- тянет pytz ради timezone-aware значений, а лишняя
+                   -- зависимость на сервере не нужна.
+                   CAST(min(r.open_time) AS VARCHAR)            AS first_bar,
+                   CAST(max(r.open_time) AS VARCHAR)            AS last_bar,
+                   CAST(date_diff('minute', min(r.open_time),
+                                  max(r.open_time))
+                        / {step_min} + 1 AS BIGINT)             AS expected,
+                   sum(CASE WHEN r.trades = 0 THEN 1 ELSE 0 END)  AS no_trade,
+                   sum(CASE WHEN r.volume = 0 THEN 1 ELSE 0 END)  AS zero_vol,
+                   any_value(m.mad)                             AS mad,
+                   sum(CASE WHEN abs(r.ret) > {OUTLIER_MAD} * m.mad
+                            THEN 1 ELSE 0 END)                  AS outliers
+            FROM r, m
+        """, [sym]).fetchone()
+        if row and row[0]:
+            out.append((sym,) + tuple(row))
+    return out
 
 
 def life_profile(con, side, days):

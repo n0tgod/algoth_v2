@@ -3,6 +3,8 @@ out/parquet/
 out/*.duckdb
 out/*.log
 out/*.err
+out/.tmp/
+.tmp/
 
 # Коммитятся: out/A2-hygiene-report.md, out/hygiene.json
 
