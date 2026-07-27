@@ -48,7 +48,8 @@ OUTLIER_MAD = 10.0
 
 QUARANTINE_DAYS = 30      # горизонт профиля начала жизни
 ENDLIFE_DAYS = 30         # горизонт профиля конца жизни
-PAIR_SAMPLE = 400         # пар для замера согласованности по времени
+PAIR_SYMBOLS = 45         # символов для попарного замера согласованности
+                          # (даёт ~990 пар)
 
 
 def connect(interval):
@@ -75,8 +76,11 @@ def per_symbol(con, step_min):
         )
         SELECT r.symbol,
                count(*)                                        AS bars,
-               min(r.open_time)                                AS first_bar,
-               max(r.open_time)                                AS last_bar,
+               -- Метки приводятся к строке в запросе: иначе duckdb тянет
+               -- pytz ради timezone-aware значений, а лишняя зависимость
+               -- на сервере не нужна.
+               CAST(min(r.open_time) AS VARCHAR)               AS first_bar,
+               CAST(max(r.open_time) AS VARCHAR)               AS last_bar,
                CAST(date_diff('minute', min(r.open_time), max(r.open_time))
                     / {step_min} + 1 AS BIGINT)                AS expected,
                sum(CASE WHEN r.trades = 0 THEN 1 ELSE 0 END)   AS no_trade_bars,
@@ -122,57 +126,110 @@ def life_profile(con, side, days):
     """).fetchall()
 
 
-def pair_alignment(con, universe, sample):
-    """Доля общих меток времени у двух ног — по случайным парам универсума.
+def frozen_tails(con, min_days=7):
+    """Хвост ряда, где бары публикуются, но сделок нет ни одной.
 
-    Считается на пересечении сроков жизни: вне его несовпадение тривиально
-    и о качестве данных ничего не говорит.
+    Самая тихая ловушка из найденных. Архив Binance не прекращает выдавать
+    бар после того, как инструмент там перестал торговаться: бар выходит
+    каждые 15 минут с перенесённой ценой, годами. У SCUSDT последняя сделка
+    2022-06-17, а бары идут до 2026-06-30 — четыре года константы.
+
+    Почему это опаснее пропуска:
+
+    - проверка «есть ли бар» проходит на 100 %, то есть штатная гигиена
+      раздела 2.4 такой ряд не ловит;
+    - доходности равны нулю, поэтому волатильность выглядит крошечной,
+      а σ спреда — заниженной;
+    - на площадке исполнения инструмент в это время торговался. То есть
+      ряд для оценки отношения (Binance, раздел 2.2) фиктивен ровно там,
+      где торговое окно настоящее.
+
+    **Следствие для A3 и далее:** концом ряда Binance считается последний
+    бар со сделкой, а не последний опубликованный. Бар с `trades = 0` —
+    пропуск, а не наблюдение.
+    """
+    rows = con.execute(f"""
+        WITH t AS (
+            SELECT symbol, trades,
+                   max(CASE WHEN trades > 0 THEN open_time END)
+                       OVER (PARTITION BY symbol) AS last_traded,
+                   max(open_time) OVER (PARTITION BY symbol) AS last_bar
+            FROM bars
+        )
+        SELECT symbol,
+               CAST(date_diff('day', any_value(last_traded),
+                              any_value(last_bar)) AS BIGINT) AS frozen_days,
+               CAST(any_value(last_traded) AS VARCHAR) AS last_traded,
+               CAST(any_value(last_bar) AS VARCHAR)    AS last_bar
+        FROM t GROUP BY symbol
+        HAVING frozen_days >= {min_days}
+        ORDER BY frozen_days DESC
+    """).fetchall()
+    return [{"symbol": s, "frozen_days": d, "last_traded": lt, "last_bar": lb}
+            for s, d, lt, lb in rows]
+
+
+def pair_alignment(con, universe, n_symbols):
+    """Согласованность двух ног по времени на пересечении их сроков жизни.
+
+    Считаются две разные величины, и различие между ними и есть суть
+    проверки:
+
+    - **общий бар** — метка времени есть у обеих ног. Отсутствие означает,
+      что спред в этот момент посчитать нечем;
+    - **общий бар со сделками у обеих** — в баре у каждой ноги была хотя бы
+      одна сделка. Бар без сделок существует, но цена в нём перенесена с
+      предыдущего: формально данные есть, фактически спред считается по
+      несвежей цене. Для оценки отношения это то же самое, что пропуск,
+      только молчаливый.
+
+    Ряды вытягиваются в память по символу и пересекаются попарно: запрос на
+    каждую пару отдельно читал бы одни и те же партиции по многу раз, и на
+    сотнях пар это дороже всего остального вместе взятого.
     """
     syms = sorted(
-        r["bybit_symbol"] and r["binance_symbol"]
-        for r in universe["assets"].values()
+        r["binance_symbol"] for r in universe["assets"].values()
         if r.get("binance_symbol") and r.get("asset_class") != "non_crypto"
     )
-    syms = [s for s in syms if s]
-    pairs = []
-    step = max(1, len(syms) // int(sample ** 0.5 + 1))
-    for i in range(0, len(syms), step):
-        for j in range(i + step, len(syms), step):
-            pairs.append((syms[i], syms[j]))
-            if len(pairs) >= sample:
-                break
-        if len(pairs) >= sample:
-            break
+    # Равномерная выборка по алфавиту: он не связан ни с ликвидностью, ни с
+    # возрастом, поэтому не смещает результат в сторону мажоров.
+    step = max(1, len(syms) // n_symbols)
+    picked = syms[::step][:n_symbols]
 
-    rows = []
-    for a, b in pairs:
-        r = con.execute("""
-            WITH x AS (SELECT open_time, trades FROM bars WHERE symbol = ?),
-                 y AS (SELECT open_time, trades FROM bars WHERE symbol = ?),
-                 lo AS (SELECT greatest((SELECT min(open_time) FROM x),
-                                        (SELECT min(open_time) FROM y)) AS t),
-                 hi AS (SELECT least((SELECT max(open_time) FROM x),
-                                     (SELECT max(open_time) FROM y)) AS t)
-            SELECT
-              (SELECT count(*) FROM x, lo, hi
-                WHERE x.open_time BETWEEN lo.t AND hi.t)          AS nx,
-              (SELECT count(*) FROM y, lo, hi
-                WHERE y.open_time BETWEEN lo.t AND hi.t)          AS ny,
-              (SELECT count(*) FROM x JOIN y USING (open_time), lo, hi
-                WHERE x.open_time BETWEEN lo.t AND hi.t)          AS both,
-              (SELECT count(*) FROM x JOIN y USING (open_time), lo, hi
-                WHERE x.open_time BETWEEN lo.t AND hi.t
-                  AND x.trades > 0 AND y.trades > 0)              AS both_traded
-        """, [a, b]).fetchone()
-        nx, ny, both, traded = r
-        if not both:
+    series = {}
+    for s in picked:
+        rows = con.execute(
+            "SELECT epoch_ms(open_time), trades FROM bars WHERE symbol = ?"
+            " ORDER BY open_time", [s]).fetchall()
+        if not rows:
             continue
-        rows.append({
-            "a": a, "b": b, "overlap_bars": both,
-            "share_of_max": both / max(nx, ny) if max(nx, ny) else None,
-            "share_traded": traded / both if both else None,
-        })
-    return rows
+        all_ts = {t for t, _ in rows}
+        traded = {t for t, n in rows if n and n > 0}
+        series[s] = (all_ts, traded, rows[0][0], rows[-1][0])
+
+    out = []
+    names = sorted(series)
+    for i, a in enumerate(names):
+        ta, tra, lo_a, hi_a = series[a]
+        for b in names[i + 1:]:
+            tb, trb, lo_b, hi_b = series[b]
+            lo, hi = max(lo_a, lo_b), min(hi_a, hi_b)
+            if hi <= lo:
+                continue
+            wa = {t for t in ta if lo <= t <= hi}
+            wb = {t for t in tb if lo <= t <= hi}
+            both = wa & wb
+            if not both:
+                continue
+            traded_both = both & tra & trb
+            out.append({
+                "a": a, "b": b,
+                "overlap_days": round((hi - lo) / 86_400_000, 1),
+                "bars_in_window": max(len(wa), len(wb)),
+                "share_common": len(both) / max(len(wa), len(wb)),
+                "share_both_traded": len(traded_both) / len(both),
+            })
+    return out
 
 
 def quantiles(vals, qs=(0.05, 0.25, 0.5, 0.75, 0.95)):
@@ -185,7 +242,7 @@ def quantiles(vals, qs=(0.05, 0.25, 0.5, 0.75, 0.95)):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--interval", default="15m")
-    ap.add_argument("--pairs", type=int, default=PAIR_SAMPLE)
+    ap.add_argument("--pair-symbols", type=int, default=PAIR_SYMBOLS)
     args = ap.parse_args()
 
     step = STEP_MINUTES[args.interval]
@@ -199,8 +256,8 @@ def main():
     for (sym, bars, first, last, expected, no_trade, zero_vol, mad, out) in rows:
         symbols[sym] = {
             "bars": bars,
-            "first_bar": str(first),
-            "last_bar": str(last),
+            "first_bar": first,
+            "last_bar": last,
             "expected": expected,
             "missing": expected - bars,
             "missing_pct": 100 * (expected - bars) / expected if expected else 0,
@@ -217,9 +274,12 @@ def main():
     print("профиль конца жизни...", file=sys.stderr, flush=True)
     end = life_profile(con, "end", ENDLIFE_DAYS)
 
-    print(f"согласованность по времени, {args.pairs} пар...",
+    print("замороженные хвосты...", file=sys.stderr, flush=True)
+    frozen = frozen_tails(con)
+
+    print(f"согласованность по времени, {args.pair_symbols} символов...",
           file=sys.stderr, flush=True)
-    pairs = pair_alignment(con, universe, args.pairs)
+    pairs = pair_alignment(con, universe, args.pair_symbols)
 
     doc = {
         "meta": {
@@ -233,6 +293,7 @@ def main():
         "life_start": [{"day": d, "ratio": r, "n": n} for d, r, n in start],
         "life_end": [{"day": d, "ratio": r, "n": n} for d, r, n in end],
         "pair_alignment": pairs,
+        "frozen_tails": frozen,
     }
     path = os.path.join(OUT, f"hygiene_{args.interval}.json")
     with open(path, "w", encoding="utf-8") as f:
@@ -250,6 +311,8 @@ def main():
         "outlier_pct_median": round(
             quantiles([v["outlier_pct"] for v in symbols.values()]).get(0.5, 0), 3),
         "pairs_measured": len(pairs),
+        "frozen_tail_symbols": len(frozen),
+        "frozen_days_total": sum(f["frozen_days"] for f in frozen),
     }, ensure_ascii=False, indent=2))
 
 
