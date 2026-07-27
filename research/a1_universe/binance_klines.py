@@ -162,10 +162,20 @@ def fetch_month(symbol, interval, ym, keep):
 
 
 def read_symbol_timestamps(symbol, interval):
-    """Все метки времени по символу из уже скачанных файлов."""
+    """Уникальные метки времени по символу и число дублей.
+
+    Дубли возникают закономерно: дыру ищем по дням, а суточный файл
+    приносит день целиком — вместе с барами, которые в месячном файле
+    уже были. Метка времени и есть ключ бара, поэтому пересечение
+    снимается множеством.
+
+    **Следствие для A2:** хранилище обязано дедуплицировать по
+    `(symbol, open_time)`. Без этого часть баров войдёт в ряд дважды,
+    и оценка σ спреда окажется заниженной.
+    """
     d = os.path.join(RAW, interval, symbol)
     if not os.path.isdir(d):
-        return []
+        return [], 0
     ts = []
     for fn in sorted(os.listdir(d)):
         if not fn.endswith(".zip"):
@@ -178,8 +188,8 @@ def read_symbol_timestamps(symbol, interval):
                             ts.append(int(r[0]))
         except (zipfile.BadZipFile, ValueError, IndexError):
             continue
-    ts.sort()
-    return ts
+    uniq = sorted(set(ts))
+    return uniq, len(ts) - len(uniq)
 
 
 def missing_days(ts, step_ms):
@@ -197,6 +207,28 @@ def missing_days(ts, step_ms):
             days.add(datetime.fromtimestamp(t / 1000, timezone.utc).date())
             t += step_ms
     return sorted(days)
+
+
+def daily_files_present(symbol, interval):
+    """Дни, закрытые суточными файлами, по состоянию каталога.
+
+    Считается по именам файлов, а не по тому, что скачал текущий прогон:
+    при повторном запуске дыры уже закрыты, и дельта прогона пуста, хотя
+    дефект архива никуда не делся. Инвентаризация обязана описывать
+    состояние, иначе повторный прогон «вылечит» отчёт, а не данные.
+    """
+    d = os.path.join(RAW, interval, symbol)
+    if not os.path.isdir(d):
+        return []
+    prefix = f"{symbol}-{interval}-"
+    out = []
+    for fn in os.listdir(d):
+        if not (fn.startswith(prefix) and fn.endswith(".zip")):
+            continue
+        stamp = fn[len(prefix):-4]
+        if len(stamp) == 10:                  # YYYY-MM-DD, а не YYYY-MM
+            out.append(stamp)
+    return sorted(out)
 
 
 def fetch_day(symbol, interval, day, keep):
@@ -285,20 +317,20 @@ def main():
         # Дозакрытие дыр возможно только когда файлы лежат на диске:
         # пропуски ищутся по собранному ряду. Повторное чтение архивов
         # делается лишь тогда, когда что-то действительно дозакрыто.
-        ts, filled = [], []
+        ts, filled, dups = [], [], 0
         if keep:
-            ts = read_symbol_timestamps(sym, args.interval)
+            ts, dups = read_symbol_timestamps(sym, args.interval)
             filled = fill_gaps(sym, args.interval, keep, ts)
             if filled:
-                ts = read_symbol_timestamps(sym, args.interval)
+                ts, dups = read_symbol_timestamps(sym, args.interval)
         done[0] += 1
         note = f" +{len(filled)} дн" if filled else ""
         print(f"  {done[0]}/{len(jobs)} {base}{note}", file=sys.stderr, flush=True)
-        return base, sym, res, filled, ts
+        return base, sym, res, filled, ts, dups
 
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         step_ms = INTERVAL_MINUTES[args.interval] * 60_000
-        for base, sym, res, filled, ts in ex.map(work, jobs):
+        for base, sym, res, filled, ts, dups in ex.map(work, jobs):
             stamps = [r for r in res if r["first_ts"] is not None]
             if keep:
                 # После дозакрытия истина лежит на диске, а не в ответах
@@ -314,7 +346,9 @@ def main():
             # неполные месяцы листинга и делистинга — не пропуск данных.
             exp = ((last_ts - first_ts) // step_ms + 1) if first_ts is not None else 0
             inventory[base] = {
-                "days_filled_from_daily": [d.isoformat() for d in filled],
+                "days_filled_from_daily": daily_files_present(sym, args.interval)
+                                          if keep else [d.isoformat() for d in filled],
+                "duplicate_bars": dups,
                 "binance_symbol": sym,
                 "interval": args.interval,
                 "months_requested": len(res),

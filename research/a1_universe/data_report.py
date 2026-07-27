@@ -35,7 +35,12 @@ def load(name):
 
 
 def pct(x, n):
-    return f"{100 * x / n:.1f} %" if n else "—"
+    if not n:
+        return "—"
+    v = 100 * x / n
+    # Малые доли — как раз содержательные: 0.06 % пропусков и 0.1 %
+    # это разные утверждения о качестве данных.
+    return f"{v:.3f} %" if 0 < v < 0.1 else f"{v:.1f} %"
 
 
 def quantiles(vals, qs=(0.05, 0.25, 0.5, 0.75, 0.95)):
@@ -97,13 +102,44 @@ def main():
         add("делистинга неполны по построению, и записывать их в недобор —")
         add("значит завести себе ложную проблему гигиены.\n")
 
+        filled = {b: v["days_filled_from_daily"] for b, v in A.items()
+                  if v.get("days_filled_from_daily")}
+        if filled:
+            days = sorted({d for ds in filled.values() for d in ds})
+            common = sorted(
+                {d for d in days
+                 if sum(1 for ds in filled.values() if d in ds) >= 10}
+            )
+            add("### 1.1 Обрыв месячного архива и его дозакрытие\n")
+            add(f"У {len(filled)} активов месячные файлы неполны. Разрывы")
+            add("совпадают дословно между активами — значит это дефект архива,")
+            add("а не остановки торгов на бирже.\n")
+            if common:
+                add("Даты, отсутствующие у десяти и более активов:\n")
+                add("| Дата | У скольких активов |")
+                add("|---|---:|")
+                for d in common:
+                    add(f"| {d} | {sum(1 for ds in filled.values() if d in ds)} |")
+                add("")
+            add("Дыра в несколько суток, одинаковая у обеих ног пары, вошла бы")
+            add("в спред как скачок цены — то есть как сигнал, которого не было.")
+            add("Пропуски дозакрыты суточными файлами того же архива.\n")
+
+            dups = sum(v.get("duplicate_bars", 0) for v in A.values())
+            add("Побочный эффект: суточный файл приносит день целиком, включая")
+            add("бары, уже присутствующие в месячном. Пересечение составило")
+            add(f"{dups:,}".replace(",", " ") + " баров и снято по ключу `(symbol, open_time)`.")
+            add("**Хранилище этапа A2 обязано дедуплицировать по тому же ключу:**")
+            add("иначе часть баров войдёт в ряд дважды и оценка σ спреда")
+            add("окажется заниженной.\n")
+
         worst = sorted(
             (v for v in A.values() if v["bars_expected"]),
             key=lambda v: -v["missing_bars"] / v["bars_expected"],
         )[:15]
         holed = [v for v in worst if v["missing_bars"] > 0]
         if holed:
-            add("### 1.1 Где пропуски\n")
+            add("### 1.2 Остаточные пропуски\n")
             add("| Актив | Баров | Пропущено | Доля |")
             add("|---|---:|---:|---:|")
             for v in holed:
@@ -120,7 +156,7 @@ def main():
         missing_months = [(v["binance_symbol"], v["months_absent"])
                           for v in A.values() if v["months_absent"]]
         if missing_months:
-            add("### 1.2 Отсутствующие месяцы\n")
+            add("### 1.3 Отсутствующие месяцы\n")
             add(f"У {len(missing_months)} активов часть месяцев в архиве отсутствует.\n")
             add("| Актив | Месяцев нет | Какие |")
             add("|---|---:|---|")
@@ -129,7 +165,7 @@ def main():
                 add(f"| {sym} | {len(ms)} | {shown} |")
             add("")
 
-        add("### 1.3 Схема файлов — вход для A2\n")
+        add("### 1.4 Схема файлов — вход для A2\n")
         add("Месячный CSV, 12 колонок. В файлах до 2025 года заголовка нет,")
         add("в поздних есть — загрузчик обрабатывает оба варианта.\n")
         add("| # | Колонка | Примечание |")
@@ -220,7 +256,12 @@ def main():
         add("считаются по ставкам Bybit; эти показывают порядок величины.\n")
 
         # Покрытие: ряд funding обязан накрывать торговое окно на Bybit.
+        # Месячный архив отстаёт примерно на месяц, и у живых инструментов
+        # ряд обрывается на этом срезе у всех сразу. Считать это дефектом
+        # покрытия — значит получить 617 «проблемных» активов вместо восьми
+        # настоящих, то есть завысить оценку в семьдесят с лишним раз.
         U = universe["assets"]
+        cutoff = max(v["last"][:7] for v in withdata.values())
         late, early = [], []
         for b, v in withdata.items():
             rec = U.get(b)
@@ -231,7 +272,7 @@ def main():
                 late.append((b, rec["listed"], f_first,
                              (datetime.fromisoformat(f_first)
                               - datetime.fromisoformat(rec["listed"])).days))
-            if f_last < rec["last_trading_day"]:
+            if f_last < rec["last_trading_day"] and f_last[:7] < cutoff:
                 early.append((b, f_last, rec["last_trading_day"],
                               (datetime.fromisoformat(rec["last_trading_day"])
                                - datetime.fromisoformat(f_last)).days))
@@ -240,8 +281,12 @@ def main():
         add("Ряд funding обязан накрывать период, когда инструмент торговался")
         add("на площадке исполнения. Там, где не накрывает, издержки удержания")
         add("за этот отрезок посчитать нечем.\n")
+        add(f"Срез архива — **{cutoff}**; месячные файлы выкладываются с")
+        add("задержкой, поэтому у живых инструментов ряд обрывается на нём")
+        add("у всех сразу. Это отставание выкладки, а не пробел покрытия,")
+        add("и в подсчёт ниже оно не входит.\n")
         add(f"- ряд начинается **позже** листинга на Bybit: {len(late)} активов")
-        add(f"- ряд кончается **раньше** делистинга на Bybit: {len(early)} активов\n")
+        add(f"- ряд кончается **раньше** ухода с Bybit: {len(early)} активов\n")
 
         if early:
             add("Второй случай — обратный тому, что предусматривает раздел 2.2:")
