@@ -229,14 +229,38 @@ def summarize(symbol, rows):
 
 # ------------------------------------------------------------- комиссии
 
-def collect_fees():
-    """Ставки комиссий по ключу API. Раздел 5.1: из живого API, не по памяти."""
+def check_credentials():
+    """Ключ и секрет на месте и различны. Зовётся до сбора, а не после.
+
+    Проверка вынесена вперёд по опыту: прогон с `--with-fees` сначала
+    обходил все 722 символа и только потом падал на подписи. Комиссии —
+    один запрос, и узнать о неверном ключе полагается на первой секунде.
+
+    Совпадение ключа и секрета проверяется отдельно, потому что ошибка
+    распространённая и диагностируется плохо: площадка отвечает «Error
+    sign» и печатает строку, которую подписывала. Строка совпадает с
+    нашей — значит, дело не в формате запроса, а в самом секрете.
+    """
     key = os.environ.get("BYBIT_API_KEY")
     secret = os.environ.get("BYBIT_API_SECRET")
     if not (key and secret):
         print("BYBIT_API_KEY / BYBIT_API_SECRET не заданы — комиссии пропущены",
               file=sys.stderr)
+        return False
+    if key == secret:
+        print("BYBIT_API_SECRET равен BYBIT_API_KEY — в переменную попал ключ,\n"
+              "а не секрет. Площадка ответит «Error sign», хотя запрос верен.",
+              file=sys.stderr)
+        return False
+    return True
+
+
+def collect_fees():
+    """Ставки комиссий по ключу API. Раздел 5.1: из живого API, не по памяти."""
+    if not check_credentials():
         return None
+    key = os.environ["BYBIT_API_KEY"]
+    secret = os.environ["BYBIT_API_SECRET"]
 
     ts = str(int(time.time() * 1000))
     recv, query = "5000", f"category={CATEGORY}"
@@ -284,6 +308,8 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(CACHE, exist_ok=True)
     preflight()
+    if "--with-fees" in sys.argv and not check_credentials():
+        raise SystemExit(1)
 
     with open(os.path.join(OUT, "universe.json"), encoding="utf-8") as f:
         manifest = json.load(f)
