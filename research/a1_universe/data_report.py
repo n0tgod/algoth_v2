@@ -610,7 +610,15 @@ def _persistence_section(add, universe, fs):
 
 def main():
     universe = load("universe.json")
-    klines = load("klines_inventory_15m.json")
+    # Отчёт описывает самый точный из загруженных таймфреймов. На VPS это
+    # 1m, как требует раздел 2.2 спеки 02; в песочнице разработки 1m по
+    # всему универсуму не помещается на диск, и там остаётся 15m. Жёстко
+    # зашитый 15m означал бы, что отчёт молчит о 25 ГБ реальных данных.
+    klines = None
+    for tf in ("1m", "5m", "15m", "1h"):
+        klines = load(f"klines_inventory_{tf}.json")
+        if klines:
+            break
     funding = load("funding_binance_summary.json")
 
     if universe is None:
@@ -629,7 +637,7 @@ def main():
     # ---------------------------------------------------------------- свечи
     add("## 1. Свечи Binance\n")
     if not klines:
-        add("Прогон не завершён — `klines_inventory_15m.json` отсутствует.\n")
+        add("Прогон не завершён — инвентаря `klines_inventory_*.json` нет.\n")
     else:
         meta, A = klines["meta"], klines["assets"]
         months_ok = sum(v["months_ok"] for v in A.values())
