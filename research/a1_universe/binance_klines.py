@@ -46,12 +46,14 @@ import urllib.error
 import urllib.request
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 RAW = os.path.join(OUT, "klines")
 
 BASE = "https://data.binance.vision/data/futures/um/monthly/klines"
+DAILY = "https://data.binance.vision/data/futures/um/daily/klines"
 WORKERS = 6
 TIMEOUT = 120
 RETRIES = 3
@@ -159,6 +161,80 @@ def fetch_month(symbol, interval, ym, keep):
     }
 
 
+def read_symbol_timestamps(symbol, interval):
+    """Все метки времени по символу из уже скачанных файлов."""
+    d = os.path.join(RAW, interval, symbol)
+    if not os.path.isdir(d):
+        return []
+    ts = []
+    for fn in sorted(os.listdir(d)):
+        if not fn.endswith(".zip"):
+            continue
+        try:
+            with zipfile.ZipFile(os.path.join(d, fn)) as z:
+                with z.open(z.namelist()[0]) as f:
+                    for r in csv.reader(io.TextIOWrapper(f, encoding="utf-8")):
+                        if r and not r[0].startswith("open_time"):
+                            ts.append(int(r[0]))
+        except (zipfile.BadZipFile, ValueError, IndexError):
+            continue
+    ts.sort()
+    return ts
+
+
+def missing_days(ts, step_ms):
+    """Даты UTC, внутри которых не хватает баров.
+
+    Края не трогаются: первый и последний день неполны по построению —
+    инструмент листингуется и делистингуется не в полночь.
+    """
+    days = set()
+    for a, b in zip(ts, ts[1:]):
+        if b - a <= step_ms:
+            continue
+        t = a + step_ms
+        while t < b:
+            days.add(datetime.fromtimestamp(t / 1000, timezone.utc).date())
+            t += step_ms
+    return sorted(days)
+
+
+def fetch_day(symbol, interval, day, keep):
+    """Один суточный файл — им закрываются дыры месячного архива."""
+    stem = f"{symbol}-{interval}-{day.isoformat()}"
+    url = f"{DAILY}/{symbol}/{interval}/{stem}.zip"
+    path = os.path.join(RAW, interval, symbol, f"{stem}.zip")
+    if os.path.exists(path):
+        return True
+
+    blob = http_bytes(url)
+    if blob is None:
+        return False
+    chk_raw = http_bytes(url + ".CHECKSUM")
+    checksum = chk_raw.decode().split()[0] if chk_raw else None
+    rows, _, _, status = verify_and_count(blob, checksum)
+    if status != "ok" or not rows:
+        return False
+    if keep:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(blob)
+    return True
+
+
+def fill_gaps(symbol, interval, keep, ts):
+    """Закрыть дыры месячного архива суточными файлами.
+
+    Нужно не из аккуратности. Месячные файлы за 2022-02 и 2022-04 у Binance
+    обрываются: 26–28 февраля и 1–2 апреля отсутствуют почти по всему
+    универсуму. Дыра в трое суток, одинаковая у обеих ног пары, войдёт в
+    спред как скачок цены — то есть как сигнал, которого не было.
+    """
+    step = INTERVAL_MINUTES[interval] * 60_000
+    return [d for d in missing_days(ts, step)
+            if fetch_day(symbol, interval, d, keep)]
+
+
 def plan(manifest, interval):
     """Какие символо-месяцы нужны: от начала истории Binance до смерти на Bybit.
 
@@ -201,26 +277,44 @@ def main():
 
     inventory, done = {}, [0]
 
+    keep = not args.no_keep
+
     def work(job):
         base, sym, months = job
-        res = []
-        for ym in months:
-            res.append(fetch_month(sym, args.interval, ym, keep=not args.no_keep))
+        res = [fetch_month(sym, args.interval, ym, keep) for ym in months]
+        # Дозакрытие дыр возможно только когда файлы лежат на диске:
+        # пропуски ищутся по собранному ряду. Повторное чтение архивов
+        # делается лишь тогда, когда что-то действительно дозакрыто.
+        ts, filled = [], []
+        if keep:
+            ts = read_symbol_timestamps(sym, args.interval)
+            filled = fill_gaps(sym, args.interval, keep, ts)
+            if filled:
+                ts = read_symbol_timestamps(sym, args.interval)
         done[0] += 1
-        print(f"  {done[0]}/{len(jobs)} {base}", file=sys.stderr, flush=True)
-        return base, sym, res
+        note = f" +{len(filled)} дн" if filled else ""
+        print(f"  {done[0]}/{len(jobs)} {base}{note}", file=sys.stderr, flush=True)
+        return base, sym, res, filled, ts
 
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         step_ms = INTERVAL_MINUTES[args.interval] * 60_000
-        for base, sym, res in ex.map(work, jobs):
-            got = sum(r["rows"] for r in res)
+        for base, sym, res, filled, ts in ex.map(work, jobs):
             stamps = [r for r in res if r["first_ts"] is not None]
-            first_ts = min(r["first_ts"] for r in stamps) if stamps else None
-            last_ts = max(r["last_ts"] for r in stamps) if stamps else None
+            if keep:
+                # После дозакрытия истина лежит на диске, а не в ответах
+                # по месяцам: часть баров пришла суточными файлами.
+                got = len(ts)
+                first_ts = ts[0] if ts else None
+                last_ts = ts[-1] if ts else None
+            else:
+                got = sum(r["rows"] for r in res)
+                first_ts = min((r["first_ts"] for r in stamps), default=None)
+                last_ts = max((r["last_ts"] for r in stamps), default=None)
             # Ожидание считается по наблюдаемому диапазону, а не по календарю:
             # неполные месяцы листинга и делистинга — не пропуск данных.
-            exp = ((last_ts - first_ts) // step_ms + 1) if stamps else 0
+            exp = ((last_ts - first_ts) // step_ms + 1) if first_ts is not None else 0
             inventory[base] = {
+                "days_filled_from_daily": [d.isoformat() for d in filled],
                 "binance_symbol": sym,
                 "interval": args.interval,
                 "months_requested": len(res),

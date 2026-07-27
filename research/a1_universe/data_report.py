@@ -129,6 +129,32 @@ def main():
                 add(f"| {sym} | {len(ms)} | {shown} |")
             add("")
 
+        add("### 1.3 Схема файлов — вход для A2\n")
+        add("Месячный CSV, 12 колонок. В файлах до 2025 года заголовка нет,")
+        add("в поздних есть — загрузчик обрабатывает оба варианта.\n")
+        add("| # | Колонка | Примечание |")
+        add("|---:|---|---|")
+        for i, (col, note) in enumerate([
+            ("open_time", "мс, UTC — ключ времени"),
+            ("open", ""),
+            ("high", "нужен для консервативной проверки стопа внутри бара"),
+            ("low", "то же"),
+            ("close", "цена сигнала: z считается на закрытии бара"),
+            ("volume", "в базовом активе"),
+            ("close_time", "мс"),
+            ("quote_volume", "в USDT — основа фильтра ликвидности"),
+            ("count", "число сделок — поле `trades` схемы раздела 2.3"),
+            ("taker_buy_volume", "агрессивные покупки"),
+            ("taker_buy_quote_volume", ""),
+            ("ignore", "служебное, всегда 0"),
+        ]):
+            add(f"| {i} | `{col}` | {note} |")
+        add("")
+        add("Целевая схема хранилища раздела 2.3 — `(symbol, time, o, h, l, c,")
+        add("v, trades)` — покрывается полностью. `quote_volume` берётся сверх")
+        add("неё: фильтр ликвидности раздела 2.1.1 нужно считать в долларах,")
+        add("а не в единицах базового актива, иначе активы несравнимы.\n")
+
     # -------------------------------------------------------------- funding
     add("## 2. Ставки funding Binance\n")
     add("> Это **не издержки**. Раздел 5.2 требует считать их по ставкам")
@@ -192,6 +218,52 @@ def main():
         add("издержкой или включить в критерий отбора пар — переходит из")
         add("теоретических в требующие проверки на данных. Окончательные числа")
         add("считаются по ставкам Bybit; эти показывают порядок величины.\n")
+
+        # Покрытие: ряд funding обязан накрывать торговое окно на Bybit.
+        U = universe["assets"]
+        late, early = [], []
+        for b, v in withdata.items():
+            rec = U.get(b)
+            if not rec:
+                continue
+            f_first, f_last = v["first"][:10], v["last"][:10]
+            if f_first > rec["listed"]:
+                late.append((b, rec["listed"], f_first,
+                             (datetime.fromisoformat(f_first)
+                              - datetime.fromisoformat(rec["listed"])).days))
+            if f_last < rec["last_trading_day"]:
+                early.append((b, f_last, rec["last_trading_day"],
+                              (datetime.fromisoformat(rec["last_trading_day"])
+                               - datetime.fromisoformat(f_last)).days))
+
+        add("### 2.3 Покрытие торгового окна\n")
+        add("Ряд funding обязан накрывать период, когда инструмент торговался")
+        add("на площадке исполнения. Там, где не накрывает, издержки удержания")
+        add("за этот отрезок посчитать нечем.\n")
+        add(f"- ряд начинается **позже** листинга на Bybit: {len(late)} активов")
+        add(f"- ряд кончается **раньше** делистинга на Bybit: {len(early)} активов\n")
+
+        if early:
+            add("Второй случай — обратный тому, что предусматривает раздел 2.2:")
+            add("не история площадки исполнения короче, а история Binance.")
+            add("Инструмент ушёл с Binance, продолжая торговаться на Bybit.\n")
+            add("| Актив | Funding до | Торговался на Bybit до | Не покрыто, дней |")
+            add("|---|---|---|---:|")
+            for b, f_last, b_last, days in sorted(early, key=lambda x: -x[3])[:12]:
+                add(f"| {b} | {f_last} | {b_last} | {days} |")
+            add("")
+
+        if late:
+            add("| Актив | Листинг на Bybit | Funding с | Не покрыто, дней |")
+            add("|---|---|---|---:|")
+            for b, listed, f_first, days in sorted(late, key=lambda x: -x[3])[:12]:
+                add(f"| {b} | {listed} | {f_first} | {days} |")
+            add("")
+
+        add("Для издержек это некритично — там авторитетны ставки Bybit, а не")
+        add("Binance. Но перекрёстную проверку раздела 7 на этих отрезках")
+        add("провести не удастся, и при расхождении результатов по ним нельзя")
+        add("будет отличить артефакт площадки от дефекта данных.\n")
 
     path = os.path.join(OUT, "A1-data-report.md")
     with open(path, "w", encoding="utf-8") as f:
