@@ -59,6 +59,31 @@ DELIST_GAP_DAYS = 7
 SETTLEMENT_MAX_LEN_DAYS = 1
 SETTLEMENT_MIN_GAP_DAYS = 7
 
+# Перпы не на криптоактивы. Bybit торгует акции (AAPL, NVDA, TSLA), биржевые
+# фонды (SPY, QQQ, SOXX), фонды с плечом и обратные (TQQQ, SQQQ, SOXL, TZA),
+# металлы (XAU, XAG) и сырьё (CL, BZ). Из универсума они исключены решением
+# владельца, и причина не в том, что «это не крипта»:
+#
+#   - базовый актив стоит в выходные, а перп торгуется круглосуточно, поэтому
+#     цена держится ожиданием. У спреда появляется календарная компонента,
+#     которая проходит тест на коинтеграцию, не будучи возвратом к среднему;
+#   - у фондов с плечом сверх того собственный распад — структурный дрейф,
+#     а не стационарность.
+#
+# То есть такие пары попадут в отбор по причинам, не имеющим отношения к
+# гипотезе, и съедят квоту ложных открытий раздела 3.3 спеки 02.
+#
+# Признак — ставка комиссии: у этого класса тейкер 2.75 б.п. против 5.5 у
+# основной массы. Признак точный, но это **признак, а не определение**,
+# поэтому исключения ведутся явным списком.
+#
+# Инструменты не удаляются, а помечаются: решение обратимо, а перпы на акции
+# и металлы остаются законной, просто **другой** гипотезой (см. `IDEAS.md`).
+NON_CRYPTO_TAKER_BP = 2.75
+KEEP_AS_CRYPTO = {
+    "PURR",   # мемкоин экосистемы Hyperliquid, на дешёвом тарифе по иной причине
+}
+
 DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})\.csv\.gz")
 
 
@@ -240,7 +265,32 @@ def estimation_history_days_by(rec, day):
     return max(history_days_by(rec, day), binance_history_days_by(rec, day))
 
 
-def universe_at(manifest, day, min_history_days=0, require_binance=True):
+def classify_asset_class(manifest, fees):
+    """Проставить `asset_class` по ставке комиссии. Сеть не нужна.
+
+    Возвращает число размеченных как некриптоактивы. Символы, для которых
+    площадка ставку не отдала (делистнутые — эндпоинт отвечает по текущему
+    состоянию счёта), остаются `crypto`: у них нет признака, а исключать
+    по умолчанию нельзя, иначе из универсума молча выпадет ровно та часть,
+    ради которой он строится на момент времени.
+    """
+    rate = {f["symbol"]: float(f["takerFeeRate"]) * 1e4 for f in fees}
+    n = 0
+    for base, rec in manifest["assets"].items():
+        taker = rate.get(rec["bybit_symbol"])
+        non_crypto = (
+            taker is not None
+            and abs(taker - NON_CRYPTO_TAKER_BP) < 1e-9
+            and base not in KEEP_AS_CRYPTO
+        )
+        rec["asset_class"] = "non_crypto" if non_crypto else "crypto"
+        rec["taker_fee_bp"] = taker
+        n += non_crypto
+    return n
+
+
+def universe_at(manifest, day, min_history_days=0, require_binance=True,
+                include_non_crypto=False):
     """Универсум на момент времени — реализация требования раздела 2.1.1.
 
     Существует ли инструмент сегодня, на отбор не влияет. Условия ровно два:
@@ -251,6 +301,8 @@ def universe_at(manifest, day, min_history_days=0, require_binance=True):
     for base, rec in manifest["assets"].items():
         if require_binance and not rec["binance_symbol"]:
             continue
+        if not include_non_crypto and rec.get("asset_class") == "non_crypto":
+            continue
         if not tradable_on(rec, day):
             continue
         if estimation_history_days_by(rec, day) < min_history_days:
@@ -259,7 +311,51 @@ def universe_at(manifest, day, min_history_days=0, require_binance=True):
     return sorted(out)
 
 
+def _load_fees():
+    path = os.path.join(OUT, "fees.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def reclassify_stored():
+    """Разметить классы активов в уже собранном манифесте, без сети.
+
+    Полный пересбор ходил бы в архив Bybit заново и сдвинул бы дату среза,
+    а с ней все числа отчётов. Разметка от даты среза не зависит, поэтому
+    делается отдельным проходом — как `--renormalize` на этапе A0.
+    """
+    path = os.path.join(OUT, "universe.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"нет {path} — сначала обычный прогон")
+    fees = _load_fees()
+    if fees is None:
+        raise SystemExit("нет out/fees.json — соберите bybit_api.py --with-fees")
+
+    with open(path, encoding="utf-8") as f:
+        manifest = json.load(f)
+    n = classify_asset_class(manifest, fees)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=1, sort_keys=True)
+
+    assets = manifest["assets"]
+    with_bnc = [r for r in assets.values() if r["binance_symbol"]]
+    dropped = [r for r in with_bnc if r["asset_class"] == "non_crypto"]
+    print(json.dumps({
+        "assets": len(assets),
+        "non_crypto": n,
+        "kept_by_exception": sorted(KEEP_AS_CRYPTO),
+        "with_binance_before": len(with_bnc),
+        "with_binance_after": len(with_bnc) - len(dropped),
+    }, ensure_ascii=False, indent=2))
+
+
 def main():
+    if "--classify" in sys.argv:
+        reclassify_stored()
+        return
+
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(CACHE, exist_ok=True)
 
@@ -275,6 +371,9 @@ def main():
     print(f"с непустым архивом: {len(days_by_symbol)}", file=sys.stderr, flush=True)
 
     manifest = build(days_by_symbol, a0_bybit, a0_binance)
+    fees = _load_fees()
+    if fees:
+        classify_asset_class(manifest, fees)
     path = os.path.join(OUT, "universe.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=1, sort_keys=True)

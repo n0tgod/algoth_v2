@@ -21,7 +21,10 @@ sys.path.insert(0, os.path.dirname(HERE))
 
 from common.venue import normalize  # noqa: E402
 from universe import (  # noqa: E402
+    KEEP_AS_CRYPTO,
+    NON_CRYPTO_TAKER_BP,
     binance_history_days_by,
+    classify_asset_class,
     estimation_history_days_by,
     history_days_by,
     split_settlement,
@@ -153,6 +156,67 @@ class UniverseAt(unittest.TestCase):
 
     def test_requires_binance_series_by_default(self):
         self.assertNotIn("NOBNC", universe_at(self.m, D("2023-03-01")))
+
+
+class AssetClass(unittest.TestCase):
+    """Разметка классов активов и исключение некрипты из универсума."""
+
+    def _manifest(self):
+        return {"assets": {
+            "BTC": dict(REC, bybit_symbol="BTCUSDT"),
+            "AAPL": dict(REC, bybit_symbol="AAPLUSDT"),
+            "PURR": dict(REC, bybit_symbol="PURRUSDT"),
+            "DEAD": dict(REC, bybit_symbol="DEADUSDT"),
+        }}
+
+    def _fees(self):
+        # Делистнутого DEADUSDT в ответе нет: эндпоинт отвечает по текущему
+        # состоянию счёта и закрытые контракты не возвращает.
+        return [
+            {"symbol": "BTCUSDT", "takerFeeRate": "0.00055"},
+            {"symbol": "AAPLUSDT", "takerFeeRate": "0.000275"},
+            {"symbol": "PURRUSDT", "takerFeeRate": "0.000275"},
+        ]
+
+    def test_cheap_tier_marks_non_crypto(self):
+        m = self._manifest()
+        n = classify_asset_class(m, self._fees())
+        self.assertEqual(m["assets"]["AAPL"]["asset_class"], "non_crypto")
+        self.assertEqual(m["assets"]["BTC"]["asset_class"], "crypto")
+        self.assertEqual(n, 1)
+
+    def test_exception_list_wins_over_tier(self):
+        # PURR сидит на дешёвом тарифе, но это криптотокен: признак не
+        # является определением, и исключения ведутся явным списком.
+        self.assertIn("PURR", KEEP_AS_CRYPTO)
+        m = self._manifest()
+        classify_asset_class(m, self._fees())
+        self.assertEqual(m["assets"]["PURR"]["asset_class"], "crypto")
+
+    def test_missing_rate_stays_crypto(self):
+        # Ставки нет только у делистнутых. Исключать их по умолчанию нельзя:
+        # иначе из универсума молча выпадет ровно та часть, ради которой он
+        # строится на момент времени.
+        m = self._manifest()
+        classify_asset_class(m, self._fees())
+        self.assertEqual(m["assets"]["DEAD"]["asset_class"], "crypto")
+        self.assertIsNone(m["assets"]["DEAD"]["taker_fee_bp"])
+
+    def test_universe_excludes_non_crypto_by_default(self):
+        m = self._manifest()
+        classify_asset_class(m, self._fees())
+        d = D("2023-03-01")
+        self.assertNotIn("AAPL", universe_at(m, d))
+        self.assertIn("AAPL", universe_at(m, d, include_non_crypto=True))
+
+    def test_tier_threshold_is_exact(self):
+        m = self._manifest()
+        classify_asset_class(m, [
+            {"symbol": "AAPLUSDT", "takerFeeRate": str(NON_CRYPTO_TAKER_BP / 1e4)},
+            {"symbol": "BTCUSDT", "takerFeeRate": "0.0003"},
+        ])
+        self.assertEqual(m["assets"]["AAPL"]["asset_class"], "non_crypto")
+        self.assertEqual(m["assets"]["BTC"]["asset_class"], "crypto")
 
 
 class Normalize(unittest.TestCase):

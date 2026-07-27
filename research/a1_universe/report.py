@@ -12,6 +12,7 @@ OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
 from universe import (  # noqa: E402
+    KEEP_AS_CRYPTO,
     binance_history_days_by,
     estimation_history_days_by,
     history_days_by,
@@ -24,6 +25,27 @@ from universe import (  # noqa: E402
 # порядка дают по этой истории осмысленное число окон.
 PROBE_MONTHS = (1, 7)
 MIN_HISTORY = 365
+
+
+def _decile_share(assets):
+    """Доля попаданий в дециль признака funding, приходящаяся на эти активы.
+
+    Считается из `funding_persistence.json`, а не вписывается числом:
+    иначе при следующем прогоне отчёт разойдётся с данными. Если файла
+    нет — утверждение не печатается вовсе.
+    """
+    path = os.path.join(OUT, "funding_persistence.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        doc = json.load(f)
+    for leg in doc.get("legs", []):
+        picks = leg.get("picked_counts")
+        if picks:
+            total = sum(picks.values())
+            hit = sum(n for a, n in picks.items() if a in assets)
+            return 100 * hit / total if total else None
+    return None
 
 
 def main():
@@ -80,6 +102,45 @@ def main():
         share = f"{dead} ({100*dead/n:.0f} %)" if n else "—"
         add(f"| {d.isoformat()} | {n} | {n*(n-1)//2:,} | {share} |".replace(",", " "))
     add("")
+
+    # 2.1 — состав универсума
+    nc = sorted(b for b, r in A.items() if r.get("asset_class") == "non_crypto")
+    if nc:
+        nc_bnc = [b for b in nc if A[b]["binance_symbol"]]
+        listed = sorted(A[b]["listed"] for b in nc)
+        add("### 2.1 Из универсума исключены перпы не на криптоактивы\n")
+        add(f"Решением владельца {len(nc)} инструментов помечены как")
+        add("некриптоактивы и в отбор не входят: акции (`AAPL`, `NVDA`,")
+        add("`TSLA`), биржевые фонды (`SPY`, `QQQ`, `SOXX`), фонды с плечом")
+        add("и обратные (`TQQQ`, `SQQQ`, `SOXL`, `TZA`), металлы (`XAU`,")
+        add("`XAG`), сырьё (`CL`, `BZ`).\n")
+        add("Причина не в том, что это «не крипта». Базовый актив стоит в")
+        add("выходные, а перп торгуется круглосуточно, и цена держится")
+        add("ожиданием — у спреда появляется календарная компонента, которая")
+        add("пройдёт тест на коинтеграцию, не будучи возвратом к среднему.")
+        add("У фондов с плечом сверх того собственный распад. Такие пары")
+        add("съели бы квоту ложных открытий раздела 3.3 спеки 02 по причинам,")
+        add("не имеющим отношения к гипотезе.\n")
+        add("Признак — ставка комиссии: у этого класса тейкер 2.75 б.п.")
+        add("против 5.5 у основной массы. Признак точный, но это признак, а")
+        add(f"не определение, поэтому исключения ведутся явным списком")
+        add(f"(сейчас в нём `{'`, `'.join(sorted(KEEP_AS_CRYPTO))}` — мемкоин")
+        add("экосистемы Hyperliquid на дешёвом тарифе по иной причине).\n")
+        add("**На walk-forward это не влияет.** Bybit начал листинговать их")
+        add(f"только в 2026 году — самый ранний {listed[0]}, — поэтому ни в")
+        add("одном историческом окне они не набирали требуемого года истории")
+        add(f"и в универсум не попадали ни разу. Из {len(nc)} инструментов")
+        add(f"{len(nc_bnc)} имеют историю Binance и потому входили в")
+        add("статистику funding: там окна короткие.")
+        share = _decile_share(set(nc))
+        if share is None:
+            add("")
+        else:
+            add("На вывод о персистентности это не повлияло — их доля в")
+            add(f"попаданиях в дециль раздела 5 отчёта о данных {share:.1f} %.\n")
+        add("Инструменты помечены, а не удалены: решение обратимо, а перпы на")
+        add("акции и металлы остаются законной, просто **другой** гипотезой —")
+        add("см. `IDEAS.md`.\n")
 
     # 3 — главное следствие
     add("## 3. Величина survivorship bias\n")
