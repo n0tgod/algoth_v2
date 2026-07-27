@@ -26,9 +26,11 @@ A2 — отчёт о гигиене данных.
 """
 
 import argparse
+import bisect
 import json
 import os
 import sys
+from array import array
 
 import duckdb
 
@@ -50,6 +52,7 @@ QUARANTINE_DAYS = 30      # горизонт профиля начала жиз�
 ENDLIFE_DAYS = 30         # горизонт профиля конца жизни
 PAIR_SYMBOLS = 45         # символов для попарного замера согласованности
                           # (даёт ~990 пар)
+PAIR_WINDOW_DAYS = 365    # хвост истории каждого символа для этого замера
 
 
 def connect(interval):
@@ -169,7 +172,7 @@ def frozen_tails(con, min_days=7):
             for s, d, lt, lb in rows]
 
 
-def pair_alignment(con, universe, n_symbols):
+def pair_alignment(con, universe, n_symbols, window_days=PAIR_WINDOW_DAYS):
     """Согласованность двух ног по времени на пересечении их сроков жизни.
 
     Считаются две разные величины, и различие между ними и есть суть
@@ -196,38 +199,64 @@ def pair_alignment(con, universe, n_symbols):
     step = max(1, len(syms) // n_symbols)
     picked = syms[::step][:n_symbols]
 
+    # Окно ограничено сверху, и ряды держатся отсортированными массивами,
+    # а не множествами. На 15m множества занимали десятки мегабайт, но на
+    # 1m баров в пятнадцать раз больше: сорок пять символов за всю историю
+    # дали бы порядка ста тридцати миллионов меток, а множество целых в
+    # Python стоит под сотню байт на элемент — машина с восемью гигабайтами
+    # такого не переживёт. Свойство, которое здесь измеряется, от длины
+    # окна не зависит, поэтому ограничение ничего не портит.
+    horizon_ms = window_days * 86_400_000
     series = {}
     for s in picked:
         rows = con.execute(
             "SELECT epoch_ms(open_time), trades FROM bars WHERE symbol = ?"
-            " ORDER BY open_time", [s]).fetchall()
+            " AND open_time >= (SELECT max(open_time) FROM bars WHERE symbol = ?)"
+            f"     - INTERVAL {window_days} DAY"
+            " ORDER BY open_time", [s, s]).fetchall()
         if not rows:
             continue
-        all_ts = {t for t, _ in rows}
-        traded = {t for t, n in rows if n and n > 0}
-        series[s] = (all_ts, traded, rows[0][0], rows[-1][0])
+        ts = array("q", (t for t, _ in rows))
+        tr = array("q", (t for t, n in rows if n and n > 0))
+        series[s] = (ts, tr)
+
+    def intersect(x, y):
+        """Число общих элементов двух отсортированных массивов."""
+        i = j = n = 0
+        while i < len(x) and j < len(y):
+            if x[i] == y[j]:
+                n, i, j = n + 1, i + 1, j + 1
+            elif x[i] < y[j]:
+                i += 1
+            else:
+                j += 1
+        return n
+
+    def window(arr, lo, hi):
+        return arr[bisect.bisect_left(arr, lo):bisect.bisect_right(arr, hi)]
 
     out = []
     names = sorted(series)
     for i, a in enumerate(names):
-        ta, tra, lo_a, hi_a = series[a]
+        ta, tra = series[a]
         for b in names[i + 1:]:
-            tb, trb, lo_b, hi_b = series[b]
-            lo, hi = max(lo_a, lo_b), min(hi_a, hi_b)
+            tb, trb = series[b]
+            lo, hi = max(ta[0], tb[0]), min(ta[-1], tb[-1])
             if hi <= lo:
                 continue
-            wa = {t for t in ta if lo <= t <= hi}
-            wb = {t for t in tb if lo <= t <= hi}
-            both = wa & wb
+            wa, wb = window(ta, lo, hi), window(tb, lo, hi)
+            if not wa or not wb:
+                continue
+            both = intersect(wa, wb)
             if not both:
                 continue
-            traded_both = both & tra & trb
+            traded_both = intersect(window(tra, lo, hi), window(trb, lo, hi))
             out.append({
                 "a": a, "b": b,
                 "overlap_days": round((hi - lo) / 86_400_000, 1),
                 "bars_in_window": max(len(wa), len(wb)),
-                "share_common": len(both) / max(len(wa), len(wb)),
-                "share_both_traded": len(traded_both) / len(both),
+                "share_common": both / max(len(wa), len(wb)),
+                "share_both_traded": traded_both / both,
             })
     return out
 
@@ -243,6 +272,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--interval", default="15m")
     ap.add_argument("--pair-symbols", type=int, default=PAIR_SYMBOLS)
+    ap.add_argument("--pair-days", type=int, default=PAIR_WINDOW_DAYS)
     args = ap.parse_args()
 
     step = STEP_MINUTES[args.interval]
@@ -279,7 +309,7 @@ def main():
 
     print(f"согласованность по времени, {args.pair_symbols} символов...",
           file=sys.stderr, flush=True)
-    pairs = pair_alignment(con, universe, args.pair_symbols)
+    pairs = pair_alignment(con, universe, args.pair_symbols, args.pair_days)
 
     doc = {
         "meta": {
