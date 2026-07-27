@@ -15,3 +15,6 @@ out/funding/
 # Python
 __pycache__/
 *.pyc
+
+# Сырые архивы свечей — объём данных, не место для git
+out/klines/
