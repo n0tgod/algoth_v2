@@ -1,0 +1,8408 @@
+{
+ "0GUSDT": {
+  "base": "0G",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "0GUSDT"
+ },
+ "1000000BOBUSDT": {
+  "base": "BOB",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1000000,
+  "quote": "USDT",
+  "symbol": "1000000BOBUSDT"
+ },
+ "1000000MOGUSDT": {
+  "base": "MOG",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1000000,
+  "quote": "USDT",
+  "symbol": "1000000MOGUSDT"
+ },
+ "1000BONKUSDC": {
+  "base": "BONK",
+  "first_month": "2024-05",
+  "last_month": "2026-06",
+  "months_available": 26,
+  "multiplier": 1000,
+  "quote": "USDC",
+  "symbol": "1000BONKUSDC"
+ },
+ "1000BONKUSDT": {
+  "base": "BONK",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000BONKUSDT"
+ },
+ "1000BTTCUSDT": {
+  "base": "BTTC",
+  "first_month": "2022-01",
+  "last_month": "2022-04",
+  "months_available": 4,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000BTTCUSDT"
+ },
+ "1000CATUSDT": {
+  "base": "CAT",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000CATUSDT"
+ },
+ "1000CHEEMSUSDT": {
+  "base": "CHEEMS",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000CHEEMSUSDT"
+ },
+ "1000FLOKIUSDT": {
+  "base": "FLOKI",
+  "first_month": "2023-05",
+  "last_month": "2026-06",
+  "months_available": 38,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000FLOKIUSDT"
+ },
+ "1000LUNCBUSD": {
+  "base": "LUNCB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1000,
+  "quote": "USD",
+  "symbol": "1000LUNCBUSD"
+ },
+ "1000LUNCUSDT": {
+  "base": "LUNC",
+  "first_month": "2022-09",
+  "last_month": "2026-06",
+  "months_available": 46,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000LUNCUSDT"
+ },
+ "1000PEPEUSDC": {
+  "base": "PEPE",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1000,
+  "quote": "USDC",
+  "symbol": "1000PEPEUSDC"
+ },
+ "1000PEPEUSDT": {
+  "base": "PEPE",
+  "first_month": "2023-05",
+  "last_month": "2026-06",
+  "months_available": 38,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000PEPEUSDT"
+ },
+ "1000RATSUSDT": {
+  "base": "RATS",
+  "first_month": "2023-12",
+  "last_month": "2026-06",
+  "months_available": 31,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000RATSUSDT"
+ },
+ "1000SATSUSDT": {
+  "base": "SATS",
+  "first_month": "2023-12",
+  "last_month": "2026-06",
+  "months_available": 31,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000SATSUSDT"
+ },
+ "1000SHIBBUSD": {
+  "base": "SHIBB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1000,
+  "quote": "USD",
+  "symbol": "1000SHIBBUSD"
+ },
+ "1000SHIBUSDC": {
+  "base": "SHIB",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1000,
+  "quote": "USDC",
+  "symbol": "1000SHIBUSDC"
+ },
+ "1000SHIBUSDT": {
+  "base": "SHIB",
+  "first_month": "2021-05",
+  "last_month": "2026-06",
+  "months_available": 62,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000SHIBUSDT"
+ },
+ "1000WHYUSDT": {
+  "base": "WHY",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000WHYUSDT"
+ },
+ "1000XECUSDT": {
+  "base": "XEC",
+  "first_month": "2021-09",
+  "last_month": "2026-06",
+  "months_available": 58,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000XECUSDT"
+ },
+ "1000XUSDT": {
+  "base": "X",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1000,
+  "quote": "USDT",
+  "symbol": "1000XUSDT"
+ },
+ "1INCHUSDT": {
+  "base": "1INCH",
+  "first_month": "2020-12",
+  "last_month": "2026-06",
+  "months_available": 67,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "1INCHUSDT"
+ },
+ "1MBABYDOGEUSDT": {
+  "base": "1MBABYDOGE",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "1MBABYDOGEUSDT"
+ },
+ "2ZUSDT": {
+  "base": "2Z",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "2ZUSDT"
+ },
+ "42USDT": {
+  "base": "42",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "42USDT"
+ },
+ "4USDT": {
+  "base": "4",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "4USDT"
+ },
+ "A2ZUSDT": {
+  "base": "A2Z",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "A2ZUSDT"
+ },
+ "AAOIUSDT": {
+  "base": "AAOI",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AAOIUSDT"
+ },
+ "AAPLUSDT": {
+  "base": "AAPL",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AAPLUSDT"
+ },
+ "AAVEUSDC": {
+  "base": "AAVE",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "AAVEUSDC"
+ },
+ "AAVEUSDT": {
+  "base": "AAVE",
+  "first_month": "2020-10",
+  "last_month": "2026-06",
+  "months_available": 69,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AAVEUSDT"
+ },
+ "ACEUSDT": {
+  "base": "ACE",
+  "first_month": "2023-12",
+  "last_month": "2026-06",
+  "months_available": 31,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ACEUSDT"
+ },
+ "ACHUSDT": {
+  "base": "ACH",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ACHUSDT"
+ },
+ "ACTUSDT": {
+  "base": "ACT",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ACTUSDT"
+ },
+ "ACUUSDT": {
+  "base": "ACU",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ACUUSDT"
+ },
+ "ACXUSDT": {
+  "base": "ACX",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ACXUSDT"
+ },
+ "ADABUSD": {
+  "base": "ADAB",
+  "first_month": "2021-08",
+  "last_month": "2023-12",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "ADABUSD"
+ },
+ "ADAUSDC": {
+  "base": "ADA",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "ADAUSDC"
+ },
+ "ADAUSDT": {
+  "base": "ADA",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ADAUSDT"
+ },
+ "ADBEUSDT": {
+  "base": "ADBE",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ADBEUSDT"
+ },
+ "AERGOUSDT": {
+  "base": "AERGO",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AERGOUSDT"
+ },
+ "AERGOUSDTSETTLED": {
+  "base": "AERGOUSDTSETTLED",
+  "first_month": "2025-04",
+  "last_month": "2025-04",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "AERGOUSDTSETTLED"
+ },
+ "AEROUSDT": {
+  "base": "AERO",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AEROUSDT"
+ },
+ "AEVOUSDT": {
+  "base": "AEVO",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AEVOUSDT"
+ },
+ "AGIXBUSD": {
+  "base": "AGIXB",
+  "first_month": "2023-01",
+  "last_month": "2023-12",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "AGIXBUSD"
+ },
+ "AGIXUSDT": {
+  "base": "AGIX",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AGIXUSDT"
+ },
+ "AGLDUSDT": {
+  "base": "AGLD",
+  "first_month": "2023-07",
+  "last_month": "2026-06",
+  "months_available": 36,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AGLDUSDT"
+ },
+ "AGTUSDT": {
+  "base": "AGT",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AGTUSDT"
+ },
+ "AI16ZUSDT": {
+  "base": "AI16Z",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AI16ZUSDT"
+ },
+ "AIAUSDT": {
+  "base": "AIA",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AIAUSDT"
+ },
+ "AIAUSDTSETTLED": {
+  "base": "AIAUSDTSETTLED",
+  "first_month": "2026-01",
+  "last_month": "2026-01",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "AIAUSDTSETTLED"
+ },
+ "AIGENSYNUSDT": {
+  "base": "AIGENSYN",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AIGENSYNUSDT"
+ },
+ "AINUSDT": {
+  "base": "AIN",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AINUSDT"
+ },
+ "AIOTUSDT": {
+  "base": "AIOT",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AIOTUSDT"
+ },
+ "AIOUSDT": {
+  "base": "AIO",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AIOUSDT"
+ },
+ "AIUSDT": {
+  "base": "AI",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AIUSDT"
+ },
+ "AIXBTUSDT": {
+  "base": "AIXBT",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AIXBTUSDT"
+ },
+ "AKEUSDT": {
+  "base": "AKE",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AKEUSDT"
+ },
+ "AKROUSDT": {
+  "base": "AKRO",
+  "first_month": "2021-01",
+  "last_month": "2022-05",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AKROUSDT"
+ },
+ "AKTUSDT": {
+  "base": "AKT",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AKTUSDT"
+ },
+ "ALABUSDT": {
+  "base": "ALAB",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALABUSDT"
+ },
+ "ALCHUSDT": {
+  "base": "ALCH",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALCHUSDT"
+ },
+ "ALGOUSDT": {
+  "base": "ALGO",
+  "first_month": "2020-06",
+  "last_month": "2026-06",
+  "months_available": 73,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALGOUSDT"
+ },
+ "ALICEUSDT": {
+  "base": "ALICE",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALICEUSDT"
+ },
+ "ALLOUSDT": {
+  "base": "ALLO",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALLOUSDT"
+ },
+ "ALLUSDT": {
+  "base": "ALL",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALLUSDT"
+ },
+ "ALPACAUSDT": {
+  "base": "ALPACA",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALPACAUSDT"
+ },
+ "ALPHAUSDT": {
+  "base": "ALPHA",
+  "first_month": "2020-11",
+  "last_month": "2026-06",
+  "months_available": 68,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALPHAUSDT"
+ },
+ "ALPINEUSDT": {
+  "base": "ALPINE",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALPINEUSDT"
+ },
+ "ALTUSDT": {
+  "base": "ALT",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ALTUSDT"
+ },
+ "AMATUSDT": {
+  "base": "AMAT",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AMATUSDT"
+ },
+ "AMBBUSD": {
+  "base": "AMBB",
+  "first_month": "2022-09",
+  "last_month": "2023-12",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "AMBBUSD"
+ },
+ "AMBUSDT": {
+  "base": "AMB",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AMBUSDT"
+ },
+ "AMDUSDT": {
+  "base": "AMD",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AMDUSDT"
+ },
+ "AMZNUSDT": {
+  "base": "AMZN",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AMZNUSDT"
+ },
+ "ANCBUSD": {
+  "base": "ANCB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "ANCBUSD"
+ },
+ "ANCUSDT": {
+  "base": "ANC",
+  "first_month": "2022-03",
+  "last_month": "2022-05",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ANCUSDT"
+ },
+ "ANIMEUSDT": {
+  "base": "ANIME",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ANIMEUSDT"
+ },
+ "ANKRUSDT": {
+  "base": "ANKR",
+  "first_month": "2021-01",
+  "last_month": "2026-06",
+  "months_available": 66,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ANKRUSDT"
+ },
+ "ANTHROPICUSDT": {
+  "base": "ANTHROPIC",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ANTHROPICUSDT"
+ },
+ "ANTUSDT": {
+  "base": "ANT",
+  "first_month": "2021-12",
+  "last_month": "2024-05",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ANTUSDT"
+ },
+ "APEBUSD": {
+  "base": "APEB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "APEBUSD"
+ },
+ "APEUSDT": {
+  "base": "APE",
+  "first_month": "2022-03",
+  "last_month": "2026-06",
+  "months_available": 52,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "APEUSDT"
+ },
+ "API3USDT": {
+  "base": "API3",
+  "first_month": "2022-02",
+  "last_month": "2026-06",
+  "months_available": 53,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "API3USDT"
+ },
+ "APRUSDT": {
+  "base": "APR",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "APRUSDT"
+ },
+ "APTBUSD": {
+  "base": "APTB",
+  "first_month": "2022-10",
+  "last_month": "2023-12",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "APTBUSD"
+ },
+ "APTUSDT": {
+  "base": "APT",
+  "first_month": "2022-10",
+  "last_month": "2026-06",
+  "months_available": 45,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "APTUSDT"
+ },
+ "ARBUSDC": {
+  "base": "ARB",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "ARBUSDC"
+ },
+ "ARBUSDT": {
+  "base": "ARB",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARBUSDT"
+ },
+ "ARCUSDT": {
+  "base": "ARC",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARCUSDT"
+ },
+ "ARIAUSDT": {
+  "base": "ARIA",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARIAUSDT"
+ },
+ "ARKMUSDT": {
+  "base": "ARKM",
+  "first_month": "2023-07",
+  "last_month": "2026-06",
+  "months_available": 36,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARKMUSDT"
+ },
+ "ARKUSDT": {
+  "base": "ARK",
+  "first_month": "2023-09",
+  "last_month": "2026-06",
+  "months_available": 34,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARKUSDT"
+ },
+ "ARMUSDT": {
+  "base": "ARM",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARMUSDT"
+ },
+ "ARPAUSDT": {
+  "base": "ARPA",
+  "first_month": "2021-10",
+  "last_month": "2026-06",
+  "months_available": 57,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARPAUSDT"
+ },
+ "ARUSDT": {
+  "base": "AR",
+  "first_month": "2021-09",
+  "last_month": "2026-06",
+  "months_available": 58,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARUSDT"
+ },
+ "ARXUSDT": {
+  "base": "ARX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ARXUSDT"
+ },
+ "ASMLUSDT": {
+  "base": "ASML",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ASMLUSDT"
+ },
+ "ASRUSDT": {
+  "base": "ASR",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ASRUSDT"
+ },
+ "ASTERUSDT": {
+  "base": "ASTER",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ASTERUSDT"
+ },
+ "ASTRUSDT": {
+  "base": "ASTR",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ASTRUSDT"
+ },
+ "ASTSUSDT": {
+  "base": "ASTS",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ASTSUSDT"
+ },
+ "ATAUSDT": {
+  "base": "ATA",
+  "first_month": "2021-08",
+  "last_month": "2026-06",
+  "months_available": 59,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ATAUSDT"
+ },
+ "ATHUSDT": {
+  "base": "ATH",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ATHUSDT"
+ },
+ "ATOMUSDT": {
+  "base": "ATOM",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ATOMUSDT"
+ },
+ "ATUSDT": {
+  "base": "AT",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ATUSDT"
+ },
+ "AUCTIONBUSD": {
+  "base": "AUCTIONB",
+  "first_month": "2022-08",
+  "last_month": "2023-12",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "AUCTIONBUSD"
+ },
+ "AUCTIONUSDT": {
+  "base": "AUCTION",
+  "first_month": "2023-12",
+  "last_month": "2026-06",
+  "months_available": 31,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AUCTIONUSDT"
+ },
+ "AUDIOUSDT": {
+  "base": "AUDIO",
+  "first_month": "2021-08",
+  "last_month": "2024-05",
+  "months_available": 34,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AUDIOUSDT"
+ },
+ "AUSDT": {
+  "base": "A",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AUSDT"
+ },
+ "AVAAIUSDT": {
+  "base": "AVAAI",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AVAAIUSDT"
+ },
+ "AVAUSDT": {
+  "base": "AVA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AVAUSDT"
+ },
+ "AVAXBUSD": {
+  "base": "AVAXB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "AVAXBUSD"
+ },
+ "AVAXUSDC": {
+  "base": "AVAX",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "AVAXUSDC"
+ },
+ "AVAXUSDT": {
+  "base": "AVAX",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AVAXUSDT"
+ },
+ "AVGOUSDT": {
+  "base": "AVGO",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AVGOUSDT"
+ },
+ "AVNTUSDT": {
+  "base": "AVNT",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AVNTUSDT"
+ },
+ "AWEUSDT": {
+  "base": "AWE",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AWEUSDT"
+ },
+ "AXLUSDT": {
+  "base": "AXL",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AXLUSDT"
+ },
+ "AXSUSDT": {
+  "base": "AXS",
+  "first_month": "2020-11",
+  "last_month": "2026-06",
+  "months_available": 68,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AXSUSDT"
+ },
+ "AXTIUSDT": {
+  "base": "AXTI",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AXTIUSDT"
+ },
+ "AZTECUSDT": {
+  "base": "AZTEC",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "AZTECUSDT"
+ },
+ "B2USDT": {
+  "base": "B2",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "B2USDT"
+ },
+ "B3USDT": {
+  "base": "B3",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "B3USDT"
+ },
+ "BABAUSDT": {
+  "base": "BABA",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BABAUSDT"
+ },
+ "BABYUSDT": {
+  "base": "BABY",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BABYUSDT"
+ },
+ "BADGERUSDT": {
+  "base": "BADGER",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BADGERUSDT"
+ },
+ "BAKEUSDT": {
+  "base": "BAKE",
+  "first_month": "2021-05",
+  "last_month": "2026-06",
+  "months_available": 62,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BAKEUSDT"
+ },
+ "BALUSDT": {
+  "base": "BAL",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BALUSDT"
+ },
+ "BANANAS31USDT": {
+  "base": "BANANAS31",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BANANAS31USDT"
+ },
+ "BANANAUSDT": {
+  "base": "BANANA",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BANANAUSDT"
+ },
+ "BANDUSDT": {
+  "base": "BAND",
+  "first_month": "2020-07",
+  "last_month": "2026-06",
+  "months_available": 72,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BANDUSDT"
+ },
+ "BANKUSDT": {
+  "base": "BANK",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BANKUSDT"
+ },
+ "BANUSDT": {
+  "base": "BAN",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BANUSDT"
+ },
+ "BARDUSDT": {
+  "base": "BARD",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BARDUSDT"
+ },
+ "BASEDUSDT": {
+  "base": "BASED",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BASEDUSDT"
+ },
+ "BASUSDT": {
+  "base": "BAS",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BASUSDT"
+ },
+ "BATUSDT": {
+  "base": "BAT",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BATUSDT"
+ },
+ "BBUSDT": {
+  "base": "BB",
+  "first_month": "2024-05",
+  "last_month": "2026-06",
+  "months_available": 26,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BBUSDT"
+ },
+ "BBXUSDT": {
+  "base": "BBX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BBXUSDT"
+ },
+ "BCHUSDC": {
+  "base": "BCH",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "BCHUSDC"
+ },
+ "BCHUSDT": {
+  "base": "BCH",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BCHUSDT"
+ },
+ "BDXNUSDT": {
+  "base": "BDXN",
+  "first_month": "2025-06",
+  "last_month": "2026-03",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BDXNUSDT"
+ },
+ "BDXNUSDTSETTLED": {
+  "base": "BDXNUSDTSETTLED",
+  "first_month": "2026-04",
+  "last_month": "2026-04",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BDXNUSDTSETTLED"
+ },
+ "BEAMXUSDT": {
+  "base": "BEAMX",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BEAMXUSDT"
+ },
+ "BEATUSDT": {
+  "base": "BEAT",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BEATUSDT"
+ },
+ "BELUSDT": {
+  "base": "BEL",
+  "first_month": "2020-11",
+  "last_month": "2026-06",
+  "months_available": 68,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BELUSDT"
+ },
+ "BERAUSDT": {
+  "base": "BERA",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BERAUSDT"
+ },
+ "BEUSDT": {
+  "base": "BE",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BEUSDT"
+ },
+ "BICOUSDT": {
+  "base": "BICO",
+  "first_month": "2023-09",
+  "last_month": "2026-06",
+  "months_available": 34,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BICOUSDT"
+ },
+ "BIDUSDT": {
+  "base": "BID",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BIDUSDT"
+ },
+ "BIGTIMEUSDT": {
+  "base": "BIGTIME",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BIGTIMEUSDT"
+ },
+ "BILLUSDT": {
+  "base": "BILL",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BILLUSDT"
+ },
+ "BIOUSDC": {
+  "base": "BIO",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "BIOUSDC"
+ },
+ "BIOUSDT": {
+  "base": "BIO",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BIOUSDT"
+ },
+ "BIRBUSDT": {
+  "base": "BIRB",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BIRBUSDT"
+ },
+ "BLESSUSDT": {
+  "base": "BLESS",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BLESSUSDT"
+ },
+ "BLUAIUSDT": {
+  "base": "BLUAI",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BLUAIUSDT"
+ },
+ "BLUEBIRDUSDT": {
+  "base": "BLUEBIRD",
+  "first_month": "2022-11",
+  "last_month": "2024-05",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BLUEBIRDUSDT"
+ },
+ "BLURUSDT": {
+  "base": "BLUR",
+  "first_month": "2023-04",
+  "last_month": "2026-06",
+  "months_available": 39,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BLURUSDT"
+ },
+ "BLZUSDT": {
+  "base": "BLZ",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BLZUSDT"
+ },
+ "BMNRUSDT": {
+  "base": "BMNR",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BMNRUSDT"
+ },
+ "BMTUSDT": {
+  "base": "BMT",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BMTUSDT"
+ },
+ "BNBBUSD": {
+  "base": "BNBB",
+  "first_month": "2021-07",
+  "last_month": "2023-12",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "BNBBUSD"
+ },
+ "BNBUSDC": {
+  "base": "BNB",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "BNBUSDC"
+ },
+ "BNBUSDT": {
+  "base": "BNB",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BNBUSDT"
+ },
+ "BNTUSDT": {
+  "base": "BNT",
+  "first_month": "2023-08",
+  "last_month": "2026-06",
+  "months_available": 35,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BNTUSDT"
+ },
+ "BNXUSDT": {
+  "base": "BNX",
+  "first_month": "2022-04",
+  "last_month": "2026-06",
+  "months_available": 51,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BNXUSDT"
+ },
+ "BNXUSDTSETTLED": {
+  "base": "BNXUSDTSETTLED",
+  "first_month": "2022-04",
+  "last_month": "2023-02",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BNXUSDTSETTLED"
+ },
+ "BOBUSDT": {
+  "base": "BOB",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BOBUSDT"
+ },
+ "BOMEUSDC": {
+  "base": "BOME",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "BOMEUSDC"
+ },
+ "BOMEUSDT": {
+  "base": "BOME",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BOMEUSDT"
+ },
+ "BONDUSDT": {
+  "base": "BOND",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BONDUSDT"
+ },
+ "BRETTUSDT": {
+  "base": "BRETT",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BRETTUSDT"
+ },
+ "BREVUSDT": {
+  "base": "BREV",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BREVUSDT"
+ },
+ "BRKBUSDT": {
+  "base": "BRKB",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BRKBUSDT"
+ },
+ "BROCCOLI714USDT": {
+  "base": "BROCCOLI714",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BROCCOLI714USDT"
+ },
+ "BROCCOLIF3BUSDT": {
+  "base": "BROCCOLIF3B",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BROCCOLIF3BUSDT"
+ },
+ "BRUSDT": {
+  "base": "BR",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BRUSDT"
+ },
+ "BSBUSDT": {
+  "base": "BSB",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BSBUSDT"
+ },
+ "BSVUSDT": {
+  "base": "BSV",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BSVUSDT"
+ },
+ "BSWUSDT": {
+  "base": "BSW",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BSWUSDT"
+ },
+ "BTCBUSD": {
+  "base": "BTCB",
+  "first_month": "2021-01",
+  "last_month": "2023-12",
+  "months_available": 36,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "BTCBUSD"
+ },
+ "BTCBUSD_210129": {
+  "base": "BTCBUSD_210129",
+  "first_month": "2021-01",
+  "last_month": "2021-01",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCBUSD_210129"
+ },
+ "BTCBUSD_210226": {
+  "base": "BTCBUSD_210226",
+  "first_month": "2021-01",
+  "last_month": "2021-01",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCBUSD_210226"
+ },
+ "BTCDOMUSDT": {
+  "base": "BTCDOM",
+  "first_month": "2021-06",
+  "last_month": "2026-06",
+  "months_available": 61,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BTCDOMUSDT"
+ },
+ "BTCSTUSDT": {
+  "base": "BTCST",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BTCSTUSDT"
+ },
+ "BTCUSD1": {
+  "base": "BTCUSD1",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSD1"
+ },
+ "BTCUSDC": {
+  "base": "BTC",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "BTCUSDC"
+ },
+ "BTCUSDT": {
+  "base": "BTC",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BTCUSDT"
+ },
+ "BTCUSDT_210326": {
+  "base": "BTCUSDT_210326",
+  "first_month": "2021-02",
+  "last_month": "2021-03",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_210326"
+ },
+ "BTCUSDT_210625": {
+  "base": "BTCUSDT_210625",
+  "first_month": "2021-03",
+  "last_month": "2021-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_210625"
+ },
+ "BTCUSDT_210924": {
+  "base": "BTCUSDT_210924",
+  "first_month": "2021-06",
+  "last_month": "2021-09",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_210924"
+ },
+ "BTCUSDT_211231": {
+  "base": "BTCUSDT_211231",
+  "first_month": "2021-09",
+  "last_month": "2021-12",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_211231"
+ },
+ "BTCUSDT_220325": {
+  "base": "BTCUSDT_220325",
+  "first_month": "2021-12",
+  "last_month": "2022-03",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_220325"
+ },
+ "BTCUSDT_220624": {
+  "base": "BTCUSDT_220624",
+  "first_month": "2022-03",
+  "last_month": "2022-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_220624"
+ },
+ "BTCUSDT_220930": {
+  "base": "BTCUSDT_220930",
+  "first_month": "2022-06",
+  "last_month": "2022-09",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_220930"
+ },
+ "BTCUSDT_221230": {
+  "base": "BTCUSDT_221230",
+  "first_month": "2022-09",
+  "last_month": "2022-12",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_221230"
+ },
+ "BTCUSDT_230331": {
+  "base": "BTCUSDT_230331",
+  "first_month": "2022-12",
+  "last_month": "2023-03",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_230331"
+ },
+ "BTCUSDT_230630": {
+  "base": "BTCUSDT_230630",
+  "first_month": "2023-03",
+  "last_month": "2023-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_230630"
+ },
+ "BTCUSDT_230929": {
+  "base": "BTCUSDT_230929",
+  "first_month": "2023-06",
+  "last_month": "2023-11",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_230929"
+ },
+ "BTCUSDT_231229": {
+  "base": "BTCUSDT_231229",
+  "first_month": "2023-08",
+  "last_month": "2024-01",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_231229"
+ },
+ "BTCUSDT_240329": {
+  "base": "BTCUSDT_240329",
+  "first_month": "2023-09",
+  "last_month": "2024-03",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_240329"
+ },
+ "BTCUSDT_240628": {
+  "base": "BTCUSDT_240628",
+  "first_month": "2023-12",
+  "last_month": "2024-07",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_240628"
+ },
+ "BTCUSDT_240927": {
+  "base": "BTCUSDT_240927",
+  "first_month": "2024-03",
+  "last_month": "2024-09",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_240927"
+ },
+ "BTCUSDT_241227": {
+  "base": "BTCUSDT_241227",
+  "first_month": "2024-06",
+  "last_month": "2024-12",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_241227"
+ },
+ "BTCUSDT_250328": {
+  "base": "BTCUSDT_250328",
+  "first_month": "2024-09",
+  "last_month": "2025-03",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_250328"
+ },
+ "BTCUSDT_250627": {
+  "base": "BTCUSDT_250627",
+  "first_month": "2024-12",
+  "last_month": "2025-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_250627"
+ },
+ "BTCUSDT_250926": {
+  "base": "BTCUSDT_250926",
+  "first_month": "2025-03",
+  "last_month": "2025-09",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_250926"
+ },
+ "BTCUSDT_251226": {
+  "base": "BTCUSDT_251226",
+  "first_month": "2025-06",
+  "last_month": "2026-01",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_251226"
+ },
+ "BTCUSDT_260327": {
+  "base": "BTCUSDT_260327",
+  "first_month": "2025-09",
+  "last_month": "2026-04",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_260327"
+ },
+ "BTCUSDT_260626": {
+  "base": "BTCUSDT_260626",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_260626"
+ },
+ "BTCUSDT_260925": {
+  "base": "BTCUSDT_260925",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_260925"
+ },
+ "BTCUSDT_261225": {
+  "base": "BTCUSDT_261225",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "BTCUSDT_261225"
+ },
+ "BTRUSDT": {
+  "base": "BTR",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BTRUSDT"
+ },
+ "BTSUSDT": {
+  "base": "BTS",
+  "first_month": "2021-02",
+  "last_month": "2024-05",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BTSUSDT"
+ },
+ "BTTUSDT": {
+  "base": "BTT",
+  "first_month": "2021-04",
+  "last_month": "2022-01",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BTTUSDT"
+ },
+ "BTWUSDT": {
+  "base": "BTW",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BTWUSDT"
+ },
+ "BULLAUSDT": {
+  "base": "BULLA",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BULLAUSDT"
+ },
+ "BUSDT": {
+  "base": "B",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BUSDT"
+ },
+ "BXUSDT": {
+  "base": "BX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BXUSDT"
+ },
+ "BZRXUSDT": {
+  "base": "BZRX",
+  "first_month": "2020-09",
+  "last_month": "2021-12",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BZRXUSDT"
+ },
+ "BZUSDT": {
+  "base": "BZ",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "BZUSDT"
+ },
+ "C98USDT": {
+  "base": "C98",
+  "first_month": "2021-08",
+  "last_month": "2026-06",
+  "months_available": 59,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "C98USDT"
+ },
+ "CAKEUSDT": {
+  "base": "CAKE",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CAKEUSDT"
+ },
+ "CAPUSDT": {
+  "base": "CAP",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CAPUSDT"
+ },
+ "CARVUSDT": {
+  "base": "CARV",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CARVUSDT"
+ },
+ "CATIUSDT": {
+  "base": "CATI",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CATIUSDT"
+ },
+ "CBRSUSDT": {
+  "base": "CBRS",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CBRSUSDT"
+ },
+ "CCUSDT": {
+  "base": "CC",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CCUSDT"
+ },
+ "CELOUSDT": {
+  "base": "CELO",
+  "first_month": "2021-09",
+  "last_month": "2026-06",
+  "months_available": 58,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CELOUSDT"
+ },
+ "CELRUSDT": {
+  "base": "CELR",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CELRUSDT"
+ },
+ "CETUSUSDT": {
+  "base": "CETUS",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CETUSUSDT"
+ },
+ "CFGUSDT": {
+  "base": "CFG",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CFGUSDT"
+ },
+ "CFXUSDT": {
+  "base": "CFX",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CFXUSDT"
+ },
+ "CGPTUSDT": {
+  "base": "CGPT",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CGPTUSDT"
+ },
+ "CHESSUSDT": {
+  "base": "CHESS",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CHESSUSDT"
+ },
+ "CHILLGUYUSDT": {
+  "base": "CHILLGUY",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CHILLGUYUSDT"
+ },
+ "CHIPUSDT": {
+  "base": "CHIP",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CHIPUSDT"
+ },
+ "CHRUSDT": {
+  "base": "CHR",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CHRUSDT"
+ },
+ "CHZUSDT": {
+  "base": "CHZ",
+  "first_month": "2021-01",
+  "last_month": "2026-06",
+  "months_available": 66,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CHZUSDT"
+ },
+ "CIENUSDT": {
+  "base": "CIEN",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CIENUSDT"
+ },
+ "CKBUSDT": {
+  "base": "CKB",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CKBUSDT"
+ },
+ "CLANKERUSDT": {
+  "base": "CLANKER",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CLANKERUSDT"
+ },
+ "CLOUSDT": {
+  "base": "CLO",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CLOUSDT"
+ },
+ "CLUSDT": {
+  "base": "CL",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CLUSDT"
+ },
+ "COAIUSDT": {
+  "base": "COAI",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COAIUSDT"
+ },
+ "COCOSUSDT": {
+  "base": "COCOS",
+  "first_month": "2023-02",
+  "last_month": "2024-05",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COCOSUSDT"
+ },
+ "COHRUSDT": {
+  "base": "COHR",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COHRUSDT"
+ },
+ "COINUSDT": {
+  "base": "COIN",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COINUSDT"
+ },
+ "COLLECTUSDT": {
+  "base": "COLLECT",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COLLECTUSDT"
+ },
+ "COMBOUSDT": {
+  "base": "COMBO",
+  "first_month": "2023-06",
+  "last_month": "2026-06",
+  "months_available": 37,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COMBOUSDT"
+ },
+ "COMMONUSDT": {
+  "base": "COMMON",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COMMONUSDT"
+ },
+ "COMPUSDT": {
+  "base": "COMP",
+  "first_month": "2020-06",
+  "last_month": "2026-06",
+  "months_available": 73,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COMPUSDT"
+ },
+ "COOKIEUSDT": {
+  "base": "COOKIE",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COOKIEUSDT"
+ },
+ "COPPERUSDT": {
+  "base": "COPPER",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COPPERUSDT"
+ },
+ "COSTUSDT": {
+  "base": "COST",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COSTUSDT"
+ },
+ "COSUSDT": {
+  "base": "COS",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COSUSDT"
+ },
+ "COTIUSDT": {
+  "base": "COTI",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COTIUSDT"
+ },
+ "COWUSDT": {
+  "base": "COW",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "COWUSDT"
+ },
+ "CRCLUSDT": {
+  "base": "CRCL",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CRCLUSDT"
+ },
+ "CRDOUSDT": {
+  "base": "CRDO",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CRDOUSDT"
+ },
+ "CRMUSDT": {
+  "base": "CRM",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CRMUSDT"
+ },
+ "CROSSUSDT": {
+  "base": "CROSS",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CROSSUSDT"
+ },
+ "CRVUSDC": {
+  "base": "CRV",
+  "first_month": "2024-07",
+  "last_month": "2026-06",
+  "months_available": 24,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "CRVUSDC"
+ },
+ "CRVUSDT": {
+  "base": "CRV",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CRVUSDT"
+ },
+ "CRWDUSDT": {
+  "base": "CRWD",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CRWDUSDT"
+ },
+ "CRWVUSDT": {
+  "base": "CRWV",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CRWVUSDT"
+ },
+ "CSCOUSDT": {
+  "base": "CSCO",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CSCOUSDT"
+ },
+ "CTKUSDT": {
+  "base": "CTK",
+  "first_month": "2020-11",
+  "last_month": "2026-06",
+  "months_available": 68,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CTKUSDT"
+ },
+ "CTKUSDTSETTLED": {
+  "base": "CTKUSDTSETTLED",
+  "first_month": "2025-04",
+  "last_month": "2025-04",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "CTKUSDTSETTLED"
+ },
+ "CTRUSDT": {
+  "base": "CTR",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CTRUSDT"
+ },
+ "CTSIUSDT": {
+  "base": "CTSI",
+  "first_month": "2021-10",
+  "last_month": "2026-06",
+  "months_available": 57,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CTSIUSDT"
+ },
+ "CUDISUSDT": {
+  "base": "CUDIS",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CUDISUSDT"
+ },
+ "CUSDT": {
+  "base": "C",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CUSDT"
+ },
+ "CVCUSDT": {
+  "base": "CVC",
+  "first_month": "2020-11",
+  "last_month": "2026-06",
+  "months_available": 68,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CVCUSDT"
+ },
+ "CVCUSDTSETTLED": {
+  "base": "CVCUSDTSETTLED",
+  "first_month": "2025-05",
+  "last_month": "2025-05",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "CVCUSDTSETTLED"
+ },
+ "CVXBUSD": {
+  "base": "CVXB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "CVXBUSD"
+ },
+ "CVXUSDT": {
+  "base": "CVX",
+  "first_month": "2022-09",
+  "last_month": "2026-06",
+  "months_available": 46,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CVXUSDT"
+ },
+ "CVXUSDTSETTLED": {
+  "base": "CVXUSDTSETTLED",
+  "first_month": "2025-07",
+  "last_month": "2025-07",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "CVXUSDTSETTLED"
+ },
+ "CYBERUSDT": {
+  "base": "CYBER",
+  "first_month": "2023-08",
+  "last_month": "2026-06",
+  "months_available": 35,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CYBERUSDT"
+ },
+ "CYSUSDT": {
+  "base": "CYS",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "CYSUSDT"
+ },
+ "DAMUSDT": {
+  "base": "DAM",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DAMUSDT"
+ },
+ "DARUSDT": {
+  "base": "DAR",
+  "first_month": "2022-04",
+  "last_month": "2026-06",
+  "months_available": 51,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DARUSDT"
+ },
+ "DASHUSDT": {
+  "base": "DASH",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DASHUSDT"
+ },
+ "DEEPUSDT": {
+  "base": "DEEP",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DEEPUSDT"
+ },
+ "DEFIUSDT": {
+  "base": "DEFI",
+  "first_month": "2020-08",
+  "last_month": "2026-06",
+  "months_available": 71,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DEFIUSDT"
+ },
+ "DEGENUSDT": {
+  "base": "DEGEN",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DEGENUSDT"
+ },
+ "DEGOUSDT": {
+  "base": "DEGO",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DEGOUSDT"
+ },
+ "DELLUSDT": {
+  "base": "DELL",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DELLUSDT"
+ },
+ "DENTUSDT": {
+  "base": "DENT",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DENTUSDT"
+ },
+ "DEXEUSDT": {
+  "base": "DEXE",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DEXEUSDT"
+ },
+ "DFUSDT": {
+  "base": "DF",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DFUSDT"
+ },
+ "DGBUSDT": {
+  "base": "DGB",
+  "first_month": "2021-04",
+  "last_month": "2026-06",
+  "months_available": 63,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DGBUSDT"
+ },
+ "DIAUSDT": {
+  "base": "DIA",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DIAUSDT"
+ },
+ "DISUSDT": {
+  "base": "DIS",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DISUSDT"
+ },
+ "DKNGUSDT": {
+  "base": "DKNG",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DKNGUSDT"
+ },
+ "DMCUSDT": {
+  "base": "DMC",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DMCUSDT"
+ },
+ "DODOBUSD": {
+  "base": "DODOB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "DODOBUSD"
+ },
+ "DODOUSDT": {
+  "base": "DODO",
+  "first_month": "2021-02",
+  "last_month": "2022-05",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DODOUSDT"
+ },
+ "DODOXUSDT": {
+  "base": "DODOX",
+  "first_month": "2023-08",
+  "last_month": "2026-06",
+  "months_available": 35,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DODOXUSDT"
+ },
+ "DOGEBUSD": {
+  "base": "DOGEB",
+  "first_month": "2021-08",
+  "last_month": "2023-12",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "DOGEBUSD"
+ },
+ "DOGEUSDC": {
+  "base": "DOGE",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "DOGEUSDC"
+ },
+ "DOGEUSDT": {
+  "base": "DOGE",
+  "first_month": "2020-07",
+  "last_month": "2026-06",
+  "months_available": 72,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DOGEUSDT"
+ },
+ "DOGSUSDT": {
+  "base": "DOGS",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DOGSUSDT"
+ },
+ "DOLOUSDT": {
+  "base": "DOLO",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DOLOUSDT"
+ },
+ "DOODUSDT": {
+  "base": "DOOD",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DOODUSDT"
+ },
+ "DOTBUSD": {
+  "base": "DOTB",
+  "first_month": "2022-06",
+  "last_month": "2023-12",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "DOTBUSD"
+ },
+ "DOTECOUSDT": {
+  "base": "DOTECO",
+  "first_month": "2021-01",
+  "last_month": "2021-02",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DOTECOUSDT"
+ },
+ "DOTUSDT": {
+  "base": "DOT",
+  "first_month": "2020-08",
+  "last_month": "2026-06",
+  "months_available": 71,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DOTUSDT"
+ },
+ "DRAMUSDT": {
+  "base": "DRAM",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DRAMUSDT"
+ },
+ "DRIFTUSDT": {
+  "base": "DRIFT",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DRIFTUSDT"
+ },
+ "DUSDT": {
+  "base": "D",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DUSDT"
+ },
+ "DUSKUSDT": {
+  "base": "DUSK",
+  "first_month": "2022-01",
+  "last_month": "2026-06",
+  "months_available": 54,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DUSKUSDT"
+ },
+ "DYDXUSDT": {
+  "base": "DYDX",
+  "first_month": "2021-09",
+  "last_month": "2026-06",
+  "months_available": 58,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DYDXUSDT"
+ },
+ "DYMUSDT": {
+  "base": "DYM",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "DYMUSDT"
+ },
+ "EBAYUSDT": {
+  "base": "EBAY",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EBAYUSDT"
+ },
+ "EDENUSDT": {
+  "base": "EDEN",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EDENUSDT"
+ },
+ "EDGEUSDT": {
+  "base": "EDGE",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EDGEUSDT"
+ },
+ "EDUUSDT": {
+  "base": "EDU",
+  "first_month": "2023-04",
+  "last_month": "2026-06",
+  "months_available": 39,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EDUUSDT"
+ },
+ "EGLDUSDT": {
+  "base": "EGLD",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EGLDUSDT"
+ },
+ "EIGENUSDT": {
+  "base": "EIGEN",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EIGENUSDT"
+ },
+ "ELSAUSDT": {
+  "base": "ELSA",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ELSAUSDT"
+ },
+ "ENAUSDC": {
+  "base": "ENA",
+  "first_month": "2024-05",
+  "last_month": "2026-06",
+  "months_available": 26,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "ENAUSDC"
+ },
+ "ENAUSDT": {
+  "base": "ENA",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ENAUSDT"
+ },
+ "ENJUSDT": {
+  "base": "ENJ",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ENJUSDT"
+ },
+ "ENSOUSDT": {
+  "base": "ENSO",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ENSOUSDT"
+ },
+ "ENSUSDT": {
+  "base": "ENS",
+  "first_month": "2021-11",
+  "last_month": "2026-06",
+  "months_available": 56,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ENSUSDT"
+ },
+ "EOSUSDT": {
+  "base": "EOS",
+  "first_month": "2020-01",
+  "last_month": "2025-05",
+  "months_available": 65,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EOSUSDT"
+ },
+ "EPICUSDT": {
+  "base": "EPIC",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EPICUSDT"
+ },
+ "EPTUSDT": {
+  "base": "EPT",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EPTUSDT"
+ },
+ "ERAUSDT": {
+  "base": "ERA",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ERAUSDT"
+ },
+ "ESPORTSUSDT": {
+  "base": "ESPORTS",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ESPORTSUSDT"
+ },
+ "ESPUSDT": {
+  "base": "ESP",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ESPUSDT"
+ },
+ "ETCBUSD": {
+  "base": "ETCB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "ETCBUSD"
+ },
+ "ETCUSDT": {
+  "base": "ETC",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ETCUSDT"
+ },
+ "ETHBTC": {
+  "base": "ETHBTC",
+  "first_month": "2023-04",
+  "last_month": "2026-06",
+  "months_available": 39,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHBTC"
+ },
+ "ETHBUSD": {
+  "base": "ETHB",
+  "first_month": "2021-06",
+  "last_month": "2023-12",
+  "months_available": 31,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "ETHBUSD"
+ },
+ "ETHFIUSDC": {
+  "base": "ETHFI",
+  "first_month": "2024-05",
+  "last_month": "2026-06",
+  "months_available": 26,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "ETHFIUSDC"
+ },
+ "ETHFIUSDT": {
+  "base": "ETHFI",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ETHFIUSDT"
+ },
+ "ETHUSDC": {
+  "base": "ETH",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "ETHUSDC"
+ },
+ "ETHUSDT": {
+  "base": "ETH",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ETHUSDT"
+ },
+ "ETHUSDT_210326": {
+  "base": "ETHUSDT_210326",
+  "first_month": "2021-02",
+  "last_month": "2021-03",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_210326"
+ },
+ "ETHUSDT_210625": {
+  "base": "ETHUSDT_210625",
+  "first_month": "2021-03",
+  "last_month": "2021-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_210625"
+ },
+ "ETHUSDT_210924": {
+  "base": "ETHUSDT_210924",
+  "first_month": "2021-06",
+  "last_month": "2021-09",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_210924"
+ },
+ "ETHUSDT_211231": {
+  "base": "ETHUSDT_211231",
+  "first_month": "2021-09",
+  "last_month": "2021-12",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_211231"
+ },
+ "ETHUSDT_220325": {
+  "base": "ETHUSDT_220325",
+  "first_month": "2021-12",
+  "last_month": "2022-03",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_220325"
+ },
+ "ETHUSDT_220624": {
+  "base": "ETHUSDT_220624",
+  "first_month": "2022-03",
+  "last_month": "2022-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_220624"
+ },
+ "ETHUSDT_220930": {
+  "base": "ETHUSDT_220930",
+  "first_month": "2022-06",
+  "last_month": "2022-09",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_220930"
+ },
+ "ETHUSDT_221230": {
+  "base": "ETHUSDT_221230",
+  "first_month": "2022-09",
+  "last_month": "2022-12",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_221230"
+ },
+ "ETHUSDT_230331": {
+  "base": "ETHUSDT_230331",
+  "first_month": "2022-12",
+  "last_month": "2023-03",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_230331"
+ },
+ "ETHUSDT_230630": {
+  "base": "ETHUSDT_230630",
+  "first_month": "2023-03",
+  "last_month": "2023-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_230630"
+ },
+ "ETHUSDT_230929": {
+  "base": "ETHUSDT_230929",
+  "first_month": "2023-06",
+  "last_month": "2023-11",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_230929"
+ },
+ "ETHUSDT_231229": {
+  "base": "ETHUSDT_231229",
+  "first_month": "2023-08",
+  "last_month": "2024-01",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_231229"
+ },
+ "ETHUSDT_240329": {
+  "base": "ETHUSDT_240329",
+  "first_month": "2023-09",
+  "last_month": "2024-03",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_240329"
+ },
+ "ETHUSDT_240628": {
+  "base": "ETHUSDT_240628",
+  "first_month": "2023-12",
+  "last_month": "2024-07",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_240628"
+ },
+ "ETHUSDT_240927": {
+  "base": "ETHUSDT_240927",
+  "first_month": "2024-03",
+  "last_month": "2024-09",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_240927"
+ },
+ "ETHUSDT_241227": {
+  "base": "ETHUSDT_241227",
+  "first_month": "2024-06",
+  "last_month": "2024-12",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_241227"
+ },
+ "ETHUSDT_250328": {
+  "base": "ETHUSDT_250328",
+  "first_month": "2024-09",
+  "last_month": "2025-03",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_250328"
+ },
+ "ETHUSDT_250627": {
+  "base": "ETHUSDT_250627",
+  "first_month": "2024-12",
+  "last_month": "2025-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_250627"
+ },
+ "ETHUSDT_250926": {
+  "base": "ETHUSDT_250926",
+  "first_month": "2025-03",
+  "last_month": "2025-09",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_250926"
+ },
+ "ETHUSDT_251226": {
+  "base": "ETHUSDT_251226",
+  "first_month": "2025-06",
+  "last_month": "2026-01",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_251226"
+ },
+ "ETHUSDT_260327": {
+  "base": "ETHUSDT_260327",
+  "first_month": "2025-09",
+  "last_month": "2026-04",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_260327"
+ },
+ "ETHUSDT_260626": {
+  "base": "ETHUSDT_260626",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_260626"
+ },
+ "ETHUSDT_260925": {
+  "base": "ETHUSDT_260925",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_260925"
+ },
+ "ETHUSDT_261225": {
+  "base": "ETHUSDT_261225",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ETHUSDT_261225"
+ },
+ "ETHWUSDT": {
+  "base": "ETHW",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ETHWUSDT"
+ },
+ "EULUSDT": {
+  "base": "EUL",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EULUSDT"
+ },
+ "EVAAUSDT": {
+  "base": "EVAA",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EVAAUSDT"
+ },
+ "EWJUSDT": {
+  "base": "EWJ",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EWJUSDT"
+ },
+ "EWTUSDT": {
+  "base": "EWT",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EWTUSDT"
+ },
+ "EWYUSDT": {
+  "base": "EWY",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EWYUSDT"
+ },
+ "EWZUSDT": {
+  "base": "EWZ",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "EWZUSDT"
+ },
+ "FARTCOINUSDT": {
+  "base": "FARTCOIN",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FARTCOINUSDT"
+ },
+ "FETUSDT": {
+  "base": "FET",
+  "first_month": "2023-01",
+  "last_month": "2026-06",
+  "months_available": 42,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FETUSDT"
+ },
+ "FFUSDT": {
+  "base": "FF",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FFUSDT"
+ },
+ "FHEUSDT": {
+  "base": "FHE",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FHEUSDT"
+ },
+ "FIDAUSDT": {
+  "base": "FIDA",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FIDAUSDT"
+ },
+ "FIGHTUSDT": {
+  "base": "FIGHT",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FIGHTUSDT"
+ },
+ "FILBUSD": {
+  "base": "FILB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "FILBUSD"
+ },
+ "FILUSDC": {
+  "base": "FIL",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "FILUSDC"
+ },
+ "FILUSDT": {
+  "base": "FIL",
+  "first_month": "2020-10",
+  "last_month": "2026-06",
+  "months_available": 69,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FILUSDT"
+ },
+ "FIOUSDT": {
+  "base": "FIO",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FIOUSDT"
+ },
+ "FISUSDT": {
+  "base": "FIS",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FISUSDT"
+ },
+ "FLMUSDT": {
+  "base": "FLM",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FLMUSDT"
+ },
+ "FLNCUSDT": {
+  "base": "FLNC",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FLNCUSDT"
+ },
+ "FLOCKUSDT": {
+  "base": "FLOCK",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FLOCKUSDT"
+ },
+ "FLOWUSDT": {
+  "base": "FLOW",
+  "first_month": "2022-02",
+  "last_month": "2026-06",
+  "months_available": 53,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FLOWUSDT"
+ },
+ "FLUIDUSDT": {
+  "base": "FLUID",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FLUIDUSDT"
+ },
+ "FLUXUSDT": {
+  "base": "FLUX",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FLUXUSDT"
+ },
+ "FOGOUSDT": {
+  "base": "FOGO",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FOGOUSDT"
+ },
+ "FOLKSUSDT": {
+  "base": "FOLKS",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FOLKSUSDT"
+ },
+ "FOOTBALLUSDT": {
+  "base": "FOOTBALL",
+  "first_month": "2022-09",
+  "last_month": "2024-05",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FOOTBALLUSDT"
+ },
+ "FORMUSDT": {
+  "base": "FORM",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FORMUSDT"
+ },
+ "FORTHUSDT": {
+  "base": "FORTH",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FORTHUSDT"
+ },
+ "FRAXUSDT": {
+  "base": "FRAX",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FRAXUSDT"
+ },
+ "FRONTUSDT": {
+  "base": "FRONT",
+  "first_month": "2023-09",
+  "last_month": "2024-09",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FRONTUSDT"
+ },
+ "FTMBUSD": {
+  "base": "FTMB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "FTMBUSD"
+ },
+ "FTMUSDT": {
+  "base": "FTM",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FTMUSDT"
+ },
+ "FTTBUSD": {
+  "base": "FTTB",
+  "first_month": "2021-09",
+  "last_month": "2023-12",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "FTTBUSD"
+ },
+ "FTTUSDT": {
+  "base": "FTT",
+  "first_month": "2022-04",
+  "last_month": "2026-06",
+  "months_available": 51,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FTTUSDT"
+ },
+ "FUNUSDT": {
+  "base": "FUN",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FUNUSDT"
+ },
+ "FUSDT": {
+  "base": "F",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FUSDT"
+ },
+ "FXSUSDT": {
+  "base": "FXS",
+  "first_month": "2023-01",
+  "last_month": "2026-06",
+  "months_available": 42,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "FXSUSDT"
+ },
+ "GALABUSD": {
+  "base": "GALAB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "GALABUSD"
+ },
+ "GALAUSDT": {
+  "base": "GALA",
+  "first_month": "2021-09",
+  "last_month": "2026-06",
+  "months_available": 58,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GALAUSDT"
+ },
+ "GALBUSD": {
+  "base": "GALB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "GALBUSD"
+ },
+ "GALUSDT": {
+  "base": "GAL",
+  "first_month": "2022-05",
+  "last_month": "2024-07",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GALUSDT"
+ },
+ "GASUSDT": {
+  "base": "GAS",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GASUSDT"
+ },
+ "GENIUSUSDT": {
+  "base": "GENIUS",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GENIUSUSDT"
+ },
+ "GHSTUSDT": {
+  "base": "GHST",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GHSTUSDT"
+ },
+ "GIGGLEUSDT": {
+  "base": "GIGGLE",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GIGGLEUSDT"
+ },
+ "GLMRUSDT": {
+  "base": "GLMR",
+  "first_month": "2023-09",
+  "last_month": "2026-06",
+  "months_available": 34,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GLMRUSDT"
+ },
+ "GLMUSDT": {
+  "base": "GLM",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GLMUSDT"
+ },
+ "GLWUSDT": {
+  "base": "GLW",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GLWUSDT"
+ },
+ "GMEUSDT": {
+  "base": "GME",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GMEUSDT"
+ },
+ "GMTBUSD": {
+  "base": "GMTB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "GMTBUSD"
+ },
+ "GMTUSDT": {
+  "base": "GMT",
+  "first_month": "2022-03",
+  "last_month": "2026-06",
+  "months_available": 52,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GMTUSDT"
+ },
+ "GMXUSDT": {
+  "base": "GMX",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GMXUSDT"
+ },
+ "GOATUSDT": {
+  "base": "GOAT",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GOATUSDT"
+ },
+ "GOOGLUSDT": {
+  "base": "GOOGL",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GOOGLUSDT"
+ },
+ "GPSUSDT": {
+  "base": "GPS",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GPSUSDT"
+ },
+ "GRASSUSDT": {
+  "base": "GRASS",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GRASSUSDT"
+ },
+ "GRIFFAINUSDT": {
+  "base": "GRIFFAIN",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GRIFFAINUSDT"
+ },
+ "GRTUSDT": {
+  "base": "GRT",
+  "first_month": "2020-12",
+  "last_month": "2026-06",
+  "months_available": 67,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GRTUSDT"
+ },
+ "GTCUSDT": {
+  "base": "GTC",
+  "first_month": "2021-06",
+  "last_month": "2026-06",
+  "months_available": 61,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GTCUSDT"
+ },
+ "GUAUSDT": {
+  "base": "GUA",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GUAUSDT"
+ },
+ "GUNUSDT": {
+  "base": "GUN",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GUNUSDT"
+ },
+ "GUSDT": {
+  "base": "G",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GUSDT"
+ },
+ "GWEIUSDT": {
+  "base": "GWEI",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "GWEIUSDT"
+ },
+ "HAEDALUSDT": {
+  "base": "HAEDAL",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HAEDALUSDT"
+ },
+ "HANAUSDT": {
+  "base": "HANA",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HANAUSDT"
+ },
+ "HBARUSDC": {
+  "base": "HBAR",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "HBARUSDC"
+ },
+ "HBARUSDT": {
+  "base": "HBAR",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HBARUSDT"
+ },
+ "HDUSDT": {
+  "base": "HD",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HDUSDT"
+ },
+ "HEIUSDT": {
+  "base": "HEI",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HEIUSDT"
+ },
+ "HEMIUSDT": {
+  "base": "HEMI",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HEMIUSDT"
+ },
+ "HFTUSDT": {
+  "base": "HFT",
+  "first_month": "2023-04",
+  "last_month": "2026-06",
+  "months_available": 39,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HFTUSDT"
+ },
+ "HIFIUSDT": {
+  "base": "HIFI",
+  "first_month": "2023-09",
+  "last_month": "2026-06",
+  "months_available": 34,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HIFIUSDT"
+ },
+ "HIGHUSDT": {
+  "base": "HIGH",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HIGHUSDT"
+ },
+ "HIMSUSDT": {
+  "base": "HIMS",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HIMSUSDT"
+ },
+ "HIPPOUSDT": {
+  "base": "HIPPO",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HIPPOUSDT"
+ },
+ "HIVEUSDT": {
+  "base": "HIVE",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HIVEUSDT"
+ },
+ "HMSTRUSDT": {
+  "base": "HMSTR",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HMSTRUSDT"
+ },
+ "HNTUSDT": {
+  "base": "HNT",
+  "first_month": "2020-09",
+  "last_month": "2024-05",
+  "months_available": 45,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HNTUSDT"
+ },
+ "HOLOUSDT": {
+  "base": "HOLO",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HOLOUSDT"
+ },
+ "HOMEUSDT": {
+  "base": "HOME",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HOMEUSDT"
+ },
+ "HOODUSDT": {
+  "base": "HOOD",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HOODUSDT"
+ },
+ "HOOKUSDT": {
+  "base": "HOOK",
+  "first_month": "2023-01",
+  "last_month": "2026-06",
+  "months_available": 42,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HOOKUSDT"
+ },
+ "HOTUSDT": {
+  "base": "HOT",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HOTUSDT"
+ },
+ "HPEUSDT": {
+  "base": "HPE",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HPEUSDT"
+ },
+ "HUMAUSDT": {
+  "base": "HUMA",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HUMAUSDT"
+ },
+ "HUSDT": {
+  "base": "H",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HUSDT"
+ },
+ "HYPERUSDT": {
+  "base": "HYPER",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HYPERUSDT"
+ },
+ "HYPEUSDT": {
+  "base": "HYPE",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HYPEUSDT"
+ },
+ "HYUNDAIUSDT": {
+  "base": "HYUNDAI",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "HYUNDAIUSDT"
+ },
+ "IBMUSDT": {
+  "base": "IBM",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IBMUSDT"
+ },
+ "ICNTUSDT": {
+  "base": "ICNT",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ICNTUSDT"
+ },
+ "ICPBUSD": {
+  "base": "ICPB",
+  "first_month": "2022-06",
+  "last_month": "2023-03",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "ICPBUSD"
+ },
+ "ICPUSDT": {
+  "base": "ICP",
+  "first_month": "2021-05",
+  "last_month": "2026-06",
+  "months_available": 62,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ICPUSDT"
+ },
+ "ICPUSDT_SETTLED": {
+  "base": "ICPUSDT_SETTLED",
+  "first_month": "2022-01",
+  "last_month": "2022-09",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "ICPUSDT_SETTLED"
+ },
+ "ICXUSDT": {
+  "base": "ICX",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ICXUSDT"
+ },
+ "IDEXUSDT": {
+  "base": "IDEX",
+  "first_month": "2023-05",
+  "last_month": "2026-06",
+  "months_available": 38,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IDEXUSDT"
+ },
+ "IDOLUSDT": {
+  "base": "IDOL",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IDOLUSDT"
+ },
+ "IDUSDT": {
+  "base": "ID",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IDUSDT"
+ },
+ "ILVUSDT": {
+  "base": "ILV",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ILVUSDT"
+ },
+ "IMXUSDT": {
+  "base": "IMX",
+  "first_month": "2022-02",
+  "last_month": "2026-06",
+  "months_available": 53,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IMXUSDT"
+ },
+ "INITUSDT": {
+  "base": "INIT",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "INITUSDT"
+ },
+ "INJUSDT": {
+  "base": "INJ",
+  "first_month": "2022-08",
+  "last_month": "2026-06",
+  "months_available": 47,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "INJUSDT"
+ },
+ "INTCUSDT": {
+  "base": "INTC",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "INTCUSDT"
+ },
+ "INUSDT": {
+  "base": "IN",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "INUSDT"
+ },
+ "INXUSDT": {
+  "base": "INX",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "INXUSDT"
+ },
+ "IOSTUSDT": {
+  "base": "IOST",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IOSTUSDT"
+ },
+ "IOTAUSDT": {
+  "base": "IOTA",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IOTAUSDT"
+ },
+ "IOTXUSDT": {
+  "base": "IOTX",
+  "first_month": "2021-08",
+  "last_month": "2026-06",
+  "months_available": 59,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IOTXUSDT"
+ },
+ "IOUSDT": {
+  "base": "IO",
+  "first_month": "2024-06",
+  "last_month": "2026-06",
+  "months_available": 25,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IOUSDT"
+ },
+ "IPUSDC": {
+  "base": "IP",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "IPUSDC"
+ },
+ "IPUSDT": {
+  "base": "IP",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IPUSDT"
+ },
+ "IRENUSDT": {
+  "base": "IREN",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IRENUSDT"
+ },
+ "IRUSDT": {
+  "base": "IR",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IRUSDT"
+ },
+ "IRYSUSDT": {
+  "base": "IRYS",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IRYSUSDT"
+ },
+ "IWMUSDT": {
+  "base": "IWM",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "IWMUSDT"
+ },
+ "JASMYUSDT": {
+  "base": "JASMY",
+  "first_month": "2022-04",
+  "last_month": "2026-06",
+  "months_available": 51,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JASMYUSDT"
+ },
+ "JCTUSDT": {
+  "base": "JCT",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JCTUSDT"
+ },
+ "JELLYJELLYUSDT": {
+  "base": "JELLYJELLY",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JELLYJELLYUSDT"
+ },
+ "JOEUSDT": {
+  "base": "JOE",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JOEUSDT"
+ },
+ "JPMUSDT": {
+  "base": "JPM",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JPMUSDT"
+ },
+ "JSTUSDT": {
+  "base": "JST",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JSTUSDT"
+ },
+ "JTOUSDT": {
+  "base": "JTO",
+  "first_month": "2023-12",
+  "last_month": "2026-06",
+  "months_available": 31,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JTOUSDT"
+ },
+ "JUPUSDT": {
+  "base": "JUP",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "JUPUSDT"
+ },
+ "KAIAUSDT": {
+  "base": "KAIA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KAIAUSDT"
+ },
+ "KAITOUSDC": {
+  "base": "KAITO",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "KAITOUSDC"
+ },
+ "KAITOUSDT": {
+  "base": "KAITO",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KAITOUSDT"
+ },
+ "KASUSDT": {
+  "base": "KAS",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KASUSDT"
+ },
+ "KATUSDT": {
+  "base": "KAT",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KATUSDT"
+ },
+ "KAVAUSDT": {
+  "base": "KAVA",
+  "first_month": "2020-07",
+  "last_month": "2026-06",
+  "months_available": 72,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KAVAUSDT"
+ },
+ "KDAUSDT": {
+  "base": "KDA",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KDAUSDT"
+ },
+ "KEEPUSDT": {
+  "base": "KEEP",
+  "first_month": "2021-06",
+  "last_month": "2022-02",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KEEPUSDT"
+ },
+ "KERNELUSDT": {
+  "base": "KERNEL",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KERNELUSDT"
+ },
+ "KEYUSDT": {
+  "base": "KEY",
+  "first_month": "2023-05",
+  "last_month": "2026-06",
+  "months_available": 38,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KEYUSDT"
+ },
+ "KGENUSDT": {
+  "base": "KGEN",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KGENUSDT"
+ },
+ "KITEUSDT": {
+  "base": "KITE",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KITEUSDT"
+ },
+ "KLACUSDT": {
+  "base": "KLAC",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KLACUSDT"
+ },
+ "KLAYUSDT": {
+  "base": "KLAY",
+  "first_month": "2021-10",
+  "last_month": "2026-06",
+  "months_available": 57,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KLAYUSDT"
+ },
+ "KMNOUSDT": {
+  "base": "KMNO",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KMNOUSDT"
+ },
+ "KNCUSDT": {
+  "base": "KNC",
+  "first_month": "2020-06",
+  "last_month": "2026-06",
+  "months_available": 73,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KNCUSDT"
+ },
+ "KOMAUSDT": {
+  "base": "KOMA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KOMAUSDT"
+ },
+ "KORUUSDT": {
+  "base": "KORU",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KORUUSDT"
+ },
+ "KSMUSDT": {
+  "base": "KSM",
+  "first_month": "2020-10",
+  "last_month": "2026-06",
+  "months_available": 69,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "KSMUSDT"
+ },
+ "LABUSDT": {
+  "base": "LAB",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LABUSDT"
+ },
+ "LAUSDT": {
+  "base": "LA",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LAUSDT"
+ },
+ "LAYERUSDT": {
+  "base": "LAYER",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LAYERUSDT"
+ },
+ "LDOBUSD": {
+  "base": "LDOB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "LDOBUSD"
+ },
+ "LDOUSDT": {
+  "base": "LDO",
+  "first_month": "2022-09",
+  "last_month": "2026-06",
+  "months_available": 46,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LDOUSDT"
+ },
+ "LENDUSDT": {
+  "base": "LEND",
+  "first_month": "2020-07",
+  "last_month": "2020-11",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LENDUSDT"
+ },
+ "LEVERBUSD": {
+  "base": "LEVERB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "LEVERBUSD"
+ },
+ "LEVERUSDT": {
+  "base": "LEVER",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LEVERUSDT"
+ },
+ "LIGHTUSDT": {
+  "base": "LIGHT",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LIGHTUSDT"
+ },
+ "LINAUSDT": {
+  "base": "LINA",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LINAUSDT"
+ },
+ "LINEAUSDT": {
+  "base": "LINEA",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LINEAUSDT"
+ },
+ "LINKBUSD": {
+  "base": "LINKB",
+  "first_month": "2022-06",
+  "last_month": "2023-12",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "LINKBUSD"
+ },
+ "LINKUSDC": {
+  "base": "LINK",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "LINKUSDC"
+ },
+ "LINKUSDT": {
+  "base": "LINK",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LINKUSDT"
+ },
+ "LISTAUSDT": {
+  "base": "LISTA",
+  "first_month": "2024-06",
+  "last_month": "2026-06",
+  "months_available": 25,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LISTAUSDT"
+ },
+ "LITEUSDT": {
+  "base": "LITE",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LITEUSDT"
+ },
+ "LITUSDT": {
+  "base": "LIT",
+  "first_month": "2021-02",
+  "last_month": "2026-06",
+  "months_available": 65,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LITUSDT"
+ },
+ "LITUSDTSETTLED": {
+  "base": "LITUSDTSETTLED",
+  "first_month": "2025-12",
+  "last_month": "2025-12",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "LITUSDTSETTLED"
+ },
+ "LLYUSDT": {
+  "base": "LLY",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LLYUSDT"
+ },
+ "LOKAUSDT": {
+  "base": "LOKA",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LOKAUSDT"
+ },
+ "LOOMUSDT": {
+  "base": "LOOM",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LOOMUSDT"
+ },
+ "LPTUSDT": {
+  "base": "LPT",
+  "first_month": "2021-11",
+  "last_month": "2026-06",
+  "months_available": 56,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LPTUSDT"
+ },
+ "LQTYUSDT": {
+  "base": "LQTY",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LQTYUSDT"
+ },
+ "LRCUSDT": {
+  "base": "LRC",
+  "first_month": "2020-10",
+  "last_month": "2026-06",
+  "months_available": 69,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LRCUSDT"
+ },
+ "LRCXUSDT": {
+  "base": "LRCX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LRCXUSDT"
+ },
+ "LSKUSDT": {
+  "base": "LSK",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LSKUSDT"
+ },
+ "LTCBUSD": {
+  "base": "LTCB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "LTCBUSD"
+ },
+ "LTCUSDC": {
+  "base": "LTC",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "LTCUSDC"
+ },
+ "LTCUSDT": {
+  "base": "LTC",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LTCUSDT"
+ },
+ "LUMIAUSDT": {
+  "base": "LUMIA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LUMIAUSDT"
+ },
+ "LUNA2BUSD": {
+  "base": "LUNA2B",
+  "first_month": "2022-06",
+  "last_month": "2023-03",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "LUNA2BUSD"
+ },
+ "LUNA2USDT": {
+  "base": "LUNA2",
+  "first_month": "2022-09",
+  "last_month": "2026-06",
+  "months_available": 46,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LUNA2USDT"
+ },
+ "LUNABUSD": {
+  "base": "LUNAB",
+  "first_month": "2022-05",
+  "last_month": "2022-05",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "LUNABUSD"
+ },
+ "LUNAUSDT": {
+  "base": "LUNA",
+  "first_month": "2021-01",
+  "last_month": "2022-05",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LUNAUSDT"
+ },
+ "LYNUSDT": {
+  "base": "LYN",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "LYNUSDT"
+ },
+ "MAGICUSDT": {
+  "base": "MAGIC",
+  "first_month": "2023-01",
+  "last_month": "2026-06",
+  "months_available": 42,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MAGICUSDT"
+ },
+ "MAGMAUSDT": {
+  "base": "MAGMA",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MAGMAUSDT"
+ },
+ "MANAUSDT": {
+  "base": "MANA",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MANAUSDT"
+ },
+ "MANTAUSDT": {
+  "base": "MANTA",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MANTAUSDT"
+ },
+ "MANTRAUSDT": {
+  "base": "MANTRA",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MANTRAUSDT"
+ },
+ "MASKUSDT": {
+  "base": "MASK",
+  "first_month": "2021-08",
+  "last_month": "2026-06",
+  "months_available": 59,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MASKUSDT"
+ },
+ "MATICBUSD": {
+  "base": "MATICB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "MATICBUSD"
+ },
+ "MATICUSDC": {
+  "base": "MATIC",
+  "first_month": "2024-04",
+  "last_month": "2024-09",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "MATICUSDC"
+ },
+ "MATICUSDT": {
+  "base": "MATIC",
+  "first_month": "2020-10",
+  "last_month": "2024-09",
+  "months_available": 48,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MATICUSDT"
+ },
+ "MAVIAUSDT": {
+  "base": "MAVIA",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MAVIAUSDT"
+ },
+ "MAVIAUSDTSETTLED": {
+  "base": "MAVIAUSDTSETTLED",
+  "first_month": "2025-03",
+  "last_month": "2025-03",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "MAVIAUSDTSETTLED"
+ },
+ "MAVUSDT": {
+  "base": "MAV",
+  "first_month": "2023-06",
+  "last_month": "2026-06",
+  "months_available": 37,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MAVUSDT"
+ },
+ "MBLUSDT": {
+  "base": "MBL",
+  "first_month": "2023-11",
+  "last_month": "2024-05",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MBLUSDT"
+ },
+ "MBOXUSDT": {
+  "base": "MBOX",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MBOXUSDT"
+ },
+ "MDTUSDT": {
+  "base": "MDT",
+  "first_month": "2023-06",
+  "last_month": "2026-06",
+  "months_available": 37,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MDTUSDT"
+ },
+ "MEGAUSDT": {
+  "base": "MEGA",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MEGAUSDT"
+ },
+ "MELANIAUSDT": {
+  "base": "MELANIA",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MELANIAUSDT"
+ },
+ "MEMEFIUSDT": {
+  "base": "MEMEFI",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MEMEFIUSDT"
+ },
+ "MEMEUSDT": {
+  "base": "MEME",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MEMEUSDT"
+ },
+ "MERLUSDT": {
+  "base": "MERL",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MERLUSDT"
+ },
+ "METAUSDT": {
+  "base": "META",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "METAUSDT"
+ },
+ "METISUSDT": {
+  "base": "METIS",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "METISUSDT"
+ },
+ "METUSDT": {
+  "base": "MET",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "METUSDT"
+ },
+ "MEUSDT": {
+  "base": "ME",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MEUSDT"
+ },
+ "MEWUSDT": {
+  "base": "MEW",
+  "first_month": "2024-06",
+  "last_month": "2026-06",
+  "months_available": 25,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MEWUSDT"
+ },
+ "MILKUSDT": {
+  "base": "MILK",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MILKUSDT"
+ },
+ "MINAUSDT": {
+  "base": "MINA",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MINAUSDT"
+ },
+ "MINAUSDTSETTLED": {
+  "base": "MINAUSDTSETTLED",
+  "first_month": "2023-02",
+  "last_month": "2023-02",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "MINAUSDTSETTLED"
+ },
+ "MIRAUSDT": {
+  "base": "MIRA",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MIRAUSDT"
+ },
+ "MITOUSDT": {
+  "base": "MITO",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MITOUSDT"
+ },
+ "MKRUSDT": {
+  "base": "MKR",
+  "first_month": "2020-08",
+  "last_month": "2026-06",
+  "months_available": 71,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MKRUSDT"
+ },
+ "MLNUSDT": {
+  "base": "MLN",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MLNUSDT"
+ },
+ "MMTUSDT": {
+  "base": "MMT",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MMTUSDT"
+ },
+ "MOCAUSDT": {
+  "base": "MOCA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MOCAUSDT"
+ },
+ "MONUSDT": {
+  "base": "MON",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MONUSDT"
+ },
+ "MOODENGUSDT": {
+  "base": "MOODENG",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MOODENGUSDT"
+ },
+ "MORPHOUSDT": {
+  "base": "MORPHO",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MORPHOUSDT"
+ },
+ "MOVEUSDT": {
+  "base": "MOVE",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MOVEUSDT"
+ },
+ "MOVRUSDT": {
+  "base": "MOVR",
+  "first_month": "2023-12",
+  "last_month": "2026-06",
+  "months_available": 31,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MOVRUSDT"
+ },
+ "MRVLUSDT": {
+  "base": "MRVL",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MRVLUSDT"
+ },
+ "MSFTUSDT": {
+  "base": "MSFT",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MSFTUSDT"
+ },
+ "MSTRUSDT": {
+  "base": "MSTR",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MSTRUSDT"
+ },
+ "MTLUSDT": {
+  "base": "MTL",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MTLUSDT"
+ },
+ "MUBARAKUSDT": {
+  "base": "MUBARAK",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MUBARAKUSDT"
+ },
+ "MUSDT": {
+  "base": "M",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MUSDT"
+ },
+ "MUUSDT": {
+  "base": "MU",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MUUSDT"
+ },
+ "MVLLUSDT": {
+  "base": "MVLL",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MVLLUSDT"
+ },
+ "MYROUSDT": {
+  "base": "MYRO",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MYROUSDT"
+ },
+ "MYXUSDT": {
+  "base": "MYX",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "MYXUSDT"
+ },
+ "NAORISUSDT": {
+  "base": "NAORIS",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NAORISUSDT"
+ },
+ "NATGASUSDT": {
+  "base": "NATGAS",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NATGASUSDT"
+ },
+ "NBISUSDT": {
+  "base": "NBIS",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NBISUSDT"
+ },
+ "NEARBUSD": {
+  "base": "NEARB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "NEARBUSD"
+ },
+ "NEARUSDC": {
+  "base": "NEAR",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "NEARUSDC"
+ },
+ "NEARUSDT": {
+  "base": "NEAR",
+  "first_month": "2020-10",
+  "last_month": "2026-06",
+  "months_available": 69,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NEARUSDT"
+ },
+ "NEIROETHUSDT": {
+  "base": "NEIROETH",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NEIROETHUSDT"
+ },
+ "NEIROUSDT": {
+  "base": "NEIRO",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NEIROUSDT"
+ },
+ "NEOUSDC": {
+  "base": "NEO",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "NEOUSDC"
+ },
+ "NEOUSDT": {
+  "base": "NEO",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NEOUSDT"
+ },
+ "NEWTUSDT": {
+  "base": "NEWT",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NEWTUSDT"
+ },
+ "NFLXUSDT": {
+  "base": "NFLX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NFLXUSDT"
+ },
+ "NFPUSDT": {
+  "base": "NFP",
+  "first_month": "2023-12",
+  "last_month": "2026-06",
+  "months_available": 31,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NFPUSDT"
+ },
+ "NIGHTUSDT": {
+  "base": "NIGHT",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NIGHTUSDT"
+ },
+ "NILUSDT": {
+  "base": "NIL",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NILUSDT"
+ },
+ "NKNUSDT": {
+  "base": "NKN",
+  "first_month": "2021-04",
+  "last_month": "2026-06",
+  "months_available": 63,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NKNUSDT"
+ },
+ "NMRUSDT": {
+  "base": "NMR",
+  "first_month": "2023-06",
+  "last_month": "2026-06",
+  "months_available": 37,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NMRUSDT"
+ },
+ "NOKUSDT": {
+  "base": "NOK",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NOKUSDT"
+ },
+ "NOMUSDT": {
+  "base": "NOM",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NOMUSDT"
+ },
+ "NOTUSDT": {
+  "base": "NOT",
+  "first_month": "2024-05",
+  "last_month": "2026-06",
+  "months_available": 26,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NOTUSDT"
+ },
+ "NOWUSDT": {
+  "base": "NOW",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NOWUSDT"
+ },
+ "NTRNUSDT": {
+  "base": "NTRN",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NTRNUSDT"
+ },
+ "NULSUSDT": {
+  "base": "NULS",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NULSUSDT"
+ },
+ "NUUSDT": {
+  "base": "NU",
+  "first_month": "2021-10",
+  "last_month": "2022-02",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NUUSDT"
+ },
+ "NVDAUSDT": {
+  "base": "NVDA",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NVDAUSDT"
+ },
+ "NVOUSDT": {
+  "base": "NVO",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NVOUSDT"
+ },
+ "NXPCUSDT": {
+  "base": "NXPC",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "NXPCUSDT"
+ },
+ "OBOLUSDT": {
+  "base": "OBOL",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OBOLUSDT"
+ },
+ "OCEANUSDT": {
+  "base": "OCEAN",
+  "first_month": "2020-11",
+  "last_month": "2026-06",
+  "months_available": 68,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OCEANUSDT"
+ },
+ "OGNUSDT": {
+  "base": "OGN",
+  "first_month": "2021-04",
+  "last_month": "2026-06",
+  "months_available": 63,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OGNUSDT"
+ },
+ "OGUSDT": {
+  "base": "OG",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OGUSDT"
+ },
+ "OLUSDT": {
+  "base": "OL",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OLUSDT"
+ },
+ "OMGUSDT": {
+  "base": "OMG",
+  "first_month": "2020-07",
+  "last_month": "2026-06",
+  "months_available": 72,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OMGUSDT"
+ },
+ "OMNIUSDT": {
+  "base": "OMNI",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OMNIUSDT"
+ },
+ "OMUSDT": {
+  "base": "OM",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OMUSDT"
+ },
+ "ONDOUSDT": {
+  "base": "ONDO",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ONDOUSDT"
+ },
+ "ONDSUSDT": {
+  "base": "ONDS",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ONDSUSDT"
+ },
+ "ONEUSDT": {
+  "base": "ONE",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ONEUSDT"
+ },
+ "ONGUSDT": {
+  "base": "ONG",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ONGUSDT"
+ },
+ "ONTUSDT": {
+  "base": "ONT",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ONTUSDT"
+ },
+ "ONUSDT": {
+  "base": "ON",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ONUSDT"
+ },
+ "OPENAIUSDT": {
+  "base": "OPENAI",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OPENAIUSDT"
+ },
+ "OPENUSDT": {
+  "base": "OPEN",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OPENUSDT"
+ },
+ "OPGUSDT": {
+  "base": "OPG",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OPGUSDT"
+ },
+ "OPNUSDT": {
+  "base": "OPN",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OPNUSDT"
+ },
+ "OPUSDT": {
+  "base": "OP",
+  "first_month": "2022-06",
+  "last_month": "2026-06",
+  "months_available": 49,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OPUSDT"
+ },
+ "ORBSUSDT": {
+  "base": "ORBS",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ORBSUSDT"
+ },
+ "ORCAUSDT": {
+  "base": "ORCA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ORCAUSDT"
+ },
+ "ORCLUSDT": {
+  "base": "ORCL",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ORCLUSDT"
+ },
+ "ORDERUSDT": {
+  "base": "ORDER",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ORDERUSDT"
+ },
+ "ORDIUSDC": {
+  "base": "ORDI",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "ORDIUSDC"
+ },
+ "ORDIUSDT": {
+  "base": "ORDI",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ORDIUSDT"
+ },
+ "OUSDT": {
+  "base": "O",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OUSDT"
+ },
+ "OXTUSDT": {
+  "base": "OXT",
+  "first_month": "2023-08",
+  "last_month": "2026-06",
+  "months_available": 35,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "OXTUSDT"
+ },
+ "PARTIUSDT": {
+  "base": "PARTI",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PARTIUSDT"
+ },
+ "PAXGUSDT": {
+  "base": "PAXG",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PAXGUSDT"
+ },
+ "PAYPUSDT": {
+  "base": "PAYP",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PAYPUSDT"
+ },
+ "PENDLEUSDT": {
+  "base": "PENDLE",
+  "first_month": "2023-07",
+  "last_month": "2026-06",
+  "months_available": 36,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PENDLEUSDT"
+ },
+ "PENGUUSDC": {
+  "base": "PENGU",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "PENGUUSDC"
+ },
+ "PENGUUSDT": {
+  "base": "PENGU",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PENGUUSDT"
+ },
+ "PEOPLEUSDT": {
+  "base": "PEOPLE",
+  "first_month": "2021-12",
+  "last_month": "2026-06",
+  "months_available": 55,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PEOPLEUSDT"
+ },
+ "PERPUSDT": {
+  "base": "PERP",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PERPUSDT"
+ },
+ "PHAROSUSDT": {
+  "base": "PHAROS",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PHAROSUSDT"
+ },
+ "PHAUSDT": {
+  "base": "PHA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PHAUSDT"
+ },
+ "PHBBUSD": {
+  "base": "PHBB",
+  "first_month": "2022-09",
+  "last_month": "2023-12",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "PHBBUSD"
+ },
+ "PHBUSDT": {
+  "base": "PHB",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PHBUSDT"
+ },
+ "PIEVERSEUSDT": {
+  "base": "PIEVERSE",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PIEVERSEUSDT"
+ },
+ "PIPPINUSDT": {
+  "base": "PIPPIN",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PIPPINUSDT"
+ },
+ "PIXELUSDT": {
+  "base": "PIXEL",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PIXELUSDT"
+ },
+ "PLAYUSDT": {
+  "base": "PLAY",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PLAYUSDT"
+ },
+ "PLTRUSDT": {
+  "base": "PLTR",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PLTRUSDT"
+ },
+ "PLUMEUSDT": {
+  "base": "PLUME",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PLUMEUSDT"
+ },
+ "PNUTUSDC": {
+  "base": "PNUT",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "PNUTUSDC"
+ },
+ "PNUTUSDT": {
+  "base": "PNUT",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PNUTUSDT"
+ },
+ "POLUSDT": {
+  "base": "POL",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "POLUSDT"
+ },
+ "POLYXUSDT": {
+  "base": "POLYX",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "POLYXUSDT"
+ },
+ "PONKEUSDT": {
+  "base": "PONKE",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PONKEUSDT"
+ },
+ "POPCATUSDT": {
+  "base": "POPCAT",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "POPCATUSDT"
+ },
+ "PORT3USDT": {
+  "base": "PORT3",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PORT3USDT"
+ },
+ "PORTALUSDT": {
+  "base": "PORTAL",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PORTALUSDT"
+ },
+ "POWERUSDT": {
+  "base": "POWER",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "POWERUSDT"
+ },
+ "POWRUSDT": {
+  "base": "POWR",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "POWRUSDT"
+ },
+ "PRLUSDT": {
+  "base": "PRL",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PRLUSDT"
+ },
+ "PROMPTUSDT": {
+  "base": "PROMPT",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PROMPTUSDT"
+ },
+ "PROMUSDT": {
+  "base": "PROM",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PROMUSDT"
+ },
+ "PROVEUSDT": {
+  "base": "PROVE",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PROVEUSDT"
+ },
+ "PTBUSDT": {
+  "base": "PTB",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PTBUSDT"
+ },
+ "PUFFERUSDT": {
+  "base": "PUFFER",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PUFFERUSDT"
+ },
+ "PUMPBTCUSDT": {
+  "base": "PUMPBTC",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PUMPBTCUSDT"
+ },
+ "PUMPUSDT": {
+  "base": "PUMP",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PUMPUSDT"
+ },
+ "PUMPUSDTSETTLED": {
+  "base": "PUMPUSDTSETTLED",
+  "first_month": "2025-07",
+  "last_month": "2025-07",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "PUMPUSDTSETTLED"
+ },
+ "PUNDIXUSDT": {
+  "base": "PUNDIX",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PUNDIXUSDT"
+ },
+ "PYTHUSDT": {
+  "base": "PYTH",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "PYTHUSDT"
+ },
+ "QCOMUSDT": {
+  "base": "QCOM",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "QCOMUSDT"
+ },
+ "QNTUSDT": {
+  "base": "QNT",
+  "first_month": "2022-10",
+  "last_month": "2026-06",
+  "months_available": 45,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "QNTUSDT"
+ },
+ "QNTXUSDT": {
+  "base": "QNTX",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "QNTXUSDT"
+ },
+ "QQQUSDT": {
+  "base": "QQQ",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "QQQUSDT"
+ },
+ "QTUMUSDT": {
+  "base": "QTUM",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "QTUMUSDT"
+ },
+ "QUICKUSDT": {
+  "base": "QUICK",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "QUICKUSDT"
+ },
+ "QUSDT": {
+  "base": "Q",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "QUSDT"
+ },
+ "RADUSDT": {
+  "base": "RAD",
+  "first_month": "2023-05",
+  "last_month": "2026-06",
+  "months_available": 38,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RADUSDT"
+ },
+ "RAREUSDT": {
+  "base": "RARE",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RAREUSDT"
+ },
+ "RAVEUSDT": {
+  "base": "RAVE",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RAVEUSDT"
+ },
+ "RAYSOLUSDT": {
+  "base": "RAYSOL",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RAYSOLUSDT"
+ },
+ "RAYUSDT": {
+  "base": "RAY",
+  "first_month": "2021-08",
+  "last_month": "2026-06",
+  "months_available": 59,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RAYUSDT"
+ },
+ "RDNTUSDT": {
+  "base": "RDNT",
+  "first_month": "2023-04",
+  "last_month": "2026-06",
+  "months_available": 39,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RDNTUSDT"
+ },
+ "RECALLUSDT": {
+  "base": "RECALL",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RECALLUSDT"
+ },
+ "REDUSDT": {
+  "base": "RED",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "REDUSDT"
+ },
+ "REEFUSDT": {
+  "base": "REEF",
+  "first_month": "2021-02",
+  "last_month": "2026-06",
+  "months_available": 65,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "REEFUSDT"
+ },
+ "REIUSDT": {
+  "base": "REI",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "REIUSDT"
+ },
+ "RENDERUSDT": {
+  "base": "RENDER",
+  "first_month": "2024-07",
+  "last_month": "2026-06",
+  "months_available": 24,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RENDERUSDT"
+ },
+ "RENUSDT": {
+  "base": "REN",
+  "first_month": "2020-10",
+  "last_month": "2026-06",
+  "months_available": 69,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RENUSDT"
+ },
+ "RESOLVUSDT": {
+  "base": "RESOLV",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RESOLVUSDT"
+ },
+ "REUSDT": {
+  "base": "RE",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "REUSDT"
+ },
+ "REZUSDT": {
+  "base": "REZ",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "REZUSDT"
+ },
+ "RIFUSDT": {
+  "base": "RIF",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RIFUSDT"
+ },
+ "RIVERUSDT": {
+  "base": "RIVER",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RIVERUSDT"
+ },
+ "RIVNUSDT": {
+  "base": "RIVN",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RIVNUSDT"
+ },
+ "RKLBUSDT": {
+  "base": "RKLB",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RKLBUSDT"
+ },
+ "RLCUSDT": {
+  "base": "RLC",
+  "first_month": "2020-07",
+  "last_month": "2026-06",
+  "months_available": 72,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RLCUSDT"
+ },
+ "RLSUSDT": {
+  "base": "RLS",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RLSUSDT"
+ },
+ "RNDRUSDT": {
+  "base": "RNDR",
+  "first_month": "2023-02",
+  "last_month": "2024-07",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RNDRUSDT"
+ },
+ "ROBOUSDT": {
+  "base": "ROBO",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ROBOUSDT"
+ },
+ "RONINUSDT": {
+  "base": "RONIN",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RONINUSDT"
+ },
+ "ROSEUSDT": {
+  "base": "ROSE",
+  "first_month": "2021-12",
+  "last_month": "2026-06",
+  "months_available": 55,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ROSEUSDT"
+ },
+ "RPLUSDT": {
+  "base": "RPL",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RPLUSDT"
+ },
+ "RSRUSDT": {
+  "base": "RSR",
+  "first_month": "2020-10",
+  "last_month": "2026-06",
+  "months_available": 69,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RSRUSDT"
+ },
+ "RUNEUSDT": {
+  "base": "RUNE",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RUNEUSDT"
+ },
+ "RVNUSDT": {
+  "base": "RVN",
+  "first_month": "2021-02",
+  "last_month": "2026-06",
+  "months_available": 65,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RVNUSDT"
+ },
+ "RVVUSDT": {
+  "base": "RVV",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "RVVUSDT"
+ },
+ "SAFEUSDT": {
+  "base": "SAFE",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SAFEUSDT"
+ },
+ "SAGAUSDT": {
+  "base": "SAGA",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SAGAUSDT"
+ },
+ "SAHARAUSDT": {
+  "base": "SAHARA",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SAHARAUSDT"
+ },
+ "SAMSUNGUSDT": {
+  "base": "SAMSUNG",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SAMSUNGUSDT"
+ },
+ "SANDBUSD": {
+  "base": "SANDB",
+  "first_month": "2022-07",
+  "last_month": "2023-12",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "SANDBUSD"
+ },
+ "SANDUSDT": {
+  "base": "SAND",
+  "first_month": "2021-01",
+  "last_month": "2026-06",
+  "months_available": 66,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SANDUSDT"
+ },
+ "SANTOSUSDT": {
+  "base": "SANTOS",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SANTOSUSDT"
+ },
+ "SAPIENUSDT": {
+  "base": "SAPIEN",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SAPIENUSDT"
+ },
+ "SCRTUSDT": {
+  "base": "SCRT",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SCRTUSDT"
+ },
+ "SCRUSDT": {
+  "base": "SCR",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SCRUSDT"
+ },
+ "SCUSDT": {
+  "base": "SC",
+  "first_month": "2021-04",
+  "last_month": "2026-06",
+  "months_available": 63,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SCUSDT"
+ },
+ "SEIUSDT": {
+  "base": "SEI",
+  "first_month": "2023-08",
+  "last_month": "2026-06",
+  "months_available": 35,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SEIUSDT"
+ },
+ "SENTUSDT": {
+  "base": "SENT",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SENTUSDT"
+ },
+ "SFPUSDT": {
+  "base": "SFP",
+  "first_month": "2021-02",
+  "last_month": "2026-06",
+  "months_available": 65,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SFPUSDT"
+ },
+ "SHELLUSDT": {
+  "base": "SHELL",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SHELLUSDT"
+ },
+ "SIGNUSDT": {
+  "base": "SIGN",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SIGNUSDT"
+ },
+ "SIRENUSDT": {
+  "base": "SIREN",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SIRENUSDT"
+ },
+ "SKATEUSDT": {
+  "base": "SKATE",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SKATEUSDT"
+ },
+ "SKHYNIXUSDT": {
+  "base": "SKHYNIX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SKHYNIXUSDT"
+ },
+ "SKLUSDT": {
+  "base": "SKL",
+  "first_month": "2020-12",
+  "last_month": "2026-06",
+  "months_available": 67,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SKLUSDT"
+ },
+ "SKRUSDT": {
+  "base": "SKR",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SKRUSDT"
+ },
+ "SKYAIUSDT": {
+  "base": "SKYAI",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SKYAIUSDT"
+ },
+ "SKYUSDT": {
+  "base": "SKY",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SKYUSDT"
+ },
+ "SLERFUSDT": {
+  "base": "SLERF",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SLERFUSDT"
+ },
+ "SLPUSDT": {
+  "base": "SLP",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SLPUSDT"
+ },
+ "SLPUSDTSETTLED": {
+  "base": "SLPUSDTSETTLED",
+  "first_month": "2025-07",
+  "last_month": "2025-07",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "SLPUSDTSETTLED"
+ },
+ "SLXUSDT": {
+  "base": "SLX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SLXUSDT"
+ },
+ "SMCIUSDT": {
+  "base": "SMCI",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SMCIUSDT"
+ },
+ "SNDKUSDT": {
+  "base": "SNDK",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SNDKUSDT"
+ },
+ "SNTUSDT": {
+  "base": "SNT",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SNTUSDT"
+ },
+ "SNXUSDT": {
+  "base": "SNX",
+  "first_month": "2020-08",
+  "last_month": "2026-06",
+  "months_available": 71,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SNXUSDT"
+ },
+ "SOLBUSD": {
+  "base": "SOLB",
+  "first_month": "2021-09",
+  "last_month": "2023-12",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "SOLBUSD"
+ },
+ "SOLUSDC": {
+  "base": "SOL",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "SOLUSDC"
+ },
+ "SOLUSDT": {
+  "base": "SOL",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SOLUSDT"
+ },
+ "SOLVUSDT": {
+  "base": "SOLV",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SOLVUSDT"
+ },
+ "SOMIUSDT": {
+  "base": "SOMI",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SOMIUSDT"
+ },
+ "SONICUSDT": {
+  "base": "SONIC",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SONICUSDT"
+ },
+ "SONYUSDT": {
+  "base": "SONY",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SONYUSDT"
+ },
+ "SOONUSDT": {
+  "base": "SOON",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SOONUSDT"
+ },
+ "SOPHUSDT": {
+  "base": "SOPH",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SOPHUSDT"
+ },
+ "SOXLUSDT": {
+  "base": "SOXL",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SOXLUSDT"
+ },
+ "SPACEUSDT": {
+  "base": "SPACE",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SPACEUSDT"
+ },
+ "SPCXUSDT": {
+  "base": "SPCX",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SPCXUSDT"
+ },
+ "SPELLUSDT": {
+  "base": "SPELL",
+  "first_month": "2022-09",
+  "last_month": "2026-06",
+  "months_available": 46,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SPELLUSDT"
+ },
+ "SPKUSDT": {
+  "base": "SPK",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SPKUSDT"
+ },
+ "SPORTFUNUSDT": {
+  "base": "SPORTFUN",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SPORTFUNUSDT"
+ },
+ "SPXUSDT": {
+  "base": "SPX",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SPXUSDT"
+ },
+ "SPYUSDT": {
+  "base": "SPY",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SPYUSDT"
+ },
+ "SQDUSDT": {
+  "base": "SQD",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SQDUSDT"
+ },
+ "SQQQUSDT": {
+  "base": "SQQQ",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SQQQUSDT"
+ },
+ "SRMUSDT": {
+  "base": "SRM",
+  "first_month": "2020-09",
+  "last_month": "2024-05",
+  "months_available": 45,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SRMUSDT"
+ },
+ "SSVUSDT": {
+  "base": "SSV",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SSVUSDT"
+ },
+ "STABLEUSDT": {
+  "base": "STABLE",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STABLEUSDT"
+ },
+ "STARUSDT": {
+  "base": "STAR",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STARUSDT"
+ },
+ "STBLUSDT": {
+  "base": "STBL",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STBLUSDT"
+ },
+ "STEEMUSDT": {
+  "base": "STEEM",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STEEMUSDT"
+ },
+ "STGUSDT": {
+  "base": "STG",
+  "first_month": "2022-08",
+  "last_month": "2026-06",
+  "months_available": 47,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STGUSDT"
+ },
+ "STMXUSDT": {
+  "base": "STMX",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STMXUSDT"
+ },
+ "STORJUSDT": {
+  "base": "STORJ",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STORJUSDT"
+ },
+ "STOUSDT": {
+  "base": "STO",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STOUSDT"
+ },
+ "STPTUSDT": {
+  "base": "STPT",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STPTUSDT"
+ },
+ "STRAXUSDT": {
+  "base": "STRAX",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STRAXUSDT"
+ },
+ "STRKUSDT": {
+  "base": "STRK",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STRKUSDT"
+ },
+ "STXUSDT": {
+  "base": "STX",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STXUSDT"
+ },
+ "STXXUSDT": {
+  "base": "STXX",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "STXXUSDT"
+ },
+ "SUIUSDC": {
+  "base": "SUI",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "SUIUSDC"
+ },
+ "SUIUSDT": {
+  "base": "SUI",
+  "first_month": "2023-05",
+  "last_month": "2026-06",
+  "months_available": 38,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SUIUSDT"
+ },
+ "SUNUSDT": {
+  "base": "SUN",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SUNUSDT"
+ },
+ "SUPERUSDT": {
+  "base": "SUPER",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SUPERUSDT"
+ },
+ "SUSDT": {
+  "base": "S",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SUSDT"
+ },
+ "SUSHIUSDT": {
+  "base": "SUSHI",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SUSHIUSDT"
+ },
+ "SWARMSUSDT": {
+  "base": "SWARMS",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SWARMSUSDT"
+ },
+ "SWELLUSDT": {
+  "base": "SWELL",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SWELLUSDT"
+ },
+ "SXPUSDT": {
+  "base": "SXP",
+  "first_month": "2020-07",
+  "last_month": "2026-05",
+  "months_available": 71,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SXPUSDT"
+ },
+ "SXPUSDTSETTLED": {
+  "base": "SXPUSDTSETTLED",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "SXPUSDTSETTLED"
+ },
+ "SXTUSDT": {
+  "base": "SXT",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SXTUSDT"
+ },
+ "SYNUSDT": {
+  "base": "SYN",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SYNUSDT"
+ },
+ "SYRUPUSDT": {
+  "base": "SYRUP",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SYRUPUSDT"
+ },
+ "SYSUSDT": {
+  "base": "SYS",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "SYSUSDT"
+ },
+ "TACUSDT": {
+  "base": "TAC",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TACUSDT"
+ },
+ "TAGUSDT": {
+  "base": "TAG",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TAGUSDT"
+ },
+ "TAIKOUSDT": {
+  "base": "TAIKO",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TAIKOUSDT"
+ },
+ "TAKEUSDT": {
+  "base": "TAKE",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TAKEUSDT"
+ },
+ "TANSSIUSDT": {
+  "base": "TANSSI",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TANSSIUSDT"
+ },
+ "TAOUSDT": {
+  "base": "TAO",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TAOUSDT"
+ },
+ "TAUSDT": {
+  "base": "TA",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TAUSDT"
+ },
+ "THETAUSDT": {
+  "base": "THETA",
+  "first_month": "2020-05",
+  "last_month": "2026-06",
+  "months_available": 74,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "THETAUSDT"
+ },
+ "THEUSDT": {
+  "base": "THE",
+  "first_month": "2024-11",
+  "last_month": "2026-06",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "THEUSDT"
+ },
+ "TIAUSDC": {
+  "base": "TIA",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "TIAUSDC"
+ },
+ "TIAUSDT": {
+  "base": "TIA",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TIAUSDT"
+ },
+ "TLMBUSD": {
+  "base": "TLMB",
+  "first_month": "2022-06",
+  "last_month": "2023-12",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "TLMBUSD"
+ },
+ "TLMUSDT": {
+  "base": "TLM",
+  "first_month": "2021-07",
+  "last_month": "2026-06",
+  "months_available": 60,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TLMUSDT"
+ },
+ "TLMUSDTSETTLED": {
+  "base": "TLMUSDTSETTLED",
+  "first_month": "2022-01",
+  "last_month": "2023-03",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": null,
+  "symbol": "TLMUSDTSETTLED"
+ },
+ "TNSRUSDT": {
+  "base": "TNSR",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TNSRUSDT"
+ },
+ "TOKENUSDT": {
+  "base": "TOKEN",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TOKENUSDT"
+ },
+ "TOMOUSDT": {
+  "base": "TOMO",
+  "first_month": "2020-10",
+  "last_month": "2024-05",
+  "months_available": 44,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TOMOUSDT"
+ },
+ "TONUSDT": {
+  "base": "TON",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TONUSDT"
+ },
+ "TOSHIUSDT": {
+  "base": "TOSHI",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TOSHIUSDT"
+ },
+ "TOWNSUSDT": {
+  "base": "TOWNS",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TOWNSUSDT"
+ },
+ "TQQQUSDT": {
+  "base": "TQQQ",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TQQQUSDT"
+ },
+ "TRADOORUSDT": {
+  "base": "TRADOOR",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRADOORUSDT"
+ },
+ "TRBUSDT": {
+  "base": "TRB",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRBUSDT"
+ },
+ "TREEUSDT": {
+  "base": "TREE",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TREEUSDT"
+ },
+ "TRIAUSDT": {
+  "base": "TRIA",
+  "first_month": "2026-02",
+  "last_month": "2026-06",
+  "months_available": 5,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRIAUSDT"
+ },
+ "TROYUSDT": {
+  "base": "TROY",
+  "first_month": "2024-10",
+  "last_month": "2026-06",
+  "months_available": 21,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TROYUSDT"
+ },
+ "TRUMPUSDC": {
+  "base": "TRUMP",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "TRUMPUSDC"
+ },
+ "TRUMPUSDT": {
+  "base": "TRUMP",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRUMPUSDT"
+ },
+ "TRUSTUSDT": {
+  "base": "TRUST",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRUSTUSDT"
+ },
+ "TRUTHUSDT": {
+  "base": "TRUTH",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRUTHUSDT"
+ },
+ "TRUUSDT": {
+  "base": "TRU",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRUUSDT"
+ },
+ "TRXBUSD": {
+  "base": "TRXB",
+  "first_month": "2022-05",
+  "last_month": "2023-12",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "TRXBUSD"
+ },
+ "TRXUSDT": {
+  "base": "TRX",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TRXUSDT"
+ },
+ "TSLAUSDT": {
+  "base": "TSLA",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TSLAUSDT"
+ },
+ "TSMUSDT": {
+  "base": "TSM",
+  "first_month": "2026-04",
+  "last_month": "2026-06",
+  "months_available": 3,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TSMUSDT"
+ },
+ "TSTUSDT": {
+  "base": "TST",
+  "first_month": "2025-02",
+  "last_month": "2026-06",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TSTUSDT"
+ },
+ "TURBOUSDT": {
+  "base": "TURBO",
+  "first_month": "2024-05",
+  "last_month": "2026-06",
+  "months_available": 26,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TURBOUSDT"
+ },
+ "TURTLEUSDT": {
+  "base": "TURTLE",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TURTLEUSDT"
+ },
+ "TUSDT": {
+  "base": "T",
+  "first_month": "2023-02",
+  "last_month": "2026-06",
+  "months_available": 41,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TUSDT"
+ },
+ "TUTUSDT": {
+  "base": "TUT",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TUTUSDT"
+ },
+ "TWTUSDT": {
+  "base": "TWT",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "TWTUSDT"
+ },
+ "UAIUSDT": {
+  "base": "UAI",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UAIUSDT"
+ },
+ "UBERUSDT": {
+  "base": "UBER",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UBERUSDT"
+ },
+ "UBUSDT": {
+  "base": "UB",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UBUSDT"
+ },
+ "UMAUSDT": {
+  "base": "UMA",
+  "first_month": "2023-05",
+  "last_month": "2026-06",
+  "months_available": 38,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UMAUSDT"
+ },
+ "UNFIUSDT": {
+  "base": "UNFI",
+  "first_month": "2021-02",
+  "last_month": "2026-06",
+  "months_available": 65,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UNFIUSDT"
+ },
+ "UNIBUSD": {
+  "base": "UNIB",
+  "first_month": "2022-08",
+  "last_month": "2023-12",
+  "months_available": 17,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "UNIBUSD"
+ },
+ "UNIUSDC": {
+  "base": "UNI",
+  "first_month": "2025-06",
+  "last_month": "2026-06",
+  "months_available": 13,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "UNIUSDC"
+ },
+ "UNIUSDT": {
+  "base": "UNI",
+  "first_month": "2020-09",
+  "last_month": "2026-06",
+  "months_available": 70,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UNIUSDT"
+ },
+ "URNMUSDT": {
+  "base": "URNM",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "URNMUSDT"
+ },
+ "USARUSDT": {
+  "base": "USAR",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "USARUSDT"
+ },
+ "USDCUSDT": {
+  "base": "USDC",
+  "first_month": "2023-03",
+  "last_month": "2026-06",
+  "months_available": 40,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "USDCUSDT"
+ },
+ "USELESSUSDT": {
+  "base": "USELESS",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "USELESSUSDT"
+ },
+ "USTCUSDT": {
+  "base": "USTC",
+  "first_month": "2023-11",
+  "last_month": "2026-06",
+  "months_available": 32,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "USTCUSDT"
+ },
+ "USUALUSDT": {
+  "base": "USUAL",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "USUALUSDT"
+ },
+ "USUSDT": {
+  "base": "US",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "USUSDT"
+ },
+ "UVXYUSDT": {
+  "base": "UVXY",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UVXYUSDT"
+ },
+ "UXLINKUSDT": {
+  "base": "UXLINK",
+  "first_month": "2024-09",
+  "last_month": "2026-06",
+  "months_available": 22,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "UXLINKUSDT"
+ },
+ "VANAUSDT": {
+  "base": "VANA",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VANAUSDT"
+ },
+ "VANRYUSDT": {
+  "base": "VANRY",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VANRYUSDT"
+ },
+ "VELODROMEUSDT": {
+  "base": "VELODROME",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VELODROMEUSDT"
+ },
+ "VELVETUSDT": {
+  "base": "VELVET",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VELVETUSDT"
+ },
+ "VETUSDT": {
+  "base": "VET",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VETUSDT"
+ },
+ "VFYUSDT": {
+  "base": "VFY",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VFYUSDT"
+ },
+ "VICUSDT": {
+  "base": "VIC",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VICUSDT"
+ },
+ "VIDTUSDT": {
+  "base": "VIDT",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VIDTUSDT"
+ },
+ "VINEUSDT": {
+  "base": "VINE",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VINEUSDT"
+ },
+ "VIRTUALUSDT": {
+  "base": "VIRTUAL",
+  "first_month": "2024-12",
+  "last_month": "2026-06",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VIRTUALUSDT"
+ },
+ "VOXELUSDT": {
+  "base": "VOXEL",
+  "first_month": "2024-08",
+  "last_month": "2026-06",
+  "months_available": 23,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VOXELUSDT"
+ },
+ "VTHOUSDT": {
+  "base": "VTHO",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VTHOUSDT"
+ },
+ "VUSDT": {
+  "base": "V",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VUSDT"
+ },
+ "VVVUSDT": {
+  "base": "VVV",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "VVVUSDT"
+ },
+ "WALUSDT": {
+  "base": "WAL",
+  "first_month": "2025-03",
+  "last_month": "2026-06",
+  "months_available": 16,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WALUSDT"
+ },
+ "WAVESBUSD": {
+  "base": "WAVESB",
+  "first_month": "2022-06",
+  "last_month": "2023-12",
+  "months_available": 19,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "WAVESBUSD"
+ },
+ "WAVESUSDT": {
+  "base": "WAVES",
+  "first_month": "2020-08",
+  "last_month": "2026-06",
+  "months_available": 71,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WAVESUSDT"
+ },
+ "WAXPUSDT": {
+  "base": "WAXP",
+  "first_month": "2023-10",
+  "last_month": "2026-06",
+  "months_available": 33,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WAXPUSDT"
+ },
+ "WCTUSDT": {
+  "base": "WCT",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WCTUSDT"
+ },
+ "WDCUSDT": {
+  "base": "WDC",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WDCUSDT"
+ },
+ "WETUSDT": {
+  "base": "WET",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WETUSDT"
+ },
+ "WIFUSDC": {
+  "base": "WIF",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "WIFUSDC"
+ },
+ "WIFUSDT": {
+  "base": "WIF",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WIFUSDT"
+ },
+ "WLDUSDC": {
+  "base": "WLD",
+  "first_month": "2024-03",
+  "last_month": "2026-06",
+  "months_available": 28,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "WLDUSDC"
+ },
+ "WLDUSDT": {
+  "base": "WLD",
+  "first_month": "2023-07",
+  "last_month": "2026-06",
+  "months_available": 36,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WLDUSDT"
+ },
+ "WLFIUSDC": {
+  "base": "WLFI",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "WLFIUSDC"
+ },
+ "WLFIUSDT": {
+  "base": "WLFI",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WLFIUSDT"
+ },
+ "WMTUSDT": {
+  "base": "WMT",
+  "first_month": "2026-05",
+  "last_month": "2026-06",
+  "months_available": 2,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WMTUSDT"
+ },
+ "WOOUSDT": {
+  "base": "WOO",
+  "first_month": "2022-04",
+  "last_month": "2026-06",
+  "months_available": 51,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WOOUSDT"
+ },
+ "WUSDT": {
+  "base": "W",
+  "first_month": "2024-04",
+  "last_month": "2026-06",
+  "months_available": 27,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "WUSDT"
+ },
+ "XAGUSDT": {
+  "base": "XAG",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XAGUSDT"
+ },
+ "XAIUSDT": {
+  "base": "XAI",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XAIUSDT"
+ },
+ "XANUSDT": {
+  "base": "XAN",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XANUSDT"
+ },
+ "XAUTUSDT": {
+  "base": "XAUT",
+  "first_month": "2026-03",
+  "last_month": "2026-06",
+  "months_available": 4,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XAUTUSDT"
+ },
+ "XAUUSDT": {
+  "base": "XAU",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XAUUSDT"
+ },
+ "XCNUSDT": {
+  "base": "XCN",
+  "first_month": "2025-04",
+  "last_month": "2026-06",
+  "months_available": 15,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XCNUSDT"
+ },
+ "XEMUSDT": {
+  "base": "XEM",
+  "first_month": "2021-03",
+  "last_month": "2026-06",
+  "months_available": 64,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XEMUSDT"
+ },
+ "XLEUSDT": {
+  "base": "XLE",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XLEUSDT"
+ },
+ "XLMUSDT": {
+  "base": "XLM",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XLMUSDT"
+ },
+ "XMRUSDT": {
+  "base": "XMR",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XMRUSDT"
+ },
+ "XNYUSDT": {
+  "base": "XNY",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XNYUSDT"
+ },
+ "XPDUSDT": {
+  "base": "XPD",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XPDUSDT"
+ },
+ "XPINUSDT": {
+  "base": "XPIN",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XPINUSDT"
+ },
+ "XPLUSDT": {
+  "base": "XPL",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XPLUSDT"
+ },
+ "XPTUSDT": {
+  "base": "XPT",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XPTUSDT"
+ },
+ "XRPBUSD": {
+  "base": "XRPB",
+  "first_month": "2021-08",
+  "last_month": "2023-12",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USD",
+  "symbol": "XRPBUSD"
+ },
+ "XRPUSDC": {
+  "base": "XRP",
+  "first_month": "2024-01",
+  "last_month": "2026-06",
+  "months_available": 30,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "XRPUSDC"
+ },
+ "XRPUSDT": {
+  "base": "XRP",
+  "first_month": "2020-01",
+  "last_month": "2026-06",
+  "months_available": 78,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XRPUSDT"
+ },
+ "XTZUSDT": {
+  "base": "XTZ",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XTZUSDT"
+ },
+ "XVGUSDT": {
+  "base": "XVG",
+  "first_month": "2023-07",
+  "last_month": "2026-06",
+  "months_available": 36,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XVGUSDT"
+ },
+ "XVSUSDT": {
+  "base": "XVS",
+  "first_month": "2023-04",
+  "last_month": "2026-06",
+  "months_available": 39,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "XVSUSDT"
+ },
+ "YALAUSDT": {
+  "base": "YALA",
+  "first_month": "2025-08",
+  "last_month": "2026-06",
+  "months_available": 11,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "YALAUSDT"
+ },
+ "YBUSDT": {
+  "base": "YB",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "YBUSDT"
+ },
+ "YFIIUSDT": {
+  "base": "YFII",
+  "first_month": "2020-09",
+  "last_month": "2022-04",
+  "months_available": 20,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "YFIIUSDT"
+ },
+ "YFIUSDT": {
+  "base": "YFI",
+  "first_month": "2020-08",
+  "last_month": "2026-06",
+  "months_available": 71,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "YFIUSDT"
+ },
+ "YGGUSDT": {
+  "base": "YGG",
+  "first_month": "2023-08",
+  "last_month": "2026-06",
+  "months_available": 35,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "YGGUSDT"
+ },
+ "ZAMAUSDT": {
+  "base": "ZAMA",
+  "first_month": "2026-01",
+  "last_month": "2026-06",
+  "months_available": 6,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZAMAUSDT"
+ },
+ "ZBTUSDT": {
+  "base": "ZBT",
+  "first_month": "2025-10",
+  "last_month": "2026-06",
+  "months_available": 9,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZBTUSDT"
+ },
+ "ZECUSDC": {
+  "base": "ZEC",
+  "first_month": "2025-11",
+  "last_month": "2026-06",
+  "months_available": 8,
+  "multiplier": 1,
+  "quote": "USDC",
+  "symbol": "ZECUSDC"
+ },
+ "ZECUSDT": {
+  "base": "ZEC",
+  "first_month": "2020-02",
+  "last_month": "2026-06",
+  "months_available": 77,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZECUSDT"
+ },
+ "ZENUSDT": {
+  "base": "ZEN",
+  "first_month": "2020-11",
+  "last_month": "2026-06",
+  "months_available": 68,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZENUSDT"
+ },
+ "ZEREBROUSDT": {
+  "base": "ZEREBRO",
+  "first_month": "2025-01",
+  "last_month": "2026-06",
+  "months_available": 18,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZEREBROUSDT"
+ },
+ "ZESTUSDT": {
+  "base": "ZEST",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZESTUSDT"
+ },
+ "ZETAUSDT": {
+  "base": "ZETA",
+  "first_month": "2024-02",
+  "last_month": "2026-06",
+  "months_available": 29,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZETAUSDT"
+ },
+ "ZILUSDT": {
+  "base": "ZIL",
+  "first_month": "2020-06",
+  "last_month": "2026-06",
+  "months_available": 73,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZILUSDT"
+ },
+ "ZKCUSDT": {
+  "base": "ZKC",
+  "first_month": "2025-09",
+  "last_month": "2026-06",
+  "months_available": 10,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZKCUSDT"
+ },
+ "ZKJUSDT": {
+  "base": "ZKJ",
+  "first_month": "2025-05",
+  "last_month": "2026-06",
+  "months_available": 14,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZKJUSDT"
+ },
+ "ZKPUSDT": {
+  "base": "ZKP",
+  "first_month": "2025-12",
+  "last_month": "2026-06",
+  "months_available": 7,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZKPUSDT"
+ },
+ "ZKUSDT": {
+  "base": "ZK",
+  "first_month": "2024-06",
+  "last_month": "2026-06",
+  "months_available": 25,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZKUSDT"
+ },
+ "ZMUSDT": {
+  "base": "ZM",
+  "first_month": "2026-06",
+  "last_month": "2026-06",
+  "months_available": 1,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZMUSDT"
+ },
+ "ZORAUSDT": {
+  "base": "ZORA",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZORAUSDT"
+ },
+ "ZRCUSDT": {
+  "base": "ZRC",
+  "first_month": "2025-07",
+  "last_month": "2026-06",
+  "months_available": 12,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZRCUSDT"
+ },
+ "ZROUSDT": {
+  "base": "ZRO",
+  "first_month": "2024-06",
+  "last_month": "2026-06",
+  "months_available": 25,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZROUSDT"
+ },
+ "ZRXUSDT": {
+  "base": "ZRX",
+  "first_month": "2020-06",
+  "last_month": "2026-06",
+  "months_available": 73,
+  "multiplier": 1,
+  "quote": "USDT",
+  "symbol": "ZRXUSDT"
+ }
+}

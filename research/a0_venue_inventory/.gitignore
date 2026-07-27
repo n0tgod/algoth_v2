@@ -1,0 +1,12 @@
+# Кэш сетевых ответов — воспроизводится повторным запуском inventory.py
+out/cache/
+out/run.log
+out/run.err
+
+# Результаты сбора и отчёт коммитятся отдельно, когда прогон завершён:
+#   out/summary.json, out/bybit.json, out/binance.json,
+#   out/hyperliquid.json, out/A0-report.md
+
+# Python
+__pycache__/
+*.pyc
