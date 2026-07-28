@@ -33,7 +33,9 @@ BIG_GROUP_PAIRS = 200      # выше этого группу дробит сл�
 def parse_groups(path):
     """Читает плоский YAML вида `ключ:` + список `  - ЗНАЧЕНИЕ`."""
     sections, current, top = {}, None, None
-    for raw in open(path, encoding="utf-8"):
+    with open(path, encoding="utf-8") as f:
+        lines = f.readlines()
+    for raw in lines:
         line = raw.split("#")[0].rstrip()
         if not line.strip():
             continue
@@ -56,7 +58,8 @@ def parse_groups(path):
 
 def eligible():
     """Активы, способные попасть хотя бы в одно окно walk-forward."""
-    u = json.load(open(UNIVERSE, encoding="utf-8"))
+    with open(UNIVERSE, encoding="utf-8") as f:
+        u = json.load(f)
     end = date.fromisoformat(u["archive_as_of"])
     cutoff = (end - timedelta(days=MIN_HISTORY)).isoformat()
     keep = {a for a, v in u["assets"].items()
