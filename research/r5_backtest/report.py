@@ -24,8 +24,10 @@ def pct(x, d=1):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--interval", default="1m")
+    ap.add_argument("--blend-funding", action="store_true")
     args = ap.parse_args()
-    path = os.path.join(OUT, f"validation_{args.interval}.json")
+    tag = "_blend" if args.blend_funding else ""
+    path = os.path.join(OUT, f"validation_{args.interval}{tag}.json")
     if not os.path.exists(path):
         raise SystemExit(f"нет {path} — сначала run.py --interval "
                          f"{args.interval}")

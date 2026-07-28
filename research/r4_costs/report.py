@@ -44,17 +44,47 @@ def sharpe(cell, h):
     return (t / math.sqrt(n)) * math.sqrt(365.0 / h)
 
 
+def split_arms(cells):
+    """Ячейки по рукам прогона: чистый остаток, он же на суженном
+    универсуме, комбинация с funding.
+
+    Разделять обязательно: без этого «медиана нетто по сетке» считалась
+    бы по смеси трёх книг, и любое улучшение одной руки размывалось бы
+    двумя остальными. Базовые таблицы отчёта строятся по руке `resid`,
+    то есть остаются тем же, чем были до итерации 1.
+    """
+    out = {"resid": {}, "resid_r": {}, "blend": {}}
+    for k, v in cells.items():
+        if k.endswith("_blend"):
+            out["blend"][k[:-len("_blend")]] = v
+        elif k.endswith("_resid_r"):
+            out["resid_r"][k[:-len("_resid_r")]] = v
+        else:
+            out["resid"][k] = v
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--interval", default="1m")
+    ap.add_argument("--blend-funding", action="store_true",
+                    help="читать артефакт рычага 2 §12.3")
     args = ap.parse_args()
-    path = os.path.join(OUT, f"costs_{args.interval}.json")
+    tag = "_blend" if args.blend_funding else ""
+    path = os.path.join(OUT, f"costs_{args.interval}{tag}.json")
     if not os.path.exists(path):
         raise SystemExit(f"нет {path} — сначала run.py --interval "
                          f"{args.interval}")
     with open(path, encoding="utf-8") as fh:
         doc = json.load(fh)
     cfg, rules = doc["config"], doc["rules"]
+    blend_run = bool(cfg.get("blend_funding"))
+    arms = {r: split_arms(c) for r, c in rules.items()}
+    if blend_run:
+        # Дальше по отчёту `rules[rule]` означает базовую руку: все
+        # прежние таблицы обязаны остаться сравнимыми с прогоном до
+        # итерации 1, иначе сравнивать будет не с чем.
+        rules = {r: a["resid"] for r, a in arms.items()}
     p = print
 
     p("# R4 — издержки на фактическом обороте книги\n")
@@ -214,6 +244,68 @@ def main():
           "выглядят лучшими, к нему чувствительнее всего. Ранжирование "
           "ячеек может перевернуться. Прогон с funding обязателен до "
           "любого вывода.\n")
+
+
+    # --- рычаг 2 итерации 1 ---------------------------------------------
+    if blend_run:
+        a = arms["expected"]
+        res, resr, bl = a["resid"], a["resid_r"], a["blend"]
+        keys = sorted(set(resr) & set(bl))
+        p("## 4а. Рычаг 2 итерации 1 — funding вторым сигналом (§12.3)\n")
+        cv = cfg.get("score_coverage") or {}
+        p(f"**Оценка:** минус средняя суточная ставка за окно формирования "
+          f"({cfg.get('form_days')} дней), комбинация — среднее рангов с "
+          f"весом {cfg.get('blend_weight')}. Вес объявлен один и не "
+          f"перебирается: перебор был бы новым измерением сетки.\n")
+        p(f"**Покрытие оценки:** медиана {cv.get('median', float('nan')):.3f}, "
+          f"минимум {cv.get('min', float('nan')):.3f} по "
+          f"{cv.get('dates', 0)} датам. Согласие двух прочиток «средней "
+          f"ставки» (за сутки против за начисление): "
+          f"{cfg.get('score_reading_agreement'):.4f}.\n")
+        p("Сравнивать комбинацию с ПОЛНОЙ чистой книгой нельзя: "
+          "`blend_ranks` выбрасывает актив без одного из двух сигналов, "
+          "поэтому у комбинированной книги универсум уже. Разница тогда "
+          "включала бы эффект сужения. Колонка «остаток, суженный» — тот "
+          "же чистый остаток на том же универсуме, и честное сравнение "
+          "идёт против неё.\n")
+        p("| Ячейка | IC остаток | IC суж. | IC комб. | Funding суж., б.п. "
+          "| Funding комб., б.п. | Нетто суж., б.п. | Нетто комб., б.п. |")
+        p("|---|---|---|---|---|---|---|---|")
+        for k in keys:
+            c0, c1, c2 = res.get(k), resr[k], bl[k]
+            p(f"| {k} | {f(c0['ic_median'], 4) if c0 else '—'} "
+              f"| {f(c1['ic_median'], 4)} | {f(c2['ic_median'], 4)} "
+              f"| {bp(c1['funding']['mean'])} | {bp(c2['funding']['mean'])} "
+              f"| {bp(c1['net']['mean'])} | {bp(c2['net']['mean'])} |")
+        p("")
+        fr = median([c["funding"]["mean"] for c in resr.values()])
+        fb = median([c["funding"]["mean"] for c in bl.values()])
+        ir = median([c["ic_median"] for c in resr.values()
+                     if c["ic_median"] is not None])
+        ib = median([c["ic_median"] for c in bl.values()
+                     if c["ic_median"] is not None])
+        nr = median([c["net"]["mean"] for c in resr.values()])
+        nb = median([c["net"]["mean"] for c in bl.values()])
+        p(f"Медианы по сетке: **funding {bp(fr)} → {bp(fb)} б.п.**, "
+          f"**IC {f(ir, 4)} → {f(ib, 4)}**, **нетто {bp(nr)} → {bp(nb)} б.п.**\n")
+        p("### Критерий немедленной остановки §12.6, условие 3\n")
+        p("> Funding-издержка книги при комбинированном сигнале против "
+          "чистого остатка: **не ниже** — работа прекращается.\n")
+        drop = fb < fr
+        p(f"Получено: **{bp(fr)} → {bp(fb)} б.п.** — "
+          f"{'издержка упала, условие НЕ сработало' if drop else 'издержка НЕ упала, условие СРАБОТАЛО'}.\n")
+        p("Это прямая проверка механизма, а не косвенный признак. R4 "
+          "намерил, что книга систематически платит funding: длинная нога "
+          "— активы, отставшие от волны, — имеет ставку выше короткой. "
+          "Сигнал по funding тянет отбор в противоположную сторону и "
+          "обязан этот перекос уменьшать. Если издержка не упала, "
+          "механизм понят неверно, и улучшение любых других чисел было бы "
+          "совпадением.\n")
+        p("**Цена рычага, объявленная §12.4 до прогона:** испытаний "
+          "становится 192 вместо 96, поправка растёт с 1.195 до 1.307, то "
+          "есть планка поднимается на **0.112 Sharpe**. Комбинация, "
+          "давшая меньше, вредна — даже когда её собственные числа "
+          "выглядят лучше.\n")
 
     p("## 5. Что дальше\n")
     if not cfg["funding_included"]:

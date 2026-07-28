@@ -42,6 +42,17 @@ Funding
 
     python3 run.py --interval 1m
     python3 run.py --interval 15m --no-funding
+
+Рычаг 2 итерации 1
+------------------
+
+`--blend-funding` включает второй сигнал §12.3: минус средняя суточная
+ставка за окно формирования, комбинация с остатком средним рангов при
+весе 0.5. Прогон считает ТРИ руки на каждую ячейку — чистый остаток, он
+же на суженном универсуме и комбинацию, — и пишет отдельный артефакт
+`costs_<разрешение>_blend.json`, чтобы базовый прогон остался цел.
+
+    python3 run.py --interval 1m --blend-funding
 """
 
 import argparse
@@ -66,6 +77,9 @@ sys.path.insert(0, os.path.join(RESEARCH, "asset_groups"))
 import costs as C            # noqa: E402
 import pairs as P            # noqa: E402
 
+sys.path.insert(0, os.path.join(RESEARCH, "r2_residual"))
+import residual as RS        # noqa: E402
+
 BP = 0.0001
 CHEAP, MODAL, EXPENSIVE = 2.75 * BP, 5.5 * BP, 11.0 * BP
 # Доля дорогого тарифа по квинтилям оборота, замер A1 (раздел 6 спеки).
@@ -73,6 +87,8 @@ EXPENSIVE_SHARE = [0.432, 0.326, 0.137, 0.147, 0.052]
 
 WIDTHS = {"decile": 0.10, "quintile": 0.20}
 COST_MULTIPLIER = 1.5        # критерий §8.3 п. 9
+FORM_DAYS = 90               # окно формирования, как в R2
+BLEND_WEIGHT = 0.5           # §12.3: вес объявлен один и не перебирается
 # Ниже этого числа символов с рядами funding покрытие считается
 # отсутствующим: частичное покрытие даёт заниженную издержку, выдавая
 # её за полную.
@@ -192,6 +208,63 @@ def ms(day):
     return int(np.datetime64(day + "T00:00:00", "ms").astype("int64"))
 
 
+def funding_score(funding, names, at, form_days=FORM_DAYS):
+    """Оценка §12.3: минус средняя суточная ставка за окно формирования.
+
+    Знак минус приводит величину к общему соглашению спеки:
+    **положительная оценка означает «ожидаем роста»**. Высокая ставка —
+    перекос толпы в лонг, за который лонг платит, значит такой актив
+    идёт в короткую ногу.
+
+    Средняя **суточная**, а не средняя на начисление. Спека §12.3 пишет
+    «средняя ставка за окно формирования», и обе прочитки грамматически
+    законны, но экономически они разные: 318 символов из 722 меняли
+    режим начисления по ходу истории (A1), и у актива на часовых
+    начислениях та же ставка стоит вчетверо дороже, чем у актива на
+    четырёхчасовых. Средняя на начисление сравнивала бы несравнимое.
+    Прочитка выбрана до прогона и записана здесь; вторая приводится в
+    артефакте как проверка устойчивости.
+
+    `NaN` там, где ряда нет или в окне не было ни одного начисления.
+    Ноль означал бы «ставка была нулевой» — то самое молчание, выданное
+    за данные, которым в A2 отличались замороженные ряды.
+    """
+    t1 = ms(at)
+    t0 = ms((date.fromisoformat(at) - timedelta(days=form_days)).isoformat())
+    per_day = np.full(len(names), np.nan)
+    per_accrual = np.full(len(names), np.nan)
+    for i, s in enumerate(names):
+        v = funding.get(s)
+        if v is None:
+            continue
+        t, r = v
+        i0 = int(np.searchsorted(t, t0, "left"))
+        i1 = int(np.searchsorted(t, t1, "left"))
+        if i1 <= i0:
+            continue
+        tot = float(r[i0:i1].sum())
+        per_day[i] = -tot / form_days
+        per_accrual[i] = -tot / (i1 - i0)
+    return per_day, per_accrual
+
+
+def blended(sig, fs, arm):
+    """Сигнал руки прогона. §12.3, вес 0.5, комбинация рангов.
+
+    Три руки, а не две, и третья — не роскошь. `blend_ranks` выбрасывает
+    актив, у которого нет одного из двух сигналов, поэтому у
+    комбинированной книги универсум уже, чем у чистой. Сравнив её с
+    полной чистой книгой, мы приписали бы funding эффект сужения
+    универсума. Рука `resid_r` — тот же чистый остаток на том же
+    суженном универсуме, и только против неё сравнение честно.
+    """
+    if arm == "resid":
+        return sig
+    if arm == "resid_r":
+        return np.where(np.isfinite(fs), sig, np.nan)
+    return RS.blend_ranks(sig, fs, BLEND_WEIGHT)
+
+
 def rate_table(names, fees, state, rule):
     """Ставка каждого имени по выбранному правилу назначения."""
     known = {s: fees.get(s) for s in names}
@@ -208,16 +281,24 @@ def rate_table(names, fees, state, rule):
     return out
 
 
-def run_cell(dates, vec, k, h, width, fees, states, funding, rule):
+def run_cell(dates, vec, k, h, width, fees, states, funding, rule,
+             arm="resid", fscore=None):
     """Проход по непересекающимся датам с переносом книги между ними."""
     prev_names, prev_w = [], np.array([])
-    gross, comm, fund, turn, nets = [], [], [], [], []
+    gross, comm, fund, turn, nets, ics = [], [], [], [], [], []
     for d in dates[::h]:
         v = vec[d]
-        w, per_leg = C.weights(v["sig"][k], v["fwd"][h], width)
+        names = v["names"]
+        fs = (fscore.get(d) if fscore is not None else None)
+        if arm != "resid" and fs is None:
+            continue
+        score = blended(v["sig"][k], fs, arm)
+        w, per_leg = C.weights(score, v["fwd"][h], width)
         if per_leg < 1:
             continue
-        names = v["names"]
+        ic, _ = RS.spearman(score, v["fwd"][h])
+        if ic is not None:
+            ics.append(ic)
         rates = rate_table(names, fees, states.get(d, {}), rule)
 
         order, delta, tot = C.turnover(prev_names, prev_w, names, w)
@@ -253,6 +334,7 @@ def run_cell(dates, vec, k, h, width, fees, states, funding, rule):
         # ещё одного круга на сервер.
         "series": [round(float(x), 12) for x in nets],
         "sections": len(nets),
+        "ic_median": float(np.median(ics)) if ics else None,
         "gross": stat(gross), "commission": stat(comm),
         "funding": stat(fund), "turnover": stat(turn),
         "net": stat(nets),
@@ -269,6 +351,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--interval", default="1m")
     ap.add_argument("--no-funding", action="store_true")
+    ap.add_argument("--blend-funding", action="store_true",
+                    help="рычаг 2 §12.3: funding вторым сигналом")
     ap.add_argument("--check-funding", action="store_true",
                     help="только проверить загрузку рядов funding и выйти")
     args = ap.parse_args()
@@ -330,6 +414,32 @@ def main():
     for d in dates:
         states[d] = P.state_at(liq, universe, d)
 
+    # Оценка funding на окне формирования — §12.3, рычаг 2 итерации 1.
+    # Считается один раз на дату: от k, h и ширины корзины она не зависит.
+    fscore, coverage, agree = None, None, None
+    arms = ("resid",)
+    if args.blend_funding:
+        if funding is None:
+            raise SystemExit("рычаг 2 требует рядов funding площадки "
+                             "исполнения; без них комбинировать нечего")
+        fscore, cov, ag = {}, [], []
+        for d in dates:
+            names = vec[d]["names"]
+            per_day, per_accrual = funding_score(funding, names, d)
+            fscore[d] = per_day
+            cov.append(float(np.isfinite(per_day).mean()))
+            r, _ = RS.spearman(per_day, per_accrual)
+            if r is not None:
+                ag.append(r)
+        coverage = {"median": float(np.median(cov)),
+                    "min": float(np.min(cov)), "dates": len(cov)}
+        agree = float(np.median(ag)) if ag else None
+        arms = ("resid", "resid_r", "blend")
+        print(f"оценка funding: покрытие медиана {coverage['median']:.3f}, "
+              f"минимум {coverage['min']:.3f}; согласие прочиток "
+              f"«за сутки»/«за начисление» {agree:.4f}",
+              file=sys.stderr, flush=True)
+
     ks = sorted(vec[dates[0]]["sig"])
     hs = sorted(vec[dates[0]]["fwd"])
     out = {}
@@ -338,10 +448,13 @@ def main():
         for k in ks:
             for h in hs:
                 for wname, w in WIDTHS.items():
-                    r = run_cell(dates, vec, k, h, w, fees, states, funding,
-                                 rule)
-                    if r:
-                        cells[f"k{k}_h{h}_{wname}"] = r
+                    for arm in arms:
+                        r = run_cell(dates, vec, k, h, w, fees, states,
+                                     funding, rule, arm, fscore)
+                        if not r:
+                            continue
+                        tag = "" if arm == "resid" else "_" + arm
+                        cells[f"k{k}_h{h}_{wname}{tag}"] = r
         out[rule] = cells
         med = np.median([c["net"]["median"] for c in cells.values()])
         print(f"{rule}: ячеек {len(cells)}, медиана нетто по сетке "
@@ -359,10 +472,21 @@ def main():
                       "funding_included": funding is not None,
                       "funding_symbols": covered,
                       "universe_symbols": len(used),
-                      "sections_total": len(dates)},
+                      "sections_total": len(dates),
+                      "blend_funding": bool(args.blend_funding),
+                      "blend_weight": BLEND_WEIGHT if args.blend_funding
+                      else None,
+                      "form_days": FORM_DAYS,
+                      "score_coverage": coverage,
+                      "score_reading_agreement": agree},
            "rules": out}
     os.makedirs(OUT, exist_ok=True)
-    name = f"costs_{args.interval}.json"
+    # Прогон с рычагом 2 пишется отдельным файлом: он содержит другую
+    # сетку ячеек, и молча затереть им базовый прогон значило бы
+    # потерять ровно то, с чем его надо сравнивать. Тот же дефект уже
+    # ловили в R1 со сводкой без указания разрешения.
+    tag = "_blend" if args.blend_funding else ""
+    name = f"costs_{args.interval}{tag}.json"
     with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
         json.dump(doc, f, ensure_ascii=False, indent=1)
     print(f"записано {os.path.join(OUT, name)}")

@@ -221,3 +221,104 @@ class ParseTime(unittest.TestCase):
     def test_unknown_form_raises(self):
         with self.assertRaises(ValueError):
             self.run.parse_time_ms("позавчера")
+
+
+class TestFundingSignal(unittest.TestCase):
+    """Рычаг 2 итерации 1, §12.3: funding вторым сигналом."""
+
+    def setUp(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "r4run", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "run.py"))
+        self.run = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.run)
+
+    def series(self, rates, step_h, end="2024-01-31"):
+        """Ряд начислений, заканчивающийся до `end`, с шагом `step_h` часов."""
+        t1 = self.run.ms(end)
+        n = len(rates)
+        t = np.array([t1 - (n - i) * step_h * 3_600_000 for i in range(n)],
+                     dtype=np.int64)
+        return t, np.asarray(rates, dtype=np.float64)
+
+    def test_sign_convention(self):
+        """Высокая ставка обязана давать ОТРИЦАТЕЛЬНУЮ оценку.
+
+        Соглашение спеки: положительная оценка = «ожидаем роста». Актив
+        с высокой ставкой платят лонги, значит он идёт в короткую ногу.
+        Перепутанный знак здесь не падает и не выглядит странно — он
+        просто переворачивает вторую половину сигнала.
+        """
+        f = {"A": self.series([0.0001] * 90, 24)}
+        per_day, _ = self.run.funding_score(f, ["A"], "2024-01-31",
+                                            form_days=90)
+        self.assertLess(per_day[0], 0.0)
+
+    def test_hourly_costs_more_than_four_hourly_at_equal_rate(self):
+        """Главное место, где прочитка «за сутки» отличается от «за
+        начисление»: та же ставка при часовых начислениях дороже вчетверо.
+
+        A1 намерила, что 318 символов из 722 меняли режим по ходу
+        истории, поэтому сравнивать ставки на начисление значило бы
+        сравнивать несравнимое.
+        """
+        f = {"H": self.series([0.0001] * (90 * 24), 1),
+             "Q": self.series([0.0001] * (90 * 6), 4)}
+        per_day, per_accrual = self.run.funding_score(
+            f, ["H", "Q"], "2024-01-31", form_days=90)
+        self.assertAlmostEqual(per_day[0] / per_day[1], 4.0, places=6)
+        self.assertAlmostEqual(per_accrual[0], per_accrual[1], places=12)
+
+    def test_missing_series_is_nan_not_zero(self):
+        """Ноль означал бы «ставка была нулевой» — наблюдение, которого
+        не было. Тот же класс ошибки, что замороженные ряды A2."""
+        f = {"A": self.series([0.0001] * 90, 24)}
+        per_day, _ = self.run.funding_score(f, ["A", "B"], "2024-01-31",
+                                            form_days=90)
+        self.assertTrue(np.isfinite(per_day[0]))
+        self.assertTrue(np.isnan(per_day[1]))
+
+    def test_window_excludes_future_accruals(self):
+        """Начисления, случившиеся в дату отбора и позже, в оценку не
+        входят: иначе сигнал знал бы будущее."""
+        t1 = self.run.ms("2024-01-31")
+        t = np.array([t1 - 86_400_000, t1, t1 + 86_400_000], dtype=np.int64)
+        r = np.array([0.0001, 1.0, 1.0])
+        per_day, _ = self.run.funding_score({"A": (t, r)}, ["A"],
+                                            "2024-01-31", form_days=90)
+        self.assertAlmostEqual(per_day[0], -0.0001 / 90, places=15)
+
+    def test_restricted_arm_keeps_signal_and_drops_uncovered(self):
+        """`resid_r` — тот же остаток на суженном универсуме.
+
+        Без этой руки эффект сужения универсума приписался бы funding.
+        """
+        sig = np.array([1.0, 2.0, 3.0, 4.0])
+        fs = np.array([0.5, np.nan, -0.5, 0.1])
+        out = self.run.blended(sig, fs, "resid_r")
+        self.assertTrue(np.isnan(out[1]))
+        self.assertEqual(list(out[[0, 2, 3]]), [1.0, 3.0, 4.0])
+        self.assertTrue(np.array_equal(self.run.blended(sig, fs, "resid"),
+                                       sig))
+
+    def test_blend_moves_ranking_toward_funding(self):
+        """Комбинация обязана двигать порядок в сторону второго сигнала.
+
+        Актив, лучший по остатку и худший по funding, не должен
+        оставаться первым — иначе вес 0.5 не применён.
+        """
+        sig = np.array([4.0, 3.0, 2.0, 1.0])
+        fs = np.array([-9.0, 5.0, 1.0, 2.0])
+        out = self.run.blended(sig, fs, "blend")
+        self.assertLess(out[0], out[1])
+
+    def test_exactly_opposite_signals_give_no_portfolio(self):
+        """Крайний случай, найденный при написании предыдущего теста:
+        если funding ранжирует сечение ровно наоборот, комбинация с
+        весом 0.5 постоянна и книга вырождается. Это не дефект, а
+        свойство равных весов, и знать о нём надо до чтения результата —
+        частичная выраженность того же эффекта просто ослабляет книгу."""
+        sig = np.array([4.0, 3.0, 2.0, 1.0])
+        out = self.run.blended(sig, -sig, "blend")
+        self.assertLess(float(np.std(out)), 1e-12)
