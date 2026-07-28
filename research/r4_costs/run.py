@@ -80,6 +80,11 @@ import pairs as P            # noqa: E402
 sys.path.insert(0, os.path.join(RESEARCH, "r2_residual"))
 import residual as RS        # noqa: E402
 
+sys.path.insert(0, os.path.dirname(RESEARCH))
+from research.common.funding_series import (        # noqa: E402
+    MIN_FUNDING_SYMBOLS, accrued, funding_score as _funding_score,
+    load_funding as _load_funding, ms, parse_time_ms)
+
 BP = 0.0001
 CHEAP, MODAL, EXPENSIVE = 2.75 * BP, 5.5 * BP, 11.0 * BP
 # Доля дорогого тарифа по квинтилям оборота, замер A1 (раздел 6 спеки).
@@ -89,10 +94,6 @@ WIDTHS = {"decile": 0.10, "quintile": 0.20}
 COST_MULTIPLIER = 1.5        # критерий §8.3 п. 9
 FORM_DAYS = 90               # окно формирования, как в R2
 BLEND_WEIGHT = 0.5           # §12.3: вес объявлен один и не перебирается
-# Ниже этого числа символов с рядами funding покрытие считается
-# отсутствующим: частичное покрытие даёт заниженную издержку, выдавая
-# её за полную.
-MIN_FUNDING_SYMBOLS = 50
 
 
 def load_vectors(interval):
@@ -125,127 +126,13 @@ def load_fees(universe):
     return out
 
 
-def parse_time_ms(x):
-    """Метка времени в миллисекундах из того, что лежит в файле.
-
-    Формат я угадывал дважды и дважды ошибся: сначала счёл файлы
-    json-ом (они gzip-CSV), потом счёл время миллисекундами (сборщик
-    конвертирует его в ISO строкой 178 `bybit_api.py`, а миллисекунды
-    видны только строкой 168, до возврата функции).
-
-    Поэтому разбор принимает оба вида и **падает громко**, если не понял
-    ни одного. Молчаливый пропуск здесь уже стоил одного круга: пустой
-    результат выглядел как посчитанный ноль.
-    """
-    x = x.strip()
-    try:
-        return int(x)
-    except ValueError:
-        pass
-    from datetime import datetime
-    return int(datetime.fromisoformat(x).timestamp() * 1000)
-
-
 def load_funding(universe, symbols):
-    """Ряды funding площадки исполнения: `{актив: (времена_мс, ставки)}`.
-
-    Формат — тот, что пишет сборщик A1 (`bybit_api.py`): gzip-CSV с
-    заголовком `funding_time,funding_rate`, время в миллисекундах, файл
-    на символ Bybit. Первая редакция искала `.json` и не находила
-    ничего; каталог при этом существовал, поэтому прогон отрапортовал
-    «funding включён» и посчитал нули.
-
-    Возвращает `None`, если каталога нет вовсе.
-    """
-    d = os.path.join(A1, "funding")
-    if not os.path.isdir(d):
-        return None
-    by_symbol = {v["bybit_symbol"]: a for a, v in universe.items()
-                 if v.get("bybit_symbol")}
-    out = {}
-    for fn in sorted(os.listdir(d)):
-        if not fn.endswith(".csv.gz"):
-            continue
-        sym = fn[:-len(".csv.gz")]
-        a = by_symbol.get(sym)
-        if a is None or a not in symbols:
-            continue
-        t, r = [], []
-        with gzip.open(os.path.join(d, fn), "rt", encoding="utf-8") as f:
-            rd = csv.reader(f)
-            next(rd, None)                      # заголовок
-            for row in rd:
-                if len(row) < 2:
-                    continue
-                t.append(parse_time_ms(row[0]))
-                r.append(float(row[1]))
-        if t:
-            o = np.argsort(t)
-            out[a] = (np.asarray(t, dtype=np.int64)[o],
-                      np.asarray(r, dtype=np.float64)[o])
-    return out
-
-
-def accrued(funding, asset, t0_ms, t1_ms):
-    """Сумма ставок, начисленных в `[t0, t1)`.
-
-    Число начислений берётся из ряда, а не из объявленного интервала:
-    318 символов из 722 меняли режим по ходу истории, и константа даёт
-    у 128 активов ошибку больше 15 %, местами двукратную.
-    """
-    v = funding.get(asset)
-    if v is None:
-        return None
-    t, r = v
-    i0 = int(np.searchsorted(t, t0_ms, "left"))
-    i1 = int(np.searchsorted(t, t1_ms, "left"))
-    if i1 <= i0:
-        return 0.0
-    return float(r[i0:i1].sum())
-
-
-def ms(day):
-    return int(np.datetime64(day + "T00:00:00", "ms").astype("int64"))
+    """Ряды площадки исполнения из каталога A1. Обёртка над общим модулем."""
+    return _load_funding(os.path.join(A1, "funding"), universe, symbols)
 
 
 def funding_score(funding, names, at, form_days=FORM_DAYS):
-    """Оценка §12.3: минус средняя суточная ставка за окно формирования.
-
-    Знак минус приводит величину к общему соглашению спеки:
-    **положительная оценка означает «ожидаем роста»**. Высокая ставка —
-    перекос толпы в лонг, за который лонг платит, значит такой актив
-    идёт в короткую ногу.
-
-    Средняя **суточная**, а не средняя на начисление. Спека §12.3 пишет
-    «средняя ставка за окно формирования», и обе прочитки грамматически
-    законны, но экономически они разные: 318 символов из 722 меняли
-    режим начисления по ходу истории (A1), и у актива на часовых
-    начислениях та же ставка стоит вчетверо дороже, чем у актива на
-    четырёхчасовых. Средняя на начисление сравнивала бы несравнимое.
-    Прочитка выбрана до прогона и записана здесь; вторая приводится в
-    артефакте как проверка устойчивости.
-
-    `NaN` там, где ряда нет или в окне не было ни одного начисления.
-    Ноль означал бы «ставка была нулевой» — то самое молчание, выданное
-    за данные, которым в A2 отличались замороженные ряды.
-    """
-    t1 = ms(at)
-    t0 = ms((date.fromisoformat(at) - timedelta(days=form_days)).isoformat())
-    per_day = np.full(len(names), np.nan)
-    per_accrual = np.full(len(names), np.nan)
-    for i, s in enumerate(names):
-        v = funding.get(s)
-        if v is None:
-            continue
-        t, r = v
-        i0 = int(np.searchsorted(t, t0, "left"))
-        i1 = int(np.searchsorted(t, t1, "left"))
-        if i1 <= i0:
-            continue
-        tot = float(r[i0:i1].sum())
-        per_day[i] = -tot / form_days
-        per_accrual[i] = -tot / (i1 - i0)
-    return per_day, per_accrual
+    return _funding_score(funding, names, at, form_days)
 
 
 def blended(sig, fs, arm):
