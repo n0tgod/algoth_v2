@@ -1,374 +1,774 @@
 # Экономическая группировка активов
 #
 # Назначение: сократить пространство поиска пар ДО статистики.
-# Спецификация 02, раздел 3.1.
+# Спецификация 02, раздел 3.1. Пара, у которой нет причины быть парой,
+# — это шум, прошедший тест.
 #
-# Без группировки кандидатов ~15 000 пар, из которых около 750 пройдут
-# тест на коинтеграцию чистой случайностью. Группировка убирает основную
-# массу бессмысленных сочетаний до того, как начнётся перебор.
+# Группы отражают то, что РЕАЛЬНО СО-ДВИЖЕТСЯ, а не техническую точность
+# классификации. «ИИ-агенты» ходят вместе из-за нарратива, а не из-за
+# общей технологии.
 #
-# ВАЖНО: группы отражают то, что РЕАЛЬНО СО-ДВИЖЕТСЯ, а не техническую
-# точность классификации. "AI-токены" ходят вместе из-за нарратива,
-# а не из-за общей технологии. Если два актива реагируют на одни и те же
-# новости и одни и те же потоки — они в одной группе, даже если
-# технически не связаны.
+# ОХВАТ. Размечается всё, что может попасть хотя бы в одно окно
+# walk-forward: криптоактив с историей Binance, листингованный не позже
+# чем за 365 дней до конца данных. Это 490 активов, а не 269 когорт
+# «3+ года» — те покрывали только ранние окна.
 #
-# СТАТУС: черновик, составлен ассистентом по 269 активам когорт
-# с историей 3+ года. Требует правки владельцем проекта — здесь нужна
-# экспертиза трейдера, наблюдавшего эти активы, а не формальная таксономия.
+# ЧЕГО ЗДЕСЬ НЕТ. Деления по обороту. Крупные группы дробятся слоем
+# tiers на момент окна (`tiers.py`), потому что деление «майоры против
+# остальных» по сегодняшнему обороту есть заглядывание вперёд: сегодня
+# майор, а в окне 2022 года — нет.
 #
-# Что проверить в первую очередь:
-#   1. Активы в разделе `unclassified` — куда их
-#   2. Группа `smart_contract_l1` слишком велика (35 активов = 595 пар).
-#      Стоит ли дробить по капитализации или по возрасту
-#   3. Активы, попавшие не туда по вашему опыту
-#   4. Пары, которые вы знаете как рабочие, но которые группировка разводит
+# Проверяется `check_coverage.py` после каждой правки.
 
 groups:
 
   # --- Bitcoin и PoW ---------------------------------------------------
-  # Старые монеты, реагируют на одни и те же нарративы (халвинг, майнинг,
-  # регуляторка по PoW). Исторически самая устойчивая группа.
+  # Старые монеты, реагируют на одни и те же нарративы: халвинг,
+  # себестоимость майнинга, регуляторка по PoW.
   bitcoin_pow:
-    - BTC
     - BCH
     - BSV
-    - LTC
+    - BTC
     - DASH
     - DGB
-    - RVN
+    - EPIC
     - ETC
     - ETHW
+    - FLUX
+    - KAS
+    - LTC
+    - RVN
+
+  # --- Приватность -----------------------------------------------------
+  # Отдельная от PoW группа: у приватных монет собственный
+  # регуляторный риск — делистинги идут волной и по всем сразу.
+  privacy:
+    - DUSK
+    - FHE
+    - KEEP
+    - OXT
+    - SCRT
+    - T
+    - XMR
     - ZEC
     - ZEN
-    - XMR
 
   # --- Смарт-контрактные L1 --------------------------------------------
-  # ВНИМАНИЕ: самая крупная группа, кандидат на дробление.
+  # Самая крупная группа и остаётся такой намеренно: дробить её
+  # «майоры против остальных» значило бы делить по сегодняшнему
+  # обороту, то есть заглядывать вперёд. Деление по обороту делает
+  # слой tiers на момент окна.
   smart_contract_l1:
-    - ETH
-    - SOL
     - ADA
-    - AVAX
-    - DOT
-    - ATOM
-    - NEAR
+    - AERGO
     - ALGO
-    - EGLD
-    - FTM
-    - ONE
-    - HBAR
-    - ICP
-    - KLAY
-    - TRX
-    - EOS
-    - XTZ
-    - WAVES
-    - KDA
-    - KAS
-    - MINA
-    - SUI
-    - SEI
-    - TON
     - APT
+    - ARK
+    - ATOM
+    - AVAX
+    - BERA
     - CELO
-    - ROSE
-    - QTUM
-    - NEO
-    - ONT
-    - ZIL
-    - VET
+    - CHR
+    - DOT
+    - DYM
+    - EGLD
+    - EOS
+    - ETH
+    - FLOW
+    - FTM
+    - HBAR
+    - HYPE
+    - ICP
+    - ICX
+    - INIT
+    - IOST
     - IOTA
+    - IP
+    - KAIA
+    - KDA
+    - KLAY
+    - LSK
+    - MINA
+    - MOVE
+    - NEAR
+    - NEO
+    - NULS
+    - ONE
+    - ONG
+    - ONT
+    - PHB
+    - PLUME
+    - QTUM
+    - ROSE
+    - S
+    - SAGA
+    - SEI
+    - SOL
+    - SONIC
+    - SOON
+    - STRAX
+    - SUI
+    - SYS
+    - TAC
+    - TON
+    - TRX
+    - VANA
+    - VET
+    - VIC
+    - VTHO
+    - WAVES
     - XLM
     - XRP
+    - XTZ
+    - ZETA
+    - ZIL
 
   # --- L2 и масштабирование --------------------------------------------
   layer2:
-    - MATIC
-    - OP
+    - ALT
     - ARB
-    - IMX
-    - LRC
-    - SKL
+    - B2
     - CTSI
-    - POLYX
-    - STX
+    - ERA
+    - IMX
+    - LOOM
+    - LRC
+    - MANTA
+    - MATIC
+    - MERL
     - METIS
+    - OMG
+    - OMNI
+    - OP
+    - POL
+    - POLYX
+    - PROM
+    - SCR
+    - SKL
+    - STRK
+    - STX
+    - TAIKO
+    - ZK
+    - ZRC
 
-  # --- Cosmos и интероперабельность ------------------------------------
+  # --- Cosmos, интероперабельность, мосты ------------------------------
   cosmos_interop:
-    - TIA
-    - NTRN
     - AXL
-    - KAVA
+    - CELR
+    - HYPER
     - INJ
+    - KAVA
+    - NTRN
+    - REN
     - RUNE
-    - SCRT
+    - STG
+    - SYN
+    - TIA
+    - W
+    - ZRO
 
-  # --- Polkadot ---------------------------------------------------------
+  # --- Экосистема Polkadot ---------------------------------------------
   polkadot:
-    - KSM
-    - GLMR
-    - MOVR
     - ASTR
-    - PHB
+    - GLMR
+    - KSM
+    - MOVR
+    - PHA
+    - TANSSI
 
-  # --- DeFi: кредитование и DEX ----------------------------------------
-  defi_core:
-    - UNI
-    - AAVE
-    - MKR
-    - COMP
+  # --- DeFi: биржи и AMM -----------------------------------------------
+  # DeFi разделён по функции, а не по размеру: у кредитных
+  # протоколов и у бирж разные драйверы — ставка и объём торгов.
+  defi_dex:
+    - 1INCH
+    - AERO
+    - BAKE
+    - BAL
+    - BNT
+    - BSW
+    - C98
+    - CAKE
+    - CETUS
+    - CHESS
+    - COW
     - CRV
-    - SNX
+    - DEEP
+    - DODO
+    - FLM
+    - IDEX
+    - JOE
+    - JST
+    - JUP
+    - KNC
+    - MAV
+    - ORCA
+    - ORDER
+    - QUICK
+    - RAY
+    - SUN
     - SUSHI
+    - THE
+    - TNSR
+    - UNI
+    - VELODROME
+    - ZRX
+
+  # --- DeFi: кредитование ----------------------------------------------
+  defi_lending:
+    - AAVE
+    - ALPACA
+    - BOND
+    - COMP
+    - HIFI
+    - HUMA
+    - KMNO
+    - LISTA
+    - LQTY
+    - MKR
+    - MORPHO
+    - RDNT
+    - SPK
+    - SYRUP
+    - TRU
+    - XVS
+
+  # --- DeFi: деривативы и синтетика ------------------------------------
+  defi_derivatives:
+    - AEVO
+    - DRIFT
+    - DYDX
+    - GMX
+    - LEVER
+    - LINA
+    - PENDLE
+    - PERP
+    - SNX
+    - UMA
+
+  # --- DeFi: доходность и агрегаторы -----------------------------------
+  defi_yield:
+    - ACX
+    - AKRO
+    - ALPHA
+    - AUCTION
+    - BADGER
+    - BEL
+    - CVX
+    - FIDA
+    - FRONT
+    - FXS
+    - MLN
+    - OGN
+    - REEF
+    - RESOLV
+    - RSR
+    - SPELL
+    - UNFI
+    - VELVET
     - YFI
     - YFII
-    - BAL
-    - 1INCH
-    - DYDX
-    - FXS
-    - CVX
-    - PENDLE
-    - RDNT
-    - JOE
-    - CAKE
-    - DODO
-    - PERP
-    - ALPHA
-    - BOND
-    - UNFI
-    - SPELL
-    - ALPACA
-    - BADGER
-    - GMX
-    - STG
-    - LQTY
-    - TRU
-    - UMA
-    - RAY
 
-  # --- Ликвидный стейкинг ----------------------------------------------
+  # --- Ликвидный стейкинг и рестейкинг ---------------------------------
   liquid_staking:
-    - LDO
-    - RPL
-    - SSV
     - ANKR
+    - BB
+    - EIGEN
+    - ETHFI
+    - HAEDAL
+    - JTO
+    - KERNEL
+    - LDO
+    - OBOL
+    - PUFFER
+    - PUMPBTC
+    - REZ
+    - RPL
+    - SOLV
+    - SSV
+    - SWELL
 
-  # --- Оракулы и данные -------------------------------------------------
+  # --- Оракулы и поставщики данных -------------------------------------
   oracles:
-    - LINK
-    - BAND
     - API3
-    - TRB
-    - PYTH
+    - BAND
+    - DIA
+    - LINK
     - NMR
+    - PYTH
+    - RED
+    - SXT
+    - TRB
 
   # --- Хранение и вычисления -------------------------------------------
   storage_compute:
-    - FIL
-    - AR
-    - STORJ
-    - SC
-    - BTT
-    - HNT
-    - GLM
-    - OCEAN
-    - GRT
-    - POWR
     - AKT
+    - AR
+    - BLZ
+    - BTT
+    - FIL
+    - GLM
+    - GRT
+    - LPT
+    - MDT
+    - OCEAN
+    - SC
+    - SQD
+    - STORJ
+    - WAL
 
-  # --- AI ---------------------------------------------------------------
-  # Нарративная группа: ходят вместе на новостях об ИИ независимо
-  # от фактической технологии.
-  ai:
+  # --- DePIN — физическая инфраструктура -------------------------------
+  depin:
+    - AMB
+    - ATH
+    - GRASS
+    - HNT
+    - ICNT
+    - IO
+    - IOTX
+    - JASMY
+    - POWR
+    - THETA
+
+  # --- ИИ: инфраструктура ----------------------------------------------
+  ai_infra:
     - AGIX
-    - FET
-    - RNDR
-    - WLD
+    - AIN
     - ARKM
+    - CARV
+    - CGPT
+    - FET
+    - FLOCK
     - NFP
+    - PROMPT
+    - RENDER
+    - RNDR
+    - SAHARA
     - TAO
+    - VVV
+    - WLD
 
-  # --- Мемы -------------------------------------------------------------
-  # Самая нарративная группа, самая высокая корреляция внутри,
-  # самый высокий риск делистинга.
+  # --- ИИ: агенты ------------------------------------------------------
+  # Нарративная когорта конца 2024 — 2025. Ходят вместе на новостях
+  # об агентах независимо от того, что у них внутри.
+  ai_agents:
+    - AI
+    - AI16Z
+    - AIXBT
+    - ALCH
+    - ARC
+    - AVAAI
+    - CLANKER
+    - COOKIE
+    - GOAT
+    - GRIFFAIN
+    - KAITO
+    - PIPPIN
+    - SHELL
+    - SKYAI
+    - SWARMS
+    - VIRTUAL
+    - ZEREBRO
+
+  # --- Мемы ------------------------------------------------------------
+  # Самая нарративная группа и самая большая после L1. Внутри неё
+  # разброс оборота на три порядка — дробится слоем tiers.
   memes:
-    - DOGE
-    - SHIB
-    - PEPE
-    - FLOKI
+    - ACT
+    - BAN
+    - BANANA
+    - BANANAS31
+    - BOME
     - BONK
+    - BR
+    - BRETT
+    - CAT
+    - CHEEMS
+    - CHILLGUY
+    - DEGEN
+    - DOGE
+    - FARTCOIN
+    - FLOKI
+    - GME
+    - HIPPO
+    - JELLYJELLY
+    - MELANIA
     - MEME
+    - MEW
+    - MOG
+    - MOODENG
+    - MUBARAK
+    - MYRO
+    - NEIROETH
+    - PENGU
     - PEOPLE
+    - PEPE
+    - PNUT
+    - PONKE
+    - POPCAT
+    - PUMP
+    - SHIB
+    - SLERF
+    - SPX
     - TOKEN
-
-  # --- Экосистема Bitcoin / ordinals -----------------------------------
-  bitcoin_ecosystem:
-    - ORDI
-    - SATS
-    - RATS
+    - TOSHI
+    - TRUMP
+    - TURBO
+    - TUT
+    - USELESS
+    - VINE
+    - WHY
+    - WIF
 
   # --- Игры и метавселенная --------------------------------------------
   gaming_metaverse:
-    - AXS
-    - SAND
-    - MANA
-    - GALA
-    - ILV
-    - ALICE
-    - YGG
-    - TLM
-    - SLP
-    - GMT
-    - MAGIC
-    - BIGTIME
-    - HIGH
-    - SUPER
-    - DAR
-    - VOXEL
-    - AGLD
-    - COCOS
     - ACE
+    - AGLD
+    - ALICE
+    - APE
+    - AXS
+    - B3
+    - BABY
+    - BIGTIME
+    - COCOS
+    - COMBO
+    - DAR
+    - ENJ
+    - FUN
+    - GALA
+    - GMT
+    - GUN
+    - HIGH
+    - ILV
+    - MAGIC
+    - MANA
+    - MAVIA
+    - MBOX
+    - NXPC
+    - PIXEL
+    - PORTAL
+    - RONIN
+    - SAND
+    - SLP
+    - SUPER
+    - TLM
+    - VOXEL
+    - WAXP
+    - XAI
+    - YGG
+
+  # --- Телеграм-игры ---------------------------------------------------
+  # Отдельно от остальных игр: листинг и аудитория общие,
+  # падение после раздачи тоже общее.
+  telegram_games:
+    - CATI
+    - DOGS
+    - HMSTR
+    - MEMEFI
+    - NOT
+
+  # --- NFT и создатели -------------------------------------------------
+  nft_creator:
+    - ANIME
+    - AUDIO
+    - BLUR
+    - DOOD
+    - ME
+    - MOCA
+    - RARE
+    - ZORA
 
   # --- Биржевые и платформенные токены ---------------------------------
   exchange_tokens:
     - BNB
-    - FTT
-    - WOO
-    - TWT
-    - SXP
     - BNX
-    - HFT
+    - DEXE
+    - FTT
     - GAS
-    - OG
-    - BSW
+    - HFT
+    - SFP
+    - SXP
+    - TWT
+    - WOO
 
-  # --- Приватность и идентичность --------------------------------------
-  privacy_identity:
-    - KEEP
-    - T
-    - ID
+  # --- Фан-токены ------------------------------------------------------
+  fan_tokens:
+    - CHZ
+    - OG
+
+  # --- Потребительские приложения --------------------------------------
+  consumer_apps:
+    - BAT
+    - EDU
+    - HOOK
+    - MBL
+    - STMX
+    - UXLINK
+
+  # --- Идентичность, кошельки, доступ ----------------------------------
+  identity_access:
+    - CVC
     - CYBER
     - ENS
+    - GAL
+    - H
+    - ID
+    - KEY
     - MASK
+    - PUNDIX
+    - SAFE
+    - SIGN
+    - SNT
+    - WCT
 
   # --- Инфраструктура и middleware -------------------------------------
   infrastructure:
-    - QNT
+    - ARPA
+    - ATA
+    - BICO
     - CFX
     - CKB
+    - COTI
+    - CTK
+    - FIO
+    - G
+    - LA
+    - NIL
     - NKN
     - ORBS
+    - PARTI
+    - QNT
     - RLC
-    - ATA
-    - ARPA
-    - CELR
-    - COTI
-    - REN
+    - STPT
+    - TROY
+    - VANRY
+    - VIDT
+    - XCN
+    - ZKJ
 
-  # --- Платежи и переводы ----------------------------------------------
-  payments:
+  # --- Платежи и социальные сети ---------------------------------------
+  payments_social:
+    - ACH
+    - COS
+    - DENT
+    - HIVE
+    - HOT
+    - MTL
+    - RIF
+    - STEEM
     - XEC
     - XEM
     - XVG
-    - STEEM
-    - HOT
-    - DENT
-    - RIF
-    - ACH
+
+  # --- DAO и общественные блага ----------------------------------------
+  dao_governance:
+    - ANT
+    - FORTH
+    - GTC
+    - RAD
+
+  # --- Реальные активы и доходные стейблы ------------------------------
+  rwa:
+    - ENA
+    - LUMIA
+    - OM
+    - ONDO
+    - USUAL
+
+  # --- Экосистема Bitcoin, ordinals ------------------------------------
+  bitcoin_ecosystem:
+    - ORDI
+    - RATS
+    - SATS
 
   # --- Особые случаи: не для парной торговли ---------------------------
-  # Стейблкоины, обёрнутое золото, обломки Terra. Динамика не имеет
-  # ничего общего с остальным универсумом.
+  # Стейблкоины, обёрнутое золото, обломки Terra, остатки FTX.
+  # Динамика не имеет ничего общего с остальным универсумом.
   excluded_special:
-    - USDC
-    - PAXG
+    - ANC
     - LUNA
     - LUNA2
     - LUNC
-    - USTC
+    - PAXG
     - SRM
     - TOMO
-    - ANC
+    - USDC
+    - USTC
+    - XAUT
 
-# --- Не отнесены ------------------------------------------------------
-# Требуют решения владельца проекта.
-unclassified:
-  - AKRO
-  - AERGO
-  - AMB
-  - ANT
-  - APE
-  - ARK
-  - AUCTION
-  - AUDIO
-  - BAKE
-  - BAT
-  - BEL
-  - BICO
-  - BLUR
-  - BLZ
-  - BNT
-  - C98
-  - CHR
-  - CHZ
-  - CTK
-  - CVC
-  - COMBO
-  - DUSK
-  - EDU
-  - ENJ
-  - FLM
-  - FLOW
-  - FORTH
-  - FRONT
-  - FUN
-  - GAL
-  - GTC
-  - HIFI
-  - HOOK
-  - ICX
-  - IDEX
-  - IOST
-  - IOTX
-  - JASMY
-  - JST
-  - JTO
-  - KEY
-  - KNC
-  - LEVER
-  - LINA
-  - LOOM
-  - LPT
-  - MAV
-  - MBL
-  - MDT
-  - MTL
-  - OGN
-  - OMG
-  - ONG
-  - OXT
-  - PHA
+# --- Одинаковые активы: ребрендинг или миграция 1:1 ------------------
+# Спред между ними постоянен по построению. Тест на коинтеграцию
+# нашёл бы здесь сильнейшую «связь» в универсуме, которой не
+# существует: это один и тот же актив под двумя тикерами.
+# Пары исключаются из отбора целиком.
+duplicate_listings:
+  - MATIC/POL
+  - FTM/S
+  - RNDR/RENDER
+  - KLAY/KAIA
+
+# --- Механически связанные ------------------------------------------
+# Разные активы, но связь задана протоколом, а не нарративом:
+# газовый токен своей сети, стороны объявленного слияния.
+# Приоритетные кандидаты раздела 3.1 — причина быть парой здесь
+# сильнее секторной.
+mechanically_linked:
+  - VET/VTHO
+  - ONT/ONG
+  - AGIX/FET
+  - AGIX/OCEAN
+  - FET/OCEAN
+
+# --- Метка ненадёжна ------------------------------------------------
+# Актив слишком новый либо не имеет узнаваемого сектора. В отбор
+# входит наравне с прочими, но при разборе результата пара с таким
+# активом требует проверки: возможно, связь нашлась не потому,
+# что группа верна.
+low_confidence:
+  - ACX
+  - AI
+  - AIN
+  - ALCH
+  - ALT
+  - ANIME
+  - ARC
+  - ATH
+  - AVAAI
+  - B2
+  - B3
+  - BABY
+  - BAN
+  - BANANAS31
+  - BB
+  - BR
+  - CARV
+  - CGPT
+  - CHEEMS
+  - CHESS
+  - CLANKER
+  - COS
+  - COW
+  - DEEP
+  - DOOD
+  - DYM
+  - EPIC
+  - ERA
+  - FHE
+  - FIO
+  - FLOCK
+  - FLUX
+  - G
+  - GRASS
+  - GRIFFAIN
+  - GUN
+  - H
+  - HAEDAL
+  - HIPPO
+  - HIVE
+  - HUMA
+  - HYPER
+  - ICNT
+  - INIT
+  - IO
+  - IP
+  - JELLYJELLY
+  - KERNEL
+  - LA
+  - LISTA
+  - LUMIA
+  - MANTA
+  - ME
+  - MERL
+  - MOCA
+  - MOVE
+  - MUBARAK
+  - NEIROETH
+  - NIL
+  - NXPC
+  - OBOL
+  - OMNI
+  - ORDER
+  - PARTI
+  - PHB
+  - PIPPIN
+  - PLUME
   - PROM
-  - RAD
-  - RARE
-  - REEF
-  - RSR
-  - SFP
-  - SNT
-  - STMX
-  - STPT
-  - STRAX
-  - SUN
-  - THETA
-  - WAXP
+  - PROMPT
+  - PUMP
+  - PUMPBTC
+  - PUNDIX
+  - RESOLV
+  - SAFE
+  - SAGA
+  - SAHARA
+  - SCR
+  - SHELL
+  - SIGN
+  - SKYAI
+  - SOLV
+  - SOON
+  - SPK
+  - SQD
+  - STRK
+  - SWARMS
+  - SYRUP
+  - TAC
+  - TAIKO
+  - TANSSI
+  - TROY
+  - TUT
+  - USELESS
+  - UXLINK
+  - VANA
+  - VANRY
+  - VELVET
+  - VIC
+  - VIDT
+  - VINE
+  - VVV
+  - WAL
+  - WCT
+  - WHY
+  - XAI
   - XCN
-  - XVS
-  - ZRX
+  - ZEREBRO
+  - ZK
+  - ZKJ
+  - ZORA
+  - ZRC
 
-# --- Дополнение, не требующее экспертизы ------------------------------
-# Группировка по бете к BTC считается из данных и не зависит от мнения.
-# Планируется как второй, независимый слой отбора: пара должна быть
-# осмысленной и по нарративу, и по статистической близости.
-# Реализуется на этапе A3.
+# --- Без метки ------------------------------------------------------
+# Сектор назвать нечестно. Такие активы НЕ порождают пар по
+# сектору — пустая метка хуже отсутствующей: она создаёт
+# кандидатов, у которых нет причины быть парой.
+unlabeled:
+  - A
+  - AGT
+  - AVA
+  - AWE
+  - B
+  - BANK
+  - BDXN
+  - BIO
+  - BMT
+  - C
+  - CROSS
+  - CUDIS
+  - DMC
+  - EPT
+  - F
+  - FORM
+  - GPS
+  - HEI
+  - HOME
+  - KOMA
+  - M
+  - MILK
+  - NEWT
+  - OL
+  - SIREN
+  - SKATE
+  - SOPH
+  - STO
+  - TA
+  - X
+
