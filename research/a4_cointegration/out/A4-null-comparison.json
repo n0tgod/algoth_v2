@@ -1,0 +1,550 @@
+{
+ "null_seed": 1,
+ "since": "2025-01-01",
+ "all_windows": {
+  "real": {
+   "windows": 48,
+   "candidates_mean": 990.3541666666666,
+   "raw_pass_share": 0.16273639480825464,
+   "fdr_pass_share": 0.04493342028314786,
+   "fdr_pass_mean": 44.5,
+   "fdr_pass_median": 19.5,
+   "windows_zero": 11,
+   "adjacent": {
+    "survival": 0.19945191838962395,
+    "survival_denominator_total": 1950,
+    "survival_by_chance": 0.04277390105532808,
+    "survival_over_chance": 4.6629349549304075,
+    "selected_still_candidate": 0.9873906220028787,
+    "candidate_carryover": 0.9547523110856581,
+    "survival_unconditional": 0.1974762399900021
+   },
+   "three_steps": {
+    "survival": 0.06188645265942985,
+    "survival_denominator_total": 1468,
+    "survival_by_chance": 0.04500535856115356,
+    "survival_over_chance": 1.375090758922366,
+    "selected_still_candidate": 0.9503483881346594,
+    "candidate_carryover": 0.8944295134798083,
+    "survival_unconditional": 0.058919959670679166
+   }
+  },
+  "null": {
+   "windows": 48,
+   "candidates_mean": 818.3333333333334,
+   "raw_pass_share": 0.1555244399185336,
+   "fdr_pass_share": 0.046868635437881875,
+   "fdr_pass_mean": 38.354166666666664,
+   "fdr_pass_median": 17.0,
+   "windows_zero": 7,
+   "adjacent": {
+    "survival": 0.20851779033639667,
+    "survival_denominator_total": 1684,
+    "survival_by_chance": 0.04258074321960306,
+    "survival_over_chance": 4.8969974352256145,
+    "selected_still_candidate": 0.980750472535483,
+    "candidate_carryover": 0.9465213285101595,
+    "survival_unconditional": 0.20284283902534433
+   },
+   "three_steps": {
+    "survival": 0.08240576889529644,
+    "survival_denominator_total": 1294,
+    "survival_by_chance": 0.040332805437510666,
+    "survival_over_chance": 2.0431449784213798,
+    "selected_still_candidate": 0.9063992570239369,
+    "candidate_carryover": 0.8903285760133767,
+    "survival_unconditional": 0.0790922456190763
+   }
+  }
+ },
+ "late_windows": {
+  "real": {
+   "windows": 17,
+   "candidates_mean": 1700.5882352941176,
+   "raw_pass_share": 0.17433414043583534,
+   "fdr_pass_share": 0.04936008301625735,
+   "fdr_pass_mean": 83.94117647058823,
+   "fdr_pass_median": 74.0,
+   "windows_zero": 0,
+   "adjacent": {
+    "survival": 0.2015237932025496,
+    "survival_denominator_total": 1260,
+    "survival_by_chance": 0.046690929421901464,
+    "survival_over_chance": 4.316122975012362,
+    "selected_still_candidate": 0.9835773468740647,
+    "candidate_carryover": 0.9454861769151321,
+    "survival_unconditional": 0.197440876533903
+   },
+   "three_steps": {
+    "survival": 0.056888380312750064,
+    "survival_denominator_total": 796,
+    "survival_by_chance": 0.05036835235429467,
+    "survival_over_chance": 1.1294469176317907,
+    "selected_still_candidate": 0.9192237542173174,
+    "candidate_carryover": 0.8647658800343762,
+    "survival_unconditional": 0.05075052497652598
+   }
+  },
+  "null": {
+   "windows": 17,
+   "candidates_mean": 1522.0588235294117,
+   "raw_pass_share": 0.16510144927536233,
+   "fdr_pass_share": 0.050009661835748793,
+   "fdr_pass_mean": 76.11764705882354,
+   "fdr_pass_median": 60.0,
+   "windows_zero": 0,
+   "adjacent": {
+    "survival": 0.2298657499854499,
+    "survival_denominator_total": 1151,
+    "survival_by_chance": 0.04767102008449994,
+    "survival_over_chance": 4.821918003390699,
+    "selected_still_candidate": 0.96926440103499,
+    "candidate_carryover": 0.9407899749540087,
+    "survival_unconditional": 0.22079416498532267
+   },
+   "three_steps": {
+    "survival": 0.04789850783001286,
+    "survival_denominator_total": 801,
+    "survival_by_chance": 0.051604947823087326,
+    "survival_over_chance": 0.928176654576206,
+    "selected_still_candidate": 0.883107663601361,
+    "candidate_carryover": 0.8510059527398003,
+    "survival_unconditional": 0.041869544499096314
+   }
+  }
+ },
+ "funnel": [
+  {
+   "date": "2022-07-01",
+   "candidates_real": 19,
+   "candidates_null": 3,
+   "raw_real": 0,
+   "raw_null": 0,
+   "fdr_real": 0,
+   "fdr_null": 0
+  },
+  {
+   "date": "2022-07-31",
+   "candidates_real": 18,
+   "candidates_null": 2,
+   "raw_real": 0,
+   "raw_null": 0,
+   "fdr_real": 0,
+   "fdr_null": 0
+  },
+  {
+   "date": "2022-08-30",
+   "candidates_real": 18,
+   "candidates_null": 2,
+   "raw_real": 1,
+   "raw_null": 0,
+   "fdr_real": 0,
+   "fdr_null": 0
+  },
+  {
+   "date": "2022-09-29",
+   "candidates_real": 53,
+   "candidates_null": 12,
+   "raw_real": 5,
+   "raw_null": 1,
+   "fdr_real": 0,
+   "fdr_null": 1
+  },
+  {
+   "date": "2022-10-29",
+   "candidates_real": 116,
+   "candidates_null": 40,
+   "raw_real": 13,
+   "raw_null": 5,
+   "fdr_real": 0,
+   "fdr_null": 1
+  },
+  {
+   "date": "2022-11-28",
+   "candidates_real": 177,
+   "candidates_null": 79,
+   "raw_real": 8,
+   "raw_null": 11,
+   "fdr_real": 0,
+   "fdr_null": 0
+  },
+  {
+   "date": "2022-12-28",
+   "candidates_real": 256,
+   "candidates_null": 158,
+   "raw_real": 13,
+   "raw_null": 9,
+   "fdr_real": 0,
+   "fdr_null": 3
+  },
+  {
+   "date": "2023-01-27",
+   "candidates_real": 362,
+   "candidates_null": 223,
+   "raw_real": 23,
+   "raw_null": 31,
+   "fdr_real": 1,
+   "fdr_null": 1
+  },
+  {
+   "date": "2023-02-26",
+   "candidates_real": 418,
+   "candidates_null": 244,
+   "raw_real": 49,
+   "raw_null": 24,
+   "fdr_real": 6,
+   "fdr_null": 2
+  },
+  {
+   "date": "2023-03-28",
+   "candidates_real": 457,
+   "candidates_null": 284,
+   "raw_real": 49,
+   "raw_null": 30,
+   "fdr_real": 5,
+   "fdr_null": 2
+  },
+  {
+   "date": "2023-04-27",
+   "candidates_real": 568,
+   "candidates_null": 381,
+   "raw_real": 85,
+   "raw_null": 44,
+   "fdr_real": 10,
+   "fdr_null": 2
+  },
+  {
+   "date": "2023-05-27",
+   "candidates_real": 592,
+   "candidates_null": 405,
+   "raw_real": 85,
+   "raw_null": 68,
+   "fdr_real": 7,
+   "fdr_null": 22
+  },
+  {
+   "date": "2023-06-26",
+   "candidates_real": 656,
+   "candidates_null": 447,
+   "raw_real": 171,
+   "raw_null": 117,
+   "fdr_real": 74,
+   "fdr_null": 79
+  },
+  {
+   "date": "2023-07-26",
+   "candidates_real": 637,
+   "candidates_null": 447,
+   "raw_real": 99,
+   "raw_null": 54,
+   "fdr_real": 23,
+   "fdr_null": 9
+  },
+  {
+   "date": "2023-08-25",
+   "candidates_real": 640,
+   "candidates_null": 453,
+   "raw_real": 84,
+   "raw_null": 55,
+   "fdr_real": 18,
+   "fdr_null": 28
+  },
+  {
+   "date": "2023-09-24",
+   "candidates_real": 667,
+   "candidates_null": 490,
+   "raw_real": 150,
+   "raw_null": 96,
+   "fdr_real": 93,
+   "fdr_null": 28
+  },
+  {
+   "date": "2023-10-24",
+   "candidates_real": 703,
+   "candidates_null": 480,
+   "raw_real": 68,
+   "raw_null": 36,
+   "fdr_real": 13,
+   "fdr_null": 0
+  },
+  {
+   "date": "2023-11-23",
+   "candidates_real": 714,
+   "candidates_null": 505,
+   "raw_real": 135,
+   "raw_null": 71,
+   "fdr_real": 23,
+   "fdr_null": 16
+  },
+  {
+   "date": "2023-12-23",
+   "candidates_real": 735,
+   "candidates_null": 508,
+   "raw_real": 129,
+   "raw_null": 77,
+   "fdr_real": 18,
+   "fdr_null": 12
+  },
+  {
+   "date": "2024-01-22",
+   "candidates_real": 740,
+   "candidates_null": 512,
+   "raw_real": 117,
+   "raw_null": 89,
+   "fdr_real": 27,
+   "fdr_null": 47
+  },
+  {
+   "date": "2024-02-21",
+   "candidates_real": 762,
+   "candidates_null": 569,
+   "raw_real": 73,
+   "raw_null": 59,
+   "fdr_real": 3,
+   "fdr_null": 18
+  },
+  {
+   "date": "2024-03-22",
+   "candidates_real": 811,
+   "candidates_null": 662,
+   "raw_real": 217,
+   "raw_null": 187,
+   "fdr_real": 98,
+   "fdr_null": 91
+  },
+  {
+   "date": "2024-04-21",
+   "candidates_real": 819,
+   "candidates_null": 634,
+   "raw_real": 59,
+   "raw_null": 45,
+   "fdr_real": 0,
+   "fdr_null": 5
+  },
+  {
+   "date": "2024-05-21",
+   "candidates_real": 874,
+   "candidates_null": 651,
+   "raw_real": 139,
+   "raw_null": 104,
+   "fdr_real": 36,
+   "fdr_null": 22
+  },
+  {
+   "date": "2024-06-20",
+   "candidates_real": 864,
+   "candidates_null": 632,
+   "raw_real": 81,
+   "raw_null": 56,
+   "fdr_real": 0,
+   "fdr_null": 6
+  },
+  {
+   "date": "2024-07-20",
+   "candidates_real": 848,
+   "candidates_null": 616,
+   "raw_real": 103,
+   "raw_null": 50,
+   "fdr_real": 34,
+   "fdr_null": 0
+  },
+  {
+   "date": "2024-08-19",
+   "candidates_real": 931,
+   "candidates_null": 663,
+   "raw_real": 102,
+   "raw_null": 75,
+   "fdr_real": 0,
+   "fdr_null": 1
+  },
+  {
+   "date": "2024-09-18",
+   "candidates_real": 935,
+   "candidates_null": 675,
+   "raw_real": 77,
+   "raw_null": 70,
+   "fdr_real": 1,
+   "fdr_null": 0
+  },
+  {
+   "date": "2024-10-18",
+   "candidates_real": 1023,
+   "candidates_null": 825,
+   "raw_real": 100,
+   "raw_null": 69,
+   "fdr_real": 0,
+   "fdr_null": 7
+  },
+  {
+   "date": "2024-11-17",
+   "candidates_real": 1061,
+   "candidates_null": 862,
+   "raw_real": 128,
+   "raw_null": 106,
+   "fdr_real": 35,
+   "fdr_null": 52
+  },
+  {
+   "date": "2024-12-17",
+   "candidates_real": 1153,
+   "candidates_null": 941,
+   "raw_real": 333,
+   "raw_null": 198,
+   "fdr_real": 184,
+   "fdr_null": 92
+  },
+  {
+   "date": "2025-01-16",
+   "candidates_real": 1134,
+   "candidates_null": 940,
+   "raw_real": 126,
+   "raw_null": 98,
+   "fdr_real": 29,
+   "fdr_null": 25
+  },
+  {
+   "date": "2025-02-15",
+   "candidates_real": 1253,
+   "candidates_null": 1058,
+   "raw_real": 255,
+   "raw_null": 150,
+   "fdr_real": 44,
+   "fdr_null": 9
+  },
+  {
+   "date": "2025-03-17",
+   "candidates_real": 1327,
+   "candidates_null": 1102,
+   "raw_real": 244,
+   "raw_null": 165,
+   "fdr_real": 9,
+   "fdr_null": 35
+  },
+  {
+   "date": "2025-04-16",
+   "candidates_real": 1360,
+   "candidates_null": 1133,
+   "raw_real": 179,
+   "raw_null": 122,
+   "fdr_real": 12,
+   "fdr_null": 1
+  },
+  {
+   "date": "2025-05-16",
+   "candidates_real": 1423,
+   "candidates_null": 1246,
+   "raw_real": 164,
+   "raw_null": 172,
+   "fdr_real": 20,
+   "fdr_null": 60
+  },
+  {
+   "date": "2025-06-15",
+   "candidates_real": 1457,
+   "candidates_null": 1323,
+   "raw_real": 146,
+   "raw_null": 116,
+   "fdr_real": 19,
+   "fdr_null": 9
+  },
+  {
+   "date": "2025-07-15",
+   "candidates_real": 1593,
+   "candidates_null": 1389,
+   "raw_real": 292,
+   "raw_null": 282,
+   "fdr_real": 127,
+   "fdr_null": 112
+  },
+  {
+   "date": "2025-08-14",
+   "candidates_real": 1585,
+   "candidates_null": 1448,
+   "raw_real": 178,
+   "raw_null": 172,
+   "fdr_real": 24,
+   "fdr_null": 26
+  },
+  {
+   "date": "2025-09-13",
+   "candidates_real": 1679,
+   "candidates_null": 1544,
+   "raw_real": 243,
+   "raw_null": 235,
+   "fdr_real": 37,
+   "fdr_null": 25
+  },
+  {
+   "date": "2025-10-13",
+   "candidates_real": 1689,
+   "candidates_null": 1510,
+   "raw_real": 361,
+   "raw_null": 303,
+   "fdr_real": 150,
+   "fdr_null": 100
+  },
+  {
+   "date": "2025-11-12",
+   "candidates_real": 1816,
+   "candidates_null": 1681,
+   "raw_real": 437,
+   "raw_null": 421,
+   "fdr_real": 150,
+   "fdr_null": 204
+  },
+  {
+   "date": "2025-12-12",
+   "candidates_real": 1897,
+   "candidates_null": 1703,
+   "raw_real": 376,
+   "raw_null": 386,
+   "fdr_real": 75,
+   "fdr_null": 162
+  },
+  {
+   "date": "2026-01-11",
+   "candidates_real": 1913,
+   "candidates_null": 1810,
+   "raw_real": 381,
+   "raw_null": 331,
+   "fdr_real": 141,
+   "fdr_null": 162
+  },
+  {
+   "date": "2026-02-10",
+   "candidates_real": 2103,
+   "candidates_null": 1827,
+   "raw_real": 340,
+   "raw_null": 250,
+   "fdr_real": 74,
+   "fdr_null": 37
+  },
+  {
+   "date": "2026-03-12",
+   "candidates_real": 2140,
+   "candidates_null": 1920,
+   "raw_real": 446,
+   "raw_null": 338,
+   "fdr_real": 190,
+   "fdr_null": 77
+  },
+  {
+   "date": "2026-04-11",
+   "candidates_real": 2258,
+   "candidates_null": 2047,
+   "raw_real": 450,
+   "raw_null": 389,
+   "fdr_real": 189,
+   "fdr_null": 163
+  },
+  {
+   "date": "2026-05-11",
+   "candidates_real": 2283,
+   "candidates_null": 2194,
+   "raw_real": 422,
+   "raw_null": 342,
+   "fdr_real": 137,
+   "fdr_null": 87
+  }
+ ]
+}

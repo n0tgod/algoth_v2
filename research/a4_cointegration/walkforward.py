@@ -282,7 +282,7 @@ def survival(sel_a, sel_b, tested_b):
     return len(base & sel_b) / len(base), len(base)
 
 
-def summarize(rows):
+def summarize(rows, where=None):
     rows = sorted(rows, key=lambda r: r["date"])
     # Выживание «между соседними окнами» имеет смысл, только если соседние
     # окна отстоят на шаг сетки. Одно окно, посчитанное вручную не по
@@ -291,10 +291,15 @@ def summarize(rows):
     gaps = {(date.fromisoformat(b["date"]) - date.fromisoformat(a["date"])).days
             for a, b in zip(rows, rows[1:])}
     if gaps - {TRADE_DAYS}:
+        bad = [f"{a['date']}→{b['date']}"
+               for a, b in zip(rows, rows[1:])
+               if (date.fromisoformat(b["date"])
+                   - date.fromisoformat(a["date"])).days != TRADE_DAYS]
         raise SystemExit(
             f"окна стоят не по сетке: шаги {sorted(gaps)} при ожидаемом "
-            f"{TRADE_DAYS}. Лишние файлы в {WINDOWS} нужно убрать — сводка "
-            f"по разношаговой сетке считала бы соседство неправильно.")
+            f"{TRADE_DAYS}, разрывы {bad}. Каталог: {where or WINDOWS}. "
+            f"Сводка по разношаговой сетке считала бы соседство "
+            f"неправильно.")
     sel = [{p["pair"] for p in r["pairs"] if p.get("selected")} for r in rows]
     fdr = [{p["pair"] for p in r["pairs"] if p.get("fdr")} for r in rows]
     tested = [{p["pair"] for p in r["pairs"]} for r in rows]
@@ -417,7 +422,7 @@ def main():
     rows = load_windows(where)
     if not rows:
         return
-    s = summarize(rows)
+    s = summarize(rows, where)
     with open(os.path.join(OUT, f"walkforward_summary{tag}.json"), "w",
               encoding="utf-8") as f:
         json.dump({"step": STEP, "form_days": FORM_DAYS,
