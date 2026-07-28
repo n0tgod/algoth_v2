@@ -45,6 +45,8 @@ Funding
 """
 
 import argparse
+import csv
+import gzip
 import json
 import os
 import sys
@@ -110,8 +112,13 @@ def load_fees(universe):
 def load_funding(universe, symbols):
     """Ряды funding площадки исполнения: `{актив: (времена_мс, ставки)}`.
 
-    Возвращает `None`, если каталога нет — прогон тогда считает только
-    комиссию и говорит об этом.
+    Формат — тот, что пишет сборщик A1 (`bybit_api.py`): gzip-CSV с
+    заголовком `funding_time,funding_rate`, время в миллисекундах, файл
+    на символ Bybit. Первая редакция искала `.json` и не находила
+    ничего; каталог при этом существовал, поэтому прогон отрапортовал
+    «funding включён» и посчитал нули.
+
+    Возвращает `None`, если каталога нет вовсе.
     """
     d = os.path.join(A1, "funding")
     if not os.path.isdir(d):
@@ -120,18 +127,21 @@ def load_funding(universe, symbols):
                  if v.get("bybit_symbol")}
     out = {}
     for fn in sorted(os.listdir(d)):
-        if not fn.endswith(".json"):
+        if not fn.endswith(".csv.gz"):
             continue
-        sym = fn[:-len(".json")]
+        sym = fn[:-len(".csv.gz")]
         a = by_symbol.get(sym)
         if a is None or a not in symbols:
             continue
-        with open(os.path.join(d, fn), encoding="utf-8") as f:
-            rows = json.load(f)
         t, r = [], []
-        for x in rows:
-            t.append(int(x["fundingRateTimestamp"]))
-            r.append(float(x["fundingRate"]))
+        with gzip.open(os.path.join(d, fn), "rt", encoding="utf-8") as f:
+            rd = csv.reader(f)
+            next(rd, None)                      # заголовок
+            for row in rd:
+                if len(row) < 2:
+                    continue
+                t.append(int(row[0]))
+                r.append(float(row[1]))
         if t:
             o = np.argsort(t)
             out[a] = (np.asarray(t, dtype=np.int64)[o],
