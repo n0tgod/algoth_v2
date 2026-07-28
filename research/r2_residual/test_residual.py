@@ -291,5 +291,64 @@ class BlendRanks(unittest.TestCase):
         out = RS.blend_ranks(a, b, 0.0)
         self.assertGreater(RS.spearman(out, a)[0], 0.999)
 
+class TestPathNorm(unittest.TestCase):
+    """Замер нормировки пути (эквивалент RSI на остатке)."""
+
+    def test_rsi_identity(self):
+        """RSI Уайлдера есть в точности 50·(1 + чистое / путь).
+
+        Именно поэтому переход к RSI не является новым сигналом: наш
+        сигнал — это «чистое», а RSI получается делением на путь. Тест
+        закрепляет тождество числом, а не рассуждением в комментарии.
+        """
+        steps = np.array([0.03, -0.01, 0.02, -0.04, 0.01])
+        up = steps[steps > 0].sum()
+        down = -steps[steps < 0].sum()
+        rsi = 100.0 * up / (up + down)
+        net, run = steps.sum(), np.abs(steps).sum()
+        self.assertAlmostEqual(rsi, 50.0 * (1.0 + net / run), places=12)
+
+    def test_rsi_is_monotone_in_net_over_path(self):
+        """Сечение ранжируется, поэтому важна только монотонность."""
+        rng = np.random.default_rng(7)
+        net = rng.normal(size=200)
+        run = rng.uniform(0.5, 3.0, size=200)
+        ratio = net / run
+        rsi = 50.0 * (1.0 + ratio)
+        self.assertGreater(RS.spearman(ratio, rsi)[0], 1.0 - 1e-12)
+
+    def test_sharpe_se_depends_on_span_not_frequency(self):
+        """Стандартная ошибка годового Sharpe равна 1/√(лет истории).
+
+        Множители сокращаются: `√(периодов в году)` из годового
+        масштабирования против `√(числа наблюдений)` в знаменателе. Из
+        этого следует вывод, который иначе легко упустить: **учащение
+        ребаланса не повышает точность оценки Sharpe** — её повышает
+        только длина календарной истории.
+        """
+        import path_norm as PN
+        rng = np.random.default_rng(11)
+        years = 4.0
+        for h in (1, 5, 10):
+            n = int(years * 365 / h)
+            v = rng.normal(0.0, 1.0, n)
+            _, _, se = PN.gross_sharpe(v, h)
+            self.assertAlmostEqual(se, 1.0 / np.sqrt(years), places=1)
+
+    def test_sharpe_matches_hand_computation(self):
+        import path_norm as PN
+        v = [0.01, -0.005, 0.02, 0.0, 0.015, -0.01, 0.005, 0.03, -0.02, 0.01]
+        a = np.asarray(v)
+        want = a.mean() / a.std(ddof=1) * np.sqrt(365.0 / 5)
+        sr, pos, _ = PN.gross_sharpe(v, 5)
+        self.assertAlmostEqual(sr, want, places=12)
+        self.assertAlmostEqual(pos, 0.6, places=12)
+
+    def test_short_series_gives_nothing(self):
+        """Девять периодов — не ряд. Лучше пусто, чем Sharpe из воздуха."""
+        import path_norm as PN
+        self.assertEqual(PN.gross_sharpe([0.01] * 9, 1), (None, None, None))
+
+
 if __name__ == "__main__":
     unittest.main()
