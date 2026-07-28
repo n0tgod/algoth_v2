@@ -199,5 +199,30 @@ class WindowBounds(unittest.TestCase):
         _, _, fwd = RS.window_bounds(0, 4990, 5000, 1, 10, 24)
         self.assertEqual(fwd[1], 5000)
 
+
+class DeterministicSeed(unittest.TestCase):
+    """Нулевая модель, которую нельзя повторить, не является проверяемой.
+
+    Первая версия брала `abs(hash((seed, day)))`, а хеш строки в Python
+    солится на каждый процесс — два запуска одного кода на одних данных
+    давали разные нули. Значение здесь ЗАКРЕПЛЕНО числом: любая замена
+    способа вывода зерна обязана сломать этот тест, а не пройти его.
+    """
+
+    def test_known_values(self):
+        self.assertEqual(RS.seed_for(1, "1970-01-01"), [1, 0])
+        self.assertEqual(RS.seed_for(1, "1970-01-02"), [1, 1])
+        self.assertEqual(RS.seed_for(7, "2025-01-01"), [7, 20089])
+
+    def test_same_input_same_permutation(self):
+        a = np.random.default_rng(RS.seed_for(3, "2024-06-01")).permutation(50)
+        b = np.random.default_rng(RS.seed_for(3, "2024-06-01")).permutation(50)
+        self.assertTrue((a == b).all())
+
+    def test_different_date_different_permutation(self):
+        a = np.random.default_rng(RS.seed_for(3, "2024-06-01")).permutation(50)
+        b = np.random.default_rng(RS.seed_for(3, "2024-06-02")).permutation(50)
+        self.assertFalse((a == b).all())
+
 if __name__ == "__main__":
     unittest.main()

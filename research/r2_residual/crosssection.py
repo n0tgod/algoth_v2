@@ -285,9 +285,8 @@ def process_chunk(con, dates, liq, universe, interval, null_seed=None):
         live, st = live_by_date[at]
         # Зерно завязано на дату: прогон остаётся воспроизводимым и не
         # зависит от того, каким куском и в каком порядке считался.
-        rng = (np.random.default_rng(
-            abs(hash((null_seed, at))) % (2 ** 32)) if null_seed is not None
-            else None)
+        rng = (np.random.default_rng(RS.seed_for(null_seed, at))
+               if null_seed is not None else None)
         r = run_date(at, grid, PX, cols, live, st, universe, rng)
         if r:
             out.append(r)

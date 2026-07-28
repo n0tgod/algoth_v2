@@ -159,9 +159,9 @@ def null1_builder(vec, seed):
     def build(dates, k, h):
         out = []
         for d in dates:
-            # Зерно завязано на дату: результат воспроизводим и не зависит
-            # от порядка обхода.
-            rng = np.random.default_rng(abs(hash((seed, d))) % (2 ** 32))
+            # Зерно завязано на дату: результат воспроизводим и не
+            # зависит ни от порядка обхода, ни от процесса.
+            rng = np.random.default_rng(RS.seed_for(seed, d))
             sig = vec[d]["sig"][k]
             out.append((sig[rng.permutation(len(sig))], vec[d]["fwd"][h]))
         return out
@@ -225,14 +225,35 @@ def verify_against_run(real, interval):
 
 
 def verdict(real, nulls, key="ic_median"):
+    """Сравнение прогона с распределением зёрен нуля.
+
+    Порог §8.2 — 95-й процентиль десяти зёрен. У этого есть следствие,
+    которое надо назвать: при десяти наблюдениях 95-й процентиль ЕСТЬ
+    максимум десяти, а максимум десяти — сам по себе шумная величина.
+    Отношение «прогон / процентиль» поэтому гуляет от набора к набору
+    (на замерах выходило ×8.6, ×10.7, ×19.3 при неизменном прогоне) и
+    как мера силы результата негодно.
+
+    Рядом считается величина, устойчивая к этому: на сколько
+    стандартных отклонений распределения зёрен прогон отстоит от его
+    среднего. Вердикт §8.2 по-прежнему выносится по процентилю — порог
+    менять нельзя, — но читать силу результата надо по `z`.
+    """
     v = sorted(n[key] for n in nulls if n[key] is not None)
     if not v:
         return None
     p95 = v[min(len(v) - 1, int(round(NULL_PERCENTILE / 100 * (len(v) - 1))))]
-    return {"real": real[key], "null_median": float(np.median(v)),
+    mean = float(np.mean(v))
+    sd = float(np.std(v, ddof=1)) if len(v) > 1 else 0.0
+    r = real[key]
+    return {"real": r, "null_median": float(np.median(v)),
+            "null_mean": mean, "null_sd": sd,
             "null_p95": p95, "null_max": v[-1], "null_min": v[0],
-            "beats_p95": real[key] is not None and real[key] > p95,
-            "ratio": (real[key] / p95) if p95 and p95 > 0 else None}
+            "seeds": len(v),
+            "percentile_is_max": p95 == v[-1],
+            "beats_p95": r is not None and r > p95,
+            "z": ((r - mean) / sd) if (sd > 0 and r is not None) else None,
+            "ratio": (r / p95) if p95 and p95 > 0 else None}
 
 
 def main():
