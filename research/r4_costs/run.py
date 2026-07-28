@@ -212,6 +212,11 @@ def run_cell(dates, vec, k, h, width, fees, states, funding, rule):
     n = np.asarray(nets)
     sd = float(n.std(ddof=1)) if len(n) > 1 else 0.0
     return {
+        # Ряд доходностей по периодам, а не только его среднее. R5 считает
+        # по нему просадку, худший подпериод и Deflated Sharpe — из
+        # агрегата их не восстановить, а второй прогон ради этого стоил бы
+        # ещё одного круга на сервер.
+        "series": [round(float(x), 12) for x in nets],
         "sections": len(nets),
         "gross": stat(gross), "commission": stat(comm),
         "funding": stat(fund), "turnover": stat(turn),
@@ -265,7 +270,11 @@ def main():
         print(f"{rule}: ячеек {len(cells)}, медиана нетто по сетке "
               f"{med * 10000:+.1f} б.п.", file=sys.stderr, flush=True)
 
-    doc = {"config": {"interval": args.interval, "ks": ks, "hs": hs,
+    # Даты ребаланса хранятся один раз на горизонт, а не в каждой ячейке:
+    # они одинаковы у всех ячеек с общим h.
+    dates_by_h = {str(h): dates[::h] for h in hs}
+    doc = {"dates_by_h": dates_by_h,
+           "config": {"interval": args.interval, "ks": ks, "hs": hs,
                       "widths": WIDTHS, "cost_multiplier": COST_MULTIPLIER,
                       "expensive_share": EXPENSIVE_SHARE,
                       "cheap_bp": CHEAP / BP, "modal_bp": MODAL / BP,
