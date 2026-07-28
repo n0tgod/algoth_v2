@@ -1,0 +1,368 @@
+{
+ "config": {
+  "interval": "1m",
+  "funding_venue": "bybit",
+  "worst_n": 10,
+  "stops": [
+   0.5,
+   0.3,
+   0.2,
+   0.1
+  ],
+  "dd_limit": 0.2
+ },
+ "cells": {
+  "k7_h5_decile": {
+   "periods": 266,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.4950296957009664,
+   "share_of_loss_worst3_legs": 0.9066409216386224,
+   "share_of_legs_losing": 0.5934782608695652,
+   "leg_return_p01": -0.32665609386315075,
+   "leg_return_p05": -0.19323476153172114,
+   "leg_return_median": -0.0015588467692913,
+   "leg_worst": -2.515417784470789,
+   "leg_share_below_20pct": 0.046330139286772695,
+   "leg_share_below_50pct": 0.0036550429714511507,
+   "base": {
+    "drawdown": -0.47816529809469777,
+    "annual": 0.05156173778597482,
+    "sharpe": 0.2045735887002279
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.26342689402193065,
+     "annual": 0.19584247834798288,
+     "sharpe": 1.0132960374180262,
+     "passes_dd": false
+    },
+    "0.3": {
+     "drawdown": -0.18522890787742963,
+     "annual": 0.30235337468289547,
+     "sharpe": 1.6240289226821518,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.14716209792844548,
+     "annual": 0.49630340888800406,
+     "sharpe": 2.64400330548648,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.09176971468995199,
+     "annual": 1.1777182607615604,
+     "sharpe": 5.666785913092135,
+     "passes_dd": true
+    }
+   }
+  },
+  "k7_h5_quintile": {
+   "periods": 266,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.4623462995769,
+   "share_of_loss_worst3_legs": 0.8175014875158029,
+   "share_of_legs_losing": 0.5513157894736842,
+   "leg_return_p01": -0.3156209161927588,
+   "leg_return_p05": -0.18344180566887064,
+   "leg_return_median": -0.0006330545090460632,
+   "leg_worst": -2.515417784470789,
+   "leg_share_below_20pct": 0.04092829052774676,
+   "leg_share_below_50pct": 0.002718842549885906,
+   "base": {
+    "drawdown": -0.2457453630435522,
+    "annual": 0.11804442953654146,
+    "sharpe": 0.8790672008103897
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.13222281030424643,
+     "annual": 0.1944981139171946,
+     "sharpe": 1.632164809254245,
+     "passes_dd": true
+    },
+    "0.3": {
+     "drawdown": -0.10258134906885641,
+     "annual": 0.28381084102357484,
+     "sharpe": 2.356701314317047,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.07621949554352614,
+     "annual": 0.45574742669463647,
+     "sharpe": 3.447706602019321,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.041636976207897525,
+     "annual": 1.0758918484706477,
+     "sharpe": 6.183966059052458,
+     "passes_dd": true
+    }
+   }
+  },
+  "k7_h10_decile": {
+   "periods": 133,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.6092715704305167,
+   "share_of_loss_worst3_legs": 1.0927731843528963,
+   "share_of_legs_losing": 0.5477272727272727,
+   "leg_return_p01": -0.44674251938695136,
+   "leg_return_p05": -0.2716102130275933,
+   "leg_return_median": -0.002492989761087916,
+   "leg_worst": -2.5623942830486657,
+   "leg_share_below_20pct": 0.1011704026978774,
+   "leg_share_below_50pct": 0.006347946835945249,
+   "base": {
+    "drawdown": -0.19829071131005183,
+    "annual": 0.233744942089545,
+    "sharpe": 1.147548921857784
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.16014149018493296,
+     "annual": 0.30237078349035545,
+     "sharpe": 1.5842907997051459,
+     "passes_dd": true
+    },
+    "0.3": {
+     "drawdown": -0.1229006060634239,
+     "annual": 0.43168541374597225,
+     "sharpe": 2.330826752671067,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.10009297537044537,
+     "annual": 0.664238630437868,
+     "sharpe": 3.476385204832719,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.05046436251407793,
+     "annual": 1.2628773699497806,
+     "sharpe": 5.861084233111915,
+     "passes_dd": true
+    }
+   }
+  },
+  "k7_h10_quintile": {
+   "periods": 133,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.5240766702623227,
+   "share_of_loss_worst3_legs": 0.8753509798420616,
+   "share_of_legs_losing": 0.5292613636363637,
+   "leg_return_p01": -0.43480383436021014,
+   "leg_return_p05": -0.2559154487264566,
+   "leg_return_median": -0.0010325422270031498,
+   "leg_worst": -2.5623942830486657,
+   "leg_share_below_20pct": 0.09020066238067408,
+   "leg_share_below_50pct": 0.0061367621274108705,
+   "base": {
+    "drawdown": -0.2763151819093692,
+    "annual": 0.12517130675095461,
+    "sharpe": 0.8507128654137339
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.1502464383740667,
+     "annual": 0.21541628262127385,
+     "sharpe": 1.759941940419153,
+     "passes_dd": true
+    },
+    "0.3": {
+     "drawdown": -0.08245792112325179,
+     "annual": 0.32601225110886606,
+     "sharpe": 2.6670875203708118,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.04172601183034663,
+     "annual": 0.5284983255217321,
+     "sharpe": 3.8882266217845403,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.011214040331962494,
+     "annual": 1.090025057624507,
+     "sharpe": 6.259735744591673,
+     "passes_dd": true
+    }
+   }
+  },
+  "k14_h5_decile": {
+   "periods": 266,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.5194154133568067,
+   "share_of_loss_worst3_legs": 0.953918900342237,
+   "share_of_legs_losing": 0.5965909090909092,
+   "leg_return_p01": -0.32143250639658366,
+   "leg_return_p05": -0.1902563597604314,
+   "leg_return_median": -0.0019797432800725545,
+   "leg_worst": -1.9918008634753575,
+   "leg_share_below_20pct": 0.04458724666337123,
+   "leg_share_below_50pct": 0.0032624814631735046,
+   "base": {
+    "drawdown": -0.31295433761992053,
+    "annual": 0.09585074809893085,
+    "sharpe": 0.49355975609105385
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.2811193368760292,
+     "annual": 0.16244585742266102,
+     "sharpe": 0.8885230636911504,
+     "passes_dd": false
+    },
+    "0.3": {
+     "drawdown": -0.19048226908580612,
+     "annual": 0.26220374166600213,
+     "sharpe": 1.462989168011429,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.12447122045182668,
+     "annual": 0.44521257110134627,
+     "sharpe": 2.4114713200025064,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.0880878538086276,
+     "annual": 1.1068008055860807,
+     "sharpe": 5.313210536106126,
+     "passes_dd": true
+    }
+   }
+  },
+  "k14_h5_quintile": {
+   "periods": 266,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.3967519602661132,
+   "share_of_loss_worst3_legs": 0.7254687691379283,
+   "share_of_legs_losing": 0.5526315789473685,
+   "leg_return_p01": -0.3092189469990528,
+   "leg_return_p05": -0.18304670153579017,
+   "leg_return_median": -0.000841075096414734,
+   "leg_worst": -2.515417784470789,
+   "leg_share_below_20pct": 0.041324721992910214,
+   "leg_share_below_50pct": 0.00242800951779731,
+   "base": {
+    "drawdown": -0.29883589984860914,
+    "annual": 0.09472532961790876,
+    "sharpe": 0.6698781349110762
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.19164492297198132,
+     "annual": 0.16610787535653368,
+     "sharpe": 1.3473060144913973,
+     "passes_dd": true
+    },
+    "0.3": {
+     "drawdown": -0.1267687205082313,
+     "annual": 0.2482205200083201,
+     "sharpe": 2.0395083942930277,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.07869289203589791,
+     "annual": 0.41476283618777365,
+     "sharpe": 3.1762243475325245,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.05806781223109159,
+     "annual": 1.0343290096668798,
+     "sharpe": 6.043649918235724,
+     "passes_dd": true
+    }
+   }
+  },
+  "k14_h10_decile": {
+   "periods": 133,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.47161190683001664,
+   "share_of_loss_worst3_legs": 0.8190745522614239,
+   "share_of_legs_losing": 0.5645833333333333,
+   "leg_return_p01": -0.4366323883187001,
+   "leg_return_p05": -0.2631960981838603,
+   "leg_return_median": -0.003230171897151468,
+   "leg_worst": -2.5623942830486657,
+   "leg_share_below_20pct": 0.0962683604605002,
+   "leg_share_below_50pct": 0.0059547439460103215,
+   "base": {
+    "drawdown": -0.24096314201534408,
+    "annual": 0.138622751310083,
+    "sharpe": 0.6867962541727343
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.18818695846523448,
+     "annual": 0.21014548178567624,
+     "sharpe": 1.1401800343432158,
+     "passes_dd": true
+    },
+    "0.3": {
+     "drawdown": -0.11962058573729129,
+     "annual": 0.3300608903127693,
+     "sharpe": 1.8483573503791104,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.09258443324976529,
+     "annual": 0.548678324507037,
+     "sharpe": 2.947725608939827,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.048783645895412175,
+     "annual": 1.1426708261505127,
+     "sharpe": 5.371436821103595,
+     "passes_dd": true
+    }
+   }
+  },
+  "k14_h10_quintile": {
+   "periods": 133,
+   "worst_periods_used": 10,
+   "share_of_loss_worst_leg": 0.41462913536292034,
+   "share_of_loss_worst3_legs": 0.8536628724708408,
+   "share_of_legs_losing": 0.5263157894736842,
+   "leg_return_p01": -0.42050544208851354,
+   "leg_return_p05": -0.25508150109434113,
+   "leg_return_median": -0.001849283929704626,
+   "leg_worst": -2.5623942830486657,
+   "leg_share_below_20pct": 0.08733794716834,
+   "leg_share_below_50pct": 0.0051661955356272545,
+   "base": {
+    "drawdown": -0.30540628693680594,
+    "annual": 0.08395008424034174,
+    "sharpe": 0.5668482965077482
+   },
+   "stops": {
+    "0.5": {
+     "drawdown": -0.191514274837429,
+     "annual": 0.16680615097705132,
+     "sharpe": 1.2920779205787574,
+     "passes_dd": true
+    },
+    "0.3": {
+     "drawdown": -0.1144718841362995,
+     "annual": 0.2718708441125306,
+     "sharpe": 2.116357672789289,
+     "passes_dd": true
+    },
+    "0.2": {
+     "drawdown": -0.07219001691817639,
+     "annual": 0.47292403379141806,
+     "sharpe": 3.321313776020831,
+     "passes_dd": true
+    },
+    "0.1": {
+     "drawdown": -0.04079385184065398,
+     "annual": 1.0274102214568965,
+     "sharpe": 5.683947002981199,
+     "passes_dd": true
+    }
+   }
+  }
+ }
+}
