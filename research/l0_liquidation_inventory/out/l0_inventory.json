@@ -1,0 +1,141 @@
+{
+ "binance_datasets": {
+  "monthly": [
+   "aggTrades",
+   "bookTicker",
+   "fundingRate",
+   "indexPriceKlines",
+   "klines",
+   "markPriceKlines",
+   "monthly",
+   "premiumIndexKlines",
+   "trades"
+  ],
+  "daily": [
+   "aggTrades",
+   "bookDepth",
+   "bookTicker",
+   "daily",
+   "indexPriceKlines",
+   "klines",
+   "markPriceKlines",
+   "metrics",
+   "premiumIndexKlines",
+   "trades"
+  ]
+ },
+ "binance_agg_format": {
+  "file": "BTCUSDT-aggTrades-2025-03.zip",
+  "columns": [
+   "agg_trade_id",
+   "price",
+   "quantity",
+   "first_trade_id",
+   "last_trade_id",
+   "transact_time",
+   "is_buyer_maker"
+  ],
+  "sample": [
+   "2596919084,84299.6,0.003,6025373256,6025373256,1740787204297,true",
+   "2596919085,84299.7,0.063,6025373257,6025373259,1740787204325,false"
+  ],
+  "has_liquidation_flag": false,
+  "zip_mb": 708.6
+ },
+ "bybit_tick_format": {
+  "file": "BTCUSDT2026-07-27.csv.gz",
+  "columns": [
+   "timestamp",
+   "symbol",
+   "side",
+   "size",
+   "price",
+   "tickDirection",
+   "trdMatchID",
+   "grossValue",
+   "homeNotional",
+   "foreignNotional",
+   "RPI"
+  ],
+  "sample": [
+   "1785110400.4256,BTCUSDT,Sell,0.245,65376.10,PlusTick,9749e02e-1e8c-59f0-b329-701207a40fd6,1.6017144499999998e+12,0.245,16017.144499999999,0",
+   "1785110400.448,BTCUSDT,Sell,0.011,65376.10,ZeroPlusTick,72b561b0-2ea5-504c-8d76-fa840aa91021,7.191370999999998e+10,0.011,719.1370999999999,0",
+   "1785110400.4481,BTCUSDT,Sell,0.008,65376.10,ZeroPlusTick,3c25002d-d6be-53f0-b1f6-a2f5434ac687,5.230087999999999e+10,0.008,523.0088,0"
+  ],
+  "has_liquidation_flag": false,
+  "has_aggressor": true,
+  "first_files": [
+   "BTCUSDT2020-03-25.csv.gz",
+   "BTCUSDT2020-03-26.csv.gz"
+  ],
+  "files": 2316
+ },
+ "volume": {
+  "BTCUSDT": {
+   "aggTrades": {
+    "months": 79,
+    "sample_month_mb": 708.6,
+    "total_gb": 43.59
+   },
+   "trades": {
+    "months": 82,
+    "sample_month_mb": 1080.6,
+    "total_gb": 67.3
+   },
+   "bookTicker": {
+    "months": 12,
+    "sample_month_mb": null,
+    "total_gb": 53.55
+   },
+   "klines_1m": {
+    "months": 78,
+    "sample_month_mb": 1.9,
+    "total_gb": 0.15
+   }
+  },
+  "SOLUSDT": {
+   "aggTrades": {
+    "months": 70,
+    "sample_month_mb": 178.2,
+    "total_gb": 14.04
+   },
+   "trades": {
+    "months": 70,
+    "sample_month_mb": 410.7,
+    "total_gb": 27.54
+   },
+   "bookTicker": {
+    "months": 12,
+    "sample_month_mb": null,
+    "total_gb": 23.87
+   },
+   "klines_1m": {
+    "months": 70,
+    "sample_month_mb": 1.5,
+    "total_gb": 0.11
+   }
+  },
+  "ARBUSDT": {
+   "aggTrades": {
+    "months": 40,
+    "sample_month_mb": 33.9,
+    "total_gb": 2.58
+   },
+   "trades": {
+    "months": 40,
+    "sample_month_mb": 98.0,
+    "total_gb": 6.97
+   },
+   "bookTicker": {
+    "months": 12,
+    "sample_month_mb": null,
+    "total_gb": 10.11
+   },
+   "klines_1m": {
+    "months": 40,
+    "sample_month_mb": 1.7,
+    "total_gb": 0.07
+   }
+  }
+ }
+}

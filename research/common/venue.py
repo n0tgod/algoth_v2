@@ -83,6 +83,38 @@ def fetch(url, cache_dir, method="GET", body=None, cache_key=None, user_agent="a
     raise RuntimeError(f"fetch failed {url}: {last}")
 
 
+def fetch_binary(url, cache_dir, cache_key=None,
+                 user_agent="algoth-v2/1.0"):
+    """То же, что `fetch`, но возвращает байты и кэширует их как есть.
+
+    Отдельной функцией, а не флагом: `fetch` декодирует ответ в текст с
+    заменой битых байт, и для zip-архива это молча портит данные —
+    файл распакуется с ошибкой уже потом, далеко от места причины.
+    """
+    key = cache_key or sha256(url.encode()).hexdigest()
+    path = os.path.join(cache_dir, key + ".bin")
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return f.read()
+    last = None
+    for attempt in range(RETRIES):
+        try:
+            req = urllib.request.Request(
+                url, headers={"User-Agent": user_agent})
+            with urllib.request.urlopen(req, timeout=TIMEOUT,
+                                        context=SSL_CTX) as r:
+                data = r.read()
+            os.makedirs(cache_dir, exist_ok=True)
+            with open(path, "wb") as f:
+                f.write(data)
+            return data
+        except Exception as e:  # noqa: BLE001 — сеть, нужен любой сбой
+            last = e
+            if attempt < RETRIES - 1:
+                time.sleep(2 ** attempt)
+    raise RuntimeError(f"fetch_binary failed {url}: {last}")
+
+
 def normalize(symbol):
     """Тикер площадки -> (базовый актив, котируемый актив, множитель)."""
     s = symbol.upper()
