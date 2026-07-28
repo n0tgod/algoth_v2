@@ -61,8 +61,14 @@ def main():
     p("**Спека:** 03, этап R4 и раздел 6  ")
     p(f"**Разрешение хранилища:** {cfg['interval']}  ")
     p(f"**Сечений в истории:** {cfg['sections_total']}  ")
-    p(f"**Funding включён:** "
-      f"{'да' if cfg['funding_included'] else '**НЕТ** — см. раздел 4'}\n")
+    cov = cfg.get("funding_symbols")
+    tot = cfg.get("universe_symbols")
+    if cfg["funding_included"]:
+        p(f"**Funding включён:** да, ряды у {cov} активов из {tot}\n")
+    else:
+        p(f"**Funding включён:** **НЕТ**"
+          + (f" (рядов нашлось {cov} из {tot})" if cov is not None else "")
+          + " — см. раздел 4\n")
 
     p("## Единица измерения\n")
     p("Всё выражается **в долях гросс-нотионала книги** — суммы модулей "

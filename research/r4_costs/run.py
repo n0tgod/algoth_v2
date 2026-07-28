@@ -71,6 +71,10 @@ EXPENSIVE_SHARE = [0.432, 0.326, 0.137, 0.147, 0.052]
 
 WIDTHS = {"decile": 0.10, "quintile": 0.20}
 COST_MULTIPLIER = 1.5        # критерий §8.3 п. 9
+# Ниже этого числа символов с рядами funding покрытие считается
+# отсутствующим: частичное покрытие даёт заниженную издержку, выдавая
+# её за полную.
+MIN_FUNDING_SYMBOLS = 50
 
 
 def load_vectors(interval):
@@ -243,8 +247,22 @@ def main():
 
     used = sorted({s for d in dates for s in vec[d]["names"]})
     funding = None if args.no_funding else load_funding(universe, set(used))
+    # Пустой словарь — НЕ то же самое, что посчитанный ноль. Каталог может
+    # существовать и быть пустым, имена символов могут не сойтись — и
+    # тогда funding_cost вернёт 0.0 по каждой ноге, а сводка отрапортует
+    # «funding включён». Ровно так и вышло на первом прогоне: +0.00 б.п.
+    # во всех 32 ячейках. Точный ноль везде есть признак отсутствия
+    # данных, а не свойство рынка, и различать это обязан код.
+    covered = len(funding) if funding else 0
+    if funding is not None and covered < MIN_FUNDING_SYMBOLS:
+        print(f"рядов funding нашлось {covered} из {len(used)} активов — "
+              f"это не покрытие, а его отсутствие; считается только "
+              f"комиссия", file=sys.stderr, flush=True)
+        funding = None
     if funding is None and not args.no_funding:
-        print("рядов funding нет — считается только комиссия",
+        print("funding НЕ включён", file=sys.stderr, flush=True)
+    elif funding is not None:
+        print(f"funding: ряды у {covered} активов из {len(used)}",
               file=sys.stderr, flush=True)
 
     # Оборот на окне формирования нужен только для правила назначения
@@ -280,6 +298,8 @@ def main():
                       "cheap_bp": CHEAP / BP, "modal_bp": MODAL / BP,
                       "expensive_bp": EXPENSIVE / BP,
                       "funding_included": funding is not None,
+                      "funding_symbols": covered,
+                      "universe_symbols": len(used),
                       "sections_total": len(dates)},
            "rules": out}
     os.makedirs(OUT, exist_ok=True)
