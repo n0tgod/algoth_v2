@@ -53,7 +53,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESEARCH = os.path.dirname(HERE)
 OUT = os.path.join(HERE, "out")
-WINDOWS = os.path.join(OUT, "windows")
+WINDOWS = os.path.join(OUT, "windows")   # + суффикс разрешения, см. windows_dir()
 
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(RESEARCH, "a4_cointegration"))
@@ -76,6 +76,16 @@ MIN_ASSETS = 10              # окно тоньше — волна не опр�
 # а не отдельное окно.
 P1_MIN_EXPLAINED = 0.40
 P2_MAX_SPREAD = 0.15
+
+
+def windows_dir(interval):
+    """Окна тоже раскладываются по разрешению.
+
+    Иначе возобновление прогона подхватило бы окна, посчитанные на
+    другом разрешении, и сводка описала бы смесь двух прогонов, ничем
+    себя не выдав.
+    """
+    return f"{WINDOWS}_{interval}"
 
 
 def window_dates(start, end, step_days):
@@ -225,14 +235,15 @@ def run_window(con, at, liq, universe, of_group, interval):
     return row
 
 
-def load_windows():
+def load_windows(interval):
     """Состояние с диска, а не из дельты прогона (урок A2, правка a51c133)."""
     rows = []
-    if not os.path.isdir(WINDOWS):
+    where = windows_dir(interval)
+    if not os.path.isdir(where):
         return rows
-    for fn in sorted(os.listdir(WINDOWS)):
+    for fn in sorted(os.listdir(where)):
         if fn.endswith(".json"):
-            with open(os.path.join(WINDOWS, fn), encoding="utf-8") as f:
+            with open(os.path.join(where, fn), encoding="utf-8") as f:
                 rows.append(json.load(f))
     return rows
 
@@ -297,7 +308,8 @@ def main():
     ap.add_argument("--report", action="store_true", help="только сводка")
     args = ap.parse_args()
 
-    os.makedirs(WINDOWS, exist_ok=True)
+    where = windows_dir(args.interval)
+    os.makedirs(where, exist_ok=True)
     if not args.report:
         liq, universe = P.load_liquidity(args.interval)
         of_group = P.load_groups()[1]
@@ -305,7 +317,7 @@ def main():
         dates = [args.at] if args.at else list(
             window_dates(GRID_START, GRID_END, TRADE_DAYS))
         for i, at in enumerate(dates, 1):
-            path = os.path.join(WINDOWS, f"{at}.json")
+            path = os.path.join(where, f"{at}.json")
             if os.path.exists(path) and not args.rerun:
                 continue
             row = run_window(con, at, liq, universe, of_group,
@@ -316,7 +328,7 @@ def main():
                   f", R² медиана {row.get('r2_median', float('nan')):.3f}"
                   f", {row['seconds']} с", file=sys.stderr, flush=True)
 
-    rows = load_windows()
+    rows = load_windows(args.interval)
     s = summarize(rows)
     # Настройки прогона идут в артефакт, а не читаются отчётом из кода.
     # Во-первых, отчёт тогда описывает тот прогон, который этот файл
@@ -326,10 +338,16 @@ def main():
     config = {"step": STEP, "coarser": list(COARSER), "form_days": FORM_DAYS,
               "trade_days": TRADE_DAYS, "grid_start": GRID_START,
               "grid_end": GRID_END, "min_assets": MIN_ASSETS,
+              "interval": args.interval,
               "p1_min_explained": P1_MIN_EXPLAINED,
               "p2_max_spread": P2_MAX_SPREAD}
-    with open(os.path.join(OUT, "premise_summary.json"), "w",
-              encoding="utf-8") as f:
+    # Имя несёт разрешение хранилища: 15m и 1m — два независимых
+    # прогона, и они служат перекрёстной проверкой друг другу. Общее имя
+    # означало бы, что второй молча затирает первый, а сравнивать станет
+    # нечего. В A2 это сделано правильно (build_15m.json / build_1m.json),
+    # здесь перенести забыли — и 1m действительно затёр 15m.
+    name = f"premise_summary_{args.interval}.json"
+    with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
         json.dump({"config": config, "summary": s, "windows": rows}, f,
                   ensure_ascii=False, indent=1)
     print(json.dumps(s, ensure_ascii=False, indent=2))

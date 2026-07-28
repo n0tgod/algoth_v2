@@ -6,7 +6,7 @@ R1 — отчёт по проверке посылки §8.1 спеки 03.
 расхождение «42 партиции» против 78 появилось ровно потому, что число
 попало в текст, а не бралось из состояния.
 
-    python3 report.py > out/R1-report.md
+    python3 report.py --interval 1m > out/R1-report-1m.md
 
 Отчёт намеренно не импортирует `premise.py` и не требует numpy, duckdb и
 pyarrow: настройки и пороги прогона лежат в самом артефакте. Поэтому
@@ -15,6 +15,7 @@ pyarrow: настройки и пороги прогона лежат в сам�
 породил, а не текущее состояние исходников.
 """
 
+import argparse
 import json
 import os
 
@@ -35,7 +36,14 @@ def median(v):
 
 
 def main():
-    with open(os.path.join(OUT, "premise_summary.json"), encoding="utf-8") as f:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--interval", default="1m", help="разрешение прогона")
+    args = ap.parse_args()
+    path = os.path.join(OUT, f"premise_summary_{args.interval}.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"нет {path} — сначала premise.py --interval "
+                         f"{args.interval}")
+    with open(path, encoding="utf-8") as f:
         doc = json.load(f)
     cfg = doc.get("config")
     if cfg is None:
