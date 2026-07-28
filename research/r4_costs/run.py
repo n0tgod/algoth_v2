@@ -109,6 +109,27 @@ def load_fees(universe):
     return out
 
 
+def parse_time_ms(x):
+    """Метка времени в миллисекундах из того, что лежит в файле.
+
+    Формат я угадывал дважды и дважды ошибся: сначала счёл файлы
+    json-ом (они gzip-CSV), потом счёл время миллисекундами (сборщик
+    конвертирует его в ISO строкой 178 `bybit_api.py`, а миллисекунды
+    видны только строкой 168, до возврата функции).
+
+    Поэтому разбор принимает оба вида и **падает громко**, если не понял
+    ни одного. Молчаливый пропуск здесь уже стоил одного круга: пустой
+    результат выглядел как посчитанный ноль.
+    """
+    x = x.strip()
+    try:
+        return int(x)
+    except ValueError:
+        pass
+    from datetime import datetime
+    return int(datetime.fromisoformat(x).timestamp() * 1000)
+
+
 def load_funding(universe, symbols):
     """Ряды funding площадки исполнения: `{актив: (времена_мс, ставки)}`.
 
@@ -140,7 +161,7 @@ def load_funding(universe, symbols):
             for row in rd:
                 if len(row) < 2:
                     continue
-                t.append(int(row[0]))
+                t.append(parse_time_ms(row[0]))
                 r.append(float(row[1]))
         if t:
             o = np.argsort(t)

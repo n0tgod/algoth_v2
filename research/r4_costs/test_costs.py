@@ -186,3 +186,38 @@ class NetSpread(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ParseTime(unittest.TestCase):
+    """Формат метки времени угадывался дважды и дважды неверно.
+
+    Первый раз файлы сочли json-ом, второй — время миллисекундами, тогда
+    как сборщик A1 пишет ISO. Оба вида теперь разбираются, а незнакомый
+    обязан падать: молчаливый пропуск уже выдавал пустой результат за
+    посчитанный ноль.
+    """
+
+    def setUp(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "r4run", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "run.py"))
+        self.run = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.run)
+
+    def test_iso_with_timezone(self):
+        got = self.run.parse_time_ms("2025-09-18T04:00:00+00:00")
+        self.assertEqual(got, 1758168000000)
+
+    def test_milliseconds_as_string(self):
+        self.assertEqual(self.run.parse_time_ms("1758168000000"),
+                         1758168000000)
+
+    def test_both_forms_agree(self):
+        a = self.run.parse_time_ms("2024-11-25T08:00:00+00:00")
+        b = self.run.parse_time_ms(str(a))
+        self.assertEqual(a, b)
+
+    def test_unknown_form_raises(self):
+        with self.assertRaises(ValueError):
+            self.run.parse_time_ms("позавчера")
