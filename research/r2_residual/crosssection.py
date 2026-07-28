@@ -67,6 +67,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 RESEARCH = os.path.dirname(HERE)
 OUT = os.path.join(HERE, "out")
 CHUNKS = os.path.join(OUT, "chunks")
+VECTORS = os.path.join(OUT, "vectors")
 
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(RESEARCH, "r1_factor"))
@@ -210,6 +211,19 @@ def run_date(at, grid, PX, cols, live, state, universe, rng=None):
                     cell["composition"] = composition(
                         b, names, state, universe, at)
             row["cells"][f"k{k}_h{h}"] = cell
+
+    # Векторы сигнала и форварда сохраняются целиком. Нулевые модели R3
+    # отличаются от прогона ровно тем, КАК сопоставлены эти два вектора,
+    # и ничем больше: перестановкой внутри сечения либо сдвигом сечения
+    # во времени. Пересчитывать ради этого весь конвейер двадцать раз
+    # незачем — достаточно один раз сохранить то, что он произвёл.
+    #
+    # Побочная выгода важнее экономии: реальный результат, пересчитанный
+    # из этих же векторов, обязан совпасть с результатом прогона. Если
+    # не совпадёт — ошибка в одном из двух путей, и мы об этом узнаем.
+    row["_vectors"] = {"names": names,
+                       "sig": {k: v.tolist() for k, v in sig.items()},
+                       "fwd": {h: v.tolist() for h, v in fwd.items()}}
     return row
 
 
@@ -437,10 +451,18 @@ def main():
             t = time.time()
             rows = process_chunk(con, g, liq, universe,
                                  args.interval, args.null_seed)
+            vecs = {r["date"]: r.pop("_vectors") for r in rows
+                    if "_vectors" in r}
             tmp = path + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(rows, f, ensure_ascii=False)
             os.replace(tmp, path)
+            if args.null_seed is None:
+                os.makedirs(VECTORS, exist_ok=True)
+                vp = os.path.join(VECTORS, f"{args.interval}_{i:03d}.json")
+                with open(vp + ".tmp", "w", encoding="utf-8") as f:
+                    json.dump(vecs, f)
+                os.replace(vp + ".tmp", vp)
             print(f"  {i + 1}/{len(groups)} {g[0]}…{g[-1]}: сечений "
                   f"{len(rows)}, {time.time() - t:.1f} с",
                   file=sys.stderr, flush=True)
