@@ -129,6 +129,67 @@ class ConditionalSurvival(unittest.TestCase):
         self.assertTrue(s["criterion_2_survival_ge_30pct"])
 
 
+class NullModel(unittest.TestCase):
+    """Нулевая модель обязана отнимать смысл метки и ничего больше.
+
+    Если перестановка попутно меняет размеры групп, меняется и число
+    кандидатов, а от него напрямую зависит порог Бенджамини–Хохберга.
+    Тогда сравнение с настоящим прогоном перестаёт быть сравнением.
+    """
+
+    def setUp(self):
+        self.of = {"A": "l1", "B": "l1", "C": "l1",
+                   "D": "dex", "E": "dex", "F": "meme"}
+        self.groups = {"l1": ["A", "B", "C"], "dex": ["D", "E"],
+                       "meme": ["F"]}
+        self.meta = {"duplicates": {frozenset(("A", "B"))},
+                     "mechanical": [("C", "D")], "low": set(),
+                     "unlabeled": set()}
+
+    def test_group_sizes_are_preserved(self):
+        g, of, _ = W.shuffle_labels(self.groups, self.of, self.meta, 1)
+        self.assertEqual(sorted(len(v) for v in g.values()), [1, 2, 3])
+        self.assertEqual(set(of), set(self.of))
+
+    def test_every_asset_keeps_exactly_one_label(self):
+        _, of, _ = W.shuffle_labels(self.groups, self.of, self.meta, 7)
+        self.assertEqual(len(of), len(self.of))
+        self.assertEqual(sorted(of.values()), sorted(self.of.values()))
+
+    def test_labels_actually_move(self):
+        _, of, _ = W.shuffle_labels(self.groups, self.of, self.meta, 3)
+        self.assertNotEqual(of, self.of)
+
+    def test_same_seed_same_permutation(self):
+        a = W.shuffle_labels(self.groups, self.of, self.meta, 42)[1]
+        b = W.shuffle_labels(self.groups, self.of, self.meta, 42)[1]
+        self.assertEqual(a, b)
+
+    def test_mechanical_pairs_dropped_duplicates_kept_excluded(self):
+        """Механическая связь задана протоколом, а не меткой.
+
+        Оставить её в нуле значило бы подмешать туда настоящую связь.
+        Пары-дубликаты, наоборот, обязаны остаться исключёнными: это
+        один и тот же актив, и в нуле они дали бы гарантированное
+        прохождение теста.
+        """
+        _, _, meta = W.shuffle_labels(self.groups, self.of, self.meta, 5)
+        self.assertEqual(meta["mechanical"], [])
+        self.assertEqual(meta["duplicates"], self.meta["duplicates"])
+
+    def test_original_inputs_not_mutated(self):
+        before_groups = {k: list(v) for k, v in self.groups.items()}
+        before_meta = dict(self.meta)
+        W.shuffle_labels(self.groups, self.of, self.meta, 11)
+        self.assertEqual(self.groups, before_groups)
+        self.assertEqual(self.meta["mechanical"], before_meta["mechanical"])
+
+    def test_null_windows_stored_apart(self):
+        """Окна нуля и окна прогона в одном каталоге испортили бы сводку."""
+        self.assertNotEqual(W.windows_dir(None), W.windows_dir(1))
+        self.assertNotEqual(W.windows_dir(1), W.windows_dir(2))
+
+
 class Summary(unittest.TestCase):
     def test_survival_pairs_consecutive_windows(self):
         rows = grid([{"A/B", "C/D"}, {"A/B", "E/F"}, {"E/F", "G/H"}],

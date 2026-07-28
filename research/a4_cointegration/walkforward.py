@@ -109,6 +109,44 @@ def form_window(at):
     return (t1 - timedelta(days=FORM_DAYS)).isoformat(), t1.isoformat()
 
 
+def shuffle_labels(groups, of_group, meta, seed):
+    """Нулевая модель: метки групп перемешиваются между активами.
+
+    §7 требует сравнения с нулевой моделью, и вопрос здесь конкретный:
+    добавляет ли экономическая группировка §3.1 хоть что-нибудь по
+    сравнению с перебором пар без неё. Ответ имеет смысл, только если
+    всё остальное осталось на месте.
+
+    Перестановка меток — а не набор случайных пар — выбрана потому, что
+    случайный набор, вытянутый заново в каждом окне, не имеет
+    выживаемости по построению, и критерий 2 на нём измерить нечем.
+    Перестановка сохраняет размеры групп (а значит и число кандидатов,
+    от которого напрямую зависит порог Бенджамини–Хохберга), фильтр по
+    обороту, фильтр ликвидности и преемственность списка между окнами.
+    Отнимается ровно одно — смысл метки.
+
+    Тот же приём в A1 показал ровно нулевую персистентность funding на
+    перемешанных метках, и именно он поймал там ошибку с ничьими.
+
+    Механически связанные пары в нулевой модели не участвуют: они
+    приходят не из меток, а из протокола, и их включение внесло бы в
+    нуль настоящую связь. Пары-дубликаты остаются исключёнными по той
+    же причине с обратным знаком — это один и тот же актив, и в нуле
+    они дали бы гарантированное прохождение теста.
+    """
+    rng = np.random.default_rng(seed)
+    assets = sorted(of_group)
+    labels = [of_group[a] for a in assets]
+    perm = rng.permutation(len(assets))
+    shuffled = {assets[i]: labels[perm[i]] for i in range(len(assets))}
+    new_groups = {}
+    for a, g in shuffled.items():
+        new_groups.setdefault(g, []).append(a)
+    new_meta = dict(meta)
+    new_meta["mechanical"] = []
+    return new_groups, shuffled, new_meta
+
+
 def run_window(con, at, groups, of_group, meta, liq, universe, interval):
     """Один срез: кандидаты A3 → Энгл–Грейнджер → BH → полураспад."""
     t = time.time()
@@ -182,13 +220,25 @@ def run_window(con, at, groups, of_group, meta, liq, universe, interval):
     return row
 
 
-def load_windows():
-    if not os.path.isdir(WINDOWS):
+def windows_dir(null_seed=None):
+    """Результаты нулевой модели живут отдельно от настоящих.
+
+    Складывать их в один каталог нельзя: сводка считается по всему, что
+    в нём лежит, и одно забытое окно нулевой модели молча испортило бы
+    результат — ровно тем же способом, каким это чуть не сделало окно
+    не по сетке.
+    """
+    return WINDOWS if null_seed is None else f"{WINDOWS}_null{null_seed}"
+
+
+def load_windows(where=None):
+    where = where or WINDOWS
+    if not os.path.isdir(where):
         return []
     out = []
-    for f in sorted(os.listdir(WINDOWS)):
+    for f in sorted(os.listdir(where)):
         if f.endswith(".json"):
-            with open(os.path.join(WINDOWS, f), encoding="utf-8") as fh:
+            with open(os.path.join(where, f), encoding="utf-8") as fh:
                 out.append(json.load(fh))
     return out
 
@@ -324,18 +374,29 @@ def main():
                     help="пересчитать окна, которые уже есть на диске")
     ap.add_argument("--report", action="store_true",
                     help="только сводка по тому, что уже посчитано")
+    ap.add_argument("--null", type=int, metavar="SEED",
+                    help="нулевая модель §7: метки групп перемешаны "
+                         "между активами этим зерном")
     args = ap.parse_args()
 
-    os.makedirs(WINDOWS, exist_ok=True)
+    where = windows_dir(args.null)
+    os.makedirs(where, exist_ok=True)
+    tag = "" if args.null is None else f"_null{args.null}"
 
     if not args.report:
         groups, of_group, meta = P.load_groups()
+        if args.null is not None:
+            groups, of_group, meta = shuffle_labels(groups, of_group, meta,
+                                                    args.null)
+            print(f"нулевая модель: метки перемешаны зерном {args.null}, "
+                  f"групп {len(groups)}, активов с меткой {len(of_group)}",
+                  flush=True)
         liq, universe = P.load_liquidity(args.interval)
         dates = ([args.at] if args.at
                  else list(window_dates(args.start, args.end, TRADE_DAYS)))
         con = S.connect()
         for at in dates:
-            path = os.path.join(WINDOWS, f"{at}.json")
+            path = os.path.join(where, f"{at}.json")
             if os.path.exists(path) and not args.force:
                 print(f"{at}  — уже посчитано, пропуск", flush=True)
                 continue
@@ -353,15 +414,16 @@ def main():
                   f"{row['selected']:>4}"
                   f"  ({row['seconds']} с)", flush=True)
 
-    rows = load_windows()
+    rows = load_windows(where)
     if not rows:
         return
     s = summarize(rows)
-    with open(os.path.join(OUT, "walkforward_summary.json"), "w",
+    with open(os.path.join(OUT, f"walkforward_summary{tag}.json"), "w",
               encoding="utf-8") as f:
         json.dump({"step": STEP, "form_days": FORM_DAYS,
                    "embargo_days": EMBARGO_DAYS, "trade_days": TRADE_DAYS,
                    "alpha": ALPHA, "max_half_life_days": MAX_HALF_LIFE_DAYS,
+                   "null_seed": args.null,
                    "summary": s,
                    "windows": [{k: v for k, v in r.items() if k != "pairs"}
                                for r in rows]}, f, ensure_ascii=False, indent=1)
