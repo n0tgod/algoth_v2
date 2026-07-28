@@ -194,14 +194,42 @@ def load_windows():
 
 
 def overlap(a, b):
-    """Доля пар окна `a`, дошедших до окна `b`.
+    """Доля пар окна `a`, дошедших до окна `b`, от всего набора `a`.
 
     Знаменатель — размер более раннего набора: вопрос §8 в том, сколько
     из отобранного удержалось, а не насколько похожи два набора.
+
+    Это число смешивает две причины потери, и потому само по себе
+    вопрос §8 не решает: см. `survival`.
     """
     if not a:
         return float("nan")
     return len(a & b) / len(a)
+
+
+def survival(sel_a, sel_b, tested_b):
+    """Выживание среди пар, которые во втором окне вообще проверялись.
+
+    Пара исчезает из отбора по двум разным причинам, и смешивать их
+    нельзя:
+
+    1. связь распалась — пару проверили и она не прошла;
+    2. пару перестали проверять — нога вышла из кандидатов A3, потому
+       что упала ликвидность, или оборот ног разошёлся больше чем в
+       десять раз, или актив перестал удовлетворять требованию истории.
+
+    Вторая причина к устойчивости отношения отношения не имеет, а в
+    безусловной доле выглядит неотличимо от первой. Здесь знаменатель —
+    только пары, дожившие до второго окна в качестве кандидата.
+
+    Возвращает (доля, размер знаменателя): доля, посчитанная по трём
+    парам, и доля по тремстам — не одно и то же число, и знаменатель
+    должен ехать вместе с ней.
+    """
+    base = sel_a & tested_b
+    if not base:
+        return float("nan"), 0
+    return len(base & sel_b) / len(base), len(base)
 
 
 def summarize(rows):
@@ -219,17 +247,48 @@ def summarize(rows):
             f"по разношаговой сетке считала бы соседство неправильно.")
     sel = [{p["pair"] for p in r["pairs"] if p.get("selected")} for r in rows]
     fdr = [{p["pair"] for p in r["pairs"] if p.get("fdr")} for r in rows]
-
-    adj = [overlap(fdr[i], fdr[i + 1]) for i in range(len(fdr) - 1)]
-    far = [overlap(fdr[i], fdr[i + 3]) for i in range(len(fdr) - 3)]
-    adj_s = [overlap(sel[i], sel[i + 1]) for i in range(len(sel) - 1)]
+    tested = [{p["pair"] for p in r["pairs"]} for r in rows]
 
     def mean(v):
         v = [x for x in v if np.isfinite(x)]
         return float(np.mean(v)) if v else float("nan")
 
+    def pairs_at(lag):
+        """Метрики перехода между окнами, отстоящими на `lag` шагов."""
+        cond, base, kept_cand, churn, raw, chance = [], [], [], [], [], []
+        for i in range(len(rows) - lag):
+            j = i + lag
+            s, n = survival(fdr[i], fdr[j], tested[j])
+            cond.append(s)
+            base.append(n)
+            # Мерка, с которой выживание надо сравнивать: доля, которую
+            # дал бы отбор, выбирающий столько же пар наугад из
+            # кандидатов второго окна. Без неё 19 % — просто число.
+            if tested[j] and np.isfinite(s):
+                chance.append(len(fdr[j]) / len(tested[j]))
+            # Какая доля отобранного вообще осталась в списке
+            # тестируемого: мера того, насколько велика поправка.
+            kept_cand.append(overlap(fdr[i], tested[j]))
+            # Оборачиваемость самого списка кандидатов A3 — фон, на
+            # котором любое выживание пар надо читать.
+            churn.append(overlap(tested[i], tested[j]))
+            raw.append(overlap(fdr[i], fdr[j]))
+        by_chance = mean(chance)
+        return {
+            "survival": mean(cond),
+            "survival_denominator_total": int(sum(base)),
+            "survival_by_chance": by_chance,
+            "survival_over_chance": (mean(cond) / by_chance
+                                     if by_chance else float("nan")),
+            "selected_still_candidate": mean(kept_cand),
+            "candidate_carryover": mean(churn),
+            "survival_unconditional": mean(raw),
+        }
+
     n_fdr = [r["fdr_pass"] for r in rows]
     n_sel = [r["selected"] for r in rows]
+    adjacent = pairs_at(1)
+    three = pairs_at(3)
     return {
         "windows": len(rows),
         "candidates_total": sum(r["candidates"] for r in rows),
@@ -241,11 +300,15 @@ def summarize(rows):
         "selected_median": float(np.median(n_sel)),
         "windows_fdr_below_15": int(sum(1 for x in n_fdr if x < 15)),
         "windows_selected_below_15": int(sum(1 for x in n_sel if x < 15)),
-        "survival_adjacent_fdr": mean(adj),
-        "survival_adjacent_selected": mean(adj_s),
-        "survival_three_steps_fdr": mean(far),
+        "adjacent": adjacent,
+        "three_steps": three,
         "criterion_1_fdr_ge_50": bool(np.mean(n_fdr) >= 50),
-        "criterion_2_survival_ge_30pct": bool(mean(adj) >= 0.30),
+        # Критерий 2 читается по условной доле: пара, которую перестали
+        # проверять, ничего не говорит об устойчивости отношения, а
+        # безусловная доля засчитывает её как распавшуюся связь.
+        "criterion_2_survival_ge_30pct": bool(adjacent["survival"] >= 0.30),
+        "criterion_2_unconditional_ge_30pct":
+            bool(adjacent["survival_unconditional"] >= 0.30),
         "stop_rule_triggered": bool(sum(1 for x in n_fdr if x < 15)
                                     > len(n_fdr) / 2),
     }
@@ -311,12 +374,24 @@ def main():
           f"{'да' if s['criterion_1_fdr_ge_50'] else 'НЕТ'})")
     print(f"после фильтра полураспада: среднее {s['selected_mean']:.1f}, "
           f"медиана {s['selected_median']:.0f}")
-    print(f"выживание между соседними окнами (после FDR): "
-          f"{100*s['survival_adjacent_fdr']:.1f} %"
-          f"   (критерий 2 — ≥ 30 %: "
-          f"{'да' if s['criterion_2_survival_ge_30pct'] else 'НЕТ'})")
-    print(f"выживание через три шага (окна отбора не пересекаются): "
-          f"{100*s['survival_three_steps_fdr']:.1f} %")
+    for name, k in (("соседние окна", "adjacent"),
+                    ("через три шага (окна отбора не пересекаются)",
+                     "three_steps")):
+        v = s[k]
+        print(f"\n{name}:")
+        print(f"  список кандидатов A3 переходит целиком на "
+              f"{100*v['candidate_carryover']:.1f} %")
+        print(f"  из отобранных пар остаётся кандидатами "
+              f"{100*v['selected_still_candidate']:.1f} %")
+        print(f"  выживание среди них: {100*v['survival']:.1f} %"
+              f"  (знаменатель {v['survival_denominator_total']} пар)")
+        print(f"  при отборе наугад было бы "
+              f"{100*v['survival_by_chance']:.1f} % — "
+              f"выше случайного в {v['survival_over_chance']:.1f} раза")
+        print(f"  для сравнения, безусловная доля: "
+              f"{100*v['survival_unconditional']:.1f} %")
+    print(f"\nкритерий 2 — ≥ 30 %: "
+          f"{'да' if s['criterion_2_survival_ge_30pct'] else 'НЕТ'}")
     print(f"окон с менее чем 15 парами после FDR: "
           f"{s['windows_fdr_below_15']} из {s['windows']}"
           f"   (правило остановки: "
