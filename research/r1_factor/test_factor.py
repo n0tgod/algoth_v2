@@ -223,5 +223,124 @@ class Residuals(unittest.TestCase):
         self.assertAlmostEqual(float(np.corrcoef(e, floo[:, 0])[0, 1]), -1.0, 6)
 
 
+
+class SectorFactor(unittest.TestCase):
+    def test_small_group_gives_no_factor(self):
+        """Среднее по трём именам — шум, а не фактор. Вычитание такого
+        «фактора» добавило бы в остаток чужую случайность."""
+        R = np.random.default_rng(20).normal(0, 0.01, (100, 10))
+        self.assertIsNone(F.sector_factor(R, [0, 1, 2], min_members=5))
+
+    def test_factor_is_group_mean(self):
+        R = np.arange(30.0).reshape(3, 10)
+        f, _ = F.sector_factor(R, [0, 1, 2, 3, 4], min_members=5)
+        self.assertAlmostEqual(f[0], np.mean(R[0, :5]), places=12)
+
+    def test_loo_excludes_own(self):
+        R = np.arange(30.0).reshape(3, 10)
+        _, loo = F.sector_factor(R, [0, 1, 2, 3, 4], min_members=5)
+        self.assertAlmostEqual(loo[0, 0], np.mean(R[0, 1:5]), places=12)
+
+
+class PairwiseCovariance(unittest.TestCase):
+    def test_matches_plain_covariance_without_gaps(self):
+        R = np.random.default_rng(21).normal(0, 0.01, (500, 6))
+        C = F.pairwise_cov(R, min_overlap=10)
+        ref = np.cov(R, rowvar=False)
+        self.assertTrue(np.allclose(C, ref, atol=1e-12))
+
+    def test_gaps_do_not_become_zeros(self):
+        """Заполнить пропуск нулём значит утверждать «доходность была
+        нулевой» — то самое молчание, выданное за данные, которым
+        отличались замороженные ряды A2."""
+        rng = np.random.default_rng(22)
+        R = rng.normal(0, 0.01, (500, 3))
+        R[:250, 2] = np.nan
+        C = F.pairwise_cov(R, min_overlap=10)
+        # дисперсия столбца с пропусками считается по доступной половине
+        self.assertAlmostEqual(C[2, 2], np.var(R[250:, 2], ddof=1), places=10)
+
+    def test_short_overlap_is_unknown_not_zero_correlation(self):
+        rng = np.random.default_rng(23)
+        R = rng.normal(0, 0.01, (500, 2))
+        R[50:, 1] = np.nan
+        C = F.pairwise_cov(R, min_overlap=100)
+        self.assertEqual(C[0, 1], 0.0)
+
+
+class Components(unittest.TestCase):
+    def test_first_component_of_common_factor_is_the_factor(self):
+        """Если весь универсум движется одной волной, первая компонента
+        обязана быть примерно равновзвешенной."""
+        rng = np.random.default_rng(24)
+        f = rng.normal(0, 0.02, 2000)
+        R = f[:, None] * np.ones(12) + rng.normal(0, 0.002, (2000, 12))
+        W, vals = F.top_components(F.pairwise_cov(R, 10), 3)
+        w = W[:, 0]
+        self.assertGreater(vals[0], 10 * vals[1])       # доминирует одна
+        self.assertLess(w.std() / abs(w.mean()), 0.15)  # веса почти равны
+
+    def test_sign_is_fixed_so_beta_does_not_flip(self):
+        """Собственный вектор определён с точностью до знака. Без
+        фиксации первая компонента произвольно меняла бы направление от
+        окна к окну, а вместе с ней знак β."""
+        rng = np.random.default_rng(25)
+        f = rng.normal(0, 0.02, 800)
+        R = f[:, None] * np.ones(8) + rng.normal(0, 0.002, (800, 8))
+        for seed in range(4):
+            perm = np.random.default_rng(seed).permutation(8)
+            W, _ = F.top_components(F.pairwise_cov(R[:, perm], 10), 1)
+            self.assertGreater(W[:, 0].sum(), 0)
+
+
+class WeightedFactor(unittest.TestCase):
+    def test_loo_is_exact_subtraction(self):
+        rng = np.random.default_rng(26)
+        R = rng.normal(0, 0.01, (50, 6))
+        W = rng.normal(size=(6, 2))
+        Fm, contrib = F.weighted_factor(R, W)
+        for i in (0, 3, 5):
+            expect = np.delete(R, i, axis=1) @ np.delete(W, i, axis=0)
+            self.assertTrue(np.allclose(Fm - contrib[:, i, :], expect))
+
+    def test_market_weights_reproduce_market_factor(self):
+        """Рынок — частный случай той же конструкции с весами 1/n."""
+        rng = np.random.default_rng(27)
+        R = rng.normal(0, 0.01, (200, 10))
+        Fm, _ = F.weighted_factor(R, np.full((10, 1), 0.1))
+        ref, _, _ = F.market_factor(R, min_assets=5)
+        self.assertTrue(np.allclose(Fm[:, 0], ref, atol=1e-12))
+
+
+class RegressMulti(unittest.TestCase):
+    def test_recovers_known_coefficients(self):
+        rng = np.random.default_rng(28)
+        n = 4000
+        X = rng.normal(0, 0.02, (n, 3))
+        y = 1.4 * X[:, 0] - 0.7 * X[:, 1] + 0.3 * X[:, 2] + \
+            rng.normal(0, 0.001, n) + 0.005
+        b, r2, k = F.regress_multi(y, X)
+        self.assertAlmostEqual(b[0], 1.4, places=2)
+        self.assertAlmostEqual(b[1], -0.7, places=2)
+        self.assertAlmostEqual(b[2], 0.3, places=2)
+        self.assertGreater(r2, 0.99)
+        self.assertEqual(k, n)
+
+    def test_more_factors_explain_more(self):
+        """Смысл ступеней 2 и 3: больше факторов — меньше дисперсии
+        остаётся в остатке. Это и есть рычаг итерации 1."""
+        rng = np.random.default_rng(29)
+        n = 3000
+        X = rng.normal(0, 0.02, (n, 3))
+        y = X @ np.array([1.0, 0.8, 0.6]) + rng.normal(0, 0.005, n)
+        r1 = F.regress_multi(y, X[:, :1])[1]
+        r3 = F.regress_multi(y, X)[1]
+        self.assertGreater(r3, r1 + 0.2)
+
+    def test_degenerate_input_returns_none(self):
+        y = np.zeros(50)
+        X = np.random.default_rng(30).normal(size=(50, 2))
+        self.assertIsNone(F.regress_multi(y, X))
+
 if __name__ == "__main__":
     unittest.main()

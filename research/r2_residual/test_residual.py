@@ -224,5 +224,72 @@ class DeterministicSeed(unittest.TestCase):
         b = np.random.default_rng(RS.seed_for(3, "2024-06-02")).permutation(50)
         self.assertFalse((a == b).all())
 
+
+class ResidualMatrix(unittest.TestCase):
+    def test_single_factor_matches_old_path(self):
+        """Многофакторная формула на одном факторе обязана совпасть с
+        одномерной: иначе у остатка две разные формулы."""
+        rng = np.random.default_rng(40)
+        R = rng.normal(0, 0.01, (200, 5))
+        Fl = rng.normal(0, 0.02, (200, 5))
+        beta = rng.uniform(0.5, 1.5, 5)
+        E = RS.residual_matrix(R, Fl[:, :, None], beta[:, None])
+        self.assertTrue(np.allclose(E, R - beta[None, :] * Fl))
+
+    def test_unfitted_asset_has_no_residual(self):
+        R = np.zeros((10, 3))
+        FACT = np.zeros((10, 3, 2))
+        B = np.array([[1.0, 1.0], [np.nan, 1.0], [1.0, 1.0]])
+        E = RS.residual_matrix(R, FACT, B)
+        self.assertTrue(np.isnan(E[:, 1]).all())
+        self.assertFalse(np.isnan(E[:, 0]).any())
+
+    def test_more_factors_remove_more_variance(self):
+        """Рычаг итерации 1: лучший хедж оставляет меньше дисперсии."""
+        rng = np.random.default_rng(41)
+        n = 3000
+        X = rng.normal(0, 0.02, (n, 3))
+        y = X @ np.array([1.0, 0.8, 0.6]) + rng.normal(0, 0.004, n)
+        R = y[:, None]
+        one = RS.residual_matrix(R, X[:, None, :1], np.array([[1.0]]))
+        three = RS.residual_matrix(R, X[:, None, :],
+                                   np.array([[1.0, 0.8, 0.6]]))
+        self.assertLess(np.nanstd(three), np.nanstd(one) * 0.5)
+
+
+class BlendRanks(unittest.TestCase):
+    def test_equal_signals_give_same_order(self):
+        a = np.arange(10.0)
+        out = RS.blend_ranks(a, a, 0.5)
+        self.assertTrue(np.all(np.diff(out) > 0))
+
+    def test_opposite_signals_cancel(self):
+        a = np.arange(10.0)
+        out = RS.blend_ranks(a, -a, 0.5)
+        self.assertLess(float(np.std(out)), 1e-12)
+
+    def test_scale_of_inputs_does_not_matter(self):
+        """Ранги, а не значения: иначе комбинацию определял бы тот
+        сигнал, у кого шире распределение."""
+        rng = np.random.default_rng(42)
+        a = rng.normal(0, 1.0, 200)
+        b = rng.normal(0, 1.0, 200)
+        x = RS.blend_ranks(a, b, 0.5)
+        y = RS.blend_ranks(a * 1000.0, b, 0.5)
+        self.assertTrue(np.allclose(x, y))
+
+    def test_asset_with_one_signal_is_dropped(self):
+        a = np.array([1.0, 2.0, 3.0, 4.0])
+        b = np.array([1.0, np.nan, 3.0, 4.0])
+        out = RS.blend_ranks(a, b, 0.5)
+        self.assertTrue(np.isnan(out[1]))
+        self.assertEqual(int((~np.isnan(out)).sum()), 3)
+
+    def test_weight_zero_is_pure_first_signal(self):
+        rng = np.random.default_rng(43)
+        a, b = rng.normal(size=50), rng.normal(size=50)
+        out = RS.blend_ranks(a, b, 0.0)
+        self.assertGreater(RS.spearman(out, a)[0], 0.999)
+
 if __name__ == "__main__":
     unittest.main()

@@ -82,7 +82,9 @@ import pairs as P            # noqa: E402
 STEP = "1h"                  # выбран замером в A4, подтверждён R1
 BARS_PER_DAY = 24
 FORM_DAYS = 90
-MODEL = "market"             # ступень 1 лестницы §3.3
+MODELS = ("market", "market_sector", "pca3")   # лестница §3.3
+MIN_GROUP = 5                # §12.3: группа меньше — секторного фактора нет
+PCA_COMPONENTS = 3
 
 # Сетка §2 спеки 03. Объявлена до прогона и не меняется.
 KS = (1, 3, 7, 14)           # окно накопления сигнала, дни
@@ -109,18 +111,64 @@ def ms(day):
     return int(np.datetime64(day + "T00:00:00", "ms").astype("int64"))
 
 
-def fit_window(R, F_loo, need):
+def build_factors(R, names, of_group, model):
+    """Матрица факторов на каждый актив: (T, N, m), уже «все, кроме меня».
+
+    Три ступени лестницы §3.3 — одна конструкция с разными весами, и
+    собираются они здесь, чтобы формула остатка осталась одна на всех
+    (`residual_matrix`). Ступень выбирается прогоном, а не правится в
+    коде: сетка §2 объявляет все три, и все три обязаны быть посчитаны
+    одинаковым кодом.
+    """
+    T, N = R.shape
+    _, F_loo, _ = FA.market_factor(R)
+    if model == "market":
+        return F_loo[:, :, None]
+
+    if model == "market_sector":
+        FACT = np.full((T, N, 2), np.nan)
+        FACT[:, :, 0] = F_loo
+        by_group = {}
+        for j, a in enumerate(names):
+            g = of_group.get(a)
+            if g:
+                by_group.setdefault(g, []).append(j)
+        for g, members in by_group.items():
+            res = FA.sector_factor(R, members, MIN_GROUP)
+            if res is None:
+                continue
+            _, loo = res
+            for col, j in enumerate(members):
+                FACT[:, j, 1] = loo[:, col]
+        # Актив без группы либо из малой группы секторного фактора не
+        # получает: столбец остаётся NaN, и регрессия его отбрасывает
+        # целиком. Подставлять ноль нельзя — это утверждение «сектор не
+        # двигался», то есть выдуманное наблюдение.
+        return FACT
+
+    if model == "pca3":
+        C = FA.pairwise_cov(R)
+        W, _ = FA.top_components(C, PCA_COMPONENTS)
+        _, contrib = FA.weighted_factor(R, W)
+        Fm = (np.where(np.isnan(R), 0.0, R) @ W)
+        return Fm[:, None, :] - contrib
+
+    raise ValueError(f"неизвестная модель фактора: {model}")
+
+
+def fit_window(R, FACT, need):
     """β каждого актива на окне формирования. NaN там, где не оценивается."""
-    n = R.shape[1]
-    beta = np.full(n, np.nan)
-    for j in range(n):
-        r = FA.regress(R[:, j], F_loo[:, j])
+    N, m = R.shape[1], FACT.shape[2]
+    B = np.full((N, m), np.nan)
+    for j in range(N):
+        r = FA.regress_multi(R[:, j], FACT[:, j, :])
         if r is not None and r[2] >= need:
-            beta[j] = r[0]
-    return beta
+            B[j] = r[0]
+    return B
 
 
-def run_date(at, grid, PX, cols, live, state, universe, rng=None):
+def run_date(at, grid, PX, cols, live, state, universe, of_group,
+             model, rng=None):
     """Одно сечение: сигналы по всем k, форварды по всем h, IC и корзины."""
     t_ms = ms(at)
     i_t = int(np.searchsorted(grid, t_ms))
@@ -137,7 +185,7 @@ def run_date(at, grid, PX, cols, live, state, universe, rng=None):
     names = [cols[i] for i in keep]
 
     R = FA.log_returns(sub)
-    _, F_loo, _ = FA.market_factor(R)
+    FACT = build_factors(R, names, of_group, model)
     # Индексация после log_returns: R[i] — переход grid[i] -> grid[i+1].
     # Значит R[i_t − 1] есть доходность часа, ЗАКОНЧИВШЕГОСЯ в момент t,
     # то есть уже известного при ребалансе; она принадлежит сигналу.
@@ -153,19 +201,31 @@ def run_date(at, grid, PX, cols, live, state, universe, rng=None):
     # после падения в окне сигнала пришёл бы в результат как эдж.
     need = int(FA.MIN_COVERAGE * (i_t - i_form))
     (f0, f1), _, _ = RS.window_bounds(i_form, i_t, len(R), 1, 1, BARS_PER_DAY)
-    beta = fit_window(R[f0:f1], F_loo[f0:f1], need)
+    B = fit_window(R[f0:f1], FACT[f0:f1], need)
+    fitted = np.isfinite(B).all(axis=1)
+    E = RS.residual_matrix(R, FACT, B)
 
-    row = {"date": at, "assets": len(names),
-           "beta_median": float(np.nanmedian(beta)) if np.isfinite(beta).any()
+    # Доля дисперсии, снятая моделью на окне формирования: вход критерия
+    # остановки §12.6. Считается на том же окне, где оценена β.
+    var_r = np.nanvar(R[f0:f1], axis=0)
+    var_e = np.nanvar(E[f0:f1], axis=0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        expl = 1.0 - var_e / var_r
+    expl = expl[fitted & np.isfinite(expl)]
+
+    row = {"date": at, "assets": len(names), "model": model,
+           "beta_median": float(np.nanmedian(B[:, 0])) if fitted.any()
            else None,
-           "beta_fitted": int(np.isfinite(beta).sum()), "cells": {}}
+           "beta_fitted": int(fitted.sum()),
+           "explained_median": float(np.median(expl)) if len(expl) else None,
+           "cells": {}}
 
     sig = {}
     for k in KS:
         _, (s0, s1), _ = RS.window_bounds(i_form, i_t, len(R), k, 1,
                                           BARS_PER_DAY)
-        e, _ = RS.accumulate(R, F_loo, beta, s0, s1)
-        sig[k] = np.where(np.isfinite(beta), -e, np.nan)
+        e, _ = RS.accumulate_resid(E, s0, s1)
+        sig[k] = np.where(fitted, -e, np.nan)
 
     if rng is not None:
         # Нуль 1 §7: «кто какой сигнал получил» перемешивается между
@@ -189,9 +249,8 @@ def run_date(at, grid, PX, cols, live, state, universe, rng=None):
     for h in HS:
         _, _, (w0, w1) = RS.window_bounds(i_form, i_t, len(R), 1, h,
                                           BARS_PER_DAY)
-        e, nb = RS.accumulate(R, F_loo, beta, w0, w1)
-        fwd[h] = np.where(np.isfinite(beta) & (nb >= MIN_FORWARD_BARS),
-                          e, np.nan)
+        e, nb = RS.accumulate_resid(E, w0, w1)
+        fwd[h] = np.where(fitted & (nb >= MIN_FORWARD_BARS), e, np.nan)
         fwd_bars[h] = nb
 
     for k in KS:
@@ -250,7 +309,8 @@ def composition(b, names, state, universe, at):
             "universe": stats(range(len(names)))}
 
 
-def process_chunk(con, dates, liq, universe, interval, null_seed=None):
+def process_chunk(con, dates, liq, universe, of_group, model, interval,
+                  null_seed=None):
     """Одна загрузка данных на группу дат: память под контролем.
 
     Читать всю историю разом — 36 тыс. баров на 700 символов, порядка
@@ -287,29 +347,48 @@ def process_chunk(con, dates, liq, universe, interval, null_seed=None):
         # зависит от того, каким куском и в каком порядке считался.
         rng = (np.random.default_rng(RS.seed_for(null_seed, at))
                if null_seed is not None else None)
-        r = run_date(at, grid, PX, cols, live, st, universe, rng)
+        r = run_date(at, grid, PX, cols, live, st, universe, of_group,
+                     model, rng)
         if r:
             out.append(r)
     return out
 
 
-def tag(interval, null_seed):
-    return interval if null_seed is None else f"{interval}_null{null_seed}"
+def tag(interval, null_seed, model="market"):
+    """Имя артефакта несёт и разрешение, и ступень лестницы.
+
+    Общее имя означало бы, что прогон следующей ступени молча затирает
+    предыдущую, — та же ошибка, что уже случилась в R1 со сводкой без
+    указания разрешения. А сравнение ступеней и есть весь смысл
+    итерации 1.
+    """
+    base = interval if model == "market" else f"{interval}_{model}"
+    return base if null_seed is None else f"{base}_null{null_seed}"
 
 
-def chunk_path(interval, i, null_seed=None):
-    return os.path.join(CHUNKS, f"{tag(interval, null_seed)}_{i:03d}.json")
+def chunk_path(interval, first_date, null_seed=None, model="market"):
+    """Имя чанка несёт ПЕРВУЮ ДАТУ, а не порядковый номер.
+
+    С номером тот же файл при другом `--start` указывал бы на другой
+    период: возобновление подхватило бы чужие данные и молча выдало их
+    за свои. Ровно так смоук-тест на двух месяцах вернул числа полной
+    истории.
+    """
+    return os.path.join(
+        CHUNKS, f"{tag(interval, null_seed, model)}_{first_date}.json")
 
 
-def load_chunks(interval, null_seed=None):
+def load_chunks(interval, null_seed=None, model="market"):
     """Состояние с диска, а не из дельты прогона (урок A2)."""
     rows = []
     if not os.path.isdir(CHUNKS):
         return rows
     for fn in sorted(os.listdir(CHUNKS)):
-        if fn.startswith(tag(interval, null_seed) + "_") \
-                and fn.endswith(".json") and ("null" in fn) == (
-                    null_seed is not None):
+        pref = tag(interval, null_seed, model) + "_"
+        rest = fn[len(pref):-len(".json")] if fn.startswith(pref) else ""
+        if fn.startswith(pref) and fn.endswith(".json") \
+                and ("null" in fn) == (null_seed is not None) \
+                and len(rest) == 10 and rest[4] == "-":
             with open(os.path.join(CHUNKS, fn), encoding="utf-8") as f:
                 rows.extend(json.load(f))
     rows.sort(key=lambda r: r["date"])
@@ -321,6 +400,14 @@ def summarize(rows):
     if not rows:
         return s
     s["date_first"], s["date_last"] = rows[0]["date"], rows[-1]["date"]
+    # Доля дисперсии, снятая моделью фактора, — вход критерия остановки
+    # §12.6: если более сложная ступень не объясняет заметно больше,
+    # дисперсия остатка не упадёт, и разброс доходности книги не
+    # улучшится. Проверять это надо до бэктеста, а не после.
+    ex = [r["explained_median"] for r in rows
+          if r.get("explained_median") is not None]
+    s["explained"] = {"median": float(np.median(ex)) if ex else None,
+                      "q": RS.quantiles(ex), "sections": len(ex)}
     s["assets"] = {"median": float(np.median([r["assets"] for r in rows])),
                    "min": int(min(r["assets"] for r in rows)),
                    "max": int(max(r["assets"] for r in rows))}
@@ -431,6 +518,8 @@ def main():
     ap.add_argument("--end", default=GRID_END)
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--rerun", action="store_true")
+    ap.add_argument("--model", default="market", choices=list(MODELS),
+                    help="ступень лестницы §3.3")
     ap.add_argument("--null-seed", type=int, default=None,
                     help="нулевая модель §7: сигнал перемешан между активами")
     args = ap.parse_args()
@@ -438,18 +527,20 @@ def main():
     os.makedirs(CHUNKS, exist_ok=True)
     if not args.report:
         liq, universe = P.load_liquidity(args.interval)
+        of_group = P.load_groups()[1]
         con = S.connect()
         dates = list(rebalance_dates(args.start, args.end,
                                      REBALANCE_STEP_DAYS))
         groups = [dates[i:i + CHUNK_DAYS]
                   for i in range(0, len(dates), CHUNK_DAYS)]
         for i, g in enumerate(groups):
-            path = chunk_path(args.interval, i, args.null_seed)
+            path = chunk_path(args.interval, g[0], args.null_seed,
+                              args.model)
             if os.path.exists(path) and not args.rerun:
                 continue
             t = time.time()
-            rows = process_chunk(con, g, liq, universe,
-                                 args.interval, args.null_seed)
+            rows = process_chunk(con, g, liq, universe, of_group,
+                                 args.model, args.interval, args.null_seed)
             vecs = {r["date"]: r.pop("_vectors") for r in rows
                     if "_vectors" in r}
             tmp = path + ".tmp"
@@ -458,7 +549,9 @@ def main():
             os.replace(tmp, path)
             if args.null_seed is None:
                 os.makedirs(VECTORS, exist_ok=True)
-                vp = os.path.join(VECTORS, f"{args.interval}_{i:03d}.json")
+                vp = os.path.join(
+                    VECTORS, f"{tag(args.interval, None, args.model)}"
+                             f"_{g[0]}.json")
                 with open(vp + ".tmp", "w", encoding="utf-8") as f:
                     json.dump(vecs, f)
                 os.replace(vp + ".tmp", vp)
@@ -466,15 +559,16 @@ def main():
                   f"{len(rows)}, {time.time() - t:.1f} с",
                   file=sys.stderr, flush=True)
 
-    rows = load_chunks(args.interval, args.null_seed)
+    rows = load_chunks(args.interval, args.null_seed, args.model)
     s = summarize(rows)
-    config = {"step": STEP, "model": MODEL, "form_days": FORM_DAYS,
+    config = {"step": STEP, "form_days": FORM_DAYS,
               "ks": list(KS), "hs": list(HS), "widths": WIDTHS,
               "rebalance_step_days": REBALANCE_STEP_DAYS,
               "grid_start": args.start, "grid_end": args.end,
               "min_assets": MIN_ASSETS, "interval": args.interval,
-              "null_seed": args.null_seed}
-    name = f"crosssection_{tag(args.interval, args.null_seed)}.json"
+              "model": args.model, "null_seed": args.null_seed}
+    name = ("crosssection_"
+            f"{tag(args.interval, args.null_seed, args.model)}.json")
     # В артефакт идёт сводка, а не все сечения: подробности живут в
     # chunks/ и пересобираются за минуты, а в git должно попадать то, что
     # читается человеком и сравнивается между прогонами.
