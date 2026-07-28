@@ -139,6 +139,60 @@ def symbol_month_table(symbol, paths):
     return t.cast(SCHEMA), dups
 
 
+def read_manifest(path):
+    """Манифест партиции: состав и её собственные числа.
+
+    Ранний образец — голый список символов, без чисел. Такой манифест
+    читается как «состав известен, дублей не знаем»: подставлять вместо
+    неизвестного нуль нельзя, иначе сводка молча занизит итог.
+    """
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        m = json.load(f)
+    if isinstance(m, list):
+        return {"symbols": m, "rows": None, "duplicates": None}
+    return {"symbols": m["symbols"], "rows": m.get("rows"),
+            "duplicates": m.get("duplicates")}
+
+
+def write_manifest(path, symbols, rows, dups):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"symbols": symbols, "rows": rows, "duplicates": dups}, f)
+
+
+def scan_store(dest):
+    """Сводка по тому, что лежит на диске, а не по тому, что сделал прогон.
+
+    Прогон возобновляем, и при обрыве — перезагрузка сервера, OOM — вторая
+    попытка пропускает готовые партиции. Если сводку писать по дельте
+    прогона, она опишет остаток работы и будет выглядеть как состояние
+    хранилища: после перезагрузки в отчёт ушли 42 партиции из 78 и 6075
+    дублей вместо 7365. Та же ошибка уже случалась в загрузчике funding
+    (правка ae9b279), поэтому здесь состояние читается только с диска.
+
+    Число строк берётся из футера Parquet — он содержит его точно, а
+    читать сами данные не нужно. Число дублей из данных не выводится
+    вовсе: снятый дубль в хранилище не оставляет следа, поэтому его
+    помнит манифест партиции.
+    """
+    stats = {"months": 0, "rows": 0, "duplicates": 0,
+             "duplicates_unknown_months": 0, "bytes": 0}
+    for name in sorted(os.listdir(dest)):
+        if not name.endswith(".parquet"):
+            continue
+        path = os.path.join(dest, name)
+        stats["months"] += 1
+        stats["bytes"] += os.path.getsize(path)
+        stats["rows"] += pq.ParquetFile(path).metadata.num_rows
+        m = read_manifest(path + ".symbols.json")
+        if m is None or m["duplicates"] is None:
+            stats["duplicates_unknown_months"] += 1
+        else:
+            stats["duplicates"] += m["duplicates"]
+    return stats
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--interval", default="15m")
@@ -147,6 +201,9 @@ def main():
                     help="каталог сырых архивов этапа A1")
     ap.add_argument("--rebuild", action="store_true",
                     help="перезаписать готовые партиции")
+    ap.add_argument("--restat", action="store_true",
+                    help="дочитать числа партиций, собранных ранним кодом; "
+                         "сами партиции не переписываются")
     args = ap.parse_args()
 
     root = os.path.join(args.raw, args.interval)
@@ -170,8 +227,7 @@ def main():
     dest = os.path.join(PARQUET, args.interval)
     os.makedirs(dest, exist_ok=True)
 
-    stats = {"months": 0, "rows": 0, "duplicates": 0, "symbols": len(symbols),
-             "skipped_existing": 0}
+    skipped = 0
     for i, ym in enumerate(sorted(by_month), 1):
         path = os.path.join(dest, f"{ym}.parquet")
         manifest = path + ".symbols.json"
@@ -183,16 +239,29 @@ def main():
         # навсегда осталось бы три символа вместо семисот. Ошибка того же
         # рода уже дважды встречалась в загрузчиках: признаком состояния
         # служило то, что сделал текущий прогон, а не то, что лежит на диске.
-        if os.path.exists(path) and os.path.exists(manifest) and not args.rebuild:
-            with open(manifest, encoding="utf-8") as f:
-                if json.load(f) == want:
-                    stats["skipped_existing"] += 1
-                    continue
+        done = read_manifest(manifest)
+        if os.path.exists(path) and done and done["symbols"] == want \
+                and not args.rebuild:
+            if done["duplicates"] is not None or not args.restat:
+                skipped += 1
+                continue
+            # Манифест старого образца: состав известен, а числа нет.
+            # Пересчитываем их тем же кодом, не трогая саму партицию —
+            # иначе они разошлись бы со сборкой.
+            restat = True
+        else:
+            restat = False
+
+        # В режиме пересчёта ничего не пишется на диск, в том числе когда
+        # состав партиции разошёлся с раскладкой: иначе `--restat --limit`
+        # пересобрал бы месяц по горстке символов и потерял остальные.
+        if args.restat and not restat:
+            skipped += 1
+            continue
 
         tmp = path + ".tmp"
         writer = None
         rows = dups = 0
-        written = []
         for sym in want:
             res = symbol_month_table(sym, by_month[ym][sym])
             if res is None:
@@ -200,26 +269,24 @@ def main():
             table, d = res
             dups += d
             rows += table.num_rows
+            if restat:
+                continue
             if writer is None:
                 writer = pq.ParquetWriter(tmp, SCHEMA, compression="zstd")
             writer.write_table(table)          # один символ — одна row group
-            written.append(sym)
-        if writer is None:
-            continue
-        writer.close()
-        os.replace(tmp, path)                  # партиция появляется целиком
-        with open(manifest, "w", encoding="utf-8") as f:
-            json.dump(want, f)
-
-        stats["months"] += 1
-        stats["rows"] += rows
-        stats["duplicates"] += dups
-        print(f"  {i}/{len(by_month)} {ym}: {rows} строк, дублей {dups}",
+        if not restat:
+            if writer is None:
+                continue
+            writer.close()
+            os.replace(tmp, path)              # партиция появляется целиком
+        write_manifest(manifest, want, rows, dups)
+        print(f"  {i}/{len(by_month)} {ym}: {rows} строк, дублей {dups}"
+              + (" (пересчёт)" if restat else ""),
               file=sys.stderr, flush=True)
 
-    size = sum(os.path.getsize(os.path.join(dest, f))
-               for f in os.listdir(dest) if f.endswith(".parquet"))
-    stats["bytes"] = size
+    stats = scan_store(dest)
+    stats["symbols"] = len(symbols)
+    stats["skipped_existing"] = skipped
     stats["interval"] = args.interval
     with open(os.path.join(OUT, f"build_{args.interval}.json"), "w",
               encoding="utf-8") as f:
