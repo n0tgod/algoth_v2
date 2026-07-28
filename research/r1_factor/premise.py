@@ -318,10 +318,20 @@ def main():
 
     rows = load_windows()
     s = summarize(rows)
+    # Настройки прогона идут в артефакт, а не читаются отчётом из кода.
+    # Во-первых, отчёт тогда описывает тот прогон, который этот файл
+    # породил, а не текущее состояние исходников. Во-вторых, сборка
+    # отчёта перестаёт зависеть от numpy и duckdb: имея JSON, отчёт
+    # делается где угодно.
+    config = {"step": STEP, "coarser": list(COARSER), "form_days": FORM_DAYS,
+              "trade_days": TRADE_DAYS, "grid_start": GRID_START,
+              "grid_end": GRID_END, "min_assets": MIN_ASSETS,
+              "p1_min_explained": P1_MIN_EXPLAINED,
+              "p2_max_spread": P2_MAX_SPREAD}
     with open(os.path.join(OUT, "premise_summary.json"), "w",
               encoding="utf-8") as f:
-        json.dump({"summary": s, "windows": rows}, f, ensure_ascii=False,
-                  indent=1)
+        json.dump({"config": config, "summary": s, "windows": rows}, f,
+                  ensure_ascii=False, indent=1)
     print(json.dumps(s, ensure_ascii=False, indent=2))
 
 

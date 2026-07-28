@@ -1,4 +1,18 @@
 {
+ "config": {
+  "step": "1h",
+  "coarser": [
+   "4h",
+   "1d"
+  ],
+  "form_days": 90,
+  "trade_days": 30,
+  "grid_start": "2022-07-01",
+  "grid_end": "2026-06-01",
+  "min_assets": 10,
+  "p1_min_explained": 0.4,
+  "p2_max_spread": 0.15
+ },
  "summary": {
   "windows": 48,
   "windows_measured": 48,

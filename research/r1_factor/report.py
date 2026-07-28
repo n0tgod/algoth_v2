@@ -7,27 +7,47 @@ R1 — отчёт по проверке посылки §8.1 спеки 03.
 попало в текст, а не бралось из состояния.
 
     python3 report.py > out/R1-report.md
+
+Отчёт намеренно не импортирует `premise.py` и не требует numpy, duckdb и
+pyarrow: настройки и пороги прогона лежат в самом артефакте. Поэтому
+отчёт собирается из JSON где угодно — в том числе там, где тяжёлых
+зависимостей нет вовсе, — и описывает тот прогон, который этот файл
+породил, а не текущее состояние исходников.
 """
 
 import json
 import os
-import statistics as st
-import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
-
-sys.path.insert(0, HERE)
-from premise import P1_MIN_EXPLAINED, P2_MAX_SPREAD, STEP, COARSER  # noqa: E402
 
 
 def pct(x, d=1):
     return "—" if x is None else f"{100 * x:.{d}f} %"
 
 
+def median(v):
+    v = sorted(v)
+    n = len(v)
+    if not n:
+        return None
+    return v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) / 2
+
+
 def main():
     with open(os.path.join(OUT, "premise_summary.json"), encoding="utf-8") as f:
         doc = json.load(f)
+    cfg = doc.get("config")
+    if cfg is None:
+        raise SystemExit(
+            "в артефакте нет раздела config — он собран кодом раннего\n"
+            "образца, читавшим пороги из исходников. Подставлять сюда\n"
+            "сегодняшние значения нельзя: отчёт обязан описывать тот\n"
+            "прогон, который породил файл. Перезапустите premise.py."
+        )
+    P1_MIN_EXPLAINED = cfg["p1_min_explained"]
+    P2_MAX_SPREAD = cfg["p2_max_spread"]
+    STEP, COARSER = cfg["step"], cfg["coarser"]
     s, W = doc["summary"], doc["windows"]
     good = [w for w in W if "r2_median" in w]
     ev = s["explained_variance"]
@@ -75,8 +95,8 @@ def main():
 
     first = [w["r2_median"] for w in good[:12]]
     last = [w["r2_median"] for w in good[-12:]]
-    p(f"**Тренд.** Первые двенадцать окон дают медиану {pct(st.median(first))}, "
-      f"последние двенадцать — {pct(st.median(last))}. Волна не разрушается, но "
+    p(f"**Тренд.** Первые двенадцать окон дают медиану {pct(median(first))}, "
+      f"последние двенадцать — {pct(median(last))}. Волна не разрушается, но "
       f"слабеет по мере расширения универсума: в 2022 отбору удовлетворяют "
       f"{good[0]['assets_fitted']} активов, преимущественно мажоры, ходящие "
       f"вместе; к {good[-1]['date']} их {good[-1]['assets_fitted']}, и хвост "
@@ -105,7 +125,7 @@ def main():
       "входит в волну с весом 1/n, и это следует из построения, а не из "
       "свойств рынка. Отклонение означало бы ошибку расчёта.\n")
     bm = [w["beta_median"] for w in good]
-    p(f"- медиана β по окнам: {st.median(bm):.3f}, диапазон {min(bm):.3f}–{max(bm):.3f}\n")
+    p(f"- медиана β по окнам: {median(bm):.3f}, диапазон {min(bm):.3f}–{max(bm):.3f}\n")
     oi = s.get("own_inclusion_beta_ratio")
     if oi:
         p("**Актив исключён из собственной волны.** При трёхстах активах "
