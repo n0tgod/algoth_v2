@@ -152,29 +152,59 @@ def life_profile(con, side, days):
     Нормируется на медиану самого символа, иначе профиль будет описывать
     состав выборки, а не поведение инструментов: у молодых альтов движение
     больше в любой день их жизни.
+
+    Считается в два прохода по той же причине, что и покрытие: одним
+    запросом на 1m это не считается. Здесь окно ещё дороже — рамка
+    `UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING` по каждому символу поверх
+    759 млн строк, — да ещё точная медиана на символ поверх всей истории.
+
+    Проход первый: по одному символу за запрос считается `typical` и сразу
+    же, тем же сканированием, откладываются отношения только для края
+    жизни. Край — это `days` суток, то есть порядка тридцати миллионов
+    строк на всю выборку вместо семисот шестидесяти миллионов.
+
+    Проход второй: финальная свёртка по дню поверх отложенного. Медиана
+    остаётся точной и пулится по всем символам сразу — ровно как раньше,
+    иначе профиль описывал бы состав выборки.
     """
     idx = ("date_diff('day', first_value(open_time) OVER w, open_time)"
            if side == "start" else
            "date_diff('day', open_time, last_value(open_time) OVER w)")
-    return con.execute(f"""
-        WITH r AS (
-            SELECT symbol, open_time,
-                   abs(ln(close / lag(close) OVER w)) AS ar,
-                   {idx} AS d
-            FROM bars
-            WINDOW w AS (PARTITION BY symbol ORDER BY open_time
-                         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-        ),
-        base AS (
-            SELECT symbol, median(ar) AS typical FROM r
-            WHERE ar IS NOT NULL AND ar > 0 AND d > {days}
-            GROUP BY symbol
-        )
-        SELECT r.d AS day, median(r.ar / base.typical) AS ratio, count(*) AS n
-        FROM r JOIN base USING (symbol)
-        WHERE r.ar IS NOT NULL AND r.ar > 0 AND r.d <= {days}
-        GROUP BY r.d ORDER BY r.d
-    """).fetchall()
+
+    symbols = [r[0] for r in con.execute(
+        "SELECT DISTINCT symbol FROM bars ORDER BY symbol").fetchall()]
+
+    con.execute("CREATE OR REPLACE TEMP TABLE edge (day BIGINT, ratio DOUBLE)")
+    for sym in symbols:
+        con.execute(f"""
+            INSERT INTO edge
+            WITH r AS (
+                SELECT open_time,
+                       abs(ln(close / lag(close) OVER w)) AS ar,
+                       {idx} AS d
+                FROM bars WHERE symbol = ?
+                WINDOW w AS (ORDER BY open_time
+                             ROWS BETWEEN UNBOUNDED PRECEDING
+                                      AND UNBOUNDED FOLLOWING)
+            ),
+            base AS (
+                SELECT median(ar) AS typical FROM r
+                WHERE ar IS NOT NULL AND ar > 0 AND d > {days}
+            )
+            -- Символ без «обычного» движения выпадает целиком: у него вся
+            -- история короче горизонта, нормировать не на что. В прежней
+            -- формулировке это делал внутренний JOIN, здесь — проверка на
+            -- NULL, потому что median по пустому множеству возвращает
+            -- строку, а группировка не возвращала ничего.
+            SELECT r.d, r.ar / base.typical
+            FROM r, base
+            WHERE r.ar IS NOT NULL AND r.ar > 0 AND r.d <= {days}
+              AND base.typical IS NOT NULL
+        """, [sym])
+
+    return con.execute(
+        "SELECT day, median(ratio) AS ratio, count(*) AS n"
+        " FROM edge GROUP BY day ORDER BY day").fetchall()
 
 
 def frozen_tails(con, min_days=7):
@@ -199,20 +229,21 @@ def frozen_tails(con, min_days=7):
     бар со сделкой, а не последний опубликованный. Бар с `trades = 0` —
     пропуск, а не наблюдение.
     """
+    # Обычная группировка, а не оконная функция. `max(...) OVER (PARTITION
+    # BY symbol)` вычисляет ровно то же самое, но заставляет движок держать
+    # партицию целиком, чтобы приписать результат каждой строке — а строк
+    # на 1m семьсот шестьдесят миллионов. Группировка идёт потоком: на
+    # каждый из 720 символов живёт по два значения.
     rows = con.execute(f"""
-        WITH t AS (
-            SELECT symbol, trades,
-                   max(CASE WHEN trades > 0 THEN open_time END)
-                       OVER (PARTITION BY symbol) AS last_traded,
-                   max(open_time) OVER (PARTITION BY symbol) AS last_bar
-            FROM bars
-        )
         SELECT symbol,
-               CAST(date_diff('day', any_value(last_traded),
-                              any_value(last_bar)) AS BIGINT) AS frozen_days,
-               CAST(any_value(last_traded) AS VARCHAR) AS last_traded,
-               CAST(any_value(last_bar) AS VARCHAR)    AS last_bar
-        FROM t GROUP BY symbol
+               CAST(date_diff('day',
+                              max(CASE WHEN trades > 0 THEN open_time END),
+                              max(open_time)) AS BIGINT)       AS frozen_days,
+               CAST(max(CASE WHEN trades > 0 THEN open_time END)
+                    AS VARCHAR)                                AS last_traded,
+               CAST(max(open_time) AS VARCHAR)                 AS last_bar
+        FROM bars
+        GROUP BY symbol
         HAVING frozen_days >= {min_days}
         ORDER BY frozen_days DESC
     """).fetchall()
