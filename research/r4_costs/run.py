@@ -248,7 +248,35 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--interval", default="1m")
     ap.add_argument("--no-funding", action="store_true")
+    ap.add_argument("--check-funding", action="store_true",
+                    help="только проверить загрузку рядов funding и выйти")
     args = ap.parse_args()
+
+    if args.check_funding:
+        # Быстрая изоляция вопроса «читаются ли ряды», без часового
+        # прогона. Нужна потому, что прогон и отчёт — разные команды, и
+        # упавший прогон оставляет отчёт собираться по прежнему артефакту.
+        _, universe = P.load_liquidity(args.interval)
+        d = os.path.join(A1, "funding")
+        print(f"каталог: {d}")
+        print(f"существует: {os.path.isdir(d)}")
+        if os.path.isdir(d):
+            names = sorted(os.listdir(d))
+            print(f"файлов всего: {len(names)}")
+            print(f"первые три: {names[:3]}")
+            print(f"с расширением .csv.gz: "
+                  f"{sum(1 for x in names if x.endswith('.csv.gz'))}")
+        f = load_funding(universe, {a for a in universe})
+        if f is None:
+            print("РЯДЫ НЕ ЗАГРУЖЕНЫ: каталога нет")
+            return
+        print(f"загружено рядов: {len(f)}")
+        if f:
+            a = sorted(f)[0]
+            t, r = f[a]
+            print(f"пример {a}: записей {len(t)}, "
+                  f"первая ставка {r[0]}, последняя {r[-1]}")
+        return
 
     vec = load_vectors(args.interval)
     dates = sorted(vec)
