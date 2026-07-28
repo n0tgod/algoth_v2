@@ -268,6 +268,9 @@ def main():
                     help="binance — только смоук-тест конвейера, деньги "
                          "считаются исключительно по площадке исполнения")
     ap.add_argument("--rerun", action="store_true")
+    ap.add_argument("--restat", action="store_true",
+                    help="пересобрать сводку из сохранённых векторов, без "
+                         "прохода по хранилищу")
     args = ap.parse_args()
 
     chunks = os.path.join(OUT, "chunks")
@@ -294,6 +297,56 @@ def main():
           flush=True)
 
     tag = f"{args.interval}_{args.funding_venue}"
+
+    if args.restat:
+        # Пересбор из векторов. Нужен, когда исправлена арифметика
+        # сборки книги: сами векторы (оценки, форварды цены и
+        # начислений) от этого не меняются, а куски с готовыми ячейками
+        # — меняются. Проход по 760 млн баров ради этого не нужен.
+        rows = []
+        for fn in sorted(os.listdir(vectors)):
+            if not (fn.startswith(tag + "_") and fn.endswith(".json")):
+                continue
+            with open(os.path.join(vectors, fn), encoding="utf-8") as f:
+                for day, v in json.load(f).items():
+                    names = v["names"]
+                    row = {"date": day, "assets": len(names), "cells": {},
+                           "reading_agreement": {}, "score_coverage": {}}
+                    for k in KS:
+                        sc = np.asarray(v["score"][str(k)], dtype=np.float64)
+                        for h in HS:
+                            pr = np.asarray(v["price"][str(h)],
+                                            dtype=np.float64)
+                            fd = np.asarray(v["funding"][str(h)],
+                                            dtype=np.float64)
+                            for wname, width in WIDTHS.items():
+                                w, per_leg = CY.weights(sc, width)
+                                if per_leg < 1:
+                                    continue
+                                d = CY.decompose(w, pr, fd)
+                                d["per_leg"] = per_leg
+                                row["cells"][f"k{k}_h{h}_{wname}"] = d
+                    rows.append(row)
+        if not rows:
+            raise SystemExit(f"в {vectors} нет векторов для {tag}")
+        s = summarize(rows, HS)
+        s["config"] = {"interval": args.interval, "ks": list(KS),
+                       "hs": list(HS), "widths": WIDTHS,
+                       "start": args.start, "end": args.end,
+                       "funding_venue": args.funding_venue,
+                       "funding_symbols": None, "rebuilt_from_vectors": True,
+                       "declared_trials": len(KS) * len(HS) * len(WIDTHS)}
+        dst = os.path.join(OUT, f"f1_{tag}.json")
+        with open(dst, "w", encoding="utf-8") as f:
+            json.dump(s, f, ensure_ascii=False, indent=1)
+        g = s["grid"]
+        print(f"пересобрано из векторов: сечений {g['sections']}, "
+              f"ячеек {g['n_cells']}")
+        print(f"медиана начислений {g['funding_median'] * 1e4:+.1f} б.п., "
+              f"медиана брутто {g['gross_median'] * 1e4:+.1f} б.п.")
+        print(f"записано {dst}")
+        return
+
     con = S.connect()
     dates = list(rebalance_dates(args.start, args.end, REBALANCE_STEP_DAYS))
     groups = [dates[i:i + CHUNK_DAYS]

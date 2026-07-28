@@ -95,8 +95,58 @@ class TestDecompose(unittest.TestCase):
         fund = np.array([0.0, 0.0])
         d = CY.decompose(w, price, fund)
         self.assertAlmostEqual(d["dropped_weight"], 0.5, places=12)
-        self.assertAlmostEqual(d["price"], 0.05, places=12)
+        # 0.5 · (e^0.10 − 1), а не 0.5 · 0.10: логарифмическое
+        # приращение переводится в доходность позиции.
+        self.assertAlmostEqual(d["price"], 0.5 * (np.expm1(0.10)), places=12)
         self.assertEqual(d["short"]["names"], 0)
+
+
+class TestPositionReturn(unittest.TestCase):
+    """Перевод накопленного логарифма в доходность позиции.
+
+    Дефект, найденный после закрытия гипотезы: PnL считался суммой
+    логарифмических приращений. На медиане разница в сотых долях, на
+    хвосте — решающая, а гипотеза умерла именно на хвосте.
+    """
+
+    def test_long_cannot_lose_more_than_everything(self):
+        for log_ret in (-1.0, -2.56, -10.0):
+            r = float(CY.position_return(np.array([1.0]), np.array([log_ret]))[0])
+            self.assertGreater(r, -1.0)
+            self.assertLess(r, -0.6)
+
+    def test_short_loss_is_unbounded(self):
+        """У шорта убыток сверху не ограничен ничем: актив, выросший в
+        13 раз, стоит позиции 1194 %, а не 256 %."""
+        r = float(CY.position_return(np.array([-1.0]), np.array([2.56]))[0])
+        self.assertLess(r, -11.0)
+        self.assertAlmostEqual(r, -(np.expm1(2.56)), places=9)
+
+    def test_small_moves_are_almost_unchanged(self):
+        """На величинах, которыми живёт медиана книги, поправка
+        пренебрежима — поэтому дефект и не был виден в средних."""
+        r = float(CY.position_return(np.array([1.0]), np.array([0.0027]))[0])
+        self.assertAlmostEqual(r, 0.0027, places=5)
+
+    def test_short_side_sign(self):
+        """Актив упал — шорт заработал."""
+        r = float(CY.position_return(np.array([-1.0]), np.array([-0.20]))[0])
+        self.assertGreater(r, 0)
+        self.assertAlmostEqual(r, -np.expm1(-0.20), places=12)
+
+    def test_book_tail_is_worse_than_the_log_approximation(self):
+        """Проверка направления ошибки на книге из двух ног.
+
+        Длинная нога потеряла (лог −1.0), короткая взорвалась (лог
+        +1.0). Сумма логарифмов дала бы ноль — ноги «погасили» бы друг
+        друга. На деле книга в глубоком минусе: шорт теряет больше, чем
+        лонг может потерять в принципе.
+        """
+        w = np.array([0.5, -0.5])
+        price = np.array([-1.0, 1.0])
+        fund = np.array([0.0, 0.0])
+        d = CY.decompose(w, price, fund)
+        self.assertLess(d["price"], -0.4)
 
     def test_the_case_the_spec_predicts(self):
         """§5.1: нам платят за покупку падающего.

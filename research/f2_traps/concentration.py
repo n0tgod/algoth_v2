@@ -98,8 +98,11 @@ def leg_pnl(w, price, fund, stop=None):
     """
     ok = np.isfinite(price) & np.isfinite(fund)
     ww = np.where(ok, w, 0.0)
-    s = np.sign(ww)
-    ret = np.where(ok, s * price, 0.0)
+    # Доходность позиции, а не сумма логарифмов. Разница решающая
+    # именно здесь: стоп ставится в процентах ОТ ПОЗИЦИИ, и сравнивать
+    # его с логарифмом значило бы резать по чужой шкале. Обоснование —
+    # `carry.position_return`.
+    ret = CY.position_return(ww, np.where(ok, price, 0.0))
     if stop is not None:
         ret = np.maximum(ret, -stop)
     # Начисления сохраняются целиком даже у обрезанной ноги — поблажка
@@ -137,7 +140,7 @@ def main():
                     base.append(float(p.sum()))
                     per_period.append((day, p, w, price))
                     m = w != 0
-                    legs_all.append(np.sign(w[m]) * price[m])
+                    legs_all.append(CY.position_return(w[m], price[m]))
                     for s in STOPS:
                         stopped[s].append(
                             float(leg_pnl(w, price, fund, s).sum()))
