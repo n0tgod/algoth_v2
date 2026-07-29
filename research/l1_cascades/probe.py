@@ -213,6 +213,34 @@ def scan(sym, oi_t, oi_v, price, oi_drop, move):
     return events
 
 
+def baseline(series, rng_seed=7):
+    """Безусловная доходность на тех же активах и том же периоде.
+
+    Без неё замер бессмыслен. Если рынок за выборку рос, положительный
+    форвард после события ничего не говорит о событии — он говорит о
+    периоде. Подпись «обе стороны положительны» именно на это и
+    указывает, и проверять её надо, а не объяснять.
+
+    Берутся случайные моменты той же сетки, по тысяче на актив: полный
+    перебор дал бы то же самое дороже.
+    """
+    rng = np.random.default_rng(rng_seed)
+    out = {f: [] for f in FORWARD_MIN}
+    for sym, (t, v, px) in series.items():
+        n = len(t)
+        if n < 1000:
+            continue
+        for i in rng.choice(n - 1, size=min(1000, n - 1), replace=False):
+            if not np.isfinite(px[i]) or px[i] <= 0:
+                continue
+            for f in FORWARD_MIN:
+                j = int(np.searchsorted(t, t[i] + f * 60))
+                if j < n and np.isfinite(px[j]):
+                    out[f].append(px[j] / px[i] - 1.0)
+    return {f: (float(np.median(v)) if len(v) >= 100 else None)
+            for f, v in out.items()}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", default=START)
@@ -235,6 +263,14 @@ def main():
               f"{np.isfinite(price).mean():.1%}", file=sys.stderr, flush=True)
     if not series:
         raise SystemExit("ничего не загрузилось")
+
+    base = baseline(series)
+    print("\nБЕЗУСЛОВНАЯ доходность на тех же активах и периоде "
+          "(медиана по случайным моментам):")
+    print("  " + "  ".join(f"{f} мин: {base[f] * 100:+.3f}%"
+                           if base[f] is not None else f"{f} мин: —"
+                           for f in FORWARD_MIN))
+    print("  всё, что ниже, надо читать ПРОТИВ этих чисел\n")
 
     grid = []
     for oi_drop in OI_DROPS:
@@ -261,6 +297,7 @@ def main():
                               "oi_drops": list(OI_DROPS),
                               "moves": list(MOVES),
                               "forward_min": list(FORWARD_MIN)},
+                   "baseline": {str(k): v for k, v in base.items()},
                    "grid": grid}, f, ensure_ascii=False, indent=1)
 
     print("\nСКОЛЬКО СОБЫТИЙ (падение интереса И движение цены за 15 мин)\n")
@@ -269,20 +306,20 @@ def main():
         print(f"{r['oi_drop']:>11.0%}{r['move']:>11.0%}"
               f"{r['events']:>10}{r['down']:>8}")
 
-    print("\nЧТО БЫЛО ПОСЛЕ, медиана доходности от момента события")
-    print("каскад ВНИЗ: положительное = отскок вверх\n")
+    print("\nЧТО БЫЛО ПОСЛЕ — ПРЕВЫШЕНИЕ над безусловной доходностью")
+    print("каскад ВНИЗ: положительное = отскок сверх обычного сноса\n")
     hdr = "".join(f"{str(f) + ' мин':>11}" for f in FORWARD_MIN)
     print(f"{'падение OI':>11}{'движение':>10}{hdr}")
     for r in grid:
         cells = "".join(
-            f"{r.get(f'down_{f}', float('nan')) * 100:>10.2f}%"
+            f"{(r[f'down_{f}'] - (base[f] or 0)) * 100:>10.2f}%"
             if f"down_{f}" in r else f"{'—':>11}" for f in FORWARD_MIN)
         print(f"{r['oi_drop']:>10.0%}{r['move']:>10.0%}{cells}")
-    print("\nкаскад ВВЕРХ: отрицательное = откат вниз\n")
+    print("\nкаскад ВВЕРХ: отрицательное = откат вниз сверх обычного\n")
     print(f"{'падение OI':>11}{'движение':>10}{hdr}")
     for r in grid:
         cells = "".join(
-            f"{r.get(f'up_{f}', float('nan')) * 100:>10.2f}%"
+            f"{(r[f'up_{f}'] - (base[f] or 0)) * 100:>10.2f}%"
             if f"up_{f}" in r else f"{'—':>11}" for f in FORWARD_MIN)
         print(f"{r['oi_drop']:>10.0%}{r['move']:>10.0%}{cells}")
     print(f"\nзаписано {os.path.join(OUT, 'l1_probe.json')}")
