@@ -125,7 +125,7 @@ def test_absorption_finds_held_price():
             np.array(sz)[order], np.array(px)[order])
     g = T.to_grid(tape, step, t0=t0, t1=t0 + n)
     idx, info = T.absorption(g, window_sec=10, vol_mult=5.0,
-                             max_move=0.001, side=-1)
+                             move_mult=0.5, side=-1)
     check("поглощение найдено", len(idx) >= 1, f"{idx} {info}")
     if len(idx):
         # Окно суммы выровнено по правому краю и захватывает всплеск уже
@@ -155,7 +155,7 @@ def test_absorption_ignores_move():
             np.array(sz)[order], np.array(px)[order])
     g = T.to_grid(tape, step, t0=t0, t1=t0 + n)
     idx, _ = T.absorption(g, window_sec=10, vol_mult=5.0,
-                          max_move=0.001, side=-1)
+                          move_mult=0.5, side=-1)
     check("пролив с падением цены поглощением не считается",
           not any(200 <= i <= 215 for i in idx), str(idx))
 

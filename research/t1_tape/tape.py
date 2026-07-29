@@ -224,7 +224,7 @@ def rolling_sum(v, w):
     return out
 
 
-def absorption(grid, window_sec, vol_mult, max_move, side):
+def absorption(grid, window_sec, vol_mult, move_mult, side):
     """Моменты поглощения: много агрессии в одну сторону, цена не идёт.
 
     `side = -1` — поглощение **продаж**: льют в стакан, а цена стоит,
@@ -235,8 +235,13 @@ def absorption(grid, window_sec, vol_mult, max_move, side):
     разах, а не в долларах: у ARBUSDT и SOLUSDT обычные объёмы
     различаются в шесть раз, и абсолютный порог сравнивал бы разное.
 
-    `max_move` — насколько цене позволено уйти против поглощающего.
-    Именно это и делает событие поглощением, а не обычным проливом.
+    `move_mult` — насколько цене позволено уйти против поглощающего, **в
+    долях её обычного хода за то же окно**. Абсолютный допуск сравнивал бы
+    разное: 10 б.п. за полминуты для BTC тесно, для мелкого альта широко.
+    Это та же ошибка, что абсолютный порог объёма, и лечится так же.
+
+    Именно неподвижность цены и делает событие поглощением, а не обычным
+    проливом.
     """
     step = grid["step_sec"]
     w = max(1, int(round(window_sec / step)))
@@ -254,8 +259,14 @@ def absorption(grid, window_sec, vol_mult, max_move, side):
     with np.errstate(invalid="ignore", divide="ignore"):
         move = cl / start - 1.0
 
-    # Поглощение продаж: цена НЕ упала ниже допуска (side<0 -> move >= -max_move)
-    held = move >= -max_move if side < 0 else move <= max_move
+    # Обычный ход за то же окно — медиана модуля по суткам. Порог в долях
+    # от него, а не в базисных пунктах.
+    typ = np.nanmedian(np.abs(move[np.isfinite(move)])) if np.any(
+        np.isfinite(move)) else np.nan
+    if not np.isfinite(typ):
+        return np.empty(0, dtype=np.int64), {}
+    allow = max(move_mult * float(typ), 1e-9)
+    held = move >= -allow if side < 0 else move <= allow
     hit = np.isfinite(vol) & np.isfinite(move) & held & (vol >= vol_mult * med)
     idx = np.flatnonzero(hit)
     if len(idx) == 0:
@@ -269,6 +280,8 @@ def absorption(grid, window_sec, vol_mult, max_move, side):
             last = i
     return np.array(keep, dtype=np.int64), {
         "median_window_qv": float(med),
+        "typical_move": float(typ),
+        "allowed_move": float(allow),
         "windows": int(np.isfinite(vol).sum()),
         "raw_hits": int(len(idx)),
     }
