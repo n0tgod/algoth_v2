@@ -106,7 +106,8 @@ def universe():
     return out
 
 
-def price_matrix(symbols, times, interval="1m", log=None):
+def price_matrix(symbols, times, interval="1m", log=None,
+                 columns=("open",)):
     """Первая доступная цена в каждый момент сетки: `(символы × моменты)`.
 
     Берётся **открытие** минутного бара, начинающегося в этот момент, —
@@ -114,6 +115,11 @@ def price_matrix(symbols, times, interval="1m", log=None):
     известно, но сделка по нему уже невозможна: она в прошлом.
 
     Бары без сделок отбрасываются: `trades = 0` — не наблюдение.
+
+    `columns` задаёт, какие цены бара нужны. Кроме открытия бывают
+    нужны `low` и `high`: по ним считается, насколько далеко цена ушла
+    **против** позиции, прежде чем вернуться. Это и есть вход для
+    уровня ограничения убытка — иначе он назначается на глаз.
     """
     import duckdb
     import series as S                                    # noqa: E402
@@ -121,7 +127,8 @@ def price_matrix(symbols, times, interval="1m", log=None):
     con = S.connect()
     idx = {s: i for i, s in enumerate(symbols)}
     t0, t1 = int(times[0]), int(times[-1])
-    P = np.full((len(symbols), len(times)), np.nan, dtype=np.float32)
+    M = {c: np.full((len(symbols), len(times)), np.nan, dtype=np.float32)
+         for c in columns}
     want = "', '".join(symbols)
     for mon in months(
             datetime.fromtimestamp(int(times[0]), timezone.utc).date().isoformat(),
@@ -129,8 +136,9 @@ def price_matrix(symbols, times, interval="1m", log=None):
         path = os.path.join(S.PARQUET, interval, f"{mon}.parquet")
         if not os.path.exists(path):
             continue
+        cols = ", ".join(columns)
         q = f"""
-            SELECT symbol, epoch(open_time)::BIGINT AS ts, open
+            SELECT symbol, epoch(open_time)::BIGINT AS ts, {cols}
             FROM read_parquet('{path}')
             WHERE trades > 0
               AND symbol IN ('{want}')
@@ -149,15 +157,16 @@ def price_matrix(symbols, times, interval="1m", log=None):
         row_of = np.array([idx.get(s, -1) for s in vocab], dtype=np.int64)
         rows = row_of[np.asarray(d.indices)]
         ts = np.asarray(tab.column("ts"))
-        px = np.asarray(tab.column("open"), dtype=np.float32)
         ok = (ts >= t0) & (ts <= t1)
         col = ((ts - t0) // STEP_SEC).astype(np.int64)
         keep = ok & (rows >= 0)
-        P[rows[keep], col[keep]] = px[keep]
+        for c in columns:
+            v = np.asarray(tab.column(c), dtype=np.float32)
+            M[c][rows[keep], col[keep]] = v[keep]
         if log:
             log(f"  цены {mon}: {int(keep.sum()):,} значений")
     con.close()
-    return P
+    return M[columns[0]] if len(columns) == 1 else M
 
 
 def oi_series(symbol, times):

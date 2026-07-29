@@ -119,7 +119,9 @@ def run_month(mon, nxt, symbols, uni, share, min_share, interval, log):
     a0, _ = month_bounds(mon)
     _, b1 = month_bounds(nxt or mon)
     times = grid(a0, b1)
-    P = D.price_matrix(symbols, times, interval, None)
+    M = D.price_matrix(symbols, times, interval, None,
+                       columns=("open", "low", "high"))
+    P = M["open"]
     own = len(grid(*month_bounds(mon)))          # индексы своего месяца
     rec = []
     ones = np.ones(len(times), dtype=np.float64)
@@ -138,11 +140,41 @@ def run_month(mon, nxt, symbols, uni, share, min_share, interval, log):
             for j in idx:
                 rec.append((r, int(j), move))
     log(f"  {mon}: событий {len(rec)}")
-    return rec, P, times
+    return rec, M, times
 
 
-def measure(rec, P, times, log):
+def excursions(M, er, ec, horizons):
+    """Насколько далеко цена ушла ПРОТИВ позиции и в её пользу.
+
+    Ход против позиции — это и есть вход для уровня ограничения
+    убытка: назначать его на глаз нельзя, а по распределению
+    просадки внутри сделки — можно. Считается по минимумам и
+    максимумам баров, а не по закрытиям: стоп срабатывает от
+    касания, а не от закрытия.
+    """
+    lo, hi, op = M["low"], M["high"], M["open"]
+    entry = op[er, ec]
+    n = op.shape[1]
+    run_lo = np.full(len(ec), np.inf)
+    run_hi = np.full(len(ec), -np.inf)
+    out = {}
+    for k in range(0, max(horizons) + 1):
+        idx = np.clip(ec + k, 0, n - 1)
+        fit = (ec + k) < n
+        v_lo = np.where(fit, lo[er, idx], np.nan)
+        v_hi = np.where(fit, hi[er, idx], np.nan)
+        run_lo = np.fmin(run_lo, v_lo)
+        run_hi = np.fmax(run_hi, v_hi)
+        if k in horizons:
+            with np.errstate(invalid="ignore", divide="ignore"):
+                out[k] = (run_lo / entry - 1.0,
+                          run_hi / entry - 1.0)
+    return out
+
+
+def measure(rec, M, times, log):
     """Превышение над одновременной кросс-секцией по эпизодам."""
+    P = M["open"]
     out = {}
     for move in MOVES:
         sel = [(r, j) for r, j, m in rec if m == move]
@@ -158,6 +190,7 @@ def measure(rec, P, times, log):
             er, ec = rows[good], ent[good]
             ep = E.episodes(times[ec])
             banned = E.ban_matrix(P.shape, er, ec, 60, STEP_MIN)
+            exc_path = excursions(M, er, ec, set(HORIZONS))
             for h in HORIZONS:
                 k = ec + h
                 fit = k < P.shape[1]
@@ -171,17 +204,21 @@ def measure(rec, P, times, log):
                 exc = np.where(np.isfinite(cs) & np.isfinite(f),
                                f - cs, np.nan)
                 key = (move, delay, h)
-                acc = out.setdefault(key, {"exc": [], "raw": [], "ep": []})
+                acc = out.setdefault(key, {"exc": [], "raw": [], "ep": [],
+                                           "mae": [], "mfe": []})
                 acc["exc"].append(exc)
                 acc["raw"].append(f)
+                acc["mae"].append(exc_path[h][0])
+                acc["mfe"].append(exc_path[h][1])
                 acc["ep"].append(ep + (10**7) * len(acc["ep"]))
     return out
 
 
 def merge(dst, src):
     for k, v in src.items():
-        d = dst.setdefault(k, {"exc": [], "raw": [], "ep": []})
-        for name in ("exc", "raw", "ep"):
+        d = dst.setdefault(k, {"exc": [], "raw": [], "ep": [],
+                               "mae": [], "mfe": []})
+        for name in ("exc", "raw", "ep", "mae", "mfe"):
             d[name] += v[name]
     return dst
 
@@ -214,11 +251,11 @@ def main():
     acc = {}
     for i, mon in enumerate(mons):
         nxt = mons[i + 1] if i + 1 < len(mons) else None
-        rec, P, times = run_month(mon, nxt, symbols, uni, share, min_share,
-                                  a.interval, log)
+        rec, M, times = run_month(mon, nxt, symbols, uni, share,
+                                  min_share, a.interval, log)
         if rec:
-            acc = merge(acc, measure(rec, P, times, log))
-        del P
+            acc = merge(acc, measure(rec, M, times, log))
+        del M
 
     rows = []
     for (move, delay, h), v in sorted(acc.items()):
@@ -228,12 +265,19 @@ def main():
         e = E.by_episode(exc, ep)
         if len(e) < 10:
             continue
+        mae = np.concatenate(v["mae"])
+        mfe = np.concatenate(v["mfe"])
+        mae = mae[np.isfinite(mae)]
+        mfe = mfe[np.isfinite(mfe)]
         rows.append({"move": move, "delay": delay, "horizon": h,
                      "episodes": int(len(e)),
                      "events": int(np.isfinite(exc).sum()),
                      "excess_bp": float(np.median(e)) * 1e4,
                      "raw_bp": float(np.median(raw[np.isfinite(raw)])) * 1e4,
-                     "share_pos": float(np.mean(e > 0))})
+                     "share_pos": float(np.mean(e > 0)),
+                     "mae_med_bp": float(np.median(mae)) * 1e4 if len(mae) else None,
+                     "mae_p10_bp": float(np.percentile(mae, 10)) * 1e4 if len(mae) else None,
+                     "mfe_med_bp": float(np.median(mfe)) * 1e4 if len(mfe) else None})
 
     with open(os.path.join(OUT, f"probe_{a.interval}.json"), "w",
               encoding="utf-8") as f:
@@ -267,6 +311,25 @@ def main():
             md.append(f"| +{delay} мин | " + " | ".join(cells)
                       + f" | {eps} |")
         md.append("")
+    md.append("\n## Ход против позиции — вход для уровня стопа\n")
+    md.append("После входа цена уходит вниз, прежде чем отскочить. "
+              "Медиана и 10-й процентиль этого хода говорят, где обязан "
+              "стоять ограничитель убытка, чтобы не выбивало на шуме, — "
+              "и сколько он будет стоить. Считается по минимумам баров: "
+              "стоп срабатывает от касания, а не от закрытия.\n")
+    md.append("| Падение | Горизонт | Ход против, медиана | 10-й процентиль "
+              "| Ход в пользу, медиана |")
+    md.append("|---|---|---|---|---|")
+    for move in MOVES:
+        for h in HORIZONS:
+            r = next((x for x in rows if x["move"] == move
+                      and x["delay"] == 0 and x["horizon"] == h), None)
+            if not r or r.get("mae_med_bp") is None:
+                continue
+            md.append(f"| {move:.0%} | {h} мин | {r['mae_med_bp']:+.0f} б.п. "
+                      f"| {r['mae_p10_bp']:+.0f} б.п. "
+                      f"| {r['mfe_med_bp']:+.0f} б.п. |")
+    md.append("")
     md.append("\n## Как читать\n")
     md.append("**Растёт при укорочении горизонта** — подпись микроструктуры, "
               "а не торгуемого эффекта: цена скачет между спросом и "
