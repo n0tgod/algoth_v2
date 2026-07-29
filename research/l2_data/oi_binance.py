@@ -25,6 +25,15 @@ L2 — открытый интерес по всему крипто-универ
 диск не кладутся (`cache=False`): единица возобновления крупнее файла,
 и кэш только съел бы 4 ГБ.
 
+**Прерывание прогона не должно портить состояние, и это проверено
+жизнью дважды.** В A2 перезагрузка VPS заставила сборку доложить
+дельту прогона вместо состояния хранилища; здесь ряд пишется через
+временный файл, а манифест — атомарной заменой, потому что перезапись
+поверх себя оставляет после обрыва обрезанный JSON, на котором падает
+уже следующий запуск. Если манифест всё же потерян, состояние
+**читается с диска**, а не берётся из утверждения: готовые ряды
+пересчитываются в манифест, и прогон продолжается с того же места.
+
 **Дни берутся из интервалов жизни инструмента**, а не подряд по
 календарю. Универсум A1 знает, когда инструмент листингован и когда
 перестал торговаться; запрашивать дни вне этих интервалов значит
@@ -151,6 +160,60 @@ def collect_symbol(symbol, days, workers):
     }
 
 
+def write_json(path, doc):
+    """Атомарная запись: обрыв не оставляет обрезанного файла."""
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(doc, f, ensure_ascii=False)
+    os.replace(tmp, path)
+
+
+def scan_series():
+    """Состояние — с диска, а не из манифеста.
+
+    Урок A2: сводка, написанная прогоном, описывает прогон, а не
+    хранилище. Здесь то же самое: если манифест потерян или побит
+    обрывом, готовые ряды всё равно лежат на диске и должны быть
+    учтены, иначе перезапуск скачает заново то, что уже есть.
+    """
+    out = {}
+    if not os.path.isdir(SERIES):
+        return out
+    for fn in sorted(os.listdir(SERIES)):
+        if not fn.endswith(".npz") or fn.endswith(".tmp.npz"):
+            continue
+        sym = fn[:-len(".npz")]
+        try:
+            with np.load(os.path.join(SERIES, fn)) as z:
+                t, usd = z["t"], z["oi_usd"]
+        except Exception:                                 # noqa: BLE001
+            continue                     # битый файл — пусть соберётся заново
+        if len(t) == 0:
+            continue
+        out[sym] = {"rows": int(len(t)), "first": int(t[0]),
+                    "last": int(t[-1]),
+                    "median_oi_usd": float(np.median(usd)),
+                    "recovered": True}
+    return out
+
+
+def load_manifest(path):
+    """Манифест плюс то, что найдено на диске. Диск главнее."""
+    man = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                man = json.load(f).get("symbols", {})
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"манифест не читается ({str(e)[:60]}) — "
+                  f"состояние восстанавливается с диска", file=sys.stderr)
+    disk = scan_series()
+    for sym, info in disk.items():
+        if sym not in man:
+            man[sym] = info
+    return man
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", default=START)
@@ -182,10 +245,13 @@ def main():
           file=sys.stderr, flush=True)
 
     manifest_path = os.path.join(OUT, "oi_binance_manifest.json")
-    manifest = {}
-    if os.path.exists(manifest_path):
-        with open(manifest_path, encoding="utf-8") as f:
-            manifest = json.load(f).get("symbols", {})
+    manifest = load_manifest(manifest_path)
+    ready = sum(1 for sym, _ in plan
+                if sym in manifest
+                and os.path.exists(os.path.join(SERIES, f"{sym}.npz")))
+    if ready:
+        print(f"уже собрано {ready} символов, остаётся {len(plan) - ready}",
+              file=sys.stderr, flush=True)
 
     done = 0
     t_start = time.time()
@@ -208,24 +274,37 @@ def main():
             os.replace(dst + ".tmp.npz", dst)
         manifest[sym] = info
         done += 1
-        with open(manifest_path, "w", encoding="utf-8") as f:
-            json.dump({"config": {"start": a.start, "end": a.end},
-                       "symbols": manifest}, f, ensure_ascii=False)
+        write_json(manifest_path, {"config": {"start": a.start, "end": a.end},
+                                   "symbols": manifest})
         el = time.time() - t_start
         print(f"[{done}/{len(plan)}] {sym}: строк {info['rows']}, "
               f"дней {info['days']}, пропущено {info['days_missing']}, "
               f"{info['seconds']} с (всего {el / 60:.1f} мин)",
               file=sys.stderr, flush=True)
 
+    # Манифест пишется и в конце: если он был потерян и состояние
+    # восстановлено с диска, восстановление должно закрепиться, а не
+    # повторяться на каждом запуске.
+    write_json(manifest_path, {"config": {"start": a.start, "end": a.end},
+                               "symbols": manifest})
+
     ok = [v for v in manifest.values() if v.get("rows")]
-    miss = sum(v.get("days_missing", 0) for v in manifest.values())
-    days = sum(v.get("days", 0) for v in manifest.values())
+    counted = [v for v in manifest.values() if not v.get("recovered")]
+    rec = len(manifest) - len(counted)
+    miss = sum(v.get("days_missing", 0) for v in counted)
+    days = sum(v.get("days", 0) for v in counted)
     print("\nИТОГ СБОРА")
     print(f"  символов с рядом      {len(ok)} из {len(manifest)}")
     print(f"  строк                 {sum(v['rows'] for v in ok):,}")
     print(f"  символо-дней          {days:,}")
     print(f"  дней без файла        {miss:,} ({miss / max(days, 1):.2%})")
     print(f"  дублей по метке       {sum(v.get('dups', 0) for v in ok):,}")
+    if rec:
+        # Честно: у восстановленных с диска нет статистики загрузки, и
+        # три числа выше их не считают. Молча приплюсовать было бы той
+        # же ошибкой, что дельта прогона вместо состояния в A2.
+        print(f"  восстановлено с диска {rec} — доля пропусков и дублей "
+              f"по ним неизвестна")
     print(f"\nманифест {manifest_path}")
     print(f"ряды     {SERIES}")
 

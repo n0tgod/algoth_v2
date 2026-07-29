@@ -283,8 +283,10 @@ def collect(args):
                     "first_ms": rows[0][0] if rows else None,
                     "last_ms": rows[-1][0] if rows else None,
                     "seconds": round(time.time() - t0, 1)}
-        with open(man_path, "w", encoding="utf-8") as f:
+        tmp = man_path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump({"symbols": man}, f, ensure_ascii=False)
+        os.replace(tmp, man_path)     # обрыв не оставляет обрезанный JSON
         print(f"[{i}/{len(syms)}] {sym}: точек {len(rows)}, "
               f"{man[sym]['seconds']} с", file=sys.stderr, flush=True)
     ok = [v for v in man.values() if v.get("rows")]
