@@ -213,13 +213,24 @@ def label_profile(symbol, oi_rows):
 
 
 def probe(args):
+    """Обе проверки площадки. Пишет отчёт в `out/`, а не только в консоль.
+
+    Отчёт файлом, а не выводом на экран, — правило проекта: прогон
+    идёт на сервере, а обсуждается в другом месте, и пересказывать
+    консоль руками значит терять числа.
+    """
     import datetime as dt
 
     now_ms = int(time.time() * 1000)
-    print("1. ГЛУБИНА ИСТОРИИ ОТКРЫТОГО ИНТЕРЕСА BYBIT")
-    print("   нащупывается пробными запросами, а не обходом назад\n")
-    print(f"{'символ':<10}{'шаг':>8}{'данные есть до':>18}"
-          f"{'суток назад':>14}{'дальше пусто с':>18}")
+    md = []
+    w = md.append
+    w("# L2 — площадка исполнения, проверка\n")
+    w("## 1. Глубина истории открытого интереса Bybit\n")
+    w("Нащупывается пробными запросами, а не обходом назад: глубина — "
+      "предел эндпоинта, а не наш выбор, и она задаёт период, на "
+      "котором вообще возможно сравнение площадок.\n")
+    w("| Символ | Шаг | Данные есть до | Суток назад | Дальше пусто с |")
+    w("|---|---|---|---|---|")
     depth = {}
     for sym in PROBE_SYMBOLS:
         for interval in (INTERVAL, "1h"):
@@ -230,14 +241,17 @@ def probe(args):
                 dt.timezone.utc).date().isoformat()
             depth[f"{sym}_{interval}"] = {"deep_days": lo,
                                           "empty_from_days": hi}
-            print(f"{sym:<10}{interval:>8}{edge:>18}{lo:>14}"
-                  f"{(str(hi) if hi else 'не найдено'):>18}")
-    print("\n  глубина — предел эндпоинта, а не наш выбор; она задаёт "
-          "период,\n  на котором вообще возможно сравнение площадок\n")
-
-    print("\n2. СОГЛАШЕНИЕ О МЕТКЕ: связь изменения интереса с объёмом\n")
-    print(f"{'символ':<10}{'точек':>8}"
-          + "".join(f"{'сдвиг ' + str(o):>12}" for o in (-2, -1, 0, 1, 2)))
+            w(f"| {sym} | {interval} | {edge} | {lo} | "
+              f"{hi if hi else 'не найдено'} |")
+    w("")
+    w("## 2. Соглашение о метке\n")
+    w("Изменение интереса обязано идти вместе с объёмом того интервала, "
+      "в котором произошло. Положение пика отвечает на вопрос: сдвиг 0 — "
+      "снимок на начале интервала, метка известна в `t`; сдвиг +1 — на "
+      "конце, метка известна в `t` плюс шаг.\n")
+    w("| Символ | Точек | " + " | ".join(f"сдвиг {o:+d}"
+                                         for o in (-2, -1, 0, 1, 2)) + " |")
+    w("|---|---|---|---|---|---|---|")
     profs = []
     for sym in PROBE_SYMBOLS:
         print(f"  … {sym} профиль", file=sys.stderr, flush=True)
@@ -245,13 +259,14 @@ def probe(args):
                           since_days=PROBE_DAYS)
         p = label_profile(sym, rows)
         if not p:
-            print(f"{sym:<10}{'—':>8}")
+            w(f"| {sym} | — | | | | | |")
             continue
         profs.append(p)
-        cells = "".join(f"{p['profile'][o]:>12.3f}"
-                        if p["profile"][o] is not None else f"{'—':>12}"
-                        for o in (-2, -1, 0, 1, 2))
-        print(f"{sym:<10}{p['points']:>8}{cells}")
+        cells = " | ".join(f"{p['profile'][o]:.3f}"
+                           if p["profile"][o] is not None else "—"
+                           for o in (-2, -1, 0, 1, 2))
+        w(f"| {sym} | {p['points']} | {cells} |")
+    w("")
     if profs:
         peak = {}
         for o in (-2, -1, 0, 1, 2):
@@ -259,19 +274,26 @@ def probe(args):
                     if p["profile"][o] is not None]
             peak[o] = float(np.mean(vals)) if vals else -1.0
         best = max(peak, key=peak.get)
-        print(f"\n  пик на сдвиге {best:+d} ({peak[best]:.3f})")
-        print("  сдвиг 0 — снимок на начале интервала, метка известна в t")
-        print("  сдвиг +1 — на конце, метка известна в t + шаг")
-        print(f"\n  для сравнения, Binance: пик на +1 (0.557), "
-              f"то есть строка известна в t+5")
+        w(f"**Пик на сдвиге {best:+d}** ({peak[best]:.3f}).\n")
+        w("Для сравнения, Binance: пик на **+1** (0.557), то есть строка "
+          "`metrics` с меткой `t` завершена только в `t+5`, и момент "
+          "решения сдвинут туда (`l1_cascades/lag.py`). Если у Bybit "
+          "пик на 0 — правило момента решения там своё, и это надо "
+          "учесть в L3, а не считать мелочью.\n")
+    else:
+        w("Профиль не построен — данных не хватило.\n")
 
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, "bybit_probe.json"), "w",
               encoding="utf-8") as f:
         json.dump({"depth": depth, "profiles": profs}, f,
-                  ensure_ascii=False, indent=1,
-                  default=lambda o: None)
-    print(f"\nзаписано {os.path.join(OUT, 'bybit_probe.json')}")
+                  ensure_ascii=False, indent=1, default=lambda o: None)
+    text = "\n".join(md)
+    dst = os.path.join(OUT, "L2-bybit-probe.md")
+    with open(dst, "w", encoding="utf-8") as f:
+        f.write(text)
+    print(text)
+    print(f"\nзаписано {dst}")
 
 
 def sample_symbols(n):
