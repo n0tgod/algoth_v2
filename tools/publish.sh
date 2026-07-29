@@ -33,17 +33,26 @@ git diff --cached --stat
 
 git commit -q -m "$msg"
 
-# Повторы только на сетевых сбоях, с растущей паузой.
+# Отказ бывает двух родов, и лечатся они по-разному. Сетевой сбой лечится
+# повтором; отвергнутая не-перемотка — только подтягиванием чужих
+# коммитов, и повторять push без этого бессмысленно. Первая версия
+# скрипта повторяла четыре раза подряд одно и то же и сдавалась.
 for attempt in 1 2 3 4; do
   if git push -u origin "$branch"; then
     echo "опубликовано"
     exit 0
   fi
-  delay=$((2 ** attempt))
-  echo "push не прошёл, повтор через ${delay} с (попытка $attempt из 4)"
-  sleep "$delay"
+  echo "push не прошёл, подтягиваю ветку и пробую снова "
+  echo "(попытка $attempt из 4)"
+  if ! git pull --rebase origin "$branch"; then
+    git rebase --abort 2>/dev/null || true
+    echo "ветка разошлась и свести автоматически не вышло."
+    echo "коммит на месте; разобрать вручную: git pull --rebase origin $branch"
+    exit 1
+  fi
+  sleep $((2 ** attempt))
 done
 
-echo "push не прошёл после четырёх попыток — коммит на месте, "
+echo "push не прошёл после четырёх попыток — коммит на месте,"
 echo "повторить можно командой: git push -u origin $branch"
 exit 1
