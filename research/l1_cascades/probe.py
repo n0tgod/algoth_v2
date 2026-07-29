@@ -95,6 +95,7 @@ END = "2026-06-30"
 STEP_MIN = 5                      # шаг набора metrics
 LAG_MIN = 5                       # строка с меткой t завершена в t+5 (lag.py)
 WINDOW_MIN = 15                   # окно, за которое меряется падение
+TOL_SEC = 60                      # допуск попадания в точку сетки
 OI_DROPS = (0.01, 0.02, 0.03)     # параметры обзора, не критерии
 MOVES = (0.01, 0.02, 0.03)
 FORWARD_MIN = (5, 15, 60, 240, 1440)
@@ -211,16 +212,40 @@ def align(mt, pt, close, open_, lag_min=LAG_MIN, rule="closed"):
     return np.where(ok, close[clip], np.nan), at
 
 
+def at_time(t, want, tol=TOL_SEC):
+    """Индекс точки сетки, стоящей в нужный момент. Иначе −1.
+
+    Поиск по времени, а не по номеру. Ряд интереса дырявый: у части
+    универсума нет 15–39 % суточных файлов, и смещение на `k` точек
+    назад означает 15 минут только там, где дыр нет. Там, где они есть,
+    то же смещение уводит на месяц, и разность интереса за месяц была
+    бы засчитана как каскад. Тот же род ошибки, что замороженные ряды
+    A2: проверка «точка есть» проходит, а величина считается не та.
+    """
+    j = np.searchsorted(t, want, "left")
+    out = np.full(len(want), -1, dtype=np.int64)
+    for k, cand in enumerate((j, j - 1)):
+        ok = (cand >= 0) & (cand < len(t))
+        c = np.clip(cand, 0, len(t) - 1)
+        good = ok & (np.abs(t[c] - want) <= tol) & (out < 0)
+        out[good] = c[good]
+    return out
+
+
 def scan(sym, oi_t, oi_v, price, oi_drop, move):
     """События: интерес упал И цена сдвинулась за одно окно."""
-    w = WINDOW_MIN // STEP_MIN
-    if len(oi_v) < w + 2:
+    if len(oi_v) < 4:
         return []
-    d_oi = np.full(len(oi_v), np.nan)
-    d_px = np.full(len(oi_v), np.nan)
-    d_oi[w:] = oi_v[w:] / np.maximum(oi_v[:-w], 1e-12) - 1.0
+    n = len(oi_v)
+    back = at_time(oi_t, oi_t - WINDOW_MIN * 60)
+    ok = back >= 0
+    d_oi = np.full(n, np.nan)
+    d_px = np.full(n, np.nan)
+    idx = np.arange(n)[ok]
+    b = back[ok]
     with np.errstate(invalid="ignore", divide="ignore"):
-        d_px[w:] = price[w:] / price[:-w] - 1.0
+        d_oi[idx] = oi_v[idx] / np.maximum(oi_v[b], 1e-12) - 1.0
+        d_px[idx] = price[idx] / price[b] - 1.0
 
     hit = np.isfinite(d_oi) & np.isfinite(d_px) & \
         (d_oi <= -oi_drop) & (np.abs(d_px) >= move)
@@ -230,9 +255,9 @@ def scan(sym, oi_t, oi_v, price, oi_drop, move):
             continue
         last = oi_t[i]
         fwd = {}
-        for f in FORWARD_MIN:
-            j = int(np.searchsorted(oi_t, oi_t[i] + f * 60))
-            if j < len(price) and np.isfinite(price[j]) and \
+        fwd_idx = at_time(oi_t, oi_t[i] + np.array(FORWARD_MIN) * 60.0)
+        for f, j in zip(FORWARD_MIN, fwd_idx):
+            if j >= 0 and np.isfinite(price[j]) and \
                     np.isfinite(price[i]) and price[i] > 0:
                 fwd[f] = price[j] / price[i] - 1.0
         events.append({"symbol": sym, "t": float(oi_t[i]),
@@ -292,12 +317,16 @@ def baseline(series, rng_seed=7):
         n = len(t)
         if n < 1000:
             continue
-        for i in rng.choice(n - 1, size=min(1000, n - 1), replace=False):
+        pick = rng.choice(n - 1, size=min(1000, n - 1), replace=False)
+        for i in pick:
             if not np.isfinite(px[i]) or px[i] <= 0:
                 continue
-            for f in FORWARD_MIN:
-                j = int(np.searchsorted(t, t[i] + f * 60))
-                if j < n and np.isfinite(px[j]):
+            # По времени, как и в `scan`: иначе безусловная доходность
+            # считалась бы на другом горизонте, чем событийная, и
+            # сравнение перестало бы быть сравнением.
+            for f, j in zip(FORWARD_MIN,
+                            at_time(t, t[i] + np.array(FORWARD_MIN) * 60.0)):
+                if j >= 0 and np.isfinite(px[j]):
                     out[f].append(px[j] / px[i] - 1.0)
     return {f: (float(np.median(v)) if len(v) >= 100 else None)
             for f, v in out.items()}
