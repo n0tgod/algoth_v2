@@ -122,6 +122,12 @@ def run_month(mon, nxt, symbols, uni, share, min_share, interval, log):
     M = D.price_matrix(symbols, times, interval, None,
                        columns=("open", "low", "high"))
     P = M["open"]
+    fill = float(np.isfinite(P).mean())
+    if fill < 0.01:
+        # Пустая матрица — не «событий нет», а сломанная загрузка.
+        # Первый прогон зонда молча выдал нулевой отчёт именно так.
+        raise SystemExit(f"{mon}: матрица цен заполнена на {fill:.2%} — "
+                         "проверить шаг сетки и хранилище")
     own = len(grid(*month_bounds(mon)))          # индексы своего месяца
     rec = []
     ones = np.ones(len(times), dtype=np.float64)
@@ -139,7 +145,7 @@ def run_month(mon, nxt, symbols, uni, share, min_share, interval, log):
             idx = idx[idx < own]                 # события только своего месяца
             for j in idx:
                 rec.append((r, int(j), move))
-    log(f"  {mon}: событий {len(rec)}")
+    log(f"  {mon}: заполнено {fill:.1%}, событий {len(rec)}")
     return rec, M, times
 
 

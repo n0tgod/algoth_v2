@@ -124,6 +124,14 @@ def price_matrix(symbols, times, interval="1m", log=None,
     import duckdb
     import series as S                                    # noqa: E402
 
+    # Шаг берётся из САМОЙ сетки, а не из константы модуля. Зашитый шаг
+    # уже стоил одного пустого прогона: зонд возврата просил минутную
+    # сетку, загрузчик фильтровал бары по кратности пяти минутам и
+    # раскладывал их по колонкам с шагом 300 секунд, и матрица выходила
+    # почти пустой — молча, потому что пустота не является ошибкой.
+    step = int(times[1] - times[0]) if len(times) > 1 else STEP_SEC
+    if step <= 0:
+        raise ValueError("сетка времени должна возрастать")
     con = S.connect()
     idx = {s: i for i, s in enumerate(symbols)}
     t0, t1 = int(times[0]), int(times[-1])
@@ -142,7 +150,7 @@ def price_matrix(symbols, times, interval="1m", log=None,
             FROM read_parquet('{path}')
             WHERE trades > 0
               AND symbol IN ('{want}')
-              AND (epoch_ms(open_time) % {STEP_SEC * 1000}) = 0
+              AND (epoch_ms(open_time) % {step * 1000}) = 0
         """
         try:
             tab = con.execute(q).fetch_arrow_table()
@@ -158,7 +166,7 @@ def price_matrix(symbols, times, interval="1m", log=None,
         rows = row_of[np.asarray(d.indices)]
         ts = np.asarray(tab.column("ts"))
         ok = (ts >= t0) & (ts <= t1)
-        col = ((ts - t0) // STEP_SEC).astype(np.int64)
+        col = ((ts - t0) // step).astype(np.int64)
         keep = ok & (rows >= 0)
         for c in columns:
             v = np.asarray(tab.column(c), dtype=np.float32)
@@ -182,10 +190,11 @@ def oi_series(symbol, times):
     with np.load(path) as z:
         t, oi, usd = z["t"], z["oi"], z["oi_usd"]
     n = len(times)
+    step = int(times[1] - times[0]) if n > 1 else STEP_SEC
     C = np.full(n, np.nan, dtype=np.float32)
     U = np.full(n, np.nan, dtype=np.float32)
-    col = (t - int(times[0])) // STEP_SEC
-    ok = (col >= 0) & (col < n) & (((t - int(times[0])) % STEP_SEC) == 0)
+    col = (t - int(times[0])) // step
+    ok = (col >= 0) & (col < n) & (((t - int(times[0])) % step) == 0)
     C[col[ok]] = oi[ok]
     U[col[ok]] = usd[ok]
     if LAG_STEPS:
