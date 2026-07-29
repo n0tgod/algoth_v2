@@ -77,14 +77,28 @@ HORIZONS = (5, 10, 30, 60, 300)   # горизонты удержания, се�
 # мера независимости перестаёт что-либо мерить. Берётся кратным
 # окну обнаружения, а не «по-крупному».
 EPISODE_SEC = 300
-CROSS_GUARD_SEC = 300             # каскадящие соседи вне кросс-секции
+# Защитное окно кросс-секции: сосед, у которого событие рядом по
+# времени, в фон не входит. Величина НЕ константа, а `max(окно
+# обнаружения, горизонт)` — загрязняет фон ровно то событие, чей
+# форвард накрывает наш замер. Плоские 300 с на секундной сетке
+# запрещали 76–81 % ячеек и оставляли с контролем 1 % событий; на
+# непрерывном сигнале это то же вырождение, что убило слипание в
+# эпизоды у зонда возврата.
 MIN_CROSS = 3                     # символов в кросс-секции минимум
+# Доля символов, требуемая в фоне. Держится НИЗКОЙ намеренно. Строгое
+# требование (половина) выбрасывает ровно те моменты, когда поглощают
+# многие сразу, то есть отбирает события по состоянию рынка — смещение,
+# которого в результате не видно. Слабое требование оставляет фон узким
+# и шумным, а шум виден: он расходит ячейки, а не двигает их в одну
+# сторону. Ширина фона поэтому докладывается числом.
+MIN_CROSS_SHARE = 0.2
 
 TAKER_ROUND_BP = 11.0             # 5.5 в каждую сторону
 MAKER_ROUND_BP = 4.0              # 2.0 в каждую сторону
 
 
-def cross(P, cols, rows, horizon_sec, banned):
+def cross(P, cols, rows, horizon_sec, banned, guard_sec, min_cross,
+          step_sec=STEP_SEC):
     """Контроль 1 через общую функцию L3.
 
     Функция `E.cross_section` работает в **единицах сетки**: она делит
@@ -93,8 +107,8 @@ def cross(P, cols, rows, horizon_sec, banned):
     секунды. Второй копии кросс-секции в проекте не заводится.
     """
     return E.cross_section(P, cols, rows, horizon_sec,
-                           guard_min=CROSS_GUARD_SEC, step_min=STEP_SEC,
-                           banned=banned, min_cross=MIN_CROSS)
+                           guard_min=guard_sec, step_min=step_sec,
+                           banned=banned, min_cross=min_cross)
 
 
 def day_matrix(symbols, day, step_sec, log):
@@ -165,7 +179,14 @@ def main():
     ap.add_argument("--start", default=START)
     ap.add_argument("--end", default=END)
     ap.add_argument("--step-sec", type=int, default=STEP_SEC)
+    # Смоук пишется под своим именем и в git не идёт: коммит F2 однажды
+    # уже подменил артефакт настоящего прогона смоуковым, и отличить их
+    # по содержимому нельзя — оба выглядят как отчёт этапа.
+    ap.add_argument("--tag", default="",
+                    help="суффикс артефактов, например -smoke")
     a = ap.parse_args()
+    if a.tag and not a.tag.startswith("-"):
+        a.tag = "-" + a.tag
     os.makedirs(OUT, exist_ok=True)
     syms = [s.strip() for s in a.symbols.split(",") if s.strip()]
     t_start = time.time()
@@ -198,9 +219,12 @@ def main():
                     rows = np.array(rows, dtype=np.int64)
                     cols = np.array(cols, dtype=np.int64)
                     ep = episodes_of(times, cols)
-                    banned = E.ban_matrix(C.shape, rows, cols,
-                                          guard_min=CROSS_GUARD_SEC,
-                                          step_min=a.step_sec)
+                    # Фон обязан быть шире одного соседа: медиана по двум
+                    # именам не оценивает движение рынка, а повторяет его
+                    # случайную половину.
+                    min_cross = max(MIN_CROSS,
+                                    int(round(MIN_CROSS_SHARE * len(have))))
+                    bans = {}
                     for h in HORIZONS:
                         k = cols + h // a.step_sec
                         fit = k < C.shape[1]
@@ -211,21 +235,34 @@ def main():
                         # Знак приводится к «в пользу поглощающего»:
                         # поглощение продаж ждёт роста, покупок — падения.
                         f = f * (1 if side < 0 else -1)
-                        cs = cross(C, cols, rows, h, banned) * (
+                        guard = max(win, h)
+                        if guard not in bans:
+                            bans[guard] = E.ban_matrix(
+                                C.shape, rows, cols, guard_min=guard,
+                                step_min=a.step_sec)
+                        cs = cross(C, cols, rows, h, bans[guard], guard,
+                                   min_cross, a.step_sec) * (
                             1 if side < 0 else -1)
                         exc = np.where(np.isfinite(cs) & np.isfinite(f),
                                        f - cs, np.nan)
+                        wid = cross_width(C, bans[guard], cols,
+                                          h // a.step_sec)
                         mae, mfe = excursion(C, H, L, rows, cols,
                                              h // a.step_sec, side)
                         key = (win, mult, name, h)
                         d = acc.setdefault(key, {"exc": [], "ep": [],
                                                  "mae": [], "mfe": [],
-                                                 "n": 0})
+                                                 "n": 0, "with_cross": 0,
+                                                 "wid": [],
+                                                 "guard": guard,
+                                                 "min_cross": min_cross})
                         d["exc"].append(exc)
                         d["ep"].append(ep + 10**7 * len(d["ep"]))
                         d["mae"].append(mae)
                         d["mfe"].append(mfe)
+                        d["wid"].append(wid)
                         d["n"] += len(cols)
+                        d["with_cross"] += int(np.isfinite(exc).sum())
         del C, C_raw, H, L, grids
 
     rows_out = []
@@ -242,20 +279,26 @@ def main():
         rows_out.append({
             "window_sec": win, "vol_mult": mult, "side": name,
             "horizon_sec": h, "events": int(v["n"]), "episodes": int(len(e)),
+            "with_cross": int(v["with_cross"]),
+            "cross_cover": float(v["with_cross"]) / max(1, v["n"]),
+            "cross_width": float(np.median(np.concatenate(v["wid"]))),
+            "guard_sec": int(v["guard"]), "min_cross": int(v["min_cross"]),
             "excess_bp": float(np.median(e)) * 1e4,
             "share_pos": float(np.mean(e > 0)),
             "mae_bp": float(np.median(mae)) * 1e4 if len(mae) else None,
             "mfe_bp": float(np.median(mfe)) * 1e4 if len(mfe) else None,
         })
 
-    with open(os.path.join(OUT, "tape_probe.json"), "w",
+    with open(os.path.join(OUT, f"tape_probe{a.tag}.json"), "w",
               encoding="utf-8") as f:
         json.dump({"config": {"symbols": syms, "start": a.start,
                               "end": a.end, "step_sec": a.step_sec,
                               "windows": list(WINDOWS),
                               "vol_mults": list(VOL_MULTS),
                               "move_mult": MOVE_MULT,
-                              "horizons_sec": list(HORIZONS)},
+                              "horizons_sec": list(HORIZONS),
+                              "episode_sec": EPISODE_SEC,
+                              "min_cross_share": MIN_CROSS_SHARE},
                    "rows": rows_out}, f, ensure_ascii=False, indent=1)
 
     md = ["# Зонд: поглощение в ленте\n",
@@ -266,15 +309,22 @@ def main():
           "Все величины — **превышение над одновременной кросс-секцией**, "
           "по эпизодам, знак приведён к «в пользу поглощающего». "
           f"Сравнивать с кругом издержек: тейкер **{TAKER_ROUND_BP:.0f} "
-          f"б.п.**, мейкер {MAKER_ROUND_BP:.0f}.\n"]
+          f"б.п.**, мейкер {MAKER_ROUND_BP:.0f}.\n",
+          "Фон берётся из соседей, у которых в это время события не было; "
+          "защитное окно равно `max(окно, горизонт)`. Колонки «с "
+          "контролем» (доля событий, которым фон удалось построить) и "
+          "«имён в фоне» (медианная его ширина) — цена контроля, и "
+          "читать их надо раньше величин: узкий фон означает шумную "
+          "оценку, низкое покрытие — отбор событий по состоянию рынка.\n"]
     for name in ("поглощение продаж", "поглощение покупок"):
         md.append(f"\n## {name.capitalize()}\n")
-        md.append("| Окно | Объём | Эпизодов | "
+        md.append("| Окно | Объём | Событий | Эпизодов | С контролем | "
+                  "Имён в фоне | "
                   + " | ".join(f"{h} с" for h in HORIZONS) + " |")
-        md.append("|---" * (len(HORIZONS) + 3) + "|")
+        md.append("|---" * (len(HORIZONS) + 6) + "|")
         for win in WINDOWS:
             for mult in VOL_MULTS:
-                cells, eps = [], 0
+                cells, eps, ev, cov, wid = [], 0, 0, [], []
                 for h in HORIZONS:
                     r = next((x for x in rows_out
                               if x["window_sec"] == win
@@ -283,8 +333,14 @@ def main():
                               and x["horizon_sec"] == h), None)
                     cells.append(f"{r['excess_bp']:+.1f}" if r else "—")
                     eps = max(eps, r["episodes"] if r else 0)
-                md.append(f"| {win} с | ×{mult:g} | {eps} | "
-                          + " | ".join(cells) + " |")
+                    ev = max(ev, r["events"] if r else 0)
+                    if r:
+                        cov.append(r["cross_cover"])
+                        wid.append(r["cross_width"])
+                c = f"{min(cov):.0%}–{max(cov):.0%}" if cov else "—"
+                w = f"{min(wid):.0f}–{max(wid):.0f}" if wid else "—"
+                md.append(f"| {win} с | ×{mult:g} | {ev} | {eps} | {c} | "
+                          f"{w} | " + " | ".join(cells) + " |")
         md.append("")
     md.append("\n## Ход против позиции и в её пользу\n")
     md.append("| Окно | Объём | Сторона | Горизонт | Против | В пользу |")
@@ -304,13 +360,33 @@ def main():
               "убытка не спасёт: стоп, который что-то ограничивает, "
               "срабатывает на медианной сделке.\n")
     md.append("**Эпизодов мало** — на малом срезе это ожидаемо, и вывод "
-              "делать рано; расширяется добавлением суток.\n")
+              "делать рано; расширяется добавлением **символов**, а не "
+              "суток: фон строится по одновременным соседям, и связывает "
+              "их число.\n")
+    md.append("**Событий на эпизод много** — слипание вырождено, сигнал "
+              "почти непрерывен, и число эпизодов перестаёт быть мерой "
+              "независимости. Так вело себя падение на 2 % в зонде "
+              "возврата.\n")
     text = "\n".join(md)
-    dst = os.path.join(OUT, "T1-tape-probe.md")
+    dst = os.path.join(OUT, f"T1-tape-probe{a.tag}.md")
     with open(dst, "w", encoding="utf-8") as f:
         f.write(text)
     print(text)
     log(f"записано {dst}")
+
+
+def cross_width(C, banned, cols, steps_h):
+    """Сколько символов оказалось в фоне на каждом событии.
+
+    Ширина фона — качество контроля, и её надо видеть числом: медиана
+    по трём именам оценивает движение рынка много хуже медианы по
+    двадцати, а в самой величине превышения это никак не проявляется.
+    """
+    n = C.shape[1]
+    j = np.asarray(cols, dtype=np.int64)
+    k = np.clip(j + steps_h, 0, n - 1)
+    ok = (~banned[:, j]) & np.isfinite(C[:, j]) & np.isfinite(C[:, k])
+    return ok.sum(axis=0).astype(np.float64)
 
 
 def excursion(C, H, L, rows, cols, steps_h, side):

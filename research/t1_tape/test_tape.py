@@ -183,6 +183,22 @@ def test_side_is_aggressor_on_real_file():
           share_up_for_sell < 0.2, f"{share_up_for_sell:.3f}")
 
 
+def test_cross_width_counts_only_clean():
+    """Ширина фона: сам актив в него не входит, запрещённые тоже."""
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "l3_events"))
+    import probe as P  # noqa: E402
+
+    C = np.full((4, 10), 100.0)
+    C[3, :] = np.nan                       # у четвёртого цены нет вовсе
+    banned = np.zeros((4, 10), dtype=bool)
+    banned[0, 5] = True                    # событие первого — он же и запрещён
+    banned[1, 5] = True                    # сосед в это время тоже поглощал
+    w = P.cross_width(C, banned, np.array([5]), 2)
+    check("в фоне остался один сосед", int(w[0]) == 1, str(w))
+    w2 = P.cross_width(C, np.zeros((4, 10), dtype=bool), np.array([5]), 2)
+    check("без запретов — все с ценой", int(w2[0]) == 3, str(w2))
+
+
 def main():
     print("сетка")
     test_grid_volumes()
@@ -194,6 +210,8 @@ def main():
     test_rolling_sum()
     test_absorption_finds_held_price()
     test_absorption_ignores_move()
+    print("контроль кросс-секцией")
+    test_cross_width_counts_only_clean()
     print("живая проверка стороны")
     test_side_is_aggressor_on_real_file()
     print()
