@@ -199,6 +199,38 @@ def test_url_and_days():
           == ["2024-02-28", "2024-02-29", "2024-03-01"], "високосный год")
 
 
+def test_retention_ladder():
+    """Глубину истории нащупывают, а не обходят.
+
+    Первая версия проверки шла страницами по 200 точек: на два с
+    половиной года пятиминутных данных это больше тысячи запросов на
+    символ, и на сервере выглядело как зависание.
+    """
+    sys.path.insert(0, os.path.join(RESEARCH, "a1_universe"))
+    import oi_bybit as B
+
+    now_ms = 1_800_000_000_000
+    for depth in (5, 200, 900):
+        calls = []
+
+        def fake(symbol, end_ms, interval=B.INTERVAL, start_ms=None,
+                 _d=depth, _c=calls):
+            _c.append(end_ms)
+            return ([(end_ms, 1.0)]
+                    if (now_ms - end_ms) / 86_400_000 <= _d else [])
+
+        real, pause = B.oi_page, B.PAUSE_S
+        B.oi_page, B.PAUSE_S = fake, 0
+        lo, hi = B.retention_days("X", B.INTERVAL, now_ms)
+        B.oi_page, B.PAUSE_S = real, pause
+        check(f"граница {depth} суток найдена",
+              hi is not None and lo <= depth <= hi, f"{lo} … {hi}")
+        check(f"граница {depth} суток уточнена",
+              hi is not None and hi - lo <= max(3, lo // 20), f"{lo} … {hi}")
+        check(f"на {depth} суток ушло меньше 20 запросов",
+              len(calls) < 20, str(len(calls)))
+
+
 def main():
     print("разбор metrics")
     test_columns_by_name()
@@ -210,6 +242,8 @@ def main():
     test_url_and_days()
     print("возобновление")
     test_is_done_checks_window()
+    print("глубина истории Bybit")
+    test_retention_ladder()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

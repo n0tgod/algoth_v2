@@ -62,14 +62,16 @@ PROBE_DAYS = 20               # сколько суток берётся на п
 STEP_SEC = 300
 
 
-def oi_page(symbol, end_ms, interval=INTERVAL):
+def oi_page(symbol, end_ms, interval=INTERVAL, start_ms=None):
     """Страница интереса, назад во времени от `end_ms`."""
     params = {"category": CATEGORY, "symbol": symbol,
               "intervalTime": interval, "limit": LIMIT}
     if end_ms:
         params["endTime"] = end_ms
+    if start_ms:
+        params["startTime"] = start_ms
     res = api_get("/v5/market/open-interest", params,
-                  f"oi_{symbol}_{interval}_{end_ms or 0}")
+                  f"oi_{symbol}_{interval}_{start_ms or 0}_{end_ms or 0}")
     rows = []
     for r in res.get("list", []):
         try:
@@ -79,24 +81,68 @@ def oi_page(symbol, end_ms, interval=INTERVAL):
     return rows
 
 
-def oi_history(symbol, pages_max, interval=INTERVAL):
-    """История назад во времени, пока эндпоинт отдаёт. Глубина — замер."""
-    rows, end_ms, seen = [], None, 0
-    for _ in range(pages_max):
+def has_data_at(symbol, days_ago, interval=INTERVAL, now_ms=None):
+    """Есть ли данные примерно `days_ago` суток назад. Один запрос."""
+    now_ms = now_ms or int(time.time() * 1000)
+    end = now_ms - days_ago * 86_400_000
+    return bool(oi_page(symbol, end, interval, start_ms=end - 86_400_000))
+
+
+def retention_days(symbol, interval=INTERVAL, now_ms=None):
+    """Глубина истории — лестницей и уточнением, а не обходом назад.
+
+    Первая версия шла страницами по 200 точек: на два с половиной года
+    пятиминутных данных это больше тысячи запросов на символ, и
+    выглядело как зависание. Глубину незачем обходить — её надо
+    **нащупать**: десяток пробных запросов вместо тысячи.
+    """
+    now_ms = now_ms or int(time.time() * 1000)
+    ladder = (1, 7, 30, 90, 180, 365, 545, 730, 1095, 1460, 1825)
+    ok, bad = 0, None
+    for d in ladder:
+        if has_data_at(symbol, d, interval, now_ms):
+            ok = d
+        else:
+            bad = d
+            break
+        time.sleep(PAUSE_S)
+    if bad is None:
+        return ok, None          # глубже лестницы не проверяли
+    lo, hi = ok, bad
+    while hi - lo > max(3, lo // 20):      # уточнение до нескольких суток
+        mid = (lo + hi) // 2
+        if has_data_at(symbol, mid, interval, now_ms):
+            lo = mid
+        else:
+            hi = mid
+        time.sleep(PAUSE_S)
+    return lo, hi
+
+
+def oi_history(symbol, pages_max, interval=INTERVAL, since_days=None,
+               log_every=0):
+    """История назад во времени. `since_days` ограничивает глубину."""
+    now_ms = int(time.time() * 1000)
+    floor_ms = (now_ms - since_days * 86_400_000) if since_days else None
+    rows, end_ms = [], None
+    for page in range(pages_max):
         batch = oi_page(symbol, end_ms, interval)
         if not batch:
             break
         rows += batch
         oldest = min(t for t, _ in batch)
+        if floor_ms and oldest <= floor_ms:
+            break
         if end_ms is not None and oldest >= end_ms:
             break
         end_ms = oldest - 1
         if len(batch) < LIMIT:
             break
-        seen += 1
+        if log_every and (page + 1) % log_every == 0:
+            print(f"    {symbol}: страниц {page + 1}, точек {len(rows)}",
+                  file=sys.stderr, flush=True)
         time.sleep(PAUSE_S)
-    rows = sorted(set(rows))
-    return rows
+    return sorted(set(rows))
 
 
 def klines(symbol, start_ms, end_ms):
@@ -167,27 +213,25 @@ def label_profile(symbol, oi_rows):
 
 
 def probe(args):
-    print("1. ГЛУБИНА ИСТОРИИ ОТКРЫТОГО ИНТЕРЕСА BYBIT\n")
-    print(f"{'символ':<10}{'шаг':>8}{'точек':>9}{'самая ранняя метка':>24}"
-          f"{'суток':>8}")
+    import datetime as dt
+
+    now_ms = int(time.time() * 1000)
+    print("1. ГЛУБИНА ИСТОРИИ ОТКРЫТОГО ИНТЕРЕСА BYBIT")
+    print("   нащупывается пробными запросами, а не обходом назад\n")
+    print(f"{'символ':<10}{'шаг':>8}{'данные есть до':>18}"
+          f"{'суток назад':>14}{'дальше пусто с':>18}")
     depth = {}
     for sym in PROBE_SYMBOLS:
         for interval in (INTERVAL, "1h"):
-            rows = oi_history(sym, args.pages, interval)
-            if not rows:
-                print(f"{sym:<10}{interval:>8}{'—':>9}")
-                continue
-            first = rows[0][0] / 1000
-            days = (rows[-1][0] - rows[0][0]) / 86_400_000
-            depth[f"{sym}_{interval}"] = {"points": len(rows),
-                                          "first_ms": rows[0][0],
-                                          "last_ms": rows[-1][0],
-                                          "days": round(days, 1)}
-            import datetime as dt
-            stamp = dt.datetime.fromtimestamp(
-                first, dt.timezone.utc).isoformat()
-            print(f"{sym:<10}{interval:>8}{len(rows):>9}{stamp:>24}"
-                  f"{days:>8.1f}")
+            print(f"  … {sym} {interval}", file=sys.stderr, flush=True)
+            lo, hi = retention_days(sym, interval, now_ms)
+            edge = dt.datetime.fromtimestamp(
+                (now_ms - lo * 86_400_000) / 1000,
+                dt.timezone.utc).date().isoformat()
+            depth[f"{sym}_{interval}"] = {"deep_days": lo,
+                                          "empty_from_days": hi}
+            print(f"{sym:<10}{interval:>8}{edge:>18}{lo:>14}"
+                  f"{(str(hi) if hi else 'не найдено'):>18}")
     print("\n  глубина — предел эндпоинта, а не наш выбор; она задаёт "
           "период,\n  на котором вообще возможно сравнение площадок\n")
 
@@ -196,7 +240,9 @@ def probe(args):
           + "".join(f"{'сдвиг ' + str(o):>12}" for o in (-2, -1, 0, 1, 2)))
     profs = []
     for sym in PROBE_SYMBOLS:
-        rows = oi_history(sym, max(2, PROBE_DAYS * 288 // LIMIT))
+        print(f"  … {sym} профиль", file=sys.stderr, flush=True)
+        rows = oi_history(sym, max(2, PROBE_DAYS * 288 // LIMIT + 2),
+                          since_days=PROBE_DAYS)
         p = label_profile(sym, rows)
         if not p:
             print(f"{sym:<10}{'—':>8}")
@@ -267,7 +313,8 @@ def collect(args):
             continue
         t0 = time.time()
         try:
-            rows = oi_history(sym, args.pages)
+            rows = oi_history(sym, args.pages, since_days=args.since_days,
+                              log_every=100)
         except Exception as e:                            # noqa: BLE001
             man[sym] = {"rows": 0, "error": str(e)[:120]}
             print(f"[{i}/{len(syms)}] {sym}: {str(e)[:80]}",
@@ -303,6 +350,8 @@ def main():
     ap.add_argument("--symbols", default="")
     ap.add_argument("--pages", type=int, default=4000,
                     help="предел страниц на символ — страховка от петли")
+    ap.add_argument("--since-days", type=int, default=0,
+                    help="глубина сбора в сутках; 0 — сколько отдаёт")
     a = ap.parse_args()
     if a.probe:
         probe(a)
