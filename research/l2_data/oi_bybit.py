@@ -40,7 +40,9 @@ import argparse
 import json
 import os
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
@@ -59,6 +61,9 @@ LIMIT = 200                   # максимум записей на ответ
 PAUSE_S = 0.05
 PROBE_SYMBOLS = ("BTCUSDT", "SOLUSDT", "ARBUSDT")
 PROBE_DAYS = 20               # сколько суток берётся на проверку метки
+# Окно сбора L2 по Binance: сравнивать площадки можно только на
+# общем периоде, и глубже собирать незачем.
+WINDOW_DAYS = 940
 STEP_SEC = 300
 
 
@@ -320,48 +325,94 @@ def sample_symbols(n):
 
 
 def collect(args):
+    """Ряды интереса по выборке символов.
+
+    Страницы внутри символа идут строго последовательно — эндпоинт
+    отдаёт назад во времени, и следующий запрос зависит от предыдущего.
+    А вот символы независимы, и обходить их по очереди значит платить
+    сетевой задержкой за каждую из полутора тысяч страниц: на сорока
+    символах это часы против получаса.
+    """
     os.makedirs(SERIES, exist_ok=True)
     syms = ([s.strip() for s in args.symbols.split(",") if s.strip()]
             if args.symbols else sample_symbols(args.sample))
-    print(f"символов {len(syms)}", file=sys.stderr, flush=True)
     man_path = os.path.join(OUT, "oi_bybit_manifest.json")
     man = {}
     if os.path.exists(man_path):
         with open(man_path, encoding="utf-8") as f:
             man = json.load(f).get("symbols", {})
-    for i, sym in enumerate(syms, 1):
-        dst = os.path.join(SERIES, f"{sym}.npz")
-        if os.path.exists(dst) and sym in man:
-            continue
+    todo = [s for s in syms
+            if not (os.path.exists(os.path.join(SERIES, f"{s}.npz"))
+                    and s in man)]
+    print(f"символов {len(syms)}, к сбору {len(todo)}, "
+          f"глубина {args.since_days or 'сколько отдаёт'} суток",
+          file=sys.stderr, flush=True)
+
+    lock = threading.Lock()
+    done = [0]
+
+    def one(sym):
         t0 = time.time()
         try:
-            rows = oi_history(sym, args.pages, since_days=args.since_days,
-                              log_every=100)
+            rows = oi_history(sym, args.pages, since_days=args.since_days)
         except Exception as e:                            # noqa: BLE001
-            man[sym] = {"rows": 0, "error": str(e)[:120]}
-            print(f"[{i}/{len(syms)}] {sym}: {str(e)[:80]}",
-                  file=sys.stderr, flush=True)
-            continue
+            info = {"rows": 0, "error": str(e)[:120]}
+            rows = []
+        else:
+            info = {"rows": len(rows),
+                    "first_ms": rows[0][0] if rows else None,
+                    "last_ms": rows[-1][0] if rows else None}
+        info["seconds"] = round(time.time() - t0, 1)
         if rows:
+            dst = os.path.join(SERIES, f"{sym}.npz")
             np.savez_compressed(
                 dst + ".tmp.npz",
                 t=np.array([r[0] for r in rows], dtype=np.int64),
                 oi=np.array([r[1] for r in rows], dtype=np.float32))
             os.replace(dst + ".tmp.npz", dst)
-        man[sym] = {"rows": len(rows),
-                    "first_ms": rows[0][0] if rows else None,
-                    "last_ms": rows[-1][0] if rows else None,
-                    "seconds": round(time.time() - t0, 1)}
-        tmp = man_path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump({"symbols": man}, f, ensure_ascii=False)
-        os.replace(tmp, man_path)     # обрыв не оставляет обрезанный JSON
-        print(f"[{i}/{len(syms)}] {sym}: точек {len(rows)}, "
-              f"{man[sym]['seconds']} с", file=sys.stderr, flush=True)
+        with lock:
+            man[sym] = info
+            done[0] += 1
+            tmp = man_path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump({"symbols": man}, f, ensure_ascii=False)
+            os.replace(tmp, man_path)   # обрыв не оставляет обрезанный JSON
+            print(f"[{done[0]}/{len(todo)}] {sym}: точек {info['rows']}, "
+                  f"{info['seconds']} с"
+                  + (f" — {info['error']}" if info.get("error") else ""),
+                  file=sys.stderr, flush=True)
+
+    with ThreadPoolExecutor(max_workers=args.workers) as ex:
+        list(ex.map(one, todo))
+
     ok = [v for v in man.values() if v.get("rows")]
-    print(f"\nсимволов с рядом {len(ok)} из {len(man)}, "
-          f"точек {sum(v['rows'] for v in ok):,}")
-    print(f"манифест {man_path}")
+    lines = ["# L2 — открытый интерес площадки исполнения\n",
+             "| Мера | Значение |", "|---|---|",
+             f"| Символов с рядом | **{len(ok)}** из {len(man)} |",
+             f"| Точек интереса | **{sum(v['rows'] for v in ok):,}** |",
+             f"| Глубина сбора | "
+             f"{args.since_days or 'сколько отдаёт'} суток |", ""]
+    if ok:
+        first = min(v["first_ms"] for v in ok if v.get("first_ms"))
+        last = max(v["last_ms"] for v in ok if v.get("last_ms"))
+        import datetime as dt
+        lines.append(
+            f"Период: {dt.datetime.fromtimestamp(first / 1000, dt.timezone.utc).date()}"
+            f" … {dt.datetime.fromtimestamp(last / 1000, dt.timezone.utc).date()}\n")
+    bad = [s for s, v in man.items() if v.get("error")]
+    if bad:
+        lines.append(f"Символов с ошибкой: {len(bad)} — "
+                     f"{', '.join(bad[:10])}\n")
+    lines.append("Сравнение событий двух площадок идёт в L3 и **по моменту "
+                 "наблюдения, а не по метке**: интерес Bybit с меткой `t` "
+                 "известен в `t`, интерес Binance с меткой `t` — только в "
+                 "`t+5` (проверено, см. `L2-bybit-probe.md`).\n")
+    text = "\n".join(lines)
+    dst = os.path.join(OUT, "L2-bybit-oi.md")
+    with open(dst, "w", encoding="utf-8") as f:
+        f.write(text)
+    print(text)
+    print(f"\nзаписано {dst}")
 
 
 def main():
@@ -369,10 +420,13 @@ def main():
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--collect", action="store_true")
     ap.add_argument("--sample", type=int, default=40)
+    ap.add_argument("--workers", type=int, default=6,
+                    help="символов параллельно; страницы внутри "
+                         "символа всё равно последовательны")
     ap.add_argument("--symbols", default="")
     ap.add_argument("--pages", type=int, default=4000,
                     help="предел страниц на символ — страховка от петли")
-    ap.add_argument("--since-days", type=int, default=0,
+    ap.add_argument("--since-days", type=int, default=WINDOW_DAYS,
                     help="глубина сбора в сутках; 0 — сколько отдаёт")
     a = ap.parse_args()
     if a.probe:
