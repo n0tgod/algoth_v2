@@ -34,6 +34,29 @@ L1 — как каскад ликвидаций выглядит в данных
 Докладывается несколько значений сразу, чтобы видеть форму зависимости,
 а не одно число, которое захочется подогнать.
 
+Момент решения — не метка строки
+--------------------------------
+
+Первая версия зонда решала и входила по метке `t`. Проверка `lag.py`
+показала, что так нельзя, причём дважды:
+
+- **строка `metrics` с меткой `t` описывает интервал `[t, t+5)` и
+  завершена только в `t+5`.** Отношение объёмов из строки совпадает с
+  пересчётом по свечам за интервал ПОСЛЕ метки (отклонение 0.0003
+  против 0.4 у интервала до), а снимок интереса стоит на конце
+  интервала: связь изменения интереса с объёмом даёт острый пик на
+  сдвиге +1 во всех проверенных символо-месяцах;
+- **цена бралась с бара, который на метке ещё не закрылся.** Правило
+  «последний бар, открытый не позже метки» при точном совпадении сеток
+  даёт бар `[t, t+1)`, а его закрытие наступает в `t+1`. Расхождение с
+  закрытым баром — медиана 4–7 б.п., 95-й процентиль 15–29 б.п., и в
+  каскаде оно систематическое, а не случайное.
+
+Поэтому решение принимается в `t + LAG_MIN`, а цена входа берётся с
+последнего бара, **закрытого** к этому моменту. Старое поведение
+достижимо ключами `--lag-min 0 --price-rule open` — не ради выбора, а
+чтобы измерить, сколько эффекта создавалось заглядыванием.
+
     python3 probe.py
 """
 
@@ -45,7 +68,7 @@ import os
 import sys
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import numpy as np
 
@@ -70,6 +93,7 @@ START = "2024-01-01"
 END = "2026-06-30"
 
 STEP_MIN = 5                      # шаг набора metrics
+LAG_MIN = 5                       # строка с меткой t завершена в t+5 (lag.py)
 WINDOW_MIN = 15                   # окно, за которое меряется падение
 OI_DROPS = (0.01, 0.02, 0.03)     # параметры обзора, не критерии
 MOVES = (0.01, 0.02, 0.03)
@@ -124,7 +148,10 @@ def load_metrics(sym, start, end):
             if len(r) <= max(it, io_):
                 continue
             try:
-                t = datetime.fromisoformat(r[it].strip()).timestamp()
+                # Метка — UTC. Без явной зоны берётся локальная, и на
+                # машине не в UTC сетка молча съезжает на часы.
+                t = datetime.fromisoformat(r[it].strip()).replace(
+                    tzinfo=timezone.utc).timestamp()
                 out.append((t, float(r[io_])))
             except ValueError:
                 continue
@@ -174,12 +201,23 @@ def load_price(sym, start, end):
     return t, v
 
 
-def align(mt, mv, pt, pv):
-    """Цена на сетке открытого интереса, по ближайшему предыдущему бару."""
-    idx = np.searchsorted(pt, mt, "right") - 1
-    ok = (idx >= 0) & (np.abs(pt[np.clip(idx, 0, len(pt) - 1)] - mt) <= 120)
-    price = np.where(ok, pv[np.clip(idx, 0, len(pt) - 1)], np.nan)
-    return price
+def align(mt, pt, pv, lag_min=LAG_MIN, rule="closed"):
+    """Цена в момент решения — по бару, ЗАКРЫТОМУ к этому моменту.
+
+    Момент решения = метка строки + `lag_min`: раньше строки просто нет
+    (см. шапку и `lag.py`). Правило `closed` берёт последний бар, чьё
+    закрытие уже наступило; `open` воспроизводит первую версию зонда,
+    бравшую бар, который в этот момент ещё торгуется.
+    """
+    at = mt + lag_min * 60
+    side = "left" if rule == "closed" else "right"
+    idx = np.searchsorted(pt, at, side) - 1
+    clip = np.clip(idx, 0, len(pt) - 1)
+    # Допуск считается от закрытия бара, а не от его открытия: у бара
+    # `[at-60, at)` открытие отстоит на минуту по построению.
+    close_t = pt[clip] + 60.0
+    ok = (idx >= 0) & (np.abs(close_t - at) <= 120)
+    return np.where(ok, pv[clip], np.nan), at
 
 
 def scan(sym, oi_t, oi_v, price, oi_drop, move):
@@ -211,6 +249,39 @@ def scan(sym, oi_t, oi_v, price, oi_drop, move):
                        "price_change": float(d_px[i]),
                        "down": bool(d_px[i] < 0), "fwd": fwd})
     return events
+
+
+def episodes(events, gap_sec=4 * 3600):
+    """События, слипшиеся в эпизоды по всем символам сразу.
+
+    Каскады не независимы: обвал накрывает весь рынок, и двенадцать
+    событий на двенадцати активах в один час — это одно наблюдение, а
+    не двенадцать. Фаза A четыре раза упиралась в то, что бюджетом
+    доказательства служит число НЕЗАВИСИМЫХ наблюдений; считать его
+    надо здесь, а не после того, как построена стратегия.
+    """
+    if not events:
+        return []
+    order = sorted(events, key=lambda e: e["t"])
+    groups, cur = [], [order[0]]
+    for e in order[1:]:
+        if e["t"] - cur[-1]["t"] <= gap_sec:
+            cur.append(e)
+        else:
+            groups.append(cur)
+            cur = [e]
+    groups.append(cur)
+    return groups
+
+
+def by_episode(events, f):
+    """Медиана внутри эпизода, потом по эпизодам. Одно окно — один голос."""
+    vals = []
+    for g in episodes(events):
+        inner = [e["fwd"][f] for e in g if f in e["fwd"]]
+        if inner:
+            vals.append(float(np.median(inner)))
+    return vals
 
 
 def baseline(series, rng_seed=7):
@@ -246,6 +317,14 @@ def main():
     ap.add_argument("--start", default=START)
     ap.add_argument("--end", default=END)
     ap.add_argument("--symbols", default=",".join(SAMPLE))
+    ap.add_argument("--lag-min", type=int, default=LAG_MIN,
+                    help="задержка появления строки metrics, минуты")
+    ap.add_argument("--price-rule", choices=("closed", "open"),
+                    default="closed",
+                    help="closed — бар закрыт к моменту решения; "
+                         "open — первая версия зонда")
+    ap.add_argument("--tag", default="",
+                    help="суффикс имени артефакта, чтобы прогоны не затирались")
     a = ap.parse_args()
     syms = [s.strip() for s in a.symbols.split(",") if s.strip()]
     os.makedirs(OUT, exist_ok=True)
@@ -257,12 +336,15 @@ def main():
         if not m or not p:
             print(f"{sym}: данных нет", file=sys.stderr, flush=True)
             continue
-        price = align(m[0], m[1], p[0], p[1])
+        price, _ = align(m[0], p[0], p[1], a.lag_min, a.price_rule)
         series[sym] = (m[0], m[1], price)
         print(f"{sym}: точек интереса {len(m[0])}, цена сошлась у "
               f"{np.isfinite(price).mean():.1%}", file=sys.stderr, flush=True)
     if not series:
         raise SystemExit("ничего не загрузилось")
+
+    print(f"\nмомент решения = метка + {a.lag_min} мин, цена по правилу "
+          f"'{a.price_rule}'", file=sys.stderr, flush=True)
 
     base = baseline(series)
     print("\nБЕЗУСЛОВНАЯ доходность на тех же активах и периоде "
@@ -280,31 +362,50 @@ def main():
                 ev += scan(sym, t, v, px, oi_drop, move)
             if not ev:
                 continue
+            down_ev = [e for e in ev if e["down"]]
+            eps = episodes(down_ev)
             row = {"oi_drop": oi_drop, "move": move, "events": len(ev),
-                   "down": sum(1 for e in ev if e["down"])}
-            for side, sel in (("down", [e for e in ev if e["down"]]),
+                   "down": len(down_ev), "episodes": len(eps),
+                   "top_episode_share": (max(len(g) for g in eps) / len(down_ev)
+                                         if eps else None)}
+            for side, sel in (("down", down_ev),
                               ("up", [e for e in ev if not e["down"]])):
                 for f in FORWARD_MIN:
                     vals = [e["fwd"][f] for e in sel if f in e["fwd"]]
                     if len(vals) >= 20:
                         row[f"{side}_{f}"] = float(np.median(vals))
                         row[f"{side}_{f}_n"] = len(vals)
+            # То же по эпизодам: одно рыночное окно даёт один голос.
+            for f in FORWARD_MIN:
+                ep = by_episode(down_ev, f)
+                if len(ep) >= 10:
+                    row[f"ep_{f}"] = float(np.median(ep))
+                    row[f"ep_{f}_n"] = len(ep)
+                    row[f"ep_{f}_pos"] = float(np.mean(np.array(ep) > 0))
             grid.append(row)
 
-    with open(os.path.join(OUT, "l1_probe.json"), "w", encoding="utf-8") as f:
+    dst = os.path.join(OUT, f"l1_probe{a.tag}.json")
+    with open(dst, "w", encoding="utf-8") as f:
         json.dump({"config": {"symbols": syms, "start": a.start,
                               "end": a.end, "window_min": WINDOW_MIN,
+                              "lag_min": a.lag_min,
+                              "price_rule": a.price_rule,
                               "oi_drops": list(OI_DROPS),
                               "moves": list(MOVES),
                               "forward_min": list(FORWARD_MIN)},
                    "baseline": {str(k): v for k, v in base.items()},
                    "grid": grid}, f, ensure_ascii=False, indent=1)
 
-    print("\nСКОЛЬКО СОБЫТИЙ (падение интереса И движение цены за 15 мин)\n")
-    print(f"{'падение OI':>12}{'движение':>11}{'событий':>10}{'вниз':>8}")
+    print("\nСКОЛЬКО СОБЫТИЙ (падение интереса И движение цены за 15 мин)")
+    print("эпизод — события всех активов, слипшиеся в окно 4 часа\n")
+    print(f"{'падение OI':>12}{'движение':>11}{'событий':>10}{'вниз':>8}"
+          f"{'эпизодов':>11}{'крупнейший':>13}")
     for r in grid:
+        top = (f"{r['top_episode_share']:.0%}"
+               if r.get("top_episode_share") is not None else "—")
         print(f"{r['oi_drop']:>11.0%}{r['move']:>11.0%}"
-              f"{r['events']:>10}{r['down']:>8}")
+              f"{r['events']:>10}{r['down']:>8}"
+              f"{r.get('episodes', 0):>11}{top:>13}")
 
     print("\nЧТО БЫЛО ПОСЛЕ — ПРЕВЫШЕНИЕ над безусловной доходностью")
     print("каскад ВНИЗ: положительное = отскок сверх обычного сноса\n")
@@ -322,7 +423,18 @@ def main():
             f"{(r[f'up_{f}'] - (base[f] or 0)) * 100:>10.2f}%"
             if f"up_{f}" in r else f"{'—':>11}" for f in FORWARD_MIN)
         print(f"{r['oi_drop']:>10.0%}{r['move']:>10.0%}{cells}")
-    print(f"\nзаписано {os.path.join(OUT, 'l1_probe.json')}")
+
+    print("\nТО ЖЕ ПО ЭПИЗОДАМ — одно рыночное окно даёт один голос")
+    print("в скобках доля эпизодов, где отскок положителен\n")
+    print(f"{'падение OI':>11}{'движение':>10}{'эпизодов':>10}{hdr}")
+    for r in grid:
+        cells = "".join(
+            f"{(r[f'ep_{f}'] - (base[f] or 0)) * 100:>7.2f}%"
+            f"{r[f'ep_{f}_pos']:>4.0%}" if f"ep_{f}" in r else f"{'—':>11}"
+            for f in FORWARD_MIN)
+        print(f"{r['oi_drop']:>10.0%}{r['move']:>10.0%}"
+              f"{r.get('ep_' + str(FORWARD_MIN[0]) + '_n', 0):>10}{cells}")
+    print(f"\nзаписано {dst}")
 
 
 if __name__ == "__main__":
