@@ -214,9 +214,16 @@ def is_done(info, sym, days, start, end):
     if not info:
         return False
     npz = os.path.join(SERIES, f"{sym}.npz")
+    # Ноль строк при совпавшем плане — знание, а не пробел: файлов у
+    # архива нет вовсе, и перезапрашивать их каждый прогон незачем.
     if info.get("start") == start and info.get("end") == end:
-        # Ноль строк при совпавшем окне — знание, а не пробел: файлов
-        # у архива нет, и перезапрашивать их каждый прогон незачем.
+        return info.get("rows", 0) == 0 or os.path.exists(npz)
+    # Записи прежнего формата окна не несут, но несут число дней плана
+    # на момент сбора. Совпало с нынешним планом — окно то же; у трёх
+    # символов, собранных пилотом, оно не совпадёт.
+    if info.get("days") is not None and not info.get("recovered"):
+        if info["days"] != len(days):
+            return False
         return info.get("rows", 0) == 0 or os.path.exists(npz)
     if not info.get("recovered") or not os.path.exists(npz):
         return False
