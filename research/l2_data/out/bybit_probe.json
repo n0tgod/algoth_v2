@@ -1,0 +1,63 @@
+{
+ "depth": {
+  "BTCUSDT_5min": {
+   "deep_days": 1825,
+   "empty_from_days": null
+  },
+  "BTCUSDT_1h": {
+   "deep_days": 1825,
+   "empty_from_days": null
+  },
+  "SOLUSDT_5min": {
+   "deep_days": 1825,
+   "empty_from_days": null
+  },
+  "SOLUSDT_1h": {
+   "deep_days": 1825,
+   "empty_from_days": null
+  },
+  "ARBUSDT_5min": {
+   "deep_days": 1186,
+   "empty_from_days": 1231
+  },
+  "ARBUSDT_1h": {
+   "deep_days": 1186,
+   "empty_from_days": 1231
+  }
+ },
+ "profiles": [
+  {
+   "symbol": "BTCUSDT",
+   "points": 5799,
+   "profile": {
+    "-2": 0.32839816268173744,
+    "-1": 0.3892415235113734,
+    "0": 0.6547794323920394,
+    "1": 0.39671588938482716,
+    "2": 0.3230149956861221
+   }
+  },
+  {
+   "symbol": "SOLUSDT",
+   "points": 5799,
+   "profile": {
+    "-2": 0.24692928167784278,
+    "-1": 0.31809209362940666,
+    "0": 0.6340777130442974,
+    "1": 0.31381176570984337,
+    "2": 0.25629362652005616
+   }
+  },
+  {
+   "symbol": "ARBUSDT",
+   "points": 5799,
+   "profile": {
+    "-2": 0.28115184260626946,
+    "-1": 0.3521541365496361,
+    "0": 0.6991701853537032,
+    "1": 0.32946418813851713,
+    "2": 0.29302000183613824
+   }
+  }
+ ]
+}
