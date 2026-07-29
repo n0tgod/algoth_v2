@@ -13,9 +13,13 @@
 
 ```bash
 cd ~/algoth_v2
-git pull origin main
+git fetch origin
+git checkout claude/claude-md-stage-a1-pqrhnx && git pull
 .venv/bin/python research/l2_data/test_l2.py
 ```
+
+Код лежит в ветке `claude/claude-md-stage-a1-pqrhnx`; после слияния в
+`main` достаточно `git pull origin main`.
 
 Тесты обязаны пройти все. Они закрывают два места, где ошибка уже
 случалась в проекте: поиск колонки по номеру вместо имени и часовой
