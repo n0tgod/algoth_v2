@@ -170,7 +170,13 @@ def load_metrics(sym, start, end):
 
 
 def load_price(sym, start, end):
-    """Минутные закрытия из месячных архивов."""
+    """Минутные открытия и закрытия из месячных архивов.
+
+    Открытие нужно не для симметрии: закрытие бара, кончившегося в
+    момент решения, — это последняя цена ДО решения, то есть цена, по
+    которой уже нельзя купить. Первая доступная — открытие следующего
+    бара.
+    """
     def one(mon):
         key = (f"data/futures/um/monthly/klines/{sym}/1m/"
                f"{sym}-1m-{mon}.zip")
@@ -184,7 +190,7 @@ def load_price(sym, start, end):
             if not r or not r[0].strip().lstrip("-").isdigit():
                 continue          # заголовок появился в файлах 2025 года
             try:
-                out.append((int(r[0]) / 1000.0, float(r[4])))
+                out.append((int(r[0]) / 1000.0, float(r[4]), float(r[1])))
             except (ValueError, IndexError):
                 continue
         return out
@@ -197,19 +203,30 @@ def load_price(sym, start, end):
     if not got:
         return None
     t = np.array([x[0] for x in got], dtype=np.float64)
-    v = np.array([x[1] for x in got], dtype=np.float64)
-    return t, v
+    close = np.array([x[1] for x in got], dtype=np.float64)
+    open_ = np.array([x[2] for x in got], dtype=np.float64)
+    return t, close, open_
 
 
-def align(mt, pt, pv, lag_min=LAG_MIN, rule="closed"):
-    """Цена в момент решения — по бару, ЗАКРЫТОМУ к этому моменту.
+def align(mt, pt, close, open_, lag_min=LAG_MIN, rule="closed"):
+    """Цена в момент решения. Момент = метка строки + `lag_min`.
 
-    Момент решения = метка строки + `lag_min`: раньше строки просто нет
-    (см. шапку и `lag.py`). Правило `closed` берёт последний бар, чьё
-    закрытие уже наступило; `open` воспроизводит первую версию зонда,
-    бравшую бар, который в этот момент ещё торгуется.
+    Раньше `lag_min` строки просто нет (см. шапку и `lag.py`). Правила:
+
+    - `next_open` — открытие бара, начинающегося в момент решения. Это
+      первая цена, по которой можно купить, и единственное правило без
+      подарка;
+    - `closed` — закрытие бара, кончившегося в момент решения. Цена
+      известна, но сделка по ней уже невозможна: она в прошлом;
+    - `open` — первая версия зонда, бар ещё торгуется. Оставлено, чтобы
+      мерить цену заглядывания, а не выбирать.
     """
     at = mt + lag_min * 60
+    if rule == "next_open":
+        idx = np.searchsorted(pt, at, "left")
+        clip = np.clip(idx, 0, len(pt) - 1)
+        ok = (idx < len(pt)) & (np.abs(pt[clip] - at) <= 120)
+        return np.where(ok, open_[clip], np.nan), at
     side = "left" if rule == "closed" else "right"
     idx = np.searchsorted(pt, at, side) - 1
     clip = np.clip(idx, 0, len(pt) - 1)
@@ -217,7 +234,7 @@ def align(mt, pt, pv, lag_min=LAG_MIN, rule="closed"):
     # `[at-60, at)` открытие отстоит на минуту по построению.
     close_t = pt[clip] + 60.0
     ok = (idx >= 0) & (np.abs(close_t - at) <= 120)
-    return np.where(ok, pv[clip], np.nan), at
+    return np.where(ok, close[clip], np.nan), at
 
 
 def scan(sym, oi_t, oi_v, price, oi_drop, move):
@@ -319,9 +336,11 @@ def main():
     ap.add_argument("--symbols", default=",".join(SAMPLE))
     ap.add_argument("--lag-min", type=int, default=LAG_MIN,
                     help="задержка появления строки metrics, минуты")
-    ap.add_argument("--price-rule", choices=("closed", "open"),
-                    default="closed",
-                    help="closed — бар закрыт к моменту решения; "
+    ap.add_argument("--price-rule",
+                    choices=("next_open", "closed", "open"),
+                    default="next_open",
+                    help="next_open — первая цена после решения; "
+                         "closed — бар закрыт к моменту решения; "
                          "open — первая версия зонда")
     ap.add_argument("--tag", default="",
                     help="суффикс имени артефакта, чтобы прогоны не затирались")
@@ -336,7 +355,7 @@ def main():
         if not m or not p:
             print(f"{sym}: данных нет", file=sys.stderr, flush=True)
             continue
-        price, _ = align(m[0], p[0], p[1], a.lag_min, a.price_rule)
+        price, _ = align(m[0], p[0], p[1], p[2], a.lag_min, a.price_rule)
         series[sym] = (m[0], m[1], price)
         print(f"{sym}: точек интереса {len(m[0])}, цена сошлась у "
               f"{np.isfinite(price).mean():.1%}", file=sys.stderr, flush=True)
