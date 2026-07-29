@@ -17,7 +17,11 @@ cd "$(git rev-parse --show-toplevel)"
 msg="${1:-артефакты прогона}"
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
-git add -A research/*/out docs 2>/dev/null || true
+# --ignore-removal, а не -A: команда публикации не вправе записывать
+# удаления. Машина, где артефактов этапа нет на диске, иначе стирает их
+# из репозитория, а следующий `git pull` стирает их и на сервере. В
+# проекте это случалось дважды: с артефактами F1 и с манифестом L2.
+git add --ignore-removal research/*/out docs 2>/dev/null || true
 
 if git diff --cached --quiet; then
   echo "нечего публиковать — артефакты не изменились"
