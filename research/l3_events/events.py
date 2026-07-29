@@ -34,11 +34,19 @@ CROSS_GUARD_MIN = 60              # каскадящие соседи вне к�
 SHIFT_DAYS = 365                  # нуль 2
 
 
-def steps(minutes):
-    return int(minutes // STEP_MIN)
+def steps(minutes, step_min=STEP_MIN):
+    """Число шагов сетки в `minutes`. Шаг — параметр, а не константа.
+
+    L3 работает на пятиминутной сетке набора `metrics`, зонд возврата —
+    на минутной. Отбор при этом один и тот же, и второй копии ему не
+    полагается: разъехавшиеся копии расчётного ядра уже убивали в этом
+    проекте один движок.
+    """
+    return int(minutes // step_min)
 
 
-def detect(oi_c, price, ok, oi_drop, move, require_oi=True):
+def detect(oi_c, price, ok, oi_drop, move, require_oi=True,
+           step_min=STEP_MIN, window_min=WINDOW_MIN, dedup_min=DEDUP_MIN):
     """Индексы моментов, где сработало условие §5.1.
 
     `ok` — маска допустимых моментов (ликвидность, делистинг, размер).
@@ -47,7 +55,7 @@ def detect(oi_c, price, ok, oi_drop, move, require_oi=True):
     иначе сравнивались бы разные множества моментов, и разница
     объяснялась бы составом, а не условием.
     """
-    w = steps(WINDOW_MIN)
+    w = steps(window_min, step_min)
     n = len(price)
     if n <= w:
         return np.empty(0, dtype=np.int64)
@@ -63,7 +71,7 @@ def detect(oi_c, price, ok, oi_drop, move, require_oi=True):
     if len(idx) == 0:
         return idx
     # Серия соседних баров одного обвала — одно событие, а не десять.
-    gap = steps(DEDUP_MIN)
+    gap = steps(dedup_min, step_min)
     keep, last = [], -10**9
     for i in idx:
         if i - last >= gap:
@@ -72,9 +80,9 @@ def detect(oi_c, price, ok, oi_drop, move, require_oi=True):
     return np.array(keep, dtype=np.int64)
 
 
-def forward(price, j, horizon_min):
+def forward(price, j, horizon_min, step_min=STEP_MIN):
     """Доходность от входа в `j` до выхода через `horizon_min` минут."""
-    h = steps(horizon_min)
+    h = steps(horizon_min, step_min)
     k = j + h
     ok = (k < len(price))
     out = np.full(len(j), np.nan)
@@ -116,32 +124,43 @@ def by_episode(values, ep):
     return np.array(out)
 
 
-def cross_section(P, j_list, rows, horizon_min, guard_min=CROSS_GUARD_MIN):
+def ban_matrix(shape, rows, j_list, guard_min=CROSS_GUARD_MIN,
+               step_min=STEP_MIN):
+    """Кто в какой момент считается «каскадящим» и не входит в фон.
+
+    Матрицей, а не словарём множеств: на минутной сетке защитное окно в
+    час — это 121 ячейка на событие, и словарь означал бы десятки
+    миллионов вставок на каждый горизонт. Матрица строится один раз и
+    переиспользуется всеми горизонтами.
+    """
+    g = steps(guard_min, step_min)
+    banned = np.zeros(shape, dtype=bool)
+    for r, j in zip(rows, j_list):
+        banned[r, max(0, j - g):min(shape[1], j + g + 1)] = True
+    return banned
+
+
+def cross_section(P, j_list, rows, horizon_min,
+                  guard_min=CROSS_GUARD_MIN, step_min=STEP_MIN,
+                  banned=None, min_cross=20):
     """Контроль 1: медианный форвард тех, кто в этот момент не каскадил.
 
     Из кросс-секции исключаются активы, у которых событие случилось
     рядом по времени: иначе «фон» частично состоит из тех же каскадов,
     и контроль сравнивал бы событие с самим собой.
     """
-    h = steps(horizon_min)
-    g = steps(guard_min)
-    near = {}
-    for r, j in zip(rows, j_list):
-        for c in range(j - g, j + g + 1):
-            near.setdefault(c, set()).add(r)
+    h = steps(horizon_min, step_min)
+    if banned is None:
+        banned = ban_matrix(P.shape, rows, j_list, guard_min, step_min)
     out = np.full(len(j_list), np.nan)
     for k, j in enumerate(j_list):
         if j + h >= P.shape[1]:
             continue
-        a, b = P[:, j], P[:, j + h]
         with np.errstate(invalid="ignore", divide="ignore"):
-            r = b / a - 1.0
-        drop = near.get(j)
-        if drop:
-            r = r.copy()
-            r[list(drop)] = np.nan
+            r = P[:, j + h] / P[:, j] - 1.0
+        r[banned[:, j]] = np.nan
         v = r[np.isfinite(r)]
-        if len(v) >= 20:
+        if len(v) >= min_cross:
             out[k] = float(np.median(v))
     return out
 

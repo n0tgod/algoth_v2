@@ -97,6 +97,7 @@ def measure(rec, arm, times, P, valid_by_row, hours, log):
     res = {"events": int(len(cols)), "episodes": int(len(np.unique(ep)))}
     n = len(times)
 
+    banned = E.ban_matrix(P.shape, rows, cols)
     for h in HORIZONS + DIAGNOSTIC:
         # Векторно по матрице: поэлементный цикл на десятках тысяч
         # событий стоил бы минут, а даёт то же самое.
@@ -109,7 +110,7 @@ def measure(rec, arm, times, P, valid_by_row, hours, log):
         res[f"fwd_{h}"] = f
         res[f"ep_{h}"] = E.by_episode(f, ep)
         # Контроль 1 — одновременная кросс-секция.
-        cs = E.cross_section(P, cols, rows, h)
+        cs = E.cross_section(P, cols, rows, h, banned=banned)
         res[f"cross_{h}"] = cs
         res[f"ep_cross_{h}"] = E.by_episode(np.where(
             np.isfinite(cs) & np.isfinite(f), f - cs, np.nan), ep)
