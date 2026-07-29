@@ -61,14 +61,11 @@ L1 — как каскад ликвидаций выглядит в данных
 """
 
 import argparse
-import csv
-import io
 import json
 import os
 import sys
-import zipfile
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 
 import numpy as np
 
@@ -78,6 +75,9 @@ OUT = os.path.join(HERE, "out")
 CACHE = os.path.join(OUT, "cache")
 
 sys.path.insert(0, RESEARCH)
+from common.oi_metrics import (                            # noqa: E402
+    metrics_url, parse_metrics, read_zip_csv,
+)
 from common.venue import fetch_binary                      # noqa: E402
 
 S3 = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
@@ -119,43 +119,17 @@ def days(start, end):
     return out
 
 
-def read_zip_csv(raw):
-    with zipfile.ZipFile(io.BytesIO(raw)) as z:
-        with z.open(z.namelist()[0]) as f:
-            return list(csv.reader(io.TextIOWrapper(f, "utf-8")))
-
-
 def load_metrics(sym, start, end):
     """Открытый интерес по 5-минутной сетке. `metrics` бывает только суточным."""
     def one(day):
-        key = (f"data/futures/um/daily/metrics/{sym}/"
-               f"{sym}-metrics-{day}.zip")
         try:
-            raw = fetch_binary(f"{S3}/{key}", CACHE,
+            raw = fetch_binary(metrics_url(sym, day), CACHE,
                                cache_key=f"m_{sym}_{day}", user_agent=UA)
         except Exception:
             return []
-        rows = read_zip_csv(raw)
-        if not rows:
-            return []
-        head = [c.strip() for c in rows[0]]
-        try:
-            it, io_ = head.index("create_time"), head.index("sum_open_interest")
-        except ValueError:
-            return []
-        out = []
-        for r in rows[1:]:
-            if len(r) <= max(it, io_):
-                continue
-            try:
-                # Метка — UTC. Без явной зоны берётся локальная, и на
-                # машине не в UTC сетка молча съезжает на часы.
-                t = datetime.fromisoformat(r[it].strip()).replace(
-                    tzinfo=timezone.utc).timestamp()
-                out.append((t, float(r[io_])))
-            except ValueError:
-                continue
-        return out
+        # Разбор — общий модуль: те же файлы читает сбор L2, и вторая
+        # копия поиска колонок уже однажды стоила проекта тихий ноль.
+        return parse_metrics(raw)
 
     got = []
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:

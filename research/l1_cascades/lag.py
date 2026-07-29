@@ -41,13 +41,10 @@ L1 — известно ли в момент `t` то, что мы взяли н
     python3 lag.py
 """
 
-import csv
-import io
 import os
 import sys
-import zipfile
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 
 import numpy as np
 
@@ -57,6 +54,9 @@ OUT = os.path.join(HERE, "out")
 CACHE = os.path.join(OUT, "cache")
 
 sys.path.insert(0, RESEARCH)
+from common.oi_metrics import (                            # noqa: E402
+    OI_COL, TAKER_RATIO_COL, metrics_url, parse_metrics, read_zip_csv,
+)
 from common.venue import fetch_binary                      # noqa: E402
 
 S3 = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
@@ -82,46 +82,15 @@ def days_of(mon):
     return out
 
 
-def read_zip_csv(raw):
-    with zipfile.ZipFile(io.BytesIO(raw)) as z:
-        with z.open(z.namelist()[0]) as f:
-            return list(csv.reader(io.TextIOWrapper(f, "utf-8")))
-
-
 def load_metrics(sym, mon):
     """`(время, интерес, отношение объёмов)` по суточным файлам месяца."""
     def one(day):
-        key = (f"data/futures/um/daily/metrics/{sym}/"
-               f"{sym}-metrics-{day}.zip")
         try:
-            raw = fetch_binary(f"{S3}/{key}", CACHE,
+            raw = fetch_binary(metrics_url(sym, day), CACHE,
                                cache_key=f"m_{sym}_{day}", user_agent=UA)
         except Exception:
             return []
-        rows = read_zip_csv(raw)
-        if not rows:
-            return []
-        head = [c.strip() for c in rows[0]]
-        try:
-            it = head.index("create_time")
-            ioi = head.index("sum_open_interest")
-            ir = head.index("sum_taker_long_short_vol_ratio")
-        except ValueError:
-            return []
-        out = []
-        for r in rows[1:]:
-            if len(r) <= max(it, ioi, ir):
-                continue
-            try:
-                # Метка — UTC. Без явной зоны `fromisoformat` берёт
-                # локальную, и на машине не в UTC вся сетка молча
-                # съезжает на часы.
-                t = datetime.fromisoformat(r[it].strip()).replace(
-                    tzinfo=timezone.utc).timestamp()
-                out.append((t, float(r[ioi]), float(r[ir])))
-            except ValueError:
-                continue
-        return out
+        return parse_metrics(raw, (OI_COL, TAKER_RATIO_COL))
 
     got = []
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:

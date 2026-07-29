@@ -84,16 +84,26 @@ def fetch(url, cache_dir, method="GET", body=None, cache_key=None, user_agent="a
 
 
 def fetch_binary(url, cache_dir, cache_key=None,
-                 user_agent="algoth-v2/1.0"):
+                 user_agent="algoth-v2/1.0", cache=True):
     """То же, что `fetch`, но возвращает байты и кэширует их как есть.
 
     Отдельной функцией, а не флагом: `fetch` декодирует ответ в текст с
     заменой битых байт, и для zip-архива это молча портит данные —
     файл распакуется с ошибкой уже потом, далеко от места причины.
+
+    `cache=False` нужен массовым прогонам: сбор L2 обходит 363 тысячи
+    суточных файлов, и складывать их на диск незачем — из каждого
+    берутся два числа на строку, а единицей возобновления служит
+    символ, а не файл.
+
+    **404 не повторяется.** У архива отсутствующий день — обычное дело
+    (инструмент ещё не листингован, набор за этот день не выложен), и
+    три попытки с задержками 1 + 2 секунды на каждый такой день
+    превращали бы обход в сутки ожидания пустоты.
     """
     key = cache_key or sha256(url.encode()).hexdigest()
     path = os.path.join(cache_dir, key + ".bin")
-    if os.path.exists(path):
+    if cache and os.path.exists(path):
         with open(path, "rb") as f:
             return f.read()
     last = None
@@ -104,10 +114,17 @@ def fetch_binary(url, cache_dir, cache_key=None,
             with urllib.request.urlopen(req, timeout=TIMEOUT,
                                         context=SSL_CTX) as r:
                 data = r.read()
-            os.makedirs(cache_dir, exist_ok=True)
-            with open(path, "wb") as f:
-                f.write(data)
+            if cache:
+                os.makedirs(cache_dir, exist_ok=True)
+                with open(path, "wb") as f:
+                    f.write(data)
             return data
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                raise FileNotFoundError(url) from None
+            last = e
+            if attempt < RETRIES - 1:
+                time.sleep(2 ** attempt)
         except Exception as e:  # noqa: BLE001 — сеть, нужен любой сбой
             last = e
             if attempt < RETRIES - 1:
