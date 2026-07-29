@@ -301,6 +301,29 @@ def probe(args):
     print(f"\nзаписано {dst}")
 
 
+def venue_map():
+    """Тикер Binance -> тикер Bybit и статус контракта.
+
+    Тикеры площадок совпадают не всегда: множитель бывает и префиксом, и
+    суффиксом (`1000SHIBUSDT` против `SHIB1000USDT`), и различаются они
+    у 7 символов универсума. Слать имя одной площадки в API другой —
+    молчаливый ноль вместо ряда.
+    """
+    with open(os.path.join(A1, "out", "universe.json"), encoding="utf-8") as f:
+        uni = json.load(f)["assets"]
+    with open(os.path.join(A1, "out", "instruments.json"),
+              encoding="utf-8") as f:
+        ins = json.load(f)
+    if isinstance(ins, dict) and "instruments" in ins:
+        ins = ins["instruments"]
+    out = {}
+    for v in uni.values():
+        b, y = v.get("binance_symbol"), v.get("bybit_symbol")
+        if b and y:
+            out[b] = (y, (ins.get(y) or {}).get("status"))
+    return out
+
+
 def sample_symbols(n):
     """Выборка по размеру инструмента, а не первые по алфавиту.
 
@@ -308,6 +331,10 @@ def sample_symbols(n):
     медианному открытому интересу и прореживаются равномерно, чтобы
     выборка накрывала весь диапазон размеров. Сравнение площадок на
     одних мажорах ничего не сказало бы о хвосте универсума.
+
+    Возвращает тикеры **Bybit** вместе со статусом контракта: снятые с
+    торгов площадка не обслуживает вовсе, и знать это надо до прогона,
+    а не выяснять по нулям в логе.
     """
     path = os.path.join(OUT, "oi_binance_manifest.json")
     if not os.path.exists(path):
@@ -315,13 +342,14 @@ def sample_symbols(n):
                          "манифесту")
     with open(path, encoding="utf-8") as f:
         man = json.load(f)["symbols"]
+    vmap = venue_map()
     have = [(v["median_oi_usd"], s) for s, v in man.items()
-            if v.get("rows") and v.get("median_oi_usd")]
+            if v.get("rows") and v.get("median_oi_usd") and s in vmap]
     have.sort()
-    if len(have) <= n:
-        return [s for _, s in have]
-    step = len(have) / n
-    return [have[int(i * step)][1] for i in range(n)]
+    step = 1 if len(have) <= n else len(have) / n
+    picked = ([s for _, s in have] if len(have) <= n
+              else [have[int(i * step)][1] for i in range(n)])
+    return [(vmap[s][0], vmap[s][1]) for s in picked]
 
 
 def collect(args):
@@ -334,8 +362,16 @@ def collect(args):
     символах это часы против получаса.
     """
     os.makedirs(SERIES, exist_ok=True)
-    syms = ([s.strip() for s in args.symbols.split(",") if s.strip()]
-            if args.symbols else sample_symbols(args.sample))
+    if args.symbols:
+        vmap = venue_map()
+        pairs = [(vmap.get(s.strip(), (s.strip(), None))[0],
+                  vmap.get(s.strip(), (s.strip(), None))[1])
+                 for s in args.symbols.split(",") if s.strip()]
+    else:
+        pairs = sample_symbols(args.sample)
+    status = dict(pairs)
+    syms = [s for s, _ in pairs]
+    closed = [s for s, st in pairs if st == "Closed"]
     man_path = os.path.join(OUT, "oi_bybit_manifest.json")
     man = {}
     if os.path.exists(man_path):
@@ -347,6 +383,15 @@ def collect(args):
     print(f"символов {len(syms)}, к сбору {len(todo)}, "
           f"глубина {args.since_days or 'сколько отдаёт'} суток",
           file=sys.stderr, flush=True)
+    if closed:
+        # Ограничение площадки, а не наша ошибка: по снятым с торгов
+        # контрактам эндпоинт интереса не отдаёт ничего. Тот же класс,
+        # что эндпоинт комиссий в A1 — прошлого состояния Bybit не
+        # хранит. Такие символы возвращаются мгновенно и попадают в лог
+        # первыми, из-за чего прогон выглядит сломанным.
+        print(f"  из них снято с торгов: {len(closed)} — "
+              f"{', '.join(closed[:8])}"
+              + ("…" if len(closed) > 8 else ""), file=sys.stderr, flush=True)
 
     lock = threading.Lock()
     done = [0]
@@ -363,6 +408,7 @@ def collect(args):
                     "first_ms": rows[0][0] if rows else None,
                     "last_ms": rows[-1][0] if rows else None}
         info["seconds"] = round(time.time() - t0, 1)
+        info["status"] = status.get(sym)
         if rows:
             dst = os.path.join(SERIES, f"{sym}.npz")
             np.savez_compressed(
@@ -377,10 +423,15 @@ def collect(args):
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump({"symbols": man}, f, ensure_ascii=False)
             os.replace(tmp, man_path)   # обрыв не оставляет обрезанный JSON
+            why = ""
+            if info.get("error"):
+                why = f" — {info['error']}"
+            elif not info["rows"]:
+                why = (" — снят с торгов, площадка ряда не отдаёт"
+                       if info.get("status") == "Closed"
+                       else f" — пусто, статус {info.get('status')}")
             print(f"[{done[0]}/{len(todo)}] {sym}: точек {info['rows']}, "
-                  f"{info['seconds']} с"
-                  + (f" — {info['error']}" if info.get("error") else ""),
-                  file=sys.stderr, flush=True)
+                  f"{info['seconds']} с{why}", file=sys.stderr, flush=True)
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         list(ex.map(one, todo))
@@ -403,6 +454,17 @@ def collect(args):
     if bad:
         lines.append(f"Символов с ошибкой: {len(bad)} — "
                      f"{', '.join(bad[:10])}\n")
+    empty_closed = [s for s, v in man.items()
+                    if not v.get("rows") and v.get("status") == "Closed"]
+    if empty_closed:
+        lines.append(
+            f"**Ограничение площадки: по снятым с торгов контрактам "
+            f"открытый интерес не отдаётся вовсе** — {len(empty_closed)} "
+            f"символов выборки из {len(man)}. Тот же класс, что эндпоинт "
+            f"комиссий в A1: прошлого состояния Bybit не хранит. "
+            f"Следствие для §9.1 — сравнение площадок возможно только по "
+            f"живым инструментам, то есть содержит отбор выживших, и "
+            f"вывод о доле общих событий относится к ним.\n")
     lines.append("Сравнение событий двух площадок идёт в L3 и **по моменту "
                  "наблюдения, а не по метке**: интерес Bybit с меткой `t` "
                  "известен в `t`, интерес Binance с меткой `t` — только в "
