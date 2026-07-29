@@ -138,6 +138,50 @@ def test_days_of_intervals():
     check("интервал вне окна даёт пусто", d == [], str(d))
 
 
+def test_is_done_checks_window():
+    """Готовность — это «собрано за нужное окно», а не «файл есть».
+
+    Дефект первого полного прогона: пилот собрал три символа за пять
+    дней, полный прогон их пропустил, и три инструмента из 618 несли
+    пять суток вместо 912.
+    """
+    import tempfile
+
+    import oi_binance as OB
+
+    old = OB.SERIES
+    with tempfile.TemporaryDirectory() as tmp:
+        OB.SERIES = tmp
+        open(os.path.join(tmp, "X.npz"), "wb").close()
+        days = days_between("2024-01-01", "2026-06-30")
+
+        check("окно совпало и файл есть — готово",
+              OB.is_done({"start": "2024-01-01", "end": "2026-06-30",
+                          "rows": 10}, "X", days,
+                         "2024-01-01", "2026-06-30"))
+        check("окно совпало, строк нет — готово, перезапрашивать нечего",
+              OB.is_done({"start": "2024-01-01", "end": "2026-06-30",
+                          "rows": 0}, "Y", days,
+                         "2024-01-01", "2026-06-30"))
+        check("окно пилота не считается готовностью",
+              not OB.is_done({"start": "2025-03-01", "end": "2025-03-05",
+                              "rows": 1440}, "X", days,
+                             "2024-01-01", "2026-06-30"))
+        check("записи без окна нет — не готово",
+              not OB.is_done({"rows": 1440}, "X", days,
+                             "2024-01-01", "2026-06-30"))
+        # Восстановленные с диска: окна нет, судим по покрытию.
+        full = {"recovered": True, "rows": 262522,
+                "first": 1704067200, "last": 1782604800}
+        check("восстановленный ряд, накрывающий план — готово",
+              OB.is_done(full, "X", days, "2024-01-01", "2026-06-30"))
+        short = {"recovered": True, "rows": 1440,
+                 "first": 1740787200, "last": 1741218900}
+        check("восстановленный ряд в пять суток — не готово",
+              not OB.is_done(short, "X", days, "2024-01-01", "2026-06-30"))
+    OB.SERIES = old
+
+
 def test_url_and_days():
     u = metrics_url("BTCUSDT", "2025-03-10")
     check("адрес суточного файла", u.endswith(
@@ -156,6 +200,8 @@ def main():
     print("план обхода")
     test_days_of_intervals()
     test_url_and_days()
+    print("возобновление")
+    test_is_done_checks_window()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

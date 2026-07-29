@@ -197,6 +197,38 @@ def scan_series():
     return out
 
 
+def is_done(info, sym, days, start, end):
+    """Собран ли символ **за нужное окно**, а не просто «файл есть».
+
+    Дефект, найденный по манифесту первого полного прогона: пилот из
+    инструкции собирал три символа за пять дней, а полный прогон их
+    пропускал, потому что признаком готовности было существование
+    файла. Три инструмента из 618 несли пять суток вместо 912, и
+    заметить это в сводке было нечем — она докладывала «618 из 621».
+
+    Поэтому окно запоминается в манифесте и сверяется. У записей,
+    восстановленных с диска (окна там нет по определению), готовность
+    проверяется **по данным**: ряд обязан накрывать план от первого
+    дня до последнего, иначе символ собирается заново.
+    """
+    if not info:
+        return False
+    npz = os.path.join(SERIES, f"{sym}.npz")
+    if info.get("start") == start and info.get("end") == end:
+        # Ноль строк при совпавшем окне — знание, а не пробел: файлов
+        # у архива нет, и перезапрашивать их каждый прогон незачем.
+        return info.get("rows", 0) == 0 or os.path.exists(npz)
+    if not info.get("recovered") or not os.path.exists(npz):
+        return False
+    first, last = info.get("first"), info.get("last")
+    if not first or not last or not days:
+        return False
+    plan_first = int(np.datetime64(days[0] + "T00:00:00", "s").astype("int64"))
+    plan_last = int(np.datetime64(days[-1] + "T23:59:59", "s").astype("int64"))
+    tol = 3 * 86400
+    return first <= plan_first + tol and last >= plan_last - tol
+
+
 def load_manifest(path):
     """Манифест плюс то, что найдено на диске. Диск главнее."""
     man = {}
@@ -246,9 +278,8 @@ def main():
 
     manifest_path = os.path.join(OUT, "oi_binance_manifest.json")
     manifest = load_manifest(manifest_path)
-    ready = sum(1 for sym, _ in plan
-                if sym in manifest
-                and os.path.exists(os.path.join(SERIES, f"{sym}.npz")))
+    ready = sum(1 for sym, d in plan
+                if is_done(manifest.get(sym), sym, d, a.start, a.end))
     if ready:
         print(f"уже собрано {ready} символов, остаётся {len(plan) - ready}",
               file=sys.stderr, flush=True)
@@ -257,11 +288,12 @@ def main():
     t_start = time.time()
     for sym, days in plan:
         dst = os.path.join(SERIES, f"{sym}.npz")
-        if os.path.exists(dst) and sym in manifest:
+        if is_done(manifest.get(sym), sym, days, a.start, a.end):
             done += 1
             continue
         t0 = time.time()
         arr, info = collect_symbol(sym, days, a.workers)
+        info["start"], info["end"] = a.start, a.end
         info["asset"] = uni[sym]["asset"]
         info["delisted"] = uni[sym]["delisted"]
         info["seconds"] = round(time.time() - t0, 1)
