@@ -25,6 +25,7 @@
     .venv/bin/python research/b1_book/collect.py --http 8765
 """
 
+import gzip
 import json
 import secrets
 import threading
@@ -886,17 +887,44 @@ def serve(collector, port, token, log):
     """Поднять сервер наблюдения в отдельном потоке."""
 
     class H(BaseHTTPRequestHandler):
+        # Постоянное соединение. По умолчанию сервер отвечает по
+        # HTTP/1.0 и закрывает соединение после каждого ответа, то есть
+        # на каждый опрос идёт новое TCP-рукопожатие. На мобильной сети
+        # потерянный SYN повторяется с нарастающей задержкой — секунда,
+        # три, семь, — и страница открывается через пять-десять секунд
+        # при исправном сервере, отвечающем за полсекунды.
+        protocol_version = "HTTP/1.1"
+        timeout = 65                      # праздное соединение не держим
+
         def _ok(self, body, ctype):
+            # Сжатие: первый ответ весит под полсотни килобайт, и на
+            # мобильной связи это разница между «открылось» и «висит».
+            enc = (self.headers.get("Accept-Encoding") or "")
+            gz = "gzip" in enc and len(body) > 1024
+            if gz:
+                body = gzip.compress(body, 6)
             self.send_response(200)
             self.send_header("Content-Type", ctype)
+            if gz:
+                self.send_header("Content-Encoding", "gzip")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
 
-        def _deny(self):
-            self.send_response(403)
+        def _empty(self, code, body=b""):
+            """Ответ без содержимого обязан нести длину.
+
+            Иначе при постоянном соединении клиент ждёт тело, которого
+            не будет, — и это выглядит как зависший сервер.
+            """
+            self.send_response(code)
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(b"nope")
+            if body:
+                self.wfile.write(body)
+
+        def _deny(self):
+            self._empty(403, b"nope")
 
         def do_GET(self):                                 # noqa: N802
             u = urlparse(self.path)
@@ -930,8 +958,7 @@ def serve(collector, port, token, log):
             if u.path in ("/", "/index.html"):
                 return self._ok(PAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
-            self.send_response(404)
-            self.end_headers()
+            self._empty(404)
 
         def log_message(self, *a):                        # тишина в консоли
             return
