@@ -610,8 +610,13 @@ drawStats(); drawSyms(); focusTrade(0);
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="")
+    # График рисует любой этап, чья выгрузка сделана тем же форматом:
+    # ядро сделки общее, значит и просмотр должен быть один, а не по
+    # копии на этап.
+    ap.add_argument("--dir", default=OUT,
+                    help="каталог с backtest.json (по умолчанию t3_brackets)")
     a = ap.parse_args()
-    src = os.path.join(OUT, f"backtest{a.tag}.json")
+    src = os.path.join(a.dir, f"backtest{a.tag}.json")
     with open(src, encoding="utf-8") as f:
         raw = json.load(f)
     c = raw["cell"]
@@ -627,7 +632,7 @@ def main():
             .replace("__EYEBROW__", eyebrow)
             .replace("__SUB__", sub)
             .replace("__COST__", f"{c['cost_bp']:.0f}"))
-    dst = os.path.join(OUT, f"T3-chart{a.tag}.html")
+    dst = os.path.join(a.dir, f"chart{a.tag}.html")
     with open(dst, "w", encoding="utf-8") as f:
         f.write(html)
     print(f"{dst}: {len(raw['trades'])} сделок, "
