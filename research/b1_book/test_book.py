@@ -136,11 +136,14 @@ def test_view_does_not_reset_counter():
 
 
 def test_page_has_no_external_loads():
-    """Страница обязана быть самодостаточной: сервер стоит в интернете."""
+    """Страницы обязаны быть самодостаточными: сервер стоит в интернете."""
     import web
-    check("внешних ссылок на странице нет",
-          "http://" not in web.PAGE and "https://" not in web.PAGE)
-    check("данные тянутся с самого сборщика", "/state?k=" in web.PAGE)
+    for name, src in (("обзор", web.PAGE), ("график", web.CHART)):
+        check(f"{name}: внешних ссылок нет",
+              "http://" not in src and "https://" not in src)
+        check(f"{name}: данные тянутся с самого сборщика",
+              "/state?k=" in src)
+    check("с обзора есть ссылка на график", "/chart?k=" in web.PAGE)
 
 
 def test_live_detector_agrees_with_batch():

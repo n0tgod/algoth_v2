@@ -54,7 +54,10 @@ h1{font-size:17px;margin:0 0 2px}
 .st .k{font-size:10.5px;color:var(--muted);letter-spacing:.04em}
 .st .v{font-size:15px;font-weight:600}
 .bad{color:var(--ask)} .good{color:var(--bid)}
-.syms{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.syms{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center}
+.open{font-size:13px;color:var(--ink);background:var(--panel);
+ border:1px solid var(--accent);padding:4px 9px;text-decoration:none}
+.open:hover{background:var(--grid)}
 button{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);
  border:1px solid var(--rule);padding:4px 9px;cursor:pointer}
 button[aria-pressed=true]{border-color:var(--accent);
@@ -104,9 +107,9 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
     <div class="bands" id="bands"></div>
   </div>
   <div class="panel">
-    <div class="cap"><span>минутные свечи, уровни и сделки</span>
+    <div class="cap"><span>середина, последние 15 мин</span>
       <span id="cap-mid" class="mono"></span></div>
-    <canvas id="mid" height="300"></canvas>
+    <canvas id="mid" height="140"></canvas>
     <div class="cap" style="border-top:1px solid var(--rule)">
       <span>детектор — что выполнено прямо сейчас</span>
       <span id="cap-diag" class="mono"></span></div>
@@ -171,7 +174,10 @@ function render(d) {
 
   document.getElementById("syms").innerHTML = d.symbols.map(x =>
     `<button data-s="${x}" aria-pressed="${x === d.sym}">${
-      x.replace("USDT","")}</button>`).join("");
+      x.replace("USDT","")}</button>`).join("")
+    + `<a class="open" target="_blank" href="/chart?k=${
+        encodeURIComponent(KEY)}&sym=${d.sym}">график ${
+        d.sym.replace("USDT","")} ↗</a>`;
   document.querySelectorAll("[data-s]").forEach(b =>
     b.onclick = () => { sym = b.dataset.s; tick(); });
 
@@ -215,7 +221,7 @@ function render(d) {
   ).join("");
 
   const sg = d.sig || {levels:[], open:[], done:[], candles:[]};
-  drawMid(sg.candles || [], d.mid || [], sg);
+  drawMid(d.mid || [], sg);
   document.getElementById("cap-diag").textContent =
     `история ${sg.history_min ?? 0} мин · до уровня ${
       sg.near_x ?? "—"} шума (нужно ≤ ${sg.touch_x})`;
@@ -260,22 +266,18 @@ function render(d) {
   lg.textContent = (d.log || []).join("\n");
 }
 
-function drawMid(cands, pts, sg) {
+function drawMid(pts, sg) {
   const cv = document.getElementById("mid");
-  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 300;
+  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 140;
   cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
   const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
   g.clearRect(0,0,W,H);
-  // Пока свечей нет, рисуется середина по секундам: первые минуты сбора
-  // не должны выглядеть как поломка.
-  const useC = cands.length >= 3;
-  if (!useC && pts.length < 2) {
+  if (pts.length < 2) {
     g.fillStyle = css("--muted");
     g.font = "12px system-ui"; g.textBaseline = "middle";
     g.fillText("копим историю…", 10, H/2);
     return;
   }
-  pts = useC ? cands.map(c => [c[0], c[4]]) : pts;
   // В шкалу входят и уровни со сделками: иначе метка окажется за краем,
   // и «сделки не видно» будет означать не отсутствие, а обрезку.
   const near = (sg.levels||[]).map(l=>l.p).filter(p =>
@@ -283,8 +285,7 @@ function drawMid(cands, pts, sg) {
     p < Math.max(...pts.map(q=>q[1]))*1.005);
   const marks = (sg.open||[]).concat(sg.done||[]).slice(0,8);
   const extra = marks.flatMap(m=>[m.entry, m.stop, m.target]);
-  const vals = pts.map(p=>p[1]).concat(near, extra)
-    .concat(useC ? cands.flatMap(c=>[c[2], c[3]]) : []);
+  const vals = pts.map(p=>p[1]).concat(near, extra);
   const lo = Math.min(...vals), hi = Math.max(...vals);
   const pad = (hi-lo)*0.08 || 1e-9;
   const y = v => 8 + (H-24)*(hi+pad-v)/((hi-lo)+2*pad);
@@ -303,23 +304,10 @@ function drawMid(cands, pts, sg) {
     g.font = "10px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
     g.fillText(l.kind, 9, y(l.p) - 6);
   }
-  if (useC) {
-    const cw = Math.max(1, (W-70)/cands.length*0.62);
-    cands.forEach((c,i) => {
-      const up = c[4] >= c[1];
-      g.strokeStyle = g.fillStyle = up ? css("--bid") : css("--ask");
-      g.beginPath(); g.moveTo(x(i), y(c[2])); g.lineTo(x(i), y(c[3]));
-      g.stroke();
-      const yo = y(c[1]), yc = y(c[4]);
-      g.fillRect(x(i)-cw/2, Math.min(yo,yc), cw,
-                 Math.max(Math.abs(yc-yo), 1));
-    });
-  } else {
-    g.strokeStyle = css("--ink"); g.lineWidth = 1.5; g.globalAlpha = .85;
-    g.beginPath();
-    pts.forEach((p,i)=> i?g.lineTo(x(i),y(p[1])):g.moveTo(x(i),y(p[1])));
-    g.stroke(); g.globalAlpha = 1;
-  }
+  g.strokeStyle = css("--ink"); g.lineWidth = 1.5; g.globalAlpha = .85;
+  g.beginPath();
+  pts.forEach((p,i)=> i?g.lineTo(x(i),y(p[1])):g.moveTo(x(i),y(p[1])));
+  g.stroke(); g.globalAlpha = 1;
 
   // Сделки: вход треугольником по направлению, стоп и цель отрезками
   // вправо от входа — там, где сделка живёт.
@@ -346,11 +334,307 @@ function drawMid(cands, pts, sg) {
   g.fillText(hi.toPrecision(7), W-60, y(hi));
   g.fillText(lo.toPrecision(7), W-60, y(lo));
   document.getElementById("cap-mid").textContent =
-    (useC ? `${cands.length} мин · ` : "по секундам · ")
-    + ((pts[pts.length-1][1]/pts[0][1]-1)*1e4).toFixed(1) + " б.п. за окно";
+    ((pts[pts.length-1][1]/pts[0][1]-1)*1e4).toFixed(1) + " б.п. за окно";
 }
 
 tick(); timer = setInterval(tick, 1000);
+</script>
+"""
+
+
+CHART = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>График живьём</title>
+<style>
+:root{color-scheme:light dark;
+ --ground:#f6f7f9;--panel:#fff;--ink:#141a21;--muted:#5c6673;--rule:#dfe4ea;
+ --bid:#1f7a56;--ask:#b8452c;--accent:#a97514;--grid:#eef1f5}
+@media(prefers-color-scheme:dark){:root{
+ --ground:#0c1015;--panel:#131922;--ink:#e4e9f0;--muted:#8b95a4;--rule:#212936;
+ --bid:#35a877;--ask:#d4614a;--accent:#d7a24a;--grid:#1a212c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:12px 12px 40px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+h1{font-size:17px;margin:0 8px 0 0}
+button,a.btn{font:inherit;font-size:13px;color:var(--ink);
+ background:var(--panel);border:1px solid var(--rule);padding:4px 9px;
+ cursor:pointer;text-decoration:none}
+button[aria-pressed=true]{border-color:var(--accent);
+ box-shadow:inset 0 -2px 0 var(--accent)}
+.sp{flex:1 1 auto}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ margin-bottom:10px;position:relative}
+.cap{padding:6px 10px;border-bottom:1px solid var(--rule);font-size:11.5px;
+ color:var(--muted);letter-spacing:.05em;text-transform:uppercase;
+ display:flex;justify-content:space-between;gap:8px}
+canvas{display:block;width:100%;touch-action:none}
+#tip{position:absolute;z-index:5;pointer-events:none;display:none;
+ background:var(--panel);border:1px solid var(--rule);padding:7px 9px;
+ font-size:12.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+#tip .r{display:flex;justify-content:space-between;gap:14px}
+#tip .r span:first-child{color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 9px;text-align:right;white-space:nowrap;
+ border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500;font-size:11px;letter-spacing:.05em;
+ text-transform:uppercase;position:sticky;top:0;background:var(--panel)}
+td:first-child,th:first-child{text-align:left}
+.buy{color:var(--bid)} .sell{color:var(--ask)}
+.hist{max-height:300px;overflow-y:auto}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;
+ color:var(--muted);margin:8px 0 12px}
+.sw{display:inline-block;width:20px;height:0;border-top:2px solid;
+ vertical-align:4px;margin-right:6px}
+</style>
+<div class="wrap">
+<div class="bar">
+  <h1 id="ttl" class="mono">…</h1>
+  <span id="syms"></span>
+  <span class="sp"></span>
+  <button id="fit">весь период</button>
+  <button id="live" aria-pressed="true">следить за краем</button>
+  <a class="btn" href="/" id="home">к обзору</a>
+</div>
+<div class="panel">
+  <div class="cap"><span id="cap">минутные свечи · тяните, колесо или щипок — масштаб</span>
+    <span id="cap2" class="mono"></span></div>
+  <canvas id="px" height="420"></canvas>
+  <div id="tip" class="mono"></div>
+</div>
+<div class="legend">
+  <span><span class="sw" style="border-color:var(--accent)"></span>уровень</span>
+  <span><span class="sw" style="border-color:var(--ask)"></span>стоп</span>
+  <span><span class="sw" style="border-color:var(--bid)"></span>цель</span>
+  <span><span class="sw" style="border-color:var(--ink)"></span>вход и выход</span>
+</div>
+<div class="panel">
+  <div class="cap"><span>история сделок — бумажные, наблюдение</span>
+    <span id="cap3" class="mono"></span></div>
+  <div class="hist"><table><thead><tr>
+    <th>время</th><th>сторона</th><th>вход</th><th>стоп</th><th>цель</th>
+    <th>уровень</th><th>отн.</th><th>состояние</th><th>держали</th><th>итог</th>
+  </tr></thead><tbody id="rows"></tbody></table></div>
+</div>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const KEY = Q.get("k") || "";
+let sym = Q.get("sym") || "";
+let data = null, view = null, follow = true, HIT = [];
+const css = k => getComputedStyle(document.documentElement)
+  .getPropertyValue(k).trim();
+const stamp = t => new Date(t*1000).toISOString().slice(11,16);
+
+async function pull() {
+  try {
+    const r = await fetch(`/state?k=${encodeURIComponent(KEY)}&sym=${sym}`);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    data = await r.json();
+  } catch (e) {
+    document.getElementById("cap2").textContent = "нет связи: " + e;
+    return;
+  }
+  sym = data.sym;
+  document.getElementById("ttl").textContent = sym;
+  document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+  document.getElementById("syms").innerHTML = data.symbols.map(x =>
+    `<button data-s="${x}" aria-pressed="${x===sym}">${
+      x.replace("USDT","")}</button>`).join(" ");
+  document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+    sym = b.dataset.s; view = null; follow = true;
+    history.replaceState(null, "", `?k=${encodeURIComponent(KEY)}&sym=${sym}`);
+    pull();
+  });
+  draw(); rows();
+}
+
+function cands() { return (data && data.sig && data.sig.candles) || []; }
+function trades() {
+  const sg = (data && data.sig) || {};
+  return (sg.open||[]).concat(sg.done||[]);
+}
+
+function draw() {
+  const c = cands();
+  const cv = document.getElementById("px");
+  const dpr = Math.min(devicePixelRatio||1, 2);
+  const W = cv.clientWidth, H = 420;
+  cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+  if (c.length < 2) {
+    g.fillStyle = css("--muted"); g.font = "13px system-ui";
+    g.textBaseline = "middle";
+    g.fillText("копим историю — свечи появятся через пару минут", 12, H/2);
+    return;
+  }
+  if (!view) view = { i0: Math.max(0, c.length-90), n: Math.min(90, c.length) };
+  // Следить за краем: если пользователь не уводил окно, оно едет за
+  // последней свечой; уведёт — остаётся там, где поставил.
+  if (follow) view.i0 = Math.max(0, c.length - view.n);
+  view.n = Math.max(15, Math.min(view.n, c.length));
+  view.i0 = Math.max(0, Math.min(c.length - view.n, view.i0));
+  const i0 = Math.round(view.i0), i1 = Math.min(c.length, i0 + view.n);
+
+  const padL=6, padR=70, padT=10, padB=20;
+  const pw = W-padL-padR, ph = H-padT-padB;
+  const lv = (data.sig.levels||[]);
+  const tr = trades();
+  let lo = Infinity, hi = -Infinity;
+  for (let i=i0;i<i1;i++){ lo=Math.min(lo,c[i][3]); hi=Math.max(hi,c[i][2]); }
+  const t0 = c[i0][0], t1 = c[i1-1][0];
+  for (const l of lv) if (l.p>lo*0.99 && l.p<hi*1.01){
+    lo=Math.min(lo,l.p); hi=Math.max(hi,l.p); }
+  for (const m of tr) if (m.t>=t0-3600 && m.t<=t1+3600){
+    lo=Math.min(lo,m.stop,m.target,m.entry);
+    hi=Math.max(hi,m.stop,m.target,m.entry); }
+  const pad=(hi-lo)*0.06||1e-9; lo-=pad; hi+=pad;
+  const y = v => padT + ph*(hi-v)/(hi-lo);
+  const x = i => padL + pw*(i-i0+0.5)/(i1-i0);
+  const xt = t => padL + pw*((t-t0)/Math.max(t1-t0,1)*(i1-i0-1)+0.5)/(i1-i0);
+  const dec = Math.max(2, Math.ceil(-Math.log10((hi-lo)/50)));
+
+  g.strokeStyle = css("--grid"); g.lineWidth = 1;
+  g.fillStyle = css("--muted"); g.font = "11px ui-monospace, Menlo, monospace";
+  g.textBaseline = "middle";
+  for (let k=0;k<=4;k++){
+    const v = hi-(hi-lo)*k/4;
+    g.beginPath(); g.moveTo(padL,y(v)); g.lineTo(W-padR,y(v)); g.stroke();
+    g.fillText(v.toFixed(dec), W-padR+5, y(v));
+  }
+  for (const l of lv) {
+    if (l.p<lo||l.p>hi) continue;
+    g.save(); g.strokeStyle=css("--accent"); g.globalAlpha=.55;
+    g.setLineDash(l.kind==="полка"?[]:[3,3]);
+    g.beginPath(); g.moveTo(padL,y(l.p)); g.lineTo(W-padR,y(l.p)); g.stroke();
+    g.restore();
+    g.fillStyle=css("--muted"); g.fillText(l.kind, padL+4, y(l.p)-7);
+  }
+  const cw = Math.max(1, pw/(i1-i0)*0.62);
+  for (let i=i0;i<i1;i++){
+    const up = c[i][4] >= c[i][1];
+    g.strokeStyle = g.fillStyle = up ? css("--bid") : css("--ask");
+    g.beginPath(); g.moveTo(x(i),y(c[i][2])); g.lineTo(x(i),y(c[i][3]));
+    g.stroke();
+    const yo=y(c[i][1]), yc=y(c[i][4]);
+    g.fillRect(x(i)-cw/2, Math.min(yo,yc), cw, Math.max(Math.abs(yc-yo),1));
+  }
+  HIT = [];
+  for (const m of tr) {
+    if (m.t < t0-60 || m.t > t1+60) continue;
+    const xa = xt(m.t), xb = W-padR;
+    const seg=(v,col,dash)=>{ if(v<lo||v>hi) return;
+      g.save(); g.strokeStyle=col; g.setLineDash(dash); g.lineWidth=1.2;
+      g.beginPath(); g.moveTo(xa,y(v)); g.lineTo(xb,y(v)); g.stroke(); g.restore(); };
+    seg(m.stop, css("--ask"), [3,3]);
+    seg(m.target, css("--bid"), [3,3]);
+    g.fillStyle = css("--ink");
+    const yy=y(m.entry), d = m.long?1:-1;
+    g.beginPath(); g.moveTo(xa,yy); g.lineTo(xa-6,yy+11*d);
+    g.lineTo(xa+6,yy+11*d); g.closePath(); g.fill();
+    const ya=y(Math.max(m.stop,m.target)), yb=y(Math.min(m.stop,m.target));
+    const h2=Math.max(yb-ya,20);
+    HIT.push({m, x0:xa-10, x1:xb, y0:(ya+yb)/2-h2/2, y1:(ya+yb)/2+h2/2});
+  }
+  g.fillStyle = css("--muted"); g.textBaseline="alphabetic";
+  g.fillText(stamp(t0), padL, H-6);
+  g.textAlign="right"; g.fillText(stamp(t1), W-padR, H-6); g.textAlign="left";
+  document.getElementById("cap2").textContent =
+    `${i1-i0} из ${c.length} мин · ${stamp(t0)}—${stamp(t1)}`;
+  document.getElementById("cap3").textContent = `${tr.length} сделок`;
+}
+
+function rows() {
+  const tr = trades();
+  document.getElementById("rows").innerHTML = tr.length ? tr.map(m => `
+    <tr><td class="mono">${stamp(m.t)}</td>
+    <td class="${m.long?"buy":"sell"}">${m.long?"лонг":"шорт"}</td>
+    <td class="mono">${m.entry}</td><td class="mono">${m.stop}</td>
+    <td class="mono">${m.target}</td>
+    <td style="color:var(--muted)">${m.kind}</td>
+    <td class="mono">1:${m.rr}</td><td>${m.state}</td>
+    <td class="mono">${m.held} с</td>
+    <td class="mono ${m.pnl_bp>0?"buy":"sell"}">${
+      m.pnl_bp>0?"+":""}${m.pnl_bp} б.п. · ${m.r>0?"+":""}${m.r} R</td></tr>`
+  ).join("") : `<tr><td colspan="10" style="color:var(--muted)">
+    событий пока нет — детектор ждёт совпадения условий</td></tr>`;
+}
+
+const px = document.getElementById("px"), tip = document.getElementById("tip");
+let drag=null, pinch=null;
+px.addEventListener("pointerdown", e => {
+  px.setPointerCapture(e.pointerId); drag={x:e.clientX, i0:view?view.i0:0}; });
+px.addEventListener("pointermove", e => {
+  if (!drag) { hover(e); return; }
+  const c = cands(); if (!c.length || !view) return;
+  follow = false; document.getElementById("live").setAttribute("aria-pressed","false");
+  const per = px.clientWidth/view.n;
+  view.i0 = Math.max(0, Math.min(c.length-view.n,
+                                 drag.i0 - (e.clientX-drag.x)/per));
+  draw();
+});
+px.addEventListener("pointerup", e => {
+  if (drag && Math.abs(e.clientX-drag.x) < 6) hover(e);
+  drag = null; });
+px.addEventListener("pointerleave", () => { tip.style.display="none"; });
+px.addEventListener("wheel", e => {
+  e.preventDefault(); zoom(e.deltaY>0?1.15:1/1.15, e.offsetX/px.clientWidth);
+}, {passive:false});
+px.addEventListener("touchstart", e => { if (e.touches.length===2){
+  drag=null; pinch=dist(e); } }, {passive:true});
+px.addEventListener("touchmove", e => { if (e.touches.length===2 && pinch){
+  const d=dist(e); zoom(pinch/d, .5); pinch=d; } }, {passive:true});
+px.addEventListener("touchend", () => { pinch=null; });
+function dist(e){ return Math.hypot(
+  e.touches[0].clientX-e.touches[1].clientX,
+  e.touches[0].clientY-e.touches[1].clientY); }
+function zoom(k, anchor) {
+  const c = cands(); if (!c.length || !view) return;
+  const n0 = view.n;
+  view.n = Math.max(15, Math.min(c.length, Math.round(view.n*k)));
+  view.i0 = Math.max(0, Math.min(c.length-view.n, view.i0+(n0-view.n)*anchor));
+  if (view.i0 + view.n < c.length - 1) {
+    follow = false;
+    document.getElementById("live").setAttribute("aria-pressed","false");
+  }
+  draw();
+}
+function hover(e) {
+  const r = px.getBoundingClientRect();
+  const mx = e.clientX-r.left, my = e.clientY-r.top;
+  const h = HIT.find(z => mx>=z.x0 && mx<=z.x1 && my>=z.y0 && my<=z.y1);
+  if (!h) { tip.style.display="none"; return; }
+  const m = h.m;
+  const row=(k,v,cls)=>`<div class="r"><span>${k}</span>
+    <span class="${cls||""}">${v}</span></div>`;
+  tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">${
+      m.long?"лонг":"шорт"} · ${m.state}</div>`
+    + row("время", stamp(m.t)) + row("вход", m.entry)
+    + row("стоп", m.stop) + row("цель", m.target)
+    + row("уровень", `${m.level} (${m.kind})`)
+    + row("отношение", "1:"+m.rr) + row("держали", m.held+" с")
+    + row("итог", `${m.pnl_bp>0?"+":""}${m.pnl_bp} б.п. · ${
+        m.r>0?"+":""}${m.r} R`, m.pnl_bp>0?"buy":"sell");
+  tip.style.display="block";
+  tip.style.left = Math.max(4, Math.min(px.clientWidth-tip.offsetWidth-4,
+                                        mx+14))+"px";
+  tip.style.top = Math.max(4, my+18)+"px";
+}
+document.getElementById("fit").onclick = () => {
+  const c = cands(); if (!c.length) return;
+  view = {i0:0, n:c.length}; follow=false;
+  document.getElementById("live").setAttribute("aria-pressed","false"); draw();
+};
+document.getElementById("live").onclick = e => {
+  follow = !follow; e.target.setAttribute("aria-pressed", String(follow));
+  draw();
+};
+window.addEventListener("resize", draw);
+pull(); setInterval(pull, 1000);
 </script>
 """
 
@@ -380,6 +664,9 @@ def serve(collector, port, token, log):
                 body = json.dumps(collector.snapshot(q.get("sym", [None])[0]),
                                   ensure_ascii=False).encode("utf-8")
                 return self._ok(body, "application/json; charset=utf-8")
+            if u.path == "/chart":
+                return self._ok(CHART.encode("utf-8"),
+                                "text/html; charset=utf-8")
             if u.path in ("/", "/index.html"):
                 return self._ok(PAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")

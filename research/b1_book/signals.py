@@ -215,7 +215,7 @@ class Live:
         self.levels_at = now
 
     # --- события и бумажные сделки ------------------------------------
-    def candles(self, a, minutes=120):
+    def candles(self, a, minutes=240):
         """Минутные свечи из накопленных секунд — для графика страницы."""
         if a is None or len(a) < 60:
             return []
