@@ -93,8 +93,9 @@ const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"], count: 2,
              };
 
 let full = true, calls = 0;
+const seen = [];
 global.fetch = async (url) => {
-  calls++;
+  calls++; seen.push(url);
   const body = url.startsWith("/trades") ? hist : state(full, 60);
   return {ok: true, json: async () => body};
 };
@@ -122,6 +123,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Замена выглядит как исправная страница с графиком в две точки —
   // ровно тот отказ, который не отличить от «данных ещё нет».
   const st = global.__st, bad = [];
+  // Обе страницы обязаны сходить и за состоянием, и за историей сделок.
+  // Функция, которая определена и не вызывается ни откуда, — отказ,
+  // неотличимый от «сделок пока нет»: панель просто пустая.
+  if (!seen.some(u => u.startsWith("/state")))
+    bad.push("страница не запросила состояние");
+  if (!seen.some(u => u.startsWith("/trades")))
+    bad.push("страница не запросила историю сделок (/trades)");
   const buf = st.mid && st.mid.length ? st.mid : st.cand;
   if (!buf || buf.length < 50)
     bad.push(`склейка потеряла историю: осталось ${buf ? buf.length : "—"}`);
