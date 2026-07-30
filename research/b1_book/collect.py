@@ -341,7 +341,11 @@ def stable_token(root):
             return tok
     except OSError:
         pass
-    tok = secrets.token_urlsafe(8)
+    # Алфавит без похожих знаков: ключ читают с экрана глазами, а `l`,
+    # `I`, `1`, `O` и `0` в такой ссылке путаются и дают отказ доступа,
+    # выглядящий как поломка сервера.
+    alpha = "abcdefghjkmnpqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ23456789"
+    tok = "".join(secrets.choice(alpha) for _ in range(12))
     os.makedirs(root, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(tok + "\n")
