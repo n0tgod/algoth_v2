@@ -81,7 +81,8 @@ const state = (full, n) => ({
                   rate_mb_h: 42.5, per_sym_mb_h: 5.3, days_left: 78.9,
                   by_kind: {book: 0.7, trades: 0.4, raw: 0.1}}},
 });
-const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"],
+const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"], count: 2,
+              by_rule: {"лента": null, "стакан": null},
               trades: [trade(1, true), trade(2, true)],
               equity: [[T0 - 300, 20.5, 1.3], [T0 - 200, 41.0, 2.6]],
               stats: {trades: 2, win_rate: 1.0, break_even: 0.31,
@@ -89,7 +90,7 @@ const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"],
                       median_r: 1.3, stop_bp_median: 15.5, rr_median: 2.0,
                       held_median_sec: 120, share_target: 1.0, share_stop: 0.0,
                       share_time: 0.0, cut_by_restart: 1},
-              all_stats: null, all_equity: [], all_trades: 2};
+             };
 
 let full = true, calls = 0;
 global.fetch = async (url) => {

@@ -148,6 +148,7 @@ class Collector:
         self.pending_resub = set()
         self.live = set()
         self.disk = {}
+        self.samples = deque(maxlen=90)   # (момент, байт)
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -375,18 +376,13 @@ class Collector:
         меняется раз в несколько минут, а опрос идёт раз в секунду.
         """
         sym = sym if sym in self.books else None
-        one = self.sig.history(sym) if sym else []
-        allt = [t for s in self.symbols for t in self.sig.history(s)]
-        return {"sym": sym, "symbols": self.symbols,
-                "trades": sorted(one, key=lambda t: -(t.get("closed_at")
-                                                      or t.get("t") or 0)),
-                "stats": paper.summary(one) if sym else None,
-                "by_rule": paper.by_rule(one) if sym else {},
-                "all_by_rule": paper.by_rule(allt),
-                "equity": paper.equity(one) if sym else [],
-                "all_stats": paper.summary(allt),
-                "all_equity": paper.equity(allt),
-                "all_trades": len(allt)}
+        rows = (self.sig.history(sym) if sym
+                else [t for s in self.symbols for t in self.sig.history(s)])
+        rows = sorted(rows, key=lambda t: -(t.get("closed_at")
+                                            or t.get("t") or 0))
+        return {"sym": sym, "symbols": self.symbols, "trades": rows,
+                "stats": paper.summary(rows), "by_rule": paper.by_rule(rows),
+                "equity": paper.equity(rows), "count": len(rows)}
 
     def disk_view(self):
         """Диск в человеческих единицах, с запасом хода в сутках."""
@@ -395,14 +391,18 @@ class Collector:
             return None
         gb = 1 << 30
         rate = d.get("rate_h")
+        # Проверка на `is not None`, а не на истинность: честный ноль —
+        # это измерение («не растёт»), а не отсутствие измерения.
         days = (d["free"] / rate / 24.0) if rate and rate > 0 else None
         n = max(1, d.get("symbols") or 1)
         return {"used_gb": round(d["bytes"] / gb, 2),
                 "free_gb": round(d["free"] / gb, 1),
                 "total_gb": round(d["total"] / gb, 1),
-                "rate_mb_h": round(rate / (1 << 20), 1) if rate else None,
+                "window_min": round((d.get("window_s") or 0) / 60),
+                "rate_mb_h": (round(rate / (1 << 20), 1)
+                              if rate is not None else None),
                 "per_sym_mb_h": (round(rate / n / (1 << 20), 2)
-                                 if rate else None),
+                                 if rate is not None else None),
                 "days_left": round(days, 1) if days else None,
                 "by_kind": {k: round(v / gb, 2)
                             for k, v in (d.get("by_kind") or {}).items()}}
@@ -428,15 +428,20 @@ class Collector:
                         total += n
                         by[kind] = by.get(kind, 0) + n
                 du = shutil.disk_usage(self.w.root)
-                prev, prev_t = self.disk.get("bytes"), self.disk.get("at")
+                now = time.time()
+                # Скорость считается по ОКНУ, а не по соседним замерам:
+                # при закрытии часа файл сжимается, и занятое место
+                # проседает. Разность соседних минут тогда отрицательна,
+                # и «рост» выходит то нулём, то выбросом.
+                self.samples.append((now, total))
                 rate = None
-                if prev is not None and prev_t:
-                    dt = time.time() - prev_t
-                    if dt > 0:
-                        rate = max(0.0, (total - prev) / dt * 3600)
-                self.disk = {"bytes": total, "at": time.time(), "by_kind": by,
+                t0, b0 = self.samples[0]
+                if now - t0 >= 300:
+                    rate = (total - b0) / (now - t0) * 3600
+                self.disk = {"bytes": total, "at": now, "by_kind": by,
                              "free": du.free, "total": du.total,
-                             "rate_h": rate, "symbols": len(self.symbols)}
+                             "rate_h": rate, "window_s": round(now - t0),
+                             "symbols": len(self.symbols)}
             except Exception as e:                        # noqa: BLE001
                 self.log(f"замер диска не вышел: {e}")
 

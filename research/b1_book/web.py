@@ -126,6 +126,14 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
   </div>
 </div>
 <div class="panel" style="margin-top:12px">
+  <div class="cap"><span>итог бумажных сделок по всем монетам</span>
+    <span id="cap-all" class="mono"></span></div>
+  <div id="sum2" class="strip" style="margin:0;border:0"></div>
+  <div id="rules2"></div>
+  <canvas id="eq2" height="110"></canvas>
+  <div class="tape" style="max-height:260px"><table id="alltr"></table></div>
+</div>
+<div class="panel" style="margin-top:12px">
   <div class="cap"><span>журнал сборщика</span></div>
   <div class="log mono" id="log"></div>
 </div>
@@ -320,6 +328,104 @@ function render(d) {
     : `<tr><td style="color:var(--muted);padding:8px 10px">событий пока нет</td></tr>`;
   const lg = document.getElementById("log");
   lg.textContent = (d.log || []).join("\n");
+}
+
+// Общий итог по всем монетам. Тянется отдельным запросом раз в
+// пятнадцать секунд: история меняется раз в минуты, а опрос идёт раз в
+// секунду, и возить её вместе с состоянием значит платить за неё
+// каждую секунду.
+const ALL = {trades:[], stats:null, by_rule:{}, equity:[], at:0, busy:false};
+async function pullAll() {
+  if (ALL.busy || Date.now() - ALL.at < 15000) return;
+  ALL.busy = true;
+  try {
+    const r = await fetch(`/trades?k=${encodeURIComponent(KEY)}`);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const h = await r.json();
+    ALL.trades = h.trades || []; ALL.stats = h.stats;
+    ALL.by_rule = h.by_rule || {}; ALL.equity = h.equity || [];
+    ALL.at = Date.now();
+  } catch (e) { /* тихо: следующий круг попробует снова */ }
+  finally { ALL.busy = false; }
+  renderAll();
+}
+
+function renderAll() {
+  const pc = v => (v*100).toFixed(0) + " %";
+  const s = ALL.stats;
+  document.getElementById("cap-all").textContent =
+    `${ALL.trades.length} сделок всего`;
+  const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
+    <div class="v mono ${cls||""}">${v}</div></div>`;
+  document.getElementById("sum2").innerHTML = !s
+    ? cell("закрытых сделок", "пока нет")
+    : cell("сделок", s.trades)
+      // Доля побед сравнивается с безубыточной, а не с половиной: при
+      // отношении 1:3 выигрывать надо каждую четвёртую.
+      + cell("побед", pc(s.win_rate),
+             s.win_rate >= s.break_even ? "good" : "bad")
+      + cell("безубыточно", pc(s.break_even))
+      + cell("ожидание", (s.expectancy_bp>0?"+":"")
+             + s.expectancy_bp.toFixed(1) + " б.п.",
+             s.expectancy_bp > 0 ? "good" : "bad")
+      + cell("в риске", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
+             + " R", s.expectancy_r > 0 ? "good" : "bad")
+      + cell("цель/стоп/время",
+             `${pc(s.share_target)}/${pc(s.share_stop)}/${pc(s.share_time)}`)
+      + (s.cut_by_restart ? cell("оборвано", s.cut_by_restart, "bad") : "");
+  const br = ALL.by_rule || {};
+  document.getElementById("rules2").innerHTML =
+    `<div style="padding:7px 10px;font-size:12.5px;color:var(--muted)">`
+    + (Object.keys(br).map(r => {
+        const x = br[r];
+        return x ? `<b>${r}</b>: ${x.trades} сд., побед ${pc(x.win_rate)} `
+          + `при безубыточных ${pc(x.break_even)}, ожидание ${
+            x.expectancy_bp>0?"+":""}${x.expectancy_bp.toFixed(1)} б.п.`
+          : `<b>${r}</b>: сделок нет`;
+      }).join(" · ") || "&nbsp;") + `</div>`;
+  document.getElementById("alltr").innerHTML = ALL.trades.length
+    ? ALL.trades.slice(0, 60).map(x => `<tr>
+        <td class="mono" style="color:var(--muted)">${
+          new Date(x.t*1000).toISOString().slice(5,16).replace("T"," ")}</td>
+        <td class="mono">${(x.sym||"").replace("USDT","")}</td>
+        <td>${x.rule || "лента"}</td>
+        <td class="mono ${x.long?"buy":"sell"}">${x.long?"лонг":"шорт"}</td>
+        <td class="mono">1:${x.rr}</td>
+        <td class="mono">${x.state}</td>
+        <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${x.pnl_bp == null ? "—"
+          : (x.pnl_bp>0?"+":"") + x.pnl_bp + " б.п. · "
+            + (x.r>0?"+":"") + x.r + " R"}</td></tr>`).join("")
+    : `<tr><td style="color:var(--muted);padding:8px 10px">
+        закрытых сделок пока нет</td></tr>`;
+  drawEqAll();
+}
+
+function drawEqAll() {
+  const cv = document.getElementById("eq2"), pts = ALL.equity || [];
+  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 110;
+  cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+  g.fillStyle = css("--muted"); g.font = "12px system-ui";
+  g.textBaseline = "middle";
+  if (pts.length < 2) {
+    g.fillText("кривая появится после двух закрытых сделок", 10, H/2);
+    return;
+  }
+  const v = pts.map(p => p[1]);
+  const lo = Math.min(0, ...v), hi = Math.max(0, ...v);
+  const y = q => 8 + (H-26)*(hi-q)/((hi-lo)||1e-9);
+  const x = i => 6 + (W-70)*i/(pts.length-1);
+  g.strokeStyle = css("--grid");
+  g.beginPath(); g.moveTo(6, y(0)); g.lineTo(W-64, y(0)); g.stroke();
+  g.strokeStyle = v[v.length-1] >= 0 ? css("--bid") : css("--ask");
+  g.lineWidth = 1.6; g.beginPath();
+  v.forEach((q,i) => i ? g.lineTo(x(i), y(q)) : g.moveTo(x(i), y(q)));
+  g.stroke();
+  g.fillStyle = css("--muted");
+  g.font = "11px ui-monospace, Menlo, monospace";
+  g.fillText(hi.toFixed(0) + " б.п.", W-60, y(hi));
+  g.fillText(lo.toFixed(0) + " б.п.", W-60, y(lo));
 }
 
 // Диск: сколько занято, с какой скоростью растёт и надолго ли хватит.
