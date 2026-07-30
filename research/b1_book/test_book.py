@@ -241,6 +241,45 @@ def test_warm_start_restores_history():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_warm_start_survives_truncated_file():
+    """Обрубленный хвост файла не вправе уносить запуск.
+
+    `pkill` убивает сборщик посреди записи, и последний gzip остаётся
+    недописанным. Первая версия ловила только OSError, а обрыв бросает
+    EOFError — и падение подъёма истории уносило вместе с собой
+    страницу наблюдения. Владелец увидел это как «ссылка упала».
+    """
+    import shutil
+    import tempfile
+    import time as _time
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    try:
+        now = int(_time.time())
+        a = C.Collector(["TEST"], [], root, lambda m: None)
+        for i in range(1200):
+            t = {"ts": (now - 1200 + i) * 1000, "s": "TEST",
+                 "side": 1 if i % 3 else -1, "p": 100 + 0.01 * (i % 9),
+                 "v": 1.0}
+            a.w.write("trades", "TEST", t, ts=t["ts"] / 1000.0)
+        a.w.close()
+        d = os.path.join(root, "trades", "TEST")
+        path = os.path.join(d, sorted(os.listdir(d))[-1])
+        raw = open(path, "rb").read()
+        open(path, "wb").write(raw[:int(len(raw) * 0.6)])
+
+        b = C.Collector(["TEST"], [], root, lambda m: None)
+        C.warm_start(root, ["TEST"], b, lambda m: None)
+        b.sig.by["TEST"].close_second(now)
+        v = b.sig.by["TEST"].view()
+        check(f"история поднялась частично ({v['history_min']} мин)",
+              v["history_min"] > 5, str(v["history_min"]))
+        b.w.close()
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -261,6 +300,7 @@ def main():
     test_metrics_explain_refusal()
     print("перезапуск")
     test_warm_start_restores_history()
+    test_warm_start_survives_truncated_file()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

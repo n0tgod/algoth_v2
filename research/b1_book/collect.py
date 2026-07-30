@@ -334,6 +334,30 @@ def warm_start(root, symbols, collector, log, hours=4):
     кода обнуляла наблюдение, а уровни появлялись заново только через
     треть часа.
     """
+    def rows_of(path, cutoff_ts, pick):
+        """Прочитать строки файла, не падая на обрубленном хвосте.
+
+        `pkill` убивает сборщик посреди записи, и последний gzip
+        остаётся недописанным: чтение бросает `EOFError`, который не
+        является `OSError`. Обрыв в конце файла — нормальное состояние
+        после аварийной остановки, а не причина терять запуск.
+        """
+        out = []
+        try:
+            with gzip.open(path, "rt", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    v = pick(r, cutoff_ts)
+                    if v is not None:
+                        out.append(v)
+        except Exception as e:                            # noqa: BLE001
+            log(f"  хвост файла {os.path.basename(path)} обрублен "
+                f"({type(e).__name__}), прочитано {len(out)}")
+        return out
+
     cutoff = time.time() - hours * 3600
     hh = [datetime.fromtimestamp(cutoff + i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(hours + 2)]
@@ -342,42 +366,25 @@ def warm_start(root, symbols, collector, log, hours=4):
         rows = []
         for h in hh:
             path = os.path.join(root, "trades", sym, f"{h}.jsonl.gz")
-            if not os.path.exists(path):
-                continue
-            try:
-                with gzip.open(path, "rt", encoding="utf-8") as f:
-                    for line in f:
-                        try:
-                            t = json.loads(line)
-                        except ValueError:
-                            continue
-                        if t.get("ts", 0) / 1000.0 >= cutoff:
-                            rows.append(t)
-            except OSError:
-                continue
-        rows.sort(key=lambda x: x["ts"])
+            if os.path.exists(path):
+                rows += rows_of(path, cutoff, lambda r, c:
+                                r if r.get("ts", 0) / 1000.0 >= c else None)
+        rows.sort(key=lambda x: x.get("ts", 0))
         for t in rows:
             collector.sig.on_trade(t)
         n_tr += len(rows)
         # Середина для линии обзора — из посекундных снимков стакана.
         mids = []
+        recent = time.time() - 900
         for h in hh:
             path = os.path.join(root, "book", sym, f"{h}.jsonl.gz")
-            if not os.path.exists(path):
-                continue
-            try:
-                with gzip.open(path, "rt", encoding="utf-8") as f:
-                    for line in f:
-                        try:
-                            r = json.loads(line)
-                        except ValueError:
-                            continue
-                        t = r.get("t", 0)
-                        if t >= time.time() - 900 and r.get("bid"):
-                            mids.append((round(t, 1),
-                                         (r["bid"] + r["ask"]) / 2.0))
-            except OSError:
-                continue
+            if os.path.exists(path):
+                mids += rows_of(
+                    path, recent,
+                    lambda r, c: ((round(r["t"], 1),
+                                   (r["bid"] + r["ask"]) / 2.0)
+                                  if r.get("t", 0) >= c and r.get("bid")
+                                  and r.get("ask") else None))
         mids.sort()
         collector.mid[sym].extend(mids[-900:])
         n_bk += len(mids)
@@ -493,10 +500,17 @@ def main():
     log(f"каталог {a.out}")
     c = Collector(syms, raw, a.out, log)
     c.lines = lines
-    warm_start(a.out, syms, c, log)
     if a.http:
         token = a.token or stable_token(a.out)
         web.serve(c, a.http, token, log)
+    # Подъём истории — удобство, а не условие работы. Его падение не
+    # вправе уносить ни сбор, ни страницу: именно страница и нужна,
+    # чтобы увидеть, что случилось.
+    try:
+        warm_start(a.out, syms, c, log)
+    except Exception as e:                                # noqa: BLE001
+        log(f"поднять историю не вышло ({type(e).__name__}: {e}); "
+            f"сбор продолжается с нуля")
     try:
         c.run(a.hours)
     except KeyboardInterrupt:
