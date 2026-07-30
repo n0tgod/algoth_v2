@@ -54,13 +54,14 @@
 | A0, A1 | стандартная библиотека |
 | A2 | `pyarrow` |
 | A3, A4, R1+ | `duckdb`, `numpy` |
+| B1 (сбор стакана) | `websocket-client` |
 
 Окружение создаётся один раз и живёт рядом с репозиторием:
 
 ```bash
 cd ~/algoth_v2
 [ -d .venv ] || python3 -m venv .venv
-.venv/bin/pip install -q numpy pyarrow duckdb
+.venv/bin/pip install -q numpy pyarrow duckdb websocket-client
 ```
 
 Дальше **все прогоны идут через `.venv/bin/python`, а не через `python3`**:
@@ -72,10 +73,39 @@ cd ~/algoth_v2
 Команда идемпотентна: если окружение уже есть, `venv` не пересоздаётся, а `pip` ничего не доставляет. Проверка на месте:
 
 ```bash
-.venv/bin/python -c "import numpy, duckdb, pyarrow; print('зависимости на месте')"
+.venv/bin/python -c "import numpy, duckdb, pyarrow, websocket; print('зависимости на месте')"
 ```
 
 Отчёты — исключение и зависимостей не требуют: все числа лежат в JSON-артефактах прогонов, поэтому `report.py` собирается любым `python3`.
+
+## Запуск: сбор живых данных
+
+Сборщик стакана — не прогон: он живёт неделями и ничего не публикует, а
+пишет ряды на диск. Поэтому запускается не через `tools/run.sh`:
+
+```bash
+cd ~/algoth_v2
+nohup .venv/bin/python research/b1_book/collect.py \
+  --symbols BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,DOGEUSDT,ARBUSDT,LINKUSDT,AVAXUSDT \
+  --raw ARBUSDT \
+  > research/b1_book/out/collect.log 2>&1 &
+```
+
+Проверить, что он не молчит впустую:
+
+```bash
+tail -f ~/algoth_v2/research/b1_book/out/collect.log     # строка раз в минуту
+cat ~/algoth_v2/research/b1_book/out/status.json         # состояние книг
+du -sh ~/algoth_v2/research/b1_book/out/                 # сколько занял
+```
+
+Перед первым запуском — проверка пути записи без сети:
+
+```bash
+.venv/bin/python research/b1_book/collect.py --selftest
+```
+
+Ряды в git не идут (как свечи и funding): публикуются только отчёты.
 
 ## Запуск: прогон и публикация одной командой
 
