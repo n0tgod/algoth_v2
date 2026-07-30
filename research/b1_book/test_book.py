@@ -280,6 +280,119 @@ def test_warm_start_survives_truncated_file():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_store_writes_plain_and_packs_on_hour():
+    """Текущий час лежит простым текстом, прошлый — сжатым.
+
+    Смысл именно в этом: обрыв процесса на простом файле стоит одной
+    строки, а на дозаписываемом архиве — всего хвоста файла.
+    """
+    import shutil
+    import tempfile
+    import time as _time
+    from store import Writer, read_jsonl
+
+    root = tempfile.mkdtemp()
+    try:
+        w = Writer(root)
+        h0 = 1_700_000_000
+        for i in range(10):
+            w.write("book", "TEST", {"i": i}, ts=h0 + i)
+        p = w.path("book", "TEST", w.hour(h0))
+        check("текущий час не сжат", os.path.exists(p), p)
+        w.flush()
+        check("записи читаются", len(read_jsonl(p)) == 10,
+              str(len(read_jsonl(p))))
+        w.write("book", "TEST", {"i": 10}, ts=h0 + 3600)   # смена часа
+        for _ in range(50):
+            if os.path.exists(p + ".gz"):
+                break
+            _time.sleep(0.05)
+        w.close()
+        check("прошлый час сжат", os.path.exists(p + ".gz"),
+              str(os.listdir(os.path.dirname(p))))
+        check("исходник убран", not os.path.exists(p))
+        check("сжатое читается", len(read_jsonl(p + ".gz")) == 10,
+              str(len(read_jsonl(p + ".gz"))))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_store_hour_not_counted_twice():
+    """Час, лежащий и простым, и сжатым, не удваивается.
+
+    Сжатие делает `rename`, а потом убирает исходник; остановка между
+    этими шагами оставляет оба файла. Подъём истории читал их подряд и
+    складывал — то есть удваивал объём ровно в той величине, в разах от
+    которой считаются пороги детектора.
+    """
+    import gzip as _gzip
+    import json as _json
+    import shutil
+    import tempfile
+    from store import read_hour
+
+    root = tempfile.mkdtemp()
+    try:
+        h = "2026-07-30-12"
+        body = "".join(_json.dumps({"i": i}) + "\n" for i in range(20))
+        open(os.path.join(root, f"{h}.jsonl"), "w").write(body)
+        with _gzip.open(os.path.join(root, f"{h}.jsonl.gz"), "wt") as g:
+            g.write(body)
+        rows = read_hour(root, h)
+        check(f"час прочитан один раз ({len(rows)} записей)",
+              len(rows) == 20, str(len(rows)))
+        # А разное содержимое — наследство прежнего хранения — теряться
+        # не должно: оба файла настоящие.
+        open(os.path.join(root, f"{h}.jsonl"), "w").write(
+            body + _json.dumps({"i": 99}) + "\n")
+        check("новая запись не потеряна",
+              len(read_hour(root, h)) == 21, str(len(read_hour(root, h))))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_store_salvages_corrupted_archive():
+    """Порча В СЕРЕДИНЕ архива не вправе уносить то, что записано после.
+
+    Так выглядели файлы прошлого сбора: дозапись членами плюс `pkill`
+    посреди записи. Обычный читатель останавливается на первом
+    испорченном члене — то есть теряет весь хвост, а не последнюю
+    строку. Проверка требует, чтобы целые члены были подняты все.
+    """
+    import gzip as _gzip
+    import io
+    import json as _json
+    import shutil
+    import tempfile
+    from store import read_jsonl
+
+    root = tempfile.mkdtemp()
+    try:
+        parts = []
+        for k in range(3):
+            buf = io.BytesIO()
+            with _gzip.GzipFile(fileobj=buf, mode="wb") as g:
+                for i in range(k * 50, k * 50 + 50):
+                    g.write((_json.dumps({"i": i}) + "\n").encode())
+            parts.append(buf.getvalue())
+        raw = parts[0][:len(parts[0]) // 2] + parts[1] + parts[2]
+        p = os.path.join(root, "битый.jsonl.gz")
+        open(p, "wb").write(raw)
+
+        naive = None
+        try:
+            with _gzip.open(p, "rt", encoding="utf-8") as f:
+                naive = sum(1 for _ in f)
+        except Exception as e:                             # noqa: BLE001
+            naive = f"падение {type(e).__name__}"
+        rows = read_jsonl(p)
+        got = {r["i"] for r in rows if isinstance(r, dict) and "i" in r}
+        check(f"целые члены подняты ({len(rows)} записей, наивно {naive})",
+              set(range(50, 150)) <= got, str(sorted(got)[:5]))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -298,6 +411,10 @@ def main():
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
+    print("хранение")
+    test_store_writes_plain_and_packs_on_hour()
+    test_store_hour_not_counted_twice()
+    test_store_salvages_corrupted_archive()
     print("перезапуск")
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()

@@ -54,6 +54,7 @@ import gzip
 import json
 import os
 import secrets
+import signal
 import ssl
 import sys
 import threading
@@ -67,6 +68,7 @@ OUT = os.path.join(HERE, "out")
 sys.path.insert(0, HERE)
 from book import BANDS, Book, parse_trades                 # noqa: E402
 from signals import Signals                               # noqa: E402
+from store import Writer, read_hour, read_jsonl            # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
@@ -78,51 +80,12 @@ SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
            "ARBUSDT", "LINKUSDT", "AVAXUSDT")
 
 
-class Writer:
-    """Пишет строки JSON в почасовые сжатые файлы, по файлу на символ."""
-
-    def __init__(self, root):
-        self.root = root
-        self.files = {}
-        self.lock = threading.Lock()
-
-    def hour(self, ts):
-        return datetime.fromtimestamp(ts, timezone.utc).strftime(
-            "%Y-%m-%d-%H")
-
-    def write(self, kind, symbol, obj, ts=None):
-        ts = ts if ts is not None else time.time()
-        key = (kind, symbol, self.hour(ts))
-        with self.lock:
-            f = self.files.get(key)
-            if f is None:
-                for k in [k for k in self.files if k[:2] == (kind, symbol)]:
-                    self.files.pop(k).close()      # час сменился
-                d = os.path.join(self.root, kind, symbol)
-                os.makedirs(d, exist_ok=True)
-                f = gzip.open(os.path.join(d, f"{key[2]}.jsonl.gz"), "at",
-                              encoding="utf-8")
-                self.files[key] = f
-            f.write(json.dumps(obj, separators=(",", ":")) + "\n")
-
-    def flush(self):
-        with self.lock:
-            for f in self.files.values():
-                f.flush()
-
-    def close(self):
-        with self.lock:
-            for f in self.files.values():
-                f.close()
-            self.files.clear()
-
-
 class Collector:
     def __init__(self, symbols, raw_symbols, root, log):
         self.symbols = list(symbols)
         self.raw = set(raw_symbols)
         self.books = {s: Book(s) for s in symbols}
-        self.w = Writer(root)
+        self.w = Writer(root, log)
         self.log = log
         self.n_msg = 0
         self.n_trades = 0
@@ -334,28 +297,13 @@ def warm_start(root, symbols, collector, log, hours=4):
     кода обнуляла наблюдение, а уровни появлялись заново только через
     треть часа.
     """
-    def rows_of(path, cutoff_ts, pick):
-        """Прочитать строки файла, не падая на обрубленном хвосте.
-
-        `pkill` убивает сборщик посреди записи, и последний gzip
-        остаётся недописанным: чтение бросает `EOFError`, который не
-        является `OSError`. Обрыв в конце файла — нормальное состояние
-        после аварийной остановки, а не причина терять запуск.
-        """
+    def rows_of(kind, sym, hour, cutoff_ts, pick):
         out = []
-        try:
-            with gzip.open(path, "rt", encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        r = json.loads(line)
-                    except ValueError:
-                        continue
-                    v = pick(r, cutoff_ts)
-                    if v is not None:
-                        out.append(v)
-        except Exception as e:                            # noqa: BLE001
-            log(f"  хвост файла {os.path.basename(path)} обрублен "
-                f"({type(e).__name__}), прочитано {len(out)}")
+        d = os.path.join(root, kind, sym)
+        for r in read_hour(d, hour, log=lambda m: log("  " + m)):
+            v = pick(r, cutoff_ts)
+            if v is not None:
+                out.append(v)
         return out
 
     cutoff = time.time() - hours * 3600
@@ -365,10 +313,8 @@ def warm_start(root, symbols, collector, log, hours=4):
     for sym in symbols:
         rows = []
         for h in hh:
-            path = os.path.join(root, "trades", sym, f"{h}.jsonl.gz")
-            if os.path.exists(path):
-                rows += rows_of(path, cutoff, lambda r, c:
-                                r if r.get("ts", 0) / 1000.0 >= c else None)
+            rows += rows_of("trades", sym, h, cutoff, lambda r, c:
+                            r if r.get("ts", 0) / 1000.0 >= c else None)
         rows.sort(key=lambda x: x.get("ts", 0))
         for t in rows:
             collector.sig.on_trade(t)
@@ -377,14 +323,12 @@ def warm_start(root, symbols, collector, log, hours=4):
         mids = []
         recent = time.time() - 900
         for h in hh:
-            path = os.path.join(root, "book", sym, f"{h}.jsonl.gz")
-            if os.path.exists(path):
-                mids += rows_of(
-                    path, recent,
-                    lambda r, c: ((round(r["t"], 1),
-                                   (r["bid"] + r["ask"]) / 2.0)
-                                  if r.get("t", 0) >= c and r.get("bid")
-                                  and r.get("ask") else None))
+            mids += rows_of(
+                "book", sym, h, recent,
+                lambda r, c: ((round(r["t"], 1),
+                               (r["bid"] + r["ask"]) / 2.0)
+                              if r.get("t", 0) >= c and r.get("bid")
+                              and r.get("ask") else None))
         mids.sort()
         collector.mid[sym].extend(mids[-900:])
         n_bk += len(mids)
@@ -450,8 +394,7 @@ def selftest(root):
         for f in files:
             path = os.path.join(base, f)
             size = os.path.getsize(path)
-            with gzip.open(path, "rt", encoding="utf-8") as fh:
-                rows = sum(1 for _ in fh)
+            rows = len(read_jsonl(path))
             print(f"  {os.path.relpath(path, root)}: {rows} записей, "
                   f"{size} байт")
             n += rows
@@ -500,12 +443,31 @@ def main():
     log(f"каталог {a.out}")
     c = Collector(syms, raw, a.out, log)
     c.lines = lines
+
+    # `pkill` шлёт TERM, и без обработчика процесс умирал, не закрыв
+    # файлы: последняя запись терялась, а раньше — портила весь архив.
+    def bye(signum, frame):
+        log(f"сигнал {signum}: закрываю файлы")
+        c.stop.set()
+        c.w.close()
+        if c.ws is not None:
+            try:
+                c.ws.close()
+            except Exception:                             # noqa: BLE001
+                pass
+        raise SystemExit(0)
+
+    signal.signal(signal.SIGTERM, bye)
+    signal.signal(signal.SIGINT, bye)
     if a.http:
         token = a.token or stable_token(a.out)
         web.serve(c, a.http, token, log)
     # Подъём истории — удобство, а не условие работы. Его падение не
     # вправе уносить ни сбор, ни страницу: именно страница и нужна,
     # чтобы увидеть, что случилось.
+    n = c.w.pack_stale()
+    if n:
+        log(f"сжато незакрытых часов от прошлых запусков: {n}")
     try:
         warm_start(a.out, syms, c, log)
     except Exception as e:                                # noqa: BLE001
