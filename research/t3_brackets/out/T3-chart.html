@@ -72,6 +72,14 @@ tbody tr[aria-selected="true"] { background:var(--grid);
   vertical-align:4px; margin-right:6px; }
 footer { color:var(--muted); font-size:12.5px; border-top:1px solid var(--rule);
   padding-top:12px; margin-top:18px; }
+#tip { position:absolute; z-index:5; pointer-events:none; display:none;
+  background:var(--panel); border:1px solid var(--rule); padding:8px 10px;
+  font-size:12.5px; line-height:1.45; box-shadow:0 6px 24px rgba(0,0,0,.18);
+  max-width:260px; }
+#tip .t { font-weight:650; margin-bottom:3px; }
+#tip .r { display:flex; justify-content:space-between; gap:14px; }
+#tip .r span:first-child { color:var(--muted); }
+.holder { position:relative; }
 </style>
 
 <div class="wrap">
@@ -89,10 +97,11 @@ footer { color:var(--muted); font-size:12.5px; border-top:1px solid var(--rule);
   <button id="fit" title="показать все сделки символа">весь период</button>
 </div>
 
-<div class="panel">
+<div class="panel holder">
   <div class="cap"><span id="cap-sym" class="mono"></span>
     <span id="cap-range" class="mono"></span></div>
   <canvas id="px" height="380"></canvas>
+  <div id="tip" class="mono"></div>
 </div>
 
 <div class="panel">
@@ -308,6 +317,7 @@ function draw() {
     g.globalAlpha = 1;
   }
 
+  HIT.length = 0;
   const cw = Math.max(1, pw / (i1 - i0) * 0.66);
   for (let i = i0; i < i1; i++) {
     const up = s.c[i] >= s.o[i];
@@ -337,6 +347,14 @@ function draw() {
     g.moveTo(xa, yy + 7 * d); g.lineTo(xa - 5, yy + 14 * d);
     g.lineTo(xa + 5, yy + 14 * d); g.closePath(); g.fill();
     g.fillRect(xb - 2.5, y(t.exit) - 2.5, 5, 5);
+    // Область сделки для подсказки: от входа до выхода, между стопом и
+    // целью, но не тоньше пальца — иначе попасть в неё невозможно.
+    const ya = y(Math.max(t.stop, t.target)), yb = y(Math.min(t.stop, t.target));
+    const h2 = Math.max(yb - ya, 18);
+    HIT.push({ t, x0: xa - 8, x1: Math.max(xb, xa + 8) + 8,
+               y0: (ya + yb) / 2 - h2 / 2, y1: (ya + yb) / 2 + h2 / 2 });
+
+    if (t === tr) label(g, t, xa, xb, y, W - padR);
   }
 
   g.fillStyle = css("--muted");
@@ -354,6 +372,32 @@ function draw() {
     stamp(s.t[i0]) + " — " + stamp(s.t[i1 - 1]);
   drawEquity();
 }
+
+function label(g, t, xa, xb, y, right) {
+  // Подписи выбранной сделки: где вход, где выход и с чем вышли. Только
+  // у выбранной — иначе при десятке сделок в окне читать нечего.
+  const chip = (x, yy, text, color, align) => {
+    g.font = "11px ui-monospace, Menlo, monospace";
+    const w = g.measureText(text).width + 10;
+    let x0 = align === "right" ? x - w : x;
+    x0 = Math.max(2, Math.min(right - w, x0));
+    g.fillStyle = css("--panel");
+    g.fillRect(x0, yy - 8, w, 16);
+    g.strokeStyle = color; g.lineWidth = 1;
+    g.strokeRect(x0 + .5, yy - 7.5, w - 1, 15);
+    g.fillStyle = color; g.textBaseline = "middle";
+    g.fillText(text, x0 + 5, yy);
+  };
+  const d = t.side < 0 ? 1 : -1;
+  chip(xa, y(t.entry) + 22 * d,
+       (t.side < 0 ? "вход · лонг " : "вход · шорт ") + t.entry,
+       css("--ink"), "left");
+  chip(xb + 4, y(t.exit),
+       "выход " + t.exit + " · " + t.outcome + " · "
+       + (t.net > 0 ? "+" : "") + t.net + " б.п.",
+       t.net > 0 ? css("--up") : css("--down"), "left");
+}
+
 
 function drawEquity() {
   const cv = document.getElementById("eq");
@@ -399,19 +443,57 @@ function drawEquity() {
 // Тяга и масштаб: мышь и палец одинаково, через указатели.
 const px = document.getElementById("px");
 let drag = null, pinch = null;
+const HIT = [];
+const tip = document.getElementById("tip");
+
+function showTip(e) {
+  const r = px.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const hit = HIT.find(h => mx >= h.x0 && mx <= h.x1
+                         && my >= h.y0 && my <= h.y1);
+  if (!hit) { tip.style.display = "none"; return; }
+  const t = hit.t;
+  const row = (k, v, cls) => `<div class="r"><span>${k}</span>
+    <span class="${cls || ""}">${v}</span></div>`;
+  tip.innerHTML =
+    `<div class="t">${t.sym} · ${t.side < 0 ? "лонг" : "шорт"}</div>` +
+    row("время", t.t.slice(5, 19).replace("T", " ")) +
+    row("вход", t.entry) +
+    row("выход", t.exit) +
+    row("стоп", t.stop) +
+    row("цель", t.target) +
+    row("уровень", t.level) +
+    row("отношение", "1:" + t.rr) +
+    row("держали", t.held + " с") +
+    row("исход", t.outcome) +
+    row("итог", (t.net > 0 ? "+" : "") + t.net + " б.п.",
+        t.net > 0 ? "good" : "bad");
+  tip.style.display = "block";
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  tip.style.left = Math.max(4, Math.min(px.clientWidth - tw - 4,
+                                        mx + 14)) + "px";
+  tip.style.top = Math.max(4, Math.min(px.clientHeight - th + 30,
+                                       my + 30)) + "px";
+}
 px.addEventListener("pointerdown", e => {
   px.setPointerCapture(e.pointerId);
   drag = { x: e.clientX, i0: view.i0 };
 });
 px.addEventListener("pointermove", e => {
-  if (!drag) return;
+  if (!drag) { showTip(e); return; }
   const s = SER[sym];
   const per = px.clientWidth / view.n;
   view.i0 = Math.max(0, Math.min(s.t.length - view.n,
                                  drag.i0 - (e.clientX - drag.x) / per));
   draw();
 });
-px.addEventListener("pointerup", () => { drag = null; });
+px.addEventListener("pointerup", e => {
+  // На телефоне «наведения» нет: короткое касание без протяжки
+  // показывает ту же подсказку.
+  if (drag && Math.abs(e.clientX - drag.x) < 6) showTip(e);
+  drag = null;
+});
+px.addEventListener("pointerleave", () => { tip.style.display = "none"; });
 px.addEventListener("pointercancel", () => { drag = null; });
 px.addEventListener("wheel", e => {
   e.preventDefault();
