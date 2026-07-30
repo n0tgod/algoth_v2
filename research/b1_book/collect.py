@@ -87,6 +87,9 @@ WS_URL = "wss://stream.bybit.com/v5/public/linear"
 DEPTH = 50
 DEEP_DEPTH = 500
 DEEP = ("BTCUSDT", "ETHUSDT")
+# Лестница отступления: площадка может не принять глубину, и
+# тогда берём мельче, а не остаёмся без стакана вовсе.
+DEPTH_LADDER = (500, 200, 50)
 PING_SEC = 20
 SAMPLE_SEC = 1
 STATUS_SEC = 5
@@ -135,6 +138,7 @@ class Collector:
         self.stop = threading.Event()
         self.ws = None
         self.pending_resub = set()
+        self.live = set()
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -159,19 +163,76 @@ class Collector:
             out.append(f"publicTrade.{s}")
         return out
 
+    def send_sub(self, ws, topics):
+        """Подписка по одной теме, с именем темы в `req_id`.
+
+        Одним запросом на все шестнадцать площадка отвергает **весь**
+        запрос из-за одной негодной темы: так глубокая тема стакана
+        погасила сбор целиком, и в журнале это выглядело как
+        «подключено, тем 16» и дальше тишина. По одной — отказ стоит
+        своей темы и называет её.
+        """
+        for t in topics:
+            try:
+                ws.send(json.dumps({"op": "subscribe", "args": [t],
+                                    "req_id": t}))
+            except Exception as e:                        # noqa: BLE001
+                self.log(f"не отправилась подписка {t}: {e}")
+
     def on_open(self, ws):
-        self.log(f"подключено, тем {len(self.topics())}")
-        ws.send(json.dumps({"op": "subscribe", "args": self.topics()}))
+        self.live = set()
+        self.log(f"подключено, подписываюсь на {len(self.topics())} тем")
+        self.send_sub(ws, self.topics())
+
+    def on_op(self, ws, msg):
+        """Ответ на служебную команду. Молчать о нём нельзя.
+
+        Отклонённая подписка неотличима от тишины рынка: данных нет в
+        обоих случаях. Раньше такие сообщения выбрасывались, потому что
+        у них нет поля `topic`.
+        """
+        if msg.get("op") == "pong" or msg.get("ret_msg") == "pong":
+            return
+        ok, req = msg.get("success"), msg.get("req_id") or ""
+        if ok is False:
+            self.log(f"подписка отклонена: {req or '?'} — "
+                     f"{msg.get('ret_msg') or msg}")
+            self.downgrade(ws, req)
+        elif ok is True and req:
+            self.live.add(req)
+
+    def downgrade(self, ws, topic):
+        """Стакан не принят на этой глубине — пробуем мельче.
+
+        Список глубин у площадки свой, и он может отличаться от того,
+        что написано в документации. Сбор не вправе от этого умирать:
+        мельче — хуже, но это данные, а отказ — их отсутствие.
+        """
+        if not topic.startswith("orderbook."):
+            return
+        try:
+            _, d, sym = topic.split(".", 2)
+            d = int(d)
+        except ValueError:
+            return
+        nxt = next((x for x in DEPTH_LADDER if x < d), None)
+        if nxt is None or sym not in self.books:
+            self.log(f"{sym}: глубины кончились, стакан собираться не будет")
+            return
+        self.depth[sym] = nxt
+        self.log(f"{sym}: глубина {d} не принята, пробую {nxt}")
+        self.send_sub(ws, [f"orderbook.{nxt}.{sym}"])
 
     def on_message(self, ws, raw):
         try:
             msg = json.loads(raw)
         except ValueError:
             return
-        self.last_msg = time.time()
         topic = msg.get("topic") or ""
         if not topic:
+            self.on_op(ws, msg)
             return
+        self.last_msg = time.time()
         self.n_msg += 1
         if topic.startswith("orderbook."):
             sym = topic.rsplit(".", 1)[-1]
@@ -184,13 +245,13 @@ class Collector:
                 self.n_resets += 1
                 self.log(f"{sym}: разрыв нумерации, переподписка")
                 self.pending_resub.add(sym)
+                self.live.discard(topic)
                 try:
                     ws.send(json.dumps({"op": "unsubscribe",
                                         "args": [topic]}))
-                    ws.send(json.dumps({"op": "subscribe",
-                                        "args": [topic]}))
                 except Exception:                         # noqa: BLE001
                     pass
+                self.send_sub(ws, [topic])
         elif topic.startswith("publicTrade."):
             sym = topic.rsplit(".", 1)[-1]
             for t in parse_trades(msg):
@@ -287,6 +348,8 @@ class Collector:
                            "resets": self.n_resets,
                            "signals": self.n_signals,
                            "closed": self.n_closed,
+                           "topics_live": len(self.live),
+                           "topics": len(self.topics()),
                            "msg_per_sec": round(self.msg_rate, 1),
                            "ready": sum(1 for x in self.books.values()
                                         if x.ready),
@@ -346,6 +409,7 @@ class Collector:
                      f"сделок {self.n_trades:,} "
                      f"(+{self.n_trades - last[1]:,}), "
                      f"книг готово {ready}/{len(self.books)}, "
+                     f"тем принято {len(self.live)}/{len(self.topics())}, "
                      f"сбросов {self.n_resets}")
             last = (self.n_msg, self.n_trades)
 

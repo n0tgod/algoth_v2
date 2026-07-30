@@ -11,6 +11,7 @@
     python3 research/b1_book/test_book.py
 """
 
+import json
 import os
 import sys
 
@@ -312,6 +313,52 @@ def test_warm_start_survives_truncated_file():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_rejected_subscription_is_not_silence():
+    """Отклонённая подписка обязана назваться и не гасить остальные.
+
+    Одним запросом на все темы площадка отвергает ВЕСЬ запрос из-за
+    одной негодной: глубокая тема стакана так погасила сбор целиком, а
+    в журнале это выглядело как «подключено, тем 16» и дальше тишина —
+    неотличимо от тишины рынка, потому что у ответа нет поля `topic`.
+    """
+    import collect as C
+
+    said, sent = [], []
+
+    class WS:
+        def send(self, s):
+            sent.append(json.loads(s))
+
+    c = C.Collector(["BTCUSDT", "ARBUSDT"], [], "/tmp/nope",
+                    said.append, deep=["BTCUSDT"])
+    ws = WS()
+    c.on_open(ws)
+    check(f"подписка по одной теме ({len(sent)} запросов)",
+          len(sent) == 4 and all(len(m["args"]) == 1 for m in sent),
+          str(sent))
+    check("тема названа в req_id",
+          all(m["req_id"] == m["args"][0] for m in sent), str(sent))
+
+    sent.clear()
+    c.on_message(ws, json.dumps({"op": "subscribe", "success": False,
+                                 "ret_msg": "Invalid topic",
+                                 "req_id": "orderbook.500.BTCUSDT"}))
+    check(f"отказ попал в журнал ({said[-2] if len(said) > 1 else ''})",
+          any("отклонена" in s for s in said), str(said))
+    check(f"глубина понижена ({c.depth['BTCUSDT']})",
+          c.depth["BTCUSDT"] == 200, str(c.depth))
+    check("и переподписка отправлена",
+          sent and sent[-1]["args"] == ["orderbook.200.BTCUSDT"], str(sent))
+
+    c.on_message(ws, json.dumps({"op": "subscribe", "success": True,
+                                 "req_id": "orderbook.50.ARBUSDT"}))
+    check("принятая тема учтена", "orderbook.50.ARBUSDT" in c.live,
+          str(c.live))
+    check("служебный ответ не считается данными", c.n_msg == 0
+          and c.last_msg == 0.0, f"{c.n_msg} {c.last_msg}")
+    c.w.close()
+
+
 def test_closed_trade_is_returned_for_writing():
     """Закрытие обязано выйти наружу, иначе его некому записать.
 
@@ -505,6 +552,8 @@ def main():
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
+    print("подписка")
+    test_rejected_subscription_is_not_silence()
     print("бумажные сделки")
     test_closed_trade_is_returned_for_writing()
     test_restore_marks_trade_cut_by_restart()
