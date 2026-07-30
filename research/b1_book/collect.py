@@ -325,6 +325,30 @@ class Collector:
         self.w.close()
 
 
+def stable_token(root):
+    """Ключ доступа, переживающий перезапуск.
+
+    Первая версия генерировала его заново при каждом старте, и ссылка на
+    страницу менялась после каждого перезапуска сборщика — открытая
+    вкладка переставала работать без всякой причины. Ключ хранится
+    рядом с рядами и в git не идёт.
+    """
+    path = os.path.join(root, "token.txt")
+    try:
+        with open(path, encoding="utf-8") as f:
+            tok = f.read().strip()
+        if tok:
+            return tok
+    except OSError:
+        pass
+    tok = secrets.token_urlsafe(8)
+    os.makedirs(root, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(tok + "\n")
+    os.chmod(path, 0o600)
+    return tok
+
+
 def selftest(root):
     """Прогнать поддельный поток через путь записи и показать итог."""
     root = os.path.join(root, "selftest")
@@ -380,7 +404,7 @@ def main():
     ap.add_argument("--http", type=int, default=0,
                     help="порт страницы наблюдения; 0 — не поднимать")
     ap.add_argument("--token", default="",
-                    help="ключ доступа; пустой — сгенерируется")
+                    help="ключ доступа; пустой — берётся из out/token.txt")
     a = ap.parse_args()
     if a.selftest:
         selftest(a.out)
@@ -404,7 +428,7 @@ def main():
     c = Collector(syms, raw, a.out, log)
     c.lines = lines
     if a.http:
-        token = a.token or secrets.token_urlsafe(8)
+        token = a.token or stable_token(a.out)
         web.serve(c, a.http, token, log)
     try:
         c.run(a.hours)
