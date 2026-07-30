@@ -310,5 +310,72 @@ def absorption(grid, window_sec, vol_mult, move_mult, side, imb=0.0):
     }
 
 
+def level_filter(tape, grid, idx, window_sec, side, bands=10):
+    """Из моментов поглощения оставить те, где набирали НА ЦЕНЕ.
+
+    Прежний детектор спрашивал «много ли лили в окне» и цену уровня
+    игнорировал вовсе. Но набор крупного лимитника — событие на
+    конкретной цене: он стоит заявкой, её выедают, он подставляет
+    снова. Объём, размазанный по всему ходу окна, — это не набор, это
+    просто активная торговля.
+
+    Мера сосредоточенности сделана **безразмерной**, чтобы её можно было
+    сравнивать между инструментами: ход окна `[минимум, максимум]`
+    делится на `bands` равных полос, и берётся доля односторонней
+    агрессии, попавшая в самую загруженную полосу. Ровный набор по всему
+    ходу даёт `1/bands`, набор на одной цене — единицу. Шаг цены при
+    этом не участвует: у BTC он равен 0.1 доллара на девяносто тысяч, у
+    мелкого альта — единице последнего знака, и полосы в шагах цены
+    сравнивали бы разное. Та же причина, по которой относительны порог
+    объёма и допуск на движение.
+
+    Возвращает `(моменты, сосредоточенность, цена уровня, отход от
+    уровня в долях)` — последнее диагностика: если к концу окна цена
+    ушла от уровня, войти по нему уже нельзя.
+    """
+    ts, sg, sz, px = tape
+    step = grid["step_sec"]
+    w = max(1, int(round(window_sec / step)))
+    t = grid["t"]
+    keep, conc, level, away = [], [], [], []
+    for i in idx:
+        t_to = float(t[i]) + step
+        t_from = t_to - w * step
+        a = int(np.searchsorted(ts, t_from, "left"))
+        b = int(np.searchsorted(ts, t_to, "left"))
+        if b <= a:
+            continue
+        p = px[a:b]
+        q = (sz[a:b] * p)
+        s = sg[a:b]
+        mine = (s < 0) if side < 0 else (s > 0)
+        if not mine.any():
+            continue
+        lo, hi = float(p.min()), float(p.max())
+        if hi <= lo:
+            # Цена вообще не двигалась: вся агрессия на одной цене, и это
+            # предельный случай набора, а не вырождение меры.
+            keep.append(i)
+            conc.append(1.0)
+            level.append(lo)
+            away.append(0.0)
+            continue
+        width = (hi - lo) / bands
+        k = np.clip(((p[mine] - lo) / width).astype(np.int64), 0, bands - 1)
+        vol = np.bincount(k, weights=q[mine], minlength=bands)
+        tot = float(vol.sum())
+        if tot <= 0:
+            continue
+        j = int(np.argmax(vol))
+        lvl = lo + (j + 0.5) * width
+        last = float(p[-1])
+        keep.append(i)
+        conc.append(float(vol[j]) / tot)
+        level.append(lvl)
+        away.append(abs(last - lvl) / lvl)
+    return (np.array(keep, dtype=np.int64), np.array(conc),
+            np.array(level), np.array(away))
+
+
 def stamp(sec):
     return datetime.fromtimestamp(float(sec), timezone.utc).isoformat()

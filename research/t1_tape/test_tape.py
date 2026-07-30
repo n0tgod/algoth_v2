@@ -223,6 +223,75 @@ def test_imbalance_separates_accumulation():
           str(n1))
 
 
+def level_tape(spread):
+    """Всплеск продаж: весь на одной цене либо размазанный по ходу."""
+    step, n, t0 = 1.0, 120, 1_000_000.0
+    ts, sg, sz, px = [], [], [], []
+    for k in range(n):
+        ts.append(t0 + k + 0.1)
+        sg.append(-1 if k % 2 else 1)
+        sz.append(1.0)
+        px.append(100.0)
+    for k in range(60, 70):
+        for j in range(20):
+            ts.append(t0 + k + 0.5)
+            sg.append(-1)
+            sz.append(1.0)
+            # размазанный — по десяти ценам внутри хода, набор — на одной
+            px.append(100.0 + (0.10 * (j % 10) if spread else 0.0))
+    if not spread:
+        # ход окна должен существовать, иначе случай вырожденный
+        ts.append(t0 + 69.9)
+        sg.append(1)
+        sz.append(1.0)
+        px.append(100.9)
+    order = np.argsort(ts)
+    tape = (np.array(ts)[order], np.array(sg, dtype=np.int8)[order],
+            np.array(sz)[order], np.array(px)[order])
+    return tape, T.to_grid(tape, step, t0=t0, t1=t0 + n)
+
+
+def test_level_filter_measures_concentration():
+    """Набор на цене против объёма, размазанного по ходу окна.
+
+    Проверяется разделение, а не абсолютная граница. Ровный набор по
+    десяти полосам даёт не ровно 0.1: полосы считаются от хода окна, а
+    цены в нём дискретны, и часть фоновых продаж сидит на нижней цене.
+    Тесная граница в первой версии теста падала именно на этом — и
+    ошибка была в ожидании, а не в мере.
+    """
+    got = {}
+    for spread in (False, True):
+        tape, g = level_tape(spread)
+        idx, _ = T.absorption(g, 10, 3.0, 0.5, -1)
+        if len(idx) == 0:
+            check(f"есть кандидаты (размазан={spread})", False, "пусто")
+            return
+        k, conc, lvl, away = T.level_filter(tape, g, idx, 10, -1)
+        got[spread] = (float(np.max(conc)), lvl, conc)
+    c_lvl, lvl, conc = got[False]
+    c_spr = got[True][0]
+    check(f"набор на цене сосредоточен ({c_lvl:.2f})", c_lvl > 0.9, str(conc))
+    check(f"размазанный — заметно меньше ({c_spr:.2f})", c_spr < 0.4, "")
+    check("разделение больше чем втрое", c_lvl > 3 * c_spr,
+          f"{c_lvl:.2f} против {c_spr:.2f}")
+    check("цена уровня совпала с ценой набора",
+          abs(float(lvl[int(np.argmax(conc))]) - 100.0) < 0.10, str(lvl))
+
+
+def test_level_filter_flat_window():
+    """Цена не двигалась вовсе — предельный набор, а не деление на ноль."""
+    step, n, t0 = 1.0, 60, 1_000_000.0
+    ts = np.array([t0 + k + 0.5 for k in range(n)])
+    tape = (ts, np.full(n, -1, dtype=np.int8), np.ones(n),
+            np.full(n, 50.0))
+    g = T.to_grid(tape, step, t0=t0, t1=t0 + n)
+    k, conc, lvl, away = T.level_filter(tape, g, np.array([30]), 10, -1)
+    check("на стоячей цене сосредоточенность равна единице",
+          len(conc) == 1 and abs(conc[0] - 1.0) < 1e-12, str(conc))
+    check("отход от уровня ноль", abs(away[0]) < 1e-12, str(away))
+
+
 def load_probe():
     sys.path.insert(0, os.path.join(os.path.dirname(HERE), "l3_events"))
     import probe as P  # noqa: E402
@@ -296,6 +365,9 @@ def main():
     test_absorption_finds_held_price()
     test_absorption_ignores_move()
     test_imbalance_separates_accumulation()
+    print("уровень")
+    test_level_filter_measures_concentration()
+    test_level_filter_flat_window()
     print("контроль кросс-секцией")
     test_excursions_match_per_horizon()
     test_cross_width_counts_only_clean()
