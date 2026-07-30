@@ -109,6 +109,7 @@ class Collector:
         # видеть, ТУДА ли детектор показывает.
         self.sig = Signals(symbols)
         self.n_signals = 0
+        self.n_closed = 0
 
     # --- сеть ---------------------------------------------------------
     def topics(self):
@@ -180,13 +181,20 @@ class Collector:
                     self.w.write("book", sym, s, ts=now)
                     self.mid[sym].append(
                         (round(now, 1), (s["bid"] + s["ask"]) / 2.0))
-            for ev in self.sig.tick(now):
+            opened, closed = self.sig.tick(now)
+            for ev in opened:
                 self.n_signals += 1
                 self.log(f"{ev['sym']}: сигнал "
                          f"{'лонг' if ev['long'] else 'шорт'} у уровня "
                          f"{ev['level']:.6g} ({ev['kind']}), стоп "
                          f"{ev['stop_bp']:.0f} б.п., отношение 1:{ev['rr']}")
-                self.w.write("signals", ev["sym"], ev, ts=now)
+                self.w.write("signals", ev["sym"], dict(ev, ev="open"), ts=now)
+            for tr in closed:
+                self.n_closed += 1
+                self.log(f"{tr['sym']}: {tr['state']} — "
+                         f"{tr['pnl_bp']:+.1f} б.п. ({tr['r']:+.2f} R), "
+                         f"держали {tr['held']} с")
+                self.w.write("signals", tr["sym"], dict(tr, ev="close"), ts=now)
 
     def snapshot(self, sym=None):
         """Состояние для страницы наблюдения — прямо из памяти."""
@@ -210,6 +218,7 @@ class Collector:
                            "messages": self.n_msg, "trades": self.n_trades,
                            "resets": self.n_resets,
                            "signals": self.n_signals,
+                           "closed": self.n_closed,
                            "msg_per_sec": round(self.msg_rate, 1),
                            "ready": sum(1 for x in self.books.values()
                                         if x.ready),
@@ -288,7 +297,7 @@ class Collector:
         self.w.close()
 
 
-def warm_start(root, symbols, collector, log, hours=4):
+def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     """Поднять историю из собственных файлов сборщика.
 
     Перезапуск не должен стоить двадцати минут накопления: сделки и
@@ -296,6 +305,10 @@ def warm_start(root, symbols, collector, log, hours=4):
     буфер детектора, и середина для графика. Без этого каждая правка
     кода обнуляла наблюдение, а уровни появлялись заново только через
     треть часа.
+
+    Бумажные сделки поднимаются за более длинное окно (`trade_hours`),
+    чем поток: поток нужен детектору «сейчас», а сделки — это результат,
+    и он не имеет права исчезать по перезапуску.
     """
     def rows_of(kind, sym, hour, cutoff_ts, pick):
         out = []
@@ -332,8 +345,19 @@ def warm_start(root, symbols, collector, log, hours=4):
         mids.sort()
         collector.mid[sym].extend(mids[-900:])
         n_bk += len(mids)
+    n_paper = 0
+    ph = [datetime.fromtimestamp(time.time() - i * 3600, timezone.utc)
+          .strftime("%Y-%m-%d-%H") for i in range(trade_hours, -1, -1)]
+    for sym in symbols:
+        rows = []
+        for h in ph:
+            rows += rows_of("signals", sym, h, 0.0, lambda r, c: r)
+        live = collector.sig.by.get(sym)
+        if live is not None and rows:
+            n_paper += live.restore(rows)
     if n_tr or n_bk:
-        log(f"поднято из своих файлов: сделок {n_tr:,}, снимков {n_bk:,}")
+        log(f"поднято из своих файлов: сделок {n_tr:,}, снимков {n_bk:,}, "
+            f"бумажных сделок {n_paper}")
     else:
         log("своих файлов нет — история копится с нуля")
 

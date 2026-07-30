@@ -280,6 +280,67 @@ def test_warm_start_survives_truncated_file():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_closed_trade_is_returned_for_writing():
+    """Закрытие обязано выйти наружу, иначе его некому записать.
+
+    Первая версия складывала закрытые сделки в `deque(maxlen=40)` и
+    только в память: сделка, которую владелец видел открытой и закрытой
+    по стопу, исчезала и по переполнению, и по перезапуску. На диск шло
+    лишь открытие.
+    """
+    import signals as S
+
+    live = S.Live("TEST")
+    live.open = [{"id": "TEST-1-1", "t": 100.0, "sym": "TEST", "side": -1,
+                  "long": True, "entry": 100.0, "stop": 99.0,
+                  "target": 103.0, "level": 100.0, "kind": "полка",
+                  "stop_bp": 100.0, "rr": 2.0, "state": "открыта",
+                  "pnl_bp": 0.0, "r": 0.0, "held": 0,
+                  "exit": None, "closed_at": None}]
+    live.last_px = 98.5                                # пробили стоп
+    closed = live.update_open(160.0)
+    check(f"закрытие возвращено ({len(closed)})", len(closed) == 1,
+          str(closed))
+    tr = closed[0]
+    check(f"состояние определено ({tr['state']})", tr["state"] == "стоп",
+          tr["state"])
+    check("цена выхода записана", tr["exit"] == 99.0, str(tr["exit"]))
+    check("момент закрытия записан", tr["closed_at"] == 160.0,
+          str(tr["closed_at"]))
+    check("убыток учитывает издержки",
+          abs(tr["pnl_bp"] - (-100.0 - 11.0)) < 0.6, str(tr["pnl_bp"]))
+    check("сделка ушла из открытых", not live.open, str(live.open))
+    check("и попала в показ", len(live.done) == 1, str(len(live.done)))
+    op, cl = S.Signals(["TEST"]).tick(1.0)
+    check("tick отдаёт две части", isinstance(op, list) and isinstance(cl, list),
+          f"{type(op)} {type(cl)}")
+
+
+def test_restore_marks_trade_cut_by_restart():
+    """Открытие без закрытия — не «ничего не было», а оборванная сделка."""
+    import signals as S
+
+    live = S.Live("TEST")
+    n = live.restore([
+        {"ev": "open", "id": "TEST-1-1", "t": 100.0, "sym": "TEST",
+         "state": "открыта", "pnl_bp": 0.0, "r": 0.0},
+        {"ev": "close", "id": "TEST-1-1", "t": 100.0, "sym": "TEST",
+         "state": "цель", "pnl_bp": 189.0, "r": 1.89, "closed_at": 160.0},
+        {"ev": "open", "id": "TEST-9-2", "t": 900.0, "sym": "TEST",
+         "state": "открыта", "pnl_bp": 0.0, "r": 0.0},
+    ])
+    check(f"поднято сделок ({n})", n == 2, str(n))
+    by = {t["id"]: t for t in live.done}
+    check("закрытая поднялась с результатом",
+          by["TEST-1-1"]["state"] == "цель" and by["TEST-1-1"]["r"] == 1.89,
+          str(by["TEST-1-1"]))
+    check(f"оборванная помечена ({by['TEST-9-2']['state']})",
+          by["TEST-9-2"]["state"] == "оборвана перезапуском"
+          and by["TEST-9-2"]["pnl_bp"] is None, str(by["TEST-9-2"]))
+    check("номер продолжится, а не начнётся заново", live.seq >= 2,
+          str(live.seq))
+
+
 def test_store_writes_plain_and_packs_on_hour():
     """Текущий час лежит простым текстом, прошлый — сжатым.
 
@@ -411,6 +472,9 @@ def main():
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
+    print("бумажные сделки")
+    test_closed_trade_is_returned_for_writing()
+    test_restore_marks_trade_cut_by_restart()
     print("хранение")
     test_store_writes_plain_and_packs_on_hour()
     test_store_hour_not_counted_twice()

@@ -59,6 +59,11 @@ MAX_HOLD_SEC = 4 * 3600
 COST_BP = 11.0
 KEEP_SEC = 4 * 3600               # сколько секунд истории держим
 DEDUP_SEC = 60                    # не чаще одного события в минуту на символ
+# Сколько закрытых сделок держим в памяти для показа. История целиком
+# живёт в файлах: первая версия хранила сорок штук ТОЛЬКО в памяти, и
+# сделки, открывавшиеся при владельце, исчезали и по переполнению, и по
+# перезапуску. Память — витрина, источник истины — диск.
+DONE_KEEP = 400
 
 
 def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
@@ -130,7 +135,8 @@ class Live:
         self.levels = ([], [], float("nan"), float("nan"))
         self.levels_at = 0.0
         self.open = []                         # незакрытые бумажные сделки
-        self.done = deque(maxlen=40)
+        self.done = deque(maxlen=DONE_KEEP)
+        self.seq = 0                           # номер сделки внутри символа
         self.last_event = 0.0
         self.last_px = None
         self.diag = {-1: {}, 1: {}}
@@ -232,8 +238,10 @@ class Live:
         return out
 
     def check(self, now):
+        # Ведение открытых сделок вынесено в `Signals.tick`: закрытие
+        # обязано попасть на диск, а для этого его должен увидеть тот,
+        # кто умеет писать. Порядок вызовов прежний.
         self.refresh_levels(now)
-        self.update_open(now)
         px, kinds, noise, _ = self.levels
         if len(px) == 0 or not np.isfinite(noise) or noise <= 0:
             return None
@@ -270,22 +278,25 @@ class Live:
             rr = (tgt_bp - COST_BP) / max(stop_bp, 1e-9)
             if rr < MIN_RR:
                 continue
-            tr = {"t": now, "sym": self.symbol, "side": side,
+            self.seq += 1
+            tr = {"id": f"{self.symbol}-{int(now)}-{self.seq}",
+                  "t": now, "sym": self.symbol, "side": side,
                   "long": long, "entry": entry, "stop": stop,
                   "target": tgt, "level": lvl, "kind": kind,
                   "stop_bp": round(stop_bp, 1), "rr": round(rr, 2),
                   "state": "открыта", "pnl_bp": 0.0, "r": 0.0,
-                  "held": 0}
+                  "held": 0, "exit": None, "closed_at": None}
             self.open.append(tr)
             self.last_event = now
             return tr
         return None
 
     def update_open(self, now):
+        """Провести открытые сделки; вернуть закрывшиеся на этом шаге."""
         if not self.open or self.last_px is None:
-            return
+            return []
         p = self.last_px
-        still = []
+        still, closed = [], []
         for tr in self.open:
             tr["held"] = int(now - tr["t"])
             sign = 1.0 if tr["long"] else -1.0
@@ -303,11 +314,47 @@ class Live:
                 tr["r"] = round(tr["pnl_bp"] / max(tr["stop_bp"], 1e-9), 2)
                 still.append(tr)
                 continue
+            tr["exit"] = exit_px
+            tr["closed_at"] = now
             tr["pnl_bp"] = round(
                 sign * (exit_px / tr["entry"] - 1.0) * 1e4 - COST_BP, 1)
             tr["r"] = round(tr["pnl_bp"] / max(tr["stop_bp"], 1e-9), 2)
             self.done.appendleft(tr)
+            closed.append(tr)
         self.open = still
+        return closed
+
+    def restore(self, rows):
+        """Поднять историю сделок с диска.
+
+        Открытие и закрытие лежат отдельными записями. Открытие без
+        закрытия означает, что процесс остановили с живой сделкой:
+        такая помечается прямо, а не выбрасывается — молча исчезнувшая
+        сделка и есть то, на что жаловался владелец.
+        """
+        opened, closed = {}, {}
+        for r in rows:
+            key = r.get("id") or f"{r.get('sym')}-{r.get('t')}"
+            (closed if r.get("ev") == "close" else opened)[key] = r
+        out = []
+        for key, r in opened.items():
+            done = closed.get(key)
+            if done is None:
+                r = dict(r)
+                r["state"] = "оборвана перезапуском"
+                r["pnl_bp"] = r["r"] = None
+                out.append(r)
+            else:
+                out.append(done)
+        out += [r for k, r in closed.items() if k not in opened]
+        out.sort(key=lambda x: x.get("closed_at") or x.get("t") or 0)
+        for r in out:
+            r.pop("ev", None)
+            self.done.appendleft(r)
+            self.seq = max(self.seq, int(str(r.get("id", "")).rsplit("-", 1)[-1])
+                           if str(r.get("id", "")).rsplit("-", 1)[-1].isdigit()
+                           else 0)
+        return len(out)
 
     def view(self):
         px, kinds, noise, _ = self.levels
@@ -345,14 +392,16 @@ class Signals:
             live.on_trade(t)
 
     def tick(self, now=None):
+        """Шаг всех детекторов. Возвращает `(открытые, закрытые)`."""
         now = now if now is not None else time.time()
-        out = []
+        opened, closed = [], []
         for live in self.by.values():
             live.close_second(int(now))
+            closed += live.update_open(now)
             ev = live.check(now)
             if ev is not None:
-                out.append(ev)
-        return out
+                opened.append(ev)
+        return opened, closed
 
     def view(self, sym):
         live = self.by.get(sym)
