@@ -289,17 +289,18 @@ class Collector:
                     self.w.write("book", sym, s, ts=now)
                     self.mid[sym].append(
                         (round(now, 1), (s["bid"] + s["ask"]) / 2.0))
-            opened, closed = self.sig.tick(now)
+            opened, closed = self.sig.tick(now, self.books)
             for ev in opened:
                 self.n_signals += 1
-                self.log(f"{ev['sym']}: сигнал "
+                self.log(f"{ev['sym']}: сигнал [{ev['rule']}] "
                          f"{'лонг' if ev['long'] else 'шорт'} у уровня "
                          f"{ev['level']:.6g} ({ev['kind']}), стоп "
                          f"{ev['stop_bp']:.0f} б.п., отношение 1:{ev['rr']}")
                 self.w.write("signals", ev["sym"], dict(ev, ev="open"), ts=now)
             for tr in closed:
                 self.n_closed += 1
-                self.log(f"{tr['sym']}: {tr['state']} — "
+                self.log(f"{tr['sym']}: [{tr['rule']}] "
+                         f"{tr['state']} — "
                          f"{tr['pnl_bp']:+.1f} б.п. ({tr['r']:+.2f} R), "
                          f"держали {tr['held']} с")
                 self.w.write("signals", tr["sym"], dict(tr, ev="close"), ts=now)
@@ -377,6 +378,8 @@ class Collector:
                 "trades": sorted(one, key=lambda t: -(t.get("closed_at")
                                                       or t.get("t") or 0)),
                 "stats": paper.summary(one) if sym else None,
+                "by_rule": paper.by_rule(one) if sym else {},
+                "all_by_rule": paper.by_rule(allt),
                 "equity": paper.equity(one) if sym else [],
                 "all_stats": paper.summary(allt),
                 "all_equity": paper.equity(allt),

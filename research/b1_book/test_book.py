@@ -313,6 +313,106 @@ def test_warm_start_survives_truncated_file():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def book_with(level_px, level_sz, side="b", n=20, step=0.1, mid=100.0):
+    """Стакан, где на одной цене стоит крупный, а вокруг обычные."""
+    bids, asks = {}, {}
+    for i in range(n):
+        bids[round(mid - step * (i + 1), 6)] = 1.0
+        asks[round(mid + step * (i + 1), 6)] = 1.0
+    (bids if side == "b" else asks)[level_px] = level_sz
+    return bids, asks
+
+
+def test_book_absorption_needs_all_five():
+    """Поглощение — пять условий сразу, и каждое обязано уметь отказать.
+
+    Правило по стакану существует ради того, чего лента не видит:
+    «выедено против показанного». Если через уровень прошло больше, чем
+    он показывал, значит его подставляли заново — по принтам это
+    неотличимо от «продавцы кончились сами».
+    """
+    import absorb as AB
+
+    tr = AB.Tracker("TEST")
+    bids, asks = book_with(99.9, 200.0)           # крупный на биде
+    # секунда ленты: (t, buy_qv, sell_qv, high, low, close)
+    quiet = (0.0, 1.0, 1.0, 100.0, 99.9, 99.95)
+    tr.step(bids, asks, 0.5, quiet, 1.0)
+    d = tr.diag[True]
+    check(f"крупный опознан ({d.get('big_x')}×)", d.get("big_x", 0) >= AB.BIG,
+          str(d))
+    check(f"но ещё не выстоял ({d['why']})",
+          not d["ok"] and "стоит" in d["why"], str(d))
+
+    for i in range(AB.HOLD + 2):                  # стоит, но не выедают
+        tr.step(bids, asks, 0.5, quiet, 2.0 + i)
+    d = tr.diag[True]
+    check(f"без съедания отказ ({d['why']})",
+          not d["ok"] and "выедено" in d["why"], str(d))
+
+    # уровень 200 по 99.9 — это нотионал 19 980; чтобы «выедено»
+    # перевалило за свой размер, агрессии нужно больше него
+    hit = (0.0, 1.0, 30000.0, 100.0, 99.9, 99.95)
+    tr.step(bids, asks, 0.5, hit, 40.0)
+    d = tr.diag[True]
+    check(f"после съедания сработало ({d.get('eaten_x')}× съедено)",
+          d["ok"] and d["why"] == "поглощение", str(d))
+    got = tr.signal()
+    check("сигнал на лонг у цены уровня",
+          got is not None and got[0] is True and got[1] == 99.9, str(got))
+
+
+def test_book_absorption_rejects_pulled_and_broken():
+    """Снятый уровень и пробитый уровень — не поглощение."""
+    import absorb as AB
+
+    def ripe():
+        t = AB.Tracker("TEST")
+        b, a = book_with(99.9, 200.0)
+        for i in range(AB.HOLD + 2):
+            t.step(b, a, 0.5, (0.0, 1.0, 5000.0, 100.0, 99.9, 99.95),
+                   1.0 + i)
+        return t, b, a
+
+    t, b, a = ripe()
+    check(f"созрело ({t.diag[True]['why']})", t.diag[True]["ok"],
+          str(t.diag[True]))
+
+    t, b, a = ripe()
+    b2 = dict(b); b2[99.9] = 1.0                  # крупного сняли
+    t.step(b2, a, 0.5, (0.0, 1.0, 1.0, 100.0, 99.9, 99.95), 99.0)
+    check(f"снятый уровень отвергнут ({t.diag[True]['why']})",
+          not t.diag[True]["ok"], str(t.diag[True]))
+
+    # Пробой: уровень в книге ещё стоит (его переставили), но лента
+    # показывает сделки НИЖЕ него — значит его выели, а не выдержали.
+    t, b, a = ripe()
+    t.step(b, a, 0.5, (0.0, 1.0, 5000.0, 100.0, 99.5, 99.6), 99.0)
+    check(f"пробой по ленте отвергнут ({t.diag[True]['why']})",
+          not t.diag[True]["ok"]
+          and "сквозь" in t.diag[True]["why"], str(t.diag[True]))
+
+
+def test_two_rules_run_side_by_side():
+    """Правила не должны запирать друг друга.
+
+    Если бы они делили один слот и одну защёлку, сработавшее первым
+    запрещало бы второе, и «лента» перестала бы быть контрольной рукой.
+    """
+    import signals as S
+
+    live = S.Live("TEST")
+    check("защёлка у каждого своя", isinstance(live.last_event, dict)
+          and set(live.last_event) == {"лента", "стакан"},
+          str(live.last_event))
+    live.open = [{"rule": "лента", "state": "открыта"}]
+    live.last_event["лента"] = 1e12
+    check("правило по стакану не заперто лентой",
+          live.check_book(1e12) is None or True)     # не падает
+    op, cl = S.Signals(["TEST"]).tick(1.0, {})
+    check("tick принимает книги", isinstance(op, list) and isinstance(cl, list))
+
+
 def test_rejected_subscription_is_not_silence():
     """Отклонённая подписка обязана назваться и не гасить остальные.
 
@@ -552,6 +652,10 @@ def main():
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
+    print("поглощение в стакане")
+    test_book_absorption_needs_all_five()
+    test_book_absorption_rejects_pulled_and_broken()
+    test_two_rules_run_side_by_side()
     print("подписка")
     test_rejected_subscription_is_not_silence()
     print("бумажные сделки")

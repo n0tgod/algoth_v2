@@ -295,8 +295,9 @@ function render(d) {
       <td style="color:var(--muted);font-size:11.5px">перевес</td>
       <td style="color:var(--muted);font-size:11.5px">ход</td>
       <td style="color:var(--muted);font-size:11.5px">итог</td></tr>`
-    + drow("поглощение продаж · лонг", dg.long)
-    + drow("поглощение покупок · шорт", dg.short);
+    + drow("лента: поглощение продаж · лонг", dg.long)
+    + drow("лента: поглощение покупок · шорт", dg.short)
+    + bookRows(sg.book || {});
   const all = sg.open.concat(sg.done).slice(0, 12);
   document.getElementById("cap-sig").textContent =
     `открыто ${sg.open.length} · шум ${sg.noise_bp ?? "—"} б.п. · уровней ${
@@ -317,6 +318,23 @@ function render(d) {
     : `<tr><td style="color:var(--muted);padding:8px 10px">событий пока нет</td></tr>`;
   const lg = document.getElementById("log");
   lg.textContent = (d.log || []).join("\n");
+}
+
+// Правило по стакану: крупный стоит, его выедают, он подставляет снова.
+// Показываются измеренные величины, а не «да/нет»: без чисел «событий
+// нет» неотличимо от «детектор сломан».
+function bookRows(b) {
+  const cell = (v, need, ok) => v === null || v === undefined
+    ? `<td class="mono" style="color:var(--muted)">—</td>`
+    : `<td class="mono ${ok ? "buy" : "sell"}">${v}${need}</td>`;
+  return ["лонг", "шорт"].map(k => {
+    const m = b[k] || {};
+    return `<tr><td>стакан: ${k} у крупного</td>
+      ${cell(m.big_x, "×", m.big_x >= (b.big || 5))}
+      ${cell(m.held, " с", m.held >= (b.hold || 10))}
+      ${cell(m.eaten_x, "× съедено", m.eaten_x >= (b.eat || 1))}
+      <td class="mono" style="color:var(--muted)">${m.why || "—"}</td></tr>`;
+  }).join("");
 }
 
 function drawMid(pts, sg) {
@@ -473,6 +491,7 @@ td:first-child,th:first-child{text-align:left}
   <div class="cap"><span>итог бумажных сделок по этой монете</span>
     <button id="unit" style="padding:1px 7px">в R</button></div>
   <div id="sum" class="stats"></div>
+  <div id="rules"></div>
   <canvas id="eq"></canvas>
 </div>
 <div class="panel">
@@ -480,7 +499,8 @@ td:first-child,th:first-child{text-align:left}
     <span id="cap3" class="mono"></span></div>
   <div class="hist"><table><thead><tr>
     <th>время</th><th>сторона</th><th>вход</th><th>стоп</th><th>цель</th>
-    <th>уровень</th><th>отн.</th><th>состояние</th><th>держали</th><th>итог</th>
+    <th>правило</th><th>уровень</th><th>отн.</th><th>состояние</th>
+    <th>держали</th><th>итог</th>
   </tr></thead><tbody id="rows"></tbody></table></div>
 </div>
 </div>
@@ -495,13 +515,14 @@ const stamp = t => new Date(t*1000).toISOString().slice(11,16);
 
 // Опрос разностный — см. тот же приём на странице обзора.
 const ST = {cand:[], since:0, sym:"", busy:false, fails:0};
-const HIST = {trades:[], stats:null, equity:[], at:0, busy:false};
+const HIST = {trades:[], stats:null, by_rule:{}, equity:[], at:0,
+              busy:false};
 // Единица кривой счёта: базисные пункты — сколько денег при равном
 // размере позиции, R — сколько при равном риске на сделку. Это разные
 // вопросы, поэтому переключатель, а не выбор раз и навсегда.
 let EQR = false;
-function wipe() { ST.cand=[]; ST.since=0;
-                  HIST.trades=[]; HIST.stats=null; HIST.equity=[]; HIST.at=0; }
+function wipe() { ST.cand=[]; ST.since=0; HIST.trades=[]; HIST.stats=null;
+                  HIST.by_rule={}; HIST.equity=[]; HIST.at=0; }
 function mergeCandles(old, add) {
   if (!add.length) return old;
   const m = new Map(old.map(c => [c[0], c]));
@@ -520,6 +541,7 @@ async function history() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     const h = await r.json();
     HIST.trades = h.trades || []; HIST.stats = h.stats;
+    HIST.by_rule = h.by_rule || {};
     HIST.equity = h.equity || []; HIST.at = Date.now();
   } catch (e) { /* тихо: следующий круг попробует снова */ }
   finally { HIST.busy = false; }
@@ -677,11 +699,12 @@ function rows() {
     <td class="${m.long?"buy":"sell"}">${m.long?"лонг":"шорт"}</td>
     <td class="mono">${m.entry}</td><td class="mono">${m.stop}</td>
     <td class="mono">${m.target}</td>
+    <td>${m.rule || "лента"}</td>
     <td style="color:var(--muted)">${m.kind}</td>
     <td class="mono">1:${m.rr}</td><td>${m.state}</td>
     <td class="mono">${m.held} с</td>
     <td class="mono">${res(m)}</td></tr>`
-  ).join("") : `<tr><td colspan="10" style="color:var(--muted)">
+  ).join("") : `<tr><td colspan="11" style="color:var(--muted)">
     событий пока нет — детектор ждёт совпадения условий</td></tr>`;
 }
 
@@ -713,6 +736,21 @@ function summary() {
       (s.cut_by_restart
         ? cell("оборвано", s.cut_by_restart, "sell") : "");
   }
+  // По правилам отдельно: «лента» — то же, что мерили T3 и T4, и она
+  // здесь контрольная рука. Сравнивать новое правило надо с ней на
+  // одном периоде, а не с числами старого отчёта.
+  const br = HIST.by_rule || {};
+  const line = Object.keys(br).map(r => {
+    const x = br[r];
+    return x ? `<b>${r}</b>: ${x.trades} сд., побед ${
+      (x.win_rate*100).toFixed(0)} % при безубыточных ${
+      (x.break_even*100).toFixed(0)} %, ожидание ${
+      x.expectancy_bp > 0 ? "+" : ""}${x.expectancy_bp.toFixed(1)} б.п. (${
+      x.expectancy_r > 0 ? "+" : ""}${x.expectancy_r.toFixed(2)} R)`
+      : `<b>${r}</b>: сделок нет`;
+  }).join(" · ");
+  document.getElementById("rules").innerHTML =
+    `<div class="note">${line || "&nbsp;"}</div>`;
   drawEq();
 }
 

@@ -48,6 +48,9 @@ RESEARCH = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(RESEARCH, "t4_structure"))
 import levels as LV                                       # noqa: E402
 
+sys.path.insert(0, HERE)
+import absorb as AB                                       # noqa: E402
+
 WINDOW_SEC = 60
 VOL_MULT = 5.0
 MOVE_MULT = 0.5
@@ -137,7 +140,12 @@ class Live:
         self.open = []                         # незакрытые бумажные сделки
         self.done = deque(maxlen=DONE_KEEP)
         self.seq = 0                           # номер сделки внутри символа
-        self.last_event = 0.0
+        # Поглощение в стакане — второе правило, идущее рядом с первым.
+        # Своя защёлка и свой слот на каждое правило: если бы они делили
+        # один, сработавшее первым запрещало бы второе, и контрольная
+        # рука перестала бы быть контрольной.
+        self.bk = AB.Tracker(symbol)
+        self.last_event = {"лента": 0.0, "стакан": 0.0}
         self.last_px = None
         self.diag = {-1: {}, 1: {}}
 
@@ -245,7 +253,8 @@ class Live:
         px, kinds, noise, _ = self.levels
         if len(px) == 0 or not np.isfinite(noise) or noise <= 0:
             return None
-        if now - self.last_event < DEDUP_SEC or self.open:
+        if now - self.last_event["лента"] < DEDUP_SEC or \
+                any(t["rule"] == "лента" for t in self.open):
             return None
         a = self.arrays()
         if a is None:
@@ -264,32 +273,70 @@ class Live:
             if near is None:
                 continue
             lvl, kind = near
-            long = side < 0
-            stop = lvl - STOP_NOISE * noise if long else lvl + STOP_NOISE * noise
-            tgt = LV.ahead(px, price, long, STOP_NOISE * noise)
-            if tgt is None:
-                continue
-            entry = price
-            if (long and (stop >= entry or tgt <= entry)) or \
-               (not long and (stop <= entry or tgt >= entry)):
-                continue
-            stop_bp = abs(entry - stop) / entry * 1e4
-            tgt_bp = abs(tgt - entry) / entry * 1e4
-            rr = (tgt_bp - COST_BP) / max(stop_bp, 1e-9)
-            if rr < MIN_RR:
-                continue
-            self.seq += 1
-            tr = {"id": f"{self.symbol}-{int(now)}-{self.seq}",
-                  "t": now, "sym": self.symbol, "side": side,
-                  "long": long, "entry": entry, "stop": stop,
-                  "target": tgt, "level": lvl, "kind": kind,
-                  "stop_bp": round(stop_bp, 1), "rr": round(rr, 2),
-                  "state": "открыта", "pnl_bp": 0.0, "r": 0.0,
-                  "held": 0, "exit": None, "closed_at": None}
-            self.open.append(tr)
-            self.last_event = now
-            return tr
+            tr = self.make_trade(now, side < 0, lvl, kind, price, noise, px,
+                                 "лента")
+            if tr is not None:
+                return tr
         return None
+
+    def make_trade(self, now, long, lvl, kind, price, noise, px, rule):
+        """Собрать сделку. Одна реализация геометрии на оба правила.
+
+        Меняется ровно повод для входа; стоп за уровнем на один шум,
+        цель на ближайшем структурном уровне впереди и вход по следующей
+        сделке остаются теми же, что в замерах T3 и T4. Тогда разницу
+        между правилами можно отнести к поводу, а не к другой сделке.
+        """
+        stop = lvl - STOP_NOISE * noise if long else lvl + STOP_NOISE * noise
+        tgt = LV.ahead(px, price, long, STOP_NOISE * noise)
+        if tgt is None:
+            return None
+        entry = price
+        if (long and (stop >= entry or tgt <= entry)) or \
+           (not long and (stop <= entry or tgt >= entry)):
+            return None
+        stop_bp = abs(entry - stop) / entry * 1e4
+        tgt_bp = abs(tgt - entry) / entry * 1e4
+        rr = (tgt_bp - COST_BP) / max(stop_bp, 1e-9)
+        if rr < MIN_RR:
+            return None
+        self.seq += 1
+        tr = {"id": f"{self.symbol}-{int(now)}-{self.seq}",
+              "t": now, "sym": self.symbol, "side": 1 if not long else -1,
+              "long": long, "entry": entry, "stop": stop,
+              "target": tgt, "level": lvl, "kind": kind, "rule": rule,
+              "stop_bp": round(stop_bp, 1), "rr": round(rr, 2),
+              "state": "открыта", "pnl_bp": 0.0, "r": 0.0,
+              "held": 0, "exit": None, "closed_at": None}
+        self.open.append(tr)
+        self.last_event[rule] = now
+        return tr
+
+    def on_book(self, bids, asks, now):
+        """Шаг отслеживания поглощения по свежему снимку книги."""
+        noise = self.levels[2]
+        if not (noise and noise == noise and noise > 0):
+            # Шум ещё не измерен — окно уровня задать нечем.
+            noise = None
+        sec = self.sec[-1] if self.sec else None
+        self.bk.step(bids, asks, noise, sec, now)
+
+    def check_book(self, now):
+        """Правило по стакану. Геометрия — общая с правилом по ленте."""
+        if now - self.last_event["стакан"] < DEDUP_SEC or \
+                any(t["rule"] == "стакан" for t in self.open):
+            return None
+        got = self.bk.signal()
+        if got is None:
+            return None
+        long, lvl, _ = got
+        px, kinds, noise, _ = self.levels
+        if len(px) == 0 or not np.isfinite(noise) or noise <= 0:
+            return None
+        if self.last_px is None:
+            return None
+        return self.make_trade(now, long, lvl, "стакан", self.last_px,
+                               noise, px, "стакан")
 
     def update_open(self, now):
         """Провести открытые сделки; вернуть закрывшиеся на этом шаге."""
@@ -382,6 +429,10 @@ class Live:
             "diag": {"long": self.diag.get(-1, {}),
                      "short": self.diag.get(1, {})},
             "touch_x": TOUCH_NOISE, "vol_mult": VOL_MULT, "imb": IMB,
+            "book": {"лонг": self.bk.diag.get(True) or {},
+                     "шорт": self.bk.diag.get(False) or {},
+                     "big": AB.BIG, "hold": AB.HOLD, "eat": AB.EAT,
+                     "refill": AB.REFILL},
             "candles": cd, "candles_full": cd_full,
             "done_total": len(self.done),
             "levels": [{"p": float(p), "kind": k}
@@ -405,16 +456,23 @@ class Signals:
         if live is not None:
             live.on_trade(t)
 
-    def tick(self, now=None):
-        """Шаг всех детекторов. Возвращает `(открытые, закрытые)`."""
+    def tick(self, now=None, books=None):
+        """Шаг всех детекторов. Возвращает `(открытые, закрытые)`.
+
+        `books` — текущие книги по символам; без них правило по стакану
+        просто не срабатывает, а правило по ленте работает как прежде.
+        """
         now = now if now is not None else time.time()
         opened, closed = [], []
-        for live in self.by.values():
+        for sym, live in self.by.items():
             live.close_second(int(now))
+            b = (books or {}).get(sym)
+            if b is not None and b.ready:
+                live.on_book(b.bids, b.asks, now)
             closed += live.update_open(now)
-            ev = live.check(now)
-            if ev is not None:
-                opened.append(ev)
+            for ev in (live.check(now), live.check_book(now)):
+                if ev is not None:
+                    opened.append(ev)
         return opened, closed
 
     def view(self, sym, since=0.0):

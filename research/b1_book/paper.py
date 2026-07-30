@@ -34,6 +34,10 @@ sys.path.insert(0, HERE)
 from signals import COST_BP                               # noqa: E402
 
 FINISHED = ("цель", "стоп", "время")
+# Правила идут параллельно: «лента» — то же, что мерили T3 и T4, «стакан»
+# — новое. Первое здесь контрольная рука, и сравнивать надо их друг с
+# другом на одном периоде, а не новое правило с числами старого отчёта.
+RULES = ("лента", "стакан")
 
 
 def finished(trades):
@@ -57,6 +61,12 @@ def summary(trades):
     out = BR.stats([as_bracket(t) for t in fin], COST_BP)
     out["cut_by_restart"] = len(trades) - len(fin)
     return out
+
+
+def by_rule(trades):
+    """Сводка по каждому правилу отдельно."""
+    return {r: summary([t for t in trades if t.get("rule", "лента") == r])
+            for r in RULES}
 
 
 def equity(trades):
