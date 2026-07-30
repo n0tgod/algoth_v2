@@ -26,6 +26,7 @@
 """
 
 import json
+import secrets
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
@@ -658,7 +659,11 @@ def serve(collector, port, token, log):
         def do_GET(self):                                 # noqa: N802
             u = urlparse(self.path)
             q = parse_qs(u.query)
-            if token and q.get("k", [""])[0] != token:
+            # Сравнение за постоянное время: страница стоит открытым
+            # портом, и обычное `!=` отвечает тем быстрее, чем раньше
+            # разошлись строки, то есть подсказывает ключ по знаку.
+            if token and not secrets.compare_digest(
+                    q.get("k", [""])[0], token):
                 return self._deny()
             if u.path == "/state":
                 body = json.dumps(collector.snapshot(q.get("sym", [None])[0]),
