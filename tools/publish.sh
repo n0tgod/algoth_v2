@@ -23,15 +23,64 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 # проекте это случалось дважды: с артефактами F1 и с манифестом L2.
 git add --ignore-removal research/*/out docs 2>/dev/null || true
 
-if git diff --cached --quiet; then
+# Конфликт на артефакте разрешается в пользу того, что лежит на диске
+# ЗДЕСЬ, то есть в пользу прогона. Так уже вышло однажды: в удалённой
+# ветке имя отчёта было удалено из индекса, на сервере тот же файл
+# записал настоящий прогон, и git отказался решать сам — а публикация
+# оборвала сведение и оставила владельца разбираться вручную с телефона.
+# Артефакт прогона авторитетнее любого состояния индекса: прогон
+# случился, файл существует, его и оставляем. На конфликте вне `out`
+# скрипт по-прежнему останавливается — код руками, всегда.
+finish_rebase() {
+  local i p unmerged bad
+  for i in 1 2 3 4 5; do
+    unmerged="$(git diff --name-only --diff-filter=U)"
+    if [ -n "$unmerged" ]; then
+      bad=0
+      while IFS= read -r p; do
+        [ -z "$p" ] && continue
+        case "$p" in
+          research/*/out/*)
+            if [ -e "$p" ]; then git add -- "$p"; else git rm -q -- "$p"; fi
+            echo "  конфликт разрешён в пользу прогона: $p"
+            ;;
+          *)
+            echo "  конфликт не в артефактах, разбирать руками: $p"
+            bad=1
+            ;;
+        esac
+      done <<< "$unmerged"
+      [ "$bad" = 1 ] && return 1
+    fi
+    if [ -z "$(git diff --name-only --diff-filter=U)" ] \
+       && git diff --cached --quiet; then
+      # Замещать нечем: коммит целиком повторяет удалённое состояние.
+      GIT_EDITOR=true git rebase --skip && return 0
+    fi
+    GIT_EDITOR=true git rebase --continue && return 0
+  done
+  return 1
+}
+
+# «Нечего коммитить» и «нечего публиковать» — разные вещи. Коммит мог
+# быть сделан руками, а до удалённой ветки не дойти: именно так отчёт
+# зонда ленты остался лежать на сервере, а я читал пустоту.
+ahead="$(git rev-list --count "origin/$branch..HEAD" 2>/dev/null || echo 0)"
+if git diff --cached --quiet && [ "$ahead" = "0" ]; then
   echo "нечего публиковать — артефакты не изменились"
   exit 0
+fi
+if git diff --cached --quiet; then
+  echo "новых артефактов нет, но $ahead коммит(ов) не опубликовано — толкаю"
+  msg=""
 fi
 
 echo "публикуется в ветку $branch:"
 git diff --cached --stat
 
-git commit -q -m "$msg"
+if [ -n "$msg" ]; then
+  git commit -q -m "$msg"
+fi
 
 # Отказ бывает двух родов, и лечатся они по-разному. Сетевой сбой лечится
 # повтором; отвергнутая не-перемотка — только подтягиванием чужих
@@ -45,10 +94,12 @@ for attempt in 1 2 3 4; do
   echo "push не прошёл, подтягиваю ветку и пробую снова "
   echo "(попытка $attempt из 4)"
   if ! git pull --rebase origin "$branch"; then
-    git rebase --abort 2>/dev/null || true
-    echo "ветка разошлась и свести автоматически не вышло."
-    echo "коммит на месте; разобрать вручную: git pull --rebase origin $branch"
-    exit 1
+    if ! finish_rebase; then
+      git rebase --abort 2>/dev/null || true
+      echo "ветка разошлась и свести автоматически не вышло."
+      echo "коммит на месте; разобрать вручную: git pull --rebase origin $branch"
+      exit 1
+    fi
   fi
   sleep $((2 ** attempt))
 done
