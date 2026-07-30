@@ -224,11 +224,22 @@ def rolling_sum(v, w):
     return out
 
 
-def absorption(grid, window_sec, vol_mult, move_mult, side):
+def absorption(grid, window_sec, vol_mult, move_mult, side, imb=0.0):
     """Моменты поглощения: много агрессии в одну сторону, цена не идёт.
 
     `side = -1` — поглощение **продаж**: льют в стакан, а цена стоит,
     значит кто-то откупает, и ожидание — рост. `side = +1` зеркально.
+
+    `imb` — требуемый **перевес** давящей стороны, доля от общего
+    агрессивного объёма окна: `|дельта| / (покупки + продажи) ≥ imb`.
+    Ноль означает «перевеса не требуем», и первая версия детектора вела
+    себя именно так — брала абсолютную величину давления, не спрашивая,
+    односторонне ли оно. Но всплеск объёма бывает двусторонним: обе
+    стороны бьют друг по другу, цена стоит потому, что силы равны, и
+    крупного лимитника там нет вовсе. То, что трейдер называет
+    накоплением, — это перекос: льют в одну сторону, а цена держится.
+    Условие добавлено потому, что без него события двух родов
+    смешивались в одну выборку.
 
     `vol_mult` — во сколько раз агрессивный объём окна должен превышать
     обычный для этого символа (медиана по всем окнам суток). Порог в
@@ -268,6 +279,16 @@ def absorption(grid, window_sec, vol_mult, move_mult, side):
     allow = max(move_mult * float(typ), 1e-9)
     held = move >= -allow if side < 0 else move <= allow
     hit = np.isfinite(vol) & np.isfinite(move) & held & (vol >= vol_mult * med)
+
+    # Перевес давящей стороны. Считается по тому же окну и в долях, а не
+    # в деньгах — по той же причине, по которой относителен порог объёма.
+    other = rolling_sum(grid["buy_qv"] if side < 0 else grid["sell_qv"], w)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        total = vol + other
+        skew = np.where(total > 0, (vol - other) / total, np.nan)
+    if imb > 0:
+        hit &= np.isfinite(skew) & (skew >= imb)
+
     idx = np.flatnonzero(hit)
     if len(idx) == 0:
         return idx, {"median_window_qv": float(med)}
@@ -278,12 +299,14 @@ def absorption(grid, window_sec, vol_mult, move_mult, side):
         if i - last >= gap:
             keep.append(i)
             last = i
-    return np.array(keep, dtype=np.int64), {
+    keep = np.array(keep, dtype=np.int64)
+    return keep, {
         "median_window_qv": float(med),
         "typical_move": float(typ),
         "allowed_move": float(allow),
         "windows": int(np.isfinite(vol).sum()),
         "raw_hits": int(len(idx)),
+        "median_skew": float(np.nanmedian(skew[keep])) if len(keep) else None,
     }
 
 

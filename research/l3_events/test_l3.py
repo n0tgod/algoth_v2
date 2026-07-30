@@ -135,6 +135,33 @@ def test_by_episode():
           len(r) == 2 and abs(r[0] - 0.2) < 1e-12, str(r))
 
 
+def test_ban_matrix_matches_direct_fill():
+    """Разностный массив обязан дать в точности то же, что прямая запись.
+
+    Переписано ради скорости: на секундной сетке ленты окно в полчаса —
+    3601 ячейка на событие. Ускорение, меняющее результат, есть не
+    ускорение, а другая мера, поэтому равенство проверяется числом на
+    краях и на пересечениях окон.
+    """
+    rng = np.random.default_rng(7)
+    shape = (5, 200)
+    rows = rng.integers(0, shape[0], 40)
+    cols = rng.integers(0, shape[1], 40)
+    for guard in (0, 1, 7, 300):
+        want = np.zeros(shape, dtype=bool)
+        g = E.steps(guard, 1)
+        for r, j in zip(rows, cols):
+            want[r, max(0, j - g):min(shape[1], j + g + 1)] = True
+        got = E.ban_matrix(shape, rows, cols, guard_min=guard, step_min=1)
+        check(f"защитное окно {guard}: совпало с прямой записью",
+              bool(np.array_equal(got, want)),
+              f"расхождений {int((got != want).sum())}")
+    empty = E.ban_matrix(shape, np.array([], dtype=np.int64),
+                         np.array([], dtype=np.int64), guard_min=5,
+                         step_min=1)
+    check("без событий не запрещено ничего", not empty.any(), "")
+
+
 def test_cross_section_excludes_neighbours():
     """Каскадящие соседи не должны попадать в собственный фон."""
     # Кросс-секция меньше двадцати активов не считается вовсе — фон из
@@ -187,6 +214,7 @@ def main():
     test_episodes()
     test_by_episode()
     print("контроли и нули")
+    test_ban_matrix_matches_direct_fill()
     test_cross_section_excludes_neighbours()
     test_null_shift()
     test_null_matched_hour()

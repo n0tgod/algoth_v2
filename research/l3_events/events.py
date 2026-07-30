@@ -132,12 +132,23 @@ def ban_matrix(shape, rows, j_list, guard_min=CROSS_GUARD_MIN,
     час — это 121 ячейка на событие, и словарь означал бы десятки
     миллионов вставок на каждый горизонт. Матрица строится один раз и
     переиспользуется всеми горизонтами.
+
+    Заполняется разностным массивом, а не отрезком на событие: на
+    секундной сетке ленты защитное окно в полчаса — это 3601 ячейка, и
+    при сотне тысяч событий прямая запись даёт триста миллионов
+    присваиваний. Разностный массив стоит O(событий + строк × ячеек)
+    независимо от ширины окна; результат тождествен прямой записи и это
+    закреплено тестом.
     """
     g = steps(guard_min, step_min)
-    banned = np.zeros(shape, dtype=bool)
-    for r, j in zip(rows, j_list):
-        banned[r, max(0, j - g):min(shape[1], j + g + 1)] = True
-    return banned
+    n = shape[1]
+    acc = np.zeros((shape[0], n + 1), dtype=np.int32)
+    r = np.asarray(rows, dtype=np.int64)
+    j = np.asarray(j_list, dtype=np.int64)
+    if len(j):
+        np.add.at(acc, (r, np.clip(j - g, 0, n)), 1)
+        np.add.at(acc, (r, np.clip(j + g + 1, 0, n)), -1)
+    return np.cumsum(acc[:, :n], axis=1) > 0
 
 
 def cross_section(P, j_list, rows, horizon_min,

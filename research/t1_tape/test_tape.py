@@ -183,10 +183,95 @@ def test_side_is_aggressor_on_real_file():
           share_up_for_sell < 0.2, f"{share_up_for_sell:.3f}")
 
 
-def test_cross_width_counts_only_clean():
-    """Ширина фона: сам актив в него не входит, запрещённые тоже."""
+def two_sided_spike(one_sided):
+    """Всплеск объёма при стоящей цене: односторонний или двусторонний."""
+    step, n, t0 = 1.0, 300, 1_000_000.0
+    ts, sg, sz, px = [], [], [], []
+    for k in range(n):
+        ts.append(t0 + k + 0.1)
+        sg.append(-1 if k % 2 else 1)
+        sz.append(1.0)
+        px.append(100.0)
+    for k in range(200, 210):
+        for j in range(20):
+            ts.append(t0 + k + 0.5)
+            # односторонний — только продажи; двусторонний — пополам
+            sg.append(-1 if (one_sided or j % 2) else 1)
+            sz.append(1.0)
+            px.append(100.0)
+    order = np.argsort(ts)
+    tape = (np.array(ts)[order], np.array(sg, dtype=np.int8)[order],
+            np.array(sz)[order], np.array(px)[order])
+    return T.to_grid(tape, step, t0=t0, t1=t0 + n)
+
+
+def test_imbalance_separates_accumulation():
+    """Перевес: льют в одну сторону — накопление; обе бьются — нет."""
+    g1 = two_sided_spike(one_sided=True)
+    g2 = two_sided_spike(one_sided=False)
+    i1, n1 = T.absorption(g1, 10, 5.0, 0.5, -1, imb=0.3)
+    i2, _ = T.absorption(g2, 10, 5.0, 0.5, -1, imb=0.3)
+    check("односторонний всплеск проходит",
+          any(200 <= i <= 215 for i in i1), f"{i1} {n1}")
+    check("двусторонний всплеск накоплением не считается",
+          not any(200 <= i <= 215 for i in i2), str(i2))
+    i3, _ = T.absorption(g2, 10, 5.0, 0.5, -1, imb=0.0)
+    check("без требования перевеса двусторонний проходит",
+          any(200 <= i <= 215 for i in i3), str(i3))
+    check("перевес докладывается числом",
+          n1.get("median_skew") is not None and n1["median_skew"] > 0.3,
+          str(n1))
+
+
+def load_probe():
     sys.path.insert(0, os.path.join(os.path.dirname(HERE), "l3_events"))
     import probe as P  # noqa: E402
+    return P
+
+
+def test_excursions_match_per_horizon():
+    """Один проход на все горизонты обязан дать то же, что проход на каждый.
+
+    Переписано ради скорости: на получасовом горизонте отдельный проход
+    стоил бы 1800 итераций по числу событий на каждую из тридцати двух
+    ячеек. Ускорение, меняющее числа, есть другая мера, поэтому
+    сравнение с прямым счётом закреплено тестом.
+    """
+    P = load_probe()
+    rng = np.random.default_rng(11)
+    n_sym, n_t = 4, 400
+    C = 100.0 * np.exp(np.cumsum(rng.normal(0, 0.001, (n_sym, n_t)), axis=1))
+    H = C * (1 + rng.uniform(0, 0.002, (n_sym, n_t)))
+    L = C * (1 - rng.uniform(0, 0.002, (n_sym, n_t)))
+    rows = rng.integers(0, n_sym, 25)
+    cols = rng.integers(0, n_t, 25)
+    for side in (-1, 1):
+        got = P.excursions(C, H, L, rows, cols, [5, 30, 120], side)
+        for h in (5, 30, 120):
+            lo = np.full(len(cols), np.inf)
+            hi = np.full(len(cols), -np.inf)
+            entry = C[rows, cols]
+            for k in range(h + 1):
+                j = np.clip(cols + k, 0, n_t - 1)
+                fit = (cols + k) < n_t
+                lo = np.fmin(lo, np.where(fit, L[rows, j], np.nan))
+                hi = np.fmax(hi, np.where(fit, H[rows, j], np.nan))
+            a, b = lo / entry - 1.0, hi / entry - 1.0
+            want = (a, b) if side < 0 else (-b, -a)
+            ok = (np.allclose(got[h][0], want[0], equal_nan=True)
+                  and np.allclose(got[h][1], want[1], equal_nan=True))
+            check(f"ход на {h} ячейках, сторона {side:+d}", ok,
+                  f"{got[h][0][:3]} против {want[0][:3]}")
+    P_side = P.excursions(C, H, L, rows, cols, [30], -1)
+    check("против позиции не положителен, в пользу не отрицателен",
+          bool(np.all(P_side[30][0] <= 1e-12)
+               and np.all(P_side[30][1] >= -1e-12)),
+          f"{P_side[30][0].max()} {P_side[30][1].min()}")
+
+
+def test_cross_width_counts_only_clean():
+    """Ширина фона: сам актив в него не входит, запрещённые тоже."""
+    P = load_probe()
 
     C = np.full((4, 10), 100.0)
     C[3, :] = np.nan                       # у четвёртого цены нет вовсе
@@ -210,7 +295,9 @@ def main():
     test_rolling_sum()
     test_absorption_finds_held_price()
     test_absorption_ignores_move()
+    test_imbalance_separates_accumulation()
     print("контроль кросс-секцией")
+    test_excursions_match_per_horizon()
     test_cross_width_counts_only_clean()
     print("живая проверка стороны")
     test_side_is_aggressor_on_real_file()
