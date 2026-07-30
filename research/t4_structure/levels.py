@@ -45,6 +45,15 @@ import numpy as np
 
 LOOKBACK_MIN = 24 * 60            # окно, из которого строятся уровни
 MIN_HISTORY_MIN = 6 * 60          # меньше — уровней не строим
+# Шум меряется по НЕДАВНЕМУ окну, а не по суткам. Волатильность внутри
+# суток не постоянна: у ARBUSDT 4 марта медианный ход минутной свечи за
+# сутки 21 б.п., а в час разгона 44 при размахе часа 455. Стоп,
+# посчитанный по суточной медиане, оказывался ВНУТРИ одной свечи того
+# часа — владелец увидел это на графике раньше, чем я в числах. Тот же
+# класс ошибки, что константа вместо частоты начисления funding: величина
+# переменная, а зафиксирована средним.
+RECENT_MIN = 30
+MIN_RECENT_MIN = 10               # меньше — берём медленную оценку
 SHELF_Q = 0.85                    # полка: полоса выше этого квантиля
 ROUND_SPAN = 3.0                  # круглые числа в пределах стольких шумов
 
@@ -126,19 +135,32 @@ def round_levels(price, noise, span=ROUND_SPAN):
     return out[np.abs(out - price) <= span * max(noise, step * 1e-6)]
 
 
-def build(t, H, L, P, V, now_i, prev_day_hl=None):
+def build(t, H, L, P, V, now_i, prev_day_hl=None, recent_min=RECENT_MIN):
     """Уровни на момент `now_i`: полки, экстремумы суток, круглые числа.
 
-    Возвращает `(цены уровней, вид уровня, шум)`. Вид нужен диагностике:
-    если работает только один источник, это надо видеть, а не усреднять.
+    Возвращает `(цены уровней, вид уровня, шум текущий, шум суточный)`.
+
+    **Уровни берутся из суток, а геометрия — из текущего режима.**
+    Структура медленная: полка объёма, где торговали вчера, никуда не
+    делась. А ширина полос профиля, стоп и зазор до цели обязаны
+    следовать тому, как рынок движется СЕЙЧАС, иначе в разгон сделка
+    целиком помещается внутрь одной свечи.
+
+    Вид уровня нужен диагностике: если работает только один источник,
+    это надо видеть, а не усреднять.
     """
     a = max(0, now_i - LOOKBACK_MIN)
     if now_i - a < MIN_HISTORY_MIN:
-        return np.empty(0), [], float("nan")
+        return np.empty(0), [], float("nan"), float("nan")
     hh, ll, pp, vv = H[a:now_i], L[a:now_i], P[a:now_i], V[a:now_i]
-    noise = noise_px(hh, ll, pp)
+    slow = noise_px(hh, ll, pp)
+    r0 = max(a, now_i - recent_min)
+    noise = (noise_px(H[r0:now_i], L[r0:now_i], P[r0:now_i])
+             if now_i - r0 >= MIN_RECENT_MIN else slow)
     if not np.isfinite(noise) or noise <= 0:
-        return np.empty(0), [], float("nan")
+        noise = slow
+    if not np.isfinite(noise) or noise <= 0:
+        return np.empty(0), [], float("nan"), float("nan")
     px, kind = [], []
     for v in shelves(pp, vv, noise):
         px.append(float(v))
@@ -154,9 +176,9 @@ def build(t, H, L, P, V, now_i, prev_day_hl=None):
         px.append(float(v))
         kind.append("круглое")
     if not px:
-        return np.empty(0), [], noise
+        return np.empty(0), [], noise, slow
     order = np.argsort(px)
-    return (np.asarray(px)[order], [kind[i] for i in order], noise)
+    return (np.asarray(px)[order], [kind[i] for i in order], noise, slow)
 
 
 def nearest(levels, kinds, price, tol):

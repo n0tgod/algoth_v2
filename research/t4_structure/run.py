@@ -199,7 +199,7 @@ def main():
                 d["seen"] += len(idx)
                 for i in idx:
                     sec = float(g["t"][i]) - t_day
-                    px, kinds, noise = levels_at(sec)
+                    px, kinds, noise, slow = levels_at(sec)
                     if len(px) == 0 or not np.isfinite(noise):
                         d["skip"]["нет истории для уровней"] = \
                             d["skip"].get("нет истории для уровней", 0) + 1
@@ -229,6 +229,13 @@ def main():
                     r["symbol"] = sym
                     r["time"] = T.stamp(g["t"][i])
                     r["kind"] = kind
+                    # Стоп в единицах ТЕКУЩЕГО хода свечи: по построению
+                    # он не меньше единицы, и это надо видеть числом, а
+                    # не считать выполненным.
+                    r["stop_in_noise"] = r["stop_bp"] / max(
+                        noise / r["entry"] * 1e4, 1e-9)
+                    r["noise_bp"] = noise / r["entry"] * 1e4
+                    r["slow_bp"] = slow / r["entry"] * 1e4
                     d["trades"].append(r)
                     d["kind"][kind] = d["kind"].get(kind, 0) + 1
                     d["stop"].append(r["stop_bp"])
@@ -269,7 +276,11 @@ def main():
         if st is None:
             continue
         nl = B.stats(d["null"], cost)
-        rows.append({"vol_mult": mult, "stop_noise": stop_k,
+        med = lambda k: float(np.median([t[k] for t in d["trades"]]))
+        rows.append({"noise_bp_median": med("noise_bp"),
+                     "slow_bp_median": med("slow_bp"),
+                     "stop_in_noise_median": med("stop_in_noise"),
+                     "vol_mult": mult, "stop_noise": stop_k,
                      "min_rr": min_rr, "side": name,
                      "maker_expectancy_bp":
                          st["expectancy_bp"] + 2 * (TAKER_BP - MAKER_BP),
@@ -367,10 +378,10 @@ def report(cfg, rows):
     for name in ("поддержка · лонг", "сопротивление · шорт"):
         md.append(f"\n## {name.capitalize()}\n")
         md.append("| Объём | Стоп | Мин. rr | Событий | Взято | Сделок | "
-                  "Стоп, б.п. | Отн. | Побед | Безубыт. | Ожидание | R | "
-                  "Мейкер | Нуль |")
+                  "Стоп, б.п. | Ход свечи | Стоп/ход | Отн. | Побед | "
+                  "Безубыт. | Ожидание | R | Мейкер | Нуль |")
         md.append("|---|---|---|---|---|---|---|---|---|---|---|"
-                  "---|---|---|")
+                  "---|---|---|---|---|")
         for mult, sk, rr in product(cfg["vol_mults"], cfg["stop_noises"],
                                     cfg["min_rrs"]):
             r = next((x for x in rows if x["vol_mult"] == mult
@@ -383,7 +394,8 @@ def report(cfg, rows):
             md.append(
                 f"| ×{mult:g} | {sk:g} ш | {rr:g} | {r['events']} | "
                 f"{r['taken_share']:.0%} | {r['trades']} | "
-                f"{r['stop_bp_median']:.0f} | {r['rr_median']:.1f} | "
+                f"{r['stop_bp_median']:.0f} | {r['noise_bp_median']:.0f} | "
+                f"{r['stop_in_noise_median']:.1f} | {r['rr_median']:.1f} | "
                 f"{r['win_rate']:.0%} | {r['break_even']:.0%} | "
                 f"{r['expectancy_bp']:+.1f} | {r['expectancy_r']:+.2f} | "
                 f"{r['maker_expectancy_bp']:+.1f} | {nul} |")
@@ -410,6 +422,13 @@ def report(cfg, rows):
               "уже нормирован на шум своего инструмента, так что R здесь "
               "и есть та мера, в которой стратегия либо работает, либо "
               "нет.\n")
+    md.append("**Стоп/ход — главная колонка этого прогона.** Она "
+              "показывает стоп в единицах ТЕКУЩЕГО хода минутной свечи, "
+              "и по построению обязана быть не меньше единицы. Прошлый "
+              "прогон мерил шум суточной медианой: у ARBUSDT 4 марта это "
+              "21 б.п. при 44 в час разгона, и сделка целиком помещалась "
+              "внутрь одной свечи. Величина переменная — фиксировать её "
+              "средним нельзя.\n")
     md.append("**Стоп против круга издержек.** Ради этого всё и делалось: "
               "стоп обязан быть кратно больше 11 б.п., иначе комиссия "
               "съедает выигрыш даже при верном направлении.\n")

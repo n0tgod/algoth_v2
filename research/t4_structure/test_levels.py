@@ -117,14 +117,38 @@ def test_build_needs_history():
     L = np.full(n, 100.0)
     P = np.full(n, 100.5)
     V = np.full(n, 10.0)
-    px, kinds, noise = LV.build(t, H, L, P, V, now_i=n)
+    px, kinds, noise, slow = LV.build(t, H, L, P, V, now_i=n)
     check("короткой истории не хватает — уровней нет", len(px) == 0,
           f"{px} {noise}")
+
+
+def test_noise_follows_recent_regime():
+    """Шум обязан следовать текущему режиму, а не суточному среднему.
+
+    Ровно этим прошлый прогон и испортился: стоп считался по медиане за
+    сутки и в час разгона оказывался внутри одной свечи.
+    """
+    n = 24 * 60
+    t = np.arange(n, dtype=np.float64) * 60
+    H = np.full(n, 100.10)
+    L = np.full(n, 100.00)          # тихо: ход свечи 0.10
+    H[-20:] = 100.60                # последние двадцать минут — разгон
+    L[-20:] = 100.00                # ход свечи 0.60
+    P = (H + L) / 2
+    V = np.full(n, 10.0)
+    px, kinds, noise, slow = LV.build(t, H, L, P, V, now_i=n)
+    check(f"текущий шум взят по разгону ({noise:.2f})",
+          abs(noise - 0.60) < 1e-9, f"{noise} против медленного {slow}")
+    check(f"суточный остался тихим ({slow:.2f})", abs(slow - 0.10) < 1e-9,
+          str(slow))
+    check("стоп по текущему шире, чем по суточному", noise > 3 * slow,
+          f"{noise} {slow}")
 
 
 def main():
     print("шум")
     test_noise_is_median_range()
+    test_noise_follows_recent_regime()
     print("источники уровней")
     test_shelf_found_where_volume_sits()
     test_round_levels_scale_with_price()
