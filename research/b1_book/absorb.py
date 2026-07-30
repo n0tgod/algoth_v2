@@ -22,9 +22,19 @@ Binance. Поэтому стакан пишется живьём, и поэто�
 Каждую секунду по каждому символу берётся самый крупный по нотионалу
 уровень своей стороны в пределах `NEAR` шумов от лучшей цены.
 
-1. **Крупный** — его нотионал не меньше `BIG` медиан по видимым уровням
-   той же стороны. Мера относительная намеренно: у BTC и ARBUSDT
-   абсолютные размеры несравнимы, и константа означала бы разное.
+1. **Крупный** — его нотионал не меньше `BIG` от того, каким этот
+   уровень обычно бывает **у этого же инструмента**: берётся медиана
+   такого же замера за последние `CAL` секунд.
+
+   Первая версия сравнивала с медианой соседних уровней, и живой прогон
+   это убил за минуту: у BTCUSDT вышло 186×, у ETHUSDT 37×, а у всех
+   шести альтов 1.1–2.7×, то есть порога 5 они не достигали никогда.
+   Дело не в рынке, а в дробности котирования — двести уровней BTC
+   стоят в четырёх базисных пунктах и почти все они пыль, а полсотни
+   уровней альта размазаны на 63 б.п. и каждый весом. Мера, относительная
+   к соседям, оказалась НЕ инвариантна к тому, как мелко нарезан стакан;
+   мера, относительная к собственному прошлому, инвариантна. Тот же
+   приём, которым T1 чинил порог объёма.
 2. **Стоит** — та же цена держится крупной `HOLD` секунд подряд.
    Сменилась цена или уровень измельчал — отсчёт с нуля.
 3. **Выедают** — накопленная агрессия противоположной стороны с момента
@@ -56,14 +66,17 @@ Binance. Поэтому стакан пишется живьём, и поэто�
 Только стандартная библиотека.
 """
 
+from collections import deque
 from statistics import median
 
 NEAR = 2.0                        # уровень ищем в стольких шумах от цены
-BIG = 5.0                         # во столько раз крупнее медианы уровней
+BIG = 3.0                         # во столько раз крупнее обычного для себя
 HOLD = 10                         # столько секунд подряд держится крупным
 EAT = 1.0                         # выедено не меньше стольких его размеров
 REFILL = 0.5                      # текущий размер к максимальному
 MIN_LEVELS = 5                    # меньше уровней — медиана бессмысленна
+CAL = 900                         # окно калибровки «обычного», секунд
+MIN_CAL = 120                     # меньше — сравнивать не с чем
 
 
 class Side:
@@ -123,6 +136,10 @@ class Tracker:
         self.symbol = symbol
         self.by = {True: Side(), False: Side()}   # True — бид (лонг)
         self.diag = {True: {}, False: {}}
+        # «Обычный» крупнейший уровень у этого инструмента: тот же замер,
+        # накопленный по времени. Сравнение с собственным прошлым не
+        # зависит от дробности котирования, сравнение с соседями зависит.
+        self.hist = {True: deque(maxlen=CAL), False: deque(maxlen=CAL)}
 
     def step(self, bids, asks, noise, sec, now):
         """Шаг на новом снимке книги.
@@ -144,7 +161,10 @@ class Tracker:
                 self.diag[long] = {"why": "уровней мало или шум неизвестен"}
                 continue
             price, notional, med, n = found
-            big = notional >= BIG * med if med > 0 else False
+            h = self.hist[long]
+            h.append(notional)
+            usual = median(h) if len(h) >= MIN_CAL else None
+            big = usual is not None and usual > 0 and notional >= BIG * usual
             if not big or side.price != price:
                 if big:
                     side.reset(price, notional, now)
@@ -168,17 +188,27 @@ class Tracker:
                     # выели, а не выдержали.
                     if (sec[4] < price) if long else (sec[3] > price):
                         side.pierced = True
-            self.diag[long] = self._verdict(long, price, notional, med, n)
+            self.diag[long] = self._verdict(long, price, notional,
+                                            med, n, usual, len(h))
 
-    def _verdict(self, long, price, notional, med, n):
+    def _verdict(self, long, price, notional, med, n, usual, seen):
         s = self.by[long]
-        d = {"price": price, "big_x": round(notional / med, 2) if med else None,
-             "levels": n, "held": s.held,
+        d = {"price": price,
+             # `big_x` — во сколько раз крупнее ОБЫЧНОГО для себя, это и
+             # есть условие. `vs_levels` — во сколько раз крупнее соседей,
+             # оставлено диагностикой: именно оно оказалось несравнимым
+             # между инструментами, и видеть его надо, чтобы это помнить.
+             "big_x": (round(notional / usual, 2)
+                       if usual and usual > 0 else None),
+             "vs_levels": round(notional / med, 2) if med else None,
+             "levels": n, "calib_s": seen, "held": s.held,
              "eaten_x": (round(s.eaten / s.peak, 2) if s.peak > 0 else None),
              "refill": (round(s.size / s.peak, 2) if s.peak > 0 else None),
              "ok": False, "why": ""}
         if s.price is None:
-            d["why"] = f"не крупный ({d['big_x']}× при нужных {BIG})"
+            d["why"] = (f"калибровка {seen}/{MIN_CAL} с"
+                        if seen < MIN_CAL
+                        else f"не крупный ({d['big_x']}× при нужных {BIG})")
             return d
         if s.held < HOLD:
             d["why"] = f"стоит {s.held} с при нужных {HOLD}"

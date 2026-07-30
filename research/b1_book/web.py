@@ -330,7 +330,7 @@ function bookRows(b) {
   return ["лонг", "шорт"].map(k => {
     const m = b[k] || {};
     return `<tr><td>стакан: ${k} у крупного</td>
-      ${cell(m.big_x, "×", m.big_x >= (b.big || 5))}
+      ${cell(m.big_x, "× обычного", m.big_x >= (b.big || 3))}
       ${cell(m.held, " с", m.held >= (b.hold || 10))}
       ${cell(m.eaten_x, "× съедено", m.eaten_x >= (b.eat || 1))}
       <td class="mono" style="color:var(--muted)">${m.why || "—"}</td></tr>`;

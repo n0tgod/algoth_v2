@@ -313,14 +313,32 @@ def test_warm_start_survives_truncated_file():
         shutil.rmtree(root, ignore_errors=True)
 
 
-def book_with(level_px, level_sz, side="b", n=20, step=0.1, mid=100.0):
-    """Стакан, где на одной цене стоит крупный, а вокруг обычные."""
+QUIET = (0.0, 1.0, 1.0, 100.0, 99.9, 99.95)   # секунда ленты без напора
+
+
+def book_with(level_px=None, level_sz=0.0, side="b", n=20, step=0.1,
+              mid=100.0):
+    """Стакан из обычных уровней; при желании — с крупным на одной цене."""
     bids, asks = {}, {}
     for i in range(n):
         bids[round(mid - step * (i + 1), 6)] = 1.0
         asks[round(mid + step * (i + 1), 6)] = 1.0
-    (bids if side == "b" else asks)[level_px] = level_sz
+    if level_px is not None:
+        (bids if side == "b" else asks)[level_px] = level_sz
     return bids, asks
+
+
+def calibrate(tr, secs=None):
+    """Накопить «обычное» — без этого крупный не с чем сравнивать.
+
+    Детектор меряет размер в разах от того, каким уровень бывает у ЭТОГО
+    инструмента обычно, поэтому первые минуты он молчит по делу.
+    """
+    import absorb as AB
+    b, a = book_with()
+    for i in range(secs or AB.MIN_CAL + 5):
+        tr.step(b, a, 0.5, QUIET, float(i))
+    return b, a
 
 
 def test_book_absorption_needs_all_five():
@@ -334,18 +352,22 @@ def test_book_absorption_needs_all_five():
     import absorb as AB
 
     tr = AB.Tracker("TEST")
-    bids, asks = book_with(99.9, 200.0)           # крупный на биде
-    # секунда ленты: (t, buy_qv, sell_qv, high, low, close)
-    quiet = (0.0, 1.0, 1.0, 100.0, 99.9, 99.95)
-    tr.step(bids, asks, 0.5, quiet, 1.0)
     d = tr.diag[True]
-    check(f"крупный опознан ({d.get('big_x')}×)", d.get("big_x", 0) >= AB.BIG,
-          str(d))
+    tr.step(*book_with(), noise=0.5, sec=QUIET, now=0.0)
+    check(f"до калибровки молчит ({tr.diag[True]['why']})",
+          "калибровка" in tr.diag[True]["why"], str(tr.diag[True]))
+    calibrate(tr)
+    bids, asks = book_with(99.9, 200.0)           # крупный на биде
+    quiet = QUIET
+    tr.step(bids, asks, 0.5, quiet, 1000.0)
+    d = tr.diag[True]
+    check(f"крупный опознан ({d.get('big_x')}× обычного)",
+          (d.get("big_x") or 0) >= AB.BIG, str(d))
     check(f"но ещё не выстоял ({d['why']})",
           not d["ok"] and "стоит" in d["why"], str(d))
 
     for i in range(AB.HOLD + 2):                  # стоит, но не выедают
-        tr.step(bids, asks, 0.5, quiet, 2.0 + i)
+        tr.step(bids, asks, 0.5, quiet, 1001.0 + i)
     d = tr.diag[True]
     check(f"без съедания отказ ({d['why']})",
           not d["ok"] and "выедено" in d["why"], str(d))
@@ -353,7 +375,7 @@ def test_book_absorption_needs_all_five():
     # уровень 200 по 99.9 — это нотионал 19 980; чтобы «выедено»
     # перевалило за свой размер, агрессии нужно больше него
     hit = (0.0, 1.0, 30000.0, 100.0, 99.9, 99.95)
-    tr.step(bids, asks, 0.5, hit, 40.0)
+    tr.step(bids, asks, 0.5, hit, 1040.0)
     d = tr.diag[True]
     check(f"после съедания сработало ({d.get('eaten_x')}× съедено)",
           d["ok"] and d["why"] == "поглощение", str(d))
@@ -368,10 +390,11 @@ def test_book_absorption_rejects_pulled_and_broken():
 
     def ripe():
         t = AB.Tracker("TEST")
+        calibrate(t)
         b, a = book_with(99.9, 200.0)
         for i in range(AB.HOLD + 2):
             t.step(b, a, 0.5, (0.0, 1.0, 5000.0, 100.0, 99.9, 99.95),
-                   1.0 + i)
+                   1000.0 + i)
         return t, b, a
 
     t, b, a = ripe()
@@ -380,14 +403,14 @@ def test_book_absorption_rejects_pulled_and_broken():
 
     t, b, a = ripe()
     b2 = dict(b); b2[99.9] = 1.0                  # крупного сняли
-    t.step(b2, a, 0.5, (0.0, 1.0, 1.0, 100.0, 99.9, 99.95), 99.0)
+    t.step(b2, a, 0.5, QUIET, 1099.0)
     check(f"снятый уровень отвергнут ({t.diag[True]['why']})",
           not t.diag[True]["ok"], str(t.diag[True]))
 
     # Пробой: уровень в книге ещё стоит (его переставили), но лента
     # показывает сделки НИЖЕ него — значит его выели, а не выдержали.
     t, b, a = ripe()
-    t.step(b, a, 0.5, (0.0, 1.0, 5000.0, 100.0, 99.5, 99.6), 99.0)
+    t.step(b, a, 0.5, (0.0, 1.0, 5000.0, 100.0, 99.5, 99.6), 1099.0)
     check(f"пробой по ленте отвергнут ({t.diag[True]['why']})",
           not t.diag[True]["ok"]
           and "сквозь" in t.diag[True]["why"], str(t.diag[True]))
