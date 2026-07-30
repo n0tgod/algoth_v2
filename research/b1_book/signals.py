@@ -61,34 +61,40 @@ KEEP_SEC = 4 * 3600               # сколько секунд истории �
 DEDUP_SEC = 60                    # не чаще одного события в минуту на символ
 
 
-def absorption_live(buy, sell, close, w, vol_mult, move_mult, imb, side):
-    """Есть ли поглощение в последнем окне. Правило — как в `tape.py`.
+def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
+    """Измеренные величины последнего окна и вердикт по ним.
 
-    Возвращает `True/False`. Пороги относительные: объём в разах от
-    обычного для этого символа, допуск на движение — в долях обычного
-    хода за то же окно. Абсолютные величины сравнивали бы разное.
+    Возвращает словарь, а не «да/нет», намеренно: без чисел «событий
+    нет» неотличимо от «детектор сломан», и смотреть не на что. Правило
+    то же, что в `tape.absorption`, пороги относительные — объём в разах
+    от обычного для этого символа, допуск на движение в долях обычного
+    хода за то же окно.
     """
+    out = {"vol_x": None, "imb": None, "move_x": None, "ok": False,
+           "why": "мало истории"}
     n = len(close)
     if n < w * 3:
-        return False
+        return out
     press = sell if side < 0 else buy
     other = buy if side < 0 else sell
     win_press = float(np.sum(press[-w:]))
     win_other = float(np.sum(other[-w:]))
     tot = win_press + win_other
     if tot <= 0:
-        return False
-    if (win_press - win_other) / tot < imb:
-        return False
+        out["why"] = "нет объёма"
+        return out
+    out["imb"] = round((win_press - win_other) / tot, 3)
     # Обычный объём окна — медиана скользящих сумм по всей истории.
     c = np.concatenate([[0.0], np.cumsum(press)])
     sums = c[w:] - c[:-w]
     sums = sums[sums > 0]
     if len(sums) < 5:
-        return False
+        return out
     med = float(np.median(sums))
-    if med <= 0 or win_press < vol_mult * med:
-        return False
+    if med <= 0:
+        out["why"] = "нет обычного объёма"
+        return out
+    out["vol_x"] = round(win_press / med, 2)
     # Ход окна и обычный ход окна.
     # Смещение окна ровно такое же, как в `tape.absorption`: конец окна
     # против его начала, то есть w−1 шагов назад. Разница в один шаг
@@ -98,10 +104,20 @@ def absorption_live(buy, sell, close, w, vol_mult, move_mult, imb, side):
              - 1.0)
     moves = moves[np.isfinite(moves)]
     if not np.isfinite(move) or len(moves) < 5:
-        return False
+        return out
     typ = float(np.median(np.abs(moves)))
     allow = max(move_mult * typ, 1e-9)
-    return move >= -allow if side < 0 else move <= allow
+    out["move_x"] = round((move if side < 0 else -move) / allow, 2)
+    held = move >= -allow if side < 0 else move <= allow
+    if out["vol_x"] < vol_mult:
+        out["why"] = "объём ниже порога"
+    elif out["imb"] < imb:
+        out["why"] = "давление двустороннее"
+    elif not held:
+        out["why"] = "цена ушла"
+    else:
+        out["ok"], out["why"] = True, "условия выполнены"
+    return out
 
 
 class Live:
@@ -117,6 +133,7 @@ class Live:
         self.done = deque(maxlen=40)
         self.last_event = 0.0
         self.last_px = None
+        self.diag = {-1: {}, 1: {}}
 
     # --- поток --------------------------------------------------------
     def on_trade(self, t):
@@ -179,7 +196,7 @@ class Live:
         # На живом потоке истории меньше суток, поэтому окно построения
         # равно тому, что накопилось; требование к минимуму — тоже.
         px, kinds, noise, slow = LV.build(
-            t, H, L, P, V, now_i=n, prev_day_hl=None)
+            t, H, L, P, V, now_i=n, prev_day_hl=None, min_history=20)
         if len(px) == 0 and n >= 20:
             # Истории мало для полок — но круглые числа и экстремумы
             # накопленного окна доступны сразу, и это лучше пустоты.
@@ -198,6 +215,22 @@ class Live:
         self.levels_at = now
 
     # --- события и бумажные сделки ------------------------------------
+    def candles(self, a, minutes=120):
+        """Минутные свечи из накопленных секунд — для графика страницы."""
+        if a is None or len(a) < 60:
+            return []
+        t, H, L, P, V = self.minute_frames(a)
+        # Открытие и закрытие минуты берём по краям её секунд.
+        keys = (a[:, 0] // 60).astype(np.int64)
+        uniq = np.unique(keys)
+        out = []
+        for k in uniq[-minutes:]:
+            m = a[keys == k]
+            out.append([float(k * 60), float(m[0, 5]),
+                        float(np.max(m[:, 3])), float(np.min(m[:, 4])),
+                        float(m[-1, 5]), float(np.sum(m[:, 1] + m[:, 2]))])
+        return out
+
     def check(self, now):
         self.refresh_levels(now)
         self.update_open(now)
@@ -214,8 +247,10 @@ class Live:
         close, hi, lo = a[:, 5], a[:, 3], a[:, 4]
         price = float(close[-1])
         for side in (-1, 1):
-            if not absorption_live(buy, sell, close, w, VOL_MULT,
-                                   MOVE_MULT, IMB, side):
+            m = absorb_metrics(buy, sell, close, w, VOL_MULT, MOVE_MULT,
+                               IMB, side)
+            self.diag[side] = m
+            if not m["ok"]:
                 continue
             near = LV.nearest(px, kinds, price, TOUCH_NOISE * noise)
             if near is None:
@@ -276,7 +311,18 @@ class Live:
 
     def view(self):
         px, kinds, noise, _ = self.levels
+        a = self.arrays()
+        near = None
+        if len(px) and self.last_px and np.isfinite(noise) and noise > 0:
+            d = min(abs(np.asarray(px) - self.last_px))
+            near = round(float(d) / noise, 2)      # в единицах шума
         return {
+            "history_min": round(len(self.sec) / 60.0, 1),
+            "near_x": near,
+            "diag": {"long": self.diag.get(-1, {}),
+                     "short": self.diag.get(1, {})},
+            "touch_x": TOUCH_NOISE, "vol_mult": VOL_MULT, "imb": IMB,
+            "candles": self.candles(a),
             "levels": [{"p": float(p), "kind": k}
                        for p, k in zip(list(px), list(kinds))],
             "noise_bp": (round(noise / self.last_px * 1e4, 1)

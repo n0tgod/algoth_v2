@@ -135,7 +135,8 @@ def round_levels(price, noise, span=ROUND_SPAN):
     return out[np.abs(out - price) <= span * max(noise, step * 1e-6)]
 
 
-def build(t, H, L, P, V, now_i, prev_day_hl=None, recent_min=RECENT_MIN):
+def build(t, H, L, P, V, now_i, prev_day_hl=None, recent_min=RECENT_MIN,
+          min_history=MIN_HISTORY_MIN):
     """Уровни на момент `now_i`: полки, экстремумы суток, круглые числа.
 
     Возвращает `(цены уровней, вид уровня, шум текущий, шум суточный)`.
@@ -148,9 +149,13 @@ def build(t, H, L, P, V, now_i, prev_day_hl=None, recent_min=RECENT_MIN):
 
     Вид уровня нужен диагностике: если работает только один источник,
     это надо видеть, а не усреднять.
+
+    `min_history` — сколько минут требуется, чтобы вообще строить уровни.
+    Для суточного профиля разумны шесть часов, но на живом потоке их нет
+    первые полдня, и с ними страница наблюдения показывала бы пустоту.
     """
     a = max(0, now_i - LOOKBACK_MIN)
-    if now_i - a < MIN_HISTORY_MIN:
+    if now_i - a < min_history:
         return np.empty(0), [], float("nan"), float("nan")
     hh, ll, pp, vv = H[a:now_i], L[a:now_i], P[a:now_i], V[a:now_i]
     slow = noise_px(hh, ll, pp)

@@ -168,8 +168,8 @@ def test_live_detector_agrees_with_batch():
     batch = set(int(i) for i in idx)
     live_hits = []
     for i in range(180, n):
-        if S.absorption_live(buy[:i + 1], sell[:i + 1], close[:i + 1],
-                             60, 5.0, 0.5, 0.3, -1):
+        if S.absorb_metrics(buy[:i + 1], sell[:i + 1], close[:i + 1],
+                            60, 5.0, 0.5, 0.3, -1)["ok"]:
             live_hits.append(i)
     check(f"пакетный нашёл {len(batch)}, живой {len(live_hits)}",
           bool(batch) and bool(live_hits), f"{sorted(batch)[:5]} {live_hits[:5]}")
@@ -179,6 +179,24 @@ def test_live_detector_agrees_with_batch():
         check(f"первое срабатывание совпало ({min(live_hits)} против "
               f"{min(batch)})", abs(min(live_hits) - min(batch)) <= 1,
               f"{min(live_hits)} {min(batch)}")
+
+
+def test_metrics_explain_refusal():
+    """Отказ обязан быть объяснён числом, а не молчанием."""
+    import numpy as np
+    import signals as S
+    n = 400
+    buy = np.full(n, 100.0)
+    sell = np.full(n, 100.0)
+    close = np.full(n, 100.0)
+    m = S.absorb_metrics(buy, sell, close, 60, 5.0, 0.5, 0.3, -1)
+    check(f"вердикт отрицательный ({m['why']})", not m["ok"], str(m))
+    check("перевес измерен", m["imb"] is not None and abs(m["imb"]) < 1e-9,
+          str(m))
+    check("объём измерен в разах", m["vol_x"] is not None
+          and abs(m["vol_x"] - 1.0) < 0.05, str(m))
+    check("причина названа", m["why"] in ("объём ниже порога",
+                                          "давление двустороннее"), m["why"])
 
 
 def main():
@@ -198,6 +216,7 @@ def main():
     test_page_has_no_external_loads()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
+    test_metrics_explain_refusal()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

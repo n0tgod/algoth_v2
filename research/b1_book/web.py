@@ -104,9 +104,13 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
     <div class="bands" id="bands"></div>
   </div>
   <div class="panel">
-    <div class="cap"><span>середина, уровни и сделки</span>
+    <div class="cap"><span>минутные свечи, уровни и сделки</span>
       <span id="cap-mid" class="mono"></span></div>
-    <canvas id="mid" height="190"></canvas>
+    <canvas id="mid" height="300"></canvas>
+    <div class="cap" style="border-top:1px solid var(--rule)">
+      <span>детектор — что выполнено прямо сейчас</span>
+      <span id="cap-diag" class="mono"></span></div>
+    <table id="diag"></table>
     <div class="cap" style="border-top:1px solid var(--rule)">
       <span>бумажные сделки — наблюдение, не торговля</span>
       <span id="cap-sig" class="mono"></span></div>
@@ -210,8 +214,31 @@ function render(d) {
      <td class="mono" style="color:var(--muted)">${kk(x.p*x.v)}</td></tr>`
   ).join("");
 
-  const sg = d.sig || {levels:[], open:[], done:[]};
-  drawMid(d.mid || [], sg);
+  const sg = d.sig || {levels:[], open:[], done:[], candles:[]};
+  drawMid(sg.candles || [], d.mid || [], sg);
+  document.getElementById("cap-diag").textContent =
+    `история ${sg.history_min ?? 0} мин · до уровня ${
+      sg.near_x ?? "—"} шума (нужно ≤ ${sg.touch_x})`;
+  const dg = sg.diag || {};
+  const drow = (name, m) => {
+    m = m || {};
+    const cell = (v, need, ok) => v === null || v === undefined
+      ? `<td class="mono" style="color:var(--muted)">—</td>`
+      : `<td class="mono ${ok?"buy":"sell"}">${v}${need}</td>`;
+    return `<tr><td>${name}</td>
+      ${cell(m.vol_x, "×", m.vol_x >= (sg.vol_mult||5))}
+      ${cell(m.imb, "", m.imb >= (sg.imb||0.3))}
+      ${cell(m.move_x, "", m.move_x !== undefined && m.move_x >= -1)}
+      <td class="mono" style="color:var(--muted)">${m.why || "—"}</td></tr>`;
+  };
+  document.getElementById("diag").innerHTML =
+    `<tr><td style="color:var(--muted);font-size:11.5px">сторона</td>
+      <td style="color:var(--muted);font-size:11.5px">объём</td>
+      <td style="color:var(--muted);font-size:11.5px">перевес</td>
+      <td style="color:var(--muted);font-size:11.5px">ход</td>
+      <td style="color:var(--muted);font-size:11.5px">итог</td></tr>`
+    + drow("поглощение продаж · лонг", dg.long)
+    + drow("поглощение покупок · шорт", dg.short);
   const all = sg.open.concat(sg.done).slice(0, 12);
   document.getElementById("cap-sig").textContent =
     `открыто ${sg.open.length} · шум ${sg.noise_bp ?? "—"} б.п. · уровней ${
@@ -233,13 +260,22 @@ function render(d) {
   lg.textContent = (d.log || []).join("\n");
 }
 
-function drawMid(pts, sg) {
+function drawMid(cands, pts, sg) {
   const cv = document.getElementById("mid");
-  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 190;
+  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 300;
   cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
   const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
   g.clearRect(0,0,W,H);
-  if (pts.length < 2) return;
+  // Пока свечей нет, рисуется середина по секундам: первые минуты сбора
+  // не должны выглядеть как поломка.
+  const useC = cands.length >= 3;
+  if (!useC && pts.length < 2) {
+    g.fillStyle = css("--muted");
+    g.font = "12px system-ui"; g.textBaseline = "middle";
+    g.fillText("копим историю…", 10, H/2);
+    return;
+  }
+  pts = useC ? cands.map(c => [c[0], c[4]]) : pts;
   // В шкалу входят и уровни со сделками: иначе метка окажется за краем,
   // и «сделки не видно» будет означать не отсутствие, а обрезку.
   const near = (sg.levels||[]).map(l=>l.p).filter(p =>
@@ -247,7 +283,8 @@ function drawMid(pts, sg) {
     p < Math.max(...pts.map(q=>q[1]))*1.005);
   const marks = (sg.open||[]).concat(sg.done||[]).slice(0,8);
   const extra = marks.flatMap(m=>[m.entry, m.stop, m.target]);
-  const vals = pts.map(p=>p[1]).concat(near, extra);
+  const vals = pts.map(p=>p[1]).concat(near, extra)
+    .concat(useC ? cands.flatMap(c=>[c[2], c[3]]) : []);
   const lo = Math.min(...vals), hi = Math.max(...vals);
   const pad = (hi-lo)*0.08 || 1e-9;
   const y = v => 8 + (H-24)*(hi+pad-v)/((hi-lo)+2*pad);
@@ -266,9 +303,23 @@ function drawMid(pts, sg) {
     g.font = "10px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
     g.fillText(l.kind, 9, y(l.p) - 6);
   }
-  g.strokeStyle = css("--ink"); g.lineWidth = 1.5; g.globalAlpha = .85;
-  g.beginPath(); pts.forEach((p,i)=> i?g.lineTo(x(i),y(p[1])):g.moveTo(x(i),y(p[1])));
-  g.stroke(); g.globalAlpha = 1;
+  if (useC) {
+    const cw = Math.max(1, (W-70)/cands.length*0.62);
+    cands.forEach((c,i) => {
+      const up = c[4] >= c[1];
+      g.strokeStyle = g.fillStyle = up ? css("--bid") : css("--ask");
+      g.beginPath(); g.moveTo(x(i), y(c[2])); g.lineTo(x(i), y(c[3]));
+      g.stroke();
+      const yo = y(c[1]), yc = y(c[4]);
+      g.fillRect(x(i)-cw/2, Math.min(yo,yc), cw,
+                 Math.max(Math.abs(yc-yo), 1));
+    });
+  } else {
+    g.strokeStyle = css("--ink"); g.lineWidth = 1.5; g.globalAlpha = .85;
+    g.beginPath();
+    pts.forEach((p,i)=> i?g.lineTo(x(i),y(p[1])):g.moveTo(x(i),y(p[1])));
+    g.stroke(); g.globalAlpha = 1;
+  }
 
   // Сделки: вход треугольником по направлению, стоп и цель отрезками
   // вправо от входа — там, где сделка живёт.
@@ -295,7 +346,8 @@ function drawMid(pts, sg) {
   g.fillText(hi.toPrecision(7), W-60, y(hi));
   g.fillText(lo.toPrecision(7), W-60, y(lo));
   document.getElementById("cap-mid").textContent =
-    ((pts[pts.length-1][1]/pts[0][1]-1)*1e4).toFixed(1) + " б.п. за окно";
+    (useC ? `${cands.length} мин · ` : "по секундам · ")
+    + ((pts[pts.length-1][1]/pts[0][1]-1)*1e4).toFixed(1) + " б.п. за окно";
 }
 
 tick(); timer = setInterval(tick, 1000);
