@@ -1,0 +1,1149 @@
+{
+ "config": {
+  "symbols": [
+   "ARBUSDT"
+  ],
+  "start": "2025-03-09",
+  "end": "2025-03-10",
+  "window_sec": 60,
+  "vol_mults": [
+   5.0,
+   10.0
+  ],
+  "min_rrs": [
+   1.5,
+   2.0,
+   3.0
+  ],
+  "imb": 0.3,
+  "cost_bp": 11.0,
+  "touch_noise": 0.5,
+  "stop_noises": [
+   1.0,
+   2.0,
+   4.0
+  ],
+  "maker_bp": 2.0,
+  "lookback_min": 1440,
+  "max_hold_sec": 14400
+ },
+ "rows": [
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 1.0,
+   "min_rr": 1.5,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -11.835100408652032,
+   "events": 201,
+   "taken_share": 0.1044776119402985,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 5
+   },
+   "kind": {
+    "полка": 20,
+    "минимум суток": 1
+   },
+   "trades": 21,
+   "win_rate": 0.09523809523809523,
+   "stop_bp_median": 14.319076213962855,
+   "break_even": 0.4143004675527685,
+   "expectancy_bp": -18.835100408652032,
+   "median_bp": -25.271065899781334,
+   "rr_median": 3.530323843449521,
+   "held_median_sec": 101.0,
+   "share_target": 0.09523809523809523,
+   "share_stop": 0.9047619047619048,
+   "share_time": 0.0,
+   "null_expectancy_bp": -24.42813082051586,
+   "null_trades": 2
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 1.0,
+   "min_rr": 1.5,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 0.737837583137666,
+   "events": 207,
+   "taken_share": 0.06763285024154589,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 7,
+    "отношение мало": 1
+   },
+   "kind": {
+    "полка": 13,
+    "круглое": 1
+   },
+   "trades": 14,
+   "win_rate": 0.21428571428571427,
+   "stop_bp_median": 13.111732049732694,
+   "break_even": 0.4012554466860351,
+   "expectancy_bp": -6.262162416862334,
+   "median_bp": -19.431009348036646,
+   "rr_median": 3.7213713824084724,
+   "held_median_sec": 67.0,
+   "share_target": 0.21428571428571427,
+   "share_stop": 0.7857142857142857,
+   "share_time": 0.0,
+   "null_expectancy_bp": -24.204540961025415,
+   "null_trades": 4
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 1.0,
+   "min_rr": 2.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -9.941377735027338,
+   "events": 201,
+   "taken_share": 0.0845771144278607,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 9
+   },
+   "kind": {
+    "полка": 16,
+    "минимум суток": 1
+   },
+   "trades": 17,
+   "win_rate": 0.11764705882352941,
+   "stop_bp_median": 14.66697136579629,
+   "break_even": 0.3594338201049966,
+   "expectancy_bp": -16.941377735027338,
+   "median_bp": -24.907865790747653,
+   "rr_median": 3.7695114784552817,
+   "held_median_sec": 109.0,
+   "share_target": 0.11764705882352941,
+   "share_stop": 0.8823529411764706,
+   "share_time": 0.0,
+   "null_expectancy_bp": -26.487507632860886,
+   "null_trades": 3
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 1.0,
+   "min_rr": 2.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 0.737837583137666,
+   "events": 207,
+   "taken_share": 0.06763285024154589,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 7,
+    "отношение мало": 1
+   },
+   "kind": {
+    "полка": 13,
+    "круглое": 1
+   },
+   "trades": 14,
+   "win_rate": 0.21428571428571427,
+   "stop_bp_median": 13.111732049732694,
+   "break_even": 0.4012554466860351,
+   "expectancy_bp": -6.262162416862334,
+   "median_bp": -19.431009348036646,
+   "rr_median": 3.7213713824084724,
+   "held_median_sec": 67.0,
+   "share_target": 0.21428571428571427,
+   "share_stop": 0.7857142857142857,
+   "share_time": 0.0,
+   "null_expectancy_bp": -27.055837254272397,
+   "null_trades": 4
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 1.0,
+   "min_rr": 3.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -6.550187016344003,
+   "events": 201,
+   "taken_share": 0.06467661691542288,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 13
+   },
+   "kind": {
+    "полка": 12,
+    "минимум суток": 1
+   },
+   "trades": 13,
+   "win_rate": 0.15384615384615385,
+   "stop_bp_median": 14.66697136579629,
+   "break_even": 0.3045721476579428,
+   "expectancy_bp": -13.550187016344003,
+   "median_bp": -24.907865790747653,
+   "rr_median": 4.859550704430886,
+   "held_median_sec": 109.0,
+   "share_target": 0.15384615384615385,
+   "share_stop": 0.8461538461538461,
+   "share_time": 0.0,
+   "null_expectancy_bp": 6.221792013986104,
+   "null_trades": 3
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 1.0,
+   "min_rr": 3.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": -2.708433338750341,
+   "events": 207,
+   "taken_share": 0.03864734299516908,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 7,
+    "отношение мало": 7
+   },
+   "kind": {
+    "круглое": 1,
+    "полка": 7
+   },
+   "trades": 8,
+   "win_rate": 0.125,
+   "stop_bp_median": 10.181747467258344,
+   "break_even": 0.31333568712876037,
+   "expectancy_bp": -9.708433338750341,
+   "median_bp": -19.67913357812111,
+   "rr_median": 5.345024394343487,
+   "held_median_sec": 62.0,
+   "share_target": 0.125,
+   "share_stop": 0.875,
+   "share_time": 0.0,
+   "null_expectancy_bp": -24.91584924007594,
+   "null_trades": 3
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 2.0,
+   "min_rr": 1.5,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -7.145270261605507,
+   "events": 201,
+   "taken_share": 0.06965174129353234,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 12
+   },
+   "kind": {
+    "полка": 13,
+    "минимум суток": 1
+   },
+   "trades": 14,
+   "win_rate": 0.2857142857142857,
+   "stop_bp_median": 30.444586131034058,
+   "break_even": 0.36914225859773886,
+   "expectancy_bp": -14.145270261605507,
+   "median_bp": -35.94811965238597,
+   "rr_median": 2.3080513711336,
+   "held_median_sec": 657.0,
+   "share_target": 0.2857142857142857,
+   "share_stop": 0.7142857142857143,
+   "share_time": 0.0,
+   "null_expectancy_bp": 2.02564294172822,
+   "null_trades": 3
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 2.0,
+   "min_rr": 1.5,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 13.80226140874641,
+   "events": 207,
+   "taken_share": 0.03864734299516908,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 7,
+    "отношение мало": 7
+   },
+   "kind": {
+    "круглое": 1,
+    "полка": 7
+   },
+   "trades": 8,
+   "win_rate": 0.375,
+   "stop_bp_median": 24.356194710025992,
+   "break_even": 0.42773538980770065,
+   "expectancy_bp": 6.80226140874641,
+   "median_bp": -33.71672829847526,
+   "rr_median": 2.419881816537525,
+   "held_median_sec": 282.0,
+   "share_target": 0.375,
+   "share_stop": 0.625,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 2.0,
+   "min_rr": 2.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -13.110301117743532,
+   "events": 201,
+   "taken_share": 0.04477611940298507,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 17
+   },
+   "kind": {
+    "полка": 8,
+    "минимум суток": 1
+   },
+   "trades": 9,
+   "win_rate": 0.2222222222222222,
+   "stop_bp_median": 29.6000850143921,
+   "break_even": 0.29601190187650794,
+   "expectancy_bp": -20.110301117743532,
+   "median_bp": -36.392347023958095,
+   "rr_median": 3.574304130737021,
+   "held_median_sec": 478.0,
+   "share_target": 0.2222222222222222,
+   "share_stop": 0.7777777777777778,
+   "share_time": 0.0,
+   "null_expectancy_bp": -47.603223919383645,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 2.0,
+   "min_rr": 2.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 13.518589666909218,
+   "events": 207,
+   "taken_share": 0.024154589371980676,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 7,
+    "отношение мало": 10
+   },
+   "kind": {
+    "круглое": 1,
+    "полка": 4
+   },
+   "trades": 5,
+   "win_rate": 0.4,
+   "stop_bp_median": 22.844089091948113,
+   "break_even": 0.3930499881916063,
+   "expectancy_bp": 6.518589666909219,
+   "median_bp": -33.58936750500151,
+   "rr_median": 2.7807549058437573,
+   "held_median_sec": 217.0,
+   "share_target": 0.4,
+   "share_stop": 0.6,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 2.0,
+   "min_rr": 3.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -35.59433316043559,
+   "events": 201,
+   "taken_share": 0.024875621890547265,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 21
+   },
+   "kind": {
+    "полка": 4,
+    "минимум суток": 1
+   },
+   "trades": 5,
+   "win_rate": 0.0,
+   "stop_bp_median": 25.39234702395786,
+   "break_even": 0.20382219234484733,
+   "expectancy_bp": -42.59433316043559,
+   "median_bp": -36.392347023958095,
+   "rr_median": 5.444683644924042,
+   "held_median_sec": 191.0,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 2.0,
+   "min_rr": 3.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 96.69044879171484,
+   "events": 207,
+   "taken_share": 0.004830917874396135,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 7,
+    "отношение мало": 14
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 1.0,
+   "stop_bp_median": 29.036052739095783,
+   "break_even": 0.3372124354957609,
+   "expectancy_bp": 89.69044879171484,
+   "median_bp": 89.69044879171484,
+   "rr_median": 3.088933940078928,
+   "held_median_sec": 376.0,
+   "share_target": 1.0,
+   "share_stop": 0.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 4.0,
+   "min_rr": 1.5,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -53.24141176648121,
+   "events": 201,
+   "taken_share": 0.06467661691542288,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 13
+   },
+   "kind": {
+    "полка": 12,
+    "минимум суток": 1
+   },
+   "trades": 13,
+   "win_rate": 0.07692307692307693,
+   "stop_bp_median": 56.83891189691969,
+   "break_even": 0.32545929326644063,
+   "expectancy_bp": -60.24141176648121,
+   "median_bp": -66.29685681024965,
+   "rr_median": 2.0059360797089245,
+   "held_median_sec": 780.0,
+   "share_target": 0.07692307692307693,
+   "share_stop": 0.9230769230769231,
+   "share_time": 0.0,
+   "null_expectancy_bp": -49.66810976019153,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 4.0,
+   "min_rr": 1.5,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 27.36143979600825,
+   "events": 207,
+   "taken_share": 0.024154589371980676,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 8,
+    "отношение мало": 9
+   },
+   "kind": {
+    "полка": 5
+   },
+   "trades": 5,
+   "win_rate": 0.2,
+   "stop_bp_median": 53.980582222532696,
+   "break_even": 0.4251072086552238,
+   "expectancy_bp": 20.36143979600825,
+   "median_bp": -61.45592095053397,
+   "rr_median": 1.5750092762038885,
+   "held_median_sec": 505.0,
+   "share_target": 0.2,
+   "share_stop": 0.6,
+   "share_time": 0.2,
+   "null_expectancy_bp": -93.70227247813455,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 4.0,
+   "min_rr": 2.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -61.25599136698442,
+   "events": 201,
+   "taken_share": 0.03980099502487562,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 18
+   },
+   "kind": {
+    "полка": 7,
+    "минимум суток": 1
+   },
+   "trades": 8,
+   "win_rate": 0.0,
+   "stop_bp_median": 50.496401035598296,
+   "break_even": 0.25827289351644034,
+   "expectancy_bp": -68.25599136698442,
+   "median_bp": -61.496401035598495,
+   "rr_median": 3.136940138987229,
+   "held_median_sec": 627.5,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": -102.07553375539146,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 4.0,
+   "min_rr": 2.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 207.0091743119269,
+   "events": 207,
+   "taken_share": 0.004830917874396135,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 8,
+    "отношение мало": 13
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 0.0,
+   "stop_bp_median": 85.2545521571711,
+   "break_even": 0.27274194393034307,
+   "expectancy_bp": 200.0091743119269,
+   "median_bp": 200.0091743119269,
+   "rr_median": 3.139537000183721,
+   "held_median_sec": 9976.0,
+   "share_target": 0.0,
+   "share_stop": 0.0,
+   "share_time": 1.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 4.0,
+   "min_rr": 3.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -66.59358239093471,
+   "events": 201,
+   "taken_share": 0.024875621890547265,
+   "skip": {
+    "нет истории для уровней": 7,
+    "не у уровня": 168,
+    "отношение мало": 21
+   },
+   "kind": {
+    "полка": 5
+   },
+   "trades": 5,
+   "win_rate": 0.0,
+   "stop_bp_median": 64.56444393833846,
+   "break_even": 0.18600371764389648,
+   "expectancy_bp": -73.59358239093471,
+   "median_bp": -75.5644439383386,
+   "rr_median": 5.014588359976737,
+   "held_median_sec": 786.0,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": -51.5914807985297,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 5.0,
+   "stop_noise": 4.0,
+   "min_rr": 3.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 207.0091743119269,
+   "events": 207,
+   "taken_share": 0.004830917874396135,
+   "skip": {
+    "нет истории для уровней": 15,
+    "не у уровня": 170,
+    "нет уровня впереди": 8,
+    "отношение мало": 13
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 0.0,
+   "stop_bp_median": 85.2545521571711,
+   "break_even": 0.27274194393034307,
+   "expectancy_bp": 200.0091743119269,
+   "median_bp": 200.0091743119269,
+   "rr_median": 3.139537000183721,
+   "held_median_sec": 9976.0,
+   "share_target": 0.0,
+   "share_stop": 0.0,
+   "share_time": 1.0,
+   "null_expectancy_bp": 208.98166819431674,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 1.0,
+   "min_rr": 1.5,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -8.456122799400276,
+   "events": 89,
+   "taken_share": 0.0898876404494382,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 1
+   },
+   "kind": {
+    "полка": 6,
+    "минимум суток": 2
+   },
+   "trades": 8,
+   "win_rate": 0.125,
+   "stop_bp_median": 14.429093210208311,
+   "break_even": 0.38436120182622635,
+   "expectancy_bp": -15.456122799400276,
+   "median_bp": -25.113471002355496,
+   "rr_median": 3.461590404597274,
+   "held_median_sec": 54.0,
+   "share_target": 0.125,
+   "share_stop": 0.875,
+   "share_time": 0.0,
+   "null_expectancy_bp": 43.36226848791969,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 1.0,
+   "min_rr": 1.5,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 48.16375256300476,
+   "events": 77,
+   "taken_share": 0.03896103896103896,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1
+   },
+   "kind": {
+    "полка": 3
+   },
+   "trades": 3,
+   "win_rate": 0.6666666666666666,
+   "stop_bp_median": 14.65170291170797,
+   "break_even": 0.359789590822664,
+   "expectancy_bp": 41.16375256300476,
+   "median_bp": 53.59254264405968,
+   "rr_median": 4.568545415857574,
+   "held_median_sec": 214.0,
+   "share_target": 0.6666666666666666,
+   "share_stop": 0.3333333333333333,
+   "share_time": 0.0,
+   "null_expectancy_bp": -28.23601678107478,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 1.0,
+   "min_rr": 2.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -7.047129454462695,
+   "events": 89,
+   "taken_share": 0.07865168539325842,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 2
+   },
+   "kind": {
+    "полка": 5,
+    "минимум суток": 2
+   },
+   "trades": 7,
+   "win_rate": 0.14285714285714285,
+   "stop_bp_median": 14.539110206453765,
+   "break_even": 0.3476132039224228,
+   "expectancy_bp": -14.047129454462695,
+   "median_bp": -24.907865790747653,
+   "rr_median": 3.7695114784552817,
+   "held_median_sec": 65.0,
+   "share_target": 0.14285714285714285,
+   "share_stop": 0.8571428571428571,
+   "share_time": 0.0,
+   "null_expectancy_bp": -19.614416474973517,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 1.0,
+   "min_rr": 2.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 48.16375256300476,
+   "events": 77,
+   "taken_share": 0.03896103896103896,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1
+   },
+   "kind": {
+    "полка": 3
+   },
+   "trades": 3,
+   "win_rate": 0.6666666666666666,
+   "stop_bp_median": 14.65170291170797,
+   "break_even": 0.359789590822664,
+   "expectancy_bp": 41.16375256300476,
+   "median_bp": 53.59254264405968,
+   "rr_median": 4.568545415857574,
+   "held_median_sec": 214.0,
+   "share_target": 0.6666666666666666,
+   "share_stop": 0.3333333333333333,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 1.0,
+   "min_rr": 3.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -1.9752771098828728,
+   "events": 89,
+   "taken_share": 0.056179775280898875,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 4
+   },
+   "kind": {
+    "полка": 3,
+    "минимум суток": 2
+   },
+   "trades": 5,
+   "win_rate": 0.2,
+   "stop_bp_median": 14.539110206453765,
+   "break_even": 0.2688834287326288,
+   "expectancy_bp": -8.975277109882873,
+   "median_bp": -24.907865790747653,
+   "rr_median": 6.589682916048612,
+   "held_median_sec": 43.0,
+   "share_target": 0.2,
+   "share_stop": 0.8,
+   "share_time": 0.0,
+   "null_expectancy_bp": -26.773826438604253,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 1.0,
+   "min_rr": 3.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 41.94935752247731,
+   "events": 77,
+   "taken_share": 0.025974025974025976,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1,
+    "отношение мало": 1
+   },
+   "kind": {
+    "полка": 2
+   },
+   "trades": 2,
+   "win_rate": 0.5,
+   "stop_bp_median": 11.721718329233617,
+   "break_even": 0.32505424741103656,
+   "expectancy_bp": 34.94935752247731,
+   "median_bp": 34.94935752247731,
+   "rr_median": 5.345024394343487,
+   "held_median_sec": 192.0,
+   "share_target": 0.5,
+   "share_stop": 0.5,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 2.0,
+   "min_rr": 1.5,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -17.853330402859665,
+   "events": 89,
+   "taken_share": 0.06741573033707865,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 3
+   },
+   "kind": {
+    "полка": 4,
+    "минимум суток": 2
+   },
+   "trades": 6,
+   "win_rate": 0.16666666666666666,
+   "stop_bp_median": 26.777606736998976,
+   "break_even": 0.40465142272688465,
+   "expectancy_bp": -24.853330402859665,
+   "median_bp": -34.888090748217515,
+   "rr_median": 2.431227929593031,
+   "held_median_sec": 128.0,
+   "share_target": 0.16666666666666666,
+   "share_stop": 0.8333333333333334,
+   "share_time": 0.0,
+   "null_expectancy_bp": -34.072794638898664,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 2.0,
+   "min_rr": 1.5,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 34.843047118838896,
+   "events": 77,
+   "taken_share": 0.025974025974025976,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1,
+    "отношение мало": 1
+   },
+   "kind": {
+    "полка": 2
+   },
+   "trades": 2,
+   "win_rate": 0.5,
+   "stop_bp_median": 26.02020364656596,
+   "break_even": 0.43775666802318547,
+   "expectancy_bp": 27.8430471188389,
+   "median_bp": 27.8430471188389,
+   "rr_median": 2.417463315402049,
+   "held_median_sec": 287.0,
+   "share_target": 0.5,
+   "share_stop": 0.5,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 2.0,
+   "min_rr": 2.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -30.590094323185227,
+   "events": 89,
+   "taken_share": 0.033707865168539325,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 6
+   },
+   "kind": {
+    "полка": 1,
+    "минимум суток": 2
+   },
+   "trades": 3,
+   "win_rate": 0.0,
+   "stop_bp_median": 24.503892280813844,
+   "break_even": 0.2888807403104252,
+   "expectancy_bp": -37.59009432318523,
+   "median_bp": -35.503892280813844,
+   "rr_median": 3.7401578716432637,
+   "held_median_sec": 104.0,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 2.0,
+   "min_rr": 2.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 96.69044879171484,
+   "events": 77,
+   "taken_share": 0.012987012987012988,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1,
+    "отношение мало": 2
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 1.0,
+   "stop_bp_median": 29.036052739095783,
+   "break_even": 0.3372124354957609,
+   "expectancy_bp": 89.69044879171484,
+   "median_bp": 89.69044879171484,
+   "rr_median": 3.088933940078928,
+   "held_median_sec": 376.0,
+   "share_target": 1.0,
+   "share_stop": 0.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 2.0,
+   "min_rr": 3.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -30.590094323185227,
+   "events": 89,
+   "taken_share": 0.033707865168539325,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 6
+   },
+   "kind": {
+    "полка": 1,
+    "минимум суток": 2
+   },
+   "trades": 3,
+   "win_rate": 0.0,
+   "stop_bp_median": 24.503892280813844,
+   "break_even": 0.2888807403104252,
+   "expectancy_bp": -37.59009432318523,
+   "median_bp": -35.503892280813844,
+   "rr_median": 3.7401578716432637,
+   "held_median_sec": 104.0,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 2.0,
+   "min_rr": 3.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 96.69044879171484,
+   "events": 77,
+   "taken_share": 0.012987012987012988,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1,
+    "отношение мало": 2
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 1.0,
+   "stop_bp_median": 29.036052739095783,
+   "break_even": 0.3372124354957609,
+   "expectancy_bp": 89.69044879171484,
+   "median_bp": 89.69044879171484,
+   "rr_median": 3.088933940078928,
+   "held_median_sec": 376.0,
+   "share_target": 1.0,
+   "share_stop": 0.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 4.0,
+   "min_rr": 1.5,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -59.72044624922111,
+   "events": 89,
+   "taken_share": 0.0449438202247191,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 5
+   },
+   "kind": {
+    "полка": 3,
+    "минимум суток": 1
+   },
+   "trades": 4,
+   "win_rate": 0.0,
+   "stop_bp_median": 50.496401035598296,
+   "break_even": 0.3918708433158699,
+   "expectancy_bp": -66.72044624922111,
+   "median_bp": -61.496401035598495,
+   "rr_median": 2.0057750184236305,
+   "held_median_sec": 1205.0,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 4.0,
+   "min_rr": 1.5,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 151.84981155182086,
+   "events": 77,
+   "taken_share": 0.025974025974025976,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1,
+    "отношение мало": 1
+   },
+   "kind": {
+    "полка": 2
+   },
+   "trades": 2,
+   "win_rate": 0.5,
+   "stop_bp_median": 71.52965227552126,
+   "break_even": 0.36961500919760226,
+   "expectancy_bp": 144.84981155182086,
+   "median_bp": 144.84981155182086,
+   "rr_median": 2.345573646531895,
+   "held_median_sec": 5176.0,
+   "share_target": 0.5,
+   "share_stop": 0.0,
+   "share_time": 0.5,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 4.0,
+   "min_rr": 2.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -51.47762462157319,
+   "events": 89,
+   "taken_share": 0.033707865168539325,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 6
+   },
+   "kind": {
+    "полка": 2,
+    "минимум суток": 1
+   },
+   "trades": 3,
+   "win_rate": 0.0,
+   "stop_bp_median": 45.6959452609469,
+   "break_even": 0.3734944008278768,
+   "expectancy_bp": -58.47762462157319,
+   "median_bp": -56.69594526094733,
+   "rr_median": 2.0059360797089245,
+   "held_median_sec": 243.0,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 4.0,
+   "min_rr": 2.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 207.0091743119269,
+   "events": 77,
+   "taken_share": 0.012987012987012988,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1,
+    "отношение мало": 2
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 0.0,
+   "stop_bp_median": 85.2545521571711,
+   "break_even": 0.27274194393034307,
+   "expectancy_bp": 200.0091743119269,
+   "median_bp": 200.0091743119269,
+   "rr_median": 3.139537000183721,
+   "held_median_sec": 9976.0,
+   "share_target": 0.0,
+   "share_stop": 0.0,
+   "share_time": 1.0,
+   "null_expectancy_bp": 208.98166819431674,
+   "null_trades": 1
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 4.0,
+   "min_rr": 3.0,
+   "side": "поддержка · лонг",
+   "maker_expectancy_bp": -45.440071793522606,
+   "events": 89,
+   "taken_share": 0.011235955056179775,
+   "skip": {
+    "нет истории для уровней": 4,
+    "не у уровня": 76,
+    "отношение мало": 8
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 0.0,
+   "stop_bp_median": 41.44007179352297,
+   "break_even": 0.30882892887018215,
+   "expectancy_bp": -52.440071793522606,
+   "median_bp": -52.440071793522606,
+   "rr_median": 3.097555109881468,
+   "held_median_sec": 3356.0,
+   "share_target": 0.0,
+   "share_stop": 1.0,
+   "share_time": 0.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  },
+  {
+   "vol_mult": 10.0,
+   "stop_noise": 4.0,
+   "min_rr": 3.0,
+   "side": "сопротивление · шорт",
+   "maker_expectancy_bp": 207.0091743119269,
+   "events": 77,
+   "taken_share": 0.012987012987012988,
+   "skip": {
+    "нет истории для уровней": 2,
+    "не у уровня": 71,
+    "нет уровня впереди": 1,
+    "отношение мало": 2
+   },
+   "kind": {
+    "полка": 1
+   },
+   "trades": 1,
+   "win_rate": 0.0,
+   "stop_bp_median": 85.2545521571711,
+   "break_even": 0.27274194393034307,
+   "expectancy_bp": 200.0091743119269,
+   "median_bp": 200.0091743119269,
+   "rr_median": 3.139537000183721,
+   "held_median_sec": 9976.0,
+   "share_target": 0.0,
+   "share_stop": 0.0,
+   "share_time": 1.0,
+   "null_expectancy_bp": null,
+   "null_trades": 0
+  }
+ ]
+}
