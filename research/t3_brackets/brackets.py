@@ -288,7 +288,11 @@ def main():
     cells = list(product(WINDOWS, VOL_MULTS, CONCS, MIN_RRS,
                          ((-1, "набор под ценой"), (1, "разгрузка над ценой"))))
     acc = {k: {"trades": [], "null": [], "seen": 0, "skip": {}} for k in cells}
-    dump = []
+    # Выгрузка отбирается равномерно по всему прогону, а не «первые N»:
+    # первые тридцать сделок приходятся на первые сутки и два символа,
+    # и смотреть глазами пришлось бы один день одного инструмента.
+    dump, n_tr = [], 0
+    dump_rng = np.random.default_rng(20250303)
     days = T.days_between(a.start, a.end)
     for di, day in enumerate(days):
         log(f"  {day}")
@@ -323,8 +327,14 @@ def main():
                     r["symbol"] = sym
                     r["time"] = T.stamp(g["t"][i])
                     d["trades"].append(r)
-                    if len(dump) < a.dump:
-                        dump.append(pack(g, tp, r, key, sym, day))
+                    n_tr += 1
+                    if a.dump:
+                        if len(dump) < a.dump:
+                            dump.append(pack(g, tp, r, key, sym, day))
+                        else:
+                            j = int(dump_rng.integers(n_tr))
+                            if j < a.dump:
+                                dump[j] = pack(g, tp, r, key, sym, day)
                 # Нуль: те же правила, случайный момент того же часа.
                 rng = rng_for(di, ci, 1)
                 for i, L, w in zip(keep, lvl, width):
