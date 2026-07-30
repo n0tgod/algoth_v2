@@ -244,7 +244,8 @@ function render(d) {
         fmt((bk.ask+bk.bid)/2, 6)}</td></tr>` +
       bk.b.map(r => row(r, "b")).join("");
     document.getElementById("cap-book").textContent =
-      `обновлений/с ${bk.upd} · видно ±${bk.reach_b}/${bk.reach_a} б.п.`;
+      `${bk.depth ?? "?"} уровней · обновлений/с ${bk.upd} · видно ±${
+        bk.reach_b}/${bk.reach_a} б.п.`;
     document.getElementById("bands").innerHTML = d.bands.map(b => {
       const tot = b.bid + b.ask || 1;
       // Полоса шире видимой книги содержит её целиком: подписка отдаёт

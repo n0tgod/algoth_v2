@@ -73,7 +73,20 @@ from store import Writer, read_hour, read_jsonl            # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
-DEPTH = 50                        # глубина темы orderbook
+# Глубина темы orderbook. Пятьдесят уровней — это НЕ проценты, а
+# полсотни цен подряд, и у плотных инструментов они умещаются в точку:
+# замер на живом сборщике дал охват ±1.2 б.п. у BTCUSDT и ±2.6 у
+# ETHUSDT против 45–77 б.п. у остальных шести. Уровень в пяти пунктах от
+# цены там не виден вовсе, то есть главный вопрос B1 — стоит ли объём на
+# цене — на этих двух проверить было нечем.
+#
+# Плата за глубокую тему — шаг 100 мс вместо 20. Для записи она никакая:
+# снимок пишется раз в секунду. Быстрый шаг важен только сырому потоку,
+# по которому меряется восполнение внутри секунды, и он остаётся на
+# мелкой теме.
+DEPTH = 50
+DEEP_DEPTH = 500
+DEEP = ("BTCUSDT", "ETHUSDT")
 PING_SEC = 20
 SAMPLE_SEC = 1
 STATUS_SEC = 5
@@ -106,9 +119,11 @@ class LogBuf:
 
 
 class Collector:
-    def __init__(self, symbols, raw_symbols, root, log):
+    def __init__(self, symbols, raw_symbols, root, log, deep=DEEP):
         self.symbols = list(symbols)
         self.raw = set(raw_symbols)
+        self.depth = {s: (DEEP_DEPTH if s in set(deep or ()) else DEPTH)
+                      for s in symbols}
         self.books = {s: Book(s) for s in symbols}
         self.w = Writer(root, log)
         self.log = log
@@ -140,7 +155,7 @@ class Collector:
     def topics(self):
         out = []
         for s in self.symbols:
-            out.append(f"orderbook.{DEPTH}.{s}")
+            out.append(f"orderbook.{self.depth[s]}.{s}")
             out.append(f"publicTrade.{s}")
         return out
 
@@ -260,6 +275,8 @@ class Collector:
             if tape and tape[0]["ts"] / 1000.0 <= since:
                 tape = [t for t in tape if t["ts"] / 1000.0 > since]
                 tape_full = False
+        if s:
+            s["depth"] = self.depth.get(sym, DEPTH)
         return {"sym": sym, "symbols": self.symbols, "book": s,
                 "bands": bands, "mid": mid, "tape": tape, "log": lines,
                 "mid_full": mid_full, "tape_full": tape_full,
@@ -503,6 +520,9 @@ def main():
     ap.add_argument("--symbols", default=",".join(SYMBOLS))
     ap.add_argument("--raw", default="",
                     help="символы, для которых писать сырой поток целиком")
+    ap.add_argument("--deep", default=",".join(DEEP),
+                    help="символы с глубокой темой стакана (500 уровней); "
+                         "нужны там, где полсотни уровней стоят в точке")
     ap.add_argument("--hours", type=float, default=0,
                     help="сколько собирать; 0 — до остановки")
     ap.add_argument("--out", default=OUT)
@@ -534,7 +554,10 @@ def main():
     if raw:
         log(f"сырой поток пишется для: {', '.join(raw)}")
     log(f"каталог {a.out}")
-    c = Collector(syms, raw, a.out, log)
+    deep = [x.strip() for x in a.deep.split(",") if x.strip()]
+    c = Collector(syms, raw, a.out, log, deep=deep)
+    log("глубина стакана: " + ", ".join(
+        f"{s_}={c.depth[s_]}" for s_ in syms))
     c.lines = lines
 
     # `pkill` шлёт TERM, и без обработчика процесс умирал, не закрыв
