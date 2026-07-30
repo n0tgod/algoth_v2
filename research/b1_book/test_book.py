@@ -146,6 +146,38 @@ def test_page_has_no_external_loads():
     check("с обзора есть ссылка на график", "/chart?k=" in web.PAGE)
 
 
+def test_pages_run_headless():
+    """Логика страниц обязана отработать на подставном ответе.
+
+    Ошибка в разборе ответа или в склейке разностных кусков ничего не
+    роняет: страница просто перестаёт обновляться, и это неотличимо от
+    «сборщик молчит». Проверка синтаксиса такого не ловит.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+    import web
+
+    node = shutil.which("node")
+    if not node:
+        print("  —    node не найден, проверка страниц пропущена")
+        return
+    d = tempfile.mkdtemp()
+    try:
+        for name, src in (("обзор", web.PAGE), ("график", web.CHART)):
+            p = os.path.join(d, "p.html")
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(src)
+            r = subprocess.run(
+                [node, os.path.join(HERE, "headless_check.js"), p],
+                capture_output=True, text=True, timeout=120)
+            out = (r.stdout + r.stderr).strip().splitlines()
+            check(f"{name}: {out[-1] if out else 'нет вывода'}",
+                  r.returncode == 0, r.stderr[-400:])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_live_detector_agrees_with_batch():
     """Живой детектор обязан решать так же, как тот, чем считаны отчёты.
 
@@ -469,6 +501,7 @@ def main():
     print("страница наблюдения")
     test_view_does_not_reset_counter()
     test_page_has_no_external_loads()
+    test_pages_run_headless()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()

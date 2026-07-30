@@ -356,27 +356,41 @@ class Live:
                            else 0)
         return len(out)
 
-    def view(self):
+    def view(self, since=0.0, done_keep=20):
+        """Состояние для страницы.
+
+        `done` намеренно урезан: в памяти держатся сотни закрытых
+        сделок, но пересылать их каждую секунду незачем — историю
+        целиком отдаёт отдельный запрос, который делают по требованию.
+        """
         px, kinds, noise, _ = self.levels
         a = self.arrays()
         near = None
         if len(px) and self.last_px and np.isfinite(noise) and noise > 0:
             d = min(abs(np.asarray(px) - self.last_px))
             near = round(float(d) / noise, 2)      # в единицах шума
+        cd = self.candles(a)
+        cd_full = True
+        if since > 0 and cd and cd[0][0] <= since:
+            # Последняя свеча ещё копится, поэтому шлётся всегда: иначе
+            # страница держала бы её недостроенной до следующей минуты.
+            cd = [c for c in cd if c[0] >= since - 60]
+            cd_full = False
         return {
             "history_min": round(len(self.sec) / 60.0, 1),
             "near_x": near,
             "diag": {"long": self.diag.get(-1, {}),
                      "short": self.diag.get(1, {})},
             "touch_x": TOUCH_NOISE, "vol_mult": VOL_MULT, "imb": IMB,
-            "candles": self.candles(a),
+            "candles": cd, "candles_full": cd_full,
+            "done_total": len(self.done),
             "levels": [{"p": float(p), "kind": k}
                        for p, k in zip(list(px), list(kinds))],
             "noise_bp": (round(noise / self.last_px * 1e4, 1)
                          if noise and self.last_px and np.isfinite(noise)
                          else None),
             "open": list(self.open),
-            "done": list(self.done),
+            "done": list(self.done)[:done_keep],
         }
 
 
@@ -403,6 +417,13 @@ class Signals:
                 opened.append(ev)
         return opened, closed
 
-    def view(self, sym):
+    def view(self, sym, since=0.0):
         live = self.by.get(sym)
-        return live.view() if live else {"levels": [], "open": [], "done": []}
+        return live.view(since) if live else {
+            "levels": [], "open": [], "done": [], "candles": [],
+            "candles_full": True, "done_total": 0}
+
+    def history(self, sym):
+        """Все закрытые сделки, что держим в памяти, — для разбора."""
+        live = self.by.get(sym)
+        return list(live.done) if live else []

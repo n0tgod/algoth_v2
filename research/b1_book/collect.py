@@ -67,6 +67,7 @@ OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
 from book import BANDS, Book, parse_trades                 # noqa: E402
+import paper                                              # noqa: E402
 from signals import Signals                               # noqa: E402
 from store import Writer, read_hour, read_jsonl            # noqa: E402
 import web                                                # noqa: E402
@@ -78,6 +79,30 @@ SAMPLE_SEC = 1
 STATUS_SEC = 5
 SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
            "ARBUSDT", "LINKUSDT", "AVAXUSDT")
+
+
+class LogBuf:
+    """Журнал для страницы: кольцо строк плюс сквозной номер.
+
+    Номер нужен не для порядка, а чтобы страница просила только новое.
+    Пересылать все шестьдесят строк каждую секунду — 4.6 КиБ в секунду
+    на пустом месте, и это при том, что новых строк обычно ноль.
+    """
+
+    def __init__(self, keep=60):
+        self.lines = deque(maxlen=keep)
+        self.n = 0
+
+    def add(self, line):
+        self.lines.append(line)
+        self.n += 1
+
+    def since(self, k):
+        """Вернуть `(всего строк, новые для того, у кого есть k)`."""
+        first = self.n - len(self.lines)
+        if k is None or k < first:
+            return self.n, list(self.lines)
+        return self.n, list(self.lines)[max(0, int(k) - first):]
 
 
 class Collector:
@@ -100,7 +125,7 @@ class Collector:
         self.lock = threading.Lock()
         self.mid = {s: deque(maxlen=900) for s in symbols}   # 15 минут
         self.tape = {s: deque(maxlen=120) for s in symbols}
-        self.lines = deque(maxlen=60)
+        self.lines = LogBuf()
         self.msg_mark = (time.time(), 0)
         self.msg_rate = 0.0
         # Живой детектор: те же правила, что в замерах. Сделки бумажные,
@@ -196,8 +221,20 @@ class Collector:
                          f"держали {tr['held']} с")
                 self.w.write("signals", tr["sym"], dict(tr, ev="close"), ts=now)
 
-    def snapshot(self, sym=None):
-        """Состояние для страницы наблюдения — прямо из памяти."""
+    def snapshot(self, sym=None, since=0.0, logn=None):
+        """Состояние для страницы наблюдения — прямо из памяти.
+
+        Выдача **разностная**: страница сообщает, до какого момента у неё
+        уже всё есть, и получает только новое. Полная выдача весила 58
+        КиБ, из них 29 — девятьсот точек середины, пересылавшихся
+        целиком каждую секунду ради одной новой. На мобильной связи
+        ответ не успевал прийти до следующего опроса, и страница
+        показывала «нет связи со сборщиком» на исправном сборщике.
+
+        Если `since` старше того, что мы держим в памяти, шлём всё и
+        говорим об этом флагом: догадываться на стороне страницы, полон
+        ли кусок, значит однажды склеить ряд с дырой.
+        """
         sym = sym if sym in self.books else self.symbols[0]
         b = self.books[sym]
         s = b.sample_view()
@@ -210,10 +247,20 @@ class Collector:
         with self.lock:
             mid = list(self.mid[sym])
             tape = list(self.tape[sym])
-            lines = list(self.lines)
+            log_n, lines = self.lines.since(logn)
+        mid_full = tape_full = True
+        if since > 0:
+            if mid and mid[0][0] <= since:
+                mid = [p for p in mid if p[0] > since]
+                mid_full = False
+            if tape and tape[0]["ts"] / 1000.0 <= since:
+                tape = [t for t in tape if t["ts"] / 1000.0 > since]
+                tape_full = False
         return {"sym": sym, "symbols": self.symbols, "book": s,
                 "bands": bands, "mid": mid, "tape": tape, "log": lines,
-                "sig": self.sig.view(sym),
+                "mid_full": mid_full, "tape_full": tape_full,
+                "log_n": log_n, "now": round(time.time(), 3),
+                "sig": self.sig.view(sym, since),
                 "status": {"uptime_sec": round(time.time() - self.started, 1),
                            "messages": self.n_msg, "trades": self.n_trades,
                            "resets": self.n_resets,
@@ -225,6 +272,24 @@ class Collector:
                            "last_msg_age_sec": (
                                round(time.time() - self.last_msg, 1)
                                if self.last_msg else None)}}
+
+    def trades(self, sym=None):
+        """История бумажных сделок и сводка — по требованию, не в опросе.
+
+        Отдельным запросом именно потому, что это не поток: история
+        меняется раз в несколько минут, а опрос идёт раз в секунду.
+        """
+        sym = sym if sym in self.books else None
+        one = self.sig.history(sym) if sym else []
+        allt = [t for s in self.symbols for t in self.sig.history(s)]
+        return {"sym": sym, "symbols": self.symbols,
+                "trades": sorted(one, key=lambda t: -(t.get("closed_at")
+                                                      or t.get("t") or 0)),
+                "stats": paper.summary(one) if sym else None,
+                "equity": paper.equity(one) if sym else [],
+                "all_stats": paper.summary(allt),
+                "all_equity": paper.equity(allt),
+                "all_trades": len(allt)}
 
     def statuser(self):
         while not self.stop.wait(STATUS_SEC):
@@ -454,11 +519,11 @@ def main():
     raw = [s.strip() for s in a.raw.split(",") if s.strip()]
     t0 = time.time()
 
-    lines = deque(maxlen=60)
+    lines = LogBuf()
 
     def log(m):
         line = f"[{time.time() - t0:8.0f} с] {m}"
-        lines.append(line)
+        lines.add(line)
         print(line, flush=True)
 
     log(f"символов {len(syms)}: {', '.join(syms)}")

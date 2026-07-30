@@ -142,19 +142,63 @@ const fmt = (v, d=2) => v === null || v === undefined || !isFinite(v)
 const kk = v => v >= 1e6 ? (v/1e6).toFixed(1)+" млн"
   : v >= 1e3 ? (v/1e3).toFixed(0) : v.toFixed(0);
 
+// Разностный опрос. Полная выдача весила 58 КиБ, из них 29 — девятьсот
+// точек середины ради одной новой; на мобильной связи ответ не успевал
+// прийти до следующего опроса, и страница писала «нет связи» на
+// исправном сборщике. Здесь копится своё, а с сервера берётся новое.
+const ST = {mid:[], tape:[], log:[], cand:[], logn:0, since:0, sym:"",
+            busy:false, fails:0};
+function wipe() { ST.mid=[]; ST.tape=[]; ST.log=[]; ST.cand=[];
+                  ST.logn=0; ST.since=0; }
+function mergeCandles(old, add) {
+  if (!add.length) return old;
+  const m = new Map(old.map(c => [c[0], c]));
+  for (const c of add) m.set(c[0], c);
+  return [...m.values()].sort((a,b) => a[0]-b[0]).slice(-600);
+}
+function merge(d) {
+  ST.mid  = d.mid_full  ? (d.mid||[])  : ST.mid.concat(d.mid||[]);
+  ST.tape = d.tape_full ? (d.tape||[]) : ST.tape.concat(d.tape||[]);
+  if (ST.mid.length  > 900) ST.mid  = ST.mid.slice(-900);
+  if (ST.tape.length > 120) ST.tape = ST.tape.slice(-120);
+  if (d.log && d.log.length) ST.log = ST.log.concat(d.log).slice(-60);
+  if (d.log_n != null) ST.logn = d.log_n;
+  const sg = d.sig || {};
+  ST.cand = sg.candles_full ? (sg.candles||[])
+                            : mergeCandles(ST.cand, sg.candles||[]);
+  sg.candles = ST.cand;
+  ST.since = d.now || ST.since;
+  d.mid = ST.mid; d.tape = ST.tape; d.log = ST.log;
+  return d;
+}
+
 async function tick() {
+  if (ST.busy) return;            // на медленной связи запросы не копятся
+  ST.busy = true;
   let d;
   try {
     const r = await fetch(`/state?k=${encodeURIComponent(KEY)}`
-      + (sym ? `&sym=${sym}` : ""));
+      + (sym ? `&sym=${sym}` : "")
+      + `&since=${ST.since}&logn=${ST.logn}`);
     if (!r.ok) throw new Error("HTTP " + r.status);
     d = await r.json();
+    ST.fails = 0;
   } catch (e) {
-    document.getElementById("sub").textContent = "нет связи со сборщиком: " + e;
+    // Картинка не стирается: обрыв на секунду — не повод показать пустоту.
+    ST.fails++;
+    document.getElementById("sub").textContent =
+      `связь потеряна (попыток ${ST.fails}), последние данные ниже`;
     return;
-  }
+  } finally { ST.busy = false; }
+  // Смена символа: чужие буферы выбрасываются. Если ответ был
+  // разностным (спросили до смены), он не годится — ждём следующего,
+  // который придёт полным. Склеить куски разных символов хуже, чем
+  // подождать секунду.
+  const fresh = d.sym !== ST.sym;
+  if (fresh) { wipe(); ST.sym = d.sym; }
   sym = d.sym;
-  render(d);
+  if (fresh && !d.mid_full) return;
+  render(merge(d));
 }
 
 function render(d) {
@@ -171,6 +215,7 @@ function render(d) {
     cell("книг готово", `${s.ready}/${d.symbols.length}`,
          s.ready === d.symbols.length ? "good" : "bad") +
     cell("сбросов", s.resets, s.resets ? "bad" : "") +
+    cell("сделок закрыто", `${s.closed ?? 0}/${s.signals ?? 0}`) +
     cell("тишина, с", fmt(age, 1), age > 5 ? "bad" : "good");
 
   document.getElementById("syms").innerHTML = d.symbols.map(x =>
@@ -180,7 +225,7 @@ function render(d) {
         encodeURIComponent(KEY)}&sym=${d.sym}">график ${
         d.sym.replace("USDT","")} ↗</a>`;
   document.querySelectorAll("[data-s]").forEach(b =>
-    b.onclick = () => { sym = b.dataset.s; tick(); });
+    b.onclick = () => { sym = b.dataset.s; wipe(); ST.sym = sym; tick(); });
 
   const bk = d.book;
   const t = document.getElementById("book");
@@ -259,8 +304,9 @@ function render(d) {
         <td class="mono" style="color:var(--muted)">${x.kind}</td>
         <td class="mono">1:${x.rr}</td>
         <td class="mono">${x.state}</td>
-        <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${
-          x.pnl_bp>0?"+":""}${x.pnl_bp} б.п. · ${x.r>0?"+":""}${x.r} R</td>
+        <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${x.pnl_bp == null ? "—"
+          : (x.pnl_bp>0?"+":"") + x.pnl_bp + " б.п. · "
+            + (x.r>0?"+":"") + x.r + " R"}</td>
       </tr>`).join("")
     : `<tr><td style="color:var(--muted);padding:8px 10px">событий пока нет</td></tr>`;
   const lg = document.getElementById("log");
@@ -390,6 +436,11 @@ td:first-child,th:first-child{text-align:left}
  color:var(--muted);margin:8px 0 12px}
 .sw{display:inline-block;width:20px;height:0;border-top:2px solid;
  vertical-align:4px;margin-right:6px}
+.stats{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule)}
+.st{flex:1 1 108px;background:var(--panel);padding:7px 10px}
+.st .k{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.st .v{font-size:15px;margin-top:2px}
+.note{padding:10px;color:var(--muted);font-size:13px}
 </style>
 <div class="wrap">
 <div class="bar">
@@ -413,6 +464,12 @@ td:first-child,th:first-child{text-align:left}
   <span><span class="sw" style="border-color:var(--ink)"></span>вход и выход</span>
 </div>
 <div class="panel">
+  <div class="cap"><span>итог бумажных сделок по этой монете</span>
+    <button id="unit" style="padding:1px 7px">в R</button></div>
+  <div id="sum" class="stats"></div>
+  <canvas id="eq"></canvas>
+</div>
+<div class="panel">
   <div class="cap"><span>история сделок — бумажные, наблюдение</span>
     <span id="cap3" class="mono"></span></div>
   <div class="hist"><table><thead><tr>
@@ -430,15 +487,64 @@ const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
 const stamp = t => new Date(t*1000).toISOString().slice(11,16);
 
-async function pull() {
+// Опрос разностный — см. тот же приём на странице обзора.
+const ST = {cand:[], since:0, sym:"", busy:false, fails:0};
+const HIST = {trades:[], stats:null, equity:[], at:0, busy:false};
+// Единица кривой счёта: базисные пункты — сколько денег при равном
+// размере позиции, R — сколько при равном риске на сделку. Это разные
+// вопросы, поэтому переключатель, а не выбор раз и навсегда.
+let EQR = false;
+function wipe() { ST.cand=[]; ST.since=0;
+                  HIST.trades=[]; HIST.stats=null; HIST.equity=[]; HIST.at=0; }
+function mergeCandles(old, add) {
+  if (!add.length) return old;
+  const m = new Map(old.map(c => [c[0], c]));
+  for (const c of add) m.set(c[0], c);
+  return [...m.values()].sort((a,b) => a[0]-b[0]).slice(-1440);
+}
+
+async function history() {
+  // История сделок — не поток: она меняется раз в минуты, а опрос идёт
+  // раз в секунду. Тянуть её вместе с состоянием значит платить за неё
+  // каждую секунду.
+  if (HIST.busy || Date.now() - HIST.at < 15000) return;
+  HIST.busy = true;
   try {
-    const r = await fetch(`/state?k=${encodeURIComponent(KEY)}&sym=${sym}`);
+    const r = await fetch(`/trades?k=${encodeURIComponent(KEY)}&sym=${sym}`);
     if (!r.ok) throw new Error("HTTP " + r.status);
-    data = await r.json();
+    const h = await r.json();
+    HIST.trades = h.trades || []; HIST.stats = h.stats;
+    HIST.equity = h.equity || []; HIST.at = Date.now();
+  } catch (e) { /* тихо: следующий круг попробует снова */ }
+  finally { HIST.busy = false; }
+}
+
+async function pull() {
+  if (ST.busy) return;
+  ST.busy = true;
+  let d;
+  try {
+    const r = await fetch(`/state?k=${encodeURIComponent(KEY)}&sym=${sym}`
+      + `&since=${ST.since}`);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    d = await r.json();
+    ST.fails = 0;
   } catch (e) {
-    document.getElementById("cap2").textContent = "нет связи: " + e;
+    ST.fails++;
+    document.getElementById("cap2").textContent =
+      `связь потеряна (попыток ${ST.fails}), картинка прежняя`;
     return;
-  }
+  } finally { ST.busy = false; }
+  const fresh = d.sym !== ST.sym;
+  if (fresh) { wipe(); ST.sym = d.sym; }
+  if (fresh && !(d.sig || {}).candles_full) { sym = d.sym; return; }
+  const sg = d.sig || {};
+  ST.cand = sg.candles_full ? (sg.candles||[])
+                            : mergeCandles(ST.cand, sg.candles||[]);
+  sg.candles = ST.cand;
+  ST.since = d.now || ST.since;
+  data = d;
+  history();
   sym = data.sym;
   document.getElementById("ttl").textContent = sym;
   document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
@@ -446,17 +552,26 @@ async function pull() {
     `<button data-s="${x}" aria-pressed="${x===sym}">${
       x.replace("USDT","")}</button>`).join(" ");
   document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
-    sym = b.dataset.s; view = null; follow = true;
-    history.replaceState(null, "", `?k=${encodeURIComponent(KEY)}&sym=${sym}`);
+    sym = b.dataset.s; view = null; follow = true; wipe(); ST.sym = sym;
+    window.history.replaceState(
+      null, "", `?k=${encodeURIComponent(KEY)}&sym=${sym}`);
     pull();
   });
-  draw(); rows();
+  draw(); rows(); summary();
 }
 
 function cands() { return (data && data.sig && data.sig.candles) || []; }
 function trades() {
+  // История берётся из отдельного запроса: в состоянии лежат только
+  // последние двадцать закрытых, чтобы не гонять сотни каждую секунду.
   const sg = (data && data.sig) || {};
-  return (sg.open||[]).concat(sg.done||[]);
+  return (sg.open||[]).concat(
+    HIST.trades.length ? HIST.trades : (sg.done||[]));
+}
+function res(m) {
+  return m.pnl_bp == null ? `<span style="color:var(--muted)">—</span>`
+    : `<span class="${m.pnl_bp>0?"buy":"sell"}">${m.pnl_bp>0?"+":""}${
+        m.pnl_bp} б.п. · ${m.r>0?"+":""}${m.r} R</span>`;
 }
 
 function draw() {
@@ -559,10 +674,72 @@ function rows() {
     <td style="color:var(--muted)">${m.kind}</td>
     <td class="mono">1:${m.rr}</td><td>${m.state}</td>
     <td class="mono">${m.held} с</td>
-    <td class="mono ${m.pnl_bp>0?"buy":"sell"}">${
-      m.pnl_bp>0?"+":""}${m.pnl_bp} б.п. · ${m.r>0?"+":""}${m.r} R</td></tr>`
+    <td class="mono">${res(m)}</td></tr>`
   ).join("") : `<tr><td colspan="10" style="color:var(--muted)">
     событий пока нет — детектор ждёт совпадения условий</td></tr>`;
+}
+
+function summary() {
+  const s = HIST.stats, box = document.getElementById("sum");
+  const pc = v => (v*100).toFixed(0) + " %";
+  if (!s) {
+    box.innerHTML = `<div class="note">закрытых сделок пока нет</div>`;
+  } else {
+    const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
+      <div class="v mono ${cls||""}">${v}</div></div>`;
+    // Доля побед сравнивается с безубыточной, а не с половиной: при
+    // отношении 1:3 выигрывать нужно каждую четвёртую, и «мало побед»
+    // само по себе ничего не значит.
+    box.innerHTML =
+      cell("сделок", s.trades) +
+      cell("побед", pc(s.win_rate),
+           s.win_rate >= s.break_even ? "buy" : "sell") +
+      cell("безубыточно", pc(s.break_even)) +
+      cell("ожидание", (s.expectancy_bp>0?"+":"") +
+           s.expectancy_bp.toFixed(1) + " б.п.",
+           s.expectancy_bp > 0 ? "buy" : "sell") +
+      cell("в риске", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
+           + " R", s.expectancy_r > 0 ? "buy" : "sell") +
+      cell("медиана", s.median_bp.toFixed(1) + " б.п.") +
+      cell("стоп", s.stop_bp_median.toFixed(0) + " б.п.") +
+      cell("цель / стоп / время",
+           `${pc(s.share_target)} / ${pc(s.share_stop)} / ${pc(s.share_time)}`) +
+      (s.cut_by_restart
+        ? cell("оборвано", s.cut_by_restart, "sell") : "");
+  }
+  drawEq();
+}
+
+function drawEq() {
+  const cv = document.getElementById("eq"), pts = HIST.equity || [];
+  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 110;
+  cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+  if (pts.length < 2) {
+    g.fillStyle = css("--muted"); g.font = "12px system-ui";
+    g.textBaseline = "middle";
+    g.fillText(pts.length ? "одна сделка — кривой ещё нет"
+                          : "кривая появится после двух закрытых сделок",
+               10, H/2);
+    return;
+  }
+  const k = EQR ? 2 : 1;
+  const v = pts.map(p => p[k]);
+  const lo = Math.min(0, ...v), hi = Math.max(0, ...v);
+  const y = q => 8 + (H-26)*(hi-q)/((hi-lo)||1e-9);
+  const x = i => 6 + (W-70)*i/(pts.length-1);
+  g.strokeStyle = css("--grid");
+  g.beginPath(); g.moveTo(6, y(0)); g.lineTo(W-64, y(0)); g.stroke();
+  g.strokeStyle = v[v.length-1] >= 0 ? css("--bid") : css("--ask");
+  g.lineWidth = 1.6; g.beginPath();
+  v.forEach((q,i) => i ? g.lineTo(x(i), y(q)) : g.moveTo(x(i), y(q)));
+  g.stroke();
+  g.fillStyle = css("--muted");
+  g.font = "11px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
+  const u = EQR ? " R" : " б.п.";
+  g.fillText(hi.toFixed(EQR?1:0) + u, W-60, y(hi));
+  g.fillText(lo.toFixed(EQR?1:0) + u, W-60, y(lo));
 }
 
 const px = document.getElementById("px"), tip = document.getElementById("tip");
@@ -634,7 +811,10 @@ document.getElementById("live").onclick = e => {
   follow = !follow; e.target.setAttribute("aria-pressed", String(follow));
   draw();
 };
-window.addEventListener("resize", draw);
+document.getElementById("unit").onclick = e => {
+  EQR = !EQR; e.target.textContent = EQR ? "в б.п." : "в R"; drawEq();
+};
+window.addEventListener("resize", () => { draw(); drawEq(); });
 pull(); setInterval(pull, 1000);
 </script>
 """
@@ -666,9 +846,22 @@ def serve(collector, port, token, log):
                     q.get("k", [""])[0], token):
                 return self._deny()
             if u.path == "/state":
-                body = json.dumps(collector.snapshot(q.get("sym", [None])[0]),
-                                  ensure_ascii=False).encode("utf-8")
+                def num(name, default=0.0):
+                    try:
+                        return float(q.get(name, [""])[0])
+                    except ValueError:
+                        return default
+                body = json.dumps(
+                    collector.snapshot(q.get("sym", [None])[0],
+                                       since=num("since"),
+                                       logn=num("logn", None)),
+                    ensure_ascii=False).encode("utf-8")
                 return self._ok(body, "application/json; charset=utf-8")
+            if u.path == "/trades":
+                return self._ok(json.dumps(
+                    collector.trades(q.get("sym", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),
                                 "text/html; charset=utf-8")
