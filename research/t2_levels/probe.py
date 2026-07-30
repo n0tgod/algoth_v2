@@ -145,7 +145,8 @@ def detect_day(sym, day, win, mult, conc_min, side, log):
     idx, _ = T.absorption(g, win, mult, MOVE_MULT, side, IMB)
     if len(idx) == 0:
         return np.empty(0), np.empty(0), np.empty(0)
-    keep, conc, lvl, away = T.level_filter(tp, g, idx, win, side, BANDS)
+    keep, conc, lvl, away, _w = T.level_filter(tp, g, idx, win, side,
+                                              BANDS)
     if len(keep) == 0:
         return np.empty(0), np.empty(0), np.empty(0)
     take = conc >= conc_min

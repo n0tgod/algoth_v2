@@ -330,14 +330,16 @@ def level_filter(tape, grid, idx, window_sec, side, bands=10):
     объёма и допуск на движение.
 
     Возвращает `(моменты, сосредоточенность, цена уровня, отход от
-    уровня в долях)` — последнее диагностика: если к концу окна цена
-    ушла от уровня, войти по нему уже нельзя.
+    уровня в долях, толщина полосы)`. Отход — диагностика: если к концу
+    окна цена ушла от уровня, войти по нему уже нельзя. Толщина нужна
+    замеру сделки: **стоп задаётся уровнем, а не выбирается** — прошли
+    полосу насквозь, значит крупного там нет, и идея кончилась.
     """
     ts, sg, sz, px = tape
     step = grid["step_sec"]
     w = max(1, int(round(window_sec / step)))
     t = grid["t"]
-    keep, conc, level, away = [], [], [], []
+    keep, conc, level, away, width = [], [], [], [], []
     for i in idx:
         t_to = float(t[i]) + step
         t_from = t_to - w * step
@@ -359,22 +361,27 @@ def level_filter(tape, grid, idx, window_sec, side, bands=10):
             conc.append(1.0)
             level.append(lo)
             away.append(0.0)
+            # Ход равен нулю, толщины полосы нет — берётся шаг цены,
+            # то есть минимальное ненулевое различие цен в окне.
+            d = np.diff(np.unique(p))
+            width.append(float(d.min()) if len(d) else lo * 1e-4)
             continue
-        width = (hi - lo) / bands
-        k = np.clip(((p[mine] - lo) / width).astype(np.int64), 0, bands - 1)
+        width_px = (hi - lo) / bands
+        k = np.clip(((p[mine] - lo) / width_px).astype(np.int64), 0, bands - 1)
         vol = np.bincount(k, weights=q[mine], minlength=bands)
         tot = float(vol.sum())
         if tot <= 0:
             continue
         j = int(np.argmax(vol))
-        lvl = lo + (j + 0.5) * width
+        lvl = lo + (j + 0.5) * width_px
         last = float(p[-1])
         keep.append(i)
         conc.append(float(vol[j]) / tot)
         level.append(lvl)
         away.append(abs(last - lvl) / lvl)
+        width.append(float(width_px))
     return (np.array(keep, dtype=np.int64), np.array(conc),
-            np.array(level), np.array(away))
+            np.array(level), np.array(away), np.array(width))
 
 
 def stamp(sec):
