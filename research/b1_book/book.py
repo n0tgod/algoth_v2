@@ -119,6 +119,18 @@ class Book:
             return None, None
         return max(self.bids), min(self.asks)
 
+    def sample_view(self, ladder=LADDER, bands=BANDS):
+        """То же, что `sample`, но БЕЗ обнуления счётчика обновлений.
+
+        Страница наблюдения смотрит в ту же книгу, что и запись. Если бы
+        показ пользовался `sample`, он сбрасывал бы счётчик, и в файлы
+        уходило бы заниженное число обновлений — показ портил бы данные.
+        """
+        keep = self.updates
+        out = self.sample(ladder, bands)
+        self.updates = keep
+        return out
+
     def sample(self, ladder=LADDER, bands=BANDS):
         """Снимок для записи: лучшие, лесенка и объём в полосах.
 

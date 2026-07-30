@@ -117,6 +117,32 @@ def test_trades_side_is_aggressor():
     check("продажа это −1", out[1]["side"] == -1, str(out[1]))
 
 
+def test_view_does_not_reset_counter():
+    """Показ не вправе портить запись.
+
+    Страница смотрит в ту же книгу, что и сборщик. Если бы показ
+    пользовался `sample`, он сбрасывал бы счётчик обновлений, и в файлы
+    уходило бы заниженное число — наблюдение искажало бы данные.
+    """
+    bk = Book("TEST")
+    bk.apply(snap())
+    bk.apply(delta(101, b=[["100.0", "9"]]))
+    before = bk.updates
+    bk.sample_view()
+    check("счётчик после показа не изменился", bk.updates == before,
+          f"{before} -> {bk.updates}")
+    bk.sample()
+    check("а после записи обнулён", bk.updates == 0, str(bk.updates))
+
+
+def test_page_has_no_external_loads():
+    """Страница обязана быть самодостаточной: сервер стоит в интернете."""
+    import web
+    check("внешних ссылок на странице нет",
+          "http://" not in web.PAGE and "https://" not in web.PAGE)
+    check("данные тянутся с самого сборщика", "/state?k=" in web.PAGE)
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -129,6 +155,9 @@ def main():
     test_sample_none_when_one_side_empty()
     print("сделки")
     test_trades_side_is_aggressor()
+    print("страница наблюдения")
+    test_view_does_not_reset_counter()
+    test_page_has_no_external_loads()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

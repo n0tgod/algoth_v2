@@ -87,8 +87,17 @@ cd ~/algoth_v2
 cd ~/algoth_v2
 nohup .venv/bin/python research/b1_book/collect.py \
   --symbols BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,DOGEUSDT,ARBUSDT,LINKUSDT,AVAXUSDT \
-  --raw ARBUSDT \
+  --raw ARBUSDT --http 8765 \
   > research/b1_book/out/collect.log 2>&1 &
+```
+
+Ключ `--http` поднимает **страницу наблюдения**: стакан лесенкой, глубина
+по полосам, лента, середина за пятнадцать минут и журнал сборщика — всё
+обновляется раз в секунду прямо из памяти процесса. Ссылку с ключом
+доступа сборщик печатает в журнал первой строкой:
+
+```bash
+head -3 research/b1_book/out/collect.log
 ```
 
 Проверить, что он не молчит впустую:

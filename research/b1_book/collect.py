@@ -53,17 +53,20 @@ import argparse
 import gzip
 import json
 import os
+import secrets
 import ssl
 import sys
 import threading
 import time
+from collections import deque
 from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
-from book import Book, parse_trades                       # noqa: E402
+from book import BANDS, Book, parse_trades                 # noqa: E402
+import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
 DEPTH = 50                        # глубина темы orderbook
@@ -128,6 +131,14 @@ class Collector:
         self.stop = threading.Event()
         self.ws = None
         self.pending_resub = set()
+        # Кольцевые буферы для страницы наблюдения: она смотрит в память,
+        # а не в файлы — между данными и глазом не должно быть выгрузки.
+        self.lock = threading.Lock()
+        self.mid = {s: deque(maxlen=900) for s in symbols}   # 15 минут
+        self.tape = {s: deque(maxlen=120) for s in symbols}
+        self.lines = deque(maxlen=60)
+        self.msg_mark = (time.time(), 0)
+        self.msg_rate = 0.0
 
     # --- сеть ---------------------------------------------------------
     def topics(self):
@@ -174,6 +185,9 @@ class Collector:
             for t in parse_trades(msg):
                 self.n_trades += 1
                 self.w.write("trades", sym, t, ts=t["ts"] / 1000.0)
+                d = self.tape.get(sym)
+                if d is not None:
+                    d.append(t)
 
     def on_error(self, ws, err):
         self.log(f"ошибка соединения: {err}")
@@ -193,10 +207,43 @@ class Collector:
                 if s is not None:
                     s["t"] = round(now, 3)
                     self.w.write("book", sym, s, ts=now)
+                    self.mid[sym].append(
+                        (round(now, 1), (s["bid"] + s["ask"]) / 2.0))
+
+    def snapshot(self, sym=None):
+        """Состояние для страницы наблюдения — прямо из памяти."""
+        sym = sym if sym in self.books else self.symbols[0]
+        b = self.books[sym]
+        s = b.sample_view()
+        bands = []
+        if s:
+            for w in BANDS:
+                bands.append({"w": round(w * 100, 3),
+                              "bid": s.get(f"bq{w}", 0.0),
+                              "ask": s.get(f"aq{w}", 0.0)})
+        with self.lock:
+            mid = list(self.mid[sym])
+            tape = list(self.tape[sym])
+            lines = list(self.lines)
+        return {"sym": sym, "symbols": self.symbols, "book": s,
+                "bands": bands, "mid": mid, "tape": tape, "log": lines,
+                "status": {"uptime_sec": round(time.time() - self.started, 1),
+                           "messages": self.n_msg, "trades": self.n_trades,
+                           "resets": self.n_resets,
+                           "msg_per_sec": round(self.msg_rate, 1),
+                           "ready": sum(1 for x in self.books.values()
+                                        if x.ready),
+                           "last_msg_age_sec": (
+                               round(time.time() - self.last_msg, 1)
+                               if self.last_msg else None)}}
 
     def statuser(self):
         while not self.stop.wait(STATUS_SEC):
             self.w.flush()
+            t0, n0 = self.msg_mark
+            dt = max(time.time() - t0, 1e-9)
+            self.msg_rate = (self.n_msg - n0) / dt
+            self.msg_mark = (time.time(), self.n_msg)
             st = {
                 "t": round(time.time(), 1),
                 "uptime_sec": round(time.time() - self.started, 1),
@@ -313,6 +360,10 @@ def main():
     # пишет, выглядит работающим. Прогоняет поддельные сообщения через
     # тот же путь, что и живые, и показывает, что легло на диск.
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--http", type=int, default=0,
+                    help="порт страницы наблюдения; 0 — не поднимать")
+    ap.add_argument("--token", default="",
+                    help="ключ доступа; пустой — сгенерируется")
     a = ap.parse_args()
     if a.selftest:
         selftest(a.out)
@@ -322,14 +373,22 @@ def main():
     raw = [s.strip() for s in a.raw.split(",") if s.strip()]
     t0 = time.time()
 
+    lines = deque(maxlen=60)
+
     def log(m):
-        print(f"[{time.time() - t0:8.0f} с] {m}", flush=True)
+        line = f"[{time.time() - t0:8.0f} с] {m}"
+        lines.append(line)
+        print(line, flush=True)
 
     log(f"символов {len(syms)}: {', '.join(syms)}")
     if raw:
         log(f"сырой поток пишется для: {', '.join(raw)}")
     log(f"каталог {a.out}")
     c = Collector(syms, raw, a.out, log)
+    c.lines = lines
+    if a.http:
+        token = a.token or secrets.token_urlsafe(8)
+        web.serve(c, a.http, token, log)
     try:
         c.run(a.hours)
     except KeyboardInterrupt:
