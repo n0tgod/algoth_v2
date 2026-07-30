@@ -54,6 +54,7 @@ import gzip
 import json
 import os
 import secrets
+import shutil
 import signal
 import ssl
 import sys
@@ -146,6 +147,7 @@ class Collector:
         self.ws = None
         self.pending_resub = set()
         self.live = set()
+        self.disk = {}
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -363,7 +365,8 @@ class Collector:
                                         if x.ready),
                            "last_msg_age_sec": (
                                round(time.time() - self.last_msg, 1)
-                               if self.last_msg else None)}}
+                               if self.last_msg else None),
+                           "disk": self.disk_view()}}
 
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.
@@ -384,6 +387,58 @@ class Collector:
                 "all_stats": paper.summary(allt),
                 "all_equity": paper.equity(allt),
                 "all_trades": len(allt)}
+
+    def disk_view(self):
+        """Диск в человеческих единицах, с запасом хода в сутках."""
+        d = self.disk
+        if not d:
+            return None
+        gb = 1 << 30
+        rate = d.get("rate_h")
+        days = (d["free"] / rate / 24.0) if rate and rate > 0 else None
+        n = max(1, d.get("symbols") or 1)
+        return {"used_gb": round(d["bytes"] / gb, 2),
+                "free_gb": round(d["free"] / gb, 1),
+                "total_gb": round(d["total"] / gb, 1),
+                "rate_mb_h": round(rate / (1 << 20), 1) if rate else None,
+                "per_sym_mb_h": (round(rate / n / (1 << 20), 2)
+                                 if rate else None),
+                "days_left": round(days, 1) if days else None,
+                "by_kind": {k: round(v / gb, 2)
+                            for k, v in (d.get("by_kind") or {}).items()}}
+
+    def diskstat(self):
+        """Сколько занято, с какой скоростью растёт и надолго ли хватит.
+
+        Считается раз в минуту обходом каталога, а не оценкой: расширять
+        универсум надо по измеренной скорости на символ, иначе получится
+        та же ошибка, что с порогами — число из головы. Обход отдельным
+        потоком, чтобы не задерживать приём.
+        """
+        while not self.stop.wait(60):
+            try:
+                total, by = 0, {}
+                for base, _, files in os.walk(self.w.root):
+                    kind = os.path.relpath(base, self.w.root).split(os.sep)[0]
+                    for f in files:
+                        try:
+                            n = os.path.getsize(os.path.join(base, f))
+                        except OSError:
+                            continue
+                        total += n
+                        by[kind] = by.get(kind, 0) + n
+                du = shutil.disk_usage(self.w.root)
+                prev, prev_t = self.disk.get("bytes"), self.disk.get("at")
+                rate = None
+                if prev is not None and prev_t:
+                    dt = time.time() - prev_t
+                    if dt > 0:
+                        rate = max(0.0, (total - prev) / dt * 3600)
+                self.disk = {"bytes": total, "at": time.time(), "by_kind": by,
+                             "free": du.free, "total": du.total,
+                             "rate_h": rate, "symbols": len(self.symbols)}
+            except Exception as e:                        # noqa: BLE001
+                self.log(f"замер диска не вышел: {e}")
 
     def statuser(self):
         while not self.stop.wait(STATUS_SEC):
@@ -430,6 +485,7 @@ class Collector:
         threading.Thread(target=self.sampler, daemon=True).start()
         threading.Thread(target=self.statuser, daemon=True).start()
         threading.Thread(target=self.reporter, daemon=True).start()
+        threading.Thread(target=self.diskstat, daemon=True).start()
         delay = 1
         while not self.stop.is_set():
             if deadline and time.time() >= deadline:

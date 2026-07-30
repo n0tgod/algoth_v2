@@ -76,7 +76,10 @@ const state = (full, n) => ({
                {state: "оборвана перезапуском", pnl_bp: null, r: null})]},
   status: {uptime_sec: 3600, messages: 1e6, trades: 1e5, resets: 0,
            signals: 3, closed: 2, msg_per_sec: 150, ready: 2,
-           last_msg_age_sec: 0.1},
+           last_msg_age_sec: 0.1, topics_live: 4, topics: 4,
+           disk: {used_gb: 1.2, free_gb: 80.4, total_gb: 150.0,
+                  rate_mb_h: 42.5, per_sym_mb_h: 5.3, days_left: 78.9,
+                  by_kind: {book: 0.7, trades: 0.4, raw: 0.1}}},
 });
 const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"],
               trades: [trade(1, true), trade(2, true)],

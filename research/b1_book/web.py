@@ -216,6 +216,7 @@ function render(d) {
          s.ready === d.symbols.length ? "good" : "bad") +
     cell("сбросов", s.resets, s.resets ? "bad" : "") +
     cell("сделок закрыто", `${s.closed ?? 0}/${s.signals ?? 0}`) +
+    dkCells(s.disk) +
     cell("тишина, с", fmt(age, 1), age > 5 ? "bad" : "good");
 
   document.getElementById("syms").innerHTML = d.symbols.map(x =>
@@ -318,6 +319,23 @@ function render(d) {
     : `<tr><td style="color:var(--muted);padding:8px 10px">событий пока нет</td></tr>`;
   const lg = document.getElementById("log");
   lg.textContent = (d.log || []).join("\n");
+}
+
+// Диск: сколько занято, с какой скоростью растёт и надолго ли хватит.
+// «Хватит на» — то число, по которому решается, сколько символов
+// добавлять: ширина универсума покупает наблюдения быстрее, чем время,
+// но упирается в диск, и упереться она должна на бумаге, а не ночью.
+function dkCells(d) {
+  const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
+    <div class="v mono ${cls||""}">${v}</div></div>`;
+  if (!d) return cell("диск", "считаю…");
+  const days = d.days_left;
+  return cell("занято, ГБ", d.used_gb ?? "—")
+    + cell("свободно, ГБ", d.free_gb ?? "—")
+    + cell("рост, МБ/ч", `${d.rate_mb_h ?? "—"}`)
+    + cell("на символ, МБ/ч", `${d.per_sym_mb_h ?? "—"}`)
+    + cell("хватит на, сут", days ?? "—",
+           days && days < 14 ? "bad" : days ? "good" : "");
 }
 
 // Правило по стакану: крупный стоит, его выедают, он подставляет снова.
