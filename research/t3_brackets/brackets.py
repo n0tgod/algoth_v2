@@ -273,6 +273,10 @@ def main():
     ap.add_argument("--end", default=END)
     ap.add_argument("--dump", type=int, default=0,
                     help="выгрузить N событий с картинкой для просмотра")
+    ap.add_argument("--bundle", default="",
+                    help="выгрузить бэктест ячейки для графика: "
+                         "окно,объём,сосредоточенность,мин.отношение "
+                         "(например 60,5,0.4,1.5)")
     ap.add_argument("--tag", default="")
     a = ap.parse_args()
     if a.tag and not a.tag.startswith("-"):
@@ -293,6 +297,11 @@ def main():
     # и смотреть глазами пришлось бы один день одного инструмента.
     dump, n_tr = [], 0
     dump_rng = np.random.default_rng(20250303)
+    want = None
+    if a.bundle:
+        v = [float(x) for x in a.bundle.split(",")]
+        want = (int(v[0]), v[1], v[2], v[3])
+    candles = {}
     days = T.days_between(a.start, a.end)
     for di, day in enumerate(days):
         log(f"  {day}")
@@ -304,6 +313,9 @@ def main():
                 tzinfo=timezone.utc).timestamp()
             g = T.to_grid(tp, STEP_SEC, t0=t_day, t1=t_day + 86_400)
             hours = ((g["t"] - t_day) // 3600).astype(np.int64)
+            if want is not None:
+                candles.setdefault(sym, {}).update(
+                    minute_bars(g, t_day))
             for ci, key in enumerate(cells):
                 win, mult, conc_min, min_rr, (side, name) = key
                 idx, _ = T.absorption(g, win, mult, MOVE_MULT, side, IMB)
@@ -374,6 +386,9 @@ def main():
                      "null_win_rate": nl["win_rate"] if nl else None,
                      "null_trades": nl["trades"] if nl else 0})
 
+    if want is not None:
+        write_bundle(OUT, a.tag, want, acc, candles, cost, a, log)
+
     cfg = {"symbols": syms, "start": a.start, "end": a.end,
            "windows": list(WINDOWS), "vol_mults": list(VOL_MULTS),
            "concs": list(CONCS), "min_rrs": list(MIN_RRS), "imb": IMB,
@@ -396,6 +411,102 @@ def main():
         f.write(text)
     print(text)
     log(f"записано {dst}")
+
+
+def minute_bars(g, t_day):
+    """Секундную сетку суток — в минутные свечи для графика.
+
+    Минута без сделок остаётся пустой, а не повторяет прошлую цену:
+    урок A2, бар без сделок — пропуск, а не наблюдение.
+    """
+    n = 1440
+    op = g["open"][:86_400].reshape(n, 60)
+    hi = g["high"][:86_400].reshape(n, 60)
+    lo = g["low"][:86_400].reshape(n, 60)
+    cl = g["close"][:86_400].reshape(n, 60)
+    has = np.isfinite(op)
+    out = {}
+    with np.errstate(invalid="ignore"):
+        H = np.nanmax(np.where(has, hi, np.nan), axis=1)
+        L = np.nanmin(np.where(has, lo, np.nan), axis=1)
+    first = np.argmax(has, axis=1)
+    last = 59 - np.argmax(has[:, ::-1], axis=1)
+    any_ = has.any(axis=1)
+    for m in np.flatnonzero(any_):
+        out[int(t_day) + int(m) * 60] = (
+            float(op[m, first[m]]), float(H[m]), float(L[m]),
+            float(cl[m, last[m]]))
+    return out
+
+
+def write_bundle(out_dir, tag, want, acc, candles, cost, a, log):
+    """Бэктест одной ячейки для графика: свечи, сделки, кривая счёта.
+
+    Ячейка задаётся порогами, а СТОРОНЫ объединяются: это одна
+    стратегия, где направление задаёт событие — лонг после набора под
+    ценой, шорт после разгрузки над ценой.
+    """
+    win, mult, conc, min_rr = want
+    trades = []
+    for (w, m, c, rr, (side, name)), d in acc.items():
+        if (w, m, c, rr) != (win, mult, conc, min_rr):
+            continue
+        for t in d["trades"]:
+            trades.append({"sym": t["symbol"], "t": t["time"],
+                           "side": int(t["side"]), "entry": t["entry"],
+                           "stop": t["stop_px"], "target": t["target_px"],
+                           "exit": t["exit"], "outcome": t["outcome"],
+                           "held": int(t["held"]), "rr": round(t["rr"], 2),
+                           "net": round(t["net_bp"], 1),
+                           "level": t["level"]})
+    trades.sort(key=lambda x: x["t"])
+    if not trades:
+        log("бэктест: в этой ячейке сделок нет, выгружать нечего")
+        return
+    # Цены — целыми в шагах цены: файл иначе распухает вчетверо, а
+    # разрешение от этого не страдает.
+    have = {t["sym"] for t in trades}
+    ser = {}
+    for sym, bars in candles.items():
+        if not bars or sym not in have:
+            continue          # символ без сделок в этой ячейке не нужен
+        ts = sorted(bars)
+        vals = [v for t in ts for v in bars[t]]
+        step = tick_of(vals)
+        base = min(vals)
+        # Закрытие хранится приращением к предыдущему, остальные три цены
+        # — смещением от закрытия своей же свечи. Числа выходят
+        # однозначными вместо шестизначных, и файл сжимается вчетверо
+        # без потери разрешения: шаг цены сохранён точно.
+        c = [int(round((bars[t][3] - base) / step)) for t in ts]
+        dc, prev = [], 0
+        for v in c:
+            dc.append(v - prev)
+            prev = v
+        ser[sym] = {
+            "base": round(base, 10), "tick": step, "t0": ts[0],
+            "dt": [(ts[i] - ts[i - 1]) // 60 for i in range(1, len(ts))],
+            "dc": dc,
+            "o": [int(round((bars[t][0] - bars[t][3]) / step)) for t in ts],
+            "h": [int(round((bars[t][1] - bars[t][3]) / step)) for t in ts],
+            "l": [int(round((bars[t][2] - bars[t][3]) / step)) for t in ts]}
+    path = os.path.join(out_dir, f"backtest{tag}.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"cell": {"window_sec": win, "vol_mult": mult,
+                            "conc": conc, "min_rr": min_rr,
+                            "cost_bp": cost, "imb": IMB,
+                            "start": a.start, "end": a.end},
+                   "series": ser, "trades": trades}, f, ensure_ascii=False)
+    log(f"бэктест: {len(trades)} сделок, {len(ser)} символов, "
+        f"{os.path.getsize(path) // 1024} КиБ -> {path}")
+
+
+def tick_of(vals):
+    """Шаг цены — наименьшее ненулевое различие цен, а не догадка."""
+    u = np.unique(np.round(np.asarray(vals, dtype=np.float64), 10))
+    d = np.diff(u)
+    d = d[d > 0]
+    return float(d.min()) if len(d) else 1e-8
 
 
 def pack(g, tape, r, key, sym, day):
