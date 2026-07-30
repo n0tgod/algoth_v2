@@ -241,9 +241,13 @@ class Collector:
         bands = []
         if s:
             for w in BANDS:
+                # Полоса шире того, докуда достаёт подписка, — это не
+                # измерение глубины, а весь видимый стакан целиком.
+                reach = min(s.get("reach_b", 0.0), s.get("reach_a", 0.0))
                 bands.append({"w": round(w * 100, 3),
                               "bid": s.get(f"bq{w}", 0.0),
-                              "ask": s.get(f"aq{w}", 0.0)})
+                              "ask": s.get(f"aq{w}", 0.0),
+                              "beyond": w * 1e4 > reach})
         with self.lock:
             mid = list(self.mid[sym])
             tape = list(self.tape[sym])

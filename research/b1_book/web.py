@@ -244,10 +244,15 @@ function render(d) {
         fmt((bk.ask+bk.bid)/2, 6)}</td></tr>` +
       bk.b.map(r => row(r, "b")).join("");
     document.getElementById("cap-book").textContent =
-      `обновлений/с ${bk.upd}`;
+      `обновлений/с ${bk.upd} · видно ±${bk.reach_b}/${bk.reach_a} б.п.`;
     document.getElementById("bands").innerHTML = d.bands.map(b => {
       const tot = b.bid + b.ask || 1;
-      return `<div class="band"><span class="n mono">±${b.w}%</span>
+      // Полоса шире видимой книги содержит её целиком: подписка отдаёт
+      // полсотни уровней, а не проценты. Помечена, чтобы одинаковые
+      // числа в соседних строках не читались как измерение.
+      return `<div class="band" ${b.beyond ? 'style="opacity:.5"' : ""}
+        title="${b.beyond ? "шире видимой книги — это весь стакан" : ""}">
+        <span class="n mono">±${b.w}%${b.beyond ? "*" : ""}</span>
         <span class="g"><i class="l" style="width:${
           (b.bid/tot*100).toFixed(1)}%"></i><i class="r" style="width:${
           (b.ask/tot*100).toFixed(1)}%"></i></span>
