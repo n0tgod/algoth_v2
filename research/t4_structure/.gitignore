@@ -1,0 +1,8 @@
+out/*
+!out/*.md
+!out/*.json
+!out/*.html
+!out/.gitkeep
+out/*-smoke.md
+out/*-smoke.json
+out/*-smoke.html
