@@ -123,6 +123,14 @@ def main():
     ap.add_argument("--end", default=END)
     ap.add_argument("--bundle", default="", help="ячейка для графика: "
                     "объём,мин.отношение (например 5,1.5)")
+    # Зеркало: те же события, направление сделки перевёрнуто. Нужно
+    # потому, что доля побед вышла НИЖЕ случайной у обеих сторон сразу
+    # (лонги −5…−13 п.п., шорты −2…−8), а снос недели так не выглядит: он
+    # сделал бы шорты лучше случайных. Единый механизм, не зависящий от
+    # направления, означает, что после события цена чаще идёт в сторону
+    # агрессии, то есть сделку надо открывать ПО ней, а не против.
+    ap.add_argument("--mirror", action="store_true",
+                    help="торговать по агрессии, а не против неё")
     ap.add_argument("--tag", default="")
     a = ap.parse_args()
     if a.tag and not a.tag.startswith("-"):
@@ -213,7 +221,10 @@ def main():
                             d["skip"].get("не у уровня", 0) + 1
                         continue
                     lvl, kind = near
-                    long = side < 0
+                    # Сторона события задаёт, что поглощают; сторона
+                    # сделки может быть ей противоположна.
+                    trade_side = -side if a.mirror else side
+                    long = trade_side < 0
                     stop_px = lvl - stop_k * noise if long \
                         else lvl + stop_k * noise
                     tgt = LV.ahead(px, price, long, stop_k * noise)
@@ -221,7 +232,7 @@ def main():
                         d["skip"]["нет уровня впереди"] = \
                             d["skip"].get("нет уровня впереди", 0) + 1
                         continue
-                    r = evaluate(g, int(i), side, lvl, stop_px, tgt,
+                    r = evaluate(g, int(i), trade_side, lvl, stop_px, tgt,
                                  min_rr, cost)
                     if "skip" in r:
                         d["skip"][r["skip"]] = d["skip"].get(r["skip"], 0) + 1
@@ -260,7 +271,8 @@ def main():
                         t2 = LV.ahead(px, p2, long, stop_k * noise)
                         if t2 is None:
                             continue
-                        r2 = evaluate(g, jj, side, l2, s2, t2, min_rr, cost)
+                        r2 = evaluate(g, jj, trade_side, l2, s2, t2,
+                                      min_rr, cost)
                         if "skip" not in r2:
                             d["null"].append(r2)
         log("    " + ", ".join(
@@ -293,6 +305,7 @@ def main():
     cfg = {"symbols": syms, "start": a.start, "end": a.end,
            "window_sec": WINDOW, "vol_mults": list(VOL_MULTS),
            "min_rrs": list(MIN_RRS), "imb": IMB, "cost_bp": cost,
+           "mirror": bool(a.mirror),
            "touch_noise": TOUCH_NOISE, "stop_noises": list(STOP_NOISES),
            "maker_bp": MAKER_BP,
            "lookback_min": LV.LOOKBACK_MIN, "max_hold_sec": MAX_HOLD_SEC}
@@ -361,7 +374,8 @@ def bundle(out_dir, tag, want, trades, candles, cost, a, log):
 
 
 def report(cfg, rows):
-    md = ["# Замер сделки на структурных уровнях\n",
+    md = ["# Замер сделки на структурных уровнях"
+          + (" — зеркало\n" if cfg.get("mirror") else "\n"),
           f"Символов {len(cfg['symbols'])}, окно {cfg['start']} … "
           f"{cfg['end']}. Круг издержек {cfg['cost_bp']:.0f} б.п. тейкером.\n",
           "**Роли разделены.** Структура задаёт цену: уровень — полка "
@@ -371,6 +385,12 @@ def report(cfg, rows):
           f"{'/'.join(f'{v:g}' for v in cfg['stop_noises'])} медианного "
           "хода минутной свечи, то есть "
           "заведомо снаружи шума.\n",
+          ("**Зеркало: сделка открывается ПО агрессии, а не против.** "
+           "Причина в прошлом прогоне: доля побед вышла ниже случайной у "
+           "обеих сторон сразу, а снос недели так не выглядит — он сделал "
+           "бы шорты лучше случайных. Единый механизм, не зависящий от "
+           "направления, означает, что после поглощения цена чаще идёт в "
+           "сторону бьющего.\n" if cfg.get("mirror") else ""),
           "Это прямое исправление дефекта T3, где уровень выдумывала "
           "лента и медианный стоп выходил 7 б.п. при круге издержек 11. "
           "**Смотреть надо на колонку «стоп»:** если он снова окажется "
