@@ -202,6 +202,45 @@ def test_metrics_explain_refusal():
                                           "давление двустороннее"), m["why"])
 
 
+def test_warm_start_restores_history():
+    """Перезапуск не должен обнулять наблюдение.
+
+    Сделки и снимки уже лежат на диске; если их не поднимать, каждая
+    правка кода стоит двадцати минут накопления, и уровни появляются
+    заново. Владелец заметил это раньше, чем я.
+    """
+    import json as _json
+    import shutil
+    import tempfile
+    import time as _time
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    try:
+        now = int(_time.time())
+        a = C.Collector(["TEST"], [], root, lambda m: None)
+        for i in range(1200):
+            t = {"ts": (now - 1200 + i) * 1000, "s": "TEST",
+                 "side": 1 if i % 3 else -1, "p": 100 + 0.01 * (i % 9),
+                 "v": 1.0}
+            a.w.write("trades", "TEST", t, ts=t["ts"] / 1000.0)
+            a.w.write("book", "TEST", {"t": now - 1200 + i, "bid": 100.0,
+                                       "ask": 100.02}, ts=now - 1200 + i)
+        a.w.close()
+
+        b = C.Collector(["TEST"], [], root, lambda m: None)
+        C.warm_start(root, ["TEST"], b, lambda m: None)
+        b.sig.by["TEST"].close_second(now)
+        v = b.sig.by["TEST"].view()
+        check(f"история поднялась ({v['history_min']} мин)",
+              v["history_min"] > 15, str(v["history_min"]))
+        check(f"середина поднялась ({len(b.mid['TEST'])} точек)",
+              len(b.mid["TEST"]) > 100, str(len(b.mid["TEST"])))
+        b.w.close()
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -220,6 +259,8 @@ def main():
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
+    print("перезапуск")
+    test_warm_start_restores_history()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

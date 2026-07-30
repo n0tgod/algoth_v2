@@ -325,6 +325,68 @@ class Collector:
         self.w.close()
 
 
+def warm_start(root, symbols, collector, log, hours=4):
+    """Поднять историю из собственных файлов сборщика.
+
+    Перезапуск не должен стоить двадцати минут накопления: сделки и
+    снимки уже лежат на диске, и по ним восстанавливается и посекундный
+    буфер детектора, и середина для графика. Без этого каждая правка
+    кода обнуляла наблюдение, а уровни появлялись заново только через
+    треть часа.
+    """
+    cutoff = time.time() - hours * 3600
+    hh = [datetime.fromtimestamp(cutoff + i * 3600, timezone.utc)
+          .strftime("%Y-%m-%d-%H") for i in range(hours + 2)]
+    n_tr = n_bk = 0
+    for sym in symbols:
+        rows = []
+        for h in hh:
+            path = os.path.join(root, "trades", sym, f"{h}.jsonl.gz")
+            if not os.path.exists(path):
+                continue
+            try:
+                with gzip.open(path, "rt", encoding="utf-8") as f:
+                    for line in f:
+                        try:
+                            t = json.loads(line)
+                        except ValueError:
+                            continue
+                        if t.get("ts", 0) / 1000.0 >= cutoff:
+                            rows.append(t)
+            except OSError:
+                continue
+        rows.sort(key=lambda x: x["ts"])
+        for t in rows:
+            collector.sig.on_trade(t)
+        n_tr += len(rows)
+        # Середина для линии обзора — из посекундных снимков стакана.
+        mids = []
+        for h in hh:
+            path = os.path.join(root, "book", sym, f"{h}.jsonl.gz")
+            if not os.path.exists(path):
+                continue
+            try:
+                with gzip.open(path, "rt", encoding="utf-8") as f:
+                    for line in f:
+                        try:
+                            r = json.loads(line)
+                        except ValueError:
+                            continue
+                        t = r.get("t", 0)
+                        if t >= time.time() - 900 and r.get("bid"):
+                            mids.append((round(t, 1),
+                                         (r["bid"] + r["ask"]) / 2.0))
+            except OSError:
+                continue
+        mids.sort()
+        collector.mid[sym].extend(mids[-900:])
+        n_bk += len(mids)
+    if n_tr or n_bk:
+        log(f"поднято из своих файлов: сделок {n_tr:,}, снимков {n_bk:,}")
+    else:
+        log("своих файлов нет — история копится с нуля")
+
+
 def stable_token(root):
     """Ключ доступа, переживающий перезапуск.
 
@@ -431,6 +493,7 @@ def main():
     log(f"каталог {a.out}")
     c = Collector(syms, raw, a.out, log)
     c.lines = lines
+    warm_start(a.out, syms, c, log)
     if a.http:
         token = a.token or stable_token(a.out)
         web.serve(c, a.http, token, log)
