@@ -66,6 +66,7 @@ OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
 from book import BANDS, Book, parse_trades                 # noqa: E402
+from signals import Signals                               # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
@@ -139,6 +140,12 @@ class Collector:
         self.lines = deque(maxlen=60)
         self.msg_mark = (time.time(), 0)
         self.msg_rate = 0.0
+        # Живой детектор: те же правила, что в замерах. Сделки бумажные,
+        # это наблюдение, а не торговля — замеры T1–T4 показали, что
+        # направленного содержания у события нет. Страница нужна, чтобы
+        # видеть, ТУДА ли детектор показывает.
+        self.sig = Signals(symbols)
+        self.n_signals = 0
 
     # --- сеть ---------------------------------------------------------
     def topics(self):
@@ -188,6 +195,7 @@ class Collector:
                 d = self.tape.get(sym)
                 if d is not None:
                     d.append(t)
+                self.sig.on_trade(t)
 
     def on_error(self, ws, err):
         self.log(f"ошибка соединения: {err}")
@@ -209,6 +217,13 @@ class Collector:
                     self.w.write("book", sym, s, ts=now)
                     self.mid[sym].append(
                         (round(now, 1), (s["bid"] + s["ask"]) / 2.0))
+            for ev in self.sig.tick(now):
+                self.n_signals += 1
+                self.log(f"{ev['sym']}: сигнал "
+                         f"{'лонг' if ev['long'] else 'шорт'} у уровня "
+                         f"{ev['level']:.6g} ({ev['kind']}), стоп "
+                         f"{ev['stop_bp']:.0f} б.п., отношение 1:{ev['rr']}")
+                self.w.write("signals", ev["sym"], ev, ts=now)
 
     def snapshot(self, sym=None):
         """Состояние для страницы наблюдения — прямо из памяти."""
@@ -227,9 +242,11 @@ class Collector:
             lines = list(self.lines)
         return {"sym": sym, "symbols": self.symbols, "book": s,
                 "bands": bands, "mid": mid, "tape": tape, "log": lines,
+                "sig": self.sig.view(sym),
                 "status": {"uptime_sec": round(time.time() - self.started, 1),
                            "messages": self.n_msg, "trades": self.n_trades,
                            "resets": self.n_resets,
+                           "signals": self.n_signals,
                            "msg_per_sec": round(self.msg_rate, 1),
                            "ready": sum(1 for x in self.books.values()
                                         if x.ready),

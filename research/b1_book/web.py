@@ -104,9 +104,13 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
     <div class="bands" id="bands"></div>
   </div>
   <div class="panel">
-    <div class="cap"><span>середина, последние 15 мин</span>
+    <div class="cap"><span>середина, уровни и сделки</span>
       <span id="cap-mid" class="mono"></span></div>
-    <canvas id="mid" height="130"></canvas>
+    <canvas id="mid" height="190"></canvas>
+    <div class="cap" style="border-top:1px solid var(--rule)">
+      <span>бумажные сделки — наблюдение, не торговля</span>
+      <span id="cap-sig" class="mono"></span></div>
+    <table id="sig"></table>
     <div class="cap" style="border-top:1px solid var(--rule)">
       <span>лента</span><span id="cap-tape" class="mono"></span></div>
     <div class="tape"><table id="tape"></table></div>
@@ -206,28 +210,86 @@ function render(d) {
      <td class="mono" style="color:var(--muted)">${kk(x.p*x.v)}</td></tr>`
   ).join("");
 
-  drawMid(d.mid || []);
+  const sg = d.sig || {levels:[], open:[], done:[]};
+  drawMid(d.mid || [], sg);
+  const all = sg.open.concat(sg.done).slice(0, 12);
+  document.getElementById("cap-sig").textContent =
+    `открыто ${sg.open.length} · шум ${sg.noise_bp ?? "—"} б.п. · уровней ${
+      sg.levels.length}`;
+  document.getElementById("sig").innerHTML = all.length
+    ? all.map(x => `<tr>
+        <td class="mono" style="color:var(--muted)">${
+          new Date(x.t*1000).toISOString().slice(11,19)}</td>
+        <td class="mono ${x.long?"buy":"sell"}">${x.long?"лонг":"шорт"}</td>
+        <td class="mono">${x.entry}</td>
+        <td class="mono" style="color:var(--muted)">${x.kind}</td>
+        <td class="mono">1:${x.rr}</td>
+        <td class="mono">${x.state}</td>
+        <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${
+          x.pnl_bp>0?"+":""}${x.pnl_bp} б.п. · ${x.r>0?"+":""}${x.r} R</td>
+      </tr>`).join("")
+    : `<tr><td style="color:var(--muted);padding:8px 10px">событий пока нет</td></tr>`;
   const lg = document.getElementById("log");
   lg.textContent = (d.log || []).join("\n");
 }
 
-function drawMid(pts) {
+function drawMid(pts, sg) {
   const cv = document.getElementById("mid");
-  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 130;
+  const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 190;
   cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
   const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
   g.clearRect(0,0,W,H);
   if (pts.length < 2) return;
-  const lo = Math.min(...pts.map(p=>p[1])), hi = Math.max(...pts.map(p=>p[1]));
+  // В шкалу входят и уровни со сделками: иначе метка окажется за краем,
+  // и «сделки не видно» будет означать не отсутствие, а обрезку.
+  const near = (sg.levels||[]).map(l=>l.p).filter(p =>
+    p > Math.min(...pts.map(q=>q[1]))*0.995 &&
+    p < Math.max(...pts.map(q=>q[1]))*1.005);
+  const marks = (sg.open||[]).concat(sg.done||[]).slice(0,8);
+  const extra = marks.flatMap(m=>[m.entry, m.stop, m.target]);
+  const vals = pts.map(p=>p[1]).concat(near, extra);
+  const lo = Math.min(...vals), hi = Math.max(...vals);
   const pad = (hi-lo)*0.08 || 1e-9;
   const y = v => 8 + (H-24)*(hi+pad-v)/((hi-lo)+2*pad);
   const x = i => 6 + (W-70)*i/(pts.length-1);
   g.strokeStyle = css("--grid");
   for (let k=0;k<=2;k++){const yy=8+(H-24)*k/2;
     g.beginPath();g.moveTo(6,yy);g.lineTo(W-64,yy);g.stroke();}
-  g.strokeStyle = css("--accent"); g.lineWidth = 1.5;
+  // Уровни — горизонтали; вид подписан, чтобы было видно, откуда взялся.
+  for (const l of (sg.levels||[])) {
+    if (l.p < lo || l.p > hi) continue;
+    g.save(); g.strokeStyle = css("--accent"); g.globalAlpha = .5;
+    g.setLineDash(l.kind === "полка" ? [] : [3,3]);
+    g.beginPath(); g.moveTo(6, y(l.p)); g.lineTo(W-64, y(l.p)); g.stroke();
+    g.restore();
+    g.fillStyle = css("--muted");
+    g.font = "10px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
+    g.fillText(l.kind, 9, y(l.p) - 6);
+  }
+  g.strokeStyle = css("--ink"); g.lineWidth = 1.5; g.globalAlpha = .85;
   g.beginPath(); pts.forEach((p,i)=> i?g.lineTo(x(i),y(p[1])):g.moveTo(x(i),y(p[1])));
-  g.stroke();
+  g.stroke(); g.globalAlpha = 1;
+
+  // Сделки: вход треугольником по направлению, стоп и цель отрезками
+  // вправо от входа — там, где сделка живёт.
+  const t0 = pts[0][0], t1 = pts[pts.length-1][0];
+  const xt = t => 6 + (W-70)*Math.max(0, Math.min(1, (t-t0)/Math.max(t1-t0,1)));
+  for (const m of marks) {
+    const xa = xt(m.t), xb = W-64;
+    const seg = (v, color, dash) => {
+      if (v < lo || v > hi) return;
+      g.save(); g.strokeStyle = color; g.setLineDash(dash); g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(xa, y(v)); g.lineTo(xb, y(v)); g.stroke();
+      g.restore();
+    };
+    seg(m.stop, css("--ask"), [2,3]);
+    seg(m.target, css("--bid"), [2,3]);
+    g.fillStyle = css("--ink");
+    const yy = y(m.entry), d = m.long ? 1 : -1;
+    g.beginPath(); g.moveTo(xa, yy);
+    g.lineTo(xa-5, yy+9*d); g.lineTo(xa+5, yy+9*d);
+    g.closePath(); g.fill();
+  }
   g.fillStyle = css("--muted");
   g.font = "11px ui-monospace, Menlo, monospace"; g.textBaseline="middle";
   g.fillText(hi.toPrecision(7), W-60, y(hi));

@@ -143,6 +143,44 @@ def test_page_has_no_external_loads():
     check("данные тянутся с самого сборщика", "/state?k=" in web.PAGE)
 
 
+def test_live_detector_agrees_with_batch():
+    """Живой детектор обязан решать так же, как тот, чем считаны отчёты.
+
+    Две реализации одного правила — обычный способ незаметно разойтись:
+    страница показывала бы одно, а замеры мерили другое, и обе стороны
+    выглядели бы правдоподобно. Поэтому согласие проверяется на одних и
+    тех же данных.
+    """
+    import numpy as np
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "t1_tape"))
+    import tape as T
+    import signals as S
+
+    n = 400
+    rng = np.random.default_rng(5)
+    buy = rng.uniform(80, 120, n)
+    sell = rng.uniform(80, 120, n)
+    close = np.full(n, 100.0) + rng.normal(0, 0.02, n)
+    sell[300:340] += 4000.0            # пролив, цена стоит
+    grid = {"step_sec": 1, "buy_qv": buy, "sell_qv": sell,
+            "close": close, "t": np.arange(n, dtype=np.float64)}
+    idx, _ = T.absorption(grid, 60, 5.0, 0.5, -1, 0.3)
+    batch = set(int(i) for i in idx)
+    live_hits = []
+    for i in range(180, n):
+        if S.absorption_live(buy[:i + 1], sell[:i + 1], close[:i + 1],
+                             60, 5.0, 0.5, 0.3, -1):
+            live_hits.append(i)
+    check(f"пакетный нашёл {len(batch)}, живой {len(live_hits)}",
+          bool(batch) and bool(live_hits), f"{sorted(batch)[:5]} {live_hits[:5]}")
+    if batch and live_hits:
+        # Пакетный склеивает соседние срабатывания в одно; живой видит
+        # каждое. Сверяется первое — оно и есть момент решения.
+        check(f"первое срабатывание совпало ({min(live_hits)} против "
+              f"{min(batch)})", abs(min(live_hits) - min(batch)) <= 1,
+              f"{min(live_hits)} {min(batch)}")
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -158,6 +196,8 @@ def main():
     print("страница наблюдения")
     test_view_does_not_reset_counter()
     test_page_has_no_external_loads()
+    print("живой детектор")
+    test_live_detector_agrees_with_batch()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")
