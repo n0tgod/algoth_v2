@@ -144,8 +144,9 @@ footer { color:var(--muted); font-size:12.5px; border-top:1px solid var(--rule);
 </div>
 
 <div class="panel">
-  <div class="cap"><span>кривая счёта, базисные пункты на сделку</span>
-    <span id="cap-eq" class="mono"></span></div>
+  <div class="cap"><span>кривая счёта ·
+    <button id="unit" style="padding:1px 8px;font-size:12px">в R</button>
+    </span><span id="cap-eq" class="mono"></span></div>
   <canvas id="eq" height="150"></canvas>
 </div>
 
@@ -198,8 +199,20 @@ for (const [sym, s] of Object.entries(D.series)) {
 }
 const TR = D.trades.map(x => ({ ...x, ts: Date.parse(x.t) / 1000 }));
 TR.sort((a, b) => a.ts - b.ts);
-let equity = 0;
-TR.forEach(x => { equity += x.net; x.eq = equity; });
+// Итог сделки в кратности риска: сколько взяли относительно того, чем
+// рисковали. Кривая в R равносильна одинаковому риску на сделку, кривая
+// в процентах — одинаковому объёму; трейдер размеряет позицию первым
+// способом, поэтому переключатель, а не одна мера.
+TR.forEach(x => {
+  x.stopBp = Math.abs(x.entry - x.stop) / x.entry * 1e4;
+  x.r = x.net / Math.max(x.stopBp, 1e-9);
+});
+let UNIT = "bp";
+function recalc() {
+  let e = 0;
+  TR.forEach(x => { e += (UNIT === "bp" ? x.net : x.r); x.eq = e; });
+}
+recalc();
 
 const symbols = Object.keys(SER).sort(
   (a, b) => TR.filter(x => x.sym === b).length
@@ -214,6 +227,7 @@ function stats(list) {
   const wins = list.filter(x => x.net > 0);
   const pos = wins.reduce((s, x) => s + x.net, 0);
   const neg = list.filter(x => x.net <= 0).reduce((s, x) => s - x.net, 0);
+  const rAvg = list.reduce((s, x) => s + x.r, 0) / n;
   let peak = 0, dd = 0, e = 0;
   for (const x of list) { e += x.net; peak = Math.max(peak, e);
     dd = Math.min(dd, e - peak); }
@@ -223,7 +237,7 @@ function stats(list) {
     const stop = Math.abs(x.entry - x.stop) / x.entry * 1e4;
     return s + (stop + D.cell.cost_bp) / (stop * (1 + x.rr));
   }, 0) / n;
-  return { n, win: wins.length / n, be, exp: (pos - neg) / n,
+  return { n, win: wins.length / n, be, exp: (pos - neg) / n, rAvg,
     sum: pos - neg, dd, pf: neg > 0 ? pos / neg : Infinity };
 }
 
@@ -239,6 +253,8 @@ function drawStats() {
     cell("безубыточная", (s.be * 100).toFixed(0) + " %") +
     cell("ожидание", (s.exp > 0 ? "+" : "") + s.exp.toFixed(1) + " б.п.",
          s.exp > 0 ? "good" : "bad") +
+    cell("ожидание, R", (s.rAvg > 0 ? "+" : "") + s.rAvg.toFixed(2),
+         s.rAvg > 0 ? "good" : "bad") +
     cell("итог", (s.sum > 0 ? "+" : "") + s.sum.toFixed(0) + " б.п.",
          s.sum > 0 ? "good" : "bad") +
     cell("просадка", s.dd.toFixed(0) + " б.п.", "bad") +
@@ -476,7 +492,9 @@ function drawEquity() {
     }
   }
   document.getElementById("cap-eq").textContent =
-    TR.length + " сделок · итог " + TR[TR.length - 1].eq.toFixed(0) + " б.п.";
+    TR.length + " сделок · итог "
+    + TR[TR.length - 1].eq.toFixed(UNIT === "bp" ? 0 : 1)
+    + (UNIT === "bp" ? " б.п." : " R");
 }
 
 // Тяга и масштаб: мышь и палец одинаково, через указатели.
@@ -505,7 +523,8 @@ function showTip(e) {
     row("отношение", "1:" + t.rr) +
     row("держали", t.held + " с") +
     row("исход", t.outcome) +
-    row("итог", (t.net > 0 ? "+" : "") + t.net + " б.п.",
+    row("итог", (t.net > 0 ? "+" : "") + t.net + " б.п. · "
+        + (t.r > 0 ? "+" : "") + t.r.toFixed(2) + " R",
         t.net > 0 ? "good" : "bad");
   tip.style.display = "block";
   const tw = tip.offsetWidth, th = tip.offsetHeight;
@@ -563,6 +582,11 @@ function zoom(k, anchor) {
   draw();
 }
 
+document.getElementById("unit").onclick = e => {
+  UNIT = UNIT === "bp" ? "r" : "bp";
+  e.target.textContent = UNIT === "bp" ? "в R" : "в б.п.";
+  recalc(); drawEquity();
+};
 document.getElementById("prev").onclick = () => focusTrade(sel - 1);
 document.getElementById("next").onclick = () => focusTrade(sel + 1);
 document.getElementById("fit").onclick = () => {
