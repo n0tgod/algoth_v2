@@ -80,7 +80,8 @@ STRUCTURAL_STOP = True
 # просто не идут в статистику текущей.
 #   1 — стоп долей шума (до 2026-07-31)
 #   2 — стоп за экстремумом и накоплением
-RULES_VERSION = 2
+#   3 — цель на ближайшем уровне, ОПРАВДЫВАЮЩЕМ риск
+RULES_VERSION = 3
 
 
 def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
@@ -319,18 +320,23 @@ class Live:
                 stop = cand
             else:
                 why = "шум"
-        tgt = LV.ahead(px, price, long, STOP_NOISE * noise)
-        if tgt is None:
-            return None
         entry = price
-        if (long and (stop >= entry or tgt <= entry)) or \
-           (not long and (stop <= entry or tgt >= entry)):
+        if (long and stop >= entry) or (not long and stop <= entry):
             return None
         stop_bp = abs(entry - stop) / entry * 1e4
+        # Цель — не ближайший уровень, а ближайший ИЗ ОПРАВДЫВАЮЩИХ риск.
+        # Уровень в двух шагах от входа отношения не даёт; целиться в
+        # него значит отдавать движение, ради которого и входили.
+        def worth(v):
+            bp = abs(v - entry) / entry * 1e4
+            return (bp - COST_BP) / max(stop_bp, 1e-9) >= MIN_RR
+        tgt = LV.ahead_worth(px, price, long, STOP_NOISE * noise, worth)
+        if tgt is None:
+            return None
+        if (long and tgt <= entry) or (not long and tgt >= entry):
+            return None
         tgt_bp = abs(tgt - entry) / entry * 1e4
         rr = (tgt_bp - COST_BP) / max(stop_bp, 1e-9)
-        if rr < MIN_RR:
-            return None
         self.seq += 1
         tr = {"id": f"{self.symbol}-{int(now)}-{self.seq}",
               "ver": RULES_VERSION,

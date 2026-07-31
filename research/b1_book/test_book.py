@@ -585,10 +585,43 @@ def test_seeded_replay_keeps_entry_changes_stop():
             check(f"стоп пересчитан и шире прежних 5 б.п. "
                   f"({tr['stop_bp']} б.п., задан: {tr.get('stop_by')})",
                   tr["stop_bp"] > 5.0, str(tr["stop_bp"]))
+            import signals as SG
             check("сделка помечена текущей версией правил",
-                  tr.get("ver") == 2, str(tr.get("ver")))
+                  tr.get("ver") == SG.RULES_VERSION, str(tr.get("ver")))
     finally:
         shutil.rmtree(root, ignore_errors=True)
+
+
+def test_target_skips_levels_that_do_not_pay_for_risk():
+    """Цель — ближайший уровень, ОПРАВДЫВАЮЩИЙ риск, а не просто ближайший.
+
+    Владелец увидел это на BEATUSDT: вход шортом на самом пике, цель на
+    ближайшей полке в 49 б.п., задета через минуты, а цена потом прошла
+    ещё 230 б.п. мимо. Уровень в двух шагах от входа отношения к риску
+    не даёт, и целиться в него значит отдавать движение, ради которого
+    и входили.
+    """
+    import numpy as np
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "t4_structure"))
+    import levels as LV
+
+    lv = np.array([3.876, 3.852, 3.820])      # три полки под ценой
+    entry, stop_bp, cost, min_rr = 3.895, 26.0, 11.0, 1.5
+
+    def worth(v):
+        bp = abs(v - entry) / entry * 1e4
+        return (bp - cost) / stop_bp >= min_rr
+
+    near = LV.ahead(lv, entry, False, 1e-6)
+    got = LV.ahead_worth(lv, entry, False, 1e-6, worth)
+    bp = lambda v: abs(v - entry) / entry * 1e4
+    check(f"ближайшая полка не оправдывает риск ({bp(near):.0f} б.п., "
+          f"1:{(bp(near)-cost)/stop_bp:.2f})", not worth(near), str(near))
+    check(f"взята следующая ({got}, {bp(got):.0f} б.п., "
+          f"1:{(bp(got)-cost)/stop_bp:.2f})", got == 3.852, str(got))
+    # Если ни один уровень не платит за риск — сделки нет вовсе.
+    check("без годной цели сделки нет",
+          LV.ahead_worth(np.array([3.894]), entry, False, 1e-6, worth) is None)
 
 
 def test_rejected_subscription_is_not_silence():
@@ -839,6 +872,7 @@ def main():
     test_seeded_replay_keeps_entry_changes_stop()
     print("геометрия стопа")
     test_stop_goes_behind_structure_not_inside_noise()
+    test_target_skips_levels_that_do_not_pay_for_risk()
     print("подписка")
     test_rejected_subscription_is_not_silence()
     print("бумажные сделки")

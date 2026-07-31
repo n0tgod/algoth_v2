@@ -251,3 +251,30 @@ def ahead(levels, price, long, min_gap):
     if len(f) == 0:
         return None
     return float(f.min() if long else f.max())
+
+
+def ahead_worth(levels, price, long, min_gap, ok):
+    """Ближайший уровень впереди, который **оправдывает риск**.
+
+    Прежняя версия брала первый попавшийся уровень и только потом
+    проверяла отношение к риску — то есть при удачном входе целилась в
+    ближайшую полку, даже если та в двух шагах. Владелец увидел это на
+    BEATUSDT: вход шортом на самом пике, цель на ближайшей полке в 49
+    б.п., задета через минуты, а цена потом прошла ещё 230 б.п. мимо.
+
+    Здесь уровни перебираются по удалённости, и берётся первый, на
+    котором `ok(расстояние)` истинно. Если ни один не годится, сделки
+    нет вовсе: «иногда они даже не открывают сделку, если не видят
+    правильного выхода» — это условие, а не пожелание.
+    """
+    if len(levels) == 0:
+        return None
+    f = levels[levels > price + min_gap] if long \
+        else levels[levels < price - min_gap]
+    if len(f) == 0:
+        return None
+    order = np.sort(f) if long else np.sort(f)[::-1]
+    for v in order:
+        if ok(float(v)):
+            return float(v)
+    return None
