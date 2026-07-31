@@ -343,7 +343,8 @@ class Live:
               "t": now, "sym": self.symbol, "side": 1 if not long else -1,
               "long": long, "entry": entry, "stop": stop,
               "target": tgt, "level": lvl, "kind": kind, "rule": rule,
-              "stop_bp": round(stop_bp, 1), "rr": round(rr, 2),
+              "stop_bp": round(stop_bp, 1),
+              "tgt_bp": round(tgt_bp, 1), "rr": round(rr, 2),
               "stop_by": why,
               "state": "открыта", "pnl_bp": 0.0, "r": 0.0,
               "held": 0, "exit": None, "closed_at": None}

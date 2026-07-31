@@ -624,6 +624,43 @@ def test_target_skips_levels_that_do_not_pay_for_risk():
           LV.ahead_worth(np.array([3.894]), entry, False, 1e-6, worth) is None)
 
 
+def test_compare_pairs_old_and_recomputed():
+    """Сопоставление «было / стало» обязано считать по парам, а не в среднем.
+
+    Просьба владельца: пересчитать тейки под новую логику исторически,
+    с теми же входами. Смысл — увидеть каждую сделку до и после, а не
+    два столбика итогов: агрегат скрывает, что одна сделка выиграла от
+    правки, а другая проиграла.
+    """
+    import replay as R
+
+    seeded = [
+        {"t": 1, "sym": "FILUSDT", "long": True, "stop_bp": 31.0,
+         "tgt_bp": 110.0, "state": "цель", "pnl_bp": 99.0,
+         "was": {"id": "a"}},
+        {"t": 2, "sym": "BEATUSDT", "long": False, "stop_bp": 26.0,
+         "tgt_bp": 110.0, "state": "стоп", "pnl_bp": -37.0,
+         "was": {"id": "b"}},
+        {"t": 3, "sym": "XLMUSDT", "long": True, "stop_bp": 20.0,
+         "tgt_bp": 60.0, "state": "цель", "pnl_bp": 49.0,
+         "was": {"id": "нет такой"}},
+    ]
+    was = {"a": {"stop_bp": 7.0, "tgt_bp": 30.0, "state": "стоп",
+                 "pnl_bp": -18.0},
+           "b": {"stop_bp": 5.0, "tgt_bp": 49.0, "state": "цель",
+                 "pnl_bp": 38.0}}
+    rows, better, med = R.compare(seeded, was)
+    check(f"сопоставлены только пары с записью ({len(rows)})",
+          len(rows) == 2, str(len(rows)))
+    check(f"улучшений посчитано ({better})", better == 1, str(better))
+    check(f"медиана изменения ({med:+.1f} б.п.)", abs(med - 21.0) < 1e-9,
+          str(med))
+    check("правка помогает не всем — и это видно построчно",
+          rows[0]["pnl"] > rows[0]["was_pnl"]
+          and rows[1]["pnl"] < rows[1]["was_pnl"], str(rows))
+    check("без записей сопоставлять нечего", R.compare(seeded, {})[0] == [])
+
+
 def test_rejected_subscription_is_not_silence():
     """Отклонённая подписка обязана назваться и не гасить остальные.
 
@@ -870,6 +907,7 @@ def main():
     print("воспроизведение записи")
     test_replay_drives_detector_from_files()
     test_seeded_replay_keeps_entry_changes_stop()
+    test_compare_pairs_old_and_recomputed()
     print("геометрия стопа")
     test_stop_goes_behind_structure_not_inside_noise()
     test_target_skips_levels_that_do_not_pay_for_risk()

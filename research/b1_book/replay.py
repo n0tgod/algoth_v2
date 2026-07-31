@@ -128,10 +128,17 @@ def replay_seeded(root, sym, hours):
     геометрии на состоянии рынка того момента. Разница тогда целиком
     приходится на геометрию.
 
+    Пересчитываются ОБА конца сделки — и стоп, и цель. Цель по новым
+    правилам берётся не ближайшая, а ближайшая из оправдывающих риск,
+    поэтому у той же точки входа она обычно дальше прежней.
+
     Сделка, которая по новым правилам не открылась бы вовсе (стоп
-    расширился, и отношение к цели перестало устраивать), не
+    расширился, и ни один уровень впереди не оправдывает риск), не
     подменяется ничем — она считается отдельным числом. Это тоже
     ответ: часть входов новая геометрия просто отвергает.
+
+    К каждой пересчитанной сделке прикладывается то, чем она была в
+    записи, — иначе сравнивать пришлось бы глазами по двум таблицам.
     """
     S.STRUCTURAL_STOP = True
     opens = [r for r in load(root, "signals", sym, hours)
@@ -171,10 +178,38 @@ def replay_seeded(root, sym, hours):
         if tr is None:
             refused += 1
         else:
+            tr["was"] = {"stop_bp": r.get("stop_bp"), "rr": r.get("rr"),
+                         "tgt_bp": r.get("tgt_bp"), "ver": r.get("ver"),
+                         "id": r.get("id")}
             created.append(tr)
     # Созданные возвращаются целиком: по ним видно геометрию даже у тех
     # сделок, что не успели закрыться до конца окна.
     return done, created, refused
+
+
+def compare(seeded, was_close):
+    """Сопоставить пересчитанные сделки с их записанными исходами.
+
+    Вынесено из `main` не для красоты: логика внутри печати ничем не
+    проверяется, а сравнение «было / стало» — это то самое, ради чего
+    прогон и делается.
+    """
+    from statistics import median
+    rows, d = [], []
+    for t in sorted(seeded, key=lambda x: x.get("t") or 0):
+        o = was_close.get((t.get("was") or {}).get("id"))
+        if o is None or o.get("pnl_bp") is None or t.get("pnl_bp") is None:
+            continue
+        rows.append({
+            "sym": t.get("sym", ""), "side": "лонг" if t["long"] else "шорт",
+            "was_stop": o.get("stop_bp"), "was_tgt": o.get("tgt_bp") or "—",
+            "was_state": o.get("state"), "was_pnl": float(o["pnl_bp"]),
+            "stop": t["stop_bp"], "tgt": t.get("tgt_bp", "—"),
+            "state": t["state"], "pnl": float(t["pnl_bp"])})
+        d.append(rows[-1]["pnl"] - rows[-1]["was_pnl"])
+    if not rows:
+        return [], 0, 0.0
+    return rows, sum(1 for x in d if x > 0), float(median(d))
 
 
 def main():
@@ -236,7 +271,7 @@ def main():
         refused += rf
     st = paper.summary(seeded)
     if st:
-        print(f"{'те же входы, новый стоп':24} {st['trades']:>7} "
+        print(f"{'те же входы, новая геометрия':24} {st['trades']:>7} "
               f"{st['win_rate']*100:>6.0f}% {st['break_even']*100:>6.0f}% "
               f"{st['expectancy_bp']:>+9.1f} б.п. {st['expectancy_r']:>+8.2f} "
               f"{st['stop_bp_median']:>7.1f}")
@@ -245,12 +280,36 @@ def main():
               f"{refused}; медианный стоп "
               f"{st_now[len(st_now)//2] if st_now else '—'} б.п.")
     else:
-        print(f"{'те же входы, новый стоп':24} открыто {len(made)}, "
+        print(f"{'те же входы, новая геометрия':24} открыто {len(made)}, "
               f"отвергнуто {refused}, закрытых в окне нет")
-    res["те же входы, новый стоп"] = {
+    res["те же входы, новая геометрия"] = {
         "trades": seeded, "stats": st, "by_rule": paper.by_rule(seeded),
         "seconds": 0, "book_seconds": 0, "made": len(made),
         "refused": refused}
+
+    # Посделочное сопоставление: что было в записи и что вышло бы.
+    was_close = {}
+    for s_ in syms:
+        for r in load(root, "signals", s_, hh):
+            if r.get("ev") == "close" and r.get("id"):
+                was_close[r["id"]] = r
+    rows, better, med = compare(seeded, was_close)
+    if rows:
+        print(f"\nте же входы, посделочно (первые 15 из {len(rows)}):")
+        print(f"  {'монета':10} {'сторона':6} | "
+              f"{'было: стоп':>10} {'цель':>6} {'итог':>7} {'б.п.':>8} | "
+              f"{'стало: стоп':>11} {'цель':>6} {'итог':>7} {'б.п.':>8}")
+        for r in rows[:15]:
+            print(f"  {r['sym']:10} {r['side']:6} | "
+                  f"{r['was_stop']:>10} {r['was_tgt']:>6} {r['was_state']:>7} "
+                  f"{r['was_pnl']:>+8.1f} | "
+                  f"{r['stop']:>11} {r['tgt']:>6} {r['state']:>7} "
+                  f"{r['pnl']:>+8.1f}")
+        print(f"  сопоставлено {len(rows)}, стало лучше у {better}, "
+              f"медиана изменения {med:+.1f} б.п.")
+    else:
+        print("\nпосделочно сопоставить нечего: в окне нет сделок, у которых "
+              "есть и запись прежнего исхода, и пересчитанный")
 
     bs = res["новая (за структуру)"]["book_seconds"]
     print(f"\nсекунд книги с полной лесенкой: {bs}"
