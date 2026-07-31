@@ -119,11 +119,22 @@ du -sh ~/algoth_v2/research/b1_book/out/                 # сколько зан
 Перезапуск после правки кода — обычной остановкой, **не** `kill -9`:
 
 ```bash
+cd ~/algoth_v2
 pkill -f 'b1_book/collect.py'      # сигнал TERM: файлы закрываются
-cd ~/algoth_v2 && git pull --rebase && nohup .venv/bin/python \
-  research/b1_book/collect.py --http 8765 \
-  >> research/b1_book/out/collect.log 2>&1 &
+sleep 3                            # дать закрыть текущий час
+git pull --rebase
+(nohup .venv/bin/python research/b1_book/collect.py --http 8765 \
+  >> research/b1_book/out/collect.log 2>&1 &)
+sleep 20 && tail -5 research/b1_book/out/collect.log
 ```
+
+Скобки вокруг `nohup … &` обязательны, и это не украшение. В прежней
+записи `cd … && git pull … && nohup … &` знак `&` относится ко **всей**
+цепочке, а не к последней команде: в фон уходит и `cd`, поэтому
+`tail research/b1_book/out/collect.log` следующей строкой ищет файл в
+домашнем каталоге и говорит «нет такого файла» на исправном запуске.
+Отдельный `cd` первой строкой плюс подоболочка вокруг запуска убирают
+обе беды сразу.
 
 Накопленное при этом не теряется: запуск поднимает историю из
 собственных файлов за последние четыре часа, а ссылка и ключ доступа
