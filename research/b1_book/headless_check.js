@@ -105,8 +105,12 @@ const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"], count: 2,
 // Встречный счёт: те же входы, другая геометрия. Опознаётся по номеру
 // сделки — так видно, подменила ли страница показанное, а не только
 // напечатала ли отчёт.
+// Поле `was.id` связывает пересчитанную сделку с настоящей: без него
+// новую геометрию не наложить на тот же вход, а отдельным графиком две
+// картинки глазами не совместить.
 const recTrade = i => Object.assign(trade(i, true),
-  {id: "rec-" + i, stop: 64500, target: 65100, stop_bp: 31.0, rr: 4.0});
+  {id: "rec-" + i, stop: 64500, target: 65100, stop_bp: 31.0, rr: 4.0,
+   was: {id: "BTCUSDT-" + i, stop_bp: 15.5}});
 const recount = {busy: false, done: 2, total: 2, hours: 24, at: T0, ver: 3,
                  made: 5, refused: 1, took_sec: 2.0,
                  trades: [recTrade(1), recTrade(2)], stats: hist.stats,
@@ -139,7 +143,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? pullRec : null;"
                 + "\nglobal.__REC = typeof REC !== 'undefined' ? REC : null;"
                 + "\nglobal.__shown = typeof shown === 'function' "
-                + "? shown : null;")();
+                + "? shown : null;"
+                + "\nglobal.__table = typeof tableTrades === 'function' "
+                + "? tableTrades : (typeof shown === 'function' "
+                + "? () => shown().trades : null);"
+                + "\nglobal.__ghost = typeof recMap === 'function' "
+                + "? recMap : null;")();
 (async () => {
   const step = global.__step;
   // Первый кадр отдан самой страницей при загрузке; ждём его, затем
@@ -181,22 +190,38 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // строчку отчёта: владелец просил видеть пересчитанные стоп и цель на
   // графике и в таблице. Отчёт при пустом графике — отказ, неотличимый
   // от исправной страницы.
-  if (!global.__rec || !global.__REC || !global.__shown) {
+  if (!global.__rec || !global.__REC || !global.__table) {
     bad.push("на странице нет переключателя встречного счёта");
   } else {
-    const wasN = global.__shown().trades.length;
+    const wasN = global.__table().length;
     global.__REC.on = true;
     await global.__rec(true);
     if (!seen.some(u => u.startsWith("/recount")))
       bad.push("встречный счёт не запрошен (/recount)");
-    const tr = global.__shown().trades;
+    const tr = global.__table();
     if (!tr.length || !tr.every(m => String(m.id || "").startsWith("rec-")))
-      bad.push(`встречный счёт не подменил сделки: показано ${tr.length}, `
+      bad.push(`встречный счёт не подменил таблицу: показано ${tr.length}, `
                + `было ${wasN}`);
+    // На графике пересчёт обязан ЛОЖИТЬСЯ ПОВЕРХ настоящей сделки, а не
+    // заменять её: владелец просил видеть, как сделки поменялись, а
+    // подмена показывает только «стало», сравнить не с чем.
+    if (isChart) {
+      if (!global.__ghost)
+        bad.push("график не умеет накладывать пересчёт");
+      else {
+        const gm = global.__ghost();
+        if (!gm || !gm.size)
+          bad.push("наложение пересчёта пустое — сравнивать нечего");
+        else if (!gm.get("BTCUSDT-1"))
+          bad.push("пересчёт не связан с исходной сделкой по номеру");
+      }
+    }
     global.__REC.on = false;
-    const back = global.__shown().trades;
+    const back = global.__table();
     if (back.some(m => String(m.id || "").startsWith("rec-")))
       bad.push("после выключения на странице остались пересчитанные сделки");
+    if (isChart && global.__ghost && global.__ghost())
+      bad.push("после выключения наложение осталось на графике");
   }
   if (bad.length) { console.error("ПАДЕНИЕ: " + bad.join("; "));
                     process.exit(1); }

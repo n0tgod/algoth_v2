@@ -735,6 +735,9 @@ td:first-child,th:first-child{text-align:left}
   <span><span class="sw" style="border-color:var(--ask)"></span>стоп</span>
   <span><span class="sw" style="border-color:var(--bid)"></span>цель</span>
   <span><span class="sw" style="border-color:var(--ink)"></span>вход и выход</span>
+  <span><span class="sw" style="border-color:var(--muted);
+    border-top-style:dotted"></span>пунктир — пересчёт: тот же вход,
+    нынешние стоп и цель</span>
 </div>
 <div class="panel">
   <div class="cap"><span>итог бумажных сделок по этой монете</span>
@@ -792,8 +795,14 @@ async function pullRec(go) {
   try {
     const r = await fetch(`/recount?k=${encodeURIComponent(KEY)}`
       + `&sym=${encodeURIComponent(sym)}&hours=24&go=${go ? 1 : 0}`);
-    if (r.ok) { REC.data = await r.json(); REC.sym = sym; }
-  } catch (e) { /* тихо: следующий круг попробует снова */ }
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    REC.data = await r.json(); REC.sym = sym; REC.err = 0;
+  } catch (e) {
+    // Молча проглоченный отказ выглядит как «считаю…» без конца, а
+    // график при этом не меняется — ровно тот симптом, который
+    // владелец и увидел. Отказ обязан называть себя.
+    REC.err = (REC.err || 0) + 1;
+  }
   finally { REC.busy = false; }
   if (REC.data && REC.data.busy && !REC.timer)
     REC.timer = setInterval(() => pullRec(false), 3000);
@@ -811,9 +820,29 @@ function recReady() {
     ? REC.data : null;
 }
 
+// Пересчитанные сделки, сложенные по номеру исходной: чтобы наложить
+// новую геометрию на тот же вход, а не рисовать её отдельным графиком.
+// Ради этого `replay_seeded` и кладёт в каждую сделку поле `was`.
+function recMap() {
+  const d = REC.data;
+  if (!REC.on || !d || d.busy || REC.sym !== sym) return null;
+  const m = new Map();
+  for (const t of (d.trades || [])) {
+    const id = (t.was || {}).id;
+    if (id) m.set(id, t);
+  }
+  return m.size ? m : null;
+}
+
 function renderRec() {
   const box = document.getElementById("recnote"), d = REC.data;
   if (!REC.on) { box.innerHTML = ""; return; }
+  if (REC.err) {
+    box.innerHTML = `<div class="panel"><div class="note">пересчёт не
+      отвечает (неудачных попыток ${REC.err}). Показано то, что было на
+      самом деле. Связь восстановится — нажмите ещё раз.</div></div>`;
+    return;
+  }
   if (!d || d.busy) {
     box.innerHTML = `<div class="panel"><div class="note">пересчитываю те же
       входы под текущие правила${d ? `: ${d.done} из ${d.total} монет` : ""}…
@@ -825,7 +854,10 @@ function renderRec() {
     же входы, проведённые по правилам v${d.ver} (окно ${d.hours} ч, счёт
     ${d.took_sec} с). Цена шла та же, сделка была бы другой: стоп и цель
     пересчитаны, значит и выход другой. Входов по этой монете взято
-    ${d.made}, отвергнуто новой геометрией ${d.refused}.`
+    ${d.made}, отвергнуто новой геометрией ${d.refused}.
+    <br><b>На графике нарисованы обе геометрии:</b> сплошные отрезки —
+    что было, пунктирные — что стало бы у того же входа. В таблице и
+    сводке ниже — только пересчёт.`
     + coverLine(d, HIST.trades.length) + `</div></div>`;
 }
 
@@ -939,16 +971,20 @@ function cands() {
   return mergeCandles(HC.cand, live);
 }
 function trades() {
+  // ФАКТ: что действительно случилось. График всегда рисует это, потому
+  // что пересчёт показывается поверх — иначе сравнивать не с чем, а
+  // владельцу нужно видеть именно разницу.
   // История берётся из отдельного запроса: в состоянии лежат только
   // последние двадцать закрытых, чтобы не гонять сотни каждую секунду.
-  const d = recReady();
-  // Встречный счёт заменяет список целиком, вместе с открытыми: у
-  // открытой сделки исхода ещё нет, и подмешать её к пересчитанным
-  // значило бы смешать факт с пересчётом в одной таблице.
-  if (d) return d.trades || [];
   const sg = (data && data.sig) || {};
   return (sg.open||[]).concat(
     HIST.trades.length ? HIST.trades : (sg.done||[]));
+}
+function tableTrades() {
+  // А вот таблица и сводка переключаются целиком: смешивать факт с
+  // пересчётом в одной статистике нельзя.
+  const d = recReady();
+  return d ? (d.trades || []) : trades();
 }
 function res(m) {
   return m.pnl_bp == null ? `<span style="color:var(--muted)">—</span>`
@@ -982,6 +1018,7 @@ function draw() {
   const pw = W-padL-padR, ph = H-padT-padB;
   const lv = (data.sig.levels||[]);
   const tr = trades();
+  const ghost = recMap();
   let lo = Infinity, hi = -Infinity;
   for (let i=i0;i<i1;i++){ lo=Math.min(lo,c[i][3]); hi=Math.max(hi,c[i][2]); }
   const t0 = c[i0][0], t1 = c[i1-1][0];
@@ -989,7 +1026,13 @@ function draw() {
     lo=Math.min(lo,l.p); hi=Math.max(hi,l.p); }
   for (const m of tr) if (m.t>=t0-3600 && m.t<=t1+3600){
     lo=Math.min(lo,m.stop,m.target,m.entry);
-    hi=Math.max(hi,m.stop,m.target,m.entry); }
+    hi=Math.max(hi,m.stop,m.target,m.entry);
+    // Пересчитанный стоп шире настоящего по построению — если не
+    // включить его в шкалу, он окажется за краем, и «ничего не
+    // поменялось» будет означать обрезку, а не отсутствие разницы.
+    const r = ghost && ghost.get(m.id);
+    if (r) { lo=Math.min(lo,r.stop,r.target); hi=Math.max(hi,r.stop,r.target); }
+  }
   const pad=(hi-lo)*0.06||1e-9; lo-=pad; hi+=pad;
   const y = v => padT + ph*(hi-v)/(hi-lo);
   const x = i => padL + pw*(i-i0+0.5)/(i1-i0);
@@ -1054,6 +1097,29 @@ function draw() {
       g.moveTo(xb, y(m.entry)); g.lineTo(xb, y(m.exit)); g.stroke();
       g.restore();
     }
+    // Пересчёт того же входа — поверх, пунктиром и бледнее. Так видно
+    // ровно то, что просил владелец: где стоял бы стоп по нынешним
+    // правилам и чем сделка кончилась бы. Отдельным графиком это
+    // сравнением не является — глазами две картинки не совместить.
+    const r = ghost && ghost.get(m.id);
+    if (r) {
+      const rend = r.closed_at || (r.held ? r.t + r.held : null);
+      const rb = rend ? clamp(xt(rend)) : W-padR;
+      const seg2 = (v, col) => { if (v == null || v < lo || v > hi) return;
+        g.save(); g.strokeStyle = col; g.globalAlpha = .75;
+        g.setLineDash([1,3]); g.lineWidth = 1.6;
+        g.beginPath(); g.moveTo(xa, y(v)); g.lineTo(Math.max(rb, xa+2), y(v));
+        g.stroke(); g.restore(); };
+      seg2(r.stop, css("--ask"));
+      seg2(r.target, css("--bid"));
+      if (rend && r.exit != null && r.exit >= lo && r.exit <= hi) {
+        g.save();
+        g.strokeStyle = r.state === "цель" ? css("--bid")
+                      : r.state === "стоп" ? css("--ask") : css("--muted");
+        g.lineWidth = 1.6; g.strokeRect(rb-3.5, y(r.exit)-3.5, 7, 7);
+        g.restore();
+      }
+    }
     const ya=y(Math.max(m.stop,m.target)), yb=y(Math.min(m.stop,m.target));
     const h2=Math.max(yb-ya,20);
     HIT.push({m, x0:xa-10, x1:xb, y0:(ya+yb)/2-h2/2, y1:(ya+yb)/2+h2/2});
@@ -1072,14 +1138,16 @@ function draw() {
   const S = shown();
   const off = tr.filter(m => m.t < first || m.t > last).length;
   const old = tr.filter(m => (m.ver || 1) !== S.ver).length;
+  const gn = ghost ? tr.filter(m => ghost.get(m.id)).length : 0;
   document.getElementById("cap3").textContent =
-    `${tr.length} сделок` + (S.rec ? " · встречный счёт, не факт" : "")
+    `${tr.length} сделок` + (S.rec ? " · в таблице встречный счёт" : "")
+    + (gn ? ` · ${gn} с пересчётом (пунктир)` : "")
     + (off ? ` · ${off} вне окна графика` : "")
     + (old ? ` · ${old} по прежним правилам` : "");
 }
 
 function rows() {
-  const tr = trades(), c = cands();
+  const tr = tableTrades(), c = cands();
   const first = c.length ? c[0][0] : 0, last = c.length ? c[c.length-1][0] : 0;
   const off = m => c.length && (m.t < first || m.t > last);
   document.getElementById("rows").innerHTML = tr.length ? tr.map(m => `
