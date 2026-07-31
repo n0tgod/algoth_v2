@@ -461,13 +461,15 @@ class Collector:
             threading.Thread(target=self._recount_job, args=(hours,),
                              daemon=True).start()
         rows = st.get("trades") or []
+        one = (st.get("by_sym") or {}).get(sym) if sym else None
         if sym:
             # По одной монете: странице графика нужны её сделки, а не все.
             rows = [t for t in rows if t.get("sym") == sym]
         out = {"busy": st.get("busy", False), "done": st.get("done", 0),
                "total": st.get("total", 0), "hours": st.get("hours"),
                "at": st.get("at", 0), "ver": signals_version(),
-               "made": st.get("made", 0), "refused": st.get("refused", 0),
+               "made": (one or st).get("made", 0),
+               "refused": (one or st).get("refused", 0),
                "took_sec": st.get("took_sec"),
                "trades": sorted(rows, key=lambda t: -(t.get("closed_at")
                                                       or t.get("t") or 0))}
@@ -487,6 +489,10 @@ class Collector:
         keep = signals.STRUCTURAL_STOP
         hh = R.hours_back(hours)
         allt, made, refused = [], 0, 0
+        # По каждой монете отдельно: на странице монеты сравнивать общее
+        # число входов с её таблицей нельзя — покрытие вышло бы то
+        # больше единицы, то меньше, и ни о чём бы не говорило.
+        bysym = {}
         try:
             for i, s in enumerate(self.symbols, 1):
                 try:
@@ -497,8 +503,9 @@ class Collector:
                 allt += d
                 made += len(cr)
                 refused += rf
+                bysym[s] = {"made": len(cr), "refused": rf, "closed": len(d)}
                 self.rec["done"] = i
-            self.rec.update({"trades": allt,
+            self.rec.update({"trades": allt, "by_sym": bysym,
                              "stats": paper.summary(allt),
                              "by_rule": paper.by_rule(allt),
                              "equity": paper.equity(allt),
