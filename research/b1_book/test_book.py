@@ -514,6 +514,41 @@ def test_two_rules_run_side_by_side():
     check("tick принимает книги", isinstance(op, list) and isinstance(cl, list))
 
 
+def test_stop_clears_the_biggest_candle_not_the_median():
+    """Стоп не вправе стоять внутри крупнейшей свечи окна.
+
+    Найдено владельцем на FILUSDT по живому графику и подтверждено
+    пересчётом: шорт 01:10 получил стоп 8.3 б.п. против 7.6 у прежнего
+    правила — то есть «за структуру» не сдвинуло почти ничего. Причина в
+    том, что `noise_px` берёт МЕДИАНУ хода свечи, а вход случается на
+    разгоне, где свечи в разы крупнее: стоп сидел внутри той самой
+    свечи, что его сняла.
+
+    Вход у только что сделанного экстремума — не исключение, а обычный
+    случай: детектор для того и ждёт уровня. Значит «за экстремумом»
+    само по себе близости не запрещает, и нужен пол.
+    """
+    import numpy as np
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "t4_structure"))
+    import levels as LV
+
+    n = 30
+    H = np.full(n, 0.7202)
+    L = np.full(n, 0.7198)                          # медиана хода 4 б.п.
+    H[25], L[25] = 0.7210, 0.7192                   # свеча разгона, 25 б.п.
+    med = LV.noise_px(H, L, None)
+    big = LV.burst_px(H, L)
+    check(f"медиана хода {med/0.72*1e4:.1f} б.п.",
+          abs(med - 0.0004) < 1e-9, str(med))
+    check(f"крупнейшая свеча {big/0.72*1e4:.1f} б.п.",
+          abs(big - 0.0018) < 1e-9, str(big))
+    check("крупнейшая свеча заметно шире медианы", big > 4 * med)
+
+    # Пустое окно меру не роняет: она обязана вернуть nan, а не выдумать.
+    check("на пустом окне не выдумывает",
+          not np.isfinite(LV.burst_px(np.empty(0), np.empty(0))))
+
+
 def test_stop_goes_behind_structure_not_inside_noise():
     """Стоп обязан стоять за экстремумом и накоплением, а не в шуме.
 
@@ -988,6 +1023,7 @@ def main():
     test_compare_pairs_old_and_recomputed()
     print("геометрия стопа")
     test_stop_goes_behind_structure_not_inside_noise()
+    test_stop_clears_the_biggest_candle_not_the_median()
     test_target_skips_levels_that_do_not_pay_for_risk()
     print("подписка")
     test_rejected_subscription_is_not_silence()

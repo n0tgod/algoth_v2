@@ -81,7 +81,8 @@ STRUCTURAL_STOP = True
 #   1 — стоп долей шума (до 2026-07-31)
 #   2 — стоп за экстремумом и накоплением
 #   3 — цель на ближайшем уровне, ОПРАВДЫВАЮЩЕМ риск
-RULES_VERSION = 3
+#   4 — пол стопа по крупнейшей свече окна, а не по медианной
+RULES_VERSION = 4
 
 
 def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
@@ -321,6 +322,16 @@ class Live:
             else:
                 why = "шум"
         entry = price
+        # Пол по КРУПНЕЙШЕЙ свече окна, а не по медианной. Структура
+        # сама по себе близости не запрещает: если вход стоит у только
+        # что сделанного экстремума, «за экстремум» отстоит на единицы
+        # пунктов. На FILUSDT это дало стоп 8.3 б.п. против 7.6 у
+        # прежнего правила — то есть правило не сработало вовсе, и
+        # сделку сняла обычная для того получаса свеча.
+        burst = LV.burst_px(self.frames[1], self.frames[2])
+        if np.isfinite(burst) and burst > 0 and abs(entry - stop) < burst:
+            stop = entry - burst if long else entry + burst
+            why = "крупнейшая свеча"
         if (long and stop >= entry) or (not long and stop <= entry):
             return None
         stop_bp = abs(entry - stop) / entry * 1e4
