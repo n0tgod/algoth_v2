@@ -59,6 +59,10 @@ TOUCH_NOISE = 0.5
 STOP_NOISE = 1.0
 MIN_RR = 1.5
 MAX_HOLD_SEC = 4 * 3600
+# Промежуток в ленте больше этого считается ДЫРОЙ, а не тишиной
+# рынка: у наших символов сделки идут чаще. Через дыру исход
+# досчитывается консервативно — см. `finish_from_tape`.
+GAP_SEC = 5.0
 COST_BP = 11.0
 KEEP_SEC = 4 * 3600               # сколько секунд истории держим
 DEDUP_SEC = 60                    # не чаще одного события в минуту на символ
@@ -85,6 +89,93 @@ STRUCTURAL_STOP = True
 #   5 — стоп считается по свечам ДО СЕКУНДЫ ВХОДА, а не до последнего
 #       пересчёта уровней: свечи прокола в данных могло не быть вовсе
 RULES_VERSION = 5
+
+
+def outcome_at(tr, p, now):
+    """Что стало со сделкой при цене `p` в момент `now`.
+
+    Возвращает `(состояние, цена выхода)` либо `None`, если ещё жива.
+
+    Вынесено отдельно намеренно: тем же правилом закрывает сделки живой
+    детектор и досчитывает оборванные `finish_from_tape`. Две копии
+    одного правила однажды разошлись бы, и тогда досчитанная сделка
+    отличалась бы от живой, а обе выглядели бы правдоподобно.
+
+    Ничья решается ПРОТИВ нас — стоп проверяется первым. То же правило
+    в T3/T4, и менять его здесь нельзя: досчёт стал бы мягче живого
+    счёта, то есть льстил бы результату.
+    """
+    if (p <= tr["stop"]) if tr["long"] else (p >= tr["stop"]):
+        return "стоп", tr["stop"]
+    if (p >= tr["target"]) if tr["long"] else (p <= tr["target"]):
+        return "цель", tr["target"]
+    if int(now - tr["t"]) >= MAX_HOLD_SEC:
+        return "время", p
+    return None
+
+
+def finish_from_tape(tr, prints, gap_sec=GAP_SEC):
+    """Досчитать оборванную сделку по записанной ленте.
+
+    Владелец: «оборванных сделок быть не должно, история цены есть,
+    их можно досчитать». Верно, и вот с какой оговоркой.
+
+    **Лента имеет дыру ровно там, где она нужнее всего.** Сделка
+    оборвалась потому, что процесс остановили, а записывает ленту тот
+    же процесс: секунды простоя в записи отсутствуют. Пройти по ленте
+    насквозь, будто в дыре ничего не происходило, — это ровно то
+    молчание, которое стенд ловит у себя третий день подряд.
+
+    Поэтому дыра не игнорируется, а учитывается двумя способами:
+
+    * если сделка разрешилась ДО первой дыры, исход настоящий;
+    * если разрешение пришлось на цену ПОСЛЕ дыры, выход берётся по
+      **худшей** из двух — уровня и первой цены после дыры. Цена могла
+      пройти уровень разрывом, и заполнение по уровню было бы подарком.
+      Тот же довод, по которому S1 не верил стопу на разрывах.
+
+    Размер слепого места пишется в сделку числом (`blind_sec`): его
+    надо видеть, а не выводить из молчания.
+
+    Возвращает закрытую сделку либо `None`, если лента до разрешения не
+    дотянулась — тогда честнее пометка, чем выдуманный исход.
+    """
+    if not prints:
+        return None
+    t0 = float(tr.get("t") or 0)
+    if not (tr.get("stop") and tr.get("target")) or not t0:
+        return None
+    prev, blind = t0, 0.0
+    for r in prints:
+        try:
+            ts = float(r["ts"]) / 1000.0
+            p = float(r["p"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if ts <= t0:
+            continue
+        if ts - prev > gap_sec:
+            blind = max(blind, ts - prev)
+        prev = ts
+        got = outcome_at(tr, p, ts)
+        if got is None:
+            continue
+        state, exit_px = got
+        if blind > 0 and state in ("стоп", "цель"):
+            # Через дыру уровень мог быть пройден разрывом: берём
+            # худшее из уровня и первой доступной после неё цены.
+            exit_px = min(exit_px, p) if tr["long"] else max(exit_px, p)
+        sign = 1.0 if tr["long"] else -1.0
+        out = dict(tr)
+        out["state"], out["exit"] = state, exit_px
+        out["closed_at"] = ts
+        out["held"] = int(ts - t0)
+        out["pnl_bp"] = round(
+            sign * (exit_px / tr["entry"] - 1.0) * 1e4 - COST_BP, 1)
+        out["r"] = round(out["pnl_bp"] / max(tr.get("stop_bp") or 1e-9, 1e-9), 2)
+        out["blind_sec"] = round(blind, 1)
+        return out
+    return None
 
 
 def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
@@ -441,14 +532,9 @@ class Live:
         for tr in self.open:
             tr["held"] = int(now - tr["t"])
             sign = 1.0 if tr["long"] else -1.0
-            hit_stop = p <= tr["stop"] if tr["long"] else p >= tr["stop"]
-            hit_tgt = p >= tr["target"] if tr["long"] else p <= tr["target"]
-            if hit_stop:
-                tr["state"], exit_px = "стоп", tr["stop"]
-            elif hit_tgt:
-                tr["state"], exit_px = "цель", tr["target"]
-            elif tr["held"] >= MAX_HOLD_SEC:
-                tr["state"], exit_px = "время", p
+            got = outcome_at(tr, p, now)
+            if got is not None:
+                tr["state"], exit_px = got
             else:
                 tr["pnl_bp"] = round(
                     sign * (p / tr["entry"] - 1.0) * 1e4 - COST_BP, 1)
@@ -465,13 +551,17 @@ class Live:
         self.open = still
         return closed
 
-    def restore(self, rows):
+    def restore(self, rows, prints=None):
         """Поднять историю сделок с диска.
 
         Открытие и закрытие лежат отдельными записями. Открытие без
-        закрытия означает, что процесс остановили с живой сделкой:
-        такая помечается прямо, а не выбрасывается — молча исчезнувшая
-        сделка и есть то, на что жаловался владелец.
+        закрытия означает, что процесс остановили с живой сделкой.
+
+        Такая сделка **досчитывается по записанной ленте** — владелец
+        прав, что данные для этого есть: цена лежит на диске, и пройти
+        по ней вперёд от точки входа тем же правилом закрытия можно.
+        Досчитать удаётся не всегда, и когда не удаётся, сделка
+        по-прежнему помечается прямо, а не выбрасывается.
         """
         opened, closed = {}, {}
         for r in rows:
@@ -482,9 +572,14 @@ class Live:
             done = closed.get(key)
             if done is None:
                 r = dict(r)
-                r["state"] = "оборвана перезапуском"
-                r["pnl_bp"] = r["r"] = None
-                out.append(r)
+                r.pop("ev", None)
+                got = finish_from_tape(r, prints) if prints else None
+                if got is None:
+                    r["state"] = "оборвана перезапуском"
+                    r["pnl_bp"] = r["r"] = None
+                    out.append(r)
+                else:
+                    out.append(got)
             else:
                 out.append(done)
         out += [r for k, r in closed.items() if k not in opened]

@@ -464,6 +464,77 @@ def calibrate(tr, secs=None):
     return b, a
 
 
+def test_interrupted_trade_is_finished_from_tape():
+    """Оборванная сделка досчитывается по ленте — и честно про дыру.
+
+    Владелец: «оборванных сделок быть не должно, история цены есть».
+    Верно, и вот с какой оговоркой: ленту пишет тот же процесс, который
+    остановили, поэтому дыра в ней приходится ровно на то место, где
+    исход и решается. Пройти сквозь дыру, будто в ней ничего не было, —
+    то самое молчание, которое стенд ловит у себя третий день.
+
+    Проверяется трижды: чистый досчёт без дыры; досчёт через дыру, где
+    выход обязан браться ХУЖЕ уровня; и лента, до исхода не дотянувшаяся,
+    — там честнее пометка, чем выдуманный исход.
+    """
+    import signals as SG
+
+    def tr(**kw):
+        base = {"id": "T-1", "t": 100.0, "sym": "TEST", "long": True,
+                "entry": 100.0, "stop": 99.0, "target": 102.0,
+                "stop_bp": 100.0, "rule": "лента", "ver": 5,
+                "state": "открыта"}
+        base.update(kw)
+        return base
+
+    def pr(ts, p):
+        return {"ts": ts * 1000.0, "p": p}
+
+    # 1. Без дыры: цель взята, выход ровно по уровню.
+    got = SG.finish_from_tape(tr(), [pr(101, 100.5), pr(102, 102.5)])
+    check(f"цель досчитана ({got and got['state']})",
+          got and got["state"] == "цель", str(got))
+    check(f"выход по уровню ({got['exit']})", got["exit"] == 102.0,
+          str(got["exit"]))
+    check(f"слепого места нет ({got['blind_sec']})", got["blind_sec"] == 0.0,
+          str(got["blind_sec"]))
+
+    # 2. Через дыру: цена вернулась НИЖЕ стопа, значит уровень прошли
+    # разрывом. Заполнение по стопу было бы подарком.
+    got = SG.finish_from_tape(tr(), [pr(101, 100.2), pr(400, 98.0)])
+    check(f"стоп досчитан ({got and got['state']})",
+          got and got["state"] == "стоп", str(got))
+    check(f"выход ХУЖЕ уровня ({got['exit']} против стопа 99.0)",
+          got["exit"] == 98.0, str(got["exit"]))
+    check(f"слепое место названо числом ({got['blind_sec']} с)",
+          got["blind_sec"] > 200, str(got["blind_sec"]))
+    check(f"убыток посчитан по худшей цене ({got['pnl_bp']} б.п.)",
+          got["pnl_bp"] < -200, str(got["pnl_bp"]))
+
+    # 3. Лента до исхода не дотянулась — исход не выдумывается.
+    check("недотянувшаяся лента исхода не даёт",
+          SG.finish_from_tape(tr(), [pr(101, 100.1), pr(102, 100.2)]) is None)
+    check("пустая лента исхода не даёт", SG.finish_from_tape(tr(), []) is None)
+
+    # 4. Ничья решается против нас — тем же правилом, что живьём.
+    check("ничья внутри наблюдения — стоп",
+          SG.outcome_at(tr(), 99.0, 200.0)[0] == "стоп",
+          str(SG.outcome_at(tr(), 99.0, 200.0)))
+
+    # 5. И весь путь целиком: `restore` подставляет досчитанное.
+    live = SG.Live("TEST")
+    rows = [dict(tr(), ev="open")]
+    live.restore(rows, [pr(101, 100.2), pr(102, 102.5)])
+    done = list(live.done)
+    check(f"после подъёма сделка закрыта ({done[0]['state']})",
+          done and done[0]["state"] == "цель", str(done))
+    live2 = SG.Live("TEST")
+    live2.restore([dict(tr(), ev="open")], [])
+    check("без ленты пометка остаётся",
+          list(live2.done)[0]["state"] == "оборвана перезапуском",
+          str(list(live2.done)))
+
+
 def test_recount_runs_itself_and_merges_live():
     """Пересчёт запускается сам, а живые сделки дописываются как есть.
 
@@ -1357,6 +1428,7 @@ def main():
     print("поглощение в стакане")
     test_open_trade_is_visible_but_not_counted()
     test_recount_runs_itself_and_merges_live()
+    test_interrupted_trade_is_finished_from_tape()
     test_book_absorption_needs_all_five()
     test_gate_fires_equally_on_smooth_and_lumpy_books()
     test_level_out_of_reach_is_never_a_candidate()

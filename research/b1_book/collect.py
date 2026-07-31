@@ -822,6 +822,18 @@ class Collector:
         self.w.close()
 
 
+def _unfinished(rows):
+    """Записи об открытии, у которых нет парного закрытия."""
+    opened, closed = {}, set()
+    for r in rows:
+        key = r.get("id") or f"{r.get('sym')}-{r.get('t')}"
+        if r.get("ev") == "close":
+            closed.add(key)
+        else:
+            opened[key] = r
+    return [r for k, r in opened.items() if k not in closed]
+
+
 def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     """Поднять историю из собственных файлов сборщика.
 
@@ -873,13 +885,43 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     n_paper = 0
     ph = [datetime.fromtimestamp(time.time() - i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(trade_hours, -1, -1)]
+    n_fixed = n_left = 0
     for sym in symbols:
         rows = []
         for h in ph:
             rows += rows_of("signals", sym, h, 0.0, lambda r, c: r)
         live = collector.sig.by.get(sym)
-        if live is not None and rows:
-            n_paper += live.restore(rows)
+        if live is None or not rows:
+            continue
+        # Оборванные сделки досчитываются по записанной ленте, и для
+        # этого её надо ДОЧИТАТЬ: в память поднимаются последние четыре
+        # часа, а оборваться сделка могла двое суток назад. Читаем
+        # прицельно — только часы от входа до предела удержания и только
+        # у символов, где есть что досчитывать. Иначе пришлось бы поднять
+        # трое суток ленты по всем двадцати пяти именам ради нескольких
+        # сделок.
+        need = _unfinished(rows)
+        tape = []
+        if need:
+            want = set()
+            for r in need:
+                t0 = float(r.get("t") or 0)
+                for k in range(0, signals.MAX_HOLD_SEC + 3600, 3600):
+                    want.add(datetime.fromtimestamp(t0 + k, timezone.utc)
+                             .strftime("%Y-%m-%d-%H"))
+            for h in sorted(want):
+                tape += rows_of("trades", sym, h, 0.0, lambda r, c: r)
+            tape.sort(key=lambda x: x.get("ts", 0))
+        before = len(need)
+        n_paper += live.restore(rows, tape)
+        after = sum(1 for t in live.done
+                    if t.get("state") == "оборвана перезапуском")
+        n_fixed += before - after
+        n_left += after
+    if n_fixed or n_left:
+        log(f"оборванных сделок досчитано по ленте: {n_fixed}"
+            + (f", осталось без исхода {n_left} "
+               f"(лента не дотянулась)" if n_left else ""))
     if n_tr or n_bk:
         log(f"поднято из своих файлов: сделок {n_tr:,}, снимков {n_bk:,}, "
             f"бумажных сделок {n_paper}")
