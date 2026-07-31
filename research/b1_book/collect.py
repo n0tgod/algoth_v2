@@ -102,8 +102,16 @@ DEPTH_LADDER = (500, 200, 50)
 PING_SEC = 20
 SAMPLE_SEC = 1
 STATUS_SEC = 5
+# Состав сбора живёт ЗДЕСЬ, а не в строке запуска. Пока он был только в
+# консоли, перезапуск командой из README тихо срезал сбор до восьми
+# монет — процесс при этом исправен, страница исправна, и заметить можно
+# лишь глазами через сутки. Менять список — правкой этой строки и
+# коммитом, тогда он переживает перезапуск, сервер и сессию.
 SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
            "ARBUSDT", "LINKUSDT", "AVAXUSDT")
+# Сырой поток изменений книги тяжёл, поэтому пишется по одной монете:
+# по нему меряется восполнение уровня внутри секунды.
+RAW = ("ARBUSDT",)
 
 
 def minute_bars(rows):
@@ -808,10 +816,45 @@ def selftest(root):
         raise SystemExit("сборщик ничего не записал — путь записи сломан")
 
 
+def dropped_symbols(root, syms, days=3):
+    """Символы, по которым на диске есть свежие ряды, а в запуске их нет.
+
+    Список монет задаётся строкой запуска, то есть живёт в чужой
+    консоли, а не в репозитории. Достаточно один раз запустить сборщик
+    командой из README — и половина монет молча пропадает: процесс
+    поднимается исправным, страница показывает исправные восемь, и
+    заметить это можно только глазами через сутки. Ровно так и вышло.
+
+    Свежесть обязательна: инструмент, который сняли месяц назад,
+    ругался бы вечно, и предупреждение перестали бы читать.
+    """
+    d = os.path.join(root, "trades")
+    if not os.path.isdir(d):
+        return []
+    edge = time.time() - days * 86400
+    gone = []
+    for s in sorted(os.listdir(d)):
+        if s in syms or not os.path.isdir(os.path.join(d, s)):
+            continue
+        try:
+            fresh = max((os.path.getmtime(os.path.join(d, s, f))
+                         for f in os.listdir(os.path.join(d, s))), default=0)
+        except OSError:
+            continue
+        if fresh >= edge:
+            gone.append(s)
+    if not gone:
+        return []
+    return [f"ВНИМАНИЕ: на диске есть свежие ряды ещё по {len(gone)} "
+            f"символам, а в этом запуске их нет: {', '.join(gone)}",
+            "сбор по ним прекращён — если это не нарочно, остановите и "
+            "перезапустите без --symbols (список по умолчанию в коде)"]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--symbols", default=",".join(SYMBOLS))
-    ap.add_argument("--raw", default="",
+    ap.add_argument("--raw", default=",".join(RAW),
                     help="символы, для которых писать сырой поток целиком")
     ap.add_argument("--deep", default=",".join(DEEP),
                     help="символы с глубокой темой стакана (500 уровней); "
@@ -844,6 +887,8 @@ def main():
         print(line, flush=True)
 
     log(f"символов {len(syms)}: {', '.join(syms)}")
+    for m in dropped_symbols(a.out, syms):
+        log(m)
     if raw:
         log(f"сырой поток пишется для: {', '.join(raw)}")
     log(f"каталог {a.out}")

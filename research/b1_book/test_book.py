@@ -274,6 +274,50 @@ def test_warm_start_restores_history():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_shrunken_run_announces_dropped_symbols():
+    """Урезанный состав сбора обязан назвать пропавших поимённо.
+
+    Список монет задавался строкой запуска, то есть жил в чужой консоли,
+    а не в репозитории. Достаточно было один раз запустить сборщик
+    командой из README — и половина монет пропала: процесс исправен,
+    страница показывает исправные восемь, и заметил это владелец глазами
+    через сутки. Ровно тот отказ, что весь проект ловит по одному
+    признаку: отсутствие данных неотличимо от их отсутствия по делу.
+
+    Свежесть обязательна отдельной проверкой: снятый месяц назад
+    инструмент ругался бы вечно, и предупреждение перестали бы читать.
+    """
+    import shutil
+    import tempfile
+    import time as _time
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    try:
+        d = os.path.join(root, "trades")
+        for s in ("BTCUSDT", "FILUSDT", "BEATUSDT", "OLDUSDT"):
+            os.makedirs(os.path.join(d, s))
+            p = os.path.join(d, s, "2026-07-31-08.jsonl")
+            open(p, "w").write("{}\n")
+            if s == "OLDUSDT":
+                old = _time.time() - 30 * 86400
+                os.utime(p, (old, old))
+
+        msgs = C.dropped_symbols(root, ["BTCUSDT", "ETHUSDT"])
+        check("урезание состава замечено", bool(msgs))
+        head = msgs[0] if msgs else ""
+        check("пропавшие названы поимённо",
+              "FILUSDT" in head and "BEATUSDT" in head, head[:60])
+        check("снятый месяц назад не поминается", "OLDUSDT" not in head)
+        check("на полном составе молчит",
+              not C.dropped_symbols(root, ["BTCUSDT", "FILUSDT",
+                                           "BEATUSDT", "OLDUSDT"]))
+        check("пустой каталог не роняет запуск",
+              C.dropped_symbols(os.path.join(root, "нет"), ["BTCUSDT"]) == [])
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_warm_start_survives_truncated_file():
     """Обрубленный хвост файла не вправе уносить запуск.
 
@@ -923,6 +967,7 @@ def main():
     print("перезапуск")
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()
+    test_shrunken_run_announces_dropped_symbols()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

@@ -85,11 +85,19 @@ cd ~/algoth_v2
 
 ```bash
 cd ~/algoth_v2
-nohup .venv/bin/python research/b1_book/collect.py \
-  --symbols BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,DOGEUSDT,ARBUSDT,LINKUSDT,AVAXUSDT \
-  --raw ARBUSDT --http 8765 \
+nohup .venv/bin/python research/b1_book/collect.py --http 8765 \
   > research/b1_book/out/collect.log 2>&1 &
 ```
+
+Список монет **не передаётся строкой запуска** — он лежит в `SYMBOLS` в
+`collect.py`. Пока он жил в консоли, перезапуск командой из этого файла
+однажды тихо срезал сбор до восьми монет: процесс исправен, страница
+исправна, заметно только глазами через сутки. Менять состав — правкой
+строки и коммитом; тогда он переживает перезапуск и сессию.
+
+Если запуск всё же урезал состав, сборщик скажет об этом первой же
+строкой журнала — он сверяет запрошенные символы со свежими рядами на
+диске и называет пропавших поимённо.
 
 Ключ `--http` поднимает **страницу наблюдения**: стакан лесенкой, глубина
 по полосам, лента, середина за пятнадцать минут и журнал сборщика — всё
@@ -113,7 +121,7 @@ du -sh ~/algoth_v2/research/b1_book/out/                 # сколько зан
 ```bash
 pkill -f 'b1_book/collect.py'      # сигнал TERM: файлы закрываются
 cd ~/algoth_v2 && git pull --rebase && nohup .venv/bin/python \
-  research/b1_book/collect.py --symbols … --http 8765 \
+  research/b1_book/collect.py --http 8765 \
   >> research/b1_book/out/collect.log 2>&1 &
 ```
 
