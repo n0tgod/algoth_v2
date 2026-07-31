@@ -69,6 +69,7 @@ OUT = os.path.join(HERE, "out")
 sys.path.insert(0, HERE)
 from book import BANDS, STORE_LADDER, Book, parse_trades                 # noqa: E402
 import paper                                              # noqa: E402
+import signals                                            # noqa: E402
 from signals import RULES_VERSION, Signals                # noqa: E402
 from store import Writer, read_hour, read_jsonl            # noqa: E402
 import web                                                # noqa: E402
@@ -180,6 +181,7 @@ class Collector:
         self.disk = {}
         self.samples = deque(maxlen=90)   # (момент, байт)
         self.ccache = {}                  # свечи закрытых часов
+        self.rec = {}                     # встречный пересчёт
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -433,6 +435,68 @@ class Collector:
             out += got
         out.sort(key=lambda c: c[0])
         return {"sym": sym, "candles": out, "hours": len(hh)}
+
+    def recount(self, hours=24, start=True):
+        """Пересчитать ВСЕ прошлые входы под текущие правила.
+
+        Владелец: «оставить ту же точку входа, но поменять стоп и цель —
+        я хочу видеть, как меняется вся статистика, а не только новая».
+        Сводка по версиям отвечает на другой вопрос: там каждая версия
+        считается на своих сделках, и выборка текущей всегда мала.
+        Здесь берутся ВСЕ записанные входы и проводятся по нынешней
+        геометрии на состоянии рынка того момента.
+
+        Это **встречный** счёт, а не то, что было: цена шла та же, но
+        сделка была бы другой. Смешивать его с настоящими исходами
+        нельзя, поэтому он отдаётся отдельно и подписан.
+
+        Счёт идёт в фоне: сутки по двадцати пяти символам — это минуты
+        работы, и держать на них ответ сервера нельзя.
+        """
+        st = self.rec
+        fresh = st.get("hours") == hours and time.time() - st.get("at", 0) < 900
+        if start and not st.get("busy") and not fresh:
+            st.update({"busy": True, "hours": hours, "done": 0,
+                       "total": len(self.symbols), "at": 0})
+            threading.Thread(target=self._recount_job, args=(hours,),
+                             daemon=True).start()
+        return {"busy": st.get("busy", False), "done": st.get("done", 0),
+                "total": st.get("total", 0), "hours": st.get("hours"),
+                "at": st.get("at", 0), "ver": signals_version(),
+                "made": st.get("made", 0), "refused": st.get("refused", 0),
+                "stats": st.get("stats"), "by_rule": st.get("by_rule"),
+                "equity": st.get("equity") or [],
+                "took_sec": st.get("took_sec")}
+
+    def _recount_job(self, hours):
+        import replay as R
+        t0 = time.time()
+        keep = signals.STRUCTURAL_STOP
+        hh = R.hours_back(hours)
+        allt, made, refused = [], 0, 0
+        try:
+            for i, s in enumerate(self.symbols, 1):
+                try:
+                    d, cr, rf = R.replay_seeded(self.w.root, s, hh)
+                except Exception as e:                    # noqa: BLE001
+                    self.log(f"пересчёт {s}: {type(e).__name__}: {e}")
+                    d, cr, rf = [], [], 0
+                allt += d
+                made += len(cr)
+                refused += rf
+                self.rec["done"] = i
+            self.rec.update({"stats": paper.summary(allt),
+                             "by_rule": paper.by_rule(allt),
+                             "equity": paper.equity(allt),
+                             "made": made, "refused": refused,
+                             "took_sec": round(time.time() - t0, 1),
+                             "at": time.time()})
+            self.log(f"пересчёт под правила v{signals_version()}: "
+                     f"входов {made}, отвергнуто {refused}, "
+                     f"закрытых {len(allt)}, за {time.time() - t0:.0f} с")
+        finally:
+            signals.STRUCTURAL_STOP = keep
+            self.rec["busy"] = False
 
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.

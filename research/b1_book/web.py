@@ -127,9 +127,12 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
 </div>
 <div class="panel" style="margin-top:12px">
   <div class="cap"><span>итог бумажных сделок по всем монетам</span>
-    <span id="cap-all" class="mono"></span></div>
+    <span><button id="rec" style="padding:1px 7px">пересчитать все входы
+      под текущие правила</button>
+    <span id="cap-all" class="mono"></span></span></div>
   <div id="sum2" class="strip" style="margin:0;border:0"></div>
   <div id="rules2"></div>
+  <div id="recbox"></div>
   <canvas id="eq2" height="110"></canvas>
   <div class="tape" style="max-height:260px"><table id="alltr"></table></div>
 </div>
@@ -436,6 +439,54 @@ function drawEqAll() {
   g.fillText(lo.toFixed(0) + " б.п.", W-60, y(lo));
 }
 
+// Встречный пересчёт: те же входы, нынешняя геометрия. Отвечает на
+// вопрос «как изменилась бы вся статистика», а не «что было». Считается
+// в фоне на сервере — сутки по двум десяткам символов это минуты, — и
+// показывается ОТДЕЛЬНО от настоящих исходов: смешивать встречный счёт
+// с фактическим нельзя.
+const REC = {on:false, busy:false, data:null, timer:null};
+async function pullRec(go) {
+  if (REC.busy) return;
+  REC.busy = true;
+  try {
+    const r = await fetch(`/recount?k=${encodeURIComponent(KEY)}`
+      + `&hours=24&go=${go ? 1 : 0}`);
+    if (r.ok) REC.data = await r.json();
+  } catch (e) { /* тихо */ }
+  finally { REC.busy = false; }
+  renderRec();
+  if (REC.data && REC.data.busy && !REC.timer)
+    REC.timer = setInterval(() => pullRec(false), 3000);
+  if (REC.data && !REC.data.busy && REC.timer) {
+    clearInterval(REC.timer); REC.timer = null;
+  }
+}
+
+function renderRec() {
+  const box = document.getElementById("recbox"), d = REC.data;
+  if (!REC.on || !d) { box.innerHTML = ""; return; }
+  const pc = v => (v*100).toFixed(0) + " %";
+  if (d.busy) {
+    box.innerHTML = `<div class="note" style="padding:7px 10px">пересчитываю
+      те же входы под правила v${d.ver}: ${d.done} из ${d.total} монет…</div>`;
+    return;
+  }
+  const s = d.stats;
+  box.innerHTML = `<div class="note" style="padding:7px 10px">`
+    + `<b>встречный счёт</b> (те же входы, правила v${d.ver}, `
+    + `${d.hours} ч, ${d.took_sec} с): `
+    + (s ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
+         + `${pc(s.break_even)}, ожидание ${s.expectancy_bp>0?"+":""}`
+         + `${s.expectancy_bp.toFixed(1)} б.п. (${s.expectancy_r>0?"+":""}`
+         + `${s.expectancy_r.toFixed(2)} R), стоп `
+         + `${s.stop_bp_median.toFixed(0)} б.п.`
+       : "закрытых сделок не вышло")
+    + ` · входов взято ${d.made}, отвергнуто ${d.refused}`
+    + `<br><span style="opacity:.8">это НЕ то, что было: цена шла та же, `
+    + `но сделка была бы другой. С настоящими исходами не смешивается.`
+    + `</span></div>`;
+}
+
 // Диск: сколько занято, с какой скоростью растёт и надолго ли хватит.
 // «Хватит на» — то число, по которому решается, сколько символов
 // добавлять: ширина универсума покупает наблюдения быстрее, чем время,
@@ -569,6 +620,9 @@ tick(); timer = setInterval(tick, 1000);
 // выходы (обрыв связи, смена символа), и привязка к нему означала бы,
 // что панель молчит ровно тогда, когда что-то пошло не так.
 pullAll(); setInterval(pullAll, 15000);
+document.getElementById("rec").onclick = () => {
+  REC.on = true; pullRec(true);
+};
 </script>
 """
 
@@ -1171,6 +1225,16 @@ def serve(collector, port, token, log):
                                        logn=num("logn", None)),
                     ensure_ascii=False).encode("utf-8")
                 return self._ok(body, "application/json; charset=utf-8")
+            if u.path == "/recount":
+                try:
+                    n = int(float(q.get("hours", ["24"])[0]))
+                except ValueError:
+                    n = 24
+                go = q.get("go", ["1"])[0] not in ("0", "false", "")
+                return self._ok(json.dumps(
+                    collector.recount(max(1, min(n, 72)), start=go),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
             if u.path == "/candles":
                 try:
                     n = int(float(q.get("hours", ["12"])[0]))
