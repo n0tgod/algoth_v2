@@ -1509,7 +1509,24 @@ def serve(collector, port, token, log):
         def log_message(self, *a):                        # тишина в консоли
             return
 
-    srv = ThreadingHTTPServer(("0.0.0.0", port), H)
+    try:
+        srv = ThreadingHTTPServer(("0.0.0.0", port), H)
+    except OSError as e:
+        # Занятый порт означает ровно одно: прежний сборщик ещё жив.
+        # Голая трасса `[Errno 98] Address already in use` этого не
+        # говорит, и владелец, увидев её, считал перезапуск удавшимся —
+        # а на сервере продолжал работать СТАРЫЙ код, отдавая исправную
+        # с виду страницу. Тишина вместо отказа, третий раз подряд.
+        if getattr(e, "errno", None) in (48, 98):          # EADDRINUSE
+            raise SystemExit(
+                f"\nПОРТ {port} ЗАНЯТ — прежний сборщик ещё не закрылся.\n"
+                f"Новый НЕ запущен, на сервере работает старый код.\n\n"
+                f"Дождитесь его выхода и запустите снова:\n"
+                f"  pkill -f 'b1_book/collect.py'\n"
+                f"  while pgrep -f 'b1_book/collect.py' >/dev/null; "
+                f"do sleep 1; done\n"
+                f"или разом: tools/restart_book.sh\n") from None
+        raise
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     log(f"страница наблюдения: http://<адрес сервера>:{port}/"
         + (f"?k={token}" if token else ""))
