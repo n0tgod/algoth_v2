@@ -537,6 +537,60 @@ def test_replay_drives_detector_from_files():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_seeded_replay_keeps_entry_changes_stop():
+    """Те же входы, новая геометрия — вход обязан остаться прежним.
+
+    Вопрос владельца: почему нельзя пересчитать уже случившиеся сделки
+    по новым правилам с той же точкой входа. Можно, и это отвечает не на
+    тот вопрос, что полный прогон: там входы ищутся заново, и вклад
+    геометрии не отделить. Здесь вход берётся из записи как есть.
+    """
+    import random
+    import shutil
+    import tempfile
+    import replay as R
+    from store import Writer
+
+    root = tempfile.mkdtemp()
+    try:
+        w = Writer(root)
+        t0 = 1785400000
+        random.seed(7)
+        for i in range(3600 * 2):
+            ts = (t0 + i) * 1000
+            base = 100.0 if (i // 600) % 2 == 0 else 100.5   # две полки
+            p = base + random.gauss(0, 0.02)
+            if i == 5000:
+                p = 99.80                                    # прокол вниз
+            w.write("trades", "TEST", {"ts": ts, "s": "TEST",
+                                       "side": 1 if i % 2 else -1,
+                                       "p": round(p, 4), "v": 1.0},
+                    ts=ts / 1000)
+        ent = t0 + 6000
+        w.write("signals", "TEST",
+                {"ev": "open", "id": "TEST-1", "t": float(ent), "sym": "TEST",
+                 "long": True, "entry": 100.0, "level": 100.0,
+                 "kind": "полка", "rule": "лента", "stop_bp": 5.0, "ver": 1},
+                ts=ent)
+        w.close()
+        hh = sorted({f.split(".")[0]
+                     for f in os.listdir(os.path.join(root, "trades", "TEST"))})
+        done, made, refused = R.replay_seeded(root, "TEST", hh)
+        check(f"вход переоткрыт ({len(made)}) либо отвергнут ({refused})",
+              len(made) + refused == 1, f"{len(made)} {refused}")
+        if made:
+            tr = made[0]
+            check(f"вход тот же ({tr['entry']})", tr["entry"] == 100.0,
+                  str(tr["entry"]))
+            check(f"стоп пересчитан и шире прежних 5 б.п. "
+                  f"({tr['stop_bp']} б.п., задан: {tr.get('stop_by')})",
+                  tr["stop_bp"] > 5.0, str(tr["stop_bp"]))
+            check("сделка помечена текущей версией правил",
+                  tr.get("ver") == 2, str(tr.get("ver")))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_rejected_subscription_is_not_silence():
     """Отклонённая подписка обязана назваться и не гасить остальные.
 
@@ -782,6 +836,7 @@ def main():
     test_two_rules_run_side_by_side()
     print("воспроизведение записи")
     test_replay_drives_detector_from_files()
+    test_seeded_replay_keeps_entry_changes_stop()
     print("геометрия стопа")
     test_stop_goes_behind_structure_not_inside_noise()
     print("подписка")

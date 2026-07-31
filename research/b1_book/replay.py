@@ -117,6 +117,66 @@ def replay_symbol(root, sym, hours, structural, use_book):
     return done, t1 - t0, len(books)
 
 
+def replay_seeded(root, sym, hours):
+    """Те же входы, что были, но геометрия новая.
+
+    Вопрос владельца: почему нельзя пересчитать уже случившиеся сделки
+    по новым правилам с той же точкой входа. Можно, и это отвечает на
+    другой вопрос, чем полный прогон. Полный прогон ищет входы заново —
+    там меняются и они, и стоп, и разделить вклад нельзя. Здесь входы
+    берутся из записи **как есть**, а стоп и цель считаются по новой
+    геометрии на состоянии рынка того момента. Разница тогда целиком
+    приходится на геометрию.
+
+    Сделка, которая по новым правилам не открылась бы вовсе (стоп
+    расширился, и отношение к цели перестало устраивать), не
+    подменяется ничем — она считается отдельным числом. Это тоже
+    ответ: часть входов новая геометрия просто отвергает.
+    """
+    S.STRUCTURAL_STOP = True
+    opens = [r for r in load(root, "signals", sym, hours)
+             if r.get("ev") == "open" and r.get("entry")]
+    if not opens:
+        return [], [], 0
+    trades = load(root, "trades", sym, hours)
+    if not trades:
+        return [], [], 0
+    trades.sort(key=lambda t: t.get("ts", 0))
+    seed = {}
+    for r in opens:
+        seed.setdefault(int(r.get("t") or 0), r)
+
+    sig = S.Signals([sym])
+    live = sig.by[sym]
+    t0 = int(trades[0]["ts"] // 1000)
+    t1 = int(trades[-1]["ts"] // 1000)
+    i, done, created, refused = 0, [], [], 0
+    for sec in range(t0, t1 + 1):
+        while i < len(trades) and trades[i]["ts"] // 1000 <= sec:
+            live.on_trade(trades[i])
+            i += 1
+        live.close_second(sec)
+        done += live.update_open(float(sec))
+        live.refresh_levels(float(sec))
+        r = seed.pop(sec, None)
+        if r is None or live.open:
+            continue
+        px, kinds, noise, _ = live.levels
+        if len(px) == 0 or not (noise == noise) or noise <= 0:
+            continue
+        tr = live.make_trade(float(sec), bool(r.get("long")),
+                             float(r.get("level") or r["entry"]),
+                             r.get("kind") or "полка", float(r["entry"]),
+                             noise, px, r.get("rule") or "лента")
+        if tr is None:
+            refused += 1
+        else:
+            created.append(tr)
+    # Созданные возвращаются целиком: по ним видно геометрию даже у тех
+    # сделок, что не успели закрыться до конца окна.
+    return done, created, refused
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=OUT)
@@ -163,6 +223,35 @@ def main():
               f"{st['break_even']*100:>6.0f}% "
               f"{st['expectancy_bp']:>+9.1f} б.п. {st['expectancy_r']:>+8.2f} "
               f"{st['stop_bp_median']:>7.1f}")
+    # Третья рука: те же входы, новая геометрия.
+    seeded, made, refused = [], [], 0
+    for s in syms:
+        try:
+            d, cr, rf = replay_seeded(root, s, hh)
+        except Exception as e:                            # noqa: BLE001
+            print(f"  {s}: те же входы пропущены ({type(e).__name__}: {e})")
+            continue
+        seeded += d
+        made += cr
+        refused += rf
+    st = paper.summary(seeded)
+    if st:
+        print(f"{'те же входы, новый стоп':24} {st['trades']:>7} "
+              f"{st['win_rate']*100:>6.0f}% {st['break_even']*100:>6.0f}% "
+              f"{st['expectancy_bp']:>+9.1f} б.п. {st['expectancy_r']:>+8.2f} "
+              f"{st['stop_bp_median']:>7.1f}")
+        st_now = sorted(t["stop_bp"] for t in made)
+        print(f"{'':24} открыто {len(made)}, отвергнуто новой геометрией "
+              f"{refused}; медианный стоп "
+              f"{st_now[len(st_now)//2] if st_now else '—'} б.п.")
+    else:
+        print(f"{'те же входы, новый стоп':24} открыто {len(made)}, "
+              f"отвергнуто {refused}, закрытых в окне нет")
+    res["те же входы, новый стоп"] = {
+        "trades": seeded, "stats": st, "by_rule": paper.by_rule(seeded),
+        "seconds": 0, "book_seconds": 0, "made": len(made),
+        "refused": refused}
+
     bs = res["новая (за структуру)"]["book_seconds"]
     print(f"\nсекунд книги с полной лесенкой: {bs}"
           + ("" if bs else "  — правило по стакану не воспроизводилось: "
