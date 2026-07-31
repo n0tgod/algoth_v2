@@ -274,6 +274,29 @@ def test_warm_start_restores_history():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_live_universe_matches_probe_universe():
+    """Живой сбор идёт по тем же именам, что архивные зонды.
+
+    Это не педантизм: довод в пользу состава ровно один — тогда живые
+    бумажные сделки и замеры T1/T2/T4 сравнимы напрямую, а не «примерно
+    про то же». Разойдутся списки — довод исчезнет молча, и сравнение
+    останется в силе только на словах.
+
+    Менять состав можно, но обоими местами сразу и осознанно.
+    """
+    import collect as C
+
+    research = os.path.dirname(HERE)
+    src = open(os.path.join(research, "t2_levels", "probe.py"),
+               encoding="utf-8").read()
+    body = src.split("START =")[0].split("A1_OUT")[1].split("\n", 1)[1]
+    ns = {}
+    exec(compile(body, "t2_probe", "exec"), ns)                 # noqa: S102
+    check("состав сбора совпал с составом зондов",
+          sorted(C.SYMBOLS) == sorted(ns["SYMBOLS"]),
+          f"сбор {len(C.SYMBOLS)}, зонды {len(ns['SYMBOLS'])}")
+
+
 def test_shrunken_run_announces_dropped_symbols():
     """Урезанный состав сбора обязан назвать пропавших поимённо.
 
@@ -968,6 +991,7 @@ def main():
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()
     test_shrunken_run_announces_dropped_symbols()
+    test_live_universe_matches_probe_universe()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")
