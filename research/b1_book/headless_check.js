@@ -127,7 +127,12 @@ const noTrade = {id: "rec-нет", t: T0 - 300, sym: "BTCUSDT", long: true,
                  why: "стоп 31.0 б.п., ни один уровень впереди не даёт 1:1.5",
                  stop_bp: null, rr: null, held: null, pnl_bp: null, r: null,
                  exit: null, closed_at: null};
-const recount = {busy: false, done: 2, total: 2, hours: 24, at: T0, ver: 3,
+// `at` намеренно СТАРЫЙ (три часа назад), а живые сделки в `hist`
+// свежее: так проверяется, что страница говорит о возрасте пересчёта.
+// Снимок трёхчасовой давности на исправном сборщике выглядит точно как
+// «новых сделок нет», и молчание тут — отказ, а не пустота.
+const recount = {busy: false, done: 2, total: 2, hours: 24,
+                 at: T0 - 3 * 3600, ver: 3,
                  made: 5, refused: 1, took_sec: 2.0, no_outcome: 1,
                  trades: [recTrade(1), recTrade(2), noTrade],
                  stats: hist.stats,
@@ -161,6 +166,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__REC = typeof REC !== 'undefined' ? REC : null;"
                 + "\nglobal.__shown = typeof shown === 'function' "
                 + "? shown : null;"
+                // Строку про возраст пересчёта проверяем вызовом самой
+                // функции, а не чтением `innerHTML`: DOM здесь заглушен,
+                // и проверка по разметке проходила ВХОЛОСТУЮ — сломанный
+                // `ageLine` её не ронял. Отрицательный контроль это и
+                // показал.
+                + "\nglobal.__age = typeof ageLine === 'function' "
+                + "? ageLine : null;"
                 // Что график ДЕЙСТВИТЕЛЬНО нарисовал: `draw` складывает
                 // сюда по записи на каждую отрисованную сделку. Без
                 // этого проверка смотрела на функцию-источник и не
@@ -268,6 +280,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // пропущен: молчание тут неотличимо от потери данных.
       else if (!drawn.some(h => h.m.state === "не открыта"))
         bad.push("отвергнутый вход не показан на графике");
+    }
+    // Возраст пересчёта обязан быть назван, и назван числом: иначе
+    // застывший снимок читается как «сделок больше не находится».
+    if (!global.__age) {
+      bad.push("страница не говорит о возрасте пересчёта (нет ageLine)");
+    } else {
+      const note = global.__age(recount, hist.trades) || "";
+      if (!/посчитан в/.test(note))
+        bad.push("возраст пересчёта не показан: " + JSON.stringify(note));
+      if (!/\b1[78]\d\s*мин|\b\d+ мин назад/.test(note))
+        bad.push("возраст не назван числом минут: " + JSON.stringify(note));
+      if (!/Живых сделок после этого момента/.test(note))
+        bad.push("новые живые сделки после пересчёта не названы: "
+                 + JSON.stringify(note));
     }
     global.__REC.on = false;
     const back = global.__table();
