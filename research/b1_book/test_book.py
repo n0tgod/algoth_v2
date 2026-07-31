@@ -484,8 +484,8 @@ def test_book_absorption_needs_all_five():
     quiet = QUIET
     tr.step(bids, asks, 0.5, quiet, 1000.0)
     d = tr.diag[True]
-    check(f"крупный опознан ({d.get('big_x')}× обычного)",
-          (d.get("big_x") or 0) >= AB.BIG, str(d))
+    check(f"крупный опознан ({d.get('gate_x')}× порога)",
+          (d.get("gate_x") or 0) >= 1.0, str(d))
     check(f"но ещё не выстоял ({d['why']})",
           not d["ok"] and "стоит" in d["why"], str(d))
 
@@ -505,6 +505,93 @@ def test_book_absorption_needs_all_five():
     got = tr.signal()
     check("сигнал на лонг у цены уровня",
           got is not None and got[0] is True and got[1] == 99.9, str(got))
+
+
+def test_gate_fires_equally_on_smooth_and_lumpy_books():
+    """Гейт «крупный» обязан срабатывать одинаково часто у всех.
+
+    Это и есть дефект, найденный живым опросом: множитель к медиане
+    инвариантен к МАСШТАБУ и не инвариантен к РАЗБРОСУ. У инструмента с
+    ровной глубокой книгой самый крупный уровень всегда примерно
+    одинаков, отношение к медиане не отходит от единицы, и порог 2.0
+    закрыт наглухо; у рваной книги изредка встаёт кит и даёт 9×. По 25
+    символам живого сбора порог брали шесть, а девятнадцать не
+    дотягивали никогда — то есть кросс-секции у правила не было.
+
+    Квантиль собственного прошлого срабатывает с объявленной частотой у
+    обоих по построению. Проверяется именно частота, а не «сработало».
+    """
+    import absorb as AB
+
+    def rate(sizes):
+        t = AB.Tracker("TEST")
+        fired = 0
+        for i, sz in enumerate(sizes):
+            b, a = book_with(99.9, sz)
+            t.step(b, a, 0.5, QUIET, float(i))
+            if i >= AB.MIN_CAL and t.by[True].price is not None:
+                fired += 1
+        return fired / max(1, len(sizes) - AB.MIN_CAL)
+
+    import random
+    n = AB.MIN_CAL + 2000
+    rnd = random.Random(20260731)      # зерно числом: тест обязан повторяться
+    # Ряд обязан быть НЕПРЕРЫВНЫМ. Первая версия теста брала пять
+    # повторяющихся значений, квантиль совпадала с максимумом, и при
+    # сравнении `>=` срабатывало 20 % вместо объявленных 2 % — тест
+    # мерил дискретность своей синтетики, а не свойство гейта.
+    smooth = [100.0 * (1.0 + 0.02 * rnd.gauss(0, 1)) for _ in range(n)]
+    # Рваная: тот же уровень, но раз в сто секунд встаёт кит.
+    lumpy = [(900.0 if i % 100 == 0 else s) for i, s in enumerate(smooth)]
+    r_s, r_l = rate(smooth), rate(lumpy)
+    want = 1.0 - AB.QBIG
+    check(f"ровная книга даёт объявленную частоту ({r_s:.1%} при "
+          f"{want:.0%})", abs(r_s - want) < 0.02, f"{r_s}")
+    check(f"рваная книга даёт её же ({r_l:.1%} против {r_s:.1%})",
+          abs(r_s - r_l) < 0.02, f"{r_s} против {r_l}")
+    # А множитель к медиане на ровной книге не берёт порога никогда —
+    # ровно то, что убило правило на девятнадцати символах.
+    worst = max(smooth) / AB.median(smooth)
+    check(f"множитель на ровной книге бессилен ({worst:.2f}× < {AB.BIG})",
+          worst < AB.BIG, f"{worst}")
+
+
+def test_quantile_threshold_belongs_to_the_sample():
+    """Порог обязан быть значением из выборки, а не выдуманным.
+
+    Интерполяция создала бы размер, которого рынок не показывал, и
+    «крупный» перестал бы значить «такое уже бывало».
+    """
+    import absorb as AB
+
+    s = [1.0, 2.0, 3.0, 4.0, 5.0]
+    check("квантиль 1.0 — максимум", AB.quantile(s, 1.0) == 5.0,
+          str(AB.quantile(s, 1.0)))
+    check("квантиль 0.8 — четвёртый", AB.quantile(s, 0.8) == 4.0,
+          str(AB.quantile(s, 0.8)))
+    check("квантиль 0.0 не падает", AB.quantile(s, 0.0) == 1.0,
+          str(AB.quantile(s, 0.0)))
+    check("пустая выборка — None", AB.quantile([], 0.98) is None, "не None")
+    check("порог принадлежит выборке",
+          AB.quantile([1.0, 9.0], 0.98) in (1.0, 9.0), "выдуман")
+
+
+def test_level_is_not_judged_against_itself():
+    """Текущий замер не входит в выборку, по которой его судят.
+
+    Иначе при узком распределении уровень сам приподнимает свой порог,
+    и мера тем строже, чем реже смотришь. Проверяется числом: кит,
+    вставший после ровной калибровки, обязан порог ВЗЯТЬ.
+    """
+    import absorb as AB
+
+    t = AB.Tracker("TEST")
+    calibrate(t)
+    b, a = book_with(99.9, 100000.0)              # кит, много больше всех
+    t.step(b, a, 0.5, QUIET, 1000.0)
+    d = t.diag[True]
+    check(f"кит взял порог ({d.get('gate_x')}×)",
+          t.by[True].price == 99.9, str(d))
 
 
 def test_book_absorption_rejects_pulled_and_broken():
@@ -1107,6 +1194,9 @@ def main():
     test_metrics_explain_refusal()
     print("поглощение в стакане")
     test_book_absorption_needs_all_five()
+    test_gate_fires_equally_on_smooth_and_lumpy_books()
+    test_quantile_threshold_belongs_to_the_sample()
+    test_level_is_not_judged_against_itself()
     test_book_absorption_rejects_pulled_and_broken()
     test_two_rules_run_side_by_side()
     print("воспроизведение записи")

@@ -522,8 +522,12 @@ class Live:
             "touch_x": TOUCH_NOISE, "vol_mult": VOL_MULT, "imb": IMB,
             "book": {"лонг": self.bk.diag.get(True) or {},
                      "шорт": self.bk.diag.get(False) or {},
-                     "big": AB.BIG, "hold": AB.HOLD, "eat": AB.EAT,
-                     "refill": AB.REFILL},
+                     "qbig": AB.QBIG, "big": AB.BIG, "hold": AB.HOLD,
+                     "eat": AB.EAT, "refill": AB.REFILL,
+                     # Докуда дошла цепочка условий за жизнь процесса.
+                     # «Правило молчит» и «правило молчит на третьем
+                     # условии» — разные сообщения, и чинится второе.
+                     "chain": self.bk.chain()},
             "candles": cd, "candles_full": cd_full,
             "done_total": len(self.done),
             "levels": [{"p": float(p), "kind": k}

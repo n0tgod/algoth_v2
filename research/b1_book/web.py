@@ -568,14 +568,27 @@ function bookRows(b) {
   const cell = (v, need, ok) => v === null || v === undefined
     ? `<td class="mono" style="color:var(--muted)">—</td>`
     : `<td class="mono ${ok ? "buy" : "sell"}">${v}${need}</td>`;
-  return ["лонг", "шорт"].map(k => {
+  const rows = ["лонг", "шорт"].map(k => {
     const m = b[k] || {};
     return `<tr><td>стакан: ${k} у крупного</td>
-      ${cell(m.big_x, "× обычного", m.big_x >= (b.big || 3))}
+      ${cell(m.gate_x, "× порога", m.gate_x >= 1)}
       ${cell(m.held, " с", m.held >= (b.hold || 10))}
       ${cell(m.eaten_x, "× съедено", m.eaten_x >= (b.eat || 1))}
       <td class="mono" style="color:var(--muted)">${m.why || "—"}</td></tr>`;
   }).join("");
+  // Докуда цепочка дошла за жизнь процесса. Без этой строки «правило
+  // молчит» неотличимо от «правило молчит вот на этом условии», а
+  // чинится только второе.
+  const c = b.chain || {};
+  const named = ["ни разу не крупный", "крупный был",
+                 "выстаивал", "выедали"][c.stage || 0];
+  return rows + `<tr><td>стакан: докуда доходило</td>
+    <td class="mono" colspan="3">${named}${c.eat_n
+      ? `, выедание по ${c.eat_n} замерам: медиана ${c.eat_med}×, `
+        + `максимум ${c.eat_max}× при нужных ${b.eat || 1}`
+      : ""}</td>
+    <td class="mono" style="color:var(--muted)">гейт ${
+      ((1 - (b.qbig || 0.98)) * 100).toFixed(0)}% времени</td></tr>`;
 }
 
 function drawMid(pts, sg) {
