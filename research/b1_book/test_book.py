@@ -559,6 +559,43 @@ def test_two_rules_run_side_by_side():
     check("tick принимает книги", isinstance(op, list) and isinstance(cl, list))
 
 
+def test_stop_sees_the_candle_it_entered_on():
+    """Стоп считается по свечам ДО СЕКУНДЫ ВХОДА, а не до пересчёта.
+
+    Найдено владельцем на ARBUSDT: вход 10:05:42 после прокола до
+    0.07578, стоп встал в 18.4 б.п. при проколе на 26 — то есть НАД
+    лоем. Числа объяснили причину: `stop_by` был «крупнейшая свеча», а
+    не «экстремум», потому что экстремума в данных не было вовсе.
+    Уровни пересчитываются раз в минуту, а вход случается ровно на
+    резком движении — той самой свечи в `self.frames` ещё нет.
+
+    Заглядывания вперёд правка не вносит: буфер секунд содержит только
+    то, что случилось к моменту решения. Проверяется именно это — свежие
+    свечи видят прокол, устаревшие не видят.
+    """
+    import numpy as np
+    import signals as S
+
+    sig = S.Signals(["TEST"])
+    live = sig.by["TEST"]
+    t0 = 1785440000 - (1785440000 % 60)      # ровно на границе минуты
+    for i in range(180):                     # три полные минуты, цена стоит
+        live.sec.append([t0 + i, 10.0, 10.0, 100.05, 99.95, 100.0])
+    live.refresh_levels(float(t0 + 179))     # уровни посчитаны ЗДЕСЬ
+    stale = live.frames
+    for i in range(40):                      # четвёртая минута: прокол вниз
+        px = 98.0 if i == 20 else 100.0
+        live.sec.append([t0 + 180 + i, 10.0, 10.0, px + 0.05, px - 0.05, px])
+
+    fresh = live.stop_frames()
+    check(f"устаревшие свечи прокола не видят ({float(stale[2].min()):.2f})",
+          float(stale[2].min()) > 99.0)
+    check(f"свежие свечи прокол видят ({float(fresh[2].min()):.2f})",
+          abs(float(fresh[2].min()) - 97.95) < 1e-9)
+    check("свежие свечи не заглядывают вперёд",
+          float(fresh[0].max()) <= t0 + 219)
+
+
 def test_stop_clears_the_biggest_candle_not_the_median():
     """Стоп не вправе стоять внутри крупнейшей свечи окна.
 
@@ -1069,6 +1106,7 @@ def main():
     print("геометрия стопа")
     test_stop_goes_behind_structure_not_inside_noise()
     test_stop_clears_the_biggest_candle_not_the_median()
+    test_stop_sees_the_candle_it_entered_on()
     test_target_skips_levels_that_do_not_pay_for_risk()
     print("подписка")
     test_rejected_subscription_is_not_silence()

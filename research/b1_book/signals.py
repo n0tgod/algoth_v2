@@ -82,7 +82,9 @@ STRUCTURAL_STOP = True
 #   2 — стоп за экстремумом и накоплением
 #   3 — цель на ближайшем уровне, ОПРАВДЫВАЮЩЕМ риск
 #   4 — пол стопа по крупнейшей свече окна, а не по медианной
-RULES_VERSION = 4
+#   5 — стоп считается по свечам ДО СЕКУНДЫ ВХОДА, а не до последнего
+#       пересчёта уровней: свечи прокола в данных могло не быть вовсе
+RULES_VERSION = 5
 
 
 def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
@@ -215,6 +217,27 @@ class Live:
         P = np.where(V > 0, S / np.maximum(V, 1e-12), (H + L) / 2)
         return keys * 60.0, H, L, P, V
 
+    def stop_frames(self):
+        """Свечи ДО СЕКУНДЫ РЕШЕНИЯ, а не до последнего пересчёта уровней.
+
+        Уровни (полки, круглые числа) пересчитываются раз в минуту — они
+        медленные, и это правильно. Но стоп считается по экстремуму и по
+        крупнейшей свече окна, а вход случается ровно на резком движении,
+        то есть на той самой свече, которой в `self.frames` может ещё не
+        быть: между пересчётами проходит до шестидесяти секунд.
+
+        Владелец увидел это на ARBUSDT: вход 10:05:42 после прокола до
+        0.07578, стоп встал в 18.4 б.п. при проколе на 26 — то есть НАД
+        лоем, хотя правило требует за него. Числа подтвердили: стоп задан
+        «крупнейшей свечой», а не экстремумом, потому что экстремума в
+        данных не было.
+
+        Заглядывания вперёд здесь нет: буфер секунд содержит только то,
+        что уже случилось к моменту решения.
+        """
+        a = self.arrays()
+        return None if a is None else self.minute_frames(a)
+
     def refresh_levels(self, now):
         """Уровни пересчитываются раз в минуту: структура медленная."""
         if now - self.levels_at < 60:
@@ -311,8 +334,11 @@ class Live:
         # ставит стоп не ближе, чем раньше, но не ограничивает сверху.
         base = lvl - STOP_NOISE * noise if long else lvl + STOP_NOISE * noise
         why = "шум"
-        got = (LV.structural_stop(self.frames[1], self.frames[2], px,
-                                  price, long, noise)
+        # Свечи берутся свежие, до секунды решения: в `self.frames` той
+        # свечи, на которой мы входим, может ещё не быть — уровни
+        # пересчитываются раз в минуту.
+        fr = self.stop_frames() or self.frames
+        got = (LV.structural_stop(fr[1], fr[2], px, price, long, noise)
                if STRUCTURAL_STOP else None)
         stop = base
         if got is not None:
@@ -328,7 +354,7 @@ class Live:
         # пунктов. На FILUSDT это дало стоп 8.3 б.п. против 7.6 у
         # прежнего правила — то есть правило не сработало вовсе, и
         # сделку сняла обычная для того получаса свеча.
-        burst = LV.burst_px(self.frames[1], self.frames[2])
+        burst = LV.burst_px(fr[1], fr[2])
         if np.isfinite(burst) and burst > 0 and abs(entry - stop) < burst:
             stop = entry - burst if long else entry + burst
             why = "крупнейшая свеча"
