@@ -885,7 +885,7 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     n_paper = 0
     ph = [datetime.fromtimestamp(time.time() - i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(trade_hours, -1, -1)]
-    n_fixed = n_left = 0
+    n_fixed = n_left = n_alive = 0
     for sym in symbols:
         rows = []
         for h in ph:
@@ -916,12 +916,14 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
         n_paper += live.restore(rows, tape)
         after = sum(1 for t in live.done
                     if t.get("state") == "оборвана перезапуском")
-        n_fixed += before - after
+        n_alive += len(live.open)
+        n_fixed += before - after - len(live.open)
         n_left += after
-    if n_fixed or n_left:
-        log(f"оборванных сделок досчитано по ленте: {n_fixed}"
-            + (f", осталось без исхода {n_left} "
-               f"(лента не дотянулась)" if n_left else ""))
+    if n_fixed or n_left or n_alive:
+        log(f"незакрытых сделок поднято: досчитано по ленте {n_fixed}"
+            + (f", возвращено в работу {n_alive}" if n_alive else "")
+            + (f", без исхода {n_left} (лента не дотянулась)"
+               if n_left else ""))
     if n_tr or n_bk:
         log(f"поднято из своих файлов: сделок {n_tr:,}, снимков {n_bk:,}, "
             f"бумажных сделок {n_paper}")

@@ -511,9 +511,20 @@ def test_interrupted_trade_is_finished_from_tape():
     check(f"убыток посчитан по худшей цене ({got['pnl_bp']} б.п.)",
           got["pnl_bp"] < -200, str(got["pnl_bp"]))
 
-    # 3. Лента до исхода не дотянулась — исход не выдумывается.
-    check("недотянувшаяся лента исхода не даёт",
-          SG.finish_from_tape(tr(), [pr(101, 100.1), pr(102, 100.2)]) is None)
+    # 3. Исхода ещё НЕ БЫЛО, но лента доведена до конца — сделка ЖИВА.
+    # Первая версия склеивала этот случай с «лента оборвалась» и хоронила
+    # живую сделку пометкой; владелец увидел это первым же взглядом.
+    got = SG.finish_from_tape(tr(), [pr(101, 100.1), pr(102, 100.2)],
+                              now=102.0)
+    check(f"живая возвращается открытой ({got and got['state']})",
+          got and got["state"] == "открыта", str(got))
+    check(f"промежуточный итог посчитан ({got['pnl_bp']} б.п.)",
+          got["pnl_bp"] is not None, str(got))
+
+    # 4. А вот если лента обрывается задолго до «сейчас» — не знаем.
+    check("оборванная лента исхода не даёт",
+          SG.finish_from_tape(tr(), [pr(101, 100.1), pr(102, 100.2)],
+                              now=100000.0) is None)
     check("пустая лента исхода не даёт", SG.finish_from_tape(tr(), []) is None)
 
     # 4. Ничья решается против нас — тем же правилом, что живьём.
@@ -533,6 +544,25 @@ def test_interrupted_trade_is_finished_from_tape():
     check("без ленты пометка остаётся",
           list(live2.done)[0]["state"] == "оборвана перезапуском",
           str(list(live2.done)))
+
+    # И главное по жалобе владельца: живая сделка возвращается В РАБОТУ,
+    # а не в историю. Иначе она застыла бы пометкой навсегда.
+    # Времена берутся от «сейчас»: свежесть ленты — часть правила, и
+    # проверять его на метках 1970 года значило бы проверять другое.
+    import time as _t
+    tn = _t.time()
+    live3 = SG.Live("TEST")
+    n = live3.restore([dict(tr(t=tn - 120), ev="open")],
+                      [pr(tn - 60, 100.1), pr(tn - 5, 100.2)])
+    check(f"живая ушла в открытые ({len(live3.open)})", len(live3.open) == 1,
+          str(live3.open))
+    check("и не осела в истории", len(live3.done) == 0, str(live3.done))
+    check(f"посчитана в поднятых ({n})", n == 1, str(n))
+    # Детектор доводит её сам: цена дошла до цели — сделка закрывается.
+    live3.last_px = 102.5
+    closed = live3.update_open(tn)
+    check(f"детектор довёл её до конца ({closed and closed[0]['state']})",
+          closed and closed[0]["state"] == "цель", str(closed))
 
 
 def test_recount_runs_itself_and_merges_live():

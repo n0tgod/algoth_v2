@@ -63,6 +63,11 @@ MAX_HOLD_SEC = 4 * 3600
 # рынка: у наших символов сделки идут чаще. Через дыру исход
 # досчитывается консервативно — см. `finish_from_tape`.
 GAP_SEC = 5.0
+# Насколько лента вправе отставать от «сейчас», чтобы считать её
+# доведённой до конца. Пять минут: перезапуск занимает около
+# минуты, а отставание в полчаса означало бы, что исход мог
+# наступить в куске, которого у нас нет.
+TAPE_FRESH_SEC = 300.0
 COST_BP = 11.0
 KEEP_SEC = 4 * 3600               # сколько секунд истории держим
 DEDUP_SEC = 60                    # не чаще одного события в минуту на символ
@@ -114,7 +119,7 @@ def outcome_at(tr, p, now):
     return None
 
 
-def finish_from_tape(tr, prints, gap_sec=GAP_SEC):
+def finish_from_tape(tr, prints, gap_sec=GAP_SEC, now=None):
     """Досчитать оборванную сделку по записанной ленте.
 
     Владелец: «оборванных сделок быть не должно, история цены есть,
@@ -137,15 +142,30 @@ def finish_from_tape(tr, prints, gap_sec=GAP_SEC):
     Размер слепого места пишется в сделку числом (`blind_sec`): его
     надо видеть, а не выводить из молчания.
 
-    Возвращает закрытую сделку либо `None`, если лента до разрешения не
-    дотянулась — тогда честнее пометка, чем выдуманный исход.
+    **Три исхода, а не два.** Первая версия возвращала «закрыта» либо
+    `None`, и вторым случаем оказывались склеены две совершенно разные
+    вещи: лента до разрешения не дотянулась — и разрешения ПРОСТО ЕЩЁ НЕ
+    БЫЛО. Владелец увидел это сразу: после досчёта осталось две сделки
+    с пометкой «оборвана», а на деле обе были живы — вошли час-два
+    назад, при пределе удержания в четыре часа, и ни стопа, ни цели не
+    касались. Такую надо не помечать, а **вернуть в работу**: у нас есть
+    и вход, и стоп, и цель, детектор доведёт её сам.
+
+    Поэтому возвращается:
+
+    * сделка с наступившим исходом — если он наступил;
+    * сделка в состоянии `открыта` — если лента доведена до конца и
+      исхода в ней нет, а предел удержания не вышел;
+    * `None` — если лента обрывается заметно раньше конца, то есть
+      исход мог наступить в неизвестном нам куске. Тогда честнее
+      пометка, чем выдуманный исход.
     """
     if not prints:
         return None
     t0 = float(tr.get("t") or 0)
     if not (tr.get("stop") and tr.get("target")) or not t0:
         return None
-    prev, blind = t0, 0.0
+    prev, blind, last_p = t0, 0.0, None
     for r in prints:
         try:
             ts = float(r["ts"]) / 1000.0
@@ -156,7 +176,7 @@ def finish_from_tape(tr, prints, gap_sec=GAP_SEC):
             continue
         if ts - prev > gap_sec:
             blind = max(blind, ts - prev)
-        prev = ts
+        prev, last_p = ts, p
         got = outcome_at(tr, p, ts)
         if got is None:
             continue
@@ -175,7 +195,21 @@ def finish_from_tape(tr, prints, gap_sec=GAP_SEC):
         out["r"] = round(out["pnl_bp"] / max(tr.get("stop_bp") or 1e-9, 1e-9), 2)
         out["blind_sec"] = round(blind, 1)
         return out
-    return None
+    # Исхода в ленте нет. Два разных случая, и путать их нельзя.
+    now = time.time() if now is None else now
+    if last_p is None or now - prev > TAPE_FRESH_SEC:
+        return None                    # лента обрывается — не знаем
+    # Лента доведена до конца, исхода не было: сделка ЖИВА. Возвращаем её
+    # открытой, с пересчитанным на последней цене промежуточным итогом.
+    sign = 1.0 if tr["long"] else -1.0
+    out = dict(tr)
+    out["state"] = "открыта"
+    out["held"] = int(prev - t0)
+    out["pnl_bp"] = round(
+        sign * (last_p / tr["entry"] - 1.0) * 1e4 - COST_BP, 1)
+    out["r"] = round(out["pnl_bp"] / max(tr.get("stop_bp") or 1e-9, 1e-9), 2)
+    out["blind_sec"] = round(blind, 1)
+    return out
 
 
 def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
@@ -567,30 +601,40 @@ class Live:
         for r in rows:
             key = r.get("id") or f"{r.get('sym')}-{r.get('t')}"
             (closed if r.get("ev") == "close" else opened)[key] = r
-        out = []
+        out, alive = [], []
         for key, r in opened.items():
             done = closed.get(key)
-            if done is None:
-                r = dict(r)
-                r.pop("ev", None)
-                got = finish_from_tape(r, prints) if prints else None
-                if got is None:
-                    r["state"] = "оборвана перезапуском"
-                    r["pnl_bp"] = r["r"] = None
-                    out.append(r)
-                else:
-                    out.append(got)
-            else:
+            if done is not None:
                 out.append(done)
+                continue
+            r = dict(r)
+            r.pop("ev", None)
+            got = finish_from_tape(r, prints) if prints else None
+            if got is None:
+                r["state"] = "оборвана перезапуском"
+                r["pnl_bp"] = r["r"] = None
+                out.append(r)
+            elif got.get("state") == "открыта":
+                # Сделка ЖИВА: исхода в ленте нет, предел удержания не
+                # вышел. Возвращаем её в работу — детектор доведёт её
+                # сам. Помечать живую сделку «оборванной» значило бы
+                # хоронить её раньше времени, и владелец увидел это
+                # первым же взглядом.
+                alive.append(got)
+            else:
+                out.append(got)
         out += [r for k, r in closed.items() if k not in opened]
         out.sort(key=lambda x: x.get("closed_at") or x.get("t") or 0)
         for r in out:
             r.pop("ev", None)
             self.done.appendleft(r)
+        for r in alive + out:
             self.seq = max(self.seq, int(str(r.get("id", "")).rsplit("-", 1)[-1])
                            if str(r.get("id", "")).rsplit("-", 1)[-1].isdigit()
                            else 0)
-        return len(out)
+        # Живые — в работу, а не в историю: их ещё вести.
+        self.open.extend(alive)
+        return len(out) + len(alive)
 
     def view(self, since=0.0, done_keep=20):
         """Состояние для страницы.
