@@ -460,7 +460,7 @@ def calibrate(tr, secs=None):
     import absorb as AB
     b, a = book_with()
     for i in range(secs or AB.MIN_CAL + 5):
-        tr.step(b, a, 0.5, QUIET, float(i))
+        tr.step(b, a, QUIET, float(i))
     return b, a
 
 
@@ -476,13 +476,13 @@ def test_book_absorption_needs_all_five():
 
     tr = AB.Tracker("TEST")
     d = tr.diag[True]
-    tr.step(*book_with(), noise=0.5, sec=QUIET, now=0.0)
+    tr.step(*book_with(), sec=QUIET, now=0.0)
     check(f"до калибровки молчит ({tr.diag[True]['why']})",
           "калибровка" in tr.diag[True]["why"], str(tr.diag[True]))
     calibrate(tr)
     bids, asks = book_with(99.9, 200.0)           # крупный на биде
     quiet = QUIET
-    tr.step(bids, asks, 0.5, quiet, 1000.0)
+    tr.step(bids, asks, quiet, 1000.0)
     d = tr.diag[True]
     check(f"крупный опознан ({d.get('gate_x')}× порога)",
           (d.get("gate_x") or 0) >= 1.0, str(d))
@@ -490,7 +490,7 @@ def test_book_absorption_needs_all_five():
           not d["ok"] and "стоит" in d["why"], str(d))
 
     for i in range(AB.HOLD + 2):                  # стоит, но не выедают
-        tr.step(bids, asks, 0.5, quiet, 1001.0 + i)
+        tr.step(bids, asks, quiet, 1001.0 + i)
     d = tr.diag[True]
     check(f"без съедания отказ ({d['why']})",
           not d["ok"] and "выедено" in d["why"], str(d))
@@ -498,7 +498,7 @@ def test_book_absorption_needs_all_five():
     # уровень 200 по 99.9 — это нотионал 19 980; чтобы «выедено»
     # перевалило за свой размер, агрессии нужно больше него
     hit = (0.0, 1.0, 30000.0, 100.0, 99.9, 99.95)
-    tr.step(bids, asks, 0.5, hit, 1040.0)
+    tr.step(bids, asks, hit, 1040.0)
     d = tr.diag[True]
     check(f"после съедания сработало ({d.get('eaten_x')}× съедено)",
           d["ok"] and d["why"] == "поглощение", str(d))
@@ -528,7 +528,7 @@ def test_gate_fires_equally_on_smooth_and_lumpy_books():
         fired = 0
         for i, sz in enumerate(sizes):
             b, a = book_with(99.9, sz)
-            t.step(b, a, 0.5, QUIET, float(i))
+            t.step(b, a, QUIET, float(i))
             if i >= AB.MIN_CAL and t.by[True].price is not None:
                 fired += 1
         return fired / max(1, len(sizes) - AB.MIN_CAL)
@@ -554,6 +554,61 @@ def test_gate_fires_equally_on_smooth_and_lumpy_books():
     worst = max(smooth) / AB.median(smooth)
     check(f"множитель на ровной книге бессилен ({worst:.2f}× < {AB.BIG})",
           worst < AB.BIG, f"{worst}")
+
+
+def test_level_out_of_reach_is_never_a_candidate():
+    """Недосягаемый уровень не должен выдавать себя за измерение.
+
+    Это и есть дефект, найденный живым замером: полоса поиска строилась
+    из шума МИНУТНОЙ свечи, а правило работает на секундах. Уровень
+    выбирался в 5–18 б.п. от цены при спуске за десять секунд в 2–7
+    б.п., то есть цена до него не доходила ни разу — и «выедено»
+    выходило ТОЖДЕСТВЕННО нулём (51 замер на 13 символах, максимум
+    0.0). Ноль от недостижимости выглядит ровно как ноль от отсутствия
+    эффекта; отличить их можно только этой проверкой.
+    """
+    import absorb as AB
+
+    tr = AB.Tracker("TEST")
+    # Цена всю дорогу стоит у 100.0 и ниже 99.98 не опускается,
+    # а крупный уровень лежит на 99.5 — двадцать пунктов ниже.
+    tight = (0.0, 1.0, 1.0, 100.02, 99.98, 100.0)
+    b, a = book_with(99.5, 100000.0)
+    for i in range(AB.MIN_CAL + 20):
+        tr.step(b, a, tight, float(i))
+    d = tr.diag[True]
+    check(f"недосягаемый уровень не взят ({d.get('why')})",
+          tr.by[True].price != 99.5, str(d))
+
+    # А тот же уровень при цене, доходившей до него, — берётся.
+    tr2 = AB.Tracker("TEST")
+    deep = (0.0, 1.0, 1.0, 100.02, 99.4, 99.6)
+    for i in range(AB.MIN_CAL + 20):
+        tr2.step(b, a, (deep[0] + i,) + deep[1:], float(i))
+    check(f"досягаемый — взят ({tr2.diag[True].get('why')})",
+          tr2.by[True].price == 99.5, str(tr2.diag[True]))
+
+
+def test_reach_window_counts_seconds_not_snapshots():
+    """Ход копится по НОВЫМ секундам, а не по снимкам книги.
+
+    Снимок приходит чаще секунды. Складывая одну и ту же секунду по
+    разу на снимок, окно досягаемости мерило бы частоту опроса, а не
+    рынок, — и на быстром опросе схлопывалось бы до одной секунды.
+    """
+    import absorb as AB
+
+    tr = AB.Tracker("TEST")
+    b, a = book_with()
+    same = (7.0, 1.0, 1.0, 100.5, 99.5, 100.0)
+    for i in range(5):                       # пять снимков одной секунды
+        tr.step(b, a, same, float(i))
+    check(f"одна секунда учтена один раз ({len(tr.span)})",
+          len(tr.span) == 1, str(list(tr.span)))
+    for k in range(3):
+        tr.step(b, a, (8.0 + k, 1.0, 1.0, 100.5, 99.5, 100.0), 10.0 + k)
+    check(f"три новые секунды добавлены ({len(tr.span)})",
+          len(tr.span) == 4, str(list(tr.span)))
 
 
 def test_quantile_threshold_belongs_to_the_sample():
@@ -588,7 +643,7 @@ def test_level_is_not_judged_against_itself():
     t = AB.Tracker("TEST")
     calibrate(t)
     b, a = book_with(99.9, 100000.0)              # кит, много больше всех
-    t.step(b, a, 0.5, QUIET, 1000.0)
+    t.step(b, a, QUIET, 1000.0)
     d = t.diag[True]
     check(f"кит взял порог ({d.get('gate_x')}×)",
           t.by[True].price == 99.9, str(d))
@@ -603,7 +658,7 @@ def test_book_absorption_rejects_pulled_and_broken():
         calibrate(t)
         b, a = book_with(99.9, 200.0)
         for i in range(AB.HOLD + 2):
-            t.step(b, a, 0.5, (0.0, 1.0, 5000.0, 100.0, 99.9, 99.95),
+            t.step(b, a, (0.0, 1.0, 5000.0, 100.0, 99.9, 99.95),
                    1000.0 + i)
         return t, b, a
 
@@ -613,14 +668,14 @@ def test_book_absorption_rejects_pulled_and_broken():
 
     t, b, a = ripe()
     b2 = dict(b); b2[99.9] = 1.0                  # крупного сняли
-    t.step(b2, a, 0.5, QUIET, 1099.0)
+    t.step(b2, a, QUIET, 1099.0)
     check(f"снятый уровень отвергнут ({t.diag[True]['why']})",
           not t.diag[True]["ok"], str(t.diag[True]))
 
     # Пробой: уровень в книге ещё стоит (его переставили), но лента
     # показывает сделки НИЖЕ него — значит его выели, а не выдержали.
     t, b, a = ripe()
-    t.step(b, a, 0.5, (0.0, 1.0, 5000.0, 100.0, 99.5, 99.6), 1099.0)
+    t.step(b, a, (0.0, 1.0, 5000.0, 100.0, 99.5, 99.6), 1099.0)
     check(f"пробой по ленте отвергнут ({t.diag[True]['why']})",
           not t.diag[True]["ok"]
           and "сквозь" in t.diag[True]["why"], str(t.diag[True]))
@@ -1195,6 +1250,8 @@ def main():
     print("поглощение в стакане")
     test_book_absorption_needs_all_five()
     test_gate_fires_equally_on_smooth_and_lumpy_books()
+    test_level_out_of_reach_is_never_a_candidate()
+    test_reach_window_counts_seconds_not_snapshots()
     test_quantile_threshold_belongs_to_the_sample()
     test_level_is_not_judged_against_itself()
     test_book_absorption_rejects_pulled_and_broken()
