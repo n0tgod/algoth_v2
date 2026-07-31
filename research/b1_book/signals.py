@@ -67,6 +67,11 @@ DEDUP_SEC = 60                    # не чаще одного события в
 # сделки, открывавшиеся при владельце, исчезали и по переполнению, и по
 # перезапуску. Память — витрина, источник истины — диск.
 DONE_KEEP = 400
+# Ставить ли стоп за структуру. Выключатель нужен не для настройки, а
+# для честного сравнения: воспроизведение прогоняет одни и те же
+# записанные данные дважды — прежней геометрией и новой, — и разницу
+# тогда можно отнести к геометрии, а не к другому куску рынка.
+STRUCTURAL_STOP = True
 
 
 def absorb_metrics(buy, sell, close, w, vol_mult, move_mult, imb, side):
@@ -295,8 +300,9 @@ class Live:
         # ставит стоп не ближе, чем раньше, но не ограничивает сверху.
         base = lvl - STOP_NOISE * noise if long else lvl + STOP_NOISE * noise
         why = "шум"
-        got = LV.structural_stop(self.frames[1], self.frames[2], px,
-                                 price, long, noise)
+        got = (LV.structural_stop(self.frames[1], self.frames[2], px,
+                                  price, long, noise)
+               if STRUCTURAL_STOP else None)
         stop = base
         if got is not None:
             cand, why = got

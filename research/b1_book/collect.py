@@ -67,7 +67,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
-from book import BANDS, Book, parse_trades                 # noqa: E402
+from book import BANDS, STORE_LADDER, Book, parse_trades                 # noqa: E402
 import paper                                              # noqa: E402
 from signals import Signals                               # noqa: E402
 from store import Writer, read_hour, read_jsonl            # noqa: E402
@@ -286,7 +286,7 @@ class Collector:
             nxt += SAMPLE_SEC
             now = time.time()
             for sym, b in self.books.items():
-                s = b.sample()
+                s = b.sample(ladder=STORE_LADDER)
                 if s is not None:
                     s["t"] = round(now, 3)
                     self.w.write("book", sym, s, ts=now)

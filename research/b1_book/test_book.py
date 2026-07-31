@@ -480,6 +480,63 @@ def test_stop_goes_behind_structure_not_inside_noise():
           LV.structural_stop(H, L, lv, entry, True, float("nan")) is None)
 
 
+def test_replay_drives_detector_from_files():
+    """Прогон записи обязан кормить тот же детектор, что работает живьём.
+
+    Если путь «файлы → детектор» порвётся, воспроизведение вернёт ноль
+    сделок — и это будет неотличимо от «условий не было». Поэтому
+    проверяется не число сделок, а то, что история поднялась, уровни
+    построены и обе руки геометрии переключаются.
+    """
+    import random
+    import shutil
+    import tempfile
+    import replay as R
+    import signals as S
+    from store import Writer
+
+    root = tempfile.mkdtemp()
+    try:
+        w = Writer(root)
+        random.seed(11)
+        for i in range(3600):
+            ts = (1785400000 + i) * 1000
+            p = round(100.0 + random.gauss(0, 0.01), 4)
+            w.write("trades", "TEST", {"ts": ts, "s": "TEST",
+                                       "side": 1 if i % 2 else -1,
+                                       "p": p, "v": 1.0}, ts=ts / 1000)
+        w.close()
+        hh = sorted({f.split(".")[0]
+                     for f in os.listdir(os.path.join(root, "trades", "TEST"))})
+        rows = R.load(root, "trades", "TEST", hh)
+        check(f"записи прочитаны ({len(rows)})", len(rows) == 3600, str(len(rows)))
+
+        for name, structural in (("прежняя", False), ("новая", True)):
+            S.STRUCTURAL_STOP = structural
+            sig = S.Signals(["TEST"])
+            live = sig.by["TEST"]
+            rows.sort(key=lambda x: x["ts"])
+            i = 0
+            for sec in range(int(rows[0]["ts"] // 1000),
+                             int(rows[-1]["ts"] // 1000) + 1):
+                while i < len(rows) and rows[i]["ts"] // 1000 <= sec:
+                    live.on_trade(rows[i])
+                    i += 1
+                sig.tick(float(sec), None)
+            v = live.view()
+            check(f"{name}: история поднялась ({v['history_min']} мин)",
+                  v["history_min"] > 50, str(v["history_min"]))
+            check(f"{name}: уровни построены ({len(v['levels'])})",
+                  len(v["levels"]) > 0, str(v["levels"]))
+            check(f"{name}: диагностика посчитана "
+                  f"({v['diag']['long'].get('why')})",
+                  v["diag"]["long"].get("vol_x") is not None,
+                  str(v["diag"]))
+        S.STRUCTURAL_STOP = True
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_rejected_subscription_is_not_silence():
     """Отклонённая подписка обязана назваться и не гасить остальные.
 
@@ -723,6 +780,8 @@ def main():
     test_book_absorption_needs_all_five()
     test_book_absorption_rejects_pulled_and_broken()
     test_two_rules_run_side_by_side()
+    print("воспроизведение записи")
+    test_replay_drives_detector_from_files()
     print("геометрия стопа")
     test_stop_goes_behind_structure_not_inside_noise()
     print("подписка")
