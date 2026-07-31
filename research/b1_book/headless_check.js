@@ -151,11 +151,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__REC = typeof REC !== 'undefined' ? REC : null;"
                 + "\nglobal.__shown = typeof shown === 'function' "
                 + "? shown : null;"
-                + "\nglobal.__table = typeof tableTrades === 'function' "
-                + "? tableTrades : (typeof shown === 'function' "
-                + "? () => shown().trades : null);"
-                + "\nglobal.__ghost = typeof recMap === 'function' "
-                + "? recMap : null;")();
+                // Что график ДЕЙСТВИТЕЛЬНО нарисовал: `draw` складывает
+                // сюда по записи на каждую отрисованную сделку. Без
+                // этого проверка смотрела на функцию-источник и не
+                // замечала, что рисуется из другой, — тот самый отказ
+                // «определено и не вызывается».
+                + "\nglobal.__hit = typeof HIT !== 'undefined' "
+                + "? () => HIT : null;"
+                + "\nglobal.__table = typeof shownTrades === 'function' "
+                + "? shownTrades : (typeof shown === 'function' "
+                + "? () => shown().trades : null);")();
 (async () => {
   const step = global.__step;
   // Первый кадр отдан самой страницей при загрузке; ждём его, затем
@@ -220,26 +225,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!tr.length || !tr.every(m => String(m.id || "").startsWith("rec-")))
       bad.push(`встречный счёт не подменил таблицу: показано ${tr.length}, `
                + `было ${wasN}`);
-    // На графике пересчёт обязан ЛОЖИТЬСЯ ПОВЕРХ настоящей сделки, а не
-    // заменять её: владелец просил видеть, как сделки поменялись, а
-    // подмена показывает только «стало», сравнить не с чем.
+    // И главное: НАРИСОВАНЫ обязаны быть пересчитанные, а не настоящие.
+    // Владелец просил, чтобы старой геометрии на графике не было вовсе.
     if (isChart) {
-      if (!global.__ghost)
-        bad.push("график не умеет накладывать пересчёт");
-      else {
-        const gm = global.__ghost();
-        if (!gm || !gm.size)
-          bad.push("наложение пересчёта пустое — сравнивать нечего");
-        else if (!gm.get("BTCUSDT-1"))
-          bad.push("пересчёт не связан с исходной сделкой по номеру");
-      }
+      const drawn = global.__hit ? global.__hit() : null;
+      if (!drawn || !drawn.length)
+        bad.push("график не нарисовал ни одной сделки");
+      else if (!drawn.every(h => String(h.m.id || "").startsWith("rec-")))
+        bad.push("на графике осталась старая геометрия: "
+                 + drawn.map(h => h.m.id).join(", "));
     }
     global.__REC.on = false;
     const back = global.__table();
     if (back.some(m => String(m.id || "").startsWith("rec-")))
       bad.push("после выключения на странице остались пересчитанные сделки");
-    if (isChart && global.__ghost && global.__ghost())
-      bad.push("после выключения наложение осталось на графике");
   }
   if (bad.length) { console.error("ПАДЕНИЕ: " + bad.join("; "));
                     process.exit(1); }
