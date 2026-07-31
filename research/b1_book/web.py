@@ -818,13 +818,25 @@ function draw() {
   g.textAlign="right"; g.fillText(stamp(t1), W-padR, H-6); g.textAlign="left";
   document.getElementById("cap2").textContent =
     `${i1-i0} из ${c.length} мин · ${stamp(t0)}—${stamp(t1)}`;
-  document.getElementById("cap3").textContent = `${tr.length} сделок`;
+  // Сколько сделок вообще попадает на график. Свечи живут в
+  // посекундном буфере (несколько часов), а история сделок поднимается
+  // с диска за трое суток — значит часть сделок старше самой старой
+  // свечи и нарисована быть не может. Молчать об этом нельзя: в
+  // таблице их видно, на графике нет, и это читается как пропажа.
+  const first = c[0][0], last = c[c.length-1][0];
+  const off = tr.filter(m => m.t < first || m.t > last).length;
+  document.getElementById("cap3").textContent =
+    `${tr.length} сделок` + (off ? ` · ${off} вне окна графика` : "");
 }
 
 function rows() {
-  const tr = trades();
+  const tr = trades(), c = cands();
+  const first = c.length ? c[0][0] : 0, last = c.length ? c[c.length-1][0] : 0;
+  const off = m => c.length && (m.t < first || m.t > last);
   document.getElementById("rows").innerHTML = tr.length ? tr.map(m => `
-    <tr><td class="mono">${stamp(m.t)}</td>
+    <tr ${off(m) ? 'style="opacity:.55" title="вне окна графика — '
+                 + 'свеча за это время уже не хранится"' : ""}>
+    <td class="mono">${stamp(m.t)}${off(m) ? " ·" : ""}</td>
     <td class="${m.long?"buy":"sell"}">${m.long?"лонг":"шорт"}</td>
     <td class="mono">${m.entry}</td><td class="mono">${m.stop}</td>
     <td class="mono">${m.target}</td>
