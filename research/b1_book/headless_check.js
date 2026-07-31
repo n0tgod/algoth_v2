@@ -118,9 +118,19 @@ const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"], count: 2,
 const recTrade = i => Object.assign(trade(i, true),
   {id: "rec-" + i, stop: 64500, target: 65100, stop_bp: 31.0, rr: 4.0,
    was: {id: "BTCUSDT-" + i, stop_bp: 15.5}});
+// Отвергнутый вход: сделки нет, но событие было. Он обязан доехать до
+// графика — иначе «правило этот вход не берёт» выглядит как пропажа
+// данных, и владелец так это и прочитал.
+const noTrade = {id: "rec-нет", t: T0 - 300, sym: "BTCUSDT", long: true,
+                 side: -1, entry: 64700, stop: null, target: null,
+                 level: 64700, kind: "полка", state: "не открыта",
+                 why: "стоп 31.0 б.п., ни один уровень впереди не даёт 1:1.5",
+                 stop_bp: null, rr: null, held: null, pnl_bp: null, r: null,
+                 exit: null, closed_at: null};
 const recount = {busy: false, done: 2, total: 2, hours: 24, at: T0, ver: 3,
-                 made: 5, refused: 1, took_sec: 2.0,
-                 trades: [recTrade(1), recTrade(2)], stats: hist.stats,
+                 made: 5, refused: 1, took_sec: 2.0, no_outcome: 1,
+                 trades: [recTrade(1), recTrade(2), noTrade],
+                 stats: hist.stats,
                  by_rule: hist.by_rule, equity: hist.equity};
 
 let full = true, calls = 0;
@@ -234,6 +244,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       else if (!drawn.every(h => String(h.m.id || "").startsWith("rec-")))
         bad.push("на графике осталась старая геометрия: "
                  + drawn.map(h => h.m.id).join(", "));
+      // Вход, который правило не взяло, обязан быть НАРИСОВАН, а не
+      // пропущен: молчание тут неотличимо от потери данных.
+      else if (!drawn.some(h => h.m.state === "не открыта"))
+        bad.push("отвергнутый вход не показан на графике");
     }
     global.__REC.on = false;
     const back = global.__table();

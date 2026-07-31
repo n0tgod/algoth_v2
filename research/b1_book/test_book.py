@@ -743,6 +743,7 @@ def test_seeded_replay_keeps_entry_changes_stop():
     import random
     import shutil
     import tempfile
+    import paper
     import replay as R
     from store import Writer
 
@@ -771,8 +772,17 @@ def test_seeded_replay_keeps_entry_changes_stop():
         hh = sorted({f.split(".")[0]
                      for f in os.listdir(os.path.join(root, "trades", "TEST"))})
         done, made, refused = R.replay_seeded(root, "TEST", hh)
-        check(f"вход переоткрыт ({len(made)}) либо отвергнут ({refused})",
-              len(made) + refused == 1, f"{len(made)} {refused}")
+        check(f"вход переоткрыт ({len(made)}) либо отвергнут "
+              f"({len(refused)})",
+              len(made) + len(refused) == 1, f"{len(made)} {len(refused)}")
+        # Отказ — запись с причиной, а не голое число: иначе вход,
+        # который правило не берёт, исчезает с графика без следа, и это
+        # неотличимо от потери данных. Владелец так это и прочитал.
+        for r in refused:
+            check(f"отказ назвал причину ({r.get('why')})", bool(r.get("why")))
+            check("у отказа нет геометрии", r.get("stop") is None)
+            check("отказ не идёт в статистику",
+                  paper.finished([r]) == [], str(r.get("state")))
         if made:
             tr = made[0]
             check(f"вход тот же ({tr['entry']})", tr["entry"] == 100.0,

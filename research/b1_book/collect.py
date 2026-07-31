@@ -513,10 +513,16 @@ class Collector:
             threading.Thread(target=self._recount_job, args=(hours,),
                              daemon=True).start()
         rows = st.get("trades") or []
+        # Отвергнутые и незакрытые идут ОТДЕЛЬНЫМ списком и в статистику
+        # не попадают: у них нет исхода. Показываются вместе с
+        # остальными, потому что «правило этот вход не берёт» — ответ, а
+        # молчание ответом не является.
+        extra = st.get("extra") or []
         one = (st.get("by_sym") or {}).get(sym) if sym else None
         if sym:
             # По одной монете: странице графика нужны её сделки, а не все.
             rows = [t for t in rows if t.get("sym") == sym]
+            extra = [t for t in extra if t.get("sym") == sym]
         # Версия отдаётся ТА, ПОД КОТОРУЮ СЧИТАЛИ, а не текущая: иначе
         # поднятый с диска пересчёт после правки геометрии подписывался
         # бы нынешними правилами, не будучи ими. `stale` говорит об этом
@@ -530,8 +536,10 @@ class Collector:
                "made": (one or st).get("made", 0),
                "refused": (one or st).get("refused", 0),
                "took_sec": st.get("took_sec"),
-               "trades": sorted(rows, key=lambda t: -(t.get("closed_at")
-                                                      or t.get("t") or 0))}
+               "trades": sorted(rows + extra,
+                                key=lambda t: -(t.get("closed_at")
+                                                or t.get("t") or 0)),
+               "no_outcome": len(extra)}
         if sym:
             out["stats"] = paper.summary(rows)
             out["by_rule"] = paper.by_rule(rows)
@@ -547,7 +555,7 @@ class Collector:
         t0 = time.time()
         keep = signals.STRUCTURAL_STOP
         hh = R.hours_back(hours)
-        allt, made, refused = [], 0, 0
+        allt, extra, made, refused = [], [], 0, 0
         # По каждой монете отдельно: на странице монеты сравнивать общее
         # число входов с её таблицей нельзя — покрытие вышло бы то
         # больше единицы, то меньше, и ни о чём бы не говорило.
@@ -558,13 +566,22 @@ class Collector:
                     d, cr, rf = R.replay_seeded(self.w.root, s, hh)
                 except Exception as e:                    # noqa: BLE001
                     self.log(f"пересчёт {s}: {type(e).__name__}: {e}")
-                    d, cr, rf = [], [], 0
+                    d, cr, rf = [], [], []
                 allt += d
                 made += len(cr)
-                refused += rf
-                bysym[s] = {"made": len(cr), "refused": rf, "closed": len(d)}
+                refused += len(rf)
+                # Отвергнутые входы и не успевшие закрыться — тоже
+                # результат правила, а не пустота. В статистику они не
+                # идут (исхода нет), но на графике обязаны быть видны:
+                # иначе сделка, которую новая геометрия не берёт, просто
+                # исчезает, и это неотличимо от потери данных.
+                done_ids = {t.get("id") for t in d}
+                extra += list(rf) + [t for t in cr
+                                     if t.get("id") not in done_ids]
+                bysym[s] = {"made": len(cr), "refused": len(rf),
+                            "closed": len(d)}
                 self.rec["done"] = i
-            self.rec.update({"trades": allt, "by_sym": bysym,
+            self.rec.update({"trades": allt, "extra": extra, "by_sym": bysym,
                              "stats": paper.summary(allt),
                              "by_rule": paper.by_rule(allt),
                              "equity": paper.equity(allt),

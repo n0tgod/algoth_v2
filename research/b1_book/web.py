@@ -1032,8 +1032,9 @@ function draw() {
   for (const l of lv) if (l.p>lo*0.99 && l.p<hi*1.01){
     lo=Math.min(lo,l.p); hi=Math.max(hi,l.p); }
   for (const m of tr) if (m.t>=t0-3600 && m.t<=t1+3600){
-    lo=Math.min(lo,m.stop,m.target,m.entry);
-    hi=Math.max(hi,m.stop,m.target,m.entry); }
+    // У отвергнутого входа стопа и цели нет вовсе — их и не построили.
+    const vs = [m.entry, m.stop, m.target].filter(v => v != null);
+    lo=Math.min(lo, ...vs); hi=Math.max(hi, ...vs); }
   const pad=(hi-lo)*0.06||1e-9; lo-=pad; hi+=pad;
   const y = v => padT + ph*(hi-v)/(hi-lo);
   const x = i => padL + pw*(i-i0+0.5)/(i1-i0);
@@ -1077,16 +1078,23 @@ function draw() {
     const end = m.closed_at || (m.held ? m.t + m.held : null);
     const xa = clamp(xt(m.t));
     const xb = end ? clamp(xt(end)) : W-padR;
-    const seg=(v,col,dash)=>{ if(v<lo||v>hi) return;
+    const seg=(v,col,dash)=>{ if(v==null||v<lo||v>hi) return;
       g.save(); g.strokeStyle=col; g.setLineDash(dash); g.lineWidth=1.2;
       g.beginPath(); g.moveTo(xa,y(v)); g.lineTo(Math.max(xb, xa+2),y(v));
       g.stroke(); g.restore(); };
     seg(m.stop, css("--ask"), [3,3]);
     seg(m.target, css("--bid"), [3,3]);
-    g.fillStyle = css("--ink");
     const yy=y(m.entry), d = m.long?1:-1;
     g.beginPath(); g.moveTo(xa,yy); g.lineTo(xa-6,yy+11*d);
-    g.lineTo(xa+6,yy+11*d); g.closePath(); g.fill();
+    g.lineTo(xa+6,yy+11*d); g.closePath();
+    if (m.state === "не открыта") {
+      // Полый треугольник: вход был, сделки нет. Молча пропустив
+      // такой вход, страница выдаёт отказ правила за пропажу данных.
+      g.save(); g.strokeStyle = css("--muted"); g.lineWidth = 1.4;
+      g.setLineDash([2,2]); g.stroke(); g.restore();
+    } else {
+      g.fillStyle = css("--ink"); g.fill();
+    }
     // Выход — квадратом на цене выхода: без него видно, где вошли, и
     // не видно, чем кончилось.
     if (end && m.exit != null && m.exit >= lo && m.exit <= hi) {
@@ -1118,6 +1126,9 @@ function draw() {
   const old = tr.filter(m => (m.ver || 1) !== S.ver).length;
   document.getElementById("cap3").textContent =
     `${tr.length} сделок` + (S.rec ? " · встречный счёт, не факт" : "")
+    + (S.rec && recReady() && recReady().no_outcome
+       ? ` · ${tr.filter(m => m.state === "не открыта").length} входов `
+         + `правило не взяло (полый треугольник)` : "")
     + (off ? ` · ${off} вне окна графика` : "")
     + (old ? ` · ${old} по прежним правилам` : "");
 }
@@ -1131,12 +1142,13 @@ function rows() {
                  + 'свеча за это время уже не хранится"' : ""}>
     <td class="mono">${stamp(m.t)}${off(m) ? " ·" : ""}</td>
     <td class="${m.long?"buy":"sell"}">${m.long?"лонг":"шорт"}</td>
-    <td class="mono">${m.entry}</td><td class="mono">${m.stop}</td>
-    <td class="mono">${m.target}</td>
+    <td class="mono">${m.entry}</td><td class="mono">${m.stop ?? "—"}</td>
+    <td class="mono">${m.target ?? "—"}</td>
     <td>${m.rule || "лента"}</td>
     <td style="color:var(--muted)">${m.kind}</td>
-    <td class="mono">1:${m.rr}</td><td>${m.state}</td>
-    <td class="mono">${m.held} с</td>
+    <td class="mono">${m.rr == null ? "—" : "1:" + m.rr}</td>
+    <td title="${m.why || ""}">${m.state}</td>
+    <td class="mono">${m.held == null ? "—" : m.held + " с"}</td>
     <td class="mono">${res(m)}</td></tr>`
   ).join("") : `<tr><td colspan="11" style="color:var(--muted)">
     событий пока нет — детектор ждёт совпадения условий</td></tr>`;
@@ -1291,7 +1303,8 @@ function hover(e) {
   tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">${
       m.long?"лонг":"шорт"} · ${m.state}</div>`
     + row("время", stamp(m.t)) + row("вход", m.entry)
-    + row("стоп", m.stop) + row("цель", m.target)
+    + (m.state === "не открыта" ? row("почему", m.why || "правило не берёт")
+       : row("стоп", m.stop) + row("цель", m.target))
     + row("уровень", `${m.level} (${m.kind})`)
     + row("отношение", "1:"+m.rr) + row("держали", m.held+" с")
     + row("итог", `${m.pnl_bp>0?"+":""}${m.pnl_bp} б.п. · ${

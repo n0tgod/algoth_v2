@@ -117,6 +117,25 @@ def replay_symbol(root, sym, hours, structural, use_book):
     return done, t1 - t0, len(books)
 
 
+def stub(rec, sec, why):
+    """Запись об отвергнутом входе — «сделки нет и вот почему».
+
+    Полей сделки у неё нет вовсе (ни стопа, ни цели: их и не построили),
+    поэтому в статистику она не попадает по тем же правилам, что и
+    оборванная перезапуском, — `paper.finished` пропускает всё, кроме
+    наступивших исходов.
+    """
+    return {"id": f"{rec.get('sym', '')}-{int(sec)}-нет",
+            "ver": S.RULES_VERSION, "t": float(sec), "sym": rec.get("sym"),
+            "long": bool(rec.get("long")), "side": -1 if rec.get("long") else 1,
+            "entry": float(rec["entry"]), "stop": None, "target": None,
+            "level": rec.get("level"), "kind": rec.get("kind"),
+            "rule": rec.get("rule") or "лента", "state": "не открыта",
+            "why": why, "stop_bp": None, "tgt_bp": None, "rr": None,
+            "held": None, "pnl_bp": None, "r": None, "exit": None,
+            "closed_at": None}
+
+
 def replay_seeded(root, sym, hours):
     """Те же входы, что были, но геометрия новая.
 
@@ -133,9 +152,11 @@ def replay_seeded(root, sym, hours):
     поэтому у той же точки входа она обычно дальше прежней.
 
     Сделка, которая по новым правилам не открылась бы вовсе (стоп
-    расширился, и ни один уровень впереди не оправдывает риск), не
-    подменяется ничем — она считается отдельным числом. Это тоже
-    ответ: часть входов новая геометрия просто отвергает.
+    расширился, и ни один уровень впереди не оправдывает риск),
+    возвращается **записью с причиной отказа**, а не просто считается.
+    Владелец смотрел на конкретную сделку ARBUSDT, новая геометрия её не
+    взяла — и на графике она просто исчезла, что неотличимо от «данные
+    потерялись». Отказ есть результат правила и обязан быть виден.
 
     К каждой пересчитанной сделке прикладывается то, чем она была в
     записи, — иначе сравнивать пришлось бы глазами по двум таблицам.
@@ -157,7 +178,7 @@ def replay_seeded(root, sym, hours):
     live = sig.by[sym]
     t0 = int(trades[0]["ts"] // 1000)
     t1 = int(trades[-1]["ts"] // 1000)
-    i, done, created, refused = 0, [], [], 0
+    i, done, created, refused = 0, [], [], []
     for sec in range(t0, t1 + 1):
         while i < len(trades) and trades[i]["ts"] // 1000 <= sec:
             live.on_trade(trades[i])
@@ -170,20 +191,26 @@ def replay_seeded(root, sym, hours):
             continue
         px, kinds, noise, _ = live.levels
         if len(px) == 0 or not (noise == noise) or noise <= 0:
+            refused.append(stub(r, sec, "уровней или шума ещё нет"))
             continue
         tr = live.make_trade(float(sec), bool(r.get("long")),
                              float(r.get("level") or r["entry"]),
                              r.get("kind") or "полка", float(r["entry"]),
                              noise, px, r.get("rule") or "лента")
         if tr is None:
-            refused += 1
+            refused.append(stub(r, sec, live.last_refusal or "правило не берёт"))
         else:
             tr["was"] = {"stop_bp": r.get("stop_bp"), "rr": r.get("rr"),
                          "tgt_bp": r.get("tgt_bp"), "ver": r.get("ver"),
                          "id": r.get("id")}
             created.append(tr)
-    # Созданные возвращаются целиком: по ним видно геометрию даже у тех
-    # сделок, что не успели закрыться до конца окна.
+    # Не закрывшиеся до конца окна — тоже результат: геометрия у них
+    # построена, исхода ещё нет. Помечаются отдельно и в статистику не
+    # идут, но на графике видны — иначе свежий вход выглядит пропажей.
+    ids = {t.get("id") for t in done}
+    for t in created:
+        if t.get("id") not in ids:
+            t["state"] = "не закрылась в окне"
     return done, created, refused
 
 
@@ -259,7 +286,7 @@ def main():
               f"{st['expectancy_bp']:>+9.1f} б.п. {st['expectancy_r']:>+8.2f} "
               f"{st['stop_bp_median']:>7.1f}")
     # Третья рука: те же входы, новая геометрия.
-    seeded, made, refused = [], [], 0
+    seeded, made, refused = [], [], []
     for s in syms:
         try:
             d, cr, rf = replay_seeded(root, s, hh)
@@ -277,15 +304,18 @@ def main():
               f"{st['stop_bp_median']:>7.1f}")
         st_now = sorted(t["stop_bp"] for t in made)
         print(f"{'':24} открыто {len(made)}, отвергнуто новой геометрией "
-              f"{refused}; медианный стоп "
+              f"{len(refused)}; медианный стоп "
               f"{st_now[len(st_now)//2] if st_now else '—'} б.п.")
     else:
         print(f"{'те же входы, новая геометрия':24} открыто {len(made)}, "
-              f"отвергнуто {refused}, закрытых в окне нет")
+              f"отвергнуто {len(refused)}, закрытых в окне нет")
     res["те же входы, новая геометрия"] = {
         "trades": seeded, "stats": st, "by_rule": paper.by_rule(seeded),
         "seconds": 0, "book_seconds": 0, "made": len(made),
-        "refused": refused}
+        "refused": len(refused),
+        # Причины отказов — по ним видно, ЧТО именно правило не берёт,
+        # а не только сколько. Первые двадцать: список бывает длинным.
+        "refused_why": [r.get("why") for r in refused[:20]]}
 
     # Посделочное сопоставление: что было в записи и что вышло бы.
     was_close = {}
