@@ -45,6 +45,7 @@
   "2026": 57794
  },
  "features": [
+  "age",
   "beta",
   "d_oi_1",
   "d_oi_7",
@@ -66,6 +67,7 @@
   "vol_ratio"
  ],
  "coverage": {
+  "age": 1.0,
   "beta": 0.9963,
   "d_oi_1": 0.8033,
   "d_oi_7": 0.7999,
@@ -92,10 +94,10 @@
  },
  "complete_rows": 216491,
  "budget": {
-  "stage1_sec": 61.9,
-  "stage1_resumed": 0,
-  "stage2_sec": 3.9,
-  "ridge_fit_sec": 0.11,
-  "total_sec": 79.3
+  "stage1_sec": 0.0,
+  "stage1_resumed": 78,
+  "stage2_sec": 3.8,
+  "ridge_fit_sec": 0.1,
+  "total_sec": 15.2
  }
 }
