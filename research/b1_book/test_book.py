@@ -327,11 +327,21 @@ def test_shrunken_run_announces_dropped_symbols():
                 old = _time.time() - 30 * 86400
                 os.utime(p, (old, old))
 
+        # У BEAT час, у FIL три: глубина обязана попасть в сообщение и
+        # поставить накопленное вперёд следа от ошибочного запуска.
+        for h in ("09", "10"):
+            open(os.path.join(d, "FILUSDT", f"2026-07-31-{h}.jsonl"),
+                 "w").write("{}\n")
+
         msgs = C.dropped_symbols(root, ["BTCUSDT", "ETHUSDT"])
         check("урезание состава замечено", bool(msgs))
         head = msgs[0] if msgs else ""
         check("пропавшие названы поимённо",
               "FILUSDT" in head and "BEATUSDT" in head, head[:60])
+        check("глубина названа числом", "FILUSDT (3 ч)" in head
+              and "BEATUSDT (1 ч)" in head, head[60:])
+        check("накопленное впереди следа от промаха",
+              head.index("FILUSDT") < head.index("BEATUSDT"))
         check("снятый месяц назад не поминается", "OLDUSDT" not in head)
         check("на полном составе молчит",
               not C.dropped_symbols(root, ["BTCUSDT", "FILUSDT",

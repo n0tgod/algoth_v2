@@ -847,16 +847,24 @@ def dropped_symbols(root, syms, days=3):
         if s in syms or not os.path.isdir(os.path.join(d, s)):
             continue
         try:
+            files = os.listdir(os.path.join(d, s))
             fresh = max((os.path.getmtime(os.path.join(d, s, f))
-                         for f in os.listdir(os.path.join(d, s))), default=0)
+                         for f in files), default=0)
         except OSError:
             continue
         if fresh >= edge:
-            gone.append(s)
+            # Глубина, а не только свежесть: файл — час, поэтому их число
+            # и есть накопленное. Без этого ошибочный запуск на три
+            # минуты оставляет след, на который сторож потом ругается
+            # вечно наравне с монетой, собиравшейся неделю, — и
+            # предупреждение перестают читать.
+            gone.append((s, len(files)))
     if not gone:
         return []
+    gone.sort(key=lambda x: -x[1])
+    names = ", ".join(f"{s} ({n} ч)" for s, n in gone)
     return [f"ВНИМАНИЕ: на диске есть свежие ряды ещё по {len(gone)} "
-            f"символам, а в этом запуске их нет: {', '.join(gone)}",
+            f"символам, а в этом запуске их нет: {names}",
             "сбор по ним прекращён — если это не нарочно, остановите и "
             "перезапустите без --symbols (список по умолчанию в коде)"]
 
