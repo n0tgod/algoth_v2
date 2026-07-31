@@ -436,7 +436,7 @@ class Collector:
         out.sort(key=lambda c: c[0])
         return {"sym": sym, "candles": out, "hours": len(hh)}
 
-    def recount(self, hours=24, start=True):
+    def recount(self, hours=24, start=True, sym=None):
         """Пересчитать ВСЕ прошлые входы под текущие правила.
 
         Владелец: «оставить ту же точку входа, но поменять стоп и цель —
@@ -460,13 +460,26 @@ class Collector:
                        "total": len(self.symbols), "at": 0})
             threading.Thread(target=self._recount_job, args=(hours,),
                              daemon=True).start()
-        return {"busy": st.get("busy", False), "done": st.get("done", 0),
-                "total": st.get("total", 0), "hours": st.get("hours"),
-                "at": st.get("at", 0), "ver": signals_version(),
-                "made": st.get("made", 0), "refused": st.get("refused", 0),
-                "stats": st.get("stats"), "by_rule": st.get("by_rule"),
-                "equity": st.get("equity") or [],
-                "took_sec": st.get("took_sec")}
+        rows = st.get("trades") or []
+        if sym:
+            # По одной монете: странице графика нужны её сделки, а не все.
+            rows = [t for t in rows if t.get("sym") == sym]
+        out = {"busy": st.get("busy", False), "done": st.get("done", 0),
+               "total": st.get("total", 0), "hours": st.get("hours"),
+               "at": st.get("at", 0), "ver": signals_version(),
+               "made": st.get("made", 0), "refused": st.get("refused", 0),
+               "took_sec": st.get("took_sec"),
+               "trades": sorted(rows, key=lambda t: -(t.get("closed_at")
+                                                      or t.get("t") or 0))}
+        if sym:
+            out["stats"] = paper.summary(rows)
+            out["by_rule"] = paper.by_rule(rows)
+            out["equity"] = paper.equity(rows)
+        else:
+            out["stats"] = st.get("stats")
+            out["by_rule"] = st.get("by_rule")
+            out["equity"] = st.get("equity") or []
+        return out
 
     def _recount_job(self, hours):
         import replay as R
@@ -485,7 +498,8 @@ class Collector:
                 made += len(cr)
                 refused += rf
                 self.rec["done"] = i
-            self.rec.update({"stats": paper.summary(allt),
+            self.rec.update({"trades": allt,
+                             "stats": paper.summary(allt),
                              "by_rule": paper.by_rule(allt),
                              "equity": paper.equity(allt),
                              "made": made, "refused": refused,

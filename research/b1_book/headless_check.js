@@ -102,11 +102,22 @@ const hist = {sym: "BTCUSDT", symbols: ["BTCUSDT"], count: 2,
                       share_time: 0.0, cut_by_restart: 1},
              };
 
+// Встречный счёт: те же входы, другая геометрия. Опознаётся по номеру
+// сделки — так видно, подменила ли страница показанное, а не только
+// напечатала ли отчёт.
+const recTrade = i => Object.assign(trade(i, true),
+  {id: "rec-" + i, stop: 64500, target: 65100, stop_bp: 31.0, rr: 4.0});
+const recount = {busy: false, done: 2, total: 2, hours: 24, at: T0, ver: 3,
+                 made: 5, refused: 1, took_sec: 2.0,
+                 trades: [recTrade(1), recTrade(2)], stats: hist.stats,
+                 by_rule: hist.by_rule, equity: hist.equity};
+
 let full = true, calls = 0;
 const seen = [];
 global.fetch = async (url) => {
   calls++; seen.push(url);
   const body = url.startsWith("/trades") ? hist
+             : url.startsWith("/recount") ? recount
              : url.startsWith("/candles")
                ? {sym: "BTCUSDT", candles: candles(1440), hours: 24}
                : state(full, 60);
@@ -123,7 +134,12 @@ process.on("unhandledRejection", e => {
 new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? tick : pull;\nglobal.__st = ST;"
                 + "\nglobal.__cands = typeof cands === 'function' "
-                + "? cands : null;")();
+                + "? cands : null;"
+                + "\nglobal.__rec = typeof pullRec === 'function' "
+                + "? pullRec : null;"
+                + "\nglobal.__REC = typeof REC !== 'undefined' ? REC : null;"
+                + "\nglobal.__shown = typeof shown === 'function' "
+                + "? shown : null;")();
 (async () => {
   const step = global.__step;
   // Первый кадр отдан самой страницей при загрузке; ждём его, затем
@@ -161,6 +177,27 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     bad.push(`склейка потеряла историю: осталось ${buf ? buf.length : "—"}`);
   if (st.cand && st.cand.length && st.cand.length < 50)
     bad.push(`свечи склеились неверно: ${st.cand.length}`);
+  // Встречный счёт обязан ПОДМЕНИТЬ показанные сделки, а не приписать
+  // строчку отчёта: владелец просил видеть пересчитанные стоп и цель на
+  // графике и в таблице. Отчёт при пустом графике — отказ, неотличимый
+  // от исправной страницы.
+  if (!global.__rec || !global.__REC || !global.__shown) {
+    bad.push("на странице нет переключателя встречного счёта");
+  } else {
+    const wasN = global.__shown().trades.length;
+    global.__REC.on = true;
+    await global.__rec(true);
+    if (!seen.some(u => u.startsWith("/recount")))
+      bad.push("встречный счёт не запрошен (/recount)");
+    const tr = global.__shown().trades;
+    if (!tr.length || !tr.every(m => String(m.id || "").startsWith("rec-")))
+      bad.push(`встречный счёт не подменил сделки: показано ${tr.length}, `
+               + `было ${wasN}`);
+    global.__REC.on = false;
+    const back = global.__shown().trades;
+    if (back.some(m => String(m.id || "").startsWith("rec-")))
+      bad.push("после выключения на странице остались пересчитанные сделки");
+  }
   if (bad.length) { console.error("ПАДЕНИЕ: " + bad.join("; "));
                     process.exit(1); }
   console.log(`логика страницы отработала без ошибок, запросов ${calls}, `

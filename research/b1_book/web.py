@@ -356,12 +356,24 @@ async function pullAll() {
   renderAll();
 }
 
+// Источник сделок для всей панели сразу: либо настоящие исходы, либо
+// встречный счёт. Одна точка выбора, потому что таблица по пересчёту и
+// сводка по факту — это два разных счёта в одной картинке.
+function shown() {
+  const d = recReady();
+  return d ? {trades: d.trades || [], stats: d.stats,
+              by_rule: d.by_rule || {}, by_ver: [], ver: d.ver,
+              equity: d.equity || [], older: 0, rec: true} : ALL;
+}
+
 function renderAll() {
   const pc = v => (v*100).toFixed(0) + " %";
-  const s = ALL.stats;
+  const A = shown(), s = A.stats;
   document.getElementById("cap-all").textContent =
-    `${ALL.trades.length} сделок всего`
-    + (ALL.older ? ` · ${ALL.older} по прежним правилам, вне статистики` : "");
+    `${A.trades.length} сделок всего`
+    + (A.rec ? " · встречный счёт, не факт"
+             : ALL.older
+               ? ` · ${ALL.older} по прежним правилам, вне статистики` : "");
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
   document.getElementById("sum2").innerHTML = !s
@@ -380,10 +392,10 @@ function renderAll() {
       + cell("цель/стоп/время",
              `${pc(s.share_target)}/${pc(s.share_stop)}/${pc(s.share_time)}`)
       + (s.cut_by_restart ? cell("оборвано", s.cut_by_restart, "bad") : "");
-  const br = ALL.by_rule || {};
+  const br = A.by_rule || {};
   document.getElementById("rules2").innerHTML =
     `<div style="padding:7px 10px;font-size:12.5px;color:var(--muted)">`
-    + (verLine(ALL.by_ver, ALL.ver) ? verLine(ALL.by_ver, ALL.ver) + "<br>" : "")
+    + (verLine(A.by_ver, A.ver) ? verLine(A.by_ver, A.ver) + "<br>" : "")
     + (Object.keys(br).map(r => {
         const x = br[r];
         return x ? `<b>${r}</b>: ${x.trades} сд., побед ${pc(x.win_rate)} `
@@ -391,9 +403,9 @@ function renderAll() {
             x.expectancy_bp>0?"+":""}${x.expectancy_bp.toFixed(1)} б.п.`
           : `<b>${r}</b>: сделок нет`;
       }).join(" · ") || "&nbsp;") + `</div>`;
-  document.getElementById("alltr").innerHTML = ALL.trades.length
-    ? ALL.trades.slice(0, 60).map(x => `<tr ${
-        (x.ver || 1) !== ALL.ver
+  document.getElementById("alltr").innerHTML = A.trades.length
+    ? A.trades.slice(0, 60).map(x => `<tr ${
+        (x.ver || 1) !== A.ver
           ? 'style="opacity:.5" title="прежние правила — в статистику не идёт"'
           : ""}>
         <td class="mono" style="color:var(--muted)">${
@@ -412,7 +424,7 @@ function renderAll() {
 }
 
 function drawEqAll() {
-  const cv = document.getElementById("eq2"), pts = ALL.equity || [];
+  const cv = document.getElementById("eq2"), pts = shown().equity || [];
   const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 110;
   cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
   const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
@@ -441,9 +453,13 @@ function drawEqAll() {
 
 // Встречный пересчёт: те же входы, нынешняя геометрия. Отвечает на
 // вопрос «как изменилась бы вся статистика», а не «что было». Считается
-// в фоне на сервере — сутки по двум десяткам символов это минуты, — и
-// показывается ОТДЕЛЬНО от настоящих исходов: смешивать встречный счёт
-// с фактическим нельзя.
+// в фоне на сервере — сутки по двум десяткам символов это минуты.
+//
+// Пока он включён, ПОДМЕНЯЕТСЯ вся панель разом — сводка, кривая счёта,
+// таблица сделок, — а не приписывается строчкой отчёта. Показывать
+// таблицу по факту, а числа по пересчёту значило бы сложить два разных
+// счёта в одну картинку. Что перед глазами именно встречный счёт,
+// сказано в заголовке и подписью.
 const REC = {on:false, busy:false, data:null, timer:null};
 async function pullRec(go) {
   if (REC.busy) return;
@@ -454,37 +470,36 @@ async function pullRec(go) {
     if (r.ok) REC.data = await r.json();
   } catch (e) { /* тихо */ }
   finally { REC.busy = false; }
-  renderRec();
   if (REC.data && REC.data.busy && !REC.timer)
     REC.timer = setInterval(() => pullRec(false), 3000);
   if (REC.data && !REC.data.busy && REC.timer) {
     clearInterval(REC.timer); REC.timer = null;
   }
+  renderRec(); renderAll();
+}
+
+// Пересчёт годен к показу, только когда он досчитан: наполовину
+// собранный список сделок выглядит как готовый и врал бы числами.
+function recReady() {
+  return REC.on && REC.data && !REC.data.busy && REC.data.stats !== undefined
+    ? REC.data : null;
 }
 
 function renderRec() {
   const box = document.getElementById("recbox"), d = REC.data;
-  if (!REC.on || !d) { box.innerHTML = ""; return; }
-  const pc = v => (v*100).toFixed(0) + " %";
-  if (d.busy) {
+  if (!REC.on) { box.innerHTML = ""; return; }
+  if (!d || d.busy) {
     box.innerHTML = `<div class="note" style="padding:7px 10px">пересчитываю
-      те же входы под правила v${d.ver}: ${d.done} из ${d.total} монет…</div>`;
+      те же входы под текущие правила${
+        d ? `: ${d.done} из ${d.total} монет` : ""}…</div>`;
     return;
   }
-  const s = d.stats;
   box.innerHTML = `<div class="note" style="padding:7px 10px">`
-    + `<b>встречный счёт</b> (те же входы, правила v${d.ver}, `
-    + `${d.hours} ч, ${d.took_sec} с): `
-    + (s ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
-         + `${pc(s.break_even)}, ожидание ${s.expectancy_bp>0?"+":""}`
-         + `${s.expectancy_bp.toFixed(1)} б.п. (${s.expectancy_r>0?"+":""}`
-         + `${s.expectancy_r.toFixed(2)} R), стоп `
-         + `${s.stop_bp_median.toFixed(0)} б.п.`
-       : "закрытых сделок не вышло")
-    + ` · входов взято ${d.made}, отвергнуто ${d.refused}`
-    + `<br><span style="opacity:.8">это НЕ то, что было: цена шла та же, `
-    + `но сделка была бы другой. С настоящими исходами не смешивается.`
-    + `</span></div>`;
+    + `<b>встречный счёт</b>: ниже показаны НЕ настоящие исходы, а те же `
+    + `входы, проведённые по правилам v${d.ver} (окно ${d.hours} ч, счёт `
+    + `${d.took_sec} с). Цена шла та же, сделка была бы другой. `
+    + `Входов взято ${d.made}, отвергнуто новой геометрией ${d.refused}.`
+    + `</div>`;
 }
 
 // Диск: сколько занято, с какой скоростью растёт и надолго ли хватит.
@@ -620,8 +635,13 @@ tick(); timer = setInterval(tick, 1000);
 // выходы (обрыв связи, смена символа), и привязка к нему означала бы,
 // что панель молчит ровно тогда, когда что-то пошло не так.
 pullAll(); setInterval(pullAll, 15000);
-document.getElementById("rec").onclick = () => {
-  REC.on = true; pullRec(true);
+document.getElementById("rec").onclick = e => {
+  REC.on = !REC.on;
+  e.target.setAttribute("aria-pressed", String(REC.on));
+  e.target.textContent = REC.on ? "показать настоящие исходы"
+                                : "пересчитать все входы под текущие правила";
+  if (REC.on && !REC.data) pullRec(true);
+  else { renderRec(); renderAll(); }
 };
 </script>
 """
@@ -685,10 +705,12 @@ td:first-child,th:first-child{text-align:left}
   <h1 id="ttl" class="mono">…</h1>
   <span id="syms"></span>
   <span class="sp"></span>
+  <button id="rec" aria-pressed="false">встречный счёт</button>
   <button id="fit">весь период</button>
   <button id="live" aria-pressed="true">следить за краем</button>
   <a class="btn" href="/" id="home">к обзору</a>
 </div>
+<div id="recnote"></div>
 <div class="panel">
   <div class="cap"><span id="cap">минутные свечи · тяните, колесо или щипок — масштаб</span>
     <span id="cap2" class="mono"></span></div>
@@ -740,9 +762,66 @@ const HC = {sym:"", cand:[], busy:false, hours:24};
 // размере позиции, R — сколько при равном риске на сделку. Это разные
 // вопросы, поэтому переключатель, а не выбор раз и навсегда.
 let EQR = false;
+// Встречный счёт: те же входы, нынешняя геометрия. Пока включён,
+// подменяются ВСЕ панели разом — график, таблица, сводка, кривая, —
+// потому что владельцу нужно видеть не отчёт о пересчёте, а сами
+// сделки: где стоял бы стоп, куда уехала бы цель, чем кончилось бы.
+// Смешивать с настоящими исходами нельзя, поэтому это переключатель, а
+// не добавка, и включённое состояние подписано над графиком.
+const REC = {on:false, busy:false, data:null, timer:null, sym:""};
 function wipe() { ST.cand=[]; ST.since=0; HIST.trades=[]; HIST.stats=null;
                   HIST.by_rule={}; HIST.equity=[]; HIST.at=0;
-                  HC.sym=""; HC.cand=[]; }
+                  HC.sym=""; HC.cand=[]; REC.data=null; REC.sym=""; }
+
+async function pullRec(go) {
+  if (REC.busy || !sym) return;
+  REC.busy = true;
+  try {
+    const r = await fetch(`/recount?k=${encodeURIComponent(KEY)}`
+      + `&sym=${encodeURIComponent(sym)}&hours=24&go=${go ? 1 : 0}`);
+    if (r.ok) { REC.data = await r.json(); REC.sym = sym; }
+  } catch (e) { /* тихо: следующий круг попробует снова */ }
+  finally { REC.busy = false; }
+  if (REC.data && REC.data.busy && !REC.timer)
+    REC.timer = setInterval(() => pullRec(false), 3000);
+  if (REC.data && !REC.data.busy && REC.timer) {
+    clearInterval(REC.timer); REC.timer = null;
+  }
+  renderRec(); draw(); rows(); summary();
+}
+
+// Пересчёт годен к показу, только когда он досчитан и посчитан по ЭТОЙ
+// монете: чужой список сделок на чужом графике выглядел бы как сделки,
+// которых не было.
+function recReady() {
+  return REC.on && REC.data && !REC.data.busy && REC.sym === sym
+    ? REC.data : null;
+}
+
+function renderRec() {
+  const box = document.getElementById("recnote"), d = REC.data;
+  if (!REC.on) { box.innerHTML = ""; return; }
+  if (!d || d.busy) {
+    box.innerHTML = `<div class="panel"><div class="note">пересчитываю те же
+      входы под текущие правила${d ? `: ${d.done} из ${d.total} монет` : ""}…
+      </div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="panel"><div class="note">
+    <b>встречный счёт</b> — на странице показаны НЕ настоящие исходы, а те
+    же входы, проведённые по правилам v${d.ver} (окно ${d.hours} ч, счёт
+    ${d.took_sec} с). Цена шла та же, сделка была бы другой: стоп и цель
+    пересчитаны, значит и выход другой. Входов по всем монетам взято
+    ${d.made}, отвергнуто новой геометрией ${d.refused}.</div></div>`;
+}
+
+// Источник сделок и сводки для всех панелей сразу.
+function shown() {
+  const d = recReady();
+  return d ? {trades: d.trades || [], stats: d.stats,
+              by_rule: d.by_rule || {}, by_ver: [], ver: d.ver,
+              equity: d.equity || [], rec: true} : HIST;
+}
 
 async function pullHistory(s) {
   if (HC.busy || HC.sym === s) return;
@@ -809,6 +888,9 @@ async function pull() {
   data = d;
   history();
   pullHistory(d.sym);
+  // Смена монеты стирает пересчёт: он посчитан по другой. Тянем заново,
+  // иначе включённый переключатель показывал бы пустую таблицу.
+  if (REC.on && !REC.data && !REC.busy) pullRec(true);
   sym = data.sym;
   document.getElementById("ttl").textContent = sym;
   document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
@@ -834,6 +916,11 @@ function cands() {
 function trades() {
   // История берётся из отдельного запроса: в состоянии лежат только
   // последние двадцать закрытых, чтобы не гонять сотни каждую секунду.
+  const d = recReady();
+  // Встречный счёт заменяет список целиком, вместе с открытыми: у
+  // открытой сделки исхода ещё нет, и подмешать её к пересчитанным
+  // значило бы смешать факт с пересчётом в одной таблице.
+  if (d) return d.trades || [];
   const sg = (data && data.sig) || {};
   return (sg.open||[]).concat(
     HIST.trades.length ? HIST.trades : (sg.done||[]));
@@ -957,10 +1044,12 @@ function draw() {
   // свечи и нарисована быть не может. Молчать об этом нельзя: в
   // таблице их видно, на графике нет, и это читается как пропажа.
   const first = c[0][0], last = c[c.length-1][0];
+  const S = shown();
   const off = tr.filter(m => m.t < first || m.t > last).length;
-  const old = tr.filter(m => (m.ver || 1) !== HIST.ver).length;
+  const old = tr.filter(m => (m.ver || 1) !== S.ver).length;
   document.getElementById("cap3").textContent =
-    `${tr.length} сделок` + (off ? ` · ${off} вне окна графика` : "")
+    `${tr.length} сделок` + (S.rec ? " · встречный счёт, не факт" : "")
+    + (off ? ` · ${off} вне окна графика` : "")
     + (old ? ` · ${old} по прежним правилам` : "");
 }
 
@@ -1005,7 +1094,7 @@ function verLine(list, cur) {
 
 
 function summary() {
-  const s = HIST.stats, box = document.getElementById("sum");
+  const S = shown(), s = S.stats, box = document.getElementById("sum");
   const pc = v => (v*100).toFixed(0) + " %";
   if (!s) {
     box.innerHTML = `<div class="note">закрытых сделок пока нет</div>`;
@@ -1035,7 +1124,7 @@ function summary() {
   // По правилам отдельно: «лента» — то же, что мерили T3 и T4, и она
   // здесь контрольная рука. Сравнивать новое правило надо с ней на
   // одном периоде, а не с числами старого отчёта.
-  const br = HIST.by_rule || {};
+  const br = S.by_rule || {};
   const line = Object.keys(br).map(r => {
     const x = br[r];
     return x ? `<b>${r}</b>: ${x.trades} сд., побед ${
@@ -1045,14 +1134,14 @@ function summary() {
       x.expectancy_r > 0 ? "+" : ""}${x.expectancy_r.toFixed(2)} R)`
       : `<b>${r}</b>: сделок нет`;
   }).join(" · ");
-  const vl = verLine(HIST.by_ver, HIST.ver);
+  const vl = verLine(S.by_ver, S.ver);
   document.getElementById("rules").innerHTML =
     `<div class="note">${vl ? vl + "<br>" : ""}${line || "&nbsp;"}</div>`;
   drawEq();
 }
 
 function drawEq() {
-  const cv = document.getElementById("eq"), pts = HIST.equity || [];
+  const cv = document.getElementById("eq"), pts = shown().equity || [];
   const dpr = Math.min(devicePixelRatio||1, 2), W = cv.clientWidth, H = 110;
   cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
   const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
@@ -1155,6 +1244,13 @@ document.getElementById("live").onclick = e => {
 document.getElementById("unit").onclick = e => {
   EQR = !EQR; e.target.textContent = EQR ? "в б.п." : "в R"; drawEq();
 };
+document.getElementById("rec").onclick = e => {
+  REC.on = !REC.on;
+  e.target.setAttribute("aria-pressed", String(REC.on));
+  e.target.textContent = REC.on ? "показать факт" : "встречный счёт";
+  if (REC.on && !REC.data) pullRec(true);
+  else { renderRec(); draw(); rows(); summary(); }
+};
 window.addEventListener("resize", () => { draw(); drawEq(); });
 pull(); setInterval(pull, 1000);
 </script>
@@ -1232,7 +1328,8 @@ def serve(collector, port, token, log):
                     n = 24
                 go = q.get("go", ["1"])[0] not in ("0", "false", "")
                 return self._ok(json.dumps(
-                    collector.recount(max(1, min(n, 72)), start=go),
+                    collector.recount(max(1, min(n, 72)), start=go,
+                                      sym=q.get("sym", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/candles":
