@@ -334,7 +334,8 @@ function render(d) {
 // пятнадцать секунд: история меняется раз в минуты, а опрос идёт раз в
 // секунду, и возить её вместе с состоянием значит платить за неё
 // каждую секунду.
-const ALL = {trades:[], stats:null, by_rule:{}, equity:[], at:0, busy:false};
+const ALL = {trades:[], stats:null, by_rule:{}, equity:[], at:0,
+             busy:false, older:0, ver:null};
 async function pullAll() {
   if (ALL.busy || Date.now() - ALL.at < 15000) return;
   ALL.busy = true;
@@ -344,6 +345,7 @@ async function pullAll() {
     const h = await r.json();
     ALL.trades = h.trades || []; ALL.stats = h.stats;
     ALL.by_rule = h.by_rule || {}; ALL.equity = h.equity || [];
+    ALL.older = h.older || 0; ALL.ver = h.ver;
     ALL.at = Date.now();
   } catch (e) { /* тихо: следующий круг попробует снова */ }
   finally { ALL.busy = false; }
@@ -354,7 +356,8 @@ function renderAll() {
   const pc = v => (v*100).toFixed(0) + " %";
   const s = ALL.stats;
   document.getElementById("cap-all").textContent =
-    `${ALL.trades.length} сделок всего`;
+    `${ALL.trades.length} сделок всего`
+    + (ALL.older ? ` · ${ALL.older} по прежним правилам, вне статистики` : "");
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
   document.getElementById("sum2").innerHTML = !s
@@ -384,7 +387,10 @@ function renderAll() {
           : `<b>${r}</b>: сделок нет`;
       }).join(" · ") || "&nbsp;") + `</div>`;
   document.getElementById("alltr").innerHTML = ALL.trades.length
-    ? ALL.trades.slice(0, 60).map(x => `<tr>
+    ? ALL.trades.slice(0, 60).map(x => `<tr ${
+        (x.ver || 1) !== ALL.ver
+          ? 'style="opacity:.5" title="прежние правила — в статистику не идёт"'
+          : ""}>
         <td class="mono" style="color:var(--muted)">${
           new Date(x.t*1000).toISOString().slice(5,16).replace("T"," ")}</td>
         <td class="mono">${(x.sym||"").replace("USDT","")}</td>
@@ -674,7 +680,8 @@ async function history() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     const h = await r.json();
     HIST.trades = h.trades || []; HIST.stats = h.stats;
-    HIST.by_rule = h.by_rule || {};
+    HIST.by_rule = h.by_rule || {}; HIST.older = h.older || 0;
+    HIST.ver = h.ver;
     HIST.equity = h.equity || []; HIST.at = Date.now();
   } catch (e) { /* тихо: следующий круг попробует снова */ }
   finally { HIST.busy = false; }
@@ -849,8 +856,10 @@ function draw() {
   // таблице их видно, на графике нет, и это читается как пропажа.
   const first = c[0][0], last = c[c.length-1][0];
   const off = tr.filter(m => m.t < first || m.t > last).length;
+  const old = tr.filter(m => (m.ver || 1) !== HIST.ver).length;
   document.getElementById("cap3").textContent =
-    `${tr.length} сделок` + (off ? ` · ${off} вне окна графика` : "");
+    `${tr.length} сделок` + (off ? ` · ${off} вне окна графика` : "")
+    + (old ? ` · ${old} по прежним правилам` : "");
 }
 
 function rows() {

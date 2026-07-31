@@ -69,7 +69,7 @@ OUT = os.path.join(HERE, "out")
 sys.path.insert(0, HERE)
 from book import BANDS, STORE_LADDER, Book, parse_trades                 # noqa: E402
 import paper                                              # noqa: E402
-from signals import Signals                               # noqa: E402
+from signals import RULES_VERSION, Signals                # noqa: E402
 from store import Writer, read_hour, read_jsonl            # noqa: E402
 import web                                                # noqa: E402
 
@@ -103,6 +103,11 @@ SAMPLE_SEC = 1
 STATUS_SEC = 5
 SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
            "ARBUSDT", "LINKUSDT", "AVAXUSDT")
+
+
+def signals_version():
+    """Текущая версия правил — одним местом, чтобы не разъехалась."""
+    return RULES_VERSION
 
 
 class LogBuf:
@@ -380,9 +385,16 @@ class Collector:
                 else [t for s in self.symbols for t in self.sig.history(s)])
         rows = sorted(rows, key=lambda t: -(t.get("closed_at")
                                             or t.get("t") or 0))
+        # Статистика — только по текущей версии правил. Подъём истории
+        # поднимает трое суток, и после правки геометрии в сводке
+        # смешались бы две: числа стали бы бессмысленными, оставшись на
+        # вид осмысленными. Старые сделки не удаляются, они видны в
+        # таблице и посчитаны отдельным числом.
+        cur = paper.current(rows, signals_version())
         return {"sym": sym, "symbols": self.symbols, "trades": rows,
-                "stats": paper.summary(rows), "by_rule": paper.by_rule(rows),
-                "equity": paper.equity(rows), "count": len(rows)}
+                "stats": paper.summary(cur), "by_rule": paper.by_rule(cur),
+                "equity": paper.equity(cur), "count": len(cur),
+                "ver": signals_version(), "older": len(rows) - len(cur)}
 
     def disk_view(self):
         """Диск в человеческих единицах, с запасом хода в сутках."""
