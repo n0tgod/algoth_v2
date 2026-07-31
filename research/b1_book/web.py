@@ -656,12 +656,31 @@ const stamp = t => new Date(t*1000).toISOString().slice(11,16);
 const ST = {cand:[], since:0, sym:"", busy:false, fails:0};
 const HIST = {trades:[], stats:null, by_rule:{}, equity:[], at:0,
               busy:false};
+// История свечей с диска: в памяти сборщика живут считанные часы, а
+// сделки поднимаются за трое суток — график обрывался там, где кончался
+// буфер, и прошлые сделки смотреть было не на чем. Тянется один раз на
+// символ, живые свечи ложатся поверх.
+const HC = {sym:"", cand:[], busy:false, hours:24};
 // Единица кривой счёта: базисные пункты — сколько денег при равном
 // размере позиции, R — сколько при равном риске на сделку. Это разные
 // вопросы, поэтому переключатель, а не выбор раз и навсегда.
 let EQR = false;
 function wipe() { ST.cand=[]; ST.since=0; HIST.trades=[]; HIST.stats=null;
-                  HIST.by_rule={}; HIST.equity=[]; HIST.at=0; }
+                  HIST.by_rule={}; HIST.equity=[]; HIST.at=0;
+                  HC.sym=""; HC.cand=[]; }
+
+async function pullHistory(s) {
+  if (HC.busy || HC.sym === s) return;
+  HC.busy = true;
+  try {
+    const r = await fetch(`/candles?k=${encodeURIComponent(KEY)}&sym=${s}`
+      + `&hours=${HC.hours}`);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const h = await r.json();
+    if (h.sym === s) { HC.cand = h.candles || []; HC.sym = s; draw(); }
+  } catch (e) { /* тихо: живые свечи всё равно рисуются */ }
+  finally { HC.busy = false; }
+}
 function mergeCandles(old, add) {
   if (!add.length) return old;
   const m = new Map(old.map(c => [c[0], c]));
@@ -713,6 +732,7 @@ async function pull() {
   ST.since = d.now || ST.since;
   data = d;
   history();
+  pullHistory(d.sym);
   sym = data.sym;
   document.getElementById("ttl").textContent = sym;
   document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
@@ -728,7 +748,13 @@ async function pull() {
   draw(); rows(); summary();
 }
 
-function cands() { return (data && data.sig && data.sig.candles) || []; }
+function cands() {
+  // История с диска снизу, живые свечи поверх: у текущей минуты живая
+  // версия свежее файловой, и она обязана победить.
+  const live = (data && data.sig && data.sig.candles) || [];
+  if (!HC.cand.length) return live;
+  return mergeCandles(HC.cand, live);
+}
 function trades() {
   // История берётся из отдельного запроса: в состоянии лежат только
   // последние двадцать закрытых, чтобы не гонять сотни каждую секунду.
@@ -1102,6 +1128,15 @@ def serve(collector, port, token, log):
                                        logn=num("logn", None)),
                     ensure_ascii=False).encode("utf-8")
                 return self._ok(body, "application/json; charset=utf-8")
+            if u.path == "/candles":
+                try:
+                    n = int(float(q.get("hours", ["12"])[0]))
+                except ValueError:
+                    n = 12
+                return self._ok(json.dumps(
+                    collector.candles_files(q.get("sym", [None])[0], n),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
             if u.path == "/trades":
                 return self._ok(json.dumps(
                     collector.trades(q.get("sym", [None])[0]),

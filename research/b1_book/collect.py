@@ -105,6 +105,31 @@ SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
            "ARBUSDT", "LINKUSDT", "AVAXUSDT")
 
 
+def minute_bars(rows):
+    """Сделки -> минутные свечи `[t, o, h, l, c, объём]`.
+
+    Минута без сделок отсутствует, а не выходит нулевой: пустой бар —
+    пропуск, а не наблюдение с нулевым объёмом (урок A2).
+    """
+    by = {}
+    for r in rows:
+        try:
+            t = int(r["ts"] // 60000) * 60
+            p = float(r["p"])
+            v = float(r["v"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        c = by.get(t)
+        if c is None:
+            by[t] = [t, p, p, p, p, p * v]
+        else:
+            c[2] = max(c[2], p)
+            c[3] = min(c[3], p)
+            c[4] = p
+            c[5] += p * v
+    return [by[k] for k in sorted(by)]
+
+
 def signals_version():
     """Текущая версия правил — одним местом, чтобы не разъехалась."""
     return RULES_VERSION
@@ -154,6 +179,7 @@ class Collector:
         self.live = set()
         self.disk = {}
         self.samples = deque(maxlen=90)   # (момент, байт)
+        self.ccache = {}                  # свечи закрытых часов
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -373,6 +399,40 @@ class Collector:
                                round(time.time() - self.last_msg, 1)
                                if self.last_msg else None),
                            "disk": self.disk_view()}}
+
+    def candles_files(self, sym, hours=12):
+        """Минутные свечи из записей — история глубже памяти сборщика.
+
+        В памяти живут несколько часов посекундной истории, а сделки
+        поднимаются за трое суток: график обрывался там, где кончался
+        буфер, и прошлые сделки посмотреть было не на чем.
+
+        Закрытый час неизменен, поэтому его свечи считаются один раз и
+        кладутся в память. Текущий час пересчитывается каждый запрос —
+        он ещё дописывается.
+        """
+        sym = sym if sym in self.books else self.symbols[0]
+        now = time.time()
+        hh = [datetime.fromtimestamp(now - i * 3600, timezone.utc)
+              .strftime("%Y-%m-%d-%H")
+              for i in range(int(max(1, min(hours, 72))), -1, -1)]
+        cur = self.w.hour(now)
+        out = []
+        for h in hh:
+            key = (sym, h)
+            got = self.ccache.get(key)
+            if got is None or h == cur:
+                rows = read_hour(os.path.join(self.w.root, "trades", sym), h)
+                got = minute_bars(rows)
+                if h != cur:
+                    self.ccache[key] = got
+                    # Кэш ограничен: символов много, а часов копится.
+                    if len(self.ccache) > 4000:
+                        for k in list(self.ccache)[:1000]:
+                            self.ccache.pop(k, None)
+            out += got
+        out.sort(key=lambda c: c[0])
+        return {"sym": sym, "candles": out, "hours": len(hh)}
 
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.

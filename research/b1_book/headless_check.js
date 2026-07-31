@@ -14,6 +14,7 @@
 const fs = require("fs");
 const src = fs.readFileSync(process.argv[2], "utf8");
 const js = src.match(/<script>\n([\s\S]*)<\/script>/)[1];
+const isChart = /id="px"/.test(src);
 
 const ctx = new Proxy({}, { get: (t, k) => {
   if (k === "canvas") return { clientWidth: 900 };
@@ -96,7 +97,10 @@ let full = true, calls = 0;
 const seen = [];
 global.fetch = async (url) => {
   calls++; seen.push(url);
-  const body = url.startsWith("/trades") ? hist : state(full, 60);
+  const body = url.startsWith("/trades") ? hist
+             : url.startsWith("/candles")
+               ? {sym: "BTCUSDT", candles: candles(1440), hours: 24}
+               : state(full, 60);
   return {ok: true, json: async () => body};
 };
 
@@ -108,7 +112,9 @@ process.on("unhandledRejection", e => {
 // Точка такта живёт внутри области видимости страницы, поэтому её надо
 // вынести наружу явно — иначе проверялся бы только запуск.
 new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
-                + "? tick : pull;\nglobal.__st = ST;")();
+                + "? tick : pull;\nglobal.__st = ST;"
+                + "\nglobal.__cands = typeof cands === 'function' "
+                + "? cands : null;")();
 (async () => {
   const step = global.__step;
   // Первый кадр отдан самой страницей при загрузке; ждём его, затем
@@ -130,6 +136,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     bad.push("страница не запросила состояние");
   if (!seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
+  // График обязан достроить историю свечей с диска: без неё он
+  // обрывается там, где кончается память сборщика, и прошлые сделки
+  // смотреть не на чем.
+  if (isChart && !seen.some(u => u.startsWith("/candles")))
+    bad.push("график не запросил историю свечей (/candles)");
+  if (isChart && global.__cands) {
+    const all = global.__cands();
+    if (all.length <= (st.cand || []).length)
+      bad.push(`история свечей не подмешалась: ${all.length} против живых `
+               + `${(st.cand || []).length}`);
+  }
   const buf = st.mid && st.mid.length ? st.mid : st.cand;
   if (!buf || buf.length < 50)
     bad.push(`склейка потеряла историю: осталось ${buf ? buf.length : "—"}`);
