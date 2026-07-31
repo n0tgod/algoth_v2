@@ -464,6 +464,47 @@ def calibrate(tr, secs=None):
     return b, a
 
 
+def test_open_trade_is_visible_but_not_counted():
+    """Открытая позиция обязана быть видна и обязана не считаться.
+
+    Дефект, который это ловит: `history()` отдавала только закрытые
+    сделки, поэтому позиция, которую детектор держит прямо сейчас, не
+    попадала ни в таблицу, ни на график. В журнале «сигнал», в счётчике
+    единица, на диске запись — на странице пусто. Со стороны владельца
+    это неотличимо от «сделок не находится», и ровно так он и прочитал.
+
+    Обратная половина не менее важна: у открытой сделки выхода ещё не
+    было, и посчитать её нулём значило бы разбавить ожидание выдумкой —
+    та же причина, по которой не считаются оборванные перезапуском.
+    """
+    import paper
+    import signals as SG
+
+    live = SG.Live("TEST")
+    closed = {"id": "TEST-1", "t": 1.0, "sym": "TEST", "rule": "лента",
+              "state": "стоп", "pnl_bp": -20.0, "r": -1.0, "ver": 5,
+              "stop_bp": 20.0, "rr": 2.0, "held": 60}
+    opened = {"id": "TEST-2", "t": 2.0, "sym": "TEST", "rule": "лента",
+              "state": "открыта", "pnl_bp": 0.0, "r": 0.0, "ver": 5,
+              "stop_bp": 20.0, "rr": 2.0, "held": 0}
+    live.done.appendleft(closed)
+    live.open.append(opened)
+    sig = SG.Signals(["TEST"])
+    sig.by["TEST"] = live
+
+    rows = sig.history("TEST")
+    ids = {r["id"] for r in rows}
+    check(f"открытая сделка видна ({len(rows)} строк)", "TEST-2" in ids,
+          str(ids))
+    check("закрытая на месте", "TEST-1" in ids, str(ids))
+    fin = paper.finished(rows)
+    check(f"в статистику идёт только закрытая ({len(fin)})",
+          [f["id"] for f in fin] == ["TEST-1"], str([f["id"] for f in fin]))
+    s = paper.summary(paper.current(rows, 5))
+    check(f"ожидание считано по одной сделке ({s.get('trades')})",
+          s.get("trades") == 1, str(s))
+
+
 def test_book_absorption_needs_all_five():
     """Поглощение — пять условий сразу, и каждое обязано уметь отказать.
 
@@ -1248,6 +1289,7 @@ def main():
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
     print("поглощение в стакане")
+    test_open_trade_is_visible_but_not_counted()
     test_book_absorption_needs_all_five()
     test_gate_fires_equally_on_smooth_and_lumpy_books()
     test_level_out_of_reach_is_never_a_candidate()
