@@ -239,7 +239,7 @@ def forward_residual(close, r, elig, beta, h):
 
 
 def feature_pack(close, turnover, traded_share, elig,
-                 fund_bp=None, fund_cnt=None, oi_usd=None):
+                 fund_bp=None, fund_cnt=None, oi_usd=None, age_days=None):
     """Все признаки спеки §4 разом: `{имя: матрица (символы, дни)}`.
 
     Одна точка сборки, чтобы тест на заглядывание проверял ВСЕ признаки
@@ -276,6 +276,11 @@ def feature_pack(close, turnover, traded_share, elig,
             f["oi_turn"] = oi_usd / turn_med
         f["d_oi_1"] = rel_change(oi_usd, 1)
         f["d_oi_7"] = rel_change(oi_usd, 7)
+    if age_days is not None:
+        # Возраст листинга (§4 п. 7 спеки 07) — в годах. Признак был
+        # упущен первой сборкой и добавлен ДО первого прогона модели:
+        # после просмотра результатов это была бы новая итерация.
+        f["age"] = age_days / 365.25
 
     for k, v in f.items():
         v[~np.isfinite(v)] = np.nan

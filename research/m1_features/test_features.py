@@ -49,12 +49,14 @@ def synth(S=24, D=140, gap=None):
     fund_bp = rng.normal(1.0, 3.0, (S, D))
     fund_cnt = np.full((S, D), 3.0)
     oi = np.abs(rng.normal(5e6, 1e6, (S, D)))
-    return close, turn, traded, elig, fund_bp, fund_cnt, oi
+    age = np.arange(D, dtype=float)[None, :] + 400.0 + \
+        np.arange(S, dtype=float)[:, None]
+    return close, turn, traded, elig, fund_bp, fund_cnt, oi, age
 
 
 def pack(data):
-    c, tu, tr, e, fb, fc, oi = data
-    return F.feature_pack(c, tu, tr, e, fb, fc, oi)
+    c, tu, tr, e, fb, fc, oi, age = data
+    return F.feature_pack(c, tu, tr, e, fb, fc, oi, age_days=age)
 
 
 def mutate_after(data, t0):
@@ -159,6 +161,16 @@ def test_funding_day_aggregation():
     check("частота посчитана", cnt[0] == 3 and cnt[1] == 1, str(cnt))
     check("день без начислений — NaN, не ноль",
           np.isnan(bp[2]) and cnt[2] == 0, str(bp[2]))
+
+
+def test_age_is_linear_in_time():
+    data = synth()
+    a = pack(data)
+    d = a["age"][0, 100] - a["age"][0, 99]
+    check("возраст растёт на день за день",
+          abs(d - 1.0 / 365.25) < 1e-12, str(d))
+    check("возраст в годах, не в днях",
+          abs(a["age"][0, 0] - 400.0 / 365.25) < 1e-9, str(a["age"][0, 0]))
 
 
 def test_oi_respects_publication_lag():

@@ -291,10 +291,19 @@ def main():
             n_oi += 1
         log(f"открытый интерес: рядов {n_oi}")
 
+    # Возраст листинга — из справочника универсума, а не из матрицы цен:
+    # матрица начинается с a.start, и «первый бар в матрице» занизил бы
+    # возраст всем, кто листингован раньше окна, причём всем одинаково.
+    age_days = np.empty((len(assets), n_days))
+    drng = np.arange(n_days, dtype=float)
+    for i, aname in enumerate(assets):
+        listed = (day0 - date.fromisoformat(crypto[aname]["listed"])).days
+        age_days[i] = drng + listed
+
     # Этап 2 — признаки и цели.
     t3 = time.time()
     feats = F.feature_pack(close, turn, traded_share, elig,
-                           fund_bp, fund_cnt, oi_usd)
+                           fund_bp, fund_cnt, oi_usd, age_days=age_days)
     r = F.daily_returns(close)
     targets, fwd_raw = {}, {}
     for h in F.HORIZONS:
