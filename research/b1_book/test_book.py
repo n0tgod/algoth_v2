@@ -436,6 +436,50 @@ def test_two_rules_run_side_by_side():
     check("tick принимает книги", isinstance(op, list) and isinstance(cl, list))
 
 
+def test_stop_goes_behind_structure_not_inside_noise():
+    """Стоп обязан стоять за экстремумом и накоплением, а не в шуме.
+
+    На живом потоке прежнее правило «уровень минус один шум» дало 5
+    базисных пунктов при круге издержек 11: в тихие часы минутная свеча
+    ходит 4–5 б.п., и стоп снимался внутри одной обычной свечи.
+    Владелец увидел это на графике FILUSDT — два входа у самого дна
+    выбиты, хотя цена потом прошла всё расстояние до цели.
+    """
+    import numpy as np
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "t4_structure"))
+    import levels as LV
+
+    # Минутные бары: цена у 0.7075, локальный минимум окна 0.7053.
+    n = 30
+    H = np.full(n, 0.7080)
+    L = np.full(n, 0.7072)
+    L[10] = 0.7053                                  # тот самый прокол вниз
+    lv = np.array([0.7070, 0.7136])                 # накопления
+    noise = 0.00003                                 # ~4 б.п. на 0.7075
+    entry = 0.7075
+
+    got = LV.structural_stop(H, L, lv, entry, True, noise)
+    check("стоп нашёлся", got is not None, str(got))
+    stop, why = got
+    bp = (entry - stop) / entry * 1e4
+    check(f"стоп за экстремумом ({bp:.0f} б.п., задан: {why})",
+          stop < 0.7053 and bp > 25, f"{stop} {bp}")
+    check("и это именно экстремум, а не накопление", why == "экстремум", why)
+    old = 0.7070 - 1.0 * noise                      # как было раньше
+    check(f"прежний стоп был бы {(entry-old)/entry*1e4:.0f} б.п.",
+          (entry - old) / entry * 1e4 < 10, str(old))
+
+    # Зеркально для шорта.
+    got = LV.structural_stop(H, L, lv, 0.7075, False, noise)
+    stop, why = got
+    check(f"шорт: стоп над экстремумом ({stop:.5f})", stop > 0.7080, str(stop))
+
+    # Экстремум по ту же сторону, что вход, стопом быть не может.
+    check("стоп ниже входа невозможен для шорта", stop > 0.7075, str(stop))
+    check("без шума не считается",
+          LV.structural_stop(H, L, lv, entry, True, float("nan")) is None)
+
+
 def test_rejected_subscription_is_not_silence():
     """Отклонённая подписка обязана назваться и не гасить остальные.
 
@@ -679,6 +723,8 @@ def main():
     test_book_absorption_needs_all_five()
     test_book_absorption_rejects_pulled_and_broken()
     test_two_rules_run_side_by_side()
+    print("геометрия стопа")
+    test_stop_goes_behind_structure_not_inside_noise()
     print("подписка")
     test_rejected_subscription_is_not_silence()
     print("бумажные сделки")

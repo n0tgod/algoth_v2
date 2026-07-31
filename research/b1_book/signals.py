@@ -136,6 +136,7 @@ class Live:
         self.sec = deque(maxlen=KEEP_SEC)      # (t, buy, sell, hi, lo, close)
         self.cur = None                        # накапливаемая секунда
         self.levels = ([], [], float("nan"), float("nan"))
+        self.frames = (None, None, None, None, None)
         self.levels_at = 0.0
         self.open = []                         # незакрытые бумажные сделки
         self.done = deque(maxlen=DONE_KEEP)
@@ -206,6 +207,7 @@ class Live:
         if a is None:
             return
         t, H, L, P, V = self.minute_frames(a)
+        self.frames = (t, H, L, P, V)
         n = len(t)
         # На живом потоке истории меньше суток, поэтому окно построения
         # равно тому, что накопилось; требование к минимуму — тоже.
@@ -287,7 +289,21 @@ class Live:
         сделке остаются теми же, что в замерах T3 и T4. Тогда разницу
         между правилами можно отнести к поводу, а не к другой сделке.
         """
-        stop = lvl - STOP_NOISE * noise if long else lvl + STOP_NOISE * noise
+        # Стоп за структурой, а не в долях шума. Прежний «уровень минус
+        # один шум» давал 5 б.п. при круге издержек 11 — стоп сидел
+        # внутри обычной минутной свечи. Долевой остаётся полом: он
+        # ставит стоп не ближе, чем раньше, но не ограничивает сверху.
+        base = lvl - STOP_NOISE * noise if long else lvl + STOP_NOISE * noise
+        why = "шум"
+        got = LV.structural_stop(self.frames[1], self.frames[2], px,
+                                 price, long, noise)
+        stop = base
+        if got is not None:
+            cand, why = got
+            if (long and cand < base) or (not long and cand > base):
+                stop = cand
+            else:
+                why = "шум"
         tgt = LV.ahead(px, price, long, STOP_NOISE * noise)
         if tgt is None:
             return None
@@ -306,6 +322,7 @@ class Live:
               "long": long, "entry": entry, "stop": stop,
               "target": tgt, "level": lvl, "kind": kind, "rule": rule,
               "stop_bp": round(stop_bp, 1), "rr": round(rr, 2),
+              "stop_by": why,
               "state": "открыта", "pnl_bp": 0.0, "r": 0.0,
               "held": 0, "exit": None, "closed_at": None}
         self.open.append(tr)

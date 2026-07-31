@@ -186,6 +186,52 @@ def build(t, H, L, P, V, now_i, prev_day_hl=None, recent_min=RECENT_MIN,
     return (np.asarray(px)[order], [kind[i] for i in order], noise, slow)
 
 
+def structural_stop(H, L, levels, entry, long, noise, lookback=RECENT_MIN,
+                    buf=0.25):
+    """Стоп за ближайшим экстремумом и за накоплением, а не в долях шума.
+
+    Прежняя версия ставила стоп на один шум за уровень, и на живом
+    потоке это дало **5 базисных пунктов при круге издержек 11**: в
+    тихие часы минутная свеча ходит 4–5 б.п., то есть стоп сидел внутри
+    одной обычной свечи и снимался до того, как идея успевала
+    выполниться. Владелец увидел это на графике FILUSDT: два входа у
+    самого дна выбиты, хотя цена потом прошла всё расстояние до цели.
+
+    Здесь стоп уходит за **обе** структуры сразу — за локальный
+    экстремум окна и за ближайшее накопление по ту сторону входа, — и
+    отступает ещё на долю шума, потому что ровно на экстремуме стоят
+    все и туда же метят. Если получившийся стоп велик настолько, что
+    отношение к цели перестаёт устраивать, сделка не открывается вовсе:
+    лучше пропустить, чем взять заведомо невозможную.
+
+    Возвращает `(цена стопа, чем задан)` либо `None`.
+    """
+    if not np.isfinite(noise) or noise <= 0 or not np.isfinite(entry):
+        return None
+    cands = []
+    w = (L if long else H)
+    if w is not None and len(w):
+        w = np.asarray(w[-lookback:], dtype=np.float64)
+        w = w[np.isfinite(w)]
+        if len(w):
+            cands.append((float(w.min()) if long else float(w.max()),
+                          "экстремум"))
+    if levels is not None and len(levels):
+        a = np.asarray(levels, dtype=np.float64)
+        beyond = a[a < entry] if long else a[a > entry]
+        if len(beyond):
+            cands.append((float(beyond.max()) if long else float(beyond.min()),
+                          "накопление"))
+    if not cands:
+        return None
+    # За обе структуры: берём ту, что дальше от входа.
+    edge, why = min(cands) if long else max(cands)
+    px = edge - buf * noise if long else edge + buf * noise
+    if (long and px >= entry) or (not long and px <= entry):
+        return None
+    return px, why
+
+
 def nearest(levels, kinds, price, tol):
     """Ближайший уровень к цене, если он в пределах `tol`."""
     if len(levels) == 0:
