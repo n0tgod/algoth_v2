@@ -509,14 +509,25 @@ def test_recount_runs_itself_and_merges_live():
     check(f"число дописанных названо ({c.n_live_merged})",
           c.n_live_merged == 1, str(c.n_live_merged))
 
-    # Сторож: нужен счёт или нет.
+    # Сторож: нужен счёт или нет. Третье условие — «старше запуска» —
+    # добавлено после первого прогона: без него сторож смотрел только на
+    # номер версии геометрии, а правки ДЕТЕКТОРА её не меняют, и
+    # четырёхчасовой пересчёт остался лежать как «свежий». Перезапуск и
+    # есть деплой: владелец перезапускает сервер, чтобы подхватить
+    # правки, значит считать надо заново.
+    started = 1000.0
+
     def need(rec):
-        return (not rec.get("at")) or rec.get("ver") != SG.RULES_VERSION
+        at = rec.get("at") or 0
+        return (not at) or rec.get("ver") != SG.RULES_VERSION \
+            or at < started
     check("без пересчёта — нужен", need({}))
     check("под другой версией — нужен",
-          need({"at": 1.0, "ver": SG.RULES_VERSION - 1}))
-    check("свежий под той же версией — не нужен",
-          not need({"at": 1.0, "ver": SG.RULES_VERSION}))
+          need({"at": 2000.0, "ver": SG.RULES_VERSION - 1}))
+    check("старше запуска процесса — нужен",
+          need({"at": 900.0, "ver": SG.RULES_VERSION}))
+    check("свежее запуска и под той же версией — не нужен",
+          not need({"at": 2000.0, "ver": SG.RULES_VERSION}))
 
 
 def test_open_trade_is_visible_but_not_counted():
