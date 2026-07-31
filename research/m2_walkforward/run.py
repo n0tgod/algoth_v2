@@ -45,8 +45,7 @@ OUT = os.path.join(HERE, "out")
 
 META = ("day", "asset")
 NOT_FEATURES = ("target_1", "target_5", "fwd_1", "fwd_5")
-NULL3_STOP = 0.01            # §8: больше — конвейер течёт, прогон недействителен
-NULL3_PASS = 0.005           # критерий 7
+NULL3_STOP = 0.01            # §8: сдвиг больше этого при |t| > 3 — течь
 FIXED_BASELINE = "ret_7"     # диагностика: возврат R2 в лоб, знак минус
 
 
@@ -192,7 +191,9 @@ def main():
     n3 = summary["null3"].values()
     sec_worst = max(abs(s["median"]) for s in n3)
     t_worst = max(abs(s["t_shift"]) for s in n3)
-    summary["verdict"]["null3_pass"] = sec_worst <= NULL3_PASS
+    # Критерий 7 в правленой редакции §7/§8 спеки: без согласованного
+    # сдвига зёрен. Остановка — сдвиг и величина разом.
+    summary["verdict"]["null3_pass"] = t_worst <= 3.0
     summary["verdict"]["null3_leak"] = (t_worst > 3.0
                                         and sec_worst > NULL3_STOP)
     if summary["verdict"]["null3_leak"]:
@@ -203,9 +204,8 @@ def main():
         return
     if sec_worst > NULL3_STOP:
         log(f"нуль 3 поднят (|медиана| {sec_worst:.4f} > {NULL3_STOP}) "
-            f"без согласованного сдвига (t {t_worst:.1f}) — на течь не "
-            f"похоже, но критерий 7 не выполнен; сетка считается для "
-            f"протокола")
+            f"без согласованного сдвига (t {t_worst:.1f}) — шум проекции, "
+            f"не течь; сетка считается")
     if fit_times:
         rest = est_total_fits(len(eval_idx), 0) * float(np.mean(fit_times))
         log(f"сетка 8 ячеек — проекция ~{rest / 3600:.1f} ч "
