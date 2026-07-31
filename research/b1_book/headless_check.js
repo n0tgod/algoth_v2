@@ -39,6 +39,13 @@ global.history = { replaceState: () => {} };
 global.window = { devicePixelRatio: 2, addEventListener: () => {},
                   history: global.history, location: global.location };
 global.getComputedStyle = () => ({ getPropertyValue: () => "#000000" });
+// Память страницы: в ней живёт состояние переключателя встречного счёта,
+// чтобы перезагрузка его не гасила. Заводится включённым — тогда
+// проверка заодно требует, чтобы страница САМА подтянула готовый счёт.
+const LS = new Map([["rec", "1"]]);
+global.localStorage = { getItem: k => (LS.has(k) ? LS.get(k) : null),
+                        setItem: (k, v) => LS.set(k, String(v)),
+                        removeItem: k => LS.delete(k) };
 global.devicePixelRatio = 2;
 global.setInterval = () => 0;          // такт даём сами, вручную
 global.requestAnimationFrame = f => f();
@@ -193,6 +200,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   if (!global.__rec || !global.__REC || !global.__table) {
     bad.push("на странице нет переключателя встречного счёта");
   } else {
+    // Переключатель был включён ДО загрузки (память страницы), значит
+    // страница обязана сама запросить готовый счёт — и запросить его
+    // словом «не начинай новый»: иначе каждое обновление запускало бы
+    // трёхминутный прогон заново, а это ровно то, на что жаловались.
+    if (!global.__REC.on)
+      bad.push("переключатель не пережил перезагрузку страницы");
+    const self = seen.filter(u => u.startsWith("/recount"));
+    if (!self.length)
+      bad.push("готовый пересчёт не запрошен при загрузке");
+    else if (!self.every(u => /go=0/.test(u)))
+      bad.push("загрузка страницы запускает новый пересчёт: " + self[0]);
     const wasN = global.__table().length;
     global.__REC.on = true;
     await global.__rec(true);

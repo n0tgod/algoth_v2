@@ -274,6 +274,51 @@ def test_warm_start_restores_history():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_recount_survives_restart():
+    """Встречный счёт переживает перезапуск сборщика.
+
+    Держали в памяти процесса — и после каждого перезапуска владельцу
+    приходилось гонять трёхминутный пересчёт заново ради тех же чисел.
+    Пишем на диск целиком и атомарно.
+
+    Версия правил хранится вместе с результатом: без неё поднятый файл
+    подписывался бы НЫНЕШНИМИ правилами, не будучи ими, — то есть после
+    любой правки геометрии страница показывала бы старый счёт как новый.
+    Это тот же класс ошибки, что отчёт R1, описывавший не тот прогон,
+    который его породил.
+    """
+    import shutil
+    import tempfile
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    try:
+        a = C.Collector(["TEST"], [], root, lambda m: None)
+        a.rec.update({"trades": [{"sym": "TEST", "pnl_bp": 7.0}],
+                      "made": 3, "refused": 2, "hours": 24, "ver": 42,
+                      "at": 1.0, "busy": True})
+        a.save_recount()
+
+        b = C.Collector(["TEST"], [], root, lambda m: None)
+        check("пересчёт поднялся с диска", len(b.rec.get("trades") or []) == 1)
+        check("счётчики целы", b.rec.get("made") == 3
+              and b.rec.get("refused") == 2)
+        check("«считается» не переживает перезапуск",
+              b.rec.get("busy") is False, str(b.rec.get("busy")))
+
+        out = b.recount(24, start=False)
+        check("версия отдаётся та, под которую считали", out["ver"] == 42,
+              str(out["ver"]))
+        check("расхождение версий названо", out["stale"] is True)
+        check("нынешняя версия рядом", out["now_ver"] == C.signals_version())
+
+        # Пустой каталог не роняет запуск и не выдумывает результата.
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        check("без файла пересчёта сборщик поднимается", c.rec == {})
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_collected_symbols_are_not_lost():
     """Состав сбора не теряет монет, по которым уже собраны ряды.
 
@@ -1039,6 +1084,7 @@ def main():
     test_warm_start_survives_truncated_file()
     test_shrunken_run_announces_dropped_symbols()
     test_collected_symbols_are_not_lost()
+    test_recount_survives_restart()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

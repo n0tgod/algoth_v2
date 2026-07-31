@@ -199,7 +199,12 @@ class Collector:
         self.disk = {}
         self.samples = deque(maxlen=90)   # (момент, байт)
         self.ccache = {}                  # свечи закрытых часов
-        self.rec = {}                     # встречный пересчёт
+        # Встречный пересчёт живёт на ДИСКЕ, а не только в памяти.
+        # Держали в памяти — и он пропадал при каждом перезапуске
+        # сборщика, а на странице гас при каждой перезагрузке: владельцу
+        # приходилось гонять трёхминутный счёт заново, чтобы увидеть то
+        # же самое. Считаем один раз, дальше читаем.
+        self.rec = self.load_recount()
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -454,6 +459,35 @@ class Collector:
         out.sort(key=lambda c: c[0])
         return {"sym": sym, "candles": out, "hours": len(hh)}
 
+    def rec_path(self):
+        return os.path.join(self.w.root, "recount.json")
+
+    def load_recount(self):
+        """Поднять сохранённый пересчёт. Отказ не вправе ронять сбор."""
+        try:
+            with open(self.rec_path(), encoding="utf-8") as f:
+                st = json.load(f)
+        except Exception:                                 # noqa: BLE001
+            return {}
+        st["busy"] = False        # процесс, считавший его, давно умер
+        return st
+
+    def save_recount(self):
+        """Записать пересчёт целиком и атомарно.
+
+        Через временный файл: обрыв посреди записи оставил бы огрызок,
+        который при следующем запуске разобрался бы как «пересчёта нет»
+        либо, хуже, как неполный, — а по нему не отличить одно от
+        другого. Тот же приём, что при сжатии часа.
+        """
+        tmp = self.rec_path() + ".tmp"
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(self.rec, f, ensure_ascii=False)
+            os.replace(tmp, self.rec_path())
+        except Exception as e:                            # noqa: BLE001
+            self.log(f"пересчёт не сохранён: {type(e).__name__}: {e}")
+
     def recount(self, hours=24, start=True, sym=None):
         """Пересчитать ВСЕ прошлые входы под текущие правила.
 
@@ -483,9 +517,16 @@ class Collector:
         if sym:
             # По одной монете: странице графика нужны её сделки, а не все.
             rows = [t for t in rows if t.get("sym") == sym]
+        # Версия отдаётся ТА, ПОД КОТОРУЮ СЧИТАЛИ, а не текущая: иначе
+        # поднятый с диска пересчёт после правки геометрии подписывался
+        # бы нынешними правилами, не будучи ими. `stale` говорит об этом
+        # прямо, чтобы страница не молчала о расхождении.
+        made_ver = st.get("ver") or signals_version()
         out = {"busy": st.get("busy", False), "done": st.get("done", 0),
                "total": st.get("total", 0), "hours": st.get("hours"),
-               "at": st.get("at", 0), "ver": signals_version(),
+               "at": st.get("at", 0), "ver": made_ver,
+               "now_ver": signals_version(),
+               "stale": made_ver != signals_version(),
                "made": (one or st).get("made", 0),
                "refused": (one or st).get("refused", 0),
                "took_sec": st.get("took_sec"),
@@ -529,6 +570,10 @@ class Collector:
                              "equity": paper.equity(allt),
                              "made": made, "refused": refused,
                              "took_sec": round(time.time() - t0, 1),
+                             # Версия правил, под которую считали. Без неё
+                             # поднятый с диска пересчёт выдавал бы себя
+                             # за нынешний после любой правки геометрии.
+                             "ver": signals_version(),
                              "at": time.time()})
             self.log(f"пересчёт под правила v{signals_version()}: "
                      f"входов {made}, отвергнуто {refused}, "
@@ -536,6 +581,7 @@ class Collector:
         finally:
             signals.STRUCTURAL_STOP = keep
             self.rec["busy"] = False
+            self.save_recount()
 
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.

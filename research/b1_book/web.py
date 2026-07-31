@@ -460,7 +460,14 @@ function drawEqAll() {
 // таблицу по факту, а числа по пересчёту значило бы сложить два разных
 // счёта в одну картинку. Что перед глазами именно встречный счёт,
 // сказано в заголовке и подписью.
-const REC = {on:false, busy:false, data:null, timer:null};
+// Состояние переключателя переживает перезагрузку страницы. Держали
+// только в памяти — и каждое обновление гасило встречный счёт, а
+// владельцу приходилось запускать трёхминутный пересчёт заново ради тех
+// же чисел. Сам результат при этом лежит на сервере в файле, поэтому
+// восстановление бесплатно: просим `go=0`, то есть «отдай готовое, не
+// начинай новый».
+const REC = {on: localStorage.getItem("rec") === "1",
+             busy:false, data:null, timer:null};
 async function pullRec(go) {
   if (REC.busy) return;
   REC.busy = true;
@@ -495,6 +502,9 @@ function renderRec() {
     return;
   }
   box.innerHTML = `<div class="note" style="padding:7px 10px">`
+    + (d.stale ? `<b style="color:var(--ask)">пересчёт считан под правила `
+        + `v${d.ver}, а сейчас действуют v${d.now_ver}</b> — нажмите ещё раз, `
+        + `чтобы пересчитать под нынешние.<br>` : "")
     + `<b>встречный счёт</b>: ниже показаны НЕ настоящие исходы, а те же `
     + `входы, проведённые по правилам v${d.ver} (окно ${d.hours} ч, счёт `
     + `${d.took_sec} с). Цена шла та же, сделка была бы другой. `
@@ -648,14 +658,24 @@ tick(); timer = setInterval(tick, 1000);
 // выходы (обрыв связи, смена символа), и привязка к нему означала бы,
 // что панель молчит ровно тогда, когда что-то пошло не так.
 pullAll(); setInterval(pullAll, 15000);
-document.getElementById("rec").onclick = e => {
+function recButton() {
+  const b = document.getElementById("rec");
+  b.setAttribute("aria-pressed", String(REC.on));
+  b.textContent = REC.on ? "показать настоящие исходы"
+                         : "пересчитать все входы под текущие правила";
+}
+document.getElementById("rec").onclick = () => {
   REC.on = !REC.on;
-  e.target.setAttribute("aria-pressed", String(REC.on));
-  e.target.textContent = REC.on ? "показать настоящие исходы"
-                                : "пересчитать все входы под текущие правила";
+  localStorage.setItem("rec", REC.on ? "1" : "0");
+  recButton();
+  // Кнопка вправе ЗАПУСТИТЬ счёт (`go=1`); восстановление после
+  // перезагрузки — нет, иначе каждое обновление страницы гоняло бы
+  // трёхминутный прогон заново.
   if (REC.on && !REC.data) pullRec(true);
   else { renderRec(); renderAll(); }
 };
+recButton();
+if (REC.on) pullRec(false);
 </script>
 """
 
@@ -784,7 +804,9 @@ let EQR = false;
 // сделки: где стоял бы стоп, куда уехала бы цель, чем кончилось бы.
 // Смешивать с настоящими исходами нельзя, поэтому это переключатель, а
 // не добавка, и включённое состояние подписано над графиком.
-const REC = {on:false, busy:false, data:null, timer:null, sym:""};
+// Переключатель переживает перезагрузку — см. тот же приём на обзоре.
+const REC = {on: localStorage.getItem("rec") === "1",
+             busy:false, data:null, timer:null, sym:"", err:0};
 function wipe() { ST.cand=[]; ST.since=0; HIST.trades=[]; HIST.stats=null;
                   HIST.by_rule={}; HIST.equity=[]; HIST.at=0;
                   HC.sym=""; HC.cand=[]; REC.data=null; REC.sym=""; }
@@ -849,7 +871,10 @@ function renderRec() {
       </div></div>`;
     return;
   }
-  box.innerHTML = `<div class="panel"><div class="note">
+  box.innerHTML = `<div class="panel"><div class="note">`
+    + (d.stale ? `<b style="color:var(--ask)">пересчёт считан под правила
+        v${d.ver}, а сейчас действуют v${d.now_ver}</b> — нажмите ещё раз,
+        чтобы пересчитать под нынешние.<br>` : "") + `
     <b>встречный счёт</b> — на странице показаны НЕ настоящие исходы, а те
     же входы, проведённые по правилам v${d.ver} (окно ${d.hours} ч, счёт
     ${d.took_sec} с). Цена шла та же, сделка была бы другой: стоп и цель
@@ -945,9 +970,10 @@ async function pull() {
   data = d;
   history();
   pullHistory(d.sym);
-  // Смена монеты стирает пересчёт: он посчитан по другой. Тянем заново,
-  // иначе включённый переключатель показывал бы пустую таблицу.
-  if (REC.on && !REC.data && !REC.busy) pullRec(true);
+  // Смена монеты и перезагрузка страницы стирают пересчёт из памяти —
+  // но не с сервера. Просим готовое (`go=0`): запускать трёхминутный
+  // прогон при каждом открытии графика было бы издевательством.
+  if (REC.on && !REC.data && !REC.busy) pullRec(false);
   sym = data.sym;
   document.getElementById("ttl").textContent = sym;
   document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
@@ -1337,13 +1363,19 @@ document.getElementById("live").onclick = e => {
 document.getElementById("unit").onclick = e => {
   EQR = !EQR; e.target.textContent = EQR ? "в б.п." : "в R"; drawEq();
 };
-document.getElementById("rec").onclick = e => {
+function recButton() {
+  const b = document.getElementById("rec");
+  b.setAttribute("aria-pressed", String(REC.on));
+  b.textContent = REC.on ? "показать факт" : "встречный счёт";
+}
+document.getElementById("rec").onclick = () => {
   REC.on = !REC.on;
-  e.target.setAttribute("aria-pressed", String(REC.on));
-  e.target.textContent = REC.on ? "показать факт" : "встречный счёт";
+  localStorage.setItem("rec", REC.on ? "1" : "0");
+  recButton();
   if (REC.on && !REC.data) pullRec(true);
   else { renderRec(); draw(); rows(); summary(); }
 };
+recButton();
 window.addEventListener("resize", () => { draw(); drawEq(); });
 pull(); setInterval(pull, 1000);
 </script>
