@@ -335,7 +335,7 @@ function render(d) {
 // секунду, и возить её вместе с состоянием значит платить за неё
 // каждую секунду.
 const ALL = {trades:[], stats:null, by_rule:{}, equity:[], at:0,
-             busy:false, older:0, ver:null};
+             busy:false, older:0, ver:null, by_ver:[]};
 async function pullAll() {
   if (ALL.busy || Date.now() - ALL.at < 15000) return;
   ALL.busy = true;
@@ -346,6 +346,7 @@ async function pullAll() {
     ALL.trades = h.trades || []; ALL.stats = h.stats;
     ALL.by_rule = h.by_rule || {}; ALL.equity = h.equity || [];
     ALL.older = h.older || 0; ALL.ver = h.ver;
+    ALL.by_ver = h.by_ver || [];
     ALL.at = Date.now();
   } catch (e) { /* тихо: следующий круг попробует снова */ }
   finally { ALL.busy = false; }
@@ -379,6 +380,7 @@ function renderAll() {
   const br = ALL.by_rule || {};
   document.getElementById("rules2").innerHTML =
     `<div style="padding:7px 10px;font-size:12.5px;color:var(--muted)">`
+    + (verLine(ALL.by_ver, ALL.ver) ? verLine(ALL.by_ver, ALL.ver) + "<br>" : "")
     + (Object.keys(br).map(r => {
         const x = br[r];
         return x ? `<b>${r}</b>: ${x.trades} сд., побед ${pc(x.win_rate)} `
@@ -454,6 +456,25 @@ function dkCells(d) {
 // Правило по стакану: крупный стоит, его выедают, он подставляет снова.
 // Показываются измеренные величины, а не «да/нет»: без чисел «событий
 // нет» неотличимо от «детектор сломан».
+function verLine(list, cur) {
+  // По версиям правил рядом: смешивать их нельзя, но и прятать прежние
+  // незачем — выборка текущей всегда мала, и без соседних строк
+  // непонятно, стало лучше или просто сделок мало.
+  if (!list || !list.length) return "";
+  const pc = v => (v*100).toFixed(0) + " %";
+  return list.map(x => {
+    const s = x.stats, me = x.ver === cur;
+    const head = (me ? "<b>правила v" + x.ver + " (сейчас)</b>"
+                     : "правила v" + x.ver);
+    return head + ": " + (s
+      ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
+        + `${pc(s.break_even)}, ожидание ${s.expectancy_bp>0?"+":""}`
+        + `${s.expectancy_bp.toFixed(1)} б.п., стоп `
+        + `${s.stop_bp_median.toFixed(0)} б.п.`
+      : `${x.n} сд., закрытых нет`);
+  }).join("<br>");
+}
+
 function bookRows(b) {
   const cell = (v, need, ok) => v === null || v === undefined
     ? `<td class="mono" style="color:var(--muted)">—</td>`
@@ -654,8 +675,8 @@ const stamp = t => new Date(t*1000).toISOString().slice(11,16);
 
 // Опрос разностный — см. тот же приём на странице обзора.
 const ST = {cand:[], since:0, sym:"", busy:false, fails:0};
-const HIST = {trades:[], stats:null, by_rule:{}, equity:[], at:0,
-              busy:false};
+const HIST = {trades:[], stats:null, by_rule:{}, by_ver:[], equity:[],
+              at:0, busy:false};
 // История свечей с диска: в памяти сборщика живут считанные часы, а
 // сделки поднимаются за трое суток — график обрывался там, где кончался
 // буфер, и прошлые сделки смотреть было не на чем. Тянется один раз на
@@ -700,6 +721,7 @@ async function history() {
     const h = await r.json();
     HIST.trades = h.trades || []; HIST.stats = h.stats;
     HIST.by_rule = h.by_rule || {}; HIST.older = h.older || 0;
+    HIST.by_ver = h.by_ver || [];
     HIST.ver = h.ver;
     HIST.equity = h.equity || []; HIST.at = Date.now();
   } catch (e) { /* тихо: следующий круг попробует снова */ }
@@ -908,6 +930,26 @@ function rows() {
     событий пока нет — детектор ждёт совпадения условий</td></tr>`;
 }
 
+function verLine(list, cur) {
+  // По версиям правил рядом: смешивать их нельзя, но и прятать прежние
+  // незачем — выборка текущей всегда мала, и без соседних строк
+  // непонятно, стало лучше или просто сделок мало.
+  if (!list || !list.length) return "";
+  const pc = v => (v*100).toFixed(0) + " %";
+  return list.map(x => {
+    const s = x.stats, me = x.ver === cur;
+    const head = (me ? "<b>правила v" + x.ver + " (сейчас)</b>"
+                     : "правила v" + x.ver);
+    return head + ": " + (s
+      ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
+        + `${pc(s.break_even)}, ожидание ${s.expectancy_bp>0?"+":""}`
+        + `${s.expectancy_bp.toFixed(1)} б.п., стоп `
+        + `${s.stop_bp_median.toFixed(0)} б.п.`
+      : `${x.n} сд., закрытых нет`);
+  }).join("<br>");
+}
+
+
 function summary() {
   const s = HIST.stats, box = document.getElementById("sum");
   const pc = v => (v*100).toFixed(0) + " %";
@@ -949,8 +991,9 @@ function summary() {
       x.expectancy_r > 0 ? "+" : ""}${x.expectancy_r.toFixed(2)} R)`
       : `<b>${r}</b>: сделок нет`;
   }).join(" · ");
+  const vl = verLine(HIST.by_ver, HIST.ver);
   document.getElementById("rules").innerHTML =
-    `<div class="note">${line || "&nbsp;"}</div>`;
+    `<div class="note">${vl ? vl + "<br>" : ""}${line || "&nbsp;"}</div>`;
   drawEq();
 }
 

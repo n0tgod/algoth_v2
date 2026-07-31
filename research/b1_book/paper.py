@@ -73,6 +73,19 @@ def summary(trades):
     return out
 
 
+def by_version(trades):
+    """Сводка по каждой версии правил отдельно, от новой к старой.
+
+    Смешивать версии нельзя — числа станут бессмысленными, оставшись на
+    вид осмысленными. Но и прятать прежние незачем: правила меняются
+    часто, выборка текущей версии всегда мала, и без соседних строк
+    непонятно, стало лучше или просто мало сделок.
+    """
+    vers = sorted({int(t.get("ver") or 1) for t in trades}, reverse=True)
+    return [{"ver": v, "stats": summary(current(trades, v)),
+             "n": len(current(trades, v))} for v in vers]
+
+
 def by_rule(trades):
     """Сводка по каждому правилу отдельно."""
     return {r: summary([t for t in trades if t.get("rule", "лента") == r])

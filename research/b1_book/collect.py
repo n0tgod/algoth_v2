@@ -454,6 +454,7 @@ class Collector:
         return {"sym": sym, "symbols": self.symbols, "trades": rows,
                 "stats": paper.summary(cur), "by_rule": paper.by_rule(cur),
                 "equity": paper.equity(cur), "count": len(cur),
+                "by_ver": paper.by_version(rows),
                 "ver": signals_version(), "older": len(rows) - len(cur)}
 
     def disk_view(self):
