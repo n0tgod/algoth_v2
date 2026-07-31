@@ -274,27 +274,28 @@ def test_warm_start_restores_history():
         shutil.rmtree(root, ignore_errors=True)
 
 
-def test_live_universe_matches_probe_universe():
-    """Живой сбор идёт по тем же именам, что архивные зонды.
+def test_collected_symbols_are_not_lost():
+    """Состав сбора не теряет монет, по которым уже собраны ряды.
 
-    Это не педантизм: довод в пользу состава ровно один — тогда живые
-    бумажные сделки и замеры T1/T2/T4 сравнимы напрямую, а не «примерно
-    про то же». Разойдутся списки — довод исчезнет молча, и сравнение
-    останется в силе только на словах.
-
-    Менять состав можно, но обоими местами сразу и осознанно.
+    Список восстановлен с диска после того, как перезапуск урезал сбор
+    до восьми монет. Проверка держит именно это: имена, по которым ряды
+    уже пишутся, из состава не исчезают. Свою же подмену состава
+    «универсумом зондов» я сюда закреплял тестом — довод о сравнимости
+    с T1/T2/T4 мой, а состав сбора выбирает владелец, и тест не вправе
+    закреплять мой выбор вместо его.
     """
     import collect as C
 
-    research = os.path.dirname(HERE)
-    src = open(os.path.join(research, "t2_levels", "probe.py"),
-               encoding="utf-8").read()
-    body = src.split("START =")[0].split("A1_OUT")[1].split("\n", 1)[1]
-    ns = {}
-    exec(compile(body, "t2_probe", "exec"), ns)                 # noqa: S102
-    check("состав сбора совпал с составом зондов",
-          sorted(C.SYMBOLS) == sorted(ns["SYMBOLS"]),
-          f"сбор {len(C.SYMBOLS)}, зонды {len(ns['SYMBOLS'])}")
+    было = {"BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
+            "ARBUSDT", "LINKUSDT", "AVAXUSDT", "1000PEPEUSDT", "ADAUSDT",
+            "BCHUSDT", "BEATUSDT", "BNBUSDT", "ENAUSDT", "FILUSDT",
+            "HUSDT", "HYPEUSDT", "LABUSDT", "NEARUSDT", "SUIUSDT",
+            "TAOUSDT", "VELVETUSDT", "WLDUSDT", "XLMUSDT", "ZECUSDT"}
+    lost = было - set(C.SYMBOLS)
+    check("монеты с накопленными рядами остались в составе",
+          not lost, ", ".join(sorted(lost)) if lost else "")
+    check("в составе нет повторов",
+          len(C.SYMBOLS) == len(set(C.SYMBOLS)), str(len(C.SYMBOLS)))
 
 
 def test_shrunken_run_announces_dropped_symbols():
@@ -991,7 +992,7 @@ def main():
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()
     test_shrunken_run_announces_dropped_symbols()
-    test_live_universe_matches_probe_universe()
+    test_collected_symbols_are_not_lost()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")
