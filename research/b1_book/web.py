@@ -510,11 +510,15 @@ function drawMid(pts, sg) {
   const t0 = pts[0][0], t1 = pts[pts.length-1][0];
   const xt = t => 6 + (W-70)*Math.max(0, Math.min(1, (t-t0)/Math.max(t1-t0,1)));
   for (const m of marks) {
-    const xa = xt(m.t), xb = W-64;
+    // Отрезок кончается вместе со сделкой — иначе линии соседних сделок
+    // наезжают друг на друга и читать нечего.
+    const end = m.closed_at || (m.held ? m.t + m.held : null);
+    const xa = xt(m.t), xb = end ? Math.min(xt(end), W-64) : W-64;
     const seg = (v, color, dash) => {
       if (v < lo || v > hi) return;
       g.save(); g.strokeStyle = color; g.setLineDash(dash); g.lineWidth = 1.2;
-      g.beginPath(); g.moveTo(xa, y(v)); g.lineTo(xb, y(v)); g.stroke();
+      g.beginPath(); g.moveTo(xa, y(v)); g.lineTo(Math.max(xb, xa+2), y(v));
+      g.stroke();
       g.restore();
     };
     seg(m.stop, css("--ask"), [2,3]);
@@ -797,18 +801,38 @@ function draw() {
     g.fillRect(x(i)-cw/2, Math.min(yo,yc), cw, Math.max(Math.abs(yc-yo),1));
   }
   HIT = [];
+  const clamp = v => Math.max(padL, Math.min(W-padR, v));
   for (const m of tr) {
     if (m.t < t0-60 || m.t > t1+60) continue;
-    const xa = xt(m.t), xb = W-padR;
+    // Отрезки стопа и цели обрываются там, где сделка закончилась.
+    // Иначе они тянутся до правого края и у нескольких сделок подряд
+    // накладываются друг на друга — на графике каша, и непонятно,
+    // какая линия чьей сделке принадлежит. У открытой сделки конца
+    // ещё нет, и она честно тянется до края.
+    const end = m.closed_at || (m.held ? m.t + m.held : null);
+    const xa = clamp(xt(m.t));
+    const xb = end ? clamp(xt(end)) : W-padR;
     const seg=(v,col,dash)=>{ if(v<lo||v>hi) return;
       g.save(); g.strokeStyle=col; g.setLineDash(dash); g.lineWidth=1.2;
-      g.beginPath(); g.moveTo(xa,y(v)); g.lineTo(xb,y(v)); g.stroke(); g.restore(); };
+      g.beginPath(); g.moveTo(xa,y(v)); g.lineTo(Math.max(xb, xa+2),y(v));
+      g.stroke(); g.restore(); };
     seg(m.stop, css("--ask"), [3,3]);
     seg(m.target, css("--bid"), [3,3]);
     g.fillStyle = css("--ink");
     const yy=y(m.entry), d = m.long?1:-1;
     g.beginPath(); g.moveTo(xa,yy); g.lineTo(xa-6,yy+11*d);
     g.lineTo(xa+6,yy+11*d); g.closePath(); g.fill();
+    // Выход — квадратом на цене выхода: без него видно, где вошли, и
+    // не видно, чем кончилось.
+    if (end && m.exit != null && m.exit >= lo && m.exit <= hi) {
+      g.fillStyle = m.state === "цель" ? css("--bid")
+                  : m.state === "стоп" ? css("--ask") : css("--muted");
+      g.fillRect(xb-3, y(m.exit)-3, 6, 6);
+      g.save(); g.strokeStyle = css("--muted"); g.globalAlpha = .5;
+      g.setLineDash([2,3]); g.beginPath();
+      g.moveTo(xb, y(m.entry)); g.lineTo(xb, y(m.exit)); g.stroke();
+      g.restore();
+    }
     const ya=y(Math.max(m.stop,m.target)), yb=y(Math.min(m.stop,m.target));
     const h2=Math.max(yb-ya,20);
     HIT.push({m, x0:xa-10, x1:xb, y0:(ya+yb)/2-h2/2, y1:(ya+yb)/2+h2/2});

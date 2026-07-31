@@ -46,7 +46,7 @@ const T0 = 1785440000;
 const trade = (i, closed) => ({
   id: "BTCUSDT-" + i, t: T0 - 600 + i, sym: "BTCUSDT", side: -1, long: true,
   entry: 64700, stop: 64600, target: 64900, level: 64700, kind: "полка",
-  stop_bp: 15.5, rr: 2.0, held: 120,
+  stop_bp: 15.5, rr: 2.0, held: 120, stop_by: "экстремум",
   state: closed ? "цель" : "открыта",
   pnl_bp: closed ? 20.5 : 0.0, r: closed ? 1.3 : 0.0,
   exit: closed ? 64900 : null, closed_at: closed ? T0 - 400 + i : null,
