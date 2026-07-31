@@ -168,6 +168,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // «определено и не вызывается».
                 + "\nglobal.__hit = typeof HIT !== 'undefined' "
                 + "? () => HIT : null;"
+                + "\nglobal.__barAt = typeof barAt === 'function' "
+                + "? barAt : null;"
                 + "\nglobal.__table = typeof shownTrades === 'function' "
                 + "? shownTrades : (typeof shown === 'function' "
                 + "? () => shown().trades : null);")();
@@ -202,6 +204,24 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (all.length <= (st.cand || []).length)
       bad.push(`история свечей не подмешалась: ${all.length} против живых `
                + `${(st.cand || []).length}`);
+  }
+  // Метка сделки обязана ложиться на СВОЮ свечу. Раньше положение
+  // считалось долей окна по времени, а ряд свечей дырявый — минута без
+  // сделок отсутствует, — и метки разъезжались при масштабировании.
+  if (isChart && global.__barAt) {
+    const gap = [[100, 1, 1, 1, 1, 0], [160, 1, 1, 1, 1, 0],
+                 [1000, 1, 1, 1, 1, 0], [1060, 1, 1, 1, 1, 0]];
+    const cases = [[90, 0], [100, 0], [159, 0], [160, 1], [999, 1],
+                   [1000, 2], [1059, 2], [1060, 3], [9999, 3]];
+    for (const [t, want] of cases) {
+      const got = global.__barAt(gap, t);
+      if (got !== want) {
+        bad.push(`момент ${t} лёг на свечу ${got}, а должен на ${want}`);
+        break;
+      }
+    }
+    if (global.__barAt([], 5) !== 0)
+      bad.push("пустой ряд свечей роняет привязку меток");
   }
   const buf = st.mid && st.mid.length ? st.mid : st.cand;
   if (!buf || buf.length < 50)
