@@ -464,6 +464,61 @@ def calibrate(tr, secs=None):
     return b, a
 
 
+def test_recount_runs_itself_and_merges_live():
+    """Пересчёт запускается сам, а живые сделки дописываются как есть.
+
+    Решение владельца: кнопки не нужно, всё считается под новые условия
+    автоматически. Отсюда два требования, и оба проверяются числом.
+
+    Первое: сторож обязан затребовать счёт, когда его нет вовсе либо
+    когда прежний считан под ДРУГУЮ версию правил, — и не требовать,
+    когда он свежий. Периодический перезапуск был бы вреден: счёт
+    занимает процессор у приёма сообщений, а приём важнее.
+
+    Второе: живую сделку пересчитывать незачем — её сделал живой
+    детектор нынешними правилами. Она дописывается к результату, и
+    ключом служит момент входа, иначе та же сделка показалась бы дважды
+    и обе выглядели бы настоящими.
+    """
+    import collect as C
+    import signals as SG
+
+    c = C.Collector.__new__(C.Collector)
+    c.symbols = ["TEST"]
+    c.n_live_merged = 0
+    live = SG.Live("TEST")
+    c.sig = SG.Signals(["TEST"])
+    c.sig.by["TEST"] = live
+
+    at = 1000.0
+    replayed = [{"id": "rec-1", "sym": "TEST", "t": 900.0, "state": "стоп",
+                 "pnl_bp": -20.0, "ver": 5, "rule": "лента", "rr": 2.0,
+                 "stop_bp": 20.0, "held": 60}]
+    # Та же сделка в живой истории — по ней и сделан пересчёт.
+    live.done.appendleft(dict(replayed[0], id="live-1"))
+    # А эта случилась ПОСЛЕ счёта, её пересчитывать нечем и незачем.
+    live.done.appendleft({"id": "live-2", "sym": "TEST", "t": 1500.0,
+                          "state": "цель", "pnl_bp": 40.0, "ver": 5,
+                          "rule": "лента", "rr": 2.0, "stop_bp": 20.0,
+                          "held": 90})
+    out = c.merge_live(replayed, at)
+    ids = [r["id"] for r in out]
+    check(f"свежая живая дописана ({ids})", "live-2" in ids, str(ids))
+    check("пересчитанная на месте", "rec-1" in ids, str(ids))
+    check("дубля старой сделки нет", "live-1" not in ids, str(ids))
+    check(f"число дописанных названо ({c.n_live_merged})",
+          c.n_live_merged == 1, str(c.n_live_merged))
+
+    # Сторож: нужен счёт или нет.
+    def need(rec):
+        return (not rec.get("at")) or rec.get("ver") != SG.RULES_VERSION
+    check("без пересчёта — нужен", need({}))
+    check("под другой версией — нужен",
+          need({"at": 1.0, "ver": SG.RULES_VERSION - 1}))
+    check("свежий под той же версией — не нужен",
+          not need({"at": 1.0, "ver": SG.RULES_VERSION}))
+
+
 def test_open_trade_is_visible_but_not_counted():
     """Открытая позиция обязана быть видна и обязана не считаться.
 
@@ -1290,6 +1345,7 @@ def main():
     test_metrics_explain_refusal()
     print("поглощение в стакане")
     test_open_trade_is_visible_but_not_counted()
+    test_recount_runs_itself_and_merges_live()
     test_book_absorption_needs_all_five()
     test_gate_fires_equally_on_smooth_and_lumpy_books()
     test_level_out_of_reach_is_never_a_candidate()

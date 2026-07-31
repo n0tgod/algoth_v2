@@ -101,6 +101,9 @@ DEEP = ("BTCUSDT", "ETHUSDT")
 DEPTH_LADDER = (500, 200, 50)
 PING_SEC = 20
 SAMPLE_SEC = 1
+# Глубина автоматического пересчёта. Живые сделки свежее него
+# дописываются как есть — они уже под нынешними правилами.
+RECOUNT_HOURS = 24
 STATUS_SEC = 5
 # Состав сбора живёт ЗДЕСЬ, а не в строке запуска. Пока он был только в
 # консоли, перезапуск командой из README тихо срезал сбор до восьми
@@ -219,6 +222,7 @@ class Collector:
         # видеть, ТУДА ли детектор показывает.
         self.sig = Signals(symbols)
         self.n_signals = 0
+        self.n_live_merged = 0
         self.n_closed = 0
 
     # --- сеть ---------------------------------------------------------
@@ -489,30 +493,28 @@ class Collector:
             self.log(f"пересчёт не сохранён: {type(e).__name__}: {e}")
 
     def recount(self, hours=24, start=True, sym=None):
-        """Пересчитать ВСЕ прошлые входы под текущие правила.
+        """Все сделки под ТЕКУЩИМИ правилами — единственный вид.
 
-        Владелец: «оставить ту же точку входа, но поменять стоп и цель —
-        я хочу видеть, как меняется вся статистика, а не только новая».
-        Сводка по версиям отвечает на другой вопрос: там каждая версия
-        считается на своих сделках, и выборка текущей всегда мала.
-        Здесь берутся ВСЕ записанные входы и проводятся по нынешней
-        геометрии на состоянии рынка того момента.
+        Решение владельца: кнопки пересчёта не нужно, сравнивать «как
+        было и как стало» он не хочет, всё должно считаться под новые
+        условия само. Поэтому счёт запускается автоматически (см.
+        `_recount_watch`), а страница показывает только его.
 
-        Это **встречный** счёт, а не то, что было: цена шла та же, но
-        сделка была бы другой. Смешивать его с настоящими исходами
-        нельзя, поэтому он отдаётся отдельно и подписан.
+        Живые сделки, записанные ПОСЛЕ момента счёта, пересчитывать не
+        надо и нельзя: их сделал живой детектор, то есть уже нынешними
+        правилами. Они просто дописываются к результату. Отсюда и
+        устройство перезапуска счёта — он нужен ровно тогда, когда
+        меняется версия правил, а не по часам.
 
-        Счёт идёт в фоне: сутки по двадцати пяти символам — это минуты
-        работы, и держать на них ответ сервера нельзя.
+        Оговорка, которую нельзя терять: это **встречный** счёт для
+        старых входов — цена шла та же, но сделка была бы другой.
+        Пересчитывается геометрия (стоп и цель), а сами входы берутся из
+        записи. Значит правка УСЛОВИЙ ВХОДА в этих числах не отражается,
+        отражается только правка геометрии. Для условий входа нужен
+        полный прогон (`replay.replay_symbol`), он дороже и читает книгу.
         """
         st = self.rec
-        fresh = st.get("hours") == hours and time.time() - st.get("at", 0) < 900
-        if start and not st.get("busy") and not fresh:
-            st.update({"busy": True, "hours": hours, "done": 0,
-                       "total": len(self.symbols), "at": 0})
-            threading.Thread(target=self._recount_job, args=(hours,),
-                             daemon=True).start()
-        rows = st.get("trades") or []
+        rows = self.merge_live(st.get("trades") or [], st.get("at", 0))
         # Отвергнутые и незакрытые идут ОТДЕЛЬНЫМ списком и в статистику
         # не попадают: у них нет исхода. Показываются вместе с
         # остальными, потому что «правило этот вход не берёт» — ответ, а
@@ -532,6 +534,7 @@ class Collector:
                "total": st.get("total", 0), "hours": st.get("hours"),
                "at": st.get("at", 0), "ver": made_ver,
                "now_ver": signals_version(),
+               "live": self.n_live_merged,
                "stale": made_ver != signals_version(),
                "made": (one or st).get("made", 0),
                "refused": (one or st).get("refused", 0),
@@ -540,15 +543,62 @@ class Collector:
                                 key=lambda t: -(t.get("closed_at")
                                                 or t.get("t") or 0)),
                "no_outcome": len(extra)}
-        if sym:
-            out["stats"] = paper.summary(rows)
-            out["by_rule"] = paper.by_rule(rows)
-            out["equity"] = paper.equity(rows)
-        else:
-            out["stats"] = st.get("stats")
-            out["by_rule"] = st.get("by_rule")
-            out["equity"] = st.get("equity") or []
+        # Сводка считается ИЗ ТЕХ ЖЕ строк, что показаны, а не берётся из
+        # сохранённой: после склейки с живыми сделками сохранённая
+        # описывала бы другой набор — таблица одно, числа другое, и обе
+        # стороны выглядели бы правдоподобно. Открытые и отвергнутые
+        # отсеет `paper.finished` сам: исхода у них нет.
+        out["stats"] = paper.summary(rows)
+        out["by_rule"] = paper.by_rule(rows)
+        out["equity"] = paper.equity(rows)
         return out
+
+    def merge_live(self, rows, at):
+        """Пересчитанные сделки плюс живые, сделанные ПОСЛЕ счёта.
+
+        Живую сделку пересчитывать незачем: её сделал живой детектор
+        нынешними правилами, то есть она уже «под новыми условиями».
+        Пересчёт нужен только тем, что записаны под прежней версией.
+
+        Ключ склейки — момент входа: пересчитанная запись несёт тот же
+        `t`, что и живая, из которой она выведена. Без ключа сделка
+        показалась бы дважды, и обе выглядели бы настоящими.
+        """
+        seen = {(r.get("sym"), int(r.get("t") or 0)) for r in rows}
+        add = []
+        for s in self.symbols:
+            for t in self.sig.history(s):
+                if float(t.get("t") or 0) <= at:
+                    continue
+                if (t.get("sym"), int(t.get("t") or 0)) in seen:
+                    continue
+                add.append(t)
+        self.n_live_merged = len(add)
+        return list(rows) + add
+
+    def _recount_watch(self):
+        """Сам пересчитывает, когда это нужно, и не чаще.
+
+        Нужно ровно в двух случаях: пересчёта нет вовсе и он считан под
+        ДРУГУЮ версию правил. По часам перезапускать незачем — живые
+        сделки и так под нынешними правилами, их дописывает `merge_live`.
+        Периодический счёт занимал бы процессор у приёма сообщений, а
+        приём сообщений здесь важнее.
+        """
+        while not self.stop.wait(30.0):
+            st = self.rec
+            if st.get("busy"):
+                continue
+            need = (not st.get("at")) or st.get("ver") != signals_version()
+            if not need:
+                continue
+            self.log(f"пересчёт под правила v{signals_version()} "
+                     f"запускается сам: "
+                     + ("прежнего нет" if not st.get("at")
+                        else f"прежний считан под v{st.get('ver')}"))
+            st.update({"busy": True, "hours": RECOUNT_HOURS, "done": 0,
+                       "total": len(self.symbols), "at": 0})
+            self._recount_job(RECOUNT_HOURS)
 
     def _recount_job(self, hours):
         import replay as R
@@ -730,6 +780,8 @@ class Collector:
         threading.Thread(target=self.statuser, daemon=True).start()
         threading.Thread(target=self.reporter, daemon=True).start()
         threading.Thread(target=self.diskstat, daemon=True).start()
+        threading.Thread(target=self._recount_watch,
+                         daemon=True).start()
         delay = 1
         while not self.stop.is_set():
             if deadline and time.time() >= deadline:

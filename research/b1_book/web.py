@@ -127,9 +127,7 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
 </div>
 <div class="panel" style="margin-top:12px">
   <div class="cap"><span>итог бумажных сделок по всем монетам</span>
-    <span><button id="rec" style="padding:1px 7px">пересчитать все входы
-      под текущие правила</button>
-    <span id="cap-all" class="mono"></span></span></div>
+    <span id="cap-all" class="mono"></span></div>
   <div id="sum2" class="strip" style="margin:0;border:0"></div>
   <div id="rules2"></div>
   <div id="recbox"></div>
@@ -356,9 +354,15 @@ async function pullAll() {
   renderAll();
 }
 
-// Источник сделок для всей панели сразу: либо настоящие исходы, либо
-// встречный счёт. Одна точка выбора, потому что таблица по пересчёту и
-// сводка по факту — это два разных счёта в одной картинке.
+// Источник сделок один: всё под нынешними правилами. Выбора между
+// «как было» и «как стало» здесь больше нет — решение владельца, и оно
+// снимает целый класс путаницы: застывший снимок часами подменял
+// таблицу, а страница молчала об этом.
+//
+// Пока счёт идёт (первые минуты после запуска сборщика либо после
+// правки правил), показываются настоящие исходы: это ЧЕСТНЕЕ пустоты и
+// подписано строкой сверху. Полупосчитанный список — нет: он выглядит
+// готовым и врал бы числами.
 function shown() {
   const d = recReady();
   return d ? {trades: d.trades || [], stats: d.stats,
@@ -466,14 +470,16 @@ function drawEqAll() {
 // же чисел. Сам результат при этом лежит на сервере в файле, поэтому
 // восстановление бесплатно: просим `go=0`, то есть «отдай готовое, не
 // начинай новый».
-const REC = {on: localStorage.getItem("rec") === "1",
-             busy:false, data:null, timer:null};
+const REC = {on:true, busy:false, data:null, timer:null};
 async function pullRec(go) {
   if (REC.busy) return;
   REC.busy = true;
   try {
+    // `go=0` всегда: счёт запускает сам сборщик, когда меняется версия
+    // правил. Страница только забирает готовое — иначе каждое открытие
+    // вкладки гоняло бы трёхминутный прогон заново.
     const r = await fetch(`/recount?k=${encodeURIComponent(KEY)}`
-      + `&hours=24&go=${go ? 1 : 0}`);
+      + `&hours=24&go=0`);
     if (r.ok) REC.data = await r.json();
   } catch (e) { /* тихо */ }
   finally { REC.busy = false; }
@@ -488,13 +494,12 @@ async function pullRec(go) {
 // Пересчёт годен к показу, только когда он досчитан: наполовину
 // собранный список сделок выглядит как готовый и врал бы числами.
 function recReady() {
-  return REC.on && REC.data && !REC.data.busy && REC.data.stats !== undefined
+  return REC.data && !REC.data.busy && REC.data.stats !== undefined
     ? REC.data : null;
 }
 
 function renderRec() {
   const box = document.getElementById("recbox"), d = REC.data;
-  if (!REC.on) { box.innerHTML = ""; return; }
   if (!d || d.busy) {
     box.innerHTML = `<div class="note" style="padding:7px 10px">пересчитываю
       те же входы под текущие правила${
@@ -694,24 +699,11 @@ tick(); timer = setInterval(tick, 1000);
 // выходы (обрыв связи, смена символа), и привязка к нему означала бы,
 // что панель молчит ровно тогда, когда что-то пошло не так.
 pullAll(); setInterval(pullAll, 15000);
-function recButton() {
-  const b = document.getElementById("rec");
-  b.setAttribute("aria-pressed", String(REC.on));
-  b.textContent = REC.on ? "показать настоящие исходы"
-                         : "пересчитать все входы под текущие правила";
-}
-document.getElementById("rec").onclick = () => {
-  REC.on = !REC.on;
-  localStorage.setItem("rec", REC.on ? "1" : "0");
-  recButton();
-  // Кнопка вправе ЗАПУСТИТЬ счёт (`go=1`); восстановление после
-  // перезагрузки — нет, иначе каждое обновление страницы гоняло бы
-  // трёхминутный прогон заново.
-  if (REC.on && !REC.data) pullRec(true);
-  else { renderRec(); renderAll(); }
-};
-recButton();
-if (REC.on) pullRec(false);
+// Тумблера нет: вид один. Опрос повторяется, потому что сборщик может
+// пересчитывать прямо сейчас — при первом запуске и после каждой правки
+// правил, — и результат обязан появиться сам, без нажатий.
+localStorage.removeItem("rec");
+pullRec(false); setInterval(() => pullRec(false), 30000);
 </script>
 """
 
@@ -774,7 +766,6 @@ td:first-child,th:first-child{text-align:left}
   <h1 id="ttl" class="mono">…</h1>
   <span id="syms"></span>
   <span class="sp"></span>
-  <button id="rec" aria-pressed="false">встречный счёт</button>
   <button id="fit">весь период</button>
   <button id="live" aria-pressed="true">следить за краем</button>
   <a class="btn" href="/" id="home">к обзору</a>
@@ -838,8 +829,7 @@ let EQR = false;
 // Смешивать с настоящими исходами нельзя, поэтому это переключатель, а
 // не добавка, и включённое состояние подписано над графиком.
 // Переключатель переживает перезагрузку — см. тот же приём на обзоре.
-const REC = {on: localStorage.getItem("rec") === "1",
-             busy:false, data:null, timer:null, sym:"", err:0};
+const REC = {on:true, busy:false, data:null, timer:null, sym:"", err:0};
 function wipe() { ST.cand=[]; ST.since=0; HIST.trades=[]; HIST.stats=null;
                   HIST.by_rule={}; HIST.equity=[]; HIST.at=0;
                   HC.sym=""; HC.cand=[]; REC.data=null; REC.sym=""; }
@@ -848,8 +838,10 @@ async function pullRec(go) {
   if (REC.busy || !sym) return;
   REC.busy = true;
   try {
+    // `go=0` всегда: счёт запускает сборщик сам при смене версии
+    // правил, страница только забирает готовое.
     const r = await fetch(`/recount?k=${encodeURIComponent(KEY)}`
-      + `&sym=${encodeURIComponent(sym)}&hours=24&go=${go ? 1 : 0}`);
+      + `&sym=${encodeURIComponent(sym)}&hours=24&go=0`);
     if (!r.ok) throw new Error("HTTP " + r.status);
     REC.data = await r.json(); REC.sym = sym; REC.err = 0;
   } catch (e) {
@@ -871,13 +863,12 @@ async function pullRec(go) {
 // монете: чужой список сделок на чужом графике выглядел бы как сделки,
 // которых не было.
 function recReady() {
-  return REC.on && REC.data && !REC.data.busy && REC.sym === sym
+  return REC.data && !REC.data.busy && REC.sym === sym
     ? REC.data : null;
 }
 
 function renderRec() {
   const box = document.getElementById("recnote"), d = REC.data;
-  if (!REC.on) { box.innerHTML = ""; return; }
   if (REC.err) {
     box.innerHTML = `<div class="panel"><div class="note">пересчёт не
       отвечает (неудачных попыток ${REC.err}). Показано то, что было на
@@ -1011,7 +1002,10 @@ async function pull() {
   // Смена монеты и перезагрузка страницы стирают пересчёт из памяти —
   // но не с сервера. Просим готовое (`go=0`): запускать трёхминутный
   // прогон при каждом открытии графика было бы издевательством.
-  if (REC.on && !REC.data && !REC.busy) pullRec(false);
+  // Счёт мог пойти заново (правка правил) — переспрашиваем,
+  // пока не придёт досчитанный, иначе вид застынет молча.
+  if (!REC.busy && (!REC.data || REC.data.busy
+                    || REC.sym !== sym)) pullRec(false);
   sym = data.sym;
   document.getElementById("ttl").textContent = sym;
   document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
@@ -1407,19 +1401,8 @@ document.getElementById("live").onclick = e => {
 document.getElementById("unit").onclick = e => {
   EQR = !EQR; e.target.textContent = EQR ? "в б.п." : "в R"; drawEq();
 };
-function recButton() {
-  const b = document.getElementById("rec");
-  b.setAttribute("aria-pressed", String(REC.on));
-  b.textContent = REC.on ? "показать факт" : "встречный счёт";
-}
-document.getElementById("rec").onclick = () => {
-  REC.on = !REC.on;
-  localStorage.setItem("rec", REC.on ? "1" : "0");
-  recButton();
-  if (REC.on && !REC.data) pullRec(true);
-  else { renderRec(); draw(); rows(); summary(); }
-};
-recButton();
+// Тумблера нет: вид один — всё под нынешними правилами.
+localStorage.removeItem("rec");
 window.addEventListener("resize", () => { draw(); drawEq(); });
 pull(); setInterval(pull, 1000);
 </script>
