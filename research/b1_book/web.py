@@ -34,7 +34,7 @@ from urllib.parse import parse_qs, urlparse
 
 PAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Стакан живьём</title>
+<title>Order Book Live</title>
 <style>
 :root{color-scheme:light dark;
  --ground:#f6f7f9;--panel:#fff;--ink:#141a21;--muted:#5c6673;--rule:#dfe4ea;
@@ -67,7 +67,7 @@ details.grp summary{cursor:pointer;padding:6px 2px;font-size:12px;
  display:flex;justify-content:space-between}
 details.grp summary::after{content:"▸";color:var(--muted)}
 details.grp[open] summary::after{content:"▾"}
-details.grp .gs{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px}
+details.grp .gs{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px;max-height:38vh;overflow-y:auto}
 .modelbox{padding:8px 10px;font-size:13px}
 .modelbox .mline{color:var(--muted);font-size:12px;margin-bottom:6px}
 .thoughts{max-height:230px;overflow-y:auto;font-size:12.5px;
@@ -119,49 +119,49 @@ canvas{display:block;width:100%}
 footer{color:var(--muted);font-size:12px;margin-top:14px}
 </style>
 <div class="wrap">
-<h1>Стакан живьём</h1>
-<p class="sub" id="sub">подключение…</p>
+<h1>Order Book Live</h1>
+<p class="sub" id="sub">connecting…</p>
 <div class="strip" id="strip"></div>
 <div class="panel" style="margin-bottom:12px">
-  <div class="cap"><span>монеты по группам</span>
+  <div class="cap"><span>coins by sector</span>
     <span id="cap-syms" class="mono"></span></div>
   <div class="pick">
-    <input id="symq" placeholder="поиск монеты…" autocomplete="off">
+    <input id="symq" placeholder="search coin…" autocomplete="off">
     <div id="groups"></div>
   </div>
 </div>
 <div class="panel" style="margin-bottom:12px">
-  <div class="cap"><span>модель — гипотеза 6, наблюдение</span>
+  <div class="cap"><span>model — hypothesis 6, observation</span>
     <span id="cap-model" class="mono"></span></div>
   <div class="modelbox" id="modelbox">…</div>
 </div>
 <div class="cols">
   <div class="panel">
-    <div class="cap"><span>стакан</span><span id="cap-book" class="mono"></span></div>
+    <div class="cap"><span>order book</span><span id="cap-book" class="mono"></span></div>
     <table id="book"></table>
     <div class="cap" style="border-top:1px solid var(--rule)">
-      <span>глубина по полосам, тыс. $</span></div>
+      <span>depth by bands, k$</span></div>
     <div class="bands" id="bands"></div>
   </div>
   <div class="panel">
-    <div class="cap"><span>середина, последние 15 мин</span>
+    <div class="cap"><span>mid price, last 15 min</span>
       <span id="cap-mid" class="mono"></span></div>
     <canvas id="mid" height="140"></canvas>
     <div class="cap" style="border-top:1px solid var(--rule)">
-      <span>детектор — что выполнено прямо сейчас</span>
+      <span>detector — conditions right now</span>
       <span id="cap-diag" class="mono"></span></div>
     <table id="diag"></table>
     <div class="cap" style="border-top:1px solid var(--rule)">
-      <span>бумажные сделки — наблюдение, не торговля</span>
+      <span>paper trades — observation, not trading</span>
       <span id="cap-sig" class="mono"></span></div>
     <table id="sig"></table>
     <div class="cap" style="border-top:1px solid var(--rule)">
-      <span>лента</span><span id="cap-tape" class="mono"></span></div>
+      <span>tape</span><span id="cap-tape" class="mono"></span></div>
     <div class="tape"><table id="tape"></table></div>
   </div>
 </div>
 <div class="panel" style="margin-top:12px">
-  <div class="cap"><span>итог бумажных сделок по всем монетам</span>
+  <div class="cap"><span>paper trades summary, all coins</span>
     <span id="cap-all" class="mono"></span></div>
   <div id="sum2" class="strip" style="margin:0;border:0"></div>
   <div id="rules2"></div>
@@ -170,7 +170,7 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
   <div class="tape" style="max-height:260px"><table id="alltr"></table></div>
 </div>
 <div class="panel" style="margin-top:12px">
-  <div class="cap"><span>журнал сборщика</span></div>
+  <div class="cap"><span>collector log</span></div>
   <div class="log mono" id="log"></div>
 </div>
 <footer>Обновление раз в секунду. Стакан — тема orderbook.50 площадки
@@ -232,7 +232,7 @@ async function tick() {
     // Картинка не стирается: обрыв на секунду — не повод показать пустоту.
     ST.fails++;
     document.getElementById("sub").textContent =
-      `связь потеряна (попыток ${ST.fails}), последние данные ниже`;
+      `connection lost (attempts ${ST.fails}), last data below`;
     return;
   } finally { ST.busy = false; }
   // Смена символа: чужие буферы выбрасываются. Если ответ был
@@ -249,20 +249,20 @@ async function tick() {
 function render(d) {
   const s = d.status;
   document.getElementById("sub").textContent =
-    `${d.symbols.length} символов · сбор идёт ${(s.uptime_sec/3600).toFixed(1)} ч`;
+    `${d.symbols.length} symbols · collecting for ${(s.uptime_sec/3600).toFixed(1)} ч`;
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
   const age = s.last_msg_age_sec;
   document.getElementById("strip").innerHTML =
-    cell("сообщений", kk(s.messages)) +
-    cell("в секунду", fmt(s.msg_per_sec, 0)) +
-    cell("сделок", kk(s.trades)) +
-    cell("книг готово", `${s.ready}/${d.symbols.length}`,
+    cell("messages", kk(s.messages)) +
+    cell("per second", fmt(s.msg_per_sec, 0)) +
+    cell("trades", kk(s.trades)) +
+    cell("books ready", `${s.ready}/${d.symbols.length}`,
          s.ready === d.symbols.length ? "good" : "bad") +
-    cell("сбросов", s.resets, s.resets ? "bad" : "") +
-    cell("сделок закрыто", `${s.closed ?? 0}/${s.signals ?? 0}`) +
+    cell("resets", s.resets, s.resets ? "bad" : "") +
+    cell("trades closed", `${s.closed ?? 0}/${s.signals ?? 0}`) +
     dkCells(s.disk) +
-    cell("тишина, с", fmt(age, 1), age > 5 ? "bad" : "good");
+    cell("quiet, s", fmt(age, 1), age > 5 ? "bad" : "good");
 
   // Группы строятся отдельно (renderGroups) и не пересобираются каждым
   // тактом: пересборка DOM с 540 кнопками раз в секунду убивала бы
@@ -271,13 +271,13 @@ function render(d) {
   document.querySelectorAll("#groups [data-s]").forEach(b =>
     b.setAttribute("aria-pressed", String(b.dataset.s === d.sym)));
   document.getElementById("cap-syms").innerHTML =
-    `${(d.symbols || []).length} монет · <a class="open" target="_blank"`
-    + ` href="/chart?k=${encodeURIComponent(KEY)}&sym=${d.sym}">график ${
+    `${(d.symbols || []).length} coins · <a class="open" target="_blank"`
+    + ` href="/chart?k=${encodeURIComponent(KEY)}&sym=${d.sym}">chart ${
       d.sym.replace("USDT","")} ↗</a>`;
 
   const bk = d.book;
   const t = document.getElementById("book");
-  if (!bk) { t.innerHTML = `<tr><td>книга ещё не готова</td></tr>`; }
+  if (!bk) { t.innerHTML = `<tr><td>book not ready yet</td></tr>`; }
   else {
     const mx = Math.max(...bk.a.map(r => r[1]), ...bk.b.map(r => r[1]), 1);
     const row = (r, cls) => `<tr class="${cls}">
@@ -287,12 +287,12 @@ function render(d) {
       <td class="mono" style="color:var(--muted)">${kk(r[0]*r[1])}</td></tr>`;
     t.innerHTML =
       bk.a.slice().reverse().map(r => row(r, "a")).join("") +
-      `<tr class="spread"><td colspan="3" class="mono">спред ${
+      `<tr class="spread"><td colspan="3" class="mono">spread ${
         fmt((bk.ask-bk.bid)/bk.bid*1e4, 1)} б.п. · середина ${
         fmt((bk.ask+bk.bid)/2, 6)}</td></tr>` +
       bk.b.map(r => row(r, "b")).join("");
     document.getElementById("cap-book").textContent =
-      `${bk.depth ?? "?"} уровней · обновлений/с ${bk.upd} · видно ±${
+      `${bk.depth ?? "?"} levels · upd/s ${bk.upd} · reach ±${
         bk.reach_b}/${bk.reach_a} б.п.`;
     document.getElementById("bands").innerHTML = d.bands.map(b => {
       const tot = b.bid + b.ask || 1;
@@ -310,7 +310,7 @@ function render(d) {
   }
 
   const tp = d.tape || [];
-  document.getElementById("cap-tape").textContent = `${tp.length} последних`;
+  document.getElementById("cap-tape").textContent = `${tp.length} recent`;
   document.getElementById("tape").innerHTML = tp.slice().reverse().map(x =>
     `<tr><td class="mono" style="color:var(--muted)">${
       new Date(x.ts).toISOString().slice(11,23)}</td>
@@ -327,9 +327,9 @@ function render(d) {
   // стоил владельцу круга.
   const paperOff = d.status && d.status.paper === false;
   document.getElementById("cap-diag").textContent = paperOff
-    ? "выключен — направление ленты закрыто, поглощение ушло в модель"
-    : `история ${sg.history_min ?? 0} мин · до уровня ${
-      sg.near_x ?? "—"} шума (нужно ≤ ${sg.touch_x})`;
+    ? "off — tape direction closed by probes, absorption moved into the model"
+    : `history ${sg.history_min ?? 0} min · to level ${
+      sg.near_x ?? "—"} noise (need ≤ ${sg.touch_x})`;
   const dg = sg.diag || {};
   const drow = (name, m) => {
     m = m || {};
@@ -343,19 +343,19 @@ function render(d) {
       <td class="mono" style="color:var(--muted)">${m.why || "—"}</td></tr>`;
   };
   document.getElementById("diag").innerHTML =
-    `<tr><td style="color:var(--muted);font-size:11.5px">сторона</td>
-      <td style="color:var(--muted);font-size:11.5px">объём</td>
-      <td style="color:var(--muted);font-size:11.5px">перевес</td>
-      <td style="color:var(--muted);font-size:11.5px">ход</td>
-      <td style="color:var(--muted);font-size:11.5px">итог</td></tr>`
-    + drow("лента: поглощение продаж · лонг", dg.long)
-    + drow("лента: поглощение покупок · шорт", dg.short)
+    `<tr><td style="color:var(--muted);font-size:11.5px">side</td>
+      <td style="color:var(--muted);font-size:11.5px">volume</td>
+      <td style="color:var(--muted);font-size:11.5px">imbalance</td>
+      <td style="color:var(--muted);font-size:11.5px">move</td>
+      <td style="color:var(--muted);font-size:11.5px">verdict</td></tr>`
+    + drow("tape: sell absorption · long", dg.long)
+    + drow("tape: buy absorption · short", dg.short)
     + bookRows(sg.book || {});
   const all = sg.open.concat(sg.done).slice(0, 12);
   document.getElementById("cap-sig").textContent = paperOff
-    ? (all.length ? "новых нет — ниже история закрытого направления"
-                  : "выключены, история очищена")
-    : `открыто ${sg.open.length} · шум ${sg.noise_bp ?? "—"} б.п. · уровней ${
+    ? (all.length ? "no new ones — history of a closed direction below"
+                  : "off, history cleared")
+    : `open ${sg.open.length} · noise ${sg.noise_bp ?? "—"} bp · levels ${
       sg.levels.length}`;
   document.getElementById("sig").innerHTML = all.length
     ? all.map(x => `<tr>
@@ -370,7 +370,7 @@ function render(d) {
           : (x.pnl_bp>0?"+":"") + x.pnl_bp + " б.п. · "
             + (x.r>0?"+":"") + x.r + " R"}</td>
       </tr>`).join("")
-    : `<tr><td style="color:var(--muted);padding:8px 10px">событий пока нет</td></tr>`;
+    : `<tr><td style="color:var(--muted);padding:8px 10px">no events yet</td></tr>`;
   const lg = document.getElementById("log");
   lg.textContent = (d.log || []).join("\n");
 }
@@ -418,26 +418,26 @@ function renderAll() {
   const pc = v => (v*100).toFixed(0) + " %";
   const A = shown(), s = A.stats;
   document.getElementById("cap-all").textContent =
-    `${A.trades.length} сделок всего`
-    + (A.rec ? " · встречный счёт, не факт"
+    `${A.trades.length} trades total`
+    + (A.rec ? " · replayed, not actual"
              : ALL.older
-               ? ` · ${ALL.older} по прежним правилам, вне статистики` : "");
+               ? ` · ${ALL.older} under older rules, excluded from stats` : "");
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
   document.getElementById("sum2").innerHTML = !s
-    ? cell("закрытых сделок", "пока нет")
-    : cell("сделок", s.trades)
+    ? cell("closed trades", "none yet")
+    : cell("trades", s.trades)
       // Доля побед сравнивается с безубыточной, а не с половиной: при
       // отношении 1:3 выигрывать надо каждую четвёртую.
-      + cell("побед", pc(s.win_rate),
+      + cell("wins", pc(s.win_rate),
              s.win_rate >= s.break_even ? "good" : "bad")
-      + cell("безубыточно", pc(s.break_even))
-      + cell("ожидание", (s.expectancy_bp>0?"+":"")
+      + cell("break-even", pc(s.break_even))
+      + cell("expectancy", (s.expectancy_bp>0?"+":"")
              + s.expectancy_bp.toFixed(1) + " б.п.",
              s.expectancy_bp > 0 ? "good" : "bad")
-      + cell("в риске", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
+      + cell("in R", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
              + " R", s.expectancy_r > 0 ? "good" : "bad")
-      + cell("цель/стоп/время",
+      + cell("target/stop/time",
              `${pc(s.share_target)}/${pc(s.share_stop)}/${pc(s.share_time)}`)
       + (s.cut_by_restart ? cell("оборвано", s.cut_by_restart, "bad") : "");
   const br = A.by_rule || {};
@@ -446,10 +446,10 @@ function renderAll() {
     + (verLine(A.by_ver, A.ver) ? verLine(A.by_ver, A.ver) + "<br>" : "")
     + (Object.keys(br).map(r => {
         const x = br[r];
-        return x ? `<b>${r}</b>: ${x.trades} сд., побед ${pc(x.win_rate)} `
-          + `при безубыточных ${pc(x.break_even)}, ожидание ${
+        return x ? `<b>${r}</b>: ${x.trades} trades, wins ${pc(x.win_rate)} `
+          + `vs break-even ${pc(x.break_even)}, expectancy ${
             x.expectancy_bp>0?"+":""}${x.expectancy_bp.toFixed(1)} б.п.`
-          : `<b>${r}</b>: сделок нет`;
+          : `<b>${r}</b>: no trades`;
       }).join(" · ") || "&nbsp;") + `</div>`;
   document.getElementById("alltr").innerHTML = A.trades.length
     ? A.trades.slice(0, 60).map(x => `<tr ${
@@ -467,7 +467,7 @@ function renderAll() {
           : (x.pnl_bp>0?"+":"") + x.pnl_bp + " б.п. · "
             + (x.r>0?"+":"") + x.r + " R"}</td></tr>`).join("")
     : `<tr><td style="color:var(--muted);padding:8px 10px">
-        закрытых сделок пока нет</td></tr>`;
+        no closed trades yet</td></tr>`;
   drawEqAll();
 }
 
@@ -516,22 +516,22 @@ function drawEqAll() {
 // начинай новый».
 // --- группы монет: строятся один раз, фильтруются поиском -----------
 const GRP = {list: null, q: ""};
-const GRP_RU = {bitcoin_pow: "биткойн и PoW", privacy: "приватность",
-  smart_contract_l1: "L1-платформы", layer2: "L2",
-  cosmos_interop: "Cosmos и мосты", polkadot: "Polkadot",
-  defi_dex: "DeFi: биржи", defi_lending: "DeFi: кредитование",
-  defi_derivatives: "DeFi: деривативы", defi_yield: "DeFi: доходность",
-  liquid_staking: "стейкинг", oracles: "оракулы",
-  storage_compute: "хранение и счёт", depin: "DePIN",
-  ai_infra: "ИИ: инфраструктура", ai_agents: "ИИ: агенты",
-  memes: "мемы", gaming_metaverse: "игры и метаверс",
-  telegram_games: "телеграм-игры", nft_creator: "NFT",
-  exchange_tokens: "биржевые токены", fan_tokens: "фан-токены",
-  consumer_apps: "приложения", identity_access: "идентичность",
-  infrastructure: "инфраструктура", payments_social: "платежи",
+const GRP_RU = {bitcoin_pow: "Bitcoin & PoW", privacy: "Privacy",
+  smart_contract_l1: "L1 platforms", layer2: "L2",
+  cosmos_interop: "Cosmos & bridges", polkadot: "Polkadot",
+  defi_dex: "DeFi: exchanges", defi_lending: "DeFi: lending",
+  defi_derivatives: "DeFi: derivatives", defi_yield: "DeFi: yield",
+  liquid_staking: "Staking", oracles: "Oracles",
+  storage_compute: "Storage & compute", depin: "DePIN",
+  ai_infra: "AI: infrastructure", ai_agents: "AI: agents",
+  memes: "Memes", gaming_metaverse: "Gaming & metaverse",
+  telegram_games: "Telegram games", nft_creator: "NFT",
+  exchange_tokens: "Exchange tokens", fan_tokens: "Fan tokens",
+  consumer_apps: "Consumer apps", identity_access: "Identity",
+  infrastructure: "Infrastructure", payments_social: "Payments",
   dao_governance: "DAO", rwa: "RWA",
-  bitcoin_ecosystem: "экосистема биткойна",
-  excluded_special: "особые", other: "прочие и новые листинги"};
+  bitcoin_ecosystem: "Bitcoin ecosystem",
+  excluded_special: "Special", other: "Other & new listings"};
 async function pullGroups() {
   try {
     const r = await fetch(`/groups?k=${encodeURIComponent(KEY)}`);
@@ -547,15 +547,24 @@ function renderGroups() {
   box.innerHTML = GRP.list.map(g => {
     const ss = q ? g.symbols.filter(s => s.includes(q)) : g.symbols;
     if (!ss.length) return "";
-    const open = q || ss.includes(sym) ? " open" : "";
+    // Свёрнуто ВСЕГДА, кроме поиска: авто-раскрытие группы текущей
+    // монеты на «прочих» из двух сотен имён давало стену кнопок.
+    const open = q ? " open" : "";
     return `<details class="grp"${open}><summary><span>${
         GRP_RU[g.id] || g.id}</span><span>${ss.length}</span></summary>
       <div class="gs">${ss.map(s =>
         `<button data-s="${s}" aria-pressed="${String(s === sym)}">${
           s.replace("USDT","")}</button>`).join("")}</div></details>`;
-  }).join("") || `<div class="mline">ничего не найдено</div>`;
+  }).join("") || `<div class="mline">nothing found</div>`;
   box.querySelectorAll("[data-s]").forEach(b =>
     b.onclick = () => { sym = b.dataset.s; wipe(); ST.sym = sym; tick(); });
+  // Аккордеон: раскрытие одной группы сворачивает остальные.
+  box.querySelectorAll("details.grp").forEach(dd =>
+    dd.addEventListener("toggle", () => {
+      if (dd.open && !GRP.q)
+        box.querySelectorAll("details.grp[open]").forEach(o =>
+          { if (o !== dd) o.open = false; });
+    }));
 }
 
 // --- модель: состояние, живой IC и мысли трейдерскими словами --------
@@ -573,31 +582,31 @@ function renderModel() {
   const cap = document.getElementById("cap-model");
   if (!d) { box.textContent = "…"; return; }
   if (!d.present) {
-    cap.textContent = "копит запись";
-    box.innerHTML = `<div class="mline">модель ещё не обучалась: цикл
-      ждёт 48 закрытых часов-сечений (~2 суток записи полного списка).
-      Всё это время она уже копит свою будущую обучающую выборку.</div>`;
+    cap.textContent = "accumulating data";
+    box.innerHTML = `<div class="mline">the model has not trained yet: the cycle
+      waits for 48 closed hourly cross-sections (~2 days of full-list
+      recording). Meanwhile it is already accumulating its training set.</div>`;
     return;
   }
   const m = d.manifest || {};
   const ageH = m.trained_at
     ? Math.max(0, (Date.now()/1000 - new Date(m.trained_at).getTime()/1000)
                / 3600) : null;
-  cap.textContent = `веса v${m.version} · возраст ${
-    ageH == null ? "—" : ageH.toFixed(1)} ч`;
+  cap.textContent = `weights v${m.version} · age ${
+    ageH == null ? "—" : ageH.toFixed(1)} h`;
   const ic = {};
   (d.ic || []).forEach(r => { ic[r.target] = r; });
   const icLine = ["fwd_1h","fwd_4h","fwd_24h"].map(t => ic[t]
     ? `${t.replace("fwd_","")} ${ic[t].median_ic > 0 ? "+" : ""}${
         ic[t].median_ic}` : null).filter(Boolean).join(" · ");
-  box.innerHTML = `<div class="mline">обучена на ${m.sections ?? "—"}
-      сечениях по ${m.symbols ?? "—"} монетам · проверка на шум ${
-      m.canary_ic == null ? "—" : "чиста (" + m.canary_ic + ")"}${
-      icLine ? " · сбываемость прогнозов (IC вне выборки): " + icLine
+  box.innerHTML = `<div class="mline">trained on ${m.sections ?? "—"}
+      cross-sections, ${m.symbols ?? "—"} coins · noise check ${
+      m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
+      icLine ? " · out-of-sample IC: " + icLine
              : ""}</div>
     <div class="thoughts">${(d.thoughts || []).slice().reverse().map(t =>
       `<span class="tt">[${t.at || ""}]</span> ${t.text}`).join("\n")
-      || "мыслей пока нет — появятся после первого обучения"}</div>`;
+      || "no thoughts yet — they appear after the first training"}</div>`;
 }
 
 const REC = {on:true, busy:false, data:null, timer:null};
@@ -633,25 +642,24 @@ function renderRec() {
   // Направление закрыто — панель молчит целиком, а не показывает
   // пустую таблицу: пустота неотличима от поломки.
   if (d && d.off) {
-    box.innerHTML = `<div class="note" style="padding:7px 10px">бумажные
-      сделки детектора выключены: направление ленты закрыто замерами,
-      поглощение вошло в модель признаками</div>`;
+    box.innerHTML = `<div class="note" style="padding:7px 10px">detector paper
+      trades are off: tape direction closed by measurements, absorption
+      feeds the model as features</div>`;
     return;
   }
   if (!d || d.busy) {
-    box.innerHTML = `<div class="note" style="padding:7px 10px">пересчитываю
-      те же входы под текущие правила${
-        d ? `: ${d.done} из ${d.total} монет` : ""}…</div>`;
+    box.innerHTML = `<div class="note" style="padding:7px 10px">replaying
+      the same entries under current rules${
+        d ? `: ${d.done} of ${d.total} coins` : ""}…</div>`;
     return;
   }
   box.innerHTML = `<div class="note" style="padding:7px 10px">`
-    + (d.stale ? `<b style="color:var(--ask)">пересчёт считан под правила `
-        + `v${d.ver}, а сейчас действуют v${d.now_ver}</b> — нажмите ещё раз, `
-        + `чтобы пересчитать под нынешние.<br>` : "")
-    + `<b>встречный счёт</b>: ниже показаны НЕ настоящие исходы, а те же `
-    + `входы, проведённые по правилам v${d.ver} (окно ${d.hours} ч, счёт `
-    + `${d.took_sec} с). Цена шла та же, сделка была бы другой. `
-    + `Входов взято ${d.made}, отвергнуто новой геометрией ${d.refused}.`
+    + (d.stale ? `<b style="color:var(--ask)">replay was computed under rules `
+        + `v${d.ver}, current is v${d.now_ver}</b> — refresh to recompute.<br>` : "")
+    + `<b>replay</b>: NOT actual outcomes — the same entries run under `
+    + `rules v${d.ver} (window ${d.hours} h, took ${d.took_sec} s). `
+    + `Same price path, different trade. `
+    + `Entries taken ${d.made}, rejected by new geometry ${d.refused}.`
     + ageLine(d, ALL.trades) + coverLine(d, ALL.trades.length) + `</div>`;
 }
 
@@ -669,12 +677,12 @@ function ageLine(d, live) {
   const mins = Math.max(0, Math.round((now - d.at) / 60));
   const fresh = (live || []).filter(t => t.t > d.at).length;
   const hhmm = new Date(d.at * 1000).toISOString().slice(11, 16);
-  return `<br><span style="opacity:.8">посчитан в ${hhmm} UTC, `
-    + `${mins} мин назад — и с тех пор НЕ пересчитывался.`
+  return `<br><span style="opacity:.8">computed at ${hhmm} UTC, `
+    + `${mins} min ago — NOT recomputed since.`
     + (fresh
-        ? ` <b style="color:var(--ask)">Живых сделок после этого момента: `
-          + `${fresh}, здесь их нет</b> — нажмите «встречный счёт» ещё раз.`
-        : ` Новых живых сделок с тех пор не было.`)
+        ? ` <b style="color:var(--ask)">Live trades after that moment: `
+          + `${fresh}, not shown here</b> — refresh the replay.`
+        : ` No new live trades since.`)
     + `</span>`;
 }
 
@@ -685,10 +693,9 @@ function ageLine(d, live) {
 function coverLine(d, shownN) {
   const seen = (d.made || 0) + (d.refused || 0);
   if (!shownN || seen >= shownN) return "";
-  return `<br><span style="opacity:.8">пересчитано входов ${seen} из `
-    + `${shownN} в таблице: остальные старше окна пересчёта `
-    + `(${d.hours} ч), их лента уже не поднимается. Сводка — по `
-    + `пересчитанным, не по всей истории.</span>`;
+  return `<br><span style="opacity:.8">replayed ${seen} of `
+    + `${shownN} entries in the table: the rest are older than the `
+    + `replay window (${d.hours} h). Summary covers replayed only.</span>`;
 }
 
 // Диск: сколько занято, с какой скоростью растёт и надолго ли хватит.
@@ -698,13 +705,13 @@ function coverLine(d, shownN) {
 function dkCells(d) {
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
-  if (!d) return cell("диск", "считаю…");
+  if (!d) return cell("disk", "measuring…");
   const days = d.days_left;
-  return cell("занято, ГБ", d.used_gb ?? "—")
-    + cell("свободно, ГБ", d.free_gb ?? "—")
-    + cell("рост, МБ/ч", `${d.rate_mb_h ?? "—"}`)
-    + cell("на символ, МБ/ч", `${d.per_sym_mb_h ?? "—"}`)
-    + cell("хватит на, сут", days ?? "—",
+  return cell("used, GB", d.used_gb ?? "—")
+    + cell("free, GB", d.free_gb ?? "—")
+    + cell("growth, MB/h", `${d.rate_mb_h ?? "—"}`)
+    + cell("per symbol, MB/h", `${d.per_sym_mb_h ?? "—"}`)
+    + cell("days left", days ?? "—",
            days && days < 14 ? "bad" : days ? "good" : "");
 }
 
@@ -853,7 +860,7 @@ document.getElementById("symq").oninput = e => {
 
 CHART = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>График живьём</title>
+<title>Chart живьём</title>
 <style>
 :root{color-scheme:light dark;
  --ground:#f6f7f9;--panel:#fff;--ink:#141a21;--muted:#5c6673;--rule:#dfe4ea;
@@ -911,11 +918,11 @@ td:first-child,th:first-child{text-align:left}
   <span class="sp"></span>
   <button id="fit">весь период</button>
   <button id="live" aria-pressed="true">следить за краем</button>
-  <a class="btn" href="/" id="home">к обзору</a>
+  <a class="btn" href="/" id="home">overview</a>
 </div>
 <div id="recnote"></div>
 <div class="panel">
-  <div class="cap"><span id="cap">минутные свечи · тяните, колесо или щипок — масштаб</span>
+  <div class="cap"><span id="cap">минутные candles · тяните, колесо или щипок — масштаб</span>
     <span id="cap2" class="mono"></span></div>
   <canvas id="px" height="420"></canvas>
   <div id="tip" class="mono"></div>
@@ -957,9 +964,9 @@ const ST = {cand:[], since:0, sym:"", busy:false, fails:0};
 const HIST = {trades:[], stats:null, by_rule:{}, by_ver:[], equity:[],
               at:0, busy:false};
 // История свечей с диска: в памяти сборщика живут считанные часы, а
-// сделки поднимаются за трое суток — график обрывался там, где кончался
-// буфер, и прошлые сделки смотреть было не на чем. Тянется один раз на
-// символ, живые свечи ложатся поверх.
+// trades поднимаются за трое суток — график обрывался там, где кончался
+// буфер, и прошлые trades смотреть было не на чем. Тянется один раз на
+// символ, живые candles ложатся поверх.
 const HC = {sym:"", cand:[], busy:false, hours:24};
 // Единица кривой счёта: базисные пункты — сколько денег при равном
 // размере позиции, R — сколько при равном риске на сделку. Это разные
@@ -968,7 +975,7 @@ let EQR = false;
 // Встречный счёт: те же входы, нынешняя геометрия. Пока включён,
 // подменяются ВСЕ панели разом — график, таблица, сводка, кривая, —
 // потому что владельцу нужно видеть не отчёт о пересчёте, а сами
-// сделки: где стоял бы стоп, куда уехала бы цель, чем кончилось бы.
+// trades: где стоял бы стоп, куда уехала бы цель, чем кончилось бы.
 // Смешивать с настоящими исходами нельзя, поэтому это переключатель, а
 // не добавка, и включённое состояние подписано над графиком.
 // Переключатель переживает перезагрузку — см. тот же приём на обзоре.
@@ -1003,7 +1010,7 @@ async function pullRec(go) {
 }
 
 // Пересчёт годен к показу, только когда он досчитан и посчитан по ЭТОЙ
-// монете: чужой список сделок на чужом графике выглядел бы как сделки,
+// монете: чужой список сделок на чужом графике выглядел бы как trades,
 // которых не было.
 function recReady() {
   return REC.data && !REC.data.busy && REC.sym === sym
@@ -1013,30 +1020,29 @@ function recReady() {
 function renderRec() {
   const box = document.getElementById("recnote"), d = REC.data;
   if (d && d.off) {
-    box.innerHTML = `<div class="panel"><div class="note">бумажные сделки
-      детектора выключены: направление ленты закрыто замерами,
-      поглощение вошло в модель признаками</div></div>`;
+    box.innerHTML = `<div class="panel"><div class="note">detector paper trades
+      are off: tape direction closed by measurements, absorption feeds
+      the model as features</div></div>`;
     return;
   }
   if (REC.err) {
-    box.innerHTML = `<div class="panel"><div class="note">пересчёт не
-      отвечает (неудачных попыток ${REC.err}). Показано то, что было на
-      самом деле. Связь восстановится — нажмите ещё раз.</div></div>`;
+    box.innerHTML = `<div class="panel"><div class="note">replay is not
+      responding (${REC.err} failed attempts). Showing actual history.
+      Try again when connection recovers.</div></div>`;
     return;
   }
   if (!d || d.busy) {
     box.innerHTML = `<div class="panel"><div class="note">пересчитываю те же
-      входы под текущие правила${d ? `: ${d.done} из ${d.total} монет` : ""}…
+      входы под текущие правила${d ? `: ${d.done} of ${d.total} coins` : ""}…
       </div></div>`;
     return;
   }
   box.innerHTML = `<div class="panel"><div class="note">`
-    + (d.stale ? `<b style="color:var(--ask)">пересчёт считан под правила
-        v${d.ver}, а сейчас действуют v${d.now_ver}</b> — нажмите ещё раз,
-        чтобы пересчитать под нынешние.<br>` : "") + `
-    <b>встречный счёт</b> — на странице показаны НЕ настоящие исходы, а те
-    же входы, проведённые по правилам v${d.ver} (окно ${d.hours} ч, счёт
-    ${d.took_sec} с). Цена шла та же, сделка была бы другой: стоп и цель
+    + (d.stale ? `<b style="color:var(--ask)">replay computed under rules
+        v${d.ver}, current is v${d.now_ver}</b> — refresh to recompute.<br>` : "") + `
+    <b>replay</b> — the page shows NOT actual outcomes but the same
+    entries run under rules v${d.ver} (window ${d.hours} h, took
+    ${d.took_sec} s). Same price path, different trade: stop and target
     пересчитаны, значит и выход другой. Входов по этой монете взято
     ${d.made}, отвергнуто новой геометрией ${d.refused}.
     <br>График, таблица и сводка показывают ТОЛЬКО пересчёт: что было
@@ -1055,12 +1061,12 @@ function ageLine(d, live) {
   const mins = Math.max(0, Math.round((now - d.at) / 60));
   const fresh = (live || []).filter(t => t.t > d.at).length;
   const hhmm = new Date(d.at * 1000).toISOString().slice(11, 16);
-  return `<br><span style="opacity:.8">посчитан в ${hhmm} UTC, `
-    + `${mins} мин назад — и с тех пор НЕ пересчитывался.`
+  return `<br><span style="opacity:.8">computed at ${hhmm} UTC, `
+    + `${mins} min ago — NOT recomputed since.`
     + (fresh
-        ? ` <b style="color:var(--ask)">Живых сделок после этого момента: `
-          + `${fresh}, здесь их нет</b> — нажмите «встречный счёт» ещё раз.`
-        : ` Новых живых сделок с тех пор не было.`)
+        ? ` <b style="color:var(--ask)">Live trades after that moment: `
+          + `${fresh}, not shown here</b> — refresh the replay.`
+        : ` No new live trades since.`)
     + `</span>`;
 }
 
@@ -1069,10 +1075,9 @@ function ageLine(d, live) {
 function coverLine(d, shownN) {
   const seen = (d.made || 0) + (d.refused || 0);
   if (!shownN || seen >= shownN) return "";
-  return `<br><span style="opacity:.8">пересчитано входов ${seen} из `
-    + `${shownN} в таблице: остальные старше окна пересчёта `
-    + `(${d.hours} ч), их лента уже не поднимается. Сводка — по `
-    + `пересчитанным, не по всей истории.</span>`;
+  return `<br><span style="opacity:.8">replayed ${seen} of `
+    + `${shownN} entries in the table: the rest are older than the `
+    + `replay window (${d.hours} h). Summary covers replayed only.</span>`;
 }
 
 // Источник сделок и сводки для всех панелей сразу.
@@ -1092,7 +1097,7 @@ async function pullHistory(s) {
     if (!r.ok) throw new Error("HTTP " + r.status);
     const h = await r.json();
     if (h.sym === s) { HC.cand = h.candles || []; HC.sym = s; draw(); }
-  } catch (e) { /* тихо: живые свечи всё равно рисуются */ }
+  } catch (e) { /* тихо: живые candles всё равно рисуются */ }
   finally { HC.busy = false; }
 }
 function mergeCandles(old, add) {
@@ -1170,7 +1175,7 @@ async function pull() {
   draw(); rows(); summary();
 }
 
-// Номер свечи, внутри которой лежит момент. Двоичным поиском, потому
+// Номер candles, внутри которой лежит момент. Двоичным поиском, потому
 // что ряд свечей ДЫРЯВ: минута без сделок отсутствует, а не выходит
 // нулевой (урок A2). Прежде метки сделок ставились линейной пропорцией
 // «время между краями окна», и при каждой дыре они разъезжались со
@@ -1189,7 +1194,7 @@ function barAt(c, t) {
 }
 
 function cands() {
-  // История с диска снизу, живые свечи поверх: у текущей минуты живая
+  // История с диска снизу, живые candles поверх: у текущей минуты живая
   // версия свежее файловой, и она обязана победить.
   const live = (data && data.sig && data.sig.candles) || [];
   if (!HC.cand.length) return live;
@@ -1228,7 +1233,7 @@ function draw() {
   if (c.length < 2) {
     g.fillStyle = css("--muted"); g.font = "13px system-ui";
     g.textBaseline = "middle";
-    g.fillText("копим историю — свечи появятся через пару минут", 12, H/2);
+    g.fillText("копим историю — candles появятся через пару минут", 12, H/2);
     return;
   }
   if (!view) view = { i0: Math.max(0, c.length-90), n: Math.min(90, c.length) };
@@ -1256,7 +1261,7 @@ function draw() {
   const y = v => padT + ph*(hi-v)/(hi-lo);
   const x = i => padL + pw*(i-i0+0.5)/(i1-i0);
   // Момент кладётся на СВОЮ свечу, а не на долю окна: доля врёт на
-  // каждой дыре в ряду. Внутри свечи ещё доля минуты — чтобы метка
+  // каждой дыре в ряду. Внутри candles ещё доля минуты — чтобы метка
   // стояла там, где случилась, а не прыгала на границу бара.
   const xt = t => {
     const i = barAt(c, t);
@@ -1297,7 +1302,7 @@ function draw() {
     // Отрезки стопа и цели обрываются там, где сделка закончилась.
     // Иначе они тянутся до правого края и у нескольких сделок подряд
     // накладываются друг на друга — на графике каша, и непонятно,
-    // какая линия чьей сделке принадлежит. У открытой сделки конца
+    // какая линия чьей сделке принадлежит. У открытой trades конца
     // ещё нет, и она честно тянется до края.
     const end = m.closed_at || (m.held ? m.t + m.held : null);
     const xa = clamp(xt(m.t));
@@ -1312,7 +1317,7 @@ function draw() {
     g.beginPath(); g.moveTo(xa,yy); g.lineTo(xa-6,yy+11*d);
     g.lineTo(xa+6,yy+11*d); g.closePath();
     if (m.state === "не открыта") {
-      // Полый треугольник: вход был, сделки нет. Молча пропустив
+      // Полый треугольник: вход был, trades нет. Молча пропустив
       // такой вход, страница выдаёт отказ правила за пропажу данных.
       g.save(); g.strokeStyle = css("--muted"); g.lineWidth = 1.4;
       g.setLineDash([2,2]); g.stroke(); g.restore();
@@ -1338,18 +1343,18 @@ function draw() {
   g.fillText(stamp(t0), padL, H-6);
   g.textAlign="right"; g.fillText(stamp(t1), W-padR, H-6); g.textAlign="left";
   document.getElementById("cap2").textContent =
-    `${i1-i0} из ${c.length} мин · ${stamp(t0)}—${stamp(t1)}`;
+    `${i1-i0} of ${c.length} min · ${stamp(t0)}—${stamp(t1)}`;
   // Сколько сделок вообще попадает на график. Свечи живут в
   // посекундном буфере (несколько часов), а история сделок поднимается
   // с диска за трое суток — значит часть сделок старше самой старой
-  // свечи и нарисована быть не может. Молчать об этом нельзя: в
+  // candles и нарисована быть не может. Молчать об этом нельзя: в
   // таблице их видно, на графике нет, и это читается как пропажа.
   const first = c[0][0], last = c[c.length-1][0];
   const S = shown();
   const off = tr.filter(m => m.t < first || m.t > last).length;
   const old = tr.filter(m => (m.ver || 1) !== S.ver).length;
   document.getElementById("cap3").textContent =
-    `${tr.length} сделок` + (S.rec ? " · встречный счёт, не факт" : "")
+    `${tr.length} сделок` + (S.rec ? " · replayed, not actual" : "")
     + (S.rec && recReady() && recReady().no_outcome
        ? ` · ${tr.filter(m => m.state === "не открыта").length} входов `
          + `правило не взяло (полый треугольник)` : "")
@@ -1375,7 +1380,7 @@ function rows() {
     <td class="mono">${m.held == null ? "—" : m.held + " с"}</td>
     <td class="mono">${res(m)}</td></tr>`
   ).join("") : `<tr><td colspan="11" style="color:var(--muted)">
-    событий пока нет — детектор ждёт совпадения условий</td></tr>`;
+    no events yet — detector waits for conditions</td></tr>`;
 }
 
 function verLine(list, cur) {
@@ -1402,7 +1407,7 @@ function summary() {
   const S = shown(), s = S.stats, box = document.getElementById("sum");
   const pc = v => (v*100).toFixed(0) + " %";
   if (!s) {
-    box.innerHTML = `<div class="note">закрытых сделок пока нет</div>`;
+    box.innerHTML = `<div class="note">no closed trades yet</div>`;
   } else {
     const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
       <div class="v mono ${cls||""}">${v}</div></div>`;
@@ -1410,18 +1415,18 @@ function summary() {
     // отношении 1:3 выигрывать нужно каждую четвёртую, и «мало побед»
     // само по себе ничего не значит.
     box.innerHTML =
-      cell("сделок", s.trades) +
-      cell("побед", pc(s.win_rate),
+      cell("trades", s.trades) +
+      cell("wins", pc(s.win_rate),
            s.win_rate >= s.break_even ? "buy" : "sell") +
-      cell("безубыточно", pc(s.break_even)) +
-      cell("ожидание", (s.expectancy_bp>0?"+":"") +
+      cell("break-even", pc(s.break_even)) +
+      cell("expectancy", (s.expectancy_bp>0?"+":"") +
            s.expectancy_bp.toFixed(1) + " б.п.",
            s.expectancy_bp > 0 ? "buy" : "sell") +
-      cell("в риске", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
+      cell("in R", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
            + " R", s.expectancy_r > 0 ? "buy" : "sell") +
       cell("медиана", s.median_bp.toFixed(1) + " б.п.") +
       cell("стоп", s.stop_bp_median.toFixed(0) + " б.п.") +
-      cell("цель / стоп / время",
+      cell("target / stop / time",
            `${pc(s.share_target)} / ${pc(s.share_stop)} / ${pc(s.share_time)}`) +
       (s.cut_by_restart
         ? cell("оборвано", s.cut_by_restart, "sell") : "");
@@ -1437,7 +1442,7 @@ function summary() {
       (x.break_even*100).toFixed(0)} %, ожидание ${
       x.expectancy_bp > 0 ? "+" : ""}${x.expectancy_bp.toFixed(1)} б.п. (${
       x.expectancy_r > 0 ? "+" : ""}${x.expectancy_r.toFixed(2)} R)`
-      : `<b>${r}</b>: сделок нет`;
+      : `<b>${r}</b>: no trades`;
   }).join(" · ");
   const vl = verLine(S.by_ver, S.ver);
   document.getElementById("rules").innerHTML =

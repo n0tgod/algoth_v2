@@ -298,11 +298,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("страница не говорит о возрасте пересчёта (нет ageLine)");
     } else {
       const note = global.__age(recount, hist.trades) || "";
-      if (!/посчитан в/.test(note))
+      if (!/computed at/.test(note))
         bad.push("возраст пересчёта не показан: " + JSON.stringify(note));
-      if (!/\b\d+ мин назад/.test(note))
+      if (!/\b\d+ min ago/.test(note))
         bad.push("возраст не назван числом минут: " + JSON.stringify(note));
-      if (!/Живых сделок после этого момента/.test(note))
+      if (!/Live trades after that moment/.test(note))
         bad.push("новые живые сделки после пересчёта не названы: "
                  + JSON.stringify(note));
     }
