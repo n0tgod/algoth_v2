@@ -60,10 +60,11 @@ h1{font-size:17px;margin:0 0 2px}
 .pick{padding:8px 10px}
 .pickwrap>summary{list-style:none}
 .pickwrap>summary::-webkit-details-marker{display:none}
-.pick input{width:100%;font:inherit;font-size:14px;color:var(--ink);
+.pick input{width:100%;font:inherit;font-size:16px;color:var(--ink);
  background:var(--ground);border:1px solid var(--rule);padding:7px 10px;
  margin-bottom:6px}
 details.grp{border-top:1px solid var(--rule)}
+details.grp summary::-webkit-details-marker{display:none}
 details.grp summary{cursor:pointer;padding:6px 2px;font-size:12px;
  color:var(--muted);letter-spacing:.03em;list-style:none;
  display:flex;justify-content:space-between}
@@ -91,7 +92,7 @@ button[aria-pressed=true]{border-color:var(--accent);
  box-shadow:inset 0 -2px 0 var(--accent)}
 .cols{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:760px){.cols{grid-template-columns:1fr 1fr}}
-.panel{background:var(--panel);border:1px solid var(--rule)}
+.panel{background:var(--panel);border:1px solid var(--rule);overflow-x:auto;-webkit-overflow-scrolling:touch}
 .cap{padding:6px 10px;border-bottom:1px solid var(--rule);font-size:11.5px;
  color:var(--muted);letter-spacing:.05em;text-transform:uppercase;
  display:flex;justify-content:space-between;gap:8px}
@@ -583,18 +584,22 @@ function renderModel() {
   const box = document.getElementById("modelbox"), d = MDL.data;
   const cap = document.getElementById("cap-model");
   if (!d) { box.textContent = "…"; return; }
-  if (!d.present) {
-    cap.textContent = "accumulating data";
-    box.innerHTML = `<div class="mline">the model has not trained yet: the cycle
-      waits for 48 closed hourly cross-sections (~2 days of full-list
-      recording). Meanwhile it is already accumulating its training set.</div>`;
-    return;
-  }
-  const m = d.manifest || {};
   const armBtns = `<div style="margin-bottom:6px">` +
     [["all","both"],["gbm","trees (ML)"],["nn","neural (AI)"]].map(x =>
       `<button data-arm="${x[0]}" aria-pressed="${
         String(MDL.arm === x[0])}">${x[1]}</button>`).join(" ") + `</div>`;
+  const wireArms = () => box.querySelectorAll("[data-arm]").forEach(b =>
+    b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); });
+  if (!d.present) {
+    cap.textContent = "accumulating data";
+    box.innerHTML = armBtns + `<div class="mline">two models will train
+      here — trees (ML) vs neural net (AI) — once 48 closed hourly
+      cross-sections accumulate (~2 days of full-list recording).
+      Meanwhile the training set is being recorded.</div>`;
+    wireArms();
+    return;
+  }
+  const m = d.manifest || {};
   const ageH = m.trained_at
     ? Math.max(0, (Date.now()/1000 - new Date(m.trained_at).getTime()/1000)
                / 3600) : null;
@@ -624,8 +629,7 @@ function renderModel() {
       .map(t =>
       `<span class="tt">[${t.at || ""}]</span> ${t.text}`).join("\n")
       || "no thoughts yet — they appear after the first training"}</div>`;
-  box.querySelectorAll("[data-arm]").forEach(b =>
-    b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); });
+  wireArms();
 }
 function picksTable(d) {
   // Турнир: у каждой руки свои выборы и свой разбор. Смешение рук в
