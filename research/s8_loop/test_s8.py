@@ -225,6 +225,119 @@ def test_targets_shapes_and_direction():
           (t["mfe_4h"][ok] >= t["mae_4h"][ok] - 1e-9).all())
 
 
+# ---------- цикл переобучения ----------
+
+def _write_summaries(d, S=36, D=260, seed=5, start="2026-08-01-00"):
+    """Синтетические сводки на диск: дельта ленты предсказывает
+    следующий час — сигнал, который цикл обязан найти."""
+    r = np.random.default_rng(seed)
+    t0 = time.mktime(time.strptime(start, "%Y-%m-%d-%H"))
+    sig = r.normal(0, 1, (S, D))
+    close = np.empty((S, D))
+    close[:, 0] = 100.0
+    # Сила сигнала выбрана правдоподобной (IC ~0.2, не 0.5): шум
+    # проекции канарейки растёт вместе с настоящим сигналом (механизм
+    # M2), и на перегретой синтетике канарейка кричала бы без течи.
+    for t in range(1, D):
+        close[:, t] = close[:, t - 1] * (
+            1 + 0.004 * sig[:, t - 1] * 0.22
+            + r.normal(0, 0.004, S))
+    from datetime import datetime as DT, timezone as TZ
+    for si in range(S):
+        sym = f"S{si:02d}USDT"
+        os.makedirs(os.path.join(d, sym), exist_ok=True)
+        fh = {}
+        for t in range(D):
+            hour = DT.fromtimestamp(t0 + t * 3600, TZ.utc)\
+                .strftime("%Y-%m-%d-%H")
+            day = hour[:10]
+            buy = 1e6 * (1 + 0.4 * np.tanh(sig[si, t]))
+            sell = 2e6 - buy
+            row = {"hour": hour, "n_snap": 3600,
+                   "mid_close": round(close[si, t], 6),
+                   "mid_high": round(close[si, t] * 1.002, 6),
+                   "mid_low": round(close[si, t] * 0.998, 6),
+                   "spread_bp": 5.0, "upd": 100.0, "reach_bp": 60.0,
+                   "best_b": 1e4, "best_a": 1e4,
+                   "big_med": 1e5, "big_max": 2e5,
+                   "n_trades": 500, "buy": round(buy, 2),
+                   "sell": round(sell, 2),
+                   "vol_max_1s": 1e4, "traded_secs": 1800,
+                   "depth_eat_b": 2e5, "depth_eat_a": 2e5}
+            for w in BANDS:
+                row[f"bq_b{w}"] = 1e5
+                row[f"bq_a{w}"] = 1e5
+                row[f"cov_b{w}"] = 1.0
+                row[f"cov_a{w}"] = 1.0
+            f = fh.get(day)
+            if f is None:
+                f = fh[day] = open(os.path.join(d, sym, day + ".jsonl"),
+                                   "a", encoding="utf-8")
+            f.write(json.dumps(row, separators=(",", ":")) + "\n")
+        for f in fh.values():
+            f.close()
+
+
+def test_train_cycle_end_to_end():
+    import train as T
+
+    orig_fit = T.gbm.fit
+    T.gbm.fit = lambda x, y, seed: orig_fit(x, y, seed, n_trees=25)
+    try:
+        d = tempfile.mkdtemp()
+        sd = os.path.join(d, "summary")
+        _write_summaries(sd, D=260)
+        T.MODEL_DIR = os.path.join(d, "model")
+        ok = T.cycle(sd, lambda m: None, book_root=None)
+        check("цикл прошёл", ok)
+        man = json.load(open(os.path.join(T.MODEL_DIR, "manifest.json")))
+        check("манифест с версией и границей обучения",
+              man["version"] == T.MODEL_VERSION
+              and man["trained_upto"].startswith("2026-08-1"),
+              str(man.get("trained_upto")))
+        check("веса всех целей на месте",
+              all(os.path.exists(os.path.join(
+                  T.MODEL_DIR, f"weights_{t}.pkl")) for t in T.TARGETS))
+        check("канарейка не кричит",
+              man["canary_ic"] is not None
+              and abs(man["canary_ic"]) < T.CANARY_STOP,
+              str(man["canary_ic"]))
+
+        # Второй цикл: дописываем сутки и ждём живой вневыборочный IC —
+        # прежняя модель обязана поймать заложенный сигнал на часах,
+        # которых не видела.
+        _write_summaries(sd, D=300)   # те же зерно и старт: +40 час.
+        ok2 = T.cycle(sd, lambda m: None, book_root=None)
+        check("второй цикл прошёл", ok2)
+        hist = [json.loads(x) for x in
+                open(os.path.join(T.MODEL_DIR, "ic_history.jsonl"))]
+        f1 = [h for h in hist if h["target"] == "fwd_1h"]
+        check("живой IC записан", len(f1) == 1, str(hist))
+        check(f"заложенный сигнал пойман вне выборки "
+              f"(IC {f1[0]['median_ic']:+.3f})",
+              f1[0]["median_ic"] > 0.1, str(f1))
+    finally:
+        T.gbm.fit = orig_fit
+
+
+def test_load_matrices_grid_is_continuous():
+    import train as T
+
+    d = tempfile.mkdtemp()
+    os.makedirs(os.path.join(d, "AAA"))
+    rows = [{"hour": "2026-08-01-00", "mid_close": 1.0, "n_snap": 3600},
+            {"hour": "2026-08-01-05", "mid_close": 2.0, "n_snap": 3600}]
+    with open(os.path.join(d, "AAA", "2026-08-01.jsonl"), "w") as f:
+        for r in rows:
+            f.write(json.dumps(r) + "\n")
+    mats, syms, grid = T.load_matrices(d)
+    check("сетка часов непрерывна (дыра — колонка NaN)",
+          len(grid) == 6 and np.isnan(mats["mid_close"][0, 2]),
+          str(grid))
+    check("края на месте", mats["mid_close"][0, 0] == 1.0
+          and mats["mid_close"][0, 5] == 2.0)
+
+
 def main():
     print("сводка часа")
     test_summary_censors_bands_by_reach()
@@ -238,6 +351,9 @@ def main():
     print("сечение и цели")
     test_eligibility_floor()
     test_targets_shapes_and_direction()
+    print("цикл переобучения")
+    test_load_matrices_grid_is_continuous()
+    test_train_cycle_end_to_end()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")
