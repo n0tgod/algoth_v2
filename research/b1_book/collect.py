@@ -165,6 +165,35 @@ def signals_version():
     return RULES_VERSION
 
 
+METRICS_POLL_SEC = 300
+
+
+def metrics_rows(tickers, have):
+    """Разбор ответа tickers: funding, интерес, базис по каждому символу.
+
+    Чистая функция под тест: вторая копия разбора колонок в проекте
+    уже приводила к тихому нулю (загрузчик funding).
+    """
+    out = []
+    for it in (tickers.get("result") or {}).get("list") or []:
+        s = it.get("symbol")
+        if s not in have:
+            continue
+        try:
+            out.append((s, {
+                "ts": int(time.time() * 1000),
+                "fr": float(it["fundingRate"]),
+                "nft": int(it["nextFundingTime"]),
+                "oi": float(it["openInterest"]),
+                "oiv": float(it["openInterestValue"]),
+                "mark": float(it["markPrice"]),
+                "idx": float(it["indexPrice"]),
+            }))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
 def raise_nofile(log, want):
     """Поднять лимит открытых файлов под полный список символов.
 
@@ -379,6 +408,10 @@ class Shard:
         for s in self.symbols:
             out.append(f"orderbook.{self.c.depth[s]}.{s}")
             out.append(f"publicTrade.{s}")
+            # Ликвидации: единственный источник — живой поток, в архивах
+            # их нет ни у кого (замер L0). Каждый день без записи —
+            # минус день будущей обучающей выборки.
+            out.append(f"allLiquidation.{s}")
         return out
 
     def send_sub(self, ws, topics):
@@ -459,6 +492,15 @@ class Shard:
                 except Exception:                         # noqa: BLE001
                     pass
                 self.send_sub(ws, [topic])
+        elif topic.startswith("allLiquidation."):
+            sym = topic.rsplit(".", 1)[-1]
+            for q in msg.get("data") or []:
+                try:
+                    row = {"ts": int(q["T"]), "side": q["S"],
+                           "p": float(q["p"]), "v": float(q["v"])}
+                except (KeyError, TypeError, ValueError):
+                    continue
+                c.w.write("liq", sym, row, ts=row["ts"] / 1000.0)
         elif topic.startswith("publicTrade."):
             sym = topic.rsplit(".", 1)[-1]
             for t in parse_trades(msg):
@@ -1105,8 +1147,33 @@ class Collector:
                      f"сбросов {self.n_resets}{extra}")
             last = (self.n_msg, self.n_trades)
 
+    def metrics_poll(self):
+        """Funding, открытый интерес и базис — раз в 5 минут, один
+        запрос на все символы. Ставка и интерес доказали ценность
+        замерами (персистентность A1; d_oi_7 — второй по важности
+        признак M2), и живой ряд не восстановим задним числом."""
+        import urllib.request
+        fails = 0
+        while not self.stop.wait(METRICS_POLL_SEC):
+            try:
+                url = (f"{REST_HOST}/v5/market/tickers?category=linear")
+                with urllib.request.urlopen(url, timeout=30) as r:
+                    rows = metrics_rows(json.load(r), set(self.books))
+                now = time.time()
+                for s, row in rows:
+                    self.w.write("metrics", s, row, ts=now)
+                if fails:
+                    self.log(f"опрос тикеров ожил, строк {len(rows)}")
+                fails = 0
+            except Exception as e:                        # noqa: BLE001
+                fails += 1
+                if fails in (1, 10) or fails % 100 == 0:
+                    self.log(f"опрос тикеров не прошёл ({fails} подряд): "
+                             f"{type(e).__name__}: {e}")
+
     def run(self, hours):
         deadline = self.started + hours * 3600 if hours else None
+        threading.Thread(target=self.metrics_poll, daemon=True).start()
         threading.Thread(target=self.sampler, daemon=True).start()
         threading.Thread(target=self.statuser, daemon=True).start()
         threading.Thread(target=self.reporter, daemon=True).start()

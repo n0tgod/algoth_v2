@@ -1246,8 +1246,12 @@ def test_rejected_subscription_is_not_silence():
     ws = WS()
     sh.on_open(ws)
     check(f"подписка по одной теме ({len(sent)} запросов)",
-          len(sent) == 4 and all(len(m["args"]) == 1 for m in sent),
+          len(sent) == 6 and all(len(m["args"]) == 1 for m in sent),
           str(sent))
+    check("ликвидации подписаны по каждому символу",
+          sum(1 for m in sent
+              if m["args"][0].startswith("allLiquidation.")) == 2,
+          str([m["args"][0] for m in sent]))
     check("тема названа в req_id",
           all(m["req_id"] == m["args"][0] for m in sent), str(sent))
 
@@ -1351,6 +1355,44 @@ def test_symbol_groups_for_page():
     check(f"настоящая разметка разобрана ({len(real)} групп)",
           len(real) >= 25 and "BCH" in real.get("bitcoin_pow", []),
           str(list(real))[:100])
+
+
+def test_liq_and_metrics_recorded():
+    """Ликвидации и тикеры пишутся: живой поток не восстановим задним
+    числом, и тихая потеря этих рядов была бы видна только через
+    недели — дырами в будущей выборке модели."""
+    import tempfile
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    c = C.Collector(["TST"], [], root, lambda m: None)
+    sh = c.shards[0]
+    sh.on_message(None, json.dumps({
+        "topic": "allLiquidation.TST",
+        "data": [{"T": 1_700_000_000_500, "s": "TST", "S": "Buy",
+                  "p": "1.25", "v": "800"}]}))
+    c.w.flush()
+    import glob
+    liq = glob.glob(os.path.join(root, "liq", "TST", "*.jsonl"))
+    check("ликвидация легла на диск", len(liq) == 1
+          and json.loads(open(liq[0]).read())["p"] == 1.25, str(liq))
+
+    tick = {"result": {"list": [
+        {"symbol": "TST", "fundingRate": "0.0001",
+         "nextFundingTime": "1700003600000", "openInterest": "1000",
+         "openInterestValue": "1250.5", "markPrice": "1.251",
+         "indexPrice": "1.249"},
+        {"symbol": "CHUZHOY", "fundingRate": "0.1",
+         "nextFundingTime": "0", "openInterest": "1",
+         "openInterestValue": "1", "markPrice": "1", "indexPrice": "1"},
+    ]}}
+    rows = C.metrics_rows(tick, {"TST"})
+    check("разбор тикеров: свой символ взят, чужой нет",
+          len(rows) == 1 and rows[0][0] == "TST"
+          and rows[0][1]["fr"] == 0.0001 and rows[0][1]["oiv"] == 1250.5
+          and rows[0][1]["mark"] == 1.251, str(rows))
+    c.w.close()
 
 
 def test_all_symbols_filter():
@@ -1658,6 +1700,7 @@ def main():
     test_rejected_subscription_is_not_silence()
     print("полный список и шарды")
     test_paper_off_is_silent_but_named()
+    test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
     test_all_symbols_filter()
     test_shard_split_covers_everything()
