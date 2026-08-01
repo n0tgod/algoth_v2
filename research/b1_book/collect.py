@@ -992,6 +992,13 @@ class Collector:
                 out = {"present": True, "manifest": json.load(f)}
         except (OSError, ValueError):
             pass
+        for arm in ("gbm", "nn"):
+            try:
+                with open(os.path.join(mdir, f"account_{arm}.json"),
+                          encoding="utf-8") as f:
+                    out.setdefault("accounts", {})[arm] = json.load(f)
+            except (OSError, ValueError):
+                pass
         for name, key, keep in (("thoughts.jsonl", "thoughts", 60),
                                 ("ic_history.jsonl", "ic", 90),
                                 ("picks.jsonl", "picks", 6),

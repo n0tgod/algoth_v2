@@ -603,8 +603,13 @@ function renderModel() {
   const ageH = m.trained_at
     ? Math.max(0, (Date.now()/1000 - new Date(m.trained_at).getTime()/1000)
                / 3600) : null;
+  const accs = d.accounts || {};
+  const accLine = ["gbm","nn"].map(a => accs[a]
+    ? `${a === "gbm" ? "trees" : "neural"} $${accs[a].balance.toFixed(2)}`
+    : null).filter(Boolean).join(" · ");
   cap.textContent = `weights v${m.version} · age ${
-    ageH == null ? "—" : ageH.toFixed(1)} h`;
+    ageH == null ? "—" : ageH.toFixed(1)} h${
+    accLine ? " · " + accLine : ""}`;
   const ic = {};
   (d.ic || []).forEach(r => { ic[(r.arm || "gbm") + ":" + r.target] = r; });
   const armIc = a => ["fwd_1h","fwd_4h","fwd_24h"].map(t => {

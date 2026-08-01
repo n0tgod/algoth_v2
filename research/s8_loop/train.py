@@ -58,6 +58,11 @@ ARMS = (("gbm", gbm.fit), ("nn", nn.fit))
 CYCLE_SEC = 24 * 3600             # спека §5: раз в сутки
 MIN_TRAIN_SECTIONS = 48           # меньше двух суток сечений — рано
 CANARY_STOP = 0.05                # грубая течь; шум зерна тут ±0.015
+# Бумажный счёт руки: старт $1000, 6 позиций равными долями, тейкерский
+# круг 11 б.п. с позиции, без проскальзывания (сказано прямо), плечо 1.
+# Счёт — наблюдение для владельца, вердикт остаётся за §7.
+START_BALANCE = 1000.0
+ROUND_COST_BP = 11.0
 SEED0 = 20260801
 
 
@@ -438,6 +443,25 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                     f.write(json.dumps(
                         {"arm": arm, "hour": lp["hour"], "rows": review},
                         ensure_ascii=False) + "\n")
+                # Бумажный счёт: исполняем прошлый выбор по факту.
+                apath = os.path.join(MODEL_DIR, f"account_{arm}.json")
+                try:
+                    with open(apath, encoding="utf-8") as f:
+                        acc = json.load(f)
+                except (OSError, ValueError):
+                    acc = {"balance": START_BALANCE, "history": []}
+                pos = acc["balance"] / max(len(review), 1)
+                pnl = sum(pos * ((1 if r["side"] == "long" else -1)
+                                 * r["got"] - ROUND_COST_BP) / 1e4
+                          for r in review)
+                acc["balance"] = round(acc["balance"] + pnl, 2)
+                acc["history"].append(
+                    {"hour": lp["hour"], "pnl": round(pnl, 2),
+                     "balance": acc["balance"]})
+                acc["history"] = acc["history"][-500:]
+                with open(apath + ".tmp", "w", encoding="utf-8") as f:
+                    json.dump(acc, f, ensure_ascii=False)
+                os.replace(apath + ".tmp", apath)
         picks = None
         if (arm, "fwd_4h") in models and (arm, "mae_4h") in models \
                 and j_last is not None:
@@ -466,6 +490,10 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         if review:
             hits = sum(1 for r in review
                        if (r["got"] > 0) == (r["side"] == "long"))
+            lines.insert(0, f"счёт: {acc['balance'] - pnl:+.2f} -> "
+                            f"{acc['balance']:+.2f} $ "
+                            f"({pnl / max(acc['balance'] - pnl, 1) * 1e4:+.0f}"
+                            f" б.п. за круг, издержки учтены).")
             lines.insert(0, f"разбор прошлых выборов ({len(review)} имён, "
                             f"угадан знак у {hits}): " + "; ".join(
                                 f"{r['sym'].replace('USDT','')} "

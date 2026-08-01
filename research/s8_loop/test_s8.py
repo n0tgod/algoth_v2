@@ -341,6 +341,17 @@ def test_train_cycle_end_to_end():
               len(rev) == 2 and {r["arm"] for r in rev} == {"gbm", "nn"}
               and all("got" in x for r in rev for x in r["rows"]),
               str(rev)[:120])
+        for arm in ("gbm", "nn"):
+            acc = json.load(open(os.path.join(
+                T.MODEL_DIR, f"account_{arm}.json")))
+            check(f"счёт {arm} исполнен: старт 1000, издержки учтены",
+                  len(acc["history"]) == 1
+                  and abs(acc["balance"] - 1000.0
+                          - acc["history"][0]["pnl"]) < 0.01
+                  and acc["balance"] != 1000.0, str(acc))
+        check("счёт попал в мысли",
+              any(t.startswith("[деревья] счёт:") or
+                  t.startswith("[сеть] счёт:") for t in th), str(th[:3]))
         check("разбор попал в мысли обеих рук",
               any("разбор прошлых выборов" in t and "[деревья]" in t
                   for t in th)
