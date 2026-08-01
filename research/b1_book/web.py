@@ -316,7 +316,8 @@ function render(d) {
     + bookRows(sg.book || {});
   const all = sg.open.concat(sg.done).slice(0, 12);
   document.getElementById("cap-sig").textContent = paperOff
-    ? "новых нет — сделки ниже из истории закрытого направления"
+    ? (all.length ? "новых нет — ниже история закрытого направления"
+                  : "выключены, история очищена")
     : `открыто ${sg.open.length} · шум ${sg.noise_bp ?? "—"} б.п. · уровней ${
       sg.levels.length}`;
   document.getElementById("sig").innerHTML = all.length
