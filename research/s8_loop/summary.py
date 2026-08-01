@@ -194,10 +194,14 @@ def run(root, out_dir, hours_back, log):
         raise SystemExit(f"нет записи стакана в {book_dir}")
     hours = hours_closed(back=hours_back)
     n_new = n_sym = 0
+    said = time.time()
     for si, sym in enumerate(symbols):
-        if si and si % 100 == 0:
+        if time.time() - said > 30:
+            # Молчащий дольше минуты прогон неотличим от повисшего;
+            # на бэклоге один символ со старой записью жуётся минуты.
             log(f"  сводка: {si}/{len(symbols)} символов, "
                 f"новых часов {n_new}")
+            said = time.time()
         sdir = os.path.join(book_dir, sym)
         have = {f.split(".")[0] for f in os.listdir(sdir)}
         todo = [h for h in hours if h in have]
@@ -237,6 +241,11 @@ def main():
     ap.add_argument("--hours-back", type=int, default=0,
                     help="0 — вся запись")
     a = ap.parse_args()
+    try:
+        # Рядом живёт сборщик, приём данных важнее счёта (правило M5).
+        os.nice(10)
+    except OSError:
+        pass
     run(a.root, a.out, a.hours_back or None,
         lambda m: print(m, flush=True))
 
