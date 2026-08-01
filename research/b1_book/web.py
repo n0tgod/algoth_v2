@@ -570,7 +570,7 @@ function renderGroups() {
 }
 
 // --- модель: состояние, живой IC и мысли трейдерскими словами --------
-const MDL = {data: null};
+const MDL = {data: null, arm: "all"};   // переключатель рук турнира
 async function pullModel() {
   try {
     const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
@@ -591,6 +591,10 @@ function renderModel() {
     return;
   }
   const m = d.manifest || {};
+  const armBtns = `<div style="margin-bottom:6px">` +
+    [["all","both"],["gbm","trees (ML)"],["nn","neural (AI)"]].map(x =>
+      `<button data-arm="${x[0]}" aria-pressed="${
+        String(MDL.arm === x[0])}">${x[1]}</button>`).join(" ") + `</div>`;
   const ageH = m.trained_at
     ? Math.max(0, (Date.now()/1000 - new Date(m.trained_at).getTime()/1000)
                / 3600) : null;
@@ -607,15 +611,21 @@ function renderModel() {
     const s = armIc(a);
     return s ? `${a === "gbm" ? "trees" : "neural"}: ${s}` : null;
   }).filter(Boolean).join(" · ");
-  box.innerHTML = `<div class="mline">trained on ${m.sections ?? "—"}
+  box.innerHTML = armBtns + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
       icLine ? " · out-of-sample IC: " + icLine
              : ""}</div>
     ${picksTable(d)}
-    <div class="thoughts">${(d.thoughts || []).slice().reverse().map(t =>
+    <div class="thoughts">${(d.thoughts || []).slice().reverse()
+      .filter(t => MDL.arm === "all"
+        || (MDL.arm === "gbm" ? /^\[деревья\]/ : /^\[сеть\]/)
+             .test(t.text || ""))
+      .map(t =>
       `<span class="tt">[${t.at || ""}]</span> ${t.text}`).join("\n")
       || "no thoughts yet — they appear after the first training"}</div>`;
+  box.querySelectorAll("[data-arm]").forEach(b =>
+    b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); });
 }
 function picksTable(d) {
   // Турнир: у каждой руки свои выборы и свой разбор. Смешение рук в
@@ -644,6 +654,8 @@ function picksTable(d) {
       <table>${(pk.long || []).map(p => row(p, "long")).join("")}${
         (pk.short || []).map(p => row(p, "short")).join("")}</table>`;
   };
+  if (MDL.arm === "gbm") return one("gbm", "trees (ML)");
+  if (MDL.arm === "nn") return one("nn", "neural net (AI)");
   return one("gbm", "trees (ML)") + one("nn", "neural net (AI)");
 }
 
