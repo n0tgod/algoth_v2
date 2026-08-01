@@ -285,8 +285,13 @@ function render(d) {
 
   const sg = d.sig || {levels:[], open:[], done:[], candles:[]};
   drawMid(d.mid || [], sg);
-  document.getElementById("cap-diag").textContent =
-    `история ${sg.history_min ?? 0} мин · до уровня ${
+  // Выключенный детектор обязан называться выключенным. Пустые таблицы
+  // «сделок нет» неотличимы от сломанного детектора — этот симптом уже
+  // стоил владельцу круга.
+  const paperOff = d.status && d.status.paper === false;
+  document.getElementById("cap-diag").textContent = paperOff
+    ? "выключен — направление ленты закрыто, поглощение ушло в модель"
+    : `история ${sg.history_min ?? 0} мин · до уровня ${
       sg.near_x ?? "—"} шума (нужно ≤ ${sg.touch_x})`;
   const dg = sg.diag || {};
   const drow = (name, m) => {
@@ -310,8 +315,9 @@ function render(d) {
     + drow("лента: поглощение покупок · шорт", dg.short)
     + bookRows(sg.book || {});
   const all = sg.open.concat(sg.done).slice(0, 12);
-  document.getElementById("cap-sig").textContent =
-    `открыто ${sg.open.length} · шум ${sg.noise_bp ?? "—"} б.п. · уровней ${
+  document.getElementById("cap-sig").textContent = paperOff
+    ? "новых нет — сделки ниже из истории закрытого направления"
+    : `открыто ${sg.open.length} · шум ${sg.noise_bp ?? "—"} б.п. · уровней ${
       sg.levels.length}`;
   document.getElementById("sig").innerHTML = all.length
     ? all.map(x => `<tr>

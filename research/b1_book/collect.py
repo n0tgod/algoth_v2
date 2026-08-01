@@ -406,7 +406,8 @@ class Shard:
                 d = c.tape.get(sym)
                 if d is not None:
                     d.append(t)
-                c.sig.on_trade(t)
+                if c.paper:
+                    c.sig.on_trade(t)
 
     def run(self):
         import websocket                                   # noqa: E402
@@ -440,7 +441,17 @@ class Shard:
 
 
 class Collector:
-    def __init__(self, symbols, raw_symbols, root, log, deep=DEEP):
+    def __init__(self, symbols, raw_symbols, root, log, deep=DEEP,
+                 paper=False):
+        # `paper` — бумажные сделки детектора. По умолчанию выключены
+        # решением владельца 2026-08-01: направление ленты закрыто
+        # четырьмя замерами (T1–T4), а правило поглощения в стакане
+        # входит в модель гипотезы 6 признаками (eat_bid/eat_ask,
+        # big_rel, дисбалансы) — выученными, а не зашитыми порогами.
+        # Держать ручную версию рядом с моделью значит смешивать две
+        # статистики на одной странице; сама запись стакана и ленты от
+        # этого не меняется ни байтом.
+        self.paper = paper
         self.symbols = list(symbols)
         self.raw = set(raw_symbols)
         self.depth = {s: (DEEP_DEPTH if s in set(deep or ()) else DEPTH)
@@ -525,6 +536,8 @@ class Collector:
                     self.w.write("book", sym, s, ts=now)
                     self.mid[sym].append(
                         (round(now, 1), (s["bid"] + s["ask"]) / 2.0))
+            if not self.paper:
+                continue
             opened, closed = self.sig.tick(now, self.books)
             for ev in opened:
                 self.n_signals += 1
@@ -591,6 +604,7 @@ class Collector:
                            "messages": self.n_msg, "trades": self.n_trades,
                            "resets": self.n_resets,
                            "signals": self.n_signals,
+                           "paper": self.paper,
                            "closed": self.n_closed,
                            "topics_live": self.live_count(),
                            "topics": self.topics_count(),
@@ -975,8 +989,13 @@ class Collector:
         threading.Thread(target=self.statuser, daemon=True).start()
         threading.Thread(target=self.reporter, daemon=True).start()
         threading.Thread(target=self.diskstat, daemon=True).start()
-        threading.Thread(target=self._recount_watch,
-                         daemon=True).start()
+        if self.paper:
+            threading.Thread(target=self._recount_watch,
+                             daemon=True).start()
+        else:
+            self.log("бумажные сделки выключены: направление ленты "
+                     "закрыто замерами, поглощение входит в модель "
+                     "признаками; запись стакана и ленты идёт как шла")
         # Шарды вводятся ступенями: тысяча подписок разом — это шторм
         # и для площадки, и для собственного разбора сообщений.
         for sh in self.shards:
@@ -1045,8 +1064,9 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
             rows += rows_of("trades", sym, h, cutoff, lambda r, c:
                             r if r.get("ts", 0) / 1000.0 >= c else None)
         rows.sort(key=lambda x: x.get("ts", 0))
-        for t in rows:
-            collector.sig.on_trade(t)
+        if collector.paper:
+            for t in rows:
+                collector.sig.on_trade(t)
         n_tr += len(rows)
         # Середина для линии обзора — из посекундных снимков стакана.
         mids = []
@@ -1065,7 +1085,11 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     ph = [datetime.fromtimestamp(time.time() - i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(trade_hours, -1, -1)]
     n_fixed = n_left = n_alive = 0
-    for sym in symbols:
+    # При выключенных бумажных сделках поднимать нечего: прошлые сделки
+    # лежат на диске и никуда не денутся, а досчитывать оборванные —
+    # значит читать ленту двух суток на 540 символов ради истории
+    # закрытого направления.
+    for sym in (symbols if collector.paper else ()):
         rows = []
         for h in ph:
             rows += rows_of("signals", sym, h, 0.0, lambda r, c: r)
@@ -1238,6 +1262,11 @@ def main():
     # Проверка без сети: сборщик, который подключился и молча ничего не
     # пишет, выглядит работающим. Прогоняет поддельные сообщения через
     # тот же путь, что и живые, и показывает, что легло на диск.
+    ap.add_argument("--paper", action="store_true",
+                    help="вести бумажные сделки детектора; по умолчанию "
+                         "выключены — направление ленты закрыто "
+                         "замерами T1–T4, поглощение входит в модель "
+                         "гипотезы 6 признаками")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--http", type=int, default=0,
                     help="порт страницы наблюдения; 0 — не поднимать")
@@ -1270,7 +1299,7 @@ def main():
         log(f"сырой поток пишется для: {', '.join(raw)}")
     log(f"каталог {a.out}")
     deep = [x.strip() for x in a.deep.split(",") if x.strip()]
-    c = Collector(syms, raw, a.out, log, deep=deep)
+    c = Collector(syms, raw, a.out, log, deep=deep, paper=a.paper)
     log("глубина стакана: " + ", ".join(
         f"{s_}={c.depth[s_]}" for s_ in syms))
     c.lines = lines

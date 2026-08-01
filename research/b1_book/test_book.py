@@ -253,7 +253,8 @@ def test_warm_start_restores_history():
     root = tempfile.mkdtemp()
     try:
         now = int(_time.time())
-        a = C.Collector(["TEST"], [], root, lambda m: None)
+        a = C.Collector(["TEST"], [], root, lambda m: None,
+                        paper=True)
         for i in range(1200):
             t = {"ts": (now - 1200 + i) * 1000, "s": "TEST",
                  "side": 1 if i % 3 else -1, "p": 100 + 0.01 * (i % 9),
@@ -263,7 +264,8 @@ def test_warm_start_restores_history():
                                        "ask": 100.02}, ts=now - 1200 + i)
         a.w.close()
 
-        b = C.Collector(["TEST"], [], root, lambda m: None)
+        b = C.Collector(["TEST"], [], root, lambda m: None,
+                        paper=True)
         C.warm_start(root, ["TEST"], b, lambda m: None)
         b.sig.by["TEST"].close_second(now)
         v = b.sig.by["TEST"].view()
@@ -295,13 +297,15 @@ def test_recount_survives_restart():
 
     root = tempfile.mkdtemp()
     try:
-        a = C.Collector(["TEST"], [], root, lambda m: None)
+        a = C.Collector(["TEST"], [], root, lambda m: None,
+                        paper=True)
         a.rec.update({"trades": [{"sym": "TEST", "pnl_bp": 7.0}],
                       "made": 3, "refused": 2, "hours": 24, "ver": 42,
                       "at": 1.0, "busy": True})
         a.save_recount()
 
-        b = C.Collector(["TEST"], [], root, lambda m: None)
+        b = C.Collector(["TEST"], [], root, lambda m: None,
+                        paper=True)
         check("пересчёт поднялся с диска", len(b.rec.get("trades") or []) == 1)
         check("счётчики целы", b.rec.get("made") == 3
               and b.rec.get("refused") == 2)
@@ -415,7 +419,8 @@ def test_warm_start_survives_truncated_file():
     root = tempfile.mkdtemp()
     try:
         now = int(_time.time())
-        a = C.Collector(["TEST"], [], root, lambda m: None)
+        a = C.Collector(["TEST"], [], root, lambda m: None,
+                        paper=True)
         for i in range(1200):
             t = {"ts": (now - 1200 + i) * 1000, "s": "TEST",
                  "side": 1 if i % 3 else -1, "p": 100 + 0.01 * (i % 9),
@@ -427,7 +432,8 @@ def test_warm_start_survives_truncated_file():
         raw = open(path, "rb").read()
         open(path, "wb").write(raw[:int(len(raw) * 0.6)])
 
-        b = C.Collector(["TEST"], [], root, lambda m: None)
+        b = C.Collector(["TEST"], [], root, lambda m: None,
+                        paper=True)
         C.warm_start(root, ["TEST"], b, lambda m: None)
         b.sig.by["TEST"].close_second(now)
         v = b.sig.by["TEST"].view()
@@ -1265,6 +1271,43 @@ def test_rejected_subscription_is_not_silence():
     c.w.close()
 
 
+def test_paper_off_is_silent_but_named():
+    """Выключенные бумажные сделки: ни одной новой, лента детектору не
+    подаётся — и это НАЗВАНО, а не выглядит поломкой.
+
+    Пустые таблицы «сделок нет» неотличимы от сломанного детектора;
+    этот симптом уже стоил владельцу круга, поэтому состояние выносится
+    в снимок отдельным полем, а не выводится по числу сделок.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    off = C.Collector(["TEST"], [], root, lambda m: None)
+    on = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+    check("по умолчанию выключены", off.paper is False and on.paper is True)
+
+    tr = {"ts": int(time.time() * 1000), "s": "TEST", "side": 1,
+          "p": 100.0, "v": 1.0}
+    msg = json.dumps({"topic": "publicTrade.TEST", "data": [
+        {"T": tr["ts"], "s": "TEST", "S": "Buy", "p": "100.0", "v": "1"}]})
+    off.shards[0].on_message(None, msg)
+    on.shards[0].on_message(None, msg)
+    fed_off = off.sig.by["TEST"].last_px
+    fed_on = on.sig.by["TEST"].last_px
+    check(f"выключенному детектору лента не подаётся "
+          f"(цена у него {fed_off})",
+          not fed_off and fed_on == 100.0, f"{fed_off} {fed_on}")
+    check("сделка при этом ЗАПИСАНА на диск",
+          off.n_trades == 1, str(off.n_trades))
+    check("состояние названо в снимке",
+          off.snapshot()["status"]["paper"] is False
+          and on.snapshot()["status"]["paper"] is True)
+    off.w.close()
+    on.w.close()
+
+
 def test_all_symbols_filter():
     """`--symbols all`: USDT-перпы минус не-крипто, ничего лишнего.
 
@@ -1569,6 +1612,7 @@ def main():
     print("подписка")
     test_rejected_subscription_is_not_silence()
     print("полный список и шарды")
+    test_paper_off_is_silent_but_named()
     test_all_symbols_filter()
     test_shard_split_covers_everything()
     test_pack_queue_single_worker()
