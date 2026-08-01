@@ -58,6 +58,8 @@ h1{font-size:17px;margin:0 0 2px}
 .bad{color:var(--ask)} .good{color:var(--bid)}
 .syms{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center}
 .pick{padding:8px 10px}
+.pickwrap>summary{list-style:none}
+.pickwrap>summary::-webkit-details-marker{display:none}
 .pick input{width:100%;font:inherit;font-size:14px;color:var(--ink);
  background:var(--ground);border:1px solid var(--rule);padding:7px 10px;
  margin-bottom:6px}
@@ -122,14 +124,14 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
 <h1>Order Book Live</h1>
 <p class="sub" id="sub">connecting…</p>
 <div class="strip" id="strip"></div>
-<div class="panel" style="margin-bottom:12px">
-  <div class="cap"><span>coins by sector</span>
-    <span id="cap-syms" class="mono"></span></div>
+<details class="panel pickwrap" style="margin-bottom:12px">
+  <summary class="cap" style="cursor:pointer"><span>coins by sector</span>
+    <span id="cap-syms" class="mono"></span></summary>
   <div class="pick">
     <input id="symq" placeholder="search coin…" autocomplete="off">
     <div id="groups"></div>
   </div>
-</div>
+</details>
 <div class="panel" style="margin-bottom:12px">
   <div class="cap"><span>model — hypothesis 6, observation</span>
     <span id="cap-model" class="mono"></span></div>
@@ -604,9 +606,33 @@ function renderModel() {
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
       icLine ? " · out-of-sample IC: " + icLine
              : ""}</div>
+    ${picksTable(d)}
     <div class="thoughts">${(d.thoughts || []).slice().reverse().map(t =>
       `<span class="tt">[${t.at || ""}]</span> ${t.text}`).join("\n")
       || "no thoughts yet — they appear after the first training"}</div>`;
+}
+function picksTable(d) {
+  // Действия модели глазами: кого взяла, что ждала — и что вышло у
+  // прошлого выбора. Выбор -> ожидание -> факт, без пересказа.
+  const pk = (d.picks || []).slice(-1)[0];
+  const rv = (d.review || []).slice(-1)[0];
+  if (!pk) return "";
+  const got = {};
+  (rv ? rv.rows || [] : []).forEach(r => { got[r.sym] = r; });
+  const row = (p, side) => {
+    const g = got[p.sym];
+    return `<tr><td class="${side === "long" ? "buy" : "sell"}">${
+      side}</td><td>${p.sym.replace("USDT","")}</td>
+      <td class="mono">expects ${p.fwd > 0 ? "+" : ""}${p.fwd.toFixed(0)}
+        bp / 4h</td>
+      <td class="mono">adverse path ~${p.mae.toFixed(0)} bp</td>
+      <td class="mono">${g ? `last time: got ${g.got > 0 ? "+" : ""}${
+        g.got} bp` : ""}</td></tr>`;
+  };
+  return `<div class="mline" style="margin-top:6px">current picks
+      (hour ${pk.hour || "—"}):</div>
+    <table>${(pk.long || []).map(p => row(p, "long")).join("")}${
+      (pk.short || []).map(p => row(p, "short")).join("")}</table>`;
 }
 
 const REC = {on:true, busy:false, data:null, timer:null};

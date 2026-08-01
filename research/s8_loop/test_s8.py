@@ -322,6 +322,19 @@ def test_train_cycle_end_to_end():
               any("проверил вчерашние прогнозы" in t for t in th)
               and any("если бы торговал сейчас" in t for t in th),
               str(th[-3:]))
+        picks = [json.loads(x) for x in
+                 open(os.path.join(T.MODEL_DIR, "picks.jsonl"))]
+        check("выборы записаны с часом и ожиданием",
+              len(picks) == 2 and picks[0]["hour"]
+              and "fwd" in picks[0]["long"][0], str(picks[0])[:100])
+        rev = [json.loads(x) for x in
+               open(os.path.join(T.MODEL_DIR, "review.jsonl"))]
+        check("прошлый выбор разобран фактом",
+              len(rev) == 1 and rev[0]["hour"] == picks[0]["hour"]
+              and all("got" in r for r in rev[0]["rows"]),
+              str(rev)[:120])
+        check("разбор попал в мысли",
+              any("разбор прошлых выборов" in t for t in th), str(th[:2]))
     finally:
         T.gbm.fit = orig_fit
 

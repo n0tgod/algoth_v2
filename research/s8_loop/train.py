@@ -402,8 +402,51 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             picks = {"long": [mk(i) for i in o[::-1][:3]],
                      "short": [mk(i) for i in o[:3]]}
 
+    # Разбор прошлых выборов: что модель ждала — и что вышло на деле.
+    # Это главное окно наблюдения владельца: выбор -> ожидание -> факт.
+    review = None
+    ppath = os.path.join(MODEL_DIR, "picks.jsonl")
+    try:
+        with open(ppath, encoding="utf-8") as f:
+            last_pick = json.loads(f.readlines()[-1])
+    except (OSError, IndexError, ValueError):
+        last_pick = None
+    if last_pick and last_pick.get("hour") in grid:
+        j = grid.index(last_pick["hour"])
+        si = {s: i for i, s in enumerate(syms)}
+        review = []
+        for side in ("long", "short"):
+            for pk in last_pick.get(side) or []:
+                i = si.get(pk["sym"])
+                if i is None:
+                    continue
+                got = targets["fwd_4h"][i, j]
+                if np.isfinite(got):
+                    review.append({"sym": pk["sym"], "side": side,
+                                   "expected": round(pk["fwd"], 1),
+                                   "got": round(float(got), 1)})
+        if review:
+            with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(
+                    {"hour": last_pick["hour"], "rows": review},
+                    ensure_ascii=False) + "\n")
+    if picks:
+        picks["hour"] = grid[-1]
+        with open(ppath, "a", encoding="utf-8") as f:
+            f.write(json.dumps(picks, ensure_ascii=False) + "\n")
+
     at = datetime.now(timezone.utc).strftime("%m-%d %H:%M")
     lines = think(prev_man, man, ic_rows, picks)
+    if review:
+        hits = sum(1 for r in review
+                   if (r["got"] > 0) == (r["side"] == "long"))
+        lines.insert(0, f"разбор прошлых выборов ({len(review)} имён, "
+                        f"угадан знак у {hits}): " + "; ".join(
+                            f"{r['sym'].replace('USDT','')} "
+                            f"{'лонг' if r['side'] == 'long' else 'шорт'}: "
+                            f"ждал {r['expected']:+.0f}, вышло "
+                            f"{r['got']:+.0f} б.п." for r in review))
     with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",
               encoding="utf-8") as f:
         for t in lines:

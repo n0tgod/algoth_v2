@@ -951,7 +951,9 @@ class Collector:
         except (OSError, ValueError):
             pass
         for name, key, keep in (("thoughts.jsonl", "thoughts", 60),
-                                ("ic_history.jsonl", "ic", 90)):
+                                ("ic_history.jsonl", "ic", 90),
+                                ("picks.jsonl", "picks", 3),
+                                ("review.jsonl", "review", 3)):
             rows = []
             try:
                 with open(os.path.join(mdir, name), encoding="utf-8") as f:
