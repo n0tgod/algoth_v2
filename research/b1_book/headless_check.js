@@ -144,6 +144,17 @@ global.fetch = async (url) => {
   calls++; seen.push(url);
   const body = url.startsWith("/trades") ? hist
              : url.startsWith("/recount") ? recount
+             : url.startsWith("/groups")
+               ? {groups: [{id: "memes",
+                            symbols: ["DOGEUSDT", "1000PEPEUSDT"]},
+                           {id: "other", symbols: ["BTCUSDT"]}]}
+             : url.startsWith("/model")
+               ? {present: true,
+                  manifest: {version: 1, sections: 96, symbols: 540,
+                             canary_ic: 0.003, importance: {},
+                             trained_at: "2026-08-01T10:00:00+00:00"},
+                  thoughts: [{at: "08-01 10:00", text: "проверка"}],
+                  ic: [{target: "fwd_4h", median_ic: 0.021, sections: 24}]}
              : url.startsWith("/candles")
                ? {sym: "BTCUSDT", candles: candles(1440), hours: 24}
                : state(full, 60);

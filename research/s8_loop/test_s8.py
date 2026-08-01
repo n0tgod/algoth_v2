@@ -316,8 +316,41 @@ def test_train_cycle_end_to_end():
         check(f"заложенный сигнал пойман вне выборки "
               f"(IC {f1[0]['median_ic']:+.3f})",
               f1[0]["median_ic"] > 0.1, str(f1))
+        th = [json.loads(x)["text"] for x in
+              open(os.path.join(T.MODEL_DIR, "thoughts.jsonl"))]
+        check("мысли записаны и говорят о сбываемости",
+              any("проверил вчерашние прогнозы" in t for t in th)
+              and any("если бы торговал сейчас" in t for t in th),
+              str(th[-3:]))
     finally:
         T.gbm.fit = orig_fit
+
+
+def test_think_words():
+    """Мысли — чистая функция от чисел; слова обязаны следовать за
+    числами, а не украшать их."""
+    import train as T
+
+    man = {"importance": {"fwd_4h": {"imb_0.001": 0.3, "eat_bid": 0.2,
+                                     "beta": 0.1}},
+           "canary_ic": 0.004, "sections": 100, "symbols": 540}
+    prev = {"importance": {"fwd_4h": {"imb_0.001": 0.1, "eat_bid": 0.25,
+                                      "beta": 0.1}}}
+    ic = [{"target": "fwd_4h", "median_ic": 0.032, "sections": 24}]
+    picks = {"long": [{"sym": "HYPEUSDT", "fwd": 35.2, "mae": -52.1}],
+             "short": [{"sym": "DOGEUSDT", "fwd": -21.0, "mae": -30.0}]}
+    text = "\n".join(T.think(prev, man, ic, picks))
+    check("сбываемость названа по порогу IC",
+          "заметно лучше случайного" in text and "+0.032" in text, text)
+    check("важности переведены в трейдерские слова",
+          "перекос глубины стакана" in text, text)
+    check("сдвиг доверия назван с числами",
+          "больше доверять" in text and "+0.20" in text, text)
+    check("выбор назван с ожиданием и путём против",
+          "HYPE (жду +35 б.п." in text and "до -52" in text, text)
+    first = "\n".join(T.think(None, man, [], None))
+    check("первое обучение названо первым",
+          first.startswith("первое обучение"), first[:60])
 
 
 def test_load_matrices_grid_is_continuous():
@@ -352,6 +385,7 @@ def main():
     test_eligibility_floor()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
+    test_think_words()
     test_load_matrices_grid_is_continuous()
     test_train_cycle_end_to_end()
     print()

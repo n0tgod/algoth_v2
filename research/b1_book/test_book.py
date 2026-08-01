@@ -1320,6 +1320,39 @@ def test_paper_off_is_silent_but_named():
     on.w.close()
 
 
+def test_symbol_groups_for_page():
+    """Группы монет для страницы: разметка A3 + справочник, новые
+    листинги честно в «прочих», а не рассованы по догадке."""
+    import tempfile
+
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    gy = os.path.join(d, "groups.yaml")
+    with open(gy, "w", encoding="utf-8") as f:
+        f.write("groups:\n\n  # комментарий\n  memes:\n    - DOGE\n"
+                "    - PEPE\n  smart_contract_l1:\n    - SOL\n")
+    uj = os.path.join(d, "universe.json")
+    with open(uj, "w", encoding="utf-8") as f:
+        json.dump({"assets": {
+            "DOGE": {"bybit_symbol": "DOGEUSDT"},
+            "PEPE": {"bybit_symbol": "1000PEPEUSDT"},
+            "SOL": {"bybit_symbol": "SOLUSDT"}}}, f)
+    g = C.symbol_groups(
+        ["DOGEUSDT", "1000PEPEUSDT", "SOLUSDT", "NEWUSDT"], gy, uj)
+    by = {x["id"]: x["symbols"] for x in g}
+    check("группы собраны по разметке",
+          by.get("memes") == ["1000PEPEUSDT", "DOGEUSDT"]
+          and by.get("smart_contract_l1") == ["SOLUSDT"], str(by))
+    check("новый листинг — в «прочих»", by.get("other") == ["NEWUSDT"],
+          str(by))
+    # И на настоящей разметке: разбор обязан её прожевать.
+    real = C.parse_groups_yaml()
+    check(f"настоящая разметка разобрана ({len(real)} групп)",
+          len(real) >= 25 and "BCH" in real.get("bitcoin_pow", []),
+          str(list(real))[:100])
+
+
 def test_all_symbols_filter():
     """`--symbols all`: USDT-перпы минус не-крипто, ничего лишнего.
 
@@ -1625,6 +1658,7 @@ def main():
     test_rejected_subscription_is_not_silence()
     print("полный список и шарды")
     test_paper_off_is_silent_but_named()
+    test_symbol_groups_for_page()
     test_all_symbols_filter()
     test_shard_split_covers_everything()
     test_pack_queue_single_worker()

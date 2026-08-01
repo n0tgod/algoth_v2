@@ -61,6 +61,96 @@ def log(m):
           flush=True)
 
 
+# --- мысли модели: перевод её состояния в трейдерские слова ------------
+# Это НЕ речь модели (бустинг не говорит), а честный пересказ трёх
+# измеримых вещей: чему она верит (важности), как сбылись её прошлые
+# прогнозы (живой IC) и кого она выбрала бы сейчас (предсказания на
+# последнем сечении). Всё, что нельзя вывести из этих чисел, в мыслях
+# не появляется.
+FEATURE_RU = (
+    ("imb_best", "перекос у лучших цен"),
+    ("imb_", "перекос глубины стакана"),
+    ("depth_b", "глубина бидов"),
+    ("depth_a", "глубина асков"),
+    ("spread_rel", "спред"),
+    ("upd_rel", "суета обновлений книги"),
+    ("big_rel", "крупные уровни"),
+    ("turn_rel", "оборот против обычного"),
+    ("delta", "перевес агрессора в ленте"),
+    ("burst", "всплески объёма"),
+    ("traded_share", "непрерывность торгов"),
+    ("eat_bid", "выедание бидов"),
+    ("eat_ask", "выедание асков"),
+    ("net_path", "чистота хода (без пилы)"),
+    ("ret_", "ход цены к своей волатильности"),
+    ("beta", "связь с рынком"),
+    ("age_rec", "возраст записи"),
+)
+
+
+def feat_ru(name):
+    for pref, ru in FEATURE_RU:
+        if name.startswith(pref):
+            return ru
+    return name
+
+
+def _ic_words(v):
+    if v >= 0.03:
+        return "сбывались заметно лучше случайного"
+    if v >= 0.01:
+        return "сбывались слабо, но в плюс"
+    if v > -0.01:
+        return "легли около нуля"
+    return "шли мимо"
+
+
+def think(prev_man, man, ic_rows, picks):
+    """Мысли одного цикла. Чистая функция — закреплена тестами."""
+    out = []
+    ic = next((r for r in ic_rows or [] if r["target"] == "fwd_4h"), None)
+    if ic:
+        out.append(f"проверил вчерашние прогнозы на {ic['sections']} новых "
+                   f"сечениях: направления {_ic_words(ic['median_ic'])} "
+                   f"(IC {ic['median_ic']:+.3f}).")
+    imp = (man.get("importance") or {}).get("fwd_4h") or {}
+    top = list(imp)[:3]
+    if top:
+        out.append("сильнее всего сейчас смотрю на: "
+                   + ", ".join(feat_ru(t) for t in top) + ".")
+    prev_imp = ((prev_man or {}).get("importance") or {}).get("fwd_4h")
+    if prev_imp and imp:
+        diff = [(k, imp.get(k, 0.0) - prev_imp.get(k, 0.0))
+                for k in set(imp) | set(prev_imp)]
+        up = max(diff, key=lambda x: x[1])
+        dn = min(diff, key=lambda x: x[1])
+        if up[1] > 0.02:
+            out.append(f"после переобучения стал больше доверять: "
+                       f"{feat_ru(up[0])} (+{up[1]:.2f} веса), меньше — "
+                       f"{feat_ru(dn[0])} ({dn[1]:+.2f}).")
+    if picks:
+        long_s = ", ".join(
+            f"{p['sym'].replace('USDT','')} (жду {p['fwd']:+.0f} б.п. за "
+            f"4 ч, путь против до {p['mae']:.0f})" for p in picks["long"])
+        short_s = ", ".join(
+            f"{p['sym'].replace('USDT','')} ({p['fwd']:+.0f} б.п.)"
+            for p in picks["short"])
+        out.append(f"если бы торговал сейчас: лонг — {long_s}; "
+                   f"шорт — {short_s}. Это ожидание в среднем, не "
+                   f"обещание пути.")
+    can = man.get("canary_ic")
+    if can is not None:
+        out.append(f"проверка на шум {'чиста' if abs(can) <= CANARY_STOP else 'ПОДНЯТА'} "
+                   f"({can:+.3f}): на перемешанных данных я бы ничего "
+                   f"не «увидел» — значит то, что вижу, не выдумка "
+                   f"конвейера.")
+    if not prev_man:
+        out.insert(0, f"первое обучение: {man.get('sections')} сечений по "
+                      f"{man.get('symbols')} монетам. Пока выборка "
+                      f"короткая — выводы будут гулять, это нормально.")
+    return out
+
+
 def load_matrices(sum_dir):
     """Сводки всех символов → словарь матриц (символы, часы).
 
@@ -164,10 +254,10 @@ def eval_previous(x, targets, elig, grid, log_):
             man = json.load(f)
         upto = man["trained_upto"]
     except (OSError, ValueError, KeyError):
-        return
+        return []
     cols = [j for j, h in enumerate(grid) if h > upto]
     if not cols:
-        return
+        return []
     rows = []
     for tgt in TARGETS:
         wpath = os.path.join(MODEL_DIR, f"weights_{tgt}.pkl")
@@ -185,7 +275,7 @@ def eval_previous(x, targets, elig, grid, log_):
                      "median_ic": round(float(np.median(ics)), 4),
                      "sections": len(ics)})
     if not rows:
-        return
+        return []
     with open(os.path.join(MODEL_DIR, "ic_history.jsonl"), "a",
               encoding="utf-8") as f:
         at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
@@ -196,6 +286,7 @@ def eval_previous(x, targets, elig, grid, log_):
     log_(f"живой IC прежней модели: {main_line['target']} "
          f"{main_line['median_ic']:+.4f} на {main_line['sections']} "
          f"новых сечениях (все цели в ic_history.jsonl)")
+    return rows
 
 
 def canary(x, y, elig, grid, seed, log_):
@@ -238,7 +329,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
              f"запись копится")
         return False
 
-    eval_previous(x, targets, elig, grid, log_)
+    ic_rows = eval_previous(x, targets, elig, grid, log_)
 
     med = canary(x, targets["fwd_4h"], elig, grid,
                  SEED0 + len(grid), log_)
@@ -249,6 +340,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     imp_all = {}
+    models = {}
     for ti, tgt in enumerate(TARGETS):
         xs, ys, _ = flatten(x, targets[tgt], elig)
         if len(ys) < 1000:
@@ -256,6 +348,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             continue
         t1 = time.time()
         model = gbm.fit(xs, ys, seed=SEED0 + 100 * ti + len(grid))
+        models[tgt] = model
         tot = model.importance.sum() or 1.0
         imp = {names[j]: round(float(model.importance[j] / tot), 4)
                for j in np.argsort(model.importance)[::-1][:10]}
@@ -271,6 +364,14 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
              f"{time.time() - t1:.0f} с; топ признаков: "
              + ", ".join(f"{k} {v}" for k, v in list(imp.items())[:4]))
 
+    mp = os.path.join(MODEL_DIR, "manifest.json")
+    prev_man = None
+    try:
+        with open(mp, encoding="utf-8") as f:
+            prev_man = json.load(f)
+    except (OSError, ValueError):
+        pass
+
     man = {"version": MODEL_VERSION, "trained_upto": grid[-1],
            "trained_at": datetime.now(timezone.utc).isoformat(
                timespec="seconds"),
@@ -280,10 +381,36 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            "new_summary_hours": n_new,
            "importance": imp_all,
            "cycle_sec": round(time.time() - t0, 1)}
-    mp = os.path.join(MODEL_DIR, "manifest.json")
     with open(mp + ".tmp", "w", encoding="utf-8") as f:
         json.dump(man, f, ensure_ascii=False, indent=1)
     os.replace(mp + ".tmp", mp)
+
+    # Кого модель выбрала бы прямо сейчас — для мыслей на странице.
+    picks = None
+    if "fwd_4h" in models and "mae_4h" in models:
+        j = max((jj for jj in range(len(grid))
+                 if elig[:, jj].sum() >= FB.MIN_SECTION), default=None)
+        if j is not None:
+            rows_m = np.flatnonzero(elig[:, j])
+            xj = x[rows_m, j]
+            fwd = models["fwd_4h"].predict(xj)
+            mae = models["mae_4h"].predict(xj)
+            o = np.argsort(fwd)
+            mk = lambda i: {"sym": syms[rows_m[i]],           # noqa: E731
+                            "fwd": float(fwd[i]),
+                            "mae": float(mae[i])}
+            picks = {"long": [mk(i) for i in o[::-1][:3]],
+                     "short": [mk(i) for i in o[:3]]}
+
+    at = datetime.now(timezone.utc).strftime("%m-%d %H:%M")
+    lines = think(prev_man, man, ic_rows, picks)
+    with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",
+              encoding="utf-8") as f:
+        for t in lines:
+            f.write(json.dumps({"at": at, "text": t},
+                               ensure_ascii=False) + "\n")
+    for t in lines:
+        log_(f"мысль: {t}")
     log_(f"цикл закончен за {man['cycle_sec']:.0f} с, веса v{MODEL_VERSION} "
          f"до часа {grid[-1]}")
     return True

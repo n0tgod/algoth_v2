@@ -269,6 +269,67 @@ def shard_split(symbols, size=SHARD_SYMBOLS):
             for i in range(0, len(symbols), size)]
 
 
+GROUPS_YAML = os.path.join(os.path.dirname(HERE), "asset_groups",
+                           "groups.yaml")
+
+
+def parse_groups_yaml(path=GROUPS_YAML):
+    """Разметка A3 `группа: [активы]` — крошечный разбор под наш формат.
+
+    Полного YAML здесь нет намеренно: файл наш собственный, формат
+    один (двухуровневые списки), а зависимость ради него — лишняя.
+    Незнакомая строка пропускается молча — это отображение для глаз,
+    а не расчёт.
+    """
+    out, cur = {}, None
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("#") or not line.strip():
+                    continue
+                s = line.rstrip()
+                if s.startswith("    - "):
+                    if cur is not None:
+                        out[cur].append(s[6:].strip())
+                elif s.startswith("  ") and s.endswith(":"):
+                    cur = s.strip()[:-1]
+                    out[cur] = []
+    except OSError:
+        return {}
+    return out
+
+
+def symbol_groups(symbols, groups_path=GROUPS_YAML,
+                  universe_path=UNIVERSE_JSON):
+    """Символы сбора по группам A3: [{id, symbols}, …] + «прочие».
+
+    Группировка — для глаз владельца на странице: 540 плоских кнопок
+    нечитаемы. Новые листинги, которых нет в разметке, честно лежат в
+    «прочих», а не рассованы по догадке.
+    """
+    by_asset = parse_groups_yaml(groups_path)
+    sym_of = {}
+    try:
+        with open(universe_path, encoding="utf-8") as f:
+            u = json.load(f)["assets"]
+        sym_of = {k: v.get("bybit_symbol") for k, v in u.items()}
+    except (OSError, ValueError, KeyError):
+        pass
+    have = set(symbols)
+    used = set()
+    out = []
+    for gid, assets in by_asset.items():
+        ss = sorted(s for s in (sym_of.get(a) for a in assets)
+                    if s in have)
+        if ss:
+            out.append({"id": gid, "symbols": ss})
+            used.update(ss)
+    rest = sorted(have - used)
+    if rest:
+        out.append({"id": "other", "symbols": rest})
+    return out
+
+
 class LogBuf:
     """Журнал для страницы: кольцо строк плюс сквозной номер.
 
@@ -472,6 +533,16 @@ class Collector:
         # приходилось гонять трёхминутный счёт заново, чтобы увидеть то
         # же самое. Считаем один раз, дальше читаем.
         self.rec = self.load_recount()
+        # Группы монет для страницы — статика, считается один раз.
+        try:
+            self.groups = symbol_groups(self.symbols)
+        except Exception:                                 # noqa: BLE001
+            self.groups = [{"id": "other",
+                            "symbols": sorted(self.symbols)}]
+        # Состояние модели S8 читается с диска по фиксированным путям и
+        # кешируется: страница опрашивает раз в минуту, файлы меняются
+        # раз в сутки.
+        self._model_cache = (0.0, None)
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -858,6 +929,42 @@ class Collector:
             signals.STRUCTURAL_STOP = keep
             self.rec["busy"] = False
             self.save_recount()
+
+    def model_state(self):
+        """Состояние модели S8 для страницы: манифест, мысли, живой IC.
+
+        Пути фиксированы, ключ обязателен на уровне сервера; кеш на
+        30 с, потому что источники меняются раз в сутки. Отсутствие
+        модели — не ошибка, а именованное состояние: она копит запись.
+        """
+        now = time.time()
+        at, cached = self._model_cache
+        if cached is not None and now - at < 30:
+            return cached
+        mdir = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                            "model")
+        out = {"present": False}
+        try:
+            with open(os.path.join(mdir, "manifest.json"),
+                      encoding="utf-8") as f:
+                out = {"present": True, "manifest": json.load(f)}
+        except (OSError, ValueError):
+            pass
+        for name, key, keep in (("thoughts.jsonl", "thoughts", 60),
+                                ("ic_history.jsonl", "ic", 90)):
+            rows = []
+            try:
+                with open(os.path.join(mdir, name), encoding="utf-8") as f:
+                    for line in f:
+                        try:
+                            rows.append(json.loads(line))
+                        except ValueError:
+                            continue
+            except OSError:
+                pass
+            out[key] = rows[-keep:]
+        self._model_cache = (now, out)
+        return out
 
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.

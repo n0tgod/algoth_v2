@@ -57,6 +57,29 @@ h1{font-size:17px;margin:0 0 2px}
 .st .v{font-size:15px;font-weight:600}
 .bad{color:var(--ask)} .good{color:var(--bid)}
 .syms{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center}
+.pick{padding:8px 10px}
+.pick input{width:100%;font:inherit;font-size:14px;color:var(--ink);
+ background:var(--ground);border:1px solid var(--rule);padding:7px 10px;
+ margin-bottom:6px}
+details.grp{border-top:1px solid var(--rule)}
+details.grp summary{cursor:pointer;padding:6px 2px;font-size:12px;
+ color:var(--muted);letter-spacing:.03em;list-style:none;
+ display:flex;justify-content:space-between}
+details.grp summary::after{content:"▸";color:var(--muted)}
+details.grp[open] summary::after{content:"▾"}
+details.grp .gs{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px}
+.modelbox{padding:8px 10px;font-size:13px}
+.modelbox .mline{color:var(--muted);font-size:12px;margin-bottom:6px}
+.thoughts{max-height:230px;overflow-y:auto;font-size:12.5px;
+ white-space:pre-wrap;line-height:1.5}
+.thoughts .tt{color:var(--muted)}
+@media(max-width:640px){
+ .wrap{padding:10px 8px 30px}
+ button{padding:8px 12px;font-size:13.5px}
+ .strip{grid-template-columns:repeat(auto-fit,minmax(76px,1fr))}
+ td{padding:3px 7px}
+ .tape{max-height:240px}
+}
 .open{font-size:13px;color:var(--ink);background:var(--panel);
  border:1px solid var(--accent);padding:4px 9px;text-decoration:none}
 .open:hover{background:var(--grid)}
@@ -99,7 +122,19 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
 <h1>Стакан живьём</h1>
 <p class="sub" id="sub">подключение…</p>
 <div class="strip" id="strip"></div>
-<div class="syms" id="syms"></div>
+<div class="panel" style="margin-bottom:12px">
+  <div class="cap"><span>монеты по группам</span>
+    <span id="cap-syms" class="mono"></span></div>
+  <div class="pick">
+    <input id="symq" placeholder="поиск монеты…" autocomplete="off">
+    <div id="groups"></div>
+  </div>
+</div>
+<div class="panel" style="margin-bottom:12px">
+  <div class="cap"><span>модель — гипотеза 6, наблюдение</span>
+    <span id="cap-model" class="mono"></span></div>
+  <div class="modelbox" id="modelbox">…</div>
+</div>
 <div class="cols">
   <div class="panel">
     <div class="cap"><span>стакан</span><span id="cap-book" class="mono"></span></div>
@@ -229,14 +264,16 @@ function render(d) {
     dkCells(s.disk) +
     cell("тишина, с", fmt(age, 1), age > 5 ? "bad" : "good");
 
-  document.getElementById("syms").innerHTML = d.symbols.map(x =>
-    `<button data-s="${x}" aria-pressed="${x === d.sym}">${
-      x.replace("USDT","")}</button>`).join("")
-    + `<a class="open" target="_blank" href="/chart?k=${
-        encodeURIComponent(KEY)}&sym=${d.sym}">график ${
-        d.sym.replace("USDT","")} ↗</a>`;
-  document.querySelectorAll("[data-s]").forEach(b =>
-    b.onclick = () => { sym = b.dataset.s; wipe(); ST.sym = sym; tick(); });
+  // Группы строятся отдельно (renderGroups) и не пересобираются каждым
+  // тактом: пересборка DOM с 540 кнопками раз в секунду убивала бы
+  // мобильный браузер и сбрасывала бы фокус поиска. Такт лишь
+  // подсвечивает выбранную монету и обновляет ссылку на график.
+  document.querySelectorAll("#groups [data-s]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.s === d.sym)));
+  document.getElementById("cap-syms").innerHTML =
+    `${(d.symbols || []).length} монет · <a class="open" target="_blank"`
+    + ` href="/chart?k=${encodeURIComponent(KEY)}&sym=${d.sym}">график ${
+      d.sym.replace("USDT","")} ↗</a>`;
 
   const bk = d.book;
   const t = document.getElementById("book");
@@ -477,6 +514,92 @@ function drawEqAll() {
 // же чисел. Сам результат при этом лежит на сервере в файле, поэтому
 // восстановление бесплатно: просим `go=0`, то есть «отдай готовое, не
 // начинай новый».
+// --- группы монет: строятся один раз, фильтруются поиском -----------
+const GRP = {list: null, q: ""};
+const GRP_RU = {bitcoin_pow: "биткойн и PoW", privacy: "приватность",
+  smart_contract_l1: "L1-платформы", layer2: "L2",
+  cosmos_interop: "Cosmos и мосты", polkadot: "Polkadot",
+  defi_dex: "DeFi: биржи", defi_lending: "DeFi: кредитование",
+  defi_derivatives: "DeFi: деривативы", defi_yield: "DeFi: доходность",
+  liquid_staking: "стейкинг", oracles: "оракулы",
+  storage_compute: "хранение и счёт", depin: "DePIN",
+  ai_infra: "ИИ: инфраструктура", ai_agents: "ИИ: агенты",
+  memes: "мемы", gaming_metaverse: "игры и метаверс",
+  telegram_games: "телеграм-игры", nft_creator: "NFT",
+  exchange_tokens: "биржевые токены", fan_tokens: "фан-токены",
+  consumer_apps: "приложения", identity_access: "идентичность",
+  infrastructure: "инфраструктура", payments_social: "платежи",
+  dao_governance: "DAO", rwa: "RWA",
+  bitcoin_ecosystem: "экосистема биткойна",
+  excluded_special: "особые", other: "прочие и новые листинги"};
+async function pullGroups() {
+  try {
+    const r = await fetch(`/groups?k=${encodeURIComponent(KEY)}`);
+    const d = await r.json();
+    if (d && Array.isArray(d.groups)) { GRP.list = d.groups; }
+  } catch (e) { /* группы — удобство, страница живёт и без них */ }
+  renderGroups();
+}
+function renderGroups() {
+  const box = document.getElementById("groups");
+  if (!GRP.list) { box.textContent = "…"; return; }
+  const q = GRP.q.toUpperCase();
+  box.innerHTML = GRP.list.map(g => {
+    const ss = q ? g.symbols.filter(s => s.includes(q)) : g.symbols;
+    if (!ss.length) return "";
+    const open = q || ss.includes(sym) ? " open" : "";
+    return `<details class="grp"${open}><summary><span>${
+        GRP_RU[g.id] || g.id}</span><span>${ss.length}</span></summary>
+      <div class="gs">${ss.map(s =>
+        `<button data-s="${s}" aria-pressed="${String(s === sym)}">${
+          s.replace("USDT","")}</button>`).join("")}</div></details>`;
+  }).join("") || `<div class="mline">ничего не найдено</div>`;
+  box.querySelectorAll("[data-s]").forEach(b =>
+    b.onclick = () => { sym = b.dataset.s; wipe(); ST.sym = sym; tick(); });
+}
+
+// --- модель: состояние, живой IC и мысли трейдерскими словами --------
+const MDL = {data: null};
+async function pullModel() {
+  try {
+    const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
+    const d = await r.json();
+    if (d && d.present !== undefined) { MDL.data = d; }
+  } catch (e) { /* тихо: следующий опрос через минуту */ }
+  renderModel();
+}
+function renderModel() {
+  const box = document.getElementById("modelbox"), d = MDL.data;
+  const cap = document.getElementById("cap-model");
+  if (!d) { box.textContent = "…"; return; }
+  if (!d.present) {
+    cap.textContent = "копит запись";
+    box.innerHTML = `<div class="mline">модель ещё не обучалась: цикл
+      ждёт 48 закрытых часов-сечений (~2 суток записи полного списка).
+      Всё это время она уже копит свою будущую обучающую выборку.</div>`;
+    return;
+  }
+  const m = d.manifest || {};
+  const ageH = m.trained_at
+    ? Math.max(0, (Date.now()/1000 - new Date(m.trained_at).getTime()/1000)
+               / 3600) : null;
+  cap.textContent = `веса v${m.version} · возраст ${
+    ageH == null ? "—" : ageH.toFixed(1)} ч`;
+  const ic = {};
+  (d.ic || []).forEach(r => { ic[r.target] = r; });
+  const icLine = ["fwd_1h","fwd_4h","fwd_24h"].map(t => ic[t]
+    ? `${t.replace("fwd_","")} ${ic[t].median_ic > 0 ? "+" : ""}${
+        ic[t].median_ic}` : null).filter(Boolean).join(" · ");
+  box.innerHTML = `<div class="mline">обучена на ${m.sections ?? "—"}
+      сечениях по ${m.symbols ?? "—"} монетам · проверка на шум ${
+      m.canary_ic == null ? "—" : "чиста (" + m.canary_ic + ")"}${
+      icLine ? " · сбываемость прогнозов (IC вне выборки): " + icLine
+             : ""}</div>
+    <div class="thoughts">${(d.thoughts || []).slice().reverse().map(t =>
+      `<span class="tt">[${t.at || ""}]</span> ${t.text}`).join("\n")
+      || "мыслей пока нет — появятся после первого обучения"}</div>`;
+}
+
 const REC = {on:true, busy:false, data:null, timer:null};
 async function pullRec(go) {
   if (REC.busy) return;
@@ -719,6 +842,11 @@ pullAll(); setInterval(pullAll, 15000);
 // правил, — и результат обязан появиться сам, без нажатий.
 localStorage.removeItem("rec");
 pullRec(false); setInterval(() => pullRec(false), 30000);
+pullGroups();
+pullModel(); setInterval(pullModel, 60000);
+document.getElementById("symq").oninput = e => {
+  GRP.q = e.target.value.trim(); renderGroups();
+};
 </script>
 """
 
@@ -1517,6 +1645,16 @@ def serve(collector, port, token, log):
             if u.path == "/trades":
                 return self._ok(json.dumps(
                     collector.trades(q.get("sym", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/groups":
+                return self._ok(json.dumps(
+                    {"groups": collector.groups},
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/model":
+                return self._ok(json.dumps(
+                    collector.model_state(),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/chart":
