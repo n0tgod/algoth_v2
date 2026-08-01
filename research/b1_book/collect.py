@@ -701,6 +701,14 @@ class Collector:
         отражается только правка геометрии. Для условий входа нужен
         полный прогон (`replay.replay_symbol`), он дороже и читает книгу.
         """
+        if not self.paper:
+            # Детектор выключен — показывать нечего, и это не пустота,
+            # а состояние. Гасится ЗДЕСЬ, у источника: панель кормится
+            # кешем на диске, и полагаться на то, что файлы кто-то
+            # удалил, значит зависеть от постороннего действия.
+            return {"off": True, "trades": [], "extra": [], "stats": None,
+                    "by_rule": {}, "equity": [], "busy": False, "at": 0,
+                    "ver": signals_version()}
         st = self.rec
         rows = self.merge_live(st.get("trades") or [], st.get("at", 0))
         # Отвергнутые и незакрытые идут ОТДЕЛЬНЫМ списком и в статистику
@@ -858,6 +866,11 @@ class Collector:
         меняется раз в несколько минут, а опрос идёт раз в секунду.
         """
         sym = sym if sym in self.books else None
+        if not self.paper:
+            return {"off": True, "sym": sym, "symbols": self.symbols,
+                    "trades": [], "stats": None, "by_rule": {},
+                    "equity": [], "count": 0, "by_ver": [],
+                    "ver": signals_version(), "older": 0}
         rows = (self.sig.history(sym) if sym
                 else [t for s in self.symbols for t in self.sig.history(s)])
         rows = sorted(rows, key=lambda t: -(t.get("closed_at")

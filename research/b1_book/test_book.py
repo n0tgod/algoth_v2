@@ -1304,6 +1304,18 @@ def test_paper_off_is_silent_but_named():
     check("состояние названо в снимке",
           off.snapshot()["status"]["paper"] is False
           and on.snapshot()["status"]["paper"] is True)
+    # Панель итогов кормится кешем пересчёта на диске, и полагаться на
+    # то, что файлы кто-то удалил, значит зависеть от постороннего
+    # действия: владелец перезапустил сборщик и всё равно видел сделки.
+    off.rec = {"at": time.time(), "ver": 5, "trades": [{"sym": "TEST"}],
+               "stats": {"trades": 1}, "extra": [], "by_sym": {}}
+    rec = off.recount(24, start=False)
+    tr = off.trades()
+    check("итоговая панель молчит, даже если кеш пересчёта остался",
+          rec.get("off") is True and rec["trades"] == []
+          and rec["stats"] is None, str(rec)[:120])
+    check("список сделок пуст и назван выключенным",
+          tr.get("off") is True and tr["trades"] == [], str(tr)[:120])
     off.w.close()
     on.w.close()
 

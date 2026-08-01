@@ -507,6 +507,14 @@ function recReady() {
 
 function renderRec() {
   const box = document.getElementById("recbox"), d = REC.data;
+  // Направление закрыто — панель молчит целиком, а не показывает
+  // пустую таблицу: пустота неотличима от поломки.
+  if (d && d.off) {
+    box.innerHTML = `<div class="note" style="padding:7px 10px">бумажные
+      сделки детектора выключены: направление ленты закрыто замерами,
+      поглощение вошло в модель признаками</div>`;
+    return;
+  }
   if (!d || d.busy) {
     box.innerHTML = `<div class="note" style="padding:7px 10px">пересчитываю
       те же входы под текущие правила${
@@ -876,6 +884,12 @@ function recReady() {
 
 function renderRec() {
   const box = document.getElementById("recnote"), d = REC.data;
+  if (d && d.off) {
+    box.innerHTML = `<div class="panel"><div class="note">бумажные сделки
+      детектора выключены: направление ленты закрыто замерами,
+      поглощение вошло в модель признаками</div></div>`;
+    return;
+  }
   if (REC.err) {
     box.innerHTML = `<div class="panel"><div class="note">пересчёт не
       отвечает (неудачных попыток ${REC.err}). Показано то, что было на
