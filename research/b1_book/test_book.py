@@ -14,6 +14,8 @@
 import json
 import os
 import sys
+import threading
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -1234,8 +1236,9 @@ def test_rejected_subscription_is_not_silence():
 
     c = C.Collector(["BTCUSDT", "ARBUSDT"], [], "/tmp/nope",
                     said.append, deep=["BTCUSDT"])
+    sh = c.shards[0]
     ws = WS()
-    c.on_open(ws)
+    sh.on_open(ws)
     check(f"подписка по одной теме ({len(sent)} запросов)",
           len(sent) == 4 and all(len(m["args"]) == 1 for m in sent),
           str(sent))
@@ -1243,9 +1246,9 @@ def test_rejected_subscription_is_not_silence():
           all(m["req_id"] == m["args"][0] for m in sent), str(sent))
 
     sent.clear()
-    c.on_message(ws, json.dumps({"op": "subscribe", "success": False,
-                                 "ret_msg": "Invalid topic",
-                                 "req_id": "orderbook.500.BTCUSDT"}))
+    sh.on_message(ws, json.dumps({"op": "subscribe", "success": False,
+                                  "ret_msg": "Invalid topic",
+                                  "req_id": "orderbook.500.BTCUSDT"}))
     check(f"отказ попал в журнал ({said[-2] if len(said) > 1 else ''})",
           any("отклонена" in s for s in said), str(said))
     check(f"глубина понижена ({c.depth['BTCUSDT']})",
@@ -1253,13 +1256,100 @@ def test_rejected_subscription_is_not_silence():
     check("и переподписка отправлена",
           sent and sent[-1]["args"] == ["orderbook.200.BTCUSDT"], str(sent))
 
-    c.on_message(ws, json.dumps({"op": "subscribe", "success": True,
-                                 "req_id": "orderbook.50.ARBUSDT"}))
-    check("принятая тема учтена", "orderbook.50.ARBUSDT" in c.live,
-          str(c.live))
+    sh.on_message(ws, json.dumps({"op": "subscribe", "success": True,
+                                  "req_id": "orderbook.50.ARBUSDT"}))
+    check("принятая тема учтена", "orderbook.50.ARBUSDT" in sh.live,
+          str(sh.live))
     check("служебный ответ не считается данными", c.n_msg == 0
           and c.last_msg == 0.0, f"{c.n_msg} {c.last_msg}")
     c.w.close()
+
+
+def test_all_symbols_filter():
+    """`--symbols all`: USDT-перпы минус не-крипто, ничего лишнего.
+
+    Фильтр решает состав недель записи, и ошибка в нём молчалива:
+    пропущенная монета — дыра в будущей обучающей выборке, а прокравшийся
+    фонд с плечом — ровно та примесь, которую владелец исключил из
+    универсума решением.
+    """
+    import collect as C
+
+    instruments = [
+        {"symbol": "AAAUSDT", "quoteCoin": "USDT",
+         "contractType": "LinearPerpetual"},
+        {"symbol": "BBBPERP", "quoteCoin": "USDC",
+         "contractType": "LinearPerpetual"},          # не USDT
+        {"symbol": "CCCUSDT", "quoteCoin": "USDT",
+         "contractType": "LinearFutures"},            # не перп
+        {"symbol": "TSLAUSDT", "quoteCoin": "USDT",
+         "contractType": "LinearPerpetual"},          # не-крипто
+        {"symbol": "DDDUSDT", "quoteCoin": "USDT",
+         "contractType": "LinearPerpetual"},
+    ]
+    got = C.usdt_perps(instruments)
+    check("USDC и фьючерс отсечены",
+          got == ["AAAUSDT", "DDDUSDT", "TSLAUSDT"], str(got))
+    import json as J
+    import tempfile
+    d = tempfile.mkdtemp()
+    up = os.path.join(d, "universe.json")
+    with open(up, "w", encoding="utf-8") as f:
+        J.dump({"assets": {
+            "TSLA": {"asset_class": "stock", "bybit_symbol": "TSLAUSDT"},
+            "AAA": {"asset_class": "crypto", "bybit_symbol": "AAAUSDT"},
+        }}, f)
+    drop = C.non_crypto_bybit(up)
+    final = [s for s in got if s not in drop]
+    check("не-крипто исключён по справочнику",
+          final == ["AAAUSDT", "DDDUSDT"], str(final))
+    check("нет справочника — нет исключений (и нет падения)",
+          C.non_crypto_bybit(os.path.join(d, "нет.json")) == set())
+
+
+def test_shard_split_covers_everything():
+    import collect as C
+
+    syms = [f"S{i}USDT" for i in range(605)]
+    shards = C.shard_split(syms, size=40)
+    check("шардов столько, сколько нужно", len(shards) == 16,
+          str(len(shards)))
+    check("каждый символ ровно в одном шарде",
+          sorted(s for sh in shards for s in sh) == sorted(syms))
+    check("шард не больше сорока", max(len(sh) for sh in shards) == 40)
+
+
+def test_pack_queue_single_worker():
+    """Смена часа закрывает сотни файлов разом; сжатие обязано идти
+    очередью, а не потоком на файл — иначе раз в час процессор встаёт
+    ровно в ту минуту, когда приходит новый час данных."""
+    import tempfile
+
+    import store as ST
+
+    d = tempfile.mkdtemp()
+    w = ST.Writer(d, log=lambda m: None)
+    t_old = time.time() - 7200
+    for i in range(30):
+        w.write("book", f"S{i}", {"x": 1}, ts=t_old)
+    # смена часа у всех тридцати разом
+    for i in range(30):
+        w.write("book", f"S{i}", {"x": 2}, ts=time.time())
+    deadline = time.time() + 15
+    hour_old = ST.Writer.hour(t_old)
+    want = {os.path.join(d, "book", f"S{i}", hour_old + ".jsonl.gz")
+            for i in range(30)}
+    while time.time() < deadline:
+        if all(os.path.exists(p) for p in want):
+            break
+        time.sleep(0.1)
+    check("все закрытые часы дожаты одной очередью",
+          all(os.path.exists(p) for p in want),
+          f"готово {sum(os.path.exists(p) for p in want)}/30")
+    packers = [t for t in threading.enumerate()
+               if t is getattr(w, '_packer', None)]
+    check("поток сжатия один", len(packers) == 1, str(len(packers)))
+    w.close()
 
 
 def test_closed_trade_is_returned_for_writing():
@@ -1478,6 +1568,10 @@ def main():
     test_target_skips_levels_that_do_not_pay_for_risk()
     print("подписка")
     test_rejected_subscription_is_not_silence()
+    print("полный список и шарды")
+    test_all_symbols_filter()
+    test_shard_split_covers_everything()
+    test_pack_queue_single_worker()
     print("бумажные сделки")
     test_closed_trade_is_returned_for_writing()
     test_restore_marks_trade_cut_by_restart()

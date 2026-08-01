@@ -101,6 +101,14 @@ DEEP = ("BTCUSDT", "ETHUSDT")
 DEPTH_LADDER = (500, 200, 50)
 PING_SEC = 20
 SAMPLE_SEC = 1
+# Символов на одно соединение. Полный список площадки — это больше
+# тысячи тем, и одно соединение их не унесёт: буфер сокета переполняется
+# на всплеске, площадка рвёт связь, и падают все книги разом. Шардами
+# падение стоит своей доли символов, а не всего сбора.
+SHARD_SYMBOLS = 40
+REST_HOST = "https://api.bybit.com"
+UNIVERSE_JSON = os.path.join(os.path.dirname(HERE), "a1_universe", "out",
+                             "universe.json")
 # Глубина автоматического пересчёта. Живые сделки свежее него
 # дописываются как есть — они уже под нынешними правилами.
 RECOUNT_HOURS = 24
@@ -111,11 +119,11 @@ STATUS_SEC = 5
 # лишь глазами через сутки. Менять список — правкой этой строки и
 # коммитом, тогда он переживает перезапуск, сервер и сессию.
 #
-# Состав — решение владельца, и он тут восстановлен с диска, а не выбран
-# заново: сторож при запуске назвал семнадцать имён, по которым ряды
-# писались, а в урезанном запуске их не было. Собственную подмену этого
-# списка «универсумом зондов» я откатил — довод о сравнимости с T1/T2/T4
-# принадлежит мне, а состав сбора принадлежит владельцу.
+# Состав — решение владельца. 2026-08-01: «расширять на все доступные
+# пары Bybit» — по умолчанию `all`: все торгуемые линейные USDT-перпы
+# минус не-крипто по справочнику универсума. Список ниже — резерв на
+# случай недоступного справочника при пустом диске и состав смоук-тестов.
+SYMBOLS_DEFAULT = "all"
 SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
            "ARBUSDT", "LINKUSDT", "AVAXUSDT",
            "1000PEPEUSDT", "ADAUSDT", "BCHUSDT", "BEATUSDT", "BNBUSDT",
@@ -157,6 +165,110 @@ def signals_version():
     return RULES_VERSION
 
 
+def raise_nofile(log, want):
+    """Поднять лимит открытых файлов под полный список символов.
+
+    Писатель держит по файлу на символ и вид данных: шестьсот монет —
+    это за тысячу дескрипторов при системном лимите 1024 по умолчанию.
+    Отказ open() на лимите тих: часть рядов просто перестала бы
+    писаться, и заметить это можно было бы лишь дырами через недели.
+    """
+    try:
+        import resource
+        soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        if soft < want:
+            new = min(want, hard) if hard > 0 else want
+            resource.setrlimit(resource.RLIMIT_NOFILE, (new, hard))
+            log(f"лимит открытых файлов: {soft} -> {new}")
+        if min(want, hard if hard > 0 else want) < want:
+            log(f"ВНИМАНИЕ: жёсткий лимит файлов {hard} меньше нужных "
+                f"{want} — возможны отказы записи")
+    except Exception as e:                                # noqa: BLE001
+        log(f"не удалось поднять лимит файлов: {e}")
+
+
+def fetch_instruments(host=REST_HOST):
+    """Справочник линейных контрактов площадки, все страницы."""
+    import urllib.request
+    out, cursor = [], ""
+    while True:
+        url = (f"{host}/v5/market/instruments-info?category=linear"
+               f"&status=Trading&limit=1000"
+               + (f"&cursor={cursor}" if cursor else ""))
+        with urllib.request.urlopen(url, timeout=30) as r:
+            d = json.load(r)
+        res = d.get("result") or {}
+        out += res.get("list") or []
+        cursor = res.get("nextPageCursor") or ""
+        if not cursor:
+            break
+    return out
+
+
+def usdt_perps(instruments):
+    """Из справочника — торгуемые линейные USDT-перпы."""
+    return sorted({it["symbol"] for it in instruments
+                   if it.get("quoteCoin") == "USDT"
+                   and it.get("contractType") == "LinearPerpetual"
+                   and it.get("symbol")})
+
+
+def non_crypto_bybit(universe_path=UNIVERSE_JSON):
+    """Символы Bybit не-крипто активов по справочнику универсума.
+
+    Решение владельца: перпы не на криптоактивы в универсум не входят
+    (у базового актива календарь биржи, у перпа — круглосуточный).
+    Оговорка: не-крипто, листингованные ПОСЛЕ снимка универсума, так не
+    распознаются — известная примесь, запись дешёвая.
+    """
+    try:
+        with open(universe_path, encoding="utf-8") as f:
+            u = json.load(f)["assets"]
+    except OSError:
+        return set()
+    return {v["bybit_symbol"] for v in u.values()
+            if v.get("asset_class") != "crypto" and v.get("bybit_symbol")}
+
+
+def disk_symbols(root):
+    """Символы, по которым на диске уже лежат ряды книги."""
+    d = os.path.join(root, "book")
+    try:
+        return sorted(s for s in os.listdir(d)
+                      if os.path.isdir(os.path.join(d, s)))
+    except OSError:
+        return []
+
+
+def resolve_symbols(arg, log, root=OUT):
+    """`--symbols all` — всё, что торгуется, минус не-крипто.
+
+    Если справочник площадки недоступен (сеть, гео), сбор не умирает,
+    а продолжает то, что уже записывается: пропущенный час всего списка
+    хуже, чем час без новых имён. Отказ называется в журнале громко.
+    """
+    if arg.strip().lower() != "all":
+        return [s.strip() for s in arg.split(",") if s.strip()]
+    try:
+        got = usdt_perps(fetch_instruments())
+    except Exception as e:                                # noqa: BLE001
+        ondisk = disk_symbols(root) or list(SYMBOLS)
+        log(f"ВНИМАНИЕ: справочник площадки недоступен ({e}); "
+            f"продолжаю по уже записываемым {len(ondisk)} символам")
+        return ondisk
+    drop = non_crypto_bybit()
+    syms = [s for s in got if s not in drop]
+    log(f"справочник площадки: {len(got)} торгуемых USDT-перпов, "
+        f"не-крипто исключено {len(got) - len(syms)}, собираем {len(syms)}")
+    return syms
+
+
+def shard_split(symbols, size=SHARD_SYMBOLS):
+    """Разбивка списка на шарды соединений, устойчивая по порядку."""
+    return [list(symbols[i:i + size])
+            for i in range(0, len(symbols), size)]
+
+
 class LogBuf:
     """Журнал для страницы: кольцо строк плюс сквозной номер.
 
@@ -181,6 +293,152 @@ class LogBuf:
         return self.n, list(self.lines)[max(0, int(k) - first):]
 
 
+class Shard:
+    """Одно соединение с площадкой: свои темы и свой цикл переподключения.
+
+    Книги, писатель и детектор — общие (живут в коллекторе); шарду
+    принадлежат сокет, множество живых тем и счётчики. Падение шарда
+    стоит своей доли символов, а не всего сбора, и переподключение
+    очищает только свои книги.
+    """
+
+    def __init__(self, idx, symbols, coll):
+        self.idx = idx
+        self.symbols = list(symbols)
+        self.c = coll
+        self.ws = None
+        self.live = set()
+        self.n_msg = 0
+        self.n_trades = 0
+        self.n_resets = 0
+        self.last_msg = 0.0
+
+    def topics(self):
+        out = []
+        for s in self.symbols:
+            out.append(f"orderbook.{self.c.depth[s]}.{s}")
+            out.append(f"publicTrade.{s}")
+        return out
+
+    def send_sub(self, ws, topics):
+        """Подписка по одной теме, с именем темы в `req_id`: одним
+        запросом площадка отвергает ВСЁ из-за одной негодной темы."""
+        for t in topics:
+            try:
+                ws.send(json.dumps({"op": "subscribe", "args": [t],
+                                    "req_id": t}))
+            except Exception as e:                        # noqa: BLE001
+                self.c.log(f"шард {self.idx}: не отправилась подписка "
+                           f"{t}: {e}")
+
+    def on_open(self, ws):
+        self.live = set()
+        self.c.log(f"шард {self.idx}: подключён, подписываюсь на "
+                   f"{len(self.topics())} тем")
+        self.send_sub(ws, self.topics())
+
+    def on_op(self, ws, msg):
+        """Служебный ответ. Отклонённая подписка неотличима от тишины
+        рынка, молчать о ней нельзя."""
+        if msg.get("op") == "pong" or msg.get("ret_msg") == "pong":
+            return
+        ok, req = msg.get("success"), msg.get("req_id") or ""
+        if ok is False:
+            self.c.log(f"шард {self.idx}: подписка отклонена: "
+                       f"{req or '?'} — {msg.get('ret_msg') or msg}")
+            self.downgrade(ws, req)
+        elif ok is True and req:
+            self.live.add(req)
+
+    def downgrade(self, ws, topic):
+        """Стакан не принят на этой глубине — пробуем мельче: мельче
+        хуже, но это данные, а отказ — их отсутствие."""
+        if not topic.startswith("orderbook."):
+            return
+        try:
+            _, d, sym = topic.split(".", 2)
+            d = int(d)
+        except ValueError:
+            return
+        nxt = next((x for x in DEPTH_LADDER if x < d), None)
+        if nxt is None or sym not in self.c.books:
+            self.c.log(f"{sym}: глубины кончились, стакан собираться "
+                       f"не будет")
+            return
+        self.c.depth[sym] = nxt
+        self.c.log(f"{sym}: глубина {d} не принята, пробую {nxt}")
+        self.send_sub(ws, [f"orderbook.{nxt}.{sym}"])
+
+    def on_message(self, ws, raw):
+        c = self.c
+        try:
+            msg = json.loads(raw)
+        except ValueError:
+            return
+        topic = msg.get("topic") or ""
+        if not topic:
+            self.on_op(ws, msg)
+            return
+        self.last_msg = time.time()
+        self.n_msg += 1
+        if topic.startswith("orderbook."):
+            sym = topic.rsplit(".", 1)[-1]
+            b = c.books.get(sym)
+            if b is None:
+                return
+            if sym in c.raw:
+                c.w.write("raw", sym, msg)
+            if not b.apply(msg):
+                self.n_resets += 1
+                c.log(f"{sym}: разрыв нумерации, переподписка")
+                self.live.discard(topic)
+                try:
+                    ws.send(json.dumps({"op": "unsubscribe",
+                                        "args": [topic]}))
+                except Exception:                         # noqa: BLE001
+                    pass
+                self.send_sub(ws, [topic])
+        elif topic.startswith("publicTrade."):
+            sym = topic.rsplit(".", 1)[-1]
+            for t in parse_trades(msg):
+                self.n_trades += 1
+                c.w.write("trades", sym, t, ts=t["ts"] / 1000.0)
+                d = c.tape.get(sym)
+                if d is not None:
+                    d.append(t)
+                c.sig.on_trade(t)
+
+    def run(self):
+        import websocket                                   # noqa: E402
+        delay = 1
+        while not self.c.stop.is_set():
+            self.ws = websocket.WebSocketApp(
+                WS_URL, on_open=self.on_open,
+                on_message=self.on_message,
+                on_error=lambda ws, e:
+                    self.c.log(f"шард {self.idx}: ошибка соединения: {e}"),
+                on_close=lambda ws, code, reason:
+                    self.c.log(f"шард {self.idx}: соединение закрыто: "
+                               f"{code} {reason}"))
+            try:
+                self.ws.run_forever(
+                    ping_interval=PING_SEC, ping_timeout=PING_SEC // 2,
+                    sslopt={"cert_reqs": ssl.CERT_REQUIRED})
+            except Exception as e:                        # noqa: BLE001
+                self.c.log(f"шард {self.idx}: разрыв: {e}")
+            if self.c.stop.is_set():
+                break
+            # Книги шарда после разрыва недействительны: до нового
+            # снимка площадки их состояние — вымысел.
+            for s in self.symbols:
+                b = self.c.books.get(s)
+                if b is not None:
+                    b.clear()
+            self.c.log(f"шард {self.idx}: переподключение через {delay} с")
+            time.sleep(delay)
+            delay = min(delay * 2, 30)
+
+
 class Collector:
     def __init__(self, symbols, raw_symbols, root, log, deep=DEEP):
         self.symbols = list(symbols)
@@ -190,15 +448,10 @@ class Collector:
         self.books = {s: Book(s) for s in symbols}
         self.w = Writer(root, log)
         self.log = log
-        self.n_msg = 0
-        self.n_trades = 0
-        self.n_resets = 0
-        self.last_msg = 0.0
         self.started = time.time()
         self.stop = threading.Event()
-        self.ws = None
-        self.pending_resub = set()
-        self.live = set()
+        self.shards = [Shard(i, chunk, self)
+                       for i, chunk in enumerate(shard_split(self.symbols))]
         self.disk = {}
         self.samples = deque(maxlen=90)   # (момент, байт)
         self.ccache = {}                  # свечи закрытых часов
@@ -225,118 +478,38 @@ class Collector:
         self.n_live_merged = 0
         self.n_closed = 0
 
-    # --- сеть ---------------------------------------------------------
-    def topics(self):
-        out = []
-        for s in self.symbols:
-            out.append(f"orderbook.{self.depth[s]}.{s}")
-            out.append(f"publicTrade.{s}")
-        return out
+    # --- агрегаты по шардам --------------------------------------------
+    # Сеть живёт в шардах; здесь только суммы для страницы и журнала.
+    @property
+    def n_msg(self):
+        return sum(s.n_msg for s in self.shards)
 
-    def send_sub(self, ws, topics):
-        """Подписка по одной теме, с именем темы в `req_id`.
+    @property
+    def n_trades(self):
+        return sum(s.n_trades for s in self.shards)
 
-        Одним запросом на все шестнадцать площадка отвергает **весь**
-        запрос из-за одной негодной темы: так глубокая тема стакана
-        погасила сбор целиком, и в журнале это выглядело как
-        «подключено, тем 16» и дальше тишина. По одной — отказ стоит
-        своей темы и называет её.
-        """
-        for t in topics:
-            try:
-                ws.send(json.dumps({"op": "subscribe", "args": [t],
-                                    "req_id": t}))
-            except Exception as e:                        # noqa: BLE001
-                self.log(f"не отправилась подписка {t}: {e}")
+    @property
+    def n_resets(self):
+        return sum(s.n_resets for s in self.shards)
 
-    def on_open(self, ws):
-        self.live = set()
-        self.log(f"подключено, подписываюсь на {len(self.topics())} тем")
-        self.send_sub(ws, self.topics())
+    @property
+    def last_msg(self):
+        return max((s.last_msg for s in self.shards), default=0.0)
 
-    def on_op(self, ws, msg):
-        """Ответ на служебную команду. Молчать о нём нельзя.
+    def topics_count(self):
+        return sum(len(s.topics()) for s in self.shards)
 
-        Отклонённая подписка неотличима от тишины рынка: данных нет в
-        обоих случаях. Раньше такие сообщения выбрасывались, потому что
-        у них нет поля `topic`.
-        """
-        if msg.get("op") == "pong" or msg.get("ret_msg") == "pong":
-            return
-        ok, req = msg.get("success"), msg.get("req_id") or ""
-        if ok is False:
-            self.log(f"подписка отклонена: {req or '?'} — "
-                     f"{msg.get('ret_msg') or msg}")
-            self.downgrade(ws, req)
-        elif ok is True and req:
-            self.live.add(req)
+    def live_count(self):
+        return sum(len(s.live) for s in self.shards)
 
-    def downgrade(self, ws, topic):
-        """Стакан не принят на этой глубине — пробуем мельче.
+    def shard_state(self):
+        now = time.time()
+        return [{"i": s.idx, "symbols": len(s.symbols),
+                 "live": len(s.live), "topics": len(s.topics()),
+                 "age_sec": (round(now - s.last_msg, 1)
+                             if s.last_msg else None)}
+                for s in self.shards]
 
-        Список глубин у площадки свой, и он может отличаться от того,
-        что написано в документации. Сбор не вправе от этого умирать:
-        мельче — хуже, но это данные, а отказ — их отсутствие.
-        """
-        if not topic.startswith("orderbook."):
-            return
-        try:
-            _, d, sym = topic.split(".", 2)
-            d = int(d)
-        except ValueError:
-            return
-        nxt = next((x for x in DEPTH_LADDER if x < d), None)
-        if nxt is None or sym not in self.books:
-            self.log(f"{sym}: глубины кончились, стакан собираться не будет")
-            return
-        self.depth[sym] = nxt
-        self.log(f"{sym}: глубина {d} не принята, пробую {nxt}")
-        self.send_sub(ws, [f"orderbook.{nxt}.{sym}"])
-
-    def on_message(self, ws, raw):
-        try:
-            msg = json.loads(raw)
-        except ValueError:
-            return
-        topic = msg.get("topic") or ""
-        if not topic:
-            self.on_op(ws, msg)
-            return
-        self.last_msg = time.time()
-        self.n_msg += 1
-        if topic.startswith("orderbook."):
-            sym = topic.rsplit(".", 1)[-1]
-            b = self.books.get(sym)
-            if b is None:
-                return
-            if sym in self.raw:
-                self.w.write("raw", sym, msg)
-            if not b.apply(msg):
-                self.n_resets += 1
-                self.log(f"{sym}: разрыв нумерации, переподписка")
-                self.pending_resub.add(sym)
-                self.live.discard(topic)
-                try:
-                    ws.send(json.dumps({"op": "unsubscribe",
-                                        "args": [topic]}))
-                except Exception:                         # noqa: BLE001
-                    pass
-                self.send_sub(ws, [topic])
-        elif topic.startswith("publicTrade."):
-            sym = topic.rsplit(".", 1)[-1]
-            for t in parse_trades(msg):
-                self.n_trades += 1
-                self.w.write("trades", sym, t, ts=t["ts"] / 1000.0)
-                d = self.tape.get(sym)
-                if d is not None:
-                    d.append(t)
-                self.sig.on_trade(t)
-
-    def on_error(self, ws, err):
-        self.log(f"ошибка соединения: {err}")
-
-    def on_close(self, ws, code, reason):
-        self.log(f"соединение закрыто: {code} {reason}")
 
     # --- фоновые задачи ------------------------------------------------
     def sampler(self):
@@ -419,8 +592,9 @@ class Collector:
                            "resets": self.n_resets,
                            "signals": self.n_signals,
                            "closed": self.n_closed,
-                           "topics_live": len(self.live),
-                           "topics": len(self.topics()),
+                           "topics_live": self.live_count(),
+                           "topics": self.topics_count(),
+                           "shards": self.shard_state(),
                            "msg_per_sec": round(self.msg_rate, 1),
                            "ready": sum(1 for x in self.books.values()
                                         if x.ready),
@@ -777,17 +951,25 @@ class Collector:
         last = (0, 0)
         while not self.stop.wait(60):
             ready = sum(1 for b in self.books.values() if b.ready)
+            ages = [(s.idx, time.time() - s.last_msg)
+                    for s in self.shards if s.last_msg]
+            worst = max(ages, key=lambda x: x[1]) if ages else None
+            extra = (f", худший шард {worst[0]} ({worst[1]:.0f} с тишины)"
+                     if worst and worst[1] > 30 else "")
+            d = self.disk or {}
+            if d.get("rate_h") and d["rate_h"] > 0 and d.get("free"):
+                extra += (f", диска на ~"
+                          f"{d['free'] / d['rate_h'] / 24:.0f} дн.")
             self.log(f"сообщений {self.n_msg:,} (+{self.n_msg - last[0]:,}), "
                      f"сделок {self.n_trades:,} "
                      f"(+{self.n_trades - last[1]:,}), "
                      f"книг готово {ready}/{len(self.books)}, "
-                     f"тем принято {len(self.live)}/{len(self.topics())}, "
-                     f"сбросов {self.n_resets}")
+                     f"тем принято {self.live_count()}/"
+                     f"{self.topics_count()}, "
+                     f"сбросов {self.n_resets}{extra}")
             last = (self.n_msg, self.n_trades)
 
     def run(self, hours):
-        import websocket                                   # noqa: E402
-
         deadline = self.started + hours * 3600 if hours else None
         threading.Thread(target=self.sampler, daemon=True).start()
         threading.Thread(target=self.statuser, daemon=True).start()
@@ -795,30 +977,23 @@ class Collector:
         threading.Thread(target=self.diskstat, daemon=True).start()
         threading.Thread(target=self._recount_watch,
                          daemon=True).start()
-        delay = 1
-        while not self.stop.is_set():
+        # Шарды вводятся ступенями: тысяча подписок разом — это шторм
+        # и для площадки, и для собственного разбора сообщений.
+        for sh in self.shards:
+            threading.Thread(target=sh.run, daemon=True).start()
+            time.sleep(1.0)
+        self.log(f"шардов запущено: {len(self.shards)}")
+        while not self.stop.wait(1.0):
             if deadline and time.time() >= deadline:
                 self.log("время сбора вышло")
                 break
-            self.ws = websocket.WebSocketApp(
-                WS_URL, on_open=self.on_open, on_message=self.on_message,
-                on_error=self.on_error, on_close=self.on_close)
-            try:
-                self.ws.run_forever(
-                    ping_interval=PING_SEC, ping_timeout=PING_SEC // 2,
-                    sslopt={"cert_reqs": ssl.CERT_REQUIRED})
-            except Exception as e:                        # noqa: BLE001
-                self.log(f"разрыв: {e}")
-            if self.stop.is_set() or (deadline and time.time() >= deadline):
-                break
-            # Книги после разрыва недействительны: биржа пришлёт новый
-            # снимок, но до него старое состояние — вымысел.
-            for b in self.books.values():
-                b.clear()
-            self.log(f"переподключение через {delay} с")
-            time.sleep(delay)
-            delay = min(delay * 2, 30)
         self.stop.set()
+        for sh in self.shards:
+            if sh.ws is not None:
+                try:
+                    sh.ws.close()
+                except Exception:                         # noqa: BLE001
+                    pass
         self.w.close()
 
 
@@ -860,7 +1035,11 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     hh = [datetime.fromtimestamp(cutoff + i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(hours + 2)]
     n_tr = n_bk = 0
-    for sym in symbols:
+    for si, sym in enumerate(symbols):
+        if si and si % 100 == 0:
+            # На полном списке подъём читает сотни файлов; молчание
+            # дольше минуты неотличимо от зависания.
+            log(f"  подъём истории: {si}/{len(symbols)} символов")
         rows = []
         for h in hh:
             rows += rows_of("trades", sym, h, cutoff, lambda r, c:
@@ -968,12 +1147,13 @@ def selftest(root):
             "data": {"s": "TEST", "u": 1,
                      "b": [["100.0", "5"], ["99.9", "3"]],
                      "a": [["100.1", "4"], ["100.2", "6"]]}}
-    c.on_message(None, json.dumps(snap))
-    c.on_message(None, json.dumps(
+    sh = c.shards[0]
+    sh.on_message(None, json.dumps(snap))
+    sh.on_message(None, json.dumps(
         {"topic": "orderbook.50.TEST", "type": "delta",
          "ts": 1_700_000_000_100,
          "data": {"s": "TEST", "u": 2, "b": [["100.0", "0"]], "a": []}}))
-    c.on_message(None, json.dumps(
+    sh.on_message(None, json.dumps(
         {"topic": "publicTrade.TEST", "data": [
             {"T": 1_700_000_000_050, "s": "TEST", "S": "Buy",
              "p": "100.1", "v": "2"}]}))
@@ -1037,13 +1217,16 @@ def dropped_symbols(root, syms, days=3):
     names = ", ".join(f"{s} ({n} ч)" for s, n in gone)
     return [f"ВНИМАНИЕ: на диске есть свежие ряды ещё по {len(gone)} "
             f"символам, а в этом запуске их нет: {names}",
-            "сбор по ним прекращён — если это не нарочно, остановите и "
-            "перезапустите без --symbols (список по умолчанию в коде)"]
+            "сбор по ним прекращён — при составе `all` так выглядит "
+            "делистинг; если это не нарочно, проверьте строку запуска"]
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--symbols", default=",".join(SYMBOLS))
+    ap.add_argument("--symbols", default=SYMBOLS_DEFAULT,
+                    help="`all` — все торгуемые линейные USDT-перпы минус "
+                         "не-крипто (решение владельца, 2026-08-01) — "
+                         "либо список через запятую")
     ap.add_argument("--raw", default=",".join(RAW),
                     help="символы, для которых писать сырой поток целиком")
     ap.add_argument("--deep", default=",".join(DEEP),
@@ -1065,8 +1248,6 @@ def main():
         selftest(a.out)
         return
     os.makedirs(a.out, exist_ok=True)
-    syms = [s.strip() for s in a.symbols.split(",") if s.strip()]
-    raw = [s.strip() for s in a.raw.split(",") if s.strip()]
     t0 = time.time()
 
     lines = LogBuf()
@@ -1076,7 +1257,13 @@ def main():
         lines.add(line)
         print(line, flush=True)
 
-    log(f"символов {len(syms)}: {', '.join(syms)}")
+    syms = resolve_symbols(a.symbols, log)
+    raw = [s.strip() for s in a.raw.split(",") if s.strip()]
+    raise_nofile(log, want=2 * len(syms) + 1024)
+    shown = (", ".join(syms) if len(syms) <= 40
+             else ", ".join(syms[:30]) + f", … ещё {len(syms) - 30} "
+             f"(полный список в status.json)")
+    log(f"символов {len(syms)}: {shown}")
     for m in dropped_symbols(a.out, syms):
         log(m)
     if raw:
@@ -1094,11 +1281,12 @@ def main():
         log(f"сигнал {signum}: закрываю файлы")
         c.stop.set()
         c.w.close()
-        if c.ws is not None:
-            try:
-                c.ws.close()
-            except Exception:                             # noqa: BLE001
-                pass
+        for sh in c.shards:
+            if sh.ws is not None:
+                try:
+                    sh.ws.close()
+                except Exception:                         # noqa: BLE001
+                    pass
         raise SystemExit(0)
 
     signal.signal(signal.SIGTERM, bye)

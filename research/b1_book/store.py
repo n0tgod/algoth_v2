@@ -56,6 +56,20 @@ class Writer:
         self.log = log or (lambda m: None)
         self.files = {}
         self.lock = threading.Lock()
+        # Сжатие — одной очередью, а не потоком на файл. На смене часа
+        # закрываются ВСЕ файлы разом: при сотнях символов «поток на
+        # файл» означает сотни одновременных gzip — процессор встаёт
+        # колом ровно раз в час, и именно в ту минуту, когда приходит
+        # новый час данных. Очередь жуёт файлы по одному, приёму потока
+        # она не мешает.
+        self._packq = []
+        # У очереди свой замок: `_pack` зовётся из `write()` под общим
+        # замком записи, и общий замок здесь был бы дедлоком.
+        self._packlock = threading.Lock()
+        self._packev = threading.Event()
+        self._packer = threading.Thread(target=self._pack_worker,
+                                        daemon=True)
+        self._packer.start()
 
     @staticmethod
     def hour(ts):
@@ -84,8 +98,27 @@ class Writer:
             cur[1].write(json.dumps(obj, separators=(",", ":")) + "\n")
 
     def _pack(self, path):
-        """Сжать закрытый час: временный файл, затем переименование."""
-        def job():
+        """Поставить закрытый час в очередь сжатия."""
+        with self._packlock:
+            self._packq.append(path)
+        self._packev.set()
+
+    def _pack_worker(self):
+        """Единственный поток сжатия: файлы по одному, без штурма CPU.
+
+        Недожатое на выходе не теряется: `pack_stale` следующего запуска
+        дожимает простые файлы прошлых часов.
+        """
+        while True:
+            self._packev.wait()
+            with self._packlock:
+                if not self._packq:
+                    self._packev.clear()
+                    continue
+                path = self._packq.pop(0)
+                depth = len(self._packq)
+            if depth and depth % 100 == 0:
+                self.log(f"очередь сжатия: {depth} файлов")
             try:
                 tmp = path + ".gz.tmp"
                 with open(path, "rb") as src, gzip.open(tmp, "wb") as dst:
@@ -98,7 +131,6 @@ class Writer:
                 os.remove(path)
             except Exception as e:                        # noqa: BLE001
                 self.log(f"не удалось сжать {os.path.basename(path)}: {e}")
-        threading.Thread(target=job, daemon=True).start()
 
     def flush(self):
         with self.lock:
