@@ -42,14 +42,19 @@ sys.path.insert(0, os.path.join(RESEARCH, "m2_walkforward"))
 
 import bookfeat as FB                                      # noqa: E402
 import gbm                                                 # noqa: E402
+import nn                                                  # noqa: E402
 import summary as SM                                       # noqa: E402
 import wf                                                  # noqa: E402
 
 OUT = os.path.join(HERE, "out")
 MODEL_DIR = os.path.join(OUT, "model")
 
-MODEL_VERSION = 1
+MODEL_VERSION = 2
 TARGETS = [f"{k}_{h}h" for k in ("fwd", "mfe", "mae") for h in FB.HORIZONS]
+# Турнир: две руки на одних данных, объявлены до окна вердикта.
+# gbm — деревья (ML), nn — сеть (AI-рука). Прогноз до запуска записан:
+# на табличных признаках и неделях данных сеть скорее проиграет.
+ARMS = (("gbm", gbm.fit), ("nn", nn.fit))
 CYCLE_SEC = 24 * 3600             # спека §5: раз в сутки
 MIN_TRAIN_SECTIONS = 48           # меньше двух суток сечений — рано
 CANARY_STOP = 0.05                # грубая течь; шум зерна тут ±0.015
@@ -259,21 +264,23 @@ def eval_previous(x, targets, elig, grid, log_):
     if not cols:
         return []
     rows = []
-    for tgt in TARGETS:
-        wpath = os.path.join(MODEL_DIR, f"weights_{tgt}.pkl")
-        try:
-            with open(wpath, "rb") as f:
-                saved = pickle.load(f)
-        except OSError:
-            continue
-        pred = predict_matrix(saved["model"], x, elig)
-        ics = section_ic(pred, targets[tgt], elig, cols)
-        if not ics:
-            continue
-        rows.append({"target": tgt, "version": saved.get("version"),
-                     "trained_upto": upto,
-                     "median_ic": round(float(np.median(ics)), 4),
-                     "sections": len(ics)})
+    for arm, _ in ARMS:
+        for tgt in TARGETS:
+            wpath = os.path.join(MODEL_DIR, f"weights_{arm}_{tgt}.pkl")
+            try:
+                with open(wpath, "rb") as f:
+                    saved = pickle.load(f)
+            except OSError:
+                continue
+            pred = predict_matrix(saved["model"], x, elig)
+            ics = section_ic(pred, targets[tgt], elig, cols)
+            if not ics:
+                continue
+            rows.append({"arm": arm, "target": tgt,
+                         "version": saved.get("version"),
+                         "trained_upto": upto,
+                         "median_ic": round(float(np.median(ics)), 4),
+                         "sections": len(ics)})
     if not rows:
         return []
     with open(os.path.join(MODEL_DIR, "ic_history.jsonl"), "a",
@@ -282,10 +289,12 @@ def eval_previous(x, targets, elig, grid, log_):
         for r in rows:
             r["at"] = at
             f.write(json.dumps(r, separators=(",", ":")) + "\n")
-    main_line = next((r for r in rows if r["target"] == "fwd_4h"), rows[0])
-    log_(f"живой IC прежней модели: {main_line['target']} "
-         f"{main_line['median_ic']:+.4f} на {main_line['sections']} "
-         f"новых сечениях (все цели в ic_history.jsonl)")
+    for arm, _ in ARMS:
+        ml = next((r for r in rows if r["target"] == "fwd_4h"
+                   and r.get("arm") == arm), None)
+        if ml:
+            log_(f"живой IC [{arm}]: fwd_4h {ml['median_ic']:+.4f} на "
+                 f"{ml['sections']} новых сечениях")
     return rows
 
 
@@ -341,28 +350,30 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     os.makedirs(MODEL_DIR, exist_ok=True)
     imp_all = {}
     models = {}
-    for ti, tgt in enumerate(TARGETS):
-        xs, ys, _ = flatten(x, targets[tgt], elig)
-        if len(ys) < 1000:
-            log_(f"{tgt}: строк {len(ys)} — пропуск")
-            continue
-        t1 = time.time()
-        model = gbm.fit(xs, ys, seed=SEED0 + 100 * ti + len(grid))
-        models[tgt] = model
-        tot = model.importance.sum() or 1.0
-        imp = {names[j]: round(float(model.importance[j] / tot), 4)
-               for j in np.argsort(model.importance)[::-1][:10]}
-        imp_all[tgt] = imp
-        blob = {"model": model, "features": names, "target": tgt,
-                "version": MODEL_VERSION,
-                "trained_upto": grid[-1], "rows": len(ys)}
-        p = os.path.join(MODEL_DIR, f"weights_{tgt}.pkl")
-        with open(p + ".tmp", "wb") as f:
-            pickle.dump(blob, f)
-        os.replace(p + ".tmp", p)
-        log_(f"{tgt}: обучена на {len(ys):,} строках за "
-             f"{time.time() - t1:.0f} с; топ признаков: "
-             + ", ".join(f"{k} {v}" for k, v in list(imp.items())[:4]))
+    for ai, (arm, fit_fn) in enumerate(ARMS):
+        for ti, tgt in enumerate(TARGETS):
+            xs, ys, _ = flatten(x, targets[tgt], elig)
+            if len(ys) < 1000:
+                log_(f"{arm}/{tgt}: строк {len(ys)} — пропуск")
+                continue
+            t1 = time.time()
+            model = fit_fn(xs, ys,
+                           seed=SEED0 + 10_000 * ai + 100 * ti + len(grid))
+            models[(arm, tgt)] = model
+            tot = model.importance.sum() or 1.0
+            imp = {names[j]: round(float(model.importance[j] / tot), 4)
+                   for j in np.argsort(model.importance)[::-1][:10]}
+            imp_all.setdefault(arm, {})[tgt] = imp
+            blob = {"model": model, "features": names, "target": tgt,
+                    "arm": arm, "version": MODEL_VERSION,
+                    "trained_upto": grid[-1], "rows": len(ys)}
+            p = os.path.join(MODEL_DIR, f"weights_{arm}_{tgt}.pkl")
+            with open(p + ".tmp", "wb") as f:
+                pickle.dump(blob, f)
+            os.replace(p + ".tmp", p)
+            log_(f"{arm}/{tgt}: обучена на {len(ys):,} строках за "
+                 f"{time.time() - t1:.0f} с; топ: "
+                 + ", ".join(f"{k} {v}" for k, v in list(imp.items())[:3]))
 
     mp = os.path.join(MODEL_DIR, "manifest.json")
     prev_man = None
@@ -385,68 +396,85 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         json.dump(man, f, ensure_ascii=False, indent=1)
     os.replace(mp + ".tmp", mp)
 
-    # Кого модель выбрала бы прямо сейчас — для мыслей на странице.
-    picks = None
-    if "fwd_4h" in models and "mae_4h" in models:
-        j = max((jj for jj in range(len(grid))
-                 if elig[:, jj].sum() >= FB.MIN_SECTION), default=None)
-        if j is not None:
-            rows_m = np.flatnonzero(elig[:, j])
-            xj = x[rows_m, j]
-            fwd = models["fwd_4h"].predict(xj)
-            mae = models["mae_4h"].predict(xj)
-            o = np.argsort(fwd)
-            mk = lambda i: {"sym": syms[rows_m[i]],           # noqa: E731
-                            "fwd": float(fwd[i]),
-                            "mae": float(mae[i])}
-            picks = {"long": [mk(i) for i in o[::-1][:3]],
-                     "short": [mk(i) for i in o[:3]]}
-
-    # Разбор прошлых выборов: что модель ждала — и что вышло на деле.
-    # Это главное окно наблюдения владельца: выбор -> ожидание -> факт.
-    review = None
+    # Выбор -> ожидание -> факт, по каждой руке турнира отдельно:
+    # сводка по смеси рук осмысленна на вид и бессмысленна по сути.
     ppath = os.path.join(MODEL_DIR, "picks.jsonl")
+    prev_picks = {}
     try:
         with open(ppath, encoding="utf-8") as f:
-            last_pick = json.loads(f.readlines()[-1])
-    except (OSError, IndexError, ValueError):
-        last_pick = None
-    if last_pick and last_pick.get("hour") in grid:
-        j = grid.index(last_pick["hour"])
-        si = {s: i for i, s in enumerate(syms)}
-        review = []
-        for side in ("long", "short"):
-            for pk in last_pick.get(side) or []:
-                i = si.get(pk["sym"])
-                if i is None:
+            for line in f:
+                try:
+                    row = json.loads(line)
+                    prev_picks[row.get("arm") or "gbm"] = row
+                except ValueError:
                     continue
-                got = targets["fwd_4h"][i, j]
-                if np.isfinite(got):
-                    review.append({"sym": pk["sym"], "side": side,
-                                   "expected": round(pk["fwd"], 1),
-                                   "got": round(float(got), 1)})
-        if review:
-            with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
-                      encoding="utf-8") as f:
-                f.write(json.dumps(
-                    {"hour": last_pick["hour"], "rows": review},
-                    ensure_ascii=False) + "\n")
-    if picks:
-        picks["hour"] = grid[-1]
-        with open(ppath, "a", encoding="utf-8") as f:
-            f.write(json.dumps(picks, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
 
     at = datetime.now(timezone.utc).strftime("%m-%d %H:%M")
-    lines = think(prev_man, man, ic_rows, picks)
-    if review:
-        hits = sum(1 for r in review
-                   if (r["got"] > 0) == (r["side"] == "long"))
-        lines.insert(0, f"разбор прошлых выборов ({len(review)} имён, "
-                        f"угадан знак у {hits}): " + "; ".join(
-                            f"{r['sym'].replace('USDT','')} "
-                            f"{'лонг' if r['side'] == 'long' else 'шорт'}: "
-                            f"ждал {r['expected']:+.0f}, вышло "
-                            f"{r['got']:+.0f} б.п." for r in review))
+    all_lines = []
+    si = {s: i for i, s in enumerate(syms)}
+    j_last = max((jj for jj in range(len(grid))
+                  if elig[:, jj].sum() >= FB.MIN_SECTION), default=None)
+    for arm, _ in ARMS:
+        review = None
+        lp = prev_picks.get(arm)
+        if lp and lp.get("hour") in grid:
+            j = grid.index(lp["hour"])
+            review = []
+            for side in ("long", "short"):
+                for pk in lp.get(side) or []:
+                    i = si.get(pk["sym"])
+                    if i is None:
+                        continue
+                    got = targets["fwd_4h"][i, j]
+                    if np.isfinite(got):
+                        review.append({"sym": pk["sym"], "side": side,
+                                       "expected": round(pk["fwd"], 1),
+                                       "got": round(float(got), 1)})
+            if review:
+                with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
+                          encoding="utf-8") as f:
+                    f.write(json.dumps(
+                        {"arm": arm, "hour": lp["hour"], "rows": review},
+                        ensure_ascii=False) + "\n")
+        picks = None
+        if (arm, "fwd_4h") in models and (arm, "mae_4h") in models \
+                and j_last is not None:
+            rows_m = np.flatnonzero(elig[:, j_last])
+            xj = x[rows_m, j_last]
+            fwd = models[(arm, "fwd_4h")].predict(xj)
+            mae = models[(arm, "mae_4h")].predict(xj)
+            o = np.argsort(fwd)
+            mk = lambda i: {"sym": syms[rows_m[i]],          # noqa: E731
+                            "fwd": float(fwd[i]),
+                            "mae": float(mae[i])}
+            picks = {"arm": arm, "hour": grid[-1],
+                     "long": [mk(i) for i in o[::-1][:3]],
+                     "short": [mk(i) for i in o[:3]]}
+            with open(ppath, "a", encoding="utf-8") as f:
+                f.write(json.dumps(picks, ensure_ascii=False) + "\n")
+
+        man_arm = dict(man, importance=imp_all.get(arm) or {})
+        prev_arm = None
+        if prev_man:
+            pi = prev_man.get("importance") or {}
+            prev_arm = dict(prev_man,
+                            importance=pi.get(arm) if arm in pi else pi)
+        ic_arm = [r for r in ic_rows or [] if r.get("arm") == arm]
+        lines = think(prev_arm, man_arm, ic_arm, picks)
+        if review:
+            hits = sum(1 for r in review
+                       if (r["got"] > 0) == (r["side"] == "long"))
+            lines.insert(0, f"разбор прошлых выборов ({len(review)} имён, "
+                            f"угадан знак у {hits}): " + "; ".join(
+                                f"{r['sym'].replace('USDT','')} "
+                                f"{'лонг' if r['side'] == 'long' else 'шорт'}: "
+                                f"ждал {r['expected']:+.0f}, вышло "
+                                f"{r['got']:+.0f} б.п." for r in review))
+        all_lines += [f"[{'деревья' if arm == 'gbm' else 'сеть'}] {t}"
+                      for t in lines]
+    lines = all_lines
     with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",
               encoding="utf-8") as f:
         for t in lines:

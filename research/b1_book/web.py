@@ -597,10 +597,16 @@ function renderModel() {
   cap.textContent = `weights v${m.version} · age ${
     ageH == null ? "—" : ageH.toFixed(1)} h`;
   const ic = {};
-  (d.ic || []).forEach(r => { ic[r.target] = r; });
-  const icLine = ["fwd_1h","fwd_4h","fwd_24h"].map(t => ic[t]
-    ? `${t.replace("fwd_","")} ${ic[t].median_ic > 0 ? "+" : ""}${
-        ic[t].median_ic}` : null).filter(Boolean).join(" · ");
+  (d.ic || []).forEach(r => { ic[(r.arm || "gbm") + ":" + r.target] = r; });
+  const armIc = a => ["fwd_1h","fwd_4h","fwd_24h"].map(t => {
+    const r = ic[a + ":" + t];
+    return r ? `${t.replace("fwd_","")} ${r.median_ic > 0 ? "+" : ""}${
+      r.median_ic}` : null;
+  }).filter(Boolean).join(" ");
+  const icLine = ["gbm","nn"].map(a => {
+    const s = armIc(a);
+    return s ? `${a === "gbm" ? "trees" : "neural"}: ${s}` : null;
+  }).filter(Boolean).join(" · ");
   box.innerHTML = `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
@@ -612,27 +618,33 @@ function renderModel() {
       || "no thoughts yet — they appear after the first training"}</div>`;
 }
 function picksTable(d) {
-  // Действия модели глазами: кого взяла, что ждала — и что вышло у
-  // прошлого выбора. Выбор -> ожидание -> факт, без пересказа.
-  const pk = (d.picks || []).slice(-1)[0];
-  const rv = (d.review || []).slice(-1)[0];
-  if (!pk) return "";
-  const got = {};
-  (rv ? rv.rows || [] : []).forEach(r => { got[r.sym] = r; });
-  const row = (p, side) => {
-    const g = got[p.sym];
-    return `<tr><td class="${side === "long" ? "buy" : "sell"}">${
-      side}</td><td>${p.sym.replace("USDT","")}</td>
-      <td class="mono">expects ${p.fwd > 0 ? "+" : ""}${p.fwd.toFixed(0)}
-        bp / 4h</td>
-      <td class="mono">adverse path ~${p.mae.toFixed(0)} bp</td>
-      <td class="mono">${g ? `last time: got ${g.got > 0 ? "+" : ""}${
-        g.got} bp` : ""}</td></tr>`;
+  // Турнир: у каждой руки свои выборы и свой разбор. Смешение рук в
+  // одной таблице выглядело бы осмысленно и не значило бы ничего.
+  const arms = {};
+  (d.picks || []).forEach(p => { arms[p.arm || "gbm"] = p; });
+  const revs = {};
+  (d.review || []).forEach(r => { revs[r.arm || "gbm"] = r; });
+  const one = (armId, title) => {
+    const pk = arms[armId];
+    if (!pk) return "";
+    const got = {};
+    ((revs[armId] || {}).rows || []).forEach(r => { got[r.sym] = r; });
+    const row = (p, side) => {
+      const g = got[p.sym];
+      return `<tr><td class="${side === "long" ? "buy" : "sell"}">${
+        side}</td><td>${p.sym.replace("USDT","")}</td>
+        <td class="mono">expects ${p.fwd > 0 ? "+" : ""}${p.fwd.toFixed(0)}
+          bp / 4h</td>
+        <td class="mono">adverse ~${p.mae.toFixed(0)} bp</td>
+        <td class="mono">${g ? `last: got ${g.got > 0 ? "+" : ""}${
+          g.got} bp` : ""}</td></tr>`;
+    };
+    return `<div class="mline" style="margin-top:6px">${title} — picks
+        (hour ${pk.hour || "—"}):</div>
+      <table>${(pk.long || []).map(p => row(p, "long")).join("")}${
+        (pk.short || []).map(p => row(p, "short")).join("")}</table>`;
   };
-  return `<div class="mline" style="margin-top:6px">current picks
-      (hour ${pk.hour || "—"}):</div>
-    <table>${(pk.long || []).map(p => row(p, "long")).join("")}${
-      (pk.short || []).map(p => row(p, "short")).join("")}</table>`;
+  return one("gbm", "trees (ML)") + one("nn", "neural net (AI)");
 }
 
 const REC = {on:true, busy:false, data:null, timer:null};

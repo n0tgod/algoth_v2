@@ -282,7 +282,10 @@ def test_train_cycle_end_to_end():
     import train as T
 
     orig_fit = T.gbm.fit
+    orig_nn = T.nn.fit
     T.gbm.fit = lambda x, y, seed: orig_fit(x, y, seed, n_trees=25)
+    T.nn.fit = lambda x, y, seed: orig_nn(x, y, seed, epochs=4)
+    T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
     try:
         d = tempfile.mkdtemp()
         sd = os.path.join(d, "summary")
@@ -295,9 +298,10 @@ def test_train_cycle_end_to_end():
               man["version"] == T.MODEL_VERSION
               and man["trained_upto"].startswith("2026-08-1"),
               str(man.get("trained_upto")))
-        check("веса всех целей на месте",
+        check("веса всех целей обеих рук на месте",
               all(os.path.exists(os.path.join(
-                  T.MODEL_DIR, f"weights_{t}.pkl")) for t in T.TARGETS))
+                  T.MODEL_DIR, f"weights_{a}_{t}.pkl"))
+                  for a, _ in T.ARMS for t in T.TARGETS))
         check("канарейка не кричит",
               man["canary_ic"] is not None
               and abs(man["canary_ic"]) < T.CANARY_STOP,
@@ -312,10 +316,13 @@ def test_train_cycle_end_to_end():
         hist = [json.loads(x) for x in
                 open(os.path.join(T.MODEL_DIR, "ic_history.jsonl"))]
         f1 = [h for h in hist if h["target"] == "fwd_1h"]
-        check("живой IC записан", len(f1) == 1, str(hist))
-        check(f"заложенный сигнал пойман вне выборки "
-              f"(IC {f1[0]['median_ic']:+.3f})",
-              f1[0]["median_ic"] > 0.1, str(f1))
+        check("живой IC записан по обеим рукам",
+              len(f1) == 2 and {h["arm"] for h in f1} == {"gbm", "nn"},
+              str(f1))
+        check(f"заложенный сигнал пойман вне выборки обеими "
+              f"(деревья {f1[0]['median_ic']:+.2f}, "
+              f"сеть {f1[1]['median_ic']:+.2f})",
+              all(h["median_ic"] > 0.1 for h in f1), str(f1))
         th = [json.loads(x)["text"] for x in
               open(os.path.join(T.MODEL_DIR, "thoughts.jsonl"))]
         check("мысли записаны и говорят о сбываемости",
@@ -324,19 +331,48 @@ def test_train_cycle_end_to_end():
               str(th[-3:]))
         picks = [json.loads(x) for x in
                  open(os.path.join(T.MODEL_DIR, "picks.jsonl"))]
-        check("выборы записаны с часом и ожиданием",
-              len(picks) == 2 and picks[0]["hour"]
-              and "fwd" in picks[0]["long"][0], str(picks[0])[:100])
+        check("выборы обеих рук записаны с часом и ожиданием",
+              len(picks) == 4 and {p["arm"] for p in picks} ==
+              {"gbm", "nn"} and "fwd" in picks[0]["long"][0],
+              str(picks[0])[:100])
         rev = [json.loads(x) for x in
                open(os.path.join(T.MODEL_DIR, "review.jsonl"))]
-        check("прошлый выбор разобран фактом",
-              len(rev) == 1 and rev[0]["hour"] == picks[0]["hour"]
-              and all("got" in r for r in rev[0]["rows"]),
+        check("прошлые выборы обеих рук разобраны фактом",
+              len(rev) == 2 and {r["arm"] for r in rev} == {"gbm", "nn"}
+              and all("got" in x for r in rev for x in r["rows"]),
               str(rev)[:120])
-        check("разбор попал в мысли",
-              any("разбор прошлых выборов" in t for t in th), str(th[:2]))
+        check("разбор попал в мысли обеих рук",
+              any("разбор прошлых выборов" in t and "[деревья]" in t
+                  for t in th)
+              and any("[сеть]" in t for t in th), str(th[:2]))
     finally:
         T.gbm.fit = orig_fit
+        T.nn.fit = orig_nn
+        T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+
+
+def test_nn_learns_and_sees_missing():
+    """Сеть учится и видит пропуск флагом, а не затиркой."""
+    import nn as N
+
+    r = np.random.default_rng(4)
+    n = 6000
+    x = r.normal(0, 1, (n, 5))
+    miss = r.random(n) < 0.3
+    x[miss, 2] = np.nan
+    y = 1.5 * x[:, 0] + np.where(miss, 2.0, -1.0) + r.normal(0, 0.3, n)
+    m = N.fit(x[:4500], y[:4500], seed=1, epochs=20)
+    p = m.predict(x[4500:])
+    c = np.corrcoef(p, y[4500:])[0, 1]
+    check(f"сеть учит сигнал вне выборки (корр. {c:.2f})", c > 0.8, str(c))
+    gap = p[miss[4500:]].mean() - p[~miss[4500:]].mean()
+    # Настоящий зазор 3.0; сети с четырьмя эпохами хватает поймать
+    # направление и величину порядка — тест проверяет «флаг работает»,
+    # а не «сеть сошлась до конца».
+    check(f"пропуск различён флагом (зазор {gap:.1f})", gap > 1.0,
+          str(gap))
+    p2 = N.fit(x[:4500], y[:4500], seed=1, epochs=20).predict(x[4500:])
+    check("одно зерно — бит в бит", np.array_equal(p, p2))
 
 
 def test_think_words():
@@ -398,6 +434,7 @@ def main():
     test_eligibility_floor()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
+    test_nn_learns_and_sees_missing()
     test_think_words()
     test_load_matrices_grid_is_continuous()
     test_train_cycle_end_to_end()
