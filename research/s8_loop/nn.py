@@ -15,6 +15,8 @@ NaN-корзину.
 и на странице подписана как «вес входа», а не как вклад.
 """
 
+import warnings
+
 import numpy as np
 
 LAYERS = (64, 32)
@@ -49,7 +51,11 @@ class NN:
 def fit(x, y, seed, epochs=EPOCHS):
     ok = np.isfinite(y)
     x, y = x[ok], y[ok]
-    med = np.nanmedian(x, axis=0)
+    with warnings.catch_warnings():
+        # Колонка целиком из NaN законна (признак, чья запись ещё не
+        # началась) и обработана строкой ниже — предупреждение лишнее.
+        warnings.simplefilter("ignore", RuntimeWarning)
+        med = np.nanmedian(x, axis=0)
     med = np.where(np.isfinite(med), med, 0.0)
     miss = ~np.isfinite(x)
     xi = np.where(miss, med[None, :], x)

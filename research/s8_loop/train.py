@@ -99,6 +99,21 @@ FEATURE_RU = (
     ("ret_", "ход цены к своей волатильности"),
     ("beta", "связь с рынком"),
     ("age_rec", "возраст записи"),
+    ("fr_bp", "ставка funding"),
+    ("mins_fund", "минут до начисления funding"),
+    ("oi_rel", "открытый интерес против обычного"),
+    ("oi_chg", "приток/уход позиций (интерес)"),
+    ("basis_bp", "базис (перп к споту)"),
+    ("liq_long", "ликвидации лонгов"),
+    ("liq_short", "ликвидации шортов"),
+    ("liq_imb", "перекос ликвидаций"),
+    ("vol_regime", "режим волатильности (день к неделе)"),
+    ("hod_", "час суток"),
+    ("dow", "день недели"),
+    ("btc_ret", "ход BTC (лидер рынка)"),
+    ("sec_ret", "ход своего сектора"),
+    ("rel_sec", "отставание от сектора"),
+    ("dist_round", "близость к круглому числу"),
 )
 
 
@@ -175,6 +190,7 @@ def load_matrices(sum_dir):
     """
     rows_by_sym = {}
     hours = set()
+    fields_seen = set()
     try:
         symbols = sorted(os.listdir(sum_dir))
     except OSError:
@@ -191,6 +207,10 @@ def load_matrices(sum_dir):
                         r = json.loads(line)
                         rr.append(r)
                         hours.add(r["hour"])
+                        # Состав полей — по ВСЕМ строкам: сводка
+                        # расширялась по ходу записи, и поле, которого
+                        # нет в первой строке, иначе выпало бы молча.
+                        fields_seen.update(r)
                     except (ValueError, KeyError):
                         continue
         if rr:
@@ -207,12 +227,12 @@ def load_matrices(sum_dir):
         t = datetime.fromtimestamp(t.timestamp() + 3600, timezone.utc)
     idx = {h: i for i, h in enumerate(grid)}
     syms = sorted(rows_by_sym)
-    fields = set()
-    for rr in rows_by_sym.values():
-        fields.update(rr[0])
+    fields = fields_seen
     fields.discard("hour")
     mats = {f: np.full((len(syms), len(grid)), np.nan) for f in fields}
     for si, sym in enumerate(syms):
+        # Строки идут в порядке дозаписи; пересведённый час стоит позже
+        # исходного и побеждает — на это опирается summary --redo.
         for r in rows_by_sym[sym]:
             j = idx.get(r["hour"])
             if j is None:
@@ -221,7 +241,38 @@ def load_matrices(sum_dir):
                 v = r.get(f)
                 if isinstance(v, (int, float)):
                     mats[f][si, j] = v
+    mats.update(context_mats(syms, grid))
     return mats, syms, grid
+
+
+def context_mats(syms, grid):
+    """Контекст, который несут не сводки, а сами оси: время и сектор.
+
+    hour_ts — начало часа (epoch), из него признаки времени; sector —
+    код группы A3 (NaN у неразмеченных); is_btc — флаг ряда BTCUSDT
+    для признака «ход лидера». Всё это входит в общий словарь матриц,
+    чтобы один тест на заглядывание накрывал и эти признаки.
+    """
+    S = len(syms)
+    ts = np.array([datetime.strptime(h, "%Y-%m-%d-%H")
+                   .replace(tzinfo=timezone.utc).timestamp()
+                   for h in grid])
+    out = {"hour_ts": np.tile(ts, (S, 1))}
+    sector = np.full((S, 1), np.nan)
+    try:
+        sys.path.insert(0, os.path.join(RESEARCH, "b1_book"))
+        from collect import symbol_groups
+        for gi, g in enumerate(symbol_groups(syms)):
+            if g["id"] == "other":
+                continue                 # «прочие» — не сектор, а незнание
+            for s in g["symbols"]:
+                sector[syms.index(s), 0] = float(gi)
+    except Exception as e:                                 # noqa: BLE001
+        log(f"группы недоступны, сектор пуст: {type(e).__name__}: {e}")
+    out["sector"] = sector
+    out["is_btc"] = np.array(
+        [[1.0 if s == "BTCUSDT" else 0.0] for s in syms])
+    return out
 
 
 def assemble(mats):

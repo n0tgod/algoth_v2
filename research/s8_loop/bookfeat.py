@@ -169,11 +169,102 @@ def formations(s):
     return f
 
 
+def _opt(s, key, like):
+    """Матрица сводки, которой может не быть (поле добавлено позже
+    начала записи): нет — весь ряд NaN, признак честно пуст."""
+    v = s.get(key)
+    return v if v is not None else np.full_like(like, np.nan)
+
+
+def lagged_change(x, k):
+    """x[t]/x[t−k] − 1; дыра в любом конце — NaN, а не склейка."""
+    out = np.full_like(x, np.nan)
+    with np.errstate(all="ignore"):
+        out[:, k:] = x[:, k:] / x[:, :-k] - 1.0
+    out[~np.isfinite(out)] = np.nan
+    return out
+
+
+def clock_features(s, like):
+    """Час суток и день недели из начала часа — сезонность.
+
+    Час — синусом и косинусом, чтобы 23:00 и 00:00 были соседями, а
+    не краями шкалы; день недели — числом 0–6, деревьям этого
+    достаточно, а у сети берёт на себя стандартизация.
+    """
+    ts = s.get("hour_ts")
+    if ts is None:
+        nanm = np.full_like(like, np.nan)
+        return {"hod_sin": nanm, "hod_cos": nanm.copy(),
+                "dow": nanm.copy()}
+    hod = (ts / 3600.0) % 24
+    dow = (ts / 86400.0 + 3) % 7            # эпоха — четверг; 0 — Пн
+    return {"hod_sin": np.sin(2 * np.pi * hod / 24),
+            "hod_cos": np.cos(2 * np.pi * hod / 24),
+            "dow": np.floor(dow)}
+
+
+def leader_features(s, close):
+    """Ход BTC и своего сектора за 4 часа — запаздывание за лидером.
+
+    Сектор берёт среднее по СВОИМ без себя (как волна): включить себя
+    значило бы подмешать собственный ход в «чужой» признак. Меньше
+    трёх соседей — NaN: среднее двух имён не сектор, а сосед.
+    """
+    S, D = close.shape
+    r4 = lagged_change(close, 4)
+    out = {}
+    is_btc = s.get("is_btc")
+    if is_btc is not None and np.nansum(is_btc) == 1:
+        bi = int(np.argmax(is_btc[:, 0]))
+        out["btc_ret_4h"] = np.tile(r4[bi], (S, 1))
+    else:
+        out["btc_ret_4h"] = np.full((S, D), np.nan)
+    sec = s.get("sector")
+    sec_ret = np.full((S, D), np.nan)
+    if sec is not None:
+        codes = sec[:, 0]
+        for c in np.unique(codes[np.isfinite(codes)]):
+            rows = np.where(codes == c)[0]
+            if len(rows) < 4:
+                continue
+            g = r4[rows]
+            fin = np.isfinite(g)
+            n = fin.sum(axis=0)
+            tot = np.where(fin, g, 0.0).sum(axis=0)
+            with np.errstate(all="ignore"):
+                excl = (tot[None, :] - np.where(fin, g, 0.0)) \
+                    / (n[None, :] - fin)
+            excl[(n[None, :] - fin) < 3] = np.nan
+            sec_ret[rows] = excl
+    out["sec_ret_4h"] = sec_ret
+    with np.errstate(all="ignore"):
+        out["rel_sec_4h"] = r4 - sec_ret
+    return out
+
+
+def dist_round(close):
+    """Близость к круглому числу в долях шага круглой сетки, 0…0.5.
+
+    Шаг — на порядок ниже разряда цены: у BTC на 90 000 это 1 000, у
+    монеты на 0.05 — 0.001. Мера безразмерна и не зависит от того, во
+    сколько знаков площадка котирует тикер.
+    """
+    with np.errstate(all="ignore"):
+        step = np.power(10.0, np.floor(np.log10(close)) - 1.0)
+        x = close / step
+        d = np.abs(x - np.round(x))
+    d[~np.isfinite(d)] = np.nan
+    return d
+
+
 def feature_pack(s):
     """Все признаки спеки 08 §3 разом из словаря матриц сводки.
 
     Одна точка сборки — тест на заглядывание проверяет все признаки
-    одним проходом (правило M1).
+    одним проходом (правило M1). Пакеты, добавленные решением
+    владельца 2026-08-02 (до первого обучения): время, funding/интерес/
+    ликвидации, режим волатильности, лидер и сектор, круглые числа.
     """
     close = s["mid_close"]
     r = F.daily_returns(close)                 # доходности час к часу
@@ -205,6 +296,32 @@ def feature_pack(s):
     for k in (1, 4, 24):
         f[f"ret_{k}h"] = F.ret_norm(close, k, sig)
     f["net_path_24h"] = F.net_over_path(close, r, 24)
+    with np.errstate(all="ignore"):
+        # день к неделе: >1 — рынок у монеты проснулся, <1 — заснул
+        f["vol_regime"] = F.trailing_std(r, 24, 12) / sig
+
+    # --- funding / интерес / базис / ликвидации (запись с 2026-08) ---
+    fr = _opt(s, "fr", close)
+    f["fr_bp"] = fr * 1e4
+    f["mins_fund"] = _opt(s, "mins_fund", close)
+    oi = _opt(s, "oi_usd", close)
+    f["oi_rel"] = rel_to_past(oi)
+    f["oi_chg_4h"] = lagged_change(oi, 4)
+    f["oi_chg_24h"] = lagged_change(oi, 24)
+    f["basis_bp"] = _opt(s, "basis_bp", close)
+    liq_l = _opt(s, "liq_long", close)
+    liq_s = _opt(s, "liq_short", close)
+    with np.errstate(all="ignore"):
+        # доля принудительных в обороте часа: безразмерна, сравнима
+        # между монетами; ноль — законное наблюдение «никого не выбило»
+        f["liq_long_share"] = liq_l / turn
+        f["liq_short_share"] = liq_s / turn
+    f["liq_imb"] = imbalance(liq_s, liq_l)
+
+    # --- время, лидер/сектор, круглые числа --------------------------
+    f.update(clock_features(s, close))
+    f.update(leader_features(s, close))
+    f["dist_round"] = dist_round(close)
 
     wave = F.wave_excl_self(np.where(elig, r, np.nan), elig)
     f["beta"] = F.rolling_beta(r, wave, win=BETA_WIN, min_n=BETA_MIN)

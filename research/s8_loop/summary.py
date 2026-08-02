@@ -54,12 +54,20 @@ def _med(v):
     return s[m] if n % 2 else (s[m - 1] + s[m]) / 2.0
 
 
-def summarize_hour(book_rows, trade_rows):
+def summarize_hour(book_rows, trade_rows, metrics_rows=None,
+                   liq_rows=None, hour_end=None):
     """Один (символ, час) → одна строка сводки.
 
     Все величины — только из этого часа; нормировка на собственное
     прошлое живёт в признаках (этап 2), где прошлое явное и проверяемое
     тестом на заглядывание.
+
+    metrics_rows — опрос тикеров раз в 5 минут (funding, интерес,
+    базис), liq_rows — поток ликвидаций. Часы до начала их записи
+    честно несут None: пропуск — не ноль (урок A2). Ликвидации при
+    живом опросе — наоборот ноль, а не пропуск: «в этот час никого не
+    ликвидировали» есть наблюдение, и стирать его в NaN значило бы
+    выбросить самые спокойные часы из знаменателя.
     """
     spreads, upds, reaches = [], [], []
     bands = {f"{side}{w}": [] for side in "ba" for w in BANDS}
@@ -146,6 +154,57 @@ def summarize_hour(book_rows, trade_rows):
         "depth_eat_b": _med([b for b, _ in depth_eat]),
         "depth_eat_a": _med([a for _, a in depth_eat]),
     }
+
+    # --- funding / открытый интерес / базис: последняя точка часа ---
+    last = None
+    for m in metrics_rows or []:
+        try:
+            ts = float(m["ts"]) / 1000.0
+        except (KeyError, TypeError, ValueError):
+            continue
+        if last is None or ts >= last[0]:
+            last = (ts, m)
+    if last is not None:
+        m = last[1]
+        try:
+            out["fr"] = float(m["fr"])
+        except (KeyError, TypeError, ValueError):
+            pass
+        try:
+            out["oi_usd"] = round(float(m["oiv"]), 2)
+        except (KeyError, TypeError, ValueError):
+            pass
+        try:
+            idx_p = float(m["idx"])
+            out["basis_bp"] = round(
+                (float(m["mark"]) - idx_p) / idx_p * 1e4, 4)
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+            pass
+        if hour_end is not None:
+            try:
+                out["mins_fund"] = round(
+                    (float(m["nft"]) / 1000.0 - hour_end) / 60.0, 1)
+            except (KeyError, TypeError, ValueError):
+                pass
+        # Ликвидации считаются только при живом опросе метрик того же
+        # часа: сам по себе пустой поток неотличим от выключенного
+        # сборщика, а метрики идут раз в 5 минут и служат пульсом.
+        # Сторона по соглашению Bybit: `Buy` — принудительно выкупают
+        # ШОРТЫ, `Sell` — принудительно продают ЛОНГИ. Закреплено
+        # тестом; перепутать стороны значило бы учить модель наоборот.
+        lb = ls = 0.0
+        for q in liq_rows or []:
+            try:
+                notional = float(q["p"]) * float(q["v"])
+                side = q["side"]
+            except (KeyError, TypeError, ValueError):
+                continue
+            if side == "Buy":
+                lb += notional
+            elif side == "Sell":
+                ls += notional
+        out["liq_short"] = round(lb, 2)
+        out["liq_long"] = round(ls, 2)
     for k, v in bands.items():
         out[f"bq_{k}"] = _med(v)
         # Доля снимков, где полоса вообще была измерима, — чтобы
@@ -185,7 +244,15 @@ def done_hours(day_path):
     return out
 
 
-def run(root, out_dir, hours_back, log):
+def run(root, out_dir, hours_back, log, redo=0):
+    """redo — пересвести последние N часов, даже если они уже готовы.
+
+    Нужен ровно при смене состава сводки (добавили metrics/liq): часы,
+    сведённые старым кодом, помечены готовыми и сами не обновятся, а
+    сырьё для новых полей на диске уже лежит. Строка дописывается в
+    конец дневного файла; при сборке матриц поздняя строка того же
+    часа побеждает — порядок строк файла хронологичен по дозаписи.
+    """
     t0 = time.time()
     book_dir = os.path.join(root, "book")
     try:
@@ -193,6 +260,7 @@ def run(root, out_dir, hours_back, log):
     except OSError:
         raise SystemExit(f"нет записи стакана в {book_dir}")
     hours = hours_closed(back=hours_back)
+    redo_set = set(hours_closed(back=redo)) if redo else set()
     n_new = n_sym = 0
     said = time.time()
     for si, sym in enumerate(symbols):
@@ -214,15 +282,21 @@ def run(root, out_dir, hours_back, log):
         for day, hh in sorted(by_day.items()):
             day_path = os.path.join(out_dir, sym, day + ".jsonl")
             seen = done_hours(day_path)
-            fresh = [h for h in hh if h not in seen]
+            fresh = [h for h in hh if h not in seen or h in redo_set]
             if not fresh:
                 continue
             os.makedirs(os.path.dirname(day_path), exist_ok=True)
             with open(day_path, "a", encoding="utf-8") as f:
                 for h in sorted(fresh):
+                    h_end = datetime.strptime(
+                        h, "%Y-%m-%d-%H").replace(
+                        tzinfo=timezone.utc).timestamp() + 3600
                     row = summarize_hour(
                         read_hour(sdir, h),
-                        read_hour(os.path.join(root, "trades", sym), h))
+                        read_hour(os.path.join(root, "trades", sym), h),
+                        read_hour(os.path.join(root, "metrics", sym), h),
+                        read_hour(os.path.join(root, "liq", sym), h),
+                        hour_end=h_end)
                     if row is None:
                         continue
                     row["hour"] = h
@@ -240,6 +314,8 @@ def main():
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--hours-back", type=int, default=0,
                     help="0 — вся запись")
+    ap.add_argument("--redo", type=int, default=0,
+                    help="пересвести последние N часов (смена состава)")
     a = ap.parse_args()
     try:
         # Рядом живёт сборщик, приём данных важнее счёта (правило M5).
@@ -247,7 +323,7 @@ def main():
     except OSError:
         pass
     run(a.root, a.out, a.hours_back or None,
-        lambda m: print(m, flush=True))
+        lambda m: print(m, flush=True), redo=a.redo)
 
 
 if __name__ == "__main__":

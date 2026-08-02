@@ -152,6 +152,19 @@ def synth_summary(S=40, D=600, seed=3):
     for w in BANDS:
         s[f"bq_b{w}"] = np.abs(r.normal(1e5, 1e4, (S, D)))
         s[f"bq_a{w}"] = np.abs(r.normal(1e5, 1e4, (S, D)))
+    # metrics/liq и контекст — чтобы общий тест заглядывания кусался
+    # и на новых признаках, а не проходил их по пустым NaN
+    s["fr"] = r.normal(0.0001, 0.0002, (S, D))
+    s["mins_fund"] = np.abs(r.normal(120, 60, (S, D)))
+    s["oi_usd"] = np.abs(r.normal(5e6, 5e5, (S, D)))
+    s["basis_bp"] = r.normal(0, 3, (S, D))
+    s["liq_long"] = np.abs(r.normal(1e4, 5e3, (S, D)))
+    s["liq_short"] = np.abs(r.normal(1e4, 5e3, (S, D)))
+    ts0 = 1785600000 - (1785600000 % 3600)
+    ts = ts0 + np.arange(D) * 3600.0
+    s["hour_ts"] = np.tile(ts, (S, 1))
+    s["sector"] = np.array([[float(i % 5)] for i in range(S)])
+    s["is_btc"] = np.array([[1.0 if i == 0 else 0.0] for i in range(S)])
     return s
 
 
@@ -239,6 +252,88 @@ def test_formations_semantics():
           f["tilt_4h"][1, 200] > 0.5, str(f["tilt_4h"][1, 200]))
     check("рост стоит у верха суточного диапазона",
           f["range_pos"][1, 200] > 0.9, str(f["range_pos"][1, 200]))
+
+
+def test_metrics_liq_in_summary():
+    """Сводка часа: funding/интерес/базис — последняя точка часа,
+    ликвидации — суммы по сторонам с соглашением Bybit."""
+    book = [_snap(100.0, 50.0, t) for t in range(10)]
+    h_end = 1785600000.0
+    met = [
+        {"ts": (h_end - 3000) * 1000, "fr": 0.0009, "nft": 1, "oi": 1,
+         "oiv": 1.0e6, "mark": 100.0, "idx": 100.0},
+        {"ts": (h_end - 120) * 1000, "fr": 0.0001,
+         "nft": (h_end + 7200) * 1000, "oi": 2, "oiv": 2.5e6,
+         "mark": 100.1, "idx": 100.0},
+    ]
+    liq = [{"ts": 1, "side": "Buy", "p": 100.0, "v": 3.0},
+           {"ts": 2, "side": "Sell", "p": 100.0, "v": 5.0},
+           {"ts": 3, "side": "Sell", "p": 100.0, "v": 2.0}]
+    row = SM.summarize_hour(book, [], met, liq, hour_end=h_end)
+    check("ставка — последняя точка часа", row["fr"] == 0.0001,
+          str(row.get("fr")))
+    check("интерес в долларах — последняя точка",
+          row["oi_usd"] == 2.5e6, str(row.get("oi_usd")))
+    check("базис в б.п.", abs(row["basis_bp"] - 10.0) < 0.05,
+          str(row.get("basis_bp")))
+    check("минуты до начисления — от конца часа",
+          abs(row["mins_fund"] - 120.0) < 0.2, str(row.get("mins_fund")))
+    check("Buy — ликвидации ШОРТОВ", row["liq_short"] == 300.0,
+          str(row.get("liq_short")))
+    check("Sell — ликвидации ЛОНГОВ", row["liq_long"] == 700.0,
+          str(row.get("liq_long")))
+    bare = SM.summarize_hour(book, [])
+    check("час без опроса метрик не выдумывает ни ставку, ни ноль "
+          "ликвидаций", "fr" not in bare and "liq_long" not in bare)
+
+
+def test_context_features():
+    """Время, лидер, сектор, круглые числа — смыслом, не только
+    отсутствием заглядывания."""
+    # 2026-08-03 05:00 UTC — понедельник
+    from datetime import datetime as DT, timezone as TZ
+    ts0 = DT(2026, 8, 3, 5, tzinfo=TZ.utc).timestamp()
+    S, D = 6, 30
+    ts = np.tile(ts0 + np.arange(D) * 3600.0, (S, 1))
+    ck = FB.clock_features({"hour_ts": ts}, ts)
+    check("понедельник распознан", ck["dow"][0, 0] == 0.0,
+          str(ck["dow"][0, 0]))
+    check("час суток по кругу", abs(
+        ck["hod_sin"][0, 0] - np.sin(2 * np.pi * 5 / 24)) < 1e-12)
+    check("вторник наступает через 19 часов",
+          ck["dow"][0, 19] == 1.0, str(ck["dow"][0, 19]))
+
+    close = np.full((S, D), 100.0)
+    close[0] = 100.0 * (1.01 ** np.arange(D))      # BTC растёт
+    close[4] = 100.0 * (1.02 ** np.arange(D))      # одиночка без сектора
+    s = {"is_btc": np.array([[1.], [0.], [0.], [0.], [0.], [0.]]),
+         "sector": np.array([[0.], [0.], [0.], [0.], [np.nan], [0.]])}
+    lf = FB.leader_features(s, close)
+    r4 = close[0, 10] / close[0, 6] - 1.0
+    check("ход BTC разослан всем", abs(lf["btc_ret_4h"][3, 10] - r4) < 1e-12)
+    # сектор кода 0 — пять имён (0,1,2,3,5): BTC растёт, остальные
+    # плоские; растущая одиночка (ряд 4) исключена NaN-сектором.
+    # Среднее для плоского ряда 1 без себя — (ход BTC + 0 + 0 + 0) / 4
+    want = r4 / 4.0
+    check("сектор считается без себя",
+          abs(lf["sec_ret_4h"][1, 10] - want) < 1e-12,
+          str(lf["sec_ret_4h"][1, 10]))
+    check("отставание от сектора — своё минус чужое",
+          abs(lf["rel_sec_4h"][1, 10] - (0.0 - want)) < 1e-12)
+    check("без сектора — пропуск, а не ноль",
+          np.isnan(lf["sec_ret_4h"][4, 10]))
+
+    d = FB.dist_round(np.array([[90000.0, 90500.0, 0.05]]))
+    check("на круглом — ноль", d[0, 0] == 0.0, str(d[0, 0]))
+    check("между круглыми — половина", abs(d[0, 1] - 0.5) < 1e-9,
+          str(d[0, 1]))
+    check("мелкая цена — своя сетка", d[0, 2] == 0.0, str(d[0, 2]))
+
+    x = np.full((1, 10), 100.0)
+    x[0, 3] = np.nan
+    ch = FB.lagged_change(x, 4)
+    check("изменение через дыру — пропуск", np.isnan(ch[0, 7]))
+    check("изменение без дыры — число", np.isfinite(ch[0, 8]))
 
 
 def test_eligibility_floor():
@@ -482,6 +577,9 @@ def main():
     test_forward_path_exact()
     print("формации")
     test_formations_semantics()
+    print("новые пакеты: metrics/liq, время, лидер, сектор")
+    test_metrics_liq_in_summary()
+    test_context_features()
     print("сечение и цели")
     test_eligibility_floor()
     test_targets_shapes_and_direction()
