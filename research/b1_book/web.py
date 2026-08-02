@@ -655,6 +655,8 @@ function picksTable(d) {
         <td class="mono">expects ${p.fwd > 0 ? "+" : ""}${p.fwd.toFixed(0)}
           bp / 4h</td>
         <td class="mono">adverse ~${p.mae.toFixed(0)} bp</td>
+        <td class="mono">${p.odd != null
+          ? `unseen ${(p.odd * 100).toFixed(0)}%` : ""}</td>
         <td class="mono">${g ? `last: got ${g.got > 0 ? "+" : ""}${
           g.got} bp` : ""}</td></tr>`;
     };

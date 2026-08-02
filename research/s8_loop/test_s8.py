@@ -359,6 +359,27 @@ def test_targets_shapes_and_direction():
           (t["mfe_4h"][ok] >= t["mae_4h"][ok] - 1e-9).all())
 
 
+def test_novelty_measure():
+    """Новизна: доля признаков вне диапазона обучения, NaN не судится."""
+    import train as T
+    lo = np.array([0.0, 0.0, np.nan])
+    hi = np.array([1.0, 1.0, np.nan])
+    check("всё внутри — ноль",
+          T.novelty(np.array([0.5, 0.5, 9.9]), lo, hi) == 0.0)
+    check("один из двух снаружи — половина",
+          T.novelty(np.array([0.5, 2.0, 9.9]), lo, hi) == 0.5)
+    check("NaN-признак не судится",
+          T.novelty(np.array([np.nan, 2.0, 9.9]), lo, hi) == 1.0)
+    check("судить не по чему — None, а не ноль",
+          T.novelty(np.array([np.nan, np.nan, 9.9]), lo, hi) is None)
+    x = np.zeros((3, 20, 2))
+    x[:, :, 1] = np.nan                     # признак без записи
+    elig = np.ones((3, 20), dtype=bool)
+    blo, bhi = T.novelty_bounds(x, elig)
+    check("пустой признак — без диапазона, живой — с диапазоном",
+          np.isnan(blo[1]) and blo[0] == 0.0 == bhi[0], str((blo, bhi)))
+
+
 # ---------- цикл переобучения ----------
 
 def _write_summaries(d, S=36, D=260, seed=5, start="2026-08-01-00"):
@@ -490,6 +511,23 @@ def test_train_cycle_end_to_end():
               any("разбор прошлых выборов" in t and "[деревья]" in t
                   for t in th)
               and any("[сеть]" in t for t in th), str(th[:2]))
+        man2 = json.load(open(os.path.join(T.MODEL_DIR,
+                                           "manifest.json")))
+        nb = man2.get("novelty_bounds") or {}
+        check("границы новизны в манифесте по каждому признаку",
+              len(nb) > 40 and man2.get("novelty_pct") == [0.5, 99.5]
+              and all(len(v) == 2 for v in nb.values()),
+              f"признаков с границами: {len(nb)}")
+        odds = [p.get("odd") for pk in picks
+                for p in pk["long"] + pk["short"]]
+        check("каждый выбор помечен новизной 0…1",
+              all(o is not None and 0.0 <= o <= 1.0 for o in odds),
+              str(odds[:6]))
+        check("новизна доехала из выбора в разбор",
+              all("odd" in x for r in rev for x in r["rows"]),
+              str(rev[0]["rows"][:2]))
+        check("новизна названа в мыслях как замер, не правило",
+              any("новизна выбора" in t for t in th), str(th[-2:]))
     finally:
         T.gbm.fit = orig_fit
         T.nn.fit = orig_nn
@@ -584,6 +622,7 @@ def main():
     test_eligibility_floor()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
+    test_novelty_measure()
     test_nn_learns_and_sees_missing()
     test_think_words()
     test_load_matrices_grid_is_continuous()

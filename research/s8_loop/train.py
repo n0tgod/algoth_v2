@@ -31,6 +31,7 @@ import os
 import pickle
 import sys
 import time
+import warnings
 from datetime import datetime, timezone
 
 import numpy as np
@@ -167,6 +168,20 @@ def think(prev_man, man, ic_rows, picks):
         out.append(f"если бы торговал сейчас: лонг — {long_s}; "
                    f"шорт — {short_s}. Это ожидание в среднем, не "
                    f"обещание пути.")
+        odds = [(p.get("odd"), p["sym"])
+                for p in (picks.get("long") or []) +
+                (picks.get("short") or []) if p.get("odd") is not None]
+        if odds:
+            avg = sum(o for o, _ in odds) / len(odds)
+            worst = max(odds)
+            out.append(
+                f"новизна выбора: в среднем {avg * 100:.0f} % признаков "
+                f"у выбранных монет вне того, что я видел в обучении"
+                + (f"; самый незнакомый — "
+                   f"{worst[1].replace('USDT', '')} "
+                   f"({worst[0] * 100:.0f} %)" if worst[0] > 0 else "")
+                + ". На новизне мои прогнозы надёжны меньше — это "
+                  "замер, торговлю он пока не ограничивает.")
     can = man.get("canary_ic")
     if can is not None:
         out.append(f"проверка на шум {'чиста' if abs(can) <= CANARY_STOP else 'ПОДНЯТА'} "
@@ -291,6 +306,39 @@ def flatten(x, y, elig):
     return x[m], y[m], m
 
 
+def novelty_bounds(x, elig):
+    """Диапазон обучения по каждому признаку: 0.5–99.5 процентили по
+    строкам сечений. Это ЗАМЕР, а не правило (идея «данные не похожи
+    на обучение — не торгуй» из обзора публичных решений): любое
+    правило «не торгуй» механически красит просадку, и вводить его
+    можно только после сравнения со случайным гейтом той же доли —
+    урок нуля 4 гипотезы 4. Пока — только метка на каждом выборе.
+    """
+    xe = x[elig]
+    with warnings.catch_warnings():
+        # Колонка целиком из NaN законна (запись признака ещё не
+        # началась) — у неё нет диапазона, новизна по ней не судится.
+        warnings.simplefilter("ignore", RuntimeWarning)
+        lo = np.nanpercentile(xe, 0.5, axis=0)
+        hi = np.nanpercentile(xe, 99.5, axis=0)
+    return lo, hi
+
+
+def novelty(xrow, lo, hi):
+    """Доля признаков монеты вне диапазона обучения, 0…1.
+
+    Считаются только измеримые признаки: NaN — «данных нет», у него
+    своя дорожка (NaN-корзина у деревьев, флаг у сети), новизной он
+    не является. Судить не по чему — None, а не ноль: ноль означал бы
+    «всё знакомо», чего никто не проверял.
+    """
+    fin = np.isfinite(xrow) & np.isfinite(lo) & np.isfinite(hi)
+    if not fin.any():
+        return None
+    out = (xrow[fin] < lo[fin]) | (xrow[fin] > hi[fin])
+    return float(out.mean())
+
+
 def section_ic(pred_mat, y_mat, elig, cols):
     out = []
     for j in cols:
@@ -408,6 +456,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         return False
 
     os.makedirs(MODEL_DIR, exist_ok=True)
+    nov_lo, nov_hi = novelty_bounds(x, elig)
     imp_all = {}
     models = {}
     for ai, (arm, fit_fn) in enumerate(ARMS):
@@ -451,6 +500,15 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            "canary_ic": round(med, 4) if np.isfinite(med) else None,
            "new_summary_hours": n_new,
            "importance": imp_all,
+           # Диапазоны новизны — в артефакт: определение обязано жить
+           # с прогоном, который им пользовался, а не в исходниках.
+           "novelty_pct": [0.5, 99.5],
+           "novelty_bounds": {
+               names[j]: [None if not np.isfinite(nov_lo[j])
+                          else float(f"{nov_lo[j]:.6g}"),
+                          None if not np.isfinite(nov_hi[j])
+                          else float(f"{nov_hi[j]:.6g}")]
+               for j in range(len(names))},
            "cycle_sec": round(time.time() - t0, 1)}
     with open(mp + ".tmp", "w", encoding="utf-8") as f:
         json.dump(man, f, ensure_ascii=False, indent=1)
@@ -489,9 +547,16 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                         continue
                     got = targets["fwd_4h"][i, j]
                     if np.isfinite(got):
-                        review.append({"sym": pk["sym"], "side": side,
-                                       "expected": round(pk["fwd"], 1),
-                                       "got": round(float(got), 1)})
+                        rr = {"sym": pk["sym"], "side": side,
+                              "expected": round(pk["fwd"], 1),
+                              "got": round(float(got), 1)}
+                        # Новизна едет из выбора в разбор: вопрос
+                        # «сбывается ли хуже на незнакомом» отвечается
+                        # соединением этих двух полей, и делать его
+                        # руками по двум файлам никто не станет.
+                        if pk.get("odd") is not None:
+                            rr["odd"] = pk["odd"]
+                        review.append(rr)
             if review:
                 with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
                           encoding="utf-8") as f:
@@ -525,9 +590,14 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             fwd = models[(arm, "fwd_4h")].predict(xj)
             mae = models[(arm, "mae_4h")].predict(xj)
             o = np.argsort(fwd)
-            mk = lambda i: {"sym": syms[rows_m[i]],          # noqa: E731
-                            "fwd": float(fwd[i]),
-                            "mae": float(mae[i])}
+
+            def mk(i):
+                d = {"sym": syms[rows_m[i]], "fwd": float(fwd[i]),
+                     "mae": float(mae[i])}
+                nv = novelty(xj[i], nov_lo, nov_hi)
+                if nv is not None:
+                    d["odd"] = round(nv, 3)
+                return d
             picks = {"arm": arm, "hour": grid[-1],
                      "long": [mk(i) for i in o[::-1][:3]],
                      "short": [mk(i) for i in o[:3]]}
