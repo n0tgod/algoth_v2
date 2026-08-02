@@ -108,6 +108,67 @@ def forward_path(close, high, low, h):
     return mfe, mae
 
 
+def rolling_extreme(x, win, fn):
+    """Скользящий максимум/минимум за последние win часов, только назад."""
+    S, D = x.shape
+    out = np.full((S, D), np.nan)
+    for t in range(D):
+        a = max(0, t - win + 1)
+        sl = x[:, a:t + 1]
+        ok = np.isfinite(sl).all(axis=1) & (t - a + 1 == win)
+        if ok.any():
+            v = fn(sl, axis=1)
+            out[ok, t] = v[ok]
+    return out
+
+
+def formations(s):
+    """Формации владельца (зажимка, наклонка, проторговка) — числами.
+
+    Идея из практики команды владельца (2026-08-02): сжатие диапазона у
+    уровня, наклонное сжатие и набор в диапазоне. Здесь они не правила
+    входа, а ПРИЗНАКИ: модель сама выучит, какие и в каких сочетаниях
+    несут ожидание. Контекст честности: T3/T4 измерили уровни БЕЗ
+    условия сжатия — исходы легли на случайность; сжатие как условие —
+    непроверенное место, потому и признак.
+    """
+    close, hi, lo = s["mid_close"], s["mid_high"], s["mid_low"]
+    f = {}
+    for k in (4, 24):
+        rng = rolling_extreme(hi, k, np.nanmax) -             rolling_extreme(lo, k, np.nanmin)
+        with np.errstate(all="ignore"):
+            rng_rel = rng / close                      # ход окна в долях
+            # зажим: диапазон окна к своему обычному; < 1 — сжатие
+            f[f"squeeze_{k}h"] = rng_rel / F.trailing_median(
+                rng_rel, NORM_WIN, NORM_MIN)
+        if k == 4:
+            net = np.full_like(close, np.nan)
+            net[:, k:] = close[:, k:] - close[:, :-k]
+            with np.errstate(all="ignore"):
+                # наклонка: чистый ход в долях диапазона, знак — наклон
+                f["tilt_4h"] = net / rng
+    rng24 = rolling_extreme(hi, 24, np.nanmax) -         rolling_extreme(lo, 24, np.nanmin)
+    with np.errstate(all="ignore"):
+        # место в суточном диапазоне: 0 — у низа, 1 — у верха
+        f["range_pos"] = (close - rolling_extreme(lo, 24, np.nanmin)) / rng24
+    # проторговка: сколько из 24 часов закрывались внутри текущего
+    # 4-часового коридора — время у цены, а не объём (объём отдельно)
+    rng4 = rolling_extreme(hi, 4, np.nanmax) -         rolling_extreme(lo, 4, np.nanmin)
+    S, D = close.shape
+    dwell = np.full((S, D), np.nan)
+    for t in range(24, D):
+        past = close[:, t - 24:t]
+        okp = np.isfinite(past).all(axis=1) & np.isfinite(close[:, t])             & np.isfinite(rng4[:, t])
+        half = rng4[:, t] / 2.0
+        inside = (np.abs(past - close[:, t][:, None])
+                  <= half[:, None]).mean(axis=1)
+        dwell[okp, t] = inside[okp]
+    f["dwell_24h"] = dwell
+    for v in f.values():
+        v[~np.isfinite(v)] = np.nan
+    return f
+
+
 def feature_pack(s):
     """Все признаки спеки 08 §3 разом из словаря матриц сводки.
 
@@ -159,6 +220,7 @@ def feature_pack(s):
     age[none, :] = np.nan
     f["age_rec"] = age
 
+    f.update(formations(s))
     for v in f.values():
         v[~np.isfinite(v)] = np.nan
     return f, r, elig

@@ -202,6 +202,45 @@ def test_forward_path_exact():
           np.isnan(mfe2[0, 2]), str(mfe2[0, 2]))
 
 
+def test_formations_semantics():
+    """Формации обязаны показывать то, что означают по-трейдерски.
+
+    Не только «не заглядывают» (это делает общий тест), а именно смысл:
+    сжатие диапазона даёт зажим меньше единицы, плоский ряд — полную
+    проторговку, рост — положительный наклон и место у верха диапазона.
+    """
+    S, D = 2, 400
+    close = np.full((S, D), 100.0)
+    # символ 1 монотонно растёт — для наклонки и места в диапазоне
+    close[1] = 100.0 + np.arange(D) * 0.1
+    high = close * 1.01
+    low = close * 0.99
+    # у символа 0 последние 8 часов ход впятеро уже обычного — зажим
+    high[0, -8:] = close[0, -8:] * 1.001
+    low[0, -8:] = close[0, -8:] * 0.999
+    # у растущего символа фитили узкие, иначе они забивают дрейф
+    # и наклон измеряет шум свечи, а не ход
+    high[1] = close[1] * 1.0001
+    low[1] = close[1] * 0.9999
+    f = FB.formations({"mid_close": close, "mid_high": high,
+                       "mid_low": low})
+    check("зажим < 1 на сжатии", f["squeeze_4h"][0, -1] < 0.5,
+          str(f["squeeze_4h"][0, -1]))
+    check("без сжатия зажим ~ 1",
+          abs(f["squeeze_4h"][0, 200] - 1.0) < 0.2,
+          str(f["squeeze_4h"][0, 200]))
+    check("мало истории — NaN, а не число",
+          np.isnan(f["squeeze_4h"][0, 10]), str(f["squeeze_4h"][0, 10]))
+    check("плоский ряд — проторговка полная",
+          f["dwell_24h"][0, 200] > 0.99, str(f["dwell_24h"][0, 200]))
+    check("на плоском ряде наклона нет",
+          abs(f["tilt_4h"][0, 200]) < 1e-9, str(f["tilt_4h"][0, 200]))
+    check("на росте наклон положителен",
+          f["tilt_4h"][1, 200] > 0.5, str(f["tilt_4h"][1, 200]))
+    check("рост стоит у верха суточного диапазона",
+          f["range_pos"][1, 200] > 0.9, str(f["range_pos"][1, 200]))
+
+
 def test_eligibility_floor():
     s = synth_summary(S=35, D=300)
     s["n_snap"][3, :] = 100.0          # книга писалась три минуты в час
@@ -441,6 +480,8 @@ def main():
     test_no_lookahead_any_feature()
     print("путь")
     test_forward_path_exact()
+    print("формации")
+    test_formations_semantics()
     print("сечение и цели")
     test_eligibility_floor()
     test_targets_shapes_and_direction()
