@@ -431,7 +431,29 @@ def canary_verdict(med):
     return "кричит" if abs(med) > CANARY_STOP else "молчит"
 
 
-def canary(x, y, elig, grid, seed, log_):
+def canary_target(targets, elig, want="fwd_4h", need=1000):
+    """На какой цели считать канарейку.
+
+    Канарейка ловит течь конвейера — нормировку на будущем и прочее, —
+    и для этого годится ЛЮБАЯ цель с достаточным числом строк.
+    Привязка к `fwd_4h` была моим упрощением, и она обошлась дорого:
+    `fwd_4h` есть остаток к волне, ему нужна бета, бете нужны
+    `FB.BETA_MIN` часов, — и на молодой записи проверка на течь
+    оказывалась невозможна ровно тогда, когда конвейер только что
+    переписали и проверять надо больше всего.
+
+    Возвращает имя цели или `None`, если не годится ни одна.
+    """
+    for name in [want] + [t for t in TARGETS if t != want]:
+        y = targets.get(name)
+        if y is None:
+            continue
+        if int((elig & np.isfinite(y)).sum()) >= need:
+            return name
+    return None
+
+
+def canary(x, y, elig, grid, seed, log_, name="fwd_4h"):
     """Обучение на перемешанных целях: кричит только на грубую течь."""
     day_idx = np.broadcast_to(np.arange(len(grid)), elig.shape)
     m = elig & np.isfinite(y)
@@ -446,7 +468,8 @@ def canary(x, y, elig, grid, seed, log_):
     pred[m] = model.predict(xs)
     ics = section_ic(pred, y, elig, list(range(len(grid))))
     med = float(np.median(ics)) if ics else float("nan")
-    log_(f"канарейка (перемешанные цели): медианный IC {med:+.4f}")
+    log_(f"канарейка (перемешанные цели, {name}): "
+         f"медианный IC {med:+.4f}")
     return med
 
 
@@ -557,14 +580,19 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
 
     ic_rows = eval_previous(x, targets, elig, grid, log_)
 
-    med = canary(x, targets["fwd_4h"], elig, grid,
-                 SEED0 + len(grid), log_)
+    # Проверка на течь и наличие главной цели — РАЗНЫЕ вопросы, и
+    # слив их в один стоил ровно того, ради чего проба и делалась:
+    # конвейер отказывался проверяться именно там, где его только что
+    # переписали. Канарейка считается на любой годной цели, а нехватка
+    # `fwd_4h` — отдельный гейт ниже.
+    cname = canary_target(targets, elig)
+    med = (canary(x, targets[cname], elig, grid, SEED0 + len(grid),
+                  log_, name=cname) if cname else float("nan"))
     verdict = canary_verdict(med)
     if verdict == "не считалась":
-        log_(f"канарейка не считается: цель fwd_4h пуста. Ей нужна бета, "
-             f"бете — {FB.BETA_MIN} ч годной истории на монету, есть "
-             f"около {int(hist_h)}. Веса НЕ обновляются: непосчитанная "
-             f"проверка не является пройденной")
+        log_(f"канарейка не считается: ни одна цель не набирает строк. "
+             f"Веса НЕ обновляются: непосчитанная проверка не является "
+             f"пройденной")
         write_outcome("канарейка не считалась", sections=n_sections,
                       hours_per_symbol=int(hist_h),
                       beta_min_hours=FB.BETA_MIN)
@@ -574,8 +602,29 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
              f"похоже на течь конвейера, веса НЕ обновляются")
         write_outcome("канарейка кричит", sections=n_sections,
                       canary_ic=round(float(med), 4),
-                      canary_stop=CANARY_STOP)
+                      canary_target=cname, canary_stop=CANARY_STOP)
         return False
+
+    # Главная цель отдельным гейтом. Без `fwd_4h` не будет ни выбора
+    # монет (ему нужны fwd_4h и mae_4h), ни живого IC, ни счетов —
+    # то есть боевые веса вели бы контур, который ничего не выбирает.
+    # Проба этот гейт проходит НАСКВОЗЬ: её дело — показать, что
+    # обучение работает, а не притворяться боевой.
+    main_ok = int((elig & np.isfinite(targets["fwd_4h"])).sum()) >= 1000
+    if not main_ok:
+        msg = (f"главной цели fwd_4h нет: ей нужна бета, бете — "
+               f"{FB.BETA_MIN} ч годной истории на монету, есть около "
+               f"{int(hist_h)}")
+        if not PROBE:
+            log_(msg + ". Веса НЕ обновляются: выбирать монеты не на чем")
+            write_outcome("нет главной цели", sections=n_sections,
+                          hours_per_symbol=int(hist_h),
+                          beta_min_hours=FB.BETA_MIN,
+                          canary_ic=round(float(med), 4),
+                          canary_target=cname, canary_stop=CANARY_STOP)
+            return False
+        log_(msg + ". Проба идёт дальше: обучатся цели, которые есть, "
+                   "выбора монет не будет")
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     nov_lo, nov_hi = novelty_bounds(x, elig)
@@ -632,6 +681,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            # 0.05 против 0.01).
            "targets_all": list(TARGETS),
            "canary_stop": CANARY_STOP,
+           "canary_target": cname,
            "canary_ic": round(med, 4) if np.isfinite(med) else None,
            "new_summary_hours": n_new,
            "importance": imp_all,
@@ -775,10 +825,57 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     write_outcome("обучилась", sections=n_sections,
                   hours_per_symbol=int(hist_h),
                   beta_min_hours=FB.BETA_MIN,
-                  canary_ic=man["canary_ic"], canary_stop=CANARY_STOP,
+                  canary_ic=man["canary_ic"], canary_target=cname,
+                  canary_stop=CANARY_STOP,
                   trained=sorted(f"{a}/{t}" for a, t in models),
                   picks=bool(all_lines), cycle_sec=man["cycle_sec"])
     return True
+
+
+def demo():
+    """Полный вывод цикла на синтетике — ответ на «что я буду видеть».
+
+    Проба на живых данных показать этого не может и не сможет ещё
+    несколько суток: выбор монет требует цели `fwd_4h`, той нужна бета,
+    бете — `FB.BETA_MIN` часов записи. Ждать четверо суток, чтобы
+    впервые увидеть форму вывода, незачем: форма от данных не зависит.
+
+    Поэтому здесь берутся синтетические сводки с ЗАЛОЖЕННЫМ сигналом
+    (дельта ленты предсказывает следующий час) и прогоняются ДВА цикла
+    подряд — второй нужен, чтобы появились живой IC, разбор прошлого
+    выбора фактом и бумажные счета: разбирать можно только прошлый
+    выбор.
+
+    Данные фальшивые целиком. Числа отсюда не значат ничего о рынке —
+    значат они ровно одно: конвейер производит то, что обещал.
+    """
+    global MODEL_DIR, PROBE
+    import shutil
+    import tempfile
+
+    import synth
+    MODEL_DIR = os.path.join(OUT, "model_demo")
+    shutil.rmtree(MODEL_DIR, ignore_errors=True)
+    PROBE = False
+    log("ПОКАЗ НА СИНТЕТИКЕ: данные выдуманы, сигнал заложен руками. "
+        "Смысл — форма вывода, а не измерение.")
+    sd = tempfile.mkdtemp(prefix="s8demo-")
+    try:
+        synth.write_summaries(sd, D=260)
+        log("цикл 1 из 2 (первое обучение)")
+        cycle(sd, log, book_root=None)
+        synth.write_summaries(sd, D=300)     # те же зерно и старт
+        log("цикл 2 из 2 (появятся живой IC, разбор и счета)")
+        cycle(sd, log, book_root=None)
+    finally:
+        shutil.rmtree(sd, ignore_errors=True)
+    try:
+        import probe_report
+        path, _ = probe_report.write(MODEL_DIR,
+                                     os.path.join(OUT, "S8-demo-report.md"))
+        log(f"отчёт показа: {path}")
+    except Exception as e:                                # noqa: BLE001
+        log(f"отчёт показа не собрался: {type(e).__name__}: {e}")
 
 
 def main():
@@ -790,7 +887,15 @@ def main():
                     help="пробный прогон конвейера на накопленном: свой "
                          "каталог, свои артефакты, порог сечений "
                          "понижен. Числа НЕ являются измерением.")
+    ap.add_argument("--demo", action="store_true",
+                    help="показ полного вывода на СИНТЕТИЧЕСКИХ данных "
+                         "с заложенным сигналом: выбор монет, живой IC, "
+                         "разбор фактом, бумажные счета. Отвечает на "
+                         "вопрос «что я буду видеть», измерением не "
+                         "является ни в какой части.")
     a = ap.parse_args()
+    if a.demo:
+        return demo()
     if a.probe:
         # Порог 48 остаётся нетронутым, меняется КАТАЛОГ. Иначе
         # пробный прогон записал бы веса, счета и выборы поверх

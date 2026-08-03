@@ -661,55 +661,7 @@ def test_novelty_measure():
 
 # ---------- цикл переобучения ----------
 
-def _write_summaries(d, S=36, D=260, seed=5, start="2026-08-01-00"):
-    """Синтетические сводки на диск: дельта ленты предсказывает
-    следующий час — сигнал, который цикл обязан найти."""
-    r = np.random.default_rng(seed)
-    t0 = time.mktime(time.strptime(start, "%Y-%m-%d-%H"))
-    sig = r.normal(0, 1, (S, D))
-    close = np.empty((S, D))
-    close[:, 0] = 100.0
-    # Сила сигнала выбрана правдоподобной (IC ~0.2, не 0.5): шум
-    # проекции канарейки растёт вместе с настоящим сигналом (механизм
-    # M2), и на перегретой синтетике канарейка кричала бы без течи.
-    for t in range(1, D):
-        close[:, t] = close[:, t - 1] * (
-            1 + 0.004 * sig[:, t - 1] * 0.22
-            + r.normal(0, 0.004, S))
-    from datetime import datetime as DT, timezone as TZ
-    for si in range(S):
-        sym = f"S{si:02d}USDT"
-        os.makedirs(os.path.join(d, sym), exist_ok=True)
-        fh = {}
-        for t in range(D):
-            hour = DT.fromtimestamp(t0 + t * 3600, TZ.utc)\
-                .strftime("%Y-%m-%d-%H")
-            day = hour[:10]
-            buy = 1e6 * (1 + 0.4 * np.tanh(sig[si, t]))
-            sell = 2e6 - buy
-            row = {"hour": hour, "n_snap": 3600,
-                   "mid_close": round(close[si, t], 6),
-                   "mid_high": round(close[si, t] * 1.002, 6),
-                   "mid_low": round(close[si, t] * 0.998, 6),
-                   "spread_bp": 5.0, "upd": 100.0, "reach_bp": 60.0,
-                   "best_b": 1e4, "best_a": 1e4,
-                   "big_med": 1e5, "big_max": 2e5,
-                   "n_trades": 500, "buy": round(buy, 2),
-                   "sell": round(sell, 2),
-                   "vol_max_1s": 1e4, "traded_secs": 1800,
-                   "depth_eat_b": 2e5, "depth_eat_a": 2e5}
-            for w in BANDS:
-                row[f"bq_b{w}"] = 1e5
-                row[f"bq_a{w}"] = 1e5
-                row[f"cov_b{w}"] = 1.0
-                row[f"cov_a{w}"] = 1.0
-            f = fh.get(day)
-            if f is None:
-                f = fh[day] = open(os.path.join(d, sym, day + ".jsonl"),
-                                   "a", encoding="utf-8")
-            f.write(json.dumps(row, separators=(",", ":")) + "\n")
-        for f in fh.values():
-            f.close()
+from synth import write_summaries as _write_summaries
 
 
 def test_train_cycle_end_to_end():
