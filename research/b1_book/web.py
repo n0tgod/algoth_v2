@@ -786,11 +786,16 @@ function dkCells(d) {
     <div class="v mono ${cls||""}">${v}</div></div>`;
   if (!d) return cell("disk", "measuring…");
   const days = d.days_left;
+  // Пока пары точек в одной фазе часа нет, скорости НЕТ — и это
+  // честнее числа, посчитанного по несжатым файлам текущего часа: оно
+  // завышало расход вчетверо и кричало «на 0.8 дня» при восьмидесяти
+  // свободных гигабайтах.
+  const wait = d.rate_mb_h == null;
   return cell("used, GB", d.used_gb ?? "—")
     + cell("free, GB", d.free_gb ?? "—")
-    + cell("growth, MB/h", `${d.rate_mb_h ?? "—"}`)
-    + cell("per symbol, MB/h", `${d.per_sym_mb_h ?? "—"}`)
-    + cell("days left", days ?? "—",
+    + cell("growth, MB/h", wait ? "measuring…" : d.rate_mb_h)
+    + cell("per symbol, MB/h", wait ? "—" : d.per_sym_mb_h)
+    + cell("days left", wait ? "after 1 h" : (days ?? "—"),
            days && days < 14 ? "bad" : days ? "good" : "");
 }
 

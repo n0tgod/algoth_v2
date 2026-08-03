@@ -279,6 +279,43 @@ def non_crypto_bybit(universe_path=UNIVERSE_JSON):
             if v.get("asset_class") != "crypto" and v.get("bybit_symbol")}
 
 
+HOUR = 3600.0
+PHASE_TOL = 120.0                 # допуск на попадание в ту же фазу часа
+
+
+def disk_rate(samples, now, total):
+    """Скорость роста занятого места — байт в час, или `None`.
+
+    Замер устроен так, а не «разностью по окну», потому что занятое
+    место пилообразно: текущий час лежит простым текстом и растёт, при
+    закрытии часа сжимается целиком, и место проседает. Отсюда два
+    способа соврать, и оба уже наблюдались на живом сборе.
+
+    Окно короче часа не накрывает ни одного закрытия и меряет рост
+    НЕСЖАТЫХ файлов: сразу после перезапуска выходило 4.0 ГБ/ч и «диска
+    на 0.8 дня» при свободных восьмидесяти гигабайтах. Тревога, которая
+    врёт в первый же час, перестаёт читаться.
+
+    Окно произвольной длины сравнивает разные фазы часа: начало у пика
+    пилы, конец у впадины — и рост выходит **отрицательным**, что и
+    видно было как «−1736 МБ/ч» через четыре минуты после закрытия.
+
+    Поэтому сравниваются две точки в одной фазе часа: ровно час назад
+    плюс-минус две минуты. Простой кусок текущего часа тогда одинаков в
+    обеих точках и в разность не входит, а входит только то, что
+    прибавилось после сжатия.
+    """
+    best = None
+    for t, b in samples:
+        d = abs(now - t - HOUR)
+        if d <= PHASE_TOL and (best is None or d < best[0]):
+            best = (d, t, b)
+    if best is None:
+        return None, None
+    _, t0, b0 = best
+    return (total - b0) / (now - t0) * HOUR, t0
+
+
 def disk_symbols(root):
     """Символы, по которым на диске уже лежат ряды книги."""
     d = os.path.join(root, "book")
@@ -1249,18 +1286,12 @@ class Collector:
                         by[kind] = by.get(kind, 0) + n
                 du = shutil.disk_usage(self.w.root)
                 now = time.time()
-                # Скорость считается по ОКНУ, а не по соседним замерам:
-                # при закрытии часа файл сжимается, и занятое место
-                # проседает. Разность соседних минут тогда отрицательна,
-                # и «рост» выходит то нулём, то выбросом.
                 self.samples.append((now, total))
-                rate = None
-                t0, b0 = self.samples[0]
-                if now - t0 >= 300:
-                    rate = (total - b0) / (now - t0) * 3600
+                rate, t0 = disk_rate(self.samples, now, total)
                 self.disk = {"bytes": total, "at": now, "by_kind": by,
                              "free": du.free, "total": du.total,
-                             "rate_h": rate, "window_s": round(now - t0),
+                             "rate_h": rate,
+                             "window_s": round(now - t0) if t0 else 0,
                              "symbols": len(self.symbols)}
             except Exception as e:                        # noqa: BLE001
                 self.log(f"замер диска не вышел: {e}")

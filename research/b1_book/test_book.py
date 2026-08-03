@@ -520,6 +520,64 @@ def test_warm_start_is_cheap_and_safe():
           str(len(b.mid["TEST"])))
 
 
+def test_disk_rate_compares_same_phase_of_hour():
+    """Скорость роста диска меряется в одной фазе часа.
+
+    Занятое место пилообразно: текущий час лежит простым текстом и
+    растёт, при закрытии сжимается целиком. Оба способа соврать
+    наблюдались на живом сборе — окно короче часа дало 4.0 ГБ/ч и
+    «диска на 0.8 дня» при восьмидесяти свободных гигабайтах, а
+    сравнение разных фаз дало −1736 МБ/ч через четыре минуты после
+    закрытия.
+    """
+    import collect as C
+
+    # Пила: за час прибавляется 1 ГБ несжатых, при закрытии остаётся
+    # десятая часть. Настоящий рост — 0.1 ГБ в час.
+    gb = 1 << 30
+    base, samples = 0.0, []
+    t = 0.0
+    for h in range(4):
+        for m in range(60):
+            samples.append((t, base + gb * (m + 1) / 60.0))
+            t += 60.0
+        base += 0.1 * gb                                  # сжатый остаток
+
+    now, total = samples[-1]
+    rate, t0 = C.disk_rate(samples, now, total)
+    check("рост измерен по одной фазе часа",
+          rate is not None and abs(rate / gb - 0.1) < 0.02,
+          f"{None if rate is None else round(rate / gb, 3)} ГБ/ч")
+    check("сравнивалась точка часовой давности",
+          t0 is not None and abs(now - t0 - 3600) <= C.PHASE_TOL,
+          str(None if t0 is None else now - t0))
+
+    # Наивная разность по короткому окну на тех же данных завышает
+    # вчетверо и больше — именно это и печаталось в журнале.
+    t5, b5 = samples[-6]
+    naive = (total - b5) / (now - t5) * 3600 / gb
+    check("наивное окно завышает", naive > 0.4, f"{naive:.2f} ГБ/ч")
+
+    # Через четыре минуты после закрытия часа наивная разность
+    # отрицательна, а фазовая — нет.
+    after = [(t + 60.0 * (i + 1), base + gb * (i + 1) / 60.0)
+             for i in range(4)]
+    s2 = samples + after
+    now2, tot2 = s2[-1]
+    naive2 = (tot2 - s2[-6][1]) / (now2 - s2[-6][0]) * 3600
+    r2, _ = C.disk_rate(s2, now2, tot2)
+    check("наивная разность уходит в минус", naive2 < 0,
+          f"{naive2 / gb:.2f} ГБ/ч")
+    check("фазовая остаётся положительной",
+          r2 is not None and r2 > 0,
+          f"{None if r2 is None else round(r2 / gb, 3)} ГБ/ч")
+
+    # Пока часа не набрано, числа нет вовсе — и это лучше неверного.
+    early, _ = C.disk_rate(samples[:30], samples[29][0], samples[29][1])
+    check("до часа работы скорость не объявляется", early is None,
+          str(early))
+
+
 def test_warm_mid_is_lazy_and_ordered():
     """Середина читается по запросу и не ломает порядок времени.
 
@@ -1948,6 +2006,7 @@ def main():
     test_warm_start_survives_truncated_file()
     test_warm_start_is_cheap_and_safe()
     test_warm_mid_is_lazy_and_ordered()
+    test_disk_rate_compares_same_phase_of_hour()
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
     test_health_is_one_definition()
