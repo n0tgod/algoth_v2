@@ -42,7 +42,9 @@ NORM_WIN, NORM_MIN = 168, 48      # неделя часов; меньше дву
 SIGMA_WIN, SIGMA_MIN = 168, 48
 BETA_WIN, BETA_MIN = 168, 96
 HORIZONS = (1, 4, 24)             # часы, ось наблюдения (не перебирается)
-MIN_SNAPS = 1800                  # полчаса снимков — иначе час не сечение
+MIN_SNAPS = 1800        # запасное правило для сводок старого образца
+MIN_SPAN_SEC = 1800     # снимки обязаны накрывать полчаса из часа
+MAX_GAP_SEC = 300       # дыра длиннее пяти минут — час не сечение
 MIN_SECTION = 30
 
 
@@ -63,14 +65,31 @@ def imbalance(b, a):
     return out
 
 
-def eligibility(close, n_snap):
+def eligibility(close, n_snap, span=None, gap=None):
     """Час участвует в сечении, если книга писалась почти весь час.
 
-    Порог по числу снимков, а не «файл есть»: недописанный час после
-    перезапуска — это обрывок, и признак из него — выдумка (тот же
-    класс, что замороженные ряды A2).
+    Мера — ПОКРЫТИЕ ВО ВРЕМЕНИ, а не число снимков. Счёт снимков был
+    прокси, молча предполагавшим ровно один снимок в секунду; на 540
+    символах полный проход длится дольше, и полностью записанный час
+    даёт 1200 снимков вместо 3600. Живой сервер показал цену этого
+    предположения: сечений с ≥30 именами было РОВНО НОЛЬ при исправной
+    записи, то есть модель не обучилась бы никогда.
+
+    Требуется: снимки накрывают не меньше половины часа и нет дыры
+    длиннее пяти минут. Обрывок после перезапуска так же не проходит
+    (у него мал охват), а редкая сетка — проходит, и правильно.
+
+    Сводки старого образца охвата не несут — для них остаётся прежнее
+    правило по числу: пропуск полей не вправе молча открывать ворота.
     """
-    return np.isfinite(close) & (np.nan_to_num(n_snap) >= MIN_SNAPS)
+    ok = np.isfinite(close)
+    if span is None or gap is None:
+        return ok & (np.nan_to_num(n_snap) >= MIN_SNAPS)
+    have = np.isfinite(span) & np.isfinite(gap)
+    cover = have & (np.nan_to_num(span) >= MIN_SPAN_SEC) \
+        & (np.nan_to_num(gap, nan=1e9) <= MAX_GAP_SEC)
+    old = ~have & (np.nan_to_num(n_snap) >= MIN_SNAPS)
+    return ok & (cover | old)
 
 
 def forward_path(close, high, low, h):
@@ -268,7 +287,8 @@ def feature_pack(s):
     """
     close = s["mid_close"]
     r = F.daily_returns(close)                 # доходности час к часу
-    elig = eligibility(close, s["n_snap"])
+    elig = eligibility(close, s["n_snap"],
+                       s.get("snap_span_sec"), s.get("snap_gap_max_sec"))
 
     f = {}
     for w in BANDS:

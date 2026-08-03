@@ -593,6 +593,13 @@ class Collector:
         self.lines = LogBuf()
         self.msg_mark = (time.time(), 0)
         self.msg_rate = 0.0
+        # Здоровье ЗАПИСИ книги, а не процесса: сообщения могут литься
+        # при мёртвом сборщике снимков, и именно так это выглядело.
+        self.n_snap = 0
+        self.n_snap_err = 0
+        self.last_snap = 0.0
+        self.snap_pass_sec = 0.0
+        self.snap_slow_said = False
         # Живой детектор: те же правила, что в замерах. Сделки бумажные,
         # это наблюдение, а не торговля — замеры T1–T4 показали, что
         # направленного содержания у события нет. Страница нужна, чтобы
@@ -637,18 +644,49 @@ class Collector:
 
     # --- фоновые задачи ------------------------------------------------
     def sampler(self):
-        """Снимок стакана раз в секунду по всем символам."""
+        """Снимок стакана раз в секунду по всем символам.
+
+        Тело обёрнуто намеренно: это поток-демон, и одна исключительная
+        ситуация (кончились дескрипторы, кончился диск, битый снимок)
+        убивала его молча — вебсокеты продолжали лить, `status.json`
+        писал другой поток, страница выглядела исправной, а запись
+        книги прекращалась. Ровно так на сервере встал сбор 2 августа.
+        Теперь отказ считается, называется и НЕ прекращает запись
+        остальных символов.
+        """
         nxt = time.time() + SAMPLE_SEC
         while not self.stop.wait(max(0.0, nxt - time.time())):
             nxt += SAMPLE_SEC
             now = time.time()
+            t_pass = time.time()
             for sym, b in self.books.items():
-                s = b.sample(ladder=STORE_LADDER)
-                if s is not None:
-                    s["t"] = round(now, 3)
-                    self.w.write("book", sym, s, ts=now)
-                    self.mid[sym].append(
-                        (round(now, 1), (s["bid"] + s["ask"]) / 2.0))
+                try:
+                    s = b.sample(ladder=STORE_LADDER)
+                    if s is not None:
+                        s["t"] = round(now, 3)
+                        self.w.write("book", sym, s, ts=now)
+                        self.n_snap += 1
+                        self.last_snap = now
+                        self.mid[sym].append(
+                            (round(now, 1), (s["bid"] + s["ask"]) / 2.0))
+                except Exception as e:                    # noqa: BLE001
+                    self.n_snap_err += 1
+                    if self.n_snap_err in (1, 10) \
+                            or self.n_snap_err % 1000 == 0:
+                        self.log(f"снимок {sym} не записан "
+                                 f"({self.n_snap_err} отказов подряд по "
+                                 f"счёту): {type(e).__name__}: {e}")
+            self.snap_pass_sec = time.time() - t_pass
+            if self.snap_pass_sec > SAMPLE_SEC and not self.snap_slow_said:
+                # Проход дольше секунды означает, что снимков в часе
+                # меньше 3600, и это меняет пригодность часа к сечению.
+                # Сказать об этом надо один раз и числом.
+                self.snap_slow_said = True
+                self.log(f"ВНИМАНИЕ: полный проход снимков занял "
+                         f"{self.snap_pass_sec:.2f} с при шаге "
+                         f"{SAMPLE_SEC} с — снимков в часе будет около "
+                         f"{int(3600 / max(self.snap_pass_sec, 1e-9))}, "
+                         f"не 3600")
             if not self.paper:
                 continue
             opened, closed = self.sig.tick(now, self.books)
@@ -1120,6 +1158,14 @@ class Collector:
                 "resets": self.n_resets,
                 "last_msg_age_sec": (round(time.time() - self.last_msg, 1)
                                      if self.last_msg else None),
+                # Главная мера здоровья: пишутся ли снимки книги. Всё
+                # остальное (сообщения, темы, status.json) остаётся
+                # бодрым и при мёртвом сборщике снимков.
+                "snapshots": self.n_snap,
+                "snapshot_errors": self.n_snap_err,
+                "last_snap_age_sec": (round(time.time() - self.last_snap, 1)
+                                      if self.last_snap else None),
+                "snap_pass_sec": round(self.snap_pass_sec, 3),
                 "symbols": {s: {"ready": b.ready,
                                 "bid": b.best()[0], "ask": b.best()[1],
                                 "resets": b.resets}

@@ -137,8 +137,19 @@ def summarize_hour(book_rows, trade_rows, metrics_rows=None,
         hi = p if hi is None else max(hi, p)
         lo = p if lo is None else min(lo, p)
 
+    # Покрытие часа снимками — во времени, а не числом. Число снимков
+    # означает «час записан» только при ровно одном снимке в секунду;
+    # на 540 символах проход занимает дольше, и та же полная запись
+    # даёт 1200 снимков вместо 3600. Меряем то, что на самом деле
+    # требуется: сколько времени часа накрыто и нет ли длинных дыр.
+    tt = [t for t, _ in mids if t]
+    span = round(tt[-1] - tt[0], 1) if len(tt) > 1 else 0.0
+    gap = round(max((b - a for a, b in zip(tt, tt[1:])), default=0.0), 1)
+
     out = {
         "n_snap": len(mvals),
+        "snap_span_sec": span,
+        "snap_gap_max_sec": gap,
         "mid_close": mvals[-1],
         "mid_high": max(mvals) if hi is None else max(max(mvals), hi),
         "mid_low": min(mvals) if lo is None else min(min(mvals), lo),

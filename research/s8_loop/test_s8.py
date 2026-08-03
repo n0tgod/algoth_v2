@@ -340,8 +340,37 @@ def test_eligibility_floor():
     s = synth_summary(S=35, D=300)
     s["n_snap"][3, :] = 100.0          # книга писалась три минуты в час
     _, r, elig = FB.feature_pack(s)
-    check("недописанный час — не сечение", not elig[3].any())
+    check("недописанный час — не сечение (правило по числу)",
+          not elig[3].any())
     check("остальные в сечении", elig[0].sum() > 250)
+
+
+def test_eligibility_by_coverage():
+    """Пригодность часа — покрытие во времени, а не число снимков.
+
+    Дефект живого сервера: на 540 символах проход снимков дольше
+    секунды, полностью записанный час даёт ~1200 снимков вместо 3600,
+    и правило по числу давало РОВНО НОЛЬ сечений — модель не обучилась
+    бы никогда при исправной записи.
+    """
+    S, D = 4, 10
+    close = np.full((S, D), 100.0)
+    n_snap = np.full((S, D), 1200.0)      # редкая сетка, час записан
+    span = np.full((S, D), 3550.0)
+    gap = np.full((S, D), 3.0)
+    span[1] = 400.0                        # обрывок после перезапуска
+    gap[2] = 900.0                         # дыра в четверть часа
+    ok = FB.eligibility(close, n_snap, span, gap)
+    check("редкая сетка при полном покрытии — сечение", ok[0].all())
+    check("обрывок часа — не сечение", not ok[1].any())
+    check("дыра длиннее пяти минут — не сечение", not ok[2].any())
+
+    # Сводка старого образца охвата не несёт: правило по числу остаётся,
+    # и пропуск полей не открывает ворота молча.
+    old = FB.eligibility(close, n_snap, np.full((S, D), np.nan),
+                         np.full((S, D), np.nan))
+    check("без охвата судим по числу, 1200 < 1800 — не сечение",
+          not old.any())
 
 
 def test_targets_shapes_and_direction():
@@ -654,6 +683,7 @@ def main():
     test_context_features()
     print("сечение и цели")
     test_eligibility_floor()
+    test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
     test_retry_when_not_trained()
