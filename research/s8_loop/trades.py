@@ -205,21 +205,33 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H):
     Возвращает `(история, баланс)` и проставляет каждой сделке `size` —
     сумму, которая в ней стоит.
     """
-    rows = [t for t in trades if t["arm"] == arm and t.get("opened_at")]
+    # Проверка на `is not None`, а не на истинность: метка времени
+    # может быть нулём, и тогда сделка молча выпадала бы из счёта —
+    # тот же род ошибки, что «честный ноль не есть отсутствие
+    # измерения» в замере диска.
+    rows = [t for t in trades
+            if t["arm"] == arm and t.get("opened_at") is not None]
     if not rows:
         return [], start
     per_hour = {}
     for t in rows:
         per_hour.setdefault(t["hour"], []).append(t)
+    # В один и тот же момент ЗАКРЫТИЕ идёт раньше открытия: деньги
+    # возвращаются в кассу до того, как их снова размещают. Порядок был
+    # обратным, и на живых данных это дало `size = 0` у всей свежей
+    # руки: при горизонте в четыре часа выход часа H совпадает со
+    # входом часа H+4, и открытие пыталось занять деньги, которые ещё
+    # не вернулись. Ошибка тихая — счёт при этом не падал, просто
+    # переставал торговать.
     ev = []
     for t in rows:
-        ev.append((t["opened_at"], 0, t))          # 0 — вход раньше
         if t["state"] == "закрыта" and t.get("closes_at"):
-            ev.append((t["closes_at"], 1, t))      # 1 — выход позже
+            ev.append((t["closes_at"], 0, t))      # 0 — сначала выход
+        ev.append((t["opened_at"], 1, t))          # 1 — потом вход
     ev.sort(key=lambda x: (x[0], x[1]))
     cash, busy, hist = start, 0.0, []
     for _, kind, t in ev:
-        if kind == 0:
+        if kind == 1:
             slots = max(1, len(per_hour[t["hour"]]) * max(1, hold_h))
             want = (cash + busy) / slots
             # Больше свободных денег в позицию не положить. Настоящий

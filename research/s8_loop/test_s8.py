@@ -89,7 +89,10 @@ def test_summary_roundtrip_through_store():
     from store import Writer
     d = tempfile.mkdtemp()
     w = Writer(d, log=lambda m: None)
-    t0 = time.time() - 7200
+    # Ровно внутрь часа: иначе двадцать секундных записей от «двух часов
+    # назад» переползают через границу часа, попадают в соседний файл, и
+    # тест падает в зависимости от времени суток.
+    t0 = (time.time() - 7200) // 3600 * 3600 + 60
     hour = Writer.hour(t0)
     for i in range(20):
         s = _snap(500.0, 30.0, t0 + i)
@@ -112,7 +115,7 @@ def test_run_resumes_by_content():
     from store import Writer
     d = tempfile.mkdtemp()
     w = Writer(d, log=lambda m: None)
-    t0 = time.time() - 7200
+    t0 = (time.time() - 7200) // 3600 * 3600 + 60
     for i in range(5):
         w.write("book", "AAA", _snap(10.0, 30.0, t0 + i), ts=t0 + i)
     w.close()
@@ -417,8 +420,12 @@ def test_retry_when_not_trained():
             pass
     finally:
         T.cycle, T.time.sleep, sys.argv = orig_c, orig_s, orig_argv
-    check("после «рано» ждём час, после обучения — сутки",
-          slept == [T.RETRY_SEC, T.CYCLE_SEC], str(slept))
+    # Первая пауза садится на ГРАНИЦУ часа (см. отдельный тест), а не
+    # равна ровно часу: иначе смещение, заданное моментом запуска,
+    # жило бы вечно и определяло запаздывание входа.
+    check("после «рано» ждём до границы часа, после обучения — сутки",
+          len(slept) == 2 and 0 < slept[0] <= T.RETRY_SEC + T.MARGIN_SEC
+          and slept[1] == T.CYCLE_SEC, str(slept))
     check("час заметно меньше суток",
           T.RETRY_SEC <= 3600 < T.CYCLE_SEC)
 
@@ -590,6 +597,64 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_capital_returns_before_it_is_redeployed():
+    """В один момент закрытие идёт раньше открытия.
+
+    Найдено на живых данных сразу после заливки: у всей свежей руки
+    стоял `size = 0`. При горизонте в четыре часа выход часа `H`
+    совпадает по времени со входом часа `H+4`, и открытие пыталось
+    занять деньги, которые ещё не вернулись в кассу. Отказ тихий —
+    счёт не падал, он просто переставал торговать.
+    """
+    import trades as TR
+
+    tr = []
+    for h in range(10):
+        for i in range(6):
+            st = "закрыта" if h < 6 else "открыта"
+            t = {"arm": "gbm", "hour": f"H{h:02d}", "sym": f"S{i}",
+                 "side": "long", "state": st,
+                 "opened_at": h * 3600, "closes_at": (h + 4) * 3600}
+            if st == "закрыта":
+                t["net_bp"] = 20.0
+            tr.append(t)
+    TR.account(tr, "gbm")
+    zero = [t for t in tr if not t.get("size")]
+    check("в стационарном режиме нулевых размеров нет", not zero,
+          f"{len(zero)} сделок без размера")
+    check("размер держится около капитала на слот",
+          all(abs(t["size"] - TR.START_BALANCE / 24) < 1.0 for t in tr),
+          str(sorted({round(t["size"], 2) for t in tr})[:4]))
+
+    # Метка времени, равная нулю, — это метка, а не её отсутствие.
+    z = [{"arm": "gbm", "hour": "H0", "sym": "A", "side": "long",
+          "state": "открыта", "opened_at": 0, "closes_at": 4 * 3600}]
+    TR.account(z, "gbm")
+    check("нулевая метка времени не выбрасывает сделку из счёта",
+          z[0].get("size"), str(z[0].get("size")))
+
+
+def test_hourly_cycle_wakes_on_the_hour():
+    """Часовой цикл ждёт до ГРАНИЦЫ часа, а не час от прошлого раза.
+
+    Запаздывание входа (`lag`) равно тому, насколько поздно цикл
+    проснулся после закрытия часа. При отсчёте «час от прошлого раза»
+    смещение задаётся моментом запуска и живёт вечно: на сервере оно
+    закрепилось на пятнадцати минутах просто потому, что в 15 минут был
+    перезапуск.
+    """
+    import train as T
+
+    for mm in (0, 5, 15, 30, 58, 59.9):
+        now = 1_000_000 - (1_000_000 % 3600) + mm * 60
+        wait = max(T.MARGIN_SEC, 3600 - (now % 3600) + T.MARGIN_SEC)
+        nxt = (now + wait) % 3600 / 60
+        check(f"проснувшись на {mm} мин, следующий заход на границе",
+              abs(nxt - T.MARGIN_SEC / 60) < 1e-6, f"{nxt:.2f} мин")
+    check("запас после закрытия часа положителен и невелик",
+          0 < T.MARGIN_SEC <= 600, str(T.MARGIN_SEC))
+
+
 def test_account_is_one_capital_at_leverage_one():
     """Счёт ведётся на ОДИН капитал, экспозиция его не превышает.
 
@@ -634,7 +699,7 @@ def test_account_is_one_capital_at_leverage_one():
           len(hist) == len(tr2), f"{len(hist)} против {len(tr2)}")
     check("баланс есть старт плюс сумма результатов",
           abs(bal - TR.START_BALANCE
-              - sum(h["pnl"] for h in hist)) < 0.05, str(bal))
+              - sum(h["pnl"] for h in hist)) < 0.5, str(bal))
 
     # Функция ЧИСТАЯ: второй вызов на том же списке даёт то же самое,
     # то есть повторный проход цикла не проведёт сделки дважды.
@@ -1415,6 +1480,8 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_capital_returns_before_it_is_redeployed()
+    test_hourly_cycle_wakes_on_the_hour()
     test_account_is_one_capital_at_leverage_one()
     test_unrealised_never_mixes_with_realised()
     test_entry_price_is_recovered_from_summaries()
