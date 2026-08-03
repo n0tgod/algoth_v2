@@ -1243,9 +1243,12 @@ class Collector:
             TR.mark(tr, self.marks(tr))
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
+            cap = {}
             for a in ("gbm", "nn"):
                 TR.account(tr, a)
-            out["trade_stats"] = {a: TR.summary(tr, a)
+                cap[a] = ((out.get("accounts") or {}).get(a)
+                          or {}).get("balance")
+            out["trade_stats"] = {a: TR.summary(tr, a, capital=cap[a])
                                   for a in ("gbm", "nn")}
         except Exception as e:                            # noqa: BLE001
             out["trades_error"] = f"{type(e).__name__}: {e}"
@@ -1296,8 +1299,14 @@ class Collector:
             # Размеры позиций проставляет счёт — он единственный, кто
             # знает капитал и занятость. Сводка их только складывает.
             TR.account(tr, a)
-        stats = {a: TR.summary(tr, a) for a in ("gbm", "nn")}
-        stats["all"] = TR.summary(tr)
+        # Капитал у каждой руки свой — по тысяче. На вкладке «обе»
+        # капитал складывается: иначе экспозиция 1504 $ читалась бы как
+        # полтора плеча, хотя капитала там две тысячи.
+        cap = {a: (accs.get(a) or {}).get("balance") for a in ("gbm", "nn")}
+        stats = {a: TR.summary(tr, a, capital=cap[a])
+                 for a in ("gbm", "nn")}
+        both = sum(v for v in cap.values() if v) or None
+        stats["all"] = TR.summary(tr, capital=both)
         rows = tr
         if arm:
             rows = [t for t in rows if t["arm"] == arm]

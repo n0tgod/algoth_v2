@@ -257,7 +257,7 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H):
     return hist, round(cash + busy, 2)
 
 
-def summary(trades, arm=None, balance=None):
+def summary(trades, arm=None, capital=None):
     """Сводка: закрытые — фактом, открытые — переоценкой.
 
     Закрытые и открытые считаются РАЗДЕЛЬНО и никогда не смешиваются в
@@ -278,7 +278,7 @@ def summary(trades, arm=None, balance=None):
     wait = [t for t in rows if t["state"] == "ждёт разбора"]
     out = {"closed": len(closed), "open": len(op),
            "no_outcome": len(lost), "awaiting": len(wait)}
-    _unreal(rows, out, balance)
+    _unreal(rows, out, capital)
     if not closed:
         return out
     hits = sum(1 for t in closed if t.get("hit"))
@@ -303,10 +303,24 @@ def summary(trades, arm=None, balance=None):
     return out
 
 
-def _unreal(rows, out, balance):
+def _unreal(rows, out, capital):
     """Переоценка открытых — отдельными полями, не смешивая с фактом."""
-    marked = [t for t in rows if t["state"] == "открыта"
-              and t.get("unreal_net_bp") is not None]
+    op = [t for t in rows if t["state"] == "открыта"]
+    # Экспозиция — по ВСЕМ открытым, а не только по переоценённым.
+    # Позиция без текущей цены (книга молчит) экспозицию всё равно
+    # несёт, и считать её нулём значило бы занижать плечо ровно там,
+    # где с инструментом что-то не так.
+    exp = sum(t["size"] for t in op if t.get("size"))
+    if exp:
+        out["exposure"] = round(exp, 2)
+        if capital:
+            out["capital"] = round(capital, 2)
+            # Плечо — то, ради чего экспозицию и показывают. В долларах
+            # она читается неверно, если капиталов несколько: у двух
+            # рук по тысяче, и 1504 $ на вкладке «обе» — это 0.75, а
+            # вовсе не полтора плеча.
+            out["leverage"] = round(exp / capital, 2)
+    marked = [t for t in op if t.get("unreal_net_bp") is not None]
     out["marked"] = len(marked)
     if not marked:
         return
@@ -321,7 +335,6 @@ def _unreal(rows, out, balance):
     if sized:
         out["unreal_pnl"] = round(
             sum(t["size"] * t["unreal_net_bp"] / 1e4 for t in sized), 2)
-        out["exposure"] = round(sum(t["size"] for t in sized), 2)
 
 
 def entry_prices(sum_dir, pairs):

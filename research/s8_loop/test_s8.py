@@ -828,6 +828,59 @@ def test_unrealised_never_mixes_with_realised():
           f"{s.get('exposure')} при капитале {TR.START_BALANCE}")
 
 
+def test_exposure_covers_all_open_and_leverage_is_named():
+    """Экспозиция — по всем открытым; в долларах её читать нельзя.
+
+    Вопрос владельца: «exposure 1504.11 $ это что?». В долларах число
+    отвечает неверно, когда счетов несколько: у двух рук по тысяче, и
+    полторы тысячи на вкладке «обе» — это 0.75 плеча, а вовсе не
+    полтора. Поэтому рядом обязаны стоять капитал и плечо.
+
+    И считаться экспозиция обязана по ВСЕМ открытым, а не только по
+    переоценённым: позиция, у которой сейчас нет текущей цены (книга по
+    инструменту молчит), экспозицию всё равно несёт. Посчитать её нулём
+    значило бы занизить плечо ровно там, где с инструментом что-то не
+    так.
+    """
+    import trades as TR
+
+    rows = []
+    for i in range(4):
+        rows.append({"state": "открыта", "arm": "gbm", "hour": "H1",
+                     "side": "long", "sym": f"S{i}",
+                     "opened_at": 1000, "closes_at": 1000 + 4 * 3600})
+    rows[0]["unreal_net_bp"] = 25.0          # переоценена только одна
+    TR.account(rows, "gbm")
+
+    s = TR.summary(rows, "gbm", capital=TR.START_BALANCE)
+    whole = round(sum(t["size"] for t in rows), 2)
+    check("экспозиция считается по всем открытым, а не по переоценённым",
+          s["exposure"] == whole and s["marked"] == 1,
+          f"{s.get('exposure')} против {whole}, переоценено "
+          f"{s.get('marked')}")
+    check("капитал назван рядом с экспозицией",
+          s["capital"] == round(TR.START_BALANCE, 2), str(s.get("capital")))
+    check("плечо есть экспозиция, делённая на капитал",
+          s["leverage"] == round(s["exposure"] / TR.START_BALANCE, 2),
+          f"{s.get('leverage')} при {s.get('exposure')} / "
+          f"{TR.START_BALANCE}")
+    check("плечо не больше единицы — книга размещает свои деньги",
+          s["leverage"] <= 1.0, str(s.get("leverage")))
+
+    # Две руки — два счёта. Общая вкладка обязана делить сумму
+    # экспозиций на сумму капиталов, иначе плечо выйдет вдвое больше.
+    for t in rows[2:]:
+        t["arm"] = "nn"
+    TR.account(rows, "gbm")
+    TR.account(rows, "nn")
+    both = TR.summary(rows, capital=2 * TR.START_BALANCE)
+    check("на общей вкладке капитал складывается вместе с экспозицией",
+          both["leverage"] <= 1.0 and both["capital"] == round(
+              2 * TR.START_BALANCE, 2),
+          f"{both.get('leverage')} при {both.get('exposure')} / "
+          f"{both.get('capital')}")
+
+
 def test_entry_price_is_recovered_from_summaries():
     """Цена входа у старых выборов не потеряна — она в сводке.
 
@@ -1543,6 +1596,7 @@ def main():
     test_hourly_cycle_wakes_on_the_hour()
     test_account_is_one_capital_at_leverage_one()
     test_unrealised_never_mixes_with_realised()
+    test_exposure_covers_all_open_and_leverage_is_named()
     test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()
     test_awaiting_review_is_not_a_lost_outcome()

@@ -1379,8 +1379,15 @@ async function load() {
       + (st.unreal_pnl == null ? "" :
          cell("unreal P&L", (st.unreal_pnl > 0 ? "+" : "")
               + st.unreal_pnl + " $", st.unreal_pnl > 0 ? "good" : "bad"))
+      // Экспозиция сама по себе читается неверно, когда капиталов
+      // несколько: 1504 $ на вкладке «обе» — это 0.75 плеча при двух
+      // тысячах капитала, а не полтора. Показываем плечо.
       + (st.exposure == null ? "" :
-         cell("exposure", st.exposure + " $"))
+         cell("exposure", st.exposure + " $"
+              + (st.capital ? ` / ${st.capital}` : "")))
+      + (st.leverage == null ? "" :
+         cell("leverage", st.leverage + "×",
+              st.leverage > 1.05 ? "bad" : ""))
       + `</div>`;
   }
   const accLine = ["gbm","nn"].map(a => {
