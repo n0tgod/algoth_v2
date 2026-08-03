@@ -590,6 +590,43 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_percent_is_the_display_unit():
+    """Сделки показываются в ПРОЦЕНТАХ движения цены, не в б.п.
+
+    Решение владельца. Существенно, что меняется только показ: цели
+    модели, издержки и формула счёта остаются в базисных пунктах —
+    единица хранения и единица показа разные вещи, и смешать их значит
+    однажды посчитать комиссию в процентах.
+
+    Числа закреплены явно, а не свойством: округление до двух знаков
+    съело бы мелкое нетто, ради которого таблицу и смотрят.
+    """
+    import train as T
+    check("крупное движение — два знака",
+          T.pct(534) == "+5.34 %" and T.pct(-725) == "-7.25 %",
+          f"{T.pct(534)} / {T.pct(-725)}")
+    check("на границе десяти б.п. знаков всё ещё два",
+          T.pct(-11.0) == "-0.11 %", T.pct(-11.0))
+    # Ниже десяти б.п. два знака дали бы «-0.00 %» — то есть скрыли бы
+    # само число.
+    check("мелкое нетто не схлопывается в ноль",
+          T.pct(-0.5) == "-0.005 %" and T.pct(4.9) == "+0.049 %",
+          f"{T.pct(-0.5)} / {T.pct(4.9)}")
+    check("пусто остаётся пустым", T.pct(None) == "—")
+    # Издержки в коде обязаны остаться базисными пунктами.
+    check("круг издержек хранится в б.п.", T.ROUND_COST_BP == 11.0,
+          str(T.ROUND_COST_BP))
+
+    # И то же самое в мыслях модели — их читает владелец, а не разработчик.
+    man = {"sections": 9, "symbols": 543, "importance": {}}
+    picks = {"long": [{"sym": "HFTUSDT", "fwd": 534.0, "mae": -112.0}],
+             "short": [{"sym": "BEATUSDT", "fwd": -725.0, "mae": -90.0}]}
+    txt = " ".join(T.think(None, man, [], picks))
+    check("мысли говорят процентами",
+          "+5.34 %" in txt and "-7.25 %" in txt and "б.п." not in txt,
+          txt[:160])
+
+
 def test_pretest_runs_where_live_refuses_and_stays_apart():
     """Предпросмотр показывает работу там, где боевой обязан молчать.
 
@@ -873,8 +910,10 @@ def test_think_words():
           "перекос глубины стакана" in text, text)
     check("сдвиг доверия назван с числами",
           "больше доверять" in text and "+0.20" in text, text)
+    # Единица показа — процент движения цены: 35 б.п. = +0.35 %,
+    # −52 б.п. = −0.52 %.
     check("выбор назван с ожиданием и путём против",
-          "HYPE (жду +35 б.п." in text and "до -52" in text, text)
+          "HYPE (жду +0.35 %" in text and "до -0.52 %" in text, text)
     first = "\n".join(T.think(None, man, [], None))
     check("первое обучение названо первым",
           first.startswith("первое обучение"), first[:60])
@@ -922,6 +961,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_percent_is_the_display_unit()
     test_pretest_runs_where_live_refuses_and_stays_apart()
     test_probe_never_touches_live_model()
     test_novelty_measure()

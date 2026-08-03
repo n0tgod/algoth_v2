@@ -135,6 +135,28 @@ FEATURE_RU = (
 )
 
 
+def pct(bp):
+    """Базисные пункты → процент движения цены, строкой.
+
+    Решение владельца: везде, где показывается сделка, единица —
+    ПРОЦЕНТ, а не базисный пункт. Процент читается как движение цены,
+    базисный пункт требует пересчёта в голове.
+
+    Внутри всё остаётся в б.п.: цели модели, издержки, формула счёта.
+    Меняется только показ — единица хранения и единица показа разные
+    вещи, и смешивать их значит однажды посчитать комиссию в процентах.
+
+    Знаков после запятой два, а при мелких величинах три: у нетто после
+    издержек типичное значение единицы б.п., и на двух знаках оно
+    схлопнулось бы в «0.00 %» — то есть исчезло бы ровно то число,
+    ради которого таблица и существует.
+    """
+    if bp is None:
+        return "—"
+    d = 2 if abs(bp) >= 10 else 3
+    return f"{bp / 100.0:+.{d}f} %"
+
+
 def feat_ru(name):
     for pref, ru in FEATURE_RU:
         if name.startswith(pref):
@@ -177,10 +199,11 @@ def think(prev_man, man, ic_rows, picks):
                        f"{feat_ru(dn[0])} ({dn[1]:+.2f}).")
     if picks:
         long_s = ", ".join(
-            f"{p['sym'].replace('USDT','')} (жду {p['fwd']:+.0f} б.п. за "
-            f"4 ч, путь против до {p['mae']:.0f})" for p in picks["long"])
+            f"{p['sym'].replace('USDT','')} (жду {pct(p['fwd'])} за "
+            f"4 ч, путь против до {pct(p['mae'])})"
+            for p in picks["long"])
         short_s = ", ".join(
-            f"{p['sym'].replace('USDT','')} ({p['fwd']:+.0f} б.п.)"
+            f"{p['sym'].replace('USDT','')} ({pct(p['fwd'])})"
             for p in picks["short"])
         out.append(f"если бы торговал сейчас: лонг — {long_s}; "
                    f"шорт — {short_s}. Это ожидание в среднем, не "
@@ -906,14 +929,14 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                        if (r["got"] > 0) == (r["side"] == "long"))
             lines.insert(0, f"счёт: {acc['balance'] - pnl:+.2f} -> "
                             f"{acc['balance']:+.2f} $ "
-                            f"({pnl / max(acc['balance'] - pnl, 1) * 1e4:+.0f}"
-                            f" б.п. за круг, издержки учтены).")
+                            f"({pct(pnl / max(acc['balance'] - pnl, 1) * 1e4)}"
+                            f" за круг, издержки учтены).")
             lines.insert(0, f"разбор прошлых выборов ({len(review)} имён, "
                             f"угадан знак у {hits}): " + "; ".join(
                                 f"{r['sym'].replace('USDT','')} "
                                 f"{'лонг' if r['side'] == 'long' else 'шорт'}: "
-                                f"ждал {r['expected']:+.0f}, вышло "
-                                f"{r['got']:+.0f} б.п." for r in review))
+                                f"ждал {pct(r['expected'])}, вышло "
+                                f"{pct(r['got'])}" for r in review))
         all_lines += [f"[{'деревья' if arm == 'gbm' else 'сеть'}] {t}"
                       for t in lines]
     lines = all_lines

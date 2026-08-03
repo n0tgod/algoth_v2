@@ -377,8 +377,7 @@ function render(d) {
         <td class="mono">1:${x.rr}</td>
         <td class="mono">${x.state}</td>
         <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${x.pnl_bp == null ? "—"
-          : (x.pnl_bp>0?"+":"") + x.pnl_bp + " б.п. · "
-            + (x.r>0?"+":"") + x.r + " R"}</td>
+          : pct(x.pnl_bp) + " · " + (x.r>0?"+":"") + x.r + " R"}</td>
       </tr>`).join("")
     : `<tr><td style="color:var(--muted);padding:8px 10px">no events yet</td></tr>`;
   const lg = document.getElementById("log");
@@ -442,8 +441,7 @@ function renderAll() {
       + cell("wins", pc(s.win_rate),
              s.win_rate >= s.break_even ? "good" : "bad")
       + cell("break-even", pc(s.break_even))
-      + cell("expectancy", (s.expectancy_bp>0?"+":"")
-             + s.expectancy_bp.toFixed(1) + " б.п.",
+      + cell("expectancy", pct(s.expectancy_bp),
              s.expectancy_bp > 0 ? "good" : "bad")
       + cell("in R", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
              + " R", s.expectancy_r > 0 ? "good" : "bad")
@@ -458,7 +456,7 @@ function renderAll() {
         const x = br[r];
         return x ? `<b>${r}</b>: ${x.trades} trades, wins ${pc(x.win_rate)} `
           + `vs break-even ${pc(x.break_even)}, expectancy ${
-            x.expectancy_bp>0?"+":""}${x.expectancy_bp.toFixed(1)} б.п.`
+            pct(x.expectancy_bp)}`
           : `<b>${r}</b>: no trades`;
       }).join(" · ") || "&nbsp;") + `</div>`;
   document.getElementById("alltr").innerHTML = A.trades.length
@@ -474,8 +472,8 @@ function renderAll() {
         <td class="mono">1:${x.rr}</td>
         <td class="mono">${x.state}</td>
         <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${x.pnl_bp == null ? "—"
-          : (x.pnl_bp>0?"+":"") + x.pnl_bp + " б.п. · "
-            + (x.r>0?"+":"") + x.r + " R"}</td></tr>`).join("")
+          : pct(x.pnl_bp) + " · " + (x.r>0?"+":"") + x.r
+            + " R"}</td></tr>`).join("")
     : `<tr><td style="color:var(--muted);padding:8px 10px">
         no closed trades yet</td></tr>`;
   drawEqAll();
@@ -505,8 +503,8 @@ function drawEqAll() {
   g.stroke();
   g.fillStyle = css("--muted");
   g.font = "11px ui-monospace, Menlo, monospace";
-  g.fillText(hi.toFixed(0) + " б.п.", W-60, y(hi));
-  g.fillText(lo.toFixed(0) + " б.п.", W-60, y(lo));
+  g.fillText(pct(hi), W-60, y(hi));
+  g.fillText(pct(lo), W-60, y(lo));
 }
 
 // Встречный пересчёт: те же входы, нынешняя геометрия. Отвечает на
@@ -647,6 +645,21 @@ function renderPretest(p, modeBtns) {
   wireModes();
 }
 
+// Базисные пункты -> ПРОЦЕНТ движения цены. Решение владельца: везде,
+// где показывается сделка, единица — процент; он читается как движение
+// цены, б.п. требуют пересчёта в голове. Внутри всё остаётся в б.п.
+// (цели модели, издержки, формула счёта) — единица хранения и единица
+// показа разные вещи.
+//
+// Два знака, а при мелких величинах три: нетто после издержек обычно
+// единицы б.п., и на двух знаках оно схлопнулось бы в «0.00 %» — то
+// есть исчезло бы ровно то число, ради которого таблица и нужна.
+function pct(v) {
+  if (v == null) return "—";
+  const d = Math.abs(v) >= 10 ? 2 : 3;
+  return (v > 0 ? "+" : "") + (v / 100).toFixed(d) + " %";
+}
+
 // Сводка по сделкам. Открытые в неё НЕ входят: у них нет исхода, и
 // посчитать его нулём значило бы разбавить статистику выдумкой.
 function tradeStats(p) {
@@ -665,7 +678,8 @@ function tradeStats(p) {
       + cell("open", s.open)
       + cell("sign right", (s.hit_rate*100).toFixed(0) + " %",
              s.hit_rate >= 0.5 ? "good" : "bad")
-      + cell("net, bp", s.net_bp_avg, s.net_bp_avg > 0 ? "good" : "bad")
+      + cell("net move", pct(s.net_bp_avg),
+             s.net_bp_avg > 0 ? "good" : "bad")
       + cell("paper P&L, $", s.pnl, s.pnl > 0 ? "good" : "bad")
       + cell("promise / actual", s.expected_over_got ?? "—",
              s.expected_over_got > 3 ? "bad" : "")
@@ -710,8 +724,6 @@ function tradeTable(p) {
   const tr = p.trades || [];
   if (!tr.length) return `<div class="mline">no model trades yet —
     the first cycle writes picks, outcomes arrive 4 h later.</div>`;
-  const bp = v => v == null ? "—"
-    : (v > 0 ? "+" : "") + Math.round(v);
   const rows = tr.slice(0, 24).map(t => {
     const cls = t.state === "закрыта"
       ? ((t.net_bp > 0) ? "good" : "bad")
@@ -724,15 +736,15 @@ function tradeTable(p) {
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
-      <td class="mono">${bp(t.expected_bp)}</td>
-      <td class="mono dim">${bp(t.mae_bp)}</td>
-      <td class="mono">${bp(t.got_bp)}</td>
+      <td class="mono">${pct(t.expected_bp)}</td>
+      <td class="mono dim">${pct(t.mae_bp)}</td>
+      <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono">${t.pnl == null ? "—" :
         (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
       <td class="dim">${when}</td></tr>`;
   }).join("");
   return `<div class="mline">model trades <span class="dim">(expected /
-    worst path expected / actual, bp over 4 h)</span></div>
+    worst path expected / actual — % price move over 4 h)</span></div>
     <div style="overflow-x:auto"><table class="mtr">
     <tr><th>hour</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
     <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
@@ -988,9 +1000,8 @@ function verLine(list, cur) {
                      : "правила v" + x.ver);
     return head + ": " + (s
       ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
-        + `${pc(s.break_even)}, ожидание ${s.expectancy_bp>0?"+":""}`
-        + `${s.expectancy_bp.toFixed(1)} б.п., стоп `
-        + `${s.stop_bp_median.toFixed(0)} б.п.`
+        + `${pc(s.break_even)}, ожидание ${pct(s.expectancy_bp)}, `
+        + `стоп ${pct(s.stop_bp_median)}`
       : `${x.n} сд., закрытых нет`);
   }).join("<br>");
 }
@@ -1094,7 +1105,7 @@ function drawMid(pts, sg) {
   g.fillText(hi.toPrecision(7), W-60, y(hi));
   g.fillText(lo.toPrecision(7), W-60, y(lo));
   document.getElementById("cap-mid").textContent =
-    ((pts[pts.length-1][1]/pts[0][1]-1)*1e4).toFixed(1) + " б.п. за окно";
+    pct((pts[pts.length-1][1]/pts[0][1]-1)*1e4) + " за окно";
 }
 
 tick(); timer = setInterval(tick, 1000);
@@ -1495,10 +1506,17 @@ function shownTrades() {
   const d = recReady();
   return d ? (d.trades || []) : trades();
 }
+// Процент движения цены вместо б.п. — решение владельца. Два знака, при
+// мелких величинах три: иначе мелкое нетто схлопывается в «0.00 %».
+function pct(v) {
+  if (v == null) return "—";
+  const d = Math.abs(v) >= 10 ? 2 : 3;
+  return (v > 0 ? "+" : "") + (v / 100).toFixed(d) + " %";
+}
 function res(m) {
   return m.pnl_bp == null ? `<span style="color:var(--muted)">—</span>`
-    : `<span class="${m.pnl_bp>0?"buy":"sell"}">${m.pnl_bp>0?"+":""}${
-        m.pnl_bp} б.п. · ${m.r>0?"+":""}${m.r} R</span>`;
+    : `<span class="${m.pnl_bp>0?"buy":"sell"}">${pct(m.pnl_bp)} · ${
+        m.r>0?"+":""}${m.r} R</span>`;
 }
 
 function draw() {
@@ -1701,9 +1719,8 @@ function verLine(list, cur) {
                      : "правила v" + x.ver);
     return head + ": " + (s
       ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
-        + `${pc(s.break_even)}, ожидание ${s.expectancy_bp>0?"+":""}`
-        + `${s.expectancy_bp.toFixed(1)} б.п., стоп `
-        + `${s.stop_bp_median.toFixed(0)} б.п.`
+        + `${pc(s.break_even)}, ожидание ${pct(s.expectancy_bp)}, `
+        + `стоп ${pct(s.stop_bp_median)}`
       : `${x.n} сд., закрытых нет`);
   }).join("<br>");
 }
@@ -1725,13 +1742,12 @@ function summary() {
       cell("wins", pc(s.win_rate),
            s.win_rate >= s.break_even ? "buy" : "sell") +
       cell("break-even", pc(s.break_even)) +
-      cell("expectancy", (s.expectancy_bp>0?"+":"") +
-           s.expectancy_bp.toFixed(1) + " б.п.",
+      cell("expectancy", pct(s.expectancy_bp),
            s.expectancy_bp > 0 ? "buy" : "sell") +
       cell("in R", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
            + " R", s.expectancy_r > 0 ? "buy" : "sell") +
-      cell("медиана", s.median_bp.toFixed(1) + " б.п.") +
-      cell("стоп", s.stop_bp_median.toFixed(0) + " б.п.") +
+      cell("медиана", pct(s.median_bp)) +
+      cell("стоп", pct(s.stop_bp_median)) +
       cell("target / stop / time",
            `${pc(s.share_target)} / ${pc(s.share_stop)} / ${pc(s.share_time)}`) +
       (s.cut_by_restart
@@ -1746,7 +1762,7 @@ function summary() {
     return x ? `<b>${r}</b>: ${x.trades} сд., побед ${
       (x.win_rate*100).toFixed(0)} % при безубыточных ${
       (x.break_even*100).toFixed(0)} %, ожидание ${
-      x.expectancy_bp > 0 ? "+" : ""}${x.expectancy_bp.toFixed(1)} б.п. (${
+      pct(x.expectancy_bp)} (${
       x.expectancy_r > 0 ? "+" : ""}${x.expectancy_r.toFixed(2)} R)`
       : `<b>${r}</b>: no trades`;
   }).join(" · ");
@@ -1783,9 +1799,11 @@ function drawEq() {
   g.stroke();
   g.fillStyle = css("--muted");
   g.font = "11px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
-  const u = EQR ? " R" : " б.п.";
-  g.fillText(hi.toFixed(EQR?1:0) + u, W-60, y(hi));
-  g.fillText(lo.toFixed(EQR?1:0) + u, W-60, y(lo));
+  // Кривая счёта: в R либо в процентах движения цены.
+  // В R — как есть; в процентах — величина хранится в б.п., поэтому
+  // делится сотней тем же правилом, что и везде.
+  g.fillText(EQR ? hi.toFixed(1) + " R" : pct(hi), W-60, y(hi));
+  g.fillText(EQR ? lo.toFixed(1) + " R" : pct(lo), W-60, y(lo));
 }
 
 const px = document.getElementById("px"), tip = document.getElementById("tip");
@@ -1838,8 +1856,12 @@ function hover(e) {
     // Сделка МОДЕЛИ. Открытая несёт прогноз и срок, закрытая — факт и
     // деньги; путать её со сделкой детектора нельзя, поэтому и
     // подсказка своя.
+    // Процент движения цены, а не б.п. — решение владельца. Два знака,
+    // при мелких величинах три: нетто после издержек иначе схлопнулось
+    // бы в «0.00 %», а это как раз то число, ради которого смотрят.
     const t = h.mdl, bp = v => v == null ? "—"
-      : (v > 0 ? "+" : "") + Math.round(v) + " б.п.";
+      : (v > 0 ? "+" : "") + (v / 100).toFixed(Math.abs(v) >= 10 ? 2 : 3)
+        + " %";
     tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">
         модель${MDL.pretest ? " (pre-testing)" : ""} · ${
         t.side === "long" ? "лонг" : "шорт"} · ${t.state}</div>`
@@ -1872,7 +1894,7 @@ function hover(e) {
        : row("стоп", m.stop) + row("цель", m.target))
     + row("уровень", `${m.level} (${m.kind})`)
     + row("отношение", "1:"+m.rr) + row("держали", m.held+" с")
-    + row("итог", `${m.pnl_bp>0?"+":""}${m.pnl_bp} б.п. · ${
+    + row("итог", `${pct(m.pnl_bp)} · ${
         m.r>0?"+":""}${m.r} R`, m.pnl_bp>0?"buy":"sell");
   tip.style.display="block";
   tip.style.left = Math.max(4, Math.min(px.clientWidth-tip.offsetWidth-4,
@@ -1889,7 +1911,7 @@ document.getElementById("live").onclick = e => {
   draw();
 };
 document.getElementById("unit").onclick = e => {
-  EQR = !EQR; e.target.textContent = EQR ? "в б.п." : "в R"; drawEq();
+  EQR = !EQR; e.target.textContent = EQR ? "в %" : "в R"; drawEq();
 };
 // Тумблера нет: вид один — всё под нынешними правилами.
 localStorage.removeItem("rec");
