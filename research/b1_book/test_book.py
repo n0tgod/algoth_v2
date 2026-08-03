@@ -325,6 +325,26 @@ def test_recount_survives_restart():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_nofile_covers_every_kind():
+    """Дескрипторов запрашивается по числу ВИДОВ рядов, не по двойке.
+
+    Зашитая двойка убила сбор 1–3 августа: виды выросли с двух до
+    четырёх (метрики и ликвидации), запрос остался 2·N + 1024 = 2104
+    при потребности 4·N = 2160, писатель упёрся в предел, отказ open()
+    пришёл в поток снимков — и тот умер молча.
+    """
+    import collect as C
+
+    for n in (8, 540, 2000):
+        need = len(C.WRITE_KINDS) * n
+        check(f"запрос покрывает все виды при {n} символах",
+              C.nofile_want(n) >= need + 512,
+              f"{C.nofile_want(n)} против {need}")
+    check("прежняя формула на 540 символах НЕ покрывала",
+          2 * 540 + 1024 < len(C.WRITE_KINDS) * 540,
+          "порядок доводов изменился — проверить заново")
+
+
 def test_health_is_one_definition():
     """Здоровье сбора — одно определение на страницу и на файл.
 
@@ -1742,6 +1762,7 @@ def main():
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()
     test_shrunken_run_announces_dropped_symbols()
+    test_nofile_covers_every_kind()
     test_health_is_one_definition()
     test_collected_symbols_are_not_lost()
     test_recount_survives_restart()
