@@ -27,8 +27,10 @@
 ради неё numpy незачем.
 """
 
+import json
+import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 HOLD_H = 4                        # горизонт выбора — цель fwd_4h
 # Круг издержек живёт ЗДЕСЬ, а не в цикле обучения: его читают и цикл
@@ -53,7 +55,7 @@ def _hour_of(ts):
         "%Y-%m-%d-%H")
 
 
-def build(picks, reviews, now=None, hold_h=HOLD_H):
+def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
     """Сделки из выборов и разборов, свежие сверху.
 
     `picks` и `reviews` — строки соответствующих `.jsonl`.
@@ -123,10 +125,12 @@ def build(picks, reviews, now=None, hold_h=HOLD_H):
                                    else None),
                     "expected_bp": p.get("fwd"),
                     # Цена закрытия часа сигнала — она же цена входа.
-                    # У старых записей её нет, и тогда нереализованный
-                    # результат не считается вовсе: выдумать цену входа
-                    # хуже, чем не показать её.
-                    "entry_px": p.get("px"),
+                    # Если выбор её не несёт (записан до того, как поле
+                    # появилось), берётся из сводки того же часа —
+                    # величина та же самая, а не приблизительная.
+                    "entry_px": (p.get("px")
+                                 or (px_at or {}).get(
+                                     (p.get("sym"), hour))),
                     # Ожидаемый ход ПРОТИВ позиции — то, что модель
                     # обещает пережить. Без него ожидание читается как
                     # обещание пути, а это разные вещи.
@@ -206,6 +210,45 @@ def summary(trades, arm=None):
         out["expected_over_got"] = (
             round(sum(abs(e) for e in exps) / max(
                 sum(abs(g) for g in gots), 1e-9), 2))
+    return out
+
+
+def entry_prices(sum_dir, pairs):
+    """Цены входа из почасовых сводок: `{(символ, час): цена}`.
+
+    Цена входа — закрытие часа сигнала, и она уже лежит в сводке полем
+    `mid_close`. Значит записывать её в выбор было удобством, а не
+    необходимостью: у выборов, сделанных до того, как это поле
+    появилось, цена НЕ потеряна — её надо просто прочитать.
+
+    Берётся то же самое поле, по которому цикл считает цели, поэтому
+    второго определения «цены входа» здесь не заводится.
+
+    Читаются только нужные символо-дни, а не весь каталог: открытых
+    сделок десятки, и обходить сводки целиком ради них незачем.
+    """
+    want = {}
+    for sym, hour in pairs:
+        if not sym or not hour:
+            continue
+        want.setdefault((sym, hour[:10]), set()).add(hour)
+    out = {}
+    for (sym, day), hours in want.items():
+        path = os.path.join(sum_dir, sym, day + ".jsonl")
+        try:
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    h = r.get("hour")
+                    if h in hours and r.get("mid_close"):
+                        # Поздняя строка часа побеждает — тот же порядок,
+                        # что при сборке матриц.
+                        out[(sym, h)] = float(r["mid_close"])
+        except OSError:
+            continue
     return out
 
 

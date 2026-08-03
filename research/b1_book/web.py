@@ -1213,8 +1213,10 @@ button:disabled{opacity:.4}
       outcome (deadline passed but the hour is not summarised yet — a
       trade with no outcome is never counted as zero).
       <b>unreal</b> — live mark-to-market of an open position against
-      its entry price, already net of the taker round trip; it refreshes
-      every 10 s while the rest of the table refreshes once a minute.
+      its entry price (the close of the signal hour, taken from the same
+      hourly summary the model itself trains on), already net of the
+      taker round trip; it refreshes every 10 s while the rest of the
+      table refreshes once a minute.
       <b>exp</b> is the expected move, <b>mae</b> the expected move
       <b>against</b> the position on the way, <b>got</b> what actually
       happened, <b>net</b> the same minus the taker round trip.

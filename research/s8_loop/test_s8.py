@@ -590,6 +590,54 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_entry_price_is_recovered_from_summaries():
+    """Цена входа у старых выборов не потеряна — она в сводке.
+
+    Вопрос владельца: почему нельзя проставить цену входа уже открытым
+    сделкам. Можно, и точно: цена входа есть закрытие часа сигнала, а
+    это поле `mid_close` почасовой сводки — то же самое, по которому
+    цикл считает цели. Записывать её в выбор было удобством, а не
+    необходимостью, и «у старых записей поля нет» было ограничением,
+    которое я сам себе назначил.
+    """
+    import tempfile
+    import trades as TR
+
+    sd = tempfile.mkdtemp()
+    os.makedirs(os.path.join(sd, "AUSDT"))
+    with open(os.path.join(sd, "AUSDT", "2026-08-03.jsonl"), "w",
+              encoding="utf-8") as f:
+        for h in (19, 20, 21):
+            f.write(json.dumps({"hour": f"2026-08-03-{h}",
+                                "mid_close": 100.0 + h}) + "\n")
+    try:
+        px = TR.entry_prices(sd, {("AUSDT", "2026-08-03-20"),
+                                  ("BUSDT", "2026-08-03-20")})
+        check("цена входа прочитана из сводки того же часа",
+              px == {("AUSDT", "2026-08-03-20"): 120.0}, str(px))
+
+        picks = [{"arm": "gbm", "hour": "2026-08-03-20",
+                  "long": [{"sym": "AUSDT", "fwd": 100.0, "mae": -50.0}],
+                  "short": []}]                       # поля `px` НЕТ
+        t = TR.build(picks, [], now=TR._ts("2026-08-03-22"), px_at=px)[0]
+        check("старый выбор получил цену входа", t["entry_px"] == 120.0,
+              str(t.get("entry_px")))
+        TR.mark([t], {"AUSDT": 121.2})
+        check("и переоценивается как обычная открытая",
+              t["unreal_bp"] == 100.0, str(t.get("unreal_bp")))
+
+        # Своя цена в выборе важнее прочитанной: она записана в момент
+        # решения, а сводку могли пересобрать.
+        own = [{"arm": "gbm", "hour": "2026-08-03-20",
+                "long": [{"sym": "AUSDT", "fwd": 1.0, "px": 999.0}],
+                "short": []}]
+        t2 = TR.build(own, [], now=TR._ts("2026-08-03-22"), px_at=px)[0]
+        check("цена из выбора не подменяется сводкой",
+              t2["entry_px"] == 999.0, str(t2.get("entry_px")))
+    finally:
+        shutil.rmtree(sd, ignore_errors=True)
+
+
 def test_unrealised_marks_open_positions_only():
     """Нереализованный результат — по живой цене и только у открытых.
 
@@ -1245,6 +1293,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()
     test_awaiting_review_is_not_a_lost_outcome()
     test_entry_is_the_close_of_the_signal_hour()

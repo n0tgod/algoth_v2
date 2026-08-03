@@ -643,6 +643,9 @@ class Collector:
         # кешируется: страница опрашивает раз в минуту, файлы меняются
         # раз в сутки.
         self._model_cache = (0.0, None)
+        # Цены входа по (символ, час). Закрытый час не меняется, значит
+        # прочитанное можно помнить навсегда.
+        self._px_cache = {}
         # Кольцевые буферы для страницы наблюдения: она смотрит в память,
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
@@ -1235,7 +1238,8 @@ class Collector:
             sys.path.insert(0, os.path.join(os.path.dirname(HERE),
                                             "s8_loop"))
             import trades as TR
-            tr = TR.build(out.get("picks"), out.get("review"))
+            tr = TR.build(out.get("picks"), out.get("review"),
+                          px_at=self.entry_px(out.get("picks")))
             TR.mark(tr, self.marks(tr))
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
@@ -1272,7 +1276,7 @@ class Collector:
             mdir = os.path.join(s8, name)
             picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
             revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
-            tr = TR.build(picks, revs)
+            tr = TR.build(picks, revs, px_at=self.entry_px(picks))
             TR.mark(tr, self.marks(tr))
             if tr or out is None:
                 out = (name, tr, revs, mdir)
@@ -1308,6 +1312,37 @@ class Collector:
                 "symbols": sorted({t["sym"] for t in tr}),
                 "rows": rows[page * per:(page + 1) * per]}
 
+    def entry_px(self, picks):
+        """Цены входа для выборов, которые их не несут.
+
+        Цена входа — закрытие часа сигнала, и оно уже лежит в почасовой
+        сводке. Значит у старых выборов цена НЕ потеряна: её надо
+        прочитать, а не считать недоступной. Читаются только недостающие
+        пары, а прочитанное запоминается навсегда — закрытый час больше
+        не меняется.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+        import trades as TR
+        need = set()
+        for pk in picks or []:
+            hour = pk.get("hour")
+            for side in ("long", "short"):
+                for p in pk.get(side) or []:
+                    if p.get("px"):
+                        continue
+                    key = (p.get("sym"), hour)
+                    if key not in self._px_cache:
+                        need.add(key)
+        if need:
+            sd = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                              "summary")
+            self._px_cache.update(TR.entry_prices(sd, need))
+            # Ненайденные помечаем пустыми, иначе каждый опрос будет
+            # заново перечитывать одни и те же файлы ради отсутствующего.
+            for k in need:
+                self._px_cache.setdefault(k, None)
+        return self._px_cache
+
     def marks(self, trades):
         """Текущая середина по символам открытых сделок.
 
@@ -1340,8 +1375,10 @@ class Collector:
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         for name in ("model_pretest", "model"):
             mdir = os.path.join(s8, name)
-            tr = TR.build(self._jsonl(os.path.join(mdir, "picks.jsonl")),
-                          self._jsonl(os.path.join(mdir, "review.jsonl")))
+            pk = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+            tr = TR.build(pk, self._jsonl(os.path.join(mdir,
+                                                       "review.jsonl")),
+                          px_at=self.entry_px(pk))
             op = [t for t in tr if t.get("state") == "открыта"]
             if not op:
                 continue
