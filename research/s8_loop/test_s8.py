@@ -590,6 +590,51 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_adverse_path_matches_the_side():
+    """Ход ПРОТИВ позиции у лонга и шорта — разные цели.
+
+    `mae_4h` есть минимум цены за горизонт, `mfe_4h` — максимум, и обе
+    считаются по ЦЕНЕ, а не по позиции. Значит лонгу против идёт mae, а
+    шорту — mfe. Первая версия таблицы подставляла шорту mae, то есть
+    подписывала ход в его ПОЛЬЗУ словами «ход против» — вранье в самой
+    важной колонке, и заметил бы его только тот, кто помнит определение.
+    """
+    import train as T
+
+    class Fake:
+        def __init__(self, v):
+            self.v = v
+            self.importance = np.ones(3)
+
+        def predict(self, x):
+            return np.full(len(x), self.v)
+
+    # Цена за горизонт ходит от −300 до +400 б.п. от входа.
+    models = {("gbm", "fwd_4h"): Fake(50.0),
+              ("gbm", "mae_4h"): Fake(-300.0),
+              ("gbm", "mfe_4h"): Fake(400.0)}
+    xj = np.zeros((5, 3))
+    fwd = models[("gbm", "fwd_4h")].predict(xj)
+    mae = models[("gbm", "mae_4h")].predict(xj)
+    mfe = models[("gbm", "mfe_4h")].predict(xj)
+    # Повторяем правило подстановки из `cycle` — оно и проверяется.
+    adv_long = float(mae[0])
+    adv_short = float(mfe[0])
+    check("лонгу против идёт минимум цены", adv_long == -300.0)
+    check("шорту против идёт максимум цены", adv_short == 400.0)
+    check("прежнее поведение не воспроизводится: у шорта не mae",
+          adv_short != float(mae[0]))
+    # И знак читается как «против» у обоих: у лонга цена падала, у
+    # шорта росла — обе стороны потеряли бы.
+    check("обе величины означают убыток своей стороне",
+          adv_long < 0 < adv_short)
+
+    src = open(os.path.join(HERE, "train.py"), encoding="utf-8").read()
+    check("сторона доезжает до сборки выбора", "def mk(i, side):" in src)
+    check("источник хода против пишется в сам выбор",
+          '"adverse_of"' in src)
+
+
 def test_percent_is_the_display_unit():
     """Сделки показываются в ПРОЦЕНТАХ движения цены, не в б.п.
 
@@ -961,6 +1006,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_adverse_path_matches_the_side()
     test_percent_is_the_display_unit()
     test_pretest_runs_where_live_refuses_and_stays_apart()
     test_probe_never_touches_live_model()

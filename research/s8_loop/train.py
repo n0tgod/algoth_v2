@@ -203,7 +203,9 @@ def think(prev_man, man, ic_rows, picks):
             f"4 ч, путь против до {pct(p['mae'])})"
             for p in picks["long"])
         short_s = ", ".join(
-            f"{p['sym'].replace('USDT','')} ({pct(p['fwd'])})"
+            f"{p['sym'].replace('USDT','')} ({pct(p['fwd'])}"
+            + (f", путь против до {pct(p['mae'])}"
+               if p.get("mae") is not None else "") + ")"
             for p in picks["short"])
         out.append(f"если бы торговал сейчас: лонг — {long_s}; "
                    f"шорт — {short_s}. Это ожидание в среднем, не "
@@ -900,19 +902,32 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             rows_m = np.flatnonzero(elig[:, j_last])
             xj = x[rows_m, j_last]
             fwd = models[(arm, "fwd_4h")].predict(xj)
+            # Ход ПРОТИВ позиции у длинной и короткой ноги — разные
+            # цели. `mae_4h` есть минимум цены за горизонт, `mfe_4h` —
+            # максимум; обе считаются по ЦЕНЕ, а не по позиции. Значит
+            # лонгу против идёт mae, а шорту — mfe. Показывать шорту
+            # mae значило бы подписывать ход в его ПОЛЬЗУ словами «ход
+            # против», то есть врать в самую важную колонку.
             mae = models[(arm, "mae_4h")].predict(xj)
+            mfe = (models[(arm, "mfe_4h")].predict(xj)
+                   if (arm, "mfe_4h") in models else None)
             o = np.argsort(fwd)
 
-            def mk(i):
+            def mk(i, side):
+                adv = (float(mae[i]) if side == "long"
+                       else (float(mfe[i]) if mfe is not None else None))
                 d = {"sym": syms[rows_m[i]], "fwd": float(fwd[i]),
-                     "mae": float(mae[i])}
+                     # Имя поля прежнее — его читают старые записи, — но
+                     # смысл теперь «ход против ЭТОЙ позиции».
+                     "mae": adv, "adverse_of": ("mae_4h" if side == "long"
+                                                else "mfe_4h")}
                 nv = novelty(xj[i], nov_lo, nov_hi)
                 if nv is not None:
                     d["odd"] = round(nv, 3)
                 return d
             picks = {"arm": arm, "hour": grid[-1],
-                     "long": [mk(i) for i in o[::-1][:3]],
-                     "short": [mk(i) for i in o[:3]]}
+                     "long": [mk(i, "long") for i in o[::-1][:3]],
+                     "short": [mk(i, "short") for i in o[:3]]}
             with open(ppath, "a", encoding="utf-8") as f:
                 f.write(json.dumps(picks, ensure_ascii=False) + "\n")
 

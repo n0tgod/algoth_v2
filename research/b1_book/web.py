@@ -743,8 +743,10 @@ function tradeTable(p) {
         (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
       <td class="dim">${when}</td></tr>`;
   }).join("");
-  return `<div class="mline">model trades <span class="dim">(expected /
-    worst path expected / actual — % price move over 4 h)</span></div>
+  return `<div class="mline">model trades <span class="dim">(exp —
+    expected move; mae — expected move <b>against</b> the position
+    on the way; got — what actually happened. % of price, over 4 h)
+    </span></div>
     <div style="overflow-x:auto"><table class="mtr">
     <tr><th>hour</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
     <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
