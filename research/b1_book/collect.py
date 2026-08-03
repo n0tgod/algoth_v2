@@ -747,6 +747,13 @@ class Collector:
             "last_snap_age_sec": (round(time.time() - self.last_snap, 1)
                                   if self.last_snap else None),
             "snap_pass_sec": round(self.snap_pass_sec, 3),
+            # По каждому виду: сколько записей и сколько секунд назад
+            # была последняя. Вид, переставший писаться, обязан быть
+            # виден числом, а не выводиться из размера каталога на
+            # диске (тот округляется до сотых гигабайта и молчит).
+            "writes": dict(self.w.n_by_kind),
+            "write_age_sec": {k: round(time.time() - v, 1)
+                              for k, v in self.w.last_by_kind.items()},
         }
 
     def snapshot(self, sym=None, since=0.0, logn=None):

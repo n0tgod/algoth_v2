@@ -361,7 +361,8 @@ def test_health_is_one_definition():
     c = C.Collector(["TEST"], [], root, lambda m: None)
     h = c.health()
     need = {"snapshots", "snapshot_errors", "last_snap_age_sec",
-            "snap_pass_sec", "uptime_sec", "messages", "last_msg_age_sec"}
+            "snap_pass_sec", "uptime_sec", "messages", "last_msg_age_sec",
+            "writes", "write_age_sec"}
     check("здоровье несёт меру записи снимков", need <= set(h),
           str(sorted(set(need) - set(h))))
     page = c.snapshot()["status"]
@@ -369,6 +370,21 @@ def test_health_is_one_definition():
           str(sorted(set(need) - set(page))))
     check("пока снимков нет — возраст пуст, а не ноль",
           page["last_snap_age_sec"] is None and page["snapshots"] == 0)
+
+    # Вид, переставший писаться, обязан быть виден числом: счётчик
+    # растёт только у того вида, в который писали.
+    c.w.write("book", "TEST", {"t": 1, "bid": 1.0, "ask": 1.1}, ts=1.0)
+    c.w.write("liq", "TEST", {"ts": 1000, "side": "Buy", "p": 1.0,
+                              "v": 1.0}, ts=1.0)
+    c.w.write("liq", "TEST", {"ts": 2000, "side": "Sell", "p": 1.0,
+                              "v": 1.0}, ts=2.0)
+    w = c.health()["writes"]
+    check("счётчик по видам считает раздельно",
+          w.get("book") == 1 and w.get("liq") == 2 and "trades" not in w,
+          str(w))
+    check("возраст записи есть по каждому писавшемуся виду",
+          set(c.health()["write_age_sec"]) == {"book", "liq"},
+          str(c.health()["write_age_sec"]))
 
 
 def test_collected_symbols_are_not_lost():
