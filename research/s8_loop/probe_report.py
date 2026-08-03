@@ -85,16 +85,13 @@ def step(ok, name, detail=""):
     return f"| {name} | {mark} | {detail} |"
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dir", default=os.path.join(OUT, "model_probe"),
-                    help="каталог артефактов прогона")
-    ap.add_argument("--out", default=os.path.join(OUT,
-                                                  "S8-probe-report.md"))
-    a = ap.parse_args()
-    d = a.dir if os.path.isabs(a.dir) else os.path.join(HERE, a.dir)
+def write(d, out_path):
+    """Собрать отчёт по каталогу артефактов. Возвращает путь."""
+    # Обычная ошибка, а не SystemExit: `write` зовут из цикла обучения,
+    # и `SystemExit` мимо `except Exception` убил бы прогон целиком —
+    # отчёт не вправе ронять то, о чём отчитывается.
     if not os.path.isdir(d):
-        raise SystemExit(f"нет каталога {d} — прогон не запускался?")
+        raise FileNotFoundError(f"нет каталога {d} — прогон не запускался?")
 
     man = jload(os.path.join(d, "manifest.json"))
     rd = jload(os.path.join(d, "readiness.json"))
@@ -108,6 +105,21 @@ def main():
                      if f.startswith("weights_") and f.endswith(".pkl"))
 
     L = ["# S8 — пробный прогон конвейера", ""]
+    # Манифест пишется В КОНЦЕ цикла, а готовность — в начале. Значит
+    # прогон, остановленный канарейкой или нехваткой сечений, оставляет
+    # манифест ПРОШЛОГО прогона нетронутым, и отчёт по нему рассказал бы
+    # про обучение, которого сейчас не было. Различить это можно только
+    # по времени, и молчать тут нельзя: артефакт прошлого прогона,
+    # выдающий себя за нынешний, — самый частый дефект этого проекта.
+    stale = (man and rd and man.get("trained_at") and rd.get("at")
+             and man["trained_at"] < rd["at"])
+    if stale:
+        L += [f"> **Манифест старше этого прогона** — обучение "
+              f"{man['trained_at']}, прогон {rd['at']}. Значит цикл "
+              f"остановился ДО записи весов (канарейка или нехватка "
+              f"сечений), а всё, что ниже помечено манифестом, описывает "
+              f"ПРОШЛЫЙ прогон. Свежее здесь только «что было на входе».",
+              ""]
     if man and not man.get("probe"):
         L += ["> **Внимание: это артефакты БОЕВОГО прогона** — в манифесте "
               "`probe: false`. Отчёт собран по ним как есть.", ""]
@@ -240,11 +252,26 @@ def main():
               f"- новых часов сводки за прогон: "
               f"{man.get('new_summary_hours')}", ""]
 
-    os.makedirs(os.path.dirname(a.out), exist_ok=True)
-    with open(a.out, "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
-    print(f"отчёт записан: {a.out}")
-    print("\n".join(L[:40]))
+    return out_path, L
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dir", default=os.path.join(OUT, "model_probe"),
+                    help="каталог артефактов прогона")
+    ap.add_argument("--out", default=os.path.join(OUT,
+                                                  "S8-probe-report.md"))
+    a = ap.parse_args()
+    d = a.dir if os.path.isabs(a.dir) else os.path.join(HERE, a.dir)
+    try:
+        path, L = write(d, a.out)
+    except FileNotFoundError as e:
+        raise SystemExit(str(e))
+    print(f"отчёт записан: {path}")
+    print("\n".join(L[:44]))
 
 
 if __name__ == "__main__":

@@ -509,6 +509,61 @@ def test_canary_not_computed_is_not_a_pass():
           '"targets_all"' in src)
 
 
+def test_report_flags_manifest_from_a_previous_run():
+    """Манифест прошлого прогона не смеет выдавать себя за нынешний.
+
+    Готовность пишется в НАЧАЛЕ цикла, манифест — в конце. Значит
+    прогон, остановленный канарейкой, оставляет манифест прошлого
+    нетронутым, и отчёт по нему рассказал бы об обучении, которого
+    сейчас не было. Ровно этот класс дефекта проект ловит чаще всех
+    прочих.
+    """
+    import probe_report as PR
+
+    root = tempfile.mkdtemp()
+    md = os.path.join(root, "model_probe")
+    os.makedirs(md)
+    try:
+        json.dump({"probe": True, "canary_ic": None, "canary_stop": 0.05,
+                   "trained_at": "2026-08-03T17:20:00+00:00",
+                   "targets_all": ["fwd_4h"], "importance": {}},
+                  open(os.path.join(md, "manifest.json"), "w"))
+        json.dump({"at": "2026-08-03T17:44:00+00:00", "sections": 8,
+                   "need": 48, "symbols": 543, "hours": 97,
+                   "features": 50, "min_section": 30,
+                   "beta_min_hours": 96, "hours_per_symbol": 8,
+                   "by_hour": []},
+                  open(os.path.join(md, "readiness.json"), "w"))
+        _, lines = PR.write(md, os.path.join(root, "r.md"))
+        txt = "\n".join(lines)
+        check("устаревший манифест назван прямо",
+              "Манифест старше этого прогона" in txt)
+        check("непосчитанная канарейка не выдаётся за пройденную",
+              "не то же самое" in txt)
+
+        # Тот же манифест, но свежее готовности — предупреждения быть
+        # не должно, иначе оно перестанет читаться.
+        json.dump({"probe": True, "canary_ic": 0.001, "canary_stop": 0.05,
+                   "trained_at": "2026-08-03T17:45:00+00:00",
+                   "targets_all": ["fwd_4h"], "importance": {}},
+                  open(os.path.join(md, "manifest.json"), "w"))
+        _, lines = PR.write(md, os.path.join(root, "r.md"))
+        check("на свежем манифесте предупреждения нет",
+              "Манифест старше" not in "\n".join(lines))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+    # Отчёт зовут из цикла обучения: он не вправе уронить прогон.
+    try:
+        PR.write(os.path.join(root, "нет-такого"), "/tmp/x.md")
+        ok = False
+    except FileNotFoundError:
+        ok = True
+    except SystemExit:
+        ok = False
+    check("нет каталога — обычная ошибка, а не SystemExit", ok)
+
+
 def test_probe_never_touches_live_model():
     """Пробный прогон пишет в свой каталог и метит себя в артефакте.
 
@@ -824,6 +879,7 @@ def main():
     test_retry_when_not_trained()
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
+    test_report_flags_manifest_from_a_previous_run()
     test_probe_never_touches_live_model()
     test_novelty_measure()
     test_nn_learns_and_sees_missing()
