@@ -609,6 +609,9 @@ class Collector:
         # а не в файлы — между данными и глазом не должно быть выгрузки.
         self.lock = threading.Lock()
         self.mid = {s: deque(maxlen=900) for s in symbols}   # 15 минут
+        # По каким символам середина уже дочитана с диска. Подъём идёт
+        # по запросу страницы, а не для всех разом: см. `warm_mid`.
+        self.mid_warmed = set()
         self.tape = {s: deque(maxlen=120) for s in symbols}
         self.lines = LogBuf()
         self.msg_mark = (time.time(), 0)
@@ -766,6 +769,57 @@ class Collector:
                               for k, v in self.w.last_by_kind.items()},
         }
 
+    def warm_mid(self, sym):
+        """Дочитать середину с диска — по одному символу и по запросу.
+
+        Раньше это делалось для ВСЕХ символов при старте, и на живом
+        сборе замер показал цену: подъём читал 480 795 снимков, полный
+        проход сборщика снимков занял из-за этого 63.8 с вместо 0.3, а
+        все четырнадцать соединений получили `ping/pong timed out` и
+        переподключились — то есть запись портилась ради линии на
+        странице. Строка «около 56 снимков в час вместо 3600» в журнале
+        и есть след этой платы.
+
+        Страница смотрит на один символ за раз, значит и читать надо
+        один. Два часовых файла одного имени — доли секунды, и платит за
+        них тот, кто смотрит, а не запись.
+        """
+        with self.lock:
+            if sym in self.mid_warmed:
+                return
+            self.mid_warmed.add(sym)
+        m_from = time.time() - 900
+        hours = sorted({datetime.fromtimestamp(m_from + i * 900,
+                                               timezone.utc)
+                        .strftime("%Y-%m-%d-%H") for i in range(0, 5)})
+        mids = []
+        d = os.path.join(self.w.root, "book", sym)
+        try:
+            for h in hours:
+                for r in read_hour(d, h):
+                    if r.get("t", 0) >= m_from and r.get("bid") \
+                            and r.get("ask"):
+                        mids.append((round(r["t"], 1),
+                                     (r["bid"] + r["ask"]) / 2.0))
+        except Exception as e:                            # noqa: BLE001
+            self.log(f"середину {sym} поднять не вышло: {e}")
+            return
+        if not mids:
+            return
+        mids.sort()
+        with self.lock:
+            live = list(self.mid[sym])
+            # Живая запись идёт параллельно, поэтому дописывать в конец
+            # нельзя: старые точки легли бы ПОСЛЕ новых, и график
+            # показал бы ряд, идущий назад во времени. Берём с диска
+            # только то, что старше самой ранней живой точки.
+            edge = live[0][0] if live else None
+            old = [p for p in mids if edge is None or p[0] < edge]
+            if not old:
+                return
+            self.mid[sym].clear()
+            self.mid[sym].extend((old + live)[-900:])
+
     def snapshot(self, sym=None, since=0.0, logn=None):
         """Состояние для страницы наблюдения — прямо из памяти.
 
@@ -781,6 +835,7 @@ class Collector:
         ли кусок, значит однажды склеить ряд с дырой.
         """
         sym = sym if sym in self.books else self.symbols[0]
+        self.warm_mid(sym)
         b = self.books[sym]
         s = b.sample_view()
         bands = []
@@ -1317,15 +1372,21 @@ def _unfinished(rows):
 def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     """Поднять историю из собственных файлов сборщика.
 
-    Перезапуск не должен стоить двадцати минут накопления: сделки и
-    снимки уже лежат на диске, и по ним восстанавливается и посекундный
-    буфер детектора, и середина для графика. Без этого каждая правка
-    кода обнуляла наблюдение, а уровни появлялись заново только через
-    треть часа.
+    Перезапуск не должен стоить двадцати минут накопления: сделки уже
+    лежат на диске, и по ним восстанавливается посекундный буфер
+    детектора. Без этого каждая правка кода обнуляла наблюдение, а
+    уровни появлялись заново только через треть часа.
 
     Бумажные сделки поднимаются за более длинное окно (`trade_hours`),
     чем поток: поток нужен детектору «сейчас», а сделки — это результат,
     и он не имеет права исчезать по перезапуску.
+
+    Середина для графика здесь НЕ поднимается — она читается по запросу
+    страницы, символ за символом (`Collector.warm_mid`). Массовый подъём
+    стоил записи: 480 795 снимков на старте, проход сборщика 63.8 с
+    вместо 0.3 и `ping/pong timed out` на всех четырнадцати соединениях.
+    Запись — цель машины, линия на странице — удобство; платить первым
+    за второе нельзя.
     """
     def rows_of(kind, sym, hour, cutoff_ts, pick):
         out = []
@@ -1339,48 +1400,23 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     cutoff = time.time() - hours * 3600
     hh = [datetime.fromtimestamp(cutoff + i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(hours + 2)]
-    # Середина нужна за последние 15 минут (буфер страницы — 900 точек
-    # по секунде), значит читать надо два часовых файла, а не шесть.
-    # На полной записи (543 символа × 3600 снимков в час) лишние четыре
-    # часа стоили двенадцати минут подъёма — и все эти двенадцать минут
-    # сбор НЕ ПИСАЛСЯ, потому что подписка идёт после.
-    m_from = time.time() - 900
-    mh = sorted({datetime.fromtimestamp(m_from + i * 900, timezone.utc)
-                 .strftime("%Y-%m-%d-%H") for i in range(0, 5)})
-    n_tr = n_bk = 0
-    for si, sym in enumerate(symbols):
+    n_tr = 0
+    # Лента нужна только детектору бумажных сделок. При выключенных
+    # сделках это чтение миллионов строк ради счётчика в журнале:
+    # прошлый подъём поднял 5.3 млн сделок и не использовал ни одной.
+    for si, sym in enumerate(symbols if collector.paper else ()):
         if si and si % 100 == 0:
             # На полном списке подъём читает сотни файлов; молчание
             # дольше минуты неотличимо от зависания.
             log(f"  подъём истории: {si}/{len(symbols)} символов")
-        # Лента нужна только детектору бумажных сделок. При выключенных
-        # сделках это чтение миллионов строк ради счётчика в журнале:
-        # прошлый подъём поднял 5.3 млн сделок и не использовал ни одной.
-        if collector.paper:
-            rows = []
-            for h in hh:
-                rows += rows_of("trades", sym, h, cutoff, lambda r, c:
-                                r if r.get("ts", 0) / 1000.0 >= c else None)
-            rows.sort(key=lambda x: x.get("ts", 0))
-            for t in rows:
-                collector.sig.on_trade(t)
-            n_tr += len(rows)
-        # Середина для линии обзора — из посекундных снимков стакана.
-        mids = []
-        for h in mh:
-            mids += rows_of(
-                "book", sym, h, m_from,
-                lambda r, c: ((round(r["t"], 1),
-                               (r["bid"] + r["ask"]) / 2.0)
-                              if r.get("t", 0) >= c and r.get("bid")
-                              and r.get("ask") else None))
-        mids.sort()
-        # Подъём идёт рядом с живой записью, поэтому дописывать в
-        # непустой буфер нельзя: старые точки легли бы ПОСЛЕ новых, и
-        # график страницы показал бы ряд, идущий назад во времени.
-        if mids and not collector.mid[sym]:
-            collector.mid[sym].extend(mids[-900:])
-            n_bk += len(mids)
+        rows = []
+        for h in hh:
+            rows += rows_of("trades", sym, h, cutoff, lambda r, c:
+                            r if r.get("ts", 0) / 1000.0 >= c else None)
+        rows.sort(key=lambda x: x.get("ts", 0))
+        for t in rows:
+            collector.sig.on_trade(t)
+        n_tr += len(rows)
     n_paper = 0
     ph = [datetime.fromtimestamp(time.time() - i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(trade_hours, -1, -1)]
@@ -1427,11 +1463,11 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
             + (f", возвращено в работу {n_alive}" if n_alive else "")
             + (f", без исхода {n_left} (лента не дотянулась)"
                if n_left else ""))
-    if n_tr or n_bk:
-        log(f"поднято из своих файлов: сделок {n_tr:,}, снимков {n_bk:,}, "
+    if n_tr or n_paper:
+        log(f"поднято из своих файлов: сделок {n_tr:,}, "
             f"бумажных сделок {n_paper}")
     else:
-        log("своих файлов нет — история копится с нуля")
+        log("подъём истории не требуется — середина читается по запросу")
 
 
 def stable_token(root):

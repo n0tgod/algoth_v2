@@ -326,7 +326,12 @@ def test_warm_start_restores_history():
         v = b.sig.by["TEST"].view()
         check(f"история поднялась ({v['history_min']} мин)",
               v["history_min"] > 15, str(v["history_min"]))
-        check(f"середина поднялась ({len(b.mid['TEST'])} точек)",
+        # Середина подъёмом больше не поднимается — она читается по
+        # запросу страницы. Здесь проверяется, что путь к ней остался
+        # рабочим, а не что подъём её принёс.
+        b.warm_mid("TEST")
+        check(f"середина читается по запросу "
+              f"({len(b.mid['TEST'])} точек)",
               len(b.mid["TEST"]) > 100, str(len(b.mid["TEST"])))
         b.w.close()
     finally:
@@ -474,6 +479,11 @@ def test_warm_start_is_cheap_and_safe():
     и всё это время сбор НЕ ПИСАЛСЯ. Лента при выключенных бумажных
     сделках не нужна вовсе: прошлый подъём поднял 5.3 млн сделок и не
     использовал ни одной.
+
+    Середина сюда больше не входит: живой замер показал, что массовый
+    подъём снимков стоил самой записи (проход 63.8 с вместо 0.3 и
+    `ping/pong timed out` на всех соединениях). Она читается по запросу
+    страницы — см. следующий тест.
     """
     import tempfile
     import time as _time
@@ -493,18 +503,80 @@ def test_warm_start_is_cheap_and_safe():
     c.w.close()
 
     b = C.Collector(["TEST"], [], root, lambda m: None)
-    C.warm_start(root, ["TEST"], b, lambda m: None)
-    check("середина поднята", len(b.mid["TEST"]) > 100,
+    read = []
+    orig = C.read_hour
+    C.read_hour = lambda d, h, log=None: (read.append(d), orig(d, h))[1]
+    try:
+        C.warm_start(root, ["TEST"], b, lambda m: None)
+    finally:
+        C.read_hour = orig
+    # Главное утверждение: при выключенных бумажных сделках подъём не
+    # трогает НИ ОДНОГО файла книги. Это и есть цена, которую платила
+    # запись.
+    check("подъём не читает книгу",
+          not any(os.sep + "book" + os.sep in d for d in read),
+          f"каталогов прочитано {len(read)}")
+    check("середина при старте пуста", not b.mid["TEST"],
           str(len(b.mid["TEST"])))
 
-    # Живой ряд уже есть — подъём не вправе дописать в него прошлое:
-    # старые точки легли бы ПОСЛЕ новых, и график пошёл бы назад.
+
+def test_warm_mid_is_lazy_and_ordered():
+    """Середина читается по запросу и не ломает порядок времени.
+
+    Живая запись идёт параллельно чтению, поэтому дописывать поднятое в
+    конец нельзя: старые точки легли бы ПОСЛЕ новых, и график страницы
+    показал бы ряд, идущий назад во времени. Берём только то, что старше
+    самой ранней живой точки.
+    """
+    import tempfile
+    import time as _time
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    now = int(_time.time())
+    c = C.Collector(["TEST"], [], root, lambda m: None)
+    for i in range(600):
+        ts = now - 600 + i
+        c.w.write("book", "TEST", {"t": ts, "bid": 100.0, "ask": 100.02},
+                  ts=ts)
+    c.w.close()
+
+    b = C.Collector(["TEST"], [], root, lambda m: None)
+    b.warm_mid("TEST")
+    check("середина поднята по запросу", len(b.mid["TEST"]) > 100,
+          str(len(b.mid["TEST"])))
+
+    # Второй запрос не должен читать диск снова: страница опрашивает
+    # раз в секунду, и повтор чтения был бы той же платой, только
+    # растянутой.
+    reads = []
+    orig = C.read_hour
+    C.read_hour = lambda d, h, log=None: (reads.append(d), orig(d, h))[1]
+    try:
+        b.warm_mid("TEST")
+    finally:
+        C.read_hour = orig
+    check("повторный запрос диск не читает", not reads, str(len(reads)))
+
+    # Живой ряд уже идёт — поднятое обязано встать ПЕРЕД ним.
     d = C.Collector(["TEST"], [], root, lambda m: None)
-    d.mid["TEST"].append((float(now + 10), 101.0))
-    C.warm_start(root, ["TEST"], d, lambda m: None)
+    d.mid["TEST"].append((float(now - 300), 101.0))
+    d.warm_mid("TEST")
     seq = [t for t, _ in d.mid["TEST"]]
-    check("живой ряд не испорчен прошлым",
-          seq == sorted(seq) and len(seq) == 1, str(seq[:4]))
+    check("порядок времени сохранён", seq == sorted(seq), str(seq[:4]))
+    check("живая точка на месте", seq[-1] == float(now - 300),
+          str(seq[-3:]))
+    check("прошлое добавлено", len(seq) > 1, str(len(seq)))
+
+    # Живая точка старше всего записанного — добавлять нечего, и ряд
+    # обязан остаться нетронутым.
+    e = C.Collector(["TEST"], [], root, lambda m: None)
+    e.mid["TEST"].append((float(now - 1000), 101.0))
+    e.warm_mid("TEST")
+    check("нечего добавить — ряд не тронут",
+          [t for t, _ in e.mid["TEST"]] == [float(now - 1000)],
+          str(list(e.mid["TEST"])))
 
 
 def test_shrunken_run_announces_dropped_symbols():
@@ -1875,6 +1947,7 @@ def main():
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()
     test_warm_start_is_cheap_and_safe()
+    test_warm_mid_is_lazy_and_ordered()
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
     test_health_is_one_definition()
