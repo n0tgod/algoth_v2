@@ -3,3 +3,5 @@ out/*
 !out/*.json
 !out/.gitkeep
 out/*smoke*
+# Пробный прогон конвейера: по содержимому неотличим от боевого.
+out/model_probe/

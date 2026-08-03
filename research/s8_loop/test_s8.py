@@ -462,6 +462,54 @@ def test_readiness_is_written_before_training():
     check("порог сечения записан", r["min_section"] == FB.MIN_SECTION)
 
 
+def test_probe_never_touches_live_model():
+    """Пробный прогон пишет в свой каталог и метит себя в артефакте.
+
+    Владелец вправе посмотреть, как работает обучение, до того как
+    накопятся сорок восемь сечений. Опасность здесь ровно одна и она
+    уже случалась: коммит F2 подменил артефакт настоящего прогона
+    смоуковым, потому что по содержимому они неотличимы. Поэтому
+    пробный прогон меняет КАТАЛОГ, а не порог, и метка `probe` лежит в
+    манифесте — каталог переименуют, а манифест поедет с весами.
+    """
+    import train as T
+
+    live, probe_flag = T.MODEL_DIR, T.PROBE
+    orig_argv = sys.argv
+    try:
+        sys.argv = ["t", "--probe"]
+        seen = {}
+
+        def fake_cycle(sum_dir, log_, **kw):
+            seen["dir"] = T.MODEL_DIR
+            seen["probe"] = T.PROBE
+            return False
+
+        orig_c = T.cycle
+        T.cycle = fake_cycle
+        try:
+            T.main()
+        finally:
+            T.cycle = orig_c
+    finally:
+        sys.argv = orig_argv
+        T.MODEL_DIR, T.PROBE = live, probe_flag
+
+    check("пробный прогон уводит каталог от боевого",
+          seen.get("dir") and seen["dir"] != live, str(seen.get("dir")))
+    check("каталог назван отдельно, а не рядом случайно",
+          str(seen.get("dir")).endswith("model_probe"), str(seen.get("dir")))
+    check("флаг пробы поднят", seen.get("probe") is True)
+    check("боевой каталог восстановлен", T.MODEL_DIR == live)
+    # Порог не трогается: пробный прогон обходит его каталогом, а не
+    # понижением. Понизить порог значило бы, что боевое обучение
+    # однажды случится на восьми сечениях.
+    check("боевой порог сечений не изменился",
+          T.MIN_TRAIN_SECTIONS == 48, str(T.MIN_TRAIN_SECTIONS))
+    check("порог пробы заметно ниже боевого",
+          T.PROBE_MIN_SECTIONS < T.MIN_TRAIN_SECTIONS)
+
+
 def test_novelty_measure():
     """Новизна: доля признаков вне диапазона обучения, NaN не судится."""
     import train as T
@@ -728,6 +776,7 @@ def main():
     print("цикл переобучения")
     test_retry_when_not_trained()
     test_readiness_is_written_before_training()
+    test_probe_never_touches_live_model()
     test_novelty_measure()
     test_nn_learns_and_sees_missing()
     test_think_words()

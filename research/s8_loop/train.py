@@ -59,6 +59,10 @@ ARMS = (("gbm", gbm.fit), ("nn", nn.fit))
 CYCLE_SEC = 24 * 3600             # спека §5: раз в сутки
 RETRY_SEC = 3600                  # не обучился — проверить через час
 MIN_TRAIN_SECTIONS = 48           # меньше двух суток сечений — рано
+# Пробный прогон: тот же конвейер на том, что уже накоплено, но в свой
+# каталог и со своей пометкой. Порог 48 не трогается — см. `--probe`.
+PROBE_MIN_SECTIONS = 4
+PROBE = False
 CANARY_STOP = 0.05                # грубая течь; шум зерна тут ±0.015
 # Бумажный счёт руки: старт $1000, 6 позиций равными долями, тейкерский
 # круг 11 б.п. с позиции, без проскальзывания (сказано прямо), плечо 1.
@@ -475,7 +479,13 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
          f"сечений с ≥{FB.MIN_SECTION} именами: {n_sections}, "
          f"признаков {len(names)}")
     write_readiness(syms, grid, per_hour, n_sections, len(names), log_)
-    if n_sections < MIN_TRAIN_SECTIONS:
+    if PROBE:
+        log_(f"ПРОБНЫЙ ПРОГОН: сечений {n_sections}, порог понижен до "
+             f"{PROBE_MIN_SECTIONS}. Проверяется, что конвейер работает "
+             f"целиком, а НЕ качество модели: на таком числе сечений "
+             f"числа — шум, и опираться на них нельзя ни в какую "
+             f"сторону. Артефакты идут в {MODEL_DIR} и помечены probe.")
+    if n_sections < (PROBE_MIN_SECTIONS if PROBE else MIN_TRAIN_SECTIONS):
         log_(f"сечений {n_sections} из {MIN_TRAIN_SECTIONS} — учиться "
              f"рано, запись копится (осталось "
              f"~{MIN_TRAIN_SECTIONS - n_sections} ч)")
@@ -528,6 +538,13 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         pass
 
     man = {"version": MODEL_VERSION, "trained_upto": grid[-1],
+           # Пометка обязана лежать В артефакте, а не в имени каталога:
+           # каталог переименуют или скопируют, а манифест поедет с
+           # весами. Прогон F2 однажды уже подменил артефакт настоящего
+           # прогона смоуковым — по содержимому они были неотличимы.
+           "probe": PROBE,
+           "min_sections": (PROBE_MIN_SECTIONS if PROBE
+                            else MIN_TRAIN_SECTIONS),
            "trained_at": datetime.now(timezone.utc).isoformat(
                timespec="seconds"),
            "symbols": len(syms), "hours": len(grid),
@@ -676,10 +693,23 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
 
 
 def main():
+    global MODEL_DIR, PROBE
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--summary-dir", default=SM.OUT)
+    ap.add_argument("--probe", action="store_true",
+                    help="пробный прогон конвейера на накопленном: свой "
+                         "каталог, свои артефакты, порог сечений "
+                         "понижен. Числа НЕ являются измерением.")
     a = ap.parse_args()
+    if a.probe:
+        # Порог 48 остаётся нетронутым, меняется КАТАЛОГ. Иначе
+        # пробный прогон записал бы веса, счета и выборы поверх
+        # боевых, и живой контур поехал бы на модели, обученной на
+        # шуме, — а снаружи это выглядело бы как работающая модель.
+        MODEL_DIR = os.path.join(OUT, "model_probe")
+        PROBE = True
+        a.once = True
     try:
         os.nice(10)               # приём данных важнее счёта
     except OSError:
