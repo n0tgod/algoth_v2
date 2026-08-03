@@ -359,6 +359,40 @@ def test_targets_shapes_and_direction():
           (t["mfe_4h"][ok] >= t["mae_4h"][ok] - 1e-9).all())
 
 
+def test_retry_when_not_trained():
+    """Не обучился — проверить через час, а не через сутки.
+
+    Дефект, найденный на живом сервере: сутки — период переобучения,
+    а не наказание за «данных ещё мало». Пока пауза была общей, час
+    накопления 48-го сечения стоил бы полных суток ожидания.
+    """
+    import train as T
+    slept, calls = [], []
+
+    def fake_cycle(sum_dir, log_, **kw):
+        calls.append(1)
+        if len(calls) >= 3:
+            raise SystemExit               # выход из вечного цикла
+        return len(calls) == 2             # первый — нет, второй — да
+
+    def fake_sleep(s):
+        slept.append(s)
+
+    orig_c, orig_s, orig_argv = T.cycle, T.time.sleep, sys.argv
+    T.cycle, T.time.sleep, sys.argv = fake_cycle, fake_sleep, ["t"]
+    try:
+        try:
+            T.main()
+        except SystemExit:
+            pass
+    finally:
+        T.cycle, T.time.sleep, sys.argv = orig_c, orig_s, orig_argv
+    check("после «рано» ждём час, после обучения — сутки",
+          slept == [T.RETRY_SEC, T.CYCLE_SEC], str(slept))
+    check("час заметно меньше суток",
+          T.RETRY_SEC <= 3600 < T.CYCLE_SEC)
+
+
 def test_novelty_measure():
     """Новизна: доля признаков вне диапазона обучения, NaN не судится."""
     import train as T
@@ -622,6 +656,7 @@ def main():
     test_eligibility_floor()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
+    test_retry_when_not_trained()
     test_novelty_measure()
     test_nn_learns_and_sees_missing()
     test_think_words()

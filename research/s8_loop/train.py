@@ -57,6 +57,7 @@ TARGETS = [f"{k}_{h}h" for k in ("fwd", "mfe", "mae") for h in FB.HORIZONS]
 # на табличных признаках и неделях данных сеть скорее проиграет.
 ARMS = (("gbm", gbm.fit), ("nn", nn.fit))
 CYCLE_SEC = 24 * 3600             # спека §5: раз в сутки
+RETRY_SEC = 3600                  # не обучился — проверить через час
 MIN_TRAIN_SECTIONS = 48           # меньше двух суток сечений — рано
 CANARY_STOP = 0.05                # грубая течь; шум зерна тут ±0.015
 # Бумажный счёт руки: старт $1000, 6 позиций равными долями, тейкерский
@@ -442,8 +443,9 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
          f"сечений с ≥{FB.MIN_SECTION} именами: {n_sections}, "
          f"признаков {len(names)}")
     if n_sections < MIN_TRAIN_SECTIONS:
-        log_(f"сечений меньше {MIN_TRAIN_SECTIONS} — учиться рано, "
-             f"запись копится")
+        log_(f"сечений {n_sections} из {MIN_TRAIN_SECTIONS} — учиться "
+             f"рано, запись копится (осталось "
+             f"~{MIN_TRAIN_SECTIONS - n_sections} ч)")
         return False
 
     ic_rows = eval_previous(x, targets, elig, grid, log_)
@@ -650,8 +652,9 @@ def main():
     except OSError:
         pass
     while True:
+        trained = False
         try:
-            cycle(a.summary_dir, log)
+            trained = bool(cycle(a.summary_dir, log))
         except Exception as e:                            # noqa: BLE001
             # Цикл живёт сутками; одна упавшая итерация не вправе
             # убить процесс — но обязана быть видна.
@@ -660,7 +663,15 @@ def main():
             traceback.print_exc()
         if a.once:
             break
-        time.sleep(CYCLE_SEC)
+        # Сутки — период ПЕРЕОБУЧЕНИЯ (спека §5), а не наказание за
+        # «ещё рано». Цикл, не обучившийся (мало сечений, крикнула
+        # канарейка, упал), обязан проверить снова скоро: иначе сутки
+        # ожидания данных превращаются в двое, и ждать выглядит ровно
+        # как работать. Тот же класс, что «отказ неотличим от тишины».
+        wait = CYCLE_SEC if trained else RETRY_SEC
+        log(f"следующая попытка через {wait // 60} мин "
+            f"({'переобучение по расписанию' if trained else 'обучения не было'})")
+        time.sleep(wait)
 
 
 if __name__ == "__main__":
