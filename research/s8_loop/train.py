@@ -69,6 +69,15 @@ RETRY_SEC = 3600                  # не обучился — проверить
 # Запас после закрытия часа: сначала его надо свести по всем монетам, и
 # только потом обучаться. Он же есть нижняя граница запаздывания входа.
 MARGIN_SEC = 120
+# Предпросмотр сводку не пишет — он читает готовую, а пишет её боевой
+# цикл. Значит приходить он обязан ПОСЛЕ него, иначе увидит сетку без
+# только что закрывшегося часа и отстанет ровно на час. Ровно это и
+# случилось на сервере: предпросмотр в 23:00:01, сведение часа 22 в
+# 23:03 — и сделки, которым срок вышел в 23:00, провисели «ждёт
+# разбора» до следующего часа.
+PRETEST_MARGIN_SEC = 360
+# Пришёл, а сводка ещё не дописана — ждать час незачем: пробуем скоро.
+STALE_RETRY_SEC = 300
 MIN_TRAIN_SECTIONS = 48           # меньше двух суток сечений — рано
 # Пробный прогон: тот же конвейер на том, что уже накоплено, но в свой
 # каталог и со своей пометкой. Порог 48 не трогается — см. `--probe`.
@@ -680,7 +689,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         log_(f"сечений {n_sections} из {MIN_TRAIN_SECTIONS} — учиться "
              f"рано, запись копится (осталось "
              f"~{MIN_TRAIN_SECTIONS - n_sections} ч)")
-        write_outcome("мало сечений", sections=n_sections,
+        write_outcome("мало сечений", last_hour=grid[-1],
+                      sections=n_sections,
                       need=MIN_TRAIN_SECTIONS, hours_per_symbol=int(hist_h),
                       beta_min_hours=FB.BETA_MIN)
         return False
@@ -711,7 +721,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         log_(f"канарейка не считается: ни одна цель не набирает строк. "
              f"Веса НЕ обновляются: непосчитанная проверка не является "
              f"пройденной")
-        write_outcome("канарейка не считалась", sections=n_sections,
+        write_outcome("канарейка не считалась", last_hour=grid[-1],
+                      sections=n_sections,
                       hours_per_symbol=int(hist_h),
                       beta_min_hours=FB.BETA_MIN)
         return False
@@ -736,7 +747,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                f"{int(hist_h)}")
         if not (PROBE or PRETEST):
             log_(msg + ". Веса НЕ обновляются: выбирать монеты не на чем")
-            write_outcome("нет главной цели", sections=n_sections,
+            write_outcome("нет главной цели", last_hour=grid[-1],
+                          sections=n_sections,
                           hours_per_symbol=int(hist_h),
                           beta_min_hours=FB.BETA_MIN,
                           canary_ic=round(float(med), 4),
@@ -1034,7 +1046,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         log_(f"мысль: {t}")
     log_(f"цикл закончен за {man['cycle_sec']:.0f} с, веса v{MODEL_VERSION} "
          f"до часа {grid[-1]}")
-    write_outcome("обучилась", sections=n_sections,
+    write_outcome("обучилась", last_hour=grid[-1],
+                  sections=n_sections,
                   hours_per_symbol=int(hist_h),
                   beta_min_hours=FB.BETA_MIN,
                   canary_ic=man["canary_ic"], canary_target=cname,
@@ -1042,6 +1055,26 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                   trained=sorted(f"{a}/{t}" for a, t in models),
                   picks=bool(all_lines), cycle_sec=man["cycle_sec"])
     return True
+
+
+def stale_summary():
+    """Отстал ли последний прогон от закрывшегося часа.
+
+    Сравнивается час, на котором работал цикл (`last_hour` в исходе), с
+    последним ЗАКРЫВШИМСЯ часом. Если цикл видел более ранний, значит
+    сводка на момент его прохода ещё не была дописана.
+    """
+    try:
+        with open(os.path.join(MODEL_DIR, "last_run.json"),
+                  encoding="utf-8") as f:
+            lh = json.load(f).get("last_hour")
+    except (OSError, ValueError):
+        return False
+    if not lh:
+        return False
+    want = datetime.fromtimestamp(time.time() - 3600, timezone.utc)\
+        .strftime("%Y-%m-%d-%H")
+    return lh < want
 
 
 def demo():
@@ -1182,6 +1215,17 @@ def main():
         # его смысл — показывать, как модель меняется по мере
         # накопления, а сутки ожидания это скрыли бы.
         wait = RETRY_SEC if (a.pretest or not trained) else CYCLE_SEC
+        # Предпросмотр отдельно проверяет, СВЕЖУЮ ли сводку он видел.
+        # Он её не пишет, а читает; придя раньше боевого цикла, он
+        # увидит сетку без только что закрывшегося часа и отстанет на
+        # час — а вместе с ним на час зависнут все сделки, которым срок
+        # вышел. Ждать час в такой ситуации незачем: сводка допишется
+        # через минуты.
+        if a.pretest and stale_summary():
+            log("сводка ещё не догнала закрывшийся час — "
+                f"повтор через {STALE_RETRY_SEC // 60} мин")
+            time.sleep(STALE_RETRY_SEC)
+            continue
         if wait == RETRY_SEC:
             # Часовой цикл ждёт до ГРАНИЦЫ ЧАСА, а не ровно час от
             # прошлого раза. Разница видна числом: запаздывание входа
@@ -1193,8 +1237,8 @@ def main():
             #
             # Запас нужен: час сначала надо свести. Меньше запаса —
             # цикл увидит незакрытый час и выберет по прошлому.
-            wait = max(MARGIN_SEC,
-                       3600 - (time.time() % 3600) + MARGIN_SEC)
+            margin = PRETEST_MARGIN_SEC if a.pretest else MARGIN_SEC
+            wait = max(margin, 3600 - (time.time() % 3600) + margin)
         log(f"следующая попытка через {wait // 60:.0f} мин "
             f"({'переобучение по расписанию' if trained else 'обучения не было'})")
         time.sleep(wait)

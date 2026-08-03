@@ -16,6 +16,8 @@ import time
 
 import numpy as np
 
+from datetime import datetime, timezone
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
@@ -632,6 +634,62 @@ def test_capital_returns_before_it_is_redeployed():
     TR.account(z, "gbm")
     check("нулевая метка времени не выбрасывает сделку из счёта",
           z[0].get("size"), str(z[0].get("size")))
+
+
+def test_pretest_comes_after_the_summary_is_written():
+    """Предпросмотр приходит ПОСЛЕ боевого цикла, а не вместе с ним.
+
+    Сводку часов пишет боевой цикл, предпросмотр её только читает.
+    Придя раньше, он видит сетку без только что закрывшегося часа и
+    отстаёт ровно на час — а вместе с ним на час зависают все сделки,
+    которым срок вышел.
+
+    Замер на сервере, по которому это и нашлось: предпросмотр отработал
+    в 23:00:01, сведение часа 22 закончилось в 23:03, и сделки со
+    сроком 23:00 провисели «ждёт разбора» до следующего часа.
+    """
+    import tempfile
+    import train as T
+
+    check("запас предпросмотра больше боевого",
+          T.PRETEST_MARGIN_SEC > T.MARGIN_SEC,
+          f"{T.PRETEST_MARGIN_SEC} против {T.MARGIN_SEC}")
+    # Запас не должен съедать час: иначе разбор уедет к следующему.
+    check("но не настолько, чтобы съесть час",
+          T.PRETEST_MARGIN_SEC < 1800, str(T.PRETEST_MARGIN_SEC))
+
+    d = tempfile.mkdtemp()
+    keep = T.MODEL_DIR
+    T.MODEL_DIR = os.path.join(d, "m")
+    os.makedirs(T.MODEL_DIR)
+    try:
+        now = time.time()
+        closed = datetime.fromtimestamp(now - 3600, timezone.utc)\
+            .strftime("%Y-%m-%d-%H")
+        earlier = datetime.fromtimestamp(now - 7200, timezone.utc)\
+            .strftime("%Y-%m-%d-%H")
+        path = os.path.join(T.MODEL_DIR, "last_run.json")
+
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"last_hour": closed}, f)
+        check("видел последний закрывшийся час — не отстал",
+              not T.stale_summary())
+
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"last_hour": earlier}, f)
+        check("видел час постарше — отстал, повторять скоро",
+              T.stale_summary())
+        check("повтор скорый, а не через час",
+              0 < T.STALE_RETRY_SEC < T.RETRY_SEC, str(T.STALE_RETRY_SEC))
+
+        # Нет исхода — не повод объявлять отставание: на первом же
+        # проходе цикла файла ещё нет.
+        os.remove(path)
+        check("без исхода отставание не выдумывается",
+              not T.stale_summary())
+    finally:
+        T.MODEL_DIR = keep
+        shutil.rmtree(d, ignore_errors=True)
 
 
 def test_hourly_cycle_wakes_on_the_hour():
@@ -1481,6 +1539,7 @@ def main():
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
     test_capital_returns_before_it_is_redeployed()
+    test_pretest_comes_after_the_summary_is_written()
     test_hourly_cycle_wakes_on_the_hour()
     test_account_is_one_capital_at_leverage_one()
     test_unrealised_never_mixes_with_realised()
