@@ -38,10 +38,15 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
-TARGETS = ("fwd_1h", "fwd_4h", "fwd_24h", "mae_4h")
 ARMS = ("gbm", "nn")
 RU_ARM = {"gbm": "деревья (ML)", "nn": "сеть (AI)"}
-CANARY_STOP = 0.01
+# Ни списка целей, ни порога канарейки здесь НЕТ намеренно. Первая
+# версия отчёта держала их константами, и обе разошлись с прогоном за
+# один вечер: целей оказалось девять, а не четыре, и отчёт объявил
+# шесть обученных целей «пропущенными»; порог канарейки был записан
+# 0.01 против 0.05 в цикле. Отчёт обязан описывать ТОТ прогон, который
+# породил файл (урок R1) — значит и цели, и пороги читаются из
+# артефакта.
 
 
 def jload(path):
@@ -125,8 +130,13 @@ def main():
               f"≥ {rd['min_section']}"]
         bh = rd.get("by_hour") or []
         thin = [h for h in bh if h["n"] < rd["min_section"]]
-        L += [f"- из последних {len(bh)} часов не дотянули {len(thin)}",
-              "",
+        L += [f"- из последних {len(bh)} часов не дотянули {len(thin)}"]
+        bmin, hps = rd.get("beta_min_hours"), rd.get("hours_per_symbol")
+        if bmin is not None and hps is not None:
+            L += [f"- часов годной истории на монету: **{hps}** при "
+                  f"{bmin}, нужных бете — а без беты нет цели `fwd_4h`, "
+                  f"то есть ни канарейки, ни выбора"]
+        L += ["",
               "Имён в часе, последние двенадцать: "
               + " · ".join(f"{h['h'][-2:]}ч {h['n']}" for h in bh[-12:])]
     else:
@@ -141,19 +151,30 @@ def main():
                f"{(rd or {}).get('symbols', '?')} монет")]
 
     can = (man or {}).get("canary_ic")
-    can_ok = can is not None and abs(can) <= CANARY_STOP
-    L += [step(can_ok, "канарейка (обучение на перемешанных целях)",
-               f"IC {can:+.4f} при пороге ±{CANARY_STOP}"
-               if can is not None else "не считалась")]
+    stop = (man or {}).get("canary_stop")
+    can_ok = (can is not None and stop is not None
+              and abs(can) <= stop)
+    L += [step(can_ok if can is not None else False,
+               "канарейка (обучение на перемешанных целях)",
+               f"IC {can:+.4f} при пороге ±{stop}" if can is not None
+               else "**не считалась — а это не то же самое, что "
+                    "пройдена**: цель fwd_4h пуста, ей нужна бета")]
 
-    have = {(w.split("_")[1], w[len("weights_"):-4].split("_", 1)[1])
-            for w in weights}
+    # Цели берутся из самого прогона: имена весов плюс ключи важностей.
+    have = {(w[len("weights_"):-4].split("_", 1)[0],
+             w[len("weights_"):-4].split("_", 1)[1]) for w in weights}
+    declared = sorted({t for _, t in have}
+                      | {t for per in ((man or {}).get("importance")
+                                       or {}).values() for t in per}
+                      | set((man or {}).get("targets_all") or ()))
     for arm in ARMS:
-        got = sorted(t for t in TARGETS if (arm, t) in have)
-        miss = [t for t in TARGETS if t not in got]
+        got = sorted(t for t in declared if (arm, t) in have)
+        miss = [t for t in declared if (arm, t) not in have]
         L += [step(bool(got), f"обучение: {RU_ARM[arm]}",
-                   ("веса на " + ", ".join(got) if got else "весов нет")
-                   + (f"; без целей: {', '.join(miss)}" if miss else ""))]
+                   (f"веса на {len(got)} целях: " + ", ".join(got)
+                    if got else "весов нет")
+                   + (f"; без целей ({len(miss)}): " + ", ".join(miss)
+                      if miss else ""))]
 
     # Выбор обязан быть, если веса обеих целей отбора обучились: он и
     # есть то, ради чего конвейер существует. Его отсутствие при

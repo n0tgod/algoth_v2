@@ -411,6 +411,26 @@ def eval_previous(x, targets, elig, grid, log_):
     return rows
 
 
+def canary_verdict(med):
+    """Три состояния канарейки, а не два.
+
+    `NaN` означает «проверка не считалась», и это НЕ «прошла».
+    Канарейка считается по `fwd_4h` — остатку к волне, — а тому нужна
+    бета, бете нужно `FB.BETA_MIN` часов истории на монету. Пока их
+    нет, цель пуста и медиана выходит `NaN`.
+
+    Прежнее условие было слитным (`isfinite(med) and |med| > порог`) и
+    читало `NaN` как «крика не было»: веса записывались, а потом вели
+    бы бумажные счета без единой проверки на течь. Найдено пробным
+    прогоном на восьми сечениях, но существенно для боевого: 48 сечений
+    меньше, чем BETA_MIN = 96 часов, то есть первое настоящее обучение
+    случилось бы ровно в этом состоянии.
+    """
+    if not np.isfinite(med):
+        return "не считалась"
+    return "кричит" if abs(med) > CANARY_STOP else "молчит"
+
+
 def canary(x, y, elig, grid, seed, log_):
     """Обучение на перемешанных целях: кричит только на грубую течь."""
     day_idx = np.broadcast_to(np.arange(len(grid)), elig.shape)
@@ -430,7 +450,8 @@ def canary(x, y, elig, grid, seed, log_):
     return med
 
 
-def write_readiness(syms, grid, per_hour, n_sections, n_feat, log_):
+def write_readiness(syms, grid, per_hour, n_sections, n_feat,
+                    hist_h, log_):
     """Готовность к обучению — файлом, а не строкой в журнале.
 
     Это третий раз, когда одна и та же слепота стоит суток. Сбор
@@ -450,6 +471,14 @@ def write_readiness(syms, grid, per_hour, n_sections, n_feat, log_):
         "symbols": len(syms), "hours": len(grid),
         "sections": n_sections, "need": MIN_TRAIN_SECTIONS,
         "min_section": FB.MIN_SECTION, "features": n_feat,
+        # Сечений мало — не единственное, чего можно ждать. Главная цель
+        # `fwd_4h` есть остаток к волне, ей нужна бета, а бете —
+        # BETA_MIN часов годной истории НА МОНЕТУ. Сорок восемь сечений
+        # меньше девяноста шести, то есть по одному счётчику ждать
+        # осталось двое суток, а по другому четверо. Показывать надо оба,
+        # иначе «обучение началось, а выборов нет» выглядит поломкой.
+        "beta_min_hours": FB.BETA_MIN,
+        "hours_per_symbol": int(hist_h),
         "by_hour": hours[-72:],
     }
     tmp = os.path.join(MODEL_DIR, "readiness.json.tmp")
@@ -478,7 +507,11 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     log_(f"матрица: {len(syms)} символов × {len(grid)} часов, "
          f"сечений с ≥{FB.MIN_SECTION} именами: {n_sections}, "
          f"признаков {len(names)}")
-    write_readiness(syms, grid, per_hour, n_sections, len(names), log_)
+    # Часов годной истории НА МОНЕТУ — второй счётчик ожидания,
+    # независимый от числа сечений: бете нужен именно он.
+    hist_h = float(np.median(elig.sum(axis=1))) if elig.size else 0
+    write_readiness(syms, grid, per_hour, n_sections, len(names),
+                    hist_h, log_)
     if PROBE:
         log_(f"ПРОБНЫЙ ПРОГОН: сечений {n_sections}, порог понижен до "
              f"{PROBE_MIN_SECTIONS}. Проверяется, что конвейер работает "
@@ -495,7 +528,14 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
 
     med = canary(x, targets["fwd_4h"], elig, grid,
                  SEED0 + len(grid), log_)
-    if np.isfinite(med) and abs(med) > CANARY_STOP:
+    verdict = canary_verdict(med)
+    if verdict == "не считалась":
+        log_(f"канарейка не считается: цель fwd_4h пуста. Ей нужна бета, "
+             f"бете — {FB.BETA_MIN} ч годной истории на монету, есть "
+             f"около {int(hist_h)}. Веса НЕ обновляются: непосчитанная "
+             f"проверка не является пройденной")
+        return False
+    if verdict == "кричит":
         log_(f"КАНАРЕЙКА КРИЧИТ: |IC| {abs(med):.3f} > {CANARY_STOP} — "
              f"похоже на течь конвейера, веса НЕ обновляются")
         return False
@@ -549,6 +589,12 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                timespec="seconds"),
            "symbols": len(syms), "hours": len(grid),
            "sections": n_sections, "targets": sorted(imp_all),
+           # Полный список объявленных целей и порог канарейки — В
+           # артефакт: отчёт держал их своими константами и разошёлся с
+           # прогоном в тот же вечер (девять целей против четырёх, порог
+           # 0.05 против 0.01).
+           "targets_all": list(TARGETS),
+           "canary_stop": CANARY_STOP,
            "canary_ic": round(med, 4) if np.isfinite(med) else None,
            "new_summary_hours": n_new,
            "importance": imp_all,

@@ -441,7 +441,8 @@ def test_readiness_is_written_before_training():
     try:
         grid = [f"2026-08-0{d}-{h:02d}" for d in (1, 2) for h in range(4)]
         per = np.array([40, 40, 12, 0, 40, 40, 40, 31])
-        T.write_readiness(["A", "B"], grid, per, 6, 17, lambda m: None)
+        T.write_readiness(["A", "B"], grid, per, 6, 17, 8.0,
+                          lambda m: None)
         with open(os.path.join(T.MODEL_DIR, "readiness.json"),
                   encoding="utf-8") as f:
             r = _json.load(f)
@@ -460,6 +461,52 @@ def test_readiness_is_written_before_training():
     check("тонкие часы видны поимённо", len(thin) == 2,
           str([h["h"] for h in thin]))
     check("порог сечения записан", r["min_section"] == FB.MIN_SECTION)
+    # Второй счётчик ожидания: бете нужны часы истории на монету,
+    # и без него «обучение началось, а выборов нет» выглядит
+    # поломкой, а не нехваткой данных.
+    check("часы на бету названы рядом с сечениями",
+          r["beta_min_hours"] == FB.BETA_MIN
+          and r["hours_per_symbol"] == 8,
+          f"{r.get('hours_per_symbol')} из {r.get('beta_min_hours')}")
+
+
+def test_canary_not_computed_is_not_a_pass():
+    """Непосчитанная проверка на течь не является пройденной.
+
+    Найдено пробным прогоном на восьми сечениях: канарейка считается по
+    `fwd_4h`, а это остаток к волне — ему нужна бета, бете нужно
+    BETA_MIN часов истории на монету. Пока их нет, цель пуста, канарейка
+    возвращает NaN, и прежнее условие `isfinite(med) and |med| > порог`
+    читало NaN как «крика не было» — веса писались, а потом повели бы
+    бумажные счета БЕЗ проверки на течь.
+
+    Существенно не для пробы, а для боевого прогона: 48 сечений меньше,
+    чем BETA_MIN = 96 часов, то есть первое настоящее обучение
+    случилось бы ровно в этом состоянии.
+    """
+    import train as T
+    check("бете нужно больше часов, чем сечений ждёт обучение",
+          FB.BETA_MIN > T.MIN_TRAIN_SECTIONS,
+          f"{FB.BETA_MIN} против {T.MIN_TRAIN_SECTIONS}")
+
+    check("NaN — отдельное состояние, а не «прошла»",
+          T.canary_verdict(float("nan")) == "не считалась")
+    check("тихая канарейка молчит",
+          T.canary_verdict(0.0) == "молчит"
+          and T.canary_verdict(T.CANARY_STOP) == "молчит")
+    check("громкая кричит в обе стороны",
+          T.canary_verdict(T.CANARY_STOP * 1.01) == "кричит"
+          and T.canary_verdict(-T.CANARY_STOP * 1.01) == "кричит")
+    # Прежнее слитное условие давало NaN тот же исход, что и тишине.
+    src = open(os.path.join(HERE, "train.py"), encoding="utf-8").read()
+    check("прежнее слитное условие не воспроизводится",
+          "np.isfinite(med) and abs(med) > CANARY_STOP" not in src)
+
+    # Порог и полный список целей обязаны ехать в артефакте, иначе
+    # отчёт снова прочитает их из своих констант и разойдётся.
+    check("порог канарейки пишется в манифест", '"canary_stop"' in src)
+    check("полный список целей пишется в манифест",
+          '"targets_all"' in src)
 
 
 def test_probe_never_touches_live_model():
@@ -776,6 +823,7 @@ def main():
     print("цикл переобучения")
     test_retry_when_not_trained()
     test_readiness_is_written_before_training()
+    test_canary_not_computed_is_not_a_pass()
     test_probe_never_touches_live_model()
     test_novelty_measure()
     test_nn_learns_and_sees_missing()
