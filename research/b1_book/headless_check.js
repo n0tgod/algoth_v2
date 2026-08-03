@@ -169,7 +169,11 @@ global.fetch = async (url) => {
                               hit_rate: 0.0, net_bp_avg: -51,
                               pnl: -0.85, expected_over_got: 18.1,
                               marked: 1, unreal_net_avg_bp: 89.0,
-                              unreal_win: 1.0, unreal_pnl: 14.83},
+                              unreal_win: 1.0, unreal_pnl: 14.83,
+                              dd_measured: 2, dd_worst_bp: -412.0,
+                              dd_med_bp: -155.0, dd_open_worst_bp: -155.0,
+                              dd_book: {pct: -6.31, at: "2026-08-03-19",
+                                        hours: 9, gaps: 0}},
                         gbm: {closed: 1, open: 1, no_outcome: 0,
                               hit_rate: 0.0, net_bp_avg: -51, pnl: -0.85,
                               marked: 1, unreal_net_avg_bp: 89.0,
@@ -184,11 +188,13 @@ global.fetch = async (url) => {
                    state: "открыта", expected_bp: 373, mae_bp: -50,
                    closes_in_sec: 13800, lag_sec: 313, odd: 0.03,
                    entry_px: 100.0, cur_px: 101.0,
-                   unreal_bp: 100.0, unreal_net_bp: 89.0},
+                   unreal_bp: 100.0, unreal_net_bp: 89.0,
+                   dd_bp: -155.0, dd_hours: 1},
                   {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
                    side: "short", opened_at: NOW-7800, closes_at: NOW-1400,
                    state: "закрыта", expected_bp: -725, mae_bp: 90,
-                   got_bp: 40, net_bp: -51, pnl: -0.85}]}
+                   got_bp: 40, net_bp: -51, pnl: -0.85,
+                   dd_bp: -412.0, dd_hours: 4}]}
              : url.startsWith("/trades") ? hist
              : url.startsWith("/recount") ? recount
              : url.startsWith("/groups")
@@ -416,6 +422,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // И оно обязано стоять ОТДЕЛЬНО от факта, а не в одной строке.
     if (!/not a result yet/.test(stats))
       bad.push("нереализованное не отделено от результата");
+    // Просадка. Худшая сделка −412 б.п. = −4.12 %, просадка счёта
+    // −6.31 %. Проверяется числом: наличие слова «drawdown» прошло бы
+    // и на пустом блоке, а пустой блок неотличим от «просадки не было».
+    if (!/-4\.12 %/.test(stats))
+      bad.push("худшая просадка сделки не показана");
+    if (!/-6\.31 %/.test(stats))
+      bad.push("просадка счёта не показана");
+    if (!/lower<\/b> bound|lower bound/.test(stats))
+      bad.push("просадка выдана за точную, без оговорки о нижней оценке");
     const pg = global.__el ? String(
       global.__el("pg").textContent || "") : "";
     if (!/page \d+ of/.test(pg))
@@ -443,6 +458,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // список пришлось бы тянуть каждые десять секунд.
     if (!seen.some(u => u.startsWith("/model_marks")))
       bad.push("переоценка не запрашивается отдельно");
+    // Просадка по КАЖДОЙ сделке, а не только в сводке: закрытая сделка
+    // тут дала −412 б.п. = −4.12 % по дороге при итоге −0.51 %, и
+    // увидеть это можно только в строке.
+    if (!/-4\.12 %/.test(html))
+      bad.push("просадка сделки не показана в строке");
   } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {

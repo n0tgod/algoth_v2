@@ -828,6 +828,117 @@ def test_unrealised_never_mixes_with_realised():
           f"{s.get('exposure')} при капитале {TR.START_BALANCE}")
 
 
+def test_drawdown_is_measured_not_inferred_from_the_outcome():
+    """Просадка сделки — ход ПРОТИВ по дороге, а не её итог.
+
+    Сделка, закрывшаяся в плюс, могла по пути стоить сорока процентов, и
+    по колонке `net` этого не видно вовсе. Стороны считаются раздельно:
+    у лонга просадка — минимум часа, у шорта максимум. Перепутать их
+    значило бы записать шорту благоприятный ход как убыток — эта ошибка
+    в проекте уже случалась с колонкой `mae`.
+    """
+    import trades as TR
+
+    h = "2026-08-03-10"
+    # Цена: вход 100, провал до 80 во втором часу, выход в плюс.
+    rows = {}
+    for i, (lo, hi, c) in enumerate(
+            [(99.0, 101.0, 100.0), (80.0, 101.0, 90.0),
+             (89.0, 130.0, 120.0), (110.0, 125.0, 115.0)], start=1):
+        key = TR._hour_of(TR._ts(h) + i * 3600)
+        rows[("AUSDT", key)] = {"c": c, "hi": hi, "lo": lo}
+    base = {"arm": "gbm", "hour": h, "sym": "AUSDT", "entry_px": 100.0,
+            "state": "закрыта", "opened_at": TR._ts(h) + 3600,
+            "closes_at": TR._ts(h) + 5 * 3600, "net_bp": 1400.0}
+    lo = dict(base, side="long")
+    sh = dict(base, side="short")
+    # `now` далеко в будущем — все четыре часа удержания закрыты.
+    later = TR._ts(h) + 100 * 3600
+    TR.excursion([lo, sh], rows, now=later)
+    check("у лонга просадка считается по минимуму часа",
+          lo["dd_bp"] == -2000.0 and lo["dd_hours"] == 4,
+          f"{lo.get('dd_bp')} за {lo.get('dd_hours')} ч")
+    check("у шорта просадка считается по максимуму, а не по минимуму",
+          sh["dd_bp"] == -3000.0, str(sh.get("dd_bp")))
+    check("итог сделки просадку не описывает",
+          lo["net_bp"] > 0 and lo["dd_bp"] < 0,
+          f"net {lo['net_bp']}, dd {lo['dd_bp']}")
+
+    # Час без сводки НЕ считается нулевой просадкой: он просто не входит
+    # в замер, и это видно числом покрытых часов.
+    part = dict(base, side="long")
+    few = {k: v for k, v in rows.items() if not k[1].endswith("-12")}
+    TR.excursion([part], few, now=later)
+    check("час без сводки не считается наблюдением",
+          part["dd_hours"] == 3 and part["dd_bp"] == -1100.0,
+          f"{part.get('dd_bp')} за {part.get('dd_hours')} ч")
+
+    # Позиция, ни разу не уходившая в минус, имеет просадку ноль, а не
+    # положительную величину: «просадка» есть ход против позиции.
+    up = dict(base, side="long")
+    TR.excursion([up], {k: {"c": 120.0, "hi": 130.0, "lo": 105.0}
+                        for k in rows}, now=later)
+    check("вверх просадки не бывает", up["dd_bp"] == 0.0,
+          str(up.get("dd_bp")))
+
+    # У открытой сделки берутся только ЗАКРЫВШИЕСЯ часы: текущий час
+    # ещё пишется, и его крайние значения через минуту будут другими.
+    op = dict(base, side="long", state="открыта")
+    TR.excursion([op], rows, now=TR._ts(h) + 2 * 3600 + 600)
+    check("у открытой сделки текущий час в замер не входит",
+          op["dd_hours"] == 1, str(op.get("dd_hours")))
+
+
+def test_account_drawdown_counts_open_positions():
+    """Просадка счёта считается с переоценкой открытых, а не по закрытиям.
+
+    Кривая по одним закрытиям систематически льстит: позиция, уходившая
+    в минус и вернувшаяся, входит в неё мелким убытком, и пережитая
+    просадка из неё не видна. Это ровно та ошибка, которой посвящено
+    закрытие гипотезы 3 — там медиана льстила, а решал хвост.
+    """
+    import trades as TR
+
+    h = "2026-08-03-10"
+    t = {"arm": "gbm", "hour": h, "sym": "AUSDT", "side": "long",
+         "entry_px": 100.0, "state": "закрыта", "net_bp": 0.0, "pnl": 0.0,
+         "opened_at": TR._ts(h) + 3600,
+         "closes_at": TR._ts(h) + 5 * 3600}
+    rows = {}
+    for i, c in enumerate([100.0, 50.0, 70.0, 100.0], start=1):
+        rows[("AUSDT", TR._hour_of(TR._ts(h) + i * 3600))] = {
+            "c": c, "hi": c, "lo": c}
+    later = TR._ts(h) + 100 * 3600
+    TR.account([t], "gbm")
+    cur = TR.equity([t], "gbm", rows, now=later)
+    dd = TR.max_dd(cur)
+    # Число закреплено точно, потому что оно проверяет и слот-модель:
+    # одна сделка в часе занимает четверть капитала (шесть имён на
+    # четыре часа — двадцать четыре слота), поэтому падение цены вдвое
+    # стоит счёту 12.5 %, а не пятидесяти. Ослабить до неравенства
+    # значило бы перестать проверять размер позиции.
+    check("просадка счёта видит провал открытой позиции",
+          dd["pct"] == -12.5, str(dd))
+    check("а по закрытиям провала нет вовсе — итог сделки нулевой",
+          t["pnl"] == 0.0 and cur[-1]["eq"] == TR.START_BALANCE,
+          f"pnl {t['pnl']}, конец {cur[-1]['eq']}")
+
+    # Час, где живую ногу переоценить нечем, помечается и считается
+    # дырой: занизить просадку молча нельзя.
+    gap = {k: v for k, v in rows.items() if not k[1].endswith("-12")}
+    d2 = TR.max_dd(TR.equity([t], "gbm", gap, now=later))
+    check("час без переоценки назван дырой", d2["gaps"] == 1, str(d2))
+
+    # Общая кривая двух счетов складывается по часам, а рука без записи
+    # в этот час берётся последним известным значением, а не нулём.
+    a = [{"hour": "2026-08-03-11", "eq": 1000.0, "open": 1, "full": True},
+         {"hour": "2026-08-03-12", "eq": 900.0, "open": 1, "full": True}]
+    b = [{"hour": "2026-08-03-11", "eq": 1000.0, "open": 1, "full": True}]
+    m = TR.merge([a, b])
+    check("рука без записи часа не обнуляется",
+          [p["eq"] for p in m] == [2000.0, 1900.0], str(m))
+
+
 def test_exposure_covers_all_open_and_leverage_is_named():
     """Экспозиция — по всем открытым; в долларах её читать нельзя.
 
@@ -1597,6 +1708,8 @@ def main():
     test_account_is_one_capital_at_leverage_one()
     test_unrealised_never_mixes_with_realised()
     test_exposure_covers_all_open_and_leverage_is_named()
+    test_drawdown_is_measured_not_inferred_from_the_outcome()
+    test_account_drawdown_counts_open_positions()
     test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()
     test_awaiting_review_is_not_a_lost_outcome()

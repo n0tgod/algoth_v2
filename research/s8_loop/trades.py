@@ -55,6 +55,12 @@ def _hour_of(ts):
         "%Y-%m-%d-%H")
 
 
+def hour_end(hour):
+    """Когда час кончился. Нужно тем, кто решает, ждать ли сводку."""
+    ts = _ts(hour)
+    return None if ts is None else ts + 3600
+
+
 def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
     """Сделки из выборов и разборов, свежие сверху.
 
@@ -279,6 +285,7 @@ def summary(trades, arm=None, capital=None):
     out = {"closed": len(closed), "open": len(op),
            "no_outcome": len(lost), "awaiting": len(wait)}
     _unreal(rows, out, capital)
+    _dd(rows, out)
     if not closed:
         return out
     hits = sum(1 for t in closed if t.get("hit"))
@@ -301,6 +308,32 @@ def summary(trades, arm=None, capital=None):
             round(sum(abs(e) for e in exps) / max(
                 sum(abs(g) for g in gots), 1e-9), 2))
     return out
+
+
+def _dd(rows, out):
+    """Просадка по сделкам: худшая, медианная и сколько их измерено.
+
+    Худшая отвечает на «какую просадку мы держали в моменте», медианная
+    — на «а обычно сколько». Разница между ними и есть форма риска: у
+    carry она была огромной, и именно это, а не среднее, убило гипотезу.
+
+    Знаменателем служит число ИЗМЕРЕННЫХ сделок, а не всех: у сделки без
+    цены входа или без сводок за часы удержания просадки нет, и считать
+    её нулём значило бы разбавить статистику выдумкой.
+    """
+    got = sorted(t["dd_bp"] for t in rows if t.get("dd_bp") is not None)
+    out["dd_measured"] = len(got)
+    if not got:
+        return
+    out["dd_worst_bp"] = round(got[0], 1)
+    out["dd_med_bp"] = round(got[len(got) // 2], 1)
+    # Открытые отдельно: у них просадка ещё может углубиться, и мешать
+    # их с завершёнными значило бы выдавать незаконченное за результат —
+    # та же причина, по которой не смешиваются деньги.
+    live = sorted(t["dd_bp"] for t in rows
+                  if t["state"] == "открыта" and t.get("dd_bp") is not None)
+    if live:
+        out["dd_open_worst_bp"] = round(live[0], 1)
 
 
 def _unreal(rows, out, capital):
@@ -337,19 +370,19 @@ def _unreal(rows, out, capital):
             sum(t["size"] * t["unreal_net_bp"] / 1e4 for t in sized), 2)
 
 
-def entry_prices(sum_dir, pairs):
-    """Цены входа из почасовых сводок: `{(символ, час): цена}`.
+def hour_rows(sum_dir, pairs):
+    """Цена часа из почасовых сводок: `{(символ, час): {c, hi, lo}}`.
 
-    Цена входа — закрытие часа сигнала, и она уже лежит в сводке полем
-    `mid_close`. Значит записывать её в выбор было удобством, а не
-    необходимостью: у выборов, сделанных до того, как это поле
-    появилось, цена НЕ потеряна — её надо просто прочитать.
+    Один загрузчик на всё, что берётся из сводок: и цена входа, и путь
+    внутри удержания. Второй обход тех же файлов был бы вторым
+    определением «цены часа» — ровно то, чего в проекте не заводят.
 
-    Берётся то же самое поле, по которому цикл считает цели, поэтому
-    второго определения «цены входа» здесь не заводится.
+    `hi` и `lo` — крайние значения середины стакана за час, снятые из
+    посекундных снимков. Значит просадка по ним есть **нижняя** оценка:
+    ход внутри секунды в снимок не попал.
 
-    Читаются только нужные символо-дни, а не весь каталог: открытых
-    сделок десятки, и обходить сводки целиком ради них незачем.
+    Читаются только нужные символо-дни, а не весь каталог: сделок
+    десятки, и обходить сводки целиком ради них незачем.
     """
     want = {}
     for sym, hour in pairs:
@@ -368,12 +401,200 @@ def entry_prices(sum_dir, pairs):
                         continue
                     h = r.get("hour")
                     if h in hours and r.get("mid_close"):
+                        c = float(r["mid_close"])
                         # Поздняя строка часа побеждает — тот же порядок,
                         # что при сборке матриц.
-                        out[(sym, h)] = float(r["mid_close"])
+                        out[(sym, h)] = {
+                            "c": c,
+                            "hi": float(r.get("mid_high") or c),
+                            "lo": float(r.get("mid_low") or c)}
         except OSError:
             continue
     return out
+
+
+def entry_prices(sum_dir, pairs):
+    """Цены входа: `{(символ, час): цена}` — закрытие часа сигнала.
+
+    Цена входа уже лежит в сводке полем `mid_close`. Значит записывать
+    её в выбор было удобством, а не необходимостью: у выборов, сделанных
+    до того, как поле появилось, цена НЕ потеряна — её надо прочитать.
+    """
+    return {k: v["c"] for k, v in hour_rows(sum_dir, pairs).items()}
+
+
+def live_hours(t, hold_h=HOLD_H, now=None):
+    """Часы, которые позиция прожила: от `час+1` до часа закрытия.
+
+    Вход — на закрытии часа сигнала, то есть позиция живёт со следующего
+    часа. У открытой сделки берутся только ЗАКРЫВШИЕСЯ часы: текущий час
+    ещё пишется, и его крайние значения будут другими через минуту.
+    """
+    h0 = _ts(t.get("hour"))
+    if h0 is None:
+        return []
+    now = now if now is not None else time.time()
+    last_done = (now // 3600) * 3600            # начало текущего часа
+    out = []
+    for i in range(1, max(1, hold_h) + 1):
+        ts = h0 + i * 3600
+        if ts >= last_done:                     # час ещё не закрыт
+            break
+        out.append(_hour_of(ts))
+    return out
+
+
+def excursion(trades, rows, hold_h=HOLD_H, now=None):
+    """Худший ход ПРОТИВ позиции за время удержания, в б.п.
+
+    Отвечает на вопрос «какую просадку мы держим в моменте»: итог сделки
+    говорит, чем всё кончилось, и ничего не говорит о том, сколько
+    позиция была в минусе по дороге. У лонга это минимум середины, у
+    шорта максимум — стороны считаются раздельно, иначе у шорта
+    благоприятный ход был бы записан как просадка (эта ошибка в проекте
+    уже случалась с колонкой `mae`).
+
+    Величина ВСЕГДА ≤ 0 и берётся брутто: издержки платятся один раз на
+    круг, а просадка — это то, что видно на позиции по дороге.
+
+    Час без сводки не считается нулём — он просто не входит в замер, и
+    число покрытых часов пишется рядом полем `dd_hours`. Ноль вместо
+    пропуска был бы наблюдением, которого не было.
+    """
+    n = 0
+    for t in trades:
+        px0 = t.get("entry_px")
+        if not px0:
+            continue
+        worst, at = None, None
+        seen = 0
+        for h in live_hours(t, hold_h, now):
+            r = rows.get((t.get("sym"), h))
+            if not r:
+                continue
+            seen += 1
+            px = r["lo"] if t.get("side") == "long" else r["hi"]
+            move = (px / px0 - 1.0) * 1e4
+            adv = move if t.get("side") == "long" else -move
+            if worst is None or adv < worst:
+                worst, at = adv, h
+        t["dd_hours"] = seen
+        if worst is None:
+            continue
+        # Позиция, ни разу не уходившая в минус, имеет просадку ноль, а
+        # не положительную величину: «просадка» есть ход против, и вверх
+        # она не бывает.
+        t["dd_bp"] = round(min(0.0, worst), 1)
+        t["dd_at"] = at
+        n += 1
+    return n
+
+
+def equity(trades, arm, rows, start=START_BALANCE, hold_h=HOLD_H,
+           cost_bp=ROUND_COST_BP, now=None):
+    """Почасовая кривая счёта С УЧЁТОМ открытых позиций.
+
+    Кривая по одним закрытиям систематически льстит: позиция, уходившая
+    в минус на 40 % и вернувшаяся, входит в неё мелким убытком, и
+    просадка счёта выходит меньше пережитой. Здесь каждый час все живые
+    позиции переоцениваются по закрытию этого часа — это и есть «сколько
+    мы держали в моменте».
+
+    Переоценка НЕТТО, как и у открытых сделок на странице: реализованный
+    результат уже за вычетом круга, и брутто-отметка давала бы скачок
+    вниз ровно в момент закрытия — разрыв кривой на ровном месте.
+
+    Час, в котором хоть одну живую позицию переоценить нечем, помечается
+    `full = False`: считать пропущенную ногу нулём значило бы занизить
+    просадку там, где по инструменту как раз нет данных.
+    """
+    rowsa = [t for t in trades
+             if t["arm"] == arm and t.get("opened_at") is not None]
+    if not rowsa:
+        return []
+    alive = {}                                  # час → живые сделки
+    closed_at = {}                              # час → закрытые в нём
+    for t in rowsa:
+        for h in live_hours(t, hold_h, now):
+            alive.setdefault(h, []).append(t)
+        if t["state"] == "закрыта" and t.get("closes_at"):
+            closed_at.setdefault(
+                _hour_of(t["closes_at"] - 1), []).append(t)
+    out, bal = [], start
+    for h in sorted(set(alive) | set(closed_at)):
+        for t in closed_at.get(h, []):
+            bal += t.get("pnl") or 0.0
+        mark_sum, full = 0.0, True
+        for t in alive.get(h, []):
+            if t in closed_at.get(h, []):
+                continue                        # уже в балансе
+            r = rows.get((t["sym"], h))
+            size = t.get("size") or 0.0
+            if not r or not t.get("entry_px") or not size:
+                if size:
+                    full = False
+                continue
+            move = (r["c"] / t["entry_px"] - 1.0) * 1e4
+            adv = move if t["side"] == "long" else -move
+            mark_sum += size * (adv - cost_bp) / 1e4
+        out.append({"hour": h, "eq": round(bal + mark_sum, 2),
+                    "cash": round(bal, 2), "open": len(alive.get(h, [])),
+                    "full": full})
+    return out
+
+
+def merge(curves):
+    """Общая кривая нескольких счетов: сумма по часам.
+
+    Час, в котором у одной руки записи нет, берётся её последним
+    известным значением, а не нулём: рука со счётом в тысячу не
+    перестаёт стоить тысячу оттого, что в этот час у неё не было сделок.
+    """
+    curves = [c for c in curves if c]
+    if not curves:
+        return []
+    hours = sorted({p["hour"] for c in curves for p in c})
+    idx = [{p["hour"]: p for p in c} for c in curves]
+    last = [None] * len(curves)
+    out = []
+    for h in hours:
+        tot, op, full, known = 0.0, 0, True, False
+        for i, m in enumerate(idx):
+            p = m.get(h) or last[i]
+            if p is None:
+                continue          # рука ещё не начинала — её тут нет
+            known = True
+            if h in m:
+                last[i] = m[h]
+            tot += p["eq"]
+            op += p["open"] if h in m else 0
+            full = full and p.get("full", True)
+        if known:
+            out.append({"hour": h, "eq": round(tot, 2), "open": op,
+                        "full": full})
+    return out
+
+
+def max_dd(curve):
+    """Максимальная просадка кривой: доля от достигнутого максимума."""
+    if not curve:
+        return None
+    peak, depth, at, top = None, 0.0, None, None
+    for p in curve:
+        eq = p["eq"]
+        if peak is None or eq > peak:
+            peak, top = eq, p["hour"]
+        if peak and eq < peak:
+            d = eq / peak - 1.0
+            if d < depth:
+                depth, at = d, p["hour"]
+    if at is None:
+        return {"pct": 0.0, "at": None, "from": top, "hours": len(curve)}
+    return {"pct": round(depth * 100.0, 2), "at": at, "from": top,
+            "hours": len(curve),
+            # Час, где хоть одну живую ногу переоценить было нечем,
+            # делает просадку заниженной — и молчать об этом нельзя.
+            "gaps": sum(1 for p in curve if not p.get("full"))}
 
 
 def mark(trades, prices, cost_bp=ROUND_COST_BP):

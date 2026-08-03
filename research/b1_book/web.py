@@ -1220,6 +1220,12 @@ button:disabled{opacity:.4}
       <b>exp</b> is the expected move, <b>mae</b> the expected move
       <b>against</b> the position on the way, <b>got</b> what actually
       happened, <b>net</b> the same minus the taker round trip.
+      <b>dd</b> is the <b>realised</b> drawdown: the worst the position
+      was actually down while it was held, taken from the hourly
+      high/low of the book mid — so <b>mae</b> is the promise and
+      <b>dd</b> is what the promise cost. A trade that closed in profit
+      can still have been 40 % down on the way, and <b>net</b> alone
+      never shows that.
       <b>unseen</b> — share of this coin&#39;s features that fell
       outside the range the model saw while training: 0 % means fully
       familiar, high means the coin is in a state the model has never
@@ -1260,8 +1266,8 @@ button:disabled{opacity:.4}
     <div class="scroll"><table>
       <thead><tr><th>signal hour</th><th>entry</th><th>exit</th>
         <th>lag</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
-        <th>mae</th><th>got</th><th>net</th><th>unreal</th><th>$</th>
-        <th>state</th><th>unseen</th>
+        <th>mae</th><th>got</th><th>net</th><th>unreal</th><th>dd</th>
+        <th>$</th><th>state</th><th>unseen</th>
       </tr></thead><tbody id="tb"></tbody>
     </table></div>
   </div>
@@ -1390,6 +1396,40 @@ async function load() {
               st.leverage > 1.05 ? "bad" : ""))
       + `</div>`;
   }
+  // Просадка — отдельным рядом, потому что она отвечает на вопрос, на
+  // который итог сделки не отвечает вовсе: сколько позиция была в
+  // минусе ПО ДОРОГЕ. Сделка, закрывшаяся в плюс, могла по пути стоить
+  // −40 %, и по колонке `net` этого не видно.
+  if (st.dd_measured || st.dd_book) {
+    const b = st.dd_book || {};
+    html += `<div class="note" style="margin-top:8px">drawdown
+      <span class="k">(worst move against the position while it was
+      held; measured from hourly high/low of the book mid, so it is a
+      <b>lower</b> bound — moves inside a second are not in the
+      snapshots)</span></div>
+      <div class="stats">`
+      + (st.dd_worst_bp == null ? "" :
+         cell("worst trade", pct(st.dd_worst_bp),
+              st.dd_worst_bp < -200 ? "bad" : ""))
+      + (st.dd_med_bp == null ? "" :
+         cell("median trade", pct(st.dd_med_bp)))
+      + (st.dd_open_worst_bp == null ? "" :
+         cell("worst open now", pct(st.dd_open_worst_bp),
+              st.dd_open_worst_bp < -200 ? "bad" : ""))
+      // Просадка счёта считается по кривой с переоценкой открытых. По
+      // одним закрытиям она была бы систематически мельче пережитой.
+      + (b.pct == null ? "" :
+         cell("account, peak to trough", b.pct + " %",
+              b.pct < -10 ? "bad" : ""))
+      + (b.at ? cell("deepest at", hourLocal(b.at)) : "")
+      + (st.dd_measured == null ? "" :
+         cell("trades measured", st.dd_measured))
+      // Час, где живую ногу переоценить было нечем, делает просадку
+      // счёта заниженной. Молчать об этом нельзя — это ровно тот класс
+      // дефекта, где пустота выдаёт себя за результат.
+      + (b.gaps ? cell("hours with a gap", b.gaps, "bad") : "")
+      + `</div>`;
+  }
   const accLine = ["gbm","nn"].map(a => {
     const x = (d.accounts||{})[a];
     return x ? `${a === "gbm" ? "ml" : "ai"} ${x.balance} $` : null;
@@ -1430,6 +1470,10 @@ async function load() {
           (t.unreal_net_bp > 0 ? "good" : "bad")}"
           data-mk="${t.arm}|${t.hour}|${t.sym}|${t.side}">${
           pct(t.unreal_net_bp)}</td>
+      <td class="mono ${t.dd_bp < -200 ? "bad" : ""}"
+          title="${t.dd_hours == null ? ""
+            : t.dd_hours + " h of the hold covered by summaries"}">${
+          t.dd_bp == null ? "—" : pct(t.dd_bp)}</td>
       <td class="mono ${cls}">${t.pnl == null ? "—"
         : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
       <td style="color:var(--muted)">${ST_EN[t.state] || t.state}${

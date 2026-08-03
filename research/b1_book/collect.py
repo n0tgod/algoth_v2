@@ -1241,15 +1241,17 @@ class Collector:
             tr = TR.build(out.get("picks"), out.get("review"),
                           px_at=self.entry_px(out.get("picks")))
             TR.mark(tr, self.marks(tr))
+            hrows = self.paths(tr)
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
-            cap = {}
+            cap, st = {}, {}
             for a in ("gbm", "nn"):
                 TR.account(tr, a)
                 cap[a] = ((out.get("accounts") or {}).get(a)
                           or {}).get("balance")
-            out["trade_stats"] = {a: TR.summary(tr, a, capital=cap[a])
-                                  for a in ("gbm", "nn")}
+                st[a] = TR.summary(tr, a, capital=cap[a])
+                st[a]["dd_book"] = TR.max_dd(TR.equity(tr, a, hrows))
+            out["trade_stats"] = st
         except Exception as e:                            # noqa: BLE001
             out["trades_error"] = f"{type(e).__name__}: {e}"
         return out
@@ -1288,6 +1290,7 @@ class Collector:
             if tr:
                 break
         name, tr, revs, mdir = out
+        hrows = self.paths(tr)
         accs = {}
         for a in ("gbm", "nn"):
             try:
@@ -1307,6 +1310,14 @@ class Collector:
                  for a in ("gbm", "nn")}
         both = sum(v for v in cap.values() if v) or None
         stats["all"] = TR.summary(tr, capital=both)
+        # Просадка счёта считается по кривой с переоценкой открытых, а
+        # не по одним закрытиям: позиция, уходившая в минус и
+        # вернувшаяся, в кривой закрытий выглядит мелким убытком, и
+        # пережитая просадка из неё не видна вовсе.
+        curves = {a: TR.equity(tr, a, hrows) for a in ("gbm", "nn")}
+        for a in ("gbm", "nn"):
+            stats[a]["dd_book"] = TR.max_dd(curves[a])
+        stats["all"]["dd_book"] = TR.max_dd(TR.merge(curves.values()))
         rows = tr
         if arm:
             rows = [t for t in rows if t["arm"] == arm]
@@ -1326,36 +1337,75 @@ class Collector:
                 "symbols": sorted({t["sym"] for t in tr}),
                 "rows": rows[page * per:(page + 1) * per]}
 
+    def hour_rows(self, pairs):
+        """Строки почасовых сводок с кэшом: цена, максимум и минимум часа.
+
+        Один загрузчик и на цену входа, и на путь внутри удержания:
+        второй обход тех же файлов был бы вторым определением «цены
+        часа».
+
+        Отсутствие кэшируется НЕ всегда. Сводка часа пишется циклом с
+        задержкой в несколько минут, и запомнить «нет данных» насовсем
+        значило бы навсегда потерять просадку свежих сделок — отказ,
+        неотличимый от «просадки не было». Свежий час перечитывается,
+        старый признаётся отсутствующим.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+        import trades as TR
+        need = {k for k in pairs
+                if k[0] and k[1] and k not in self._px_cache}
+        if need:
+            sd = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                              "summary")
+            self._px_cache.update(TR.hour_rows(sd, need))
+            now = time.time()
+            for k in need:
+                if k in self._px_cache:
+                    continue
+                end = TR.hour_end(k[1])
+                if end is None or now - end > self.SUMMARY_WAIT:
+                    self._px_cache[k] = None
+        return self._px_cache
+
+    # Сколько ждать сводку закрывшегося часа, прежде чем признать, что
+    # её не будет. Цикл сводит час через несколько минут после его
+    # конца; три часа — заведомо больше с запасом на перезапуск.
+    SUMMARY_WAIT = 3 * 3600
+
     def entry_px(self, picks):
         """Цены входа для выборов, которые их не несут.
 
         Цена входа — закрытие часа сигнала, и оно уже лежит в почасовой
         сводке. Значит у старых выборов цена НЕ потеряна: её надо
-        прочитать, а не считать недоступной. Читаются только недостающие
-        пары, а прочитанное запоминается навсегда — закрытый час больше
-        не меняется.
+        прочитать, а не считать недоступной.
         """
-        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
-        import trades as TR
         need = set()
         for pk in picks or []:
             hour = pk.get("hour")
             for side in ("long", "short"):
                 for p in pk.get(side) or []:
-                    if p.get("px"):
-                        continue
-                    key = (p.get("sym"), hour)
-                    if key not in self._px_cache:
-                        need.add(key)
-        if need:
-            sd = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
-                              "summary")
-            self._px_cache.update(TR.entry_prices(sd, need))
-            # Ненайденные помечаем пустыми, иначе каждый опрос будет
-            # заново перечитывать одни и те же файлы ради отсутствующего.
-            for k in need:
-                self._px_cache.setdefault(k, None)
-        return self._px_cache
+                    if not p.get("px"):
+                        need.add((p.get("sym"), hour))
+        rows = self.hour_rows(need)
+        return {k: (v or {}).get("c") for k, v in rows.items()}
+
+    def paths(self, trades):
+        """Просадка по каждой сделке — из тех же почасовых сводок.
+
+        Итог сделки говорит, чем всё кончилось, и молчит о том, сколько
+        позиция была в минусе по дороге. Владелец спрашивал именно про
+        второе, и ответ считается по крайним значениям середины за часы
+        удержания.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+        import trades as TR
+        need = set()
+        for t in trades:
+            for h in TR.live_hours(t):
+                need.add((t.get("sym"), h))
+        rows = self.hour_rows(need)
+        TR.excursion(trades, rows)
+        return rows
 
     def marks(self, trades):
         """Текущая середина по символам открытых сделок.
