@@ -641,7 +641,7 @@ function renderPretest(p, modeBtns) {
     + (icLine ? `<div class="mline">out-of-sample IC — ${icLine}</div>` : "")
     + tradeStats(p) + equityBlock(p) + tradeTable(p)
     + `<div class="mline"><a href="/trades-page?k=${
-        encodeURIComponent(KEY)}">вся история сделок, страницами →</a>
+        encodeURIComponent(KEY)}">full trade history, paged &rarr;</a>
        </div>`
     + (p.thoughts || []).slice(-6).map(t =>
         `<div class="mline dim">${t.text}</div>`).join("");
@@ -1152,7 +1152,7 @@ document.getElementById("symq").oninput = e => {
 # значит однажды не увидеть худшую сделку месяца.
 TRADES = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>сделки модели</title>
+<title>model trades</title>
 <style>
 :root{color-scheme:light dark;
  --bg:#fbfcfd;--panel:#fff;--ink:#12161c;--muted:#6b7785;--rule:#e3e8ee;
@@ -1163,7 +1163,7 @@ TRADES = r"""<!doctype html><meta charset="utf-8">
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
  font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.wrap{max-width:1100px;margin:0 auto;padding:14px 12px 40px}
+.wrap{max-width:1200px;margin:0 auto;padding:14px 12px 40px}
 h1{font-size:16px;margin:0 0 4px}
 a{color:var(--accent)}
 .card{background:var(--panel);border:1px solid var(--rule);
@@ -1194,43 +1194,51 @@ button:disabled{opacity:.4}
 .scroll{overflow-x:auto}
 </style>
 <div class="wrap">
-  <h1>сделки модели · <span id="src" class="mono"></span></h1>
-  <div class="note"><a href="#" id="back">← обзор</a></div>
+  <h1>model trades · <span id="src" class="mono"></span></h1>
+  <div class="note"><a href="#" id="back">&larr; overview</a></div>
   <div id="warn"></div>
 
   <div class="card">
-    <div class="note">общая статистика — по <b>всей</b> истории,
-      фильтры её не двигают</div>
+    <div class="note">how to read a row: <b>signal hour</b> is the hour
+      whose <b>close</b> the decision is based on — features cover the
+      whole hour, so the position can only be entered once it ends.
+      <b>entry</b> is that close; <b>exit</b> is 4 h later, which is
+      exactly how the target is defined. <b>lag</b> is how late the
+      training loop actually woke up after the hour closed — real entry
+      delay, not zero.</div>
+    <div class="note">overall stats below are computed over the
+      <b>whole</b> history; filters do not move them</div>
     <div id="stats"></div>
   </div>
 
   <div class="card">
     <div class="bar">
-      <span class="k">рука</span>
-      <select id="arm"><option value="">обе</option>
-        <option value="gbm">деревья</option>
-        <option value="nn">сеть</option></select>
-      <span class="k">состояние</span>
-      <select id="state"><option value="">любое</option>
-        <option value="закрыта">закрыта</option>
-        <option value="открыта">открыта</option>
-        <option value="без исхода">без исхода</option></select>
-      <span class="k">монета</span>
-      <select id="sym"><option value="">любая</option></select>
-      <span class="k">на странице</span>
+      <span class="k">arm</span>
+      <select id="arm"><option value="">both</option>
+        <option value="gbm">trees (ML)</option>
+        <option value="nn">neural (AI)</option></select>
+      <span class="k">state</span>
+      <select id="state"><option value="">any</option>
+        <option value="закрыта">closed</option>
+        <option value="открыта">open</option>
+        <option value="без исхода">no outcome</option></select>
+      <span class="k">coin</span>
+      <select id="sym"><option value="">any</option></select>
+      <span class="k">per page</span>
       <select id="per"><option>50</option><option selected>100</option>
         <option>250</option><option>500</option></select>
     </div>
     <div class="bar">
-      <button id="prev">←</button>
+      <button id="prev">&larr;</button>
       <span id="pg" class="mono k"></span>
-      <button id="next">→</button>
+      <button id="next">&rarr;</button>
       <span id="cnt" class="k"></span>
     </div>
     <div class="scroll"><table>
-      <thead><tr><th>час входа</th><th>рука</th><th>монета</th>
-        <th>сторона</th><th>ждёт</th><th>ход против</th><th>вышло</th>
-        <th>нетто</th><th>$</th><th>состояние</th><th>новизна</th>
+      <thead><tr><th>signal hour</th><th>entry</th><th>lag</th>
+        <th>arm</th><th>coin</th><th>side</th><th>exp</th>
+        <th>mae</th><th>got</th><th>net</th><th>$</th>
+        <th>state</th><th>unseen</th>
       </tr></thead><tbody id="tb"></tbody>
     </table></div>
   </div>
@@ -1239,14 +1247,25 @@ button:disabled{opacity:.4}
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
 const S = {page: 0};
-// Процент движения цены — единица показа во всём проекте (решение
-// владельца). Два знака, при мелких величинах три: иначе нетто после
-// издержек схлопывается в «0.00 %».
+// Percent of price move — the display unit across the whole project
+// (owner's decision). Two decimals, three for small values: otherwise
+// net-after-costs collapses into "0.00 %".
 function pct(v) {
   if (v == null) return "—";
   return (v > 0 ? "+" : "") + (v / 100).toFixed(Math.abs(v) >= 10 ? 2 : 3)
     + " %";
 }
+function hhmm(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts * 1000);
+  return String(d.getUTCHours()).padStart(2, "0") + ":"
+       + String(d.getUTCMinutes()).padStart(2, "0");
+}
+// Состояния приходят с сервера по-русски: это ключи, а не текст для
+// глаз. Перевод живёт здесь, на границе показа — переименовать ключ
+// значило бы разойтись с уже записанными файлами.
+const ST_EN = {"закрыта": "closed", "открыта": "open",
+               "без исхода": "no outcome"};
 const val = id => document.getElementById(id).value;
 async function load() {
   const p = new URLSearchParams({k: KEY, page: S.page, per: val("per"),
@@ -1257,34 +1276,36 @@ async function load() {
     const r = await fetch("/model_trades?" + p.toString());
     d = await r.json();
   } catch (e) {
-    document.getElementById("cnt").textContent = "нет связи со сборщиком";
+    document.getElementById("cnt").textContent = "no link to collector";
     return;
   }
   document.getElementById("src").textContent = d.pretest
-    ? "pre-testing" : "боевая";
+    ? "pre-testing" : "live model";
   document.getElementById("warn").innerHTML = d.pretest
-    ? `<div class="warn"><b>Pre-testing.</b> Модель обучена на первых
-       сутках записи и с ВЫКЛЮЧЕННЫМ рыночным хеджем, поэтому книга
-       направленная — она едет вместе с рынком. Числа показывают, что
-       обучение работает, а не что оно зарабатывает.</div>` : "";
+    ? `<div class="warn"><b>Pre-testing.</b> Trained on the first days
+       of recording and with the market hedge <b>OFF</b>, so this book is
+       <b>directional</b> — it rides the market, not just the signal.
+       These numbers show that training runs, not that it earns.</div>`
+    : "";
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
   const st = (d.stats||{}).all || {};
   let html = `<div class="stats">`
-    + cell("всего сделок", d.grand_total)
-    + cell("закрыто", st.closed || 0)
-    + cell("открыто", st.open || 0)
-    + (st.no_outcome ? cell("без исхода", st.no_outcome, "bad") : "");
+    + cell("trades", d.grand_total)
+    + cell("closed", st.closed || 0)
+    + cell("open", st.open || 0)
+    + (st.no_outcome ? cell("no outcome", st.no_outcome, "bad") : "");
   if (st.closed) {
-    html += cell("знак угадан", (st.hit_rate*100).toFixed(0) + " %",
+    html += cell("sign right", (st.hit_rate*100).toFixed(0) + " %",
                  st.hit_rate >= 0.5 ? "good" : "bad")
-      + cell("нетто в среднем", pct(st.net_bp_avg),
+      + cell("net move, avg", pct(st.net_bp_avg),
              st.net_bp_avg > 0 ? "good" : "bad")
-      + cell("деньги", (st.pnl > 0 ? "+" : "") + st.pnl + " $",
+      + cell("paper P&L", (st.pnl > 0 ? "+" : "") + st.pnl + " $",
              st.pnl > 0 ? "good" : "bad")
-      // Во сколько раз обещание крупнее факта — самое честное число
-      // здесь: модель может угадывать знак и обещать вчетверо больше.
-      + cell("обещание / факт", st.expected_over_got ?? "—",
+      // How many times the promise exceeds the outcome — the most
+      // honest number here: a model can get the sign right and still
+      // promise four times what it delivers.
+      + cell("promise / actual", st.expected_over_got ?? "—",
              st.expected_over_got > 3 ? "bad" : "");
   }
   html += `</div>`;
@@ -1292,12 +1313,12 @@ async function load() {
     const s = (d.stats||{})[a] || {}, acc = (d.accounts||{})[a];
     if (!s.closed && !s.open) return;
     html += `<div class="note" style="margin-top:8px">${
-      a === "gbm" ? "деревья (ML)" : "сеть (AI)"}: закрыто ${
-      s.closed||0}, открыто ${s.open||0}`
-      + (s.closed ? `, знак угадан ${(s.hit_rate*100).toFixed(0)} %, `
-         + `нетто ${pct(s.net_bp_avg)}, деньги ${
+      a === "gbm" ? "trees (ML)" : "neural (AI)"}: ${s.closed||0} closed, ${
+      s.open||0} open`
+      + (s.closed ? `, sign right ${(s.hit_rate*100).toFixed(0)} %, `
+         + `net ${pct(s.net_bp_avg)}, P&L ${
            (s.pnl>0?"+":"")+s.pnl} $` : "")
-      + (acc ? ` · счёт ${acc.balance} $` : "") + `</div>`;
+      + (acc ? ` · account ${acc.balance} $` : "") + `</div>`;
   });
   document.getElementById("stats").innerHTML = html;
 
@@ -1313,9 +1334,12 @@ async function load() {
     const cls = t.state === "закрыта"
       ? (t.net_bp > 0 ? "good" : "bad") : "";
     return `<tr><td class="mono">${t.hour}</td>
-      <td>${t.arm === "nn" ? "сеть" : "деревья"}</td>
+      <td class="mono">${hhmm(t.opened_at)}</td>
+      <td class="mono" style="color:var(--muted)">${t.lag_sec == null
+        ? "—" : Math.round(t.lag_sec/60) + "m"}</td>
+      <td>${t.arm === "nn" ? "neural" : "trees"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
-      <td>${t.side === "long" ? "лонг" : "шорт"}</td>
+      <td>${t.side === "long" ? "L" : "S"}</td>
       <td class="mono">${pct(t.expected_bp)}</td>
       <td class="mono" style="color:var(--muted)">${pct(t.mae_bp)}</td>
       <td class="mono">${pct(t.got_bp)}</td>
@@ -1323,16 +1347,16 @@ async function load() {
       <td class="mono ${cls}">${t.pnl == null ? "—"
         : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
       <td style="color:var(--muted)">${t.state === "открыта"
-        ? "через " + (t.closes_in_sec/3600).toFixed(1) + " ч"
-        : t.state}</td>
+        ? "in " + (t.closes_in_sec/3600).toFixed(1) + " h"
+        : (ST_EN[t.state] || t.state)}</td>
       <td class="mono" style="color:var(--muted)">${t.odd == null ? "—"
         : (t.odd*100).toFixed(0) + " %"}</td></tr>`;
-  }).join("") || `<tr><td colspan="11" style="color:var(--muted);
-    padding:10px 0">сделок нет</td></tr>`;
+  }).join("") || `<tr><td colspan="13" style="color:var(--muted);
+    padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
-    `стр. ${d.page + 1} из ${d.pages}`;
+    `page ${d.page + 1} of ${d.pages}`;
   document.getElementById("cnt").textContent = d.filtered
-    ? `${d.total} по фильтру из ${d.grand_total}` : `${d.total} сделок`;
+    ? `${d.total} match of ${d.grand_total}` : `${d.total} trades`;
   document.getElementById("prev").disabled = d.page <= 0;
   document.getElementById("next").disabled = d.page + 1 >= d.pages;
 }
@@ -2084,7 +2108,10 @@ function hover(e) {
         модель${MDL.pretest ? " (pre-testing)" : ""} · ${
         t.side === "long" ? "лонг" : "шорт"} · ${t.state}</div>`
       + row("рука", t.arm === "nn" ? "сеть (AI)" : "деревья (ML)")
-      + row("час входа", t.hour)
+      + row("час сигнала", t.hour)
+      + row("вход", new Date(t.opened_at*1000).toISOString().slice(11,16)
+            + " UTC" + (t.lag_sec == null ? ""
+              : ` (+${Math.round(t.lag_sec/60)} мин)`))
       + row("ждёт", bp(t.expected_bp))
       + row("ход против", bp(t.mae_bp))
       + (t.state === "закрыта"

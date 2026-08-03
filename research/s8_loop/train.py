@@ -960,6 +960,11 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                     d["odd"] = round(nv, 3)
                 return d
             picks = {"arm": arm, "hour": grid[-1],
+                     # Момент, когда решение стало известно. Час
+                     # решения и момент решения — разные вещи: цикл
+                     # просыпается через минуты после закрытия часа, и
+                     # это задержка входа, а не ноль.
+                     "at_ts": round(time.time()),
                      "long": [mk(i, "long") for i in o[::-1][:3]],
                      "short": [mk(i, "short") for i in o[:3]]}
             # Один выбор на (руку, час) — и не больше.

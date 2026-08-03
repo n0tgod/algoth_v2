@@ -590,6 +590,47 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_entry_is_the_close_of_the_signal_hour():
+    """Вход — на ЗАКРЫТИИ часа решения, а не на его начале.
+
+    Признаки считаются по всему часу: в 20:00 их ещё нет, они появляются
+    в 21:00. Цель `fwd_4h` определена так же — движение от закрытия часа
+    `t` до закрытия часа `t+4`. Первая версия ставила вход на начало
+    часа, и обе метки уезжали на час назад: обратный отсчёт врал, метка
+    на графике стояла до того, как сигнал существовал, а «без исхода»
+    наступало на час раньше срока.
+
+    Вопрос владельца («hour — это фактически вход?») этот сдвиг и
+    вскрыл: ответ «да» был бы неверен ровно на час.
+    """
+    import trades as TR
+
+    hour = "2026-08-03-20"
+    decided = TR._ts("2026-08-03-21") + 313          # цикл проснулся в 21:05
+    picks = [{"arm": "gbm", "hour": hour, "at_ts": decided,
+              "long": [{"sym": "BICOUSDT", "fwd": 273.0, "mae": -419.0}],
+              "short": []}]
+    t = TR.build(picks, [], now=TR._ts("2026-08-03-23"))[0]
+    check("вход на закрытии часа сигнала",
+          t["opened_at"] == TR._ts("2026-08-03-21"),
+          str(t["opened_at"] - TR._ts("2026-08-03-21")))
+    check("выход через четыре часа после входа",
+          t["closes_at"] == TR._ts("2026-08-04-01"),
+          str(t["closes_at"] - TR._ts("2026-08-04-01")))
+    check("вход НЕ на начале часа сигнала",
+          t["opened_at"] != TR._ts(hour))
+    # Задержка цикла — это задержка входа, и выдавать её за ноль нельзя.
+    check("задержка решения названа числом", t["lag_sec"] == 313,
+          str(t["lag_sec"]))
+    check("обратный отсчёт считается от верного срока",
+          abs(t["closes_in_sec"] - 2 * 3600) < 1, str(t["closes_in_sec"]))
+    # У старых записей момента решения нет — поле пустое, а не выдумано.
+    old = TR.build([{k: v for k, v in picks[0].items() if k != "at_ts"}],
+                   [], now=TR._ts("2026-08-03-23"))[0]
+    check("без записи момента задержка пуста, а не ноль",
+          old["lag_sec"] is None and old["decided_at"] is None)
+
+
 def test_one_pick_per_arm_and_hour():
     """Выбор пишется один раз на (руку, час), сколько бы ни было проходов.
 
@@ -1119,6 +1160,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_entry_is_the_close_of_the_signal_hour()
     test_one_pick_per_arm_and_hour()
     test_trades_close_on_an_hourly_cycle()
     test_adverse_path_matches_the_side()

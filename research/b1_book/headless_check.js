@@ -382,15 +382,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const tb = global.__el ? global.__el("tb") : null;
     const html = tb ? String(tb.innerHTML || "") : "";
     if (!html) bad.push("страница сделок ничего не нарисовала");
-    else if (!/\+3\.73 %|сделок нет/.test(html))
+    else if (!/\+3\.73 %|no trades yet/.test(html))
       bad.push("строки сделок не в процентах движения цены");
     const stats = global.__el ? String(
       global.__el("stats").innerHTML || "") : "";
-    if (!/всего сделок/.test(stats))
+    if (!/trades/.test(stats))
       bad.push("общая статистика не показана");
     const pg = global.__el ? String(
       global.__el("pg").textContent || "") : "";
-    if (!/стр\./.test(pg)) bad.push("нумерация страниц не показана");
+    if (!/page \d+ of/.test(pg))
+      bad.push("нумерация страниц не показана");
   } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {

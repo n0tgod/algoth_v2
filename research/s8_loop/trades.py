@@ -51,6 +51,19 @@ def build(picks, reviews, now=None, hold_h=HOLD_H):
     """Сделки из выборов и разборов, свежие сверху.
 
     `picks` и `reviews` — строки соответствующих `.jsonl`.
+
+    Про время входа
+    ---------------
+
+    `hour` — час, на ЗАКРЫТИИ которого модель приняла решение. Значит
+    войти можно не раньше конца этого часа: признаки считаются по всему
+    часу, и в 20:00 их ещё нет. Цель `fwd_4h` определена так же —
+    движение от закрытия часа `t` до закрытия часа `t+4`.
+
+    Первая версия ставила вход на НАЧАЛО часа и закрытие на «начало
+    плюс четыре». Обе метки уезжали на час назад: обратный отсчёт врал,
+    метка на графике стояла до того, как сигнал вообще существовал, а
+    состояние «без исхода» наступало на час раньше срока.
     """
     now = now if now is not None else time.time()
     done = {}
@@ -69,7 +82,14 @@ def build(picks, reviews, now=None, hold_h=HOLD_H):
         if (arm, hour) in made:
             continue
         made.add((arm, hour))
-        t0 = _ts(hour)
+        h0 = _ts(hour)
+        # Вход — на ЗАКРЫТИИ часа решения, а не на его начале.
+        t0 = (h0 + 3600) if h0 is not None else None
+        # Когда решение было принято на самом деле: цикл просыпается
+        # через несколько минут после закрытия часа, и это задержка
+        # входа, которую нельзя выдавать за ноль. Пишется циклом; у
+        # старых записей её нет, и тогда поле остаётся пустым.
+        decided = pk.get("at_ts")
         for side in ("long", "short"):
             for p in pk.get(side) or []:
                 key = (arm, hour, p.get("sym"), side)
@@ -79,6 +99,9 @@ def build(picks, reviews, now=None, hold_h=HOLD_H):
                     "arm": arm, "hour": hour, "sym": p.get("sym"),
                     "side": side,
                     "opened_at": t0, "closes_at": t_close,
+                    "decided_at": decided,
+                    "lag_sec": (round(decided - t0)
+                                if decided and t0 else None),
                     "close_hour": (_hour_of(t_close) if t_close
                                    else None),
                     "expected_bp": p.get("fwd"),
