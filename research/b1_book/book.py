@@ -31,8 +31,18 @@
 шаг 0.1 доллара на девяносто тысяч, у мелкого альта — единица
 последнего знака, и в шагах полосы сравнивали бы разное.
 
+Книгу пишет один поток (сеть), а читает другой (снимок раз в секунду),
+поэтому у каждой книги свой замок. Без него чтение видело книгу в
+середине правки: `max(bids)` возвращал цену, которую сосед уже снял, и
+следующая же строка падала `KeyError` на этой цене — снимок терялся
+целиком. Тот же гонкой объясняется «книга не готова»: между `clear()`
+и заполнением сторон обе пусты, и наблюдатель, попавший в этот зазор,
+считал инструмент выпавшим. Оба следа найдены на живом сборе 3 августа.
+
 Только стандартная библиотека.
 """
+
+import threading
 
 BANDS = (0.0005, 0.001, 0.0025, 0.005)   # ±0.05 %, 0.1 %, 0.25 %, 0.5 %
 LADDER = 10                               # уровней лесенки для показа
@@ -55,6 +65,9 @@ class Book:
 
     def __init__(self, symbol):
         self.symbol = symbol
+        # Повторный вход нужен: `sample_view` зовёт `sample`, `sample`
+        # зовёт `best` — все под замком.
+        self.lock = threading.RLock()
         self.bids = {}                    # цена (float) -> размер (float)
         self.asks = {}
         self.u = None                     # номер последнего обновления
@@ -69,7 +82,8 @@ class Book:
 
     @property
     def ready(self):
-        return bool(self.bids) and bool(self.asks)
+        with self.lock:
+            return bool(self.bids) and bool(self.asks)
 
     def apply(self, msg):
         """Применить сообщение темы `orderbook`.
@@ -78,6 +92,10 @@ class Book:
         обнаружен разрыв нумерации — в этом случае книга очищена и
         вызывающему следует переподписаться.
         """
+        with self.lock:
+            return self._apply(msg)
+
+    def _apply(self, msg):
         kind = msg.get("type")
         data = msg.get("data") or {}
         u = data.get("u")
@@ -122,9 +140,10 @@ class Book:
                 book[price] = size
 
     def best(self):
-        if not self.ready:
-            return None, None
-        return max(self.bids), min(self.asks)
+        with self.lock:
+            if not (self.bids and self.asks):
+                return None, None
+            return max(self.bids), min(self.asks)
 
     def sample_view(self, ladder=LADDER, bands=BANDS):
         """То же, что `sample`, но БЕЗ обнуления счётчика обновлений.
@@ -144,7 +163,11 @@ class Book:
         Объём в полосах — в котируемой валюте (цена × размер), потому что
         сравнивать надо деньги, а не единицы базового актива.
         """
-        if not self.ready:
+        with self.lock:
+            return self._sample(ladder, bands)
+
+    def _sample(self, ladder=LADDER, bands=BANDS):
+        if not (self.bids and self.asks):
             return None
         bid, ask = self.best()
         mid = (bid + ask) / 2.0

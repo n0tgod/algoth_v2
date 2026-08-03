@@ -55,6 +55,61 @@ def test_snapshot_then_delta():
     check("размер уровня обновился", bk.bids[100.0] == 9.0, str(bk.bids))
 
 
+def test_concurrent_apply_and_sample():
+    """Снимок и правка книги идут из разных потоков — гонки быть не должно.
+
+    Живой сбор 3 августа дал два следа одной причины: `KeyError` на
+    цене (`max(bids)` вернул уровень, который сосед уже снял) и
+    мгновенные «книга не готова» (наблюдатель попал между `clear()` и
+    заполнением сторон). Без замка тест падает за секунды.
+    """
+    import threading
+
+    bk = Book("TEST")
+    bk.apply(snap())
+    stop = threading.Event()
+    errs, not_ready = [], [0]
+
+    def writer():
+        # Нумерация ведётся честно: разрыв очистил бы книгу по делу, и
+        # тест мерил бы собственную ошибку вместо гонки.
+        u, n = 100, 0
+        while not stop.is_set():
+            n += 1
+            if n % 7 == 0:
+                # Снимок чистит книгу целиком — самое широкое окно
+                # для гонки с читателем.
+                u += 1
+                bk.apply(snap(u))
+            else:
+                u += 1
+                bk.apply(delta(u, b=[["100.0", str(u % 5 + 1)]],
+                               a=[["100.1", str(u % 3 + 1)]]))
+
+    def reader():
+        while not stop.is_set():
+            try:
+                if not bk.ready:
+                    not_ready[0] += 1
+                if bk.sample(ladder=0) is None:
+                    not_ready[0] += 1
+            except Exception as e:                        # noqa: BLE001
+                errs.append(f"{type(e).__name__}: {e}")
+
+    th = [threading.Thread(target=writer), threading.Thread(target=reader),
+          threading.Thread(target=reader)]
+    for t in th:
+        t.start()
+    time.sleep(1.5)
+    stop.set()
+    for t in th:
+        t.join()
+    check("снимок не падает при одновременной правке", not errs,
+          str(errs[:3]))
+    check("книга не выглядит пустой в момент правки",
+          not_ready[0] == 0, f"пустых наблюдений: {not_ready[0]}")
+
+
 def test_zero_size_removes_level():
     """Ноль — снятие уровня, а не нулевой объём."""
     bk = Book("TEST")
@@ -1721,6 +1776,7 @@ def test_store_salvages_corrupted_archive():
 def main():
     print("книга")
     test_snapshot_then_delta()
+    test_concurrent_apply_and_sample()
     test_zero_size_removes_level()
     test_delta_before_snapshot_ignored()
     print("разрывы")
