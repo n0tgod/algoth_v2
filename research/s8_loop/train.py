@@ -490,6 +490,33 @@ def write_readiness(syms, grid, per_hour, n_sections, n_feat,
         log_(f"готовность записать не вышло: {e}")
 
 
+def write_outcome(reason, **nums):
+    """Чем кончился ЭТОТ цикл — отдельным файлом, всегда.
+
+    Манифест пишется только при успехе, а готовность — в начале цикла.
+    Значит у прогона, остановленного канарейкой, свежим остаётся один
+    файл из двух, и отчёт по манифесту рассказывает про ПРОШЛЫЙ прогон:
+    те же веса, те же важности, та же строка «цикл занял 4 с».
+    Предупреждения по времени мало — судить о шагах всё равно не по
+    чему.
+
+    Поэтому исход пишется всегда и отдельно: он и есть ответ на вопрос
+    «что сделал этот запуск», не выводимый ни из манифеста, ни из
+    готовности.
+    """
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    out = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+           "reason": reason, "probe": PROBE, **nums}
+    tmp = os.path.join(MODEL_DIR, "last_run.json.tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False)
+        os.replace(tmp, os.path.join(MODEL_DIR, "last_run.json"))
+    except OSError:
+        pass
+    return out
+
+
 def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     t0 = time.time()
     if book_root and os.path.isdir(os.path.join(book_root, "book")):
@@ -500,6 +527,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     mats, syms, grid = load_matrices(sum_dir)
     if mats is None:
         log_("сводок ещё нет — цикл пропущен")
+        write_outcome("сводок ещё нет")
         return False
     x, names, targets, elig = assemble(mats)
     per_hour = elig.sum(axis=0)
@@ -522,6 +550,9 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         log_(f"сечений {n_sections} из {MIN_TRAIN_SECTIONS} — учиться "
              f"рано, запись копится (осталось "
              f"~{MIN_TRAIN_SECTIONS - n_sections} ч)")
+        write_outcome("мало сечений", sections=n_sections,
+                      need=MIN_TRAIN_SECTIONS, hours_per_symbol=int(hist_h),
+                      beta_min_hours=FB.BETA_MIN)
         return False
 
     ic_rows = eval_previous(x, targets, elig, grid, log_)
@@ -534,10 +565,16 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
              f"бете — {FB.BETA_MIN} ч годной истории на монету, есть "
              f"около {int(hist_h)}. Веса НЕ обновляются: непосчитанная "
              f"проверка не является пройденной")
+        write_outcome("канарейка не считалась", sections=n_sections,
+                      hours_per_symbol=int(hist_h),
+                      beta_min_hours=FB.BETA_MIN)
         return False
     if verdict == "кричит":
         log_(f"КАНАРЕЙКА КРИЧИТ: |IC| {abs(med):.3f} > {CANARY_STOP} — "
              f"похоже на течь конвейера, веса НЕ обновляются")
+        write_outcome("канарейка кричит", sections=n_sections,
+                      canary_ic=round(float(med), 4),
+                      canary_stop=CANARY_STOP)
         return False
 
     os.makedirs(MODEL_DIR, exist_ok=True)
@@ -735,6 +772,12 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         log_(f"мысль: {t}")
     log_(f"цикл закончен за {man['cycle_sec']:.0f} с, веса v{MODEL_VERSION} "
          f"до часа {grid[-1]}")
+    write_outcome("обучилась", sections=n_sections,
+                  hours_per_symbol=int(hist_h),
+                  beta_min_hours=FB.BETA_MIN,
+                  canary_ic=man["canary_ic"], canary_stop=CANARY_STOP,
+                  trained=sorted(f"{a}/{t}" for a, t in models),
+                  picks=bool(all_lines), cycle_sec=man["cycle_sec"])
     return True
 
 

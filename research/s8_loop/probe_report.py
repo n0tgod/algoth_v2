@@ -95,6 +95,7 @@ def write(d, out_path):
 
     man = jload(os.path.join(d, "manifest.json"))
     rd = jload(os.path.join(d, "readiness.json"))
+    run = jload(os.path.join(d, "last_run.json"))
     ic = jlines(os.path.join(d, "ic_history.jsonl"))
     picks = jlines(os.path.join(d, "picks.jsonl"))
     review = jlines(os.path.join(d, "review.jsonl"))
@@ -111,15 +112,17 @@ def write(d, out_path):
     # про обучение, которого сейчас не было. Различить это можно только
     # по времени, и молчать тут нельзя: артефакт прошлого прогона,
     # выдающий себя за нынешний, — самый частый дефект этого проекта.
-    stale = (man and rd and man.get("trained_at") and rd.get("at")
-             and man["trained_at"] < rd["at"])
+    ref = (run or {}).get("at") or (rd or {}).get("at")
+    stale = (man and ref and man.get("trained_at")
+             and man["trained_at"] < ref)
+    if run:
+        L += [f"**Чем кончился этот прогон: {run['reason']}** "
+              f"({run['at']}).", ""]
     if stale:
         L += [f"> **Манифест старше этого прогона** — обучение "
-              f"{man['trained_at']}, прогон {rd['at']}. Значит цикл "
-              f"остановился ДО записи весов (канарейка или нехватка "
-              f"сечений), а всё, что ниже помечено манифестом, описывает "
-              f"ПРОШЛЫЙ прогон. Свежее здесь только «что было на входе».",
-              ""]
+              f"{man['trained_at']}, прогон {ref}. Веса, важности и мысли "
+              f"ниже описывают ПРОШЛЫЙ прогон, а не этот: цикл "
+              f"остановился до их записи.", ""]
     if man and not man.get("probe"):
         L += ["> **Внимание: это артефакты БОЕВОГО прогона** — в манифесте "
               "`probe: false`. Отчёт собран по ним как есть.", ""]
@@ -162,15 +165,26 @@ def write(d, out_path):
                f"{(rd or {}).get('hours', '?')} часов × "
                f"{(rd or {}).get('symbols', '?')} монет")]
 
-    can = (man or {}).get("canary_ic")
-    stop = (man or {}).get("canary_stop")
-    can_ok = (can is not None and stop is not None
-              and abs(can) <= stop)
-    L += [step(can_ok if can is not None else False,
-               "канарейка (обучение на перемешанных целях)",
-               f"IC {can:+.4f} при пороге ±{stop}" if can is not None
-               else "**не считалась — а это не то же самое, что "
-                    "пройдена**: цель fwd_4h пуста, ей нужна бета")]
+    # Канарейка судится по ИСХОДУ этого прогона, а не по манифесту:
+    # манифест мог остаться от прошлого, и его `canary_ic` описывал бы
+    # чужую проверку.
+    reason = (run or {}).get("reason")
+    can = (run or man or {}).get("canary_ic")
+    stop = (run or man or {}).get("canary_stop")
+    if reason == "канарейка не считалась":
+        L += [step(False, "канарейка (обучение на перемешанных целях)",
+                   "**не считалась — а это не то же самое, что "
+                   "пройдена**: цель fwd_4h пуста, ей нужна бета")]
+    elif reason == "канарейка кричит":
+        L += [step(False, "канарейка (обучение на перемешанных целях)",
+                   f"IC {can:+.4f} при пороге ±{stop} — похоже на течь")]
+    elif can is not None and stop is not None:
+        L += [step(abs(can) <= stop,
+                   "канарейка (обучение на перемешанных целях)",
+                   f"IC {can:+.4f} при пороге ±{stop}")]
+    else:
+        L += [step(None, "канарейка (обучение на перемешанных целях)",
+                   "до неё не дошло" if reason else "исхода прогона нет")]
 
     # Цели берутся из самого прогона: имена весов плюс ключи важностей.
     have = {(w[len("weights_"):-4].split("_", 1)[0],
@@ -179,21 +193,29 @@ def write(d, out_path):
                       | {t for per in ((man or {}).get("importance")
                                        or {}).values() for t in per}
                       | set((man or {}).get("targets_all") or ()))
+    trained_now = reason == "обучилась" or reason is None
     for arm in ARMS:
         got = sorted(t for t in declared if (arm, t) in have)
         miss = [t for t in declared if (arm, t) not in have]
-        L += [step(bool(got), f"обучение: {RU_ARM[arm]}",
-                   (f"веса на {len(got)} целях: " + ", ".join(got)
-                    if got else "весов нет")
-                   + (f"; без целей ({len(miss)}): " + ", ".join(miss)
-                      if miss else ""))]
+        detail = ((f"веса на {len(got)} целях: " + ", ".join(got)
+                   if got else "весов нет")
+                  + (f"; без целей ({len(miss)}): " + ", ".join(miss)
+                     if miss else ""))
+        if not trained_now:
+            # Веса на диске есть, но положил их не этот прогон. Назвать
+            # шаг пройденным значило бы записать чужую работу в свою.
+            L += [step(None, f"обучение: {RU_ARM[arm]}",
+                       f"этот прогон до обучения не дошёл ({reason}); "
+                       f"на диске лежит прошлое: {detail}")]
+        else:
+            L += [step(bool(got), f"обучение: {RU_ARM[arm]}", detail)]
 
     # Выбор обязан быть, если веса обеих целей отбора обучились: он и
     # есть то, ради чего конвейер существует. Его отсутствие при
     # готовых весах — настоящий отказ, а не «рано».
     can_pick = any((arm, "fwd_4h") in have and (arm, "mae_4h") in have
                    for arm in ARMS)
-    L += [step(bool(picks) if can_pick else None,
+    L += [step(bool(picks) if (can_pick and trained_now) else None,
                "выбор длинных и коротких",
                f"записей {len(picks)}" if picks else
                "нужны веса fwd_4h и mae_4h — на этой истории цели "
@@ -207,7 +229,7 @@ def write(d, out_path):
                " · ".join(f"{RU_ARM[k]} ${v['balance']}"
                           for k, v in accs.items() if v)
                or "счёт открывается со второго прогона")]
-    L += [step(bool(thoughts), "мысли словами",
+    L += [step(bool(thoughts) if trained_now else None, "мысли словами",
                f"строк {len(thoughts)}" if thoughts else "нет")]
     L += [""]
 

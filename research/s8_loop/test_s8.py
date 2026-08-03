@@ -538,8 +538,13 @@ def test_report_flags_manifest_from_a_previous_run():
         txt = "\n".join(lines)
         check("устаревший манифест назван прямо",
               "Манифест старше этого прогона" in txt)
-        check("непосчитанная канарейка не выдаётся за пройденную",
-              "не то же самое" in txt)
+        # Без файла исхода судить о канарейке НЕ ПО ЧЕМУ: `canary_ic` в
+        # манифесте описывает тот прогон, который манифест положил.
+        # Молчание тут честнее, чем «прошла».
+        check("без исхода канарейка не объявляется пройденной",
+              "| канарейка" in txt
+              and "| канарейка (обучение на перемешанных целях) | прошёл"
+              not in txt, txt[txt.find("| канарейка"):][:120])
 
         # Тот же манифест, но свежее готовности — предупреждения быть
         # не должно, иначе оно перестанет читаться.
@@ -550,6 +555,27 @@ def test_report_flags_manifest_from_a_previous_run():
         _, lines = PR.write(md, os.path.join(root, "r.md"))
         check("на свежем манифесте предупреждения нет",
               "Манифест старше" not in "\n".join(lines))
+
+        # Исход прогона важнее предупреждения: по манифесту нельзя
+        # судить о шагах, если положил его другой запуск. Веса на диске
+        # есть, но записать их себе в заслугу нынешний прогон не вправе.
+        json.dump({"probe": True, "canary_ic": None, "canary_stop": 0.05,
+                   "trained_at": "2026-08-03T17:30:00+00:00",
+                   "targets_all": ["mae_4h"], "importance": {}},
+                  open(os.path.join(md, "manifest.json"), "w"))
+        json.dump({"at": "2026-08-03T18:03:00+00:00", "probe": True,
+                   "reason": "канарейка не считалась", "sections": 9},
+                  open(os.path.join(md, "last_run.json"), "w"))
+        for arm in ("gbm", "nn"):
+            open(os.path.join(md, f"weights_{arm}_mae_4h.pkl"),
+                 "wb").write(b"x")
+        _, lines = PR.write(md, os.path.join(root, "r.md"))
+        txt = "\n".join(lines)
+        check("исход прогона назван первой строкой",
+              "Чем кончился этот прогон: канарейка не считалась" in txt)
+        check("чужое обучение не записано себе в заслугу",
+              "| обучение: деревья (ML) | прошёл" not in txt
+              and "до обучения не дошёл" in txt)
     finally:
         shutil.rmtree(root, ignore_errors=True)
 
