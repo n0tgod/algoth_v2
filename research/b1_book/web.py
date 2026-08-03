@@ -571,7 +571,7 @@ function renderGroups() {
 }
 
 // --- модель: состояние, живой IC и мысли трейдерскими словами --------
-const MDL = {data: null, arm: "all"};   // переключатель рук турнира
+const MDL = {data: null, arm: "all", mode: "live"};   // переключатель рук турнира
 async function pullModel() {
   try {
     const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
@@ -580,16 +580,111 @@ async function pullModel() {
   } catch (e) { /* тихо: следующий опрос через минуту */ }
   renderModel();
 }
+function wireModes() {
+  const box = document.getElementById("modelbox");
+  box.querySelectorAll("[data-mode]").forEach(b =>
+    b.onclick = () => { MDL.mode = b.dataset.mode; renderModel(); });
+}
+
+// Предпросмотр: та же модель на том, что уже накоплено. Каждая строка
+// здесь обязана нести оговорку о том, чем он отличается от боевого, —
+// иначе счёт в долларах прочитается как результат стратегии.
+function renderPretest(p, modeBtns) {
+  const box = document.getElementById("modelbox");
+  const cap = document.getElementById("cap-model");
+  const m = p.manifest || {}, rd = p.readiness || {}, lr = p.last_run || {};
+  cap.textContent = "PRE-TESTING · not a result";
+  const warn = `<div class="mline" style="border-left:3px solid #b58900;
+      padding-left:8px"><b>Pre-testing.</b> Same pipeline, but trained on
+    the few days recorded so far and with the market hedge OFF — beta
+    needs ${rd.beta_min_hours ?? 96} h of history and there are
+    ${rd.hours_per_symbol ?? "—"}. So this book is <b>directional</b>: it
+    rides the market, not just the signal. Numbers here show that
+    training runs, not that anything works. The real model trains
+    separately and is untouched.${
+      m.canary_spread > 0.05 ? ` Leak check is weak at this sample size
+      (spread ±${m.canary_spread} across ${m.canary_seeds} seeds vs a
+      0.05 threshold) — it would catch a gross leak, not a subtle one.`
+      : ""}</div>`;
+  if (!p.present) {
+    box.innerHTML = modeBtns + warn + `<div class="mline">no cycle has
+      completed yet${lr.reason ? " — last run: " + lr.reason : ""}.</div>`;
+    wireModes();
+    return;
+  }
+  const ageH = m.trained_at
+    ? Math.max(0, (Date.now()/1000 - new Date(m.trained_at).getTime()/1000)
+               / 3600) : null;
+  const accs = p.accounts || {};
+  const accLine = ["gbm","nn"].map(a => accs[a]
+    ? `${a === "gbm" ? "trees" : "neural"} $${accs[a].balance.toFixed(2)}`
+    : null).filter(Boolean).join(" · ");
+  const ic = {};
+  (p.ic || []).forEach(r => { ic[(r.arm || "gbm") + ":" + r.target] = r; });
+  const icLine = ["gbm","nn"].map(a => {
+    const s = ["fwd_1h","fwd_4h","fwd_24h"].map(t => {
+      const r = ic[a + ":" + t];
+      return r ? `${t.replace("fwd_","")} ${r.median_ic > 0 ? "+" : ""}${
+        r.median_ic}` : null; }).filter(Boolean).join(" ");
+    return s ? `${a === "gbm" ? "trees" : "neural"}: ${s}` : null;
+  }).filter(Boolean).join(" · ");
+  const rows = [];
+  (p.picks || []).slice(-2).forEach(pk => {
+    const side = s => (pk[s] || []).map(x =>
+      `${x.sym.replace("USDT","")} ${x.fwd > 0 ? "+" : ""}${
+        Math.round(x.fwd)}`).join(", ");
+    rows.push(`<div class="mline"><b>${pk.arm === "nn" ? "neural" :
+      "trees"}</b> @ ${pk.hour}: long ${side("long") || "—"} · short ${
+      side("short") || "—"} <span class="dim">(bp expected over 4 h)</span>
+      </div>`);
+  });
+  (p.review || []).slice(-2).forEach(rv => {
+    const hit = (rv.rows || []).filter(r =>
+      (r.side === "long") === (r.got > 0)).length;
+    rows.push(`<div class="mline"><b>${rv.arm === "nn" ? "neural" :
+      "trees"}</b> reviewed ${rv.hour}: sign right on ${hit}/${
+      (rv.rows||[]).length} — ` + (rv.rows||[]).map(r =>
+      `${r.sym.replace("USDT","")} ${r.expected > 0 ? "+" : ""}${
+        r.expected}→${r.got > 0 ? "+" : ""}${r.got}`).join(", ")
+      + `</div>`);
+  });
+  box.innerHTML = modeBtns + warn
+    + `<div class="mline">weights v${m.version} · age ${
+        ageH == null ? "—" : ageH.toFixed(1)} h · trained on ${
+        m.sections ?? "—"} sections, ${m.symbols ?? "—"} coins · hedge ${
+        m.hedge || "?"}${accLine ? " · paper " + accLine : ""}</div>`
+    + (icLine ? `<div class="mline">out-of-sample IC — ${icLine}</div>` : "")
+    + rows.join("")
+    + (p.thoughts || []).slice(-6).map(t =>
+        `<div class="mline dim">${t.text}</div>`).join("");
+  wireModes();
+}
+
 function renderModel() {
   const box = document.getElementById("modelbox"), d = MDL.data;
   const cap = document.getElementById("cap-model");
   if (!d) { box.textContent = "…"; return; }
-  const armBtns = `<div style="margin-bottom:6px">` +
+  // Предпросмотр — ОТДЕЛЬНАЯ вкладка, а не подмешанные строки. Это
+  // другая модель на другой посылке: хедж выключен, история — дни.
+  // Слить их в одну картинку значило бы однажды прочитать её счёт как
+  // счёт боевой.
+  const hasPre = !!(d.pretest &&
+                    (d.pretest.present || d.pretest.readiness));
+  const modeBtns = hasPre ? `<div style="margin-bottom:6px">` +
+    [["live","model"],["pretest","pre-testing"]].map(x =>
+      `<button data-mode="${x[0]}" aria-pressed="${
+        String((MDL.mode||"live") === x[0])}">${x[1]}</button>`).join(" ")
+    + `</div>` : "";
+  if ((MDL.mode || "live") === "pretest" && hasPre) {
+    return renderPretest(d.pretest, modeBtns);
+  }
+  const armBtns = modeBtns + `<div style="margin-bottom:6px">` +
     [["all","both"],["gbm","trees (ML)"],["nn","neural (AI)"]].map(x =>
       `<button data-arm="${x[0]}" aria-pressed="${
         String(MDL.arm === x[0])}">${x[1]}</button>`).join(" ") + `</div>`;
-  const wireArms = () => box.querySelectorAll("[data-arm]").forEach(b =>
-    b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); });
+  const wireArms = () => { wireModes();
+    box.querySelectorAll("[data-arm]").forEach(b =>
+      b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); }); };
   if (!d.present) {
     // Готовность — числом, а не обещанием. «Модели нет» означало и
     // «копим запись», и «копим вхолостую, ни один час не годен»;

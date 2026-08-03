@@ -590,6 +590,70 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_pretest_runs_where_live_refuses_and_stays_apart():
+    """Предпросмотр показывает работу там, где боевой обязан молчать.
+
+    Владелец хочет видеть обучение на том, что уже накоплено. Боевой
+    цикл в этом состоянии отказывается по делу: `fwd_*` требуют беты,
+    бете нужно FB.BETA_MIN часов, и без главной цели веса вели бы
+    контур, который ничего не выбирает.
+
+    Предпросмотр отключает хедж (бета := 0 там, где её нет) и потому
+    работает. Цена честно названа: книга становится НАПРАВЛЕННОЙ, и
+    пометка едет в артефакт, а не в комментарий.
+
+    Главное здесь — что он не может помешать боевому: свой каталог,
+    свой порог, и сводку часов он не пишет вовсе.
+    """
+    import tempfile
+    import train as T
+    import synth
+
+    sd = tempfile.mkdtemp(prefix="pre-")
+    live = os.path.join(tempfile.mkdtemp(), "model")
+    pre = os.path.join(tempfile.mkdtemp(), "model_pretest")
+    keep = (T.MODEL_DIR, T.PRETEST, T.PROBE, T.MIN_TRAIN_SECTIONS)
+    try:
+        # 60 часов: бете нужно 96, значит fwd_* пусты по построению.
+        synth.write_summaries(sd, D=60)
+        T.MODEL_DIR, T.PRETEST, T.PROBE = live, False, False
+        T.MIN_TRAIN_SECTIONS = 4       # чтобы дойти именно до беты
+        ok_live = T.cycle(sd, lambda m: None, book_root=None)
+        with open(os.path.join(live, "last_run.json"),
+                  encoding="utf-8") as f:
+            lr = json.load(f)
+        check("боевой отказывается без главной цели",
+              not ok_live and lr["reason"] == "нет главной цели",
+              lr["reason"])
+        check("боевой весов не пишет",
+              not any(f.startswith("weights_") for f in os.listdir(live)))
+
+        T.MODEL_DIR, T.PRETEST = pre, True
+        ok_pre = T.cycle(sd, lambda m: None, book_root=None)
+        check("предпросмотр на тех же данных обучается", ok_pre)
+        with open(os.path.join(pre, "manifest.json"), encoding="utf-8") as f:
+            man = json.load(f)
+        check("хедж назван выключенным в артефакте",
+              man["pretest"] is True and "выключен" in man["hedge"],
+              str(man.get("hedge")))
+        with open(os.path.join(pre, "picks.jsonl"), encoding="utf-8") as f:
+            picks = [json.loads(x) for x in f]
+        check("выбор монет есть — ради него всё и делалось",
+              picks and picks[0]["long"], str(len(picks)))
+        # Канарейка на малой выборке кричит от собственного шума;
+        # несколько зёрен это и показывают числом.
+        check("канарейка считана несколькими зёрнами",
+              man["canary_seeds"] > 1 and man["canary_spread"] > 0,
+              f"{man['canary_seeds']} зёрен, разброс "
+              f"{man['canary_spread']}")
+        check("боевой каталог не тронут предпросмотром",
+              not os.path.exists(os.path.join(live, "picks.jsonl"))
+              and not os.path.exists(os.path.join(live, "manifest.json")))
+    finally:
+        T.MODEL_DIR, T.PRETEST, T.PROBE, T.MIN_TRAIN_SECTIONS = keep
+        shutil.rmtree(sd, ignore_errors=True)
+
+
 def test_probe_never_touches_live_model():
     """Пробный прогон пишет в свой каталог и метит себя в артефакте.
 
@@ -858,6 +922,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_pretest_runs_where_live_refuses_and_stays_apart()
     test_probe_never_touches_live_model()
     test_novelty_measure()
     test_nn_learns_and_sees_missing()

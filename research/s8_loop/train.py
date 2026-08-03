@@ -70,6 +70,11 @@ MIN_TRAIN_SECTIONS = 48           # меньше двух суток сечен�
 # каталог и со своей пометкой. Порог 48 не трогается — см. `--probe`.
 PROBE_MIN_SECTIONS = 4
 PROBE = False
+# Предпросмотр: та же модель на том, что уже накоплено, своим циклом и
+# в свой каталог. Задача — показать владельцу работу обучения СЕЙЧАС, а
+# не ждать четверо суток; вердикт по нему не выносится никогда.
+PRETEST = False
+PRETEST_MIN_SECTIONS = 4
 CANARY_STOP = 0.05                # грубая течь; шум зерна тут ±0.015
 # Бумажный счёт руки: старт $1000, 6 позиций равными долями, тейкерский
 # круг 11 б.п. с позиции, без проскальзывания (сказано прямо), плечо 1.
@@ -196,10 +201,22 @@ def think(prev_man, man, ic_rows, picks):
                   "замер, торговлю он пока не ограничивает.")
     can = man.get("canary_ic")
     if can is not None:
-        out.append(f"проверка на шум {'чиста' if abs(can) <= CANARY_STOP else 'ПОДНЯТА'} "
-                   f"({can:+.3f}): на перемешанных данных я бы ничего "
-                   f"не «увидел» — значит то, что вижу, не выдумка "
-                   f"конвейера.")
+        # Разброс по зёрнам — часть вердикта, а не украшение: если он
+        # шире порога, проверка на такой выборке ничего не различает, и
+        # «чиста» было бы обещанием, которого замер не даёт.
+        spread = man.get("canary_spread") or 0.0
+        weak = spread > CANARY_STOP
+        out.append(
+            f"проверка на шум "
+            f"{'чиста' if abs(can) <= CANARY_STOP else 'ПОДНЯТА'} "
+            f"({can:+.3f}"
+            + (f", разброс по {man.get('canary_seeds')} зёрнам "
+               f"{spread:.3f}" if spread else "") + "): "
+            + ("разброс шире порога — на такой выборке проверка ловит "
+               "только грубую течь, слабую не увидит."
+               if weak else
+               "на перемешанных данных я бы ничего не «увидел» — "
+               "значит то, что вижу, не выдумка конвейера."))
     if not prev_man:
         out.insert(0, f"первое обучение: {man.get('sections')} сечений по "
                       f"{man.get('symbols')} монетам. Пока выборка "
@@ -305,7 +322,20 @@ def context_mats(syms, grid):
 def assemble(mats):
     """Матрицы сводки → (X, имена признаков, цели, elig, r)."""
     feats, r, elig = FB.feature_pack(mats)
-    targets = FB.target_pack(mats, r, elig, feats["beta"])
+    beta = feats["beta"]
+    if PRETEST:
+        # Предпросмотр живёт на недельной записи, а бете нужно
+        # FB.BETA_MIN часов — значит `fwd_*` пусты, а без них нет ни
+        # выбора монет, ни счёта, то есть смотреть не на что.
+        #
+        # Подставляем ноль ТАМ, ГДЕ беты нет. Это не «примерно бета», а
+        # честное отключение хеджа: остаток к волне вырождается в
+        # обычную доходность, и книга становится НАПРАВЛЕННОЙ. Она
+        # ловит движение рынка вместе с сигналом, и это надо помнить
+        # при чтении её счёта — потому пометка едет во все артефакты и
+        # на страницу, а не в комментарий.
+        beta = np.where(np.isfinite(beta), beta, 0.0)
+    targets = FB.target_pack(mats, r, elig, beta)
     names = sorted(feats)
     S, H = mats["mid_close"].shape
     x = np.stack([feats[n] for n in names], axis=-1)    # (S, H, F)
@@ -418,6 +448,40 @@ def eval_previous(x, targets, elig, grid, log_):
     return rows
 
 
+PRETEST_CANARY_SEEDS = 5
+
+
+def canary_many(x, targets, elig, grid, seed, log_, name, seeds):
+    """Канарейка несколькими зёрнами: среднее — оценка, разброс — шум.
+
+    На малой выборке одна канарейка кричит от собственного шума, а не
+    от течи: её медианный IC есть медиана по сечениям, и стандартная
+    ошибка растёт как `1/√числа сечений`. На девяти сечениях это
+    сравнимо с самим порогом 0.05, то есть одиночный замер вердикта не
+    несёт — проверено сразу: на шестидесяти часах синтетики канарейка
+    закричала при заведомо исправном конвейере.
+
+    Отключать проверку нельзя — она и есть защита от течи. Правильный
+    ход тот же, что вынес R3: судить по расстоянию от СРЕДНЕГО
+    распределения зёрен, а не по одному броску. Настоящая течь смещает
+    все зёрна в одну сторону, шум — нет.
+    """
+    vals = []
+    for k in range(seeds):
+        y = targets[name]
+        vals.append(canary(x, y, elig, grid, seed + 1000 * k, log_,
+                           name=name))
+    vals = [v for v in vals if np.isfinite(v)]
+    if not vals:
+        return float("nan"), float("nan"), 0
+    mean = float(np.mean(vals))
+    spread = float(np.max(vals) - np.min(vals)) if len(vals) > 1 else 0.0
+    log_(f"канарейка по {len(vals)} зёрнам: среднее {mean:+.4f}, "
+         f"разброс {spread:.4f} (одиночный замер на такой выборке "
+         f"вердикта не несёт)")
+    return mean, spread, len(vals)
+
+
 def canary_verdict(med):
     """Три состояния канарейки, а не два.
 
@@ -509,6 +573,7 @@ def write_readiness(syms, grid, per_hour, n_sections, n_feat,
         # иначе «обучение началось, а выборов нет» выглядит поломкой.
         "beta_min_hours": FB.BETA_MIN,
         "hours_per_symbol": int(hist_h),
+        "pretest": PRETEST,
         "by_hour": hours[-72:],
     }
     tmp = os.path.join(MODEL_DIR, "readiness.json.tmp")
@@ -536,7 +601,8 @@ def write_outcome(reason, **nums):
     """
     os.makedirs(MODEL_DIR, exist_ok=True)
     out = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-           "reason": reason, "probe": PROBE, **nums}
+           "reason": reason, "probe": PROBE, "pretest": PRETEST,
+           **nums}
     tmp = os.path.join(MODEL_DIR, "last_run.json.tmp")
     try:
         with open(tmp, "w", encoding="utf-8") as f:
@@ -576,7 +642,10 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
              f"целиком, а НЕ качество модели: на таком числе сечений "
              f"числа — шум, и опираться на них нельзя ни в какую "
              f"сторону. Артефакты идут в {MODEL_DIR} и помечены probe.")
-    if n_sections < (PROBE_MIN_SECTIONS if PROBE else MIN_TRAIN_SECTIONS):
+    floor = (PROBE_MIN_SECTIONS if PROBE
+             else PRETEST_MIN_SECTIONS if PRETEST
+             else MIN_TRAIN_SECTIONS)
+    if n_sections < floor:
         log_(f"сечений {n_sections} из {MIN_TRAIN_SECTIONS} — учиться "
              f"рано, запись копится (осталось "
              f"~{MIN_TRAIN_SECTIONS - n_sections} ч)")
@@ -593,8 +662,19 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # переписали. Канарейка считается на любой годной цели, а нехватка
     # `fwd_4h` — отдельный гейт ниже.
     cname = canary_target(targets, elig)
-    med = (canary(x, targets[cname], elig, grid, SEED0 + len(grid),
-                  log_, name=cname) if cname else float("nan"))
+    spread, nseed = 0.0, 1
+    if not cname:
+        med = float("nan")
+    elif PRETEST:
+        # Предпросмотр живёт на малой выборке, где одна канарейка
+        # кричит от собственного шума. Зёрен несколько, вердикт по
+        # среднему — иначе предпросмотр молча стоял бы навсегда.
+        med, spread, nseed = canary_many(
+            x, targets, elig, grid, SEED0 + len(grid), log_, cname,
+            PRETEST_CANARY_SEEDS)
+    else:
+        med = canary(x, targets[cname], elig, grid, SEED0 + len(grid),
+                     log_, name=cname)
     verdict = canary_verdict(med)
     if verdict == "не считалась":
         log_(f"канарейка не считается: ни одна цель не набирает строк. "
@@ -609,7 +689,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
              f"похоже на течь конвейера, веса НЕ обновляются")
         write_outcome("канарейка кричит", sections=n_sections,
                       canary_ic=round(float(med), 4),
-                      canary_target=cname, canary_stop=CANARY_STOP)
+                      canary_target=cname, canary_stop=CANARY_STOP,
+                      canary_spread=round(spread, 4), canary_seeds=nseed)
         return False
 
     # Главная цель отдельным гейтом. Без `fwd_4h` не будет ни выбора
@@ -622,7 +703,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         msg = (f"главной цели fwd_4h нет: ей нужна бета, бете — "
                f"{FB.BETA_MIN} ч годной истории на монету, есть около "
                f"{int(hist_h)}")
-        if not PROBE:
+        if not (PROBE or PRETEST):
             log_(msg + ". Веса НЕ обновляются: выбирать монеты не на чем")
             write_outcome("нет главной цели", sections=n_sections,
                           hours_per_symbol=int(hist_h),
@@ -676,6 +757,9 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            # весами. Прогон F2 однажды уже подменил артефакт настоящего
            # прогона смоуковым — по содержимому они были неотличимы.
            "probe": PROBE,
+           "pretest": PRETEST,
+           "hedge": "выключен (бета не оценима)" if PRETEST
+                    else "включён",
            "min_sections": (PROBE_MIN_SECTIONS if PROBE
                             else MIN_TRAIN_SECTIONS),
            "trained_at": datetime.now(timezone.utc).isoformat(
@@ -689,6 +773,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            "targets_all": list(TARGETS),
            "canary_stop": CANARY_STOP,
            "canary_target": cname,
+           "canary_spread": round(spread, 4),
+           "canary_seeds": nseed,
            "canary_ic": round(med, 4) if np.isfinite(med) else None,
            "new_summary_hours": n_new,
            "importance": imp_all,
@@ -886,7 +972,7 @@ def demo():
 
 
 def main():
-    global MODEL_DIR, PROBE
+    global MODEL_DIR, PROBE, PRETEST
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--summary-dir", default=SM.OUT)
@@ -900,9 +986,20 @@ def main():
                          "разбор фактом, бумажные счета. Отвечает на "
                          "вопрос «что я буду видеть», измерением не "
                          "является ни в какой части.")
+    ap.add_argument("--pretest", action="store_true",
+                    help="предпросмотр: та же модель на том, что уже "
+                         "накоплено, своим циклом и в свой каталог. "
+                         "Показывает работу обучения сейчас; вердикт по "
+                         "нему не выносится никогда.")
     a = ap.parse_args()
     if a.demo:
         return demo()
+    if a.pretest:
+        # Каталог свой — боевые веса, счета и выборы не трогаются, и
+        # живой контур не может поехать на модели, обученной на неделе
+        # данных. Порог 48 остаётся ровно тем же.
+        MODEL_DIR = os.path.join(OUT, "model_pretest")
+        PRETEST = True
     if a.probe:
         # Порог 48 остаётся нетронутым, меняется КАТАЛОГ. Иначе
         # пробный прогон записал бы веса, счета и выборы поверх
@@ -912,13 +1009,21 @@ def main():
         PROBE = True
         a.once = True
     try:
-        os.nice(10)               # приём данных важнее счёта
+        # Приём данных важнее счёта, а предпросмотр — важнее всего
+        # прочего НЕ является: он уступает и сбору, и боевому циклу.
+        os.nice(15 if a.pretest else 10)
     except OSError:
         pass
     while True:
         trained = False
         try:
-            trained = bool(cycle(a.summary_dir, log))
+            # Предпросмотр НЕ сводит часы сам. Сводку пишет боевой
+            # цикл, и два процесса, пишущих одни файлы, однажды
+            # разошлись бы посреди строки. Предпросмотр только читает
+            # готовое — отсюда и гарантия «помешать не может».
+            trained = bool(cycle(a.summary_dir, log,
+                                 book_root=None if a.pretest
+                                 else SM.BOOK_ROOT))
         except Exception as e:                            # noqa: BLE001
             # Цикл живёт сутками; одна упавшая итерация не вправе
             # убить процесс — но обязана быть видна.
@@ -945,7 +1050,10 @@ def main():
         # канарейка, упал), обязан проверить снова скоро: иначе сутки
         # ожидания данных превращаются в двое, и ждать выглядит ровно
         # как работать. Тот же класс, что «отказ неотличим от тишины».
-        wait = CYCLE_SEC if trained else RETRY_SEC
+        # Предпросмотр переобучается каждый час независимо от успеха:
+        # его смысл — показывать, как модель меняется по мере
+        # накопления, а сутки ожидания это скрыли бы.
+        wait = RETRY_SEC if (a.pretest or not trained) else CYCLE_SEC
         log(f"следующая попытка через {wait // 60} мин "
             f"({'переобучение по расписанию' if trained else 'обучения не было'})")
         time.sleep(wait)

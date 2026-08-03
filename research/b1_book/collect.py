@@ -1170,8 +1170,19 @@ class Collector:
         at, cached = self._model_cache
         if cached is not None and now - at < 30:
             return cached
-        mdir = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
-                            "model")
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        out = self._model_dir_state(os.path.join(s8, "model"))
+        # Предпросмотр — ОТДЕЛЬНЫМ ключом, а не подмешан в тот же. Это
+        # другая модель на другой посылке (хедж выключен, история —
+        # дни), и слить их в одну картинку значило бы однажды прочитать
+        # её счёт как счёт боевой.
+        pre = self._model_dir_state(os.path.join(s8, "model_pretest"))
+        if pre.get("present") or pre.get("readiness"):
+            out["pretest"] = pre
+        self._model_cache = (now, out)
+        return out
+
+    def _model_dir_state(self, mdir):
         out = {"present": False}
         try:
             with open(os.path.join(mdir, "manifest.json"),
@@ -1211,7 +1222,12 @@ class Collector:
             except OSError:
                 pass
             out[key] = rows[-keep:]
-        self._model_cache = (now, out)
+        try:
+            with open(os.path.join(mdir, "last_run.json"),
+                      encoding="utf-8") as f:
+                out["last_run"] = json.load(f)
+        except (OSError, ValueError):
+            pass
         return out
 
     def trades(self, sym=None):

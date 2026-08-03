@@ -67,8 +67,22 @@ else
 fi
 
 # --- цикл обучения ---------------------------------------------------
-if ! pgrep -f "s8_loop/train.py" >/dev/null; then
+# Шаблон поиска с `--pretest` на конце у одного и без него у другого:
+# без этого `pgrep -f s8_loop/train.py` находил бы предпросмотр и
+# считал боевой цикл живым. Два процесса, неотличимые по шаблону, —
+# тот же класс ошибки, что артефакт, неотличимый от чужого.
+if ! pgrep -f "s8_loop/train.py$" >/dev/null; then
     echo "[$(now)] цикл обучения не найден — поднимаю"
     setsid nohup .venv/bin/python research/s8_loop/train.py \
         >> research/s8_loop/out/train.log 2>&1 &
+fi
+
+# --- предпросмотр ----------------------------------------------------
+# Отдельный процесс с пониженным приоритетом: он не сводит часы (только
+# читает готовое) и пишет в свой каталог, поэтому помешать боевому не
+# может даже упав.
+if ! pgrep -f "s8_loop/train.py --pretest" >/dev/null; then
+    echo "[$(now)] предпросмотр не найден — поднимаю"
+    setsid nohup .venv/bin/python research/s8_loop/train.py --pretest \
+        >> research/s8_loop/out/pretest.log 2>&1 &
 fi
