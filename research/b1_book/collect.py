@@ -619,7 +619,7 @@ class Collector:
         self.n_snap_err = 0
         self.last_snap = 0.0
         self.snap_pass_sec = 0.0
-        self.snap_slow_said = False
+        self.snap_slow_said = 0.0
         # Живой детектор: те же правила, что в замерах. Сделки бумажные,
         # это наблюдение, а не торговля — замеры T1–T4 показали, что
         # направленного содержания у события нет. Страница нужна, чтобы
@@ -676,7 +676,13 @@ class Collector:
         """
         nxt = time.time() + SAMPLE_SEC
         while not self.stop.wait(max(0.0, nxt - time.time())):
-            nxt += SAMPLE_SEC
+            # Долг НЕ отрабатывается: если проход занял дольше шага,
+            # прибавление шага к прошлому сроку заставляет цикл гнать
+            # проходы подряд, пока не догонит. На живом сборе это дало
+            # 4091 снимок на монету в час вместо 3600 — лишняя запись
+            # вспышками вместо ровной сетки. Отстали — берём следующий
+            # срок от текущего момента.
+            nxt = max(nxt + SAMPLE_SEC, time.time())
             now = time.time()
             t_pass = time.time()
             for sym, b in self.books.items():
@@ -697,11 +703,15 @@ class Collector:
                                  f"({self.n_snap_err} отказов подряд по "
                                  f"счёту): {type(e).__name__}: {e}")
             self.snap_pass_sec = time.time() - t_pass
-            if self.snap_pass_sec > SAMPLE_SEC and not self.snap_slow_said:
+            # Предупреждение перевзводится раз в час: сборщик работает
+            # неделями, состав растёт, и однократная строка о медленном
+            # проходе потерялась бы в журнале навсегда.
+            if now - self.snap_slow_said > 3600 \
+                    and self.snap_pass_sec > SAMPLE_SEC:
                 # Проход дольше секунды означает, что снимков в часе
                 # меньше 3600, и это меняет пригодность часа к сечению.
                 # Сказать об этом надо один раз и числом.
-                self.snap_slow_said = True
+                self.snap_slow_said = now
                 self.log(f"ВНИМАНИЕ: полный проход снимков занял "
                          f"{self.snap_pass_sec:.2f} с при шаге "
                          f"{SAMPLE_SEC} с — снимков в часе будет около "
