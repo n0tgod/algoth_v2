@@ -724,7 +724,8 @@ function tradeTable(p) {
   const tr = p.trades || [];
   if (!tr.length) return `<div class="mline">no model trades yet —
     the first cycle writes picks, outcomes arrive 4 h later.</div>`;
-  const rows = tr.slice(0, 24).map(t => {
+  const SHOW = 60;
+  const rows = tr.slice(0, SHOW).map(t => {
     const cls = t.state === "закрыта"
       ? ((t.net_bp > 0) ? "good" : "bad")
       : (t.state === "открыта" ? "" : "dim");
@@ -750,7 +751,9 @@ function tradeTable(p) {
     <div style="overflow-x:auto"><table class="mtr">
     <tr><th>hour</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
     <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
-    ${rows}</table></div>`;
+    ${rows}</table></div>`
+    + (tr.length > SHOW ? `<div class="mline dim">showing ${SHOW} of ${
+        p.trades_total ?? tr.length} — older ones are on disk</div>` : "");
 }
 
 function renderModel() {

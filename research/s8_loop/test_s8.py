@@ -590,6 +590,55 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_one_pick_per_arm_and_hour():
+    """Выбор пишется один раз на (руку, час), сколько бы ни было проходов.
+
+    Проходов внутри одного часа бывает несколько: перезапуск цикла — а
+    он случается на КАЖДОЙ заливке — сразу гонит проход, и следующий по
+    расписанию приходит в тот же час. Замер на живом предпросмотре: у
+    часа 20 тридцать шесть сделок вместо двенадцати, у часа 19 —
+    двадцать четыре.
+
+    Счёт дубли не портят (разбор помнит разобранные часы), но вытесняют
+    из таблицы настоящую историю и делают счётчик сделок ложным.
+    """
+    import tempfile
+    import train as T
+    import synth
+    import trades as TR
+
+    sd = tempfile.mkdtemp(prefix="dup-")
+    md = os.path.join(tempfile.mkdtemp(), "m")
+    keep = (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit)
+    T.MODEL_DIR, T.PRETEST = md, True
+    T.gbm.fit = lambda x, y, seed: keep[3](x, y, seed, n_trees=12)
+    T.nn.fit = lambda x, y, seed: keep[4](x, y, seed, epochs=3)
+    T.ARMS = (("gbm", T.gbm.fit),)
+    try:
+        synth.write_summaries(sd, D=80)
+        # Три прохода подряд БЕЗ новых часов — ровно как при трёх
+        # перезапусках внутри часа.
+        for _ in range(3):
+            T.cycle(sd, lambda m: None, book_root=None)
+        with open(os.path.join(md, "picks.jsonl"), encoding="utf-8") as f:
+            picks = [json.loads(x) for x in f]
+        key = [(p["arm"], p["hour"]) for p in picks]
+        check("выбор записан один раз на руку и час",
+              len(key) == len(set(key)), str(key))
+        tr = TR.build(picks, [])
+        check("сделок ровно шесть на проход", len(tr) == 6, str(len(tr)))
+
+        # И чтение снимает дубли, уже лежащие в файле: исправить его
+        # задним числом нельзя, а показывать историю вдвое — врать.
+        dbl = picks + picks
+        check("дубли из файла снимаются на чтении",
+              len(TR.build(dbl, [])) == len(tr),
+              f"{len(TR.build(dbl, []))} против {len(tr)}")
+    finally:
+        (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit) = keep
+        shutil.rmtree(sd, ignore_errors=True)
+
+
 def test_trades_close_on_an_hourly_cycle():
     """Сделки обязаны закрываться при часовом цикле и цели в 4 часа.
 
@@ -1070,6 +1119,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_one_pick_per_arm_and_hour()
     test_trades_close_on_an_hourly_cycle()
     test_adverse_path_matches_the_side()
     test_percent_is_the_display_unit()

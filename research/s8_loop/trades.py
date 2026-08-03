@@ -59,9 +59,16 @@ def build(picks, reviews, now=None, hold_h=HOLD_H):
             done[(rv.get("arm") or "gbm", rv.get("hour"), r.get("sym"),
                   r.get("side"))] = (r, rv)
     out = []
+    made = set()
     for pk in picks or []:
         arm = pk.get("arm") or "gbm"
         hour = pk.get("hour")
+        # Уже записанные дубли (руки, часа) снимаются на чтении: файл
+        # исправить задним числом нельзя, а показывать историю в
+        # двойном объёме — значит врать в счётчике сделок.
+        if (arm, hour) in made:
+            continue
+        made.add((arm, hour))
         t0 = _ts(hour)
         for side in ("long", "short"):
             for p in pk.get(side) or []:

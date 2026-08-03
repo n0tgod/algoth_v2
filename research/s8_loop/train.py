@@ -839,6 +839,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                     continue
     except OSError:
         pass
+    seen_picks = {((p.get("arm") or "gbm"), p.get("hour"))
+                  for p in all_picks}
     reviewed = set()
     try:
         with open(os.path.join(MODEL_DIR, "review.jsonl"),
@@ -960,8 +962,20 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             picks = {"arm": arm, "hour": grid[-1],
                      "long": [mk(i, "long") for i in o[::-1][:3]],
                      "short": [mk(i, "short") for i in o[:3]]}
-            with open(ppath, "a", encoding="utf-8") as f:
-                f.write(json.dumps(picks, ensure_ascii=False) + "\n")
+            # Один выбор на (руку, час) — и не больше.
+            #
+            # Цикл писал выбор при каждом проходе, а проходов внутри
+            # одного часа бывает несколько: перезапуск цикла (каждая
+            # заливка!) сразу гонит проход, и следующий по расписанию
+            # приходит в тот же час. Замер на живом предпросмотре: у
+            # часа 20 тридцать шесть сделок вместо двенадцати, у часа
+            # 19 — двадцать четыре. Дубли не портят счёт (разбор помнит
+            # разобранные часы), но вытесняют из таблицы настоящую
+            # историю и делают статистику вида «сколько сделок» ложной.
+            if (arm, picks["hour"]) not in seen_picks:
+                seen_picks.add((arm, picks["hour"]))
+                with open(ppath, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(picks, ensure_ascii=False) + "\n")
 
         man_arm = dict(man, importance=imp_all.get(arm) or {})
         prev_arm = None

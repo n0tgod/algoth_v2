@@ -1209,8 +1209,8 @@ class Collector:
                 pass
         for name, key, keep in (("thoughts.jsonl", "thoughts", 60),
                                 ("ic_history.jsonl", "ic", 90),
-                                ("picks.jsonl", "picks", 40),
-                                ("review.jsonl", "review", 40)):
+                                ("picks.jsonl", "picks", 200),
+                                ("review.jsonl", "review", 200)):
             rows = []
             try:
                 with open(os.path.join(mdir, name), encoding="utf-8") as f:
@@ -1236,7 +1236,8 @@ class Collector:
                                             "s8_loop"))
             import trades as TR
             tr = TR.build(out.get("picks"), out.get("review"))
-            out["trades"] = tr[:60]
+            out["trades"] = tr[:300]
+            out["trades_total"] = len(tr)
             out["trade_stats"] = {a: TR.summary(tr, a)
                                   for a in ("gbm", "nn")}
         except Exception as e:                            # noqa: BLE001
