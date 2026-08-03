@@ -67,6 +67,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 from book import BANDS, STORE_LADDER, Book, parse_trades                 # noqa: E402
 import paper                                              # noqa: E402
 import signals                                            # noqa: E402
@@ -1623,6 +1624,14 @@ def dropped_symbols(root, syms, days=3):
 
 
 def main():
+    # Проверка ЗДЕСЬ, а не при импорте модуля: `websocket` нужен только
+    # запуску сбора, а тесты и разбор записей импортируют этот файл как
+    # библиотеку и обязаны работать без него. Но и молчать нельзя:
+    # `websocket` импортируется внутри потока шарда, то есть его
+    # нехватка проявилась бы тишиной в журнале, а не отказом старта.
+    from research.common import pyenv
+    pyenv.need("websocket")
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--symbols", default=SYMBOLS_DEFAULT,
                     help="`all` — все торгуемые линейные USDT-перпы минус "

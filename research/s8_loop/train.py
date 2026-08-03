@@ -34,12 +34,19 @@ import time
 import warnings
 from datetime import datetime, timezone
 
-import numpy as np
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESEARCH = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(RESEARCH, "m2_walkforward"))
+sys.path.insert(0, os.path.dirname(RESEARCH))
+
+# Проверка ДО первого тяжёлого импорта: системный python3 на сервере
+# зависимостей не имеет, и голый ModuleNotFoundError уже дважды стоил
+# захода на сервер впустую.
+from research.common import pyenv                         # noqa: E402
+pyenv.need("numpy")
+
+import numpy as np                                        # noqa: E402
 
 import bookfeat as FB                                      # noqa: E402
 import gbm                                                 # noqa: E402
