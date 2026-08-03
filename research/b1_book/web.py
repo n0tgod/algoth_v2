@@ -686,6 +686,7 @@ function tradeStats(p) {
       + cell("paper P&L, $", s.pnl, s.pnl > 0 ? "good" : "bad")
       + cell("promise / actual", s.expected_over_got ?? "—",
              s.expected_over_got > 3 ? "bad" : "")
+      + (s.awaiting ? cell("awaiting", s.awaiting) : "")
       + (s.no_outcome ? cell("no outcome", s.no_outcome, "bad") : "")
       + `</div>`;
   }).join("");
@@ -734,7 +735,8 @@ function tradeTable(p) {
       : (t.state === "открыта" ? "" : "dim");
     const when = t.state === "открыта"
       ? `in ${(t.closes_in_sec/3600).toFixed(1)} h`
-      : (t.state === "закрыта" ? "closed" : "no outcome");
+      : (t.state === "закрыта" ? "closed"
+         : t.state === "ждёт разбора" ? "awaiting" : "no outcome");
     return `<tr class="${cls}">
       <td class="mono">${t.hour.slice(5)}</td>
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
@@ -1235,6 +1237,7 @@ button:disabled{opacity:.4}
       <select id="state"><option value="">any</option>
         <option value="закрыта">closed</option>
         <option value="открыта">open</option>
+        <option value="ждёт разбора">awaiting review</option>
         <option value="без исхода">no outcome</option></select>
       <span class="k">coin</span>
       <select id="sym"><option value="">any</option></select>
@@ -1294,7 +1297,7 @@ function hourLocal(h) {
 // глаз. Перевод живёт здесь, на границе показа — переименовать ключ
 // значило бы разойтись с уже записанными файлами.
 const ST_EN = {"закрыта": "closed", "открыта": "open",
-               "без исхода": "no outcome"};
+               "без исхода": "no outcome", "ждёт разбора": "awaiting"};
 const val = id => document.getElementById(id).value;
 async function load() {
   const p = new URLSearchParams({k: KEY, page: S.page, per: val("per"),
@@ -1323,6 +1326,10 @@ async function load() {
     + cell("trades", d.grand_total)
     + cell("closed", st.closed || 0)
     + cell("open", st.open || 0)
+    + (st.awaiting ? cell("awaiting review", st.awaiting) : "")
+    // Красным — только окончательная потеря: разбор до неё дошёл и
+    // цель посчитать не смог. Ожидание разбора красным быть не должно,
+    // иначе тревога станет фоном и её перестанут читать.
     + (st.no_outcome ? cell("no outcome", st.no_outcome, "bad") : "");
   if (st.closed) {
     html += cell("sign right", (st.hit_rate*100).toFixed(0) + " %",

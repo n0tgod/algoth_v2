@@ -590,6 +590,51 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_awaiting_review_is_not_a_lost_outcome():
+    """Ожидание разбора и потерянный исход — разные состояния.
+
+    Прежде оба звались «без исхода», и счётчик потерь рос просто оттого,
+    что цикл идёт раз в час: у сделки вышел срок, а разбор до неё не
+    дошёл. Тревога, которая срабатывает по расписанию, перестаёт
+    читаться — а различить эти два случая можно точно.
+
+    Признак строгий: выборы разбираются по ВОЗРАСТАНИЮ часа, значит
+    если разбор дошёл до более позднего часа этой руки, то и этот он
+    рассмотрел и цель посчитать не смог. Это окончательно и это дефект
+    данных — дыра записи в удержании, выпадение монеты из универсума.
+    """
+    import trades as TR
+
+    def pick(h, sym):
+        return {"arm": "gbm", "hour": h,
+                "long": [{"sym": sym, "fwd": 100.0, "mae": -50.0}],
+                "short": []}
+    picks = [pick("2026-08-03-20", "AUSDT"),
+             pick("2026-08-03-21", "BUSDT"),
+             pick("2026-08-04-01", "CUSDT")]
+    revs = [{"arm": "gbm", "hour": "2026-08-03-21", "cost_bp": 11.0,
+             "rows": [{"sym": "BUSDT", "side": "long", "expected": 100.0,
+                       "got": 40.0, "net": 29.0, "pnl": 0.5,
+                       "pos": 166.0}]}]
+    st = {t["sym"]: t["state"]
+          for t in TR.build(picks, revs, now=TR._ts("2026-08-04-06"))}
+    check("разбор прошёл мимо — исход потерян окончательно",
+          st["AUSDT"] == "без исхода", st["AUSDT"])
+    check("разбор ещё не дошёл — это ожидание, а не потеря",
+          st["CUSDT"] == "ждёт разбора", st["CUSDT"])
+    check("разобранная закрыта", st["BUSDT"] == "закрыта", st["BUSDT"])
+
+    s = TR.summary(TR.build(picks, revs, now=TR._ts("2026-08-04-06")),
+                   "gbm")
+    check("счётчики разведены",
+          s["no_outcome"] == 1 and s["awaiting"] == 1, str(s))
+    # И ни один из двух не попадает в статистику закрытых: неизвестный
+    # исход, посчитанный нулём, тянул бы долю угаданных к монетке, а
+    # пропадают исходы ровно там, где рвётся запись, то есть не
+    # случайно.
+    check("незакрытые в статистику не входят", s["closed"] == 1, str(s))
+
+
 def test_entry_is_the_close_of_the_signal_hour():
     """Вход — на ЗАКРЫТИИ часа решения, а не на его начале.
 
@@ -1160,6 +1205,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_awaiting_review_is_not_a_lost_outcome()
     test_entry_is_the_close_of_the_signal_hour()
     test_one_pick_per_arm_and_hour()
     test_trades_close_on_an_hourly_cycle()

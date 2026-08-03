@@ -71,6 +71,17 @@ def build(picks, reviews, now=None, hold_h=HOLD_H):
         for r in rv.get("rows") or []:
             done[(rv.get("arm") or "gbm", rv.get("hour"), r.get("sym"),
                   r.get("side"))] = (r, rv)
+    # Самый поздний РАЗОБРАННЫЙ час по каждой руке. Он и различает два
+    # разных случая, которые прежде звались одним словом «без исхода»:
+    # выбор, до которого разбор ещё не дошёл, и выбор, который разбор
+    # рассмотрел и ничего не смог посчитать. Первое — ожидание, второе —
+    # дефект данных, и путать их нельзя.
+    last_rev = {}
+    for rv in reviews or []:
+        a = rv.get("arm") or "gbm"
+        h = rv.get("hour") or ""
+        if h > last_rev.get(a, ""):
+            last_rev[a] = h
     out = []
     made = set()
     for pk in picks or []:
@@ -121,11 +132,25 @@ def build(picks, reviews, now=None, hold_h=HOLD_H):
                               if side == "long"
                               else (got.get("got") or 0) < 0)
                 elif t_close is not None and now >= t_close:
-                    # Срок вышел, а разбора нет: час ещё не сведён либо
-                    # цель не посчиталась. Это НЕ «закрыта в ноль» —
-                    # посчитать её нулём значило бы разбавить статистику
-                    # выдумкой (урок оборванных бумажных сделок).
-                    tr.update(state="без исхода")
+                    # Срок вышел, а разбора нет. Ни в каком случае это
+                    # НЕ «закрыта в ноль»: посчитать неизвестный исход
+                    # нулём значило бы разбавить статистику выдумкой
+                    # (урок оборванных бумажных сделок; урок A2, где
+                    # бар без сделок — пропуск, а не нулевая доходность).
+                    #
+                    # Но случая два. Если разбор уже дошёл до БОЛЕЕ
+                    # ПОЗДНЕГО часа этой руки, значит и этот он
+                    # рассмотрел — выборы разбираются по возрастанию
+                    # часа — и цель посчитать не смог: в удержании была
+                    # дыра записи, монета выпала из универсума, беты не
+                    # хватило. Это окончательно, и это дефект данных.
+                    #
+                    # Если позднее ничего не разобрано, разбор до него
+                    # просто не дошёл: цикл идёт раз в час, и сделка
+                    # ждёт своего прохода. Это ожидание, а не потеря.
+                    tr.update(state=("без исхода"
+                                     if last_rev.get(arm, "") > hour
+                                     else "ждёт разбора"))
                 else:
                     tr.update(state="открыта",
                               closes_in_sec=(t_close - now
@@ -146,7 +171,9 @@ def summary(trades, arm=None):
     closed = [t for t in rows if t["state"] == "закрыта"]
     op = [t for t in rows if t["state"] == "открыта"]
     lost = [t for t in rows if t["state"] == "без исхода"]
-    out = {"closed": len(closed), "open": len(op), "no_outcome": len(lost)}
+    wait = [t for t in rows if t["state"] == "ждёт разбора"]
+    out = {"closed": len(closed), "open": len(op),
+           "no_outcome": len(lost), "awaiting": len(wait)}
     if not closed:
         return out
     hits = sum(1 for t in closed if t.get("hit"))
