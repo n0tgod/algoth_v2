@@ -154,7 +154,13 @@ const seen = [];
 global.fetch = async (url) => {
   calls++; seen.push(url);
   const NOW = Math.floor(Date.now()/1000);
-  const body = url.startsWith("/model_trades")
+  const body = url.startsWith("/model_marks")
+             ? {source: "model_pretest", at: Date.UTC(2026,7,3,19,30)/1000,
+                rows: [{arm: "gbm", hour: "2026-08-03-18",
+                        sym: "BTCUSDT", side: "long", cur_px: 101.0,
+                        unreal_bp: 100.0, unreal_net_bp: 89.0,
+                        closes_in_sec: 13800}]}
+             : url.startsWith("/model_trades")
              ? {source: "model_pretest", pretest: true, page: 0, per: 100,
                 total: 2, pages: 1, filtered: false, grand_total: 2,
                 symbols: ["BTCUSDT"],
@@ -171,7 +177,9 @@ global.fetch = async (url) => {
                    opened_at: Date.UTC(2026,7,3,19)/1000,
                    closes_at: Date.UTC(2026,7,3,23)/1000,
                    state: "открыта", expected_bp: 373, mae_bp: -50,
-                   closes_in_sec: 13800, lag_sec: 313, odd: 0.03},
+                   closes_in_sec: 13800, lag_sec: 313, odd: 0.03,
+                   entry_px: 100.0, cur_px: 101.0,
+                   unreal_bp: 100.0, unreal_net_bp: 89.0},
                   {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
                    side: "short", opened_at: NOW-7800, closes_at: NOW-1400,
                    state: "закрыта", expected_bp: -725, mae_bp: 90,
@@ -410,6 +418,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("время выхода не показано отдельно");
     if (!/>open\b/.test(html))
       bad.push("состояние показано не словом");
+    // Нереализованный результат открытой сделки: 89 б.п. = +0.89 %.
+    if (!/\+0\.89 %/.test(html))
+      bad.push("нереализованный результат открытой сделки не показан");
+    // И он обязан обновляться ОТДЕЛЬНЫМ частым запросом, иначе весь
+    // список пришлось бы тянуть каждые десять секунд.
+    if (!seen.some(u => u.startsWith("/model_marks")))
+      bad.push("переоценка не запрашивается отдельно");
   } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {

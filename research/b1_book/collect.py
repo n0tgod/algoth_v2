@@ -1236,6 +1236,7 @@ class Collector:
                                             "s8_loop"))
             import trades as TR
             tr = TR.build(out.get("picks"), out.get("review"))
+            TR.mark(tr, self.marks(tr))
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
             out["trade_stats"] = {a: TR.summary(tr, a)
@@ -1272,6 +1273,7 @@ class Collector:
             picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
             revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
             tr = TR.build(picks, revs)
+            TR.mark(tr, self.marks(tr))
             if tr or out is None:
                 out = (name, tr, revs, mdir)
             if tr:
@@ -1305,6 +1307,54 @@ class Collector:
                 "stats": stats, "accounts": accs,
                 "symbols": sorted({t["sym"] for t in tr}),
                 "rows": rows[page * per:(page + 1) * per]}
+
+    def marks(self, trades):
+        """Текущая середина по символам открытых сделок.
+
+        Из живых книг, а не из файлов: сборщик держит стакан в памяти,
+        и это самая свежая цена, какая вообще есть в системе.
+        """
+        out = {}
+        for t in trades:
+            if t.get("state") != "открыта":
+                continue
+            sym = t.get("sym")
+            if sym in out or sym not in self.books:
+                continue
+            bid, ask = self.books[sym].best()
+            if bid and ask:
+                out[sym] = (bid + ask) / 2.0
+        return out
+
+    def model_marks(self):
+        """Только переоценка открытых сделок — для частого опроса.
+
+        Отдельно от полной выдачи намеренно: страница обновляет её раз в
+        десять секунд, а полный список сделок весит на порядок больше.
+        Прежний урок ровно об этом — тяжёлый ответ на частом опросе не
+        успевал прийти, и страница писала «нет связи» на исправном
+        сборщике.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+        import trades as TR
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        for name in ("model_pretest", "model"):
+            mdir = os.path.join(s8, name)
+            tr = TR.build(self._jsonl(os.path.join(mdir, "picks.jsonl")),
+                          self._jsonl(os.path.join(mdir, "review.jsonl")))
+            op = [t for t in tr if t.get("state") == "открыта"]
+            if not op:
+                continue
+            TR.mark(op, self.marks(op))
+            return {"source": name, "at": round(time.time(), 1),
+                    "rows": [{"arm": t["arm"], "hour": t["hour"],
+                              "sym": t["sym"], "side": t["side"],
+                              "cur_px": t.get("cur_px"),
+                              "unreal_bp": t.get("unreal_bp"),
+                              "unreal_net_bp": t.get("unreal_net_bp"),
+                              "closes_in_sec": t.get("closes_in_sec")}
+                             for t in op]}
+        return {"source": None, "at": round(time.time(), 1), "rows": []}
 
     @staticmethod
     def _jsonl(path):

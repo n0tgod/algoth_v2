@@ -1212,6 +1212,9 @@ button:disabled{opacity:.4}
       zero. <b>state</b> is a state, not a time: open / closed / no
       outcome (deadline passed but the hour is not summarised yet — a
       trade with no outcome is never counted as zero).
+      <b>unreal</b> — live mark-to-market of an open position against
+      its entry price, already net of the taker round trip; it refreshes
+      every 10 s while the rest of the table refreshes once a minute.
       <b>exp</b> is the expected move, <b>mae</b> the expected move
       <b>against</b> the position on the way, <b>got</b> what actually
       happened, <b>net</b> the same minus the taker round trip.
@@ -1250,11 +1253,12 @@ button:disabled{opacity:.4}
       <span id="pg" class="mono k"></span>
       <button id="next">&rarr;</button>
       <span id="cnt" class="k"></span>
+      <span id="mkat" class="k"></span>
     </div>
     <div class="scroll"><table>
       <thead><tr><th>signal hour</th><th>entry</th><th>exit</th>
         <th>lag</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
-        <th>mae</th><th>got</th><th>net</th><th>$</th>
+        <th>mae</th><th>got</th><th>net</th><th>unreal</th><th>$</th>
         <th>state</th><th>unseen</th>
       </tr></thead><tbody id="tb"></tbody>
     </table></div>
@@ -1382,6 +1386,10 @@ async function load() {
       <td class="mono" style="color:var(--muted)">${pct(t.mae_bp)}</td>
       <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono ${cls}">${pct(t.net_bp)}</td>
+      <td class="mono ${t.unreal_net_bp == null ? "" :
+          (t.unreal_net_bp > 0 ? "good" : "bad")}"
+          data-mk="${t.arm}|${t.hour}|${t.sym}|${t.side}">${
+          pct(t.unreal_net_bp)}</td>
       <td class="mono ${cls}">${t.pnl == null ? "—"
         : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
       <td style="color:var(--muted)">${ST_EN[t.state] || t.state}${
@@ -1390,7 +1398,7 @@ async function load() {
             left)</span>` : ""}</td>
       <td class="mono" style="color:var(--muted)">${t.odd == null ? "—"
         : (t.odd*100).toFixed(0) + " %"}</td></tr>`;
-  }).join("") || `<tr><td colspan="14" style="color:var(--muted);
+  }).join("") || `<tr><td colspan="15" style="color:var(--muted);
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
     `page ${d.page + 1} of ${d.pages}`;
@@ -1403,7 +1411,32 @@ document.getElementById("prev").onclick = () => { S.page--; load(); };
 document.getElementById("next").onclick = () => { S.page++; load(); };
 for (const id of ["arm","state","sym","per"])
   document.getElementById(id).onchange = () => { S.page = 0; load(); };
+// Полная выдача — раз в минуту, переоценка открытых — раз в десять
+// секунд. Тянуть весь список каждые десять секунд значит повторить
+// ошибку, из-за которой страница писала «нет связи со сборщиком» на
+// исправном сборщике: тяжёлый ответ не успевал прийти до следующего
+// опроса.
+async function marks() {
+  let d;
+  try {
+    const r = await fetch("/model_marks?k=" + encodeURIComponent(KEY));
+    d = await r.json();
+  } catch (e) { return; }
+  const by = {};
+  for (const m of d.rows || [])
+    by[[m.arm, m.hour, m.sym, m.side].join("|")] = m;
+  document.querySelectorAll("[data-mk]").forEach(td => {
+    const m = by[td.dataset.mk];
+    if (!m) return;
+    td.textContent = pct(m.unreal_net_bp);
+    td.className = "mono " + (m.unreal_net_bp == null ? ""
+      : (m.unreal_net_bp > 0 ? "good" : "bad"));
+  });
+  const t = document.getElementById("mkat");
+  if (t) t.textContent = "marks " + hhmm(d.at);
+}
 load(); setInterval(load, 60000);
+marks(); setInterval(marks, 10000);
 </script>
 """
 
@@ -2319,6 +2352,11 @@ def serve(collector, port, token, log):
                         sym=q.get("sym", [None])[0] or None,
                         pretest=(None if pre is None
                                  else pre not in ("0", "false", ""))),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/model_marks":
+                return self._ok(json.dumps(
+                    collector.model_marks(),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/trades-page":

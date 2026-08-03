@@ -590,6 +590,46 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_unrealised_marks_open_positions_only():
+    """Нереализованный результат — по живой цене и только у открытых.
+
+    Считается в `trades.mark`, а не на странице: формула одна на весь
+    проект, и вторая её запись в JavaScript однажды разошлась бы с той,
+    по которой ведётся счёт. Нетто — за вычетом круга издержек: открытая
+    сделка, показанная брутто, выглядит лучше, чем закроется, а разница
+    как раз в размере типичного движения за четыре часа.
+    """
+    import trades as TR
+
+    check("круг издержек — одно определение на цикл и сборщик",
+          TR.ROUND_COST_BP == 11.0, str(TR.ROUND_COST_BP))
+    rows = [
+        {"state": "открыта", "side": "long", "sym": "A", "entry_px": 100.0},
+        {"state": "открыта", "side": "short", "sym": "B", "entry_px": 50.0},
+        {"state": "открыта", "side": "long", "sym": "C", "entry_px": None},
+        {"state": "закрыта", "side": "long", "sym": "A", "entry_px": 100.0},
+    ]
+    n = TR.mark(rows, {"A": 101.0, "B": 49.0, "C": 7.0})
+    check("переоценены только открытые с ценой входа", n == 2, str(n))
+    check("лонг: цена выросла на процент — плюс сто б.п.",
+          rows[0]["unreal_bp"] == 100.0, str(rows[0].get("unreal_bp")))
+    check("шорт: цена упала на два процента — плюс двести",
+          rows[1]["unreal_bp"] == 200.0, str(rows[1].get("unreal_bp")))
+    check("нетто беднее брутто ровно на круг издержек",
+          rows[0]["unreal_net_bp"] == 100.0 - TR.ROUND_COST_BP,
+          str(rows[0].get("unreal_net_bp")))
+    # Цену входа не выдумываем: без неё величина не считается вовсе.
+    check("без цены входа переоценки нет",
+          "unreal_bp" not in rows[2], str(rows[2]))
+    check("закрытую сделка не переоценивают",
+          "unreal_bp" not in rows[3], str(rows[3]))
+    # Нет цены в стакане — тоже не выдумываем.
+    r2 = [{"state": "открыта", "side": "long", "sym": "Z",
+           "entry_px": 10.0}]
+    check("нет текущей цены — переоценки нет",
+          TR.mark(r2, {}) == 0 and "unreal_bp" not in r2[0])
+
+
 def test_awaiting_review_is_not_a_lost_outcome():
     """Ожидание разбора и потерянный исход — разные состояния.
 
@@ -1205,6 +1245,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_unrealised_marks_open_positions_only()
     test_awaiting_review_is_not_a_lost_outcome()
     test_entry_is_the_close_of_the_signal_hour()
     test_one_pick_per_arm_and_hour()

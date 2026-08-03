@@ -52,6 +52,7 @@ import bookfeat as FB                                      # noqa: E402
 import gbm                                                 # noqa: E402
 import nn                                                  # noqa: E402
 import summary as SM                                       # noqa: E402
+from trades import ROUND_COST_BP as TR_COST                # noqa: E402
 import wf                                                  # noqa: E402
 
 OUT = os.path.join(HERE, "out")
@@ -80,7 +81,9 @@ CANARY_STOP = 0.05                # грубая течь; шум зерна т�
 # круг 11 б.п. с позиции, без проскальзывания (сказано прямо), плечо 1.
 # Счёт — наблюдение для владельца, вердикт остаётся за §7.
 START_BALANCE = 1000.0
-ROUND_COST_BP = 11.0
+# Круг издержек — из `trades`: его читает и сборщик, переоценивая
+# открытые сделки. Одно определение на двоих.
+ROUND_COST_BP = TR_COST
 SEED0 = 20260801
 
 
@@ -950,7 +953,11 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             def mk(i, side):
                 adv = (float(mae[i]) if side == "long"
                        else (float(mfe[i]) if mfe is not None else None))
+                px = float(mats["mid_close"][rows_m[i], j_last])
                 d = {"sym": syms[rows_m[i]], "fwd": float(fwd[i]),
+                     # Цена входа = закрытие часа сигнала. Без неё
+                     # открытую сделку нечем переоценивать.
+                     "px": px if np.isfinite(px) else None,
                      # Имя поля прежнее — его читают старые записи, — но
                      # смысл теперь «ход против ЭТОЙ позиции».
                      "mae": adv, "adverse_of": ("mae_4h" if side == "long"
