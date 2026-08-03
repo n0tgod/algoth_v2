@@ -1141,6 +1141,16 @@ class Collector:
                 out = {"present": True, "manifest": json.load(f)}
         except (OSError, ValueError):
             pass
+        # Готовность к обучению: сколько часов уже стали сечениями.
+        # Без неё «модели нет» означает и «копим запись», и «запись
+        # копится вхолостую, ни один час не годен» — а это разные
+        # состояния, и второе стоило суток трижды.
+        try:
+            with open(os.path.join(mdir, "readiness.json"),
+                      encoding="utf-8") as f:
+                out["readiness"] = json.load(f)
+        except (OSError, ValueError):
+            pass
         for arm in ("gbm", "nn"):
             try:
                 with open(os.path.join(mdir, f"account_{arm}.json"),

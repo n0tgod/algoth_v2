@@ -591,11 +591,29 @@ function renderModel() {
   const wireArms = () => box.querySelectorAll("[data-arm]").forEach(b =>
     b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); });
   if (!d.present) {
-    cap.textContent = "accumulating data";
+    // Готовность — числом, а не обещанием. «Модели нет» означало и
+    // «копим запись», и «копим вхолостую, ни один час не годен»;
+    // второе трижды выяснялось только через сутки.
+    const rd = d.readiness;
+    let prog = `<div class="mline">no readiness file yet — the training
+      loop has not completed a cycle.</div>`;
+    if (rd) {
+      const bad = (rd.by_hour || []).filter(h => h.n < rd.min_section);
+      const last = (rd.by_hour || []).slice(-6).map(h =>
+        `${h.h.slice(-2)}h:${h.n}`).join(" ");
+      prog = `<div class="mline"><b>${rd.sections} / ${rd.need}</b>
+        hourly cross-sections ready · ${rd.symbols} coins ·
+        ${rd.hours} hours summarised · ${rd.features} features<br>
+        need ≥${rd.min_section} eligible names in an hour to count it;
+        ${bad.length} of the last ${(rd.by_hour || []).length} hours fall
+        short<br>last hours (names per hour): ${last || "—"}</div>`;
+    }
+    cap.textContent = rd ? `${rd.sections}/${rd.need} sections`
+                         : "accumulating data";
     box.innerHTML = armBtns + `<div class="mline">two models will train
       here — trees (ML) vs neural net (AI) — once 48 closed hourly
-      cross-sections accumulate (~2 days of full-list recording).
-      Meanwhile the training set is being recorded.</div>`;
+      cross-sections accumulate (~2 days of full-list recording).</div>`
+      + prog;
     wireArms();
     return;
   }

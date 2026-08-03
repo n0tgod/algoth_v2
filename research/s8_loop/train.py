@@ -426,6 +426,37 @@ def canary(x, y, elig, grid, seed, log_):
     return med
 
 
+def write_readiness(syms, grid, per_hour, n_sections, n_feat, log_):
+    """Готовность к обучению — файлом, а не строкой в журнале.
+
+    Это третий раз, когда одна и та же слепота стоит суток. Сбор
+    выглядел исправным, страница показывала живые числа, а сечений было
+    ноль — узнать об этом можно было только зайдя на сервер и прочитав
+    журнал цикла. Признак результата обязан лежать там же, где его
+    смотрят: файл читается страницей через `/model`.
+
+    Пишутся не итоги, а разложение по часам: ноль сечений при живой
+    записи и ноль при мёртвой выглядят одинаково, а «имён в часе 12 при
+    пороге 30» и «имён в часе 0» — уже разные диагнозы.
+    """
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    hours = [{"h": h, "n": int(v)} for h, v in zip(grid, per_hour)]
+    out = {
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "symbols": len(syms), "hours": len(grid),
+        "sections": n_sections, "need": MIN_TRAIN_SECTIONS,
+        "min_section": FB.MIN_SECTION, "features": n_feat,
+        "by_hour": hours[-72:],
+    }
+    tmp = os.path.join(MODEL_DIR, "readiness.json.tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False)
+        os.replace(tmp, os.path.join(MODEL_DIR, "readiness.json"))
+    except OSError as e:
+        log_(f"готовность записать не вышло: {e}")
+
+
 def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     t0 = time.time()
     if book_root and os.path.isdir(os.path.join(book_root, "book")):
@@ -438,10 +469,12 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         log_("сводок ещё нет — цикл пропущен")
         return False
     x, names, targets, elig = assemble(mats)
-    n_sections = int((elig.sum(axis=0) >= FB.MIN_SECTION).sum())
+    per_hour = elig.sum(axis=0)
+    n_sections = int((per_hour >= FB.MIN_SECTION).sum())
     log_(f"матрица: {len(syms)} символов × {len(grid)} часов, "
          f"сечений с ≥{FB.MIN_SECTION} именами: {n_sections}, "
          f"признаков {len(names)}")
+    write_readiness(syms, grid, per_hour, n_sections, len(names), log_)
     if n_sections < MIN_TRAIN_SECTIONS:
         log_(f"сечений {n_sections} из {MIN_TRAIN_SECTIONS} — учиться "
              f"рано, запись копится (осталось "

@@ -9,6 +9,7 @@ M1) и правильность пути (MFE/MAE): на них стоит вс�
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -422,6 +423,45 @@ def test_retry_when_not_trained():
           T.RETRY_SEC <= 3600 < T.CYCLE_SEC)
 
 
+def test_readiness_is_written_before_training():
+    """Готовность обязана быть файлом ДО того, как модель появится.
+
+    Три раза подряд «модели нет» означало и «копим запись», и «копим
+    вхолостую, ни один час не годен», и различить их можно было только
+    зайдя на сервер. Файл пишется на КАЖДОМ цикле, включая тот, где
+    обучения не было, — иначе он показывал бы только успех.
+    """
+    import json as _json
+    import tempfile
+    import train as T
+
+    root = tempfile.mkdtemp()
+    orig = T.MODEL_DIR
+    T.MODEL_DIR = os.path.join(root, "model")
+    try:
+        grid = [f"2026-08-0{d}-{h:02d}" for d in (1, 2) for h in range(4)]
+        per = np.array([40, 40, 12, 0, 40, 40, 40, 31])
+        T.write_readiness(["A", "B"], grid, per, 6, 17, lambda m: None)
+        with open(os.path.join(T.MODEL_DIR, "readiness.json"),
+                  encoding="utf-8") as f:
+            r = _json.load(f)
+    finally:
+        T.MODEL_DIR = orig
+        shutil.rmtree(root, ignore_errors=True)
+
+    check("сечения и порог названы числом",
+          r["sections"] == 6 and r["need"] == T.MIN_TRAIN_SECTIONS,
+          f"{r['sections']}/{r['need']}")
+    check("разложение по часам есть", len(r["by_hour"]) == len(grid),
+          str(len(r["by_hour"])))
+    # Ноль сечений при живой записи и ноль при мёртвой выглядят
+    # одинаково в итоге и по-разному в разложении.
+    thin = [h for h in r["by_hour"] if h["n"] < r["min_section"]]
+    check("тонкие часы видны поимённо", len(thin) == 2,
+          str([h["h"] for h in thin]))
+    check("порог сечения записан", r["min_section"] == FB.MIN_SECTION)
+
+
 def test_novelty_measure():
     """Новизна: доля признаков вне диапазона обучения, NaN не судится."""
     import train as T
@@ -687,6 +727,7 @@ def main():
     test_targets_shapes_and_direction()
     print("цикл переобучения")
     test_retry_when_not_trained()
+    test_readiness_is_written_before_training()
     test_novelty_measure()
     test_nn_learns_and_sees_missing()
     test_think_words()
