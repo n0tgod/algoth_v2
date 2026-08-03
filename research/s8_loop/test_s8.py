@@ -590,6 +590,70 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_trades_close_on_an_hourly_cycle():
+    """Сделки обязаны закрываться при часовом цикле и цели в 4 часа.
+
+    Разбор смотрел только на ПРЕДЫДУЩИЙ выбор. При цикле раз в час
+    форвард предыдущего выбора ещё не закрыт, поэтому разбор выходил
+    пустым; а к следующему циклу этот выбор уже не был предыдущим и не
+    разбирался НИКОГДА. На живом предпросмотре это дало 48 сделок,
+    закрытых ноль — при исправном на вид цикле, с растущей таблицей и
+    бегущими часами.
+
+    Геометрия здесь та же, что на сервере: между циклами прибавляется по
+    одному часу.
+    """
+    import tempfile
+    import train as T
+    import synth
+    import trades as TR
+
+    sd = tempfile.mkdtemp(prefix="hourly-")
+    md = os.path.join(tempfile.mkdtemp(), "m")
+    keep = (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit)
+    T.MODEL_DIR, T.PRETEST = md, True
+    T.gbm.fit = lambda x, y, seed: keep[3](x, y, seed, n_trees=12)
+    T.nn.fit = lambda x, y, seed: keep[4](x, y, seed, epochs=3)
+    T.ARMS = (("gbm", T.gbm.fit),)
+    try:
+        for k in range(6):
+            synth.write_summaries(sd, D=80 + k)
+            T.cycle(sd, lambda m: None, book_root=None)
+        with open(os.path.join(md, "picks.jsonl"), encoding="utf-8") as f:
+            picks = [json.loads(x) for x in f]
+        rp = os.path.join(md, "review.jsonl")
+        revs = []
+        if os.path.exists(rp):
+            with open(rp, encoding="utf-8") as f:
+                revs = [json.loads(x) for x in f]
+        tr = TR.build(picks, revs)
+        st = TR.summary(tr, "gbm")
+        check(f"сделки закрываются ({st['closed']} закрыто, "
+              f"{st['open']} открыто)", st["closed"] > 0, str(st))
+        # «Без исхода» — срок вышел, разбора нет. При исправном разборе
+        # таких быть не должно вовсе.
+        check("зависших без исхода нет", st["no_outcome"] == 0, str(st))
+        with open(os.path.join(md, "account_gbm.json"),
+                  encoding="utf-8") as f:
+            acc = json.load(f)
+        check("счёт двигался", len(acc["history"]) > 0
+              and acc["balance"] != T.START_BALANCE,
+              f"{acc['balance']} за {len(acc['history'])} шагов")
+        # Разбор одного часа пишется РОВНО один раз: повторный цикл не
+        # вправе снова провести те же сделки по счёту.
+        hours = [r["hour"] for r in revs]
+        check("час разбирается один раз", len(hours) == len(set(hours)),
+              str(hours))
+        T.cycle(sd, lambda m: None, book_root=None)
+        with open(rp, encoding="utf-8") as f:
+            again = [json.loads(x) for x in f]
+        check("повтор цикла не переразбирает уже разобранное",
+              len(again) == len(revs), f"{len(revs)} -> {len(again)}")
+    finally:
+        (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit) = keep
+        shutil.rmtree(sd, ignore_errors=True)
+
+
 def test_adverse_path_matches_the_side():
     """Ход ПРОТИВ позиции у лонга и шорта — разные цели.
 
@@ -1006,6 +1070,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_trades_close_on_an_hourly_cycle()
     test_adverse_path_matches_the_side()
     test_percent_is_the_display_unit()
     test_pretest_runs_where_live_refuses_and_stays_apart()

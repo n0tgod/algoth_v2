@@ -820,13 +820,33 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # Выбор -> ожидание -> факт, по каждой руке турнира отдельно:
     # сводка по смеси рук осмысленна на вид и бессмысленна по сути.
     ppath = os.path.join(MODEL_DIR, "picks.jsonl")
-    prev_picks = {}
+    # Разбираются ВСЕ неразобранные выборы, а не только последний.
+    #
+    # Прежде хранился один выбор на руку — предыдущий, — и разбор шёл
+    # только по нему. При цикле раз в час и горизонте цели в четыре часа
+    # форвард предыдущего выбора ещё не закрыт, поэтому разбор выходил
+    # пустым; а к следующему циклу этот выбор уже не был «предыдущим» и
+    # не разбирался НИКОГДА. Замер на живом предпросмотре: 48 сделок,
+    # закрытых ноль, шесть «без исхода» на руку. Сделки не закрывались
+    # бы вовсе — при исправном на вид цикле.
+    all_picks = []
     try:
         with open(ppath, encoding="utf-8") as f:
             for line in f:
                 try:
-                    row = json.loads(line)
-                    prev_picks[row.get("arm") or "gbm"] = row
+                    all_picks.append(json.loads(line))
+                except ValueError:
+                    continue
+    except OSError:
+        pass
+    reviewed = set()
+    try:
+        with open(os.path.join(MODEL_DIR, "review.jsonl"),
+                  encoding="utf-8") as f:
+            for line in f:
+                try:
+                    rr = json.loads(line)
+                    reviewed.add((rr.get("arm") or "gbm", rr.get("hour")))
                 except ValueError:
                     continue
     except OSError:
@@ -838,11 +858,22 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     j_last = max((jj for jj in range(len(grid))
                   if elig[:, jj].sum() >= FB.MIN_SECTION), default=None)
     for arm, _ in ARMS:
+        # Последний ЗАПИСАННЫЙ разбор, а не последняя итерация цикла:
+        # у свежего выбора форвард ещё не закрыт, разбор выходит пустым,
+        # и мысли молчали бы о разборе, который на деле состоялся.
         review = None
-        lp = prev_picks.get(arm)
-        if lp and lp.get("hour") in grid:
+        acc = pnl = None
+        # По возрастанию часа: счёт складывается последовательно, и
+        # порядок сделок в нём обязан быть хронологическим.
+        pend = sorted(
+            (p for p in all_picks
+             if (p.get("arm") or "gbm") == arm
+             and (arm, p.get("hour")) not in reviewed
+             and p.get("hour") in grid),
+            key=lambda p: p.get("hour") or "")
+        for lp in pend:
             j = grid.index(lp["hour"])
-            review = []
+            rows_rv = []
             for side in ("long", "short"):
                 for pk in lp.get(side) or []:
                     i = si.get(pk["sym"])
@@ -859,8 +890,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                         # руками по двум файлам никто не станет.
                         if pk.get("odd") is not None:
                             rr["odd"] = pk["odd"]
-                        review.append(rr)
-            if review:
+                        rows_rv.append(rr)
+            if rows_rv:
                 # Бумажный счёт: исполняем прошлый выбор по факту.
                 apath = os.path.join(MODEL_DIR, f"account_{arm}.json")
                 try:
@@ -868,7 +899,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                         acc = json.load(f)
                 except (OSError, ValueError):
                     acc = {"balance": START_BALANCE, "history": []}
-                pos = acc["balance"] / max(len(review), 1)
+                pos = acc["balance"] / max(len(rows_rv), 1)
                 # Деньги по КАЖДОЙ сделке пишутся здесь же, рядом с
                 # исходом. Страница обязана показывать ту же сделку, что
                 # посчитал счёт, а не пересчитывать её у себя: две
@@ -876,17 +907,17 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                 # покажет одно, а баланс другое. Тот же довод, по
                 # которому сводка бумажных сделок считается ядром
                 # `t3_brackets`, а не своим кодом страницы.
-                for r in review:
+                for r in rows_rv:
                     r["net"] = round((1 if r["side"] == "long" else -1)
                                      * r["got"] - ROUND_COST_BP, 1)
                     r["pnl"] = round(pos * r["net"] / 1e4, 2)
                     r["pos"] = round(pos, 2)
-                pnl = sum(r["pnl"] for r in review)
+                pnl = sum(r["pnl"] for r in rows_rv)
                 with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
                           encoding="utf-8") as f:
                     f.write(json.dumps(
                         {"arm": arm, "hour": lp["hour"],
-                         "cost_bp": ROUND_COST_BP, "rows": review},
+                         "cost_bp": ROUND_COST_BP, "rows": rows_rv},
                         ensure_ascii=False) + "\n")
                 acc["balance"] = round(acc["balance"] + pnl, 2)
                 acc["history"].append(
@@ -896,6 +927,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                 with open(apath + ".tmp", "w", encoding="utf-8") as f:
                     json.dump(acc, f, ensure_ascii=False)
                 os.replace(apath + ".tmp", apath)
+                review = rows_rv
         picks = None
         if (arm, "fwd_4h") in models and (arm, "mae_4h") in models \
                 and j_last is not None:
