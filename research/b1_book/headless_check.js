@@ -167,10 +167,15 @@ global.fetch = async (url) => {
                 accounts: {gbm: {balance: 998.3, history: []}},
                 stats: {all: {closed: 1, open: 1, no_outcome: 0,
                               hit_rate: 0.0, net_bp_avg: -51,
-                              pnl: -0.85, expected_over_got: 18.1},
+                              pnl: -0.85, expected_over_got: 18.1,
+                              marked: 1, unreal_net_avg_bp: 89.0,
+                              unreal_win: 1.0, unreal_pnl: 14.83},
                         gbm: {closed: 1, open: 1, no_outcome: 0,
-                              hit_rate: 0.0, net_bp_avg: -51, pnl: -0.85},
-                        nn: {closed: 0, open: 0, no_outcome: 0}},
+                              hit_rate: 0.0, net_bp_avg: -51, pnl: -0.85,
+                              marked: 1, unreal_net_avg_bp: 89.0,
+                              unreal_win: 1.0, unreal_pnl: 14.83},
+                        nn: {closed: 0, open: 0, no_outcome: 0,
+                             marked: 0}},
                 rows: [
                   {arm: "gbm", hour: "2026-08-03-18", sym: "BTCUSDT",
                    side: "long",
@@ -398,6 +403,19 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       global.__el("stats").innerHTML || "") : "";
     if (!/trades/.test(stats))
       bad.push("общая статистика не показана");
+    // Разбиение по рукам турнира: без него не видно, какая из двух
+    // моделей даёт результат, а он у них общий на вид.
+    if (!/data-sa="gbm"/.test(stats) || !/data-sa="nn"/.test(stats)
+        || !/data-sa="all"/.test(stats))
+      bad.push("статистика не делится на all / ml / ai");
+    // Нереализованное в сводке: 89 б.п. = +0.89 %, и деньги отдельно.
+    if (!/\+0\.89 %/.test(stats))
+      bad.push("нереализованное не попало в общую статистику");
+    if (!/14\.83/.test(stats))
+      bad.push("нереализованные деньги не показаны");
+    // И оно обязано стоять ОТДЕЛЬНО от факта, а не в одной строке.
+    if (!/not a result yet/.test(stats))
+      bad.push("нереализованное не отделено от результата");
     const pg = global.__el ? String(
       global.__el("pg").textContent || "") : "";
     if (!/page \d+ of/.test(pg))

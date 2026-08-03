@@ -1243,8 +1243,11 @@ class Collector:
             TR.mark(tr, self.marks(tr))
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
-            out["trade_stats"] = {a: TR.summary(tr, a)
-                                  for a in ("gbm", "nn")}
+            out["trade_stats"] = {
+                a: TR.summary(tr, a, balance=(
+                    (out.get("accounts") or {}).get(a) or {}).get(
+                        "balance"))
+                for a in ("gbm", "nn")}
         except Exception as e:                            # noqa: BLE001
             out["trades_error"] = f"{type(e).__name__}: {e}"
         return out
@@ -1283,8 +1286,22 @@ class Collector:
             if tr:
                 break
         name, tr, revs, mdir = out
-        stats = {a: TR.summary(tr, a) for a in ("gbm", "nn")}
+        accs = {}
+        for a in ("gbm", "nn"):
+            try:
+                with open(os.path.join(mdir, f"account_{a}.json"),
+                          encoding="utf-8") as f:
+                    accs[a] = json.load(f)
+            except (OSError, ValueError):
+                pass
+        stats = {a: TR.summary(tr, a, balance=(accs.get(a) or {}).get(
+            "balance")) for a in ("gbm", "nn")}
+        # У «обеих рук» своего счёта нет: складываются деньги рук.
         stats["all"] = TR.summary(tr)
+        money = [stats[a].get("unreal_pnl") for a in ("gbm", "nn")
+                 if stats[a].get("unreal_pnl") is not None]
+        if money:
+            stats["all"]["unreal_pnl"] = round(sum(money), 2)
         rows = tr
         if arm:
             rows = [t for t in rows if t["arm"] == arm]
@@ -1295,14 +1312,6 @@ class Collector:
         per = max(10, min(int(per), 500))
         page = max(0, int(page))
         total = len(rows)
-        accs = {}
-        for a in ("gbm", "nn"):
-            try:
-                with open(os.path.join(mdir, f"account_{a}.json"),
-                          encoding="utf-8") as f:
-                    accs[a] = json.load(f)
-            except (OSError, ValueError):
-                pass
         return {"source": name, "pretest": name.endswith("pretest"),
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),

@@ -590,6 +590,53 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_unrealised_never_mixes_with_realised():
+    """Нереализованное считается отдельно и тем же размером позиции.
+
+    Закрытая сделка — результат, открытая — текущая отметка, которая до
+    срока может стать любой. Сложить их в одну цифру значило бы выдать
+    незавершённое за результат, поэтому поля разные и на странице они
+    разными рядами.
+
+    Размер позиции берётся так же, как его берёт разбор: баланс на
+    число позиций ТОГО ЖЕ часа. Иначе завелось бы второе определение
+    размера, и деньги на странице разошлись бы с деньгами в счёте.
+    """
+    import trades as TR
+
+    rows = [
+        {"state": "открыта", "arm": "gbm", "hour": "H1", "side": "long",
+         "sym": "A", "unreal_net_bp": 89.0},
+        {"state": "открыта", "arm": "gbm", "hour": "H1", "side": "short",
+         "sym": "B", "unreal_net_bp": -31.0},
+        {"state": "открыта", "arm": "gbm", "hour": "H2", "side": "long",
+         "sym": "C", "unreal_net_bp": 11.0},
+        {"state": "открыта", "arm": "gbm", "hour": "H2", "side": "long",
+         "sym": "D"},                       # без отметки — не считается
+        {"state": "закрыта", "arm": "gbm", "hour": "H0", "side": "long",
+         "sym": "A", "got_bp": 40.0, "net_bp": 29.0, "pnl": 0.5,
+         "expected_bp": 100.0, "hit": True},
+    ]
+    s = TR.summary(rows, "gbm", balance=1200.0)
+    check("переоценённых столько, сколько с отметкой", s["marked"] == 3,
+          str(s.get("marked")))
+    check("реализованное и нереализованное — разные поля",
+          s["pnl"] == 0.5 and s["unreal_pnl"] != s["pnl"],
+          f"{s.get('pnl')} / {s.get('unreal_pnl')}")
+    # H1: два имени по 600 -> 5.34 - 1.86 = 3.48; H2: одно на 1200 -> 1.32
+    check("размер позиции — по числу имён своего часа",
+          abs(s["unreal_pnl"] - 4.80) < 1e-9, str(s.get("unreal_pnl")))
+    check("средняя отметка и доля в плюсе названы",
+          s["unreal_net_avg_bp"] == 23.0 and s["unreal_win"] == 0.667,
+          f"{s.get('unreal_net_avg_bp')} / {s.get('unreal_win')}")
+    # Без баланса денег нет, но проценты есть: выдумывать размер
+    # позиции нельзя, а показать движение можно.
+    s2 = TR.summary(rows, "gbm")
+    check("без баланса деньги не выдумываются",
+          "unreal_pnl" not in s2 and s2["unreal_net_avg_bp"] == 23.0,
+          str(s2))
+
+
 def test_entry_price_is_recovered_from_summaries():
     """Цена входа у старых выборов не потеряна — она в сводке.
 
@@ -1293,6 +1340,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_unrealised_never_mixes_with_realised()
     test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()
     test_awaiting_review_is_not_a_lost_outcome()

@@ -1327,9 +1327,21 @@ async function load() {
     : "";
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
-  const st = (d.stats||{}).all || {};
-  let html = `<div class="stats">`
-    + cell("trades", d.grand_total)
+  // Статистика делится по рукам турнира: all / ml / ai. Смотреть их
+  // вместе можно, но решает сравнение — они учатся на одних данных, и
+  // общий блок скрывает, какая именно из двух даёт результат.
+  const which = S.arm || "all";
+  const st = (d.stats||{})[which] || {};
+  const acc = (d.accounts||{})[which];
+  const armBtns = `<div class="bar">` +
+    [["all","all"],["gbm","ml (trees)"],["nn","ai (neural)"]].map(x =>
+      `<button data-sa="${x[0]}" aria-pressed="${
+        String(which === x[0])}">${x[1]}</button>`).join(" ")
+    + `</div>`;
+  let html = armBtns + `<div class="stats">`
+    + cell("trades", which === "all" ? d.grand_total
+           : (st.closed||0) + (st.open||0) + (st.awaiting||0)
+             + (st.no_outcome||0))
     + cell("closed", st.closed || 0)
     + cell("open", st.open || 0)
     + (st.awaiting ? cell("awaiting review", st.awaiting) : "")
@@ -1342,7 +1354,7 @@ async function load() {
                  st.hit_rate >= 0.5 ? "good" : "bad")
       + cell("net move, avg", pct(st.net_bp_avg),
              st.net_bp_avg > 0 ? "good" : "bad")
-      + cell("paper P&L", (st.pnl > 0 ? "+" : "") + st.pnl + " $",
+      + cell("realised P&L", (st.pnl > 0 ? "+" : "") + st.pnl + " $",
              st.pnl > 0 ? "good" : "bad")
       // How many times the promise exceeds the outcome — the most
       // honest number here: a model can get the sign right and still
@@ -1351,18 +1363,34 @@ async function load() {
              st.expected_over_got > 3 ? "bad" : "");
   }
   html += `</div>`;
-  ["gbm","nn"].forEach(a => {
-    const s = (d.stats||{})[a] || {}, acc = (d.accounts||{})[a];
-    if (!s.closed && !s.open) return;
-    html += `<div class="note" style="margin-top:8px">${
-      a === "gbm" ? "trees (ML)" : "neural (AI)"}: ${s.closed||0} closed, ${
-      s.open||0} open`
-      + (s.closed ? `, sign right ${(s.hit_rate*100).toFixed(0)} %, `
-         + `net ${pct(s.net_bp_avg)}, P&L ${
-           (s.pnl>0?"+":"")+s.pnl} $` : "")
-      + (acc ? ` · account ${acc.balance} $` : "") + `</div>`;
-  });
+  // Нереализованное — ОТДЕЛЬНЫМ рядом, а не в одной строке с фактом.
+  // У закрытой сделки исход известен, у открытой это лишь текущая
+  // отметка, и до срока она может стать любой; сложить их значило бы
+  // выдать незавершённое за результат.
+  if (st.marked) {
+    html += `<div class="note" style="margin-top:8px">open positions,
+      marked to market <span class="k">(not a result yet)</span></div>
+      <div class="stats">`
+      + cell("marked", st.marked)
+      + cell("unreal, avg", pct(st.unreal_net_avg_bp),
+             st.unreal_net_avg_bp > 0 ? "good" : "bad")
+      + cell("in the money", (st.unreal_win*100).toFixed(0) + " %",
+             st.unreal_win >= 0.5 ? "good" : "bad")
+      + (st.unreal_pnl == null ? "" :
+         cell("unreal P&L", (st.unreal_pnl > 0 ? "+" : "")
+              + st.unreal_pnl + " $", st.unreal_pnl > 0 ? "good" : "bad"))
+      + `</div>`;
+  }
+  const accLine = ["gbm","nn"].map(a => {
+    const x = (d.accounts||{})[a];
+    return x ? `${a === "gbm" ? "ml" : "ai"} ${x.balance} $` : null;
+  }).filter(Boolean).join(" · ");
+  if (accLine)
+    html += `<div class="note" style="margin-top:8px">paper accounts: ${
+      accLine} <span class="k">(start 1000 $ each)</span></div>`;
   document.getElementById("stats").innerHTML = html;
+  document.getElementById("stats").querySelectorAll("[data-sa]")
+    .forEach(b => b.onclick = () => { S.arm = b.dataset.sa; load(); });
 
   const sel = document.getElementById("sym");
   if (sel.options.length <= 1 && (d.symbols||[]).length) {

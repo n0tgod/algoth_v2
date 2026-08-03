@@ -175,11 +175,18 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
     return out
 
 
-def summary(trades, arm=None):
-    """Сводка по закрытым: сколько, доля угаданных, деньги.
+def summary(trades, arm=None, balance=None):
+    """Сводка: закрытые — фактом, открытые — переоценкой.
 
-    Открытые в статистику не входят — у них нет исхода, и считать его
-    нулём значило бы разбавить ожидание выдумкой.
+    Закрытые и открытые считаются РАЗДЕЛЬНО и никогда не смешиваются в
+    одну цифру. У закрытой исход известен, у открытой это лишь текущая
+    отметка, которая до срока может стать любой; сложить их значило бы
+    выдать незавершённое за результат.
+
+    Размер позиции для нереализованных денег берётся так же, как его
+    берёт разбор: баланс делится на число позиций ТОГО ЖЕ часа. Иначе
+    получилось бы второе определение размера позиции, и деньги на
+    странице разошлись бы с деньгами в счёте.
     """
     rows = [t for t in trades
             if (arm is None or t["arm"] == arm)]
@@ -189,6 +196,7 @@ def summary(trades, arm=None):
     wait = [t for t in rows if t["state"] == "ждёт разбора"]
     out = {"closed": len(closed), "open": len(op),
            "no_outcome": len(lost), "awaiting": len(wait)}
+    _unreal(rows, out, balance)
     if not closed:
         return out
     hits = sum(1 for t in closed if t.get("hit"))
@@ -211,6 +219,31 @@ def summary(trades, arm=None):
             round(sum(abs(e) for e in exps) / max(
                 sum(abs(g) for g in gots), 1e-9), 2))
     return out
+
+
+def _unreal(rows, out, balance):
+    """Переоценка открытых — отдельными полями, не смешивая с фактом."""
+    marked = [t for t in rows if t["state"] == "открыта"
+              and t.get("unreal_net_bp") is not None]
+    out["marked"] = len(marked)
+    if not marked:
+        return
+    nets = [t["unreal_net_bp"] for t in marked]
+    out["unreal_net_avg_bp"] = round(sum(nets) / len(nets), 1)
+    out["unreal_win"] = round(
+        sum(1 for v in nets if v > 0) / len(nets), 3)
+    if balance:
+        # Позиций в часе столько же, сколько их выбрано, — как и в
+        # разборе. Число берётся по факту, а не константой шесть:
+        # ячейка сетки может выбирать другую ширину.
+        per_hour = {}
+        for t in marked:
+            per_hour.setdefault((t["arm"], t["hour"]), []).append(t)
+        money = 0.0
+        for grp in per_hour.values():
+            pos = balance / max(len(grp), 1)
+            money += sum(pos * t["unreal_net_bp"] / 1e4 for t in grp)
+        out["unreal_pnl"] = round(money, 2)
 
 
 def entry_prices(sum_dir, pairs):
