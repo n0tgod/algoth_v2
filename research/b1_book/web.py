@@ -1199,13 +1199,27 @@ button:disabled{opacity:.4}
   <div id="warn"></div>
 
   <div class="card">
-    <div class="note">how to read a row: <b>signal hour</b> is the hour
-      whose <b>close</b> the decision is based on — features cover the
-      whole hour, so the position can only be entered once it ends.
-      <b>entry</b> is that close; <b>exit</b> is 4 h later, which is
-      exactly how the target is defined. <b>lag</b> is how late the
-      training loop actually woke up after the hour closed — real entry
-      delay, not zero.</div>
+    <div class="note">All clock times are <b>Europe/Vienna</b>; the
+      underlying keys are UTC and show on hover.</div>
+    <div class="note">How to read a row. <b>signal hour</b> — the hour
+      whose <b>close</b> the decision is based on: features cover the
+      whole hour, so nothing can be entered before it ends.
+      <b>entry</b> is that close, <b>exit</b> is 4 h later — exactly how
+      the target is defined. <b>lag</b> is how late the training loop
+      actually woke up after the hour closed: real entry delay, not
+      zero. <b>state</b> is a state, not a time: open / closed / no
+      outcome (deadline passed but the hour is not summarised yet — a
+      trade with no outcome is never counted as zero).
+      <b>exp</b> is the expected move, <b>mae</b> the expected move
+      <b>against</b> the position on the way, <b>got</b> what actually
+      happened, <b>net</b> the same minus the taker round trip.
+      <b>unseen</b> — share of this coin&#39;s features that fell
+      outside the range the model saw while training: 0 % means fully
+      familiar, high means the coin is in a state the model has never
+      seen, so its forecast is worth less. It is a <b>measurement, not
+      a filter</b> — any &laquo;don&#39;t trade the unfamiliar&raquo;
+      rule mechanically flatters drawdown, and may only be introduced
+      after comparing it with a random gate of the same frequency.</div>
     <div class="note">overall stats below are computed over the
       <b>whole</b> history; filters do not move them</div>
     <div id="stats"></div>
@@ -1235,8 +1249,8 @@ button:disabled{opacity:.4}
       <span id="cnt" class="k"></span>
     </div>
     <div class="scroll"><table>
-      <thead><tr><th>signal hour</th><th>entry</th><th>lag</th>
-        <th>arm</th><th>coin</th><th>side</th><th>exp</th>
+      <thead><tr><th>signal hour</th><th>entry</th><th>exit</th>
+        <th>lag</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
         <th>mae</th><th>got</th><th>net</th><th>$</th>
         <th>state</th><th>unseen</th>
       </tr></thead><tbody id="tb"></tbody>
@@ -1255,11 +1269,26 @@ function pct(v) {
   return (v > 0 ? "+" : "") + (v / 100).toFixed(Math.abs(v) >= 10 ? 2 : 3)
     + " %";
 }
-function hhmm(ts) {
-  if (!ts) return "—";
-  const d = new Date(ts * 1000);
-  return String(d.getUTCHours()).padStart(2, "0") + ":"
-       + String(d.getUTCMinutes()).padStart(2, "0");
+// Время показывается в часовом поясе владельца (Вена), а хранится и
+// ключуется в UTC. Смешивать нельзя: `signal hour` — это КЛЮЧ часа в
+// файлах и в журналах, и сдвинутый ключ ничему не соответствует.
+// Поэтому пояс назван в заголовках колонок, а исходный UTC доступен
+// наведением (title).
+const TZ = "Europe/Vienna";
+const FMT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false});
+const FMT_D = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TZ, day: "2-digit", month: "2-digit",
+  hour: "2-digit", minute: "2-digit", hour12: false});
+function hhmm(ts) { return ts ? FMT.format(new Date(ts * 1000)) : "—"; }
+function dmhm(ts) { return ts ? FMT_D.format(new Date(ts * 1000)) : "—"; }
+// Ключ часа `2026-08-03-20` — это UTC. Для глаз показываем его в
+// местном поясе, а сам ключ оставляем в подсказке.
+function hourLocal(h) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})$/.exec(h || "");
+  if (!m) return h || "—";
+  const ts = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4]) / 1000;
+  return dmhm(ts);
 }
 // Состояния приходят с сервера по-русски: это ключи, а не текст для
 // глаз. Перевод живёт здесь, на границе показа — переименовать ключ
@@ -1333,8 +1362,10 @@ async function load() {
   document.getElementById("tb").innerHTML = (d.rows||[]).map(t => {
     const cls = t.state === "закрыта"
       ? (t.net_bp > 0 ? "good" : "bad") : "";
-    return `<tr><td class="mono">${t.hour}</td>
+    return `<tr><td class="mono" title="UTC key ${t.hour}">${
+        hourLocal(t.hour)}</td>
       <td class="mono">${hhmm(t.opened_at)}</td>
+      <td class="mono">${hhmm(t.closes_at)}</td>
       <td class="mono" style="color:var(--muted)">${t.lag_sec == null
         ? "—" : Math.round(t.lag_sec/60) + "m"}</td>
       <td>${t.arm === "nn" ? "neural" : "trees"}</td>
@@ -1346,12 +1377,13 @@ async function load() {
       <td class="mono ${cls}">${pct(t.net_bp)}</td>
       <td class="mono ${cls}">${t.pnl == null ? "—"
         : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
-      <td style="color:var(--muted)">${t.state === "открыта"
-        ? "in " + (t.closes_in_sec/3600).toFixed(1) + " h"
-        : (ST_EN[t.state] || t.state)}</td>
+      <td style="color:var(--muted)">${ST_EN[t.state] || t.state}${
+        t.state === "открыта"
+        ? ` <span class="k">(${(t.closes_in_sec/3600).toFixed(1)} h
+            left)</span>` : ""}</td>
       <td class="mono" style="color:var(--muted)">${t.odd == null ? "—"
         : (t.odd*100).toFixed(0) + " %"}</td></tr>`;
-  }).join("") || `<tr><td colspan="13" style="color:var(--muted);
+  }).join("") || `<tr><td colspan="14" style="color:var(--muted);
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
     `page ${d.page + 1} of ${d.pages}`;

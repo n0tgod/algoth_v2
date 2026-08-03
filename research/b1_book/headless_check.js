@@ -166,10 +166,12 @@ global.fetch = async (url) => {
                               hit_rate: 0.0, net_bp_avg: -51, pnl: -0.85},
                         nn: {closed: 0, open: 0, no_outcome: 0}},
                 rows: [
-                  {arm: "gbm", hour: "2026-08-03-19", sym: "BTCUSDT",
-                   side: "long", opened_at: NOW-600, closes_at: NOW+13800,
+                  {arm: "gbm", hour: "2026-08-03-18", sym: "BTCUSDT",
+                   side: "long",
+                   opened_at: Date.UTC(2026,7,3,19)/1000,
+                   closes_at: Date.UTC(2026,7,3,23)/1000,
                    state: "открыта", expected_bp: 373, mae_bp: -50,
-                   closes_in_sec: 13800, odd: 0.03},
+                   closes_in_sec: 13800, lag_sec: 313, odd: 0.03},
                   {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
                    side: "short", opened_at: NOW-7800, closes_at: NOW-1400,
                    state: "закрыта", expected_bp: -725, mae_bp: 90,
@@ -392,6 +394,22 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       global.__el("pg").textContent || "") : "";
     if (!/page \d+ of/.test(pg))
       bad.push("нумерация страниц не показана");
+    // Время показывается в поясе владельца, а НЕ в UTC. Подставная
+    // сделка входит в 19:00 UTC, значит в Вене это 21:00 — проверка
+    // по числу, а не по наличию двоеточия.
+    if (!/21:00/.test(html))
+      bad.push("время показано не в поясе владельца");
+    // Ключ часа обязан остаться доступным: сдвинутый ключ ничему в
+    // файлах и журналах не соответствует.
+    if (!/UTC key/.test(html))
+      bad.push("ключ часа в UTC потерян");
+    // «Состояние» — это состояние, а не время закрытия. Само время
+    // закрытия обязано быть отдельной колонкой: выход 23:00 UTC — это
+    // 01:00 в Вене, и именно это число обязано появиться.
+    if (!/01:00/.test(html))
+      bad.push("время выхода не показано отдельно");
+    if (!/>open\b/.test(html))
+      bad.push("состояние показано не словом");
   } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {
