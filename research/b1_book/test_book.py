@@ -466,6 +466,47 @@ def test_collected_symbols_are_not_lost():
           len(C.SYMBOLS) == len(set(C.SYMBOLS)), str(len(C.SYMBOLS)))
 
 
+def test_warm_start_is_cheap_and_safe():
+    """Подъём не читает лишнего и не портит живой ряд.
+
+    На полной записи (543 символа × 3600 снимков в час) прежний подъём
+    читал шесть часовых файлов на символ и всю ленту — двенадцать минут,
+    и всё это время сбор НЕ ПИСАЛСЯ. Лента при выключенных бумажных
+    сделках не нужна вовсе: прошлый подъём поднял 5.3 млн сделок и не
+    использовал ни одной.
+    """
+    import tempfile
+    import time as _time
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    now = int(_time.time())
+    c = C.Collector(["TEST"], [], root, lambda m: None)   # paper выключен
+    for i in range(1200):
+        ts = now - 1200 + i
+        c.w.write("trades", "TEST", {"ts": ts * 1000, "s": "TEST",
+                                     "side": 1, "p": 100.0, "v": 1.0},
+                  ts=ts)
+        c.w.write("book", "TEST", {"t": ts, "bid": 100.0, "ask": 100.02},
+                  ts=ts)
+    c.w.close()
+
+    b = C.Collector(["TEST"], [], root, lambda m: None)
+    C.warm_start(root, ["TEST"], b, lambda m: None)
+    check("середина поднята", len(b.mid["TEST"]) > 100,
+          str(len(b.mid["TEST"])))
+
+    # Живой ряд уже есть — подъём не вправе дописать в него прошлое:
+    # старые точки легли бы ПОСЛЕ новых, и график пошёл бы назад.
+    d = C.Collector(["TEST"], [], root, lambda m: None)
+    d.mid["TEST"].append((float(now + 10), 101.0))
+    C.warm_start(root, ["TEST"], d, lambda m: None)
+    seq = [t for t, _ in d.mid["TEST"]]
+    check("живой ряд не испорчен прошлым",
+          seq == sorted(seq) and len(seq) == 1, str(seq[:4]))
+
+
 def test_shrunken_run_announces_dropped_symbols():
     """Урезанный состав сбора обязан назвать пропавших поимённо.
 
@@ -1833,6 +1874,7 @@ def main():
     print("перезапуск")
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()
+    test_warm_start_is_cheap_and_safe()
     test_shrunken_run_announces_dropped_symbols()
     test_nofile_covers_every_kind()
     test_health_is_one_definition()

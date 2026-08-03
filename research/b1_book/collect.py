@@ -1329,34 +1329,48 @@ def warm_start(root, symbols, collector, log, hours=4, trade_hours=72):
     cutoff = time.time() - hours * 3600
     hh = [datetime.fromtimestamp(cutoff + i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(hours + 2)]
+    # Середина нужна за последние 15 минут (буфер страницы — 900 точек
+    # по секунде), значит читать надо два часовых файла, а не шесть.
+    # На полной записи (543 символа × 3600 снимков в час) лишние четыре
+    # часа стоили двенадцати минут подъёма — и все эти двенадцать минут
+    # сбор НЕ ПИСАЛСЯ, потому что подписка идёт после.
+    m_from = time.time() - 900
+    mh = sorted({datetime.fromtimestamp(m_from + i * 900, timezone.utc)
+                 .strftime("%Y-%m-%d-%H") for i in range(0, 5)})
     n_tr = n_bk = 0
     for si, sym in enumerate(symbols):
         if si and si % 100 == 0:
             # На полном списке подъём читает сотни файлов; молчание
             # дольше минуты неотличимо от зависания.
             log(f"  подъём истории: {si}/{len(symbols)} символов")
-        rows = []
-        for h in hh:
-            rows += rows_of("trades", sym, h, cutoff, lambda r, c:
-                            r if r.get("ts", 0) / 1000.0 >= c else None)
-        rows.sort(key=lambda x: x.get("ts", 0))
+        # Лента нужна только детектору бумажных сделок. При выключенных
+        # сделках это чтение миллионов строк ради счётчика в журнале:
+        # прошлый подъём поднял 5.3 млн сделок и не использовал ни одной.
         if collector.paper:
+            rows = []
+            for h in hh:
+                rows += rows_of("trades", sym, h, cutoff, lambda r, c:
+                                r if r.get("ts", 0) / 1000.0 >= c else None)
+            rows.sort(key=lambda x: x.get("ts", 0))
             for t in rows:
                 collector.sig.on_trade(t)
-        n_tr += len(rows)
+            n_tr += len(rows)
         # Середина для линии обзора — из посекундных снимков стакана.
         mids = []
-        recent = time.time() - 900
-        for h in hh:
+        for h in mh:
             mids += rows_of(
-                "book", sym, h, recent,
+                "book", sym, h, m_from,
                 lambda r, c: ((round(r["t"], 1),
                                (r["bid"] + r["ask"]) / 2.0)
                               if r.get("t", 0) >= c and r.get("bid")
                               and r.get("ask") else None))
         mids.sort()
-        collector.mid[sym].extend(mids[-900:])
-        n_bk += len(mids)
+        # Подъём идёт рядом с живой записью, поэтому дописывать в
+        # непустой буфер нельзя: старые точки легли бы ПОСЛЕ новых, и
+        # график страницы показал бы ряд, идущий назад во времени.
+        if mids and not collector.mid[sym]:
+            collector.mid[sym].extend(mids[-900:])
+            n_bk += len(mids)
     n_paper = 0
     ph = [datetime.fromtimestamp(time.time() - i * 3600, timezone.utc)
           .strftime("%Y-%m-%d-%H") for i in range(trade_hours, -1, -1)]
@@ -1605,11 +1619,17 @@ def main():
     n = c.w.pack_stale()
     if n:
         log(f"сжато незакрытых часов от прошлых запусков: {n}")
-    try:
-        warm_start(a.out, syms, c, log)
-    except Exception as e:                                # noqa: BLE001
-        log(f"поднять историю не вышло ({type(e).__name__}: {e}); "
-            f"сбор продолжается с нуля")
+    # Подъём идёт ФОНОМ: сбор обязан начать писать сразу. Раньше он
+    # стоял перед подпиской, и на полной записи каждый перезапуск
+    # обходился в двенадцать минут тишины — а перезапусков при отладке
+    # много. История — удобство страницы, запись — смысл всего.
+    def _warm():
+        try:
+            warm_start(a.out, syms, c, log)
+        except Exception as e:                            # noqa: BLE001
+            log(f"поднять историю не вышло ({type(e).__name__}: {e}); "
+                f"сбор продолжается с нуля")
+    threading.Thread(target=_warm, daemon=True).start()
     try:
         c.run(a.hours)
     except KeyboardInterrupt:
