@@ -76,6 +76,13 @@ details.grp .gs{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px;max-height
 .thoughts{max-height:230px;overflow-y:auto;font-size:12.5px;
  white-space:pre-wrap;line-height:1.5}
 .thoughts .tt{color:var(--muted)}
+.mtr{width:100%;border-collapse:collapse;font-size:11.5px}
+.mtr th{text-align:left;color:var(--muted);font-weight:400;
+ padding:2px 6px 3px 0;border-bottom:1px solid var(--rule)}
+.mtr td{padding:2px 6px 2px 0;white-space:nowrap}
+.mtr tr.good td:nth-child(8){color:var(--bid)}
+.mtr tr.bad td:nth-child(8){color:var(--ask)}
+.mtr tr.dim td{color:var(--muted)}
 @media(max-width:640px){
  .wrap{padding:10px 8px 30px}
  button{padding:8px 12px;font-size:13.5px}
@@ -628,36 +635,108 @@ function renderPretest(p, modeBtns) {
         r.median_ic}` : null; }).filter(Boolean).join(" ");
     return s ? `${a === "gbm" ? "trees" : "neural"}: ${s}` : null;
   }).filter(Boolean).join(" · ");
-  const rows = [];
-  (p.picks || []).slice(-2).forEach(pk => {
-    const side = s => (pk[s] || []).map(x =>
-      `${x.sym.replace("USDT","")} ${x.fwd > 0 ? "+" : ""}${
-        Math.round(x.fwd)}`).join(", ");
-    rows.push(`<div class="mline"><b>${pk.arm === "nn" ? "neural" :
-      "trees"}</b> @ ${pk.hour}: long ${side("long") || "—"} · short ${
-      side("short") || "—"} <span class="dim">(bp expected over 4 h)</span>
-      </div>`);
-  });
-  (p.review || []).slice(-2).forEach(rv => {
-    const hit = (rv.rows || []).filter(r =>
-      (r.side === "long") === (r.got > 0)).length;
-    rows.push(`<div class="mline"><b>${rv.arm === "nn" ? "neural" :
-      "trees"}</b> reviewed ${rv.hour}: sign right on ${hit}/${
-      (rv.rows||[]).length} — ` + (rv.rows||[]).map(r =>
-      `${r.sym.replace("USDT","")} ${r.expected > 0 ? "+" : ""}${
-        r.expected}→${r.got > 0 ? "+" : ""}${r.got}`).join(", ")
-      + `</div>`);
-  });
   box.innerHTML = modeBtns + warn
     + `<div class="mline">weights v${m.version} · age ${
         ageH == null ? "—" : ageH.toFixed(1)} h · trained on ${
         m.sections ?? "—"} sections, ${m.symbols ?? "—"} coins · hedge ${
         m.hedge || "?"}${accLine ? " · paper " + accLine : ""}</div>`
     + (icLine ? `<div class="mline">out-of-sample IC — ${icLine}</div>` : "")
-    + rows.join("")
+    + tradeStats(p) + equityBlock(p) + tradeTable(p)
     + (p.thoughts || []).slice(-6).map(t =>
         `<div class="mline dim">${t.text}</div>`).join("");
   wireModes();
+}
+
+// Сводка по сделкам. Открытые в неё НЕ входят: у них нет исхода, и
+// посчитать его нулём значило бы разбавить статистику выдумкой.
+function tradeStats(p) {
+  const st = p.trade_stats || {};
+  const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
+    <div class="v mono ${cls||""}">${v}</div></div>`;
+  return ["gbm","nn"].map(a => {
+    const s = st[a]; if (!s) return "";
+    const name = a === "gbm" ? "trees" : "neural";
+    if (!s.closed) return `<div class="mline">${name}: ${s.open || 0}
+      open, none closed yet — first outcomes in ~4 h.</div>`;
+    // «Обещание / факт» — самое честное число здесь: модель может
+    // угадывать знак и обещать вчетверо больше, чем даёт.
+    return `<div class="mline"><b>${name}</b></div><div class="stats">`
+      + cell("closed", s.closed)
+      + cell("open", s.open)
+      + cell("sign right", (s.hit_rate*100).toFixed(0) + " %",
+             s.hit_rate >= 0.5 ? "good" : "bad")
+      + cell("net, bp", s.net_bp_avg, s.net_bp_avg > 0 ? "good" : "bad")
+      + cell("paper P&L, $", s.pnl, s.pnl > 0 ? "good" : "bad")
+      + cell("promise / actual", s.expected_over_got ?? "—",
+             s.expected_over_got > 3 ? "bad" : "")
+      + (s.no_outcome ? cell("no outcome", s.no_outcome, "bad") : "")
+      + `</div>`;
+  }).join("");
+}
+
+// Кривая счёта: рисуется из истории самого счёта, а не пересчитывается
+// по сделкам — иначе график и баланс однажды разойдутся.
+function equityBlock(p) {
+  const accs = p.accounts || {};
+  const series = ["gbm","nn"].map(a => (accs[a]||{}).history || [])
+    .filter(h => h.length > 1);
+  if (!series.length) return "";
+  const all = series.flat().map(h => h.balance);
+  const lo = Math.min(...all), hi = Math.max(...all);
+  const pad = (hi - lo) * 0.1 || 1;
+  const W = 320, H = 60;
+  const path = (h, col) => {
+    const n = h.length;
+    const pts = h.map((r, i) => {
+      const x = n > 1 ? i / (n - 1) * W : 0;
+      const y = H - (r.balance - lo + pad) / (hi - lo + 2*pad) * H;
+      return `${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="${col}"
+      stroke-width="1.5"/>`;
+  };
+  const cols = ["#268bd2", "#b58900"];
+  return `<div class="mline">paper equity <span class="dim">(start
+    $1000, ${series[0].length} closed hours)</span></div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;
+      height:${H}px;display:block">
+      ${series.map((h,i) => path(h, cols[i])).join("")}
+    </svg>`;
+}
+
+// Таблица сделок: одна строка — одна позиция. Открытая несёт прогноз и
+// срок закрытия, закрытая — факт и деньги. Ровно это и просили: «если
+// сделка ещё не состоялась, хочу видеть прогноз».
+function tradeTable(p) {
+  const tr = p.trades || [];
+  if (!tr.length) return `<div class="mline">no model trades yet —
+    the first cycle writes picks, outcomes arrive 4 h later.</div>`;
+  const bp = v => v == null ? "—"
+    : (v > 0 ? "+" : "") + Math.round(v);
+  const rows = tr.slice(0, 24).map(t => {
+    const cls = t.state === "закрыта"
+      ? ((t.net_bp > 0) ? "good" : "bad")
+      : (t.state === "открыта" ? "" : "dim");
+    const when = t.state === "открыта"
+      ? `in ${(t.closes_in_sec/3600).toFixed(1)} h`
+      : (t.state === "закрыта" ? "closed" : "no outcome");
+    return `<tr class="${cls}">
+      <td class="mono">${t.hour.slice(5)}</td>
+      <td>${t.arm === "nn" ? "neu" : "tre"}</td>
+      <td class="mono">${t.sym.replace("USDT","")}</td>
+      <td>${t.side === "long" ? "L" : "S"}</td>
+      <td class="mono">${bp(t.expected_bp)}</td>
+      <td class="mono dim">${bp(t.mae_bp)}</td>
+      <td class="mono">${bp(t.got_bp)}</td>
+      <td class="mono">${t.pnl == null ? "—" :
+        (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
+      <td class="dim">${when}</td></tr>`;
+  }).join("");
+  return `<div class="mline">model trades <span class="dim">(expected /
+    worst path expected / actual, bp over 4 h)</span></div>
+    <div style="overflow-x:auto"><table class="mtr">
+    <tr><th>hour</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
+    <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
+    ${rows}</table></div>`;
 }
 
 function renderModel() {
@@ -1305,7 +1384,28 @@ async function history() {
   finally { HIST.busy = false; }
 }
 
+// Сделки МОДЕЛИ — отдельным запросом и отдельным слоем. Мешать их с
+// бумажными сделками детектора нельзя: это два разных механизма, и
+// одна таблица на двоих однажды сложила бы их статистику.
+const MDL = {trades: [], at: 0, busy: false, pretest: false};
+async function pullModelTrades() {
+  if (MDL.busy || Date.now() - MDL.at < 60000) return;
+  MDL.busy = true;
+  try {
+    const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
+    const d = await r.json();
+    // Предпросмотр показываем, если он есть: боевая модель молчит до
+    // накопления истории, и пустой слой читался бы как поломка.
+    const src = (d.pretest && (d.pretest.trades||[]).length) ? d.pretest : d;
+    MDL.pretest = src === d.pretest;
+    MDL.trades = (src.trades || []).filter(t => t.sym === sym);
+    MDL.at = Date.now();
+  } catch (e) { /* тихо: следующий круг попробует снова */ }
+  finally { MDL.busy = false; }
+}
+
 async function pull() {
+  pullModelTrades();
   if (ST.busy) return;
   ST.busy = true;
   let d;
@@ -1518,6 +1618,30 @@ function draw() {
     const h2=Math.max(yb-ya,20);
     HIT.push({m, x0:xa-10, x1:xb, y0:(ya+yb)/2-h2/2, y1:(ya+yb)/2+h2/2});
   }
+  // Слой сделок модели: вход — треугольник на своём часе, срок
+  // закрытия — пунктир. Форма и цвет иные, чем у детектора, чтобы два
+  // механизма нельзя было спутать глазами.
+  for (const t of MDL.trades) {
+    if (!t.opened_at || t.opened_at < t0 - 3600 || t.opened_at > t1 + 3600)
+      continue;
+    const xa = xt(t.opened_at);
+    const up = t.side === "long";
+    const col = t.state === "закрыта"
+      ? ((t.net_bp || 0) > 0 ? css("--bid") : css("--ask"))
+      : css("--accent");
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.5;
+    const yb = up ? H - padB - 8 : padT + 8;
+    g.beginPath();
+    g.moveTo(xa, yb + (up ? -9 : 9));
+    g.lineTo(xa - 5, yb); g.lineTo(xa + 5, yb); g.closePath();
+    if (t.state === "закрыта") g.fill(); else g.stroke();
+    if (t.closes_at && t.closes_at <= t1 + 3600) {
+      g.setLineDash([3,3]);
+      g.beginPath(); g.moveTo(xa, yb); g.lineTo(xt(t.closes_at), yb);
+      g.stroke(); g.setLineDash([]);
+    }
+    HIT.push({mdl: t, x0: xa-7, x1: xa+7, y0: yb-11, y1: yb+11});
+  }
   g.fillStyle = css("--muted"); g.textBaseline="alphabetic";
   g.fillText(stamp(t0), padL, H-6);
   g.textAlign="right"; g.fillText(stamp(t1), W-padR, H-6); g.textAlign="left";
@@ -1538,7 +1662,10 @@ function draw() {
        ? ` · ${tr.filter(m => m.state === "не открыта").length} входов `
          + `правило не взяло (полый треугольник)` : "")
     + (off ? ` · ${off} вне окна графика` : "")
-    + (old ? ` · ${old} по прежним правилам` : "");
+    + (old ? ` · ${old} по прежним правилам` : "")
+    + (MDL.trades.length
+       ? ` · ${MDL.trades.length} сделок модели`
+         + (MDL.pretest ? " (pre-testing)" : "") : "");
 }
 
 function rows() {
@@ -1705,9 +1832,39 @@ function hover(e) {
   const mx = e.clientX-r.left, my = e.clientY-r.top;
   const h = HIT.find(z => mx>=z.x0 && mx<=z.x1 && my>=z.y0 && my<=z.y1);
   if (!h) { tip.style.display="none"; return; }
-  const m = h.m;
   const row=(k,v,cls)=>`<div class="r"><span>${k}</span>
     <span class="${cls||""}">${v}</span></div>`;
+  if (h.mdl) {
+    // Сделка МОДЕЛИ. Открытая несёт прогноз и срок, закрытая — факт и
+    // деньги; путать её со сделкой детектора нельзя, поэтому и
+    // подсказка своя.
+    const t = h.mdl, bp = v => v == null ? "—"
+      : (v > 0 ? "+" : "") + Math.round(v) + " б.п.";
+    tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">
+        модель${MDL.pretest ? " (pre-testing)" : ""} · ${
+        t.side === "long" ? "лонг" : "шорт"} · ${t.state}</div>`
+      + row("рука", t.arm === "nn" ? "сеть (AI)" : "деревья (ML)")
+      + row("час входа", t.hour)
+      + row("ждёт", bp(t.expected_bp))
+      + row("ход против", bp(t.mae_bp))
+      + (t.state === "закрыта"
+         ? row("вышло", bp(t.got_bp), (t.got_bp>0)===(t.side==="long")
+               ? "buy" : "sell")
+           + row("нетто с издержками", bp(t.net_bp),
+                 t.net_bp>0?"buy":"sell")
+           + row("деньги", (t.pnl>0?"+":"") + t.pnl + " $",
+                 t.pnl>0?"buy":"sell")
+         : t.state === "открыта"
+           ? row("закроется через",
+                 (t.closes_in_sec/3600).toFixed(1) + " ч")
+           : row("исхода нет", "час ещё не сведён"));
+    tip.style.display="block";
+    tip.style.left = Math.max(4, Math.min(px.clientWidth-tip.offsetWidth-4,
+                                          mx+14))+"px";
+    tip.style.top = Math.max(4, my+18)+"px";
+    return;
+  }
+  const m = h.m;
   tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">${
       m.long?"лонг":"шорт"} · ${m.state}</div>`
     + row("время", stamp(m.t)) + row("вход", m.entry)

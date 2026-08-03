@@ -29,8 +29,19 @@ const mkEl = () => new Proxy({
   querySelector: () => mkEl(), querySelectorAll: () => [],
 }, { get: (t, k) => (k in t ? t[k] : () => undefined),
      set: (t, k, v) => ((t[k] = v), true) });
+// Элементы кешируются ПО ИДЕНТИФИКАТОРУ. Прежде каждый вызов возвращал
+// новый объект, поэтому написанное страницей в `innerHTML` тут же
+// терялось, и любая проверка отрисованной разметки проходила вхолостую —
+// отрицательный контроль это и показал: удаление таблицы сделок тест не
+// уронило.
+const ELS = new Map();
+const elById = id => {
+  if (!ELS.has(id)) ELS.set(id, mkEl());
+  return ELS.get(id);
+};
+global.__el = elById;
 global.document = {
-  documentElement: mkEl(), getElementById: () => mkEl(),
+  documentElement: mkEl(), getElementById: elById,
   querySelector: () => mkEl(), querySelectorAll: () => [],
   createElement: () => mkEl(), addEventListener: () => {},
 };
@@ -154,7 +165,49 @@ global.fetch = async (url) => {
                              canary_ic: 0.003, importance: {},
                              trained_at: "2026-08-01T10:00:00+00:00"},
                   thoughts: [{at: "08-01 10:00", text: "проверка"}],
-                  ic: [{target: "fwd_4h", median_ic: 0.021, sections: 24}]}
+                  ic: [{target: "fwd_4h", median_ic: 0.021, sections: 24}],
+                  // Предпросмотр со сделками ОБЯЗАН быть в подставном
+                  // ответе: без него слой сделок модели не рисуется
+                  // ни разу, и ошибка в нём прошла бы незамеченной —
+                  // ровно тот отказ, который проект ловит везде.
+                  pretest: {
+                    present: true,
+                    manifest: {version: 2, sections: 9, symbols: 543,
+                               hedge: "выключен (бета не оценима)",
+                               canary_ic: 0.004, canary_spread: 0.216,
+                               canary_seeds: 5, importance: {},
+                               trained_at: "2026-08-03T19:30:00+00:00"},
+                    readiness: {sections: 9, need: 48, symbols: 543,
+                                hours_per_symbol: 9, beta_min_hours: 96,
+                                min_section: 30, features: 50,
+                                by_hour: []},
+                    last_run: {reason: "обучилась",
+                               at: "2026-08-03T19:30:13+00:00"},
+                    accounts: {gbm: {balance: 998.3,
+                                     history: [{hour: "2026-08-03-17",
+                                                pnl: -1.7, balance: 998.3},
+                                               {hour: "2026-08-03-18",
+                                                pnl: 0.9, balance: 999.2}]}},
+                    trade_stats: {gbm: {closed: 2, open: 1, no_outcome: 0,
+                                        hit_rate: 0.5, net_bp_avg: -0.5,
+                                        pnl: -0.02, expected_avg: -95.5,
+                                        got_avg: 50.5,
+                                        expected_over_got: 12.5},
+                                  nn: {closed: 0, open: 3,
+                                       no_outcome: 0}},
+                    trades: [
+                      {arm: "gbm", hour: "2026-08-03-19", sym: "BTCUSDT",
+                       side: "long", opened_at: Math.floor(Date.now()/1000)-600,
+                       closes_at: Math.floor(Date.now()/1000)+13800,
+                       state: "открыта", expected_bp: 373, mae_bp: -50,
+                       closes_in_sec: 13800},
+                      {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
+                       side: "short", opened_at: Math.floor(Date.now()/1000)-7800,
+                       closes_at: Math.floor(Date.now()/1000)-1400,
+                       state: "закрыта", expected_bp: -725, mae_bp: -90,
+                       got_bp: 40, net_bp: -51, pnl: -0.85, pos: 166.67}],
+                    thoughts: [{at: "08-03 19:30", text: "предпросмотр"}],
+                    ic: []}}
              : url.startsWith("/candles")
                ? {sym: "BTCUSDT", candles: candles(1440), hours: 24}
                : state(full, 60);
@@ -195,7 +248,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? barAt : null;"
                 + "\nglobal.__table = typeof shownTrades === 'function' "
                 + "? shownTrades : (typeof shown === 'function' "
-                + "? () => shown().trades : null);")();
+                + "? () => shown().trades : null);"
+                // Вкладка предпросмотра: её надо ОТКРЫТЬ в проверке,
+                // иначе весь её код ни разу не исполняется, и падение
+                // в нём достанется владельцу, а не тесту.
+                + "\nglobal.__pretest = typeof renderModel === 'function' "
+                + "&& typeof MDL !== 'undefined' && 'mode' in MDL "
+                + "? () => { MDL.mode = 'pretest'; renderModel(); "
+                + "          return document.getElementById('modelbox')"
+                + "                 .innerHTML || ''; } : null;")();
 (async () => {
   const step = global.__step;
   // Первый кадр отдан самой страницей при загрузке; ждём его, затем
@@ -215,6 +276,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // неотличимый от «сделок пока нет»: панель просто пустая.
   if (!seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
+  if (global.__pretest) {
+    let html = "";
+    try { html = global.__pretest(); }
+    catch (e) { bad.push("вкладка pre-testing упала: " + e.message); }
+    // Мало не упасть — она обязана НАРИСОВАТЬ сделки. Пустая вкладка
+    // неотличима от «сделок пока нет».
+    if (!html) bad.push("вкладка pre-testing ничего не нарисовала");
+    else {
+      if (!/model trades|no model trades/.test(html))
+        bad.push("вкладка pre-testing не показала сделок");
+      if (!/directional/.test(html))
+        bad.push("вкладка pre-testing без оговорки о направленности");
+    }
+  }
   if (!seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // График обязан достроить историю свечей с диска: без неё он

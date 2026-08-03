@@ -836,11 +836,6 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                             rr["odd"] = pk["odd"]
                         review.append(rr)
             if review:
-                with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
-                          encoding="utf-8") as f:
-                    f.write(json.dumps(
-                        {"arm": arm, "hour": lp["hour"], "rows": review},
-                        ensure_ascii=False) + "\n")
                 # Бумажный счёт: исполняем прошлый выбор по факту.
                 apath = os.path.join(MODEL_DIR, f"account_{arm}.json")
                 try:
@@ -849,9 +844,25 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                 except (OSError, ValueError):
                     acc = {"balance": START_BALANCE, "history": []}
                 pos = acc["balance"] / max(len(review), 1)
-                pnl = sum(pos * ((1 if r["side"] == "long" else -1)
-                                 * r["got"] - ROUND_COST_BP) / 1e4
-                          for r in review)
+                # Деньги по КАЖДОЙ сделке пишутся здесь же, рядом с
+                # исходом. Страница обязана показывать ту же сделку, что
+                # посчитал счёт, а не пересчитывать её у себя: две
+                # реализации одной формулы однажды разойдутся, и таблица
+                # покажет одно, а баланс другое. Тот же довод, по
+                # которому сводка бумажных сделок считается ядром
+                # `t3_brackets`, а не своим кодом страницы.
+                for r in review:
+                    r["net"] = round((1 if r["side"] == "long" else -1)
+                                     * r["got"] - ROUND_COST_BP, 1)
+                    r["pnl"] = round(pos * r["net"] / 1e4, 2)
+                    r["pos"] = round(pos, 2)
+                pnl = sum(r["pnl"] for r in review)
+                with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
+                          encoding="utf-8") as f:
+                    f.write(json.dumps(
+                        {"arm": arm, "hour": lp["hour"],
+                         "cost_bp": ROUND_COST_BP, "rows": review},
+                        ensure_ascii=False) + "\n")
                 acc["balance"] = round(acc["balance"] + pnl, 2)
                 acc["history"].append(
                     {"hour": lp["hour"], "pnl": round(pnl, 2),

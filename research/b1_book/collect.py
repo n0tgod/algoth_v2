@@ -1209,8 +1209,8 @@ class Collector:
                 pass
         for name, key, keep in (("thoughts.jsonl", "thoughts", 60),
                                 ("ic_history.jsonl", "ic", 90),
-                                ("picks.jsonl", "picks", 6),
-                                ("review.jsonl", "review", 6)):
+                                ("picks.jsonl", "picks", 40),
+                                ("review.jsonl", "review", 40)):
             rows = []
             try:
                 with open(os.path.join(mdir, name), encoding="utf-8") as f:
@@ -1228,6 +1228,19 @@ class Collector:
                 out["last_run"] = json.load(f)
         except (OSError, ValueError):
             pass
+        # Сделки собираются ОДНИМ кодом с отчётами (`s8_loop/trades.py`),
+        # а не своим у страницы: выбор и разбор лежат в разных файлах, и
+        # соединять их глазами — то же, что не иметь сделок вовсе.
+        try:
+            sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                            "s8_loop"))
+            import trades as TR
+            tr = TR.build(out.get("picks"), out.get("review"))
+            out["trades"] = tr[:60]
+            out["trade_stats"] = {a: TR.summary(tr, a)
+                                  for a in ("gbm", "nn")}
+        except Exception as e:                            # noqa: BLE001
+            out["trades_error"] = f"{type(e).__name__}: {e}"
         return out
 
     def trades(self, sym=None):
