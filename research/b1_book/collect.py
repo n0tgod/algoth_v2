@@ -1244,6 +1244,82 @@ class Collector:
             out["trades_error"] = f"{type(e).__name__}: {e}"
         return out
 
+    def model_trades(self, page=0, per=100, arm=None, state=None,
+                     sym=None, pretest=None):
+        """ВСЯ история сделок модели, страницами, со сводкой по всему.
+
+        Отдельно от `model_state`, потому что там история намеренно
+        урезана: страница обзора опрашивается раз в минуту, и гонять по
+        ней месяцы сделок незачем. Здесь наоборот — читаются файлы
+        целиком, а страницами режется только показ.
+
+        Сводка считается по ВСЕЙ выборке, а не по видимой странице:
+        статистика, зависящая от того, какую страницу открыли, — не
+        статистика.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+        import trades as TR
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        # По умолчанию берётся тот контур, где сделки есть: боевая
+        # модель молчит до накопления истории, и пустая страница
+        # читалась бы как поломка.
+        want = ("model_pretest" if pretest else "model") if \
+            pretest is not None else None
+        dirs = ([want] if want else ["model_pretest", "model"])
+        out = None
+        for name in dirs:
+            mdir = os.path.join(s8, name)
+            picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+            revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
+            tr = TR.build(picks, revs)
+            if tr or out is None:
+                out = (name, tr, revs, mdir)
+            if tr:
+                break
+        name, tr, revs, mdir = out
+        stats = {a: TR.summary(tr, a) for a in ("gbm", "nn")}
+        stats["all"] = TR.summary(tr)
+        rows = tr
+        if arm:
+            rows = [t for t in rows if t["arm"] == arm]
+        if state:
+            rows = [t for t in rows if t["state"] == state]
+        if sym:
+            rows = [t for t in rows if t["sym"] == sym.upper()]
+        per = max(10, min(int(per), 500))
+        page = max(0, int(page))
+        total = len(rows)
+        accs = {}
+        for a in ("gbm", "nn"):
+            try:
+                with open(os.path.join(mdir, f"account_{a}.json"),
+                          encoding="utf-8") as f:
+                    accs[a] = json.load(f)
+            except (OSError, ValueError):
+                pass
+        return {"source": name, "pretest": name.endswith("pretest"),
+                "page": page, "per": per, "total": total,
+                "pages": max(1, (total + per - 1) // per),
+                "filtered": bool(arm or state or sym),
+                "grand_total": len(tr),
+                "stats": stats, "accounts": accs,
+                "symbols": sorted({t["sym"] for t in tr}),
+                "rows": rows[page * per:(page + 1) * per]}
+
+    @staticmethod
+    def _jsonl(path):
+        out = []
+        try:
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        out.append(json.loads(line))
+                    except ValueError:
+                        continue
+        except OSError:
+            pass
+        return out
+
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.
 

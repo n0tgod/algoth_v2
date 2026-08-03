@@ -196,12 +196,19 @@ def test_view_does_not_reset_counter():
 def test_page_has_no_external_loads():
     """Страницы обязаны быть самодостаточными: сервер стоит в интернете."""
     import web
-    for name, src in (("обзор", web.PAGE), ("график", web.CHART)):
+    for name, src, api in (("обзор", web.PAGE, "/state?k="),
+                           ("график", web.CHART, "/state?k="),
+                           ("сделки", web.TRADES, "/model_trades?")):
         check(f"{name}: внешних ссылок нет",
               "http://" not in src and "https://" not in src)
-        check(f"{name}: данные тянутся с самого сборщика",
-              "/state?k=" in src)
+        check(f"{name}: данные тянутся с самого сборщика", api in src)
     check("с обзора есть ссылка на график", "/chart?k=" in web.PAGE)
+    # Страница без входа с обзора существует только в памяти того, кто
+    # её писал.
+    check("с обзора есть ссылка на историю сделок",
+          "/trades-page?k=" in web.PAGE)
+    check("со страницы сделок есть возврат на обзор",
+          'id="back"' in web.TRADES and "/?k=" in web.TRADES)
 
 
 def test_pages_run_headless():
@@ -222,7 +229,8 @@ def test_pages_run_headless():
         return
     d = tempfile.mkdtemp()
     try:
-        for name, src in (("обзор", web.PAGE), ("график", web.CHART)):
+        for name, src in (("обзор", web.PAGE), ("график", web.CHART),
+                      ("сделки", web.TRADES)):
             p = os.path.join(d, "p.html")
             with open(p, "w", encoding="utf-8") as f:
                 f.write(src)

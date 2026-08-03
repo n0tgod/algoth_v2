@@ -153,7 +153,28 @@ let full = true, calls = 0;
 const seen = [];
 global.fetch = async (url) => {
   calls++; seen.push(url);
-  const body = url.startsWith("/trades") ? hist
+  const NOW = Math.floor(Date.now()/1000);
+  const body = url.startsWith("/model_trades")
+             ? {source: "model_pretest", pretest: true, page: 0, per: 100,
+                total: 2, pages: 1, filtered: false, grand_total: 2,
+                symbols: ["BTCUSDT"],
+                accounts: {gbm: {balance: 998.3, history: []}},
+                stats: {all: {closed: 1, open: 1, no_outcome: 0,
+                              hit_rate: 0.0, net_bp_avg: -51,
+                              pnl: -0.85, expected_over_got: 18.1},
+                        gbm: {closed: 1, open: 1, no_outcome: 0,
+                              hit_rate: 0.0, net_bp_avg: -51, pnl: -0.85},
+                        nn: {closed: 0, open: 0, no_outcome: 0}},
+                rows: [
+                  {arm: "gbm", hour: "2026-08-03-19", sym: "BTCUSDT",
+                   side: "long", opened_at: NOW-600, closes_at: NOW+13800,
+                   state: "открыта", expected_bp: 373, mae_bp: -50,
+                   closes_in_sec: 13800, odd: 0.03},
+                  {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
+                   side: "short", opened_at: NOW-7800, closes_at: NOW-1400,
+                   state: "закрыта", expected_bp: -725, mae_bp: 90,
+                   got_bp: 40, net_bp: -51, pnl: -0.85}]}
+             : url.startsWith("/trades") ? hist
              : url.startsWith("/recount") ? recount
              : url.startsWith("/groups")
                ? {groups: [{id: "memes",
@@ -222,7 +243,9 @@ process.on("unhandledRejection", e => {
 // Точка такта живёт внутри области видимости страницы, поэтому её надо
 // вынести наружу явно — иначе проверялся бы только запуск.
 new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
-                + "? tick : pull;\nglobal.__st = ST;"
+                + "? tick : (typeof pull !== 'undefined' ? pull "
+                + ": (typeof load !== 'undefined' ? load : null));"
+                + "\nglobal.__st = typeof ST !== 'undefined' ? ST : null;"
                 + "\nglobal.__cands = typeof cands === 'function' "
                 + "? cands : null;"
                 + "\nglobal.__rec = typeof pullRec === 'function' "
@@ -274,7 +297,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Обе страницы обязаны сходить и за состоянием, и за историей сделок.
   // Функция, которая определена и не вызывается ни откуда, — отказ,
   // неотличимый от «сделок пока нет»: панель просто пустая.
-  if (!seen.some(u => u.startsWith("/state")))
+  const isTrades = seen.some(u => u.startsWith("/model_trades"));
+  if (!isTrades && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   if (global.__pretest) {
     let html = "";
@@ -298,7 +322,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push("в сделках остались базисные пункты");
     }
   }
-  if (!seen.some(u => u.startsWith("/trades")))
+  if (!isTrades && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // График обязан достроить историю свечей с диска: без неё он
   // обрывается там, где кончается память сборщика, и прошлые сделки
@@ -329,11 +353,18 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (global.__barAt([], 5) !== 0)
       bad.push("пустой ряд свечей роняет привязку меток");
   }
-  const buf = st.mid && st.mid.length ? st.mid : st.cand;
-  if (!buf || buf.length < 50)
-    bad.push(`склейка потеряла историю: осталось ${buf ? buf.length : "—"}`);
-  if (st.cand && st.cand.length && st.cand.length < 50)
-    bad.push(`свечи склеились неверно: ${st.cand.length}`);
+  // Склейка разностных кусков проверяется у страниц, которые её
+  // делают. У истории сделок разностного опроса нет вовсе: она
+  // тянет страницу целиком, и требовать от неё накопленного буфера
+  // значит проверять не то.
+  if (st) {
+    const buf = st.mid && st.mid.length ? st.mid : st.cand;
+    if (!buf || buf.length < 50)
+      bad.push(`склейка потеряла историю: осталось ${
+        buf ? buf.length : "—"}`);
+    if (st.cand && st.cand.length && st.cand.length < 50)
+      bad.push(`свечи склеились неверно: ${st.cand.length}`);
+  }
   // Вид ОДИН: всё под нынешними правилами, тумблера нет. Решение
   // владельца, и оно снимает целый класс путаницы — застывший снимок
   // часами подменял таблицу, а страница молчала об этом.
@@ -344,7 +375,23 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     bad.push("на странице осталась кнопка пересчёта");
   if (/localStorage\.getItem\("rec"\)/.test(src))
     bad.push("состояние тумблера всё ещё поднимается из памяти страницы");
-  if (!global.__rec || !global.__table) {
+  if (isTrades) {
+    // У истории сделок пересчёта нет вовсе — она про модель, а не про
+    // детектор ленты. Проверяется здесь другое: что страница
+    // действительно нарисовала строки, а не молча осталась пустой.
+    const tb = global.__el ? global.__el("tb") : null;
+    const html = tb ? String(tb.innerHTML || "") : "";
+    if (!html) bad.push("страница сделок ничего не нарисовала");
+    else if (!/\+3\.73 %|сделок нет/.test(html))
+      bad.push("строки сделок не в процентах движения цены");
+    const stats = global.__el ? String(
+      global.__el("stats").innerHTML || "") : "";
+    if (!/всего сделок/.test(stats))
+      bad.push("общая статистика не показана");
+    const pg = global.__el ? String(
+      global.__el("pg").textContent || "") : "";
+    if (!/стр\./.test(pg)) bad.push("нумерация страниц не показана");
+  } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {
     // Пересчёт обязан быть запрошен САМ, при загрузке, и обязательно
@@ -393,6 +440,6 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   if (bad.length) { console.error("ПАДЕНИЕ: " + bad.join("; "));
                     process.exit(1); }
   console.log(`логика страницы отработала без ошибок, запросов ${calls}, `
-    + `середина ${st.mid ? st.mid.length : "—"}, свечей ${
-        st.cand ? st.cand.length : "—"}`);
+    + `середина ${st && st.mid ? st.mid.length : "—"}, свечей ${
+        st && st.cand ? st.cand.length : "—"}`);
 })();

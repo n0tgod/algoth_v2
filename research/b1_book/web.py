@@ -640,6 +640,9 @@ function renderPretest(p, modeBtns) {
         m.hedge || "?"}${accLine ? " · paper " + accLine : ""}</div>`
     + (icLine ? `<div class="mline">out-of-sample IC — ${icLine}</div>` : "")
     + tradeStats(p) + equityBlock(p) + tradeTable(p)
+    + `<div class="mline"><a href="/trades-page?k=${
+        encodeURIComponent(KEY)}">вся история сделок, страницами →</a>
+       </div>`
     + (p.thoughts || []).slice(-6).map(t =>
         `<div class="mline dim">${t.text}</div>`).join("");
   wireModes();
@@ -1128,6 +1131,216 @@ pullModel(); setInterval(pullModel, 60000);
 document.getElementById("symq").oninput = e => {
   GRP.q = e.target.value.trim(); renderGroups();
 };
+</script>
+"""
+
+
+# Отдельная страница истории сделок модели. Заведена по просьбе
+# владельца: на обзоре таблица режется до шестидесяти строк, а история
+# растёт на двенадцать сделок в час — за неделю это две тысячи, и
+# смотреть их в панели обзора нельзя.
+#
+# Два решения, оба существенны.
+#
+# Сводка считается по ВСЕЙ выборке, а не по видимой странице.
+# Статистика, зависящая от того, какую страницу открыли, статистикой не
+# является. Фильтры при этом сводку не двигают — она всегда про всё, и
+# это сказано на самой странице.
+#
+# Страницами режется только показ; файлы читаются целиком. История
+# сделок — это то, ради чего всё писалось, и урезать её на чтении
+# значит однажды не увидеть худшую сделку месяца.
+TRADES = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>сделки модели</title>
+<style>
+:root{color-scheme:light dark;
+ --bg:#fbfcfd;--panel:#fff;--ink:#12161c;--muted:#6b7785;--rule:#e3e8ee;
+ --bid:#1f7a56;--ask:#b8452c;--accent:#a97514}
+@media(prefers-color-scheme:dark){:root{
+ --bg:#0e1116;--panel:#151a21;--ink:#e7edf5;--muted:#8b97a6;--rule:#232b36;
+ --bid:#35a877;--ask:#d4614a;--accent:#d7a24a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 12px 40px}
+h1{font-size:16px;margin:0 0 4px}
+a{color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--rule);
+ border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.note{color:var(--muted);font-size:12px;margin-bottom:8px}
+.warn{border-left:3px solid var(--accent);padding-left:9px;
+ color:var(--muted);font-size:12px;margin-bottom:10px}
+.stats{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule);
+ border-radius:8px;overflow:hidden}
+.st{flex:1 1 120px;background:var(--panel);padding:8px 10px}
+.k{color:var(--muted);font-size:11px}
+.v{font-size:15px;font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.good{color:var(--bid)} .bad{color:var(--ask)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--muted);font-weight:400;
+ padding:4px 8px 5px 0;border-bottom:1px solid var(--rule);
+ position:sticky;top:0;background:var(--panel)}
+td{padding:3px 8px 3px 0;white-space:nowrap;
+ border-bottom:1px solid var(--rule)}
+button,select{background:var(--panel);color:var(--ink);
+ border:1px solid var(--rule);border-radius:7px;padding:4px 10px;
+ font:inherit;font-size:12px}
+button[aria-pressed=true]{border-color:var(--accent)}
+button:disabled{opacity:.4}
+.bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+ margin-bottom:8px}
+.scroll{overflow-x:auto}
+</style>
+<div class="wrap">
+  <h1>сделки модели · <span id="src" class="mono"></span></h1>
+  <div class="note"><a href="#" id="back">← обзор</a></div>
+  <div id="warn"></div>
+
+  <div class="card">
+    <div class="note">общая статистика — по <b>всей</b> истории,
+      фильтры её не двигают</div>
+    <div id="stats"></div>
+  </div>
+
+  <div class="card">
+    <div class="bar">
+      <span class="k">рука</span>
+      <select id="arm"><option value="">обе</option>
+        <option value="gbm">деревья</option>
+        <option value="nn">сеть</option></select>
+      <span class="k">состояние</span>
+      <select id="state"><option value="">любое</option>
+        <option value="закрыта">закрыта</option>
+        <option value="открыта">открыта</option>
+        <option value="без исхода">без исхода</option></select>
+      <span class="k">монета</span>
+      <select id="sym"><option value="">любая</option></select>
+      <span class="k">на странице</span>
+      <select id="per"><option>50</option><option selected>100</option>
+        <option>250</option><option>500</option></select>
+    </div>
+    <div class="bar">
+      <button id="prev">←</button>
+      <span id="pg" class="mono k"></span>
+      <button id="next">→</button>
+      <span id="cnt" class="k"></span>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th>час входа</th><th>рука</th><th>монета</th>
+        <th>сторона</th><th>ждёт</th><th>ход против</th><th>вышло</th>
+        <th>нетто</th><th>$</th><th>состояние</th><th>новизна</th>
+      </tr></thead><tbody id="tb"></tbody>
+    </table></div>
+  </div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
+const S = {page: 0};
+// Процент движения цены — единица показа во всём проекте (решение
+// владельца). Два знака, при мелких величинах три: иначе нетто после
+// издержек схлопывается в «0.00 %».
+function pct(v) {
+  if (v == null) return "—";
+  return (v > 0 ? "+" : "") + (v / 100).toFixed(Math.abs(v) >= 10 ? 2 : 3)
+    + " %";
+}
+const val = id => document.getElementById(id).value;
+async function load() {
+  const p = new URLSearchParams({k: KEY, page: S.page, per: val("per"),
+                                 arm: val("arm"), state: val("state"),
+                                 sym: val("sym")});
+  let d;
+  try {
+    const r = await fetch("/model_trades?" + p.toString());
+    d = await r.json();
+  } catch (e) {
+    document.getElementById("cnt").textContent = "нет связи со сборщиком";
+    return;
+  }
+  document.getElementById("src").textContent = d.pretest
+    ? "pre-testing" : "боевая";
+  document.getElementById("warn").innerHTML = d.pretest
+    ? `<div class="warn"><b>Pre-testing.</b> Модель обучена на первых
+       сутках записи и с ВЫКЛЮЧЕННЫМ рыночным хеджем, поэтому книга
+       направленная — она едет вместе с рынком. Числа показывают, что
+       обучение работает, а не что оно зарабатывает.</div>` : "";
+  const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
+    <div class="v mono ${cls||""}">${v}</div></div>`;
+  const st = (d.stats||{}).all || {};
+  let html = `<div class="stats">`
+    + cell("всего сделок", d.grand_total)
+    + cell("закрыто", st.closed || 0)
+    + cell("открыто", st.open || 0)
+    + (st.no_outcome ? cell("без исхода", st.no_outcome, "bad") : "");
+  if (st.closed) {
+    html += cell("знак угадан", (st.hit_rate*100).toFixed(0) + " %",
+                 st.hit_rate >= 0.5 ? "good" : "bad")
+      + cell("нетто в среднем", pct(st.net_bp_avg),
+             st.net_bp_avg > 0 ? "good" : "bad")
+      + cell("деньги", (st.pnl > 0 ? "+" : "") + st.pnl + " $",
+             st.pnl > 0 ? "good" : "bad")
+      // Во сколько раз обещание крупнее факта — самое честное число
+      // здесь: модель может угадывать знак и обещать вчетверо больше.
+      + cell("обещание / факт", st.expected_over_got ?? "—",
+             st.expected_over_got > 3 ? "bad" : "");
+  }
+  html += `</div>`;
+  ["gbm","nn"].forEach(a => {
+    const s = (d.stats||{})[a] || {}, acc = (d.accounts||{})[a];
+    if (!s.closed && !s.open) return;
+    html += `<div class="note" style="margin-top:8px">${
+      a === "gbm" ? "деревья (ML)" : "сеть (AI)"}: закрыто ${
+      s.closed||0}, открыто ${s.open||0}`
+      + (s.closed ? `, знак угадан ${(s.hit_rate*100).toFixed(0)} %, `
+         + `нетто ${pct(s.net_bp_avg)}, деньги ${
+           (s.pnl>0?"+":"")+s.pnl} $` : "")
+      + (acc ? ` · счёт ${acc.balance} $` : "") + `</div>`;
+  });
+  document.getElementById("stats").innerHTML = html;
+
+  const sel = document.getElementById("sym");
+  if (sel.options.length <= 1 && (d.symbols||[]).length) {
+    for (const x of d.symbols) {
+      const o = document.createElement("option");
+      o.value = x; o.textContent = x.replace("USDT","");
+      sel.appendChild(o);
+    }
+  }
+  document.getElementById("tb").innerHTML = (d.rows||[]).map(t => {
+    const cls = t.state === "закрыта"
+      ? (t.net_bp > 0 ? "good" : "bad") : "";
+    return `<tr><td class="mono">${t.hour}</td>
+      <td>${t.arm === "nn" ? "сеть" : "деревья"}</td>
+      <td class="mono">${t.sym.replace("USDT","")}</td>
+      <td>${t.side === "long" ? "лонг" : "шорт"}</td>
+      <td class="mono">${pct(t.expected_bp)}</td>
+      <td class="mono" style="color:var(--muted)">${pct(t.mae_bp)}</td>
+      <td class="mono">${pct(t.got_bp)}</td>
+      <td class="mono ${cls}">${pct(t.net_bp)}</td>
+      <td class="mono ${cls}">${t.pnl == null ? "—"
+        : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
+      <td style="color:var(--muted)">${t.state === "открыта"
+        ? "через " + (t.closes_in_sec/3600).toFixed(1) + " ч"
+        : t.state}</td>
+      <td class="mono" style="color:var(--muted)">${t.odd == null ? "—"
+        : (t.odd*100).toFixed(0) + " %"}</td></tr>`;
+  }).join("") || `<tr><td colspan="11" style="color:var(--muted);
+    padding:10px 0">сделок нет</td></tr>`;
+  document.getElementById("pg").textContent =
+    `стр. ${d.page + 1} из ${d.pages}`;
+  document.getElementById("cnt").textContent = d.filtered
+    ? `${d.total} по фильтру из ${d.grand_total}` : `${d.total} сделок`;
+  document.getElementById("prev").disabled = d.page <= 0;
+  document.getElementById("next").disabled = d.page + 1 >= d.pages;
+}
+document.getElementById("prev").onclick = () => { S.page--; load(); };
+document.getElementById("next").onclick = () => { S.page++; load(); };
+for (const id of ["arm","state","sym","per"])
+  document.getElementById(id).onchange = () => { S.page = 0; load(); };
+load(); setInterval(load, 60000);
 </script>
 """
 
@@ -2025,6 +2238,26 @@ def serve(collector, port, token, log):
                     collector.model_state(),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
+            if u.path == "/model_trades":
+                def ival(name, default):
+                    try:
+                        return int(float(q.get(name, [""])[0]))
+                    except ValueError:
+                        return default
+                pre = q.get("pretest", [None])[0]
+                return self._ok(json.dumps(
+                    collector.model_trades(
+                        page=ival("page", 0), per=ival("per", 100),
+                        arm=q.get("arm", [None])[0] or None,
+                        state=q.get("state", [None])[0] or None,
+                        sym=q.get("sym", [None])[0] or None,
+                        pretest=(None if pre is None
+                                 else pre not in ("0", "false", ""))),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/trades-page":
+                return self._ok(TRADES.encode("utf-8"),
+                                "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),
                                 "text/html; charset=utf-8")
