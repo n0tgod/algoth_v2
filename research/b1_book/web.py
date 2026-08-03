@@ -1379,6 +1379,8 @@ async function load() {
       + (st.unreal_pnl == null ? "" :
          cell("unreal P&L", (st.unreal_pnl > 0 ? "+" : "")
               + st.unreal_pnl + " $", st.unreal_pnl > 0 ? "good" : "bad"))
+      + (st.exposure == null ? "" :
+         cell("exposure", st.exposure + " $"))
       + `</div>`;
   }
   const accLine = ["gbm","nn"].map(a => {
@@ -1387,7 +1389,8 @@ async function load() {
   }).filter(Boolean).join(" · ");
   if (accLine)
     html += `<div class="note" style="margin-top:8px">paper accounts: ${
-      accLine} <span class="k">(start 1000 $ each)</span></div>`;
+      accLine} <span class="k">(start 1000 $ each, one capital,
+      leverage 1&times;)</span></div>`;
   document.getElementById("stats").innerHTML = html;
   document.getElementById("stats").querySelectorAll("[data-sa]")
     .forEach(b => b.onclick = () => { S.arm = b.dataset.sa; load(); });

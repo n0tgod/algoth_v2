@@ -590,6 +590,68 @@ def test_report_flags_manifest_from_a_previous_run():
     check("нет каталога — обычная ошибка, а не SystemExit", ok)
 
 
+def test_account_is_one_capital_at_leverage_one():
+    """Счёт ведётся на ОДИН капитал, экспозиция его не превышает.
+
+    Прежняя модель считала каждый час независимо: весь баланс делился
+    на шесть позиций часа. При горизонте в четыре часа таких наборов
+    одновременно открыто четыре, то есть реальная экспозиция была
+    ЧЕТЫРЁХКРАТНОЙ, а счёт показывал её как торговлю на тысячу. Плечо
+    брать можно, но не молча и не задним числом.
+
+    Просьба владельца — «сделать так, чтобы было при реальном счёте в
+    1000 $».
+    """
+    import trades as TR
+
+    # Шесть имён в час, горизонт четыре часа — двадцать четыре слота.
+    tr = []
+    for h in range(4):
+        for i in range(6):
+            tr.append({"arm": "gbm", "hour": f"H{h}", "sym": f"S{i}",
+                       "side": "long", "state": "открыта",
+                       "opened_at": 1000 + h * 3600,
+                       "closes_at": 1000 + (h + 4) * 3600})
+    TR.account(tr, "gbm")
+    gross = sum(t["size"] for t in tr)
+    check("гросс равен капиталу — плечо ровно единица",
+          abs(gross - TR.START_BALANCE) < 1e-6, f"{gross:.6f}")
+    check("двадцать четыре слота, а не шесть",
+          abs(tr[0]["size"] - TR.START_BALANCE / 24) < 1e-6,
+          str(tr[0]["size"]))
+
+    # Капитал возвращается при закрытии и работает снова.
+    tr2 = []
+    for h in range(6):
+        for i in range(6):
+            tr2.append({"arm": "gbm", "hour": f"H{h:02d}", "sym": f"S{i}",
+                        "side": "long", "state": "закрыта",
+                        "opened_at": 1000 + h * 3600,
+                        "closes_at": 1000 + (h + 4) * 3600,
+                        "net_bp": 50.0 if i % 2 else -30.0})
+    hist, bal = TR.account(tr2, "gbm")
+    check("история ведётся по сделкам, а не по часам",
+          len(hist) == len(tr2), f"{len(hist)} против {len(tr2)}")
+    check("баланс есть старт плюс сумма результатов",
+          abs(bal - TR.START_BALANCE
+              - sum(h["pnl"] for h in hist)) < 0.05, str(bal))
+
+    # Функция ЧИСТАЯ: второй вызов на том же списке даёт то же самое,
+    # то есть повторный проход цикла не проведёт сделки дважды.
+    hist2, bal2 = TR.account(tr2, "gbm")
+    check("пересчёт идемпотентен", bal2 == bal and len(hist2) == len(hist),
+          f"{bal} -> {bal2}")
+
+    # Денег больше, чем есть, в позицию не кладём.
+    tr3 = [{"arm": "gbm", "hour": "H0", "sym": f"S{i}", "side": "long",
+            "state": "открыта", "opened_at": 1000,
+            "closes_at": 1000 + 4 * 3600} for i in range(200)]
+    TR.account(tr3, "gbm")
+    check("экспозиция не превышает капитал и на широкой книге",
+          sum(t["size"] for t in tr3) <= TR.START_BALANCE + 1e-6,
+          str(sum(t["size"] for t in tr3)))
+
+
 def test_unrealised_never_mixes_with_realised():
     """Нереализованное считается отдельно и тем же размером позиции.
 
@@ -617,24 +679,30 @@ def test_unrealised_never_mixes_with_realised():
          "sym": "A", "got_bp": 40.0, "net_bp": 29.0, "pnl": 0.5,
          "expected_bp": 100.0, "hit": True},
     ]
-    s = TR.summary(rows, "gbm", balance=1200.0)
+    # Размеры проставляет счёт — он и есть единственный источник
+    # размера позиции. Своей арифметики у сводки нет.
+    s0 = TR.summary(rows, "gbm")
+    check("без счёта деньги не выдумываются",
+          "unreal_pnl" not in s0 and s0["unreal_net_avg_bp"] == 23.0,
+          str(s0))
+
+    for i, t in enumerate(rows):
+        t.setdefault("opened_at", 1000 + i)
+        t.setdefault("closes_at", 1000 + i + 4 * 3600)
+    TR.account(rows, "gbm")
+    s = TR.summary(rows, "gbm")
     check("переоценённых столько, сколько с отметкой", s["marked"] == 3,
           str(s.get("marked")))
     check("реализованное и нереализованное — разные поля",
-          s["pnl"] == 0.5 and s["unreal_pnl"] != s["pnl"],
+          "pnl" in s and "unreal_pnl" in s and s["unreal_pnl"] != s["pnl"],
           f"{s.get('pnl')} / {s.get('unreal_pnl')}")
-    # H1: два имени по 600 -> 5.34 - 1.86 = 3.48; H2: одно на 1200 -> 1.32
-    check("размер позиции — по числу имён своего часа",
-          abs(s["unreal_pnl"] - 4.80) < 1e-9, str(s.get("unreal_pnl")))
     check("средняя отметка и доля в плюсе названы",
           s["unreal_net_avg_bp"] == 23.0 and s["unreal_win"] == 0.667,
           f"{s.get('unreal_net_avg_bp')} / {s.get('unreal_win')}")
-    # Без баланса денег нет, но проценты есть: выдумывать размер
-    # позиции нельзя, а показать движение можно.
-    s2 = TR.summary(rows, "gbm")
-    check("без баланса деньги не выдумываются",
-          "unreal_pnl" not in s2 and s2["unreal_net_avg_bp"] == 23.0,
-          str(s2))
+    # Экспозиция открытых не превышает капитала — это и есть плечо 1×.
+    check("экспозиция не больше капитала",
+          s["exposure"] <= TR.START_BALANCE + 1e-6,
+          f"{s.get('exposure')} при капитале {TR.START_BALANCE}")
 
 
 def test_entry_price_is_recovered_from_summaries():
@@ -1207,14 +1275,21 @@ def test_train_cycle_end_to_end():
               len(rev) == 2 and {r["arm"] for r in rev} == {"gbm", "nn"}
               and all("got" in x for r in rev for x in r["rows"]),
               str(rev)[:120])
+        # Счёт — один капитал: история ведётся ПО СДЕЛКАМ, а не по
+        # часам, и баланс есть старт плюс сумма их результатов. Прежняя
+        # модель складывала часы, каждый на полный капитал, и давала
+        # четырёхкратную экспозицию при горизонте в четыре часа.
+        import trades as TR
         for arm in ("gbm", "nn"):
             acc = json.load(open(os.path.join(
                 T.MODEL_DIR, f"account_{arm}.json")))
+            got = sum(h["pnl"] for h in acc["history"])
             check(f"счёт {arm} исполнен: старт 1000, издержки учтены",
-                  len(acc["history"]) == 1
-                  and abs(acc["balance"] - 1000.0
-                          - acc["history"][0]["pnl"]) < 0.01
-                  and acc["balance"] != 1000.0, str(acc))
+                  acc["start"] == TR.START_BALANCE
+                  and acc["leverage"] == 1.0
+                  and len(acc["history"]) == 6
+                  and abs(acc["balance"] - 1000.0 - got) < 0.05
+                  and acc["balance"] != 1000.0, str(acc)[:200])
         check("счёт попал в мысли",
               any(t.startswith("[деревья] счёт:") or
                   t.startswith("[сеть] счёт:") for t in th), str(th[:3]))
@@ -1340,6 +1415,7 @@ def main():
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
+    test_account_is_one_capital_at_leverage_one()
     test_unrealised_never_mixes_with_realised()
     test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()

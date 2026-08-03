@@ -897,41 +897,21 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                             rr["odd"] = pk["odd"]
                         rows_rv.append(rr)
             if rows_rv:
-                # Бумажный счёт: исполняем прошлый выбор по факту.
-                apath = os.path.join(MODEL_DIR, f"account_{arm}.json")
-                try:
-                    with open(apath, encoding="utf-8") as f:
-                        acc = json.load(f)
-                except (OSError, ValueError):
-                    acc = {"balance": START_BALANCE, "history": []}
-                pos = acc["balance"] / max(len(rows_rv), 1)
-                # Деньги по КАЖДОЙ сделке пишутся здесь же, рядом с
-                # исходом. Страница обязана показывать ту же сделку, что
-                # посчитал счёт, а не пересчитывать её у себя: две
-                # реализации одной формулы однажды разойдутся, и таблица
-                # покажет одно, а баланс другое. Тот же довод, по
-                # которому сводка бумажных сделок считается ядром
-                # `t3_brackets`, а не своим кодом страницы.
+                # В разбор кладётся только ФАКТ: движение цены и то же
+                # движение за вычетом круга издержек. Денег здесь нет —
+                # они зависят от размера позиции, а размер задаётся
+                # счётом, который считается по ВСЕЙ истории сразу
+                # (`trades.account`). Класть сюда деньги значило бы
+                # завести второе определение размера позиции.
                 for r in rows_rv:
                     r["net"] = round((1 if r["side"] == "long" else -1)
                                      * r["got"] - ROUND_COST_BP, 1)
-                    r["pnl"] = round(pos * r["net"] / 1e4, 2)
-                    r["pos"] = round(pos, 2)
-                pnl = sum(r["pnl"] for r in rows_rv)
                 with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
                           encoding="utf-8") as f:
                     f.write(json.dumps(
                         {"arm": arm, "hour": lp["hour"],
                          "cost_bp": ROUND_COST_BP, "rows": rows_rv},
                         ensure_ascii=False) + "\n")
-                acc["balance"] = round(acc["balance"] + pnl, 2)
-                acc["history"].append(
-                    {"hour": lp["hour"], "pnl": round(pnl, 2),
-                     "balance": acc["balance"]})
-                acc["history"] = acc["history"][-500:]
-                with open(apath + ".tmp", "w", encoding="utf-8") as f:
-                    json.dump(acc, f, ensure_ascii=False)
-                os.replace(apath + ".tmp", apath)
                 review = rows_rv
         picks = None
         if (arm, "fwd_4h") in models and (arm, "mae_4h") in models \
@@ -1000,10 +980,9 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         if review:
             hits = sum(1 for r in review
                        if (r["got"] > 0) == (r["side"] == "long"))
-            lines.insert(0, f"счёт: {acc['balance'] - pnl:+.2f} -> "
-                            f"{acc['balance']:+.2f} $ "
-                            f"({pct(pnl / max(acc['balance'] - pnl, 1) * 1e4)}"
-                            f" за круг, издержки учтены).")
+            # Про счёт мысль пишется ПОСЛЕ его пересборки, ниже: тут его
+            # ещё нет, а брать прежний баланс значило бы говорить о
+            # состоянии до этой самой сделки.
             lines.insert(0, f"разбор прошлых выборов ({len(review)} имён, "
                             f"угадан знак у {hits}): " + "; ".join(
                                 f"{r['sym'].replace('USDT','')} "
@@ -1012,6 +991,36 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                                 f"{pct(r['got'])}" for r in review))
         all_lines += [f"[{'деревья' if arm == 'gbm' else 'сеть'}] {t}"
                       for t in lines]
+    # Счёт пересобирается ЦЕЛИКОМ из выборов и разборов, а не
+    # накапливается по шагам. Так он остаётся функцией от истории:
+    # повторный проход не может провести те же сделки дважды, а
+    # изменение модели капитала применяется ко всей истории разом, а не
+    # с середины.
+    try:
+        import trades as TR
+        all_tr = TR.build(
+            [json.loads(x) for x in open(ppath, encoding="utf-8")],
+            [json.loads(x) for x in open(
+                os.path.join(MODEL_DIR, "review.jsonl"),
+                encoding="utf-8")])
+        for arm, _ in ARMS:
+            hist, bal = TR.account(all_tr, arm)
+            apath = os.path.join(MODEL_DIR, f"account_{arm}.json")
+            with open(apath + ".tmp", "w", encoding="utf-8") as f:
+                json.dump({"balance": bal, "history": hist[-500:],
+                           "start": TR.START_BALANCE,
+                           "leverage": 1.0}, f, ensure_ascii=False)
+            os.replace(apath + ".tmp", apath)
+            if hist:
+                who = "деревья" if arm == "gbm" else "сеть"
+                all_lines.append(
+                    f"[{who}] счёт: {bal:+.2f} $ из {TR.START_BALANCE:.0f} "
+                    f"после {len(hist)} закрытых сделок "
+                    f"({pct((bal / TR.START_BALANCE - 1) * 1e4)} "
+                    f"от старта, плечо 1×, издержки учтены).")
+    except (OSError, ValueError) as e:
+        log_(f"счёт пересобрать не вышло: {e}")
+
     lines = all_lines
     with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",
               encoding="utf-8") as f:

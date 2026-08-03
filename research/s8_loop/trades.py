@@ -175,6 +175,76 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
     return out
 
 
+START_BALANCE = 1000.0
+
+
+def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H):
+    """Счёт ОДНОГО капитала: экспозиция не превышает его.
+
+    Прежняя модель считала каждый час независимо — весь баланс делился
+    на шесть позиций часа. При горизонте в четыре часа таких наборов
+    одновременно открыто четыре, то есть экспозиция выходила
+    ЧЕТЫРЁХКРАТНОЙ, а счёт показывал её как торговлю на тысячу. Плечо
+    брать можно, но не молча и не задним числом.
+
+    Здесь капитал один. Размер позиции при входе — доля свободных денег
+    на число одновременных слотов: позиций в своём часе, умноженное на
+    горизонт в часах. При шести именах и четырёх часах это двадцать
+    четыре слота, то есть гросс равен капиталу — плечо ровно единица,
+    как и требует фаза C.
+
+    Свободные деньги считаются по КАССЕ: занятое возвращается только при
+    закрытии позиции. Размер, посчитанный от нереализованной прибыли,
+    наращивал бы плечо на растущем рынке — ровно та ошибка, которой этот
+    пересчёт и посвящён.
+
+    Функция ЧИСТАЯ и полная: она пересчитывает счёт с начала по списку
+    сделок. Поэтому повторный прогон цикла не может провести те же
+    сделки дважды — состояние не накапливается, а выводится.
+
+    Возвращает `(история, баланс)` и проставляет каждой сделке `size` —
+    сумму, которая в ней стоит.
+    """
+    rows = [t for t in trades if t["arm"] == arm and t.get("opened_at")]
+    if not rows:
+        return [], start
+    per_hour = {}
+    for t in rows:
+        per_hour.setdefault(t["hour"], []).append(t)
+    ev = []
+    for t in rows:
+        ev.append((t["opened_at"], 0, t))          # 0 — вход раньше
+        if t["state"] == "закрыта" and t.get("closes_at"):
+            ev.append((t["closes_at"], 1, t))      # 1 — выход позже
+    ev.sort(key=lambda x: (x[0], x[1]))
+    cash, busy, hist = start, 0.0, []
+    for _, kind, t in ev:
+        if kind == 0:
+            slots = max(1, len(per_hour[t["hour"]]) * max(1, hold_h))
+            want = (cash + busy) / slots
+            # Больше свободных денег в позицию не положить. Настоящий
+            # счёт ведёт себя так же, и молчать об этом нельзя: урезание
+            # видно полем `size`.
+            size = max(0.0, min(want, cash))
+            # Округлять размер НЕЛЬЗЯ: касса уменьшается на настоящую
+            # величину, и округлённая копия перестала бы сходиться с
+            # ней — двадцать четыре позиции по 41.67 дают 1000.08, то
+            # есть гросс выше капитала. Округляет показ.
+            t["size"] = size
+            cash -= size
+            busy += size
+        else:
+            size = t.get("size") or 0.0
+            pnl = size * (t.get("net_bp") or 0.0) / 1e4
+            t["pnl"] = round(pnl, 2)
+            cash += size + pnl
+            busy -= size
+            hist.append({"hour": t["hour"], "sym": t["sym"],
+                         "pnl": round(pnl, 2),
+                         "balance": round(cash + busy, 2)})
+    return hist, round(cash + busy, 2)
+
+
 def summary(trades, arm=None, balance=None):
     """Сводка: закрытые — фактом, открытые — переоценкой.
 
@@ -232,18 +302,14 @@ def _unreal(rows, out, balance):
     out["unreal_net_avg_bp"] = round(sum(nets) / len(nets), 1)
     out["unreal_win"] = round(
         sum(1 for v in nets if v > 0) / len(nets), 3)
-    if balance:
-        # Позиций в часе столько же, сколько их выбрано, — как и в
-        # разборе. Число берётся по факту, а не константой шесть:
-        # ячейка сетки может выбирать другую ширину.
-        per_hour = {}
-        for t in marked:
-            per_hour.setdefault((t["arm"], t["hour"]), []).append(t)
-        money = 0.0
-        for grp in per_hour.values():
-            pos = balance / max(len(grp), 1)
-            money += sum(pos * t["unreal_net_bp"] / 1e4 for t in grp)
-        out["unreal_pnl"] = round(money, 2)
+    # Деньги — по тому же размеру позиции, что проставил счёт. Своя
+    # арифметика здесь была бы вторым определением размера, и сумма на
+    # странице разошлась бы с суммой в счёте.
+    sized = [t for t in marked if t.get("size")]
+    if sized:
+        out["unreal_pnl"] = round(
+            sum(t["size"] * t["unreal_net_bp"] / 1e4 for t in sized), 2)
+        out["exposure"] = round(sum(t["size"] for t in sized), 2)
 
 
 def entry_prices(sum_dir, pairs):

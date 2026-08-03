@@ -1243,11 +1243,10 @@ class Collector:
             TR.mark(tr, self.marks(tr))
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
-            out["trade_stats"] = {
-                a: TR.summary(tr, a, balance=(
-                    (out.get("accounts") or {}).get(a) or {}).get(
-                        "balance"))
-                for a in ("gbm", "nn")}
+            for a in ("gbm", "nn"):
+                TR.account(tr, a)
+            out["trade_stats"] = {a: TR.summary(tr, a)
+                                  for a in ("gbm", "nn")}
         except Exception as e:                            # noqa: BLE001
             out["trades_error"] = f"{type(e).__name__}: {e}"
         return out
@@ -1294,14 +1293,11 @@ class Collector:
                     accs[a] = json.load(f)
             except (OSError, ValueError):
                 pass
-        stats = {a: TR.summary(tr, a, balance=(accs.get(a) or {}).get(
-            "balance")) for a in ("gbm", "nn")}
-        # У «обеих рук» своего счёта нет: складываются деньги рук.
+            # Размеры позиций проставляет счёт — он единственный, кто
+            # знает капитал и занятость. Сводка их только складывает.
+            TR.account(tr, a)
+        stats = {a: TR.summary(tr, a) for a in ("gbm", "nn")}
         stats["all"] = TR.summary(tr)
-        money = [stats[a].get("unreal_pnl") for a in ("gbm", "nn")
-                 if stats[a].get("unreal_pnl") is not None]
-        if money:
-            stats["all"]["unreal_pnl"] = round(sum(money), 2)
         rows = tr
         if arm:
             rows = [t for t in rows if t["arm"] == arm]
@@ -1388,6 +1384,8 @@ class Collector:
             tr = TR.build(pk, self._jsonl(os.path.join(mdir,
                                                        "review.jsonl")),
                           px_at=self.entry_px(pk))
+            for a in ("gbm", "nn"):
+                TR.account(tr, a)
             op = [t for t in tr if t.get("state") == "открыта"]
             if not op:
                 continue
