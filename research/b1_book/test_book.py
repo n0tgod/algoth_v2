@@ -325,6 +325,32 @@ def test_recount_survives_restart():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_health_is_one_definition():
+    """Здоровье сбора — одно определение на страницу и на файл.
+
+    Копий было две, и они разошлись сразу: поля о записи снимков ушли
+    в `status.json`, а страница показывала прежний набор — то есть
+    мёртвый сбор снимков остался бы невидимым в обоих местах, где на
+    него смотрят. Тест требует, чтобы обе поверхности несли ОДНИ поля.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    c = C.Collector(["TEST"], [], root, lambda m: None)
+    h = c.health()
+    need = {"snapshots", "snapshot_errors", "last_snap_age_sec",
+            "snap_pass_sec", "uptime_sec", "messages", "last_msg_age_sec"}
+    check("здоровье несёт меру записи снимков", need <= set(h),
+          str(sorted(set(need) - set(h))))
+    page = c.snapshot()["status"]
+    check("страница показывает те же поля", need <= set(page),
+          str(sorted(set(need) - set(page))))
+    check("пока снимков нет — возраст пуст, а не ноль",
+          page["last_snap_age_sec"] is None and page["snapshots"] == 0)
+
+
 def test_collected_symbols_are_not_lost():
     """Состав сбора не теряет монет, по которым уже собраны ряды.
 
@@ -1716,6 +1742,7 @@ def main():
     test_warm_start_restores_history()
     test_warm_start_survives_truncated_file()
     test_shrunken_run_announces_dropped_symbols()
+    test_health_is_one_definition()
     test_collected_symbols_are_not_lost()
     test_recount_survives_restart()
     print()

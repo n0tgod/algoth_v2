@@ -705,6 +705,30 @@ class Collector:
                          f"держали {tr['held']} с")
                 self.w.write("signals", tr["sym"], dict(tr, ev="close"), ts=now)
 
+    def health(self):
+        """Здоровье сбора — ОДНО определение на страницу и на файл.
+
+        Копий было две (`snapshot` для страницы, `statuser` для
+        `status.json`), и они немедленно разошлись: поля о записи
+        снимков добавились только в файл, а страница продолжала
+        показывать прежний набор. Тот же класс, что вторая копия
+        расчётного ядра, и ловится он тем же — единственным местом.
+        """
+        return {
+            "uptime_sec": round(time.time() - self.started, 1),
+            "messages": self.n_msg, "trades": self.n_trades,
+            "resets": self.n_resets,
+            "last_msg_age_sec": (round(time.time() - self.last_msg, 1)
+                                 if self.last_msg else None),
+            # Главная мера: пишутся ли снимки книги. Всё остальное
+            # остаётся бодрым и при мёртвом сборщике снимков.
+            "snapshots": self.n_snap,
+            "snapshot_errors": self.n_snap_err,
+            "last_snap_age_sec": (round(time.time() - self.last_snap, 1)
+                                  if self.last_snap else None),
+            "snap_pass_sec": round(self.snap_pass_sec, 3),
+        }
+
     def snapshot(self, sym=None, since=0.0, logn=None):
         """Состояние для страницы наблюдения — прямо из памяти.
 
@@ -751,9 +775,7 @@ class Collector:
                 "mid_full": mid_full, "tape_full": tape_full,
                 "log_n": log_n, "now": round(time.time(), 3),
                 "sig": self.sig.view(sym, since),
-                "status": {"uptime_sec": round(time.time() - self.started, 1),
-                           "messages": self.n_msg, "trades": self.n_trades,
-                           "resets": self.n_resets,
+                "status": {**self.health(),
                            "signals": self.n_signals,
                            "paper": self.paper,
                            "closed": self.n_closed,
@@ -763,9 +785,6 @@ class Collector:
                            "msg_per_sec": round(self.msg_rate, 1),
                            "ready": sum(1 for x in self.books.values()
                                         if x.ready),
-                           "last_msg_age_sec": (
-                               round(time.time() - self.last_msg, 1)
-                               if self.last_msg else None),
                            "disk": self.disk_view()}}
 
     def candles_files(self, sym, hours=12):
@@ -1153,19 +1172,7 @@ class Collector:
             self.msg_mark = (time.time(), self.n_msg)
             st = {
                 "t": round(time.time(), 1),
-                "uptime_sec": round(time.time() - self.started, 1),
-                "messages": self.n_msg, "trades": self.n_trades,
-                "resets": self.n_resets,
-                "last_msg_age_sec": (round(time.time() - self.last_msg, 1)
-                                     if self.last_msg else None),
-                # Главная мера здоровья: пишутся ли снимки книги. Всё
-                # остальное (сообщения, темы, status.json) остаётся
-                # бодрым и при мёртвом сборщике снимков.
-                "snapshots": self.n_snap,
-                "snapshot_errors": self.n_snap_err,
-                "last_snap_age_sec": (round(time.time() - self.last_snap, 1)
-                                      if self.last_snap else None),
-                "snap_pass_sec": round(self.snap_pass_sec, 3),
+                **self.health(),
                 "symbols": {s: {"ready": b.ready,
                                 "bid": b.best()[0], "ask": b.best()[1],
                                 "resets": b.resets}
