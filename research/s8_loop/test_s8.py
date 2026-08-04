@@ -889,6 +889,61 @@ def test_drawdown_is_measured_not_inferred_from_the_outcome():
           op["dd_hours"] == 1, str(op.get("dd_hours")))
 
 
+def test_drawdown_is_reported_against_the_deposit():
+    """Просадка сделки считается от ДЕПОЗИТА, а не от позиции.
+
+    Решение владельца, и повод настоящий: шорт HFT показал −47.67 %, что
+    читается как «потеряли половину», тогда как позиция — 1/24 счёта, и
+    в деньгах это −19.90 $, то есть 2 % депозита.
+
+    Отдельно проверяется, что худшая по цене и худшая по деньгам — РАЗНЫЕ
+    сделки, когда размеры позиций различаются. Пересортировка в долях
+    депозита нужна именно поэтому; взять ту же сделку, что и по цене,
+    значило бы назвать худшей не ту.
+    """
+    import trades as TR
+
+    # У первой ход вдвое хуже, у второй позиция вчетверо крупнее.
+    rows = [
+        {"state": "закрыта", "arm": "gbm", "hour": "H1", "side": "long",
+         "sym": "A", "dd_bp": -4000.0, "size": 25.0},
+        {"state": "открыта", "arm": "gbm", "hour": "H2", "side": "short",
+         "sym": "B", "dd_bp": -2000.0, "size": 100.0},
+        {"state": "закрыта", "arm": "gbm", "hour": "H3", "side": "long",
+         "sym": "C", "dd_bp": -500.0},          # без размера — не в деньгах
+    ]
+    n = TR.dd_money(rows, deposit=1000.0)
+    check("денежная просадка считается только там, где есть размер",
+          n == 2 and "dd_usd" not in rows[2], f"{n}, {rows[2]}")
+    check("деньги = размер × ход",
+          rows[0]["dd_usd"] == -10.0 and rows[1]["dd_usd"] == -20.0,
+          f"{rows[0].get('dd_usd')} / {rows[1].get('dd_usd')}")
+    check("доля депозита = деньги / депозит",
+          rows[0]["dd_cap_bp"] == -100.0 and rows[1]["dd_cap_bp"] == -200.0,
+          f"{rows[0].get('dd_cap_bp')} / {rows[1].get('dd_cap_bp')}")
+
+    s = TR.summary(rows, "gbm")
+    check("худшая по цене — первая сделка",
+          s["dd_worst_bp"] == -4000.0, str(s.get("dd_worst_bp")))
+    check("худшая по деньгам — ДРУГАЯ сделка, вторая",
+          s["dd_worst_cap_bp"] == -200.0 and s["dd_worst_usd"] == -20.0,
+          f"{s.get('dd_worst_cap_bp')} / {s.get('dd_worst_usd')}")
+    check("сделка без размера в денежную статистику не входит",
+          s["dd_sized"] == 2 and s["dd_measured"] == 3,
+          f"{s.get('dd_sized')} из {s.get('dd_measured')}")
+    check("открытые отдельно и тоже в долях депозита",
+          s["dd_open_worst_cap_bp"] == -200.0,
+          str(s.get("dd_open_worst_cap_bp")))
+
+    # Депозит — величина СТАРТОВАЯ: выросший счёт не вправе задним
+    # числом уменьшать просадку прошлой сделки.
+    same = [dict(rows[0])]
+    TR.dd_money(same, deposit=TR.START_BALANCE)
+    check("знаменатель — стартовый депозит, а не текущий баланс",
+          same[0]["dd_cap_bp"] == rows[0]["dd_cap_bp"],
+          f"{same[0]['dd_cap_bp']} против {rows[0]['dd_cap_bp']}")
+
+
 def test_account_drawdown_counts_open_positions():
     """Просадка счёта считается с переоценкой открытых, а не по закрытиям.
 
@@ -1709,6 +1764,7 @@ def main():
     test_unrealised_never_mixes_with_realised()
     test_exposure_covers_all_open_and_leverage_is_named()
     test_drawdown_is_measured_not_inferred_from_the_outcome()
+    test_drawdown_is_reported_against_the_deposit()
     test_account_drawdown_counts_open_positions()
     test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()

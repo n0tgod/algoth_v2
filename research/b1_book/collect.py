@@ -1249,6 +1249,7 @@ class Collector:
                 TR.account(tr, a)
                 cap[a] = ((out.get("accounts") or {}).get(a)
                           or {}).get("balance")
+                TR.dd_money(tr)
                 st[a] = TR.summary(tr, a, capital=cap[a])
                 st[a]["dd_book"] = TR.max_dd(TR.equity(tr, a, hrows))
             out["trade_stats"] = st
@@ -1306,6 +1307,8 @@ class Collector:
         # капитал складывается: иначе экспозиция 1504 $ читалась бы как
         # полтора плеча, хотя капитала там две тысячи.
         cap = {a: (accs.get(a) or {}).get("balance") for a in ("gbm", "nn")}
+        # Деньги просадки — после счёта: размер позиции знает только он.
+        TR.dd_money(tr)
         stats = {a: TR.summary(tr, a, capital=cap[a])
                  for a in ("gbm", "nn")}
         both = sum(v for v in cap.values() if v) or None
@@ -1406,6 +1409,18 @@ class Collector:
         rows = self.hour_rows(need)
         TR.excursion(trades, rows)
         return rows
+
+    @staticmethod
+    def dd_money(trades):
+        """Просадку в деньги и в доли депозита — ПОСЛЕ расчёта счёта.
+
+        Порядок обязателен: размер позиции проставляет счёт, а без
+        размера денежной просадки не существует. Зовётся отдельно, а не
+        внутри `paths`, именно поэтому.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+        import trades as TR
+        return TR.dd_money(trades)
 
     def marks(self, trades):
         """Текущая середина по символам открытых сделок.

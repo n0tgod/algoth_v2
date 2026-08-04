@@ -171,7 +171,10 @@ global.fetch = async (url) => {
                               marked: 1, unreal_net_avg_bp: 89.0,
                               unreal_win: 1.0, unreal_pnl: 14.83,
                               dd_measured: 2, dd_worst_bp: -412.0,
-                              dd_med_bp: -155.0, dd_open_worst_bp: -155.0,
+                              dd_med_bp: -155.0, dd_sized: 2,
+                              dd_worst_cap_bp: -17.2, dd_worst_usd: -17.2,
+                              dd_med_cap_bp: -6.5,
+                              dd_open_worst_cap_bp: -6.5,
                               dd_book: {pct: -6.31, at: "2026-08-03-19",
                                         hours: 9, gaps: 0}},
                         gbm: {closed: 1, open: 1, no_outcome: 0,
@@ -189,12 +192,13 @@ global.fetch = async (url) => {
                    closes_in_sec: 13800, lag_sec: 313, odd: 0.03,
                    entry_px: 100.0, cur_px: 101.0,
                    unreal_bp: 100.0, unreal_net_bp: 89.0,
-                   dd_bp: -155.0, dd_hours: 1},
+                   dd_bp: -155.0, dd_hours: 1, dd_usd: -6.5, dd_cap_bp: -6.5},
                   {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
                    side: "short", opened_at: NOW-7800, closes_at: NOW-1400,
                    state: "закрыта", expected_bp: -725, mae_bp: 90,
                    got_bp: 40, net_bp: -51, pnl: -0.85,
-                   dd_bp: -412.0, dd_hours: 4}]}
+                   dd_bp: -412.0, dd_hours: 4, dd_usd: -17.2,
+                   dd_cap_bp: -17.2}]}
              : url.startsWith("/trades") ? hist
              : url.startsWith("/recount") ? recount
              : url.startsWith("/groups")
@@ -425,8 +429,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Просадка. Худшая сделка −412 б.п. = −4.12 %, просадка счёта
     // −6.31 %. Проверяется числом: наличие слова «drawdown» прошло бы
     // и на пустом блоке, а пустой блок неотличим от «просадки не было».
+    if (!/-0\.17 %/.test(stats))
+      bad.push("худшая просадка сделки не показана в долях депозита");
+    if (!/-17\.2 \$/.test(stats))
+      bad.push("худшая просадка не показана в деньгах");
     if (!/-4\.12 %/.test(stats))
-      bad.push("худшая просадка сделки не показана");
+      bad.push("ход цены не показан рядом с долей депозита");
+    if (!/deposit/.test(stats))
+      bad.push("единица просадки не названа — от позиции или от депозита");
     if (!/-6\.31 %/.test(stats))
       bad.push("просадка счёта не показана");
     if (!/lower<\/b> bound|lower bound/.test(stats))
@@ -461,8 +471,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Просадка по КАЖДОЙ сделке, а не только в сводке: закрытая сделка
     // тут дала −412 б.п. = −4.12 % по дороге при итоге −0.51 %, и
     // увидеть это можно только в строке.
-    if (!/-4\.12 %/.test(html))
-      bad.push("просадка сделки не показана в строке");
+    if (!/-0\.17 %/.test(html))
+      bad.push("просадка сделки в строке не в долях депозита");
+    if (/>-4\.12 %</.test(html))
+      bad.push("в строке ведущим числом остался процент от позиции");
   } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {

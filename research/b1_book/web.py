@@ -1220,11 +1220,13 @@ button:disabled{opacity:.4}
       <b>exp</b> is the expected move, <b>mae</b> the expected move
       <b>against</b> the position on the way, <b>got</b> what actually
       happened, <b>net</b> the same minus the taker round trip.
-      <b>dd</b> is the <b>realised</b> drawdown: the worst the position
-      was actually down while it was held, taken from the hourly
-      high/low of the book mid — so <b>mae</b> is the promise and
+      <b>dd</b> is the <b>realised</b> drawdown — how much of the
+      <b>deposit</b> this trade was down at its worst while it was held.
+      Not of the position: one position is roughly 1/24 of the account,
+      so a 47 % move against it is about 2 % of the deposit. Hover shows
+      the price move and the dollars. So <b>mae</b> is the promise and
       <b>dd</b> is what the promise cost. A trade that closed in profit
-      can still have been 40 % down on the way, and <b>net</b> alone
+      can still have been deep down on the way, and <b>net</b> alone
       never shows that.
       <b>unseen</b> — share of this coin&#39;s features that fell
       outside the range the model saw while training: 0 % means fully
@@ -1403,19 +1405,26 @@ async function load() {
   if (st.dd_measured || st.dd_book) {
     const b = st.dd_book || {};
     html += `<div class="note" style="margin-top:8px">drawdown
-      <span class="k">(worst move against the position while it was
-      held; measured from hourly high/low of the book mid, so it is a
-      <b>lower</b> bound — moves inside a second are not in the
-      snapshots)</span></div>
+      <span class="k">— <b>as a share of the 1000 $ deposit</b>, not of
+      the position. One position is about 1/24 of the account (6 names
+      &times; 4 h of hold), so a 47 % move against it costs the account
+      about 2 %. The move itself is on hover. Measured from hourly
+      high/low of the book mid, so it is a <b>lower</b> bound — moves
+      inside a second are not in the snapshots.</span></div>
       <div class="stats">`
+      + (st.dd_worst_cap_bp == null ? "" :
+         cell("worst trade", pct(st.dd_worst_cap_bp)
+              + (st.dd_worst_usd == null ? "" : ` / ${st.dd_worst_usd} $`),
+              st.dd_worst_cap_bp < -100 ? "bad" : ""))
+      + (st.dd_med_cap_bp == null ? "" :
+         cell("median trade", pct(st.dd_med_cap_bp)))
+      + (st.dd_open_worst_cap_bp == null ? "" :
+         cell("worst open now", pct(st.dd_open_worst_cap_bp),
+              st.dd_open_worst_cap_bp < -100 ? "bad" : ""))
+      // Ход цены остаётся рядом, но вторым: он объясняет, ОТКУДА взялся
+      // процент депозита, и без него число выглядит взятым с потолка.
       + (st.dd_worst_bp == null ? "" :
-         cell("worst trade", pct(st.dd_worst_bp),
-              st.dd_worst_bp < -200 ? "bad" : ""))
-      + (st.dd_med_bp == null ? "" :
-         cell("median trade", pct(st.dd_med_bp)))
-      + (st.dd_open_worst_bp == null ? "" :
-         cell("worst open now", pct(st.dd_open_worst_bp),
-              st.dd_open_worst_bp < -200 ? "bad" : ""))
+         cell("worst price move", pct(st.dd_worst_bp)))
       // Просадка счёта считается по кривой с переоценкой открытых. По
       // одним закрытиям она была бы систематически мельче пережитой.
       + (b.pct == null ? "" :
@@ -1470,10 +1479,13 @@ async function load() {
           (t.unreal_net_bp > 0 ? "good" : "bad")}"
           data-mk="${t.arm}|${t.hour}|${t.sym}|${t.side}">${
           pct(t.unreal_net_bp)}</td>
-      <td class="mono ${t.dd_bp < -200 ? "bad" : ""}"
-          title="${t.dd_hours == null ? ""
-            : t.dd_hours + " h of the hold covered by summaries"}">${
-          t.dd_bp == null ? "—" : pct(t.dd_bp)}</td>
+      <td class="mono ${t.dd_cap_bp < -100 ? "bad" : ""}"
+          title="${t.dd_bp == null ? "" : pct(t.dd_bp)
+            + " of the position, " + (t.dd_usd ?? "?") + " $, "
+            + (t.dd_hours ?? "?") + " h of the hold covered"}">${
+          t.dd_cap_bp == null
+            ? (t.dd_bp == null ? "—" : "· " + pct(t.dd_bp))
+            : pct(t.dd_cap_bp)}</td>
       <td class="mono ${cls}">${t.pnl == null ? "—"
         : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
       <td style="color:var(--muted)">${ST_EN[t.state] || t.state}${
