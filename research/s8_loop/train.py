@@ -460,6 +460,134 @@ def predict_matrix(model, x, elig):
     return pred
 
 
+PREDS_KEEP_H = 48                 # дольше держать нечего — см. score_preds
+
+
+def save_preds(arm, hour, syms, rows_m, pred, target="fwd_4h"):
+    """Сохранить ВЕСЬ вектор предсказаний сечения, а не только выбор.
+
+    Живой вневыборочный IC иначе не считается вовсе, и это не «мало
+    данных», а конструкция. `eval_previous` оценивает прежние веса на
+    часах СТРОГО ПОСЛЕ их обучения; при переобучении каждый час такой
+    час ровно один — последний, — а у него форвард ещё не закрыт.
+    Цель `NaN`, IC пуст, файл не пишется. И так каждый раз: пустая
+    панель выглядит как «ещё рано», хотя измерение невозможно.
+
+    Здесь наоборот: вектор кладётся сейчас, а оценивается через
+    горизонт, когда факт станет известен. Он вневыборочный по
+    построению — строка последнего часа в обучение не попадала, её
+    цель на момент обучения была пуста.
+
+    Берётся ТОТ ЖЕ вектор, из которого сделан выбор монет, поэтому IC
+    описывает качество ровно того ранжирования, которое торгуется, а не
+    соседнего. Разбор по шести выбранным именам этого не заменяет:
+    ранговая корреляция по шести точкам — не мера.
+    """
+    rec = {"arm": arm, "hour": hour, "target": target,
+           "syms": [syms[i] for i in rows_m],
+           "pred": [round(float(v), 4) for v in pred]}
+    with open(os.path.join(MODEL_DIR, "preds.jsonl"), "a",
+              encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def score_preds(targets, elig, grid, syms, log_):
+    """Оценить сохранённые векторы, у которых форвард уже закрылся.
+
+    Возвращает строки того же вида, что `eval_previous`, и дописывает
+    их в общую историю IC. Поле `kind` их различает: `section` — этот
+    замер, один час на запись; `window` — прежние веса на всех часах
+    после обучения. Две разные меры в одном списке без метки однажды
+    были бы сложены в одно среднее.
+
+    Оценённые записи из файла убираются. Записи старше `PREDS_KEEP_H`
+    часов выбрасываются с сообщением: час мог выпасть из сетки, и
+    молча копить неоценимое значило бы растить файл вечно, делая вид,
+    что замер ещё впереди.
+    """
+    path = os.path.join(MODEL_DIR, "preds.jsonl")
+    try:
+        with open(path, encoding="utf-8") as f:
+            recs = [json.loads(x) for x in f if x.strip()]
+    except (OSError, ValueError):
+        return []
+    if not recs:
+        return []
+    col = {h: j for j, h in enumerate(grid)}
+    si = {s: i for i, s in enumerate(syms)}
+    newest = grid[-1] if grid else ""
+    rows, keep, dropped = [], [], 0
+    for r in recs:
+        j = col.get(r.get("hour"))
+        y = targets.get(r.get("target"))
+        if j is None or y is None:
+            # Часа нет в сетке — оценить нечем. Свежий подождёт,
+            # старый выбрасывается.
+            if r.get("hour", "") and _hours_apart(r["hour"], newest) \
+                    > PREDS_KEEP_H:
+                dropped += 1
+            else:
+                keep.append(r)
+            continue
+        idx = [(si[s], p) for s, p in zip(r["syms"], r["pred"])
+               if s in si]
+        idx = [(i, p) for i, p in idx
+               if elig[i, j] and np.isfinite(y[i, j])]
+        if len(idx) < FB.MIN_SECTION:
+            # Форвард ещё не закрыт — ждём. Если ждать уже поздно,
+            # запись уходит, и это видно числом, а не тишиной.
+            if _hours_apart(r["hour"], newest) > PREDS_KEEP_H:
+                dropped += 1
+            else:
+                keep.append(r)
+            continue
+        ii = np.array([i for i, _ in idx])
+        pp = np.array([p for _, p in idx], dtype=float)
+        ic = wf.spearman(pp, y[ii, j])
+        if not np.isfinite(ic):
+            dropped += 1
+            continue
+        rows.append({"arm": r["arm"], "target": r["target"],
+                     "kind": "section", "hour": r["hour"],
+                     "median_ic": round(float(ic), 4),
+                     "sections": 1, "names": len(ii)})
+    if dropped:
+        log_(f"векторов предсказаний выброшено без оценки: {dropped} "
+             f"(старше {PREDS_KEEP_H} ч или сечение уже: "
+             f"нужно {FB.MIN_SECTION} имён)")
+    if rows:
+        with open(os.path.join(MODEL_DIR, "ic_history.jsonl"), "a",
+                  encoding="utf-8") as f:
+            at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+            for r in rows:
+                r["at"] = at
+                f.write(json.dumps(r, separators=(",", ":")) + "\n")
+        for arm, _ in ARMS:
+            mine = [r["median_ic"] for r in rows
+                    if r["arm"] == arm and r["target"] == "fwd_4h"]
+            if mine:
+                log_(f"живой IC [{arm}]: fwd_4h "
+                     f"{float(np.median(mine)):+.4f} по {len(mine)} "
+                     f"закрывшимся сечениям")
+    if len(keep) != len(recs):
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            for r in keep:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        os.replace(tmp, path)
+    return rows
+
+
+def _hours_apart(a, b):
+    """Сколько часов между двумя ключами часа. Не смогли — считаем много."""
+    try:
+        ta = datetime.strptime(a, "%Y-%m-%d-%H").replace(tzinfo=timezone.utc)
+        tb = datetime.strptime(b, "%Y-%m-%d-%H").replace(tzinfo=timezone.utc)
+        return abs((tb - ta).total_seconds()) / 3600.0
+    except (ValueError, TypeError):
+        return float("inf")
+
+
 def eval_previous(x, targets, elig, grid, log_):
     """Живой вневыборочный IC: прежние веса на часах после их обучения."""
     man_path = os.path.join(MODEL_DIR, "manifest.json")
@@ -759,7 +887,14 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                       beta_min_hours=FB.BETA_MIN)
         return False
 
-    ic_rows = eval_previous(x, targets, elig, grid, log_)
+    # Две меры, а не одна. `score_preds` оценивает сохранённые векторы
+    # по мере закрытия форварда — это и есть живой IC при переобучении
+    # каждый час. `eval_previous` берёт прежние веса на всём окне после
+    # обучения — она осмысленна при суточном переобучении. Порядок
+    # важен: сохранённые считаются первыми, потому что именно они
+    # описывают ранжирование, по которому шли сделки.
+    ic_rows = score_preds(targets, elig, grid, syms, log_)
+    ic_rows += eval_previous(x, targets, elig, grid, log_)
 
     # Проверка на течь и наличие главной цели — РАЗНЫЕ вопросы, и
     # слив их в один стоил ровно того, ради чего проба и делалась:
@@ -1007,6 +1142,11 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             mfe = (models[(arm, "mfe_4h")].predict(xj)
                    if (arm, "mfe_4h") in models else None)
             o = np.argsort(fwd)
+            # Весь вектор сечения — в файл, а не только шесть выбранных.
+            # Через горизонт по нему посчитается живой вневыборочный IC:
+            # ранговая корреляция по шести именам мерой не является, а
+            # других способов её получить при часовом переобучении нет.
+            save_preds(arm, grid[-1], syms, rows_m, fwd)
 
             def mk(i, side):
                 adv = (float(mae[i]) if side == "long"

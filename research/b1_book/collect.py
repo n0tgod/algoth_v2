@@ -1225,6 +1225,7 @@ class Collector:
             except OSError:
                 pass
             out[key] = rows[-keep:]
+        out["ic"] = self.ic_summary(out.get("ic") or [])
         try:
             with open(os.path.join(mdir, "last_run.json"),
                       encoding="utf-8") as f:
@@ -1357,6 +1358,39 @@ class Collector:
                 "stats": stats, "accounts": accs,
                 "symbols": sorted({t["sym"] for t in tr}),
                 "rows": rows[page * per:(page + 1) * per]}
+
+    @staticmethod
+    def ic_summary(rows):
+        """Живой IC — МЕДИАНА по накопленным сечениям, а не последний час.
+
+        Замер по одному сечению шумен: ранговая корреляция четырёх сотен
+        имён за один час гуляет на десятые доли. Показать последнюю
+        запись значило бы выдать шум за измерение — и хуже того, число
+        менялось бы каждый час на глазах, создавая впечатление, что
+        модель то «видит», то «слепнет».
+
+        Записи двух видов не смешиваются: `section` — по сохранённому
+        вектору сечения (один час на запись), всё прочее — прежние веса
+        на окне после обучения, там медиана уже посчитана. Сложить их в
+        одну величину значило бы усреднить две разные меры.
+        """
+        by, out = {}, []
+        for r in rows:
+            if r.get("kind") == "section":
+                by.setdefault((r.get("arm"), r.get("target")), []).append(r)
+            else:
+                out.append(r)
+        for (arm, tgt), rs in by.items():
+            v = sorted(x["median_ic"] for x in rs
+                       if x.get("median_ic") is not None)
+            if not v:
+                continue
+            out.append({"arm": arm, "target": tgt, "kind": "section",
+                        "median_ic": round(v[len(v) // 2], 4),
+                        "sections": len(v),
+                        "hour": rs[-1].get("hour"),
+                        "at": rs[-1].get("at")})
+        return out
 
     def hour_rows(self, pairs):
         """Строки почасовых сводок с кэшом: цена, максимум и минимум часа.

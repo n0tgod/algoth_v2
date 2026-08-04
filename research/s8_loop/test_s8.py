@@ -1689,6 +1689,127 @@ def test_novelty_measure():
 from synth import write_summaries as _write_summaries
 
 
+def test_live_ic_survives_hourly_retraining():
+    """Живой IC обязан считаться и при переобучении каждый час.
+
+    Дефект, найденный на живом предпросмотре: `eval_previous` берёт часы
+    СТРОГО ПОСЛЕ обучения прежней модели, а при часовом цикле такой час
+    ровно один — последний, — и форвард у него не закрыт. Цель `NaN`,
+    IC пуст, файл не пишется, и так каждый раз. Панель показывала
+    пустоту, неотличимую от «данных ещё мало», тогда как измерение было
+    невозможно по построению — за сутки работы ноль записей.
+
+    Здесь проверяется обе половины починки: вектор сечения сохраняется
+    целиком, а через горизонт по нему считается IC — по всему сечению,
+    а не по шести выбранным именам.
+    """
+    import numpy as np
+    import shutil
+    import tempfile
+    import train as T
+
+    d = tempfile.mkdtemp()
+    was = T.MODEL_DIR
+    T.MODEL_DIR = d
+    try:
+        S, H = 40, 8
+        grid = [f"2026-08-04-{h:02d}" for h in range(H)]
+        syms = [f"S{i}USDT" for i in range(S)]
+        elig = np.ones((S, H), dtype=bool)
+        rng = np.random.default_rng(7)
+        y = rng.normal(size=(S, H))
+        y[:, -1] = np.nan          # форвард последнего часа не закрыт
+        targets = {"fwd_4h": y}
+
+        # Сечение предпоследнего часа: предсказание совпадает с фактом,
+        # значит IC обязан выйти около единицы. Точное совпадение здесь
+        # уместно — проверяется проводка, а не качество модели.
+        T.save_preds("gbm", grid[-2], syms, np.arange(S), y[:, -2])
+        # И сечение последнего часа — его оценить ещё нечем.
+        T.save_preds("gbm", grid[-1], syms, np.arange(S),
+                     rng.normal(size=S))
+        rows = T.score_preds(targets, elig, grid, syms, lambda m: None)
+        check("закрывшееся сечение оценено, незакрытое отложено",
+              len(rows) == 1 and rows[0]["hour"] == grid[-2],
+              str([(r["hour"], r["median_ic"]) for r in rows]))
+        check("IC посчитан по ВСЕМУ сечению, а не по выбранным именам",
+              rows[0]["names"] == S and rows[0]["median_ic"] > 0.99,
+              f"{rows[0].get('names')} имён, IC {rows[0].get('median_ic')}")
+        check("мера помечена видом — двух разных IC в одном списке быть "
+              "не должно", rows[0]["kind"] == "section",
+              str(rows[0].get("kind")))
+        with open(os.path.join(d, "ic_history.jsonl"),
+                  encoding="utf-8") as f:
+            hist = [json.loads(x) for x in f if x.strip()]
+        check("замер попал в историю, а не остался в памяти",
+              len(hist) == 1 and hist[0]["hour"] == grid[-2], str(hist))
+
+        # Оценённая запись из очереди уходит, неоценённая остаётся —
+        # иначе один и тот же час считался бы каждый цикл заново.
+        left = [json.loads(x) for x in
+                open(os.path.join(d, "preds.jsonl"), encoding="utf-8")
+                if x.strip()]
+        check("оценённое убрано из очереди, ждущее осталось",
+              len(left) == 1 and left[0]["hour"] == grid[-1], str(left))
+
+        # Повторный вызов не обязан дублировать замер.
+        again = T.score_preds(targets, elig, grid, syms, lambda m: None)
+        check("повторный проход не считает тот же час дважды",
+              not again, str(again))
+
+        # Устаревшее выбрасывается, а не копится вечно: час выпал из
+        # сетки, оценить нечем, и молчать об этом нельзя.
+        T.save_preds("gbm", "2026-07-01-00", syms, np.arange(S),
+                     rng.normal(size=S))
+        said = []
+        T.score_preds(targets, elig, grid, syms, said.append)
+        check("устаревший вектор выброшен и об этом сказано",
+              any("выброшено" in s for s in said), str(said))
+        left = [json.loads(x) for x in
+                open(os.path.join(d, "preds.jsonl"), encoding="utf-8")
+                if x.strip()]
+        check("после выброса в очереди остался только ждущий час",
+              len(left) == 1 and left[0]["hour"] == grid[-1], str(left))
+    finally:
+        T.MODEL_DIR = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_live_ic_shown_as_median_not_last_hour():
+    """Страница показывает медиану сечений, а не последний час.
+
+    Замер по одному сечению шумен: ранговая корреляция сотен имён за
+    один час гуляет на десятые доли. Показать последнюю запись значило
+    бы выдать шум за измерение, и число прыгало бы каждый час, создавая
+    впечатление, что модель то «видит», то «слепнет».
+
+    И два вида замера не складываются в один: `section` — по
+    сохранённому вектору (час на запись), прочее — прежние веса на окне
+    после обучения, где медиана уже посчитана.
+    """
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "b1_book"))
+    import collect
+
+    rows = [
+        {"arm": "gbm", "target": "fwd_4h", "kind": "section",
+         "median_ic": 0.30, "hour": "h1"},
+        {"arm": "gbm", "target": "fwd_4h", "kind": "section",
+         "median_ic": -0.10, "hour": "h2"},
+        {"arm": "gbm", "target": "fwd_4h", "kind": "section",
+         "median_ic": 0.05, "hour": "h3"},
+        {"arm": "nn", "target": "fwd_4h", "kind": "window",
+         "median_ic": 0.02, "sections": 20},
+    ]
+    out = collect.Collector.ic_summary(rows)
+    sec = [r for r in out if r["kind"] == "section"]
+    check("живой IC сведён в медиану, а не взят последним часом",
+          len(sec) == 1 and sec[0]["median_ic"] == 0.05
+          and sec[0]["sections"] == 3, str(sec))
+    check("замер на окне не смешан с замером на сечениях",
+          any(r["kind"] == "window" and r["median_ic"] == 0.02
+              for r in out), str(out))
+
+
 def test_train_cycle_end_to_end():
     import train as T
 
@@ -1724,8 +1845,26 @@ def test_train_cycle_end_to_end():
         _write_summaries(sd, D=300)   # те же зерно и старт: +40 час.
         ok2 = T.cycle(sd, lambda m: None, book_root=None)
         check("второй цикл прошёл", ok2)
+        # Цикл ОБЯЗАН сохранять вектор сечения — без этого живой IC при
+        # часовом переобучении не считается вовсе. Проверять сами
+        # функции недостаточно: отрицательный контроль показал, что
+        # снятие вызова из цикла не роняло ни одного теста.
+        pr = [json.loads(x) for x in
+              open(os.path.join(T.MODEL_DIR, "preds.jsonl"),
+                   encoding="utf-8") if x.strip()]
+        check("цикл сохранил вектор сечения по каждой руке",
+              {r["arm"] for r in pr} == {"gbm", "nn"}, str(len(pr)))
+        check("сохранён ВЕСЬ вектор, а не шесть выбранных имён",
+              all(len(r["pred"]) == len(r["syms"]) > 6 for r in pr),
+              str([len(r["pred"]) for r in pr]))
+        # И замер по сохранённому обязан доехать до истории: у второго
+        # цикла форвард первых сечений уже закрыт.
         hist = [json.loads(x) for x in
                 open(os.path.join(T.MODEL_DIR, "ic_history.jsonl"))]
+        sec = [h for h in hist if h.get("kind") == "section"]
+        check("живой IC по сохранённым векторам попал в историю",
+              sec and {h["arm"] for h in sec} == {"gbm", "nn"},
+              str(len(sec)))
         f1 = [h for h in hist if h["target"] == "fwd_1h"]
         check("живой IC записан по обеим рукам",
               len(f1) == 2 and {h["arm"] for h in f1} == {"gbm", "nn"},
@@ -1917,6 +2056,8 @@ def main():
     test_nn_learns_and_sees_missing()
     test_think_words()
     test_load_matrices_grid_is_continuous()
+    test_live_ic_survives_hourly_retraining()
+    test_live_ic_shown_as_median_not_last_hour()
     test_train_cycle_end_to_end()
     print()
     if FAILED:
