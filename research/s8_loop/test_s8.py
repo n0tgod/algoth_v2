@@ -944,6 +944,71 @@ def test_drawdown_is_reported_against_the_deposit():
           f"{same[0]['dd_cap_bp']} против {rows[0]['dd_cap_bp']}")
 
 
+def test_pretest_hedges_with_beta_one_and_keeps_books_apart():
+    """Предпросмотр хеджит бетой = 1, а смена режима начинает книгу заново.
+
+    Единица — не произвол: средняя бета по сечению равна ей ПО
+    ПОСТРОЕНИЮ (каждый актив входит в волну с весом 1/n), и R1 намерил
+    1.015 по 48 окнам. Ноль, стоявший здесь прежде, оставлял в цели ход
+    рынка за час — величину, общую для всех имён и потому непредсказуемую
+    кросс-секционными признаками, то есть чистый шум в метке.
+
+    И вторая половина: книга с хеджем и книга без него — РАЗНЫЕ книги.
+    Счёт считается чистой функцией по всем выборам каталога, поэтому при
+    смене режима старые выборы обязаны уйти в архив, иначе кривая
+    описывала бы книгу, которой не было.
+    """
+    import shutil
+    import tempfile
+    import numpy as np
+    import train as T
+
+    d = tempfile.mkdtemp()
+    try:
+        # Подстановка: там, где бета есть, она сохраняется; где нет —
+        # единица, а не ноль и не выдуманное среднее.
+        beta = np.array([0.4, np.nan, 1.9])
+        got = np.where(np.isfinite(beta), beta, 1.0)
+        check("бета подставляется единицей только там, где её нет",
+              list(got) == [0.4, 1.0, 1.9], str(list(got)))
+        check("режимы названы разными строками",
+              T.HEDGE_PRETEST != T.HEDGE_LIVE
+              and "1" in T.HEDGE_PRETEST,
+              f"{T.HEDGE_PRETEST} / {T.HEDGE_LIVE}")
+
+        was = T.MODEL_DIR
+        T.MODEL_DIR = os.path.join(d, "model_pretest")
+        os.makedirs(T.MODEL_DIR)
+        for name in ("manifest.json", "picks.jsonl", "account_gbm.json"):
+            with open(os.path.join(T.MODEL_DIR, name), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps({"hedge": "выключен (бета не оценима)"})
+                        if name == "manifest.json" else "{}\n")
+        try:
+            # Тот же режим — каталог не трогается: иначе книга
+            # начиналась бы заново на каждом запуске цикла.
+            same = T.fresh_on_mode_change("выключен (бета не оценима)")
+            check("при том же режиме каталог остаётся на месте",
+                  same is None and os.path.isdir(T.MODEL_DIR), str(same))
+
+            moved = T.fresh_on_mode_change(T.HEDGE_PRETEST)
+            check("смена режима отставляет прежнюю книгу",
+                  moved and os.path.isdir(moved)
+                  and not os.path.exists(T.MODEL_DIR), str(moved))
+            # Прежние выборы НЕ удалены: их можно прочитать и сравнить.
+            check("прежние выборы сохранены, а не стёрты",
+                  os.path.exists(os.path.join(moved, "picks.jsonl")),
+                  str(os.listdir(moved)))
+            # Пустой каталог режима не имеет — отставлять нечего.
+            os.makedirs(T.MODEL_DIR)
+            check("каталог без манифеста не отставляется",
+                  T.fresh_on_mode_change(T.HEDGE_PRETEST) is None)
+        finally:
+            T.MODEL_DIR = was
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_worst_open_book_is_not_the_worst_trade():
     """Общая просадка книги — все живые позиции разом, а не худшая из них.
 
@@ -1523,8 +1588,8 @@ def test_pretest_runs_where_live_refuses_and_stays_apart():
         check("предпросмотр на тех же данных обучается", ok_pre)
         with open(os.path.join(pre, "manifest.json"), encoding="utf-8") as f:
             man = json.load(f)
-        check("хедж назван выключенным в артефакте",
-              man["pretest"] is True and "выключен" in man["hedge"],
+        check("режим хеджа назван в артефакте, а не только на странице",
+              man["pretest"] is True and man["hedge"] == T.HEDGE_PRETEST,
               str(man.get("hedge")))
         with open(os.path.join(pre, "picks.jsonl"), encoding="utf-8") as f:
             picks = [json.loads(x) for x in f]
@@ -1829,6 +1894,7 @@ def main():
     test_exposure_covers_all_open_and_leverage_is_named()
     test_drawdown_is_measured_not_inferred_from_the_outcome()
     test_drawdown_is_reported_against_the_deposit()
+    test_pretest_hedges_with_beta_one_and_keeps_books_apart()
     test_worst_open_book_is_not_the_worst_trade()
     test_account_drawdown_counts_open_positions()
     test_entry_price_is_recovered_from_summaries()

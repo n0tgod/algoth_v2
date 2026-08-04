@@ -601,12 +601,16 @@ function renderPretest(p, modeBtns) {
   cap.textContent = "PRE-TESTING · not a result";
   const warn = `<div class="mline" style="border-left:3px solid #b58900;
       padding-left:8px"><b>Pre-testing.</b> Same pipeline, but trained on
-    the few days recorded so far and with the market hedge OFF — beta
-    needs ${rd.beta_min_hours ?? 96} h of history and there are
-    ${rd.hours_per_symbol ?? "—"}. So this book is <b>directional</b>: it
-    rides the market, not just the signal. Numbers here show that
-    training runs, not that anything works. The real model trains
-    separately and is untouched.${
+    the few days recorded so far and with a <b>crude hedge</b>: a
+    per-coin beta needs ${rd.beta_min_hours ?? 96} h of history and there
+    are ${rd.hours_per_symbol ?? "—"}, so beta is taken as <b>1</b> for
+    everyone. One is not a guess — the cross-sectional mean beta is one
+    by construction (each coin enters the wave with weight 1/n), and R1
+    measured 1.015 across 48 windows. What is still missing is the
+    <b>difference</b> between coins: a high-beta name long against a
+    low-beta name short leaves market exposure nobody removes. Numbers
+    here show that training runs, not that anything works. The real model
+    trains separately and is untouched.${
       m.canary_spread > 0.05 ? ` Leak check is weak at this sample size
       (spread ±${m.canary_spread} across ${m.canary_seeds} seeds vs a
       0.05 threshold) — it would catch a gross leak, not a subtle one.`
@@ -1328,10 +1332,12 @@ async function load() {
   document.getElementById("src").textContent = d.pretest
     ? "pre-testing" : "live model";
   document.getElementById("warn").innerHTML = d.pretest
-    ? `<div class="warn"><b>Pre-testing.</b> Trained on the first days
-       of recording and with the market hedge <b>OFF</b>, so this book is
-       <b>directional</b> — it rides the market, not just the signal.
-       These numbers show that training runs, not that it earns.</div>`
+    ? `<div class="warn"><b>Pre-testing.</b> Trained on the first days of
+       recording and with a <b>crude hedge</b> — a per-coin beta needs
+       96 h of history, so beta is taken as <b>1</b> for everyone. That
+       removes the common market wave but not the difference between
+       coins, so some market exposure is left. These numbers show that
+       training runs, not that it earns.</div>`
     : "";
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
