@@ -584,7 +584,38 @@ def equity(trades, arm, rows, start=START_BALANCE, hold_h=HOLD_H,
             mark_sum += size * (adv - cost_bp) / 1e4
         out.append({"hour": h, "eq": round(bal + mark_sum, 2),
                     "cash": round(bal, 2), "open": len(alive.get(h, [])),
+                    # Переоценка ВСЕЙ живой книги на этот час. Из неё
+                    # берётся «сколько мы держали в минусе одновременно»,
+                    # и считать её отдельным проходом было бы вторым
+                    # определением одной величины.
+                    "op": round(mark_sum, 2),
                     "full": full})
+    return out
+
+
+def worst_open(curve, deposit=START_BALANCE):
+    """Худший момент по КНИГЕ: все открытые позиции разом.
+
+    Просьба владельца, и разница с худшей сделкой настоящая. Одна
+    сделка на −2 % депозита — это одна сделка; двадцать четыре позиции,
+    одновременно стоящие −8 %, — это состояние счёта, и переживать
+    приходится именно его. Совпадать эти числа не обязаны: худшая сделка
+    может случиться в час, когда остальные в плюсе и книга в целом
+    спокойна.
+
+    Позиции складываются СО ЗНАКОМ: прибыльные гасят убыточные, потому
+    что в этот момент на счёте лежит именно сальдо. Сумма одних лишь
+    убыточных была бы не просадкой, а валовым убытком — величиной,
+    которой счёт никогда не видел.
+    """
+    if not curve:
+        return None
+    w = min(curve, key=lambda p: p.get("op", 0.0))
+    op = w.get("op", 0.0)
+    out = {"usd": round(op, 2), "hour": w["hour"], "open": w.get("open"),
+           "full": w.get("full", True)}
+    if deposit:
+        out["cap_bp"] = round(op / deposit * 1e4, 1)
     return out
 
 
@@ -603,7 +634,7 @@ def merge(curves):
     last = [None] * len(curves)
     out = []
     for h in hours:
-        tot, op, full, known = 0.0, 0, True, False
+        tot, op, opn, full, known = 0.0, 0, 0.0, True, False
         for i, m in enumerate(idx):
             p = m.get(h) or last[i]
             if p is None:
@@ -612,11 +643,18 @@ def merge(curves):
             if h in m:
                 last[i] = m[h]
             tot += p["eq"]
-            op += p["open"] if h in m else 0
+            # Баланс переносится, переоценка — НЕТ. Часа нет в кривой
+            # руки ровно тогда, когда у неё в этот час не было живых
+            # позиций, то есть открытая переоценка равна нулю, а не
+            # прошлой величине. Перенести её значило бы держать призрак
+            # закрытой позиции в просадке книги.
+            if h in m:
+                op += p["open"]
+                opn += p.get("op", 0.0)
             full = full and p.get("full", True)
         if known:
             out.append({"hour": h, "eq": round(tot, 2), "open": op,
-                        "full": full})
+                        "op": round(opn, 2), "full": full})
     return out
 
 

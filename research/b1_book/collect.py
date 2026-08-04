@@ -1251,7 +1251,9 @@ class Collector:
                           or {}).get("balance")
                 TR.dd_money(tr)
                 st[a] = TR.summary(tr, a, capital=cap[a])
-                st[a]["dd_book"] = TR.max_dd(TR.equity(tr, a, hrows))
+                cur = TR.equity(tr, a, hrows)
+                st[a]["dd_book"] = TR.max_dd(cur)
+                st[a]["dd_open_book"] = TR.worst_open(cur)
             out["trade_stats"] = st
         except Exception as e:                            # noqa: BLE001
             out["trades_error"] = f"{type(e).__name__}: {e}"
@@ -1320,7 +1322,13 @@ class Collector:
         curves = {a: TR.equity(tr, a, hrows) for a in ("gbm", "nn")}
         for a in ("gbm", "nn"):
             stats[a]["dd_book"] = TR.max_dd(curves[a])
-        stats["all"]["dd_book"] = TR.max_dd(TR.merge(curves.values()))
+            stats[a]["dd_open_book"] = TR.worst_open(curves[a])
+        both_c = TR.merge(curves.values())
+        stats["all"]["dd_book"] = TR.max_dd(both_c)
+        # На общей вкладке знаменателем служит сумма депозитов: иначе
+        # просадка двух счетов делилась бы на один и выходила вдвое.
+        stats["all"]["dd_open_book"] = TR.worst_open(
+            both_c, deposit=2 * TR.START_BALANCE)
         rows = tr
         if arm:
             rows = [t for t in rows if t["arm"] == arm]

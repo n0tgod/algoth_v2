@@ -944,6 +944,70 @@ def test_drawdown_is_reported_against_the_deposit():
           f"{same[0]['dd_cap_bp']} против {rows[0]['dd_cap_bp']}")
 
 
+def test_worst_open_book_is_not_the_worst_trade():
+    """Общая просадка книги — все живые позиции разом, а не худшая из них.
+
+    Просьба владельца. Разница настоящая и в обе стороны: худшая сделка
+    может случиться в час, когда остальные в плюсе и книга спокойна, а
+    книга может просесть глубже любой отдельной сделки, если все ноги
+    поехали вместе.
+
+    Позиции складываются СО ЗНАКОМ: прибыльные гасят убыточные, потому
+    что на счёте в этот момент лежит сальдо. Сумма одних убыточных была
+    бы валовым убытком — величиной, которой счёт не видел.
+    """
+    import trades as TR
+
+    h0 = "2026-08-03-10"
+    # Час 11: одна нога глубоко в минусе, вторая в плюсе — книга почти
+    # цела. Час 12: обе умеренно в минусе — книга просела сильнее.
+    px = {"A": [50.0, 100.0], "B": [150.0, 90.0]}
+    rows, hrows = [], {}
+    for i, sym in enumerate(("A", "B")):
+        rows.append({"arm": "gbm", "hour": h0, "sym": sym, "side": "long",
+                     "entry_px": 100.0, "state": "открыта",
+                     "opened_at": TR._ts(h0) + 3600,
+                     "closes_at": TR._ts(h0) + 5 * 3600})
+        for j, p in enumerate(px[sym]):
+            hrows[(sym, TR._hour_of(TR._ts(h0) + (j + 1) * 3600))] = {
+                "c": p, "hi": p, "lo": p}
+    later = TR._ts(h0) + 100 * 3600
+    TR.account(rows, "gbm")
+    TR.excursion(rows, hrows, now=later)
+    TR.dd_money(rows)
+    cur = TR.equity(rows, "gbm", hrows, now=later)
+    o = TR.worst_open(cur)
+    s = TR.summary(rows, "gbm")
+
+    by_hour = {p["hour"]: p["op"] for p in cur}
+    h11 = TR._hour_of(TR._ts(h0) + 3600)
+    h12 = TR._hour_of(TR._ts(h0) + 2 * 3600)
+    check("в первый час прибыльная нога гасит убыточную",
+          abs(by_hour[h11]) < abs(by_hour[h12]),
+          f"{by_hour[h11]} против {by_hour[h12]}")
+    check("худший момент книги — второй час, а не первый",
+          o["hour"] == h12 and o["open"] == 2,
+          f"{o.get('hour')}, позиций {o.get('open')}")
+    # Худшая ОДНА сделка сидит в первом часу (−50 %), а книга просела
+    # глубже во втором. Совпасть эти два числа не обязаны — ровно в этом
+    # и смысл просьбы.
+    check("худшая сделка и худший момент книги — разные числа",
+          s["dd_worst_cap_bp"] != o["cap_bp"],
+          f"сделка {s.get('dd_worst_cap_bp')}, книга {o.get('cap_bp')}")
+    check("доля депозита у книги считается от него же",
+          abs(o["cap_bp"] - o["usd"] / TR.START_BALANCE * 1e4) < 0.11,
+          f"{o.get('cap_bp')} при {o.get('usd')} $")
+
+    # На общей вкладке рука без записи часа НЕ переносит свою прошлую
+    # переоценку: часа нет ровно тогда, когда живых позиций не было.
+    a = [{"hour": "H1", "eq": 900.0, "open": 1, "op": -100.0, "full": True},
+         {"hour": "H2", "eq": 1000.0, "open": 0, "op": 0.0, "full": True}]
+    b = [{"hour": "H1", "eq": 1000.0, "open": 1, "op": 0.0, "full": True}]
+    m = TR.merge([a, b])
+    check("закрытая рука не тащит призрак переоценки в следующий час",
+          [p["op"] for p in m] == [-100.0, 0.0], str(m))
+
+
 def test_account_drawdown_counts_open_positions():
     """Просадка счёта считается с переоценкой открытых, а не по закрытиям.
 
@@ -1765,6 +1829,7 @@ def main():
     test_exposure_covers_all_open_and_leverage_is_named()
     test_drawdown_is_measured_not_inferred_from_the_outcome()
     test_drawdown_is_reported_against_the_deposit()
+    test_worst_open_book_is_not_the_worst_trade()
     test_account_drawdown_counts_open_positions()
     test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()

@@ -1403,34 +1403,38 @@ async function load() {
   // минусе ПО ДОРОГЕ. Сделка, закрывшаяся в плюс, могла по пути стоить
   // −40 %, и по колонке `net` этого не видно.
   if (st.dd_measured || st.dd_book) {
-    const b = st.dd_book || {};
+    const b = st.dd_book || {}, o = st.dd_open_book || {};
     html += `<div class="note" style="margin-top:8px">drawdown
-      <span class="k">— <b>as a share of the 1000 $ deposit</b>, not of
-      the position. One position is about 1/24 of the account (6 names
-      &times; 4 h of hold), so a 47 % move against it costs the account
-      about 2 %. The move itself is on hover. Measured from hourly
-      high/low of the book mid, so it is a <b>lower</b> bound — moves
-      inside a second are not in the snapshots.</span></div>
+      <span class="k">— <b>as a share of the deposit</b>, not of the
+      position. The headline is the <b>whole open book at one moment</b>:
+      all positions alive in that hour, summed with sign, at their worst
+      hour. That is what the account actually had to sit through — a
+      single bad trade is only a part of it. Per-trade numbers are below
+      it; the price move behind each one is on hover in the table.
+      Measured from hourly high/low of the book mid, so it is a
+      <b>lower</b> bound — moves inside a second are not in the
+      snapshots.</span></div>
       <div class="stats">`
-      + (st.dd_worst_cap_bp == null ? "" :
-         cell("worst trade", pct(st.dd_worst_cap_bp)
-              + (st.dd_worst_usd == null ? "" : ` / ${st.dd_worst_usd} $`),
-              st.dd_worst_cap_bp < -100 ? "bad" : ""))
-      + (st.dd_med_cap_bp == null ? "" :
-         cell("median trade", pct(st.dd_med_cap_bp)))
-      + (st.dd_open_worst_cap_bp == null ? "" :
-         cell("worst open now", pct(st.dd_open_worst_cap_bp),
-              st.dd_open_worst_cap_bp < -100 ? "bad" : ""))
-      // Ход цены остаётся рядом, но вторым: он объясняет, ОТКУДА взялся
-      // процент депозита, и без него число выглядит взятым с потолка.
-      + (st.dd_worst_bp == null ? "" :
-         cell("worst price move", pct(st.dd_worst_bp)))
+      // Главное число: вся живая книга в один момент. Худшая сделка —
+      // это одна сделка; одновременная просадка по всем открытым есть
+      // состояние счёта, и переживать приходится именно его.
+      + (o.cap_bp == null ? "" :
+         cell("open book, worst moment", pct(o.cap_bp)
+              + (o.usd == null ? "" : ` / ${o.usd} $`),
+              o.cap_bp < -300 ? "bad" : ""))
+      + (o.hour ? cell("at", hourLocal(o.hour)
+                       + (o.open ? ` · ${o.open} pos` : "")) : "")
       // Просадка счёта считается по кривой с переоценкой открытых. По
       // одним закрытиям она была бы систематически мельче пережитой.
       + (b.pct == null ? "" :
          cell("account, peak to trough", b.pct + " %",
               b.pct < -10 ? "bad" : ""))
-      + (b.at ? cell("deepest at", hourLocal(b.at)) : "")
+      + (st.dd_worst_cap_bp == null ? "" :
+         cell("worst single trade", pct(st.dd_worst_cap_bp)
+              + (st.dd_worst_usd == null ? "" : ` / ${st.dd_worst_usd} $`),
+              st.dd_worst_cap_bp < -100 ? "bad" : ""))
+      + (st.dd_med_cap_bp == null ? "" :
+         cell("median trade", pct(st.dd_med_cap_bp)))
       + (st.dd_measured == null ? "" :
          cell("trades measured", st.dd_measured))
       // Час, где живую ногу переоценить было нечем, делает просадку
