@@ -1399,8 +1399,13 @@ async function load() {
       + (st.exposure == null ? "" :
          cell("exposure", st.exposure + " $"
               + (st.capital ? ` / ${st.capital}` : "")))
+      // Плечо ниже единицы у свежей книги — норма, а не пропажа денег:
+      // книга набирается 4 часа, и через час стоит четверть. Пишем это
+      // рядом с числом, иначе «0.25×» выглядит поломкой.
       + (st.leverage == null ? "" :
-         cell("leverage", st.leverage + "×",
+         cell("leverage", st.leverage + "×"
+              + (st.fill_hours && st.fill_hours < st.fill_of
+                 ? ` · filling ${st.fill_hours}/${st.fill_of} h` : ""),
               st.leverage > 1.05 ? "bad" : ""))
       + `</div>`;
   }

@@ -391,6 +391,13 @@ def _unreal(rows, out, capital):
     exp = sum(t["size"] for t in op if t.get("size"))
     if exp:
         out["exposure"] = round(exp, 2)
+        # Сколько часовых наборов книги стоит сейчас. Книга набирается
+        # `hold_h` часов, и свежая заполнена на четверть — плечо выходит
+        # 0.25 не потому, что что-то сломалось. Без этого числа неполная
+        # экспозиция читается как пропавшие деньги: владелец прочитал
+        # «500 $» как «депозит стал 500».
+        out["fill_hours"] = len({t["hour"] for t in op if t.get("size")})
+        out["fill_of"] = HOLD_H
         if capital:
             out["capital"] = round(capital, 2)
             # Плечо — то, ради чего экспозицию и показывают. В долларах

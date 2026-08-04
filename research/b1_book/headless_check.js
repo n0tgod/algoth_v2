@@ -170,6 +170,9 @@ global.fetch = async (url) => {
                               pnl: -0.85, expected_over_got: 18.1,
                               marked: 1, unreal_net_avg_bp: 89.0,
                               unreal_win: 1.0, unreal_pnl: 14.83,
+                              exposure: 500.0, capital: 2000.0,
+                              leverage: 0.25, fill_hours: 1,
+                              fill_of: 4,
                               dd_measured: 2, dd_worst_bp: -412.0,
                               dd_med_bp: -155.0, dd_sized: 2,
                               dd_worst_cap_bp: -17.2, dd_worst_usd: -17.2,
@@ -431,6 +434,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("нереализованное не попало в общую статистику");
     if (!/14\.83/.test(stats))
       bad.push("нереализованные деньги не показаны");
+    // Экспозиция без знаменателя читается как «депозит стал 500».
+    // Требуем капитал рядом и плечо числом.
+    if (!/500 \$ \/ 2000/.test(stats))
+      bad.push("экспозиция показана без капитала");
+    if (!/0\.25×/.test(stats))
+      bad.push("плечо не показано");
+    // И почему оно ниже единицы: книга набирается 4 часа.
+    if (!/filling 1\/4 h/.test(stats))
+      bad.push("не сказано, что книга ещё набирается");
     // И оно обязано стоять ОТДЕЛЬНО от факта, а не в одной строке.
     if (!/not a result yet/.test(stats))
       bad.push("нереализованное не отделено от результата");
