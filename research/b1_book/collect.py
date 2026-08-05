@@ -1356,7 +1356,14 @@ class Collector:
         per = max(10, min(int(per), 500))
         page = max(0, int(page))
         total = len(rows)
+        # Кривые счёта — на страницу. Прежде они считались здесь ради
+        # просадки и выбрасывались, а владелец видел только итоговое
+        # число: где счёт рос, где проседал и чем руки разошлись, из
+        # одной цифры не читается вовсе.
+        curve_out = {a: TR.thin(curves[a]) for a in ("gbm", "nn")}
+        curve_out["all"] = TR.thin(both_c)
         return {"source": name, "pretest": name.endswith("pretest"),
+                "curves": curve_out, "start": TR.START_BALANCE,
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),
                 "filtered": bool(arm or state or sym),

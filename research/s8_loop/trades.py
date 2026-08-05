@@ -864,6 +864,32 @@ def worst_open(curve, deposit=START_BALANCE):
     return out
 
 
+def thin(curve, cap=600):
+    """Кривая для показа: не длиннее `cap` точек, без потери провалов.
+
+    Прореживать «каждую k-ю точку» нельзя: просадка живёт между
+    выборками и пропадает целиком, а именно её и смотрят. Поэтому в
+    каждой корзине сохраняются ТРИ величины — значение на конце, а
+    также минимум и максимум внутри. Тогда линия остаётся линией, а
+    провал виден полосой, и картинка не врёт о пережитом.
+
+    Возвращает `[[метка времени, эквити, минимум, максимум], …]`.
+    """
+    if not curve:
+        return []
+    step = max(1, (len(curve) + cap - 1) // cap)
+    out = []
+    for i in range(0, len(curve), step):
+        part = curve[i:i + step]
+        eqs = [p["eq"] for p in part]
+        ts = _ts(part[-1]["hour"])
+        if ts is None:
+            continue
+        out.append([int(ts), round(part[-1]["eq"], 2),
+                    round(min(eqs), 2), round(max(eqs), 2)])
+    return out
+
+
 def merge(curves):
     """Общая кривая нескольких счетов: сумма по часам.
 

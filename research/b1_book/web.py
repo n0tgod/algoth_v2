@@ -746,7 +746,7 @@ function tradeTable(p) {
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
-      <td class="mono">${pct(t.expected_bp)}</td>
+      <td class="mono hide-s">${pct(t.expected_bp)}</td>
       <td class="mono dim">${pct(t.mae_bp)}</td>
       <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono">${t.pnl == null ? "—" :
@@ -1198,6 +1198,34 @@ button:disabled{opacity:.4}
 .bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;
  margin-bottom:8px}
 .scroll{overflow-x:auto}
+/* Заголовок группы величин. Блоки статистики налипали друг на друга
+   без всякой структуры — «просадка», «издержки», «результат» шли
+   подряд одинаковыми плитками, и глазу не за что было зацепиться. */
+.gt{font-size:11px;color:var(--muted);letter-spacing:.08em;
+ text-transform:uppercase;margin:12px 0 5px}
+.gt:first-child{margin-top:0}
+/* Сравнение рук: они учатся на одних данных, и вопрос почти всегда
+   сравнительный. Переключаться между вкладками ради этого — терять
+   ответ по дороге. */
+.cmp{width:100%;border-collapse:collapse;font-size:13px}
+.cmp th{position:static;padding:5px 8px 5px 0}
+.cmp td{padding:4px 8px 4px 0;font-variant-numeric:tabular-nums;
+ font-family:ui-monospace,Menlo,Consolas,monospace}
+.cmp td:first-child,.cmp th:first-child{font-family:inherit;
+ color:var(--muted);white-space:normal}
+canvas{width:100%;display:block;touch-action:pan-y}
+/* Узкий экран. Смотрят с телефона, а колонок в таблице тринадцать:
+   без этого строка уезжает вбок и читать её невозможно. Прячутся
+   ВТОРИЧНЫЕ колонки, а не случайные: час входа и выхода выводимы из
+   часа сигнала, ожидание и ход против — диагностика модели, задержка
+   и новизна — тоже. Остаются час, монета, сторона, факт, нетто,
+   просадка. */
+@media(max-width:720px){
+  .wrap{padding:10px 8px 30px}
+  table{font-size:12px}
+  .hide-s{display:none}
+  .st{flex:1 1 46%}
+}
 </style>
 <div class="wrap">
   <h1>model trades · <span id="src" class="mono"></span></h1>
@@ -1245,6 +1273,18 @@ button:disabled{opacity:.4}
   </div>
 
   <div class="card">
+    <div class="gt">paper account over time</div>
+    <div class="note">Balance of the paper book, hour by hour, with
+      <b>open positions marked to market</b> — not just closed trades.
+      The shaded band is the range inside each drawn point, so a dip
+      that happened between samples still shows: an equity curve
+      thinned by taking every k-th point hides exactly the drawdown it
+      is looked at for. Dashed line is the 1000 $ start.</div>
+    <canvas id="eq" height="220"></canvas>
+    <div id="eqlab" class="note" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
     <div class="bar">
       <span class="k">arm</span>
       <select id="arm"><option value="">both</option>
@@ -1270,10 +1310,14 @@ button:disabled{opacity:.4}
       <span id="mkat" class="k"></span>
     </div>
     <div class="scroll"><table>
-      <thead><tr><th>signal hour</th><th>entry</th><th>exit</th>
-        <th>lag</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
-        <th>mae</th><th>got</th><th>net</th><th>unreal</th><th>dd</th>
-        <th>$</th><th>state</th><th>unseen</th>
+      <thead><tr><th>signal hour</th>
+        <th class="hide-s">entry</th><th class="hide-s">exit</th>
+        <th class="hide-s">lag</th><th class="hide-s">arm</th>
+        <th>coin</th><th>side</th><th class="hide-s">exp</th>
+        <th class="hide-s">mae</th><th>got</th><th>net</th>
+        <th>unreal</th><th>dd</th>
+        <th>$</th><th class="hide-s">state</th>
+        <th class="hide-s">unseen</th>
       </tr></thead><tbody id="tb"></tbody>
     </table></div>
   </div>
@@ -1316,6 +1360,94 @@ function hourLocal(h) {
 // значило бы разойтись с уже записанными файлами.
 const ST_EN = {"закрыта": "closed", "открыта": "open",
                "без исхода": "no outcome", "ждёт разбора": "awaiting"};
+// Кривая счёта. Рисуются ОБЕ руки всегда, даже когда выбрана одна:
+// они учатся на одних данных, и почти любой вопрос к ним
+// сравнительный — «чем разошлись». Выбранная ведётся ярко, вторая
+// приглушена, чтобы вкладка всё же что-то значила.
+const ARMC = {gbm: "#2f7fd1", nn: "#c06a1f"};
+const ARMN = {gbm: "ml", nn: "ai"};
+let EQ = null;
+function drawEq(d) {
+  const cv = document.getElementById("eq");
+  if (!cv) return;
+  const cur = d.curves || {};
+  const arms = ["gbm", "nn"].filter(a => (cur[a] || []).length > 1);
+  const lab = document.getElementById("eqlab");
+  if (!arms.length) {
+    if (lab) lab.textContent = "not enough hours yet";
+    return;
+  }
+  EQ = {cur, arms, start: d.start || 1000};
+  const w = Math.max(320, cv.clientWidth || 900), h = 220;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  cv.style.height = h + "px";
+  const g = cv.getContext("2d");
+  if (!g || !g.setTransform) return;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const pts = arms.flatMap(a => cur[a]);
+  let t0 = Infinity, t1 = -Infinity, lo = Infinity, hi = -Infinity;
+  for (const p of pts) {
+    if (p[0] < t0) t0 = p[0];
+    if (p[0] > t1) t1 = p[0];
+    if (p[2] < lo) lo = p[2];
+    if (p[3] > hi) hi = p[3];
+  }
+  // Стартовый уровень обязан быть в кадре: без него рост и падение
+  // выглядят одинаково — просто линия куда-то идёт.
+  lo = Math.min(lo, EQ.start); hi = Math.max(hi, EQ.start);
+  const pad = Math.max(1, (hi - lo) * 0.08);
+  lo -= pad; hi += pad;
+  const L = 46, R = 8, T = 8, B = 18;
+  const X = t => L + (t - t0) / Math.max(1, t1 - t0) * (w - L - R);
+  const Y = v => T + (hi - v) / Math.max(1e-9, hi - lo) * (h - T - B);
+  const css = getComputedStyle(document.documentElement);
+  const rule = css.getPropertyValue("--rule").trim() || "#333";
+  const muted = css.getPropertyValue("--muted").trim() || "#888";
+  g.strokeStyle = rule; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(L, Y(EQ.start)); g.lineTo(w - R, Y(EQ.start));
+  g.setLineDash([4, 4]); g.stroke(); g.setLineDash([]);
+  g.fillStyle = muted; g.font = "11px system-ui,sans-serif";
+  g.fillText(hi.toFixed(0), 4, Y(hi) + 9);
+  g.fillText(lo.toFixed(0), 4, Y(lo));
+  g.fillText(EQ.start + " $", 4, Y(EQ.start) + 3);
+  const sel = S.arm || "all";
+  for (const a of arms) {
+    const c = cur[a], on = sel === "all" || sel === a;
+    g.globalAlpha = on ? 1 : 0.28;
+    // Полоса «между точками» рисуется только у ведомой руки: у
+    // прореженной кривой провал живёт внутри корзины, и без полосы он
+    // исчезает — а смотрят как раз на него.
+    if (on && c.some(p => p[3] - p[2] > 1e-9)) {
+      g.fillStyle = ARMC[a]; g.globalAlpha = 0.13;
+      g.beginPath();
+      c.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[3]))
+                            : g.moveTo(X(p[0]), Y(p[3])));
+      for (let i = c.length - 1; i >= 0; i--)
+        g.lineTo(X(c[i][0]), Y(c[i][2]));
+      g.closePath(); g.fill();
+      g.globalAlpha = 1;
+    }
+    g.strokeStyle = ARMC[a]; g.lineWidth = on ? 1.8 : 1.2;
+    g.beginPath();
+    c.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1]))
+                          : g.moveTo(X(p[0]), Y(p[1])));
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+  const last = a => (cur[a] || []).slice(-1)[0];
+  if (lab)
+    lab.innerHTML = arms.map(a => {
+      const p = last(a), v = p ? p[1] : null;
+      const dp = v == null ? "" : ((v / EQ.start - 1) * 100).toFixed(2);
+      return `<span class="mono" style="color:${ARMC[a]}">&#9632;</span> ${
+        ARMN[a]} ${v == null ? "—" : v.toFixed(2) + " $ (" +
+        (dp >= 0 ? "+" : "") + dp + " %)"}`;
+    }).join(" &nbsp; ") +
+      ` <span class="k">&middot; ${(cur[arms[0]] || []).length} hours</span>`;
+}
+
 const val = id => document.getElementById(id).value;
 async function load() {
   const p = new URLSearchParams({k: KEY, page: S.page, per: val("per"),
@@ -1352,7 +1484,8 @@ async function load() {
       `<button data-sa="${x[0]}" aria-pressed="${
         String(which === x[0])}">${x[1]}</button>`).join(" ")
     + `</div>`;
-  let html = armBtns + `<div class="stats">`
+  let html = armBtns + `<div class="gt">result</div>`
+    + `<div class="stats">`
     + cell("trades", which === "all" ? d.grand_total
            : (st.closed||0) + (st.open||0) + (st.awaiting||0)
              + (st.no_outcome||0))
@@ -1382,7 +1515,8 @@ async function load() {
   // отметка, и до срока она может стать любой; сложить их значило бы
   // выдать незавершённое за результат.
   if (st.marked) {
-    html += `<div class="note" style="margin-top:8px">open positions,
+    html += `<div class="gt">live exposure</div>`
+    + `<div class="note">open positions,
       marked to market <span class="k">(not a result yet)</span></div>
       <div class="stats">`
       + cell("marked", st.marked)
@@ -1415,7 +1549,8 @@ async function load() {
   // −40 %, и по колонке `net` этого не видно.
   if (st.dd_measured || st.dd_book) {
     const b = st.dd_book || {}, o = st.dd_open_book || {};
-    html += `<div class="note" style="margin-top:8px">drawdown
+    html += `<div class="gt">risk</div>`
+    + `<div class="note">drawdown
       <span class="k">— <b>as a share of the deposit</b>, not of the
       position. The headline is the <b>whole open book at one moment</b>:
       all positions alive in that hour, summed with sign, at their worst
@@ -1464,7 +1599,8 @@ async function load() {
   // круга это скрывала бы. Покрытие ставок стоит рядом числом: без
   // него умолчание неотличимо от измерения.
   if (st.exec_n) {
-    html += `<div class="note" style="margin-top:8px">costs
+    html += `<div class="gt">execution</div>`
+    + `<div class="note">costs
       <span class="k">— walked through the <b>recorded order book</b>
       at entry and at exit, not a flat number: a long buys the ask and
       sells the bid, a short the reverse. Commission is the venue's
@@ -1484,7 +1620,8 @@ async function load() {
       + `</div>`;
   }
   if (st.gift_n) {
-    html += `<div class="note" style="margin-top:8px">entry timing
+    html += `<div class="gt">entry timing</div>`
+    + `<div class="note">entry timing
       <span class="k">— features end at the hour close, the cycle
       decides minutes later, and the trade is booked at that close.
       Positive means the recorded book entered <b>better</b> than it
@@ -1501,6 +1638,36 @@ async function load() {
       + cell("trades", st.gift_n)
       + `</div>`;
   }
+  // Две руки рядом. Они учатся на одних данных и одном универсуме, и
+  // почти любой вопрос к ним сравнительный: где разошлись и на чём.
+  // Переключение вкладок этого не отвечает — ответ теряется по дороге.
+  const CMP = [
+    ["balance", a => { const x = (d.accounts||{})[a];
+      return x ? x.balance + " $" : "—"; }],
+    ["closed", a => (d.stats[a]||{}).closed ?? "—"],
+    ["sign right", a => { const v = (d.stats[a]||{}).hit_rate;
+      return v == null ? "—" : (v*100).toFixed(0) + " %"; }],
+    ["net per trade", a => { const v = (d.stats[a]||{}).net_bp_avg;
+      return v == null ? "—" : (v>0?"+":"") + v + " bp"; }],
+    ["round trip", a => { const v = (d.stats[a]||{}).exec_med_bp;
+      return v == null ? "—" : v + " bp"; }],
+    ["account drawdown", a => { const v = ((d.stats[a]||{}).dd_book||{}).pct;
+      return v == null ? "—" : v + " %"; }],
+    ["worst open moment", a => { const v =
+      ((d.stats[a]||{}).dd_open_book||{}).cap_bp;
+      return v == null ? "—" : (v/100).toFixed(2) + " %"; }],
+  ];
+  html += `<div class="gt">arms side by side</div>`
+    + `<div class="note">Same data, same universe, same hour, same
+       slots &mdash; only the model differs. The gap between the two
+       columns is the <b>measurement error</b> made visible: neither
+       column is a result on its own.</div>`
+    + `<div class="scroll"><table class="cmp"><tr><th></th>`
+    + `<th style="color:${ARMC.gbm}">ml (trees)</th>`
+    + `<th style="color:${ARMC.nn}">ai (neural)</th></tr>`
+    + CMP.map(r => `<tr><td>${r[0]}</td><td>${r[1]("gbm")}</td>`
+                 + `<td>${r[1]("nn")}</td></tr>`).join("")
+    + `</table></div>`;
   const accLine = ["gbm","nn"].map(a => {
     const x = (d.accounts||{})[a];
     return x ? `${a === "gbm" ? "ml" : "ai"} ${x.balance} $` : null;
@@ -1510,6 +1677,7 @@ async function load() {
       accLine} <span class="k">(start 1000 $ each, one capital,
       leverage 1&times;)</span></div>`;
   document.getElementById("stats").innerHTML = html;
+  drawEq(d);
   document.getElementById("stats").querySelectorAll("[data-sa]")
     .forEach(b => b.onclick = () => { S.arm = b.dataset.sa; load(); });
 
@@ -1526,15 +1694,15 @@ async function load() {
       ? (t.net_bp > 0 ? "good" : "bad") : "";
     return `<tr><td class="mono" title="UTC key ${t.hour}">${
         hourLocal(t.hour)}</td>
-      <td class="mono">${hhmm(t.opened_at)}</td>
-      <td class="mono">${hhmm(t.closes_at)}</td>
-      <td class="mono" style="color:var(--muted)">${t.lag_sec == null
+      <td class="mono hide-s">${hhmm(t.opened_at)}</td>
+      <td class="mono hide-s">${hhmm(t.closes_at)}</td>
+      <td class="mono hide-s" style="color:var(--muted)">${t.lag_sec == null
         ? "—" : Math.round(t.lag_sec/60) + "m"}</td>
-      <td>${t.arm === "nn" ? "neural" : "trees"}</td>
+      <td class="hide-s">${t.arm === "nn" ? "neural" : "trees"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
       <td class="mono">${pct(t.expected_bp)}</td>
-      <td class="mono" style="color:var(--muted)">${pct(t.mae_bp)}</td>
+      <td class="mono hide-s" style="color:var(--muted)">${pct(t.mae_bp)}</td>
       <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono ${cls}">${pct(t.net_bp)}</td>
       <td class="mono ${t.unreal_net_bp == null ? "" :
@@ -1550,13 +1718,13 @@ async function load() {
             : pct(t.dd_cap_bp)}</td>
       <td class="mono ${cls}">${t.pnl == null ? "—"
         : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
-      <td style="color:var(--muted)">${ST_EN[t.state] || t.state}${
+      <td class="hide-s" style="color:var(--muted)">${ST_EN[t.state] || t.state}${
         t.state === "открыта"
         ? ` <span class="k">(${(t.closes_in_sec/3600).toFixed(1)} h
             left)</span>` : ""}</td>
-      <td class="mono" style="color:var(--muted)">${t.odd == null ? "—"
+      <td class="mono hide-s" style="color:var(--muted)">${t.odd == null ? "—"
         : (t.odd*100).toFixed(0) + " %"}</td></tr>`;
-  }).join("") || `<tr><td colspan="15" style="color:var(--muted);
+  }).join("") || `<tr><td colspan="16" style="color:var(--muted);
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
     `page ${d.page + 1} of ${d.pages}`;
