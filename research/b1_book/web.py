@@ -1177,11 +1177,18 @@ a{color:var(--accent)}
 .note{color:var(--muted);font-size:12px;margin-bottom:8px}
 .warn{border-left:3px solid var(--accent);padding-left:9px;
  color:var(--muted);font-size:12px;margin-bottom:10px}
-.stats{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule);
- border-radius:8px;overflow:hidden}
-.st{flex:1 1 120px;background:var(--panel);padding:8px 10px}
-.k{color:var(--muted);font-size:11px}
-.v{font-size:15px;font-variant-numeric:tabular-nums}
+/* Плотная таблица «подпись — значение», а не крупные плитки. Плитки
+   занимали втрое больше высоты, чем сами числа, и страница
+   пролистывалась ради семи величин. */
+.stats{display:grid;gap:0;border:1px solid var(--rule);
+ border-radius:8px;overflow:hidden;
+ grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.st{display:flex;justify-content:space-between;align-items:baseline;
+ gap:10px;padding:4px 9px;min-width:0;
+ border-bottom:1px solid var(--rule);border-right:1px solid var(--rule)}
+.k{color:var(--muted);font-size:11.5px;white-space:nowrap}
+.v{font-size:13px;font-variant-numeric:tabular-nums;text-align:right;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
 .good{color:var(--bid)} .bad{color:var(--ask)}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -1201,15 +1208,27 @@ button:disabled{opacity:.4}
 /* Заголовок группы величин. Блоки статистики налипали друг на друга
    без всякой структуры — «просадка», «издержки», «результат» шли
    подряд одинаковыми плитками, и глазу не за что было зацепиться. */
-.gt{font-size:11px;color:var(--muted);letter-spacing:.08em;
- text-transform:uppercase;margin:12px 0 5px}
+.gt{font-size:10.5px;color:var(--muted);letter-spacing:.09em;
+ text-transform:uppercase;margin:10px 0 4px}
 .gt:first-child{margin-top:0}
+/* Пояснения — под раскрытие. Они не лишние: в них записано, почему
+   величина считается именно так, и владелец нашёл ими не один дефект.
+   Но развёрнутые они занимают больше места, чем числа, ради которых
+   страницу открывают. Свёрнутые — остаются в разметке и в проверке. */
+.hint{margin:0 0 5px}
+.hint summary{cursor:pointer;color:var(--muted);font-size:11px;
+ list-style:none;display:inline-block}
+.hint summary::-webkit-details-marker{display:none}
+.hint summary::before{content:"? "}
+.hint summary:hover{color:var(--ink)}
+.hint .note{margin:4px 0 0}
 /* Сравнение рук: они учатся на одних данных, и вопрос почти всегда
    сравнительный. Переключаться между вкладками ради этого — терять
    ответ по дороге. */
 .cmp{width:100%;border-collapse:collapse;font-size:13px}
-.cmp th{position:static;padding:5px 8px 5px 0}
-.cmp td{padding:4px 8px 4px 0;font-variant-numeric:tabular-nums;
+.cmp{font-size:12.5px}
+.cmp th{position:static;padding:3px 8px 3px 0}
+.cmp td{padding:2px 8px 2px 0;font-variant-numeric:tabular-nums;
  font-family:ui-monospace,Menlo,Consolas,monospace}
 .cmp td:first-child,.cmp th:first-child{font-family:inherit;
  color:var(--muted);white-space:normal}
@@ -1235,7 +1254,8 @@ canvas{width:100%;display:block;touch-action:pan-y}
   <div class="card">
     <div class="note">All clock times are <b>Europe/Vienna</b>; the
       underlying keys are UTC and show on hover.</div>
-    <div class="note">How to read a row. <b>signal hour</b> — the hour
+    <details class="hint"><summary>how to read a row</summary>
+    <div class="note"><b>signal hour</b> — the hour
       whose <b>close</b> the decision is based on: features cover the
       whole hour, so nothing can be entered before it ends.
       <b>entry</b> is that close, <b>exit</b> is 4 h later — exactly how
@@ -1267,20 +1287,22 @@ canvas{width:100%;display:block;touch-action:pan-y}
       a filter</b> — any &laquo;don&#39;t trade the unfamiliar&raquo;
       rule mechanically flatters drawdown, and may only be introduced
       after comparing it with a random gate of the same frequency.</div>
-    <div class="note">overall stats below are computed over the
-      <b>whole</b> history; filters do not move them</div>
+    </details>
+    <div class="note">stats below cover the <b>whole</b> history;
+      filters do not move them</div>
     <div id="stats"></div>
   </div>
 
   <div class="card">
     <div class="gt">paper account over time</div>
+    <details class="hint"><summary>how to read</summary>
     <div class="note">Balance of the paper book, hour by hour, with
       <b>open positions marked to market</b> — not just closed trades.
       The shaded band is the range inside each drawn point, so a dip
       that happened between samples still shows: an equity curve
       thinned by taking every k-th point hides exactly the drawdown it
-      is looked at for. Dashed line is the 1000 $ start.</div>
-    <canvas id="eq" height="220"></canvas>
+      is looked at for. Dashed line is the 1000 $ start.</div></details>
+    <canvas id="eq" height="170"></canvas>
     <div id="eqlab" class="note" style="margin-top:6px"></div>
   </div>
 
@@ -1378,7 +1400,7 @@ function drawEq(d) {
     return;
   }
   EQ = {cur, arms, start: d.start || 1000};
-  const w = Math.max(320, cv.clientWidth || 900), h = 220;
+  const w = Math.max(320, cv.clientWidth || 900), h = 170;
   const dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   cv.style.height = h + "px";
@@ -1516,8 +1538,8 @@ async function load() {
   // выдать незавершённое за результат.
   if (st.marked) {
     html += `<div class="gt">live exposure</div>`
-    + `<div class="note">open positions,
-      marked to market <span class="k">(not a result yet)</span></div>
+    + `<details class="hint"><summary>how to read</summary><div class="note">open positions,
+      marked to market <span class="k">(not a result yet)</span></div></details>
       <div class="stats">`
       + cell("marked", st.marked)
       + cell("unreal, avg", pct(st.unreal_net_avg_bp),
@@ -1550,7 +1572,7 @@ async function load() {
   if (st.dd_measured || st.dd_book) {
     const b = st.dd_book || {}, o = st.dd_open_book || {};
     html += `<div class="gt">risk</div>`
-    + `<div class="note">drawdown
+    + `<details class="hint"><summary>how to read</summary><div class="note">drawdown
       <span class="k">— <b>as a share of the deposit</b>, not of the
       position. The headline is the <b>whole open book at one moment</b>:
       all positions alive in that hour, summed with sign, at their worst
@@ -1559,7 +1581,7 @@ async function load() {
       it; the price move behind each one is on hover in the table.
       Measured from hourly high/low of the book mid, so it is a
       <b>lower</b> bound — moves inside a second are not in the
-      snapshots.</span></div>
+      snapshots.</span></div></details>
       <div class="stats">`
       // Главное число: вся живая книга в один момент. Худшая сделка —
       // это одна сделка; одновременная просадка по всем открытым есть
@@ -1600,13 +1622,13 @@ async function load() {
   // него умолчание неотличимо от измерения.
   if (st.exec_n) {
     html += `<div class="gt">execution</div>`
-    + `<div class="note">costs
+    + `<details class="hint"><summary>how to read</summary><div class="note">costs
       <span class="k">— walked through the <b>recorded order book</b>
       at entry and at exit, not a flat number: a long buys the ask and
       sells the bid, a short the reverse. Commission is the venue's
       per-symbol taker rate. Maker execution is not assumed — a limit
       order is not filled just because the price touched it.</span>
-      </div>
+      </div></details>
       <div class="stats">`
       + cell("round trip, median", st.exec_med_bp + " bp",
              st.exec_med_bp > 25 ? "bad" : "")
@@ -1621,14 +1643,14 @@ async function load() {
   }
   if (st.gift_n) {
     html += `<div class="gt">entry timing</div>`
-    + `<div class="note">entry timing
+    + `<details class="hint"><summary>how to read</summary><div class="note">entry timing
       <span class="k">— features end at the hour close, the cycle
       decides minutes later, and the trade is booked at that close.
       Positive means the recorded book entered <b>better</b> than it
       could have live. Measured only — not yet applied to the
       accounts, because the outcome is measured from the same close and
       moving one end alone would be worse than the flaw itself.</span>
-      </div>
+      </div></details>
       <div class="stats">`
       + cell("gift, median", st.gift_med_bp + " bp",
              st.gift_med_bp > 5 ? "bad" : "")
@@ -1658,10 +1680,11 @@ async function load() {
       return v == null ? "—" : (v/100).toFixed(2) + " %"; }],
   ];
   html += `<div class="gt">arms side by side</div>`
-    + `<div class="note">Same data, same universe, same hour, same
+    + `<details class="hint"><summary>how to read</summary>
+       <div class="note">Same data, same universe, same hour, same
        slots &mdash; only the model differs. The gap between the two
        columns is the <b>measurement error</b> made visible: neither
-       column is a result on its own.</div>`
+       column is a result on its own.</div></details>`
     + `<div class="scroll"><table class="cmp"><tr><th></th>`
     + `<th style="color:${ARMC.gbm}">ml (trees)</th>`
     + `<th style="color:${ARMC.nn}">ai (neural)</th></tr>`
