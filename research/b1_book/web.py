@@ -1208,6 +1208,12 @@ button,select{background:var(--panel);color:var(--ink);
  font:inherit;font-size:12px}
 button[aria-pressed=true]{border-color:var(--accent)}
 button:disabled{opacity:.4}
+/* Кнопка «открыть на графике» — ссылка, а не скрипт: она обязана
+   работать средним щелчком и держаться в закладке. Строка сделки в
+   таблице не отвечает на вопрос «а что там было с ценой». */
+a.open{color:var(--muted);text-decoration:none;border:1px solid var(--rule);
+ border-radius:6px;padding:1px 7px;font-size:11px}
+a.open:hover{color:var(--ink);border-color:var(--accent)}
 .bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;
  margin-bottom:8px}
 .scroll{overflow-x:auto}
@@ -1345,7 +1351,7 @@ canvas{width:100%;display:block;touch-action:pan-y}
         <th class="hide-s">mae</th><th>got</th><th>net</th>
         <th>unreal</th><th>dd</th>
         <th>$</th><th class="hide-s">state</th>
-        <th class="hide-s">unseen</th>
+        <th class="hide-s">unseen</th><th>chart</th>
       </tr></thead><tbody id="tb"></tbody>
     </table></div>
   </div>
@@ -1752,8 +1758,11 @@ async function load() {
         ? ` <span class="k">(${(t.closes_in_sec/3600).toFixed(1)} h
             left)</span>` : ""}</td>
       <td class="mono hide-s" style="color:var(--muted)">${t.odd == null ? "—"
-        : (t.odd*100).toFixed(0) + " %"}</td></tr>`;
-  }).join("") || `<tr><td colspan="16" style="color:var(--muted);
+        : (t.odd*100).toFixed(0) + " %"}</td>
+      <td><a class="open" href="/chart?k=${encodeURIComponent(KEY)}&sym=${
+        encodeURIComponent(t.sym)}&arm=${t.arm}&hour=${t.hour}&pretest=${
+        d.pretest ? 1 : 0}">open</a></td></tr>`;
+  }).join("") || `<tr><td colspan="17" style="color:var(--muted);
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
     `page ${d.page + 1} of ${d.pages}`;
@@ -1854,6 +1863,7 @@ td:first-child,th:first-child{text-align:left}
   <h1 id="ttl" class="mono">…</h1>
   <span id="syms"></span>
   <span class="sp"></span>
+  <span id="marm"></span>
   <button id="fit">весь период</button>
   <button id="live" aria-pressed="true">следить за краем</button>
   <a class="btn" href="/" id="home">overview</a>
@@ -1870,6 +1880,7 @@ td:first-child,th:first-child{text-align:left}
   <span><span class="sw" style="border-color:var(--ask)"></span>стоп</span>
   <span><span class="sw" style="border-color:var(--bid)"></span>цель</span>
   <span><span class="sw" style="border-color:var(--ink)"></span>вход и выход</span>
+  <span id="mleg"></span>
 </div>
 <div class="panel">
   <div class="cap"><span>итог бумажных сделок по этой монете</span>
@@ -1905,7 +1916,7 @@ const HIST = {trades:[], stats:null, by_rule:{}, by_ver:[], equity:[],
 // trades поднимаются за трое суток — график обрывался там, где кончался
 // буфер, и прошлые trades смотреть было не на чем. Тянется один раз на
 // символ, живые candles ложатся поверх.
-const HC = {sym:"", cand:[], busy:false, hours:24};
+const HC = {sym:"", cand:[], busy:false, hours:24, end:0};
 // Единица кривой счёта: базисные пункты — сколько денег при равном
 // размере позиции, R — сколько при равном риске на сделку. Это разные
 // вопросы, поэтому переключатель, а не выбор раз и навсегда.
@@ -1920,7 +1931,9 @@ let EQR = false;
 const REC = {on:true, busy:false, data:null, timer:null, sym:"", err:0};
 function wipe() { ST.cand=[]; ST.since=0; HIST.trades=[]; HIST.stats=null;
                   HIST.by_rule={}; HIST.equity=[]; HIST.at=0;
-                  HC.sym=""; HC.cand=[]; REC.data=null; REC.sym=""; }
+                  HC.sym=""; HC.cand=[]; HC.end=0;
+                  MDL.trades=[]; MDL.sym=""; MDL.at=0;
+                  REC.data=null; REC.sym=""; }
 
 async function pullRec(go) {
   if (REC.busy || !sym) return;
@@ -2026,15 +2039,22 @@ function shown() {
               equity: d.equity || [], rec: true} : HIST;
 }
 
-async function pullHistory(s) {
-  if (HC.busy || HC.sym === s) return;
+async function pullHistory(s, end) {
+  const want = Math.round(end || 0);
+  if (HC.busy || (HC.sym === s && HC.end === want)) return;
   HC.busy = true;
   try {
     const r = await fetch(`/candles?k=${encodeURIComponent(KEY)}&sym=${s}`
-      + `&hours=${HC.hours}`);
+      + `&hours=${HC.hours}` + (want ? `&end=${want}` : ""));
     if (!r.ok) throw new Error("HTTP " + r.status);
     const h = await r.json();
-    if (h.sym === s) { HC.cand = h.candles || []; HC.sym = s; draw(); }
+    if (h.sym === s) {
+      HC.cand = h.candles || []; HC.sym = s; HC.end = want;
+      // Окно под сделку ставится ПОСЛЕ того, как пришли её свечи:
+      // раньше ставить не на чем — номера баров считаются по ряду.
+      if (want) fitFocus();
+      draw();
+    }
   } catch (e) { /* тихо: живые candles всё равно рисуются */ }
   finally { HC.busy = false; }
 }
@@ -2067,21 +2087,98 @@ async function history() {
 // Сделки МОДЕЛИ — отдельным запросом и отдельным слоем. Мешать их с
 // бумажными сделками детектора нельзя: это два разных механизма, и
 // одна таблица на двоих однажды сложила бы их статистику.
-const MDL = {trades: [], at: 0, busy: false, pretest: false};
+//
+// Рука выбирается, а не показывается вся: у двух моделей турнира сделки
+// идут в одни и те же часы по одним и тем же монетам, и нарисованные
+// вместе они ложатся друг на друга — вход одной закрывает вход другой,
+// и по картинке не сказать, чья она. Переключатель, а не «обе», именно
+// поэтому.
+const ARMS = [["gbm", "ml"], ["nn", "ai"]];
+const MDL = {trades: [], at: 0, busy: false, pretest: false, sym: "",
+             arm: (Q.get("arm") === "nn" ? "nn" : "gbm"),
+             // Просьба показать одну конкретную сделку: рука и час
+             // сигнала из ссылки в таблице.
+             hour: Q.get("hour") || "",
+             want: (Q.get("pretest") == null ? null
+                    : Q.get("pretest") !== "0"),
+             fit: false};
+// Сделка, ради которой страницу открыли. Ищется по руке и часу: пара
+// (рука, час, монета) единственна по построению — цикл выбирает шесть
+// имён на час, повторов в часе нет.
+function focused() {
+  if (!MDL.hour) return null;
+  return MDL.trades.find(t => t.arm === MDL.arm && t.hour === MDL.hour)
+    || null;
+}
+function modelTrades() {
+  return MDL.trades.filter(t => t.arm === MDL.arm);
+}
 async function pullModelTrades() {
-  if (MDL.busy || Date.now() - MDL.at < 60000) return;
+  // Своя монета — свой запрос, поэтому условие на свежесть проверяется
+  // ВМЕСТЕ с монетой: иначе смена монеты в течение минуты оставляла бы
+  // на графике сделки прежней.
+  if (MDL.busy || (MDL.sym === sym && Date.now() - MDL.at < 60000)) return;
   MDL.busy = true;
   try {
-    const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
+    // Полная история по монете, а не последние двадцать из состояния:
+    // страницу открывают ради сделки, которой может быть неделя.
+    const p = new URLSearchParams({k: KEY, sym: sym, per: 500});
+    // Источник передаётся ссылкой из таблицы: выбор «предпросмотр или
+    // боевая» делается на сервере по наличию сделок, и два запроса
+    // могли бы попасть в разные контуры — на графике оказались бы
+    // сделки не той модели, ничем себя не выдав.
+    if (MDL.want != null) p.set("pretest", MDL.want ? 1 : 0);
+    const r = await fetch("/model_trades?" + p.toString());
     const d = await r.json();
-    // Предпросмотр показываем, если он есть: боевая модель молчит до
-    // накопления истории, и пустой слой читался бы как поломка.
-    const src = (d.pretest && (d.pretest.trades||[]).length) ? d.pretest : d;
-    MDL.pretest = src === d.pretest;
-    MDL.trades = (src.trades || []).filter(t => t.sym === sym);
-    MDL.at = Date.now();
+    MDL.pretest = !!d.pretest;
+    MDL.trades = (d.rows || []).filter(t => t.sym === sym);
+    MDL.sym = sym; MDL.at = Date.now();
+    armButtons();
+    // Окно графика под сделку — только когда она нашлась.
+    if (focused() && !MDL.fit) { MDL.fit = true; fitFocus(); }
   } catch (e) { /* тихо: следующий круг попробует снова */ }
   finally { MDL.busy = false; }
+}
+
+function armButtons() {
+  const n = {};
+  for (const [a] of ARMS) n[a] = MDL.trades.filter(t => t.arm === a).length;
+  document.getElementById("marm").innerHTML = ARMS.map(([a, name]) =>
+    `<button data-arm="${a}" aria-pressed="${a === MDL.arm}"
+      title="сделки модели: показывается одна рука">${name} ${n[a]}</button>`
+  ).join(" ");
+  document.querySelectorAll("[data-arm]").forEach(b => b.onclick = () => {
+    MDL.arm = b.dataset.arm;
+    // Рука остаётся в адресе: страницу перезагружают и кладут в
+    // закладки, и молча вернуться к другой руке значит показать не те
+    // сделки под тем же адресом.
+    const q = new URLSearchParams(location.search);
+    q.set("arm", MDL.arm);
+    window.history.replaceState(null, "", "?" + q.toString());
+    // Час остаётся в ссылке, но у другой руки в этом часе сделка своя
+    // (или её нет вовсе) — окно не двигаем, чтобы переключение не
+    // уводило взгляд.
+    armButtons(); draw();
+  });
+}
+
+// Окно графика по сделке: удержание плюс час с каждого края. Свечи для
+// него приходят отдельным запросом — живое окно кончается «сейчас», а
+// сделка может быть недельной давности.
+function focusEnd() {
+  const t = focused();
+  return t && t.closes_at ? t.closes_at + 3600 : 0;
+}
+function fitFocus() {
+  const t = focused(), c = cands();
+  if (!t || !c.length) return;
+  const a = barAt(c, t.opened_at - 1800);
+  const b = barAt(c, (t.closes_at || t.opened_at) + 1800);
+  if (b <= a) return;
+  view = {i0: a, n: Math.max(15, b - a + 1)};
+  follow = false;
+  document.getElementById("live").setAttribute("aria-pressed", "false");
+  draw();
 }
 
 async function pull() {
@@ -2111,7 +2208,7 @@ async function pull() {
   ST.since = d.now || ST.since;
   data = d;
   history();
-  pullHistory(d.sym);
+  pullHistory(d.sym, focusEnd());
   // Смена монеты и перезагрузка страницы стирают пересчёт из памяти —
   // но не с сервера. Просим готовое (`go=0`): запускать трёхминутный
   // прогон при каждом открытии графика было бы издевательством.
@@ -2127,6 +2224,11 @@ async function pull() {
       x.replace("USDT","")}</button>`).join(" ");
   document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
     sym = b.dataset.s; view = null; follow = true; wipe(); ST.sym = sym;
+    // Просьба показать конкретную сделку относилась к прежней монете.
+    // Оставить её значило бы держать окно графика в прошлом на монете,
+    // где этой сделки не было вовсе.
+    MDL.hour = ""; MDL.fit = false;
+    document.getElementById("live").setAttribute("aria-pressed", "true");
     window.history.replaceState(
       null, "", `?k=${encodeURIComponent(KEY)}&sym=${sym}`);
     pull();
@@ -2157,7 +2259,12 @@ function cands() {
   // версия свежее файловой, и она обязана победить.
   const live = (data && data.sig && data.sig.candles) || [];
   if (!HC.cand.length) return live;
-  return mergeCandles(HC.cand, live);
+  // Окно под старую сделку кончается в прошлом, и живые свечи в него не
+  // входят вовсе. Подмешать их значило бы склеить два далёких куска в
+  // один ряд: график молча показал бы «сделку и сегодняшний день»
+  // соседними барами, а разрыв в неделю не увидеть никак.
+  const use = HC.end ? live.filter(c => c[0] <= HC.end) : live;
+  return mergeCandles(HC.cand, use);
 }
 function trades() {
   // ФАКТ: что действительно случилось.
@@ -2182,6 +2289,13 @@ function pct(v) {
   const d = Math.abs(v) >= 10 ? 2 : 3;
   return (v > 0 ? "+" : "") + (v / 100).toFixed(d) + " %";
 }
+// Цена выхода у сделки модели своей колонкой не записана: разбор пишет
+// ХОД цены за удержание, а это то же самое число с другой стороны.
+// Считать его здесь — не вторая копия расчёта, а перевод единицы.
+function mdlExit(t) {
+  return (t.entry_px && t.got_bp != null)
+    ? t.entry_px * (1 + t.got_bp / 10000) : null;
+}
 function res(m) {
   return m.pnl_bp == null ? `<span style="color:var(--muted)">—</span>`
     : `<span class="${m.pnl_bp>0?"buy":"sell"}">${pct(m.pnl_bp)} · ${
@@ -2200,6 +2314,9 @@ function draw() {
     g.fillStyle = css("--muted"); g.font = "13px system-ui";
     g.textBaseline = "middle";
     g.fillText("копим историю — candles появятся через пару минут", 12, H/2);
+    // Пустой график при открытой сделке обязан объясниться: иначе
+    // «записи за это время нет» неотличимо от «страница не работает».
+    modelNote([], 0, 0);
     return;
   }
   if (!view) view = { i0: Math.max(0, c.length-90), n: Math.min(90, c.length) };
@@ -2223,6 +2340,16 @@ function draw() {
     // У отвергнутого входа стопа и цели нет вовсе — их и не построили.
     const vs = [m.entry, m.stop, m.target].filter(v => v != null);
     lo=Math.min(lo, ...vs); hi=Math.max(hi, ...vs); }
+  // Цены сделок модели входят в масштаб наравне со свечами: иначе
+  // сделка, чей вход ушёл за край окна, молча не рисуется — и это
+  // неотличимо от «сделки не было».
+  const MT = modelTrades();
+  for (const t of MT) {
+    if (!t.entry_px || t.opened_at > t1+3600
+        || (t.closes_at || t.opened_at) < t0-3600) continue;
+    const vs = [t.entry_px, mdlExit(t)].filter(v => v != null);
+    lo=Math.min(lo, ...vs); hi=Math.max(hi, ...vs);
+  }
   const pad=(hi-lo)*0.06||1e-9; lo-=pad; hi+=pad;
   const y = v => padT + ph*(hi-v)/(hi-lo);
   const x = i => padL + pw*(i-i0+0.5)/(i1-i0);
@@ -2305,29 +2432,58 @@ function draw() {
     const h2=Math.max(yb-ya,20);
     HIT.push({m, x0:xa-10, x1:xb, y0:(ya+yb)/2-h2/2, y1:(ya+yb)/2+h2/2});
   }
-  // Слой сделок модели: вход — треугольник на своём часе, срок
-  // закрытия — пунктир. Форма и цвет иные, чем у детектора, чтобы два
-  // механизма нельзя было спутать глазами.
-  for (const t of MDL.trades) {
-    if (!t.opened_at || t.opened_at < t0 - 3600 || t.opened_at > t1 + 3600)
-      continue;
-    const xa = xt(t.opened_at);
+  // Слой сделок модели: вход — треугольник НА ЦЕНЕ входа, удержание —
+  // линия до срока закрытия, выход — квадрат на цене выхода. Прежде
+  // вход рисовался значком у нижнего края: видно было, что сделка
+  // была, и не видно, по какой цене и чем кончилась, — то есть на
+  // главный вопрос «а что там было с ценой» график не отвечал.
+  //
+  // Показывается ОДНА рука (переключатель ml/ai): у двух моделей сделки
+  // идут в те же часы по тем же монетам и ложатся друг на друга.
+  const foc = focused();
+  for (const t of MT) {
+    if (!t.opened_at || !t.entry_px) continue;
+    const end = t.closes_at || t.opened_at;
+    if (end < t0 - 3600 || t.opened_at > t1 + 3600) continue;
+    const xa = clamp(xt(t.opened_at));
+    const xb = clamp(xt(Math.min(end, t1 + 60)));
+    const ye = y(t.entry_px), ex = mdlExit(t);
     const up = t.side === "long";
     const col = t.state === "закрыта"
       ? ((t.net_bp || 0) > 0 ? css("--bid") : css("--ask"))
       : css("--accent");
-    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.5;
-    const yb = up ? H - padB - 8 : padT + 8;
+    const me = foc && foc.hour === t.hour;
+    g.save();
+    g.strokeStyle = col; g.fillStyle = col;
+    g.globalAlpha = (foc && !me) ? 0.35 : 1;
+    g.lineWidth = me ? 2.2 : 1.3;
+    // Удержание: от входа до срока закрытия по цене входа. Так видно,
+    // сколько цена стояла выше линии и сколько ниже.
+    g.setLineDash(me ? [] : [4,3]);
+    g.beginPath(); g.moveTo(xa, ye); g.lineTo(Math.max(xb, xa+2), ye);
+    g.stroke(); g.setLineDash([]);
+    // Треугольник смотрит в сторону позиции: лонг вверх, шорт вниз.
+    const d = up ? -1 : 1;
     g.beginPath();
-    g.moveTo(xa, yb + (up ? -9 : 9));
-    g.lineTo(xa - 5, yb); g.lineTo(xa + 5, yb); g.closePath();
+    g.moveTo(xa, ye + 10*d); g.lineTo(xa - 5, ye); g.lineTo(xa + 5, ye);
+    g.closePath();
     if (t.state === "закрыта") g.fill(); else g.stroke();
-    if (t.closes_at && t.closes_at <= t1 + 3600) {
-      g.setLineDash([3,3]);
-      g.beginPath(); g.moveTo(xa, yb); g.lineTo(xt(t.closes_at), yb);
-      g.stroke(); g.setLineDash([]);
+    let drew = null;
+    if (ex != null && ex >= lo && ex <= hi) {
+      g.fillRect(xb - 3, y(ex) - 3, 6, 6);
+      g.save(); g.globalAlpha = g.globalAlpha * .6; g.setLineDash([2,3]);
+      g.beginPath(); g.moveTo(xb, ye); g.lineTo(xb, y(ex)); g.stroke();
+      g.restore();
+      drew = ex;
     }
-    HIT.push({mdl: t, x0: xa-7, x1: xa+7, y0: yb-11, y1: yb+11});
+    g.restore();
+    const yl = Math.min(ye, ex == null ? ye : y(ex));
+    const yh = Math.max(ye, ex == null ? ye : y(ex));
+    // `exit` проставляется ТОЛЬКО ветвью, которая его нарисовала:
+    // иначе проверка «выход виден» смотрела бы на исходные данные, а не
+    // на картинку, и прошла бы на графике без единого выхода.
+    HIT.push({mdl: t, exit: drew, x0: xa-7, x1: Math.max(xb, xa+7),
+              y0: yl-12, y1: yh+12});
   }
   g.fillStyle = css("--muted"); g.textBaseline="alphabetic";
   g.fillText(stamp(t0), padL, H-6);
@@ -2350,9 +2506,46 @@ function draw() {
          + `правило не взяло (полый треугольник)` : "")
     + (off ? ` · ${off} вне окна графика` : "")
     + (old ? ` · ${old} по прежним правилам` : "")
-    + (MDL.trades.length
-       ? ` · ${MDL.trades.length} сделок модели`
-         + (MDL.pretest ? " (pre-testing)" : "") : "");
+    + (MT.length
+       ? ` · ${MT.length} сделок модели`
+         + ` (${MDL.arm === "nn" ? "ai" : "ml"}`
+         + (MDL.pretest ? ", pre-testing" : "") + ")" : "");
+  modelNote(MT, first, last);
+}
+
+// Что со сделкой, ради которой открыли страницу. Молчание здесь —
+// худший из отказов: график показывает какое-то окно, сделки на нём
+// нет, и по виду это неотличимо от «сделка была неудачной и незаметной».
+function modelNote(MT, first, last) {
+  const box = document.getElementById("mleg");
+  if (!MDL.hour) {
+    box.innerHTML = MT.length
+      ? `<span><span class="sw" style="border-color:var(--accent)"></span>
+         сделка модели: вход &#9650;, удержание — линия, выход
+         &#9632;</span>` : "";
+    return;
+  }
+  if (!MDL.sym) { box.innerHTML = "<span>тяну сделки модели…</span>"; return; }
+  const t = focused();
+  if (!t) {
+    // Час есть, сделки нет: у другой руки в этом часе своей сделки не
+    // было. Это ответ, а не пустота, и сказать его надо словами.
+    box.innerHTML = `<span style="color:var(--ask)">у руки ${
+      MDL.arm === "nn" ? "ai" : "ml"} в часе ${MDL.hour} сделки нет —
+      переключите руку</span>`;
+    return;
+  }
+  // Пока свечи за это окно не пришли, говорить «записи нет» нельзя:
+  // ожидание и отсутствие выглядели бы одинаково.
+  if (HC.busy || HC.end !== Math.round(focusEnd())) {
+    box.innerHTML = "<span>тяну свечи за это окно…</span>"; return;
+  }
+  const seen = t.opened_at >= first && t.opened_at <= last;
+  box.innerHTML = seen
+    ? `<span>показана сделка ${MDL.hour} · ${
+        t.side === "long" ? "лонг" : "шорт"} · ${t.state}</span>`
+    : `<span style="color:var(--ask)">записи цен за ${MDL.hour} нет —
+       сбор по этой монете начался позже</span>`;
 }
 
 function rows() {
@@ -2588,6 +2781,10 @@ document.getElementById("unit").onclick = e => {
 // Тумблера нет: вид один — всё под нынешними правилами.
 localStorage.removeItem("rec");
 window.addEventListener("resize", () => { draw(); drawEq(); });
+// Переключатель рук рисуется сразу, до первого ответа: кнопка, которая
+// появляется только при удачном запросе, при неудачном неотличима от
+// «такой возможности нет».
+armButtons();
 pull(); setInterval(pull, 1000);
 </script>
 """
@@ -2673,8 +2870,13 @@ def serve(collector, port, token, log):
                     n = int(float(q.get("hours", ["12"])[0]))
                 except ValueError:
                     n = 12
+                try:
+                    end = float(q.get("end", [""])[0])
+                except ValueError:
+                    end = None
                 return self._ok(json.dumps(
-                    collector.candles_files(q.get("sym", [None])[0], n),
+                    collector.candles_files(q.get("sym", [None])[0], n,
+                                            end=end),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/trades":

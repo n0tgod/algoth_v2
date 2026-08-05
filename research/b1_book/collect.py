@@ -920,12 +920,19 @@ class Collector:
                                         if x.ready),
                            "disk": self.disk_view()}}
 
-    def candles_files(self, sym, hours=12):
+    def candles_files(self, sym, hours=12, end=None):
         """Минутные свечи из записей — история глубже памяти сборщика.
 
         В памяти живут несколько часов посекундной истории, а сделки
         поднимаются за трое суток: график обрывался там, где кончался
         буфер, и прошлые сделки посмотреть было не на чем.
+
+        `end` — конец окна. Он нужен потому, что сделку открывают из
+        таблицы, а таблица помнит недели: у сделки недельной давности
+        «последние N часов» не содержат ни одной её свечи, и график
+        показал бы пустоту там, где запись есть. Вперёд окно не
+        уезжает — будущих свечей не существует, и просьба о них
+        означала бы ошибку в вызывающем, а не пустой ответ.
 
         Закрытый час неизменен, поэтому его свечи считаются один раз и
         кладутся в память. Текущий час пересчитывается каждый запрос —
@@ -933,7 +940,11 @@ class Collector:
         """
         sym = sym if sym in self.books else self.symbols[0]
         now = time.time()
-        hh = [datetime.fromtimestamp(now - i * 3600, timezone.utc)
+        try:
+            anchor = min(float(end), now) if end else now
+        except (TypeError, ValueError):
+            anchor = now
+        hh = [datetime.fromtimestamp(anchor - i * 3600, timezone.utc)
               .strftime("%Y-%m-%d-%H")
               for i in range(int(max(1, min(hours, 72))), -1, -1)]
         cur = self.w.hour(now)
@@ -952,7 +963,12 @@ class Collector:
                             self.ccache.pop(k, None)
             out += got
         out.sort(key=lambda c: c[0])
-        return {"sym": sym, "candles": out, "hours": len(hh)}
+        # `end` возвращается тем, что было применено: страница просит
+        # окно и обязана уметь отличить «записи за это время нет» от
+        # «сервер про окно не знает и отдал свежее». Первое — правда о
+        # данных, второе — дефект, и по пустому списку они неотличимы.
+        return {"sym": sym, "candles": out, "hours": len(hh),
+                "end": anchor}
 
     def rec_path(self):
         return os.path.join(self.w.root, "recount.json")

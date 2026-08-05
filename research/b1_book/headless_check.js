@@ -10,11 +10,21 @@
 // проверялся бы только первый кадр, а склейка, ради которой всё и
 // затевалось, не выполнялась бы ни разу.
 //
-//     node research/b1_book/headless_check.js <файл-со-страницей>
+//     node research/b1_book/headless_check.js <файл-со-страницей> [?строка]
+//
+// Второй аргумент — строка запроса страницы. Она нужна не для полноты:
+// график открывают ССЫЛКОЙ на конкретную сделку, и весь этот путь —
+// выбор руки, окно свечей в прошлом, подгонка вида — исполняется
+// только когда параметры есть. Без аргумента проверялся бы живой режим,
+// а открытая по ссылке страница падала бы у владельца.
 const fs = require("fs");
 const src = fs.readFileSync(process.argv[2], "utf8");
+const SEARCH = process.argv[3] || "?k=xxx&sym=BTCUSDT";
 const js = src.match(/<script>\n([\s\S]*)<\/script>/)[1];
 const isChart = /id="px"/.test(src);
+const isTrades = /id="tb"/.test(src);
+// Страницу открыли ссылкой на конкретную сделку модели.
+const FOCUS = /hour=/.test(SEARCH);
 
 const ctx = new Proxy({}, { get: (t, k) => {
   if (k === "canvas") return { clientWidth: 900 };
@@ -45,7 +55,7 @@ global.document = {
   querySelector: () => mkEl(), querySelectorAll: () => [],
   createElement: () => mkEl(), addEventListener: () => {},
 };
-global.location = { search: "?k=xxx&sym=BTCUSDT" };
+global.location = { search: SEARCH };
 global.history = { replaceState: () => {} };
 global.window = { devicePixelRatio: 2, addEventListener: () => {},
                   history: global.history, location: global.location };
@@ -61,7 +71,11 @@ global.devicePixelRatio = 2;
 global.setInterval = () => 0;          // такт даём сами, вручную
 global.requestAnimationFrame = f => f();
 
-const T0 = 1785440000;
+// Свечи и сделки модели обязаны лежать в одном времени: иначе слой
+// сделок не рисуется вовсе по фильтру окна, и проверка «сделка видна на
+// графике» проходит вхолостую. Час подставных сделок — 2026-08-03,
+// поэтому и край свечей там же.
+const T0 = Date.UTC(2026, 7, 3, 23, 30) / 1000;
 const trade = (i, closed) => ({
   id: "BTCUSDT-" + i, t: T0 - 600 + i, sym: "BTCUSDT", side: -1, long: true,
   entry: 64700, stop: 64600, target: 64900, level: 64700, kind: "полка",
@@ -70,8 +84,9 @@ const trade = (i, closed) => ({
   pnl_bp: closed ? 20.5 : 0.0, r: closed ? 1.3 : 0.0,
   exit: closed ? 64900 : null, closed_at: closed ? T0 - 400 + i : null,
 });
-const candles = n => Array.from({length: n}, (_, i) =>
-  [T0 - (n - i) * 60, 64700, 64720, 64680, 64710, 1234.5]);
+const candlesTo = (end, n) => Array.from({length: n}, (_, i) =>
+  [end - (n - i) * 60, 64700, 64720, 64680, 64710, 1234.5]);
+const candles = n => candlesTo(T0, n);
 const state = (full, n) => ({
   sym: "BTCUSDT", symbols: ["BTCUSDT", "ETHUSDT"], now: T0 + (full ? 0 : 1),
   book: {s: "BTCUSDT", bid: 64700, ask: 64700.1, upd: 5,
@@ -153,7 +168,6 @@ let full = true, calls = 0;
 const seen = [];
 global.fetch = async (url) => {
   calls++; seen.push(url);
-  const NOW = Math.floor(Date.now()/1000);
   const body = url.startsWith("/model_marks")
              ? {source: "model_pretest", at: Date.UTC(2026,7,3,19,30)/1000,
                 rows: [{arm: "gbm", hour: "2026-08-03-18",
@@ -162,7 +176,7 @@ global.fetch = async (url) => {
                         closes_in_sec: 13800}]}
              : url.startsWith("/model_trades")
              ? {source: "model_pretest", pretest: true, page: 0, per: 100,
-                total: 2, pages: 1, filtered: false, grand_total: 2,
+                total: 3, pages: 1, filtered: false, grand_total: 3,
                 // Кривая счёта: четыре числа на точку — метка,
                 // эквити и границы корзины. Полоса между ними и
                 // есть провал, который иначе исчез бы при
@@ -216,15 +230,30 @@ global.fetch = async (url) => {
                    closes_at: Date.UTC(2026,7,3,23)/1000,
                    state: "открыта", expected_bp: 373, mae_bp: -50,
                    closes_in_sec: 13800, lag_sec: 313, odd: 0.03,
-                   entry_px: 100.0, cur_px: 101.0,
+                   entry_px: 64700, cur_px: 64710,
                    unreal_bp: 100.0, unreal_net_bp: 89.0,
                    dd_bp: -155.0, dd_hours: 1, dd_usd: -6.5, dd_cap_bp: -6.5},
-                  {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
-                   side: "short", opened_at: NOW-7800, closes_at: NOW-1400,
+                  // Закрытая сделка со СВОЕЙ ценой входа и ходом цены:
+                  // из этой пары график и строит выход. Без них слой
+                  // рисовал бы только вход, и потеря выхода прошла бы
+                  // незамеченной.
+                  {arm: "gbm", hour: "2026-08-03-14", sym: "BTCUSDT",
+                   side: "short",
+                   opened_at: Date.UTC(2026,7,3,15)/1000,
+                   closes_at: Date.UTC(2026,7,3,19)/1000,
                    state: "закрыта", expected_bp: -725, mae_bp: 90,
-                   got_bp: 40, net_bp: -51, pnl: -0.85,
+                   entry_px: 64700, got_bp: 40, net_bp: -51, pnl: -0.85,
                    dd_bp: -412.0, dd_hours: 4, dd_usd: -17.2,
-                   dd_cap_bp: -17.2}]}
+                   dd_cap_bp: -17.2},
+                  // Вторая рука в ТОТ ЖЕ час: ровно тот случай, ради
+                  // которого заведён переключатель — нарисованные
+                  // вместе, эти две сделки легли бы друг на друга.
+                  {arm: "nn", hour: "2026-08-03-14", sym: "BTCUSDT",
+                   side: "long",
+                   opened_at: Date.UTC(2026,7,3,15)/1000,
+                   closes_at: Date.UTC(2026,7,3,19)/1000,
+                   state: "закрыта", expected_bp: 210, mae_bp: -40,
+                   entry_px: 64700, got_bp: 40, net_bp: 29, pnl: 0.48}]}
              : url.startsWith("/trades") ? hist
              : url.startsWith("/recount") ? recount
              : url.startsWith("/groups")
@@ -281,7 +310,16 @@ global.fetch = async (url) => {
                     thoughts: [{at: "08-03 19:30", text: "предпросмотр"}],
                     ic: []}}
              : url.startsWith("/candles")
-               ? {sym: "BTCUSDT", candles: candles(1440), hours: 24}
+               // Окно уважается: сервер умеет отдавать прошлое, и
+               // подставной ответ обязан вести себя так же. Отдавай он
+               // всегда свежее — проверка «сделка недельной давности
+               // видна» проходила бы вхолостую на сломанном сервере.
+               ? (() => {
+                   const m = /[?&]end=(\d+)/.exec(url);
+                   const e = m ? Math.min(+m[1], T0) : T0;
+                   return {sym: "BTCUSDT", candles: candlesTo(e, 1440),
+                           hours: 24, end: e};
+                 })()
                : state(full, 60);
   return {ok: true, json: async () => body};
 };
@@ -320,6 +358,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? () => HIT : null;"
                 + "\nglobal.__barAt = typeof barAt === 'function' "
                 + "? barAt : null;"
+                // Слой сделок МОДЕЛИ: рука, найденная сделка и то,
+                // отпущено ли слежение за краем. Проверять его по
+                // разметке нельзя — он рисуется на canvas, а тот
+                // заглушен; единственное свидетельство отрисовки —
+                // записи в HIT и состояние самой страницы.
+                + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
+                + "\nglobal.__focused = typeof focused === 'function' "
+                + "? focused : null;"
+                + "\nglobal.__follow = () => typeof follow !== 'undefined' "
+                + "? follow : null;"
                 + "\nglobal.__table = typeof shownTrades === 'function' "
                 + "? shownTrades : (typeof shown === 'function' "
                 + "? () => shown().trades : null);"
@@ -348,7 +396,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Обе страницы обязаны сходить и за состоянием, и за историей сделок.
   // Функция, которая определена и не вызывается ни откуда, — отказ,
   // неотличимый от «сделок пока нет»: панель просто пустая.
-  const isTrades = seen.some(u => u.startsWith("/model_trades"));
+  //
+  // Какая это страница, решает РАЗМЕТКА, а не список запросов. Прежде
+  // признаком служил запрос `/model_trades`, и стоило графику пойти за
+  // сделками модели — он тут же был принят за страницу сделок, и на
+  // него посыпались чужие требования. Признак, выводимый из поведения,
+  // ломается от изменения поведения; разметка страницы — это она сама.
   if (!isTrades && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   if (global.__pretest) {
@@ -416,6 +469,46 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // смотреть не на чем.
   if (isChart && !seen.some(u => u.startsWith("/candles")))
     bad.push("график не запросил историю свечей (/candles)");
+  // Сделки модели на графике. Это не украшение: страницу открывают
+  // ссылкой из таблицы ради ответа «а что было с ценой», и слой,
+  // который молча не рисуется, неотличим от «сделок по этой монете нет».
+  if (isChart) {
+    if (!seen.some(u => u.startsWith("/model_trades")))
+      bad.push("график не запросил сделок модели");
+    const M = global.__mdl, drawn = (global.__hit ? global.__hit() : [])
+      .filter(h => h.mdl);
+    if (!M) bad.push("график не держит слоя сделок модели");
+    else {
+      if (!drawn.length)
+        bad.push("сделки модели не нарисованы ни одной");
+      // Рука ОДНА. Две модели выбирают в один час по одной монете, и
+      // нарисованные вместе они ложатся друг на друга — вход одной
+      // закрывает вход другой, и чья это сделка, по картинке не сказать.
+      else if (!drawn.every(h => h.mdl.arm === M.arm))
+        bad.push("на графике сделки обеих рук: "
+                 + drawn.map(h => h.mdl.arm).join(", "));
+      // И выход обязан быть нарисован, а не только вход: иначе видно,
+      // что сделка была, и не видно, чем кончилась.
+      const cl = drawn.find(h => h.mdl.state === "закрыта");
+      if (cl && cl.exit == null)
+        bad.push("у закрытой сделки не нарисован выход");
+      // Открытая по ссылке страница: рука из ссылки, сделка найдена,
+      // окно свечей взято ЗА ПРОШЛОЕ и слежение за краем отпущено.
+      if (FOCUS) {
+        const want = /arm=nn/.test(SEARCH) ? "nn" : "gbm";
+        if (M.arm !== want)
+          bad.push(`рука из ссылки не выбрана: ${M.arm} вместо ${want}`);
+        if (!global.__focused || !global.__focused())
+          bad.push("сделка из ссылки не найдена среди загруженных");
+        if (!seen.some(u => /\/candles.*[?&]end=\d+/.test(u)))
+          bad.push("окно свечей под сделку не запрошено (нет end=)");
+        if (global.__follow() !== false)
+          bad.push("страница осталась следить за краем вместо сделки");
+        if (!drawn.some(h => h.mdl.hour === M.hour))
+          bad.push("сделка из ссылки не попала на график");
+      }
+    }
+  }
   if (isChart && global.__cands) {
     const all = global.__cands();
     if (all.length <= (st.cand || []).length)
@@ -593,8 +686,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!tr.length || !tr.every(m => String(m.id || "").startsWith("rec-")))
       bad.push(`показаны не пересчитанные сделки: ${tr.length} строк, `
                + `первая ${tr.length ? tr[0].id : "—"}`);
-    if (isChart) {
-      const drawn = global.__hit ? global.__hit() : null;
+    // Открытая по ссылке страница стоит окном на сделке модели, и
+    // сделок детектора в этом окне может не быть вовсе — требовать их
+    // там значит требовать, чтобы окно НЕ переехало.
+    if (isChart && !FOCUS) {
+      // Только сделки ДЕТЕКТОРА: в том же списке лежат теперь и сделки
+      // модели, а у них ни `id`, ни геометрии пересчёта нет вовсе.
+      const drawn = global.__hit ? global.__hit().filter(h => h.m) : null;
       if (!drawn || !drawn.length)
         bad.push("график не нарисовал ни одной сделки");
       else if (!drawn.every(h => String(h.m.id || "").startsWith("rec-")))

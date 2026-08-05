@@ -195,6 +195,7 @@ def test_view_does_not_reset_counter():
 
 def test_page_has_no_external_loads():
     """Страницы обязаны быть самодостаточными: сервер стоит в интернете."""
+    import re
     import web
     for name, src, api in (("обзор", web.PAGE, "/state?k="),
                            ("график", web.CHART, "/state?k="),
@@ -209,6 +210,14 @@ def test_page_has_no_external_loads():
           "/trades-page?k=" in web.PAGE)
     check("со страницы сделок есть возврат на обзор",
           'id="back"' in web.TRADES and "/?k=" in web.TRADES)
+    # Строка таблицы отвечает «сколько», но не «что там было с ценой».
+    # Ссылка обязана нести ВСЕ четыре опознавателя сделки: без руки на
+    # графике оказались бы обе модели, без источника — не тот контур.
+    link = re.search(r'href="/chart\?[^"]*"', web.TRADES)
+    check("из строки сделки открывается график: "
+          + (link.group(0)[:80] if link else "ссылки нет"),
+          bool(link) and all(p in link.group(0)
+                             for p in ("sym=", "arm=", "hour=", "pretest=")))
 
 
 def _tag_attrs(src, tag):
@@ -332,14 +341,23 @@ def test_pages_run_headless():
         print("  —    node не найден, проверка страниц пропущена")
         return
     d = tempfile.mkdtemp()
+    # График проверяется ДВАЖДЫ: живьём и открытым по ссылке на
+    # конкретную сделку. Второй путь — выбор руки, окно свечей в
+    # прошлом, подгонка вида — при первом прогоне не исполняется вовсе,
+    # и падение в нём досталось бы владельцу, а не проверке.
     try:
-        for name, src in (("обзор", web.PAGE), ("график", web.CHART),
-                      ("сделки", web.TRADES)):
+        for name, src, search in (
+                ("обзор", web.PAGE, None),
+                ("график", web.CHART, None),
+                ("график по ссылке на сделку", web.CHART,
+                 "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14&pretest=1"),
+                ("сделки", web.TRADES, None)):
             p = os.path.join(d, "p.html")
             with open(p, "w", encoding="utf-8") as f:
                 f.write(src)
             r = subprocess.run(
-                [node, os.path.join(HERE, "headless_check.js"), p],
+                [node, os.path.join(HERE, "headless_check.js"), p]
+                + ([search] if search else []),
                 capture_output=True, text=True, timeout=120)
             out = (r.stdout + r.stderr).strip().splitlines()
             check(f"{name}: {out[-1] if out else 'нет вывода'}",
@@ -446,6 +464,60 @@ def test_warm_start_restores_history():
               f"({len(b.mid['TEST'])} точек)",
               len(b.mid["TEST"]) > 100, str(len(b.mid["TEST"])))
         b.w.close()
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_candles_window_can_end_in_the_past():
+    """Свечи под сделку берутся из ЕЁ времени, а не из последних часов.
+
+    Сделку открывают из таблицы, а таблица помнит недели. Пока окно
+    считалось только назад от «сейчас», сделка позавчерашней давности
+    приходилась мимо: свечей за её время в ответе не было вовсе, и
+    график показывал пустоту там, где запись есть. Пустота при этом
+    неотличима от «сбор по монете начался позже» — то есть ошибка
+    выглядела бы как правда о данных.
+
+    Вперёд окно не уезжает: будущих свечей не существует, и просьба о
+    них означает ошибку в вызывающем, а не сдвиг ряда.
+    """
+    import shutil
+    import tempfile
+    import time as _time
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    try:
+        now = int(_time.time())
+        a = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        old = now - 30 * 3600           # вне суточного окна
+        for base, price in ((old, 50.0), (now - 3600, 90.0)):
+            for i in range(300):
+                t = {"ts": (base + i) * 1000, "s": "TEST", "side": 1,
+                     "p": price + 0.01 * (i % 7), "v": 1.0}
+                a.w.write("trades", "TEST", t, ts=t["ts"] / 1000.0)
+        a.w.close()
+
+        near = a.candles_files("TEST", hours=6)["candles"]
+        far = a.candles_files("TEST", hours=6, end=old + 600)["candles"]
+        check(f"без окна берутся свежие ({len(near)} свечей)",
+              near and all(c[0] > now - 7 * 3600 for c in near),
+              str(near[:1]))
+        check(f"с окном берутся свечи ТОГО времени ({len(far)} свечей)",
+              far and all(abs(c[0] - old) < 7 * 3600 for c in far),
+              str(far[:1]))
+        # Цена — свидетельство, что это разные куски записи, а не один
+        # и тот же ряд с другой подписью.
+        check("это разные куски записи, а не тот же ряд",
+              far and near and abs(far[0][4] - 50) < 1
+              and abs(near[0][4] - 90) < 1,
+              f"{far[0][4] if far else '—'} против "
+              f"{near[0][4] if near else '—'}")
+        ahead = a.candles_files("TEST", hours=6, end=now + 86400)["candles"]
+        check("окно в будущее прижато к «сейчас»",
+              ahead and all(c[0] <= now + 60 for c in ahead))
+        check("негодное значение окна не роняет ответ",
+              a.candles_files("TEST", hours=6, end="завтра") is not None)
     finally:
         shutil.rmtree(root, ignore_errors=True)
 
@@ -2124,6 +2196,7 @@ def main():
     test_nofile_covers_every_kind()
     test_health_is_one_definition()
     test_collected_symbols_are_not_lost()
+    test_candles_window_can_end_in_the_past()
     test_recount_survives_restart()
     print()
     if FAILED:
