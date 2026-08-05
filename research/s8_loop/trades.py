@@ -282,6 +282,9 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                 key = (arm, hour, p.get("sym"), side)
                 got, rv = done.get(key, (None, None))
                 t_close = (t0 + hold_h * 3600) if t0 is not None else None
+                # Книга входа: своя у выбора либо дописанная пересчётом.
+                cin = (p.get("cum") or (books or {}).get(
+                    (arm, hour, p.get("sym")), {}).get("in"))
                 tr = {
                     "arm": arm, "hour": hour, "sym": p.get("sym"),
                     "side": side,
@@ -305,14 +308,20 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                     # закрытия часа, и подменить один конец, оставив
                     # другой, значило бы завести дефект хуже чинимого.
                     # Сперва число, потом перенос всей цепочки.
-                    "px_live": p.get("px_live"),
-                    "gift_bp": _gift(p.get("px"), p.get("px_live"), side),
+                    # Середина в момент решения берётся из книги, если
+                    # своего поля у выбора нет: у сделок, пересчитанных
+                    # задним числом, история не правится вовсе, и
+                    # величина живёт только в дописанной книге. Без
+                    # этого подарок у них не считался бы — при том что
+                    # данные для него есть.
+                    "px_live": p.get("px_live") or (cin or {}).get("mid"),
+                    "gift_bp": _gift(p.get("px"),
+                                     p.get("px_live")
+                                     or (cin or {}).get("mid"), side),
                     # Книга в момент входа. Сама сделка её не считает —
                     # цена исполнения зависит от размера, а размер знает
                     # только счёт.
-                    "cum_in": (p.get("cum")
-                               or (books or {}).get(
-                                   (arm, hour, p.get("sym")), {}).get("in")),
+                    "cum_in": cin,
                     # Ожидаемый ход ПРОТИВ позиции — то, что модель
                     # обещает пережить. Без него ожидание читается как
                     # обещание пути, а это разные вещи.
