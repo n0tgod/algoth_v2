@@ -1182,13 +1182,19 @@ a{color:var(--accent)}
    пролистывалась ради семи величин. */
 .stats{display:grid;gap:0;border:1px solid var(--rule);
  border-radius:8px;overflow:hidden;
- grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
-.st{display:flex;justify-content:space-between;align-items:baseline;
- gap:10px;padding:4px 9px;min-width:0;
+ grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+/* Значение НИКОГДА не обрезается. Первая версия ставила
+   `text-overflow:ellipsis`, и составные величины («−2.09 % / −15.07 $»)
+   выходили как «−2.09 …»: число на странице есть, а прочитать его
+   нельзя. Это то же самое, что его не показать, только незаметно —
+   тот самый класс дефекта, от которого проект защищается везде.
+   Не влезло в строку — переносится целиком на следующую. */
+.st{display:flex;flex-wrap:wrap;align-items:baseline;gap:1px 10px;
+ padding:4px 9px;
  border-bottom:1px solid var(--rule);border-right:1px solid var(--rule)}
 .k{color:var(--muted);font-size:11.5px;white-space:nowrap}
 .v{font-size:13px;font-variant-numeric:tabular-nums;text-align:right;
- white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ white-space:nowrap;margin-left:auto}
 .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
 .good{color:var(--bid)} .bad{color:var(--ask)}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
