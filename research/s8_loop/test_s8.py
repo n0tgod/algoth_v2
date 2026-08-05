@@ -1291,16 +1291,26 @@ def test_backfill_recovers_the_book_for_old_trades():
               str([t.get("cost_basis") for t in before]))
 
         books = BF.Books(root)
-        n1, new = BF.stamp_picks(picks, books, lambda m: None)
-        n2, new = BF.stamp_reviews(revs, books, lambda m: None, out=new)
+        have = {}
+        want, jobs = BF.plan(picks, revs, have, lambda m: None)
+        check("план не поднимает историю, а только перечисляет моменты",
+              len(jobs) == 4 and len(want) == 4, f"{len(jobs)} {len(want)}")
+        got = books.collect(want)
+        new, miss = BF.stamp(jobs, got, lambda m: None)
         check("дописаны обе ноги на входе и на выходе",
-              n1 == 2 and n2 == 2, f"{n1} {n2}")
+              miss == 0 and len(new) == 2
+              and all({"in", "out"} <= set(v) for v in new.values()),
+              f"{miss} {new}")
         # История не тронута: пересчёт живёт в своём файле, а сделка
         # берёт книгу оттуда. Цикл дописывает `picks.jsonl` и поднимается
         # сторожем — переписать его значит однажды потерять час молча.
         check("история осталась нетронутой",
               all("cum" not in p for s_ in ("long", "short")
                   for p in picks[0][s_]), str(picks))
+        # Каждый символо-час читается ОДИН раз: первый прогон на сервере
+        # убил OOM-killer именно потому, что часы копились в памяти.
+        check("файл записи читается один раз на символо-час",
+              books.reads == len(want), f"{books.reads} против {len(want)}")
 
         after = TR.build(picks, revs, now=exit_ts + 3600, books=new)
         TR.account(after, "gbm", table={"AUSDT": 5.5, "BUSDT": 5.5})
@@ -1321,20 +1331,20 @@ def test_backfill_recovers_the_book_for_old_trades():
         check("плоский круг был мягче книжного",
               by["AUSDT"]["net_bp"] < 989.0, str(by["AUSDT"]["net_bp"]))
 
-        # Повторный проход ничего не дублирует и не переписывает.
-        check("пересчёт идемпотентен",
-              BF.stamp_picks(picks, books, lambda m: None, new)[0] == 0
-              and BF.stamp_reviews(revs, books, lambda m: None,
-                                   new)[0] == 0,
-              "дописал повторно")
+        # Повторный проход ничего не дублирует: уже дописанное в план не
+        # попадает вовсе, то есть и не читается.
+        w2, j2 = BF.plan(picks, revs, new, lambda m: None)
+        check("пересчёт идемпотентен", not j2 and not w2, f"{j2} {w2}")
 
         # Записи нет — сделка остаётся плоской, а не досчитывается.
         far = [{"arm": "gbm", "hour": "2020-01-01-00", "at_ts": 1577836800,
                 "long": [{"sym": "AUSDT", "fwd": 1.0, "px": 1.0}],
                 "short": []}]
-        n, extra = BF.stamp_picks(far, books, lambda m: None)
+        w3, j3 = BF.plan(far, [], {}, lambda m: None)
+        g3 = books.collect(w3)
+        n3, m3 = BF.stamp(j3, g3, lambda m: None)
         check("без записи книга не выдумывается",
-              n == 0 and not extra, f"{n} {extra}")
+              not n3 and m3 == 1, f"{n3} {m3}")
     finally:
         shutil.rmtree(root, ignore_errors=True)
 

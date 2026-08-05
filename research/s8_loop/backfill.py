@@ -44,16 +44,24 @@
 """
 
 import argparse
+import gzip
 import json
 import os
 import sys
 import time
+import zlib
 from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+RESEARCH = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
-sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
+sys.path.insert(0, os.path.dirname(RESEARCH))
+# Спасение испорченных архивов живёт у сборщика, и второй копии ему не
+# надо. Путь ставится ЗДЕСЬ, а не достаётся побочным эффектом чужого
+# импорта: работавший так модуль падает, стоит поменять порядок строк.
+sys.path.insert(0, os.path.join(RESEARCH, "b1_book"))
 
+import store as ST                                         # noqa: E402
 import summary as SM                                       # noqa: E402
 import trades as TR                                        # noqa: E402
 
@@ -85,120 +93,155 @@ def read_rows(path):
 
 
 class Books:
-    """Книга на момент, с памятью прочитанных часов.
+    """Книга на заданные моменты — потоком, без подъёма часа в память.
 
-    Час читается целиком (`store.read_hour` умеет спасать испорченные
-    архивы, и второй копии этой логики в проекте быть не должно), но
-    читается ОДИН раз: у трёхсот сделок моменты входа и выхода
-    ложатся на несколько десятков часов, и без памяти один и тот же
-    файл разбирался бы по два десятка раз.
+    Первая версия держала прочитанные часы в словаре, чтобы не читать
+    один файл дважды. На сервере это убил OOM-killer, и правильно: в
+    часе 3600 снимков, в снимке до двухсот уровней по каждой стороне,
+    то есть один символо-час — это сотни мегабайт объектов Python.
+    Десяток таких — и восьмигигабайтная машина кончилась. Тот же класс
+    ошибки, что в A2, где замер согласованности ног держал ряды
+    множествами.
+
+    Поэтому здесь наоборот: сначала собираются ВСЕ нужные моменты, потом
+    каждый символо-час читается ровно один раз потоком, и из него
+    остаётся только сжатая лесенка на нужную секунду. Память не зависит
+    от длины истории вовсе — она равна числу сделок.
     """
 
-    def __init__(self, root):
+    def __init__(self, root, log=None):
         self.root = root
-        self.cache = {}
-        self.reads = 0
+        self.log = log or (lambda m: None)
+        self.reads = self.rows = 0
 
-    def rows(self, sym, hour):
-        key = (sym, hour)
-        if key not in self.cache:
-            try:
-                self.cache[key] = SM.read_hour(
-                    os.path.join(self.root, "book", sym), hour)
-            except OSError:
-                self.cache[key] = []
-            self.reads += 1
-        return self.cache[key]
+    def _stream(self, path):
+        opener = gzip.open if path.endswith(".gz") else open
+        try:
+            with opener(path, "rt", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        yield json.loads(line)
+                    except ValueError:
+                        continue
+        except (OSError, EOFError, zlib.error) as e:
+            # Порченый архив — единственный случай, когда файл всё же
+            # поднимается целиком: спасение по членам живёт в `store`, и
+            # второй копии этой логики в проекте быть не должно.
+            self.log(f"  {os.path.basename(path)}: {e}, спасаю по членам")
+            for r in ST.read_jsonl(path, self.log):
+                yield r
 
-    def at(self, sym, ts, tol=120.0):
-        if ts is None:
-            return None
-        best = None
-        for back in (0, 3600):
-            h = datetime.fromtimestamp(
-                ts - back, timezone.utc).strftime("%Y-%m-%d-%H")
-            for r in self.rows(sym, h):
-                t = r.get("t")
-                if t is None or t > ts or ts - t > tol:
+    @staticmethod
+    def _hour(ts):
+        return datetime.fromtimestamp(
+            ts, timezone.utc).strftime("%Y-%m-%d-%H")
+
+    def collect(self, want, tol=120.0):
+        """`{(символ, час): [моменты]}` → `{(символ, момент): книга}`.
+
+        Момент может прийтись на первые секунды часа, где своих снимков
+        ещё нет, поэтому каждый ищется в своём часе и в предыдущем.
+        Дальше допуска снимок описывает уже другой рынок, и вернуть его
+        значило бы выдать соседний час за наш.
+        """
+        # План: у каждого файла — свои искомые моменты, включая те, чей
+        # час следующий. Так файл читается один раз, а не дважды.
+        plan = {}
+        for (sym, hour), tss in want.items():
+            for ts in tss:
+                for h in (self._hour(ts), self._hour(ts - 3600)):
+                    plan.setdefault((sym, h), set()).add(ts)
+        out, best = {}, {}
+        n = 0
+        for (sym, h), tss in sorted(plan.items()):
+            n += 1
+            if n % 25 == 0 or n == 1:
+                self.log(f"  чтение {n}/{len(plan)}: {sym} {h}")
+            d = os.path.join(self.root, "book", sym)
+            for suf in (".jsonl", ".jsonl.gz"):
+                path = os.path.join(d, h + suf)
+                if not os.path.exists(path):
                     continue
-                if not r.get("bid") or not r.get("ask"):
-                    continue
-                if best is None or t > best.get("t", 0):
-                    best = r
-            if best is not None:
-                break
-        if best is None:
-            return None
-        b = TR.cum_ladder(best.get("b"))
-        a = TR.cum_ladder(best.get("a"))
-        if not b or not a:
-            return None
-        return {"mid": (best["bid"] + best["ask"]) / 2.0,
-                "b": b, "a": a, "t": round(best.get("t") or ts, 1)}
+                self.reads += 1
+                for r in self._stream(path):
+                    self.rows += 1
+                    t = r.get("t")
+                    if t is None or not r.get("bid") or not r.get("ask"):
+                        continue
+                    for ts in tss:
+                        if t > ts or ts - t > tol:
+                            continue
+                        k = (sym, ts)
+                        if k not in best or t > best[k][0]:
+                            # Лесенка сжимается СРАЗУ: держать снимок
+                            # целиком ради одной секунды и есть та
+                            # ошибка, которая убила первый прогон.
+                            b = TR.cum_ladder(r.get("b"))
+                            a = TR.cum_ladder(r.get("a"))
+                            if b and a:
+                                best[k] = (t, {
+                                    "mid": (r["bid"] + r["ask"]) / 2.0,
+                                    "b": b, "a": a, "t": round(t, 1)})
+        for k, (_, v) in best.items():
+            out[k] = v
+        return out
 
 
-def stamp_picks(rows, books, log, have=None, out=None):
-    """Книга в момент РЕШЕНИЯ, а не в момент закрытия часа сигнала.
+def plan(picks, reviews, have, log, hold_h=TR.HOLD_H):
+    """Что именно надо прочитать: `{(символ, час): {моменты}}` и заявки.
 
-    У записи есть `at_ts` — когда цикл на самом деле выбрал. Это и есть
-    первый момент, когда войти было можно; закрытие часа сигнала на
-    6–15 минут раньше и входом быть не могло.
+    Сначала план целиком, потом одно чтение — иначе тот же символо-час
+    разбирался бы по два десятка раз, а держать его в памяти нельзя.
     """
-    have, out = have if have is not None else {}, out if out is not None else {}
-    done = miss = skip = no_ts = 0
-    for pk in rows:
-        if isinstance(pk, str):
-            continue
+    want, jobs = {}, []
+    no_ts = skip = 0
+    for pk in picks:
         arm, hour, ts = pk.get("arm") or "gbm", pk.get("hour"), pk.get("at_ts")
         if not ts:
-            # Момент решения не записан — момент входа неизвестен.
-            # Взять закрытие часа значило бы вернуть тот самый подарок,
-            # ради снятия которого всё и делается.
+            # Момент решения не записан — момент входа неизвестен. Взять
+            # закрытие часа значило бы вернуть тот самый подарок, ради
+            # снятия которого всё и делается.
             no_ts += 1
             continue
         for side in ("long", "short"):
             for p in pk.get(side) or []:
-                k = (arm, hour, p.get("sym"))
-                if p.get("cum") or "in" in have.get(k, out.get(k, {})):
+                sym = p.get("sym")
+                if p.get("cum") or "in" in have.get((arm, hour, sym), {}):
                     skip += 1
                     continue
-                got = books.at(p.get("sym"), ts)
-                if got:
-                    out.setdefault(k, {"arm": arm, "hour": hour,
-                                       "sym": p.get("sym")})["in"] = got
-                    done += 1
-                else:
-                    miss += 1
-    log(f"выборы: дописано {done}, уже было {skip}, "
-        f"нет снимка {miss}, без момента решения {no_ts}")
-    return done, out
-
-
-def stamp_reviews(rows, books, log, have=None, out=None, hold_h=TR.HOLD_H):
-    have, out = have if have is not None else {}, out if out is not None else {}
-    done = miss = skip = 0
-    for rv in rows:
-        if isinstance(rv, str):
-            continue
+                want.setdefault((sym, Books._hour(ts)), set()).add(ts)
+                jobs.append((arm, hour, sym, ts, "in"))
+    for rv in reviews:
         arm, hour = rv.get("arm") or "gbm", rv.get("hour")
         end = TR.hour_end(hour)
         if end is None:
             continue
         ts = end + hold_h * 3600
         for r in rv.get("rows") or []:
-            k = (arm, hour, r.get("sym"))
-            if r.get("cum") or "out" in have.get(k, out.get(k, {})):
+            sym = r.get("sym")
+            if r.get("cum") or "out" in have.get((arm, hour, sym), {}):
                 skip += 1
                 continue
-            got = books.at(r.get("sym"), ts)
-            if got:
-                out.setdefault(k, {"arm": arm, "hour": hour,
-                                   "sym": r.get("sym")})["out"] = got
-                done += 1
-            else:
-                miss += 1
-    log(f"разборы: дописано {done}, уже было {skip}, нет снимка {miss}")
-    return done, out
+            want.setdefault((sym, Books._hour(ts)), set()).add(ts)
+            jobs.append((arm, hour, sym, ts, "out"))
+    log(f"к пересчёту: {len(jobs)} концов сделок в "
+        f"{len(want)} символо-часах; уже было {skip}, "
+        f"без момента решения {no_ts}")
+    return want, jobs
+
+
+def stamp(jobs, got, log):
+    """Заявки + прочитанные книги → записи приписного файла."""
+    out, miss = {}, 0
+    for arm, hour, sym, ts, kind in jobs:
+        b = got.get((sym, ts))
+        if not b:
+            miss += 1
+            continue
+        out.setdefault((arm, hour, sym),
+                       {"arm": arm, "hour": hour, "sym": sym})[kind] = b
+    log(f"дописано концов: {len(jobs) - miss}, нет снимка: {miss}")
+    return out, miss
 
 
 def compare(picks, reviews, log, books=None):
@@ -281,11 +324,14 @@ def main():
     log("до пересчёта:")
     before = compare(picks, reviews, log, books=have)
 
-    books = Books(a.root)
+    books = Books(a.root, log)
     t0 = time.time()
-    n1, new = stamp_picks(picks, books, log, have)
-    n2, new = stamp_reviews(reviews, books, log, have, new)
-    log(f"прочитано символо-часов записи: {books.reads}, "
+    want, jobs = plan(picks, reviews, have, log)
+    got = books.collect(want)
+    new, miss = stamp(jobs, got, log)
+    n1 = sum(1 for v in new.values() if "in" in v)
+    n2 = sum(1 for v in new.values() if "out" in v)
+    log(f"прочитано файлов записи: {books.reads}, снимков {books.rows}, "
         f"{time.time() - t0:.0f} с")
 
     merged = dict(have)
@@ -309,9 +355,16 @@ def main():
     # читается в другом месте, и пересказ консоли теряет числа.
     tag = "pretest" if a.pretest else "live"
     rp = os.path.join(OUT, f"S8-backfill-{tag}.md")
-    with open(rp, "w", encoding="utf-8") as f:
-        f.write(report(before, after, n1, n2, books.reads, mdir))
-    log(f"отчёт: {rp}")
+    # Повторный прогон дописывать нечего, и затирать им отчёт настоящего
+    # нельзя: отчёт обязан описывать тот прогон, который его породил, а
+    # «дописано 0» на месте настоящих чисел выглядит как «пересчёт
+    # ничего не дал».
+    if new or not os.path.exists(rp):
+        with open(rp, "w", encoding="utf-8") as f:
+            f.write(report(before, after, n1, n2, books.reads, mdir))
+        log(f"отчёт: {rp}")
+    else:
+        log(f"отчёт не тронут (дописывать было нечего): {rp}")
 
     sp = os.path.join(mdir, "backfill.json")
     with open(sp, "w", encoding="utf-8") as f:
