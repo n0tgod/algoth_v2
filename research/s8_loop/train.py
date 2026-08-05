@@ -636,7 +636,7 @@ def eval_previous(x, targets, elig, grid, log_):
     return rows
 
 
-PRETEST_CANARY_SEEDS = 5
+CANARY_SEEDS = 5
 
 
 def canary_many(x, targets, elig, grid, seed, log_, name, seeds):
@@ -666,8 +666,13 @@ def canary_many(x, targets, elig, grid, seed, log_, name, seeds):
     spread = float(np.max(vals) - np.min(vals)) if len(vals) > 1 else 0.0
     log_(f"канарейка по {len(vals)} зёрнам: среднее {mean:+.4f}, "
          f"разброс {spread:.4f} (одиночный замер на такой выборке "
-         f"вердикта не несёт)")
-    return mean, spread, len(vals)
+         f"вердикта не несёт); зёрна "
+         f"{', '.join(f'{v:+.4f}' for v in vals)}")
+    # Сами зёрна возвращаются, а не только сводка: течь смещает ВСЕ в
+    # одну сторону, шум разбрасывает. Различить это по среднему и
+    # размаху нельзя, а по списку — можно, и он обязан лежать в
+    # артефакте, иначе диагноз потребует повторного прогона.
+    return mean, spread, len(vals), [round(v, 4) for v in vals]
 
 
 def canary_verdict(med):
@@ -997,19 +1002,23 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # переписали. Канарейка считается на любой годной цели, а нехватка
     # `fwd_4h` — отдельный гейт ниже.
     cname = canary_target(targets, elig)
-    spread, nseed = 0.0, 1
+    spread, nseed, cvals = 0.0, 1, []
     if not cname:
         med = float("nan")
-    elif PRETEST:
-        # Предпросмотр живёт на малой выборке, где одна канарейка
-        # кричит от собственного шума. Зёрен несколько, вердикт по
-        # среднему — иначе предпросмотр молча стоял бы навсегда.
-        med, spread, nseed = canary_many(
-            x, targets, elig, grid, SEED0 + len(grid), log_, cname,
-            PRETEST_CANARY_SEEDS)
     else:
-        med = canary(x, targets[cname], elig, grid, SEED0 + len(grid),
-                     log_, name=cname)
+        # Зёрен несколько у ОБЕИХ рук. Прежде многозёренная канарейка
+        # стояла только у предпросмотра, а боевая рука судила по одному
+        # броску — при том что довод в пользу нескольких записан прямо
+        # в `canary_many` и от руки не зависит вовсе: он про размер
+        # выборки. А первое обучение боевых рук случается ровно на
+        # пороге в 48 сечений, то есть в том самом малом режиме.
+        #
+        # Стоило это ложного крика 5 августа: одно зерно на `mfe_1h`
+        # дало −0.0719 при пороге 0.05, веса не обновились, и отличить
+        # течь от шума было нечем.
+        med, spread, nseed, cvals = canary_many(
+            x, targets, elig, grid, SEED0 + len(grid), log_, cname,
+            CANARY_SEEDS)
     verdict = canary_verdict(med)
     if verdict == "не считалась":
         log_(f"канарейка не считается: ни одна цель не набирает строк. "
@@ -1026,7 +1035,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         write_outcome("канарейка кричит", sections=n_sections,
                       canary_ic=round(float(med), 4),
                       canary_target=cname, canary_stop=CANARY_STOP,
-                      canary_spread=round(spread, 4), canary_seeds=nseed)
+                      canary_spread=round(spread, 4), canary_seeds=nseed,
+                      canary_vals=cvals)
         return False
 
     # Главная цель отдельным гейтом. Без `fwd_4h` не будет ни выбора
@@ -1111,6 +1121,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            "canary_target": cname,
            "canary_spread": round(spread, 4),
            "canary_seeds": nseed,
+           "canary_vals": cvals,
            "canary_ic": round(med, 4) if np.isfinite(med) else None,
            "new_summary_hours": n_new,
            "importance": imp_all,

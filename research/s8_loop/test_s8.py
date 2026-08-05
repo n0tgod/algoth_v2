@@ -1857,7 +1857,26 @@ def test_pretest_runs_where_live_refuses_and_stays_apart():
         synth.write_summaries(sd, D=60)
         T.MODEL_DIR, T.PRETEST, T.PROBE = live, False, False
         T.MIN_TRAIN_SECTIONS = 4       # чтобы дойти именно до беты
-        ok_live = T.cycle(sd, lambda m: None, book_root=None)
+        # Канарейка боевой руки обязана считаться НЕСКОЛЬКИМИ зёрнами,
+        # как и у предпросмотра. Довод записан в самой `canary_many` и
+        # от руки не зависит — он про размер выборки, а первое обучение
+        # боевых рук случается ровно на пороге в 48 сечений, то есть в
+        # малом режиме. Одно зерно там кричит от собственного шума: на
+        # сервере 5 августа оно дало −0.0719 при пороге 0.05.
+        real_canary, calls = T.canary, []
+
+        def counted(*a, **kw):
+            calls.append(1)
+            return real_canary(*a, **kw)
+
+        T.canary = counted
+        try:
+            ok_live = T.cycle(sd, lambda m: None, book_root=None)
+        finally:
+            T.canary = real_canary
+        check("боевая канарейка считана несколькими зёрнами",
+              len(calls) == T.CANARY_SEEDS,
+              f"{len(calls)} обучений вместо {T.CANARY_SEEDS}")
         with open(os.path.join(live, "last_run.json"),
                   encoding="utf-8") as f:
             lr = json.load(f)
