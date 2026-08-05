@@ -211,6 +211,110 @@ def test_page_has_no_external_loads():
           'id="back"' in web.TRADES and "/?k=" in web.TRADES)
 
 
+def _tag_attrs(src, tag):
+    """Атрибуты каждого тега `tag` в шаблоне страницы.
+
+    Обычным `<td[^>]*>` тут не обойтись: атрибут содержит вставку
+    `${t.unreal_net_bp > 0 ? ...}`, и знак «больше» внутри неё оборвал
+    бы разбор посреди тега. Поэтому вставки считаются явно.
+    """
+    out, i = [], 0
+    while True:
+        i = src.find("<" + tag, i)
+        if i < 0:
+            return out
+        j = i + 1 + len(tag)
+        if j < len(src) and src[j].isalpha():   # <thead> — не <th>
+            i = j
+            continue
+        depth, buf = 0, []
+        while j < len(src):
+            if src.startswith("${", j):
+                depth += 1
+                j += 2
+                continue
+            if src[j] == "}" and depth:
+                depth -= 1
+                j += 1
+                continue
+            if src[j] == ">" and not depth:
+                break
+            buf.append(src[j])
+            j += 1
+        out.append("".join(buf))
+        i = j
+
+
+def _columns(src, head_re, body_re):
+    """(колонок в шапке, в строке, скрытые в шапке, скрытые в строке)."""
+    import re
+    head = re.search(head_re, src, re.S)
+    body = re.search(body_re, src, re.S)
+    if not head or not body:
+        return None
+    ths = _tag_attrs(head.group(1), "th")
+    tds = _tag_attrs(body.group(0), "td")
+    hid = lambda xs: [i for i, a in enumerate(xs) if "hide-s" in a]  # noqa
+    return (len(ths), len(tds), hid(ths), hid(tds))
+
+
+# Таблиц сделок на сервере две — полная на своей странице и короткая на
+# обзоре, — и правка по тексту однажды уже ушла не в ту. Проверяются обе.
+TABLES = (
+    ("сделки", "TRADES",
+     r"<thead><tr>(.*?)</tr></thead>",
+     r'getElementById\("tb"\)\.innerHTML = .*?\}\)\.join\(""\)'),
+    ("обзор", "PAGE",
+     r'<table class="mtr">\s*<tr>(.*?)</tr>',
+     r'function tradeTable\(p\).*?\}\)\.join\(""\)'),
+)
+
+
+def _trades_columns(src):
+    return _columns(src, TABLES[0][2], TABLES[0][3])
+
+
+def test_trades_table_columns_line_up():
+    """Шапка и строка обязаны совпадать колонка в колонку.
+
+    На телефоне часть колонок гасится классом `hide-s`, и метка эта
+    стоит в двух местах — в шапке и в строке. Разойтись им нечему
+    помешать: правка делалась заменой по тексту, и она попала в
+    ДРУГУЮ страницу — `exp` погас в шапке и остался в строке. Дальше
+    всё после «side» съехало на колонку влево, то есть под подписью
+    «got» показывалось ожидание модели. Ни синтаксис, ни headless
+    такого не видят: разметка исправна, числа настоящие, подписаны
+    чужим именем.
+    """
+    import web
+    for name, page, head_re, body_re in TABLES:
+        got = _columns(getattr(web, page), head_re, body_re)
+        check(f"{name}: таблица найдена в разметке", got is not None)
+        if not got:
+            continue
+        n_th, n_td, h_th, h_td = got
+        check(f"{name}: колонок поровну — шапка {n_th}, строка {n_td}",
+              n_th == n_td)
+        check(f"{name}: скрытые на телефоне совпадают — {h_th} и {h_td}",
+              h_th == h_td)
+
+    # Заглушка «нет сделок» тянется на всю ширину; отстав от таблицы,
+    # она оставила бы пустой столбец сбоку.
+    import re
+    span = re.search(r'<td colspan="(\d+)"', web.TRADES)
+    n_th = _trades_columns(web.TRADES)[0]
+    check(f"colspan заглушки {span.group(1) if span else '—'} = колонок",
+          span is not None and int(span.group(1)) == n_th)
+
+    # Негативный контроль: проверка обязана кусаться. Гасим одну
+    # колонку только в шапке — ровно тот дефект, что был на сервере.
+    broken = web.TRADES.replace("<th>coin</th>",
+                                '<th class="hide-s">coin</th>', 1)
+    b = _trades_columns(broken)
+    check("на подпорченной разметке проверка падает",
+          b is not None and b[2] != b[3], str(b))
+
+
 def test_pages_run_headless():
     """Логика страниц обязана отработать на подставном ответе.
 
@@ -1969,6 +2073,7 @@ def main():
     test_view_does_not_reset_counter()
     test_page_has_no_external_loads()
     test_pages_run_headless()
+    test_trades_table_columns_line_up()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()

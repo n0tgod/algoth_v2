@@ -746,7 +746,7 @@ function tradeTable(p) {
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
-      <td class="mono hide-s">${pct(t.expected_bp)}</td>
+      <td class="mono">${pct(t.expected_bp)}</td>
       <td class="mono dim">${pct(t.mae_bp)}</td>
       <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono">${t.pnl == null ? "—" :
@@ -1730,7 +1730,7 @@ async function load() {
       <td class="hide-s">${t.arm === "nn" ? "neural" : "trees"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
-      <td class="mono">${pct(t.expected_bp)}</td>
+      <td class="mono hide-s">${pct(t.expected_bp)}</td>
       <td class="mono hide-s" style="color:var(--muted)">${pct(t.mae_bp)}</td>
       <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono ${cls}">${pct(t.net_bp)}</td>
