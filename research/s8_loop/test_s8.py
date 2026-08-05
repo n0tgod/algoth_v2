@@ -1883,6 +1883,14 @@ def test_pretest_runs_where_live_refuses_and_stays_apart():
         check("боевой отказывается без главной цели",
               not ok_live and lr["reason"] == "нет главной цели",
               lr["reason"])
+        # И несёт числа канарейки — именно эта ветка сработала на
+        # сервере, а зёрен в ней не было: по артефакту нельзя было
+        # отличить пять замеров от одного.
+        check("исход без главной цели несёт зёрна канарейки",
+              lr.get("canary_seeds") == T.CANARY_SEEDS
+              and len(lr.get("canary_vals") or []) == T.CANARY_SEEDS,
+              str({k: lr.get(k) for k in
+                   ("canary_ic", "canary_seeds", "canary_vals")}))
         check("боевой весов не пишет",
               not any(f.startswith("weights_") for f in os.listdir(live)))
 

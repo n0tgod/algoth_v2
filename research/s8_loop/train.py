@@ -1019,6 +1019,17 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         med, spread, nseed, cvals = canary_many(
             x, targets, elig, grid, SEED0 + len(grid), log_, cname,
             CANARY_SEEDS)
+    # Поля канарейки собираются ОДИН раз и кладутся всюду одинаково.
+    # Прежде они перечислялись в каждой ветке своим списком, и ветка
+    # «нет главной цели» — та единственная, что реально сработала на
+    # боевых руках, — не несла ни числа зёрен, ни их списка. То есть
+    # диагностика, ради которой всё и добавлялось, отсутствовала ровно
+    # там, где понадобилась: по артефакту нельзя было отличить пять
+    # зёрен от одного.
+    can = {"canary_ic": round(float(med), 4) if np.isfinite(med) else None,
+           "canary_target": cname, "canary_stop": CANARY_STOP,
+           "canary_spread": round(spread, 4), "canary_seeds": nseed,
+           "canary_vals": cvals}
     verdict = canary_verdict(med)
     if verdict == "не считалась":
         log_(f"канарейка не считается: ни одна цель не набирает строк. "
@@ -1027,16 +1038,12 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         write_outcome("канарейка не считалась", last_hour=grid[-1],
                       sections=n_sections,
                       hours_per_symbol=int(hist_h),
-                      beta_min_hours=FB.BETA_MIN)
+                      beta_min_hours=FB.BETA_MIN, **can)
         return False
     if verdict == "кричит":
         log_(f"КАНАРЕЙКА КРИЧИТ: |IC| {abs(med):.3f} > {CANARY_STOP} — "
              f"похоже на течь конвейера, веса НЕ обновляются")
-        write_outcome("канарейка кричит", sections=n_sections,
-                      canary_ic=round(float(med), 4),
-                      canary_target=cname, canary_stop=CANARY_STOP,
-                      canary_spread=round(spread, 4), canary_seeds=nseed,
-                      canary_vals=cvals)
+        write_outcome("канарейка кричит", sections=n_sections, **can)
         return False
 
     # Главная цель отдельным гейтом. Без `fwd_4h` не будет ни выбора
@@ -1054,9 +1061,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             write_outcome("нет главной цели", last_hour=grid[-1],
                           sections=n_sections,
                           hours_per_symbol=int(hist_h),
-                          beta_min_hours=FB.BETA_MIN,
-                          canary_ic=round(float(med), 4),
-                          canary_target=cname, canary_stop=CANARY_STOP)
+                          beta_min_hours=FB.BETA_MIN, **can)
             return False
         log_(msg + ". Проба идёт дальше: обучатся цели, которые есть, "
                    "выбора монет не будет")
@@ -1117,12 +1122,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            # прогоном в тот же вечер (девять целей против четырёх, порог
            # 0.05 против 0.01).
            "targets_all": list(TARGETS),
-           "canary_stop": CANARY_STOP,
-           "canary_target": cname,
-           "canary_spread": round(spread, 4),
-           "canary_seeds": nseed,
-           "canary_vals": cvals,
-           "canary_ic": round(med, 4) if np.isfinite(med) else None,
+           **can,
            "new_summary_hours": n_new,
            "importance": imp_all,
            # Диапазоны новизны — в артефакт: определение обязано жить
