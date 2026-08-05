@@ -185,7 +185,11 @@ global.fetch = async (url) => {
                                         from: "2026-08-03-14",
                                         hours: 9, gaps: 0},
                               gift_n: 2, gift_med_bp: 12.4,
-                              gift_avg_bp: 9.1, gift_lag_med: 393},
+                              gift_avg_bp: 9.1, gift_lag_med: 393,
+                              exec_n: 2, exec_med_bp: 18.4,
+                              exec_avg_bp: 19.1, fee_med_bp: 11.0,
+                              slip_med_bp: 7.4, fee_known: 1,
+                              exec_partial: 0, cost_flat: 3},
                         gbm: {closed: 1, open: 1, no_outcome: 0,
                               hit_rate: 0.0, net_bp_avg: -51, pnl: -0.85,
                               marked: 1, unreal_net_avg_bp: 89.0,
@@ -474,6 +478,18 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Подарок входа: книга записана по цене закрытия часа, а решение
     // пришло 393 с спустя. Число обязано быть на виду — иначе условность
     // живёт в JSON и читается как «её нет».
+    // Издержки: круг обязан быть виден разложением, а не одной
+    // цифрой, и покрытие ставок — числом. Умолчание, не отличимое от
+    // измерения, есть ровно тот класс дефекта, который проект ловит
+    // с A2: пустота выдаёт себя за результат.
+    if (!/18\.4 bp/.test(stats))
+      bad.push("круг издержек не показан");
+    if (!/11 bp/.test(stats) || !/7\.4 bp/.test(stats))
+      bad.push("круг не разложен на комиссию и спред");
+    if (!/1\/2/.test(stats))
+      bad.push("покрытие настоящей ставкой не показано");
+    if (!/recorded order book/.test(stats))
+      bad.push("не сказано, что издержки считаны по записанной книге");
     if (!/12\.4 bp/.test(stats))
       bad.push("подарок входа не показан числом");
     if (!/393 s/.test(stats))

@@ -29,10 +29,21 @@
 
 import json
 import os
+import sys
 import time
 from datetime import datetime, timezone
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
+from common import fees as FEES                             # noqa: E402
+
 HOLD_H = 4                        # горизонт выбора — цель fwd_4h
+# Максимальный нотионал, до которого лесенка стамповывается в запись.
+# Фазы C–D — капитал $1–20 тыс., то есть позиция до ~$830 при двадцати
+# четырёх слотах; запас впятеро. Заявка крупнее стамповки честно
+# помечается «не влезло», а не досчитывается по последней цене: цена
+# уровня, которого мы не видели, есть выдумка.
+LADDER_CAP_USD = 5000.0
 # Круг издержек живёт ЗДЕСЬ, а не в цикле обучения: его читают и цикл
 # (при разборе), и сборщик (при переоценке открытых сделок). Две копии
 # одного числа однажды разойдутся, и таблица покажет одну цену круга, а
@@ -59,6 +70,119 @@ def hour_end(hour):
     """Когда час кончился. Нужно тем, кто решает, ждать ли сводку."""
     ts = _ts(hour)
     return None if ts is None else ts + 3600
+
+
+_FEES = None
+
+
+def fee_table():
+    """Таблица ставок, читаемая один раз на процесс.
+
+    Ленивая, а не при импорте: модуль читает страница сборщика, и
+    падение на отсутствующем файле выгрузки A1 стоило бы ей показа —
+    при том что без ставок она обойдётся умолчанием и скажет об этом
+    числом покрытия.
+    """
+    global _FEES
+    if _FEES is None:
+        _FEES = FEES.load()
+    return _FEES
+
+
+def cum_ladder(levels, cap_usd=LADDER_CAP_USD):
+    """Лесенка → `[[цена, накопленный нотионал], …]` до потолка.
+
+    Сжатие записи, а не расчёт: снимок несёт до двухсот уровней, а
+    сделке нужны первые несколько. Накопленный нотионал считается
+    сразу, потому что заявка исполняется в деньгах, а не в единицах
+    базового актива, и переводить их на каждом чтении значило бы
+    повторять одно деление во всех вызовах.
+    """
+    out, cum = [], 0.0
+    for lvl in levels or []:
+        try:
+            p, q = float(lvl[0]), float(lvl[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if p <= 0 or q <= 0:
+            continue
+        cum += p * q
+        out.append([p, round(cum, 2)])
+        if cum >= cap_usd:
+            break
+    return out
+
+
+def walk(cum, notional):
+    """Средняя цена рыночной заявки на `notional` долларов.
+
+    Возвращает `(цена, влезло ли целиком)`. Не влезло — цена всё равно
+    считается по тому, что видели, но признак ставится `False`: молча
+    выдать частичное исполнение за полное значило бы занизить издержки
+    ровно там, где инструмент тонкий.
+    """
+    if not cum or not notional or notional <= 0:
+        return None, False
+    prev, qty, left = 0.0, 0.0, notional
+    for p, c in cum:
+        take = min(left, c - prev)
+        if take <= 0:
+            prev = c
+            continue
+        qty += take / p
+        left -= take
+        prev = c
+        if left <= 1e-9:
+            break
+    if qty <= 0:
+        return None, False
+    return (notional - left) / qty, left <= 1e-9
+
+
+def exec_cost(t, size, table=None):
+    """Полный круг издержек ЭТОЙ сделки: комиссия + проскальзывание.
+
+    Считается по записанной книге в момент входа и в момент выхода, а
+    не константой. Замер на живом стакане показал, почему константа не
+    годится: круг проскальзывания заявкой в $42 идёт от 1.5 б.п.
+    (AVAX) до 18.0 (SSPC) — разброс вдвенадцатеро, и он систематически
+    больше как раз у тонких имён, куда отбор и заходит.
+
+    Обе ноги круга берутся по СВОЕЙ стороне книги: лонг входит в аск и
+    выходит в бид, шорт наоборот. Взять середину обеих значило бы
+    подарить полспреда дважды.
+
+    Возвращает `None`, если хоть одна лесенка не записана: посчитать
+    неизвестную издержку нулём — тот же класс ошибки, что бар без
+    сделок вместо пропуска (урок A2).
+    """
+    cin, cout = t.get("cum_in"), t.get("cum_out")
+    if not cin or not cout or not size:
+        return None
+    if table is None:
+        table = fee_table()
+    long_ = t.get("side") == "long"
+    # Вход: лонг покупает в аске, шорт продаёт в биде.
+    px_in, ok_in = walk(cin["a" if long_ else "b"], size)
+    px_out, ok_out = walk(cout["b" if long_ else "a"], size)
+    mid_in, mid_out = cin.get("mid"), cout.get("mid")
+    if not px_in or not px_out or not mid_in or not mid_out:
+        return None
+    fee, known = FEES.taker_bp(t.get("sym"), table)
+    slip_in = (px_in / mid_in - 1.0) * (1e4 if long_ else -1e4)
+    slip_out = (px_out / mid_out - 1.0) * (-1e4 if long_ else 1e4)
+    # Движение цены считается по ФАКТИЧЕСКИМ ценам исполнения, а не по
+    # серединам минус поправка: у сделки два конца, и складывать их из
+    # разных источников значило бы завести второе определение цены.
+    move = (px_out / px_in - 1.0) * (1e4 if long_ else -1e4)
+    return {"fee_bp": round(fee * 2, 2), "fee_known": known,
+            "slip_in_bp": round(slip_in, 2),
+            "slip_out_bp": round(slip_out, 2),
+            "exec_bp": round(fee * 2 + slip_in + slip_out, 2),
+            "fill_in": px_in, "fill_out": px_out,
+            "move_bp": round(move, 1),
+            "net_bp": round(move - fee * 2, 1),
+            "filled": bool(ok_in and ok_out)}
 
 
 def _gift(px, px_live, side):
@@ -158,6 +282,10 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
                     # Сперва число, потом перенос всей цепочки.
                     "px_live": p.get("px_live"),
                     "gift_bp": _gift(p.get("px"), p.get("px_live"), side),
+                    # Книга в момент входа. Сама сделка её не считает —
+                    # цена исполнения зависит от размера, а размер знает
+                    # только счёт.
+                    "cum_in": p.get("cum"),
                     # Ожидаемый ход ПРОТИВ позиции — то, что модель
                     # обещает пережить. Без него ожидание читается как
                     # обещание пути, а это разные вещи.
@@ -166,6 +294,7 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
                     "ver": pk.get("ver"),
                 }
                 if got is not None:
+                    tr["cum_out"] = got.get("cum")
                     tr.update(state="закрыта", got_bp=got.get("got"),
                               net_bp=got.get("net"), pnl=got.get("pnl"),
                               pos=got.get("pos"),
@@ -205,7 +334,7 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
 START_BALANCE = 1000.0
 
 
-def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H):
+def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None):
     """Счёт ОДНОГО капитала: экспозиция не превышает его.
 
     Прежняя модель считала каждый час независимо — весь баланс делился
@@ -274,6 +403,24 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H):
             busy += size
         else:
             size = t.get("size") or 0.0
+            # Издержки считаются ЗДЕСЬ и только здесь, потому что здесь
+            # известен размер позиции, а цена исполнения от него
+            # зависит. Разбор пишет ФАКТ (движение цены и лесенки), а
+            # деньги выводит счёт: иначе завелось бы второе определение
+            # размера — ровно то, чего этот модуль избегает.
+            ec = exec_cost(t, size, table)
+            if ec:
+                t.update({k: ec[k] for k in
+                          ("fee_bp", "fee_known", "slip_in_bp",
+                           "slip_out_bp", "exec_bp", "fill_in",
+                           "fill_out", "filled")})
+                t["net_bp"] = ec["net_bp"]
+                t["cost_basis"] = "книга"
+            elif t.get("net_bp") is not None:
+                # Старые сделки: плоский круг, записанный разбором.
+                # Помечены явно — смешать две основы в одной колонке
+                # значило бы сравнивать несравнимое молча.
+                t.setdefault("cost_basis", "плоский 11")
             pnl = size * (t.get("net_bp") or 0.0) / 1e4
             t["pnl"] = round(pnl, 2)
             cash += size + pnl
@@ -339,6 +486,26 @@ def summary(trades, arm=None, capital=None):
     _dd(rows, out)
     # Подарок входа считается по ВСЕМ сделкам, а не только закрытым:
     # он известен в момент открытия и от исхода не зависит вовсе.
+    # Издержки — разложением, а не одним числом. Комиссию задаёт тариф
+    # символа, проскальзывание — толщина книги, и лечатся они разным:
+    # первое выбором инструментов, второе размером и частотой.
+    ex = [t for t in closed if t.get("exec_bp") is not None]
+    if ex:
+        ex.sort(key=lambda t: t["exec_bp"])
+        mid_t = ex[len(ex) // 2]
+        out["exec_n"] = len(ex)
+        out["exec_med_bp"] = mid_t["exec_bp"]
+        out["exec_avg_bp"] = round(
+            sum(t["exec_bp"] for t in ex) / len(ex), 2)
+        out["fee_med_bp"] = mid_t["fee_bp"]
+        out["slip_med_bp"] = round(mid_t["slip_in_bp"]
+                                   + mid_t["slip_out_bp"], 2)
+        # Сколько сделок посчитано по НАСТОЯЩЕЙ ставке, а не по
+        # умолчанию, и у скольких заявка не влезла в записанную книгу.
+        out["fee_known"] = sum(1 for t in ex if t.get("fee_known"))
+        out["exec_partial"] = sum(1 for t in ex if not t.get("filled"))
+        out["cost_flat"] = sum(1 for t in closed
+                               if t.get("cost_basis") == "плоский 11")
     have = [t for t in rows if t.get("gift_bp") is not None]
     if have:
         gifts = sorted(t["gift_bp"] for t in have)

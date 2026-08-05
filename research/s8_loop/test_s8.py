@@ -20,10 +20,12 @@ from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 
 import bookfeat as FB                                      # noqa: E402
 import summary as SM                                       # noqa: E402
 from book import BANDS                                     # noqa: E402
+from research.common import fees as FEES                   # noqa: E402
 
 FAILED = []
 rng = np.random.default_rng(20260801)
@@ -1141,6 +1143,98 @@ def test_account_drawdown_counts_open_positions():
           d3["pct"] == -10.0, str(d3))
 
 
+def test_execution_is_walked_through_the_recorded_book():
+    """Издержки — по записанной книге, а не константой.
+
+    Замер на живом стакане: круг проскальзывания заявкой в $42 идёт от
+    1.5 б.п. (AVAX) до 18.0 (SSPC). Плоские 11 б.п. занижают полный круг
+    на 64 % и занижают его СИСТЕМАТИЧЕСКИ — дорогой тариф и тонкая книга
+    стоят на одних и тех же именах.
+    """
+    import trades as TR
+    # Лесенка: два уровня по каждой стороне, середина 100.
+    cum = TR.cum_ladder([[100.5, 1.0], [101.0, 10.0]])
+    check("накопленный нотионал считается в деньгах",
+          cum == [[100.5, 100.5], [101.0, 1110.5]], str(cum))
+    px, ok = TR.walk(cum, 100.5)
+    check("заявка внутри первого уровня берёт его цену",
+          px == 100.5 and ok, f"{px} {ok}")
+    px, ok = TR.walk(cum, 201.0)
+    check("заявка глубже первого уровня платит среднюю",
+          100.5 < px < 101.0 and ok, str(px))
+    px, ok = TR.walk(cum, 1e9)
+    check("не влезло — сказано числом, а не досчитано",
+          px is not None and not ok, f"{px} {ok}")
+
+    book = {"mid": 100.0, "b": TR.cum_ladder([[99.5, 100.0]]),
+            "a": TR.cum_ladder([[100.5, 100.0]])}
+    t = {"sym": "TESTUSDT", "side": "long",
+         "cum_in": book, "cum_out": dict(book, mid=101.0,
+                                         b=TR.cum_ladder([[100.5, 100.0]]),
+                                         a=TR.cum_ladder([[101.5, 100.0]]))}
+    ec = TR.exec_cost(t, 50.0, table={"TESTUSDT": 5.5})
+    # Лонг входит в аск 100.5 и выходит в бид 100.5 — цена не двинулась,
+    # хотя середина выросла на 100 б.п. Ровно это и съедает спред.
+    check("лонг входит в аск и выходит в бид",
+          ec["fill_in"] == 100.5 and ec["fill_out"] == 100.5, str(ec))
+    check("движение считается по ценам исполнения",
+          ec["move_bp"] == 0.0, str(ec))
+    check("комиссия — круг по посимвольной ставке",
+          ec["fee_bp"] == 11.0 and ec["net_bp"] == -11.0, str(ec))
+    check("проскальзывание входа = полспреда",
+          abs(ec["slip_in_bp"] - 50.0) < 0.01, str(ec))
+
+    # Шорт на той же книге: входит в бид, выходит в аск. Середина
+    # выросла на 100 б.п., значит шорт обязан потерять — и потерять
+    # БОЛЬШЕ середины, а не меньше.
+    ts = dict(t, side="short")
+    es = TR.exec_cost(ts, 50.0, table={"TESTUSDT": 5.5})
+    check("шорт входит в бид и выходит в аск",
+          abs(es["fill_in"] - 99.5) < 1e-6
+          and abs(es["fill_out"] - 101.5) < 1e-6, str(es))
+    check("шорту то же движение середины стоит больше неё",
+          es["move_bp"] < -100.0, str(es))
+
+    # Ставки нет в таблице — умолчание И признак «не знаем». Молчаливая
+    # подстановка сделала бы пропуск неотличимым от измерения.
+    eu = TR.exec_cost(t, 50.0, table={})
+    check("без ставки берётся умолчание и это видно",
+          eu["fee_known"] is False
+          and eu["fee_bp"] == round(FEES.DEFAULT_TAKER_BP * 2, 2), str(eu))
+
+    # Нет книги — нет и числа: посчитать неизвестную издержку нулём есть
+    # тот же класс ошибки, что бар без сделок вместо пропуска (A2).
+    check("без книги выхода издержка не выдумывается",
+          TR.exec_cost({"sym": "X", "side": "long", "cum_in": book},
+                       50.0, table={}) is None, "выдумала")
+
+    # И главное: счёт обязан взять издержку ИЗ КНИГИ, а не плоскую.
+    h = "2026-08-03-10"
+    pk = [{"arm": "gbm", "hour": h, "at_ts": TR._ts(h) + 3660,
+           "long": [{"sym": "TESTUSDT", "fwd": 100.0, "px": 100.0,
+                     "cum": book}],
+           "short": []}]
+    rv = [{"arm": "gbm", "hour": h, "cost_bp": 11.0,
+           "rows": [{"sym": "TESTUSDT", "side": "long", "expected": 100.0,
+                     "got": 100.0, "net": 89.0,
+                     "cum": dict(book, mid=101.0,
+                                 b=TR.cum_ladder([[100.5, 100.0]]),
+                                 a=TR.cum_ladder([[101.5, 100.0]]))}]}]
+    tr = TR.build(pk, rv, now=TR._ts(h) + 100 * 3600)
+    TR.account(tr, "gbm", table={"TESTUSDT": 5.5})
+    check("счёт заменил плоский круг книжным",
+          tr[0]["net_bp"] == -11.0 and tr[0]["cost_basis"] == "книга",
+          str({k: tr[0].get(k) for k in
+               ("net_bp", "cost_basis", "exec_bp", "fee_bp")}))
+    check("разложение издержек доехало до сделки",
+          tr[0]["exec_bp"] > 90.0, str(tr[0].get("exec_bp")))
+    s = TR.summary(tr, "gbm")
+    check("сводка называет покрытие ставок числом",
+          s["exec_n"] == 1 and s["fee_known"] == 1 and s["cost_flat"] == 0,
+          str({k: v for k, v in s.items()
+               if k.startswith(("exec", "fee", "slip", "cost"))}))
+
+
 def test_entry_gift_is_measured_before_it_is_removed():
     """Вход по цене сигнала — подарок, и его сперва меряют.
 
@@ -1154,6 +1248,7 @@ def test_entry_gift_is_measured_before_it_is_removed():
     ТОГО ЖЕ закрытия часа, и сдвинуть один конец, оставив другой, — это
     дефект хуже чинимого. Поэтому здесь проверяется ровно замер.
     """
+    import trades as TR
     pk = [{"arm": "gbm", "hour": "2026-08-03-10", "at_ts": 1,
            "long": [{"sym": "AUSDT", "fwd": 100.0, "px": 100.0,
                      "px_live": 101.0}],
@@ -2097,6 +2192,8 @@ def main():
     test_account_is_one_capital_at_leverage_one()
     test_unrealised_never_mixes_with_realised()
     test_exposure_covers_all_open_and_leverage_is_named()
+    test_execution_is_walked_through_the_recorded_book()
+    test_entry_gift_is_measured_before_it_is_removed()
     test_drawdown_is_measured_not_inferred_from_the_outcome()
     test_drawdown_is_reported_against_the_deposit()
     test_pretest_hedges_with_beta_one_and_keeps_books_apart()

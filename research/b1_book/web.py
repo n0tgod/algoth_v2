@@ -1459,6 +1459,30 @@ async function load() {
   // значит книга входит по цене, которой в момент решения уже нет.
   // Число говорит, сколько эта условность стоит; пока оно только
   // измеряется и в счёт не входит.
+  // Издержки — разложением. Комиссию задаёт тариф символа,
+  // проскальзывание — толщина книги; лечатся они разным, и одна цифра
+  // круга это скрывала бы. Покрытие ставок стоит рядом числом: без
+  // него умолчание неотличимо от измерения.
+  if (st.exec_n) {
+    html += `<div class="note" style="margin-top:8px">costs
+      <span class="k">— walked through the <b>recorded order book</b>
+      at entry and at exit, not a flat number: a long buys the ask and
+      sells the bid, a short the reverse. Commission is the venue's
+      per-symbol taker rate. Maker execution is not assumed — a limit
+      order is not filled just because the price touched it.</span>
+      </div>
+      <div class="stats">`
+      + cell("round trip, median", st.exec_med_bp + " bp",
+             st.exec_med_bp > 25 ? "bad" : "")
+      + cell("of it commission", st.fee_med_bp + " bp")
+      + cell("of it spread", st.slip_med_bp + " bp")
+      + cell("mean", st.exec_avg_bp + " bp")
+      + cell("real fee rate for", st.fee_known + "/" + st.exec_n,
+             st.fee_known < st.exec_n ? "bad" : "")
+      + (st.exec_partial ? cell("book too thin", st.exec_partial, "bad") : "")
+      + (st.cost_flat ? cell("old flat-11 trades", st.cost_flat) : "")
+      + `</div>`;
+  }
   if (st.gift_n) {
     html += `<div class="note" style="margin-top:8px">entry timing
       <span class="k">— features end at the hour close, the cycle

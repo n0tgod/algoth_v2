@@ -52,6 +52,7 @@ import bookfeat as FB                                      # noqa: E402
 import gbm                                                 # noqa: E402
 import nn                                                  # noqa: E402
 import summary as SM                                       # noqa: E402
+import trades as TR                                         # noqa: E402
 from trades import ROUND_COST_BP as TR_COST                # noqa: E402
 import wf                                                  # noqa: E402
 
@@ -865,29 +866,77 @@ def live_px(syms, book_root, now=None, log_=None):
     самой сделке полем `px_live`, а не молча.
     """
     now = now if now is not None else time.time()
-    hour = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d-%H")
     out = {}
     if not book_root:
         # Записи стакана нет вовсе — числа не будет, и это правильно:
         # пропуск обязан остаться пропуском.
         return out
     for sym in syms:
-        d = os.path.join(book_root, "book", sym)
-        best = None
-        try:
-            for r in SM.read_hour(d, hour):
-                bid, ask = r.get("bid"), r.get("ask")
-                t = r.get("t") or 0.0
-                if not bid or not ask:
-                    continue
-                if best is None or t > best[1]:
-                    best = ((bid + ask) / 2.0, t)
-        except OSError:
-            best = None
-        if best is not None:
-            out[sym] = best
+        r = book_at(sym, now, book_root)
+        if r is not None:
+            out[sym] = ((r["bid"] + r["ask"]) / 2.0, r.get("t") or now)
     if log_ is not None and len(out) < len(syms):
         log_(f"живая цена входа найдена у {len(out)} имён из {len(syms)}")
+    return out
+
+
+def book_at(sym, ts, book_root, tol=120.0):
+    """Снимок книги, ближайший к моменту `ts` и не позже него.
+
+    «Не позже» — не придирка: снимок будущего есть заглядывание, а на
+    выходе сделки он дал бы цену, которой в момент закрытия ещё не
+    было. Допуск в две минуты нужен потому, что запись идёт раз в
+    секунду и может прерваться; дальше двух минут снимок описывает уже
+    другой рынок, и вернуть его значило бы выдать соседний час за наш.
+    """
+    if not book_root or ts is None:
+        return None
+    hour = datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%d-%H")
+    best = None
+    # Час метки и предыдущий: момент может прийтись на первые секунды
+    # часа, где своих снимков ещё нет.
+    for h in (hour, datetime.fromtimestamp(
+            ts - 3600, timezone.utc).strftime("%Y-%m-%d-%H")):
+        try:
+            rows = SM.read_hour(os.path.join(book_root, "book", sym), h)
+        except OSError:
+            continue
+        for r in rows:
+            t = r.get("t")
+            if t is None or t > ts or ts - t > tol:
+                continue
+            if not r.get("bid") or not r.get("ask"):
+                continue
+            if best is None or t > best.get("t", 0):
+                best = r
+        if best is not None:
+            break
+    return best
+
+
+def stamp_book(syms, ts, book_root, log_=None, what=""):
+    """`{символ: {mid, b, a, t}}` — книга для расчёта исполнения.
+
+    Лесенка сжимается `trades.cum_ladder` до потолка нотионала: снимок
+    несёт до двухсот уровней, а сделке нужны первые несколько. Сжимает
+    ОДНА функция, потому что по этим же числам считается цена
+    исполнения, и вторая её запись однажды разошлась бы.
+    """
+    out = {}
+    if not book_root:
+        return out
+    for sym in syms:
+        r = book_at(sym, ts, book_root)
+        if r is None:
+            continue
+        b = TR.cum_ladder(r.get("b"))
+        a = TR.cum_ladder(r.get("a"))
+        if not b or not a:
+            continue
+        out[sym] = {"mid": (r["bid"] + r["ask"]) / 2.0,
+                    "b": b, "a": a, "t": round(r.get("t") or ts, 1)}
+    if log_ is not None and len(out) < len(syms):
+        log_(f"книга {what}: снята у {len(out)} имён из {len(syms)}")
     return out
 
 
@@ -1156,15 +1205,26 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                             rr["odd"] = pk["odd"]
                         rows_rv.append(rr)
             if rows_rv:
-                # В разбор кладётся только ФАКТ: движение цены и то же
-                # движение за вычетом круга издержек. Денег здесь нет —
-                # они зависят от размера позиции, а размер задаётся
-                # счётом, который считается по ВСЕЙ истории сразу
-                # (`trades.account`). Класть сюда деньги значило бы
-                # завести второе определение размера позиции.
+                # В разбор кладётся только ФАКТ: движение цены и книга в
+                # момент выхода. Денег здесь нет — они зависят от размера
+                # позиции, а размер задаётся счётом, который считается по
+                # ВСЕЙ истории сразу (`trades.account`). Класть сюда
+                # деньги значило бы завести второе определение размера.
+                #
+                # Круг издержек тоже считает счёт: цена исполнения
+                # зависит от размера, поэтому плоское число здесь было бы
+                # не упрощением, а другой величиной. Поле `net`
+                # оставлено запасным путём — на случай, когда книги
+                # выхода нет и считать нечем.
+                out_ts = TR.hour_end(lp["hour"])
+                out_ts = (out_ts + TR.HOLD_H * 3600) if out_ts else None
+                bk_out = stamp_book([r["sym"] for r in rows_rv], out_ts,
+                                    book_root, log_, "выхода")
                 for r in rows_rv:
                     r["net"] = round((1 if r["side"] == "long" else -1)
                                      * r["got"] - ROUND_COST_BP, 1)
+                    if r["sym"] in bk_out:
+                        r["cum"] = bk_out[r["sym"]]
                 with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
                           encoding="utf-8") as f:
                     f.write(json.dumps(
@@ -1223,13 +1283,17 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             # (`px`, закрытие часа сигнала) остаётся в записи рядом:
             # разность двух — и есть цена подарка, и узнать её можно
             # только измерив, а не сняв.
-            lp = live_px([p["sym"] for s in ("long", "short")
-                          for p in picks[s]], book_root, log_=log_)
+            names = [p["sym"] for s in ("long", "short") for p in picks[s]]
+            bk = stamp_book(names, time.time(), book_root, log_, "входа")
             for s in ("long", "short"):
                 for p in picks[s]:
-                    got = lp.get(p["sym"])
+                    got = bk.get(p["sym"])
                     if got:
-                        p["px_live"], p["px_live_at"] = got[0], round(got[1])
+                        p["px_live"], p["px_live_at"] = got["mid"], got["t"]
+                        # Книга целиком, а не одна цена: заявка на $42 и
+                        # на $800 исполняется по-разному, а размер
+                        # позиции знает только счёт.
+                        p["cum"] = got
             # Один выбор на (руку, час) — и не больше.
             #
             # Цикл писал выбор при каждом проходе, а проходов внутри
@@ -1273,7 +1337,6 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # изменение модели капитала применяется ко всей истории разом, а не
     # с середины.
     try:
-        import trades as TR
         all_tr = TR.build(
             [json.loads(x) for x in open(ppath, encoding="utf-8")],
             [json.loads(x) for x in open(
