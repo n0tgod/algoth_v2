@@ -666,21 +666,31 @@ def merge(curves):
 
 
 def max_dd(curve):
-    """Максимальная просадка кривой: доля от достигнутого максимума."""
+    """Максимальная просадка кривой: доля от достигнутого максимума.
+
+    `from` — вершина, ОТ которой считается записанная просадка, а не
+    последняя вершина кривой. Разница появляется ровно тогда, когда счёт
+    после провала обновил максимум: тогда бегущая вершина уезжает вперёд
+    и пара «от / до» читается задом наперёд (у боевой руки так и вышло —
+    `from` 08-05-01 при `at` 08-04-17). Глубина при этом всегда была
+    верна, врало только место.
+    """
     if not curve:
         return None
-    peak, depth, at, top = None, 0.0, None, None
+    peak, depth, at, top, top_now = None, 0.0, None, None, None
     for p in curve:
         eq = p["eq"]
         if peak is None or eq > peak:
-            peak, top = eq, p["hour"]
+            peak, top_now = eq, p["hour"]
         if peak and eq < peak:
             d = eq / peak - 1.0
             if d < depth:
-                depth, at = d, p["hour"]
+                depth, at, top = d, p["hour"], top_now
     if at is None:
-        return {"pct": 0.0, "at": None, "from": top, "hours": len(curve)}
+        return {"pct": 0.0, "at": None, "from": top_now, "hours": len(curve)}
     return {"pct": round(depth * 100.0, 2), "at": at, "from": top,
+            # Длина кривой, а не длительность просадки: часов под водой
+            # это число не считает и называться ими не должно.
             "hours": len(curve),
             # Час, где хоть одну живую ногу переоценить было нечем,
             # делает просадку заниженной — и молчать об этом нельзя.
