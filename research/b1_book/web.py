@@ -1454,6 +1454,29 @@ async function load() {
       + (b.gaps ? cell("hours with a gap", b.gaps, "bad") : "")
       + `</div>`;
   }
+  // Подарок входа. Признаки кончаются на закрытии часа, решение
+  // приходит на минуты позже, а сделка записана по цене закрытия —
+  // значит книга входит по цене, которой в момент решения уже нет.
+  // Число говорит, сколько эта условность стоит; пока оно только
+  // измеряется и в счёт не входит.
+  if (st.gift_n) {
+    html += `<div class="note" style="margin-top:8px">entry timing
+      <span class="k">— features end at the hour close, the cycle
+      decides minutes later, and the trade is booked at that close.
+      Positive means the recorded book entered <b>better</b> than it
+      could have live. Measured only — not yet applied to the
+      accounts, because the outcome is measured from the same close and
+      moving one end alone would be worse than the flaw itself.</span>
+      </div>
+      <div class="stats">`
+      + cell("gift, median", st.gift_med_bp + " bp",
+             st.gift_med_bp > 5 ? "bad" : "")
+      + cell("mean", st.gift_avg_bp + " bp")
+      + (st.gift_lag_med == null ? "" :
+         cell("decision lag", st.gift_lag_med + " s"))
+      + cell("trades", st.gift_n)
+      + `</div>`;
+  }
   const accLine = ["gbm","nn"].map(a => {
     const x = (d.accounts||{})[a];
     return x ? `${a === "gbm" ? "ml" : "ai"} ${x.balance} $` : null;

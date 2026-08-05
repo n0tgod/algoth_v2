@@ -61,6 +61,19 @@ def hour_end(hour):
     return None if ts is None else ts + 3600
 
 
+def _gift(px, px_live, side):
+    """Насколько вход по цене сигнала выгоднее доступного в решении.
+
+    Положительное — записанная сделка вошла ЛУЧШЕ, чем вошла бы вживую:
+    цена успела уйти в нашу сторону, пока цикл считал. Знак берётся по
+    позиции, а не по цене, — иначе у шорта подарок читался бы наоборот.
+    """
+    if not px or not px_live:
+        return None
+    move = (px_live / px - 1.0) * 1e4
+    return round(move if side == "long" else -move, 1)
+
+
 def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
     """Сделки из выборов и разборов, свежие сверху.
 
@@ -137,6 +150,14 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
                     "entry_px": (p.get("px")
                                  or (px_at or {}).get(
                                      (p.get("sym"), hour))),
+                    # Цена, доступная в МОМЕНТ РЕШЕНИЯ, и подарок,
+                    # который даёт вход по цене сигнала. Считается, а не
+                    # применяется: исход сделки разбор меряет от того же
+                    # закрытия часа, и подменить один конец, оставив
+                    # другой, значило бы завести дефект хуже чинимого.
+                    # Сперва число, потом перенос всей цепочки.
+                    "px_live": p.get("px_live"),
+                    "gift_bp": _gift(p.get("px"), p.get("px_live"), side),
                     # Ожидаемый ход ПРОТИВ позиции — то, что модель
                     # обещает пережить. Без него ожидание читается как
                     # обещание пути, а это разные вещи.
@@ -316,6 +337,17 @@ def summary(trades, arm=None, capital=None):
            "no_outcome": len(lost), "awaiting": len(wait)}
     _unreal(rows, out, capital)
     _dd(rows, out)
+    # Подарок входа считается по ВСЕМ сделкам, а не только закрытым:
+    # он известен в момент открытия и от исхода не зависит вовсе.
+    have = [t for t in rows if t.get("gift_bp") is not None]
+    if have:
+        gifts = sorted(t["gift_bp"] for t in have)
+        out["gift_n"] = len(gifts)
+        out["gift_med_bp"] = gifts[len(gifts) // 2]
+        out["gift_avg_bp"] = round(sum(gifts) / len(gifts), 1)
+        lags = sorted(t["lag_sec"] for t in have
+                      if t.get("lag_sec") is not None)
+        out["gift_lag_med"] = lags[len(lags) // 2] if lags else None
     if not closed:
         return out
     hits = sum(1 for t in closed if t.get("hit"))

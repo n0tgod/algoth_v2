@@ -845,6 +845,52 @@ def write_outcome(reason, **nums):
     return out
 
 
+def live_px(syms, book_root, now=None, log_=None):
+    """Цена, доступная В МОМЕНТ РЕШЕНИЯ, а не в момент сигнала.
+
+    Признаки кончаются закрытием часа `t`, а цикл будит инференс через
+    несколько минут после него — замер на живом предпросмотре даёт
+    медиану 393 с и максимум 921. Войти по закрытию часа `t` значит
+    купить по цене, которой в момент решения уже нет: это ровно тот
+    подарок, который зонд L1 снимал правилом `next_open`, а зонд
+    возврата измерил числом — минута задержки съедала 55–70 % эффекта.
+
+    Здесь брать «открытие следующего бара» нечего: сетка часовая, а
+    следующий бар кончится через час. Зато сборщик пишет снимок книги
+    раз в секунду, и текущий (незакрытый) час лежит простым файлом —
+    его последняя запись и есть первая доступная нам цена.
+
+    Возвращает `{sym: (mid, t)}`. Символ без свежего снимка в словарь
+    не попадает: цена входа тогда останется прежней, и это видно в
+    самой сделке полем `px_live`, а не молча.
+    """
+    now = now if now is not None else time.time()
+    hour = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d-%H")
+    out = {}
+    if not book_root:
+        # Записи стакана нет вовсе — числа не будет, и это правильно:
+        # пропуск обязан остаться пропуском.
+        return out
+    for sym in syms:
+        d = os.path.join(book_root, "book", sym)
+        best = None
+        try:
+            for r in SM.read_hour(d, hour):
+                bid, ask = r.get("bid"), r.get("ask")
+                t = r.get("t") or 0.0
+                if not bid or not ask:
+                    continue
+                if best is None or t > best[1]:
+                    best = ((bid + ask) / 2.0, t)
+        except OSError:
+            best = None
+        if best is not None:
+            out[sym] = best
+    if log_ is not None and len(out) < len(syms):
+        log_(f"живая цена входа найдена у {len(out)} имён из {len(syms)}")
+    return out
+
+
 def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     t0 = time.time()
     if book_root and os.path.isdir(os.path.join(book_root, "book")):
@@ -1172,6 +1218,18 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                      "at_ts": round(time.time()),
                      "long": [mk(i, "long") for i in o[::-1][:3]],
                      "short": [mk(i, "short") for i in o[:3]]}
+            # Цена, доступная в момент решения. Ставится ПОСЛЕ отбора —
+            # раньше неизвестно, у кого её спрашивать. Прежняя цена
+            # (`px`, закрытие часа сигнала) остаётся в записи рядом:
+            # разность двух — и есть цена подарка, и узнать её можно
+            # только измерив, а не сняв.
+            lp = live_px([p["sym"] for s in ("long", "short")
+                          for p in picks[s]], book_root, log_=log_)
+            for s in ("long", "short"):
+                for p in picks[s]:
+                    got = lp.get(p["sym"])
+                    if got:
+                        p["px_live"], p["px_live_at"] = got[0], round(got[1])
             # Один выбор на (руку, час) — и не больше.
             #
             # Цикл писал выбор при каждом проходе, а проходов внутри

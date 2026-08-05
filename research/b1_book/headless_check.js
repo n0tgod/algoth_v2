@@ -182,7 +182,10 @@ global.fetch = async (url) => {
                                              hour: "2026-08-03-20",
                                              open: 12, full: true},
                               dd_book: {pct: -6.31, at: "2026-08-03-19",
-                                        hours: 9, gaps: 0}},
+                                        from: "2026-08-03-14",
+                                        hours: 9, gaps: 0},
+                              gift_n: 2, gift_med_bp: 12.4,
+                              gift_avg_bp: 9.1, gift_lag_med: 393},
                         gbm: {closed: 1, open: 1, no_outcome: 0,
                               hit_rate: 0.0, net_bp_avg: -51, pnl: -0.85,
                               marked: 1, unreal_net_avg_bp: 89.0,
@@ -468,6 +471,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("просадка счёта не показана");
     if (!/lower<\/b> bound|lower bound/.test(stats))
       bad.push("просадка выдана за точную, без оговорки о нижней оценке");
+    // Подарок входа: книга записана по цене закрытия часа, а решение
+    // пришло 393 с спустя. Число обязано быть на виду — иначе условность
+    // живёт в JSON и читается как «её нет».
+    if (!/12\.4 bp/.test(stats))
+      bad.push("подарок входа не показан числом");
+    if (!/393 s/.test(stats))
+      bad.push("задержка решения не показана рядом с подарком");
+    if (!/not yet applied/.test(stats))
+      bad.push("не сказано, что подарок пока только измеряется");
     const pg = global.__el ? String(
       global.__el("pg").textContent || "") : "";
     if (!/page \d+ of/.test(pg))
