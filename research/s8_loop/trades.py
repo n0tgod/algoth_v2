@@ -198,7 +198,32 @@ def _gift(px, px_live, side):
     return round(move if side == "long" else -move, 1)
 
 
-def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
+def load_books(path):
+    """Дописанные задним числом книги: `{(рука, час, символ): {in, out}}`.
+
+    Отдельный приписной файл, а не правка `picks.jsonl` на месте. Цикл
+    дописывает те же файлы и поднимается сторожем, поэтому переписать их
+    целиком значит однажды потерять час выборов — молча, потому что
+    файл при этом остаётся исправным на вид. Приписывать безопасно, а
+    отменить пересчёт можно удалением одного файла.
+    """
+    out = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                k = (r.get("arm"), r.get("hour"), r.get("sym"))
+                if all(k):
+                    out[k] = r
+    except OSError:
+        pass
+    return out
+
+
+def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
     """Сделки из выборов и разборов, свежие сверху.
 
     `picks` и `reviews` — строки соответствующих `.jsonl`.
@@ -285,7 +310,9 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
                     # Книга в момент входа. Сама сделка её не считает —
                     # цена исполнения зависит от размера, а размер знает
                     # только счёт.
-                    "cum_in": p.get("cum"),
+                    "cum_in": (p.get("cum")
+                               or (books or {}).get(
+                                   (arm, hour, p.get("sym")), {}).get("in")),
                     # Ожидаемый ход ПРОТИВ позиции — то, что модель
                     # обещает пережить. Без него ожидание читается как
                     # обещание пути, а это разные вещи.
@@ -294,7 +321,10 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None):
                     "ver": pk.get("ver"),
                 }
                 if got is not None:
-                    tr["cum_out"] = got.get("cum")
+                    tr["cum_out"] = (got.get("cum")
+                                     or (books or {}).get(
+                                         (arm, hour, p.get("sym")),
+                                         {}).get("out"))
                     tr.update(state="закрыта", got_bp=got.get("got"),
                               net_bp=got.get("net"), pnl=got.get("pnl"),
                               pos=got.get("pos"),

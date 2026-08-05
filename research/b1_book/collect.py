@@ -1239,8 +1239,12 @@ class Collector:
             sys.path.insert(0, os.path.join(os.path.dirname(HERE),
                                             "s8_loop"))
             import trades as TR
+            # Книги, дописанные пересчётом задним числом. Отдельный
+            # файл, потому что историю выборов правит только цикл.
             tr = TR.build(out.get("picks"), out.get("review"),
-                          px_at=self.entry_px(out.get("picks")))
+                          px_at=self.entry_px(out.get("picks")),
+                          books=TR.load_books(
+                              os.path.join(mdir, "books.jsonl")))
             TR.mark(tr, self.marks(tr))
             hrows = self.paths(tr)
             out["trades"] = tr[:300]
@@ -1292,7 +1296,9 @@ class Collector:
             mdir = os.path.join(s8, name)
             picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
             revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
-            tr = TR.build(picks, revs, px_at=self.entry_px(picks))
+            tr = TR.build(picks, revs, px_at=self.entry_px(picks),
+                          books=TR.load_books(
+                              os.path.join(mdir, "books.jsonl")))
             TR.mark(tr, self.marks(tr))
             if tr or out is None:
                 out = (name, tr, revs, mdir)
@@ -1509,7 +1515,9 @@ class Collector:
             pk = self._jsonl(os.path.join(mdir, "picks.jsonl"))
             tr = TR.build(pk, self._jsonl(os.path.join(mdir,
                                                        "review.jsonl")),
-                          px_at=self.entry_px(pk))
+                          px_at=self.entry_px(pk),
+                          books=TR.load_books(
+                              os.path.join(mdir, "books.jsonl")))
             for a in ("gbm", "nn"):
                 TR.account(tr, a)
             op = [t for t in tr if t.get("state") == "открыта"]

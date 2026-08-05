@@ -1235,6 +1235,110 @@ def test_execution_is_walked_through_the_recorded_book():
                if k.startswith(("exec", "fee", "slip", "cost"))}))
 
 
+def test_backfill_recovers_the_book_for_old_trades():
+    """Старым сделкам книга дописывается из записи, а не выдумывается.
+
+    Запись стакана идёт посекундно по всем символам, значит моменты
+    входа и выхода прошлых сделок в ней лежат целиком. Пересчёт берёт
+    ровно тот же снимок, какой новая сделка получает на лету, — это не
+    оценка задним числом, а те же данные.
+    """
+    import trades as TR
+    import backfill as BF
+    import train as T
+
+    check("каталоги пересчёта совпадают с каталогами цикла",
+          BF.MODEL_DIRS[False] == T.MODEL_DIR
+          and BF.MODEL_DIRS[True].endswith("model_pretest"),
+          f"{BF.MODEL_DIRS} против {T.MODEL_DIR}")
+
+    root = tempfile.mkdtemp()
+    try:
+        h = "2026-08-03-10"
+        t0 = TR._ts(h) + 3600           # вход — закрытие часа сигнала
+        decided = t0 + 400              # решение на 400 с позже
+        exit_ts = t0 + TR.HOLD_H * 3600
+        # Запись книги: по снимку на каждый нужный момент. Цена растёт,
+        # спред 100 б.п. — чтобы издержка была видна невооружённым
+        # глазом и не путалась с округлением.
+        for sym, (b0, a0), (b1, a1) in (
+                ("AUSDT", (99.5, 100.5), (109.5, 110.5)),
+                ("BUSDT", (99.5, 100.5), (89.5, 90.5))):
+            d = os.path.join(root, "book", sym)
+            os.makedirs(d, exist_ok=True)
+            for ts, (bid, ask) in ((decided, (b0, a0)),
+                                   (exit_ts, (b1, a1))):
+                hh = datetime.fromtimestamp(
+                    ts, timezone.utc).strftime("%Y-%m-%d-%H")
+                with open(os.path.join(d, f"{hh}.jsonl"), "a",
+                          encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "t": ts - 1, "bid": bid, "ask": ask,
+                        "b": [[bid, 1000.0]], "a": [[ask, 1000.0]]}) + "\n")
+        picks = [{"arm": "gbm", "hour": h, "at_ts": decided,
+                  "long": [{"sym": "AUSDT", "fwd": 900.0, "px": 100.0}],
+                  "short": [{"sym": "BUSDT", "fwd": -900.0, "px": 100.0}]}]
+        revs = [{"arm": "gbm", "hour": h, "cost_bp": 11.0, "rows": [
+            {"sym": "AUSDT", "side": "long", "expected": 900.0,
+             "got": 1000.0, "net": 989.0},
+            {"sym": "BUSDT", "side": "short", "expected": -900.0,
+             "got": -1000.0, "net": 989.0}]}]
+
+        before = TR.build(picks, revs, now=exit_ts + 3600)
+        TR.account(before, "gbm")
+        check("до пересчёта круг плоский",
+              all(t.get("cost_basis") == "плоский 11" for t in before),
+              str([t.get("cost_basis") for t in before]))
+
+        books = BF.Books(root)
+        n1, new = BF.stamp_picks(picks, books, lambda m: None)
+        n2, new = BF.stamp_reviews(revs, books, lambda m: None, out=new)
+        check("дописаны обе ноги на входе и на выходе",
+              n1 == 2 and n2 == 2, f"{n1} {n2}")
+        # История не тронута: пересчёт живёт в своём файле, а сделка
+        # берёт книгу оттуда. Цикл дописывает `picks.jsonl` и поднимается
+        # сторожем — переписать его значит однажды потерять час молча.
+        check("история осталась нетронутой",
+              all("cum" not in p for s_ in ("long", "short")
+                  for p in picks[0][s_]), str(picks))
+
+        after = TR.build(picks, revs, now=exit_ts + 3600, books=new)
+        TR.account(after, "gbm", table={"AUSDT": 5.5, "BUSDT": 5.5})
+        by = {t["sym"]: t for t in after}
+        check("круг стал книжным", all(
+            t.get("cost_basis") == "книга" for t in after),
+            str([t.get("cost_basis") for t in after]))
+        # Лонг: вошёл в аск 100.5, вышел в бид 109.5 — это 895.5 б.п., а
+        # не 1000 по серединам. Спред съел сотню, и это обязано быть
+        # видно в самом числе, а не только в разложении.
+        check("движение лонга посчитано по исполнению, а не по середине",
+              abs(by["AUSDT"]["net_bp"] - (895.5 - 11.0)) < 1.0,
+              str(by["AUSDT"].get("net_bp")))
+        check("шорт вошёл в бид и вышел в аск",
+              abs(by["BUSDT"]["fill_in"] - 99.5) < 1e-6
+              and abs(by["BUSDT"]["fill_out"] - 90.5) < 1e-6,
+              str(by["BUSDT"]))
+        check("плоский круг был мягче книжного",
+              by["AUSDT"]["net_bp"] < 989.0, str(by["AUSDT"]["net_bp"]))
+
+        # Повторный проход ничего не дублирует и не переписывает.
+        check("пересчёт идемпотентен",
+              BF.stamp_picks(picks, books, lambda m: None, new)[0] == 0
+              and BF.stamp_reviews(revs, books, lambda m: None,
+                                   new)[0] == 0,
+              "дописал повторно")
+
+        # Записи нет — сделка остаётся плоской, а не досчитывается.
+        far = [{"arm": "gbm", "hour": "2020-01-01-00", "at_ts": 1577836800,
+                "long": [{"sym": "AUSDT", "fwd": 1.0, "px": 1.0}],
+                "short": []}]
+        n, extra = BF.stamp_picks(far, books, lambda m: None)
+        check("без записи книга не выдумывается",
+              n == 0 and not extra, f"{n} {extra}")
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_entry_gift_is_measured_before_it_is_removed():
     """Вход по цене сигнала — подарок, и его сперва меряют.
 
@@ -2193,6 +2297,7 @@ def main():
     test_unrealised_never_mixes_with_realised()
     test_exposure_covers_all_open_and_leverage_is_named()
     test_execution_is_walked_through_the_recorded_book()
+    test_backfill_recovers_the_book_for_old_trades()
     test_entry_gift_is_measured_before_it_is_removed()
     test_drawdown_is_measured_not_inferred_from_the_outcome()
     test_drawdown_is_reported_against_the_deposit()
