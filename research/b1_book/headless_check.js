@@ -482,6 +482,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Проверяется ЧИСЛАМИ из подставного ответа — «блок есть» прошло бы
   // и на пустом блоке, а пустой блок неотличим от «данных ещё нет».
   if (isTrades) {
+    // Странице сделок нужна сводка — облегчённый ответ её не несёт.
+    if (seen.some(u => u.startsWith("/model_trades") && /lite=/.test(u)))
+      bad.push("страница сделок ушла на облегчённый ответ без сводки");
     const st = global.__el ? String(
       global.__el("stats").innerHTML || "") : "";
     const lab = global.__el ? String(
@@ -581,6 +584,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   if (isChart) {
     if (!seen.some(u => u.startsWith("/model_trades")))
       bad.push("график не запросил сделок модели");
+    // Графику нужны строки, а не сводки: полный расчёт занимал секунды
+    // на каждую смену монеты. Страница сделок, наоборот, обязана
+    // остаться на полном ответе — её проверки по числам сводки это
+    // и держат.
+    if (seen.some(u => u.startsWith("/model_trades") && !/lite=1/.test(u)))
+      bad.push("график тянет сделки модели полным ответом");
     const M = global.__mdl, drawn = (global.__hit ? global.__hit() : [])
       .filter(h => h.mdl);
     if (!M) bad.push("график не держит слоя сделок модели");

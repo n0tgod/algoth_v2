@@ -380,6 +380,70 @@ def test_pages_run_headless():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_model_trades_lite_matches_full():
+    """Лёгкий ответ /model_trades несёт те же строки, что полный.
+
+    Графику нужны строки сделок, а не сводки: полный расчёт (просадки
+    по почасовым сводкам, кривые, сводки трёх рук) занимал секунды на
+    каждую смену монеты. Облегчение, которое меняет сами строки, было
+    бы другой мерой — деньги и состояния обязаны совпасть с полным
+    ответом дословно. Данные — фикстура паритета бота: её строил
+    настоящий конвейер TR.build + TR.account.
+    """
+    import json as _json
+    import shutil
+    import tempfile
+    import collect as C
+
+    fx = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                      "bot", "tests", "fixtures", "parity")
+    orig = C.Collector._jsonl
+    root = tempfile.mkdtemp()
+    try:
+        def fake(path):
+            base = os.path.basename(path)
+            if ("model_pretest" in path
+                    and base in ("picks.jsonl", "review.jsonl")):
+                return orig(os.path.join(fx, base))
+            return []
+        C.Collector._jsonl = staticmethod(fake)
+        c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        full = c.model_trades(pretest=True, per=500)
+        lite = c.model_trades(pretest=True, per=500, lite=True)
+        check("фикстура дала сделки", len(full["rows"]) > 5,
+              str(len(full["rows"])))
+        # Полный путь дописывает в строки просадку (`dd_*`) из почасовых
+        # сводок — ровно то, что лёгкий пропускает. Всё остальное обязано
+        # совпасть значение в значение: другое означало бы, что
+        # облегчение поменяло сам счёт.
+        bad_pairs = []
+        for f, li in zip(full["rows"], lite["rows"]):
+            for k, v in li.items():
+                if _json.dumps(f.get(k), sort_keys=True) \
+                        != _json.dumps(v, sort_keys=True):
+                    bad_pairs.append(k)
+            bad_pairs += [k for k in f if k not in li
+                          and not k.startswith("dd_")]
+        check("лёгкий: строки совпали с полными (кроме dd_*)",
+              len(full["rows"]) == len(lite["rows"]) and not bad_pairs,
+              str(sorted(set(bad_pairs))[:6]))
+        check("лёгкий: сводок и кривых нет",
+              "stats" not in lite and "curves" not in lite)
+        check("лёгкий: помечен как lite", lite.get("lite") is True)
+        closed = [t for t in lite["rows"] if t.get("state") == "закрыта"]
+        check("деньги в строках остались (счёт не выброшен)",
+              bool(closed) and all(t.get("pnl") is not None
+                                   for t in closed))
+        sub = c.model_trades(pretest=True, per=500, lite=True,
+                             sym="AAAUSDT")
+        check("лёгкий: фильтр по монете работает",
+              sub["rows"] and all(t["sym"] == "AAAUSDT"
+                                  for t in sub["rows"]))
+    finally:
+        C.Collector._jsonl = orig
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_live_detector_agrees_with_batch():
     """Живой детектор обязан решать так же, как тот, чем считаны отчёты.
 
@@ -2160,6 +2224,7 @@ def main():
     test_page_has_no_external_loads()
     test_pages_run_headless()
     test_trades_table_columns_line_up()
+    test_model_trades_lite_matches_full()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()

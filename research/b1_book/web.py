@@ -2603,7 +2603,9 @@ async function pullModelTrades() {
   try {
     // Полная история по монете, а не последние двадцать из состояния:
     // страницу открывают ради сделки, которой может быть неделя.
-    const p = new URLSearchParams({k: KEY, sym: sym, per: 500});
+    // `lite` — без сводок и кривых: графику нужны строки сделок, а
+    // полный расчёт занимал секунды на каждую смену монеты.
+    const p = new URLSearchParams({k: KEY, sym: sym, per: 500, lite: 1});
     // Источник передаётся ссылкой из таблицы: выбор «предпросмотр или
     // боевая» делается на сервере по наличию сделок, и два запроса
     // могли бы попасть в разные контуры — на графике оказались бы
@@ -2622,24 +2624,39 @@ async function pullModelTrades() {
 }
 
 function armButtons() {
+  const box = document.getElementById("marm");
   const n = {};
   for (const [a] of ARMS) n[a] = MDL.trades.filter(t => t.arm === a).length;
-  document.getElementById("marm").innerHTML = ARMS.map(([a, name]) =>
-    `<button data-arm="${a}" aria-pressed="${a === MDL.arm}"
-      title="model trades: one arm shown">${name} ${n[a]}</button>`
-  ).join(" ");
-  document.querySelectorAll("[data-arm]").forEach(b => b.onclick = () => {
-    MDL.arm = b.dataset.arm;
-    // Рука остаётся в адресе: страницу перезагружают и кладут в
-    // закладки, и молча вернуться к другой руке значит показать не те
-    // сделки под тем же адресом.
-    const q = new URLSearchParams(location.search);
-    q.set("arm", MDL.arm);
-    window.history.replaceState(null, "", "?" + q.toString());
-    // Час остаётся в ссылке, но у другой руки в этом часе сделка своя
-    // (или её нет вовсе) — окно не двигаем, чтобы переключение не
-    // уводило взгляд.
-    armButtons(); draw();
+  // Кнопки создаются ОДИН раз, дальше обновляются на месте. Пересборка
+  // innerHTML при каждом приходе данных съедала касание, попавшее на
+  // момент замены узла, — владелец видел это как «иногда не
+  // переключается». Обработчик висит на контейнере и переживает всё.
+  if (!box.dataset.wired) {
+    box.innerHTML = ARMS.map(([a, name]) =>
+      `<button data-arm="${a}" title="model trades: one arm shown">${
+        name} <span class="mono"></span></button>`).join(" ");
+    box.dataset.wired = "1";
+    box.onclick = e => {
+      const b = e.target && e.target.closest
+        ? e.target.closest("[data-arm]") : null;
+      if (!b) return;
+      MDL.arm = b.dataset.arm;
+      // Рука остаётся в адресе: страницу перезагружают и кладут в
+      // закладки, и молча вернуться к другой руке значит показать не
+      // те сделки под тем же адресом.
+      const q = new URLSearchParams(location.search);
+      q.set("arm", MDL.arm);
+      window.history.replaceState(null, "", "?" + q.toString());
+      // Час остаётся в ссылке, но у другой руки в этом часе сделка
+      // своя (или её нет вовсе) — окно не двигаем, чтобы переключение
+      // не уводило взгляд.
+      armButtons(); draw();
+    };
+  }
+  box.querySelectorAll("[data-arm]").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.arm === MDL.arm));
+    const s = b.querySelector("span");
+    if (s) s.textContent = n[b.dataset.arm] ?? 0;
   });
 }
 
@@ -3601,7 +3618,8 @@ def serve(collector, port, token, log):
                         state=q.get("state", [None])[0] or None,
                         sym=q.get("sym", [None])[0] or None,
                         pretest=(None if pre is None
-                                 else pre not in ("0", "false", ""))),
+                                 else pre not in ("0", "false", "")),
+                        lite=q.get("lite", [""])[0] in ("1", "true")),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/model_marks":

@@ -1420,7 +1420,7 @@ class Collector:
         return out
 
     def model_trades(self, page=0, per=100, arm=None, state=None,
-                     sym=None, pretest=None):
+                     sym=None, pretest=None, lite=False):
         """ВСЯ история сделок модели, страницами, со сводкой по всему.
 
         Отдельно от `model_state`, потому что там история намеренно
@@ -1431,6 +1431,13 @@ class Collector:
         Сводка считается по ВСЕЙ выборке, а не по видимой странице:
         статистика, зависящая от того, какую страницу открыли, — не
         статистика.
+
+        `lite` — режим графика: ему нужны только строки сделок одной
+        монеты, а не сводки и кривые. Полный расчёт (просадка каждой
+        сделки по почасовым сводкам, кривые счёта, сводки трёх рук)
+        занимал секунды и вызывался при каждой смене монеты — владелец
+        видел это как «долго грузит». Деньги в строках остаются: их
+        проставляет тот же `TR.account`, второй копии счёта нет.
         """
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
@@ -1455,7 +1462,6 @@ class Collector:
             if tr:
                 break
         name, tr, revs, mdir = out
-        hrows = self.paths(tr)
         accs, cap = {}, {}
         for a in ("gbm", "nn"):
             try:
@@ -1473,6 +1479,27 @@ class Collector:
             # читается как «депозит стал 500». Пересчёт есть всегда и
             # согласован с показанными сделками по построению.
             cap[a] = TR.account(tr, a)[1]
+
+        def sliced():
+            rows = tr
+            if arm:
+                rows = [t for t in rows if t["arm"] == arm]
+            if state:
+                rows = [t for t in rows if t["state"] == state]
+            if sym:
+                rows = [t for t in rows if t["sym"] == sym.upper()]
+            return rows, max(10, min(int(per), 500)), max(0, int(page))
+
+        if lite:
+            rows, p, g = sliced()
+            return {"source": name, "pretest": name.endswith("pretest"),
+                    "lite": True, "start": TR.START_BALANCE,
+                    "page": g, "per": p, "total": len(rows),
+                    "pages": max(1, (len(rows) + p - 1) // p),
+                    "filtered": bool(arm or state or sym),
+                    "grand_total": len(tr),
+                    "rows": rows[g * p:(g + 1) * p]}
+        hrows = self.paths(tr)
         # Капитал у каждой руки свой — по тысяче. На вкладке «обе»
         # капитал складывается: иначе экспозиция 1504 $ читалась бы как
         # полтора плеча, хотя капитала там две тысячи.
@@ -1501,15 +1528,7 @@ class Collector:
         # просадка двух счетов делилась бы на один и выходила вдвое.
         stats["all"]["dd_open_book"] = TR.worst_open(
             both_c, deposit=2 * TR.START_BALANCE)
-        rows = tr
-        if arm:
-            rows = [t for t in rows if t["arm"] == arm]
-        if state:
-            rows = [t for t in rows if t["state"] == state]
-        if sym:
-            rows = [t for t in rows if t["sym"] == sym.upper()]
-        per = max(10, min(int(per), 500))
-        page = max(0, int(page))
+        rows, per, page = sliced()
         total = len(rows)
         # Кривые счёта — на страницу. Прежде они считались здесь ради
         # просадки и выбрасывались, а владелец видел только итоговое
