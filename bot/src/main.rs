@@ -44,6 +44,58 @@ fn main() {
                 );
             }
         }
+        Some("check") => {
+            // bot check <журнал> [капитал] [--now-ms N] — сторож:
+            // инварианты счёта; выход 1 при нарушении.
+            let dir = match args.get(2) {
+                Some(d) => d.clone(),
+                None => {
+                    eprintln!("нужен каталог журнала: bot check <dir>");
+                    exit(2);
+                }
+            };
+            let capital: f64 = args
+                .get(3)
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(1000.0);
+            let mut now_ms: Option<i64> = None;
+            let mut it = args[3..].iter();
+            while let Some(a) = it.next() {
+                if a == "--now-ms" {
+                    now_ms = it.next().and_then(|v| v.parse().ok());
+                }
+            }
+            let now_ms = now_ms.unwrap_or_else(|| {
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0)
+            });
+            let (_, records, _) = match bot::journal::Journal::open(Path::new(&dir)) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("журнал не читается: {e}");
+                    exit(2);
+                }
+            };
+            let st = match bot::state::derive(capital, &records) {
+                Ok(s) => s,
+                Err(e) => {
+                    eprintln!("состояние не выводится: {e}");
+                    exit(2);
+                }
+            };
+            let rep = bot::check::verify(
+                capital,
+                &records,
+                &st,
+                &bot::check::CheckOpts { now_ms, ..Default::default() },
+            );
+            println!("{}", serde_json::to_string_pretty(&rep).expect("json"));
+            if !rep.ok {
+                exit(1);
+            }
+        }
         Some("shadow") => {
             // bot shadow --s8 DIR --journal DIR [--arm gbm]
             //            [--capital 1000] [--fees PATH] [--now-ms N]
