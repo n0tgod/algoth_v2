@@ -199,7 +199,8 @@ def test_page_has_no_external_loads():
     import web
     for name, src, api in (("обзор", web.PAGE, "/state?k="),
                            ("график", web.CHART, "/state?k="),
-                           ("сделки", web.TRADES, "/model_trades?")):
+                           ("сделки", web.TRADES, "/model_trades?"),
+                           ("ядро", web.BOTPAGE, "/bot-full?")):
         check(f"{name}: внешних ссылок нет",
               "http://" not in src and "https://" not in src)
         check(f"{name}: данные тянутся с самого сборщика", api in src)
@@ -210,6 +211,10 @@ def test_page_has_no_external_loads():
           "/trades-page?k=" in web.PAGE)
     check("со страницы сделок есть возврат на обзор",
           'id="back"' in web.TRADES and "/?k=" in web.TRADES)
+    check("с обзора есть ссылка на страницу ядра",
+          "/bot-page?k=" in web.PAGE)
+    check("со страницы ядра есть возврат на обзор",
+          'id="back"' in web.BOTPAGE and "/?k=" in web.BOTPAGE)
     # Строка таблицы отвечает «сколько», но не «что там было с ценой».
     # Ссылка обязана нести ВСЕ четыре опознавателя сделки: без руки на
     # графике оказались бы обе модели, без источника — не тот контур.
@@ -351,7 +356,8 @@ def test_pages_run_headless():
                 ("график", web.CHART, None),
                 ("график по ссылке на сделку", web.CHART,
                  "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14&pretest=1"),
-                ("сделки", web.TRADES, None)):
+                ("сделки", web.TRADES, None),
+                ("ядро", web.BOTPAGE, None)):
             p = os.path.join(d, "p.html")
             with open(p, "w", encoding="utf-8") as f:
                 f.write(src)

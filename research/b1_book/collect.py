@@ -1202,6 +1202,116 @@ class Collector:
             st["age_sec"] = None
         return st
 
+    def bot_full(self):
+        """Полные данные страницы ядра: статус, журнал, переоценка.
+
+        Журнал читается функциями `bot/sverka.py` — той же реализацией,
+        что сверяет сделки. Вторая копия чтения однажды разошлась бы с
+        первой (урок загрузчика funding), и страница показывала бы одни
+        сделки, а сверка судила бы другие.
+
+        Переоценка открытых позиций — по СВОЕЙ книге сборщика: середина
+        лучших цен прямо сейчас. Это брутто до издержек, и страница
+        обязана подписать это словами.
+        """
+        st = self.bot_status()
+        if not st.get("present"):
+            return st
+        root = os.path.join(os.path.dirname(os.path.dirname(HERE)), "bot")
+        sys.path.insert(0, root)
+        import sverka as SV
+        jdir = os.path.join(root, "out", "shadow")
+        try:
+            recs = SV.read_journal(jdir)
+        except SystemExit as e:
+            st["journal_error"] = str(e)
+            return st
+        capital = float(st.get("capital_usd") or 1000.0)
+        bal = capital
+        opens, closed, curve = {}, [], []
+        decisions = rejects = 0
+        for r in recs:
+            ev = r.get("ev")
+            if ev == "decision":
+                decisions += 1
+            elif ev == "reject":
+                rejects += 1
+            elif ev == "open":
+                opens[r["pos"]] = r
+            elif ev == "close":
+                o = opens.pop(r["pos"], None)
+                if o is None:
+                    continue
+                bal += r["pnl_usd"]
+                closed.append({
+                    "pos": r["pos"],
+                    "hour": (r["pos"].split(":") + ["", ""])[1],
+                    "sym": o.get("sym"), "side": o.get("side"),
+                    "size": round(o.get("notional_usd") or 0.0, 2),
+                    "entry_px": o.get("entry_px"),
+                    "exit_px": r.get("exit_px"),
+                    "pnl": round(r["pnl_usd"], 2),
+                    "basis": ("книга" if "книга" in (r.get("reason") or "")
+                              else "плоский 11"),
+                    "closed_at": r["at_ms"] / 1000.0,
+                })
+                curve.append([r["at_ms"] / 1000.0, round(bal, 2)])
+        now = time.time()
+        positions = []
+        for pos, o in sorted(opens.items()):
+            sym = o.get("sym")
+            mid = None
+            bk = self.books.get(sym)
+            if bk is not None:
+                try:
+                    bid, ask = bk.best()
+                    if bid and ask:
+                        mid = (bid + ask) / 2.0
+                except Exception:                     # noqa: BLE001
+                    mid = None
+            entry = o.get("entry_px")
+            unreal_bp = None
+            if mid and entry:
+                mv = (mid / entry - 1.0) * 1e4
+                unreal_bp = round(mv if o.get("side") == "long" else -mv, 1)
+            hour = (pos.split(":") + ["", ""])[1]
+            try:
+                h0 = datetime.strptime(hour, "%Y-%m-%d-%H").replace(
+                    tzinfo=timezone.utc).timestamp()
+                closes_at = h0 + 5 * 3600.0
+            except ValueError:
+                closes_at = None
+            size = o.get("notional_usd") or 0.0
+            positions.append({
+                "pos": pos, "sym": sym, "side": o.get("side"),
+                "size": round(size, 2), "entry_px": entry, "cur_mid": mid,
+                "unreal_bp": unreal_bp,
+                "unreal_usd": (round(size * unreal_bp / 1e4, 2)
+                               if unreal_bp is not None else None),
+                "opened_at": o["at_ms"] / 1000.0,
+                "closes_at": closes_at,
+            })
+        # Хвост отчёта сверки — числа обязаны быть видны на странице, а
+        # не только вердикт (пересказ теряет числа — правило публикации).
+        rep = None
+        try:
+            with open(os.path.join(jdir, "sverka-report.md"),
+                      encoding="utf-8") as f:
+                rep = "\n".join(f.read().split("\n")[:40])
+        except OSError:
+            pass
+        st.update(
+            positions=positions,
+            closed=closed[-200:][::-1],
+            closed_total=len(closed),
+            curve=curve,
+            counts={"decisions": decisions, "rejects": rejects,
+                    "closed": len(closed), "open": len(positions)},
+            sverka_report=rep,
+            server_now=now,
+        )
+        return st
+
     def model_state(self):
         """Состояние модели S8 для страницы: манифест, мысли, живой IC.
 

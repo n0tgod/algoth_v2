@@ -23,6 +23,7 @@ const SEARCH = process.argv[3] || "?k=xxx&sym=BTCUSDT";
 const js = src.match(/<script>\n([\s\S]*)<\/script>/)[1];
 const isChart = /id="px"/.test(src);
 const isTrades = /id="tb"/.test(src);
+const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
 const FOCUS = /hour=/.test(SEARCH);
 
@@ -316,6 +317,29 @@ global.fetch = async (url) => {
                        got_bp: 40, net_bp: -51, pnl: -0.85, pos: 166.67}],
                     thoughts: [{at: "08-03 19:30", text: "предпросмотр"}],
                     ic: []}}
+             : url.startsWith("/bot-full")
+               ? {present: true, age_sec: 42.0, arm: "gbm",
+                  capital_usd: 1000.0, balance_usd: 1125.01,
+                  cash_usd: 0.0, busy_usd: 1125.01, open: 1, kill: false,
+                  check: {ok: true, violations: [], warnings: [],
+                          events: 32, open_positions: 1},
+                  sverka: {ok: true, at_ms: 1785952800000,
+                           note: "расхождений нет"},
+                  error: null, server_now: 1785952860,
+                  counts: {decisions: 12, rejects: 1, closed: 8, open: 1},
+                  closed_total: 8,
+                  positions: [{pos: "gbm:2026-08-05-10:AAAUSDT:long",
+                               sym: "AAAUSDT", side: "long", size: 62.5,
+                               entry_px: 50.02, cur_mid: 50.33,
+                               unreal_bp: 62.0, unreal_usd: 0.39,
+                               opened_at: 1785949200, closes_at: 1785963600}],
+                  closed: [{pos: "gbm:2026-08-05-10:CCCUSDT:short",
+                            hour: "2026-08-05-10", sym: "CCCUSDT",
+                            side: "short", size: 62.5, entry_px: 1199.52,
+                            exit_px: 1225.71, pnl: -1.5, basis: "книга",
+                            closed_at: 1785949200}],
+                  curve: [[1785949200, 998.5], [1785952800, 1125.01]],
+                  sverka_report: "# Сверка бота с Python-счётом"}
              : url.startsWith("/bot")
                // Статус исполнительного ядра: живой, с чистыми
                // вердиктами и числами — панель обязана их ПОКАЗАТЬ.
@@ -423,7 +447,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !seen.some(u => u.startsWith("/state")))
+  if (!isTrades && !isBot && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   if (global.__pretest) {
     let html = "";
@@ -452,7 +476,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push("в сделках остались базисные пункты");
     }
   }
-  if (!isTrades && !seen.some(u => u.startsWith("/trades")))
+  if (!isTrades && !isBot && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
   // Проверяется ЧИСЛАМИ из подставного ответа — «блок есть» прошло бы
@@ -493,10 +517,29 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/recorded order book/.test(st) || !/lower<\/b> bound/.test(st))
       bad.push("текст пояснений потерян при сворачивании");
   }
+  // Страница ядра: числа из подставного ответа обязаны дойти до
+  // разметки — баланс, доля, позиция с переоценкой, закрытая сделка,
+  // вердикт сверки.
+  if (isBot) {
+    const acct = String(global.__el("acct").innerHTML || "");
+    if (!/1125\.01/.test(acct)) bad.push("ядро: баланс не показан");
+    if (!/\+12\.50 %/.test(acct)) bad.push("ядро: доля от старта не показана");
+    if (!/расхождений 0/.test(acct)) bad.push("ядро: вердикт сверки не показан");
+    const pos = String(global.__el("pos").innerHTML || "");
+    if (!/AAA/.test(pos) || !/0\.62 %/.test(pos))
+      bad.push("ядро: открытая позиция без переоценки");
+    const cl = String(global.__el("cl").innerHTML || "");
+    if (!/CCC/.test(cl) || !/-1\.5/.test(cl))
+      bad.push("ядро: закрытая сделка не показана");
+    const svp = String(global.__el("sv").textContent || "");
+    if (!/Сверка бота/.test(svp))
+      bad.push("ядро: отчёт сверки не показан");
+  }
+
   // Панель исполнительного ядра — только на обзоре. Проверяется
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
-  if (!isTrades && !isChart) {
+  if (!isTrades && !isChart && !isBot) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -716,6 +759,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("просадка сделки в строке не в долях депозита");
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
+  } else if (isBot) {
+    // У страницы ядра нет ни пересчёта, ни детекторных сделок — её
+    // проверки выше, числами из /bot-full.
   } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {

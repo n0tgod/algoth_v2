@@ -619,6 +619,7 @@ async function pullBot() {
     инварианты ${ch.ok === true ? "целы" : "—"} ·
     сверка ${sv.ok === true ? "расхождений 0"
              : sv.ok == null ? (sv.note || "не бежала") : "см. ниже"}`
+    + ` · <a href="/bot-page?k=${encodeURIComponent(KEY)}">подробнее</a>`
     + (bad.length
        ? `<div style="color:var(--ask)"><b>${bad.join("<br>")}</b></div>`
        : "")
@@ -1876,6 +1877,195 @@ marks(); setInterval(marks, 10000);
 """
 
 
+BOTPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Исполнительное ядро — тень</title>
+<style>
+:root{color-scheme:light dark;
+ --ground:#f6f7f9;--panel:#fff;--ink:#141a21;--muted:#5c6673;--rule:#dfe4ea;
+ --good:#1f7a56;--bad:#b8452c;--accent:#a97514}
+@media(prefers-color-scheme:dark){:root{
+ --ground:#0c1015;--panel:#131922;--ink:#e4e9f0;--muted:#8b95a4;--rule:#212936;
+ --good:#35a877;--bad:#d4614a;--accent:#d7a24a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 12px 60px}
+h1{font-size:17px;margin:0 0 4px}
+.note{color:var(--muted);font-size:13px;margin:0 0 10px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;
+ padding:12px 14px;margin-bottom:12px}
+.k{color:var(--muted);font-size:12px}
+.good{color:var(--good)} .bad{color:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+ gap:1px;background:var(--rule);border:1px solid var(--rule);
+ border-radius:8px;overflow:hidden}
+.st{background:var(--panel);padding:7px 10px}
+.st .v{font-size:15px;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--muted);font-weight:400;
+ padding:4px 8px 5px 0;border-bottom:1px solid var(--rule)}
+td{padding:3px 8px 3px 0;white-space:nowrap;
+ border-bottom:1px solid var(--rule)}
+.scroll{overflow-x:auto}
+canvas{width:100%;display:block}
+pre{white-space:pre-wrap;font-size:12px;color:var(--muted);margin:0}
+.alarm{color:var(--bad);font-weight:650}
+</style>
+<div class="wrap">
+  <h1>Исполнительное ядро — тень <span id="src" class="mono k"></span></h1>
+  <div class="note"><a href="#" id="back">&larr; overview</a> ·
+    read-only: аварийный стоп — файл KILL на сервере, страница его
+    показывает, но не нажимает</div>
+  <div id="alarm"></div>
+  <div class="card"><div class="k" style="margin-bottom:6px">account</div>
+    <div class="stats" id="acct">…</div></div>
+  <div class="card"><div class="k">equity, realised closes
+      <span id="eqlab" class="mono"></span></div>
+    <canvas id="eq" height="160"></canvas></div>
+  <div class="card"><div class="k" style="margin-bottom:6px">
+      open positions — gross mark by the collector's own book,
+      costs not deducted</div>
+    <div class="scroll"><table>
+      <thead><tr><th>coin</th><th>side</th><th>size $</th><th>entry</th>
+        <th>mid now</th><th>unreal</th><th>unreal $</th><th>age</th>
+        <th>closes in</th></tr></thead>
+      <tbody id="pos"></tbody></table></div></div>
+  <div class="card"><div class="k" style="margin-bottom:6px">
+      closed trades <span id="cnt" class="mono"></span></div>
+    <div class="scroll"><table>
+      <thead><tr><th>hour</th><th>coin</th><th>side</th><th>size $</th>
+        <th>entry</th><th>exit</th><th>pnl $</th><th>cost basis</th>
+      </tr></thead><tbody id="cl"></tbody></table></div></div>
+  <div class="card"><div class="k" style="margin-bottom:6px">
+      сверка с Python-счётом</div><pre id="sv">…</pre></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
+const css = k => getComputedStyle(document.documentElement)
+  .getPropertyValue(k).trim();
+const FMT = new Intl.DateTimeFormat("en-GB", {timeZone: "Europe/Vienna",
+  hour: "2-digit", minute: "2-digit"});
+const hhmm = ts => ts ? FMT.format(new Date(ts * 1000)) : "—";
+const px = v => v == null ? "—" : String(v);
+function cell(k, v, cls) {
+  return `<div class="st"><div class="k">${k}</div>
+    <div class="v mono ${cls || ""}">${v}</div></div>`;
+}
+function drawEq(curve, capital) {
+  const cv = document.getElementById("eq");
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 700, H = 160;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  if (!curve || curve.length < 2) return;
+  let lo = capital, hi = capital;
+  for (const [, v] of curve) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+  const x = i => 6 + (W - 60) * i / (curve.length - 1);
+  const y = v => 8 + (H - 28) * (hi - v) / (hi - lo);
+  g.strokeStyle = css("--rule");
+  g.beginPath(); g.moveTo(6, y(capital)); g.lineTo(W - 54, y(capital));
+  g.stroke();
+  g.strokeStyle = css("--accent"); g.lineWidth = 1.6;
+  g.beginPath();
+  curve.forEach(([, v], i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)));
+  g.stroke();
+  g.fillStyle = css("--muted"); g.font = "11px ui-monospace,Menlo,monospace";
+  g.fillText(hi.toFixed(0), W - 50, 14);
+  g.fillText(lo.toFixed(0), W - 50, H - 8);
+}
+async function load() {
+  let d;
+  try {
+    const r = await fetch(`/bot-full?k=${encodeURIComponent(KEY)}`);
+    d = await r.json();
+  } catch (e) {
+    document.getElementById("alarm").innerHTML =
+      `<div class="card alarm">нет связи со сборщиком</div>`;
+    return;
+  }
+  if (!d.present) {
+    document.getElementById("alarm").innerHTML =
+      `<div class="card">ядро не запущено — тень ещё не развёрнута</div>`;
+    return;
+  }
+  document.getElementById("src").textContent = `рука ${d.arm}`;
+  const bad = [];
+  if (d.age_sec != null && d.age_sec > 300)
+    bad.push(`СТАТУС МОЛЧИТ ${Math.round(d.age_sec / 60)} мин — процесс повис`);
+  if (d.error) bad.push(`ОШИБКА: ${d.error}`);
+  if (d.journal_error) bad.push(`ЖУРНАЛ: ${d.journal_error}`);
+  const ch = d.check || {};
+  if (ch.ok === false)
+    bad.push(`ИНВАРИАНТЫ: ${(ch.violations || []).join("; ")}`);
+  const sv = d.sverka || {};
+  if (sv.ok === false) bad.push(sv.note || "СВЕРКА: расхождения");
+  if (d.kill) bad.push("ВЫКЛЮЧАТЕЛЬ ПОВЁРНУТ — новых входов нет");
+  document.getElementById("alarm").innerHTML = bad.length
+    ? `<div class="card alarm">${bad.join("<br>")}</div>` : "";
+  const cap = d.capital_usd || 1000;
+  const share = ((d.balance_usd / cap - 1) * 100).toFixed(2);
+  const cnt = d.counts || {};
+  document.getElementById("acct").innerHTML =
+    cell("balance", `${d.balance_usd} $`,
+         d.balance_usd >= cap ? "good" : "bad")
+    + cell("vs start", `${share > 0 ? "+" : ""}${share} %`,
+           share >= 0 ? "good" : "bad")
+    + cell("in positions", `${(d.busy_usd || 0).toFixed(2)} $`)
+    + cell("free cash", `${(d.cash_usd || 0).toFixed(2)} $`)
+    + cell("open / closed", `${cnt.open ?? "—"} / ${cnt.closed ?? "—"}`)
+    + cell("decisions / rejects",
+           `${cnt.decisions ?? "—"} / ${cnt.rejects ?? "—"}`)
+    + cell("invariants", ch.ok === true ? "целы" : "СМОТРЕТЬ",
+           ch.ok === true ? "good" : "bad")
+    + cell("сверка", sv.ok === true ? "расхождений 0"
+           : sv.ok == null ? "не бежала" : "РАСХОЖДЕНИЯ",
+           sv.ok === true ? "good" : sv.ok === false ? "bad" : "")
+    + cell("status age", d.age_sec == null ? "—"
+           : `${Math.round(d.age_sec)} s`,
+           d.age_sec > 300 ? "bad" : "");
+  drawEq(d.curve, cap);
+  document.getElementById("eqlab").textContent =
+    (d.curve || []).length + " closes";
+  const now = d.server_now || 0;
+  document.getElementById("pos").innerHTML = (d.positions || []).map(p => `
+    <tr><td class="mono">${(p.sym || "").replace("USDT", "")}</td>
+    <td>${p.side === "long" ? "L" : "S"}</td>
+    <td class="mono">${p.size}</td>
+    <td class="mono">${px(p.entry_px)}</td>
+    <td class="mono">${px(p.cur_mid)}</td>
+    <td class="mono ${p.unreal_bp > 0 ? "good" : p.unreal_bp < 0 ? "bad" : ""}">
+      ${p.unreal_bp == null ? "—" : (p.unreal_bp / 100).toFixed(2) + " %"}</td>
+    <td class="mono">${p.unreal_usd == null ? "—"
+      : (p.unreal_usd > 0 ? "+" : "") + p.unreal_usd}</td>
+    <td class="mono">${p.opened_at ? ((now - p.opened_at) / 3600).toFixed(1) + " h" : "—"}</td>
+    <td class="mono">${p.closes_at ? ((p.closes_at - now) / 3600).toFixed(1) + " h" : "—"}</td>
+    </tr>`).join("")
+    || `<tr><td colspan="9" class="k">позиций нет</td></tr>`;
+  document.getElementById("cnt").textContent =
+    `showing ${(d.closed || []).length} of ${d.closed_total || 0}`;
+  document.getElementById("cl").innerHTML = (d.closed || []).map(t => `
+    <tr><td class="mono" title="${t.pos}">${t.hour.slice(5)} ${hhmm(t.closed_at)}</td>
+    <td class="mono">${(t.sym || "").replace("USDT", "")}</td>
+    <td>${t.side === "long" ? "L" : "S"}</td>
+    <td class="mono">${t.size}</td>
+    <td class="mono">${px(t.entry_px)}</td>
+    <td class="mono">${px(t.exit_px)}</td>
+    <td class="mono ${t.pnl > 0 ? "good" : "bad"}">${t.pnl > 0 ? "+" : ""}${t.pnl}</td>
+    <td class="k">${t.basis}</td></tr>`).join("")
+    || `<tr><td colspan="8" class="k">закрытых пока нет</td></tr>`;
+  document.getElementById("sv").textContent =
+    d.sverka_report || "отчёт сверки ещё не написан";
+}
+load(); setInterval(load, 30000);
+</script>
+"""
+
 CHART = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chart живьём</title>
@@ -2964,6 +3154,14 @@ def serve(collector, port, token, log):
                     {"groups": collector.groups},
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
+            if u.path == "/bot-full":
+                return self._ok(json.dumps(
+                    collector.bot_full(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/bot-page":
+                return self._ok(BOTPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
             if u.path == "/bot":
                 return self._ok(json.dumps(
                     collector.bot_status(),

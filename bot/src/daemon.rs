@@ -76,6 +76,9 @@ impl From<&PassReport> for PassSummary {
 pub struct Status {
     pub at_ms: i64,
     pub arm: String,
+    /// Стартовый капитал — знаменатель для доли и начало кривой счёта.
+    /// Страница не вправе его выдумывать: у неё нет конфигурации ядра.
+    pub capital_usd: f64,
     pub balance_usd: f64,
     pub cash_usd: f64,
     pub busy_usd: f64,
@@ -102,6 +105,7 @@ pub fn tick(cfg: &DaemonCfg, mem: &mut TickMemory, now_ms: i64) -> Status {
     let mut status = Status {
         at_ms: now_ms,
         arm: cfg.arm.clone(),
+        capital_usd: cfg.capital_usd,
         balance_usd: 0.0,
         cash_usd: 0.0,
         busy_usd: 0.0,
