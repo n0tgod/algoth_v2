@@ -225,6 +225,39 @@ def test_page_has_no_external_loads():
                              for p in ("sym=", "arm=", "hour=", "pretest=")))
 
 
+def test_pages_do_not_shadow_platform_globals():
+    """Скрипт страницы не смеет объявлять имена платформы браузера.
+
+    `function history()` на графике ПЕРЕЗАПИСАЛ window.history —
+    свойство по спецификации заменяемое, — и replaceState перестал быть
+    функцией: обработчик переключения руки падал на полпути, подсветка
+    застывала на прежней руке. Headless этого не ловит: там history —
+    подставной объект, который затенить нельзя. Проверка статическая,
+    по объявлениям в тексте страницы.
+    """
+    import re
+    import web
+    names = "history|location|status|name|top|self|parent|frames"
+    # Только объявления ВЕРХНЕГО уровня (колонка ноль): вложенные
+    # затеняют локально и безвредны — `const name` внутри функции
+    # объявлен намеренно. Отступ здесь и есть признак вложенности:
+    # весь код страниц отформатирован именно так.
+    pat = re.compile(
+        r"^(?:async\s+)?(?:function\s+(?:%s)\s*\(|"
+        r"(?:const|let|var)\s+(?:%s)\s*[=,;])" % (names, names),
+        re.M)
+    for page, src in (("обзор", web.PAGE), ("график", web.CHART),
+                      ("сделки", web.TRADES), ("ядро", web.BOTPAGE)):
+        m = pat.search(src)
+        check(f"{page}: платформенные имена не затенены",
+              m is None, m.group(0).strip() if m else "")
+    # Негативный контроль: проверка обязана кусаться.
+    broken = web.CHART.replace("async function pullHist()",
+                               "async function history()", 1)
+    check("на подпорченной странице проверка падает",
+          pat.search(broken) is not None)
+
+
 def _tag_attrs(src, tag):
     """Атрибуты каждого тега `tag` в шаблоне страницы.
 
@@ -2222,6 +2255,7 @@ def main():
     print("страница наблюдения")
     test_view_does_not_reset_counter()
     test_page_has_no_external_loads()
+    test_pages_do_not_shadow_platform_globals()
     test_pages_run_headless()
     test_trades_table_columns_line_up()
     test_model_trades_lite_matches_full()
