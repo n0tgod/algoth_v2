@@ -1,0 +1,12 @@
+[package]
+name = "bot"
+version = "0.1.0"
+edition = "2021"
+
+# Каждая зависимость — решение, а не привычка (спека 09 §8).
+# serde/serde_json — формат журнала; flate2 — сжатие закрытых суток.
+# tokio и tungstenite появятся в E2 вместе с вебсокетом, не раньше.
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+flate2 = "1"
