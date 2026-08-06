@@ -1075,6 +1075,57 @@ def test_worst_open_book_is_not_the_worst_trade():
           [p["op"] for p in m] == [-100.0, 0.0], str(m))
 
 
+def test_summary_splits_pnl_by_side():
+    """Итог по ногам считается раздельно, доля — от СТАРТОВОГО депозита.
+
+    Сумма молчит о главном: книга нейтральна по числу позиций и не
+    нейтральна по бете. Если весь доход даёт одна сторона, перед нами
+    ставка на направление рынка, а не кросс-секция. Проект читал это
+    неверно уже дважды — в F1 всю книгу вытягивала короткая нога при
+    убыточной длинной, и в сумме этого видно не было.
+
+    Знаменателем служит депозит на старте, а не нынешний капитал: делить
+    прибыль на капитал, в который она уже вошла, значит занижать долю
+    тем сильнее, чем лучше результат.
+    """
+    import trades as TR
+
+    rows = [
+        {"state": "закрыта", "arm": "gbm", "side": "long", "sym": "A",
+         "pnl": 30.0, "net_bp": 300.0, "hit": True},
+        {"state": "закрыта", "arm": "gbm", "side": "long", "sym": "B",
+         "pnl": -10.0, "net_bp": -100.0, "hit": False},
+        {"state": "закрыта", "arm": "gbm", "side": "short", "sym": "C",
+         "pnl": -5.0, "net_bp": -50.0, "hit": False},
+        # Открытая в итог не входит: её исход ещё не наступил.
+        {"state": "открыта", "arm": "gbm", "side": "short", "sym": "D",
+         "pnl": 999.0, "net_bp": 9990.0},
+    ]
+    s = TR.summary(rows, "gbm", start=1000.0)
+    check(f"лонги {s['pnl_long']} $ на {s['n_long']} сделках",
+          s["pnl_long"] == 20.0 and s["n_long"] == 2,
+          f"{s.get('pnl_long')} / {s.get('n_long')}")
+    check(f"шорты {s['pnl_short']} $ на {s['n_short']} сделках",
+          s["pnl_short"] == -5.0 and s["n_short"] == 1,
+          f"{s.get('pnl_short')} / {s.get('n_short')}")
+    check("доля считается от старта, а не от выросшего капитала",
+          s["pnl_long_pct"] == 2.0 and s["pnl_short_pct"] == -0.5,
+          f"{s.get('pnl_long_pct')} / {s.get('pnl_short_pct')}")
+    check("ноги складываются в общий итог",
+          round(s["pnl_long"] + s["pnl_short"], 2) == s["pnl"],
+          f"{s['pnl_long']} + {s['pnl_short']} против {s['pnl']}")
+    check("открытая позиция в итог ноги не входит",
+          s["n_short"] == 1, str(s.get("n_short")))
+    check("средний ход по ногам считается раздельно",
+          s["net_bp_long"] == 100.0 and s["net_bp_short"] == -50.0,
+          f"{s.get('net_bp_long')} / {s.get('net_bp_short')}")
+    # Без знаменателя доля не выдумывается: «—» честнее неверного числа.
+    bare = TR.summary(rows, "gbm")
+    check("без стартового депозита доля не считается вовсе",
+          bare["pnl_long"] == 20.0 and bare["pnl_long_pct"] is None,
+          str(bare.get("pnl_long_pct")))
+
+
 def test_account_drawdown_counts_open_positions():
     """Просадка счёта считается с переоценкой открытых, а не по закрытиям.
 
@@ -2349,6 +2400,7 @@ def main():
     test_drawdown_is_reported_against_the_deposit()
     test_pretest_hedges_with_beta_one_and_keeps_books_apart()
     test_worst_open_book_is_not_the_worst_trade()
+    test_summary_splits_pnl_by_side()
     test_account_drawdown_counts_open_positions()
     test_entry_price_is_recovered_from_summaries()
     test_unrealised_marks_open_positions_only()

@@ -1482,6 +1482,21 @@ function drawEq(d) {
       ` <span class="k">&middot; ${(cur[arms[0]] || []).length} hours</span>`;
 }
 
+// Итог одной ноги: деньги и доля СТАРТОВОГО депозита. Доля считается
+// на сервере — там же, где счёт, — чтобы у процента не завелось второго
+// определения. Число сделок рядом: +20 $ на двух сделках и на двухстах
+// — разные утверждения.
+function sideCell(name, st, side) {
+  const p = st["pnl_" + side], q = st["pnl_" + side + "_pct"];
+  if (p == null) return "";
+  return `<div class="st"><div class="k">${name}
+    <span class="k">· ${st["n_" + side] || 0}</span></div>
+    <div class="v mono ${p > 0 ? "good" : "bad"}">${
+      (p > 0 ? "+" : "") + p} $${
+      q == null ? "" : ` <span class="k">(${
+        (q > 0 ? "+" : "") + q} %)</span>`}</div></div>`;
+}
+
 const val = id => document.getElementById(id).value;
 async function load() {
   const p = new URLSearchParams({k: KEY, page: S.page, per: val("per"),
@@ -1537,6 +1552,11 @@ async function load() {
              st.net_bp_avg > 0 ? "good" : "bad")
       + cell("realised P&L", (st.pnl > 0 ? "+" : "") + st.pnl + " $",
              st.pnl > 0 ? "good" : "bad")
+      // Раздельно по ногам. Книга нейтральна по ЧИСЛУ позиций и не
+      // нейтральна по бете: если весь доход приносит одна сторона —
+      // это ставка на направление рынка, а не кросс-секция, и сумма
+      // об этом молчит.
+      + sideCell("longs", st, "long") + sideCell("shorts", st, "short")
       // How many times the promise exceeds the outcome — the most
       // honest number here: a model can get the sign right and still
       // promise four times what it delivers.

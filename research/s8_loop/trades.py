@@ -500,7 +500,7 @@ def dd_money(trades, deposit=START_BALANCE):
     return n
 
 
-def summary(trades, arm=None, capital=None):
+def summary(trades, arm=None, capital=None, start=None):
     """Сводка: закрытые — фактом, открытые — переоценкой.
 
     Закрытые и открытые считаются РАЗДЕЛЬНО и никогда не смешиваются в
@@ -568,13 +568,28 @@ def summary(trades, arm=None, capital=None):
         pnl=round(sum(pnls), 2) if pnls else None,
         expected_avg=round(sum(exps) / len(exps), 1) if exps else None,
         got_avg=round(sum(gots) / len(gots), 1) if gots else None)
-    # Насколько ожидание вообще похоже на факт — самое честное число в
-    # этой таблице: модель может угадывать знак и при этом обещать
-    # вчетверо больше, чем даёт.
-    if exps and gots and len(exps) == len(gots):
-        out["expected_over_got"] = (
-            round(sum(abs(e) for e in exps) / max(
-                sum(abs(g) for g in gots), 1e-9), 2))
+    # Раздельно по сторонам. Общий итог молчит о том, какая нога
+    # зарабатывает, а это не деталь: книга нейтральна по ЧИСЛУ ног и не
+    # нейтральна по бете, и если весь доход приносит одна сторона —
+    # перед нами ставка на направление рынка, а не кросс-секция.
+    # Проект уже дважды читал такое неверно: в F1 всю книгу вытягивала
+    # короткая нога при убыточной длинной, и увидеть это в сумме было
+    # нельзя.
+    #
+    # `start` — знаменатель процента, депозит НА СТАРТЕ. Считать долю
+    # от текущего капитала значило бы делить прибыль на неё же саму.
+    for side in ("long", "short"):
+        s = [t for t in closed if t.get("side") == side]
+        p = [t.get("pnl") for t in s if t.get("pnl") is not None]
+        n = [t.get("net_bp") for t in s if t.get("net_bp") is not None]
+        out[f"n_{side}"] = len(s)
+        out[f"pnl_{side}"] = round(sum(p), 2) if p else None
+        out[f"pnl_{side}_pct"] = (
+            round(100 * sum(p) / start, 2) if p and start else None)
+        out[f"net_bp_{side}"] = round(sum(n) / len(n), 1) if n else None
+        out[f"hit_{side}"] = (
+            round(sum(1 for t in s if t.get("hit")) / len(s), 3)
+            if s else None)
     return out
 
 

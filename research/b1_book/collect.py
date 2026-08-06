@@ -1344,10 +1344,15 @@ class Collector:
         # полтора плеча, хотя капитала там две тысячи.
         # Деньги просадки — после счёта: размер позиции знает только он.
         TR.dd_money(tr)
-        stats = {a: TR.summary(tr, a, capital=cap[a])
+        # `start` — знаменатель для долей по сторонам: депозит на
+        # старте, а не нынешний капитал. У «обеих» он двойной, как и у
+        # просадки ниже: иначе прибыль двух счетов делилась бы на один.
+        stats = {a: TR.summary(tr, a, capital=cap[a],
+                               start=TR.START_BALANCE)
                  for a in ("gbm", "nn")}
         both = sum(v for v in cap.values() if v) or None
-        stats["all"] = TR.summary(tr, capital=both)
+        stats["all"] = TR.summary(tr, capital=both,
+                                  start=2 * TR.START_BALANCE)
         # Просадка счёта считается по кривой с переоценкой открытых, а
         # не по одним закрытиям: позиция, уходившая в минус и
         # вернувшаяся, в кривой закрытий выглядит мелким убытком, и
