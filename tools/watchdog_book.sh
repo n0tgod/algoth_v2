@@ -86,3 +86,28 @@ if ! pgrep -f "s8_loop/train.py --pretest" >/dev/null; then
     setsid nohup .venv/bin/python research/s8_loop/train.py --pretest \
         >> research/s8_loop/out/pretest.log 2>&1 &
 fi
+
+# --- исполнительное ядро (Rust-тень) ---------------------------------
+# Секция молчит, пока бинарник не собран: ядро разворачивают отдельным
+# решением, и его отсутствие — состояние, а не поломка. У собранного —
+# те же два довода, что у сборщика: процесс жив (pgrep) и внутри
+# движется (свежесть status.json; ядро пишет его каждый такт, минута).
+BOT_BIN=bot/target/release/bot
+BOT_STATUS=bot/out/shadow/status.json
+if [ -x "$BOT_BIN" ]; then
+    bot_restart=""
+    if ! pgrep -f "bot run --s8" >/dev/null; then
+        bot_restart="процесс ядра не найден"
+    elif [ ! -f "$BOT_STATUS" ]; then
+        bot_restart="status.json ядра отсутствует при живом процессе"
+    else
+        bot_age=$(( $(date +%s) - $(stat -c %Y "$BOT_STATUS") ))
+        if [ "$bot_age" -gt 300 ]; then
+            bot_restart="status.json ядра не обновлялся ${bot_age} с — повис"
+        fi
+    fi
+    if [ -n "$bot_restart" ]; then
+        echo "[$(now)] ПЕРЕЗАПУСК ЯДРА: $bot_restart"
+        tools/run_bot.sh --no-build
+    fi
+fi

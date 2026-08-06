@@ -44,6 +44,60 @@ fn main() {
                 );
             }
         }
+        Some("run") => {
+            // bot run --s8 DIR --journal DIR [--arm gbm] [--capital N]
+            //         [--fees PATH] [--interval-sec 60]
+            //         [--sverka bot/sverka.py] [--python python3]
+            let mut s8 = None;
+            let mut jr = None;
+            let mut arm = "gbm".to_string();
+            let mut capital = 1000.0_f64;
+            let mut fees_path = "research/a1_universe/out/fees.json".to_string();
+            let mut interval = 60u64;
+            let mut sverka_script: Option<String> = None;
+            let mut python = "python3".to_string();
+            let mut it = args[2..].iter();
+            while let Some(a) = it.next() {
+                let mut val = || it.next().cloned().unwrap_or_default();
+                match a.as_str() {
+                    "--s8" => s8 = Some(val()),
+                    "--journal" => jr = Some(val()),
+                    "--arm" => arm = val(),
+                    "--capital" => capital = val().parse().unwrap_or(1000.0),
+                    "--fees" => fees_path = val(),
+                    "--interval-sec" => interval = val().parse().unwrap_or(60),
+                    "--sverka" => sverka_script = Some(val()),
+                    "--python" => python = val(),
+                    other => {
+                        eprintln!("неизвестный ключ {other}");
+                        exit(2);
+                    }
+                }
+            }
+            let (Some(s8), Some(jr)) = (s8, jr) else {
+                eprintln!("нужны --s8 и --journal");
+                exit(2);
+            };
+            let cfg = bot::daemon::DaemonCfg {
+                s8_dir: s8.into(),
+                journal_dir: jr.into(),
+                arm,
+                capital_usd: capital,
+                fees_path: fees_path.into(),
+                interval_sec: interval.max(5),
+                sverka: sverka_script.map(|sc| bot::daemon::SverkaCfg {
+                    python,
+                    script: sc.into(),
+                }),
+            };
+            eprintln!(
+                "демон тени: рука {}, интервал {} с, сверка {}",
+                cfg.arm,
+                cfg.interval_sec,
+                if cfg.sverka.is_some() { "включена" } else { "НЕ настроена" }
+            );
+            bot::daemon::run(&cfg);
+        }
         Some("check") => {
             // bot check <журнал> [капитал] [--now-ms N] — сторож:
             // инварианты счёта; выход 1 при нарушении.

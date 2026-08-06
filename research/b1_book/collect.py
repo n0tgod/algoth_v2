@@ -1178,6 +1178,30 @@ class Collector:
             self.rec["busy"] = False
             self.save_recount()
 
+    def bot_status(self):
+        """Статус исполнительного ядра (Rust-тень) — из его файла.
+
+        Ядро пишет `status.json` атомарно каждый такт; страница только
+        читает. Отсутствие файла — «не запущено», и это не тревога
+        (ядро может быть не развёрнуто), а состояние словами. Возраст
+        считается ЗДЕСЬ, по часам сервера: у страницы свои часы, и на
+        телефоне они уходят.
+        """
+        p = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                         "bot", "out", "shadow", "status.json")
+        try:
+            with open(p, encoding="utf-8") as f:
+                st = json.load(f)
+        except (OSError, ValueError):
+            return {"present": False}
+        st["present"] = True
+        try:
+            st["age_sec"] = round(
+                time.time() - float(st.get("at_ms", 0)) / 1000.0, 1)
+        except (TypeError, ValueError):
+            st["age_sec"] = None
+        return st
+
     def model_state(self):
         """Состояние модели S8 для страницы: манифест, мысли, живой IC.
 

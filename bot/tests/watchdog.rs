@@ -240,6 +240,66 @@ fn сверка_чиста_на_фикстуре_и_кусается_на_под
     );
 }
 
+/// Такт демона: статус файлом, сторож и сверка внутри, ошибка не
+/// роняет и не молчит.
+#[test]
+fn такт_демона_пишет_статус_и_не_молчит_об_ошибке() {
+    let Ok(py) = which_python() else {
+        eprintln!("python3 не найден — такт с сверкой пропущен");
+        return;
+    };
+    let fixture =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/parity");
+    let jd = tmp("daemon");
+    let now = hour_ms("2026-08-05-12").unwrap() + 3_600_000 + 5 * 3_600_000;
+    let dcfg = bot::daemon::DaemonCfg {
+        s8_dir: fixture.clone(),
+        journal_dir: jd.clone(),
+        arm: "gbm".into(),
+        capital_usd: 1000.0,
+        fees_path: fixture.join("fees.json"),
+        interval_sec: 60,
+        sverka: Some(bot::daemon::SverkaCfg {
+            python: py,
+            script: PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("sverka.py"),
+        }),
+    };
+    let mut mem = bot::daemon::TickMemory::default();
+    let st = bot::daemon::tick(&dcfg, &mut mem, now);
+    assert!(st.error.is_none(), "{:?}", st.error);
+    assert_eq!(st.balance_usd, 990.08, "баланс из фикстуры чётности");
+    assert!(st.check.as_ref().unwrap().ok);
+    assert_eq!(st.sverka.ok, Some(true), "{}", st.sverka.note);
+    let raw = fs::read_to_string(jd.join("status.json")).unwrap();
+    let v: serde_json::Value = serde_json::from_str(&raw).unwrap();
+    assert_eq!(v["balance_usd"].as_f64(), Some(990.08));
+    assert_eq!(v["sverka"]["ok"].as_bool(), Some(true));
+
+    // Второй такт через минуту: закрытий нет — сверка НЕ перезапущена,
+    // прошлый вердикт в статусе остаётся подписан своим временем.
+    let st2 = bot::daemon::tick(&dcfg, &mut mem, now + 60_000);
+    assert_eq!(st2.sverka.at_ms, st.sverka.at_ms, "сверка бежала зря");
+    assert_eq!(st2.pass_report.as_ref().unwrap().appended, 0);
+
+    // Порча середины журнала: такт обязан выжить, а статус — назвать
+    // ошибку словами. Молча упавший демон неотличим от спокойного рынка.
+    let day = jd.join("journal-2026-08-05.jsonl");
+    let text = fs::read_to_string(&day).unwrap();
+    let broken: Vec<String> = text
+        .trim_end()
+        .split('\n')
+        .enumerate()
+        .map(|(i, l)| if i == 1 { "мусор".into() } else { l.to_string() })
+        .collect();
+    fs::write(&day, broken.join("\n") + "\n").unwrap();
+    let st3 = bot::daemon::tick(&dcfg, &mut mem, now + 120_000);
+    let err = st3.error.expect("ошибка обязана быть названа");
+    assert!(err.contains("порча"), "{err}");
+    let raw = fs::read_to_string(jd.join("status.json")).unwrap();
+    assert!(raw.contains("порча"), "статус молчит об ошибке");
+}
+
 fn which_python() -> Result<String, ()> {
     for c in ["python3", "python"] {
         if Command::new(c).arg("--version").output().is_ok() {

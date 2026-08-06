@@ -145,6 +145,11 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
     <span id="cap-model" class="mono"></span></div>
   <div class="modelbox" id="modelbox">…</div>
 </div>
+<div class="panel" style="margin-bottom:12px">
+  <div class="cap"><span>execution core — Rust shadow</span>
+    <span id="cap-bot" class="mono"></span></div>
+  <div class="note" id="botbox">…</div>
+</div>
 <div class="cols">
   <div class="panel">
     <div class="cap"><span>order book</span><span id="cap-book" class="mono"></span></div>
@@ -573,6 +578,51 @@ function renderGroups() {
         box.querySelectorAll("details.grp[open]").forEach(o =>
           { if (o !== dd) o.open = false; });
     }));
+}
+
+// --- исполнительное ядро: статус тени и вердикты сторожа -------------
+// Отсутствие ядра — не тревога (оно может быть просто не развёрнуто),
+// но и не пустота: панель говорит «не запущено» словами. Тревога — это
+// молчание ЗАПУЩЕННОГО: статус старше пяти минут при интервале такта в
+// минуту означает повисший процесс, и это красным.
+async function pullBot() {
+  let d = null;
+  try {
+    const r = await fetch(`/bot?k=${encodeURIComponent(KEY)}`);
+    d = await r.json();
+  } catch (e) { /* тихо: следующий опрос через минуту */ }
+  const box = document.getElementById("botbox");
+  const cap = document.getElementById("cap-bot");
+  if (!d || !d.present) {
+    box.textContent = "ядро не запущено — тень ещё не развёрнута";
+    cap.textContent = "";
+    return;
+  }
+  const age = d.age_sec == null ? null : Math.round(d.age_sec);
+  cap.textContent = age == null ? "" : `обновлено ${age} с назад`;
+  const bad = [];
+  if (age != null && age > 300)
+    bad.push(`СТАТУС МОЛЧИТ ${Math.round(age / 60)} мин — процесс повис`);
+  if (d.error) bad.push(`ОШИБКА: ${d.error}`);
+  const ch = d.check || {};
+  if (ch.ok === false)
+    bad.push(`ИНВАРИАНТЫ: ${(ch.violations || []).join("; ")}`);
+  const sv = d.sverka || {};
+  if (sv.ok === false) bad.push(sv.note || "СВЕРКА: расхождения");
+  const kill = d.kill ? ` · <b style="color:var(--ask)">ВЫКЛЮЧАТЕЛЬ</b>` : "";
+  const warns = (ch.warnings || []).length
+    ? `<div class="k">предупреждения: ${(ch.warnings || []).join("; ")}</div>`
+    : "";
+  box.innerHTML = `<span class="mono">${d.balance_usd} $</span>
+    <span class="k">баланс тени (рука ${d.arm})</span> ·
+    открыто ${d.open}${kill} ·
+    инварианты ${ch.ok === true ? "целы" : "—"} ·
+    сверка ${sv.ok === true ? "расхождений 0"
+             : sv.ok == null ? (sv.note || "не бежала") : "см. ниже"}`
+    + (bad.length
+       ? `<div style="color:var(--ask)"><b>${bad.join("<br>")}</b></div>`
+       : "")
+    + warns;
 }
 
 // --- модель: состояние, живой IC и мысли трейдерскими словами --------
@@ -1134,6 +1184,7 @@ localStorage.removeItem("rec");
 pullRec(false); setInterval(() => pullRec(false), 30000);
 pullGroups();
 pullModel(); setInterval(pullModel, 60000);
+pullBot(); setInterval(pullBot, 60000);
 document.getElementById("symq").oninput = e => {
   GRP.q = e.target.value.trim(); renderGroups();
 };
@@ -2911,6 +2962,11 @@ def serve(collector, port, token, log):
             if u.path == "/groups":
                 return self._ok(json.dumps(
                     {"groups": collector.groups},
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/bot":
+                return self._ok(json.dumps(
+                    collector.bot_status(),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/model":

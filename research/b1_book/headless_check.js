@@ -316,6 +316,20 @@ global.fetch = async (url) => {
                        got_bp: 40, net_bp: -51, pnl: -0.85, pos: 166.67}],
                     thoughts: [{at: "08-03 19:30", text: "предпросмотр"}],
                     ic: []}}
+             : url.startsWith("/bot")
+               // Статус исполнительного ядра: живой, с чистыми
+               // вердиктами и числами — панель обязана их ПОКАЗАТЬ.
+               ? {present: true, age_sec: 42.0, arm: "gbm",
+                  balance_usd: 990.08, cash_usd: 490.08, busy_usd: 500.0,
+                  open: 12, kill: false,
+                  pass_report: {appended: 0, opened: 0, closed: 0,
+                                rejected: 0, waiting_review: 4},
+                  check: {ok: true, violations: [], warnings:
+                          ["застряла gbm:x: открыта 9.0 ч при сроке 4 ч"],
+                          events: 32, open_positions: 12},
+                  sverka: {ok: true, at_ms: 1785952800000,
+                           note: "расхождений нет"},
+                  error: null}
              : url.startsWith("/candles")
                // Окно уважается: сервер умеет отдавать прошлое, и
                // подставной ответ обязан вести себя так же. Отдавай он
@@ -479,6 +493,26 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/recorded order book/.test(st) || !/lower<\/b> bound/.test(st))
       bad.push("текст пояснений потерян при сворачивании");
   }
+  // Панель исполнительного ядра — только на обзоре. Проверяется
+  // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
+  // блоке, а пустой блок неотличим от «ядро не запущено».
+  if (!isTrades && !isChart) {
+    const bb = global.__el ? String(
+      global.__el("botbox").innerHTML || "") : "";
+    if (!/990\.08/.test(bb))
+      bad.push("панель ядра не показала баланс тени");
+    if (!/расхождений 0/.test(bb))
+      bad.push("вердикт сверки не показан");
+    if (!/застряла/.test(bb))
+      bad.push("предупреждения сторожа не показаны");
+    if (/СТАТУС МОЛЧИТ/.test(bb))
+      bad.push("свежий статус назван молчащим");
+    const cap = global.__el ? String(
+      global.__el("cap-bot").textContent || "") : "";
+    if (!/42 с/.test(cap))
+      bad.push("возраст статуса ядра не показан");
+  }
+
   // График обязан достроить историю свечей с диска: без неё он
   // обрывается там, где кончается память сборщика, и прошлые сделки
   // смотреть не на чем.
