@@ -30,7 +30,7 @@ fn open_ev(pos: &str, notional: f64, at: i64) -> Event {
         sym: "AUSDT".into(),
         side: Side::Long,
         notional_usd: notional,
-        entry_px: 100.0,
+        entry_px: Some(100.0),
         fee_usd: 0.02,
         partial: false,
         ver: Some(3),
@@ -41,7 +41,7 @@ fn open_ev(pos: &str, notional: f64, at: i64) -> Event {
 fn close_ev(pos: &str, pnl: f64, at: i64) -> Event {
     Event::Close {
         pos: pos.into(),
-        exit_px: 101.0,
+        exit_px: Some(101.0),
         fee_usd: 0.02,
         pnl_usd: pnl,
         reason: "срок".into(),

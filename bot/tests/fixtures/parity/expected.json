@@ -1,0 +1,105 @@
+{
+ "balance": 990.08,
+ "trades": [
+  {
+   "pos": "gbm:2026-08-05-10:AAAUSDT:long",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -0.62,
+   "net_bp": -99.7,
+   "basis": "книга",
+   "fill_in": 50.02,
+   "fill_out": 49.576268
+  },
+  {
+   "pos": "gbm:2026-08-05-10:BBBUSDT:long",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -1.78,
+   "net_bp": -285.1,
+   "basis": "книга",
+   "fill_in": 0.031012,
+   "fill_out": 0.030145000000000005
+  },
+  {
+   "pos": "gbm:2026-08-05-10:CCCUSDT:short",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -1.5,
+   "net_bp": -240.4,
+   "basis": "книга",
+   "fill_in": 1199.52,
+   "fill_out": 1225.712139
+  },
+  {
+   "pos": "gbm:2026-08-05-10:DDDUSDT:short",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -1.37,
+   "net_bp": -219.9,
+   "basis": "книга",
+   "fill_in": 7.497000000000001,
+   "fill_out": 7.653579000000001
+  },
+  {
+   "pos": "gbm:2026-08-05-11:AAAUSDT:long",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -0.35,
+   "net_bp": -55.9,
+   "basis": "книга",
+   "fill_in": 50.07002,
+   "fill_out": 49.844985
+  },
+  {
+   "pos": "gbm:2026-08-05-11:BBBUSDT:long",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -1.02,
+   "net_bp": -163.7,
+   "basis": "книга",
+   "fill_in": 0.031043,
+   "fill_out": 0.030552
+  },
+  {
+   "pos": "gbm:2026-08-05-11:CCCUSDT:short",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -1.34,
+   "net_bp": -213.9,
+   "basis": "книга",
+   "fill_in": 1200.71952,
+   "fill_out": 1223.757932
+  },
+  {
+   "pos": "gbm:2026-08-05-11:DDDUSDT:short",
+   "size": 62.5,
+   "state": "закрыта",
+   "pnl": -1.92,
+   "net_bp": -307.935403934988,
+   "basis": "плоский 11",
+   "fill_in": null,
+   "fill_out": null
+  },
+  {
+   "pos": "gbm:2026-08-05-12:AAAUSDT:long",
+   "size": 62.5,
+   "state": "ждёт разбора"
+  },
+  {
+   "pos": "gbm:2026-08-05-12:BBBUSDT:long",
+   "size": 62.5,
+   "state": "ждёт разбора"
+  },
+  {
+   "pos": "gbm:2026-08-05-12:CCCUSDT:short",
+   "size": 62.5,
+   "state": "ждёт разбора"
+  },
+  {
+   "pos": "gbm:2026-08-05-12:DDDUSDT:short",
+   "size": 62.5,
+   "state": "ждёт разбора"
+  }
+ ]
+}

@@ -13,7 +13,8 @@ use serde::{Deserialize, Serialize};
 /// Сторона позиции. Строки в журнале — те же слова, что в Python-счёте
 /// (`long`/`short`): сверка E2 сравнивает записи двух реализаций, и
 /// разные имена одного и того же превратили бы её в перевод.
-#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq,
+         PartialOrd, Ord, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Side {
     Long,
@@ -57,7 +58,9 @@ pub enum Event {
         sym: String,
         side: Side,
         notional_usd: f64,
-        entry_px: f64,
+        /// Пустая — у входа без записанной книги и без цены сигнала:
+        /// ноль был бы утверждением, а не пропуском.
+        entry_px: Option<f64>,
         fee_usd: f64,
         /// Заявка не влезла в книгу целиком. Помечается честно, а не
         /// досчитывается по последнему уровню (спека 09 §4).
@@ -69,7 +72,7 @@ pub enum Event {
     /// восстанавливается из цен и комиссий, лежащих рядом.
     Close {
         pos: String,
-        exit_px: f64,
+        exit_px: Option<f64>,
         fee_usd: f64,
         pnl_usd: f64,
         reason: String,

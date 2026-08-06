@@ -1,0 +1,347 @@
+//! Движок тени: те же сделки, что у Python-счёта, своим счётом.
+//!
+//! Каждый проход (`shadow`) читает выборы и разборы модели, сравнивает
+//! с журналом и дописывает НЕДОСТАЮЩИЕ события: решения, входы, выходы,
+//! отказы. Проход идемпотентен — второй запуск на тех же файлах не
+//! дописывает ничего: что считать сделанным, решает журнал, а не
+//! память процесса (урок `build.py`).
+//!
+//! Порядок событий — как у Python-`account`: по времени, при равенстве
+//! момента закрытие раньше открытия (деньги возвращаются в кассу до
+//! того, как их снова размещают; обратный порядок там уже давал
+//! `size = 0` у всей руки).
+
+use crate::events::{Event, Side};
+use crate::journal::{Journal, JournalError};
+use crate::paper::{exec_cost, py_round, walk, FeeTable};
+use crate::picks::{hour_ms, load_picks, load_reviews, Leg};
+use crate::state::{derive, State, StateError};
+use std::collections::BTreeSet;
+use std::path::{Path, PathBuf};
+
+pub const HOLD_H: i64 = 4;
+
+pub struct Cfg {
+    /// Каталог руки: `…/s8_loop/out/model_pretest` или `…/model`.
+    pub s8_dir: PathBuf,
+    pub journal_dir: PathBuf,
+    pub arm: String,
+    pub capital_usd: f64,
+    pub fees: FeeTable,
+    /// «Сейчас» передаётся снаружи: движок обязан быть разыгрываемым
+    /// тестом без подмены системных часов.
+    pub now_ms: i64,
+}
+
+#[derive(Debug, Default)]
+pub struct PassReport {
+    pub appended: usize,
+    pub opened: usize,
+    pub closed: usize,
+    pub rejected: usize,
+    /// Сделки, чей срок вышел, а разбора ещё нет: ожидание, не потеря.
+    pub waiting_review: usize,
+}
+
+#[derive(Debug)]
+pub enum EngineError {
+    Journal(JournalError),
+    State(StateError),
+}
+
+impl From<JournalError> for EngineError {
+    fn from(e: JournalError) -> Self {
+        EngineError::Journal(e)
+    }
+}
+impl From<StateError> for EngineError {
+    fn from(e: StateError) -> Self {
+        EngineError::State(e)
+    }
+}
+impl std::fmt::Display for EngineError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EngineError::Journal(e) => write!(f, "журнал: {e}"),
+            EngineError::State(e) => write!(f, "состояние: {e}"),
+        }
+    }
+}
+
+fn side_str(s: Side) -> &'static str {
+    match s {
+        Side::Long => "long",
+        Side::Short => "short",
+    }
+}
+
+/// Один проход тени. Возвращает отчёт и состояние ПОСЛЕ прохода.
+pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
+    let (mut journal, records, _) = Journal::open(&cfg.journal_dir)?;
+    let mut st = derive(cfg.capital_usd, &records)?;
+
+    // Что уже сделано — по журналу, не по памяти. Отказ терминален:
+    // отвергнутый вход не переигрывается после снятия выключателя,
+    // потому что его момент прошёл, а вход задним числом — выдумка.
+    let mut seen_decision: BTreeSet<String> = BTreeSet::new();
+    let mut touched: BTreeSet<String> = BTreeSet::new(); // open/close/reject
+    let mut closed_keys: BTreeSet<String> = BTreeSet::new();
+    for r in &records {
+        match &r.event {
+            Event::Decision { arm, hour, sym, side, .. } => {
+                seen_decision
+                    .insert(format!("{arm}:{hour}:{sym}:{}", side_str(*side)));
+            }
+            Event::Open { pos, .. } => {
+                touched.insert(pos.clone());
+            }
+            Event::Close { pos, .. } => {
+                closed_keys.insert(pos.clone());
+            }
+            Event::Reject { sym, side, reason, .. } => {
+                // Ключ отказа записан в причине после «|» — см. ниже.
+                if let Some(k) = reason.split('|').nth(1) {
+                    touched.insert(k.to_string());
+                }
+                let _ = (sym, side);
+            }
+            Event::Kill { .. } => {}
+        }
+    }
+
+    // Аварийный выключатель — файл-флаг; переходы журналируются.
+    let kill_now = cfg.journal_dir.join("KILL").exists();
+    let mut appended = 0usize;
+    let mut rep = PassReport::default();
+    if kill_now != st.kill {
+        journal.append(Event::Kill {
+            on: kill_now,
+            reason: if kill_now {
+                "файл KILL появился".into()
+            } else {
+                "файл KILL снят".into()
+            },
+            at_ms: cfg.now_ms,
+        })?;
+        appended += 1;
+        st.kill = kill_now;
+    }
+
+    // План: все ноги всех часов руки, время входа — КОНЕЦ часа сигнала
+    // (признаки считаются по всему часу, раньше входа не существует).
+    struct Planned {
+        key: String,
+        hour: String,
+        sym: String,
+        side: Side,
+        legs_in_hour: usize,
+        opened_at: i64,
+        closes_at: i64,
+        px: Option<f64>,
+        cum_in: Option<crate::paper::Book>,
+        ver: Option<u32>,
+    }
+    let picks = load_picks(&cfg.s8_dir, &cfg.arm);
+    let reviews = load_reviews(&cfg.s8_dir, &cfg.arm);
+    let mut plan: Vec<Planned> = Vec::new();
+    for p in &picks {
+        let Some(h0) = hour_ms(&p.hour) else { continue };
+        let opened_at = h0 + 3_600_000;
+        let legs = p.long.len() + p.short.len();
+        let mut add = |leg: &Leg, side: Side| {
+            plan.push(Planned {
+                key: format!(
+                    "{}:{}:{}:{}",
+                    cfg.arm, p.hour, leg.sym, side_str(side)
+                ),
+                hour: p.hour.clone(),
+                sym: leg.sym.clone(),
+                side,
+                legs_in_hour: legs,
+                opened_at,
+                closes_at: opened_at + HOLD_H * 3_600_000,
+                px: leg.px,
+                cum_in: leg.cum.clone(),
+                ver: p.ver,
+            });
+        };
+        for leg in &p.long {
+            add(leg, Side::Long);
+        }
+        for leg in &p.short {
+            add(leg, Side::Short);
+        }
+    }
+
+    // События этого прохода: (момент, 0 выход | 1 вход, номер в плане).
+    // Стабильная сортировка держит ноги одного часа в порядке файла —
+    // как у Python, где сборка и счёт сохраняют исходный порядок.
+    let mut ev: Vec<(i64, u8, usize)> = Vec::new();
+    for (i, t) in plan.iter().enumerate() {
+        if t.opened_at <= cfg.now_ms && !touched.contains(&t.key) {
+            ev.push((t.opened_at, 1, i));
+        }
+        if t.closes_at <= cfg.now_ms
+            && (touched.contains(&t.key) || t.opened_at <= cfg.now_ms)
+            && !closed_keys.contains(&t.key)
+        {
+            ev.push((t.closes_at, 0, i));
+        }
+    }
+    ev.sort_by_key(|e| (e.0, e.1));
+
+    for (at, kind, i) in ev {
+        let t = &plan[i];
+        if kind == 1 {
+            // Решение журналируется один раз — до всякого риска.
+            if seen_decision.insert(t.key.clone()) {
+                journal.append(Event::Decision {
+                    arm: cfg.arm.clone(),
+                    hour: t.hour.clone(),
+                    sym: t.sym.clone(),
+                    side: t.side,
+                    px: t.px,
+                    ver: t.ver,
+                    at_ms: t.opened_at,
+                })?;
+                appended += 1;
+            }
+            if st.kill {
+                journal.append(Event::Reject {
+                    sym: t.sym.clone(),
+                    side: t.side,
+                    reason: format!("выключатель повёрнут|{}", t.key),
+                    at_ms: at,
+                })?;
+                appended += 1;
+                rep.rejected += 1;
+                touched.insert(t.key.clone());
+                st.rejected += 1;
+                continue;
+            }
+            // Размер — как у Python: доля ПОЛНОГО капитала (касса +
+            // занятое) на число слотов часа, но не больше свободного.
+            let busy: f64 =
+                st.positions.values().map(|p| p.notional_usd).sum();
+            let slots = (t.legs_in_hour as f64 * HOLD_H as f64).max(1.0);
+            let want = (st.cash_usd + busy) / slots;
+            let size = want.min(st.cash_usd).max(0.0);
+            if size <= 0.0 {
+                journal.append(Event::Reject {
+                    sym: t.sym.clone(),
+                    side: t.side,
+                    reason: format!("касса пуста, вход не размещён|{}", t.key),
+                    at_ms: at,
+                })?;
+                appended += 1;
+                rep.rejected += 1;
+                touched.insert(t.key.clone());
+                st.rejected += 1;
+                continue;
+            }
+            // Цена входа — исполнение с лесенки решения; без книги
+            // остаётся цена закрытия часа, и это видно по полю.
+            let entry_px = t
+                .cum_in
+                .as_ref()
+                .and_then(|b| {
+                    walk(
+                        if t.side == Side::Long { &b.a } else { &b.b },
+                        size,
+                    )
+                })
+                .map(|(px, _)| px)
+                .or(t.px);
+            journal.append(Event::Open {
+                pos: t.key.clone(),
+                sym: t.sym.clone(),
+                side: t.side,
+                notional_usd: size,
+                entry_px,
+                fee_usd: 0.0,
+                partial: false,
+                ver: t.ver,
+                at_ms: at,
+            })?;
+            appended += 1;
+            rep.opened += 1;
+            st.cash_usd -= size;
+            st.positions.insert(
+                t.key.clone(),
+                crate::state::Position {
+                    sym: t.sym.clone(),
+                    side: t.side,
+                    notional_usd: size,
+                    entry_px,
+                    fee_usd: 0.0,
+                    partial: false,
+                    ver: t.ver,
+                    opened_at_ms: at,
+                },
+            );
+            touched.insert(t.key.clone());
+        } else {
+            let Some(pos) = st.positions.get(&t.key) else {
+                // Вход отвергнут или ещё не случился — закрывать нечего.
+                continue;
+            };
+            let size = pos.notional_usd;
+            let Some(row) =
+                reviews.get(&(t.hour.clone(), t.sym.clone(), t.side))
+            else {
+                rep.waiting_review += 1;
+                continue;
+            };
+            // Деньги — по записанным книгам, как у Python-счёта; без
+            // книг — по нетто разбора прежней основы. Ни то ни другое
+            // недоступно — сделка остаётся открытой: посчитать
+            // неизвестный исход нулём значит разбавить счёт выдумкой.
+            let long = t.side == Side::Long;
+            let done = match (&t.cum_in, &row.cum) {
+                (Some(cin), Some(cout)) => exec_cost(
+                    long, cin, cout, size, &cfg.fees, &t.sym,
+                )
+                .map(|e| (e.net_bp, Some(e.fill_out), e.fee_bp, "книга")),
+                _ => None,
+            }
+            .or_else(|| row.net.map(|n| (n, None, 0.0, "плоский 11")));
+            let Some((net_bp, fill_out, fee_bp, basis)) = done else {
+                rep.waiting_review += 1;
+                continue;
+            };
+            // Полная точность, как в кассе Python: он добавляет к
+            // балансу НЕокруглённый pnl, а округляет только запись
+            // сделки. Округлив здесь, мы накопили бы расхождение с его
+            // балансом по центу на сделку — сверка это и поймала.
+            let pnl = size * net_bp / 1e4;
+            journal.append(Event::Close {
+                pos: t.key.clone(),
+                exit_px: fill_out,
+                fee_usd: py_round(size * fee_bp / 1e4, 4),
+                pnl_usd: pnl,
+                reason: format!("срок ({basis})"),
+                at_ms: at,
+            })?;
+            appended += 1;
+            rep.closed += 1;
+            st.cash_usd += size + pnl;
+            st.realized_pnl_usd += pnl;
+            st.closed += 1;
+            st.positions.remove(&t.key);
+            closed_keys.insert(t.key.clone());
+        }
+    }
+    rep.appended = appended;
+    // Итоговое состояние — перечитыванием журнала, а не локальной
+    // копией: если копия разошлась с журналом, это дефект, и пусть он
+    // упадёт здесь, а не в сверке.
+    let (records, _) = crate::journal::read_all(&cfg.journal_dir)?;
+    let fresh = derive(cfg.capital_usd, &records)?;
+    Ok((rep, fresh))
+}
+
+/// Умолчание для пути к таблице ставок — та же выгрузка A1, что читает
+/// Python-счёт. Не копия таблицы, а тот же файл.
+pub fn default_fees_path(repo_root: &Path) -> PathBuf {
+    repo_root.join("research/a1_universe/out/fees.json")
+}

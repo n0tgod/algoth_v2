@@ -17,7 +17,7 @@ pub struct Position {
     pub sym: String,
     pub side: Side,
     pub notional_usd: f64,
-    pub entry_px: f64,
+    pub entry_px: Option<f64>,
     pub fee_usd: f64,
     pub partial: bool,
     pub ver: Option<u32>,

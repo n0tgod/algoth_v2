@@ -44,8 +44,83 @@ fn main() {
                 );
             }
         }
+        Some("shadow") => {
+            // bot shadow --s8 DIR --journal DIR [--arm gbm]
+            //            [--capital 1000] [--fees PATH] [--now-ms N]
+            let mut s8 = None;
+            let mut jr = None;
+            let mut arm = "gbm".to_string();
+            let mut capital = 1000.0_f64;
+            let mut fees_path = None;
+            let mut now_ms: Option<i64> = None;
+            let mut it = args[2..].iter();
+            while let Some(a) = it.next() {
+                let mut val = || it.next().cloned().unwrap_or_default();
+                match a.as_str() {
+                    "--s8" => s8 = Some(val()),
+                    "--journal" => jr = Some(val()),
+                    "--arm" => arm = val(),
+                    "--capital" => capital = val().parse().unwrap_or(1000.0),
+                    "--fees" => fees_path = Some(val()),
+                    "--now-ms" => now_ms = val().parse().ok(),
+                    other => {
+                        eprintln!("неизвестный ключ {other}");
+                        exit(2);
+                    }
+                }
+            }
+            let (Some(s8), Some(jr)) = (s8, jr) else {
+                eprintln!("нужны --s8 и --journal");
+                exit(2);
+            };
+            let fees = match &fees_path {
+                Some(p) => bot::paper::FeeTable::load(Path::new(p)),
+                None => bot::paper::FeeTable::load(
+                    &bot::engine::default_fees_path(Path::new(".")),
+                ),
+            };
+            if fees.is_empty() {
+                // Пустая таблица — работаем на умолчании, но говорим об
+                // этом: молчаливое умолчание неотличимо от измерения.
+                eprintln!("ставки не прочитаны — весь счёт на умолчании 5.5 б.п.");
+            }
+            let now_ms = now_ms.unwrap_or_else(|| {
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0)
+            });
+            let cfg = bot::engine::Cfg {
+                s8_dir: s8.into(),
+                journal_dir: jr.into(),
+                arm,
+                capital_usd: capital,
+                fees,
+                now_ms,
+            };
+            match bot::engine::shadow(&cfg) {
+                Ok((rep, st)) => {
+                    eprintln!(
+                        "проход: событий {}, входов {}, выходов {}, \
+                         отказов {}, ждут разбора {}",
+                        rep.appended, rep.opened, rep.closed,
+                        rep.rejected, rep.waiting_review
+                    );
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&st).expect("json")
+                    );
+                }
+                Err(e) => {
+                    eprintln!("тень не прошла: {e}");
+                    exit(2);
+                }
+            }
+        }
         _ => {
-            eprintln!("использование: bot state <каталог-журнала> [капитал]");
+            eprintln!(
+                "использование: bot state <каталог> [капитал] | bot shadow …"
+            );
             exit(2);
         }
     }
