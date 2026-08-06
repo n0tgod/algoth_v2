@@ -2162,64 +2162,87 @@ CHART = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chart живьём</title>
 <style>
-:root{color-scheme:light dark;
- --ground:#f6f7f9;--panel:#fff;--ink:#141a21;--muted:#5c6673;--rule:#dfe4ea;
- --bid:#1f7a56;--ask:#b8452c;--accent:#a97514;--grid:#eef1f5}
-@media(prefers-color-scheme:dark){:root{
- --ground:#0c1015;--panel:#131922;--ink:#e4e9f0;--muted:#8b95a4;--rule:#212936;
- --bid:#35a877;--ask:#d4614a;--accent:#d7a24a;--grid:#1a212c}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);
- font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+/* Палитра — та же, что у страницы ядра: наследие v1 (тёмный фиолет,
+   пурпур #9747ff) в современном исполнении. Тема одна, настроек
+   внешнего вида нет — правило v2. */
+:root{color-scheme:dark;
+ --ground:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff;--grid:#1c1839;
+ --bid-soft:rgba(61,220,127,.1);--ask-soft:rgba(255,100,115,.1)}
+*{box-sizing:border-box;margin:0}
+body{background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,
+  var(--ground);
+ color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-font-smoothing:antialiased}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
  font-variant-numeric:tabular-nums}
-.wrap{max-width:1180px;margin:0 auto;padding:12px 12px 40px}
-.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
-h1{font-size:17px;margin:0 8px 0 0}
-button,a.btn{font:inherit;font-size:13px;color:var(--ink);
- background:var(--panel);border:1px solid var(--rule);padding:4px 9px;
- cursor:pointer;text-decoration:none}
-button[aria-pressed=true]{border-color:var(--accent);
- box-shadow:inset 0 -2px 0 var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:12px 14px 56px}
+.bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:14px;
+ color:var(--ink);text-decoration:none;white-space:nowrap;
+ margin-right:2px}
+.brand b{color:var(--accent);font-weight:800}
+h1{font-size:16px;margin:0 4px 0 0;font-weight:650}
+button,a.btn{font:inherit;font-size:12.5px;color:var(--muted);
+ background:var(--chip);border:1px solid var(--rule);padding:4px 11px;
+ border-radius:999px;cursor:pointer;text-decoration:none;
+ transition:border-color .15s,color .15s}
+button:hover,a.btn:hover{color:var(--ink);border-color:var(--accent)}
+button[aria-pressed=true]{color:var(--ink);border-color:var(--accent);
+ background:rgba(151,71,255,.14)}
 .sp{flex:1 1 auto}
 .panel{background:var(--panel);border:1px solid var(--rule);
- margin-bottom:10px;position:relative}
-.cap{padding:6px 10px;border-bottom:1px solid var(--rule);font-size:11.5px;
- color:var(--muted);letter-spacing:.05em;text-transform:uppercase;
- display:flex;justify-content:space-between;gap:8px}
+ border-radius:16px;margin-bottom:14px;position:relative;
+ overflow:hidden}
+.cap{padding:9px 14px;border-bottom:1px solid var(--rule-soft);
+ font-size:10.5px;color:var(--muted);letter-spacing:.12em;
+ text-transform:uppercase;display:flex;justify-content:space-between;
+ gap:8px;flex-wrap:wrap}
 canvas{display:block;width:100%;touch-action:none}
 #tip{position:absolute;z-index:5;pointer-events:none;display:none;
- background:var(--panel);border:1px solid var(--rule);padding:7px 9px;
- font-size:12.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+ background:var(--chip);border:1px solid var(--rule);padding:8px 10px;
+ font-size:12.5px;line-height:1.45;border-radius:10px;
+ box-shadow:0 8px 28px rgba(0,0,0,.45)}
 #tip .r{display:flex;justify-content:space-between;gap:14px}
 #tip .r span:first-child{color:var(--muted)}
 table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{padding:5px 9px;text-align:right;white-space:nowrap;
+th,td{padding:6px 10px;text-align:right;white-space:nowrap;
+ border-bottom:1px solid var(--rule-soft)}
+th{color:var(--muted);font-weight:500;font-size:10px;letter-spacing:.1em;
+ text-transform:uppercase;position:sticky;top:0;background:var(--panel);
  border-bottom:1px solid var(--rule)}
-th{color:var(--muted);font-weight:500;font-size:11px;letter-spacing:.05em;
- text-transform:uppercase;position:sticky;top:0;background:var(--panel)}
 td:first-child,th:first-child{text-align:left}
+tbody tr:hover td{background:rgba(151,71,255,.04)}
 .buy{color:var(--bid)} .sell{color:var(--ask)}
 .hist{max-height:300px;overflow-y:auto}
 .legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;
- color:var(--muted);margin:8px 0 12px}
+ color:var(--muted);margin:10px 2px 14px}
 .sw{display:inline-block;width:20px;height:0;border-top:2px solid;
  vertical-align:4px;margin-right:6px}
-.stats{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule)}
-.st{flex:1 1 108px;background:var(--panel);padding:7px 10px}
-.st .k{font-size:11px;color:var(--muted);letter-spacing:.04em}
-.st .v{font-size:15px;margin-top:2px}
-.note{padding:10px;color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,
+ minmax(128px,1fr));gap:8px;padding:10px 12px}
+.st{background:linear-gradient(180deg,rgba(151,71,255,.06),
+  rgba(151,71,255,0) 55%),var(--chip);
+ border:1px solid var(--rule);border-radius:12px;padding:9px 11px}
+.st .k{font-size:9.5px;color:var(--muted);letter-spacing:.1em;
+ text-transform:uppercase}
+.st .v{font-size:15px;font-weight:600;margin-top:4px}
+.note{padding:10px 14px;color:var(--muted);font-size:13px}
 </style>
 <div class="wrap">
 <div class="bar">
+  <a class="brand" href="/" id="home" title="к обзору">ALG<b>O</b>TH</a>
   <h1 id="ttl" class="mono">…</h1>
   <span id="syms"></span>
   <span class="sp"></span>
   <span id="marm"></span>
   <button id="fit">весь период</button>
   <button id="live" aria-pressed="true">следить за краем</button>
-  <a class="btn" href="/" id="home">overview</a>
 </div>
 <div id="recnote"></div>
 <div class="panel">
@@ -2257,6 +2280,8 @@ const Q = new URLSearchParams(location.search);
 const KEY = Q.get("k") || "";
 let sym = Q.get("sym") || "";
 let data = null, view = null, follow = true, HIT = [];
+// Перекрестие: позиция курсора над графиком, null — курсора нет.
+let CROSS = null;
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
 const stamp = t => new Date(t*1000).toISOString().slice(11,16);
@@ -2724,6 +2749,29 @@ function draw() {
     g.beginPath(); g.moveTo(padL,y(v)); g.lineTo(W-padR,y(v)); g.stroke();
     g.fillText(v.toFixed(dec), W-padR+5, y(v));
   }
+  // Ось времени: линии по круглым меткам, шаг подобран по ширине окна.
+  // Метки ищутся по времени свечи, а не по номеру — ряд дыряв (урок
+  // A2), и каждый десятый бар не значит каждые десять минут.
+  const stepM = [5,15,30,60,120,240,480,1440].find(s =>
+    pw / Math.max(1, (i1 - i0) / s) >= 76) || 1440;
+  let tdrawn = 0;
+  g.textAlign = "center";
+  for (let i = i0; i < i1; i++) {
+    if (c[i][0] % (stepM * 60)) continue;
+    g.strokeStyle = css("--grid");
+    g.beginPath(); g.moveTo(x(i), padT); g.lineTo(x(i), padT + ph);
+    g.stroke();
+    g.fillStyle = css("--muted");
+    g.fillText(stamp(c[i][0]), x(i), H - 10);
+    tdrawn++;
+  }
+  g.textAlign = "left";
+  if (!tdrawn) {
+    g.fillStyle = css("--muted");
+    g.fillText(stamp(t0), padL, H - 10);
+    g.textAlign = "right"; g.fillText(stamp(t1), W - padR, H - 10);
+    g.textAlign = "left";
+  }
   for (const l of lv) {
     if (l.p<lo||l.p>hi) continue;
     g.save(); g.strokeStyle=css("--accent"); g.globalAlpha=.55;
@@ -2733,6 +2781,19 @@ function draw() {
     g.fillStyle=css("--muted"); g.fillText(l.kind, padL+4, y(l.p)-7);
   }
   const cw = Math.max(1, pw/(i1-i0)*0.62);
+  // Объём — гистограммой у нижнего края, полупрозрачно: отдельная
+  // панель отняла бы высоту у цены, а тень объёма читается так же.
+  let vmax = 0;
+  for (let i = i0; i < i1; i++) vmax = Math.max(vmax, c[i][5] || 0);
+  if (vmax > 0) {
+    const vh = ph * 0.16, vy = padT + ph;
+    for (let i = i0; i < i1; i++) {
+      g.fillStyle = c[i][4] >= c[i][1]
+        ? "rgba(61,220,127,.26)" : "rgba(255,100,115,.26)";
+      const hv = vh * (c[i][5] || 0) / vmax;
+      g.fillRect(x(i) - cw / 2, vy - hv, cw, hv);
+    }
+  }
   for (let i=i0;i<i1;i++){
     const up = c[i][4] >= c[i][1];
     g.strokeStyle = g.fillStyle = up ? css("--bid") : css("--ask");
@@ -2838,9 +2899,70 @@ function draw() {
     HIT.push({mdl: t, exit: drew, x0: xa-7, x1: Math.max(xb, xa+7),
               y0: yl-12, y1: yh+12});
   }
-  g.fillStyle = css("--muted"); g.textBaseline="alphabetic";
-  g.fillText(stamp(t0), padL, H-6);
-  g.textAlign="right"; g.fillText(stamp(t1), W-padR, H-6); g.textAlign="left";
+  // Линия последней цены с биркой у правой оси: без неё край живого
+  // ряда приходится искать глазами.
+  const lastC = c[c.length - 1], lastP = lastC[4];
+  if (lastP >= lo && lastP <= hi) {
+    const lcol = lastC[4] >= lastC[1] ? css("--bid") : css("--ask");
+    g.save(); g.strokeStyle = lcol; g.globalAlpha = .75;
+    g.setLineDash([2, 3]); g.beginPath();
+    g.moveTo(padL, y(lastP)); g.lineTo(W - padR, y(lastP)); g.stroke();
+    g.restore();
+    g.fillStyle = lcol;
+    g.fillRect(W - padR + 2, y(lastP) - 8, padR - 4, 16);
+    g.fillStyle = "#0b0820";
+    g.fillText(lastP.toFixed(dec), W - padR + 5, y(lastP));
+  }
+  // Легенда OHLC: по свече под перекрестием, без него — по последней
+  // видимой. Подпись живёт на самом графике, как у любого kline-вида.
+  const li = CROSS ? Math.max(i0, Math.min(i1 - 1,
+    i0 + Math.floor((CROSS.mx - padL) / pw * (i1 - i0)))) : i1 - 1;
+  const lb = c[li], chg = lb[1] ? (lb[4] / lb[1] - 1) * 100 : 0;
+  const bcol = lb[4] >= lb[1] ? css("--bid") : css("--ask");
+  let lx = padL + 4;
+  const put = (k2, v2, col2) => {
+    // На узком экране легенда обрывается, а не наезжает на ось цены.
+    if (lx > W - padR - 64) return;
+    g.fillStyle = css("--muted"); g.fillText(k2, lx, padT + 6);
+    lx += (g.measureText(k2) || {width: 12}).width + 4;
+    g.fillStyle = col2 || css("--ink"); g.fillText(v2, lx, padT + 6);
+    lx += (g.measureText(v2) || {width: 40}).width + 10;
+  };
+  put("O", lb[1].toFixed(dec)); put("H", lb[2].toFixed(dec));
+  put("L", lb[3].toFixed(dec)); put("C", lb[4].toFixed(dec), bcol);
+  put("Δ", (chg > 0 ? "+" : "") + chg.toFixed(2) + " %", bcol);
+  // Перекрестие: бар под курсором, цена справа, время внизу. Рисуется
+  // поверх всего и только при наведении — на телефоне его нет.
+  if (CROSS && !drag) {
+    const ci = Math.max(i0, Math.min(i1 - 1,
+      i0 + Math.floor((CROSS.mx - padL) / pw * (i1 - i0))));
+    const cx = x(ci);
+    g.save(); g.strokeStyle = css("--muted"); g.globalAlpha = .5;
+    g.setLineDash([3, 3]);
+    g.beginPath(); g.moveTo(cx, padT); g.lineTo(cx, padT + ph); g.stroke();
+    if (CROSS.my >= padT && CROSS.my <= padT + ph) {
+      g.beginPath(); g.moveTo(padL, CROSS.my);
+      g.lineTo(W - padR, CROSS.my); g.stroke();
+    }
+    g.restore();
+    if (CROSS.my >= padT && CROSS.my <= padT + ph) {
+      const pv = hi - (hi - lo) * (CROSS.my - padT) / ph;
+      g.fillStyle = css("--chip");
+      g.fillRect(W - padR + 2, CROSS.my - 8, padR - 4, 16);
+      g.strokeStyle = css("--rule");
+      g.strokeRect(W - padR + 2, CROSS.my - 8, padR - 4, 16);
+      g.fillStyle = css("--ink");
+      g.fillText(pv.toFixed(dec), W - padR + 5, CROSS.my);
+    }
+    const tt = stamp(c[ci][0]);
+    const tw = (g.measureText(tt) || {width: 40}).width + 10;
+    g.fillStyle = css("--chip");
+    g.fillRect(cx - tw / 2, padT + ph + 2, tw, 16);
+    g.strokeStyle = css("--rule");
+    g.strokeRect(cx - tw / 2, padT + ph + 2, tw, 16);
+    g.fillStyle = css("--ink"); g.textAlign = "center";
+    g.fillText(tt, cx, padT + ph + 10); g.textAlign = "left";
+  }
   document.getElementById("cap2").textContent =
     `${i1-i0} of ${c.length} min · ${stamp(t0)}—${stamp(t1)}`;
   // Сколько сделок вообще попадает на график. Свечи живут в
@@ -3008,7 +3130,20 @@ function drawEq() {
   const x = i => 6 + (W-70)*i/(pts.length-1);
   g.strokeStyle = css("--grid");
   g.beginPath(); g.moveTo(6, y(0)); g.lineTo(W-64, y(0)); g.stroke();
-  g.strokeStyle = v[v.length-1] >= 0 ? css("--bid") : css("--ask");
+  const pos = v[v.length-1] >= 0;
+  // Заливка под кривой; в headless createLinearGradient заглушен.
+  const fill = g.createLinearGradient
+    ? g.createLinearGradient(0, 0, 0, H) : null;
+  if (fill && fill.addColorStop) {
+    fill.addColorStop(0, pos ? "rgba(61,220,127,.18)"
+                             : "rgba(255,100,115,.18)");
+    fill.addColorStop(1, "rgba(0,0,0,0)");
+    g.beginPath();
+    v.forEach((q,i) => i ? g.lineTo(x(i), y(q)) : g.moveTo(x(i), y(q)));
+    g.lineTo(x(v.length-1), y(0)); g.lineTo(x(0), y(0));
+    g.closePath(); g.fillStyle = fill; g.fill();
+  }
+  g.strokeStyle = pos ? css("--bid") : css("--ask");
   g.lineWidth = 1.6; g.beginPath();
   v.forEach((q,i) => i ? g.lineTo(x(i), y(q)) : g.moveTo(x(i), y(q)));
   g.stroke();
@@ -3029,6 +3164,7 @@ px.addEventListener("pointermove", e => {
   if (!drag) { hover(e); return; }
   const c = cands(); if (!c.length || !view) return;
   follow = false; document.getElementById("live").setAttribute("aria-pressed","false");
+  CROSS = null;
   const per = px.clientWidth/view.n;
   view.i0 = Math.max(0, Math.min(c.length-view.n,
                                  drag.i0 - (e.clientX-drag.x)/per));
@@ -3037,7 +3173,8 @@ px.addEventListener("pointermove", e => {
 px.addEventListener("pointerup", e => {
   if (drag && Math.abs(e.clientX-drag.x) < 6) hover(e);
   drag = null; });
-px.addEventListener("pointerleave", () => { tip.style.display="none"; });
+px.addEventListener("pointerleave", () => {
+  tip.style.display="none"; CROSS = null; draw(); });
 px.addEventListener("wheel", e => {
   e.preventDefault(); zoom(e.deltaY>0?1.15:1/1.15, e.offsetX/px.clientWidth);
 }, {passive:false});
@@ -3063,6 +3200,9 @@ function zoom(k, anchor) {
 function hover(e) {
   const r = px.getBoundingClientRect();
   const mx = e.clientX-r.left, my = e.clientY-r.top;
+  // Перекрестие живёт всегда, подсказка — только над сделкой.
+  CROSS = {mx, my};
+  draw();
   const h = HIT.find(z => mx>=z.x0 && mx<=z.x1 && my>=z.y0 && my<=z.y1);
   if (!h) { tip.style.display="none"; return; }
   const row=(k,v,cls)=>`<div class="r"><span>${k}</span>
