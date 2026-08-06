@@ -284,10 +284,10 @@ TABLES = (
     # Таблицы страницы ядра. Шапка ищется от подписи карточки: у
     # страницы две таблицы, и безадресный поиск взял бы первую попавшуюся.
     ("ядро: позиции", "BOTPAGE",
-     r"открытые позиции.*?<thead><tr>(.*?)</tr></thead>",
+     r"open positions.*?<thead><tr>(.*?)</tr></thead>",
      r'getElementById\("pos"\)\.innerHTML = .*?\)\.join\(""\)'),
     ("ядро: закрытые", "BOTPAGE",
-     r"закрытые сделки.*?<thead><tr>(.*?)</tr></thead>",
+     r"closed trades.*?<thead><tr>(.*?)</tr></thead>",
      r'getElementById\("cl"\)\.innerHTML = .*?\)\.join\(""\)'),
 )
 

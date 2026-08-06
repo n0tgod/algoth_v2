@@ -36,34 +36,52 @@ PAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Order Book Live</title>
 <style>
-:root{color-scheme:light dark;
- --ground:#f6f7f9;--panel:#fff;--ink:#141a21;--muted:#5c6673;--rule:#dfe4ea;
- --bid:#1f7a56;--ask:#b8452c;--accent:#a97514;--grid:#eef1f5}
-@media(prefers-color-scheme:dark){:root{
- --ground:#0c1015;--panel:#131922;--ink:#e4e9f0;--muted:#8b95a4;--rule:#212936;
- --bid:#35a877;--ask:#d4614a;--accent:#d7a24a;--grid:#1a212c}}
+/* Палитра — общая на все страницы: наследие v1 (тёмный фиолет, пурпур
+   #9747ff) в современном исполнении. Тема одна, настроек внешнего вида
+   нет — правило v2. */
+:root{color-scheme:dark;
+ --ground:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff;--grid:#1c1839}
 *{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);
- font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,
+  var(--ground);
+ color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-font-smoothing:antialiased}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
  font-variant-numeric:tabular-nums}
-.wrap{max-width:1000px;margin:0 auto;padding:14px 12px 40px}
-h1{font-size:17px;margin:0 0 2px}
-.sub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
-.strip{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
- grid-template-columns:repeat(auto-fit,minmax(92px,1fr));margin-bottom:12px}
-.st{background:var(--panel);padding:7px 9px}
-.st .k{font-size:10.5px;color:var(--muted);letter-spacing:.04em}
-.st .v{font-size:15px;font-weight:600}
+.wrap{max-width:1000px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand b{color:var(--accent);font-weight:800}
+.tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 10px;background:rgba(151,71,255,.06);white-space:nowrap}
+.sp{flex:1 1 auto}
+.sub{color:var(--muted);font-size:12.5px;margin:0}
+.strip{display:grid;gap:8px;
+ grid-template-columns:repeat(auto-fit,minmax(104px,1fr));margin-bottom:12px}
+.st{background:linear-gradient(180deg,rgba(151,71,255,.06),
+  rgba(151,71,255,0) 55%),var(--panel);
+ border:1px solid var(--rule);border-radius:12px;padding:9px 11px}
+.st .k{font-size:9.5px;color:var(--muted);letter-spacing:.1em;
+ text-transform:uppercase}
+.st .v{font-size:14.5px;font-weight:600;margin-top:3px}
 .bad{color:var(--ask)} .good{color:var(--bid)}
+.k{color:var(--muted);font-size:12px}
 .syms{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center}
 .pick{padding:8px 10px}
 .pickwrap>summary{list-style:none}
 .pickwrap>summary::-webkit-details-marker{display:none}
 .pick input{width:100%;font:inherit;font-size:16px;color:var(--ink);
- background:var(--ground);border:1px solid var(--rule);padding:7px 10px;
- margin-bottom:6px}
-details.grp{border-top:1px solid var(--rule)}
+ background:var(--chip);border:1px solid var(--rule);border-radius:10px;
+ padding:7px 10px;margin-bottom:6px}
+details.grp{border-top:1px solid var(--rule-soft)}
 details.grp summary::-webkit-details-marker{display:none}
 details.grp summary{cursor:pointer;padding:6px 2px;font-size:12px;
  color:var(--muted);letter-spacing:.03em;list-style:none;
@@ -71,13 +89,14 @@ details.grp summary{cursor:pointer;padding:6px 2px;font-size:12px;
 details.grp summary::after{content:"▸";color:var(--muted)}
 details.grp[open] summary::after{content:"▾"}
 details.grp .gs{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px;max-height:38vh;overflow-y:auto}
-.modelbox{padding:8px 10px;font-size:13px}
+.modelbox{padding:8px 12px;font-size:13px}
 .modelbox .mline{color:var(--muted);font-size:12px;margin-bottom:6px}
 .thoughts{max-height:230px;overflow-y:auto;font-size:12.5px;
  white-space:pre-wrap;line-height:1.5}
 .thoughts .tt{color:var(--muted)}
 .mtr{width:100%;border-collapse:collapse;font-size:11.5px}
-.mtr th{text-align:left;color:var(--muted);font-weight:400;
+.mtr th{text-align:left;color:var(--muted);font-weight:500;font-size:10px;
+ letter-spacing:.08em;text-transform:uppercase;
  padding:2px 6px 3px 0;border-bottom:1px solid var(--rule)}
 .mtr td{padding:2px 6px 2px 0;white-space:nowrap}
 .mtr tr.good td:nth-child(8){color:var(--bid)}
@@ -86,23 +105,28 @@ details.grp .gs{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px;max-height
 @media(max-width:640px){
  .wrap{padding:10px 8px 30px}
  button{padding:8px 12px;font-size:13.5px}
- .strip{grid-template-columns:repeat(auto-fit,minmax(76px,1fr))}
+ .strip{grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:6px}
  td{padding:3px 7px}
  .tape{max-height:240px}
 }
-.open{font-size:13px;color:var(--ink);background:var(--panel);
- border:1px solid var(--accent);padding:4px 9px;text-decoration:none}
-.open:hover{background:var(--grid)}
-button{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);
- border:1px solid var(--rule);padding:4px 9px;cursor:pointer}
-button[aria-pressed=true]{border-color:var(--accent);
- box-shadow:inset 0 -2px 0 var(--accent)}
+.open{font-size:12px;color:var(--ink);background:var(--chip);
+ border:1px solid var(--accent);border-radius:999px;padding:3px 10px;
+ text-decoration:none}
+.open:hover{background:rgba(151,71,255,.14)}
+button{font:inherit;font-size:12.5px;color:var(--muted);
+ background:var(--chip);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 11px;cursor:pointer;
+ transition:border-color .15s,color .15s}
+button:hover{color:var(--ink);border-color:var(--accent)}
+button[aria-pressed=true]{color:var(--ink);border-color:var(--accent);
+ background:rgba(151,71,255,.14)}
 .cols{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:760px){.cols{grid-template-columns:1fr 1fr}}
-.panel{background:var(--panel);border:1px solid var(--rule);overflow-x:auto;-webkit-overflow-scrolling:touch}
-.cap{padding:6px 10px;border-bottom:1px solid var(--rule);font-size:11.5px;
- color:var(--muted);letter-spacing:.05em;text-transform:uppercase;
- display:flex;justify-content:space-between;gap:8px}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cap{padding:8px 12px;border-bottom:1px solid var(--rule-soft);
+ font-size:10.5px;color:var(--muted);letter-spacing:.12em;
+ text-transform:uppercase;display:flex;justify-content:space-between;gap:8px}
 table{border-collapse:collapse;width:100%;font-size:13px}
 td{padding:2px 9px;position:relative;white-space:nowrap}
 td.sz{text-align:right;width:38%}
@@ -111,26 +135,31 @@ td.px{width:34%}
 tr.a .bar{background:var(--ask);right:0}
 tr.b .bar{background:var(--bid);right:0}
 tr.a td.px{color:var(--ask)} tr.b td.px{color:var(--bid)}
-.spread{background:var(--grid);font-size:12px;color:var(--muted)}
+.spread{background:var(--chip);font-size:12px;color:var(--muted)}
 .tape{max-height:330px;overflow-y:auto}
 .tape td{padding:1px 9px}
 .buy{color:var(--bid)} .sell{color:var(--ask)}
 canvas{display:block;width:100%}
-.log{max-height:150px;overflow-y:auto;padding:6px 10px;font-size:12px;
+.log{max-height:150px;overflow-y:auto;padding:6px 12px;font-size:12px;
  color:var(--muted);white-space:pre-wrap}
-.bands{padding:8px 10px}
+.bands{padding:8px 12px}
 .band{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12px}
 .band .n{width:52px;color:var(--muted);text-align:right}
-.band .g{flex:1;display:flex;height:12px;background:var(--grid)}
+.band .g{flex:1;display:flex;height:12px;background:var(--grid);
+ border-radius:4px;overflow:hidden}
 .band .g i{display:block;height:100%}
 .band .g .l{background:var(--bid);margin-left:auto}
 .band .g .r{background:var(--ask)}
 .band .q{width:96px;text-align:center;color:var(--muted)}
-footer{color:var(--muted);font-size:12px;margin-top:14px}
+footer{color:var(--muted);font-size:12px;margin-top:16px;line-height:1.7}
 </style>
 <div class="wrap">
-<h1>Order Book Live</h1>
-<p class="sub" id="sub">connecting…</p>
+<header class="top">
+  <span class="brand">ALG<b>O</b>TH</span>
+  <span class="tag">order book · live</span>
+  <span class="sp"></span>
+  <span class="sub" id="sub">connecting…</span>
+</header>
 <div class="strip" id="strip"></div>
 <details class="panel pickwrap" style="margin-bottom:12px">
   <summary class="cap" style="cursor:pointer"><span>coins by sector</span>
@@ -188,18 +217,28 @@ footer{color:var(--muted);font-size:12px;margin-top:14px}
   <div class="cap"><span>collector log</span></div>
   <div class="log mono" id="log"></div>
 </div>
-<footer>Обновление раз в секунду. Стакан — тема orderbook.50 площадки
-исполнения; сторона сделки — агрессора.</footer>
+<footer>Updates once a second. Book — the execution venue&#39;s
+orderbook.50 topic; trade side is the aggressor&#39;s.</footer>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 let sym = null, timer = null;
+// Состояния, виды уровней и правила приходят с сервера по-русски: это
+// КЛЮЧИ файлов и журналов, а не текст для глаз. Перевод живёт на
+// границе показа — переименовать ключ значило бы разойтись с записью.
+const KEY_EN = {"открыта": "open", "закрыта": "closed", "цель": "target",
+  "стоп": "stop", "время": "time", "не открыта": "not taken",
+  "оборвана перезапуском": "cut by restart", "ждёт разбора": "awaiting",
+  "без исхода": "no outcome", "полка": "shelf", "кругл": "round",
+  "экстремум": "extreme", "лента": "tape", "стакан": "book",
+  "лонг": "long", "шорт": "short"};
+const disp = v => v == null ? "—" : (KEY_EN[v] || v);
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
 const fmt = (v, d=2) => v === null || v === undefined || !isFinite(v)
-  ? "—" : v.toLocaleString("ru-RU", {minimumFractionDigits: d,
+  ? "—" : v.toLocaleString("en-US", {minimumFractionDigits: d,
                                      maximumFractionDigits: d});
-const kk = v => v >= 1e6 ? (v/1e6).toFixed(1)+" млн"
+const kk = v => v >= 1e6 ? (v/1e6).toFixed(1)+"M"
   : v >= 1e3 ? (v/1e3).toFixed(0) : v.toFixed(0);
 
 // Разностный опрос. Полная выдача весила 58 КиБ, из них 29 — девятьсот
@@ -264,7 +303,7 @@ async function tick() {
 function render(d) {
   const s = d.status;
   document.getElementById("sub").textContent =
-    `${d.symbols.length} symbols · collecting for ${(s.uptime_sec/3600).toFixed(1)} ч`;
+    `${d.symbols.length} symbols · collecting for ${(s.uptime_sec/3600).toFixed(1)} h`;
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
   const age = s.last_msg_age_sec;
@@ -303,19 +342,19 @@ function render(d) {
     t.innerHTML =
       bk.a.slice().reverse().map(r => row(r, "a")).join("") +
       `<tr class="spread"><td colspan="3" class="mono">spread ${
-        fmt((bk.ask-bk.bid)/bk.bid*1e4, 1)} б.п. · середина ${
+        fmt((bk.ask-bk.bid)/bk.bid*1e4, 1)} bp · mid ${
         fmt((bk.ask+bk.bid)/2, 6)}</td></tr>` +
       bk.b.map(r => row(r, "b")).join("");
     document.getElementById("cap-book").textContent =
       `${bk.depth ?? "?"} levels · upd/s ${bk.upd} · reach ±${
-        bk.reach_b}/${bk.reach_a} б.п.`;
+        bk.reach_b}/${bk.reach_a} bp`;
     document.getElementById("bands").innerHTML = d.bands.map(b => {
       const tot = b.bid + b.ask || 1;
       // Полоса шире видимой книги содержит её целиком: подписка отдаёт
       // полсотни уровней, а не проценты. Помечена, чтобы одинаковые
       // числа в соседних строках не читались как измерение.
       return `<div class="band" ${b.beyond ? 'style="opacity:.5"' : ""}
-        title="${b.beyond ? "шире видимой книги — это весь стакан" : ""}">
+        title="${b.beyond ? "wider than the visible book — this is all of it" : ""}">
         <span class="n mono">±${b.w}%${b.beyond ? "*" : ""}</span>
         <span class="g"><i class="l" style="width:${
           (b.bid/tot*100).toFixed(1)}%"></i><i class="r" style="width:${
@@ -329,7 +368,7 @@ function render(d) {
   document.getElementById("tape").innerHTML = tp.slice().reverse().map(x =>
     `<tr><td class="mono" style="color:var(--muted)">${
       new Date(x.ts).toISOString().slice(11,23)}</td>
-     <td class="mono ${x.side>0?"buy":"sell"}">${x.side>0?"покупка":"продажа"}</td>
+     <td class="mono ${x.side>0?"buy":"sell"}">${x.side>0?"buy":"sell"}</td>
      <td class="mono">${x.p}</td>
      <td class="mono sz">${fmt(x.v,3)}</td>
      <td class="mono" style="color:var(--muted)">${kk(x.p*x.v)}</td></tr>`
@@ -376,11 +415,11 @@ function render(d) {
     ? all.map(x => `<tr>
         <td class="mono" style="color:var(--muted)">${
           new Date(x.t*1000).toISOString().slice(11,19)}</td>
-        <td class="mono ${x.long?"buy":"sell"}">${x.long?"лонг":"шорт"}</td>
+        <td class="mono ${x.long?"buy":"sell"}">${x.long?"long":"short"}</td>
         <td class="mono">${x.entry}</td>
-        <td class="mono" style="color:var(--muted)">${x.kind}</td>
+        <td class="mono" style="color:var(--muted)">${disp(x.kind)}</td>
         <td class="mono">1:${x.rr}</td>
-        <td class="mono">${x.state}</td>
+        <td class="mono">${disp(x.state)}</td>
         <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${x.pnl_bp == null ? "—"
           : pct(x.pnl_bp) + " · " + (x.r>0?"+":"") + x.r + " R"}</td>
       </tr>`).join("")
@@ -452,30 +491,31 @@ function renderAll() {
              + " R", s.expectancy_r > 0 ? "good" : "bad")
       + cell("target/stop/time",
              `${pc(s.share_target)}/${pc(s.share_stop)}/${pc(s.share_time)}`)
-      + (s.cut_by_restart ? cell("оборвано", s.cut_by_restart, "bad") : "");
+      + (s.cut_by_restart ? cell("cut early", s.cut_by_restart, "bad") : "");
   const br = A.by_rule || {};
   document.getElementById("rules2").innerHTML =
     `<div style="padding:7px 10px;font-size:12.5px;color:var(--muted)">`
     + (verLine(A.by_ver, A.ver) ? verLine(A.by_ver, A.ver) + "<br>" : "")
     + (Object.keys(br).map(r => {
         const x = br[r];
-        return x ? `<b>${r}</b>: ${x.trades} trades, wins ${pc(x.win_rate)} `
+        return x ? `<b>${disp(r)}</b>: ${x.trades} trades, wins ${
+            pc(x.win_rate)} `
           + `vs break-even ${pc(x.break_even)}, expectancy ${
             pct(x.expectancy_bp)}`
-          : `<b>${r}</b>: no trades`;
+          : `<b>${disp(r)}</b>: no trades`;
       }).join(" · ") || "&nbsp;") + `</div>`;
   document.getElementById("alltr").innerHTML = A.trades.length
     ? A.trades.slice(0, 60).map(x => `<tr ${
         (x.ver || 1) !== A.ver
-          ? 'style="opacity:.5" title="прежние правила — в статистику не идёт"'
+          ? 'style="opacity:.5" title="older rules — excluded from stats"'
           : ""}>
         <td class="mono" style="color:var(--muted)">${
           new Date(x.t*1000).toISOString().slice(5,16).replace("T"," ")}</td>
         <td class="mono">${(x.sym||"").replace("USDT","")}</td>
-        <td>${x.rule || "лента"}</td>
-        <td class="mono ${x.long?"buy":"sell"}">${x.long?"лонг":"шорт"}</td>
+        <td>${disp(x.rule || "лента")}</td>
+        <td class="mono ${x.long?"buy":"sell"}">${x.long?"long":"short"}</td>
         <td class="mono">1:${x.rr}</td>
-        <td class="mono">${x.state}</td>
+        <td class="mono">${disp(x.state)}</td>
         <td class="mono ${x.pnl_bp>0?"buy":"sell"}">${x.pnl_bp == null ? "—"
           : pct(x.pnl_bp) + " · " + (x.r>0?"+":"") + x.r
             + " R"}</td></tr>`).join("")
@@ -493,7 +533,7 @@ function drawEqAll() {
   g.fillStyle = css("--muted"); g.font = "12px system-ui";
   g.textBaseline = "middle";
   if (pts.length < 2) {
-    g.fillText("кривая появится после двух закрытых сделок", 10, H/2);
+    g.fillText("the curve appears after two closed trades", 10, H/2);
     return;
   }
   const v = pts.map(p => p[1]);
@@ -594,32 +634,32 @@ async function pullBot() {
   const box = document.getElementById("botbox");
   const cap = document.getElementById("cap-bot");
   if (!d || !d.present) {
-    box.textContent = "ядро не запущено — тень ещё не развёрнута";
+    box.textContent = "core not running — the shadow is not deployed yet";
     cap.textContent = "";
     return;
   }
   const age = d.age_sec == null ? null : Math.round(d.age_sec);
-  cap.textContent = age == null ? "" : `обновлено ${age} с назад`;
+  cap.textContent = age == null ? "" : `updated ${age} s ago`;
   const bad = [];
   if (age != null && age > 300)
-    bad.push(`СТАТУС МОЛЧИТ ${Math.round(age / 60)} мин — процесс повис`);
-  if (d.error) bad.push(`ОШИБКА: ${d.error}`);
+    bad.push(`STATUS SILENT for ${Math.round(age / 60)} min — process hung`);
+  if (d.error) bad.push(`ERROR: ${d.error}`);
   const ch = d.check || {};
   if (ch.ok === false)
-    bad.push(`ИНВАРИАНТЫ: ${(ch.violations || []).join("; ")}`);
+    bad.push(`INVARIANTS: ${(ch.violations || []).join("; ")}`);
   const sv = d.sverka || {};
-  if (sv.ok === false) bad.push(sv.note || "СВЕРКА: расхождения");
-  const kill = d.kill ? ` · <b style="color:var(--ask)">ВЫКЛЮЧАТЕЛЬ</b>` : "";
+  if (sv.ok === false) bad.push(sv.note || "RECONCILIATION: mismatches");
+  const kill = d.kill ? ` · <b style="color:var(--ask)">KILL SWITCH</b>` : "";
   const warns = (ch.warnings || []).length
-    ? `<div class="k">предупреждения: ${(ch.warnings || []).join("; ")}</div>`
+    ? `<div class="k">warnings: ${(ch.warnings || []).join("; ")}</div>`
     : "";
   box.innerHTML = `<span class="mono">${d.balance_usd} $</span>
-    <span class="k">баланс тени (рука ${d.arm})</span> ·
-    открыто ${d.open}${kill} ·
-    инварианты ${ch.ok === true ? "целы" : "—"} ·
-    сверка ${sv.ok === true ? "расхождений 0"
-             : sv.ok == null ? (sv.note || "не бежала") : "см. ниже"}`
-    + ` · <a href="/bot-page?k=${encodeURIComponent(KEY)}">подробнее</a>`
+    <span class="k">shadow balance (arm ${d.arm})</span> ·
+    open ${d.open}${kill} ·
+    invariants ${ch.ok === true ? "intact" : "—"} ·
+    reconciliation ${sv.ok === true ? "0 mismatches"
+             : sv.ok == null ? (sv.note || "not run yet") : "see below"}`
+    + ` · <a href="/bot-page?k=${encodeURIComponent(KEY)}">details</a>`
     + (bad.length
        ? `<div style="color:var(--ask)"><b>${bad.join("<br>")}</b></div>`
        : "")
@@ -1061,13 +1101,13 @@ function verLine(list, cur) {
   const pc = v => (v*100).toFixed(0) + " %";
   return list.map(x => {
     const s = x.stats, me = x.ver === cur;
-    const head = (me ? "<b>правила v" + x.ver + " (сейчас)</b>"
-                     : "правила v" + x.ver);
+    const head = (me ? "<b>rules v" + x.ver + " (current)</b>"
+                     : "rules v" + x.ver);
     return head + ": " + (s
-      ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
-        + `${pc(s.break_even)}, ожидание ${pct(s.expectancy_bp)}, `
-        + `стоп ${pct(s.stop_bp_median)}`
-      : `${x.n} сд., закрытых нет`);
+      ? `${s.trades} trades, wins ${pc(s.win_rate)} vs break-even `
+        + `${pc(s.break_even)}, expectancy ${pct(s.expectancy_bp)}, `
+        + `stop ${pct(s.stop_bp_median)}`
+      : `${x.n} trades, none closed`);
   }).join("<br>");
 }
 
@@ -1077,25 +1117,25 @@ function bookRows(b) {
     : `<td class="mono ${ok ? "buy" : "sell"}">${v}${need}</td>`;
   const rows = ["лонг", "шорт"].map(k => {
     const m = b[k] || {};
-    return `<tr><td>стакан: ${k} у крупного</td>
-      ${cell(m.gate_x, "× порога", m.gate_x >= 1)}
-      ${cell(m.held, " с", m.held >= (b.hold || 10))}
-      ${cell(m.eaten_x, "× съедено", m.eaten_x >= (b.eat || 1))}
+    return `<tr><td>book: ${disp(k)} at a large one</td>
+      ${cell(m.gate_x, "× gate", m.gate_x >= 1)}
+      ${cell(m.held, " s", m.held >= (b.hold || 10))}
+      ${cell(m.eaten_x, "× eaten", m.eaten_x >= (b.eat || 1))}
       <td class="mono" style="color:var(--muted)">${m.why || "—"}</td></tr>`;
   }).join("");
   // Докуда цепочка дошла за жизнь процесса. Без этой строки «правило
   // молчит» неотличимо от «правило молчит вот на этом условии», а
   // чинится только второе.
   const c = b.chain || {};
-  const named = ["ни разу не крупный", "крупный был",
-                 "выстаивал", "выедали"][c.stage || 0];
-  return rows + `<tr><td>стакан: докуда доходило</td>
+  const named = ["never large", "was large",
+                 "held long enough", "was eaten"][c.stage || 0];
+  return rows + `<tr><td>book: furthest step reached</td>
     <td class="mono" colspan="3">${named}${c.eat_n
-      ? `, выедание по ${c.eat_n} замерам: медиана ${c.eat_med}×, `
-        + `максимум ${c.eat_max}× при нужных ${b.eat || 1}`
+      ? `, eating over ${c.eat_n} samples: median ${c.eat_med}×, `
+        + `max ${c.eat_max}× vs required ${b.eat || 1}`
       : ""}</td>
-    <td class="mono" style="color:var(--muted)">гейт ${
-      ((1 - (b.qbig || 0.98)) * 100).toFixed(0)}% времени</td></tr>`;
+    <td class="mono" style="color:var(--muted)">gate ${
+      ((1 - (b.qbig || 0.98)) * 100).toFixed(0)}% of time</td></tr>`;
 }
 
 function drawMid(pts, sg) {
@@ -1107,7 +1147,7 @@ function drawMid(pts, sg) {
   if (pts.length < 2) {
     g.fillStyle = css("--muted");
     g.font = "12px system-ui"; g.textBaseline = "middle";
-    g.fillText("копим историю…", 10, H/2);
+    g.fillText("accumulating history…", 10, H/2);
     return;
   }
   // В шкалу входят и уровни со сделками: иначе метка окажется за краем,
@@ -1134,7 +1174,7 @@ function drawMid(pts, sg) {
     g.restore();
     g.fillStyle = css("--muted");
     g.font = "10px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
-    g.fillText(l.kind, 9, y(l.p) - 6);
+    g.fillText(disp(l.kind), 9, y(l.p) - 6);
   }
   g.strokeStyle = css("--ink"); g.lineWidth = 1.5; g.globalAlpha = .85;
   g.beginPath();
@@ -1170,7 +1210,7 @@ function drawMid(pts, sg) {
   g.fillText(hi.toPrecision(7), W-60, y(hi));
   g.fillText(lo.toPrecision(7), W-60, y(lo));
   document.getElementById("cap-mid").textContent =
-    pct((pts[pts.length-1][1]/pts[0][1]-1)*1e4) + " за окно";
+    pct((pts[pts.length-1][1]/pts[0][1]-1)*1e4) + " over the window";
 }
 
 tick(); timer = setInterval(tick, 1000);
@@ -1212,20 +1252,32 @@ TRADES = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>model trades</title>
 <style>
-:root{color-scheme:light dark;
- --bg:#fbfcfd;--panel:#fff;--ink:#12161c;--muted:#6b7785;--rule:#e3e8ee;
- --bid:#1f7a56;--ask:#b8452c;--accent:#a97514}
-@media(prefers-color-scheme:dark){:root{
- --bg:#0e1116;--panel:#151a21;--ink:#e7edf5;--muted:#8b97a6;--rule:#232b36;
- --bid:#35a877;--ask:#d4614a;--accent:#d7a24a}}
+/* Палитра — общая на все страницы: наследие v1 (тёмный фиолет, пурпур
+   #9747ff) в современном исполнении. Тема одна, настроек нет. */
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
- font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.wrap{max-width:1200px;margin:0 auto;padding:14px 12px 40px}
-h1{font-size:16px;margin:0 0 4px}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,
+  var(--bg);
+ color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand b{color:var(--accent);font-weight:800}
+.tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 10px;background:rgba(151,71,255,.06);white-space:nowrap}
 a{color:var(--accent)}
 .card{background:var(--panel);border:1px solid var(--rule);
- border-radius:10px;padding:10px 12px;margin-bottom:12px}
+ border-radius:16px;padding:12px 14px;margin-bottom:14px}
 .note{color:var(--muted);font-size:12px;margin-bottom:8px}
 .warn{border-left:3px solid var(--accent);padding-left:9px;
  color:var(--muted);font-size:12px;margin-bottom:10px}
@@ -1233,7 +1285,7 @@ a{color:var(--accent)}
    занимали втрое больше высоты, чем сами числа, и страница
    пролистывалась ради семи величин. */
 .stats{display:grid;gap:0;border:1px solid var(--rule);
- border-radius:8px;overflow:hidden;
+ border-radius:12px;overflow:hidden;background:var(--chip);
  grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
 /* Значение НИКОГДА не обрезается. Первая версия ставила
    `text-overflow:ellipsis`, и составные величины («−2.09 % / −15.07 $»)
@@ -1242,29 +1294,35 @@ a{color:var(--accent)}
    тот самый класс дефекта, от которого проект защищается везде.
    Не влезло в строку — переносится целиком на следующую. */
 .st{display:flex;flex-wrap:wrap;align-items:baseline;gap:1px 10px;
- padding:4px 9px;
- border-bottom:1px solid var(--rule);border-right:1px solid var(--rule)}
+ padding:4px 10px;
+ border-bottom:1px solid var(--rule-soft);
+ border-right:1px solid var(--rule-soft)}
 .k{color:var(--muted);font-size:11.5px;white-space:nowrap}
 .v{font-size:13px;font-variant-numeric:tabular-nums;text-align:right;
  white-space:nowrap;margin-left:auto}
 .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
 .good{color:var(--bid)} .bad{color:var(--ask)}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{text-align:left;color:var(--muted);font-weight:400;
+th{text-align:left;color:var(--muted);font-weight:500;font-size:10px;
+ letter-spacing:.08em;text-transform:uppercase;
  padding:4px 8px 5px 0;border-bottom:1px solid var(--rule);
  position:sticky;top:0;background:var(--panel)}
-td{padding:3px 8px 3px 0;white-space:nowrap;
- border-bottom:1px solid var(--rule)}
-button,select{background:var(--panel);color:var(--ink);
- border:1px solid var(--rule);border-radius:7px;padding:4px 10px;
- font:inherit;font-size:12px}
-button[aria-pressed=true]{border-color:var(--accent)}
+td{padding:4px 8px 4px 0;white-space:nowrap;
+ border-bottom:1px solid var(--rule-soft)}
+tbody tr:hover td{background:rgba(151,71,255,.04)}
+button,select{background:var(--chip);color:var(--muted);
+ border:1px solid var(--rule);border-radius:999px;padding:4px 11px;
+ font:inherit;font-size:12px;cursor:pointer;
+ transition:border-color .15s,color .15s}
+button:hover,select:hover{color:var(--ink);border-color:var(--accent)}
+button[aria-pressed=true]{color:var(--ink);border-color:var(--accent);
+ background:rgba(151,71,255,.14)}
 button:disabled{opacity:.4}
 /* Кнопка «открыть на графике» — ссылка, а не скрипт: она обязана
    работать средним щелчком и держаться в закладке. Строка сделки в
    таблице не отвечает на вопрос «а что там было с ценой». */
 a.open{color:var(--muted);text-decoration:none;border:1px solid var(--rule);
- border-radius:6px;padding:1px 7px;font-size:11px}
+ border-radius:999px;padding:1px 8px;font-size:11px;background:var(--chip)}
 a.open:hover{color:var(--ink);border-color:var(--accent)}
 .bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;
  margin-bottom:8px}
@@ -1311,8 +1369,11 @@ canvas{width:100%;display:block;touch-action:pan-y}
 }
 </style>
 <div class="wrap">
-  <h1>model trades · <span id="src" class="mono"></span></h1>
-  <div class="note"><a href="#" id="back">&larr; overview</a></div>
+  <header class="top">
+    <a href="#" id="back" class="brand" title="to overview">ALG<b>O</b>TH</a>
+    <span class="tag">model trades</span>
+    <span id="src" class="mono note" style="margin:0"></span>
+  </header>
   <div id="warn"></div>
 
   <div class="card">
@@ -1879,7 +1940,7 @@ marks(); setInterval(marks, 10000);
 
 BOTPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Исполнительное ядро — тень</title>
+<title>Execution core — shadow</title>
 <style>
 /* Дизайн — наследник algoth_v1: тот же тёмный сине-фиолетовый фон и
    пурпурный акцент, но без тяжёлых градиентов первой версии — тонкие
@@ -1967,41 +2028,41 @@ details summary{cursor:pointer}
 </style>
 <div id="botlike-page" class="wrap">
 <header class="top">
-  <a id="back" href="#" class="brand" title="к обзору сборщика">ALG<b>O</b>TH</a>
-  <span class="tag">исполнительное ядро · тень</span>
+  <a id="back" href="#" class="brand" title="to overview">ALG<b>O</b>TH</a>
+  <span class="tag">execution core · shadow</span>
   <span class="sp"></span>
   <span id="hb" class="pill"><span class="dot"></span><span
     id="topage" class="mono">…</span></span>
   <span id="src" class="pill mono"></span>
-  <span class="chip"><span class="ck">баланс</span><span
+  <span class="chip"><span class="ck">balance</span><span
     id="topbal" class="cv mono">…</span></span>
 </header>
   <div id="alarm"></div>
   <div class="stats" id="acct">…</div>
-  <section class="card"><div class="cap"><span>кривая счёта ·
-      реализованные закрытия</span>
+  <section class="card"><div class="cap"><span>equity ·
+      realised closes</span>
       <span id="eqlab" class="mono meta"></span></div>
     <canvas id="eq" height="200"></canvas></section>
-  <section class="card"><div class="cap"><span>открытые позиции</span>
-      <span class="meta">переоценка по мидам собственной книги,
-        издержки не вычтены</span></div>
+  <section class="card"><div class="cap"><span>open positions</span>
+      <span class="meta">marked to the collector&#39;s own book mids,
+        costs not deducted</span></div>
     <div class="scroll"><table>
       <thead><tr><th>coin</th><th>side</th><th>size $</th><th>entry</th>
         <th>mid now</th><th>unreal</th><th>unreal $</th><th>age</th>
         <th>closes in</th></tr></thead>
       <tbody id="pos"></tbody></table></div></section>
-  <section class="card"><div class="cap"><span>закрытые сделки</span>
+  <section class="card"><div class="cap"><span>closed trades</span>
       <span id="cnt" class="mono meta"></span></div>
     <div class="scroll"><table>
       <thead><tr><th>hour</th><th>coin</th><th>side</th><th>size $</th>
         <th>entry</th><th>exit</th><th>pnl $</th><th>cost basis</th>
       </tr></thead><tbody id="cl"></tbody></table></div></section>
-  <section class="card"><details><summary class="cap">сверка с
-      Python-счётом — отчёт</summary>
+  <section class="card"><details><summary class="cap">reconciliation
+      vs the Python books — report</summary>
     <pre id="sv">…</pre></details></section>
-  <footer class="foot">страница только читает: аварийный стоп —
-    файл KILL на сервере, страница его показывает, но не нажимает
-    · обновление каждые 30 с</footer>
+  <footer class="foot">this page only reads: the emergency stop is the
+    KILL file on the server — the page shows it, never presses it
+    · refreshes every 30 s</footer>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
@@ -2067,30 +2128,31 @@ async function load() {
     d = await r.json();
   } catch (e) {
     document.getElementById("alarm").innerHTML =
-      `<div class="card alarm">нет связи со сборщиком</div>`;
+      `<div class="card alarm">no connection to the collector</div>`;
     return;
   }
   if (!d.present) {
     document.getElementById("alarm").innerHTML =
-      `<div class="card">ядро не запущено — тень ещё не развёрнута</div>`;
+      `<div class="card">core not running — the shadow is not deployed
+       yet</div>`;
     return;
   }
-  document.getElementById("src").textContent = `рука ${d.arm}`;
+  document.getElementById("src").textContent = `arm ${d.arm}`;
   const hb = document.getElementById("hb");
   hb.className = "pill" + (d.age_sec > 300 ? " hb-stale" : "");
   document.getElementById("topage").textContent =
     d.age_sec == null ? "—" : `${Math.round(d.age_sec)} s`;
   const bad = [];
   if (d.age_sec != null && d.age_sec > 300)
-    bad.push(`СТАТУС МОЛЧИТ ${Math.round(d.age_sec / 60)} мин — процесс повис`);
-  if (d.error) bad.push(`ОШИБКА: ${d.error}`);
-  if (d.journal_error) bad.push(`ЖУРНАЛ: ${d.journal_error}`);
+    bad.push(`STATUS SILENT for ${Math.round(d.age_sec / 60)} min — process hung`);
+  if (d.error) bad.push(`ERROR: ${d.error}`);
+  if (d.journal_error) bad.push(`JOURNAL: ${d.journal_error}`);
   const ch = d.check || {};
   if (ch.ok === false)
-    bad.push(`ИНВАРИАНТЫ: ${(ch.violations || []).join("; ")}`);
+    bad.push(`INVARIANTS: ${(ch.violations || []).join("; ")}`);
   const sv = d.sverka || {};
-  if (sv.ok === false) bad.push(sv.note || "СВЕРКА: расхождения");
-  if (d.kill) bad.push("ВЫКЛЮЧАТЕЛЬ ПОВЁРНУТ — новых входов нет");
+  if (sv.ok === false) bad.push(sv.note || "RECONCILIATION: mismatches");
+  if (d.kill) bad.push("KILL SWITCH ON — no new entries");
   document.getElementById("alarm").innerHTML = bad.length
     ? `<div class="card alarm">${bad.join("<br>")}</div>` : "";
   const cap = d.capital_usd || 1000;
@@ -2109,10 +2171,10 @@ async function load() {
     + cell("open / closed", `${cnt.open ?? "—"} / ${cnt.closed ?? "—"}`)
     + cell("decisions / rejects",
            `${cnt.decisions ?? "—"} / ${cnt.rejects ?? "—"}`)
-    + cell("invariants", ch.ok === true ? "целы" : "СМОТРЕТЬ",
+    + cell("invariants", ch.ok === true ? "intact" : "CHECK",
            ch.ok === true ? "good" : "bad")
-    + cell("сверка", sv.ok === true ? "расхождений 0"
-           : sv.ok == null ? "не бежала" : "РАСХОЖДЕНИЯ",
+    + cell("reconciliation", sv.ok === true ? "0 mismatches"
+           : sv.ok == null ? "not run yet" : "MISMATCH",
            sv.ok === true ? "good" : sv.ok === false ? "bad" : "")
     + cell("status age", d.age_sec == null ? "—"
            : `${Math.round(d.age_sec)} s`,
@@ -2136,7 +2198,7 @@ async function load() {
     <td class="mono">${p.opened_at ? ((now - p.opened_at) / 3600).toFixed(1) + " h" : "—"}</td>
     <td class="mono">${p.closes_at ? ((p.closes_at - now) / 3600).toFixed(1) + " h" : "—"}</td>
     </tr>`).join("")
-    || `<tr><td colspan="9" class="k">позиций нет</td></tr>`;
+    || `<tr><td colspan="9" class="k">no open positions</td></tr>`;
   document.getElementById("cnt").textContent =
     `showing ${(d.closed || []).length} of ${d.closed_total || 0}`;
   document.getElementById("cl").innerHTML = (d.closed || []).map(t => `
@@ -2150,9 +2212,9 @@ async function load() {
     <td class="mono ${t.pnl > 0 ? "good" : t.pnl < 0 ? "bad" : ""}">${
       t.pnl > 0 ? "+" : ""}${t.pnl}</td>
     <td class="k">${t.basis}</td></tr>`).join("")
-    || `<tr><td colspan="8" class="k">закрытых пока нет</td></tr>`;
+    || `<tr><td colspan="8" class="k">no closed trades yet</td></tr>`;
   document.getElementById("sv").textContent =
-    d.sverka_report || "отчёт сверки ещё не написан";
+    d.sverka_report || "no reconciliation report yet";
 }
 load(); setInterval(load, 30000);
 </script>
@@ -2160,7 +2222,7 @@ load(); setInterval(load, 30000);
 
 CHART = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chart живьём</title>
+<title>Chart — live</title>
 <style>
 /* Палитра — та же, что у страницы ядра: наследие v1 (тёмный фиолет,
    пурпур #9747ff) в современном исполнении. Тема одна, настроек
@@ -2236,42 +2298,42 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 </style>
 <div class="wrap">
 <div class="bar">
-  <a class="brand" href="/" id="home" title="к обзору">ALG<b>O</b>TH</a>
+  <a class="brand" href="/" id="home" title="to overview">ALG<b>O</b>TH</a>
   <h1 id="ttl" class="mono">…</h1>
   <span id="syms"></span>
   <span class="sp"></span>
   <span id="marm"></span>
-  <button id="fit">весь период</button>
-  <button id="live" aria-pressed="true">следить за краем</button>
+  <button id="fit">fit all</button>
+  <button id="live" aria-pressed="true">follow live</button>
 </div>
 <div id="recnote"></div>
 <div class="panel">
-  <div class="cap"><span id="cap">минутные candles · тяните, колесо или щипок — масштаб</span>
+  <div class="cap"><span id="cap">1m candles · drag, wheel or pinch to zoom</span>
     <span id="cap2" class="mono"></span></div>
   <canvas id="px" height="420"></canvas>
   <div id="tip" class="mono"></div>
 </div>
 <div class="legend">
-  <span><span class="sw" style="border-color:var(--accent)"></span>уровень</span>
-  <span><span class="sw" style="border-color:var(--ask)"></span>стоп</span>
-  <span><span class="sw" style="border-color:var(--bid)"></span>цель</span>
-  <span><span class="sw" style="border-color:var(--ink)"></span>вход и выход</span>
+  <span><span class="sw" style="border-color:var(--accent)"></span>level</span>
+  <span><span class="sw" style="border-color:var(--ask)"></span>stop</span>
+  <span><span class="sw" style="border-color:var(--bid)"></span>target</span>
+  <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp; exit</span>
   <span id="mleg"></span>
 </div>
 <div class="panel">
-  <div class="cap"><span>итог бумажных сделок по этой монете</span>
-    <button id="unit" style="padding:1px 7px">в R</button></div>
+  <div class="cap"><span>paper trades summary — this coin</span>
+    <button id="unit" style="padding:1px 9px">in R</button></div>
   <div id="sum" class="stats"></div>
   <div id="rules"></div>
   <canvas id="eq"></canvas>
 </div>
 <div class="panel">
-  <div class="cap"><span>история сделок — бумажные, наблюдение</span>
+  <div class="cap"><span>trade history — paper, observation</span>
     <span id="cap3" class="mono"></span></div>
   <div class="hist"><table><thead><tr>
-    <th>время</th><th>сторона</th><th>вход</th><th>стоп</th><th>цель</th>
-    <th>правило</th><th>уровень</th><th>отн.</th><th>состояние</th>
-    <th>держали</th><th>итог</th>
+    <th>time</th><th>side</th><th>entry</th><th>stop</th><th>target</th>
+    <th>rule</th><th>level</th><th>rr</th><th>state</th>
+    <th>held</th><th>result</th>
   </tr></thead><tbody id="rows"></tbody></table></div>
 </div>
 </div>
@@ -2282,6 +2344,14 @@ let sym = Q.get("sym") || "";
 let data = null, view = null, follow = true, HIT = [];
 // Перекрестие: позиция курсора над графиком, null — курсора нет.
 let CROSS = null;
+// Состояния и виды уровней приходят с сервера по-русски: это КЛЮЧИ
+// файлов и журналов. Перевод живёт на границе показа.
+const KEY_EN = {"открыта": "open", "закрыта": "closed", "цель": "target",
+  "стоп": "stop", "время": "time", "не открыта": "not taken",
+  "оборвана перезапуском": "cut by restart", "ждёт разбора": "awaiting",
+  "без исхода": "no outcome", "полка": "shelf", "кругл": "round",
+  "экстремум": "extreme", "лента": "tape", "стакан": "book"};
+const disp = v => v == null ? "—" : (KEY_EN[v] || v);
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
 const stamp = t => new Date(t*1000).toISOString().slice(11,16);
@@ -2361,8 +2431,8 @@ function renderRec() {
     return;
   }
   if (!d || d.busy) {
-    box.innerHTML = `<div class="panel"><div class="note">пересчитываю те же
-      входы под текущие правила${d ? `: ${d.done} of ${d.total} coins` : ""}…
+    box.innerHTML = `<div class="panel"><div class="note">replaying the same
+      entries under current rules${d ? `: ${d.done} of ${d.total} coins` : ""}…
       </div></div>`;
     return;
   }
@@ -2372,10 +2442,9 @@ function renderRec() {
     <b>replay</b> — the page shows NOT actual outcomes but the same
     entries run under rules v${d.ver} (window ${d.hours} h, took
     ${d.took_sec} s). Same price path, different trade: stop and target
-    пересчитаны, значит и выход другой. Входов по этой монете взято
-    ${d.made}, отвергнуто новой геометрией ${d.refused}.
-    <br>График, таблица и сводка показывают ТОЛЬКО пересчёт: что было
-    на самом деле, видно при выключенном переключателе.`
+    are recomputed, so the exit differs too. Entries taken for this coin:
+    ${d.made}, rejected by the new geometry: ${d.refused}.
+    <br>Chart, table and summary show ONLY the replay.`
     + ageLine(d, HIST.trades) + coverLine(d, HIST.trades.length)
     + `</div></div>`;
 }
@@ -2523,7 +2592,7 @@ function armButtons() {
   for (const [a] of ARMS) n[a] = MDL.trades.filter(t => t.arm === a).length;
   document.getElementById("marm").innerHTML = ARMS.map(([a, name]) =>
     `<button data-arm="${a}" aria-pressed="${a === MDL.arm}"
-      title="сделки модели: показывается одна рука">${name} ${n[a]}</button>`
+      title="model trades: one arm shown">${name} ${n[a]}</button>`
   ).join(" ");
   document.querySelectorAll("[data-arm]").forEach(b => b.onclick = () => {
     MDL.arm = b.dataset.arm;
@@ -2573,7 +2642,7 @@ async function pull() {
   } catch (e) {
     ST.fails++;
     document.getElementById("cap2").textContent =
-      `связь потеряна (попыток ${ST.fails}), картинка прежняя`;
+      `connection lost (attempts ${ST.fails}), showing last data`;
     return;
   } finally { ST.busy = false; }
   const fresh = d.sym !== ST.sym;
@@ -2691,7 +2760,7 @@ function draw() {
   if (c.length < 2) {
     g.fillStyle = css("--muted"); g.font = "13px system-ui";
     g.textBaseline = "middle";
-    g.fillText("копим историю — candles появятся через пару минут", 12, H/2);
+    g.fillText("accumulating history — candles appear in a couple of minutes", 12, H/2);
     // Пустой график при открытой сделке обязан объясниться: иначе
     // «записи за это время нет» неотличимо от «страница не работает».
     modelNote([], 0, 0);
@@ -2778,7 +2847,7 @@ function draw() {
     g.setLineDash(l.kind==="полка"?[]:[3,3]);
     g.beginPath(); g.moveTo(padL,y(l.p)); g.lineTo(W-padR,y(l.p)); g.stroke();
     g.restore();
-    g.fillStyle=css("--muted"); g.fillText(l.kind, padL+4, y(l.p)-7);
+    g.fillStyle=css("--muted"); g.fillText(disp(l.kind), padL+4, y(l.p)-7);
   }
   const cw = Math.max(1, pw/(i1-i0)*0.62);
   // Объём — гистограммой у нижнего края, полупрозрачно: отдельная
@@ -2975,14 +3044,14 @@ function draw() {
   const off = tr.filter(m => m.t < first || m.t > last).length;
   const old = tr.filter(m => (m.ver || 1) !== S.ver).length;
   document.getElementById("cap3").textContent =
-    `${tr.length} сделок` + (S.rec ? " · replayed, not actual" : "")
+    `${tr.length} trades` + (S.rec ? " · replayed, not actual" : "")
     + (S.rec && recReady() && recReady().no_outcome
-       ? ` · ${tr.filter(m => m.state === "не открыта").length} входов `
-         + `правило не взяло (полый треугольник)` : "")
-    + (off ? ` · ${off} вне окна графика` : "")
-    + (old ? ` · ${old} по прежним правилам` : "")
+       ? ` · ${tr.filter(m => m.state === "не открыта").length} entries `
+         + `refused by the rule (hollow triangle)` : "")
+    + (off ? ` · ${off} outside the chart window` : "")
+    + (old ? ` · ${old} under older rules` : "")
     + (MT.length
-       ? ` · ${MT.length} сделок модели`
+       ? ` · ${MT.length} model trades`
          + ` (${MDL.arm === "nn" ? "ai" : "ml"}`
          + (MDL.pretest ? ", pre-testing" : "") + ")" : "");
   modelNote(MT, first, last);
@@ -2996,31 +3065,31 @@ function modelNote(MT, first, last) {
   if (!MDL.hour) {
     box.innerHTML = MT.length
       ? `<span><span class="sw" style="border-color:var(--accent)"></span>
-         сделка модели: вход &#9650;, удержание — линия, выход
+         model trade: entry &#9650;, hold — line, exit
          &#9632;</span>` : "";
     return;
   }
-  if (!MDL.sym) { box.innerHTML = "<span>тяну сделки модели…</span>"; return; }
+  if (!MDL.sym) { box.innerHTML = "<span>fetching model trades…</span>"; return; }
   const t = focused();
   if (!t) {
     // Час есть, сделки нет: у другой руки в этом часе своей сделки не
     // было. Это ответ, а не пустота, и сказать его надо словами.
-    box.innerHTML = `<span style="color:var(--ask)">у руки ${
-      MDL.arm === "nn" ? "ai" : "ml"} в часе ${MDL.hour} сделки нет —
-      переключите руку</span>`;
+    box.innerHTML = `<span style="color:var(--ask)">arm ${
+      MDL.arm === "nn" ? "ai" : "ml"} has no trade in hour ${MDL.hour} —
+      switch the arm</span>`;
     return;
   }
   // Пока свечи за это окно не пришли, говорить «записи нет» нельзя:
   // ожидание и отсутствие выглядели бы одинаково.
   if (HC.busy || HC.end !== Math.round(focusEnd())) {
-    box.innerHTML = "<span>тяну свечи за это окно…</span>"; return;
+    box.innerHTML = "<span>fetching candles for this window…</span>"; return;
   }
   const seen = t.opened_at >= first && t.opened_at <= last;
   box.innerHTML = seen
-    ? `<span>показана сделка ${MDL.hour} · ${
-        t.side === "long" ? "лонг" : "шорт"} · ${t.state}</span>`
-    : `<span style="color:var(--ask)">записи цен за ${MDL.hour} нет —
-       сбор по этой монете начался позже</span>`;
+    ? `<span>showing trade ${MDL.hour} · ${
+        t.side} · ${disp(t.state)}</span>`
+    : `<span style="color:var(--ask)">no price record for ${MDL.hour} —
+       recording of this coin started later</span>`;
 }
 
 function rows() {
@@ -3028,17 +3097,17 @@ function rows() {
   const first = c.length ? c[0][0] : 0, last = c.length ? c[c.length-1][0] : 0;
   const off = m => c.length && (m.t < first || m.t > last);
   document.getElementById("rows").innerHTML = tr.length ? tr.map(m => `
-    <tr ${off(m) ? 'style="opacity:.55" title="вне окна графика — '
-                 + 'свеча за это время уже не хранится"' : ""}>
+    <tr ${off(m) ? 'style="opacity:.55" title="outside the chart window — '
+                 + 'candles for that time are no longer stored"' : ""}>
     <td class="mono">${stamp(m.t)}${off(m) ? " ·" : ""}</td>
-    <td class="${m.long?"buy":"sell"}">${m.long?"лонг":"шорт"}</td>
+    <td class="${m.long?"buy":"sell"}">${m.long?"long":"short"}</td>
     <td class="mono">${m.entry}</td><td class="mono">${m.stop ?? "—"}</td>
     <td class="mono">${m.target ?? "—"}</td>
-    <td>${m.rule || "лента"}</td>
-    <td style="color:var(--muted)">${m.kind}</td>
+    <td>${disp(m.rule || "лента")}</td>
+    <td style="color:var(--muted)">${disp(m.kind)}</td>
     <td class="mono">${m.rr == null ? "—" : "1:" + m.rr}</td>
-    <td title="${m.why || ""}">${m.state}</td>
-    <td class="mono">${m.held == null ? "—" : m.held + " с"}</td>
+    <td title="${m.why || ""}">${disp(m.state)}</td>
+    <td class="mono">${m.held == null ? "—" : m.held + " s"}</td>
     <td class="mono">${res(m)}</td></tr>`
   ).join("") : `<tr><td colspan="11" style="color:var(--muted)">
     no events yet — detector waits for conditions</td></tr>`;
@@ -3052,13 +3121,13 @@ function verLine(list, cur) {
   const pc = v => (v*100).toFixed(0) + " %";
   return list.map(x => {
     const s = x.stats, me = x.ver === cur;
-    const head = (me ? "<b>правила v" + x.ver + " (сейчас)</b>"
-                     : "правила v" + x.ver);
+    const head = (me ? "<b>rules v" + x.ver + " (current)</b>"
+                     : "rules v" + x.ver);
     return head + ": " + (s
-      ? `${s.trades} сд., побед ${pc(s.win_rate)} при безубыточных `
-        + `${pc(s.break_even)}, ожидание ${pct(s.expectancy_bp)}, `
-        + `стоп ${pct(s.stop_bp_median)}`
-      : `${x.n} сд., закрытых нет`);
+      ? `${s.trades} trades, wins ${pc(s.win_rate)} vs break-even `
+        + `${pc(s.break_even)}, expectancy ${pct(s.expectancy_bp)}, `
+        + `stop ${pct(s.stop_bp_median)}`
+      : `${x.n} trades, none closed`);
   }).join("<br>");
 }
 
@@ -3083,12 +3152,12 @@ function summary() {
            s.expectancy_bp > 0 ? "buy" : "sell") +
       cell("in R", (s.expectancy_r>0?"+":"") + s.expectancy_r.toFixed(2)
            + " R", s.expectancy_r > 0 ? "buy" : "sell") +
-      cell("медиана", pct(s.median_bp)) +
-      cell("стоп", pct(s.stop_bp_median)) +
+      cell("median", pct(s.median_bp)) +
+      cell("stop", pct(s.stop_bp_median)) +
       cell("target / stop / time",
            `${pc(s.share_target)} / ${pc(s.share_stop)} / ${pc(s.share_time)}`) +
       (s.cut_by_restart
-        ? cell("оборвано", s.cut_by_restart, "sell") : "");
+        ? cell("cut early", s.cut_by_restart, "sell") : "");
   }
   // По правилам отдельно: «лента» — то же, что мерили T3 и T4, и она
   // здесь контрольная рука. Сравнивать новое правило надо с ней на
@@ -3096,12 +3165,12 @@ function summary() {
   const br = S.by_rule || {};
   const line = Object.keys(br).map(r => {
     const x = br[r];
-    return x ? `<b>${r}</b>: ${x.trades} сд., побед ${
-      (x.win_rate*100).toFixed(0)} % при безубыточных ${
-      (x.break_even*100).toFixed(0)} %, ожидание ${
+    return x ? `<b>${disp(r)}</b>: ${x.trades} trades, wins ${
+      (x.win_rate*100).toFixed(0)} % vs break-even ${
+      (x.break_even*100).toFixed(0)} %, expectancy ${
       pct(x.expectancy_bp)} (${
       x.expectancy_r > 0 ? "+" : ""}${x.expectancy_r.toFixed(2)} R)`
-      : `<b>${r}</b>: no trades`;
+      : `<b>${disp(r)}</b>: no trades`;
   }).join(" · ");
   const vl = verLine(S.by_ver, S.ver);
   document.getElementById("rules").innerHTML =
@@ -3118,8 +3187,8 @@ function drawEq() {
   if (pts.length < 2) {
     g.fillStyle = css("--muted"); g.font = "12px system-ui";
     g.textBaseline = "middle";
-    g.fillText(pts.length ? "одна сделка — кривой ещё нет"
-                          : "кривая появится после двух закрытых сделок",
+    g.fillText(pts.length ? "one trade — no curve yet"
+                          : "the curve appears after two closed trades",
                10, H/2);
     return;
   }
@@ -3218,30 +3287,30 @@ function hover(e) {
       : (v > 0 ? "+" : "") + (v / 100).toFixed(Math.abs(v) >= 10 ? 2 : 3)
         + " %";
     tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">
-        модель${MDL.pretest ? " (pre-testing)" : ""} · ${
-        t.side === "long" ? "лонг" : "шорт"} · ${t.state}</div>`
-      + row("рука", t.arm === "nn" ? "сеть (AI)" : "деревья (ML)")
-      + row("час сигнала", t.hour)
-      + row("вход", new Date(t.opened_at*1000).toISOString().slice(11,16)
+        model${MDL.pretest ? " (pre-testing)" : ""} · ${
+        t.side} · ${disp(t.state)}</div>`
+      + row("arm", t.arm === "nn" ? "neural (AI)" : "trees (ML)")
+      + row("signal hour", t.hour)
+      + row("entry", new Date(t.opened_at*1000).toISOString().slice(11,16)
             + " UTC" + (t.lag_sec == null ? ""
-              : ` (+${Math.round(t.lag_sec/60)} мин)`))
-      + row("ждёт", bp(t.expected_bp))
-      + row("ход против", bp(t.mae_bp))
+              : ` (+${Math.round(t.lag_sec/60)} min)`))
+      + row("expects", bp(t.expected_bp))
+      + row("adverse expected", bp(t.mae_bp))
       // Ход в пользу — второй конец обещания. Пустой у сделок, записанных
       // до того, как поле появилось; показывать там ноль значило бы
       // выдать отсутствие данных за «модель не ждёт движения».
-      + (t.mfe_bp == null ? "" : row("ход в пользу", bp(t.mfe_bp)))
+      + (t.mfe_bp == null ? "" : row("favorable expected", bp(t.mfe_bp)))
       + (t.state === "закрыта"
-         ? row("вышло", bp(t.got_bp), (t.got_bp>0)===(t.side==="long")
+         ? row("got", bp(t.got_bp), (t.got_bp>0)===(t.side==="long")
                ? "buy" : "sell")
-           + row("нетто с издержками", bp(t.net_bp),
+           + row("net after costs", bp(t.net_bp),
                  t.net_bp>0?"buy":"sell")
-           + row("деньги", (t.pnl>0?"+":"") + t.pnl + " $",
+           + row("P&L", (t.pnl>0?"+":"") + t.pnl + " $",
                  t.pnl>0?"buy":"sell")
          : t.state === "открыта"
-           ? row("закроется через",
-                 (t.closes_in_sec/3600).toFixed(1) + " ч")
-           : row("исхода нет", "час ещё не сведён"));
+           ? row("closes in",
+                 (t.closes_in_sec/3600).toFixed(1) + " h")
+           : row("no outcome", "hour not summarised yet"));
     tip.style.display="block";
     tip.style.left = Math.max(4, Math.min(px.clientWidth-tip.offsetWidth-4,
                                           mx+14))+"px";
@@ -3250,13 +3319,13 @@ function hover(e) {
   }
   const m = h.m;
   tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">${
-      m.long?"лонг":"шорт"} · ${m.state}</div>`
-    + row("время", stamp(m.t)) + row("вход", m.entry)
-    + (m.state === "не открыта" ? row("почему", m.why || "правило не берёт")
-       : row("стоп", m.stop) + row("цель", m.target))
-    + row("уровень", `${m.level} (${m.kind})`)
-    + row("отношение", "1:"+m.rr) + row("держали", m.held+" с")
-    + row("итог", `${pct(m.pnl_bp)} · ${
+      m.long?"long":"short"} · ${disp(m.state)}</div>`
+    + row("time", stamp(m.t)) + row("entry", m.entry)
+    + (m.state === "не открыта" ? row("why", m.why || "rule refuses")
+       : row("stop", m.stop) + row("target", m.target))
+    + row("level", `${m.level} (${disp(m.kind)})`)
+    + row("rr", "1:"+m.rr) + row("held", m.held+" s")
+    + row("result", `${pct(m.pnl_bp)} · ${
         m.r>0?"+":""}${m.r} R`, m.pnl_bp>0?"buy":"sell");
   tip.style.display="block";
   tip.style.left = Math.max(4, Math.min(px.clientWidth-tip.offsetWidth-4,
@@ -3273,7 +3342,7 @@ document.getElementById("live").onclick = e => {
   draw();
 };
 document.getElementById("unit").onclick = e => {
-  EQR = !EQR; e.target.textContent = EQR ? "в %" : "в R"; drawEq();
+  EQR = !EQR; e.target.textContent = EQR ? "in %" : "in R"; drawEq();
 };
 // Тумблера нет: вид один — всё под нынешними правилами.
 localStorage.removeItem("rec");

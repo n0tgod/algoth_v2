@@ -528,7 +528,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const tb = String(global.__el("topbal").textContent || "");
     if (!/1125\.01/.test(tb)) bad.push("ядро: баланс в шапке не показан");
     if (!/\+12\.50 %/.test(acct)) bad.push("ядро: доля от старта не показана");
-    if (!/расхождений 0/.test(acct)) bad.push("ядро: вердикт сверки не показан");
+    if (!/0 mismatches/.test(acct)) bad.push("ядро: вердикт сверки не показан");
     const pos = String(global.__el("pos").innerHTML || "");
     if (!/AAA/.test(pos) || !/0\.62 %/.test(pos))
       bad.push("ядро: открытая позиция без переоценки");
@@ -548,15 +548,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
       bad.push("панель ядра не показала баланс тени");
-    if (!/расхождений 0/.test(bb))
+    if (!/0 mismatches/.test(bb))
       bad.push("вердикт сверки не показан");
     if (!/застряла/.test(bb))
       bad.push("предупреждения сторожа не показаны");
-    if (/СТАТУС МОЛЧИТ/.test(bb))
+    if (/STATUS SILENT/.test(bb))
       bad.push("свежий статус назван молчащим");
     const cap = global.__el ? String(
       global.__el("cap-bot").textContent || "") : "";
-    if (!/42 с/.test(cap))
+    if (!/42 s/.test(cap))
       bad.push("возраст статуса ядра не показан");
   }
 
