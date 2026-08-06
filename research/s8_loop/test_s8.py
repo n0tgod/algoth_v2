@@ -830,6 +830,71 @@ def test_unrealised_never_mixes_with_realised():
           f"{s.get('exposure')} при капитале {TR.START_BALANCE}")
 
 
+def test_both_ends_of_the_path_are_recorded_and_mirrored():
+    """Ход против и ход в пользу — зеркальны по стороне и оба в записи.
+
+    `mae_4h` есть минимум цены за горизонт, `mfe_4h` — максимум; обе
+    считаются по ЦЕНЕ, а не по позиции. Значит лонгу против идёт mae, в
+    пользу mfe, шорту наоборот. Перепутать их — ошибка, уже случавшаяся
+    в проекте, и она не выдаёт себя ничем: колонка заполнена, число
+    правдоподобно, знак осмысленный.
+
+    Второй конец нужен не для полноты: уровень тейка иначе приходится
+    брать из `fwd`, а тот захеджирован волной — величина в другой
+    единице, чем цена, по которой стоит заявка.
+    """
+    import train as T
+    import trades as TR
+
+    adv, fav, a_of, f_of = T.position_path("long", -419.0, 273.0)
+    check("у лонга против идёт минимум цены, в пользу максимум",
+          (adv, fav, a_of, f_of) == (-419.0, 273.0, "mae_4h", "mfe_4h"),
+          str((adv, fav, a_of, f_of)))
+    adv, fav, a_of, f_of = T.position_path("short", -419.0, 273.0)
+    check("у шорта ровно наоборот",
+          (adv, fav, a_of, f_of) == (273.0, -419.0, "mfe_4h", "mae_4h"),
+          str((adv, fav, a_of, f_of)))
+    check("две стороны никогда не берутся из одной цели",
+          all(T.position_path(s, 1.0, 2.0)[2]
+              != T.position_path(s, 1.0, 2.0)[3]
+              for s in ("long", "short")))
+    # Модели хода в пользу может не быть вовсе (у ранних прогонов её и
+    # не было). Тогда сторона пустая, а не нулевая: ноль читался бы как
+    # «модель не ждёт движения».
+    check("неоценённая сторона остаётся пустой, а не нулём",
+          T.position_path("long", -419.0, None)[1] is None
+          and T.position_path("short", -419.0, None)[0] is None)
+    # Поля записи собирает та же функция — у вызывающего не остаётся
+    # возможности переставить их местами при раскладке.
+    check("поля записи собраны по сторонам верно",
+          T.path_fields("long", -419.0, 273.0)
+          == {"mae": -419.0, "adverse_of": "mae_4h",
+              "mfe": 273.0, "favourable_of": "mfe_4h"}
+          and T.path_fields("short", -419.0, 273.0)
+          == {"mae": 273.0, "adverse_of": "mfe_4h",
+              "mfe": -419.0, "favourable_of": "mae_4h"},
+          str(T.path_fields("short", -419.0, 273.0)))
+
+    # И величина обязана дойти до самой сделки: записанное, но не
+    # доехавшее до показа поле неотличимо от незаписанного.
+    h = "2026-08-03-10"
+    picks = [{"arm": "gbm", "hour": h, "at_ts": TR._ts(h) + 3900,
+              "long": [{"sym": "AUSDT", "fwd": 273.0, "px": 100.0,
+                        "mae": -419.0, "adverse_of": "mae_4h",
+                        "mfe": 651.0, "favourable_of": "mfe_4h"}],
+              "short": []}]
+    tr = TR.build(picks, [], now=TR._ts(h) + 100 * 3600)
+    check(f"ход в пользу доехал до сделки: {tr[0].get('mfe_bp')}",
+          tr[0]["mfe_bp"] == 651.0 and tr[0]["mae_bp"] == -419.0,
+          f"{tr[0].get('mfe_bp')} / {tr[0].get('mae_bp')}")
+    # Старые записи поля не несут — и тогда оно пустое, а не нулевое.
+    old = [{"arm": "gbm", "hour": h,
+            "long": [{"sym": "AUSDT", "fwd": 273.0, "px": 100.0,
+                      "mae": -419.0}], "short": []}]
+    check("у старой записи ход в пользу пуст, а не ноль",
+          TR.build(old, [], now=TR._ts(h) + 100 * 3600)[0]["mfe_bp"] is None)
+
+
 def test_drawdown_is_measured_not_inferred_from_the_outcome():
     """Просадка сделки — ход ПРОТИВ по дороге, а не её итог.
 
@@ -2396,6 +2461,7 @@ def main():
     test_execution_is_walked_through_the_recorded_book()
     test_backfill_recovers_the_book_for_old_trades()
     test_entry_gift_is_measured_before_it_is_removed()
+    test_both_ends_of_the_path_are_recorded_and_mirrored()
     test_drawdown_is_measured_not_inferred_from_the_outcome()
     test_drawdown_is_reported_against_the_deposit()
     test_pretest_hedges_with_beta_one_and_keeps_books_apart()
