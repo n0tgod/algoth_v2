@@ -2258,6 +2258,34 @@ button:hover,a.btn:hover{color:var(--ink);border-color:var(--accent)}
 button[aria-pressed=true]{color:var(--ink);border-color:var(--accent);
  background:rgba(151,71,255,.14)}
 .sp{flex:1 1 auto}
+/* Выбор монеты: выпадающий список с поиском и секторами. Плоская
+   стена из пяти сотен кнопок нечитаема и пересобиралась каждым тактом
+   — тот же урок, что группы на обзоре. */
+.pickwrap{position:relative}
+.pickwrap>summary{list-style:none;cursor:pointer;font:inherit;
+ font-size:12.5px;color:var(--muted);background:var(--chip);
+ border:1px solid var(--rule);border-radius:999px;padding:4px 11px;
+ white-space:nowrap;transition:border-color .15s,color .15s}
+.pickwrap>summary::-webkit-details-marker{display:none}
+.pickwrap>summary:hover{color:var(--ink);border-color:var(--accent)}
+.pickwrap[open]>summary{color:var(--ink);border-color:var(--accent);
+ background:rgba(151,71,255,.14)}
+.pick{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
+ width:min(88vw,560px);max-height:62vh;overflow-y:auto;
+ background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:10px;
+ box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.pick input{width:100%;font:inherit;font-size:16px;color:var(--ink);
+ background:var(--chip);border:1px solid var(--rule);border-radius:10px;
+ padding:7px 10px;margin-bottom:6px}
+details.grp{border-top:1px solid var(--rule-soft)}
+details.grp summary::-webkit-details-marker{display:none}
+details.grp summary{cursor:pointer;padding:6px 2px;font-size:12px;
+ color:var(--muted);letter-spacing:.03em;list-style:none;
+ display:flex;justify-content:space-between}
+details.grp summary::after{content:"▸";color:var(--muted)}
+details.grp[open] summary::after{content:"▾"}
+details.grp .gs{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px}
 .panel{background:var(--panel);border:1px solid var(--rule);
  border-radius:16px;margin-bottom:14px;position:relative;
  overflow:hidden}
@@ -2300,7 +2328,13 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 <div class="bar">
   <a class="brand" href="/" id="home" title="to overview">ALG<b>O</b>TH</a>
   <h1 id="ttl" class="mono">…</h1>
-  <span id="syms"></span>
+  <details class="pickwrap" id="pick">
+    <summary id="npick">coins</summary>
+    <div class="pick">
+      <input id="symq" placeholder="search coin…" autocomplete="off">
+      <div id="groups">…</div>
+    </div>
+  </details>
   <span class="sp"></span>
   <span id="marm"></span>
   <button id="fit">fit all</button>
@@ -2666,21 +2700,91 @@ async function pull() {
   sym = data.sym;
   document.getElementById("ttl").textContent = sym;
   document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-  document.getElementById("syms").innerHTML = data.symbols.map(x =>
-    `<button data-s="${x}" aria-pressed="${x===sym}">${
-      x.replace("USDT","")}</button>`).join(" ");
-  document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
-    sym = b.dataset.s; view = null; follow = true; wipe(); ST.sym = sym;
-    // Просьба показать конкретную сделку относилась к прежней монете.
-    // Оставить её значило бы держать окно графика в прошлом на монете,
-    // где этой сделки не было вовсе.
-    MDL.hour = ""; MDL.fit = false;
-    document.getElementById("live").setAttribute("aria-pressed", "true");
-    window.history.replaceState(
-      null, "", `?k=${encodeURIComponent(KEY)}&sym=${sym}`);
-    pull();
-  });
+  // Группы строятся не каждым тактом: пересборка DOM с пятью сотнями
+  // кнопок раз в секунду — тот самый урок обзора. Такт лишь
+  // подсвечивает выбранную монету; полная пересборка — только когда
+  // групп ещё нет, а список символов впервые стал известен.
+  if (!GRP.list && GRP.shown !== String((data.symbols || []).length)) {
+    GRP.shown = String((data.symbols || []).length);
+    renderGroups();
+  }
+  markPick();
   draw(); rows(); summary();
+}
+
+// --- выбор монеты: сектора и поиск, как на обзоре ---------------------
+const GRP = {list: null, q: "", shown: ""};
+const GRP_EN = {bitcoin_pow: "Bitcoin & PoW", privacy: "Privacy",
+  smart_contract_l1: "L1 platforms", layer2: "L2",
+  cosmos_interop: "Cosmos & bridges", polkadot: "Polkadot",
+  defi_dex: "DeFi: exchanges", defi_lending: "DeFi: lending",
+  defi_derivatives: "DeFi: derivatives", defi_yield: "DeFi: yield",
+  liquid_staking: "Staking", oracles: "Oracles",
+  storage_compute: "Storage & compute", depin: "DePIN",
+  ai_infra: "AI: infrastructure", ai_agents: "AI: agents",
+  memes: "Memes", gaming_metaverse: "Gaming & metaverse",
+  telegram_games: "Telegram games", nft_creator: "NFT",
+  exchange_tokens: "Exchange tokens", fan_tokens: "Fan tokens",
+  consumer_apps: "Consumer apps", identity_access: "Identity",
+  infrastructure: "Infrastructure", payments_social: "Payments",
+  dao_governance: "DAO", rwa: "RWA",
+  bitcoin_ecosystem: "Bitcoin ecosystem",
+  excluded_special: "Special", other: "Other & new listings"};
+async function pullGroups() {
+  try {
+    const r = await fetch(`/groups?k=${encodeURIComponent(KEY)}`);
+    const d = await r.json();
+    if (d && Array.isArray(d.groups)) GRP.list = d.groups;
+  } catch (e) { /* группы — удобство; без них остаётся список сборщика */ }
+  renderGroups();
+}
+function renderGroups() {
+  const box = document.getElementById("groups");
+  // Пока групп нет, годится плоский список сборщика: поиск работает и
+  // по нему, а пустой выпадающий список выглядит поломкой.
+  const list = GRP.list
+    || (data ? [{id: "other", symbols: data.symbols || []}] : null);
+  if (!list) { box.textContent = "…"; return; }
+  const q = GRP.q.toUpperCase();
+  box.innerHTML = list.map(g => {
+    const ss = q ? g.symbols.filter(s => s.includes(q)) : g.symbols;
+    if (!ss.length) return "";
+    // Свёрнуто всегда, кроме поиска — стена кнопок и была причиной.
+    const open = q ? " open" : "";
+    return `<details class="grp"${open}><summary><span>${
+        GRP_EN[g.id] || g.id}</span><span>${ss.length}</span></summary>
+      <div class="gs">${ss.map(s =>
+        `<button data-s="${s}" aria-pressed="${String(s === sym)}">${
+          s.replace("USDT","")}</button>`).join("")}</div></details>`;
+  }).join("") || `<div class="note">nothing found</div>`;
+  box.querySelectorAll("[data-s]").forEach(b =>
+    b.onclick = () => pickSym(b.dataset.s));
+  // Аккордеон: раскрытие одной группы сворачивает остальные.
+  box.querySelectorAll("details.grp").forEach(dd =>
+    dd.addEventListener("toggle", () => {
+      if (dd.open && !GRP.q)
+        box.querySelectorAll("details.grp[open]").forEach(o =>
+          { if (o !== dd) o.open = false; });
+    }));
+}
+function pickSym(s) {
+  sym = s; view = null; follow = true; wipe(); ST.sym = sym;
+  // Просьба показать конкретную сделку относилась к прежней монете.
+  // Оставить её значило бы держать окно графика в прошлом на монете,
+  // где этой сделки не было вовсе.
+  MDL.hour = ""; MDL.fit = false;
+  document.getElementById("live").setAttribute("aria-pressed", "true");
+  window.history.replaceState(
+    null, "", `?k=${encodeURIComponent(KEY)}&sym=${sym}`);
+  document.getElementById("pick").open = false;
+  pull();
+}
+function markPick() {
+  document.querySelectorAll("#groups [data-s]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.s === sym)));
+  const n = (data && data.symbols) ? data.symbols.length : 0;
+  document.getElementById("npick").textContent =
+    "coins" + (n ? " · " + n : "");
 }
 
 // Номер candles, внутри которой лежит момент. Двоичным поиском, потому
@@ -3351,6 +3455,16 @@ window.addEventListener("resize", () => { draw(); drawEq(); });
 // появляется только при удачном запросе, при неудачном неотличима от
 // «такой возможности нет».
 armButtons();
+pullGroups();
+document.getElementById("symq").oninput = e => {
+  GRP.q = e.target.value.trim(); renderGroups();
+};
+// Клик мимо выпадающего списка закрывает его — иначе он висит поверх
+// графика, пока не попадёшь точно в заголовок.
+document.addEventListener("click", e => {
+  const p = document.getElementById("pick");
+  if (p && p.open && p.contains && !p.contains(e.target)) p.open = false;
+});
 pull(); setInterval(pull, 1000);
 </script>
 """
