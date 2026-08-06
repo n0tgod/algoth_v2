@@ -1881,66 +1881,127 @@ BOTPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Исполнительное ядро — тень</title>
 <style>
-:root{color-scheme:light dark;
- --ground:#f6f7f9;--panel:#fff;--ink:#141a21;--muted:#5c6673;--rule:#dfe4ea;
- --good:#1f7a56;--bad:#b8452c;--accent:#a97514}
-@media(prefers-color-scheme:dark){:root{
- --ground:#0c1015;--panel:#131922;--ink:#e4e9f0;--muted:#8b95a4;--rule:#212936;
- --good:#35a877;--bad:#d4614a;--accent:#d7a24a}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);
- font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+/* Дизайн — наследник algoth_v1: тот же тёмный сине-фиолетовый фон и
+   пурпурный акцент, но без тяжёлых градиентов первой версии — тонкие
+   рамки, воздух, крупные числа. Тема одна: фирменный цвет v1 и есть
+   тёмная тема, переключателей внешнего вида не бывает (правило v2). */
+:root{color-scheme:dark;
+ --ground:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --accent:#9747ff;--accent2:#694ef0;
+ --good:#3ddc7f;--bad:#ff6473;
+ --good-soft:rgba(61,220,127,.1);--bad-soft:rgba(255,100,115,.1)}
+*{box-sizing:border-box;margin:0}
+body{background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,
+  var(--ground);
+ color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-font-smoothing:antialiased}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
  font-variant-numeric:tabular-nums}
-.wrap{max-width:1100px;margin:0 auto;padding:14px 12px 60px}
-h1{font-size:17px;margin:0 0 4px}
-.note{color:var(--muted);font-size:13px;margin:0 0 10px}
-.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;
- padding:12px 14px;margin-bottom:12px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 16px 72px}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;
+ gap:10px;flex-wrap:wrap;padding:14px 0 12px;margin-bottom:12px;
+ background:rgba(11,8,32,.82);backdrop-filter:blur(10px);
+ border-bottom:1px solid var(--rule-soft)}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand b{color:var(--accent);font-weight:800}
+.tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 10px;background:rgba(151,71,255,.06);white-space:nowrap}
+.sp{flex:1 1 auto}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;
+ color:var(--muted);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 11px;background:var(--chip);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good);
+ box-shadow:0 0 6px var(--good);flex:none}
+.hb-stale .dot{background:var(--bad);box-shadow:0 0 6px var(--bad)}
+.chip{display:inline-flex;align-items:baseline;gap:8px;
+ border:1px solid var(--rule);border-radius:10px;padding:5px 12px;
+ background:var(--chip)}
+.ck{font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+ color:var(--muted)}
+.cv{font-size:14px;font-weight:650}
 .k{color:var(--muted);font-size:12px}
 .good{color:var(--good)} .bad{color:var(--bad)}
-.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
- gap:1px;background:var(--rule);border:1px solid var(--rule);
- border-radius:8px;overflow:hidden}
-.st{background:var(--panel);padding:7px 10px}
-.st .v{font-size:15px;margin-top:2px}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{text-align:left;color:var(--muted);font-weight:400;
- padding:4px 8px 5px 0;border-bottom:1px solid var(--rule)}
-td{padding:3px 8px 3px 0;white-space:nowrap;
- border-bottom:1px solid var(--rule)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,
+ minmax(155px,1fr));gap:10px;margin:0 0 14px}
+.st{background:linear-gradient(180deg,rgba(151,71,255,.06),
+  rgba(151,71,255,0) 55%),var(--panel);
+ border:1px solid var(--rule);border-radius:14px;padding:11px 13px}
+.st .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.st .v{font-size:17px;font-weight:600;margin-top:5px}
+.card{background:var(--panel);border:1px solid var(--rule);
+ border-radius:16px;padding:14px 16px;margin-bottom:14px}
+.cap{display:flex;justify-content:space-between;align-items:baseline;
+ gap:10px;flex-wrap:wrap;font-size:10.5px;letter-spacing:.12em;
+ text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.meta{letter-spacing:0;text-transform:none;font-size:11.5px;
+ color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:10px;
+ letter-spacing:.1em;text-transform:uppercase;
+ padding:6px 10px 7px 0;border-bottom:1px solid var(--rule)}
+td{padding:7px 10px 7px 0;white-space:nowrap;
+ border-bottom:1px solid var(--rule-soft)}
+tbody tr:hover td{background:rgba(151,71,255,.04)}
 .scroll{overflow-x:auto}
+.side{display:inline-block;min-width:22px;text-align:center;
+ border-radius:6px;font-size:11px;font-weight:700;padding:1px 6px}
+.side.l{color:var(--good);background:var(--good-soft)}
+.side.s{color:var(--bad);background:var(--bad-soft)}
 canvas{width:100%;display:block}
-pre{white-space:pre-wrap;font-size:12px;color:var(--muted);margin:0}
-.alarm{color:var(--bad);font-weight:650}
+pre{white-space:pre-wrap;font-size:12px;color:var(--muted);
+ margin:10px 0 0}
+.alarm{border-color:rgba(255,100,115,.5);background:var(--bad-soft);
+ color:var(--bad);font-weight:600}
+details summary{cursor:pointer}
+.foot{color:var(--muted);font-size:12px;margin-top:20px;line-height:1.7}
+@media(max-width:640px){
+ .wrap{padding:0 10px 60px}
+ .stats{grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:8px}
+ .card{padding:12px;border-radius:14px}}
 </style>
-<div class="wrap">
-  <h1>Исполнительное ядро — тень <span id="src" class="mono k"></span></h1>
-  <div class="note"><a href="#" id="back">&larr; overview</a> ·
-    read-only: аварийный стоп — файл KILL на сервере, страница его
-    показывает, но не нажимает</div>
+<div id="botlike-page" class="wrap">
+<header class="top">
+  <a id="back" href="#" class="brand" title="к обзору сборщика">ALG<b>O</b>TH</a>
+  <span class="tag">исполнительное ядро · тень</span>
+  <span class="sp"></span>
+  <span id="hb" class="pill"><span class="dot"></span><span
+    id="topage" class="mono">…</span></span>
+  <span id="src" class="pill mono"></span>
+  <span class="chip"><span class="ck">баланс</span><span
+    id="topbal" class="cv mono">…</span></span>
+</header>
   <div id="alarm"></div>
-  <div class="card"><div class="k" style="margin-bottom:6px">account</div>
-    <div class="stats" id="acct">…</div></div>
-  <div class="card"><div class="k">equity, realised closes
-      <span id="eqlab" class="mono"></span></div>
-    <canvas id="eq" height="160"></canvas></div>
-  <div class="card"><div class="k" style="margin-bottom:6px">
-      open positions — gross mark by the collector's own book,
-      costs not deducted</div>
+  <div class="stats" id="acct">…</div>
+  <section class="card"><div class="cap"><span>кривая счёта ·
+      реализованные закрытия</span>
+      <span id="eqlab" class="mono meta"></span></div>
+    <canvas id="eq" height="200"></canvas></section>
+  <section class="card"><div class="cap"><span>открытые позиции</span>
+      <span class="meta">переоценка по мидам собственной книги,
+        издержки не вычтены</span></div>
     <div class="scroll"><table>
       <thead><tr><th>coin</th><th>side</th><th>size $</th><th>entry</th>
         <th>mid now</th><th>unreal</th><th>unreal $</th><th>age</th>
         <th>closes in</th></tr></thead>
-      <tbody id="pos"></tbody></table></div></div>
-  <div class="card"><div class="k" style="margin-bottom:6px">
-      closed trades <span id="cnt" class="mono"></span></div>
+      <tbody id="pos"></tbody></table></div></section>
+  <section class="card"><div class="cap"><span>закрытые сделки</span>
+      <span id="cnt" class="mono meta"></span></div>
     <div class="scroll"><table>
       <thead><tr><th>hour</th><th>coin</th><th>side</th><th>size $</th>
         <th>entry</th><th>exit</th><th>pnl $</th><th>cost basis</th>
-      </tr></thead><tbody id="cl"></tbody></table></div></div>
-  <div class="card"><div class="k" style="margin-bottom:6px">
-      сверка с Python-счётом</div><pre id="sv">…</pre></div>
+      </tr></thead><tbody id="cl"></tbody></table></div></section>
+  <section class="card"><details><summary class="cap">сверка с
+      Python-счётом — отчёт</summary>
+    <pre id="sv">…</pre></details></section>
+  <footer class="foot">страница только читает: аварийный стоп —
+    файл KILL на сервере, страница его показывает, но не нажимает
+    · обновление каждые 30 с</footer>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
@@ -1950,7 +2011,10 @@ const css = k => getComputedStyle(document.documentElement)
 const FMT = new Intl.DateTimeFormat("en-GB", {timeZone: "Europe/Vienna",
   hour: "2-digit", minute: "2-digit"});
 const hhmm = ts => ts ? FMT.format(new Date(ts * 1000)) : "—";
-const px = v => v == null ? "—" : String(v);
+// Цены журнала — двоичные числа, и напрямую они печатаются с хвостом
+// вида 0.032045000000000004; десяти значащих цифр хватает любому шагу
+// цены площадки, а повторное «+» срезает нули хвоста.
+const px = v => v == null ? "—" : String(+(+v).toPrecision(10));
 function cell(k, v, cls) {
   return `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls || ""}">${v}</div></div>`;
@@ -1958,7 +2022,7 @@ function cell(k, v, cls) {
 function drawEq(curve, capital) {
   const cv = document.getElementById("eq");
   const dpr = Math.min(devicePixelRatio || 1, 2);
-  const W = cv.clientWidth || 700, H = 160;
+  const W = cv.clientWidth || 700, H = 200;
   cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, W, H);
@@ -1966,18 +2030,35 @@ function drawEq(curve, capital) {
   let lo = capital, hi = capital;
   for (const [, v] of curve) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
-  const x = i => 6 + (W - 60) * i / (curve.length - 1);
-  const y = v => 8 + (H - 28) * (hi - v) / (hi - lo);
-  g.strokeStyle = css("--rule");
-  g.beginPath(); g.moveTo(6, y(capital)); g.lineTo(W - 54, y(capital));
-  g.stroke();
-  g.strokeStyle = css("--accent"); g.lineWidth = 1.6;
+  const x = i => 8 + (W - 66) * i / (curve.length - 1);
+  const y = v => 10 + (H - 34) * (hi - v) / (hi - lo);
+  // Заливка под кривой — фирменный пурпур v1; в headless-прогоне
+  // createLinearGradient заглушен и возвращает пустоту, поэтому охрана.
+  const fill = g.createLinearGradient
+    ? g.createLinearGradient(0, 0, 0, H) : null;
+  if (fill && fill.addColorStop) {
+    fill.addColorStop(0, "rgba(151,71,255,.26)");
+    fill.addColorStop(1, "rgba(151,71,255,0)");
+    g.beginPath();
+    curve.forEach(([, v], i) =>
+      i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)));
+    g.lineTo(x(curve.length - 1), H - 6); g.lineTo(x(0), H - 6);
+    g.closePath(); g.fillStyle = fill; g.fill();
+  }
+  g.setLineDash([4, 4]); g.strokeStyle = css("--rule");
+  g.beginPath(); g.moveTo(8, y(capital)); g.lineTo(W - 58, y(capital));
+  g.stroke(); g.setLineDash([]);
+  g.strokeStyle = css("--accent"); g.lineWidth = 2;
+  g.lineJoin = "round"; g.lineCap = "round";
   g.beginPath();
   curve.forEach(([, v], i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)));
   g.stroke();
+  const lastV = curve[curve.length - 1][1];
+  g.fillStyle = css("--accent");
+  g.beginPath(); g.arc(x(curve.length - 1), y(lastV), 3, 0, 7); g.fill();
   g.fillStyle = css("--muted"); g.font = "11px ui-monospace,Menlo,monospace";
-  g.fillText(hi.toFixed(0), W - 50, 14);
-  g.fillText(lo.toFixed(0), W - 50, H - 8);
+  g.fillText(hi.toFixed(0), W - 52, 16);
+  g.fillText(lo.toFixed(0), W - 52, H - 10);
 }
 async function load() {
   let d;
@@ -1995,6 +2076,10 @@ async function load() {
     return;
   }
   document.getElementById("src").textContent = `рука ${d.arm}`;
+  const hb = document.getElementById("hb");
+  hb.className = "pill" + (d.age_sec > 300 ? " hb-stale" : "");
+  document.getElementById("topage").textContent =
+    d.age_sec == null ? "—" : `${Math.round(d.age_sec)} s`;
   const bad = [];
   if (d.age_sec != null && d.age_sec > 300)
     bad.push(`СТАТУС МОЛЧИТ ${Math.round(d.age_sec / 60)} мин — процесс повис`);
@@ -2010,6 +2095,9 @@ async function load() {
     ? `<div class="card alarm">${bad.join("<br>")}</div>` : "";
   const cap = d.capital_usd || 1000;
   const share = ((d.balance_usd / cap - 1) * 100).toFixed(2);
+  const tb = document.getElementById("topbal");
+  tb.textContent = `${d.balance_usd} $`;
+  tb.className = "cv mono " + (d.balance_usd >= cap ? "good" : "bad");
   const cnt = d.counts || {};
   document.getElementById("acct").innerHTML =
     cell("balance", `${d.balance_usd} $`,
@@ -2035,12 +2123,14 @@ async function load() {
   const now = d.server_now || 0;
   document.getElementById("pos").innerHTML = (d.positions || []).map(p => `
     <tr><td class="mono">${(p.sym || "").replace("USDT", "")}</td>
-    <td>${p.side === "long" ? "L" : "S"}</td>
+    <td><span class="side ${p.side === "long" ? "l" : "s"}">${
+      p.side === "long" ? "L" : "S"}</span></td>
     <td class="mono">${p.size}</td>
     <td class="mono">${px(p.entry_px)}</td>
     <td class="mono">${px(p.cur_mid)}</td>
     <td class="mono ${p.unreal_bp > 0 ? "good" : p.unreal_bp < 0 ? "bad" : ""}">
-      ${p.unreal_bp == null ? "—" : (p.unreal_bp / 100).toFixed(2) + " %"}</td>
+      ${p.unreal_bp == null ? "—" : (p.unreal_bp > 0 ? "+" : "")
+        + (p.unreal_bp / 100).toFixed(2) + " %"}</td>
     <td class="mono">${p.unreal_usd == null ? "—"
       : (p.unreal_usd > 0 ? "+" : "") + p.unreal_usd}</td>
     <td class="mono">${p.opened_at ? ((now - p.opened_at) / 3600).toFixed(1) + " h" : "—"}</td>
@@ -2052,11 +2142,13 @@ async function load() {
   document.getElementById("cl").innerHTML = (d.closed || []).map(t => `
     <tr><td class="mono" title="${t.pos}">${t.hour.slice(5)} ${hhmm(t.closed_at)}</td>
     <td class="mono">${(t.sym || "").replace("USDT", "")}</td>
-    <td>${t.side === "long" ? "L" : "S"}</td>
+    <td><span class="side ${t.side === "long" ? "l" : "s"}">${
+      t.side === "long" ? "L" : "S"}</span></td>
     <td class="mono">${t.size}</td>
     <td class="mono">${px(t.entry_px)}</td>
     <td class="mono">${px(t.exit_px)}</td>
-    <td class="mono ${t.pnl > 0 ? "good" : "bad"}">${t.pnl > 0 ? "+" : ""}${t.pnl}</td>
+    <td class="mono ${t.pnl > 0 ? "good" : t.pnl < 0 ? "bad" : ""}">${
+      t.pnl > 0 ? "+" : ""}${t.pnl}</td>
     <td class="k">${t.basis}</td></tr>`).join("")
     || `<tr><td colspan="8" class="k">закрытых пока нет</td></tr>`;
   document.getElementById("sv").textContent =

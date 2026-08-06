@@ -523,6 +523,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   if (isBot) {
     const acct = String(global.__el("acct").innerHTML || "");
     if (!/1125\.01/.test(acct)) bad.push("ядро: баланс не показан");
+    // Баланс в шапке — отдельный элемент, и сломаться ему нечем
+    // помешать: сетка счёта его не дублирует кодом, только числом.
+    const tb = String(global.__el("topbal").textContent || "");
+    if (!/1125\.01/.test(tb)) bad.push("ядро: баланс в шапке не показан");
     if (!/\+12\.50 %/.test(acct)) bad.push("ядро: доля от старта не показана");
     if (!/расхождений 0/.test(acct)) bad.push("ядро: вердикт сверки не показан");
     const pos = String(global.__el("pos").innerHTML || "");
