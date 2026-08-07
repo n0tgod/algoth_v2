@@ -1462,6 +1462,33 @@ class Collector:
                               os.path.join(mdir, "books.jsonl")))
             TR.mark(tr, self.marks(tr))
             hrows = self.paths(tr, hold_h=path_h)
+            # Живые входы, ещё не превращённые циклом в строки выбора,
+            # показываются сразу: вход случился в моменте, и страница,
+            # молчащая о нём до часа, была бы отказом показа.
+            if sit:
+                conv = {(t.get("sym"), t.get("opened_at"))
+                        for t in tr}
+                closed = {(rv.get("hour"), r.get("sym"), r.get("side"))
+                          for rv in out.get("review") or []
+                          for r in rv.get("rows") or []}
+                for e in self._jsonl(os.path.join(
+                        mdir, "entries_live.jsonl")):
+                    if (e.get("sym"), e.get("at_ts")) in conv:
+                        continue
+                    if (e.get("hour"), e.get("sym"),
+                            e.get("side")) in closed:
+                        continue
+                    tr.insert(0, {
+                        "arm": e.get("arm") or "gbm",
+                        "hour": e.get("hour"), "sym": e.get("sym"),
+                        "side": e.get("side"), "state": "открыта",
+                        "opened_at": e.get("at_ts"),
+                        "closes_at": None,
+                        "expected_bp": e.get("fwd"),
+                        "mae_bp": e.get("mae"),
+                        "mfe_bp": e.get("mfe"),
+                        "entry_px": e.get("px"),
+                        "odd": e.get("odd"), "live_wait": True})
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
             cap, st = {}, {}
@@ -1978,15 +2005,31 @@ class Collector:
                       e.get("side"))
                      for e in self._jsonl(os.path.join(
                          mdir, "exits_live.jsonl"))}
+        entered = {(e.get("arm"), e.get("hour"), e.get("sym"))
+                   for e in self._jsonl(os.path.join(
+                       mdir, "entries_live.jsonl"))}
         pos, pos_at = [], 0.0
+        sheet, sheet_at = None, 0.0
         while not self.stop.wait(5.0):
             try:
                 now = time.time()
                 if now - pos_at > 60:
+                    entries = self._jsonl(os.path.join(
+                        mdir, "entries_live.jsonl"))
                     pos = sit_open_levels(
                         self._jsonl(os.path.join(mdir, "picks.jsonl")),
-                        self._jsonl(os.path.join(mdir, "review.jsonl")))
+                        self._jsonl(os.path.join(mdir, "review.jsonl")),
+                        entries)
                     pos_at = now
+                if now - sheet_at > 60:
+                    try:
+                        with open(os.path.join(mdir, "scan_sheet.json"),
+                                  encoding="utf-8") as f:
+                            sheet = json.load(f)
+                    except (OSError, ValueError):
+                        sheet = None
+                    sheet_at = now
+                self._sit_scan(mdir, sheet, pos, entered, now)
                 for p in pos:
                     key = (p["arm"], p["hour"], p["sym"], p["side"])
                     if key in signalled:
@@ -2019,6 +2062,78 @@ class Collector:
             except Exception as e:                        # noqa: BLE001
                 self.log(f"сторож ситуационной книги: "
                          f"{type(e).__name__}: {e}")
+
+    def _sit_scan(self, mdir, sheet, pos, entered, now):
+        """Один тик сканера входов: лист сечения против живых цен.
+
+        Карта от модели (лист часа), курок от цены: вход в ту секунду,
+        когда остаток обещанного хода проходит гейты. Имя, где
+        движение уже пройдено, отсеивается остатком само.
+        """
+        if not sheet:
+            return
+        # Протухший лист — не карта: прогнозы стоят на закрытии часа,
+        # и старше двух часов им верить нельзя (упавшее переобучение
+        # обязано остановить входы, а не торговать прошлым).
+        if now - (sheet.get("written_at") or 0) > 2 * 3600:
+            return
+        min_edge = float(sheet.get("min_edge_bp") or 22.0)
+        min_rr = float(sheet.get("min_rr") or 2.0)
+        slots = int(sheet.get("slots") or 6)
+        hour = sheet.get("hour")
+        for arm, rows in (sheet.get("arms") or {}).items():
+            held = {p["sym"] for p in pos if p["arm"] == arm}
+            free = slots - len(held)
+            if free <= 0:
+                continue
+            # Волна — средний живой ход листа: тот же смысл, что фактор
+            # в целях. Мерить её не из чего, пока книги дали меньше
+            # тридцати имён, — тогда вход молчит, а не считает волной
+            # три случайных монеты.
+            moves, mids = [], {}
+            for r in rows:
+                b = self.books.get(r.get("sym"))
+                if not b:
+                    continue
+                bid, ask = b.best()
+                if not (bid and ask):
+                    continue
+                mid = (bid + ask) / 2.0
+                mids[r["sym"]] = mid
+                if r.get("px"):
+                    moves.append((mid / r["px"] - 1.0) * 1e4)
+            if len(moves) < 30:
+                continue
+            wave = sum(moves) / len(moves)
+            for r in rows:
+                if free <= 0:
+                    break
+                sym = r.get("sym")
+                if sym in held or (arm, hour, sym) in entered:
+                    continue
+                mid = mids.get(sym)
+                if not mid:
+                    continue
+                got = sit_scan_entry(r, mid, wave, min_edge, min_rr)
+                if not got:
+                    continue
+                ev = {"arm": arm, "hour": hour, "at_ts": round(now, 3),
+                      "reason": "вход по ситуации", **got}
+                os.makedirs(mdir, exist_ok=True)
+                with open(os.path.join(mdir, "entries_live.jsonl"),
+                          "a", encoding="utf-8") as f:
+                    f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+                entered.add((arm, hour, sym))
+                held.add(sym)
+                free -= 1
+                # Свежий вход сторожится с этой же секунды, не дожидаясь
+                # перечитывания файлов.
+                pos.append({"arm": arm, "hour": hour, "sym": sym,
+                            "side": got["side"], "px": got["px"],
+                            "adv": got["mae"]})
+                self.log(f"ситуационная [{arm}]: живой вход {sym} "
+                         f"{got['side']} (остаток {got['fwd']:+.0f} "
+                         f"б.п., RR {got['rr']}) — поймано в моменте")
 
     def run(self, hours):
         deadline = self.started + hours * 3600 if hours else None
@@ -2055,6 +2170,57 @@ class Collector:
         self.w.close()
 
 
+def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr):
+    """Живой вход по ситуации: якорим прогноз листа к живой цене.
+
+    `row` — строка листа сечения (прогноз `fwd` — остаток к волне,
+    СЫРЫЕ обещания пути `mae`/`mfe`, бета, цена закрытия `px`). К
+    моменту тика цена ушла: остаток прогноза = прогноз минус уже
+    пройденный ОСТАТОЧНЫЙ ход (сырой ход минус бета×волна — единицы
+    обязаны совпадать, fwd захеджирован волной). Обещания пути
+    переякориваются вычитанием сырого хода. Вход, когда остаток
+    проходит те же гейты, что часовой вход: край и RR.
+
+    Имя, где движение уже пройдено, отсеивается само — остаток мал.
+    Перелёт за прогноз (остаток сменил знак) — другая ситуация, не
+    заявка модели: пропуск. Возвращает поля события либо `None`;
+    чистая функция — правило денег живёт под тестом, а не в потоке.
+    """
+    px0 = row.get("px")
+    fwd0 = row.get("fwd")
+    if not px0 or not mid or fwd0 is None:
+        return None
+    move = (mid / px0 - 1.0) * 1e4
+    resid = move - (row.get("beta") if row.get("beta") is not None
+                    else 1.0) * wave_bp
+    rem = fwd0 - resid
+    if abs(rem) < min_edge or (fwd0 > 0) != (rem > 0):
+        return None
+    side = "long" if rem > 0 else "short"
+    if row.get("mae") is None or row.get("mfe") is None:
+        return None
+    rem_mae = row["mae"] - move
+    rem_mfe = row["mfe"] - move
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+    import trades as TR
+    adv, fav, _, _ = TR.position_path(side, rem_mae, rem_mfe)
+    if side == "long" and not (fav > 0 and adv < 0):
+        return None
+    if side == "short" and not (fav < 0 and adv > 0):
+        return None
+    rr = abs(fav) / abs(adv)
+    if rr < min_rr:
+        return None
+    d = {"sym": row.get("sym"), "side": side, "px": round(mid, 8),
+         "move_bp": round(move, 1), "wave_bp": round(wave_bp, 1),
+         "fwd": round(rem, 1), "fwd0": fwd0,
+         "rr": round(rr, 2),
+         **TR.path_fields(side, round(rem_mae, 1), round(rem_mfe, 1))}
+    if row.get("odd") is not None:
+        d["odd"] = row["odd"]
+    return d
+
+
 def sit_cross(side, entry_px, adv, mid):
     """Пересёк ли живой ход цены обещанный ход против.
 
@@ -2068,12 +2234,14 @@ def sit_cross(side, entry_px, adv, mid):
     return move, hit
 
 
-def sit_open_levels(picks, reviews):
+def sit_open_levels(picks, reviews, entries=None):
     """Открытые позиции ситуационной книги с уровнями против.
 
-    Открыта = выбор записан, разбора с её ключом нет. Позиции без цены
-    входа или без обещания хода против сторожить нечем — они ждут
-    часового цикла.
+    Открыта = выбор записан, разбора с её ключом нет. Живой вход,
+    ещё не превращённый циклом в строку выбора (`entries`), — тоже
+    позиция: сторожить её надо с момента события, а не с ближайшего
+    часа. Позиции без цены входа или без обещания хода против
+    сторожить нечем — они ждут часового цикла.
     """
     done = set()
     for rv in reviews:
@@ -2081,10 +2249,13 @@ def sit_open_levels(picks, reviews):
             done.add((rv.get("arm") or "gbm", rv.get("hour"),
                       r.get("sym"), r.get("side")))
     out = []
+    converted = set()
     for pk in picks:
         arm = pk.get("arm") or "gbm"
         for side in ("long", "short"):
             for p in pk.get(side) or []:
+                if p.get("at_ts") is not None:
+                    converted.add((arm, p.get("sym"), p.get("at_ts")))
                 if (arm, pk.get("hour"), p.get("sym"), side) in done:
                     continue
                 if not (p.get("px") and p.get("mae") is not None):
@@ -2092,6 +2263,17 @@ def sit_open_levels(picks, reviews):
                 out.append({"arm": arm, "hour": pk.get("hour"),
                             "sym": p.get("sym"), "side": side,
                             "px": p["px"], "adv": p["mae"]})
+    for e in entries or []:
+        arm = e.get("arm") or "gbm"
+        if (arm, e.get("sym"), e.get("at_ts")) in converted:
+            continue
+        if (arm, e.get("hour"), e.get("sym"), e.get("side")) in done:
+            continue
+        if not (e.get("px") and e.get("mae") is not None):
+            continue
+        out.append({"arm": arm, "hour": e.get("hour"),
+                    "sym": e.get("sym"), "side": e.get("side"),
+                    "px": e["px"], "adv": e["mae"]})
     return out
 
 

@@ -64,48 +64,12 @@ MODEL_VERSION = 2
 TARGETS = [f"{k}_{h}h" for k in ("fwd", "mfe", "mae") for h in FB.HORIZONS]
 
 
-def position_path(side, mae_v, mfe_v, h=4):
-    """Ход ПРОТИВ и В ПОЛЬЗУ позиции из целей, считанных по цене.
-
-    `mae_{h}h` — минимум цены за горизонт, `mfe_{h}h` — максимум, и обе
-    считаются по ЦЕНЕ, а не по позиции. Значит у лонга против идёт
-    `mae`, в пользу `mfe`; у шорта ровно наоборот. Перепутать их
-    значит подписать ход в ПОЛЬЗУ словами «ход против» — ошибка, уже
-    случавшаяся в проекте с колонкой `mae`, и потому правило вынесено
-    из замыкания в отдельную функцию: у него теперь есть тест.
-
-    Зачем нужен и второй конец. Уровень стопа берётся из хода против,
-    уровень тейка — из хода в пользу, и обе величины обязаны быть в
-    единицах СЫРОЙ цены: заявка стоит на бирже, а не в остатке к
-    волне. Прогноз `fwd` захеджирован волной и на роль тейка не
-    годится — замер бракета упёрся ровно в это.
-
-    `h` — горизонт книги в часах: у каждой книги турнира темпов свои
-    цели, и имя цели в записи обязано называть тот горизонт, по
-    которому величина считана.
-
-    Возвращает `(против, в пользу, имя цели против, имя цели в пользу)`.
-    Неоценённая сторона остаётся `None`, а не нулём: ноль означал бы
-    «модель не ждёт движения», то есть утверждение вместо пропуска.
-    """
-    if side == "long":
-        return mae_v, mfe_v, f"mae_{h}h", f"mfe_{h}h"
-    return mfe_v, mae_v, f"mfe_{h}h", f"mae_{h}h"
+# Правило сторон пути живёт в `trades` (общий модуль со сборщиком);
+# здесь псевдонимы — вторая копия однажды переставила бы стороны.
+position_path = TR.position_path
+path_fields = TR.path_fields
 
 
-def path_fields(side, mae_v, mfe_v, h=4):
-    """Оба конца пути готовыми полями записи.
-
-    Раскладывать их по местам в вызывающем нельзя: именно там правило
-    и переставляется незаметно — четыре величины, две из которых
-    похожи. Здесь связка одна, и она под тестом; у `mk` не остаётся
-    возможности ошибиться, потому что имён полей он больше не пишет.
-    """
-    adv, fav, a_of, f_of = position_path(side, mae_v, mfe_v, h)
-    # Имя `mae` прежнее — его читают старые записи, — но смысл теперь
-    # «ход против ЭТОЙ позиции», а не «минимум цены».
-    return {"mae": adv, "adverse_of": a_of,
-            "mfe": fav, "favourable_of": f_of}
 # Турнир: две руки на одних данных, объявлены до окна вердикта.
 # gbm — деревья (ML), nn — сеть (AI-рука). Прогноз до запуска записан:
 # на табличных признаках и неделях данных сеть скорее проиграет.
@@ -1077,20 +1041,59 @@ def sit_open_positions(picks, reviews, arm):
 
 
 def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
-                    grid, nov_lo, nov_hi, book_root, log_):
+                    grid, nov_lo, nov_hi, book_root, log_,
+                    beta_row=None):
     """Один проход ситуационной книги: сначала выходы, потом входы.
 
     Порядок обязателен: закрытие освобождает слот и кассу, и вход в
     тот же час имеет право занять их. Выход и вход по одному имени в
     один час запрещены отдельно — перевороты внутри часа были бы
     торговлей шумом переобучения.
+
+    Возвращает ЛИСТ сечения для живого сканера (прогноз, сырые
+    обещания пути, бета, цена закрытия по каждому имени) — карту, по
+    которой сборщик между часами якорит прогноз к живой цене.
     """
     kf, km, kx = (f"fwd_{SIT_SIGNAL_H}h", f"mae_{SIT_SIGNAL_H}h",
                   f"mfe_{SIT_SIGNAL_H}h")
     if any((arm, k) not in models for k in (kf, km, kx)) \
             or j_last is None:
-        return
+        return None
+    # Живые входы сканера (сборщик заметил ситуацию между часами и
+    # записал событие с ценой и временем момента) становятся строками
+    # выбора ЗДЕСЬ: у файла выборов один писатель — этот цикл. До
+    # превращения позицию сторожит сборщик по самому событию.
+    ev_entries = [e for e in _read_jsonl(
+        os.path.join(mdir, "entries_live.jsonl"))
+        if (e.get("arm") or "gbm") == arm]
     picks_all = _read_jsonl(os.path.join(mdir, "picks.jsonl"))
+    have = {(p.get("sym"), p.get("at_ts"))
+            for pk in picks_all if (pk.get("arm") or "gbm") == arm
+            for side in ("long", "short")
+            for p in pk.get(side) or []}
+    fresh = {}
+    for e in ev_entries:
+        if (e.get("sym"), e.get("at_ts")) in have:
+            continue
+        row = {"sym": e.get("sym"), "fwd": e.get("fwd"),
+               "px": e.get("px"), "mae": e.get("mae"),
+               "mfe": e.get("mfe"), "rr": e.get("rr"),
+               "at_ts": e.get("at_ts"), "scan": True}
+        if e.get("odd") is not None:
+            row["odd"] = e["odd"]
+        rec = fresh.setdefault(e.get("hour"), {
+            "arm": arm, "hour": e.get("hour"),
+            "at_ts": round(time.time()), "scan": True,
+            "long": [], "short": []})
+        rec[e.get("side") or "long"].append(row)
+    for hour in sorted(fresh):
+        with open(os.path.join(mdir, "picks.jsonl"), "a",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(fresh[hour], ensure_ascii=False) + "\n")
+        n = len(fresh[hour]["long"]) + len(fresh[hour]["short"])
+        log_(f"ситуационная [{arm}]: {n} живых входов часа {hour} "
+             f"записаны в книгу")
+        picks_all.append(fresh[hour])
     reviews_all = _read_jsonl(os.path.join(mdir, "review.jsonl"))
     open_pos = sit_open_positions(picks_all, reviews_all, arm)
     si = {s: i for i, s in enumerate(syms)}
@@ -1120,8 +1123,12 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         if ev is None and not (np.isfinite(px) and p.get("px")):
             # Цены нет — судить не по чему; позиция ждёт цены.
             continue
-        adv, fav, _, _ = position_path(p["side"], p.get("mae"),
-                                       p.get("mfe"))
+        # Строка выбора УЖЕ несёт стороны: `mae` — ход против ЭТОЙ
+        # позиции, `mfe` — в пользу (path_fields). Применять
+        # position_path повторно нельзя: у шорта это переставило бы
+        # стороны обратно, и любой ход закрывал бы позицию —
+        # дефект найден здесь и закрыт тестом.
+        adv, fav = p.get("mae"), p.get("mfe")
         reason, move, exit_hour, exit_ts = None, None, cur, None
         if ev is not None:
             reason = ev.get("reason") or "цена прошла обещанный ход против"
@@ -1178,15 +1185,38 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         log_(f"ситуационная [{arm}]: закрыто {len(rows_rv)} "
              f"({'; '.join(r['sym'] + ' — ' + r['reason'] for r in rows_rv)})")
 
-    # --- входы: только когда ситуация того стоит ----------------------
-    held = {p["sym"] for p in open_pos} - closed_syms
-    free = SIT_SLOTS - len(held)
-    if free <= 0:
-        return
+    # --- лист сечения для живого сканера ------------------------------
+    # Карта от модели: прогноз, СЫРЫЕ обещания пути и бета по каждому
+    # имени сечения. Сборщик секундами якорит её к живым ценам и
+    # спускает курок, когда остаток обещанного хода проходит гейты.
+    # Лист пишется ВСЕГДА, даже при полной кассе: сторожу выходов и
+    # сканеру нужна свежая карта независимо от свободных слотов.
     xj = x[rows_m, j_last]
     fwd = models[(arm, kf)].predict(xj)
     mae = models[(arm, km)].predict(xj)
     mfe = models[(arm, kx)].predict(xj)
+    sheet = []
+    for i in range(len(rows_m)):
+        px = float(mats["mid_close"][rows_m[i], j_last])
+        if not np.isfinite(px):
+            continue
+        row = {"sym": syms[rows_m[i]], "fwd": round(float(fwd[i]), 2),
+               "mae": round(float(mae[i]), 2),
+               "mfe": round(float(mfe[i]), 2),
+               "beta": (round(float(beta_row[i]), 4)
+                        if beta_row is not None
+                        and np.isfinite(beta_row[i]) else 1.0),
+               "px": px}
+        nv = novelty(xj[i], nov_lo, nov_hi)
+        if nv is not None:
+            row["odd"] = round(nv, 3)
+        sheet.append(row)
+
+    # --- входы: только когда ситуация того стоит ----------------------
+    held = {p["sym"] for p in open_pos} - closed_syms
+    free = SIT_SLOTS - len(held)
+    if free <= 0:
+        return sheet
     cand = []
     for i in range(len(rows_m)):
         f_v = float(fwd[i])
@@ -1219,7 +1249,7 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
             continue
         cand.append((abs(f_v), i, side, rr_ratio, px))
     if not cand:
-        return
+        return sheet
     cand.sort(reverse=True)
 
     def mk(i, side, rr_ratio, px):
@@ -1246,6 +1276,7 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     if write_pick(mdir, picks):
         log_(f"ситуационная [{arm}]: вход {len(names)} "
              f"({', '.join(names)}), свободных слотов было {free}")
+    return sheet
 
 
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
@@ -1754,10 +1785,29 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     try:
         mdir = MODEL_DIR + "_sit"
         os.makedirs(mdir, exist_ok=True)
+        # Бета по имени — из признака сечения: сканеру она нужна,
+        # чтобы вычесть волну из живого хода и сравнить остаток с
+        # прогнозом в одних единицах.
+        beta_row = None
+        if j_last is not None and "beta" in names:
+            beta_row = x[rows_m, j_last, names.index("beta")]
+        sheets = {}
         for arm, _ in ARMS:
-            situational_arm(mdir, arm, models, x, mats, syms, rows_m,
-                            j_last, grid, nov_lo, nov_hi, book_root,
-                            log_)
+            sh = situational_arm(mdir, arm, models, x, mats, syms,
+                                 rows_m, j_last, grid, nov_lo, nov_hi,
+                                 book_root, log_, beta_row=beta_row)
+            if sh:
+                sheets[arm] = sh
+        if sheets and j_last is not None:
+            sp = os.path.join(mdir, "scan_sheet.json")
+            with open(sp + ".tmp", "w", encoding="utf-8") as f:
+                json.dump({"hour": grid[j_last],
+                           "written_at": round(time.time(), 1),
+                           "min_edge_bp": SIT_MIN_EDGE_BP,
+                           "min_rr": SIT_MIN_RR,
+                           "slots": SIT_SLOTS,
+                           "arms": sheets}, f, ensure_ascii=False)
+            os.replace(sp + ".tmp", sp)
         rebuild_accounts(mdir, None, slots=SIT_SLOTS)
         kf = f"fwd_{SIT_SIGNAL_H}h"
         n_rows = (int((elig & np.isfinite(targets[kf])).sum())

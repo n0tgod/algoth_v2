@@ -928,6 +928,71 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d2, ignore_errors=True)
 
+        # Контроль двойной перестановки сторон: шорт с ходом против
+        # МЕЛЬЧЕ обещания обязан остаться открытым. Дефект был найден
+        # ровно здесь: правило сторон применялось к уже размеченным
+        # полям повторно, у шорта adv становился ходом В ПОЛЬЗУ, и
+        # любой ход закрывал позицию.
+        d5 = tempfile.mkdtemp()
+        try:
+            pk5 = {"arm": "gbm", "hour": "2026-08-07-10", "long": [],
+                   "short": [{"sym": "CUSDT", "fwd": -40.0, "px": 100.0,
+                              "mae": 20.0, "mfe": -50.0}]}
+            with open(os.path.join(d5, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(pk5) + "\n")
+            mats5 = {"mid_close": np.array([[100.0, 100.0],
+                                            [100.0, 100.0],
+                                            [100.0, 100.05],
+                                            [100.0, 100.0]])}
+            T.situational_arm(d5, "gbm", models, x, mats5, syms, rows_m,
+                              1, grid, lo, hi, None, lambda m: None)
+            rv5 = T._read_jsonl(os.path.join(d5, "review.jsonl"))
+            closed5 = [r for rec in rv5 for r in rec["rows"]
+                       if r["sym"] == "CUSDT"]
+            check("шорт с ходом мельче обещания остаётся открытым",
+                  not closed5, str(closed5))
+        finally:
+            shutil.rmtree(d5, ignore_errors=True)
+
+        # Живой вход сканера превращается в строку выбора с временем и
+        # ценой МОМЕНТА, и сделка открывается этим моментом.
+        d6 = tempfile.mkdtemp()
+        try:
+            ent_ts = 1786446000.0
+            with open(os.path.join(d6, "entries_live.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(
+                    {"arm": "gbm", "hour": "2026-08-07-11",
+                     "sym": "AUSDT", "side": "long", "px": 99.7,
+                     "at_ts": ent_ts, "fwd": 32.0, "mae": -8.0,
+                     "mfe": 30.0, "rr": 3.75,
+                     "reason": "вход по ситуации"}) + "\n")
+            T.situational_arm(d6, "gbm", models, x, mats, syms, rows_m,
+                              1, grid, lo, hi, None, lambda m: None)
+            pk6 = T._read_jsonl(os.path.join(d6, "picks.jsonl"))
+            row6 = [p for pk in pk6 for p in pk.get("long") or []
+                    if p.get("scan")]
+            check("живой вход стал строкой выбора с ценой момента",
+                  row6 and row6[0]["px"] == 99.7
+                  and row6[0]["at_ts"] == ent_ts, str(row6))
+            import trades as TR
+            tr6 = TR.build(pk6, [], hold_h=None)
+            a6 = [t for t in tr6 if t["sym"] == "AUSDT"][0]
+            check("сделка открыта моментом события, не часом",
+                  a6["opened_at"] == ent_ts and a6["state"] == "открыта"
+                  and a6["closes_at"] is None,
+                  str({k: a6.get(k) for k in ("opened_at", "closes_at")}))
+            # Повторный проход не плодит превращений.
+            T.situational_arm(d6, "gbm", models, x, mats, syms, rows_m,
+                              1, grid, lo, hi, None, lambda m: None)
+            pk6b = T._read_jsonl(os.path.join(d6, "picks.jsonl"))
+            n_scan = sum(1 for pk in pk6b for p in pk.get("long") or []
+                         if p.get("scan"))
+            check("превращение не дублируется", n_scan == 1, str(n_scan))
+        finally:
+            shutil.rmtree(d6, ignore_errors=True)
+
         # Событие живого сторожа: цена и час выхода — из МОМЕНТА
         # пересечения, а не из закрытия часа; разбор помечен live.
         d4 = tempfile.mkdtemp()
@@ -2252,8 +2317,12 @@ def test_adverse_path_matches_the_side():
 
     src = open(os.path.join(HERE, "train.py"), encoding="utf-8").read()
     check("сторона доезжает до сборки выбора", "def mk(i, side):" in src)
+    # Правило сторон живёт в trades — общем модуле с живым сторожем
+    # сборщика; источник хода против пишется в выбор оттуда.
+    src_tr = open(os.path.join(HERE, "trades.py"),
+                  encoding="utf-8").read()
     check("источник хода против пишется в сам выбор",
-          '"adverse_of"' in src)
+          '"adverse_of"' in src_tr)
 
 
 def test_percent_is_the_display_unit():

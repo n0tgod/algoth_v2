@@ -1976,6 +1976,50 @@ def test_liq_and_metrics_recorded():
     c.w.close()
 
 
+def test_sit_scan_anchors_forecast_to_live_price():
+    """Живой вход: карта от модели, курок от цены.
+
+    Проверяется арифметика остатка: пройденное движение отсеивает
+    имя (главная претензия владельца к часовому входу — «часть
+    движения уже пройдена»), волна не считается ситуацией (бета
+    вычитает её), перелёт за прогноз — не заявка модели, шорт входит
+    зеркально. Все числа заданы руками и пересчитываемы на бумаге.
+    """
+    import collect as C
+
+    row = {"sym": "AUSDT", "fwd": 30.0, "mae": -20.0, "mfe": 25.0,
+           "beta": 1.0, "px": 100.0}
+    # Цена ушла ПРОТИВ прогноза на 10 б.п.: остаток 40, обещания
+    # переякорены (−10 / +35), RR 3.5 — вход лонг.
+    ev = C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0)
+    check("вход лонг: остаток вырос, RR держится",
+          ev and ev["side"] == "long" and ev["fwd"] == 40.0
+          and ev["mae"] == -10.0 and ev["rr"] == 3.5, str(ev))
+    # Движение уже пройдено (+25 из 30): остаток 5 < 22 — пропуск.
+    check("движение пройдено — имя отсеяно остатком",
+          C.sit_scan_entry(row, 100.25, 0.0, 22.0, 2.0) is None)
+    # Всё падение — волна: бета вычитает её, остаток равен прогнозу,
+    # но вход решает RR по переякоренным обещаниям.
+    ev = C.sit_scan_entry(row, 99.90, -10.0, 22.0, 2.0)
+    check("волна не считается ситуацией",
+          ev and ev["fwd"] == 30.0, str(ev))
+    # Перелёт: цена прошла дальше прогноза В ЕГО сторону — остаток
+    # сменил знак, это другая ситуация.
+    check("перелёт за прогноз — не заявка модели",
+          C.sit_scan_entry(row, 100.40, 0.0, 22.0, 2.0) is None)
+    # Шорт зеркален: против — вверх, в пользу — вниз.
+    srow = {"sym": "CUSDT", "fwd": -40.0, "mae": -50.0, "mfe": 20.0,
+            "beta": 1.0, "px": 100.0}
+    ev = C.sit_scan_entry(srow, 100.10, 0.0, 22.0, 2.0)
+    check("шорт входит зеркально",
+          ev and ev["side"] == "short" and ev["fwd"] == -50.0
+          and ev["mae"] == 10.0 and ev["mfe"] == -60.0, str(ev))
+    # Пороги — те же гейты, что у часового входа.
+    check("малый остаток не входит",
+          C.sit_scan_entry({**row, "fwd": 20.0}, 100.0, 0.0, 22.0, 2.0)
+          is None)
+
+
 def test_sit_watch_levels_and_crossing():
     """Живой сторож ситуационной книги: уровни и пересечение.
 
@@ -2006,6 +2050,20 @@ def test_sit_watch_levels_and_crossing():
     check("сторожатся только открытые с ценой и обещанием",
           [p["sym"] for p in lv] == ["AUSDT"]
           and lv[0]["adv"] == -10.0, str(lv))
+    # Живой вход до превращения — тоже позиция; после превращения
+    # (строка выбора с тем же at_ts) не дублируется.
+    ents = [{"arm": "gbm", "hour": "2026-08-07-10", "sym": "DUSDT",
+             "side": "long", "px": 10.0, "mae": -8.0, "at_ts": 5.0}]
+    lv = C.sit_open_levels(picks, reviews, ents)
+    check("живой вход сторожится до превращения",
+          [p["sym"] for p in lv] == ["AUSDT", "DUSDT"], str(lv))
+    picks2 = picks + [{"arm": "gbm", "hour": "2026-08-07-10",
+                       "long": [{"sym": "DUSDT", "px": 10.0,
+                                 "mae": -8.0, "at_ts": 5.0}],
+                       "short": []}]
+    lv = C.sit_open_levels(picks2, reviews, ents)
+    check("превращённый вход не дублируется",
+          [p["sym"] for p in lv].count("DUSDT") == 1, str(lv))
 
 
 def test_all_symbols_filter():
@@ -2350,6 +2408,7 @@ def main():
     test_paper_off_is_silent_but_named()
     test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
+    test_sit_scan_anchors_forecast_to_live_price()
     test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()
     test_shard_split_covers_everything()

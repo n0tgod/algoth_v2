@@ -72,6 +72,39 @@ def hour_end(hour):
     return None if ts is None else ts + 3600
 
 
+def position_path(side, mae_v, mfe_v, h=4):
+    """Ход ПРОТИВ и В ПОЛЬЗУ позиции из целей, считанных по цене.
+
+    `mae_{h}h` — минимум цены за горизонт, `mfe_{h}h` — максимум, обе
+    по ЦЕНЕ, а не по позиции: у лонга против идёт `mae`, в пользу
+    `mfe`; у шорта наоборот. Правило живёт ЗДЕСЬ, в общем модуле:
+    его читают цикл обучения (выбор монет) и сборщик (живой сторож
+    ситуационной книги), а вторая копия однажды переставила бы
+    стороны молча — эта ошибка в проекте уже случалась.
+
+    Возвращает `(против, в пользу, имя цели против, имя цели в
+    пользу)`. Неоценённая сторона остаётся `None`, а не нулём.
+    """
+    if side == "long":
+        return mae_v, mfe_v, f"mae_{h}h", f"mfe_{h}h"
+    return mfe_v, mae_v, f"mfe_{h}h", f"mae_{h}h"
+
+
+def path_fields(side, mae_v, mfe_v, h=4):
+    """Оба конца пути готовыми полями записи выбора.
+
+    В записи поле `mae` — всегда ход ПРОТИВ ЭТОЙ позиции, `mfe` —
+    в пользу, какой бы ни была сторона. Читателю записи применять
+    `position_path` повторно НЕЛЬЗЯ: двойное применение переставляет
+    стороны у шорта обратно — этот дефект был найден в выходах
+    ситуационной книги и закрыт тестом с шортом, который не должен
+    закрываться.
+    """
+    adv, fav, a_of, f_of = position_path(side, mae_v, mfe_v, h)
+    return {"mae": adv, "adverse_of": a_of,
+            "mfe": fav, "favourable_of": f_of}
+
+
 _FEES = None
 
 
@@ -269,12 +302,6 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
     for pk in picks or []:
         arm = pk.get("arm") or "gbm"
         hour = pk.get("hour")
-        # Уже записанные дубли (руки, часа) снимаются на чтении: файл
-        # исправить задним числом нельзя, а показывать историю в
-        # двойном объёме — значит врать в счётчике сделок.
-        if (arm, hour) in made:
-            continue
-        made.add((arm, hour))
         h0 = _ts(hour)
         # Вход — на ЗАКРЫТИИ часа решения, а не на его начале.
         t0 = (h0 + 3600) if h0 is not None else None
@@ -286,19 +313,30 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
         for side in ("long", "short"):
             for p in pk.get(side) or []:
                 key = (arm, hour, p.get("sym"), side)
+                # Дубли снимаются НА СТРОКЕ, а не на (руке, часе):
+                # перезапуск пишет тот же час целиком — его строки
+                # совпадут и уйдут; живой вход дописывает к часу
+                # ВТОРУЮ запись с новыми именами — они остаются.
+                if key in made:
+                    continue
+                made.add(key)
                 got, rv = done.get(key, (None, None))
                 t_close = (t0 + hold_h * 3600) \
                     if (t0 is not None and hold_h) else None
                 # Книга входа: своя у выбора либо дописанная пересчётом.
                 cin = (p.get("cum") or (books or {}).get(
                     (arm, hour, p.get("sym")), {}).get("in"))
+                # Живой вход (сканер ситуаций): решение и вход — в
+                # момент пересечения гейта, а не на закрытии часа.
+                row_ts = p.get("at_ts")
                 tr = {
                     "arm": arm, "hour": hour, "sym": p.get("sym"),
                     "side": side,
-                    "opened_at": t0, "closes_at": t_close,
-                    "decided_at": decided,
+                    "opened_at": row_ts or t0, "closes_at": t_close,
+                    "decided_at": row_ts or decided,
                     "lag_sec": (round(decided - t0)
-                                if decided and t0 else None),
+                                if decided and t0 and not row_ts
+                                else None),
                     "close_hour": (_hour_of(t_close) if t_close
                                    else None),
                     "expected_bp": p.get("fwd"),
