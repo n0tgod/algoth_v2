@@ -1976,6 +1976,38 @@ def test_liq_and_metrics_recorded():
     c.w.close()
 
 
+def test_sit_watch_levels_and_crossing():
+    """Живой сторож ситуационной книги: уровни и пересечение.
+
+    Правило денег живёт чистыми функциями под тестом, а не внутри
+    потока. Проверяются знаки сторон (у лонга против — вниз, у шорта —
+    вверх), и что закрытая разбором позиция из сторожа уходит.
+    """
+    import collect as C
+
+    mv, hit = C.sit_cross("long", 100.0, -10.0, 99.85)
+    check("лонг: падение глубже обещания — пересечение",
+          hit and round(mv) == -15, f"{mv} {hit}")
+    mv, hit = C.sit_cross("long", 100.0, -10.0, 99.95)
+    check("лонг: падение мельче обещания — нет", not hit, str(mv))
+    mv, hit = C.sit_cross("short", 100.0, 20.0, 100.25)
+    check("шорт: рост выше обещания — пересечение",
+          hit and round(mv) == 25, f"{mv} {hit}")
+    mv, hit = C.sit_cross("short", 100.0, 20.0, 99.50)
+    check("шорт: падение — в его пользу, не выход", not hit, str(mv))
+
+    picks = [{"arm": "gbm", "hour": "2026-08-07-10",
+              "long": [{"sym": "AUSDT", "px": 100.0, "mae": -10.0},
+                       {"sym": "BUSDT", "px": None, "mae": -10.0}],
+              "short": [{"sym": "CUSDT", "px": 50.0, "mae": 20.0}]}]
+    reviews = [{"arm": "gbm", "hour": "2026-08-07-10",
+                "rows": [{"sym": "CUSDT", "side": "short"}]}]
+    lv = C.sit_open_levels(picks, reviews)
+    check("сторожатся только открытые с ценой и обещанием",
+          [p["sym"] for p in lv] == ["AUSDT"]
+          and lv[0]["adv"] == -10.0, str(lv))
+
+
 def test_all_symbols_filter():
     """`--symbols all`: USDT-перпы минус не-крипто, ничего лишнего.
 
@@ -2318,6 +2350,7 @@ def main():
     test_paper_off_is_silent_but_named()
     test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
+    test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()
     test_shard_split_covers_everything()
     test_pack_queue_single_worker()

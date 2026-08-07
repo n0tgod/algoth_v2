@@ -1954,6 +1954,72 @@ class Collector:
                     self.log(f"опрос тикеров не прошёл ({fails} подряд): "
                              f"{type(e).__name__}: {e}")
 
+    def sit_watch(self):
+        """Живой сторож выходов ситуационной книги.
+
+        «Цена прошла обещанный ход против» — единственное правило
+        выхода, где решает МОМЕНТ: уровень известен со входа, а живая
+        середина лежит у сборщика в памяти. Ждать часового цикла
+        значило бы мерить выход по закрытию пробившего бара — урок S1:
+        оно уже хуже уровня. Сторож пишет СОБЫТИЕ в свой файл
+        (`exits_live.jsonl`), а строку разбора из события делает цикл
+        обучения: у каждого файла один писатель — два процесса в одном
+        файле уже стоили потерянных данных (gzip-дозапись B1).
+
+        Правила «прогноз развернулся» и «предел возраста» остаются
+        часовыми: прогноз обновляется переобучением, ему быстрее не
+        стать.
+        """
+        mdir = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                            "model_sit")
+        # Перезапуск не дублирует события: записанные читаются с диска,
+        # а не выводятся из памяти.
+        signalled = {(e.get("arm"), e.get("hour"), e.get("sym"),
+                      e.get("side"))
+                     for e in self._jsonl(os.path.join(
+                         mdir, "exits_live.jsonl"))}
+        pos, pos_at = [], 0.0
+        while not self.stop.wait(5.0):
+            try:
+                now = time.time()
+                if now - pos_at > 60:
+                    pos = sit_open_levels(
+                        self._jsonl(os.path.join(mdir, "picks.jsonl")),
+                        self._jsonl(os.path.join(mdir, "review.jsonl")))
+                    pos_at = now
+                for p in pos:
+                    key = (p["arm"], p["hour"], p["sym"], p["side"])
+                    if key in signalled:
+                        continue
+                    b = self.books.get(p["sym"])
+                    if not b:
+                        continue
+                    bid, ask = b.best()
+                    if not (bid and ask):
+                        continue
+                    move, hit = sit_cross(p["side"], p["px"], p["adv"],
+                                          (bid + ask) / 2.0)
+                    if not hit:
+                        continue
+                    ev = {"arm": p["arm"], "hour": p["hour"],
+                          "sym": p["sym"], "side": p["side"],
+                          "px": round((bid + ask) / 2.0, 8),
+                          "move_bp": round(move, 1),
+                          "at_ts": round(now, 3),
+                          "reason": "цена прошла обещанный ход против"}
+                    os.makedirs(mdir, exist_ok=True)
+                    with open(os.path.join(mdir, "exits_live.jsonl"),
+                              "a", encoding="utf-8") as f:
+                        f.write(json.dumps(ev, ensure_ascii=False)
+                                + "\n")
+                    signalled.add(key)
+                    self.log(f"ситуационная: {p['sym']} прошла "
+                             f"обещанный ход против ({move:+.0f} б.п.) "
+                             f"— выход замечен живьём")
+            except Exception as e:                        # noqa: BLE001
+                self.log(f"сторож ситуационной книги: "
+                         f"{type(e).__name__}: {e}")
+
     def run(self, hours):
         deadline = self.started + hours * 3600 if hours else None
         threading.Thread(target=self.metrics_poll, daemon=True).start()
@@ -1961,6 +2027,7 @@ class Collector:
         threading.Thread(target=self.statuser, daemon=True).start()
         threading.Thread(target=self.reporter, daemon=True).start()
         threading.Thread(target=self.diskstat, daemon=True).start()
+        threading.Thread(target=self.sit_watch, daemon=True).start()
         if self.paper:
             threading.Thread(target=self._recount_watch,
                              daemon=True).start()
@@ -1986,6 +2053,46 @@ class Collector:
                 except Exception:                         # noqa: BLE001
                     pass
         self.w.close()
+
+
+def sit_cross(side, entry_px, adv, mid):
+    """Пересёк ли живой ход цены обещанный ход против.
+
+    `adv` — обещание из самого выбора (поле `mae` записи: ход ПРОТИВ
+    этой позиции, у лонга отрицательный, у шорта положительный).
+    Возвращает `(ход в б.п., пересёк ли)`. Чистая функция — правило
+    денег обязано жить под тестом, а не внутри потока.
+    """
+    move = (mid / entry_px - 1.0) * 1e4
+    hit = (move <= adv) if side == "long" else (move >= adv)
+    return move, hit
+
+
+def sit_open_levels(picks, reviews):
+    """Открытые позиции ситуационной книги с уровнями против.
+
+    Открыта = выбор записан, разбора с её ключом нет. Позиции без цены
+    входа или без обещания хода против сторожить нечем — они ждут
+    часового цикла.
+    """
+    done = set()
+    for rv in reviews:
+        for r in rv.get("rows") or []:
+            done.add((rv.get("arm") or "gbm", rv.get("hour"),
+                      r.get("sym"), r.get("side")))
+    out = []
+    for pk in picks:
+        arm = pk.get("arm") or "gbm"
+        for side in ("long", "short"):
+            for p in pk.get(side) or []:
+                if (arm, pk.get("hour"), p.get("sym"), side) in done:
+                    continue
+                if not (p.get("px") and p.get("mae") is not None):
+                    continue
+                out.append({"arm": arm, "hour": pk.get("hour"),
+                            "sym": p.get("sym"), "side": side,
+                            "px": p["px"], "adv": p["mae"]})
+    return out
 
 
 def _unfinished(rows):

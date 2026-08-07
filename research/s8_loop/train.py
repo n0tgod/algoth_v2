@@ -1096,36 +1096,57 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     si = {s: i for i, s in enumerate(syms)}
     cur = grid[j_last]
     mid = mats["mid_close"]
+    # События живого сторожа (сборщик замечает пересечение обещанного
+    # хода против секундами и пишет их в свой файл): цена и время
+    # выхода берутся из МОМЕНТА пересечения, а не из закрытия часа —
+    # урок S1 про закрытие пробившего бара. Строку разбора из события
+    # делает только этот цикл: у файла разбора один писатель. Событие
+    # по уже закрытой позиции игнорируется само: сюда доходят только
+    # открытые.
+    events = {}
+    for ev in _read_jsonl(os.path.join(mdir, "exits_live.jsonl")):
+        if (ev.get("arm") or "gbm") != arm:
+            continue
+        k = (ev.get("hour"), ev.get("sym"), ev.get("side"))
+        if k not in events:              # первое пересечение решает
+            events[k] = ev
 
     # --- выходы: ситуация кончилась ----------------------------------
     closed_syms, by_hour = set(), {}
     for p in open_pos:
+        ev = events.get((p["hour"], p["sym"], p["side"]))
         i = si.get(p["sym"])
-        if i is None:
-            continue
-        px = float(mid[i, j_last])
-        if not (np.isfinite(px) and p.get("px")):
+        px = float(mid[i, j_last]) if i is not None else float("nan")
+        if ev is None and not (np.isfinite(px) and p.get("px")):
             # Цены нет — судить не по чему; позиция ждёт цены.
             continue
-        move = (px / p["px"] - 1.0) * 1e4
-        age = _hours_apart(p["hour"], cur)
-        fresh = float(models[(arm, kf)].predict(
-            x[i:i + 1, j_last])[0])
         adv, fav, _, _ = position_path(p["side"], p.get("mae"),
                                        p.get("mfe"))
-        reason = None
-        # Прогноз развернулся: модель больше не ждёт того, ради чего
-        # входила. Это главный «ситуационный» выход.
-        if (p["side"] == "long") != (fresh > 0):
-            reason = "прогноз развернулся"
-        # Цена прошла обещанный ход против: обещание пути нарушено, и
-        # держать дальше значит держать ЧУЖУЮ сделку.
-        elif adv is not None and (
-                (p["side"] == "long" and move <= adv)
-                or (p["side"] == "short" and move >= adv)):
-            reason = "цена прошла обещанный ход против"
-        elif age is not None and age >= SIT_MAX_AGE_H:
-            reason = "предел возраста"
+        reason, move, exit_hour, exit_ts = None, None, cur, None
+        if ev is not None:
+            reason = ev.get("reason") or "цена прошла обещанный ход против"
+            move = float(ev.get("move_bp") or 0.0)
+            exit_ts = ev.get("at_ts")
+            if exit_ts:
+                exit_hour = datetime.fromtimestamp(
+                    exit_ts, timezone.utc).strftime("%Y-%m-%d-%H")
+        else:
+            move = (px / p["px"] - 1.0) * 1e4
+            age = _hours_apart(p["hour"], cur)
+            fresh = float(models[(arm, kf)].predict(
+                x[i:i + 1, j_last])[0])
+            # Прогноз развернулся: модель больше не ждёт того, ради
+            # чего входила. Это главный «ситуационный» выход.
+            if (p["side"] == "long") != (fresh > 0):
+                reason = "прогноз развернулся"
+            # Цена прошла обещанный ход против часовым замером —
+            # страховка на случай, когда живой сторож не видел цены.
+            elif adv is not None and (
+                    (p["side"] == "long" and move <= adv)
+                    or (p["side"] == "short" and move >= adv)):
+                reason = "цена прошла обещанный ход против"
+            elif age is not None and age >= SIT_MAX_AGE_H:
+                reason = "предел возраста"
         if reason is None:
             continue
         rr = {"sym": p["sym"], "side": p["side"],
@@ -1135,7 +1156,11 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
               "got": round(move, 1),
               "net": round((1 if p["side"] == "long" else -1) * move
                            - ROUND_COST_BP, 1),
-              "exit_hour": cur, "reason": reason}
+              "exit_hour": exit_hour, "reason": reason}
+        if ev is not None:
+            rr["live"] = True
+            rr["exit_ts"] = exit_ts
+            rr["exit_px"] = ev.get("px")
         by_hour.setdefault(p["hour"], []).append(rr)
         closed_syms.add(p["sym"])
     for hour, rows_rv in by_hour.items():

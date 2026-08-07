@@ -928,6 +928,42 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d2, ignore_errors=True)
 
+        # Событие живого сторожа: цена и час выхода — из МОМЕНТА
+        # пересечения, а не из закрытия часа; разбор помечен live.
+        d4 = tempfile.mkdtemp()
+        try:
+            pk4 = {"arm": "gbm", "hour": "2026-08-07-10",
+                   "long": [{"sym": "AUSDT", "fwd": 30.0, "px": 100.0,
+                             "mae": -10.0, "mfe": 25.0}], "short": []}
+            with open(os.path.join(d4, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(pk4) + "\n")
+            ev_ts = 1786445100.0            # 2026-08-07 10:45 UTC
+            with open(os.path.join(d4, "exits_live.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(
+                    {"arm": "gbm", "hour": "2026-08-07-10",
+                     "sym": "AUSDT", "side": "long", "px": 99.87,
+                     "move_bp": -13.0, "at_ts": ev_ts,
+                     "reason": "цена прошла обещанный ход против"})
+                    + "\n")
+            T.situational_arm(d4, "gbm", models, x, mats, syms, rows_m,
+                              1, grid, lo, hi, None, lambda m: None)
+            rv4 = T._read_jsonl(os.path.join(d4, "review.jsonl"))
+            row = [r for rec in rv4 for r in rec["rows"]][0]
+            check("живой выход: исход из события, а не из часа",
+                  row["got"] == -13.0 and row.get("live") is True
+                  and row.get("exit_px") == 99.87,
+                  str(row))
+            from datetime import datetime as _dt, timezone as _tz
+            want_hour = _dt.fromtimestamp(ev_ts, _tz.utc).strftime(
+                "%Y-%m-%d-%H")
+            check("живой выход: час выхода — час пересечения",
+                  row["exit_hour"] == want_hour,
+                  f"{row['exit_hour']} vs {want_hour}")
+        finally:
+            shutil.rmtree(d4, ignore_errors=True)
+
         # Слоты: свободных нет — вход не открывается даже на годной
         # ситуации.
         d3 = tempfile.mkdtemp()
