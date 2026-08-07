@@ -13,7 +13,9 @@
 
 import json
 import os
+import shutil
 import sys
+import tempfile
 import threading
 import time
 
@@ -2056,6 +2058,79 @@ def test_sit_scan_anchors_forecast_to_live_price():
           ev and ev["side"] == "short" and ev["fwd"] == -52.0, str(ev))
 
 
+def test_sit_scan_enters_only_on_a_crossing_it_saw():
+    """Вход — событие, а не состояние, в котором имя застали.
+
+    Владелец трижды видел пачку входов одной секундой. Первые два раза
+    её делал гейт (сразу после листа остаток равен полному прогнозу),
+    третий — накопленный запас: сборщик перезапустился, посмотрел на
+    лист часовой давности и выпустил всех, у кого условие успело стать
+    верным без нас. Значит мало требовать скидку — надо видеть саму
+    смену состояния.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        col = C.Collector.__new__(C.Collector)
+        col.books = {}
+        col.log = lambda m: None
+
+        class B:
+            def __init__(self, px):
+                self.px = px
+
+            def best(self):
+                return self.px * 0.9999, self.px * 1.0001
+
+        # Тридцать имён нужны волне; интересны первые два.
+        # Обещания взяты так, чтобы гейт проходил ПО СУЩЕСТВУ: при
+        # ходе −20 б.п. остаток 59, скидка 19, RR 5.5. Первая версия
+        # этого теста ставила `mae = −20`, и переякоренный ход против
+        # выходил ровно нулём — имя отсеивалось знаковой проверкой, а
+        # не взведением, то есть проверка ничего не проверяла.
+        rows = [{"sym": f"S{i}USDT", "fwd": 40.0, "mae": -40.0,
+                 "mfe": 90.0, "beta": 1.0, "px": 100.0}
+                for i in range(30)]
+        sheet = {"hour": "2026-08-07-20", "min_edge_bp": 22.0,
+                 "min_rr": 2.0, "min_disc_bp": 11.0, "slots": 6,
+                 "arms": {"gbm": rows}}
+        for r in rows:
+            col.books[r["sym"]] = B(100.0)
+        entered, armed = set(), set()
+
+        # Цена уже отдала скидку, но мы её падения не видели: это
+        # состояние, а не событие. Входа быть не должно.
+        col.books["S0USDT"] = B(99.80)
+        col._sit_scan(d, sheet, [], entered, 1000.0, armed)
+        rd = lambda: C.Collector._jsonl(
+            os.path.join(d, "entries_live.jsonl"))
+        n0 = len(rd())
+        check("имя, уже прошедшее гейт при первом взгляде, не берётся",
+              n0 == 0, str(n0))
+
+        # Тик, на котором имя гейт НЕ проходит, взводит его.
+        col.books["S0USDT"] = B(100.0)
+        col._sit_scan(d, sheet, [], entered, 1005.0, armed)
+        # Теперь цена приходит к нам НА НАШИХ ГЛАЗАХ — это вход.
+        col.books["S0USDT"] = B(99.80)
+        col._sit_scan(d, sheet, [], entered, 1010.0, armed)
+        evs = rd()
+        check("пересечение на наших глазах — вход",
+              len(evs) == 1 and evs[0]["sym"] == "S0USDT"
+              and evs[0]["fwd0"] == 40.0, str(evs))
+
+        # Новый лист сбрасывает взведение: у него свои обещания.
+        armed2 = set()
+        col._sit_scan(d, {**sheet, "hour": "2026-08-07-21"}, [],
+                      set(), 1015.0, armed2)
+        n2 = len(rd())
+        check("после нового листа имя снова взводится, а не входит",
+              n2 == 1, str(n2))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_sit_watch_levels_and_crossing():
     """Живой сторож ситуационной книги: уровни и пересечение.
 
@@ -2445,6 +2520,7 @@ def main():
     test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
     test_sit_scan_anchors_forecast_to_live_price()
+    test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()
     test_shard_split_covers_everything()

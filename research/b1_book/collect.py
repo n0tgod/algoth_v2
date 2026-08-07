@@ -2021,6 +2021,12 @@ class Collector:
                        mdir, "entries_live.jsonl"))}
         pos, pos_at = [], 0.0
         sheet, sheet_at = None, 0.0
+        # Взведённые имена: те, которых мы УЖЕ видели не проходящими
+        # гейт. Вход разрешён только им — иначе первый же взгляд после
+        # перезапуска (или после долгого чтения листа) выпускает всех,
+        # у кого условие успело стать верным без нас, и это выглядит
+        # пачкой входов одной секундой.
+        armed, armed_hour = set(), None
         while not self.stop.wait(5.0):
             try:
                 now = time.time()
@@ -2040,7 +2046,12 @@ class Collector:
                     except (OSError, ValueError):
                         sheet = None
                     sheet_at = now
-                self._sit_scan(mdir, sheet, pos, entered, now)
+                sh_hour = (sheet or {}).get("hour")
+                if sh_hour != armed_hour:
+                    # Новый лист — новые обещания: взведение начинается
+                    # заново, и первый же тик расставит его сам.
+                    armed, armed_hour = set(), sh_hour
+                self._sit_scan(mdir, sheet, pos, entered, now, armed)
                 for p in pos:
                     key = (p["arm"], p["hour"], p["sym"], p["side"])
                     if key in signalled:
@@ -2074,7 +2085,7 @@ class Collector:
                 self.log(f"сторож ситуационной книги: "
                          f"{type(e).__name__}: {e}")
 
-    def _sit_scan(self, mdir, sheet, pos, entered, now):
+    def _sit_scan(self, mdir, sheet, pos, entered, now, armed):
         """Один тик сканера входов: лист сечения против живых цен.
 
         Карта от модели (лист часа), курок от цены: вход в ту секунду,
@@ -2132,7 +2143,19 @@ class Collector:
                     continue
                 got = sit_scan_entry(r, mid, wave, min_edge,
                                      min_rr, min_disc)
+                key = (arm, hour, sym)
                 if not got:
+                    # Видели имя НЕ проходящим — теперь его пересечение
+                    # будет настоящим событием, а не состоянием, в
+                    # котором мы его застали.
+                    armed.add(key)
+                    continue
+                if key not in armed:
+                    # Условие было верно уже при первом нашем взгляде:
+                    # значит момент прошёл без нас (перезапуск сборщика,
+                    # опоздавший лист). Гнаться за пройденным движением
+                    # нельзя — ровно это и делало пачку входов одной
+                    # секундой, которую владелец видел трижды.
                     continue
                 ev = {"arm": arm, "hour": hour, "at_ts": round(now, 3),
                       "reason": "вход по ситуации", **got}
@@ -2148,9 +2171,13 @@ class Collector:
                 pos.append({"arm": arm, "hour": hour, "sym": sym,
                             "side": got["side"], "px": got["px"],
                             "adv": got["mae"]})
-                self.log(f"ситуационная [{arm}]: живой вход {sym} "
-                         f"{got['side']} (остаток {got['fwd']:+.0f} "
-                         f"б.п., RR {got['rr']}) — поймано в моменте")
+                armed.discard(key)
+                self.log(
+                    f"ситуационная [{arm}]: живой вход {sym} "
+                    f"{got['side']} (остаток {got['fwd']:+.0f} б.п. "
+                    f"против {got['fwd0']:+.0f} у листа, скидка "
+                    f"{abs(got['fwd']) - abs(got['fwd0']):+.0f}, RR "
+                    f"{got['rr']}) — поймано в моменте")
 
     def run(self, hours):
         deadline = self.started + hours * 3600 if hours else None
