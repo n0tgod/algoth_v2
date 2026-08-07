@@ -25,6 +25,10 @@ pub struct Leg {
     pub px: Option<f64>,
     #[serde(default)]
     pub cum: Option<Book>,
+    /// Секунда живого входа сканера: сделка ситуационной книги
+    /// открывается моментом события, а не закрытием часа.
+    #[serde(default)]
+    pub at_ts: Option<f64>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -49,12 +53,25 @@ pub struct ReviewRow {
     pub net: Option<f64>,
     #[serde(default)]
     pub cum: Option<Book>,
+    /// Час выхода ситуационной книги: срок закрытия задаёт разбор,
+    /// а не горизонт.
+    #[serde(default)]
+    pub exit_hour: Option<String>,
+    /// Причина выхода — едет в журнал закрытия дословно.
+    #[serde(default)]
+    pub reason: Option<String>,
+    /// Момент записи разбора (штампуется из записи при чтении):
+    /// касса не вправе узнать исход раньше него.
+    #[serde(skip)]
+    pub rec_at_ts: Option<f64>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Review {
     pub arm: Option<String>,
     pub hour: String,
+    #[serde(default)]
+    pub at_ts: Option<f64>,
     #[serde(default)]
     pub rows: Vec<ReviewRow>,
 }
@@ -91,14 +108,26 @@ fn read_lines<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
     out
 }
 
-/// Выборы руки: первые записи каждого часа, как у Python-сборки
-/// (`build` снимает дубли (рука, час) на чтении).
+/// Выборы руки. Дубли снимаются НА СТРОКЕ, как у Python-сборки:
+/// перезапуск пишет тот же час целиком — его строки совпадут и
+/// уйдут; живой вход сканера дописывает к часу ВТОРУЮ запись с
+/// новыми именами — они остаются.
 pub fn load_picks(dir: &Path, arm: &str) -> Vec<Pick> {
     let mut seen: BTreeSet<String> = BTreeSet::new();
     let mut out = Vec::new();
-    for p in read_lines::<Pick>(&dir.join("picks.jsonl")) {
+    for mut p in read_lines::<Pick>(&dir.join("picks.jsonl")) {
         let a = p.arm.clone().unwrap_or_else(|| "gbm".into());
-        if a != arm || !seen.insert(p.hour.clone()) {
+        if a != arm {
+            continue;
+        }
+        let hour = p.hour.clone();
+        p.long.retain(|l| {
+            seen.insert(format!("{hour}:{}:long", l.sym))
+        });
+        p.short.retain(|l| {
+            seen.insert(format!("{hour}:{}:short", l.sym))
+        });
+        if p.long.is_empty() && p.short.is_empty() {
             continue;
         }
         out.push(p);
@@ -117,12 +146,13 @@ pub fn load_reviews(
         if a != arm {
             continue;
         }
-        for row in rv.rows {
+        for mut row in rv.rows {
             let side = match row.side.as_str() {
                 "long" => Side::Long,
                 "short" => Side::Short,
                 _ => continue,
             };
+            row.rec_at_ts = rv.at_ts;
             out.entry((rv.hour.clone(), row.sym.clone(), side))
                 .or_insert(row);
         }

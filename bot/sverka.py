@@ -113,12 +113,33 @@ def bot_trades(recs):
     return out, rejects
 
 
+def book_mode(s8):
+    """Режим книги — из её манифеста, как у Rust-ядра.
+
+    Ситуационная книга живёт без срока (закрытие задаёт разбор) и с
+    фиксированными слотами кассы; книги горизонтов несут свой срок.
+    Оба счёта обязаны читать ОДИН источник — манифест: флаг сверки,
+    отличный от флага ядра, однажды сравнил бы две разные книги.
+    """
+    try:
+        with open(os.path.join(s8, "manifest.json"),
+                  encoding="utf-8") as f:
+            man = json.load(f)
+    except (OSError, ValueError):
+        return TR.HOLD_H, None
+    if man.get("situational"):
+        return None, int(man.get("slots") or 6)
+    return int(man.get("horizon_h") or TR.HOLD_H), None
+
+
 def py_trades(s8, arm, capital, table, now):
     """Правда Python-стороны — тем же конвейером, что страница."""
+    hold, slots = book_mode(s8)
     picks = read_jsonl(os.path.join(s8, "picks.jsonl"))
     reviews = read_jsonl(os.path.join(s8, "review.jsonl"))
-    tr = TR.build(picks, reviews, now=now)
-    _, balance = TR.account(tr, arm, start=capital, table=table)
+    tr = TR.build(picks, reviews, now=now, hold_h=hold)
+    _, balance = TR.account(tr, arm, start=capital, table=table,
+                            hold_h=hold or TR.HOLD_H, slots=slots)
     out = {}
     for t in tr:
         if t["arm"] != arm or t.get("size") is None:

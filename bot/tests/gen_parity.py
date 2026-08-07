@@ -125,6 +125,106 @@ def main():
     closed = sum(1 for t in expected["trades"] if t["state"] == "закрыта")
     print(f"фикстура: сделок {len(expected['trades'])}, закрыто {closed}, "
           f"баланс {balance}")
+    sit()
+
+
+SIT_OUT = os.path.join(HERE, "fixtures", "parity_sit")
+
+
+def sit():
+    """Фикстура ситуационной книги: без срока, живые входы и выходы.
+
+    Отличия от главной, каждое из которых Rust обязан повторить:
+    вход живого сканера открыт секундой события (`at_ts` строки),
+    двух записей одного часа (часовой вход + превращение сканера)
+    складываются построчно, закрытие задаёт разбор (`exit_hour` +
+    момент записи), слоты кассы фиксированы манифестом, у открытой
+    сделки срока нет вовсе.
+    """
+    os.makedirs(SIT_OUT, exist_ok=True)
+    h_a, h_b = "2026-08-05-10", "2026-08-05-11"
+    ts_a = TR._ts(h_a) or 0
+    ts_b = TR._ts(h_b) or 0
+    picks = [
+        # Часовой вход ситуационной книги: две ноги на закрытии часа.
+        {"arm": "gbm", "hour": h_a, "ver": 3, "at_ts": ts_a + 3720,
+         "long": [{"sym": "AAAUSDT", "px": 50.0, "fwd": 40.0,
+                   "mae": -15.0, "cum": book(50.0)}],
+         "short": [{"sym": "CCCUSDT", "px": 1200.0, "fwd": -55.0,
+                    "mae": 25.0, "cum": book(1200.0)}]},
+        # Превращённый живой вход: тот же час, секунда момента.
+        {"arm": "gbm", "hour": h_a, "ver": 3, "at_ts": ts_a + 5400,
+         "scan": True,
+         "long": [{"sym": "BBBUSDT", "px": 0.031, "fwd": 30.0,
+                   "mae": -10.0, "at_ts": ts_a + 5340.5,
+                   "scan": True}],
+         "short": []},
+        # Открытая: разбора нет, и срока у неё тоже нет.
+        {"arm": "gbm", "hour": h_b, "ver": 3, "at_ts": ts_b + 3660,
+         "long": [{"sym": "DDDUSDT", "px": 7.5, "fwd": 25.0,
+                   "mae": -9.0}],
+         "short": []},
+    ]
+    reviews = [
+        # Живой выход в середине следующего часа, книга есть.
+        {"arm": "gbm", "hour": h_a, "cost_bp": 11.0,
+         "at_ts": ts_b + 3900.25,
+         "rows": [{"sym": "AAAUSDT", "side": "long",
+                   "expected": 35.0, "got": -16.2,
+                   "net": -16.2 - 11.0, "exit_hour": h_b,
+                   "reason": "цена прошла обещанный ход против",
+                   "live": True, "exit_ts": ts_b + 1800.5,
+                   "cum": book(50.0 * (1 - 16.2 / 1e4))}]},
+        # Часовой выход без книги — прежняя основа, плоский круг.
+        {"arm": "gbm", "hour": h_a, "cost_bp": 11.0,
+         "at_ts": ts_b + 3901.0,
+         "rows": [{"sym": "CCCUSDT", "side": "short",
+                   "expected": -60.0, "got": -42.0,
+                   "net": 42.0 - 11.0, "exit_hour": h_b,
+                   "reason": "прогноз развернулся"}]},
+    ]
+    with open(os.path.join(SIT_OUT, "picks.jsonl"), "w",
+              encoding="utf-8") as f:
+        for p in picks:
+            f.write(json.dumps(p, ensure_ascii=False) + "\n")
+    with open(os.path.join(SIT_OUT, "review.jsonl"), "w",
+              encoding="utf-8") as f:
+        for r in reviews:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    with open(os.path.join(SIT_OUT, "fees.json"), "w",
+              encoding="utf-8") as f:
+        json.dump(FEES, f)
+    with open(os.path.join(SIT_OUT, "manifest.json"), "w",
+              encoding="utf-8") as f:
+        json.dump({"situational": True, "slots": 6,
+                   "rules_version": 2}, f)
+
+    table = {r["symbol"]: round(float(r["takerFeeRate"]) * 1e4, 4)
+             for r in FEES}
+    now = ts_b + 2 * 3600
+    tr = TR.build(picks, reviews, now=now, hold_h=None)
+    _, balance = TR.account(tr, "gbm", start=1000.0, table=table,
+                            slots=6)
+    expected = {"balance": balance, "trades": []}
+    for t in sorted((t for t in tr if t.get("size") is not None),
+                    key=lambda t: (t["hour"], t["sym"], t["side"])):
+        row = {"pos": f"gbm:{t['hour']}:{t['sym']}:{t['side']}",
+               "size": t["size"], "state": t["state"],
+               "opened_at": t.get("opened_at")}
+        if t["state"] == "закрыта":
+            row.update(pnl=t.get("pnl"), net_bp=t.get("net_bp"),
+                       basis=t.get("cost_basis"),
+                       fill_in=t.get("fill_in"),
+                       fill_out=t.get("fill_out"),
+                       reason=t.get("exit_reason"))
+        expected["trades"].append(row)
+    with open(os.path.join(SIT_OUT, "expected.json"), "w",
+              encoding="utf-8") as f:
+        json.dump(expected, f, ensure_ascii=False, indent=1)
+    closed = sum(1 for t in expected["trades"]
+                 if t["state"] == "закрыта")
+    print(f"фикстура sit: сделок {len(expected['trades'])}, закрыто "
+          f"{closed}, баланс {balance}")
 
 
 if __name__ == "__main__":

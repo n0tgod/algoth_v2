@@ -21,6 +21,38 @@ use std::path::{Path, PathBuf};
 
 pub const HOLD_H: i64 = 4;
 
+/// Режим книги — из её же манифеста: каталог сам говорит, как живут
+/// его позиции. Флаг в командной строке однажды разошёлся бы с тем,
+/// что лежит на диске, — а манифест едет вместе с книгой.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct BookMode {
+    /// Ситуационная книга: без срока, закрытие задаёт разбор.
+    pub sit: bool,
+    /// Фиксированные слоты кассы (у ситуационной книги их 6).
+    pub slots: Option<f64>,
+}
+
+pub fn book_mode(s8_dir: &Path) -> BookMode {
+    #[derive(serde::Deserialize)]
+    struct Man {
+        #[serde(default)]
+        situational: bool,
+        #[serde(default)]
+        slots: Option<f64>,
+    }
+    let Ok(text) = std::fs::read_to_string(s8_dir.join("manifest.json"))
+    else {
+        return BookMode::default();
+    };
+    match serde_json::from_str::<Man>(&text) {
+        Ok(m) if m.situational => BookMode {
+            sit: true,
+            slots: Some(m.slots.unwrap_or(6.0)),
+        },
+        _ => BookMode::default(),
+    }
+}
+
 pub struct Cfg {
     /// Каталог руки: `…/s8_loop/out/model_pretest` или `…/model`.
     pub s8_dir: PathBuf,
@@ -141,14 +173,21 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
         cum_in: Option<crate::paper::Book>,
         ver: Option<u32>,
     }
+    let mode = book_mode(&cfg.s8_dir);
     let picks = load_picks(&cfg.s8_dir, &cfg.arm);
     let reviews = load_reviews(&cfg.s8_dir, &cfg.arm);
     let mut plan: Vec<Planned> = Vec::new();
     for p in &picks {
         let Some(h0) = hour_ms(&p.hour) else { continue };
-        let opened_at = h0 + 3_600_000;
+        let hour_close = h0 + 3_600_000;
         let legs = p.long.len() + p.short.len();
         let mut add = |leg: &Leg, side: Side| {
+            // Живой вход сканера открыт секундой события; строка без
+            // метки — часовой вход, открытый закрытием часа сигнала.
+            let opened_at = leg
+                .at_ts
+                .map(|t| (t * 1000.0) as i64)
+                .unwrap_or(hour_close);
             plan.push(Planned {
                 key: format!(
                     "{}:{}:{}:{}",
@@ -159,7 +198,14 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
                 side,
                 legs_in_hour: legs,
                 opened_at,
-                closes_at: opened_at + HOLD_H * 3_600_000,
+                // У ситуационной книги СРОКА НЕТ: закрытие задаёт
+                // разбор, и его время достаётся ниже из самой строки
+                // разбора. 0 — «не назначено», а не «в эпоху».
+                closes_at: if mode.sit {
+                    0
+                } else {
+                    hour_close + HOLD_H * 3_600_000
+                },
                 px: leg.px,
                 cum_in: leg.cum.clone(),
                 ver: p.ver,
@@ -172,6 +218,28 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
             add(leg, Side::Short);
         }
     }
+    // Срок ситуационной сделки — из разбора: час выхода плюс момент
+    // записи, как у Python-кассы (`max(closes_at, review_at)` — деньги
+    // не возвращаются раньше, чем исход стал известен).
+    if mode.sit {
+        for t in plan.iter_mut() {
+            if let Some(row) =
+                reviews.get(&(t.hour.clone(), t.sym.clone(), t.side))
+            {
+                let ex = row
+                    .exit_hour
+                    .as_deref()
+                    .and_then(hour_ms)
+                    .map(|m| m + 3_600_000)
+                    .unwrap_or(0);
+                let ra = row
+                    .rec_at_ts
+                    .map(|v| (v * 1000.0) as i64)
+                    .unwrap_or(0);
+                t.closes_at = ex.max(ra);
+            }
+        }
+    }
 
     // События этого прохода: (момент, 0 выход | 1 вход, номер в плане).
     // Стабильная сортировка держит ноги одного часа в порядке файла —
@@ -181,7 +249,8 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
         if t.opened_at <= cfg.now_ms && !touched.contains(&t.key) {
             ev.push((t.opened_at, 1, i));
         }
-        if t.closes_at <= cfg.now_ms
+        if t.closes_at > 0
+            && t.closes_at <= cfg.now_ms
             && (touched.contains(&t.key) || t.opened_at <= cfg.now_ms)
             && !closed_keys.contains(&t.key)
         {
@@ -223,7 +292,9 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
             // занятое) на число слотов часа, но не больше свободного.
             let busy: f64 =
                 st.positions.values().map(|p| p.notional_usd).sum();
-            let slots = (t.legs_in_hour as f64 * HOLD_H as f64).max(1.0);
+            let slots = mode.slots.unwrap_or(
+                (t.legs_in_hour as f64 * HOLD_H as f64).max(1.0),
+            );
             let want = (st.cash_usd + busy) / slots;
             let size = want.min(st.cash_usd).max(0.0);
             if size <= 0.0 {
@@ -314,12 +385,18 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
             // сделки. Округлив здесь, мы накопили бы расхождение с его
             // балансом по центу на сделку — сверка это и поймала.
             let pnl = size * net_bp / 1e4;
+            // Причина закрытия — из разбора (ситуационная книга
+            // называет её словами), иначе прежний «срок».
+            let why = row
+                .reason
+                .clone()
+                .unwrap_or_else(|| "срок".into());
             journal.append(Event::Close {
                 pos: t.key.clone(),
                 exit_px: fill_out,
                 fee_usd: py_round(size * fee_bp / 1e4, 4),
                 pnl_usd: pnl,
-                reason: format!("срок ({basis})"),
+                reason: format!("{why} ({basis})"),
                 at_ms: at,
             })?;
             appended += 1;

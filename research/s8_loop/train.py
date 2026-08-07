@@ -1829,6 +1829,29 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         mdir = MODEL_DIR + "_sit"
         fresh_sit_on_rules_change(mdir, log_)
         os.makedirs(mdir, exist_ok=True)
+        # Манифест — ДО первых выборов: тень бота читает режим книги
+        # из него, и книга с выборами без манифеста один такт
+        # считалась бы часовой — с чужими слотами и чужим сроком.
+        kf = f"fwd_{SIT_SIGNAL_H}h"
+        n_rows = (int((elig & np.isfinite(targets[kf])).sum())
+                  if kf in targets else 0)
+        sm = {"version": MODEL_VERSION, "situational": True,
+              "rules_version": SIT_RULES_VERSION,
+              "horizon_h": None, "slots": SIT_SLOTS,
+              "hedge": man["hedge"], "trained_at": man["trained_at"],
+              "sections": n_sections, "symbols": len(syms),
+              "canary_ic": man["canary_ic"],
+              # Правила — в артефакт: отчёт обязан описывать тот
+              # прогон, который породил файл, а не текущие исходники.
+              "min_edge_bp": SIT_MIN_EDGE_BP, "min_rr": SIT_MIN_RR,
+              "max_age_h": SIT_MAX_AGE_H,
+              "target": kf, "target_rows": n_rows,
+              "target_need": MIN_TARGET_ROWS,
+              "probe": PROBE, "pretest": PRETEST}
+        smp = os.path.join(mdir, "manifest.json")
+        with open(smp + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(sm, f, ensure_ascii=False, indent=1)
+        os.replace(smp + ".tmp", smp)
         # Бета по имени — из признака сечения: сканеру она нужна,
         # чтобы вычесть волну из живого хода и сравнить остаток с
         # прогнозом в одних единицах.
@@ -1853,26 +1876,6 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
         rebuild_accounts(mdir, None, slots=SIT_SLOTS)
-        kf = f"fwd_{SIT_SIGNAL_H}h"
-        n_rows = (int((elig & np.isfinite(targets[kf])).sum())
-                  if kf in targets else 0)
-        sm = {"version": MODEL_VERSION, "situational": True,
-              "rules_version": SIT_RULES_VERSION,
-              "horizon_h": None, "slots": SIT_SLOTS,
-              "hedge": man["hedge"], "trained_at": man["trained_at"],
-              "sections": n_sections, "symbols": len(syms),
-              "canary_ic": man["canary_ic"],
-              # Правила — в артефакт: отчёт обязан описывать тот
-              # прогон, который породил файл, а не текущие исходники.
-              "min_edge_bp": SIT_MIN_EDGE_BP, "min_rr": SIT_MIN_RR,
-              "max_age_h": SIT_MAX_AGE_H,
-              "target": kf, "target_rows": n_rows,
-              "target_need": MIN_TARGET_ROWS,
-              "probe": PROBE, "pretest": PRETEST}
-        smp = os.path.join(mdir, "manifest.json")
-        with open(smp + ".tmp", "w", encoding="utf-8") as f:
-            json.dump(sm, f, ensure_ascii=False, indent=1)
-        os.replace(smp + ".tmp", smp)
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
 
