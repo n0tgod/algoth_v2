@@ -44,6 +44,7 @@ sys.path.insert(0, os.path.dirname(RESEARCH))
 # зависимостей не имеет, и голый ModuleNotFoundError уже дважды стоил
 # захода на сервер впустую.
 from research.common import pyenv                         # noqa: E402
+from research.common import universe_filter as UF          # noqa: E402
 pyenv.need("numpy")
 
 import numpy as np                                        # noqa: E402
@@ -863,6 +864,21 @@ def fresh_on_mode_change(mode, log_=None):
     return dst
 
 
+def tradable_rows(rows_m, syms, ref=None):
+    """Строки сечения, которыми МОЖНО торговать: не-крипто отсечено.
+
+    Фильтр общий со сборщиком (`research/common/universe_filter`) —
+    два определения «не-крипто» однажды разошлись бы, и модель выбирала
+    бы то, чего сборщик не пишет. Отсечение стоит на ВЫБОРЕ, а не на
+    обучении: ряды исключённых уходят из матриц сами вместе с
+    прекращением записи, а выдёргивать их из истории значило бы менять
+    выборку задним числом.
+    """
+    ref = UF.non_crypto_set() if ref is None else ref
+    return np.array([j for j in rows_m
+                     if not UF.is_non_crypto(syms[j], ref)], dtype=int)
+
+
 def write_outcome(reason, **nums):
     """Чем кончился ЭТОТ цикл — отдельным файлом, всегда.
 
@@ -1295,7 +1311,11 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         picks = None
         if (arm, "fwd_4h") in models and (arm, "mae_4h") in models \
                 and j_last is not None:
-            rows_m = np.flatnonzero(elig[:, j_last])
+            # Не-крипто не торгуется (решение владельца, A1 и
+            # 2026-08-07). Из ОБУЧЕНИЯ имена не выдёргиваются: запись
+            # по ним останавливается, и ряды уходят из матриц сами.
+            rows_m = tradable_rows(
+                np.flatnonzero(elig[:, j_last]), syms)
             xj = x[rows_m, j_last]
             fwd = models[(arm, "fwd_4h")].predict(xj)
             # Ход ПРОТИВ позиции у длинной и короткой ноги — разные

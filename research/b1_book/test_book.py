@@ -2013,11 +2013,42 @@ def test_all_symbols_filter():
             "AAA": {"asset_class": "crypto", "bybit_symbol": "AAAUSDT"},
         }}, f)
     drop = C.non_crypto_bybit(up)
-    final = [s for s in got if s not in drop]
+    final = [s for s in got if not C.UF.is_non_crypto(s, drop)]
     check("не-крипто исключён по справочнику",
           final == ["AAAUSDT", "DDDUSDT"], str(final))
-    check("нет справочника — нет исключений (и нет падения)",
-          C.non_crypto_bybit(os.path.join(d, "нет.json")) == set())
+    # Листинги после снимка справочника: курируемый список и правило
+    # суффикса. Прежний контракт «нет справочника — нет исключений»
+    # сменён владельцем (2026-08-07): UBER и компания жили в записи
+    # именно потому, что держались на одном справочнике.
+    check("листинг после снимка исключён курируемым списком",
+          C.UF.is_non_crypto("UBERUSDT", drop))
+    check("суффикс *STOCKUSDT исключает и без списка",
+          C.UF.is_non_crypto("XYZSTOCKUSDT", set()))
+    check("крипта проходит фильтр",
+          not C.UF.is_non_crypto("BTCUSDT", drop))
+    check("нет справочника — курируемый список остаётся",
+          C.non_crypto_bybit(os.path.join(d, "нет.json"))
+          == set(C.UF.NON_CRYPTO_NEW))
+
+    # Грейс: имена из свежих выборов дописываются до закрытия позиций —
+    # обрыв ряда до разбора заморозил бы слот навсегда (урок RAREUSDT).
+    import time as _t
+    s8 = os.path.join(d, "s8")
+    os.makedirs(os.path.join(s8, "model_pretest"))
+    now = _t.time()
+    hour = lambda ago: _t.strftime(                      # noqa: E731
+        "%Y-%m-%d-%H", _t.gmtime(now - ago * 3600))
+    with open(os.path.join(s8, "model_pretest", "picks.jsonl"),
+              "w", encoding="utf-8") as f:
+        f.write(J.dumps({"arm": "gbm", "hour": hour(1),
+                         "long": [{"sym": "UBERUSDT"}],
+                         "short": []}) + "\n")
+        f.write(J.dumps({"arm": "gbm", "hour": hour(10),
+                         "long": [{"sym": "SHOPUSDT"}],
+                         "short": []}) + "\n")
+    grace = C.recent_pick_symbols(s8_root=s8)
+    check("свежий выбор в грейсе, старый отпущен",
+          grace == {"UBERUSDT"}, str(grace))
 
 
 def test_shard_split_covers_everything():

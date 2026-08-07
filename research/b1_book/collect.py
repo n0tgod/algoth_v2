@@ -73,6 +73,7 @@ import paper                                              # noqa: E402
 import signals                                            # noqa: E402
 from signals import RULES_VERSION, Signals                # noqa: E402
 from store import Writer, read_hour, read_jsonl            # noqa: E402
+from common import universe_filter as UF                   # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
@@ -264,20 +265,55 @@ def usdt_perps(instruments):
 
 
 def non_crypto_bybit(universe_path=UNIVERSE_JSON):
-    """Символы Bybit не-крипто активов по справочнику универсума.
+    """Не-крипто символы Bybit: справочник плюс курируемый список.
 
-    Решение владельца: перпы не на криптоактивы в универсум не входят
-    (у базового актива календарь биржи, у перпа — круглосуточный).
-    Оговорка: не-крипто, листингованные ПОСЛЕ снимка универсума, так не
-    распознаются — известная примесь, запись дешёвая.
+    Определение одно на проект — `research/common/universe_filter`:
+    сборщик решает, что записывать, модель — что торговать, и два
+    расходящихся определения означали бы, что модель выбирает то, чего
+    сборщик не пишет. Прежняя оговорка «листинги после снимка так не
+    распознаются» закрыта курируемым списком и правилом суффикса
+    (решение владельца, 2026-08-07): в записи жили UBER, SHOP и ещё
+    четыре десятка токенизированных акций, и сеть их выбирала.
     """
-    try:
-        with open(universe_path, encoding="utf-8") as f:
-            u = json.load(f)["assets"]
-    except OSError:
-        return set()
-    return {v["bybit_symbol"] for v in u.values()
-            if v.get("asset_class") != "crypto" and v.get("bybit_symbol")}
+    return UF.non_crypto_set(universe_path)
+
+
+def recent_pick_symbols(hours=6, s8_root=None):
+    """Символы из выборов модели за последние часы.
+
+    Их запись обязана дожить до разбора: ряд, оборванный до планового
+    закрытия позиции, оставляет её «без исхода», а такие держат кассу
+    навсегда (урок RAREUSDT). Шесть часов — горизонт удержания плюс
+    запас на опоздание разбора; фильтр выбора новых сделок на такие
+    имена не даёт, поэтому множество пустеет само.
+    """
+    root = s8_root or os.path.join(
+        os.path.dirname(HERE), "s8_loop", "out")
+    out = set()
+    cut = time.time() - hours * 3600
+    for name in ("model", "model_pretest"):
+        try:
+            with open(os.path.join(root, name, "picks.jsonl"),
+                      encoding="utf-8") as f:
+                lines = f.read().split("\n")
+        except OSError:
+            continue
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                pk = json.loads(line)
+                h0 = datetime.strptime(pk.get("hour") or "",
+                                       "%Y-%m-%d-%H")
+            except ValueError:
+                continue
+            if h0.replace(tzinfo=timezone.utc).timestamp() < cut:
+                continue
+            for side in ("long", "short"):
+                for x in pk.get(side) or []:
+                    if x.get("sym"):
+                        out.add(x["sym"])
+    return out
 
 
 HOUR = 3600.0
@@ -343,10 +379,20 @@ def resolve_symbols(arg, log, root=OUT):
         log(f"ВНИМАНИЕ: справочник площадки недоступен ({e}); "
             f"продолжаю по уже записываемым {len(ondisk)} символам")
         return ondisk
-    drop = non_crypto_bybit()
-    syms = [s for s in got if s not in drop]
+    ref = non_crypto_bybit()
+    # Имена из свежих выборов дописываются до закрытия позиций — обрыв
+    # ряда до разбора заморозил бы слот навсегда. Новых выборов на
+    # не-крипто нет (фильтр стоит и у модели), так что хвост отпадает
+    # сам через горизонт удержания.
+    grace = recent_pick_symbols()
+    kept = sorted(s for s in got
+                  if UF.is_non_crypto(s, ref) and s in grace)
+    syms = [s for s in got
+            if not UF.is_non_crypto(s, ref) or s in grace]
     log(f"справочник площадки: {len(got)} торгуемых USDT-перпов, "
-        f"не-крипто исключено {len(got) - len(syms)}, собираем {len(syms)}")
+        f"не-крипто исключено {len(got) - len(syms)}, собираем {len(syms)}"
+        + (f"; дописываются до закрытия позиций: {', '.join(kept)}"
+           if kept else ""))
     return syms
 
 

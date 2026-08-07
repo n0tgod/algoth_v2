@@ -723,6 +723,29 @@ def test_sverka_pairs_cash_reject_with_zero_size():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_picks_never_take_non_crypto():
+    """Выбор монет не берёт не-крипто — ни по списку, ни по суффиксу.
+
+    Сеть выбирала UBER, SHOP и NET в первый же час боевой торговли:
+    токенизированные акции залистились после снимка справочника
+    универсума, и фильтр записи их не знал. Отсечение стоит на выборе;
+    обучение не трогается — ряды уходят сами с прекращением записи.
+    """
+    import numpy as np
+    import train as T
+    from research.common import universe_filter as UF
+
+    rows = np.array([0, 1, 2, 3])
+    syms = ["BTCUSDT", "UBERUSDT", "XYZSTOCKUSDT", "ARBUSDT"]
+    got = T.tradable_rows(rows, syms, ref=UF.non_crypto_set())
+    check("акции отсечены из выбора, крипта осталась",
+          list(got) == [0, 3], str(list(got)))
+    # Негативный контроль: с пустым справочником режет только суффикс.
+    got2 = T.tradable_rows(rows, syms, ref=set())
+    check("контроль: без списка режет только суффикс",
+          list(got2) == [0, 1, 3], str(list(got2)))
+
+
 def test_pretest_comes_after_the_summary_is_written():
     """Предпросмотр приходит ПОСЛЕ боевого цикла, а не вместе с ним.
 
@@ -2540,6 +2563,7 @@ def main():
     test_capital_returns_before_it_is_redeployed()
     test_cash_returns_when_the_review_is_written()
     test_sverka_pairs_cash_reject_with_zero_size()
+    test_picks_never_take_non_crypto()
     test_pretest_comes_after_the_summary_is_written()
     test_hourly_cycle_wakes_on_the_hour()
     test_account_is_one_capital_at_leverage_one()
