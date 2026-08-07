@@ -1482,17 +1482,33 @@ def stamp_book(syms, ts, book_root, log_=None, what=""):
 
 def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     t0 = time.time()
+    # Из чего складывается запаздывание входа. Владелец увидел шесть
+    # минут между закрытием часа и выбором и спросил, почему нельзя
+    # сразу; ответить на это можно только замером по шагам — общее
+    # время цикла не различает сведение часа, обучение и работу с
+    # книгами, а лечится каждый из них по-своему. Секунды по шагам
+    # едут в манифест: отчёт обязан описывать тот прогон, который
+    # породил файл.
+    steps = {}
+
+    def step(name, since):
+        steps[name] = round(time.time() - since, 1)
+        return time.time()
+
+    ts = t0
     if book_root and os.path.isdir(os.path.join(book_root, "book")):
         n_new = SM.run(book_root, sum_dir, None, log_)
     else:
         n_new = 0
         log_("сырой записи здесь нет — работаю по готовым сводкам")
+    ts = step("сведение часа", ts)
     mats, syms, grid = load_matrices(sum_dir)
     if mats is None:
         log_("сводок ещё нет — цикл пропущен")
         write_outcome("сводок ещё нет")
         return False
     x, names, targets, elig = assemble(mats)
+    ts = step("матрица", ts)
     per_hour = elig.sum(axis=0)
     n_sections = int((per_hour >= FB.MIN_SECTION).sum())
     log_(f"матрица: {len(syms)} символов × {len(grid)} часов, "
@@ -1528,6 +1544,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # обучения — она осмысленна при суточном переобучении. Порядок
     # важен: сохранённые считаются первыми, потому что именно они
     # описывают ранжирование, по которому шли сделки.
+    ts = time.time()
     ic_rows = score_preds(targets, elig, grid, syms, log_)
     ic_rows += eval_previous(x, targets, elig, grid, log_)
 
@@ -1565,6 +1582,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            "canary_target": cname, "canary_stop": CANARY_STOP,
            "canary_spread": round(spread, 4), "canary_seeds": nseed,
            "canary_vals": cvals}
+    ts = step("оценка и канарейка", ts)
     verdict = canary_verdict(med)
     if verdict == "не считалась":
         log_(f"канарейка не считается: ни одна цель не набирает строк. "
@@ -1603,6 +1621,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                    "выбора монет не будет")
 
     os.makedirs(MODEL_DIR, exist_ok=True)
+    ts = time.time()
     nov_lo, nov_hi = novelty_bounds(x, elig)
     imp_all = {}
     models = {}
@@ -1631,6 +1650,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                  f"{time.time() - t1:.0f} с; топ: "
                  + ", ".join(f"{k} {v}" for k, v in list(imp.items())[:3]))
 
+    ts = step("обучение", ts)
     mp = os.path.join(MODEL_DIR, "manifest.json")
     prev_man = None
     try:
@@ -1670,6 +1690,11 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                           None if not np.isfinite(nov_hi[j])
                           else float(f"{nov_hi[j]:.6g}")]
                for j in range(len(names))},
+           # Секунды по шагам и то, НАСКОЛЬКО ПОЗДНО цикл проснулся
+           # после закрытия часа: вместе они и есть запаздывание
+           # входа, которое таблица сделок показывает полем `lag`.
+           "steps_sec": steps,
+           "woke_after_hour_sec": round(t0 % 3600, 1),
            "cycle_sec": round(time.time() - t0, 1)}
     with open(mp + ".tmp", "w", encoding="utf-8") as f:
         json.dump(man, f, ensure_ascii=False, indent=1)
@@ -1842,6 +1867,22 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         rebuild_accounts(mdir, None, slots=SIT_SLOTS)
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
+
+    # Работа с книгами (разбор, выборы, лист сканера, счета четырёх
+    # книг) идёт ПОСЛЕ манифеста, то есть в прежнее `cycle_sec` не
+    # входила вовсе — а запаздывание входа задаёт именно момент
+    # записи выбора. Манифест дописывается итогом: одно место, где
+    # хранится время цикла, а не два расходящихся.
+    step("книги", ts)
+    man["steps_sec"] = steps
+    man["cycle_sec"] = round(time.time() - t0, 1)
+    with open(mp + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(man, f, ensure_ascii=False, indent=1)
+    os.replace(mp + ".tmp", mp)
+    log_("запаздывание входа: проснулся через "
+         f"{man['woke_after_hour_sec']:.0f} с после закрытия часа, "
+         f"цикл {man['cycle_sec']:.0f} с ("
+         + ", ".join(f"{k} {v:.0f} с" for k, v in steps.items()) + ")")
 
     lines = all_lines
     with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",

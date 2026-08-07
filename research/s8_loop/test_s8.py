@@ -2766,6 +2766,20 @@ def test_train_cycle_end_to_end():
               man["version"] == T.MODEL_VERSION
               and man["trained_upto"].startswith("2026-08-1"),
               str(man.get("trained_upto")))
+        # Запаздывание входа обязано быть РАЗЛОЖЕНО: владелец увидел
+        # шесть минут между закрытием часа и выбором, а лечится
+        # каждый шаг по-своему. Общее время цикла прежде не включало
+        # даже работу с книгами — то есть описывало не то, что ждут.
+        st = man.get("steps_sec") or {}
+        check("манифест несёт секунды по шагам цикла",
+              set(st) == {"сведение часа", "матрица", "оценка и канарейка",
+                          "обучение", "книги"}, str(sorted(st)))
+        check("шаги в сумме дают время цикла",
+              abs(sum(st.values()) - man["cycle_sec"]) < 1.0,
+              f"{sum(st.values())} против {man['cycle_sec']}")
+        check("записано, насколько поздно цикл проснулся",
+              0 <= man["woke_after_hour_sec"] < 3600,
+              str(man.get("woke_after_hour_sec")))
         check("веса всех целей обеих рук на месте",
               all(os.path.exists(os.path.join(
                   T.MODEL_DIR, f"weights_{a}_{t}.pkl"))

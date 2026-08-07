@@ -282,6 +282,33 @@ fn такт_демона_пишет_статус_и_не_молчит_об_ош�
     assert_eq!(st2.sverka.at_ms, st.sverka.at_ms, "сверка бежала зря");
     assert_eq!(st2.pass_report.as_ref().unwrap().appended, 0);
 
+    // Смена правил книги: журнал переначинается, и прежний вердикт
+    // сверки описывает журнал, которого больше нет. Держать его —
+    // показывать красное о несуществующем состоянии; такт обязан
+    // пересчитать сверку в этом же проходе.
+    let sit = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/parity_sit");
+    let dsit = bot::daemon::DaemonCfg {
+        s8_dir: sit.clone(),
+        journal_dir: jd.clone(),
+        arm: "gbm".into(),
+        capital_usd: 1000.0,
+        fees_path: sit.join("fees.json"),
+        interval_sec: 60,
+        sverka: Some(bot::daemon::SverkaCfg {
+            python: which_python().unwrap(),
+            script: PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("sverka.py"),
+        }),
+    };
+    let before = st.sverka.at_ms;
+    let st3 = bot::daemon::tick(&dsit, &mut mem, now + 120_000);
+    assert!(
+        st3.sverka.at_ms != before,
+        "вердикт сверки остался от прежнего журнала: {}",
+        st3.sverka.note
+    );
+
     // Порча середины журнала: такт обязан выжить, а статус — назвать
     // ошибку словами. Молча упавший демон неотличим от спокойного рынка.
     let day = jd.join("journal-2026-08-05.jsonl");

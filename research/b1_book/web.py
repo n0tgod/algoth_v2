@@ -951,6 +951,21 @@ function renderModel() {
        per-coin beta, so this book starts later than the faster ones —
        picks begin once the bar is crossed.</div>`
     : "";
+  // Запаздывание входа — числом и С РАЗБОРОМ по шагам: «шесть минут»
+  // без разложения выглядит как лень движка, тогда как лечится каждый
+  // шаг по-своему, а часть из них не лечится вовсе (признаки часа не
+  // существуют, пока час не закрылся).
+  const st = m.steps_sec || {};
+  const stNames = Object.keys(st);
+  const lagLine = (m.woke_after_hour_sec != null && stNames.length)
+    ? `<div class="mline dim">decision lag: woke <b>${
+       Math.round(m.woke_after_hour_sec)} s</b> after the hour closed,
+       then <b>${Math.round(m.cycle_sec)} s</b> of work — ${
+       stNames.map(k => `${k} ${Math.round(st[k])} s`).join(", ")}.
+       Features of an hour do not exist until it closes, and the hour
+       has to be summarised across every coin first; the rest is
+       compute.</div>`
+    : "";
   // Книга без срока входит редко и по замыслу. Правило обязано стоять
   // числом рядом с ней: иначе пустая книга неотличима от сломанной, а
   // «мало сделок» читается как отказ сборщика.
@@ -964,7 +979,7 @@ function renderModel() {
        would enter in the first tick after the sheet — a batch on the
        cycle clock, not a moment.</div>`
     : "";
-  box.innerHTML = armBtns + gateLine + `<div class="mline">trained on ${m.sections ?? "—"}
+  box.innerHTML = armBtns + lagLine + gateLine + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
       icLine ? " · out-of-sample IC: " + icLine : ""}</div>
@@ -2268,7 +2283,19 @@ async function load() {
   if (ch.ok === false)
     bad.push(`INVARIANTS: ${(ch.violations || []).join("; ")}`);
   const sv = d.sverka || {};
-  if (sv.ok === false) bad.push(sv.note || "RECONCILIATION: mismatches");
+  // Возраст вердикта — рядом с самим вердиктом. Сверка идёт раз в час,
+  // и красное от прошлого часа читается как красное сейчас: владелец
+  // так и прочёл вердикт, посчитанный за полторы минуты ДО того, как
+  // книга и журнал переначались, — оба уже были пусты.
+  const svAge = (sv.at_ms && d.server_now)
+    ? Math.max(0, d.server_now - sv.at_ms / 1000) : null;
+  const svAgeTxt = svAge == null ? ""
+    : svAge < 90 ? `${Math.round(svAge)} s ago`
+    : `${Math.round(svAge / 60)} min ago`;
+  if (sv.ok === false)
+    bad.push((sv.note || "RECONCILIATION: mismatches")
+             + (svAgeTxt ? ` <span class="k">(checked ${svAgeTxt})</span>`
+                         : ""));
   if (d.kill) bad.push("KILL SWITCH ON — no new entries");
   document.getElementById("alarm").innerHTML = bad.length
     ? `<div class="card alarm">${bad.join("<br>")}</div>` : "";
@@ -2290,8 +2317,9 @@ async function load() {
            `${cnt.decisions ?? "—"} / ${cnt.rejects ?? "—"}`)
     + cell("invariants", ch.ok === true ? "intact" : "CHECK",
            ch.ok === true ? "good" : "bad")
-    + cell("reconciliation", sv.ok === true ? "0 mismatches"
-           : sv.ok == null ? "not run yet" : "MISMATCH",
+    + cell("reconciliation", (sv.ok === true ? "0 mismatches"
+           : sv.ok == null ? "not run yet" : "MISMATCH")
+           + (svAgeTxt && sv.ok != null ? ` · ${svAgeTxt}` : ""),
            sv.ok === true ? "good" : sv.ok === false ? "bad" : "")
     + cell("status age", d.age_sec == null ? "—"
            : `${Math.round(d.age_sec)} s`,
