@@ -304,10 +304,25 @@ global.fetch = async (url) => {
                   // Книга турнира темпов: та же форма, свой горизонт и
                   // свои числа — по ним и проверяется, что переключение
                   // показывает ИМЕННО её, а не главную.
-                  books: {h1: {present: true,
+                  books: {
+                    // Книга, ждущая свою цель: выборов нет, и причина
+                    // обязана дойти до разметки числом.
+                    h24: {present: true,
+                          manifest: {version: 1, horizon_h: 24,
+                                     sections: 96, symbols: 540,
+                                     canary_ic: 0.003,
+                                     target: "fwd_24h",
+                                     target_rows: 412,
+                                     target_need: 1000,
+                                     trained_at:
+                                       "2026-08-01T10:00:00+00:00"}},
+                    h1: {present: true,
                                manifest: {version: 1, horizon_h: 1,
                                           sections: 96, symbols: 540,
                                           canary_ic: 0.003,
+                                          target: "fwd_1h",
+                                          target_rows: 5200,
+                                          target_need: 1000,
                                           trained_at:
                                             "2026-08-01T10:00:00+00:00"},
                                accounts: {gbm: {balance: 1003.57,
@@ -505,6 +520,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // может: смесь двух книг и есть отказ, ради которого проверка.
       if (/\+3\.73 %/.test(hb))
         bad.push("обзор: в книге 1 ч видны сделки главной книги");
+      // Книга 1 ч свою цель НАБРАЛА — строка ожидания у неё была бы
+      // ложной тревогой.
+      if (/waiting for its target/.test(hb))
+        bad.push("обзор: книга 1 ч ждёт цель, которую уже набрала");
+      // Книга, ждущая свою цель, обязана назвать причину ЧИСЛОМ:
+      // пустая книга без неё неотличима от сломанной.
+      let wb = "";
+      try { wb = global.__book("h24"); }
+      catch (e) { bad.push("обзор: книга 24 ч упала: " + e.message); }
+      if (!/412<\/b> of 1000/.test(wb) || !/fwd_24h/.test(wb))
+        bad.push("обзор: ждущая книга не называет причину числом");
       // Возврат на главную: проверки ниже смотрят на её разметку.
       try { global.__book("h4"); }
       catch (e) { bad.push("обзор: возврат на книгу 4 ч упал: " + e.message); }

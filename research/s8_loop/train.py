@@ -146,6 +146,10 @@ PRETEST_MIN_SECTIONS = 4
 HEDGE_PRETEST = "грубый: бета = 1 (посимвольная не оценима)"
 HEDGE_LIVE = "включён"
 CANARY_STOP = 0.05                # грубая течь; шум зерна тут ±0.015
+# Меньше тысячи строк цель не обучается: гейт главной цели, пропуск
+# цели в обучении и объяснение «книга ждёт» на странице обязаны мерить
+# ОДНИМ числом — три разных литерала однажды разошлись бы.
+MIN_TARGET_ROWS = 1000
 # Бумажный счёт руки: старт $1000, 6 позиций равными долями, тейкерский
 # круг 11 б.п. с позиции, без проскальзывания (сказано прямо), плечо 1.
 # Счёт — наблюдение для владельца, вердикт остаётся за §7.
@@ -746,7 +750,8 @@ def canary_verdict(med):
     return "кричит" if abs(med) > CANARY_STOP else "молчит"
 
 
-def canary_target(targets, elig, want="fwd_4h", need=1000):
+def canary_target(targets, elig, want="fwd_4h",
+                  need=MIN_TARGET_ROWS):
     """На какой цели считать канарейку.
 
     Канарейка ловит течь конвейера — нормировку на будущем и прочее, —
@@ -1320,7 +1325,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # то есть боевые веса вели бы контур, который ничего не выбирает.
     # Проба этот гейт проходит НАСКВОЗЬ: её дело — показать, что
     # обучение работает, а не притворяться боевой.
-    main_ok = int((elig & np.isfinite(targets["fwd_4h"])).sum()) >= 1000
+    main_ok = int((elig & np.isfinite(
+        targets["fwd_4h"])).sum()) >= MIN_TARGET_ROWS
     if not main_ok:
         msg = (f"главной цели fwd_4h нет: ей нужна бета, бете — "
                f"{FB.BETA_MIN} ч годной истории на монету, есть около "
@@ -1342,7 +1348,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     for ai, (arm, fit_fn) in enumerate(ARMS):
         for ti, tgt in enumerate(TARGETS):
             xs, ys, _ = flatten(x, targets[tgt], elig)
-            if len(ys) < 1000:
+            if len(ys) < MIN_TARGET_ROWS:
                 log_(f"{arm}/{tgt}: строк {len(ys)} — пропуск")
                 continue
             t1 = time.time()
@@ -1495,11 +1501,20 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             # Манифест книги минимален: страница берёт из него
             # присутствие, версию и ГОРИЗОНТ — по нему же сборщик
             # строит сделки с верным сроком закрытия.
+            kf = f"fwd_{h}h"
+            n_rows = (int((elig & np.isfinite(targets[kf])).sum())
+                      if kf in targets else 0)
             sm = {"version": MODEL_VERSION, "horizon_h": h,
                   "hedge": man["hedge"],
                   "trained_at": man["trained_at"],
                   "sections": n_sections, "symbols": len(syms),
                   "canary_ic": man["canary_ic"],
+                  # Готовность цели книги: строка обучения требует
+                  # закрытого форварда своего горизонта, и медленная
+                  # книга стартует позже быстрых. Без этих чисел пустая
+                  # книга неотличима от сломанной.
+                  "target": kf, "target_rows": n_rows,
+                  "target_need": MIN_TARGET_ROWS,
                   "probe": PROBE, "pretest": PRETEST}
             smp = os.path.join(mdir, "manifest.json")
             with open(smp + ".tmp", "w", encoding="utf-8") as f:

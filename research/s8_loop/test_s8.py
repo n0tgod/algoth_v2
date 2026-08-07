@@ -2481,6 +2481,19 @@ def test_train_cycle_end_to_end():
               any("проверил вчерашние прогнозы" in t for t in th)
               and any("если бы торговал сейчас" in t for t in th),
               str(th[-3:]))
+        # Книги турнира темпов: свой каталог, свой горизонт в манифесте
+        # и готовность СВОЕЙ цели числом — пустая книга без причины
+        # неотличима от сломанной.
+        for hh in (1, 24):
+            bman = json.load(open(os.path.join(
+                T.MODEL_DIR + f"_h{hh}", "manifest.json")))
+            check(f"книга {hh} ч: манифест несёт горизонт и цель",
+                  bman["horizon_h"] == hh
+                  and bman["target"] == f"fwd_{hh}h"
+                  and bman["target_need"] == T.MIN_TARGET_ROWS
+                  and isinstance(bman["target_rows"], int),
+                  str({k: bman.get(k) for k in
+                       ("horizon_h", "target", "target_rows")}))
         picks = [json.loads(x) for x in
                  open(os.path.join(T.MODEL_DIR, "picks.jsonl"))]
         check("выборы обеих рук записаны с часом и ожиданием",

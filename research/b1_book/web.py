@@ -907,11 +907,24 @@ function renderModel() {
     const s = armIc(a);
     return s ? `${a === "gbm" ? "trees" : "neural"}: ${s}` : null;
   }).filter(Boolean).join(" · ");
+  // Книга без выборов обязана называть причину ЧИСЛОМ: цель горизонта
+  // требует закрытого форварда своей длины на каждую строку обучения,
+  // и медленная книга стартует позже быстрых. Пустая книга без этой
+  // строки неотличима от сломанной.
+  const waitLine = (m.target_rows != null && m.target_need
+                    && m.target_rows < m.target_need)
+    ? `<div class="mline" style="border-left:3px solid var(--accent);
+         padding-left:8px">waiting for its target: <b>${m.target}</b>
+       has <b>${m.target_rows}</b> of ${m.target_need} training rows.
+       Each row needs a closed ${bookH(d)} h forward on top of the
+       per-coin beta, so this book starts later than the faster ones —
+       picks begin once the bar is crossed.</div>`
+    : "";
   box.innerHTML = armBtns + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
       icLine ? " · out-of-sample IC: " + icLine : ""}</div>
-    ${picksTable(d)}
+    ${waitLine}${picksTable(d)}
     ${tradeStats(d)}${equityBlock(d)}${tradeTable(d)}
     <div class="mline"><a href="/trades-page?k=${
         encodeURIComponent(KEY)}${MDL.book === "h4" ? ""
