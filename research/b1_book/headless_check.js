@@ -170,13 +170,13 @@ const seen = [];
 global.fetch = async (url) => {
   calls++; seen.push(url);
   const body = url.startsWith("/model_marks")
-             ? {source: "model_pretest", at: Date.UTC(2026,7,3,19,30)/1000,
+             ? {source: "model", at: Date.UTC(2026,7,3,19,30)/1000,
                 rows: [{arm: "gbm", hour: "2026-08-03-18",
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
              : url.startsWith("/model_trades")
-             ? {source: "model_pretest", pretest: true, page: 0, per: 100,
+             ? {source: "model", page: 0, per: 100,
                 total: 3, pages: 1, filtered: false, grand_total: 3,
                 // Кривая счёта: четыре числа на точку — метка,
                 // эквити и границы корзины. Полоса между ними и
@@ -269,56 +269,38 @@ global.fetch = async (url) => {
                             symbols: ["DOGEUSDT", "1000PEPEUSDT"]},
                            {id: "other", symbols: ["BTCUSDT"]}]}
              : url.startsWith("/model")
+               // Боевой контур со сделками: панель сделок теперь живёт
+               // здесь (предпросмотр снят), и без сделок в подставном
+               // ответе её код не исполнялся бы ни разу.
                ? {present: true,
                   manifest: {version: 1, sections: 96, symbols: 540,
                              canary_ic: 0.003, importance: {},
                              trained_at: "2026-08-01T10:00:00+00:00"},
                   thoughts: [{at: "08-01 10:00", text: "проверка"}],
                   ic: [{target: "fwd_4h", median_ic: 0.021, sections: 24}],
-                  contours: [{arm: "gbm", hour: "2026-08-03-19",
-                              n: 520, rho: 0.42}],
-                  // Предпросмотр со сделками ОБЯЗАН быть в подставном
-                  // ответе: без него слой сделок модели не рисуется
-                  // ни разу, и ошибка в нём прошла бы незамеченной —
-                  // ровно тот отказ, который проект ловит везде.
-                  pretest: {
-                    present: true,
-                    manifest: {version: 2, sections: 9, symbols: 543,
-                               hedge: "выключен (бета не оценима)",
-                               canary_ic: 0.004, canary_spread: 0.216,
-                               canary_seeds: 5, importance: {},
-                               trained_at: "2026-08-03T19:30:00+00:00"},
-                    readiness: {sections: 9, need: 48, symbols: 543,
-                                hours_per_symbol: 9, beta_min_hours: 96,
-                                min_section: 30, features: 50,
-                                by_hour: []},
-                    last_run: {reason: "обучилась",
-                               at: "2026-08-03T19:30:13+00:00"},
-                    accounts: {gbm: {balance: 998.3,
-                                     history: [{hour: "2026-08-03-17",
-                                                pnl: -1.7, balance: 998.3},
-                                               {hour: "2026-08-03-18",
-                                                pnl: 0.9, balance: 999.2}]}},
-                    trade_stats: {gbm: {closed: 2, open: 1, no_outcome: 0,
-                                        hit_rate: 0.5, net_bp_avg: -0.5,
-                                        pnl: -0.02, expected_avg: -95.5,
-                                        got_avg: 50.5,
-                                        expected_over_got: 12.5},
-                                  nn: {closed: 0, open: 3,
-                                       no_outcome: 0}},
-                    trades: [
-                      {arm: "gbm", hour: "2026-08-03-19", sym: "BTCUSDT",
-                       side: "long", opened_at: Math.floor(Date.now()/1000)-600,
-                       closes_at: Math.floor(Date.now()/1000)+13800,
-                       state: "открыта", expected_bp: 373, mae_bp: -50,
-                       closes_in_sec: 13800},
-                      {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
-                       side: "short", opened_at: Math.floor(Date.now()/1000)-7800,
-                       closes_at: Math.floor(Date.now()/1000)-1400,
-                       state: "закрыта", expected_bp: -725, mae_bp: -90,
-                       got_bp: 40, net_bp: -51, pnl: -0.85, pos: 166.67}],
-                    thoughts: [{at: "08-03 19:30", text: "предпросмотр"}],
-                    ic: []}}
+                  accounts: {gbm: {balance: 998.3,
+                                   history: [{hour: "2026-08-03-17",
+                                              pnl: -1.7, balance: 998.3},
+                                             {hour: "2026-08-03-18",
+                                              pnl: 0.9, balance: 999.2}]}},
+                  trade_stats: {gbm: {closed: 2, open: 1, no_outcome: 0,
+                                      hit_rate: 0.5, net_bp_avg: -0.5,
+                                      pnl: -0.02, expected_avg: -95.5,
+                                      got_avg: 50.5,
+                                      expected_over_got: 12.5},
+                                nn: {closed: 0, open: 3,
+                                     no_outcome: 0}},
+                  trades: [
+                    {arm: "gbm", hour: "2026-08-03-19", sym: "BTCUSDT",
+                     side: "long", opened_at: Math.floor(Date.now()/1000)-600,
+                     closes_at: Math.floor(Date.now()/1000)+13800,
+                     state: "открыта", expected_bp: 373, mae_bp: -50,
+                     closes_in_sec: 13800},
+                    {arm: "gbm", hour: "2026-08-03-17", sym: "BTCUSDT",
+                     side: "short", opened_at: Math.floor(Date.now()/1000)-7800,
+                     closes_at: Math.floor(Date.now()/1000)-1400,
+                     state: "закрыта", expected_bp: -725, mae_bp: -90,
+                     got_bp: 40, net_bp: -51, pnl: -0.85, pos: 166.67}]}
              : url.startsWith("/bot-full")
                ? {present: true, age_sec: 42.0, arm: "gbm",
                   capital_usd: 1000.0, balance_usd: 1125.01,
@@ -418,14 +400,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__table = typeof shownTrades === 'function' "
                 + "? shownTrades : (typeof shown === 'function' "
                 + "? () => shown().trades : null);"
-                // Вкладка предпросмотра: её надо ОТКРЫТЬ в проверке,
-                // иначе весь её код ни разу не исполняется, и падение
-                // в нём достанется владельцу, а не тесту.
-                + "\nglobal.__pretest = typeof renderModel === 'function' "
-                + "&& typeof MDL !== 'undefined' && 'mode' in MDL "
-                + "? () => { MDL.mode = 'pretest'; renderModel(); "
-                + "          return document.getElementById('modelbox')"
-                + "                 .innerHTML || ''; } : null;")();
+                )();
 (async () => {
   const step = global.__step;
   // Первый кадр отдан самой страницей при загрузке; ждём его, затем
@@ -451,42 +426,27 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ломается от изменения поведения; разметка страницы — это она сама.
   if (!isTrades && !isBot && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
-  // Согласие контуров — мера обученности, и число обязано дойти до
-  // разметки: пустая строка неотличима от «не посчитано». Проверка
-  // стоит ДО открытия вкладки предпросмотра: та переключает MDL.mode
-  // и не возвращает его, а строка живёт только на боевой вкладке.
+  // Панель сделок боевой модели — на обзоре, под переключателем рук.
+  // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
+  // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
-    if (!/0\.42/.test(mb) || !/520 names/.test(mb))
-      bad.push("согласие контуров не показано");
-  }
-  if (global.__pretest) {
-    let html = "";
-    try { html = global.__pretest(); }
-    catch (e) { bad.push("вкладка pre-testing упала: " + e.message); }
-    // Мало не упасть — она обязана НАРИСОВАТЬ сделки. Пустая вкладка
-    // неотличима от «сделок пока нет».
-    if (!html) bad.push("вкладка pre-testing ничего не нарисовала");
-    else {
-      if (!/model trades|no model trades/.test(html))
-        bad.push("вкладка pre-testing не показала сделок");
-      // Режим хеджа обязан быть назван, и рядом — чего он НЕ снимает.
-      // «Грубый хедж» без второй половины читается как «захеджировано»,
-      // а разница бет между ногами остаётся неснятой.
-      if (!/beta is taken as <b>1<\/b>/.test(html))
-        bad.push("вкладка pre-testing не называет режим хеджа");
-      if (!/difference(<\/b>)? between coins/.test(html))
-        bad.push("не сказано, чего грубый хедж НЕ снимает");
-      // Единица показа — ПРОЦЕНТ движения цены (решение владельца).
-      // Проверяется по числу: +373 б.п. обязаны показаться как +3.73 %,
-      // а не как «373». Проверка на наличие знака «%» прошла бы и на
-      // проценте выигрышных сделок, то есть ни о чём.
-      if (!/\+3\.73 %/.test(html))
-        bad.push("сделки показаны не в процентах движения цены");
-      if (/\bbp\b/.test(html))
-        bad.push("в сделках остались базисные пункты");
-    }
+    if (!/model trades|no model trades/.test(mb))
+      bad.push("обзор: панель сделок модели не нарисована");
+    // Единица показа — ПРОЦЕНТ движения цены (решение владельца).
+    // Проверяется по числу: +373 б.п. обязаны показаться как +3.73 %,
+    // а не как «373». Проверка на наличие знака «%» прошла бы и на
+    // проценте выигрышных сделок, то есть ни о чём.
+    if (!/\+3\.73 %/.test(mb))
+      bad.push("обзор: сделки показаны не в процентах движения цены");
+    // Сводка и кривая счёта: числа из подставного ответа.
+    if (!/paper P&amp;L, \$|paper P&L, \$/.test(mb))
+      bad.push("обзор: сводка по сделкам не нарисована");
+    if (!/paper equity/.test(mb) || !/<svg/.test(mb))
+      bad.push("обзор: кривая бумажного счёта не нарисована");
+    if (!/trades-page/.test(mb))
+      bad.push("обзор: нет ссылки на полную историю сделок");
   }
   if (!isTrades && !isBot && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");

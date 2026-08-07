@@ -14,6 +14,11 @@ PAT='bot run --s8'
 BIN=bot/target/release/bot
 LOG=bot/out/bot.log
 JOURNAL=bot/out/shadow
+# Тень ведёт БОЕВУЮ книгу (предпросмотр снят решением владельца
+# 2026-08-07). Источник записывается в журнал маркером: журнал — это
+# запись одной книги, и смена источника поверх старого журнала дала бы
+# сверке смесь двух книг — расхождения, которых не совершал никто.
+S8=research/s8_loop/out/model
 
 if [ "${1:-}" != "--no-build" ]; then
     echo "== собираю =="
@@ -50,8 +55,23 @@ fi
 
 echo "== запускаю =="
 mkdir -p "$JOURNAL"
+# Журнал от другого источника архивируется, а не дописывается. У
+# журналов до введения маркера источником был предпросмотр — их
+# застаёт та же проверка: отсутствие маркера при непустом журнале
+# означает «писано до маркера», то есть предпросмотром.
+MARK="$JOURNAL/source.txt"
+CUR=$(cat "$MARK" 2>/dev/null || true)
+if [ "$CUR" != "$S8" ] \
+        && ls "$JOURNAL"/journal-*.jsonl* >/dev/null 2>&1; then
+    ARCH="${JOURNAL}-$(date -u +%Y%m%d-%H%M%S)"
+    echo "== журнал писан другим источником (${CUR:-до маркера}) =="
+    echo "   архивирую в $ARCH и начинаю чистый"
+    mv "$JOURNAL" "$ARCH"
+    mkdir -p "$JOURNAL"
+fi
+printf '%s\n' "$S8" > "$MARK"
 ( setsid nohup "$BIN" run \
-    --s8 research/s8_loop/out/model_pretest \
+    --s8 "$S8" \
     --journal "$JOURNAL" \
     --arm gbm \
     --fees research/a1_universe/out/fees.json \

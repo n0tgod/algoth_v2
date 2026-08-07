@@ -291,7 +291,7 @@ def recent_pick_symbols(hours=6, s8_root=None):
         os.path.dirname(HERE), "s8_loop", "out")
     out = set()
     cut = time.time() - hours * 3600
-    for name in ("model", "model_pretest"):
+    for name in ("model",):
         try:
             with open(os.path.join(root, name, "picks.jsonl"),
                       encoding="utf-8") as f:
@@ -1358,82 +1358,6 @@ class Collector:
         )
         return st
 
-    @staticmethod
-    def last_preds(mdir):
-        """Последний сохранённый вектор сечения по каждой руке."""
-        out = {}
-        try:
-            with open(os.path.join(mdir, "preds.jsonl"),
-                      encoding="utf-8") as f:
-                lines = f.read().split("\n")
-        except OSError:
-            return out
-        for line in lines:
-            if not line.strip():
-                continue
-            try:
-                r = json.loads(line)
-            except ValueError:
-                continue
-            arm = r.get("arm") or "gbm"
-            prev = out.get(arm)
-            if prev is None or (r.get("hour") or "") >= (prev.get("hour")
-                                                         or ""):
-                out[arm] = r
-        return out
-
-    @staticmethod
-    def rank_corr(xs, ys):
-        """Спирмен без библиотек: Пирсон на рангах, ничьих у
-        предсказаний практически не бывает."""
-        n = len(xs)
-        if n < 3:
-            return None
-        def ranks(v):
-            order = sorted(range(n), key=lambda i: v[i])
-            rk = [0.0] * n
-            for pos, i in enumerate(order):
-                rk[i] = float(pos)
-            return rk
-        rx, ry = ranks(xs), ranks(ys)
-        mx, my = sum(rx) / n, sum(ry) / n
-        sx = sum((a - mx) ** 2 for a in rx) ** 0.5
-        sy = sum((a - my) ** 2 for a in ry) ** 0.5
-        if not sx or not sy:
-            return None
-        return sum((a - mx) * (b - my)
-                   for a, b in zip(rx, ry)) / (sx * sy)
-
-    def contour_agreement(self, s8):
-        """Согласие контуров: ранговая связь предсказаний на одном часе.
-
-        Мера ОБУЧЕННОСТИ, а не сделок: сравниваются целые векторы
-        сечения двух пар весов — насколько по-разному боевая модель и
-        предпросмотр ранжируют одни и те же сотни имён. Расхождение и
-        есть то, что купил настоящий хедж бетой против грубой единицы.
-        Часы обязаны совпадать: на разных часах мерилась бы смесь
-        «другая модель» и «другой рынок».
-        """
-        a = self.last_preds(os.path.join(s8, "model"))
-        b = self.last_preds(os.path.join(s8, "model_pretest"))
-        rows = []
-        for arm in sorted(set(a) & set(b)):
-            ra, rb = a[arm], b[arm]
-            if ra.get("hour") != rb.get("hour"):
-                continue
-            pa = dict(zip(ra.get("syms") or [], ra.get("pred") or []))
-            pb = dict(zip(rb.get("syms") or [], rb.get("pred") or []))
-            common = [s for s in pa
-                      if s in pb and pa[s] is not None
-                      and pb[s] is not None]
-            rho = self.rank_corr([pa[s] for s in common],
-                                 [pb[s] for s in common])
-            if rho is None:
-                continue
-            rows.append({"arm": arm, "hour": ra.get("hour"),
-                         "n": len(common), "rho": round(rho, 3)})
-        return rows
-
     def model_state(self):
         """Состояние модели S8 для страницы: манифест, мысли, живой IC.
 
@@ -1446,18 +1370,10 @@ class Collector:
         if cached is not None and now - at < 30:
             return cached
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        # Предпросмотр снят решением владельца (2026-08-07): боевой
+        # контур обучен и торгует, строительные леса убраны. Его
+        # артефакты остаются на диске, но не отдаются.
         out = self._model_dir_state(os.path.join(s8, "model"))
-        # Предпросмотр — ОТДЕЛЬНЫМ ключом, а не подмешан в тот же. Это
-        # другая модель на другой посылке (хедж выключен, история —
-        # дни), и слить их в одну картинку значило бы однажды прочитать
-        # её счёт как счёт боевой.
-        pre = self._model_dir_state(os.path.join(s8, "model_pretest"))
-        if pre.get("present") or pre.get("readiness"):
-            out["pretest"] = pre
-        # Согласие контуров считается, только когда обучены оба: одна
-        # пара весов сравнивать себя не с чем.
-        if out.get("present") and pre.get("present"):
-            out["contours"] = self.contour_agreement(s8)
         self._model_cache = (now, out)
         return out
 
@@ -1546,7 +1462,7 @@ class Collector:
         return out
 
     def model_trades(self, page=0, per=100, arm=None, state=None,
-                     sym=None, pretest=None, lite=False):
+                     sym=None, lite=False):
         """ВСЯ история сделок модели, страницами, со сводкой по всему.
 
         Отдельно от `model_state`, потому что там история намеренно
@@ -1568,26 +1484,14 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        # По умолчанию берётся тот контур, где сделки есть: боевая
-        # модель молчит до накопления истории, и пустая страница
-        # читалась бы как поломка.
-        want = ("model_pretest" if pretest else "model") if \
-            pretest is not None else None
-        dirs = ([want] if want else ["model_pretest", "model"])
-        out = None
-        for name in dirs:
-            mdir = os.path.join(s8, name)
-            picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
-            revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
-            tr = TR.build(picks, revs, px_at=self.entry_px(picks),
-                          books=TR.load_books(
-                              os.path.join(mdir, "books.jsonl")))
-            TR.mark(tr, self.marks(tr))
-            if tr or out is None:
-                out = (name, tr, revs, mdir)
-            if tr:
-                break
-        name, tr, revs, mdir = out
+        name = "model"
+        mdir = os.path.join(s8, name)
+        picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+        revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
+        tr = TR.build(picks, revs, px_at=self.entry_px(picks),
+                      books=TR.load_books(
+                          os.path.join(mdir, "books.jsonl")))
+        TR.mark(tr, self.marks(tr))
         accs, cap = {}, {}
         for a in ("gbm", "nn"):
             try:
@@ -1618,7 +1522,7 @@ class Collector:
 
         if lite:
             rows, p, g = sliced()
-            return {"source": name, "pretest": name.endswith("pretest"),
+            return {"source": name,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
                     "pages": max(1, (len(rows) + p - 1) // p),
@@ -1662,7 +1566,7 @@ class Collector:
         # одной цифры не читается вовсе.
         curve_out = {a: TR.thin(curves[a]) for a in ("gbm", "nn")}
         curve_out["all"] = TR.thin(both_c)
-        return {"source": name, "pretest": name.endswith("pretest"),
+        return {"source": name,
                 "curves": curve_out, "start": TR.START_BALANCE,
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),
@@ -1817,29 +1721,29 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        for name in ("model_pretest", "model"):
-            mdir = os.path.join(s8, name)
-            pk = self._jsonl(os.path.join(mdir, "picks.jsonl"))
-            tr = TR.build(pk, self._jsonl(os.path.join(mdir,
-                                                       "review.jsonl")),
-                          px_at=self.entry_px(pk),
-                          books=TR.load_books(
-                              os.path.join(mdir, "books.jsonl")))
-            for a in ("gbm", "nn"):
-                TR.account(tr, a)
-            op = [t for t in tr if t.get("state") == "открыта"]
-            if not op:
-                continue
-            TR.mark(op, self.marks(op))
-            return {"source": name, "at": round(time.time(), 1),
-                    "rows": [{"arm": t["arm"], "hour": t["hour"],
-                              "sym": t["sym"], "side": t["side"],
-                              "cur_px": t.get("cur_px"),
-                              "unreal_bp": t.get("unreal_bp"),
-                              "unreal_net_bp": t.get("unreal_net_bp"),
-                              "closes_in_sec": t.get("closes_in_sec")}
-                             for t in op]}
-        return {"source": None, "at": round(time.time(), 1), "rows": []}
+        name = "model"
+        mdir = os.path.join(s8, name)
+        pk = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+        tr = TR.build(pk, self._jsonl(os.path.join(mdir,
+                                                   "review.jsonl")),
+                      px_at=self.entry_px(pk),
+                      books=TR.load_books(
+                          os.path.join(mdir, "books.jsonl")))
+        for a in ("gbm", "nn"):
+            TR.account(tr, a)
+        op = [t for t in tr if t.get("state") == "открыта"]
+        if not op:
+            return {"source": None, "at": round(time.time(), 1),
+                    "rows": []}
+        TR.mark(op, self.marks(op))
+        return {"source": name, "at": round(time.time(), 1),
+                "rows": [{"arm": t["arm"], "hour": t["hour"],
+                          "sym": t["sym"], "side": t["side"],
+                          "cur_px": t.get("cur_px"),
+                          "unreal_bp": t.get("unreal_bp"),
+                          "unreal_net_bp": t.get("unreal_net_bp"),
+                          "closes_in_sec": t.get("closes_in_sec")}
+                         for t in op]}
 
     @staticmethod
     def _jsonl(path):

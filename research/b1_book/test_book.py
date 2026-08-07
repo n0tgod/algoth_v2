@@ -216,13 +216,13 @@ def test_page_has_no_external_loads():
     check("со страницы ядра есть возврат на обзор",
           'id="back"' in web.BOTPAGE and "/?k=" in web.BOTPAGE)
     # Строка таблицы отвечает «сколько», но не «что там было с ценой».
-    # Ссылка обязана нести ВСЕ четыре опознавателя сделки: без руки на
-    # графике оказались бы обе модели, без источника — не тот контур.
+    # Ссылка обязана нести все опознаватели сделки: без руки на графике
+    # оказались бы обе модели, без часа — не та сделка.
     link = re.search(r'href="/chart\?[^"]*"', web.TRADES)
     check("из строки сделки открывается график: "
           + (link.group(0)[:80] if link else "ссылки нет"),
           bool(link) and all(p in link.group(0)
-                             for p in ("sym=", "arm=", "hour=", "pretest=")))
+                             for p in ("sym=", "arm=", "hour=")))
 
 
 def test_pages_do_not_shadow_platform_globals():
@@ -396,7 +396,7 @@ def test_pages_run_headless():
                 ("обзор", web.PAGE, None),
                 ("график", web.CHART, None),
                 ("график по ссылке на сделку", web.CHART,
-                 "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14&pretest=1"),
+                 "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14"),
                 ("сделки", web.TRADES, None),
                 ("ядро", web.BOTPAGE, None)):
             p = os.path.join(d, "p.html")
@@ -435,14 +435,13 @@ def test_model_trades_lite_matches_full():
     try:
         def fake(path):
             base = os.path.basename(path)
-            if ("model_pretest" in path
-                    and base in ("picks.jsonl", "review.jsonl")):
+            if base in ("picks.jsonl", "review.jsonl"):
                 return orig(os.path.join(fx, base))
             return []
         C.Collector._jsonl = staticmethod(fake)
         c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
-        full = c.model_trades(pretest=True, per=500)
-        lite = c.model_trades(pretest=True, per=500, lite=True)
+        full = c.model_trades(per=500)
+        lite = c.model_trades(per=500, lite=True)
         check("фикстура дала сделки", len(full["rows"]) > 5,
               str(len(full["rows"])))
         # Полный путь дописывает в строки просадку (`dd_*`) из почасовых
@@ -467,8 +466,7 @@ def test_model_trades_lite_matches_full():
         check("деньги в строках остались (счёт не выброшен)",
               bool(closed) and all(t.get("pnl") is not None
                                    for t in closed))
-        sub = c.model_trades(pretest=True, per=500, lite=True,
-                             sym="AAAUSDT")
+        sub = c.model_trades(per=500, lite=True, sym="AAAUSDT")
         check("лёгкий: фильтр по монете работает",
               sub["rows"] and all(t["sym"] == "AAAUSDT"
                                   for t in sub["rows"]))
@@ -2034,11 +2032,11 @@ def test_all_symbols_filter():
     # обрыв ряда до разбора заморозил бы слот навсегда (урок RAREUSDT).
     import time as _t
     s8 = os.path.join(d, "s8")
-    os.makedirs(os.path.join(s8, "model_pretest"))
+    os.makedirs(os.path.join(s8, "model"))
     now = _t.time()
     hour = lambda ago: _t.strftime(                      # noqa: E731
         "%Y-%m-%d-%H", _t.gmtime(now - ago * 3600))
-    with open(os.path.join(s8, "model_pretest", "picks.jsonl"),
+    with open(os.path.join(s8, "model", "picks.jsonl"),
               "w", encoding="utf-8") as f:
         f.write(J.dumps({"arm": "gbm", "hour": hour(1),
                          "long": [{"sym": "UBERUSDT"}],
@@ -2049,59 +2047,6 @@ def test_all_symbols_filter():
     grace = C.recent_pick_symbols(s8_root=s8)
     check("свежий выбор в грейсе, старый отпущен",
           grace == {"UBERUSDT"}, str(grace))
-
-
-def test_contour_agreement_is_rank_based_and_same_hour():
-    """Согласие контуров: ранги на ОДНОМ часе, иначе пропуск.
-
-    Мера обученности: сравниваются целые векторы сечения боевых весов
-    и предпросмотра. Обратный порядок обязан дать −1, совпадающий +1;
-    разные часы — пропуск, а не сравнение «модель против рынка».
-    """
-    import json as J
-    import tempfile
-    import shutil
-    import collect as C
-
-    d = tempfile.mkdtemp()
-    try:
-        s8 = d
-        for name in ("model", "model_pretest"):
-            os.makedirs(os.path.join(s8, name))
-        syms = [f"S{i}USDT" for i in range(8)]
-        pred = [float(i) for i in range(8)]
-        def put(name, arm, hour, p):
-            with open(os.path.join(s8, name, "preds.jsonl"), "a",
-                      encoding="utf-8") as f:
-                f.write(J.dumps({"arm": arm, "hour": hour,
-                                 "syms": syms, "pred": p}) + "\n")
-        put("model", "gbm", "2026-08-07-13", pred)
-        put("model_pretest", "gbm", "2026-08-07-13", pred[::-1])
-        put("model", "nn", "2026-08-07-13", pred)
-        put("model_pretest", "nn", "2026-08-07-13", pred)
-        # у третьей руки часы разошлись — сравнивать нельзя
-        put("model", "x", "2026-08-07-13", pred)
-        put("model_pretest", "x", "2026-08-07-12", pred)
-        root = tempfile.mkdtemp()
-        try:
-            c = C.Collector(["TEST"], [], root, lambda m: None,
-                            paper=True)
-            rows = {r["arm"]: r for r in c.contour_agreement(s8)}
-            check("обратный порядок даёт −1",
-                  rows.get("gbm", {}).get("rho") == -1.0,
-                  str(rows.get("gbm")))
-            check("совпадающий порядок даёт +1",
-                  rows.get("nn", {}).get("rho") == 1.0,
-                  str(rows.get("nn")))
-            check("разные часы — пропуск, а не сравнение",
-                  "x" not in rows, str(sorted(rows)))
-            check("число имён названо",
-                  rows.get("gbm", {}).get("n") == 8,
-                  str(rows.get("gbm")))
-        finally:
-            shutil.rmtree(root, ignore_errors=True)
-    finally:
-        shutil.rmtree(d, ignore_errors=True)
 
 
 def test_shard_split_covers_everything():
@@ -2374,7 +2319,6 @@ def main():
     test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
     test_all_symbols_filter()
-    test_contour_agreement_is_rank_based_and_same_hour()
     test_shard_split_covers_everything()
     test_pack_queue_single_worker()
     print("бумажные сделки")
