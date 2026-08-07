@@ -901,10 +901,28 @@ function renderModel() {
     }
     cap.textContent = rd ? `${rd.sections}/${rd.need} sections`
                          : "accumulating data";
+    // Вердикт последнего цикла обязан быть виден: «96/48 готово» при
+    // отсутствующей модели читается как поломка, хотя цикл честно
+    // ходит и ждёт своего гейта. Причины — ключи сервера, перевод на
+    // границе показа.
+    const lr = d.last_run || {};
+    const WHY = {"нет главной цели": "main target fwd_4h not ready — it "
+      + "is the residual to the wave, so it needs a per-coin beta "
+      + "(96 h of eligible history) plus a closed 4 h forward; first "
+      + "weights come a few hours after beta crosses the bar",
+      "мало сечений": "not enough sections yet",
+      "канарейка кричит": "leak canary fired — weights withheld",
+      "канарейка не считалась": "canary had nothing to count",
+      "обучилась": "trained"};
+    const prog2 = lr.reason
+      ? prog + `<div class="mline">last cycle ${lr.at
+          ? String(lr.at).slice(11, 16) + " UTC" : ""}: <b>${
+          WHY[lr.reason] || lr.reason}</b></div>`
+      : prog;
     box.innerHTML = armBtns + `<div class="mline">two models will train
       here — trees (ML) vs neural net (AI) — once 48 closed hourly
       cross-sections accumulate (~2 days of full-list recording).</div>`
-      + prog;
+      + prog2;
     wireArms();
     return;
   }
