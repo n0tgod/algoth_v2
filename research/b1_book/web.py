@@ -2521,7 +2521,16 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
   <div id="rules"></div>
   <canvas id="eq"></canvas>
 </div>
-<div class="panel">
+<div class="panel" id="mpanel">
+  <div class="cap"><span>trades on this pair &mdash; model</span>
+    <span id="cap4" class="mono"></span></div>
+  <div class="hist"><table><thead><tr>
+    <th>entered utc</th><th>side</th><th>entry</th><th>exit</th>
+    <th>exp</th><th>got</th><th>net</th><th>$</th><th>state</th>
+  </tr></thead><tbody id="mrows"></tbody></table></div>
+  <div id="mnote" class="note"></div>
+</div>
+<div class="panel" id="ppanel">
   <div class="cap"><span>trade history — paper, observation</span>
     <span id="cap3" class="mono"></span></div>
   <div class="hist"><table><thead><tr>
@@ -2613,7 +2622,7 @@ async function pullRec(go) {
   if (REC.data && !REC.data.busy && REC.timer) {
     clearInterval(REC.timer); REC.timer = null;
   }
-  renderRec(); draw(); rows(); summary();
+  renderRec(); draw(); rows(); mrows(); summary();
 }
 
 // Пересчёт годен к показу, только когда он досчитан и посчитан по ЭТОЙ
@@ -2912,7 +2921,7 @@ async function pull() {
     renderGroups();
   }
   markPick();
-  draw(); rows(); summary();
+  draw(); rows(); mrows(); summary();
 }
 
 // --- выбор монеты: сектора и поиск, как на обзоре ---------------------
@@ -3472,14 +3481,70 @@ function rows() {
     <td title="${m.why || ""}">${disp(m.state)}</td>
     <td class="mono">${m.held == null ? "—" : m.held + " s"}</td>
     <td class="mono">${res(m)}</td></tr>`
-  ).join("") : `<tr><td colspan="11" style="color:var(--muted)">${
-    HIST.off
-      ? `hand-rolled detector is off — its direction was closed by
-         measurements T1&ndash;T4, and absorption now enters the model
-         as features (eat_bid/eat_ask, big_rel, imbalances). The book
-         and tape are still recorded; run the collector with
+  ).join("") : `<tr><td colspan="11" style="color:var(--muted)">
+    no events yet — detector waits for conditions</td></tr>`;
+  // Выключённый детектор не показывает пустую таблицу: страницу
+  // открывают ради сделки МОДЕЛИ, а пустая таблица чужого механизма
+  // рядом читается как «сделки не записываются» — владелец так её и
+  // прочёл. Панель прячется, причина уезжает строкой под сделки
+  // модели, где её видно и где она никого не сбивает.
+  const pp = document.getElementById("ppanel");
+  if (pp && pp.style) pp.style.display = HIST.off ? "none" : "";
+}
+
+// Сделки МОДЕЛИ по этой паре — то, ради чего график и открывают.
+// Отдельной таблицей, а не вместе с бумажными: два механизма в одной
+// таблице однажды сложили бы свою статистику (правило проекта).
+function mrows() {
+  const list = modelTrades().slice()
+    .sort((a, b) => (b.opened_at || 0) - (a.opened_at || 0));
+  const bookName = MDL.hz === "sit" ? "situational"
+    : MDL.hz ? MDL.hz.replace("h", "") + " h book" : "4 h book";
+  document.getElementById("cap4").textContent =
+    `${list.length} on ${sym.replace("USDT", "")} · ${
+      MDL.arm === "nn" ? "ai (neural)" : "ml (trees)"} · ${bookName}`;
+  document.getElementById("mrows").innerHTML = list.length
+    ? list.map(t => {
+        const ex = mdlExit(t);
+        const cls = t.net_bp == null ? ""
+          : (t.net_bp > 0 ? "buy" : "sell");
+        // Открытая сделка несёт нереализованное — иначе колонка «net»
+        // у неё пуста, и живая позиция выглядит как потерянная.
+        const net = t.net_bp != null ? pct(t.net_bp)
+          : t.unreal_net_bp != null
+            ? `<span style="color:var(--muted)">${
+                pct(t.unreal_net_bp)} live</span>` : "—";
+        const here = t.hour === MDL.hour;
+        return `<tr data-h="${t.hour}" style="cursor:pointer${
+          here ? ";background:rgba(127,127,255,.10)" : ""}"
+          title="click to centre the chart on this trade">
+        <td class="mono">${stamp(t.opened_at)}</td>
+        <td class="${t.side === "long" ? "buy" : "sell"}">${t.side}</td>
+        <td class="mono">${t.entry_px == null ? "—" : t.entry_px}</td>
+        <td class="mono">${ex == null ? "—" : +ex.toPrecision(10)}</td>
+        <td class="mono" style="color:var(--muted)">${
+          pct(t.expected_bp)}</td>
+        <td class="mono">${pct(t.got_bp)}</td>
+        <td class="mono ${cls}">${net}</td>
+        <td class="mono ${cls}">${t.pnl == null ? "—"
+          : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
+        <td style="color:var(--muted)">${disp(t.state)}${
+          t.exit_reason ? " · " + disp(t.exit_reason) : ""}</td></tr>`;
+      }).join("")
+    : `<tr><td colspan="9" style="color:var(--muted)">no model trades on
+       this pair in the shown book — try the other arm or another
+       book</td></tr>`;
+  const note = document.getElementById("mnote");
+  if (note) {
+    note.innerHTML = HIST.off
+      ? `The hand-rolled tape detector is off, so its own paper-trade
+         table is hidden: its direction was closed by measurements
+         T1&ndash;T4 and absorption now enters the model as features
+         (eat_bid/eat_ask, big_rel, imbalances). Book and tape are
+         still recorded; run the collector with
          <span class="mono">--paper</span> to watch it again.`
-      : "no events yet — detector waits for conditions"}</td></tr>`;
+      : "";
+  }
 }
 
 function verLine(list, cur) {
@@ -3705,6 +3770,23 @@ document.getElementById("fit").onclick = () => {
   view = {i0:0, n:c.length}; follow=false;
   document.getElementById("live").setAttribute("aria-pressed","false"); draw();
 };
+// Клик по строке сделки модели — центрировать график на ней. То же
+// самое, что ссылка с часом в адресе, только без перезагрузки; час
+// уезжает в адрес, чтобы страницу можно было переслать.
+document.getElementById("mrows").onclick = e => {
+  const tr = e.target && e.target.closest
+    ? e.target.closest("[data-h]") : null;
+  if (!tr) return;
+  MDL.hour = tr.dataset.h || "";
+  const p = new URLSearchParams(location.search);
+  p.set("hour", MDL.hour);
+  p.set("arm", MDL.arm);
+  history.replaceState(null, "", location.pathname + "?" + p.toString());
+  MDL.fit = true;
+  fitFocus();
+  mrows();
+};
+
 document.getElementById("live").onclick = e => {
   follow = !follow; e.target.setAttribute("aria-pressed", String(follow));
   draw();

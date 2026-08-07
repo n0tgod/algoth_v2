@@ -740,19 +740,37 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   }
   // Встроенный режим графика: с embed=1 шапка и сводка спрятаны, без
   // него — на месте. Ошибка в любую сторону — молчаливый отказ показа.
+  if (isChart) {
+    // Ради чего график и открывают: сделки МОДЕЛИ по этой паре —
+    // теми же числами, что в книге. Подставной ответ несёт закрытую
+    // сделку руки `gbm` (+0.40 % ход, −0.51 % нетто, −0.85 $) и
+    // открытую; обе обязаны стоять в таблице своей строкой.
+    const mr = global.__el ? String(global.__el("mrows").innerHTML || "") : "";
+    // Ход закрытой сделки одинаков у обеих рук (+0.40 %), а деньги
+    // свои: у деревьев −0.85 $, у сети +0.48. Проверяется показанная
+    // рука — иначе таблица могла бы печатать чужую и пройти.
+    const money = /arm=nn/.test(SEARCH) ? /\+0\.48/ : /-0\.85/;
+    if (!/\+0\.40 %/.test(mr) || !money.test(mr))
+      bad.push("график: сделки модели по паре не выписаны строками");
+    if (!/data-h="2026-08-03-14"/.test(mr))
+      bad.push("график: строка сделки не несёт часа для наведения");
+    const c4 = global.__el
+      ? String(global.__el("cap4").textContent || "") : "";
+    if (!/BTC/.test(c4) || !/book|situational/.test(c4))
+      bad.push("график: заголовок сделок модели не называет пару и книгу");
+  }
+
   if (isChart && /paperoff=1/.test(SEARCH)) {
     // Выключенный детектор обязан называть себя выключенным. «Ждёт
     // условий» на выключенном наблюдении — ложь, и владелец прочёл её
     // как «сделки не записываются».
-    const rw = global.__el ? String(global.__el("rows").innerHTML || "") : "";
-    if (/waits for conditions/.test(rw))
-      bad.push("график: выключенный детектор назван ждущим условий");
-    if (!/--paper/.test(rw) || !/is off/.test(rw))
-      bad.push("график: причина пустой истории сделок не названа");
-    const c3 = global.__el
-      ? String(global.__el("cap3").textContent || "") : "";
-    if (!/detector off/.test(c3))
-      bad.push("график: заголовок истории не говорит о выключенном детекторе");
+    const pp = global.__el ? global.__el("ppanel") : null;
+    const dsp = pp && pp.style ? String(pp.style.display || "") : "";
+    if (dsp !== "none")
+      bad.push("график: пустая таблица чужого детектора осталась на виду");
+    const mn = global.__el ? String(global.__el("mnote").innerHTML || "") : "";
+    if (!/--paper/.test(mn) || !/is off/.test(mn))
+      bad.push("график: причина спрятанной таблицы не названа");
   }
 
   if (isChart) {
