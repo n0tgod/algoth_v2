@@ -928,6 +928,38 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d2, ignore_errors=True)
 
+        # Смена правил книги отставляет старые сделки в архив: часовую
+        # логику v1 (с дефектом сторон у шортов) нельзя сводить в один
+        # счёт с живым сканером. Той же версии каталог не трогается.
+        d7 = tempfile.mkdtemp()
+        try:
+            old_dir = os.path.join(d7, "model_sit")
+            os.makedirs(old_dir)
+            with open(os.path.join(old_dir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps({"situational": True}))  # v1: поля нет
+            with open(os.path.join(old_dir, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps({"arm": "gbm",
+                                     "hour": "2026-08-07-09",
+                                     "long": [], "short": []}) + "\n")
+            got7 = T.fresh_sit_on_rules_change(old_dir, lambda m: None)
+            check("книга прежних правил отставлена в архив",
+                  got7 and not os.path.exists(old_dir)
+                  and os.path.isdir(got7)
+                  and os.path.exists(os.path.join(got7, "picks.jsonl")),
+                  str(got7))
+            os.makedirs(old_dir)
+            with open(os.path.join(old_dir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(
+                    {"rules_version": T.SIT_RULES_VERSION}))
+            check("книга тех же правил не трогается",
+                  T.fresh_sit_on_rules_change(old_dir, lambda m: None)
+                  is None and os.path.isdir(old_dir))
+        finally:
+            shutil.rmtree(d7, ignore_errors=True)
+
         # Контроль двойной перестановки сторон: шорт с ходом против
         # МЕЛЬЧЕ обещания обязан остаться открытым. Дефект был найден
         # ровно здесь: правило сторон применялось к уже размеченным

@@ -1011,6 +1011,49 @@ SIT_MIN_EDGE_BP = 2 * ROUND_COST_BP
 SIT_MIN_RR = 2.0
 SIT_MAX_AGE_H = 24
 SIT_SIGNAL_H = 4                  # горизонт целей, дающих сигнал
+# Версия ПРАВИЛ книги — часть её определения (урок RULES_VERSION).
+# v1 — часовые входы, и в выходах жил дефект перестановки сторон у
+# шортов; v2 — живой сканер (вход в моменте) с исправленными
+# сторонами. Сделки разных правил нельзя сводить в один счёт: кривая
+# описывала бы книгу, которой не было. Смена версии отставляет старую
+# книгу в архив — тем же приёмом, что смена режима хеджа.
+SIT_RULES_VERSION = 2
+
+
+def fresh_sit_on_rules_change(mdir, log_=None):
+    """Сменились правила ситуационной книги — старая уходит в архив.
+
+    Каталог не удаляется, а переименовывается: история прогона —
+    запись, а не мусор, и сравнить старую книгу с новой можно будет
+    чтением. Имя архива выводится из ПРЕЖНЕЙ версии правил, повторный
+    запуск копий не плодит.
+    """
+    try:
+        with open(os.path.join(mdir, "manifest.json"),
+                  encoding="utf-8") as f:
+            was = int((json.load(f) or {}).get("rules_version") or 1)
+    except (OSError, ValueError):
+        return None                # каталога нет или пуст — нечего
+    if was == SIT_RULES_VERSION:
+        return None
+    dst = f"{mdir}.rules-v{was}"
+    n = 0
+    while os.path.exists(dst):
+        n += 1
+        dst = f"{mdir}.rules-v{was}-{n}"
+    try:
+        os.rename(mdir, dst)
+    except OSError as e:
+        if log_:
+            log_(f"правила ситуационной книги сменились, но каталог "
+                 f"не отставить: {e}")
+        return None
+    if log_:
+        log_(f"правила ситуационной книги сменились "
+             f"(v{was} → v{SIT_RULES_VERSION}) — старые сделки "
+             f"отставлены в {os.path.basename(dst)}, книга начинается "
+             f"заново")
+    return dst
 
 
 def sit_open_positions(picks, reviews, arm):
@@ -1784,6 +1827,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # с фиксированными слотами; правила и пороги — у `situational_arm`.
     try:
         mdir = MODEL_DIR + "_sit"
+        fresh_sit_on_rules_change(mdir, log_)
         os.makedirs(mdir, exist_ok=True)
         # Бета по имени — из признака сечения: сканеру она нужна,
         # чтобы вычесть волну из живого хода и сравнить остаток с
@@ -1813,6 +1857,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         n_rows = (int((elig & np.isfinite(targets[kf])).sum())
                   if kf in targets else 0)
         sm = {"version": MODEL_VERSION, "situational": True,
+              "rules_version": SIT_RULES_VERSION,
               "horizon_h": None, "slots": SIT_SLOTS,
               "hedge": man["hedge"], "trained_at": man["trained_at"],
               "sections": n_sections, "symbols": len(syms),
