@@ -3242,7 +3242,14 @@ function draw() {
   const foc = focused();
   for (const t of MT) {
     if (!t.opened_at || !t.entry_px) continue;
-    const end = t.closes_at || t.opened_at;
+    // У ОТКРЫТОЙ сделки конца ещё нет: у ситуационной книги срока не
+    // существует вовсе, у часовых он в будущем. Спан обязан тянуться
+    // до правого края — иначе `xb` совпадает с `xa`, зоны и обещания
+    // отсекаются проверкой ширины, и от живой позиции остаётся одна
+    // точка входа (владелец увидел ровно это). Так же ведёт себя слой
+    // бумажных сделок: у открытой конца нет, и она идёт до края.
+    const live = t.state !== "закрыта";
+    const end = t.closes_at || (live ? t1 + 60 : t.opened_at);
     if (end < t0 - 3600 || t.opened_at > t1 + 3600) continue;
     const xa = clamp(xt(t.opened_at));
     const xb = clamp(xt(Math.min(end, t1 + 60)));
@@ -3296,7 +3303,21 @@ function draw() {
     // сделки в фокусе: на графике с десятком сделок подписи каждой
     // слились бы в шум.
     const promise = (pv, colr, lab) => {
-      if (pv == null || pv < lo || pv > hi || xb <= xa + 1) return;
+      if (pv == null || xb <= xa + 1) return;
+      if (pv < lo || pv > hi) {
+        // Уровень за краем окна цены: нарисовать нельзя, промолчать —
+        // значит показать сделку без цели. У сделки в фокусе ставится
+        // метка у края со стрелкой и ценой; та же честность, что у
+        // «сделка вне окна свечей».
+        if (!me) return;
+        g.fillStyle = colr;
+        g.fillText(`${lab} ${pv.toFixed(dec)} ${
+          pv > hi ? "↑" : "↓"} off scale`,
+          // Нижняя метка ставится НАД полосой объёма (она занимает
+          // 16 % высоты), иначе тонет в гистограмме.
+          xa + 4, pv > hi ? padT + 8 : padT + ph * 0.8);
+        return;
+      }
       g.strokeStyle = colr; g.lineWidth = me ? 1.6 : 1.1;
       g.setLineDash([5, 4]);
       g.beginPath(); g.moveTo(xa, y(pv)); g.lineTo(xb, y(pv));
