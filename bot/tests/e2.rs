@@ -205,6 +205,34 @@ fn ситуационная_тень_сходится_с_питон_счётом
 }
 
 #[test]
+fn журнал_переначинается_со_сменой_правил_книги() {
+    use bot::engine::fresh_journal_on_rules_change;
+    let sit = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/parity_sit"); // манифест с rules_version
+    let jd = tmp("rules-journal");
+    // Журнал без маркера при объявленных правилах — отставляется:
+    // доказать свою версию он не умеет (живая миграция v2 → v3).
+    fs::write(jd.join("journal-2026-08-07.jsonl"), b"").unwrap();
+    fs::write(jd.join("KILL"), b"").unwrap();
+    let dst = fresh_journal_on_rules_change(&sit, &jd).unwrap();
+    let dst = dst.expect("журнал обязан отставиться");
+    assert!(dst.join("journal-2026-08-07.jsonl").exists());
+    assert!(!jd.join("journal-2026-08-07.jsonl").exists());
+    assert!(
+        jd.join("KILL").exists(),
+        "выключатель не снимается сменой книги"
+    );
+    assert!(jd.join("rules_version.txt").exists());
+    // Повторный вызов — пустой: версия совпала.
+    assert!(fresh_journal_on_rules_change(&sit, &jd).unwrap().is_none());
+    // Книга без объявленных правил журнал не трогает.
+    let plain = fixture(); // главная книга: rules_version в манифесте нет
+    assert!(
+        fresh_journal_on_rules_change(&plain, &jd).unwrap().is_none()
+    );
+}
+
+#[test]
 fn выключатель_отвергает_входы_и_отказ_терминален() {
     let jd = tmp("kill");
     fs::write(jd.join("KILL"), b"").unwrap();

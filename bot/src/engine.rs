@@ -32,6 +32,78 @@ pub struct BookMode {
     pub slots: Option<f64>,
 }
 
+/// Версия правил книги из её манифеста; `None`, если книга правил не
+/// объявляет (книги горизонтов) или манифеста нет.
+pub fn book_rules_version(s8_dir: &Path) -> Option<i64> {
+    #[derive(serde::Deserialize)]
+    struct Man {
+        #[serde(default)]
+        rules_version: Option<i64>,
+    }
+    let text = std::fs::read_to_string(s8_dir.join("manifest.json")).ok()?;
+    serde_json::from_str::<Man>(&text).ok()?.rules_version
+}
+
+/// Журнал — запись ОДНОЙ книги. Сменились правила книги (цикл отставил
+/// её в архив и начал заново) — журнал обязан переначаться тоже:
+/// прежних сделок в новых файлах не существует, и сверка кричала бы о
+/// расхождениях, которых никто не совершал. Прежний журнал
+/// отставляется рядом, не удаляется; файл KILL переносится в свежий
+/// каталог — аварийный выключатель не снимается сменой книги.
+///
+/// Журнал без маркера версии при объявленных правилах тоже
+/// отставляется: журнал, не умеющий доказать свою версию, не
+/// принадлежит ни одной из известных.
+pub fn fresh_journal_on_rules_change(
+    s8_dir: &Path,
+    journal_dir: &Path,
+) -> std::io::Result<Option<PathBuf>> {
+    let Some(ver) = book_rules_version(s8_dir) else {
+        return Ok(None);
+    };
+    let marker = journal_dir.join("rules_version.txt");
+    let was: Option<i64> = std::fs::read_to_string(&marker)
+        .ok()
+        .and_then(|t| t.trim().parse().ok());
+    if was == Some(ver) {
+        return Ok(None);
+    }
+    let has_journal = std::fs::read_dir(journal_dir)
+        .map(|it| {
+            it.flatten().any(|e| {
+                e.file_name().to_string_lossy().starts_with("journal-")
+            })
+        })
+        .unwrap_or(false);
+    if !has_journal {
+        std::fs::create_dir_all(journal_dir)?;
+        std::fs::write(&marker, format!("{ver}
+"))?;
+        return Ok(None);
+    }
+    let tag = was.map(|v| v.to_string()).unwrap_or_else(|| "0".into());
+    let mut dst = journal_dir.with_file_name(format!(
+        "{}.rules-v{tag}",
+        journal_dir.file_name().unwrap_or_default().to_string_lossy()
+    ));
+    let mut n = 0;
+    while dst.exists() {
+        n += 1;
+        dst = journal_dir.with_file_name(format!(
+            "{}.rules-v{tag}-{n}",
+            journal_dir.file_name().unwrap_or_default().to_string_lossy()
+        ));
+    }
+    std::fs::rename(journal_dir, &dst)?;
+    std::fs::create_dir_all(journal_dir)?;
+    if dst.join("KILL").exists() {
+        std::fs::write(journal_dir.join("KILL"), b"")?;
+    }
+    std::fs::write(&marker, format!("{ver}
+"))?;
+    Ok(Some(dst))
+}
+
 pub fn book_mode(s8_dir: &Path) -> BookMode {
     #[derive(serde::Deserialize)]
     struct Man {

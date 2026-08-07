@@ -120,6 +120,26 @@ pub fn tick(cfg: &DaemonCfg, mem: &mut TickMemory, now_ms: i64) -> Status {
         },
         error: None,
     };
+    // Правила книги сменились (цикл отставил её в архив) — журнал
+    // переначинается ДО прохода: тень старой книги в новых файлах
+    // выглядела бы расхождениями, которых никто не совершал.
+    match crate::engine::fresh_journal_on_rules_change(
+        &cfg.s8_dir,
+        &cfg.journal_dir,
+    ) {
+        Ok(Some(dst)) => {
+            eprintln!(
+                "правила книги сменились — журнал отставлен в {}",
+                dst.display()
+            );
+        }
+        Ok(None) => {}
+        Err(e) => {
+            status.error = Some(format!("смена правил книги: {e}"));
+            write_status(&cfg.journal_dir, &status);
+            return status;
+        }
+    }
     let ecfg = Cfg {
         s8_dir: cfg.s8_dir.clone(),
         journal_dir: cfg.journal_dir.clone(),
