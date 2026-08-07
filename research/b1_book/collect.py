@@ -1267,6 +1267,17 @@ class Collector:
         sys.path.insert(0, root)
         import sverka as SV
         jdir = os.path.join(root, "out", "shadow")
+        # Книга тени — из маркера источника журнала (пишет run_bot.sh):
+        # странице нужен адрес книги, чтобы открыть сделку на графике
+        # именно той книги, которую ведёт ядро.
+        try:
+            with open(os.path.join(jdir, "source.txt"),
+                      encoding="utf-8") as f:
+                base = os.path.basename(f.read().strip())
+        except OSError:
+            base = ""
+        st["book_hz"] = {"model_h1": "h1", "model_h24": "h24",
+                         "model_sit": "sit"}.get(base, "")
         try:
             recs = SV.read_journal(jdir)
         except SystemExit as e:

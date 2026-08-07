@@ -397,6 +397,11 @@ def test_pages_run_headless():
                 ("график", web.CHART, None),
                 ("график по ссылке на сделку", web.CHART,
                  "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14"),
+                # Встроенный режим: график живёт внутри страницы ядра,
+                # обрамление спрятано, слой сделок работает.
+                ("график встроенный", web.CHART,
+                 "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14"
+                 "&hz=sit&embed=1"),
                 ("сделки", web.TRADES, None),
                 ("ядро", web.BOTPAGE, None)):
             p = os.path.join(d, "p.html")

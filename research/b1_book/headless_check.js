@@ -392,6 +392,7 @@ global.fetch = async (url) => {
                   sverka: {ok: true, at_ms: 1785952800000,
                            note: "расхождений нет"},
                   error: null, server_now: 1785952860,
+                  book_hz: "sit",
                   counts: {decisions: 12, rejects: 1, closed: 8, open: 1},
                   closed_total: 8,
                   positions: [{pos: "gbm:2026-08-05-10:AAAUSDT:long",
@@ -482,6 +483,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__table = typeof shownTrades === 'function' "
                 + "? shownTrades : (typeof shown === 'function' "
                 + "? () => shown().trades : null);"
+                // Клик по сделке ядра открывает её на графике: без
+                // вызова этот код не исполняется ни разу.
+                + "\nglobal.__showTrade = typeof showTrade === 'function' "
+                + "? showTrade : null;"
                 // Книгу турнира темпов надо ОТКРЫТЬ в проверке, иначе
                 // её код ни разу не исполняется — тот же урок, что
                 // с вкладкой предпросмотра.
@@ -669,6 +674,34 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const svp = String(global.__el("sv").textContent || "");
     if (!/Сверка бота/.test(svp))
       bad.push("ядро: отчёт сверки не показан");
+    // Клик по сделке открывает её на графике над equity. Проверяется
+    // числами: адрес встроенного графика обязан нести монету, руку,
+    // час, КНИГУ и embed — без книги график молча показал бы не ту.
+    const posHtml = String(global.__el("pos").innerHTML || "");
+    if (!/data-pos="gbm:2026-08-05-10:AAAUSDT:long"/.test(posHtml))
+      bad.push("ядро: строка позиции не несёт ключ сделки");
+    if (global.__showTrade) {
+      global.__showTrade("gbm:2026-08-05-10:AAAUSDT:long");
+      const src = String(global.__el("tchart").src || "");
+      for (const part of ["sym=AAAUSDT", "arm=gbm",
+                          "hour=2026-08-05-10", "hz=sit", "embed=1"])
+        if (!src.includes(part))
+          bad.push("ядро: в адресе графика сделки нет " + part);
+      const lab = String(global.__el("tlab").textContent || "");
+      if (!/AAA/.test(lab))
+        bad.push("ядро: подпись графика не называет сделку");
+    } else bad.push("ядро: showTrade не определён");
+  }
+  // Встроенный режим графика: с embed=1 шапка и сводка спрятаны, без
+  // него — на месте. Ошибка в любую сторону — молчаливый отказ показа.
+  if (isChart) {
+    const emb = /embed=1/.test(SEARCH);
+    const nav = global.__el ? global.__el("topnav") : null;
+    const disp = nav && nav.style ? String(nav.style.display || "") : "";
+    if (emb && disp !== "none")
+      bad.push("график: embed не спрятал шапку");
+    if (!emb && disp === "none")
+      bad.push("график: шапка спрятана без embed");
   }
 
   // Панель исполнительного ядра — только на обзоре. Проверяется

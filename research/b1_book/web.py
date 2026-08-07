@@ -2052,6 +2052,9 @@ th{text-align:left;color:var(--muted);font-weight:500;font-size:10px;
 td{padding:7px 10px 7px 0;white-space:nowrap;
  border-bottom:1px solid var(--rule-soft)}
 tbody tr:hover td{background:rgba(151,71,255,.04)}
+tr[data-pos]{cursor:pointer}
+#tchart{width:100%;height:520px;border:0;border-radius:12px;
+ background:var(--ground);display:block}
 .scroll{overflow-x:auto}
 .side{display:inline-block;min-width:22px;text-align:center;
  border-radius:6px;font-size:11px;font-weight:700;padding:1px 6px}
@@ -2082,13 +2085,17 @@ details summary{cursor:pointer}
 </header>
   <div id="alarm"></div>
   <div class="stats" id="acct">…</div>
+  <section class="card" id="tcard" style="display:none">
+    <div class="cap"><span>trade on chart</span>
+      <span id="tlab" class="mono meta"></span></div>
+    <iframe id="tchart" title="trade chart"></iframe></section>
   <section class="card"><div class="cap"><span>equity ·
       realised closes</span>
       <span id="eqlab" class="mono meta"></span></div>
     <canvas id="eq" height="200"></canvas></section>
   <section class="card"><div class="cap"><span>open positions</span>
       <span class="meta">marked to the collector&#39;s own book mids,
-        costs not deducted</span></div>
+        costs not deducted · click a row to see it on the chart</span></div>
     <div class="scroll"><table>
       <thead><tr><th>coin</th><th>side</th><th>size $</th><th>entry</th>
         <th>mid now</th><th>unreal</th><th>unreal $</th><th>age</th>
@@ -2119,6 +2126,35 @@ const hhmm = ts => ts ? FMT.format(new Date(ts * 1000)) : "—";
 // вида 0.032045000000000004; десяти значащих цифр хватает любому шагу
 // цены площадки, а повторное «+» срезает нули хвоста.
 const px = v => v == null ? "—" : String(+(+v).toPrecision(10));
+// Книга, которую ведёт тень, — из /bot-full (маркер источника
+// журнала). Нужна графику: сделка часовой книги и ситуационной живут
+// в разных каталогах, и без адреса график молча показал бы не ту.
+let BOOK_HZ = "";
+// Клик по строке сделки открывает её на графике НАД equity: тот же
+// чарт, что живёт своей страницей, во встроенном режиме (embed) —
+// вторая реализация графика однажды разошлась бы с первой.
+function showTrade(pos) {
+  const m = String(pos || "").split(":");
+  if (m.length < 4) return;
+  const p = new URLSearchParams({k: KEY, sym: m[2], arm: m[0],
+                                 hour: m[1], embed: 1});
+  if (BOOK_HZ) p.set("hz", BOOK_HZ);
+  const card = document.getElementById("tcard");
+  card.style.display = "";
+  const f = document.getElementById("tchart");
+  const src = "/chart?" + p.toString();
+  if (f.src !== src) f.src = src;
+  document.getElementById("tlab").textContent =
+    `${m[2].replace("USDT", "")} · ${m[3]} · signal hour ${m[1]}`;
+  if (card.scrollIntoView) card.scrollIntoView({behavior: "smooth"});
+}
+for (const id of ["pos", "cl"]) {
+  document.getElementById(id).onclick = e => {
+    const tr = e.target && e.target.closest
+      ? e.target.closest("[data-pos]") : null;
+    if (tr) showTrade(tr.dataset.pos);
+  };
+}
 function cell(k, v, cls) {
   return `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls || ""}">${v}</div></div>`;
@@ -2180,7 +2216,9 @@ async function load() {
        yet</div>`;
     return;
   }
-  document.getElementById("src").textContent = `arm ${d.arm}`;
+  BOOK_HZ = d.book_hz || "";
+  document.getElementById("src").textContent = `arm ${d.arm}`
+    + (BOOK_HZ ? ` · ${BOOK_HZ === "sit" ? "situational" : BOOK_HZ}` : "");
   const hb = document.getElementById("hb");
   hb.className = "pill" + (d.age_sec > 300 ? " hb-stale" : "");
   document.getElementById("topage").textContent =
@@ -2227,7 +2265,8 @@ async function load() {
     (d.curve || []).length + " closes";
   const now = d.server_now || 0;
   document.getElementById("pos").innerHTML = (d.positions || []).map(p => `
-    <tr><td class="mono">${(p.sym || "").replace("USDT", "")}</td>
+    <tr data-pos="${p.pos || ""}"><td class="mono">${
+      (p.sym || "").replace("USDT", "")}</td>
     <td><span class="side ${p.side === "long" ? "l" : "s"}">${
       p.side === "long" ? "L" : "S"}</span></td>
     <td class="mono">${p.size}</td>
@@ -2245,7 +2284,8 @@ async function load() {
   document.getElementById("cnt").textContent =
     `showing ${(d.closed || []).length} of ${d.closed_total || 0}`;
   document.getElementById("cl").innerHTML = (d.closed || []).map(t => `
-    <tr><td class="mono" title="${t.pos}">${t.hour.slice(5)} ${hhmm(t.closed_at)}</td>
+    <tr data-pos="${t.pos || ""}"><td class="mono" title="${t.pos}">${
+      t.hour.slice(5)} ${hhmm(t.closed_at)}</td>
     <td class="mono">${(t.sym || "").replace("USDT", "")}</td>
     <td><span class="side ${t.side === "long" ? "l" : "s"}">${
       t.side === "long" ? "L" : "S"}</span></td>
@@ -2368,7 +2408,7 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 .note{padding:10px 14px;color:var(--muted);font-size:13px}
 </style>
 <div class="wrap">
-<div class="bar">
+<div class="bar" id="topnav">
   <a class="brand" href="/" id="home" title="to overview">ALG<b>O</b>TH</a>
   <h1 id="ttl" class="mono">…</h1>
   <details class="pickwrap" id="pick">
@@ -2397,7 +2437,7 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
   <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp; exit</span>
   <span id="mleg"></span>
 </div>
-<div class="panel">
+<div class="panel" id="paperpanel">
   <div class="cap"><span>paper trades summary — this coin</span>
     <button id="unit" style="padding:1px 9px">in R</button></div>
   <div id="sum" class="stats"></div>
@@ -2417,6 +2457,17 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 <script>
 const Q = new URLSearchParams(location.search);
 const KEY = Q.get("k") || "";
+// Встроенный режим: график живёт внутри страницы ядра. Прячется
+// только обрамление — шапка с выбором монет и сводка бумажных сделок;
+// свечи, слой сделок модели и подсказка работают как есть. Вторая
+// реализация графика на странице ядра однажды разошлась бы с этой.
+const EMBED = Q.get("embed") === "1";
+if (EMBED) {
+  for (const id of ["topnav", "paperpanel"]) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  }
+}
 let sym = Q.get("sym") || "";
 let data = null, view = null, follow = true, HIT = [];
 // Перекрестие: позиция курсора над графиком, null — курсора нет.
