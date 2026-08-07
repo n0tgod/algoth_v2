@@ -2063,7 +2063,8 @@ class Collector:
                     if not (bid and ask):
                         continue
                     move, hit = sit_cross(p["side"], p["px"], p["adv"],
-                                          (bid + ask) / 2.0)
+                                          (bid + ask) / 2.0,
+                                          p.get("fav"))
                     if not hit:
                         continue
                     ev = {"arm": p["arm"], "hour": p["hour"],
@@ -2071,7 +2072,9 @@ class Collector:
                           "px": round((bid + ask) / 2.0, 8),
                           "move_bp": round(move, 1),
                           "at_ts": round(now, 3),
-                          "reason": "цена прошла обещанный ход против"}
+                          "reason": ("цена прошла обещанный ход против"
+                                     if hit == "против"
+                                     else "цена дошла до обещанной цели")}
                     os.makedirs(mdir, exist_ok=True)
                     with open(os.path.join(mdir, "exits_live.jsonl"),
                               "a", encoding="utf-8") as f:
@@ -2170,7 +2173,7 @@ class Collector:
                 # перечитывания файлов.
                 pos.append({"arm": arm, "hour": hour, "sym": sym,
                             "side": got["side"], "px": got["px"],
-                            "adv": got["mae"]})
+                            "adv": got["mae"], "fav": got["mfe"]})
                 armed.discard(key)
                 self.log(
                     f"ситуационная [{arm}]: живой вход {sym} "
@@ -2281,17 +2284,36 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     return d
 
 
-def sit_cross(side, entry_px, adv, mid):
-    """Пересёк ли живой ход цены обещанный ход против.
+def sit_cross(side, entry_px, adv, mid, fav=None):
+    """Дошёл ли живой ход цены до обещанного уровня.
 
     `adv` — обещание из самого выбора (поле `mae` записи: ход ПРОТИВ
-    этой позиции, у лонга отрицательный, у шорта положительный).
-    Возвращает `(ход в б.п., пересёк ли)`. Чистая функция — правило
-    денег обязано жить под тестом, а не внутри потока.
+    этой позиции, у лонга отрицательный, у шорта положительный),
+    `fav` — обещание В ПОЛЬЗУ (поле `mfe`). Возвращает
+    `(ход в б.п., что задето)`, где второе — `None`, `"против"` или
+    `"в пользу"`. Чистая функция — правило денег обязано жить под
+    тестом, а не внутри потока.
+
+    Цель проверяется вместе со стопом, потому что до неё книга не
+    выходила вовсе: стоп стоял, тейка не было, и позиция, дошедшая до
+    обещанного уровня, продолжала висеть до разворота прогноза или
+    суток возраста. Владелец увидел это на XNYUSDT — цена прошла
+    обещание почти сразу, сделка осталась открытой. Отношение
+    прибыли к риску, которым гейт пускает вход (RR ≥ 2), при этом
+    было наполовину выдумкой: рисковали по правилу, брали по случаю.
+
+    Одновременное касание обоих уровней внутри одного тика решается
+    ПРОТИВ нас — ровно как ничья в замерах T3/T4: цену между двумя
+    уровнями секунда не разрешает, и приписывать себе лучший исход
+    значило бы завышать результат систематически.
     """
     move = (mid / entry_px - 1.0) * 1e4
-    hit = (move <= adv) if side == "long" else (move >= adv)
-    return move, hit
+    if (move <= adv) if side == "long" else (move >= adv):
+        return move, "против"
+    if fav is not None and (
+            (move >= fav) if side == "long" else (move <= fav)):
+        return move, "в пользу"
+    return move, None
 
 
 def sit_open_levels(picks, reviews, entries=None):
@@ -2322,7 +2344,8 @@ def sit_open_levels(picks, reviews, entries=None):
                     continue
                 out.append({"arm": arm, "hour": pk.get("hour"),
                             "sym": p.get("sym"), "side": side,
-                            "px": p["px"], "adv": p["mae"]})
+                            "px": p["px"], "adv": p["mae"],
+                            "fav": p.get("mfe")})
     for e in entries or []:
         arm = e.get("arm") or "gbm"
         if (arm, e.get("sym"), e.get("at_ts")) in converted:
@@ -2333,7 +2356,8 @@ def sit_open_levels(picks, reviews, entries=None):
             continue
         out.append({"arm": arm, "hour": e.get("hour"),
                     "sym": e.get("sym"), "side": e.get("side"),
-                    "px": e["px"], "adv": e["mae"]})
+                    "px": e["px"], "adv": e["mae"],
+                    "fav": e.get("mfe")})
     return out
 
 

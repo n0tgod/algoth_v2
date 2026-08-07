@@ -839,6 +839,7 @@ function isSit(p) {
 const EXIT_EN = {"прогноз развернулся": "forecast flipped",
                  "цена прошла обещанный ход против":
                    "price broke the promised adverse path",
+                 "цена дошла до обещанной цели": "target reached",
                  "предел возраста": "age limit"};
 function renderModel() {
   const box = document.getElementById("modelbox"), full = MDL.data;
@@ -1597,6 +1598,7 @@ const ST_EN = {"закрыта": "closed", "открыта": "open",
 const EXIT_EN = {"прогноз развернулся": "forecast flipped",
                  "цена прошла обещанный ход против":
                    "price broke the promised adverse path",
+                 "цена дошла до обещанной цели": "target reached",
                  "предел возраста": "age limit"};
 // Кривая счёта. Рисуются ОБЕ руки всегда, даже когда выбрана одна:
 // они учатся на одних данных, и почти любой вопрос к ним
@@ -2567,7 +2569,14 @@ const KEY_EN = {"открыта": "open", "закрыта": "closed", "цель"
   "стоп": "stop", "время": "time", "не открыта": "not taken",
   "оборвана перезапуском": "cut by restart", "ждёт разбора": "awaiting",
   "без исхода": "no outcome", "полка": "shelf", "кругл": "round",
-  "экстремум": "extreme", "лента": "tape", "стакан": "book"};
+  "экстремум": "extreme", "лента": "tape", "стакан": "book",
+  // Причины выхода ситуационной книги: таблица сделок модели на этой
+  // же странице печатает их через `disp`, и без перевода строка
+  // осталась бы русской посреди английской страницы.
+  "прогноз развернулся": "forecast flipped",
+  "цена прошла обещанный ход против": "adverse promise hit",
+  "цена дошла до обещанной цели": "target reached",
+  "предел возраста": "age limit"};
 const disp = v => v == null ? "—" : (KEY_EN[v] || v);
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();

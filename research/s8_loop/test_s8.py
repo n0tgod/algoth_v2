@@ -1061,6 +1061,37 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d5, ignore_errors=True)
 
+        # ЦЕЛЬ часовой страховкой. До версии 6 её не было вовсе: стоп
+        # стоял, тейка не существовало, и сделка, дошедшая до
+        # обещанного уровня, висела до разворота прогноза или суток
+        # (владелец увидел это на XNYUSDT — цена прошла обещание почти
+        # сразу, позиция осталась открытой).
+        d8 = tempfile.mkdtemp()
+        try:
+            pk8 = {"arm": "gbm", "hour": "2026-08-07-10",
+                   "long": [{"sym": "AUSDT", "fwd": 30.0, "px": 100.0,
+                             "mae": -20.0, "mfe": 25.0}], "short": []}
+            with open(os.path.join(d8, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(pk8) + "\n")
+            # Цена конца часа выше обещания в пользу (+25 б.п.).
+            # AUSDT — нулевая строка: цена конца часа выше обещания
+            # в пользу (+25 б.п. от 100.0).
+            mats8 = {"mid_close": np.array([[100.0, 100.30],
+                                            [100.0, 100.0],
+                                            [100.0, 100.0],
+                                            [100.0, 100.0]])}
+            T.situational_arm(d8, "gbm", models, x, mats8, syms, rows_m,
+                              1, grid, lo, hi, None, lambda m: None)
+            rv8 = T._read_jsonl(os.path.join(d8, "review.jsonl"))
+            row8 = [r for rec in rv8 for r in rec["rows"]
+                    if r["sym"] == "AUSDT"]
+            check("цель достигнута — сделка закрыта своей причиной",
+                  row8 and row8[0]["reason"] == "цена дошла до обещанной цели",
+                  str(row8))
+        finally:
+            shutil.rmtree(d8, ignore_errors=True)
+
         # Живой вход сканера превращается в строку выбора с временем и
         # ценой МОМЕНТА, и сделка открывается этим моментом.
         d6 = tempfile.mkdtemp()
