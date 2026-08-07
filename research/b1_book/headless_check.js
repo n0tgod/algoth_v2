@@ -519,6 +519,22 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Странице сделок нужна сводка — облегчённый ответ её не несёт.
     if (seen.some(u => u.startsWith("/model_trades") && /lite=/.test(u)))
       bad.push("страница сделок ушла на облегчённый ответ без сводки");
+    // Переход между страницами статистики книг: ссылки на все три,
+    // активная помечена. «Кнопки есть» мало — без `hz` в ссылке все
+    // три вели бы на главную книгу, ничем себя не выдав.
+    const bb = global.__el ? String(
+      global.__el("books").innerHTML || "") : "";
+    if (!/hz=h1/.test(bb) || !/hz=h24/.test(bb))
+      bad.push("страница сделок: нет ссылок на книги горизонтов");
+    if (!/data-hz="h4" aria-pressed="true"/.test(bb))
+      bad.push("страница сделок: активная книга не помечена");
+    // Горизонт книги обязан дойти до подписи: страницы двух книг
+    // иначе неотличимы. В подставном ответе его нет — подпись обязана
+    // честно показать умолчание главной книги.
+    const srcp = global.__el ? String(
+      global.__el("src").textContent || "") : "";
+    if (!/hold 4 h/.test(srcp))
+      bad.push("страница сделок: горизонт книги не назван в подписи");
     const st = global.__el ? String(
       global.__el("stats").innerHTML || "") : "";
     const lab = global.__el ? String(

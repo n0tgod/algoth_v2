@@ -1359,14 +1359,16 @@ canvas{width:100%;display:block;touch-action:pan-y}
   <div id="warn"></div>
 
   <div class="card">
+    <div class="bar" id="books"></div>
     <div class="note">All clock times are <b>Europe/Vienna</b>; the
       underlying keys are UTC and show on hover.</div>
     <details class="hint"><summary>how to read a row</summary>
     <div class="note"><b>signal hour</b> — the hour
       whose <b>close</b> the decision is based on: features cover the
       whole hour, so nothing can be entered before it ends.
-      <b>entry</b> is that close, <b>exit</b> is 4 h later — exactly how
-      the target is defined. <b>lag</b> is how late the training loop
+      <b>entry</b> is that close, <b>exit</b> is the book&#39;s holding
+      horizon later (named in the header) — exactly how the target is
+      defined. <b>lag</b> is how late the training loop
       actually woke up after the hour closed: real entry delay, not
       zero. <b>state</b> is a state, not a time: open / closed / no
       outcome (deadline passed but the hour is not summarised yet — a
@@ -1461,6 +1463,23 @@ const HZ = ["h1", "h24"].includes(
   new URLSearchParams(location.search).get("hz"))
   ? new URLSearchParams(location.search).get("hz") : "";
 const S = {page: 0};
+// У каждой книги турнира темпов своя страница статистики; здесь —
+// переход между ними. Смена книги — НАВИГАЦИЯ, а не подмена данных на
+// месте: ссылку на страницу конкретной книги можно послать и открыть,
+// и фильтры не переживают переход намеренно — это другая книга.
+function renderBooks() {
+  const mk = (hz, label) => {
+    const p = new URLSearchParams({k: KEY});
+    if (hz) p.set("hz", hz);
+    return `<a href="/trades-page?${p.toString()}"><button
+      data-hz="${hz || "h4"}" aria-pressed="${
+      String((HZ || "h4") === (hz || "h4"))}">${label}</button></a>`;
+  };
+  document.getElementById("books").innerHTML =
+    `<span class="k">book (hold)</span> `
+    + mk("", "4 h") + " " + mk("h1", "1 h") + " " + mk("h24", "24 h");
+}
+renderBooks();
 // Percent of price move — the display unit across the whole project
 // (owner's decision). Two decimals, three for small values: otherwise
 // net-after-costs collapses into "0.00 %".
@@ -1614,6 +1633,9 @@ async function load() {
   }
   document.getElementById("src").textContent = "live model · hold "
     + (d.horizon_h || 4) + " h";
+  // Горизонт — в заголовок вкладки: открытые рядом страницы двух книг
+  // иначе неотличимы друг от друга.
+  document.title = "model trades · " + (d.horizon_h || 4) + " h";
   document.getElementById("warn").innerHTML = "";
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
