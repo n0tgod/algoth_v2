@@ -2432,9 +2432,16 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 </div>
 <div class="legend">
   <span><span class="sw" style="border-color:var(--accent)"></span>level</span>
-  <span><span class="sw" style="border-color:var(--ask)"></span>stop</span>
-  <span><span class="sw" style="border-color:var(--bid)"></span>target</span>
-  <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp; exit</span>
+  <span><span class="sw" style="border-color:var(--ask)"></span>stop /
+    adverse promise</span>
+  <span><span class="sw" style="border-color:var(--bid)"></span>target /
+    profit promise</span>
+  <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp;
+    exit dots</span>
+  <span><span class="sw" style="background:rgba(61,220,127,.25);
+    border-color:transparent"></span>profit side</span>
+  <span><span class="sw" style="background:rgba(255,100,115,.25);
+    border-color:transparent"></span>loss side</span>
   <span id="mleg"></span>
 </div>
 <div class="panel" id="paperpanel">
@@ -2463,7 +2470,10 @@ const KEY = Q.get("k") || "";
 // реализация графика на странице ядра однажды разошлась бы с этой.
 const EMBED = Q.get("embed") === "1";
 if (EMBED) {
-  for (const id of ["topnav", "paperpanel"]) {
+  // Прячется обрамление И баннер встречного счёта: на странице ядра
+  // график показывает одну сделку тени, реплей бумажных правил там
+  // ни при чём.
+  for (const id of ["topnav", "paperpanel", "recnote"]) {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
   }
@@ -3152,27 +3162,82 @@ function draw() {
       ? ((t.net_bp || 0) > 0 ? css("--bid") : css("--ask"))
       : css("--accent");
     const me = foc && foc.hour === t.hour;
+    // Обещания пути — уровни СВОЕЙ сделки, как TP/SL у v1: `mae` —
+    // ход против позиции, `mfe` — в пользу, оба от цены входа.
+    const pAdv = t.mae_bp == null ? null
+      : t.entry_px * (1 + t.mae_bp / 1e4);
+    const pFav = t.mfe_bp == null ? null
+      : t.entry_px * (1 + t.mfe_bp / 1e4);
+    // Границы зон — диапазон свечей за время удержания плюс уровни
+    // сделки: v1 заливал прибыльную и убыточную сторону входа на весь
+    // спан, и по цвету над/под линией видно, где сделка проводила
+    // время.
+    let rl = t.entry_px, rh = t.entry_px;
+    for (const b of c) {
+      if (b[0] < t.opened_at - 60 || b[0] > end + 60) continue;
+      if (b[3] < rl) rl = b[3];
+      if (b[2] > rh) rh = b[2];
+    }
+    for (const v of [pAdv, pFav, ex]) {
+      if (v != null) { rl = Math.min(rl, v); rh = Math.max(rh, v); }
+    }
+    rl = Math.max(rl, lo); rh = Math.min(rh, hi);
+    const yTop = y(rh), yBot = y(rl);
+    const base = (foc && !me) ? 0.35 : 1;
     g.save();
+    // Зоны v1: у лонга прибыль НАД входом (зелёная), убыток под
+    // (красная); у шорта зеркально.
+    if (xb > xa + 1 && yBot > yTop) {
+      const zone = (y0, y1, colr) => {
+        if (y1 - y0 < 1) return;
+        g.fillStyle = colr; g.globalAlpha = base * (me ? 0.16 : 0.09);
+        g.fillRect(xa, y0, xb - xa, y1 - y0);
+      };
+      if (up) {
+        zone(yTop, ye, css("--bid"));
+        zone(ye, yBot, css("--ask"));
+      } else {
+        zone(yTop, ye, css("--ask"));
+        zone(ye, yBot, css("--bid"));
+      }
+    }
+    g.globalAlpha = base;
+    // Линии обещаний через весь спан — пунктиром, подписи только у
+    // сделки в фокусе: на графике с десятком сделок подписи каждой
+    // слились бы в шум.
+    const promise = (pv, colr, lab) => {
+      if (pv == null || pv < lo || pv > hi || xb <= xa + 1) return;
+      g.strokeStyle = colr; g.lineWidth = me ? 1.6 : 1.1;
+      g.setLineDash([5, 4]);
+      g.beginPath(); g.moveTo(xa, y(pv)); g.lineTo(xb, y(pv));
+      g.stroke(); g.setLineDash([]);
+      if (me) {
+        g.fillStyle = colr;
+        g.fillText(`${lab} ${pv.toFixed(dec)}`, xa + 4, y(pv) - 4);
+      }
+    };
+    promise(pFav, css("--bid"), up ? "promise ↑" : "promise ↓");
+    promise(pAdv, css("--ask"), "adverse");
+    // Линия входа через спан удержания — сплошная, как у v1.
     g.strokeStyle = col; g.fillStyle = col;
-    g.globalAlpha = (foc && !me) ? 0.35 : 1;
-    g.lineWidth = me ? 2.2 : 1.3;
-    // Удержание: от входа до срока закрытия по цене входа. Так видно,
-    // сколько цена стояла выше линии и сколько ниже.
-    g.setLineDash(me ? [] : [4,3]);
+    g.lineWidth = me ? 2 : 1.2;
     g.beginPath(); g.moveTo(xa, ye); g.lineTo(Math.max(xb, xa+2), ye);
-    g.stroke(); g.setLineDash([]);
-    // Треугольник смотрит в сторону позиции: лонг вверх, шорт вниз.
-    const d = up ? -1 : 1;
-    g.beginPath();
-    g.moveTo(xa, ye + 10*d); g.lineTo(xa - 5, ye); g.lineTo(xa + 5, ye);
-    g.closePath();
-    if (t.state === "закрыта") g.fill(); else g.stroke();
+    g.stroke();
+    // Кружки событий v1: белая точка с цветным кольцом. Вход —
+    // пурпурное кольцо (акцент), выход — по знаку результата.
+    const dot = (x0, y0, ring) => {
+      g.beginPath(); g.arc(x0, y0, me ? 4 : 3.2, 0, 7);
+      g.fillStyle = "#ffffff"; g.fill();
+      g.lineWidth = me ? 2.6 : 2; g.strokeStyle = ring; g.stroke();
+    };
+    dot(xa, ye, css("--accent"));
     let drew = null;
     if (ex != null && ex >= lo && ex <= hi) {
-      g.fillRect(xb - 3, y(ex) - 3, 6, 6);
-      g.save(); g.globalAlpha = g.globalAlpha * .6; g.setLineDash([2,3]);
+      g.save(); g.globalAlpha = base * .6; g.strokeStyle = col;
+      g.setLineDash([2,3]);
       g.beginPath(); g.moveTo(xb, ye); g.lineTo(xb, y(ex)); g.stroke();
       g.restore();
+      dot(xb, y(ex), col);
       drew = ex;
     }
     g.restore();
