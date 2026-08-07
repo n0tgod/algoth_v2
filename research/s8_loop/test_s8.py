@@ -397,11 +397,14 @@ def test_targets_shapes_and_direction():
 
 
 def test_retry_when_not_trained():
-    """Не обучился — проверить через час, а не через сутки.
+    """Цикл ежечасный ВСЕГДА — удался он или нет.
 
-    Дефект, найденный на живом сервере: сутки — период переобучения,
-    а не наказание за «данных ещё мало». Пока пауза была общей, час
-    накопления 48-го сечения стоил бы полных суток ожидания.
+    Два дефекта одного места. Сначала пауза была общей — час накопления
+    48-го сечения стоил суток ожидания. Потом суточной осталась пауза
+    ПОСЛЕ успеха — и боевой контур, обучившись, засыпал на сутки: сделки
+    висели «ждёт разбора» до случайного деплоя, а часовая книга ждала бы
+    разбора двадцать три лишних часа. Темп задают книги, а не период
+    переобучения.
     """
     import train as T
     slept, calls = [], []
@@ -424,14 +427,13 @@ def test_retry_when_not_trained():
             pass
     finally:
         T.cycle, T.time.sleep, sys.argv = orig_c, orig_s, orig_argv
-    # Первая пауза садится на ГРАНИЦУ часа (см. отдельный тест), а не
-    # равна ровно часу: иначе смещение, заданное моментом запуска,
+    # Обе паузы садятся на ГРАНИЦУ часа (см. отдельный тест), а не
+    # равны ровно часу: иначе смещение, заданное моментом запуска,
     # жило бы вечно и определяло запаздывание входа.
-    check("после «рано» ждём до границы часа, после обучения — сутки",
-          len(slept) == 2 and 0 < slept[0] <= T.RETRY_SEC + T.MARGIN_SEC
-          and slept[1] == T.CYCLE_SEC, str(slept))
-    check("час заметно меньше суток",
-          T.RETRY_SEC <= 3600 < T.CYCLE_SEC)
+    check("и после «рано», и после обучения ждём до границы часа",
+          len(slept) == 2
+          and all(0 < s <= T.RETRY_SEC + T.MARGIN_SEC for s in slept),
+          str(slept))
 
 
 def test_readiness_is_written_before_training():
@@ -744,6 +746,73 @@ def test_picks_never_take_non_crypto():
     got2 = T.tradable_rows(rows, syms, ref=set())
     check("контроль: без списка режет только суффикс",
           list(got2) == [0, 1, 3], str(list(got2)))
+
+
+def test_horizon_books_review_with_their_own_target():
+    """Книга каждого горизонта разбирается СВОЕЙ целью и в СВОЙ каталог.
+
+    Турнир темпов: одни веса ведут книги 1/4/24 ч. Смешение целей —
+    тихий отказ худшего рода: разбор часовой книги четырёхчасовой целью
+    выглядел бы осмысленно и врал бы в каждом числе. Проверяется
+    числами: у целей в тесте разные значения, и каждая книга обязана
+    увидеть своё.
+    """
+    import json as _json
+    import tempfile
+    import shutil
+    import numpy as np
+    import train as T
+
+    d = tempfile.mkdtemp()
+    grid = ["2026-08-07-10", "2026-08-07-11"]
+    syms = ["AAAUSDT", "BBBUSDT"]
+    si = {s: i for i, s in enumerate(syms)}
+    targets = {"fwd_1h": np.array([[10.0, np.nan], [20.0, np.nan]]),
+               "fwd_4h": np.array([[40.0, np.nan], [80.0, np.nan]])}
+    pick = {"arm": "gbm", "hour": "2026-08-07-10",
+            "long": [{"sym": "AAAUSDT", "fwd": 5.0}],
+            "short": [{"sym": "BBBUSDT", "fwd": -5.0}]}
+    try:
+        for name in ("b1", "b4"):
+            os.makedirs(os.path.join(d, name))
+            with open(os.path.join(d, name, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(pick) + "\n")
+        T.review_arm(os.path.join(d, "b1"), "gbm", 1, targets, si,
+                     grid, None, lambda m: None)
+        T.review_arm(os.path.join(d, "b4"), "gbm", 4, targets, si,
+                     grid, None, lambda m: None)
+        got = {}
+        for name in ("b1", "b4"):
+            rv = T._read_jsonl(os.path.join(d, name, "review.jsonl"))
+            got[name] = {r["sym"]: r["got"] for r in rv[0]["rows"]}
+        check("часовая книга разобрана целью fwd_1h",
+              got["b1"] == {"AAAUSDT": 10.0, "BBBUSDT": 20.0},
+              str(got["b1"]))
+        check("четырёхчасовая — целью fwd_4h",
+              got["b4"] == {"AAAUSDT": 40.0, "BBBUSDT": 80.0},
+              str(got["b4"]))
+        # Повторный проход не плодит разборов: неразобранных не осталось.
+        T.review_arm(os.path.join(d, "b1"), "gbm", 1, targets, si,
+                     grid, None, lambda m: None)
+        check("повторный разбор не дублирует",
+              len(T._read_jsonl(os.path.join(d, "b1",
+                                             "review.jsonl"))) == 1)
+        # Дубль выбора не пишется — счётчик сделок не врёт.
+        first = T.write_pick(os.path.join(d, "b1"),
+                             dict(pick, hour="2026-08-07-11"))
+        second = T.write_pick(os.path.join(d, "b1"),
+                              dict(pick, hour="2026-08-07-11"))
+        check("выбор пишется один раз на (руку, час)",
+              first is True and second is False, f"{first} {second}")
+        # Цели пути называют СВОЙ горизонт: стоп часовой книги от
+        # mae_4h был бы уровнем с чужого расстояния.
+        pf = T.path_fields("long", -30.0, 50.0, h=1)
+        check("имена целей пути несут горизонт книги",
+              pf["adverse_of"] == "mae_1h"
+              and pf["favourable_of"] == "mfe_1h", str(pf))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
 
 
 def test_pretest_comes_after_the_summary_is_written():
@@ -2394,7 +2463,11 @@ def test_train_cycle_end_to_end():
         check("живой IC по сохранённым векторам попал в историю",
               sec and {h["arm"] for h in sec} == {"gbm", "nn"},
               str(len(sec)))
-        f1 = [h for h in hist if h["target"] == "fwd_1h"]
+        # Оконный замер, а не посекционный: с книгами турнира темпов
+        # сечения пишутся и по fwd_1h, но одно сечение — шум, а сигнал
+        # проверяется на 39 сечениях окна.
+        f1 = [h for h in hist if h["target"] == "fwd_1h"
+              and h.get("kind") != "section"]
         check("живой IC записан по обеим рукам",
               len(f1) == 2 and {h["arm"] for h in f1} == {"gbm", "nn"},
               str(f1))
@@ -2564,6 +2637,7 @@ def main():
     test_cash_returns_when_the_review_is_written()
     test_sverka_pairs_cash_reject_with_zero_size()
     test_picks_never_take_non_crypto()
+    test_horizon_books_review_with_their_own_target()
     test_pretest_comes_after_the_summary_is_written()
     test_hourly_cycle_wakes_on_the_hour()
     test_account_is_one_capital_at_leverage_one()

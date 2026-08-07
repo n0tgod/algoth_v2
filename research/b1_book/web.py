@@ -667,7 +667,11 @@ async function pullBot() {
 }
 
 // --- модель: состояние, живой IC и мысли трейдерскими словами --------
-const MDL = {data: null, arm: "all"};   // переключатель рук турнира
+// `arm` — рука турнира моделей, `book` — книга турнира темпов: одни
+// веса ведут несколько книг с разным сроком удержания, и сравнение
+// «какой темп учится быстрее» и есть смысл переключателя.
+const MDL = {data: null, arm: "all", book: "h4"};
+const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"]];
 async function pullModel() {
   try {
     const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
@@ -675,6 +679,14 @@ async function pullModel() {
     if (d && d.present !== undefined) { MDL.data = d; }
   } catch (e) { /* тихо: следующий опрос через минуту */ }
   renderModel();
+}
+// Состояние выбранной книги. Главная (4 ч) — сам ответ `/model`;
+// остальные лежат в `books` и имеют ту же форму, поэтому рисуются тем
+// же кодом.
+function bookState() {
+  const d = MDL.data;
+  if (!d || MDL.book === "h4") return d;
+  return (d.books || {})[MDL.book] || null;
 }
 
 // Базисные пункты -> ПРОЦЕНТ движения цены. Решение владельца: везде,
@@ -705,7 +717,7 @@ function tradeStats(p) {
     const s = st[a]; if (!s) return "";
     const name = a === "gbm" ? "trees" : "neural";
     if (!s.closed) return `<div class="mline">${name}: ${s.open || 0}
-      open, none closed yet — first outcomes in ~4 h.</div>`;
+      open, none closed yet — first outcomes in ~${bookH(p)} h.</div>`;
     // «Обещание / факт» — самое честное число здесь: модель может
     // угадывать знак и обещать вчетверо больше, чем даёт.
     return `<div class="mline"><b>${name}</b></div><div class="stats">`
@@ -784,8 +796,8 @@ function tradeTable(p) {
   }).join("");
   return `<div class="mline">model trades <span class="dim">(exp —
     expected move; mae — expected move <b>against</b> the position
-    on the way; got — what actually happened. % of price, over 4 h)
-    </span></div>
+    on the way; got — what actually happened. % of price, over
+    ${bookH(p)} h)</span></div>
     <div style="overflow-x:auto"><table class="mtr">
     <tr><th>hour</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
     <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
@@ -794,17 +806,40 @@ function tradeTable(p) {
         p.trades_total ?? tr.length} — older ones are on disk</div>` : "");
 }
 
+// Горизонт книги — из её манифеста; главная 4-часовая его не пишет.
+function bookH(p) {
+  return ((p || {}).manifest || {}).horizon_h || 4;
+}
 function renderModel() {
-  const box = document.getElementById("modelbox"), d = MDL.data;
+  const box = document.getElementById("modelbox"), full = MDL.data;
   const cap = document.getElementById("cap-model");
-  if (!d) { box.textContent = "…"; return; }
-  const armBtns = `<div style="margin-bottom:6px">` +
+  if (!full) { box.textContent = "…"; return; }
+  // Переключатель книг рисуется, только когда книги есть: до первого
+  // цикла нового кода ряд из одной кнопки выглядел бы как поломка.
+  const bookBtns = (full.books && Object.keys(full.books).length)
+    ? `<div style="margin-bottom:6px"><span class="dim"
+         style="margin-right:4px">hold</span>` +
+      BOOKS.map(x => `<button data-book="${x[0]}" aria-pressed="${
+        String(MDL.book === x[0])}">${x[1]}</button>`).join(" ")
+      + `</div>` : "";
+  const d = bookState();
+  const armBtns = bookBtns + `<div style="margin-bottom:6px">` +
     [["all","both"],["gbm","trees (ML)"],["nn","neural (AI)"]].map(x =>
       `<button data-arm="${x[0]}" aria-pressed="${
         String(MDL.arm === x[0])}">${x[1]}</button>`).join(" ") + `</div>`;
   const wireArms = () => {
     box.querySelectorAll("[data-arm]").forEach(b =>
-      b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); }); };
+      b.onclick = () => { MDL.arm = b.dataset.arm; renderModel(); });
+    box.querySelectorAll("[data-book]").forEach(b =>
+      b.onclick = () => { MDL.book = b.dataset.book; renderModel(); }); };
+  if (!d) {
+    // Выбранной книги ещё нет: цикл нового кода не прошёл ни разу.
+    box.innerHTML = armBtns + `<div class="mline">this book has not
+      started yet — first picks come with the next training cycle.</div>`;
+    cap.textContent = "book pending";
+    wireArms();
+    return;
+  }
   if (!d.present) {
     // Готовность — числом, а не обещанием. «Модели нет» означало и
     // «копим запись», и «копим вхолостую, ни один час не годен»;
@@ -858,7 +893,7 @@ function renderModel() {
   const accLine = ["gbm","nn"].map(a => accs[a]
     ? `${a === "gbm" ? "trees" : "neural"} $${accs[a].balance.toFixed(2)}`
     : null).filter(Boolean).join(" · ");
-  cap.textContent = `weights v${m.version} · age ${
+  cap.textContent = `weights v${m.version} · hold ${bookH(d)} h · age ${
     ageH == null ? "—" : ageH.toFixed(1)} h${
     accLine ? " · " + accLine : ""}`;
   const ic = {};
@@ -879,15 +914,16 @@ function renderModel() {
     ${picksTable(d)}
     ${tradeStats(d)}${equityBlock(d)}${tradeTable(d)}
     <div class="mline"><a href="/trades-page?k=${
-        encodeURIComponent(KEY)}">full trade history, paged &rarr;</a>
-    </div>
+        encodeURIComponent(KEY)}${MDL.book === "h4" ? ""
+          : "&hz=" + MDL.book}">full trade history, paged &rarr;</a>
+    </div>` + (MDL.book !== "h4" ? "" : `
     <div class="thoughts">${(d.thoughts || []).slice().reverse()
       .filter(t => MDL.arm === "all"
         || (MDL.arm === "gbm" ? /^\[деревья\]/ : /^\[сеть\]/)
              .test(t.text || ""))
       .map(t =>
       `<span class="tt">[${t.at || ""}]</span> ${t.text}`).join("\n")
-      || "no thoughts yet — they appear after the first training"}</div>`;
+      || "no thoughts yet — they appear after the first training"}</div>`);
   wireArms();
 }
 function picksTable(d) {
@@ -897,6 +933,7 @@ function picksTable(d) {
   (d.picks || []).forEach(p => { arms[p.arm || "gbm"] = p; });
   const revs = {};
   (d.review || []).forEach(r => { revs[r.arm || "gbm"] = r; });
+  const hz = bookH(d);
   const one = (armId, title) => {
     const pk = arms[armId];
     if (!pk) return "";
@@ -907,7 +944,7 @@ function picksTable(d) {
       return `<tr><td class="${side === "long" ? "buy" : "sell"}">${
         side}</td><td>${p.sym.replace("USDT","")}</td>
         <td class="mono">expects ${p.fwd > 0 ? "+" : ""}${p.fwd.toFixed(0)}
-          bp / 4h</td>
+          bp / ${hz}h</td>
         <td class="mono">adverse ~${p.mae.toFixed(0)} bp</td>
         <td class="mono">${p.odd != null
           ? `unseen ${(p.odd * 100).toFixed(0)}%` : ""}</td>
@@ -1417,6 +1454,12 @@ canvas{width:100%;display:block;touch-action:pan-y}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
+// Книга турнира темпов из ссылки («h1», «h24»); пусто — главная 4 ч.
+// Едет в каждый запрос и в ссылки на график: страница обязана
+// показывать ту книгу, из которой пришли, а не молча главную.
+const HZ = ["h1", "h24"].includes(
+  new URLSearchParams(location.search).get("hz"))
+  ? new URLSearchParams(location.search).get("hz") : "";
 const S = {page: 0};
 // Percent of price move — the display unit across the whole project
 // (owner's decision). Two decimals, three for small values: otherwise
@@ -1560,6 +1603,7 @@ async function load() {
   const p = new URLSearchParams({k: KEY, page: S.page, per: val("per"),
                                  arm: val("arm"), state: val("state"),
                                  sym: val("sym")});
+  if (HZ) p.set("hz", HZ);
   let d;
   try {
     const r = await fetch("/model_trades?" + p.toString());
@@ -1568,7 +1612,8 @@ async function load() {
     document.getElementById("cnt").textContent = "no link to collector";
     return;
   }
-  document.getElementById("src").textContent = "live model";
+  document.getElementById("src").textContent = "live model · hold "
+    + (d.horizon_h || 4) + " h";
   document.getElementById("warn").innerHTML = "";
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
@@ -1830,8 +1875,8 @@ async function load() {
       <td class="mono hide-s" style="color:var(--muted)">${t.odd == null ? "—"
         : (t.odd*100).toFixed(0) + " %"}</td>
       <td><a class="open" href="/chart?k=${encodeURIComponent(KEY)}&sym=${
-        encodeURIComponent(t.sym)}&arm=${t.arm}&hour=${
-        t.hour}">open</a></td></tr>`;
+        encodeURIComponent(t.sym)}&arm=${t.arm}&hour=${t.hour}${
+        HZ ? "&hz=" + HZ : ""}">open</a></td></tr>`;
   }).join("") || `<tr><td colspan="17" style="color:var(--muted);
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
@@ -2519,8 +2564,12 @@ const ARMS = [["gbm", "ml"], ["nn", "ai"]];
 const MDL = {trades: [], at: 0, busy: false, sym: "",
              arm: (Q.get("arm") === "nn" ? "nn" : "gbm"),
              // Просьба показать одну конкретную сделку: рука и час
-             // сигнала из ссылки в таблице.
+             // сигнала из ссылки в таблице. `hz` — книга турнира
+             // темпов: сделка часовой книги живёт в своём каталоге, и
+             // без метки график молча показал бы книгу 4 ч.
              hour: Q.get("hour") || "",
+             hz: (["h1", "h24"].includes(Q.get("hz"))
+                  ? Q.get("hz") : ""),
              fit: false};
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара
 // (рука, час, монета) единственна по построению — цикл выбирает шесть
@@ -2545,6 +2594,7 @@ async function pullModelTrades() {
     // `lite` — без сводок и кривых: графику нужны строки сделок, а
     // полный расчёт занимал секунды на каждую смену монеты.
     const p = new URLSearchParams({k: KEY, sym: sym, per: 500, lite: 1});
+    if (MDL.hz) p.set("hz", MDL.hz);
     const r = await fetch("/model_trades?" + p.toString());
     const d = await r.json();
     MDL.trades = (d.rows || []).filter(t => t.sym === sym);
@@ -3106,7 +3156,8 @@ function draw() {
     + (old ? ` · ${old} under older rules` : "")
     + (MT.length
        ? ` · ${MT.length} model trades`
-         + ` (${MDL.arm === "nn" ? "ai" : "ml"})` : "");
+         + ` (${MDL.arm === "nn" ? "ai" : "ml"}${
+             MDL.hz ? ", " + MDL.hz.slice(1) + " h book" : ""})` : "");
   modelNote(MT, first, last);
 }
 
@@ -3547,6 +3598,7 @@ def serve(collector, port, token, log):
                         arm=q.get("arm", [None])[0] or None,
                         state=q.get("state", [None])[0] or None,
                         sym=q.get("sym", [None])[0] or None,
+                        hz=q.get("hz", [None])[0] or None,
                         lite=q.get("lite", [""])[0] in ("1", "true")),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")

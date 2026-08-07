@@ -64,10 +64,10 @@ MODEL_VERSION = 2
 TARGETS = [f"{k}_{h}h" for k in ("fwd", "mfe", "mae") for h in FB.HORIZONS]
 
 
-def position_path(side, mae_v, mfe_v):
+def position_path(side, mae_v, mfe_v, h=4):
     """Ход ПРОТИВ и В ПОЛЬЗУ позиции из целей, считанных по цене.
 
-    `mae_4h` — минимум цены за горизонт, `mfe_4h` — максимум, и обе
+    `mae_{h}h` — минимум цены за горизонт, `mfe_{h}h` — максимум, и обе
     считаются по ЦЕНЕ, а не по позиции. Значит у лонга против идёт
     `mae`, в пользу `mfe`; у шорта ровно наоборот. Перепутать их
     значит подписать ход в ПОЛЬЗУ словами «ход против» — ошибка, уже
@@ -80,16 +80,20 @@ def position_path(side, mae_v, mfe_v):
     волне. Прогноз `fwd` захеджирован волной и на роль тейка не
     годится — замер бракета упёрся ровно в это.
 
+    `h` — горизонт книги в часах: у каждой книги турнира темпов свои
+    цели, и имя цели в записи обязано называть тот горизонт, по
+    которому величина считана.
+
     Возвращает `(против, в пользу, имя цели против, имя цели в пользу)`.
     Неоценённая сторона остаётся `None`, а не нулём: ноль означал бы
     «модель не ждёт движения», то есть утверждение вместо пропуска.
     """
     if side == "long":
-        return mae_v, mfe_v, "mae_4h", "mfe_4h"
-    return mfe_v, mae_v, "mfe_4h", "mae_4h"
+        return mae_v, mfe_v, f"mae_{h}h", f"mfe_{h}h"
+    return mfe_v, mae_v, f"mfe_{h}h", f"mae_{h}h"
 
 
-def path_fields(side, mae_v, mfe_v):
+def path_fields(side, mae_v, mfe_v, h=4):
     """Оба конца пути готовыми полями записи.
 
     Раскладывать их по местам в вызывающем нельзя: именно там правило
@@ -97,7 +101,7 @@ def path_fields(side, mae_v, mfe_v):
     похожи. Здесь связка одна, и она под тестом; у `mk` не остаётся
     возможности ошибиться, потому что имён полей он больше не пишет.
     """
-    adv, fav, a_of, f_of = position_path(side, mae_v, mfe_v)
+    adv, fav, a_of, f_of = position_path(side, mae_v, mfe_v, h)
     # Имя `mae` прежнее — его читают старые записи, — но смысл теперь
     # «ход против ЭТОЙ позиции», а не «минимум цены».
     return {"mae": adv, "adverse_of": a_of,
@@ -106,7 +110,13 @@ def path_fields(side, mae_v, mfe_v):
 # gbm — деревья (ML), nn — сеть (AI-рука). Прогноз до запуска записан:
 # на табличных признаках и неделях данных сеть скорее проиграет.
 ARMS = (("gbm", gbm.fit), ("nn", nn.fit))
-CYCLE_SEC = 24 * 3600             # спека §5: раз в сутки
+# Цикл ЕЖЕЧАСНЫЙ, а не суточный (спека §5 писала «раз в сутки» про
+# переобучение). Причина не в качестве весов — М2 замерил, что частота
+# переобучения сама по себе не меняет ничего (+0.000…+0.004 сутки
+# против месяца), — а в темпе книг: выбор и разбор идут раз в час, у
+# часовой книги сделка живёт один час, и спящий сутками цикл держал бы
+# её «ждёт разбора» двадцать три лишних часа. Ровно это и случилось на
+# боевом контуре: разбор приходил только с деплоем.
 RETRY_SEC = 3600                  # не обучился — проверить через час
 # Запас после закрытия часа: сначала его надо свести по всем монетам, и
 # только потом обучаться. Он же есть нижняя граница запаздывания входа.
@@ -907,6 +917,209 @@ def write_outcome(reason, **nums):
     return out
 
 
+def _read_jsonl(path):
+    """Строки jsonl; битая строка пропускается, нет файла — пусто."""
+    out = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    out.append(json.loads(line))
+                except ValueError:
+                    continue
+    except OSError:
+        pass
+    return out
+
+
+# --- книги турнира темпов ---------------------------------------------
+# Одни веса — несколько книг: цели уже обучаются на всех горизонтах
+# наблюдения (`FB.HORIZONS`), а выбор и разбор до сих пор жили только у
+# 4-часовой. Книга каждого горизонта — свой каталог со своими выборами,
+# разборами и счетами; главной остаётся 4-часовая (`model`) — её ведёт
+# тень бота, и её имя менять нельзя. Логика выбора, разбора и счёта
+# ОДНА на все книги — вторая копия расчётного ядра запрещена правилами
+# проекта, и различия между книгами исчерпываются параметром горизонта.
+
+def book_dir(h):
+    """Каталог книги горизонта `h` часов рядом с главным каталогом."""
+    return MODEL_DIR if h == TR.HOLD_H else MODEL_DIR + f"_h{h}"
+
+
+def review_arm(mdir, arm, hold_h, targets, si, grid, book_root, log_):
+    """Разобрать все неразобранные выборы одной руки одной книги.
+
+    Цель разбора — `fwd_{hold_h}h`: книга меряется тем горизонтом, на
+    который выбирала. Возвращает строки последнего записанного разбора
+    (мысли главной книги пересказывают именно его).
+    """
+    y = targets.get(f"fwd_{hold_h}h")
+    if y is None:
+        return None
+    all_picks = _read_jsonl(os.path.join(mdir, "picks.jsonl"))
+    reviewed = {(r.get("arm") or "gbm", r.get("hour"))
+                for r in _read_jsonl(os.path.join(mdir, "review.jsonl"))}
+    review = None
+    # По возрастанию часа: счёт складывается последовательно, и
+    # порядок сделок в нём обязан быть хронологическим.
+    pend = sorted(
+        (p for p in all_picks
+         if (p.get("arm") or "gbm") == arm
+         and (arm, p.get("hour")) not in reviewed
+         and p.get("hour") in grid),
+        key=lambda p: p.get("hour") or "")
+    for lp in pend:
+        j = grid.index(lp["hour"])
+        rows_rv = []
+        for side in ("long", "short"):
+            for pk in lp.get(side) or []:
+                i = si.get(pk["sym"])
+                if i is None:
+                    continue
+                got = y[i, j]
+                if np.isfinite(got):
+                    rr = {"sym": pk["sym"], "side": side,
+                          "expected": round(pk["fwd"], 1),
+                          "got": round(float(got), 1)}
+                    # Новизна едет из выбора в разбор: вопрос
+                    # «сбывается ли хуже на незнакомом» отвечается
+                    # соединением этих двух полей, и делать его
+                    # руками по двум файлам никто не станет.
+                    if pk.get("odd") is not None:
+                        rr["odd"] = pk["odd"]
+                    rows_rv.append(rr)
+        if rows_rv:
+            # В разбор кладётся только ФАКТ: движение цены и книга в
+            # момент выхода. Денег здесь нет — они зависят от размера
+            # позиции, а размер задаётся счётом, который считается по
+            # ВСЕЙ истории сразу (`trades.account`). Класть сюда
+            # деньги значило бы завести второе определение размера.
+            out_ts = TR.hour_end(lp["hour"])
+            out_ts = (out_ts + hold_h * 3600) if out_ts else None
+            bk_out = stamp_book([r["sym"] for r in rows_rv], out_ts,
+                                book_root, log_, "выхода")
+            for r in rows_rv:
+                r["net"] = round((1 if r["side"] == "long" else -1)
+                                 * r["got"] - ROUND_COST_BP, 1)
+                if r["sym"] in bk_out:
+                    r["cum"] = bk_out[r["sym"]]
+            with open(os.path.join(mdir, "review.jsonl"), "a",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(
+                    {"arm": arm, "hour": lp["hour"],
+                     "cost_bp": ROUND_COST_BP,
+                     # Момент записи разбора. Без него касса счёта
+                     # закрывала позицию задним числом по плановому
+                     # времени — знание из будущего в кассе, тот же
+                     # класс дефекта, что отбор универсума по
+                     # сегодняшнему списку.
+                     "at_ts": round(time.time(), 3),
+                     "rows": rows_rv},
+                    ensure_ascii=False) + "\n")
+            review = rows_rv
+    return review
+
+
+def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
+              nov_lo, nov_hi, book_root, log_):
+    """Выбор монет одной книги: цели fwd/mae/mfe СВОЕГО горизонта.
+
+    Возвращает запись выбора или `None`, когда у книги нет своих
+    моделей (цель не набрала строк) либо нет годного сечения.
+    """
+    kf, km, kx = (f"fwd_{hold_h}h", f"mae_{hold_h}h", f"mfe_{hold_h}h")
+    if (arm, kf) not in models or (arm, km) not in models \
+            or j_last is None:
+        return None
+    xj = x[rows_m, j_last]
+    fwd = models[(arm, kf)].predict(xj)
+    # Ход ПРОТИВ позиции у длинной и короткой ноги — разные цели:
+    # `mae` — минимум цены за горизонт, `mfe` — максимум, обе по ЦЕНЕ.
+    # Лонгу против идёт mae, шорту — mfe; связка под тестом в
+    # `path_fields`.
+    mae = models[(arm, km)].predict(xj)
+    mfe = models[(arm, kx)].predict(xj) if (arm, kx) in models else None
+    # Весь вектор сечения — в файл: через горизонт по нему посчитается
+    # живой вневыборочный IC своей цели.
+    save_preds(arm, grid[-1], syms, rows_m, fwd, target=kf)
+    o = np.argsort(fwd)
+
+    def mk(i, side):
+        px = float(mats["mid_close"][rows_m[i], j_last])
+        d = {"sym": syms[rows_m[i]], "fwd": float(fwd[i]),
+             "px": px if np.isfinite(px) else None,
+             **path_fields(side, float(mae[i]),
+                           float(mfe[i]) if mfe is not None else None,
+                           h=hold_h)}
+        nv = novelty(xj[i], nov_lo, nov_hi)
+        if nv is not None:
+            d["odd"] = round(nv, 3)
+        return d
+    picks = {"arm": arm, "hour": grid[-1],
+             # Момент, когда решение стало известно: цикл просыпается
+             # через минуты после закрытия часа, и это задержка входа,
+             # а не ноль.
+             "at_ts": round(time.time()),
+             "long": [mk(i, "long") for i in o[::-1][:3]],
+             "short": [mk(i, "short") for i in o[:3]]}
+    # Цена, доступная в момент решения. Ставится ПОСЛЕ отбора — раньше
+    # неизвестно, у кого её спрашивать.
+    names = [p["sym"] for s in ("long", "short") for p in picks[s]]
+    bk = stamp_book(names, time.time(), book_root, log_, "входа")
+    for s in ("long", "short"):
+        for p in picks[s]:
+            got = bk.get(p["sym"])
+            if got:
+                p["px_live"], p["px_live_at"] = got["mid"], got["t"]
+                # Книга целиком, а не одна цена: заявка на $42 и на
+                # $800 исполняется по-разному, а размер позиции знает
+                # только счёт.
+                p["cum"] = got
+    return picks
+
+
+def write_pick(mdir, picks):
+    """Один выбор на (руку, час) — и не больше.
+
+    Цикл перезапускается (каждая заливка!), и проходов внутри часа
+    бывает несколько; дубли не портят счёт, но вытесняют из таблицы
+    настоящую историю и делают статистику «сколько сделок» ложной.
+    """
+    ppath = os.path.join(mdir, "picks.jsonl")
+    seen = {((p.get("arm") or "gbm"), p.get("hour"))
+            for p in _read_jsonl(ppath)}
+    if (picks["arm"], picks["hour"]) in seen:
+        return False
+    with open(ppath, "a", encoding="utf-8") as f:
+        f.write(json.dumps(picks, ensure_ascii=False) + "\n")
+    return True
+
+
+def rebuild_accounts(mdir, hold_h):
+    """Счета книги — пересборкой ЦЕЛИКОМ из выборов и разборов.
+
+    Счёт остаётся функцией от истории: повторный проход не может
+    провести те же сделки дважды, а изменение модели капитала
+    применяется ко всей истории разом, а не с середины. Горизонт
+    задаёт число слотов кассы (`имена × часы удержания`), поэтому
+    передаётся явно.
+    """
+    all_tr = TR.build(_read_jsonl(os.path.join(mdir, "picks.jsonl")),
+                      _read_jsonl(os.path.join(mdir, "review.jsonl")),
+                      hold_h=hold_h)
+    out = {}
+    for arm, _ in ARMS:
+        hist, bal = TR.account(all_tr, arm, hold_h=hold_h)
+        apath = os.path.join(mdir, f"account_{arm}.json")
+        with open(apath + ".tmp", "w", encoding="utf-8") as f:
+            json.dump({"balance": bal, "history": hist[-500:],
+                       "start": TR.START_BALANCE,
+                       "leverage": 1.0}, f, ensure_ascii=False)
+        os.replace(apath + ".tmp", apath)
+        out[arm] = (hist, bal)
+    return out
+
+
 def live_px(syms, book_root, now=None, log_=None):
     """Цена, доступная В МОМЕНТ РЕШЕНИЯ, а не в момент сигнала.
 
@@ -1197,198 +1410,29 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
 
     # Выбор -> ожидание -> факт, по каждой руке турнира отдельно:
     # сводка по смеси рук осмысленна на вид и бессмысленна по сути.
-    ppath = os.path.join(MODEL_DIR, "picks.jsonl")
-    # Разбираются ВСЕ неразобранные выборы, а не только последний.
-    #
-    # Прежде хранился один выбор на руку — предыдущий, — и разбор шёл
-    # только по нему. При цикле раз в час и горизонте цели в четыре часа
-    # форвард предыдущего выбора ещё не закрыт, поэтому разбор выходил
-    # пустым; а к следующему циклу этот выбор уже не был «предыдущим» и
-    # не разбирался НИКОГДА. Замер на живом предпросмотре: 48 сделок,
-    # закрытых ноль, шесть «без исхода» на руку. Сделки не закрывались
-    # бы вовсе — при исправном на вид цикле.
-    all_picks = []
-    try:
-        with open(ppath, encoding="utf-8") as f:
-            for line in f:
-                try:
-                    all_picks.append(json.loads(line))
-                except ValueError:
-                    continue
-    except OSError:
-        pass
-    seen_picks = {((p.get("arm") or "gbm"), p.get("hour"))
-                  for p in all_picks}
-    reviewed = set()
-    try:
-        with open(os.path.join(MODEL_DIR, "review.jsonl"),
-                  encoding="utf-8") as f:
-            for line in f:
-                try:
-                    rr = json.loads(line)
-                    reviewed.add((rr.get("arm") or "gbm", rr.get("hour")))
-                except ValueError:
-                    continue
-    except OSError:
-        pass
-
+    # Разбираются ВСЕ неразобранные выборы, а не только последний
+    # (`review_arm`); выбор пишется один на (руку, час) — дубли
+    # перезапусков снимает `write_pick`.
     at = datetime.now(timezone.utc).strftime("%m-%d %H:%M")
     all_lines = []
     si = {s: i for i, s in enumerate(syms)}
     j_last = max((jj for jj in range(len(grid))
                   if elig[:, jj].sum() >= FB.MIN_SECTION), default=None)
+    # Не-крипто не торгуется (решение владельца, A1 и 2026-08-07). Из
+    # ОБУЧЕНИЯ имена не выдёргиваются: запись по ним останавливается, и
+    # ряды уходят из матриц сами. Сечение общее для всех книг.
+    rows_m = (tradable_rows(np.flatnonzero(elig[:, j_last]), syms)
+              if j_last is not None else [])
     for arm, _ in ARMS:
         # Последний ЗАПИСАННЫЙ разбор, а не последняя итерация цикла:
         # у свежего выбора форвард ещё не закрыт, разбор выходит пустым,
         # и мысли молчали бы о разборе, который на деле состоялся.
-        review = None
-        acc = pnl = None
-        # По возрастанию часа: счёт складывается последовательно, и
-        # порядок сделок в нём обязан быть хронологическим.
-        pend = sorted(
-            (p for p in all_picks
-             if (p.get("arm") or "gbm") == arm
-             and (arm, p.get("hour")) not in reviewed
-             and p.get("hour") in grid),
-            key=lambda p: p.get("hour") or "")
-        for lp in pend:
-            j = grid.index(lp["hour"])
-            rows_rv = []
-            for side in ("long", "short"):
-                for pk in lp.get(side) or []:
-                    i = si.get(pk["sym"])
-                    if i is None:
-                        continue
-                    got = targets["fwd_4h"][i, j]
-                    if np.isfinite(got):
-                        rr = {"sym": pk["sym"], "side": side,
-                              "expected": round(pk["fwd"], 1),
-                              "got": round(float(got), 1)}
-                        # Новизна едет из выбора в разбор: вопрос
-                        # «сбывается ли хуже на незнакомом» отвечается
-                        # соединением этих двух полей, и делать его
-                        # руками по двум файлам никто не станет.
-                        if pk.get("odd") is not None:
-                            rr["odd"] = pk["odd"]
-                        rows_rv.append(rr)
-            if rows_rv:
-                # В разбор кладётся только ФАКТ: движение цены и книга в
-                # момент выхода. Денег здесь нет — они зависят от размера
-                # позиции, а размер задаётся счётом, который считается по
-                # ВСЕЙ истории сразу (`trades.account`). Класть сюда
-                # деньги значило бы завести второе определение размера.
-                #
-                # Круг издержек тоже считает счёт: цена исполнения
-                # зависит от размера, поэтому плоское число здесь было бы
-                # не упрощением, а другой величиной. Поле `net`
-                # оставлено запасным путём — на случай, когда книги
-                # выхода нет и считать нечем.
-                out_ts = TR.hour_end(lp["hour"])
-                out_ts = (out_ts + TR.HOLD_H * 3600) if out_ts else None
-                bk_out = stamp_book([r["sym"] for r in rows_rv], out_ts,
-                                    book_root, log_, "выхода")
-                for r in rows_rv:
-                    r["net"] = round((1 if r["side"] == "long" else -1)
-                                     * r["got"] - ROUND_COST_BP, 1)
-                    if r["sym"] in bk_out:
-                        r["cum"] = bk_out[r["sym"]]
-                with open(os.path.join(MODEL_DIR, "review.jsonl"), "a",
-                          encoding="utf-8") as f:
-                    f.write(json.dumps(
-                        {"arm": arm, "hour": lp["hour"],
-                         "cost_bp": ROUND_COST_BP,
-                         # Момент записи разбора. Без него касса счёта
-                         # закрывала позицию задним числом по плановому
-                         # времени: опоздавший разбор ретроактивно
-                         # финансировал входы, которые Rust-тень в тот
-                         # момент честно отвергла, — знание из будущего
-                         # в кассе, тот же класс дефекта, что отбор
-                         # универсума по сегодняшнему списку.
-                         "at_ts": round(time.time(), 3),
-                         "rows": rows_rv},
-                        ensure_ascii=False) + "\n")
-                review = rows_rv
-        picks = None
-        if (arm, "fwd_4h") in models and (arm, "mae_4h") in models \
-                and j_last is not None:
-            # Не-крипто не торгуется (решение владельца, A1 и
-            # 2026-08-07). Из ОБУЧЕНИЯ имена не выдёргиваются: запись
-            # по ним останавливается, и ряды уходят из матриц сами.
-            rows_m = tradable_rows(
-                np.flatnonzero(elig[:, j_last]), syms)
-            xj = x[rows_m, j_last]
-            fwd = models[(arm, "fwd_4h")].predict(xj)
-            # Ход ПРОТИВ позиции у длинной и короткой ноги — разные
-            # цели. `mae_4h` есть минимум цены за горизонт, `mfe_4h` —
-            # максимум; обе считаются по ЦЕНЕ, а не по позиции. Значит
-            # лонгу против идёт mae, а шорту — mfe. Показывать шорту
-            # mae значило бы подписывать ход в его ПОЛЬЗУ словами «ход
-            # против», то есть врать в самую важную колонку.
-            mae = models[(arm, "mae_4h")].predict(xj)
-            mfe = (models[(arm, "mfe_4h")].predict(xj)
-                   if (arm, "mfe_4h") in models else None)
-            o = np.argsort(fwd)
-            # Весь вектор сечения — в файл, а не только шесть выбранных.
-            # Через горизонт по нему посчитается живой вневыборочный IC:
-            # ранговая корреляция по шести именам мерой не является, а
-            # других способов её получить при часовом переобучении нет.
-            save_preds(arm, grid[-1], syms, rows_m, fwd)
-
-            def mk(i, side):
-                px = float(mats["mid_close"][rows_m[i], j_last])
-                d = {"sym": syms[rows_m[i]], "fwd": float(fwd[i]),
-                     # Цена входа = закрытие часа сигнала. Без неё
-                     # открытую сделку нечем переоценивать.
-                     "px": px if np.isfinite(px) else None,
-                     # Оба конца пути — одной функцией: стоп берётся из
-                     # хода против, тейк из хода в пользу, и обе
-                     # величины в единицах СЫРОЙ цены (в отличие от
-                     # `fwd`, захеджированного волной).
-                     **path_fields(
-                         side, float(mae[i]),
-                         float(mfe[i]) if mfe is not None else None)}
-                nv = novelty(xj[i], nov_lo, nov_hi)
-                if nv is not None:
-                    d["odd"] = round(nv, 3)
-                return d
-            picks = {"arm": arm, "hour": grid[-1],
-                     # Момент, когда решение стало известно. Час
-                     # решения и момент решения — разные вещи: цикл
-                     # просыпается через минуты после закрытия часа, и
-                     # это задержка входа, а не ноль.
-                     "at_ts": round(time.time()),
-                     "long": [mk(i, "long") for i in o[::-1][:3]],
-                     "short": [mk(i, "short") for i in o[:3]]}
-            # Цена, доступная в момент решения. Ставится ПОСЛЕ отбора —
-            # раньше неизвестно, у кого её спрашивать. Прежняя цена
-            # (`px`, закрытие часа сигнала) остаётся в записи рядом:
-            # разность двух — и есть цена подарка, и узнать её можно
-            # только измерив, а не сняв.
-            names = [p["sym"] for s in ("long", "short") for p in picks[s]]
-            bk = stamp_book(names, time.time(), book_root, log_, "входа")
-            for s in ("long", "short"):
-                for p in picks[s]:
-                    got = bk.get(p["sym"])
-                    if got:
-                        p["px_live"], p["px_live_at"] = got["mid"], got["t"]
-                        # Книга целиком, а не одна цена: заявка на $42 и
-                        # на $800 исполняется по-разному, а размер
-                        # позиции знает только счёт.
-                        p["cum"] = got
-            # Один выбор на (руку, час) — и не больше.
-            #
-            # Цикл писал выбор при каждом проходе, а проходов внутри
-            # одного часа бывает несколько: перезапуск цикла (каждая
-            # заливка!) сразу гонит проход, и следующий по расписанию
-            # приходит в тот же час. Замер на живом предпросмотре: у
-            # часа 20 тридцать шесть сделок вместо двенадцати, у часа
-            # 19 — двадцать четыре. Дубли не портят счёт (разбор помнит
-            # разобранные часы), но вытесняют из таблицы настоящую
-            # историю и делают статистику вида «сколько сделок» ложной.
-            if (arm, picks["hour"]) not in seen_picks:
-                seen_picks.add((arm, picks["hour"]))
-                with open(ppath, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(picks, ensure_ascii=False) + "\n")
+        review = review_arm(MODEL_DIR, arm, TR.HOLD_H, targets, si,
+                            grid, book_root, log_)
+        picks = make_pick(arm, TR.HOLD_H, models, x, mats, syms, rows_m,
+                          j_last, grid, nov_lo, nov_hi, book_root, log_)
+        if picks:
+            write_pick(MODEL_DIR, picks)
 
         man_arm = dict(man, importance=imp_all.get(arm) or {})
         prev_arm = None
@@ -1413,24 +1457,10 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         all_lines += [f"[{'деревья' if arm == 'gbm' else 'сеть'}] {t}"
                       for t in lines]
     # Счёт пересобирается ЦЕЛИКОМ из выборов и разборов, а не
-    # накапливается по шагам. Так он остаётся функцией от истории:
-    # повторный проход не может провести те же сделки дважды, а
-    # изменение модели капитала применяется ко всей истории разом, а не
-    # с середины.
+    # накапливается по шагам (`rebuild_accounts`).
     try:
-        all_tr = TR.build(
-            [json.loads(x) for x in open(ppath, encoding="utf-8")],
-            [json.loads(x) for x in open(
-                os.path.join(MODEL_DIR, "review.jsonl"),
-                encoding="utf-8")])
-        for arm, _ in ARMS:
-            hist, bal = TR.account(all_tr, arm)
-            apath = os.path.join(MODEL_DIR, f"account_{arm}.json")
-            with open(apath + ".tmp", "w", encoding="utf-8") as f:
-                json.dump({"balance": bal, "history": hist[-500:],
-                           "start": TR.START_BALANCE,
-                           "leverage": 1.0}, f, ensure_ascii=False)
-            os.replace(apath + ".tmp", apath)
+        for arm, (hist, bal) in rebuild_accounts(
+                MODEL_DIR, TR.HOLD_H).items():
             if hist:
                 who = "деревья" if arm == "gbm" else "сеть"
                 all_lines.append(
@@ -1440,6 +1470,43 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                     f"от старта, плечо 1×, издержки учтены).")
     except (OSError, ValueError) as e:
         log_(f"счёт пересобрать не вышло: {e}")
+
+    # Книги остальных горизонтов — турнир темпов. Те же веса и то же
+    # сечение, различаются целью (`fwd_{h}h`), сроком закрытия и числом
+    # слотов кассы. Каждая живёт своим каталогом; вердикта по ним нет —
+    # это наблюдение «какой темп учится быстрее», а не отдельная
+    # гипотеза. Ошибка книги не роняет цикл: главная книга и веса уже
+    # записаны, а сломанная книга обязана быть видна журналом.
+    for h in FB.HORIZONS:
+        if h == TR.HOLD_H:
+            continue
+        try:
+            mdir = book_dir(h)
+            os.makedirs(mdir, exist_ok=True)
+            for arm, _ in ARMS:
+                review_arm(mdir, arm, h, targets, si, grid,
+                           book_root, log_)
+                pk = make_pick(arm, h, models, x, mats, syms, rows_m,
+                               j_last, grid, nov_lo, nov_hi,
+                               book_root, log_)
+                if pk:
+                    write_pick(mdir, pk)
+            rebuild_accounts(mdir, h)
+            # Манифест книги минимален: страница берёт из него
+            # присутствие, версию и ГОРИЗОНТ — по нему же сборщик
+            # строит сделки с верным сроком закрытия.
+            sm = {"version": MODEL_VERSION, "horizon_h": h,
+                  "hedge": man["hedge"],
+                  "trained_at": man["trained_at"],
+                  "sections": n_sections, "symbols": len(syms),
+                  "canary_ic": man["canary_ic"],
+                  "probe": PROBE, "pretest": PRETEST}
+            smp = os.path.join(mdir, "manifest.json")
+            with open(smp + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(sm, f, ensure_ascii=False, indent=1)
+            os.replace(smp + ".tmp", smp)
+        except Exception as e:                            # noqa: BLE001
+            log_(f"книга {h} ч не сведена: {type(e).__name__}: {e}")
 
     lines = all_lines
     with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",
@@ -1615,15 +1682,11 @@ def main():
                     log(f"отчёт о пробе не собрался: "
                         f"{type(e).__name__}: {e}")
             break
-        # Сутки — период ПЕРЕОБУЧЕНИЯ (спека §5), а не наказание за
-        # «ещё рано». Цикл, не обучившийся (мало сечений, крикнула
-        # канарейка, упал), обязан проверить снова скоро: иначе сутки
-        # ожидания данных превращаются в двое, и ждать выглядит ровно
-        # как работать. Тот же класс, что «отказ неотличим от тишины».
-        # Предпросмотр переобучается каждый час независимо от успеха:
-        # его смысл — показывать, как модель меняется по мере
-        # накопления, а сутки ожидания это скрыли бы.
-        wait = RETRY_SEC if (a.pretest or not trained) else CYCLE_SEC
+        # Час — темп ВСЕГО контура, удался цикл или нет: книги
+        # закрываются каждый час, и их разбор не вправе ждать. Спящий
+        # после успеха цикл уже стоил боевому контуру суток без
+        # разборов — сделки висели «ждёт разбора» до случайного деплоя.
+        wait = RETRY_SEC
         # Предпросмотр отдельно проверяет, СВЕЖУЮ ли сводку он видел.
         # Он её не пишет, а читает; придя раньше боевого цикла, он
         # увидит сетку без только что закрывшегося часа и отстанет на

@@ -1374,6 +1374,17 @@ class Collector:
         # контур обучен и торгует, строительные леса убраны. Его
         # артефакты остаются на диске, но не отдаются.
         out = self._model_dir_state(os.path.join(s8, "model"))
+        # Турнир темпов: книги остальных горизонтов — те же веса, свой
+        # срок удержания и свой счёт. Отдаются отдельными ключами, а не
+        # подмешаны: смесь двух книг в одной таблице выглядела бы
+        # осмысленно и не значила бы ничего.
+        books = {}
+        for key in ("h1", "h24"):
+            st = self._model_dir_state(os.path.join(s8, f"model_{key}"))
+            if st.get("present"):
+                books[key] = st
+        if books:
+            out["books"] = books
         self._model_cache = (now, out)
         return out
 
@@ -1431,14 +1442,21 @@ class Collector:
             sys.path.insert(0, os.path.join(os.path.dirname(HERE),
                                             "s8_loop"))
             import trades as TR
+            # Горизонт книги — из её же манифеста: каталог сам говорит,
+            # на сколько часов живут его позиции. Иначе часовая книга
+            # считалась бы четырёхчасовым сроком — и «открыта» там, где
+            # позиция давно закрыта.
+            hold = int((out.get("manifest") or {}).get("horizon_h")
+                       or TR.HOLD_H)
             # Книги, дописанные пересчётом задним числом. Отдельный
             # файл, потому что историю выборов правит только цикл.
             tr = TR.build(out.get("picks"), out.get("review"),
+                          hold_h=hold,
                           px_at=self.entry_px(out.get("picks")),
                           books=TR.load_books(
                               os.path.join(mdir, "books.jsonl")))
             TR.mark(tr, self.marks(tr))
-            hrows = self.paths(tr)
+            hrows = self.paths(tr, hold_h=hold)
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
             cap, st = {}, {}
@@ -1450,10 +1468,10 @@ class Collector:
                 # «депозит стал 500». Пересчёт есть всегда и совпадает с
                 # тем, что показано в таблице, потому что считается по
                 # тем же сделкам.
-                cap[a] = TR.account(tr, a)[1]
+                cap[a] = TR.account(tr, a, hold_h=hold)[1]
                 TR.dd_money(tr)
                 st[a] = TR.summary(tr, a, capital=cap[a])
-                cur = TR.equity(tr, a, hrows)
+                cur = TR.equity(tr, a, hrows, hold_h=hold)
                 st[a]["dd_book"] = TR.max_dd(cur)
                 st[a]["dd_open_book"] = TR.worst_open(cur)
             out["trade_stats"] = st
@@ -1462,7 +1480,7 @@ class Collector:
         return out
 
     def model_trades(self, page=0, per=100, arm=None, state=None,
-                     sym=None, lite=False):
+                     sym=None, hz=None, lite=False):
         """ВСЯ история сделок модели, страницами, со сводкой по всему.
 
         Отдельно от `model_state`, потому что там история намеренно
@@ -1474,6 +1492,10 @@ class Collector:
         статистика, зависящая от того, какую страницу открыли, — не
         статистика.
 
+        `hz` — книга турнира темпов («h1», «h24»); умолчание — главная
+        4-часовая. Горизонт берётся из манифеста книги, а не из имени:
+        каталог сам говорит, сколько живут его позиции.
+
         `lite` — режим графика: ему нужны только строки сделок одной
         монеты, а не сводки и кривые. Полный расчёт (просадка каждой
         сделки по почасовым сводкам, кривые счёта, сводки трёх рук)
@@ -1484,11 +1506,18 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        name = "model"
+        name = "model_" + hz if hz in ("h1", "h24") else "model"
         mdir = os.path.join(s8, name)
+        try:
+            with open(os.path.join(mdir, "manifest.json"),
+                      encoding="utf-8") as f:
+                hold = int(json.load(f).get("horizon_h") or TR.HOLD_H)
+        except (OSError, ValueError):
+            hold = TR.HOLD_H
         picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
         revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
-        tr = TR.build(picks, revs, px_at=self.entry_px(picks),
+        tr = TR.build(picks, revs, hold_h=hold,
+                      px_at=self.entry_px(picks),
                       books=TR.load_books(
                           os.path.join(mdir, "books.jsonl")))
         TR.mark(tr, self.marks(tr))
@@ -1508,7 +1537,7 @@ class Collector:
             # экспозиция оставалась без знаменателя — голое «500 $»
             # читается как «депозит стал 500». Пересчёт есть всегда и
             # согласован с показанными сделками по построению.
-            cap[a] = TR.account(tr, a)[1]
+            cap[a] = TR.account(tr, a, hold_h=hold)[1]
 
         def sliced():
             rows = tr
@@ -1522,14 +1551,14 @@ class Collector:
 
         if lite:
             rows, p, g = sliced()
-            return {"source": name,
+            return {"source": name, "horizon_h": hold,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
                     "pages": max(1, (len(rows) + p - 1) // p),
                     "filtered": bool(arm or state or sym),
                     "grand_total": len(tr),
                     "rows": rows[g * p:(g + 1) * p]}
-        hrows = self.paths(tr)
+        hrows = self.paths(tr, hold_h=hold)
         # Капитал у каждой руки свой — по тысяче. На вкладке «обе»
         # капитал складывается: иначе экспозиция 1504 $ читалась бы как
         # полтора плеча, хотя капитала там две тысячи.
@@ -1548,7 +1577,8 @@ class Collector:
         # не по одним закрытиям: позиция, уходившая в минус и
         # вернувшаяся, в кривой закрытий выглядит мелким убытком, и
         # пережитая просадка из неё не видна вовсе.
-        curves = {a: TR.equity(tr, a, hrows) for a in ("gbm", "nn")}
+        curves = {a: TR.equity(tr, a, hrows, hold_h=hold)
+                  for a in ("gbm", "nn")}
         for a in ("gbm", "nn"):
             stats[a]["dd_book"] = TR.max_dd(curves[a])
             stats[a]["dd_open_book"] = TR.worst_open(curves[a])
@@ -1566,7 +1596,7 @@ class Collector:
         # одной цифры не читается вовсе.
         curve_out = {a: TR.thin(curves[a]) for a in ("gbm", "nn")}
         curve_out["all"] = TR.thin(both_c)
-        return {"source": name,
+        return {"source": name, "horizon_h": hold,
                 "curves": curve_out, "start": TR.START_BALANCE,
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),
@@ -1661,22 +1691,24 @@ class Collector:
         rows = self.hour_rows(need)
         return {k: (v or {}).get("c") for k, v in rows.items()}
 
-    def paths(self, trades):
+    def paths(self, trades, hold_h=None):
         """Просадка по каждой сделке — из тех же почасовых сводок.
 
         Итог сделки говорит, чем всё кончилось, и молчит о том, сколько
         позиция была в минусе по дороге. Владелец спрашивал именно про
         второе, и ответ считается по крайним значениям середины за часы
-        удержания.
+        удержания. `hold_h` — горизонт книги: часы удержания у часовой
+        и суточной книги разные.
         """
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
+        hold = hold_h or TR.HOLD_H
         need = set()
         for t in trades:
-            for h in TR.live_hours(t):
+            for h in TR.live_hours(t, hold):
                 need.add((t.get("sym"), h))
         rows = self.hour_rows(need)
-        TR.excursion(trades, rows)
+        TR.excursion(trades, rows, hold)
         return rows
 
     @staticmethod

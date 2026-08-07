@@ -300,7 +300,35 @@ global.fetch = async (url) => {
                      side: "short", opened_at: Math.floor(Date.now()/1000)-7800,
                      closes_at: Math.floor(Date.now()/1000)-1400,
                      state: "закрыта", expected_bp: -725, mae_bp: -90,
-                     got_bp: 40, net_bp: -51, pnl: -0.85, pos: 166.67}]}
+                     got_bp: 40, net_bp: -51, pnl: -0.85, pos: 166.67}],
+                  // Книга турнира темпов: та же форма, свой горизонт и
+                  // свои числа — по ним и проверяется, что переключение
+                  // показывает ИМЕННО её, а не главную.
+                  books: {h1: {present: true,
+                               manifest: {version: 1, horizon_h: 1,
+                                          sections: 96, symbols: 540,
+                                          canary_ic: 0.003,
+                                          trained_at:
+                                            "2026-08-01T10:00:00+00:00"},
+                               accounts: {gbm: {balance: 1003.57,
+                                                history: [
+                                  {hour: "2026-08-03-17", pnl: 1.2,
+                                   balance: 1002.1},
+                                  {hour: "2026-08-03-18", pnl: 1.5,
+                                   balance: 1003.57}]}},
+                               trade_stats: {gbm: {closed: 4, open: 1,
+                                                   no_outcome: 0,
+                                                   hit_rate: 0.75,
+                                                   net_bp_avg: 12.5,
+                                                   pnl: 3.57,
+                                                   expected_over_got: 2.1}},
+                               trades: [
+                                 {arm: "gbm", hour: "2026-08-03-19",
+                                  sym: "BTCUSDT", side: "long",
+                                  opened_at: Math.floor(Date.now()/1000)-600,
+                                  closes_at: Math.floor(Date.now()/1000)+3000,
+                                  state: "открыта", expected_bp: 244,
+                                  mae_bp: -30, closes_in_sec: 3000}]}}}
              : url.startsWith("/bot-full")
                ? {present: true, age_sec: 42.0, arm: "gbm",
                   capital_usd: 1000.0, balance_usd: 1125.01,
@@ -400,6 +428,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__table = typeof shownTrades === 'function' "
                 + "? shownTrades : (typeof shown === 'function' "
                 + "? () => shown().trades : null);"
+                // Книгу турнира темпов надо ОТКРЫТЬ в проверке, иначе
+                // её код ни разу не исполняется — тот же урок, что
+                // с вкладкой предпросмотра.
+                + "\nglobal.__book = typeof renderModel === 'function' "
+                + "&& typeof MDL !== 'undefined' && 'book' in MDL "
+                + "? (b) => { MDL.book = b; renderModel(); "
+                + "           return document.getElementById('modelbox')"
+                + "                  .innerHTML || ''; } : null;"
                 )();
 (async () => {
   const step = global.__step;
@@ -447,6 +483,32 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("обзор: кривая бумажного счёта не нарисована");
     if (!/trades-page/.test(mb))
       bad.push("обзор: нет ссылки на полную историю сделок");
+    // Турнир темпов: переключатель книг есть, и книга 1 ч показывает
+    // СВОИ числа, а не числа главной. Проверяется числами фикстуры:
+    // «кнопка есть» прошло бы и на кнопке, которая ничего не меняет.
+    if (!/data-book="h1"/.test(mb))
+      bad.push("обзор: нет переключателя книг горизонтов");
+    if (global.__book) {
+      let hb = "";
+      try { hb = global.__book("h1"); }
+      catch (e) { bad.push("обзор: книга 1 ч упала: " + e.message); }
+      // Баланс книги живёт в ПОДПИСИ секции, горизонт — там же.
+      const hcap = global.__el
+        ? String(global.__el("cap-model").textContent || "") : "";
+      if (!/1003\.57/.test(hcap) || !/hold 1 h/.test(hcap))
+        bad.push("обзор: книга 1 ч не показывает свой счёт и горизонт");
+      if (!/\+2\.44 %/.test(hb))
+        bad.push("обзор: сделка книги 1 ч не показана в процентах");
+      if (!/hz=h1/.test(hb))
+        bad.push("обзор: ссылка на историю книги 1 ч потеряла книгу");
+      // Сделка главной книги (+3.73 %) в часовой книге видна быть не
+      // может: смесь двух книг и есть отказ, ради которого проверка.
+      if (/\+3\.73 %/.test(hb))
+        bad.push("обзор: в книге 1 ч видны сделки главной книги");
+      // Возврат на главную: проверки ниже смотрят на её разметку.
+      try { global.__book("h4"); }
+      catch (e) { bad.push("обзор: возврат на книгу 4 ч упал: " + e.message); }
+    }
   }
   if (!isTrades && !isBot && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
