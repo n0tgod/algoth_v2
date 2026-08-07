@@ -2051,6 +2051,59 @@ def test_all_symbols_filter():
           grace == {"UBERUSDT"}, str(grace))
 
 
+def test_contour_agreement_is_rank_based_and_same_hour():
+    """Согласие контуров: ранги на ОДНОМ часе, иначе пропуск.
+
+    Мера обученности: сравниваются целые векторы сечения боевых весов
+    и предпросмотра. Обратный порядок обязан дать −1, совпадающий +1;
+    разные часы — пропуск, а не сравнение «модель против рынка».
+    """
+    import json as J
+    import tempfile
+    import shutil
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        s8 = d
+        for name in ("model", "model_pretest"):
+            os.makedirs(os.path.join(s8, name))
+        syms = [f"S{i}USDT" for i in range(8)]
+        pred = [float(i) for i in range(8)]
+        def put(name, arm, hour, p):
+            with open(os.path.join(s8, name, "preds.jsonl"), "a",
+                      encoding="utf-8") as f:
+                f.write(J.dumps({"arm": arm, "hour": hour,
+                                 "syms": syms, "pred": p}) + "\n")
+        put("model", "gbm", "2026-08-07-13", pred)
+        put("model_pretest", "gbm", "2026-08-07-13", pred[::-1])
+        put("model", "nn", "2026-08-07-13", pred)
+        put("model_pretest", "nn", "2026-08-07-13", pred)
+        # у третьей руки часы разошлись — сравнивать нельзя
+        put("model", "x", "2026-08-07-13", pred)
+        put("model_pretest", "x", "2026-08-07-12", pred)
+        root = tempfile.mkdtemp()
+        try:
+            c = C.Collector(["TEST"], [], root, lambda m: None,
+                            paper=True)
+            rows = {r["arm"]: r for r in c.contour_agreement(s8)}
+            check("обратный порядок даёт −1",
+                  rows.get("gbm", {}).get("rho") == -1.0,
+                  str(rows.get("gbm")))
+            check("совпадающий порядок даёт +1",
+                  rows.get("nn", {}).get("rho") == 1.0,
+                  str(rows.get("nn")))
+            check("разные часы — пропуск, а не сравнение",
+                  "x" not in rows, str(sorted(rows)))
+            check("число имён названо",
+                  rows.get("gbm", {}).get("n") == 8,
+                  str(rows.get("gbm")))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_shard_split_covers_everything():
     import collect as C
 
@@ -2321,6 +2374,7 @@ def main():
     test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
     test_all_symbols_filter()
+    test_contour_agreement_is_rank_based_and_same_hour()
     test_shard_split_covers_everything()
     test_pack_queue_single_worker()
     print("бумажные сделки")

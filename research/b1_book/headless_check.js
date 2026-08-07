@@ -275,6 +275,8 @@ global.fetch = async (url) => {
                              trained_at: "2026-08-01T10:00:00+00:00"},
                   thoughts: [{at: "08-01 10:00", text: "проверка"}],
                   ic: [{target: "fwd_4h", median_ic: 0.021, sections: 24}],
+                  contours: [{arm: "gbm", hour: "2026-08-03-19",
+                              n: 520, rho: 0.42}],
                   // Предпросмотр со сделками ОБЯЗАН быть в подставном
                   // ответе: без него слой сделок модели не рисуется
                   // ни разу, и ошибка в нём прошла бы незамеченной —
@@ -449,6 +451,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ломается от изменения поведения; разметка страницы — это она сама.
   if (!isTrades && !isBot && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
+  // Согласие контуров — мера обученности, и число обязано дойти до
+  // разметки: пустая строка неотличима от «не посчитано». Проверка
+  // стоит ДО открытия вкладки предпросмотра: та переключает MDL.mode
+  // и не возвращает его, а строка живёт только на боевой вкладке.
+  if (!isTrades && !isChart && !isBot) {
+    const mb = global.__el ? String(
+      global.__el("modelbox").innerHTML || "") : "";
+    if (!/0\.42/.test(mb) || !/520 names/.test(mb))
+      bad.push("согласие контуров не показано");
+  }
   if (global.__pretest) {
     let html = "";
     try { html = global.__pretest(); }

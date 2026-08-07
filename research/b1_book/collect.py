@@ -1358,6 +1358,82 @@ class Collector:
         )
         return st
 
+    @staticmethod
+    def last_preds(mdir):
+        """Последний сохранённый вектор сечения по каждой руке."""
+        out = {}
+        try:
+            with open(os.path.join(mdir, "preds.jsonl"),
+                      encoding="utf-8") as f:
+                lines = f.read().split("\n")
+        except OSError:
+            return out
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            arm = r.get("arm") or "gbm"
+            prev = out.get(arm)
+            if prev is None or (r.get("hour") or "") >= (prev.get("hour")
+                                                         or ""):
+                out[arm] = r
+        return out
+
+    @staticmethod
+    def rank_corr(xs, ys):
+        """Спирмен без библиотек: Пирсон на рангах, ничьих у
+        предсказаний практически не бывает."""
+        n = len(xs)
+        if n < 3:
+            return None
+        def ranks(v):
+            order = sorted(range(n), key=lambda i: v[i])
+            rk = [0.0] * n
+            for pos, i in enumerate(order):
+                rk[i] = float(pos)
+            return rk
+        rx, ry = ranks(xs), ranks(ys)
+        mx, my = sum(rx) / n, sum(ry) / n
+        sx = sum((a - mx) ** 2 for a in rx) ** 0.5
+        sy = sum((a - my) ** 2 for a in ry) ** 0.5
+        if not sx or not sy:
+            return None
+        return sum((a - mx) * (b - my)
+                   for a, b in zip(rx, ry)) / (sx * sy)
+
+    def contour_agreement(self, s8):
+        """Согласие контуров: ранговая связь предсказаний на одном часе.
+
+        Мера ОБУЧЕННОСТИ, а не сделок: сравниваются целые векторы
+        сечения двух пар весов — насколько по-разному боевая модель и
+        предпросмотр ранжируют одни и те же сотни имён. Расхождение и
+        есть то, что купил настоящий хедж бетой против грубой единицы.
+        Часы обязаны совпадать: на разных часах мерилась бы смесь
+        «другая модель» и «другой рынок».
+        """
+        a = self.last_preds(os.path.join(s8, "model"))
+        b = self.last_preds(os.path.join(s8, "model_pretest"))
+        rows = []
+        for arm in sorted(set(a) & set(b)):
+            ra, rb = a[arm], b[arm]
+            if ra.get("hour") != rb.get("hour"):
+                continue
+            pa = dict(zip(ra.get("syms") or [], ra.get("pred") or []))
+            pb = dict(zip(rb.get("syms") or [], rb.get("pred") or []))
+            common = [s for s in pa
+                      if s in pb and pa[s] is not None
+                      and pb[s] is not None]
+            rho = self.rank_corr([pa[s] for s in common],
+                                 [pb[s] for s in common])
+            if rho is None:
+                continue
+            rows.append({"arm": arm, "hour": ra.get("hour"),
+                         "n": len(common), "rho": round(rho, 3)})
+        return rows
+
     def model_state(self):
         """Состояние модели S8 для страницы: манифест, мысли, живой IC.
 
@@ -1378,6 +1454,10 @@ class Collector:
         pre = self._model_dir_state(os.path.join(s8, "model_pretest"))
         if pre.get("present") or pre.get("readiness"):
             out["pretest"] = pre
+        # Согласие контуров считается, только когда обучены оба: одна
+        # пара весов сравнивать себя не с чем.
+        if out.get("present") and pre.get("present"):
+            out["contours"] = self.contour_agreement(s8)
         self._model_cache = (now, out)
         return out
 

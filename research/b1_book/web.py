@@ -948,11 +948,17 @@ function renderModel() {
     const s = armIc(a);
     return s ? `${a === "gbm" ? "trees" : "neural"}: ${s}` : null;
   }).filter(Boolean).join(" · ");
+  // Согласие контуров: насколько боевые веса ранжируют сечение иначе,
+  // чем предпросмотр. Мера обученности, а не сделок.
+  const ctr = (d.contours || []).map(c =>
+    `${c.arm === "nn" ? "neural" : "trees"} ρ ${c.rho} (${c.n} names)`)
+    .join(" · ");
   box.innerHTML = armBtns + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
       icLine ? " · out-of-sample IC: " + icLine
-             : ""}</div>
+             : ""}${
+      ctr ? " · rank agreement with pre-testing: " + ctr : ""}</div>
     ${picksTable(d)}
     <div class="thoughts">${(d.thoughts || []).slice().reverse()
       .filter(t => MDL.arm === "all"
