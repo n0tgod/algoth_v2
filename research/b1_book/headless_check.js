@@ -317,6 +317,7 @@ global.fetch = async (url) => {
                                      sections: 96, symbols: 540,
                                      canary_ic: 0.003,
                                      min_edge_bp: 22, min_rr: 2,
+                                     min_disc_bp: 11,
                                      max_age_h: 24,
                                      target: "fwd_4h",
                                      target_rows: 5200,
@@ -592,6 +593,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         ? String(global.__el("cap-model").textContent || "") : "";
       if (!/by situation/.test(scap))
         bad.push("обзор: подпись ситуационной книги не называет режим");
+      // Книга без срока входит редко ПО ЗАМЫСЛУ, и правило обязано
+      // стоять рядом числом: иначе пустая книга неотличима от
+      // сломанной. Требуем именно скидку — без неё сканер входил бы
+      // в первый же такт после листа, то есть по часам цикла.
+      if (!/11 bp/.test(sb) || !/22 bp/.test(sb))
+        bad.push("обзор: правило входа ситуационной книги не названо числом");
       // Возврат на главную: проверки ниже смотрят на её разметку.
       try { global.__book("h4"); }
       catch (e) { bad.push("обзор: возврат на книгу 4 ч упал: " + e.message); }

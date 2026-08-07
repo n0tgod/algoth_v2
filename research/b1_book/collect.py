@@ -2090,6 +2090,11 @@ class Collector:
             return
         min_edge = float(sheet.get("min_edge_bp") or 22.0)
         min_rr = float(sheet.get("min_rr") or 2.0)
+        # Отсутствие поля — не «правила нет»: лист прежнего образца
+        # писался до требования скидки, и молчаливый ноль вернул бы
+        # ровно то поведение, ради снятия которого правило заведено.
+        md = sheet.get("min_disc_bp")
+        min_disc = float(md) if md is not None else 11.0
         slots = int(sheet.get("slots") or 6)
         hour = sheet.get("hour")
         for arm, rows in (sheet.get("arms") or {}).items():
@@ -2125,7 +2130,8 @@ class Collector:
                 mid = mids.get(sym)
                 if not mid:
                     continue
-                got = sit_scan_entry(r, mid, wave, min_edge, min_rr)
+                got = sit_scan_entry(r, mid, wave, min_edge,
+                                     min_rr, min_disc)
                 if not got:
                     continue
                 ev = {"arm": arm, "hour": hour, "at_ts": round(now, 3),
@@ -2181,7 +2187,7 @@ class Collector:
         self.w.close()
 
 
-def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr):
+def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     """Живой вход по ситуации: якорим прогноз листа к живой цене.
 
     `row` — строка листа сечения (прогноз `fwd` — остаток к волне,
@@ -2196,6 +2202,14 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr):
     Перелёт за прогноз (остаток сменил знак) — другая ситуация, не
     заявка модели: пропуск. Возвращает поля события либо `None`;
     чистая функция — правило денег живёт под тестом, а не в потоке.
+
+    `min_disc` — насколько остаток обязан ПРЕВЫШАТЬ обещание листа.
+    Без него курок спускала не цена, а лист: пока цена не двинулась,
+    остаток равен полному прогнозу, и все выбранные моделью имена
+    проходили гейт в первый же такт после записи листа — книга
+    набивалась пачкой в минуту цикла. Требование скидки означает
+    ровно «цена пришла к нам»: вход дешевле того, на что рассчитывала
+    модель, и на величину, которой хватает окупить круг издержек.
     """
     px0 = row.get("px")
     fwd0 = row.get("fwd")
@@ -2206,6 +2220,14 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr):
                     else 1.0) * wave_bp
     rem = fwd0 - resid
     if abs(rem) < min_edge or (fwd0 > 0) != (rem > 0):
+        return None
+    # Скидка считается по МОДУЛЮ и после проверки знака: остаток той
+    # же стороны, что прогноз, и больше него — значит остаточный ход
+    # шёл ПРОТИВ прогноза, то есть цена пришла к нам. Допуск в
+    # миллионную б.п. — потому что остаток выведен делением цен, и
+    # ровное равенство выходит как 29.9999999999989: правило не имеет
+    # права переворачиваться на шуме последнего разряда.
+    if abs(rem) - abs(fwd0) < min_disc - 1e-6:
         return None
     side = "long" if rem > 0 else "short"
     if row.get("mae") is None or row.get("mfe") is None:

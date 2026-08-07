@@ -951,7 +951,20 @@ function renderModel() {
        per-coin beta, so this book starts later than the faster ones —
        picks begin once the bar is crossed.</div>`
     : "";
-  box.innerHTML = armBtns + `<div class="mline">trained on ${m.sections ?? "—"}
+  // Книга без срока входит редко и по замыслу. Правило обязано стоять
+  // числом рядом с ней: иначе пустая книга неотличима от сломанной, а
+  // «мало сделок» читается как отказ сборщика.
+  const gateLine = isSit(d) && m.min_edge_bp
+    ? `<div class="mline dim">entry rule: the sheet is a map, the
+       price is the trigger — a name is taken only when the remaining
+       move is at least <b>${m.min_edge_bp} bp</b>, reward/risk at
+       least <b>${m.min_rr}</b>, and the price has given back
+       <b>${m.min_disc_bp ?? 0} bp</b> on top of what the sheet
+       promised. Without that last one every name the model likes
+       would enter in the first tick after the sheet — a batch on the
+       cycle clock, not a moment.</div>`
+    : "";
+  box.innerHTML = armBtns + gateLine + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
       icLine ? " · out-of-sample IC: " + icLine : ""}</div>
