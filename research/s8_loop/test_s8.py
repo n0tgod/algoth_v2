@@ -669,6 +669,28 @@ def test_cash_returns_when_the_review_is_written():
     check("опоздавший разбор держит кассу занятой — вход нулевой",
           entry_size(2 * 3600) == 0.0, str(entry_size(2 * 3600)))
 
+    # Симметрия правила: вход занимает деньги В МОМЕНТ РЕШЕНИЯ, а не
+    # на границе часа. Разбор пишется циклом раньше выбора, и вход того
+    # же цикла обязан быть профинансирован. Асимметрия морила голодом
+    # каждую книгу на полном обороте: владелец увидел это на часовой
+    # книге как pnl 0.00 при живом нетто.
+    def entry_size2(decided_at):
+        a = {"arm": "gbm", "hour": "H00", "sym": "A", "side": "long",
+             "state": "закрыта", "opened_at": 0, "closes_at": 3600,
+             "net_bp": 0.0, "review_at": 3600 + 900}
+        b = {"arm": "gbm", "hour": "H01", "sym": "B", "side": "long",
+             "state": "открыта", "opened_at": 3600,
+             "closes_at": 2 * 3600}
+        if decided_at is not None:
+            b["decided_at"] = decided_at
+        TR.account([a, b], "gbm", hold_h=1)
+        return b["size"]
+
+    check("вход момента решения профинансирован из разбора того же цикла",
+          entry_size2(3600 + 960) > 0, str(entry_size2(3600 + 960)))
+    check("старая запись без момента решения — по границе часа, ноль",
+          entry_size2(None) == 0.0, str(entry_size2(None)))
+
 
 def test_sverka_pairs_cash_reject_with_zero_size():
     """Сверка: отказ ядра по пустой кассе — пара нулевому размеру.

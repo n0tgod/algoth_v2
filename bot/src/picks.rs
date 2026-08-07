@@ -35,6 +35,10 @@ pub struct Leg {
 pub struct Pick {
     pub arm: Option<String>,
     pub hour: String,
+    /// Момент решения цикла: денежное событие входа стоит на нём, а
+    /// не на номинальной границе часа — симметрично разбору.
+    #[serde(default)]
+    pub at_ts: Option<f64>,
     #[serde(default)]
     pub ver: Option<u32>,
     #[serde(default)]

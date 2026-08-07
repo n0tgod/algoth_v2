@@ -253,13 +253,23 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
         let Some(h0) = hour_ms(&p.hour) else { continue };
         let hour_close = h0 + 3_600_000;
         let legs = p.long.len() + p.short.len();
+        // Денежное событие входа — момент РЕШЕНИЯ цикла, не граница
+        // часа: разбор пишется раньше выбора, и касса успевает
+        // вернуться. Оставить вход на границе значило бы просить
+        // деньги за минуты до их возврата — размер 0 у всей руки
+        // (владелец видел это на часовой книге как pnl 0.00).
+        let decided = p
+            .at_ts
+            .map(|t| (t * 1000.0) as i64)
+            .unwrap_or(hour_close)
+            .max(hour_close);
         let mut add = |leg: &Leg, side: Side| {
             // Живой вход сканера открыт секундой события; строка без
-            // метки — часовой вход, открытый закрытием часа сигнала.
+            // метки — часовой вход, открытый моментом решения.
             let opened_at = leg
                 .at_ts
                 .map(|t| (t * 1000.0) as i64)
-                .unwrap_or(hour_close);
+                .unwrap_or(decided);
             plan.push(Planned {
                 key: format!(
                     "{}:{}:{}:{}",
