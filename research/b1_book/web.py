@@ -671,7 +671,8 @@ async function pullBot() {
 // веса ведут несколько книг с разным сроком удержания, и сравнение
 // «какой темп учится быстрее» и есть смысл переключателя.
 const MDL = {data: null, arm: "all", book: "h4"};
-const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"]];
+const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"],
+               ["sit", "situational"]];
 async function pullModel() {
   try {
     const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
@@ -717,7 +718,9 @@ function tradeStats(p) {
     const s = st[a]; if (!s) return "";
     const name = a === "gbm" ? "trees" : "neural";
     if (!s.closed) return `<div class="mline">${name}: ${s.open || 0}
-      open, none closed yet — first outcomes in ~${bookH(p)} h.</div>`;
+      open, none closed yet — ${isSit(p)
+        ? "they close when their situation ends"
+        : "first outcomes in ~" + bookH(p) + " h"}.</div>`;
     // «Обещание / факт» — самое честное число здесь: модель может
     // угадывать знак и обещать вчетверо больше, чем даёт.
     return `<div class="mline"><b>${name}</b></div><div class="stats">`
@@ -779,8 +782,11 @@ function tradeTable(p) {
       ? ((t.net_bp > 0) ? "good" : "bad")
       : (t.state === "открыта" ? "" : "dim");
     const when = t.state === "открыта"
-      ? `in ${(t.closes_in_sec/3600).toFixed(1)} h`
-      : (t.state === "закрыта" ? "closed"
+      ? (t.closes_in_sec == null ? "open"
+         : `in ${(t.closes_in_sec/3600).toFixed(1)} h`)
+      : (t.state === "закрыта"
+         ? "closed" + (t.exit_reason
+             ? " · " + (EXIT_EN[t.exit_reason] || t.exit_reason) : "")
          : t.state === "ждёт разбора" ? "awaiting" : "no outcome");
     return `<tr class="${cls}">
       <td class="mono">${t.hour.slice(5)}</td>
@@ -796,8 +802,9 @@ function tradeTable(p) {
   }).join("");
   return `<div class="mline">model trades <span class="dim">(exp —
     expected move; mae — expected move <b>against</b> the position
-    on the way; got — what actually happened. % of price, over
-    ${bookH(p)} h)</span></div>
+    on the way; got — what actually happened. % of price, ${isSit(p)
+      ? "until the situation exits"
+      : "over " + bookH(p) + " h"})</span></div>
     <div style="overflow-x:auto"><table class="mtr">
     <tr><th>hour</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
     <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
@@ -810,6 +817,14 @@ function tradeTable(p) {
 function bookH(p) {
   return ((p || {}).manifest || {}).horizon_h || 4;
 }
+function isSit(p) {
+  return !!(((p || {}).manifest || {}).situational);
+}
+// Причины выхода ситуационной книги — перевод на границе показа.
+const EXIT_EN = {"прогноз развернулся": "forecast flipped",
+                 "цена прошла обещанный ход против":
+                   "price broke the promised adverse path",
+                 "предел возраста": "age limit"};
 function renderModel() {
   const box = document.getElementById("modelbox"), full = MDL.data;
   const cap = document.getElementById("cap-model");
@@ -893,7 +908,8 @@ function renderModel() {
   const accLine = ["gbm","nn"].map(a => accs[a]
     ? `${a === "gbm" ? "trees" : "neural"} $${accs[a].balance.toFixed(2)}`
     : null).filter(Boolean).join(" · ");
-  cap.textContent = `weights v${m.version} · hold ${bookH(d)} h · age ${
+  cap.textContent = `weights v${m.version} · hold ${
+    isSit(d) ? "by situation" : bookH(d) + " h"} · age ${
     ageH == null ? "—" : ageH.toFixed(1)} h${
     accLine ? " · " + accLine : ""}`;
   const ic = {};
@@ -1472,7 +1488,7 @@ document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
 // Книга турнира темпов из ссылки («h1», «h24»); пусто — главная 4 ч.
 // Едет в каждый запрос и в ссылки на график: страница обязана
 // показывать ту книгу, из которой пришли, а не молча главную.
-const HZ = ["h1", "h24"].includes(
+const HZ = ["h1", "h24", "sit"].includes(
   new URLSearchParams(location.search).get("hz"))
   ? new URLSearchParams(location.search).get("hz") : "";
 const S = {page: 0};
@@ -1490,7 +1506,8 @@ function renderBooks() {
   };
   document.getElementById("books").innerHTML =
     `<span class="k">book (hold)</span> `
-    + mk("", "4 h") + " " + mk("h1", "1 h") + " " + mk("h24", "24 h");
+    + mk("", "4 h") + " " + mk("h1", "1 h") + " " + mk("h24", "24 h")
+    + " " + mk("sit", "situational");
 }
 renderBooks();
 // Percent of price move — the display unit across the whole project
@@ -1527,6 +1544,11 @@ function hourLocal(h) {
 // значило бы разойтись с уже записанными файлами.
 const ST_EN = {"закрыта": "closed", "открыта": "open",
                "без исхода": "no outcome", "ждёт разбора": "awaiting"};
+// Причины выхода ситуационной книги — перевод на границе показа.
+const EXIT_EN = {"прогноз развернулся": "forecast flipped",
+                 "цена прошла обещанный ход против":
+                   "price broke the promised adverse path",
+                 "предел возраста": "age limit"};
 // Кривая счёта. Рисуются ОБЕ руки всегда, даже когда выбрана одна:
 // они учатся на одних данных, и почти любой вопрос к ним
 // сравнительный — «чем разошлись». Выбранная ведётся ярко, вторая
@@ -1903,8 +1925,12 @@ async function load() {
             : pct(t.dd_cap_bp)}</td>
       <td class="mono ${cls}">${t.pnl == null ? "—"
         : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
-      <td class="hide-s" style="color:var(--muted)">${ST_EN[t.state] || t.state}${
-        t.state === "открыта"
+      <td class="hide-s" style="color:var(--muted)"
+          title="${t.exit_reason || ""}">${ST_EN[t.state] || t.state}${
+        t.exit_reason
+        ? ` <span class="k">· ${EXIT_EN[t.exit_reason]
+            || t.exit_reason}</span>` : ""}${
+        t.state === "открыта" && t.closes_in_sec != null
         ? ` <span class="k">(${(t.closes_in_sec/3600).toFixed(1)} h
             left)</span>` : ""}</td>
       <td class="mono hide-s" style="color:var(--muted)">${t.odd == null ? "—"
@@ -2603,7 +2629,7 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              // темпов: сделка часовой книги живёт в своём каталоге, и
              // без метки график молча показал бы книгу 4 ч.
              hour: Q.get("hour") || "",
-             hz: (["h1", "h24"].includes(Q.get("hz"))
+             hz: (["h1", "h24", "sit"].includes(Q.get("hz"))
                   ? Q.get("hz") : ""),
              fit: false};
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара

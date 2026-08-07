@@ -815,6 +815,141 @@ def test_horizon_books_review_with_their_own_target():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_situational_book_enters_and_exits_by_situation():
+    """Ситуационная книга: вход по порогам, выход по причинам.
+
+    Проверяется числами: гейт края (|fwd| ≥ 22 б.п.), гейт RR ≥ 2 по
+    обещаниям СЫРОГО пути, шорты входят (первый вариант гейта требовал
+    fav > 0 у обеих сторон и молча запрещал шорты целиком), выходы по
+    трём причинам с сырым ходом цены в исходе, слоты не превышаются.
+    """
+    import json as _json
+    import tempfile
+    import shutil
+    import numpy as np
+    import train as T
+
+    class Stub:
+        def __init__(self, by_row):
+            self.by_row = np.asarray(by_row, dtype=float)
+
+        def predict(self, xs):
+            # Строки различаются первым признаком — по нему и ответ.
+            idx = np.asarray(xs)[:, 0].astype(int)
+            return self.by_row[idx]
+
+    syms = ["AUSDT", "BUSDT", "CUSDT", "DUSDT"]
+    grid = ["2026-08-07-10", "2026-08-07-11"]
+    n, feat = len(syms), 2
+    x = np.zeros((n, len(grid), feat))
+    for i in range(n):
+        x[i, :, 0] = i
+    mats = {"mid_close": np.array([[100.0, 100.0],
+                                   [100.0, 100.0],
+                                   [100.0, 100.0],
+                                   [100.0, 100.0]])}
+    rows_m = np.arange(n)
+    lo, hi = np.full(feat, -1e9), np.full(feat, 1e9)
+    # A: лонг, край и RR проходят. B: край мал (10 < 22). C: ШОРТ,
+    # проходит (fav = mae < 0, adv = mfe > 0, RR 2.5). D: RR мал.
+    models = {("gbm", "fwd_4h"): Stub([30.0, 10.0, -40.0, 25.0]),
+              ("gbm", "mae_4h"): Stub([-10.0, -5.0, -50.0, -20.0]),
+              ("gbm", "mfe_4h"): Stub([25.0, 30.0, 20.0, 30.0])}
+    d = tempfile.mkdtemp()
+    try:
+        T.situational_arm(d, "gbm", models, x, mats, syms, rows_m, 1,
+                          grid, lo, hi, None, lambda m: None)
+        pk = T._read_jsonl(os.path.join(d, "picks.jsonl"))
+        check("выбор записан один", len(pk) == 1, str(len(pk)))
+        longs = {p["sym"] for p in pk[0]["long"]}
+        shorts = {p["sym"] for p in pk[0]["short"]}
+        check("вошли только A (лонг) и C (шорт)",
+              longs == {"AUSDT"} and shorts == {"CUSDT"},
+              f"{longs} {shorts}")
+        check("малый край и малый RR не вошли",
+              "BUSDT" not in longs | shorts
+              and "DUSDT" not in longs | shorts)
+        check("RR записан в выбор",
+              pk[0]["long"][0].get("rr") == 2.5,
+              str(pk[0]["long"][0].get("rr")))
+
+        # Выходы. Час 11: у A прогноз развернулся; у C цена прошла
+        # обещанный ход против (вверх на 25 б.п. при обещании 20).
+        mats2 = {"mid_close": np.array([[100.0, 100.0],
+                                        [100.0, 100.0],
+                                        [100.0, 100.25],
+                                        [100.0, 100.0]])}
+        models2 = dict(models)
+        models2[("gbm", "fwd_4h")] = Stub([-5.0, 10.0, -40.0, 25.0])
+        T.situational_arm(d, "gbm", models2, x, mats2, syms, rows_m, 1,
+                          grid, lo, hi, None, lambda m: None)
+        rv = T._read_jsonl(os.path.join(d, "review.jsonl"))
+        rows = {r["sym"]: r for rec in rv for r in rec["rows"]}
+        check("A закрыта разворотом прогноза",
+              rows.get("AUSDT", {}).get("reason") == "прогноз развернулся",
+              str(rows.get("AUSDT")))
+        check("C закрыта пробоем обещанного хода против",
+              rows.get("CUSDT", {}).get("reason")
+              == "цена прошла обещанный ход против",
+              str(rows.get("CUSDT")))
+        check("исход — сырой ход цены (C: +25 б.п. против шорта)",
+              rows.get("CUSDT", {}).get("got") == 25.0
+              and rows["CUSDT"]["net"] == round(-25.0 - T.ROUND_COST_BP, 1),
+              str(rows.get("CUSDT")))
+        # Сделки собираются ядром: у закрытой срок из разбора, у
+        # открытой срока нет вовсе.
+        import trades as TR
+        tr = TR.build(T._read_jsonl(os.path.join(d, "picks.jsonl")),
+                      rv, hold_h=None)
+        byst = {t["sym"]: t for t in tr}
+        check("закрытая несёт час выхода и причину",
+              byst["AUSDT"]["close_hour"] == "2026-08-07-11"
+              and byst["AUSDT"]["exit_reason"] == "прогноз развернулся",
+              str({k: byst["AUSDT"].get(k)
+                   for k in ("close_hour", "exit_reason")}))
+
+        # Возраст: позиция старше суток закрывается пределом возраста.
+        d2 = tempfile.mkdtemp()
+        try:
+            old = {"arm": "gbm", "hour": "2026-08-05-10",
+                   "long": [{"sym": "AUSDT", "fwd": 30.0, "px": 100.0,
+                             "mae": -10.0, "mfe": 25.0}], "short": []}
+            with open(os.path.join(d2, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(old) + "\n")
+            T.situational_arm(d2, "gbm", models, x, mats, syms, rows_m,
+                              1, grid, lo, hi, None, lambda m: None)
+            rv2 = T._read_jsonl(os.path.join(d2, "review.jsonl"))
+            got = [r for rec in rv2 for r in rec["rows"]
+                   if r["sym"] == "AUSDT"]
+            check("предел возраста закрывает позицию",
+                  got and got[0]["reason"] == "предел возраста",
+                  str(got))
+        finally:
+            shutil.rmtree(d2, ignore_errors=True)
+
+        # Слоты: свободных нет — вход не открывается даже на годной
+        # ситуации.
+        d3 = tempfile.mkdtemp()
+        try:
+            full = {"arm": "gbm", "hour": grid[1],
+                    "long": [{"sym": f"S{i}", "fwd": 30.0, "px": 100.0,
+                              "mae": -10.0, "mfe": 25.0}
+                             for i in range(T.SIT_SLOTS)], "short": []}
+            with open(os.path.join(d3, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(full) + "\n")
+            T.situational_arm(d3, "gbm", models, x, mats, syms, rows_m,
+                              1, grid, lo, hi, None, lambda m: None)
+            pk3 = T._read_jsonl(os.path.join(d3, "picks.jsonl"))
+            check("касса полна — новых входов нет",
+                  len(pk3) == 1, str(len(pk3)))
+        finally:
+            shutil.rmtree(d3, ignore_errors=True)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_pretest_comes_after_the_summary_is_written():
     """Предпросмотр приходит ПОСЛЕ боевого цикла, а не вместе с ним.
 
@@ -2651,6 +2786,7 @@ def main():
     test_sverka_pairs_cash_reject_with_zero_size()
     test_picks_never_take_non_crypto()
     test_horizon_books_review_with_their_own_target()
+    test_situational_book_enters_and_exits_by_situation()
     test_pretest_comes_after_the_summary_is_written()
     test_hourly_cycle_wakes_on_the_hour()
     test_account_is_one_capital_at_leverage_one()

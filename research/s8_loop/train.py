@@ -1025,6 +1025,204 @@ def review_arm(mdir, arm, hold_h, targets, si, grid, book_root, log_):
     return review
 
 
+# --- ситуационная книга -----------------------------------------------
+# Решение владельца (2026-08-07): книга, которая входит не по
+# расписанию, а когда модель видит ситуацию, и выходит не по сроку, а
+# когда ситуация кончилась. Сигнал — прогнозы главного горизонта
+# (fwd/mae/mfe за 4 ч): это лучше всего обученные цели.
+#
+# Пороги объявлены ДО прогона и после результатов не двигаются
+# (правило проекта). Все три выведены из уже измеренного, а не взяты
+# на вкус:
+#  - вход только если прогноз перекрывает круг издержек ВДВОЕ: платим
+#    11 б.п. за круг, ждать меньше 22 — торговать шум комиссии;
+#  - обещанный ход В ПОЛЬЗУ не меньше чем вдвое больше обещанного хода
+#    ПРОТИВ (RR ≥ 2 — число владельца). Обе величины из целей пути по
+#    СЫРОЙ цене: сравнивать fwd (остаток к волне) с путём цены — та же
+#    ошибка единиц, что уже ловилась в замере бракета;
+#  - предел возраста сутки: позиция без исхода не вправе жить вечно, а
+#    прогноз дальше 24 ч эта модель не видела никогда.
+SIT_SLOTS = 6                     # одновременных позиций не больше
+SIT_MIN_EDGE_BP = 2 * ROUND_COST_BP
+SIT_MIN_RR = 2.0
+SIT_MAX_AGE_H = 24
+SIT_SIGNAL_H = 4                  # горизонт целей, дающих сигнал
+
+
+def sit_open_positions(picks, reviews, arm):
+    """Открытые позиции ситуационной книги — перечитыванием файлов.
+
+    Состояние выводится, а не накапливается (правило журнала бота):
+    позиция открыта, если её выбор записан, а разбора с её ключом нет.
+    """
+    done = set()
+    for rv in reviews:
+        if (rv.get("arm") or "gbm") != arm:
+            continue
+        for r in rv.get("rows") or []:
+            done.add((rv.get("hour"), r.get("sym"), r.get("side")))
+    out = []
+    for pk in picks:
+        if (pk.get("arm") or "gbm") != arm:
+            continue
+        for side in ("long", "short"):
+            for p in pk.get(side) or []:
+                if (pk.get("hour"), p.get("sym"), side) in done:
+                    continue
+                out.append({"hour": pk.get("hour"), "sym": p.get("sym"),
+                            "side": side, "px": p.get("px"),
+                            "fwd": p.get("fwd"), "mae": p.get("mae"),
+                            "mfe": p.get("mfe")})
+    return out
+
+
+def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
+                    grid, nov_lo, nov_hi, book_root, log_):
+    """Один проход ситуационной книги: сначала выходы, потом входы.
+
+    Порядок обязателен: закрытие освобождает слот и кассу, и вход в
+    тот же час имеет право занять их. Выход и вход по одному имени в
+    один час запрещены отдельно — перевороты внутри часа были бы
+    торговлей шумом переобучения.
+    """
+    kf, km, kx = (f"fwd_{SIT_SIGNAL_H}h", f"mae_{SIT_SIGNAL_H}h",
+                  f"mfe_{SIT_SIGNAL_H}h")
+    if any((arm, k) not in models for k in (kf, km, kx)) \
+            or j_last is None:
+        return
+    picks_all = _read_jsonl(os.path.join(mdir, "picks.jsonl"))
+    reviews_all = _read_jsonl(os.path.join(mdir, "review.jsonl"))
+    open_pos = sit_open_positions(picks_all, reviews_all, arm)
+    si = {s: i for i, s in enumerate(syms)}
+    cur = grid[j_last]
+    mid = mats["mid_close"]
+
+    # --- выходы: ситуация кончилась ----------------------------------
+    closed_syms, by_hour = set(), {}
+    for p in open_pos:
+        i = si.get(p["sym"])
+        if i is None:
+            continue
+        px = float(mid[i, j_last])
+        if not (np.isfinite(px) and p.get("px")):
+            # Цены нет — судить не по чему; позиция ждёт цены.
+            continue
+        move = (px / p["px"] - 1.0) * 1e4
+        age = _hours_apart(p["hour"], cur)
+        fresh = float(models[(arm, kf)].predict(
+            x[i:i + 1, j_last])[0])
+        adv, fav, _, _ = position_path(p["side"], p.get("mae"),
+                                       p.get("mfe"))
+        reason = None
+        # Прогноз развернулся: модель больше не ждёт того, ради чего
+        # входила. Это главный «ситуационный» выход.
+        if (p["side"] == "long") != (fresh > 0):
+            reason = "прогноз развернулся"
+        # Цена прошла обещанный ход против: обещание пути нарушено, и
+        # держать дальше значит держать ЧУЖУЮ сделку.
+        elif adv is not None and (
+                (p["side"] == "long" and move <= adv)
+                or (p["side"] == "short" and move >= adv)):
+            reason = "цена прошла обещанный ход против"
+        elif age is not None and age >= SIT_MAX_AGE_H:
+            reason = "предел возраста"
+        if reason is None:
+            continue
+        rr = {"sym": p["sym"], "side": p["side"],
+              # Ожидание — обещанный ход В ПОЛЬЗУ по сырой цене: исход
+              # здесь тоже сырой ход цены, и единицы обязаны совпадать.
+              "expected": round(fav, 1) if fav is not None else None,
+              "got": round(move, 1),
+              "net": round((1 if p["side"] == "long" else -1) * move
+                           - ROUND_COST_BP, 1),
+              "exit_hour": cur, "reason": reason}
+        by_hour.setdefault(p["hour"], []).append(rr)
+        closed_syms.add(p["sym"])
+    for hour, rows_rv in by_hour.items():
+        bk_out = stamp_book([r["sym"] for r in rows_rv], time.time(),
+                            book_root, log_, "выхода")
+        for r in rows_rv:
+            if r["sym"] in bk_out:
+                r["cum"] = bk_out[r["sym"]]
+        with open(os.path.join(mdir, "review.jsonl"), "a",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"arm": arm, "hour": hour, "cost_bp": ROUND_COST_BP,
+                 "at_ts": round(time.time(), 3), "rows": rows_rv},
+                ensure_ascii=False) + "\n")
+        log_(f"ситуационная [{arm}]: закрыто {len(rows_rv)} "
+             f"({'; '.join(r['sym'] + ' — ' + r['reason'] for r in rows_rv)})")
+
+    # --- входы: только когда ситуация того стоит ----------------------
+    held = {p["sym"] for p in open_pos} - closed_syms
+    free = SIT_SLOTS - len(held)
+    if free <= 0:
+        return
+    xj = x[rows_m, j_last]
+    fwd = models[(arm, kf)].predict(xj)
+    mae = models[(arm, km)].predict(xj)
+    mfe = models[(arm, kx)].predict(xj)
+    cand = []
+    for i in range(len(rows_m)):
+        f_v = float(fwd[i])
+        if abs(f_v) < SIT_MIN_EDGE_BP:
+            continue
+        side = "long" if f_v > 0 else "short"
+        sym = syms[rows_m[i]]
+        if sym in held or sym in closed_syms:
+            continue
+        adv, fav, _, _ = position_path(side, float(mae[i]),
+                                       float(mfe[i]))
+        # Обещания пути обязаны смотреть в СВОИ стороны: у лонга ход в
+        # пользу вверх (fav > 0), против — вниз (adv < 0); у шорта
+        # зеркально (fav < 0, adv > 0). Обещание «цена не пойдёт
+        # против» — известный дефект прогноза, не сделка; и первый
+        # вариант этого гейта требовал fav > 0 у обеих сторон, то есть
+        # молча запрещал шорты целиком — потому проверка знаков стоит
+        # по сторонам и закреплена тестом.
+        if fav is None or adv is None:
+            continue
+        if side == "long" and not (fav > 0 and adv < 0):
+            continue
+        if side == "short" and not (fav < 0 and adv > 0):
+            continue
+        rr_ratio = abs(fav) / abs(adv)
+        if rr_ratio < SIT_MIN_RR:
+            continue
+        px = float(mats["mid_close"][rows_m[i], j_last])
+        if not np.isfinite(px):
+            continue
+        cand.append((abs(f_v), i, side, rr_ratio, px))
+    if not cand:
+        return
+    cand.sort(reverse=True)
+
+    def mk(i, side, rr_ratio, px):
+        d = {"sym": syms[rows_m[i]], "fwd": float(fwd[i]), "px": px,
+             "rr": round(rr_ratio, 2),
+             **path_fields(side, float(mae[i]), float(mfe[i]),
+                           h=SIT_SIGNAL_H)}
+        nv = novelty(xj[i], nov_lo, nov_hi)
+        if nv is not None:
+            d["odd"] = round(nv, 3)
+        return d
+    picks = {"arm": arm, "hour": grid[-1], "at_ts": round(time.time()),
+             "long": [], "short": []}
+    for _, i, side, rr_ratio, px in cand[:free]:
+        picks[side].append(mk(i, side, rr_ratio, px))
+    names = [p["sym"] for s in ("long", "short") for p in picks[s]]
+    bk = stamp_book(names, time.time(), book_root, log_, "входа")
+    for s in ("long", "short"):
+        for p in picks[s]:
+            got = bk.get(p["sym"])
+            if got:
+                p["px_live"], p["px_live_at"] = got["mid"], got["t"]
+                p["cum"] = got
+    if write_pick(mdir, picks):
+        log_(f"ситуационная [{arm}]: вход {len(names)} "
+             f"({', '.join(names)}), свободных слотов было {free}")
+
+
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
               nov_lo, nov_hi, book_root, log_):
     """Выбор монет одной книги: цели fwd/mae/mfe СВОЕГО горизонта.
@@ -1100,21 +1298,23 @@ def write_pick(mdir, picks):
     return True
 
 
-def rebuild_accounts(mdir, hold_h):
+def rebuild_accounts(mdir, hold_h, slots=None):
     """Счета книги — пересборкой ЦЕЛИКОМ из выборов и разборов.
 
     Счёт остаётся функцией от истории: повторный проход не может
     провести те же сделки дважды, а изменение модели капитала
     применяется ко всей истории разом, а не с середины. Горизонт
     задаёт число слотов кассы (`имена × часы удержания`), поэтому
-    передаётся явно.
+    передаётся явно; у ситуационной книги горизонта нет — слоты
+    приходят числом (`slots`).
     """
     all_tr = TR.build(_read_jsonl(os.path.join(mdir, "picks.jsonl")),
                       _read_jsonl(os.path.join(mdir, "review.jsonl")),
                       hold_h=hold_h)
     out = {}
     for arm, _ in ARMS:
-        hist, bal = TR.account(all_tr, arm, hold_h=hold_h)
+        hist, bal = TR.account(all_tr, arm, hold_h=hold_h or TR.HOLD_H,
+                               slots=slots)
         apath = os.path.join(mdir, f"account_{arm}.json")
         with open(apath + ".tmp", "w", encoding="utf-8") as f:
             json.dump({"balance": bal, "history": hist[-500:],
@@ -1522,6 +1722,39 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             os.replace(smp + ".tmp", smp)
         except Exception as e:                            # noqa: BLE001
             log_(f"книга {h} ч не сведена: {type(e).__name__}: {e}")
+
+    # Ситуационная книга: вход когда модель видит ситуацию, выход когда
+    # ситуация кончилась. Сигнал — цели главного горизонта; своя касса
+    # с фиксированными слотами; правила и пороги — у `situational_arm`.
+    try:
+        mdir = MODEL_DIR + "_sit"
+        os.makedirs(mdir, exist_ok=True)
+        for arm, _ in ARMS:
+            situational_arm(mdir, arm, models, x, mats, syms, rows_m,
+                            j_last, grid, nov_lo, nov_hi, book_root,
+                            log_)
+        rebuild_accounts(mdir, None, slots=SIT_SLOTS)
+        kf = f"fwd_{SIT_SIGNAL_H}h"
+        n_rows = (int((elig & np.isfinite(targets[kf])).sum())
+                  if kf in targets else 0)
+        sm = {"version": MODEL_VERSION, "situational": True,
+              "horizon_h": None, "slots": SIT_SLOTS,
+              "hedge": man["hedge"], "trained_at": man["trained_at"],
+              "sections": n_sections, "symbols": len(syms),
+              "canary_ic": man["canary_ic"],
+              # Правила — в артефакт: отчёт обязан описывать тот
+              # прогон, который породил файл, а не текущие исходники.
+              "min_edge_bp": SIT_MIN_EDGE_BP, "min_rr": SIT_MIN_RR,
+              "max_age_h": SIT_MAX_AGE_H,
+              "target": kf, "target_rows": n_rows,
+              "target_need": MIN_TARGET_ROWS,
+              "probe": PROBE, "pretest": PRETEST}
+        smp = os.path.join(mdir, "manifest.json")
+        with open(smp + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(sm, f, ensure_ascii=False, indent=1)
+        os.replace(smp + ".tmp", smp)
+    except Exception as e:                                # noqa: BLE001
+        log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
 
     lines = all_lines
     with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",

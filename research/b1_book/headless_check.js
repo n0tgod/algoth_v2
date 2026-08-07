@@ -305,6 +305,45 @@ global.fetch = async (url) => {
                   // свои числа — по ним и проверяется, что переключение
                   // показывает ИМЕННО её, а не главную.
                   books: {
+                    // Ситуационная книга: открытая позиция БЕЗ срока
+                    // (closes_in_sec нет) и закрытая с причиной выхода.
+                    sit: {present: true,
+                          manifest: {version: 1, situational: true,
+                                     horizon_h: null, slots: 6,
+                                     sections: 96, symbols: 540,
+                                     canary_ic: 0.003,
+                                     min_edge_bp: 22, min_rr: 2,
+                                     max_age_h: 24,
+                                     target: "fwd_4h",
+                                     target_rows: 5200,
+                                     target_need: 1000,
+                                     trained_at:
+                                       "2026-08-01T10:00:00+00:00"},
+                          accounts: {gbm: {balance: 1001.1,
+                                           history: [
+                             {hour: "2026-08-03-17", pnl: 0.6,
+                              balance: 1000.5},
+                             {hour: "2026-08-03-18", pnl: 0.6,
+                              balance: 1001.1}]}},
+                          trade_stats: {gbm: {closed: 1, open: 1,
+                                              no_outcome: 0,
+                                              hit_rate: 1.0,
+                                              net_bp_avg: 31.0,
+                                              pnl: 1.1,
+                                              expected_over_got: 1.4}},
+                          trades: [
+                            {arm: "gbm", hour: "2026-08-03-18",
+                             sym: "BTCUSDT", side: "long",
+                             opened_at: Math.floor(Date.now()/1000)-600,
+                             closes_at: null, state: "открыта",
+                             expected_bp: 61, mae_bp: -25},
+                            {arm: "gbm", hour: "2026-08-03-15",
+                             sym: "ETHUSDT", side: "short",
+                             opened_at: Math.floor(Date.now()/1000)-9600,
+                             state: "закрыта", expected_bp: -80,
+                             mae_bp: 30, got_bp: -42, net_bp: 31,
+                             pnl: 0.52,
+                             exit_reason: "прогноз развернулся"}]},
                     // Книга, ждущая свою цель: выборов нет, и причина
                     // обязана дойти до разметки числом.
                     h24: {present: true,
@@ -531,6 +570,19 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       catch (e) { bad.push("обзор: книга 24 ч упала: " + e.message); }
       if (!/412<\/b> of 1000/.test(wb) || !/fwd_24h/.test(wb))
         bad.push("обзор: ждущая книга не называет причину числом");
+      // Ситуационная книга: позиция без срока не рисует NaN, причина
+      // выхода закрытой доходит до разметки переводом.
+      let sb = "";
+      try { sb = global.__book("sit"); }
+      catch (e) { bad.push("обзор: ситуационная книга упала: " + e.message); }
+      if (/NaN/.test(sb))
+        bad.push("обзор: у бессрочной позиции нарисован NaN");
+      if (!/forecast flipped/.test(sb))
+        bad.push("обзор: причина выхода ситуационной сделки не показана");
+      const scap = global.__el
+        ? String(global.__el("cap-model").textContent || "") : "";
+      if (!/by situation/.test(scap))
+        bad.push("обзор: подпись ситуационной книги не называет режим");
       // Возврат на главную: проверки ниже смотрят на её разметку.
       try { global.__book("h4"); }
       catch (e) { bad.push("обзор: возврат на книгу 4 ч упал: " + e.message); }

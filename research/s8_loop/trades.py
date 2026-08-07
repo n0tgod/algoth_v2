@@ -228,6 +228,12 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
 
     `picks` и `reviews` — строки соответствующих `.jsonl`.
 
+    `hold_h=None` — книга БЕЗ срока (ситуационная): позиция закрывается
+    не по времени, а разбором, и строка разбора несёт `exit_hour`.
+    Открытая позиция такой книги не имеет ни срока, ни обратного
+    отсчёта — и никогда не переходит в «ждёт разбора»/«без исхода» по
+    таймеру: судьи-времени у неё нет.
+
     Про время входа
     ---------------
 
@@ -281,7 +287,8 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
             for p in pk.get(side) or []:
                 key = (arm, hour, p.get("sym"), side)
                 got, rv = done.get(key, (None, None))
-                t_close = (t0 + hold_h * 3600) if t0 is not None else None
+                t_close = (t0 + hold_h * 3600) \
+                    if (t0 is not None and hold_h) else None
                 # Книга входа: своя у выбора либо дописанная пересчётом.
                 cin = (p.get("cum") or (books or {}).get(
                     (arm, hour, p.get("sym")), {}).get("in"))
@@ -339,6 +346,11 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                                      or (books or {}).get(
                                          (arm, hour, p.get("sym")),
                                          {}).get("out"))
+                    # Ситуационная книга: срок закрытия задаёт РАЗБОР.
+                    if got.get("exit_hour"):
+                        tr["closes_at"] = hour_end(got["exit_hour"])
+                        tr["close_hour"] = got["exit_hour"]
+                        tr["exit_reason"] = got.get("reason")
                     tr.update(state="закрыта", got_bp=got.get("got"),
                               net_bp=got.get("net"), pnl=got.get("pnl"),
                               pos=got.get("pos"),
@@ -383,7 +395,8 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
 START_BALANCE = 1000.0
 
 
-def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None):
+def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None,
+            slots=None):
     """Счёт ОДНОГО капитала: экспозиция не превышает его.
 
     Прежняя модель считала каждый час независимо — весь баланс делился
@@ -406,6 +419,10 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None):
     Функция ЧИСТАЯ и полная: она пересчитывает счёт с начала по списку
     сделок. Поэтому повторный прогон цикла не может провести те же
     сделки дважды — состояние не накапливается, а выводится.
+
+    `slots` — фиксированное число слотов кассы: у ситуационной книги
+    одновременных позиций не больше объявленного числа, и делить
+    капитал на «имена × горизонт» там не на что — горизонта нет.
 
     Возвращает `(история, баланс)` и проставляет каждой сделке `size` —
     сумму, которая в ней стоит.
@@ -430,7 +447,8 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None):
     # переставал торговать.
     ev = []
     for t in rows:
-        if t["state"] == "закрыта" and t.get("closes_at"):
+        if t["state"] == "закрыта" \
+                and (t.get("closes_at") or t.get("review_at")):
             # Деньги возвращаются не раньше, чем исход стал ИЗВЕСТЕН.
             # Прежде выход вставал по плановому времени, даже когда
             # разбор опоздал на часы, — и касса задним числом
@@ -440,15 +458,17 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None):
             # в кассе — тот же класс дефекта, что отбор универсума по
             # сегодняшнему списку. У записей без метки прихода разбора
             # остаётся плановое время — их история уже сведена.
-            back = max(t["closes_at"], t.get("review_at") or 0)
+            back = max(t.get("closes_at") or 0,
+                       t.get("review_at") or 0)
             ev.append((back, 0, t))                # 0 — сначала выход
         ev.append((t["opened_at"], 1, t))          # 1 — потом вход
     ev.sort(key=lambda x: (x[0], x[1]))
     cash, busy, hist = start, 0.0, []
     for _, kind, t in ev:
         if kind == 1:
-            slots = max(1, len(per_hour[t["hour"]]) * max(1, hold_h))
-            want = (cash + busy) / slots
+            n_slots = slots or max(1, len(per_hour[t["hour"]])
+                                   * max(1, hold_h or 1))
+            want = (cash + busy) / n_slots
             # Больше свободных денег в позицию не положить. Настоящий
             # счёт ведёт себя так же, и молчать об этом нельзя: урезание
             # видно полем `size`.
@@ -760,12 +780,19 @@ def live_hours(t, hold_h=HOLD_H, now=None):
         return []
     now = now if now is not None else time.time()
     last_done = (now // 3600) * 3600            # начало текущего часа
+    # Конец жизни: своё закрытие, если оно известно, иначе полный
+    # горизонт. У сделки, закрытой раньше срока (ситуационная книга),
+    # часы после выхода — не её часы: мерить по ним просадку значило
+    # бы приписать позиции путь, которого она не держала.
+    end = t.get("closes_at") or (h0 + (max(1, hold_h or 1) + 1) * 3600)
     out = []
-    for i in range(1, max(1, hold_h) + 1):
+    i = 1
+    while True:
         ts = h0 + i * 3600
-        if ts >= last_done:                     # час ещё не закрыт
+        if ts + 3600 > end or ts >= last_done:  # час не в жизни сделки
             break
         out.append(_hour_of(ts))
+        i += 1
     return out
 
 
@@ -842,7 +869,8 @@ def equity(trades, arm, rows, start=START_BALANCE, hold_h=HOLD_H,
     for t in rowsa:
         for h in live_hours(t, hold_h, now):
             alive.setdefault(h, []).append(t)
-        if t["state"] == "закрыта" and t.get("closes_at"):
+        if t["state"] == "закрыта" \
+                and (t.get("closes_at") or t.get("review_at")):
             closed_at.setdefault(
                 _hour_of(t["closes_at"] - 1), []).append(t)
     out, bal = [], start
