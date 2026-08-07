@@ -106,9 +106,14 @@ const state = (full, n) => ({
         candles: full ? candles(n) : candles(2).slice(-2),
         candles_full: full, done_total: 3, noise_bp: 12.0,
         levels: [{p: 64700, kind: "полка"}],
-        open: [trade(9, false)],
-        done: [trade(1, true), Object.assign(trade(2, true),
-               {state: "оборвана перезапуском", pnl_bp: null, r: null})]},
+        // Выключенный детектор ничего не ведёт: ни открытых, ни
+        // закрытых. Подставной ответ обязан вести себя так же, иначе
+        // проверка «пустая история названа выключенной» шла бы на
+        // непустой истории и не проверяла ничего.
+        open: /paperoff=1/.test(SEARCH) ? [] : [trade(9, false)],
+        done: /paperoff=1/.test(SEARCH) ? []
+              : [trade(1, true), Object.assign(trade(2, true),
+                 {state: "оборвана перезапуском", pnl_bp: null, r: null})]},
   status: {uptime_sec: 3600, messages: 1e6, trades: 1e5, resets: 0,
            signals: 3, closed: 2, msg_per_sec: 150, ready: 2,
            last_msg_age_sec: 0.1, topics_live: 4, topics: 4,
@@ -266,7 +271,20 @@ global.fetch = async (url) => {
                    closes_at: Date.UTC(2026,7,3,19)/1000,
                    state: "закрыта", expected_bp: 210, mae_bp: -40,
                    entry_px: 64700, got_bp: 40, net_bp: 29, pnl: 0.48}]}
-             : url.startsWith("/trades") ? hist
+             // Выключенный детектор — это ОТВЕТ сервера, а не пустая
+             // история: страница обязана назвать причину, иначе
+             // выключенное наблюдение читается как поломка записи.
+             : url.startsWith("/trades")
+             ? (/paperoff=1/.test(SEARCH)
+                ? {off: true, sym: "BTCUSDT", symbols: ["BTCUSDT"],
+                   trades: [], stats: null, by_rule: {}, equity: [],
+                   count: 0, by_ver: [], ver: 3, older: 0}
+                : hist)
+             // Выключённый детектор — и пересчитывать нечего: сервер
+             // отвечает `off` на оба запроса, подставной обязан тоже.
+             : (url.startsWith("/recount") && /paperoff=1/.test(SEARCH))
+             ? {off: true, sym: "BTCUSDT", trades: [], stats: null,
+                by_rule: {}, equity: [], ver: 3, busy: false}
              : url.startsWith("/recount") ? recount
              : url.startsWith("/groups")
                ? {groups: [{id: "memes",
@@ -722,6 +740,21 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   }
   // Встроенный режим графика: с embed=1 шапка и сводка спрятаны, без
   // него — на месте. Ошибка в любую сторону — молчаливый отказ показа.
+  if (isChart && /paperoff=1/.test(SEARCH)) {
+    // Выключенный детектор обязан называть себя выключенным. «Ждёт
+    // условий» на выключенном наблюдении — ложь, и владелец прочёл её
+    // как «сделки не записываются».
+    const rw = global.__el ? String(global.__el("rows").innerHTML || "") : "";
+    if (/waits for conditions/.test(rw))
+      bad.push("график: выключенный детектор назван ждущим условий");
+    if (!/--paper/.test(rw) || !/is off/.test(rw))
+      bad.push("график: причина пустой истории сделок не названа");
+    const c3 = global.__el
+      ? String(global.__el("cap3").textContent || "") : "";
+    if (!/detector off/.test(c3))
+      bad.push("график: заголовок истории не говорит о выключенном детекторе");
+  }
+
   if (isChart) {
     const emb = /embed=1/.test(SEARCH);
     const nav = global.__el ? global.__el("topnav") : null;
@@ -988,6 +1021,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   } else if (isBot) {
     // У страницы ядра нет ни пересчёта, ни детекторных сделок — её
     // проверки выше, числами из /bot-full.
+  } else if (/paperoff=1/.test(SEARCH)) {
+    // Пересчитывать нечего: бумажных сделок не ведут. Проверки
+    // пересчёта здесь неприменимы — их место занимает проверка, что
+    // страница НАЗЫВАЕТ выключенное выключенным (выше).
   } else if (!global.__rec || !global.__table) {
     bad.push("страница не забирает пересчёт");
   } else {

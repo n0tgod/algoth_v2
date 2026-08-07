@@ -1056,8 +1056,14 @@ async function pullRec(go) {
 
 // Пересчёт годен к показу, только когда он досчитан: наполовину
 // собранный список сделок выглядит как готовый и врал бы числами.
+// Выключенный пересчёт РЕЗУЛЬТАТОМ не является: ответ `off` говорит,
+// что бумажных сделок не ведут вовсе. Прежде он проходил как готовый
+// пересчёт с пустым списком, и таблица подписывалась «0 сделок,
+// пересчёт, не факт» — то есть выключенное наблюдение выглядело как
+// посчитанная пустота.
 function recReady() {
-  return REC.data && !REC.data.busy && REC.data.stats !== undefined
+  return REC.data && !REC.data.busy && !REC.data.off
+         && REC.data.stats !== undefined
     ? REC.data : null;
 }
 
@@ -2561,7 +2567,7 @@ const stamp = t => new Date(t*1000).toISOString().slice(11,16);
 // Опрос разностный — см. тот же приём на странице обзора.
 const ST = {cand:[], since:0, sym:"", busy:false, fails:0};
 const HIST = {trades:[], stats:null, by_rule:{}, by_ver:[], equity:[],
-              at:0, busy:false};
+              at:0, busy:false, off:false};
 // История свечей с диска: в памяти сборщика живут считанные часы, а
 // trades поднимаются за трое суток — график обрывался там, где кончался
 // буфер, и прошлые trades смотреть было не на чем. Тянется один раз на
@@ -2613,8 +2619,13 @@ async function pullRec(go) {
 // Пересчёт годен к показу, только когда он досчитан и посчитан по ЭТОЙ
 // монете: чужой список сделок на чужом графике выглядел бы как trades,
 // которых не было.
+// Выключенный пересчёт РЕЗУЛЬТАТОМ не является: ответ `off` говорит,
+// что бумажных сделок не ведут вовсе. Прежде он проходил как готовый
+// пересчёт с пустым списком, и таблица подписывалась «0 сделок,
+// пересчёт, не факт» — то есть выключенное наблюдение выглядело как
+// посчитанная пустота.
 function recReady() {
-  return REC.data && !REC.data.busy && REC.sym === sym
+  return REC.data && !REC.data.busy && !REC.data.off && REC.sym === sym
     ? REC.data : null;
 }
 
@@ -2728,6 +2739,12 @@ async function pullHist() {
     const r = await fetch(`/trades?k=${encodeURIComponent(KEY)}&sym=${sym}`);
     if (!r.ok) throw new Error("HTTP " + r.status);
     const h = await r.json();
+    // Выключенный детектор — это ОТВЕТ, а не пустота. Сервер говорит
+    // об этом полем `off`, а страница его теряла и печатала «ждёт
+    // условий»: владелец прочёл выключенное наблюдение как поломку
+    // записи. Отказ, неотличимый от тишины, — сквозная болезнь этого
+    // проекта, и здесь она была в показе.
+    HIST.off = !!h.off;
     HIST.trades = h.trades || []; HIST.stats = h.stats;
     HIST.by_rule = h.by_rule || {}; HIST.older = h.older || 0;
     HIST.by_ver = h.by_ver || [];
@@ -3389,7 +3406,8 @@ function draw() {
   const off = tr.filter(m => m.t < first || m.t > last).length;
   const old = tr.filter(m => (m.ver || 1) !== S.ver).length;
   document.getElementById("cap3").textContent =
-    `${tr.length} trades` + (S.rec ? " · replayed, not actual" : "")
+    (HIST.off ? "detector off" : `${tr.length} trades`)
+    + (!HIST.off && S.rec ? " · replayed, not actual" : "")
     + (S.rec && recReady() && recReady().no_outcome
        ? ` · ${tr.filter(m => m.state === "не открыта").length} entries `
          + `refused by the rule (hollow triangle)` : "")
@@ -3454,8 +3472,14 @@ function rows() {
     <td title="${m.why || ""}">${disp(m.state)}</td>
     <td class="mono">${m.held == null ? "—" : m.held + " s"}</td>
     <td class="mono">${res(m)}</td></tr>`
-  ).join("") : `<tr><td colspan="11" style="color:var(--muted)">
-    no events yet — detector waits for conditions</td></tr>`;
+  ).join("") : `<tr><td colspan="11" style="color:var(--muted)">${
+    HIST.off
+      ? `hand-rolled detector is off — its direction was closed by
+         measurements T1&ndash;T4, and absorption now enters the model
+         as features (eat_bid/eat_ask, big_rel, imbalances). The book
+         and tape are still recorded; run the collector with
+         <span class="mono">--paper</span> to watch it again.`
+      : "no events yet — detector waits for conditions"}</td></tr>`;
 }
 
 function verLine(list, cur) {
