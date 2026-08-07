@@ -1280,7 +1280,16 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                           encoding="utf-8") as f:
                     f.write(json.dumps(
                         {"arm": arm, "hour": lp["hour"],
-                         "cost_bp": ROUND_COST_BP, "rows": rows_rv},
+                         "cost_bp": ROUND_COST_BP,
+                         # Момент записи разбора. Без него касса счёта
+                         # закрывала позицию задним числом по плановому
+                         # времени: опоздавший разбор ретроактивно
+                         # финансировал входы, которые Rust-тень в тот
+                         # момент честно отвергла, — знание из будущего
+                         # в кассе, тот же класс дефекта, что отбор
+                         # универсума по сегодняшнему списку.
+                         "at_ts": round(time.time(), 3),
+                         "rows": rows_rv},
                         ensure_ascii=False) + "\n")
                 review = rows_rv
         picks = None

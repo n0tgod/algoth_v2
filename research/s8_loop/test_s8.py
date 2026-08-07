@@ -638,6 +638,91 @@ def test_capital_returns_before_it_is_redeployed():
           z[0].get("size"), str(z[0].get("size")))
 
 
+def test_cash_returns_when_the_review_is_written():
+    """Касса узнаёт исход не раньше записи разбора.
+
+    Ребро, названное до первой сработки и сработавшее 7 августа: разбор
+    часа опоздал, Rust-тень в реальном времени отвергла вход за
+    пустотой кассы, а счёт закрывал позицию задним числом по плановому
+    времени и ретроактивно финансировал тот же вход. Сверка кричала
+    «есть у Python, нет у бота». Знание из будущего в кассе — тот же
+    класс дефекта, что отбор универсума по сегодняшнему списку.
+    """
+    import trades as TR
+
+    def entry_size(review_at):
+        a = {"arm": "gbm", "hour": "H00", "sym": "A", "side": "long",
+             "state": "закрыта", "opened_at": 0, "closes_at": 3600,
+             "net_bp": 0.0}
+        if review_at is not None:
+            a["review_at"] = review_at
+        b = {"arm": "gbm", "hour": "H01", "sym": "B", "side": "long",
+             "state": "открыта", "opened_at": 3600,
+             "closes_at": 2 * 3600}
+        TR.account([a, b], "gbm", hold_h=1)
+        return b["size"]
+
+    check("своевременный разбор: вход следующего часа профинансирован",
+          entry_size(None) > 0, str(entry_size(None)))
+    check("опоздавший разбор держит кассу занятой — вход нулевой",
+          entry_size(2 * 3600) == 0.0, str(entry_size(2 * 3600)))
+
+
+def test_sverka_pairs_cash_reject_with_zero_size():
+    """Сверка: отказ ядра по пустой кассе — пара нулевому размеру.
+
+    Деньги в обеих книгах — ноль, различается только запись: у бота
+    отказ, у Python сделка нулевого размера. Кричать здесь о
+    расхождении значило бы приучить читать красное как ложную тревогу.
+    Но отказ при НЕнулевом размере Python остаётся расхождением:
+    расписание кассы двух счетов разошлось.
+    """
+    import subprocess
+
+    d = tempfile.mkdtemp()
+    try:
+        s8 = os.path.join(d, "s8")
+        jd = os.path.join(d, "j")
+        os.makedirs(s8)
+        os.makedirs(jd)
+        with open(os.path.join(s8, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": "2026-08-05-10", "at_ts": 0,
+                "long": [{"sym": "AAAUSDT", "px": 50.0, "fwd": 10.0,
+                          "mae": -5.0}], "short": []},
+                ensure_ascii=False) + "\n")
+        open(os.path.join(s8, "review.jsonl"), "w").close()
+        key = "gbm:2026-08-05-10:AAAUSDT:long"
+        with open(os.path.join(jd, "journal-2026-08-05.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "seq": 1, "ev": "reject", "sym": "AAAUSDT",
+                "side": "long",
+                "reason": "касса пуста, вход не размещён|" + key,
+                "at_ms": 0}, ensure_ascii=False) + "\n")
+        repo = os.path.dirname(os.path.dirname(HERE))
+        cmd = [sys.executable, os.path.join(repo, "bot", "sverka.py"),
+               "--s8", s8, "--journal", jd,
+               "--fees", os.path.join(repo, "bot", "tests", "fixtures",
+                                      "parity", "fees.json")]
+        r0 = subprocess.run(cmd + ["--capital", "0"],
+                            capture_output=True, text=True)
+        check("касса 0: отказ спарен с нулевым размером, вердикт чист",
+              r0.returncode == 0,
+              (r0.stdout + r0.stderr)[-300:])
+        check("пара названа в отчёте, а не проглочена",
+              "Неисполнимые входы" in r0.stdout, r0.stdout[:300])
+        r1 = subprocess.run(cmd + ["--capital", "1000"],
+                            capture_output=True, text=True)
+        check("касса была: отказ против профинансированного — красное",
+              r1.returncode == 1, (r1.stdout + r1.stderr)[-300:])
+        check("причина расхождения названа кассой",
+              "касса разошлась" in r1.stdout, r1.stdout[:300])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_pretest_comes_after_the_summary_is_written():
     """Предпросмотр приходит ПОСЛЕ боевого цикла, а не вместе с ним.
 
@@ -2453,6 +2538,8 @@ def main():
     test_canary_not_computed_is_not_a_pass()
     test_report_flags_manifest_from_a_previous_run()
     test_capital_returns_before_it_is_redeployed()
+    test_cash_returns_when_the_review_is_written()
+    test_sverka_pairs_cash_reject_with_zero_size()
     test_pretest_comes_after_the_summary_is_written()
     test_hourly_cycle_wakes_on_the_hour()
     test_account_is_one_capital_at_leverage_one()

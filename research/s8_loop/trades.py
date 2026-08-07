@@ -343,6 +343,11 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                               net_bp=got.get("net"), pnl=got.get("pnl"),
                               pos=got.get("pos"),
                               cost_bp=(rv or {}).get("cost_bp"),
+                              # Когда разбор был ЗАПИСАН. Кассе счёта
+                              # нельзя узнавать исход раньше этого
+                              # момента; у старых записей поля нет — там
+                              # остаётся плановое время закрытия.
+                              review_at=(rv or {}).get("at_ts"),
                               hit=(got.get("got") or 0) > 0
                               if side == "long"
                               else (got.get("got") or 0) < 0)
@@ -426,7 +431,17 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None):
     ev = []
     for t in rows:
         if t["state"] == "закрыта" and t.get("closes_at"):
-            ev.append((t["closes_at"], 0, t))      # 0 — сначала выход
+            # Деньги возвращаются не раньше, чем исход стал ИЗВЕСТЕН.
+            # Прежде выход вставал по плановому времени, даже когда
+            # разбор опоздал на часы, — и касса задним числом
+            # финансировала входы, которые исполнительное ядро в тот
+            # момент честно отвергло за пустотой кассы. Сверка ловила
+            # это как «есть у Python, нет у бота». Знание из будущего
+            # в кассе — тот же класс дефекта, что отбор универсума по
+            # сегодняшнему списку. У записей без метки прихода разбора
+            # остаётся плановое время — их история уже сведена.
+            back = max(t["closes_at"], t.get("review_at") or 0)
+            ev.append((back, 0, t))                # 0 — сначала выход
         ev.append((t["opened_at"], 1, t))          # 1 — потом вход
     ev.sort(key=lambda x: (x[0], x[1]))
     cash, busy, hist = start, 0.0, []

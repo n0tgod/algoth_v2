@@ -84,8 +84,14 @@ def read_journal(jdir):
 
 
 def bot_trades(recs):
-    """Сделки из журнала: ключ → размер, цены, деньги, основа."""
-    out = {}
+    """Сделки и отказы из журнала.
+
+    Возвращает `(сделки, отказы)`: ключ → размер/цены/деньги и ключ →
+    причина отказа. Отказ по пустой кассе — не сделка, но и не пустота:
+    у Python-счёта тому же входу назначается нулевой размер, и сверка
+    обязана уметь опознать эту пару, а не кричать о расхождении.
+    """
+    out, rejects = {}, {}
     for r in recs:
         if r.get("ev") == "open":
             out[r["pos"]] = {
@@ -97,7 +103,14 @@ def bot_trades(recs):
                      fill_out=r.get("exit_px"),
                      basis=("книга" if "книга" in r.get("reason", "")
                             else "плоский 11"))
-    return out
+        elif r.get("ev") == "reject":
+            # Ключ позиции ядро пишет в причину после «|» — у отказа
+            # нет своей позиции, а сопоставлять его надо именно с ней.
+            reason = r.get("reason") or ""
+            if "|" in reason:
+                head, key = reason.rsplit("|", 1)
+                rejects[key] = head
+    return out, rejects
 
 
 def py_trades(s8, arm, capital, table, now):
@@ -136,16 +149,29 @@ def main():
     if not table:
         print("ВНИМАНИЕ: таблица ставок пуста — обе стороны на умолчании")
     recs = read_journal(args.journal)
-    bot = bot_trades(recs)
+    bot, rejects = bot_trades(recs)
     py, balance = py_trades(args.s8, args.arm, args.capital, table, now)
 
-    diffs, lag = [], []
+    diffs, lag, unfunded = [], [], []
     common = 0
     # Обе стороны: сделка, которой нет у одной из сторон, — расхождение
     # состава, и оно опаснее числового.
     for key in sorted(set(bot) | set(py)):
         b, p = bot.get(key), py.get(key)
         if b is None:
+            # Отказ по пустой кассе — законная пара нулевому размеру:
+            # денег в обеих книгах ноль, различается только запись.
+            # Отказ при НЕнулевом размере у Python — настоящее
+            # расхождение: расписание кассы двух счётов разошлось.
+            if key in rejects and abs(p["size"]) <= EXACT:
+                unfunded.append(f"{key}: {rejects[key]} — у бота отказ, "
+                                f"у Python вход нулевого размера")
+                continue
+            if key in rejects:
+                diffs.append(
+                    f"{key}: у бота отказ ({rejects[key]}), у Python "
+                    f"вход на {p['size']:.2f} $ — касса разошлась")
+                continue
             diffs.append(f"{key}: есть у Python, нет у бота")
             continue
         if p is None:
@@ -202,6 +228,9 @@ def main():
     ]
     if diffs:
         lines += ["## Расхождения", ""] + [f"- {d}" for d in diffs] + [""]
+    if unfunded:
+        lines += ["## Неисполнимые входы — касса была пуста", ""] + \
+                 [f"- {d}" for d in unfunded] + [""]
     if lag:
         lines += ["## Ожидание (разбор между проходами)", ""] + \
                  [f"- {d}" for d in lag] + [""]
