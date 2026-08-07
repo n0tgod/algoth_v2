@@ -771,6 +771,14 @@ function equityBlock(p) {
 // Таблица сделок: одна строка — одна позиция. Открытая несёт прогноз и
 // срок закрытия, закрытая — факт и деньги. Ровно это и просили: «если
 // сделка ещё не состоялась, хочу видеть прогноз».
+// Метка «месяц-день час:минута» в UTC. На этой странице все часы —
+// КЛЮЧИ, то есть UTC; показать рядом местное время значило бы держать
+// два пояса в одной колонке.
+function utcHM(ts) {
+  return ts ? new Date(ts * 1000).toISOString().slice(5, 16)
+                .replace("T", " ") : "—";
+}
+
 function tradeTable(p) {
   const tr = (p.trades || []).filter(t => MDL.arm === "all"
                                           || t.arm === MDL.arm);
@@ -788,8 +796,14 @@ function tradeTable(p) {
          ? "closed" + (t.exit_reason
              ? " · " + (EXIT_EN[t.exit_reason] || t.exit_reason) : "")
          : t.state === "ждёт разбора" ? "awaiting" : "no outcome");
+    // У книги без срока час — это ключ ЛИСТА сечения, а не время
+    // сделки: вход сканера случается посреди следующего часа, и
+    // строка «17» у сделки, открытой в 18:16, читается как старая
+    // сделка по таймеру (владелец так её и прочёл). Показываем факт —
+    // секунду входа, час остаётся подсказкой.
+    const key = isSit(p) ? utcHM(t.opened_at) : t.hour.slice(5);
     return `<tr class="${cls}">
-      <td class="mono">${t.hour.slice(5)}</td>
+      <td class="mono" title="sheet hour ${t.hour}">${key}</td>
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
@@ -806,7 +820,8 @@ function tradeTable(p) {
       ? "until the situation exits"
       : "over " + bookH(p) + " h"})</span></div>
     <div style="overflow-x:auto"><table class="mtr">
-    <tr><th>hour</th><th>arm</th><th>coin</th><th>side</th><th>exp</th>
+    <tr><th>${isSit(p) ? "entered" : "hour"}</th>
+    <th>arm</th><th>coin</th><th>side</th><th>exp</th>
     <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
     ${rows}</table></div>`
     + (tr.length > SHOW ? `<div class="mline dim">showing ${SHOW} of ${
@@ -1470,8 +1485,8 @@ canvas{width:100%;display:block;touch-action:pan-y}
       <span id="mkat" class="k"></span>
     </div>
     <div class="scroll"><table>
-      <thead><tr><th>signal hour</th>
-        <th class="hide-s">entry</th><th class="hide-s">exit</th>
+      <thead><tr><th id="thw">signal hour</th>
+        <th class="hide-s" id="thw2">entry</th><th class="hide-s">exit</th>
         <th class="hide-s">lag</th><th class="hide-s">arm</th>
         <th>coin</th><th>side</th><th class="hide-s">exp</th>
         <th class="hide-s">mae</th><th>got</th><th>net</th>
@@ -1896,12 +1911,20 @@ async function load() {
       sel.appendChild(o);
     }
   }
+  const SIT = !!d.situational;
+  document.getElementById("thw").textContent = SIT ? "entered" : "signal hour";
+  document.getElementById("thw2").textContent = SIT ? "sheet hour" : "entry";
   document.getElementById("tb").innerHTML = (d.rows||[]).map(t => {
     const cls = t.state === "закрыта"
       ? (t.net_bp > 0 ? "good" : "bad") : "";
+    // У книги без срока первым идёт МОМЕНТ ВХОДА: час — это ключ
+    // листа сечения, и сделка, открытая сканером в 18:16, стояла бы
+    // под «17:00» — на телефоне, где колонка входа скрыта, она
+    // читается как старая сделка по таймеру.
     return `<tr><td class="mono" title="UTC key ${t.hour}">${
-        hourLocal(t.hour)}</td>
-      <td class="mono hide-s">${hhmm(t.opened_at)}</td>
+        SIT ? hhmm(t.opened_at) : hourLocal(t.hour)}</td>
+      <td class="mono hide-s">${
+        SIT ? hourLocal(t.hour) : hhmm(t.opened_at)}</td>
       <td class="mono hide-s">${hhmm(t.closes_at)}</td>
       <td class="mono hide-s" style="color:var(--muted)">${t.lag_sec == null
         ? "—" : Math.round(t.lag_sec/60) + "m"}</td>

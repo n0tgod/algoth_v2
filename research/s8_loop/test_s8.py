@@ -691,6 +691,51 @@ def test_cash_returns_when_the_review_is_written():
     check("старая запись без момента решения — по границе часа, ноль",
           entry_size2(None) == 0.0, str(entry_size2(None)))
 
+    # Живой отказ, переживший симметрию: разбор штампуется
+    # миллисекундами (`round(t, 3)`), выбор — целой секундой, и метка
+    # выбора, поставленная ПОЗЖЕ, выходила численно МЕНЬШЕ. Вход
+    # вставал перед выходом, деньги ещё не вернулись, и рука получала
+    # ноль через час на третий (владелец видел чередование: час с
+    # деньгами, час с pnl 0.00). Порядок кассы решает секунда, а не
+    # то, как какой писатель округлил.
+    def entry_size3(review_at, decided_at):
+        a = {"arm": "gbm", "hour": "H00", "sym": "A", "side": "long",
+             "state": "закрыта", "opened_at": 0, "closes_at": 3600,
+             "net_bp": 0.0, "review_at": review_at}
+        b = {"arm": "gbm", "hour": "H01", "sym": "B", "side": "long",
+             "state": "открыта", "opened_at": 3600,
+             "decided_at": decided_at, "closes_at": 2 * 3600}
+        TR.account([a, b], "gbm", hold_h=1)
+        return b["size"]
+
+    check("вход в ту же секунду, что разбор, профинансирован",
+          entry_size3(4500.339, 4500) > 0, str(entry_size3(4500.339, 4500)))
+    check("вход секундой РАНЬШЕ разбора денег не получает",
+          entry_size3(4500.9, 4499) == 0.0,
+          str(entry_size3(4500.9, 4499)))
+
+    # Живой выход ситуационной книги: сторож записал факт секундой
+    # пересечения, цикл переписал его часом позже. Деньги обязаны
+    # вернуться в секунду события — иначе книга на шести слотах весь
+    # вечер держит капитал в позициях, которых уже нет: на живом
+    # сервере входы 18:31 и 18:46 получили нулевой размер, а тень
+    # бота их профинансировала, и сверка стала красной.
+    def entry_size5(exit_ts):
+        a = {"arm": "gbm", "hour": "H00", "sym": "A", "side": "long",
+             "state": "закрыта", "opened_at": 0, "net_bp": 0.0,
+             "closes_at": exit_ts or 7200, "review_at": 7200}
+        if exit_ts is not None:
+            a["exit_ts"] = exit_ts
+        b = {"arm": "gbm", "hour": "H01", "sym": "B", "side": "long",
+             "state": "открыта", "opened_at": 3600, "closes_at": None}
+        TR.account([a, b], "gbm", hold_h=None, slots=1)
+        return b["size"]
+
+    check("живой выход вернул деньги — вход между событием и разбором сыт",
+          entry_size5(1800) > 0, str(entry_size5(1800)))
+    check("часовой выход держит деньги до разбора — вход пустой",
+          entry_size5(None) == 0.0, str(entry_size5(None)))
+
 
 def test_sverka_pairs_cash_reject_with_zero_size():
     """Сверка: отказ ядра по пустой кассе — пара нулевому размеру.
@@ -1087,6 +1132,16 @@ def test_situational_book_enters_and_exits_by_situation():
             check("живой выход: час выхода — час пересечения",
                   row["exit_hour"] == want_hour,
                   f"{row['exit_hour']} vs {want_hour}")
+            # Сборка обязана закрыть сделку СЕКУНДОЙ пересечения, а не
+            # концом часа: до конца часа позиции уже нет, и её деньги
+            # не вправе стоять в кассе.
+            tr4 = TR.build(T._read_jsonl(os.path.join(d4,
+                                                      "picks.jsonl")),
+                           rv4, now=ev_ts + 7200, hold_h=None)
+            check("живой выход: сделка закрыта секундой пересечения",
+                  tr4[0]["closes_at"] == ev_ts
+                  and tr4[0]["exit_ts"] == ev_ts,
+                  str(tr4[0].get("closes_at")))
         finally:
             shutil.rmtree(d4, ignore_errors=True)
 

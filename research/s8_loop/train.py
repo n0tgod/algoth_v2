@@ -1128,7 +1128,7 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
             row["odd"] = e["odd"]
         rec = fresh.setdefault(e.get("hour"), {
             "arm": arm, "hour": e.get("hour"),
-            "at_ts": round(time.time()), "scan": True,
+            "at_ts": round(time.time(), 3), "scan": True,
             "long": [], "short": []})
         rec[e.get("side") or "long"].append(row)
     for hour in sorted(fresh):
@@ -1306,7 +1306,10 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
              # Момент, когда решение стало известно: цикл просыпается
              # через минуты после закрытия часа, и это задержка входа,
              # а не ноль.
-             "at_ts": round(time.time()),
+             # Точность та же, что у разбора (`round(t, 3)`): касса
+             # сравнивает эти метки между собой, и целая секунда против
+             # миллисекунд означала бы сравнение округлений.
+             "at_ts": round(time.time(), 3),
              "long": [mk(i, "long") for i in o[::-1][:3]],
              "short": [mk(i, "short") for i in o[:3]]}
     # Цена, доступная в момент решения. Ставится ПОСЛЕ отбора — раньше

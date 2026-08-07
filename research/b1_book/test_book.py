@@ -403,6 +403,9 @@ def test_pages_run_headless():
                  "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14"
                  "&hz=sit&embed=1"),
                 ("сделки", web.TRADES, None),
+                # Книга без срока: час — ключ листа, а не время
+                # сделки, и первым столбцом обязан идти вход.
+                ("сделки ситуационной книги", web.TRADES, "?k=xxx&hz=sit"),
                 ("ядро", web.BOTPAGE, None)):
             p = os.path.join(d, "p.html")
             with open(p, "w", encoding="utf-8") as f:

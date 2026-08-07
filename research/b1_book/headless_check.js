@@ -177,6 +177,10 @@ global.fetch = async (url) => {
                         closes_in_sec: 13800}]}
              : url.startsWith("/model_trades")
              ? {source: "model", page: 0, per: 100,
+                // Книга без срока: страница обязана переставить
+                // столбцы — час здесь ключ листа, а не время сделки.
+                ...(/hz=sit/.test(url)
+                    ? {situational: true, horizon_h: null} : {}),
                 total: 3, pages: 1, filtered: false, grand_total: 3,
                 // Кривая счёта: четыре числа на точку — метка,
                 // эквити и границы корзины. Полоса между ними и
@@ -609,7 +613,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       global.__el("books").innerHTML || "") : "";
     if (!/hz=h1/.test(bb) || !/hz=h24/.test(bb))
       bad.push("страница сделок: нет ссылок на книги горизонтов");
-    if (!/data-hz="h4" aria-pressed="true"/.test(bb))
+    const act = /hz=sit/.test(SEARCH) ? "sit" : "h4";
+    if (!new RegExp(`data-hz="${act}" aria-pressed="true"`).test(bb))
       bad.push("страница сделок: активная книга не помечена");
     // Горизонт книги обязан дойти до подписи: страницы двух книг
     // иначе неотличимы. В подставном ответе его нет — подпись обязана
@@ -840,6 +845,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!html) bad.push("страница сделок ничего не нарисовала");
     else if (!/\+3\.73 %|no trades yet/.test(html))
       bad.push("строки сделок не в процентах движения цены");
+    // Книга без срока: первым столбцом идёт ВХОД, час листа уезжает
+    // вторым. Вход 19:00 UTC — это 21:00 в Вене, час листа 18 — 20:00,
+    // так что перестановка видна числами. Без неё сделка сканера,
+    // открытая в 18:16, стоит под «17:00» и на телефоне (второй
+    // столбец скрыт) читается как старая часовая.
+    if (/hz=sit/.test(SEARCH)) {
+      const h1 = String((global.__el("thw") || {}).textContent || "");
+      const h2 = String((global.__el("thw2") || {}).textContent || "");
+      if (h1 !== "entered" || h2 !== "sheet hour")
+        bad.push(`книга без срока: заголовки не переставлены (${h1}/${h2})`);
+      const cells = html.split("<td").slice(1, 3).join("|");
+      if (!/21:00/.test(cells) || !/20:00/.test(cells))
+        bad.push("вход и час листа не различимы в строке: " + cells);
+    }
     const stats = global.__el ? String(
       global.__el("stats").innerHTML || "") : "";
     if (!/trades/.test(stats))

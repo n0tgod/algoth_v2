@@ -318,7 +318,13 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
                     .rec_at_ts
                     .map(|v| (v * 1000.0) as i64)
                     .unwrap_or(0);
-                t.closes_at = ex.max(ra);
+                // Живой выход закрыт секундой пересечения — её и
+                // берём: конец часа держал бы деньги в позиции,
+                // которой уже нет, и расходился бы с Python-кассой.
+                t.closes_at = row
+                    .exit_ts
+                    .map(|v| (v * 1000.0) as i64)
+                    .unwrap_or_else(|| ex.max(ra));
             }
         }
     }
@@ -339,7 +345,11 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
             ev.push((t.closes_at, 0, i));
         }
     }
-    ev.sort_by_key(|e| (e.0, e.1));
+    // Порядок — по ЦЕЛОЙ секунде, выход в ней раньше входа. Зеркало
+    // `trades.account`: разбор пишется с миллисекундами, выбор — целой
+    // секундой, и ниже секунды сравнивались бы округления писателей, а
+    // не моменты. Секунда одна и та же в обоих счётах.
+    ev.sort_by_key(|e| (e.0.div_euclid(1000), e.1));
 
     for (at, kind, i) in ev {
         let t = &plan[i];
