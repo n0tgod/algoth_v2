@@ -816,12 +816,13 @@ def test_horizon_books_review_with_their_own_target():
 
 
 def test_situational_book_enters_and_exits_by_situation():
-    """Ситуационная книга: вход по порогам, выход по причинам.
+    """Ситуационная книга: вход только от сканера, выход по причинам.
 
-    Проверяется числами: гейт края (|fwd| ≥ 22 б.п.), гейт RR ≥ 2 по
-    обещаниям СЫРОГО пути, шорты входят (первый вариант гейта требовал
-    fav > 0 у обеих сторон и молча запрещал шорты целиком), выходы по
-    трём причинам с сырым ходом цены в исходе, слоты не превышаются.
+    Проверяется числами: сам цикл входов НЕ делает (часовой вход
+    «страховкой» заполнил живую книгу сделками по таймеру и снят —
+    v3), лист сечения для сканера пишется, живые входы превращаются в
+    строки выбора с секундой момента, выходы по трём причинам с сырым
+    ходом цены, разбор живого выхода несёт цену и час пересечения.
     """
     import json as _json
     import tempfile
@@ -855,23 +856,29 @@ def test_situational_book_enters_and_exits_by_situation():
     models = {("gbm", "fwd_4h"): Stub([30.0, 10.0, -40.0, 25.0]),
               ("gbm", "mae_4h"): Stub([-10.0, -5.0, -50.0, -20.0]),
               ("gbm", "mfe_4h"): Stub([25.0, 30.0, 20.0, 30.0])}
+    import json as _json
     d = tempfile.mkdtemp()
     try:
-        T.situational_arm(d, "gbm", models, x, mats, syms, rows_m, 1,
-                          grid, lo, hi, None, lambda m: None)
-        pk = T._read_jsonl(os.path.join(d, "picks.jsonl"))
-        check("выбор записан один", len(pk) == 1, str(len(pk)))
-        longs = {p["sym"] for p in pk[0]["long"]}
-        shorts = {p["sym"] for p in pk[0]["short"]}
-        check("вошли только A (лонг) и C (шорт)",
-              longs == {"AUSDT"} and shorts == {"CUSDT"},
-              f"{longs} {shorts}")
-        check("малый край и малый RR не вошли",
-              "BUSDT" not in longs | shorts
-              and "DUSDT" not in longs | shorts)
-        check("RR записан в выбор",
-              pk[0]["long"][0].get("rr") == 2.5,
-              str(pk[0]["long"][0].get("rr")))
+        sheet = T.situational_arm(d, "gbm", models, x, mats, syms,
+                                  rows_m, 1, grid, lo, hi, None,
+                                  lambda m: None)
+        check("цикл сам входов не делает — дверь только у сканера",
+              not os.path.exists(os.path.join(d, "picks.jsonl")))
+        check("лист сечения для сканера построен",
+              sheet and {r["sym"] for r in sheet}
+              == set(syms), str(sheet)[:80])
+
+        # Позиции для проверки выходов сеются файлом — как их писал бы
+        # цикл из событий сканера. Поля path-размечены: mae — ход
+        # ПРОТИВ этой позиции, mfe — в пользу.
+        with open(os.path.join(d, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(
+                {"arm": "gbm", "hour": "2026-08-07-10",
+                 "long": [{"sym": "AUSDT", "fwd": 30.0, "px": 100.0,
+                           "mae": -10.0, "mfe": 25.0}],
+                 "short": [{"sym": "CUSDT", "fwd": -40.0, "px": 100.0,
+                            "mae": 20.0, "mfe": -50.0}]}) + "\n")
 
         # Выходы. Час 11: у A прогноз развернулся; у C цена прошла
         # обещанный ход против (вверх на 25 б.п. при обещании 20).
@@ -1061,24 +1068,6 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d4, ignore_errors=True)
 
-        # Слоты: свободных нет — вход не открывается даже на годной
-        # ситуации.
-        d3 = tempfile.mkdtemp()
-        try:
-            full = {"arm": "gbm", "hour": grid[1],
-                    "long": [{"sym": f"S{i}", "fwd": 30.0, "px": 100.0,
-                              "mae": -10.0, "mfe": 25.0}
-                             for i in range(T.SIT_SLOTS)], "short": []}
-            with open(os.path.join(d3, "picks.jsonl"), "w",
-                      encoding="utf-8") as f:
-                f.write(_json.dumps(full) + "\n")
-            T.situational_arm(d3, "gbm", models, x, mats, syms, rows_m,
-                              1, grid, lo, hi, None, lambda m: None)
-            pk3 = T._read_jsonl(os.path.join(d3, "picks.jsonl"))
-            check("касса полна — новых входов нет",
-                  len(pk3) == 1, str(len(pk3)))
-        finally:
-            shutil.rmtree(d3, ignore_errors=True)
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

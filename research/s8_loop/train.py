@@ -1013,11 +1013,13 @@ SIT_MAX_AGE_H = 24
 SIT_SIGNAL_H = 4                  # горизонт целей, дающих сигнал
 # Версия ПРАВИЛ книги — часть её определения (урок RULES_VERSION).
 # v1 — часовые входы, и в выходах жил дефект перестановки сторон у
-# шортов; v2 — живой сканер (вход в моменте) с исправленными
-# сторонами. Сделки разных правил нельзя сводить в один счёт: кривая
-# описывала бы книгу, которой не было. Смена версии отставляет старую
-# книгу в архив — тем же приёмом, что смена режима хеджа.
-SIT_RULES_VERSION = 2
+# шортов; v2 — живой сканер ПЛЮС часовой вход «страховкой» — на живом
+# прогоне страховка заполнила книгу сделками по таймеру, ровно тем,
+# от чего книга и строилась; v3 — вход ТОЛЬКО от сканера. Сделки
+# разных правил нельзя сводить в один счёт: кривая описывала бы
+# книгу, которой не было. Смена версии отставляет старую книгу в
+# архив — тем же приёмом, что смена режима хеджа.
+SIT_RULES_VERSION = 3
 
 
 def fresh_sit_on_rules_change(mdir, log_=None):
@@ -1255,70 +1257,13 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
             row["odd"] = round(nv, 3)
         sheet.append(row)
 
-    # --- входы: только когда ситуация того стоит ----------------------
-    held = {p["sym"] for p in open_pos} - closed_syms
-    free = SIT_SLOTS - len(held)
-    if free <= 0:
-        return sheet
-    cand = []
-    for i in range(len(rows_m)):
-        f_v = float(fwd[i])
-        if abs(f_v) < SIT_MIN_EDGE_BP:
-            continue
-        side = "long" if f_v > 0 else "short"
-        sym = syms[rows_m[i]]
-        if sym in held or sym in closed_syms:
-            continue
-        adv, fav, _, _ = position_path(side, float(mae[i]),
-                                       float(mfe[i]))
-        # Обещания пути обязаны смотреть в СВОИ стороны: у лонга ход в
-        # пользу вверх (fav > 0), против — вниз (adv < 0); у шорта
-        # зеркально (fav < 0, adv > 0). Обещание «цена не пойдёт
-        # против» — известный дефект прогноза, не сделка; и первый
-        # вариант этого гейта требовал fav > 0 у обеих сторон, то есть
-        # молча запрещал шорты целиком — потому проверка знаков стоит
-        # по сторонам и закреплена тестом.
-        if fav is None or adv is None:
-            continue
-        if side == "long" and not (fav > 0 and adv < 0):
-            continue
-        if side == "short" and not (fav < 0 and adv > 0):
-            continue
-        rr_ratio = abs(fav) / abs(adv)
-        if rr_ratio < SIT_MIN_RR:
-            continue
-        px = float(mats["mid_close"][rows_m[i], j_last])
-        if not np.isfinite(px):
-            continue
-        cand.append((abs(f_v), i, side, rr_ratio, px))
-    if not cand:
-        return sheet
-    cand.sort(reverse=True)
-
-    def mk(i, side, rr_ratio, px):
-        d = {"sym": syms[rows_m[i]], "fwd": float(fwd[i]), "px": px,
-             "rr": round(rr_ratio, 2),
-             **path_fields(side, float(mae[i]), float(mfe[i]),
-                           h=SIT_SIGNAL_H)}
-        nv = novelty(xj[i], nov_lo, nov_hi)
-        if nv is not None:
-            d["odd"] = round(nv, 3)
-        return d
-    picks = {"arm": arm, "hour": grid[-1], "at_ts": round(time.time()),
-             "long": [], "short": []}
-    for _, i, side, rr_ratio, px in cand[:free]:
-        picks[side].append(mk(i, side, rr_ratio, px))
-    names = [p["sym"] for s in ("long", "short") for p in picks[s]]
-    bk = stamp_book(names, time.time(), book_root, log_, "входа")
-    for s in ("long", "short"):
-        for p in picks[s]:
-            got = bk.get(p["sym"])
-            if got:
-                p["px_live"], p["px_live_at"] = got["mid"], got["t"]
-                p["cum"] = got
-    if write_pick(mdir, picks):
-        log_(f"ситуационная [{arm}]: вход {len(names)} "
-             f"({', '.join(names)}), свободных слотов было {free}")
+    # Входов здесь НЕТ — единственная дверь в книгу живой сканер
+    # сборщика (события `entries_live`, превращённые выше). Часовой
+    # вход стоял тут «страховкой на случай упавшего сборщика» и на
+    # живом прогоне заполнил книгу сделками по таймеру — ровно тем,
+    # от чего книга строилась. Страховка, меняющая природу сделки,
+    # не страховка, а другая книга; упавший сборщик означает «входов
+    # нет», и это честнее, чем «входы не те».
     return sheet
 
 
