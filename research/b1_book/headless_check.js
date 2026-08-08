@@ -406,17 +406,28 @@ global.fetch = async (url) => {
                   // Итог по книге сервер отдаёт ключом `all`, и
                   // на вкладке «обе» показывается ТОЛЬКО он: разбивка
                   // по рукам живёт за соседними кнопками.
-                  trade_stats: {gbm: {closed: 2, open: 1, no_outcome: 0,
+                  // Открытые деньги: у `gbm` переоценены не все
+                  // позиции (2 из 3) — знаменатель обязан быть виден,
+                  // у `nn` закрытых нет вовсе, и отметка там всё, что
+                  // о книге известно.
+                  trade_stats: {gbm: {closed: 2, open: 3, no_outcome: 0,
                                       hit_rate: 0.5, net_bp_avg: -0.5,
                                       pnl: -0.02, expected_avg: -95.5,
-                                      got_avg: 50.5,
+                                      got_avg: 50.5, marked: 2,
+                                      unreal_pnl: 4.25,
+                                      unreal_net_avg_bp: 31.0,
+                                      unreal_win: 0.5,
                                       expected_over_got: 12.5},
-                                nn: {closed: 0, open: 3,
+                                nn: {closed: 0, open: 3, marked: 3,
+                                     unreal_pnl: -1.75,
+                                     unreal_net_avg_bp: -12.0,
                                      no_outcome: 0},
-                                all: {closed: 2, open: 4, trades: 6,
+                                all: {closed: 2, open: 6, trades: 8,
                                       no_outcome: 0, hit_rate: 0.5,
                                       hit_basis: "all", hit_n: 2,
                                       net_bp_avg: -0.5, pnl: -0.02,
+                                      marked: 5, unreal_pnl: 2.50,
+                                      unreal_net_avg_bp: 9.5,
                                       expected_avg: -95.5,
                                       got_avg: 50.5,
                                       expected_over_got: 12.5}},
@@ -660,6 +671,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? (b) => { MDL.book = b; renderModel(); "
                 + "           return document.getElementById('modelbox')"
                 + "                  .innerHTML || ''; } : null;"
+                // То же для руки: на вкладке «обе» печатается только
+                // итог по книге, поэтому ветки отдельных рук (частично
+                // переоценённая книга, книга без единого закрытия) без
+                // переключения не исполняются ни разу.
+                + "\nglobal.__arm = typeof renderModel === 'function' "
+                + "&& typeof MDL !== 'undefined' && 'arm' in MDL "
+                + "? (a) => { MDL.arm = a; renderModel(); "
+                + "           return document.getElementById('modelbox')"
+                + "                  .innerHTML || ''; } : null;"
                 )();
 (async () => {
   const step = global.__step;
@@ -713,6 +733,36 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>trees</.test(mb) || /neural<\/b>/.test(mb))
       bad.push("обзор: на вкладке «обе» снова печатается разбивка "
                + "по рукам");
+    // Открытые деньги — по ЧИСЛАМ фикстуры: «ячейка есть» прошло бы и
+    // на прочерке, а прочерк неотличим от «позиций нет».
+    if (!/open P&amp;L, \$ \(mark\)|open P&L, \$ \(mark\)/.test(mb))
+      bad.push("обзор: открытых денег нет в сводке");
+    if (!/\+2\.5/.test(mb))
+      bad.push("обзор: сумма открытых денег не показана числом");
+    // И она обязана стоять ОТДЕЛЬНО от факта: сложенные вместе
+    // −0.02 и +2.50 дали бы +2.48 — незавершённое, выданное за
+    // результат. Обе величины стоят рядом каждая своей ячейкой.
+    if (/2\.48/.test(mb))
+      bad.push("обзор: открытые деньги сложены с реализованными");
+    if (!/-0\.02/.test(mb))
+      bad.push("обзор: реализованный итог пропал");
+    // Отдельные руки: у деревьев переоценены не все позиции, у сети
+    // нет ни одного закрытия. Обе ветки на вкладке «обе» не
+    // исполняются вовсе, а владелец смотрит именно по рукам.
+    if (global.__arm) {
+      const gb = global.__arm("gbm");
+      if (!/\+4\.25/.test(gb))
+        bad.push("рука: открытых денег нет");
+      if (!/2\/3 priced/.test(gb))
+        bad.push("рука: непереоценённые позиции молча выпали из суммы");
+      const nb = global.__arm("nn");
+      if (!/none closed yet/.test(nb))
+        bad.push("рука без закрытий: строка состояния пропала");
+      if (!/-1\.75/.test(nb))
+        bad.push("рука без закрытий: открытых денег не видно, хотя "
+                 + "кроме них о книге ничего не известно");
+      global.__arm("all");
+    }
     if (!/paper equity/.test(mb) || !/<svg/.test(mb))
       bad.push("обзор: кривая бумажного счёта не нарисована");
     if (!/trades-page/.test(mb))

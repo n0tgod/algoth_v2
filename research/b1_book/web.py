@@ -813,6 +813,32 @@ function tradeStats(p) {
   const st = p.trade_stats || {};
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
+  // Открытые деньги — просьба владельца: их не было видно ни у одной
+  // руки и ни у одной книги, хотя сервер их считает.
+  //
+  // Ячейка ОТДЕЛЬНАЯ и с фактом не складывается. У закрытой сделки
+  // исход известен, у открытой это лишь текущая отметка, и до выхода
+  // она может стать любой; сумма «итого» выдала бы незавершённое за
+  // результат — то самое правило, по которому счёт держит закрытые и
+  // открытые раздельно.
+  //
+  // Ноля здесь не бывает по умолчанию: позиция без цены (книга по
+  // инструменту молчит) в переоценку не входит, и написать ей ноль
+  // значило бы объявить её ровной. Если переоценить нечего — прочерк,
+  // а сколько позиций переоценено, стоит рядом числом.
+  const openCell = (s) => {
+    if (!s.open) return "";
+    if (s.unreal_pnl == null)
+      return cell("open P&L, $ (mark)", "—"
+        + `<span class="k"> ${s.open} open, none priced yet</span>`);
+    const part = (s.marked != null && s.marked < s.open)
+      ? ` of ${s.marked}/${s.open} priced` : "";
+    return cell("open P&L, $ (mark)",
+      (s.unreal_pnl > 0 ? "+" : "") + s.unreal_pnl
+      + `<span class="k">${s.unreal_net_avg_bp != null
+          ? " " + pct(s.unreal_net_avg_bp) + " avg" : ""}${part}</span>`,
+      s.unreal_pnl > 0 ? "good" : "bad");
+  };
   // На вкладке «обе» показывается ТОЛЬКО итог по книге. Разбивка по
   // рукам никуда не делась — она за соседними кнопками, и печатать её
   // здесь же значит показывать одно и то же двумя способами: три
@@ -823,10 +849,14 @@ function tradeStats(p) {
     const s = st[a]; if (!s) return "";
     const name = a === "gbm" ? "trees"
       : a === "nn" ? "neural" : "both arms together";
+    // Книга без единого закрытия — ровно тот случай, где открытые
+    // деньги и есть всё, что о ней известно: отметка идёт той же
+    // ячейкой, а не теряется до первого исхода.
     if (!s.closed) return `<div class="mline">${name}: ${s.open || 0}
       open, none closed yet — ${isSit(p)
         ? "they close when their situation ends"
-        : "first outcomes in ~" + bookH(p) + " h"}.</div>`;
+        : "first outcomes in ~" + bookH(p) + " h"}.</div>`
+      + (s.open ? `<div class="stats">${openCell(s)}</div>` : "");
     // «Обещание / факт» — самое честное число здесь: модель может
     // угадывать знак и обещать вчетверо больше, чем даёт.
     return `<div class="mline"><b>${name}</b></div><div class="stats">`
@@ -857,6 +887,7 @@ function tradeStats(p) {
       + cell("net move", pct(s.net_bp_avg),
              s.net_bp_avg > 0 ? "good" : "bad")
       + cell("paper P&L, $", s.pnl, s.pnl > 0 ? "good" : "bad")
+      + openCell(s)
       + cell("promise / actual", s.expected_over_got ?? "—",
              s.expected_over_got > 3 ? "bad" : "")
       + (s.awaiting ? cell("awaiting", s.awaiting) : "")
