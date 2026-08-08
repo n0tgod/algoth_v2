@@ -62,16 +62,25 @@ mkdir -p "$JOURNAL"
 # застаёт та же проверка: отсутствие маркера при непустом журнале
 # означает «писано до маркера», то есть предпросмотром.
 MARK="$JOURNAL/source.txt"
+# В маркер идёт и ВЕРСИЯ ПРАВИЛА КАССЫ: журнал дописывается и хранит
+# размеры, посчитанные правилом на момент записи, а Python пересчитывает
+# всё заново. После правки правила старые записи несравнимы навсегда, и
+# сверка краснеет вечно, ничего не сообщая, — красное, которое всегда
+# красное, перестаёт быть сигналом. Версию берём У САМОГО ЯДРА расчёта,
+# а не повторяем здесь числом: две записи одной версии разошлись бы.
+CASHV=$(python3 -c "import sys; sys.path.insert(0, 'research/s8_loop'); \
+import trades; print(trades.CASH_RULES_VERSION)" 2>/dev/null || echo "?")
+WANT="$S8 cash=$CASHV"
 CUR=$(cat "$MARK" 2>/dev/null || true)
-if [ "$CUR" != "$S8" ] \
+if [ "$CUR" != "$WANT" ] \
         && ls "$JOURNAL"/journal-*.jsonl* >/dev/null 2>&1; then
     ARCH="${JOURNAL}-$(date -u +%Y%m%d-%H%M%S)"
-    echo "== журнал писан другим источником (${CUR:-до маркера}) =="
+    echo "== журнал писан другим правилом (${CUR:-до маркера}) =="
     echo "   архивирую в $ARCH и начинаю чистый"
     mv "$JOURNAL" "$ARCH"
     mkdir -p "$JOURNAL"
 fi
-printf '%s\n' "$S8" > "$MARK"
+printf '%s\n' "$WANT" > "$MARK"
 ( setsid nohup "$BIN" run \
     --s8 "$S8" \
     --journal "$JOURNAL" \
