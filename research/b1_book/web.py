@@ -4705,7 +4705,12 @@ body{margin:0;background:
     transparent 65%) fixed,var(--bg);color:var(--ink);
  font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
    sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1100px;margin:0 auto;padding:14px 14px 56px}
+/* Ширина страницы — по вопросу владельца «почему бы не сделать шире»:
+   1100px делили экран на панели по ~256px, и полная таблица группы
+   (имя + четыре колонки чисел, ~360px) не влезала ни в одну — контент
+   жил за прокруткой. Теперь панель по минимуму вмещает таблицу
+   целиком, а страница даёт четырём панелям встать в ряд. */
+.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
 .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
  margin-bottom:12px}
 .brand{font-weight:800;letter-spacing:.24em;font-size:15px;
@@ -4731,7 +4736,7 @@ button{background:var(--chip);border:1px solid var(--rule);
 button[aria-pressed="true"]{border-color:var(--accent);
  color:var(--accent)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,
- minmax(240px,1fr));gap:12px}
+ minmax(340px,1fr));gap:12px}
 .scroll{overflow-x:auto}
 /* В панелях групп самое широкое — имя («book eaten (absorption)»),
    и ему МОЖНО переноситься: числа при этом остаются в одну строку.
