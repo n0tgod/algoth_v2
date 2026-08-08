@@ -2354,6 +2354,79 @@ def test_pending_live_exit_is_shown_before_the_review():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_live_entries_reach_both_pages():
+    """Обзор и история сделок обязаны показывать ОДНИ сделки.
+
+    Ситуационная позиция живёт секундами, а строку выбора пишет
+    часовой цикл: до него она существует только в файле событий.
+    Обзор её накладывал, история читала голые `picks.jsonl` — и после
+    смены правил книги владелец увидел двенадцать открытых позиций на
+    обзоре против пустой истории. Расхождение выглядело как поломка
+    выгрузки, а было двумя разными ответами на один вопрос.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        # `model_trades` ищет книги от каталога сборщика; подменяется
+        # только он — считает настоящий код, на настоящих файлах.
+        C.HERE = os.path.join(d, "b1_book")
+        mdir = os.path.join(d, "s8_loop", "out", "model_sit")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"situational": True, "slots": 6,
+                       "rules_version": 8, "min_rr": 2.0}, f)
+        # Выборов НЕТ вовсе: цикл ещё не приходил. Есть только событие
+        # сканера — ровно состояние свежей книги после миграции.
+        with open(os.path.join(mdir, "entries_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"arm": "gbm", "hour": "2026-08-08-11", "sym": "AUSDT",
+                 "side": "long", "px": 100.0, "fwd": 40.0,
+                 "fwd0": 25.0, "rr": 3.0, "mae": -20.0, "mae_m": -4.0,
+                 "adverse_of": "maeq_4h", "mfe": 60.0,
+                 "at_ts": 1786190000.0}) + "\n")
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col.books = {}
+        col.recount = None
+        col._px_cache = {}
+        col.root = d
+        over = col._model_dir_state(mdir)
+        key = lambda t: (t.get("sym"), t.get("side"), t.get("state"))
+        a = sorted(map(key, over.get("trades") or []))
+        check("обзор видит живой вход до цикла",
+              a == [("AUSDT", "long", "открыта")],
+              str(over.get("trades_error") or a))
+        hist = col.model_trades(hz="sit", per=50)
+        b = sorted(map(key, hist.get("rows") or []))
+        check("история сделок показывает ТО ЖЕ, что обзор", a == b,
+              f"обзор {a} против истории {b}")
+        # И выход, записанный сторожем, обязан доехать в обе стороны
+        # одинаково: иначе история отставала бы на час там, где обзор
+        # уже показал закрытие.
+        with open(os.path.join(mdir, "exits_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"arm": "gbm", "hour": "2026-08-08-11", "sym": "AUSDT",
+                 "side": "long", "px": 100.6, "move_bp": 60.0,
+                 "at_ts": 1786191000.0,
+                 "reason": "цена дошла до обещанной цели"}) + "\n")
+        col._jsonl_cache = {}
+        over2 = col._model_dir_state(mdir)
+        hist2 = col.model_trades(hz="sit", per=50)
+        a2 = sorted(map(key, over2.get("trades") or []))
+        b2 = sorted(map(key, hist2.get("rows") or []))
+        check("живой выход виден обеим страницам одинаково",
+              a2 == b2 == [("AUSDT", "long", "вышла, ждёт разбора")],
+              f"обзор {a2} против истории {b2}")
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_sit_watch_levels_and_crossing():
     """Живой сторож ситуационной книги: уровни и пересечение.
 
@@ -2373,6 +2446,28 @@ def test_sit_watch_levels_and_crossing():
           hit == "против" and round(mv) == 25, f"{mv} {hit}")
     mv, hit = C.sit_cross("short", 100.0, 20.0, 99.50)
     check("шорт: падение без цели — не выход", not hit, str(mv))
+
+    # Уровень задевается ПУТЁМ, а не снимком. POWERUSDT 8 августа:
+    # шорт с целью −654 б.п., минута 11:05 сходила на −696 и вернулась
+    # к −494; сторож смотрит раз в пять секунд и мгновенной серединой
+    # ничего не увидел — сделка осталась открытой при сработавшем
+    # правиле.
+    mv, hit = C.sit_cross("short", 0.09802, 293.0, 0.0932, -654.0)
+    check("без пути пробитая цель невидима", not hit, f"{mv} {hit}")
+    mv, hit = C.sit_cross("short", 0.09802, 293.0, 0.0932, -654.0,
+                          hi=0.09758, lo=0.09119)
+    check("путь показывает касание цели",
+          hit == "в пользу", f"{mv} {hit}")
+    # А цена выхода берётся из СЕРЕДИНЫ, где мы можем торговать, а не
+    # с уровня: фитиль вернулся, и продать по его дну нельзя.
+    check("исполнение по доступной цене, а не по уровню",
+          round(mv) == -492, str(mv))
+    # Ничья решается против нас и на пути тоже: если путь задел оба
+    # уровня, засчитывается ход ПРОТИВ.
+    mv, hit = C.sit_cross("long", 100.0, -50.0, 100.1, 50.0,
+                          hi=100.6, lo=99.4)
+    check("оба уровня на пути — считается стоп", hit == "против",
+          f"{mv} {hit}")
 
     # ЦЕЛЬ. До версии 6 её не существовало: стоп стоял, тейка не было,
     # и сделка, дошедшая до обещанного уровня, висела дальше (владелец
@@ -2766,6 +2861,7 @@ def main():
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
+    test_live_entries_reach_both_pages()
     test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()
     test_shard_split_covers_everything()

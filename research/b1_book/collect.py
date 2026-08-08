@@ -613,6 +613,26 @@ class Shard:
                 d = c.tape.get(sym)
                 if d is not None:
                     d.append(t)
+                # Крайние цены с прошлого взгляда сторожа. Сторож
+                # смотрит раз в пять секунд, а уровень задевается
+                # путём: у POWERUSDT 8 августа тейк был пробит внутри
+                # одной минуты (низ 0.09119 при уровне 0.09161) и
+                # мгновенный снимок его не увидел — сделка осталась
+                # открытой. Лента даёт путь целиком, и стоит это двух
+                # сравнений на принт.
+                #
+                # Копить экстремум в самой ленте нельзя: у неё сто
+                # двадцать последних принтов, а в обвале их сотни в
+                # секунду — окно свернулось бы раньше, чем сторож
+                # посмотрит.
+                ex = c.px_ext.get(sym)
+                if ex is None:
+                    c.px_ext[sym] = [t["p"], t["p"]]
+                else:
+                    if t["p"] > ex[0]:
+                        ex[0] = t["p"]
+                    if t["p"] < ex[1]:
+                        ex[1] = t["p"]
                 if c.paper:
                     c.sig.on_trade(t)
 
@@ -700,6 +720,11 @@ class Collector:
         # по запросу страницы, а не для всех разом: см. `warm_mid`.
         self.mid_warmed = set()
         self.tape = {s: deque(maxlen=120) for s in symbols}
+        # Путь цены между взглядами сторожа: [максимум, минимум] по
+        # принтам. Читается и сбрасывается сторожем; принт, пришедший
+        # ровно между чтением и сбросом, теряется — одна сделка из
+        # сотен, и это дешевле, чем блокировка на каждом принте.
+        self.px_ext = {}
         self.lines = LogBuf()
         self.msg_mark = (time.time(), 0)
         self.msg_rate = 0.0
@@ -1436,6 +1461,78 @@ class Collector:
         self._model_cache = (now, out, rr_min)
         return out
 
+    def live_overlay(self, mdir, tr, reviews):
+        """Живые события сборщика поверх истории выборов и разбора.
+
+        Ситуационная книга живёт секундами, а строки выбора и разбора
+        пишет часовой цикл. До него позиция существует ТОЛЬКО в файлах
+        событий, и показ, молчащий о ней до конца часа, есть отказ
+        показа: вход случился в моменте, и владелец видит его на
+        графике сразу.
+
+        Функция одна на обзор и на страницу сделок намеренно. Пока
+        наложение жило внутри обзора, страница истории читала голые
+        `picks.jsonl` — и после смены правил книги обзор показывал
+        двенадцать открытых позиций, а история ноль. Расхождение это
+        выглядело как поломка выгрузки, а было двумя разными ответами
+        на один вопрос.
+
+        Деньги не трогаются ни входом, ни выходом: их считает разбор,
+        и касса возвращает их тогда же. Тень бота читает те же два
+        файла, и показ, обгоняющий её, развёл бы два счёта.
+        """
+        conv = {(t.get("sym"), t.get("opened_at")) for t in tr}
+        closed = {(rv.get("hour"), r.get("sym"), r.get("side"))
+                  for rv in reviews or []
+                  for r in rv.get("rows") or []}
+        for e in self._jsonl(os.path.join(mdir, "entries_live.jsonl")):
+            if (e.get("sym"), e.get("at_ts")) in conv:
+                continue
+            if (e.get("hour"), e.get("sym"), e.get("side")) in closed:
+                continue
+            tr.insert(0, {
+                "arm": e.get("arm") or "gbm",
+                "hour": e.get("hour"), "sym": e.get("sym"),
+                "side": e.get("side"), "state": "открыта",
+                "opened_at": e.get("at_ts"), "closes_at": None,
+                "expected_bp": e.get("fwd"),
+                "mae_bp": e.get("mae"),
+                # Линия среднего и происхождение стопа — те же поля,
+                # что кладёт в сделку разбор. Без них свежая позиция
+                # рисовалась бы на графике без второй линии, и это
+                # читалось бы как «стоп стоит на прогнозе», то есть
+                # как прежнее правило.
+                "mae_m_bp": e.get("mae_m"),
+                "stop_of": e.get("adverse_of"),
+                "mfe_bp": e.get("mfe"),
+                "entry_px": e.get("px"),
+                "odd": e.get("odd"), "live_wait": True})
+        # Живые ВЫХОДЫ — зеркально входам. Сторож закрывает позицию
+        # секундами, а строку разбора пишет часовой цикл: до него
+        # страница показывала позицию открытой, хотя её уже нет.
+        # Владелец увидел это на HFTUSDT — цена дошла до цели в 00:35,
+        # разбор шёл в 01:06, и сделка висела открытой почти час.
+        pend = {}
+        for e in self._jsonl(os.path.join(mdir, "exits_live.jsonl")):
+            k = (e.get("arm") or "gbm", e.get("hour"),
+                 e.get("sym"), e.get("side"))
+            pend.setdefault(k, e)          # первое пересечение решает
+        for t in tr:
+            if t.get("state") != "открыта":
+                continue
+            e = pend.get((t.get("arm"), t.get("hour"),
+                          t.get("sym"), t.get("side")))
+            if not e:
+                continue
+            t["state"] = "вышла, ждёт разбора"
+            t["exit_pending"] = True
+            t["exit_ts"] = e.get("at_ts")
+            t["exit_px"] = e.get("px")
+            t["exit_move_bp"] = e.get("move_bp")
+            t["exit_reason"] = e.get("reason")
+            t["closes_in_sec"] = None
+        return tr
+
     def _model_dir_state(self, mdir, rr_min=None):
         out = {"present": False}
         try:
@@ -1510,72 +1607,14 @@ class Collector:
                               os.path.join(mdir, "books.jsonl")))
             TR.mark(tr, self.marks(tr))
             hrows = self.paths(tr, hold_h=path_h)
-            # Живые входы, ещё не превращённые циклом в строки выбора,
-            # показываются сразу: вход случился в моменте, и страница,
-            # молчащая о нём до часа, была бы отказом показа.
+            # Живые события сборщика (вход в моменте, выход по
+            # уровню) накладываются на историю ОДНОЙ функцией — её же
+            # зовёт страница сделок. Два наложения однажды разошлись
+            # бы, и обзор показывал бы сделки, которых нет в истории;
+            # ровно это владелец и увидел: двенадцать позиций на
+            # обзоре против пустой истории.
             if sit:
-                conv = {(t.get("sym"), t.get("opened_at"))
-                        for t in tr}
-                closed = {(rv.get("hour"), r.get("sym"), r.get("side"))
-                          for rv in out.get("review") or []
-                          for r in rv.get("rows") or []}
-                for e in self._jsonl(os.path.join(
-                        mdir, "entries_live.jsonl")):
-                    if (e.get("sym"), e.get("at_ts")) in conv:
-                        continue
-                    if (e.get("hour"), e.get("sym"),
-                            e.get("side")) in closed:
-                        continue
-                    tr.insert(0, {
-                        "arm": e.get("arm") or "gbm",
-                        "hour": e.get("hour"), "sym": e.get("sym"),
-                        "side": e.get("side"), "state": "открыта",
-                        "opened_at": e.get("at_ts"),
-                        "closes_at": None,
-                        "expected_bp": e.get("fwd"),
-                        "mae_bp": e.get("mae"),
-                        # Линия среднего и происхождение стопа — те же
-                        # поля, что кладёт в сделку разбор. Без них
-                        # свежая позиция рисовалась бы на графике без
-                        # второй линии, и это читалось бы как «стоп
-                        # стоит на прогнозе», то есть как прежнее
-                        # правило. Пустота, похожая на данные, — самый
-                        # дорогой род дефекта в этом проекте.
-                        "mae_m_bp": e.get("mae_m"),
-                        "stop_of": e.get("adverse_of"),
-                        "mfe_bp": e.get("mfe"),
-                        "entry_px": e.get("px"),
-                        "odd": e.get("odd"), "live_wait": True})
-                # Живые ВЫХОДЫ — зеркально входам. Сторож закрывает
-                # позицию секундами, а строку разбора пишет часовой
-                # цикл: до него страница показывала позицию открытой,
-                # хотя её уже нет. Владелец увидел это на HFTUSDT —
-                # цена дошла до цели в 00:35, разбор шёл в 01:06, и
-                # сделка висела открытой почти час. Деньги при этом НЕ
-                # трогаются: их считает разбор, и касса возвращает их
-                # тогда же — тень бота узнаёт о выходе из тех же
-                # файлов, и опережать её показом значило бы разводить
-                # два счёта.
-                pend = {}
-                for e in self._jsonl(os.path.join(
-                        mdir, "exits_live.jsonl")):
-                    k = (e.get("arm") or "gbm", e.get("hour"),
-                         e.get("sym"), e.get("side"))
-                    pend.setdefault(k, e)   # первое пересечение решает
-                for t in tr:
-                    if t.get("state") != "открыта":
-                        continue
-                    e = pend.get((t.get("arm"), t.get("hour"),
-                                  t.get("sym"), t.get("side")))
-                    if not e:
-                        continue
-                    t["state"] = "вышла, ждёт разбора"
-                    t["exit_pending"] = True
-                    t["exit_ts"] = e.get("at_ts")
-                    t["exit_px"] = e.get("px")
-                    t["exit_move_bp"] = e.get("move_bp")
-                    t["exit_reason"] = e.get("reason")
-                    t["closes_in_sec"] = None
+                self.live_overlay(mdir, tr, out.get("review"))
             # Фильтр владельца по обещанному отношению: показ и СЧЁТ
             # считаются по отобранному подмножеству одним и тем же
             # ядром. Отфильтрованная кривая — это «что было бы, если
@@ -1683,6 +1722,12 @@ class Collector:
                       books=TR.load_books(
                           os.path.join(mdir, "books.jsonl")))
         TR.mark(tr, self.marks(tr))
+        # Живые события — той же функцией, что у обзора. Без неё
+        # история читала голые `picks.jsonl` и молчала о позициях,
+        # открытых сканером после последнего цикла: обзор показывал
+        # двенадцать сделок, история — ноль.
+        if sit:
+            self.live_overlay(mdir, tr, revs)
         # Порог обещанного отношения — только у книги без срока: у
         # часовых обещания пути не решают ни входа, ни выхода.
         tr, rr_cut, rr_unknown = TR.by_rr(tr, rr_min if sit else None)
@@ -2160,6 +2205,7 @@ class Collector:
         # у кого условие успело стать верным без нас, и это выглядит
         # пачкой входов одной секундой.
         armed, armed_hour = set(), None
+        last_look = None
         while not self.stop.wait(5.0):
             try:
                 now = time.time()
@@ -2202,6 +2248,23 @@ class Collector:
                 # не книги, и книги различаются только требованием к
                 # отношению и числом мест.
                 self._sit_scan(root, sheet, want, books, now, armed)
+                # Путь цены с прошлого взгляда — по каждому имени
+                # разом, ОДНИМ снятием на тик: книг несколько, и
+                # сбросив экстремум внутри цикла по книгам, вторая
+                # книга смотрела бы на пустой путь.
+                ext = {}
+                for sym in {p["sym"] for stt in books.values()
+                            for p in stt["pos"]}:
+                    e = self.px_ext.pop(sym, None)
+                    if e:
+                        ext[sym] = (e[0], e[1])
+                # Путь накоплен с ПРОШЛОГО взгляда, а позиция могла
+                # открыться внутри этого окна: её уровень тогда задело
+                # бы движение, случившееся ДО входа, и сделка вышла бы
+                # той же секундой, что открылась. Свежей позиции путь
+                # не даётся — ей хватит следующего тика.
+                since = last_look
+                last_look = now
                 for d, stt in books.items():
                     for p in stt["pos"]:
                         key = (p["arm"], p["hour"], p["sym"], p["side"])
@@ -2213,10 +2276,16 @@ class Collector:
                         bid, ask = bk.best()
                         if not (bid and ask):
                             continue
+                        eh, el = ext.get(p["sym"], (None, None))
+                        at = p.get("at_ts")
+                        if at is not None and since is not None \
+                                and at > since:
+                            eh = el = None
                         move, hit = sit_cross(p["side"], p["px"],
                                               p["adv"],
                                               (bid + ask) / 2.0,
-                                              p.get("fav"))
+                                              p.get("fav"),
+                                              hi=eh, lo=el)
                         if not hit:
                             continue
                         ev = {"arm": p["arm"], "hour": p["hour"],
@@ -2501,7 +2570,7 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     return d
 
 
-def sit_cross(side, entry_px, adv, mid, fav=None):
+def sit_cross(side, entry_px, adv, mid, fav=None, hi=None, lo=None):
     """Дошёл ли живой ход цены до обещанного уровня.
 
     `adv` — обещание из самого выбора (поле `mae` записи: ход ПРОТИВ
@@ -2523,12 +2592,33 @@ def sit_cross(side, entry_px, adv, mid, fav=None):
     ПРОТИВ нас — ровно как ничья в замерах T3/T4: цену между двумя
     уровнями секунда не разрешает, и приписывать себе лучший исход
     значило бы завышать результат систематически.
+
+    `hi`/`lo` — крайние цены ПУТИ с прошлого взгляда (по ленте).
+    Уровень задевается путём, а не снимком: сторож смотрит раз в пять
+    секунд, и у POWERUSDT 8 августа тейк был пробит внутри одной
+    минуты (низ 0.09119 при уровне 0.09161), а мгновенная середина
+    этого не увидела — сделка осталась открытой при сработавшем
+    правиле. Без пути правило проверялось на выборке из каждой
+    пятой секунды.
+
+    Срабатывание решает ПУТЬ, а цена выхода берётся из `mid` — то
+    есть оттуда, где мы можем торговать, когда заметили. Считать
+    исполнение по самому уровню значило бы дарить себе цену, которой
+    в момент нашего решения уже нет: фитиль вернулся, и продать по
+    его дну нельзя. Это тот же принцип, что «не предполагать
+    исполнение лимитной заявки по касанию» (ошибка движка v1).
     """
     move = (mid / entry_px - 1.0) * 1e4
-    if (move <= adv) if side == "long" else (move >= adv):
+    hi = mid if hi is None else max(hi, mid)
+    lo = mid if lo is None else min(lo, mid)
+    ext_adv = lo if side == "long" else hi
+    ext_fav = hi if side == "long" else lo
+    m_adv = (ext_adv / entry_px - 1.0) * 1e4
+    m_fav = (ext_fav / entry_px - 1.0) * 1e4
+    if (m_adv <= adv) if side == "long" else (m_adv >= adv):
         return move, "против"
     if fav is not None and (
-            (move >= fav) if side == "long" else (move <= fav)):
+            (m_fav >= fav) if side == "long" else (m_fav <= fav)):
         return move, "в пользу"
     return move, None
 
@@ -2562,7 +2652,12 @@ def sit_open_levels(picks, reviews, entries=None):
                 out.append({"arm": arm, "hour": pk.get("hour"),
                             "sym": p.get("sym"), "side": side,
                             "px": p["px"], "adv": p["mae"],
-                            "fav": p.get("mfe")})
+                            "fav": p.get("mfe"),
+                            # Момент открытия: сторож по нему решает,
+                            # годится ли накопленный путь. Путь до
+                            # входа — чужой, и уровень им задевать
+                            # нельзя.
+                            "at_ts": p.get("at_ts")})
     for e in entries or []:
         arm = e.get("arm") or "gbm"
         if (arm, e.get("sym"), e.get("at_ts")) in converted:
@@ -2574,7 +2669,7 @@ def sit_open_levels(picks, reviews, entries=None):
         out.append({"arm": arm, "hour": e.get("hour"),
                     "sym": e.get("sym"), "side": e.get("side"),
                     "px": e["px"], "adv": e["mae"],
-                    "fav": e.get("mfe")})
+                    "fav": e.get("mfe"), "at_ts": e.get("at_ts")})
     return out
 
 
