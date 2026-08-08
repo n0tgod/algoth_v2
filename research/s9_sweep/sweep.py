@@ -91,10 +91,16 @@ class HttpBars:
     в чужую сделку.
     """
 
-    def __init__(self, base, key, log=print):
+    def __init__(self, base, key, log=print, disk=None):
         self.base, self.key, self.log = base.rstrip("/"), key, log
         self.cache = {}
         self.miss = 0
+        # Кеш на диске: добавить нулевую модель — значит пересчитать
+        # те же ноги, и второй обход по сети за теми же барами есть
+        # чистая потеря времени (первый шёл семь минут).
+        self.disk = disk
+        if disk:
+            os.makedirs(disk, exist_ok=True)
 
     def bars(self, sym, t0, t1):
         import urllib.parse
@@ -115,6 +121,14 @@ class HttpBars:
         for e, span in need:
             key = (int(e // 3600), span)
             chunk = got.get(key)
+            dpath = (os.path.join(self.disk, f"{sym}-{key[0]}-{key[1]}.json")
+                     if self.disk else None)
+            if chunk is None and dpath and os.path.exists(dpath):
+                try:
+                    with open(dpath, encoding="utf-8") as fh:
+                        chunk = got[key] = json.load(fh)
+                except (OSError, ValueError):
+                    chunk = None
             if chunk is None:
                 q = urllib.parse.urlencode({
                     "k": self.key, "sym": sym, "hours": span,
@@ -132,6 +146,12 @@ class HttpBars:
                     self.miss += 1
                     d = {}
                 chunk = got[key] = d.get("candles") or []
+                if dpath:
+                    try:
+                        with open(dpath, "w", encoding="utf-8") as fh:
+                            json.dump(chunk, fh)
+                    except OSError:
+                        pass
             out += chunk
         return sorted({b[0]: b for b in out}.values(),
                       key=lambda b: b[0])
@@ -296,13 +316,32 @@ def run(root, books, log=print, src=None, legs=None):
                 cell.update(measure(sel, take))
                 cell.update({f"null_{k}": v for k, v in
                              measure(sel, take, null=True).items()})
+                cell.update({f"mir_{k}": v for k, v in
+                             measure(sel, take, mirror=True).items()})
                 cells.append(cell)
     return legs, cells
 
 
-def measure(sel, take, null=False):
+def measure(sel, take, null=False, mirror=False):
+    """`null` — сдвиг момента, `mirror` — та же сделка в другую сторону.
+
+    Второй нуль решает вопрос, на который первый не отвечает: сдвиг
+    времени сохраняет СТОРОНУ, которую выбрала модель, и если рынок в
+    окне куда-то ехал, оба замера поймают этот ход одинаково. Зеркало
+    оставляет момент и геометрию и переворачивает направление — если
+    и оно даёт то же, значит меряется свойство рынка и ширина
+    бракета, а не выбор модели.
+    """
     nets, rs, out = [], [], {"стоп": 0, "цель": 0, "срок": 0}
     for g in sel:
+        side = g["side"]
+        adv, fav = g["mae"], g["mfe"]
+        if mirror:
+            # Зеркало: та же ширина уровней, другая сторона. Обещания
+            # переставляются знаком, потому что записаны В ЕДИНИЦАХ
+            # ПОЗИЦИИ, а не цены (`path_fields`).
+            side = "short" if side == "long" else "long"
+            adv, fav = -adv, -fav
         bars = g["bars_null"] if null else g["bars"]
         t0 = g["at"] + (NULL_SHIFT_H * 3600 if null else 0)
         px = g["px"]
@@ -314,12 +353,11 @@ def measure(sel, take, null=False):
             if not first:
                 continue
             px = first[0][1]
-        got = bracket(bars, t0, px, g["side"], g["mae"], g["mfe"],
-                      take=take)
+        got = bracket(bars, t0, px, side, adv, fav, take=take)
         if got is None:
             continue
         why, move, _ = got
-        n, r = net_bp(g["side"], move, g["mae"])
+        n, r = net_bp(side, move, adv)
         nets.append(n)
         if r is not None:
             rs.append(r)
@@ -360,8 +398,8 @@ def report(legs, cells, path, root, books):
         "## Все ячейки объявленной сетки",
         "",
         "| край, б.п. | RR ≥ | цель | сделок | побед | ожидание, б.п. "
-        "| медиана | R | стоп/цель/срок | нуль, б.п. |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| медиана | R | стоп/цель/срок | нуль момента | зеркало |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     ok = [c for c in cells if c.get("n", 0) >= MIN_CELL]
     for c in cells:
@@ -369,7 +407,7 @@ def report(legs, cells, path, root, books):
         if not n:
             lines.append(f"| {c['edge']:.0f} | {c['rr']} | "
                          f"{'да' if c['take'] else 'нет'} | 0 | — | — | "
-                         f"— | — | — | — |")
+                         f"— | — | — | — | — |")
             continue
         r_txt = "—" if c.get("exp_r") is None else f"{c['exp_r']:+.2f}"
         few = "" if n >= MIN_CELL else " ·мало"
@@ -378,16 +416,21 @@ def report(legs, cells, path, root, books):
             f"{'да' if c['take'] else 'нет'} | {n}{few} | {c['win']} | "
             f"{c['exp_bp']:+} | {c['med_bp']:+} | {r_txt} | "
             f"{c['stop']}/{c['target']}/{c['time']} | "
-            f"{c.get('null_exp_bp', '—')} |")
+            f"{c.get('null_exp_bp', '—')} | {c.get('mir_exp_bp', '—')} |")
     if ok:
         med = st.median([c["exp_bp"] for c in ok])
         med_null = st.median([c.get("null_exp_bp") or 0.0 for c in ok])
+        med_mir = st.median([c.get("mir_exp_bp") or 0.0 for c in ok])
         best = max(ok, key=lambda c: c["exp_bp"])
         lines += [
             "", "## Итог", "",
             f"- измеренных ячеек: **{len(ok)}** из {len(cells)}",
             f"- медиана ожидания по измеренным: **{med:+.1f} б.п.**, "
-            f"у нуля момента {med_null:+.1f}",
+            f"у нуля момента {med_null:+.1f}, у зеркала {med_mir:+.1f}",
+            "- **читать надо разность, а не уровень**: если прогон, "
+            "сдвинутый момент и перевёрнутая сторона дают одно и то же, "
+            "меряется ширина бракета и ход рынка в окне, а не выбор "
+            "модели",
             f"- лучшая ячейка: край {best['edge']:.0f}, RR ≥ "
             f"{best['rr']}, цель "
             f"{'да' if best['take'] else 'нет'} — {best['exp_bp']:+} "
@@ -446,10 +489,13 @@ def main():
     ap.add_argument("--http", default="",
                     help="адрес страницы наблюдения вместо записей")
     ap.add_argument("--key", default="", help="ключ страницы")
+    ap.add_argument("--cache", default="",
+                    help="каталог кеша баров: пересчёт с другим нулём "
+                         "не должен стоить нового обхода по сети")
     a = ap.parse_args()
     src = legs = None
     if a.http:
-        src = HttpBars(a.http, a.key)
+        src = HttpBars(a.http, a.key, disk=a.cache or None)
         legs = legs_from_http(a.http, a.key, a.books)
     legs, cells = run(a.root, a.books, src=src, legs=legs)
     if src and src.miss:
