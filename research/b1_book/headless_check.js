@@ -24,6 +24,7 @@ const js = src.match(/<script>\n([\s\S]*)<\/script>/)[1];
 const isChart = /id="px"/.test(src);
 const isInfo = /id="whybox"/.test(src);
 const isLeague = /league — what works best/.test(src);
+const isGloss = /playbook — what the model can read/.test(src);
 const isTrades = /id="tb"/.test(src);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
@@ -190,6 +191,29 @@ global.fetch = async (url) => {
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
+             : url.startsWith("/glossary")
+             ? {present: true, n_features: 3, train_seq: 77,
+                weight_covers: 0.2, weight_arm: "gbm",
+                weight_target: "fwd_4h", error: null,
+                families: [
+                  {key: "absorption",
+                   title: "Absorption — the book being eaten",
+                   plain: "Someone keeps putting size back at the same "
+                          + "price while the market keeps hitting it.",
+                   reads: "aggressive volume against displayed depth",
+                   caveat: "Measured on prints alone this carried no "
+                           + "direction at all.",
+                   features: [{name: "eat_bid", weight: 0.12}],
+                   n_features: 1, weight: 0.12,
+                   traded: {n: 5, pnl: 8.0, win: 0.6}},
+                  {key: "oi", title: "Open interest",
+                   plain: "How much money is standing in this contract "
+                          + "right now against its usual level.",
+                   reads: "open interest vs its own past week",
+                   caveat: null,
+                   features: [{name: "oi_rel", weight: 0.08},
+                              {name: "oi_chg_4h", weight: 0}],
+                   n_features: 2, weight: 0.08, traded: null}]}
              : url.startsWith("/league")
              ? {present: true, closed_total: 3,
                 errors: ["model_h24: ValueError: boom"],
@@ -642,13 +666,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
-  if (!isTrades && !isChart && !isBot && !isInfo && !isLeague) {
+  if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
+      && !isGloss) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -782,7 +807,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -1024,6 +1049,49 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                + ` (обёрток ${nScroll} из 6)`);
   }
 
+  if (isGloss) {
+    // Пробелы схлопываются: текст страницы переносится по строкам
+    // исходника, и фраза «reading of the forecast» физически стоит на
+    // двух — проверка на дословное совпадение падала бы на вёрстке, а
+    // не на смысле.
+    const flat = s => String(s || "").replace(/\s+/g, " ");
+    const bx = flat(global.__el
+      ? global.__el("box").innerHTML : "");
+    const intro = flat(global.__el
+      ? global.__el("intro").innerHTML : "");
+    // Главная честность страницы обязана стоять на ней, а не в моей
+    // голове: без неё список семейств читается как набор правил.
+    if (!/no separate strategies/.test(intro))
+      bad.push("справочник: не сказано, что стратегий у модели нет");
+    if (!/reading of the forecast, not a rule/.test(intro))
+      bad.push("справочник: имя ситуации выдано за правило");
+    if (!/top ten per target/.test(intro) || !/20 %/.test(intro))
+      bad.push("справочник: неполнота весов не названа числом");
+    // Числа стаба, а не «блок есть»: пустая карточка неотличима от
+    // «данных ещё нет».
+    if (!/Absorption — the book being eaten/.test(bx))
+      bad.push("справочник: семейство не названо");
+    if (!/putting size back at the same price/.test(bx))
+      bad.push("справочник: объяснение простыми словами потеряно");
+    if (!/aggressive volume against displayed depth/.test(bx))
+      bad.push("справочник: не сказано, что именно мерится");
+    if (!/carried no direction at all/.test(bx))
+      bad.push("справочник: оговорка честности потеряна");
+    // Признак переведён ОБЩИМ словарём — тем же, что у разбора сделки.
+    if (!/sellers eating through the shown bids/.test(bx))
+      bad.push("справочник: признак не переведён на человеческий");
+    if (!/12\.0 %/.test(bx))
+      bad.push("справочник: вес признака не показан");
+    // Вес неизвестен — прочерк, а НЕ ноль: ноль читался бы как
+    // «модель им не пользуется».
+    if (/0\.0 %/.test(bx))
+      bad.push("справочник: неизвестный вес показан нулём");
+    if (!/named in 5 closed trades/.test(bx))
+      bad.push("справочник: сделки по семейству не посчитаны");
+    if (!seen.some(u => u.startsWith("/glossary")))
+      bad.push("справочник: данные не запрошены");
+  }
+
   if (isInfo) {
     const wb = global.__el
       ? String(global.__el("whybox").innerHTML || "") : "";
@@ -1074,7 +1142,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Панель исполнительного ядра — только на обзоре. Проверяется
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
-  if (!isTrades && !isChart && !isBot && !isInfo && !isLeague) {
+  if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
+      && !isGloss) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -1324,7 +1393,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("просадка сделки в строке не в долях депозита");
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
-  } else if (isBot || isInfo || isLeague) {
+  } else if (isBot || isInfo || isLeague || isGloss) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {

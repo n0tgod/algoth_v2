@@ -2044,6 +2044,104 @@ class Collector:
         self._league_cache = (now, out)
         return out
 
+    def model_glossary(self):
+        """Справочник: какие ситуации модель вообще способна читать.
+
+        Просьба владельца — страница со всеми «стратегиями» модели и
+        объяснением каждой простыми словами. Честный ответ записан в
+        `families.py` и повторён страницей: дискретных стратегий у
+        модели нет, она одна на все ситуации. Что есть — семейства
+        признаков, то есть словарь, на котором она думает; имя
+        ситуации у сделки получается разложением вкладов в ОДИН
+        прогноз.
+
+        Список признаков берётся из ЖИВОГО манифеста обучения, а не из
+        исходников: справочник обязан описывать ту модель, которая
+        сейчас торгует. Пороги новизны пишутся по каждому признаку,
+        поэтому их ключи и есть полный список имён, на которых модель
+        училась, — тот же, что берёт тест на полноту карты.
+
+        Вес семейства — сумма важностей его признаков по цели `fwd_4h`
+        (главный горизонт). Манифест хранит топ-10 на цель, поэтому
+        сумма долей меньше единицы: `weight_covers` говорит, какую
+        часть важности мы вообще видим. Печатать долю от неполной
+        суммы как «доля семейства» значило бы выдать десять признаков
+        за все пятьдесят.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_gloss_cache", (0.0, None))
+        if cached is not None and now - at < 300:
+            return cached
+        s8d = os.path.join(os.path.dirname(HERE), "s8_loop")
+        sys.path.insert(0, s8d)
+        # Только карта семейств и тексты — без numpy: `bookfeat` тянет
+        # математику M1, а справочнику нужны строки.
+        import families as FM
+        mdir = os.path.join(s8d, "out", "model")
+        man, err = {}, None
+        try:
+            with open(os.path.join(mdir, "manifest.json"),
+                      encoding="utf-8") as f:
+                man = json.load(f)
+        except OSError:
+            err = "манифест обучения не найден — модель ещё не училась"
+        except ValueError as e:
+            err = f"манифест обучения не читается: {e}"
+        feats = sorted((man.get("novelty_bounds") or {}))
+        imp = ((man.get("importance") or {}).get("gbm")
+               or {}).get("fwd_4h") or {}
+        seen = 0.0
+        by_fam = {}
+        for n in feats:
+            fam = FM.family(n)
+            g = by_fam.setdefault(fam, {"feats": [], "weight": 0.0})
+            w = float(imp.get(n) or 0.0)
+            seen += w
+            g["weight"] += w
+            g["feats"].append({"name": n, "weight": round(w, 4)})
+        # Сделки, где семейство оказалось главным: справочник должен
+        # отвечать не только «что модель умеет читать», но и «чем она
+        # на деле торговала». Берётся год лиги — она уже посчитана и
+        # закеширована, второй проход по книгам был бы вторым счётом.
+        traded = {}
+        try:
+            lg = self.model_league()
+            for g in (((lg.get("periods") or {}).get("365d") or {})
+                      .get("groups") or {}).get("setup") or []:
+                traded[g["key"]] = {"n": g["n"], "pnl": g["pnl"],
+                                    "win": g["win"]}
+        except Exception as e:                            # noqa: BLE001
+            err = (err or "") + f" лига недоступна: {type(e).__name__}"
+        rows = []
+        for key, txt in FM.GLOSSARY:
+            g = by_fam.get(key) or {"feats": [], "weight": 0.0}
+            if key == "other" and not g["feats"]:
+                # «Прочее» пусто — так и должно быть; печатать пустую
+                # карточку дефекта незачем.
+                continue
+            rows.append({
+                "key": key, "title": txt["title"], "plain": txt["plain"],
+                "reads": txt["reads"], "caveat": txt.get("caveat"),
+                "features": sorted(g["feats"],
+                                   key=lambda f: (-f["weight"],
+                                                  f["name"])),
+                "n_features": len(g["feats"]),
+                "weight": round(g["weight"], 4),
+                "traded": traded.get(key)})
+        out = {"present": bool(feats), "error": err,
+               "n_features": len(feats),
+               "train_seq": man.get("train_seq"),
+               "trained_at": man.get("trained_at"),
+               "trained_upto": man.get("trained_upto"),
+               "symbols": man.get("symbols"), "hours": man.get("hours"),
+               # Какую часть важности накрывает топ-10 манифеста: без
+               # этого числа веса семейств читались бы как полные доли.
+               "weight_covers": round(seen, 4),
+               "weight_target": "fwd_4h", "weight_arm": "gbm",
+               "families": rows, "generated_at": round(now, 1)}
+        self._gloss_cache = (now, out)
+        return out
+
     def entry_px(self, picks):
         """Цены входа для выборов, которые их не несут.
 

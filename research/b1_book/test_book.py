@@ -414,6 +414,8 @@ def test_pages_run_headless():
                  "&hz=sit&rr=1.5"),
                 # Лига: что ведёт себя лучше и топ сделок.
                 ("лига", web.LEAGUE, "?k=xxx"),
+                # Справочник: все ситуации модели простыми словами.
+                ("справочник", web.GLOSSARY_PAGE, "?k=xxx"),
                 # Страница разбора сделки: простыми словами, почему
                 # вход здесь и как расставлены уровни. Ссылка ведёт на
                 # сделку руки nn — у неё в фикстуре why/setup/train_seq.
@@ -2519,6 +2521,100 @@ def test_league_ranks_by_realised_money():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_glossary_describes_the_live_model():
+    """Справочник: каждое семейство названо, каждый признак расписан.
+
+    Просьба владельца — страница со всеми «стратегиями» модели и
+    объяснением каждой простыми словами. Проверяется не «ответ есть»,
+    а ЧИСЛА и главное свойство: список признаков берётся из ЖИВОГО
+    манифеста обучения, и ни один живой признак не остаётся без
+    семейства. Признак без строчки в карте молча размывал бы вид
+    ситуации на каждой странице — этот же класс дефекта уже находил
+    тест полноты в S8 (`rel_sec_4h`).
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        mdir = os.path.join(d, "s8_loop", "out", "model")
+        os.makedirs(mdir)
+        # Манифест подставной, а имена признаков — НАСТОЯЩИЕ: по одному
+        # из каждого семейства плюс те, что ловятся префиксом.
+        feats = ["eat_bid", "big_rel", "imb_best", "depth_a0.005",
+                 "delta", "burst", "liq_imb", "oi_rel", "fr_bp",
+                 "squeeze_4h", "tilt_4h", "range_pos", "ret_4h",
+                 "vol_regime", "btc_ret_4h", "beta", "dist_round",
+                 "dow", "age_rec"]
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"train_seq": 77, "symbols": 556, "hours": 217,
+                       "novelty_bounds": {n: [0.0, 1.0] for n in feats},
+                       "importance": {"gbm": {"fwd_4h": {
+                           "eat_bid": 0.12, "oi_rel": 0.08}}}}, f)
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        g = col.model_glossary()
+        check("справочник собрался по живому манифесту",
+              g["present"] is True and g["n_features"] == len(feats)
+              and g["train_seq"] == 77, str(g)[:160])
+        fams = {f["key"]: f for f in g["families"]}
+        # Ни одного признака без семейства: карточка «other» есть
+        # только когда есть сироты, и её появление — дефект.
+        check("сирот нет — все живые признаки расписаны",
+              "other" not in fams, str(fams.get("other")))
+        check("каждое семейство названо и объяснено словами",
+              all(f["title"] and len(f["plain"]) > 80 and f["reads"]
+                  for f in g["families"]),
+              str([f["key"] for f in g["families"]
+                   if not (f["title"] and f["reads"])]))
+        check("признак попал в своё семейство",
+              [x["name"] for x in fams["absorption"]["features"]]
+              == ["eat_bid", "big_rel"],
+              str(fams["absorption"]["features"]))
+        check("вес семейства — сумма важностей его признаков",
+              abs(fams["absorption"]["weight"] - 0.12) < 1e-9
+              and abs(fams["oi"]["weight"] - 0.08) < 1e-9,
+              str([fams["absorption"]["weight"], fams["oi"]["weight"]]))
+        check("накрытая топ-10 доля важности названа числом",
+              abs(g["weight_covers"] - 0.20) < 1e-9,
+              str(g["weight_covers"]))
+        # Префикс работает наравне с точным именем: `depth_a0.005` и
+        # `ret_4h` не перечислены поимённо нигде.
+        check("признаки по префиксу тоже расписаны",
+              [x["name"] for x in fams["book"]["features"]]
+              == ["depth_a0.005", "imb_best"]
+              and [x["name"] for x in fams["move"]["features"]]
+              == ["ret_4h"], str([fams["book"], fams["move"]])[:160])
+        # Сирота обязана ВЫДАТЬ себя карточкой, а не раствориться.
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"train_seq": 78,
+                       "novelty_bounds": {"zz_new_feature": [0, 1]},
+                       "importance": {}}, f)
+        col._gloss_cache = (0.0, None)
+        g2 = col.model_glossary()
+        orph = next((f for f in g2["families"] if f["key"] == "other"),
+                    None)
+        check("признак без семейства называет себя дефектом",
+              orph is not None
+              and [x["name"] for x in orph["features"]]
+              == ["zz_new_feature"], str(orph))
+        # Модель, которая ещё не училась: страница обязана сказать
+        # «весов нет», а не показать пустой справочник как полный.
+        os.remove(os.path.join(mdir, "manifest.json"))
+        col._gloss_cache = (0.0, None)
+        g3 = col.model_glossary()
+        check("без обучения справочник честно пуст",
+              g3["present"] is False and g3["error"], str(g3)[:120])
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_live_entries_reach_both_pages():
     """Обзор и история сделок обязаны показывать ОДНИ сделки.
 
@@ -3027,6 +3123,7 @@ def main():
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()
+    test_glossary_describes_the_live_model()
     test_live_entries_reach_both_pages()
     test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()

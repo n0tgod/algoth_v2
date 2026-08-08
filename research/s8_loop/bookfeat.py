@@ -28,6 +28,9 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESEARCH = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(RESEARCH, "b1_book"))
+# Свой каталог — явно: модуль грузят и по пути (сборщик), и тогда
+# соседний `families` иначе не находится вовсе.
+sys.path.insert(0, HERE)
 from book import BANDS                                     # noqa: E402
 
 import importlib.util as _ilu                              # noqa: E402
@@ -44,10 +47,11 @@ BETA_WIN, BETA_MIN = 168, 96
 HORIZONS = (1, 4, 24)             # часы, ось наблюдения (не перебирается)
 
 # Семейства признаков — вид СИТУАЦИИ словами владельца: выедение
-# стакана, ликвидации, зажим, наклонка и так далее. Живут здесь, рядом
-# с определениями самих признаков, — отдельная таблица в другом файле
-# однажды разошлась бы с ними, и новый признак молча падал бы в
-# «прочее». Порядок проверки: сначала точное имя, потом префикс.
+# стакана, ликвидации, зажим, наклонка и так далее. Карта живёт в
+# `families.py` — стандартная библиотека без numpy, потому что её
+# читает ещё и веб-сервер справочника, а тянуть туда математику M1
+# незачем. Копии здесь нет намеренно: две таблицы, решающие одно,
+# однажды разойдутся, и новый признак молча падал бы в «прочее».
 #
 # Зачем: у модели нет дискретных стратегий — она одна на все ситуации.
 # Но разложение вклада (`contrib`) говорит, какие признаки двигали
@@ -55,41 +59,8 @@ HORIZONS = (1, 4, 24)             # часы, ось наблюдения (не 
 # «прогноз стоит на ликвидациях», «на выедении стакана». Это чтение
 # вкладов, а не выбор стратегии, и страница обязана подписывать его
 # именно так.
-FAMILY_EXACT = {
-    "imb_best": "book", "spread_rel": "book", "upd_rel": "book",
-    "delta": "tape", "turn_rel": "tape", "burst": "tape",
-    "traded_share": "tape",
-    "eat_bid": "absorption", "eat_ask": "absorption",
-    "big_rel": "absorption",
-    "fr_bp": "funding", "mins_fund": "funding", "basis_bp": "funding",
-    "net_path_24h": "move", "vol_regime": "vol",
-    "range_pos": "range", "dwell_24h": "range",
-    "dist_round": "round", "beta": "beta", "age_rec": "age",
-    "dow": "clock",
-    "btc_ret_4h": "leader", "sec_ret_4h": "leader",
-    # Отставание от своего сектора (ход минус ход сектора) — тоже
-    # семейство лидера: признак про «свои уже ушли», а не про сам ход.
-    # Найден ТЕСТОМ на полноту карты, а не чтением, — ровно для этого
-    # тест и заведён.
-    "rel_sec_4h": "leader",
-}
-FAMILY_PREFIX = (
-    ("imb_", "book"), ("depth_b", "book"), ("depth_a", "book"),
-    ("liq_", "liq"), ("oi_", "oi"), ("ret_", "move"),
-    ("squeeze_", "squeeze"), ("tilt_", "tilt"), ("hod_", "clock"),
-)
-
-
-def family(name):
-    """Семейство признака; незнакомое имя — «other», и тест на живом
-    списке признаков обязан держать «other» пустым."""
-    got = FAMILY_EXACT.get(name)
-    if got:
-        return got
-    for pre, fam in FAMILY_PREFIX:
-        if name.startswith(pre):
-            return fam
-    return "other"
+from families import (FAMILY_EXACT, FAMILY_PREFIX,   # noqa: E402,F401
+                      family)
 
 MIN_SNAPS = 1800        # запасное правило для сводок старого образца
 MIN_SPAN_SEC = 1800     # снимки обязаны накрывать полчаса из часа

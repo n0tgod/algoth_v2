@@ -1160,6 +1160,8 @@ function renderModel() {
           : "&hz=" + MDL.book}">full trade history, paged &rarr;</a>
       &nbsp;·&nbsp; <a href="/league-page?k=${encodeURIComponent(KEY)
         }">league: what works best &rarr;</a>
+      &nbsp;·&nbsp; <a href="/glossary-page?k=${encodeURIComponent(KEY)
+        }">playbook: every situation explained &rarr;</a>
     </div>` + (MDL.book !== "h4" ? "" : `
     <div class="thoughts">${(d.thoughts || []).slice().reverse()
       .filter(t => MDL.arm === "all"
@@ -4364,6 +4366,62 @@ pull(); setInterval(pull, 1000);
 """
 
 
+# Перевод признаков на человеческий — ОДИН на все страницы, которые
+# его показывают (разбор сделки и справочник). Копию я едва не завёл
+# ради справочника: два словаря с одними ключами разошлись бы молча, и
+# одна страница объясняла бы признак иначе, чем другая. Незнакомое имя
+# честно остаётся как есть — выдуманное описание хуже сырого имени.
+FEATJS = r"""
+const FEAT_EN = {
+  imb_best:"bid vs ask size at the very top of the book",
+  spread_rel:"the bid-ask spread vs its usual width",
+  upd_rel:"how fast the book is changing vs usual",
+  big_rel:"the largest resting order vs what is usual here",
+  turn_rel:"turnover this hour vs usual",
+  delta:"who is hitting harder in the tape — buyers or sellers",
+  burst:"the biggest one-second volume spike vs usual",
+  traded_share:"how much of the hour had any trades at all",
+  eat_bid:"sellers eating through the shown bids",
+  eat_ask:"buyers eating through the shown asks",
+  net_path_24h:"how straight the 24 h move was (net vs path)",
+  vol_regime:"volatility today vs its week — awake or asleep",
+  fr_bp:"the current funding rate",
+  mins_fund:"minutes left to the next funding payment",
+  oi_rel:"open interest vs its usual level",
+  oi_chg_4h:"open interest change over 4 h",
+  oi_chg_24h:"open interest change over 24 h",
+  basis_bp:"perp price vs spot (premium or discount)",
+  liq_long_share:"long liquidations as a share of turnover",
+  liq_short_share:"short liquidations as a share of turnover",
+  liq_imb:"which side got liquidated more",
+  squeeze_4h:"how squeezed the 4 h range is vs usual",
+  squeeze_24h:"how squeezed the 24 h range is vs usual",
+  tilt_4h:"a tilted move: the net 4 h push inside its range",
+  range_pos:"where price sits in the daily range (0 low, 1 high)",
+  dwell_24h:"how long price has been sitting in this corridor",
+  hod_sin:"time of day", hod_cos:"time of day", dow:"day of week",
+  btc_ret_4h:"BTC's own 4 h move",
+  sec_ret_4h:"the coin's sector move over 4 h",
+  rel_sec_4h:"how far the coin lags its own sector over 4 h",
+  dist_round:"distance to the nearest round price",
+  beta:"how strongly the coin follows the market wave",
+  age_rec:"the coin's age in the record"};
+function featDesc(n){
+  if (FEAT_EN[n]) return FEAT_EN[n];
+  let m = n.match(/^ret_(\d+)h?$/);
+  if (m) return `the coin's own ${m[1]} h move vs its usual volatility`;
+  const band = w => parseFloat((w*100).toFixed(3));
+  m = n.match(/^imb_([\d.]+)$/);
+  if (m) return `bid vs ask depth within ±${band(+m[1])} % of price`;
+  m = n.match(/^depth_b([\d.]+)$/);
+  if (m) return `bid depth within ±${band(+m[1])} % vs usual`;
+  m = n.match(/^depth_a([\d.]+)$/);
+  if (m) return `ask depth within ±${band(+m[1])} % vs usual`;
+  return n;
+}
+"""
+
+
 # Страница разбора ОДНОЙ сделки — просьба владельца: у каждой сделки
 # значок «i», по нему страница, где простыми словами объяснено, почему
 # модель открыла здесь и как расставила уровни. Слова собираются ИЗ
@@ -4458,55 +4516,7 @@ const FAM_EN = {absorption:"the order book being eaten through",
   clock:"time of day", round:"round price levels",
   beta:"how the coin follows the market", age:"listing age",
   other:"other"};
-// Перевод признаков на человеческий. Незнакомое имя честно остаётся
-// как есть: выдуманное описание хуже сырого имени.
-const FEAT_EN = {
-  imb_best:"bid vs ask size at the very top of the book",
-  spread_rel:"the bid-ask spread vs its usual width",
-  upd_rel:"how fast the book is changing vs usual",
-  big_rel:"the largest resting order vs what is usual here",
-  turn_rel:"turnover this hour vs usual",
-  delta:"who is hitting harder in the tape — buyers or sellers",
-  burst:"the biggest one-second volume spike vs usual",
-  traded_share:"how much of the hour had any trades at all",
-  eat_bid:"sellers eating through the shown bids",
-  eat_ask:"buyers eating through the shown asks",
-  net_path_24h:"how straight the 24 h move was (net vs path)",
-  vol_regime:"volatility today vs its week — awake or asleep",
-  fr_bp:"the current funding rate",
-  mins_fund:"minutes left to the next funding payment",
-  oi_rel:"open interest vs its usual level",
-  oi_chg_4h:"open interest change over 4 h",
-  oi_chg_24h:"open interest change over 24 h",
-  basis_bp:"perp price vs spot (premium or discount)",
-  liq_long_share:"long liquidations as a share of turnover",
-  liq_short_share:"short liquidations as a share of turnover",
-  liq_imb:"which side got liquidated more",
-  squeeze_4h:"how squeezed the 4 h range is vs usual",
-  squeeze_24h:"how squeezed the 24 h range is vs usual",
-  tilt_4h:"a tilted move: the net 4 h push inside its range",
-  range_pos:"where price sits in the daily range (0 low, 1 high)",
-  dwell_24h:"how long price has been sitting in this corridor",
-  hod_sin:"time of day", hod_cos:"time of day", dow:"day of week",
-  btc_ret_4h:"BTC's own 4 h move",
-  sec_ret_4h:"the coin's sector move over 4 h",
-  rel_sec_4h:"how far the coin lags its own sector over 4 h",
-  dist_round:"distance to the nearest round price",
-  beta:"how strongly the coin follows the market wave",
-  age_rec:"the coin's age in the record"};
-function featDesc(n){
-  if (FEAT_EN[n]) return FEAT_EN[n];
-  let m = n.match(/^ret_(\d+)h?$/);
-  if (m) return `the coin's own ${m[1]} h move vs its usual volatility`;
-  const band = w => parseFloat((w*100).toFixed(3));
-  m = n.match(/^imb_([\d.]+)$/);
-  if (m) return `bid vs ask depth within ±${band(+m[1])} % of price`;
-  m = n.match(/^depth_b([\d.]+)$/);
-  if (m) return `bid depth within ±${band(+m[1])} % vs usual`;
-  m = n.match(/^depth_a([\d.]+)$/);
-  if (m) return `ask depth within ±${band(+m[1])} % vs usual`;
-  return n;
-}
+""" + FEATJS + r"""
 
 async function ask(rr){
   const p = new URLSearchParams({k:KEY, per:500, lite:1, sym:SYM});
@@ -4686,6 +4696,169 @@ load();
 """
 
 
+# Справочник — просьба владельца: страница со всеми «стратегиями»
+# модели и подробным объяснением каждой простыми словами. Тексты
+# приходят с сервера из `families.py` (единственное определение карты
+# семейств), список признаков — из ЖИВОГО манифеста обучения. Страница
+# ничего не выдумывает и своей таблицы семейств не держит: вторая
+# таблица разошлась бы с той, по которой считается вид ситуации.
+GLOSSARY_PAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>playbook — what the model can read</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:14px 16px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+h2{font-size:15px;margin:0 0 6px}
+.plain{margin:0 0 10px}
+.sub{font-size:12.5px;color:var(--muted);margin:0 0 8px}
+.sub b{color:var(--ink);font-weight:600}
+.warn{border-left:2px solid var(--ask);padding-left:10px;
+ font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.warn b{color:var(--ask);font-weight:600}
+.feats{margin:8px 0 0;border-top:1px solid var(--rule-soft)}
+.feat{display:flex;gap:10px;padding:4px 0;font-size:12.5px;
+ border-bottom:1px solid var(--rule-soft);flex-wrap:wrap}
+.feat .n{font-family:ui-monospace,Menlo,Consolas,monospace;
+ color:var(--ink);min-width:150px}
+.feat .d{color:var(--muted);flex:1;min-width:200px}
+.feat .w{color:var(--accent);font-family:ui-monospace,Menlo,
+ Consolas,monospace}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+.tag{background:var(--chip);border:1px solid var(--rule);
+ border-radius:999px;padding:2px 10px;font-size:11.5px;
+ color:var(--muted)}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+a{color:var(--accent)}
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">playbook — every situation the model can read</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div class="panel" id="intro"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + FEATJS + r"""
+
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function famCard(f){
+  // Признаки — с весом там, где он известен. Вес есть только у тех,
+  // кто попал в топ-10 манифеста; остальным ставится прочерк, а НЕ
+  // ноль: ноль читался бы как «модель им не пользуется», тогда как
+  // на деле мы просто не видим его важности.
+  const feats = (f.features || []).map(x => `<div class="feat">
+      <span class="n">${esc(x.name)}</span>
+      <span class="d">${esc(featDesc(x.name))}</span>
+      <span class="w">${x.weight ? (x.weight*100).toFixed(1) + " %"
+                                 : "&middot;"}</span></div>`).join("");
+  const tr = f.traded;
+  const tags = [
+    `<span class="tag">${f.n_features} feature${
+       f.n_features === 1 ? "" : "s"}</span>`,
+    f.weight ? `<span class="tag">weight in the 4 h forecast: ${
+       (f.weight*100).toFixed(1)} %</span>` : "",
+    tr ? `<span class="tag">named in ${tr.n} closed trade${
+       tr.n === 1 ? "" : "s"} &middot; <span class="${
+       tr.pnl > 0 ? "good" : "bad"}">${tr.pnl > 0 ? "+" : ""}${
+       tr.pnl}</span></span>` : ""].join("");
+  return `<div class="panel">
+    <h2>${esc(f.title)}</h2>
+    <div class="tags">${tags}</div>
+    <p class="plain">${esc(f.plain)}</p>
+    <p class="sub"><b>What the model actually measures:</b> ${
+      esc(f.reads)}.</p>
+    ${f.caveat ? `<p class="warn"><b>What this does not mean.</b> ${
+      esc(f.caveat)}</p>` : ""}
+    <div class="feats">${feats}</div></div>`;
+}
+
+function render(d){
+  const box = document.getElementById("box");
+  const intro = document.getElementById("intro");
+  if (!d || !d.present) {
+    intro.innerHTML = `<b>The model has not trained yet</b> — this page
+      lists what the live weights read, and there are none.${
+      d && d.error ? ` <span class="mono dim">${esc(d.error)}</span>`
+                   : ""}`;
+    box.innerHTML = "";
+    return;
+  }
+  document.getElementById("lead").textContent =
+    `training #${d.train_seq} · ${d.n_features} features`;
+  // Главная честность страницы, и она стоит ПЕРВОЙ: дискретных
+  // стратегий у модели нет. Без этого абзаца список семейств читался
+  // бы как набор правил, которые модель выбирает.
+  intro.innerHTML = `
+    <p class="plain"><b>The model has no separate strategies.</b> It is
+     one model over every coin and every situation, and it was never
+     told "this is a squeeze, do that". What it has is the vocabulary
+     below: ${d.n_features} numbers describing what is happening right
+     now, each of them normalised against that coin's own past so that
+     BTC and a small alt can be compared at all.</p>
+    <p class="plain">When a trade is opened, the contributions of every
+     feature to that one forecast are decomposed, and the family that
+     moved it most becomes the name of the situation you see on the
+     trade — "liquidations", "book eaten". That is a reading of the
+     forecast, not a rule that was followed.</p>
+    <p class="sub">Weights are the model's own feature importance for
+     the 4 h forecast (${esc(d.weight_arm)} arm). The manifest keeps
+     the top ten per target, so they cover ${
+       ((d.weight_covers||0)*100).toFixed(0)} % of the total — a family
+     without a weight is not unused, it is unseen at this depth.
+     "Named in N closed trades" counts the last 365 days.</p>
+    ${d.error ? `<p class="warn"><b>Partial.</b> ${esc(d.error)}</p>`
+              : ""}`;
+  const fams = d.families || [];
+  box.innerHTML = fams.map(famCard).join("")
+    || `<div class="panel">no families — the map is empty</div>`;
+  const orphan = fams.find(f => f.key === "other");
+  if (orphan)
+    box.insertAdjacentHTML("afterbegin", `<div class="panel"
+      style="border-color:var(--ask)"><div class="cap"
+      style="color:var(--ask)">defect: features without a family</div>
+      ${orphan.features.map(x => esc(x.name)).join(", ")} — every
+      situation name on every page is diluted until these are mapped
+      </div>`);
+}
+async function pull(){
+  let d = null;
+  try {
+    const r = await fetch("/glossary?k=" + encodeURIComponent(KEY));
+    d = await r.json();
+  } catch (e) { d = null; }
+  render(d);
+}
+pull();
+</script>
+"""
+
+
 # Страница лиги — просьба владельца: наблюдение за каждой стратегией
 # и моделью отдельно (что ведёт себя лучше) и ТОП сделок по
 # прибыльности за сегодня / месяц / год. Все агрегаты приходят с
@@ -4750,12 +4923,18 @@ button[aria-pressed="true"]{border-color:var(--accent);
   <span class="k">league — what works best</span>
   <span style="flex:1"></span>
   <span id="per"></span></div>
+<div class="k" style="margin-bottom:8px"><a id="pb"
+  href="#">what each situation means &rarr;</a></div>
 <div id="note" class="k"></div>
 <div id="box">&hellip;</div>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+// Названия ситуаций в таблицах — короткие ярлыки; что каждая значит,
+// объясняет справочник, и ссылка на него стоит рядом с ними.
+document.getElementById("pb").href =
+  "/glossary-page?k=" + encodeURIComponent(KEY);
 let PERIOD = "30d", DATA = null;
 
 function pct(v){ if (v == null) return "—";
@@ -5068,6 +5247,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/league-page":
                 return self._ok(LEAGUE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/glossary":
+                return self._ok(json.dumps(
+                    collector.model_glossary(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/glossary-page":
+                return self._ok(GLOSSARY_PAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),
