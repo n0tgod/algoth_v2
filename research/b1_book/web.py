@@ -4733,6 +4733,12 @@ button[aria-pressed="true"]{border-color:var(--accent);
 .grid{display:grid;grid-template-columns:repeat(auto-fit,
  minmax(240px,1fr));gap:12px}
 .scroll{overflow-x:auto}
+/* В панелях групп самое широкое — имя («book eaten (absorption)»),
+   и ему МОЖНО переноситься: числа при этом остаются в одну строку.
+   Без переноса таблица шире панели, и колонки денег срезались, а
+   срез читался как «денег нет». */
+.grid td:first-child{white-space:normal;min-width:96px}
+.grid td,.grid th{padding:4px 6px}
 </style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
@@ -4770,8 +4776,11 @@ function groupTable(cap, rows, names){
       <div class="dim">nothing closed in this period</div></div>`;
   // Лидер — просто верхняя строка сортировки по деньгам. При малом
   // числе сделок это шум, и число стоит в той же строке нарочно.
+  // Таблица завёрнута в прокрутку, как таблицы топа: панель узкая, и
+  // без неё правые колонки СРЕЗАЛИСЬ — владелец видел «avg net» без
+  // процента и деньги не видел вовсе.
   return `<div class="panel"><div class="cap">${cap}</div>
-    <table><tr><th></th><th>trades</th><th>wins</th>
+    <div class="scroll"><table><tr><th></th><th>trades</th><th>wins</th>
     <th>avg net</th><th>$</th></tr>` + rows.map((g, i) =>
     `<tr><td>${i === 0 ? "&#9733; " : ""}${
        (names && names[g.key]) || g.key}</td>
@@ -4780,7 +4789,7 @@ function groupTable(cap, rows, names){
      <td class="mono">${pct(g.net_bp_avg)}</td>
      <td class="mono ${g.pnl > 0 ? "good" : "bad"}">${
        g.pnl > 0 ? "+" : ""}${g.pnl}</td></tr>`).join("")
-    + "</table></div>";
+    + "</table></div></div>";
 }
 function tradeRows(list){
   return list.map(t => {

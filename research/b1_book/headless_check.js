@@ -1014,6 +1014,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/model_h24: ValueError: boom/.test(bx)
         || !/NOT the whole story/.test(bx))
       bad.push("лига: ошибка сборки книги не показана");
+    // Каждая таблица — в прокрутке: панель узкая, и без обёртки
+    // правые колонки СРЕЗАЛИСЬ (владелец видел «avg net» без
+    // процента и не видел денег вовсе). Четыре панели групп плюс два
+    // топа — шесть обёрток на подставных данных, где все группы полны.
+    const nScroll = (bx.match(/class="scroll"/g) || []).length;
+    if (nScroll < 6)
+      bad.push("лига: таблицы групп не в прокрутке, колонки срезаются"
+               + ` (обёрток ${nScroll} из 6)`);
   }
 
   if (isInfo) {
