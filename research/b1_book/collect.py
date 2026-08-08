@@ -1500,6 +1500,36 @@ class Collector:
                         "mfe_bp": e.get("mfe"),
                         "entry_px": e.get("px"),
                         "odd": e.get("odd"), "live_wait": True})
+                # Живые ВЫХОДЫ — зеркально входам. Сторож закрывает
+                # позицию секундами, а строку разбора пишет часовой
+                # цикл: до него страница показывала позицию открытой,
+                # хотя её уже нет. Владелец увидел это на HFTUSDT —
+                # цена дошла до цели в 00:35, разбор шёл в 01:06, и
+                # сделка висела открытой почти час. Деньги при этом НЕ
+                # трогаются: их считает разбор, и касса возвращает их
+                # тогда же — тень бота узнаёт о выходе из тех же
+                # файлов, и опережать её показом значило бы разводить
+                # два счёта.
+                pend = {}
+                for e in self._jsonl(os.path.join(
+                        mdir, "exits_live.jsonl")):
+                    k = (e.get("arm") or "gbm", e.get("hour"),
+                         e.get("sym"), e.get("side"))
+                    pend.setdefault(k, e)   # первое пересечение решает
+                for t in tr:
+                    if t.get("state") != "открыта":
+                        continue
+                    e = pend.get((t.get("arm"), t.get("hour"),
+                                  t.get("sym"), t.get("side")))
+                    if not e:
+                        continue
+                    t["state"] = "вышла, ждёт разбора"
+                    t["exit_pending"] = True
+                    t["exit_ts"] = e.get("at_ts")
+                    t["exit_px"] = e.get("px")
+                    t["exit_move_bp"] = e.get("move_bp")
+                    t["exit_reason"] = e.get("reason")
+                    t["closes_in_sec"] = None
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
             cap, st = {}, {}

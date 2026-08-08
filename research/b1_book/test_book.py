@@ -445,6 +445,12 @@ def test_model_trades_lite_matches_full():
     fx = os.path.join(os.path.dirname(os.path.dirname(HERE)),
                       "bot", "tests", "fixtures", "parity")
     orig = C.Collector._jsonl
+    # Возвращать НАДО сам дескриптор, а не развёрнутую функцию: через
+    # класс статический метод достаётся обычной функцией, и присвоение
+    # её обратно делает первым аргументом `self`. Тест чинил себя, а
+    # ломал следующие — этим и вскрылось: соседний тест падал на
+    # «_jsonl() takes 1 positional argument but 2 were given».
+    orig_sm = C.Collector.__dict__["_jsonl"]
     root = tempfile.mkdtemp()
     try:
         def fake(path):
@@ -485,7 +491,7 @@ def test_model_trades_lite_matches_full():
               sub["rows"] and all(t["sym"] == "AAAUSDT"
                                   for t in sub["rows"]))
     finally:
-        C.Collector._jsonl = orig
+        C.Collector._jsonl = orig_sm
         shutil.rmtree(root, ignore_errors=True)
 
 
@@ -2131,6 +2137,72 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_pending_live_exit_is_shown_before_the_review():
+    """Живой выход виден сразу, а не через час.
+
+    Сторож закрывает позицию секундами, строку разбора пишет часовой
+    цикл. Владелец увидел на HFTUSDT: цена дошла до цели в 00:35,
+    разбор шёл в 01:06, и сделка почти час показывалась открытой —
+    при том что тейк сработал. Деньги при этом НЕ трогаются: их
+    считает разбор, и касса возвращает их тогда же, иначе показ
+    обгонял бы тень бота, которая читает те же файлы.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        mdir = os.path.join(d, "model_sit")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"situational": True, "slots": 6,
+                       "rules_version": 6}, f)
+        pk = {"arm": "gbm", "hour": "2026-08-07-22", "scan": True,
+              "long": [], "short": [{"sym": "HFTUSDT", "px": 0.0133,
+                                     "fwd": -300.0, "mae": 292.0,
+                                     "mfe": -730.0, "at_ts": 1786141026.0,
+                                     "scan": True}]}
+        with open(os.path.join(mdir, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(pk) + "\n")
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col.books = {}
+        col.recount = None
+        col._px_cache = {}
+        col.root = d
+        st = col._model_dir_state(mdir)
+        tr = [t for t in (st.get("trades") or [])
+              if t["sym"] == "HFTUSDT"]
+        check("без события сделка открыта",
+              tr and tr[0]["state"] == "открыта",
+              str(st.get("trades_error") or tr))
+
+        with open(os.path.join(mdir, "exits_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"arm": "gbm", "hour": "2026-08-07-22",
+                 "sym": "HFTUSDT", "side": "short", "px": 0.01236,
+                 "move_bp": -740.0, "at_ts": 1786152900.0,
+                 "reason": "цена дошла до обещанной цели"}) + "\n")
+        st2 = col._model_dir_state(mdir)
+        t2 = [t for t in (st2.get("trades") or [])
+              if t["sym"] == "HFTUSDT"][0]
+        check("живой выход виден сразу, с причиной и ценой",
+              t2["state"] == "вышла, ждёт разбора"
+              and t2["exit_reason"] == "цена дошла до обещанной цели"
+              and t2["exit_px"] == 0.01236,
+              str({k: t2.get(k) for k in ("state", "exit_reason",
+                                          "exit_px")}))
+        # Деньги остаются за разбором: касса не вправе узнать исход
+        # раньше, чем он записан в книгу (и раньше тени бота).
+        check("деньги пока не считаны — это дело разбора",
+              t2.get("net_bp") is None and t2.get("pnl") is None,
+              str({k: t2.get(k) for k in ("net_bp", "pnl")}))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_sit_watch_levels_and_crossing():
     """Живой сторож ситуационной книги: уровни и пересечение.
 
@@ -2540,6 +2612,7 @@ def main():
     test_symbol_groups_for_page()
     test_sit_scan_anchors_forecast_to_live_price()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
+    test_pending_live_exit_is_shown_before_the_review()
     test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()
     test_shard_split_covers_everything()

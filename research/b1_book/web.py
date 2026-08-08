@@ -229,6 +229,7 @@ let sym = null, timer = null;
 const KEY_EN = {"открыта": "open", "закрыта": "closed", "цель": "target",
   "стоп": "stop", "время": "time", "не открыта": "not taken",
   "оборвана перезапуском": "cut by restart", "ждёт разбора": "awaiting",
+  "вышла, ждёт разбора": "exited, pnl pending",
   "без исхода": "no outcome", "полка": "shelf", "кругл": "round",
   "экстремум": "extreme", "лента": "tape", "стакан": "book",
   "лонг": "long", "шорт": "short"};
@@ -795,6 +796,9 @@ function tradeTable(p) {
       : (t.state === "закрыта"
          ? "closed" + (t.exit_reason
              ? " · " + (EXIT_EN[t.exit_reason] || t.exit_reason) : "")
+         : t.state === "вышла, ждёт разбора"
+           ? "exited " + (EXIT_EN[t.exit_reason] || t.exit_reason || "")
+             + " · pnl at next cycle"
          : t.state === "ждёт разбора" ? "awaiting" : "no outcome");
     // У книги без срока час — это ключ ЛИСТА сечения, а не время
     // сделки: вход сканера случается посреди следующего часа, и
@@ -1504,6 +1508,7 @@ canvas{width:100%;display:block;touch-action:pan-y}
       <select id="state"><option value="">any</option>
         <option value="закрыта">closed</option>
         <option value="открыта">open</option>
+        <option value="вышла, ждёт разбора">exited, pnl pending</option>
         <option value="ждёт разбора">awaiting review</option>
         <option value="без исхода">no outcome</option></select>
       <span class="k">coin</span>
@@ -1593,7 +1598,8 @@ function hourLocal(h) {
 // глаз. Перевод живёт здесь, на границе показа — переименовать ключ
 // значило бы разойтись с уже записанными файлами.
 const ST_EN = {"закрыта": "closed", "открыта": "open",
-               "без исхода": "no outcome", "ждёт разбора": "awaiting"};
+               "без исхода": "no outcome", "ждёт разбора": "awaiting",
+               "вышла, ждёт разбора": "exited, pnl pending"};
 // Причины выхода ситуационной книги — перевод на границе показа.
 const EXIT_EN = {"прогноз развернулся": "forecast flipped",
                  "цена прошла обещанный ход против":
@@ -2568,6 +2574,7 @@ let CROSS = null;
 const KEY_EN = {"открыта": "open", "закрыта": "closed", "цель": "target",
   "стоп": "stop", "время": "time", "не открыта": "not taken",
   "оборвана перезапуском": "cut by restart", "ждёт разбора": "awaiting",
+  "вышла, ждёт разбора": "exited, pnl pending",
   "без исхода": "no outcome", "полка": "shelf", "кругл": "round",
   "экстремум": "extreme", "лента": "tape", "стакан": "book",
   // Причины выхода ситуационной книги: таблица сделок модели на этой
@@ -3065,6 +3072,10 @@ function pct(v) {
 // ХОД цены за удержание, а это то же самое число с другой стороны.
 // Считать его здесь — не вторая копия расчёта, а перевод единицы.
 function mdlExit(t) {
+  // У сделки, вышедшей живым сторожем, исхода в разборе ещё нет, а
+  // цена выхода записана событием — она и есть факт. Считать по ней
+  // не «вторая копия расчёта»: разбор считает ДЕНЬГИ, здесь цена.
+  if (t.exit_px) return t.exit_px;
   return (t.entry_px && t.got_bp != null)
     ? t.entry_px * (1 + t.got_bp / 10000) : null;
 }
@@ -3258,7 +3269,11 @@ function draw() {
     // точка входа (владелец увидел ровно это). Так же ведёт себя слой
     // бумажных сделок: у открытой конца нет, и она идёт до края.
     const live = t.state !== "закрыта";
-    const end = t.closes_at || (live ? t1 + 60 : t.opened_at);
+    // Живой выход, ещё не разобранный циклом, — уже конец сделки:
+    // спан обязан кончиться на нём, иначе зона тянется до края у
+    // позиции, которой нет.
+    const end = t.closes_at || t.exit_ts
+      || (live ? t1 + 60 : t.opened_at);
     if (end < t0 - 3600 || t.opened_at > t1 + 3600) continue;
     const xa = clamp(xt(t.opened_at));
     const xb = clamp(xt(Math.min(end, t1 + 60)));
