@@ -192,10 +192,16 @@ global.fetch = async (url) => {
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
+             : url.startsWith("/volatility") && /voldown=1/.test(SEARCH)
+             ? (() => { throw new Error("сборщик молчит"); })()
              : url.startsWith("/volatility")
              ? {present: true, n: 40, no_hour: 3, days: 12,
                 hours_measured: 300, cuts_bp: [22.0, 61.0],
                 buckets: ["quiet", "normal", "loud"], errors: [],
+                // Отбор волатильных имён: 1.42× — перекос, который
+                // страница обязана НАЗВАТЬ, а не просто напечатать.
+                pick_vol: {n: 37, rel_med: 1.42, above: 0.73,
+                           own_med_bp: 68.0},
                 series: [{hour: "2026-08-01-10", bp: 14.0, n: 500},
                          {hour: "2026-08-01-11", bp: 55.0, n: 500},
                          {hour: "2026-08-02-12", bp: 180.0, n: 498}],
@@ -1156,7 +1162,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("меню: текущая страница не помечена");
   }
 
-  if (isVol) {
+  if (isVol && /voldown=1/.test(SEARCH)) {
+    // Медленный счёт не есть отсутствие данных. Первый обход суток
+    // отваливается по времени, и страница писала «делить нечего» —
+    // владелец прочёл это как пустую страницу.
+    const intro = String(global.__el
+      ? global.__el("intro").innerHTML : "").replace(/\s+/g, " ");
+    if (!/No answer from the collector/.test(intro))
+      bad.push("волатильность: молчание сборщика не названо");
+    if (/Nothing to split yet/.test(intro))
+      bad.push("волатильность: медленный счёт выдан за отсутствие "
+               + "данных");
+    if (!/takes about a minute/.test(intro))
+      bad.push("волатильность: не сказано, сколько ждать");
+  } else if (isVol) {
     const flat = s => String(s || "").replace(/\s+/g, " ");
     const bx = flat(global.__el ? global.__el("box").innerHTML : "");
     const intro = flat(global.__el
@@ -1201,6 +1220,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("волатильность: кривой режима рынка нет");
     if (!seen.some(u => u.startsWith("/volatility")))
       bad.push("волатильность: данные не запрошены");
+    // Отбирает ли модель волатильные имена — числами фикстуры.
+    if (!/does the model pick the movers/.test(bx))
+      bad.push("волатильность: замера отбора нет");
+    if (!/1\.42/.test(bx) || !/73 %/.test(bx))
+      bad.push("волатильность: перекос отбора не показан числом");
+    if (!/targets are raw basis points/.test(bx))
+      bad.push("волатильность: перекос напечатан, но не назван");
+    if (!/not a proof of cause/.test(bx))
+      bad.push("волатильность: отпечаток выдан за причину");
   }
 
   if (isGloss) {
@@ -1657,4 +1685,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   console.log(`логика страницы отработала без ошибок, запросов ${calls}, `
     + `середина ${st && st.mid ? st.mid.length : "—"}, свечей ${
         st && st.cand ? st.cand.length : "—"}`);
+  // Выход ЯВНЫЙ: страница вправе назначить повтор по таймеру (так
+  // делает волатильность, когда сборщик молчит), и незавершённый
+  // таймер держал бы node живым вечно. Проверка, висящая на исправной
+  // странице, неотличима от проверки, поймавшей зависание.
+  process.exit(0);
 })();

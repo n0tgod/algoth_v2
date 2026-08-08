@@ -2200,6 +2200,11 @@ class Collector:
         at, cached = getattr(self, "_volmod_cache", (0.0, None))
         if cached is not None and now - at < 120:
             return cached
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        sd = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                          "summary")
         vol = self.market_vol()
         hours = vol["hours"]
         rows, errors, scanned = self.closed_rows()
@@ -2248,6 +2253,40 @@ class Collector:
                     **{b: agg([x for x in sub if x["bucket"] == b])
                        for b in names}}
 
+        # Отбирает ли модель ВОЛАТИЛЬНЫЕ имена — вопрос владельца о том,
+        # не стоит ли учитывать волатильность в обучении. Отвечать на
+        # него мнением нельзя, а число берётся дёшево: у каждой сделки
+        # есть свой час, и в нём известен и размах САМОЙ монеты, и
+        # медиана рынка.
+        #
+        # Почему это важно именно здесь: признаки модели нормированы
+        # собственной волатильностью монеты (`ret_*` делятся на σ), а
+        # ЦЕЛИ — нет, они в сырых базисных пунктах. Значит, ранжируя
+        # сечение по предсказанному ходу, модель механически ставит
+        # выше тех, кто просто больше ходит. Отношение заметно выше
+        # единицы и есть подпись этого перекоса; около единицы —
+        # перекоса нет, и вопрос закрыт замером, а не рассуждением.
+        pairs = {(r["sym"], r["hour"]) for r in kept
+                 if r.get("sym") and r.get("hour")}
+        rel, own_bp = [], []
+        if pairs:
+            px = TR.hour_rows(sd, pairs)
+            for r in kept:
+                row = px.get((r.get("sym"), r.get("hour")))
+                med = (hours.get(r.get("hour") or "") or {}).get("bp")
+                if not row or not row.get("c") or not med:
+                    continue
+                o = (row["hi"] - row["lo"]) / row["c"] * 1e4
+                own_bp.append(o)
+                rel.append(o / med)
+        pick = None
+        if rel:
+            pick = {"n": len(rel),
+                    "rel_med": round(_median(rel), 2),
+                    "above": round(sum(1 for x in rel if x > 1.0)
+                                   / len(rel), 3),
+                    "own_med_bp": round(_median(own_bp), 1)}
+
         books = {}
         for hz, _name in self.BOOKS:
             sub = [x for x in kept if x["hz"] == hz]
@@ -2260,6 +2299,7 @@ class Collector:
                          for h, v in hours.items()),
                         key=lambda x: x["hour"])
         out = {"present": bool(kept), "n": len(kept), "no_hour": lost,
+               "pick_vol": pick,
                "cuts_bp": cuts, "buckets": names,
                "hours_measured": len(hours), "days": vol["days"],
                "books": books, "series": series[-720:],

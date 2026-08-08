@@ -4972,15 +4972,63 @@ function bookTable(hz, b){
       result</div></div>`;
 }
 
+// Отбирает ли модель волатильные имена. Вопрос владельца («не учесть
+// ли волатильность в обучении») упирается в то, не учтена ли она уже
+// молча: признаки нормированы собственной σ монеты, а цели — сырые
+// базисные пункты, и ранжирование по предсказанному ходу тогда
+// частично есть ранжирование по волатильности.
+function pickBlock(d){
+  const p = d.pick_vol;
+  if (!p) return "";
+  const hot = p.rel_med >= 1.15;
+  return `<div class="panel"><div class="cap">does the model pick the
+    movers?</div>
+    <div class="scroll"><table>
+    <tr><th>trades measured</th><th>coin's own range vs the market
+      median that hour</th><th>share above the median</th>
+      <th>median range of the picked coin</th></tr>
+    <tr><td class="mono">${p.n}</td>
+      <td class="mono ${hot ? "bad" : ""}">${p.rel_med}&times;</td>
+      <td class="mono ${p.above > 0.6 ? "bad" : ""}">${
+        Math.round(p.above*100)} %</td>
+      <td class="mono">${p.own_med_bp} bp</td></tr></table></div>
+    <div class="k">${hot
+      ? `<b>The picked coin moves ${p.rel_med}&times; the market
+         median.</b> That is the fingerprint worth knowing about: the
+         model's features are normalised by each coin's own volatility,
+         but its targets are raw basis points — so ranking the section
+         by predicted move ranks partly by volatility itself.`
+      : `Around one means the selection is not a volatility ranking in
+         disguise: picked coins move about as much as the market does
+         that hour.`} This is a fingerprint, not a proof of cause —
+      it says what the book holds, not why the model chose it.</div>
+    </div>`;
+}
+
 function render(d){
   const box = document.getElementById("box");
   const intro = document.getElementById("intro");
   document.getElementById("curve").innerHTML = d && d.present
     ? curveBlock(d) : "";
-  if (!d || !d.present) {
+  // «Не ответил» и «ответил, что пусто» — РАЗНОЕ, и мешать их нельзя.
+  // Первый обход суток читает файл на имя в сутки по пятистам именам и
+  // занимает около минуты; запрос при этом отваливается, и страница
+  // писала «делить нечего» — то есть выдавала медленный счёт за
+  // отсутствие данных. Ровно тот отказ, неотличимый от тишины, против
+  // которого весь проект.
+  if (!d) {
+    intro.innerHTML = `<b>No answer from the collector.</b> The first
+      build walks every recorded day across ~500 coins and takes about
+      a minute; after that it is cached and answers instantly. Retrying
+      &hellip;`;
+    box.innerHTML = "";
+    setTimeout(pull, 5000);
+    return;
+  }
+  if (!d.present) {
     intro.innerHTML = `<b>Nothing to split yet.</b> This page needs
       closed trades and the hourly summaries they were opened in${
-      d && d.no_hour ? ` — ${d.no_hour} closed trades have no summary
+      d.no_hour ? ` — ${d.no_hour} closed trades have no summary
       for their entry hour` : ""}.`;
     box.innerHTML = "";
     return;
@@ -5010,9 +5058,9 @@ function render(d){
       ? `<p class="warn"><b>Partial.</b> ${d.errors.map(esc).join("; ")}
          — these books are missing from every number below</p>` : ""}`;
   const hz = Object.keys(d.books || {});
-  box.innerHTML = hz.map(k => bookTable(k, d.books[k])).join("")
-    || `<div class="panel">no book has closed trades in a measured
-        hour yet</div>`;
+  box.innerHTML = pickBlock(d) + (hz.map(k => bookTable(k, d.books[k]))
+    .join("") || `<div class="panel">no book has closed trades in a
+        measured hour yet</div>`);
 }
 async function pull(){
   let d = null;
