@@ -726,9 +726,14 @@ function tradeStats(p) {
   const st = p.trade_stats || {};
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
-  return shownArms().map(a => {
+  // На вкладке «обе» первым идёт ИТОГ по книге: складывать две
+  // колонки глазами — не дело владельца, а разошедшиеся руки видны
+  // ниже, они никуда не деваются.
+  const shown = MDL.arm === "all" ? ["all", "gbm", "nn"] : [MDL.arm];
+  return shown.map(a => {
     const s = st[a]; if (!s) return "";
-    const name = a === "gbm" ? "trees" : "neural";
+    const name = a === "gbm" ? "trees"
+      : a === "nn" ? "neural" : "both arms together";
     if (!s.closed) return `<div class="mline">${name}: ${s.open || 0}
       open, none closed yet — ${isSit(p)
         ? "they close when their situation ends"
@@ -1057,6 +1062,16 @@ function rrControl(d) {
       Math.abs(cur - parseFloat(v)) < 1e-9 ? " selected" : ""
     }>≥ 1 : ${v}</option>`)).join("");
   const total = (d.trades_total || 0) + (d.rr_cut || 0);
+  // Порог НИЖЕ собственного гейта книги не добавляет ничего: сделок с
+  // меньшим отношением она не открывала вовсе. Без этой фразы «1 : 1
+  // не добавляет сделок» читается как поломка фильтра — владелец так
+  // и прочёл. Фильтр только убирает, добавлять ему нечего.
+  const gate = +((d.manifest || {}).min_rr || 0);
+  const floor = (cur && gate && cur <= gate)
+    ? `<span class="dim"> The book enters only at reward/risk
+       <b>≥ ${gate}</b> (its own gate), so any threshold at or below
+       that keeps everything: this filter removes trades, it never
+       adds them.</span>` : "";
   const note = cur
     ? `<span class="dim"> — keeping every trade whose promised
        reward/risk is <b>${cur} or higher</b>: <b>${
@@ -1070,7 +1085,7 @@ function rrControl(d) {
        (<b>${d.trades_total || 0}</b> across both arms), as in the 1 h
        and 4 h books.</span>`;
   return `<div class="mline">reward/risk filter — at least:
-    <select id="rrf">${opts}</select>${note}</div>`;
+    <select id="rrf">${opts}</select>${note}${floor}</div>`;
 }
 
 function picksTable(d) {

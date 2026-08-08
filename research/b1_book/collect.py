@@ -1550,7 +1550,7 @@ class Collector:
             out["rr_unknown"] = unknown
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
-            cap, st = {}, {}
+            cap, st, curves = {}, {}, {}
             for a in ("gbm", "nn"):
                 # Капитал берётся из ПЕРЕСЧЁТА, а не из файла счёта.
                 # Файл пишет цикл при разборе, то есть у свежей книги
@@ -1566,6 +1566,19 @@ class Collector:
                 cur = TR.equity(tr, a, hrows, hold_h=path_h)
                 st[a]["dd_book"] = TR.max_dd(cur)
                 st[a]["dd_open_book"] = TR.worst_open(cur)
+                curves[a] = cur
+            # Общая сводка по книге: на вкладке «обе» владельцу нужен
+            # ИТОГ, а не две колонки, между которыми надо складывать
+            # глазами. Капитал складывается — у каждой руки свой счёт
+            # по тысяче, и делить прибыль двух счетов на один значило
+            # бы завышать доходность вдвое.
+            both_cap = sum(v for v in cap.values() if v) or None
+            st["all"] = TR.summary(tr, capital=both_cap,
+                                   start=2 * TR.START_BALANCE)
+            both_curve = TR.merge(curves.values())
+            st["all"]["dd_book"] = TR.max_dd(both_curve)
+            st["all"]["dd_open_book"] = TR.worst_open(
+                both_curve, deposit=2 * TR.START_BALANCE)
             out["trade_stats"] = st
         except Exception as e:                            # noqa: BLE001
             out["trades_error"] = f"{type(e).__name__}: {e}"

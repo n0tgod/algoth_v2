@@ -350,7 +350,7 @@ global.fetch = async (url) => {
                                      horizon_h: null, slots: 6,
                                      sections: 96, symbols: 540,
                                      canary_ic: 0.003,
-                                     min_edge_bp: 22, min_rr: 2,
+                                     min_edge_bp: 22, min_rr: 4,
                                      min_disc_bp: 11,
                                      max_age_h: 24,
                                      woke_after_hour_sec: 120,
@@ -370,12 +370,22 @@ global.fetch = async (url) => {
                               balance: 1000.5},
                              {hour: "2026-08-03-18", pnl: 0.6,
                               balance: 1001.1}]}},
+                          // Сводка «обе» приходит с сервера тем же
+                          // ядром: страница её показывает, а не
+                          // складывает сама — второй счёт разошёлся
+                          // бы с первым.
                           trade_stats: {gbm: {closed: 1, open: 1,
                                               no_outcome: 0,
                                               hit_rate: 1.0,
                                               net_bp_avg: 31.0,
-                                              pnl: 1.1,
-                                              expected_over_got: 1.4}},
+                                              pnl: 1.1, trades: 2,
+                                              expected_over_got: 1.4},
+                                        all: {closed: 2, open: 2,
+                                              no_outcome: 0, trades: 4,
+                                              hit_rate: 0.5,
+                                              net_bp_avg: 12.0,
+                                              pnl: 0.7,
+                                              expected_over_got: 2.1}},
                           trades: [
                             {arm: "gbm", hour: "2026-08-03-18",
                              sym: "BTCUSDT", side: "long",
@@ -652,6 +662,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // «закрыто 32» читается как вся книга (владелец так и прочёл).
       if (!/>trades</.test(sb))
         bad.push("обзор: у руки не показано число сделок всего");
+      // Порог ниже собственного гейта книги не добавляет сделок — их
+      // не открывали. Без этой фразы фильтр выглядит сломанным.
+      if (!/never\s+adds them/.test(sb.replace(/\s+/g, " ")))
+        bad.push("обзор: не сказано, что фильтр только убирает");
+      // Вкладка «обе» обязана давать ИТОГ, а не две колонки.
+      if (!/both arms together/.test(sb))
+        bad.push("обзор: общей сводки по книге нет");
       // Запаздывание входа — с разбором по шагам: без него шесть
       // минут выглядят как лень движка, а лечится каждый шаг иначе.
       if (!/120 s/.test(sb) || !/261 s/.test(sb)
