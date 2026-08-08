@@ -3077,6 +3077,19 @@ def test_train_cycle_end_to_end():
         check("вклад назван именем признака и величиной",
               isinstance(why0[0][0], str)
               and isinstance(why0[0][1], float), str(why0))
+        # Вид ситуации: семейство признаков с долей. Формат [[ключ,
+        # доля], …], доли в (0, 1] и убывают.
+        su0 = next((q["setup"] for q in legs if q.get("setup")), None)
+        check("вид ситуации доехал до записи выбора",
+              su0 is not None and 0 < su0[0][1] <= 1.0, str(su0))
+        # КАЖДЫЙ живой признак обязан иметь семейство: «прочее» — это
+        # признак, добавленный без строчки в карте, и новый признак
+        # молча размывал бы вид ситуации. Список берётся из весов —
+        # то есть ровно тот, на котором модель училась.
+        feats = blob["features"]
+        orphan = [n for n in feats if T.FB.family(n) == "other"]
+        check(f"все {len(feats)} признаков расписаны по семействам",
+              not orphan, str(orphan))
         rev = [json.loads(x) for x in
                open(os.path.join(T.MODEL_DIR, "review.jsonl"))]
         check("прошлые выборы обеих рук разобраны фактом",

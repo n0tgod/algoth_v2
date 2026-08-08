@@ -532,20 +532,37 @@ def explain_rows(model, xj, names):
     его нельзя. Зовётся ТОЛЬКО для целей квадратичной потери: у
     квантильной листья — квантили, и разложение по средним было бы
     числами без смысла.
+
+    Второй ответ — СИТУАЦИЯ, словами владельца: выедение стакана,
+    ликвидации, зажим, наклонка. У модели нет дискретных стратегий, но
+    вклад раскладывается по семействам признаков (`FB.family`), и
+    доминирующее семейство — честное имя того, на чём стоит прогноз.
+    Возвращаются два верхних с долями; страница обязана подписывать
+    это как чтение вкладов, а не как выбранную стратегию.
     """
     fn = getattr(model, "contrib", None)
     if fn is None:
-        return None
+        return None, None
     c = fn(xj)
     if c is None:
-        return None
-    out = []
+        return None, None
+    whys, setups = [], []
     for i in range(len(xj)):
         idx = np.argsort(-np.abs(c[i]))[:WHY_TOP]
-        out.append([[names[j], round(float(c[i][j]), 1)]
-                    for j in idx
-                    if abs(c[i][j]) >= WHY_FLOOR_BP])
-    return out
+        whys.append([[names[j], round(float(c[i][j]), 1)]
+                     for j in idx
+                     if abs(c[i][j]) >= WHY_FLOOR_BP])
+        fam = {}
+        for j in range(len(names)):
+            v = abs(float(c[i][j]))
+            if v > 0:
+                k = FB.family(names[j])
+                fam[k] = fam.get(k, 0.0) + v
+        tot = sum(fam.values())
+        top = sorted(fam.items(), key=lambda kv: -kv[1])[:2]
+        setups.append([[k, round(v / tot, 2)] for k, v in top
+                       if tot and v / tot >= 0.15])
+    return whys, setups
 
 
 
@@ -1276,7 +1293,7 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         # новое обучение, и приписать сделке чужие веса значило бы
         # соврать в самом поле, ради которого оно заведено.
         for k in ("mae_m", "adverse_of", "favourable_of", "why",
-                  "train_seq"):
+                  "setup", "train_seq"):
             if e.get(k) is not None:
                 row[k] = e[k]
         if e.get("odd") is not None:
@@ -1422,8 +1439,8 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     # его в событие входа, цикл — в запись выбора. Считается здесь,
     # потому что только у цикла есть и модель, и имена признаков;
     # сканеру ехать должен готовый ответ.
-    whys = (explain_rows(models[(arm, kf)], xj, names)
-            if names is not None else None)
+    whys, setups = (explain_rows(models[(arm, kf)], xj, names)
+                    if names is not None else (None, None))
     sheet = []
     for i in range(len(rows_m)):
         px = float(mats["mid_close"][rows_m[i], j_last])
@@ -1441,6 +1458,8 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
             row["mfe_q"] = round(float(mfeq[i]), 2)
         if whys is not None and whys[i]:
             row["why"] = whys[i]
+        if setups is not None and setups[i]:
+            row["setup"] = setups[i]
         nv = novelty(xj[i], nov_lo, nov_hi)
         if nv is not None:
             row["odd"] = round(nv, 3)
@@ -1486,10 +1505,12 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
     # книги ровно в этом («самые крайние из N»), и без места в записи
     # ответ «почему эта монета» был бы словами, а не числом.
     chosen = list(o[::-1][:3]) + list(o[:3])
-    whys = (explain_rows(models[(arm, kf)], xj[chosen], names)
-            if names is not None else None)
+    whys, setups = (explain_rows(models[(arm, kf)], xj[chosen], names)
+                    if names is not None else (None, None))
     wmap = ({int(i): w for i, w in zip(chosen, whys)}
             if whys is not None else {})
+    smap = ({int(i): w for i, w in zip(chosen, setups)}
+            if setups is not None else {})
 
     def mk(i, side):
         px = float(mats["mid_close"][rows_m[i], j_last])
@@ -1504,6 +1525,8 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
         d["of"] = int(len(fwd))
         if wmap.get(int(i)):
             d["why"] = wmap[int(i)]
+        if smap.get(int(i)):
+            d["setup"] = smap[int(i)]
         nv = novelty(xj[i], nov_lo, nov_hi)
         if nv is not None:
             d["odd"] = round(nv, 3)

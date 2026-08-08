@@ -1507,6 +1507,7 @@ class Collector:
                 "mfe_bp": e.get("mfe"),
                 "entry_px": e.get("px"),
                 "why": e.get("why"),
+                "setup": e.get("setup"),
                 "train_seq": e.get("train_seq"),
                 "fwd0_bp": e.get("fwd0"),
                 "odd": e.get("odd"), "live_wait": True})
@@ -2591,6 +2592,9 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     # и единственный честный путь — довезти ответ цикла до записи.
     if row.get("why") is not None:
         d["why"] = row["why"]
+    # Вид ситуации (доминирующие семейства признаков) — тем же путём.
+    if row.get("setup") is not None:
+        d["setup"] = row["setup"]
     if row.get("odd") is not None:
         d["odd"] = row["odd"]
     return d

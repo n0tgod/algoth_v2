@@ -507,6 +507,9 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                     "train_seq": (p.get("train_seq")
                                   or pk.get("train_seq")),
                     "why": p.get("why"),
+                    # Вид ситуации: верхние семейства признаков этого
+                    # прогноза с долями — «на чём стоит сделка».
+                    "setup": p.get("setup"),
                     "rank": p.get("rank"), "of": p.get("of"),
                     "fwd0_bp": p.get("fwd0"),
                 }

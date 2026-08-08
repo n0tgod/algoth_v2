@@ -893,11 +893,18 @@ function tradeTable(p) {
                  (t.why || []).map(w => `${w[0]} ${w[1] > 0 ? "+" : ""}${
                    (w[1] / 100).toFixed(2)} %`).join(", ") || null]
       .filter(Boolean).join(" · ");
+    // Вид ситуации — колонкой, а не подсказкой: владелец просил видеть,
+    // на чём стоит сделка (выедение стакана, ликвидации, зажим), и
+    // прятать это в наведение значило бы не показать вовсе. Доли — в
+    // подсказке колонки.
+    const su = (t.setup || [])[0];
+    const suTxt = su ? (FAM_EN[su[0]] || su[0]).split(" (")[0] : "—";
     return `<tr class="${cls}"${why ? ` title="${why}"` : ""}>
       <td class="mono" title="sheet hour ${t.hour}">${key}</td>
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
+      <td class="dim" title="${setupText(t)}">${suTxt}</td>
       <td class="mono">${pct(t.expected_bp)}</td>
       <td class="mono dim">${pct(t.mae_bp)}</td>
       <td class="mono">${pct(t.got_bp)}</td>
@@ -912,7 +919,10 @@ function tradeTable(p) {
       : "over " + bookH(p) + " h"})</span></div>
     <div style="overflow-x:auto"><table class="mtr">
     <tr><th>${isSit(p) ? "entered" : "hour"}</th>
-    <th>arm</th><th>coin</th><th>side</th><th>exp</th>
+    <th>arm</th><th>coin</th><th>side</th>
+    <th title="dominant feature family of this forecast — a reading
+      of the contributions, not a hand-picked strategy">setup</th>
+    <th>exp</th>
     <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
     ${rows}</table></div>`
     + (tr.length > SHOW ? `<div class="mline dim">showing ${SHOW} of ${
@@ -927,6 +937,25 @@ function isSit(p) {
   return !!(((p || {}).manifest || {}).situational);
 }
 // Причины выхода ситуационной книги — перевод на границе показа.
+// Вид ситуации — семейство признаков, на котором стоит прогноз
+// сделки. Ключи объявлены в bookfeat.FAMILY_*; это ЧТЕНИЕ вкладов, а
+// не выбранная стратегия — у модели дискретных стратегий нет, и
+// подписывать надо честно.
+const FAM_EN = {absorption: "book eaten (absorption)",
+                book: "book imbalance / depth",
+                tape: "tape pressure", liq: "liquidations",
+                oi: "open interest", funding: "funding & basis",
+                move: "price move / reversal", squeeze: "squeeze",
+                tilt: "tilt", range: "range / dwell",
+                vol: "volatility regime", leader: "leader & sector",
+                clock: "time of day", round: "round levels",
+                beta: "market beta", age: "listing age",
+                other: "other"};
+function setupText(t) {
+  if (!t || !t.setup || !t.setup.length) return "";
+  return t.setup.map(x => `${FAM_EN[x[0]] || x[0]} ${
+    Math.round(x[1] * 100)} %`).join(", ");
+}
 const EXIT_EN = {"прогноз развернулся": "forecast flipped",
                  "цена прошла обещанный ход против":
                    "price broke the promised adverse path",
@@ -1813,6 +1842,25 @@ const ST_EN = {"закрыта": "closed", "открыта": "open",
                "без исхода": "no outcome", "ждёт разбора": "awaiting",
                "вышла, ждёт разбора": "exited, pnl pending"};
 // Причины выхода ситуационной книги — перевод на границе показа.
+// Вид ситуации — семейство признаков, на котором стоит прогноз
+// сделки. Ключи объявлены в bookfeat.FAMILY_*; это ЧТЕНИЕ вкладов, а
+// не выбранная стратегия — у модели дискретных стратегий нет, и
+// подписывать надо честно.
+const FAM_EN = {absorption: "book eaten (absorption)",
+                book: "book imbalance / depth",
+                tape: "tape pressure", liq: "liquidations",
+                oi: "open interest", funding: "funding & basis",
+                move: "price move / reversal", squeeze: "squeeze",
+                tilt: "tilt", range: "range / dwell",
+                vol: "volatility regime", leader: "leader & sector",
+                clock: "time of day", round: "round levels",
+                beta: "market beta", age: "listing age",
+                other: "other"};
+function setupText(t) {
+  if (!t || !t.setup || !t.setup.length) return "";
+  return t.setup.map(x => `${FAM_EN[x[0]] || x[0]} ${
+    Math.round(x[1] * 100)} %`).join(", ");
+}
 const EXIT_EN = {"прогноз развернулся": "forecast flipped",
                  "цена прошла обещанный ход против":
                    "price broke the promised adverse path",
@@ -3857,6 +3905,21 @@ function rows() {
 // стратегии вошла и как расставила уровни. Прозы в записи нет
 // намеренно: числа — источник истины, предложение из них собирает
 // страница, и врать оно может только вместе с числами.
+const FAM_EN = {absorption: "book eaten (absorption)",
+                book: "book imbalance / depth",
+                tape: "tape pressure", liq: "liquidations",
+                oi: "open interest", funding: "funding & basis",
+                move: "price move / reversal", squeeze: "squeeze",
+                tilt: "tilt", range: "range / dwell",
+                vol: "volatility regime", leader: "leader & sector",
+                clock: "time of day", round: "round levels",
+                beta: "market beta", age: "listing age",
+                other: "other"};
+function setupText(t) {
+  if (!t || !t.setup || !t.setup.length) return "";
+  return t.setup.map(x => `${FAM_EN[x[0]] || x[0]} ${
+    Math.round(x[1] * 100)} %`).join(", ");
+}
 function whyDrivers(t) {
   if (!t || !t.why || !t.why.length) return "";
   return t.why.map(w => `${w[0]} ${w[1] > 0 ? "+" : ""}${
@@ -3872,6 +3935,12 @@ function explainTrade(t) {
     : "training number not recorded (trade predates the field)");
   if (t.expected_bp != null)
     bits.push(`the model expected <b>${pct(t.expected_bp)}</b>`);
+  const st = setupText(t);
+  if (st)
+    bits.push(`situation read from the features: <b>${st}</b>
+      <span class="dim">(the dominant feature families of this
+      forecast — a reading of the contributions, not a hand-picked
+      strategy)</span>`);
   const drv = whyDrivers(t);
   bits.push(drv ? `main drivers of the forecast: <b>${drv}</b>`
                 : "per-feature breakdown not recorded for this trade");
