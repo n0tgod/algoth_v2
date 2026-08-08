@@ -324,13 +324,23 @@ global.fetch = async (url) => {
                                               pnl: -1.7, balance: 998.3},
                                              {hour: "2026-08-03-18",
                                               pnl: 0.9, balance: 999.2}]}},
+                  // Итог по книге сервер отдаёт ключом `all`, и
+                  // на вкладке «обе» показывается ТОЛЬКО он: разбивка
+                  // по рукам живёт за соседними кнопками.
                   trade_stats: {gbm: {closed: 2, open: 1, no_outcome: 0,
                                       hit_rate: 0.5, net_bp_avg: -0.5,
                                       pnl: -0.02, expected_avg: -95.5,
                                       got_avg: 50.5,
                                       expected_over_got: 12.5},
                                 nn: {closed: 0, open: 3,
-                                     no_outcome: 0}},
+                                     no_outcome: 0},
+                                all: {closed: 2, open: 4, trades: 6,
+                                      no_outcome: 0, hit_rate: 0.5,
+                                      hit_basis: "all", hit_n: 2,
+                                      net_bp_avg: -0.5, pnl: -0.02,
+                                      expected_avg: -95.5,
+                                      got_avg: 50.5,
+                                      expected_over_got: 12.5}},
                   trades: [
                     {arm: "gbm", hour: "2026-08-03-19", sym: "BTCUSDT",
                      side: "long", opened_at: Math.floor(Date.now()/1000)-600,
@@ -607,6 +617,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Сводка и кривая счёта: числа из подставного ответа.
     if (!/paper P&amp;L, \$|paper P&L, \$/.test(mb))
       bad.push("обзор: сводка по сделкам не нарисована");
+    // На вкладке «обе» — ТОЛЬКО итог по книге. Три одинаковых блока
+    // подряд (итог, деревья, сеть) показывали одно и то же двумя
+    // способами; разбивка по рукам живёт за соседними кнопками.
+    if (!/both arms together/.test(mb))
+      bad.push("обзор: итога по книге нет");
+    if (/>trees</.test(mb) || /neural<\/b>/.test(mb))
+      bad.push("обзор: на вкладке «обе» снова печатается разбивка "
+               + "по рукам");
     if (!/paper equity/.test(mb) || !/<svg/.test(mb))
       bad.push("обзор: кривая бумажного счёта не нарисована");
     if (!/trades-page/.test(mb))
