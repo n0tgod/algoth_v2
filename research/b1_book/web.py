@@ -2709,7 +2709,10 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 </div>
 <div id="recnote"></div>
 <div class="panel">
-  <div class="cap"><span id="cap">1m candles · drag, wheel or pinch to zoom</span>
+  <div class="cap"><span id="cap">1m candles · drag to pan —
+      sideways and up/down · wheel or pinch zooms time, shift+wheel
+      (or wheel over the price axis) zooms price · double click
+      resets the price scale</span>
     <span id="cap2" class="mono"></span></div>
   <canvas id="px" height="420"></canvas>
   <div id="tip" class="mono"></div>
@@ -3121,6 +3124,9 @@ function fitFocus() {
   const b = barAt(c, (t.closes_at || t.opened_at) + 1800);
   if (b <= a) return;
   view = {i0: a, n: Math.max(15, b - a + 1)};
+  // Подгонка под сделку возвращает и вертикаль: её задача — показать
+  // сделку целиком, а ручной сдвиг цены увёл бы её за край.
+  vreset();
   follow = false;
   document.getElementById("live").setAttribute("aria-pressed", "false");
   draw();
@@ -3370,6 +3376,13 @@ function draw() {
     lo=Math.min(lo, ...vs); hi=Math.max(hi, ...vs);
   }
   const pad=(hi-lo)*0.06||1e-9; lo-=pad; hi+=pad;
+  // Ручная вертикаль поверх автоматической: сдвиг и растяжение
+  // считаются от середины автоматического диапазона, поэтому окно не
+  // прыгает, когда сам диапазон меняется от прокрутки во времени.
+  if (vpan || vzoom !== 1) {
+    const mid=(lo+hi)/2, half=(hi-lo)/2*vzoom, off=(hi-lo)*vpan;
+    lo = mid - half + off; hi = mid + half + off;
+  }
   const y = v => padT + ph*(hi-v)/(hi-lo);
   const x = i => padL + pw*(i-i0+0.5)/(i1-i0);
   // Момент кладётся на СВОЮ свечу, а не на долю окна: доля врёт на
@@ -3958,8 +3971,19 @@ function drawEq() {
 
 const px = document.getElementById("px"), tip = document.getElementById("tip");
 let drag=null, pinch=null;
+// Вертикаль цены. Держится В ДОЛЯХ автоматического диапазона, а не в
+// самой цене: диапазон пересчитывается на каждый кадр по видимым
+// свечам, и абсолютный сдвиг уезжал бы вместе с ним. Ноль и единица —
+// «как считает сам график», то есть прежнее поведение бит в бит.
+let vpan = 0, vzoom = 1;
+function vreset() { vpan = 0; vzoom = 1; }
 px.addEventListener("pointerdown", e => {
-  px.setPointerCapture(e.pointerId); drag={x:e.clientX, i0:view?view.i0:0}; });
+  px.setPointerCapture(e.pointerId);
+  drag = {x:e.clientX, y:e.clientY, i0:view?view.i0:0, v:vpan,
+          // Палец на телефоне листает страницу, и отнимать это у
+          // владельца нельзя: вертикаль тянется мышью и пером, а
+          // касание оставляет прокрутку экрану.
+          vert: e.pointerType !== "touch"}; });
 px.addEventListener("pointermove", e => {
   if (!drag) { hover(e); return; }
   const c = cands(); if (!c.length || !view) return;
@@ -3968,15 +3992,33 @@ px.addEventListener("pointermove", e => {
   const per = px.clientWidth/view.n;
   view.i0 = Math.max(0, Math.min(c.length-view.n,
                                  drag.i0 - (e.clientX-drag.x)/per));
+  if (drag.vert) {
+    // Тянем вниз — содержимое едет вниз, то есть окно цены вверх.
+    const ph = Math.max(1, px.clientHeight - 30);
+    vpan = drag.v + (e.clientY - drag.y) / ph;
+  }
   draw();
 });
 px.addEventListener("pointerup", e => {
-  if (drag && Math.abs(e.clientX-drag.x) < 6) hover(e);
+  if (drag && Math.abs(e.clientX-drag.x) < 6
+      && Math.abs(e.clientY-drag.y) < 6) hover(e);
   drag = null; });
+// Двойной щелчок возвращает автоматический масштаб: уехав по цене,
+// вернуться иначе было бы нечем, кроме перезагрузки страницы.
+px.addEventListener("dblclick", () => { vreset(); draw(); });
 px.addEventListener("pointerleave", () => {
   tip.style.display="none"; CROSS = null; draw(); });
 px.addEventListener("wheel", e => {
-  e.preventDefault(); zoom(e.deltaY>0?1.15:1/1.15, e.offsetX/px.clientWidth);
+  e.preventDefault();
+  const k = e.deltaY>0 ? 1.15 : 1/1.15;
+  // Колесо над ШКАЛОЙ цены (правое поле) и Shift+колесо где угодно —
+  // масштаб цены; всё остальное как было, масштаб времени.
+  if (e.shiftKey || e.offsetX > px.clientWidth - 70) {
+    vzoom = Math.max(0.05, Math.min(20, vzoom*k));
+    draw();
+    return;
+  }
+  zoom(k, e.offsetX/px.clientWidth);
 }, {passive:false});
 px.addEventListener("touchstart", e => { if (e.touches.length===2){
   drag=null; pinch=dist(e); } }, {passive:true});
@@ -4064,7 +4106,9 @@ function hover(e) {
 }
 document.getElementById("fit").onclick = () => {
   const c = cands(); if (!c.length) return;
-  view = {i0:0, n:c.length}; follow=false;
+  // «Весь период» возвращает и вертикаль: кнопка обещает показать всё,
+  // а с уехавшей ценой она показала бы весь период мимо свечей.
+  view = {i0:0, n:c.length}; follow=false; vreset();
   document.getElementById("live").setAttribute("aria-pressed","false"); draw();
 };
 // Клик по строке сделки модели — центрировать график на ней. То же

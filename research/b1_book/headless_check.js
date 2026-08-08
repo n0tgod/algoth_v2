@@ -27,16 +27,24 @@ const isBot = /id="botlike-page"|Исполнительное ядро — те�
 // Страницу открыли ссылкой на конкретную сделку модели.
 const FOCUS = /hour=/.test(SEARCH);
 
+// Нарисованное надо чем-то наблюдать: холст здесь заглушка, и
+// единственный видимый снаружи след отрисовки — подписи. По ним
+// проверяется вертикаль цены: сдвинулась ли шкала.
+global.__texts = [];
 const ctx = new Proxy({}, { get: (t, k) => {
   if (k === "canvas") return { clientWidth: 900 };
   if (k === "measureText") return () => ({ width: 40 });
+  if (k === "fillText") return (s) => { global.__texts.push(String(s)); };
   return () => undefined;
 }, set: () => true });
 const mkEl = () => new Proxy({
   style: {}, dataset: {}, clientWidth: 900, clientHeight: 380,
   textContent: "", innerHTML: "", getContext: () => ctx,
   getBoundingClientRect: () => ({ left: 0, top: 0 }),
-  setAttribute: () => {}, addEventListener: () => {},
+  setAttribute: () => {}, _ev: {},
+  addEventListener: function (t, f) {
+    (this._ev[t] = this._ev[t] || []).push(f);
+  },
   querySelector: () => mkEl(), querySelectorAll: () => [],
 }, { get: (t, k) => (k in t ? t[k] : () => undefined),
      set: (t, k, v) => ((t[k] = v), true) });
@@ -852,6 +860,39 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       ? String(global.__el("cap4").textContent || "") : "";
     if (!/BTC/.test(c4) || !/book|situational/.test(c4))
       bad.push("график: заголовок сделок модели не называет пару и книгу");
+
+    // Вертикаль цены: тянуть вверх-вниз, а не только в сторону. Жест
+    // воспроизводится настоящими обработчиками страницы, а результат
+    // читается по ПОДПИСЯМ шкалы — «функция вызвалась» прошло бы и на
+    // графике, который не сдвинулся.
+    const cv = global.__el ? global.__el("px") : null;
+    const ev = cv && cv._ev;
+    const fire = (t, e) => (ev[t] || []).forEach(f => f(e));
+    if (!ev || !ev.pointerdown || !ev.pointermove) {
+      bad.push("график: жесты не привязаны к холсту");
+    } else {
+      // Снимок шкалы ДО жеста: перерисовываем сдвигом на ноль, чтобы
+      // сравнивать одно и то же — подписи одной и той же отрисовки.
+      global.__texts = [];
+      fire("pointerdown", {clientX: 400, clientY: 200, pointerId: 1,
+                           pointerType: "mouse"});
+      fire("pointermove", {clientX: 400, clientY: 200, pointerId: 1});
+      const before = global.__texts.join("|");
+      global.__texts = [];
+      fire("pointermove", {clientX: 400, clientY: 320, pointerId: 1});
+      const after = global.__texts.join("|");
+      fire("pointerup", {clientX: 400, clientY: 320, pointerId: 1});
+      if (!before || before === after)
+        bad.push("график: вертикальный сдвиг не меняет шкалу цены");
+      global.__texts = [];
+      if (ev.dblclick) fire("dblclick", {});
+      const reset = global.__texts.join("|");
+      if (!reset)
+        bad.push("график: двойной щелчок ничего не перерисовывает");
+      else if (reset !== before)
+        bad.push("график: двойной щелчок не вернул автоматический "
+                 + "масштаб цены");
+    }
   }
 
   if (isChart && /paperoff=1/.test(SEARCH)) {
