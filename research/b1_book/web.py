@@ -1912,10 +1912,12 @@ function renderBooks() {
       data-hz="${hz || "h4"}" aria-pressed="${
       String((HZ || "h4") === (hz || "h4"))}">${label}</button></a>`;
   };
+  // Кнопки строятся ИЗ ОБЩЕГО списка книг, а не перечисляются здесь
+  // руками: перечень жил пятым местом, и книга в единицах σ до него не
+  // доехала — страница открывалась, а вкладки у неё не было.
   document.getElementById("books").innerHTML =
     `<span class="k">book (hold)</span> `
-    + mk("", "4 h") + " " + mk("h1", "1 h") + " " + mk("h24", "24 h")
-    + " " + mk("sit", "situational");
+    + BOOK_LIST.map(x => mk(x[0] === "h4" ? "" : x[0], x[1])).join(" ");
 }
 renderBooks();
 // Percent of price move — the display unit across the whole project
