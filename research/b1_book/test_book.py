@@ -2172,6 +2172,29 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_collector_keeps_its_public_methods():
+    """Сборщик цел: у него на месте всё, чем его запускают.
+
+    Правка сканера вырезала `Collector.run` заодно с переписанным
+    куском — файл парсился, тесты проходили, а на сервере сбор упал
+    сразу: «object has no attribute run». Ни один тест не звал точку
+    входа, поэтому пропажа была невидимой. Проверка дешёвая и ловит
+    ровно этот класс: метод, который зовут ИЗВНЕ, а не из тестов.
+    """
+    import collect as C
+
+    need = ["run", "sit_watch", "_sit_scan", "sampler", "statuser",
+            "reporter", "diskstat", "metrics_poll", "model_state",
+            "model_trades", "candles_files", "model_marks"]
+    miss = [m for m in need if not hasattr(C.Collector, m)]
+    check("точки входа сборщика на месте", not miss, str(miss))
+    import inspect
+    check("run принимает часы прогона",
+          list(inspect.signature(C.Collector.run).parameters) ==
+          ["self", "hours"],
+          str(inspect.signature(C.Collector.run)))
+
+
 def test_pending_live_exit_is_shown_before_the_review():
     """Живой выход виден сразу, а не через час.
 
@@ -2647,6 +2670,7 @@ def main():
     test_symbol_groups_for_page()
     test_sit_scan_anchors_forecast_to_live_price()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
+    test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
     test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()

@@ -2307,6 +2307,41 @@ class Collector:
                         f"{got['rr']}) — поймано в моменте")
 
 
+    def run(self, hours):
+        deadline = self.started + hours * 3600 if hours else None
+        threading.Thread(target=self.metrics_poll, daemon=True).start()
+        threading.Thread(target=self.sampler, daemon=True).start()
+        threading.Thread(target=self.statuser, daemon=True).start()
+        threading.Thread(target=self.reporter, daemon=True).start()
+        threading.Thread(target=self.diskstat, daemon=True).start()
+        threading.Thread(target=self.sit_watch, daemon=True).start()
+        if self.paper:
+            threading.Thread(target=self._recount_watch,
+                             daemon=True).start()
+        else:
+            self.log("бумажные сделки выключены: направление ленты "
+                     "закрыто замерами, поглощение входит в модель "
+                     "признаками; запись стакана и ленты идёт как шла")
+        # Шарды вводятся ступенями: тысяча подписок разом — это шторм
+        # и для площадки, и для собственного разбора сообщений.
+        for sh in self.shards:
+            threading.Thread(target=sh.run, daemon=True).start()
+            time.sleep(1.0)
+        self.log(f"шардов запущено: {len(self.shards)}")
+        while not self.stop.wait(1.0):
+            if deadline and time.time() >= deadline:
+                self.log("время сбора вышло")
+                break
+        self.stop.set()
+        for sh in self.shards:
+            if sh.ws is not None:
+                try:
+                    sh.ws.close()
+                except Exception:                         # noqa: BLE001
+                    pass
+        self.w.close()
+
+
 def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     """Живой вход по ситуации: якорим прогноз листа к живой цене.
 
