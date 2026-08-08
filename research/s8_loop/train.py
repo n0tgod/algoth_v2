@@ -1021,6 +1021,19 @@ SIT_MIN_RR = 2.0
 # хотя бы его, вход ничем не лучше входа по самому листу.
 SIT_MIN_DISC_BP = ROUND_COST_BP
 SIT_MAX_AGE_H = 24
+# Наблюдательная книга: те же гейты, КРОМЕ отношения. Нужна затем,
+# чтобы фильтру владельца было что показывать ниже боевого порога: в
+# торгуемой книге сделок с RR < 2 нет вовсе, и порог 1 к 1 добавить
+# ничего не может. Слотов больше, потому что при снятом требовании
+# кандидатов больше, и шесть мест отобрали бы не по качеству, а по
+# очерёдности — состав книги перестал бы описывать распределение.
+#
+# Торгуемая книга от этого не меняется НИ ЧЕМ: у наблюдательной свой
+# каталог, свой счёт и своя запись, тень бота её не читает. Смешать
+# их в одном счёте было бы той же ошибкой, что смешать правила разных
+# версий: кривая описывала бы книгу, которой не было.
+SIT_OBS_SLOTS = 24
+SIT_OBS_MIN_RR = 0.0
 SIT_SIGNAL_H = 4                  # горизонт целей, дающих сигнал
 # Версия ПРАВИЛ книги — часть её определения (урок RULES_VERSION).
 # v1 — часовые входы, и в выходах жил дефект перестановки сторон у
@@ -1891,6 +1904,21 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                            "min_rr": SIT_MIN_RR,
                            "min_disc_bp": SIT_MIN_DISC_BP,
                            "slots": SIT_SLOTS,
+                           # Книги, которые ведёт сканер. Торгуемая
+                           # идёт первой и не меняется; наблюдательная
+                           # берёт всё, что прошло остальные гейты, —
+                           # иначе фильтру владельца нечего добавлять
+                           # ниже боевого порога. Обход кандидатов
+                           # ОДИН на обе: второй считал бы ту же волну
+                           # дважды и мог бы разойтись с первой.
+                           "books": [
+                               {"dir": os.path.basename(mdir),
+                                "min_rr": SIT_MIN_RR,
+                                "slots": SIT_SLOTS},
+                               {"dir": os.path.basename(mdir) + "_obs",
+                                "min_rr": SIT_OBS_MIN_RR,
+                                "slots": SIT_OBS_SLOTS},
+                           ],
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
             # Лист ПЕРЕЗАПИСЫВАЕТСЯ каждый час, то есть история решений
@@ -1911,6 +1939,26 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                      "slots": SIT_SLOTS, "arms": sheets},
                     ensure_ascii=False) + "\n")
         rebuild_accounts(mdir, None, slots=SIT_SLOTS)
+        # Наблюдательная книга: та же ситуация без требования к
+        # отношению. Свой каталог, свой счёт, своя запись — торгуемая
+        # не меняется ни чем, и тень бота её не читает. Лист сечения
+        # один на обе: он лежит у торгуемой, сканер берёт из него
+        # состав книг.
+        obs = mdir + "_obs"
+        fresh_sit_on_rules_change(obs, log_)
+        os.makedirs(obs, exist_ok=True)
+        som = dict(sm, slots=SIT_OBS_SLOTS, min_rr=SIT_OBS_MIN_RR,
+                   observation=True)
+        with open(os.path.join(obs, "manifest.json.tmp"), "w",
+                  encoding="utf-8") as f:
+            json.dump(som, f, ensure_ascii=False, indent=1)
+        os.replace(os.path.join(obs, "manifest.json.tmp"),
+                   os.path.join(obs, "manifest.json"))
+        for arm, _ in ARMS:
+            situational_arm(obs, arm, models, x, mats, syms,
+                            rows_m, j_last, grid, nov_lo, nov_hi,
+                            book_root, log_, beta_row=beta_row)
+        rebuild_accounts(obs, None, slots=SIT_OBS_SLOTS)
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
 

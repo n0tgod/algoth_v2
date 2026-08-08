@@ -2103,24 +2103,31 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
                  "arms": {"gbm": rows}}
         for r in rows:
             col.books[r["sym"]] = B(100.0)
-        entered, armed = set(), set()
+        # Сканер ведёт КНИГИ: у каждой свой каталог, порог отношения
+        # и число мест. Здесь одна — торгуемая.
+        want = [{"dir": "bk", "min_rr": 2.0, "slots": 6}]
+        bdir = os.path.join(d, "bk")
+        os.makedirs(bdir, exist_ok=True)
+        books = {bdir: {"dir": bdir, "signalled": set(),
+                        "entered": set(), "pos": []}}
+        armed = set()
 
         # Цена уже отдала скидку, но мы её падения не видели: это
         # состояние, а не событие. Входа быть не должно.
         col.books["S0USDT"] = B(99.80)
-        col._sit_scan(d, sheet, [], entered, 1000.0, armed)
+        col._sit_scan(d, sheet, want, books, 1000.0, armed)
         rd = lambda: C.Collector._jsonl(
-            os.path.join(d, "entries_live.jsonl"))
+            os.path.join(bdir, "entries_live.jsonl"))
         n0 = len(rd())
         check("имя, уже прошедшее гейт при первом взгляде, не берётся",
               n0 == 0, str(n0))
 
         # Тик, на котором имя гейт НЕ проходит, взводит его.
         col.books["S0USDT"] = B(100.0)
-        col._sit_scan(d, sheet, [], entered, 1005.0, armed)
+        col._sit_scan(d, sheet, want, books, 1005.0, armed)
         # Теперь цена приходит к нам НА НАШИХ ГЛАЗАХ — это вход.
         col.books["S0USDT"] = B(99.80)
-        col._sit_scan(d, sheet, [], entered, 1010.0, armed)
+        col._sit_scan(d, sheet, want, books, 1010.0, armed)
         evs = rd()
         check("пересечение на наших глазах — вход",
               len(evs) == 1 and evs[0]["sym"] == "S0USDT"
@@ -2128,11 +2135,39 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
 
         # Новый лист сбрасывает взведение: у него свои обещания.
         armed2 = set()
-        col._sit_scan(d, {**sheet, "hour": "2026-08-07-21"}, [],
-                      set(), 1015.0, armed2)
+        books2 = {bdir: {"dir": bdir, "signalled": set(),
+                         "entered": set(), "pos": []}}
+        col._sit_scan(d, {**sheet, "hour": "2026-08-07-21"}, want,
+                      books2, 1015.0, armed2)
         n2 = len(rd())
         check("после нового листа имя снова взводится, а не входит",
               n2 == 1, str(n2))
+
+        # Наблюдательная книга: тот же кандидат, но требования к
+        # отношению нет. Нужна затем, чтобы фильтру владельца было
+        # что показывать ниже боевого порога — в торгуемой книге
+        # сделок с меньшим отношением нет вовсе.
+        obs = os.path.join(d, "obs")
+        os.makedirs(obs, exist_ok=True)
+        want2 = [{"dir": "bk", "min_rr": 9.0, "slots": 6},
+                 {"dir": "obs", "min_rr": 0.0, "slots": 24}]
+        books3 = {bdir: {"dir": bdir, "signalled": set(),
+                         "entered": set(), "pos": []},
+                  obs: {"dir": obs, "signalled": set(),
+                        "entered": set(), "pos": []}}
+        armed3 = set()
+        col.books["S0USDT"] = B(100.0)
+        col._sit_scan(d, sheet, want2, books3, 2000.0, armed3)
+        col.books["S0USDT"] = B(99.80)
+        col._sit_scan(d, sheet, want2, books3, 2005.0, armed3)
+        n_bk = len(C.Collector._jsonl(
+            os.path.join(bdir, "entries_live.jsonl")))
+        n_obs = len(C.Collector._jsonl(
+            os.path.join(obs, "entries_live.jsonl")))
+        check("торгуемая книга своё отношение соблюдает",
+              n_bk == 1, str(n_bk))
+        check("наблюдательная берёт ту же сделку без порога",
+              n_obs == 1, str(n_obs))
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

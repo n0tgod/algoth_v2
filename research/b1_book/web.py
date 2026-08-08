@@ -673,7 +673,13 @@ async function pullBot() {
 // «какой темп учится быстрее» и есть смысл переключателя.
 const MDL = {data: null, arm: "all", book: "h4"};
 const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"],
-               ["sit", "situational"]];
+               ["sit", "situational"],
+               // Наблюдательная книга: та же ситуация без требования
+               // к отношению. Нужна фильтру владельца — в торгуемой
+               // сделок ниже её гейта нет вовсе, и порог 1 к 1 не
+               // может добавить ничего. Торгуемой она не мешает: свой
+               // каталог, свой счёт, тень бота её не читает.
+               ["sit_obs", "situational · any RR"]];
 // Порог обещанного отношения: настройка ВЛАДЕЛЬЦА, не правило книги.
 // Книга торгует своим гейтом (RR ≥ 2 на входе), а этот порог отвечает
 // на вопрос «что было бы, если считать только такие сделки» — поэтому
@@ -1633,7 +1639,7 @@ const RRQ = parseFloat(
   new URLSearchParams(location.search).get("rr")
   || localStorage.getItem("rr_min") || "0") || 0;
 let RR_MIN = RRQ;
-const HZ = ["h1", "h24", "sit"].includes(
+const HZ = ["h1", "h24", "sit", "sit_obs"].includes(
   new URLSearchParams(location.search).get("hz"))
   ? new URLSearchParams(location.search).get("hz") : "";
 const S = {page: 0};
@@ -2898,7 +2904,7 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              // темпов: сделка часовой книги живёт в своём каталоге, и
              // без метки график молча показал бы книгу 4 ч.
              hour: Q.get("hour") || "",
-             hz: (["h1", "h24", "sit"].includes(Q.get("hz"))
+             hz: (["h1", "h24", "sit", "sit_obs"].includes(Q.get("hz"))
                   ? Q.get("hz") : ""),
              fit: false};
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара

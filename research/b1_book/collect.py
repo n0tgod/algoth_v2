@@ -1396,10 +1396,10 @@ class Collector:
         # подмешаны: смесь двух книг в одной таблице выглядела бы
         # осмысленно и не значила бы ничего.
         books = {}
-        for key in ("h1", "h24", "sit"):
+        for key in ("h1", "h24", "sit", "sit_obs"):
             st = self._model_dir_state(
                 os.path.join(s8, f"model_{key}"),
-                rr_min=rr_min if key == "sit" else None)
+                rr_min=rr_min if key.startswith("sit") else None)
             if st.get("present"):
                 books[key] = st
         if books:
@@ -1611,7 +1611,8 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        name = "model_" + hz if hz in ("h1", "h24", "sit") else "model"
+        name = ("model_" + hz if hz in ("h1", "h24", "sit", "sit_obs")
+                else "model")
         mdir = os.path.join(s8, name)
         try:
             with open(os.path.join(mdir, "manifest.json"),
@@ -2077,18 +2078,28 @@ class Collector:
         часовыми: прогноз обновляется переобучением, ему быстрее не
         стать.
         """
-        mdir = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+        base = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
                             "model_sit")
-        # Перезапуск не дублирует события: записанные читаются с диска,
-        # а не выводятся из памяти.
-        signalled = {(e.get("arm"), e.get("hour"), e.get("sym"),
-                      e.get("side"))
-                     for e in self._jsonl(os.path.join(
-                         mdir, "exits_live.jsonl"))}
-        entered = {(e.get("arm"), e.get("hour"), e.get("sym"))
-                   for e in self._jsonl(os.path.join(
-                       mdir, "entries_live.jsonl"))}
-        pos, pos_at = [], 0.0
+        # Книг может быть больше одной: торгуемая и наблюдательная (та
+        # же ситуация без требования к отношению — иначе фильтру
+        # владельца нечего показывать ниже боевого порога). Состояние
+        # у каждой своё: перезапуск не дублирует события, потому что
+        # записанное читается с диска, а не выводится из памяти.
+        def fresh_state(mdir):
+            return {
+                "dir": mdir,
+                "signalled": {(e.get("arm"), e.get("hour"),
+                               e.get("sym"), e.get("side"))
+                              for e in self._jsonl(os.path.join(
+                                  mdir, "exits_live.jsonl"))},
+                "entered": {(e.get("arm"), e.get("hour"), e.get("sym"))
+                            for e in self._jsonl(os.path.join(
+                                mdir, "entries_live.jsonl"))},
+                "pos": [],
+            }
+
+        books = {base: fresh_state(base)}
+        pos_at = 0.0
         sheet, sheet_at = None, 0.0
         # Взведённые имена: те, которых мы УЖЕ видели не проходящими
         # гейт. Вход разрешён только им — иначе первый же взгляд после
@@ -2099,70 +2110,98 @@ class Collector:
         while not self.stop.wait(5.0):
             try:
                 now = time.time()
-                if now - pos_at > 60:
-                    entries = self._jsonl(os.path.join(
-                        mdir, "entries_live.jsonl"))
-                    pos = sit_open_levels(
-                        self._jsonl(os.path.join(mdir, "picks.jsonl")),
-                        self._jsonl(os.path.join(mdir, "review.jsonl")),
-                        entries)
-                    pos_at = now
                 if now - sheet_at > 60:
                     try:
-                        with open(os.path.join(mdir, "scan_sheet.json"),
+                        with open(os.path.join(base, "scan_sheet.json"),
                                   encoding="utf-8") as f:
                             sheet = json.load(f)
                     except (OSError, ValueError):
                         sheet = None
                     sheet_at = now
+                # Состав книг объявляет ЛИСТ: цикл знает, какие книги
+                # ведёт, и сканеру незачем держать второй список — два
+                # места, решающих одно, однажды разойдутся. Листа нет
+                # или он старого образца — работаем одной торгуемой.
+                want = (sheet or {}).get("books") or [
+                    {"dir": os.path.basename(base),
+                     "min_rr": (sheet or {}).get("min_rr"),
+                     "slots": (sheet or {}).get("slots")}]
+                root = os.path.dirname(base)
+                for b in want:
+                    d = os.path.join(root, b.get("dir") or "")
+                    if d not in books:
+                        os.makedirs(d, exist_ok=True)
+                        books[d] = fresh_state(d)
+                if now - pos_at > 60:
+                    for d, stt in books.items():
+                        stt["pos"] = sit_open_levels(
+                            self._jsonl(os.path.join(d, "picks.jsonl")),
+                            self._jsonl(os.path.join(d, "review.jsonl")),
+                            self._jsonl(os.path.join(
+                                d, "entries_live.jsonl")))
+                    pos_at = now
                 sh_hour = (sheet or {}).get("hour")
                 if sh_hour != armed_hour:
                     # Новый лист — новые обещания: взведение начинается
                     # заново, и первый же тик расставит его сам.
                     armed, armed_hour = set(), sh_hour
-                self._sit_scan(mdir, sheet, pos, entered, now, armed)
-                for p in pos:
-                    key = (p["arm"], p["hour"], p["sym"], p["side"])
-                    if key in signalled:
-                        continue
-                    b = self.books.get(p["sym"])
-                    if not b:
-                        continue
-                    bid, ask = b.best()
-                    if not (bid and ask):
-                        continue
-                    move, hit = sit_cross(p["side"], p["px"], p["adv"],
-                                          (bid + ask) / 2.0,
-                                          p.get("fav"))
-                    if not hit:
-                        continue
-                    ev = {"arm": p["arm"], "hour": p["hour"],
-                          "sym": p["sym"], "side": p["side"],
-                          "px": round((bid + ask) / 2.0, 8),
-                          "move_bp": round(move, 1),
-                          "at_ts": round(now, 3),
-                          "reason": ("цена прошла обещанный ход против"
-                                     if hit == "против"
-                                     else "цена дошла до обещанной цели")}
-                    os.makedirs(mdir, exist_ok=True)
-                    with open(os.path.join(mdir, "exits_live.jsonl"),
-                              "a", encoding="utf-8") as f:
-                        f.write(json.dumps(ev, ensure_ascii=False)
-                                + "\n")
-                    signalled.add(key)
-                    self.log(f"ситуационная: {p['sym']} прошла "
-                             f"обещанный ход против ({move:+.0f} б.п.) "
-                             f"— выход замечен живьём")
+                # Взведение общее: пересечение гейта — свойство ЦЕНЫ, а
+                # не книги, и книги различаются только требованием к
+                # отношению и числом мест.
+                self._sit_scan(root, sheet, want, books, now, armed)
+                for d, stt in books.items():
+                    for p in stt["pos"]:
+                        key = (p["arm"], p["hour"], p["sym"], p["side"])
+                        if key in stt["signalled"]:
+                            continue
+                        bk = self.books.get(p["sym"])
+                        if not bk:
+                            continue
+                        bid, ask = bk.best()
+                        if not (bid and ask):
+                            continue
+                        move, hit = sit_cross(p["side"], p["px"],
+                                              p["adv"],
+                                              (bid + ask) / 2.0,
+                                              p.get("fav"))
+                        if not hit:
+                            continue
+                        ev = {"arm": p["arm"], "hour": p["hour"],
+                              "sym": p["sym"], "side": p["side"],
+                              "px": round((bid + ask) / 2.0, 8),
+                              "move_bp": round(move, 1),
+                              "at_ts": round(now, 3),
+                              "reason": (
+                                  "цена прошла обещанный ход против"
+                                  if hit == "против"
+                                  else "цена дошла до обещанной цели")}
+                        os.makedirs(d, exist_ok=True)
+                        with open(os.path.join(d, "exits_live.jsonl"),
+                                  "a", encoding="utf-8") as f:
+                            f.write(json.dumps(ev, ensure_ascii=False)
+                                    + "\n")
+                        stt["signalled"].add(key)
+                        if d == base:
+                            self.log(
+                                f"ситуационная: {p['sym']} "
+                                f"{'дошла до цели' if hit == 'в пользу' else 'прошла обещанный ход против'}"
+                                f" ({move:+.0f} б.п.) — выход замечен "
+                                f"живьём")
             except Exception as e:                        # noqa: BLE001
                 self.log(f"сторож ситуационной книги: "
                          f"{type(e).__name__}: {e}")
 
-    def _sit_scan(self, mdir, sheet, pos, entered, now, armed):
+    def _sit_scan(self, root, sheet, want, books, now, armed):
         """Один тик сканера входов: лист сечения против живых цен.
 
         Карта от модели (лист часа), курок от цены: вход в ту секунду,
         когда остаток обещанного хода проходит гейты. Имя, где
         движение уже пройдено, отсеивается остатком само.
+
+        Кандидат считается ОДИН раз на все книги, а дальше книги
+        различаются лишь требованием к отношению и числом мест:
+        второй проход считал бы ту же волну заново и мог бы разойтись
+        с первым на округлении.
         """
         if not sheet:
             return
@@ -2172,24 +2211,17 @@ class Collector:
         if now - (sheet.get("written_at") or 0) > 2 * 3600:
             return
         min_edge = float(sheet.get("min_edge_bp") or 22.0)
-        min_rr = float(sheet.get("min_rr") or 2.0)
         # Отсутствие поля — не «правила нет»: лист прежнего образца
         # писался до требования скидки, и молчаливый ноль вернул бы
         # ровно то поведение, ради снятия которого правило заведено.
         md = sheet.get("min_disc_bp")
         min_disc = float(md) if md is not None else 11.0
-        slots = int(sheet.get("slots") or 6)
         hour = sheet.get("hour")
+        # Гейт по отношению у сканера снимается: его применяет КНИГА,
+        # каждая своим порогом. Само событие входа от этого не
+        # меняется — меняется, кто его к себе записывает.
         for arm, rows in (sheet.get("arms") or {}).items():
-            held = {p["sym"] for p in pos if p["arm"] == arm}
-            free = slots - len(held)
-            if free <= 0:
-                continue
-            # Волна — средний живой ход листа: тот же смысл, что фактор
-            # в целях. Мерить её не из чего, пока книги дали меньше
-            # тридцати имён, — тогда вход молчит, а не считает волной
-            # три случайных монеты.
-            moves, mids = [], {}
+            mids, moves = {}, []
             for r in rows:
                 b = self.books.get(r.get("sym"))
                 if not b:
@@ -2201,20 +2233,30 @@ class Collector:
                 mids[r["sym"]] = mid
                 if r.get("px"):
                     moves.append((mid / r["px"] - 1.0) * 1e4)
+            # Волна — средний живой ход листа: тот же смысл, что фактор
+            # в целях. Мерить её не из чего, пока книги дали меньше
+            # тридцати имён, — тогда вход молчит, а не считает волной
+            # три случайных монеты.
             if len(moves) < 30:
                 continue
             wave = sum(moves) / len(moves)
-            for r in rows:
-                if free <= 0:
-                    break
-                sym = r.get("sym")
-                if sym in held or (arm, hour, sym) in entered:
+            free = {}
+            for b in want:
+                d = os.path.join(root, b.get("dir") or "")
+                stt = books.get(d)
+                if stt is None:
                     continue
+                held = {p["sym"] for p in stt["pos"] if p["arm"] == arm}
+                free[d] = (int(b.get("slots") or 6) - len(held), held,
+                           float(b.get("min_rr") or 0.0), stt)
+            for r in rows:
+                sym = r.get("sym")
                 mid = mids.get(sym)
                 if not mid:
                     continue
-                got = sit_scan_entry(r, mid, wave, min_edge,
-                                     min_rr, min_disc)
+                # Гейт без отношения: RR проверяет книга.
+                got = sit_scan_entry(r, mid, wave, min_edge, 0.0,
+                                     min_disc)
                 key = (arm, hour, sym)
                 if not got:
                     # Видели имя НЕ проходящим — теперь его пересечение
@@ -2229,61 +2271,40 @@ class Collector:
                     # нельзя — ровно это и делало пачку входов одной
                     # секундой, которую владелец видел трижды.
                     continue
-                ev = {"arm": arm, "hour": hour, "at_ts": round(now, 3),
-                      "reason": "вход по ситуации", **got}
-                os.makedirs(mdir, exist_ok=True)
-                with open(os.path.join(mdir, "entries_live.jsonl"),
-                          "a", encoding="utf-8") as f:
-                    f.write(json.dumps(ev, ensure_ascii=False) + "\n")
-                entered.add((arm, hour, sym))
-                held.add(sym)
-                free -= 1
-                # Свежий вход сторожится с этой же секунды, не дожидаясь
-                # перечитывания файлов.
-                pos.append({"arm": arm, "hour": hour, "sym": sym,
-                            "side": got["side"], "px": got["px"],
-                            "adv": got["mae"], "fav": got["mfe"]})
-                armed.discard(key)
-                self.log(
-                    f"ситуационная [{arm}]: живой вход {sym} "
-                    f"{got['side']} (остаток {got['fwd']:+.0f} б.п. "
-                    f"против {got['fwd0']:+.0f} у листа, скидка "
-                    f"{abs(got['fwd']) - abs(got['fwd0']):+.0f}, RR "
-                    f"{got['rr']}) — поймано в моменте")
-
-    def run(self, hours):
-        deadline = self.started + hours * 3600 if hours else None
-        threading.Thread(target=self.metrics_poll, daemon=True).start()
-        threading.Thread(target=self.sampler, daemon=True).start()
-        threading.Thread(target=self.statuser, daemon=True).start()
-        threading.Thread(target=self.reporter, daemon=True).start()
-        threading.Thread(target=self.diskstat, daemon=True).start()
-        threading.Thread(target=self.sit_watch, daemon=True).start()
-        if self.paper:
-            threading.Thread(target=self._recount_watch,
-                             daemon=True).start()
-        else:
-            self.log("бумажные сделки выключены: направление ленты "
-                     "закрыто замерами, поглощение входит в модель "
-                     "признаками; запись стакана и ленты идёт как шла")
-        # Шарды вводятся ступенями: тысяча подписок разом — это шторм
-        # и для площадки, и для собственного разбора сообщений.
-        for sh in self.shards:
-            threading.Thread(target=sh.run, daemon=True).start()
-            time.sleep(1.0)
-        self.log(f"шардов запущено: {len(self.shards)}")
-        while not self.stop.wait(1.0):
-            if deadline and time.time() >= deadline:
-                self.log("время сбора вышло")
-                break
-        self.stop.set()
-        for sh in self.shards:
-            if sh.ws is not None:
-                try:
-                    sh.ws.close()
-                except Exception:                         # noqa: BLE001
-                    pass
-        self.w.close()
+                took = False
+                for d, (n_free, held, min_rr, stt) in list(free.items()):
+                    if n_free <= 0 or sym in held:
+                        continue
+                    if key in stt["entered"]:
+                        continue
+                    if got["rr"] < min_rr:
+                        continue
+                    ev = {"arm": arm, "hour": hour,
+                          "at_ts": round(now, 3),
+                          "reason": "вход по ситуации", **got}
+                    os.makedirs(d, exist_ok=True)
+                    with open(os.path.join(d, "entries_live.jsonl"),
+                              "a", encoding="utf-8") as f:
+                        f.write(json.dumps(ev, ensure_ascii=False)
+                                + "\n")
+                    stt["entered"].add(key)
+                    held.add(sym)
+                    free[d] = (n_free - 1, held, min_rr, stt)
+                    # Свежий вход сторожится с этой же секунды, не
+                    # дожидаясь перечитывания файлов.
+                    stt["pos"].append({
+                        "arm": arm, "hour": hour, "sym": sym,
+                        "side": got["side"], "px": got["px"],
+                        "adv": got["mae"], "fav": got["mfe"]})
+                    took = True
+                if took:
+                    armed.discard(key)
+                    self.log(
+                        f"ситуационная [{arm}]: живой вход {sym} "
+                        f"{got['side']} (остаток {got['fwd']:+.0f} б.п. "
+                        f"против {got['fwd0']:+.0f} у листа, скидка "
+                        f"{abs(got['fwd']) - abs(got['fwd0']):+.0f}, RR "
+                        f"{got['rr']}) — поймано в моменте")
 
 
 def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
