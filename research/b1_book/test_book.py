@@ -2562,6 +2562,13 @@ def test_glossary_describes_the_live_model():
               g["present"] is True and g["n_features"] == len(feats)
               and g["train_seq"] == 77, str(g)[:160])
         fams = {f["key"]: f for f in g["families"]}
+        # Проверка ведётся по НАСТОЯЩЕЙ карте: список обязательных
+        # полей объявлен рядом с текстами, чтобы новый язык нельзя
+        # было завести и забыть в половине семейств.
+        import families as FM
+        gap = [(k, f) for k, t in FM.GLOSSARY for f in FM.BILINGUAL
+               if not t.get(f) or not t.get(f + "_ru")]
+        check("в карте нет семейства на одном языке", not gap, str(gap))
         # Ни одного признака без семейства: карточка «other» есть
         # только когда есть сироты, и её появление — дефект.
         check("сирот нет — все живые признаки расписаны",
@@ -2571,6 +2578,24 @@ def test_glossary_describes_the_live_model():
                   for f in g["families"]),
               str([f["key"] for f in g["families"]
                    if not (f["title"] and f["reads"])]))
+        # Оба языка едут в ОДНОМ ответе: переключатель на странице не
+        # ходит на сервер, а семейство без перевода показало бы
+        # русскому читателю английский абзац вперемешку со своими —
+        # страница при этом выглядела бы исправной.
+        half = [f["key"] for f in g["families"]
+                if not (f["title_ru"] and len(f["plain_ru"]) > 80
+                        and f["reads_ru"])]
+        check("каждое семейство объяснено и по-русски", not half,
+              str(half))
+        check("оговорка не теряется в переводе",
+              all((f["caveat"] is None) == (f["caveat_ru"] is None)
+                  for f in g["families"]),
+              str([f["key"] for f in g["families"]
+                   if (f["caveat"] is None) != (f["caveat_ru"] is None)]))
+        check("русский текст не английский",
+              fams["absorption"]["plain_ru"]
+              != fams["absorption"]["plain"],
+              fams["absorption"]["plain_ru"][:60])
         check("признак попал в своё семейство",
               [x["name"] for x in fams["absorption"]["features"]]
               == ["eat_bid", "big_rel"],

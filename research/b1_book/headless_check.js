@@ -203,6 +203,12 @@ global.fetch = async (url) => {
                    reads: "aggressive volume against displayed depth",
                    caveat: "Measured on prints alone this carried no "
                            + "direction at all.",
+                   title_ru: "Выедение стакана — поглощение",
+                   plain_ru: "Кто-то доставляет объём на ту же цену, "
+                             + "пока по нему бьют.",
+                   reads_ru: "агрессивный объём против показанной "
+                             + "глубины",
+                   caveat_ru: "По одним принтам направления нет вовсе.",
                    features: [{name: "eat_bid", weight: 0.12}],
                    n_features: 1, weight: 0.12,
                    traded: {n: 5, pnl: 8.0, win: 0.6}},
@@ -211,6 +217,11 @@ global.fetch = async (url) => {
                           + "right now against its usual level.",
                    reads: "open interest vs its own past week",
                    caveat: null,
+                   title_ru: "Открытый интерес",
+                   plain_ru: "Сколько денег стоит в контракте сейчас "
+                             + "против обычного уровня.",
+                   reads_ru: "интерес против собственной недели",
+                   caveat_ru: null,
                    features: [{name: "oi_rel", weight: 0.08},
                               {name: "oi_chg_4h", weight: 0}],
                    n_features: 2, weight: 0.08, traded: null}]}
@@ -622,6 +633,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // разметке нельзя — он рисуется на canvas, а тот
                 // заглушен; единственное свидетельство отрисовки —
                 // записи в HIT и состояние самой страницы.
+                // Переключатель языка справочника. Дёргается САМА
+                // функция страницы, а не подставная кнопка: DOM здесь
+                // заглушен, `querySelectorAll` пуст, и проверка «клик
+                // по кнопке» шла бы вхолостую — обработчик до неё не
+                // доезжает вовсе.
+                + "\nglobal.__lang = typeof setLang === 'function' "
+                + "? setLang : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
                 + "\nglobal.__focused = typeof focused === 'function' "
                 + "? focused : null;"
@@ -1049,6 +1067,23 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                + ` (обёрток ${nScroll} из 6)`);
   }
 
+  // Меню страниц — на каждой самостоятельной странице, и проверяется
+  // ЧИСЛАМИ: пять пунктов, ключ в каждой ссылке, текущая помечена.
+  // «Блок есть» прошло бы и на пустом меню, а пустое меню неотличимо
+  // от «страницы кончились».
+  if (!isChart && !isInfo) {
+    const nv = global.__el ? global.__el("nav") : null;
+    const nh = nv ? String(nv.innerHTML || "") : "";
+    const links = (nh.match(/class="navlink/g) || []).length;
+    if (links !== 5)
+      bad.push(`меню: пунктов ${links}, а страниц пять`);
+    if (!/href="\/league-page\?k=xxx"/.test(nh)
+        || !/href="\/glossary-page\?k=xxx"/.test(nh))
+      bad.push("меню: ссылка без ключа или страница потеряна");
+    if (!/aria-current="page"/.test(nh))
+      bad.push("меню: текущая страница не помечена");
+  }
+
   if (isGloss) {
     // Пробелы схлопываются: текст страницы переносится по строкам
     // исходника, и фраза «reading of the forecast» физически стоит на
@@ -1090,6 +1125,53 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("справочник: сделки по семейству не посчитаны");
     if (!seen.some(u => u.startsWith("/glossary")))
       bad.push("справочник: данные не запрошены");
+    // Переключатель языка. Проверяется не «кнопка есть», а то, что
+    // страница ПЕРЕСОБРАЛАСЬ по-русски: текст семейства, подписи самой
+    // страницы, перевод признака и — главное — та же оговорка про
+    // отсутствие стратегий. Потерять её в переводе значило бы соврать
+    // одному из двух читателей.
+    const before = bx;
+    const nq = calls;
+    if (!/data-l="ru"/.test(String(global.__el
+          ? global.__el("lang").innerHTML : "")))
+      bad.push("справочник: кнопки языка нет на странице");
+    if (!global.__lang) {
+      bad.push("справочник: переключателя языка нет");
+    } else {
+      global.__lang("ru");
+      const rbx = flat(global.__el ? global.__el("box").innerHTML : "");
+      const rin = flat(global.__el
+        ? global.__el("intro").innerHTML : "");
+      if (rbx === before)
+        bad.push("справочник: переключение языка ничего не изменило");
+      if (!/Отдельных стратегий у модели нет/.test(rin))
+        bad.push("справочник по-русски: оговорка про стратегии "
+                 + "потеряна в переводе");
+      if (!/чтение прогноза, а не правило/.test(rin))
+        bad.push("справочник по-русски: имя ситуации выдано за правило");
+      if (!/топ-10 на цель/.test(rin) || !/20 %/.test(rin))
+        bad.push("справочник по-русски: неполнота весов не названа");
+      if (!/Выедение стакана/.test(rbx))
+        bad.push("справочник по-русски: семейство не переведено");
+      if (!/доставляет объём на ту же цену/.test(rbx))
+        bad.push("справочник по-русски: объяснение не переведено");
+      if (!/Что именно мерится/.test(rbx))
+        bad.push("справочник по-русски: подписи страницы остались "
+                 + "английскими");
+      if (!/продавцы выедают показанные биды/.test(rbx))
+        bad.push("справочник по-русски: признак не переведён");
+      if (!/признаков: 1/.test(rbx))
+        bad.push("справочник по-русски: счётчики не переведены");
+      // Оба языка приходят одним ответом: смена языка не имеет права
+      // ходить на сервер — на потерянной связи страница погасла бы.
+      if (calls !== nq)
+        bad.push("справочник: смена языка полезла на сервер");
+      // Меню переезжает на русский вместе со страницей.
+      const nh2 = global.__el
+        ? String(global.__el("nav").innerHTML || "") : "";
+      if (!/справочник/.test(nh2))
+        bad.push("справочник: меню осталось на другом языке");
+    }
   }
 
   if (isInfo) {

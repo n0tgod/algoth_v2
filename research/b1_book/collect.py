@@ -2119,9 +2119,16 @@ class Collector:
                 # «Прочее» пусто — так и должно быть; печатать пустую
                 # карточку дефекта незачем.
                 continue
+            # Оба языка едут в ответе разом: переключатель на странице
+            # не должен ходить на сервер за переводом — иначе смена
+            # языка на потерянной связи давала бы пустую страницу.
             rows.append({
-                "key": key, "title": txt["title"], "plain": txt["plain"],
-                "reads": txt["reads"], "caveat": txt.get("caveat"),
+                "key": key,
+                **{f: txt[f] for f in ("title", "plain", "reads")},
+                **{f + "_ru": txt[f + "_ru"]
+                   for f in ("title", "plain", "reads")},
+                "caveat": txt.get("caveat"),
+                "caveat_ru": txt.get("caveat_ru"),
                 "features": sorted(g["feats"],
                                    key=lambda f: (-f["weight"],
                                                   f["name"])),

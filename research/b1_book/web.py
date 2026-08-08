@@ -32,6 +32,51 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
+# Меню страниц — просьба владельца: все страницы в одном месте, чтобы
+# переключаться, не возвращаясь на обзор. Список объявлен ОДИН раз и
+# вставляется во все страницы: пять копий разошлись бы, и новая
+# страница появлялась бы в меню через раз.
+#
+# Что в меню не входит и почему: график (`/chart`) существует только
+# для конкретной монеты и часа, а пункт меню без них вёл бы в пустоту;
+# разбор сделки (`/trade-info`) — то же самое. Оба открываются со
+# своих мест, где монета известна.
+NAVJS = r"""
+const NAV_ITEMS = [
+  ["/", "overview", "обзор"],
+  ["/trades-page", "trades", "сделки"],
+  ["/league-page", "league", "лига"],
+  ["/glossary-page", "playbook", "справочник"],
+  ["/bot-page", "core", "ядро"]];
+function navMount(current){
+  const el = document.getElementById("nav");
+  if (!el) return;
+  // Ключ несёт КАЖДАЯ ссылка: без него переход роняет доступ, и меню
+  // выглядело бы сломанным сервером.
+  const key = (typeof KEY === "string" && KEY) ? KEY : "";
+  const lang = (typeof LANG === "string" && LANG === "ru") ? 1 : 0;
+  el.className = "navbar";
+  el.innerHTML = NAV_ITEMS.map(it => {
+    const here = it[0] === current;
+    const q = "?k=" + encodeURIComponent(key);
+    return `<a class="navlink${here ? " on" : ""}" href="${it[0]}${q}"
+      ${here ? 'aria-current="page"' : ""}>${it[lang ? 2 : 1]}</a>`;
+  }).join("");
+}
+"""
+
+# Стили меню — тоже один раз: пять копий CSS разъехались бы так же
+# незаметно, как разъехался бы список.
+NAVCSS = r"""
+.navbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.navlink{display:inline-block;padding:4px 12px;border-radius:999px;
+ font-size:12px;text-decoration:none;border:1px solid #272250;
+ background:#1a1636;color:#8e88ad}
+.navlink:hover{color:#eceaf6}
+.navlink.on{border-color:#9747ff;color:#9747ff}
+"""
+
+
 PAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Order Book Live</title>
@@ -152,7 +197,7 @@ canvas{display:block;width:100%}
 .band .g .r{background:var(--ask)}
 .band .q{width:96px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:12px;margin-top:16px;line-height:1.7}
-</style>
+""" + NAVCSS + r"""</style>
 <div class="wrap">
 <header class="top">
   <span class="brand">ALG<b>O</b>TH</span>
@@ -160,6 +205,7 @@ footer{color:var(--muted);font-size:12px;margin-top:16px;line-height:1.7}
   <span class="sp"></span>
   <span class="sub" id="sub">connecting…</span>
 </header>
+<div id="nav"></div>
 <div class="strip" id="strip"></div>
 <details class="panel pickwrap" style="margin-bottom:12px">
   <summary class="cap" style="cursor:pointer"><span>coins by sector</span>
@@ -222,6 +268,8 @@ orderbook.50 topic; trade side is the aggressor&#39;s.</footer>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
+""" + NAVJS + r"""
+navMount("/");
 let sym = null, timer = null;
 // Состояния, виды уровней и правила приходят с сервера по-русски: это
 // КЛЮЧИ файлов и журналов, а не текст для глаз. Перевод живёт на
@@ -1677,13 +1725,14 @@ canvas{width:100%;display:block;touch-action:pan-y}
   .hide-s{display:none}
   .st{flex:1 1 46%}
 }
-</style>
+""" + NAVCSS + r"""</style>
 <div class="wrap">
   <header class="top">
     <a href="#" id="back" class="brand" title="to overview">ALG<b>O</b>TH</a>
     <span class="tag">model trades</span>
     <span id="src" class="mono note" style="margin:0"></span>
   </header>
+  <div id="nav"></div>
   <div id="warn"></div>
 
   <div class="card">
@@ -1786,6 +1835,8 @@ canvas{width:100%;display:block;touch-action:pan-y}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+navMount("/trades-page");
 // Книга турнира темпов из ссылки («h1», «h24»); пусто — главная 4 ч.
 // Едет в каждый запрос и в ссылки на график: страница обязана
 // показывать ту книгу, из которой пришли, а не молча главную.
@@ -2452,7 +2503,7 @@ details summary{cursor:pointer}
  .wrap{padding:0 10px 60px}
  .stats{grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:8px}
  .card{padding:12px;border-radius:14px}}
-</style>
+""" + NAVCSS + r"""</style>
 <div id="botlike-page" class="wrap">
 <header class="top">
   <a id="back" href="#" class="brand" title="to overview">ALG<b>O</b>TH</a>
@@ -2464,6 +2515,7 @@ details summary{cursor:pointer}
   <span class="chip"><span class="ck">balance</span><span
     id="topbal" class="cv mono">…</span></span>
 </header>
+  <div id="nav"></div>
   <div id="alarm"></div>
   <div class="stats" id="acct">…</div>
   <section class="card" id="tcard" style="display:none">
@@ -2498,6 +2550,8 @@ details summary{cursor:pointer}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+navMount("/bot-page");
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
 const FMT = new Intl.DateTimeFormat("en-GB", {timeZone: "Europe/Vienna",
@@ -4406,17 +4460,66 @@ const FEAT_EN = {
   dist_round:"distance to the nearest round price",
   beta:"how strongly the coin follows the market wave",
   age_rec:"the coin's age in the record"};
-function featDesc(n){
-  if (FEAT_EN[n]) return FEAT_EN[n];
+const FEAT_RU = {
+  imb_best:"размер бида против аска на самой вершине книги",
+  spread_rel:"спред против своей обычной ширины",
+  upd_rel:"как быстро переписывают книгу против обычного",
+  big_rel:"самая крупная стоящая заявка против обычной здесь",
+  turn_rel:"оборот часа против обычного",
+  delta:"кто бьёт сильнее в ленте — покупатели или продавцы",
+  burst:"крупнейший всплеск объёма за секунду против обычного",
+  traded_share:"в какой доле часа вообще были сделки",
+  eat_bid:"продавцы выедают показанные биды",
+  eat_ask:"покупатели выедают показанные аски",
+  net_path_24h:"насколько прямым был суточный ход (чистое к пути)",
+  vol_regime:"волатильность суток против недели — проснулась или спит",
+  fr_bp:"текущая ставка финансирования",
+  mins_fund:"минуты до следующего начисления",
+  oi_rel:"открытый интерес против своего обычного уровня",
+  oi_chg_4h:"изменение открытого интереса за 4 часа",
+  oi_chg_24h:"изменение открытого интереса за сутки",
+  basis_bp:"цена перпа против спота — премия или дисконт",
+  liq_long_share:"ликвидации лонгов как доля оборота",
+  liq_short_share:"ликвидации шортов как доля оборота",
+  liq_imb:"какую сторону вынесло сильнее",
+  squeeze_4h:"насколько зажат четырёхчасовой размах против обычного",
+  squeeze_24h:"насколько зажат суточный размах против обычного",
+  tilt_4h:"наклонка: чистый ход за 4 часа внутри своего размаха",
+  range_pos:"где цена в суточном диапазоне (0 — низ, 1 — верх)",
+  dwell_24h:"сколько цена уже стоит в этом коридоре",
+  hod_sin:"время суток", hod_cos:"время суток", dow:"день недели",
+  btc_ret_4h:"собственный ход BTC за 4 часа",
+  sec_ret_4h:"ход сектора этой монеты за 4 часа",
+  rel_sec_4h:"насколько монета отстала от своего сектора за 4 часа",
+  dist_round:"расстояние до ближайшего круглого числа",
+  beta:"насколько сильно монета идёт за рыночной волной",
+  age_rec:"возраст монеты в записи"};
+// `lang` необязателен: страница разбора сделки зовёт без него и
+// получает прежний английский бит в бит. Незнакомое имя честно
+// остаётся как есть на любом языке — выдуманный перевод хуже сырого
+// имени, а перевод, которого нет, не должен превращаться в пустоту.
+function featDesc(n, lang){
+  const ru = lang === "ru";
+  const D = ru ? FEAT_RU : FEAT_EN;
+  if (D[n]) return D[n];
+  if (ru && FEAT_EN[n]) return FEAT_EN[n];
   let m = n.match(/^ret_(\d+)h?$/);
-  if (m) return `the coin's own ${m[1]} h move vs its usual volatility`;
+  if (m) return ru
+    ? `собственный ход монеты за ${m[1]} ч в единицах своей волатильности`
+    : `the coin's own ${m[1]} h move vs its usual volatility`;
   const band = w => parseFloat((w*100).toFixed(3));
   m = n.match(/^imb_([\d.]+)$/);
-  if (m) return `bid vs ask depth within ±${band(+m[1])} % of price`;
+  if (m) return ru
+    ? `бид против аска в полосе ±${band(+m[1])} % от цены`
+    : `bid vs ask depth within ±${band(+m[1])} % of price`;
   m = n.match(/^depth_b([\d.]+)$/);
-  if (m) return `bid depth within ±${band(+m[1])} % vs usual`;
+  if (m) return ru
+    ? `глубина бида в полосе ±${band(+m[1])} % против обычной`
+    : `bid depth within ±${band(+m[1])} % vs usual`;
   m = n.match(/^depth_a([\d.]+)$/);
-  if (m) return `ask depth within ±${band(+m[1])} % vs usual`;
+  if (m) return ru
+    ? `глубина аска в полосе ±${band(+m[1])} % против обычной`
+    : `ask depth within ±${band(+m[1])} % vs usual`;
   return n;
 }
 """
@@ -4750,71 +4853,141 @@ h2{font-size:15px;margin:0 0 6px}
  color:var(--muted)}
 .good{color:var(--bid)}.bad{color:var(--ask)}
 a{color:var(--accent)}
-</style>
+button{background:var(--chip);border:1px solid var(--rule);
+ color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;
+ cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+""" + NAVCSS + r"""</style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
-  <span class="k">playbook — every situation the model can read</span>
+  <span class="k" id="strap"></span>
   <span style="flex:1"></span>
+  <span id="lang"></span>
   <span class="k" id="lead"></span></div>
+<div id="nav"></div>
 <div class="panel" id="intro"></div>
 <div id="box">&hellip;</div>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+// Язык страницы. Выбор держится в браузере: владелец читает
+// по-русски, и переспрашивать его каждый раз незачем. Ссылка с
+// параметром `lang` перебивает сохранённое — так страницу можно
+// переслать сразу на нужном языке.
+let LANG = new URLSearchParams(location.search).get("lang")
+  || (function(){ try { return localStorage.getItem("algoth_lang"); }
+                  catch (e) { return null; } })() || "en";
+// Последний ответ держим у себя: переключение языка обязано работать
+// БЕЗ похода на сервер — оба языка уже пришли, и запрашивать их
+// заново значило бы гасить страницу на потерянной связи.
+let DATA = null;
+function setLang(v){
+  LANG = v;
+  try { localStorage.setItem("algoth_lang", v); } catch (e) {}
+  render(DATA);
+}
 """ + FEATJS + r"""
 
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+// Подписи самой страницы. Тексты семейств приходят с сервера на обоих
+// языках, а это — её собственные слова, и они обязаны переключаться
+// вместе с ними: половина страницы по-русски и половина по-английски
+// выглядела бы исправной и читалась бы как недоделка.
+const UI = {
+  strap: {en: "playbook — every situation the model can read",
+          ru: "справочник — все ситуации, которые читает модель"},
+  lead: {en: t => `training #${t.seq} · ${t.n} features`,
+         ru: t => `обучение №${t.seq} · признаков ${t.n}`},
+  feats: {en: n => `${n} feature${n === 1 ? "" : "s"}`,
+          ru: n => `признаков: ${n}`},
+  weight: {en: w => `weight in the 4 h forecast: ${w} %`,
+           ru: w => `вес в четырёхчасовом прогнозе: ${w} %`},
+  named: {en: n => `named in ${n} closed trade${n === 1 ? "" : "s"}`,
+          ru: n => `названо в закрытых сделках: ${n}`},
+  reads: {en: "What the model actually measures:",
+          ru: "Что именно мерится:"},
+  caveat: {en: "What this does not mean.",
+           ru: "Чего это не значит."},
+  untrained: {en: "<b>The model has not trained yet</b> — this page "
+                  + "lists what the live weights read, and there are "
+                  + "none.",
+              ru: "<b>Модель ещё не училась</b> — страница описывает "
+                  + "то, что читают живые веса, а весов нет."},
+  empty: {en: "no families — the map is empty",
+          ru: "семейств нет — карта пуста"},
+  partial: {en: "Partial.", ru: "Неполно."},
+  orphan: {en: "defect: features without a family",
+           ru: "дефект: признаки без семейства"},
+  orphan_tail: {
+    en: "— every situation name on every page is diluted until these "
+        + "are mapped",
+    ru: "— пока они не расписаны, имя ситуации размыто на каждой "
+        + "странице"},
+};
+const T = k => { const v = UI[k]; return v[LANG] || v.en; };
 
 function famCard(f){
+  const ru = LANG === "ru";
+  const pick = (k) => (ru && f[k + "_ru"]) ? f[k + "_ru"] : f[k];
   // Признаки — с весом там, где он известен. Вес есть только у тех,
   // кто попал в топ-10 манифеста; остальным ставится прочерк, а НЕ
   // ноль: ноль читался бы как «модель им не пользуется», тогда как
   // на деле мы просто не видим его важности.
   const feats = (f.features || []).map(x => `<div class="feat">
       <span class="n">${esc(x.name)}</span>
-      <span class="d">${esc(featDesc(x.name))}</span>
+      <span class="d">${esc(featDesc(x.name, LANG))}</span>
       <span class="w">${x.weight ? (x.weight*100).toFixed(1) + " %"
                                  : "&middot;"}</span></div>`).join("");
   const tr = f.traded;
   const tags = [
-    `<span class="tag">${f.n_features} feature${
-       f.n_features === 1 ? "" : "s"}</span>`,
-    f.weight ? `<span class="tag">weight in the 4 h forecast: ${
-       (f.weight*100).toFixed(1)} %</span>` : "",
-    tr ? `<span class="tag">named in ${tr.n} closed trade${
-       tr.n === 1 ? "" : "s"} &middot; <span class="${
+    `<span class="tag">${T("feats")(f.n_features)}</span>`,
+    f.weight ? `<span class="tag">${
+       T("weight")((f.weight*100).toFixed(1))}</span>` : "",
+    tr ? `<span class="tag">${T("named")(tr.n)} &middot; <span class="${
        tr.pnl > 0 ? "good" : "bad"}">${tr.pnl > 0 ? "+" : ""}${
        tr.pnl}</span></span>` : ""].join("");
+  const cav = pick("caveat");
   return `<div class="panel">
-    <h2>${esc(f.title)}</h2>
+    <h2>${esc(pick("title"))}</h2>
     <div class="tags">${tags}</div>
-    <p class="plain">${esc(f.plain)}</p>
-    <p class="sub"><b>What the model actually measures:</b> ${
-      esc(f.reads)}.</p>
-    ${f.caveat ? `<p class="warn"><b>What this does not mean.</b> ${
-      esc(f.caveat)}</p>` : ""}
+    <p class="plain">${esc(pick("plain"))}</p>
+    <p class="sub"><b>${T("reads")}</b> ${esc(pick("reads"))}.</p>
+    ${cav ? `<p class="warn"><b>${T("caveat")}</b> ${esc(cav)}</p>`
+          : ""}
     <div class="feats">${feats}</div></div>`;
 }
 
-function render(d){
-  const box = document.getElementById("box");
-  const intro = document.getElementById("intro");
-  if (!d || !d.present) {
-    intro.innerHTML = `<b>The model has not trained yet</b> — this page
-      lists what the live weights read, and there are none.${
-      d && d.error ? ` <span class="mono dim">${esc(d.error)}</span>`
-                   : ""}`;
-    box.innerHTML = "";
-    return;
-  }
-  document.getElementById("lead").textContent =
-    `training #${d.train_seq} · ${d.n_features} features`;
-  // Главная честность страницы, и она стоит ПЕРВОЙ: дискретных
-  // стратегий у модели нет. Без этого абзаца список семейств читался
-  // бы как набор правил, которые модель выбирает.
-  intro.innerHTML = `
+// Главная честность страницы, и она стоит ПЕРВОЙ на обоих языках:
+// дискретных стратегий у модели нет. Без этого абзаца список семейств
+// читался бы как набор правил, которые модель выбирает, — и потерять
+// его в переводе значило бы соврать одному из двух читателей.
+function introHTML(d){
+  const cov = ((d.weight_covers||0)*100).toFixed(0);
+  if (LANG === "ru") return `
+    <p class="plain"><b>Отдельных стратегий у модели нет.</b> Это одна
+     модель на все монеты и все ситуации, и ей никогда не говорили
+     «это зажим — делай так». Что у неё есть — словарь ниже:
+     ${d.n_features} чисел о том, что происходит прямо сейчас, и
+     каждое нормировано собственным прошлым монеты, иначе BTC и мелкий
+     альт не сравнить вовсе.</p>
+    <p class="plain">Когда открывается сделка, вклад каждого признака
+     в ЭТОТ прогноз раскладывается, и семейство, двинувшее его
+     сильнее прочих, становится именем ситуации, которое видно на
+     сделке — «ликвидации», «выедение стакана». Это чтение прогноза,
+     а не правило, которому следовали.</p>
+    <p class="sub">Вес — собственная важность признака у модели для
+     четырёхчасового прогноза (рука ${esc(d.weight_arm)}). Манифест
+     хранит топ-10 на цель, поэтому веса накрывают ${cov} % общей
+     важности: семейство без веса не «не используется», а не видно на
+     этой глубине. «Названо в закрытых сделках» считает последний
+     год.</p>
+    ${d.error ? `<p class="warn"><b>${T("partial")}</b> ${
+      esc(d.error)}</p>` : ""}`;
+  return `
     <p class="plain"><b>The model has no separate strategies.</b> It is
      one model over every coin and every situation, and it was never
      told "this is a squeeze, do that". What it has is the vocabulary
@@ -4828,23 +5001,44 @@ function render(d){
      forecast, not a rule that was followed.</p>
     <p class="sub">Weights are the model's own feature importance for
      the 4 h forecast (${esc(d.weight_arm)} arm). The manifest keeps
-     the top ten per target, so they cover ${
-       ((d.weight_covers||0)*100).toFixed(0)} % of the total — a family
-     without a weight is not unused, it is unseen at this depth.
-     "Named in N closed trades" counts the last 365 days.</p>
-    ${d.error ? `<p class="warn"><b>Partial.</b> ${esc(d.error)}</p>`
-              : ""}`;
+     the top ten per target, so they cover ${cov} % of the total — a
+     family without a weight is not unused, it is unseen at this
+     depth. "Named in N closed trades" counts the last 365 days.</p>
+    ${d.error ? `<p class="warn"><b>${T("partial")}</b> ${
+      esc(d.error)}</p>` : ""}`;
+}
+
+function render(d){
+  DATA = d;
+  const box = document.getElementById("box");
+  const intro = document.getElementById("intro");
+  navMount("/glossary-page");
+  document.getElementById("strap").textContent = T("strap");
+  document.getElementById("lang").innerHTML =
+    ["en","ru"].map(v => `<button data-l="${v}"
+      aria-pressed="${String(LANG === v)}">${v.toUpperCase()}</button>`)
+      .join(" ");
+  document.querySelectorAll("#lang button").forEach(b =>
+    b.onclick = () => setLang(b.dataset.l));
+  if (!d || !d.present) {
+    intro.innerHTML = T("untrained") + (d && d.error
+      ? ` <span class="mono dim">${esc(d.error)}</span>` : "");
+    box.innerHTML = "";
+    return;
+  }
+  document.getElementById("lead").textContent =
+    T("lead")({seq: d.train_seq, n: d.n_features});
+  intro.innerHTML = introHTML(d);
   const fams = d.families || [];
   box.innerHTML = fams.map(famCard).join("")
-    || `<div class="panel">no families — the map is empty</div>`;
+    || `<div class="panel">${T("empty")}</div>`;
   const orphan = fams.find(f => f.key === "other");
   if (orphan)
     box.insertAdjacentHTML("afterbegin", `<div class="panel"
       style="border-color:var(--ask)"><div class="cap"
-      style="color:var(--ask)">defect: features without a family</div>
-      ${orphan.features.map(x => esc(x.name)).join(", ")} — every
-      situation name on every page is diluted until these are mapped
-      </div>`);
+      style="color:var(--ask)">${T("orphan")}</div>
+      ${orphan.features.map(x => esc(x.name)).join(", ")}
+      ${T("orphan_tail")}</div>`);
 }
 async function pull(){
   let d = null;
@@ -4917,12 +5111,13 @@ button[aria-pressed="true"]{border-color:var(--accent);
    срез читался как «денег нет». */
 .grid td:first-child{white-space:normal;min-width:96px}
 .grid td,.grid th{padding:4px 6px}
-</style>
+""" + NAVCSS + r"""</style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
   <span class="k">league — what works best</span>
   <span style="flex:1"></span>
   <span id="per"></span></div>
+<div id="nav"></div>
 <div class="k" style="margin-bottom:8px"><a id="pb"
   href="#">what each situation means &rarr;</a></div>
 <div id="note" class="k"></div>
@@ -4931,6 +5126,8 @@ button[aria-pressed="true"]{border-color:var(--accent);
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+navMount("/league-page");
 // Названия ситуаций в таблицах — короткие ярлыки; что каждая значит,
 // объясняет справочник, и ссылка на него стоит рядом с ними.
 document.getElementById("pb").href =
