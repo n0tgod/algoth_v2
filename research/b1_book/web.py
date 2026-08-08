@@ -788,8 +788,22 @@ function tradeStats(p) {
       + cell("closed", s.closed)
       + cell("open", s.open)
       + (s.exiting ? cell("exited, pnl pending", s.exiting) : "")
-      + cell("sign right", (s.hit_rate*100).toFixed(0) + " %",
+      // «Знак угадан» считается по сделкам, дошедшим до НАШЕГО же
+      // уровня — стопа или цели. Сделка, закрытая разворотом прогноза
+      // или пределом возраста, до уровня не дошла, и её мелкий плюс
+      // победой не является: владелец увидел 70 % при отрицательном
+      // счёте. Знаменатель стоит рядом числом, а прежняя доля по всем
+      // закрытым — в подсказке, чтобы разница была видна, а не
+      // заменена.
+      + cell(s.hit_basis === "levels" ? "sign right (at a level)"
+             : "sign right",
+             (s.hit_rate*100).toFixed(0) + " %"
+             + `<span class="k"> of ${s.hit_n ?? s.closed}</span>`,
              s.hit_rate >= 0.5 ? "good" : "bad")
+      + (s.hit_rate_all != null
+         ? cell("sign right, all exits",
+                (s.hit_rate_all*100).toFixed(0) + " %"
+                + `<span class="k"> of ${s.closed}</span>`) : "")
       + cell("net move", pct(s.net_bp_avg),
              s.net_bp_avg > 0 ? "good" : "bad")
       + cell("paper P&L, $", s.pnl, s.pnl > 0 ? "good" : "bad")
@@ -797,7 +811,7 @@ function tradeStats(p) {
              s.expected_over_got > 3 ? "bad" : "")
       + (s.awaiting ? cell("awaiting", s.awaiting) : "")
       + (s.no_outcome ? cell("no outcome", s.no_outcome, "bad") : "")
-      + `</div>`;
+      + `</div>` + exitLine(s);
   }).join("");
 }
 
@@ -906,6 +920,17 @@ const EXIT_EN = {"прогноз развернулся": "forecast flipped",
                    "price broke the promised adverse path",
                  "цена дошла до обещанной цели": "target reached",
                  "предел возраста": "age limit"};
+function exitLine(s) {
+  // Раскладка выходов числом. Без неё «знак угадан у 55 % из 12» не
+  // говорит, куда делись остальные сделки, а именно там и сидит
+  // разница между двумя долями.
+  const e = s.exits || {};
+  const ks = Object.keys(e);
+  if (!ks.length) return "";
+  const part = ks.sort((a, b) => e[b] - e[a])
+    .map(k => `${EXIT_EN[k] || k} <b>${e[k]}</b>`).join(" · ");
+  return `<div class="mline dim">how they ended: ${part}</div>`;
+}
 function renderModel() {
   const box = document.getElementById("modelbox"), full = MDL.data;
   const cap = document.getElementById("cap-model");
@@ -1933,8 +1958,15 @@ async function load() {
     // иначе тревога станет фоном и её перестанут читать.
     + (st.no_outcome ? cell("no outcome", st.no_outcome, "bad") : "");
   if (st.closed) {
-    html += cell("sign right", (st.hit_rate*100).toFixed(0) + " %",
+    html += cell(st.hit_basis === "levels" ? "sign right (at a level)"
+                 : "sign right",
+                 (st.hit_rate*100).toFixed(0) + " %"
+                 + `<span class="k"> of ${st.hit_n ?? st.closed}</span>`,
                  st.hit_rate >= 0.5 ? "good" : "bad")
+      + (st.hit_rate_all != null
+         ? cell("sign right, all exits",
+                (st.hit_rate_all*100).toFixed(0) + " %"
+                + `<span class="k"> of ${st.closed}</span>`) : "")
       + cell("net move, avg", pct(st.net_bp_avg),
              st.net_bp_avg > 0 ? "good" : "bad")
       + cell("realised P&L", (st.pnl > 0 ? "+" : "") + st.pnl + " $",

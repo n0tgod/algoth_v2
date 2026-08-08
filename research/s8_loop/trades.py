@@ -52,6 +52,27 @@ LADDER_CAP_USD = 5000.0
 ROUND_COST_BP = 11.0
 
 
+# Выходы, которые ставили МЫ САМИ: стоп и цель. Причины выхода живут
+# строками в разборе, и список обязан быть один на весь проект —
+# страница, сводка и отчёт не вправе решать это каждый по-своему.
+#
+# Различие содержательное, а не оформительское. «Угадал знак» отвечает
+# на вопрос, сработала ли ГЕОМЕТРИЯ сделки: цена дошла до нашей цели
+# или до нашего стопа. Сделка, закрытая разворотом прогноза или
+# пределом возраста, до уровня не дошла ни разу — её исход есть та
+# цена, на которой мы её застали, и знак у неё случаен. Замечание
+# владельца: доля «знак угадан» стояла выше 70 % при отрицательном
+# счёте, потому что мелкие плюсы отменённых сигналов считались
+# победами наравне с дошедшими до цели.
+LEVEL_EXITS = ("цена прошла обещанный ход против",
+               "цена дошла до обещанной цели")
+
+
+def by_level(t):
+    """Сделка закрыта нашим же уровнем (стоп или цель)."""
+    return t.get("exit_reason") in LEVEL_EXITS
+
+
 def _ts(hour):
     """`2026-08-03-17` → epoch-секунды начала часа."""
     try:
@@ -775,14 +796,36 @@ def summary(trades, arm=None, capital=None, start=None):
         out["gift_lag_med"] = lags[len(lags) // 2] if lags else None
     if not closed:
         return out
-    hits = sum(1 for t in closed if t.get("hit"))
+    # Знаменатель «знака» — сделки, дошедшие до уровня. У книг со
+    # сроком (1/4/24 ч) уровней в выходе нет вовсе, там причина пуста и
+    # знаменателем остаются все закрытые: смысл меры там другой —
+    # «куда ушла цена за горизонт».
+    lvl = [t for t in closed if by_level(t)]
+    base = lvl if lvl else closed
+    out["hit_basis"] = "levels" if lvl else "all"
+    out["hit_n"] = len(base)
+    # Прежнее число (по всем закрытым) остаётся рядом: разница между
+    # ними и есть цена отменённых сигналов, и прятать её значило бы
+    # заменить одну неполную правду другой.
+    if lvl:
+        out["hit_rate_all"] = round(
+            sum(1 for t in closed if t.get("hit")) / len(closed), 3)
+    # Сколько сделок каким выходом закрылось — числом, а не догадкой по
+    # доле: без этой раскладки «знак угадан у 55 %» не говорит, о
+    # скольких сделках речь.
+    ex_by = {}
+    for t in closed:
+        ex_by[t.get("exit_reason") or "срок"] = 1 + ex_by.get(
+            t.get("exit_reason") or "срок", 0)
+    out["exits"] = ex_by
+    hits = sum(1 for t in base if t.get("hit"))
     nets = [t.get("net_bp") for t in closed if t.get("net_bp") is not None]
     pnls = [t.get("pnl") for t in closed if t.get("pnl") is not None]
     exps = [t.get("expected_bp") for t in closed
             if t.get("expected_bp") is not None]
     gots = [t.get("got_bp") for t in closed if t.get("got_bp") is not None]
     out.update(
-        hit_rate=round(hits / len(closed), 3),
+        hit_rate=round(hits / len(base), 3),
         net_bp_avg=round(sum(nets) / len(nets), 1) if nets else None,
         pnl=round(sum(pnls), 2) if pnls else None,
         expected_avg=round(sum(exps) / len(exps), 1) if exps else None,
@@ -806,9 +849,12 @@ def summary(trades, arm=None, capital=None, start=None):
         out[f"pnl_{side}_pct"] = (
             round(100 * sum(p) / start, 2) if p and start else None)
         out[f"net_bp_{side}"] = round(sum(n) / len(n), 1) if n else None
+        # Знак по стороне — на том же знаменателе, что общий: иначе
+        # стороны считались бы по одной выборке, а итог по другой.
+        sb = [t for t in s if by_level(t)] if lvl else s
         out[f"hit_{side}"] = (
-            round(sum(1 for t in s if t.get("hit")) / len(s), 3)
-            if s else None)
+            round(sum(1 for t in sb if t.get("hit")) / len(sb), 3)
+            if sb else None)
     return out
 
 

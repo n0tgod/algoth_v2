@@ -1776,6 +1776,70 @@ def test_worst_open_book_is_not_the_worst_trade():
           [p["op"] for p in m] == [-100.0, 0.0], str(m))
 
 
+def test_sign_counts_only_trades_that_reached_a_level():
+    """«Знак угадан» — про геометрию сделки, а не про то, где её застали.
+
+    Замечание владельца: доля стояла выше 70 % при отрицательном счёте.
+    Причина в том, что сделка, закрытая разворотом прогноза или
+    пределом возраста, до нашего уровня не доходила ни разу — её исход
+    есть цена момента отмены, и мелкий плюс засчитывался победой
+    наравне с дошедшей до цели.
+
+    Прежнее число не выбрасывается, а стоит рядом: разница между двумя
+    долями и есть цена отменённых сигналов.
+    """
+    import trades as TR
+
+    mk = (lambda sym, side, reason, got, pnl:
+          {"state": "закрыта", "arm": "gbm", "side": side, "sym": sym,
+           "exit_reason": reason, "got_bp": got, "net_bp": got - 11,
+           "pnl": pnl, "hit": (got > 0) if side == "long" else (got < 0)})
+    rows = [
+        mk("A", "long", "цена дошла до обещанной цели", 120.0, 12.0),
+        mk("B", "long", "цена прошла обещанный ход против", -60.0, -6.0),
+        mk("C", "long", "цена прошла обещанный ход против", -55.0, -5.5),
+        # Отменённые сигналы: знак «верный», денег почти нет.
+        mk("D", "long", "прогноз развернулся", 3.0, 0.3),
+        mk("E", "long", "прогноз развернулся", 2.0, 0.2),
+        mk("F", "short", "предел возраста", -1.0, 0.1),
+    ]
+    s = TR.summary(rows, "gbm", start=1000.0)
+    check("знаменатель — только дошедшие до уровня",
+          s["hit_basis"] == "levels" and s["hit_n"] == 3,
+          f"{s.get('hit_basis')} / {s.get('hit_n')}")
+    check("доля считается по ним (1 из 3)",
+          abs(s["hit_rate"] - 0.333) < 1e-9, str(s.get("hit_rate")))
+    check("прежняя доля по всем закрытым осталась рядом (4 из 6)",
+          abs(s["hit_rate_all"] - 0.667) < 1e-9,
+          str(s.get("hit_rate_all")))
+    check("раскладка выходов — числом",
+          s["exits"].get("прогноз развернулся") == 2
+          and s["exits"].get("цена дошла до обещанной цели") == 1,
+          str(s.get("exits")))
+    # Стороны считаются на ТОМ ЖЕ знаменателе: иначе итог был бы по
+    # одной выборке, а ноги по другой.
+    check("сторона считается по уровневым сделкам",
+          abs(s["hit_long"] - 0.333) < 1e-9 and s["hit_short"] is None,
+          f"{s.get('hit_long')} / {s.get('hit_short')}")
+
+    # Книга со СРОКОМ уровней в выходе не имеет вовсе: там причина
+    # пуста, и знаменателем обязаны остаться все закрытые — смысл меры
+    # там другой, «куда ушла цена за горизонт».
+    hourly = [{"state": "закрыта", "arm": "gbm", "side": "long",
+               "sym": "X", "got_bp": 10.0, "net_bp": -1.0, "pnl": 1.0,
+               "hit": True},
+              {"state": "закрыта", "arm": "gbm", "side": "long",
+               "sym": "Y", "got_bp": -10.0, "net_bp": -21.0,
+               "pnl": -2.0, "hit": False}]
+    h = TR.summary(hourly, "gbm", start=1000.0)
+    check("у книги со сроком знаменатель прежний",
+          h["hit_basis"] == "all" and h["hit_n"] == 2
+          and abs(h["hit_rate"] - 0.5) < 1e-9,
+          f"{h.get('hit_basis')} / {h.get('hit_rate')}")
+    check("второй доли там не появляется",
+          "hit_rate_all" not in h, str(h.get("hit_rate_all")))
+
+
 def test_summary_splits_pnl_by_side():
     """Итог по ногам считается раздельно, доля — от СТАРТОВОГО депозита.
 
@@ -3162,6 +3226,7 @@ def main():
     test_drawdown_is_reported_against_the_deposit()
     test_pretest_hedges_with_beta_one_and_keeps_books_apart()
     test_worst_open_book_is_not_the_worst_trade()
+    test_sign_counts_only_trades_that_reached_a_level()
     test_summary_splits_pnl_by_side()
     test_account_drawdown_counts_open_positions()
     test_entry_price_is_recovered_from_summaries()
