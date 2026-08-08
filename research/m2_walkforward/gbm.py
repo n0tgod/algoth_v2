@@ -21,7 +21,10 @@ M2: градиентный бустинг деревьев на numpy — мод
   2024 года пропусков 100 %, и любое другое обращение с ними было бы
   выдумкой.
 * Дерево жадное, разрез ищется по гистограммам градиентов; потеря
-  квадратичная, значение листа — среднее остатка.
+  квадратичная, значение листа — среднее остатка. Заданный `tau`
+  переводит обучение на квантильную потерю (значение листа — квантиль
+  остатка): это нужно целям-экстремумам, где условное среднее
+  перекрывается в половине случаев и уровнем стопа быть не может.
 
 Гиперпараметры зафиксированы спекой §3 до прогона и осями сетки не
 являются: глубина 3, 200 деревьев, шаг 0.05, подвыборка 0.8. Константы
@@ -116,18 +119,28 @@ def _go_left(col, thr, nan_left):
     return np.where(col == 0, nan_left, col <= thr)
 
 
-def _grow(codes, g, idx, depth, importance):
+def _grow(codes, g, idx, depth, importance, leaf=None):
+    """Дерево по псевдоостаткам `g`.
+
+    `leaf` — чем считается значение листа. У квадратичной потери это
+    среднее самого `g` (умолчание), у квантильной — квантиль ОСТАТКА,
+    а не среднее градиента: градиент там равен ±константе и величины
+    шага не несёт. Разрез в обоих случаях ищется по гистограммам `g`.
+    """
+    if leaf is None:
+        def leaf(i):
+            return float(g[i].mean())
     if depth >= DEPTH or idx.size < 2 * MIN_LEAF:
-        return float(g[idx].mean()) if idx.size else 0.0
+        return leaf(idx) if idx.size else 0.0
     hg, hn = _histograms(codes[idx], g[idx], N_BINS + 2)
     j, t, nan_left, gain = _best_split(hg, hn)
     if j < 0:
-        return float(g[idx].mean())
+        return leaf(idx)
     importance[j] += gain
     m = _go_left(codes[idx, j], t, nan_left)
     return (j, t, nan_left,
-            _grow(codes, g, idx[m], depth + 1, importance),
-            _grow(codes, g, idx[~m], depth + 1, importance))
+            _grow(codes, g, idx[m], depth + 1, importance, leaf),
+            _grow(codes, g, idx[~m], depth + 1, importance, leaf))
 
 
 def _tree_predict(node, codes, idx, out):
@@ -162,17 +175,32 @@ class GBM:
         return pred
 
 
-def fit(x, y, seed, n_trees=N_TREES):
+def fit(x, y, seed, n_trees=N_TREES, tau=None):
     """Обучение. `seed` обязателен и выводится вызывающим из номеров —
     урок R3: зерно, которое нельзя воспроизвести, делает нуль-модель
-    непроверяемой."""
+    непроверяемой.
+
+    `tau` — уровень квантиля. `None` (умолчание) даёт прежнюю
+    квадратичную потерю, то есть предсказание УСЛОВНОГО СРЕДНЕГО, и
+    числа обязаны совпасть с прежними до бита. Заданный `tau`
+    переводит обучение на квантильную (pinball) потерю: модель
+    предсказывает уровень, ниже которого цель оказывается в доле
+    `tau` случаев.
+
+    Разница существенна там, где цель — экстремум пути. Максимальный
+    ход ПРОТИВ позиции есть максимум, и его условное среднее по
+    построению перекрывается примерно в половине случаев: стоп,
+    поставленный на среднем, срабатывает на медианной сделке. Уровень
+    же нужен такой, за который цена заходит РЕДКО, — а это квантиль,
+    и получить его из квадратичной потери нельзя ничем.
+    """
     ok = np.isfinite(y)
     x, y = x[ok], y[ok]
     edges = bin_edges(x)
     codes = bin_apply(x, edges)
     rng = np.random.default_rng(seed)
     n = len(y)
-    base = float(y.mean())
+    base = float(y.mean() if tau is None else np.quantile(y, tau))
     pred = np.full(n, base)
     trees = []
     importance = np.zeros(x.shape[1])
@@ -180,8 +208,18 @@ def fit(x, y, seed, n_trees=N_TREES):
     all_idx = np.arange(n)
     for _ in range(n_trees):
         sub = np.flatnonzero(rng.random(n) < SUBSAMPLE)
-        g = y - pred
-        tr = _grow(codes, g, sub, 0, importance)
+        res = y - pred
+        if tau is None:
+            g, leaf = res, None
+        else:
+            # Псевдоостаток квантильной потери: +tau там, где цель выше
+            # предсказания, −(1−tau) где ниже. Шаг листа берётся
+            # отдельной строкой поиска — квантилем остатка внутри листа.
+            g = np.where(res > 0, tau, tau - 1.0)
+
+            def leaf(i, _r=res):
+                return float(np.quantile(_r[i], tau)) if i.size else 0.0
+        tr = _grow(codes, g, sub, 0, importance, leaf)
         trees.append(tr)
         _tree_predict(tr, codes, all_idx, buf)
         pred += LEARNING_RATE * buf

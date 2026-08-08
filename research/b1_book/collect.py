@@ -2358,6 +2358,12 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     заявка модели: пропуск. Возвращает поля события либо `None`;
     чистая функция — правило денег живёт под тестом, а не в потоке.
 
+    Стоп берётся из квантильных концов листа (`mae_q`/`mfe_q`), а не
+    из линии прогноза: линия прогноза есть уровень, куда модель ЖДЁТ
+    цену, и заявка на нём срабатывает примерно у половины сделок.
+    Отношение RR считается по этому же стопу — иначе гейт мерил бы
+    одно, а сделка несла другое.
+
     `min_disc` — насколько остаток обязан ПРЕВЫШАТЬ обещание листа.
     Без него курок спускала не цена, а лист: пока цена не двинулась,
     остаток равен полному прогнозу, и все выбранные моделью имена
@@ -2389,9 +2395,26 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
         return None
     rem_mae = row["mae"] - move
     rem_mfe = row["mfe"] - move
+    # Квантильные концы пути переякориваются тем же ходом: это уровни
+    # той же цены, а не другая величина. Листа без них хватает (цель
+    # не набрала строк, лист прежнего образца) — тогда стоп остаётся
+    # на средней линии, и `path_fields` скажет это полем `adverse_of`.
+    rem_maeq = (row["mae_q"] - move if row.get("mae_q") is not None
+                else None)
+    rem_mfeq = (row["mfe_q"] - move if row.get("mfe_q") is not None
+                else None)
     sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
     import trades as TR
-    adv, fav, _, _ = TR.position_path(side, rem_mae, rem_mfe)
+    pf = TR.path_fields(side, round(rem_mae, 1), round(rem_mfe, 1),
+                        mae_q=(None if rem_maeq is None
+                               else round(rem_maeq, 1)),
+                        mfe_q=(None if rem_mfeq is None
+                               else round(rem_mfeq, 1)))
+    # Отношение считается по ИСПОЛНЯЕМОЙ геометрии: риск сделки — это
+    # тот стоп, который реально стоит, а не линия прогноза. Иначе гейт
+    # обещал бы RR ≥ 2, а сделка бралась бы с фактическим 1.2 — та же
+    # ошибка единиц, что уже дважды ловилась в этом проекте.
+    adv, fav = pf["mae"], pf["mfe"]
     if side == "long" and not (fav > 0 and adv < 0):
         return None
     if side == "short" and not (fav < 0 and adv > 0):
@@ -2402,8 +2425,7 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     d = {"sym": row.get("sym"), "side": side, "px": round(mid, 8),
          "move_bp": round(move, 1), "wave_bp": round(wave_bp, 1),
          "fwd": round(rem, 1), "fwd0": fwd0,
-         "rr": round(rr, 2),
-         **TR.path_fields(side, round(rem_mae, 1), round(rem_mfe, 1))}
+         "rr": round(rr, 2), **pf}
     if row.get("odd") is not None:
         d["odd"] = row["odd"]
     return d

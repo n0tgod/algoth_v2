@@ -1012,11 +1012,25 @@ function renderModel() {
        would enter in the first tick after the sheet — a batch on the
        cycle clock, not a moment.</div>`
     : "";
+  // Правило СТОПА — тем же способом и рядом: заявка стоит не там,
+  // куда модель ждёт цену, а за этой линией, и уровень предсказывает
+  // отдельная модель. Без числа на странице разницу между двумя
+  // правилами не увидеть в сделке никак.
+  const stopLine = isSit(d) && m.stop_tau
+    ? `<div class="mline dim">stop rule: not on the forecast line —
+       the level the model expects price to reach would be hit by
+       about half the trades (measured: 52 % touch it, 37 % of those
+       come back and still reach the target). The stop sits on a
+       separately learned level that price is allowed to pass in
+       <b>${Math.round(m.stop_tau * 100)} %</b> of cases; reward/risk
+       at the gate is counted against that level, not the forecast
+       one.</div>`
+    : "";
   // Переключатель порога — только у книги без срока: у часовых книг
   // обещания пути не решают ни входа, ни выхода, и фильтровать их тем
   // же числом значило бы сравнивать разные вещи.
   const rrLine = isSit(d) ? rrControl(d) : "";
-  box.innerHTML = armBtns + rrLine + lagLine + gateLine
+  box.innerHTML = armBtns + rrLine + lagLine + gateLine + stopLine
     + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
@@ -2618,8 +2632,10 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 </div>
 <div class="legend">
   <span><span class="sw" style="border-color:var(--accent)"></span>level</span>
-  <span><span class="sw" style="border-color:var(--ask)"></span>stop /
-    adverse promise</span>
+  <span><span class="sw" style="border-color:var(--ask)"></span>stop</span>
+  <span><span class="sw" style="border-color:var(--muted)"></span>where the
+    model expects price to go against the trade — the stop stands
+    beyond it</span>
   <span><span class="sw" style="border-color:var(--bid)"></span>target /
     profit promise</span>
   <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp;
@@ -3397,6 +3413,11 @@ function draw() {
       : t.entry_px * (1 + t.mae_bp / 1e4);
     const pFav = t.mfe_bp == null ? null
       : t.entry_px * (1 + t.mfe_bp / 1e4);
+    // Линия, куда модель ЖДЁТ цену. Раньше на ней стоял стоп; теперь
+    // стоп за ней, и обе линии обязаны быть видны — иначе по графику
+    // не сказать, какое из двух правил вело сделку.
+    const pExp = t.mae_m_bp == null ? null
+      : t.entry_px * (1 + t.mae_m_bp / 1e4);
     // Границы зон — диапазон свечей за время удержания плюс уровни
     // сделки: v1 заливал прибыльную и убыточную сторону входа на весь
     // спан, и по цвету над/под линией видно, где сделка проводила
@@ -3460,7 +3481,8 @@ function draw() {
       }
     };
     promise(pFav, css("--bid"), up ? "promise ↑" : "promise ↓");
-    promise(pAdv, css("--ask"), "adverse");
+    promise(pAdv, css("--ask"), "stop");
+    promise(pExp, css("--muted"), "expected move against");
     // Линия входа через спан удержания — сплошная, как у v1.
     g.strokeStyle = col; g.fillStyle = col;
     g.lineWidth = me ? 2 : 1.2;

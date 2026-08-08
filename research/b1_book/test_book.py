@@ -2064,6 +2064,54 @@ def test_sit_scan_anchors_forecast_to_live_price():
           ev and ev["side"] == "short" and ev["fwd"] == -52.0, str(ev))
 
 
+def test_sit_scan_stop_is_the_quantile_level():
+    """Стоп берётся из квантильных концов листа, а не из линии прогноза.
+
+    Замечание владельца: прежде заявка стояла ровно там, куда модель
+    сама предсказывает цену. Здесь проверяется, что стоп отодвинулся,
+    что отношение RR считается ПО НЕМУ (иначе гейт обещал бы одно, а
+    сделка несла другое), и что лист без квантилей работает по-старому.
+    """
+    import collect as C
+
+    # Прогноз 30, цена отдала 10 → остаток 40, обещания −10 / +35.
+    # Средняя линия дала бы RR 3.5; квантильный стоп −25 (после
+    # переякоривания −15) оставляет 35/15 = 2.33.
+    row = {"sym": "AUSDT", "fwd": 30.0, "mae": -20.0, "mfe": 25.0,
+           "mae_q": -25.0, "mfe_q": 30.0, "beta": 1.0, "px": 100.0}
+    ev = C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0)
+    check("стоп отодвинут на квантильный уровень",
+          ev and ev["mae"] == -15.0 and ev["mae_m"] == -10.0
+          and ev["adverse_of"] == "maeq_4h", str(ev))
+    check("RR считается по исполняемой геометрии, а не по прогнозу",
+          ev and ev["rr"] == 2.33, str(ev))
+    # Тот же кандидат при пороге 3: по средней линии он прошёл бы
+    # (3.5 ≥ 3), по настоящему стопу — нет. Гейт обязан отказать.
+    check("кандидат, проходящий по средней линии, но не по стопу, "
+          "не входит",
+          C.sit_scan_entry(row, 99.90, 0.0, 22.0, 3.0, 0.0) is None)
+    # Шорт зеркален: против него ход ВВЕРХ, дальний уровень — больший.
+    srow = {"sym": "CUSDT", "fwd": -40.0, "mae": -50.0, "mfe": 20.0,
+            "mae_q": -60.0, "mfe_q": 30.0, "beta": 1.0, "px": 100.0}
+    ev = C.sit_scan_entry(srow, 100.10, 0.0, 22.0, 2.0, 0.0)
+    check("шорт: стоп из верхнего квантиля максимума цены",
+          ev and ev["mae"] == 20.0 and ev["mae_m"] == 10.0
+          and ev["adverse_of"] == "mfeq_4h", str(ev))
+    # Пересечение квантилей: предсказанный уровень оказался БЛИЖЕ
+    # среднего. Это артефакт двух независимых подгонок, а не сведение
+    # о рынке — стоп остаётся на дальнем, то есть на прежнем месте.
+    near = {**row, "mae_q": -15.0}
+    ev = C.sit_scan_entry(near, 99.90, 0.0, 22.0, 2.0, 0.0)
+    check("квантиль ближе среднего — стоп не придвигается",
+          ev and ev["mae"] == -10.0 and "mae_m" not in ev, str(ev))
+    # Лист прежнего образца (квантилей нет вовсе) — прежнее правило.
+    old = {k: v for k, v in row.items() if k not in ("mae_q", "mfe_q")}
+    ev = C.sit_scan_entry(old, 99.90, 0.0, 22.0, 2.0, 0.0)
+    check("лист без квантилей — стоп по средней линии, как прежде",
+          ev and ev["mae"] == -10.0 and ev["adverse_of"] == "mae_4h",
+          str(ev))
+
+
 def test_sit_scan_enters_only_on_a_crossing_it_saw():
     """Вход — событие, а не состояние, в котором имя застали.
 
@@ -2669,6 +2717,7 @@ def main():
     test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
     test_sit_scan_anchors_forecast_to_live_price()
+    test_sit_scan_stop_is_the_quantile_level()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()

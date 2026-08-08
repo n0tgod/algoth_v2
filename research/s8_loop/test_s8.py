@@ -978,6 +978,21 @@ def test_situational_book_enters_and_exits_by_situation():
         check("лист сечения для сканера построен",
               sheet and {r["sym"] for r in sheet}
               == set(syms), str(sheet)[:80])
+        # Квантильных моделей у этого набора нет — лист обязан выйти
+        # БЕЗ уровней стопа, а не с нулями: ноль читался бы сканером
+        # как «стоп на входе», то есть закрывал бы сделку сразу.
+        check("нет квантильной модели — в листе нет и уровня",
+              all("mae_q" not in r for r in sheet), str(sheet)[:120])
+        with_q = dict(models)
+        with_q[("gbm", "maeq_4h")] = Stub([-25.0, -5.0, -60.0, -20.0])
+        with_q[("gbm", "mfeq_4h")] = Stub([30.0, 30.0, 30.0, 30.0])
+        sheet_q = T.situational_arm(d, "gbm", with_q, x, mats, syms,
+                                    rows_m, 1, grid, lo, hi, None,
+                                    lambda m: None)
+        a = next(r for r in sheet_q if r["sym"] == "AUSDT")
+        check("уровни стопа доехали до листа сканера",
+              a.get("mae_q") == -25.0 and a.get("mfe_q") == 30.0,
+              str(a))
 
         # Позиции для проверки выходов сеются файлом — как их писал бы
         # цикл из событий сканера. Поля path-размечены: mae — ход
@@ -1460,6 +1475,41 @@ def test_both_ends_of_the_path_are_recorded_and_mirrored():
           == {"mae": 273.0, "adverse_of": "mfe_4h",
               "mfe": -419.0, "favourable_of": "mae_4h"},
           str(T.path_fields("short", -419.0, 273.0)))
+
+    # Стоп из квантильных концов: он обязан быть ДАЛЬШЕ средней линии,
+    # а сама средняя — остаться в записи, иначе величину сдвига потом
+    # нечем измерить.
+    pf = T.path_fields("long", -400.0, 300.0, mae_q=-600.0, mfe_q=350.0)
+    check("стоп лонга — нижний квантиль минимума цены",
+          pf == {"mae": -600.0, "mae_m": -400.0,
+                 "adverse_of": "maeq_4h",
+                 "mfe": 300.0, "favourable_of": "mfe_4h"}, str(pf))
+    pf = T.path_fields("short", -400.0, 300.0, mae_q=-600.0, mfe_q=350.0)
+    check("стоп шорта — верхний квантиль максимума цены",
+          pf == {"mae": 350.0, "mae_m": 300.0,
+                 "adverse_of": "mfeq_4h",
+                 "mfe": -400.0, "favourable_of": "mae_4h"}, str(pf))
+    check("цель остаётся средней: её ждут, а не заходят за неё редко",
+          pf["mfe"] == -400.0)
+    # Инвариант правки: новый стоп НЕ бывает теснее прежнего. Ни
+    # пересечение квантилей, ни перевёрнутый знак не вправе придвинуть
+    # заявку — это артефакты подгонки, а не сведения о рынке.
+    check("квантиль ближе среднего — остаётся прежний стоп",
+          T.path_fields("long", -400.0, 300.0, mae_q=-100.0,
+                        mfe_q=350.0)["mae"] == -400.0)
+    check("перевёрнутый знак квантиля — остаётся прежний стоп",
+          T.path_fields("long", -400.0, 300.0, mae_q=+50.0,
+                        mfe_q=350.0)["mae"] == -400.0)
+    check("никакой набор квантилей не придвигает стоп",
+          all(abs(T.path_fields(s, -400.0, 300.0, mae_q=a,
+                                mfe_q=b)["mae"])
+              >= abs(T.path_fields(s, -400.0, 300.0)["mae"]) - 1e-9
+              for s in ("long", "short")
+              for a in (-900.0, -400.0, -100.0, 0.0, 120.0)
+              for b in (900.0, 300.0, 90.0, 0.0, -120.0)))
+    check("квантилей нет — прежние поля бит в бит",
+          T.path_fields("long", -419.0, 273.0, mae_q=None, mfe_q=None)
+          == T.path_fields("long", -419.0, 273.0))
 
     # И величина обязана дойти до самой сделки: записанное, но не
     # доехавшее до показа поле неотличимо от незаписанного.
@@ -2357,8 +2407,10 @@ def test_one_pick_per_arm_and_hour():
     md = os.path.join(tempfile.mkdtemp(), "m")
     keep = (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit)
     T.MODEL_DIR, T.PRETEST = md, True
-    T.gbm.fit = lambda x, y, seed: keep[3](x, y, seed, n_trees=12)
-    T.nn.fit = lambda x, y, seed: keep[4](x, y, seed, epochs=3)
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 keep[3](x, y, seed, n_trees=12, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                keep[4](x, y, seed, epochs=3, **kw))
     T.ARMS = (("gbm", T.gbm.fit),)
     try:
         synth.write_summaries(sd, D=80)
@@ -2407,8 +2459,10 @@ def test_trades_close_on_an_hourly_cycle():
     md = os.path.join(tempfile.mkdtemp(), "m")
     keep = (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit)
     T.MODEL_DIR, T.PRETEST = md, True
-    T.gbm.fit = lambda x, y, seed: keep[3](x, y, seed, n_trees=12)
-    T.nn.fit = lambda x, y, seed: keep[4](x, y, seed, epochs=3)
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 keep[3](x, y, seed, n_trees=12, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                keep[4](x, y, seed, epochs=3, **kw))
     T.ARMS = (("gbm", T.gbm.fit),)
     try:
         for k in range(6):
@@ -2826,8 +2880,10 @@ def test_train_cycle_end_to_end():
 
     orig_fit = T.gbm.fit
     orig_nn = T.nn.fit
-    T.gbm.fit = lambda x, y, seed: orig_fit(x, y, seed, n_trees=25)
-    T.nn.fit = lambda x, y, seed: orig_nn(x, y, seed, epochs=4)
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 orig_fit(x, y, seed, n_trees=25, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                orig_nn(x, y, seed, epochs=4, **kw))
     T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
     try:
         d = tempfile.mkdtemp()
@@ -3000,6 +3056,19 @@ def test_nn_learns_and_sees_missing():
           str(gap))
     p2 = N.fit(x[:4500], y[:4500], seed=1, epochs=20).predict(x[4500:])
     check("одно зерно — бит в бит", np.array_equal(p, p2))
+    # Квантильная потеря у сети — то же требование, что у бустинга:
+    # уровень с объявленной долей захода. Умолчание обязано остаться
+    # прежним бит в бит.
+    yq = r.normal(0, 1, n) * np.where(x[:, 0] > 0, 4.0, 1.0)
+    mq = N.fit(x, yq, seed=2, epochs=20, tau=0.2)
+    share = float(np.mean(yq < mq.predict(x)))
+    check(f"сеть: квантиль держит долю ({share:.3f})",
+          0.13 < share < 0.28, str(share))
+    a = N.fit(x[:2000], y[:2000], seed=3, epochs=4).predict(x[:200])
+    b = N.fit(x[:2000], y[:2000], seed=3, epochs=4,
+              tau=None).predict(x[:200])
+    check("сеть: умолчание — прежняя потеря бит в бит",
+          np.array_equal(a, b))
 
 
 def test_think_words():

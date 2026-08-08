@@ -84,6 +84,59 @@ def test_gbm_deterministic():
     check("другое зерно — другая модель", not np.array_equal(p1, p3))
 
 
+def test_gbm_quantile_holds_declared_share():
+    # Гетероскедастика: у половины строк разброс вчетверо больше. Это
+    # и есть случай стопа — уровень обязан быть ИМЕННЫМ, а не общим
+    # множителем, иначе он одновременно тесен для одних и широк для
+    # других.
+    n = 8000
+    x = rng.normal(0, 1, (n, 3))
+    wide = x[:, 0] > 0
+    y = rng.normal(0, 1, n) * np.where(wide, 4.0, 1.0)
+    m = gbm.fit(x, y, seed=11, n_trees=120, tau=0.2)
+    p = m.predict(x)
+    share = float(np.mean(y < p))
+    check(f"квантиль держит объявленную долю (заход {share:.3f})",
+          0.15 < share < 0.25, str(share))
+    gap = p[wide].mean() - p[~wide].mean()
+    check(f"уровень именной, а не общий (зазор {gap:.2f})", gap < -1.5,
+          str(gap))
+    # Тот же прогон средней потерей: условное среднее стоит около нуля,
+    # то есть цена заходит за него в половине случаев. Ровно это
+    # замечание владельца и есть.
+    mm = gbm.fit(x, y, seed=11, n_trees=120)
+    sh_mean = float(np.mean(y < mm.predict(x)))
+    check(f"среднее перекрывается вдвое чаще ({sh_mean:.3f})",
+          sh_mean > 0.4, str(sh_mean))
+
+
+def test_gbm_squared_loss_bit_for_bit():
+    # Правка потери не вправе шевельнуть прежние цели: `tau=None` —
+    # тот же код, что был, и числа обязаны совпасть до бита.
+    n = 1500
+    x = rng.normal(0, 1, (n, 4))
+    x[rng.random((n, 4)) < 0.1] = np.nan
+    y = x[:, 2] * 1.5 + rng.normal(0, 0.4, n)
+    a = gbm.fit(x, y, seed=17, n_trees=30).predict(x)
+    b = gbm.fit(x, y, seed=17, n_trees=30, tau=None).predict(x)
+    check("умолчание — прежняя квадратичная потеря",
+          np.array_equal(a, b))
+    q = gbm.fit(x, y, seed=17, n_trees=30, tau=0.5).predict(x)
+    check("медианная потеря даёт ДРУГУЮ модель",
+          not np.array_equal(a, q))
+
+
+def test_gbm_quantile_monotone_in_tau():
+    n = 4000
+    x = rng.normal(0, 1, (n, 3))
+    y = x[:, 0] + rng.normal(0, 1, n)
+    lo = gbm.fit(x, y, seed=19, n_trees=80, tau=0.1).predict(x)
+    hi = gbm.fit(x, y, seed=19, n_trees=80, tau=0.9).predict(x)
+    check("низкий квантиль ниже высокого на всех строках",
+          bool((lo < hi).mean() > 0.99),
+          str(float((lo < hi).mean())))
+
+
 def test_binning_edges_from_training_only():
     x = np.array([[0.0], [1.0], [2.0], [3.0]])
     e = gbm.bin_edges(x)
@@ -260,6 +313,9 @@ def main():
     test_gbm_on_noise_is_flat()
     test_gbm_nan_is_information()
     test_gbm_deterministic()
+    test_gbm_quantile_holds_declared_share()
+    test_gbm_squared_loss_bit_for_bit()
+    test_gbm_quantile_monotone_in_tau()
     test_binning_edges_from_training_only()
     print("ранги и IC")
     test_rankdata_ties()

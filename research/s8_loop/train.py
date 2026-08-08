@@ -61,7 +61,39 @@ OUT = os.path.join(HERE, "out")
 MODEL_DIR = os.path.join(OUT, "model")
 
 MODEL_VERSION = 2
-TARGETS = [f"{k}_{h}h" for k in ("fwd", "mfe", "mae") for h in FB.HORIZONS]
+
+# Горизонт, на котором ставятся заявки (он же `SIT_SIGNAL_H` ниже:
+# сигнал ситуационной книги). Квантильные цели заводятся ТОЛЬКО на нём:
+# часовая и суточная книги закрываются по времени, стопа у них нет
+# вовсе, а каждая лишняя цель стоит двух обучений в час — цикл и так
+# опаздывает на минуты, и платить временем за уровень, которым никто
+# не пользуется, нечем.
+STOP_H = 4
+# Доля случаев, в которых цена ВПРАВЕ зайти за стоп. Число объявлено
+# до прогона и выведено из замера `s9_sweep/stops.py`, а не выбрано на
+# вкус: стоп на условном среднем хода против касается 52 % сделок, и
+# 37 % касаний возвращаются к цели — то есть нынешнее правило зря
+# убивает каждую пятую сделку (0.52 × 0.37 ≈ 0.19). Уровень с долей
+# захода 0.20 опускает это до 0.07 и не идёт дальше по двум причинам:
+# риск ноги растёт ровно на величину сдвига (в том же замере плоский
+# буфер глубже ×1.25 ожидание уже ухудшал), а гейт входа считает
+# отношение по ИСПОЛНЯЕМОЙ геометрии — чем дальше стоп, тем меньше
+# имён проходит RR ≥ 2.
+STOP_TAU = 0.20
+# Цель квантильной модели — та же КОЛОНКА, что у средней; отличается
+# только потеря обучения. Отдельная колонка была бы вторым именем
+# одних и тех же чисел, а расхождение двух копий данных в этом проекте
+# уже случалось. Низкий квантиль минимума цены — стоп ЛОНГА, высокий
+# квантиль максимума — стоп ШОРТА (стороны разводит `position_path`).
+QUANT_TARGETS = {f"maeq_{STOP_H}h": (f"mae_{STOP_H}h", STOP_TAU),
+                 f"mfeq_{STOP_H}h": (f"mfe_{STOP_H}h", 1.0 - STOP_TAU)}
+TARGETS = ([f"{k}_{h}h" for k in ("fwd", "mfe", "mae")
+            for h in FB.HORIZONS] + list(QUANT_TARGETS))
+
+
+def target_col(tgt):
+    """Колонка целей, по которой обучается и оценивается цель `tgt`."""
+    return QUANT_TARGETS.get(tgt, (tgt, None))[0]
 
 
 # Правило сторон пути живёт в `trades` (общий модуль со сборщиком);
@@ -630,7 +662,7 @@ def eval_previous(x, targets, elig, grid, log_):
             except OSError:
                 continue
             pred = predict_matrix(saved["model"], x, elig)
-            ics = section_ic(pred, targets[tgt], elig, cols)
+            ics = section_ic(pred, targets[target_col(tgt)], elig, cols)
             if not ics:
                 continue
             rows.append({"arm": arm, "target": tgt,
@@ -675,7 +707,7 @@ def canary_many(x, targets, elig, grid, seed, log_, name, seeds):
     """
     vals = []
     for k in range(seeds):
-        y = targets[name]
+        y = targets[target_col(name)]
         vals.append(canary(x, y, elig, grid, seed + 1000 * k, log_,
                            name=name))
     vals = [v for v in vals if np.isfinite(v)]
@@ -728,7 +760,10 @@ def canary_target(targets, elig, want="fwd_4h",
 
     Возвращает имя цели или `None`, если не годится ни одна.
     """
-    for name in [want] + [t for t in TARGETS if t != want]:
+    # Квантильные цели канарейке не нужны: колонка у них та же, что у
+    # средних, и течь конвейера они ловили бы дважды одними данными.
+    for name in [want] + [t for t in TARGETS
+                          if t != want and t not in QUANT_TARGETS]:
         y = targets.get(name)
         if y is None:
             continue
@@ -1055,7 +1090,13 @@ SIT_SIGNAL_H = 4                  # горизонт целей, дающих с
 # гейтом отношение RR ≥ 2 держалось лишь наполовину: рисковали по
 # правилу, брали по случаю. Найдено владельцем на XNYUSDT: цена
 # прошла обещанный уровень почти сразу, сделка осталась открытой.
-SIT_RULES_VERSION = 6
+# v7 — стоп переехал ЗА линию прогноза: до неё он стоял ровно там,
+# куда модель сама предсказывала цену, то есть на уровне, который по
+# построению перекрывается примерно в половине случаев (замер
+# `s9_sweep/stops.py`: касаются 52 %). Теперь уровень предсказывает
+# отдельная квантильная модель (`STOP_TAU`), а гейт считает отношение
+# по ИСПОЛНЯЕМОЙ геометрии — по тому стопу, который реально стоит.
+SIT_RULES_VERSION = 7
 
 
 def fresh_sit_on_rules_change(mdir, log_=None):
@@ -1137,6 +1178,7 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     """
     kf, km, kx = (f"fwd_{SIT_SIGNAL_H}h", f"mae_{SIT_SIGNAL_H}h",
                   f"mfe_{SIT_SIGNAL_H}h")
+    kmq, kxq = f"maeq_{SIT_SIGNAL_H}h", f"mfeq_{SIT_SIGNAL_H}h"
     if any((arm, k) not in models for k in (kf, km, kx)) \
             or j_last is None:
         return None
@@ -1166,6 +1208,13 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                # значит доверять коду на слово.
                "fwd0": e.get("fwd0"),
                "at_ts": e.get("at_ts"), "scan": True}
+        # Чем поставлен стоп — квантильным уровнем или средней линией —
+        # обязано ехать в саму запись: через месяц по сделке иначе не
+        # сказать, каким правилом её стопили. `mae_m` рядом со стопом
+        # даёт показу обе линии, а замеру — величину сдвига.
+        for k in ("mae_m", "adverse_of", "favourable_of"):
+            if e.get(k) is not None:
+                row[k] = e[k]
         if e.get("odd") is not None:
             row["odd"] = e["odd"]
         rec = fresh.setdefault(e.get("hour"), {
@@ -1296,6 +1345,15 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     fwd = models[(arm, kf)].predict(xj)
     mae = models[(arm, km)].predict(xj)
     mfe = models[(arm, kx)].predict(xj)
+    # Квантильные концы пути — уровни стопа. Их может не быть (цель не
+    # набрала строк на молодой записи): тогда лист идёт без них, и
+    # сканер ставит стоп по среднему, как прежде. Отсутствие уровня
+    # обязано быть видно в самом листе полем `stop_tau`, а не
+    # угадываться по тому, есть ли ключ.
+    maeq = (models[(arm, kmq)].predict(xj)
+            if (arm, kmq) in models else None)
+    mfeq = (models[(arm, kxq)].predict(xj)
+            if (arm, kxq) in models else None)
     sheet = []
     for i in range(len(rows_m)):
         px = float(mats["mid_close"][rows_m[i], j_last])
@@ -1308,6 +1366,9 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                         if beta_row is not None
                         and np.isfinite(beta_row[i]) else 1.0),
                "px": px}
+        if maeq is not None and mfeq is not None:
+            row["mae_q"] = round(float(maeq[i]), 2)
+            row["mfe_q"] = round(float(mfeq[i]), 2)
         nv = novelty(xj[i], nov_lo, nov_hi)
         if nv is not None:
             row["odd"] = round(nv, 3)
@@ -1667,15 +1728,19 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     nov_lo, nov_hi = novelty_bounds(x, elig)
     imp_all = {}
     models = {}
+    breach = {}
     for ai, (arm, fit_fn) in enumerate(ARMS):
         for ti, tgt in enumerate(TARGETS):
-            xs, ys, _ = flatten(x, targets[tgt], elig)
+            col, tau = QUANT_TARGETS.get(tgt, (tgt, None))
+            xs, ys, _ = flatten(x, targets[col], elig)
             if len(ys) < MIN_TARGET_ROWS:
                 log_(f"{arm}/{tgt}: строк {len(ys)} — пропуск")
                 continue
             t1 = time.time()
+            kw = {} if tau is None else {"tau": tau}
             model = fit_fn(xs, ys,
-                           seed=SEED0 + 10_000 * ai + 100 * ti + len(grid))
+                           seed=SEED0 + 10_000 * ai + 100 * ti + len(grid),
+                           **kw)
             models[(arm, tgt)] = model
             tot = model.importance.sum() or 1.0
             imp = {names[j]: round(float(model.importance[j] / tot), 4)
@@ -1683,14 +1748,32 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             imp_all.setdefault(arm, {})[tgt] = imp
             blob = {"model": model, "features": names, "target": tgt,
                     "arm": arm, "version": MODEL_VERSION,
+                    "target_col": col, "tau": tau,
                     "trained_upto": grid[-1], "rows": len(ys)}
             p = os.path.join(MODEL_DIR, f"weights_{arm}_{tgt}.pkl")
             with open(p + ".tmp", "wb") as f:
                 pickle.dump(blob, f)
             os.replace(p + ".tmp", p)
+            extra = ""
+            if tau is not None:
+                # Доля захода за уровень: величина, ради которой
+                # квантильная потеря и заведена, — сколько строк
+                # оказалось ДАЛЬШЕ предсказанного стопа. Должна выйти
+                # около `tau`; заметно ниже — модель подогналась под
+                # обучающие часы. Число внутривыборочное и вердиктом
+                # не является: честную долю даст сама книга своими
+                # сделками, здесь проверяется, что потеря делает то,
+                # что обещает.
+                pr = model.predict(xs)
+                sh = float(np.mean(ys < pr) if tau < 0.5
+                           else np.mean(ys > pr))
+                breach.setdefault(arm, {})[tgt] = round(sh, 3)
+                extra = (f"; заход за уровень {sh:.3f} "
+                         f"при объявленных {min(tau, 1 - tau):.2f}")
             log_(f"{arm}/{tgt}: обучена на {len(ys):,} строках за "
                  f"{time.time() - t1:.0f} с; топ: "
-                 + ", ".join(f"{k} {v}" for k, v in list(imp.items())[:3]))
+                 + ", ".join(f"{k} {v}" for k, v in list(imp.items())[:3])
+                 + extra)
 
     ts = step("обучение", ts)
     mp = os.path.join(MODEL_DIR, "manifest.json")
@@ -1720,6 +1803,13 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            # прогоном в тот же вечер (девять целей против четырёх, порог
            # 0.05 против 0.01).
            "targets_all": list(TARGETS),
+           # Уровень стопа: чем он объявлен и что вышло на обучающих
+           # часах. Правило заявки обязано лежать в артефакте рядом с
+           # весами, которыми она поставлена, — иначе через месяц по
+           # сделке нельзя будет сказать, каким правилом её стопили.
+           "stop_tau": STOP_TAU,
+           "stop_targets": list(QUANT_TARGETS),
+           "stop_breach_insample": breach,
            **can,
            "new_summary_hours": n_new,
            "importance": imp_all,
@@ -1874,7 +1964,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
               # прогон, который породил файл, а не текущие исходники.
               "min_edge_bp": SIT_MIN_EDGE_BP, "min_rr": SIT_MIN_RR,
               "min_disc_bp": SIT_MIN_DISC_BP,
-              "max_age_h": SIT_MAX_AGE_H,
+              "max_age_h": SIT_MAX_AGE_H, "stop_tau": STOP_TAU,
               "target": kf, "target_rows": n_rows,
               "target_need": MIN_TARGET_ROWS,
               "probe": PROBE, "pretest": PRETEST}
@@ -1903,7 +1993,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                            "min_edge_bp": SIT_MIN_EDGE_BP,
                            "min_rr": SIT_MIN_RR,
                            "min_disc_bp": SIT_MIN_DISC_BP,
-                           "slots": SIT_SLOTS,
+                           "slots": SIT_SLOTS, "stop_tau": STOP_TAU,
                            # Книги, которые ведёт сканер. Торгуемая
                            # идёт первой и не меняется; наблюдательная
                            # берёт всё, что прошло остальные гейты, —
@@ -1936,7 +2026,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                      "min_edge_bp": SIT_MIN_EDGE_BP,
                      "min_rr": SIT_MIN_RR,
                      "min_disc_bp": SIT_MIN_DISC_BP,
-                     "slots": SIT_SLOTS, "arms": sheets},
+                     "slots": SIT_SLOTS, "stop_tau": STOP_TAU,
+                     "arms": sheets},
                     ensure_ascii=False) + "\n")
         rebuild_accounts(mdir, None, slots=SIT_SLOTS)
         # Наблюдательная книга: та же ситуация без требования к

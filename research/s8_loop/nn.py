@@ -48,7 +48,12 @@ class NN:
         return (a @ self.ws[-1] + self.bs[-1]).ravel() + self.base
 
 
-def fit(x, y, seed, epochs=EPOCHS):
+def fit(x, y, seed, epochs=EPOCHS, tau=None):
+    """`tau` — уровень квантиля; `None` оставляет прежнюю квадратичную
+    потерю бит в бит. Смысл тот же, что у бустинга: цель-экстремум
+    (максимальный ход против позиции) условным средним не описывается,
+    уровень стопа есть квантиль. У сети замена дешёвая — меняется
+    только градиент выхода и начальный уровень."""
     ok = np.isfinite(y)
     x, y = x[ok], y[ok]
     with warnings.catch_warnings():
@@ -63,7 +68,7 @@ def fit(x, y, seed, epochs=EPOCHS):
     sd = xi.std(axis=0)
     sd[sd == 0] = 1.0
     z = np.hstack([(xi - mu) / sd, miss.astype(np.float64)])
-    base = float(y.mean())
+    base = float(y.mean() if tau is None else np.quantile(y, tau))
     yc = y - base
 
     rng = np.random.default_rng(seed)
@@ -88,7 +93,15 @@ def fit(x, y, seed, epochs=EPOCHS):
                 a = np.maximum(a @ w + b, 0.0)
                 acts.append(a)
             out = (a @ ws[-1] + bs[-1]).ravel()
-            g = (out - yc[idx])[:, None] / len(idx)
+            if tau is None:
+                d0 = out - yc[idx]
+            else:
+                # Производная pinball: −tau там, где цель выше выхода,
+                # +(1−tau) где ниже. Величина шага у Adam нормируется,
+                # поэтому постоянный по модулю градиент здесь работает —
+                # в отличие от бустинга, где шаг листа задаёт значение.
+                d0 = np.where(yc[idx] > out, -tau, 1.0 - tau)
+            g = d0[:, None] / len(idx)
             grads_w, grads_b = [], []
             d = g
             for li in range(len(ws) - 1, -1, -1):
