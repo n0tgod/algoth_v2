@@ -419,6 +419,43 @@ def test_targets_shapes_and_direction():
           (t["mfe_4h"][ok] >= t["mae_4h"][ok] - 1e-9).all())
 
 
+def test_zero_length_trade_returns_its_money():
+    """Сделка, закрытая в секунду своего же входа, не течёт кассой.
+
+    Живой случай: CATIUSDT открыта и закрыта в 18:08:35. Правило
+    «внутри секунды выход раньше входа» верно для ЧУЖИХ сделок, а свою
+    оно ставило перед её же входом: размер на момент выхода не
+    проставлен, pnl считался от нуля, а занятые деньги не возвращались
+    уже никому. Касса беднела, и следующим входам доставался размер 0 —
+    сверка с ядром показала это тремя строками разом.
+
+    Проверяются ДЕНЬГИ: у нулевой сделки настоящий размер и настоящий
+    pnl, а следующий вход получает размер, а не ноль.
+    """
+    import trades as TR
+
+    t0 = 1_786_000_000
+    def leg(sym, opened, closed, net):
+        return {"arm": "gbm", "hour": "2026-08-08-17", "sym": sym,
+                "side": "long", "state": "закрыта", "opened_at": opened,
+                "closes_at": closed, "exit_ts": closed, "net_bp": net}
+    # Первая живёт одну секунду, вторая заходит следом.
+    tr = [leg("AUSDT", t0, t0, -50.0), leg("BUSDT", t0 + 1, t0 + 60, 20.0)]
+    hist, bal = TR.account(tr, "gbm", slots=2)
+    a, b = tr
+    check("нулевая сделка получила настоящий размер",
+          a["size"] > 0, str(a.get("size")))
+    check("её деньги посчитаны от размера, а не от нуля",
+          a["pnl"] < 0 and abs(a["pnl"] - a["size"] * -50.0 / 1e4) < 1e-9,
+          str(a.get("pnl")))
+    check("следующему входу досталась касса, а не ноль",
+          b["size"] > 0, str(b.get("size")))
+    # Деньги обязаны сойтись: старт плюс сумма результатов.
+    check("баланс сходится с суммой сделок",
+          abs(bal - TR.START_BALANCE - a["pnl"] - b["pnl"]) < 0.01,
+          f"{bal} против {TR.START_BALANCE + a['pnl'] + b['pnl']}")
+
+
 def test_rank_key_reorders_the_section():
     """Книга в σ обязана ранжировать ДРУГОЙ величиной.
 
@@ -3350,6 +3387,7 @@ def main():
     test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
+    test_zero_length_trade_returns_its_money()
     test_rank_key_reorders_the_section()
     test_retry_when_not_trained()
     test_readiness_is_written_before_training()
