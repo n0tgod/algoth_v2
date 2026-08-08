@@ -378,7 +378,36 @@ def measure(sel, take, null=False, mirror=False):
     }
 
 
+def drift(legs):
+    """Куда ехал рынок в окне и как перекошены стороны.
+
+    Без этих двух чисел «зеркало в минусе» читается как умение
+    модели выбирать сторону, тогда как то же самое даёт простой снос:
+    если книга почти вся в шортах, а рынок падал, любая шортовая
+    геометрия выиграет, а перевёрнутая проиграет — в любой момент.
+    Снос считается по тем же барам и тем же окнам, что и сделки, но
+    БЕЗ уровней: чистый ход цены от входа до предела возраста.
+    """
+    moves, longs = [], 0
+    for g in legs:
+        if g["side"] == "long":
+            longs += 1
+        bars = [b for b in g.get("bars") or []
+                if b[0] >= g["at"] and b[0] <= g["at"] + MAX_AGE_H * 3600]
+        if len(bars) < 2 or not g["px"]:
+            continue
+        moves.append((bars[-1][4] / g["px"] - 1.0) * 1e4)
+    return {
+        "n": len(legs),
+        "long_share": round(longs / len(legs), 3) if legs else None,
+        "drift_bp": round(st.median(moves), 1) if moves else None,
+        "drift_mean_bp": round(sum(moves) / len(moves), 1) if moves
+        else None,
+    }
+
+
 def report(legs, cells, path, root, books):
+    dr = drift(legs)
     lines = ["# Перебор правил ситуационной книги", ""]
     lines += [
         f"- ног в записи: **{len(legs)}**, книги: "
@@ -390,6 +419,11 @@ def report(legs, cells, path, root, books):
         f"{NULL_SHIFT_H} ч",
         f"- ячейка меньше {MIN_CELL} сделок считается НЕизмеренной и "
         f"в медиану не входит",
+        f"- состав выборки: доля лонгов **{dr['long_share']}**, снос "
+        f"цены за окно удержания — медиана **{dr['drift_bp']:+} б.п.**, "
+        f"среднее {dr['drift_mean_bp']:+}. Это ход БЕЗ уровней: если "
+        f"стороны перекошены, а снос велик, зеркало обязано уйти в "
+        f"минус само по себе, без всякого умения",
         "",
         "Оценка ОПТИМИСТИЧНА: веса модели видели эти часы в обучении, "
         "и рассматриваются только те имена, которые отбор уже выбрал. "
@@ -482,8 +516,12 @@ def main():
         os.path.join(os.path.dirname(HERE), "s8_loop", "out", "model"),
         os.path.join(os.path.dirname(HERE), "s8_loop", "out",
                      "model_sit")])
-    ap.add_argument("--out", default=os.path.join(
-        HERE, "out", "S9-sweep.md"))
+    # Имя отчёта различает ИСТОЧНИК: прогон на сервере (записи с
+    # диска) и прогон из песочницы (те же записи по HTTP) писали в
+    # один файл, и git свёл их конфликтом прямо в артефакте. Тот же
+    # урок, что `build_15m.json` против `build_1m.json` в A2: ценность
+    # в сравнении двух прогонов, а не в затирании одного другим.
+    ap.add_argument("--out", default="")
     # Считать можно там, где лежит запись, и там, где сидит ассистент:
     # источник один и тот же, путь разный.
     ap.add_argument("--http", default="",
@@ -493,6 +531,10 @@ def main():
                     help="каталог кеша баров: пересчёт с другим нулём "
                          "не должен стоить нового обхода по сети")
     a = ap.parse_args()
+    if not a.out:
+        a.out = os.path.join(
+            HERE, "out",
+            "S9-sweep-remote.md" if a.http else "S9-sweep.md")
     src = legs = None
     if a.http:
         src = HttpBars(a.http, a.key, disk=a.cache or None)
@@ -500,8 +542,8 @@ def main():
     legs, cells = run(a.root, a.books, src=src, legs=legs)
     if src and src.miss:
         print(f"ВНИМАНИЕ: {src.miss} ответов с чужим символом отброшено")
-    with open(os.path.join(os.path.dirname(a.out), "cells.json"), "w",
-              encoding="utf-8") as f:
+    cells_path = a.out.replace(".md", "-cells.json")
+    with open(cells_path, "w", encoding="utf-8") as f:
         json.dump({"cells": cells, "legs": len(legs)}, f,
                   ensure_ascii=False, indent=1)
     print("отчёт:", report(legs, cells, a.out, a.root, a.books))
