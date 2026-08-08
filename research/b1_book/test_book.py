@@ -2633,6 +2633,54 @@ def test_volatility_splits_results_by_regime():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_book_registry_is_one_list():
+    """Книги объявлены один раз, и запрос каждой идёт в СВОЙ каталог.
+
+    Список книг жил в четырёх местах, и книга в единицах σ доехала до
+    трёх: страница сделок молча отдавала главную книгу под именем
+    выбранной — отказ, неотличимый от «у книги пока пусто». Владелец
+    нашёл это вопросом «почему у per σ нет своей истории сделок».
+    """
+    import collect as C
+
+    dirs = C.Collector.BOOK_DIRS
+    books = dict(C.Collector.BOOKS)
+    check("торгуемые — подмножество карты каталогов",
+          all(k in dirs and dirs[k] == v for k, v in books.items()),
+          str(books))
+    check("наблюдательная запись не в торгуемых",
+          "sit_obs" in dirs and "sit_obs" not in books, str(list(books)))
+    check("книга в единицах σ есть и там, и там",
+          dirs.get("z") == "model_z" and "z" in books, str(dirs))
+    # Незнакомый ключ обязан УВОДИТЬ в главную книгу осознанно, а
+    # каждый знакомый — в свой каталог. Проверяется по ответу, а не по
+    # коду: раньше `z` попадал в ветку «иначе главная».
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        for hz, want in dirs.items():
+            mdir = os.path.join(d, "s8_loop", "out", want)
+            os.makedirs(mdir)
+            with open(os.path.join(mdir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"horizon_h": 4, "book": want}, f)
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        seen = {}
+        for hz in dirs:
+            r = col.model_trades(hz=None if hz == "h4" else hz, per=1)
+            seen[hz] = r.get("source")
+        bad = {k: seen[k] for k, v in dirs.items() if seen[k] != v}
+        check("каждая книга спрошена в своём каталоге", not bad,
+              str(bad))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_glossary_describes_the_live_model():
     """Справочник: каждое семейство названо, каждый признак расписан.
 
@@ -3261,6 +3309,7 @@ def main():
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()
     test_volatility_splits_results_by_regime()
+    test_book_registry_is_one_list()
     test_glossary_describes_the_live_model()
     test_live_entries_reach_both_pages()
     test_sit_watch_levels_and_crossing()

@@ -1449,7 +1449,7 @@ class Collector:
         # подмешаны: смесь двух книг в одной таблице выглядела бы
         # осмысленно и не значила бы ничего.
         books = {}
-        for key in ("h1", "h24", "sit", "sit_obs", "z"):
+        for key in (k for k in self.BOOK_DIRS if k != "h4"):
             st = self._model_dir_state(
                 os.path.join(s8, f"model_{key}"),
                 rr_min=rr_min if key.startswith("sit") else None)
@@ -1702,8 +1702,7 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        name = ("model_" + hz if hz in ("h1", "h24", "sit", "sit_obs")
-                else "model")
+        name = self.BOOK_DIRS.get(hz) or "model"
         # Та же развилка, что у обзора, и тем же правилом: ниже гейта
         # торгуемой книги ответить может только наблюдательная запись.
         # Считается ДО чтения файлов — иначе страница сделок и обзор
@@ -1948,6 +1947,16 @@ class Collector:
     # объявлен ОДИН раз — лига и замер волатильности обязаны считать по
     # одному составу книг, иначе одна страница знала бы о книге, о
     # которой другая молчит.
+    # Все книги: ключ показа → каталог на диске. ОДНО определение на
+    # сборщик. Список жил в четырёх местах, и книга в единицах σ
+    # появилась в трёх из них: страница сделок молча падала на главную
+    # книгу, то есть показывала ЧУЖИЕ сделки под именем выбранной —
+    # отказ, неотличимый от «у книги пока пусто».
+    BOOK_DIRS = {"h4": "model", "h1": "model_h1", "h24": "model_h24",
+                 "sit": "model_sit", "sit_obs": "model_sit_obs",
+                 "z": "model_z"}
+    # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
+    # счётах по книгам её быть не должно.
     BOOKS = (("h4", "model"), ("h1", "model_h1"),
              ("h24", "model_h24"), ("sit", "model_sit"),
              ("z", "model_z"))

@@ -41,6 +41,19 @@ from urllib.parse import parse_qs, urlparse
 # для конкретной монеты и часа, а пункт меню без них вёл бы в пустоту;
 # разбор сделки (`/trade-info`) — то же самое. Оба открываются со
 # своих мест, где монета известна.
+BOOKJS = r"""
+// Книги турнира: ключ, подпись. ОДИН список на все страницы — он жил
+// в четырёх местах, и книга в единицах σ доехала до трёх: страница
+// сделок молча показывала главную книгу под именем выбранной.
+const BOOK_LIST = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"],
+                   ["sit", "situational"], ["z", "per \u03c3"]];
+// Ключи, законные в адресе. Главная книга — умолчание и в адрес не
+// пишется; наблюдательная запись адресуема, потому что на неё уводит
+// порог отношения.
+const HZ_KEYS = BOOK_LIST.map(x => x[0]).filter(k => k !== "h4")
+  .concat(["sit_obs"]);
+"""
+
 NAVJS = r"""
 const NAV_ITEMS = [
   ["/", "overview", "обзор"],
@@ -269,7 +282,7 @@ orderbook.50 topic; trade side is the aggressor&#39;s.</footer>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
-""" + NAVJS + r"""
+""" + BOOKJS + NAVJS + r"""
 navMount("/");
 let sym = null, timer = null;
 // Состояния, виды уровней и правила приходят с сервера по-русски: это
@@ -727,8 +740,7 @@ const MDL = {data: null, arm: "all", book: "h4"};
 // отношению. Две вкладки предлагали выбирать книгу — то есть плумбинг,
 // — вместо вопроса, который на самом деле задают: «а если считать
 // только сделки от такого-то RR».
-const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"],
-               ["sit", "situational"], ["z", "per σ"]];
+const BOOKS = BOOK_LIST;
 // Порог обещанного отношения: настройка ВЛАДЕЛЬЦА, не правило книги.
 // Он же выбирает ИСТОЧНИК: ниже собственного гейта книги торгуемых
 // сделок не существует вовсе, и ответ на такой порог может дать только
@@ -1867,7 +1879,7 @@ canvas{width:100%;display:block;touch-action:pan-y}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + r"""
+""" + BOOKJS + NAVJS + r"""
 navMount("/trades-page");
 // Книга турнира темпов из ссылки («h1», «h24»); пусто — главная 4 ч.
 // Едет в каждый запрос и в ссылки на график: страница обязана
@@ -1884,7 +1896,7 @@ const RRQ = (() => {
   return isNaN(v) ? null : v;
 })();
 let RR_MIN = RRQ;
-const HZ = ["h1", "h24", "sit", "sit_obs"].includes(
+const HZ = HZ_KEYS.includes(
   new URLSearchParams(location.search).get("hz"))
   ? new URLSearchParams(location.search).get("hz") : "";
 const S = {page: 0};
@@ -2964,6 +2976,7 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 <script>
 const Q = new URLSearchParams(location.search);
 const KEY = Q.get("k") || "";
+""" + BOOKJS + r"""
 // Встроенный режим: график живёт внутри страницы ядра. Прячется
 // только обрамление — шапка с выбором монет и сводка бумажных сделок;
 // свечи, слой сделок модели и подсказка работают как есть. Вторая
@@ -3209,7 +3222,7 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              // темпов: сделка часовой книги живёт в своём каталоге, и
              // без метки график молча показал бы книгу 4 ч.
              hour: Q.get("hour") || "",
-             hz: (["h1", "h24", "sit", "sit_obs"].includes(Q.get("hz"))
+             hz: (HZ_KEYS.includes(Q.get("hz"))
                   ? Q.get("hz") : ""),
              // Порог обещанного отношения из ссылки: он выбирает
              // ЗАПИСЬ, из которой сервер отдаёт сделки. `null` —
