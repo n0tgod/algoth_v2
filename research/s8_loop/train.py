@@ -1893,6 +1893,23 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                            "slots": SIT_SLOTS,
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
+            # Лист ПЕРЕЗАПИСЫВАЕТСЯ каждый час, то есть история решений
+            # не хранится нигде: перебрать пороги задним числом можно
+            # было бы только по шести выбранным именам, а не по всему
+            # сечению. Дописываем копию в журнал — 500 имён на час это
+            # около мегабайта в сутки, а без него любой вопрос «а если
+            # бы порог был другим» упирается в то, что спрашивать не у
+            # чего.
+            with open(os.path.join(mdir, "sheets.jsonl"), "a",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(
+                    {"hour": grid[j_last],
+                     "written_at": round(time.time(), 1),
+                     "min_edge_bp": SIT_MIN_EDGE_BP,
+                     "min_rr": SIT_MIN_RR,
+                     "min_disc_bp": SIT_MIN_DISC_BP,
+                     "slots": SIT_SLOTS, "arms": sheets},
+                    ensure_ascii=False) + "\n")
         rebuild_accounts(mdir, None, slots=SIT_SLOTS)
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
