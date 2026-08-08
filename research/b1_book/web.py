@@ -1042,21 +1042,26 @@ function rrControl(d) {
   const cur = +(d.rr_min || 0);
   const steps = [];
   for (let v = 1.0; v <= 5.0001; v += 0.5) steps.push(v.toFixed(1));
+  // «1 : 3» означает ТРИ И ВЫШЕ, а не ровно три — иначе порог читался
+  // бы как выбор одной полки, и сделка с отношением 5 из показа
+  // выпадала бы. Слово «≥» стоит прямо в подписи, потому что вопрос
+  // возник у владельца до первого использования.
   const opts = [`<option value="0"${cur ? "" : " selected"}>all</option>`]
     .concat(steps.map(v => `<option value="${v}"${
       Math.abs(cur - parseFloat(v)) < 1e-9 ? " selected" : ""
-    }>1 : ${v}</option>`)).join("");
+    }>≥ 1 : ${v}</option>`)).join("");
   const total = (d.trades_total || 0) + (d.rr_cut || 0);
   const note = cur
-    ? `<span class="dim"> — showing <b>${d.trades_total || 0}</b> of ${
-        total} trades${d.rr_unknown
+    ? `<span class="dim"> — keeping every trade whose promised
+       reward/risk is <b>${cur} or higher</b>: <b>${
+        d.trades_total || 0}</b> of ${total} trades${d.rr_unknown
           ? `, ${d.rr_unknown} with no promise to judge by` : ""}.
        The account below is recomputed on this subset: it answers
        “what if only such trades were taken”, it is NOT the book’s
        money.</span>`
     : `<span class="dim"> — no filter: every trade the book took, as in
        the 1 h and 4 h books.</span>`;
-  return `<div class="mline">reward/risk filter:
+  return `<div class="mline">reward/risk filter — at least:
     <select id="rrf">${opts}</select>${note}</div>`;
 }
 
