@@ -899,6 +899,19 @@ function tradeTable(p) {
     // подсказке колонки.
     const su = (t.setup || [])[0];
     const suTxt = su ? (FAM_EN[su[0]] || su[0]).split(" (")[0] : "—";
+    // Значок «i» — просьба владельца: страница разбора сделки, где
+    // простыми словами сказано, почему вход здесь и как расставлены
+    // уровни. Ссылка несёт книгу и порог: сделка ниже гейта живёт в
+    // наблюдательной записи, и страница обязана открыть именно её.
+    const ip = new URLSearchParams({k: KEY, sym: t.sym,
+                                    arm: t.arm || "gbm",
+                                    hour: t.hour, side: t.side});
+    const bhz = MDL.book === "h4" ? "" : MDL.book;
+    if (bhz) ip.set("hz", bhz);
+    if (RR_MIN != null) ip.set("rr", String(RR_MIN));
+    const info = `<a href="/trade-info?${ip.toString()}"
+      title="why this trade — plain-words breakdown"
+      style="text-decoration:none">&#9432;</a>`;
     return `<tr class="${cls}"${why ? ` title="${why}"` : ""}>
       <td class="mono" title="sheet hour ${t.hour}">${key}</td>
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
@@ -910,7 +923,7 @@ function tradeTable(p) {
       <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono">${t.pnl == null ? "—" :
         (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
-      <td class="dim">${when}</td></tr>`;
+      <td class="dim">${when}</td><td>${info}</td></tr>`;
   }).join("");
   return `<div class="mline">model trades <span class="dim">(exp —
     expected move; mae — expected move <b>against</b> the position
@@ -923,7 +936,7 @@ function tradeTable(p) {
     <th title="dominant feature family of this forecast — a reading
       of the contributions, not a hand-picked strategy">setup</th>
     <th>exp</th>
-    <th>mae</th><th>got</th><th>$</th><th>state</th></tr>
+    <th>mae</th><th>got</th><th>$</th><th>state</th><th>i</th></tr>
     ${rows}</table></div>`
     + (tr.length > SHOW ? `<div class="mline dim">showing ${SHOW} of ${
         p.trades_total ?? tr.length} — older ones are on disk</div>` : "");
@@ -2271,7 +2284,13 @@ async function load() {
             left)</span>` : ""}</td>
       <td class="mono hide-s" style="color:var(--muted)">${t.odd == null ? "—"
         : (t.odd*100).toFixed(0) + " %"}</td>
-      <td><a class="open" href="/chart?k=${encodeURIComponent(KEY)}&sym=${
+      <td><a class="open" title="plain-words breakdown of this trade"
+        href="/trade-info?k=${encodeURIComponent(KEY)}&sym=${
+        encodeURIComponent(t.sym)}&arm=${t.arm}&hour=${t.hour}&side=${
+        t.side}${HZ ? "&hz=" + HZ : ""}${
+        RR_MIN == null ? "" : "&rr=" + RR_MIN
+        }" style="text-decoration:none">&#9432;</a>
+        <a class="open" href="/chart?k=${encodeURIComponent(KEY)}&sym=${
         encodeURIComponent(t.sym)}&arm=${t.arm}&hour=${t.hour}${
         HZ ? "&hz=" + HZ : ""}${
         // Порог едет в ссылку: он выбирает не только подмножество, но
@@ -3996,7 +4015,17 @@ function mrows() {
         const here = t.hour === MDL.hour;
         const tip = [t.train_seq != null ? "training #"
                        + t.train_seq : null,
+                     setupText(t) || null,
                      whyDrivers(t) || null].filter(Boolean).join(" · ");
+        const ip = new URLSearchParams({k: KEY, sym: t.sym,
+                                        arm: t.arm || "gbm",
+                                        hour: t.hour, side: t.side});
+        if (MDL.hz) ip.set("hz", MDL.hz);
+        if (MDL.rr != null) ip.set("rr", String(MDL.rr));
+        const info = `<a href="/trade-info?${ip.toString()}"
+          title="plain-words breakdown"
+          style="text-decoration:none"
+          onclick="event.stopPropagation()">&#9432;</a>`;
         return `<tr data-h="${t.hour}" style="cursor:pointer${
           here ? ";background:rgba(127,127,255,.10)" : ""}"
           title="${tip ? tip + " — " : ""}click to centre the chart">
@@ -4011,7 +4040,8 @@ function mrows() {
         <td class="mono ${cls}">${t.pnl == null ? "—"
           : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
         <td style="color:var(--muted)">${disp(t.state)}${
-          t.exit_reason ? " · " + disp(t.exit_reason) : ""}</td></tr>`;
+          t.exit_reason ? " · " + disp(t.exit_reason) : ""} ${
+          info}</td></tr>`;
       }).join("")
     : `<tr><td colspan="9" style="color:var(--muted)">no model trades on
        this pair in the shown book — try the other arm or another
@@ -4332,6 +4362,328 @@ pull(); setInterval(pull, 1000);
 """
 
 
+# Страница разбора ОДНОЙ сделки — просьба владельца: у каждой сделки
+# значок «i», по нему страница, где простыми словами объяснено, почему
+# модель открыла здесь и как расставила уровни. Слова собираются ИЗ
+# ЧИСЕЛ записи (why/setup/train_seq/обещания) и правил книги из ответа
+# сервера — прозы в записи нет, и врать страница может только вместе с
+# числами. Признаки переводятся на человеческий словарём FEAT_EN.
+TRADEINFO = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>trade breakdown</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+h1{font-size:17px;margin:8px 0 2px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+a{color:var(--accent)}
+.btn{display:inline-block;border:1px solid var(--rule);
+ border-radius:999px;padding:4px 12px;color:var(--ink);
+ text-decoration:none;font-size:12px;background:var(--chip)}
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">trade breakdown</span>
+  <span style="flex:1"></span>
+  <a class="btn" id="chartlink" href="#">open on the chart</a></div>
+<h1 id="ttl">&hellip;</h1>
+<div class="k mono" id="sub"></div>
+<div id="whybox"></div>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const KEY = Q.get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+const HZ = ["h1","h24","sit","sit_obs"].includes(Q.get("hz"))
+  ? Q.get("hz") : "";
+const ARM = Q.get("arm") === "nn" ? "nn" : "gbm";
+const HOUR = Q.get("hour") || "";
+const SYM = Q.get("sym") || "";
+const SIDE = Q.get("side") || "";
+const RR = Q.get("rr");
+
+function pct(v){ if (v == null) return "—";
+  return (v>0?"+":"") + (v/100).toFixed(Math.abs(v)>=10?2:3) + " %"; }
+function px_at(entry, bp){ if (entry == null || bp == null) return null;
+  return +(entry * (1 + bp/1e4)).toPrecision(6); }
+function utc(ts){ if (!ts) return "—";
+  const d = new Date(ts*1000);
+  return d.toISOString().slice(0,16).replace("T"," ") + " utc"; }
+
+// Состояния и причины выхода приходят по-русски: это ключи файлов.
+const ST_EN = {"закрыта":"closed","открыта":"open",
+  "вышла, ждёт разбора":"exited, pnl pending",
+  "ждёт разбора":"awaiting review","без исхода":"no outcome"};
+const EXIT_EN = {"прогноз развернулся":"the forecast flipped sign",
+  "цена прошла обещанный ход против":"price hit the stop",
+  "цена дошла до обещанной цели":"price reached the target",
+  "предел возраста":"the 24 h age limit",
+  "вход по ситуации":"situational entry"};
+const FAM_EN = {absorption:"the order book being eaten through",
+  book:"order-book imbalance and depth",
+  tape:"pressure in the tape (aggressive flow)",
+  liq:"liquidations", oi:"open interest",
+  funding:"funding and basis",
+  move:"the coin's own price move",
+  squeeze:"a squeeze (range compression)",
+  tilt:"a tilted, one-sided drift", range:"range trading / dwell",
+  vol:"the volatility regime", leader:"the leader and the sector",
+  clock:"time of day", round:"round price levels",
+  beta:"how the coin follows the market", age:"listing age",
+  other:"other"};
+// Перевод признаков на человеческий. Незнакомое имя честно остаётся
+// как есть: выдуманное описание хуже сырого имени.
+const FEAT_EN = {
+  imb_best:"bid vs ask size at the very top of the book",
+  spread_rel:"the bid-ask spread vs its usual width",
+  upd_rel:"how fast the book is changing vs usual",
+  big_rel:"the largest resting order vs what is usual here",
+  turn_rel:"turnover this hour vs usual",
+  delta:"who is hitting harder in the tape — buyers or sellers",
+  burst:"the biggest one-second volume spike vs usual",
+  traded_share:"how much of the hour had any trades at all",
+  eat_bid:"sellers eating through the shown bids",
+  eat_ask:"buyers eating through the shown asks",
+  net_path_24h:"how straight the 24 h move was (net vs path)",
+  vol_regime:"volatility today vs its week — awake or asleep",
+  fr_bp:"the current funding rate",
+  mins_fund:"minutes left to the next funding payment",
+  oi_rel:"open interest vs its usual level",
+  oi_chg_4h:"open interest change over 4 h",
+  oi_chg_24h:"open interest change over 24 h",
+  basis_bp:"perp price vs spot (premium or discount)",
+  liq_long_share:"long liquidations as a share of turnover",
+  liq_short_share:"short liquidations as a share of turnover",
+  liq_imb:"which side got liquidated more",
+  squeeze_4h:"how squeezed the 4 h range is vs usual",
+  squeeze_24h:"how squeezed the 24 h range is vs usual",
+  tilt_4h:"a tilted move: the net 4 h push inside its range",
+  range_pos:"where price sits in the daily range (0 low, 1 high)",
+  dwell_24h:"how long price has been sitting in this corridor",
+  hod_sin:"time of day", hod_cos:"time of day", dow:"day of week",
+  btc_ret_4h:"BTC's own 4 h move",
+  sec_ret_4h:"the coin's sector move over 4 h",
+  rel_sec_4h:"how far the coin lags its own sector over 4 h",
+  dist_round:"distance to the nearest round price",
+  beta:"how strongly the coin follows the market wave",
+  age_rec:"the coin's age in the record"};
+function featDesc(n){
+  if (FEAT_EN[n]) return FEAT_EN[n];
+  let m = n.match(/^ret_(\d+)h?$/);
+  if (m) return `the coin's own ${m[1]} h move vs its usual volatility`;
+  const band = w => parseFloat((w*100).toFixed(3));
+  m = n.match(/^imb_([\d.]+)$/);
+  if (m) return `bid vs ask depth within ±${band(+m[1])} % of price`;
+  m = n.match(/^depth_b([\d.]+)$/);
+  if (m) return `bid depth within ±${band(+m[1])} % vs usual`;
+  m = n.match(/^depth_a([\d.]+)$/);
+  if (m) return `ask depth within ±${band(+m[1])} % vs usual`;
+  return n;
+}
+
+async function ask(rr){
+  const p = new URLSearchParams({k:KEY, per:500, lite:1, sym:SYM});
+  if (HZ) p.set("hz", HZ);
+  if (rr != null) p.set("rr_min", String(rr));
+  const r = await fetch("/model_trades?" + p.toString());
+  return await r.json();
+}
+function findT(rows){
+  return (rows||[]).find(t => t.sym === SYM && t.hour === HOUR
+    && (t.arm||"gbm") === ARM && (!SIDE || t.side === SIDE)) || null;
+}
+async function load(){
+  let d, t;
+  try {
+    d = await ask(RR != null && RR !== "" ? parseFloat(RR) : null);
+    t = findT(d.rows);
+    // Сделки с отношением ниже гейта живут в наблюдательной записи —
+    // та же логика, что у графика: прямая ссылка обязана открываться.
+    if (!t && HZ === "sit" && d.source_book === "traded") {
+      const d2 = await ask(0);
+      const t2 = findT(d2.rows);
+      if (t2) { d = d2; t = t2; }
+    }
+  } catch (e) {
+    document.getElementById("ttl").textContent =
+      "no link to the collector — try again";
+    return;
+  }
+  render(d, t);
+}
+function sec(cap, body){
+  return `<div class="panel"><div class="cap">${cap}</div>${body}</div>`;
+}
+function render(d, t){
+  const cl = document.getElementById("chartlink");
+  const cp = new URLSearchParams({k:KEY, sym:SYM, arm:ARM, hour:HOUR});
+  if (HZ) cp.set("hz", HZ);
+  if (RR != null && RR !== "") cp.set("rr", RR);
+  cl.href = "/chart?" + cp.toString();
+  if (!t) {
+    document.getElementById("ttl").textContent = "trade not found";
+    document.getElementById("whybox").innerHTML = sec("what happened",
+      `<p>No trade of arm <b>${ARM}</b> on <b>${SYM}</b> for hour
+       <b>${HOUR}</b> in this book. If the book was archived by a
+       rules change, the trade lives in the archive on disk, not in
+       the live record.</p>`);
+    return;
+  }
+  const bookName = d.situational ? "situational book"
+    : `${d.horizon_h || 4} h book`;
+  document.getElementById("ttl").textContent =
+    `${SYM.replace("USDT","")} · ${t.side} · ${bookName} · ${
+      ST_EN[t.state] || t.state}`;
+  document.getElementById("sub").textContent =
+    `entered ${utc(t.opened_at)} · ${ARM === "nn"
+      ? "neural arm" : "tree arm"}${t.train_seq != null
+      ? " · training #" + t.train_seq : ""}${
+      d.source_book === "observation"
+      ? " · observation record (the bot does not trade it)" : ""}`;
+
+  let html = "";
+
+  // --- что модель увидела -------------------------------------------
+  let saw = "";
+  if (t.setup && t.setup.length) {
+    saw += `<p>Most of this forecast came from <b>${t.setup.map(x =>
+      `${FAM_EN[x[0]] || x[0]} (${Math.round(x[1]*100)} %)`)
+      .join("</b> and <b>")}</b>.
+      <span class="dim">The share says how much of the forecast size
+      these feature groups produced. It is a reading of the model's
+      arithmetic, not a strategy it picked — the model has no named
+      strategies.</span></p>`;
+  }
+  if (t.why && t.why.length) {
+    saw += `<table><tr><th>signal</th><th>in plain words</th>
+      <th>pushed the forecast by</th></tr>` + t.why.map(w =>
+      `<tr><td class="mono">${w[0]}</td><td>${featDesc(w[0])}</td>
+       <td class="mono ${w[1] > 0 ? "good" : "bad"}">${
+         pct(w[1])}</td></tr>`).join("") + "</table>";
+  }
+  if (!saw) saw = `<p class="dim">Not recorded for this trade — it was
+    opened before explanations were introduced, or the weights predate
+    the field. New trades carry it.</p>`;
+  html += sec("what the model saw", saw);
+
+  // --- почему вход именно здесь -------------------------------------
+  let why = "";
+  const exp = t.expected_bp;
+  if (t.rank != null && t.of) {
+    why = `<p>This book re-balances on the hour: it takes the names
+      with the most extreme expected move. <b>${SYM.replace("USDT","")}
+      </b> ranked <b>#${t.rank} of ${t.of}</b> coins by expected move
+      (${pct(exp)} over ${d.horizon_h || 4} h) — that is the whole
+      entry rule here.</p>`;
+  } else if (t.fwd0_bp != null && exp != null) {
+    const disc = Math.abs(exp) - Math.abs(t.fwd0_bp);
+    why = `<p>At the top of the hour the model expected
+      <b>${pct(t.fwd0_bp)}</b> from this coin. The scanner then watched
+      the live price. By ${utc(t.opened_at)} the price had walked
+      <b>${pct(disc)}</b> against that promise — the entry got cheaper
+      than the model planned by more than the round cost — while the
+      remaining expected move, <b>${pct(exp)}</b>, was still above the
+      ${((d.min_edge_bp ?? 22)/100).toFixed(2)} % entry gate.</p>
+      <p>Two more checks passed before entering: the crossing happened
+      <b>in front of the scanner</b> (the name was first seen away
+      from the trigger — so this was a move, not a wobble around a
+      line it was parked at), and the promised reward was at least
+      ${d.min_rr ?? 2}&times; the distance to the actual stop.</p>`;
+  } else if (exp != null) {
+    why = `<p>The model expected <b>${pct(exp)}</b>. The entry
+      mechanics for this trade predate the recorded fields.</p>`;
+  } else {
+    why = `<p class="dim">Not recorded for this trade.</p>`;
+  }
+  html += sec("why it entered here", why);
+
+  // --- как расставлены уровни ---------------------------------------
+  let lv = "";
+  if (t.mae_bp != null) {
+    const stopPx = px_at(t.entry_px, t.mae_bp);
+    const tgtPx = px_at(t.entry_px, t.mfe_bp);
+    const learned = String(t.stop_of || "").indexOf("q_") > 0;
+    lv = `<p><b>Stop</b> at ${stopPx ?? "—"} (${pct(t.mae_bp)} from
+      entry). ` + (learned
+      ? `This is <b>not</b> where the model expects price to go — that
+         line is at ${pct(t.mae_m_bp)}. It is a separately learned
+         level that price historically passes in only
+         <b>${Math.round((d.stop_tau ?? 0.2)*100)} %</b> of cases:
+         far enough that ordinary noise does not knock the trade out,
+         close enough that a real break ends it.`
+      : `Set on the model's expected adverse line (the older stop
+         rule).`) + `</p>`
+      + (t.mfe_bp != null
+      ? `<p><b>Target</b> at ${tgtPx ?? "—"} (${pct(t.mfe_bp)}): the
+         best excursion the model expects in the trade's favour —
+         what it waits for, not a rare tail.</p>` : "")
+      + `<p class="dim">Exits, in order: stop or target touched by the
+       path of prices (checked every ~5 seconds, fill at the price
+       available when noticed — in a gap the fill can be worse than
+       the level, the stop does <b>not</b> guarantee the loss bound);
+       the forecast flipping sign at an hourly review; the 24 h age
+       limit.</p>`;
+  } else {
+    lv = `<p class="dim">No levels recorded for this trade.</p>`;
+  }
+  html += sec("how the levels are set", lv);
+
+  // --- чем кончилось -------------------------------------------------
+  let out = "";
+  if (t.state === "закрыта") {
+    out = `<p>Closed: <b>${EXIT_EN[t.exit_reason] || t.exit_reason
+      || "period ended"}</b>. Price moved ${pct(t.got_bp)}; after the
+      round cost the trade made <b class="${(t.net_bp||0) > 0
+      ? "good" : "bad"}">${pct(t.net_bp)}</b>${t.pnl != null
+      ? ` (${t.pnl > 0 ? "+" : ""}${t.pnl.toFixed(2)} $)` : ""}.</p>`;
+  } else if (t.exit_pending) {
+    out = `<p>The guard saw the exit (${EXIT_EN[t.exit_reason]
+      || t.exit_reason}) at ${utc(t.exit_ts)}; money is booked at the
+      hourly review — the shadowed bot reads the same files, and the
+      page must not run ahead of it.</p>`;
+  } else {
+    out = `<p>Still open${t.unreal_net_bp != null
+      ? `; running at ${pct(t.unreal_net_bp)} after costs` : ""}.</p>`;
+  }
+  if (t.odd != null)
+    out += `<p class="dim">Novelty: ${(t.odd*100).toFixed(0)} % of this
+      coin's features were outside anything the training saw — on high
+      novelty the forecast is less reliable (measured, not a
+      rule).</p>`;
+  html += sec("how it went", out);
+
+  document.getElementById("whybox").innerHTML = html;
+}
+load();
+</script>
+"""
+
+
 def serve(collector, port, token, log):
     """Поднять сервер наблюдения в отдельном потоке."""
 
@@ -4504,6 +4856,9 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/trades-page":
                 return self._ok(TRADES.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/trade-info":
+                return self._ok(TRADEINFO.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),

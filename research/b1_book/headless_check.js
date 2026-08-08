@@ -22,6 +22,7 @@ const src = fs.readFileSync(process.argv[2], "utf8");
 const SEARCH = process.argv[3] || "?k=xxx&sym=BTCUSDT";
 const js = src.match(/<script>\n([\s\S]*)<\/script>/)[1];
 const isChart = /id="px"/.test(src);
+const isInfo = /id="whybox"/.test(src);
 const isTrades = /id="tb"/.test(src);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
@@ -609,12 +610,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !seen.some(u => u.startsWith("/state")))
+  if (!isTrades && !isBot && !isInfo
+      && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
-  if (!isTrades && !isChart && !isBot) {
+  if (!isTrades && !isChart && !isBot && !isInfo) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -748,7 +750,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !seen.some(u => u.startsWith("/trades")))
+  if (!isTrades && !isBot && !isInfo
+      && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
   // Проверяется ЧИСЛАМИ из подставного ответа — «блок есть» прошло бы
@@ -952,6 +955,30 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     }
   }
 
+  if (isInfo) {
+    const wb = global.__el
+      ? String(global.__el("whybox").innerHTML || "") : "";
+    const sub = global.__el
+      ? String(global.__el("sub").textContent || "") : "";
+    // Числа фикстуры, а не «блок есть»: пустой разбор неотличим от
+    // «данных ещё нет».
+    if (!/training #124/.test(sub))
+      bad.push("разбор: номер обучения не назван");
+    if (!/liquidations \(42 %\)/.test(wb))
+      bad.push("разбор: вид ситуации не назван долей");
+    if (!/eating through the shown bids/.test(wb))
+      bad.push("разбор: признак не переведён на человеческий");
+    if (!/in only\s+<b>20 %<\/b> of cases/.test(wb.replace(/\s+/g, " ")))
+      bad.push("разбор: правило стопа не объяснено");
+    if (!/does <b>not<\/b> guarantee/.test(wb))
+      bad.push("разбор: честность про разрывы потеряна");
+    if (!/walked\s+<b>\+0\.30 %<\/b> against/.test(
+          wb.replace(/\s+/g, " ")))
+      bad.push("разбор: скидка входа не посчитана из чисел");
+    if (!seen.some(u => u.startsWith("/model_trades")))
+      bad.push("разбор: сделки не запрошены у сервера");
+  }
+
   if (isChart && /paperoff=1/.test(SEARCH)) {
     // Выключенный детектор обязан называть себя выключенным. «Ждёт
     // условий» на выключенном наблюдении — ложь, и владелец прочёл её
@@ -978,7 +1005,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Панель исполнительного ядра — только на обзоре. Проверяется
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
-  if (!isTrades && !isChart && !isBot) {
+  if (!isTrades && !isChart && !isBot && !isInfo) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -1228,9 +1255,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("просадка сделки в строке не в долях депозита");
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
-  } else if (isBot) {
-    // У страницы ядра нет ни пересчёта, ни детекторных сделок — её
-    // проверки выше, числами из /bot-full.
+  } else if (isBot || isInfo) {
+    // У страницы ядра и у разбора сделки нет ни пересчёта, ни
+    // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {
     // Пересчитывать нечего: бумажных сделок не ведут. Проверки
     // пересчёта здесь неприменимы — их место занимает проверка, что
