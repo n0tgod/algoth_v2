@@ -2170,8 +2170,9 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         check("имя, уже прошедшее гейт при первом взгляде, не берётся",
               n0 == 0, str(n0))
 
-        # Тик, на котором имя гейт НЕ проходит, взводит его.
-        col.books["S0USDT"] = B(100.0)
+        # Тик, на котором имя стоит ДАЛЬШЕ полосы от крючка (цена ещё
+        # ничего не отдала — скидка отрицательна), взводит его.
+        col.books["S0USDT"] = B(100.10)
         col._sit_scan(d, sheet, want, books, 1005.0, armed)
         # Теперь цена приходит к нам НА НАШИХ ГЛАЗАХ — это вход.
         col.books["S0USDT"] = B(99.80)
@@ -2190,6 +2191,50 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         n2 = len(rd())
         check("после нового листа имя снова взводится, а не входит",
               n2 == 1, str(n2))
+
+        # Полоса взведения. Имя, застигнутое ВПЛОТНУЮ к крючку (скидка
+        # около 6 при пороге 11), взводиться не вправе: его последующий
+        # проход — дрожание вокруг линии, у которой оно и так стояло, а
+        # не движение. Ровно так возвращались пачки входов: когорта
+        # подходила к линии за слепые минуты запаздывания цикла, и пять
+        # секунд шума решали, кто перетечёт. Свой каталог, чтобы счёт
+        # не смешивался с проверками выше.
+        b2 = os.path.join(d, "bk2")
+        os.makedirs(b2, exist_ok=True)
+        want4 = [{"dir": "bk2", "min_rr": 2.0, "slots": 6}]
+        books4 = {b2: {"dir": b2, "signalled": set(),
+                       "entered": set(), "pos": []}}
+        armed4 = set()
+        rd2 = lambda: C.Collector._jsonl(
+            os.path.join(b2, "entries_live.jsonl"))
+        col.books["S1USDT"] = B(99.94)          # скидка около 6 б.п.
+        col._sit_scan(d, sheet, want4, books4, 1100.0, armed4)
+        col.books["S1USDT"] = B(99.80)          # прошёл крючок
+        col._sit_scan(d, sheet, want4, books4, 1105.0, armed4)
+        check("имя у самой линии не взводится — дрожание не событие",
+              len(rd2()) == 0, str(len(rd2())))
+        # Оно же, но замеченное ДО того, как цена начала отдавать:
+        # теперь проход — настоящий ход, и вход состоится.
+        col.books["S1USDT"] = B(100.10)
+        col._sit_scan(d, sheet, want4, books4, 1110.0, armed4)
+        col.books["S1USDT"] = B(99.80)
+        col._sit_scan(d, sheet, want4, books4, 1115.0, armed4)
+        evs2 = rd2()
+        check("то же имя, увиденное до отдачи цены, входит",
+              len(evs2) == 1 and evs2[0]["sym"] == "S1USDT", str(evs2))
+        # Лист прежнего образца полосы не несёт — и она обязана
+        # остаться в силе умолчанием, а не исчезнуть молча.
+        old_sheet = {k: v for k, v in sheet.items()
+                     if k != "arm_band_bp"}
+        books5 = {b2: {"dir": b2, "signalled": set(),
+                       "entered": set(), "pos": []}}
+        armed5 = set()
+        col.books["S2USDT"] = B(99.94)
+        col._sit_scan(d, old_sheet, want4, books5, 1200.0, armed5)
+        col.books["S2USDT"] = B(99.80)
+        col._sit_scan(d, old_sheet, want4, books5, 1205.0, armed5)
+        check("лист без полосы: правило не исчезает умолчанием",
+              len(rd2()) == 1, str(len(rd2())))
 
         # Наблюдательная книга: тот же кандидат, но требования к
         # отношению нет. Нужна затем, чтобы фильтру владельца было

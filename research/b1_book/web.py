@@ -672,28 +672,39 @@ async function pullBot() {
 // веса ведут несколько книг с разным сроком удержания, и сравнение
 // «какой темп учится быстрее» и есть смысл переключателя.
 const MDL = {data: null, arm: "all", book: "h4"};
+// Ситуационная книга — ОДНА секция. Наблюдательная (та же ситуация
+// без требования к отношению) отдельной вкладкой не стоит: владелец
+// видит один раздел, а какие сделки в нём показаны, решает дилер по
+// отношению. Две вкладки предлагали выбирать книгу — то есть плумбинг,
+// — вместо вопроса, который на самом деле задают: «а если считать
+// только сделки от такого-то RR».
 const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"],
-               ["sit", "situational"],
-               // Наблюдательная книга: та же ситуация без требования
-               // к отношению. Нужна фильтру владельца — в торгуемой
-               // сделок ниже её гейта нет вовсе, и порог 1 к 1 не
-               // может добавить ничего. Торгуемой она не мешает: свой
-               // каталог, свой счёт, тень бота её не читает.
-               ["sit_obs", "situational · any RR"]];
+               ["sit", "situational"]];
 // Порог обещанного отношения: настройка ВЛАДЕЛЬЦА, не правило книги.
-// Книга торгует своим гейтом (RR ≥ 2 на входе), а этот порог отвечает
-// на вопрос «что было бы, если считать только такие сделки» — поэтому
-// он живёт в показе и всегда подписан как подмножество. Хранится в
-// памяти страницы и в адресе, чтобы ссылку можно было переслать.
-const RRQ = parseFloat(
-  new URLSearchParams(location.search).get("rr")
-  || localStorage.getItem("rr_min") || "0") || 0;
+// Он же выбирает ИСТОЧНИК: ниже собственного гейта книги торгуемых
+// сделок не существует вовсе, и ответ на такой порог может дать только
+// наблюдательная запись. Подмена источника обязана быть подписана —
+// молча показать другую книгу под тем же именем было бы худшим из
+// решений. Хранится в памяти страницы и в адресе, чтобы ссылку можно
+// было переслать.
+//
+// `null` — «не выбирал»: тогда показывается книга как она торгует, со
+// своим гейтом. Ноль от него отличается и означает «любое отношение».
+const RRQ = (() => {
+  const q = new URLSearchParams(location.search).get("rr");
+  const raw = q != null ? q : localStorage.getItem("rr_min");
+  if (raw == null || raw === "") return null;
+  const v = parseFloat(raw);
+  return isNaN(v) ? null : v;
+})();
 let RR_MIN = RRQ;
 
 async function pullModel() {
   try {
     const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`
-      + (RR_MIN ? `&rr_min=${RR_MIN}` : ""));
+      // Ноль отправляется тоже: для сервера это «любое отношение» и
+      // выбор источника, а не отсутствие выбора.
+      + (RR_MIN == null ? "" : `&rr_min=${RR_MIN}`));
     const d = await r.json();
     if (d && d.present !== undefined) { MDL.data = d; }
   } catch (e) { /* тихо: следующий опрос через минуту */ }
@@ -705,7 +716,29 @@ async function pullModel() {
 function bookState() {
   const d = MDL.data;
   if (!d || MDL.book === "h4") return d;
+  // Ситуационная секция ОДНА: какая запись отвечает на выбранный
+  // порог — торгуемая или наблюдательная, — решил сервер, и под
+  // ключом `sit` уже лежит она. Второе такое же решение здесь однажды
+  // разошлось бы с ним, и страница показывала бы одно, а страница
+  // сделок другое.
   return (d.books || {})[MDL.book] || null;
+}
+// Какой порог ДЕЙСТВУЕТ на экране: «не выбирал» означает книгу как она
+// торгует, то есть её собственный гейт. Гейт приходит от сервера
+// числом (`traded_gate`) и остаётся верным даже когда на экране
+// наблюдательная запись, у которой своего гейта нет.
+function rrEff(d) {
+  // Значение берётся из ОТВЕТА, а не из памяти страницы: показать
+  // выбор, которого сервер не применил, — это расхождение «что
+  // просили» и «что посчитали», и увидеть его потом нельзя ничем.
+  // Ноль ответа означает две разные вещи, и различает их источник:
+  // при наблюдательной записи это «любое отношение» (владелец ушёл
+  // ниже гейта), при торгуемой — «не выбирал», то есть книга как она
+  // торгует.
+  const v = +((d || {}).rr_min || 0);
+  if (v) return v;
+  return (d || {}).source_book === "observation"
+    ? 0 : +((d || {}).traded_gate || 0);
 }
 
 // Базисные пункты -> ПРОЦЕНТ движения цены. Решение владельца: везде,
@@ -1010,7 +1043,12 @@ function renderModel() {
        <b>${m.min_disc_bp ?? 0} bp</b> on top of what the sheet
        promised. Without that last one every name the model likes
        would enter in the first tick after the sheet — a batch on the
-       cycle clock, not a moment.</div>`
+       cycle clock, not a moment.${m.arm_band_bp
+         ? ` And the crossing has to happen <b>in front of us</b>: the
+            name must first be seen at least <b>${m.arm_band_bp} bp</b>
+            away from the trigger. A name found already parked at the
+            line is skipped — its next tick is a wobble around a level
+            it was standing on, not a move.` : ""}</div>`
     : "";
   // Правило СТОПА — тем же способом и рядом: заявка стоит не там,
   // куда модель ждёт цену, а за этой линией, и уровень предсказывает
@@ -1053,10 +1091,13 @@ function renderModel() {
   // в адресе: перезагрузка его не гасит, а ссылку можно переслать.
   const rf = document.getElementById("rrf");
   if (rf) rf.onchange = () => {
+    // Ноль здесь — «любое отношение», сознательный выбор владельца, а
+    // не отсутствие выбора: он переключает показ на наблюдательную
+    // запись. Поэтому и в памяти, и в адресе он хранится числом.
     RR_MIN = parseFloat(rf.value) || 0;
     localStorage.setItem("rr_min", String(RR_MIN));
     const u = new URLSearchParams(location.search);
-    if (RR_MIN) u.set("rr", String(RR_MIN)); else u.delete("rr");
+    u.set("rr", String(RR_MIN));
     history.replaceState(null, "", location.pathname + "?" + u);
     pullModel();
   };
@@ -1070,42 +1111,57 @@ function renderModel() {
 // памяти страницы: отбор и счёт делает он, и расхождение между
 // «что просили» и «что посчитали» обязано быть видно, а не спрятано.
 function rrControl(d) {
-  const cur = +(d.rr_min || 0);
+  // Гейт торгуемой книги и то, чья запись на экране, приходят от
+  // сервера: он и выбирает источник. Спрашивать гейт у показанного
+  // манифеста нельзя — у наблюдательной записи он ноль по построению.
+  const gate = +(d.traded_gate || 0);
+  const cur = rrEff(d);
+  const obs = d.source_book === "observation";
   const steps = [];
   for (let v = 1.0; v <= 5.0001; v += 0.5) steps.push(v.toFixed(1));
   // «1 : 3» означает ТРИ И ВЫШЕ, а не ровно три — иначе порог читался
   // бы как выбор одной полки, и сделка с отношением 5 из показа
   // выпадала бы. Слово «≥» стоит прямо в подписи, потому что вопрос
   // возник у владельца до первого использования.
-  const opts = [`<option value="0"${cur ? "" : " selected"}>all</option>`]
+  const lab = v => (Math.abs(v - gate) < 1e-9
+    ? `≥ 1 : ${v} — as the book trades` : `≥ 1 : ${v}`);
+  const opts = [`<option value="0"${cur ? "" : " selected"}>any
+      reward/risk</option>`]
     .concat(steps.map(v => `<option value="${v}"${
       Math.abs(cur - parseFloat(v)) < 1e-9 ? " selected" : ""
-    }>≥ 1 : ${v}</option>`)).join("");
+    }>${lab(parseFloat(v).toFixed(1))}</option>`)).join("");
   const total = (d.trades_total || 0) + (d.rr_cut || 0);
-  // Порог НИЖЕ собственного гейта книги не добавляет ничего: сделок с
-  // меньшим отношением она не открывала вовсе. Без этой фразы «1 : 1
-  // не добавляет сделок» читается как поломка фильтра — владелец так
-  // и прочёл. Фильтр только убирает, добавлять ему нечего.
-  const gate = +((d.manifest || {}).min_rr || 0);
-  const floor = (cur && gate && cur <= gate)
-    ? `<span class="dim"> The book enters only at reward/risk
-       <b>≥ ${gate}</b> (its own gate), so any threshold at or below
-       that keeps everything: this filter removes trades, it never
-       adds them.</span>` : "";
-  const note = cur
-    ? `<span class="dim"> — keeping every trade whose promised
-       reward/risk is <b>${cur} or higher</b>: <b>${
-        d.trades_total || 0}</b> of ${total} trades
-       <b>across both arms</b>, open and closed${d.rr_unknown
+  // Откуда числа — обязано стоять на экране. Ниже собственного гейта
+  // торгуемых сделок не существует, и ответ даёт наблюдательная
+  // запись: те же правила входа, снятое требование к отношению, свой
+  // счёт. Молчаливая подмена книги под тем же именем была бы худшим
+  // из решений — по кривой её не отличить.
+  const src = obs
+    ? `<span class="dim"> — below the book’s own gate
+       (<b>≥ ${gate}</b>) it has no such trades at all, so these come
+       from the <b>observation record</b>: same entry rules, the
+       reward/risk requirement dropped, its own account. The shadowed
+       bot does not trade it${cur ? `. Keeping reward/risk
+       <b>${cur} or higher</b>` : ""}.</span>`
+    : `<span class="dim"> — the <b>traded book</b>, the one the bot
+       shadows${cur > gate
+         ? `, keeping only trades whose promised reward/risk is
+            <b>${cur} or higher</b>`
+         : ", every trade it took"}.</span>`;
+  // Оговорка принадлежит ОТБОРУ, а не источнику: она нужна везде, где
+  // порог что-то убрал, — и в торгуемой книге, и в наблюдательной
+  // записи. Привязав её к источнику, я бы прятал её ровно там, где
+  // отфильтрованная кривая читается как деньги книги.
+  const note = (d.rr_cut || 0)
+    ? `<span class="dim"> <b>${d.trades_total || 0}</b> of ${total}
+       trades <b>across both arms</b>, open and closed${d.rr_unknown
           ? `, ${d.rr_unknown} with no promise to judge by` : ""}.
        The account below is recomputed on this subset: it answers
        “what if only such trades were taken”, it is NOT the book’s
        money.</span>`
-    : `<span class="dim"> — no filter: every trade the book took
-       (<b>${d.trades_total || 0}</b> across both arms), as in the 1 h
-       and 4 h books.</span>`;
-  return `<div class="mline">reward/risk filter — at least:
-    <select id="rrf">${opts}</select>${note}${floor}</div>`;
+    : "";
+  return `<div class="mline">show trades with reward/risk:
+    <select id="rrf">${opts}</select>${src}${note}</div>`;
 }
 
 function picksTable(d) {
@@ -1649,9 +1705,17 @@ document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
 // Книга турнира темпов из ссылки («h1», «h24»); пусто — главная 4 ч.
 // Едет в каждый запрос и в ссылки на график: страница обязана
 // показывать ту книгу, из которой пришли, а не молча главную.
-const RRQ = parseFloat(
-  new URLSearchParams(location.search).get("rr")
-  || localStorage.getItem("rr_min") || "0") || 0;
+// Порог владельца: `null` — «не выбирал» (книга как торгует), ноль —
+// «любое отношение». Разные значения: второе переключает показ на
+// наблюдательную запись, и свести их к нулю значило бы открывать
+// страницу на другой книге.
+const RRQ = (() => {
+  const q = new URLSearchParams(location.search).get("rr");
+  const raw = q != null ? q : localStorage.getItem("rr_min");
+  if (raw == null || raw === "") return null;
+  const v = parseFloat(raw);
+  return isNaN(v) ? null : v;
+})();
 let RR_MIN = RRQ;
 const HZ = ["h1", "h24", "sit", "sit_obs"].includes(
   new URLSearchParams(location.search).get("hz"))
@@ -1825,9 +1889,9 @@ async function load() {
                                  arm: val("arm"), state: val("state"),
                                  sym: val("sym")});
   if (HZ) p.set("hz", HZ);
-  // Порог обещанного отношения — настройка владельца; сервер отбирает
-  // и ПЕРЕСЧИТЫВАЕТ счёт по подмножеству тем же ядром.
-  if (RR_MIN) p.set("rr_min", String(RR_MIN));
+  // Порог обещанного отношения — настройка владельца; сервер отбирает,
+  // ПЕРЕСЧИТЫВАЕТ счёт тем же ядром и он же выбирает запись-источник.
+  if (RR_MIN != null) p.set("rr_min", String(RR_MIN));
   let d;
   try {
     const r = await fetch("/model_trades?" + p.toString());
@@ -2124,11 +2188,19 @@ async function load() {
   // Порог владельца обязан быть подписан ТАМ ЖЕ, где счёт: иначе
   // отфильтрованная кривая читается как деньги книги.
   const rl = document.getElementById("rrlab");
-  if (rl) rl.innerHTML = !d.rr_min ? ""
+  // Подписей две, и путать их нельзя: одна про ОТБОР (счёт пересчитан
+  // на подмножестве), другая про ИСТОЧНИК (на экране наблюдательная
+  // запись, а не торгуемая книга). Порог ниже гейта делает второе, не
+  // первое: отбирать там нечего, книга таких сделок не открывала.
+  const obs = d.source_book === "observation"
+    ? `<span class="k">observation record — same entry rules, the
+       reward/risk requirement dropped, its own account; the shadowed
+       bot does not trade it</span> ` : "";
+  if (rl) rl.innerHTML = obs + (!d.rr_min ? ""
     : `<span class="k">reward/risk ≥ ${d.rr_min}: ${d.grand_total}
        of ${(d.grand_total || 0) + (d.rr_cut || 0)} trades, account
        recomputed on this subset — a “what if”, not the book’s
-       money</span>`;
+       money</span>`);
   document.getElementById("cnt").textContent = d.filtered
     ? `${d.total} match of ${d.grand_total}` : `${d.total} trades`;
   document.getElementById("prev").disabled = d.page <= 0;
@@ -4105,10 +4177,19 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/model":
                 def fval(name):
+                    """Порог числом; ОТСУТСТВИЕ — не ноль.
+
+                    Ноль означает «любое отношение» и переключает
+                    показ на наблюдательную запись; отсутствие — «не
+                    выбирал», то есть книга как она торгует. Свести их
+                    к одному числу значило бы отдать владельцу другую
+                    книгу при первом же открытии страницы."""
+                    if name not in q:
+                        return None
                     try:
-                        return float(q.get(name, [""])[0])
-                    except ValueError:
-                        return 0.0
+                        return float(q[name][0])
+                    except (ValueError, IndexError):
+                        return None
                 return self._ok(json.dumps(
                     collector.model_state(rr_min=fval("rr_min")),
                     ensure_ascii=False).encode("utf-8"),
@@ -4120,11 +4201,16 @@ def serve(collector, port, token, log):
                     Падать на кривом параметре нельзя: страница —
                     единственный способ смотреть на сбор, и ошибка в
                     адресе не должна её гасить."""
-                    try:
-                        v = float(q.get(name, [""])[0])
-                    except ValueError:
+                    if name not in q:
                         return None
-                    return v if v > 0 else None
+                    try:
+                        v = float(q[name][0])
+                    except (ValueError, IndexError):
+                        return None
+                    # Ноль здесь осмыслен: «любое отношение». Отбор он
+                    # не делает, но выбирает ИСТОЧНИК — наблюдательную
+                    # запись вместо торгуемой книги.
+                    return v if v >= 0 else None
 
                 def ival(name, default):
                     try:

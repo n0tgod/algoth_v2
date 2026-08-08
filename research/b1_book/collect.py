@@ -688,7 +688,7 @@ class Collector:
         # Состояние модели S8 читается с диска по фиксированным путям и
         # кешируется: страница опрашивает раз в минуту, файлы меняются
         # раз в сутки.
-        self._model_cache = (0.0, None, 0)
+        self._model_cache = (0.0, None, object())
         # Цены входа по (символ, час). Закрытый час не меняется, значит
         # прочитанное можно помнить навсегда.
         self._px_cache = {}
@@ -1369,6 +1369,24 @@ class Collector:
         )
         return st
 
+    # Ситуационная книга на странице ОДНА, а записей две: торгуемая
+    # (свой гейт по отношению, 6 мест, её ведёт тень бота) и
+    # наблюдательная (те же правила входа, требование к отношению
+    # снято, 24 места). Порог владельца выбирает, какая отвечает:
+    # ниже гейта торгуемых сделок не существует вовсе, и ответить
+    # может только наблюдательная. Правило живёт ЗДЕСЬ, на сервере, —
+    # обзор и страница сделок обязаны решать это одинаково, а две
+    # реализации одного правила однажды разойдутся.
+    #
+    # `None` и ноль здесь РАЗНЫЕ: `None` — «владелец не выбирал», то
+    # есть книга как она торгует; ноль — «любое отношение», то есть
+    # сознательный переход к наблюдательной записи.
+    @staticmethod
+    def sit_source(rr_min, traded_gate):
+        if rr_min is None or not traded_gate:
+            return "traded"
+        return "observation" if rr_min < float(traded_gate) else "traded"
+
     def model_state(self, rr_min=None):
         """Состояние модели S8 для страницы: манифест, мысли, живой IC.
 
@@ -1381,7 +1399,7 @@ class Collector:
         # Кеш ключуется порогом: тот же ответ на другой порог был бы
         # молчаливой подменой отбора — таблица показывала бы один
         # фильтр, а числа считались по другому.
-        if cached is not None and now - at < 30 and was == (rr_min or 0):
+        if cached is not None and now - at < 30 and was == rr_min:
             return cached
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         # Предпросмотр снят решением владельца (2026-08-07): боевой
@@ -1402,9 +1420,20 @@ class Collector:
                 rr_min=rr_min if key.startswith("sit") else None)
             if st.get("present"):
                 books[key] = st
+        # Ситуационная секция одна: под ключом `sit` едет та запись,
+        # которая отвечает на выбранный порог. Гейт торгуемой книги
+        # едет рядом ЧИСЛОМ — без него показ не сможет ни подписать
+        # подмену, ни отличить «книга как торгует» от «пересчёт».
+        sit = books.get("sit")
+        if sit is not None:
+            gate = (sit.get("manifest") or {}).get("min_rr")
+            src = self.sit_source(rr_min, gate)
+            base = books.get("sit_obs") if src == "observation" else sit
+            books["sit"] = dict(base or sit, source_book=src,
+                                traded_gate=gate)
         if books:
             out["books"] = books
-        self._model_cache = (now, out, rr_min or 0)
+        self._model_cache = (now, out, rr_min)
         return out
 
     def _model_dir_state(self, mdir, rr_min=None):
@@ -1622,6 +1651,21 @@ class Collector:
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         name = ("model_" + hz if hz in ("h1", "h24", "sit", "sit_obs")
                 else "model")
+        # Та же развилка, что у обзора, и тем же правилом: ниже гейта
+        # торгуемой книги ответить может только наблюдательная запись.
+        # Считается ДО чтения файлов — иначе страница сделок и обзор
+        # показывали бы под одним порогом разные книги.
+        src_book = "traded"
+        if hz == "sit":
+            try:
+                with open(os.path.join(s8, "model_sit", "manifest.json"),
+                          encoding="utf-8") as f:
+                    gate = (json.load(f) or {}).get("min_rr")
+            except (OSError, ValueError):
+                gate = None
+            src_book = self.sit_source(rr_min, gate)
+            if src_book == "observation":
+                name = "model_sit_obs"
         mdir = os.path.join(s8, name)
         try:
             with open(os.path.join(mdir, "manifest.json"),
@@ -1674,7 +1718,7 @@ class Collector:
         if lite:
             rows, p, g = sliced()
             return {"source": name, "horizon_h": hold,
-                    "situational": sit,
+                    "situational": sit, "source_book": src_book,
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
@@ -1721,7 +1765,7 @@ class Collector:
         curve_out = {a: TR.thin(curves[a]) for a in ("gbm", "nn")}
         curve_out["all"] = TR.thin(both_c)
         return {"source": name, "horizon_h": hold,
-                "situational": sit,
+                "situational": sit, "source_book": src_book,
                 # Порог владельца и его цена в сделках: без этих чисел
                 # отфильтрованный счёт неотличим от счёта книги.
                 "rr_min": rr_min or 0, "rr_cut": rr_cut,
@@ -2225,6 +2269,13 @@ class Collector:
         # ровно то поведение, ради снятия которого правило заведено.
         md = sheet.get("min_disc_bp")
         min_disc = float(md) if md is not None else 11.0
+        # Полоса взведения: насколько ДАЛЬШЕ крючка обязано стоять имя,
+        # чтобы его последующий проход считался событием. Отсутствие
+        # поля — лист прежнего образца, и тут та же логика, что у
+        # скидки: молчаливый ноль вернул бы поведение, ради снятия
+        # которого правило и заведено.
+        ab = sheet.get("arm_band_bp")
+        band = float(ab) if ab is not None else 11.0
         hour = sheet.get("hour")
         # Гейт по отношению у сканера снимается: его применяет КНИГА,
         # каждая своим порогом. Само событие входа от этого не
@@ -2268,10 +2319,20 @@ class Collector:
                                      min_disc)
                 key = (arm, hour, sym)
                 if not got:
-                    # Видели имя НЕ проходящим — теперь его пересечение
-                    # будет настоящим событием, а не состоянием, в
-                    # котором мы его застали.
-                    armed.add(key)
+                    # Видели имя НЕ проходящим — но взводим не всякий
+                    # промах, а только уверенный: имя обязано не
+                    # проходить даже ОСЛАБЛЕННЫЙ на полосу гейт. Иначе
+                    # взводится тот, кто стоит в миллиметре от крючка,
+                    # и пятисекундное дрожание выпускает когорту разом
+                    # — пачки входов, которые владелец видел четырежды.
+                    #
+                    # Ослабленный гейт считается ТОЙ ЖЕ функцией с
+                    # меньшей скидкой: второй расчёт того же условия
+                    # однажды разошёлся бы с первым, и правило входа
+                    # перестало бы совпадать с правилом взведения.
+                    if not sit_scan_entry(r, mid, wave, min_edge, 0.0,
+                                          min_disc - band):
+                        armed.add(key)
                     continue
                 if key not in armed:
                     # Условие было верно уже при первом нашем взгляде:
