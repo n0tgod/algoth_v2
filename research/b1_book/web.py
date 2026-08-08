@@ -4811,9 +4811,21 @@ function render(){
       .join(" ");
   document.querySelectorAll("#per button").forEach(b =>
     b.onclick = () => { PERIOD = b.dataset.p; render(); });
+  const errs = (d && d.errors && d.errors.length)
+    ? `<div class="panel" style="border-color:var(--ask)">
+       <div class="cap" style="color:var(--ask)">books that failed to
+       load</div>${d.errors.map(e => `<div class="mono">${e}</div>`)
+         .join("")}
+       <div class="k">these books are missing from every number on
+       this page — the totals below are NOT the whole story</div>
+       </div>` : "";
   if (!d || !d.present) {
-    box.innerHTML = `<div class="panel">no closed trades yet — the
-      league starts with the first outcome</div>`;
+    box.innerHTML = errs + `<div class="panel">no closed trades yet —
+      the league starts with the first outcome${(d && d.books)
+        ? ` <span class="dim">(books scanned: ${
+            d.books.map(b => `${b.book} ${b.trades} trades / ${
+              b.closed_kept} kept`).join(", ") || "none"})</span>`
+        : ""}</div>`;
     return;
   }
   const p = (d.periods || {})[PERIOD] || {};
@@ -4825,7 +4837,7 @@ function render(){
      book's · with a handful of trades every leader is noise: read
      the counts first`;
   const g = p.groups || {};
-  box.innerHTML = `<div class="grid">
+  box.innerHTML = errs + `<div class="grid">
     ${groupTable("models (arms)", g.arm, ARM_EN)}
     ${groupTable("books (hold)", g.book, BOOK_EN)}
     ${groupTable("situations (dominant family)", g.setup, FAM_EN)}

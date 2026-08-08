@@ -2483,6 +2483,27 @@ def test_league_ranks_by_realised_money():
         check("сегодняшний период видит сегодняшние закрытия",
               lg["periods"]["today"]["n"] >= 1,
               str(lg["periods"]["today"]["n"]))
+        check("здоровые книги отчитываются числами",
+              any(b["book"] == "model_sit" and b["closed_kept"] == 1
+                  for b in lg["books"]), str(lg["books"]))
+        # Сломанная книга обязана НАЗВАТЬ себя в ответе. Первый прогон
+        # на сервере вернул пустую лигу при сотнях закрытых сделок, и
+        # по ответу нельзя было сказать почему: except глотал всё —
+        # ровно тот отказ, неотличимый от тишины, против которого
+        # весь проект.
+        mdir = os.path.join(s8, "model_h24")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"horizon_h": "boom"}, f)
+        col._league_cache = (0.0, None)
+        lg2 = col.model_league()
+        check("сломанная книга называет себя, а не молчит",
+              any("model_h24" in e and "boom" in e
+                  for e in lg2["errors"]), str(lg2["errors"]))
+        check("остальные книги при этом живы",
+              lg2["periods"]["30d"]["n"] == 2,
+              str(lg2["periods"]["30d"]["n"]))
     finally:
         C.HERE = was
         shutil.rmtree(d, ignore_errors=True)

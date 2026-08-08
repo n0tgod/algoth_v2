@@ -191,7 +191,11 @@ global.fetch = async (url) => {
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
              : url.startsWith("/league")
-             ? {present: true, closed_total: 3, periods: {
+             ? {present: true, closed_total: 3,
+                errors: ["model_h24: ValueError: boom"],
+                books: [{book: "model_sit", trades: 3,
+                         closed_kept: 2}],
+                periods: {
                  today: {n: 0, groups: {}, best: [], worst: [],
                          setup_known: 0},
                  "30d": {n: 3, setup_known: 2, groups: {
@@ -1006,6 +1010,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("лига: оговорки честности потеряны");
     if (!seen.some(u => u.startsWith("/league")))
       bad.push("лига: данные не запрошены");
+    // Сломанная книга видна на странице, и сказано, что итоги неполны.
+    if (!/model_h24: ValueError: boom/.test(bx)
+        || !/NOT the whole story/.test(bx))
+      bad.push("лига: ошибка сборки книги не показана");
   }
 
   if (isInfo) {

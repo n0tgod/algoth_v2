@@ -1935,7 +1935,7 @@ class Collector:
                                         "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        rows = []
+        rows, errors, scanned = [], [], []
         for hz, name in (("h4", "model"), ("h1", "model_h1"),
                          ("h24", "model_h24"), ("sit", "model_sit")):
             mdir = os.path.join(s8, name)
@@ -1943,20 +1943,30 @@ class Collector:
                 with open(os.path.join(mdir, "manifest.json"),
                           encoding="utf-8") as f:
                     mman = json.load(f)
-            except (OSError, ValueError):
+            except OSError:
+                continue                  # книги нет — это не ошибка
+            except ValueError as e:
+                errors.append(f"{name}: манифест не читается: {e}")
                 continue
-            sit = bool(mman.get("situational"))
-            hold = None if sit else int(mman.get("horizon_h")
-                                        or TR.HOLD_H)
-            picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
-            revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
             try:
+                sit = bool(mman.get("situational"))
+                hold = None if sit else int(mman.get("horizon_h")
+                                            or TR.HOLD_H)
+                picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+                revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
                 tr = TR.build(picks, revs, hold_h=hold,
                               px_at=self.entry_px(picks),
                               books=TR.load_books(
                                   os.path.join(mdir, "books.jsonl")))
-            except Exception:                         # noqa: BLE001
+            except Exception as e:                    # noqa: BLE001
+                # Ошибка обязана быть ВИДНА в ответе, а не глотаться:
+                # первый же прогон на сервере вернул пустую лигу при
+                # 261 закрытой сделке, и по ответу нельзя было сказать,
+                # почему, — ровно тот отказ, неотличимый от тишины,
+                # против которого весь проект.
+                errors.append(f"{name}: {type(e).__name__}: {e}")
                 continue
+            n0 = len(rows)
             for t in tr:
                 if t.get("state") != "закрыта" or t.get("pnl") is None:
                     continue
@@ -1972,6 +1982,8 @@ class Collector:
                     "setup": su[0][0] if su and su[0] else None,
                     "train_seq": t.get("train_seq"),
                     "reason": t.get("exit_reason")})
+            scanned.append({"book": name, "trades": len(tr),
+                            "closed_kept": len(rows) - n0})
 
         def agg(sub, key):
             out = {}
@@ -2016,6 +2028,7 @@ class Collector:
             }
         out = {"present": bool(rows), "closed_total": len(rows),
                "periods": periods,
+               "books": scanned, "errors": errors,
                "generated_at": round(now, 1)}
         self._league_cache = (now, out)
         return out
