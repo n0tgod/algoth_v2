@@ -76,6 +76,63 @@ def hour_ts(hour):
     return TR._ts(hour)
 
 
+class HttpBars:
+    """Бары через страницу наблюдения, когда записи нет под рукой.
+
+    Считать перебор можно там, где лежит запись (сервер), и там, где
+    сидит ассистент (песочница) — второе требует того же источника, а
+    не второй копии данных. Эндпоинт отдаёт минутные свечи из ТЕХ ЖЕ
+    файлов, что читает локальный путь, поэтому числа совпадают.
+
+    Две тонкости, каждая из которых молча испортила бы результат:
+    окно эндпоинта не больше 72 часов (просьба о большем молча
+    урезается), и неизвестный символ он ПОДМЕНЯЕТ первым из списка —
+    значит ответ обязан сверяться по имени, иначе чужие бары уехали бы
+    в чужую сделку.
+    """
+
+    def __init__(self, base, key, log=print):
+        self.base, self.key, self.log = base.rstrip("/"), key, log
+        self.cache = {}
+        self.miss = 0
+
+    def bars(self, sym, t0, t1):
+        import urllib.parse
+        import urllib.request
+        got = self.cache.get(sym)
+        if got is None:
+            got = self.cache[sym] = {}
+        need = []
+        end = t1
+        while end > t0:
+            need.append(end)
+            end -= 72 * 3600
+        out = []
+        for e in need:
+            key = int(e // 3600)
+            chunk = got.get(key)
+            if chunk is None:
+                q = urllib.parse.urlencode({
+                    "k": self.key, "sym": sym, "hours": 72,
+                    "end": int(e)})
+                try:
+                    with urllib.request.urlopen(
+                            f"{self.base}/candles?{q}", timeout=60) as r:
+                        d = json.loads(r.read().decode("utf-8"))
+                except Exception as ex:                   # noqa: BLE001
+                    self.log(f"  {sym}: свечи не пришли ({ex})")
+                    d = {}
+                if d.get("sym") != sym:
+                    # Подмена символа сервером: молча взять эти бары —
+                    # значит посчитать сделку по чужой цене.
+                    self.miss += 1
+                    d = {}
+                chunk = got[key] = d.get("candles") or []
+            out += chunk
+        return sorted({b[0]: b for b in out}.values(),
+                      key=lambda b: b[0])
+
+
 def read_bars(root, sym, t0, t1):
     """Минутные бары собственной записи сборщика в окне `[t0, t1]`.
 
@@ -147,39 +204,51 @@ def net_bp(side, move, adv):
 
 def legs_of(book_dir):
     """Ноги всех выборов книги: цена входа, прогноз, обещания пути."""
-    out = []
-    path = os.path.join(book_dir, "picks.jsonl")
+    recs = []
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(os.path.join(book_dir, "picks.jsonl"),
+                  encoding="utf-8") as f:
             for line in f:
                 try:
-                    pk = json.loads(line)
+                    recs.append(json.loads(line))
                 except ValueError:
                     continue
-                hour = pk.get("hour")
-                t0 = hour_ts(hour)
-                if t0 is None:
-                    continue
-                for side in ("long", "short"):
-                    for p in pk.get(side) or []:
-                        if p.get("mae") is None or p.get("mfe") is None:
-                            continue
-                        if not p.get("px"):
-                            continue
-                        out.append({
-                            "book": os.path.basename(book_dir),
-                            "arm": pk.get("arm") or "gbm",
-                            "hour": hour, "sym": p.get("sym"),
-                            "side": side, "px": float(p["px"]),
-                            "fwd": float(p.get("fwd") or 0.0),
-                            "mae": float(p["mae"]),
-                            "mfe": float(p["mfe"]),
-                            # Живой вход сканера открыт своей секундой;
-                            # часовой — закрытием часа сигнала.
-                            "at": float(p.get("at_ts") or (t0 + 3600)),
-                        })
     except OSError:
         pass
+    return legs_of_records(recs, os.path.basename(book_dir))
+
+
+def legs_of_records(recs, book):
+    """Разбор записей выбора — ОДИН на оба источника (файл и HTTP).
+
+    Вторая копия разбора однажды разошлась бы с первой, и перебор,
+    считанный в песочнице, отличался бы от считанного на сервере, не
+    выдавая себя ничем.
+    """
+    out = []
+    for pk in recs:
+        hour = pk.get("hour")
+        t0 = hour_ts(hour)
+        if t0 is None:
+            continue
+        for side in ("long", "short"):
+            for p in pk.get(side) or []:
+                if p.get("mae") is None or p.get("mfe") is None:
+                    continue
+                if not p.get("px"):
+                    continue
+                out.append({
+                    "book": book,
+                    "arm": pk.get("arm") or "gbm",
+                    "hour": hour, "sym": p.get("sym"),
+                    "side": side, "px": float(p["px"]),
+                    "fwd": float(p.get("fwd") or 0.0),
+                    "mae": float(p["mae"]),
+                    "mfe": float(p["mfe"]),
+                    # Живой вход сканера открыт своей секундой;
+                    # часовой — закрытием часа сигнала.
+                    "at": float(p.get("at_ts") or (t0 + 3600)),
+                })
     return out
 
 
@@ -187,12 +256,14 @@ def rr_of(leg):
     return abs(leg["mfe"]) / abs(leg["mae"]) if leg["mae"] else None
 
 
-def run(root, books, log=print):
-    legs = []
-    for b in books:
-        got = legs_of(b)
-        log(f"{os.path.basename(b)}: ног {len(got)}")
-        legs += got
+def run(root, books, log=print, src=None, legs=None):
+    """`src` — источник баров (`None` — записи на диске)."""
+    if legs is None:
+        legs = []
+        for b in books:
+            got = legs_of(b)
+            log(f"{os.path.basename(b)}: ног {len(got)}")
+            legs += got
     if not legs:
         raise SystemExit("выборов не найдено — нечего перебирать")
     # Бары читаются ОДИН раз на ногу и переиспользуются всеми ячейками:
@@ -203,11 +274,11 @@ def run(root, books, log=print):
             log(f"  бары: {i}/{len(legs)} ног")
             said = time.time()
         t0 = lg["at"]
-        lg["bars"] = read_bars(root, lg["sym"], t0,
-                               t0 + MAX_AGE_H * 3600)
-        lg["bars_null"] = read_bars(
-            root, lg["sym"], t0 + NULL_SHIFT_H * 3600,
-            t0 + (NULL_SHIFT_H + MAX_AGE_H) * 3600)
+        get = src.bars if src else (
+            lambda sym, a, b: read_bars(root, sym, a, b))
+        lg["bars"] = get(lg["sym"], t0, t0 + MAX_AGE_H * 3600)
+        lg["bars_null"] = get(lg["sym"], t0 + NULL_SHIFT_H * 3600,
+                              t0 + (NULL_SHIFT_H + MAX_AGE_H) * 3600)
         lg["rr"] = rr_of(lg)
     cells = []
     for edge in EDGES:
@@ -332,6 +403,30 @@ def report(legs, cells, path, root, books):
 
 
 
+def legs_from_http(base, key, books, log=print):
+    """Выборы через страницу наблюдения: те же записи, другой путь."""
+    import urllib.parse
+    import urllib.request
+    q = urllib.parse.urlencode({"k": key})
+    with urllib.request.urlopen(f"{base.rstrip('/')}/model?{q}",
+                                timeout=120) as r:
+        d = json.loads(r.read().decode("utf-8"))
+    src = {"model": d}
+    for name, b in (d.get("books") or {}).items():
+        src["model_" + name] = b
+    out = []
+    for want in books:
+        base_name = os.path.basename(want)
+        blk = src.get(base_name)
+        if not blk:
+            log(f"{base_name}: книги нет в ответе — пропуск")
+            continue
+        got = legs_of_records(blk.get("picks") or [], base_name)
+        log(f"{base_name}: ног {len(got)}")
+        out += got
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=os.path.join(
@@ -342,8 +437,19 @@ def main():
                      "model_sit")])
     ap.add_argument("--out", default=os.path.join(
         HERE, "out", "S9-sweep.md"))
+    # Считать можно там, где лежит запись, и там, где сидит ассистент:
+    # источник один и тот же, путь разный.
+    ap.add_argument("--http", default="",
+                    help="адрес страницы наблюдения вместо записей")
+    ap.add_argument("--key", default="", help="ключ страницы")
     a = ap.parse_args()
-    legs, cells = run(a.root, a.books)
+    src = legs = None
+    if a.http:
+        src = HttpBars(a.http, a.key)
+        legs = legs_from_http(a.http, a.key, a.books)
+    legs, cells = run(a.root, a.books, src=src, legs=legs)
+    if src and src.miss:
+        print(f"ВНИМАНИЕ: {src.miss} ответов с чужим символом отброшено")
     with open(os.path.join(os.path.dirname(a.out), "cells.json"), "w",
               encoding="utf-8") as f:
         json.dump({"cells": cells, "legs": len(legs)}, f,
