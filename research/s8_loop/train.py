@@ -87,8 +87,15 @@ STOP_TAU = 0.20
 # квантиль максимума — стоп ШОРТА (стороны разводит `position_path`).
 QUANT_TARGETS = {f"maeq_{STOP_H}h": (f"mae_{STOP_H}h", STOP_TAU),
                  f"mfeq_{STOP_H}h": (f"mfe_{STOP_H}h", 1.0 - STOP_TAU)}
+# Ранжирующая цель книги в единицах собственной σ монеты. Заведена
+# по замеру отбора: размах выбранной моделью монеты равен 6.1 медианы
+# сечения (86 % выборов выше медианы), потому что признаки нормированы,
+# а цели были сырыми. Геометрия сделки при этом НЕ трогается — стоп и
+# цель остаются на сырых `mae`/`mfe`, — чтобы разница между книгами
+# принадлежала ранжированию, а не другой сделке.
+RANK_Z = f"fwd_{FB.SIGNAL_H}h_z"
 TARGETS = ([f"{k}_{h}h" for k in ("fwd", "mfe", "mae")
-            for h in FB.HORIZONS] + list(QUANT_TARGETS))
+            for h in FB.HORIZONS] + list(QUANT_TARGETS) + [RANK_Z])
 
 
 def target_col(tgt):
@@ -1477,7 +1484,7 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
 
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
               nov_lo, nov_hi, book_root, log_, names=None,
-              train_seq=None):
+              train_seq=None, rank_key=None):
     """Выбор монет одной книги: цели fwd/mae/mfe СВОЕГО горизонта.
 
     Возвращает запись выбора или `None`, когда у книги нет своих
@@ -1487,8 +1494,17 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
     if (arm, kf) not in models or (arm, km) not in models \
             or j_last is None:
         return None
+    if rank_key is not None and (arm, rank_key) not in models:
+        return None
     xj = x[rows_m, j_last]
     fwd = models[(arm, kf)].predict(xj)
+    # Порядок сечения задаёт ОДНА величина, и какая именно — свойство
+    # книги. У книги в единицах σ это прогноз, делённый на собственную
+    # волатильность монеты; ожидание при этом записывается сырым, иначе
+    # «обещание / факт» у двух книг мерилось бы в разных единицах и
+    # сравнить их было бы нечем.
+    rank_by = (models[(arm, rank_key)].predict(xj)
+               if rank_key is not None else fwd)
     # Ход ПРОТИВ позиции у длинной и короткой ноги — разные цели:
     # `mae` — минимум цены за горизонт, `mfe` — максимум, обе по ЦЕНЕ.
     # Лонгу против идёт mae, шорту — mfe; связка под тестом в
@@ -1498,7 +1514,9 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
     # Весь вектор сечения — в файл: через горизонт по нему посчитается
     # живой вневыборочный IC своей цели.
     save_preds(arm, grid[-1], syms, rows_m, fwd, target=kf)
-    o = np.argsort(fwd)
+    if rank_key is not None:
+        save_preds(arm, grid[-1], syms, rows_m, rank_by, target=rank_key)
+    o = np.argsort(rank_by)
     # Объяснение — только для выбранных шести, а не для всего сечения:
     # у часовых книг сделка и есть выбор, остальным строкам объяснять
     # нечего. `rank` — место в сечении по прогнозу: стратегия часовой
@@ -2071,6 +2089,44 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             os.replace(smp + ".tmp", smp)
         except Exception as e:                            # noqa: BLE001
             log_(f"книга {h} ч не сведена: {type(e).__name__}: {e}")
+
+    # Книга в единицах собственной σ: то же сечение, тот же горизонт и
+    # та же геометрия сделки, отличается РОВНО порядок сечения — по
+    # прогнозу, делённому на волатильность монеты. Заведена замером:
+    # ранжирование по сырому прогнозу выбирает имена, ходящие вшестеро
+    # больше медианы сечения. Вердикта по ней нет, это наблюдение —
+    # какое из двух ранжирований зарабатывает на одних и тех же часах.
+    try:
+        zdir = MODEL_DIR + "_z"
+        os.makedirs(zdir, exist_ok=True)
+        for arm, _ in ARMS:
+            review_arm(zdir, arm, TR.HOLD_H, targets, si, grid,
+                       book_root, log_)
+            pk = make_pick(arm, TR.HOLD_H, models, x, mats, syms,
+                           rows_m, j_last, grid, nov_lo, nov_hi,
+                           book_root, log_, names=names,
+                           train_seq=train_seq, rank_key=RANK_Z)
+            if pk:
+                write_pick(zdir, pk)
+        rebuild_accounts(zdir, TR.HOLD_H)
+        n_z = (int((elig & np.isfinite(targets[RANK_Z])).sum())
+               if RANK_Z in targets else 0)
+        zm = {"version": MODEL_VERSION, "horizon_h": TR.HOLD_H,
+              "hedge": man["hedge"], "trained_at": man["trained_at"],
+              "sections": n_sections, "symbols": len(syms),
+              "canary_ic": man["canary_ic"],
+              # Чем эта книга отличается от главной — В АРТЕФАКТЕ, а не
+              # в имени каталога: через месяц по записи должно быть
+              # видно, каким правилом её сечение упорядочено.
+              "rank_target": RANK_Z, "target": f"fwd_{TR.HOLD_H}h",
+              "target_rows": n_z, "target_need": MIN_TARGET_ROWS,
+              "probe": PROBE, "pretest": PRETEST}
+        zp = os.path.join(zdir, "manifest.json")
+        with open(zp + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(zm, f, ensure_ascii=False, indent=1)
+        os.replace(zp + ".tmp", zp)
+    except Exception as e:                                # noqa: BLE001
+        log_(f"книга в σ не сведена: {type(e).__name__}: {e}")
 
     # Ситуационная книга: вход когда модель видит ситуацию, выход когда
     # ситуация кончилась. Сигнал — цели главного горизонта; своя касса

@@ -385,15 +385,104 @@ def test_targets_shapes_and_direction():
     s = synth_summary(S=35, D=400)
     f, r, elig = FB.feature_pack(s)
     t = FB.target_pack(s, r, elig, f["beta"])
+    want = [f"{k}_{h}h" for k in ("fwd", "mfe", "mae")
+            for h in FB.HORIZONS]
+    # Единицы собственной σ — только на горизонте сигнала: книга
+    # торгует на нём, и лишние цели стоили бы минуты цикла на каждую.
+    want += [f"{k}_{FB.SIGNAL_H}h_z" for k in ("fwd", "mfe", "mae")]
     check("цели всех горизонтов на месте",
-          sorted(t) == sorted([f"{k}_{h}h" for k in ("fwd", "mfe", "mae")
-                               for h in FB.HORIZONS]), str(sorted(t)))
+          sorted(t) == sorted(want), str(sorted(t)))
+    # Цель в σ обязана СНИМАТЬ масштаб волатильности, а не повторять
+    # сырую в других единицах. Общая синтетика для этого не годится:
+    # у неё все монеты одной волатильности, снимать нечего, и проверка
+    # прошла бы вхолостую. Здесь своя пара — тихая и бешеная.
+    g = np.random.default_rng(11)
+    D2 = 400
+    quiet = 100 * np.exp(np.cumsum(g.normal(0, 0.001, D2)))
+    wild = 100 * np.exp(np.cumsum(g.normal(0, 0.010, D2)))
+    c2 = np.vstack([quiet, wild])
+    s2 = {"mid_close": c2, "mid_high": c2 * 1.001, "mid_low": c2 * 0.999,
+          "n_snap": np.full((2, D2), 3600.0)}
+    r2 = np.full_like(c2, np.nan)
+    r2[:, 1:] = np.diff(np.log(c2), axis=1)
+    t2 = FB.target_pack(s2, r2, np.isfinite(c2), np.ones((2, D2)))
+    raw = [np.nanmedian(np.abs(t2["mfe_4h"][i])) for i in (0, 1)]
+    z = [np.nanmedian(np.abs(t2["mfe_4h_z"][i])) for i in (0, 1)]
+    check("цель в σ снимает масштаб волатильности",
+          raw[1] / raw[0] > 3.0 and z[1] / z[0] < 1.5,
+          f"сырая {raw[1]/raw[0]:.2f}, в сигмах {z[1]/z[0]:.2f}")
     ok = np.isfinite(t["mfe_4h"]) & np.isfinite(t["mae_4h"])
     # MFE бывает отрицательным (цена ни разу не поднялась выше входа),
     # MAE — положительным; настоящий инвариант пути: максимум не ниже
     # минимума.
     check("MFE ≥ MAE там, где оба есть",
           (t["mfe_4h"][ok] >= t["mae_4h"][ok] - 1e-9).all())
+
+
+def test_rank_key_reorders_the_section():
+    """Книга в σ обязана ранжировать ДРУГОЙ величиной.
+
+    Без этой проверки `rank_key` можно было бы обойти, и книга молча
+    стала бы копией главной: на диске два каталога, в отчёте две
+    книги, а сравнивать нечего — ответ, неотличимый от вопроса.
+    Отрицательный контроль (ранжирование всегда по сырому прогнозу)
+    обязан ронять именно её.
+
+    Заодно закрепляется, что ожидание в записи остаётся СЫРЫМ: две
+    книги меряются «обещание / факт» в одних единицах, иначе сравнить
+    их нечем.
+    """
+    import train as T
+
+    class Fake:
+        def __init__(self, v):
+            self.v = np.asarray(v, dtype=float)
+
+        def predict(self, x):
+            return self.v[:len(x)]
+
+    n = 6
+    syms = [f"S{i}USDT" for i in range(n)]
+    # Сырой прогноз растёт с номером, прогноз в σ — убывает: у двух
+    # ранжирований крайние имена ровно противоположны.
+    raw = Fake([10.0, 20.0, 30.0, 40.0, 50.0, 60.0])
+    zed = Fake([60.0, 50.0, 40.0, 30.0, 20.0, 10.0])
+    models = {("gbm", "fwd_4h"): raw,
+              ("gbm", "mae_4h"): Fake([-20.0] * n),
+              ("gbm", "mfe_4h"): Fake([40.0] * n),
+              ("gbm", T.RANK_Z): zed}
+    x = np.zeros((n, 1, 3))
+    mats = {"mid_close": np.full((n, 1), 100.0)}
+    rows_m, grid = list(range(n)), ["2026-08-09-10"]
+    kw = dict(models=models, x=x, mats=mats, syms=syms, rows_m=rows_m,
+              j_last=0, grid=grid,
+              nov_lo=np.full(3, -9.0), nov_hi=np.full(3, 9.0),
+              book_root=None, log_=lambda m: None)
+    # Векторы сечения пишутся в каталог модели; на время проверки он
+    # временный — писать в боевой из теста нельзя, живой IC считается
+    # по этому же файлу.
+    d = tempfile.mkdtemp()
+    was = T.MODEL_DIR
+    try:
+        T.MODEL_DIR = d
+        a = T.make_pick("gbm", 4, **kw)
+        b = T.make_pick("gbm", 4, rank_key=T.RANK_Z, **kw)
+    finally:
+        T.MODEL_DIR = was
+        shutil.rmtree(d, ignore_errors=True)
+    check("обе книги выбрали по три ноги",
+          len(a["long"]) == 3 and len(b["long"]) == 3,
+          str([len(a["long"]), len(b["long"])]))
+    la = [q["sym"] for q in a["long"]]
+    lb = [q["sym"] for q in b["long"]]
+    check("книга в σ выбрала ДРУГИЕ имена", set(la) != set(lb),
+          f"сырая {la}, в сигмах {lb}")
+    check("порядок задан своей величиной: крайние противоположны",
+          la[0] == "S5USDT" and lb[0] == "S0USDT", f"{la[0]} / {lb[0]}")
+    # Ожидание — сырое у обеих: `fwd` у S0 равен 10 в любой книге.
+    z0 = next(q for q in b["long"] if q["sym"] == "S0USDT")
+    check("ожидание в записи осталось сырым", z0["fwd"] == 10.0,
+          str(z0["fwd"]))
 
 
 def test_retry_when_not_trained():
@@ -3261,6 +3350,7 @@ def main():
     test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
+    test_rank_key_reorders_the_section()
     test_retry_when_not_trained()
     test_readiness_is_written_before_training()
     test_canary_not_computed_is_not_a_pass()

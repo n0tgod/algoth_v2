@@ -1311,7 +1311,8 @@ class Collector:
         except OSError:
             base = ""
         st["book_hz"] = {"model_h1": "h1", "model_h24": "h24",
-                         "model_sit": "sit"}.get(base, "")
+                         "model_sit": "sit",
+                         "model_z": "z"}.get(base, "")
         try:
             recs = SV.read_journal(jdir)
         except SystemExit as e:
@@ -1448,7 +1449,7 @@ class Collector:
         # подмешаны: смесь двух книг в одной таблице выглядела бы
         # осмысленно и не значила бы ничего.
         books = {}
-        for key in ("h1", "h24", "sit", "sit_obs"):
+        for key in ("h1", "h24", "sit", "sit_obs", "z"):
             st = self._model_dir_state(
                 os.path.join(s8, f"model_{key}"),
                 rr_min=rr_min if key.startswith("sit") else None)
@@ -1948,7 +1949,8 @@ class Collector:
     # одному составу книг, иначе одна страница знала бы о книге, о
     # которой другая молчит.
     BOOKS = (("h4", "model"), ("h1", "model_h1"),
-             ("h24", "model_h24"), ("sit", "model_sit"))
+             ("h24", "model_h24"), ("sit", "model_sit"),
+             ("z", "model_z"))
 
     def closed_rows(self):
         """Закрытые сделки всех торгуемых книг — с деньгами.

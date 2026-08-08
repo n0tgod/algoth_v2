@@ -728,7 +728,7 @@ const MDL = {data: null, arm: "all", book: "h4"};
 // — вместо вопроса, который на самом деле задают: «а если считать
 // только сделки от такого-то RR».
 const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"],
-               ["sit", "situational"]];
+               ["sit", "situational"], ["z", "per σ"]];
 // Порог обещанного отношения: настройка ВЛАДЕЛЬЦА, не правило книги.
 // Он же выбирает ИСТОЧНИК: ниже собственного гейта книги торгуемых
 // сделок не существует вовсе, и ответ на такой порог может дать только
@@ -4899,7 +4899,7 @@ document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
 """ + NAVJS + r"""
 navMount("/vol-page");
 const BOOK_EN = {h4:"4 h book", h1:"1 h book", h24:"24 h book",
-                 sit:"situational"};
+                 sit:"situational", z:"ranked per σ"};
 const ARM_EN = {all:"both arms", gbm:"trees (ML)", nn:"neural (AI)"};
 const BUCKETS = ["quiet", "normal", "loud"];
 
@@ -5411,7 +5411,7 @@ function utc(ts){ if (!ts) return "—";
   return new Date(ts*1000).toISOString().slice(5,16).replace("T"," "); }
 const ARM_EN = {gbm:"trees (ML)", nn:"neural (AI)"};
 const BOOK_EN = {h4:"4 h book", h1:"1 h book", h24:"24 h book",
-                 sit:"situational"};
+                 sit:"situational", z:"ranked per σ"};
 const FAM_EN = {absorption:"book eaten (absorption)",
   book:"book imbalance / depth", tape:"tape pressure",
   liq:"liquidations", oi:"open interest", funding:"funding & basis",
