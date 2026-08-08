@@ -90,6 +90,55 @@ def position_path(side, mae_v, mfe_v, h=4):
     return mfe_v, mae_v, f"mfe_{h}h", f"mae_{h}h"
 
 
+def rr_of(t):
+    """Отношение обещанной прибыли к обещанному риску у ЭТОЙ сделки.
+
+    Одна формула на всех: гейт входа ситуационной книги пускает по
+    `|mfe| / |mae|`, и фильтр показа обязан считать ровно то же —
+    иначе таблица отбирала бы по одной величине, а книга входила по
+    другой, и обе назывались бы «RR». Поля записи уже размечены
+    сторонами (`path_fields`), применять `position_path` повторно
+    нельзя.
+
+    `None` — когда обещания против нет или оно нулевое: отношение к
+    нулю не существует, и придумывать ему число значило бы пускать
+    такую сделку в любой порог.
+    """
+    adv, fav = t.get("mae_bp"), t.get("mfe_bp")
+    if adv is None:
+        adv, fav = t.get("mae"), t.get("mfe")
+    try:
+        adv, fav = abs(float(adv)), abs(float(fav))
+    except (TypeError, ValueError):
+        return None
+    return (fav / adv) if adv else None
+
+
+def by_rr(trades, rr_min):
+    """Сделки, чьё обещанное отношение не ниже порога.
+
+    Сделка без отношения (нет обещания против) НЕ проходит ни один
+    порог: неизмеримое не есть удовлетворяющее. Возвращает
+    `(отобранные, сколько отброшено, сколько без отношения)` — числа
+    нужны показу, потому что «стало меньше сделок» и «часть сделок
+    нечем судить» это разные сообщения.
+    """
+    if not rr_min:
+        return list(trades), 0, 0
+    keep, cut, unknown = [], 0, 0
+    for t in trades:
+        r = rr_of(t)
+        if r is None:
+            unknown += 1
+            cut += 1
+            continue
+        if r + 1e-9 < rr_min:
+            cut += 1
+            continue
+        keep.append(t)
+    return keep, cut, unknown
+
+
 def path_fields(side, mae_v, mfe_v, h=4):
     """Оба конца пути готовыми полями записи выбора.
 

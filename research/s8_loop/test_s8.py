@@ -737,6 +737,50 @@ def test_cash_returns_when_the_review_is_written():
           entry_size5(None) == 0.0, str(entry_size5(None)))
 
 
+def test_rr_filter_is_one_definition_and_recounts_money():
+    """Фильтр по обещанному отношению: одна формула и честный счёт.
+
+    Настройка владельца отбирает сделки по `|mfe| / |mae|` — ровно по
+    той величине, которой гейт входа пускает сделку. Две формулы с
+    одним именем однажды разошлись бы, и таблица отбирала бы не то,
+    чем книга торгует. Сделка без обещания против не проходит НИ
+    ОДИН порог: неизмеримое не есть удовлетворяющее.
+    """
+    import trades as TR
+
+    mk = lambda sym, mae, mfe: {                      # noqa: E731
+        "arm": "gbm", "hour": "H01", "sym": sym, "side": "long",
+        "state": "закрыта", "opened_at": 3600, "closes_at": 7200,
+        "net_bp": 100.0, "mae_bp": mae, "mfe_bp": mfe}
+    # Исходы РАЗНЫЕ намеренно: при одинаковых счёт подмножества совпал
+    # бы с полным (капитал делится между ногами часа и вкладывается
+    # весь), и проверка «деньги пересчитаны» прошла бы вхолостую.
+    a2 = mk("A", -20.0, 40.0)      # RR 2.0, убыточная
+    a2["net_bp"] = -300.0
+    a3 = mk("B", -20.0, 60.0)      # RR 3.0, прибыльная
+    a0 = mk("C", 0.0, 60.0)        # обещания против нет
+    check("отношение считается по обещаниям пути",
+          TR.rr_of(a3) == 3.0 and TR.rr_of(a0) is None,
+          f"{TR.rr_of(a3)} {TR.rr_of(a0)}")
+    keep, cut, unk = TR.by_rr([a2, a3, a0], 3.0)
+    check("порог 1:3 оставляет только своё",
+          [t["sym"] for t in keep] == ["B"] and cut == 2 and unk == 1,
+          f"{[t['sym'] for t in keep]} {cut} {unk}")
+    keep, cut, unk = TR.by_rr([a2, a3, a0], 2.0)
+    check("ровно на пороге сделка остаётся",
+          [t["sym"] for t in keep] == ["A", "B"], str(cut))
+    keep, cut, unk = TR.by_rr([a2, a3, a0], 0)
+    check("без порога не выбрасывается ничего",
+          len(keep) == 3 and cut == 0)
+    # Деньги пересчитываются по подмножеству тем же ядром: иначе
+    # таблица показывала бы отбор, а счёт — всю книгу.
+    all_bal = TR.account([a2, a3, a0], "gbm", hold_h=1)[1]
+    sub_bal = TR.account(TR.by_rr([a2, a3, a0], 3.0)[0], "gbm",
+                         hold_h=1)[1]
+    check("счёт подмножества отличается от счёта книги",
+          all_bal != sub_bal, f"{all_bal} против {sub_bal}")
+
+
 def test_sverka_pairs_cash_reject_with_zero_size():
     """Сверка: отказ ядра по пустой кассе — пара нулевому размеру.
 
@@ -3031,6 +3075,7 @@ def main():
     test_report_flags_manifest_from_a_previous_run()
     test_capital_returns_before_it_is_redeployed()
     test_cash_returns_when_the_review_is_written()
+    test_rr_filter_is_one_definition_and_recounts_money()
     test_sverka_pairs_cash_reject_with_zero_size()
     test_picks_never_take_non_crypto()
     test_horizon_books_review_with_their_own_target()

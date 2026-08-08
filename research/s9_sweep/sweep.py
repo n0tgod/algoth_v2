@@ -102,18 +102,22 @@ class HttpBars:
         got = self.cache.get(sym)
         if got is None:
             got = self.cache[sym] = {}
-        need = []
-        end = t1
+        # Просим РОВНО нужное окно, а не предел эндпоинта: он читает
+        # по часовому файлу на каждый запрошенный час, и лишние сорок
+        # восемь часов — это втрое дольше на каждый запрос. Первый
+        # прогон из-за этого шёл двадцать минут и был убит.
+        need, end = [], t1
         while end > t0:
-            need.append(end)
-            end -= 72 * 3600
+            span = min(72, max(1, int((end - t0) // 3600) + 1))
+            need.append((end, span))
+            end -= span * 3600
         out = []
-        for e in need:
-            key = int(e // 3600)
+        for e, span in need:
+            key = (int(e // 3600), span)
             chunk = got.get(key)
             if chunk is None:
                 q = urllib.parse.urlencode({
-                    "k": self.key, "sym": sym, "hours": 72,
+                    "k": self.key, "sym": sym, "hours": span,
                     "end": int(e)})
                 try:
                     with urllib.request.urlopen(

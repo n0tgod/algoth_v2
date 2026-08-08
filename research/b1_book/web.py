@@ -674,9 +674,20 @@ async function pullBot() {
 const MDL = {data: null, arm: "all", book: "h4"};
 const BOOKS = [["h4", "4 h"], ["h1", "1 h"], ["h24", "24 h"],
                ["sit", "situational"]];
+// Порог обещанного отношения: настройка ВЛАДЕЛЬЦА, не правило книги.
+// Книга торгует своим гейтом (RR ≥ 2 на входе), а этот порог отвечает
+// на вопрос «что было бы, если считать только такие сделки» — поэтому
+// он живёт в показе и всегда подписан как подмножество. Хранится в
+// памяти страницы и в адресе, чтобы ссылку можно было переслать.
+const RRQ = parseFloat(
+  new URLSearchParams(location.search).get("rr")
+  || localStorage.getItem("rr_min") || "0") || 0;
+let RR_MIN = RRQ;
+
 async function pullModel() {
   try {
-    const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`);
+    const r = await fetch(`/model?k=${encodeURIComponent(KEY)}`
+      + (RR_MIN ? `&rr_min=${RR_MIN}` : ""));
     const d = await r.json();
     if (d && d.present !== undefined) { MDL.data = d; }
   } catch (e) { /* тихо: следующий опрос через минуту */ }
@@ -984,7 +995,12 @@ function renderModel() {
        would enter in the first tick after the sheet — a batch on the
        cycle clock, not a moment.</div>`
     : "";
-  box.innerHTML = armBtns + lagLine + gateLine + `<div class="mline">trained on ${m.sections ?? "—"}
+  // Переключатель порога — только у книги без срока: у часовых книг
+  // обещания пути не решают ни входа, ни выхода, и фильтровать их тем
+  // же числом значило бы сравнивать разные вещи.
+  const rrLine = isSit(d) ? rrControl(d) : "";
+  box.innerHTML = armBtns + rrLine + lagLine + gateLine
+    + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
       icLine ? " · out-of-sample IC: " + icLine : ""}</div>
@@ -1002,7 +1018,48 @@ function renderModel() {
       `<span class="tt">[${t.at || ""}]</span> ${t.text}`).join("\n")
       || "no thoughts yet — they appear after the first training"}</div>`);
   wireArms();
+  // Порог — настройка владельца, поэтому живёт и в памяти страницы, и
+  // в адресе: перезагрузка его не гасит, а ссылку можно переслать.
+  const rf = document.getElementById("rrf");
+  if (rf) rf.onchange = () => {
+    RR_MIN = parseFloat(rf.value) || 0;
+    localStorage.setItem("rr_min", String(RR_MIN));
+    const u = new URLSearchParams(location.search);
+    if (RR_MIN) u.set("rr", String(RR_MIN)); else u.delete("rr");
+    history.replaceState(null, "", location.pathname + "?" + u);
+    pullModel();
+  };
 }
+// Настройка ВЛАДЕЛЬЦА: показывать только сделки с обещанным
+// отношением не ниже порога, шаг 0.5. Книга торгует своим гейтом, а
+// это вопрос «что было бы, если считать только такие» — поэтому
+// отбор живёт в показе и всегда подписан как подмножество.
+//
+// Выбранное значение и подпись берутся из ОТВЕТА сервера, а не из
+// памяти страницы: отбор и счёт делает он, и расхождение между
+// «что просили» и «что посчитали» обязано быть видно, а не спрятано.
+function rrControl(d) {
+  const cur = +(d.rr_min || 0);
+  const steps = [];
+  for (let v = 1.0; v <= 5.0001; v += 0.5) steps.push(v.toFixed(1));
+  const opts = [`<option value="0"${cur ? "" : " selected"}>all</option>`]
+    .concat(steps.map(v => `<option value="${v}"${
+      Math.abs(cur - parseFloat(v)) < 1e-9 ? " selected" : ""
+    }>1 : ${v}</option>`)).join("");
+  const total = (d.trades_total || 0) + (d.rr_cut || 0);
+  const note = cur
+    ? `<span class="dim"> — showing <b>${d.trades_total || 0}</b> of ${
+        total} trades${d.rr_unknown
+          ? `, ${d.rr_unknown} with no promise to judge by` : ""}.
+       The account below is recomputed on this subset: it answers
+       “what if only such trades were taken”, it is NOT the book’s
+       money.</span>`
+    : `<span class="dim"> — no filter: every trade the book took, as in
+       the 1 h and 4 h books.</span>`;
+  return `<div class="mline">reward/risk filter:
+    <select id="rrf">${opts}</select>${note}</div>`;
+}
+
 function picksTable(d) {
   // Турнир: у каждой руки свои выборы и свой разбор. Смешение рук в
   // одной таблице выглядело бы осмысленно и не значило бы ничего.
@@ -1523,6 +1580,7 @@ canvas{width:100%;display:block;touch-action:pan-y}
       <button id="next">&rarr;</button>
       <span id="cnt" class="k"></span>
       <span id="mkat" class="k"></span>
+      <span id="rrlab"></span>
     </div>
     <div class="scroll"><table>
       <thead><tr><th id="thw">signal hour</th>
@@ -1543,6 +1601,10 @@ document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
 // Книга турнира темпов из ссылки («h1», «h24»); пусто — главная 4 ч.
 // Едет в каждый запрос и в ссылки на график: страница обязана
 // показывать ту книгу, из которой пришли, а не молча главную.
+const RRQ = parseFloat(
+  new URLSearchParams(location.search).get("rr")
+  || localStorage.getItem("rr_min") || "0") || 0;
+let RR_MIN = RRQ;
 const HZ = ["h1", "h24", "sit"].includes(
   new URLSearchParams(location.search).get("hz"))
   ? new URLSearchParams(location.search).get("hz") : "";
@@ -1715,6 +1777,9 @@ async function load() {
                                  arm: val("arm"), state: val("state"),
                                  sym: val("sym")});
   if (HZ) p.set("hz", HZ);
+  // Порог обещанного отношения — настройка владельца; сервер отбирает
+  // и ПЕРЕСЧИТЫВАЕТ счёт по подмножеству тем же ядром.
+  if (RR_MIN) p.set("rr_min", String(RR_MIN));
   let d;
   try {
     const r = await fetch("/model_trades?" + p.toString());
@@ -2007,6 +2072,14 @@ async function load() {
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
     `page ${d.page + 1} of ${d.pages}`;
+  // Порог владельца обязан быть подписан ТАМ ЖЕ, где счёт: иначе
+  // отфильтрованная кривая читается как деньги книги.
+  const rl = document.getElementById("rrlab");
+  if (rl) rl.innerHTML = !d.rr_min ? ""
+    : `<span class="k">reward/risk ≥ ${d.rr_min}: ${d.grand_total}
+       of ${(d.grand_total || 0) + (d.rr_cut || 0)} trades, account
+       recomputed on this subset — a “what if”, not the book’s
+       money</span>`;
   document.getElementById("cnt").textContent = d.filtered
     ? `${d.total} match of ${d.grand_total}` : `${d.total} trades`;
   document.getElementById("prev").disabled = d.page <= 0;
@@ -3974,11 +4047,28 @@ def serve(collector, port, token, log):
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/model":
+                def fval(name):
+                    try:
+                        return float(q.get(name, [""])[0])
+                    except ValueError:
+                        return 0.0
                 return self._ok(json.dumps(
-                    collector.model_state(),
+                    collector.model_state(rr_min=fval("rr_min")),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/model_trades":
+                def fnum(name):
+                    """Порог RR числом; мусор — как отсутствие порога.
+
+                    Падать на кривом параметре нельзя: страница —
+                    единственный способ смотреть на сбор, и ошибка в
+                    адресе не должна её гасить."""
+                    try:
+                        v = float(q.get(name, [""])[0])
+                    except ValueError:
+                        return None
+                    return v if v > 0 else None
+
                 def ival(name, default):
                     try:
                         return int(float(q.get(name, [""])[0]))
@@ -3991,6 +4081,7 @@ def serve(collector, port, token, log):
                         state=q.get("state", [None])[0] or None,
                         sym=q.get("sym", [None])[0] or None,
                         hz=q.get("hz", [None])[0] or None,
+                        rr_min=fnum("rr_min"),
                         lite=q.get("lite", [""])[0] in ("1", "true")),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")

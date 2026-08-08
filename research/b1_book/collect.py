@@ -688,7 +688,7 @@ class Collector:
         # Состояние модели S8 читается с диска по фиксированным путям и
         # кешируется: страница опрашивает раз в минуту, файлы меняются
         # раз в сутки.
-        self._model_cache = (0.0, None)
+        self._model_cache = (0.0, None, 0)
         # Цены входа по (символ, час). Закрытый час не меняется, значит
         # прочитанное можно помнить навсегда.
         self._px_cache = {}
@@ -1369,7 +1369,7 @@ class Collector:
         )
         return st
 
-    def model_state(self):
+    def model_state(self, rr_min=None):
         """Состояние модели S8 для страницы: манифест, мысли, живой IC.
 
         Пути фиксированы, ключ обязателен на уровне сервера; кеш на
@@ -1377,13 +1377,19 @@ class Collector:
         модели — не ошибка, а именованное состояние: она копит запись.
         """
         now = time.time()
-        at, cached = self._model_cache
-        if cached is not None and now - at < 30:
+        at, cached, was = self._model_cache
+        # Кеш ключуется порогом: тот же ответ на другой порог был бы
+        # молчаливой подменой отбора — таблица показывала бы один
+        # фильтр, а числа считались по другому.
+        if cached is not None and now - at < 30 and was == (rr_min or 0):
             return cached
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         # Предпросмотр снят решением владельца (2026-08-07): боевой
         # контур обучен и торгует, строительные леса убраны. Его
         # артефакты остаются на диске, но не отдаются.
+        # Порог применяется ТОЛЬКО к книге без срока: у часовых книг
+        # обещания пути не служат ни входом, ни выходом, и фильтровать
+        # их тем же числом значило бы сравнивать разные вещи.
         out = self._model_dir_state(os.path.join(s8, "model"))
         # Турнир темпов: книги остальных горизонтов — те же веса, свой
         # срок удержания и свой счёт. Отдаются отдельными ключами, а не
@@ -1391,15 +1397,17 @@ class Collector:
         # осмысленно и не значила бы ничего.
         books = {}
         for key in ("h1", "h24", "sit"):
-            st = self._model_dir_state(os.path.join(s8, f"model_{key}"))
+            st = self._model_dir_state(
+                os.path.join(s8, f"model_{key}"),
+                rr_min=rr_min if key == "sit" else None)
             if st.get("present"):
                 books[key] = st
         if books:
             out["books"] = books
-        self._model_cache = (now, out)
+        self._model_cache = (now, out, rr_min or 0)
         return out
 
-    def _model_dir_state(self, mdir):
+    def _model_dir_state(self, mdir, rr_min=None):
         out = {"present": False}
         try:
             with open(os.path.join(mdir, "manifest.json"),
@@ -1530,6 +1538,16 @@ class Collector:
                     t["exit_move_bp"] = e.get("move_bp")
                     t["exit_reason"] = e.get("reason")
                     t["closes_in_sec"] = None
+            # Фильтр владельца по обещанному отношению: показ и СЧЁТ
+            # считаются по отобранному подмножеству одним и тем же
+            # ядром. Отфильтрованная кривая — это «что было бы, если
+            # брать только такие сделки», а не деньги книги, и страница
+            # обязана сказать это словами: числа сами по себе выглядят
+            # как результат книги.
+            tr, cut, unknown = TR.by_rr(tr, rr_min)
+            out["rr_min"] = rr_min or 0
+            out["rr_cut"] = cut
+            out["rr_unknown"] = unknown
             out["trades"] = tr[:300]
             out["trades_total"] = len(tr)
             cap, st = {}, {}
@@ -1554,7 +1572,7 @@ class Collector:
         return out
 
     def model_trades(self, page=0, per=100, arm=None, state=None,
-                     sym=None, hz=None, lite=False):
+                     sym=None, hz=None, lite=False, rr_min=None):
         """ВСЯ история сделок модели, страницами, со сводкой по всему.
 
         Отдельно от `model_state`, потому что там история намеренно
@@ -1598,6 +1616,9 @@ class Collector:
                       books=TR.load_books(
                           os.path.join(mdir, "books.jsonl")))
         TR.mark(tr, self.marks(tr))
+        # Порог обещанного отношения — только у книги без срока: у
+        # часовых обещания пути не решают ни входа, ни выхода.
+        tr, rr_cut, rr_unknown = TR.by_rr(tr, rr_min if sit else None)
         accs, cap = {}, {}
         for a in ("gbm", "nn"):
             try:
@@ -1631,6 +1652,7 @@ class Collector:
             rows, p, g = sliced()
             return {"source": name, "horizon_h": hold,
                     "situational": sit,
+                    "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
                     "pages": max(1, (len(rows) + p - 1) // p),
@@ -1677,6 +1699,10 @@ class Collector:
         curve_out["all"] = TR.thin(both_c)
         return {"source": name, "horizon_h": hold,
                 "situational": sit,
+                # Порог владельца и его цена в сделках: без этих чисел
+                # отфильтрованный счёт неотличим от счёта книги.
+                "rr_min": rr_min or 0, "rr_cut": rr_cut,
+                "rr_unknown": rr_unknown,
                 "curves": curve_out, "start": TR.START_BALANCE,
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),
