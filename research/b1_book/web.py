@@ -46,6 +46,7 @@ const NAV_ITEMS = [
   ["/", "overview", "обзор"],
   ["/trades-page", "trades", "сделки"],
   ["/league-page", "league", "лига"],
+  ["/vol-page", "volatility", "волатильность"],
   ["/glossary-page", "playbook", "справочник"],
   ["/bot-page", "core", "ядро"]];
 function navMount(current){
@@ -4836,6 +4837,197 @@ load();
 # семейств), список признаков — из ЖИВОГО манифеста обучения. Страница
 # ничего не выдумывает и своей таблицы семейств не держит: вторая
 # таблица разошлась бы с той, по которой считается вид ситуации.
+# Волатильность рынка против результата книг — просьба владельца:
+# сразу понимать, насколько режим рынка влияет на модели. Страница
+# намеренно НЕ является картинкой волатильности: главное на ней —
+# разбивка наших же закрытых сделок по режиму часа входа, а кривая
+# стоит рядом контекстом. Все агрегаты приходят с сервера готовыми.
+VOLPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>volatility — does the market regime move our results</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+.thin{color:var(--muted)}
+a{color:var(--accent)}
+.scroll{overflow-x:auto}
+.warn{border-left:2px solid var(--ask);padding-left:10px;
+ font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.warn b{color:var(--ask);font-weight:600}
+""" + NAVCSS + r"""
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">volatility — does the market regime move our
+    results</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div id="curve"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+navMount("/vol-page");
+const BOOK_EN = {h4:"4 h book", h1:"1 h book", h24:"24 h book",
+                 sit:"situational"};
+const ARM_EN = {all:"both arms", gbm:"trees (ML)", nn:"neural (AI)"};
+const BUCKETS = ["quiet", "normal", "loud"];
+
+function pct(v){ if (v == null) return "—";
+  return (v>0?"+":"") + (v/100).toFixed(Math.abs(v)>=10?2:3) + " %"; }
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// Кривая волатильности — контекст, а не вывод: она показывает, что за
+// период вообще был, и была ли «шумная» корзина одним обвалом.
+function curveBlock(d){
+  const s = d.series || [];
+  if (s.length < 2) return "";
+  const W = 900, H = 90;
+  const hi = Math.max(...s.map(p => p.bp)), lo = 0;
+  const pts = s.map((p, i) => {
+    const x = i / (s.length - 1) * W;
+    const y = H - (p.bp - lo) / (hi - lo || 1) * H;
+    return `${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ");
+  const line = (v, col) => {
+    const y = H - (v - lo) / (hi - lo || 1) * H;
+    return `<line x1="0" y1="${y.toFixed(1)}" x2="${W}"
+      y2="${y.toFixed(1)}" stroke="${col}" stroke-width="1"
+      stroke-dasharray="3 3"/>`; };
+  return `<div class="panel"><div class="cap">market range per hour —
+    median across every coin we record</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;
+      display:block">
+      ${(d.cuts_bp || []).map(c => line(c, "#8e88ad")).join("")}
+      <polyline points="${pts}" fill="none" stroke="#9747ff"
+        stroke-width="1.2"/></svg>
+    <div class="k">${s.length} hours shown${
+      d.hours_measured > s.length
+        ? ` of ${d.hours_measured} recorded` : ""} · dashed lines are
+      the bucket edges (${(d.cuts_bp||[]).map(c => c.toFixed(0))
+        .join(" and ")} bp) · from ${esc((s[0]||{}).hour)} to ${
+      esc((s[s.length-1]||{}).hour)} UTC</div></div>`;
+}
+
+// Одна книга — одна таблица: строка на руку × корзину. Числа сделок и
+// РАЗНЫХ ДАТ стоят в той же строке нарочно: на десятке сделок с двух
+// дней любая разница между корзинами есть шум, и увидеть это надо
+// раньше, чем разницу.
+function bookTable(hz, b){
+  const row = (arm, key) => {
+    const g = ((b[arm] || {})[key]) || null;
+    const thin = g && (g.n < 20 || g.days < 5);
+    if (!g) return `<tr><td>${ARM_EN[arm]}</td><td>${key}</td>
+      <td colspan="5" class="dim">no closed trades</td></tr>`;
+    return `<tr class="${thin ? "thin" : ""}">
+      <td>${ARM_EN[arm]}</td>
+      <td>${key === "all" ? "<b>every hour</b>" : key}</td>
+      <td class="mono">${g.n}</td>
+      <td class="mono">${g.days}</td>
+      <td class="mono">${g.vol_med_bp}</td>
+      <td class="mono">${Math.round(g.win*100)} %</td>
+      <td class="mono">${pct(g.net_bp_avg)}</td>
+      <td class="mono ${g.pnl > 0 ? "good" : "bad"}">${
+        g.pnl > 0 ? "+" : ""}${g.pnl}</td></tr>`;
+  };
+  const arms = ["all", "gbm", "nn"].filter(a => b[a]);
+  return `<div class="panel"><div class="cap">${
+    BOOK_EN[hz] || hz}</div><div class="scroll"><table>
+    <tr><th>arm</th><th>market</th><th>trades</th><th>days</th>
+    <th>median range</th><th>wins</th><th>avg net</th><th>$</th></tr>
+    ${arms.map(a => ["all", ...BUCKETS].map(k => row(a, k)).join(""))
+      .join("")}</table></div>
+    <div class="k">rows in grey stand on fewer than 20 trades or fewer
+      than 5 distinct days — read them as anecdotes, not as a
+      result</div></div>`;
+}
+
+function render(d){
+  const box = document.getElementById("box");
+  const intro = document.getElementById("intro");
+  document.getElementById("curve").innerHTML = d && d.present
+    ? curveBlock(d) : "";
+  if (!d || !d.present) {
+    intro.innerHTML = `<b>Nothing to split yet.</b> This page needs
+      closed trades and the hourly summaries they were opened in${
+      d && d.no_hour ? ` — ${d.no_hour} closed trades have no summary
+      for their entry hour` : ""}.`;
+    box.innerHTML = "";
+    return;
+  }
+  document.getElementById("lead").textContent =
+    `${d.n} closed trades · ${d.hours_measured} hours · ${d.days} days`;
+  // Что именно меряется и чего это не значит — до чисел, а не после.
+  intro.innerHTML = `
+    <p><b>Volatility here is the median hourly range across every coin
+     we record</b> — high minus low of the mid, in basis points. It is
+     the range and not the hourly return on purpose: an hour where the
+     market fell and came back is calm by return and was anything but
+     for the positions holding through it.</p>
+    <p>Each closed trade is filed under the volatility of the hour it
+     was <b>opened</b> in. That is the number known at decision time,
+     so a rule could be built from it ("do not trade quiet hours").
+     Volatility during the hold explains outcomes better and can never
+     become a rule — it is not known when the trade is placed.</p>
+    <p class="k">Bucket edges are the terciles of the volatility
+     distribution itself (${(d.cuts_bp||[]).map(c => c.toFixed(0))
+       .join(" / ")} bp), fixed before any outcome is looked at:
+     thresholds picked after seeing results would be a search without a
+     correction.${d.no_hour ? ` ${d.no_hour} closed trades had no
+     summary for their entry hour and are left out rather than filed
+     under "normal".` : ""}</p>
+    ${(d.errors && d.errors.length)
+      ? `<p class="warn"><b>Partial.</b> ${d.errors.map(esc).join("; ")}
+         — these books are missing from every number below</p>` : ""}`;
+  const hz = Object.keys(d.books || {});
+  box.innerHTML = hz.map(k => bookTable(k, d.books[k])).join("")
+    || `<div class="panel">no book has closed trades in a measured
+        hour yet</div>`;
+}
+async function pull(){
+  let d = null;
+  try {
+    const r = await fetch("/volatility?k=" + encodeURIComponent(KEY));
+    d = await r.json();
+  } catch (e) { d = null; }
+  render(d);
+}
+pull();
+setInterval(pull, 120000);
+</script>
+"""
+
+
 GLOSSARY_PAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>playbook — what the model can read</title>
@@ -5483,6 +5675,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/glossary-page":
                 return self._ok(GLOSSARY_PAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/volatility":
+                return self._ok(json.dumps(
+                    collector.vol_vs_models(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/vol-page":
+                return self._ok(VOLPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),

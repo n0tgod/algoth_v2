@@ -137,6 +137,15 @@ SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT",
 RAW = ("ARBUSDT",)
 
 
+def _median(xs):
+    """Медиана списка. Пустой список сюда не приходит — вызывающий
+    обязан проверить: медиана пустоты есть ноль ровно в том смысле, в
+    каком «нет данных» есть «рынок стоял», то есть ни в каком."""
+    s = sorted(xs)
+    n = len(s)
+    return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
+
+
 def minute_bars(rows):
     """Сделки -> минутные свечи `[t, o, h, l, c, объём]`.
 
@@ -1931,13 +1940,35 @@ class Collector:
         at, cached = getattr(self, "_league_cache", (0.0, None))
         if cached is not None and now - at < 60:
             return cached
+        rows, errors, scanned = self.closed_rows()
+        return self._league_from(rows, errors, scanned, now)
+
+    # Книги турнира темпов: ключ показа → каталог на диске. Список
+    # объявлен ОДИН раз — лига и замер волатильности обязаны считать по
+    # одному составу книг, иначе одна страница знала бы о книге, о
+    # которой другая молчит.
+    BOOKS = (("h4", "model"), ("h1", "model_h1"),
+             ("h24", "model_h24"), ("sit", "model_sit"))
+
+    def closed_rows(self):
+        """Закрытые сделки всех торгуемых книг — с деньгами.
+
+        Одно определение «закрытой сделки с деньгами» на все страницы,
+        которые по ним считают: лига ранжирует, замер волатильности
+        раскладывает по режимам рынка. Второй такой обход однажды
+        разошёлся бы с первым — например, забыл бы позвать кассу, и
+        одна страница видела бы сотни сделок, а другая ни одной.
+
+        Наблюдательная книга (`model_sit_obs`) НЕ входит: её входы —
+        те же кандидаты, что у торгуемой, и смешение посчитало бы одни
+        решения дважды.
+        """
         sys.path.insert(0, os.path.join(os.path.dirname(HERE),
                                         "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         rows, errors, scanned = [], [], []
-        for hz, name in (("h4", "model"), ("h1", "model_h1"),
-                         ("h24", "model_h24"), ("sit", "model_sit")):
+        for hz, name in self.BOOKS:
             mdir = os.path.join(s8, name)
             try:
                 with open(os.path.join(mdir, "manifest.json"),
@@ -1995,6 +2026,10 @@ class Collector:
                     "reason": t.get("exit_reason")})
             scanned.append({"book": name, "trades": len(tr),
                             "closed_kept": len(rows) - n0})
+        return rows, errors, scanned
+
+    def _league_from(self, rows, errors, scanned, now):
+        """Агрегаты лиги из готовых строк — арифметика без чтения."""
 
         def agg(sub, key):
             out = {}
@@ -2042,6 +2077,195 @@ class Collector:
                "books": scanned, "errors": errors,
                "generated_at": round(now, 1)}
         self._league_cache = (now, out)
+        return out
+
+    def market_vol(self):
+        """Волатильность рынка по часам — из наших же почасовых сводок.
+
+        Мера — МЕДИАННЫЙ РАЗМАХ середины стакана за час по всем именам,
+        `(hi − lo) / close` в б.п. Почему размах, а не доходность часа:
+        доходность требует закрытия ПРЕДЫДУЩЕГО часа, то есть ломается
+        на дырах записи и на границе суток, и час, в котором рынок
+        сходил вниз и вернулся, она считает спокойным — а пережить его
+        позиции пришлось целиком. Размах полон в одной строке и такой
+        час видит.
+
+        Медиана, а не среднее: одна разогнанная монета не имеет права
+        объявлять волатильным весь рынок.
+
+        Считается по тем же сводкам, на которых учится модель, — то
+        есть сравнение «режим рынка против результата» идёт по одному
+        источнику, а не по чужому индексу.
+
+        Готовые СУТКИ кешируются на диск и больше не перечитываются:
+        имён около пятисот, файл на имя в сутки, и полный обход стоил
+        бы десятки секунд на каждый запрос страницы. Текущие сутки
+        пересчитываются всегда — они ещё дописываются.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_vol_cache", (0.0, None))
+        if cached is not None and now - at < 300:
+            return cached
+        sd = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                          "summary")
+        cpath = os.path.join(HERE, "out", "market_vol.json")
+        try:
+            with open(cpath, encoding="utf-8") as f:
+                done = json.load(f)
+        except (OSError, ValueError):
+            done = {}
+        today = time.strftime("%Y-%m-%d", time.gmtime(now))
+        try:
+            syms = sorted(os.listdir(sd))
+        except OSError:
+            syms = []
+        days = set()
+        for s in syms:
+            try:
+                days.update(f[:-6] for f in os.listdir(os.path.join(sd, s))
+                            if f.endswith(".jsonl"))
+            except OSError:
+                continue
+        fresh = 0
+        for day in sorted(days):
+            if day in done and day != today:
+                continue                       # сутки закрыты и посчитаны
+            per_hour = {}
+            for s in syms:
+                path = os.path.join(sd, s, day + ".jsonl")
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        for line in f:
+                            try:
+                                r = json.loads(line)
+                            except ValueError:
+                                continue
+                            c = r.get("mid_close")
+                            hi = r.get("mid_high")
+                            lo = r.get("mid_low")
+                            h = r.get("hour")
+                            if not h or not c or hi is None or lo is None:
+                                continue
+                            rng = (float(hi) - float(lo)) / float(c) * 1e4
+                            if rng >= 0:
+                                # Поздняя строка часа побеждает — тот же
+                                # порядок, что при сборке матриц.
+                                per_hour.setdefault(h, {})[s] = rng
+                except OSError:
+                    continue
+            done[day] = {h: {"bp": round(_median(list(v.values())), 1),
+                             "n": len(v)}
+                         for h, v in per_hour.items()}
+            fresh += 1
+        if fresh:
+            try:
+                os.makedirs(os.path.dirname(cpath), exist_ok=True)
+                with open(cpath + ".tmp", "w", encoding="utf-8") as f:
+                    json.dump(done, f)
+                os.replace(cpath + ".tmp", cpath)
+            except OSError:
+                pass                       # кеш — ускорение, не истина
+        hours = {}
+        for day, hh in done.items():
+            hours.update(hh)
+        out = {"hours": hours, "days": len(done), "recomputed": fresh}
+        self._vol_cache = (now, out)
+        return out
+
+    def vol_vs_models(self):
+        """Влияет ли волатильность рынка на результат книг.
+
+        Просьба владельца: видеть сразу, насколько результат зависит от
+        режима рынка. Ответ — не картинка волатильности, а РАЗБИВКА
+        наших же закрытых сделок по режиму часа, в котором они открыты.
+
+        Час входа, а не час выхода: волатильность входа известна В
+        МОМЕНТ РЕШЕНИЯ, и из неё может выйти правило («в тихие часы не
+        торгуем»). Волатильность за время удержания результат объясняет
+        лучше, но знать её заранее нельзя — правилом она не станет
+        никогда. Обе разные, и путать их значит выдать невозможное за
+        вывод.
+
+        Границы корзин — терцили распределения САМОЙ волатильности, а
+        не подобранные по результату: пороги, выбранные после того, как
+        видны исходы, есть перебор без поправки. Считаются по всем
+        записанным часам, то есть «тихий» значит тихий по нашей
+        собственной истории.
+
+        Отдельной колонкой идёт число РАЗНЫХ ДАТ в корзине: пятьдесят
+        сделок с двух дней — это два дня, а не пятьдесят наблюдений, и
+        без этого числа корзина читается как статистика.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_volmod_cache", (0.0, None))
+        if cached is not None and now - at < 120:
+            return cached
+        vol = self.market_vol()
+        hours = vol["hours"]
+        rows, errors, scanned = self.closed_rows()
+        vals = sorted(v["bp"] for v in hours.values())
+        cuts = []
+        if len(vals) >= 3:
+            cuts = [vals[len(vals) // 3], vals[2 * len(vals) // 3]]
+        names = ("quiet", "normal", "loud")
+
+        def bucket(bp):
+            if not cuts:
+                return None
+            return names[0] if bp < cuts[0] else (
+                names[1] if bp < cuts[1] else names[2])
+
+        # Сделка без часа сводки в корзину НЕ попадает: приписать её
+        # «обычному» рынку значило бы придумать наблюдение. Сколько их
+        # выпало — числом.
+        kept, lost = [], 0
+        for r in rows:
+            h = hours.get(r.get("hour") or "")
+            if not h:
+                lost += 1
+                continue
+            r = dict(r, vol_bp=h["bp"], vol_n=h["n"],
+                     bucket=bucket(h["bp"]))
+            kept.append(r)
+
+        def agg(sub):
+            if not sub:
+                return None
+            pnl = sum(x["pnl"] or 0.0 for x in sub)
+            nets = [x["net_bp"] for x in sub if x["net_bp"] is not None]
+            vb = sorted(x["vol_bp"] for x in sub)
+            return {"n": len(sub),
+                    "days": len({(x["hour"] or "")[:10] for x in sub}),
+                    "win": round(sum(1 for x in sub
+                                     if (x["pnl"] or 0) > 0) / len(sub), 3),
+                    "pnl": round(pnl, 2),
+                    "net_bp_avg": round(sum(nets) / len(nets), 1)
+                    if nets else None,
+                    "vol_med_bp": round(_median(vb), 1)}
+
+        def split(sub):
+            return {"all": agg(sub),
+                    **{b: agg([x for x in sub if x["bucket"] == b])
+                       for b in names}}
+
+        books = {}
+        for hz, _name in self.BOOKS:
+            sub = [x for x in kept if x["hz"] == hz]
+            if not sub:
+                continue
+            books[hz] = {"all": split(sub),
+                         **{a: split([x for x in sub if x["arm"] == a])
+                            for a in ("gbm", "nn")}}
+        series = sorted(({"hour": h, "bp": v["bp"], "n": v["n"]}
+                         for h, v in hours.items()),
+                        key=lambda x: x["hour"])
+        out = {"present": bool(kept), "n": len(kept), "no_hour": lost,
+               "cuts_bp": cuts, "buckets": names,
+               "hours_measured": len(hours), "days": vol["days"],
+               "books": books, "series": series[-720:],
+               "errors": errors, "scanned": scanned,
+               "generated_at": round(now, 1)}
+        self._volmod_cache = (now, out)
         return out
 
     def model_glossary(self):

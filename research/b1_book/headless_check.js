@@ -25,6 +25,7 @@ const isChart = /id="px"/.test(src);
 const isInfo = /id="whybox"/.test(src);
 const isLeague = /league — what works best/.test(src);
 const isGloss = /playbook — what the model can read/.test(src);
+const isVol = /does the market regime move our results/.test(src);
 const isTrades = /id="tb"/.test(src);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
@@ -191,6 +192,27 @@ global.fetch = async (url) => {
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
+             : url.startsWith("/volatility")
+             ? {present: true, n: 40, no_hour: 3, days: 12,
+                hours_measured: 300, cuts_bp: [22.0, 61.0],
+                buckets: ["quiet", "normal", "loud"], errors: [],
+                series: [{hour: "2026-08-01-10", bp: 14.0, n: 500},
+                         {hour: "2026-08-01-11", bp: 55.0, n: 500},
+                         {hour: "2026-08-02-12", bp: 180.0, n: 498}],
+                books: {h4: {
+                  all: {all: {n: 40, days: 12, win: 0.45, pnl: -3.5,
+                              net_bp_avg: -4.0, vol_med_bp: 48.0},
+                        quiet: {n: 25, days: 9, win: 0.3, pnl: -9.4,
+                                net_bp_avg: -21.0, vol_med_bp: 16.0},
+                        normal: {n: 12, days: 6, win: 0.6, pnl: 4.1,
+                                 net_bp_avg: 12.0, vol_med_bp: 44.0},
+                        // Тонкая корзина: три сделки с двух дней —
+                        // страница обязана пометить её как анекдот.
+                        loud: {n: 3, days: 2, win: 1.0, pnl: 1.8,
+                               net_bp_avg: 55.0, vol_med_bp: 150.0}},
+                  gbm: {all: {n: 20, days: 10, win: 0.5, pnl: 1.0,
+                              net_bp_avg: 2.0, vol_med_bp: 47.0},
+                        quiet: null, normal: null, loud: null}}}}
              : url.startsWith("/glossary")
              ? {present: true, n_features: 3, train_seq: 77,
                 weight_covers: 0.2, weight_arm: "gbm",
@@ -704,14 +726,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss) {
+      && !isGloss && !isVol) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -875,7 +897,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -1125,13 +1147,60 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 5)
-      bad.push(`меню: пунктов ${links}, а страниц пять`);
+    if (links !== 6)
+      bad.push(`меню: пунктов ${links}, а страниц шесть`);
     if (!/href="\/league-page\?k=xxx"/.test(nh)
         || !/href="\/glossary-page\?k=xxx"/.test(nh))
       bad.push("меню: ссылка без ключа или страница потеряна");
     if (!/aria-current="page"/.test(nh))
       bad.push("меню: текущая страница не помечена");
+  }
+
+  if (isVol) {
+    const flat = s => String(s || "").replace(/\s+/g, " ");
+    const bx = flat(global.__el ? global.__el("box").innerHTML : "");
+    const intro = flat(global.__el
+      ? global.__el("intro").innerHTML : "");
+    const cur = flat(global.__el ? global.__el("curve").innerHTML : "");
+    // Меряемая величина названа, и названа честно: почему размах, а не
+    // доходность часа. Без этого абзаца число не читается вовсе.
+    if (!/median hourly range/.test(intro))
+      bad.push("волатильность: мера не названа");
+    if (!/fell and came back is calm by return/.test(intro))
+      bad.push("волатильность: не сказано, почему размах, а не "
+               + "доходность");
+    // Час ВХОДА против часа удержания — разница, из которой только
+    // первая может стать правилом.
+    if (!/opened<\/b> in/.test(intro) || !/never become a rule/.test(intro))
+      bad.push("волатильность: не разделены час входа и час удержания");
+    // Границы корзин объявлены до результата, и это сказано числом.
+    if (!/22 \/ 61 bp/.test(intro))
+      bad.push("волатильность: границы корзин не названы числом");
+    if (!/thresholds picked after seeing results/.test(intro))
+      bad.push("волатильность: не сказано, что пороги не подбирались "
+               + "под результат");
+    // Сделки без сводки часа не растворяются молча.
+    if (!/3 closed trades had no summary/.test(intro))
+      bad.push("волатильность: выпавшие сделки не посчитаны");
+    // Разбивка: числа фикстуры по корзинам, обе руки, дни рядом.
+    if (!/quiet/.test(bx) || !/loud/.test(bx))
+      bad.push("волатильность: разбивки по режиму нет");
+    if (!/-9\.4/.test(bx) || !/\+4\.1/.test(bx))
+      bad.push("волатильность: деньги корзин не показаны");
+    if (!/trees \(ML\)/.test(bx))
+      bad.push("волатильность: разбивки по рукам нет");
+    // Число разных ДАТ обязано стоять рядом с числом сделок: три
+    // сделки с двух дней — это два дня.
+    if (!/<th>days<\/th>/.test(bx))
+      bad.push("волатильность: числа разных дат нет в таблице");
+    if (!/class="thin"/.test(bx))
+      bad.push("волатильность: тонкая корзина не помечена анекдотом");
+    if (!/read them as anecdotes/.test(bx))
+      bad.push("волатильность: не сказано, как читать тонкие строки");
+    if (!/<svg/.test(cur) || !/bucket edges/.test(cur))
+      bad.push("волатильность: кривой режима рынка нет");
+    if (!seen.some(u => u.startsWith("/volatility")))
+      bad.push("волатильность: данные не запрошены");
   }
 
   if (isGloss) {
@@ -1275,7 +1344,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss) {
+      && !isGloss && !isVol) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -1525,7 +1594,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("просадка сделки в строке не в долях депозита");
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
-  } else if (isBot || isInfo || isLeague || isGloss) {
+  } else if (isBot || isInfo || isLeague || isGloss || isVol) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {

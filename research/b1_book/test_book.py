@@ -416,6 +416,8 @@ def test_pages_run_headless():
                 ("лига", web.LEAGUE, "?k=xxx"),
                 # Справочник: все ситуации модели простыми словами.
                 ("справочник", web.GLOSSARY_PAGE, "?k=xxx"),
+                # Волатильность рынка против результата книг.
+                ("волатильность", web.VOLPAGE, "?k=xxx"),
                 # Страница разбора сделки: простыми словами, почему
                 # вход здесь и как расставлены уровни. Ссылка ведёт на
                 # сделку руки nn — у неё в фикстуре why/setup/train_seq.
@@ -2521,6 +2523,111 @@ def test_league_ranks_by_realised_money():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_volatility_splits_results_by_regime():
+    """Волатильность рынка против результата книг.
+
+    Просьба владельца: видеть сразу, влияет ли режим рынка на наши
+    результаты. Проверяется настоящим кодом на настоящих файлах —
+    почасовые сводки двух имён и книга с закрытыми сделками. Числа: в
+    какую корзину попал час, сколько РАЗНЫХ ДАТ в корзине (пятьдесят
+    сделок с двух дней — это два дня), и что сделка без сводки часа не
+    приписана «обычному» рынку молча.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        os.makedirs(C.HERE)
+        sd = os.path.join(d, "s8_loop", "out", "summary")
+        # Три часа с разным размахом рынка: 10, 50 и 200 б.п. Медиана
+        # по двум именам обязана дать ровно середину, поэтому имена
+        # расходятся вокруг неё.
+        hours = {"2026-08-01-10": (8.0, 12.0),      # тихо
+                 "2026-08-01-11": (40.0, 60.0),     # обычно
+                 "2026-08-02-12": (150.0, 250.0)}   # шумно
+        for sym, idx in (("AUSDT", 0), ("BUSDT", 1)):
+            for h, pair in hours.items():
+                day = h[:10]
+                os.makedirs(os.path.join(sd, sym), exist_ok=True)
+                c = 100.0
+                half = c * pair[idx] / 1e4 / 2
+                with open(os.path.join(sd, sym, day + ".jsonl"), "a",
+                          encoding="utf-8") as f:
+                    f.write(json.dumps(
+                        {"hour": h, "mid_close": c,
+                         "mid_high": c + half, "mid_low": c - half}) + "\n")
+        mdir = os.path.join(d, "s8_loop", "out", "model")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"horizon_h": 4}, f)
+        now = time.time()
+        picks, revs = [], []
+        # По сделке в каждый час плюс одна в час БЕЗ сводки: она обязана
+        # выпасть из разбивки и быть посчитанной отдельно.
+        plan = [("2026-08-01-10", "AUSDT", 60.0),
+                ("2026-08-01-11", "BUSDT", -40.0),
+                ("2026-08-02-12", "AUSDT", 90.0),
+                ("2026-09-09-09", "BUSDT", 10.0)]
+        for hour, sym, got in plan:
+            picks.append({"arm": "gbm", "hour": hour, "at_ts": now - 7000,
+                          "long": [{"sym": sym, "px": 100.0, "fwd": 40.0,
+                                    "mae": -20.0}], "short": []})
+            revs.append({"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+                         "at_ts": now - 3600,
+                         "rows": [{"sym": sym, "side": "long", "got": got,
+                                   "net": got - 11.0}]})
+        with open(os.path.join(mdir, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write("\n".join(json.dumps(p) for p in picks) + "\n")
+        with open(os.path.join(mdir, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write("\n".join(json.dumps(r) for r in revs) + "\n")
+
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        mv = col.market_vol()
+        check("волатильность посчитана по часам",
+              mv["hours"]["2026-08-01-10"]["bp"] == 10.0
+              and mv["hours"]["2026-08-02-12"]["bp"] == 200.0
+              and mv["hours"]["2026-08-01-11"]["n"] == 2,
+              str(mv["hours"]))
+        v = col.vol_vs_models()
+        check("разбивка собралась", v["present"] is True, str(v)[:140])
+        check("сделка без сводки часа не приписана рынку молча",
+              v["n"] == 3 and v["no_hour"] == 1,
+              f"{v['n']} в разбивке, {v['no_hour']} без часа")
+        b = v["books"]["h4"]["all"]
+        check("часы разошлись по корзинам по своей волатильности",
+              b["quiet"]["n"] == 1 and b["normal"]["n"] == 1
+              and b["loud"]["n"] == 1,
+              str({k: (b[k] or {}).get("n") for k in
+                   ("quiet", "normal", "loud")}))
+        check("корзина несёт медиану волатильности своих часов",
+              b["loud"]["vol_med_bp"] == 200.0
+              and b["quiet"]["vol_med_bp"] == 10.0,
+              str([b["loud"]["vol_med_bp"], b["quiet"]["vol_med_bp"]]))
+        check("число РАЗНЫХ ДАТ стоит рядом с числом сделок",
+              b["all"]["days"] == 2 and b["all"]["n"] == 3,
+              str(b["all"]))
+        check("деньги корзины — из кассы, а не из разбора",
+              b["loud"]["pnl"] > 0 and b["normal"]["pnl"] < 0,
+              str([b["loud"]["pnl"], b["normal"]["pnl"]]))
+        # Кеш суток: второй вызов не обязан перечитывать закрытые дни.
+        col._vol_cache = (0.0, None)
+        mv2 = col.market_vol()
+        check("закрытые сутки читаются один раз",
+              mv2["recomputed"] <= 1 and mv2["hours"] == mv["hours"],
+              f"пересчитано суток {mv2['recomputed']}")
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_glossary_describes_the_live_model():
     """Справочник: каждое семейство названо, каждый признак расписан.
 
@@ -3148,6 +3255,7 @@ def main():
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()
+    test_volatility_splits_results_by_regime()
     test_glossary_describes_the_live_model()
     test_live_entries_reach_both_pages()
     test_sit_watch_levels_and_crossing()
