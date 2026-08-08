@@ -412,6 +412,8 @@ def test_pages_run_headless():
                 ("график сделки ниже гейта", web.CHART,
                  "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14"
                  "&hz=sit&rr=1.5"),
+                # Лига: что ведёт себя лучше и топ сделок.
+                ("лига", web.LEAGUE, "?k=xxx"),
                 # Страница разбора сделки: простыми словами, почему
                 # вход здесь и как расставлены уровни. Ссылка ведёт на
                 # сделку руки nn — у неё в фикстуре why/setup/train_seq.
@@ -2384,6 +2386,108 @@ def test_pending_live_exit_is_shown_before_the_review():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_league_ranks_by_realised_money():
+    """Лига: агрегаты по рукам/книгам/ситуациям и топ по деньгам.
+
+    Считается настоящим кодом на настоящих файлах: подставные выбор и
+    разбор двух книг, деньги из разбора. Проверяются ЧИСЛА — сумма по
+    руке, лидер ситуаций, порядок топа, исключение наблюдательной
+    книги и сделок без исхода.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        s8 = os.path.join(d, "s8_loop", "out")
+        now = time.time()
+        hour = time.strftime("%Y-%m-%d-%H", time.gmtime(now - 7200))
+
+        def put(name, man, pick, rev):
+            mdir = os.path.join(s8, name)
+            os.makedirs(mdir)
+            with open(os.path.join(mdir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump(man, f)
+            with open(os.path.join(mdir, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(pick) + "\n")
+            with open(os.path.join(mdir, "review.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(rev) + "\n")
+
+        # Ситуационная книга: закрытая прибыльная сделка на ликвидациях
+        # и открытая (в лигу не входит — исхода нет).
+        put("model_sit",
+            {"situational": True, "slots": 6, "rules_version": 8},
+            {"arm": "gbm", "hour": hour, "at_ts": now - 7000,
+             "long": [{"sym": "AUSDT", "px": 100.0, "fwd": 40.0,
+                       "mae": -20.0, "mfe": 60.0, "at_ts": now - 7000,
+                       "setup": [["liq", 0.5]], "scan": True},
+                      {"sym": "BUSDT", "px": 100.0, "fwd": 30.0,
+                       "mae": -20.0, "mfe": 60.0, "at_ts": now - 6900,
+                       "setup": [["squeeze", 0.6]], "scan": True}],
+             "short": []},
+            {"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+             "at_ts": now - 3600,
+             "rows": [{"sym": "AUSDT", "side": "long", "got": 60.0,
+                       "net": 49.0, "pnl": 8.0, "exit_ts": now - 60,
+                       "exit_hour": hour,
+                       "reason": "цена дошла до обещанной цели"}]})
+        # Часовая книга: убыточная сделка сети.
+        put("model_h1",
+            {"horizon_h": 1},
+            {"arm": "nn", "hour": hour, "at_ts": now - 7000,
+             "long": [{"sym": "CUSDT", "px": 50.0, "fwd": 20.0,
+                       "mae": -30.0}], "short": []},
+            {"arm": "nn", "hour": hour, "cost_bp": 11.0,
+             "at_ts": now - 3000,
+             "rows": [{"sym": "CUSDT", "side": "long", "got": -40.0,
+                       "net": -51.0, "pnl": -3.0}]})
+        # Наблюдательная книга обязана быть ИСКЛЮЧЕНА: её входы — те же
+        # кандидаты, что у торгуемой, смешение считало бы их дважды.
+        put("model_sit_obs",
+            {"situational": True, "observation": True, "slots": 24,
+             "rules_version": 8},
+            {"arm": "gbm", "hour": hour, "at_ts": now - 7000,
+             "long": [{"sym": "AUSDT", "px": 100.0, "fwd": 40.0,
+                       "mae": -20.0, "at_ts": now - 7000,
+                       "scan": True}], "short": []},
+            {"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+             "at_ts": now - 3600,
+             "rows": [{"sym": "AUSDT", "side": "long", "got": 60.0,
+                       "net": 49.0, "pnl": 99.0, "exit_hour": hour}]})
+
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        lg = col.model_league()
+        check("лига собралась", lg.get("present") is True,
+              str(lg)[:120])
+        p30 = lg["periods"]["30d"]
+        check("сделок в периоде две — без исхода и без книги-дубля",
+              p30["n"] == 2, str(p30["n"]))
+        arm = {g["key"]: g for g in p30["groups"]["arm"]}
+        check("деньги по рукам сходятся с разбором",
+              arm["gbm"]["pnl"] == 8.0 and arm["nn"]["pnl"] == -3.0,
+              str(arm))
+        check("лидер ситуаций — ликвидации",
+              p30["groups"]["setup"][0]["key"] == "liq",
+              str(p30["groups"]["setup"]))
+        check("топ отсортирован по деньгам",
+              p30["best"][0]["pnl"] == 8.0
+              and p30["worst"][0]["pnl"] == -3.0,
+              str([p30["best"][0]["pnl"], p30["worst"][0]["pnl"]]))
+        check("сегодняшний период видит сегодняшние закрытия",
+              lg["periods"]["today"]["n"] >= 1,
+              str(lg["periods"]["today"]["n"]))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_live_entries_reach_both_pages():
     """Обзор и история сделок обязаны показывать ОДНИ сделки.
 
@@ -2891,6 +2995,7 @@ def main():
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
+    test_league_ranks_by_realised_money()
     test_live_entries_reach_both_pages()
     test_sit_watch_levels_and_crossing()
     test_all_symbols_filter()

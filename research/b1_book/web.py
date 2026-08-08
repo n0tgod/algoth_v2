@@ -1158,6 +1158,8 @@ function renderModel() {
     <div class="mline"><a href="/trades-page?k=${
         encodeURIComponent(KEY)}${MDL.book === "h4" ? ""
           : "&hz=" + MDL.book}">full trade history, paged &rarr;</a>
+      &nbsp;·&nbsp; <a href="/league-page?k=${encodeURIComponent(KEY)
+        }">league: what works best &rarr;</a>
     </div>` + (MDL.book !== "h4" ? "" : `
     <div class="thoughts">${(d.thoughts || []).slice().reverse()
       .filter(t => MDL.arm === "all"
@@ -4684,6 +4686,179 @@ load();
 """
 
 
+# Страница лиги — просьба владельца: наблюдение за каждой стратегией
+# и моделью отдельно (что ведёт себя лучше) и ТОП сделок по
+# прибыльности за сегодня / месяц / год. Все агрегаты приходят с
+# сервера готовыми (`/league`) — страница только рисует: вторая
+# реализация сумм однажды разошлась бы с первой.
+LEAGUE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>league — what works best</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+h1{font-size:17px;margin:8px 0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+a{color:var(--accent)}
+button{background:var(--chip);border:1px solid var(--rule);
+ color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;
+ cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,
+ minmax(240px,1fr));gap:12px}
+.scroll{overflow-x:auto}
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">league — what works best</span>
+  <span style="flex:1"></span>
+  <span id="per"></span></div>
+<div id="note" class="k"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+let PERIOD = "30d", DATA = null;
+
+function pct(v){ if (v == null) return "—";
+  return (v>0?"+":"") + (v/100).toFixed(Math.abs(v)>=10?2:3) + " %"; }
+function utc(ts){ if (!ts) return "—";
+  return new Date(ts*1000).toISOString().slice(5,16).replace("T"," "); }
+const ARM_EN = {gbm:"trees (ML)", nn:"neural (AI)"};
+const BOOK_EN = {h4:"4 h book", h1:"1 h book", h24:"24 h book",
+                 sit:"situational"};
+const FAM_EN = {absorption:"book eaten (absorption)",
+  book:"book imbalance / depth", tape:"tape pressure",
+  liq:"liquidations", oi:"open interest", funding:"funding & basis",
+  move:"price move / reversal", squeeze:"squeeze", tilt:"tilt",
+  range:"range / dwell", vol:"volatility regime",
+  leader:"leader & sector", clock:"time of day",
+  round:"round levels", beta:"market beta", age:"listing age"};
+const PER_EN = {today:"today (utc)", "30d":"last 30 days",
+                "365d":"last 365 days"};
+
+function groupTable(cap, rows, names){
+  if (!rows || !rows.length)
+    return `<div class="panel"><div class="cap">${cap}</div>
+      <div class="dim">nothing closed in this period</div></div>`;
+  // Лидер — просто верхняя строка сортировки по деньгам. При малом
+  // числе сделок это шум, и число стоит в той же строке нарочно.
+  return `<div class="panel"><div class="cap">${cap}</div>
+    <table><tr><th></th><th>trades</th><th>wins</th>
+    <th>avg net</th><th>$</th></tr>` + rows.map((g, i) =>
+    `<tr><td>${i === 0 ? "&#9733; " : ""}${
+       (names && names[g.key]) || g.key}</td>
+     <td class="mono">${g.n}</td>
+     <td class="mono">${Math.round(g.win*100)} %</td>
+     <td class="mono">${pct(g.net_bp_avg)}</td>
+     <td class="mono ${g.pnl > 0 ? "good" : "bad"}">${
+       g.pnl > 0 ? "+" : ""}${g.pnl}</td></tr>`).join("")
+    + "</table></div>";
+}
+function tradeRows(list){
+  return list.map(t => {
+    const ip = new URLSearchParams({k: KEY, sym: t.sym,
+      arm: t.arm || "gbm", hour: t.hour, side: t.side});
+    if (t.hz && t.hz !== "h4") ip.set("hz", t.hz);
+    return `<tr>
+      <td class="mono">${utc(t.at)}</td>
+      <td class="mono">${(t.sym||"").replace("USDT","")}</td>
+      <td>${t.side === "long" ? "L" : "S"}</td>
+      <td class="dim">${BOOK_EN[t.hz] || t.hz}</td>
+      <td>${t.arm === "nn" ? "neu" : "tre"}</td>
+      <td class="dim">${t.setup
+        ? (FAM_EN[t.setup] || t.setup).split(" (")[0] : "—"}</td>
+      <td class="mono">${pct(t.net_bp)}</td>
+      <td class="mono ${t.pnl > 0 ? "good" : "bad"}">${
+        t.pnl > 0 ? "+" : ""}${(t.pnl ?? 0).toFixed(2)}</td>
+      <td><a href="/trade-info?${ip.toString()}"
+        style="text-decoration:none">&#9432;</a></td></tr>`;
+  }).join("");
+}
+function render(){
+  const d = DATA;
+  const box = document.getElementById("box");
+  document.getElementById("per").innerHTML =
+    ["today","30d","365d"].map(k => `<button data-p="${k}"
+      aria-pressed="${String(PERIOD === k)}">${PER_EN[k]}</button>`)
+      .join(" ");
+  document.querySelectorAll("#per button").forEach(b =>
+    b.onclick = () => { PERIOD = b.dataset.p; render(); });
+  if (!d || !d.present) {
+    box.innerHTML = `<div class="panel">no closed trades yet — the
+      league starts with the first outcome</div>`;
+    return;
+  }
+  const p = (d.periods || {})[PERIOD] || {};
+  document.getElementById("note").innerHTML =
+    `${p.n || 0} closed trades in this period · situations known for
+     ${p.setup_known || 0} of them (older trades predate the field) ·
+     realised money only, open positions are not here · the
+     observation record is excluded — its entries repeat the traded
+     book's · with a handful of trades every leader is noise: read
+     the counts first`;
+  const g = p.groups || {};
+  box.innerHTML = `<div class="grid">
+    ${groupTable("models (arms)", g.arm, ARM_EN)}
+    ${groupTable("books (hold)", g.book, BOOK_EN)}
+    ${groupTable("situations (dominant family)", g.setup, FAM_EN)}
+    ${groupTable("sides", g.side, {long:"long", short:"short"})}
+    </div>
+    <div class="panel"><div class="cap">top trades — ${
+      PER_EN[PERIOD]}</div><div class="scroll"><table>
+      <tr><th>closed</th><th>coin</th><th>side</th><th>book</th>
+      <th>arm</th><th>situation</th><th>net</th><th>$</th><th>i</th>
+      </tr>${tradeRows(p.best || [])
+        || `<tr><td colspan="9" class="dim">none</td></tr>`}
+    </table></div></div>
+    <div class="panel"><div class="cap">worst trades — ${
+      PER_EN[PERIOD]}</div><div class="scroll"><table>
+      <tr><th>closed</th><th>coin</th><th>side</th><th>book</th>
+      <th>arm</th><th>situation</th><th>net</th><th>$</th><th>i</th>
+      </tr>${tradeRows(p.worst || [])
+        || `<tr><td colspan="9" class="dim">none</td></tr>`}
+    </table></div></div>`;
+}
+async function pull(){
+  try {
+    const r = await fetch("/league?k=" + encodeURIComponent(KEY));
+    DATA = await r.json();
+  } catch (e) { DATA = null; }
+  render();
+}
+pull();
+setInterval(pull, 60000);
+</script>
+"""
+
+
 def serve(collector, port, token, log):
     """Поднять сервер наблюдения в отдельном потоке."""
 
@@ -4859,6 +5034,14 @@ def serve(collector, port, token, log):
                                 "text/html; charset=utf-8")
             if u.path == "/trade-info":
                 return self._ok(TRADEINFO.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/league":
+                return self._ok(json.dumps(
+                    collector.model_league(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/league-page":
+                return self._ok(LEAGUE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),

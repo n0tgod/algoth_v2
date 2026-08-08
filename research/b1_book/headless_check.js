@@ -23,6 +23,7 @@ const SEARCH = process.argv[3] || "?k=xxx&sym=BTCUSDT";
 const js = src.match(/<script>\n([\s\S]*)<\/script>/)[1];
 const isChart = /id="px"/.test(src);
 const isInfo = /id="whybox"/.test(src);
+const isLeague = /league — what works best/.test(src);
 const isTrades = /id="tb"/.test(src);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
@@ -189,6 +190,33 @@ global.fetch = async (url) => {
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
+             : url.startsWith("/league")
+             ? {present: true, closed_total: 3, periods: {
+                 today: {n: 0, groups: {}, best: [], worst: [],
+                         setup_known: 0},
+                 "30d": {n: 3, setup_known: 2, groups: {
+                     arm: [{key: "nn", n: 2, win: 0.5, pnl: 4.1,
+                            net_bp_avg: 12.0},
+                           {key: "gbm", n: 1, win: 0, pnl: -3.0,
+                            net_bp_avg: -51.0}],
+                     book: [{key: "sit", n: 2, win: 0.5, pnl: 4.1,
+                             net_bp_avg: 12.0},
+                            {key: "h1", n: 1, win: 0, pnl: -3.0,
+                             net_bp_avg: -51.0}],
+                     setup: [{key: "liq", n: 1, win: 1, pnl: 8.0,
+                              net_bp_avg: 49.0}],
+                     side: [{key: "long", n: 3, win: 0.33, pnl: 1.1,
+                             net_bp_avg: -5.0}]},
+                   best: [{hz: "sit", arm: "nn", hour: "2026-08-03-14",
+                           sym: "AAAUSDT", side: "long",
+                           at: 1786190000, net_bp: 49.0, pnl: 8.0,
+                           setup: "liq"}],
+                   worst: [{hz: "h1", arm: "gbm",
+                            hour: "2026-08-03-15", sym: "CCCUSDT",
+                            side: "long", at: 1786190100,
+                            net_bp: -51.0, pnl: -3.0, setup: null}]},
+                 "365d": {n: 3, groups: {}, best: [], worst: [],
+                          setup_known: 2}}}
              : url.startsWith("/model_trades")
              ? {source: "model", page: 0, per: 100,
                 // Правила книги — в ответе: из них страница графика
@@ -610,13 +638,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo
+  if (!isTrades && !isBot && !isInfo && !isLeague
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
-  if (!isTrades && !isChart && !isBot && !isInfo) {
+  if (!isTrades && !isChart && !isBot && !isInfo && !isLeague) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -750,7 +778,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo
+  if (!isTrades && !isBot && !isInfo && !isLeague
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -955,6 +983,31 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     }
   }
 
+  if (isLeague) {
+    const bx = global.__el
+      ? String(global.__el("box").innerHTML || "") : "";
+    // Числа стаба: лидер группы помечен, деньги и счётчики на месте,
+    // топ несёт ссылку на разбор сделки.
+    if (!/&#9733;|\u2605/.test(bx) && bx.indexOf("\u2605") < 0
+        && bx.indexOf("★") < 0)
+      bad.push("лига: лидер группы не помечен");
+    if (!/\+4\.1/.test(bx) || !/-3/.test(bx))
+      bad.push("лига: деньги групп не показаны");
+    if (!/liquidations/.test(bx))
+      bad.push("лига: ситуация не названа человеческим именем");
+    if (!/AAA/.test(bx) || !/\+8\.00/.test(bx))
+      bad.push("лига: топ сделок не показан");
+    if (!/trade-info/.test(bx))
+      bad.push("лига: из топа нет ссылки на разбор сделки");
+    const nt = global.__el
+      ? String(global.__el("note").innerHTML || "") : "";
+    if (!/observation record is excluded/.test(nt)
+        || !/noise/.test(nt))
+      bad.push("лига: оговорки честности потеряны");
+    if (!seen.some(u => u.startsWith("/league")))
+      bad.push("лига: данные не запрошены");
+  }
+
   if (isInfo) {
     const wb = global.__el
       ? String(global.__el("whybox").innerHTML || "") : "";
@@ -1005,7 +1058,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Панель исполнительного ядра — только на обзоре. Проверяется
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
-  if (!isTrades && !isChart && !isBot && !isInfo) {
+  if (!isTrades && !isChart && !isBot && !isInfo && !isLeague) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -1255,7 +1308,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("просадка сделки в строке не в долях депозита");
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
-  } else if (isBot || isInfo) {
+  } else if (isBot || isInfo || isLeague) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {

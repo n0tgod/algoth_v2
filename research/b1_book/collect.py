@@ -1907,6 +1907,119 @@ class Collector:
     # конца; три часа — заведомо больше с запасом на перезапуск.
     SUMMARY_WAIT = 3 * 3600
 
+    def model_league(self):
+        """Лига: что ведёт себя лучше — руки, книги, ситуации, стороны.
+
+        Просьба владельца: отдельная страница наблюдений за каждой
+        стратегией и моделью плюс ТОП сделок по прибыльности за
+        сегодня/месяц/год. Агрегаты считаются ЗДЕСЬ, на сервере, и
+        один раз: сумма и доля побед — простая арифметика, но два
+        места, считающих одно и то же, однажды разойдутся (правило
+        одной кассы). Деньги каждой сделки при этом не пересчитываются
+        — они уже посчитаны разбором и лежат в записи.
+
+        Наблюдательная книга (`model_sit_obs`) НЕ входит: её входы —
+        те же кандидаты, что у торгуемой, и смешение посчитало бы одни
+        решения дважды. Сделки без исхода не входят тоже: посчитать
+        неизвестный исход нулём значило бы разбавить лигу выдумкой.
+
+        Период сделки — момент, когда деньги стали известны (живой
+        выход либо конец часа разбора): «топ за сегодня» — про то, что
+        закрылось сегодня, а не про то, что сегодня открыто.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_league_cache", (0.0, None))
+        if cached is not None and now - at < 60:
+            return cached
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        rows = []
+        for hz, name in (("h4", "model"), ("h1", "model_h1"),
+                         ("h24", "model_h24"), ("sit", "model_sit")):
+            mdir = os.path.join(s8, name)
+            try:
+                with open(os.path.join(mdir, "manifest.json"),
+                          encoding="utf-8") as f:
+                    mman = json.load(f)
+            except (OSError, ValueError):
+                continue
+            sit = bool(mman.get("situational"))
+            hold = None if sit else int(mman.get("horizon_h")
+                                        or TR.HOLD_H)
+            picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+            revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
+            try:
+                tr = TR.build(picks, revs, hold_h=hold,
+                              px_at=self.entry_px(picks),
+                              books=TR.load_books(
+                                  os.path.join(mdir, "books.jsonl")))
+            except Exception:                         # noqa: BLE001
+                continue
+            for t in tr:
+                if t.get("state") != "закрыта" or t.get("pnl") is None:
+                    continue
+                su = (t.get("setup") or [None])
+                rows.append({
+                    "hz": hz, "arm": t.get("arm") or "gbm",
+                    "hour": t.get("hour"), "sym": t.get("sym"),
+                    "side": t.get("side"),
+                    "opened_at": t.get("opened_at"),
+                    "at": (t.get("exit_ts") or t.get("closes_at")
+                           or t.get("opened_at")),
+                    "net_bp": t.get("net_bp"), "pnl": t.get("pnl"),
+                    "setup": su[0][0] if su and su[0] else None,
+                    "train_seq": t.get("train_seq"),
+                    "reason": t.get("exit_reason")})
+
+        def agg(sub, key):
+            out = {}
+            for r in sub:
+                k = key(r)
+                if k is None:
+                    continue
+                g = out.setdefault(k, {"n": 0, "w": 0, "pnl": 0.0,
+                                       "net": 0.0})
+                g["n"] += 1
+                g["w"] += 1 if (r["pnl"] or 0) > 0 else 0
+                g["pnl"] += r["pnl"] or 0.0
+                g["net"] += r["net_bp"] or 0.0
+            return sorted(
+                [{"key": k, "n": g["n"],
+                  "win": round(g["w"] / g["n"], 3),
+                  "pnl": round(g["pnl"], 2),
+                  "net_bp_avg": round(g["net"] / g["n"], 1)}
+                 for k, g in out.items()],
+                key=lambda x: -x["pnl"])
+
+        # «Сегодня» — календарные сутки UTC, не последние 24 часа:
+        # владелец читает это как «что закрылось сегодня».
+        day0 = (int(now) // 86400) * 86400
+        periods = {}
+        for pkey, since in (("today", day0),
+                            ("30d", now - 30 * 86400),
+                            ("365d", now - 365 * 86400)):
+            sub = [r for r in rows if (r["at"] or 0) >= since]
+            srt = sorted(sub, key=lambda r: -(r["pnl"] or 0))
+            periods[pkey] = {
+                "n": len(sub),
+                "groups": {
+                    "arm": agg(sub, lambda r: r["arm"]),
+                    "book": agg(sub, lambda r: r["hz"]),
+                    "setup": agg(sub, lambda r: r["setup"]),
+                    "side": agg(sub, lambda r: r["side"]),
+                },
+                "best": srt[:10],
+                "worst": srt[::-1][:5],
+                "setup_known": sum(1 for r in sub if r["setup"]),
+            }
+        out = {"present": bool(rows), "closed_total": len(rows),
+               "periods": periods,
+               "generated_at": round(now, 1)}
+        self._league_cache = (now, out)
+        return out
+
     def entry_px(self, picks):
         """Цены входа для выборов, которые их не несут.
 
