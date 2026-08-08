@@ -736,8 +736,14 @@ function tradeStats(p) {
     // «Обещание / факт» — самое честное число здесь: модель может
     // угадывать знак и обещать вчетверо больше, чем даёт.
     return `<div class="mline"><b>${name}</b></div><div class="stats">`
+      // «Всего» первым: столбики иначе не складываются с числом
+      // сделок книги, и закрытые одной руки читаются как вся книга —
+      // владелец так и прочёл 32 из 76.
+      + cell("trades", s.trades ?? ((s.closed||0) + (s.open||0)
+             + (s.exiting||0) + (s.awaiting||0) + (s.no_outcome||0)))
       + cell("closed", s.closed)
       + cell("open", s.open)
+      + (s.exiting ? cell("exited, pnl pending", s.exiting) : "")
       + cell("sign right", (s.hit_rate*100).toFixed(0) + " %",
              s.hit_rate >= 0.5 ? "good" : "bad")
       + cell("net move", pct(s.net_bp_avg),
@@ -1054,13 +1060,15 @@ function rrControl(d) {
   const note = cur
     ? `<span class="dim"> — keeping every trade whose promised
        reward/risk is <b>${cur} or higher</b>: <b>${
-        d.trades_total || 0}</b> of ${total} trades${d.rr_unknown
+        d.trades_total || 0}</b> of ${total} trades
+       <b>across both arms</b>, open and closed${d.rr_unknown
           ? `, ${d.rr_unknown} with no promise to judge by` : ""}.
        The account below is recomputed on this subset: it answers
        “what if only such trades were taken”, it is NOT the book’s
        money.</span>`
-    : `<span class="dim"> — no filter: every trade the book took, as in
-       the 1 h and 4 h books.</span>`;
+    : `<span class="dim"> — no filter: every trade the book took
+       (<b>${d.trades_total || 0}</b> across both arms), as in the 1 h
+       and 4 h books.</span>`;
   return `<div class="mline">reward/risk filter — at least:
     <select id="rrf">${opts}</select>${note}</div>`;
 }
@@ -1815,10 +1823,11 @@ async function load() {
   let html = armBtns + `<div class="gt">result</div>`
     + `<div class="stats">`
     + cell("trades", which === "all" ? d.grand_total
-           : (st.closed||0) + (st.open||0) + (st.awaiting||0)
-             + (st.no_outcome||0))
+           : st.trades ?? ((st.closed||0) + (st.open||0)
+             + (st.exiting||0) + (st.awaiting||0) + (st.no_outcome||0)))
     + cell("closed", st.closed || 0)
     + cell("open", st.open || 0)
+    + (st.exiting ? cell("exited, pnl pending", st.exiting) : "")
     + (st.awaiting ? cell("awaiting review", st.awaiting) : "")
     // Красным — только окончательная потеря: разбор до неё дошёл и
     // цель посчитать не смог. Ожидание разбора красным быть не должно,

@@ -680,8 +680,18 @@ def summary(trades, arm=None, capital=None, start=None):
     op = [t for t in rows if t["state"] == "открыта"]
     lost = [t for t in rows if t["state"] == "без исхода"]
     wait = [t for t in rows if t["state"] == "ждёт разбора"]
+    # Живой выход, ещё не разобранный циклом: состояние существует с
+    # тех пор, как сторож стал закрывать позиции секундами, а в сводке
+    # его не было — счётчики не сходились с числом сделок, и владелец
+    # честно прочёл это как «показывает не все». Считать его закрытым
+    # нельзя: денег у него пока нет.
+    exiting = [t for t in rows if t["state"] == "вышла, ждёт разбора"]
     out = {"closed": len(closed), "open": len(op),
-           "no_outcome": len(lost), "awaiting": len(wait)}
+           "no_outcome": len(lost), "awaiting": len(wait),
+           "exiting": len(exiting),
+           # Сколько сделок всего у этой руки — чтобы столбики можно
+           # было сложить и получить именно его, а не гадать.
+           "trades": len(rows)}
     _unreal(rows, out, capital)
     _dd(rows, out)
     # Подарок входа считается по ВСЕМ сделкам, а не только закрытым:
