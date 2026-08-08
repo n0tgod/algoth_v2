@@ -2180,7 +2180,13 @@ async function load() {
         : (t.odd*100).toFixed(0) + " %"}</td>
       <td><a class="open" href="/chart?k=${encodeURIComponent(KEY)}&sym=${
         encodeURIComponent(t.sym)}&arm=${t.arm}&hour=${t.hour}${
-        HZ ? "&hz=" + HZ : ""}">open</a></td></tr>`;
+        HZ ? "&hz=" + HZ : ""}${
+        // Порог едет в ссылку: он выбирает не только подмножество, но
+        // и ЗАПИСЬ. Без него график просил у сервера торгуемую книгу,
+        // не находил там сделку с отношением ниже гейта и говорил
+        // «у этой руки в этом часе сделки нет» — ответ верный для
+        // другой книги и потому неверный по существу.
+        RR_MIN == null ? "" : "&rr=" + RR_MIN}">open</a></td></tr>`;
   }).join("") || `<tr><td colspan="17" style="color:var(--muted);
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
@@ -2398,6 +2404,12 @@ function showTrade(pos) {
   const p = new URLSearchParams({k: KEY, sym: m[2], arm: m[0],
                                  hour: m[1], embed: 1});
   if (BOOK_HZ) p.set("hz", BOOK_HZ);
+  // Порог владельца выбирает запись, а не только подмножество: без
+  // него график ищет сделку в торгуемой книге, где её нет. На
+  // странице ядра дилера нет вовсе — там порог не задан, и график
+  // сам переспросит наблюдательную запись, если не найдёт сделку.
+  if (typeof RR_MIN !== "undefined" && RR_MIN != null)
+    p.set("rr", String(RR_MIN));
   const card = document.getElementById("tcard");
   card.style.display = "";
   const f = document.getElementById("tchart");
@@ -2994,6 +3006,14 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              hour: Q.get("hour") || "",
              hz: (["h1", "h24", "sit", "sit_obs"].includes(Q.get("hz"))
                   ? Q.get("hz") : ""),
+             // Порог обещанного отношения из ссылки: он выбирает
+             // ЗАПИСЬ, из которой сервер отдаёт сделки. `null` —
+             // «не задан», и тогда график берёт книгу как она
+             // торгует, а если сделки там нет — переспрашивает
+             // наблюдательную запись (ниже).
+             rr: (Q.get("rr") == null || Q.get("rr") === ""
+                  ? null : parseFloat(Q.get("rr"))),
+             obs: false,
              fit: false};
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара
 // (рука, час, монета) единственна по построению — цикл выбирает шесть
@@ -3017,11 +3037,31 @@ async function pullModelTrades() {
     // страницу открывают ради сделки, которой может быть неделя.
     // `lite` — без сводок и кривых: графику нужны строки сделок, а
     // полный расчёт занимал секунды на каждую смену монеты.
-    const p = new URLSearchParams({k: KEY, sym: sym, per: 500, lite: 1});
-    if (MDL.hz) p.set("hz", MDL.hz);
-    const r = await fetch("/model_trades?" + p.toString());
-    const d = await r.json();
-    MDL.trades = (d.rows || []).filter(t => t.sym === sym);
+    const ask = async rr => {
+      const p = new URLSearchParams({k: KEY, sym: sym, per: 500,
+                                     lite: 1});
+      if (MDL.hz) p.set("hz", MDL.hz);
+      if (rr != null) p.set("rr_min", String(rr));
+      const r = await fetch("/model_trades?" + p.toString());
+      return await r.json();
+    };
+    let d = await ask(MDL.rr);
+    let rows = (d.rows || []).filter(t => t.sym === sym);
+    // Сделки в торгуемой книге нет, а нас звали смотреть именно её:
+    // переспрашиваем наблюдательную запись. Так открывается сделка с
+    // отношением ниже гейта — её в торгуемой книге не существует
+    // вовсе, и «у руки нет сделки в этом часе» было бы ответом про
+    // другую книгу. Один повтор, и только когда сделку искали по часу.
+    MDL.obs = d.source_book === "observation";
+    if (MDL.hour && d.source_book === "traded"
+        && !rows.some(t => t.arm === MDL.arm && t.hour === MDL.hour)) {
+      const d2 = await ask(0);
+      const r2 = (d2.rows || []).filter(t => t.sym === sym);
+      if (r2.some(t => t.arm === MDL.arm && t.hour === MDL.hour)) {
+        d = d2; rows = r2; MDL.obs = true;
+      }
+    }
+    MDL.trades = rows;
     MDL.sym = sym; MDL.at = Date.now();
     armButtons();
     // Окно графика под сделку — только когда она нашлась.
@@ -3692,10 +3732,13 @@ function modelNote(MT, first, last) {
   const t = focused();
   if (!t) {
     // Час есть, сделки нет: у другой руки в этом часе своей сделки не
-    // было. Это ответ, а не пустота, и сказать его надо словами.
+    // было. Это ответ, а не пустота, и сказать его надо словами —
+    // вместе с тем, где уже искали: без этого совет «переключите
+    // руку» звучит как единственная причина, а их две.
     box.innerHTML = `<span style="color:var(--ask)">arm ${
-      MDL.arm === "nn" ? "ai" : "ml"} has no trade in hour ${MDL.hour} —
-      switch the arm</span>`;
+      MDL.arm === "nn" ? "ai" : "ml"} has no trade in hour ${MDL.hour}
+      — switch the arm${MDL.hz === "sit"
+        ? " (the observation record was checked too)" : ""}</span>`;
     return;
   }
   // Пока свечи за это окно не пришли, говорить «записи нет» нельзя:
@@ -3705,8 +3748,15 @@ function modelNote(MT, first, last) {
   }
   const seen = t.opened_at >= first && t.opened_at <= last;
   box.innerHTML = seen
+    // Откуда сделка — обязано стоять рядом с ней: наблюдательная
+    // запись ведётся теми же правилами входа, но без требования к
+    // отношению и своим счётом, и молча выдать её за сделку книги
+    // значило бы показать деньги, которых книга не делала.
     ? `<span>showing trade ${MDL.hour} · ${
-        t.side} · ${disp(t.state)}</span>`
+        t.side} · ${disp(t.state)}${MDL.obs
+        ? ` · <span style="color:var(--muted)">from the observation
+            record (reward/risk requirement dropped; the bot does not
+            trade it)</span>` : ""}</span>`
     : `<span style="color:var(--ask)">no price record for ${MDL.hour} —
        recording of this coin started later</span>`;
 }

@@ -702,6 +702,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       catch (e) { bad.push("обзор: возврат на книгу 4 ч упал: " + e.message); }
     }
   }
+  // Порог из ссылки обязан доехать до запроса сделок: он выбирает не
+  // подмножество, а ЗАПИСЬ, и без него график ищет сделку в книге,
+  // где её нет по построению.
+  if (/[?&]rr=1\.5/.test(SEARCH || "")) {
+    const q = seen.filter(u => u.startsWith("/model_trades"));
+    if (!q.some(u => /rr_min=1\.5/.test(u)))
+      bad.push("график: порог из ссылки не доехал до запроса: "
+               + q.join(" "));
+  }
   if (!isTrades && !isBot && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
