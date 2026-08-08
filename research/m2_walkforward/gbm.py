@@ -138,7 +138,14 @@ def _grow(codes, g, idx, depth, importance, leaf=None):
         return leaf(idx)
     importance[j] += gain
     m = _go_left(codes[idx, j], t, nan_left)
-    return (j, t, nan_left,
+    # Внутренний узел несёт СРЕДНЕЕ остатка своих строк. Это не для
+    # предсказания (оно идёт по листьям, как шло), а для разложения
+    # вклада: спуск по дереву меняет ожидание от среднего узла к
+    # среднему ребёнка, и эта разница принадлежит признаку разреза.
+    # Сумма разниц по пути точно равна значению листа — тождество
+    # закреплено тестом, и только оно делает «почему модель так
+    # решила» проверяемым утверждением, а не украшением.
+    return (j, t, nan_left, float(g[idx].mean()),
             _grow(codes, g, idx[m], depth + 1, importance, leaf),
             _grow(codes, g, idx[~m], depth + 1, importance, leaf))
 
@@ -147,7 +154,14 @@ def _tree_predict(node, codes, idx, out):
     if not isinstance(node, tuple):
         out[idx] = node
         return
-    j, t, nan_left, left, right = node
+    # Узел прежнего образца — пять полей, без среднего: веса, обученные
+    # до введения разложения вклада, обязаны предсказывать как раньше.
+    # Живой цикл держит такие веса не дольше часа, но живой IC читает
+    # ИМЕННО прежние веса — упасть на них значило бы ослепнуть на такт.
+    if len(node) == 5:
+        j, t, nan_left, left, right = node
+    else:
+        j, t, nan_left, _, left, right = node
     m = _go_left(codes[idx, j], t, nan_left)
     _tree_predict(left, codes, idx[m], out)
     _tree_predict(right, codes, idx[~m], out)
@@ -173,6 +187,51 @@ class GBM:
             _tree_predict(tr, codes, all_idx, buf)
             pred += LEARNING_RATE * buf
         return pred
+
+    def contrib(self, x):
+        """Вклад каждого признака в предсказание КАЖДОЙ строки.
+
+        Разложение по пути в дереве: спуск из узла в ребёнка меняет
+        ожидание со среднего узла на среднее ребёнка, и разница
+        принадлежит признаку разреза. Просуммировано по всем деревьям
+        со скоростью обучения. Тождество, закреплённое тестом:
+        предсказание минус сумма вкладов — одна и та же константа у
+        всех строк (базовый уровень плюс средние корней).
+
+        Это ответ на вопрос владельца «почему модель открыла именно
+        здесь»: не глобальная важность (она одна на все сделки), а
+        вклад признаков в ЭТОТ прогноз, в его же единицах — б.п.
+
+        Возвращает матрицу (строки × признаки) либо `None`, если
+        деревья прежнего образца (средние узлов не хранились): чужую
+        важность выдавать за разложение нельзя.
+
+        Годится ТОЛЬКО для квадратичной потери: у неё значение листа —
+        среднее остатка, то есть ровно то, что копят узлы. У
+        квантильной лист — квантиль, а псевдоостаток — константа со
+        знаком, и разложение по средним было бы числами без смысла.
+        Вызывающий это знает (у него в руках `tau` весов); здесь
+        проверить нечем — модель потерю не хранит.
+        """
+        codes = bin_apply(x, self.edges)
+        n, nf = codes.shape
+        out = np.zeros((n, nf))
+        for tr in self.trees:
+            if not isinstance(tr, tuple):
+                continue                     # дерево-константа: вклада нет
+            if len(tr) == 5:
+                return None                  # прежний формат
+            for i in range(n):
+                node = tr
+                while isinstance(node, tuple):
+                    j, t, nan_left, m = node[0], node[1], node[2], node[3]
+                    c = codes[i, j]
+                    child = (node[4] if (nan_left if c == 0 else c <= t)
+                             else node[5])
+                    cm = child[3] if isinstance(child, tuple) else child
+                    out[i, j] += LEARNING_RATE * (cm - m)
+                    node = child
+        return out
 
 
 def fit(x, y, seed, n_trees=N_TREES, tau=None):

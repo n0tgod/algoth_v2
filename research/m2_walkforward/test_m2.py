@@ -137,6 +137,52 @@ def test_gbm_quantile_monotone_in_tau():
           str(float((lo < hi).mean())))
 
 
+def test_gbm_contrib_identity():
+    # Разложение вклада обязано быть ТОЖДЕСТВОМ, а не оценкой:
+    # предсказание минус сумма вкладов — одна и та же константа у всех
+    # строк (база плюс средние корней). Иначе «почему модель так
+    # решила» — украшение, а не утверждение.
+    n = 3000
+    x = rng.normal(0, 1, (n, 5))
+    x[rng.random((n, 5)) < 0.1] = np.nan
+    y = 2.0 * x[:, 0] - 1.0 * x[:, 3] + rng.normal(0, 0.5, n)
+    m = gbm.fit(x, y, seed=23, n_trees=40)
+    c = m.contrib(x[:200])
+    resid = m.predict(x[:200]) - c.sum(axis=1)
+    check(f"вклады сходятся к предсказанию (разброс {np.ptp(resid):.2e})",
+          np.ptp(resid) < 1e-9, str(np.ptp(resid)))
+    tot = np.abs(c).sum(axis=0)
+    check("вклад сосредоточен на настоящих признаках",
+          tot[0] + tot[3] > 0.9 * tot.sum(), str(tot))
+    # Знак вклада следует за знаком связи: у строки с большим x0
+    # вклад признака 0 положителен.
+    hi = x[:200, 0] > 1.0
+    check("знак вклада следует за признаком",
+          bool(c[hi, 0].mean() > 0.5), str(float(c[hi, 0].mean())))
+
+
+def test_gbm_old_trees_still_predict():
+    # Веса прежнего образца (узлы без средних) обязаны предсказывать
+    # как раньше — их читает живой IC, — а разложение честно отвечает
+    # «нет», а не выдумывает числа.
+    n = 800
+    x = rng.normal(0, 1, (n, 3))
+    y = x[:, 1] + rng.normal(0, 0.3, n)
+    m = gbm.fit(x, y, seed=29, n_trees=15)
+
+    def strip(node):
+        if not isinstance(node, tuple):
+            return node
+        j, t, nl, _, le, ri = node
+        return (j, t, nl, strip(le), strip(ri))
+    old = gbm.GBM(m.edges, [strip(t) for t in m.trees], m.base,
+                  m.importance)
+    check("прежний формат предсказывает бит в бит",
+          np.array_equal(m.predict(x), old.predict(x)))
+    check("разложение на прежнем формате — None, а не выдумка",
+          old.contrib(x[:5]) is None)
+
+
 def test_binning_edges_from_training_only():
     x = np.array([[0.0], [1.0], [2.0], [3.0]])
     e = gbm.bin_edges(x)
@@ -316,6 +362,8 @@ def main():
     test_gbm_quantile_holds_declared_share()
     test_gbm_squared_loss_bit_for_bit()
     test_gbm_quantile_monotone_in_tau()
+    test_gbm_contrib_identity()
+    test_gbm_old_trees_still_predict()
     test_binning_edges_from_training_only()
     print("ранги и IC")
     test_rankdata_ties()

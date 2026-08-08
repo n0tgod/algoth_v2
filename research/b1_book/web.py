@@ -883,7 +883,17 @@ function tradeTable(p) {
     // сделка по таймеру (владелец так её и прочёл). Показываем факт —
     // секунду входа, час остаётся подсказкой.
     const key = isSit(p) ? utcHM(t.opened_at) : t.hour.slice(5);
-    return `<tr class="${cls}">
+    // «Почему» — подсказкой на строке: обучение, вклад признаков,
+    // место в сечении. Полное предложение живёт на странице графика;
+    // здесь достаточно того, что ответ ЕСТЬ и его видно без перехода.
+    const why = [t.train_seq != null ? "training #" + t.train_seq
+                   : null,
+                 t.rank != null && t.of
+                   ? `rank #${t.rank} of ${t.of}` : null,
+                 (t.why || []).map(w => `${w[0]} ${w[1] > 0 ? "+" : ""}${
+                   (w[1] / 100).toFixed(2)} %`).join(", ") || null]
+      .filter(Boolean).join(" · ");
+    return `<tr class="${cls}"${why ? ` title="${why}"` : ""}>
       <td class="mono" title="sheet hour ${t.hour}">${key}</td>
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
@@ -1016,7 +1026,8 @@ function renderModel() {
   const accLine = ["gbm","nn"].map(a => accs[a]
     ? `${a === "gbm" ? "trees" : "neural"} $${accs[a].balance.toFixed(2)}`
     : null).filter(Boolean).join(" · ");
-  cap.textContent = `weights v${m.version} · hold ${
+  cap.textContent = `weights v${m.version}${
+    m.train_seq != null ? " · training #" + m.train_seq : ""} · hold ${
     isSit(d) ? "by situation" : bookH(d) + " h"} · age ${
     ageH == null ? "—" : ageH.toFixed(1)} h${
     accLine ? " · " + accLine : ""}`;
@@ -3099,6 +3110,11 @@ async function pullModelTrades() {
       }
     }
     MDL.trades = rows;
+    // Правила книги — из ОТВЕТА, не из констант страницы: объяснение
+    // сделки обязано описывать тот прогон, который её открыл.
+    MDL.rules = {stop_tau: d.stop_tau, min_edge_bp: d.min_edge_bp,
+                 min_rr: d.min_rr, min_disc_bp: d.min_disc_bp,
+                 rules_version: d.rules_version};
     MDL.sym = sym; MDL.at = Date.now();
     armButtons();
     // Окно графика под сделку — только когда она нашлась.
@@ -3836,6 +3852,56 @@ function rows() {
   if (pp && pp.style) pp.style.display = HIST.off ? "none" : "";
 }
 
+// Объяснение сделки СЛОВАМИ ИЗ ЧИСЕЛ записи — просьба владельца:
+// каким обучением открыта, почему модель выбрала имя, по какой
+// стратегии вошла и как расставила уровни. Прозы в записи нет
+// намеренно: числа — источник истины, предложение из них собирает
+// страница, и врать оно может только вместе с числами.
+function whyDrivers(t) {
+  if (!t || !t.why || !t.why.length) return "";
+  return t.why.map(w => `${w[0]} ${w[1] > 0 ? "+" : ""}${
+    (w[1] / 100).toFixed(2)} %`).join(", ");
+}
+function explainTrade(t) {
+  if (!t) return "";
+  const r = MDL.rules || {};
+  const bits = [];
+  bits.push(t.train_seq != null
+    ? `opened by <b>training #${t.train_seq}</b> of the ${
+        MDL.arm === "nn" ? "neural" : "tree"} arm`
+    : "training number not recorded (trade predates the field)");
+  if (t.expected_bp != null)
+    bits.push(`the model expected <b>${pct(t.expected_bp)}</b>`);
+  const drv = whyDrivers(t);
+  bits.push(drv ? `main drivers of the forecast: <b>${drv}</b>`
+                : "per-feature breakdown not recorded for this trade");
+  if (t.rank != null && t.of)
+    bits.push(`strategy: hourly rebalance — this name ranked
+      <b>#${t.rank} of ${t.of}</b> in the cross-section by expected
+      move`);
+  if (t.fwd0_bp != null && t.expected_bp != null) {
+    const disc = Math.abs(t.expected_bp) - Math.abs(t.fwd0_bp);
+    bits.push(`strategy: situational scanner${r.rules_version
+      ? " (rules v" + r.rules_version + ")" : ""} — the sheet promised
+      ${pct(t.fwd0_bp)}, price gave back <b>${pct(disc)}</b> more, so
+      the remaining move crossed the ${r.min_edge_bp ?? 22} bp gate in
+      front of us with reward/risk ≥ ${r.min_rr ?? 2} against the
+      executable stop`);
+  }
+  if (t.mae_bp != null) {
+    const q = String(t.stop_of || "").indexOf("q_") > 0;
+    bits.push(`levels: stop at ${pct(t.mae_bp)}${q
+      ? ` — the learned level price passes in ${
+          Math.round((r.stop_tau ?? 0.2) * 100)} % of cases` +
+        (t.mae_m_bp != null
+          ? `, the forecast line itself was ${pct(t.mae_m_bp)}` : "")
+      : " (the forecast line: older stop rule)"}${t.mfe_bp != null
+      ? `; target at the expected favourable extreme ${pct(t.mfe_bp)}`
+      : ""}`);
+  }
+  return bits.join(" · ");
+}
+
 // Сделки МОДЕЛИ по этой паре — то, ради чего график и открывают.
 // Отдельной таблицей, а не вместе с бумажными: два механизма в одной
 // таблице однажды сложили бы свою статистику (правило проекта).
@@ -3859,9 +3925,12 @@ function mrows() {
             ? `<span style="color:var(--muted)">${
                 pct(t.unreal_net_bp)} live</span>` : "—";
         const here = t.hour === MDL.hour;
+        const tip = [t.train_seq != null ? "training #"
+                       + t.train_seq : null,
+                     whyDrivers(t) || null].filter(Boolean).join(" · ");
         return `<tr data-h="${t.hour}" style="cursor:pointer${
           here ? ";background:rgba(127,127,255,.10)" : ""}"
-          title="click to centre the chart on this trade">
+          title="${tip ? tip + " — " : ""}click to centre the chart">
         <td class="mono">${stamp(t.opened_at)}</td>
         <td class="${t.side === "long" ? "buy" : "sell"}">${t.side}</td>
         <td class="mono">${t.entry_px == null ? "—" : t.entry_px}</td>
@@ -3880,14 +3949,17 @@ function mrows() {
        book</td></tr>`;
   const note = document.getElementById("mnote");
   if (note) {
-    note.innerHTML = HIST.off
+    const f = focused();
+    note.innerHTML = (f
+      ? `<div class="mline">why this trade: ${explainTrade(f)}</div>`
+      : "") + (HIST.off
       ? `The hand-rolled tape detector is off, so its own paper-trade
          table is hidden: its direction was closed by measurements
          T1&ndash;T4 and absorption now enters the model as features
          (eat_bid/eat_ask, big_rel, imbalances). Book and tape are
          still recorded; run the collector with
          <span class="mono">--paper</span> to watch it again.`
-      : "";
+      : "");
   }
 }
 

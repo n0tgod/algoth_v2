@@ -513,6 +513,40 @@ def predict_matrix(model, x, elig):
 
 
 PREDS_KEEP_H = 48                 # дольше держать нечего — см. score_preds
+WHY_TOP = 3                       # признаков в объяснении сделки
+WHY_FLOOR_BP = 1.0                # мельче — шум, а не довод
+
+
+def explain_rows(model, xj, names):
+    """«Почему прогноз такой»: главные признаки КАЖДОЙ строки, в б.п.
+
+    Просьба владельца: сделка обязана нести объяснение, почему модель
+    открыла её именно здесь. Глобальная важность на этот вопрос не
+    отвечает — она одна на все сделки часа. Здесь вклад признаков в
+    ЭТОТ прогноз: у деревьев — точное разложение по пути (тождество
+    под тестом), у сети — замена признака медианой обучения, мера
+    грубее и подписывается так же честно.
+
+    Возвращает список списков `[[имя, б.п.], …]` по строкам либо
+    `None` — у весов прежнего образца разложения нет, и выдумывать
+    его нельзя. Зовётся ТОЛЬКО для целей квадратичной потери: у
+    квантильной листья — квантили, и разложение по средним было бы
+    числами без смысла.
+    """
+    fn = getattr(model, "contrib", None)
+    if fn is None:
+        return None
+    c = fn(xj)
+    if c is None:
+        return None
+    out = []
+    for i in range(len(xj)):
+        idx = np.argsort(-np.abs(c[i]))[:WHY_TOP]
+        out.append([[names[j], round(float(c[i][j]), 1)]
+                    for j in idx
+                    if abs(c[i][j]) >= WHY_FLOOR_BP])
+    return out
+
 
 
 def save_preds(arm, hour, syms, rows_m, pred, target="fwd_4h"):
@@ -1187,7 +1221,7 @@ def sit_open_positions(picks, reviews, arm):
 
 def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                     grid, nov_lo, nov_hi, book_root, log_,
-                    beta_row=None):
+                    beta_row=None, names=None, train_seq=None):
     """Один проход ситуационной книги: сначала выходы, потом входы.
 
     Порядок обязателен: закрытие освобождает слот и кассу, и вход в
@@ -1235,7 +1269,14 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         # обязано ехать в саму запись: через месяц по сделке иначе не
         # сказать, каким правилом её стопили. `mae_m` рядом со стопом
         # даёт показу обе линии, а замеру — величину сдвига.
-        for k in ("mae_m", "adverse_of", "favourable_of"):
+        # `why` и номер обучения — просьба владельца: сделка несёт,
+        # каким обучением она открыта и какие признаки дали прогноз.
+        # Номер идёт с ЛИСТА, породившего вход, а не с цикла,
+        # переписывающего событие в книгу: между ними может лежать
+        # новое обучение, и приписать сделке чужие веса значило бы
+        # соврать в самом поле, ради которого оно заведено.
+        for k in ("mae_m", "adverse_of", "favourable_of", "why",
+                  "train_seq"):
             if e.get(k) is not None:
                 row[k] = e[k]
         if e.get("odd") is not None:
@@ -1377,6 +1418,12 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
             if (arm, kmq) in models else None)
     mfeq = (models[(arm, kxq)].predict(xj)
             if (arm, kxq) in models else None)
+    # Объяснение прогноза — по каждой строке листа: сканер скопирует
+    # его в событие входа, цикл — в запись выбора. Считается здесь,
+    # потому что только у цикла есть и модель, и имена признаков;
+    # сканеру ехать должен готовый ответ.
+    whys = (explain_rows(models[(arm, kf)], xj, names)
+            if names is not None else None)
     sheet = []
     for i in range(len(rows_m)):
         px = float(mats["mid_close"][rows_m[i], j_last])
@@ -1392,6 +1439,8 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         if maeq is not None and mfeq is not None:
             row["mae_q"] = round(float(maeq[i]), 2)
             row["mfe_q"] = round(float(mfeq[i]), 2)
+        if whys is not None and whys[i]:
+            row["why"] = whys[i]
         nv = novelty(xj[i], nov_lo, nov_hi)
         if nv is not None:
             row["odd"] = round(nv, 3)
@@ -1408,7 +1457,8 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
 
 
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
-              nov_lo, nov_hi, book_root, log_):
+              nov_lo, nov_hi, book_root, log_, names=None,
+              train_seq=None):
     """Выбор монет одной книги: цели fwd/mae/mfe СВОЕГО горизонта.
 
     Возвращает запись выбора или `None`, когда у книги нет своих
@@ -1430,6 +1480,16 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
     # живой вневыборочный IC своей цели.
     save_preds(arm, grid[-1], syms, rows_m, fwd, target=kf)
     o = np.argsort(fwd)
+    # Объяснение — только для выбранных шести, а не для всего сечения:
+    # у часовых книг сделка и есть выбор, остальным строкам объяснять
+    # нечего. `rank` — место в сечении по прогнозу: стратегия часовой
+    # книги ровно в этом («самые крайние из N»), и без места в записи
+    # ответ «почему эта монета» был бы словами, а не числом.
+    chosen = list(o[::-1][:3]) + list(o[:3])
+    whys = (explain_rows(models[(arm, kf)], xj[chosen], names)
+            if names is not None else None)
+    wmap = ({int(i): w for i, w in zip(chosen, whys)}
+            if whys is not None else {})
 
     def mk(i, side):
         px = float(mats["mid_close"][rows_m[i], j_last])
@@ -1438,11 +1498,17 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
              **path_fields(side, float(mae[i]),
                            float(mfe[i]) if mfe is not None else None,
                            h=hold_h)}
+        # Место 1 — самый крайний прогноз своей стороны.
+        d["rank"] = int((len(fwd) - 1 - np.where(o == i)[0][0])
+                        if side == "long" else np.where(o == i)[0][0]) + 1
+        d["of"] = int(len(fwd))
+        if wmap.get(int(i)):
+            d["why"] = wmap[int(i)]
         nv = novelty(xj[i], nov_lo, nov_hi)
         if nv is not None:
             d["odd"] = round(nv, 3)
         return d
-    picks = {"arm": arm, "hour": grid[-1],
+    picks = {"arm": arm, "hour": grid[-1], "train_seq": train_seq,
              # Момент, когда решение стало известно: цикл просыпается
              # через минуты после закрытия часа, и это задержка входа,
              # а не ноль.
@@ -1749,6 +1815,21 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     os.makedirs(MODEL_DIR, exist_ok=True)
     ts = time.time()
     nov_lo, nov_hi = novelty_bounds(x, elig)
+    # Номер обучения — просьба владельца: у каждой сделки должно быть
+    # видно, КАКИМ обучением она открыта. Возраст весов для этого не
+    # годится (он меняется каждую минуту), час обучения — коряво в
+    # показе; счётчик растёт на единицу за каждый успешный цикл и
+    # штампуется в веса, манифест, лист сечения и каждую запись
+    # выбора. Живёт в манифесте: своя копия в отдельном файле однажды
+    # разошлась бы с ним.
+    train_seq = 1
+    try:
+        with open(os.path.join(MODEL_DIR, "manifest.json"),
+                  encoding="utf-8") as f:
+            train_seq = int((json.load(f) or {}).get("train_seq")
+                            or 0) + 1
+    except (OSError, ValueError):
+        pass
     imp_all = {}
     models = {}
     breach = {}
@@ -1772,6 +1853,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             blob = {"model": model, "features": names, "target": tgt,
                     "arm": arm, "version": MODEL_VERSION,
                     "target_col": col, "tau": tau,
+                    "train_seq": train_seq,
                     "trained_upto": grid[-1], "rows": len(ys)}
             p = os.path.join(MODEL_DIR, f"weights_{arm}_{tgt}.pkl")
             with open(p + ".tmp", "wb") as f:
@@ -1808,6 +1890,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         pass
 
     man = {"version": MODEL_VERSION, "trained_upto": grid[-1],
+           "train_seq": train_seq,
            # Пометка обязана лежать В артефакте, а не в имени каталога:
            # каталог переименуют или скопируют, а манифест поедет с
            # весами. Прогон F2 однажды уже подменил артефакт настоящего
@@ -1877,7 +1960,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         review = review_arm(MODEL_DIR, arm, TR.HOLD_H, targets, si,
                             grid, book_root, log_)
         picks = make_pick(arm, TR.HOLD_H, models, x, mats, syms, rows_m,
-                          j_last, grid, nov_lo, nov_hi, book_root, log_)
+                          j_last, grid, nov_lo, nov_hi, book_root, log_,
+                          names=names, train_seq=train_seq)
         if picks:
             write_pick(MODEL_DIR, picks)
 
@@ -1935,7 +2019,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                            book_root, log_)
                 pk = make_pick(arm, h, models, x, mats, syms, rows_m,
                                j_last, grid, nov_lo, nov_hi,
-                               book_root, log_)
+                               book_root, log_, names=names,
+                               train_seq=train_seq)
                 if pk:
                     write_pick(mdir, pk)
             rebuild_accounts(mdir, h)
@@ -2006,7 +2091,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         for arm, _ in ARMS:
             sh = situational_arm(mdir, arm, models, x, mats, syms,
                                  rows_m, j_last, grid, nov_lo, nov_hi,
-                                 book_root, log_, beta_row=beta_row)
+                                 book_root, log_, beta_row=beta_row,
+                                 names=names, train_seq=train_seq)
             if sh:
                 sheets[arm] = sh
         if sheets and j_last is not None:
@@ -2014,6 +2100,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             with open(sp + ".tmp", "w", encoding="utf-8") as f:
                 json.dump({"hour": grid[j_last],
                            "written_at": round(time.time(), 1),
+                           "train_seq": train_seq,
                            "min_edge_bp": SIT_MIN_EDGE_BP,
                            "min_rr": SIT_MIN_RR,
                            "min_disc_bp": SIT_MIN_DISC_BP,
@@ -2048,6 +2135,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                 f.write(json.dumps(
                     {"hour": grid[j_last],
                      "written_at": round(time.time(), 1),
+                     "train_seq": train_seq,
                      "min_edge_bp": SIT_MIN_EDGE_BP,
                      "min_rr": SIT_MIN_RR,
                      "min_disc_bp": SIT_MIN_DISC_BP,
@@ -2074,7 +2162,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         for arm, _ in ARMS:
             situational_arm(obs, arm, models, x, mats, syms,
                             rows_m, j_last, grid, nov_lo, nov_hi,
-                            book_root, log_, beta_row=beta_row)
+                            book_root, log_, beta_row=beta_row,
+                            names=names, train_seq=train_seq)
         rebuild_accounts(obs, None, slots=SIT_OBS_SLOTS)
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")

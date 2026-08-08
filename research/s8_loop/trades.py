@@ -496,6 +496,19 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                     "mfe_bp": p.get("mfe"),
                     "odd": p.get("odd"),
                     "ver": pk.get("ver"),
+                    # Просьба владельца: сделка несёт, КАКИМ обучением
+                    # открыта и ПОЧЕМУ. Номер обучения у ситуационной
+                    # строки свой (лист, породивший вход), у часовой —
+                    # общий на запись выбора; `why` — вклад признаков
+                    # в прогноз, `rank`/`of` — место в сечении, и есть
+                    # ответ «почему эта монета» у часовой книги;
+                    # `fwd0_bp` — что обещал лист до того, как цена
+                    # отдала скидку.
+                    "train_seq": (p.get("train_seq")
+                                  or pk.get("train_seq")),
+                    "why": p.get("why"),
+                    "rank": p.get("rank"), "of": p.get("of"),
+                    "fwd0_bp": p.get("fwd0"),
                 }
                 if got is not None:
                     tr["cum_out"] = (got.get("cum")

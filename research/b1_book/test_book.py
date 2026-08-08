@@ -2118,6 +2118,15 @@ def test_sit_scan_stop_is_the_quantile_level():
     check("лист без квантилей — стоп по средней линии, как прежде",
           ev and ev["mae"] == -10.0 and ev["adverse_of"] == "mae_4h",
           str(ev))
+    # Объяснение прогноза едет С ЛИСТА в событие входа как есть: у
+    # сканера нет ни модели, ни имён признаков, пересчитать его нечем.
+    w = [["ret_7", 18.3], ["eat_bid", -6.1]]
+    ev = C.sit_scan_entry({**row, "why": w}, 99.90, 0.0, 22.0, 2.0, 0.0)
+    check("объяснение прогноза доезжает до события входа",
+          ev and ev.get("why") == w, str(ev and ev.get("why")))
+    check("листу без объяснения событие ничего не выдумывает",
+          "why" not in (C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0,
+                                         0.0) or {}))
 
 
 def test_sit_scan_enters_only_on_a_crossing_it_saw():
@@ -2156,6 +2165,7 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
                 for i in range(30)]
         sheet = {"hour": "2026-08-07-20", "min_edge_bp": 22.0,
                  "min_rr": 2.0, "min_disc_bp": 11.0, "slots": 6,
+                 "train_seq": 17,
                  "arms": {"gbm": rows}}
         for r in rows:
             col.books[r["sym"]] = B(100.0)
@@ -2189,6 +2199,12 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         check("пересечение на наших глазах — вход",
               len(evs) == 1 and evs[0]["sym"] == "S0USDT"
               and evs[0]["fwd0"] == 40.0, str(evs))
+        # Номер обучения — с листа, породившего вход: цикл может
+        # успеть обучиться заново, пока перепишет событие в книгу, и
+        # сделке достались бы чужие веса.
+        check("событие входа несёт номер обучения листа",
+              evs[0].get("train_seq") == 17,
+              str(evs[0].get("train_seq")))
 
         # Новый лист сбрасывает взведение: у него свои обещания.
         armed2 = set()

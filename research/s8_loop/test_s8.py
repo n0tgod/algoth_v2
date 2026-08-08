@@ -3047,6 +3047,36 @@ def test_train_cycle_end_to_end():
               len(picks) == 4 and {p["arm"] for p in picks} ==
               {"gbm", "nn"} and "fwd" in picks[0]["long"][0],
               str(picks[0])[:100])
+        # Номер обучения — просьба владельца: каждое обучение получает
+        # версию, и каждая запись выбора несёт её. Два цикла обязаны
+        # дать номера 1 и 2 — не свойство «растёт», а сами числа.
+        man2 = json.load(open(os.path.join(T.MODEL_DIR,
+                                           "manifest.json")))
+        check("номер обучения второго цикла равен 2",
+              man2.get("train_seq") == 2, str(man2.get("train_seq")))
+        check("записи выбора несут номер своего обучения",
+              [p.get("train_seq") for p in picks] == [1, 1, 2, 2],
+              str([p.get("train_seq") for p in picks]))
+        import pickle as _pk
+        blob = _pk.load(open(os.path.join(
+            T.MODEL_DIR, "weights_gbm_fwd_1h.pkl"), "rb"))
+        check("веса несут номер обучения",
+              blob.get("train_seq") == 2, str(blob.get("train_seq")))
+        # Объяснение «почему эта монета»: место в сечении и вклад
+        # признаков — у каждой ноги выбора. Вклад может быть пуст
+        # (все мельче порога), но место обязано быть всегда.
+        legs = [q for p in picks for sd_ in ("long", "short")
+                for q in p[sd_]]
+        check("каждая нога несёт место в сечении",
+              all(q.get("rank") and q.get("of") for q in legs),
+              str(legs[0])[:120])
+        check("вклад признаков доехал хотя бы до части ног",
+              any(q.get("why") for q in legs),
+              str([q.get("why") for q in legs[:4]]))
+        why0 = next(q["why"] for q in legs if q.get("why"))
+        check("вклад назван именем признака и величиной",
+              isinstance(why0[0][0], str)
+              and isinstance(why0[0][1], float), str(why0))
         rev = [json.loads(x) for x in
                open(os.path.join(T.MODEL_DIR, "review.jsonl"))]
         check("прошлые выборы обеих рук разобраны фактом",
@@ -3133,6 +3163,22 @@ def test_nn_learns_and_sees_missing():
               tau=None).predict(x[:200])
     check("сеть: умолчание — прежняя потеря бит в бит",
           np.array_equal(a, b))
+    # Вклад признаков у сети: заложенный драйвер обязан получать
+    # наибольший |вклад|. Тождества здесь нет по построению (мера —
+    # замена медианой, взаимодействия не раскладываются), и тест его
+    # честно НЕ требует.
+    # Мера у сети грубая (замена медианой), и шумовым признакам она
+    # честно приписывает ненулевую чувствительность — сеть нелинейна.
+    # Требовать нуля у шума значило бы требовать от меры того, чем она
+    # не является; требуется другое: главный драйвер держит НАИБОЛЬШИЙ
+    # вклад с запасом от любого шумового признака.
+    mq2 = N.fit(x, y, seed=5, epochs=20)
+    cb = mq2.contrib(x[:300])
+    tot = np.abs(cb).sum(axis=0)
+    noise = max(tot[1], tot[3], tot[4])
+    check(f"сеть: драйвер впереди шума с запасом (×{tot[0]/noise:.1f})",
+          tot[0] > 2 * noise and tot[0] == tot.max(),
+          str(tot.round(1)))
 
 
 def test_think_words():

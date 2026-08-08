@@ -1506,6 +1506,9 @@ class Collector:
                 "stop_of": e.get("adverse_of"),
                 "mfe_bp": e.get("mfe"),
                 "entry_px": e.get("px"),
+                "why": e.get("why"),
+                "train_seq": e.get("train_seq"),
+                "fwd0_bp": e.get("fwd0"),
                 "odd": e.get("odd"), "live_wait": True})
         # Живые ВЫХОДЫ — зеркально входам. Сторож закрывает позицию
         # секундами, а строку разбора пишет часовой цикл: до него
@@ -1764,6 +1767,8 @@ class Collector:
             rows, p, g = sliced()
             return {"source": name, "horizon_h": hold,
                     "situational": sit, "source_book": src_book,
+                    "stop_tau": mman.get("stop_tau"),
+                    "rules_version": mman.get("rules_version"),
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
@@ -1811,6 +1816,15 @@ class Collector:
         curve_out["all"] = TR.thin(both_c)
         return {"source": name, "horizon_h": hold,
                 "situational": sit, "source_book": src_book,
+                # Правила книги — в ответ: страница графика строит из
+                # них объяснение сделки словами, и брать их из своих
+                # констант значило бы описывать текущие исходники, а
+                # не тот прогон, который открыл сделку.
+                "stop_tau": mman.get("stop_tau"),
+                "rules_version": mman.get("rules_version"),
+                "min_edge_bp": mman.get("min_edge_bp"),
+                "min_rr": mman.get("min_rr"),
+                "min_disc_bp": mman.get("min_disc_bp"),
                 # Порог владельца и его цена в сделках: без этих чисел
                 # отфильтрованный счёт неотличим от счёта книги.
                 "rr_min": rr_min or 0, "rr_cut": rr_cut,
@@ -2421,6 +2435,12 @@ class Collector:
                     ev = {"arm": arm, "hour": hour,
                           "at_ts": round(now, 3),
                           "reason": "вход по ситуации", **got}
+                    # Номер обучения — С ЛИСТА, породившего вход: цикл,
+                    # который позже перепишет событие в книгу, может
+                    # успеть обучиться заново, и сделке достались бы
+                    # чужие веса.
+                    if sheet.get("train_seq") is not None:
+                        ev["train_seq"] = sheet["train_seq"]
                     os.makedirs(d, exist_ok=True)
                     with open(os.path.join(d, "entries_live.jsonl"),
                               "a", encoding="utf-8") as f:
@@ -2565,6 +2585,12 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
          "move_bp": round(move, 1), "wave_bp": round(wave_bp, 1),
          "fwd": round(rem, 1), "fwd0": fwd0,
          "rr": round(rr, 2), **pf}
+    # Объяснение прогноза приходит С ЛИСТА готовым: у сканера нет ни
+    # модели, ни имён признаков, и пересчитать его тут нечем. Сделка
+    # обязана нести, почему модель выбрала это имя (просьба владельца),
+    # и единственный честный путь — довезти ответ цикла до записи.
+    if row.get("why") is not None:
+        d["why"] = row["why"]
     if row.get("odd") is not None:
         d["odd"] = row["odd"]
     return d
