@@ -999,6 +999,53 @@ def merge_adds(trades):
              for q in lots
              if q.get("state") == "закрыта"),
             key=lambda e: e["at"] or 0)
+        # Деньги ГОЛОВНОЙ строки обязаны описывать всю позицию, а не
+        # первый лот. Головная сделка есть копия первого лота, и если
+        # её оставить как есть, показ напечатает размер позиции (200 $)
+        # рядом с прибылью одного лота (100 $) — молчаливая ложь того
+        # же рода, что «сумма по десяти из двенадцати». Это сложение
+        # уже посчитанного разбором, а не второй расчёт: pnl лотов
+        # складывается, ход цены усредняется размером.
+        shut = [q for q in lots if q.get("state") == "закрыта"]
+        head["lots_closed"] = len(shut)
+        pnls = [q["pnl"] for q in shut if q.get("pnl") is not None]
+        head["pnl"] = round(sum(pnls), 2) if pnls else None
+
+        def _wavg(rowsq, field):
+            vals = [((q.get("size") or 0.0), q[field]) for q in rowsq
+                    if q.get(field) is not None]
+            if not vals:
+                return None
+            tw = sum(v for v, _ in vals)
+            if tw > 0:
+                return round(sum(v * x for v, x in vals) / tw, 1)
+            return round(sum(x for _, x in vals) / len(vals), 1)
+
+        head["net_bp"] = _wavg(shut, "net_bp")
+        head["got_bp"] = _wavg(shut, "got_bp")
+        # Открытая часть позиции — своей отметкой, и НИКОГДА не в одной
+        # цифре с закрытой: у закрытой исход известен, у открытой это
+        # отметка (правило `summary`).
+        alive = [q for q in lots if q.get("state") != "закрыта"]
+        head["unreal_net_bp"] = _wavg(alive, "unreal_net_bp")
+        if alive:
+            # Позиция ещё жива: её состояние — состояние лота, который
+            # её держит (последний по времени). Назвать её закрытой,
+            # потому что закрылся первый лот, значило бы спрятать
+            # оставшуюся экспозицию.
+            last = max(alive, key=lambda q: q.get("opened_at") or 0)
+            head["state"] = last.get("state")
+            head["exit_reason"] = last.get("exit_reason")
+            head.pop("exit_px", None)
+            head.pop("exit_ts", None)
+        elif head["exits"]:
+            # Позиция разгружена целиком: конец — ПОСЛЕДНЯЯ разгрузка,
+            # а не выход первого лота.
+            fin = head["exits"][-1]
+            head["state"] = "закрыта"
+            head["exit_px"] = fin["px"]
+            head["exit_ts"] = fin["at"]
+            head["exit_reason"] = fin["reason"]
         rows.append(head)
     return rows
 

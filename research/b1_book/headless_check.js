@@ -286,6 +286,23 @@ global.fetch = async (url) => {
                           setup_known: 2}}}
              : url.startsWith("/model_trades")
              ? {source: "model", page: 0, per: 100,
+                // Слитая позиция: два лота одного имени. График обязан
+                // нарисовать ОДНУ позицию, точку долива и засечку
+                // разгрузки — четыре наложенных прямоугольника были
+                // именно тем, что владелец не мог прочесть.
+                merged: [{arm: "gbm", hour: "2026-08-03-12",
+                          sym: "BTCUSDT", side: "long",
+                          entry_px: 64700, avg_px: 64750,
+                          size_total: 150, lots: 2,
+                          opened_at: T0 - 600, closes_at: T0 - 200,
+                          state: "закрыта", net_bp: 20.0, pnl: 0.3,
+                          exit_px: 64900,
+                          mae_bp: -50, mfe_bp: 120,
+                          adds: [{at: T0 - 400, px: 64800, size: 50,
+                                  hour: "2026-08-03-13"}],
+                          exits: [{at: T0 - 200, px: 64900, size: 150,
+                                   net_bp: 20.0, pnl: 0.3,
+                                   state: "закрыта"}]}],
                 // Правила книги — в ответе: из них страница графика
                 // собирает объяснение сделки словами.
                 stop_tau: 0.2, min_edge_bp: 22, min_rr: 2,
@@ -680,6 +697,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__lang = typeof setLang === 'function' "
                 + "? setLang : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
+                // Сколько отметок ДОЛИВА попало в карту наведения:
+                // слой рисуется на canvas, и единственное свидетельство
+                // отрисовки — записи в HIT.
+                + "\nglobal.__hitAdds = typeof HIT !== 'undefined' "
+                + "? () => HIT.filter(h => h && h.add).length : null;"
                 + "\nglobal.__focused = typeof focused === 'function' "
                 + "? focused : null;"
                 + "\nglobal.__follow = () => typeof follow !== 'undefined' "
@@ -1367,6 +1389,33 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: причина спрятанной таблицы не названа");
   }
 
+  if (isChart && !/paperoff=1/.test(SEARCH)) {
+    // Слитая позиция: график рисует ОДНУ сделку модели вместо лотов,
+    // и точка долива попадает в карту наведения. «Слой нарисовался»
+    // прошло бы и на четырёх наложенных прямоугольниках — проверяем
+    // ЧИСЛОМ: одна позиция и одна отметка долива.
+    // Долив проверяем там, где рука совпадает со слитой позицией
+    // фикстуры (gbm). На странице по ссылке рука другая, и доливов у
+    // неё нет ПО СОСТАВУ — требовать их там значило бы проверять
+    // фикстуру, а не страницу.
+    const mdl = global.__mdl;
+    if (mdl && mdl.arm === "gbm") {
+      const hits = (global.__hitAdds ? global.__hitAdds() : null);
+      if (hits !== null && hits < 1)
+        bad.push("график: долив не нарисован точкой на позиции");
+      // Таблица под графиком обязана говорить о позиции то же, что
+      // картинка: линия входа стоит на СРЕДНЕЙ цене (64750), а не на
+      // цене первого лота (64700). Разойдись они — владелец увидел бы
+      // на графике одно, а в строке другое, и оба выглядели бы верно.
+      const mr = global.__el ? String(
+        global.__el("mrows").innerHTML || "") : "";
+      if (mr && !/64750/.test(mr))
+        bad.push("график: в таблице не средняя цена слитой позиции");
+      if (mr && !/avg &times;2|avg ×2/.test(mr))
+        bad.push("график: слитая позиция не названа слитой");
+    }
+  }
+
   if (isChart) {
     const emb = /embed=1/.test(SEARCH);
     const nav = global.__el ? global.__el("topnav") : null;
@@ -1439,7 +1488,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                  + drawn.map(h => h.mdl.arm).join(", "));
       // И выход обязан быть нарисован, а не только вход: иначе видно,
       // что сделка была, и не видно, чем кончилась.
-      const cl = drawn.find(h => h.mdl.state === "закрыта");
+      // Точки долива несут ту же сделку (`mdl`), но выхода у них нет
+      // по построению — это отметки внутри позиции. Спрашивать выход
+      // надо у записи ПОЗИЦИИ, иначе проверка падала бы на слитой
+      // сделке, у которой всё нарисовано верно.
+      const cl = drawn.find(h => !h.add && h.mdl.state === "закрыта");
       if (cl && cl.exit == null)
         bad.push("у закрытой сделки не нарисован выход");
       // Открытая по ссылке страница: рука из ссылки, сделка найдена,

@@ -3244,7 +3244,23 @@ function focused() {
     || null;
 }
 function modelTrades() {
-  return MDL.trades.filter(t => t.arm === MDL.arm);
+  // Сливаются ТОЛЬКО позиции, у которых доливы были: их лоты
+  // накладывались друг на друга и не читались (просьба владельца).
+  // Остальные сделки проходят как есть — подменять ими весь список
+  // значило бы спрятать те, о которых сервер ничего не склеивал
+  // (ответ прежнего образца, другая рука, неполный набор).
+  const heads = (MDL.merged || []).filter(t => (t.lots || 1) > 1
+                                          && t.arm === MDL.arm);
+  const eaten = new Set();
+  for (const h of heads) {
+    eaten.add(h.arm + "|" + h.sym + "|" + h.side + "|" + h.hour);
+    for (const a of (h.adds || []))
+      eaten.add(h.arm + "|" + h.sym + "|" + h.side + "|" + a.hour);
+  }
+  const rest = MDL.trades.filter(
+    t => t.arm === MDL.arm
+      && !eaten.has(t.arm + "|" + t.sym + "|" + t.side + "|" + t.hour));
+  return heads.concat(rest);
 }
 async function pullModelTrades() {
   // Своя монета — свой запрос, поэтому условие на свежесть проверяется
@@ -3282,6 +3298,12 @@ async function pullModelTrades() {
       }
     }
     MDL.trades = rows;
+    // Слитые позиции считает СЕРВЕР (`trades.merge_adds`): долив —
+    // точка на одной позиции, а не отдельная сделка. Фильтруем по
+    // монете тем же условием, что строки; головная сделка несёт все
+    // поля первого лота, поэтому рисовальщику ничего доучивать не
+    // нужно — он просто получает одну позицию вместо четырёх.
+    MDL.merged = (d.merged || []).filter(t => t.sym === sym);
     // Правила книги — из ОТВЕТА, не из констант страницы: объяснение
     // сделки обязано описывать тот прогон, который её открыл.
     MDL.rules = {stop_tau: d.stop_tau, min_edge_bp: d.min_edge_bp,
@@ -3743,12 +3765,18 @@ function draw() {
     // Живой выход, ещё не разобранный циклом, — уже конец сделки:
     // спан обязан кончиться на нём, иначе зона тянется до края у
     // позиции, которой нет.
-    const end = t.closes_at || t.exit_ts
-      || (live ? t1 + 60 : t.opened_at);
+    // Конец ПОЗИЦИИ — последняя разгрузка, а не выход первого лота:
+    // иначе спан обрывался бы на первом тейке, а позиция ещё жива.
+    const lastEx = (t.exits || []).reduce(
+      (m, e) => Math.max(m, e.at || 0), 0);
+    const end = (live ? t1 + 60 : 0)
+      || lastEx || t.closes_at || t.exit_ts || t.opened_at;
     if (end < t0 - 3600 || t.opened_at > t1 + 3600) continue;
     const xa = clamp(xt(t.opened_at));
     const xb = clamp(xt(Math.min(end, t1 + 60)));
-    const ye = y(t.entry_px), ex = mdlExit(t);
+    // Уровень входа — СРЕДНЯЯ цена позиции, когда доливы были.
+    const entry = t.avg_px || t.entry_px;
+    const ye = y(entry), ex = mdlExit(t);
     const up = t.side === "long";
     const col = t.state === "закрыта"
       ? ((t.net_bp || 0) > 0 ? css("--bid") : css("--ask"))
@@ -3858,6 +3886,32 @@ function draw() {
     // `exit` проставляется ТОЛЬКО ветвью, которая его нарисовала:
     // иначе проверка «выход виден» смотрела бы на исходные данные, а не
     // на картинку, и прошла бы на графике без единого выхода.
+    // Доливы — точками на линии позиции, с размером в подсказке:
+    // владелец просил видеть, ЧТО долив был и какой, а не четыре
+    // наложенных прямоугольника. Разгрузка — засечками на выходах:
+    // это тейки одной позиции, а не отдельные сделки.
+    for (const ad of (t.adds || [])) {
+      if (!ad.at || !ad.px) continue;
+      const xd = clamp(xt(ad.at));
+      if (xd < 0 || xd > W) continue;
+      g.fillStyle = col;
+      g.beginPath();
+      g.arc(xd, y(ad.px), me ? 4 : 3, 0, 6.284);
+      g.fill();
+      HIT.push({add: ad, mdl: t, x0: xd-5, x1: xd+5,
+                y0: y(ad.px)-5, y1: y(ad.px)+5});
+    }
+    for (const e of (t.exits || [])) {
+      if (!e.at || !e.px) continue;
+      const xe = clamp(xt(e.at));
+      if (xe < 0 || xe > W) continue;
+      g.strokeStyle = (e.net_bp || 0) > 0 ? css("--bid") : css("--ask");
+      g.lineWidth = me ? 2 : 1;
+      g.beginPath();
+      g.moveTo(xe, y(e.px) - 5);
+      g.lineTo(xe, y(e.px) + 5);
+      g.stroke();
+    }
     HIT.push({mdl: t, exit: drew, x0: xa-7, x1: Math.max(xb, xa+7),
               y0: yl-12, y1: yh+12});
   }
@@ -4136,7 +4190,13 @@ function mrows() {
           title="${tip ? tip + " — " : ""}click to centre the chart">
         <td class="mono">${stamp(t.opened_at)}</td>
         <td class="${t.side === "long" ? "buy" : "sell"}">${t.side}</td>
-        <td class="mono">${t.entry_px == null ? "—" : t.entry_px}</td>
+        <td class="mono" ${(t.lots || 1) > 1
+          ? `title="${t.lots} lots, average of ${t.size_total} $"` : ""}>${
+          t.entry_px == null && t.avg_px == null ? "—"
+          : (t.lots || 1) > 1
+            ? `${t.avg_px} <span style="color:var(--muted)">avg ×${
+                t.lots}</span>`
+            : t.entry_px}</td>
         <td class="mono">${ex == null ? "—" : +ex.toPrecision(10)}</td>
         <td class="mono" style="color:var(--muted)">${
           pct(t.expected_bp)}</td>
