@@ -2653,6 +2653,29 @@ def test_model_tree_names_every_book():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_tree_page_fits_the_phone():
+    """Дерево на телефоне — вертикальное; правила закреплены источником.
+
+    Харнесс страниц исполняет JS, но не считает CSS-раскладку, поэтому
+    медиазапрос проверяется по несущим правилам в самом источнике
+    страницы: вертикальный рельс, заглушка его хвоста цветом панели,
+    узлы во всю ширину и сбросы угловых линий десктопа, включая
+    :first/:last/:only-child — без них десктопные углы побеждают по
+    специфичности и рисуются поверх вертикальных. Проверка источника
+    слабее прогона, но это всё, что видно без браузера, и она ловит
+    ровно снятие правила.
+    """
+    import web
+    for frag in ("@media (max-width:720px)",
+                 ".tree ul li:last-child::after",
+                 "background:var(--panel)}",
+                 ".node,.node.root{max-width:none;width:100%",
+                 ".tree li:only-child::before,.tree li:only-child::after",
+                 ".tree ul li:only-child::before"):
+        check(f"мобильное правило на месте: {frag[:40]}",
+              frag in web.TREEPAGE, "правило снято из TREEPAGE")
+
+
 def test_volatility_splits_results_by_regime():
     """Волатильность рынка против результата книг.
 
@@ -3434,6 +3457,7 @@ def main():
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()
     test_model_tree_names_every_book()
+    test_tree_page_fits_the_phone()
     test_volatility_splits_results_by_regime()
     test_book_registry_is_one_list()
     test_glossary_describes_the_live_model()

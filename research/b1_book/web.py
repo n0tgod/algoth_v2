@@ -5492,6 +5492,44 @@ button[aria-pressed="true"]{border-color:var(--accent);
 .plain{margin:0 0 10px;font-size:13.5px}
 .stat{font-size:12.5px;color:var(--muted)}
 .stat b{color:var(--ink);font-weight:600}
+/* Телефон: дерево разворачивается ВЕРТИКАЛЬНО. Шесть веток в ширину
+   не помещаются ни на один экран, и горизонтальная прокрутка прятала
+   бы половину семьи за краем — владелец смотрит с телефона. Корень
+   сверху, ветки лесенкой вниз по левой линии, лист турнира ступенькой
+   глубже. Сбросы перечисляют и :first/:last/:only-child — иначе
+   десктопные линии углов побеждают по специфичности и рисуются
+   поверх вертикальных. */
+@media (max-width:720px){
+  .treewrap{overflow:visible;padding:0}
+  .tree,.tree ul{display:block}
+  .tree ul{margin:0;padding:0 0 0 16px;position:relative}
+  .tree ul::before{content:"";position:absolute;left:0;top:0;
+    bottom:0;height:auto;width:0;border-left:1px solid var(--rule)}
+  .tree li,.tree>li{display:block;padding:10px 0 0;position:relative}
+  .tree li::before,.tree li::after,
+  .tree li:first-child::before,.tree li:first-child::after,
+  .tree li:last-child::before,.tree li:last-child::after,
+  .tree li:only-child::before,.tree li:only-child::after{
+    display:none;content:none;border:0 none;border-radius:0;
+    background:none}
+  .tree ul li{padding-left:14px}
+  .tree ul li::before,
+  .tree ul li:first-child::before,
+  .tree ul li:last-child::before,
+  .tree ul li:only-child::before{content:"";display:block;
+    position:absolute;left:-16px;top:28px;width:28px;height:0;
+    right:auto;border:0 none;border-top:1px solid var(--rule)}
+  /* Ниже последней ветки рельса нет: хвост закрашивается цветом
+     панели, иначе линия висела бы в пустоту. */
+  .tree ul li:last-child::after,
+  .tree ul li:only-child::after{content:"";display:block;
+    position:absolute;left:-17px;top:29px;bottom:0;width:3px;
+    right:auto;border:0 none;background:var(--panel)}
+  .node,.node.root{max-width:none;width:100%;text-align:left}
+  /* Палец — не курсор: кнопке «i» нужна площадь. */
+  .ibtn{width:24px;height:24px;line-height:21px;font-size:13px}
+  .mx{font-size:20px}
+}
 """ + NAVCSS + r"""</style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
