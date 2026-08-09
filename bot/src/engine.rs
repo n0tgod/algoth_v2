@@ -244,7 +244,19 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
         px: Option<f64>,
         cum_in: Option<crate::paper::Book>,
         ver: Option<u32>,
+        // Схлопывание: сигнал встречной стороны позиции НЕ открывает,
+        // а закрывает старший лот. Зеркало `trades.net_positions` —
+        // площадка не даёт двух отдельных лонгов по одной паре.
+        netted: bool,
+        // Плоский нетто и момент закрытия; книга встречного входа —
+        // ЛЕСЕНКА ВЫХОДА схлопнутого лота (тот же выбор, что в Python:
+        // выход происходит в книгу того момента, а не прежнего разбора).
+        net_close: Option<(f64, i64)>,
+        net_book: Option<crate::paper::Book>,
     }
+    // Круг издержек схлопнутого лота без лесенки — плоский, ровно как
+    // у Python в этом же месте.
+    const NET_ROUND_BP: f64 = 11.0;
     let mode = book_mode(&cfg.s8_dir);
     let picks = load_picks(&cfg.s8_dir, &cfg.arm);
     let reviews = load_reviews(&cfg.s8_dir, &cfg.arm);
@@ -291,6 +303,9 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
                 px: leg.px,
                 cum_in: leg.cum.clone(),
                 ver: p.ver,
+                netted: false,
+                net_close: None,
+                net_book: None,
             });
         };
         for leg in &p.long {
@@ -329,11 +344,57 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
         }
     }
 
+    // Схлопывание встречной стороны: одно имя — одна позиция.
+    // Закрывается самый старый лот (FIFO), по цене входа схлопнувшего
+    // сигнала и в его же книгу.
+    {
+        let mut order: Vec<usize> = (0..plan.len()).collect();
+        order.sort_by(|&a, &b| {
+            plan[a].opened_at.cmp(&plan[b].opened_at)
+                .then(plan[a].sym.cmp(&plan[b].sym))
+        });
+        let mut live: std::collections::BTreeMap<String, Vec<usize>> =
+            std::collections::BTreeMap::new();
+        for i in order {
+            let (sym, side, now, px) = (
+                plan[i].sym.clone(), plan[i].side,
+                plan[i].opened_at, plan[i].px,
+            );
+            let keep = live.entry(sym).or_default();
+            keep.retain(|&j| plan[j].closes_at == 0
+                        || plan[j].closes_at > now);
+            let victim = keep.iter().copied()
+                .filter(|&j| plan[j].side != side)
+                .min_by_key(|&j| plan[j].opened_at);
+            match victim {
+                None => keep.push(i),
+                Some(v) => {
+                    keep.retain(|&j| j != v);
+                    if let (Some(px0), Some(px1)) = (plan[v].px, px) {
+                        let sign = if plan[v].side == Side::Long {
+                            1.0
+                        } else {
+                            -1.0
+                        };
+                        let mv = sign * (px1 / px0 - 1.0) * 1e4;
+                        plan[v].net_close = Some((mv - NET_ROUND_BP, now));
+                        plan[v].net_book = plan[i].cum_in.clone();
+                        plan[v].closes_at = now;
+                    }
+                    plan[i].netted = true;
+                }
+            }
+        }
+    }
+
     // События этого прохода: (момент, 0 выход | 1 вход, номер в плане).
     // Стабильная сортировка держит ноги одного часа в порядке файла —
     // как у Python, где сборка и счёт сохраняют исходный порядок.
     let mut ev: Vec<(i64, u8, usize)> = Vec::new();
     for (i, t) in plan.iter().enumerate() {
+        if t.netted {
+            continue;                  // позиции нет: ни входа, ни выхода
+        }
         if t.opened_at <= cfg.now_ms && !touched.contains(&t.key) {
             ev.push((t.opened_at, 1, i));
         }
@@ -470,25 +531,44 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
                 continue;
             };
             let size = pos.notional_usd;
-            let Some(row) =
-                reviews.get(&(t.hour.clone(), t.sym.clone(), t.side))
-            else {
+            let netted = t.net_close;
+            let row_opt =
+                reviews.get(&(t.hour.clone(), t.sym.clone(), t.side));
+            if row_opt.is_none() && netted.is_none() {
                 rep.waiting_review += 1;
                 continue;
-            };
+            }
             // Деньги — по записанным книгам, как у Python-счёта; без
             // книг — по нетто разбора прежней основы. Ни то ни другое
             // недоступно — сделка остаётся открытой: посчитать
             // неизвестный исход нулём значит разбавить счёт выдумкой.
             let long = t.side == Side::Long;
-            let done = match (&t.cum_in, &row.cum) {
-                (Some(cin), Some(cout)) => exec_cost(
-                    long, cin, cout, size, &cfg.fees, &t.sym,
-                )
-                .map(|e| (e.net_bp, Some(e.fill_out), e.fee_bp, "книга")),
-                _ => None,
-            }
-            .or_else(|| row.net.map(|n| (n, None, 0.0, "плоский 11")));
+            // Схлопнутый лот выходит в книгу встречного входа; нет её —
+            // плоский круг. Прежний разбор к нему отношения не имеет.
+            let done = if let Some((flat, _)) = netted {
+                match (&t.cum_in, &t.net_book) {
+                    (Some(cin), Some(cout)) => exec_cost(
+                        long, cin, cout, size, &cfg.fees, &t.sym,
+                    )
+                    .map(|e| {
+                        (e.net_bp, Some(e.fill_out), e.fee_bp, "книга")
+                    }),
+                    _ => None,
+                }
+                .or(Some((flat, None, NET_ROUND_BP, "плоский 11")))
+            } else {
+                let row = row_opt.unwrap();
+                match (&t.cum_in, &row.cum) {
+                    (Some(cin), Some(cout)) => exec_cost(
+                        long, cin, cout, size, &cfg.fees, &t.sym,
+                    )
+                    .map(|e| {
+                        (e.net_bp, Some(e.fill_out), e.fee_bp, "книга")
+                    }),
+                    _ => None,
+                }
+                .or_else(|| row.net.map(|n| (n, None, 0.0, "плоский 11")))
+            };
             let Some((net_bp, fill_out, fee_bp, basis)) = done else {
                 rep.waiting_review += 1;
                 continue;
@@ -500,10 +580,12 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
             let pnl = size * net_bp / 1e4;
             // Причина закрытия — из разбора (ситуационная книга
             // называет её словами), иначе прежний «срок».
-            let why = row
-                .reason
-                .clone()
-                .unwrap_or_else(|| "срок".into());
+            let why = if netted.is_some() {
+                "встречный сигнал закрыл позицию".to_string()
+            } else {
+                row_opt.and_then(|r| r.reason.clone())
+                    .unwrap_or_else(|| "срок".into())
+            };
             journal.append(Event::Close {
                 pos: t.key.clone(),
                 exit_px: fill_out,
