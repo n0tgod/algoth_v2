@@ -53,15 +53,27 @@ def _end(t):
 
 def apply_rule(rows, rule):
     """Список сделок под выбранным правилом; исходный не трогается."""
+    # Правило разбирается ПО ВРЕМЕНИ, а список возвращается в ИСХОДНОМ
+    # порядке. Касса сортирует события по целой секунде, а внутри
+    # секунды очередь за деньгами задаёт порядок входного списка
+    # (сортировка стабильна). В книге 4 ч 79 секунд несут несколько
+    # входов, до двенадцати разом, — пересортировка меняла размеры и
+    # уводила итог на 76 долларов. Замер, меняющий не то, что
+    # объявлено, есть другой замер.
     out, open_by = [], {}
-    for t in sorted(rows, key=lambda r: (r.get("opened_at") or 0,
-                                         r.get("sym") or "")):
-        t = dict(t)
+    keep = set()
+    order = sorted(range(len(rows)),
+                   key=lambda i: (rows[i].get("opened_at") or 0,
+                                  rows[i].get("sym") or ""))
+    early = {}
+    for i in order:
+        t = dict(rows[i])
         sym = t.get("sym")
         now = t.get("opened_at") or 0
         # Снимаем с учёта то, что к этому моменту уже закрылось.
         live = [q for q in open_by.get(sym, []) if _end(q) > now]
         open_by[sym] = live
+        t["_i"] = i
         clash = [q for q in live if q.get("side") != t.get("side")]
         if rule == "one" and live:
             continue                       # вход не берётся вовсе
@@ -69,6 +81,7 @@ def apply_rule(rows, rule):
             # Схлопывание: самый старый встречный лот закрывается ЗДЕСЬ
             # и по ЭТОЙ цене, а новая позиция не открывается.
             victim = min(clash, key=lambda q: q.get("opened_at") or 0)
+            vi = victim["_i"]
             px0, px1 = victim.get("entry_px"), t.get("entry_px")
             if px0 and px1:
                 sign = 1.0 if victim.get("side") == "long" else -1.0
@@ -76,15 +89,17 @@ def apply_rule(rows, rule):
                 cost = victim.get("exec_bp")
                 if cost is None:
                     cost = TR.ROUND_COST_BP
-                victim["net_bp"] = round(move - cost, 1)
-                victim["closes_at"] = now
-                victim["exit_ts"] = now
-                victim["state"] = "закрыта"
-                victim["netted"] = True
+                early[vi] = {"net_bp": round(move - cost, 1),
+                             "closes_at": now, "exit_ts": now,
+                             "state": "закрыта", "netted": True}
             live.remove(victim)
             continue
-        out.append(t)
+        keep.add(i)
         live.append(t)
+    for i in sorted(keep):
+        t = dict(rows[i])
+        t.update(early.get(i) or {})
+        out.append(t)
     return out
 
 
