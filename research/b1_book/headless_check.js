@@ -238,7 +238,8 @@ global.fetch = async (url) => {
                    plain_ru: "Зарабатывает ли само ранжирование "
                              + "сечения.",
                    facts: "hold 4 h · 24 slots",
-                   stats: {gbm: {closed: 5, win: 0.6, pnl: 12.34},
+                   stats: {gbm: {closed: 5, win: 0.6, pnl: 12.34,
+                                 open: 2, marked: 2, open_pnl: 14.83},
                            nn: {closed: 4, win: 0.25, pnl: -3.21}}},
                   {key: "sit", dir: "model_sit", present: true,
                    title: "situational book — price pulls the trigger",
@@ -246,8 +247,12 @@ global.fetch = async (url) => {
                    plain: "Does picking the moment add anything.",
                    plain_ru: "Даёт ли выбор момента что-то сверх "
                              + "расписания.",
-                   facts: "gate 22 bp · RR ≥ 2 · stop τ 0.2",
-                   stats: {gbm: {closed: 3, win: 0.667, pnl: 4.10}}},
+                                      facts: "gate 22 bp \u00b7 RR >= 2 \u00b7 stop tau 0.2",
+                   stats: {gbm: {closed: 3, win: 0.667, pnl: 4.10,
+                                 open: 12, marked: 10,
+                                 open_pnl: -0.44},
+                           nn: {open: 2, marked: 0,
+                                open_pnl: null}}},
                   // Книга без манифеста на сервере: ветка обязана
                   // сказать «не заведена», а не выглядеть пустой.
                   {key: "h24", dir: "model_h24", present: false,
@@ -1250,6 +1255,25 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("дерево: действующий вариант турнира не в узле");
     if (!/not started/.test(bx))
       bad.push("дерево: отсутствующая на сервере книга не помечена");
+    // Открытые деньги — отдельной строкой у каждой таблички: узла
+    // книги и корня. Прочерк — не ноль (переоценить нечем), частичная
+    // переоценка названа числом, и открытое НЕ складывается с
+    // закрытым: 4.10 + (−0.44) = 3.66 на странице — падение.
+    if (!/open 12 ·/.test(bx) || !/-0\.44 \$/.test(bx))
+      bad.push("дерево: открытые деньги ветки не показаны");
+    if (!/10\/12/.test(bx))
+      bad.push("дерево: частичная переоценка не названа числом");
+    // Прочерков ровно два — узел sit/nn и корень nn: проверка «прочерк
+    // есть где-то» проходила бы на честном корне при сломанном узле.
+    const dashes = (bx.match(/open 2 · \u2014 · 0\/2/g) || []).length;
+    if (dashes !== 2)
+      bad.push(`дерево: непереоценённое не прочерком (${dashes} из 2)`);
+    if (/0\.00 \$ · 0\/2/.test(bx))
+      bad.push("дерево: отсутствие цены показано нулём");
+    if (/3\.66/.test(bx))
+      bad.push("дерево: открытое сложено с закрытым");
+    if (!/open 14 ·/.test(bx))
+      bad.push("дерево: у корня нет суммы открытых");
     // Проза по умолчанию СПРЯТАНА: если описание видно без «i», вся
     // просьба владельца не выполнена.
     if (/Reads thresholds and break points/.test(bx)
@@ -1274,6 +1298,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push("дерево: деньги руки не в карточке");
       if (!/href="\/trades-page\?k=xxx&hz=sit"/.test(md))
         bad.push("дерево: ссылка истории без книги или ключа");
+      if (!/open <b>12<\/b>/.test(md) || !/10\/12 priced/.test(md))
+        bad.push("дерево: открытая строка не в карточке");
       // Карточка турнира: статус целиком.
       global.__info("tourney:gbm");
       md = flat(global.__el("modal").innerHTML);

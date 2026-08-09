@@ -2575,7 +2575,10 @@ def test_model_tree_names_every_book():
                 {"arm": "gbm", "hour": hour, "at_ts": now - 7000,
                  "long": [{"sym": "AUSDT", "px": 100.0, "fwd": 40.0,
                            "mae": -20.0, "mfe": 60.0,
-                           "at_ts": now - 7000, "scan": True}],
+                           "at_ts": now - 7000, "scan": True},
+                          {"sym": "BUSDT", "px": 50.0, "fwd": 30.0,
+                           "mae": -20.0, "mfe": 60.0,
+                           "at_ts": now - 6900, "scan": True}],
                  "short": []}) + "\n")
         with open(os.path.join(mdir, "review.jsonl"), "w",
                   encoding="utf-8") as f:
@@ -2620,6 +2623,14 @@ def test_model_tree_names_every_book():
         check("деньги ветки — из кассы",
               sit["stats"]["gbm"]["closed"] == 1
               and sit["stats"]["gbm"]["pnl"] == 0.49,
+              str(sit["stats"]))
+        # Открытая позиция без живых книг (переоценить нечем): счётчик
+        # есть, переоценено 0, денег НЕТ — None, а не ноль. Ноль
+        # объявил бы позицию ровной там, где цены просто не существует.
+        check("открытая позиция считается отдельными полями",
+              sit["stats"]["gbm"].get("open") == 1
+              and sit["stats"]["gbm"].get("marked") == 0
+              and sit["stats"]["gbm"].get("open_pnl") is None,
               str(sit["stats"]))
         absent = next(b for b in tr["books"] if b["key"] == "h1")
         check("книга без манифеста помечена отсутствующей",

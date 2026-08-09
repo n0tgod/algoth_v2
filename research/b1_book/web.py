@@ -5552,6 +5552,11 @@ const UI = {
               Math.round(s.win * 100)} % · `},
   none: {en: "no closed yet", ru: "закрытых нет"},
   nomoney: {en: "records only", ru: "только запись"},
+  openw: {en: "open", ru: "откр."},
+  openL: {en: (s, mv) => `open <b>${s.open}</b> · ${mv} (${
+            s.marked}/${s.open} priced)`,
+          ru: (s, mv) => `открыто <b>${s.open}</b> · ${mv} (переоценено ${
+            s.marked} из ${s.open})`},
   nomoneyL: {en: "not traded and not in the league money",
              ru: "не торгуется и в деньги лиги не входит"},
   history: {en: "history →", ru: "история →"},
@@ -5587,6 +5592,16 @@ function money(v){
 function label(o){
   return String(tx(o, "title")).split(" — ")[0];
 }
+function openLine(s){
+  // Открытые деньги — ОТДЕЛЬНОЙ строкой и никогда в одной цифре с
+  // закрытыми (правило `summary`). Переоценить нечего — прочерк, а не
+  // ноль: ноль объявил бы позицию ровной там, где цены просто нет.
+  // Частичная переоценка названа числом — «10/12».
+  if (!s || !s.open) return "";
+  const m = s.open_pnl == null ? "\u2014" : money(s.open_pnl);
+  const part = s.marked < s.open ? ` · ${s.marked}/${s.open}` : "";
+  return `<div class="ns">${T("openw")} ${s.open} · ${m}${part}</div>`;
+}
 function bookStat(b, arm){
   if (b.key === "sit_obs") return T("nomoney");
   if (!b.present) return T("offbook");
@@ -5605,12 +5620,25 @@ function rootSum(arm){
   return any ? `\u03a3 ${n} · ${money(Math.round(p * 100) / 100)}`
              : T("none");
 }
-function nodeCard(key, cls, title, stat){
+function rootOpen(arm){
+  let n = 0, m = 0, p = 0.0, priced = false;
+  for (const b of (DATA.books || [])) {
+    const s = (b.stats || {})[arm];
+    if (!s || !s.open) continue;
+    n += s.open; m += s.marked;
+    if (s.open_pnl != null) { p += s.open_pnl; priced = true; }
+  }
+  if (!n) return "";
+  const mv = priced ? money(Math.round(p * 100) / 100) : "\u2014";
+  const part = m < n ? ` · ${m}/${n}` : "";
+  return `<div class="ns">${T("openw")} ${n} · ${mv}${part}</div>`;
+}
+function nodeCard(key, cls, title, stat, extra){
   return `<div class="node ${cls}" data-key="${esc(key)}">
     <button class="ibtn" onclick="showInfo('${key}')"
       title="what this branch tests">i</button>
     <div class="nt">${esc(title)}</div>
-    <div class="ns">${stat}</div></div>`;
+    <div class="ns">${stat}</div>${extra || ""}</div>`;
 }
 function rootCard(r){
   const kids = (DATA.books || []).map(b => {
@@ -5621,14 +5649,15 @@ function rootCard(r){
           label(DATA.tournament), T("tnode")(DATA.tournament))}
          </li></ul>` : "";
     return `<li>${nodeCard(b.key + ":" + r.arm,
-      b.present ? "" : "off", label(b), bookStat(b, r.arm))}${
+      b.present ? "" : "off", label(b), bookStat(b, r.arm),
+      openLine((b.stats || {})[r.arm]))}${
       kid}</li>`;
   }).join("");
   return `<div class="panel" data-root="${esc(r.arm)}">
     <div class="cap">${esc(r.arm)}</div>
     <div class="treewrap"><ul class="tree"><li>
       ${nodeCard("root:" + r.arm, "root", tx(r, "title"),
-                 rootSum(r.arm))}
+                 rootSum(r.arm), rootOpen(r.arm))}
       <ul>${kids}</ul></li></ul></div></div>`;
 }
 function infoHTML(){
@@ -5640,7 +5669,7 @@ function infoHTML(){
     if (!r) return "";
     return `<div class="mt">${esc(tx(r, "title"))}</div>
       <div class="plain">${esc(tx(r, "plain"))}</div>
-      <div class="stat mono">${rootSum(arm)}</div>`;
+      <div class="stat mono">${rootSum(arm)}</div>${rootOpen(arm)}`;
   }
   if (kind === "tourney") {
     const t = DATA.tournament || {};
@@ -5655,13 +5684,17 @@ function infoHTML(){
     : !b.present ? T("offbookL")
     : s ? T("closedL")(s) + money(s.pnl) : T("none");
   const hz = b.key === "h4" ? "" : "&hz=" + encodeURIComponent(b.key);
+  const so = (b.stats || {})[arm];
+  const openRow = so && so.open
+    ? `<div class="stat">${T("openL")(so, so.open_pnl == null
+        ? "\u2014" : money(so.open_pnl))}</div>` : "";
   return `<div class="mt">${esc(tx(b, "title"))} <span class="dim"
       style="font-weight:400">· ${esc(arm)}</span></div>
     ${b.facts ? `<div class="facts">${esc(b.facts)}</div>` : ""}
     <div class="plain">${esc(tx(b, "plain"))}</div>
     <div class="stat">${st} &nbsp;
       <a href="/trades-page?k=${encodeURIComponent(KEY)}${hz}">${
-        T("history")}</a></div>`;
+        T("history")}</a></div>${openRow}`;
 }
 function render(d){
   DATA = d;

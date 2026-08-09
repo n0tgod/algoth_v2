@@ -1947,7 +1947,7 @@ class Collector:
         at, cached = getattr(self, "_league_cache", (0.0, None))
         if cached is not None and now - at < 60:
             return cached
-        rows, errors, scanned = self.closed_rows()
+        rows, errors, scanned, _ = self.closed_rows()
         return self._league_from(rows, errors, scanned, now)
 
     # Книги турнира темпов: ключ показа → каталог на диске. Список
@@ -2124,7 +2124,7 @@ class Collector:
                                         "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        rows, errors, scanned = [], [], []
+        rows, errors, scanned, opens = [], [], [], []
         for hz, name in self.BOOKS:
             mdir = os.path.join(s8, name)
             try:
@@ -2165,6 +2165,27 @@ class Collector:
                 # против которого весь проект.
                 errors.append(f"{name}: {type(e).__name__}: {e}")
                 continue
+            # Открытые позиции переоцениваются живой серединой стакана
+            # тем же `TR.mark`, а деньги отметки считает тот же
+            # `TR.summary`, что у обзора: вторая формула однажды
+            # разошлась бы, и дерево показывало бы одни открытые
+            # деньги, а обзор другие. Живых книг может не быть (тесты,
+            # ранний старт) — тогда позиции честно остаются
+            # непереоценёнными: «переоценено 0 из N», а не ноль денег.
+            op = [t for t in tr if t.get("state") == "открыта"]
+            if op and getattr(self, "books", None):
+                try:
+                    TR.mark(op, self.marks(op))
+                except Exception as e:                # noqa: BLE001
+                    errors.append(f"{name}: переоценка: "
+                                  f"{type(e).__name__}: {e}")
+            for a in ("gbm", "nn"):
+                sm = TR.summary(tr, arm=a)
+                if sm.get("open"):
+                    opens.append({"hz": hz, "arm": a,
+                                  "open": sm["open"],
+                                  "marked": sm.get("marked", 0),
+                                  "unreal_pnl": sm.get("unreal_pnl")})
             n0 = len(rows)
             for t in tr:
                 if t.get("state") != "закрыта" or t.get("pnl") is None:
@@ -2183,7 +2204,7 @@ class Collector:
                     "reason": t.get("exit_reason")})
             scanned.append({"book": name, "trades": len(tr),
                             "closed_kept": len(rows) - n0})
-        return rows, errors, scanned
+        return rows, errors, scanned, opens
 
     def _league_from(self, rows, errors, scanned, now):
         """Агрегаты лиги из готовых строк — арифметика без чтения."""
@@ -2364,7 +2385,7 @@ class Collector:
                           "summary")
         vol = self.market_vol()
         hours = vol["hours"]
-        rows, errors, scanned = self.closed_rows()
+        rows, errors, scanned, _ = self.closed_rows()
         vals = sorted(v["bp"] for v in hours.values())
         cuts = []
         if len(vals) >= 3:
@@ -2594,13 +2615,25 @@ class Collector:
         at, cached = getattr(self, "_tree_cache", (0.0, None))
         if cached is not None and now - at < 60:
             return cached
-        rows, errors, scanned = self.closed_rows()
+        rows, errors, scanned, opens = self.closed_rows()
         stats = {}
         for r in rows:
-            s = stats.setdefault((r["hz"], r["arm"]), [0, 0, 0.0])
-            s[0] += 1
-            s[1] += 1 if (r["pnl"] or 0) > 0 else 0
-            s[2] += r["pnl"] or 0.0
+            s = stats.setdefault((r["hz"], r["arm"]),
+                                 {"closed": 0, "wins": 0, "pnl": 0.0})
+            s["closed"] += 1
+            s["wins"] += 1 if (r["pnl"] or 0) > 0 else 0
+            s["pnl"] += r["pnl"] or 0.0
+        # Открытые деньги — ОТДЕЛЬНЫМИ полями и никогда не в одной
+        # цифре с закрытыми: у закрытой сделки исход известен, у
+        # открытой это отметка (правило `summary`). Ветка может нести
+        # только открытые — у живой книги 24 ч так и было: 0 закрытых
+        # при 108 открытых, и без этих полей о её деньгах не
+        # говорилось ничего вовсе.
+        for o in opens:
+            s = stats.setdefault((o["hz"], o["arm"]), {})
+            s["open"] = o["open"]
+            s["marked"] = o["marked"]
+            s["open_pnl"] = o["unreal_pnl"]
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         books = []
         for key, name in self.BOOK_DIRS.items():
@@ -2645,10 +2678,18 @@ class Collector:
             per = {}
             for a in ("gbm", "nn"):
                 s = stats.get((key, a))
-                if s:
-                    per[a] = {"closed": s[0],
-                              "win": round(s[1] / s[0], 3),
-                              "pnl": round(s[2], 2)}
+                if not s:
+                    continue
+                d = {}
+                if s.get("closed"):
+                    d.update(closed=s["closed"],
+                             win=round(s["wins"] / s["closed"], 3),
+                             pnl=round(s["pnl"], 2))
+                if s.get("open"):
+                    d.update(open=s["open"], marked=s["marked"],
+                             open_pnl=s["open_pnl"])
+                if d:
+                    per[a] = d
             row["stats"] = per
             books.append(row)
         # Турнир политик — ветка ситуационной книги. Живые числа из
