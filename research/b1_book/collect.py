@@ -1776,6 +1776,12 @@ class Collector:
         if lite:
             rows, p, g = sliced()
             return {"source": name, "horizon_h": hold,
+                    # Слитые позиции — для графика: долив рисуется
+                    # точкой на одной позиции, а не отдельной сделкой
+                    # (просьба владельца). Считает ЯДРО, а не страница:
+                    # склейку показывают график и таблица, и вторая
+                    # реализация разошлась бы с первой.
+                    "merged": TR.merge_adds(tr),
                     "situational": sit, "source_book": src_book,
                     "stop_tau": mman.get("stop_tau"),
                     "rules_version": mman.get("rules_version"),
@@ -1825,6 +1831,7 @@ class Collector:
         curve_out = {a: TR.thin(curves[a]) for a in ("gbm", "nn")}
         curve_out["all"] = TR.thin(both_c)
         return {"source": name, "horizon_h": hold,
+                "merged": TR.merge_adds(tr),
                 "situational": sit, "source_book": src_book,
                 # Правила книги — в ответ: страница графика строит из
                 # них объяснение сделки словами, и брать их из своих

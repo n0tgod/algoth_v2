@@ -478,6 +478,56 @@ def test_one_name_one_position():
           str([t.get("state") for t in tr2]))
 
 
+def test_merge_adds_shows_one_position():
+    """Долив — точка на одной позиции, а не отдельная сделка.
+
+    Просьба владельца: лоты одного имени накладываются друг на друга и
+    на графике не читаются. Проверяются ЧИСЛА: средняя цена входа
+    взвешена размером, доливы перечислены с размерами, выходы идут
+    разгрузкой по времени, а закрывшаяся позиция НЕ склеивается со
+    следующей — иначе разгрузка описывала бы то, чего не было.
+    """
+    import trades as TR
+
+    def lot(px, size, opened, closes, state="закрыта", net=10.0):
+        return {"arm": "gbm", "sym": "AUSDT", "side": "long",
+                "hour": f"H{opened}", "entry_px": px, "size": size,
+                "opened_at": opened, "closes_at": closes,
+                "state": state, "net_bp": net if state == "закрыта" else None,
+                "pnl": (size * net / 1e4) if state == "закрыта" else None}
+
+    # Три лота одной позиции: 100 @ 100$, 110 @ 50$, 120 @ 50$.
+    tr = [lot(100.0, 100.0, 0, 3600), lot(110.0, 50.0, 600, 7200),
+          lot(120.0, 50.0, 1200, 10800)]
+    rows = TR.merge_adds(tr)
+    check("три лота стали одной позицией", len(rows) == 1,
+          str(len(rows)))
+    h = rows[0]
+    # (100·100 + 110·50 + 120·50) / 200 = 107.5
+    check("средняя цена входа взвешена РАЗМЕРОМ",
+          abs(h["avg_px"] - 107.5) < 1e-9, str(h["avg_px"]))
+    check("суммарный размер и число лотов на месте",
+          h["size_total"] == 200.0 and h["lots"] == 3,
+          f"{h['size_total']} / {h['lots']}")
+    check("доливы перечислены с размерами",
+          [a["size"] for a in h["adds"]] == [50.0, 50.0],
+          str(h["adds"]))
+    check("разгрузка идёт по времени, тремя выходами",
+          [e["at"] for e in h["exits"]] == [3600, 7200, 10800],
+          str([e["at"] for e in h["exits"]]))
+    # Закрывшаяся позиция и новая позже — ДВЕ позиции, не одна.
+    tr2 = [lot(100.0, 100.0, 0, 3600), lot(90.0, 100.0, 7200, 10800)]
+    check("новая позиция после закрытия не склеивается с прежней",
+          len(TR.merge_adds(tr2)) == 2,
+          str(len(TR.merge_adds(tr2))))
+    # Схлопнувший сигнал позиции не имеет и в показ не идёт.
+    tr3 = [lot(100.0, 100.0, 0, 3600),
+           {"arm": "gbm", "sym": "AUSDT", "side": "short",
+            "opened_at": None, "state": "схлопнула позицию"}]
+    check("схлопнувший сигнал в склейку не попадает",
+          len(TR.merge_adds(tr3)) == 1, str(len(TR.merge_adds(tr3))))
+
+
 def test_name_cap_and_inv_risk_sizing():
     """Забор 10 % на имя и рука 1/σ² — числами, с отрицательным смыслом.
 
@@ -3526,6 +3576,7 @@ def main():
     test_targets_shapes_and_direction()
     print("цикл переобучения")
     test_one_name_one_position()
+    test_merge_adds_shows_one_position()
     test_name_cap_and_inv_risk_sizing()
     test_zero_length_trade_returns_its_money()
     test_rank_key_reorders_the_section()

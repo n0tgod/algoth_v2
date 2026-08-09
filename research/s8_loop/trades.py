@@ -924,6 +924,85 @@ def dd_money(trades, deposit=START_BALANCE):
     return n
 
 
+def merge_adds(trades):
+    """Слитая позиция для ПОКАЗА: долив — не отдельная сделка.
+
+    Просьба владельца, повторённая дважды: сейчас лоты одного имени
+    рисуются отдельными сделками, накладываются друг на друга и на
+    графике не читаются. Нужна одна позиция — точка долива с размером,
+    средняя цена входа, а выходы лотов как постепенная разгрузка
+    (тейки одной сделки).
+
+    Вариант (б), выбранный владельцем: уровни у каждого лота ОСТАЮТСЯ
+    свои, средняя цена показывается для понимания позиции. Поэтому
+    деньги здесь не трогаются вовсе — склейка ничего не пересчитывает,
+    она группирует. Вариант (а) — цели от новой средней — отвергнут:
+    у позиции, в которую долили против движения, стоп уезжал бы
+    дальше, а раздел «Чего не делать» запрещает расширять стоп.
+
+    Возвращает список ГОЛОВНЫХ сделок: первый лот позиции, к которому
+    приложены `adds` (доливы с их размерами и ценами) и `exits`
+    (разгрузка). Головная сделка несёт `avg_px`, `size_total` и
+    `lots` — по ним показ рисует одну позицию вместо четырёх.
+
+    Склейка идёт по (рука, имя, сторона) и рвётся, когда позиция
+    закрылась целиком: следующий вход — уже другая позиция, а не
+    долив в прежнюю. Иначе две разные сделки одного дня слились бы в
+    одну и разгрузка описывала бы то, чего не было.
+    """
+    live, out = {}, []
+    for t in sorted(trades, key=lambda q: (q.get("opened_at") or 0,
+                                           q.get("sym") or "")):
+        if t.get("opened_at") is None:
+            continue                   # схлопнувший сигнал: позиции нет
+        key = (t.get("arm"), t.get("sym"), t.get("side"))
+        head = live.get(key)
+        now = t["opened_at"]
+        if head is not None and head["_end"] <= now:
+            head = None                # позиция закрылась — новая
+        end = t.get("exit_ts") or t.get("closes_at") or float("inf")
+        if head is None:
+            head = {"head": t, "lots": [t], "_end": end}
+            live[key] = head
+            out.append(head)
+        else:
+            head["lots"].append(t)
+            head["_end"] = max(head["_end"], end)
+    rows = []
+    for h in out:
+        lots = h["lots"]
+        head = dict(h["head"])
+        sized = [(q.get("size") or 0.0, q.get("entry_px")) for q in lots
+                 if q.get("entry_px")]
+        tot = sum(v for v, _ in sized)
+        # Средняя цена входа взвешена РАЗМЕРОМ: у лотов он разный
+        # (касса даёт что осталось, потолок имени режет), и простое
+        # среднее описывало бы позицию, которой не было.
+        if tot > 0:
+            head["avg_px"] = round(
+                sum(v * px for v, px in sized) / tot, 10)
+        elif sized:
+            head["avg_px"] = round(
+                sum(px for _, px in sized) / len(sized), 10)
+        head["size_total"] = round(tot, 2)
+        head["lots"] = len(lots)
+        head["adds"] = [
+            {"at": q.get("opened_at"), "px": q.get("entry_px"),
+             "size": q.get("size"), "hour": q.get("hour")}
+            for q in lots[1:]]
+        # Разгрузка: выходы лотов как тейки одной позиции, по времени.
+        head["exits"] = sorted(
+            ({"at": q.get("exit_ts") or q.get("closes_at"),
+              "px": q.get("exit_px"), "size": q.get("size"),
+              "net_bp": q.get("net_bp"), "pnl": q.get("pnl"),
+              "reason": q.get("exit_reason"), "state": q.get("state")}
+             for q in lots
+             if q.get("state") == "закрыта"),
+            key=lambda e: e["at"] or 0)
+        rows.append(head)
+    return rows
+
+
 def summary(trades, arm=None, capital=None, start=None):
     """Сводка: закрытые — фактом, открытые — переоценкой.
 
