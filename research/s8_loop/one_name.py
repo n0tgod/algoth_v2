@@ -44,7 +44,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import trades as TR                                       # noqa: E402
 
-RULES = ("hedge", "netting", "one")
+RULES = ("hedge", "netting", "one", "netting_plus")
 
 
 def _end(t):
@@ -77,7 +77,21 @@ def apply_rule(rows, rule):
         clash = [q for q in live if q.get("side") != t.get("side")]
         if rule == "one" and live:
             continue                       # вход не берётся вовсе
-        if rule == "netting" and clash:
+        same = [q for q in live if q.get("side") == t.get("side")]
+        if rule == "netting_plus" and same:
+            # Долив только в ПЛЮСОВУЮ позицию (решение владельца):
+            # усреднять против движения запрещено разделом «Чего не
+            # делать». Плюс считается по средней цене открытых лотов
+            # этой стороны на момент нового входа — это то, что видно
+            # в терминале, а не по отдельному лоту.
+            px = [q.get("entry_px") for q in same if q.get("entry_px")]
+            px1 = t.get("entry_px")
+            if px and px1:
+                avg = sum(px) / len(px)
+                sign = 1.0 if t.get("side") == "long" else -1.0
+                if sign * (px1 / avg - 1.0) <= 0:
+                    continue               # позиция в минусе — не доливаем
+        if rule in ("netting", "netting_plus") and clash:
             # Схлопывание: самый старый встречный лот закрывается ЗДЕСЬ
             # и по ЭТОЙ цене, а новая позиция не открывается.
             victim = min(clash, key=lambda q: q.get("opened_at") or 0)
