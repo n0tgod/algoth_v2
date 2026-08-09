@@ -2589,6 +2589,11 @@ def test_model_tree_names_every_book():
                            "got": 60.0, "net": 49.0,
                            "exit_ts": now - 60, "exit_hour": hour,
                            "reason": "цена дошла до цели"}]}) + "\n")
+        h4dir = os.path.join(s8, "model")
+        os.makedirs(h4dir)
+        with open(os.path.join(h4dir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"version": 2, "slots": 24}, f)
         # Артефакт турнира: дерево обязано показать статус и выбор.
         tdir = os.path.join(d, "s10_policy", "out")
         os.makedirs(tdir)
@@ -2632,6 +2637,13 @@ def test_model_tree_names_every_book():
               and sit["stats"]["gbm"].get("marked") == 0
               and sit["stats"]["gbm"].get("open_pnl") is None,
               str(sit["stats"]))
+        # Манифест главной книги старше турнира темпов и horizon_h не
+        # несёт: срок обязан печататься запасным значением кассы, а не
+        # пустотой — пустая строка правил показала бы книгу без срока.
+        h4b = next(b for b in tr["books"] if b["key"] == "h4")
+        check("книга без horizon_h печатает срок кассы",
+              "hold 4 h" in h4b["facts"] and "24 slots" in h4b["facts"],
+              h4b["facts"])
         absent = next(b for b in tr["books"] if b["key"] == "h1")
         check("книга без манифеста помечена отсутствующей",
               absent["present"] is False, str(absent["present"]))

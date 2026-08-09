@@ -2615,6 +2615,9 @@ class Collector:
         at, cached = getattr(self, "_tree_cache", (0.0, None))
         if cached is not None and now - at < 60:
             return cached
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
         rows, errors, scanned, opens = self.closed_rows()
         stats = {}
         for r in rows:
@@ -2666,8 +2669,13 @@ class Collector:
                     facts.append(f"stop τ {man['stop_tau']:g}")
                 if man.get("max_age_h"):
                     facts.append(f"age ≤ {man['max_age_h']} h")
-            elif man.get("horizon_h"):
-                facts.append(f"hold {man['horizon_h']} h")
+            elif man:
+                # Манифест главной книги старше турнира темпов и
+                # `horizon_h` не несёт; срок у неё тот, что берёт
+                # касса по умолчанию (`TR.HOLD_H`) — печатать пустую
+                # строку правил значило бы показать книгу без срока.
+                facts.append(
+                    f"hold {man.get('horizon_h') or TR.HOLD_H} h")
             if man.get("rank_target"):
                 facts.append(f"rank by {man['rank_target']}")
             if man.get("slots"):
