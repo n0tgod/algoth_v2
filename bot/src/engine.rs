@@ -398,7 +398,18 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
                 (t.legs_in_hour as f64 * HOLD_H as f64).max(1.0),
             );
             let want = (st.cash_usd + busy) / slots;
-            let size = want.min(st.cash_usd).max(0.0);
+            // Забор v4, зеркало NAME_CAP_SHARE из trades.py: суммарная
+            // позиция по одному имени не выше 10 % капитала книги.
+            // Занятое имени считается по открытым позициям — тот же
+            // источник, что busy, второго учёта не заводится.
+            let name_busy: f64 = st
+                .positions
+                .values()
+                .filter(|p| p.sym == t.sym)
+                .map(|p| p.notional_usd)
+                .sum();
+            let room = (0.10 * (st.cash_usd + busy) - name_busy).max(0.0);
+            let size = want.min(room).min(st.cash_usd).max(0.0);
             if size <= 0.0 {
                 journal.append(Event::Reject {
                     sym: t.sym.clone(),

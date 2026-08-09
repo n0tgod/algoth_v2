@@ -71,12 +71,18 @@ fn тень_сходится_с_питон_счётом_до_цента() {
     )
     .unwrap();
 
-    let n_closed = exp.trades.iter().filter(|t| t.state == "закрыта").count();
-    let n_open = exp.trades.len() - n_closed;
-    assert_eq!(rep.opened, exp.trades.len(), "входов столько же");
+    // Нулевой размер у Python-кассы (потолок имени, пустая касса) пар
+    // ОТКАЗУ ядра — конвенция сверки: «отказ по пустой кассе — законная
+    // пара нулевому размеру». Позиция нулевого размера не открывается.
+    let sized: Vec<_> =
+        exp.trades.iter().filter(|t| t.size > 0.0).collect();
+    let n_zero = exp.trades.len() - sized.len();
+    let n_closed = sized.iter().filter(|t| t.state == "закрыта").count();
+    let n_open = sized.len() - n_closed;
+    assert_eq!(rep.opened, sized.len(), "входов столько же");
     assert_eq!(rep.closed, n_closed, "выходов столько же");
     assert_eq!(rep.waiting_review as usize, n_open, "остальные ждут разбора");
-    assert_eq!(rep.rejected, 0);
+    assert_eq!(rep.rejected, n_zero, "нулевые размеры — отказы ядра");
 
     // Журнал → карты фактов по ключу позиции.
     let (records, _) = read_all(&jd).unwrap();
@@ -99,6 +105,11 @@ fn тень_сходится_с_питон_счётом_до_цента() {
     }
 
     for t in &exp.trades {
+        if t.size <= 0.0 {
+            assert!(!opens.contains_key(&t.pos),
+                    "нулевой размер открыт ядром: {}", t.pos);
+            continue;
+        }
         let (size, entry_px) = opens
             .get(&t.pos)
             .unwrap_or_else(|| panic!("нет входа {}", t.pos));

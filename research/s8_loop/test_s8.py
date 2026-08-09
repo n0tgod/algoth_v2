@@ -478,6 +478,65 @@ def test_one_name_one_position():
           str([t.get("state") for t in tr2]))
 
 
+def test_name_cap_and_inv_risk_sizing():
+    """Забор 10 % на имя и рука 1/σ² — числами, с отрицательным смыслом.
+
+    Потолок: сумма позиций одного имени не превышает долю капитала,
+    срез помечен полем, чужие имена не задеты. Рука: внутри часа веса
+    обратны квадрату предсказанного хода против, пол из сечения ловит
+    ловушку замороженных рядов (крошечный |mae| не забирает корзину).
+    """
+    import trades as TR
+
+    def leg(sym, mae=-20.0):
+        return {"sym": sym, "px": 100.0, "fwd": 40.0, "mae": mae}
+
+    hrs = ["2026-08-05-10", "2026-08-05-11", "2026-08-05-12"]
+    now = (TR._ts(hrs[-1]) or 0) + 9 * 3600
+    # Одно имя три часа подряд, hold 4: лоты живут одновременно, и
+    # потолок обязан срезать третий в ноль, а второй — до остатка.
+    picks = [{"arm": "gbm", "hour": h, "long": [leg("AUSDT")],
+              "short": []} for h in hrs]
+    tr = TR.build(picks, [], hold_h=4, now=now)
+    TR.account(tr, "gbm", hold_h=4)
+    by = {t["hour"]: t for t in tr}
+    s0, s1, s2 = (by[h].get("size") or 0.0 for h in hrs)
+    check("потолок держит сумму по имени на 10 % капитала",
+          abs(s0 + s1 + s2 - 0.10 * TR.START_BALANCE) < 1.0,
+          f"{s0:.2f}+{s1:.2f}+{s2:.2f}")
+    check("срез потолком помечен полем, а не молчит",
+          by[hrs[-1]].get("name_capped") is True,
+          str(by[hrs[-1]].get("name_capped")))
+    # Чужое имя потолком не задето: обычная доля слота.
+    picks2 = picks + [{"arm": "gbm", "hour": hrs[0],
+                       "long": [leg("BUSDT")], "short": []}]
+    tr2 = TR.build(picks2, [], hold_h=4, now=now)
+    TR.account(tr2, "gbm", hold_h=4)
+    other = next(t for t in tr2 if t["sym"] == "BUSDT")
+    # Потолок AUSDT не съедает бюджет BUSDT: у каждого имени СВОЙ
+    # потолок. Сам BUSDT здесь тоже упирается в свои 10 % (двум ногам
+    # часа при hold 4 касса предлагает по 12.5 %) — важно, что он
+    # получил полные свои 100, а не остаток от чужого.
+    check("чужое имя живёт своим потолком, а не остатком чужого",
+          abs((other.get("size") or 0) - 100.0) < 1.0,
+          str(other.get("size")))
+    # Рука 1/σ²: спокойной ноге больше, бешеной меньше; нога с
+    # крошечным |mae| упирается в пол сечения, а не забирает корзину.
+    picks3 = [{"arm": "gbm", "hour": hrs[0],
+               "long": [leg("QUIET", -10.0), leg("WILD", -40.0),
+                        leg("FROZEN", -0.001), leg("MIDA", -15.0),
+                        leg("MIDB", -20.0)], "short": []}]
+    tr3 = TR.build(picks3, [], hold_h=1, now=now)
+    TR.account(tr3, "gbm", hold_h=1, sizing="inv_risk2")
+    sz = {t["sym"]: t.get("size") or 0.0 for t in tr3}
+    check("спокойной ноге больше, чем бешеной",
+          sz["QUIET"] > sz["WILD"] * 3,
+          str(sz))
+    total = sum(sz.values()) or 1.0
+    check("замороженная нога не забирает корзину (пол из сечения)",
+          sz["FROZEN"] / total < 0.6, f"{sz['FROZEN']/total:.2f}")
+
+
 def test_zero_length_trade_returns_its_money():
     """Сделка, закрытая в секунду своего же входа, не течёт кассой.
 
@@ -810,12 +869,18 @@ def test_capital_returns_before_it_is_redeployed():
                 t["net_bp"] = 20.0
             tr.append(t)
     TR.account(tr, "gbm")
-    zero = [t for t in tr if not t.get("size")]
-    check("в стационарном режиме нулевых размеров нет", not zero,
-          f"{len(zero)} сделок без размера")
-    check("размер держится около капитала на слот",
-          all(abs(t["size"] - TR.START_BALANCE / 24) < 1.0 for t in tr),
-          str(sorted({round(t["size"], 2) for t in tr})[:4]))
+    # Шесть имён повторяются каждый час — с введением потолка на имя
+    # (v4) это ровно тот случай, который забор и держит: третий лот
+    # имени срезается до остатка, четвёртый до нуля. Нуль законен,
+    # только когда помечен потолком; немаркированный нуль — прежний
+    # дефект голодания кассы, и его тут по-прежнему быть не должно.
+    zero = [t for t in tr if not t.get("size")
+            and not t.get("name_capped")]
+    check("нулевой размер бывает только от потолка имени", not zero,
+          f"{len(zero)} немаркированных нулей")
+    check("размер не выше капитала на слот",
+          all(t["size"] <= TR.START_BALANCE / 24 + 1.0 for t in tr),
+          str(sorted({round(t.get("size") or 0, 2) for t in tr})[-4:]))
 
     # Метка времени, равная нулю, — это метка, а не её отсутствие.
     z = [{"arm": "gbm", "hour": "H0", "sym": "A", "side": "long",
@@ -846,7 +911,7 @@ def test_cash_returns_when_the_review_is_written():
         b = {"arm": "gbm", "hour": "H01", "sym": "B", "side": "long",
              "state": "открыта", "opened_at": 3600,
              "closes_at": 2 * 3600}
-        TR.account([a, b], "gbm", hold_h=1)
+        TR.account([a, b], "gbm", name_cap=1.0, hold_h=1)
         return b["size"]
 
     check("своевременный разбор: вход следующего часа профинансирован",
@@ -868,7 +933,7 @@ def test_cash_returns_when_the_review_is_written():
              "closes_at": 2 * 3600}
         if decided_at is not None:
             b["decided_at"] = decided_at
-        TR.account([a, b], "gbm", hold_h=1)
+        TR.account([a, b], "gbm", name_cap=1.0, hold_h=1)
         return b["size"]
 
     check("вход момента решения профинансирован из разбора того же цикла",
@@ -890,7 +955,7 @@ def test_cash_returns_when_the_review_is_written():
         b = {"arm": "gbm", "hour": "H01", "sym": "B", "side": "long",
              "state": "открыта", "opened_at": 3600,
              "decided_at": decided_at, "closes_at": 2 * 3600}
-        TR.account([a, b], "gbm", hold_h=1)
+        TR.account([a, b], "gbm", name_cap=1.0, hold_h=1)
         return b["size"]
 
     check("вход в ту же секунду, что разбор, профинансирован",
@@ -913,7 +978,7 @@ def test_cash_returns_when_the_review_is_written():
             a["exit_ts"] = exit_ts
         b = {"arm": "gbm", "hour": "H01", "sym": "B", "side": "long",
              "state": "открыта", "opened_at": 3600, "closes_at": None}
-        TR.account([a, b], "gbm", hold_h=None, slots=1)
+        TR.account([a, b], "gbm", name_cap=1.0, hold_h=None, slots=1)
         return b["size"]
 
     check("живой выход вернул деньги — вход между событием и разбором сыт",
@@ -1519,7 +1584,9 @@ def test_account_is_one_capital_at_leverage_one():
     tr = []
     for h in range(4):
         for i in range(6):
-            tr.append({"arm": "gbm", "hour": f"H{h}", "sym": f"S{i}",
+            # Имена РАЗНЫЕ в каждом часе: полный гросс достижим только
+            # так — повторение имён с v4 держится потолком на имя.
+            tr.append({"arm": "gbm", "hour": f"H{h}", "sym": f"S{h}{i}",
                        "side": "long", "state": "открыта",
                        "opened_at": 1000 + h * 3600,
                        "closes_at": 1000 + (h + 4) * 3600})
@@ -1527,6 +1594,18 @@ def test_account_is_one_capital_at_leverage_one():
     gross = sum(t["size"] for t in tr)
     check("гросс равен капиталу — плечо ровно единица",
           abs(gross - TR.START_BALANCE) < 1e-6, f"{gross:.6f}")
+    # А те же шесть имён каждый час — 60 % гросса: по 10 % на имя.
+    tr_rep = []
+    for h in range(4):
+        for i in range(6):
+            tr_rep.append({"arm": "gbm", "hour": f"H{h}", "sym": f"S{i}",
+                           "side": "long", "state": "открыта",
+                           "opened_at": 1000 + h * 3600,
+                           "closes_at": 1000 + (h + 4) * 3600})
+    TR.account(tr_rep, "gbm")
+    g2 = sum(t["size"] for t in tr_rep)
+    check("повторение имён держится потолком: гросс 60 %",
+          abs(g2 - 0.6 * TR.START_BALANCE) < 1.0, f"{g2:.2f}")
     check("двадцать четыре слота, а не шесть",
           abs(tr[0]["size"] - TR.START_BALANCE / 24) < 1e-6,
           str(tr[0]["size"]))
@@ -2099,13 +2178,13 @@ def test_account_drawdown_counts_open_positions():
     TR.account([t], "gbm")
     cur = TR.equity([t], "gbm", rows, now=later)
     dd = TR.max_dd(cur)
-    # Число закреплено точно, потому что оно проверяет и слот-модель:
-    # одна сделка в часе занимает четверть капитала (шесть имён на
-    # четыре часа — двадцать четыре слота), поэтому падение цены вдвое
-    # стоит счёту 12.5 %, а не пятидесяти. Ослабить до неравенства
+    # Число закреплено точно, потому что оно проверяет и слот-модель,
+    # и забор v4: одиночной сделке в часе касса предложила бы четверть
+    # капитала, потолок имени режет до 10 % — падение цены вдвое стоит
+    # счёту 5 %, а не пятидесяти и не 12.5. Ослабить до неравенства
     # значило бы перестать проверять размер позиции.
     check("просадка счёта видит провал открытой позиции",
-          dd["pct"] == -12.5, str(dd))
+          dd["pct"] == -5.0, str(dd))
     check("а по закрытиям провала нет вовсе — итог сделки нулевой",
           t["pnl"] == 0.0 and cur[-1]["eq"] == TR.START_BALANCE,
           f"pnl {t['pnl']}, конец {cur[-1]['eq']}")
@@ -3447,6 +3526,7 @@ def main():
     test_targets_shapes_and_direction()
     print("цикл переобучения")
     test_one_name_one_position()
+    test_name_cap_and_inv_risk_sizing()
     test_zero_length_trade_returns_its_money()
     test_rank_key_reorders_the_section()
     test_retry_when_not_trained()

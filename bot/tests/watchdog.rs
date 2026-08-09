@@ -268,12 +268,12 @@ fn такт_демона_пишет_статус_и_не_молчит_об_ош�
     let mut mem = bot::daemon::TickMemory::default();
     let st = bot::daemon::tick(&dcfg, &mut mem, now);
     assert!(st.error.is_none(), "{:?}", st.error);
-    assert_eq!(st.balance_usd, 990.08, "баланс из фикстуры чётности");
+    assert_eq!(st.balance_usd, 991.94, "баланс из фикстуры чётности");
     assert!(st.check.as_ref().unwrap().ok);
     assert_eq!(st.sverka.ok, Some(true), "{}", st.sverka.note);
     let raw = fs::read_to_string(jd.join("status.json")).unwrap();
     let v: serde_json::Value = serde_json::from_str(&raw).unwrap();
-    assert_eq!(v["balance_usd"].as_f64(), Some(990.08));
+    assert_eq!(v["balance_usd"].as_f64(), Some(991.94));
     assert_eq!(v["sverka"]["ok"].as_bool(), Some(true));
 
     // Второй такт через минуту: закрытий нет — сверка НЕ перезапущена,
