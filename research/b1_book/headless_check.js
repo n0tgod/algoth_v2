@@ -740,6 +740,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // доезжает вовсе.
                 + "\nglobal.__lang = typeof setLang === 'function' "
                 + "? setLang : null;"
+                + "\nglobal.__info = typeof showInfo === 'function' "
+                + "? showInfo : null;"
+                + "\nglobal.__infoClose = typeof closeInfo === "
+                + "'function' ? closeInfo : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
                 // Сколько отметок ДОЛИВА попало в карту наведения:
                 // слой рисуется на canvas, и единственное свидетельство
@@ -1220,9 +1224,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                + ` (обёрток ${nScroll} из 6)`);
   }
 
-  // Дерево моделей: две руки, у каждой ПОЛНЫЙ набор веток, тексты и
-  // деньги — числами подставного ответа. «Блок есть» прошло бы и на
-  // пустом дереве, а пустое дерево неотличимо от «книг нет».
+  // Дерево моделей — родовое дерево: по умолчанию узел несёт ТОЛЬКО
+  // имя и главную статистику, проза открывается кнопкой «i» (просьба
+  // владельца). Проверяется числами и в обе стороны: статистика видна
+  // без нажатия, описание БЕЗ нажатия не видно.
   if (isTree) {
     if (!seen.some(u => u.startsWith("/model_tree")))
       bad.push("дерево: страница не запросила /model_tree");
@@ -1231,36 +1236,70 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const roots = (bx.match(/data-root="/g) || []).length;
     if (roots !== 2)
       bad.push(`дерево: корней ${roots}, а рук две`);
-    const branches = (bx.match(/class="branch/g) || []).length;
-    if (branches !== 6)
-      bad.push(`дерево: веток ${branches}, а книг по три на руку`);
-    const leaves = (bx.match(/class="leaf"/g) || []).length;
-    if (leaves !== 2)
-      bad.push(`дерево: листов турнира ${leaves}, а рук две`);
+    // Узлов на руку: корень + три книги + лист турнира = 5.
+    const nodes = (bx.match(/data-key="/g) || []).length;
+    if (nodes !== 10)
+      bad.push(`дерево: узлов ${nodes}, а должно быть 10`);
+    const ibtns = (bx.match(/class="ibtn"/g) || []).length;
+    if (ibtns !== 10)
+      bad.push(`дерево: кнопок «i» ${ibtns} на 10 узлов`);
+    // Статистика — видна по умолчанию, это и есть лицо узла.
     if (!/\+12\.34 \$/.test(bx) || !/-3\.21 \$/.test(bx))
       bad.push("дерево: деньги веток не из ответа");
-    if (!/диагностика, не вердикт/.test(bx))
-      bad.push("дерево: статус турнира не показан");
     if (!/e22_rr1\.5_sm_t1_a24/.test(bx))
-      bad.push("дерево: действующий вариант турнира не назван");
-    if (!/href="\/trades-page\?k=xxx&hz=sit"/.test(bx))
-      bad.push("дерево: ссылка истории без книги или ключа");
-    // Книга без манифеста названа не заведённой: пустая ветка была бы
-    // неотличима от «данных ещё нет».
-    if (!/book not started on the server/.test(bx))
-      bad.push("дерево: отсутствующая на сервере книга не названа");
-    // Язык дёргается НАСТОЯЩЕЙ функцией страницы: русские тексты уже
-    // в ответе, и переключение не имеет права ходить на сервер.
-    if (!global.__lang) {
-      bad.push("дерево: переключателя языка нет");
+      bad.push("дерево: действующий вариант турнира не в узле");
+    if (!/not started/.test(bx))
+      bad.push("дерево: отсутствующая на сервере книга не помечена");
+    // Проза по умолчанию СПРЯТАНА: если описание видно без «i», вся
+    // просьба владельца не выполнена.
+    if (/Reads thresholds and break points/.test(bx)
+        || /Does picking the moment/.test(bx)
+        || /The picking rule is judged/.test(bx))
+      bad.push("дерево: описание видно без нажатия «i»");
+    const md0 = flat(global.__el ? global.__el("modal").innerHTML : "");
+    if (md0 !== "")
+      bad.push("дерево: карточка «i» открыта без нажатия");
+    if (!global.__info || !global.__infoClose) {
+      bad.push("дерево: функции карточки «i» не существуют");
     } else {
-      global.__lang("ru");
-      const ru = flat(global.__el("box").innerHTML);
-      if (!/Читает пороги и изломы/.test(ru))
-        bad.push("дерево: русский текст корня не показан");
-      if (!/Судится правило выбора/.test(ru))
-        bad.push("дерево: русский текст турнира не показан");
-      global.__lang("en");
+      // Карточка книги: проза, правила из манифеста, деньги руки и
+      // ссылка на историю С КНИГОЙ в адресе.
+      global.__info("sit:gbm");
+      let md = flat(global.__el("modal").innerHTML);
+      if (!/Does picking the moment add anything/.test(md))
+        bad.push("дерево: проза ветки не открылась по «i»");
+      if (!/gate 22 bp/.test(md))
+        bad.push("дерево: правила ветки не в карточке");
+      if (!/closed <b>3<\/b>/.test(md) || !/\+4\.10 \$/.test(md))
+        bad.push("дерево: деньги руки не в карточке");
+      if (!/href="\/trades-page\?k=xxx&hz=sit"/.test(md))
+        bad.push("дерево: ссылка истории без книги или ключа");
+      // Карточка турнира: статус целиком.
+      global.__info("tourney:gbm");
+      md = flat(global.__el("modal").innerHTML);
+      if (!/The picking rule is judged/.test(md))
+        bad.push("дерево: проза турнира не открылась");
+      if (!/диагностика, не вердикт/.test(md))
+        bad.push("дерево: статус турнира не в карточке");
+      // Язык переключается НАСТОЯЩЕЙ функцией страницы, и открытая
+      // карточка обязана перерисоваться на новом языке.
+      if (global.__lang) {
+        global.__lang("ru");
+        md = flat(global.__el("modal").innerHTML);
+        if (!/Судится правило выбора/.test(md))
+          bad.push("дерево: карточка не перешла на русский");
+        global.__info("root:gbm");
+        md = flat(global.__el("modal").innerHTML);
+        if (!/Читает пороги и изломы/.test(md))
+          bad.push("дерево: русская проза корня не показана");
+        global.__lang("en");
+      } else {
+        bad.push("дерево: переключателя языка нет");
+      }
+      // Крестик закрывает: карточка пустеет, дерево остаётся.
+      global.__infoClose();
+      if (flat(global.__el("modal").innerHTML) !== "")
+        bad.push("дерево: карточка «i» не закрывается");
     }
   }
 

@@ -5434,22 +5434,44 @@ body{margin:0;background:
  border-radius:14px;padding:14px 16px;margin:12px 0}
 .cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
  color:var(--muted);margin-bottom:8px}
-h2{font-size:15px;margin:0 0 6px}
-.roots{display:grid;gap:12px;
- grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
-/* Ветки: линия слева — это и есть «дерево», без библиотек и картинок.
-   Узел глубже — отступ больше; так читается «от какой руки растёт». */
-.branch{border-left:2px solid var(--rule);margin:10px 0 10px 6px;
- padding:8px 0 8px 14px}
-.branch.off{opacity:.55}
-.leaf{border-left:2px solid var(--rule-soft);margin:8px 0 0 6px;
- padding:6px 0 2px 12px}
-.bt{font-weight:600}
-.facts{font-family:ui-monospace,Menlo,Consolas,monospace;
- font-size:11.5px;color:var(--muted);margin:2px 0 4px}
-.plain{margin:2px 0 6px;font-size:13px}
-.stat{font-size:12.5px;color:var(--muted)}
-.stat b{color:var(--ink);font-weight:600}
+/* Родовое дерево на чистом CSS: линии — рамки псевдоэлементов, без
+   единой библиотеки и картинки (правило v2). Широкое дерево скроллится
+   в своём контейнере, а не ломает страницу. */
+.treewrap{overflow-x:auto;padding:4px 0 8px}
+.tree,.tree ul{display:flex;justify-content:center;padding:0;margin:0;
+ list-style:none}
+.tree ul{padding-top:18px;position:relative}
+.tree li{display:flex;flex-direction:column;align-items:center;
+ position:relative;padding:18px 5px 0}
+.tree li::before,.tree li::after{content:"";position:absolute;top:0;
+ right:50%;border-top:1px solid var(--rule);width:50%;height:18px}
+.tree li::after{right:auto;left:50%;border-left:1px solid var(--rule)}
+.tree li:first-child::before,.tree li:last-child::after{border:0 none}
+.tree li:last-child::before{border-right:1px solid var(--rule);
+ border-radius:0 8px 0 0}
+.tree li:first-child::after{border-radius:8px 0 0 0}
+.tree li:only-child::before{display:none}
+.tree li:only-child::after{border:0 none;
+ border-left:1px solid var(--rule);right:auto;left:50%}
+.tree>li{padding:0}
+.tree>li::before,.tree>li::after{display:none}
+.tree ul::before{content:"";position:absolute;top:0;left:50%;
+ border-left:1px solid var(--rule);width:0;height:18px}
+.node{position:relative;background:var(--chip);
+ border:1px solid var(--rule);border-radius:10px;
+ padding:8px 26px 8px 10px;min-width:118px;max-width:172px;
+ text-align:center}
+.node.root{border-color:var(--accent);max-width:240px}
+.node.off{opacity:.55}
+.nt{font-weight:600;font-size:12.5px;line-height:1.35}
+.ns{font-size:11px;color:var(--muted);margin-top:3px;
+ font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums;word-break:break-all}
+.ibtn{position:absolute;top:4px;right:4px;width:18px;height:18px;
+ line-height:15px;padding:0;border-radius:50%;font-size:11px;
+ font-style:italic;font-family:Georgia,serif;background:var(--chip);
+ border:1px solid var(--rule);color:var(--accent);cursor:pointer}
+.ibtn:hover{border-color:var(--accent)}
 .good{color:var(--bid)}.bad{color:var(--ask)}
 a{color:var(--accent)}
 button{background:var(--chip);border:1px solid var(--rule);
@@ -5457,6 +5479,19 @@ button{background:var(--chip);border:1px solid var(--rule);
  cursor:pointer}
 button[aria-pressed="true"]{border-color:var(--accent);
  color:var(--accent)}
+.mback{position:fixed;inset:0;background:rgba(5,3,18,.66);z-index:40}
+.mbox{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+ z-index:41;width:min(540px,92vw);max-height:80vh;overflow:auto;
+ background:var(--panel);border:1px solid var(--accent);
+ border-radius:14px;padding:16px 18px}
+.mx{position:absolute;top:6px;right:10px;background:none;border:0;
+ color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
+.mt{font-weight:700;font-size:14.5px;margin:0 18px 6px 0}
+.facts{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-size:11.5px;color:var(--muted);margin:0 0 8px}
+.plain{margin:0 0 10px;font-size:13.5px}
+.stat{font-size:12.5px;color:var(--muted)}
+.stat b{color:var(--ink);font-weight:600}
 """ + NAVCSS + r"""</style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
@@ -5465,7 +5500,8 @@ button[aria-pressed="true"]{border-color:var(--accent);
   <span id="lang"></span></div>
 <div id="nav"></div>
 <div class="panel" id="intro"></div>
-<div class="roots" id="box"></div>
+<div id="box"></div>
+<div id="modal"></div>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
@@ -5477,11 +5513,17 @@ let LANG = new URLSearchParams(location.search).get("lang")
   || (function(){ try { return localStorage.getItem("algoth_lang"); }
                   catch (e) { return null; } })() || "en";
 let DATA = null;
+// Какая карточка раскрыта. Проза живёт ТОЛЬКО в карточке по кнопке
+// «i» (просьба владельца): по умолчанию узел несёт имя и главную
+// статистику, и дерево читается одним взглядом.
+let INFO = null;
 function setLang(v){
   LANG = v;
   try { localStorage.setItem("algoth_lang", v); } catch (e) {}
   render(DATA);
 }
+function showInfo(k){ INFO = k; render(DATA); }
+function closeInfo(){ INFO = null; render(DATA); }
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 const UI = {
@@ -5494,80 +5536,132 @@ const UI = {
               + "is a book on the same weights that differs by "
               + "exactly one declared rule, so a difference in "
               + "results can be attributed to the rule and not to "
-              + "another model.",
+              + "another model. Press the \u201ci\u201d on a branch "
+              + "to read what it tests.",
           ru: "Две головы учатся на одних данных и ведут ОДИНАКОВЫЙ "
               + "набор книг параллельно — это первый турнир: чья "
               + "голова лучше читает рынок. Под-модель здесь — не "
               + "отдельно обученная модель, а книга на тех же весах, "
               + "отличающаяся ровно одним объявленным правилом: "
               + "только так разницу результатов можно приписать "
-              + "правилу, а не другой модели."},
-  closed: {en: s => `closed <b>${s.closed}</b> · win ${
-             Math.round(s.win * 100)} % · `,
-           ru: s => `закрыто <b>${s.closed}</b> · побед ${
-             Math.round(s.win * 100)} % · `},
-  none: {en: "no closed trades yet",
-         ru: "закрытых сделок пока нет"},
-  nomoney: {en: "not in the league money (records only)",
-            ru: "в деньги лиги не входит (только запись)"},
+              + "правилу, а не другой модели. Нажмите «i» на ветке, "
+              + "чтобы прочитать, что она проверяет."},
+  closedL: {en: s => `closed <b>${s.closed}</b> · win ${
+              Math.round(s.win * 100)} % · `,
+            ru: s => `закрыто <b>${s.closed}</b> · побед ${
+              Math.round(s.win * 100)} % · `},
+  none: {en: "no closed yet", ru: "закрытых нет"},
+  nomoney: {en: "records only", ru: "только запись"},
+  nomoneyL: {en: "not traded and not in the league money",
+             ru: "не торгуется и в деньги лиги не входит"},
   history: {en: "history →", ru: "история →"},
-  offbook: {en: "book not started on the server",
-            ru: "книга на сервере ещё не заведена"},
+  offbook: {en: "not started", ru: "не заведена"},
+  offbookL: {en: "book not started on the server",
+             ru: "книга на сервере ещё не заведена"},
+  tnode: {en: t => t.present
+            ? `picks ${t.points}` + (t.pick ? ` · now ${esc(t.pick)}`
+                                            : "")
+            : esc(t.status),
+          ru: t => t.present
+            ? `точек ${t.points}` + (t.pick ? ` · сейчас ${
+                esc(t.pick)}` : "")
+            : esc(t.status)},
   tstat: {en: t => `status: ${esc(t.status)}` + (t.present
-            ? ` · legs ${t.legs} · picks ${t.points}`
+            ? ` · legs ${t.legs} · measured cells ${t.cells_measured}`
               + (t.pick ? ` · now ${esc(t.pick)}` : "") : ""),
           ru: t => `статус: ${esc(t.status)}` + (t.present
-            ? ` · ног ${t.legs} · точек выбора ${t.points}`
+            ? ` · ног ${t.legs} · измеренных ячеек ${t.cells_measured}`
               + (t.pick ? ` · сейчас ${esc(t.pick)}` : "") : "")},
 };
 function T(k){ const v = UI[k]; return v[LANG] || v.en; }
 function tx(o, f){ return LANG === "ru" ? o[f + "_ru"] || o[f]
                                         : o[f]; }
-
 function money(v){
   if (v == null) return "";
   const c = v > 0 ? "good" : v < 0 ? "bad" : "";
   return `<span class="${c} mono">${v > 0 ? "+" : ""}${
     v.toFixed(2)} $</span>`;
 }
-function statLine(b, arm){
-  if (b.key === "sit_obs") return `<span class="stat">${
-    T("nomoney")}</span>`;
+// Короткое имя узла: часть заголовка до тире. Полный заголовок и
+// проза — в карточке по «i».
+function label(o){
+  return String(tx(o, "title")).split(" — ")[0];
+}
+function bookStat(b, arm){
+  if (b.key === "sit_obs") return T("nomoney");
+  if (!b.present) return T("offbook");
   const s = (b.stats || {})[arm];
-  if (!s) return `<span class="stat dim">${T("none")}</span>`;
-  return `<span class="stat">${T("closed")(s)}${money(s.pnl)}</span>`;
+  if (!s) return T("none");
+  return `${s.closed} · ${Math.round(s.win * 100)} % · ${
+    money(s.pnl)}`;
 }
-function bookNode(b, arm){
-  const hz = b.key === "h4" ? "" : "&hz=" + encodeURIComponent(b.key);
-  const link = `<a href="/trades-page?k=${encodeURIComponent(KEY)}${
-    hz}">${T("history")}</a>`;
-  // Ветка без текста — видимый дефект, а не пустота: пустая карточка
-  // была бы неотличима от «книги нет».
-  const warn = b.no_text
-    ? ` <span class="bad">no description — defect</span>` : "";
-  const off = b.present ? "" : ` <span class="dim">· ${
-    T("offbook")}</span>`;
-  const kid = b.key === "sit" && DATA && DATA.tournament
-    ? treeLeaf(DATA.tournament) : "";
-  return `<div class="branch${b.present ? "" : " off"}">
-    <div class="bt">${esc(tx(b, "title"))}${warn}${off}</div>
-    ${b.facts ? `<div class="facts">${esc(b.facts)}</div>` : ""}
-    <div class="plain">${esc(tx(b, "plain"))}</div>
-    <div>${statLine(b, arm)} &nbsp; ${link}</div>${kid}</div>`;
+function rootSum(arm){
+  let n = 0, p = 0.0, any = false;
+  for (const b of (DATA.books || [])) {
+    const s = (b.stats || {})[arm];
+    if (!s) continue;
+    any = true; n += s.closed; p += s.pnl;
+  }
+  return any ? `\u03a3 ${n} · ${money(Math.round(p * 100) / 100)}`
+             : T("none");
 }
-function treeLeaf(t){
-  return `<div class="leaf">
-    <div class="bt">${esc(tx(t, "title"))}</div>
-    <div class="plain">${esc(tx(t, "plain"))}</div>
-    <div class="stat mono" id="tstat">${T("tstat")(t)}</div></div>`;
+function nodeCard(key, cls, title, stat){
+  return `<div class="node ${cls}" data-key="${esc(key)}">
+    <button class="ibtn" onclick="showInfo('${key}')"
+      title="what this branch tests">i</button>
+    <div class="nt">${esc(title)}</div>
+    <div class="ns">${stat}</div></div>`;
 }
 function rootCard(r){
-  const books = (DATA.books || []).map(b => bookNode(b, r.arm));
+  const kids = (DATA.books || []).map(b => {
+    // Турнир политик — лист ситуационной ветки: правила этой книги и
+    // есть то, что он перебирает.
+    const kid = b.key === "sit" && DATA.tournament
+      ? `<ul><li>${nodeCard("tourney:" + r.arm, "leaf",
+          label(DATA.tournament), T("tnode")(DATA.tournament))}
+         </li></ul>` : "";
+    return `<li>${nodeCard(b.key + ":" + r.arm,
+      b.present ? "" : "off", label(b), bookStat(b, r.arm))}${
+      kid}</li>`;
+  }).join("");
   return `<div class="panel" data-root="${esc(r.arm)}">
     <div class="cap">${esc(r.arm)}</div>
-    <h2>${esc(tx(r, "title"))}</h2>
-    <div class="plain">${esc(tx(r, "plain"))}</div>
-    ${books.join("")}</div>`;
+    <div class="treewrap"><ul class="tree"><li>
+      ${nodeCard("root:" + r.arm, "root", tx(r, "title"),
+                 rootSum(r.arm))}
+      <ul>${kids}</ul></li></ul></div></div>`;
+}
+function infoHTML(){
+  const i = String(INFO).indexOf(":");
+  const kind = String(INFO).slice(0, i < 0 ? undefined : i);
+  const arm = i < 0 ? "" : String(INFO).slice(i + 1);
+  if (kind === "root") {
+    const r = (DATA.roots || []).find(x => x.arm === arm);
+    if (!r) return "";
+    return `<div class="mt">${esc(tx(r, "title"))}</div>
+      <div class="plain">${esc(tx(r, "plain"))}</div>
+      <div class="stat mono">${rootSum(arm)}</div>`;
+  }
+  if (kind === "tourney") {
+    const t = DATA.tournament || {};
+    return `<div class="mt">${esc(tx(t, "title"))}</div>
+      <div class="plain">${esc(tx(t, "plain"))}</div>
+      <div class="stat mono">${T("tstat")(t)}</div>`;
+  }
+  const b = (DATA.books || []).find(x => x.key === kind);
+  if (!b) return "";
+  const s = (b.stats || {})[arm];
+  const st = b.key === "sit_obs" ? T("nomoneyL")
+    : !b.present ? T("offbookL")
+    : s ? T("closedL")(s) + money(s.pnl) : T("none");
+  const hz = b.key === "h4" ? "" : "&hz=" + encodeURIComponent(b.key);
+  return `<div class="mt">${esc(tx(b, "title"))} <span class="dim"
+      style="font-weight:400">· ${esc(arm)}</span></div>
+    ${b.facts ? `<div class="facts">${esc(b.facts)}</div>` : ""}
+    <div class="plain">${esc(tx(b, "plain"))}</div>
+    <div class="stat">${st} &nbsp;
+      <a href="/trades-page?k=${encodeURIComponent(KEY)}${hz}">${
+        T("history")}</a></div>`;
 }
 function render(d){
   DATA = d;
@@ -5581,6 +5675,7 @@ function render(d){
     b.onclick = () => setLang(b.dataset.l));
   const intro = document.getElementById("intro");
   const box = document.getElementById("box");
+  const modal = document.getElementById("modal");
   if (!d) {
     intro.textContent = "no answer from the collector — retrying";
     setTimeout(pull, 5000);
@@ -5590,6 +5685,13 @@ function render(d){
     ? `<div class="k" style="margin-top:6px">${
         d.errors.map(esc).join("<br>")}</div>` : "");
   box.innerHTML = (d.roots || []).map(rootCard).join("");
+  // Карточка «i»: подложка и крестик закрывают, содержимое — из тех
+  // же данных и того же языка, что дерево.
+  modal.innerHTML = INFO
+    ? `<div class="mback" onclick="closeInfo()"></div>
+       <div class="mbox"><button class="mx"
+         onclick="closeInfo()">\u00d7</button>${infoHTML()}</div>`
+    : "";
 }
 async function pull(){
   let d = null;
