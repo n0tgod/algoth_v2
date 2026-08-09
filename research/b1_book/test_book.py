@@ -418,6 +418,8 @@ def test_pages_run_headless():
                 ("справочник", web.GLOSSARY_PAGE, "?k=xxx"),
                 # Волатильность рынка против результата книг.
                 ("волатильность", web.VOLPAGE, "?k=xxx"),
+                # Дерево моделей: две руки и логика каждой ветки.
+                ("дерево моделей", web.TREEPAGE, "?k=xxx"),
                 # Сборщик не ответил (первый обход суток идёт около
                 # минуты): страница обязана сказать «нет ответа», а не
                 # «делить нечего» — владелец увидел ровно это.
@@ -2528,6 +2530,118 @@ def test_league_ranks_by_realised_money():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_model_tree_names_every_book():
+    """Дерево моделей: у каждой книги из карты есть текст, оба языка.
+
+    Состав веток выводится из `BOOK_DIRS`, тексты из `BOOK_TREE` — и
+    они обязаны совпадать по ключам: ветка без текста была бы на
+    странице пустотой, неотличимой от «книги нет». Оба языка обязаны
+    быть у каждой записи (правило справочника: разъехавшись, переводы
+    стали бы двумя разными утверждениями о модели). Живой ответ
+    проверяется числами на настоящем ядре: деньги ветки — те же, что
+    штампует касса, статус турнира — из артефакта прогона.
+    """
+    import collect as C
+
+    # Совпадение карт — статически, до всякого сервера.
+    dirs, tree = set(C.Collector.BOOK_DIRS), set(C.Collector.BOOK_TREE)
+    check("у каждой книги из карты есть ветка дерева", dirs == tree,
+          f"без текста: {dirs - tree}; лишние: {tree - dirs}")
+    both = ("title", "plain", "title_ru", "plain_ru")
+    for key, txt in list(C.Collector.BOOK_TREE.items()) \
+            + list(C.Collector.ROOT_TREE.items()) \
+            + [("tourney", C.Collector.TOURNEY_TREE)]:
+        missing = [f for f in both if not (txt.get(f) or "").strip()]
+        check(f"оба языка у ветки {key}", not missing, str(missing))
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        s8 = os.path.join(d, "s8_loop", "out")
+        now = time.time()
+        hour = time.strftime("%Y-%m-%d-%H", time.gmtime(now - 7200))
+        mdir = os.path.join(s8, "model_sit")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"situational": True, "slots": 6,
+                       "rules_version": 8, "min_edge_bp": 22.0,
+                       "min_rr": 2.0, "min_disc_bp": 11.0,
+                       "stop_tau": 0.2, "max_age_h": 24}, f)
+        with open(os.path.join(mdir, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"arm": "gbm", "hour": hour, "at_ts": now - 7000,
+                 "long": [{"sym": "AUSDT", "px": 100.0, "fwd": 40.0,
+                           "mae": -20.0, "mfe": 60.0,
+                           "at_ts": now - 7000, "scan": True}],
+                 "short": []}) + "\n")
+        with open(os.path.join(mdir, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+                 "at_ts": now - 3600,
+                 "rows": [{"sym": "AUSDT", "side": "long",
+                           "got": 60.0, "net": 49.0,
+                           "exit_ts": now - 60, "exit_hour": hour,
+                           "reason": "цена дошла до цели"}]}) + "\n")
+        # Артефакт турнира: дерево обязано показать статус и выбор.
+        tdir = os.path.join(d, "s10_policy", "out")
+        os.makedirs(tdir)
+        with open(os.path.join(tdir, "V1-tournament.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"legs": 100,
+                       "verdict": {"status":
+                                   "диагностика, не вердикт: 1 из 8"},
+                       "wf": {"points": [
+                           {"day": 1, "pick": "e22_rr2.0_sq_t1_a24",
+                            "elig": 5}]},
+                       "cells": [{"n": 40}, {"n": 10}]}, f)
+
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        tr = col.model_tree()
+        got = {b["key"] for b in tr["books"]}
+        check("живой ответ несёт все книги карты",
+              got == set(C.Collector.BOOK_DIRS), str(got))
+        check("ветки без текста в живом ответе нет",
+              not any(b.get("no_text") for b in tr["books"]),
+              str([b["key"] for b in tr["books"]
+                   if b.get("no_text")]))
+        sit = next(b for b in tr["books"] if b["key"] == "sit")
+        check("правила ветки — из живого манифеста",
+              "gate 22 bp" in sit["facts"] and "RR ≥ 2" in sit["facts"]
+              and "rules v8" in sit["facts"], sit["facts"])
+        # Деньги — те же, что у лиги: касса под забором v4 даёт слоту
+        # ситуационной книги 100 $, 49 б.п. → 0.49 $.
+        check("деньги ветки — из кассы",
+              sit["stats"]["gbm"]["closed"] == 1
+              and sit["stats"]["gbm"]["pnl"] == 0.49,
+              str(sit["stats"]))
+        absent = next(b for b in tr["books"] if b["key"] == "h1")
+        check("книга без манифеста помечена отсутствующей",
+              absent["present"] is False, str(absent["present"]))
+        tt = tr["tournament"]
+        check("турнир: статус и выбор — из артефакта",
+              "диагностика" in tt["status"]
+              and tt["pick"] == "e22_rr2.0_sq_t1_a24"
+              and tt["points"] == 1 and tt["cells_measured"] == 1,
+              str(tt))
+        # Артефакта нет — честное «ждёт прогона», а не пустая карточка.
+        os.remove(os.path.join(tdir, "V1-tournament.json"))
+        col._tree_cache = (0.0, None)
+        tt2 = col.model_tree()["tournament"]
+        check("без артефакта турнир ждёт прогона, а не молчит",
+              tt2["present"] is False and "ждёт" in tt2["status"],
+              str(tt2))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_volatility_splits_results_by_regime():
     """Волатильность рынка против результата книг.
 
@@ -3308,6 +3422,7 @@ def main():
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()
+    test_model_tree_names_every_book()
     test_volatility_splits_results_by_regime()
     test_book_registry_is_one_list()
     test_glossary_describes_the_live_model()

@@ -61,6 +61,7 @@ const NAV_ITEMS = [
   ["/league-page", "league", "лига"],
   ["/vol-page", "volatility", "волатильность"],
   ["/glossary-page", "playbook", "справочник"],
+  ["/tree-page", "models", "модели"],
   ["/bot-page", "core", "ядро"]];
 function navMount(current){
   const el = document.getElementById("nav");
@@ -5399,6 +5400,210 @@ pull();
 """
 
 
+# Страница дерева моделей — просьба владельца: разветвление от
+# основных ML и AI, и по каждой ветке простыми словами, какую логику
+# она проверяет. Состав веток и тексты приходят с сервера готовыми
+# (`/model_tree` из `BOOK_DIRS`/`BOOK_TREE`): вторая копия списка книг
+# на странице однажды разошлась бы — этим уже кончалось «список книг в
+# пяти местах».
+TREEPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>model tree — which logic each branch tests</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:14px 16px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+h2{font-size:15px;margin:0 0 6px}
+.roots{display:grid;gap:12px;
+ grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+/* Ветки: линия слева — это и есть «дерево», без библиотек и картинок.
+   Узел глубже — отступ больше; так читается «от какой руки растёт». */
+.branch{border-left:2px solid var(--rule);margin:10px 0 10px 6px;
+ padding:8px 0 8px 14px}
+.branch.off{opacity:.55}
+.leaf{border-left:2px solid var(--rule-soft);margin:8px 0 0 6px;
+ padding:6px 0 2px 12px}
+.bt{font-weight:600}
+.facts{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-size:11.5px;color:var(--muted);margin:2px 0 4px}
+.plain{margin:2px 0 6px;font-size:13px}
+.stat{font-size:12.5px;color:var(--muted)}
+.stat b{color:var(--ink);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+a{color:var(--accent)}
+button{background:var(--chip);border:1px solid var(--rule);
+ color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;
+ cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+""" + NAVCSS + r"""</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k" id="strap"></span>
+  <span style="flex:1"></span>
+  <span id="lang"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div class="roots" id="box"></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+// Язык — та же механика, что у справочника: оба языка уже в ответе,
+// переключение не ходит на сервер, ссылка с `lang` перебивает память.
+let LANG = new URLSearchParams(location.search).get("lang")
+  || (function(){ try { return localStorage.getItem("algoth_lang"); }
+                  catch (e) { return null; } })() || "en";
+let DATA = null;
+function setLang(v){
+  LANG = v;
+  try { localStorage.setItem("algoth_lang", v); } catch (e) {}
+  render(DATA);
+}
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+const UI = {
+  strap: {en: "model tree — which logic each branch tests",
+          ru: "дерево моделей — какую логику проверяет каждая ветка"},
+  intro: {en: "Two heads learn on the same data and run the SAME set "
+              + "of books side by side — that is the first "
+              + "tournament: which head reads the market better. A "
+              + "sub-model here is not a separately trained model: it "
+              + "is a book on the same weights that differs by "
+              + "exactly one declared rule, so a difference in "
+              + "results can be attributed to the rule and not to "
+              + "another model.",
+          ru: "Две головы учатся на одних данных и ведут ОДИНАКОВЫЙ "
+              + "набор книг параллельно — это первый турнир: чья "
+              + "голова лучше читает рынок. Под-модель здесь — не "
+              + "отдельно обученная модель, а книга на тех же весах, "
+              + "отличающаяся ровно одним объявленным правилом: "
+              + "только так разницу результатов можно приписать "
+              + "правилу, а не другой модели."},
+  closed: {en: s => `closed <b>${s.closed}</b> · win ${
+             Math.round(s.win * 100)} % · `,
+           ru: s => `закрыто <b>${s.closed}</b> · побед ${
+             Math.round(s.win * 100)} % · `},
+  none: {en: "no closed trades yet",
+         ru: "закрытых сделок пока нет"},
+  nomoney: {en: "not in the league money (records only)",
+            ru: "в деньги лиги не входит (только запись)"},
+  history: {en: "history →", ru: "история →"},
+  offbook: {en: "book not started on the server",
+            ru: "книга на сервере ещё не заведена"},
+  tstat: {en: t => `status: ${esc(t.status)}` + (t.present
+            ? ` · legs ${t.legs} · picks ${t.points}`
+              + (t.pick ? ` · now ${esc(t.pick)}` : "") : ""),
+          ru: t => `статус: ${esc(t.status)}` + (t.present
+            ? ` · ног ${t.legs} · точек выбора ${t.points}`
+              + (t.pick ? ` · сейчас ${esc(t.pick)}` : "") : "")},
+};
+function T(k){ const v = UI[k]; return v[LANG] || v.en; }
+function tx(o, f){ return LANG === "ru" ? o[f + "_ru"] || o[f]
+                                        : o[f]; }
+
+function money(v){
+  if (v == null) return "";
+  const c = v > 0 ? "good" : v < 0 ? "bad" : "";
+  return `<span class="${c} mono">${v > 0 ? "+" : ""}${
+    v.toFixed(2)} $</span>`;
+}
+function statLine(b, arm){
+  if (b.key === "sit_obs") return `<span class="stat">${
+    T("nomoney")}</span>`;
+  const s = (b.stats || {})[arm];
+  if (!s) return `<span class="stat dim">${T("none")}</span>`;
+  return `<span class="stat">${T("closed")(s)}${money(s.pnl)}</span>`;
+}
+function bookNode(b, arm){
+  const hz = b.key === "h4" ? "" : "&hz=" + encodeURIComponent(b.key);
+  const link = `<a href="/trades-page?k=${encodeURIComponent(KEY)}${
+    hz}">${T("history")}</a>`;
+  // Ветка без текста — видимый дефект, а не пустота: пустая карточка
+  // была бы неотличима от «книги нет».
+  const warn = b.no_text
+    ? ` <span class="bad">no description — defect</span>` : "";
+  const off = b.present ? "" : ` <span class="dim">· ${
+    T("offbook")}</span>`;
+  const kid = b.key === "sit" && DATA && DATA.tournament
+    ? treeLeaf(DATA.tournament) : "";
+  return `<div class="branch${b.present ? "" : " off"}">
+    <div class="bt">${esc(tx(b, "title"))}${warn}${off}</div>
+    ${b.facts ? `<div class="facts">${esc(b.facts)}</div>` : ""}
+    <div class="plain">${esc(tx(b, "plain"))}</div>
+    <div>${statLine(b, arm)} &nbsp; ${link}</div>${kid}</div>`;
+}
+function treeLeaf(t){
+  return `<div class="leaf">
+    <div class="bt">${esc(tx(t, "title"))}</div>
+    <div class="plain">${esc(tx(t, "plain"))}</div>
+    <div class="stat mono" id="tstat">${T("tstat")(t)}</div></div>`;
+}
+function rootCard(r){
+  const books = (DATA.books || []).map(b => bookNode(b, r.arm));
+  return `<div class="panel" data-root="${esc(r.arm)}">
+    <div class="cap">${esc(r.arm)}</div>
+    <h2>${esc(tx(r, "title"))}</h2>
+    <div class="plain">${esc(tx(r, "plain"))}</div>
+    ${books.join("")}</div>`;
+}
+function render(d){
+  DATA = d;
+  navMount("/tree-page");
+  document.getElementById("strap").textContent = T("strap");
+  document.getElementById("lang").innerHTML =
+    ["en","ru"].map(v => `<button data-l="${v}"
+      aria-pressed="${String(LANG === v)}">${v.toUpperCase()}</button>`)
+      .join(" ");
+  document.querySelectorAll("#lang button").forEach(b =>
+    b.onclick = () => setLang(b.dataset.l));
+  const intro = document.getElementById("intro");
+  const box = document.getElementById("box");
+  if (!d) {
+    intro.textContent = "no answer from the collector — retrying";
+    setTimeout(pull, 5000);
+    return;
+  }
+  intro.innerHTML = T("intro") + ((d.errors || []).length
+    ? `<div class="k" style="margin-top:6px">${
+        d.errors.map(esc).join("<br>")}</div>` : "");
+  box.innerHTML = (d.roots || []).map(rootCard).join("");
+}
+async function pull(){
+  let d = null;
+  try {
+    const r = await fetch("/model_tree?k=" + encodeURIComponent(KEY));
+    d = await r.json();
+  } catch (e) { d = null; }
+  render(d);
+}
+pull();
+</script>
+"""
+
+
 # Страница лиги — просьба владельца: наблюдение за каждой стратегией
 # и моделью отдельно (что ведёт себя лучше) и ТОП сделок по
 # прибыльности за сегодня / месяц / год. Все агрегаты приходят с
@@ -5806,6 +6011,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/vol-page":
                 return self._ok(VOLPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/model_tree":
+                return self._ok(json.dumps(
+                    collector.model_tree(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/tree-page":
+                return self._ok(TREEPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),

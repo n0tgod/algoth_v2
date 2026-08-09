@@ -1968,6 +1968,145 @@ class Collector:
              ("h24", "model_h24"), ("sit", "model_sit"),
              ("z", "model_z"))
 
+    # Дерево моделей: что за логику проверяет каждая ветка, простыми
+    # словами и на обоих языках разом (правило справочника: разъехавшись,
+    # переводы стали бы двумя разными утверждениями о модели). Ключи
+    # ОБЯЗАНЫ совпадать с `BOOK_DIRS` — это закреплено тестом: ветка без
+    # текста была бы на странице пустотой, неотличимой от «книги нет».
+    ROOT_TREE = {
+        "gbm": {
+            "title": "ML — decision trees",
+            "title_ru": "ML — деревья решений",
+            "plain": "Gradient-boosted trees on histograms. Reads "
+                     "thresholds and break points — “if this feature "
+                     "is past X, the situation is different”. Robust "
+                     "to outliers; every forecast decomposes into "
+                     "exact feature contributions.",
+            "plain_ru": "Градиентный бустинг на гистограммах. Читает "
+                        "пороги и изломы — «если признак выше "
+                        "такого-то, ситуация другая». Устойчив к "
+                        "выбросам; каждый прогноз раскладывается на "
+                        "точные вклады признаков."},
+        "nn": {
+            "title": "AI — neural net",
+            "title_ru": "AI — нейросеть",
+            "plain": "A small neural network on the same features and "
+                     "targets. Blends many features smoothly and can "
+                     "catch interactions the trees miss, but overfits "
+                     "easier and its explanations are approximate.",
+            "plain_ru": "Небольшая нейросеть на тех же признаках и "
+                        "целях. Гладко смешивает много признаков сразу "
+                        "и ловит взаимодействия, которых деревья не "
+                        "видят, но легче переобучается, и её "
+                        "объяснения приблизительны."},
+    }
+    BOOK_TREE = {
+        "h4": {
+            "title": "4-hour book — the main one",
+            "title_ru": "Книга 4 часа — главная",
+            "plain": "Every hour takes the most extreme forecasts of "
+                     "the 4-hour horizon — six names long, six short — "
+                     "and holds exactly four hours. Tests the core "
+                     "question of hypothesis 6: does ranking the "
+                     "cross-section make money at all.",
+            "plain_ru": "Каждый час берёт самые крайние прогнозы "
+                        "четырёхчасового горизонта — шесть имён в лонг "
+                        "и шесть в шорт — и держит ровно четыре часа. "
+                        "Проверяет главный вопрос гипотезы 6: "
+                        "зарабатывает ли само ранжирование сечения."},
+        "h1": {
+            "title": "1-hour book — does speed pay",
+            "title_ru": "Книга 1 час — окупается ли скорость",
+            "plain": "The same picking at an hourly pace: more trades, "
+                     "but every hour pays the full cost round. Tests "
+                     "whether speed covers the fee; by R4/R5 the fee "
+                     "eats fast books, so tempos are compared fairly "
+                     "by IC and hit rate, not by money.",
+            "plain_ru": "Тот же выбор на часовом темпе: сделок больше, "
+                        "но каждый час платит полный круг издержек. "
+                        "Проверяет, окупает ли скорость комиссию; по "
+                        "замерам R4/R5 частота съедает деньги, поэтому "
+                        "темпы честно сравнивать по IC и точности, а "
+                        "не по деньгам."},
+        "h24": {
+            "title": "24-hour book — does the signal live a day",
+            "title_ru": "Книга 24 часа — живёт ли сигнал сутки",
+            "plain": "The daily pace: fewer trades, less fee, longer "
+                     "in risk. Tests the slow end — whether the "
+                     "forecast survives a full day of holding.",
+            "plain_ru": "Суточный темп: сделок меньше, комиссии "
+                        "меньше, в риске дольше. Проверяет медленный "
+                        "край — доживает ли прогноз до конца суток "
+                        "удержания."},
+        "z": {
+            "title": "per-σ book — were we just picking volatility",
+            "title_ru": "Книга per σ — не волатильность ли мы отбирали",
+            "plain": "Same section, same trade geometry; exactly one "
+                     "thing differs — the ordering: the forecast is "
+                     "divided by the coin’s own volatility. Tests "
+                     "whether the main book’s picking was volatility "
+                     "in disguise (measured: the picked coin ranges "
+                     "6× the market that same hour).",
+            "plain_ru": "То же сечение и та же геометрия сделки; "
+                        "отличается ровно одно — порядок: прогноз "
+                        "делится на собственную волатильность монеты. "
+                        "Проверяет, не был ли отбор главной книги "
+                        "переодетым отбором по волатильности (замер: "
+                        "выбранная монета вшестеро волатильнее рынка "
+                        "в тот же час)."},
+        "sit": {
+            "title": "situational book — price pulls the trigger",
+            "title_ru": "Ситуационная книга — курок у цены",
+            "plain": "The model draws the map, live price pulls the "
+                     "trigger: entry only when price gives a discount "
+                     "to the sheet forecast, crossing the gate before "
+                     "our eyes. Stop is the learned quantile level "
+                     "(~20 % breach), target is the promised "
+                     "favourable move, plus an age limit. Tests "
+                     "whether picking the moment adds what scheduled "
+                     "entries cannot. The Rust core shadows this book.",
+            "plain_ru": "Модель рисует карту, курок спускает живая "
+                        "цена: вход только когда цена даёт скидку к "
+                        "прогнозу листа и пересекает гейт у нас на "
+                        "глазах. Стоп — выученный квантильный уровень "
+                        "(заход ~20 %), тейк — обещанный ход в пользу, "
+                        "плюс предел возраста. Проверяет, даёт ли "
+                        "выбор момента то, чего не даёт вход по "
+                        "расписанию. Эту книгу ведёт тень Rust-ядра."},
+        "sit_obs": {
+            "title": "observation record — same setup, no RR gate",
+            "title_ru": "Наблюдательная запись — та же ситуация без "
+                        "порога RR",
+            "plain": "Not traded and not in the league money: records "
+                     "the same candidates without the ratio "
+                     "requirement, so the RR filter has something to "
+                     "show below the traded gate.",
+            "plain_ru": "Не торгуется и в деньги лиги не входит: "
+                        "записывает те же кандидаты без требования к "
+                        "отношению, чтобы фильтр по RR мог показать "
+                        "сделки ниже боевого гейта."},
+    }
+    TOURNEY_TREE = {
+        "title": "policy tournament (spec 10)",
+        "title_ru": "Турнир политик исполнения (спека 10)",
+        "plain": "72 rule variants of the situational book — stop "
+                 "(quantile / forecast line / none) × target × age "
+                 "limit × RR gate × entry edge — replayed over the "
+                 "sheet journal; once a week a selector picks which "
+                 "variant to live by next. What is judged is not the "
+                 "winner but the picking rule itself: the selector "
+                 "must beat a RANDOM pick from the same variants — "
+                 "otherwise self-tuning is decoration.",
+        "plain_ru": "72 варианта правил ситуационной книги — стоп "
+                    "(квантиль / линия прогноза / нет) × тейк × "
+                    "предел возраста × порог RR × край входа — "
+                    "прогоняются по журналу листов, и раз в неделю "
+                    "селектор сам выбирает, каким вариантом жить "
+                    "дальше. Судится не победитель, а само правило "
+                    "выбора: селектор обязан бить СЛУЧАЙНЫЙ выбор из "
+                    "тех же вариантов — иначе самоподстройка есть "
+                    "украшение."}
+
     def closed_rows(self):
         """Закрытые сделки всех торгуемых книг — с деньгами.
 
@@ -2429,6 +2568,121 @@ class Collector:
                "weight_target": "fwd_4h", "weight_arm": "gbm",
                "families": rows, "generated_at": round(now, 1)}
         self._gloss_cache = (now, out)
+        return out
+
+    def model_tree(self):
+        """Дерево моделей: две руки и их книги, с логикой каждой ветки.
+
+        Просьба владельца: отдельная страница с разветвлением моделей
+        и описанием простыми словами, какую логику проверяет каждая
+        под-модель, ветки от основных ML и AI. Честная рамка стоит в
+        текстах: под-модель — не отдельная обученная модель, а книга
+        на тех же весах, отличающаяся ровно одним объявленным
+        правилом, — иначе разницу результатов нельзя было бы приписать
+        правилу.
+
+        Состав веток выводится из `BOOK_DIRS` (единственная карта книг
+        на сервере), тексты — из `BOOK_TREE`; ветка без текста
+        помечается полем `no_text`, а не выпадает: пустота на странице
+        была бы неотличима от «книги нет». Совпадение ключей закреплено
+        тестом. Правила ветки читаются из ЖИВОГО манифеста книги —
+        страница обязана описывать то, что торгует, а не исходники.
+        Деньги — те же `closed_rows`, что у лиги и волатильности:
+        второй обход однажды разошёлся бы с первым.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_tree_cache", (0.0, None))
+        if cached is not None and now - at < 60:
+            return cached
+        rows, errors, scanned = self.closed_rows()
+        stats = {}
+        for r in rows:
+            s = stats.setdefault((r["hz"], r["arm"]), [0, 0, 0.0])
+            s[0] += 1
+            s[1] += 1 if (r["pnl"] or 0) > 0 else 0
+            s[2] += r["pnl"] or 0.0
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        books = []
+        for key, name in self.BOOK_DIRS.items():
+            meta = self.BOOK_TREE.get(key)
+            row = dict(meta) if meta else {
+                "title": key, "title_ru": key,
+                "plain": "", "plain_ru": "", "no_text": True}
+            row.update(key=key, dir=name)
+            man = {}
+            try:
+                with open(os.path.join(s8, name, "manifest.json"),
+                          encoding="utf-8") as f:
+                    man = json.load(f)
+            except OSError:
+                pass
+            except ValueError as e:
+                errors.append(f"{name}: манифест не читается: {e}")
+            row["present"] = bool(man)
+            # Правила ветки — короткой строкой из манифеста. Числа
+            # языка не имеют, поэтому строка одна на оба языка.
+            facts = []
+            if man.get("situational"):
+                if man.get("min_edge_bp") is not None:
+                    facts.append(f"gate {man['min_edge_bp']:g} bp")
+                if man.get("min_rr") is not None:
+                    facts.append(f"RR ≥ {man['min_rr']:g}")
+                if man.get("min_disc_bp") is not None:
+                    facts.append(f"disc {man['min_disc_bp']:g} bp")
+                if man.get("stop_tau") is not None:
+                    facts.append(f"stop τ {man['stop_tau']:g}")
+                if man.get("max_age_h"):
+                    facts.append(f"age ≤ {man['max_age_h']} h")
+            elif man.get("horizon_h"):
+                facts.append(f"hold {man['horizon_h']} h")
+            if man.get("rank_target"):
+                facts.append(f"rank by {man['rank_target']}")
+            if man.get("slots"):
+                facts.append(f"{man['slots']} slots")
+            if man.get("rules_version"):
+                facts.append(f"rules v{man['rules_version']}")
+            row["facts"] = " · ".join(facts)
+            per = {}
+            for a in ("gbm", "nn"):
+                s = stats.get((key, a))
+                if s:
+                    per[a] = {"closed": s[0],
+                              "win": round(s[1] / s[0], 3),
+                              "pnl": round(s[2], 2)}
+            row["stats"] = per
+            books.append(row)
+        # Турнир политик — ветка ситуационной книги. Живые числа из
+        # артефакта последнего прогона; артефакта нет — честное «ждёт
+        # прогона», а не пустая карточка.
+        tourney = dict(self.TOURNEY_TREE)
+        tp = os.path.join(os.path.dirname(HERE), "s10_policy", "out",
+                          "V1-tournament.json")
+        try:
+            with open(tp, encoding="utf-8") as f:
+                tj = json.load(f)
+            v = tj.get("verdict") or {}
+            wf = tj.get("wf") or {}
+            picks = (wf.get("points") or []) if wf else []
+            tourney.update(
+                present=True, legs=tj.get("legs"),
+                status=v.get("status") or "прогон без вердикта",
+                points=len(picks),
+                pick=(picks[-1].get("pick") if picks else None),
+                cells_measured=sum(
+                    1 for c in tj.get("cells") or []
+                    if (c.get("n") or 0) >= 30))
+        except OSError:
+            tourney.update(present=False,
+                           status="ждёт первого прогона на VPS")
+        except ValueError as e:
+            tourney.update(present=False,
+                           status=f"артефакт не читается: {e}")
+        out = {"roots": [dict(self.ROOT_TREE["gbm"], arm="gbm"),
+                         dict(self.ROOT_TREE["nn"], arm="nn")],
+               "books": books, "tournament": tourney,
+               "errors": errors, "scanned": scanned,
+               "generated_at": round(now, 1)}
+        self._tree_cache = (now, out)
         return out
 
     def entry_px(self, picks):

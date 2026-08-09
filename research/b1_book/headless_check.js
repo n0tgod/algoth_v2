@@ -26,6 +26,7 @@ const isInfo = /id="whybox"/.test(src);
 const isLeague = /league — what works best/.test(src);
 const isGloss = /playbook — what the model can read/.test(src);
 const isVol = /does the market regime move our results/.test(src);
+const isTree = /model tree — which logic each branch tests/.test(src);
 const isTrades = /id="tb"/.test(src);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
@@ -219,6 +220,49 @@ global.fetch = async (url) => {
                   gbm: {all: {n: 20, days: 10, win: 0.5, pnl: 1.0,
                               net_bp_avg: 2.0, vol_med_bp: 47.0},
                         quiet: null, normal: null, loud: null}}}}
+             : url.startsWith("/model_tree")
+             ? {roots: [
+                  {arm: "gbm", title: "ML — decision trees",
+                   title_ru: "ML — деревья решений",
+                   plain: "Reads thresholds and break points.",
+                   plain_ru: "Читает пороги и изломы."},
+                  {arm: "nn", title: "AI — neural net",
+                   title_ru: "AI — нейросеть",
+                   plain: "Blends many features smoothly.",
+                   plain_ru: "Гладко смешивает много признаков."}],
+                books: [
+                  {key: "h4", dir: "model", present: true,
+                   title: "4-hour book — the main one",
+                   title_ru: "Книга 4 часа — главная",
+                   plain: "Does ranking the cross-section make money.",
+                   plain_ru: "Зарабатывает ли само ранжирование "
+                             + "сечения.",
+                   facts: "hold 4 h · 24 slots",
+                   stats: {gbm: {closed: 5, win: 0.6, pnl: 12.34},
+                           nn: {closed: 4, win: 0.25, pnl: -3.21}}},
+                  {key: "sit", dir: "model_sit", present: true,
+                   title: "situational book — price pulls the trigger",
+                   title_ru: "Ситуационная книга — курок у цены",
+                   plain: "Does picking the moment add anything.",
+                   plain_ru: "Даёт ли выбор момента что-то сверх "
+                             + "расписания.",
+                   facts: "gate 22 bp · RR ≥ 2 · stop τ 0.2",
+                   stats: {gbm: {closed: 3, win: 0.667, pnl: 4.10}}},
+                  // Книга без манифеста на сервере: ветка обязана
+                  // сказать «не заведена», а не выглядеть пустой.
+                  {key: "h24", dir: "model_h24", present: false,
+                   title: "24-hour book", title_ru: "Книга 24 часа",
+                   plain: "Slow end.", plain_ru: "Медленный край.",
+                   facts: "", stats: {}}],
+                tournament: {
+                  title: "policy tournament (spec 10)",
+                  title_ru: "Турнир политик исполнения (спека 10)",
+                  plain: "The picking rule is judged, not the winner.",
+                  plain_ru: "Судится правило выбора, а не победитель.",
+                  present: true, legs: 3840, points: 3,
+                  pick: "e22_rr1.5_sm_t1_a24", cells_measured: 12,
+                  status: "диагностика, не вердикт: точек 3 из 8"},
+                errors: [], generated_at: 0}
              : url.startsWith("/glossary")
              ? {present: true, n_features: 3, train_seq: 77,
                 weight_covers: 0.2, weight_arm: "gbm",
@@ -754,14 +798,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol) {
+      && !isGloss && !isVol && !isTree) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -925,7 +969,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -1176,6 +1220,50 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                + ` (обёрток ${nScroll} из 6)`);
   }
 
+  // Дерево моделей: две руки, у каждой ПОЛНЫЙ набор веток, тексты и
+  // деньги — числами подставного ответа. «Блок есть» прошло бы и на
+  // пустом дереве, а пустое дерево неотличимо от «книг нет».
+  if (isTree) {
+    if (!seen.some(u => u.startsWith("/model_tree")))
+      bad.push("дерево: страница не запросила /model_tree");
+    const flat = s => String(s || "").replace(/\s+/g, " ");
+    const bx = flat(global.__el ? global.__el("box").innerHTML : "");
+    const roots = (bx.match(/data-root="/g) || []).length;
+    if (roots !== 2)
+      bad.push(`дерево: корней ${roots}, а рук две`);
+    const branches = (bx.match(/class="branch/g) || []).length;
+    if (branches !== 6)
+      bad.push(`дерево: веток ${branches}, а книг по три на руку`);
+    const leaves = (bx.match(/class="leaf"/g) || []).length;
+    if (leaves !== 2)
+      bad.push(`дерево: листов турнира ${leaves}, а рук две`);
+    if (!/\+12\.34 \$/.test(bx) || !/-3\.21 \$/.test(bx))
+      bad.push("дерево: деньги веток не из ответа");
+    if (!/диагностика, не вердикт/.test(bx))
+      bad.push("дерево: статус турнира не показан");
+    if (!/e22_rr1\.5_sm_t1_a24/.test(bx))
+      bad.push("дерево: действующий вариант турнира не назван");
+    if (!/href="\/trades-page\?k=xxx&hz=sit"/.test(bx))
+      bad.push("дерево: ссылка истории без книги или ключа");
+    // Книга без манифеста названа не заведённой: пустая ветка была бы
+    // неотличима от «данных ещё нет».
+    if (!/book not started on the server/.test(bx))
+      bad.push("дерево: отсутствующая на сервере книга не названа");
+    // Язык дёргается НАСТОЯЩЕЙ функцией страницы: русские тексты уже
+    // в ответе, и переключение не имеет права ходить на сервер.
+    if (!global.__lang) {
+      bad.push("дерево: переключателя языка нет");
+    } else {
+      global.__lang("ru");
+      const ru = flat(global.__el("box").innerHTML);
+      if (!/Читает пороги и изломы/.test(ru))
+        bad.push("дерево: русский текст корня не показан");
+      if (!/Судится правило выбора/.test(ru))
+        bad.push("дерево: русский текст турнира не показан");
+      global.__lang("en");
+    }
+  }
+
   // Меню страниц — на каждой самостоятельной странице, и проверяется
   // ЧИСЛАМИ: пять пунктов, ключ в каждой ссылке, текущая помечена.
   // «Блок есть» прошло бы и на пустом меню, а пустое меню неотличимо
@@ -1184,10 +1272,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 6)
-      bad.push(`меню: пунктов ${links}, а страниц шесть`);
+    if (links !== 7)
+      bad.push(`меню: пунктов ${links}, а страниц семь`);
     if (!/href="\/league-page\?k=xxx"/.test(nh)
-        || !/href="\/glossary-page\?k=xxx"/.test(nh))
+        || !/href="\/glossary-page\?k=xxx"/.test(nh)
+        || !/href="\/tree-page\?k=xxx"/.test(nh))
       bad.push("меню: ссылка без ключа или страница потеряна");
     if (!/aria-current="page"/.test(nh))
       bad.push("меню: текущая страница не помечена");
@@ -1430,7 +1519,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol) {
+      && !isGloss && !isVol && !isTree) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -1684,7 +1773,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("просадка сделки в строке не в долях депозита");
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
-  } else if (isBot || isInfo || isLeague || isGloss || isVol) {
+  } else if (isBot || isInfo || isLeague || isGloss || isVol
+             || isTree) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {
