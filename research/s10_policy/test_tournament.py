@@ -235,6 +235,39 @@ def test_kill_arm():
           T._bleeding(busy, 110) is True, str(T._bleeding(busy, 110)))
 
 
+def test_artifacts_survive_fresh_checkout():
+    """Прогон целиком, в каталог, которого ещё нет, — оба артефакта.
+
+    Живой прогон на сервере досчитал все 710 ног по барам и упал на
+    ЗАПИСИ JSON: свежий чекаут не несёт research/s10_policy/out/, а
+    каталог создавал только report() — после записи. Вся работа
+    терялась на последнем шаге; смоук в песочнице этого не ловил,
+    потому что писал во ВРЕМЕННЫЙ каталог, который существовал.
+    Здесь прогоняется настоящий main() в несуществующий каталог.
+    """
+    import json as _json
+    import subprocess
+    import tempfile
+    td = tempfile.mkdtemp()
+    sheets = os.path.join(td, "sheets.jsonl")
+    rec = {"hour": "2026-08-05-10", "written_at": 1_786_000_000.0,
+           "arms": {"gbm": [{"sym": "AUSDT", "fwd": 30.0,
+                             "mae": -30.0, "mfe": 90.0,
+                             "px": 100.0, "beta": 1.0}]}}
+    with open(sheets, "w", encoding="utf-8") as f:
+        f.write(_json.dumps(rec) + "\n")
+    out = os.path.join(td, "no", "such", "dir", "V1.md")
+    r = subprocess.run(
+        [sys.executable, os.path.join(HERE, "tournament.py"),
+         "--sheets", sheets, "--root", td, "--out", out],
+        capture_output=True, text=True, timeout=300)
+    check("прогон в свежем чекауте не падает", r.returncode == 0,
+          (r.stderr or r.stdout)[-300:])
+    check("оба артефакта написаны",
+          os.path.exists(out)
+          and os.path.exists(out.replace(".md", ".json")), out)
+
+
 def test_verdict():
     # Немедленная остановка: селектор ниже медианы случайных.
     wf = {"points": [{"day": 1, "pick": "A", "elig": 2}] * 3,
@@ -263,6 +296,7 @@ if __name__ == "__main__":
     test_slots()
     test_selector()
     test_kill_arm()
+    test_artifacts_survive_fresh_checkout()
     test_verdict()
     if FAIL:
         print(f"\nПАДЕНИЙ: {len(FAIL)} — " + "; ".join(FAIL))

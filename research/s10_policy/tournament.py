@@ -610,6 +610,13 @@ def main():
         if a.tag:
             name += f"-{a.tag}"
         a.out = os.path.join(HERE, "out", name + ".md")
+    # Каталог артефактов создаётся ДО счёта, а не в report(): живой
+    # прогон на сервере досчитал все бары и упал на записи JSON —
+    # свежий чекаут каталога out/ не несёт, а создавал его только
+    # отчёт, который зовётся после. Полтора часа работы терялись на
+    # последнем шаге — тот же класс отказа, что прогон A1 с
+    # --with-fees, падавший на подписи после обхода всех символов.
+    os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     src = None
     if a.http:
         src = SW.HttpBars(a.http, a.key, disk=a.cache or None)
