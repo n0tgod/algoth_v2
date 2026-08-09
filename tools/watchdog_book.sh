@@ -102,3 +102,30 @@ if [ -x "$BOT_BIN" ]; then
         tools/run_bot.sh --no-build
     fi
 fi
+
+# --- турнир политик (спека 10) ---------------------------------------
+# Раз в сутки, в ночное окно 02:xx UTC: реплей журнала листов по всем
+# 72 вариантам и публикация артефактов. Триггер — ВОЗРАСТ артефакта, а
+# не память сторожа: сторож без состояния, возраст файла переживает
+# перезагрузку. Догоняющий запуск при артефакте старше 48 ч (сервер
+# мог проспать своё окно), первый на чистом каталоге — сразу, без
+# ожидания ночи. Прогон идёт с пониженным приоритетом: сборщик и
+# боевой цикл важнее. Код прогона сторож НЕ обновляет — деплой
+# остаётся за git pull владельца.
+TOUR=research/s10_policy/out/V1-tournament.json
+TOUR_LOG=research/s10_policy/out/tournament.log
+if ! pgrep -f "s10_policy/tournament.py" >/dev/null; then
+    tour_age=999999999
+    if [ -f "$TOUR" ]; then
+        tour_age=$(( $(date +%s) - $(stat -c %Y "$TOUR") ))
+    fi
+    if { [ "$(date -u +%H)" = "02" ] && [ "$tour_age" -gt 43200 ]; } \
+       || [ "$tour_age" -gt 172800 ]; then
+        echo "[$(now)] турнир политик: артефакту ${tour_age} с — запускаю прогон"
+        setsid nohup bash -c "
+            nice -n 10 .venv/bin/python research/s10_policy/tournament.py \
+                >> $TOUR_LOG 2>&1 \
+            && tools/publish.sh 'V1: суточный прогон турнира политик' \
+                >> $TOUR_LOG 2>&1" &
+    fi
+fi
