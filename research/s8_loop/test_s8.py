@@ -419,6 +419,65 @@ def test_targets_shapes_and_direction():
           (t["mfe_4h"][ok] >= t["mae_4h"][ok] - 1e-9).all())
 
 
+def test_one_name_one_position():
+    """Одно имя — одна позиция: долив своей стороны, схлопывание чужой.
+
+    Требование ПЛОЩАДКИ, а не удобство: на одном аккаунте нельзя
+    держать два отдельных лонга по одной паре. Четырёхчасовые книги
+    входили каждый час и держали до четырёх лотов на имени.
+
+    Проверяются ЧИСЛА: долив не трогает позиции своей стороны, а
+    встречный сигнал закрывает САМЫЙ СТАРЫЙ лот по своей цене входа,
+    сам позиции не открывает и из записи не исчезает.
+    """
+    import trades as TR
+
+    def leg(px, fwd=40.0):
+        return {"sym": "AUSDT", "px": px, "fwd": fwd, "mae": -20.0}
+
+    h = ["2026-08-05-10", "2026-08-05-11", "2026-08-05-12"]
+    picks = [
+        {"arm": "gbm", "hour": h[0], "long": [leg(100.0)], "short": []},
+        {"arm": "gbm", "hour": h[1], "long": [leg(110.0)], "short": []},
+        {"arm": "gbm", "hour": h[2], "long": [],
+         "short": [leg(121.0, -40.0)]},
+    ]
+    now = (TR._ts(h[2]) or 0) + 9 * 3600
+    tr = {t["hour"]: t for t in TR.build(picks, [], hold_h=4, now=now)}
+    check("долив своей стороны позиции не отменяет",
+          tr[h[0]].get("opened_at") and tr[h[1]].get("opened_at"),
+          str([tr[h[0]].get("state"), tr[h[1]].get("state")]))
+    check("встречный сигнал позиции не открыл",
+          tr[h[2]]["state"] == "схлопнула позицию"
+          and tr[h[2]].get("opened_at") is None,
+          str(tr[h[2]])[:140])
+    check("схлопнувший выбор остался в записи, а не исчез",
+          tr[h[2]].get("netted_with") == h[0],
+          str(tr[h[2]].get("netted_with")))
+    # Закрыт САМЫЙ СТАРЫЙ лот по цене входа встречного: 100 → 121 есть
+    # +2100 б.п. хода.
+    v = tr[h[0]]
+    check("закрыт старший лот по цене встречного входа",
+          v["state"] == "закрыта" and v.get("got_bp") == 2100.0,
+          f"{v.get('state')} / {v.get('got_bp')}")
+    check("причина выхода названа",
+          v.get("exit_reason") == "встречный сигнал закрыл позицию",
+          str(v.get("exit_reason")))
+    # Второй лот схлопывание НЕ трогает: закрывается только старший.
+    # Его состояние тут «ждёт разбора» — горизонт кончился, разбора в
+    # синтетике нет; важно, что позиция при нём осталась своя.
+    check("второй лот схлопыванием не тронут",
+          tr[h[1]].get("exit_reason") is None
+          and tr[h[1]].get("opened_at"),
+          f"{tr[h[1]]['state']} / {tr[h[1]].get('exit_reason')}")
+    # Долив сам по себе ничего не меняет: без встречного сигнала обе
+    # позиции живут как прежде.
+    tr2 = TR.build(picks[:2], [], hold_h=4, now=now)
+    check("без встречного сигнала оба входа живут как прежде",
+          len(tr2) == 2 and all(t.get("opened_at") for t in tr2),
+          str([t.get("state") for t in tr2]))
+
+
 def test_zero_length_trade_returns_its_money():
     """Сделка, закрытая в секунду своего же входа, не течёт кассой.
 
@@ -3387,6 +3446,7 @@ def main():
     test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
     print("цикл переобучения")
+    test_one_name_one_position()
     test_zero_length_trade_returns_its_money()
     test_rank_key_reorders_the_section()
     test_retry_when_not_trained()
