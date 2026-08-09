@@ -61,6 +61,13 @@ MIN_WIN_TRADES = 30                # годность варианта в окн
 N_SEEDS = 10                       # случайных селекторов
 MIN_POINTS = 8                     # календарь вердикта §8.2
 MIN_WF_TRADES = 300
+# Рука kill-10 (§7.1, правка владельца 2026-08-10 до первого прогона):
+# вариант с отрицательной суммой за последние KILL_D суток при не
+# менее чем KILL_MIN_TRADES сделках — сливающий: не выбирается нигде,
+# держимый снимается немедленно. Правило по СУММЕ, а не по серии
+# красных дней: копеечная зелёная свеча не должна обнулять счётчик.
+KILL_D = 10
+KILL_MIN_TRADES = 10
 DAY = 86400
 
 
@@ -268,6 +275,26 @@ def _win(series, d0, d1):
     return tot, int(n)
 
 
+def _elig(series_by_key, keys, D):
+    """Годные варианты на день `D`: окно 28 суток, не тоньше 30 сделок."""
+    out = []
+    for k in keys:
+        tot, n = _win(series_by_key[k], D - SEL_WIN_D, D)
+        if n >= MIN_WIN_TRADES:
+            out.append((k, tot))
+    return out
+
+
+def _bleeding(series, D):
+    """Сливает ли вариант по правилу kill-10 на день `D`.
+
+    Вариант без сделок в окне не сливает, а простаивает — его правило
+    не трогает (иначе тихая книга снималась бы за тишину).
+    """
+    tot, n = _win(series, D - KILL_D, D)
+    return tot < 0 and n >= KILL_MIN_TRADES
+
+
 def _rnd_pick(seed, point_idx, n):
     """Зерно выводится ЧИСЛОМ из номера зерна и номера точки.
 
@@ -304,11 +331,7 @@ def walk_forward(series_by_key, keys, log=print):
     rnd = [{"days": {}, "trades": 0} for _ in range(N_SEEDS)]
     prev = None
     for i, D in enumerate(points):
-        elig = []
-        for k in keys:
-            tot, n = _win(series_by_key[k], D - SEL_WIN_D, D)
-            if n >= MIN_WIN_TRADES:
-                elig.append((k, tot))
+        elig = _elig(series_by_key, keys, D)
         if not elig:
             # Точка без годных: держим прежний выбор, а не выдумываем.
             if prev is None:
@@ -332,13 +355,60 @@ def walk_forward(series_by_key, keys, log=print):
             _add(rnd[s], series_by_key[rk], D, fwd_end)
     if not sel["picks"]:
         return None
+    kill, kill_ev = _kill_arm(series_by_key, keys, points, last)
     span = (sel["picks"][0]["day"], last + 1)
     ref = {"days": {}, "trades": 0}
     if CURRENT in series_by_key:
         _add(ref, series_by_key[CURRENT], span[0], span[1])
     return {"points": sel["picks"], "sel": _tot(sel), "ora": _tot(ora),
             "rnd": [_tot(r) for r in rnd], "ref": _tot(ref),
+            "kill": _tot(kill), "kill_events": kill_ev,
             "span_days": span[1] - span[0]}
+
+
+def _kill_arm(series_by_key, keys, points, last):
+    """Рука kill-10: базовый селектор плюс правило свежести (§7.1).
+
+    Нуль этой руки — сама базовая ветка: обе идут по одним дням, и
+    разность кривых ЕСТЬ эффект правила. Ходит по дням, а не по
+    точкам: снятие сливающего варианта не ждёт расписания.
+    """
+    acc = {"days": {}, "trades": 0, "picks": []}
+    events = []
+    pts = set(points)
+    prev = None
+    held = 0
+    for D in range(points[0], last + 1):
+        if D in pts:
+            elig = [(k, v) for k, v in _elig(series_by_key, keys, D)
+                    if not _bleeding(series_by_key[k], D)]
+            if elig:
+                best = max(v for _, v in elig)
+                top = [k for k, v in elig if v == best]
+                prev = prev if prev in top else top[0]
+                acc["picks"].append({"day": D, "pick": prev})
+            elif prev is not None:
+                held += 1              # некого выбрать — держим текущий
+        elif prev is not None and _bleeding(series_by_key[prev], D):
+            was = prev
+            elig = [(k, v) for k, v in _elig(series_by_key, keys, D)
+                    if k != prev
+                    and not _bleeding(series_by_key[k], D)]
+            if elig:
+                best = max(v for _, v in elig)
+                prev = [k for k, v in elig if v == best][0]
+                events.append({"day": D, "was": was, "to": prev})
+                acc["picks"].append({"day": D, "pick": prev,
+                                     "kill": True})
+            else:
+                held += 1
+        if prev is not None:
+            got = series_by_key[prev].get(D)
+            if got:
+                acc["days"][D] = acc["days"].get(D, 0.0) + got[0]
+                acc["trades"] += got[1]
+    acc["held_bleeding"] = held
+    return acc, events
 
 
 def _add(acc, series, d0, d1):
@@ -395,6 +465,12 @@ def verdict(wf):
           and wf["sel"]["dd_bp"] >= 1.5 * ref["dd_bp"])
     out["status"] = ("ПОЛОЖИТЕЛЬНЫЙ §8.3 — открывается V3"
                      if ok else "критерии §8.3 не выполнены")
+    # §8.5: рука kill-10 идёт в V3 вместо базовой только если на общих
+    # днях её итог выше И она сама выше 95-го процентиля случайных.
+    if ok and wf.get("kill"):
+        kt = wf["kill"]["total_bp"]
+        out["v3_arm"] = ("kill-10" if kt > sel and kt > p95
+                         else "base")
     return out
 
 
@@ -455,6 +531,8 @@ def report(legs, cells, wf, path):
         lines.append(f"- {v['status']}")
     else:
         sel, ref, ora = wf["sel"], wf["ref"], wf["ora"]
+        kl = wf.get("kill")
+        kev = wf.get("kill_events") or []
         rnds = [r["total_bp"] for r in wf["rnd"]]
         lines += [
             f"- статус: **{v['status']}**",
@@ -471,6 +549,12 @@ def report(legs, cells, wf, path):
             f"{ora['total_bp']:+.1f} б.п. — если он рядом со "
             f"случайными, варианты не различаются и направление "
             f"закрыто дёшево",
+            (f"- рука kill-10 (\u00a77.1): {kl['total_bp']:+.1f} "
+             f"б.п., просадка {kl['dd_bp']:.1f}, снятий {len(kev)}; "
+             f"разность с базовым на общих днях "
+             f"{kl['total_bp'] - sel['total_bp']:+.1f} б.п. — она и "
+             f"есть эффект правила") if kl
+            else "- рука kill-10: точек нет",
             "- выбор по точкам: " + ", ".join(
                 f"{p['pick']}({p['elig']})" for p in wf["points"]),
         ]

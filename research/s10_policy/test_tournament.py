@@ -194,6 +194,47 @@ def test_selector():
           got == [4, 1, 5], str(got))
 
 
+def test_kill_arm():
+    """Рука kill-10: сливающий вариант снимается немедленно.
+
+    B великолепен 28 дней и дальше сливает по −20 в день; базовый
+    селектор держит его до плановой точки, пока 28-дневное окно не
+    протухнет, и заканчивает −310. Рука kill-10 обязана снять B в
+    первый же день, когда его 10-дневная сумма ушла в минус, и не
+    возвращать, пока он сливает. Реализация, где правило не работает,
+    даст ровно базовые числа — этим тест и кусается.
+    """
+    day0 = 30_000
+    A, B = {}, {}
+    for d in range(day0, day0 + 60):
+        A[d] = [10.0, 4]
+        B[d] = [50.0, 4] if d < day0 + 28 else [-20.0, 4]
+    wf = T.walk_forward({"A": A, "B": B}, ["A", "B"],
+                        log=lambda *a: None)
+    check("база выбирает B и платит за инерцию −310",
+          wf["sel"]["total_bp"] == -310.0, str(wf["sel"]))
+    check("kill-10 снимает B в первый день минусовой десятидневки",
+          len(wf["kill_events"]) == 1
+          and wf["kill_events"][0]["day"] == day0 + 36
+          and wf["kill_events"][0]["was"] == "B"
+          and wf["kill_events"][0]["to"] == "A",
+          str(wf["kill_events"]))
+    check("рука kill-10 заканчивает +80 против −310 у базы",
+          wf["kill"]["total_bp"] == 80.0, str(wf["kill"]))
+    check("снятый не возвращается, пока сливает",
+          all(p["pick"] == "A" for p in wf["kill"]["picks"]
+              if p["day"] >= day0 + 36),
+          str(wf["kill"]["picks"]))
+    # Правило свежести напрямую: без десяти сделок в окне вариант
+    # простаивает, а не сливает, — тихая книга не снимается за тишину.
+    idle = {d: [-5.0, 1] for d in range(100, 109)}
+    check("вариант без десяти сделок не сливает",
+          T._bleeding(idle, 109) is False, str(T._bleeding(idle, 109)))
+    busy = {d: [-5.0, 1] for d in range(100, 110)}
+    check("десять сделок в минус — сливает",
+          T._bleeding(busy, 110) is True, str(T._bleeding(busy, 110)))
+
+
 def test_verdict():
     # Немедленная остановка: селектор ниже медианы случайных.
     wf = {"points": [{"day": 1, "pick": "A", "elig": 2}] * 3,
@@ -221,6 +262,7 @@ if __name__ == "__main__":
     test_outcome()
     test_slots()
     test_selector()
+    test_kill_arm()
     test_verdict()
     if FAIL:
         print(f"\nПАДЕНИЙ: {len(FAIL)} — " + "; ".join(FAIL))
