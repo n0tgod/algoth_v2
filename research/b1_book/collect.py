@@ -2643,6 +2643,13 @@ class Collector:
                           if c.get("exp_bp") is not None)
             med = exps[len(exps) // 2] if exps else None
             age = now - os.path.getmtime(tp)
+            # Несёт ли прогон просадку кривой. Колонка прочерков
+            # без объяснения неотличима от сломанного счёта —
+            # владелец увидел ровно это и спросил. Признак считается
+            # по ячейкам СО СДЕЛКАМИ: у пустой прочерк законен всегда.
+            with_n = [c for c in cells if c.get("n")]
+            out["has_dd"] = bool(with_n) and any(
+                c.get("dd_bp") is not None for c in with_n)
             out.update(present=True, legs=tj.get("legs"),
                        cells=cells, wf=tj.get("wf"),
                        verdict=tj.get("verdict") or {},

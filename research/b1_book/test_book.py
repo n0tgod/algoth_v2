@@ -426,6 +426,10 @@ def test_pages_run_headless():
                 # кричать, а не выглядеть сегодняшней.
                 ("турнир с устаревшим прогоном", web.TOURPAGE,
                  "?k=xxx&tourstale=1"),
+                # Прогон сделан до появления колонки просадки: прочерк
+                # обязан объяснить себя, а не выглядеть поломкой.
+                ("турнир без колонки просадки", web.TOURPAGE,
+                 "?k=xxx&tournodd=1"),
                 # Сборщик не ответил (первый обход суток идёт около
                 # минуты): страница обязана сказать «нет ответа», а не
                 # «делить нечего» — владелец увидел ровно это.
@@ -2723,10 +2727,23 @@ def test_tournament_page_reads_artifact():
               f"{tr['measured']} / {tr['med_exp_bp']}")
         check("свежий прогон устаревшим не объявлен",
               tr["stale"] is False, str(tr.get("run_age_sec")))
+        # Артефакт фикстуры просадки не несёт — сервер обязан это
+        # СКАЗАТЬ полем, а не оставить страницу гадать по прочеркам.
+        check("прогон без просадки помечен полем",
+              tr["has_dd"] is False, str(tr.get("has_dd")))
         # Ночной прогон приходит раз в сутки: артефакт старше суток с
         # запасом обязан быть назван устаревшим — иначе разовый прогон
         # выглядит наблюдением. И то же самое обязано доехать до
         # ДЕРЕВА: обе страницы читают один метод.
+        with open(os.path.join(tdir, "V1-tournament.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"legs": 100,
+                       "cells": [dict(cells[0], dd_bp=-815.0)] + cells[1:],
+                       "wf": None, "verdict": {"status": "нет точек"}}, f)
+        col._tour_cache = (0.0, None)
+        check("прогон С просадкой помечен полным",
+              col.model_tournament()["has_dd"] is True,
+              str(col.model_tournament().get("has_dd")))
         art = os.path.join(tdir, "V1-tournament.json")
         old_ts = time.time() - 40 * 3600
         os.utime(art, (old_ts, old_ts))

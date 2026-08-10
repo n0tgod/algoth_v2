@@ -186,6 +186,46 @@ def test_cell_drawdown_is_not_the_worst_trade():
     check("три убыточных дня копят просадку глубже одной сделки",
           dd2 < worst, f"просадка {dd2} против худшей сделки {worst}")
 
+    # СКВОЗНАЯ проверка: просадка обязана доехать до ЯЧЕЙКИ прогона, а
+    # не только считаться. Именно её отсутствие владелец увидел
+    # колонкой прочерков, и ни один прежний тест этого не покрывал —
+    # `curve_dd` проверялась отдельно от своего подключения.
+    import json as _j
+    import tempfile as _t
+    td = _t.mkdtemp()
+    sp = os.path.join(td, "sheets.jsonl")
+    base = 1_786_000_000 - (1_786_000_000 % 86400)
+    with open(sp, "w", encoding="utf-8") as f:
+        for d in range(6):
+            rows = [{"sym": f"S{i}USDT", "fwd": 30.0, "mae": -40.0,
+                     "mfe": 95.0, "mae_q": -55.0, "mfe_q": 110.0,
+                     "px": 100.0, "beta": 1.0} for i in range(4)]
+            f.write(_j.dumps({"hour": "x",
+                              "written_at": base + d * 86400,
+                              "arms": {"gbm": rows}}) + "\n")
+
+    class Bars:
+        miss = 0
+
+        def bars(self, sym, a, b):
+            out, t = [], int(a // 60) * 60
+            while t <= b:
+                ph = ((t // 60) % 240) / 240.0
+                m = 100.0 * (1 + 0.5 / 100.0 * (2 * abs(2 * ph - 1) - 1))
+                out.append([t, m, m * 1.0007, m * 0.9993, m, 1.0])
+                t += 300
+            return out
+
+    _, cells, _ = T.run([sp], root=td, src=Bars(),
+                        log=lambda *a: None)
+    traded = [c for c in cells if c.get("n")]
+    check("ячейка со сделками несёт просадку кривой",
+          bool(traded)
+          and all(c.get("dd_bp") is not None for c in traded),
+          "со сделками %d, без просадки %d"
+          % (len(traded),
+             sum(1 for c in traded if c.get("dd_bp") is None)))
+
 
 def test_selector():
     # Дневные ряды строятся руками. Вариант A стабильно хорош в
@@ -297,6 +337,7 @@ def test_artifacts_survive_fresh_checkout():
     check("оба артефакта написаны",
           os.path.exists(out)
           and os.path.exists(out.replace(".md", ".json")), out)
+
 
 
 def test_verdict():

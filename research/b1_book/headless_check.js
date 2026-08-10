@@ -225,6 +225,7 @@ global.fetch = async (url) => {
              ? {present: true, legs: 55245, min_cell: 30,
                 current: "e22_rr2.0_sq_t1_a24", measured: 1,
                 med_exp_bp: 47.3,
+                has_dd: !/tournodd=1/.test(SEARCH),
                 run_age_sec: /tourstale=1/.test(SEARCH) ? 190000 : 7200,
                 stale: /tourstale=1/.test(SEARCH),
                 stale_after_sec: 129600, wf: null,
@@ -1489,8 +1490,19 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // обязана различие называть, а не подразумевать.
     if (!/worst trade %/.test(bx) || !/curve drawdown %/.test(bx))
       bad.push("турнир: колонки просадки и худшей сделки не разведены");
-    if (!/-8\.15 %/.test(bx))
-      bad.push("турнир: просадка кривой не показана числом");
+    if (/tournodd=1/.test(SEARCH)) {
+      // Пустая колонка обязана СКАЗАТЬ, почему она пуста: прочерк без
+      // объяснения неотличим от сломанного счёта.
+      if (!/drawdown is empty on purpose/.test(lg))
+        bad.push("турнир: пустая просадка не объяснена");
+      if (!/nothing is broken/.test(lg))
+        bad.push("турнир: не сказано, что ничего не сломано");
+    } else {
+      if (!/-8\.15 %/.test(bx))
+        bad.push("турнир: просадка кривой не показана числом");
+      if (/drawdown is empty on purpose/.test(lg))
+        bad.push("турнир: полная колонка объявлена пустой");
+    }
     if (!/not a drawdown/.test(lg))
       bad.push("турнир: не сказано, что худшая сделка — не просадка");
     if (!/not percent of the deposit/.test(lg))

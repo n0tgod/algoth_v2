@@ -6018,6 +6018,12 @@ const UI = {
              + `таблица: это СУММА процентов на ногу, а не процент `
              + `депозита — реплей моделирует слоты, а не размер `
              + `позиции.`},
+  nodd: {en: "<b>curve drawdown is empty on purpose</b> \u2014 this "
+             + "run was made before the column existed. It fills at "
+             + "the next nightly run; nothing is broken.",
+         ru: "<b>просадка кривой пуста по делу</b> \u2014 прогон "
+             + "сделан до появления колонки. Заполнится ближайшим "
+             + "ночным прогоном; ничего не сломано."},
   wait: {en: "no answer from the collector — retrying",
          ru: "сборщик не ответил — повторяю"},
   cols: {en: ["variant", "edge %", "RR \u2265", "stop", "target",
@@ -6113,7 +6119,9 @@ function render(d){
   }
   selbox.innerHTML = sl;
   document.getElementById("tcap").textContent = T("tcap");
-  document.getElementById("tlegend").innerHTML = T("legend")(d);
+  document.getElementById("tlegend").innerHTML = T("legend")(d)
+    + (d.has_dd === false ? `<div class="warn">${T("nodd")}</div>`
+                          : "");
   const rows = sortRows(d);
   const H = T("cols");
   box.innerHTML = `<table><thead><tr>${H.map((h, i) =>
