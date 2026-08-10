@@ -428,6 +428,142 @@ def test_episodes_glue_the_market_wide_drop():
     check("два эпизода", len(np.unique(ep)) == 2, f"{np.unique(ep)}")
 
 
+# --- реплей: чтение записи и сквозной прогон -------------------------
+
+def snapshot_line(sym, t, bid, ask, levels=50):
+    """Строка снимка ровно того вида, что пишет сборщик."""
+    import json as _json
+    o = {"s": sym, "ts": int(t * 1000), "u": 7,
+         "bid": bid, "ask": ask, "bid_sz": 12.5, "ask_sz": 9.25, "upd": 3,
+         "b": [[bid - i * 0.01, 1.0 + i] for i in range(levels)],
+         "a": [[ask + i * 0.01, 1.0 + i] for i in range(levels)],
+         "reach_b": 4.2, "reach_a": 4.1}
+    for w in (0.0005, 0.001, 0.0025, 0.005):
+        o[f"bq{w}"] = 1000.0 * w
+        o[f"aq{w}"] = 1001.0 * w
+    o["t"] = round(t, 3)
+    return _json.dumps(o, separators=(",", ":"))
+
+
+def test_fast_parse_matches_json_loads():
+    """Ускорение, меняющее числа, есть другая мера.
+
+    Лёгкий разбор берёт три поля из строки со ста уровнями. Совпадать он
+    обязан с `json.loads` дословно — иначе весь замер стоял бы на
+    догадке о формате, как это уже было с загрузчиком funding (колонка
+    по номеру) и с `metrics` (колонки по имени).
+    """
+    import json as _json
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "b1_book"))
+    import run_d1 as R                                     # noqa: E402
+    cases = [
+        ("BTCUSDT", 1786000000.123, 90000.5, 90000.6),
+        ("1000PEPEUSDT", 1786000001.0, 1.234e-05, 1.235e-05),
+        ("XUSDT", 1786000002.999, 0.1, 0.2),
+        ("BIDUSDT", 1786000003.5, 7.0, 7.25),      # «bid» внутри имени
+    ]
+    bad = 0
+    for sym, t, bid, ask in cases:
+        line = snapshot_line(sym, t, bid, ask)
+        o = _json.loads(line)
+        want = (float(o["t"]), (o["bid"] + o["ask"]) / 2.0)
+        got = R.mid_line(line)
+        if got != want:
+            bad += 1
+            print(f"       {sym}: {got} против {want}")
+    check("лёгкий разбор совпадает с json.loads", bad == 0, f"{bad}")
+
+
+def test_fast_parse_refuses_a_snapshot_without_time():
+    """Снимок прежнего образца — пропуск, а не цена без времени.
+
+    Отказ обязан быть `ValueError`: хранилище пропускает такую строку
+    наравне с битой, а «тихое ноль» встало бы в ряд ценой.
+    """
+    import json as _json
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "b1_book"))
+    import run_d1 as R                                     # noqa: E402
+    line = _json.dumps({"s": "X", "bid": 1.0, "ask": 1.1})
+    try:
+        R.mid_line(line)
+        check("снимок без метки отвергается", False, "разбор прошёл")
+    except ValueError:
+        check("снимок без метки отвергается", True)
+
+
+def test_replay_end_to_end_into_a_fresh_checkout():
+    """Сквозной прогон настоящего `main()` по настоящим файлам записи.
+
+    Каталог артефактов НЕ создаётся заранее: прогон турнира однажды
+    досчитал всё и упал на последнем шаге, потому что свежий чекаут не
+    несёт `out/`. Тот же дефект потом повторился в зонде режимов —
+    записанный урок сам по себе не защищает новый модуль.
+    """
+    import shutil
+    import tempfile
+    from datetime import datetime, timezone
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "b1_book"))
+    import run_d1 as R                                     # noqa: E402
+    from store import Writer                              # noqa: E402
+
+    tmp = tempfile.mkdtemp()
+    try:
+        root = os.path.join(tmp, "store")
+        w = Writer(root)
+        day = datetime(2026, 8, 5, tzinfo=timezone.utc)
+        t0 = int(day.timestamp())
+        rows, step = 60, 5           # фону нужно не меньше 50 имён
+        j_ev = 3600
+        for r in range(rows):
+            sym = f"S{r:03d}USDT"
+            px = 100.0
+            for j in range(0, 7200, step):
+                if r == 0 and j >= j_ev:
+                    px = 96.0 if j < j_ev + 60 else 96.0 * 1.02
+                t = t0 + j
+                line_px = px
+                w.write("book", sym, {
+                    "s": sym, "ts": int(t * 1000), "u": 1,
+                    "bid": line_px * 0.9999, "ask": line_px * 1.0001,
+                    "bid_sz": 1.0, "ask_sz": 1.0, "upd": 1,
+                    "b": [[line_px * 0.9999, 1.0]],
+                    "a": [[line_px * 1.0001, 1.0]],
+                    "t": round(float(t), 3)}, ts=t)
+        w.flush()
+        w.close()
+
+        out = os.path.join(tmp, "нет", "такого", "каталога")
+        argv = sys.argv
+        sys.argv = ["run.py", "--root", os.path.join(root, "book"),
+                    "--out", out, "--tag", "test"]
+        try:
+            R.main()
+        finally:
+            sys.argv = argv
+        art = os.path.join(out, "D1-events-test.json")
+        rep = os.path.join(out, "D1-report-test.md")
+        check("артефакт записан в несуществующий каталог",
+              os.path.exists(art), art)
+        check("отчёт записан", os.path.exists(rep), rep)
+        import json as _json
+        a = _json.load(open(art, encoding="utf-8"))
+        key = a["verdict_cell"]["key"]
+        c = a["cells"][key]
+        check("событие найдено", c["events"] == 1, f"{c['events']}")
+        check("фон построен по остальным именам",
+              c["width_median"] == rows - 1, f"{c['width_median']}")
+        check("превышение положительно и заметно",
+              c["excess_bp"] is not None and c["excess_bp"] > 100.0,
+              f"{c['excess_bp']}")
+        txt = open(rep, encoding="utf-8").read()
+        check("отчёт называет себя диагностикой",
+              "диагностика, а не вердикт" in txt, "нет оговорки")
+        check("отчёт говорит, что требование §3 не выполнено",
+              "НЕ выполнено" in txt, "молчит о покрытии")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     print("сетка и время")
     test_place_takes_the_last_price_of_the_second()
@@ -456,6 +592,10 @@ def main():
     print("объявленное спекой")
     test_declared_grid_matches_the_spec()
     test_episodes_glue_the_market_wide_drop()
+    print("реплей")
+    test_fast_parse_matches_json_loads()
+    test_fast_parse_refuses_a_snapshot_without_time()
+    test_replay_end_to_end_into_a_fresh_checkout()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

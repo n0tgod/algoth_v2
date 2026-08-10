@@ -165,20 +165,28 @@ class Writer:
         return n
 
 
-def read_jsonl(path, log=None):
+def read_jsonl(path, log=None, parse=json.loads):
     """Прочитать файл записей: простой, сжатый или сжатый с порчей.
 
     Обычное чтение сжатого файла останавливается на первом испорченном
     члене архива, теряя весь хвост. Здесь при отказе поток режется по
     сигнатурам членов и разбирается по частям — данные, записанные ПОСЛЕ
     порчи, остаются доступны.
+
+    `parse` — чем разбирается строка. Умолчание отдаёт запись целиком;
+    D1 передаёт свой лёгкий разбор (нужны три числа из ста уровней, и
+    полный `json.loads` на сотнях миллионов строк стоит часы). Разбор
+    сделан параметром, а не второй копией функции: **порча обрабатывается
+    одним кодом** — иначе быстрый путь однажды потерял бы хвост файла
+    там, где медленный его спасает. Строка, которую `parse` отвергает
+    `ValueError`, пропускается — так же, как битая.
     """
     log = log or (lambda m: None)
     name = os.path.basename(path)
     if path.endswith(".gz"):
         try:
             with gzip.open(path, "rt", encoding="utf-8") as f:
-                rows, ok = _parse(f)
+                rows, ok = _parse(f, parse)
         except OSError as e:
             log(f"{name}: {e}")
             return []
@@ -186,18 +194,18 @@ def read_jsonl(path, log=None):
             return rows
         log(f"{name}: обычное чтение оборвалось на {len(rows)} записях, "
             f"разбираю по членам архива")
-        more = _salvage(path, log)
+        more = _salvage(path, log, parse)
         return more if len(more) > len(rows) else rows
     try:
         with open(path, "r", encoding="utf-8") as f:
-            rows, _ = _parse(f)
+            rows, _ = _parse(f, parse)
     except OSError as e:
         log(f"{name}: {e}")
         return []
     return rows
 
 
-def read_hour(dirpath, hour, log=None):
+def read_hour(dirpath, hour, log=None, parse=json.loads):
     """Записи одного часа: простой файл, сжатый или оба сразу.
 
     Оба сразу бывают по двум разным причинам. Сжатие прервали между
@@ -217,9 +225,14 @@ def read_hour(dirpath, hour, log=None):
     seen = set() if len(have) > 1 else None
     rows, dup = [], 0
     for p in have:
-        for r in read_jsonl(p, log):
+        for r in read_jsonl(p, log, parse):
             if seen is not None:
-                k = json.dumps(r, sort_keys=True, separators=(",", ":"))
+                # Ключ снятия повторов зависит от того, ЧТО вернул
+                # разбор: у записи целиком порядок ключей не обязан
+                # совпадать (отсюда `sort_keys`), а лёгкий разбор отдаёт
+                # кортеж чисел, который сам себе ключ.
+                k = r if isinstance(r, tuple) else json.dumps(
+                    r, sort_keys=True, separators=(",", ":"))
                 if k in seen:
                     dup += 1
                     continue
@@ -230,7 +243,7 @@ def read_hour(dirpath, hour, log=None):
     return rows
 
 
-def _parse(f):
+def _parse(f, parse=json.loads):
     """Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 
     Решение о запасном пути принимает вызывающий: если проглотить отказ
@@ -241,7 +254,7 @@ def _parse(f):
     try:
         for line in f:
             try:
-                out.append(json.loads(line))
+                out.append(parse(line))
             except ValueError:
                 continue                                  # обрыв строки
     except Exception:                                     # noqa: BLE001
@@ -249,7 +262,7 @@ def _parse(f):
     return out, True
 
 
-def _salvage(path, log):
+def _salvage(path, log, parse=json.loads):
     """Разобрать сжатый файл по членам, пропуская испорченные.
 
     Распаковка потоковая, а не «поделить по сигнатуре и разжать куски»:
@@ -284,7 +297,7 @@ def _salvage(path, log):
         text = b"".join(chunks).decode("utf-8", "replace")
         for line in text.splitlines():
             try:
-                out.append(json.loads(line))
+                out.append(parse(line))
             except ValueError:
                 continue
         if d.eof:

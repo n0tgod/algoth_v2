@@ -324,6 +324,16 @@ def episodes(times, gap_sec=EPISODE_SEC):
     return E.episodes(np.asarray(times, dtype=np.float64), gap_sec=gap_sec)
 
 
+def by_episode(values, ep):
+    """Медиана внутри эпизода: одно рыночное окно — один голос.
+
+    Та же функция L3. Без неё месяц из сорока тысяч событий считался бы
+    сорока тысячами наблюдений, а это один рынок, а не сорок тысяч.
+    """
+    return E.by_episode(np.asarray(values, dtype=np.float64),
+                        np.asarray(ep, dtype=np.int64))
+
+
 def live_fall(times, mids, t_now, window_sec=W_SEC, tol=REF_TOL_SEC):
     """Падение к моменту `t_now` по сырому ряду живого сборщика.
 
