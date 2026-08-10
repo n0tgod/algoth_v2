@@ -334,6 +334,12 @@ global.fetch = async (url) => {
                    n_features: 2, weight: 0.08, traded: null}]}
              : url.startsWith("/league")
              ? {present: true, closed_total: 3,
+                // Парное сравнение книг: интервал НАКРЫВАЕТ ноль —
+                // страница обязана сказать это словами, иначе
+                // средняя разница читается как превосходство.
+                pairs: [{a: "z", b: "h4", hours: 82, thin: false,
+                         mean_bp: 79.3, lo_bp: -18.6, hi_bp: 173.0,
+                         covers_zero: true, a_wins: 0.573}],
                 errors: ["model_h24: ValueError: boom"],
                 books: [{book: "model_sit", trades: 3,
                          closed_kept: 2}],
@@ -1345,6 +1351,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("лига: не названо имя, вытягивающее группу");
     if (!/is a pump, not a behaviour/.test(bx))
       bad.push("лига: не сказано, зачем колонка");
+    // Парное сравнение книг — числами стаба и с честным чтением
+    // интервала: 57 % часов и +0.793 % средней разницы, но интервал
+    // накрывает ноль, и это обязано быть сказано.
+    if (!/beats/.test(bx) || !/82 shared hours/.test(bx))
+      bad.push("лига: парное сравнение книг не показано");
+    if (!/\+0\.79 %/.test(bx))
+      bad.push("лига: средняя разность не числом ответа");
+    if (!/cannot be claimed/.test(bx))
+      bad.push("лига: интервал накрывает ноль, а страница молчит");
     const nScroll = (bx.match(/class="scroll"/g) || []).length;
     if (nScroll < 6)
       bad.push("лига: таблицы групп не в прокрутке, колонки срезаются"

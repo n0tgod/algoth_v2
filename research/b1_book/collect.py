@@ -53,6 +53,7 @@ import argparse
 import gzip
 import json
 import os
+import random
 import secrets
 import shutil
 import signal
@@ -2211,6 +2212,61 @@ class Collector:
                             "closed_kept": len(rows) - n0})
         return rows, errors, scanned, opens
 
+    # Книги, которые сравнимы ПАРНО: одно сечение, один горизонт,
+    # различается ровно порядок. У книг разных горизонтов общих часов
+    # нет по построению, и сравнивать их итогами значит сравнивать
+    # разные периоды.
+    PAIRS = (("z", "h4"),)
+    PAIR_BOOT = 4000
+    PAIR_SEED = 20260812
+
+    def _book_pairs(self, rows):
+        """Парное сравнение книг по ОБЩИМ часам, с интервалом.
+
+        Владелец прочёл «per σ показывает лучшие результаты» по итогам
+        рядом — а итоги считаны на разном числе часов и на разных
+        именах. Разность двух книг мерится парно и с интервалом
+        (правило проекта: `compare_arms` в R5), иначе разница в
+        полпроцента на восьмидесяти часах читается как превосходство.
+
+        Единица — среднее нетто ЧАСА, а не сделки: книга набирает в час
+        разное число ног, и сделка тяжёлого часа иначе весила бы
+        больше.
+        """
+        out = []
+        for a, b in self.PAIRS:
+            ga, gb = {}, {}
+            for r in rows:
+                k = (r["arm"], r["hour"])
+                if r["hz"] == a:
+                    ga.setdefault(k, []).append(r)
+                elif r["hz"] == b:
+                    gb.setdefault(k, []).append(r)
+            common = sorted(set(ga) & set(gb))
+            if len(common) < 20:
+                out.append({"a": a, "b": b, "hours": len(common),
+                            "thin": True})
+                continue
+            d = [sum(t["net_bp"] or 0 for t in ga[k]) / len(ga[k])
+                 - sum(t["net_bp"] or 0 for t in gb[k]) / len(gb[k])
+                 for k in common]
+            n = len(d)
+            mean = sum(d) / n
+            rnd = random.Random(self.PAIR_SEED)
+            boot = sorted(sum(d[rnd.randrange(n)] for _ in range(n)) / n
+                          for _ in range(self.PAIR_BOOT))
+            lo = boot[int(0.025 * self.PAIR_BOOT)]
+            hi = boot[int(0.975 * self.PAIR_BOOT)]
+            out.append({
+                "a": a, "b": b, "hours": n, "thin": False,
+                "mean_bp": round(mean, 1),
+                "lo_bp": round(lo, 1), "hi_bp": round(hi, 1),
+                # Интервал накрывает ноль — разницу предъявить нельзя,
+                # какой бы ни была её величина.
+                "covers_zero": bool(lo <= 0 <= hi),
+                "a_wins": round(sum(1 for x in d if x > 0) / n, 3)})
+        return out
+
     def _league_from(self, rows, errors, scanned, now):
         """Агрегаты лиги из готовых строк — арифметика без чтения."""
 
@@ -2280,6 +2336,7 @@ class Collector:
                 "setup_known": sum(1 for r in sub if r["setup"]),
             }
         out = {"present": bool(rows), "closed_total": len(rows),
+               "pairs": self._book_pairs(rows),
                "periods": periods,
                "books": scanned, "errors": errors,
                "generated_at": round(now, 1)}

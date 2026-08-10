@@ -6331,6 +6331,38 @@ const PER_EN = {today:"today (utc)", "30d":"last 30 days",
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
   .replace(/"/g,"&quot;"); }
+// Парное сравнение книг: одно сечение, один горизонт, различается
+// ровно порядок. Итоги рядом в таблице книг считаны на разном числе
+// часов и на разных именах, и разница в них читается как
+// превосходство — а она может не отличаться от нуля. Разность мерится
+// парно и с интервалом, как `compare_arms` в R5.
+function pairPanel(){
+  const ps = (DATA && DATA.pairs) || [];
+  if (!ps.length) return "";
+  return ps.map(p => {
+    const nm = a => BOOK_EN[a] || a;
+    if (p.thin)
+      return `<div class="panel"><div class="cap">${nm(p.a)} vs ${
+        nm(p.b)}</div><div class="dim">only ${p.hours} shared hours —
+        too few to compare</div></div>`;
+    const win = p.covers_zero
+      ? `the interval covers zero: on this history the difference
+         <b>cannot be claimed</b>, whatever its size`
+      : `the interval does not cover zero`;
+    return `<div class="panel"><div class="cap">${nm(p.a)} vs ${
+      nm(p.b)} — paired on shared hours</div>
+      <div>${nm(p.a)} beats ${nm(p.b)} in <b>${
+        Math.round(p.a_wins*100)} %</b> of ${p.hours} shared hours ·
+        mean difference <b class="${p.mean_bp > 0 ? "good" : "bad"}">${
+        pct(p.mean_bp)}</b> per hour ·
+        95 % interval [${pct(p.lo_bp)}, ${pct(p.hi_bp)}]</div>
+      <div class="k" style="margin-top:6px">${win}. Both books rank the
+        same section over the same horizon and differ only in the
+        ordering, so they are compared hour by hour — totals side by
+        side are counted over different hours and different names.</div>
+      </div>`;
+  }).join("");
+}
 function groupTable(cap, rows, names){
   if (!rows || !rows.length)
     return `<div class="panel"><div class="cap">${cap}</div>
@@ -6427,6 +6459,7 @@ function render(){
   box.innerHTML = errs + `<div class="grid">
     ${groupTable("models (arms)", g.arm, ARM_EN)}
     ${groupTable("books (hold)", g.book, BOOK_EN)}
+    ${pairPanel()}
     ${groupTable("situations (dominant family)", g.setup, FAM_EN)}
     ${groupTable("sides", g.side, {long:"long", short:"short"})}
     </div>
