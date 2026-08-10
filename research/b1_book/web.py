@@ -5862,6 +5862,11 @@ body{margin:0;background:
 .frame b{color:var(--accent);font-weight:600}
 .legend{font-size:12.5px;color:var(--muted);margin:0 0 10px}
 .legend b{color:var(--ink);font-weight:600}
+.gloss{margin:8px 0 0}
+.gloss summary{cursor:pointer;color:var(--accent);font-size:12.5px}
+.grow{font-size:12.5px;color:var(--muted);margin:6px 0 0;
+ padding-left:10px;border-left:1px solid var(--rule-soft)}
+.grow b{color:var(--ink);font-weight:600}
 .scroll{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{padding:5px 8px;text-align:right;white-space:nowrap;
@@ -6024,6 +6029,54 @@ const UI = {
          ru: "<b>просадка кривой пуста по делу</b> \u2014 прогон "
              + "сделан до появления колонки. Заполнится ближайшим "
              + "ночным прогоном; ничего не сломано."},
+  gtitle: {en: "what each column means",
+           ru: "что означает каждая колонка"},
+  gloss: {en: [
+      ["variant", "the branch key: all of its settings in one name."],
+      ["edge %", "entry gate \u2014 the smallest move the model has "
+       + "to promise for this branch to take the trade at all. "
+       + "0.22 % is twice the cost round of a leg; 0.33 % is a "
+       + "pickier branch that trades less."],
+      ["RR \u2265", "required ratio of the promised favourable move "
+       + "to the risk, measured on the stop the branch actually "
+       + "places."],
+      ["stop", "where the stop level comes from: the learned "
+       + "quantile, the forecast line, or no stop at all."],
+      ["target", "whether the branch closes at the promised "
+       + "favourable move, or only by stop and time."],
+      ["age h", "how long a position may live before it is closed "
+       + "by time."],
+      ["trades / win", "how many trades the branch took and the "
+       + "share that ended in profit."],
+      ["expect %", "average result of a trade \u2014 the default "
+       + "ranking of this table."],
+      ["median %", "result of the middle trade. A big gap from "
+       + "expectancy means the branch lives on a tail, not on its "
+       + "typical trade."],
+      ["total %", "sum of all its trades."]],
+          ru: [
+      ["вариант", "ключ ветки: все её настройки одним именем."],
+      ["край %", "порог входа \u2014 насколько крупный ход модель "
+       + "должна обещать, чтобы ветка вообще взяла сделку. 0.22 % "
+       + "это двойной круг издержек на ногу; 0.33 % \u2014 ветка "
+       + "придирчивее и торгует реже."],
+      ["RR \u2265", "требуемое отношение обещанного хода в пользу к "
+       + "риску, считанное по тому стопу, который ветка реально "
+       + "ставит."],
+      ["стоп", "откуда берётся уровень стопа: выученный квантиль, "
+       + "линия прогноза или стопа нет вовсе."],
+      ["тейк", "закрывает ли ветка по обещанной цели или только по "
+       + "стопу и времени."],
+      ["возраст ч", "сколько позиция может жить до закрытия по "
+       + "времени."],
+      ["сделок / побед", "сколько сделок ветка взяла и какая доля "
+       + "кончилась прибылью."],
+      ["ожид. %", "средний результат сделки \u2014 по нему таблица "
+       + "и упорядочена по умолчанию."],
+      ["медиана %", "результат средней сделки. Крупное расхождение с "
+       + "ожиданием означает, что ветка живёт хвостом, а не обычной "
+       + "своей сделкой."],
+      ["итог %", "сумма всех её сделок."]]},
   wait: {en: "no answer from the collector — retrying",
          ru: "сборщик не ответил — повторяю"},
   cols: {en: ["variant", "edge %", "RR \u2265", "stop", "target",
@@ -6119,9 +6172,16 @@ function render(d){
   }
   selbox.innerHTML = sl;
   document.getElementById("tcap").textContent = T("tcap");
+  // Расшифровка колонок — под раскрытие: на экране их тринадцать, и
+  // абзацем подряд они вытеснили бы саму таблицу. Владелец спрашивал
+  // про «мало», «current rules», «worst» и «edge» по очереди —
+  // значит объяснять надо ВСЕ, а не те, о которых уже спросили.
   document.getElementById("tlegend").innerHTML = T("legend")(d)
     + (d.has_dd === false ? `<div class="warn">${T("nodd")}</div>`
-                          : "");
+                          : "")
+    + `<details class="gloss"><summary>${T("gtitle")}</summary>${
+        T("gloss").map(r => `<div class="grow"><b>${esc(r[0])}</b> — ${
+          esc(r[1])}</div>`).join("")}</details>`;
   const rows = sortRows(d);
   const H = T("cols");
   box.innerHTML = `<table><thead><tr>${H.map((h, i) =>
