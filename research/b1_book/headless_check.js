@@ -224,7 +224,10 @@ global.fetch = async (url) => {
              : url.startsWith("/tournament")
              ? {present: true, legs: 55245, min_cell: 30,
                 current: "e22_rr2.0_sq_t1_a24", measured: 1,
-                med_exp_bp: 47.3, run_age_sec: 7200, wf: null,
+                med_exp_bp: 47.3,
+                run_age_sec: /tourstale=1/.test(SEARCH) ? 190000 : 7200,
+                stale: /tourstale=1/.test(SEARCH),
+                stale_after_sec: 129600, wf: null,
                 verdict: {status:
                   "нет точек выбора — журнал короче 28 суток"},
                 // Порядок нарочно такой, чтобы объявленный список,
@@ -1470,6 +1473,18 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("турнир: пустая ячейка показана нулём, а не прочерком");
     if (!/нет точек выбора/.test(selb))
       bad.push("турнир: статус селектора не показан");
+    // Свежесть прогона — в ОБЕ стороны: устаревший обязан кричать,
+    // свежий обязан молчать. Иначе либо старая таблица выглядит
+    // сегодняшней («разовый прогон вместо наблюдения»), либо тревога
+    // висит всегда и перестаёт быть сигналом.
+    if (/tourstale=1/.test(SEARCH)) {
+      if (!/nightly run has not come/.test(intro))
+        bad.push("турнир: устаревший прогон не назван устаревшим");
+      if (!/53 h old/.test(intro))
+        bad.push("турнир: возраст устаревшего прогона не числом");
+    } else if (/nightly run has not come/.test(intro)) {
+      bad.push("турнир: свежий прогон объявлен устаревшим");
+    }
     // Сортировка — настоящей функцией страницы: по итогу первой
     // обязана встать текущая ячейка (+2365.5 — максимум стаба).
     if (!global.__sort) {

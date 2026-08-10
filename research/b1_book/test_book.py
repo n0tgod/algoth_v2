@@ -422,6 +422,10 @@ def test_pages_run_headless():
                 ("дерево моделей", web.TREEPAGE, "?k=xxx"),
                 # Турнир политик: весь лист веток отдельной страницей.
                 ("турнир политик", web.TOURPAGE, "?k=xxx"),
+                # Ночной прогон не пришёл: старая таблица обязана
+                # кричать, а не выглядеть сегодняшней.
+                ("турнир с устаревшим прогоном", web.TOURPAGE,
+                 "?k=xxx&tourstale=1"),
                 # Сборщик не ответил (первый обход суток идёт около
                 # минуты): страница обязана сказать «нет ответа», а не
                 # «делить нечего» — владелец увидел ровно это.
@@ -2607,7 +2611,8 @@ def test_model_tree_names_every_book():
                        "wf": {"points": [
                            {"day": 1, "pick": "e22_rr2.0_sq_t1_a24",
                             "elig": 5}]},
-                       "cells": [{"n": 40}, {"n": 10}]}, f)
+                       "cells": [{"n": 40, "exp_bp": 12.0},
+                                 {"n": 10, "exp_bp": -3.0}]}, f)
 
         col = C.Collector.__new__(C.Collector)
         col.log = lambda m: None
@@ -2656,8 +2661,11 @@ def test_model_tree_names_every_book():
               and tt["points"] == 1 and tt["cells_measured"] == 1,
               str(tt))
         # Артефакта нет — честное «ждёт прогона», а не пустая карточка.
+        # Сбрасываются ОБА кеша: дерево читает лист тем же методом, и
+        # его кеш держал бы прежний ответ.
         os.remove(os.path.join(tdir, "V1-tournament.json"))
         col._tree_cache = (0.0, None)
+        col._tour_cache = (0.0, None)
         tt2 = col.model_tree()["tournament"]
         check("без артефакта турнир ждёт прогона, а не молчит",
               tt2["present"] is False and "ждёт" in tt2["status"],
@@ -2713,7 +2721,26 @@ def test_tournament_page_reads_artifact():
         check("медиана считается по измеренным на сервере",
               tr["measured"] == 2 and tr["med_exp_bp"] == 163.0,
               f"{tr['measured']} / {tr['med_exp_bp']}")
-        os.remove(os.path.join(tdir, "V1-tournament.json"))
+        check("свежий прогон устаревшим не объявлен",
+              tr["stale"] is False, str(tr.get("run_age_sec")))
+        # Ночной прогон приходит раз в сутки: артефакт старше суток с
+        # запасом обязан быть назван устаревшим — иначе разовый прогон
+        # выглядит наблюдением. И то же самое обязано доехать до
+        # ДЕРЕВА: обе страницы читают один метод.
+        art = os.path.join(tdir, "V1-tournament.json")
+        old_ts = time.time() - 40 * 3600
+        os.utime(art, (old_ts, old_ts))
+        col._tour_cache = (0.0, None)
+        check("прогон старше 36 ч назван устаревшим",
+              col.model_tournament()["stale"] is True,
+              str(col.model_tournament().get("run_age_sec")))
+        col._tour_cache = (0.0, None)
+        col._tree_cache = (0.0, None)
+        tt = col.model_tree()["tournament"]
+        check("дерево видит ту же устарелость",
+              tt.get("stale") is True and tt.get("present") is True,
+              str(tt))
+        os.remove(art)
         col._tour_cache = (0.0, None)
         tr2 = col.model_tournament()
         check("без артефакта — честное «ждёт прогона»",

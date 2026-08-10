@@ -2086,6 +2086,11 @@ class Collector:
                         "отношению, чтобы фильтр по RR мог показать "
                         "сделки ниже боевого гейта."},
     }
+    # Ночной прогон турнира приходит раз в сутки (сторож, окно 02:xx
+    # UTC). Запас на одно пропущенное окно: 36 ч — это «одну ночь
+    # можно потерять», а двух подряд уже не бывает без поломки.
+    TOUR_STALE = 36 * 3600
+
     TOURNEY_TREE = {
         "title": "policy tournament (spec 10)",
         "title_ru": "Турнир политик исполнения (спека 10)",
@@ -2616,23 +2621,34 @@ class Collector:
         import tournament as TM
         tp = os.path.join(os.path.dirname(HERE), "s10_policy", "out",
                           "V1-tournament.json")
+        # Ночной прогон приходит раз в сутки; порог с запасом на одно
+        # пропущенное окно. Молчащий сторож обязан быть ВИДЕН: старая
+        # таблица со свежим видом — это разовый прогон, притворяющийся
+        # наблюдением, тот же класс, что тишина вместо отказа.
         out = {"present": False, "min_cell": TM.MIN_WIN_TRADES,
-               "current": TM.CURRENT, "generated_at": round(now, 1)}
+               "current": TM.CURRENT, "stale_after_sec": self.TOUR_STALE,
+               "generated_at": round(now, 1)}
         try:
             with open(tp, encoding="utf-8") as f:
                 tj = json.load(f)
             cells = tj.get("cells") or []
             ok = [c for c in cells
                   if (c.get("n") or 0) >= TM.MIN_WIN_TRADES]
-            med = None
-            if ok:
-                exps = sorted(c["exp_bp"] for c in ok)
-                med = exps[len(exps) // 2]
+            # Ячейка без ожидания в медиану не идёт и НЕ роняет ответ:
+            # артефакт прежнего образца (или дописанный наполовину)
+            # обрушивал бы обе страницы разом — и лист, и дерево,
+            # которое читает тот же метод. Отсутствие величины есть
+            # состояние артефакта, а не повод потерять весь показ.
+            exps = sorted(c["exp_bp"] for c in ok
+                          if c.get("exp_bp") is not None)
+            med = exps[len(exps) // 2] if exps else None
+            age = now - os.path.getmtime(tp)
             out.update(present=True, legs=tj.get("legs"),
                        cells=cells, wf=tj.get("wf"),
                        verdict=tj.get("verdict") or {},
                        measured=len(ok), med_exp_bp=med,
-                       run_age_sec=round(now - os.path.getmtime(tp), 1))
+                       run_age_sec=round(age, 1),
+                       stale=age > self.TOUR_STALE)
         except OSError:
             out["status"] = "ждёт первого прогона на VPS"
         except ValueError as e:
@@ -2752,29 +2768,28 @@ class Collector:
         # Турнир политик — ветка ситуационной книги. Живые числа из
         # артефакта последнего прогона; артефакта нет — честное «ждёт
         # прогона», а не пустая карточка.
+        # Артефакт читает ОДИН метод на обе страницы: своя копия
+        # разбора здесь однажды разошлась бы с листом — и порог
+        # измеримости в ней уже был зашит числом 30 вместо константы
+        # турнира.
         tourney = dict(self.TOURNEY_TREE)
-        tp = os.path.join(os.path.dirname(HERE), "s10_policy", "out",
-                          "V1-tournament.json")
-        try:
-            with open(tp, encoding="utf-8") as f:
-                tj = json.load(f)
-            v = tj.get("verdict") or {}
+        tj = self.model_tournament()
+        if tj.get("present"):
             wf = tj.get("wf") or {}
             picks = (wf.get("points") or []) if wf else []
             tourney.update(
                 present=True, legs=tj.get("legs"),
-                status=v.get("status") or "прогон без вердикта",
+                status=(tj.get("verdict") or {}).get("status")
+                or "прогон без вердикта",
                 points=len(picks),
                 pick=(picks[-1].get("pick") if picks else None),
-                cells_measured=sum(
-                    1 for c in tj.get("cells") or []
-                    if (c.get("n") or 0) >= 30))
-        except OSError:
+                cells_measured=tj.get("measured"),
+                run_age_sec=tj.get("run_age_sec"),
+                stale=tj.get("stale"))
+        else:
             tourney.update(present=False,
-                           status="ждёт первого прогона на VPS")
-        except ValueError as e:
-            tourney.update(present=False,
-                           status=f"артефакт не читается: {e}")
+                           status=tj.get("status")
+                           or "ждёт первого прогона на VPS")
         out = {"roots": [dict(self.ROOT_TREE["gbm"], arm="gbm"),
                          dict(self.ROOT_TREE["nn"], arm="nn")],
                "books": books, "tournament": tourney,

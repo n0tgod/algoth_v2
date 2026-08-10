@@ -5647,12 +5647,14 @@ const UI = {
   offbookL: {en: "book not started on the server",
              ru: "книга на сервере ещё не заведена"},
   tnode: {en: t => t.present
-            ? `picks ${t.points}` + (t.pick ? ` · now ${esc(t.pick)}`
-                                            : "")
+            ? (t.stale ? "\u26a0 run is stale · " : "")
+              + `picks ${t.points}`
+              + (t.pick ? ` · now ${esc(t.pick)}` : "")
             : esc(t.status),
           ru: t => t.present
-            ? `точек ${t.points}` + (t.pick ? ` · сейчас ${
-                esc(t.pick)}` : "")
+            ? (t.stale ? "\u26a0 прогон устарел · " : "")
+              + `точек ${t.points}`
+              + (t.pick ? ` · сейчас ${esc(t.pick)}` : "")
             : esc(t.status)},
   allvars: {en: "all 72 branches \u2192",
             ru: "все 72 ветки \u2192"},
@@ -5981,6 +5983,13 @@ const UI = {
   cur: {en: "current rules", ru: "текущие правила"},
   thin: {en: "thin", ru: "мало"},
   tree: {en: "model tree \u2192", ru: "дерево моделей \u2192"},
+  stale: {en: h => `<b>the nightly run has not come</b> \u2014 this `
+            + `table is ${h} h old. The numbers below describe the `
+            + `journal as it was then, not now; check the watchdog `
+            + `and the run log on the server.`,
+          ru: h => `<b>ночной прогон не пришёл</b> \u2014 таблице `
+            + `${h} ч. Числа ниже описывают журнал на тот момент, а `
+            + `не сейчас; проверить сторож и лог прогона на сервере.`},
 };
 function T(k){ const v = UI[k]; return v[LANG] || v.en; }
 function fmt(v, d){
@@ -6019,6 +6028,8 @@ function render(d){
   intro.innerHTML = `<div class="frame">${T("frame")}</div>
     ${T("head")(d)} ·
     <a href="/tree-page?k=${encodeURIComponent(KEY)}">${T("tree")}</a>
+    ${d.stale ? `<div class="warn">${T("stale")(
+        Math.round(d.run_age_sec / 3600))}</div>` : ""}
     <div class="warn"><b>!</b> ${T("guard")}</div>`;
   // Селектор: пока точек нет — его честный статус из артефакта;
   // появятся — числа рядом с нулями (случайный, оракул, референс).
