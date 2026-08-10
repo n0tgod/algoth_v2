@@ -5860,6 +5860,8 @@ body{margin:0;background:
 .frame{border-left:2px solid var(--accent);padding-left:10px;
  font-size:13px;margin:0 0 10px}
 .frame b{color:var(--accent);font-weight:600}
+.legend{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+.legend b{color:var(--ink);font-weight:600}
 .scroll{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{padding:5px 8px;text-align:right;white-space:nowrap;
@@ -5886,6 +5888,7 @@ button[aria-pressed="true"]{border-color:var(--accent);
 <div class="panel" id="intro"></div>
 <div class="panel" id="selbox"></div>
 <div class="panel"><div class="cap" id="tcap"></div>
+  <div class="legend" id="tlegend"></div>
   <div class="scroll" id="box">&hellip;</div></div>
 </div>
 <script>
@@ -5968,6 +5971,22 @@ const UI = {
          ru: "все ветки · клик по заголовку сортирует, второй "
              + "переворачивает, третий возвращает объявленный "
              + "порядок"},
+  legend: {en: d => `<b>current rules</b> \u2014 the branch the live `
+             + `situational book trades right now; it is the `
+             + `reference, not the winner: the selector has to beat `
+             + `it to justify changing the rules at all. `
+             + `<b>thin</b> \u2014 fewer than ${d.min_cell} trades: `
+             + `the cell is <b>unmeasured, not zero</b>, its numbers `
+             + `are noise. Thin cells stay out of the median and are `
+             + `not eligible for the selector.`,
+           ru: d => `<b>текущие правила</b> \u2014 ветка, которой `
+             + `ситуационная книга торгует прямо сейчас; это точка `
+             + `отсчёта, а не победитель: селектор обязан переиграть `
+             + `её, чтобы оправдать само право менять правила. `
+             + `<b>мало</b> \u2014 сделок меньше ${d.min_cell}: `
+             + `ячейка <b>не измерена, а не нулевая</b>, её числа `
+             + `суть шум. В медиану такие не входят и селектору для `
+             + `выбора не годятся.`},
   wait: {en: "no answer from the collector — retrying",
          ru: "сборщик не ответил — повторяю"},
   cols: {en: ["variant", "edge %", "RR \u2265", "stop", "target",
@@ -6042,6 +6061,7 @@ function render(d){
   }
   selbox.innerHTML = sl;
   document.getElementById("tcap").textContent = T("tcap");
+  document.getElementById("tlegend").innerHTML = T("legend")(d);
   const rows = (d.cells || []).map((c, i) => Object.assign({_i: i}, c));
   if (SORT) rows.sort((a, b) => {
     const va = a[SORT.col], vb = b[SORT.col];
