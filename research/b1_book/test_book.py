@@ -420,6 +420,8 @@ def test_pages_run_headless():
                 ("волатильность", web.VOLPAGE, "?k=xxx"),
                 # Дерево моделей: две руки и логика каждой ветки.
                 ("дерево моделей", web.TREEPAGE, "?k=xxx"),
+                # Турнир политик: весь лист веток отдельной страницей.
+                ("турнир политик", web.TOURPAGE, "?k=xxx"),
                 # Сборщик не ответил (первый обход суток идёт около
                 # минуты): страница обязана сказать «нет ответа», а не
                 # «делить нечего» — владелец увидел ровно это.
@@ -2665,6 +2667,63 @@ def test_model_tree_names_every_book():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_tournament_page_reads_artifact():
+    """Лист турнира: ответ — из артефакта прогона, пороги — из турнира.
+
+    Ключ текущих правил и пол измеримости берутся у САМОГО турнира
+    (вторая запись константы разошлась бы с той, по которой считался
+    артефакт); медиана считается по измеренным ячейкам на сервере.
+    Артефакта нет — честное «ждёт прогона», а не пустая таблица.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        tdir = os.path.join(d, "s10_policy", "out")
+        os.makedirs(tdir)
+        cells = [
+            {"key": "e22_rr2.0_sq_t1_a24", "edge": 22, "rr": 2,
+             "stop": "q", "take": True, "age": 24, "n": 50,
+             "win": 0.5, "exp_bp": 47.3, "med_bp": -2.7,
+             "total_bp": 2365.5, "worst_bp": -352.3},
+            {"key": "e22_rr1.5_sn_t1_a24", "edge": 22, "rr": 1.5,
+             "stop": "none", "take": True, "age": 24, "n": 44,
+             "win": 0.705, "exp_bp": 163.0, "med_bp": 99.9,
+             "total_bp": 7172.1, "worst_bp": -543.8},
+            {"key": "e33_rr3.0_sm_t1_a72", "edge": 33, "rr": 3,
+             "stop": "m", "take": True, "age": 72, "n": 9}]
+        with open(os.path.join(tdir, "V1-tournament.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"legs": 100, "cells": cells, "wf": None,
+                       "verdict": {"status": "нет точек"}}, f)
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        tr = col.model_tournament()
+        check("лист собрался из артефакта",
+              tr["present"] is True and tr["legs"] == 100
+              and len(tr["cells"]) == 3, str(tr)[:120])
+        check("пол измеримости и текущие правила — из турнира",
+              tr["min_cell"] == 30
+              and tr["current"] == "e22_rr2.0_sq_t1_a24",
+              f"{tr['min_cell']} / {tr['current']}")
+        # Медиана по ДВУМ измеренным (47.3, 163.0) — средняя из
+        # отсортированных при чётном числе берётся верхняя.
+        check("медиана считается по измеренным на сервере",
+              tr["measured"] == 2 and tr["med_exp_bp"] == 163.0,
+              f"{tr['measured']} / {tr['med_exp_bp']}")
+        os.remove(os.path.join(tdir, "V1-tournament.json"))
+        col._tour_cache = (0.0, None)
+        tr2 = col.model_tournament()
+        check("без артефакта — честное «ждёт прогона»",
+              tr2["present"] is False and "ждёт" in tr2["status"],
+              str(tr2))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_tree_page_fits_the_phone():
     """Дерево на телефоне — вертикальное; правила закреплены источником.
 
@@ -3469,6 +3528,7 @@ def main():
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()
     test_model_tree_names_every_book()
+    test_tournament_page_reads_artifact()
     test_tree_page_fits_the_phone()
     test_volatility_splits_results_by_regime()
     test_book_registry_is_one_list()

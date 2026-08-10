@@ -2591,6 +2591,55 @@ class Collector:
         self._gloss_cache = (now, out)
         return out
 
+    def model_tournament(self):
+        """Полный лист турнира политик: все 72 ветки и селектор.
+
+        Просьба владельца — весь лист веток и подветок отдельной
+        страницей. Ответ читает АРТЕФАКТ последнего прогона (его
+        обновляет ночной сторож), а не пересчитывает: страница обязана
+        описывать тот прогон, который породил файл (урок R1).
+        Артефакта нет — честное «ждёт прогона», а не пустая таблица.
+
+        Порог измеримости ячейки и ключ текущих правил берутся у
+        САМОГО турнира: вторая запись константы разошлась бы с той,
+        по которой считался артефакт.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_tour_cache", (0.0, None))
+        if cached is not None and now - at < 60:
+            return cached
+        # КОД турнира — от настоящего файла, а не от `HERE`: тесты
+        # подменяют `HERE`, чтобы подложить артефакты, и код по тому
+        # же пути не нашёлся бы. Данные ниже — нарочно по `HERE`.
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "s10_policy"))
+        import tournament as TM
+        tp = os.path.join(os.path.dirname(HERE), "s10_policy", "out",
+                          "V1-tournament.json")
+        out = {"present": False, "min_cell": TM.MIN_WIN_TRADES,
+               "current": TM.CURRENT, "generated_at": round(now, 1)}
+        try:
+            with open(tp, encoding="utf-8") as f:
+                tj = json.load(f)
+            cells = tj.get("cells") or []
+            ok = [c for c in cells
+                  if (c.get("n") or 0) >= TM.MIN_WIN_TRADES]
+            med = None
+            if ok:
+                exps = sorted(c["exp_bp"] for c in ok)
+                med = exps[len(exps) // 2]
+            out.update(present=True, legs=tj.get("legs"),
+                       cells=cells, wf=tj.get("wf"),
+                       verdict=tj.get("verdict") or {},
+                       measured=len(ok), med_exp_bp=med,
+                       run_age_sec=round(now - os.path.getmtime(tp), 1))
+        except OSError:
+            out["status"] = "ждёт первого прогона на VPS"
+        except ValueError as e:
+            out["status"] = f"артефакт не читается: {e}"
+        self._tour_cache = (now, out)
+        return out
+
     def model_tree(self):
         """Дерево моделей: две руки и их книги, с логикой каждой ветки.
 

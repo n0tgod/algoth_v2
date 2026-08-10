@@ -27,6 +27,7 @@ const isLeague = /league — what works best/.test(src);
 const isGloss = /playbook — what the model can read/.test(src);
 const isVol = /does the market regime move our results/.test(src);
 const isTree = /model tree — which logic each branch tests/.test(src);
+const isTour = /tournament — all 72 branches/.test(src);
 const isTrades = /id="tb"/.test(src);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
@@ -220,6 +221,31 @@ global.fetch = async (url) => {
                   gbm: {all: {n: 20, days: 10, win: 0.5, pnl: 1.0,
                               net_bp_avg: 2.0, vol_med_bp: 47.0},
                         quiet: null, normal: null, loud: null}}}}
+             : url.startsWith("/tournament")
+             ? {present: true, legs: 55245, min_cell: 30,
+                current: "e22_rr2.0_sq_t1_a24", measured: 1,
+                med_exp_bp: 47.3, run_age_sec: 7200, wf: null,
+                verdict: {status:
+                  "нет точек выбора — журнал короче 28 суток"},
+                // Порядок нарочно такой, чтобы объявленный список,
+                // убывание и возрастание давали ТРИ разных первых
+                // строки: иначе сломанную сортировку не отличить от
+                // работающей (первый вариант стаба это и показал).
+                cells: [
+                  {key: "e22_rr1.5_sq_t1_a24", edge: 22, rr: 1.5,
+                   stop: "q", take: true, age: 24, n: 65, win: 0.569,
+                   exp_bp: 116.3, med_bp: 87.5, total_bp: 700.0,
+                   worst_bp: -896.4},
+                  {key: "e22_rr2.0_sq_t1_a24", edge: 22, rr: 2,
+                   stop: "q", take: true, age: 24, n: 50, win: 0.5,
+                   exp_bp: 47.3, med_bp: -2.7, total_bp: 2365.5,
+                   worst_bp: -352.3},
+                  {key: "e22_rr3.0_sn_t0_a24", edge: 22, rr: 3,
+                   stop: "none", take: false, age: 24, n: 11,
+                   win: 0.455, exp_bp: 62.6, med_bp: -10.3,
+                   total_bp: 50.0, worst_bp: -135.9},
+                  {key: "e33_rr3.0_sm_t1_a72", edge: 33, rr: 3,
+                   stop: "m", take: true, age: 72, n: 0}]}
              : url.startsWith("/model_tree")
              ? {roots: [
                   {arm: "gbm", title: "ML — decision trees",
@@ -747,6 +773,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? setLang : null;"
                 + "\nglobal.__info = typeof showInfo === 'function' "
                 + "? showInfo : null;"
+                + "\nglobal.__sort = typeof sortBy === 'function' "
+                + "? sortBy : null;"
                 + "\nglobal.__infoClose = typeof closeInfo === "
                 + "'function' ? closeInfo : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
@@ -807,14 +835,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree) {
+      && !isGloss && !isVol && !isTree && !isTour) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -978,7 +1006,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -1405,6 +1433,67 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     }
   }
 
+  // Турнир политик: весь лист веток отдельной страницей. Проверки —
+  // числами стаба и в обе стороны: ограничитель «читать по медиане»
+  // обязан быть виден ВСЕГДА, текущие правила помечены, тонкая ячейка
+  // названа тонкой, пустая — прочерками, а не нулями.
+  if (isTour) {
+    if (!seen.some(u => u.startsWith("/tournament")))
+      bad.push("турнир: страница не запросила /tournament");
+    const flat = q => String(q || "").replace(/\s+/g, " ");
+    const bx = flat(global.__el ? global.__el("box").innerHTML : "");
+    const intro = flat(global.__el ? global.__el("intro").innerHTML
+                                   : "");
+    const selb = flat(global.__el ? global.__el("selbox").innerHTML
+                                  : "");
+    const nrows = (bx.match(/<tr class=|<tr>/g) || []).length - 1;
+    if (nrows !== 4)
+      bad.push(`турнир: строк ${nrows}, а ячеек в ответе 4`);
+    if (!/picking the best cell of 72/.test(intro))
+      bad.push("турнир: ограничитель про лучшую ячейку не виден");
+    if (!/legs in the journal <b>55245<\/b>/.test(intro))
+      bad.push("турнир: шапка не несёт числа прогона");
+    if (!/current rules/.test(bx))
+      bad.push("турнир: текущие правила не помечены");
+    if (!/·thin|·мало/.test(bx))
+      bad.push("турнир: тонкая ячейка не названа тонкой");
+    if (!/\+47\.3/.test(bx) || !/-352\.3/.test(bx))
+      bad.push("турнир: числа ячеек не из ответа");
+    if (/e33_rr3\.0_sm_t1_a72[^№]*?\+0\.0/.test(bx))
+      bad.push("турнир: пустая ячейка показана нулём, а не прочерком");
+    if (!/нет точек выбора/.test(selb))
+      bad.push("турнир: статус селектора не показан");
+    // Сортировка — настоящей функцией страницы: по итогу первой
+    // обязана встать текущая ячейка (+2365.5 — максимум стаба).
+    if (!global.__sort) {
+      bad.push("турнир: функции сортировки нет");
+    } else {
+      global.__sort("total_bp");
+      const rows = flat(global.__el("box").innerHTML)
+        .split("<tr").slice(2);
+      if (!/e22_rr2\.0_sq_t1_a24/.test(rows[0] || ""))
+        bad.push("турнир: сортировка по итогу не подняла максимум");
+      global.__sort("total_bp");
+      const asc = flat(global.__el("box").innerHTML)
+        .split("<tr").slice(2);
+      if (!/e22_rr3\.0_sn_t0_a24/.test(asc[0] || ""))
+        bad.push("турнир: второй клик не перевернул порядок");
+      global.__sort("total_bp");
+      const back = flat(global.__el("box").innerHTML)
+        .split("<tr").slice(2);
+      if (!/e22_rr1\.5_sq_t1_a24/.test(back[0] || ""))
+        bad.push("турнир: третий клик не вернул объявленный порядок");
+    }
+    // Язык: русский ограничитель приходит тем же ответом.
+    if (global.__lang) {
+      global.__lang("ru");
+      const ru = flat(global.__el("intro").innerHTML);
+      if (!/лучшую из 72 ячеек/.test(ru))
+        bad.push("турнир: русский ограничитель не показан");
+      global.__lang("en");
+    }
+  }
+
   // Меню страниц — на каждой самостоятельной странице, и проверяется
   // ЧИСЛАМИ: пять пунктов, ключ в каждой ссылке, текущая помечена.
   // «Блок есть» прошло бы и на пустом меню, а пустое меню неотличимо
@@ -1413,11 +1502,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 7)
-      bad.push(`меню: пунктов ${links}, а страниц семь`);
+    if (links !== 8)
+      bad.push(`меню: пунктов ${links}, а страниц восемь`);
     if (!/href="\/league-page\?k=xxx"/.test(nh)
         || !/href="\/glossary-page\?k=xxx"/.test(nh)
-        || !/href="\/tree-page\?k=xxx"/.test(nh))
+        || !/href="\/tree-page\?k=xxx"/.test(nh)
+        || !/href="\/tournament-page\?k=xxx"/.test(nh))
       bad.push("меню: ссылка без ключа или страница потеряна");
     if (!/aria-current="page"/.test(nh))
       bad.push("меню: текущая страница не помечена");
@@ -1660,7 +1750,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree) {
+      && !isGloss && !isVol && !isTree && !isTour) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -1915,7 +2005,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree) {
+             || isTree || isTour) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {

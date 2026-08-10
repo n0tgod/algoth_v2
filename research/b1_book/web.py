@@ -62,6 +62,7 @@ const NAV_ITEMS = [
   ["/vol-page", "volatility", "волатильность"],
   ["/glossary-page", "playbook", "справочник"],
   ["/tree-page", "models", "модели"],
+  ["/tournament-page", "tournament", "турнир"],
   ["/bot-page", "core", "ядро"]];
 function navMount(current){
   const el = document.getElementById("nav");
@@ -5653,6 +5654,8 @@ const UI = {
             ? `точек ${t.points}` + (t.pick ? ` · сейчас ${
                 esc(t.pick)}` : "")
             : esc(t.status)},
+  allvars: {en: "all 72 branches \u2192",
+            ru: "все 72 ветки \u2192"},
   tstat: {en: t => `status: ${esc(t.status)}` + (t.present
             ? ` · legs ${t.legs} · measured cells ${t.cells_measured}`
               + (t.pick ? ` · now ${esc(t.pick)}` : "") : ""),
@@ -5757,7 +5760,9 @@ function infoHTML(){
     const t = DATA.tournament || {};
     return `<div class="mt">${esc(tx(t, "title"))}</div>
       <div class="plain">${esc(tx(t, "plain"))}</div>
-      <div class="stat mono">${T("tstat")(t)}</div>`;
+      <div class="stat mono">${T("tstat")(t)}</div>
+      <div class="stat"><a href="/tournament-page?k=${
+        encodeURIComponent(KEY)}">${T("allvars")}</a></div>`;
   }
   const b = (DATA.books || []).find(x => x.key === kind);
   if (!b) return "";
@@ -5812,6 +5817,252 @@ async function pull(){
   let d = null;
   try {
     const r = await fetch("/model_tree?k=" + encodeURIComponent(KEY));
+    d = await r.json();
+  } catch (e) { d = null; }
+  render(d);
+}
+pull();
+</script>
+"""
+
+
+# Страница турнира политик — просьба владельца: весь лист веток и
+# подветок отдельной страницей. Данные — артефакт последнего прогона
+# через `/tournament`: страница обязана описывать тот прогон, который
+# породил файл, а не текущие исходники (урок R1).
+TOURPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tournament — all 72 branches</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:14px 16px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+.warn{border-left:2px solid var(--ask);padding-left:10px;
+ font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.warn b{color:var(--ask);font-weight:600}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:5px 8px;text-align:right;white-space:nowrap;
+ border-bottom:1px solid var(--rule-soft)}
+th{color:var(--muted);font-weight:600;cursor:pointer;
+ position:sticky;top:0;background:var(--panel)}
+th:first-child,td:first-child{text-align:left}
+tr.hl td{background:rgba(151,71,255,.10)}
+tr.thin td{opacity:.55}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+a{color:var(--accent)}
+button{background:var(--chip);border:1px solid var(--rule);
+ color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;
+ cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+""" + NAVCSS + r"""</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k" id="strap"></span>
+  <span style="flex:1"></span>
+  <span id="lang"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div class="panel" id="selbox"></div>
+<div class="panel"><div class="cap" id="tcap"></div>
+  <div class="scroll" id="box">&hellip;</div></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+let LANG = new URLSearchParams(location.search).get("lang")
+  || (function(){ try { return localStorage.getItem("algoth_lang"); }
+                  catch (e) { return null; } })() || "en";
+let DATA = null;
+// Сортировка — состояние показа, не данных: артефакт приходит в
+// объявленном порядке сетки, и сброс сортировки возвращает его.
+let SORT = null;
+function setLang(v){
+  LANG = v;
+  try { localStorage.setItem("algoth_lang", v); } catch (e) {}
+  render(DATA);
+}
+function sortBy(col){
+  SORT = (SORT && SORT.col === col)
+    ? (SORT.asc ? null : {col: col, asc: true})
+    : {col: col, asc: false};
+  render(DATA);
+}
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+const UI = {
+  strap: {en: "policy tournament — all 72 branches",
+          ru: "турнир политик — все 72 ветки"},
+  guard: {en: "This table is diagnostics, not a verdict. The replay "
+              + "is optimistic — the weights saw these hours, the "
+              + "scanner\u2019s discount and arming are not replayed "
+              + "— and picking the best cell of 72 by the past is "
+              + "exactly the mistake the selector exists to test. "
+              + "The reading is the MEDIAN of measured cells; rows "
+              + "thinner than the floor are unmeasured, not zero.",
+          ru: "Таблица — диагностика, а не вердикт. Реплей "
+              + "оптимистичен: веса видели эти часы, скидка и "
+              + "взведение сканера не реплеятся, — а выбрать лучшую "
+              + "из 72 ячеек по прошлому есть ровно та ошибка, для "
+              + "проверки которой существует селектор. Чтение — "
+              + "МЕДИАНА измеренных ячеек; строки тоньше пола не "
+              + "измерены, а не нулевые."},
+  head: {en: d => `legs in the journal <b>${d.legs}</b> · `
+              + `measured cells <b>${d.measured}</b> of `
+              + `${d.cells.length} · median expectancy of measured `
+              + `<b>${fmt(d.med_exp_bp)} bp</b> · run `
+              + `${Math.round(d.run_age_sec/3600)} h ago`,
+         ru: d => `ног в журнале <b>${d.legs}</b> · измеренных ячеек `
+              + `<b>${d.measured}</b> из ${d.cells.length} · медиана `
+              + `ожидания по измеренным <b>${fmt(d.med_exp_bp)} `
+              + `б.п.</b> · прогон ${Math.round(d.run_age_sec/3600)} `
+              + `ч назад`},
+  selcap: {en: "selector (the verdict is judged here)",
+           ru: "селектор (вердикт выносится здесь)"},
+  tcap: {en: "all branches · click a column header to sort, click "
+             + "again to flip, third click restores the declared "
+             + "order",
+         ru: "все ветки · клик по заголовку сортирует, второй "
+             + "переворачивает, третий возвращает объявленный "
+             + "порядок"},
+  wait: {en: "no answer from the collector — retrying",
+         ru: "сборщик не ответил — повторяю"},
+  cols: {en: ["variant", "edge bp", "RR \u2265", "stop", "target",
+              "age h", "trades", "win", "expect bp", "median",
+              "total", "worst"],
+         ru: ["вариант", "край б.п.", "RR \u2265", "стоп", "тейк",
+              "возраст ч", "сделок", "побед", "ожид. б.п.",
+              "медиана", "итог", "худшая"]},
+  stop: {en: {q: "quantile", m: "forecast line", none: "no stop"},
+         ru: {q: "квантиль", m: "линия прогноза", none: "без стопа"}},
+  yes: {en: "yes", ru: "да"}, no: {en: "no", ru: "нет"},
+  cur: {en: "current rules", ru: "текущие правила"},
+  thin: {en: "thin", ru: "мало"},
+  tree: {en: "model tree \u2192", ru: "дерево моделей \u2192"},
+};
+function T(k){ const v = UI[k]; return v[LANG] || v.en; }
+function fmt(v, d){
+  if (v == null) return "\u2014";
+  const t = v.toFixed(d == null ? 1 : d);
+  return (v > 0 ? "+" : "") + t;
+}
+function cls(v){ return v == null ? "" : v > 0 ? "good"
+  : v < 0 ? "bad" : ""; }
+const COLS = ["key", "edge", "rr", "stop", "take", "age",
+              "n", "win", "exp_bp", "med_bp", "total_bp", "worst_bp"];
+function render(d){
+  DATA = d;
+  navMount("/tournament-page");
+  document.getElementById("strap").textContent = T("strap");
+  document.getElementById("lang").innerHTML =
+    ["en","ru"].map(v => `<button data-l="${v}"
+      aria-pressed="${String(LANG === v)}">${v.toUpperCase()}</button>`)
+      .join(" ");
+  document.querySelectorAll("#lang button").forEach(b =>
+    b.onclick = () => setLang(b.dataset.l));
+  const intro = document.getElementById("intro");
+  const selbox = document.getElementById("selbox");
+  const box = document.getElementById("box");
+  if (!d) {
+    intro.textContent = T("wait");
+    setTimeout(pull, 5000);
+    return;
+  }
+  if (!d.present) {
+    intro.innerHTML = `${esc(d.status || "")} ·
+      <a href="/tree-page?k=${encodeURIComponent(KEY)}">${T("tree")}</a>`;
+    selbox.innerHTML = ""; box.innerHTML = "";
+    return;
+  }
+  intro.innerHTML = `${T("head")(d)} ·
+    <a href="/tree-page?k=${encodeURIComponent(KEY)}">${T("tree")}</a>
+    <div class="warn"><b>!</b> ${T("guard")}</div>`;
+  // Селектор: пока точек нет — его честный статус из артефакта;
+  // появятся — числа рядом с нулями (случайный, оракул, референс).
+  const wf = d.wf, v = d.verdict || {};
+  let sl = `<div class="cap">${T("selcap")}</div>`;
+  if (!wf) {
+    sl += esc(v.status || "");
+  } else {
+    sl += `${esc(v.status || "")}<div class="mono" style="margin-top:6px">
+      selector ${fmt(wf.sel && wf.sel.total_bp)} bp ·
+      random median ${fmt(v.rnd_median_bp)} / max ${fmt(v.rnd_p95_bp)} ·
+      oracle ${fmt(wf.ora && wf.ora.total_bp)} ·
+      current ${fmt(wf.ref && wf.ref.total_bp)} ·
+      kill-10 ${fmt(wf.kill && wf.kill.total_bp)}
+      (${(wf.kill_events || []).length} kills)</div>`;
+  }
+  selbox.innerHTML = sl;
+  document.getElementById("tcap").textContent = T("tcap");
+  const rows = (d.cells || []).map((c, i) => Object.assign({_i: i}, c));
+  if (SORT) rows.sort((a, b) => {
+    const va = a[SORT.col], vb = b[SORT.col];
+    if (va == null && vb == null) return a._i - b._i;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (va === vb) return a._i - b._i;
+    return SORT.asc ? (va < vb ? -1 : 1) : (va > vb ? -1 : 1);
+  });
+  const H = T("cols");
+  box.innerHTML = `<table><thead><tr>${H.map((h, i) =>
+    `<th onclick="sortBy('${COLS[i]}')">${h}${
+      SORT && SORT.col === COLS[i] ? (SORT.asc ? " \u2191" : " \u2193")
+      : ""}</th>`).join("")}</tr></thead><tbody>${
+    rows.map(c => {
+      const cur = c.key === d.current;
+      const thin = (c.n || 0) > 0 && c.n < d.min_cell;
+      const name = `<span class="mono">${esc(c.key)}</span>${
+        cur ? ` <span style="color:var(--accent)">· ${T("cur")}</span>`
+            : ""}`;
+      if (!c.n)
+        return `<tr${cur ? ' class="hl"' : ""}><td>${name}</td>
+          <td>${c.edge}</td><td>${c.rr}</td>
+          <td>${T("stop")[c.stop]}</td>
+          <td>${c.take ? T("yes") : T("no")}</td><td>${c.age}</td>
+          <td>0</td><td>\u2014</td><td>\u2014</td><td>\u2014</td>
+          <td>\u2014</td><td>\u2014</td></tr>`;
+      return `<tr class="${cur ? "hl" : ""}${thin ? " thin" : ""}">
+        <td>${name}${thin ? ` <span class="dim">·${T("thin")}</span>`
+                          : ""}</td>
+        <td>${c.edge}</td><td>${c.rr}</td>
+        <td>${T("stop")[c.stop]}</td>
+        <td>${c.take ? T("yes") : T("no")}</td><td>${c.age}</td>
+        <td class="mono">${c.n}</td>
+        <td class="mono">${Math.round((c.win || 0) * 100)} %</td>
+        <td class="mono ${cls(c.exp_bp)}">${fmt(c.exp_bp)}</td>
+        <td class="mono ${cls(c.med_bp)}">${fmt(c.med_bp)}</td>
+        <td class="mono ${cls(c.total_bp)}">${fmt(c.total_bp)}</td>
+        <td class="mono ${cls(c.worst_bp)}">${fmt(c.worst_bp)}</td>
+      </tr>`;
+    }).join("")}</tbody></table>`;
+}
+async function pull(){
+  let d = null;
+  try {
+    const r = await fetch("/tournament?k=" + encodeURIComponent(KEY));
     d = await r.json();
   } catch (e) { d = null; }
   render(d);
@@ -6236,6 +6487,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/tree-page":
                 return self._ok(TREEPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/tournament":
+                return self._ok(json.dumps(
+                    collector.model_tournament(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/tournament-page":
+                return self._ok(TOURPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),
