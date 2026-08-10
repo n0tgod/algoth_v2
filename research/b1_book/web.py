@@ -5861,6 +5861,9 @@ body{margin:0;background:
 .warn{border-left:2px solid var(--ask);padding-left:10px;
  font-size:12.5px;color:var(--muted);margin:10px 0 0}
 .warn b{color:var(--ask);font-weight:600}
+.frame{border-left:2px solid var(--accent);padding-left:10px;
+ font-size:13px;margin:0 0 10px}
+.frame b{color:var(--accent);font-weight:600}
 .scroll{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{padding:5px 8px;text-align:right;white-space:nowrap;
@@ -5916,6 +5919,22 @@ function esc(s){ return String(s == null ? "" : s)
 const UI = {
   strap: {en: "policy tournament — all 72 branches",
           ru: "турнир политик — все 72 ветки"},
+  frame: {en: "These are <b>not 72 models</b>. There is one set of "
+              + "weights per head (ML trees and AI net), and the 72 "
+              + "rows are 72 sets of <b>behaviour rules</b> on those "
+              + "same weights \u2014 where to put the stop, whether "
+              + "to take profit, how long to hold, how selective to "
+              + "be at entry. Same forecast, different handling. "
+              + "That is why a difference in results can be "
+              + "attributed to the rule and not to another model.",
+          ru: "Это <b>не 72 модели</b>. Веса одни на голову (ML — "
+              + "деревья, AI — сеть), а 72 строки — это 72 набора "
+              + "<b>правил поведения</b> на тех же весах: куда "
+              + "ставить стоп, брать ли прибыль по цели, сколько "
+              + "держать, насколько придирчиво входить. Прогноз тот "
+              + "же, обращение с ним разное. Именно поэтому разницу "
+              + "результатов можно приписать правилу, а не другой "
+              + "модели."},
   guard: {en: "This table is diagnostics, not a verdict. The replay "
               + "is optimistic — the weights saw these hours, the "
               + "scanner\u2019s discount and arming are not replayed "
@@ -5997,7 +6016,8 @@ function render(d){
     selbox.innerHTML = ""; box.innerHTML = "";
     return;
   }
-  intro.innerHTML = `${T("head")(d)} ·
+  intro.innerHTML = `<div class="frame">${T("frame")}</div>
+    ${T("head")(d)} ·
     <a href="/tree-page?k=${encodeURIComponent(KEY)}">${T("tree")}</a>
     <div class="warn"><b>!</b> ${T("guard")}</div>`;
   // Селектор: пока точек нет — его честный статус из артефакта;

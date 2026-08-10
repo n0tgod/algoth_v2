@@ -1451,6 +1451,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push(`турнир: строк ${nrows}, а ячеек в ответе 4`);
     if (!/picking the best cell of 72/.test(intro))
       bad.push("турнир: ограничитель про лучшую ячейку не виден");
+    // Рамка предмета: таблица из 72 строк с ключами читается как 72
+    // РАЗНЫЕ МОДЕЛИ — владелец так её и прочёл. Страница обязана
+    // сказать обратное сама, и первым же абзацем.
+    if (!/not 72 models/.test(intro))
+      bad.push("турнир: не сказано, что это не 72 модели");
+    if (!/behaviour rules/.test(intro))
+      bad.push("турнир: не сказано, что различаются правила поведения");
     if (!/legs in the journal <b>55245<\/b>/.test(intro))
       bad.push("турнир: шапка не несёт числа прогона");
     if (!/current rules/.test(bx))
@@ -1490,6 +1497,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       const ru = flat(global.__el("intro").innerHTML);
       if (!/лучшую из 72 ячеек/.test(ru))
         bad.push("турнир: русский ограничитель не показан");
+      if (!/не 72 модели/.test(ru))
+        bad.push("турнир: русская рамка предмета не показана");
       global.__lang("en");
     }
   }
