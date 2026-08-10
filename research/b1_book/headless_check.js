@@ -1189,6 +1189,82 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       else if (reset !== before)
         bad.push("график: двойной щелчок не вернул автоматический "
                  + "масштаб цены");
+
+      // Телефон: палец обязан уметь всё то же, что мышь, — жалоба
+      // владельца была ровно об этом. Жесты воспроизводятся
+      // НАСТОЯЩИМИ обработчиками, результат читается по подписям
+      // шкалы и счётчику свечей.
+      const tfire = (t, touches) => (ev[t] || []).forEach(
+        f => f({touches: touches}));
+      // 1. Вертикальный сдвиг ПАЛЬЦЕМ (pointerType touch): раньше он
+      //    не делал ничего — вертикаль была отдана мыши и перу.
+      global.__texts = [];
+      fire("pointerdown", {clientX: 400, clientY: 200, pointerId: 2,
+                           pointerType: "touch"});
+      fire("pointermove", {clientX: 400, clientY: 200, pointerId: 2});
+      const t0 = global.__texts.join("|");
+      global.__texts = [];
+      fire("pointermove", {clientX: 400, clientY: 320, pointerId: 2});
+      fire("pointerup", {clientX: 400, clientY: 320, pointerId: 2,
+                         pointerType: "touch"});
+      if (!t0 || t0 === global.__texts.join("|"))
+        bad.push("график: палец не сдвигает шкалу цены");
+      if (ev.dblclick) fire("dblclick", {});
+      // 2. Вертикальный щипок — масштаб ЦЕНЫ.
+      global.__texts = []; if (ev.dblclick) fire("dblclick", {});
+      const v0 = global.__texts.join("|");
+      tfire("touchstart", [{clientX: 400, clientY: 150},
+                           {clientX: 400, clientY: 250}]);
+      global.__texts = [];
+      tfire("touchmove", [{clientX: 400, clientY: 100},
+                          {clientX: 400, clientY: 300}]);
+      tfire("touchend", []);
+      if (!global.__texts.length
+          || v0 === global.__texts.join("|"))
+        bad.push("график: вертикальный щипок не меняет масштаб цены");
+      if (ev.dblclick) fire("dblclick", {});
+      // 3. Горизонтальный щипок — масштаб ВРЕМЕНИ: счётчик видимых
+      //    свечей обязан измениться.
+      const capEl = global.__el("cap2");
+      const n0 = String(capEl.textContent || "");
+      tfire("touchstart", [{clientX: 300, clientY: 200},
+                           {clientX: 500, clientY: 200}]);
+      tfire("touchmove", [{clientX: 200, clientY: 200},
+                          {clientX: 600, clientY: 200}]);
+      tfire("touchend", []);
+      if (!n0 || n0 === String(capEl.textContent || ""))
+        bad.push("график: горизонтальный щипок не меняет окно времени");
+      // Окно времени возвращается ОБРАТНЫМ щипком точно (90 → 45 →
+      // 90 при том же якоре): дальше проверяется слой сделок, и
+      // уехавшее окно роняло бы его виной этого теста.
+      tfire("touchstart", [{clientX: 200, clientY: 200},
+                           {clientX: 600, clientY: 200}]);
+      tfire("touchmove", [{clientX: 300, clientY: 200},
+                          {clientX: 500, clientY: 200}]);
+      tfire("touchend", []);
+      // 4. Двойное касание возвращает автоматическую вертикаль — как
+      //    двойной щелчок у мыши; dblclick телефон не шлёт.
+      fire("pointerdown", {clientX: 400, clientY: 200, pointerId: 3,
+                           pointerType: "touch"});
+      fire("pointermove", {clientX: 400, clientY: 260, pointerId: 3});
+      fire("pointerup", {clientX: 400, clientY: 260, pointerId: 3,
+                         pointerType: "touch"});
+      const taps = () => {
+        fire("pointerdown", {clientX: 400, clientY: 200, pointerId: 4,
+                             pointerType: "touch"});
+        fire("pointerup", {clientX: 400, clientY: 200, pointerId: 4,
+                           pointerType: "touch"});
+      };
+      // Первый тап ставит перекрестие и подсказку (тап по сделке —
+      // фича), сброс обязан снять их вместе с масштабом — иначе
+      // «возврат к исходному» не совпал бы с исходным.
+      taps(); global.__texts = []; taps();
+      const dt = global.__texts.join("|");
+      if (!dt)
+        bad.push("график: двойное касание ничего не перерисовывает");
+      else if (dt !== before)
+        bad.push("график: двойное касание не вернуло автоматический "
+                 + "масштаб цены");
     }
   }
 

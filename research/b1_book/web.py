@@ -2927,9 +2927,10 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 <div id="recnote"></div>
 <div class="panel">
   <div class="cap"><span id="cap">1m candles · drag to pan —
-      sideways and up/down · wheel or pinch zooms time, shift+wheel
-      (or wheel over the price axis) zooms price · double click
-      resets the price scale</span>
+      sideways and up/down, finger too · pinch sideways or wheel
+      zooms time, pinch up-down / shift+wheel (or wheel over the
+      price axis) zooms price · double click or double tap resets
+      the price scale</span>
     <span id="cap2" class="mono"></span></div>
   <canvas id="px" height="420"></canvas>
   <div id="tip" class="mono"></div>
@@ -4351,10 +4352,13 @@ function vreset() { vpan = 0; vzoom = 1; }
 px.addEventListener("pointerdown", e => {
   px.setPointerCapture(e.pointerId);
   drag = {x:e.clientX, y:e.clientY, i0:view?view.i0:0, v:vpan,
-          // Палец на телефоне листает страницу, и отнимать это у
-          // владельца нельзя: вертикаль тянется мышью и пером, а
-          // касание оставляет прокрутку экрану.
-          vert: e.pointerType !== "touch"}; });
+          // Палец тянет и вертикаль тоже: у холста стоит
+          // touch-action:none, страница с него не листается и так,
+          // значит вертикальный жест не отнимает у владельца ничего —
+          // а без него телефон не мог сдвинуть цену вовсе (прежняя
+          // оговорка «касание оставляет прокрутку экрану» была
+          // списана с намерения, а не с кода).
+          vert: true}; });
 px.addEventListener("pointermove", e => {
   if (!drag) { hover(e); return; }
   const c = cands(); if (!c.length || !view) return;
@@ -4370,9 +4374,24 @@ px.addEventListener("pointermove", e => {
   }
   draw();
 });
+// Двойное касание пальцем — тот же сброс, что двойной щелчок мышью:
+// dblclick при touch-action:none телефон не шлёт, и уехавшую цену
+// иначе было бы не вернуть без перезагрузки страницы.
+let lastTap = 0;
 px.addEventListener("pointerup", e => {
   if (drag && Math.abs(e.clientX-drag.x) < 6
-      && Math.abs(e.clientY-drag.y) < 6) hover(e);
+      && Math.abs(e.clientY-drag.y) < 6) {
+    if (e.pointerType === "touch" && Date.now() - lastTap < 350) {
+      // Сброс снимает и перекрестие с подсказкой: первый тап их
+      // поставил (тап по сделке показывает подсказку — это фича),
+      // и «автоматический масштаб» с висящим перекрестием не был бы
+      // возвратом к исходному виду.
+      vreset(); lastTap = 0; CROSS = null;
+      tip.style.display = "none"; draw();
+    } else {
+      lastTap = Date.now(); hover(e);
+    }
+  }
   drag = null; });
 // Двойной щелчок возвращает автоматический масштаб: уехав по цене,
 // вернуться иначе было бы нечем, кроме перезагрузки страницы.
@@ -4391,14 +4410,39 @@ px.addEventListener("wheel", e => {
   }
   zoom(k, e.offsetX/px.clientWidth);
 }, {passive:false});
+// Щипок читается по осям, а не одним расстоянием: горизонтальный
+// развод пальцев — масштаб времени вокруг центра щипка, вертикальный —
+// масштаб цены, движение самого центра — панорама по обеим осям.
+// Прежний щипок менял только время и всегда вокруг середины экрана —
+// владелец на телефоне не мог ни растянуть цену, ни прицелиться.
 px.addEventListener("touchstart", e => { if (e.touches.length===2){
-  drag=null; pinch=dist(e); } }, {passive:true});
+  drag=null; pinch=span(e); } }, {passive:true});
 px.addEventListener("touchmove", e => { if (e.touches.length===2 && pinch){
-  const d=dist(e); zoom(pinch/d, .5); pinch=d; } }, {passive:true});
+  const s=span(e);
+  const r = px.getBoundingClientRect();
+  // Оси независимы: диагональный щипок меняет обе. Порог в 40px —
+  // чтобы почти вертикальный щипок не дёргал время шумом дрожащих
+  // пальцев (и наоборот).
+  if (pinch.dx > 40 && s.dx > 40)
+    zoom(pinch.dx/s.dx, (s.cx - r.left)/Math.max(1, px.clientWidth));
+  if (pinch.dy > 40 && s.dy > 40)
+    vzoom = Math.max(0.05, Math.min(20, vzoom*pinch.dy/s.dy));
+  const c = cands();
+  if (c.length && view) {
+    const per = Math.max(1e-9, px.clientWidth/view.n);
+    view.i0 = Math.max(0, Math.min(c.length-view.n,
+                                   view.i0 - (s.cx-pinch.cx)/per));
+    follow = false;
+    document.getElementById("live").setAttribute("aria-pressed","false");
+  }
+  vpan += (s.cy-pinch.cy)/Math.max(1, px.clientHeight - 30);
+  pinch=s; draw(); } }, {passive:true});
 px.addEventListener("touchend", () => { pinch=null; });
-function dist(e){ return Math.hypot(
-  e.touches[0].clientX-e.touches[1].clientX,
-  e.touches[0].clientY-e.touches[1].clientY); }
+function span(e){
+  const a=e.touches[0], b=e.touches[1];
+  return {dx: Math.abs(a.clientX-b.clientX),
+          dy: Math.abs(a.clientY-b.clientY),
+          cx: (a.clientX+b.clientX)/2, cy: (a.clientY+b.clientY)/2}; }
 function zoom(k, anchor) {
   const c = cands(); if (!c.length || !view) return;
   const n0 = view.n;
