@@ -7,12 +7,13 @@
    "stop": "q",
    "take": true,
    "age": 24,
-   "n": 65,
-   "win": 0.569,
-   "exp_bp": 116.3,
-   "med_bp": 87.5,
-   "total_bp": 7559.5,
-   "worst_bp": -896.4
+   "n": 97,
+   "win": 0.443,
+   "exp_bp": -29.9,
+   "med_bp": -35.9,
+   "total_bp": -2902.2,
+   "worst_bp": -2004.1,
+   "dd_bp": -8964.4
   },
   {
    "key": "e22_rr1.5_sq_t1_a72",
@@ -21,12 +22,13 @@
    "stop": "q",
    "take": true,
    "age": 72,
-   "n": 61,
-   "win": 0.557,
-   "exp_bp": 99.1,
-   "med_bp": 77.0,
-   "total_bp": 6042.5,
-   "worst_bp": -896.4
+   "n": 89,
+   "win": 0.449,
+   "exp_bp": 30.0,
+   "med_bp": -35.9,
+   "total_bp": 2667.7,
+   "worst_bp": -2004.1,
+   "dd_bp": -2685.7
   },
   {
    "key": "e22_rr1.5_sq_t0_a24",
@@ -35,12 +37,13 @@
    "stop": "q",
    "take": false,
    "age": 24,
-   "n": 25,
-   "win": 0.6,
-   "exp_bp": 1108.2,
-   "med_bp": 223.4,
-   "total_bp": 27704.2,
-   "worst_bp": -137.8
+   "n": 40,
+   "win": 0.475,
+   "exp_bp": 557.8,
+   "med_bp": -12.2,
+   "total_bp": 22311.1,
+   "worst_bp": -1287.4,
+   "dd_bp": -79.5
   },
   {
    "key": "e22_rr1.5_sq_t0_a72",
@@ -49,12 +52,13 @@
    "stop": "q",
    "take": false,
    "age": 72,
-   "n": 19,
-   "win": 0.579,
-   "exp_bp": 1644.9,
-   "med_bp": 63.0,
-   "total_bp": 31253.3,
-   "worst_bp": -137.8
+   "n": 26,
+   "win": 0.308,
+   "exp_bp": 420.3,
+   "med_bp": -77.0,
+   "total_bp": 10927.8,
+   "worst_bp": -1399.7,
+   "dd_bp": -737.5
   },
   {
    "key": "e22_rr1.5_sm_t1_a24",
@@ -63,12 +67,13 @@
    "stop": "m",
    "take": true,
    "age": 24,
-   "n": 79,
-   "win": 0.443,
-   "exp_bp": 85.2,
-   "med_bp": -12.4,
-   "total_bp": 6729.8,
-   "worst_bp": -617.8
+   "n": 124,
+   "win": 0.347,
+   "exp_bp": 7.6,
+   "med_bp": -48.7,
+   "total_bp": 936.4,
+   "worst_bp": -1180.7,
+   "dd_bp": -3871.6
   },
   {
    "key": "e22_rr1.5_sm_t1_a72",
@@ -77,12 +82,13 @@
    "stop": "m",
    "take": true,
    "age": 72,
-   "n": 75,
-   "win": 0.44,
-   "exp_bp": 81.5,
-   "med_bp": -33.1,
-   "total_bp": 6113.2,
-   "worst_bp": -617.8
+   "n": 116,
+   "win": 0.345,
+   "exp_bp": 18.7,
+   "med_bp": -47.2,
+   "total_bp": 2168.9,
+   "worst_bp": -1180.7,
+   "dd_bp": -2639.1
   },
   {
    "key": "e22_rr1.5_sm_t0_a24",
@@ -91,12 +97,13 @@
    "stop": "m",
    "take": false,
    "age": 24,
-   "n": 31,
-   "win": 0.484,
-   "exp_bp": 900.3,
-   "med_bp": -8.2,
-   "total_bp": 27907.8,
-   "worst_bp": -149.4
+   "n": 53,
+   "win": 0.34,
+   "exp_bp": 345.3,
+   "med_bp": -44.6,
+   "total_bp": 18302.5,
+   "worst_bp": -1289.7,
+   "dd_bp": -1953.4
   },
   {
    "key": "e22_rr1.5_sm_t0_a72",
@@ -105,12 +112,13 @@
    "stop": "m",
    "take": false,
    "age": 72,
-   "n": 24,
-   "win": 0.417,
-   "exp_bp": 1273.1,
-   "med_bp": -34.8,
-   "total_bp": 30555.4,
-   "worst_bp": -117.0
+   "n": 39,
+   "win": 0.282,
+   "exp_bp": 254.3,
+   "med_bp": -65.6,
+   "total_bp": 9917.0,
+   "worst_bp": -1289.7,
+   "dd_bp": -2582.3
   },
   {
    "key": "e22_rr1.5_sn_t1_a24",
@@ -119,12 +127,13 @@
    "stop": "none",
    "take": true,
    "age": 24,
-   "n": 44,
-   "win": 0.705,
-   "exp_bp": 163.0,
-   "med_bp": 99.9,
-   "total_bp": 7172.1,
-   "worst_bp": -543.8
+   "n": 52,
+   "win": 0.654,
+   "exp_bp": 23.6,
+   "med_bp": 97.7,
+   "total_bp": 1229.7,
+   "worst_bp": -2299.2,
+   "dd_bp": -7827.0
   },
   {
    "key": "e22_rr1.5_sn_t1_a72",
@@ -133,12 +142,13 @@
    "stop": "none",
    "take": true,
    "age": 72,
-   "n": 39,
-   "win": 0.744,
-   "exp_bp": 165.8,
-   "med_bp": 103.0,
-   "total_bp": 6466.2,
-   "worst_bp": -543.8
+   "n": 41,
+   "win": 0.732,
+   "exp_bp": 58.0,
+   "med_bp": 109.6,
+   "total_bp": 2379.9,
+   "worst_bp": -2787.8,
+   "dd_bp": -5964.5
   },
   {
    "key": "e22_rr1.5_sn_t0_a24",
@@ -147,12 +157,13 @@
    "stop": "none",
    "take": false,
    "age": 24,
-   "n": 20,
-   "win": 0.65,
-   "exp_bp": 1286.2,
-   "med_bp": 269.8,
-   "total_bp": 25724.0,
-   "worst_bp": -225.2
+   "n": 24,
+   "win": 0.583,
+   "exp_bp": 950.1,
+   "med_bp": 107.8,
+   "total_bp": 22803.4,
+   "worst_bp": -800.6,
+   "dd_bp": -149.9
   },
   {
    "key": "e22_rr1.5_sn_t0_a72",
@@ -161,12 +172,13 @@
    "stop": "none",
    "take": false,
    "age": 72,
-   "n": 13,
-   "win": 0.538,
-   "exp_bp": 2169.9,
-   "med_bp": 32.0,
-   "total_bp": 28208.4,
-   "worst_bp": -310.9
+   "n": 12,
+   "win": 0.667,
+   "exp_bp": 1183.8,
+   "med_bp": 202.4,
+   "total_bp": 14205.7,
+   "worst_bp": -272.2,
+   "dd_bp": 0.0
   },
   {
    "key": "e22_rr2.0_sq_t1_a24",
@@ -175,12 +187,13 @@
    "stop": "q",
    "take": true,
    "age": 24,
-   "n": 50,
-   "win": 0.5,
-   "exp_bp": 47.3,
-   "med_bp": -2.7,
-   "total_bp": 2365.5,
-   "worst_bp": -352.3
+   "n": 63,
+   "win": 0.349,
+   "exp_bp": -13.4,
+   "med_bp": -37.9,
+   "total_bp": -842.2,
+   "worst_bp": -1551.5,
+   "dd_bp": -865.5
   },
   {
    "key": "e22_rr2.0_sq_t1_a72",
@@ -189,12 +202,13 @@
    "stop": "q",
    "take": true,
    "age": 72,
-   "n": 49,
-   "win": 0.49,
-   "exp_bp": 44.1,
-   "med_bp": -7.2,
-   "total_bp": 2162.7,
-   "worst_bp": -352.3
+   "n": 62,
+   "win": 0.355,
+   "exp_bp": -2.6,
+   "med_bp": -43.5,
+   "total_bp": -159.4,
+   "worst_bp": -1551.5,
+   "dd_bp": -631.4
   },
   {
    "key": "e22_rr2.0_sq_t0_a24",
@@ -203,12 +217,13 @@
    "stop": "q",
    "take": false,
    "age": 24,
-   "n": 31,
-   "win": 0.355,
-   "exp_bp": 132.1,
-   "med_bp": -17.3,
-   "total_bp": 4093.7,
-   "worst_bp": -352.3
+   "n": 43,
+   "win": 0.209,
+   "exp_bp": -92.7,
+   "med_bp": -54.3,
+   "total_bp": -3987.1,
+   "worst_bp": -1657.3,
+   "dd_bp": -5497.9
   },
   {
    "key": "e22_rr2.0_sq_t0_a72",
@@ -217,12 +232,13 @@
    "stop": "q",
    "take": false,
    "age": 72,
-   "n": 26,
-   "win": 0.385,
-   "exp_bp": 144.6,
-   "med_bp": -42.5,
-   "total_bp": 3758.6,
-   "worst_bp": -352.3
+   "n": 35,
+   "win": 0.143,
+   "exp_bp": -103.7,
+   "med_bp": -64.9,
+   "total_bp": -3628.0,
+   "worst_bp": -1657.3,
+   "dd_bp": -3628.0
   },
   {
    "key": "e22_rr2.0_sm_t1_a24",
@@ -231,12 +247,13 @@
    "stop": "m",
    "take": true,
    "age": 24,
-   "n": 52,
-   "win": 0.404,
-   "exp_bp": 43.4,
-   "med_bp": -14.8,
-   "total_bp": 2259.3,
-   "worst_bp": -90.4
+   "n": 71,
+   "win": 0.296,
+   "exp_bp": -31.2,
+   "med_bp": -42.2,
+   "total_bp": -2213.0,
+   "worst_bp": -1232.5,
+   "dd_bp": -2240.7
   },
   {
    "key": "e22_rr2.0_sm_t1_a72",
@@ -245,12 +262,13 @@
    "stop": "m",
    "take": true,
    "age": 72,
-   "n": 51,
-   "win": 0.392,
-   "exp_bp": 27.4,
-   "med_bp": -16.4,
-   "total_bp": 1395.5,
-   "worst_bp": -90.4
+   "n": 66,
+   "win": 0.318,
+   "exp_bp": 48.4,
+   "med_bp": -40.5,
+   "total_bp": 3195.7,
+   "worst_bp": -1215.1,
+   "dd_bp": -1140.2
   },
   {
    "key": "e22_rr2.0_sm_t0_a24",
@@ -259,12 +277,13 @@
    "stop": "m",
    "take": false,
    "age": 24,
-   "n": 36,
-   "win": 0.278,
-   "exp_bp": 125.5,
-   "med_bp": -37.7,
-   "total_bp": 4518.1,
-   "worst_bp": -90.4
+   "n": 50,
+   "win": 0.16,
+   "exp_bp": -61.6,
+   "med_bp": -49.5,
+   "total_bp": -3081.3,
+   "worst_bp": -1361.4,
+   "dd_bp": -4900.1
   },
   {
    "key": "e22_rr2.0_sm_t0_a72",
@@ -273,12 +292,13 @@
    "stop": "m",
    "take": false,
    "age": 72,
-   "n": 31,
-   "win": 0.29,
-   "exp_bp": 134.9,
-   "med_bp": -50.4,
-   "total_bp": 4183.0,
-   "worst_bp": -90.4
+   "n": 41,
+   "win": 0.146,
+   "exp_bp": -19.1,
+   "med_bp": -51.5,
+   "total_bp": -784.2,
+   "worst_bp": -1077.4,
+   "dd_bp": -1639.3
   },
   {
    "key": "e22_rr2.0_sn_t1_a24",
@@ -287,12 +307,13 @@
    "stop": "none",
    "take": true,
    "age": 24,
-   "n": 28,
-   "win": 0.643,
-   "exp_bp": 164.9,
-   "med_bp": 95.2,
-   "total_bp": 4616.5,
-   "worst_bp": -83.7
+   "n": 34,
+   "win": 0.529,
+   "exp_bp": -49.5,
+   "med_bp": 39.5,
+   "total_bp": -1682.1,
+   "worst_bp": -4408.4,
+   "dd_bp": -4519.7
   },
   {
    "key": "e22_rr2.0_sn_t1_a72",
@@ -301,12 +322,13 @@
    "stop": "none",
    "take": true,
    "age": 72,
-   "n": 27,
-   "win": 0.63,
-   "exp_bp": 139.0,
-   "med_bp": 91.6,
-   "total_bp": 3752.7,
-   "worst_bp": -83.7
+   "n": 26,
+   "win": 0.692,
+   "exp_bp": 140.7,
+   "med_bp": 106.7,
+   "total_bp": 3657.1,
+   "worst_bp": -1339.2,
+   "dd_bp": 0.0
   },
   {
    "key": "e22_rr2.0_sn_t0_a24",
@@ -315,12 +337,13 @@
    "stop": "none",
    "take": false,
    "age": 24,
-   "n": 18,
-   "win": 0.5,
-   "exp_bp": 233.3,
-   "med_bp": -2.7,
-   "total_bp": 4200.0,
-   "worst_bp": -225.2
+   "n": 23,
+   "win": 0.348,
+   "exp_bp": -3.9,
+   "med_bp": -64.5,
+   "total_bp": -88.8,
+   "worst_bp": -1708.0,
+   "dd_bp": -3432.4
   },
   {
    "key": "e22_rr2.0_sn_t0_a72",
@@ -330,11 +353,12 @@
    "take": false,
    "age": 72,
    "n": 12,
-   "win": 0.667,
-   "exp_bp": 332.5,
-   "med_bp": 28.9,
-   "total_bp": 3990.4,
-   "worst_bp": -225.2
+   "win": 0.5,
+   "exp_bp": 95.7,
+   "med_bp": -18.4,
+   "total_bp": 1148.4,
+   "worst_bp": -332.8,
+   "dd_bp": 0.0
   },
   {
    "key": "e22_rr3.0_sq_t1_a24",
@@ -343,12 +367,13 @@
    "stop": "q",
    "take": true,
    "age": 24,
-   "n": 17,
-   "win": 0.294,
-   "exp_bp": -63.8,
-   "med_bp": -20.2,
-   "total_bp": -1084.9,
-   "worst_bp": -1182.5
+   "n": 22,
+   "win": 0.182,
+   "exp_bp": -182.6,
+   "med_bp": -26.4,
+   "total_bp": -4017.9,
+   "worst_bp": -1551.5,
+   "dd_bp": -4017.9
   },
   {
    "key": "e22_rr3.0_sq_t1_a72",
@@ -357,12 +382,13 @@
    "stop": "q",
    "take": true,
    "age": 72,
-   "n": 17,
-   "win": 0.294,
-   "exp_bp": -63.8,
-   "med_bp": -20.2,
-   "total_bp": -1084.9,
-   "worst_bp": -1182.5
+   "n": 22,
+   "win": 0.182,
+   "exp_bp": -182.4,
+   "med_bp": -26.4,
+   "total_bp": -4012.9,
+   "worst_bp": -1551.5,
+   "dd_bp": -4012.9
   },
   {
    "key": "e22_rr3.0_sq_t0_a24",
@@ -371,12 +397,13 @@
    "stop": "q",
    "take": false,
    "age": 24,
-   "n": 14,
-   "win": 0.357,
-   "exp_bp": 45.3,
-   "med_bp": -18.0,
-   "total_bp": 633.9,
-   "worst_bp": -60.4
+   "n": 19,
+   "win": 0.211,
+   "exp_bp": -139.4,
+   "med_bp": -24.2,
+   "total_bp": -2649.3,
+   "worst_bp": -1551.5,
+   "dd_bp": -2649.3
   },
   {
    "key": "e22_rr3.0_sq_t0_a72",
@@ -385,12 +412,13 @@
    "stop": "q",
    "take": false,
    "age": 72,
-   "n": 14,
-   "win": 0.357,
-   "exp_bp": 46.0,
-   "med_bp": -18.0,
-   "total_bp": 643.5,
-   "worst_bp": -60.4
+   "n": 19,
+   "win": 0.211,
+   "exp_bp": -123.0,
+   "med_bp": -24.2,
+   "total_bp": -2337.1,
+   "worst_bp": -1551.5,
+   "dd_bp": -2337.1
   },
   {
    "key": "e22_rr3.0_sm_t1_a24",
@@ -399,12 +427,13 @@
    "stop": "m",
    "take": true,
    "age": 24,
-   "n": 17,
-   "win": 0.176,
-   "exp_bp": -73.1,
-   "med_bp": -23.9,
-   "total_bp": -1242.0,
-   "worst_bp": -1093.1
+   "n": 22,
+   "win": 0.136,
+   "exp_bp": -131.6,
+   "med_bp": -26.2,
+   "total_bp": -2894.6,
+   "worst_bp": -1093.1,
+   "dd_bp": -2894.6
   },
   {
    "key": "e22_rr3.0_sm_t1_a72",
@@ -413,12 +442,13 @@
    "stop": "m",
    "take": true,
    "age": 72,
-   "n": 17,
-   "win": 0.176,
-   "exp_bp": -73.1,
-   "med_bp": -23.9,
-   "total_bp": -1242.0,
-   "worst_bp": -1093.1
+   "n": 22,
+   "win": 0.136,
+   "exp_bp": -131.3,
+   "med_bp": -26.2,
+   "total_bp": -2889.6,
+   "worst_bp": -1093.1,
+   "dd_bp": -2889.6
   },
   {
    "key": "e22_rr3.0_sm_t0_a24",
@@ -427,12 +457,13 @@
    "stop": "m",
    "take": false,
    "age": 24,
-   "n": 14,
-   "win": 0.214,
-   "exp_bp": 27.9,
-   "med_bp": -22.9,
-   "total_bp": 391.0,
-   "worst_bp": -54.1
+   "n": 19,
+   "win": 0.158,
+   "exp_bp": -79.2,
+   "med_bp": -23.9,
+   "total_bp": -1505.1,
+   "worst_bp": -843.9,
+   "dd_bp": -1628.4
   },
   {
    "key": "e22_rr3.0_sm_t0_a72",
@@ -441,12 +472,13 @@
    "stop": "m",
    "take": false,
    "age": 72,
-   "n": 14,
-   "win": 0.214,
-   "exp_bp": 28.6,
-   "med_bp": -22.9,
-   "total_bp": 400.6,
-   "worst_bp": -54.1
+   "n": 19,
+   "win": 0.158,
+   "exp_bp": -66.0,
+   "med_bp": -23.9,
+   "total_bp": -1253.1,
+   "worst_bp": -843.9,
+   "dd_bp": -1933.3
   },
   {
    "key": "e22_rr3.0_sn_t1_a24",
@@ -455,12 +487,13 @@
    "stop": "none",
    "take": true,
    "age": 24,
-   "n": 14,
-   "win": 0.357,
-   "exp_bp": 14.5,
-   "med_bp": -8.1,
-   "total_bp": 202.5,
-   "worst_bp": -135.9
+   "n": 18,
+   "win": 0.333,
+   "exp_bp": -115.3,
+   "med_bp": -19.1,
+   "total_bp": -2075.6,
+   "worst_bp": -1831.0,
+   "dd_bp": -2347.8
   },
   {
    "key": "e22_rr3.0_sn_t1_a72",
@@ -469,12 +502,13 @@
    "stop": "none",
    "take": true,
    "age": 72,
-   "n": 14,
-   "win": 0.357,
-   "exp_bp": 14.5,
-   "med_bp": -8.1,
-   "total_bp": 202.5,
-   "worst_bp": -135.9
+   "n": 16,
+   "win": 0.312,
+   "exp_bp": -159.6,
+   "med_bp": -50.9,
+   "total_bp": -2553.8,
+   "worst_bp": -1831.0,
+   "dd_bp": -3006.4
   },
   {
    "key": "e22_rr3.0_sn_t0_a24",
@@ -483,12 +517,13 @@
    "stop": "none",
    "take": false,
    "age": 24,
-   "n": 11,
-   "win": 0.455,
-   "exp_bp": 62.6,
-   "med_bp": -10.3,
-   "total_bp": 688.9,
-   "worst_bp": -135.9
+   "n": 15,
+   "win": 0.4,
+   "exp_bp": -100.3,
+   "med_bp": -14.0,
+   "total_bp": -1504.8,
+   "worst_bp": -1831.0,
+   "dd_bp": -1640.3
   },
   {
    "key": "e22_rr3.0_sn_t0_a72",
@@ -497,12 +532,13 @@
    "stop": "none",
    "take": false,
    "age": 72,
-   "n": 11,
-   "win": 0.455,
-   "exp_bp": 63.5,
-   "med_bp": -10.3,
-   "total_bp": 698.5,
-   "worst_bp": -135.9
+   "n": 12,
+   "win": 0.417,
+   "exp_bp": -113.3,
+   "med_bp": -14.2,
+   "total_bp": -1359.2,
+   "worst_bp": -1831.0,
+   "dd_bp": -1359.2
   },
   {
    "key": "e33_rr1.5_sq_t1_a24",
@@ -511,12 +547,13 @@
    "stop": "q",
    "take": true,
    "age": 24,
-   "n": 58,
-   "win": 0.517,
-   "exp_bp": 100.3,
-   "med_bp": 43.6,
-   "total_bp": 5815.9,
-   "worst_bp": -896.4
+   "n": 92,
+   "win": 0.391,
+   "exp_bp": -8.5,
+   "med_bp": -54.0,
+   "total_bp": -779.5,
+   "worst_bp": -2061.7,
+   "dd_bp": -5269.8
   },
   {
    "key": "e33_rr1.5_sq_t1_a72",
@@ -525,12 +562,13 @@
    "stop": "q",
    "take": true,
    "age": 72,
-   "n": 58,
-   "win": 0.517,
-   "exp_bp": 100.3,
-   "med_bp": 43.6,
-   "total_bp": 5815.9,
-   "worst_bp": -896.4
+   "n": 92,
+   "win": 0.391,
+   "exp_bp": -8.5,
+   "med_bp": -54.0,
+   "total_bp": -784.5,
+   "worst_bp": -2061.7,
+   "dd_bp": -5274.8
   },
   {
    "key": "e33_rr1.5_sq_t0_a24",
@@ -539,12 +577,13 @@
    "stop": "q",
    "take": false,
    "age": 24,
-   "n": 28,
-   "win": 0.429,
-   "exp_bp": 867.8,
-   "med_bp": -25.9,
-   "total_bp": 24298.3,
-   "worst_bp": -896.4
+   "n": 42,
+   "win": 0.31,
+   "exp_bp": 428.5,
+   "med_bp": -72.1,
+   "total_bp": 17997.0,
+   "worst_bp": -1657.3,
+   "dd_bp": -94.1
   },
   {
    "key": "e33_rr1.5_sq_t0_a72",
@@ -553,12 +592,13 @@
    "stop": "q",
    "take": false,
    "age": 72,
-   "n": 23,
-   "win": 0.478,
-   "exp_bp": 1323.4,
-   "med_bp": -8.2,
-   "total_bp": 30437.9,
-   "worst_bp": -896.4
+   "n": 27,
+   "win": 0.333,
+   "exp_bp": 444.2,
+   "med_bp": -77.5,
+   "total_bp": 11992.6,
+   "worst_bp": -1657.3,
+   "dd_bp": -2883.6
   },
   {
    "key": "e33_rr1.5_sm_t1_a24",
@@ -567,12 +607,13 @@
    "stop": "m",
    "take": true,
    "age": 24,
-   "n": 70,
-   "win": 0.429,
-   "exp_bp": 153.8,
-   "med_bp": -43.5,
-   "total_bp": 10766.4,
-   "worst_bp": -1678.5
+   "n": 113,
+   "win": 0.301,
+   "exp_bp": 11.1,
+   "med_bp": -56.1,
+   "total_bp": 1250.2,
+   "worst_bp": -1678.5,
+   "dd_bp": -7607.0
   },
   {
    "key": "e33_rr1.5_sm_t1_a72",
@@ -581,12 +622,13 @@
    "stop": "m",
    "take": true,
    "age": 72,
-   "n": 70,
-   "win": 0.429,
-   "exp_bp": 153.8,
-   "med_bp": -43.5,
-   "total_bp": 10766.4,
-   "worst_bp": -1678.5
+   "n": 112,
+   "win": 0.304,
+   "exp_bp": 13.2,
+   "med_bp": -56.7,
+   "total_bp": 1473.6,
+   "worst_bp": -1678.5,
+   "dd_bp": -7383.6
   },
   {
    "key": "e33_rr1.5_sm_t0_a24",
@@ -595,12 +637,13 @@
    "stop": "m",
    "take": false,
    "age": 24,
-   "n": 35,
-   "win": 0.371,
-   "exp_bp": 677.3,
-   "med_bp": -42.2,
-   "total_bp": 23706.7,
-   "worst_bp": -749.1
+   "n": 54,
+   "win": 0.241,
+   "exp_bp": 288.1,
+   "med_bp": -69.5,
+   "total_bp": 15558.2,
+   "worst_bp": -1386.2,
+   "dd_bp": -2062.3
   },
   {
    "key": "e33_rr1.5_sm_t0_a72",
@@ -609,12 +652,13 @@
    "stop": "m",
    "take": false,
    "age": 72,
-   "n": 28,
-   "win": 0.429,
-   "exp_bp": 1053.2,
-   "med_bp": -48.0,
-   "total_bp": 29490.1,
-   "worst_bp": -749.1
+   "n": 32,
+   "win": 0.312,
+   "exp_bp": 385.8,
+   "med_bp": -54.2,
+   "total_bp": 12344.6,
+   "worst_bp": -1077.4,
+   "dd_bp": -3220.0
   },
   {
    "key": "e33_rr1.5_sn_t1_a24",
@@ -623,12 +667,13 @@
    "stop": "none",
    "take": true,
    "age": 24,
-   "n": 35,
-   "win": 0.657,
-   "exp_bp": 175.5,
-   "med_bp": 142.3,
-   "total_bp": 6142.0,
-   "worst_bp": -1624.0
+   "n": 44,
+   "win": 0.636,
+   "exp_bp": 66.2,
+   "med_bp": 120.5,
+   "total_bp": 2913.5,
+   "worst_bp": -1868.5,
+   "dd_bp": -6834.1
   },
   {
    "key": "e33_rr1.5_sn_t1_a72",
@@ -637,12 +682,13 @@
    "stop": "none",
    "take": true,
    "age": 72,
-   "n": 31,
-   "win": 0.71,
-   "exp_bp": 190.0,
+   "n": 37,
+   "win": 0.73,
+   "exp_bp": 78.0,
    "med_bp": 163.2,
-   "total_bp": 5890.0,
-   "worst_bp": -1624.0
+   "total_bp": 2887.0,
+   "worst_bp": -2278.0,
+   "dd_bp": -6477.7
   },
   {
    "key": "e33_rr1.5_sn_t0_a24",
@@ -651,12 +697,13 @@
    "stop": "none",
    "take": false,
    "age": 24,
-   "n": 19,
-   "win": 0.579,
-   "exp_bp": 1337.6,
-   "med_bp": 131.0,
-   "total_bp": 25415.0,
-   "worst_bp": -225.2
+   "n": 24,
+   "win": 0.542,
+   "exp_bp": 903.9,
+   "med_bp": 5.6,
+   "total_bp": 21692.6,
+   "worst_bp": -800.6,
+   "dd_bp": 0.0
   },
   {
    "key": "e33_rr1.5_sn_t0_a72",
@@ -665,12 +712,13 @@
    "stop": "none",
    "take": false,
    "age": 72,
-   "n": 13,
-   "win": 0.462,
-   "exp_bp": 2215.1,
-   "med_bp": -8.2,
-   "total_bp": 28796.9,
-   "worst_bp": -346.0
+   "n": 12,
+   "win": 0.583,
+   "exp_bp": 1071.8,
+   "med_bp": 123.5,
+   "total_bp": 12861.7,
+   "worst_bp": -748.0,
+   "dd_bp": 0.0
   },
   {
    "key": "e33_rr2.0_sq_t1_a24",
@@ -679,12 +727,13 @@
    "stop": "q",
    "take": true,
    "age": 24,
-   "n": 36,
-   "win": 0.361,
-   "exp_bp": 55.4,
-   "med_bp": -19.6,
-   "total_bp": 1993.5,
-   "worst_bp": -391.2
+   "n": 49,
+   "win": 0.286,
+   "exp_bp": -40.7,
+   "med_bp": -63.8,
+   "total_bp": -1994.1,
+   "worst_bp": -1551.5,
+   "dd_bp": -1994.1
   },
   {
    "key": "e33_rr2.0_sq_t1_a72",
@@ -693,12 +742,13 @@
    "stop": "q",
    "take": true,
    "age": 72,
-   "n": 36,
-   "win": 0.361,
-   "exp_bp": 55.4,
-   "med_bp": -19.6,
-   "total_bp": 1993.5,
-   "worst_bp": -391.2
+   "n": 47,
+   "win": 0.234,
+   "exp_bp": -130.9,
+   "med_bp": -64.6,
+   "total_bp": -6151.0,
+   "worst_bp": -1551.5,
+   "dd_bp": -6151.0
   },
   {
    "key": "e33_rr2.0_sq_t0_a24",
@@ -707,12 +757,13 @@
    "stop": "q",
    "take": false,
    "age": 24,
-   "n": 32,
-   "win": 0.281,
-   "exp_bp": -42.2,
-   "med_bp": -43.0,
-   "total_bp": -1351.0,
-   "worst_bp": -1263.4
+   "n": 46,
+   "win": 0.13,
+   "exp_bp": -250.7,
+   "med_bp": -74.0,
+   "total_bp": -11530.3,
+   "worst_bp": -1551.5,
+   "dd_bp": -11530.3
   },
   {
    "key": "e33_rr2.0_sq_t0_a72",
@@ -721,12 +772,13 @@
    "stop": "q",
    "take": false,
    "age": 72,
-   "n": 29,
-   "win": 0.31,
-   "exp_bp": -44.1,
-   "med_bp": -49.9,
-   "total_bp": -1279.3,
-   "worst_bp": -1263.4
+   "n": 39,
+   "win": 0.077,
+   "exp_bp": -265.8,
+   "med_bp": -83.3,
+   "total_bp": -10366.3,
+   "worst_bp": -1551.5,
+   "dd_bp": -10366.3
   },
   {
    "key": "e33_rr2.0_sm_t1_a24",
@@ -735,12 +787,13 @@
    "stop": "m",
    "take": true,
    "age": 24,
-   "n": 37,
-   "win": 0.297,
-   "exp_bp": -12.3,
-   "med_bp": -26.4,
-   "total_bp": -454.0,
-   "worst_bp": -185.4
+   "n": 54,
+   "win": 0.222,
+   "exp_bp": -103.2,
+   "med_bp": -48.7,
+   "total_bp": -5573.0,
+   "worst_bp": -1232.5,
+   "dd_bp": -5573.0
   },
   {
    "key": "e33_rr2.0_sm_t1_a72",
@@ -749,12 +802,13 @@
    "stop": "m",
    "take": true,
    "age": 72,
-   "n": 37,
-   "win": 0.297,
-   "exp_bp": -12.3,
-   "med_bp": -26.4,
-   "total_bp": -454.0,
-   "worst_bp": -185.4
+   "n": 50,
+   "win": 0.2,
+   "exp_bp": -127.8,
+   "med_bp": -48.7,
+   "total_bp": -6390.4,
+   "worst_bp": -1232.5,
+   "dd_bp": -6390.4
   },
   {
    "key": "e33_rr2.0_sm_t0_a24",
@@ -763,12 +817,13 @@
    "stop": "m",
    "take": false,
    "age": 24,
-   "n": 34,
-   "win": 0.206,
-   "exp_bp": -30.0,
-   "med_bp": -32.8,
-   "total_bp": -1020.7,
-   "worst_bp": -185.4
+   "n": 51,
+   "win": 0.098,
+   "exp_bp": -159.3,
+   "med_bp": -57.2,
+   "total_bp": -8122.2,
+   "worst_bp": -1077.4,
+   "dd_bp": -8122.2
   },
   {
    "key": "e33_rr2.0_sm_t0_a72",
@@ -777,12 +832,13 @@
    "stop": "m",
    "take": false,
    "age": 72,
-   "n": 31,
-   "win": 0.226,
-   "exp_bp": -30.6,
-   "med_bp": -40.0,
-   "total_bp": -949.0,
-   "worst_bp": -185.4
+   "n": 45,
+   "win": 0.067,
+   "exp_bp": -157.8,
+   "med_bp": -57.2,
+   "total_bp": -7102.1,
+   "worst_bp": -1077.4,
+   "dd_bp": -7102.1
   },
   {
    "key": "e33_rr2.0_sn_t1_a24",
@@ -791,12 +847,13 @@
    "stop": "none",
    "take": true,
    "age": 24,
-   "n": 23,
-   "win": 0.652,
-   "exp_bp": 43.0,
-   "med_bp": 45.7,
-   "total_bp": 989.9,
-   "worst_bp": -372.4
+   "n": 29,
+   "win": 0.379,
+   "exp_bp": -125.6,
+   "med_bp": -64.5,
+   "total_bp": -3643.4,
+   "worst_bp": -4408.4,
+   "dd_bp": -4292.3
   },
   {
    "key": "e33_rr2.0_sn_t1_a72",
@@ -805,12 +862,13 @@
    "stop": "none",
    "take": true,
    "age": 72,
-   "n": 22,
-   "win": 0.682,
-   "exp_bp": 43.9,
-   "med_bp": 61.6,
-   "total_bp": 966.8,
-   "worst_bp": -401.0
+   "n": 20,
+   "win": 0.55,
+   "exp_bp": -1.4,
+   "med_bp": 84.5,
+   "total_bp": -27.3,
+   "worst_bp": -662.8,
+   "dd_bp": -1111.6
   },
   {
    "key": "e33_rr2.0_sn_t0_a24",
@@ -819,12 +877,13 @@
    "stop": "none",
    "take": false,
    "age": 24,
-   "n": 17,
-   "win": 0.471,
-   "exp_bp": 22.4,
-   "med_bp": -5.5,
-   "total_bp": 380.6,
-   "worst_bp": -434.2
+   "n": 22,
+   "win": 0.273,
+   "exp_bp": -238.3,
+   "med_bp": -102.4,
+   "total_bp": -5243.3,
+   "worst_bp": -3076.3,
+   "dd_bp": -5243.3
   },
   {
    "key": "e33_rr2.0_sn_t0_a72",
@@ -833,12 +892,13 @@
    "stop": "none",
    "take": false,
    "age": 72,
-   "n": 13,
-   "win": 0.615,
-   "exp_bp": 32.9,
-   "med_bp": 3.2,
-   "total_bp": 428.0,
-   "worst_bp": -434.2
+   "n": 12,
+   "win": 0.333,
+   "exp_bp": -87.9,
+   "med_bp": -64.9,
+   "total_bp": -1055.0,
+   "worst_bp": -807.7,
+   "dd_bp": -1055.0
   },
   {
    "key": "e33_rr3.0_sq_t1_a24",
@@ -847,12 +907,13 @@
    "stop": "q",
    "take": true,
    "age": 24,
-   "n": 9,
-   "win": 0.222,
-   "exp_bp": -148.0,
-   "med_bp": -28.6,
-   "total_bp": -1332.1,
-   "worst_bp": -1182.5
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -326.8,
+   "med_bp": -60.0,
+   "total_bp": -4248.1,
+   "worst_bp": -1551.5,
+   "dd_bp": -4248.1
   },
   {
    "key": "e33_rr3.0_sq_t1_a72",
@@ -861,12 +922,13 @@
    "stop": "q",
    "take": true,
    "age": 72,
-   "n": 9,
-   "win": 0.222,
-   "exp_bp": -148.0,
-   "med_bp": -28.6,
-   "total_bp": -1332.1,
-   "worst_bp": -1182.5
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -326.8,
+   "med_bp": -60.0,
+   "total_bp": -4248.1,
+   "worst_bp": -1551.5,
+   "dd_bp": -4248.1
   },
   {
    "key": "e33_rr3.0_sq_t0_a24",
@@ -875,12 +937,13 @@
    "stop": "q",
    "take": false,
    "age": 24,
-   "n": 9,
-   "win": 0.222,
-   "exp_bp": -126.6,
-   "med_bp": -28.6,
-   "total_bp": -1139.2,
-   "worst_bp": -1182.5
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -311.9,
+   "med_bp": -60.0,
+   "total_bp": -4055.2,
+   "worst_bp": -1551.5,
+   "dd_bp": -4055.2
   },
   {
    "key": "e33_rr3.0_sq_t0_a72",
@@ -889,12 +952,13 @@
    "stop": "q",
    "take": false,
    "age": 72,
-   "n": 9,
-   "win": 0.222,
-   "exp_bp": -125.5,
-   "med_bp": -28.6,
-   "total_bp": -1129.6,
-   "worst_bp": -1182.5
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -324.8,
+   "med_bp": -60.0,
+   "total_bp": -4222.4,
+   "worst_bp": -1551.5,
+   "dd_bp": -4222.4
   },
   {
    "key": "e33_rr3.0_sm_t1_a24",
@@ -903,12 +967,13 @@
    "stop": "m",
    "take": true,
    "age": 24,
-   "n": 9,
-   "win": 0.111,
-   "exp_bp": -142.1,
-   "med_bp": -36.0,
-   "total_bp": -1278.5,
-   "worst_bp": -1093.1
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -224.2,
+   "med_bp": -44.7,
+   "total_bp": -2914.1,
+   "worst_bp": -1093.1,
+   "dd_bp": -2914.1
   },
   {
    "key": "e33_rr3.0_sm_t1_a72",
@@ -917,12 +982,13 @@
    "stop": "m",
    "take": true,
    "age": 72,
-   "n": 9,
-   "win": 0.111,
-   "exp_bp": -142.1,
-   "med_bp": -36.0,
-   "total_bp": -1278.5,
-   "worst_bp": -1093.1
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -224.2,
+   "med_bp": -44.7,
+   "total_bp": -2914.1,
+   "worst_bp": -1093.1,
+   "dd_bp": -2914.1
   },
   {
    "key": "e33_rr3.0_sm_t0_a24",
@@ -931,12 +997,13 @@
    "stop": "m",
    "take": false,
    "age": 24,
-   "n": 9,
-   "win": 0.111,
-   "exp_bp": -120.6,
-   "med_bp": -36.0,
-   "total_bp": -1085.6,
-   "worst_bp": -1093.1
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -209.3,
+   "med_bp": -44.7,
+   "total_bp": -2721.2,
+   "worst_bp": -1093.1,
+   "dd_bp": -2721.2
   },
   {
    "key": "e33_rr3.0_sm_t0_a72",
@@ -945,12 +1012,13 @@
    "stop": "m",
    "take": false,
    "age": 72,
-   "n": 9,
-   "win": 0.111,
-   "exp_bp": -119.6,
-   "med_bp": -36.0,
-   "total_bp": -1076.0,
-   "worst_bp": -1093.1
+   "n": 13,
+   "win": 0.077,
+   "exp_bp": -222.2,
+   "med_bp": -44.7,
+   "total_bp": -2888.4,
+   "worst_bp": -1093.1,
+   "dd_bp": -2959.4
   },
   {
    "key": "e33_rr3.0_sn_t1_a24",
@@ -959,12 +1027,13 @@
    "stop": "none",
    "take": true,
    "age": 24,
-   "n": 9,
-   "win": 0.444,
-   "exp_bp": 195.2,
-   "med_bp": -0.2,
-   "total_bp": 1756.4,
-   "worst_bp": -135.9
+   "n": 12,
+   "win": 0.417,
+   "exp_bp": 117.6,
+   "med_bp": -39.2,
+   "total_bp": 1411.6,
+   "worst_bp": -1831.0,
+   "dd_bp": -43.4
   },
   {
    "key": "e33_rr3.0_sn_t1_a72",
@@ -973,12 +1042,13 @@
    "stop": "none",
    "take": true,
    "age": 72,
-   "n": 9,
-   "win": 0.444,
-   "exp_bp": 195.2,
-   "med_bp": -0.2,
-   "total_bp": 1756.4,
-   "worst_bp": -135.9
+   "n": 12,
+   "win": 0.333,
+   "exp_bp": 94.6,
+   "med_bp": -50.9,
+   "total_bp": 1135.0,
+   "worst_bp": -1831.0,
+   "dd_bp": 0.0
   },
   {
    "key": "e33_rr3.0_sn_t0_a24",
@@ -987,12 +1057,13 @@
    "stop": "none",
    "take": false,
    "age": 24,
-   "n": 8,
-   "win": 0.5,
-   "exp_bp": 246.9,
-   "med_bp": 2.1,
-   "total_bp": 1975.4,
-   "worst_bp": -135.9
+   "n": 11,
+   "win": 0.273,
+   "exp_bp": -284.0,
+   "med_bp": -113.5,
+   "total_bp": -3124.3,
+   "worst_bp": -1831.0,
+   "dd_bp": -3250.8
   },
   {
    "key": "e33_rr3.0_sn_t0_a72",
@@ -1001,15 +1072,16 @@
    "stop": "none",
    "take": false,
    "age": 72,
-   "n": 8,
-   "win": 0.5,
-   "exp_bp": 248.1,
-   "med_bp": 2.1,
-   "total_bp": 1985.0,
-   "worst_bp": -135.9
+   "n": 10,
+   "win": 0.2,
+   "exp_bp": -517.8,
+   "med_bp": -136.9,
+   "total_bp": -5177.9,
+   "worst_bp": -2814.7,
+   "dd_bp": -5177.9
   }
  ],
- "legs": 55245,
+ "legs": 80785,
  "wf": null,
  "verdict": {
   "status": "нет точек выбора — журнал короче 28 суток"
