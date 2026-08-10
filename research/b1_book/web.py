@@ -41,6 +41,14 @@ from urllib.parse import parse_qs, urlparse
 # для конкретной монеты и часа, а пункт меню без них вёл бы в пустоту;
 # разбор сделки (`/trade-info`) — то же самое. Оба открываются со
 # своих мест, где монета известна.
+PCTJS = r"""
+function pct(v) {
+  if (v == null) return "\u2014";
+  const d = Math.abs(v) >= 10 ? 2 : 3;
+  return (v > 0 ? "+" : "") + (v / 100).toFixed(d) + " %";
+}
+"""
+
 BOOKJS = r"""
 // Книги турнира: ключ, подпись. ОДИН список на все страницы — он жил
 // в четырёх местах, и книга в единицах σ доехала до трёх: страница
@@ -813,11 +821,7 @@ function rrEff(d) {
 // Два знака, а при мелких величинах три: нетто после издержек обычно
 // единицы б.п., и на двух знаках оно схлопнулось бы в «0.00 %» — то
 // есть исчезло бы ровно то число, ради которого таблица и нужна.
-function pct(v) {
-  if (v == null) return "—";
-  const d = Math.abs(v) >= 10 ? 2 : 3;
-  return (v > 0 ? "+" : "") + (v / 100).toFixed(d) + " %";
-}
+""" + PCTJS + r"""
 
 // Сводка по сделкам. Открытые в неё НЕ входят: у них нет исхода, и
 // посчитать его нулём значило бы разбавить статистику выдумкой.
@@ -1925,11 +1929,7 @@ renderBooks();
 // Percent of price move — the display unit across the whole project
 // (owner's decision). Two decimals, three for small values: otherwise
 // net-after-costs collapses into "0.00 %".
-function pct(v) {
-  if (v == null) return "—";
-  return (v > 0 ? "+" : "") + (v / 100).toFixed(Math.abs(v) >= 10 ? 2 : 3)
-    + " %";
-}
+""" + PCTJS + r"""
 // Время показывается в часовом поясе владельца (Вена), а хранится и
 // ключуется в UTC. Смешивать нельзя: `signal hour` — это КЛЮЧ часа в
 // файлах и в журналах, и сдвинутый ключ ничему не соответствует.
@@ -3552,11 +3552,7 @@ function shownTrades() {
 }
 // Процент движения цены вместо б.п. — решение владельца. Два знака, при
 // мелких величинах три: иначе мелкое нетто схлопывается в «0.00 %».
-function pct(v) {
-  if (v == null) return "—";
-  const d = Math.abs(v) >= 10 ? 2 : 3;
-  return (v > 0 ? "+" : "") + (v / 100).toFixed(d) + " %";
-}
+""" + PCTJS + r"""
 // Цена выхода у сделки модели своей колонкой не записана: разбор пишет
 // ХОД цены за удержание, а это то же самое число с другой стороны.
 // Считать его здесь — не вторая копия расчёта, а перевод единицы.
@@ -4743,8 +4739,7 @@ const SYM = Q.get("sym") || "";
 const SIDE = Q.get("side") || "";
 const RR = Q.get("rr");
 
-function pct(v){ if (v == null) return "—";
-  return (v>0?"+":"") + (v/100).toFixed(Math.abs(v)>=10?2:3) + " %"; }
+""" + PCTJS + r"""
 function px_at(entry, bp){ if (entry == null || bp == null) return null;
   return +(entry * (1 + bp/1e4)).toPrecision(6); }
 function utc(ts){ if (!ts) return "—";
@@ -5024,8 +5019,7 @@ const BOOK_EN = {h4:"4 h book", h1:"1 h book", h24:"24 h book",
 const ARM_EN = {all:"both arms", gbm:"trees (ML)", nn:"neural (AI)"};
 const BUCKETS = ["quiet", "normal", "loud"];
 
-function pct(v){ if (v == null) return "—";
-  return (v>0?"+":"") + (v/100).toFixed(Math.abs(v)>=10?2:3) + " %"; }
+""" + PCTJS + r"""
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
@@ -5918,6 +5912,12 @@ function sortBy(col){
 }
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+""" + PCTJS + r"""
+// Порог — величина БЕЗЗНАКОВАЯ: это настройка ветки, а не движение
+// цены, и «+0.22 %» у неё читалось бы как прибыль. Формат величин
+// движения общий на весь проект (`pct`), у настройки свой намеренно.
+function lvl(v){ return v == null ? "\u2014"
+  : (v / 100).toFixed(2) + " %"; }
 const UI = {
   strap: {en: "policy tournament — all 72 branches",
           ru: "турнир политик — все 72 ветки"},
@@ -5954,13 +5954,12 @@ const UI = {
   head: {en: d => `legs in the journal <b>${d.legs}</b> · `
               + `measured cells <b>${d.measured}</b> of `
               + `${d.cells.length} · median expectancy of measured `
-              + `<b>${fmt(d.med_exp_bp)} bp</b> · run `
+              + `<b>${pct(d.med_exp_bp)}</b> · run `
               + `${Math.round(d.run_age_sec/3600)} h ago`,
          ru: d => `ног в журнале <b>${d.legs}</b> · измеренных ячеек `
               + `<b>${d.measured}</b> из ${d.cells.length} · медиана `
-              + `ожидания по измеренным <b>${fmt(d.med_exp_bp)} `
-              + `б.п.</b> · прогон ${Math.round(d.run_age_sec/3600)} `
-              + `ч назад`},
+              + `ожидания по измеренным <b>${pct(d.med_exp_bp)}</b> `
+              + `· прогон ${Math.round(d.run_age_sec/3600)} ч назад`},
   selcap: {en: "selector (the verdict is judged here)",
            ru: "селектор (вердикт выносится здесь)"},
   tcap: {en: "all branches · click a column header to sort, click "
@@ -5971,12 +5970,12 @@ const UI = {
              + "порядок"},
   wait: {en: "no answer from the collector — retrying",
          ru: "сборщик не ответил — повторяю"},
-  cols: {en: ["variant", "edge bp", "RR \u2265", "stop", "target",
-              "age h", "trades", "win", "expect bp", "median",
-              "total", "worst"],
-         ru: ["вариант", "край б.п.", "RR \u2265", "стоп", "тейк",
-              "возраст ч", "сделок", "побед", "ожид. б.п.",
-              "медиана", "итог", "худшая"]},
+  cols: {en: ["variant", "edge %", "RR \u2265", "stop", "target",
+              "age h", "trades", "win", "expect %", "median %",
+              "total %", "worst %"],
+         ru: ["вариант", "край %", "RR \u2265", "стоп", "тейк",
+              "возраст ч", "сделок", "побед", "ожид. %",
+              "медиана %", "итог %", "худшая %"]},
   stop: {en: {q: "quantile", m: "forecast line", none: "no stop"},
          ru: {q: "квантиль", m: "линия прогноза", none: "без стопа"}},
   yes: {en: "yes", ru: "да"}, no: {en: "no", ru: "нет"},
@@ -5992,11 +5991,6 @@ const UI = {
             + `не сейчас; проверить сторож и лог прогона на сервере.`},
 };
 function T(k){ const v = UI[k]; return v[LANG] || v.en; }
-function fmt(v, d){
-  if (v == null) return "\u2014";
-  const t = v.toFixed(d == null ? 1 : d);
-  return (v > 0 ? "+" : "") + t;
-}
 function cls(v){ return v == null ? "" : v > 0 ? "good"
   : v < 0 ? "bad" : ""; }
 const COLS = ["key", "edge", "rr", "stop", "take", "age",
@@ -6039,11 +6033,11 @@ function render(d){
     sl += esc(v.status || "");
   } else {
     sl += `${esc(v.status || "")}<div class="mono" style="margin-top:6px">
-      selector ${fmt(wf.sel && wf.sel.total_bp)} bp ·
-      random median ${fmt(v.rnd_median_bp)} / max ${fmt(v.rnd_p95_bp)} ·
-      oracle ${fmt(wf.ora && wf.ora.total_bp)} ·
-      current ${fmt(wf.ref && wf.ref.total_bp)} ·
-      kill-10 ${fmt(wf.kill && wf.kill.total_bp)}
+      selector ${pct(wf.sel && wf.sel.total_bp)} ·
+      random median ${pct(v.rnd_median_bp)} / max ${pct(v.rnd_p95_bp)} ·
+      oracle ${pct(wf.ora && wf.ora.total_bp)} ·
+      current ${pct(wf.ref && wf.ref.total_bp)} ·
+      kill-10 ${pct(wf.kill && wf.kill.total_bp)}
       (${(wf.kill_events || []).length} kills)</div>`;
   }
   selbox.innerHTML = sl;
@@ -6070,7 +6064,7 @@ function render(d){
             : ""}`;
       if (!c.n)
         return `<tr${cur ? ' class="hl"' : ""}><td>${name}</td>
-          <td>${c.edge}</td><td>${c.rr}</td>
+          <td>${lvl(c.edge)}</td><td>${c.rr}</td>
           <td>${T("stop")[c.stop]}</td>
           <td>${c.take ? T("yes") : T("no")}</td><td>${c.age}</td>
           <td>0</td><td>\u2014</td><td>\u2014</td><td>\u2014</td>
@@ -6078,15 +6072,15 @@ function render(d){
       return `<tr class="${cur ? "hl" : ""}${thin ? " thin" : ""}">
         <td>${name}${thin ? ` <span class="dim">·${T("thin")}</span>`
                           : ""}</td>
-        <td>${c.edge}</td><td>${c.rr}</td>
+        <td>${lvl(c.edge)}</td><td>${c.rr}</td>
         <td>${T("stop")[c.stop]}</td>
         <td>${c.take ? T("yes") : T("no")}</td><td>${c.age}</td>
         <td class="mono">${c.n}</td>
         <td class="mono">${Math.round((c.win || 0) * 100)} %</td>
-        <td class="mono ${cls(c.exp_bp)}">${fmt(c.exp_bp)}</td>
-        <td class="mono ${cls(c.med_bp)}">${fmt(c.med_bp)}</td>
-        <td class="mono ${cls(c.total_bp)}">${fmt(c.total_bp)}</td>
-        <td class="mono ${cls(c.worst_bp)}">${fmt(c.worst_bp)}</td>
+        <td class="mono ${cls(c.exp_bp)}">${pct(c.exp_bp)}</td>
+        <td class="mono ${cls(c.med_bp)}">${pct(c.med_bp)}</td>
+        <td class="mono ${cls(c.total_bp)}">${pct(c.total_bp)}</td>
+        <td class="mono ${cls(c.worst_bp)}">${pct(c.worst_bp)}</td>
       </tr>`;
     }).join("")}</tbody></table>`;
 }
@@ -6184,8 +6178,7 @@ document.getElementById("pb").href =
   "/glossary-page?k=" + encodeURIComponent(KEY);
 let PERIOD = "30d", DATA = null;
 
-function pct(v){ if (v == null) return "—";
-  return (v>0?"+":"") + (v/100).toFixed(Math.abs(v)>=10?2:3) + " %"; }
+""" + PCTJS + r"""
 function utc(ts){ if (!ts) return "—";
   return new Date(ts*1000).toISOString().slice(5,16).replace("T"," "); }
 const ARM_EN = {gbm:"trees (ML)", nn:"neural (AI)"};
