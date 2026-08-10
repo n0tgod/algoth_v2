@@ -235,14 +235,14 @@ global.fetch = async (url) => {
                 // строки: иначе сломанную сортировку не отличить от
                 // работающей (первый вариант стаба это и показал).
                 cells: [
-                  {key: "e22_rr1.5_sq_t1_a24", edge: 22, rr: 1.5,
-                   stop: "q", take: true, age: 24, n: 65, win: 0.569,
-                   exp_bp: 116.3, med_bp: 87.5, total_bp: 700.0,
-                   worst_bp: -896.4},
                   {key: "e22_rr2.0_sq_t1_a24", edge: 22, rr: 2,
                    stop: "q", take: true, age: 24, n: 50, win: 0.5,
                    exp_bp: 47.3, med_bp: -2.7, total_bp: 2365.5,
                    worst_bp: -352.3},
+                  {key: "e22_rr1.5_sq_t1_a24", edge: 22, rr: 1.5,
+                   stop: "q", take: true, age: 24, n: 65, win: 0.569,
+                   exp_bp: 116.3, med_bp: 87.5, total_bp: 700.0,
+                   worst_bp: -896.4},
                   {key: "e22_rr3.0_sn_t0_a24", edge: 22, rr: 3,
                    stop: "none", take: false, age: 24, n: 11,
                    win: 0.455, exp_bp: 62.6, med_bp: -10.3,
@@ -1508,6 +1508,21 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     } else if (/nightly run has not come/.test(intro)) {
       bad.push("турнир: свежий прогон объявлен устаревшим");
     }
+    // Порядок ПО УМОЛЧАНИЮ — лучшие сверху по ожиданию (просьба
+    // владельца), а не как пришло: в стабе объявленный порядок начат
+    // не с лучшей ячейки, поэтому «как пришло» здесь не прошло бы.
+    const order = () => flat(global.__el("box").innerHTML)
+      .split("<tr").slice(2);
+    const first = order();
+    if (!/e22_rr1\.5_sq_t1_a24/.test(first[0] || ""))
+      bad.push("турнир: по умолчанию не лучшая ветка сверху");
+    // И главное: тонкая ячейка (+0.626 % — ВЫШЕ измеренной +0.473 %)
+    // обязана стоять НИЖЕ измеренной. Иначе восемь сделок читались бы
+    // как лучшее правило сетки — ровно ловушка шапки страницы.
+    const iThin = first.findIndex(r => /e22_rr3\.0_sn_t0_a24/.test(r));
+    const iMeas = first.findIndex(r => /e22_rr2\.0_sq_t1_a24/.test(r));
+    if (iThin < 0 || iMeas < 0 || iThin < iMeas)
+      bad.push("турнир: неизмеренная ячейка не утонула вниз");
     // Сортировка — настоящей функцией страницы: по итогу первой
     // обязана встать текущая ячейка (+2365.5 — максимум стаба).
     if (!global.__sort) {
@@ -1519,15 +1534,22 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       if (!/e22_rr2\.0_sq_t1_a24/.test(rows[0] || ""))
         bad.push("турнир: сортировка по итогу не подняла максимум");
       global.__sort("total_bp");
-      const asc = flat(global.__el("box").innerHTML)
-        .split("<tr").slice(2);
-      if (!/e22_rr3\.0_sn_t0_a24/.test(asc[0] || ""))
+      const asc = order();
+      // Возрастание — среди ИЗМЕРЕННЫХ: тонкая с итогом +0.5 % не
+      // всплывает наверх и здесь.
+      if (!/e22_rr1\.5_sq_t1_a24/.test(asc[0] || ""))
         bad.push("турнир: второй клик не перевернул порядок");
+      if (/e22_rr3\.0_sn_t0_a24/.test(asc[0] || ""))
+        bad.push("турнир: тонкая ячейка всплыла при возрастании");
       global.__sort("total_bp");
-      const back = flat(global.__el("box").innerHTML)
-        .split("<tr").slice(2);
+      const back = order();
       if (!/e22_rr1\.5_sq_t1_a24/.test(back[0] || ""))
-        bad.push("турнир: третий клик не вернул объявленный порядок");
+        bad.push("турнир: третий клик не вернул порядок «лучшие сверху»");
+      // Возврат к умолчанию виден стрелкой у СВОЕЙ колонки: без неё
+      // назначенный порядок выглядит случайным.
+      const th = flat(global.__el("box").innerHTML);
+      if (!/expect % \u2193|ожид\. % \u2193/.test(th))
+        bad.push("турнир: порядок по умолчанию не помечен стрелкой");
     }
     // Язык: русский ограничитель приходит тем же ответом.
     if (global.__lang) {

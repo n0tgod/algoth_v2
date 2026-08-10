@@ -5899,9 +5899,21 @@ let LANG = new URLSearchParams(location.search).get("lang")
   || (function(){ try { return localStorage.getItem("algoth_lang"); }
                   catch (e) { return null; } })() || "en";
 let DATA = null;
-// Сортировка — состояние показа, не данных: артефакт приходит в
-// объявленном порядке сетки, и сброс сортировки возвращает его.
+// Порядок по умолчанию — ЛУЧШИЕ СВЕРХУ по ожиданию на сделку
+// (просьба владельца). `null` означает именно его, а не объявленный
+// порядок сетки: семьдесят две строки подряд глазами не читаются.
+// Ожидание, а не итог: у ячеек разное число сделок, и итог сравнивал
+// бы «сколько наторговала», а не «как ведёт себя правило».
 let SORT = null;
+const DEFAULT_SORT = "exp_bp";
+// Колонки РЕЗУЛЬТАТА. При сортировке по любой из них неизмеренные
+// ячейки уходят вниз ВСЕГДА: ветка с +2.47 % на восьми сделках иначе
+// встала бы первой строкой и читалась бы как победитель — ровно та
+// ловушка, о которой предупреждает шапка страницы. По колонкам
+// НАСТРОЕК (край, RR, стоп, тейк, возраст, сделки) порядок не
+// трогается: там тонкие ячейки и есть предмет просмотра.
+const RESULT_COLS = ["win", "exp_bp", "med_bp", "total_bp",
+                     "worst_bp"];
 function setLang(v){
   LANG = v;
   try { localStorage.setItem("algoth_lang", v); } catch (e) {}
@@ -5965,28 +5977,33 @@ const UI = {
               + `· прогон ${Math.round(d.run_age_sec/3600)} ч назад`},
   selcap: {en: "selector (the verdict is judged here)",
            ru: "селектор (вердикт выносится здесь)"},
-  tcap: {en: "all branches · click a column header to sort, click "
-             + "again to flip, third click restores the declared "
-             + "order",
-         ru: "все ветки · клик по заголовку сортирует, второй "
-             + "переворачивает, третий возвращает объявленный "
-             + "порядок"},
+  tcap: {en: "all branches, best first by expectancy · click a "
+             + "column header to sort, again to flip, third click "
+             + "returns to best-first",
+         ru: "все ветки, лучшие сверху по ожиданию · клик по "
+             + "заголовку сортирует, второй переворачивает, третий "
+             + "возвращает порядок «лучшие сверху»"},
   legend: {en: d => `<b>current rules</b> \u2014 the branch the live `
              + `situational book trades right now; it is the `
              + `reference, not the winner: the selector has to beat `
              + `it to justify changing the rules at all. `
              + `<b>thin</b> \u2014 fewer than ${d.min_cell} trades: `
              + `the cell is <b>unmeasured, not zero</b>, its numbers `
-             + `are noise. Thin cells stay out of the median and are `
-             + `not eligible for the selector.`,
+             + `are noise. Thin cells stay out of the median, are `
+             + `not eligible for the selector, and <b>always sink to `
+             + `the bottom</b> when the table is ranked by a result `
+             + `column \u2014 an unmeasured cell cannot be the best `
+             + `one.`,
            ru: d => `<b>текущие правила</b> \u2014 ветка, которой `
              + `ситуационная книга торгует прямо сейчас; это точка `
              + `отсчёта, а не победитель: селектор обязан переиграть `
              + `её, чтобы оправдать само право менять правила. `
              + `<b>мало</b> \u2014 сделок меньше ${d.min_cell}: `
              + `ячейка <b>не измерена, а не нулевая</b>, её числа `
-             + `суть шум. В медиану такие не входят и селектору для `
-             + `выбора не годятся.`},
+             + `суть шум. В медиану такие не входят, селектору для `
+             + `выбора не годятся и <b>всегда уходят вниз</b> при `
+             + `сортировке по колонке результата \u2014 неизмеренная `
+             + `ячейка не может быть лучшей.`},
   wait: {en: "no answer from the collector — retrying",
          ru: "сборщик не ответил — повторяю"},
   cols: {en: ["variant", "edge %", "RR \u2265", "stop", "target",
@@ -6014,6 +6031,25 @@ function cls(v){ return v == null ? "" : v > 0 ? "good"
   : v < 0 ? "bad" : ""; }
 const COLS = ["key", "edge", "rr", "stop", "take", "age",
               "n", "win", "exp_bp", "med_bp", "total_bp", "worst_bp"];
+function sortRows(d){
+  const rows = (d.cells || []).map((c, i) => Object.assign({_i: i}, c));
+  const col = SORT ? SORT.col : DEFAULT_SORT;
+  const asc = SORT ? SORT.asc : false;
+  const sink = RESULT_COLS.indexOf(col) >= 0;
+  // Ранг годности: измеренная → тонкая → пустая. Он старше самой
+  // величины, поэтому сравнивается первым.
+  const rank = c => !c.n ? 2 : (c.n < d.min_cell ? 1 : 0);
+  rows.sort((a, b) => {
+    if (sink && rank(a) !== rank(b)) return rank(a) - rank(b);
+    const va = a[col], vb = b[col];
+    if (va == null && vb == null) return a._i - b._i;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (va === vb) return a._i - b._i;
+    return asc ? (va < vb ? -1 : 1) : (va > vb ? -1 : 1);
+  });
+  return rows;
+}
 function render(d){
   DATA = d;
   navMount("/tournament-page");
@@ -6062,20 +6098,13 @@ function render(d){
   selbox.innerHTML = sl;
   document.getElementById("tcap").textContent = T("tcap");
   document.getElementById("tlegend").innerHTML = T("legend")(d);
-  const rows = (d.cells || []).map((c, i) => Object.assign({_i: i}, c));
-  if (SORT) rows.sort((a, b) => {
-    const va = a[SORT.col], vb = b[SORT.col];
-    if (va == null && vb == null) return a._i - b._i;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (va === vb) return a._i - b._i;
-    return SORT.asc ? (va < vb ? -1 : 1) : (va > vb ? -1 : 1);
-  });
+  const rows = sortRows(d);
   const H = T("cols");
   box.innerHTML = `<table><thead><tr>${H.map((h, i) =>
     `<th onclick="sortBy('${COLS[i]}')">${h}${
-      SORT && SORT.col === COLS[i] ? (SORT.asc ? " \u2191" : " \u2193")
-      : ""}</th>`).join("")}</tr></thead><tbody>${
+      (SORT ? SORT.col : DEFAULT_SORT) === COLS[i]
+        ? ((SORT && SORT.asc) ? " \u2191" : " \u2193") : ""}</th>`
+    ).join("")}</tr></thead><tbody>${
     rows.map(c => {
       const cur = c.key === d.current;
       const thin = (c.n || 0) > 0 && c.n < d.min_cell;
