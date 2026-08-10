@@ -5913,7 +5913,7 @@ const DEFAULT_SORT = "exp_bp";
 // НАСТРОЕК (край, RR, стоп, тейк, возраст, сделки) порядок не
 // трогается: там тонкие ячейки и есть предмет просмотра.
 const RESULT_COLS = ["win", "exp_bp", "med_bp", "total_bp",
-                     "worst_bp"];
+                     "worst_bp", "dd_bp"];
 function setLang(v){
   LANG = v;
   try { localStorage.setItem("algoth_lang", v); } catch (e) {}
@@ -5993,7 +5993,14 @@ const UI = {
              + `not eligible for the selector, and <b>always sink to `
              + `the bottom</b> when the table is ranked by a result `
              + `column \u2014 an unmeasured cell cannot be the best `
-             + `one.`,
+             + `one. <b>worst trade</b> is the final result of the `
+             + `single worst trade, not a drawdown \u2014 that trade `
+             + `may have gone deeper against us and come back. `
+             + `<b>curve drawdown</b> is the deepest dip of the `
+             + `variant\u2019s cumulative curve, measured in the `
+             + `same unit as the rest of the table: a SUM of per-leg `
+             + `percentages, not percent of the deposit \u2014 the `
+             + `replay models slots, not position size.`,
            ru: d => `<b>текущие правила</b> \u2014 ветка, которой `
              + `ситуационная книга торгует прямо сейчас; это точка `
              + `отсчёта, а не победитель: селектор обязан переиграть `
@@ -6003,15 +6010,23 @@ const UI = {
              + `суть шум. В медиану такие не входят, селектору для `
              + `выбора не годятся и <b>всегда уходят вниз</b> при `
              + `сортировке по колонке результата \u2014 неизмеренная `
-             + `ячейка не может быть лучшей.`},
+             + `ячейка не может быть лучшей. <b>худшая сделка</b> — `
+             + `итог самой убыточной сделки, а НЕ просадка: по дороге `
+             + `она могла провалиться глубже и вернуться. `
+             + `<b>просадка кривой</b> — глубочайший провал `
+             + `накопленной кривой ветки, в той же единице, что вся `
+             + `таблица: это СУММА процентов на ногу, а не процент `
+             + `депозита — реплей моделирует слоты, а не размер `
+             + `позиции.`},
   wait: {en: "no answer from the collector — retrying",
          ru: "сборщик не ответил — повторяю"},
   cols: {en: ["variant", "edge %", "RR \u2265", "stop", "target",
               "age h", "trades", "win", "expect %", "median %",
-              "total %", "worst %"],
+              "total %", "worst trade %", "curve drawdown %"],
          ru: ["вариант", "край %", "RR \u2265", "стоп", "тейк",
               "возраст ч", "сделок", "побед", "ожид. %",
-              "медиана %", "итог %", "худшая %"]},
+              "медиана %", "итог %", "худшая сделка %",
+              "просадка кривой %"]},
   stop: {en: {q: "quantile", m: "forecast line", none: "no stop"},
          ru: {q: "квантиль", m: "линия прогноза", none: "без стопа"}},
   yes: {en: "yes", ru: "да"}, no: {en: "no", ru: "нет"},
@@ -6030,7 +6045,8 @@ function T(k){ const v = UI[k]; return v[LANG] || v.en; }
 function cls(v){ return v == null ? "" : v > 0 ? "good"
   : v < 0 ? "bad" : ""; }
 const COLS = ["key", "edge", "rr", "stop", "take", "age",
-              "n", "win", "exp_bp", "med_bp", "total_bp", "worst_bp"];
+              "n", "win", "exp_bp", "med_bp", "total_bp", "worst_bp",
+              "dd_bp"];
 function sortRows(d){
   const rows = (d.cells || []).map((c, i) => Object.assign({_i: i}, c));
   const col = SORT ? SORT.col : DEFAULT_SORT;
@@ -6117,7 +6133,7 @@ function render(d){
           <td>${T("stop")[c.stop]}</td>
           <td>${c.take ? T("yes") : T("no")}</td><td>${c.age}</td>
           <td>0</td><td>\u2014</td><td>\u2014</td><td>\u2014</td>
-          <td>\u2014</td><td>\u2014</td></tr>`;
+          <td>\u2014</td><td>\u2014</td><td>\u2014</td></tr>`;
       return `<tr class="${cur ? "hl" : ""}${thin ? " thin" : ""}">
         <td>${name}${thin ? ` <span class="dim">·${T("thin")}</span>`
                           : ""}</td>
@@ -6130,6 +6146,7 @@ function render(d){
         <td class="mono ${cls(c.med_bp)}">${pct(c.med_bp)}</td>
         <td class="mono ${cls(c.total_bp)}">${pct(c.total_bp)}</td>
         <td class="mono ${cls(c.worst_bp)}">${pct(c.worst_bp)}</td>
+        <td class="mono ${cls(c.dd_bp)}">${pct(c.dd_bp)}</td>
       </tr>`;
     }).join("")}</tbody></table>`;
 }

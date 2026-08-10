@@ -238,15 +238,15 @@ global.fetch = async (url) => {
                   {key: "e22_rr2.0_sq_t1_a24", edge: 22, rr: 2,
                    stop: "q", take: true, age: 24, n: 50, win: 0.5,
                    exp_bp: 47.3, med_bp: -2.7, total_bp: 2365.5,
-                   worst_bp: -352.3},
+                   worst_bp: -352.3, dd_bp: -815.0},
                   {key: "e22_rr1.5_sq_t1_a24", edge: 22, rr: 1.5,
                    stop: "q", take: true, age: 24, n: 65, win: 0.569,
                    exp_bp: 116.3, med_bp: 87.5, total_bp: 700.0,
-                   worst_bp: -896.4},
+                   worst_bp: -896.4, dd_bp: -1204.0},
                   {key: "e22_rr3.0_sn_t0_a24", edge: 22, rr: 3,
                    stop: "none", take: false, age: 24, n: 11,
                    win: 0.455, exp_bp: 62.6, med_bp: -10.3,
-                   total_bp: 50.0, worst_bp: -135.9},
+                   total_bp: 50.0, worst_bp: -135.9, dd_bp: -140.0},
                   {key: "e33_rr3.0_sm_t1_a72", edge: 33, rr: 3,
                    stop: "m", take: true, age: 72, n: 0}]}
              : url.startsWith("/model_tree")
@@ -1484,6 +1484,18 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("турнир: порог измеримости не назван числом");
     if (!/reference, not the winner/.test(lg))
       bad.push("турнир: не сказано, что текущие правила — отсчёт");
+    // Худшая СДЕЛКА и просадка КРИВОЙ — разные колонки и разные
+    // величины: владелец прочёл «worst» как просадку, и страница
+    // обязана различие называть, а не подразумевать.
+    if (!/worst trade %/.test(bx) || !/curve drawdown %/.test(bx))
+      bad.push("турнир: колонки просадки и худшей сделки не разведены");
+    if (!/-8\.15 %/.test(bx))
+      bad.push("турнир: просадка кривой не показана числом");
+    if (!/not a drawdown/.test(lg))
+      bad.push("турнир: не сказано, что худшая сделка — не просадка");
+    if (!/not percent of the deposit/.test(lg))
+      bad.push("турнир: не сказано, что просадка не в процентах "
+               + "депозита");
     // Числа ячеек — в процентах: 47.3 б.п. = +0.47 %, −352.3 =
     // −3.52 %. Проверяется ПЕРЕВЕДЁННОЕ значение: совпадение по
     // сырому числу прошло бы и на странице, оставшейся в б.п.

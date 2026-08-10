@@ -419,14 +419,31 @@ def _add(acc, series, d0, d1):
             acc["trades"] += c
 
 
-def _tot(acc):
-    days = sorted(acc["days"])
+def curve_dd(day_sums):
+    """Глубочайший провал накопленной кривой и её итог.
+
+    Единица — та же, в которой считаются сами ячейки: СУММА
+    результатов ног (`Σ` процентов на ногу), а не процент депозита —
+    размер позиции реплей не моделирует, он моделирует слоты. Значит
+    это просадка КРИВОЙ ветки, и называть её просадкой баланса
+    нельзя: при шести слотах шесть ног по −3 % дают день в −18, но
+    депозит столько не теряет.
+
+    Одна реализация на ячейки таблицы и на кривые селектора: вторая
+    однажды разошлась бы, и таблица говорила бы одно, а вердикт
+    другое.
+    """
     run = peak = dd = 0.0
-    for d in days:
-        run += acc["days"][d]
+    for d in sorted(day_sums):
+        run += day_sums[d]
         peak = max(peak, run)
         dd = min(dd, run - peak)
-    return {"total_bp": round(run, 1), "dd_bp": round(dd, 1),
+    return round(run, 1), round(dd, 1)
+
+
+def _tot(acc):
+    run, dd = curve_dd(acc["days"])
+    return {"total_bp": run, "dd_bp": dd,
             "trades": acc.get("trades", 0),
             "picks": acc.get("picks", None)}
 
@@ -498,16 +515,22 @@ def run(sheets, root, src=None, log=print):
     series = {}
     for var in variants():
         tr = simulate(need, outs, var)
-        series[var["key"]] = daily(tr)
+        day = daily(tr)
+        series[var["key"]] = day
         nets = [t["net"] for t in tr]
         row = dict(var, n=len(nets))
         if nets:
             wins = sum(1 for v in nets if v > 0)
+            _, dd = curve_dd({d: v[0] for d, v in day.items()})
             row.update(win=round(wins / len(nets), 3),
                        exp_bp=round(sum(nets) / len(nets), 1),
                        med_bp=round(st.median(nets), 1),
                        total_bp=round(sum(nets), 1),
-                       worst_bp=round(min(nets), 1))
+                       # Худшая СДЕЛКА и просадка КРИВОЙ — разные
+                       # величины: сделка могла провалиться глубже и
+                       # вернуться, а кривая копит провал по дням.
+                       worst_bp=round(min(nets), 1),
+                       dd_bp=dd)
         cells.append(row)
     wf = walk_forward(series, [v["key"] for v in variants()], log=log)
     return legs, cells, wf

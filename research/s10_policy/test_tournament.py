@@ -156,6 +156,37 @@ def test_slots():
     check("прогноз слабее края не входит", len(tr) == 0, str(len(tr)))
 
 
+def test_cell_drawdown_is_not_the_worst_trade():
+    """Просадка кривой и худшая сделка — РАЗНЫЕ величины.
+
+    Вопрос владельца: `worst` — это просадка по сделке или по
+    балансу? Ни то, ни другое: это итог худшей сделки. Просадка
+    считается по накопленной кривой и обязана отличаться от неё
+    численно — иначе колонки дублировали бы друг друга и различие,
+    ради которого их две, было бы невидимо.
+    """
+    # Два дня подряд по −10 дают провал кривой −20 при худшей
+    # ОДИНОЧНОЙ сделке −10; третий день +5 провал не отменяет.
+    got, dd = T.curve_dd({1: -10.0, 2: -10.0, 3: 5.0})
+    check("итог кривой — сумма дней", got == -15.0, str(got))
+    check("просадка глубже худшего дня", dd == -20.0, str(dd))
+    check("растущая кривая просадки не имеет",
+          T.curve_dd({1: 5.0, 2: 5.0})[1] == 0.0,
+          str(T.curve_dd({1: 5.0, 2: 5.0})))
+    # Через полный прогон: у ячейки обе величины и они не равны.
+    t0 = 1_786_000_000
+    var = dict(T.variants()[0], edge=22.0, rr=1.5, stop="q",
+               take=True, age=24)
+    legs = [_leg(i, f"S{i}USDT", t0 + i * 90_000) for i in range(3)]
+    outs = _outs(legs, why="стоп", move=-40.0, hold=3600)
+    tr = T.simulate(legs, outs, var)
+    day = T.daily(tr)
+    _, dd2 = T.curve_dd({d: v[0] for d, v in day.items()})
+    worst = min(t["net"] for t in tr)
+    check("три убыточных дня копят просадку глубже одной сделки",
+          dd2 < worst, f"просадка {dd2} против худшей сделки {worst}")
+
+
 def test_selector():
     # Дневные ряды строятся руками. Вариант A стабильно хорош в
     # прошлом и будущем; вариант B — великий ТОЛЬКО в будущем окне.
@@ -294,6 +325,7 @@ if __name__ == "__main__":
     test_legs()
     test_outcome()
     test_slots()
+    test_cell_drawdown_is_not_the_worst_trade()
     test_selector()
     test_kill_arm()
     test_artifacts_survive_fresh_checkout()
