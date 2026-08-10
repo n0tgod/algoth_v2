@@ -6328,6 +6328,9 @@ const FAM_EN = {absorption:"book eaten (absorption)",
 const PER_EN = {today:"today (utc)", "30d":"last 30 days",
                 "365d":"last 365 days"};
 
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;"); }
 function groupTable(cap, rows, names){
   if (!rows || !rows.length)
     return `<div class="panel"><div class="cap">${cap}</div>
@@ -6337,17 +6340,34 @@ function groupTable(cap, rows, names){
   // Таблица завёрнута в прокрутку, как таблицы топа: панель узкая, и
   // без неё правые колонки СРЕЗАЛИСЬ — владелец видел «avg net» без
   // процента и деньги не видел вовсе.
+  // Колонка «без лучшего имени» стоит РЯДОМ с деньгами, а не в
+  // подсказке: группа из тысячи сделок выглядит статистикой, и
+  // владелец прочёл «book imbalance / depth» как лучшую стратегию —
+  // тогда как её +331 $ это TUT, XAN и THE, а без них −84 $. Пока
+  // разница не стоит в строке, её не видно.
   return `<div class="panel"><div class="cap">${cap}</div>
     <div class="scroll"><table><tr><th></th><th>trades</th><th>wins</th>
-    <th>avg net</th><th>$</th></tr>` + rows.map((g, i) =>
+    <th>avg net</th><th>$</th><th>$ w/o best name</th></tr>`
+    + rows.map((g, i) =>
     `<tr><td>${i === 0 ? "&#9733; " : ""}${
        (names && names[g.key]) || g.key}</td>
      <td class="mono">${g.n}</td>
      <td class="mono">${Math.round(g.win*100)} %</td>
      <td class="mono">${pct(g.net_bp_avg)}</td>
      <td class="mono ${g.pnl > 0 ? "good" : "bad"}">${
-       g.pnl > 0 ? "+" : ""}${g.pnl}</td></tr>`).join("")
-    + "</table></div></div>";
+       g.pnl > 0 ? "+" : ""}${g.pnl}</td>
+     <td class="mono ${g.pnl_wo_top > 0 ? "good" : "bad"}"
+       title="${esc(g.top_sym || "")} alone gives ${
+         g.top_pnl > 0 ? "+" : ""}${g.top_pnl} $ of it; ${
+         g.syms} names in the group">${
+       g.pnl_wo_top == null ? "&mdash;"
+       : (g.pnl_wo_top > 0 ? "+" : "") + g.pnl_wo_top}</td></tr>`)
+      .join("")
+    + `</table></div><div class="k">The last column drops the single
+       best-earning name of each group. A group whose money survives
+       only with that one name is a pump, not a behaviour: 1301
+       trades look like statistics, and one name can still be all of
+       it.</div></div>`;
 }
 function tradeRows(list){
   return list.map(t => {

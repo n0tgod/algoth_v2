@@ -2215,24 +2215,48 @@ class Collector:
         """Агрегаты лиги из готовых строк — арифметика без чтения."""
 
         def agg(sub, key):
+            """Итог группы И её итог БЕЗ лучшего имени.
+
+            Вторая величина обязательна, а не украшение: владелец
+            прочёл «book imbalance / depth» как лучшую стратегию по
+            1301 сделке, а замер показал, что +331 $ это TUT (+247),
+            XAN (+119) и THE (+49), без них группа даёт −84 $.
+            Крупное число сделок делает такую группу похожей на
+            статистику, хотя деньги в ней принадлежат одному разгону.
+            Тот же приём проект уже применял в `one_name.py`, где
+            колонка «без лучшего имени» переворачивала вывод.
+            """
             out = {}
             for r in sub:
                 k = key(r)
                 if k is None:
                     continue
                 g = out.setdefault(k, {"n": 0, "w": 0, "pnl": 0.0,
-                                       "net": 0.0})
+                                       "net": 0.0, "sym": {}})
                 g["n"] += 1
                 g["w"] += 1 if (r["pnl"] or 0) > 0 else 0
                 g["pnl"] += r["pnl"] or 0.0
                 g["net"] += r["net_bp"] or 0.0
-            return sorted(
-                [{"key": k, "n": g["n"],
-                  "win": round(g["w"] / g["n"], 3),
-                  "pnl": round(g["pnl"], 2),
-                  "net_bp_avg": round(g["net"] / g["n"], 1)}
-                 for k, g in out.items()],
-                key=lambda x: -x["pnl"])
+                g["sym"][r["sym"]] = (g["sym"].get(r["sym"], 0.0)
+                                      + (r["pnl"] or 0.0))
+            def row(k, g):
+                best, bv = None, 0.0
+                for sym, v in g["sym"].items():
+                    if best is None or v > bv:
+                        best, bv = sym, v
+                return {"key": k, "n": g["n"],
+                        "win": round(g["w"] / g["n"], 3),
+                        "pnl": round(g["pnl"], 2),
+                        "net_bp_avg": round(g["net"] / g["n"], 1),
+                        # Имя, дающее группе больше всех, и итог без
+                        # него. Одно имя вместо доли: владелец должен
+                        # видеть, ЧТО именно вытягивает группу.
+                        "top_sym": best,
+                        "top_pnl": round(bv, 2),
+                        "pnl_wo_top": round(g["pnl"] - bv, 2),
+                        "syms": len(g["sym"])}
+            return sorted([row(k, g) for k, g in out.items()],
+                          key=lambda x: -x["pnl"])
 
         # «Сегодня» — календарные сутки UTC, не последние 24 часа:
         # владелец читает это как «что закрылось сегодня».

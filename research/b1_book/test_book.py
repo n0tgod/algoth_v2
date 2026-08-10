@@ -2504,6 +2504,14 @@ def test_league_ranks_by_realised_money():
         check("деньги по рукам — из кассы, по размеру позиции",
               arm["gbm"]["pnl"] == 0.49 and arm["nn"]["pnl"] == -0.51,
               str(arm))
+        # Итог БЕЗ лучшего имени — на настоящем ядре: у руки gbm
+        # единственная сделка +0.49 $ по AUSDT, значит без него ноль.
+        arm_g = {g["key"]: g for g in p30["groups"]["arm"]}
+        check("лига считает итог без лучшего имени",
+              arm_g["gbm"]["top_sym"] == "AUSDT"
+              and arm_g["gbm"]["pnl_wo_top"] == 0.0
+              and arm_g["gbm"]["syms"] == 1,
+              str(arm_g["gbm"]))
         check("лидер ситуаций — ликвидации",
               p30["groups"]["setup"][0]["key"] == "liq",
               str(p30["groups"]["setup"]))

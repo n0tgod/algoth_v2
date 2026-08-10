@@ -342,9 +342,12 @@ global.fetch = async (url) => {
                          setup_known: 0},
                  "30d": {n: 3, setup_known: 2, groups: {
                      arm: [{key: "nn", n: 2, win: 0.5, pnl: 4.1,
-                            net_bp_avg: 12.0},
+                            net_bp_avg: 12.0, top_sym: "TUTUSDT",
+                            top_pnl: 9.0, pnl_wo_top: -4.9, syms: 2},
                            {key: "gbm", n: 1, win: 0, pnl: -3.0,
-                            net_bp_avg: -51.0}],
+                            net_bp_avg: -51.0, top_sym: "CCCUSDT",
+                            top_pnl: -3.0, pnl_wo_top: 0.0,
+                            syms: 1}],
                      book: [{key: "sit", n: 2, win: 0.5, pnl: 4.1,
                              net_bp_avg: 12.0},
                             {key: "h1", n: 1, win: 0, pnl: -3.0,
@@ -1331,6 +1334,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // правые колонки СРЕЗАЛИСЬ (владелец видел «avg net» без
     // процента и не видел денег вовсе). Четыре панели групп плюс два
     // топа — шесть обёрток на подставных данных, где все группы полны.
+    // Колонка «без лучшего имени» — числами стаба и в обе стороны:
+    // группа с +4.1 обязана показать −4.9 без TUT, иначе колонка
+    // просто повторяет итог и ничего не ловит.
+    if (!/\$ w\/o best name/.test(bx))
+      bad.push("лига: нет колонки «без лучшего имени»");
+    if (!/-4\.9/.test(bx))
+      bad.push("лига: итог без лучшего имени не показан числом");
+    if (!/TUTUSDT alone gives \+9/.test(bx))
+      bad.push("лига: не названо имя, вытягивающее группу");
+    if (!/is a pump, not a behaviour/.test(bx))
+      bad.push("лига: не сказано, зачем колонка");
     const nScroll = (bx.match(/class="scroll"/g) || []).length;
     if (nScroll < 6)
       bad.push("лига: таблицы групп не в прокрутке, колонки срезаются"
