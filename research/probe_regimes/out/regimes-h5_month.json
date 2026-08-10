@@ -1,0 +1,111 @@
+{
+ "rows": [
+  {
+   "feat": "age",
+   "name": "возраст листинга",
+   "ic_all": -0.0026595744680851063,
+   "bins": [
+    0.0056,
+    -0.0018,
+    -0.0091
+   ],
+   "spread_med": 0.2431,
+   "rand_spread_med": 0.2534,
+   "wider": 0.488,
+   "best_share": [
+    0.343,
+    0.349,
+    0.308
+   ],
+   "top_bin": 1,
+   "top_share": 0.349,
+   "sections": 1311
+  },
+  {
+   "feat": "vol_ratio",
+   "name": "волатильность против своей обычной",
+   "ic_all": -0.002684129033194562,
+   "bins": [
+    -0.0049,
+    -0.0078,
+    0.0073
+   ],
+   "spread_med": 0.2544,
+   "rand_spread_med": 0.2545,
+   "wider": 0.485,
+   "best_share": [
+    0.342,
+    0.329,
+    0.33
+   ],
+   "top_bin": 0,
+   "top_share": 0.342,
+   "sections": 1326
+  },
+  {
+   "feat": "turn_rel",
+   "name": "оборот против своего обычного",
+   "ic_all": -0.002684129033194562,
+   "bins": [
+    0.007,
+    -0.0087,
+    0.0027
+   ],
+   "spread_med": 0.2451,
+   "rand_spread_med": 0.2545,
+   "wider": 0.477,
+   "best_share": [
+    0.33,
+    0.342,
+    0.329
+   ],
+   "top_bin": 1,
+   "top_share": 0.342,
+   "sections": 1326
+  },
+  {
+   "feat": "beta",
+   "name": "связь с рынком",
+   "ic_all": -0.002684129033194562,
+   "bins": [
+    0.0042,
+    -0.006,
+    -0.0013
+   ],
+   "spread_med": 0.2434,
+   "rand_spread_med": 0.2545,
+   "wider": 0.477,
+   "best_share": [
+    0.336,
+    0.324,
+    0.339
+   ],
+   "top_bin": 2,
+   "top_share": 0.339,
+   "sections": 1326
+  },
+  {
+   "feat": "d_oi_7",
+   "name": "приток/отток открытого интереса за неделю",
+   "ic_all": -0.00099660675337899,
+   "bins": [
+    0.0169,
+    0.0019,
+    -0.0058
+   ],
+   "spread_med": 0.217,
+   "rand_spread_med": 0.2303,
+   "wider": 0.467,
+   "best_share": [
+    0.367,
+    0.322,
+    0.311
+   ],
+   "top_bin": 0,
+   "top_share": 0.367,
+   "sections": 900
+  }
+ ],
+ "sections": 1326,
+ "vectors": "vectors_h5_month.npz"
+}
