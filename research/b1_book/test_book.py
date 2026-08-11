@@ -2951,6 +2951,27 @@ def test_book_registry_is_one_list():
         bad = {k: seen[k] for k, v in dirs.items() if seen[k] != v}
         check("каждая книга спрошена в своём каталоге", not bad,
               str(bad))
+        # То же самое у СВОДКИ, и вот там дыра и жила: каталог там
+        # собирался соглашением `model_<ключ>`, совпадавшим с картой у
+        # четырёх книг из пяти. Подставной каталог по соглашению стоит
+        # рядом с настоящим — без него дефект неотличим от исправности.
+        decoy = os.path.join(d, "s8_loop", "out", "model_z")
+        os.makedirs(decoy, exist_ok=True)
+        with open(os.path.join(decoy, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"horizon_h": 4, "book": "model_z"}, f)
+        col._model_cache = (0.0, None, object())
+        st = col.model_state()
+        got = {k: ((v.get("manifest") or {}).get("book"))
+               for k, v in (st.get("books") or {}).items()}
+        # `sit` в ответе подменяется наблюдательной записью по порогу —
+        # это отдельное правило, и спрашивать с него каталог нельзя.
+        bad = {k: got.get(k) for k, v in dirs.items()
+               if k not in ("h4", "sit") and got.get(k) != v}
+        check("сводка тоже читает каталог из карты", not bad, str(bad))
+        check("главная книга в сводке — своя",
+              (st.get("manifest") or {}).get("book") == dirs["h4"],
+              str((st.get("manifest") or {}).get("book")))
     finally:
         C.HERE = was
         shutil.rmtree(d, ignore_errors=True)

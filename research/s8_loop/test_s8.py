@@ -1425,12 +1425,17 @@ def test_situational_book_enters_and_exits_by_situation():
                                      "hour": "2026-08-07-09",
                                      "long": [], "short": []}) + "\n")
             got7 = T.fresh_sit_on_rules_change(old_dir, lambda m: None)
+            # Переезжают ФАЙЛЫ КНИГИ, а не каталог: у главной книги
+            # каталог общий с моделью, и переименование уносило веса.
+            # Правило одно на все книги — два способа отставить книгу
+            # однажды разошлись бы, как разошлись здесь.
             check("книга прежних правил отставлена в архив",
-                  got7 and not os.path.exists(old_dir)
-                  and os.path.isdir(got7)
-                  and os.path.exists(os.path.join(got7, "picks.jsonl")),
+                  got7 and os.path.isdir(got7)
+                  and os.path.exists(os.path.join(got7, "picks.jsonl"))
+                  and not os.path.exists(
+                      os.path.join(old_dir, "picks.jsonl")),
                   str(got7))
-            os.makedirs(old_dir)
+            os.makedirs(old_dir, exist_ok=True)
             with open(os.path.join(old_dir, "manifest.json"), "w",
                       encoding="utf-8") as f:
                 f.write(_json.dumps(
@@ -3652,14 +3657,38 @@ def test_book_archives_when_the_order_changes():
     # проверка по нему не срабатывала никогда.
     open(os.path.join(d, "picks.jsonl"), "w", encoding="utf-8").write(
         _j.dumps({"arm": "gbm", "rank_want": None}) + "\n")
+    open(os.path.join(d, "review.jsonl"), "w", encoding="utf-8").write(
+        _j.dumps({"arm": "gbm", "sym": "AAAUSDT"}) + "\n")
+    open(os.path.join(d, "account_gbm.json"), "w",
+         encoding="utf-8").write("{}")
+    # Каталог ГЛАВНОЙ книги — это каталог МОДЕЛИ: рядом с выборами
+    # лежат веса, сохранённые векторы, мысли и история IC. Отставить
+    # книгу переименованием каталога значит унести с ней модель — и
+    # ровно это остановило живой контур: следующий цикл падал на
+    # `preds.jsonl` в несуществующем каталоге.
+    for f in ("preds.jsonl", "thoughts.jsonl", "ic_history.jsonl",
+              "gbm_fwd_4h.pkl"):
+        open(os.path.join(d, f), "w", encoding="utf-8").write("x\n")
     got = T.fresh_book_on_rank_change(d, "fwd_4h_z")
     check("смена порядка отставляет книгу",
           got is not None and os.path.basename(got) == "model.rank-raw",
           f"{got}")
-    check("прежний каталог освобождён", not os.path.exists(d), d)
     check("сделки не потеряны, а переехали",
-          got and os.path.exists(os.path.join(got, "picks.jsonl")), got)
-    os.makedirs(d, exist_ok=True)
+          got and all(os.path.exists(os.path.join(got, f))
+                      for f in ("picks.jsonl", "review.jsonl",
+                                "account_gbm.json")), got)
+    left = sorted(os.listdir(d)) if os.path.isdir(d) else None
+    check("каталог модели на месте", left is not None,
+          "каталог унесён вместе с книгой — цикл упадёт на preds.jsonl")
+    left = left or []
+    check("книга из живого каталога ушла целиком",
+          not any(f in left for f in ("picks.jsonl", "review.jsonl",
+                                      "account_gbm.json")),
+          str(left))
+    check("модель осталась на месте",
+          all(f in left for f in ("preds.jsonl", "thoughts.jsonl",
+                                  "ic_history.jsonl", "gbm_fwd_4h.pkl")),
+          str(left))
     open(os.path.join(d, "picks.jsonl"), "w", encoding="utf-8").write(
         _j.dumps({"arm": "gbm", "rank_want": "fwd_4h_z"}) + "\n")
     # Живой случай, на котором дефект и вылез: манифест УЖЕ несёт новый
@@ -3692,6 +3721,72 @@ def test_book_archives_when_the_order_changes():
           T.fresh_book_on_rank_change(d, "fwd_4h_z") is None
           and os.path.exists(d), "книга отставлена зря")
     shutil.rmtree(td, ignore_errors=True)
+
+
+def test_repair_returns_the_model_and_leaves_the_book():
+    """Разбор последствий: модель возвращается, книга остаётся в архиве.
+
+    Дефект уже случился на живом сервере, и модель уехала в архив
+    книги. Скрипт починки гоняется НАСТОЯЩИЙ: чинилка, проверенная
+    пересказом того, что она делает, — это не проверка.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+    root = os.path.dirname(os.path.dirname(HERE))
+    sh = os.path.join(root, "tools", "repair_model_dir.sh")
+    if not os.path.exists(sh):
+        check("скрипт починки на месте", False, sh)
+        return
+    td = tempfile.mkdtemp()
+    try:
+        live = os.path.join(td, "model")
+        arch = os.path.join(td, "model.rank-raw")
+        os.makedirs(live)
+        os.makedirs(arch)
+        # Живой каталог после падения: в нём только исход цикла.
+        open(os.path.join(live, "last_run.json"), "w").write('{"a":1}')
+        model_files = ("preds.jsonl", "thoughts.jsonl",
+                       "ic_history.jsonl", "gbm_fwd_4h.pkl")
+        book_files = ("picks.jsonl", "review.jsonl", "account_gbm.json",
+                      "manifest.json")
+        for f in model_files + book_files + ("last_run.json",):
+            open(os.path.join(arch, f), "w").write("old\n")
+        r = subprocess.run([sh, td], capture_output=True, text=True,
+                           timeout=60)
+        check("починка отработала", r.returncode == 0,
+              (r.stdout + r.stderr)[-300:])
+        left = sorted(os.listdir(live))
+        check("модель вернулась",
+              all(f in left for f in model_files), str(left))
+        check("книга осталась в архиве",
+              all(os.path.exists(os.path.join(arch, f))
+                  for f in book_files), str(sorted(os.listdir(arch))))
+        check("книга в живой каталог не вернулась",
+              not any(f in left for f in
+                      ("picks.jsonl", "review.jsonl", "account_gbm.json")),
+              str(left))
+        # Исход упавшего цикла новее архивного — затирать его нечем.
+        check("свежий файл не затёрт",
+              open(os.path.join(live, "last_run.json")).read() == '{"a":1}',
+              "живой файл перезаписан архивным")
+        # Повтор ничего не портит: архива с моделью больше нет.
+        r2 = subprocess.run([sh, td], capture_output=True, text=True,
+                            timeout=60)
+        check("повтор безвреден",
+              r2.returncode == 0 and "чинить нечего" in r2.stdout,
+              (r2.stdout + r2.stderr)[-200:])
+        # Обычная отставленная книга (без модели) не трогается вовсе.
+        plain = os.path.join(td, "model.rank-fwd_4h_z")
+        os.makedirs(plain)
+        open(os.path.join(plain, "picks.jsonl"), "w").write("x\n")
+        subprocess.run([sh, td], capture_output=True, text=True,
+                       timeout=60)
+        check("книга без модели остаётся книгой",
+              os.path.exists(os.path.join(plain, "picks.jsonl")),
+              str(sorted(os.listdir(plain))))
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
 
 
 def test_books_order_by_their_own_sigma():
@@ -3738,6 +3833,7 @@ def main():
     test_sigma_targets_exist_on_every_horizon()
     test_books_order_by_their_own_sigma()
     test_book_archives_when_the_order_changes()
+    test_repair_returns_the_model_and_leaves_the_book()
     print("цикл переобучения")
     test_one_name_one_position()
     test_merge_adds_shows_one_position()
