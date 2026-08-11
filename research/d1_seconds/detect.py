@@ -275,15 +275,34 @@ def guard_sec(delay_sec, horizon_sec, window_sec=W_SEC):
     return int(max(int(window_sec), int(delay_sec) + int(horizon_sec)))
 
 
-def guard_matrix(shape, rows, j_list, guard):
+GUARD_CHUNK = 128                 # строк за раз при построении запретов
+
+
+def guard_matrix(shape, rows, j_list, guard, chunk=GUARD_CHUNK):
     """Кто в какой момент не годится в фон. Обёртка над L3.
 
     Считает `E.ban_matrix` — она работает в единицах сетки, и у нас эта
     единица секунда. Второй реализации не полагается: в проекте уже был
     случай, когда одинаково названные нули считались разным кодом.
+
+    Строки идут пачками. На сутках это 518 × 93 600, и разностный массив
+    внутри L3 берёт вчетверо больше готового результата — почти 400 МБ
+    разом. Строки независимы, поэтому пачка даёт **тот же результат**
+    (закреплено тестом), а пик памяти падает вчетверо. Считать это
+    оптимизацией «на всякий случай» нельзя: реплей работает рядом со
+    сбором, и память, отобранная у сборщика, стоит суток записи, которую
+    неоткуда докачать.
     """
-    return E.ban_matrix(shape, rows, j_list, guard_min=int(guard),
-                        step_min=1)
+    rows = np.asarray(rows, dtype=np.int64)
+    j_list = np.asarray(j_list, dtype=np.int64)
+    out = np.zeros(shape, dtype=bool)
+    for lo in range(0, shape[0], int(chunk)):
+        hi = min(lo + int(chunk), shape[0])
+        m = (rows >= lo) & (rows < hi)
+        out[lo:hi] = E.ban_matrix((hi - lo, shape[1]), rows[m] - lo,
+                                  j_list[m], guard_min=int(guard),
+                                  step_min=1)
+    return out
 
 
 def excess(P, NXT, row, j, delay_sec, horizon_sec, banned,

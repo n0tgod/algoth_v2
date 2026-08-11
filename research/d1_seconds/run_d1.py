@@ -68,6 +68,38 @@ DAY_SEC = 86400
 COST_ROUND_BP = 11.7
 
 
+def mem_available_mb():
+    """Сколько памяти реально доступно. Linux; иначе `None`."""
+    try:
+        for line in open("/proc/meminfo", encoding="utf-8"):
+            if line.startswith("MemAvailable:"):
+                return float(line.split()[1]) / 1024.0
+    except OSError:
+        pass
+    return None
+
+
+def rss_mb():
+    try:
+        import resource
+        return round(resource.getrusage(
+            resource.RUSAGE_SELF).ru_maxrss / 1024.0, 1)
+    except Exception:                                     # noqa: BLE001
+        return None
+
+
+def mem_need_mb(rows, n):
+    """Пик памяти на сутки, мегабайты.
+
+    Считается по составу, а не на глаз: цены (4 Б на ячейку), индекс
+    следующего наблюдения (4 Б), матрица запретов (1 Б) и разностный
+    массив внутри неё пачкой строк (8 Б на пачку). Запас — треть.
+    """
+    per_cell = 4 + 4 + 1
+    chunk = D.GUARD_CHUNK * n * 8
+    return round((rows * n * per_cell + chunk) / 1e6 * 1.33, 1)
+
+
 def mid_line(line):
     """Время и середина из строки снимка. Быстрый разбор трёх полей.
 
@@ -122,7 +154,13 @@ def symbol_row(root, sym, hours, t0, n):
         for t, m in read_hour(d, h, parse=mid_line):
             times.append(t)
             mids.append(m)
-    return D.place(times, mids, t0, n)
+    # float32: сутки по 518 именам — это 388 МБ в двойной точности и
+    # вдвое меньше здесь. Цена перехода измерена, а не объявлена малой
+    # (тест `test_float32_prices_do_not_move_the_measure`): относительная
+    # погрешность 6e-8 даёт около 0.001 б.п. на доходность при эффекте в
+    # единицы б.п. и пороге события в 300. Память рядом со сборщиком
+    # стоит дороже четвёртого знака.
+    return D.place(times, mids, t0, n).astype(np.float32)
 
 
 def _job(args):
@@ -163,7 +201,7 @@ def load_day(root, syms, day, jobs=1, log=print):
     t0 = day_bounds(day) - PAD_SEC
     n = DAY_SEC + 2 * PAD_SEC
     hours = hours_of(t0, n)
-    P = np.full((len(syms), n), np.nan)
+    P = np.full((len(syms), n), np.nan, dtype=np.float32)
     tasks = [(root, s, hours, t0, n) for s in syms]
     done = 0
     started = time.time()
@@ -401,6 +439,38 @@ def report(art, path):
 
 
 def main():
+    """Точка входа. Падение здесь обязано САМО СЕБЯ доложить.
+
+    Первый живой прогон оборвался и не оставил ничего: ни артефакта, ни
+    следа. Снаружи это неотличимо от «забыли опубликовать», и круг
+    переписки ушёл на угадывание. Теперь причина падения пишется в
+    состояние и публикуется вместе с ним — тот же принцип, по которому
+    сборщик считает отказы числом, а не молчит.
+    """
+    try:
+        return _run()
+    except SystemExit:
+        raise
+    except BaseException as e:                            # noqa: BLE001
+        import traceback
+        out, tag = _LAST.get("out"), _LAST.get("tag")
+        if out and tag:
+            st = _LAST.get("status") or {}
+            st["state"] = "УПАЛ"
+            st["error"] = f"{type(e).__name__}: {e}"
+            st["traceback"] = traceback.format_exc()[-2000:]
+            st["rss_mb"] = rss_mb()
+            write_status(out, tag, st)
+            print(f"ПРОГОН УПАЛ: {type(e).__name__}: {e}")
+            if not _LAST.get("no_publish"):
+                publish(f"D1: прогон упал ({tag})")
+        raise
+
+
+_LAST = {}
+
+
+def _run():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=BOOK_ROOT)
     ap.add_argument("--days", type=int, default=0,
@@ -411,6 +481,8 @@ def main():
     ap.add_argument("--tag", default="")
     ap.add_argument("--no-publish", action="store_true",
                     help="не публиковать отчёт в git")
+    ap.add_argument("--mem-share", type=float, default=0.6,
+                    help="какую долю свободной памяти можно занять")
     a = ap.parse_args()
     # Частичный прогон НЕ занимает имя полного: смоук под именем
     # настоящего прогона в этом проекте уже подменял артефакт (F2), а по
@@ -421,6 +493,7 @@ def main():
     # Каталог создаётся ДО счёта, а не отчётом: прогон турнира однажды
     # досчитал всё и упал на записи в несуществующий каталог.
     os.makedirs(a.out, exist_ok=True)
+    _LAST.update({"out": a.out, "tag": a.tag, "no_publish": a.no_publish})
 
     syms, hours = available(a.root)
     if a.symbols:
@@ -433,12 +506,37 @@ def main():
         raise SystemExit(f"в {a.root} нет записи")
     print(f"символов {len(syms)}, суток {len(days)}: {days[0]} … {days[-1]}")
 
+    # Память проверяется ДО счёта. Реплей работает рядом со сборщиком, и
+    # если ядро прибьёт по памяти НЕ его, а сбор, это стоит суток
+    # записи, которую неоткуда докачать — единственное необратимое в
+    # проекте. Отказаться громко лучше, чем рискнуть молча.
+    need = mem_need_mb(len(syms), DAY_SEC + 2 * PAD_SEC)
+    have = mem_available_mb()
+    print(f"память: нужно ~{need:.0f} МБ на сутки, доступно "
+          f"{'неизвестно' if have is None else f'{have:.0f} МБ'}")
+    if have is not None and need > have * a.mem_share:
+        fits = int(len(syms) * have * a.mem_share / max(need, 1e-9))
+        raise SystemExit(
+            f"ОТКАЗ: на сутки нужно ~{need:.0f} МБ, а свободно "
+            f"{have:.0f} МБ (порог {a.mem_share:.0%}). Рядом работает "
+            f"сбор, и ронять его нельзя. Влезет около {fits} символов: "
+            f"сузьте --symbols либо освободите память.")
+
     cells = [(d, dl, h) for d in D.DROPS for dl in D.DELAYS
              for h in D.HORIZONS_SEC]
     acc = {k: [] for k in cells}
     last_seen = {}
     cover, cadences = [], []
     t_start = time.time()
+    status = {"state": "идёт", "tag": a.tag, "symbols": len(syms),
+              "days_planned": len(days), "day_from": days[0],
+              "day_to": days[-1], "mem_need_mb": need,
+              "mem_available_mb": None if have is None else round(have),
+              "days_done": [],
+              "started_at": datetime.now(timezone.utc).strftime(
+                  "%Y-%m-%d %H:%M UTC")}
+    _LAST["status"] = status
+    write_status(a.out, a.tag, status)
     for day in days:
         t_day = time.time()
         print(f"  {day}: читаю")
@@ -460,9 +558,22 @@ def main():
             for k in sub:
                 acc[k] += got[k]
         del P, NXT
-        print(f"  {day}: готово за {(time.time() - t_day) / 60:.1f} мин")
+        took = round((time.time() - t_day) / 60, 1)
+        print(f"  {day}: готово за {took} мин, память {rss_mb()} МБ")
+        # Состояние пишется ПОСЛЕ КАЖДЫХ суток, а не в конце. Прогон,
+        # убитый по памяти, не пишет ничего — и снаружи это неотличимо
+        # от «владелец забыл опубликовать». Оба раза ответ должен давать
+        # файл, а не переписка.
+        status["days_done"].append(
+            {"day": day, "took_min": took, "rss_mb": rss_mb(),
+             "cadence_sec": round(step, 2),
+             "events": {str(k[0]): len(acc[k]) for k in cells
+                        if k[1] == D.DELAYS[0] and k[2] == D.HORIZONS_SEC[0]}})
+        write_status(a.out, a.tag, status)
 
     cov = np.array(cover, dtype=np.float64)
+    status["state"] = "готов"
+    write_status(a.out, a.tag, status)
     art = {
         "run_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "days": len(days), "day_from": days[0], "day_to": days[-1],
@@ -499,6 +610,21 @@ def main():
     print(f"готово: {p}")
     if not a.no_publish:
         publish(f"D1: реплей записи B1 ({a.tag})")
+
+
+def write_status(out, tag, status):
+    """Состояние прогона отдельным файлом. Пишется атомарно.
+
+    Это не журнал: журналы правило публикации не берёт намеренно (они
+    меняются каждым запуском). Здесь — короткая сводка о том, докуда
+    дошли и чем кончилось, и она обязана уехать в git даже у прогона,
+    который упал.
+    """
+    p = os.path.join(out, f"D1-status-{tag}.json")
+    tmp = p + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(status, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, p)
 
 
 def publish(msg):

@@ -601,6 +601,112 @@ def test_replay_end_to_end_into_a_fresh_checkout():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_guard_matrix_chunks_change_nothing():
+    """Пачки строк экономят память и обязаны дать ТОТ ЖЕ ответ.
+
+    Строки независимы, поэтому равенство здесь — не надежда, а свойство;
+    но «ускорение, меняющее числа, есть другая мера», и проверяется оно
+    сравнением, а не рассуждением.
+    """
+    import events as E                                    # noqa: E402
+    shape = (37, 5000)
+    rows = [0, 5, 5, 12, 36, 36]
+    cols = [100, 200, 240, 4000, 10, 4990]
+    # Сравнивать надо с ИСХОДНОЙ функцией L3, а не с собой на другом
+    # размере пачки: две пачки одного сломанного кода совпадут между
+    # собой и проверка пройдёт. Ровно это и показал отрицательный
+    # контроль — первая версия теста ломалась вместе с кодом.
+    want = E.ban_matrix(shape, rows, cols, guard_min=900, step_min=1)
+    for chunk in (10 ** 9, 7, 1):
+        got = D.guard_matrix(shape, rows, cols, 900, chunk=chunk)
+        check(f"пачка {chunk}: тот же запрет, что у L3",
+              bool(np.array_equal(got, want)),
+              f"расхождений {int((got != want).sum())}")
+
+
+def test_float32_prices_do_not_move_the_measure():
+    """Цены хранятся в одинарной точности ради памяти.
+
+    Цена этого измерена, а не объявлена малой: относительная
+    погрешность 6e-8 против эффекта в единицы базисных пунктов. Проверка
+    берёт и крупную цену, и мелкую (у альтов середина бывает 1e-5), и
+    требует совпадения превышения до сотой доли б.п.
+    """
+    n, rows, j = 2600, 60, 1800
+    worst = 0.0
+    for base in (90000.0, 1.0, 1.234e-05):
+        P64 = np.full((rows, n), base)
+        P64[0, j:] = base * 0.96
+        P64[0, j + 60:] = base * 0.96 * 1.02
+        P32 = P64.astype(np.float32)
+        out = []
+        for P in (P64, P32):
+            NXT = matrix_index(P)
+            _, _, exc, _ = D.excess(P, NXT, 0, j, 5, 300, None)
+            out.append(exc * 1e4)
+        worst = max(worst, abs(out[0] - out[1]))
+    check("одинарная точность не двигает превышение", worst < 0.01,
+          f"{worst:.4f} б.п.")
+
+
+def test_a_crash_reports_itself():
+    """Упавший прогон обязан оставить файл, а не тишину.
+
+    Первый живой прогон оборвался и не оставил ничего — снаружи это
+    неотличимо от «забыли опубликовать», и круг ушёл на угадывание. Это
+    тот же класс отказа, что молчащий сборщик: причина обязана быть
+    записана числом и опубликована.
+    """
+    import shutil
+    import tempfile
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "b1_book"))
+    import run_d1 as R                                    # noqa: E402
+    from store import Writer                              # noqa: E402
+    from datetime import datetime, timezone
+
+    tmp = tempfile.mkdtemp()
+    try:
+        root = os.path.join(tmp, "store")
+        w = Writer(root)
+        t0 = int(datetime(2026, 8, 5, tzinfo=timezone.utc).timestamp())
+        for j in range(0, 600, 5):
+            w.write("book", "AAAUSDT", {
+                "s": "AAAUSDT", "bid": 1.0, "ask": 1.1,
+                "t": round(float(t0 + j), 3)}, ts=t0 + j)
+        w.flush()
+        w.close()
+        out = os.path.join(tmp, "out")
+        argv, real_load, real_pub = sys.argv, R.load_day, R.publish
+        called = []
+        R.publish = lambda msg: called.append(msg)
+
+        def boom(*_a, **_k):
+            raise MemoryError("не хватило памяти на сутки")
+        R.load_day = boom
+        sys.argv = ["run_d1.py", "--root", os.path.join(root, "book"),
+                    "--out", out, "--tag", "crash"]
+        try:
+            R.main()
+            check("падение доходит наружу", False, "исключения не было")
+        except MemoryError:
+            check("падение доходит наружу", True)
+        finally:
+            sys.argv, R.load_day, R.publish = argv, real_load, real_pub
+        import json as _json
+        p = os.path.join(out, "D1-status-crash.json")
+        check("состояние записано", os.path.exists(p), p)
+        if os.path.exists(p):
+            st = _json.load(open(p, encoding="utf-8"))
+            check("состояние названо падением", st.get("state") == "УПАЛ",
+                  f"{st.get('state')}")
+            check("причина названа",
+                  "MemoryError" in (st.get("error") or ""),
+                  f"{st.get('error')}")
+        check("падение опубликовано", len(called) == 1, f"{called}")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     print("сетка и время")
     test_place_takes_the_last_price_of_the_second()
@@ -629,6 +735,10 @@ def main():
     print("объявленное спекой")
     test_declared_grid_matches_the_spec()
     test_episodes_glue_the_market_wide_drop()
+    print("память и устойчивость")
+    test_guard_matrix_chunks_change_nothing()
+    test_float32_prices_do_not_move_the_measure()
+    test_a_crash_reports_itself()
     print("реплей")
     test_fast_parse_matches_json_loads()
     test_fast_parse_refuses_a_snapshot_without_time()

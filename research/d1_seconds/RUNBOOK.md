@@ -13,11 +13,29 @@
 
 ## Команда
 
+Сначала короткий прогон — числа через несколько минут:
+
 ```bash
 cd ~/algoth_v2 && git pull
-nice -n 10 .venv/bin/python research/d1_seconds/run_d1.py --jobs 2 \
-    2>&1 | tee research/d1_seconds/out/d1.log
+mkdir -p research/d1_seconds/out
+.venv/bin/python research/d1_seconds/run_d1.py --days 2 --jobs 2
 ```
+
+Полный — **обязательно отцепленным от терминала**: он идёт час-полтора,
+и закрытая сессия убивала бы его вместе с работой.
+
+```bash
+cd ~/algoth_v2 && mkdir -p research/d1_seconds/out
+setsid nohup nice -n 10 .venv/bin/python \
+    research/d1_seconds/run_d1.py --jobs 2 \
+    > research/d1_seconds/out/d1.log 2>&1 &
+tail -f research/d1_seconds/out/d1.log      # смотреть; Ctrl+C не убивает прогон
+```
+
+Докуда дошло — видно и без терминала, в
+`research/d1_seconds/out/D1-status-1m.json`: он переписывается после
+каждых суток и несёт время, память и число событий. Упавший прогон
+пишет туда же причину и публикует её — молчания быть не должно.
 
 Отчёт публикуется **самим прогоном** — отдельной команды не нужно.
 Отдельный шаг здесь уже стоил круга: прогон случился, отчёт лежал на
