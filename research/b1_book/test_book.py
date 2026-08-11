@@ -3547,9 +3547,36 @@ def test_scanner_prefers_the_biggest_move_for_its_own_coin():
           got[-1]["sym"] == "D", got[-1]["sym"])
 
 
+def test_switcher_says_how_the_book_is_ordered():
+    """Подпись обязана говорить, ЧТО за книга.
+
+    Книги 4 ч, 1 ч и ситуационная перешли на порядок в единицах σ, а
+    переключатель остался прежним — владелец обновил сервер и увидел ту
+    же страницу, хотя книги под ней уже другие. Молчаливая подмена
+    смысла при неизменном виде — тот же класс отказа, что молчаливый
+    ноль в числах.
+    """
+    import web as W
+    src = W.BOOKJS
+    for key in ("h4", "h1", "sit"):
+        i = src.find(f'["{key}", ')
+        end = src.find("]", i)
+        check(f"{key} назван книгой в σ", r"per \u03c3" in src[i:end],
+              src[i:end])
+    i = src.find('["z", ')
+    end = src.find("]", i)
+    check("пара названа своим горизонтом",
+          "24 h" in src[i:end] and r"per \u03c3" in src[i:end], src[i:end])
+    check("книга 24 ч на сыром прогнозе подписи в σ не несёт",
+          r"per \u03c3" not in src[src.find('["h24", '):
+                                   src.find("]", src.find('["h24", '))],
+          "подписана как σ")
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
+    test_switcher_says_how_the_book_is_ordered()
     test_scanner_prefers_the_biggest_move_for_its_own_coin()
     test_concurrent_apply_and_sample()
     test_zero_size_removes_level()
