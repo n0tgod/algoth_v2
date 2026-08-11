@@ -2019,38 +2019,69 @@ class Collector:
             "title_ru": "Книга 4 часа — главная",
             "plain": "Every hour takes the most extreme forecasts of "
                      "the 4-hour horizon — six names long, six short — "
-                     "and holds exactly four hours. Tests the core "
-                     "question of hypothesis 6: does ranking the "
-                     "cross-section make money at all.",
+                     "and holds exactly four hours. Since the owner’s "
+                     "decision the extremes are counted in units of "
+                     "the coin’s own volatility, not in basis points: "
+                     "raw targets made «extreme» mean «volatile», and "
+                     "the measured pick was six times wilder than the "
+                     "market. The book’s history continues the pair "
+                     "that already traded that order — it is the same "
+                     "book, not a new one. Tests the core question of "
+                     "hypothesis 6: does ranking the cross-section "
+                     "make money at all.",
             "plain_ru": "Каждый час берёт самые крайние прогнозы "
                         "четырёхчасового горизонта — шесть имён в лонг "
                         "и шесть в шорт — и держит ровно четыре часа. "
-                        "Проверяет главный вопрос гипотезы 6: "
-                        "зарабатывает ли само ранжирование сечения."},
+                        "Решением владельца крайность считается в "
+                        "единицах собственной волатильности монеты, а "
+                        "не в базисных пунктах: на сырых целях "
+                        "«крайний» значило «волатильный», и выбранное "
+                        "имя выходило вшестеро размашистее рынка. "
+                        "История книги продолжает пару, которая этим "
+                        "порядком уже торговала, — это та же книга, а "
+                        "не новая. Проверяет главный вопрос гипотезы "
+                        "6: зарабатывает ли само ранжирование "
+                        "сечения."},
         "h1": {
             "title": "1-hour book — does speed pay",
             "title_ru": "Книга 1 час — окупается ли скорость",
-            "plain": "The same picking at an hourly pace: more trades, "
-                     "but every hour pays the full cost round. Tests "
-                     "whether speed covers the fee; by R4/R5 the fee "
-                     "eats fast books, so tempos are compared fairly "
-                     "by IC and hit rate, not by money.",
-            "plain_ru": "Тот же выбор на часовом темпе: сделок больше, "
-                        "но каждый час платит полный круг издержек. "
+            "plain": "The same picking at an hourly pace, ordered per "
+                     "σ like the main book: more trades, but every "
+                     "hour pays the full cost round. Tests whether "
+                     "speed covers the fee; by R4/R5 the fee eats fast "
+                     "books, so tempos are compared fairly by IC and "
+                     "hit rate, not by money. Its history restarted "
+                     "when the order changed — the σ forecast never "
+                     "existed on this horizon before, so there was "
+                     "nothing to carry over.",
+            "plain_ru": "Тот же выбор на часовом темпе, в порядке per "
+                        "σ как у главной книги: сделок больше, но "
+                        "каждый час платит полный круг издержек. "
                         "Проверяет, окупает ли скорость комиссию; по "
                         "замерам R4/R5 частота съедает деньги, поэтому "
                         "темпы честно сравнивать по IC и точности, а "
-                        "не по деньгам."},
+                        "не по деньгам. История начата заново со "
+                        "сменой порядка: прогноза в σ на этом "
+                        "горизонте раньше не существовало, переносить "
+                        "было нечего."},
         "h24": {
             "title": "24-hour book — does the signal live a day",
             "title_ru": "Книга 24 часа — живёт ли сигнал сутки",
             "plain": "The daily pace: fewer trades, less fee, longer "
                      "in risk. Tests the slow end — whether the "
-                     "forecast survives a full day of holding.",
+                     "forecast survives a full day of holding. This is "
+                     "also the one horizon deliberately LEFT on the "
+                     "raw order: it is the control half of the per σ "
+                     "pair next to it, and switching it too would "
+                     "leave nothing to compare against.",
             "plain_ru": "Суточный темп: сделок меньше, комиссии "
                         "меньше, в риске дольше. Проверяет медленный "
                         "край — доживает ли прогноз до конца суток "
-                        "удержания."},
+                        "удержания. Это же единственный горизонт, "
+                        "намеренно ОСТАВЛЕННЫЙ на сыром порядке: он "
+                        "контрольная половина стоящей рядом пары per "
+                        "σ, и перевести его значило бы остаться без "
+                        "сравнения."},
         "z": {
             "title": "24 h per σ — the control pair",
             "title_ru": "24 ч per σ — контрольная пара",
@@ -2081,7 +2112,15 @@ class Collector:
                      "(~20 % breach), target is the promised "
                      "favourable move, plus an age limit. Tests "
                      "whether picking the moment adds what scheduled "
-                     "entries cannot. The Rust core shadows this book.",
+                     "entries cannot. The Rust core shadows this book. "
+                     "Per σ changed only the ORDER in which candidates "
+                     "are offered a slot — the gate itself stays in "
+                     "basis points, because it is derived from the "
+                     "cost round and σ units have no such anchor. The "
+                     "book was therefore not archived: it sits full "
+                     "under a tenth of the time, so the order decides "
+                     "anything only rarely; which order took a trade "
+                     "is written into the trade itself.",
             "plain_ru": "Модель рисует карту, курок спускает живая "
                         "цена: вход только когда цена даёт скидку к "
                         "прогнозу листа и пересекает гейт у нас на "
@@ -2089,7 +2128,16 @@ class Collector:
                         "(заход ~20 %), тейк — обещанный ход в пользу, "
                         "плюс предел возраста. Проверяет, даёт ли "
                         "выбор момента то, чего не даёт вход по "
-                        "расписанию. Эту книгу ведёт тень Rust-ядра."},
+                        "расписанию. Эту книгу ведёт тень Rust-ядра. "
+                        "Per σ сменил только ПОРЯДОК, в котором "
+                        "кандидатам предлагается слот: гейт остался в "
+                        "базисных пунктах, потому что выведен из круга "
+                        "издержек, а в единицах σ такого якоря нет. "
+                        "Поэтому книга и не отставлена: полной она "
+                        "стоит меньше десятой части времени, то есть "
+                        "порядок решает что-либо редко, а каким "
+                        "порядком взята сделка — записано в самой "
+                        "сделке."},
         "sit_obs": {
             "title": "observation record — same setup, no RR gate",
             "title_ru": "Наблюдательная запись — та же ситуация без "

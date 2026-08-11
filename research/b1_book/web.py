@@ -5695,7 +5695,12 @@ function bookStat(b, arm){
   if (b.key === "sit_obs") return T("nomoney");
   if (!b.present) return T("offbook");
   const s = (b.stats || {})[arm];
-  if (!s) return T("none");
+  // Книга с открытыми позициями и БЕЗ закрытых несёт только поля
+  // открытых — так задумано (сервер не выдумывает нулей). Спрашивать у
+  // неё число закрытых значило бы напечатать `undefined · NaN %`, и
+  // ровно это владелец увидел у книги в σ. Нет закрытых — так и
+  // сказано, а деньги открытых идут своей строкой ниже.
+  if (!s || !s.closed) return T("none");
   return `${s.closed} · ${Math.round(s.win * 100)} % · ${
     money(s.pnl)}`;
 }
@@ -5703,7 +5708,9 @@ function rootSum(arm){
   let n = 0, p = 0.0, any = false;
   for (const b of (DATA.books || [])) {
     const s = (b.stats || {})[arm];
-    if (!s) continue;
+    // Ветка без закрытых сделок в сумму не входит вовсе: сложить с ней
+    // значит получить NaN, то есть потерять и те ветки, что посчитаны.
+    if (!s || !s.closed) continue;
     any = true; n += s.closed; p += s.pnl;
   }
   return any ? `\u03a3 ${n} · ${money(Math.round(p * 100) / 100)}`
@@ -5773,7 +5780,7 @@ function infoHTML(){
   const s = (b.stats || {})[arm];
   const st = b.key === "sit_obs" ? T("nomoneyL")
     : !b.present ? T("offbookL")
-    : s ? T("closedL")(s) + money(s.pnl) : T("none");
+    : s && s.closed ? T("closedL")(s) + money(s.pnl) : T("none");
   const hz = b.key === "h4" ? "" : "&hz=" + encodeURIComponent(b.key);
   const so = (b.stats || {})[arm];
   const openRow = so && so.open
