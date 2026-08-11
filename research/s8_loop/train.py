@@ -94,8 +94,21 @@ QUANT_TARGETS = {f"maeq_{STOP_H}h": (f"mae_{STOP_H}h", STOP_TAU),
 # цель остаются на сырых `mae`/`mfe`, — чтобы разница между книгами
 # принадлежала ранжированию, а не другой сделке.
 RANK_Z = f"fwd_{FB.SIGNAL_H}h_z"
+
+
+def rank_z(h):
+    """Ключ порядка сечения в единицах σ для своего горизонта.
+
+    Функция, а не константа: книг в σ теперь несколько, и брать чужой
+    горизонт значило бы упорядочивать часовую книгу мерой разброса
+    четырёхчасовой.
+    """
+    return f"fwd_{h}h_z"
+
+
 TARGETS = ([f"{k}_{h}h" for k in ("fwd", "mfe", "mae")
-            for h in FB.HORIZONS] + list(QUANT_TARGETS) + [RANK_Z])
+            for h in FB.HORIZONS] + list(QUANT_TARGETS)
+           + [rank_z(h) for h in FB.HORIZONS])
 
 
 def target_col(tgt):

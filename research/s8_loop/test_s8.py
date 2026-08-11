@@ -387,9 +387,12 @@ def test_targets_shapes_and_direction():
     t = FB.target_pack(s, r, elig, f["beta"])
     want = [f"{k}_{h}h" for k in ("fwd", "mfe", "mae")
             for h in FB.HORIZONS]
-    # Единицы собственной σ — только на горизонте сигнала: книга
-    # торгует на нём, и лишние цели стоили бы минуты цикла на каждую.
-    want += [f"{k}_{FB.SIGNAL_H}h_z" for k in ("fwd", "mfe", "mae")]
+    # Единицы собственной σ — на КАЖДОМ горизонте: решением владельца
+    # на этот порядок переводятся книги 1 ч и 4 ч, а у 24 ч заводится
+    # второй вариант рядом с прежним. Порядок сечения нельзя задать
+    # целью, которой не существует.
+    want += [f"{k}_{h}h_z" for k in ("fwd", "mfe", "mae")
+             for h in FB.HORIZONS]
     check("цели всех горизонтов на месте",
           sorted(t) == sorted(want), str(sorted(t)))
     # Цель в σ обязана СНИМАТЬ масштаб волатильности, а не повторять
@@ -3600,6 +3603,31 @@ def test_load_matrices_grid_is_continuous():
           and mats["mid_close"][0, 5] == 2.0)
 
 
+def test_sigma_targets_exist_on_every_horizon():
+    """Порядок сечения нельзя задать целью, которой не существует.
+
+    Книг в единицах σ теперь три (1 ч, 4 ч, 24 ч), и у каждой обязана
+    быть СВОЯ мера разброса: делитель несёт √h, поэтому часовую книгу
+    нельзя упорядочивать сигмой четырёхчасовой. Данные те же, что у
+    соседней проверки целей, — своя синтетика давала сплошной NaN и
+    «проверяла» пустоту.
+    """
+    import numpy as np
+    s = synth_summary(S=35, D=400)
+    f, r, elig = FB.feature_pack(s)
+    t = FB.target_pack(s, r, elig, f["beta"])
+    miss = [h for h in FB.HORIZONS if f"fwd_{h}h_z" not in t]
+    check("z-цель есть у каждого горизонта", not miss, f"нет у {miss}")
+    a = t[f"fwd_{FB.HORIZONS[0]}h_z"]
+    b = t[f"fwd_{FB.HORIZONS[-1]}h_z"]
+    both = np.isfinite(a) & np.isfinite(b)
+    check("z-цели считаются, а не остаются пустыми",
+          int(both.sum()) > 100, f"общих конечных {int(both.sum())}")
+    check("сигмы горизонтов не совпадают",
+          both.any() and not np.allclose(a[both], b[both]),
+          "цели одинаковы — делитель взят чужой")
+
+
 def main():
     print("сводка часа")
     test_summary_censors_bands_by_reach()
@@ -3619,6 +3647,7 @@ def main():
     test_eligibility_floor()
     test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
+    test_sigma_targets_exist_on_every_horizon()
     print("цикл переобучения")
     test_one_name_one_position()
     test_merge_adds_shows_one_position()
