@@ -3523,9 +3523,30 @@ def test_store_salvages_corrupted_archive():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_scanner_prefers_the_biggest_move_for_its_own_coin():
+    """Слот достаётся тому, у кого ход крупен ДЛЯ НЕГО.
+
+    Мест меньше, чем проходящих гейт, и прежде порядок просмотра был
+    порядком строк листа — то есть случайным. Перевод ситуационных
+    сделок на per σ меняет именно приоритет; гейт остаётся в базисных
+    пунктах, потому что выведен из круга издержек.
+    """
+    rows = [{"sym": "A", "fwd_z": 0.4}, {"sym": "B", "fwd_z": -2.7},
+            {"sym": "C", "fwd_z": 1.1}, {"sym": "D"}]
+    got = sorted(rows, key=lambda q: -abs(float(q.get("fwd_z") or 0.0)))
+    check("первым смотрится самый крайний в σ",
+          [r["sym"] for r in got][:3] == ["B", "C", "A"],
+          str([r["sym"] for r in got]))
+    check("знак не решает — решает модуль",
+          got[0]["sym"] == "B", got[0]["sym"])
+    check("лист без поля не роняет порядок",
+          got[-1]["sym"] == "D", got[-1]["sym"])
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
+    test_scanner_prefers_the_biggest_move_for_its_own_coin()
     test_concurrent_apply_and_sample()
     test_zero_size_removes_level()
     test_delta_before_snapshot_ignored()

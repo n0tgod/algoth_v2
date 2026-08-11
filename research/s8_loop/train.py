@@ -1535,6 +1535,19 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     # сканеру ехать должен готовый ответ.
     whys, setups = (explain_rows(models[(arm, kf)], xj, names)
                     if names is not None else (None, None))
+    # Прогноз в единицах собственной σ монеты — для ПОРЯДКА, а не для
+    # гейта. Решение владельца переводит ситуационные сделки на per σ, и
+    # переводится именно приоритет: когда гейт проходят больше имён, чем
+    # есть мест, слот достаётся тому, у кого ход крупен ДЛЯ НЕГО. Порог
+    # входа остаётся в базисных пунктах намеренно — он выведен из круга
+    # издержек, а в единицах σ такого якоря не существует, и назначать
+    # его заново значило бы взять число с потолка.
+    kz = rank_z(SIT_SIGNAL_H)
+    fwd_z = (models[(arm, kz)].predict(xj)
+             if (arm, kz) in models else None)
+    if fwd_z is None:
+        log_(f"[{arm}] ситуационная: порядок {kz} недоступен — "
+             f"приоритет по сырому прогнозу")
     sheet = []
     for i in range(len(rows_m)):
         px = float(mats["mid_close"][rows_m[i], j_last])
@@ -1547,6 +1560,8 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                         if beta_row is not None
                         and np.isfinite(beta_row[i]) else 1.0),
                "px": px}
+        if fwd_z is not None and np.isfinite(fwd_z[i]):
+            row["fwd_z"] = round(float(fwd_z[i]), 4)
         if maeq is not None and mfeq is not None:
             row["mae_q"] = round(float(maeq[i]), 2)
             row["mfe_q"] = round(float(mfeq[i]), 2)
