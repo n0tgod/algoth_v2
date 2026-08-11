@@ -161,6 +161,49 @@ def test_report_names_the_fence():
     check("названа цена оси в испытаниях", "72 → 216" in txt, "молчит")
 
 
+def test_run_publishes_itself():
+    """Прогон обязан публиковать отчёт сам.
+
+    Отдельный шаг публикации я уже терял дважды: прогон случался, отчёт
+    оставался на сервере, а в ветке было пусто. Проверка двусторонняя —
+    с флагом публикации нет, без флага она обязана случиться.
+    """
+    import shutil
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "d1_seconds"))
+    import run_d1 as RD                                    # noqa: E402
+    called, real = [], RD.publish
+    RD.publish = lambda msg: called.append(msg)
+    td = tempfile.mkdtemp()
+    sheets = os.path.join(td, "sheets.jsonl")
+    hour = "2026-08-05-10"
+    rows = [{"sym": f"S{k}", "fwd": 40.0 - k, "px": 100.0,
+             "mae": -50.0, "mfe": 100.0} for k in range(4)]
+    with open(sheets, "w", encoding="utf-8") as f:
+        f.write(json.dumps({"hour": hour, "written_at": 1.0,
+                            "arms": {"gbm": rows}}) + "\n")
+    # Бары подменяются: их источник здесь не предмет проверки, а без
+    # них прогон честно падает «исходов нет» и до публикации не доходит.
+    real_bars = W.SW.read_bars
+    W.SW.read_bars = lambda root, sym, a, b: [
+        (a + 60.0, 100.0, 101.0, 99.0, 100.5),
+        (a + 120.0, 100.5, 102.0, 100.0, 101.0)]
+    argv = sys.argv
+    try:
+        for extra, want in ((["--no-publish"], 0), ([], 1)):
+            sys.argv = (["width.py", "--sheets", sheets, "--root", td,
+                         "--out", os.path.join(td, f"w{want}.md")] + extra)
+            try:
+                W.main()
+            except SystemExit:
+                pass                      # баров нет — считать нечего
+            check(f"публикаций {want}", len(called) == want,
+                  f"{called}")
+    finally:
+        sys.argv, RD.publish = argv, real
+        W.SW.read_bars = real_bars
+        shutil.rmtree(td, ignore_errors=True)
+
+
 def main():
     print("места")
     test_rank_is_within_hour_arm_and_side()
@@ -173,6 +216,7 @@ def main():
     test_width_reports_concentration()
     test_net_matches_the_tournament_formula()
     test_report_names_the_fence()
+    test_run_publishes_itself()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

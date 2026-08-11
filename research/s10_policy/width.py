@@ -265,6 +265,7 @@ def main():
     ap.add_argument("--cache", default="")
     ap.add_argument("--tag", default="")
     ap.add_argument("--out", default="")
+    ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args()
     if not a.out:
         name = "V1-width" + (f"-{a.tag}" if a.tag else "")
@@ -288,6 +289,15 @@ def main():
     report(art, a.out)
     print(f"готово: {a.out}")
     print(art["reading"])
+    if not a.no_publish:
+        # Публикация — ЧАСТЬ прогона, а не отдельный шаг. Урок записан
+        # два шага назад и тут же нарушен: прогон случился, отчёт остался
+        # на сервере, в git не приехало ничего. Шаг, который можно
+        # забыть, забывают — в том числе я.
+        sys.path.insert(0, os.path.join(RESEARCH, "d1_seconds"))
+        import run_d1 as RD                                # noqa: E402
+        RD.publish(f"V1: профиль ожидания по месту в сечении"
+                   + (f" ({a.tag})" if a.tag else ""))
 
 
 if __name__ == "__main__":
