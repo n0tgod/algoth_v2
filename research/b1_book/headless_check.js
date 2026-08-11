@@ -337,9 +337,17 @@ global.fetch = async (url) => {
                 // Парное сравнение книг: интервал НАКРЫВАЕТ ноль —
                 // страница обязана сказать это словами, иначе
                 // средняя разница читается как превосходство.
-                pairs: [{a: "z", b: "h4", hours: 82, thin: false,
-                         mean_bp: 79.3, lo_bp: -18.6, hi_bp: 173.0,
-                         covers_zero: true, a_wins: 0.573}],
+                // Пара живёт на 24 ч: главная книга сама перешла на
+                // порядок в σ, и сравнение с ней стало бы сравнением
+                // книги с собственной копией. Тонкая ветка (у одной
+                // стороны нет закрытых) проверяется отдельным
+                // прогоном — `leaguethin=1`.
+                pairs: [/leaguethin=1/.test(SEARCH)
+                        ? {a: "z", b: "h24", hours: 0, thin: true,
+                           a_hours: 0, b_hours: 41}
+                        : {a: "z", b: "h24", hours: 82, thin: false,
+                           mean_bp: 79.3, lo_bp: -18.6, hi_bp: 173.0,
+                           covers_zero: true, a_wins: 0.573}],
                 errors: ["model_h24: ValueError: boom"],
                 books: [{book: "model_sit", trades: 3,
                          closed_kept: 2}],
@@ -1354,12 +1362,33 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Парное сравнение книг — числами стаба и с честным чтением
     // интервала: 57 % часов и +0.793 % средней разницы, но интервал
     // накрывает ноль, и это обязано быть сказано.
-    if (!/beats/.test(bx) || !/82 shared hours/.test(bx))
-      bad.push("лига: парное сравнение книг не показано");
-    if (!/\+0\.79 %/.test(bx))
-      bad.push("лига: средняя разность не числом ответа");
-    if (!/cannot be claimed/.test(bx))
-      bad.push("лига: интервал накрывает ноль, а страница молчит");
+    const thinPair = /leaguethin=1/.test(SEARCH);
+    if (!thinPair) {
+      if (!/beats/.test(bx) || !/82 shared hours/.test(bx))
+        bad.push("лига: парное сравнение книг не показано");
+      if (!/\+0\.79 %/.test(bx))
+        bad.push("лига: средняя разность не числом ответа");
+      if (!/cannot be claimed/.test(bx))
+        bad.push("лига: интервал накрывает ноль, а страница молчит");
+    }
+    // Имена книг — из общего списка страниц. Своя таблица здесь уже
+    // разошлась с ним и называла книги в σ просто «1 h book», то есть
+    // говорила, что в σ упорядочена одна из пяти.
+    if (!/1 h · per σ/.test(bx) || !/situational · per σ/.test(bx))
+      bad.push("лига: имена книг не из общего списка (порядок не назван)");
+    // Тонкая пара: «общих часов 0» выглядит поломкой, поэтому пустая
+    // сторона обязана быть названа, а панель — сказать, зачем пара
+    // вообще существует.
+    if (thinPair) {
+      if (!/has no closed trades yet/.test(bx))
+        bad.push("лига: пустая сторона пары не названа");
+      if (/only 0 shared hours/.test(bx))
+        bad.push("лига: ноль общих часов выдан за «слишком мало»");
+      if (!/does per σ help/.test(bx))
+        bad.push("лига: не сказано, зачем пара");
+    } else if (/has no closed trades yet/.test(bx)) {
+      bad.push("лига: полная пара названа пустой");
+    }
     const nScroll = (bx.match(/class="scroll"/g) || []).length;
     if (nScroll < 6)
       bad.push("лига: таблицы групп не в прокрутке, колонки срезаются"

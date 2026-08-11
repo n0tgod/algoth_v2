@@ -2314,8 +2314,14 @@ class Collector:
                     gb.setdefault(k, []).append(r)
             common = sorted(set(ga) & set(gb))
             if len(common) < 20:
+                # Числа сторон едут вместе с отказом: «общих часов 0»
+                # выглядит поломкой, а «у второй книги закрытых сделок
+                # ещё нет» — состоянием. Пара переехала на 24 ч в день,
+                # когда главная книга сама перешла на порядок в σ,
+                # поэтому нулю тут взяться откуда.
                 out.append({"a": a, "b": b, "hours": len(common),
-                            "thin": True})
+                            "thin": True,
+                            "a_hours": len(ga), "b_hours": len(gb)})
                 continue
             d = [sum(t["net_bp"] or 0 for t in ga[k]) / len(ga[k])
                  - sum(t["net_bp"] or 0 for t in gb[k]) / len(gb[k])

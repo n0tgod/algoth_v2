@@ -6319,7 +6319,7 @@ button[aria-pressed="true"]{border-color:var(--accent);
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + r"""
+""" + BOOKJS + NAVJS + r"""
 navMount("/league-page");
 // Названия ситуаций в таблицах — короткие ярлыки; что каждая значит,
 // объясняет справочник, и ссылка на него стоит рядом с ними.
@@ -6331,8 +6331,13 @@ let PERIOD = "30d", DATA = null;
 function utc(ts){ if (!ts) return "—";
   return new Date(ts*1000).toISOString().slice(5,16).replace("T"," "); }
 const ARM_EN = {gbm:"trees (ML)", nn:"neural (AI)"};
-const BOOK_EN = {h4:"4 h book", h1:"1 h book", h24:"24 h book",
-                 sit:"situational", z:"ranked per σ"};
+// Имена книг — из ОДНОГО списка на все страницы. Своя таблица здесь
+// уже разошлась с ним: после перевода на per σ она называла главную
+// книгу «4 h book», а книгу в σ — «ranked per σ», то есть говорила,
+// что в σ упорядочена одна из пяти, тогда как их четыре. Молчаливая
+// подмена смысла при неизменном виде — тот же класс, что молчаливый
+// ноль в числах.
+const BOOK_EN = Object.fromEntries(BOOK_LIST);
 const FAM_EN = {absorption:"book eaten (absorption)",
   book:"book imbalance / depth", tape:"tape pressure",
   liq:"liquidations", oi:"open interest", funding:"funding & basis",
@@ -6356,10 +6361,23 @@ function pairPanel(){
   if (!ps.length) return "";
   return ps.map(p => {
     const nm = a => BOOK_EN[a] || a;
-    if (p.thin)
+    if (p.thin) {
+      // «0 общих часов» выглядит поломкой, поэтому пустая сторона
+      // называется прямо. Пара переехала на 24 ч в день, когда главная
+      // книга сама перешла на порядок в σ: сравнивать её с собственной
+      // копией было бы нечем, а новая половина копит первые сделки.
+      const why = !p.a_hours || !p.b_hours
+        ? `${!p.a_hours ? nm(p.a) : nm(p.b)} has no closed trades yet —
+           the pair fills as it closes its first ones`
+        : `only ${p.hours} shared hours — too few to compare`;
       return `<div class="panel"><div class="cap">${nm(p.a)} vs ${
-        nm(p.b)}</div><div class="dim">only ${p.hours} shared hours —
-        too few to compare</div></div>`;
+        nm(p.b)}</div><div class="dim">${why}</div>
+        <div class="k" style="margin-top:6px">this pair is the only
+        place left to answer «does per σ help»: 4 h, 1 h and the
+        situational book all moved to that ordering, so 24 h runs both
+        orderings side by side — same section, same geometry, one
+        thing different.</div></div>`;
+    }
     const win = p.covers_zero
       ? `the interval covers zero: on this history the difference
          <b>cannot be claimed</b>, whatever its size`
@@ -6412,7 +6430,7 @@ function groupTable(cap, rows, names){
       .join("")
     + `</table></div><div class="k">The last column drops the single
        best-earning name of each group. A group whose money survives
-       only with that one name is a pump, not a behaviour: 1301
+       only with that one name is a pump, not a behaviour: a thousand
        trades look like statistics, and one name can still be all of
        it.</div></div>`;
 }
@@ -6473,7 +6491,7 @@ function render(){
   const g = p.groups || {};
   box.innerHTML = errs + `<div class="grid">
     ${groupTable("models (arms)", g.arm, ARM_EN)}
-    ${groupTable("books (hold)", g.book, BOOK_EN)}
+    ${groupTable("books (horizon \u00b7 ordering)", g.book, BOOK_EN)}
     ${pairPanel()}
     ${groupTable("situations (dominant family)", g.setup, FAM_EN)}
     ${groupTable("sides", g.side, {long:"long", short:"short"})}
