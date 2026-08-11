@@ -1,161 +1,262 @@
 {
- "run_at": "2026-08-11 12:00 UTC",
- "legs": 8760,
- "measured": 8760,
- "sections": 292,
+ "run_at": "2026-08-11 13:12 UTC",
+ "legs": 14800,
+ "measured": 14800,
+ "sections": 296,
  "age_h": 4,
  "ranks": [
   {
    "rank": 1,
-   "n": 292,
-   "exp_bp": 164.7,
-   "med_bp": 90.1,
-   "win": 0.579
+   "n": 296,
+   "exp_bp": 166.4,
+   "med_bp": 97.6,
+   "win": 0.595
   },
   {
    "rank": 2,
-   "n": 292,
-   "exp_bp": 65.8,
-   "med_bp": 50.5,
-   "win": 0.558
+   "n": 296,
+   "exp_bp": 65.6,
+   "med_bp": 53.5,
+   "win": 0.557
   },
   {
    "rank": 3,
-   "n": 292,
-   "exp_bp": 56.8,
-   "med_bp": 33.9,
-   "win": 0.545
+   "n": 296,
+   "exp_bp": 64.0,
+   "med_bp": 35.1,
+   "win": 0.547
   },
   {
    "rank": 4,
-   "n": 292,
-   "exp_bp": 104.5,
-   "med_bp": 51.7,
-   "win": 0.555
+   "n": 296,
+   "exp_bp": 109.5,
+   "med_bp": 52.1,
+   "win": 0.557
   },
   {
    "rank": 5,
-   "n": 292,
-   "exp_bp": 38.4,
+   "n": 296,
+   "exp_bp": 41.9,
    "med_bp": 18.4,
-   "win": 0.531
+   "win": 0.534
   },
   {
    "rank": 6,
-   "n": 292,
-   "exp_bp": -6.0,
-   "med_bp": 11.2,
-   "win": 0.521
+   "n": 296,
+   "exp_bp": -6.1,
+   "med_bp": 13.4,
+   "win": 0.524
   },
   {
    "rank": 8,
-   "n": 292,
-   "exp_bp": -29.2,
+   "n": 296,
+   "exp_bp": -25.7,
    "med_bp": -13.6,
-   "win": 0.469
+   "win": 0.466
   },
   {
    "rank": 10,
-   "n": 292,
-   "exp_bp": 9.0,
+   "n": 296,
+   "exp_bp": 15.6,
    "med_bp": 29.1,
-   "win": 0.527
+   "win": 0.534
   },
   {
    "rank": 15,
-   "n": 292,
-   "exp_bp": 16.5,
-   "med_bp": 15.0,
-   "win": 0.517
+   "n": 296,
+   "exp_bp": 14.9,
+   "med_bp": 8.0,
+   "win": 0.51
   },
   {
    "rank": 20,
-   "n": 292,
-   "exp_bp": 0.2,
-   "med_bp": -4.0,
-   "win": 0.476
+   "n": 296,
+   "exp_bp": 8.8,
+   "med_bp": -3.1,
+   "win": 0.49
   },
   {
    "rank": 30,
-   "n": 292,
-   "exp_bp": 9.6,
-   "med_bp": -12.0,
-   "win": 0.473
+   "n": 296,
+   "exp_bp": 12.1,
+   "med_bp": -13.8,
+   "win": 0.466
+  },
+  {
+   "rank": 40,
+   "n": 296,
+   "exp_bp": -4.8,
+   "med_bp": -5.5,
+   "win": 0.483
+  },
+  {
+   "rank": 50,
+   "n": 296,
+   "exp_bp": -23.6,
+   "med_bp": -13.4,
+   "win": 0.463
   }
  ],
  "widths": [
   {
    "width": 1,
-   "n": 292,
-   "exp_bp": 164.7,
-   "med_bp": 90.1,
-   "win": 0.579,
-   "total_bp": 48089.1,
-   "syms": 72,
+   "n": 296,
+   "exp_bp": 166.4,
+   "med_bp": 97.6,
+   "win": 0.595,
+   "total_bp": 49249.3,
+   "syms": 73,
    "top_sym": "TUTUSDT",
    "top_bp": 55448.2,
-   "total_wo_top_bp": -7359.1
+   "total_wo_top_bp": -6198.9
   },
   {
    "width": 2,
-   "n": 584,
-   "exp_bp": 115.2,
-   "med_bp": 69.3,
-   "win": 0.568,
-   "total_bp": 67289.0,
-   "syms": 105,
+   "n": 592,
+   "exp_bp": 116.0,
+   "med_bp": 75.9,
+   "win": 0.576,
+   "total_bp": 68652.1,
+   "syms": 108,
    "top_sym": "TUTUSDT",
    "top_bp": 75732.9,
-   "total_wo_top_bp": -8443.9
+   "total_wo_top_bp": -7080.8
   },
   {
    "width": 3,
-   "n": 876,
-   "exp_bp": 95.7,
-   "med_bp": 57.2,
-   "win": 0.561,
-   "total_bp": 83871.1,
-   "syms": 146,
+   "n": 888,
+   "exp_bp": 98.6,
+   "med_bp": 60.8,
+   "win": 0.566,
+   "total_bp": 87587.5,
+   "syms": 147,
    "top_sym": "TUTUSDT",
-   "top_bp": 94676.2,
-   "total_wo_top_bp": -10805.1
+   "top_bp": 94503.5,
+   "total_wo_top_bp": -6916.0
   },
   {
    "width": 5,
-   "n": 1460,
-   "exp_bp": 86.0,
-   "med_bp": 45.6,
-   "win": 0.553,
-   "total_bp": 125616.9,
-   "syms": 197,
+   "n": 1480,
+   "exp_bp": 89.5,
+   "med_bp": 50.0,
+   "win": 0.558,
+   "total_bp": 132396.6,
+   "syms": 200,
    "top_sym": "TUTUSDT",
-   "top_bp": 97086.0,
-   "total_wo_top_bp": 28530.9
+   "top_bp": 96913.3,
+   "total_wo_top_bp": 35483.3
   },
   {
    "width": 10,
-   "n": 2920,
-   "exp_bp": 40.7,
-   "med_bp": 26.9,
-   "win": 0.537,
-   "total_bp": 118943.6,
-   "syms": 302,
+   "n": 2960,
+   "exp_bp": 43.7,
+   "med_bp": 26.5,
+   "win": 0.54,
+   "total_bp": 129497.6,
+   "syms": 303,
    "top_sym": "TUTUSDT",
-   "top_bp": 89299.4,
-   "total_wo_top_bp": 29644.1
+   "top_bp": 87810.5,
+   "total_wo_top_bp": 41687.1
   },
   {
    "width": 20,
-   "n": 5840,
-   "exp_bp": 12.4,
-   "med_bp": 6.8,
-   "win": 0.512,
-   "total_bp": 72571.6,
-   "syms": 413,
+   "n": 5920,
+   "exp_bp": 14.2,
+   "med_bp": 6.7,
+   "win": 0.513,
+   "total_bp": 83868.5,
+   "syms": 418,
    "top_sym": "TUTUSDT",
-   "top_bp": 79000.1,
-   "total_wo_top_bp": -6428.5
+   "top_bp": 77121.1,
+   "total_wo_top_bp": 6747.4
+  },
+  {
+   "width": 30,
+   "n": 8880,
+   "exp_bp": 5.0,
+   "med_bp": 0.9,
+   "win": 0.502,
+   "total_bp": 44569.4,
+   "syms": 469,
+   "top_sym": "TUTUSDT",
+   "top_bp": 73964.8,
+   "total_wo_top_bp": -29395.4
+  },
+  {
+   "width": 50,
+   "n": 14800,
+   "exp_bp": -5.2,
+   "med_bp": -5.1,
+   "win": 0.485,
+   "total_bp": -76561.1,
+   "syms": 517,
+   "top_sym": "TUTUSDT",
+   "top_bp": 83007.2,
+   "total_wo_top_bp": -159568.3
   }
  ],
- "reading": "Профиль рваный: +164.7 на первом месте против +9.6 на 30-м при 6 убываниях из 10. Ранжирование не несёт информации дальше краёв — это находка о модели, а не о ширине."
+ "step": {
+  "edge": 5,
+  "top_mean_bp": 89.5,
+  "tail_mean_bp": -1.1
+ },
+ "bands": [
+  {
+   "from": 1,
+   "to": 1,
+   "n": 296,
+   "total_bp": 49249.3,
+   "per_leg_bp": 166.4
+  },
+  {
+   "from": 2,
+   "to": 2,
+   "n": 296,
+   "total_bp": 19402.8,
+   "per_leg_bp": 65.6
+  },
+  {
+   "from": 3,
+   "to": 3,
+   "n": 296,
+   "total_bp": 18935.4,
+   "per_leg_bp": 64.0
+  },
+  {
+   "from": 4,
+   "to": 5,
+   "n": 592,
+   "total_bp": 44809.1,
+   "per_leg_bp": 75.7
+  },
+  {
+   "from": 6,
+   "to": 10,
+   "n": 1480,
+   "total_bp": -2899.0,
+   "per_leg_bp": -2.0
+  },
+  {
+   "from": 11,
+   "to": 20,
+   "n": 2960,
+   "total_bp": -45629.1,
+   "per_leg_bp": -15.4
+  },
+  {
+   "from": 21,
+   "to": 30,
+   "n": 2960,
+   "total_bp": -39299.1,
+   "per_leg_bp": -13.3
+  },
+  {
+   "from": 31,
+   "to": 50,
+   "n": 5920,
+   "total_bp": -121130.5,
+   "per_leg_bp": -20.5
+  }
+ ],
+ "reading": "Профиль рваный: +166.4 на первом месте против -23.6 на 50-м при 9 убываниях из 12. Ранжирование не несёт информации дальше краёв — это находка о модели, а не о ширине."
 }
