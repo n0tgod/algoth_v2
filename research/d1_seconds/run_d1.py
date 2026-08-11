@@ -190,6 +190,25 @@ def load_day(root, syms, day, jobs=1, log=print):
     return P, t0, n
 
 
+def cadence(P, lo, hi):
+    """Как часто на деле стоят наблюдения: медиана промежутка, секунды.
+
+    Не украшение отчёта, а граница измеримости. Сборщик снимает книгу
+    проходом по всем именам, и живой журнал уже показывал проход в 2.5 с
+    вместо секунды — «снимков в часе будет около 1441, не 3600».
+    Задержка входа мельче фактического шага записью НЕ РАЗРЕШАЕТСЯ: в
+    колонке δ = 1 с окажется тот же вход, что в δ = 5 с, и совпадение
+    колонок читалось бы как «распада нет», хотя его просто нечем
+    измерить.
+    """
+    gaps = []
+    for r in range(P.shape[0]):
+        idx = np.flatnonzero(np.isfinite(P[r, lo:hi]))
+        if len(idx) > 10:
+            gaps.append(float(np.median(np.diff(idx))))
+    return float(np.median(gaps)) if gaps else float("nan")
+
+
 def next_index(P):
     """Матрица «первое наблюдение начиная с этой секунды», int32.
 
@@ -308,7 +327,18 @@ def report(art, path):
     L.append(f"- секунд с ценой, медиана по символо-суткам: "
              f"**{a['coverage_median']}** из {DAY_SEC} "
              f"({a['coverage_share']} покрытия)")
+    L.append(f"- шаг записи: снимок раз в **{a['cadence_sec']} с** "
+             f"(объявлено — раз в секунду)")
     L.append(f"- прогон занял {a['took_min']} мин\n")
+    blind = [d for d in a["delays"] if a["cadence_sec"]
+             and d < a["cadence_sec"]]
+    if blind:
+        L.append(f"**Задержки {', '.join(str(d) for d in blind)} с "
+                 f"записью не разрешаются.** Сборщик снимает книгу "
+                 f"проходом по всем именам, и фактический шаг больше "
+                 f"объявленного; в этих колонках стоит тот же вход, что "
+                 f"в ближайшей разрешаемой, и совпадение колонок "
+                 f"означает предел записи, а не отсутствие распада.\n")
     need = a["requirement"]
     L.append(f"Требование §3 (не меньше 14 суток по 300 символам): "
              f"**{'выполнено' if need['ok'] else 'НЕ выполнено'}** — "
@@ -378,8 +408,15 @@ def main():
     ap.add_argument("--symbols", default="")
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--out", default=OUT)
-    ap.add_argument("--tag", default="1m")
+    ap.add_argument("--tag", default="")
+    ap.add_argument("--no-publish", action="store_true",
+                    help="не публиковать отчёт в git")
     a = ap.parse_args()
+    # Частичный прогон НЕ занимает имя полного: смоук под именем
+    # настоящего прогона в этом проекте уже подменял артефакт (F2), а по
+    # содержимому они неотличимы — оба выглядят как отчёт этапа.
+    if not a.tag:
+        a.tag = f"1m-{a.days}d" if a.days else "1m"
 
     # Каталог создаётся ДО счёта, а не отчётом: прогон турнира однажды
     # досчитал всё и упал на записи в несуществующий каталог.
@@ -400,7 +437,7 @@ def main():
              for h in D.HORIZONS_SEC]
     acc = {k: [] for k in cells}
     last_seen = {}
-    cover = []
+    cover, cadences = [], []
     t_start = time.time()
     for day in days:
         t_day = time.time()
@@ -408,6 +445,9 @@ def main():
         P, t0, n = load_day(a.root, syms, day, a.jobs)
         cover += [int(np.isfinite(P[r, PAD_SEC:PAD_SEC + DAY_SEC]).sum())
                   for r in range(P.shape[0])]
+        step = cadence(P, PAD_SEC, PAD_SEC + DAY_SEC)
+        cadences.append(step)
+        print(f"    шаг записи: снимок раз в {step:.1f} с")
         NXT = next_index(P)
         for drop in D.DROPS:
             rows, cols = events_of_day(P, t0, drop, last_seen.setdefault(
@@ -430,6 +470,8 @@ def main():
         "coverage_median": int(np.median(cov)) if len(cov) else 0,
         "coverage_share": round(float(np.median(cov) / DAY_SEC), 3)
         if len(cov) else 0.0,
+        "cadence_sec": round(float(np.median(cadences)), 2)
+        if cadences else None,
         "drops": list(D.DROPS), "delays": list(D.DELAYS),
         "horizons": list(D.HORIZONS_SEC),
         "verdict_cell": dict(D.VERDICT_CELL,
@@ -455,6 +497,35 @@ def main():
               indent=1)
     report(art, os.path.join(a.out, f"D1-report-{a.tag}.md"))
     print(f"готово: {p}")
+    if not a.no_publish:
+        publish(f"D1: реплей записи B1 ({a.tag})")
+
+
+def publish(msg):
+    """Опубликовать отчёт сразу же, а не отдельной командой.
+
+    Правило проекта — «каждый прогон пишет отчёт файлом, а publish.sh
+    его коммитит», — но публикация оставалась ОТДЕЛЬНЫМ шагом, и первый
+    же живой прогон на этом и запнулся: прогон случился, отчёт лежал на
+    сервере, а в git не приехало ничего. Шаг, который можно забыть, рано
+    или поздно забывают; шаг, который делает сам прогон, — нет.
+    """
+    import subprocess
+    sh = os.path.join(RESEARCH, os.pardir, "tools", "publish.sh")
+    sh = os.path.abspath(sh)
+    if not os.path.exists(sh):
+        print(f"публиковать нечем: нет {sh}")
+        return
+    print("публикую отчёт")
+    try:
+        r = subprocess.run(["bash", sh, msg], cwd=os.path.dirname(
+            os.path.dirname(sh)), timeout=600)
+        if r.returncode != 0:
+            print(f"публикация не прошла (код {r.returncode}); "
+                  f"отчёт на диске, повторить: tools/publish.sh '{msg}'")
+    except Exception as e:                                # noqa: BLE001
+        print(f"публикация не прошла ({type(e).__name__}: {e}); "
+              f"отчёт на диске, повторить: tools/publish.sh '{msg}'")
 
 
 def checks(art):
@@ -473,6 +544,14 @@ def checks(art):
     h = art["verdict_cell"]["horizon_sec"]
     seq = [art["cells"][f"{d}|{dl}|{h}"]["excess_bp"] for dl in art["delays"]]
     seq = [x for x in seq if x is not None]
+    cad = art.get("cadence_sec")
+    out["шаг записи"] = (
+        f"снимок раз в {cad} с; "
+        + ("задержки мельче этого не разрешаются — колонки "
+           + ", ".join(f"{d} с" for d in art["delays"] if d < cad)
+           + " предъявлять нельзя"
+           if cad and any(d < cad for d in art["delays"])
+           else "вся объявленная ось задержек разрешается"))
     if len(seq) < 2:
         out["кривая распада"] = "не измерена"
     else:

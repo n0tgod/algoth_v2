@@ -533,13 +533,41 @@ def test_replay_end_to_end_into_a_fresh_checkout():
         w.close()
 
         out = os.path.join(tmp, "нет", "такого", "каталога")
-        argv = sys.argv
-        sys.argv = ["run.py", "--root", os.path.join(root, "book"),
-                    "--out", out, "--tag", "test"]
+        argv, real_publish = sys.argv, R.publish
+        # Публикация ПОДМЕНЯЕТСЯ, а не просто выключается флагом: прогон
+        # зовёт `publish.sh`, а тот коммитит и пушит. Тест, который может
+        # что-то толкнуть в репозиторий, недопустим, и полагаться здесь
+        # на «в каталоге ничего не изменилось» значит полагаться на удачу.
+        called = []
+        R.publish = lambda msg: called.append(msg)
         try:
+            sys.argv = ["run_d1.py", "--root", os.path.join(root, "book"),
+                        "--out", out, "--tag", "test", "--no-publish"]
             R.main()
+            check("с --no-publish публикации нет", called == [], f"{called}")
+            # И обратная сторона: без флага прогон обязан публиковать сам.
+            # Иначе «публикует по умолчанию» однажды окажется выключенным
+            # — ровно тот отказ, из-за которого первый живой прогон
+            # остался лежать на сервере.
+            sys.argv = ["run_d1.py", "--root", os.path.join(root, "book"),
+                        "--out", out, "--tag", "test2"]
+            R.main()
+            check("без флага прогон публикует сам", len(called) == 1,
+                  f"{called}")
+            # Частичный прогон не вправе занять имя полного: по
+            # содержимому они неотличимы — оба выглядят как отчёт этапа,
+            # и трёхсуточная диагностика встала бы в git отчётом
+            # гипотезы. В F2 смоук так уже подменил артефакт F1.
+            sys.argv = ["run_d1.py", "--root", os.path.join(root, "book"),
+                        "--out", out, "--days", "1", "--no-publish"]
+            R.main()
+            check("частичный прогон под своим именем",
+                  os.path.exists(os.path.join(out, "D1-report-1m-1d.md"))
+                  and not os.path.exists(
+                      os.path.join(out, "D1-report-1m.md")),
+                  str(sorted(os.listdir(out))))
         finally:
-            sys.argv = argv
+            sys.argv, R.publish = argv, real_publish
         art = os.path.join(out, "D1-events-test.json")
         rep = os.path.join(out, "D1-report-test.md")
         check("артефакт записан в несуществующий каталог",
@@ -558,6 +586,15 @@ def test_replay_end_to_end_into_a_fresh_checkout():
         txt = open(rep, encoding="utf-8").read()
         check("отчёт называет себя диагностикой",
               "диагностика, а не вердикт" in txt, "нет оговорки")
+        # Запись в фикстуре идёт раз в пять секунд, значит колонка
+        # δ = 1 с содержит тот же вход, что δ = 5 с. Совпадение колонок
+        # читалось бы как «распада нет» — отчёт обязан сказать, что это
+        # предел записи, а не свойство рынка.
+        check("шаг записи измерен", a["cadence_sec"] == 5.0,
+              f"{a['cadence_sec']}")
+        check("неразрешаемая задержка названа",
+              "Задержки 1 с записью не разрешаются" in txt,
+              "отчёт молчит о пределе записи")
         check("отчёт говорит, что требование §3 не выполнено",
               "НЕ выполнено" in txt, "молчит о покрытии")
     finally:
