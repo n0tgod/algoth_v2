@@ -3594,6 +3594,81 @@ function mdlExit(t) {
   return (t.entry_px && t.got_bp != null)
     ? t.entry_px * (1 + t.got_bp / 10000) : null;
 }
+// Ноги позиции: чем набирали и чем скидывали, по времени. Первый лот
+// в `adds` не лежит (там доливы), а его размер выводится из общего:
+// второй список размеров разошёлся бы с кассой, которая считает по
+// лотам.
+function mdlLegs(t) {
+  const adds = t.adds || [], exits = t.exits || [];
+  if (!adds.length && exits.length < 2) return [];
+  const legs = [];
+  const first = (t.size_total != null && adds.length)
+    ? Math.round((t.size_total
+        - adds.reduce((s, a) => s + (a.size || 0), 0)) * 100) / 100
+    : t.size;
+  legs.push({kind: "entry", at: t.opened_at, px: t.entry_px,
+             size: first, hour: t.hour});
+  for (const a of adds)
+    legs.push({kind: "add", at: a.at, px: a.px, size: a.size,
+               hour: a.hour});
+  for (const e of exits)
+    legs.push({kind: "exit", at: e.at, px: e.px, size: e.size,
+               net_bp: e.net_bp, pnl: e.pnl, reason: e.reason});
+  legs.sort((a, b) => (a.at || 0) - (b.at || 0));
+  return legs;
+}
+function mdlLegRows(key, legs) {
+  const rows = legs.map(l => {
+    const money = l.kind === "exit"
+      ? `<td class="mono ${(l.pnl || 0) > 0 ? "buy" : "sell"}">${
+          l.net_bp == null ? "—" : pct(l.net_bp)}</td>
+         <td class="mono ${(l.pnl || 0) > 0 ? "buy" : "sell"}">${
+          l.pnl == null ? "—"
+          : (l.pnl > 0 ? "+" : "") + l.pnl.toFixed(2)}</td>`
+      : `<td class="mono" style="color:var(--muted)">—</td>
+         <td class="mono" style="color:var(--muted)">—</td>`;
+    return `<tr>
+      <td class="mono" style="color:var(--muted)">${stamp(l.at)}</td>
+      <td style="color:var(--muted)">${l.kind === "exit" ? "unload"
+        : l.kind === "add" ? "add" : "entry"}</td>
+      <td class="mono">${l.size == null ? "—"
+        : (+l.size).toFixed(2)} $</td>
+      <td class="mono">${l.px == null ? "—" : +(+l.px).toPrecision(10)}</td>
+      ${money}</tr>`;
+  }).join("");
+  // Цена разгрузки у книг со сроком не записывается вовсе (разбор
+  // считает деньги, не цену), и прочерк здесь — не потеря: выдумывать
+  // её из хода мы уже перестали.
+  return `<tr class="mdet" id="mdet-${mdlKeyId(key)}"
+    data-det="${key}" style="display:none">
+    <td colspan="9" style="padding:2px 0 8px 22px">
+    <table style="width:100%;border-collapse:collapse" class="mleg">
+    <tr><th style="text-align:left">when</th>
+    <th style="text-align:left">leg</th><th style="text-align:left">size</th>
+    <th style="text-align:left">price</th>
+    <th style="text-align:left">net</th>
+    <th style="text-align:left">$</th></tr>${rows}</table></td></tr>`;
+}
+// Ключ строки — в ИДЕНТИФИКАТОРЕ, а не в селекторе по атрибуту:
+// разворот обязан проверяться прогоном страницы, а заглушка DOM в
+// проверке умеет искать по id. Проверка, которую нельзя выполнить,
+// защищает ровно ничего.
+function mdlKeyId(key) {
+  return String(key).replace(/[^a-z0-9]+/gi, "-");
+}
+function mdlToggle(key) {
+  const id = mdlKeyId(key);
+  const r = document.getElementById("mdet-" + id);
+  const b = document.getElementById("mexp-" + id);
+  if (!r) return;
+  // Открыто — только «table-row»; всё остальное (пусто, `none`,
+  // унаследованное) считается закрытым. Опираться на дословное `none`
+  // значит зависеть от того, что браузер вернёт для строки, которой
+  // стиль ещё не назначали.
+  const open = r.style.display !== "table-row";
+  r.style.display = open ? "table-row" : "none";
+  if (b) b.innerHTML = open ? "&#9662;" : "&#9656;";
+}
 // Частично разгруженная позиция: часть лотов закрыта, часть жива.
 // Реализованное принадлежит закрытой части, и печатать его без
 // пометки — то же, что назвать открытую сделку закрытой.
@@ -4235,10 +4310,24 @@ function mrows() {
           title="plain-words breakdown"
           style="text-decoration:none"
           onclick="event.stopPropagation()">&#9432;</a>`;
+        // Позиция из нескольких лотов разворачивается по кнопке:
+        // каждый долив и каждая разгрузка — своей строкой, с размером
+        // и с тем, сколько на ней зафиксировано. Сложенная строка
+        // говорит про позицию целиком, и по ней не видно, ЧЕМ её
+        // набирали и по частям ли скидывали.
+        const legs = mdlLegs(t);
+        const key = `${t.arm || "gbm"}|${t.hour}`;
+        const exp = legs.length > 1
+          ? `<button class="mexp" id="mexp-${mdlKeyId(key)}"
+             data-exp="${key}"
+             title="show the lots and unloads"
+             onclick="event.stopPropagation();mdlToggle('${key}')"
+             style="background:none;border:0;color:var(--muted);
+             cursor:pointer;padding:0 4px">&#9656;</button>` : "";
         return `<tr data-h="${t.hour}" style="cursor:pointer${
           here ? ";background:rgba(127,127,255,.10)" : ""}"
           title="${tip ? tip + " — " : ""}click to centre the chart">
-        <td class="mono">${stamp(t.opened_at)}</td>
+        <td class="mono">${exp}${stamp(t.opened_at)}</td>
         <td class="${t.side === "long" ? "buy" : "sell"}">${t.side}</td>
         <td class="mono" ${(t.lots || 1) > 1
           ? `title="${t.lots} lots, average of ${t.size_total} $"` : ""}>${
@@ -4259,7 +4348,7 @@ function mrows() {
           : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
         <td style="color:var(--muted)">${disp(t.state)}${
           t.exit_reason ? " · " + disp(t.exit_reason) : ""} ${
-          info}</td></tr>`;
+          info}</td></tr>${legs.length > 1 ? mdlLegRows(key, legs) : ""}`;
       }).join("")
     : `<tr><td colspan="9" style="color:var(--muted)">no model trades on
        this pair in the shown book — try the other arm or another

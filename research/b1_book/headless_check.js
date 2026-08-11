@@ -851,6 +851,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? () => shown().trades : null);"
                 // Клик по сделке ядра открывает её на графике: без
                 // вызова этот код не исполняется ни разу.
+                + "\nglobal.__mdlToggle = typeof mdlToggle === "
+                + "'function' ? mdlToggle : null;"
                 + "\nglobal.__showTrade = typeof showTrade === 'function' "
                 + "? showTrade : null;"
                 // Книгу турнира темпов надо ОТКРЫТЬ в проверке, иначе
@@ -2044,6 +2046,44 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
           bad.push("график: реализованное сложено с живым");
         if (!/1 of 2 lots closed/.test(hb))
           bad.push("график: не сказано, какая часть закрыта");
+        // Разворот по кнопке: каждый долив и каждая разгрузка своей
+        // строкой, с размером и с тем, сколько на ней зафиксировано
+        // (просьба владельца). Свёрнутая строка говорит про позицию
+        // целиком, и по ней не видно, чем её набирали.
+        // До конца ВЛОЖЕННОЙ таблицы: нежадное `</tr>` обрывалось на
+        // заголовке подтаблицы, и проверка смотрела пустую шапку.
+        // Разворот ИМЕННО этой позиции: в таблице их несколько, и
+        // «первый попавшийся mdet» описывал другую сделку — проверка
+        // смотрела чужой разворот и проходила бы на сломанном своём.
+        const det = new RegExp('<tr class="mdet" id="mdet-gbm-2026-08-'
+          + '03-16"[\\s\\S]*?</table></td></tr>').exec(mr);
+        if (!det) {
+          bad.push("график: у позиции из лотов нет разворота");
+        } else {
+          if (!/display:none/.test(det[0]))
+            bad.push("график: подробности лотов открыты без нажатия");
+          const legs = (det[0].match(/>unload</g) || []).length;
+          if (legs !== 1)
+            bad.push(`график: разгрузок в развороте ${legs}, а была одна`);
+          if (!/>add</.test(det[0]) || !/>entry</.test(det[0]))
+            bad.push("график: доливы не выписаны строками");
+          if (!/45\.00 \$/.test(det[0]) && !/45 \$/.test(det[0]))
+            bad.push("график: размер выхода не показан");
+          if (!/\+9\.04/.test(det[0]) || !/\+22\.54 %/.test(det[0]))
+            bad.push("график: зафиксированное на выходе не показано");
+        }
+        if (!/mexp-gbm-2026-08-03-16/.test(mr))
+          bad.push("график: кнопки разворота нет");
+        if (global.__mdlToggle) {
+          global.__mdlToggle("gbm|2026-08-03-16");
+          const row = global.__el("mdet-gbm-2026-08-03-16");
+          if (String(row.style.display) !== "table-row")
+            bad.push("график: нажатие не разворачивает подробности: "
+                     + row.style.display);
+          global.__mdlToggle("gbm|2026-08-03-16");
+          if (String(row.style.display) !== "none")
+            bad.push("график: повторное нажатие не сворачивает");
+        } else bad.push("график: функции разворота не существует");
       }
     }
   }
