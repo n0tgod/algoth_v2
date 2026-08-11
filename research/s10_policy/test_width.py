@@ -161,6 +161,24 @@ def test_report_names_the_fence():
     check("названа цена оси в испытаниях", "72 → 216" in txt, "молчит")
 
 
+def test_bands_show_what_the_added_places_bring():
+    """Полоса мест считается разностью, а не долей накопленного.
+
+    Накопительный итог может расти при УБЫТОЧНЫХ добавляемых местах —
+    просто медленнее; из него «стоит ли расширять» не читается вовсе.
+    """
+    rows = [{"rank": 1, "net": 100.0, "sym": "A", "hour": "h", "arm": "g",
+             "side": "long", "id": 0}]
+    rows += [{"rank": r, "net": -20.0, "sym": f"S{r}", "hour": "h",
+              "arm": "g", "side": "long", "id": r} for r in (2, 3)]
+    b = W.bands(W.by_width(rows))
+    first = [x for x in b if x["from"] == 1][0]
+    later = [x for x in b if x["from"] == 2]
+    check("первая полоса — сама ширина", first["to"] == 1, f"{first}")
+    check("добавленные места убыточны",
+          later and later[0]["per_leg_bp"] < 0, f"{later}")
+
+
 def test_step_separates_rich_head_from_flat_tail():
     """Ступень: верхние места богаты, дальше ноль.
 
@@ -232,6 +250,7 @@ def main():
     print("деньги и оговорки")
     test_width_reports_concentration()
     test_net_matches_the_tournament_formula()
+    test_bands_show_what_the_added_places_bring()
     test_step_separates_rich_head_from_flat_tail()
     test_report_names_the_fence()
     test_run_publishes_itself()

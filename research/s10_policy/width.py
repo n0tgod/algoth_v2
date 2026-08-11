@@ -64,8 +64,8 @@ import trades as TR                                       # noqa: E402
 # по которым печатается профиль. Это не сетка выбора — вердикта у
 # замера нет, он отвечает на «различает ли место» и ничего не выбирает.
 AGE_H = 4
-RANKS = (1, 2, 3, 4, 5, 6, 8, 10, 15, 20, 30)
-WIDTHS = (1, 2, 3, 5, 10, 20)
+RANKS = (1, 2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40, 50)
+WIDTHS = (1, 2, 3, 5, 10, 20, 30, 50)
 
 
 def rank_legs(legs):
@@ -189,6 +189,30 @@ def step(ranks, edge=5):
             "tail_mean_bp": round(sum(tail) / len(tail), 2) if tail else None}
 
 
+def bands(widths):
+    """Вклад полосы мест: сколько приносят места от прошлой ширины до
+    этой. Из накопительных итогов это не читается, а решает именно он:
+    книга шире выгодна ровно тогда, когда ДОБАВЛЯЕМЫЕ места не убыточны.
+    """
+    out, prev = [], None
+    for w in widths:
+        if not w.get("n"):
+            continue
+        if prev is None:
+            out.append({"from": 1, "to": w["width"], "n": w["n"],
+                        "total_bp": w["total_bp"],
+                        "per_leg_bp": round(w["total_bp"] / w["n"], 1)})
+        else:
+            dn = w["n"] - prev["n"]
+            dt = w["total_bp"] - prev["total_bp"]
+            if dn > 0:
+                out.append({"from": prev["width"] + 1, "to": w["width"],
+                            "n": dn, "total_bp": round(dt, 1),
+                            "per_leg_bp": round(dt / dn, 1)})
+        prev = w
+    return out
+
+
 def reading(ranks, widths):
     """Вывод пишется из чисел: убывает ли ожидание с местом."""
     got = [r for r in ranks if r.get("n", 0) >= 30]
@@ -260,6 +284,15 @@ def report(art, path):
                  f"{r['top_sym']} {r['top_bp']:+.1f} | "
                  f"{r['total_wo_top_bp']:+.1f} |")
     L.append("")
+    L.append("## 2а. Вклад полосы мест\n")
+    L.append("Накопительный итог прячет главное: книга шире выгодна "
+             "ровно тогда, когда ДОБАВЛЯЕМЫЕ места не убыточны.\n")
+    L.append("| места | ног | итог | на ногу |")
+    L.append("|---|---|---|---|")
+    for b in art.get("bands") or []:
+        L.append(f"| {b['from']}–{b['to']} | {b['n']} | "
+                 f"{b['total_bp']:+.1f} | {b['per_leg_bp']:+.1f} б.п. |")
+    L.append("")
     L.append("## 3. Что из этого следует\n")
     L.append(art["reading"])
     L.append("")
@@ -312,7 +345,7 @@ def main():
         "measured": len(rows),
         "sections": len({(r["hour"], r["arm"], r["side"]) for r in rows}),
         "age_h": AGE_H, "ranks": ranks, "widths": widths,
-        "step": step(ranks),
+        "step": step(ranks), "bands": bands(widths),
     }
     art["reading"] = reading(ranks, widths)
     json.dump(art, open(a.out.replace(".md", ".json"), "w",
