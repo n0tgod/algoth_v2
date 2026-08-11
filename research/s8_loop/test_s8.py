@@ -3618,6 +3618,11 @@ def test_sigma_targets_exist_on_every_horizon():
     t = FB.target_pack(s, r, elig, f["beta"])
     miss = [h for h in FB.HORIZONS if f"fwd_{h}h_z" not in t]
     check("z-цель есть у каждого горизонта", not miss, f"нет у {miss}")
+    if miss:
+        # Дальше идти нельзя: обращение к отсутствующей цели роняет
+        # ВЕСЬ прогон, и остальные полторы сотни проверок не считаются
+        # вовсе. Отказ обязан оставаться одной строкой падения.
+        return
     a = t[f"fwd_{FB.HORIZONS[0]}h_z"]
     b = t[f"fwd_{FB.HORIZONS[-1]}h_z"]
     both = np.isfinite(a) & np.isfinite(b)
