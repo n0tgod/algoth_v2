@@ -3647,9 +3647,11 @@ def test_book_archives_when_the_order_changes():
     td = tempfile.mkdtemp()
     d = os.path.join(td, "model")
     os.makedirs(d, exist_ok=True)
-    _j.dump({"rank_target": None}, open(os.path.join(d, "manifest.json"),
-                                        "w", encoding="utf-8"))
-    open(os.path.join(d, "picks.jsonl"), "w").write("{}\n")
+    # Прежний порядок берётся из ЗАПИСИ ВЫБОРА: у главной книги
+    # манифест пишется раньше книг и содержит уже новое значение —
+    # проверка по нему не срабатывала никогда.
+    open(os.path.join(d, "picks.jsonl"), "w", encoding="utf-8").write(
+        _j.dumps({"arm": "gbm", "rank_want": None}) + "\n")
     got = T.fresh_book_on_rank_change(d, "fwd_4h_z")
     check("смена порядка отставляет книгу",
           got is not None and os.path.basename(got) == "model.rank-raw",
@@ -3658,8 +3660,22 @@ def test_book_archives_when_the_order_changes():
     check("сделки не потеряны, а переехали",
           got and os.path.exists(os.path.join(got, "picks.jsonl")), got)
     os.makedirs(d, exist_ok=True)
+    open(os.path.join(d, "picks.jsonl"), "w", encoding="utf-8").write(
+        _j.dumps({"arm": "gbm", "rank_want": "fwd_4h_z"}) + "\n")
+    # Живой случай, на котором дефект и вылез: манифест УЖЕ несёт новый
+    # порядок (модель пишет его в начале цикла), а книга торговала
+    # прежним. Проверка по манифесту здесь молчала, по записи выбора —
+    # срабатывает.
+    d2 = os.path.join(td, "model2")
+    os.makedirs(d2)
     _j.dump({"rank_target": "fwd_4h_z"},
-            open(os.path.join(d, "manifest.json"), "w", encoding="utf-8"))
+            open(os.path.join(d2, "manifest.json"), "w", encoding="utf-8"))
+    open(os.path.join(d2, "picks.jsonl"), "w", encoding="utf-8").write(
+        _j.dumps({"arm": "gbm"}) + "\n")
+    check("манифест с новым порядком проверку не обманывает",
+          T.fresh_book_on_rank_change(d2, "fwd_4h_z") is not None,
+          "книга не отставлена")
+
     check("тот же порядок книгу не трогает",
           T.fresh_book_on_rank_change(d, "fwd_4h_z") is None
           and os.path.exists(d), "книга отставлена зря")

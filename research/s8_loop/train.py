@@ -1239,10 +1239,26 @@ def fresh_book_on_rank_change(mdir, want, log_=None):
     Прежний порядок читается из манифеста. Манифеста нет — книга новая,
     отставлять нечего.
     """
-    mp = os.path.join(mdir, "manifest.json")
+    # Прежний порядок читается из ПОСЛЕДНЕЙ ЗАПИСИ ВЫБОРА, а не из
+    # манифеста. У главной книги манифест — это манифест МОДЕЛИ, он
+    # пишется в начале цикла, до книг; проверка читала оттуда значение,
+    # которое тот же цикл только что и записал, и потому не срабатывала
+    # никогда. У часовых книг манифест свой, и там всё работало — из-за
+    # этой асимметрии дефект и выглядел избирательным.
+    #
+    # Запись выбора несёт `rank_want` — чем книга упорядочивала сечение
+    # НА САМОМ ДЕЛЕ. Подделать его нечем: его пишет тот же код, который
+    # выбирает.
+    pf = os.path.join(mdir, "picks.jsonl")
     try:
-        with open(mp, encoding="utf-8") as f:
-            was = (json.load(f) or {}).get("rank_target")
+        last = None
+        with open(pf, encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    last = line
+        if last is None:
+            return None                # книга пуста — отставлять нечего
+        was = (json.loads(last) or {}).get("rank_want")
     except (OSError, ValueError):
         return None
     if was == want:
