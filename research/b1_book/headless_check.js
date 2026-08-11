@@ -853,6 +853,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // вызова этот код не исполняется ни разу.
                 + "\nglobal.__mdlToggle = typeof mdlToggle === "
                 + "'function' ? mdlToggle : null;"
+                + "\nglobal.__mrows = typeof mrows === 'function' "
+                + "? mrows : null;"
                 + "\nglobal.__showTrade = typeof showTrade === 'function' "
                 + "? showTrade : null;"
                 // Книгу турнира темпов надо ОТКРЫТЬ в проверке, иначе
@@ -2080,9 +2082,32 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
           if (String(row.style.display) !== "table-row")
             bad.push("график: нажатие не разворачивает подробности: "
                      + row.style.display);
+          // Таблица перерисовывается каждым опросом, и разворот,
+          // живущий только в разметке, схлопывался сам через секунду
+          // после нажатия — владелец увидел это на телефоне.
+          if (global.__mrows) {
+            global.__mrows();
+            const again = String(global.__el("mrows").innerHTML || "");
+            const re = new RegExp('<tr class="mdet" id="mdet-gbm-2026-'
+              + '08-03-16"[^>]*display:table-row');
+            if (!re.test(again))
+              bad.push("график: разворот не пережил перерисовку");
+            const btn = /id="mexp-gbm-2026-08-03-16"[\s\S]*?<\/button>/
+              .exec(again);
+            if (!btn || !/9662/.test(btn[0]))
+              bad.push("график: стрелка развёрнутой строки не та");
+          } else bad.push("график: перерисовку таблицы не позвать");
           global.__mdlToggle("gbm|2026-08-03-16");
           if (String(row.style.display) !== "none")
             bad.push("график: повторное нажатие не сворачивает");
+          if (global.__mrows) {
+            global.__mrows();
+            const shut = String(global.__el("mrows").innerHTML || "");
+            const re2 = new RegExp('<tr class="mdet" id="mdet-gbm-2026-'
+              + '08-03-16"[^>]*display:none');
+            if (!re2.test(shut))
+              bad.push("график: свёрнутое открывается перерисовкой");
+          }
         } else bad.push("график: функции разворота не существует");
       }
     }

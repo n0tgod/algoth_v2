@@ -3617,6 +3617,11 @@ function mdlLegs(t) {
   legs.sort((a, b) => (a.at || 0) - (b.at || 0));
   return legs;
 }
+// Какие позиции развёрнуты — состояние ПОКАЗА, и оно обязано пережить
+// перерисовку: таблица собирается заново каждым опросом (раз в
+// секунду), и разворот, живущий только в разметке, схлопывался сам
+// через секунду после нажатия — владелец увидел это на телефоне.
+const MDLEXP = new Set();
 function mdlLegRows(key, legs) {
   const rows = legs.map(l => {
     const money = l.kind === "exit"
@@ -3640,7 +3645,8 @@ function mdlLegRows(key, legs) {
   // считает деньги, не цену), и прочерк здесь — не потеря: выдумывать
   // её из хода мы уже перестали.
   return `<tr class="mdet" id="mdet-${mdlKeyId(key)}"
-    data-det="${key}" style="display:none">
+    data-det="${key}" style="display:${
+      MDLEXP.has(key) ? "table-row" : "none"}">
     <td colspan="9" style="padding:2px 0 8px 22px">
     <table style="width:100%;border-collapse:collapse" class="mleg">
     <tr><th style="text-align:left">when</th>
@@ -3660,12 +3666,16 @@ function mdlToggle(key) {
   const id = mdlKeyId(key);
   const r = document.getElementById("mdet-" + id);
   const b = document.getElementById("mexp-" + id);
+  // Состояние пишется в набор ДО выхода: строки может не оказаться в
+  // разметке (её перерисовывают), но намерение владельца от этого не
+  // исчезает — иначе нажатие терялось бы ровно на перерисовке.
+  if (MDLEXP.has(key)) MDLEXP.delete(key); else MDLEXP.add(key);
   if (!r) return;
   // Открыто — только «table-row»; всё остальное (пусто, `none`,
   // унаследованное) считается закрытым. Опираться на дословное `none`
   // значит зависеть от того, что браузер вернёт для строки, которой
   // стиль ещё не назначали.
-  const open = r.style.display !== "table-row";
+  const open = MDLEXP.has(key);
   r.style.display = open ? "table-row" : "none";
   if (b) b.innerHTML = open ? "&#9662;" : "&#9656;";
 }
@@ -4323,7 +4333,8 @@ function mrows() {
              title="show the lots and unloads"
              onclick="event.stopPropagation();mdlToggle('${key}')"
              style="background:none;border:0;color:var(--muted);
-             cursor:pointer;padding:0 4px">&#9656;</button>` : "";
+             cursor:pointer;padding:0 4px">${
+             MDLEXP.has(key) ? "&#9662;" : "&#9656;"}</button>` : "";
         return `<tr data-h="${t.hour}" style="cursor:pointer${
           here ? ";background:rgba(127,127,255,.10)" : ""}"
           title="${tip ? tip + " — " : ""}click to centre the chart">
