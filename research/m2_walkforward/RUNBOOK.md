@@ -36,6 +36,6 @@ tail -f research/m2_walkforward/out/run.log
 Смоук (не для вердикта, в git не идёт):
 
 ```bash
-.venv/bin/python research/m2_walkforward/run.py --tag smoke \
+cd ~/algoth_v2 && .venv/bin/python research/m2_walkforward/run.py --tag smoke \
   --cells h1_static,h5_static --null-seeds 1 --trees 25
 ```

@@ -149,7 +149,7 @@ tail -f research/d1_seconds/out/passive.log
 ## Тесты
 
 ```bash
-python3 research/d1_seconds/test_detect.py
+cd ~/algoth_v2 && python3 research/d1_seconds/test_detect.py
 python3 research/d1_seconds/test_tape_check.py
 python3 research/d1_seconds/test_passive.py
 ```

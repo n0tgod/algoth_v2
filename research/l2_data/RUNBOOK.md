@@ -43,7 +43,7 @@ git checkout claude/claude-md-stage-a1-pqrhnx && git pull
 нельзя:
 
 ```bash
-.venv/bin/python research/l2_data/oi_binance.py --limit 3
+cd ~/algoth_v2 && .venv/bin/python research/l2_data/oi_binance.py --limit 3
 ```
 
 Занимает около полутора минут и собирает настоящие ряды, которые
@@ -59,7 +59,7 @@ git checkout claude/claude-md-stage-a1-pqrhnx && git pull
 Затем полный прогон:
 
 ```bash
-nohup .venv/bin/python research/l2_data/oi_binance.py \
+cd ~/algoth_v2 && nohup .venv/bin/python research/l2_data/oi_binance.py \
   --workers 24 > research/l2_data/out/l2_binance.log 2>&1 &
 ```
 
@@ -79,7 +79,7 @@ nohup .venv/bin/python research/l2_data/oi_binance.py \
 Следить:
 
 ```bash
-tail -f research/l2_data/out/l2_binance.log
+cd ~/algoth_v2 && tail -f research/l2_data/out/l2_binance.log
 ```
 
 **Что доложить по окончании:** последние 10 строк лога, то есть блок
@@ -96,7 +96,7 @@ tail -f research/l2_data/out/l2_binance.log
 Bybit соглашение о метке и насколько глубока его история интереса.
 
 ```bash
-.venv/bin/python research/l2_data/oi_bybit.py --probe
+cd ~/algoth_v2 && .venv/bin/python research/l2_data/oi_bybit.py --probe
 ```
 
 Занимает минуты. Печатает две таблицы:
@@ -117,7 +117,7 @@ Bybit соглашение о метке и насколько глубока е
 Если глубина позволяет, дальше выборка символов и сбор:
 
 ```bash
-nohup .venv/bin/python research/l2_data/oi_bybit.py \
+cd ~/algoth_v2 && nohup .venv/bin/python research/l2_data/oi_bybit.py \
   --collect --sample 40 > research/l2_data/out/l2_bybit.log 2>&1 &
 ```
 

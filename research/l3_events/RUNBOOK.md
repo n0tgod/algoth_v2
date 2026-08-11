@@ -28,7 +28,7 @@ ls research/a2_storage/out/parquet/1m | wc -l       # партиции хран�
 ## 1. Пилот
 
 ```bash
-.venv/bin/python research/l3_events/run.py --limit 40 \
+cd ~/algoth_v2 && .venv/bin/python research/l3_events/run.py --limit 40 \
   --start 2025-01-01 --end 2025-06-30
 ```
 
@@ -38,7 +38,7 @@ ls research/a2_storage/out/parquet/1m | wc -l       # партиции хран�
 ## 2. Полный прогон
 
 ```bash
-nohup .venv/bin/python research/l3_events/run.py \
+cd ~/algoth_v2 && nohup .venv/bin/python research/l3_events/run.py \
   > research/l3_events/out/l3.log 2>&1 &
 ```
 
@@ -56,7 +56,7 @@ nohup .venv/bin/python research/l3_events/run.py \
 ## 3. Публикация
 
 ```bash
-tools/publish.sh "L3: события, эпизоды и контроли"
+cd ~/algoth_v2 && tools/publish.sh "L3: события, эпизоды и контроли"
 ```
 
 Ряды и векторы в git не идут, отчёт идёт.
