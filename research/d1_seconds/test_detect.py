@@ -597,6 +597,26 @@ def test_replay_end_to_end_into_a_fresh_checkout():
               "отчёт молчит о пределе записи")
         check("отчёт говорит, что требование §3 не выполнено",
               "НЕ выполнено" in txt, "молчит о покрытии")
+        # Круг издержек: пока проверки по ленте нет, отчёт обязан
+        # СКАЗАТЬ, что берёт оценку по чужой лесенке. Читать превышение
+        # против чужого числа, имея своё, значит льстить себе ровно на
+        # величину спреда.
+        check("без замера спреда круг назван оценкой",
+              "оценка L1" in txt, "круг подан как измеренный")
+        import json as _j
+        _j.dump({"groups": {"подтверждено лентой": {"spread_in_bp": 6.8,
+                                                    "spread_out_bp": 6.1}}},
+                open(os.path.join(out, "D1-tape-check-1m.json"), "w",
+                     encoding="utf-8"), ensure_ascii=False)
+        sys.argv = ["run_d1.py", "--root", os.path.join(root, "book"),
+                    "--out", out, "--tag", "test3", "--no-publish"]
+        R.main()
+        t3 = open(os.path.join(out, "D1-report-test3.md"),
+                  encoding="utf-8").read()
+        check("измеренный спред попадает в круг",
+              "Круг издержек 17.4" in t3,
+              [l for l in t3.splitlines() if "Круг издержек" in l])
+        check("нетто печатается", "Нетто" in t3, "нетто нет")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

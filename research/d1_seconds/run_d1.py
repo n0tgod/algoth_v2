@@ -62,10 +62,15 @@ BOOK_ROOT = os.path.join(RESEARCH, "b1_book", "out", "book")
 PAD_SEC = 3600                    # запас по краям суток
 DAY_SEC = 86400
 
-# Справочно при чтении таблицы, НЕ вердикт: круг тейкера с грубым
-# проскальзыванием, измеренный в L1 на $10 тыс. Настоящее исполнение
-# считается обходом лесенки в D3.
-COST_ROUND_BP = 11.7
+# Круг издержек для чтения таблицы. Комиссия — тейкерский цикл по
+# крипто-универсуму Bybit; спред берётся ИЗМЕРЕННЫЙ по нашей же записи,
+# если рядом лежит артефакт проверки по ленте. Оценка L1 (11.7 б.п. по
+# лесенке Binance) остаётся запасной и помечается как оценка: читать
+# превышение против чужого числа, когда есть своё, значит льстить себе
+# ровно на величину спреда — а он в момент события и есть главный
+# расход.
+COMMISSION_BP = 11.0
+COST_ROUND_FALLBACK_BP = 11.7
 
 
 def mem_available_mb():
@@ -349,7 +354,33 @@ def summarise(rec):
     return res
 
 
-def report(art, path):
+def cost_round(out_dir, tag):
+    """Круг издержек и откуда он взят.
+
+    Вход платит половину спреда, выход вторую — это цена первого уровня,
+    ниже которой исполнение быть не может. Проскальзывания обходом
+    лесенки здесь по-прежнему нет, оно в D3.
+    """
+    for name in (f"D1-tape-check-{tag}.json", "D1-tape-check-1m.json"):
+        p = os.path.join(out_dir, name)
+        if not os.path.exists(p):
+            continue
+        try:
+            g = (json.load(open(p, encoding="utf-8"))["groups"]
+                 .get("подтверждено лентой") or {})
+            si, so = g.get("spread_in_bp"), g.get("spread_out_bp")
+            if si is not None and so is not None:
+                return (COMMISSION_BP + (si + so) / 2.0,
+                        f"комиссия {COMMISSION_BP:.0f} + спред "
+                        f"{si:.1f}/{so:.1f} б.п., измеренный по записи")
+        except (ValueError, KeyError, OSError):
+            continue
+    return (COST_ROUND_FALLBACK_BP,
+            "оценка L1 по лесенке Binance; спред по нашей записи ещё не "
+            "измерен — прогнать `tape_check.py`")
+
+
+def report(art, path, out_dir=None):
     L = []
     a = art
     L.append("# D1 — отскок в первые секунды: реплей записи B1\n")
@@ -425,10 +456,17 @@ def report(art, path):
         L.append(f"- доля прибыльных эпизодов {c['share_pos']}")
         L.append(f"- ширина фона: медиана {c['width_median']} имён, "
                  f"тоньше пола у {c['thin_share']} событий")
-        L.append(f"\nСправочно, НЕ вердикт: круг тейкера с грубым "
-                 f"проскальзыванием — {COST_ROUND_BP} б.п. на $10 тыс. "
-                 f"(замер L1). Настоящее исполнение считается обходом "
-                 f"лесенки в D3, и оно дороже.")
+        ring, src = cost_round(out_dir or os.path.dirname(path),
+                               art.get("tag", "1m"))
+        net = c["excess_bp"] - ring
+        L.append(f"\n**Круг издержек {ring:.1f} б.п.** ({src}). "
+                 f"Нетто **{net:+.1f} б.п.**")
+        L.append(f"\nКритерий §7 п.4 требует нетто не меньше двойного "
+                 f"круга, то есть валового около {3 * ring:.0f} б.п. при "
+                 f"имеющихся {c['excess_bp']:.1f} — "
+                 f"**{'выполнен' if net >= 2 * ring else 'НЕ выполнен'}**. "
+                 f"Проскальзывания обходом лесенки в этом числе нет, оно "
+                 f"считается в D3 и может только ухудшить.")
     L.append("")
 
     L.append("## 4. Условия §7, измеримые уже сейчас\n")
@@ -606,7 +644,8 @@ def _run():
     p = os.path.join(a.out, f"D1-events-{a.tag}.json")
     json.dump(art, open(p, "w", encoding="utf-8"), ensure_ascii=False,
               indent=1)
-    report(art, os.path.join(a.out, f"D1-report-{a.tag}.md"))
+    art["tag"] = a.tag
+    report(art, os.path.join(a.out, f"D1-report-{a.tag}.md"), a.out)
     print(f"готово: {p}")
     if not a.no_publish:
         publish(f"D1: реплей записи B1 ({a.tag})")
