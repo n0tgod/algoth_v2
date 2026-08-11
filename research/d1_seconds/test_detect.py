@@ -669,6 +669,34 @@ def test_float32_prices_do_not_move_the_measure():
           f"{worst:.4f} б.п.")
 
 
+def test_output_is_line_buffered_when_redirected():
+    """Отцепленный прогон обязан печатать построчно.
+
+    С перенаправлением в файл Python буферизует блоками, и прогон молчит
+    по несколько суток счёта, а потом выдаёт всё разом. Снаружи это
+    неотличимо от зависания — ровно то, из-за чего пришлось гадать, жив
+    ли двенадцатисуточный прогон.
+    """
+    import tempfile
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "b1_book"))
+    import run_d1 as R                                    # noqa: E402
+    p = os.path.join(tempfile.mkdtemp(), "log.txt")
+    f = open(p, "w", encoding="utf-8")
+    real = sys.stdout
+    try:
+        sys.stdout = f
+        R.unbuffer_output()
+        buffered = sys.stdout.line_buffering
+        print("строка")
+        wrote = os.path.getsize(p)
+    finally:
+        sys.stdout = real
+        f.close()
+    check("вывод построчный при перенаправлении", buffered,
+          "буферизация блоками")
+    check("строка доходит до файла сразу", wrote > 0, f"{wrote} байт")
+
+
 def test_a_crash_reports_itself():
     """Упавший прогон обязан оставить файл, а не тишину.
 
@@ -758,6 +786,7 @@ def main():
     print("память и устойчивость")
     test_guard_matrix_chunks_change_nothing()
     test_float32_prices_do_not_move_the_measure()
+    test_output_is_line_buffered_when_redirected()
     test_a_crash_reports_itself()
     print("реплей")
     test_fast_parse_matches_json_loads()

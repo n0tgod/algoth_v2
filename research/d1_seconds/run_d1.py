@@ -73,6 +73,24 @@ COMMISSION_BP = 11.0
 COST_ROUND_FALLBACK_BP = 11.7
 
 
+def unbuffer_output():
+    """Печатать построчно, даже когда вывод уходит в файл.
+
+    Python буферизует stdout блоками, если это не терминал. Отцепленный
+    прогон с перенаправлением в файл из-за этого молчит по несколько
+    суток счёта подряд, а потом выдаёт всё разом — и снаружи неотличим
+    от повисшего. Правило проекта прямое: прогон, который молчит дольше
+    минуты, обязан печатать прогресс. Буферизация ставится В КОДЕ, а не
+    надеждой на ключ `-u` в команде: команду набирают руками, а забытый
+    ключ выглядит как зависание.
+    """
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+        sys.stderr.reconfigure(line_buffering=True)
+    except (AttributeError, OSError):
+        pass
+
+
 def mem_available_mb():
     """Сколько памяти реально доступно. Linux; иначе `None`."""
     try:
@@ -509,6 +527,7 @@ _LAST = {}
 
 
 def _run():
+    unbuffer_output()
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=BOOK_ROOT)
     ap.add_argument("--days", type=int, default=0,
