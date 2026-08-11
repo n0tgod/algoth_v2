@@ -3583,8 +3583,23 @@ function mdlExit(t) {
   // цена выхода записана событием — она и есть факт. Считать по ней
   // не «вторая копия расчёта»: разбор считает ДЕНЬГИ, здесь цена.
   if (t.exit_px) return t.exit_px;
+  // У ОТКРЫТОЙ позиции цены выхода не существует, и восстанавливать её
+  // из хода нельзя. У частично разгруженной позиции ход принадлежит
+  // уже закрытым лотам, и `вход × (1 + ход)` давал бы цену, по которой
+  // никто не выходил: владелец увидел ровно такую — 0.008372 у живого
+  // шорта по INX. Сервер эту цену и не отдаёт (`exit_px` снят), а
+  // страница её выдумывала.
+  if (t.state !== "\u0437\u0430\u043a\u0440\u044b\u0442\u0430")
+    return null;
   return (t.entry_px && t.got_bp != null)
     ? t.entry_px * (1 + t.got_bp / 10000) : null;
+}
+// Частично разгруженная позиция: часть лотов закрыта, часть жива.
+// Реализованное принадлежит закрытой части, и печатать его без
+// пометки — то же, что назвать открытую сделку закрытой.
+function mdlPart(t) {
+  return t.state !== "\u0437\u0430\u043a\u0440\u044b\u0442\u0430"
+    && t.got_bp != null;
 }
 function res(m) {
   return m.pnl_bp == null ? `<span style="color:var(--muted)">—</span>`
@@ -4189,12 +4204,23 @@ function mrows() {
         const ex = mdlExit(t);
         const cls = t.net_bp == null ? ""
           : (t.net_bp > 0 ? "buy" : "sell");
+        // Частично разгруженная позиция: закрытые лоты дали факт,
+        // живые — отметку. Обе величины показываются РЯДОМ и никогда
+        // не складываются (правило `summary`), и обе подписаны: без
+        // подписи реализованное на одном лоте из двух читается как
+        // исход всей сделки — владелец увидел ровно это.
+        const part = mdlPart(t);
+        const ttl = part ? `${t.lots_closed || 1} of ${t.lots || 2}`
+          + " lots closed — realised on that part only" : "";
+        const live = t.unreal_net_bp == null ? ""
+          : `<span style="color:var(--muted)">${
+              pct(t.unreal_net_bp)} live</span>`;
         // Открытая сделка несёт нереализованное — иначе колонка «net»
         // у неё пуста, и живая позиция выглядит как потерянная.
-        const net = t.net_bp != null ? pct(t.net_bp)
-          : t.unreal_net_bp != null
-            ? `<span style="color:var(--muted)">${
-                pct(t.unreal_net_bp)} live</span>` : "—";
+        const net = t.net_bp == null ? (live || "—")
+          : part ? `${pct(t.net_bp)}<span style="color:var(--muted)">
+              part</span>${live ? " · " + live : ""}`
+          : pct(t.net_bp);
         const here = t.hour === MDL.hour;
         const tip = [t.train_seq != null ? "training #"
                        + t.train_seq : null,
@@ -4224,9 +4250,12 @@ function mrows() {
         <td class="mono">${ex == null ? "—" : +ex.toPrecision(10)}</td>
         <td class="mono" style="color:var(--muted)">${
           pct(t.expected_bp)}</td>
-        <td class="mono">${pct(t.got_bp)}</td>
-        <td class="mono ${cls}">${net}</td>
-        <td class="mono ${cls}">${t.pnl == null ? "—"
+        <td class="mono"${part ? ` title="${ttl}"` : ""}>${
+          pct(t.got_bp)}${part
+          ? `<span style="color:var(--muted)"> part</span>` : ""}</td>
+        <td class="mono ${cls}"${part ? ` title="${ttl}"` : ""}>${net}</td>
+        <td class="mono ${cls}"${part ? ` title="${ttl}"` : ""}>${
+          t.pnl == null ? "—"
           : (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
         <td style="color:var(--muted)">${disp(t.state)}${
           t.exit_reason ? " · " + disp(t.exit_reason) : ""} ${
