@@ -239,13 +239,17 @@ def summarise(rows):
             continue
         exc = np.array([e["excess"] for e in sub], dtype=np.float64)
         ok = np.isfinite(exc)
+        # `None` НЕ приводится к нулю: у группы «нечем проверять»
+        # падения по сделкам не существует, а «+0.00 %» в таблице
+        # читается как «цена не двигалась» — то есть как измерение.
+        # Тот же молчаливый ноль, что ловится в этом проекте с A2.
+        mf = med([e["mid_fall"] for e in sub])
+        tf = med([e["trade_fall"] for e in sub])
         rec = {
             "events": len(sub),
             "measured": int(ok.sum()),
-            "mid_fall_pct": round((med([e["mid_fall"] for e in sub]) or 0)
-                                  * 100, 2),
-            "trade_fall_pct": round((med([e["trade_fall"] for e in sub])
-                                     or 0) * 100, 2),
+            "mid_fall_pct": None if mf is None else round(mf * 100, 2),
+            "trade_fall_pct": None if tf is None else round(tf * 100, 2),
             "trades_median": med([e["n_trades"] for e in sub]),
             "spread_in_bp": round(med([e["spread_in"] for e in sub]) or 0, 1),
             "spread_out_bp": round(med([e["spread_out"] for e in sub]) or 0,
@@ -292,12 +296,14 @@ def report(art, path):
         if not r.get("events"):
             L.append(f"| {g} | 0 | — | — | — | — | — | — |")
             continue
-        exc = "—" if r["excess_bp"] is None else f"{r['excess_bp']:+.1f}"
-        pos = "—" if r["share_pos"] is None else f"{r['share_pos']}"
+        dash = lambda v, f: "—" if v is None else format(v, f)
         L.append(
-            f"| {g} | {r['events']} | {r['episodes']} | {exc} | {pos} | "
-            f"{r['mid_fall_pct']:+.2f} % | {r['trade_fall_pct']:+.2f} % | "
-            f"{r['trades_median']:.0f} |")
+            f"| {g} | {r['events']} | {r['episodes']} | "
+            f"{dash(r['excess_bp'], '+.1f')} | "
+            f"{dash(r['share_pos'], '')} | "
+            f"{dash(r['mid_fall_pct'], '+.2f')} % | "
+            f"{dash(r['trade_fall_pct'], '+.2f')} % | "
+            f"{dash(r['trades_median'], '.0f')} |")
     L.append("")
     L.append("## 2. Спред: чем придётся платить\n")
     L.append("Вход платит половину спреда, выход вторую. Это ещё не "
@@ -311,6 +317,8 @@ def report(art, path):
             L.append(f"| {g} | — | — | — | — |")
             continue
         ring = COMMISSION_BP + (r["spread_in_bp"] + r["spread_out_bp"]) / 2
+        # Круг со спредом печатается рядом с превышением намеренно:
+        # именно их отношение решает, а не величина сама по себе.
         L.append(f"| {g} | {r['spread_in_bp']:.1f} б.п. | "
                  f"{r['spread_out_bp']:.1f} б.п. | "
                  f"{r['spread_ratio']:.2f}× | {ring:.1f} б.п. |")

@@ -204,6 +204,30 @@ def test_no_evidence_is_not_a_refutation():
           "закрыто" in T.reading(g2), T.reading(g2))
 
 
+def test_missing_median_is_not_printed_as_zero():
+    """У группы без сделок падения по сделкам НЕ СУЩЕСТВУЕТ.
+
+    «+0.00 %» в таблице читается как «цена не двигалась», то есть как
+    измерение. Молчаливый ноль на месте пропуска — сквозная болезнь
+    проекта, и в собственном отчёте он тоже недопустим.
+    """
+    rows = [{"excess": float("nan"), "own": 0.0, "bg": 0.0, "width": 100,
+             "mid_fall": -0.031, "trade_fall": float("nan"), "n_trades": 0,
+             "spread_in": 5.0, "spread_out": 5.0, "spread_usual": 4.0,
+             "t": 1786000000.0}]
+    g = T.summarise(rows)["нечем проверять"]
+    check("падение по сделкам не подменяется нулём",
+          g["trade_fall_pct"] is None, f"{g['trade_fall_pct']}")
+    import tempfile as _tf
+    p = os.path.join(_tf.mkdtemp(), "r.md")
+    T.report({"run_at": "x", "days": 1, "events": 1, "mismatch": 0,
+              "groups": T.summarise(rows), "reading": "—"}, p)
+    txt = open(p, encoding="utf-8").read()
+    check("в таблице стоит прочерк, а не ноль",
+          "| — % |" in txt, [l for l in txt.splitlines()
+                             if "нечем проверять" in l])
+
+
 def test_reading_is_written_from_numbers():
     """Вывод собирается из чисел, а не из надежды."""
     g = {"подтверждено лентой": {"events": 10, "excess_bp": -2.0,
@@ -227,6 +251,7 @@ def main():
     print("группы")
     test_no_trades_is_a_third_group()
     test_no_evidence_is_not_a_refutation()
+    test_missing_median_is_not_printed_as_zero()
     test_reading_is_written_from_numbers()
     print("сквозные сценарии")
     test_real_move_is_confirmed()
