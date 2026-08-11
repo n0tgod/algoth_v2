@@ -3789,6 +3789,100 @@ def test_repair_returns_the_model_and_leaves_the_book():
         shutil.rmtree(td, ignore_errors=True)
 
 
+def test_adopting_the_same_book_keeps_its_history():
+    """Книга, которой главная СТАЛА, уже существовала — её и продолжаем.
+
+    Вопрос владельца: зачем 4 ч начинать с нуля, если пара в σ и была
+    четырёхчасовой. Перенос законен ровно при одном условии — тот же
+    порядок сечения; запись, явно упорядоченная иначе, обязана перенос
+    остановить.
+    """
+    import json as _j
+    import shutil
+    import tempfile
+    import adopt_book as AB
+    td = tempfile.mkdtemp()
+    try:
+        src = os.path.join(td, "model_z")
+        dst = os.path.join(td, "model")
+        arch = os.path.join(td, "model.rank-raw")
+        for p in (src, dst, arch):
+            os.makedirs(p)
+        with open(os.path.join(src, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            # Записи ДО появления поля порядка: их и надо пометить.
+            f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-09-10",
+                              "train_seq": 100, "long": [], "short": []})
+                    + "\n")
+            f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-11-18",
+                              "rank_want": "fwd_4h_z", "train_seq": 124,
+                              "long": [], "short": []}) + "\n")
+        with open(os.path.join(src, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-09-10",
+                              "rows": []}) + "\n")
+        # Живая книга: два часа, уже своим порядком. Один час общий —
+        # дубль обязан достаться цели, иначе выйдут две позиции на час.
+        with open(os.path.join(dst, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-11-18",
+                              "rank_want": "fwd_4h_z", "train_seq": 2,
+                              "long": ["живой"], "short": []}) + "\n")
+            f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-11-20",
+                              "rank_want": "fwd_4h_z", "train_seq": 2,
+                              "long": [], "short": []}) + "\n")
+        _j.dump({"train_seq": 2}, open(os.path.join(dst, "manifest.json"),
+                                       "w", encoding="utf-8"))
+        _j.dump({"train_seq": 124}, open(os.path.join(arch, "manifest.json"),
+                                         "w", encoding="utf-8"))
+        rc = AB.main(["--from", src, "--into", dst, "--rank", "fwd_4h_z",
+                      "--seq-from", arch])
+        check("перенос отработал", rc == 0, f"код {rc}")
+        rows = AB.read_jsonl(os.path.join(dst, "picks.jsonl"))
+        check("история переехала, дубль не задвоился",
+              len(rows) == 3, str([r.get("hour") for r in rows]))
+        check("хронология восстановлена",
+              [r["hour"] for r in rows] == sorted(r["hour"] for r in rows),
+              str([r.get("hour") for r in rows]))
+        keep = [r for r in rows if r["hour"] == "2026-08-11-18"]
+        check("общий час остался за живой книгой",
+              len(keep) == 1 and keep[0]["long"] == ["живой"], str(keep))
+        old = [r for r in rows if r["hour"] == "2026-08-09-10"]
+        check("старой записи проставлен порядок",
+              old and old[0].get("rank_want") == "fwd_4h_z"
+              and old[0].get("train_seq") == 100, str(old))
+        check("разбор переехал тоже",
+              len(AB.read_jsonl(os.path.join(dst, "review.jsonl"))) == 1,
+              "разбор потерян")
+        man = _j.load(open(os.path.join(dst, "manifest.json"),
+                           encoding="utf-8"))
+        check("нумерация обучений продолжена, а не начата заново",
+              man.get("train_seq") == 124, str(man))
+        check("источник помечен перенесённым",
+              os.path.exists(os.path.join(src, "adopted_into.txt")), src)
+        # Повтор ничего не добавляет: все записи уже на месте.
+        AB.main(["--from", src, "--into", dst, "--rank", "fwd_4h_z"])
+        check("повтор переноса безвреден",
+              len(AB.read_jsonl(os.path.join(dst, "picks.jsonl"))) == 3,
+              "записи задвоились")
+        # Книга ДРУГОГО порядка переносу не подлежит — иначе в одной
+        # кривой окажутся два правила, ровно то, от чего защищает архив.
+        other = os.path.join(td, "model_other")
+        os.makedirs(other)
+        with open(os.path.join(other, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-01-01",
+                              "rank_want": None}) + "\n")
+        rc2 = AB.main(["--from", other, "--into", dst,
+                       "--rank", "fwd_4h_z"])
+        check("чужой порядок останавливает перенос", rc2 == 2, f"код {rc2}")
+        check("цель от отказа не пострадала",
+              len(AB.read_jsonl(os.path.join(dst, "picks.jsonl"))) == 3,
+              "книга изменена при отказе")
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
+
+
 def test_books_order_by_their_own_sigma():
     """Порядок сечения — свойство книги, и он один на весь цикл.
 
@@ -3834,6 +3928,7 @@ def main():
     test_books_order_by_their_own_sigma()
     test_book_archives_when_the_order_changes()
     test_repair_returns_the_model_and_leaves_the_book()
+    test_adopting_the_same_book_keeps_its_history()
     print("цикл переобучения")
     test_one_name_one_position()
     test_merge_adds_shows_one_position()
