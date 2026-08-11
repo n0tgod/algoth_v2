@@ -3672,6 +3672,18 @@ def test_book_archives_when_the_order_changes():
             open(os.path.join(d2, "manifest.json"), "w", encoding="utf-8"))
     open(os.path.join(d2, "picks.jsonl"), "w", encoding="utf-8").write(
         _j.dumps({"arm": "gbm"}) + "\n")
+    # Живой случай №2: цикл, заметивший смену первым, уже дописал
+    # выборы НОВОГО порядка. Проверка по последней записи видела бы
+    # своё же значение и молчала, оставив в книге смесь.
+    d3 = os.path.join(td, "model3")
+    os.makedirs(d3)
+    with open(os.path.join(d3, "picks.jsonl"), "w", encoding="utf-8") as f:
+        f.write(_j.dumps({"arm": "gbm"}) + "\n")                  # старый
+        f.write(_j.dumps({"arm": "gbm", "rank_want": "fwd_4h_z"}) + "\n")
+    check("смесь порядков в книге отставляется",
+          T.fresh_book_on_rank_change(d3, "fwd_4h_z") is not None,
+          "книга со смесью оставлена как есть")
+
     check("манифест с новым порядком проверку не обманывает",
           T.fresh_book_on_rank_change(d2, "fwd_4h_z") is not None,
           "книга не отставлена")

@@ -1249,17 +1249,29 @@ def fresh_book_on_rank_change(mdir, want, log_=None):
     # Запись выбора несёт `rank_want` — чем книга упорядочивала сечение
     # НА САМОМ ДЕЛЕ. Подделать его нечем: его пишет тот же код, который
     # выбирает.
+    # Смотрится ВСЯ книга, а не последняя запись. Цикл, заметивший смену
+    # первым, уже успел записать выборы нового порядка — и проверка «что
+    # было в прошлый раз» видела бы своё же новое значение и не
+    # срабатывала никогда, оставив в книге СМЕСЬ: старые сделки одного
+    # порядка, новые другого. Отставлять надо ровно тогда, когда в
+    # истории есть запись, упорядоченная иначе.
     pf = os.path.join(mdir, "picks.jsonl")
+    was, mixed = None, False
     try:
-        last = None
         with open(pf, encoding="utf-8") as f:
             for line in f:
-                if line.strip():
-                    last = line
-        if last is None:
-            return None                # книга пуста — отставлять нечего
-        was = (json.loads(last) or {}).get("rank_want")
-    except (OSError, ValueError):
+                if not line.strip():
+                    continue
+                try:
+                    got = (json.loads(line) or {}).get("rank_want")
+                except ValueError:
+                    continue
+                if got != want:
+                    was, mixed = got, True
+                    break
+    except OSError:
+        return None
+    if not mixed:
         return None
     if was == want:
         return None
