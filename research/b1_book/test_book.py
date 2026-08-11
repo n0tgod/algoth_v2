@@ -3566,6 +3566,23 @@ def test_scanner_prefers_the_biggest_move_for_its_own_coin():
           got[0]["sym"] == "B", got[0]["sym"])
     check("лист без поля не роняет порядок",
           got[-1]["sym"] == "D", got[-1]["sym"])
+    # Приоритет обязан ехать В ЗАПИСЬ входа. Гейт ситуационной книги не
+    # менялся, поэтому версия правил не поднималась и старые сделки
+    # остались в книге — а по какой очереди раздавались слоты, без
+    # поля в записи через месяц сказать было бы нечем. Манифест на
+    # вопрос не отвечает: он переписывается каждый час.
+    sheet = {"scan_rank": "fwd_4h_z"}
+    for rs, want in (([{"sym": "A", "fwd_z": 0.4}], "fwd_4h_z"),
+                     ([{"sym": "A"}], None)):
+        used = (sheet.get("scan_rank")
+                if any(q.get("fwd_z") is not None for q in rs) else None)
+        check(f"приоритет записи при листе {'с σ' if want else 'без σ'}",
+              used == want, str(used))
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "collect.py"), encoding="utf-8").read()
+    check("запись входа несёт приоритет",
+          '"scan_rank": scan_rank' in src,
+          "поле не доехало до события входа")
 
 
 def test_switcher_says_how_the_book_is_ordered():

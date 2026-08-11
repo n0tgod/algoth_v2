@@ -1453,7 +1453,7 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         # новое обучение, и приписать сделке чужие веса значило бы
         # соврать в самом поле, ради которого оно заведено.
         for k in ("mae_m", "adverse_of", "favourable_of", "why",
-                  "setup", "train_seq"):
+                  "setup", "train_seq", "scan_rank"):
             if e.get(k) is not None:
                 row[k] = e[k]
         if e.get("odd") is not None:
@@ -2377,6 +2377,11 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                 json.dump({"hour": grid[j_last],
                            "written_at": round(time.time(), 1),
                            "train_seq": train_seq,
+                           # По какой очереди сканер раздаёт слоты:
+                           # гейт ситуационной книги не менялся, а
+                           # приоритет менялся, и без этого поля запись
+                           # о нём молчала бы.
+                           "scan_rank": rank_z(SIT_SIGNAL_H),
                            "min_edge_bp": SIT_MIN_EDGE_BP,
                            "min_rr": SIT_MIN_RR,
                            "min_disc_bp": SIT_MIN_DISC_BP,
@@ -2412,6 +2417,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                     {"hour": grid[j_last],
                      "written_at": round(time.time(), 1),
                      "train_seq": train_seq,
+                     "scan_rank": rank_z(SIT_SIGNAL_H),
                      "min_edge_bp": SIT_MIN_EDGE_BP,
                      "min_rr": SIT_MIN_RR,
                      "min_disc_bp": SIT_MIN_DISC_BP,
