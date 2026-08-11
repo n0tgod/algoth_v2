@@ -3615,6 +3615,12 @@ function mdlLegs(t) {
     legs.push({kind: "exit", at: e.at, px: e.px, size: e.size,
                net_bp: e.net_bp, pnl: e.pnl, reason: e.reason});
   legs.sort((a, b) => (a.at || 0) - (b.at || 0));
+  // Лот нулевого размера — не дефект показа: касса была занята, и
+  // выбор записан без денег (на живой книге так выходит у каждого
+  // девятого лота). Голый «0.00 $» читается как поломка, поэтому
+  // причина стоит рядом словом.
+  for (const l of legs)
+    l.dry = l.size != null && Math.abs(l.size) < 0.005;
   return legs;
 }
 // Какие позиции развёрнуты — состояние ПОКАЗА, и оно обязано пережить
@@ -3636,8 +3642,11 @@ function mdlLegRows(key, legs) {
       <td class="mono" style="color:var(--muted)">${stamp(l.at)}</td>
       <td style="color:var(--muted)">${l.kind === "exit" ? "unload"
         : l.kind === "add" ? "add" : "entry"}</td>
-      <td class="mono">${l.size == null ? "—"
-        : (+l.size).toFixed(2)} $</td>
+      <td class="mono"${l.dry ? ` title="no free cash that hour: the
+        pick is recorded, but the money was already in earlier
+        positions — this leg carries no exposure"` : ""}>${
+        l.size == null ? "—" : (+l.size).toFixed(2)} $${l.dry
+        ? `<span style="color:var(--muted)"> no cash</span>` : ""}</td>
       <td class="mono">${l.px == null ? "—" : +(+l.px).toPrecision(10)}</td>
       ${money}</tr>`;
   }).join("");
