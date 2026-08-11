@@ -1960,14 +1960,19 @@ class Collector:
     # появилась в трёх из них: страница сделок молча падала на главную
     # книгу, то есть показывала ЧУЖИЕ сделки под именем выбранной —
     # отказ, неотличимый от «у книги пока пусто».
+    # Ключ `z` теперь указывает на пару горизонта 24 ч. Прежняя пара
+    # стояла на 4 ч, но решением владельца главная книга сама перешла
+    # на порядок в единицах σ — и пара стала бы её дубликатом. Каталог
+    # `model_z` не удалён: его сделки остаются накопленной записью
+    # торговли в σ на 4 ч, но живой книгой он больше не является.
     BOOK_DIRS = {"h4": "model", "h1": "model_h1", "h24": "model_h24",
                  "sit": "model_sit", "sit_obs": "model_sit_obs",
-                 "z": "model_z"}
+                 "z": "model_h24z"}
     # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
     # счётах по книгам её быть не должно.
     BOOKS = (("h4", "model"), ("h1", "model_h1"),
              ("h24", "model_h24"), ("sit", "model_sit"),
-             ("z", "model_z"))
+             ("z", "model_h24z"))
 
     # Дерево моделей: что за логику проверяет каждая ветка, простыми
     # словами и на обоих языках разом (правило справочника: разъехавшись,
@@ -2040,21 +2045,25 @@ class Collector:
                         "край — доживает ли прогноз до конца суток "
                         "удержания."},
         "z": {
-            "title": "per-σ book — were we just picking volatility",
-            "title_ru": "Книга per σ — не волатильность ли мы отбирали",
-            "plain": "Same section, same trade geometry; exactly one "
-                     "thing differs — the ordering: the forecast is "
-                     "divided by the coin’s own volatility. Tests "
-                     "whether the main book’s picking was volatility "
-                     "in disguise (measured: the picked coin ranges "
-                     "6× the market that same hour).",
-            "plain_ru": "То же сечение и та же геометрия сделки; "
-                        "отличается ровно одно — порядок: прогноз "
-                        "делится на собственную волатильность монеты. "
-                        "Проверяет, не был ли отбор главной книги "
-                        "переодетым отбором по волатильности (замер: "
-                        "выбранная монета вшестеро волатильнее рынка "
-                        "в тот же час)."},
+            "title": "24 h per σ — the control pair",
+            "title_ru": "24 ч per σ — контрольная пара",
+            "plain": "Books 4 h, 1 h and situational now order the "
+                     "section by the forecast divided by the coin’s own "
+                     "volatility. This pair keeps the comparison alive "
+                     "on the one horizon that was NOT switched: 24 h "
+                     "runs both orderings side by side, same section, "
+                     "same geometry, one thing different. Without it "
+                     "there would be nothing left to answer «does per σ "
+                     "help» with.",
+            "plain_ru": "Книги 4 ч, 1 ч и ситуационная теперь "
+                        "упорядочивают сечение прогнозом, делённым на "
+                        "собственную волатильность монеты. Эта пара "
+                        "держит сравнение живым на единственном "
+                        "горизонте, который НЕ переводили: у 24 ч "
+                        "идут оба порядка разом — то же сечение, та же "
+                        "геометрия, отличается ровно одно. Без неё "
+                        "отвечать на «помогает ли per σ» стало бы "
+                        "нечем."},
         "sit": {
             "title": "situational book — price pulls the trigger",
             "title_ru": "Ситуационная книга — курок у цены",
