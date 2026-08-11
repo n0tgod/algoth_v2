@@ -1,0 +1,54 @@
+{
+ "run_at": "2026-08-11 07:56 UTC",
+ "days": 12,
+ "events": 4493,
+ "mismatch": 0,
+ "thresholds": {
+  "min_trades": 10,
+  "confirm_share": 0.5,
+  "trade_tol_sec": 60
+ },
+ "groups": {
+  "подтверждено лентой": {
+   "events": 4435,
+   "measured": 4348,
+   "mid_fall_pct": -3.12,
+   "trade_fall_pct": -3.13,
+   "trades_median": 6231.0,
+   "spread_in_bp": 6.8,
+   "spread_out_bp": 6.1,
+   "spread_ratio": 1.21,
+   "excess_bp": 26.98,
+   "episodes": 660,
+   "share_pos": 0.57
+  },
+  "только котировка": {
+   "events": 29,
+   "measured": 29,
+   "mid_fall_pct": -3.53,
+   "trade_fall_pct": -1.37,
+   "trades_median": 18389.0,
+   "spread_in_bp": 4.5,
+   "spread_out_bp": 4.6,
+   "spread_ratio": 1.0,
+   "excess_bp": -7.27,
+   "episodes": 28,
+   "share_pos": 0.5
+  },
+  "нечем проверять": {
+   "events": 29,
+   "measured": 29,
+   "mid_fall_pct": -3.14,
+   "trade_fall_pct": 0,
+   "trades_median": 518.0,
+   "spread_in_bp": 21.8,
+   "spread_out_bp": 13.5,
+   "spread_ratio": 1.48,
+   "excess_bp": 79.04,
+   "episodes": 28,
+   "share_pos": 0.571
+  }
+ },
+ "took_min": 39.8,
+ "reading": "Превышение живёт в подтверждённой лентой группе: +27.0 б.п. на 660 эпизодах против -7.3 у «только котировки». Угроза котировочного артефакта не подтвердилась — событие есть движение цены."
+}
