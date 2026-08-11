@@ -1016,8 +1016,41 @@ def _read_jsonl(path):
 # ОДНА на все книги — вторая копия расчётного ядра запрещена правилами
 # проекта, и различия между книгами исчерпываются параметром горизонта.
 
-def book_dir(h):
-    """Каталог книги горизонта `h` часов рядом с главным каталогом."""
+# Решение владельца (2026-08-11): книги 4 ч, 1 ч и ситуационная
+# упорядочиваются в единицах СОБСТВЕННОЙ волатильности монеты; у 24 ч
+# прежний порядок остаётся, а рядом заводится второй вариант в σ —
+# контрольная пара, на которой вопрос «помогает ли per σ» и будет
+# решаться дальше. Парный замер на 134 общих часах преимущества по
+# доходности не показал (доля часов 0.515, интервал накрывает ноль);
+# решение принято по доводу о РИСКЕ: книга в σ берёт спокойные имена,
+# потолок на имя связывает её вчетверо реже, и без лучшего имени она
+# остаётся положительной.
+#
+# Карта одна на весь цикл: порядок сечения — свойство книги, и
+# перечислять его по месту вызова значило бы завести второй список,
+# который однажды разойдётся с первым (как уже было со списком книг в
+# четырёх местах).
+RANK_BY_HORIZON = {1: True, 4: True, 24: False}
+
+
+def rank_key_for(h, sigma=None):
+    """Ключ порядка сечения книги горизонта `h`.
+
+    `None` — порядок по сырому прогнозу. `sigma=True/False` перебивает
+    карту: у 24 ч живут ОБА варианта, и второй просит порядок в σ явно.
+    """
+    want = RANK_BY_HORIZON.get(h, False) if sigma is None else sigma
+    return rank_z(h) if want else None
+
+
+def book_dir(h, sigma=False):
+    """Каталог книги горизонта `h` часов рядом с главным каталогом.
+
+    У книги 24 ч вариант в σ живёт своим каталогом: две книги в одном
+    означали бы смешанную историю, по которой ничего не сравнить.
+    """
+    if sigma and not RANK_BY_HORIZON.get(h, False):
+        return MODEL_DIR + f"_h{h}z"
     return MODEL_DIR if h == TR.HOLD_H else MODEL_DIR + f"_h{h}"
 
 
@@ -1191,6 +1224,47 @@ SIT_SIGNAL_H = 4                  # горизонт целей, дающих с
 # отдельная квантильная модель (`STOP_TAU`), а гейт считает отношение
 # по ИСПОЛНЯЕМОЙ геометрии — по тому стопу, который реально стоит.
 SIT_RULES_VERSION = 8
+
+
+def fresh_book_on_rank_change(mdir, want, log_=None):
+    """Сменился ПОРЯДОК сечения — старая книга уходит в архив.
+
+    Книга, упорядоченная по сырому прогнозу, и книга, упорядоченная в
+    единицах σ, — разные книги, даже если каталог один. Дописать вторую
+    к первой значит получить кривую, описывающую то одну, то другую, и
+    сравнить их станет нечем. Тот же приём, что у смены правил
+    ситуационной книги: каталог не удаляется, а переименовывается —
+    история прогона это запись, а не мусор.
+
+    Прежний порядок читается из манифеста. Манифеста нет — книга новая,
+    отставлять нечего.
+    """
+    mp = os.path.join(mdir, "manifest.json")
+    try:
+        with open(mp, encoding="utf-8") as f:
+            was = (json.load(f) or {}).get("rank_target")
+    except (OSError, ValueError):
+        return None
+    if was == want:
+        return None
+    tag = (was or "raw").replace("/", "-")
+    dst = f"{mdir}.rank-{tag}"
+    n = 0
+    while os.path.exists(dst):
+        n += 1
+        dst = f"{mdir}.rank-{tag}-{n}"
+    try:
+        os.rename(mdir, dst)
+    except OSError as e:
+        if log_:
+            log_(f"порядок сечения сменился, но каталог не отставить: {e}")
+        return None
+    if log_:
+        log_(f"порядок сечения книги {os.path.basename(mdir)} сменился "
+             f"({was or 'сырой прогноз'} → {want or 'сырой прогноз'}) — "
+             f"старые сделки отставлены в {os.path.basename(dst)}, "
+             f"книга начинается заново")
+    return dst
 
 
 def fresh_sit_on_rules_change(mdir, log_=None):
@@ -1507,8 +1581,16 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
     if (arm, kf) not in models or (arm, km) not in models \
             or j_last is None:
         return None
+    # Порядок в единицах σ недоступен (цель не набрала строк) — книга НЕ
+    # молчит, а падает на сырой прогноз. Для боковой книги молчание было
+    # терпимо, для главной оно означает остановку торговли без единого
+    # признака отказа. Подмена при этом громкая: она идёт в журнал и в
+    # саму запись выбора.
+    rank_used = rank_key
     if rank_key is not None and (arm, rank_key) not in models:
-        return None
+        log_(f"[{arm}] порядок {rank_key} недоступен — сечение "
+             f"упорядочено сырым прогнозом")
+        rank_key = None
     xj = x[rows_m, j_last]
     fwd = models[(arm, kf)].predict(xj)
     # Порядок сечения задаёт ОДНА величина, и какая именно — свойство
@@ -1563,6 +1645,10 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
             d["odd"] = round(nv, 3)
         return d
     picks = {"arm": arm, "hour": grid[-1], "train_seq": train_seq,
+             # Чем упорядочено сечение НА САМОМ ДЕЛЕ: настройка книги
+             # говорит о намерении, а это поле — о факте. Без него кусок
+             # истории, упорядоченный подменой, ничем себя не выдаёт.
+             "rank_by": rank_key, "rank_want": rank_used,
              # Момент, когда решение стало известно: цикл просыпается
              # через минуты после закрытия часа, и это задержка входа,
              # а не ноль.
@@ -1962,6 +2048,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            # артефакт: отчёт держал их своими константами и разошёлся с
            # прогоном в тот же вечер (девять целей против четырёх, порог
            # 0.05 против 0.01).
+           "rank_target": rank_key_for(TR.HOLD_H),
            "targets_all": list(TARGETS),
            # Уровень стопа: чем он объявлен и что вышло на обучающих
            # часах. Правило заявки обязано лежать в артефакте рядом с
@@ -2007,6 +2094,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # ряды уходят из матриц сами. Сечение общее для всех книг.
     rows_m = (tradable_rows(np.flatnonzero(elig[:, j_last]), syms)
               if j_last is not None else [])
+    # Порядок сечения главной книги сменился — прежние сделки в архив.
+    fresh_book_on_rank_change(MODEL_DIR, rank_key_for(TR.HOLD_H), log_)
     for arm, _ in ARMS:
         # Последний ЗАПИСАННЫЙ разбор, а не последняя итерация цикла:
         # у свежего выбора форвард ещё не закрыт, разбор выходит пустым,
@@ -2015,7 +2104,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                             grid, book_root, log_)
         picks = make_pick(arm, TR.HOLD_H, models, x, mats, syms, rows_m,
                           j_last, grid, nov_lo, nov_hi, book_root, log_,
-                          names=names, train_seq=train_seq)
+                          names=names, train_seq=train_seq,
+                          rank_key=rank_key_for(TR.HOLD_H))
         if picks:
             write_pick(MODEL_DIR, picks)
 
@@ -2067,6 +2157,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             continue
         try:
             mdir = book_dir(h)
+            fresh_book_on_rank_change(mdir, rank_key_for(h), log_)
             os.makedirs(mdir, exist_ok=True)
             for arm, _ in ARMS:
                 review_arm(mdir, arm, h, targets, si, grid,
@@ -2074,7 +2165,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                 pk = make_pick(arm, h, models, x, mats, syms, rows_m,
                                j_last, grid, nov_lo, nov_hi,
                                book_root, log_, names=names,
-                               train_seq=train_seq)
+                               train_seq=train_seq,
+                               rank_key=rank_key_for(h))
                 if pk:
                     write_pick(mdir, pk)
             rebuild_accounts(mdir, h)
@@ -2082,6 +2174,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             # присутствие, версию и ГОРИЗОНТ — по нему же сборщик
             # строит сделки с верным сроком закрытия.
             kf = f"fwd_{h}h"
+            rk_h = rank_key_for(h)
             n_rows = (int((elig & np.isfinite(targets[kf])).sum())
                       if kf in targets else 0)
             sm = {"version": MODEL_VERSION, "horizon_h": h,
@@ -2095,6 +2188,10 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                   # книга неотличима от сломанной.
                   "target": kf, "target_rows": n_rows,
                   "target_need": MIN_TARGET_ROWS,
+                  # Чем упорядочено сечение — В АРТЕФАКТЕ, а не в имени
+                  # каталога: по нему же следующий цикл узнаёт смену
+                  # порядка и отставляет прежнюю книгу.
+                  "rank_target": rk_h,
                   "probe": PROBE, "pretest": PRETEST}
             smp = os.path.join(mdir, "manifest.json")
             with open(smp + ".tmp", "w", encoding="utf-8") as f:
@@ -2103,35 +2200,41 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         except Exception as e:                            # noqa: BLE001
             log_(f"книга {h} ч не сведена: {type(e).__name__}: {e}")
 
-    # Книга в единицах собственной σ: то же сечение, тот же горизонт и
-    # та же геометрия сделки, отличается РОВНО порядок сечения — по
-    # прогнозу, делённому на волатильность монеты. Заведена замером:
-    # ранжирование по сырому прогнозу выбирает имена, ходящие вшестеро
-    # больше медианы сечения. Вердикта по ней нет, это наблюдение —
-    # какое из двух ранжирований зарабатывает на одних и тех же часах.
+    # Контрольная пара горизонта 24 ч: тот же горизонт, то же сечение и
+    # та же геометрия, отличается РОВНО порядок — по прогнозу,
+    # делённому на волатильность монеты. Прежде такая пара стояла на
+    # 4 ч (`model_z`); с переводом главной книги на σ она стала бы
+    # дубликатом, и вопрос «помогает ли per σ» решать было бы нечем.
+    # Пара переехала на 24 ч решением владельца: сравнение сохраняется,
+    # но на том горизонте, который не переводится.
+    #
+    # Прежний каталог `model_z` больше не пишется. Его история — это и
+    # есть накопленная запись торговли в σ на 4 ч, и трогать её нельзя:
+    # с ней сравнивают то, что главная книга начнёт писать теперь.
     try:
-        zdir = MODEL_DIR + "_z"
+        zdir = book_dir(24, sigma=True)
         os.makedirs(zdir, exist_ok=True)
         for arm, _ in ARMS:
-            review_arm(zdir, arm, TR.HOLD_H, targets, si, grid,
+            review_arm(zdir, arm, 24, targets, si, grid,
                        book_root, log_)
-            pk = make_pick(arm, TR.HOLD_H, models, x, mats, syms,
+            pk = make_pick(arm, 24, models, x, mats, syms,
                            rows_m, j_last, grid, nov_lo, nov_hi,
-                           book_root, log_, names=names,
-                           train_seq=train_seq, rank_key=RANK_Z)
+                           book_root, log_, names=names, train_seq=train_seq,
+                           rank_key=rank_key_for(24, sigma=True))
             if pk:
                 write_pick(zdir, pk)
-        rebuild_accounts(zdir, TR.HOLD_H)
-        n_z = (int((elig & np.isfinite(targets[RANK_Z])).sum())
-               if RANK_Z in targets else 0)
-        zm = {"version": MODEL_VERSION, "horizon_h": TR.HOLD_H,
+        rebuild_accounts(zdir, 24)
+        zkey = rank_key_for(24, sigma=True)
+        n_z = (int((elig & np.isfinite(targets[zkey])).sum())
+               if zkey in targets else 0)
+        zm = {"version": MODEL_VERSION, "horizon_h": 24,
               "hedge": man["hedge"], "trained_at": man["trained_at"],
               "sections": n_sections, "symbols": len(syms),
               "canary_ic": man["canary_ic"],
               # Чем эта книга отличается от главной — В АРТЕФАКТЕ, а не
               # в имени каталога: через месяц по записи должно быть
               # видно, каким правилом её сечение упорядочено.
-              "rank_target": RANK_Z, "target": f"fwd_{TR.HOLD_H}h",
+              "rank_target": zkey, "target": "fwd_24h",
               "target_rows": n_z, "target_need": MIN_TARGET_ROWS,
               "probe": PROBE, "pretest": PRETEST}
         zp = os.path.join(zdir, "manifest.json")

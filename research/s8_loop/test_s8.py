@@ -3633,6 +3633,61 @@ def test_sigma_targets_exist_on_every_horizon():
           "цели одинаковы — делитель взят чужой")
 
 
+def test_book_archives_when_the_order_changes():
+    """Книга, упорядоченная иначе, — ДРУГАЯ книга.
+
+    Дописать сделки нового порядка к старым значит получить кривую,
+    описывающую то одну книгу, то другую; сравнить их после этого
+    нечем. Тот же приём, что у смены правил ситуационной книги.
+    """
+    import json as _j
+    import shutil
+    import tempfile
+    import train as T
+    td = tempfile.mkdtemp()
+    d = os.path.join(td, "model")
+    os.makedirs(d, exist_ok=True)
+    _j.dump({"rank_target": None}, open(os.path.join(d, "manifest.json"),
+                                        "w", encoding="utf-8"))
+    open(os.path.join(d, "picks.jsonl"), "w").write("{}\n")
+    got = T.fresh_book_on_rank_change(d, "fwd_4h_z")
+    check("смена порядка отставляет книгу",
+          got is not None and os.path.basename(got) == "model.rank-raw",
+          f"{got}")
+    check("прежний каталог освобождён", not os.path.exists(d), d)
+    check("сделки не потеряны, а переехали",
+          got and os.path.exists(os.path.join(got, "picks.jsonl")), got)
+    os.makedirs(d, exist_ok=True)
+    _j.dump({"rank_target": "fwd_4h_z"},
+            open(os.path.join(d, "manifest.json"), "w", encoding="utf-8"))
+    check("тот же порядок книгу не трогает",
+          T.fresh_book_on_rank_change(d, "fwd_4h_z") is None
+          and os.path.exists(d), "книга отставлена зря")
+    shutil.rmtree(td, ignore_errors=True)
+
+
+def test_books_order_by_their_own_sigma():
+    """Порядок сечения — свойство книги, и он один на весь цикл.
+
+    Решение владельца: 4 ч и 1 ч переходят в единицы σ, 24 ч остаётся
+    как есть, а рядом заводится второй вариант в σ. Часовую книгу
+    нельзя упорядочивать сигмой четырёхчасовой — у каждой свой ключ.
+    """
+    import train as T
+    check("4 ч в единицах σ", T.rank_key_for(4) == "fwd_4h_z",
+          f"{T.rank_key_for(4)}")
+    check("1 ч в единицах σ", T.rank_key_for(1) == "fwd_1h_z",
+          f"{T.rank_key_for(1)}")
+    check("24 ч остаётся на сыром прогнозе",
+          T.rank_key_for(24) is None, f"{T.rank_key_for(24)}")
+    check("у 24 ч есть вариант в σ",
+          T.rank_key_for(24, sigma=True) == "fwd_24h_z",
+          f"{T.rank_key_for(24, sigma=True)}")
+    check("вариант в σ живёт своим каталогом",
+          T.book_dir(24, sigma=True) != T.book_dir(24),
+          T.book_dir(24, sigma=True))
+
+
 def main():
     print("сводка часа")
     test_summary_censors_bands_by_reach()
@@ -3653,6 +3708,8 @@ def main():
     test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
     test_sigma_targets_exist_on_every_horizon()
+    test_books_order_by_their_own_sigma()
+    test_book_archives_when_the_order_changes()
     print("цикл переобучения")
     test_one_name_one_position()
     test_merge_adds_shows_one_position()
