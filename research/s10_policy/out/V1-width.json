@@ -1,0 +1,161 @@
+{
+ "run_at": "2026-08-11 12:00 UTC",
+ "legs": 8760,
+ "measured": 8760,
+ "sections": 292,
+ "age_h": 4,
+ "ranks": [
+  {
+   "rank": 1,
+   "n": 292,
+   "exp_bp": 164.7,
+   "med_bp": 90.1,
+   "win": 0.579
+  },
+  {
+   "rank": 2,
+   "n": 292,
+   "exp_bp": 65.8,
+   "med_bp": 50.5,
+   "win": 0.558
+  },
+  {
+   "rank": 3,
+   "n": 292,
+   "exp_bp": 56.8,
+   "med_bp": 33.9,
+   "win": 0.545
+  },
+  {
+   "rank": 4,
+   "n": 292,
+   "exp_bp": 104.5,
+   "med_bp": 51.7,
+   "win": 0.555
+  },
+  {
+   "rank": 5,
+   "n": 292,
+   "exp_bp": 38.4,
+   "med_bp": 18.4,
+   "win": 0.531
+  },
+  {
+   "rank": 6,
+   "n": 292,
+   "exp_bp": -6.0,
+   "med_bp": 11.2,
+   "win": 0.521
+  },
+  {
+   "rank": 8,
+   "n": 292,
+   "exp_bp": -29.2,
+   "med_bp": -13.6,
+   "win": 0.469
+  },
+  {
+   "rank": 10,
+   "n": 292,
+   "exp_bp": 9.0,
+   "med_bp": 29.1,
+   "win": 0.527
+  },
+  {
+   "rank": 15,
+   "n": 292,
+   "exp_bp": 16.5,
+   "med_bp": 15.0,
+   "win": 0.517
+  },
+  {
+   "rank": 20,
+   "n": 292,
+   "exp_bp": 0.2,
+   "med_bp": -4.0,
+   "win": 0.476
+  },
+  {
+   "rank": 30,
+   "n": 292,
+   "exp_bp": 9.6,
+   "med_bp": -12.0,
+   "win": 0.473
+  }
+ ],
+ "widths": [
+  {
+   "width": 1,
+   "n": 292,
+   "exp_bp": 164.7,
+   "med_bp": 90.1,
+   "win": 0.579,
+   "total_bp": 48089.1,
+   "syms": 72,
+   "top_sym": "TUTUSDT",
+   "top_bp": 55448.2,
+   "total_wo_top_bp": -7359.1
+  },
+  {
+   "width": 2,
+   "n": 584,
+   "exp_bp": 115.2,
+   "med_bp": 69.3,
+   "win": 0.568,
+   "total_bp": 67289.0,
+   "syms": 105,
+   "top_sym": "TUTUSDT",
+   "top_bp": 75732.9,
+   "total_wo_top_bp": -8443.9
+  },
+  {
+   "width": 3,
+   "n": 876,
+   "exp_bp": 95.7,
+   "med_bp": 57.2,
+   "win": 0.561,
+   "total_bp": 83871.1,
+   "syms": 146,
+   "top_sym": "TUTUSDT",
+   "top_bp": 94676.2,
+   "total_wo_top_bp": -10805.1
+  },
+  {
+   "width": 5,
+   "n": 1460,
+   "exp_bp": 86.0,
+   "med_bp": 45.6,
+   "win": 0.553,
+   "total_bp": 125616.9,
+   "syms": 197,
+   "top_sym": "TUTUSDT",
+   "top_bp": 97086.0,
+   "total_wo_top_bp": 28530.9
+  },
+  {
+   "width": 10,
+   "n": 2920,
+   "exp_bp": 40.7,
+   "med_bp": 26.9,
+   "win": 0.537,
+   "total_bp": 118943.6,
+   "syms": 302,
+   "top_sym": "TUTUSDT",
+   "top_bp": 89299.4,
+   "total_wo_top_bp": 29644.1
+  },
+  {
+   "width": 20,
+   "n": 5840,
+   "exp_bp": 12.4,
+   "med_bp": 6.8,
+   "win": 0.512,
+   "total_bp": 72571.6,
+   "syms": 413,
+   "top_sym": "TUTUSDT",
+   "top_bp": 79000.1,
+   "total_wo_top_bp": -6428.5
+  }
+ ],
+ "reading": "Профиль рваный: +164.7 на первом месте против +9.6 на 30-м при 6 убываниях из 10. Ранжирование не несёт информации дальше краёв — это находка о модели, а не о ширине."
+}
