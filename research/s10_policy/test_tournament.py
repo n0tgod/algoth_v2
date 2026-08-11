@@ -82,6 +82,41 @@ def test_legs():
     check("у шорта риск — верхний квантиль", lb["adv_q"] == 35.0,
           str(lb["adv_q"]))
 
+    # Порядок внутри часа — тот же, каким слот раздаёт живой сканер: по
+    # модулю прогноза в единицах σ. Мест шесть, и когда проходящих
+    # больше, алфавитный порядок описывал бы ДРУГУЮ книгу, чем та, к
+    # которой прикладывается вердикт.
+    zrows = [{"sym": "AUSDT", "fwd": 30.0, "fwd_z": 0.4, "mae": -30.0,
+              "mfe": 90.0, "px": 100.0},
+             {"sym": "BUSDT", "fwd": 25.0, "fwd_z": -2.7, "mae": -25.0,
+              "mfe": 70.0, "px": 50.0},
+             {"sym": "CUSDT", "fwd": 40.0, "fwd_z": 1.1, "mae": -40.0,
+              "mfe": 90.0, "px": 10.0}]
+    zrec = {"hour": "2026-08-05-10", "written_at": 1_786_000_000.0,
+            "arms": {"gbm": zrows}}
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "sheets.jsonl")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(json.dumps(zrec) + "\n")
+        zl = T.legs_from_sheets([p], log=lambda *a: None)
+    check("слот раздаётся по модулю прогноза в σ",
+          [g["sym"] for g in zl] == ["BUSDT", "CUSDT", "AUSDT"],
+          str([g["sym"] for g in zl]))
+    # Лист старого образца поля не несёт — порядок остаётся прежним, а
+    # не становится случайным: смесь листов обоих образцов законна.
+    orows = [dict(r) for r in zrows]
+    for r in orows:
+        r.pop("fwd_z")
+    orec = dict(zrec, arms={"gbm": orows})
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "sheets.jsonl")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(json.dumps(orec) + "\n")
+        ol = T.legs_from_sheets([p], log=lambda *a: None)
+    check("лист без поля сохраняет прежний порядок",
+          [g["sym"] for g in ol] == ["AUSDT", "BUSDT", "CUSDT"],
+          str([g["sym"] for g in ol]))
+
 
 def test_outcome():
     t0 = 1_786_000_000

@@ -1283,6 +1283,25 @@ class Collector:
             st["age_sec"] = None
         return st
 
+    @staticmethod
+    def journal_marker(text):
+        """Разобрать маркер журнала тени: (каталог книги, версия кассы).
+
+        Маркер пишет `run_bot.sh` строкой «<путь книги> cash=N».
+        Разбирать его basename-ом целиком — значит получить
+        «model_sit cash=4», не найти такой книги и молча увести панель
+        на главную: ровно это и случилось, когда в маркер добавили
+        версию правила кассы. Маркер прежнего образца (без версии)
+        читается как «версия неизвестна», а не как нулевая.
+        """
+        parts = str(text or "").strip().split()
+        base = os.path.basename(parts[0]) if parts else ""
+        cash = None
+        for p in parts[1:]:
+            if p.startswith("cash="):
+                cash = p.split("=", 1)[1]
+        return base, cash
+
     def bot_full(self):
         """Полные данные страницы ядра: статус, журнал, переоценка.
 
@@ -1305,15 +1324,40 @@ class Collector:
         # Книга тени — из маркера источника журнала (пишет run_bot.sh):
         # странице нужен адрес книги, чтобы открыть сделку на графике
         # именно той книги, которую ведёт ядро.
+        # Маркер несёт ДВА поля: каталог книги и версию правила кассы
+        # (`<путь> cash=N`). Брать от него basename целиком — значит
+        # получить «model_sit cash=4», не найти такой книги и молча
+        # увести панель на главную: ровно это и случилось, когда в
+        # маркер добавили версию.
         try:
             with open(os.path.join(jdir, "source.txt"),
                       encoding="utf-8") as f:
-                base = os.path.basename(f.read().strip())
+                base, cash_was = self.journal_marker(f.read())
         except OSError:
-            base = ""
-        st["book_hz"] = {"model_h1": "h1", "model_h24": "h24",
-                         "model_sit": "sit",
-                         "model_z": "z"}.get(base, "")
+            base, cash_was = "", None
+        # Ключ книги — обращением КАРТЫ, а не своим списком: третий
+        # список каталогов уже разошёлся с картой (он держал `model_z`
+        # там, где живая пара давно `model_h24z`), и панель уводила бы
+        # на график чужой книги.
+        st["book_hz"] = {v: k for k, v in self.BOOK_DIRS.items()
+                         if k != "h4"}.get(base, "")
+        # Правило кассы, которым писан журнал, против действующего.
+        # Журнал дописывается и хранит размеры, посчитанные правилом на
+        # момент записи, а Python пересчитывает всё заново — после
+        # правки правила сверка краснеет НАВСЕГДА и перестаёт быть
+        # сигналом. Архивирует журнал `run_bot.sh` при запуске; пока
+        # ядро не перезапущено, страница обязана сказать, что красное
+        # объясняется этим, а не расхождением реализаций.
+        try:
+            sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                            "s8_loop"))
+            import trades as TRV
+            now_v = str(TRV.CASH_RULES_VERSION)
+        except Exception:                                # noqa: BLE001
+            now_v = None
+        if now_v is not None and cash_was is not None \
+                and cash_was != now_v:
+            st["cash_stale"] = {"was": cash_was, "now": now_v}
         try:
             recs = SV.read_journal(jdir)
         except SystemExit as e:
@@ -2608,7 +2652,14 @@ class Collector:
         # перекоса нет, и вопрос закрыт замером, а не рассуждением.
         pairs = {(r["sym"], r["hour"]) for r in kept
                  if r.get("sym") and r.get("hour")}
-        rel, own_bp = [], []
+        #
+        # По книгам ОТДЕЛЬНО, и это не украшение: перекос лечится
+        # порядком сечения, а порядок теперь разный. Книги 4 ч, 1 ч и
+        # ситуационная упорядочены в единицах σ, книга 24 ч намеренно
+        # оставлена на сыром порядке — то есть страница показывает
+        # обе стороны замера рядом, а не смесь, в которой не видно,
+        # что чему принадлежит.
+        rel, own_bp, by_book = [], [], {}
         if pairs:
             px = TR.hour_rows(sd, pairs)
             for r in kept:
@@ -2619,13 +2670,22 @@ class Collector:
                 o = (row["hi"] - row["lo"]) / row["c"] * 1e4
                 own_bp.append(o)
                 rel.append(o / med)
+                b = by_book.setdefault(r["hz"], {"rel": [], "own": []})
+                b["rel"].append(o / med)
+                b["own"].append(o)
+
+        def _pick(rr, oo):
+            return {"n": len(rr), "rel_med": round(_median(rr), 2),
+                    "above": round(sum(1 for x in rr if x > 1.0)
+                                   / len(rr), 3),
+                    "own_med_bp": round(_median(oo), 1)}
+
         pick = None
         if rel:
-            pick = {"n": len(rel),
-                    "rel_med": round(_median(rel), 2),
-                    "above": round(sum(1 for x in rel if x > 1.0)
-                                   / len(rel), 3),
-                    "own_med_bp": round(_median(own_bp), 1)}
+            pick = _pick(rel, own_bp)
+            pick["books"] = {hz: _pick(v["rel"], v["own"])
+                             for hz, v in sorted(by_book.items())
+                             if v["rel"]}
 
         books = {}
         for hz, _name in self.BOOKS:

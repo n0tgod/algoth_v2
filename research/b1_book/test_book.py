@@ -440,6 +440,11 @@ def test_pages_run_headless():
                 # «делить нечего» — владелец увидел ровно это.
                 ("волатильность без ответа", web.VOLPAGE,
                  "?k=xxx&voldown=1"),
+                # Ядро с журналом прежнего правила кассы: сверка
+                # краснеет навсегда, и панель обязана назвать причину,
+                # а не показывать расхождения молча.
+                ("ядро с прежним правилом кассы", web.BOTPAGE,
+                 "?k=xxx&botcash=1"),
                 # Страница разбора сделки: простыми словами, почему
                 # вход здесь и как расставлены уровни. Ссылка ведёт на
                 # сделку руки nn — у неё в фикстуре why/setup/train_seq.
@@ -2909,6 +2914,32 @@ def test_volatility_splits_results_by_regime():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_journal_marker_is_parsed_not_basenamed():
+    """Маркер журнала тени несёт ДВА поля, и разбирать надо оба.
+
+    `run_bot.sh` пишет «<путь книги> cash=N». Разбор basename-ом
+    целиком давал «model_sit cash=4» — такой книги нет, и панель ядра
+    молча уводила на главную. Версия правила кассы нужна отдельно:
+    журнал, писанный прежним правилом, делает сверку вечно красной, и
+    красное, которое всегда красное, перестаёт быть сигналом.
+    """
+    import collect as C
+
+    got = C.Collector.journal_marker(
+        "/root/algoth_v2/research/s8_loop/out/model_sit cash=4")
+    check("каталог книги отделён от версии", got == ("model_sit", "4"),
+          str(got))
+    old = C.Collector.journal_marker("/x/y/model_sit")
+    check("маркер прежнего образца: версия неизвестна, а не ноль",
+          old == ("model_sit", None), str(old))
+    check("пустой маркер не роняет разбор",
+          C.Collector.journal_marker("") == ("", None),
+          str(C.Collector.journal_marker("")))
+    inv = {v: k for k, v in C.Collector.BOOK_DIRS.items() if k != "h4"}
+    check("каталог из маркера находится в карте книг",
+          inv.get(got[0]) == "sit", str(inv))
+
+
 def test_book_registry_is_one_list():
     """Книги объявлены один раз, и запрос каждой идёт в СВОЙ каталог.
 
@@ -3678,6 +3709,7 @@ def main():
     test_tournament_page_reads_artifact()
     test_tree_page_fits_the_phone()
     test_volatility_splits_results_by_regime()
+    test_journal_marker_is_parsed_not_basenamed()
     test_book_registry_is_one_list()
     test_glossary_describes_the_live_model()
     test_live_entries_reach_both_pages()

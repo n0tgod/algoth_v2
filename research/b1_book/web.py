@@ -2606,7 +2606,7 @@ details summary{cursor:pointer}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("back").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + r"""
+""" + BOOKJS + NAVJS + r"""
 navMount("/bot-page");
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
@@ -2714,8 +2714,11 @@ async function load() {
     return;
   }
   BOOK_HZ = d.book_hz || "";
+  // Имя книги — из общего списка страниц: своя развилка называла
+  // ситуационную книгу «situational», а остальные — голым ключом.
+  const bkName = (BOOK_LIST.find(x => x[0] === BOOK_HZ) || [])[1];
   document.getElementById("src").textContent = `arm ${d.arm}`
-    + (BOOK_HZ ? ` · ${BOOK_HZ === "sit" ? "situational" : BOOK_HZ}` : "");
+    + (BOOK_HZ ? ` · ${bkName || BOOK_HZ}` : "");
   const hb = document.getElementById("hb");
   hb.className = "pill" + (d.age_sec > 300 ? " hb-stale" : "");
   document.getElementById("topage").textContent =
@@ -2743,6 +2746,17 @@ async function load() {
              + (svAgeTxt ? ` <span class="k">(checked ${svAgeTxt})</span>`
                          : ""));
   if (d.kill) bad.push("KILL SWITCH ON — no new entries");
+  // Журнал писан ПРЕЖНИМ правилом кассы: он дописывается и хранит
+  // размеры, посчитанные тем правилом, а Python пересчитывает всё
+  // заново — сверка после такой правки краснеет навсегда и перестаёт
+  // быть сигналом. Это не расхождение реализаций, и панель обязана
+  // сказать это прямо, вместе с тем, чем оно лечится.
+  if (d.cash_stale)
+    bad.push(`CASH RULES CHANGED: journal written under rule v${
+      d.cash_stale.was}, engine now v${d.cash_stale.now} — the
+      mismatches above are the old rule, not a real disagreement.
+      Restart the core (<span class="mono">tools/run_bot.sh</span>):
+      it archives the journal and starts a clean one.`);
   document.getElementById("alarm").innerHTML = bad.length
     ? `<div class="card alarm">${bad.join("<br>")}</div>` : "";
   const cap = d.capital_usd || 1000;
@@ -4162,8 +4176,11 @@ function explainTrade(t) {
 function mrows() {
   const list = modelTrades().slice()
     .sort((a, b) => (b.opened_at || 0) - (a.opened_at || 0));
-  const bookName = MDL.hz === "sit" ? "situational"
-    : MDL.hz ? MDL.hz.replace("h", "") + " h book" : "4 h book";
+  // Имя книги — из общего списка, а не из ключа строковой хирургией:
+  // у ключа `z` она давала «z h book», а у главной книги теряла
+  // порядок сечения, которым та торгует.
+  const bookName = (BOOK_LIST.find(x => x[0] === (MDL.hz || "h4"))
+                    || [null, MDL.hz || "h4"])[1];
   document.getElementById("cap4").textContent =
     `${list.length} on ${sym.replace("USDT", "")} · ${
       MDL.arm === "nn" ? "ai (neural)" : "ml (trees)"} · ${bookName}`;
@@ -5020,10 +5037,11 @@ a{color:var(--accent)}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + r"""
+""" + BOOKJS + NAVJS + r"""
 navMount("/vol-page");
-const BOOK_EN = {h4:"4 h book", h1:"1 h book", h24:"24 h book",
-                 sit:"situational", z:"ranked per σ"};
+// Имена книг — из общего списка (третья копия этой таблицы уже
+// разошлась с ним после перевода на per σ).
+const BOOK_EN = Object.fromEntries(BOOK_LIST);
 const ARM_EN = {all:"both arms", gbm:"trees (ML)", nn:"neural (AI)"};
 const BUCKETS = ["quiet", "normal", "loud"];
 
@@ -5114,17 +5132,28 @@ function pickBlock(d){
       <td class="mono ${hot ? "bad" : ""}">${p.rel_med}&times;</td>
       <td class="mono ${p.above > 0.6 ? "bad" : ""}">${
         Math.round(p.above*100)} %</td>
-      <td class="mono">${p.own_med_bp} bp</td></tr></table></div>
-    <div class="k">${hot
-      ? `<b>The picked coin moves ${p.rel_med}&times; the market
-         median.</b> That is the fingerprint worth knowing about: the
-         model's features are normalised by each coin's own volatility,
-         but its targets are raw basis points — so ranking the section
-         by predicted move ranks partly by volatility itself.`
+      <td class="mono">${p.own_med_bp} bp</td></tr>
+    ${Object.entries(p.books || {}).map(([hz, b]) =>
+      `<tr><td class="dim">${BOOK_EN[hz] || hz} <span class="mono">${
+         b.n}</span></td>
+       <td class="mono ${b.rel_med >= 1.15 ? "bad" : ""}">${
+         b.rel_med}&times;</td>
+       <td class="mono ${b.above > 0.6 ? "bad" : ""}">${
+         Math.round(b.above*100)} %</td>
+       <td class="mono">${b.own_med_bp} bp</td></tr>`).join("")}
+    </table></div>
+    <div class="k">The measured cause was the units: features are
+      normalised by each coin's own volatility, targets were raw basis
+      points, so ranking by predicted move ranked partly by volatility
+      itself. Books 4 h, 1 h and situational now rank <b>per σ</b>; the
+      24 h book is deliberately left on the raw order as the control
+      half of its pair — so the rows above are the two sides of that
+      measurement, not a blend. ${hot
+      ? `The overall line is still ${p.rel_med}&times; the market
+         median: read it per book, not as one number.`
       : `Around one means the selection is not a volatility ranking in
-         disguise: picked coins move about as much as the market does
-         that hour.`} This is a fingerprint, not a proof of cause —
-      it says what the book holds, not why the model chose it.</div>
+         disguise.`} A fingerprint, not a proof of cause — it says what
+      the book holds, not why the model chose it.</div>
     </div>`;
 }
 

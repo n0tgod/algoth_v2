@@ -125,7 +125,16 @@ def legs_from_sheets(paths, log=print):
                         if lg is not None:
                             legs.append(lg)
         log(f"{os.path.basename(path)}: ног {len(legs) - n0}")
-    legs.sort(key=lambda g: (g["at"], g["arm"], g["sym"]))
+    # Порядок внутри часа — тот же, каким слот раздаёт живой сканер:
+    # по модулю прогноза в единицах σ. Мест шесть, и когда проходящих
+    # больше, реплей брал бы имена ПО АЛФАВИТУ, то есть описывал бы
+    # другую книгу, чем та, к которой прикладывается вердикт. Порядок
+    # сечения — правило книги, а не ось поиска, поэтому он один на все
+    # 72 варианта. Лист старого образца поля не несёт — тогда порядок
+    # прежний, и это видно в отчёте числом.
+    legs.sort(key=lambda g: (g["at"], g["arm"],
+                             -abs(g["fz"]) if g["fz"] is not None else 0,
+                             g["sym"]))
     for i, lg in enumerate(legs):
         lg["id"] = i
     return legs
@@ -150,8 +159,10 @@ def _leg(row, arm, hour, at):
     if side == "short" and not (fav < 0 and adv_q > 0):
         return None
     risk = abs(adv_q)
+    fz = row.get("fwd_z")
     return {"arm": arm or "gbm", "sym": row.get("sym"), "hour": hour,
             "at": at, "side": side, "fwd": float(fwd), "px": float(px),
+            "fz": None if fz is None else float(fz),
             "adv_q": adv_q, "adv_m": adv_m, "fav": fav,
             "rr": abs(fav) / risk if risk else None}
 
@@ -543,6 +554,11 @@ def report(legs, cells, wf, path):
         "# Турнир политик исполнения (спека 10)", "",
         f"- ног в журнале листов: **{len(legs)}**; слоты {SLOTS}, одна "
         f"позиция на имя, круг {TR.ROUND_COST_BP} б.п. на ногу",
+        f"- слот раздаётся в порядке живого сканера (по модулю прогноза "
+        f"в единицах σ); ног с этим полем в журнале "
+        f"**{sum(1 for g in legs if g.get('fz') is not None)}** из "
+        f"{len(legs)} — у остальных лист старого образца и порядок "
+        f"прежний",
         "- оценка ОПТИМИСТИЧНА: веса видели эти часы; скидка и "
         "взведение сканера не реплеятся. Верхняя граница, не бэктест",
         "- таблица вариантов — ДИАГНОСТИКА. Выбрать лучшую ячейку и "
