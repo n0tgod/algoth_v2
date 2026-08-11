@@ -1,0 +1,43 @@
+{
+ "run_at": "2026-08-11 11:12 UTC",
+ "days": 12,
+ "events": 4481,
+ "size_usd": 5000.0,
+ "wait_sec": 60,
+ "maker_bp": 2.0,
+ "taker_bp": 5.5,
+ "summary": {
+  "тейкер": {
+   "events": 4481,
+   "filled": 4481,
+   "fill_rate": 1.0,
+   "excess_net_bp": 7.36,
+   "episodes": 670,
+   "share_pos": 0.513,
+   "wait_median": 0.0,
+   "excess_mid_bp": 25.88
+  },
+  "мейкер на биде": {
+   "events": 4481,
+   "filled": 1878,
+   "fill_rate": 0.419,
+   "excess_net_bp": -33.95,
+   "episodes": 778,
+   "share_pos": 0.446,
+   "wait_median": 16.2,
+   "excess_mid_bp": -28.78
+  },
+  "мейкер на середине": {
+   "events": 4481,
+   "filled": 1951,
+   "fill_rate": 0.435,
+   "excess_net_bp": -38.0,
+   "episodes": 788,
+   "share_pos": 0.444,
+   "wait_median": 15.7,
+   "excess_mid_bp": -26.08
+  },
+  "_all_mid_bp": 25.88
+ },
+ "took_min": 47.1
+}
