@@ -21,7 +21,14 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 # удаления. Машина, где артефактов этапа нет на диске, иначе стирает их
 # из репозитория, а следующий `git pull` стирает их и на сервере. В
 # проекте это случалось дважды: с артефактами F1 и с манифестом L2.
-git add --ignore-removal research/*/out docs 2>/dev/null || true
+# Отказ `git add` НЕ глотается. Раньше он уходил в /dev/null, и
+# «нечего публиковать» звучало одинаково для трёх разных случаев:
+# файлов нет, файлы гасит .gitignore, add сломался на пути. Отчёт
+# прогона при этом лежал на диске, а в ветке было пусто.
+if ! add_err="$(git add --ignore-removal research/*/out docs 2>&1)"; then
+    echo "git add отказал: $add_err"
+fi
+[ -n "${add_err:-}" ] && echo "git add сказал: $add_err"
 # Журналы прогонов не публикуются никогда, даже если попали под учёт
 # раньше: они меняются каждым запуском, и на сервере это оборачивается
 # «cannot pull with rebase: You have unstaged changes» — сведение веток
@@ -88,7 +95,13 @@ finish_rebase() {
 # зонда ленты остался лежать на сервере, а я читал пустоту.
 ahead="$(git rev-list --count "origin/$branch..HEAD" 2>/dev/null || echo 0)"
 if git diff --cached --quiet && [ "$ahead" = "0" ]; then
-  echo "нечего публиковать — артефакты не изменились"
+  echo "нечего публиковать: в индекс не попало ни одного файла."
+  echo "что git видит в артефактах (?? не отслеживается, !! погашен"
+  echo ".gitignore, пусто — файла нет вовсе):"
+  git status --porcelain --ignored -- research/*/out docs 2>/dev/null \
+      | head -30 || true
+  echo "нет строк выше — прогон писал не в этот каталог;"
+  echo "строки с !! — правило .gitignore этапа гасит отчёт."
   exit 0
 fi
 if git diff --cached --quiet; then
