@@ -161,6 +161,23 @@ def test_report_names_the_fence():
     check("названа цена оси в испытаниях", "72 → 216" in txt, "молчит")
 
 
+def test_step_separates_rich_head_from_flat_tail():
+    """Ступень: верхние места богаты, дальше ноль.
+
+    Проверка на монотонность такой профиль называет рваным и величину
+    ступени не показывает вовсе — а именно она и есть ответ на вопрос о
+    ширине.
+    """
+    rows = rows_with({1: 160, 2: 66, 3: 57, 4: 104, 5: 38,
+                      6: -6, 8: -29, 10: 9, 15: 16, 20: 0, 30: 10})
+    got = W.step(W.by_rank(rows))
+    check("голова богата", got["top_mean_bp"] > 50, f"{got}")
+    check("хвост около нуля", abs(got["tail_mean_bp"]) < 5, f"{got}")
+    flat = W.step(W.by_rank(rows_with({r: 12 for r in W.RANKS})))
+    check("на плоском ступени нет",
+          abs(flat["top_mean_bp"] - flat["tail_mean_bp"]) < 1, f"{flat}")
+
+
 def test_run_publishes_itself():
     """Прогон обязан публиковать отчёт сам.
 
@@ -215,6 +232,7 @@ def main():
     print("деньги и оговорки")
     test_width_reports_concentration()
     test_net_matches_the_tournament_formula()
+    test_step_separates_rich_head_from_flat_tail()
     test_report_names_the_fence()
     test_run_publishes_itself()
     print()

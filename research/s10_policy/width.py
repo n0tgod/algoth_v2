@@ -167,6 +167,28 @@ def by_width(rows):
     return res
 
 
+def step(ranks, edge=5):
+    """Средние по верхним местам и по хвосту — ДОБАВЛЕНО после прогона.
+
+    Первый прогон показал: ожидание не убывает ровно, а стоит
+    СТУПЕНЬКОЙ — верхние места богаты, дальше ноль. Проверка на
+    монотонность назвала это «рваным профилем», и по существу она права
+    («информации дальше краёв нет»), но величину ступени не показывала
+    вовсе.
+
+    Это добавленное ИЗМЕРЕНИЕ, а не подкрученный вердикт: фраза вывода
+    и её порог остались прежними. Правило проекта запрещает менять
+    пороги после результата — добавлять числа, которых не хватало, оно
+    не запрещает.
+    """
+    got = [r for r in ranks if r.get("n", 0) >= 30]
+    top = [r["exp_bp"] for r in got if r["rank"] <= edge]
+    tail = [r["exp_bp"] for r in got if r["rank"] > edge]
+    return {"edge": edge,
+            "top_mean_bp": round(sum(top) / len(top), 1) if top else None,
+            "tail_mean_bp": round(sum(tail) / len(tail), 2) if tail else None}
+
+
 def reading(ranks, widths):
     """Вывод пишется из чисел: убывает ли ожидание с местом."""
     got = [r for r in ranks if r.get("n", 0) >= 30]
@@ -215,6 +237,14 @@ def report(art, path):
             continue
         L.append(f"| {r['rank']} | {r['n']} | {r['exp_bp']:+.1f} б.п. | "
                  f"{r['med_bp']:+.1f} | {r['win']:.3f} |")
+    st_ = art.get("step") or {}
+    if st_.get("top_mean_bp") is not None:
+        L.append("")
+        L.append(f"Ступень: места 1–{st_['edge']} дают в среднем "
+                 f"**{st_['top_mean_bp']:+.1f} б.п.** на ногу, места "
+                 f"дальше — **{st_['tail_mean_bp']:+.2f}**. Информация "
+                 f"живёт у краёв сечения и обрывается, а не сходит на "
+                 f"нет плавно.")
     L.append("")
     L.append("## 2. По ширине книги (места 1..N)\n")
     L.append("| ширина | ног | имён | ожидание | медиана | побед | итог | "
@@ -282,6 +312,7 @@ def main():
         "measured": len(rows),
         "sections": len({(r["hour"], r["arm"], r["side"]) for r in rows}),
         "age_h": AGE_H, "ranks": ranks, "widths": widths,
+        "step": step(ranks),
     }
     art["reading"] = reading(ranks, widths)
     json.dump(art, open(a.out.replace(".md", ".json"), "w",
