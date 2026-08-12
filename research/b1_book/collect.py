@@ -2070,9 +2070,12 @@ class Collector:
                      "the measured pick was six times wilder than the "
                      "market. The book’s history continues the pair "
                      "that already traded that order — it is the same "
-                     "book, not a new one. Tests the core question of "
-                     "hypothesis 6: does ranking the cross-section "
-                     "make money at all.",
+                     "book, not a new one. Entries also pass a floor "
+                     "of 30 bp (≈3× the cost round, from the "
+                     "extremeness probe): a quiet hour is not traded "
+                     "at all. Tests the core question of hypothesis "
+                     "6: does ranking the cross-section make money at "
+                     "all.",
             "plain_ru": "Каждый час берёт самые крайние прогнозы "
                         "четырёхчасового горизонта — шесть имён в лонг "
                         "и шесть в шорт — и держит ровно четыре часа. "
@@ -2083,8 +2086,10 @@ class Collector:
                         "имя выходило вшестеро размашистее рынка. "
                         "История книги продолжает пару, которая этим "
                         "порядком уже торговала, — это та же книга, а "
-                        "не новая. Проверяет главный вопрос гипотезы "
-                        "6: зарабатывает ли само ранжирование "
+                        "не новая. Вход проходит и пол в 30 б.п. "
+                        "(≈3× круга, из зонда крайности): тихий час "
+                        "не торгуется вовсе. Проверяет главный вопрос "
+                        "гипотезы 6: зарабатывает ли само ранжирование "
                         "сечения."},
         "h1": {
             "title": "1-hour book — does speed pay",

@@ -3632,11 +3632,17 @@ def test_switcher_says_how_the_book_is_ordered():
     """
     import web as W
     src = W.BOOKJS
-    for key in ("h4", "h1", "sit"):
+    for key in ("h4", "sit"):
         i = src.find(f'["{key}", ')
         end = src.find("]", i)
         check(f"{key} назван книгой в σ", r"per \u03c3" in src[i:end],
               src[i:end])
+    # Часовая книга остановлена решением владельца — подпись обязана
+    # это говорить, иначе прежний ярлык обещал бы живую книгу.
+    i = src.find('["h1", ')
+    end = src.find("]", i)
+    check("h1 назван остановленной книгой", "stopped" in src[i:end],
+          src[i:end])
     i = src.find('["z", ')
     end = src.find("]", i)
     check("пара названа своим горизонтом",

@@ -1276,7 +1276,7 @@ def archive_book(mdir, dst, log_=None):
     return moved
 
 
-def fresh_book_on_rank_change(mdir, want, log_=None):
+def fresh_book_on_rank_change(mdir, want, log_=None, floor=None):
     """Сменился ПОРЯДОК сечения — старая книга уходит в архив.
 
     Книга, упорядоченная по сырому прогнозу, и книга, упорядоченная в
@@ -1304,17 +1304,26 @@ def fresh_book_on_rank_change(mdir, want, log_=None):
     # истории есть запись, упорядоченная иначе.
     pf = os.path.join(mdir, "picks.jsonl")
     was, mixed = None, False
+    want_floor = float(floor or 0)
     try:
         with open(pf, encoding="utf-8") as f:
             for line in f:
                 if not line.strip():
                     continue
                 try:
-                    got = (json.loads(line) or {}).get("rank_want")
+                    rec = json.loads(line) or {}
                 except ValueError:
                     continue
+                got = rec.get("rank_want")
+                got_floor = float(rec.get("floor_bp") or 0)
                 if got != want:
                     was, mixed = got, True
+                    break
+                if got_floor != want_floor:
+                    # Смена ПОЛА входа — тоже смена книги: населения
+                    # сделок до и после пола не смешиваются в одну
+                    # кривую по той же причине, что и порядки сечения.
+                    was, mixed = f"floor{got_floor:g}", True
                     break
     except OSError:
         return None
@@ -1650,9 +1659,24 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     return sheet
 
 
+# Пол на вход книги 4 ч — из зонда крайности (probe_extreme,
+# 2026-08-12): исход растёт монотонно с величиной прогноза, и весь
+# запас сидит в верхнем квинтиле (его граница ≈30 б.п. ≈ 3× круга
+# издержек; +11.2 б.п. превышения против +2.0 у середины, без лучшего
+# имени +8.3). Нога мельче пола не входит; тихий час — книга не
+# торгует. Порог объявлен до внедрения и по исходам не подгонялся.
+H4_FLOOR_BP = 30.0
+# Часовая книга остановлена решением владельца (2026-08-12): даже
+# зашкал прогноза даёт +2.9 б.п. брутто при круге 11 — фильтр не лечит
+# знаменатель. Разбор старых выборов продолжается (открытые позиции
+# обязаны закрыться), новых входов нет; IC по fwd_1h меряется
+# бесплатно через save_preds, как и раньше.
+STOPPED_BOOKS = {1}
+
+
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
               nov_lo, nov_hi, book_root, log_, names=None,
-              train_seq=None, rank_key=None):
+              train_seq=None, rank_key=None, floor_bp=None):
     """Выбор монет одной книги: цели fwd/mae/mfe СВОЕГО горизонта.
 
     Возвращает запись выбора или `None`, когда у книги нет своих
@@ -1693,6 +1717,17 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
     if rank_key is not None:
         save_preds(arm, grid[-1], syms, rows_m, rank_by, target=rank_key)
     o = np.argsort(rank_by)
+    if floor_bp:
+        # Пол в СЫРЫХ б.п. при ранжировании в σ — намеренно: порог
+        # выведен из круга издержек, а в единицах σ такого якоря нет
+        # (то же решение, что у гейта ситуационной книги). Обе оси
+        # зонда дали почти один профиль.
+        o = np.array([i for i in o if abs(float(fwd[i])) >= floor_bp],
+                     dtype=int)
+        if not len(o):
+            log_(f"[{arm}] час тихий: ни одного прогноза не мельче "
+                 f"пола {floor_bp:g} б.п. — книга не торгует")
+            return None
     # Объяснение — только для выбранных шести, а не для всего сечения:
     # у часовых книг сделка и есть выбор, остальным строкам объяснять
     # нечего. `rank` — место в сечении по прогнозу: стратегия часовой
@@ -1730,6 +1765,7 @@ def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
              # говорит о намерении, а это поле — о факте. Без него кусок
              # истории, упорядоченный подменой, ничем себя не выдаёт.
              "rank_by": rank_key, "rank_want": rank_used,
+             "floor_bp": floor_bp,
              # Момент, когда решение стало известно: цикл просыпается
              # через минуты после закрытия часа, и это задержка входа,
              # а не ноль.
@@ -2130,6 +2166,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            # прогоном в тот же вечер (девять целей против четырёх, порог
            # 0.05 против 0.01).
            "rank_target": rank_key_for(TR.HOLD_H),
+           "entry_floor_bp": H4_FLOOR_BP,
            "targets_all": list(TARGETS),
            # Уровень стопа: чем он объявлен и что вышло на обучающих
            # часах. Правило заявки обязано лежать в артефакте рядом с
@@ -2176,7 +2213,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     rows_m = (tradable_rows(np.flatnonzero(elig[:, j_last]), syms)
               if j_last is not None else [])
     # Порядок сечения главной книги сменился — прежние сделки в архив.
-    fresh_book_on_rank_change(MODEL_DIR, rank_key_for(TR.HOLD_H), log_)
+    fresh_book_on_rank_change(MODEL_DIR, rank_key_for(TR.HOLD_H), log_,
+                              floor=H4_FLOOR_BP)
     for arm, _ in ARMS:
         # Последний ЗАПИСАННЫЙ разбор, а не последняя итерация цикла:
         # у свежего выбора форвард ещё не закрыт, разбор выходит пустым,
@@ -2186,7 +2224,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         picks = make_pick(arm, TR.HOLD_H, models, x, mats, syms, rows_m,
                           j_last, grid, nov_lo, nov_hi, book_root, log_,
                           names=names, train_seq=train_seq,
-                          rank_key=rank_key_for(TR.HOLD_H))
+                          rank_key=rank_key_for(TR.HOLD_H),
+                          floor_bp=H4_FLOOR_BP)
         if picks:
             write_pick(MODEL_DIR, picks)
 
@@ -2240,9 +2279,15 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             mdir = book_dir(h)
             fresh_book_on_rank_change(mdir, rank_key_for(h), log_)
             os.makedirs(mdir, exist_ok=True)
+            stopped = h in STOPPED_BOOKS
             for arm, _ in ARMS:
+                # Разбор идёт и у остановленной книги: открытые позиции
+                # обязаны закрыться своим форвардом, а не висеть вечно.
+                # Новых входов у неё нет.
                 review_arm(mdir, arm, h, targets, si, grid,
                            book_root, log_)
+                if stopped:
+                    continue
                 pk = make_pick(arm, h, models, x, mats, syms, rows_m,
                                j_last, grid, nov_lo, nov_hi,
                                book_root, log_, names=names,
@@ -2259,6 +2304,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             n_rows = (int((elig & np.isfinite(targets[kf])).sum())
                       if kf in targets else 0)
             sm = {"version": MODEL_VERSION, "horizon_h": h,
+                  "stopped": stopped or None,
                   "hedge": man["hedge"],
                   "trained_at": man["trained_at"],
                   "sections": n_sections, "symbols": len(syms),

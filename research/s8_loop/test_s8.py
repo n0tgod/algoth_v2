@@ -23,6 +23,12 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 
 import bookfeat as FB                                      # noqa: E402
+import train as _TR                                        # noqa: E402
+
+# Пол входа главной книги на СИНТЕТИКЕ снимается: её прогнозы мельче
+# живых, и пол оставил бы без выборов тесты, чей предмет — дедуп,
+# касса и разбор, а не пол. Тест самого пола ставит его явно.
+_TR.H4_FLOOR_BP = 0.0
 import summary as SM                                       # noqa: E402
 from book import BANDS                                     # noqa: E402
 from research.common import fees as FEES                   # noqa: E402
@@ -3883,6 +3889,68 @@ def test_adopting_the_same_book_keeps_its_history():
         shutil.rmtree(td, ignore_errors=True)
 
 
+def test_entry_floor_gates_the_main_book():
+    """Пол входа: тихий час не торгуется, смена пола отставляет книгу.
+
+    Порог выведен из зонда крайности (верх квинтиля ≈ 3× круга): нога
+    мельче пола не входит, пол едет в запись выбора, а книга, писанная
+    другим полом, — другая книга.
+    """
+    import json as _j
+    import shutil
+    import tempfile
+    import train as T
+
+    td = tempfile.mkdtemp()
+    d = os.path.join(td, "model")
+    os.makedirs(d)
+    with open(os.path.join(d, "picks.jsonl"), "w", encoding="utf-8") as f:
+        f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-11-18",
+                          "rank_want": "fwd_4h_z",
+                          "floor_bp": None}) + "\n")
+    got = T.fresh_book_on_rank_change(d, "fwd_4h_z", floor=30.0)
+    check("смена пола отставляет книгу",
+          got is not None and "floor0" in os.path.basename(got),
+          str(got))
+    d2 = os.path.join(td, "model2")
+    os.makedirs(d2)
+    with open(os.path.join(d2, "picks.jsonl"), "w",
+              encoding="utf-8") as f:
+        f.write(_j.dumps({"arm": "gbm", "hour": "2026-08-11-18",
+                          "rank_want": "fwd_4h_z",
+                          "floor_bp": 30.0}) + "\n")
+    check("тот же пол книгу не трогает",
+          T.fresh_book_on_rank_change(d2, "fwd_4h_z", floor=30.0)
+          is None, "книга отставлена зря")
+    shutil.rmtree(td, ignore_errors=True)
+
+    # Сам фильтр — живым циклом: запретительный пол оставляет главную
+    # книгу без выборов, часовые книги без пола выбирают как выбирали.
+    import synth
+    sd = tempfile.mkdtemp(prefix="floor-")
+    md = os.path.join(tempfile.mkdtemp(), "m")
+    keep = (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit,
+            T.H4_FLOOR_BP)
+    T.MODEL_DIR, T.PRETEST = md, True
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 keep[3](x, y, seed, n_trees=12, **kw))
+    T.ARMS = (("gbm", T.gbm.fit),)
+    T.H4_FLOOR_BP = 1e9
+    try:
+        synth.write_summaries(sd, D=80)
+        T.cycle(sd, lambda m: None, book_root=None)
+        check("запретительный пол: главная книга не торгует",
+              not os.path.exists(os.path.join(md, "picks.jsonl")),
+              "выборы записаны сквозь пол")
+        p24 = os.path.join(md + "_h24", "picks.jsonl")
+        check("книга без пола выбирает как выбирала",
+              os.path.exists(p24), "у h24 нет выборов")
+    finally:
+        (T.MODEL_DIR, T.PRETEST, T.ARMS, T.gbm.fit, T.nn.fit,
+         T.H4_FLOOR_BP) = keep
+        shutil.rmtree(sd, ignore_errors=True)
+
+
 def test_books_order_by_their_own_sigma():
     """Порядок сечения — свойство книги, и он один на весь цикл.
 
@@ -3925,6 +3993,7 @@ def main():
     test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
     test_sigma_targets_exist_on_every_horizon()
+    test_entry_floor_gates_the_main_book()
     test_books_order_by_their_own_sigma()
     test_book_archives_when_the_order_changes()
     test_repair_returns_the_model_and_leaves_the_book()
