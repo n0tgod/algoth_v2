@@ -1,0 +1,337 @@
+{
+ "run_at": "2026-08-12 16:28 UTC",
+ "legs_total": 146844,
+ "legs_measured": 143278,
+ "sheets": 284,
+ "syms": 526,
+ "buckets": 5,
+ "cost_bp": 11.0,
+ "profiles": {
+  "rel_1h": {
+   "edges": [
+    0.347,
+    0.762,
+    1.285,
+    2.197
+   ],
+   "rows": [
+    {
+     "bucket": 1,
+     "lo": null,
+     "hi": 0.35,
+     "n": 28512,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 0.5,
+     "med_bp": 0.0,
+     "pos": 0.498,
+     "total_bp": 12880.7,
+     "top_sym": "TUTUSDT",
+     "wo_top_mean_bp": 0.1
+    },
+    {
+     "bucket": 2,
+     "lo": 0.35,
+     "hi": 0.76,
+     "n": 28511,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 1.3,
+     "med_bp": -0.1,
+     "pos": 0.496,
+     "total_bp": 38037.1,
+     "top_sym": "HOMEUSDT",
+     "wo_top_mean_bp": 1.1
+    },
+    {
+     "bucket": 3,
+     "lo": 0.76,
+     "hi": 1.28,
+     "n": 28512,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 0.4,
+     "med_bp": -0.0,
+     "pos": 0.497,
+     "total_bp": 12473.8,
+     "top_sym": "MAGMAUSDT",
+     "wo_top_mean_bp": 0.2
+    },
+    {
+     "bucket": 4,
+     "lo": 1.28,
+     "hi": 2.2,
+     "n": 28512,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 0.8,
+     "med_bp": 0.2,
+     "pos": 0.502,
+     "total_bp": 22139.8,
+     "top_sym": "1000CATUSDT",
+     "wo_top_mean_bp": 0.4
+    },
+    {
+     "bucket": 5,
+     "lo": 2.2,
+     "hi": null,
+     "n": 28515,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 2.9,
+     "med_bp": 0.4,
+     "pos": 0.503,
+     "total_bp": 81295.1,
+     "top_sym": "1000CATUSDT",
+     "wo_top_mean_bp": 2.5
+    }
+   ]
+  },
+  "rel_4h": {
+   "edges": [
+    0.347,
+    0.764,
+    1.287,
+    2.201
+   ],
+   "rows": [
+    {
+     "bucket": 1,
+     "lo": null,
+     "hi": 0.35,
+     "n": 27917,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 1.5,
+     "med_bp": 0.1,
+     "pos": 0.501,
+     "total_bp": 40542.4,
+     "top_sym": "TUTUSDT",
+     "wo_top_mean_bp": 0.2
+    },
+    {
+     "bucket": 2,
+     "lo": 0.35,
+     "hi": 0.76,
+     "n": 27916,
+     "dates": 5,
+     "syms": 521,
+     "mean_bp": 2.6,
+     "med_bp": -0.2,
+     "pos": 0.497,
+     "total_bp": 72484.3,
+     "top_sym": "CATIUSDT",
+     "wo_top_mean_bp": 1.8
+    },
+    {
+     "bucket": 3,
+     "lo": 0.76,
+     "hi": 1.29,
+     "n": 27918,
+     "dates": 5,
+     "syms": 521,
+     "mean_bp": 2.0,
+     "med_bp": -0.1,
+     "pos": 0.498,
+     "total_bp": 54661.4,
+     "top_sym": "VELVETUSDT",
+     "wo_top_mean_bp": 1.3
+    },
+    {
+     "bucket": 4,
+     "lo": 1.29,
+     "hi": 2.2,
+     "n": 27917,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 4.9,
+     "med_bp": 1.0,
+     "pos": 0.505,
+     "total_bp": 136743.7,
+     "top_sym": "BRUSDT",
+     "wo_top_mean_bp": 4.3
+    },
+    {
+     "bucket": 5,
+     "lo": 2.2,
+     "hi": null,
+     "n": 27918,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 11.2,
+     "med_bp": 3.3,
+     "pos": 0.513,
+     "total_bp": 312343.1,
+     "top_sym": "TUTUSDT",
+     "wo_top_mean_bp": 8.3
+    }
+   ]
+  },
+  "raw_1h": {
+   "edges": [
+    4.19,
+    9.44,
+    16.82,
+    30.0
+   ],
+   "rows": [
+    {
+     "bucket": 1,
+     "lo": null,
+     "hi": 4.19,
+     "n": 28511,
+     "dates": 5,
+     "syms": 520,
+     "mean_bp": 0.4,
+     "med_bp": 0.0,
+     "pos": 0.498,
+     "total_bp": 10702.8,
+     "top_sym": "BROCCOLIUSDT",
+     "wo_top_mean_bp": 0.2
+    },
+    {
+     "bucket": 2,
+     "lo": 4.19,
+     "hi": 9.44,
+     "n": 28511,
+     "dates": 5,
+     "syms": 521,
+     "mean_bp": 0.2,
+     "med_bp": -0.1,
+     "pos": 0.496,
+     "total_bp": 6557.2,
+     "top_sym": "HOMEUSDT",
+     "wo_top_mean_bp": -0.0
+    },
+    {
+     "bucket": 3,
+     "lo": 9.44,
+     "hi": 16.82,
+     "n": 28507,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 0.8,
+     "med_bp": 0.2,
+     "pos": 0.503,
+     "total_bp": 22085.9,
+     "top_sym": "VELODROMEUSDT",
+     "wo_top_mean_bp": 0.6
+    },
+    {
+     "bucket": 4,
+     "lo": 16.82,
+     "hi": 30.0,
+     "n": 28513,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 1.6,
+     "med_bp": 0.0,
+     "pos": 0.497,
+     "total_bp": 46312.9,
+     "top_sym": "CASHCATUSDT",
+     "wo_top_mean_bp": 1.3
+    },
+    {
+     "bucket": 5,
+     "lo": 30.0,
+     "hi": null,
+     "n": 28520,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 2.8,
+     "med_bp": 0.4,
+     "pos": 0.503,
+     "total_bp": 81167.7,
+     "top_sym": "1000CATUSDT",
+     "wo_top_mean_bp": 2.1
+    }
+   ]
+  },
+  "raw_4h": {
+   "edges": [
+    4.18,
+    9.46,
+    16.84,
+    30.07
+   ],
+   "rows": [
+    {
+     "bucket": 1,
+     "lo": null,
+     "hi": 4.18,
+     "n": 27889,
+     "dates": 5,
+     "syms": 520,
+     "mean_bp": 2.5,
+     "med_bp": 0.2,
+     "pos": 0.501,
+     "total_bp": 70512.9,
+     "top_sym": "HOMEUSDT",
+     "wo_top_mean_bp": 2.1
+    },
+    {
+     "bucket": 2,
+     "lo": 4.18,
+     "hi": 9.46,
+     "n": 27908,
+     "dates": 5,
+     "syms": 521,
+     "mean_bp": 1.9,
+     "med_bp": -0.1,
+     "pos": 0.498,
+     "total_bp": 53809.2,
+     "top_sym": "HOMEUSDT",
+     "wo_top_mean_bp": 1.4
+    },
+    {
+     "bucket": 3,
+     "lo": 9.46,
+     "hi": 16.84,
+     "n": 27937,
+     "dates": 5,
+     "syms": 520,
+     "mean_bp": 2.4,
+     "med_bp": 0.0,
+     "pos": 0.499,
+     "total_bp": 68089.5,
+     "top_sym": "APRUSDT",
+     "wo_top_mean_bp": 1.5
+    },
+    {
+     "bucket": 4,
+     "lo": 16.84,
+     "hi": 30.07,
+     "n": 27929,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 4.7,
+     "med_bp": 1.1,
+     "pos": 0.505,
+     "total_bp": 132246.3,
+     "top_sym": "VELVETUSDT",
+     "wo_top_mean_bp": 4.3
+    },
+    {
+     "bucket": 5,
+     "lo": 30.07,
+     "hi": null,
+     "n": 27923,
+     "dates": 5,
+     "syms": 522,
+     "mean_bp": 10.5,
+     "med_bp": 3.8,
+     "pos": 0.511,
+     "total_bp": 292117.1,
+     "top_sym": "TUTUSDT",
+     "wo_top_mean_bp": 6.9
+    }
+   ]
+  }
+ },
+ "reading": [
+  "rel/1h: плоско (зашкал +2.9, середина +0.4) — фильтр по крайности означает торговать реже, а не лучше",
+  "rel/4h: ступенька +9.2 б.п. (зашкал +11.2, середина +2.0) — фильтр настоящий",
+  "raw/1h: плоско (зашкал +2.8, середина +0.8) — фильтр по крайности означает торговать реже, а не лучше",
+  "raw/4h: ступенька +8.1 б.п. (зашкал +10.5, середина +2.4) — фильтр настоящий"
+ ]
+}
