@@ -1430,6 +1430,12 @@ def test_situational_book_enters_and_exits_by_situation():
                 f.write(_json.dumps({"arm": "gbm",
                                      "hour": "2026-08-07-09",
                                      "long": [], "short": []}) + "\n")
+            # Живые события — файлы книги: не уехав с ней, они
+            # пересоздали бы всю старую книгу первым же циклом.
+            with open(os.path.join(old_dir, "entries_live.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps({"arm": "gbm", "sym": "AUSDT"})
+                        + "\n")
             got7 = T.fresh_sit_on_rules_change(old_dir, lambda m: None)
             # Переезжают ФАЙЛЫ КНИГИ, а не каталог: у главной книги
             # каталог общий с моделью, и переименование уносило веса.
@@ -1441,6 +1447,12 @@ def test_situational_book_enters_and_exits_by_situation():
                   and not os.path.exists(
                       os.path.join(old_dir, "picks.jsonl")),
                   str(got7))
+            check("живые события уехали вместе с книгой",
+                  got7 and os.path.exists(
+                      os.path.join(got7, "entries_live.jsonl"))
+                  and not os.path.exists(
+                      os.path.join(old_dir, "entries_live.jsonl")),
+                  "события остались — книга возродится")
             os.makedirs(old_dir, exist_ok=True)
             with open(os.path.join(old_dir, "manifest.json"), "w",
                       encoding="utf-8") as f:
