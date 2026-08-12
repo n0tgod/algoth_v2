@@ -1286,11 +1286,39 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       if (!/not a\s+hand-picked\s+strategy/
             .test(mn.replace(/\s+/g, " ")))
         bad.push("график: подпись не говорит, что это чтение вкладов");
-      if (!/20 % of cases/.test(mn))
-        bad.push("график: правило стопа не названо в объяснении");
-      if (!/sheet promised/.test(mn) || !/in\s+front of us/
-            .test(mn.replace(/\s+/g, " ")))
-        bad.push("график: стратегия входа не названа в объяснении");
+      // Уровни — правило только ситуационной книги. На часовой книге
+      // объяснение обязано честно сказать «стопа и тейка нет, выход
+      // по времени», а не выдавать прогноз пути за уровни: владелец
+      // прочёл линии на графике h4-сделки как её стоп и тейк.
+      if (/hz=sit/.test(SEARCH)) {
+        if (!/20 % of cases/.test(mn))
+          bad.push("график: правило стопа не названо в объяснении");
+        if (!/sheet promised/.test(mn) || !/in\s+front of us/
+              .test(mn.replace(/\s+/g, " ")))
+          bad.push("график: стратегия входа не названа в объяснении");
+      } else {
+        if (!/no stop or take/.test(mn)
+            || !/exits by\s+time/.test(mn.replace(/\s+/g, " ")))
+          bad.push("график: у часовой сделки уровни не названы "
+                   + "прогнозом");
+        if (/20 % of cases/.test(mn) || /levels: stop at/.test(mn))
+          bad.push("график: часовой сделке приписаны уровни");
+      }
+    }
+    // Легенда и линии уровней — только у книги, которая ими торгует.
+    const lv = global.__el ? global.__el("lglv") : null;
+    const lvHidden = lv && lv.style
+      && String(lv.style.display) === "none";
+    if (/hz=sit/.test(SEARCH)) {
+      if (lvHidden)
+        bad.push("график: легенда уровней спрятана у ситуационной книги");
+    } else {
+      if (!lvHidden)
+        bad.push("график: легенда уровней видна у книги без уровней");
+      const drawn = global.__texts.join("|");
+      if (/(^|\|)stop /.test(drawn) || /promise [↑↓]/.test(drawn))
+        bad.push("график: линии стопа/тейка нарисованы у книги "
+                 + "без уровней: " + drawn.slice(0, 120));
     }
 
     // Вертикаль цены: тянуть вверх-вниз, а не только в сторону. Жест

@@ -2960,12 +2960,13 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
 </div>
 <div class="legend">
   <span><span class="sw" style="border-color:var(--accent)"></span>level</span>
-  <span><span class="sw" style="border-color:var(--ask)"></span>stop</span>
+  <span id="lglv"><span><span class="sw"
+    style="border-color:var(--ask)"></span>stop</span>
   <span><span class="sw" style="border-color:var(--muted)"></span>where the
     model expects price to go against the trade — the stop stands
     beyond it</span>
   <span><span class="sw" style="border-color:var(--bid)"></span>target /
-    profit promise</span>
+    profit promise</span></span>
   <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp;
     exit dots</span>
   <span><span class="sw" style="background:rgba(61,220,127,.25);
@@ -3260,6 +3261,13 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
                   ? null : parseFloat(Q.get("rr"))),
              obs: false,
              fit: false};
+// Пункты легенды про уровни — только там, где уровни действуют:
+// подпись «stop» под графиком часовой книги утверждала бы правило,
+// которого у книги нет.
+{
+  const lv = document.getElementById("lglv");
+  if (lv) lv.style.display = actsOnLevels() ? "" : "none";
+}
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара
 // (рука, час, монета) единственна по построению — цикл выбирает шесть
 // имён на час, повторов в часе нет.
@@ -3593,6 +3601,14 @@ function mdlExit(t) {
     return null;
   return (t.entry_px && t.got_bp != null)
     ? t.entry_px * (1 + t.got_bp / 10000) : null;
+}
+// Уровни (стоп и тейк) — правило ТОЛЬКО ситуационной книги: их ведёт
+// живой сторож. Книги со сроком (1/4/24 ч) выходят по времени, стопа
+// и тейка у их сделок НЕ СУЩЕСТВУЕТ — mae/mfe там прогноз пути, и
+// рисовать его линиями TP/SL значит показывать правило, которого нет:
+// владелец прочёл эти линии как уровни сделки.
+function actsOnLevels() {
+  return MDL.hz === "sit" || MDL.hz === "sit_obs";
 }
 // Ноги позиции: чем набирали и чем скидывали, по времени. Первый лот
 // в `adds` не лежит (там доливы), а его размер выводится из общего:
@@ -3933,7 +3949,8 @@ function draw() {
       if (b[3] < rl) rl = b[3];
       if (b[2] > rh) rh = b[2];
     }
-    for (const v of [pAdv, pFav, ex]) {
+    // У книги без уровней зоны не тянутся к линиям, которых нет.
+    for (const v of (actsOnLevels() ? [pAdv, pFav, ex] : [ex])) {
       if (v != null) { rl = Math.min(rl, v); rh = Math.max(rh, v); }
     }
     rl = Math.max(rl, lo); rh = Math.min(rh, hi);
@@ -3985,9 +4002,11 @@ function draw() {
         g.fillText(`${lab} ${pv.toFixed(dec)}`, xa + 4, y(pv) - 4);
       }
     };
-    promise(pFav, css("--bid"), up ? "promise ↑" : "promise ↓");
-    promise(pAdv, css("--ask"), "stop");
-    promise(pExp, css("--muted"), "expected move against");
+    if (actsOnLevels()) {
+      promise(pFav, css("--bid"), up ? "promise ↑" : "promise ↓");
+      promise(pAdv, css("--ask"), "stop");
+      promise(pExp, css("--muted"), "expected move against");
+    }
     // Линия входа через спан удержания — сплошная, как у v1.
     g.strokeStyle = col; g.fillStyle = col;
     g.lineWidth = me ? 2 : 1.2;
@@ -4265,7 +4284,12 @@ function explainTrade(t) {
       front of us with reward/risk ≥ ${r.min_rr ?? 2} against the
       executable stop`);
   }
-  if (t.mae_bp != null) {
+  if (t.mae_bp != null && !actsOnLevels()) {
+    bits.push(`path forecast (not orders): expected extreme against
+      ${pct(t.mae_bp)}${t.mfe_bp != null
+      ? `, in favour ${pct(t.mfe_bp)}` : ""} — this book exits by
+      time, it has no stop or take`);
+  } else if (t.mae_bp != null) {
     const q = String(t.stop_of || "").indexOf("q_") > 0;
     bits.push(`levels: stop at ${pct(t.mae_bp)}${q
       ? ` — the learned level price passes in ${
