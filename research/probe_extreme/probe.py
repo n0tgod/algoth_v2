@@ -51,6 +51,21 @@ EXIT_TOL = 0.2               # выход не раньше 80 % горизон�
 ROUND_COST_BP = 11.0         # круг тейкера, для чтения профиля
 
 
+def unbuffer_output():
+    """Печатать построчно, даже когда вывод уходит в файл.
+
+    Урок D1, нарушенный здесь в третий раз по проекту: отцепленный
+    прогон с перенаправлением в файл молчит блоками буфера и снаружи
+    неотличим от повисшего — владелец увидел ровно это. Ставится В
+    КОДЕ, а не ключом `-u`: команду набирают руками.
+    """
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+        sys.stderr.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
+
+
 def load_legs(paths, log=print):
     """Ноги из журнала листов: (время, час, рука, монета, прогноз, цена).
 
@@ -286,6 +301,8 @@ def run(sheets, root, src=None, log=print):
     legs = load_legs(sheets, log=log)
     if not legs:
         raise SystemExit("журнал листов пуст — мерить нечего")
+    log(f"ног в журнале {len(legs)}, "
+        f"монет {len({g['sym'] for g in legs})} — начинаю обход баров")
     extremeness(legs, log=log)
     by_sym = collections.defaultdict(list)
     for lg in legs:
@@ -322,6 +339,7 @@ def run(sheets, root, src=None, log=print):
 
 
 def main():
+    unbuffer_output()
     ap = argparse.ArgumentParser()
     ap.add_argument("--sheets", nargs="+", default=[os.path.join(
         RESEARCH, "s8_loop", "out", "model_sit", "sheets.jsonl")])
