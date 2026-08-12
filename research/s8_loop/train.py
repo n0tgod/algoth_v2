@@ -1666,12 +1666,14 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
 # имени +8.3). Нога мельче пола не входит; тихий час — книга не
 # торгует. Порог объявлен до внедрения и по исходам не подгонялся.
 H4_FLOOR_BP = 30.0
-# Часовая книга остановлена решением владельца (2026-08-12): даже
-# зашкал прогноза даёт +2.9 б.п. брутто при круге 11 — фильтр не лечит
-# знаменатель. Разбор старых выборов продолжается (открытые позиции
-# обязаны закрыться), новых входов нет; IC по fwd_1h меряется
-# бесплатно через save_preds, как и раньше.
-STOPPED_BOOKS = {1}
+# Часовая книга УДАЛЕНА решением владельца (2026-08-12): даже зашкал
+# прогноза даёт +2.9 б.п. брутто при круге 11 — фильтр не лечит
+# знаменатель. Книга не ведётся и не показывается нигде; каталог
+# `model_h1` остаётся на диске записью, но не читается и не пишется.
+# Цели fwd_1h продолжают обучаться, IC на 1 ч меряется бесплатно
+# через save_preds — если сигнал дорастёт до экономики, это будет
+# видно без единой сделки.
+REMOVED_BOOKS = {1}
 
 
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
@@ -2273,21 +2275,15 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # гипотеза. Ошибка книги не роняет цикл: главная книга и веса уже
     # записаны, а сломанная книга обязана быть видна журналом.
     for h in FB.HORIZONS:
-        if h == TR.HOLD_H:
+        if h == TR.HOLD_H or h in REMOVED_BOOKS:
             continue
         try:
             mdir = book_dir(h)
             fresh_book_on_rank_change(mdir, rank_key_for(h), log_)
             os.makedirs(mdir, exist_ok=True)
-            stopped = h in STOPPED_BOOKS
             for arm, _ in ARMS:
-                # Разбор идёт и у остановленной книги: открытые позиции
-                # обязаны закрыться своим форвардом, а не висеть вечно.
-                # Новых входов у неё нет.
                 review_arm(mdir, arm, h, targets, si, grid,
                            book_root, log_)
-                if stopped:
-                    continue
                 pk = make_pick(arm, h, models, x, mats, syms, rows_m,
                                j_last, grid, nov_lo, nov_hi,
                                book_root, log_, names=names,
@@ -2304,7 +2300,6 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             n_rows = (int((elig & np.isfinite(targets[kf])).sum())
                       if kf in targets else 0)
             sm = {"version": MODEL_VERSION, "horizon_h": h,
-                  "stopped": stopped or None,
                   "hedge": man["hedge"],
                   "trained_at": man["trained_at"],
                   "sections": n_sections, "symbols": len(syms),

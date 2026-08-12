@@ -59,8 +59,10 @@ BOOKJS = r"""
 // книги под ним уже другие. Пара к 24 ч названа своим горизонтом:
 // прежняя стояла на 4 ч и после перевода главной книги стала бы её
 // дубликатом.
-const BOOK_LIST = [["h4", "4 h \u00b7 per \u03c3"],
-                   ["h1", "1 h \u00b7 stopped"], ["h24", "24 h"],
+// Часовой книги в списке НЕТ: удалена решением владельца
+// (2026-08-12, зонд крайности) — не остановлена, а убрана из показа
+// и статистики целиком. Каталог на диске остаётся записью.
+const BOOK_LIST = [["h4", "4 h \u00b7 per \u03c3"], ["h24", "24 h"],
                    ["sit", "situational \u00b7 per \u03c3"],
                    ["z", "24 h \u00b7 per \u03c3"]];
 // Ключи, законные в адресе. Главная книга — умолчание и в адрес не
@@ -1260,21 +1262,11 @@ function renderModel() {
        quintile) — a quiet hour is not traded at all, so an hour
        without picks is the rule working, not a failure.</div>`
     : "";
-  // Остановленная книга обязана называть себя остановленной: живой
-  // вид с давними сделками читался бы как поломка записи.
-  const stopBook = m.stopped
-    ? `<div class="mline" style="color:var(--ask)">book STOPPED by the
-       owner's decision: no new entries — the extremeness probe showed
-       even the top of the forecast (+2.9 bp gross) cannot pay the
-       11 bp hourly cost round. Old positions were closed by their own
-       forwards; the record below stays readable, and the 1h IC is
-       still measured for free every cycle.</div>`
-    : "";
   // Переключатель порога — только у книги без срока: у часовых книг
   // обещания пути не решают ни входа, ни выхода, и фильтровать их тем
   // же числом значило бы сравнивать разные вещи.
   const rrLine = isSit(d) ? rrControl(d) : "";
-  box.innerHTML = armBtns + stopBook + rrLine + lagLine + gateLine
+  box.innerHTML = armBtns + rrLine + lagLine + gateLine
     + stopLine + floorLine
     + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${

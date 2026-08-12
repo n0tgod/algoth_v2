@@ -2016,12 +2016,15 @@ class Collector:
     # на порядок в единицах σ — и пара стала бы её дубликатом. Каталог
     # `model_z` не удалён: его сделки остаются накопленной записью
     # торговли в σ на 4 ч, но живой книгой он больше не является.
-    BOOK_DIRS = {"h4": "model", "h1": "model_h1", "h24": "model_h24",
+    # Часовой книги в карте НЕТ: удалена решением владельца
+    # (2026-08-12) по зонду крайности — из показа и статистики
+    # целиком. Каталог `model_h1` на диске остаётся записью.
+    BOOK_DIRS = {"h4": "model", "h24": "model_h24",
                  "sit": "model_sit", "sit_obs": "model_sit_obs",
                  "z": "model_h24z"}
     # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
     # счётах по книгам её быть не должно.
-    BOOKS = (("h4", "model"), ("h1", "model_h1"),
+    BOOKS = (("h4", "model"),
              ("h24", "model_h24"), ("sit", "model_sit"),
              ("z", "model_h24z"))
 
@@ -2091,28 +2094,6 @@ class Collector:
                         "не торгуется вовсе. Проверяет главный вопрос "
                         "гипотезы 6: зарабатывает ли само ранжирование "
                         "сечения."},
-        "h1": {
-            "title": "1-hour book — does speed pay",
-            "title_ru": "Книга 1 час — окупается ли скорость",
-            "plain": "The same picking at an hourly pace, ordered per "
-                     "σ like the main book: more trades, but every "
-                     "hour pays the full cost round. Tests whether "
-                     "speed covers the fee; by R4/R5 the fee eats fast "
-                     "books, so tempos are compared fairly by IC and "
-                     "hit rate, not by money. Its history restarted "
-                     "when the order changed — the σ forecast never "
-                     "existed on this horizon before, so there was "
-                     "nothing to carry over.",
-            "plain_ru": "Тот же выбор на часовом темпе, в порядке per "
-                        "σ как у главной книги: сделок больше, но "
-                        "каждый час платит полный круг издержек. "
-                        "Проверяет, окупает ли скорость комиссию; по "
-                        "замерам R4/R5 частота съедает деньги, поэтому "
-                        "темпы честно сравнивать по IC и точности, а "
-                        "не по деньгам. История начата заново со "
-                        "сменой порядка: прогноза в σ на этом "
-                        "горизонте раньше не существовало, переносить "
-                        "было нечего."},
         "h24": {
             "title": "24-hour book — does the signal live a day",
             "title_ru": "Книга 24 часа — живёт ли сигнал сутки",

@@ -2471,9 +2471,10 @@ def test_league_ranks_by_realised_money():
                        "net": 49.0, "exit_ts": now - 60,
                        "exit_hour": hour,
                        "reason": "цена дошла до обещанной цели"}]})
-        # Часовая книга: убыточная сделка сети.
-        put("model_h1",
-            {"horizon_h": 1},
+        # Книга 24 ч: убыточная сделка сети (часовая книга удалена
+        # решением владельца и в лигу не входит).
+        put("model_h24",
+            {"horizon_h": 24},
             {"arm": "nn", "hour": hour, "at_ts": now - 7000,
              "long": [{"sym": "CUSDT", "px": 50.0, "fwd": 20.0,
                        "mae": -30.0}], "short": []},
@@ -2506,13 +2507,13 @@ def test_league_ranks_by_realised_money():
         check("сделок в периоде две — без исхода и без книги-дубля",
               p30["n"] == 2, str(p30["n"]))
         # Деньги — те, что штампует касса ПОД ЗАБОРОМ v4: потолок на имя
-        # 10 % капитала режет и слот ситуационной книги (166.67 → 100,
-        # 49 б.п. нетто → 0.49 $), и одиночный слот часовой (1000 →
-        # 100, −51 б.п. → −0.51 $). Числа выведены из размера, а не
-        # взяты из разбора — в разборе денег нет.
+        # 10 % капитала режет слот ситуационной книги (166.67 → 100,
+        # 49 б.п. нетто → 0.49 $); слот суточной книги — своей
+        # арифметикой кассы (−51 б.п. → −0.21 $). Числа выведены из
+        # размера, а не взяты из разбора — в разборе денег нет.
         arm = {g["key"]: g for g in p30["groups"]["arm"]}
         check("деньги по рукам — из кассы, по размеру позиции",
-              arm["gbm"]["pnl"] == 0.49 and arm["nn"]["pnl"] == -0.51,
+              arm["gbm"]["pnl"] == 0.49 and arm["nn"]["pnl"] == -0.21,
               str(arm))
         # Итог БЕЗ лучшего имени — на настоящем ядре: у руки gbm
         # единственная сделка +0.49 $ по AUSDT, значит без него ноль.
@@ -2527,7 +2528,7 @@ def test_league_ranks_by_realised_money():
               str(p30["groups"]["setup"]))
         check("топ отсортирован по деньгам",
               p30["best"][0]["pnl"] == 0.49
-              and p30["worst"][0]["pnl"] == -0.51,
+              and p30["worst"][0]["pnl"] == -0.21,
               str([p30["best"][0]["pnl"], p30["worst"][0]["pnl"]]))
         check("сегодняшний период видит сегодняшние закрытия",
               lg["periods"]["today"]["n"] >= 1,
@@ -2541,7 +2542,6 @@ def test_league_ranks_by_realised_money():
         # ровно тот отказ, неотличимый от тишины, против которого
         # весь проект.
         mdir = os.path.join(s8, "model_h24")
-        os.makedirs(mdir)
         with open(os.path.join(mdir, "manifest.json"), "w",
                   encoding="utf-8") as f:
             json.dump({"horizon_h": "boom"}, f)
@@ -2550,8 +2550,10 @@ def test_league_ranks_by_realised_money():
         check("сломанная книга называет себя, а не молчит",
               any("model_h24" in e and "boom" in e
                   for e in lg2["errors"]), str(lg2["errors"]))
+        # Сломанная книга уносит СВОИ сделки (её и ломали), остальные
+        # живы: сделка ситуационной остаётся.
         check("остальные книги при этом живы",
-              lg2["periods"]["30d"]["n"] == 2,
+              lg2["periods"]["30d"]["n"] == 1,
               str(lg2["periods"]["30d"]["n"]))
     finally:
         C.HERE = was
@@ -2673,7 +2675,7 @@ def test_model_tree_names_every_book():
         check("книга без horizon_h печатает срок кассы",
               "hold 4 h" in h4b["facts"] and "24 slots" in h4b["facts"],
               h4b["facts"])
-        absent = next(b for b in tr["books"] if b["key"] == "h1")
+        absent = next(b for b in tr["books"] if b["key"] == "h24")
         check("книга без манифеста помечена отсутствующей",
               absent["present"] is False, str(absent["present"]))
         tt = tr["tournament"]
@@ -3637,12 +3639,11 @@ def test_switcher_says_how_the_book_is_ordered():
         end = src.find("]", i)
         check(f"{key} назван книгой в σ", r"per \u03c3" in src[i:end],
               src[i:end])
-    # Часовая книга остановлена решением владельца — подпись обязана
-    # это говорить, иначе прежний ярлык обещал бы живую книгу.
-    i = src.find('["h1", ')
-    end = src.find("]", i)
-    check("h1 назван остановленной книгой", "stopped" in src[i:end],
-          src[i:end])
+    # Часовая книга удалена решением владельца — её не должно быть в
+    # списке вовсе: ярлык, оставшийся в переключателе, обещал бы
+    # живую книгу.
+    check("h1 удалён из списка книг", '["h1"' not in src,
+          "часовая книга всё ещё в BOOK_LIST")
     i = src.find('["z", ')
     end = src.find("]", i)
     check("пара названа своим горизонтом",

@@ -373,7 +373,7 @@ global.fetch = async (url) => {
                             syms: 1}],
                      book: [{key: "sit", n: 2, win: 0.5, pnl: 4.1,
                              net_bp_avg: 12.0},
-                            {key: "h1", n: 1, win: 0, pnl: -3.0,
+                            {key: "h24", n: 1, win: 0, pnl: -3.0,
                              net_bp_avg: -51.0}],
                      setup: [{key: "liq", n: 1, win: 1, pnl: 8.0,
                               net_bp_avg: 49.0}],
@@ -383,7 +383,7 @@ global.fetch = async (url) => {
                            sym: "AAAUSDT", side: "long",
                            at: 1786190000, net_bp: 49.0, pnl: 8.0,
                            setup: "liq"}],
-                   worst: [{hz: "h1", arm: "gbm",
+                   worst: [{hz: "h24", arm: "gbm",
                             hour: "2026-08-03-15", sym: "CCCUSDT",
                             side: "long", at: 1786190100,
                             net_bp: -51.0, pnl: -3.0, setup: null}]},
@@ -693,44 +693,51 @@ global.fetch = async (url) => {
                              exit_reason: "прогноз развернулся"}]},
                     // Книга, ждущая свою цель: выборов нет, и причина
                     // обязана дойти до разметки числом.
+                    // Книга 24 ч несёт СВОИ числа: переключатель
+                    // проверяется тем, что они не смешиваются с
+                    // числами главной. Часовой книги в ответе нет —
+                    // удалена решением владельца.
                     h24: {present: true,
                           manifest: {version: 1, horizon_h: 24,
                                      sections: 96, symbols: 540,
                                      canary_ic: 0.003,
                                      target: "fwd_24h",
-                                     target_rows: 412,
+                                     target_rows: 5200,
                                      target_need: 1000,
                                      trained_at:
-                                       "2026-08-01T10:00:00+00:00"}},
-                    h1: {present: true,
-                               manifest: {version: 1, horizon_h: 1,
-                                          stopped: true,
-                                          sections: 96, symbols: 540,
-                                          canary_ic: 0.003,
-                                          target: "fwd_1h",
-                                          target_rows: 5200,
-                                          target_need: 1000,
-                                          trained_at:
-                                            "2026-08-01T10:00:00+00:00"},
-                               accounts: {gbm: {balance: 1003.57,
-                                                history: [
+                                       "2026-08-01T10:00:00+00:00"},
+                          accounts: {gbm: {balance: 1003.57,
+                                           history: [
                                   {hour: "2026-08-03-17", pnl: 1.2,
                                    balance: 1002.1},
                                   {hour: "2026-08-03-18", pnl: 1.5,
                                    balance: 1003.57}]}},
-                               trade_stats: {gbm: {closed: 4, open: 1,
-                                                   no_outcome: 0,
-                                                   hit_rate: 0.75,
-                                                   net_bp_avg: 12.5,
-                                                   pnl: 3.57,
-                                                   expected_over_got: 2.1}},
-                               trades: [
+                          trade_stats: {gbm: {closed: 4, open: 1,
+                                              no_outcome: 0,
+                                              hit_rate: 0.75,
+                                              net_bp_avg: 12.5,
+                                              pnl: 3.57,
+                                              expected_over_got: 2.1}},
+                          trades: [
                                  {arm: "gbm", hour: "2026-08-03-19",
                                   sym: "BTCUSDT", side: "long",
                                   opened_at: Math.floor(Date.now()/1000)-600,
                                   closes_at: Math.floor(Date.now()/1000)+3000,
                                   state: "открыта", expected_bp: 244,
-                                  mae_bp: -30, closes_in_sec: 3000}]}}}
+                                  mae_bp: -30, closes_in_sec: 3000}]},
+                    // Пара в σ копит цель — ждущая книга обязана
+                    // называть причину числом (у живой z сегодня
+                    // ровно это состояние).
+                    z: {present: true,
+                        manifest: {version: 1, horizon_h: 24,
+                                   rank_target: "fwd_24h_z",
+                                   sections: 96, symbols: 540,
+                                   canary_ic: 0.003,
+                                   target: "fwd_24h",
+                                   target_rows: 412,
+                                   target_need: 1000,
+                                   trained_at:
+                                     "2026-08-01T10:00:00+00:00"}}}}
              : url.startsWith("/bot-full")
                ? {present: true, age_sec: 42.0, arm: "gbm",
                   capital_usd: 1000.0, balance_usd: 1125.01,
@@ -974,40 +981,36 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Турнир темпов: переключатель книг есть, и книга 1 ч показывает
     // СВОИ числа, а не числа главной. Проверяется числами фикстуры:
     // «кнопка есть» прошло бы и на кнопке, которая ничего не меняет.
-    if (!/data-book="h1"/.test(mb))
+    if (!/data-book="h24"/.test(mb))
       bad.push("обзор: нет переключателя книг горизонтов");
+    // Часовая книга удалена решением владельца: кнопка, оставшаяся в
+    // переключателе, обещала бы живую книгу.
+    if (/data-book="h1"/.test(mb))
+      bad.push("обзор: удалённая часовая книга в переключателе");
     if (global.__book) {
       let hb = "";
-      try { hb = global.__book("h1"); }
-      catch (e) { bad.push("обзор: книга 1 ч упала: " + e.message); }
+      try { hb = global.__book("h24"); }
+      catch (e) { bad.push("обзор: книга 24 ч упала: " + e.message); }
       // Баланс книги живёт в ПОДПИСИ секции, горизонт — там же.
       const hcap = global.__el
         ? String(global.__el("cap-model").textContent || "") : "";
-      if (!/1003\.57/.test(hcap) || !/hold 1 h/.test(hcap))
-        bad.push("обзор: книга 1 ч не показывает свой счёт и горизонт");
-      if (!/\+2\.44 %/.test(hb))
-        bad.push("обзор: сделка книги 1 ч не показана в процентах");
-      if (!/hz=h1/.test(hb))
-        bad.push("обзор: ссылка на историю книги 1 ч потеряла книгу");
-      // Сделка главной книги (+3.73 %) в часовой книге видна быть не
+      if (!/1003\.57/.test(hcap) || !/hold 24 h/.test(hcap))
+        bad.push("обзор: книга 24 ч не показывает свой счёт и горизонт");
+      if (!/hz=h24/.test(hb))
+        bad.push("обзор: ссылка на историю книги 24 ч потеряла книгу");
+      // Сделка главной книги (+3.73 %) в чужой книге видна быть не
       // может: смесь двух книг и есть отказ, ради которого проверка.
       if (/\+3\.73 %/.test(hb))
-        bad.push("обзор: в книге 1 ч видны сделки главной книги");
-      // Остановленная книга называет себя остановленной: живой вид с
-      // давними сделками читался бы как поломка записи.
-      const hbx = global.__el
-        ? String(global.__el("modelbox").innerHTML || "") : "";
-      if (!/STOPPED by the/.test(hbx.replace(/\s+/g, " ")))
-        bad.push("обзор: остановка книги 1 ч не названа");
-      // Книга 1 ч свою цель НАБРАЛА — строка ожидания у неё была бы
+        bad.push("обзор: в книге 24 ч видны сделки главной книги");
+      // Книга 24 ч свою цель НАБРАЛА — строка ожидания у неё была бы
       // ложной тревогой.
       if (/waiting for its target/.test(hb))
-        bad.push("обзор: книга 1 ч ждёт цель, которую уже набрала");
+        bad.push("обзор: книга 24 ч ждёт цель, которую уже набрала");
       // Книга, ждущая свою цель, обязана назвать причину ЧИСЛОМ:
       // пустая книга без неё неотличима от сломанной.
       let wb = "";
-      try { wb = global.__book("h24"); }
-      catch (e) { bad.push("обзор: книга 24 ч упала: " + e.message); }
+      try { wb = global.__book("z"); }
+      catch (e) { bad.push("обзор: книга z упала: " + e.message); }
       if (!/412<\/b> of 1000/.test(wb) || !/fwd_24h/.test(wb))
         bad.push("обзор: ждущая книга не называет причину числом");
       // Ситуационная книга: позиция без срока не рисует NaN, причина
@@ -1111,15 +1114,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // три вели бы на главную книгу, ничем себя не выдав.
     const bb = global.__el ? String(
       global.__el("books").innerHTML || "") : "";
-    if (!/hz=h1/.test(bb) || !/hz=h24/.test(bb))
+    if (!/hz=h24/.test(bb))
       bad.push("страница сделок: нет ссылок на книги горизонтов");
     // Кнопок столько же, сколько книг в ОБЩЕМ списке. «Ссылки есть»
     // прошло бы и на четырёх из пяти — ровно это владелец и увидел:
     // страница книги в единицах σ открывалась, а вкладки у неё не
     // было, потому что перечень кнопок жил здесь пятым местом.
     const nb = (bb.match(/data-hz="/g) || []).length;
-    if (nb !== 5)
-      bad.push(`страница сделок: кнопок книг ${nb}, а книг пять`);
+    if (nb !== 4)
+      bad.push(`страница сделок: кнопок книг ${nb}, а книг четыре`);
+    if (/data-hz="h1"/.test(bb))
+      bad.push("страница сделок: вкладка удалённой часовой книги");
     if (!/hz=z/.test(bb))
       bad.push("страница сделок: нет вкладки книги в единицах σ");
     const act = /hz=sit/.test(SEARCH) ? "sit" : "h4";
@@ -1509,8 +1514,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Имена книг — из общего списка страниц. Своя таблица здесь уже
     // разошлась с ним и называла книги в σ просто «1 h book», то есть
     // говорила, что в σ упорядочена одна из пяти.
-    if (!/1 h · stopped/.test(bx) || !/situational · per σ/.test(bx))
+    if (!/24 h</.test(bx) || !/situational · per σ/.test(bx))
       bad.push("лига: имена книг не из общего списка (порядок не назван)");
+    if (/1 h ·/.test(bx))
+      bad.push("лига: удалённая часовая книга всё ещё показана");
     // Тонкая пара: «общих часов 0» выглядит поломкой, поэтому пустая
     // сторона обязана быть названа, а панель — сказать, зачем пара
     // вообще существует.
