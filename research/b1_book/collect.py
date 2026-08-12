@@ -2970,6 +2970,11 @@ class Collector:
                 # строку правил значило бы показать книгу без срока.
                 facts.append(
                     f"hold {man.get('horizon_h') or TR.HOLD_H} h")
+                if man.get("entry_floor_bp"):
+                    facts.append(
+                        f"entry ≥ {man['entry_floor_bp']:g} bp")
+            if man.get("stopped"):
+                facts.append("STOPPED")
             if man.get("rank_target"):
                 facts.append(f"rank by {man['rank_target']}")
             if man.get("slots"):

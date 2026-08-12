@@ -1250,11 +1250,32 @@ function renderModel() {
        at the gate is counted against that level, not the forecast
        one.</div>`
     : "";
+  // Правило пола главной книги — числом, по той же причине, что гейт
+  // ситуационной: с полом тихий час НЕ торгуется, и пустой час — это
+  // работа правила, а не отказ сборщика.
+  const floorLine = !isSit(d) && m.entry_floor_bp
+    ? `<div class="mline dim">entry rule: a leg enters only if its
+       forecast clears <b>${m.entry_floor_bp} bp</b> (≈3× the cost
+       round; the extremeness probe put all the edge in that top
+       quintile) — a quiet hour is not traded at all, so an hour
+       without picks is the rule working, not a failure.</div>`
+    : "";
+  // Остановленная книга обязана называть себя остановленной: живой
+  // вид с давними сделками читался бы как поломка записи.
+  const stopBook = m.stopped
+    ? `<div class="mline" style="color:var(--ask)">book STOPPED by the
+       owner's decision: no new entries — the extremeness probe showed
+       even the top of the forecast (+2.9 bp gross) cannot pay the
+       11 bp hourly cost round. Old positions were closed by their own
+       forwards; the record below stays readable, and the 1h IC is
+       still measured for free every cycle.</div>`
+    : "";
   // Переключатель порога — только у книги без срока: у часовых книг
   // обещания пути не решают ни входа, ни выхода, и фильтровать их тем
   // же числом значило бы сравнивать разные вещи.
   const rrLine = isSit(d) ? rrControl(d) : "";
-  box.innerHTML = armBtns + rrLine + lagLine + gateLine + stopLine
+  box.innerHTML = armBtns + stopBook + rrLine + lagLine + gateLine
+    + stopLine + floorLine
     + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${
       m.canary_ic == null ? "—" : "clean (" + m.canary_ic + ")"}${
@@ -4278,7 +4299,9 @@ function explainTrade(t) {
   if (t.rank != null && t.of)
     bits.push(`strategy: hourly rebalance — this name ranked
       <b>#${t.rank} of ${t.of}</b> in the cross-section by expected
-      move`);
+      move${t.floor_bp
+        ? ` and cleared the <b>${t.floor_bp} bp</b> entry floor`
+        : ""}`);
   if (t.fwd0_bp != null && t.expected_bp != null) {
     const disc = Math.abs(t.expected_bp) - Math.abs(t.fwd0_bp);
     bits.push(`strategy: situational scanner${r.rules_version

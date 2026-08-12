@@ -572,6 +572,7 @@ global.fetch = async (url) => {
                ? {present: true,
                   manifest: {version: 1, sections: 96, symbols: 540,
                              canary_ic: 0.003, importance: {},
+                             entry_floor_bp: 30,
                              trained_at: "2026-08-01T10:00:00+00:00"},
                   thoughts: [{at: "08-01 10:00", text: "проверка"}],
                   ic: [{target: "fwd_4h", median_ic: 0.021, sections: 24}],
@@ -703,6 +704,7 @@ global.fetch = async (url) => {
                                        "2026-08-01T10:00:00+00:00"}},
                     h1: {present: true,
                                manifest: {version: 1, horizon_h: 1,
+                                          stopped: true,
                                           sections: 96, symbols: 540,
                                           canary_ic: 0.003,
                                           target: "fwd_1h",
@@ -991,6 +993,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // может: смесь двух книг и есть отказ, ради которого проверка.
       if (/\+3\.73 %/.test(hb))
         bad.push("обзор: в книге 1 ч видны сделки главной книги");
+      // Остановленная книга называет себя остановленной: живой вид с
+      // давними сделками читался бы как поломка записи.
+      const hbx = global.__el
+        ? String(global.__el("modelbox").innerHTML || "") : "";
+      if (!/STOPPED by the/.test(hbx.replace(/\s+/g, " ")))
+        bad.push("обзор: остановка книги 1 ч не названа");
       // Книга 1 ч свою цель НАБРАЛА — строка ожидания у неё была бы
       // ложной тревогой.
       if (/waiting for its target/.test(hb))
@@ -1065,6 +1073,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push("обзор: запаздывание входа не разложено по шагам");
       // Возврат на главную: проверки ниже смотрят на её разметку.
       try { global.__book("h4"); }
+      catch (e) { bad.push("обзор: возврат на h4 упал: " + e.message); }
+      // Пол входа главной книги — числом на панели: тихий час не
+      // торгуется, и пустой час обязан читаться работой правила.
+      const h4x = (global.__el
+        ? String(global.__el("modelbox").innerHTML || "") : "")
+        .replace(/\s+/g, " ");
+      if (!/30 bp/.test(h4x) || !/not traded at all/.test(h4x))
+        bad.push("обзор: правило пола главной книги не названо");
+      if (/STOPPED by the/.test(h4x))
+        bad.push("обзор: главная книга названа остановленной");
+      try { global.__noop && global.__noop(); }
       catch (e) { bad.push("обзор: возврат на книгу 4 ч упал: " + e.message); }
     }
   }
