@@ -232,7 +232,7 @@ global.fetch = async (url) => {
                         quiet: null, normal: null, loud: null}}}}
              : url.startsWith("/tournament")
              ? {present: true, legs: 55245, min_cell: 30,
-                current: "e22_rr2.0_sq_t1_a24", measured: 1,
+                current: "e33_rr2.0_sq_t1_a24", measured: 1,
                 med_exp_bp: 47.3,
                 has_dd: !/tournodd=1/.test(SEARCH),
                 run_age_sec: /tourstale=1/.test(SEARCH) ? 190000 : 7200,
@@ -245,7 +245,7 @@ global.fetch = async (url) => {
                 // строки: иначе сломанную сортировку не отличить от
                 // работающей (первый вариант стаба это и показал).
                 cells: [
-                  {key: "e22_rr2.0_sq_t1_a24", edge: 22, rr: 2,
+                  {key: "e33_rr2.0_sq_t1_a24", edge: 33, rr: 2,
                    stop: "q", take: true, age: 24, n: 50, win: 0.5,
                    exp_bp: 47.3, med_bp: -2.7, total_bp: 2365.5,
                    worst_bp: -352.3, dd_bp: -815.0},
@@ -1782,7 +1782,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // обязана стоять НИЖЕ измеренной. Иначе восемь сделок читались бы
     // как лучшее правило сетки — ровно ловушка шапки страницы.
     const iThin = first.findIndex(r => /e22_rr3\.0_sn_t0_a24/.test(r));
-    const iMeas = first.findIndex(r => /e22_rr2\.0_sq_t1_a24/.test(r));
+    const iMeas = first.findIndex(r => /e33_rr2\.0_sq_t1_a24/.test(r));
     if (iThin < 0 || iMeas < 0 || iThin < iMeas)
       bad.push("турнир: неизмеренная ячейка не утонула вниз");
     // Сортировка — настоящей функцией страницы: по итогу первой
@@ -1793,7 +1793,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       global.__sort("total_bp");
       const rows = flat(global.__el("box").innerHTML)
         .split("<tr").slice(2);
-      if (!/e22_rr2\.0_sq_t1_a24/.test(rows[0] || ""))
+      if (!/e33_rr2\.0_sq_t1_a24/.test(rows[0] || ""))
         bad.push("турнир: сортировка по итогу не подняла максимум");
       global.__sort("total_bp");
       const asc = order();
