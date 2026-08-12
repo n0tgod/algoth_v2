@@ -4060,6 +4060,10 @@ function draw() {
       g.moveTo(xe, y(e.px) - 5);
       g.lineTo(xe, y(e.px) + 5);
       g.stroke();
+      // Засечка — своя зона наведения, как у точки долива: подсказка
+      // обязана говорить об ЭТОЙ разгрузке, а не о позиции целиком.
+      HIT.push({ex: e, mdl: t, x0: xe-5, x1: xe+5,
+                y0: y(e.px)-7, y1: y(e.px)+7});
     }
     HIT.push({mdl: t, exit: drew, x0: xa-7, x1: Math.max(xb, xa+7),
               y0: yl-12, y1: yh+12});
@@ -4648,6 +4652,49 @@ function hover(e) {
   if (!h) { tip.style.display="none"; return; }
   const row=(k,v,cls)=>`<div class="r"><span>${k}</span>
     <span class="${cls||""}">${v}</span></div>`;
+  const put = () => {
+    tip.style.display="block";
+    tip.style.left = Math.max(4, Math.min(px.clientWidth-tip.offsetWidth-4,
+                                          mx+14))+"px";
+    tip.style.top = Math.max(4, my+18)+"px";
+  };
+  const hm = v => new Date(v*1000).toISOString().slice(11,16) + " UTC";
+  // Точка долива и засечка разгрузки — подсказка ПРО ЭТУ ногу, а не про
+  // позицию целиком: зона точки лежит внутри спана сделки, и общая
+  // подсказка на ней съедала бы ровно те числа, ради которых точка и
+  // нарисована (просьба владельца).
+  if (h.add) {
+    const a = h.add, t = h.mdl;
+    const dry = a.size != null && Math.abs(a.size) < 0.005;
+    tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">
+        add · ${t.side} · ${t.sym.replace("USDT","")}</div>`
+      + row("time", hm(a.at))
+      + row("price", a.px)
+      + row("size", dry ? "0 $ — no cash that hour"
+            : a.size == null ? "—" : (+a.size).toFixed(2) + " $")
+      + row("position from", t.hour);
+    put();
+    return;
+  }
+  if (h.ex) {
+    const ev = h.ex, t = h.mdl;
+    tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">
+        unload · ${t.side} · ${t.sym.replace("USDT","")}</div>`
+      + row("time", hm(ev.at))
+      + row("price", ev.px == null ? "—" : ev.px)
+      + row("size out", ev.size == null ? "—"
+            : (+ev.size).toFixed(2) + " $")
+      + (ev.net_bp == null ? ""
+         : row("net this lot", pct(ev.net_bp),
+               ev.net_bp > 0 ? "buy" : "sell"))
+      + (ev.pnl == null ? ""
+         : row("locked in", (ev.pnl > 0 ? "+" : "")
+               + (+ev.pnl).toFixed(2) + " $",
+               ev.pnl > 0 ? "buy" : "sell"))
+      + (ev.reason ? row("reason", disp(ev.reason)) : "");
+    put();
+    return;
+  }
   if (h.mdl) {
     // Сделка МОДЕЛИ. Открытая несёт прогноз и срок, закрытая — факт и
     // деньги; путать её со сделкой детектора нельзя, поэтому и

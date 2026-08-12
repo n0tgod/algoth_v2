@@ -859,6 +859,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // вызова этот код не исполняется ни разу.
                 + "\nglobal.__mdlToggle = typeof mdlToggle === "
                 + "'function' ? mdlToggle : null;"
+                + "\nglobal.__hover = typeof hover === 'function' "
+                + "? hover : null;"
                 + "\nglobal.__mrows = typeof mrows === 'function' "
                 + "? mrows : null;"
                 + "\nglobal.__showTrade = typeof showTrade === 'function' "
@@ -2228,9 +2230,51 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // по построению — это отметки внутри позиции. Спрашивать выход
       // надо у записи ПОЗИЦИИ, иначе проверка падала бы на слитой
       // сделке, у которой всё нарисовано верно.
-      const cl = drawn.find(h => !h.add && h.mdl.state === "закрыта");
+      const cl = drawn.find(h => !h.add && !h.ex
+                             && h.mdl.state === "закрыта");
       if (cl && cl.exit == null)
         bad.push("у закрытой сделки не нарисован выход");
+      // Подсказка точки — ПРО НОГУ, а не про позицию целиком (просьба
+      // владельца): наведение гоняется настоящим обработчиком по
+      // центру зоны, и читается настоящий tip. Зона точки лежит
+      // внутри спана сделки, и общая подсказка на ней съедала бы
+      // ровно те числа, ради которых точка нарисована.
+      const tipEl = global.__el ? global.__el("tip") : null;
+      const hAdd = drawn.find(h => h.add);
+      if (!global.__hover) {
+        bad.push("график: функции наведения не существует");
+      } else if (hAdd && tipEl) {
+        global.__hover({clientX: (hAdd.x0 + hAdd.x1) / 2,
+                        clientY: (hAdd.y0 + hAdd.y1) / 2});
+        const tp = String(tipEl.innerHTML || "").replace(/\s+/g, " ");
+        if (!/add ·/.test(tp))
+          bad.push("график: подсказка долива говорит не о доливе: "
+                   + tp.slice(0, 90));
+        if (!/50\.00 \$/.test(tp) && !/45\.00 \$/.test(tp)
+            && !/0 \$ — no cash/.test(tp))
+          bad.push("график: в подсказке долива нет его размера: "
+                   + tp.slice(0, 120));
+        if (/expects|closes in/.test(tp))
+          bad.push("график: подсказка долива несёт поля всей сделки");
+      }
+      const hEx = drawn.find(h => h.ex);
+      if (hEx && tipEl && global.__hover) {
+        global.__hover({clientX: (hEx.x0 + hEx.x1) / 2,
+                        clientY: (hEx.y0 + hEx.y1) / 2});
+        const tp = String(tipEl.innerHTML || "").replace(/\s+/g, " ");
+        if (!/unload ·/.test(tp))
+          bad.push("график: подсказка разгрузки говорит не о ней: "
+                   + tp.slice(0, 90));
+        if (!/size out/.test(tp))
+          bad.push("график: в подсказке разгрузки нет размера выхода");
+        if (!/locked in/.test(tp) && !/net this lot/.test(tp))
+          bad.push("график: в подсказке разгрузки нет зафиксированного");
+      } else if (!hEx && !/arm=nn/.test(SEARCH)) {
+        // На фикстуре слитая позиция руки gbm несёт разгрузку С ЦЕНОЙ —
+        // засечка обязана быть зоной. Прогон руки nn её не рисует по
+        // праву: слой держит одну руку.
+        bad.push("график: засечка разгрузки не стала зоной наведения");
+      }
       // Открытая по ссылке страница: рука из ссылки, сделка найдена,
       // окно свечей взято ЗА ПРОШЛОЕ и слежение за краем отпущено.
       if (FOCUS) {
