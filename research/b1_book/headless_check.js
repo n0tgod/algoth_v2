@@ -463,6 +463,10 @@ global.fetch = async (url) => {
                 // столбцы — час здесь ключ листа, а не время сделки.
                 ...(/hz=sit/.test(url)
                     ? {situational: true, horizon_h: null} : {}),
+                // Книга равного риска: выходы только по уровням —
+                // страница обязана взять правило из ОТВЕТА.
+                ...(/hz=sit_r/.test(url)
+                    ? {exit_policy: "levels_only"} : {}),
                 total: 4, pages: 1, filtered: false, grand_total: 4,
                 // Кривая счёта: четыре числа на точку — метка,
                 // эквити и границы корзины. Полоса между ними и
@@ -2109,6 +2113,22 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         && !seen.some(u => u.startsWith("/model_trades")
                            && /hz=sit_r/.test(u)))
       bad.push("разбор: книга sit_r потеряна по дороге к серверу");
+    // Политика выходов — из ответа: книге равного риска разбор обязан
+    // сказать «только стоп или тейк», а ситуационной — по-прежнему
+    // называть разворот прогноза и предел возраста. Двусторонне:
+    // рассказ, повешенный всем книгам разом, иначе прошёл бы.
+    const wb2 = wb.replace(/\s+/g, " ");
+    if (/hz=sit_r/.test(SEARCH)) {
+      if (!/Nothing else closes/.test(wb2))
+        bad.push("разбор: правило «только уровни» не названо");
+      if (/forecast flipping sign/.test(wb2))
+        bad.push("разбор: книге равного риска приписан разворот "
+                 + "прогноза");
+    } else if (/hz=sit(&|$)/.test(SEARCH)) {
+      if (!/forecast flipping sign/.test(wb2)
+          || !/24 h age limit/.test(wb2))
+        bad.push("разбор: у ситуационной пропали часовые причины");
+    }
   }
 
   if (isChart && /paperoff=1/.test(SEARCH)) {

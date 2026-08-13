@@ -1416,6 +1416,51 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d2, ignore_errors=True)
 
+        # Книга «только уровни» (решение владельца: у равного риска
+        # сделка закрывается либо стопом, либо тейком). Разворот
+        # прогноза и предел возраста позиций НЕ трогают, уровень —
+        # трогает как прежде. Политика читается из МАНИФЕСТА книги:
+        # правило, зашитое в имя каталога, уже подводило график.
+        d3 = tempfile.mkdtemp()
+        try:
+            with open(os.path.join(d3, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(
+                    {"exit_policy": T.SIT_R_EXIT_POLICY}))
+            old3 = {"arm": "gbm", "hour": "2026-08-05-10",
+                    "long": [{"sym": "AUSDT", "fwd": 30.0,
+                              "px": 100.0, "mae": -10.0,
+                              "mfe": 25.0}], "short": []}
+            with open(os.path.join(d3, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(old3) + "\n")
+            # Обе часовые причины разом: прогноз развернулся (fresh
+            # −5 у models2) И возраст за сутки. Позиция обязана жить.
+            T.situational_arm(d3, "gbm", models2, x, mats, syms,
+                              rows_m, 1, grid, lo, hi, None,
+                              lambda m: None)
+            rv3 = T._read_jsonl(os.path.join(d3, "review.jsonl"))
+            check("«только уровни»: ни разворот, ни возраст не "
+                  "закрывают",
+                  not [r for rec in rv3 for r in rec["rows"]],
+                  str(rv3))
+            # А стоп закрывает: −15 б.п. при обещанных −10.
+            mats3 = {"mid_close": np.array([[100.0, 99.85],
+                                            [100.0, 100.0],
+                                            [100.0, 100.0],
+                                            [100.0, 100.0]])}
+            T.situational_arm(d3, "gbm", models2, x, mats3, syms,
+                              rows_m, 1, grid, lo, hi, None,
+                              lambda m: None)
+            rv3 = T._read_jsonl(os.path.join(d3, "review.jsonl"))
+            got3 = [r for rec in rv3 for r in rec["rows"]
+                    if r["sym"] == "AUSDT"]
+            check("«только уровни»: стоп закрывает как прежде",
+                  got3 and got3[0]["reason"]
+                  == "цена прошла обещанный ход против", str(got3))
+        finally:
+            shutil.rmtree(d3, ignore_errors=True)
+
         # Смена правил книги отставляет старые сделки в архив: часовую
         # логику v1 (с дефектом сторон у шортов) нельзя сводить в один
         # счёт с живым сканером. Той же версии каталог не трогается.
@@ -1462,6 +1507,26 @@ def test_situational_book_enters_and_exits_by_situation():
             check("книга тех же правил не трогается",
                   T.fresh_sit_on_rules_change(old_dir, lambda m: None)
                   is None and os.path.isdir(old_dir))
+            # Политика выходов — то же правило книги, что и версия:
+            # появление «только уровней» отставляет книгу и при
+            # неизменной версии правил.
+            got7p = T.fresh_sit_on_rules_change(
+                old_dir, lambda m: None,
+                exit_policy=T.SIT_R_EXIT_POLICY)
+            check("смена политики выходов отставляет книгу",
+                  got7p is not None and os.path.isdir(got7p),
+                  str(got7p))
+            os.makedirs(old_dir, exist_ok=True)
+            with open(os.path.join(old_dir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(
+                    {"rules_version": T.SIT_RULES_VERSION,
+                     "exit_policy": T.SIT_R_EXIT_POLICY}))
+            check("та же политика книгу не трогает",
+                  T.fresh_sit_on_rules_change(
+                      old_dir, lambda m: None,
+                      exit_policy=T.SIT_R_EXIT_POLICY) is None
+                  and os.path.isdir(old_dir))
         finally:
             shutil.rmtree(d7, ignore_errors=True)
 

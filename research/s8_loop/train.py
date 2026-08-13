@@ -1196,6 +1196,13 @@ SIT_ARM_BAND_BP = ROUND_COST_BP
 # сказано честно. Объявлен до замера по записанным сделкам
 SIT_MAX_EATEN = 0.5
 SIT_MAX_AGE_H = 24
+# Книга равного риска (решение владельца 2026-08-13): сделка
+# закрывается ТОЛЬКО уровнем — стопом или тейком. Разворот прогноза и
+# предел возраста её позиций не трогают: выход «по середине» ломает
+# математику ожидания в деньгах (−R либо +r·R), ради которой книга и
+# заведена. Цена решения названа: позиция, не задевшая ни один
+# уровень, живёт дольше суток и держит слот.
+SIT_R_EXIT_POLICY = "levels_only"
 # Наблюдательная книга: те же гейты, КРОМЕ отношения. Нужна затем,
 # чтобы фильтру владельца было что показывать ниже боевого порога: в
 # торгуемой книге сделок с RR < 2 нет вовсе, и порог 1 к 1 добавить
@@ -1391,7 +1398,7 @@ def fresh_book_on_rank_change(mdir, want, log_=None, floor=None):
     return dst
 
 
-def fresh_sit_on_rules_change(mdir, log_=None):
+def fresh_sit_on_rules_change(mdir, log_=None, exit_policy=None):
     """Сменились правила ситуационной книги — старая уходит в архив.
 
     Книга не удаляется, а переезжает в архивный каталог: история
@@ -1402,10 +1409,15 @@ def fresh_sit_on_rules_change(mdir, log_=None):
     try:
         with open(os.path.join(mdir, "manifest.json"),
                   encoding="utf-8") as f:
-            was = int((json.load(f) or {}).get("rules_version") or 1)
+            man = json.load(f) or {}
+        was = int(man.get("rules_version") or 1)
     except (OSError, ValueError):
         return None                # каталога нет или пуст — нечего
-    if was == SIT_RULES_VERSION:
+    # Политика выходов — то же правило книги, что и версия: книга,
+    # закрывавшая сделки разворотом прогноза, и книга «только стоп
+    # или тейк» — разные книги, и сшивать их кривые в одну нельзя.
+    if was == SIT_RULES_VERSION \
+            and man.get("exit_policy") == exit_policy:
         return None
     dst = f"{mdir}.rules-v{was}"
     n = 0
@@ -1414,11 +1426,14 @@ def fresh_sit_on_rules_change(mdir, log_=None):
         dst = f"{mdir}.rules-v{was}-{n}"
     if archive_book(mdir, dst, log_) is None:
         return None
+    why = (f"v{was} → v{SIT_RULES_VERSION}"
+           if was != SIT_RULES_VERSION
+           else f"выходы: {man.get('exit_policy') or 'все причины'}"
+                f" → {exit_policy or 'все причины'}")
     if log_:
-        log_(f"правила ситуационной книги сменились "
-             f"(v{was} → v{SIT_RULES_VERSION}) — старые сделки "
-             f"отставлены в {os.path.basename(dst)}, книга начинается "
-             f"заново")
+        log_(f"правила ситуационной книги сменились ({why}) — "
+             f"старые сделки отставлены в {os.path.basename(dst)}, "
+             f"книга начинается заново")
     return dst
 
 
@@ -1461,6 +1476,19 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     si = {s: i for i, s in enumerate(syms)}
     cur = grid[j_last]
     mid = mats["mid_close"]
+    # Политика выходов — из МАНИФЕСТА книги, а не из имени каталога:
+    # у книги равного риска сделку закрывает только уровень (стоп или
+    # тейк, решение владельца), и часовые причины «разворот прогноза»
+    # и «предел возраста» её позиций не трогают. Манифест пишет этот
+    # же цикл до вызова руки; нет манифеста (свежий каталог, тесты) —
+    # политика прежняя, все причины в силе.
+    try:
+        with open(os.path.join(mdir, "manifest.json"),
+                  encoding="utf-8") as f:
+            lvl_only = ((json.load(f) or {}).get("exit_policy")
+                        == SIT_R_EXIT_POLICY)
+    except (OSError, ValueError):
+        lvl_only = False
 
     # --- выходы: ситуация кончилась (часовые причины) ----------------
     # Событийные выходы уже поглощены выше; остаются причины, которым
@@ -1506,10 +1534,13 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                 or (p["side"] == "short" and move <= fav)):
             reason = "цена дошла до обещанной цели"
         # Прогноз развернулся: модель больше не ждёт того, ради
-        # чего входила.
-        elif (p["side"] == "long") != (fresh > 0):
+        # чего входила. У книги «только уровни» ни разворот, ни
+        # возраст позицию не трогают — каждый её исход обязан быть
+        # −R либо +r·R.
+        elif not lvl_only and (p["side"] == "long") != (fresh > 0):
             reason = "прогноз развернулся"
-        elif age is not None and age >= SIT_MAX_AGE_H:
+        elif not lvl_only and age is not None \
+                and age >= SIT_MAX_AGE_H:
             reason = "предел возраста"
         if reason is None:
             continue
@@ -2471,10 +2502,12 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         # (гейты и места совпадают): меняется только распределение
         # размера, и разница результатов принадлежит правилу.
         rbk = mdir + "_r"
-        fresh_sit_on_rules_change(rbk, log_)
+        fresh_sit_on_rules_change(rbk, log_,
+                                  exit_policy=SIT_R_EXIT_POLICY)
         os.makedirs(rbk, exist_ok=True)
         srm = dict(sm, sizing="fixed_risk",
-                   risk_share=TR.FIXED_RISK_SHARE)
+                   risk_share=TR.FIXED_RISK_SHARE,
+                   exit_policy=SIT_R_EXIT_POLICY)
         with open(os.path.join(rbk, "manifest.json.tmp"), "w",
                   encoding="utf-8") as f:
             json.dump(srm, f, ensure_ascii=False, indent=1)

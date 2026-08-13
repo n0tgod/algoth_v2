@@ -1856,6 +1856,7 @@ class Collector:
                     "min_rr": mman.get("min_rr"),
                     "min_disc_bp": mman.get("min_disc_bp"),
                     "max_eaten": mman.get("max_eaten"),
+                    "exit_policy": mman.get("exit_policy"),
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
@@ -1914,6 +1915,7 @@ class Collector:
                 "min_rr": mman.get("min_rr"),
                 "min_disc_bp": mman.get("min_disc_bp"),
                 "max_eaten": mman.get("max_eaten"),
+                "exit_policy": mman.get("exit_policy"),
                 # Порог владельца и его цена в сделках: без этих чисел
                 # отфильтрованный счёт неотличим от счёта книги.
                 "rr_min": rr_min or 0, "rr_cut": rr_cut,
@@ -2221,15 +2223,23 @@ class Collector:
                      "The owner saw RR 1:3 takes worth $20 and $5 "
                      "while a stop took $15 — levels differ per "
                      "trade, size did not, so dollar expectancy "
-                     "broke. Not in league or root sums: same "
-                     "decisions would be counted twice.",
+                     "broke. Exits ONLY by its own levels — stop "
+                     "or take (owner's rule): a forecast flip "
+                     "or the age limit never close its trades, "
+                     "so every close is -1R or +RR·R. Not in "
+                     "league or root sums: same decisions would "
+                     "be counted twice.",
             "plain_ru": "ТЕ ЖЕ сделки, что у ситуационной книги — "
                         "гейты и места совпадают, — но размер обратен "
                         "исполняемому стопу: стоп всегда −R, тейк при "
                         "RR 3 всегда +3R. Владелец увидел тейки 1:3 "
                         "по 20 $ и по 5 $ при стопе в 15 $ — уровни у "
                         "сделок разные, размер один, и математика "
-                        "ожидания в деньгах ломалась. В лигу и сумму "
+                        "ожидания в деньгах ломалась. Выходы — "
+                        "ТОЛЬКО по своим уровням, стоп или тейк "
+                        "(правило владельца): разворот прогноза и "
+                        "предел возраста её сделок не закрывают, "
+                        "каждый исход — −1R либо +RR·R. В лигу и сумму "
                         "корня не входит: те же решения считались бы "
                         "дважды."},
     }

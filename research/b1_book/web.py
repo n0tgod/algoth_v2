@@ -5219,9 +5219,13 @@ function render(d, t){
       + `<p class="dim">Exits, in order: stop or target touched by the
        path of prices (checked every ~5 seconds, fill at the price
        available when noticed — in a gap the fill can be worse than
-       the level, the stop does <b>not</b> guarantee the loss bound);
-       the forecast flipping sign at an hourly review; the 24 h age
-       limit.</p>`;
+       the level, the stop does <b>not</b> guarantee the loss bound)${
+       d.exit_policy === "levels_only"
+       ? `. <b>Nothing else closes this book's trades</b> (owner's
+          rule): no forecast flip, no age limit — every close is the
+          stop or the take, −1R or +RR·R`
+       : `; the forecast flipping sign at an hourly review; the 24 h
+          age limit`}.</p>`;
   } else {
     lv = `<p class="dim">No levels recorded for this trade.</p>`;
   }
