@@ -3026,6 +3026,10 @@ class Collector:
         out = {"roots": [dict(self.ROOT_TREE["gbm"], arm="gbm"),
                          dict(self.ROOT_TREE["nn"], arm="nn")],
                "books": books, "tournament": tourney,
+               # Депозит книги (на руку): страница печатает рядом с
+               # деньгами долю к нему (просьба владельца). Число — из
+               # ядра расчёта, не из констант страницы.
+               "cap": TR.START_BALANCE,
                "errors": errors, "scanned": scanned,
                "generated_at": round(now, 1)}
         self._tree_cache = (now, out)

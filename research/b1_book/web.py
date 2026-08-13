@@ -5888,7 +5888,7 @@ button[aria-pressed="true"]{border-color:var(--accent);
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + r"""
+""" + NAVJS + PCTJS + r"""
 // Язык — та же механика, что у справочника: оба языка уже в ответе,
 // переключение не ходит на сервер, ссылка с `lang` перебивает память.
 let LANG = new URLSearchParams(location.search).get("lang")
@@ -5973,6 +5973,25 @@ function money(v){
   return `<span class="${c} mono">${v > 0 ? "+" : ""}${
     v.toFixed(2)} $</span>`;
 }
+// Доля к депозиту — рядом с каждой денежной цифрой (просьба
+// владельца): «+59.95 $» без знаменателя не говорит, много это или
+// пыль. Знаменатель едет из ответа сервера; без него доля не
+// печатается вовсе — выдуманное число хуже пропуска.
+function share(v, cap){
+  if (v == null || !cap) return "";
+  return ` <span class="mono" style="color:var(--muted)">(${
+    pct(v / cap * 1e4)})</span>`;
+}
+// Депозит руки — сумма депозитов её ТОРГУЕМЫХ книг: наблюдательная
+// запись денег не держит, незаведённая книга — тоже. Делить сумму
+// двух счетов на один депозит нельзя — то же правило, что у вкладки
+// «обе» в сводке.
+function rootCap(){
+  if (!DATA || !DATA.cap) return null;
+  const n = (DATA.books || []).filter(
+    b => b.present && b.key !== "sit_obs").length;
+  return n ? DATA.cap * n : null;
+}
 // Короткое имя узла: часть заголовка до тире. Полный заголовок и
 // проза — в карточке по «i».
 function label(o){
@@ -5984,7 +6003,8 @@ function openLine(s){
   // ноль: ноль объявил бы позицию ровной там, где цены просто нет.
   // Частичная переоценка названа числом — «10/12».
   if (!s || !s.open) return "";
-  const m = s.open_pnl == null ? "\u2014" : money(s.open_pnl);
+  const m = s.open_pnl == null ? "\u2014"
+    : money(s.open_pnl) + share(s.open_pnl, DATA && DATA.cap);
   const part = s.marked < s.open ? ` · ${s.marked}/${s.open}` : "";
   return `<div class="ns">${T("openw")} ${s.open} · ${m}${part}</div>`;
 }
@@ -5999,7 +6019,7 @@ function bookStat(b, arm){
   // сказано, а деньги открытых идут своей строкой ниже.
   if (!s || !s.closed) return T("none");
   return `${s.closed} · ${Math.round(s.win * 100)} % · ${
-    money(s.pnl)}`;
+    money(s.pnl)}${share(s.pnl, DATA && DATA.cap)}`;
 }
 function rootSum(arm){
   let n = 0, p = 0.0, any = false;
@@ -6010,7 +6030,8 @@ function rootSum(arm){
     if (!s || !s.closed) continue;
     any = true; n += s.closed; p += s.pnl;
   }
-  return any ? `\u03a3 ${n} · ${money(Math.round(p * 100) / 100)}`
+  return any ? `\u03a3 ${n} · ${money(Math.round(p * 100) / 100)}${
+      share(p, rootCap())}`
              : T("none");
 }
 function rootOpen(arm){
@@ -6022,7 +6043,9 @@ function rootOpen(arm){
     if (s.open_pnl != null) { p += s.open_pnl; priced = true; }
   }
   if (!n) return "";
-  const mv = priced ? money(Math.round(p * 100) / 100) : "\u2014";
+  const mv = priced
+    ? money(Math.round(p * 100) / 100) + share(p, rootCap())
+    : "\u2014";
   const part = m < n ? ` · ${m}/${n}` : "";
   return `<div class="ns">${T("openw")} ${n} · ${mv}${part}</div>`;
 }
