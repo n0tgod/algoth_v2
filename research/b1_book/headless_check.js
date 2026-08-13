@@ -1040,8 +1040,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       catch (e) { bad.push("обзор: ситуационная книга упала: " + e.message); }
       if (/NaN/.test(sb))
         bad.push("обзор: у бессрочной позиции нарисован NaN");
-      if (!/forecast flipped/.test(sb))
+      // Причина выхода — коротким словом («closed · flip»): длинная
+      // фраза распухала ряд (владелец: «таблица поехала на одной
+      // сделке»). Полная причина живёт в подсказке строки и на
+      // странице разбора; возврат длинной фразы в ячейку — регресс.
+      if (!/closed · flip/.test(sb))
         bad.push("обзор: причина выхода ситуационной сделки не показана");
+      if (/forecast flipped/.test(sb))
+        bad.push("обзор: длинная фраза причины вернулась в таблицу");
+      if (!/title="прогноз развернулся"/.test(sb))
+        bad.push("обзор: полной причины нет в подсказке строки");
       const scap = global.__el
         ? String(global.__el("cap-model").textContent || "") : "";
       if (!/by situation/.test(scap))

@@ -49,6 +49,21 @@ function pct(v) {
 }
 """
 
+# Причины выхода в ячейках таблиц — коротким словом. Длинная фраза
+# («price broke the promised adverse path») переносила ячейку
+# состояния на вторую строку, и ряд закрытой сделки распухал —
+# владелец увидел это как «таблица поехала на одной сделке». Полная
+# причина остаётся в подсказке строки и на странице разбора сделки;
+# карта ОДНА на все таблицы — копии уже завелись трижды и разошлись
+# бы.
+EXITJS = r"""
+const EXIT_EN = {"прогноз развернулся": "flip",
+                 "цена прошла обещанный ход против": "stop",
+                 "цена дошла до обещанной цели": "target",
+                 "предел возраста": "age",
+                 "встречный сигнал закрыл позицию": "netted"};
+"""
+
 BOOKJS = r"""
 // Книги турнира: ключ, подпись. ОДИН список на все страницы — он жил
 // в четырёх местах, и книга в единицах σ доехала до трёх: страница
@@ -1033,7 +1048,9 @@ function tradeTable(p) {
       <td class="mono">${pct(t.got_bp)}</td>
       <td class="mono">${t.pnl == null ? "—" :
         (t.pnl > 0 ? "+" : "") + t.pnl.toFixed(2)}</td>
-      <td class="dim">${when}</td><td>${info}</td></tr>`;
+      <td class="dim"${t.exit_reason
+        ? ` title="${t.exit_reason}"` : ""}>${when}</td>
+      <td>${info}</td></tr>`;
   }).join("");
   return `<div class="mline">model trades <span class="dim">(exp —
     expected move; mae — expected move <b>against</b> the position
@@ -1080,11 +1097,7 @@ function setupText(t) {
   return t.setup.map(x => `${FAM_EN[x[0]] || x[0]} ${
     Math.round(x[1] * 100)} %`).join(", ");
 }
-const EXIT_EN = {"прогноз развернулся": "forecast flipped",
-                 "цена прошла обещанный ход против":
-                   "price broke the promised adverse path",
-                 "цена дошла до обещанной цели": "target reached",
-                 "предел возраста": "age limit"};
+""" + EXITJS + r"""
 function exitLine(s) {
   // Раскладка выходов числом. Без неё «знак угадан у 55 % из 12» не
   // говорит, куда делись остальные сделки, а именно там и сидит
@@ -2009,11 +2022,7 @@ function setupText(t) {
   return t.setup.map(x => `${FAM_EN[x[0]] || x[0]} ${
     Math.round(x[1] * 100)} %`).join(", ");
 }
-const EXIT_EN = {"прогноз развернулся": "forecast flipped",
-                 "цена прошла обещанный ход против":
-                   "price broke the promised adverse path",
-                 "цена дошла до обещанной цели": "target reached",
-                 "предел возраста": "age limit"};
+""" + EXITJS + r"""
 // Кривая счёта. Рисуются ОБЕ руки всегда, даже когда выбрана одна:
 // они учатся на одних данных, и почти любой вопрос к ним
 // сравнительный — «чем разошлись». Выбранная ведётся ярко, вторая
@@ -3071,15 +3080,9 @@ const KEY_EN = {"открыта": "open", "закрыта": "closed", "цель"
   "оборвана перезапуском": "cut by restart", "ждёт разбора": "awaiting",
   "вышла, ждёт разбора": "exited, pnl pending",
   "без исхода": "no outcome", "полка": "shelf", "кругл": "round",
-  "экстремум": "extreme", "лента": "tape", "стакан": "book",
-  // Причины выхода ситуационной книги: таблица сделок модели на этой
-  // же странице печатает их через `disp`, и без перевода строка
-  // осталась бы русской посреди английской страницы.
-  "прогноз развернулся": "forecast flipped",
-  "цена прошла обещанный ход против": "adverse promise hit",
-  "цена дошла до обещанной цели": "target reached",
-  "предел возраста": "age limit"};
-const disp = v => v == null ? "—" : (KEY_EN[v] || v);
+  "экстремум": "extreme", "лента": "tape", "стакан": "book"};
+""" + EXITJS + r"""
+const disp = v => v == null ? "—" : (EXIT_EN[v] || KEY_EN[v] || v);
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
 const stamp = t => new Date(t*1000).toISOString().slice(11,16);
