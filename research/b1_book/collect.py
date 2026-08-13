@@ -734,6 +734,10 @@ class Collector:
         # ровно между чтением и сбросом, теряется — одна сделка из
         # сотен, и это дешевле, чем блокировка на каждом принте.
         self.px_ext = {}
+        # Живой шум монеты для правила v11 сканера: кеш на минуту,
+        # состав целых минут меняется раз в минуту, а сканер
+        # спрашивает раз в пять секунд по всем кандидатам.
+        self._noise_cache = {}
         self.lines = LogBuf()
         self.msg_mark = (time.time(), 0)
         self.msg_rate = 0.0
@@ -1542,6 +1546,9 @@ class Collector:
         и касса возвращает их тогда же. Тень бота читает те же два
         файла, и показ, обгоняющий её, развёл бы два счёта.
         """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
         conv = {(t.get("sym"), t.get("opened_at")) for t in tr}
         closed = {(rv.get("hour"), r.get("sym"), r.get("side"))
                   for rv in reviews or []
@@ -1571,7 +1578,12 @@ class Collector:
                 "setup": e.get("setup"),
                 "train_seq": e.get("train_seq"),
                 "fwd0_bp": e.get("fwd0"),
+                "noise_bp": e.get("noise_bp"), "eaten": e.get("eaten"),
                 "odd": e.get("odd"), "live_wait": True})
+            # Id — тем же правилом, что у построенных сделок: поля
+            # совпадают с будущей строкой выбора, поэтому имя позиции
+            # не меняется, когда цикл перепишет событие в книгу.
+            tr[0]["tid"] = TR.tid_of(tr[0])
         # Живые ВЫХОДЫ — зеркально входам. Сторож закрывает позицию
         # секундами, а строку разбора пишет часовой цикл: до него
         # страница показывала позицию открытой, хотя её уже нет.
@@ -1841,6 +1853,7 @@ class Collector:
                     "min_edge_bp": mman.get("min_edge_bp"),
                     "min_rr": mman.get("min_rr"),
                     "min_disc_bp": mman.get("min_disc_bp"),
+                    "max_eaten": mman.get("max_eaten"),
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
@@ -1898,6 +1911,7 @@ class Collector:
                 "min_edge_bp": mman.get("min_edge_bp"),
                 "min_rr": mman.get("min_rr"),
                 "min_disc_bp": mman.get("min_disc_bp"),
+                "max_eaten": mman.get("max_eaten"),
                 # Порог владельца и его цена в сделках: без этих чисел
                 # отфильтрованный счёт неотличим от счёта книги.
                 "rr_min": rr_min or 0, "rr_cut": rr_cut,
@@ -3106,10 +3120,15 @@ class Collector:
         try:
             with open(os.path.join(mdir, "manifest.json"),
                       encoding="utf-8") as f:
-                sit = bool((json.load(f) or {}).get("situational"))
+                mman = json.load(f) or {}
         except (OSError, ValueError):
-            sit = False
-        tr = TR.build(pk, revs,
+            mman = {}
+        sit = bool(mman.get("situational"))
+        # Горизонт — из манифеста книги, как в полной выдаче: без него
+        # позиции 24-часовой книги старше четырёх часов считались бы
+        # «ждёт разбора» и выпадали из переоценки.
+        hold = None if sit else int(mman.get("horizon_h") or TR.HOLD_H)
+        tr = TR.build(pk, revs, hold_h=hold,
                       px_at=self.entry_px(pk),
                       books=TR.load_books(
                           os.path.join(mdir, "books.jsonl")))
@@ -3117,7 +3136,8 @@ class Collector:
         if sit:
             self.live_overlay(mdir, tr, revs)
         for a in ("gbm", "nn"):
-            TR.account(tr, a)
+            TR.account(tr, a, hold_h=hold or TR.HOLD_H,
+                       slots=mman.get("slots"))
         op = [t for t in tr if t.get("state") == "открыта"]
         if not op:
             return {"source": None, "at": round(time.time(), 1),
@@ -3131,6 +3151,58 @@ class Collector:
                           "unreal_net_bp": t.get("unreal_net_bp"),
                           "closes_in_sec": t.get("closes_in_sec")}
                          for t in op]}
+
+    def trade_by_id(self, tid):
+        """Сделка по короткому id — поиск по всем книгам разом.
+
+        Просьба владельца: у каждой сделки имя, по которому её можно
+        назвать, не описывая монету, руку и час. Id выводится из полей
+        записи (`trades.tid_of`), поэтому одно решение в торгуемой
+        книге и в наблюдательной записи находится дважды — оба
+        попадания возвращаются со своим источником, читатель видит,
+        какую страницу открывать.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        tid = str(tid or "").strip().lstrip("#").lower()
+        hits = []
+        if tid:
+            for key, name in self.BOOK_DIRS.items():
+                mdir = os.path.join(s8, name)
+                pk = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+                revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
+                try:
+                    with open(os.path.join(mdir, "manifest.json"),
+                              encoding="utf-8") as f:
+                        mman = json.load(f) or {}
+                except (OSError, ValueError):
+                    mman = {}
+                sit = bool(mman.get("situational"))
+                if not pk and not revs and not sit:
+                    continue
+                hold = (None if sit
+                        else int(mman.get("horizon_h") or TR.HOLD_H))
+                tr = TR.build(pk, revs, hold_h=hold,
+                              px_at=self.entry_px(pk),
+                              books=TR.load_books(
+                                  os.path.join(mdir, "books.jsonl")))
+                if sit:
+                    self.live_overlay(mdir, tr, revs)
+                if not any(t.get("tid") == tid for t in tr):
+                    continue
+                # Деньги — той же кассой, что у страниц: найденная
+                # сделка обязана совпадать с тем, что показывают.
+                for a in ("gbm", "nn"):
+                    TR.account(tr, a, hold_h=hold or TR.HOLD_H,
+                               slots=mman.get("slots"))
+                for t in tr:
+                    if t.get("tid") == tid:
+                        hits.append({"book": key, "source": name,
+                                     "trade": t})
+        return {"tid": tid, "hits": hits,
+                "at": round(time.time(), 1)}
 
     @staticmethod
     def _jsonl(path):
@@ -3450,6 +3522,44 @@ class Collector:
                 self.log(f"сторож ситуационной книги: "
                          f"{type(e).__name__}: {e}")
 
+    def sit_noise(self, sym, now):
+        """Живой шум монеты: медианный минутный размах середины, б.п.
+
+        Мера для правила v11 сканера — запас до стопа обязан
+        переживать обычный минутный ход самой монеты. Урок T3/T4:
+        стоп внутри шума свечи есть монетка минус комиссия; у TWT
+        2026-08-13 запас 16 б.п. пробил бар самого входа при минутных
+        фитилях разгона в 30–50 б.п.
+
+        Окно — кольцо середин сборщика (~15 минут), в размах идут
+        только ЦЕЛЫЕ минуты: текущая ещё пишется, и её размах занижен
+        по построению. Меньше пяти целых минут — меры НЕТ (`None`), и
+        это пропуск, а не ноль: нулевой шум пропускал бы любой запас
+        (урок замороженных рядов).
+        """
+        mstamp = int(now // 60)
+        hit = self._noise_cache.get(sym)
+        if hit is not None and hit[0] == mstamp:
+            return hit[1]
+        bins = {}
+        for ts, m in list(self.mid.get(sym) or ()):
+            b = int(ts // 60)
+            if b >= mstamp:
+                continue
+            lohi = bins.get(b)
+            if lohi is None:
+                bins[b] = [m, m]
+            else:
+                if m < lohi[0]:
+                    lohi[0] = m
+                if m > lohi[1]:
+                    lohi[1] = m
+        rng = sorted((hi - lo) / ((hi + lo) / 2.0) * 1e4
+                     for lo, hi in bins.values() if lo > 0)
+        val = rng[len(rng) // 2] if len(rng) >= 5 else None
+        self._noise_cache[sym] = (mstamp, val)
+        return val
+
     def _sit_scan(self, root, sheet, want, books, now, armed):
         """Один тик сканера входов: лист сечения против живых цен.
 
@@ -3482,6 +3592,12 @@ class Collector:
         # которого правило и заведено.
         ab = sheet.get("arm_band_bp")
         band = float(ab) if ab is not None else 11.0
+        # Потолок на съеденную долю обещания против (правило v11):
+        # отсутствие поля — лист прежнего образца, и молчаливая
+        # единица вернула бы фейд разгона, ради снятия которого
+        # правило заведено. Та же логика, что у скидки и полосы.
+        me = sheet.get("max_eaten")
+        max_eaten = float(me) if me is not None else 0.5
         hour = sheet.get("hour")
         # Гейт по отношению у сканера снимается: его применяет КНИГА,
         # каждая своим порогом. Само событие входа от этого не
@@ -3545,9 +3661,14 @@ class Collector:
                 mid = mids.get(sym)
                 if not mid:
                     continue
+                # Живой шум монеты — часть гейта v11: запас до стопа
+                # обязан переживать обычный минутный ход. Первые
+                # минуты после запуска меры нет — и входа нет, это
+                # калибровка, а не отказ.
+                noise = self.sit_noise(sym, now)
                 # Гейт без отношения: RR проверяет книга.
                 got = sit_scan_entry(r, mid, wave, min_edge, 0.0,
-                                     min_disc)
+                                     min_disc, noise, max_eaten)
                 key = (arm, hour, sym)
                 if not got:
                     # Видели имя НЕ проходящим — но взводим не всякий
@@ -3562,7 +3683,8 @@ class Collector:
                     # однажды разошёлся бы с первым, и правило входа
                     # перестало бы совпадать с правилом взведения.
                     if not sit_scan_entry(r, mid, wave, min_edge, 0.0,
-                                          min_disc - band):
+                                          min_disc - band, noise,
+                                          max_eaten):
                         armed.add(key)
                     continue
                 if key not in armed:
@@ -3650,7 +3772,8 @@ class Collector:
         self.w.close()
 
 
-def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
+def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc,
+                   noise_bp, max_eaten):
     """Живой вход по ситуации: якорим прогноз листа к живой цене.
 
     `row` — строка листа сечения (прогноз `fwd` — остаток к волне,
@@ -3679,6 +3802,19 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     набивалась пачкой в минуту цикла. Требование скидки означает
     ровно «цена пришла к нам»: вход дешевле того, на что рассчитывала
     модель, и на величину, которой хватает окупить круг издержек.
+
+    Правило v11 — два гейта против фейда разгона. Ход цены против
+    прогноза до входа считался ДВАЖДЫ в плюс (скидка растёт, RR
+    растёт: переякоренный риск сжимается, награда растёт) и ни разу в
+    минус — хотя тот же ход съедает обещанный моделью запас до стопа.
+    `noise_bp` — живой минутный шум монеты: запас до стопа обязан его
+    переживать, стоп внутри шума свечи есть монетка минус комиссия
+    (урок T3/T4; TWT 2026-08-13 — запас 16 б.п., пробит баром самого
+    входа). Нет меры (`None`) — нет входа: пропуск не есть ноль.
+    `max_eaten` — потолок съеденной доли обещания против, якорь —
+    ЛИСТ: у пяти стопнутых сделок v10 цена съела 44–86 % обещания до
+    входа. Оба аргумента обязательны: правило, исчезающее при забытом
+    параметре, есть отказ, неотличимый от тишины.
     """
     px0 = row.get("px")
     fwd0 = row.get("fwd")
@@ -3737,9 +3873,35 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     rr = abs(fav) / abs(adv)
     if rr < min_rr:
         return None
+    # Правило v11, запас: стоп обязан переживать обычный минутный ход
+    # самой монеты. Нет меры — нет входа.
+    if noise_bp is None or abs(adv) < noise_bp - 1e-9:
+        return None
+    # Правило v11, съеденное обещание: та же геометрия стопа на ЯКОРЕ
+    # ЛИСТА даёт, сколько хода против модель обещала изначально;
+    # доля, уже пройденная ценой, не выше потолка. Обещание против не
+    # той стороны — та же причина отказа: цена изначально за пределом
+    # карты (случай «предсказанный максимум ниже входа» из замера
+    # бракета, который обязан становиться пропуском).
+    pf0 = TR.path_fields(side, round(row["mae"], 1),
+                         round(row["mfe"], 1),
+                         mae_q=(None if row.get("mae_q") is None
+                                else round(row["mae_q"], 1)),
+                         mfe_q=(None if row.get("mfe_q") is None
+                                else round(row["mfe_q"], 1)))
+    adv0 = pf0["mae"]
+    if adv0 is None or (side == "long" and adv0 >= 0) \
+            or (side == "short" and adv0 <= 0):
+        return None
+    eaten = 1.0 - abs(adv) / abs(adv0)
+    if eaten > max_eaten + 1e-9:
+        return None
     d = {"sym": row.get("sym"), "side": side, "px": round(mid, 8),
          "move_bp": round(move, 1), "wave_bp": round(wave_bp, 1),
          "fwd": round(rem, 1), "fwd0": fwd0,
+         # Числа обоих правил v11 — в запись: сработало ли правило,
+         # проверяется числом, а не доверием к коду (урок v5 с fwd0).
+         "noise_bp": round(noise_bp, 1), "eaten": round(eaten, 3),
          "rr": round(rr, 2), **pf}
     # Объяснение прогноза приходит С ЛИСТА готовым: у сканера нет ни
     # модели, ни имён признаков, и пересчитать его тут нечем. Сделка

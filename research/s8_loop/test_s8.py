@@ -4012,6 +4012,42 @@ def test_books_order_by_their_own_sigma():
           T.book_dir(24, sigma=True))
 
 
+def test_trade_ids_are_stable():
+    """Id сделки: выводится из полей записи и переживает пересборку.
+
+    Просьба владельца — называть сделку коротким именем. Счётчика нет
+    намеренно: сделки пересобираются из файлов на каждый запрос, а
+    живой вход сканера до часового цикла существует только событием —
+    id обязан быть тем же до цикла и после.
+    """
+    import trades as TR
+
+    t = {"arm": "nn", "hour": "2026-08-13-08", "sym": "TWTUSDT",
+         "side": "short", "opened_at": 1786612762.346}
+    a = TR.tid_of(t)
+    check("id стабилен и короток", a == TR.tid_of(dict(t))
+          and len(a) == 7, a)
+    check("алфавит читается вслух: base32, ни нулей, ни единиц",
+          all(c in "abcdefghijklmnopqrstuvwxyz234567" for c in a), a)
+    check("другая секунда — другой id",
+          TR.tid_of({**t, "opened_at": 1786612763.0}) != a)
+    check("другая рука — другой id",
+          TR.tid_of({**t, "arm": "gbm"}) != a)
+    pk = [{"arm": "gbm", "hour": "2026-08-01-10",
+           "at_ts": 1754042500.0,
+           "long": [{"sym": "AAAUSDT", "fwd": 30.0, "px": 100.0}],
+           "short": [{"sym": "BBBUSDT", "fwd": -30.0, "px": 50.0}]}]
+    tr = TR.build(pk, [], now=1754050000.0)
+    check("build штампует id каждой строке",
+          tr and all(len(x.get("tid") or "") == 7 for x in tr),
+          str([x.get("tid") for x in tr]))
+    tr2 = TR.build(pk, [], now=1754060000.0)
+    check("пересборка в другой момент даёт те же id",
+          [x["tid"] for x in tr] == [x["tid"] for x in tr2])
+    check("id разных строк различны",
+          len({x["tid"] for x in tr}) == len(tr))
+
+
 def main():
     print("сводка часа")
     test_summary_censors_bands_by_reach()
@@ -4033,6 +4069,7 @@ def main():
     test_targets_shapes_and_direction()
     test_sigma_targets_exist_on_every_horizon()
     test_non_crypto_split_by_book_kind()
+    test_trade_ids_are_stable()
     test_entry_floor_gates_the_main_book()
     test_books_order_by_their_own_sigma()
     test_book_archives_when_the_order_changes()

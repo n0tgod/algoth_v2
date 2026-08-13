@@ -502,7 +502,7 @@ global.fetch = async (url) => {
                              marked: 0}},
                 rows: [
                   {arm: "gbm", hour: "2026-08-03-18", sym: "BTCUSDT",
-                   side: "long",
+                   side: "long", tid: "ab3k2mq",
                    opened_at: Date.UTC(2026,7,3,19)/1000,
                    closes_at: Date.UTC(2026,7,3,23)/1000,
                    state: "открыта", expected_bp: 373, mae_bp: -50,
@@ -515,7 +515,7 @@ global.fetch = async (url) => {
                   // рисовал бы только вход, и потеря выхода прошла бы
                   // незамеченной.
                   {arm: "gbm", hour: "2026-08-03-14", sym: "BTCUSDT",
-                   side: "short",
+                   side: "short", tid: "cd4m3nq",
                    opened_at: Date.UTC(2026,7,3,15)/1000,
                    closes_at: Date.UTC(2026,7,3,19)/1000,
                    state: "закрыта", expected_bp: -725, mae_bp: 90,
@@ -526,7 +526,7 @@ global.fetch = async (url) => {
                   // которого заведён переключатель — нарисованные
                   // вместе, эти две сделки легли бы друг на друга.
                   {arm: "nn", hour: "2026-08-03-14", sym: "BTCUSDT",
-                   side: "long",
+                   side: "long", tid: "ef5n4pq",
                    opened_at: Date.UTC(2026,7,3,15)/1000,
                    closes_at: Date.UTC(2026,7,3,19)/1000,
                    state: "закрыта", expected_bp: 210, mae_bp: -40,
@@ -543,7 +543,7 @@ global.fetch = async (url) => {
                   // в точку, и от живой позиции оставалась одна метка
                   // входа, без зон и обещаний.
                   {arm: "gbm", hour: "2026-08-03-20", sym: "BTCUSDT",
-                   side: "long",
+                   side: "long", tid: "gh6p5rq",
                    opened_at: Date.UTC(2026,7,3,21)/1000,
                    closes_at: null,
                    state: "открыта", expected_bp: 150, mae_bp: -60,
@@ -1282,6 +1282,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: сделки модели по паре не выписаны строками");
     if (!/data-h="2026-08-03-14"/.test(mr))
       bad.push("график: строка сделки не несёт часа для наведения");
+    // Id сделки — просьба владельца: короткое имя, по которому сделку
+    // называют в переписке. Проверяется id строки ПОКАЗАННОЙ руки —
+    // чужой id прошёл бы и на таблице, печатающей не ту руку.
+    if (!(/arm=nn/.test(SEARCH) ? /#ef5n4pq/ : /#cd4m3nq/).test(mr))
+      bad.push("график: id сделки не виден в таблице");
     const c4 = global.__el
       ? String(global.__el("cap4").textContent || "") : "";
     // Имя книги в заголовке — ровно то, что стоит в общем списке
@@ -2104,7 +2109,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         // на строке есть слово» прошла бы на неподписанном «got».
         const td = (hb.match(/<td[\s\S]*?<\/td>/g) || []);
         const cell = i => String(td[i] || "");
-        const exitC = cell(3), gotC = cell(5), netC = cell(6);
+        // Первой колонкой встал id сделки — номера прежних сдвинулись.
+        const exitC = cell(4), gotC = cell(6), netC = cell(7);
         if (/0\.00837/.test(exitC) || !/—/.test(exitC))
           bad.push(`график: у открытой позиции выдумана цена выхода: ${
             exitC}`);
@@ -2381,6 +2387,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!html) bad.push("страница сделок ничего не нарисовала");
     else if (!/\+3\.73 %|no trades yet/.test(html))
       bad.push("строки сделок не в процентах движения цены");
+    // Id — первой колонкой: владелец называет сделку по нему.
+    if (html && !/no trades yet/.test(html) && !/#ab3k2mq/.test(html))
+      bad.push("страница сделок: id сделки не виден в строках");
     // Книга без срока: первым столбцом идёт ВХОД, час листа уезжает
     // вторым. Вход 19:00 UTC — это 21:00 в Вене, час листа 18 — 20:00,
     // так что перестановка видна числами. Без неё сделка сканера,
@@ -2391,7 +2400,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       const h2 = String((global.__el("thw2") || {}).textContent || "");
       if (h1 !== "entered" || h2 !== "sheet hour")
         bad.push(`книга без срока: заголовки не переставлены (${h1}/${h2})`);
-      const cells = html.split("<td").slice(1, 3).join("|");
+      const cells = html.split("<td").slice(2, 4).join("|");
       if (!/21:00/.test(cells) || !/20:00/.test(cells))
         bad.push("вход и час листа не различимы в строке: " + cells);
     }

@@ -27,6 +27,8 @@
 ради неё numpy незачем.
 """
 
+import base64
+import hashlib
 import json
 import os
 import sys
@@ -368,6 +370,26 @@ def load_books(path):
     return out
 
 
+def tid_of(t):
+    """Короткий постоянный идентификатор сделки (просьба владельца).
+
+    Выводится из полей самой записи, а не из счётчика: сделки
+    пересобираются из файлов на каждый запрос, а живая позиция сканера
+    до часового цикла существует только событием — счётчик с одним
+    писателем оставил бы её без имени на час. Одно решение в торгуемой
+    книге и в наблюдательной записи получает ОДИН id: это одна сделка,
+    записанная дважды, а не две.
+
+    Формат — семь знаков base32 (латиница и цифры 2–7, ни нулей, ни
+    единиц): читается с телефона вслух, не путая символы.
+    """
+    raw = "|".join((str(t.get("arm") or ""), str(t.get("hour") or ""),
+                    str(t.get("sym") or ""), str(t.get("side") or ""),
+                    format(float(t.get("opened_at") or 0.0), ".3f")))
+    dig = hashlib.blake2s(raw.encode("utf-8")).digest()
+    return base64.b32encode(dig)[:7].decode("ascii").lower()
+
+
 def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
     """Сделки из выборов и разборов, свежие сверху.
 
@@ -512,6 +534,11 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                     "setup": p.get("setup"),
                     "rank": p.get("rank"), "of": p.get("of"),
                     "fwd0_bp": p.get("fwd0"),
+                    # Числа правил v11 (запас против шума, съеденная
+                    # доля обещания): по ним видно, что пропустило
+                    # вход, — числом, а не доверием к коду.
+                    "noise_bp": p.get("noise_bp"),
+                    "eaten": p.get("eaten"),
                 }
                 if got is not None:
                     tr["cum_out"] = (got.get("cum")
@@ -568,6 +595,10 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                     tr.update(state="открыта",
                               closes_in_sec=(t_close - now
                                              if t_close else None))
+                # Id — из собранной строки: те же поля даёт и наложение
+                # живых событий, поэтому позиция носит одно имя до
+                # цикла и после него.
+                tr["tid"] = tid_of(tr)
                 out.append(tr)
     out.sort(key=lambda t: (t["opened_at"] or 0), reverse=True)
     net_positions(out)

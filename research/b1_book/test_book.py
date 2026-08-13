@@ -550,6 +550,51 @@ def test_model_trades_lite_matches_full():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_trade_by_id_finds_across_books():
+    """Поиск сделки по короткому id обходит все книги разом.
+
+    Просьба владельца: назвать сделку по id, не описывая монету и час.
+    Данные — фикстура паритета, подложенная КАЖДОЙ книге одинаково:
+    одно решение под одним id обязано найтись во всех, а незнакомый id
+    — не найтись нигде (и это пустой список, а не ошибка).
+    """
+    import shutil
+    import tempfile
+    import collect as C
+
+    fx = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                      "bot", "tests", "fixtures", "parity")
+    orig = C.Collector._jsonl
+    orig_sm = C.Collector.__dict__["_jsonl"]
+    root = tempfile.mkdtemp()
+    try:
+        def fake(path):
+            base = os.path.basename(path)
+            if base in ("picks.jsonl", "review.jsonl"):
+                return orig(os.path.join(fx, base))
+            return []
+        C.Collector._jsonl = staticmethod(fake)
+        c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        tr = TR.build(orig(os.path.join(fx, "picks.jsonl")),
+                      orig(os.path.join(fx, "review.jsonl")))
+        tid = tr[0]["tid"]
+        got = c.trade_by_id("#" + tid.upper())
+        check("id находится, регистр и решётка не мешают",
+              len(got["hits"]) == len(c.BOOK_DIRS),
+              f'{len(got["hits"])} из {len(c.BOOK_DIRS)} книг')
+        check("найденная сделка несёт тот же id и имя книги",
+              all(h["trade"]["tid"] == tid and h.get("book")
+                  for h in got["hits"]))
+        check("незнакомый id — пусто, а не ошибка",
+              c.trade_by_id("zzzzzzz")["hits"] == [])
+    finally:
+        C.Collector._jsonl = orig_sm
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_live_detector_agrees_with_batch():
     """Живой детектор обязан решать так же, как тот, чем считаны отчёты.
 
@@ -2072,37 +2117,37 @@ def test_sit_scan_anchors_forecast_to_live_price():
     # mfe вверх +300; после хода +217 у шорта риск +83, польза −635.
     tiny = dict(row, fwd=-1.1, mae=-418.0, mfe=300.0)
     check("нулевой прогноз не входит даже на разгоне",
-          C.sit_scan_entry(tiny, 102.17, 0.0, 22.0, 2.0, 0.0) is None,
+          C.sit_scan_entry(tiny, 102.17, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0) is None,
           "фейд разгона под именем модели")
     # Цена ушла ПРОТИВ прогноза на 10 б.п.: остаток 40, обещания
     # переякорены (−10 / +35), RR 3.5 — вход лонг.
-    ev = C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("вход лонг: остаток вырос, RR держится",
           ev and ev["side"] == "long" and ev["fwd"] == 40.0
           and ev["mae"] == -10.0 and ev["rr"] == 3.5, str(ev))
     # Движение уже пройдено (+25 из 30): остаток 5 < 22 — пропуск.
     check("движение пройдено — имя отсеяно остатком",
-          C.sit_scan_entry(row, 100.25, 0.0, 22.0, 2.0, 0.0) is None)
+          C.sit_scan_entry(row, 100.25, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0) is None)
     # Всё падение — волна: бета вычитает её, остаток равен прогнозу,
     # но вход решает RR по переякоренным обещаниям.
-    ev = C.sit_scan_entry(row, 99.90, -10.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry(row, 99.90, -10.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("волна не считается ситуацией",
           ev and ev["fwd"] == 30.0, str(ev))
     # Перелёт: цена прошла дальше прогноза В ЕГО сторону — остаток
     # сменил знак, это другая ситуация.
     check("перелёт за прогноз — не заявка модели",
-          C.sit_scan_entry(row, 100.40, 0.0, 22.0, 2.0, 0.0) is None)
+          C.sit_scan_entry(row, 100.40, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0) is None)
     # Шорт зеркален: против — вверх, в пользу — вниз.
     srow = {"sym": "CUSDT", "fwd": -40.0, "mae": -50.0, "mfe": 20.0,
             "beta": 1.0, "px": 100.0}
-    ev = C.sit_scan_entry(srow, 100.10, 0.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry(srow, 100.10, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("шорт входит зеркально",
           ev and ev["side"] == "short" and ev["fwd"] == -50.0
           and ev["mae"] == 10.0 and ev["mfe"] == -60.0, str(ev))
     # Пороги — те же гейты, что у часового входа.
     check("малый остаток не входит",
           C.sit_scan_entry({**row, "fwd": 20.0}, 100.0, 0.0, 22.0, 2.0,
-                           0.0) is None)
+                           0.0, 0.0, 1.0) is None)
 
     # Скидка: курок спускает ЦЕНА, а не лист. В момент листа цена не
     # двигалась, остаток равен прогнозу — и вход обязан молчать,
@@ -2110,23 +2155,122 @@ def test_sit_scan_anchors_forecast_to_live_price():
     # это на живых входах: 20:16, 20:31, 20:46, 21:06).
     big = {**row, "fwd": 40.0}
     check("в момент листа вход молчит — цена ещё ничего не отдала",
-          C.sit_scan_entry(big, 100.0, 0.0, 22.0, 2.0, 11.0) is None)
+          C.sit_scan_entry(big, 100.0, 0.0, 22.0, 2.0, 11.0, 0.0, 1.0) is None)
     check("цена отдала меньше круга издержек — рано",
-          C.sit_scan_entry(big, 99.95, 0.0, 22.0, 2.0, 11.0) is None)
-    ev = C.sit_scan_entry(big, 99.88, 0.0, 22.0, 2.0, 11.0)
+          C.sit_scan_entry(big, 99.95, 0.0, 22.0, 2.0, 11.0, 0.0, 1.0) is None)
+    ev = C.sit_scan_entry(big, 99.88, 0.0, 22.0, 2.0, 11.0, 0.0, 1.0)
     check("цена пришла к нам на круг издержек — вход",
           ev and ev["fwd"] == 52.0, str(ev))
     # Скидку даёт ОСТАТОЧНЫЙ ход, а не общий: упавший вместе с рынком
     # актив дешевле не стал — бета вычитает волну.
     check("падение вместе с волной скидкой не считается",
-          C.sit_scan_entry(big, 99.88, -12.0, 22.0, 2.0, 11.0) is None)
+          C.sit_scan_entry(big, 99.88, -12.0, 22.0, 2.0, 11.0, 0.0, 1.0) is None)
     # Зеркало у шорта: к нам он приходит РОСТОМ цены.
     sbig = {**srow, "fwd": -40.0}
     check("шорт: в момент листа молчит",
-          C.sit_scan_entry(sbig, 100.0, 0.0, 22.0, 2.0, 11.0) is None)
-    ev = C.sit_scan_entry(sbig, 100.12, 0.0, 22.0, 2.0, 11.0)
+          C.sit_scan_entry(sbig, 100.0, 0.0, 22.0, 2.0, 11.0, 0.0, 1.0) is None)
+    ev = C.sit_scan_entry(sbig, 100.12, 0.0, 22.0, 2.0, 11.0, 0.0, 1.0)
     check("шорт: цена выросла — вход дешевле обещанного",
           ev and ev["side"] == "short" and ev["fwd"] == -52.0, str(ev))
+
+
+def test_sit_scan_v11_room_and_eaten():
+    """Правило v11: запас переживает шум, обещание съедено не больше
+    потолка.
+
+    Ход цены против прогноза до входа считался ДВАЖДЫ в плюс (скидка
+    растёт, RR растёт) и ни разу в минус. TWT 2026-08-13: лист видел
+    −37.5 б.п. (v10 пройден), цена ушла +102 против шорта, съев 86 %
+    обещания; запас 16 б.п. пробил бар самого входа. У пяти стопнутых
+    сделок v10 съедено 44–86 %.
+    """
+    import collect as C
+
+    # База: прогноз 30, цена отдала 10 → запас до стопа 10 б.п.,
+    # съедена ровно половина обещания (−20 → −10).
+    row = {"sym": "AUSDT", "fwd": 30.0, "mae": -20.0, "mfe": 25.0,
+           "beta": 1.0, "px": 100.0}
+    check("нет меры шума — нет входа (пропуск не есть ноль)",
+          C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0,
+                           None, 1.0) is None)
+    check("запас тоньше минутного шума — вход не существует",
+          C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0,
+                           12.0, 1.0) is None, "запас 10 при шуме 12")
+    ev = C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0, 8.0, 1.0)
+    check("запас крупнее шума — вход есть, числа правил в записи",
+          ev is not None and ev.get("noise_bp") == 8.0
+          and ev.get("eaten") == 0.5, str(ev))
+    check("съедено больше потолка — вход не существует",
+          C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0,
+                           8.0, 0.4) is None, "съедено 0.5 при потолке 0.4")
+    check("съедено ровно потолок — проходит (граница не режет своих)",
+          C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0,
+                           8.0, 0.5) is not None)
+    # Сделка TWT в числах: шорт, лист −37.5, цена +102 против, съедено
+    # 86 % обещания (+118 → +16), RR при этом 25 — прежние гейты
+    # пускали, и именно это создавало сделку-точку с got 0.000.
+    twt = {"sym": "TUSDT", "fwd": -37.5, "mae": -300.0, "mfe": 118.0,
+           "beta": 1.0, "px": 100.0}
+    check("фейд разгона: съеденное обещание запирает вход",
+          C.sit_scan_entry(twt, 101.02, 0.0, 33.0, 2.0, 11.0,
+                           10.0, 0.5) is None)
+    ev = C.sit_scan_entry(twt, 101.02, 0.0, 33.0, 2.0, 11.0, 10.0, 1.0)
+    check("тот же кандидат при снятом потолке входит — запирает "
+          "именно правило v11",
+          ev is not None and ev["side"] == "short"
+          and abs(ev["eaten"] - 0.864) < 0.001, str(ev))
+    # Обещание против НЕ ТОЙ стороны (предсказанный максимум ниже
+    # входа — случай из замера бракета): кандидата не существует, даже
+    # когда переякоренная геометрия выглядит здоровой. Пара с
+    # исправленным обещанием — контроль, что запирает именно якорь
+    # листа, а не соседний гейт.
+    bad = {"sym": "BUSDT", "fwd": -60.0, "mae": -80.0, "mfe": -5.0,
+           "beta": 1.0, "px": 100.0}
+    check("обещание против не той стороны у ЛИСТА — пропуск",
+          C.sit_scan_entry(bad, 99.80, 0.0, 22.0, 0.0, -25.0,
+                           0.0, 1.0) is None)
+    good = dict(bad, mfe=15.0)
+    check("исправленное обещание — кандидат существует",
+          C.sit_scan_entry(good, 99.80, 0.0, 22.0, 0.0, -25.0,
+                           0.0, 1.0) is not None)
+
+
+def test_sit_noise_is_median_minute_range():
+    """Мера шума: медианный минутный размах середины, целые минуты.
+
+    Текущая минута не входит (её размах занижен по построению), меньше
+    пяти целых минут — меры НЕТ, а не ноль: нулевой шум пропускал бы
+    любой запас. Кеш живёт минуту и обязан обновиться на новой.
+    """
+    from collections import deque
+    import collect as C
+
+    c = C.Collector.__new__(C.Collector)
+    c._noise_cache = {}
+    now = 600.0  # десятая минута; целые минуты — 0..9
+    pts = []
+    # Шесть целых минут: размах k б.п. у минуты k (1..6) на цене ~100.
+    for k in range(1, 7):
+        t0 = (3 + k) * 60.0
+        w = 100.0 * k * 1e-4 / 2.0
+        pts += [(t0 + 1, 100.0 - w), (t0 + 30, 100.0 + w)]
+    # Текущая (десятая) минута с огромным размахом — не должна войти.
+    pts += [(600.0 + 5, 90.0), (600.0 + 10, 110.0)]
+    c.mid = {"AUSDT": deque(pts)}
+    v = c.sit_noise("AUSDT", now + 20)
+    check("медиана минутных размахов, текущая минута не в счёт",
+          v is not None and abs(v - 4.0) < 0.2, str(v))
+    # Меньше пяти целых минут — меры нет.
+    c2 = C.Collector.__new__(C.Collector)
+    c2._noise_cache = {}
+    c2.mid = {"AUSDT": deque(pts[:8])}   # четыре минуты
+    check("меньше пяти минут — меры нет, а не ноль",
+          c2.sit_noise("AUSDT", now + 20) is None)
+    # Кеш: в ту же минуту отдаётся посчитанное, в новую — пересчёт.
+    c.mid["AUSDT"].clear()
+    check("кеш держит минуту", c.sit_noise("AUSDT", now + 30) == v)
+    check("новая минута пересчитывает",
+          c.sit_noise("AUSDT", now + 80) is None)
 
 
 def test_sit_scan_stop_is_the_quantile_level():
@@ -2144,7 +2288,7 @@ def test_sit_scan_stop_is_the_quantile_level():
     # переякоривания −15) оставляет 35/15 = 2.33.
     row = {"sym": "AUSDT", "fwd": 30.0, "mae": -20.0, "mfe": 25.0,
            "mae_q": -25.0, "mfe_q": 30.0, "beta": 1.0, "px": 100.0}
-    ev = C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("стоп отодвинут на квантильный уровень",
           ev and ev["mae"] == -15.0 and ev["mae_m"] == -10.0
           and ev["adverse_of"] == "maeq_4h", str(ev))
@@ -2154,11 +2298,11 @@ def test_sit_scan_stop_is_the_quantile_level():
     # (3.5 ≥ 3), по настоящему стопу — нет. Гейт обязан отказать.
     check("кандидат, проходящий по средней линии, но не по стопу, "
           "не входит",
-          C.sit_scan_entry(row, 99.90, 0.0, 22.0, 3.0, 0.0) is None)
+          C.sit_scan_entry(row, 99.90, 0.0, 22.0, 3.0, 0.0, 0.0, 1.0) is None)
     # Шорт зеркален: против него ход ВВЕРХ, дальний уровень — больший.
     srow = {"sym": "CUSDT", "fwd": -40.0, "mae": -50.0, "mfe": 20.0,
             "mae_q": -60.0, "mfe_q": 30.0, "beta": 1.0, "px": 100.0}
-    ev = C.sit_scan_entry(srow, 100.10, 0.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry(srow, 100.10, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("шорт: стоп из верхнего квантиля максимума цены",
           ev and ev["mae"] == 20.0 and ev["mae_m"] == 10.0
           and ev["adverse_of"] == "mfeq_4h", str(ev))
@@ -2166,24 +2310,24 @@ def test_sit_scan_stop_is_the_quantile_level():
     # среднего. Это артефакт двух независимых подгонок, а не сведение
     # о рынке — стоп остаётся на дальнем, то есть на прежнем месте.
     near = {**row, "mae_q": -15.0}
-    ev = C.sit_scan_entry(near, 99.90, 0.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry(near, 99.90, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("квантиль ближе среднего — стоп не придвигается",
           ev and ev["mae"] == -10.0 and "mae_m" not in ev, str(ev))
     # Лист прежнего образца (квантилей нет вовсе) — прежнее правило.
     old = {k: v for k, v in row.items() if k not in ("mae_q", "mfe_q")}
-    ev = C.sit_scan_entry(old, 99.90, 0.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry(old, 99.90, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("лист без квантилей — стоп по средней линии, как прежде",
           ev and ev["mae"] == -10.0 and ev["adverse_of"] == "mae_4h",
           str(ev))
     # Объяснение прогноза едет С ЛИСТА в событие входа как есть: у
     # сканера нет ни модели, ни имён признаков, пересчитать его нечем.
     w = [["ret_7", 18.3], ["eat_bid", -6.1]]
-    ev = C.sit_scan_entry({**row, "why": w}, 99.90, 0.0, 22.0, 2.0, 0.0)
+    ev = C.sit_scan_entry({**row, "why": w}, 99.90, 0.0, 22.0, 2.0, 0.0, 0.0, 1.0)
     check("объяснение прогноза доезжает до события входа",
           ev and ev.get("why") == w, str(ev and ev.get("why")))
     check("листу без объяснения событие ничего не выдумывает",
           "why" not in (C.sit_scan_entry(row, 99.90, 0.0, 22.0, 2.0,
-                                         0.0) or {}))
+                                         0.0, 0.0, 1.0) or {}))
 
 
 def test_sit_scan_enters_only_on_a_crossing_it_saw():
@@ -2203,6 +2347,10 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         col = C.Collector.__new__(C.Collector)
         col.books = {}
         col.log = lambda m: None
+        # Предмет теста — взведение и пересечение, а не шум: мера
+        # подменяется нейтральной, иначе голому Collector.__new__
+        # нечем её посчитать и все входы молчали бы по чужой причине.
+        col.sit_noise = lambda sym, now: 0.0
 
         class B:
             def __init__(self, px):
@@ -3750,6 +3898,7 @@ def main():
     test_pages_run_headless()
     test_trades_table_columns_line_up()
     test_model_trades_lite_matches_full()
+    test_trade_by_id_finds_across_books()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
@@ -3781,6 +3930,8 @@ def main():
     test_liq_and_metrics_recorded()
     test_symbol_groups_for_page()
     test_sit_scan_anchors_forecast_to_live_price()
+    test_sit_scan_v11_room_and_eaten()
+    test_sit_noise_is_median_minute_range()
     test_sit_scan_stop_is_the_quantile_level()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_collector_keeps_its_public_methods()

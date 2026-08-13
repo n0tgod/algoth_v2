@@ -1021,6 +1021,7 @@ function tradeTable(p) {
       title="why this trade — plain-words breakdown"
       style="text-decoration:none">&#9432;</a>`;
     return `<tr class="${cls}"${why ? ` title="${why}"` : ""}>
+      <td class="mono dim">${t.tid ? "#" + t.tid : "\u2014"}</td>
       <td class="mono" title="sheet hour ${t.hour}">${key}</td>
       <td>${t.arm === "nn" ? "neu" : "tre"}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
@@ -1039,7 +1040,8 @@ function tradeTable(p) {
       ? "until the situation exits"
       : "over " + bookH(p) + " h"})</span></div>
     <div style="overflow-x:auto"><table class="mtr">
-    <tr><th>${isSit(p) ? "entered" : "hour"}</th>
+    <tr><th title="trade id">id</th>
+    <th>${isSit(p) ? "entered" : "hour"}</th>
     <th>arm</th><th>coin</th><th>side</th>
     <th title="dominant feature family of this forecast — a reading
       of the contributions, not a hand-picked strategy">setup</th>
@@ -1236,7 +1238,14 @@ function renderModel() {
             name must first be seen at least <b>${m.arm_band_bp} bp</b>
             away from the trigger. A name found already parked at the
             line is skipped — its next tick is a wobble around a level
-            it was standing on, not a move.` : ""}</div>`
+            it was standing on, not a move.` : ""}${m.max_eaten != null
+         ? ` Two more gates (rules v11): the stop room must survive
+            the coin's own <b>live minute noise</b>, and the price may
+            not have eaten more than <b>${Math.round(
+              m.max_eaten * 100)} %</b> of the promised adverse path
+            before entry — a move against the forecast used to count
+            twice in favour (bigger discount, bigger reward/risk) and
+            never against.` : ""}</div>`
     : "";
   // Правило СТОПА — тем же способом и рядом: заявка стоит не там,
   // куда модель ждёт цену, а за этой линией, и уровень предсказывает
@@ -1891,7 +1900,8 @@ canvas{width:100%;display:block;touch-action:pan-y}
       <span id="rrlab"></span>
     </div>
     <div class="scroll"><table>
-      <thead><tr><th id="thw">signal hour</th>
+      <thead><tr><th title="trade id — quote it to find the trade">id</th>
+        <th id="thw">signal hour</th>
         <th class="hide-s" id="thw2">entry</th><th class="hide-s">exit</th>
         <th class="hide-s">lag</th><th class="hide-s">arm</th>
         <th>coin</th><th>side</th><th class="hide-s">exp</th>
@@ -2371,7 +2381,9 @@ async function load() {
     // листа сечения, и сделка, открытая сканером в 18:16, стояла бы
     // под «17:00» — на телефоне, где колонка входа скрыта, она
     // читается как старая сделка по таймеру.
-    return `<tr><td class="mono" title="UTC key ${t.hour}">${
+    return `<tr><td class="mono" style="color:var(--muted)">${
+        t.tid ? "#" + t.tid : "\u2014"}</td>
+      <td class="mono" title="UTC key ${t.hour}">${
         SIT ? hhmm(t.opened_at) : hourLocal(t.hour)}</td>
       <td class="mono hide-s">${
         SIT ? hourLocal(t.hour) : hhmm(t.opened_at)}</td>
@@ -2423,7 +2435,7 @@ async function load() {
         // «у этой руки в этом часе сделки нет» — ответ верный для
         // другой книги и потому неверный по существу.
         RR_MIN == null ? "" : "&rr=" + RR_MIN}">open</a></td></tr>`;
-  }).join("") || `<tr><td colspan="17" style="color:var(--muted);
+  }).join("") || `<tr><td colspan="18" style="color:var(--muted);
     padding:10px 0">no trades yet</td></tr>`;
   document.getElementById("pg").textContent =
     `page ${d.page + 1} of ${d.pages}`;
@@ -3000,6 +3012,7 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
   <div class="cap"><span>trades on this pair &mdash; model</span>
     <span id="cap4" class="mono"></span></div>
   <div class="hist"><table><thead><tr>
+    <th>id</th>
     <th>entered utc</th><th>side</th><th>entry</th><th>exit</th>
     <th>exp</th><th>got</th><th>net</th><th>$</th><th>state</th>
   </tr></thead><tbody id="mrows"></tbody></table></div>
@@ -3686,7 +3699,7 @@ function mdlLegRows(key, legs) {
   return `<tr class="mdet" id="mdet-${mdlKeyId(key)}"
     data-det="${key}" style="display:${
       MDLEXP.has(key) ? "table-row" : "none"}">
-    <td colspan="9" style="padding:2px 0 8px 22px">
+    <td colspan="10" style="padding:2px 0 8px 22px">
     <table style="width:100%;border-collapse:collapse" class="mleg">
     <tr><th style="text-align:left">when</th>
     <th style="text-align:left">leg</th><th style="text-align:left">size</th>
@@ -4209,7 +4222,8 @@ function modelNote(MT, first, last) {
     // отношению и своим счётом, и молча выдать её за сделку книги
     // значило бы показать деньги, которых книга не делала.
     ? `<span>showing trade ${MDL.hour} · ${
-        t.side} · ${disp(t.state)}${MDL.obs
+        t.side} · ${disp(t.state)}${t.tid
+        ? ` · <b>#${t.tid}</b>` : ""}${MDL.obs
         ? ` · <span style="color:var(--muted)">from the observation
             record (reward/risk requirement dropped; the bot does not
             trade it)</span>` : ""}</span>`
@@ -4393,6 +4407,8 @@ function mrows() {
         return `<tr data-h="${t.hour}" style="cursor:pointer${
           here ? ";background:rgba(127,127,255,.10)" : ""}"
           title="${tip ? tip + " — " : ""}click to centre the chart">
+        <td class="mono" style="color:var(--muted)">${
+          t.tid ? "#" + t.tid : "\u2014"}</td>
         <td class="mono">${exp}${stamp(t.opened_at)}</td>
         <td class="${t.side === "long" ? "buy" : "sell"}">${t.side}</td>
         <td class="mono" ${(t.lots || 1) > 1
@@ -4416,7 +4432,7 @@ function mrows() {
           t.exit_reason ? " · " + disp(t.exit_reason) : ""} ${
           info}</td></tr>${legs.length > 1 ? mdlLegRows(key, legs) : ""}`;
       }).join("")
-    : `<tr><td colspan="9" style="color:var(--muted)">no model trades on
+    : `<tr><td colspan="10" style="color:var(--muted)">no model trades on
        this pair in the shown book — try the other arm or another
        book</td></tr>`;
   const note = document.getElementById("mnote");
@@ -5073,7 +5089,7 @@ function render(d, t){
     : `${d.horizon_h || 4} h book`;
   document.getElementById("ttl").textContent =
     `${SYM.replace("USDT","")} · ${t.side} · ${bookName} · ${
-      ST_EN[t.state] || t.state}`;
+      ST_EN[t.state] || t.state}${t.tid ? " · #" + t.tid : ""}`;
   document.getElementById("sub").textContent =
     `entered ${utc(t.opened_at)} · ${ARM === "nn"
       ? "neural arm" : "tree arm"}${t.train_seq != null
@@ -5131,7 +5147,16 @@ function render(d, t){
       line it was parked at), and the promised reward was at least
       ${d.min_rr != null ? d.min_rr + "&times;"
                          : "the gate's multiple of"}
-      the distance to the actual stop.</p>`;
+      the distance to the actual stop.</p>${t.noise_bp != null
+      ? `<p>Rules v11, both by the numbers of this entry: the stop
+        room survived the coin's live minute noise of
+        <b>${t.noise_bp} bp</b>, and the price had consumed
+        <b>${Math.round((t.eaten ?? 0) * 100)} %</b> of the promised
+        adverse path${d.max_eaten != null
+          ? ` — under the ${Math.round(d.max_eaten * 100)} % cap`
+          : ""}. A move against the forecast used to count only in
+        favour of entering; these two gates are where it counts
+        against.</p>` : ""}`;
   } else if (exp != null) {
     why = `<p>The model expected <b>${pct(exp)}</b>. The entry
       mechanics for this trade predate the recorded fields.</p>`;
@@ -6952,6 +6977,12 @@ def serve(collector, port, token, log):
                 return self._ok(json.dumps(
                     collector.model_marks(
                         hz=q.get("hz", [None])[0] or None),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/trade_by_id":
+                return self._ok(json.dumps(
+                    collector.trade_by_id(
+                        q.get("tid", [""])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/trades-page":
