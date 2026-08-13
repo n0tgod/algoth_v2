@@ -4016,6 +4016,72 @@ def test_books_order_by_their_own_sigma():
           T.book_dir(24, sigma=True))
 
 
+def test_sit_absorb_lives_in_one_module():
+    """Поглощение живых событий: и сборщик, и цикл зовут один код.
+
+    Просьба владельца — pnl сразу после закрытия. Проверяются рабочие
+    свойства: событие входа становится строкой выбора, событие выхода
+    — строкой разбора с временем и ценой момента; повторный вызов не
+    находит ничего (превращённое отсеивается чтением самих файлов);
+    разобранную позицию событие не трогает.
+    """
+    import shutil
+    import tempfile
+    import sit_absorb as SA
+    import trades as TR
+
+    d = tempfile.mkdtemp()
+    lad = {"AUSDT": {"mid": 100.0, "b": [[99.9, 500.0]],
+                     "a": [[100.1, 500.0]], "t": 1.0}}
+    try:
+        with open(os.path.join(d, "entries_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": "2026-08-13-14", "sym": "AUSDT",
+                "side": "short", "px": 100.0, "fwd": -50.0,
+                "mae": 30.0, "mfe": -90.0, "rr": 3.0, "fwd0": -44.0,
+                "noise_bp": 7.0, "eaten": 0.2, "train_seq": 9,
+                "at_ts": 1786700000.25}) + "\n")
+        n_in, n_out = SA.absorb(d, lambda ss: lad)
+        pk = SA.read_jsonl(os.path.join(d, "picks.jsonl"))
+        check("вход-событие стал строкой выбора",
+              n_in == 1 and n_out == 0 and len(pk) == 1
+              and pk[0]["short"][0]["sym"] == "AUSDT"
+              and pk[0]["short"][0]["noise_bp"] == 7.0
+              and pk[0]["short"][0]["train_seq"] == 9,
+              f"{n_in}/{n_out} {pk}")
+        check("повторное поглощение не находит ничего",
+              SA.absorb(d, lambda ss: lad) == (0, 0))
+        with open(os.path.join(d, "exits_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": "2026-08-13-14", "sym": "AUSDT",
+                "side": "short", "px": 99.2, "move_bp": -80.0,
+                "at_ts": 1786700123.5,
+                "reason": "цена дошла до обещанной цели"}) + "\n")
+        n_in, n_out = SA.absorb(d, lambda ss: lad)
+        rv = SA.read_jsonl(os.path.join(d, "review.jsonl"))
+        row = rv[0]["rows"][0]
+        check("выход-событие стал строкой разбора момента",
+              n_out == 1 and row["live"] is True
+              and row["exit_ts"] == 1786700123.5
+              and row["exit_px"] == 99.2
+              and row["reason"] == "цена дошла до обещанной цели",
+              str(row))
+        # Знак: у шорта падение цены −80 б.п. есть +80 в пользу,
+        # минус круг издержек.
+        check("нетто шорта — со знаком стороны и с кругом",
+              row["got"] == -80.0
+              and abs(row["net"] - (80.0 - TR.ROUND_COST_BP)) < 1e-9,
+              str(row))
+        check("лесенка выхода — из переданной книги",
+              row.get("cum", {}).get("mid") == 100.0, str(row.get("cum")))
+        check("разобранную позицию событие больше не трогает",
+              SA.absorb(d, lambda ss: lad) == (0, 0))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_trade_ids_are_stable():
     """Id сделки: выводится из полей записи и переживает пересборку.
 
@@ -4073,6 +4139,7 @@ def main():
     test_targets_shapes_and_direction()
     test_sigma_targets_exist_on_every_horizon()
     test_non_crypto_split_by_book_kind()
+    test_sit_absorb_lives_in_one_module()
     test_trade_ids_are_stable()
     test_entry_floor_gates_the_main_book()
     test_books_order_by_their_own_sigma()

@@ -550,6 +550,66 @@ def test_model_trades_lite_matches_full():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_sit_absorb_now_makes_pnl_immediate():
+    """Сборщик поглощает события сам: pnl сразу после закрытия.
+
+    Просьба владельца. Вход и выход записаны событиями; после
+    `sit_absorb_now` — без всякого часового цикла — книга несёт
+    строку выбора и строку разбора, сделка читается закрытой с нетто,
+    а лесенка выхода взята из ЖИВОЙ книги этой секунды.
+    """
+    import shutil
+    import tempfile
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+
+        class B:
+            def sample_view(self, ladder=0, bands=()):
+                return {"bid": 99.15, "ask": 99.25,
+                        "b": [[99.15, 400.0], [99.1, 900.0]],
+                        "a": [[99.25, 400.0], [99.3, 900.0]]}
+
+        col.books = {"AUSDT": B()}
+        with open(os.path.join(d, "entries_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "nn", "hour": "2026-08-13-14", "sym": "AUSDT",
+                "side": "long", "px": 100.0, "fwd": 60.0,
+                "mae": -40.0, "mfe": 120.0, "rr": 3.0,
+                "at_ts": 1786700000.5}) + "\n")
+        with open(os.path.join(d, "exits_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "nn", "hour": "2026-08-13-14", "sym": "AUSDT",
+                "side": "long", "px": 99.2, "move_bp": -80.0,
+                "at_ts": 1786700200.0,
+                "reason": "цена прошла обещанный ход против"}) + "\n")
+        n_in, n_out = col.sit_absorb_now(d)
+        check("тик поглотил и вход, и выход",
+              (n_in, n_out) == (1, 1), f"{n_in}/{n_out}")
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        tr = TR.build(C.Collector._jsonl(os.path.join(d, "picks.jsonl")),
+                      C.Collector._jsonl(os.path.join(d, "review.jsonl")),
+                      hold_h=None)
+        t = [x for x in tr if x["arm"] == "nn"][0]
+        check("сделка закрыта с нетто без часового цикла",
+              t["state"] == "закрыта" and t["net_bp"] == -91.0
+              and t["exit_ts"] == 1786700200.0
+              and t["exit_reason"] == "цена прошла обещанный ход против",
+              str(t)[:160])
+        check("лесенка выхода — живая книга этой секунды",
+              (t.get("cum_out") or {}).get("mid") == 99.2,
+              str(t.get("cum_out")))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_trade_by_id_finds_across_books():
     """Поиск сделки по короткому id обходит все книги разом.
 
@@ -3928,6 +3988,7 @@ def main():
     test_pages_run_headless()
     test_trades_table_columns_line_up()
     test_model_trades_lite_matches_full()
+    test_sit_absorb_now_makes_pnl_immediate()
     test_trade_by_id_finds_across_books()
     print("живой детектор")
     test_live_detector_agrees_with_batch()

@@ -53,6 +53,7 @@ import bookfeat as FB                                      # noqa: E402
 import gbm                                                 # noqa: E402
 import nn                                                  # noqa: E402
 import summary as SM                                       # noqa: E402
+import sit_absorb as SA                                     # noqa: E402
 import trades as TR                                         # noqa: E402
 from trades import ROUND_COST_BP as TR_COST                # noqa: E402
 import wf                                                  # noqa: E402
@@ -1421,33 +1422,6 @@ def fresh_sit_on_rules_change(mdir, log_=None):
     return dst
 
 
-def sit_open_positions(picks, reviews, arm):
-    """Открытые позиции ситуационной книги — перечитыванием файлов.
-
-    Состояние выводится, а не накапливается (правило журнала бота):
-    позиция открыта, если её выбор записан, а разбора с её ключом нет.
-    """
-    done = set()
-    for rv in reviews:
-        if (rv.get("arm") or "gbm") != arm:
-            continue
-        for r in rv.get("rows") or []:
-            done.add((rv.get("hour"), r.get("sym"), r.get("side")))
-    out = []
-    for pk in picks:
-        if (pk.get("arm") or "gbm") != arm:
-            continue
-        for side in ("long", "short"):
-            for p in pk.get(side) or []:
-                if (pk.get("hour"), p.get("sym"), side) in done:
-                    continue
-                out.append({"hour": pk.get("hour"), "sym": p.get("sym"),
-                            "side": side, "px": p.get("px"),
-                            "fwd": p.get("fwd"), "mae": p.get("mae"),
-                            "mfe": p.get("mfe")})
-    return out
-
-
 def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
                     grid, nov_lo, nov_hi, book_root, log_,
                     beta_row=None, names=None, train_seq=None):
@@ -1468,91 +1442,36 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     if any((arm, k) not in models for k in (kf, km, kx)) \
             or j_last is None:
         return None
-    # Живые входы сканера (сборщик заметил ситуацию между часами и
-    # записал событие с ценой и временем момента) становятся строками
-    # выбора ЗДЕСЬ: у файла выборов один писатель — этот цикл. До
-    # превращения позицию сторожит сборщик по самому событию.
-    ev_entries = [e for e in _read_jsonl(
-        os.path.join(mdir, "entries_live.jsonl"))
-        if (e.get("arm") or "gbm") == arm]
+    # Живые события (входы сканера, выходы сторожа) поглощает общий
+    # модуль `sit_absorb` — тот же зовёт сборщик в МОМЕНТ события,
+    # поэтому pnl появляется секундами после закрытия, а не ближайшим
+    # часом (просьба владельца). Здесь тот же вызов — страховка на
+    # случай упавшего сборщика и старых событий; одновременную
+    # дозапись двух процессов разводит замок каталога книги. Лесенка
+    # выхода у цикла — снимок записи на момент прогона; сборщик
+    # ставит её секундами после события, что ближе к правде
+    # исполнения, а источник и сжатие у обоих одни.
+    SA.absorb(mdir,
+              lambda ss: stamp_book(ss, time.time(), book_root,
+                                    log_, "выхода"),
+              log_, arms=(arm,))
     picks_all = _read_jsonl(os.path.join(mdir, "picks.jsonl"))
-    have = {(p.get("sym"), p.get("at_ts"))
-            for pk in picks_all if (pk.get("arm") or "gbm") == arm
-            for side in ("long", "short")
-            for p in pk.get(side) or []}
-    fresh = {}
-    for e in ev_entries:
-        if (e.get("sym"), e.get("at_ts")) in have:
-            continue
-        row = {"sym": e.get("sym"), "fwd": e.get("fwd"),
-               "px": e.get("px"), "mae": e.get("mae"),
-               "mfe": e.get("mfe"), "rr": e.get("rr"),
-               # Что обещал ЛИСТ на момент сечения: по паре (лист,
-               # остаток) видно скидку, которую отдала цена, — то есть
-               # сработало ли правило входа. Без неё проверить это по
-               # артефакту нельзя, а спрашивать сервер каждый раз
-               # значит доверять коду на слово.
-               "fwd0": e.get("fwd0"),
-               "at_ts": e.get("at_ts"), "scan": True}
-        # Чем поставлен стоп — квантильным уровнем или средней линией —
-        # обязано ехать в саму запись: через месяц по сделке иначе не
-        # сказать, каким правилом её стопили. `mae_m` рядом со стопом
-        # даёт показу обе линии, а замеру — величину сдвига.
-        # `why` и номер обучения — просьба владельца: сделка несёт,
-        # каким обучением она открыта и какие признаки дали прогноз.
-        # Номер идёт с ЛИСТА, породившего вход, а не с цикла,
-        # переписывающего событие в книгу: между ними может лежать
-        # новое обучение, и приписать сделке чужие веса значило бы
-        # соврать в самом поле, ради которого оно заведено.
-        for k in ("mae_m", "adverse_of", "favourable_of", "why",
-                  "setup", "train_seq", "scan_rank",
-                  # Числа правил v11: сработало ли правило, проверяется
-                  # числом в артефакте, а не доверием к коду (урок v5).
-                  "noise_bp", "eaten"):
-            if e.get(k) is not None:
-                row[k] = e[k]
-        if e.get("odd") is not None:
-            row["odd"] = e["odd"]
-        rec = fresh.setdefault(e.get("hour"), {
-            "arm": arm, "hour": e.get("hour"),
-            "at_ts": round(time.time(), 3), "scan": True,
-            "long": [], "short": []})
-        rec[e.get("side") or "long"].append(row)
-    for hour in sorted(fresh):
-        with open(os.path.join(mdir, "picks.jsonl"), "a",
-                  encoding="utf-8") as f:
-            f.write(json.dumps(fresh[hour], ensure_ascii=False) + "\n")
-        n = len(fresh[hour]["long"]) + len(fresh[hour]["short"])
-        log_(f"ситуационная [{arm}]: {n} живых входов часа {hour} "
-             f"записаны в книгу")
-        picks_all.append(fresh[hour])
     reviews_all = _read_jsonl(os.path.join(mdir, "review.jsonl"))
-    open_pos = sit_open_positions(picks_all, reviews_all, arm)
+    open_pos = SA.sit_open_positions(picks_all, reviews_all, arm)
     si = {s: i for i, s in enumerate(syms)}
     cur = grid[j_last]
     mid = mats["mid_close"]
-    # События живого сторожа (сборщик замечает пересечение обещанного
-    # хода против секундами и пишет их в свой файл): цена и время
-    # выхода берутся из МОМЕНТА пересечения, а не из закрытия часа —
-    # урок S1 про закрытие пробившего бара. Строку разбора из события
-    # делает только этот цикл: у файла разбора один писатель. Событие
-    # по уже закрытой позиции игнорируется само: сюда доходят только
-    # открытые.
-    events = {}
-    for ev in _read_jsonl(os.path.join(mdir, "exits_live.jsonl")):
-        if (ev.get("arm") or "gbm") != arm:
-            continue
-        k = (ev.get("hour"), ev.get("sym"), ev.get("side"))
-        if k not in events:              # первое пересечение решает
-            events[k] = ev
 
-    # --- выходы: ситуация кончилась ----------------------------------
+    # --- выходы: ситуация кончилась (часовые причины) ----------------
+    # Событийные выходы уже поглощены выше; остаются причины, которым
+    # нужны модель и цены часа: страховочный замер уровней по закрытию
+    # часа (живой сторож мог не видеть цены), разворот прогноза и
+    # предел возраста.
     closed_syms, by_hour = set(), {}
     for p in open_pos:
-        ev = events.get((p["hour"], p["sym"], p["side"]))
         i = si.get(p["sym"])
         px = float(mid[i, j_last]) if i is not None else float("nan")
-        if ev is None and not (np.isfinite(px) and p.get("px")):
+        if not (np.isfinite(px) and p.get("px")):
             # Цены нет — судить не по чему; позиция ждёт цены.
             continue
         # Строка выбора УЖЕ несёт стороны: `mae` — ход против ЭТОЙ
@@ -1561,45 +1480,37 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         # стороны обратно, и любой ход закрывал бы позицию —
         # дефект найден здесь и закрыт тестом.
         adv, fav = p.get("mae"), p.get("mfe")
-        reason, move, exit_hour, exit_ts = None, None, cur, None
-        if ev is not None:
-            reason = ev.get("reason") or "цена прошла обещанный ход против"
-            move = float(ev.get("move_bp") or 0.0)
-            exit_ts = ev.get("at_ts")
-            if exit_ts:
-                exit_hour = datetime.fromtimestamp(
-                    exit_ts, timezone.utc).strftime("%Y-%m-%d-%H")
-        else:
-            move = (px / p["px"] - 1.0) * 1e4
-            age = _hours_apart(p["hour"], cur)
-            fresh = float(models[(arm, kf)].predict(
-                x[i:i + 1, j_last])[0])
-            # Уровни идут ПЕРЕД разворотом прогноза: задетый уровень —
-            # факт цены, разворот — мнение модели. Прежде разворот
-            # стоял первым, и позиция, ушедшая за свой стоп, попадала
-            # в разбор с чужой причиной. Ход ПРОТИВ проверяется раньше
-            # цели: ничью внутри часа разрешаем не в свою пользу, как
-            # в замерах T3/T4.
-            #
-            # Это страховка на случай, когда живой сторож не видел
-            # цены: часовой замер берёт цену конца часа.
-            if adv is not None and (
-                    (p["side"] == "long" and move <= adv)
-                    or (p["side"] == "short" and move >= adv)):
-                reason = "цена прошла обещанный ход против"
-            # ЦЕЛЬ. До версии 6 её не существовало вовсе: стоп стоял,
-            # тейка не было, и сделка, дошедшая до обещанного уровня,
-            # висела до разворота прогноза или суток возраста.
-            elif fav is not None and (
-                    (p["side"] == "long" and move >= fav)
-                    or (p["side"] == "short" and move <= fav)):
-                reason = "цена дошла до обещанной цели"
-            # Прогноз развернулся: модель больше не ждёт того, ради
-            # чего входила.
-            elif (p["side"] == "long") != (fresh > 0):
-                reason = "прогноз развернулся"
-            elif age is not None and age >= SIT_MAX_AGE_H:
-                reason = "предел возраста"
+        reason = None
+        move = (px / p["px"] - 1.0) * 1e4
+        age = _hours_apart(p["hour"], cur)
+        fresh = float(models[(arm, kf)].predict(
+            x[i:i + 1, j_last])[0])
+        # Уровни идут ПЕРЕД разворотом прогноза: задетый уровень —
+        # факт цены, разворот — мнение модели. Прежде разворот
+        # стоял первым, и позиция, ушедшая за свой стоп, попадала
+        # в разбор с чужой причиной. Ход ПРОТИВ проверяется раньше
+        # цели: ничью внутри часа разрешаем не в свою пользу, как
+        # в замерах T3/T4.
+        #
+        # Это страховка на случай, когда живой сторож не видел
+        # цены: часовой замер берёт цену конца часа.
+        if adv is not None and (
+                (p["side"] == "long" and move <= adv)
+                or (p["side"] == "short" and move >= adv)):
+            reason = "цена прошла обещанный ход против"
+        # ЦЕЛЬ. До версии 6 её не существовало вовсе: стоп стоял,
+        # тейка не было, и сделка, дошедшая до обещанного уровня,
+        # висела до разворота прогноза или суток возраста.
+        elif fav is not None and (
+                (p["side"] == "long" and move >= fav)
+                or (p["side"] == "short" and move <= fav)):
+            reason = "цена дошла до обещанной цели"
+        # Прогноз развернулся: модель больше не ждёт того, ради
+        # чего входила.
+        elif (p["side"] == "long") != (fresh > 0):
+            reason = "прогноз развернулся"
+        elif age is not None and age >= SIT_MAX_AGE_H:
+            reason = "предел возраста"
         if reason is None:
             continue
         rr = {"sym": p["sym"], "side": p["side"],
@@ -1609,27 +1520,17 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
               "got": round(move, 1),
               "net": round((1 if p["side"] == "long" else -1) * move
                            - ROUND_COST_BP, 1),
-              "exit_hour": exit_hour, "reason": reason}
-        if ev is not None:
-            rr["live"] = True
-            rr["exit_ts"] = exit_ts
-            rr["exit_px"] = ev.get("px")
+              "exit_hour": cur, "reason": reason}
         by_hour.setdefault(p["hour"], []).append(rr)
         closed_syms.add(p["sym"])
-    for hour, rows_rv in by_hour.items():
-        bk_out = stamp_book([r["sym"] for r in rows_rv], time.time(),
-                            book_root, log_, "выхода")
-        for r in rows_rv:
-            if r["sym"] in bk_out:
-                r["cum"] = bk_out[r["sym"]]
-        with open(os.path.join(mdir, "review.jsonl"), "a",
-                  encoding="utf-8") as f:
-            f.write(json.dumps(
-                {"arm": arm, "hour": hour, "cost_bp": ROUND_COST_BP,
-                 "at_ts": round(time.time(), 3), "rows": rows_rv},
-                ensure_ascii=False) + "\n")
-        log_(f"ситуационная [{arm}]: закрыто {len(rows_rv)} "
-             f"({'; '.join(r['sym'] + ' — ' + r['reason'] for r in rows_rv)})")
+    if by_hour:
+        syms_out = sorted({r["sym"] for rows_rv in by_hour.values()
+                           for r in rows_rv})
+        with SA.book_lock(mdir):
+            SA.write_reviews(mdir, arm, by_hour,
+                             stamp_book(syms_out, time.time(),
+                                        book_root, log_, "выхода"),
+                             log_)
 
     # --- лист сечения для живого сканера ------------------------------
     # Карта от модели: прогноз, СЫРЫЕ обещания пути и бета по каждому

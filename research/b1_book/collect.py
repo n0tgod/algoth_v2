@@ -3518,6 +3518,17 @@ class Collector:
                                 f"{'дошла до цели' if hit == 'в пользу' else 'прошла обещанный ход против'}"
                                 f" ({move:+.0f} б.п.) — выход замечен "
                                 f"живьём")
+                # Живое поглощение: событие ЭТОГО тика становится
+                # строкой книги сейчас, а не ближайшим часом (просьба
+                # владельца — pnl сразу после закрытия). Метка —
+                # суммарный счёт входов и выходов книги: первый тик
+                # после подъёма подбирает и накопленный до перезапуска
+                # хвост.
+                for d, stt in books.items():
+                    mark = len(stt["entered"]) + len(stt["signalled"])
+                    if mark != stt.get("absorbed_mark"):
+                        self.sit_absorb_now(d)
+                        stt["absorbed_mark"] = mark
             except Exception as e:                        # noqa: BLE001
                 self.log(f"сторож ситуационной книги: "
                          f"{type(e).__name__}: {e}")
@@ -3588,6 +3599,50 @@ class Collector:
                if lo is not None and lo > 0 else 0.0)
         val = max(med, cur)
         return val if val > 0 else None
+
+    def sit_absorb_now(self, mdir):
+        """Живое поглощение событий книги: pnl сразу после закрытия.
+
+        Превращение событий в строки выбора и разбора делает общий
+        модуль `sit_absorb` — тот же, что у часового цикла (второй
+        копии правил нет), одновременную запись двух процессов
+        разводит замок каталога. Лесенка выхода — живая книга В ЭТУ
+        СЕКУНДУ: ближе к правде исполнения, чем снимок цикла часом
+        позже; сжатие то же (`trades.cum_ladder`). Деньги по-прежнему
+        штампует касса при чтении — здесь появляются только строки.
+
+        Отказ поглощения не роняет сторожа и не молчит: события
+        остаются в файлах, их подберёт следующий тик либо цикл.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import sit_absorb as SA
+        import trades as TR
+
+        def ladder_of(syms):
+            out = {}
+            for sym in syms:
+                bk = self.books.get(sym)
+                if not bk:
+                    continue
+                s = bk.sample_view(ladder=0, bands=())
+                if not s:
+                    continue
+                b = TR.cum_ladder(s.get("b"))
+                a = TR.cum_ladder(s.get("a"))
+                if not b or not a:
+                    continue
+                out[sym] = {"mid": (s["bid"] + s["ask"]) / 2.0,
+                            "b": b, "a": a,
+                            "t": round(time.time(), 1)}
+            return out
+
+        try:
+            return SA.absorb(mdir, ladder_of, self.log)
+        except Exception as e:                            # noqa: BLE001
+            self.log(f"поглощение событий {os.path.basename(mdir)}: "
+                     f"{type(e).__name__}: {e}")
+            return (0, 0)
 
     def _sit_scan(self, root, sheet, want, books, now, armed):
         """Один тик сканера входов: лист сечения против живых цен.
