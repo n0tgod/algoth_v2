@@ -2418,13 +2418,20 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         # Бета по имени — из признака сечения: сканеру она нужна,
         # чтобы вычесть волну из живого хода и сравнить остаток с
         # прогнозом в одних единицах.
+        # Решение владельца (2026-08-13): ситуационная книга вправе
+        # торговать НЕ-КРИПТО — её выход по уровню, а не по времени,
+        # и календарная компонента спреда (базовый актив стоит в
+        # выходные) не держит позицию через закрытую биржу неделями.
+        # Книги со сроком не-крипто по-прежнему не видят (rows_m).
+        rows_sit = (np.flatnonzero(elig[:, j_last])
+                    if j_last is not None else rows_m)
         beta_row = None
         if j_last is not None and "beta" in names:
-            beta_row = x[rows_m, j_last, names.index("beta")]
+            beta_row = x[rows_sit, j_last, names.index("beta")]
         sheets = {}
         for arm, _ in ARMS:
             sh = situational_arm(mdir, arm, models, x, mats, syms,
-                                 rows_m, j_last, grid, nov_lo, nov_hi,
+                                 rows_sit, j_last, grid, nov_lo, nov_hi,
                                  book_root, log_, beta_row=beta_row,
                                  names=names, train_seq=train_seq)
             if sh:

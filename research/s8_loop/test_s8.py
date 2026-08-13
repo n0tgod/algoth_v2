@@ -3905,6 +3905,29 @@ def test_adopting_the_same_book_keeps_its_history():
         shutil.rmtree(td, ignore_errors=True)
 
 
+def test_non_crypto_split_by_book_kind():
+    """Не-крипто: часовые книги не видят, ситуационная вправе.
+
+    Найдено владельцем: CSOPSAMSUNG2L (плечевой ETF) вошёл в книгу —
+    свежий листинг не был размечен. Признак — префикс эмитента фондов;
+    решение владельца: книги со сроком не-крипто не торгуют, у
+    ситуационной выход по уровню, и ей можно.
+    """
+    from research.common import universe_filter as UF
+    import train as T
+    check("свежий фонд размечен не-крипто префиксом",
+          UF.is_non_crypto("CSOPSAMSUNG2L", set())
+          and UF.is_non_crypto("CSOPSKHYNIX2LUSDT", set()),
+          "CSOP* прошёл как монета")
+    check("монета не задета",
+          not UF.is_non_crypto("STEEMUSDT", set()), "STEEM размечен")
+    import numpy as np
+    rows = T.tradable_rows(np.array([0, 1]),
+                           ["CSOPSAMSUNG2L", "STEEMUSDT"])
+    check("книги со сроком не-крипто не видят",
+          list(rows) == [1], str(list(rows)))
+
+
 def test_entry_floor_gates_the_main_book():
     """Пол входа: тихий час не торгуется, смена пола отставляет книгу.
 
@@ -4009,6 +4032,7 @@ def main():
     test_eligibility_by_coverage()
     test_targets_shapes_and_direction()
     test_sigma_targets_exist_on_every_horizon()
+    test_non_crypto_split_by_book_kind()
     test_entry_floor_gates_the_main_book()
     test_books_order_by_their_own_sigma()
     test_book_archives_when_the_order_changes()

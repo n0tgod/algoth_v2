@@ -66,4 +66,9 @@ def is_non_crypto(sym, ref=None):
     """
     if sym.endswith("STOCKUSDT"):
         return True
+    # CSOP — эмитент биржевых фондов (Samsung 2x, SK Hynix 2x, ...):
+    # свежие листинги волной, поимённый список отставал бы от каждого
+    # нового. Найдено владельцем: CSOPSAMSUNG2L вошёл в книгу.
+    if sym.startswith("CSOP"):
+        return True
     return sym in (non_crypto_set() if ref is None else ref)
