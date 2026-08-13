@@ -1254,7 +1254,10 @@ function renderModel() {
             line is skipped — its next tick is a wobble around a level
             it was standing on, not a move.` : ""}${m.max_eaten != null
          ? ` Two more gates (rules v11): the stop room must survive
-            the coin's own <b>live minute noise</b>, and the price may
+            the coin's own <b>live minute noise</b>${m.noise_mult > 1
+              ? ` — and this book demands <b>${m.noise_mult}×</b> that
+                 noise, not just one (owner's rule after a stop one
+                 wick wide)` : ""}, and the price may
             not have eaten more than <b>${Math.round(
               m.max_eaten * 100)} %</b> of the promised adverse path
             before entry — a move against the forecast used to count
@@ -5181,7 +5184,11 @@ function render(d, t){
       the distance to the actual stop.</p>${t.noise_bp != null
       ? `<p>Rules v11, both by the numbers of this entry: the stop
         room survived the coin's live minute noise of
-        <b>${t.noise_bp} bp</b>, and the price had consumed
+        <b>${t.noise_bp} bp</b>${d.noise_mult > 1
+          ? ` — cleared at this book's own bar of
+             <b>${d.noise_mult}×</b> that noise (owner's rule: a
+             stop one wick wide is a coin toss)` : ""}, and the
+        price had consumed
         <b>${Math.round((t.eaten ?? 0) * 100)} %</b> of the promised
         adverse path${d.max_eaten != null
           ? ` — under the ${Math.round(d.max_eaten * 100)} % cap`

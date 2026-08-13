@@ -2598,6 +2598,94 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_sit_scan_book_noise_multiplier():
+    """Правило книги равного риска: запас до стопа не тоньше 1.5 шума.
+
+    Сделка #ptadyrc прошла базовый гейт v11 с запасом 1.7 б.п. (стоп
+    39 при шуме 37.3) — стоп шириной в один фитиль, снятый минутой
+    позже входа. Порог — правило КНИГИ, как min_rr: кандидат один на
+    все книги, различаются требования; торгуемая книга не меняется, а
+    лист без поля означает прежний множитель 1, не ноль.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        col = C.Collector.__new__(C.Collector)
+        col.books = {}
+        col.log = lambda m: None
+        # Запас кандидата к стопу — 20 б.п. (фикстура ниже): при шуме
+        # 15 базовый гейт в один шум проходит, полтора шума — 22.5 —
+        # уже нет. Форма #ptadyrc в числах теста.
+        col.sit_noise = lambda sym, now: 15.0
+
+        class B:
+            def __init__(self, px):
+                self.px = px
+
+            def best(self):
+                return self.px * 0.9999, self.px * 1.0001
+
+        rows = [{"sym": f"S{i}USDT", "fwd": 40.0, "mae": -40.0,
+                 "mfe": 90.0, "beta": 1.0, "px": 100.0}
+                for i in range(30)]
+        sheet = {"hour": "2026-08-13-10", "min_edge_bp": 22.0,
+                 "min_rr": 2.0, "min_disc_bp": 11.0, "slots": 6,
+                 "arms": {"gbm": rows}}
+        for r in rows:
+            col.books[r["sym"]] = B(100.0)
+        bdir, rdir = os.path.join(d, "bk"), os.path.join(d, "bk_r")
+        os.makedirs(bdir)
+        os.makedirs(rdir)
+        want = [{"dir": "bk", "min_rr": 2.0, "slots": 6},
+                {"dir": "bk_r", "min_rr": 2.0, "slots": 6,
+                 "noise_mult": 1.5}]
+        books = {p: {"dir": p, "signalled": set(), "entered": set(),
+                     "pos": []} for p in (bdir, rdir)}
+        armed = set()
+        n = lambda p: len(C.Collector._jsonl(
+            os.path.join(p, "entries_live.jsonl")))
+        col.books["S0USDT"] = B(100.10)     # взведение дальше полосы
+        col._sit_scan(d, sheet, want, books, 1000.0, armed)
+        col.books["S0USDT"] = B(99.80)      # пересечение при нас
+        col._sit_scan(d, sheet, want, books, 1005.0, armed)
+        check("запас в один шум с лишним: торгуемая книга входит",
+              n(bdir) == 1, str(n(bdir)))
+        check("та же сделка тоньше полутора шумов: книга равного "
+              "риска не входит", n(rdir) == 0, str(n(rdir)))
+
+        # Запас над полутора шумами — входят обе. Свежие каталоги и
+        # взведение: состав книг тот же, меняется только шум.
+        col.sit_noise = lambda sym, now: 10.0
+        b2, r2 = os.path.join(d, "b2"), os.path.join(d, "r2")
+        os.makedirs(b2)
+        os.makedirs(r2)
+        want2 = [{"dir": "b2", "min_rr": 2.0, "slots": 6},
+                 {"dir": "r2", "min_rr": 2.0, "slots": 6,
+                  "noise_mult": 1.5}]
+        books2 = {p: {"dir": p, "signalled": set(), "entered": set(),
+                      "pos": []} for p in (b2, r2)}
+        armed2 = set()
+        col.books["S1USDT"] = B(100.10)
+        col._sit_scan(d, sheet, want2, books2, 1100.0, armed2)
+        col.books["S1USDT"] = B(99.80)
+        col._sit_scan(d, sheet, want2, books2, 1105.0, armed2)
+        check("запас над полутора шумами — входят обе книги",
+              n(b2) == 1 and n(r2) == 1, f"{n(b2)}/{n(r2)}")
+        # Множитель — числом в записи книги, которая его требует:
+        # сработало ли правило, проверяется записью, а не доверием к
+        # коду. У книги без правила поля нет — не ноль и не единица.
+        evr = C.Collector._jsonl(os.path.join(r2, "entries_live.jsonl"))
+        evb = C.Collector._jsonl(os.path.join(b2, "entries_live.jsonl"))
+        check("множитель шума едет в событие входа своей книги",
+              evr and evr[0].get("noise_mult") == 1.5
+              and "noise_mult" not in evb[0],
+              f"{evr and evr[0].get('noise_mult')} / "
+              f"{'noise_mult' in (evb and evb[0] or {})}")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_collector_keeps_its_public_methods():
     """Сборщик цел: у него на месте всё, чем его запускают.
 
@@ -4039,6 +4127,7 @@ def main():
     test_sit_noise_is_median_minute_range()
     test_sit_scan_stop_is_the_quantile_level()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
+    test_sit_scan_book_noise_multiplier()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()

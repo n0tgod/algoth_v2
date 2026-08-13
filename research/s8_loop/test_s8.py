@@ -1507,12 +1507,12 @@ def test_situational_book_enters_and_exits_by_situation():
             check("книга тех же правил не трогается",
                   T.fresh_sit_on_rules_change(old_dir, lambda m: None)
                   is None and os.path.isdir(old_dir))
-            # Политика выходов — то же правило книги, что и версия:
-            # появление «только уровней» отставляет книгу и при
-            # неизменной версии правил.
+            # Правила самой книги (политика выходов, множитель
+            # шума) — то же правило, что и версия: смена любого
+            # отставляет книгу и при неизменной версии правил.
             got7p = T.fresh_sit_on_rules_change(
                 old_dir, lambda m: None,
-                exit_policy=T.SIT_R_EXIT_POLICY)
+                rules={"exit_policy": T.SIT_R_EXIT_POLICY})
             check("смена политики выходов отставляет книгу",
                   got7p is not None and os.path.isdir(got7p),
                   str(got7p))
@@ -1525,8 +1525,30 @@ def test_situational_book_enters_and_exits_by_situation():
             check("та же политика книгу не трогает",
                   T.fresh_sit_on_rules_change(
                       old_dir, lambda m: None,
-                      exit_policy=T.SIT_R_EXIT_POLICY) is None
-                  and os.path.isdir(old_dir))
+                      rules={"exit_policy": T.SIT_R_EXIT_POLICY})
+                  is None and os.path.isdir(old_dir))
+            # Появление множителя шума — книга, писанная до правила,
+            # не писалась по нему: манифест без поля отставляется.
+            got7n = T.fresh_sit_on_rules_change(
+                old_dir, lambda m: None,
+                rules={"exit_policy": T.SIT_R_EXIT_POLICY,
+                       "noise_mult": T.SIT_R_NOISE_MULT})
+            check("появление множителя шума отставляет книгу",
+                  got7n is not None and os.path.isdir(got7n),
+                  str(got7n))
+            os.makedirs(old_dir, exist_ok=True)
+            with open(os.path.join(old_dir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(
+                    {"rules_version": T.SIT_RULES_VERSION,
+                     "exit_policy": T.SIT_R_EXIT_POLICY,
+                     "noise_mult": T.SIT_R_NOISE_MULT}))
+            check("те же правила целиком книгу не трогают",
+                  T.fresh_sit_on_rules_change(
+                      old_dir, lambda m: None,
+                      rules={"exit_policy": T.SIT_R_EXIT_POLICY,
+                             "noise_mult": T.SIT_R_NOISE_MULT})
+                  is None and os.path.isdir(old_dir))
         finally:
             shutil.rmtree(d7, ignore_errors=True)
 

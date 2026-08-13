@@ -1203,6 +1203,14 @@ SIT_MAX_AGE_H = 24
 # заведена. Цена решения названа: позиция, не задевшая ни один
 # уровень, живёт дольше суток и держит слот.
 SIT_R_EXIT_POLICY = "levels_only"
+# Второе правило той же книги (решение владельца после #ptadyrc):
+# запас до стопа обязан быть не тоньше ПОЛУТОРА живых минутных шумов
+# монеты. Базовый гейт v11 требует один шум, и сделка #ptadyrc прошла
+# его с запасом 1.7 б.п. (стоп 39 при шуме 37.3) — стоп шириной в
+# один фитиль на тонком имени, снятый минутой позже входа. Порог —
+# правило КНИГИ, как размер и выходы: торгуемая книга не меняется,
+# и разница результатов остаётся приписуемой правилам sit_r.
+SIT_R_NOISE_MULT = 1.5
 # Наблюдательная книга: те же гейты, КРОМЕ отношения. Нужна затем,
 # чтобы фильтру владельца было что показывать ниже боевого порога: в
 # торгуемой книге сделок с RR < 2 нет вовсе, и порог 1 к 1 добавить
@@ -1398,13 +1406,20 @@ def fresh_book_on_rank_change(mdir, want, log_=None, floor=None):
     return dst
 
 
-def fresh_sit_on_rules_change(mdir, log_=None, exit_policy=None):
+def fresh_sit_on_rules_change(mdir, log_=None, rules=None):
     """Сменились правила ситуационной книги — старая уходит в архив.
 
     Книга не удаляется, а переезжает в архивный каталог: история
     прогона — запись, а не мусор, и сравнить старую книгу с новой можно
     будет чтением. Имя архива выводится из ПРЕЖНЕЙ версии правил,
     повторный запуск копий не плодит.
+
+    `rules` — правила самой книги сверх общей версии (политика
+    выходов, множитель шума): ключ манифеста → требуемое значение.
+    Смена любого из них отставляет книгу так же, как смена версии —
+    кривые, писанные разными правилами, не сшиваются. Отсутствие поля
+    в манифесте — тоже смена: книга, писанная до правила, не писалась
+    по нему.
     """
     try:
         with open(os.path.join(mdir, "manifest.json"),
@@ -1413,11 +1428,9 @@ def fresh_sit_on_rules_change(mdir, log_=None, exit_policy=None):
         was = int(man.get("rules_version") or 1)
     except (OSError, ValueError):
         return None                # каталога нет или пуст — нечего
-    # Политика выходов — то же правило книги, что и версия: книга,
-    # закрывавшая сделки разворотом прогноза, и книга «только стоп
-    # или тейк» — разные книги, и сшивать их кривые в одну нельзя.
-    if was == SIT_RULES_VERSION \
-            and man.get("exit_policy") == exit_policy:
+    diff = [(k, man.get(k), v) for k, v in (rules or {}).items()
+            if man.get(k) != v]
+    if was == SIT_RULES_VERSION and not diff:
         return None
     dst = f"{mdir}.rules-v{was}"
     n = 0
@@ -1428,8 +1441,8 @@ def fresh_sit_on_rules_change(mdir, log_=None, exit_policy=None):
         return None
     why = (f"v{was} → v{SIT_RULES_VERSION}"
            if was != SIT_RULES_VERSION
-           else f"выходы: {man.get('exit_policy') or 'все причины'}"
-                f" → {exit_policy or 'все причины'}")
+           else "; ".join(f"{k}: {w if w is not None else 'нет'} → {v}"
+                          for k, w, v in diff))
     if log_:
         log_(f"правила ситуационной книги сменились ({why}) — "
              f"старые сделки отставлены в {os.path.basename(dst)}, "
@@ -2444,9 +2457,13 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                                # Контрольная рука: другой состав
                                # сделок не позволил бы приписать
                                # разницу правилу.
+                               # Её же правило запаса: стоп не
+                               # тоньше полутора живых шумов (после
+                               # #ptadyrc — стоп в один фитиль).
                                {"dir": os.path.basename(mdir) + "_r",
                                 "min_rr": SIT_MIN_RR,
-                                "slots": SIT_SLOTS},
+                                "slots": SIT_SLOTS,
+                                "noise_mult": SIT_R_NOISE_MULT},
                            ],
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
@@ -2502,12 +2519,14 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         # (гейты и места совпадают): меняется только распределение
         # размера, и разница результатов принадлежит правилу.
         rbk = mdir + "_r"
-        fresh_sit_on_rules_change(rbk, log_,
-                                  exit_policy=SIT_R_EXIT_POLICY)
+        fresh_sit_on_rules_change(rbk, log_, rules={
+            "exit_policy": SIT_R_EXIT_POLICY,
+            "noise_mult": SIT_R_NOISE_MULT})
         os.makedirs(rbk, exist_ok=True)
         srm = dict(sm, sizing="fixed_risk",
                    risk_share=TR.FIXED_RISK_SHARE,
-                   exit_policy=SIT_R_EXIT_POLICY)
+                   exit_policy=SIT_R_EXIT_POLICY,
+                   noise_mult=SIT_R_NOISE_MULT)
         with open(os.path.join(rbk, "manifest.json.tmp"), "w",
                   encoding="utf-8") as f:
             json.dump(srm, f, ensure_ascii=False, indent=1)
