@@ -1770,10 +1770,18 @@ def rebuild_accounts(mdir, hold_h, slots=None):
     all_tr = TR.build(_read_jsonl(os.path.join(mdir, "picks.jsonl")),
                       _read_jsonl(os.path.join(mdir, "review.jsonl")),
                       hold_h=hold_h)
+    # Правило размера — из манифеста САМОЙ книги: его же читают
+    # страницы, и два места, решающих одно, однажды разошлись бы.
+    try:
+        with open(os.path.join(mdir, "manifest.json"),
+                  encoding="utf-8") as f:
+            sizing = (json.load(f) or {}).get("sizing")
+    except (OSError, ValueError):
+        sizing = None
     out = {}
     for arm, _ in ARMS:
         hist, bal = TR.account(all_tr, arm, hold_h=hold_h or TR.HOLD_H,
-                               slots=slots)
+                               slots=slots, sizing=sizing)
         apath = os.path.join(mdir, f"account_{arm}.json")
         with open(apath + ".tmp", "w", encoding="utf-8") as f:
             json.dump({"balance": bal, "history": hist[-500:],
@@ -2398,6 +2406,16 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                                {"dir": os.path.basename(mdir) + "_obs",
                                 "min_rr": SIT_OBS_MIN_RR,
                                 "slots": SIT_OBS_SLOTS},
+                               # Книга равного риска: те же гейты и
+                               # места, что у торгуемой, — различие
+                               # ровно одно, правило РАЗМЕРА (равный
+                               # доллар риска, манифест sizing).
+                               # Контрольная рука: другой состав
+                               # сделок не позволил бы приписать
+                               # разницу правилу.
+                               {"dir": os.path.basename(mdir) + "_r",
+                                "min_rr": SIT_MIN_RR,
+                                "slots": SIT_SLOTS},
                            ],
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
@@ -2445,6 +2463,29 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                             book_root, log_, beta_row=beta_row,
                             names=names, train_seq=train_seq)
         rebuild_accounts(obs, None, slots=SIT_OBS_SLOTS)
+        # Книга равного риска (просьба владельца): при одном RR тейк
+        # приносил то 20 $, то 5 $, а стоп забирал 15 — уровни у
+        # сделок разной ширины, а размер один, и доллар риска пляшет.
+        # Здесь размер обратен исполняемому стопу: стоп всегда −R,
+        # тейк при RR r — +r·R. Сделки ТЕ ЖЕ, что у торгуемой
+        # (гейты и места совпадают): меняется только распределение
+        # размера, и разница результатов принадлежит правилу.
+        rbk = mdir + "_r"
+        fresh_sit_on_rules_change(rbk, log_)
+        os.makedirs(rbk, exist_ok=True)
+        srm = dict(sm, sizing="fixed_risk",
+                   risk_share=TR.FIXED_RISK_SHARE)
+        with open(os.path.join(rbk, "manifest.json.tmp"), "w",
+                  encoding="utf-8") as f:
+            json.dump(srm, f, ensure_ascii=False, indent=1)
+        os.replace(os.path.join(rbk, "manifest.json.tmp"),
+                   os.path.join(rbk, "manifest.json"))
+        for arm, _ in ARMS:
+            situational_arm(rbk, arm, models, x, mats, syms,
+                            rows_m, j_last, grid, nov_lo, nov_hi,
+                            book_root, log_, beta_row=beta_row,
+                            names=names, train_seq=train_seq)
+        rebuild_accounts(rbk, None, slots=SIT_SLOTS)
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
 

@@ -64,6 +64,7 @@ BOOKJS = r"""
 // и статистики целиком. Каталог на диске остаётся записью.
 const BOOK_LIST = [["h4", "4 h \u00b7 per \u03c3"], ["h24", "24 h"],
                    ["sit", "situational \u00b7 per \u03c3"],
+                   ["sit_r", "situational \u00b7 fixed risk"],
                    ["z", "24 h \u00b7 per \u03c3"]];
 // Ключи, законные в адресе. Главная книга — умолчание и в адрес не
 // пишется; наблюдательная запись адресуема, потому что на неё уводит
@@ -5989,7 +5990,7 @@ function share(v, cap){
 function rootCap(){
   if (!DATA || !DATA.cap) return null;
   const n = (DATA.books || []).filter(
-    b => b.present && b.key !== "sit_obs").length;
+    b => b.present && b.key !== "sit_obs" && !b.echo).length;
   return n ? DATA.cap * n : null;
 }
 // Короткое имя узла: часть заголовка до тире. Полный заголовок и
@@ -6024,6 +6025,9 @@ function bookStat(b, arm){
 function rootSum(arm){
   let n = 0, p = 0.0, any = false;
   for (const b of (DATA.books || [])) {
+    // Книга-эхо (равный риск) — те же решения, что у торгуемой: в
+    // сумме корня они считались бы дважды. Флаг шлёт сервер.
+    if (b.echo) continue;
     const s = (b.stats || {})[arm];
     // Ветка без закрытых сделок в сумму не входит вовсе: сложить с ней
     // значит получить NaN, то есть потерять и те ветки, что посчитаны.
@@ -6037,6 +6041,7 @@ function rootSum(arm){
 function rootOpen(arm){
   let n = 0, m = 0, p = 0.0, priced = false;
   for (const b of (DATA.books || [])) {
+    if (b.echo) continue;
     const s = (b.stats || {})[arm];
     if (!s || !s.open) continue;
     n += s.open; m += s.marked;

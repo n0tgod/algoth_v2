@@ -4016,6 +4016,53 @@ def test_books_order_by_their_own_sigma():
           T.book_dir(24, sigma=True))
 
 
+def test_fixed_risk_sizing_equalises_dollar_risk():
+    """Рука равного риска: стоп всегда −R, тейк при RR r — +r·R.
+
+    Наблюдение владельца: при одном RR тейк приносил то 20 $, то 5 $,
+    а стоп забирал 15 — уровни у сделок разной ширины, размер один,
+    и доллар риска плясал. Здесь размер обратен исполняемому стопу;
+    потолок на имя (забор) старше правила и режет тесные стопы —
+    у них риск меньше целевого, и это помечено, а не молчит.
+    """
+    import trades as TR
+
+    def pk(hour, sym, mae):
+        return {"arm": "gbm", "hour": hour, "at_ts": 1786000000.0,
+                "long": [{"sym": sym, "fwd": 50.0, "px": 100.0,
+                          "mae": mae, "mfe": 150.0,
+                          "at_ts": 1786000000.0 + hash(sym) % 7}],
+                "short": []}
+
+    picks = [pk("2026-08-13-10", "AAAUSDT", -100.0),
+             pk("2026-08-13-11", "BBBUSDT", -200.0),
+             pk("2026-08-13-12", "CCCUSDT", -50.0),
+             pk("2026-08-13-13", "DDDUSDT", None)]
+    tr = TR.build(picks, [], hold_h=None, now=1786100000.0)
+    TR.account(tr, "gbm", hold_h=TR.HOLD_H, slots=6,
+               sizing="fixed_risk")
+    by = {t["sym"]: t for t in tr}
+    ra = by["AAAUSDT"]["size"] * 100.0 / 1e4
+    rb = by["BBBUSDT"]["size"] * 200.0 / 1e4
+    check("доллар риска одинаков при разной ширине стопа",
+          abs(ra - rb) < 0.02
+          and abs(ra - TR.START_BALANCE * TR.FIXED_RISK_SHARE) < 0.2,
+          f"{ra:.2f} против {rb:.2f}")
+    check("размер обратен стопу (стоп вдвое шире — размер вдвое "
+          "меньше)",
+          abs(by["AAAUSDT"]["size"] / by["BBBUSDT"]["size"] - 2.0)
+          < 0.01,
+          f'{by["AAAUSDT"]["size"]:.2f}/{by["BBBUSDT"]["size"]:.2f}')
+    check("тесный стоп упирается в потолок имени и помечен",
+          by["CCCUSDT"]["name_capped"] is True
+          and by["CCCUSDT"]["size"] <= 0.10 * TR.START_BALANCE + 1e-6,
+          str(by["CCCUSDT"].get("size")))
+    check("сделка без стопа размера не получает — неизмеримый риск "
+          "не есть нулевой",
+          (by["DDDUSDT"].get("size") or 0.0) == 0.0,
+          str(by["DDDUSDT"].get("size")))
+
+
 def test_sit_absorb_lives_in_one_module():
     """Поглощение живых событий: и сборщик, и цикл зовут один код.
 
@@ -4139,6 +4186,7 @@ def main():
     test_targets_shapes_and_direction()
     test_sigma_targets_exist_on_every_horizon()
     test_non_crypto_split_by_book_kind()
+    test_fixed_risk_sizing_equalises_dollar_risk()
     test_sit_absorb_lives_in_one_module()
     test_trade_ids_are_stable()
     test_entry_floor_gates_the_main_book()

@@ -1712,7 +1712,8 @@ class Collector:
                 # тем, что показано в таблице, потому что считается по
                 # тем же сделкам.
                 cap[a] = TR.account(tr, a, hold_h=hold or TR.HOLD_H,
-                                    slots=mman.get("slots"))[1]
+                                    slots=mman.get("slots"),
+                                    sizing=mman.get("sizing"))[1]
                 TR.dd_money(tr)
                 st[a] = TR.summary(tr, a, capital=cap[a])
                 cur = TR.equity(tr, a, hrows, hold_h=path_h)
@@ -1821,7 +1822,8 @@ class Collector:
             # читается как «депозит стал 500». Пересчёт есть всегда и
             # согласован с показанными сделками по построению.
             cap[a] = TR.account(tr, a, hold_h=hold or TR.HOLD_H,
-                                slots=mman.get("slots"))[1]
+                                slots=mman.get("slots"),
+                                sizing=mman.get("sizing"))[1]
 
         def sliced():
             rows = tr
@@ -2018,6 +2020,9 @@ class Collector:
         if cached is not None and now - at < 60:
             return cached
         rows, errors, scanned, _ = self.closed_rows()
+        # Книги-эхо (равный риск) — те же решения, что у торгуемой:
+        # в деньгах лиги они считали бы каждую сделку дважды.
+        rows = [r for r in rows if r["hz"] not in self.ECHO_BOOKS]
         return self._league_from(rows, errors, scanned, now)
 
     # Книги турнира темпов: ключ показа → каталог на диске. Список
@@ -2039,12 +2044,18 @@ class Collector:
     # целиком. Каталог `model_h1` на диске остаётся записью.
     BOOK_DIRS = {"h4": "model", "h24": "model_h24",
                  "sit": "model_sit", "sit_obs": "model_sit_obs",
-                 "z": "model_h24z"}
+                 "sit_r": "model_sit_r", "z": "model_h24z"}
     # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
     # счётах по книгам её быть не должно.
     BOOKS = (("h4", "model"),
              ("h24", "model_h24"), ("sit", "model_sit"),
-             ("z", "model_h24z"))
+             ("sit_r", "model_sit_r"), ("z", "model_h24z"))
+    # Книги-эхо: ТЕ ЖЕ решения, что у торгуемой, под другим правилом
+    # размера (равный доллар риска). Свои деньги у них настоящие, но
+    # в сводных суммах (лига, корень дерева, разбивка волатильности)
+    # они считали бы одни решения дважды — исключаются там по этому
+    # множеству, а не по имени в каждом месте.
+    ECHO_BOOKS = {"sit_r"}
 
     # Дерево моделей: что за логику проверяет каждая ветка, простыми
     # словами и на обоих языках разом (правило справочника: разъехавшись,
@@ -2198,6 +2209,29 @@ class Collector:
                         "записывает те же кандидаты без требования к "
                         "отношению, чтобы фильтр по RR мог показать "
                         "сделки ниже боевого гейта."},
+        "sit_r": {
+            "title": "situational · fixed risk — equal dollar risk "
+                     "per trade",
+            "title_ru": "Ситуационная · равный риск — одинаковый "
+                        "доллар риска на сделку",
+            "plain": "The SAME trades as the situational book — "
+                     "gates and slots match — sized so a stop always "
+                     "loses one R and a take at RR 3 always earns "
+                     "three: size is inverse to the executable stop. "
+                     "The owner saw RR 1:3 takes worth $20 and $5 "
+                     "while a stop took $15 — levels differ per "
+                     "trade, size did not, so dollar expectancy "
+                     "broke. Not in league or root sums: same "
+                     "decisions would be counted twice.",
+            "plain_ru": "ТЕ ЖЕ сделки, что у ситуационной книги — "
+                        "гейты и места совпадают, — но размер обратен "
+                        "исполняемому стопу: стоп всегда −R, тейк при "
+                        "RR 3 всегда +3R. Владелец увидел тейки 1:3 "
+                        "по 20 $ и по 5 $ при стопе в 15 $ — уровни у "
+                        "сделок разные, размер один, и математика "
+                        "ожидания в деньгах ломалась. В лигу и сумму "
+                        "корня не входит: те же решения считались бы "
+                        "дважды."},
     }
     # Ночной прогон турнира приходит раз в сутки (сторож, окно 02:xx
     # UTC). Запас на одно пропущенное окно: 36 ч — это «одну ночь
@@ -2274,7 +2308,8 @@ class Collector:
                 # лиги обязаны совпадать с деньгами показа.
                 for a in ("gbm", "nn"):
                     TR.account(tr, a, hold_h=hold or TR.HOLD_H,
-                               slots=mman.get("slots"))
+                               slots=mman.get("slots"),
+                               sizing=mman.get("sizing"))
             except Exception as e:                    # noqa: BLE001
                 # Ошибка обязана быть ВИДНА в ответе, а не глотаться:
                 # первый же прогон на сервере вернул пустую лигу при
@@ -2596,6 +2631,9 @@ class Collector:
         vol = self.market_vol()
         hours = vol["hours"]
         rows, errors, scanned, _ = self.closed_rows()
+        # Книги-эхо не входят: те же решения дважды исказили бы
+        # разбивку по режимам, как исказили бы лигу.
+        rows = [r for r in rows if r["hz"] not in self.ECHO_BOOKS]
         vals = sorted(v["bp"] for v in hours.values())
         cuts = []
         if len(vals) >= 3:
@@ -2937,7 +2975,8 @@ class Collector:
             row = dict(meta) if meta else {
                 "title": key, "title_ru": key,
                 "plain": "", "plain_ru": "", "no_text": True}
-            row.update(key=key, dir=name)
+            row.update(key=key, dir=name,
+                       echo=key in self.ECHO_BOOKS)
             man = {}
             try:
                 with open(os.path.join(s8, name, "manifest.json"),
@@ -3141,7 +3180,8 @@ class Collector:
             self.live_overlay(mdir, tr, revs)
         for a in ("gbm", "nn"):
             TR.account(tr, a, hold_h=hold or TR.HOLD_H,
-                       slots=mman.get("slots"))
+                       slots=mman.get("slots"),
+                       sizing=mman.get("sizing"))
         op = [t for t in tr if t.get("state") == "открыта"]
         if not op:
             return {"source": None, "at": round(time.time(), 1),
@@ -3200,7 +3240,8 @@ class Collector:
                 # сделка обязана совпадать с тем, что показывают.
                 for a in ("gbm", "nn"):
                     TR.account(tr, a, hold_h=hold or TR.HOLD_H,
-                               slots=mman.get("slots"))
+                               slots=mman.get("slots"),
+                               sizing=mman.get("sizing"))
                 for t in tr:
                     if t.get("tid") == tid:
                         hits.append({"book": key, "source": name,
