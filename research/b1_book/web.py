@@ -4300,8 +4300,10 @@ function explainTrade(t) {
     bits.push(`strategy: situational scanner${r.rules_version
       ? " (rules v" + r.rules_version + ")" : ""} — the sheet promised
       ${pct(t.fwd0_bp)}, price gave back <b>${pct(disc)}</b> more, so
-      the remaining move crossed the ${r.min_edge_bp ?? 22} bp gate in
-      front of us with reward/risk ≥ ${r.min_rr ?? 2} against the
+      the remaining move crossed the ${r.min_edge_bp != null
+        ? r.min_edge_bp + " bp " : ""}entry gate in
+      front of us with reward/risk${r.min_rr != null
+        ? " ≥ " + r.min_rr : " over the gate"} against the
       executable stop`);
   }
   if (t.mae_bp != null && !actsOnLevels()) {
@@ -5121,12 +5123,15 @@ function render(d, t){
       <b>${pct(disc)}</b> against that promise — the entry got cheaper
       than the model planned by more than the round cost — while the
       remaining expected move, <b>${pct(exp)}</b>, was still above the
-      ${((d.min_edge_bp ?? 22)/100).toFixed(2)} % entry gate.</p>
+      ${d.min_edge_bp != null
+        ? (d.min_edge_bp/100).toFixed(2) + " % " : ""}entry gate.</p>
       <p>Two more checks passed before entering: the crossing happened
       <b>in front of the scanner</b> (the name was first seen away
       from the trigger — so this was a move, not a wobble around a
       line it was parked at), and the promised reward was at least
-      ${d.min_rr ?? 2}&times; the distance to the actual stop.</p>`;
+      ${d.min_rr != null ? d.min_rr + "&times;"
+                         : "the gate's multiple of"}
+      the distance to the actual stop.</p>`;
   } else if (exp != null) {
     why = `<p>The model expected <b>${pct(exp)}</b>. The entry
       mechanics for this trade predate the recorded fields.</p>`;

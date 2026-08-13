@@ -1833,6 +1833,14 @@ class Collector:
                     "situational": sit, "source_book": src_book,
                     "stop_tau": mman.get("stop_tau"),
                     "rules_version": mman.get("rules_version"),
+                    # Гейты книги — и в лёгком ответе: график собирает
+                    # из них объяснение сделки, и без них страница
+                    # печатала фолбэк «22» как действующее правило,
+                    # хотя гейт давно 33. Число обязано ехать из
+                    # манифеста, как в полном ответе.
+                    "min_edge_bp": mman.get("min_edge_bp"),
+                    "min_rr": mman.get("min_rr"),
+                    "min_disc_bp": mman.get("min_disc_bp"),
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),

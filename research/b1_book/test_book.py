@@ -529,6 +529,14 @@ def test_model_trades_lite_matches_full():
         check("лёгкий: сводок и кривых нет",
               "stats" not in lite and "curves" not in lite)
         check("лёгкий: помечен как lite", lite.get("lite") is True)
+        # Гейты книги обязаны ехать и в лёгком ответе: график собирает
+        # из них объяснение сделки, и без них страница печатала фолбэк
+        # «22» как действующее правило при живом гейте 33.
+        gate_keys = ("min_edge_bp", "min_rr", "min_disc_bp")
+        check("лёгкий: гейты книги в ответе",
+              all(k in lite for k in gate_keys)
+              and all(lite[k] == full[k] for k in gate_keys),
+              str([k for k in gate_keys if k not in lite]))
         closed = [t for t in lite["rows"] if t.get("state") == "закрыта"]
         check("деньги в строках остались (счёт не выброшен)",
               bool(closed) and all(t.get("pnl") is not None
