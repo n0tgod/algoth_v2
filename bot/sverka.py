@@ -157,13 +157,17 @@ def main():
     ap.add_argument("--s8", required=True)
     ap.add_argument("--journal", required=True)
     ap.add_argument("--arm", default="gbm")
-    ap.add_argument("--capital", type=float, default=1000.0)
+    # Умолчание — из ядра расчёта: живой вызов (демон) передаёт свой
+    # капитал явно, а ручной запуск обязан совпасть со страницей.
+    ap.add_argument("--capital", type=float, default=None)
     ap.add_argument("--fees", default=FEES.FEES_PATH)
     ap.add_argument("--now", type=float, default=None,
                     help="секунды epoch; по умолчанию текущий момент")
     ap.add_argument("--out", default=None,
                     help="куда писать отчёт (md); умолчание — рядом с журналом")
     args = ap.parse_args()
+    if args.capital is None:
+        args.capital = TR.START_BALANCE
 
     now = args.now if args.now is not None else time.time()
     table = FEES.load(args.fees)

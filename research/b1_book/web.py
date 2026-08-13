@@ -2030,7 +2030,7 @@ function drawEq(d) {
     if (lab) lab.textContent = "not enough hours yet";
     return;
   }
-  EQ = {cur, arms, start: d.start || 1000};
+  EQ = {cur, arms, start: d.start ?? null};
   const w = Math.max(320, cv.clientWidth || 900), h = 170;
   const dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -2049,7 +2049,9 @@ function drawEq(d) {
   }
   // Стартовый уровень обязан быть в кадре: без него рост и падение
   // выглядят одинаково — просто линия куда-то идёт.
-  lo = Math.min(lo, EQ.start); hi = Math.max(hi, EQ.start);
+  if (EQ.start != null) {
+    lo = Math.min(lo, EQ.start); hi = Math.max(hi, EQ.start);
+  }
   const pad = Math.max(1, (hi - lo) * 0.08);
   lo -= pad; hi += pad;
   const L = 46, R = 8, T = 8, B = 18;
@@ -2059,12 +2061,17 @@ function drawEq(d) {
   const rule = css.getPropertyValue("--rule").trim() || "#333";
   const muted = css.getPropertyValue("--muted").trim() || "#888";
   g.strokeStyle = rule; g.lineWidth = 1;
-  g.beginPath(); g.moveTo(L, Y(EQ.start)); g.lineTo(w - R, Y(EQ.start));
-  g.setLineDash([4, 4]); g.stroke(); g.setLineDash([]);
+  // Без старта из ответа базовая линия не рисуется вовсе — кривые
+  // остаются: выдуманная база хуже её отсутствия.
+  if (EQ.start != null) {
+    g.beginPath(); g.moveTo(L, Y(EQ.start)); g.lineTo(w - R, Y(EQ.start));
+    g.setLineDash([4, 4]); g.stroke(); g.setLineDash([]);
+  }
   g.fillStyle = muted; g.font = "11px system-ui,sans-serif";
   g.fillText(hi.toFixed(0), 4, Y(hi) + 9);
   g.fillText(lo.toFixed(0), 4, Y(lo));
-  g.fillText(EQ.start + " $", 4, Y(EQ.start) + 3);
+  if (EQ.start != null)
+    g.fillText(EQ.start + " $", 4, Y(EQ.start) + 3);
   const sel = S.arm || "all";
   for (const a of arms) {
     const c = cur[a], on = sel === "all" || sel === a;
@@ -2093,7 +2100,8 @@ function drawEq(d) {
   if (lab)
     lab.innerHTML = arms.map(a => {
       const p = last(a), v = p ? p[1] : null;
-      const dp = v == null ? "" : ((v / EQ.start - 1) * 100).toFixed(2);
+      const dp = v == null || EQ.start == null
+        ? "" : ((v / EQ.start - 1) * 100).toFixed(2);
       return `<span class="mono" style="color:${ARMC[a]}">&#9632;</span> ${
         ARMN[a]} ${v == null ? "—" : v.toFixed(2) + " $ (" +
         (dp >= 0 ? "+" : "") + dp + " %)"}`;
@@ -2356,8 +2364,8 @@ async function load() {
   }).filter(Boolean).join(" · ");
   if (accLine)
     html += `<div class="note" style="margin-top:8px">paper accounts: ${
-      accLine} <span class="k">(start 1000 $ each, one capital,
-      leverage 1&times;)</span></div>`;
+      accLine} <span class="k">(start ${d.start ?? "—"} $ each, one
+      capital, leverage 1&times;)</span></div>`;
   document.getElementById("stats").innerHTML = html;
   drawEq(d);
   document.getElementById("stats").querySelectorAll("[data-sa]")
@@ -2785,17 +2793,22 @@ async function load() {
       it archives the journal and starts a clean one.`);
   document.getElementById("alarm").innerHTML = bad.length
     ? `<div class="card alarm">${bad.join("<br>")}</div>` : "";
-  const cap = d.capital_usd || 1000;
-  const share = ((d.balance_usd / cap - 1) * 100).toFixed(2);
+  // Капитал — из статуса самого ядра; выдуманное умолчание красило
+  // бы баланс против несуществующей базы (урок фолбэка «22 bp gate»).
+  const cap = d.capital_usd || null;
+  const share = cap == null ? null
+    : ((d.balance_usd / cap - 1) * 100).toFixed(2);
   const tb = document.getElementById("topbal");
   tb.textContent = `${d.balance_usd} $`;
-  tb.className = "cv mono " + (d.balance_usd >= cap ? "good" : "bad");
+  tb.className = "cv mono " + (cap == null ? ""
+    : d.balance_usd >= cap ? "good" : "bad");
   const cnt = d.counts || {};
   document.getElementById("acct").innerHTML =
     cell("balance", `${d.balance_usd} $`,
-         d.balance_usd >= cap ? "good" : "bad")
-    + cell("vs start", `${share > 0 ? "+" : ""}${share} %`,
-           share >= 0 ? "good" : "bad")
+         cap == null ? "" : d.balance_usd >= cap ? "good" : "bad")
+    + cell("vs start", share == null ? "—"
+             : `${share > 0 ? "+" : ""}${share} %`,
+           share == null ? "" : share >= 0 ? "good" : "bad")
     + cell("in positions", `${(d.busy_usd || 0).toFixed(2)} $`)
     + cell("free cash", `${(d.cash_usd || 0).toFixed(2)} $`)
     + cell("open / closed", `${cnt.open ?? "—"} / ${cnt.closed ?? "—"}`)

@@ -620,9 +620,10 @@ def test_name_cap_and_inv_risk_sizing():
     # Потолок AUSDT не съедает бюджет BUSDT: у каждого имени СВОЙ
     # потолок. Сам BUSDT здесь тоже упирается в свои 10 % (двум ногам
     # часа при hold 4 касса предлагает по 12.5 %) — важно, что он
-    # получил полные свои 100, а не остаток от чужого.
+    # получил ПОЛНЫЕ свои 10 % капитала, а не остаток от чужого.
     check("чужое имя живёт своим потолком, а не остатком чужого",
-          abs((other.get("size") or 0) - 100.0) < 1.0,
+          abs((other.get("size") or 0)
+              - 0.10 * TR.START_BALANCE) < 1.0,
           str(other.get("size")))
     # Рука 1/σ²: спокойной ноге больше, бешеной меньше; нога с
     # крошечным |mae| упирается в пол сечения, а не забирает корзину.
@@ -2024,9 +2025,10 @@ def test_drawdown_is_reported_against_the_deposit():
           str(s.get("dd_open_worst_cap_bp")))
 
     # Депозит — величина СТАРТОВАЯ: выросший счёт не вправе задним
-    # числом уменьшать просадку прошлой сделки.
+    # числом уменьшать просадку прошлой сделки. Тот же депозит, что у
+    # исходного расчёта, — фикстура считана на 1000 явно.
     same = [dict(rows[0])]
-    TR.dd_money(same, deposit=TR.START_BALANCE)
+    TR.dd_money(same, deposit=1000.0)
     check("знаменатель — стартовый депозит, а не текущий баланс",
           same[0]["dd_cap_bp"] == rows[0]["dd_cap_bp"],
           f"{same[0]['dd_cap_bp']} против {rows[0]['dd_cap_bp']}")
@@ -3494,12 +3496,14 @@ def test_train_cycle_end_to_end():
             acc = json.load(open(os.path.join(
                 T.MODEL_DIR, f"account_{arm}.json")))
             got = sum(h["pnl"] for h in acc["history"])
-            check(f"счёт {arm} исполнен: старт 1000, издержки учтены",
+            check(f"счёт {arm} исполнен: старт из ядра, издержки "
+                  "учтены",
                   acc["start"] == TR.START_BALANCE
                   and acc["leverage"] == 1.0
                   and len(acc["history"]) == 6
-                  and abs(acc["balance"] - 1000.0 - got) < 0.05
-                  and acc["balance"] != 1000.0, str(acc)[:200])
+                  and abs(acc["balance"] - TR.START_BALANCE - got) < 0.05
+                  and acc["balance"] != TR.START_BALANCE,
+                  str(acc)[:200])
         check("счёт попал в мысли",
               any(t.startswith("[деревья] счёт:") or
                   t.startswith("[сеть] счёт:") for t in th), str(th[:3]))

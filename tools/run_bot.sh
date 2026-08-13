@@ -70,6 +70,10 @@ MARK="$JOURNAL/source.txt"
 # а не повторяем здесь числом: две записи одной версии разошлись бы.
 CASHV=$(python3 -c "import sys; sys.path.insert(0, 'research/s8_loop'); \
 import trades; print(trades.CASH_RULES_VERSION)" 2>/dev/null || echo "?")
+# Капитал — тем же правилом, у самого ядра: бот и Python обязаны
+# считать размеры от одного числа, иначе сверка красная по построению.
+CAPITAL=$(python3 -c "import sys; sys.path.insert(0, 'research/s8_loop'); \
+import trades; print(trades.START_BALANCE)" 2>/dev/null || echo "")
 WANT="$S8 cash=$CASHV"
 CUR=$(cat "$MARK" 2>/dev/null || true)
 if [ "$CUR" != "$WANT" ] \
@@ -85,6 +89,7 @@ printf '%s\n' "$WANT" > "$MARK"
     --s8 "$S8" \
     --journal "$JOURNAL" \
     --arm gbm \
+    ${CAPITAL:+--capital "$CAPITAL"} \
     --fees research/a1_universe/out/fees.json \
     --sverka bot/sverka.py --python python3 \
     >> "$LOG" 2>&1 & )

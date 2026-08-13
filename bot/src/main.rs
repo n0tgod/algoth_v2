@@ -20,8 +20,8 @@ fn main() {
             };
             let capital: f64 = args
                 .get(3)
-                .map(|s| s.parse().unwrap_or(1000.0))
-                .unwrap_or(1000.0);
+                .map(|s| s.parse().unwrap_or(3000.0))
+                .unwrap_or(3000.0);
             let (_, records, report) = match bot::journal::Journal::open(Path::new(dir)) {
                 Ok(x) => x,
                 Err(e) => {
@@ -51,7 +51,11 @@ fn main() {
             let mut s8 = None;
             let mut jr = None;
             let mut arm = "gbm".to_string();
-            let mut capital = 1000.0_f64;
+            // Умолчание для РУЧНОГО запуска; живой контур передаёт
+            // --capital из ядра расчёта (tools/run_bot.sh спрашивает
+            // trades.START_BALANCE). 3000 — решение владельца
+            // 2026-08-13; та же цифра во всех ветках разбора аргументов.
+            let mut capital = 3000.0_f64;
             let mut fees_path = "research/a1_universe/out/fees.json".to_string();
             let mut interval = 60u64;
             let mut sverka_script: Option<String> = None;
@@ -63,7 +67,7 @@ fn main() {
                     "--s8" => s8 = Some(val()),
                     "--journal" => jr = Some(val()),
                     "--arm" => arm = val(),
-                    "--capital" => capital = val().parse().unwrap_or(1000.0),
+                    "--capital" => capital = val().parse().unwrap_or(3000.0),
                     "--fees" => fees_path = val(),
                     "--interval-sec" => interval = val().parse().unwrap_or(60),
                     "--sverka" => sverka_script = Some(val()),
@@ -111,7 +115,7 @@ fn main() {
             let capital: f64 = args
                 .get(3)
                 .and_then(|s| s.parse().ok())
-                .unwrap_or(1000.0);
+                .unwrap_or(3000.0);
             let mut now_ms: Option<i64> = None;
             let mut it = args[3..].iter();
             while let Some(a) = it.next() {
@@ -156,7 +160,11 @@ fn main() {
             let mut s8 = None;
             let mut jr = None;
             let mut arm = "gbm".to_string();
-            let mut capital = 1000.0_f64;
+            // Умолчание для РУЧНОГО запуска; живой контур передаёт
+            // --capital из ядра расчёта (tools/run_bot.sh спрашивает
+            // trades.START_BALANCE). 3000 — решение владельца
+            // 2026-08-13; та же цифра во всех ветках разбора аргументов.
+            let mut capital = 3000.0_f64;
             let mut fees_path = None;
             let mut now_ms: Option<i64> = None;
             let mut it = args[2..].iter();
@@ -166,7 +174,7 @@ fn main() {
                     "--s8" => s8 = Some(val()),
                     "--journal" => jr = Some(val()),
                     "--arm" => arm = val(),
-                    "--capital" => capital = val().parse().unwrap_or(1000.0),
+                    "--capital" => capital = val().parse().unwrap_or(3000.0),
                     "--fees" => fees_path = Some(val()),
                     "--now-ms" => now_ms = val().parse().ok(),
                     other => {
