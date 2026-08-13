@@ -2928,6 +2928,60 @@ def test_volatility_splits_results_by_regime():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_marks_poll_serves_the_book_in_view():
+    """Опрос переоценки обслуживает ТУ книгу, которую смотрят.
+
+    Зашитая главная оставляла прочие книги без переоценки: владелец
+    видел прочерки в UNREAL у всех входов ситуационного сканера свежее
+    последнего цикла — их строки существуют только наложением живых
+    событий, а опрос их не накладывал.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        mdir = os.path.join(d, "s8_loop", "out", "model_sit")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"situational": True, "slots": 6}, f)
+        now = time.time()
+        with open(os.path.join(mdir, "entries_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": "2026-08-13-11",
+                "sym": "BBUSDT", "side": "long", "px": 100.0,
+                "at_ts": now - 300, "mae": -30.0, "mfe": 90.0,
+                "fwd": 40.0, "reason": "вход по ситуации"}) + "\n")
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+
+        class B:
+            def best(self):
+                return (100.9, 101.1)
+        col.books = {"BBUSDT": B()}
+        got = col.model_marks(hz="sit")
+        rows = {r["sym"]: r for r in got.get("rows") or []}
+        check("живой вход сканера есть в опросе переоценки",
+              "BBUSDT" in rows, str(got)[:160])
+        check("и переоценён серединой сборщика",
+              rows.get("BBUSDT", {}).get("unreal_net_bp") is not None
+              and abs(rows["BBUSDT"]["unreal_bp"] - 100.0) < 1.0,
+              str(rows.get("BBUSDT")))
+        # Зашитая главная — прежний дефект: у книги model выборов нет,
+        # и живой вход ситуационной в её ответе существовать не может.
+        got0 = col.model_marks()
+        check("без ключа опрос отвечает главной книгой, без чужих строк",
+              not (got0.get("rows") or []), str(got0)[:120])
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_journal_marker_is_parsed_not_basenamed():
     """Маркер журнала тени несёт ДВА поля, и разбирать надо оба.
 
@@ -3728,6 +3782,7 @@ def main():
     test_tournament_page_reads_artifact()
     test_tree_page_fits_the_phone()
     test_volatility_splits_results_by_regime()
+    test_marks_poll_serves_the_book_in_view()
     test_journal_marker_is_parsed_not_basenamed()
     test_book_registry_is_one_list()
     test_glossary_describes_the_live_model()

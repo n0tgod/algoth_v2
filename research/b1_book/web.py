@@ -2460,7 +2460,8 @@ for (const id of ["arm","state","sym","per"])
 async function marks() {
   let d;
   try {
-    const r = await fetch("/model_marks?k=" + encodeURIComponent(KEY));
+    const r = await fetch("/model_marks?k=" + encodeURIComponent(KEY)
+      + (HZ ? "&hz=" + encodeURIComponent(HZ) : ""));
     d = await r.json();
   } catch (e) { return; }
   const by = {};
@@ -6944,7 +6945,8 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/model_marks":
                 return self._ok(json.dumps(
-                    collector.model_marks(),
+                    collector.model_marks(
+                        hz=q.get("hz", [None])[0] or None),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/trades-page":

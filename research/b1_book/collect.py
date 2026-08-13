@@ -1670,16 +1670,14 @@ class Collector:
                           px_at=self.entry_px(out.get("picks")),
                           books=TR.load_books(
                               os.path.join(mdir, "books.jsonl")))
-            TR.mark(tr, self.marks(tr))
-            hrows = self.paths(tr, hold_h=path_h)
             # Живые события сборщика (вход в моменте, выход по
             # уровню) накладываются на историю ОДНОЙ функцией — её же
-            # зовёт страница сделок. Два наложения однажды разошлись
-            # бы, и обзор показывал бы сделки, которых нет в истории;
-            # ровно это владелец и увидел: двенадцать позиций на
-            # обзоре против пустой истории.
+            # зовёт страница сделок, и ДО переоценки: строка,
+            # наложенная после TR.mark, оставалась без отметки.
             if sit:
                 self.live_overlay(mdir, tr, out.get("review"))
+            TR.mark(tr, self.marks(tr))
+            hrows = self.paths(tr, hold_h=path_h)
             # Фильтр владельца по обещанному отношению: показ и СЧЁТ
             # считаются по отобранному подмножеству одним и тем же
             # ядром. Отфильтрованная кривая — это «что было бы, если
@@ -1785,13 +1783,12 @@ class Collector:
                       px_at=self.entry_px(picks),
                       books=TR.load_books(
                           os.path.join(mdir, "books.jsonl")))
-        TR.mark(tr, self.marks(tr))
-        # Живые события — той же функцией, что у обзора. Без неё
-        # история читала голые `picks.jsonl` и молчала о позициях,
-        # открытых сканером после последнего цикла: обзор показывал
-        # двенадцать сделок, история — ноль.
+        # Живые события — ДО переоценки: строка, наложенная после
+        # TR.mark, оставалась без отметки, и владелец видел прочерки
+        # в UNREAL у всех входов сканера свежее последнего цикла.
         if sit:
             self.live_overlay(mdir, tr, revs)
+        TR.mark(tr, self.marks(tr))
         # Порог обещанного отношения — только у книги без срока: у
         # часовых обещания пути не решают ни входа, ни выхода.
         tr, rr_cut, rr_unknown = TR.by_rr(tr, rr_min if sit else None)
@@ -3079,7 +3076,7 @@ class Collector:
                 out[sym] = (bid + ask) / 2.0
         return out
 
-    def model_marks(self):
+    def model_marks(self, hz=None):
         """Только переоценка открытых сделок — для частого опроса.
 
         Отдельно от полной выдачи намеренно: страница обновляет её раз в
@@ -3091,14 +3088,26 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        name = "model"
+        # Опрос обслуживает ТУ книгу, которую смотрят: зашитая главная
+        # оставляла прочие без переоценки — владелец видел прочерки в
+        # UNREAL у входов ситуационного сканера.
+        name = self.BOOK_DIRS.get(hz or "h4", "model")
         mdir = os.path.join(s8, name)
         pk = self._jsonl(os.path.join(mdir, "picks.jsonl"))
-        tr = TR.build(pk, self._jsonl(os.path.join(mdir,
-                                                   "review.jsonl")),
+        revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
+        try:
+            with open(os.path.join(mdir, "manifest.json"),
+                      encoding="utf-8") as f:
+                sit = bool((json.load(f) or {}).get("situational"))
+        except (OSError, ValueError):
+            sit = False
+        tr = TR.build(pk, revs,
                       px_at=self.entry_px(pk),
                       books=TR.load_books(
                           os.path.join(mdir, "books.jsonl")))
+        # Живые события — ДО переоценки, той же функцией, что везде.
+        if sit:
+            self.live_overlay(mdir, tr, revs)
         for a in ("gbm", "nn"):
             TR.account(tr, a)
         op = [t for t in tr if t.get("state") == "открыта"]
