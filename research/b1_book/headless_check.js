@@ -1318,7 +1318,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // страниц. Прежде оно собиралось из ключа строковой хирургией и у
     // ключа `z` давало «z h book», а у главной книги теряло порядок
     // сечения, которым та торгует.
-    const wantBook = /hz=sit/.test(SEARCH)
+    const wantBook = /hz=sit_r/.test(SEARCH)
+      ? "situational \u00b7 fixed risk"
+      : /hz=sit/.test(SEARCH)
       ? "situational \u00b7 per \u03c3" : "4 h \u00b7 per \u03c3";
     if (!/BTC/.test(c4) || c4.indexOf(wantBook) < 0)
       bad.push(`график: заголовок сделок модели без книги «${
@@ -2100,6 +2102,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("разбор: скидка входа не посчитана из чисел");
     if (!seen.some(u => u.startsWith("/model_trades")))
       bad.push("разбор: сделки не запрошены у сервера");
+    // Книга из ссылки обязана доехать до сервера: перечень ключей на
+    // странице однажды отстал (не знал sit_r и z), и разбор молча
+    // спрашивал главную книгу — «сделки нет» было про другую книгу.
+    if (/hz=sit_r/.test(SEARCH)
+        && !seen.some(u => u.startsWith("/model_trades")
+                           && /hz=sit_r/.test(u)))
+      bad.push("разбор: книга sit_r потеряна по дороге к серверу");
   }
 
   if (isChart && /paperoff=1/.test(SEARCH)) {

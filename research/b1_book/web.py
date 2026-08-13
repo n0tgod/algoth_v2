@@ -3307,11 +3307,13 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              fit: false};
 // Пункты легенды про уровни — только там, где уровни действуют:
 // подпись «stop» под графиком часовой книги утверждала бы правило,
-// которого у книги нет.
-{
+// которого у книги нет. Пересчитывается и после ответа сервера — до
+// него ситуационность книги неизвестна и уровни не утверждаются.
+function legendLevels() {
   const lv = document.getElementById("lglv");
   if (lv) lv.style.display = actsOnLevels() ? "" : "none";
 }
+legendLevels();
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара
 // (рука, час, монета) единственна по построению — цикл выбирает шесть
 // имён на час, повторов в часе нет.
@@ -3385,7 +3387,9 @@ async function pullModelTrades() {
     // сделки обязано описывать тот прогон, который её открыл.
     MDL.rules = {stop_tau: d.stop_tau, min_edge_bp: d.min_edge_bp,
                  min_rr: d.min_rr, min_disc_bp: d.min_disc_bp,
-                 rules_version: d.rules_version};
+                 rules_version: d.rules_version,
+                 situational: !!d.situational};
+    legendLevels();
     MDL.sym = sym; MDL.at = Date.now();
     armButtons();
     // Окно графика под сделку — только когда она нашлась.
@@ -3651,8 +3655,14 @@ function mdlExit(t) {
 // и тейка у их сделок НЕ СУЩЕСТВУЕТ — mae/mfe там прогноз пути, и
 // рисовать его линиями TP/SL значит показывать правило, которого нет:
 // владелец прочёл эти линии как уровни сделки.
+// Ситуационность решает МАНИФЕСТ книги через ответ сервера
+// (`situational`), а не список ключей на странице: зашитый список уже
+// пропустил книгу равного риска (sit_r) — её сделки рисовались голым
+// спаном без стопа и цели, а объяснение писало «выход по времени» про
+// книгу, которую ведёт живой сторож уровней (владелец: «очень странно
+// отображаются»). До первого ответа уровни не утверждаются.
 function actsOnLevels() {
-  return MDL.hz === "sit" || MDL.hz === "sit_obs";
+  return !!(MDL.rules && MDL.rules.situational);
 }
 // Ноги позиции: чем набирали и чем скидывали, по времени. Первый лот
 // в `adds` не лежит (там доливы), а его размер выводится из общего:
@@ -5013,11 +5023,15 @@ a{color:var(--accent)}
 <div id="whybox"></div>
 </div>
 <script>
+""" + BOOKJS + r"""
+// Ключи книг — из общего списка: свой перечень уже отстал от жизни
+// (нёс удалённую h1 и не знал sit_r и z), и значок «i» у сделки
+// боковой книги открывал разбор ГЛАВНОЙ книги — «сделки нет» было
+// ответом про другую книгу.
 const Q = new URLSearchParams(location.search);
 const KEY = Q.get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-const HZ = ["h1","h24","sit","sit_obs"].includes(Q.get("hz"))
-  ? Q.get("hz") : "";
+const HZ = HZ_KEYS.includes(Q.get("hz")) ? Q.get("hz") : "";
 const ARM = Q.get("arm") === "nn" ? "nn" : "gbm";
 const HOUR = Q.get("hour") || "";
 const SYM = Q.get("sym") || "";
