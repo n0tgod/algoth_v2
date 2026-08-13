@@ -3672,6 +3672,13 @@ def sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc):
     resid = move - (row.get("beta") if row.get("beta") is not None
                     else 1.0) * wave_bp
     rem = fwd0 - resid
+    # Правило v10: ЛИСТ сам обязан видеть ситуацию. Остаток раздувается
+    # любым крупным внутричасовым ходом (rem = fwd0 − ход), и при
+    # прогнозе −0.011 % книга шортила разгон +2.17 % как «ситуацию» —
+    # скрытый фейд любого разгона под именем модели. Прогноз мельче
+    # гейта — кандидата не существует, каким бы ни был ход цены.
+    if abs(fwd0) < min_edge:
+        return None
     if abs(rem) < min_edge or (fwd0 > 0) != (rem > 0):
         return None
     # Скидка считается по МОДУЛЮ и после проверки знака: остаток той
