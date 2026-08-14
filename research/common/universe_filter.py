@@ -32,6 +32,16 @@ UNIVERSE_JSON = os.path.join(os.path.dirname(HERE), "a1_universe",
 # волны (CASHCAT, GRVT, 1000BTT) в список НЕ входят.
 NON_CRYPTO_NEW = {
     "AMCUSDT", "AMGNUSDT", "BACUSDT", "BIIBUSDT", "BITOUSDT",
+    # Волна августа 2026, найдена владельцем по пропавшему unreal pnl:
+    # книга со сроком торговала акциями (Meituan, Xiaomi, Kuaishou,
+    # SMIC, Riot, Ouster, KLA, Western Digital, Circle, Samsung), их
+    # котировка стоит вне часов биржи, форвард не считался, и сделки
+    # «без исхода» запирали кассу. NESA/NCLD/DOS/AEON НЕ добавлены:
+    # тождество не установлено, а 12-часовое окно /candles календарную
+    # подпись не разрешает — проверить по полной записи на сервере.
+    "MEITUANUSDT", "XIAOMIUSDT", "KUAISHOUUSDT", "SMICUSDT",
+    "RIOTUSDT", "OUSTUSDT", "KLACUSDT", "WDCUSDT", "CRCLUSDT",
+    "SAMSUNGUSDT",
     "BRKBUSDT", "CIFRUSDT", "CLSKUSDT", "CXMTUSDT", "EBAYUSDT",
     "GDXUSDT", "GEUSDT", "GIGADEVICEUSDT", "GILDUSDT", "GMESTOCKUSDT",
     "JNJUSDT", "JPMUSDT", "KOUSDT", "MAUSDT", "MINIMAXUSDT", "MOUSDT",

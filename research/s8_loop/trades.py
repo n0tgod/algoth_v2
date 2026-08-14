@@ -431,6 +431,18 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
         h = rv.get("hour") or ""
         if h > last_rev.get(a, ""):
             last_rev[a] = h
+    # Штампы разборов по руке: (час выбора, когда записан). Для сделки
+    # «без исхода» первый БОЛЕЕ ПОЗДНИЙ разбор и есть момент, когда
+    # стало известно, что исход не посчитан, — тогда касса вправе
+    # вернуть принципал (см. account). У записей прежнего образца без
+    # штампа берётся конец разобранного часа — их история сведена.
+    rev_marks = {}
+    for rv in reviews or []:
+        h = rv.get("hour") or ""
+        if not h:
+            continue
+        rev_marks.setdefault(rv.get("arm") or "gbm", []).append(
+            (h, rv.get("at_ts") or hour_end(h)))
     out = []
     made = set()
     for pk in picks or []:
@@ -594,9 +606,15 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                     # Если позднее ничего не разобрано, разбор до него
                     # просто не дошёл: цикл идёт раз в час, и сделка
                     # ждёт своего прохода. Это ожидание, а не потеря.
-                    tr.update(state=("без исхода"
-                                     if last_rev.get(arm, "") > hour
-                                     else "ждёт разбора"))
+                    st = ("без исхода"
+                          if last_rev.get(arm, "") > hour
+                          else "ждёт разбора")
+                    tr.update(state=st)
+                    if st == "без исхода":
+                        marks = [ts for h2, ts in rev_marks.get(arm, [])
+                                 if h2 > hour and ts]
+                        if marks:
+                            tr["no_outcome_at"] = min(marks)
                 else:
                     tr.update(state="открыта",
                               closes_in_sec=(t_close - now
@@ -828,6 +846,16 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None,
             # 0.0, баланс на пять копеек).
             own = int(max(t["opened_at"], t.get("decided_at") or 0))
             ev.append((back, 2 if int(back) <= own else 0, t))
+        elif t["state"] == "без исхода" and t.get("no_outcome_at"):
+            # Возврат ПРИНЦИПАЛА сделки, чей исход посчитать нечем.
+            # Прежде возврат был только у «закрыта», и деньги «без
+            # исхода» запирались НАВСЕГДА: на живой книге 90 таких
+            # сделок держали 4467 $ из 6000, все новые входы получали
+            # размер 0, а владелец увидел это как пропавший unreal
+            # pnl. Момент возврата — штамп более позднего разбора:
+            # тогда стало ИЗВЕСТНО, что исход не посчитан, — касса
+            # по-прежнему не знает будущего.
+            ev.append((t["no_outcome_at"], 0, t))
         # Вход занимает деньги В МОМЕНТ РЕШЕНИЯ, а не на номинальной
         # границе часа. Правило «касса не знает будущего» обязано быть
         # симметричным: сдвинув выходы к моменту записи разбора и
@@ -930,6 +958,15 @@ def account(trades, arm, start=START_BALANCE, hold_h=HOLD_H, table=None,
             name_busy[t["sym"]] = name_busy.get(t["sym"], 0.0) + size
         else:
             size = t.get("size") or 0.0
+            if t["state"] == "без исхода":
+                # Исход не выдумывается: pnl не ставится, в статистику
+                # сделка не входит — возвращается только размер, и
+                # баланс (cash + busy) от возврата не меняется.
+                cash += size
+                busy -= size
+                name_busy[t["sym"]] = max(
+                    0.0, name_busy.get(t["sym"], 0.0) - size)
+                continue
             # Издержки считаются ЗДЕСЬ и только здесь, потому что здесь
             # известен размер позиции, а цена исполнения от него
             # зависит. Разбор пишет ФАКТ (движение цены и лесенки), а

@@ -4012,6 +4012,19 @@ def test_non_crypto_split_by_book_kind():
           "CSOP* прошёл как монета")
     check("монета не задета",
           not UF.is_non_crypto("STEEMUSDT", set()), "STEEM размечен")
+    # Волна августа 2026 (найдена владельцем по пропавшему unreal
+    # pnl): акции торговались книгой со сроком, их форвард не
+    # считался, и «без исхода» запирали кассу.
+    ref = UF.non_crypto_set()
+    wave = ("MEITUANUSDT", "XIAOMIUSDT", "KUAISHOUUSDT", "SMICUSDT",
+            "RIOTUSDT", "OUSTUSDT", "KLACUSDT", "WDCUSDT",
+            "CRCLUSDT", "SAMSUNGUSDT")
+    miss = [s for s in wave if not UF.is_non_crypto(s, ref)]
+    check("волна биржевых имён августа размечена", not miss, str(miss))
+    check("двусмысленные имена НЕ размечены вслепую",
+          all(not UF.is_non_crypto(s, ref)
+              for s in ("NESAUSDT", "DOSUSDT", "AEONUSDT")),
+          "тождество не установлено, а имя в списке")
     import numpy as np
     rows = T.tradable_rows(np.array([0, 1]),
                            ["CSOPSAMSUNG2L", "STEEMUSDT"])
@@ -4150,6 +4163,56 @@ def test_fixed_risk_sizing_equalises_dollar_risk():
           str(by["DDDUSDT"].get("size")))
 
 
+def test_no_outcome_returns_principal():
+    """Деньги сделки «без исхода» возвращаются принципалом.
+
+    Возврат в кассе был только у «закрыта»: сделка, чей исход разбор
+    не смог посчитать, запирала деньги НАВСЕГДА — на живой книге 90
+    таких держали 4467 $ из 6000, все новые входы получали размер 0,
+    и владелец увидел это как пропавший unreal pnl. Возврат — в
+    момент штампа более позднего разбора (касса не знает будущего);
+    исход не выдумывается: pnl у сделки не появляется, баланс не
+    меняется — возвращается только размер.
+    """
+    import trades as TR
+
+    t1 = {"arm": "gbm", "hour": "2026-08-14-01", "sym": "AUSDT",
+          "side": "long", "opened_at": 1000.0,
+          "state": "без исхода", "no_outcome_at": 5000.0}
+    t2 = {"arm": "gbm", "hour": "2026-08-14-02", "sym": "BUSDT",
+          "side": "long", "opened_at": 2000.0, "state": "открыта"}
+    t3 = {"arm": "gbm", "hour": "2026-08-14-03", "sym": "CUSDT",
+          "side": "long", "opened_at": 6000.0, "state": "открыта"}
+    hist, bal = TR.account([t1, t2, t3], "gbm", start=100.0,
+                           hold_h=1, slots=1, name_cap=1.0)
+    check("вход до возврата голодает — касса ещё пуста",
+          t2["size"] == 0.0, str(t2.get("size")))
+    check("вход после возврата получает деньги",
+          abs(t3["size"] - 100.0) < 1e-9, str(t3.get("size")))
+    check("исход не выдуман: pnl у «без исхода» не появился",
+          "pnl" not in t1, str(t1.get("pnl")))
+    check("баланс не изменился — вернулся принципал, не прибыль",
+          abs(bal - 100.0) < 1e-9, str(bal))
+    check("возврат не пишет строку истории — денег счёта он не менял",
+          not any(h.get("sym") == "AUSDT" for h in hist), str(hist))
+
+    # Штамп ставит build: разбор более позднего часа записан — сделка
+    # несёт момент, когда исход стал непосчитанным.
+    picks = [{"arm": "gbm", "hour": "2026-08-14-01",
+              "long": [{"sym": "AUSDT", "px": 100.0, "fwd": 50.0,
+                        "mae": -30.0}], "short": []}]
+    reviews = [{"arm": "gbm", "hour": "2026-08-14-02",
+                "at_ts": 1786800000.5,
+                "rows": [{"sym": "BUSDT", "side": "long",
+                          "got": 10.0, "net": -1.0}]}]
+    tr = TR.build(picks, reviews, now=1787000000.0, hold_h=4)
+    a = [t for t in tr if t["sym"] == "AUSDT"][0]
+    check("сделка «без исхода» несёт штамп прохода разбора",
+          a["state"] == "без исхода"
+          and a.get("no_outcome_at") == 1786800000.5,
+          f"{a.get('state')} / {a.get('no_outcome_at')}")
+
+
 def test_sit_absorb_lives_in_one_module():
     """Поглощение живых событий: и сборщик, и цикл зовут один код.
 
@@ -4280,6 +4343,7 @@ def main():
     test_sigma_targets_exist_on_every_horizon()
     test_non_crypto_split_by_book_kind()
     test_fixed_risk_sizing_equalises_dollar_risk()
+    test_no_outcome_returns_principal()
     test_sit_absorb_lives_in_one_module()
     test_trade_ids_are_stable()
     test_entry_floor_gates_the_main_book()
