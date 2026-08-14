@@ -4028,7 +4028,7 @@ def test_non_crypto_split_by_book_kind():
     ref = UF.non_crypto_set()
     wave = ("MEITUANUSDT", "XIAOMIUSDT", "KUAISHOUUSDT", "SMICUSDT",
             "RIOTUSDT", "OUSTUSDT", "KLACUSDT", "WDCUSDT",
-            "CRCLUSDT", "SAMSUNGUSDT", "TSMUSDT")
+            "CRCLUSDT", "SAMSUNGUSDT", "TSMUSDT", "AEHRUSDT")
     miss = [s for s in wave if not UF.is_non_crypto(s, ref)]
     check("волна биржевых имён августа размечена", not miss, str(miss))
     check("двусмысленные имена НЕ размечены вслепую",
