@@ -187,6 +187,11 @@ def live_exit_rows(mdir, arm, picks_all=None, reviews_all=None):
                          or "цена прошла обещанный ход против"),
               "live": True, "exit_ts": exit_ts,
               "exit_px": ev.get("px")}
+        # Числа правила тейка-лимитки (v13) — в строку разбора:
+        # исполнение по уровню обязано быть видно записью.
+        for k in ("fill", "thru_px"):
+            if ev.get(k) is not None:
+                rr[k] = ev[k]
         by_hour.setdefault(p["hour"], []).append(rr)
     return by_hour
 

@@ -562,6 +562,9 @@ global.fetch = async (url) => {
                    // обещании собирается из них; без них проверка
                    // множителя книги не исполнялась бы вовсе.
                    noise_bp: 37.3, eaten: 0.2,
+                   // Тейк-лимитка v13: сделка исполнена по уровню,
+                   // страница обязана сказать это из данных записи.
+                   fill: "level", thru_px: 64110,
                    why: [["ret_7", 45.2], ["eat_bid", -12.1]],
                    setup: [["liq", 0.42], ["absorption", 0.25]],
                    entry_px: 64700, got_bp: 40, net_bp: 29, pnl: 0.48},
@@ -2107,6 +2110,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("разбор: правило стопа не объяснено");
     if (!/does <b>not<\/b> guarantee/.test(wb))
       bad.push("разбор: честность про разрывы потеряна");
+    // Тейк-лимитка v13: правило названо в абзаце выходов, а сделка,
+    // исполненная по уровню, говорит это сама — с крайним принтом.
+    const wbf = wb.replace(/\s+/g, " ");
+    if (!/strictly through/.test(wbf) || !/resting limit/.test(wbf))
+      bad.push("разбор: правило тейка-лимитки не названо");
+    if (!/credited <b>at the level itself<\/b>/.test(wbf)
+        || !/\(to 64110\)/.test(wbf))
+      bad.push("разбор: исполнение по уровню не названо у сделки");
     if (!/walked\s+<b>\+0\.30 %<\/b> against/.test(
           wb.replace(/\s+/g, " ")))
       bad.push("разбор: скидка входа не посчитана из чисел");

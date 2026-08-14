@@ -5224,9 +5224,13 @@ function render(d, t){
          best excursion the model expects in the trade's favour —
          what it waits for, not a rare tail.</p>` : "")
       + `<p class="dim">Exits, in order: stop or target touched by the
-       path of prices (checked every ~5 seconds, fill at the price
-       available when noticed — in a gap the fill can be worse than
-       the level, the stop does <b>not</b> guarantee the loss bound)${
+       path of trade prints (checked every ~5 seconds). The target is
+       a resting limit at a level known since entry: when prints pass
+       <b>strictly through</b> it, the fill is credited at the level
+       itself — by price-time priority such a sweep cannot skip our
+       order. A mere touch — and every stop — fills at the price
+       available when noticed: in a gap the fill can be worse than
+       the level, the stop does <b>not</b> guarantee the loss bound${
        d.exit_policy === "levels_only"
        ? `. <b>Nothing else closes this book's trades</b> (owner's
           rule): no forecast flip, no age limit — every close is the
@@ -5246,6 +5250,12 @@ function render(d, t){
       round cost the trade made <b class="${(t.net_bp||0) > 0
       ? "good" : "bad"}">${pct(t.net_bp)}</b>${t.pnl != null
       ? ` (${t.pnl > 0 ? "+" : ""}${t.pnl.toFixed(2)} $)` : ""}.</p>`;
+    if (t.fill === "level")
+      out += `<p class="dim">The take was credited <b>at the level
+        itself</b>: prints traded strictly through it${
+        t.thru_px != null ? ` (to ${t.thru_px})` : ""} — a resting
+        limit there cannot be skipped by such a sweep. A mere touch
+        would have filled at the price available when noticed.</p>`;
   } else if (t.exit_pending) {
     out = `<p>The guard saw the exit (${EXIT_EN[t.exit_reason]
       || t.exit_reason}) at ${utc(t.exit_ts)}; money is booked at the

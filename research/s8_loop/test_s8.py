@@ -4191,7 +4191,8 @@ def test_sit_absorb_lives_in_one_module():
             f.write(json.dumps({
                 "arm": "gbm", "hour": "2026-08-13-14", "sym": "AUSDT",
                 "side": "short", "px": 99.2, "move_bp": -80.0,
-                "at_ts": 1786700123.5,
+                "at_ts": 1786700123.5, "fill": "level",
+                "thru_px": 99.15,
                 "reason": "цена дошла до обещанной цели"}) + "\n")
         n_in, n_out = SA.absorb(d, lambda ss: lad)
         rv = SA.read_jsonl(os.path.join(d, "review.jsonl"))
@@ -4210,6 +4211,11 @@ def test_sit_absorb_lives_in_one_module():
               str(row))
         check("лесенка выхода — из переданной книги",
               row.get("cum", {}).get("mid") == 100.0, str(row.get("cum")))
+        # Числа правила тейка-лимитки (v13) обязаны доехать до строки
+        # разбора: исполнение по уровню проверяется записью.
+        check("исполнение по уровню видно в строке разбора",
+              row.get("fill") == "level" and row.get("thru_px") == 99.15,
+              str(row))
         check("разобранную позицию событие больше не трогает",
               SA.absorb(d, lambda ss: lad) == (0, 0))
     finally:

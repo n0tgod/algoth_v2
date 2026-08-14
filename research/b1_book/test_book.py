@@ -2686,6 +2686,69 @@ def test_sit_scan_book_noise_multiplier():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_take_limit_fill_and_exit_event():
+    """Тейк — лимитка: принты сквозь уровень исполняют по уровню.
+
+    Правило v13 (#6wa5abp): шорт 0.0280525, уровень тейка 0.027347,
+    принты минуты выхода дошли до 0.02700 — 124 б.п. сквозь, — а
+    выход записан по отскочившей середине, 63.5 б.п. отдано. По
+    приоритету цена-время сквозной проход не может обойти заявку,
+    стоящую с входа. Ровно касание исполнения не гарантирует
+    (очередь) и остаётся по середине — правило v1 в силе; стоп цену
+    уровня не получает никогда.
+    """
+    import collect as C
+
+    got = C.take_limit_fill("short", 100.0, -100.0, 100.2, 98.5)
+    check("шорт: принты сквозь уровень — исполнение по уровню",
+          got is not None and abs(got[0] - 99.0) < 1e-9
+          and got[1] == 98.5, str(got))
+    got = C.take_limit_fill("long", 100.0, 150.0, 102.0, 99.9)
+    check("лонг зеркален: цена уровня и крайний принт",
+          got is not None and abs(got[0] - 101.5) < 1e-9
+          and got[1] == 102.0, str(got))
+    check("касание уровня без прохода лимитку не исполняет",
+          C.take_limit_fill("short", 100.0, -100.0, 100.2, 99.0)
+          is None)
+    check("без пути принтов исполнения по уровню нет",
+          C.take_limit_fill("short", 100.0, -100.0, None, None) is None)
+    check("без обещания в пользу нет и уровня",
+          C.take_limit_fill("short", 100.0, None, 100.2, 90.0) is None)
+
+    pos = {"arm": "gbm", "hour": "2026-08-14-01", "sym": "BICOUSDT",
+           "side": "short", "px": 100.0, "adv": 124.7, "fav": -251.4}
+    # Форма #6wa5abp: принты сквозь уровень 97.486, середина отскочила
+    # к 97.55 — событие несёт цену уровня и ход, равный обещанию
+    # (для книги равного риска это точное +r·R).
+    ev = C.sit_exit_event(pos, 97.55, 97.6, 97.0, 1000.0)
+    check("сквозной тейк: событие несёт цену уровня и ход обещания",
+          ev is not None
+          and ev["reason"] == "цена дошла до обещанной цели"
+          and abs(ev["px"] - 100.0 * (1 - 0.02514)) < 1e-6
+          and ev["move_bp"] == -251.4 and ev["fill"] == "level"
+          and ev["thru_px"] == 97.0, str(ev))
+    lvl = 100.0 * (1 - 0.02514)
+    ev = C.sit_exit_event(pos, 97.55, 97.6, lvl, 1000.0)
+    check("касание без прохода — исполнение по доступной середине",
+          ev is not None and ev["px"] == 97.55 and "fill" not in ev
+          and ev["move_bp"] == round((97.55 / 100.0 - 1) * 1e4, 1),
+          str(ev))
+    # Ничья тика: путь задел И стоп, и цель — решается против нас,
+    # и цена уровня стопу не достаётся.
+    ev = C.sit_exit_event(pos, 100.0, 101.3, 97.0, 1000.0)
+    check("ничья тика решается против нас, стоп без цены уровня",
+          ev is not None
+          and ev["reason"] == "цена прошла обещанный ход против"
+          and ev["px"] == 100.0 and "fill" not in ev, str(ev))
+    # Свежая позиция: середина за уровнем, но пути принтов ей не дали
+    # (лимитка не могла исполниться принтами до своего появления).
+    ev = C.sit_exit_event(pos, 97.0, None, None, 1000.0)
+    check("без пути принтов тейк по середине, не по уровню",
+          ev is not None
+          and ev["reason"] == "цена дошла до обещанной цели"
+          and ev["px"] == 97.0 and "fill" not in ev, str(ev))
+
+
 def test_collector_keeps_its_public_methods():
     """Сборщик цел: у него на месте всё, чем его запускают.
 
@@ -4128,6 +4191,7 @@ def main():
     test_sit_scan_stop_is_the_quantile_level()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_sit_scan_book_noise_multiplier()
+    test_take_limit_fill_and_exit_event()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
     test_league_ranks_by_realised_money()

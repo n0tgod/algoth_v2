@@ -559,6 +559,12 @@ def build(picks, reviews, now=None, hold_h=HOLD_H, px_at=None, books=None):
                         tr["close_hour"] = got["exit_hour"]
                         tr["exit_reason"] = got.get("reason")
                         tr["exit_ts"] = got.get("exit_ts")
+                        # Тейк-лимитка v13: исполнение по уровню видно
+                        # и в сделке, а не только в строке разбора.
+                        if got.get("fill") is not None:
+                            tr["fill"] = got["fill"]
+                        if got.get("thru_px") is not None:
+                            tr["thru_px"] = got["thru_px"]
                     tr.update(state="закрыта", got_bp=got.get("got"),
                               net_bp=got.get("net"), pnl=got.get("pnl"),
                               pos=got.get("pos"),
