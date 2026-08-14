@@ -2686,6 +2686,81 @@ def test_sit_scan_book_noise_multiplier():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_sit_scan_min_stop_book_rule():
+    """Правило книги равного риска: стоп не тоньше порога (1 %).
+
+    Решение владельца («размер тейков и стопов должен быть
+    одинаковый»): стоп тоньше R/потолок не помещает равный риск под
+    потолок имени — размер срезал бы потолок, и сделка молча рисковала
+    бы меньше R (замерено: две трети книги). Порог — правило КНИГИ,
+    как min_rr и noise_mult: кандидат один на все книги, лист без поля
+    — порога нет.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        col = C.Collector.__new__(C.Collector)
+        col.books = {}
+        col.log = lambda m: None
+        col.sit_noise = lambda sym, now: 5.0
+
+        class B:
+            def __init__(self, px):
+                self.px = px
+
+            def best(self):
+                return self.px * 0.9999, self.px * 1.0001
+
+        # S0 — тесный стоп (при ходе −20 исполняемый стоп 20 б.п.),
+        # S1 — широкий (110 б.п.); остальные — наполнитель волны.
+        rows = [{"sym": "S0USDT", "fwd": 40.0, "mae": -40.0,
+                 "mfe": 90.0, "beta": 1.0, "px": 100.0},
+                {"sym": "S1USDT", "fwd": 130.0, "mae": -130.0,
+                 "mfe": 250.0, "beta": 1.0, "px": 100.0}]
+        rows += [{"sym": f"F{i}USDT", "fwd": 40.0, "mae": -40.0,
+                  "mfe": 90.0, "beta": 1.0, "px": 100.0}
+                 for i in range(28)]
+        sheet = {"hour": "2026-08-14-20", "min_edge_bp": 22.0,
+                 "min_rr": 2.0, "min_disc_bp": 11.0, "slots": 6,
+                 "arms": {"gbm": rows}}
+        for r in rows:
+            col.books[r["sym"]] = B(100.0)
+        bdir = os.path.join(d, "bk")
+        sdir = os.path.join(d, "bk_s")
+        os.makedirs(bdir)
+        os.makedirs(sdir)
+        want = [{"dir": "bk", "min_rr": 2.0, "slots": 6},
+                {"dir": "bk_s", "min_rr": 2.0, "slots": 6,
+                 "min_stop_bp": 100.0}]
+        books = {p: {"dir": p, "signalled": set(), "entered": set(),
+                     "pos": []} for p in (bdir, sdir)}
+        armed = set()
+        n = lambda p: len(C.Collector._jsonl(
+            os.path.join(p, "entries_live.jsonl")))
+        for sym in ("S0USDT", "S1USDT"):
+            col.books[sym] = B(100.10)      # взведение дальше полосы
+        col._sit_scan(d, sheet, want, books, 1000.0, armed)
+        for sym in ("S0USDT", "S1USDT"):
+            col.books[sym] = B(99.80)       # пересечение при нас
+        col._sit_scan(d, sheet, want, books, 1005.0, armed)
+        evb = C.Collector._jsonl(os.path.join(bdir, "entries_live.jsonl"))
+        evs = C.Collector._jsonl(os.path.join(sdir, "entries_live.jsonl"))
+        check("торгуемая книга берёт оба стопа",
+              sorted(e["sym"] for e in evb) == ["S0USDT", "S1USDT"],
+              str([e["sym"] for e in evb]))
+        check("книга равного риска не берёт стоп тоньше порога",
+              [e["sym"] for e in evs] == ["S1USDT"], str(
+                  [e["sym"] for e in evs]))
+        check("порог едет в событие своей книги числом",
+              evs[0].get("min_stop_bp") == 100.0
+              and "min_stop_bp" not in [e for e in evb
+                                        if e["sym"] == "S1USDT"][0],
+              str(evs))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_take_limit_fill_and_exit_event():
     """Тейк — лимитка: принты сквозь уровень исполняют по уровню.
 
@@ -4191,6 +4266,7 @@ def main():
     test_sit_scan_stop_is_the_quantile_level()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_sit_scan_book_noise_multiplier()
+    test_sit_scan_min_stop_book_rule()
     test_take_limit_fill_and_exit_event()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()

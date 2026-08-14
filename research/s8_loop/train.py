@@ -1211,6 +1211,16 @@ SIT_R_EXIT_POLICY = "levels_only"
 # правило КНИГИ, как размер и выходы: торгуемая книга не меняется,
 # и разница результатов остаётся приписуемой правилам sit_r.
 SIT_R_NOISE_MULT = 1.5
+# Третье правило той же книги (решение владельца: «размер тейков и
+# стопов должен быть одинаковый»): вход только при исполняемом стопе
+# не тоньше этого порога. Порог ВЫВЕДЕН из двух чисел забора, а не
+# назначен: риск сделки R = FIXED_RISK_SHARE капитала, потолок на имя
+# NAME_CAP_SHARE капитала, и равный риск помещается под потолок только
+# при стопе ≥ R/потолок = 0.1 %/10 % = 1 %. Тоньше — размер срезал бы
+# потолок (замерено: 45 сделок из 69, две трети книги, риск 0.2–0.9 R
+# вместо R — контракт «−R либо +r·R» держался у трети сделок). Взятая
+# сделка теперь несёт ровно R; цена — книга входит втрое реже.
+SIT_R_MIN_STOP_BP = TR.FIXED_RISK_SHARE / TR.NAME_CAP_SHARE * 1e4
 # Наблюдательная книга: те же гейты, КРОМЕ отношения. Нужна затем,
 # чтобы фильтру владельца было что показывать ниже боевого порога: в
 # торгуемой книге сделок с RR < 2 нет вовсе, и порог 1 к 1 добавить
@@ -2472,7 +2482,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                                {"dir": os.path.basename(mdir) + "_r",
                                 "min_rr": SIT_MIN_RR,
                                 "slots": SIT_SLOTS,
-                                "noise_mult": SIT_R_NOISE_MULT},
+                                "noise_mult": SIT_R_NOISE_MULT,
+                                "min_stop_bp": SIT_R_MIN_STOP_BP},
                            ],
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
@@ -2530,12 +2541,14 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         rbk = mdir + "_r"
         fresh_sit_on_rules_change(rbk, log_, rules={
             "exit_policy": SIT_R_EXIT_POLICY,
-            "noise_mult": SIT_R_NOISE_MULT})
+            "noise_mult": SIT_R_NOISE_MULT,
+            "min_stop_bp": SIT_R_MIN_STOP_BP})
         os.makedirs(rbk, exist_ok=True)
         srm = dict(sm, sizing="fixed_risk",
                    risk_share=TR.FIXED_RISK_SHARE,
                    exit_policy=SIT_R_EXIT_POLICY,
-                   noise_mult=SIT_R_NOISE_MULT)
+                   noise_mult=SIT_R_NOISE_MULT,
+                   min_stop_bp=SIT_R_MIN_STOP_BP)
         with open(os.path.join(rbk, "manifest.json.tmp"), "w",
                   encoding="utf-8") as f:
             json.dump(srm, f, ensure_ascii=False, indent=1)

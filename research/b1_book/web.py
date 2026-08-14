@@ -1262,7 +1262,13 @@ function renderModel() {
               m.max_eaten * 100)} %</b> of the promised adverse path
             before entry — a move against the forecast used to count
             twice in favour (bigger discount, bigger reward/risk) and
-            never against.` : ""}</div>`
+            never against.` : ""}${m.min_stop_bp
+         ? ` And this book refuses entries whose executable stop is
+            tighter than <b>${(m.min_stop_bp / 100).toFixed(0)} %</b>:
+            an equal dollar of risk must fit under the per-name cap —
+            a tighter stop would silently risk less than R (owner's
+            rule; the bar is derived from the cap, not chosen).`
+         : ""}</div>`
     : "";
   // Правило СТОПА — тем же способом и рядом: заявка стоит не там,
   // куда модель ждёт цену, а за этой линией, и уровень предсказывает
@@ -5218,7 +5224,12 @@ function render(d, t){
          far enough that ordinary noise does not knock the trade out,
          close enough that a real break ends it.`
       : `Set on the model's expected adverse line (the older stop
-         rule).`) + `</p>`
+         rule).`) + (d.min_stop_bp
+      ? ` This book only takes trades whose stop is at least
+         <b>${(d.min_stop_bp / 100).toFixed(0)} %</b> wide: an equal
+         dollar of risk (R) must fit under the per-name cap, and a
+         tighter stop would silently risk less than R.`
+      : "") + `</p>`
       + (t.mfe_bp != null
       ? `<p><b>Target</b> at ${tgtPx ?? "—"} (${pct(t.mfe_bp)}): the
          best excursion the model expects in the trade's favour —

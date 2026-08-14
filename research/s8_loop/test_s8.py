@@ -1549,6 +1549,16 @@ def test_situational_book_enters_and_exits_by_situation():
                       rules={"exit_policy": T.SIT_R_EXIT_POLICY,
                              "noise_mult": T.SIT_R_NOISE_MULT})
                   is None and os.path.isdir(old_dir))
+            # Порог минимального стопа — тождество забора, не число:
+            # R/потолок. Разъедься константа с кассой, правило
+            # перестало бы гарантировать ровно R под потолком.
+            import trades as _TR
+            check("порог стопа выведен из забора, а не назначен",
+                  abs(T.SIT_R_MIN_STOP_BP
+                      - _TR.FIXED_RISK_SHARE / _TR.NAME_CAP_SHARE
+                      * 1e4) < 1e-9
+                  and abs(T.SIT_R_MIN_STOP_BP - 100.0) < 1e-9,
+                  str(T.SIT_R_MIN_STOP_BP))
         finally:
             shutil.rmtree(d7, ignore_errors=True)
 

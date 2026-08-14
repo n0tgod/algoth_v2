@@ -1858,6 +1858,7 @@ class Collector:
                     "max_eaten": mman.get("max_eaten"),
                     "exit_policy": mman.get("exit_policy"),
                     "noise_mult": mman.get("noise_mult"),
+                    "min_stop_bp": mman.get("min_stop_bp"),
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
@@ -1917,6 +1918,7 @@ class Collector:
                 "min_disc_bp": mman.get("min_disc_bp"),
                 "max_eaten": mman.get("max_eaten"),
                 "noise_mult": mman.get("noise_mult"),
+                "min_stop_bp": mman.get("min_stop_bp"),
                 "exit_policy": mman.get("exit_policy"),
                 # Порог владельца и его цена в сделках: без этих чисел
                 # отфильтрованный счёт неотличим от счёта книги.
@@ -2232,7 +2234,10 @@ class Collector:
                      "also demand stop room of at least 1.5× the "
                      "coin's live minute noise where the shared "
                      "gate asks one (owner's rule after a stop one "
-                     "wick wide). Not in "
+                     "wick wide), and a stop no tighter than 1 % — "
+                     "an equal dollar of risk must fit under the "
+                     "per-name cap, tighter stops silently risked "
+                     "less than R. Not in "
                      "league or root sums: same decisions would "
                      "be counted twice.",
             "plain_ru": "ТЕ ЖЕ сделки, что у ситуационной книги — "
@@ -2249,7 +2254,10 @@ class Collector:
                         "требует запаса до стопа не тоньше ПОЛУТОРА "
                         "живых минутных шумов там, где общий гейт "
                         "требует один (правило владельца после стопа "
-                        "шириной в фитиль). В лигу и сумму "
+                        "шириной в фитиль), и стопа не тоньше 1 % — "
+                        "равный доллар риска обязан помещаться под "
+                        "потолок имени, тесный стоп молча рисковал "
+                        "меньше R. В лигу и сумму "
                         "корня не входит: те же решения считались бы "
                         "дважды."},
     }
@@ -3774,9 +3782,11 @@ class Collector:
                 held = {p["sym"] for p in stt["pos"] if p["arm"] == arm}
                 free[d] = (int(b.get("slots") or 6) - len(held), held,
                            float(b.get("min_rr") or 0.0),
-                           # Множитель шума — правило книги, как
-                           # min_rr; лист без поля — прежний один шум.
-                           float(b.get("noise_mult") or 1.0), stt)
+                           # Множитель шума и минимальный стоп —
+                           # правила книги, как min_rr; лист без поля
+                           # — прежнее поведение (1 шум, порога нет).
+                           float(b.get("noise_mult") or 1.0),
+                           float(b.get("min_stop_bp") or 0.0), stt)
             # Порядок просмотра кандидатов — в единицах собственной σ
             # монеты (решение владельца о переводе ситуационных сделок
             # на per σ). Мест меньше, чем проходящих гейт, и слот
@@ -3841,7 +3851,7 @@ class Collector:
                     # секундой, которую владелец видел трижды.
                     continue
                 took = False
-                for d, (n_free, held, min_rr, n_mult,
+                for d, (n_free, held, min_rr, n_mult, m_stop,
                         stt) in list(free.items()):
                     if n_free <= 0 or sym in held:
                         continue
@@ -3858,6 +3868,14 @@ class Collector:
                     # различаются требования — как с `min_rr`.
                     if abs(got["mae"]) < n_mult * noise - 1e-9:
                         continue
+                    # Правило книги равного риска (решение владельца:
+                    # «размер тейков и стопов должен быть одинаковый»):
+                    # стоп тоньше порога не помещает риск R под потолок
+                    # имени, размер срезал бы потолок и риск выходил бы
+                    # меньше целевого. Порог выведен из забора
+                    # (R/потолок = 1 %) и едет с листом.
+                    if abs(got["mae"]) < m_stop - 1e-9:
+                        continue
                     ev = {"arm": arm, "hour": hour,
                           "at_ts": round(now, 3),
                           "scan_rank": scan_rank,
@@ -3867,6 +3885,8 @@ class Collector:
                         # правило книги, проверяется записью, а не
                         # доверием к коду (урок v5 с fwd0).
                         ev["noise_mult"] = n_mult
+                    if m_stop:
+                        ev["min_stop_bp"] = m_stop
                     # Номер обучения — С ЛИСТА, породившего вход: цикл,
                     # который позже перепишет событие в книгу, может
                     # успеть обучиться заново, и сделке достались бы
@@ -3880,7 +3900,8 @@ class Collector:
                                 + "\n")
                     stt["entered"].add(key)
                     held.add(sym)
-                    free[d] = (n_free - 1, held, min_rr, n_mult, stt)
+                    free[d] = (n_free - 1, held, min_rr, n_mult,
+                               m_stop, stt)
                     # Свежий вход сторожится с этой же секунды, не
                     # дожидаясь перечитывания файлов. `at_ts` обязателен:
                     # по нему страж свежести отличает позицию, открытую

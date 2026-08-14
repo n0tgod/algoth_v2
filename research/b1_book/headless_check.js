@@ -467,7 +467,8 @@ global.fetch = async (url) => {
                 // запас в полтора шума — страница обязана взять оба
                 // правила из ОТВЕТА, а не из своих списков.
                 ...(/hz=sit_r/.test(url)
-                    ? {exit_policy: "levels_only", noise_mult: 1.5}
+                    ? {exit_policy: "levels_only", noise_mult: 1.5,
+                       min_stop_bp: 100}
                     : {}),
                 total: 4, pages: 1, filtered: false, grand_total: 4,
                 // Кривая счёта: четыре числа на точку — метка,
@@ -2144,6 +2145,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // Множитель шума — правило ИМЕННО этой книги, из ответа.
       if (!/<b>1\.5×<\/b> that noise/.test(wb2))
         bad.push("разбор: множитель шума книги не назван");
+      if (!/stop is at least\s+<b>1 %<\/b> wide/.test(wb2))
+        bad.push("разбор: правило минимального стопа не названо");
     } else if (/hz=sit(&|$)/.test(SEARCH)) {
       if (!/forecast flipping sign/.test(wb2)
           || !/24 h age limit/.test(wb2))
@@ -2151,6 +2154,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // Двусторонне: у книги без правила множителя нет и в тексте.
       if (/1\.5×/.test(wb2))
         bad.push("разбор: чужой множитель приписан ситуационной");
+      if (/stop is at least/.test(wb2))
+        bad.push("разбор: чужой порог стопа приписан ситуационной");
     }
   }
 
