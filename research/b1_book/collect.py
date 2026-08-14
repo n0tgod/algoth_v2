@@ -2049,19 +2049,23 @@ class Collector:
     # (2026-08-12) по зонду крайности — из показа и статистики
     # целиком. Каталог `model_h1` на диске остаётся записью.
     BOOK_DIRS = {"h4": "model", "h24": "model_h24",
+                 "h24b": "model_h24b", "h24bf": "model_h24bf",
                  "sit": "model_sit", "sit_obs": "model_sit_obs",
                  "sit_r": "model_sit_r", "z": "model_h24z"}
     # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
     # счётах по книгам её быть не должно.
     BOOKS = (("h4", "model"),
-             ("h24", "model_h24"), ("sit", "model_sit"),
+             ("h24", "model_h24"),
+             ("h24b", "model_h24b"), ("h24bf", "model_h24bf"),
+             ("sit", "model_sit"),
              ("sit_r", "model_sit_r"), ("z", "model_h24z"))
-    # Книги-эхо: ТЕ ЖЕ решения, что у торгуемой, под другим правилом
-    # размера (равный доллар риска). Свои деньги у них настоящие, но
-    # в сводных суммах (лига, корень дерева, разбивка волатильности)
-    # они считали бы одни решения дважды — исключаются там по этому
-    # множеству, а не по имени в каждом месте.
-    ECHO_BOOKS = {"sit_r"}
+    # Книги-эхо: ТЕ ЖЕ решения, что у книги-источника, под другим
+    # правилом — размера (sit_r, равный доллар риска) либо выхода
+    # (h24b/h24bf, корзинный тейк и пол). Свои деньги у них
+    # настоящие, но в сводных суммах (лига, корень дерева, разбивка
+    # волатильности) они считали бы одни решения дважды — исключаются
+    # там по этому множеству, а не по имени в каждом месте.
+    ECHO_BOOKS = {"sit_r", "h24b", "h24bf"}
 
     # Дерево моделей: что за логику проверяет каждая ветка, простыми
     # словами и на обоих языках разом (правило справочника: разъехавшись,
@@ -2260,6 +2264,58 @@ class Collector:
                         "меньше R. В лигу и сумму "
                         "корня не входит: те же решения считались бы "
                         "дважды."},
+        "h24b": {
+            "title": "24 h · basket — close all at +5 % of capital",
+            "title_ru": "24 ч · корзина — закрыть всё при +5 % "
+                        "капитала",
+            "plain": "An echo of the 24 h book: the SAME picks, but "
+                     "once an hour the combined unrealised PnL of "
+                     "all open positions of an arm is checked, and "
+                     "at +5 % of the arm's capital — one daily "
+                     "sigma of the book's own curve, declared "
+                     "before the run — the whole basket is closed "
+                     "at once. Honest theory: stopping at a "
+                     "threshold creates no expectation, it reshapes "
+                     "the distribution into frequent small takes "
+                     "and rare deep losses, so judge it by drawdown "
+                     "and tail PAIRED against the source book, not "
+                     "by the average. Not in league or root sums: "
+                     "an echo of the same decisions.",
+            "plain_ru": "Эхо книги 24 ч: ТЕ ЖЕ выборы, но раз в час "
+                        "проверяется общий нереализованный результат "
+                        "всех открытых позиций руки, и при +5 % "
+                        "капитала — один суточный ход собственной "
+                        "кривой, порог объявлен до прогона — корзина "
+                        "закрывается целиком. Честная теория: "
+                        "остановка по порогу ожидания не создаёт, "
+                        "она меняет форму распределения на частые "
+                        "мелкие фиксации и редкие глубокие минусы, "
+                        "поэтому судить книгу надо по просадке и "
+                        "хвосту ПАРНО против источника, а не по "
+                        "среднему. В лигу и сумму корня не входит: "
+                        "эхо тех же решений."},
+        "h24bf": {
+            "title": "24 h · basket ± floor — take +5 %, cut at "
+                     "−5 %",
+            "title_ru": "24 ч · корзина с полом — тейк +5 %, стоп "
+                        "−5 %",
+            "plain": "The same basket echo with a symmetric floor: "
+                     "the sum reaching −5 % of capital closes "
+                     "everything and fixes the common loss. The "
+                     "diagnostic arm of the owner's question — is "
+                     "it better to wait a shared drawdown out "
+                     "(h24b) or to cut it: the two books differ by "
+                     "exactly this one rule, so the difference in "
+                     "their curves belongs to the floor. Not in "
+                     "league or root sums.",
+            "plain_ru": "Та же корзина с симметричным полом: сумма, "
+                        "дошедшая до −5 % капитала, закрывает всё и "
+                        "фиксирует общий убыток. Диагностическая "
+                        "рука вопроса владельца — пересиживать общий "
+                        "минус (h24b) или резать его: книги "
+                        "различаются ровно этим правилом, и разница "
+                        "их кривых принадлежит полу. В лигу и сумму "
+                        "корня не входит."},
     }
     # Ночной прогон турнира приходит раз в сутки (сторож, окно 02:xx
     # UTC). Запас на одно пропущенное окно: 36 ч — это «одну ночь

@@ -4223,6 +4223,174 @@ def test_no_outcome_returns_principal():
           f"{a.get('state')} / {a.get('no_outcome_at')}")
 
 
+def test_basket_echo_books():
+    """Корзинные книги-эхо: копия выборов, порог суммы, закрытие разом.
+
+    Проверяется числами весь контракт: выбор источника копируется
+    дословно и один раз; на нейтральной цене корзина не закрывается;
+    книга без пола НЕ закрывает общий минус (контроль ветки пола);
+    непереоценённая нога блокирует решение; порог тейка закрывает ВСЕ
+    открытые позиции одной секундой с причиной в каждой строке; пол
+    диагностической книги фиксирует общий убыток; таймерный разбор
+    источника, пришедший после закрытия корзины, не копируется.
+    """
+    import json as _json
+    import tempfile
+    import shutil
+    import train as T
+    import trades as TR
+
+    d = tempfile.mkdtemp()
+    logs = []
+    log = logs.append
+    hour = "2026-08-14-01"
+    t0 = TR.hour_end(hour)             # вход — закрытие часа решения
+    now1 = t0 + 2 * 3600.0             # два часа спустя, до таймера
+    src = os.path.join(d, "model_h24")
+    dst = os.path.join(d, "model_h24b")
+    dstf = os.path.join(d, "model_h24bf")
+    pick = {"arm": "gbm", "hour": hour, "at_ts": t0 + 300.0,
+            "long": [{"sym": "AAAUSDT", "fwd": 40.0, "px": 100.0},
+                     {"sym": "BBBUSDT", "fwd": 35.0, "px": 50.0}],
+            "short": []}
+    flat = {"AAAUSDT": 100.0, "BBBUSDT": 50.0}
+    down = {"AAAUSDT": 70.0, "BBBUSDT": 35.0}
+    up = {"AAAUSDT": 200.0, "BBBUSDT": 100.0}
+    try:
+        os.makedirs(src)
+        with open(os.path.join(src, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(pick, ensure_ascii=False) + "\n")
+        # 1) нейтральная цена: копия есть, закрытия нет
+        T.basket_echo_cycle(dst, src, hour, 0.05, None, None, log,
+                            now=now1, prices=flat)
+        got_p = T._read_jsonl(os.path.join(dst, "picks.jsonl"))
+        check("выбор источника скопирован в эхо дословно",
+              len(got_p) == 1 and got_p[0] == pick, str(got_p))
+        check("на нейтральной цене корзина не закрывается",
+              not T._read_jsonl(os.path.join(dst, "review.jsonl")))
+        # 2) повторный проход не дублирует выбор
+        T.basket_echo_cycle(dst, src, hour, 0.05, None, None, log,
+                            now=now1 + 5, prices=flat)
+        check("повторный проход не дублирует выбор",
+              len(T._read_jsonl(os.path.join(dst, "picks.jsonl"))) == 1)
+        # 3) контроль ветки пола: книга БЕЗ пола общий минус не режет
+        T.basket_echo_cycle(dst, src, hour, 0.01, None, None, log,
+                            now=now1 + 10, prices=down)
+        check("книга без пола не закрывает общий минус",
+              not T._read_jsonl(os.path.join(dst, "review.jsonl")))
+        # 4) непереоценённая нога блокирует решение при любом плюсе
+        T.basket_echo_cycle(dst, src, hour, 0.001, None, None, log,
+                            now=now1 + 15, prices={"AAAUSDT": 200.0})
+        check("позиция без цены блокирует решение корзины",
+              not T._read_jsonl(os.path.join(dst, "review.jsonl"))
+              and any("нет цены" in m for m in logs), str(logs[-3:]))
+        # 5) пол диагностической книги фиксирует общий убыток
+        T.basket_echo_cycle(dstf, src, hour, 0.05, 0.01, None, log,
+                            now=now1 + 20, prices=down)
+        rvf = T._read_jsonl(os.path.join(dstf, "review.jsonl"))
+        check("пол закрыл корзину диагностической книги",
+              len(rvf) == 1
+              and all(r["reason"] == T.BASKET_FLOOR_REASON
+                      for r in rvf[0]["rows"]), str(rvf))
+        # 6) тейк: закрытие ВСЕЙ корзины одной секундой
+        now2 = now1 + 25
+        T.basket_echo_cycle(dst, src, hour, 0.01, None, None, log,
+                            now=now2, prices=up)
+        rv = T._read_jsonl(os.path.join(dst, "review.jsonl"))
+        check("корзина закрыта одной записью на час выбора",
+              len(rv) == 1 and len(rv[0]["rows"]) == 2, str(rv))
+        rows = {r["sym"]: r for r in rv[0]["rows"]}
+        ex_hour = datetime.fromtimestamp(now2, timezone.utc)\
+            .strftime("%Y-%m-%d-%H")
+        check("причина, секунда и час выхода — в каждой строке",
+              all(r["reason"] == T.BASKET_TAKE_REASON
+                  and r["exit_ts"] == round(now2, 3)
+                  and r["exit_hour"] == ex_hour
+                  for r in rows.values()), str(rows))
+        check("got — сырой ход цены, net — минус круг",
+              rows["AAAUSDT"]["got"] == 10000.0
+              and rows["AAAUSDT"]["net"] == 10000.0 - TR.ROUND_COST_BP,
+              str(rows["AAAUSDT"]))
+        tr = TR.build(T._read_jsonl(os.path.join(dst, "picks.jsonl")),
+                      rv, now=now2 + 60, hold_h=24)
+        check("обе позиции закрыты корзиной, а не таймером",
+              len(tr) == 2 and all(
+                  t["state"] == "закрыта"
+                  and t["exit_reason"] == T.BASKET_TAKE_REASON
+                  and t["closes_at"] == round(now2, 3)
+                  for t in tr),
+              str([(t["state"], t.get("exit_reason"),
+                    t.get("closes_at")) for t in tr]))
+        # 7) поздний таймерный разбор источника не копируется: ключ
+        # (рука, час) уже занят закрытием корзины
+        src_rv = {"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+                  "at_ts": t0 + 25 * 3600.0,
+                  "rows": [{"sym": "AAAUSDT", "side": "long",
+                            "expected": 40.0, "got": 12.0,
+                            "net": 1.0},
+                           {"sym": "BBBUSDT", "side": "long",
+                            "expected": 35.0, "got": 8.0,
+                            "net": -3.0}]}
+        with open(os.path.join(src, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(src_rv, ensure_ascii=False) + "\n")
+        T.basket_echo_cycle(dst, src, hour, 0.01, None, None, log,
+                            now=t0 + 25 * 3600.0 + 60, prices={})
+        check("таймерный разбор после закрытия корзины не копируется",
+              len(T._read_jsonl(os.path.join(dst,
+                                             "review.jsonl"))) == 1)
+        # 8) счета пересобраны и деньги закрытия видны кассе
+        hist, bal = TR.account(tr, "gbm", hold_h=24)
+        check("деньги закрытой корзины дошли до кассы",
+              bal > TR.START_BALANCE and len(hist) == 2,
+              f"{bal} {len(hist)}")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_fresh_sit_version_for_echo_books():
+    """`version=1` у эха: решает словарь правил, а не версия v13.
+
+    Манифест корзинной книги версии ситуационных правил не несёт; со
+    значением по умолчанию каждый цикл выглядел бы сменой v13 → v1 и
+    отставлял бы свежую книгу в архив ежечасно. Проверены обе стороны:
+    с version=1 совпадающие правила книгу не трогают, умолчание ту же
+    книгу отставило бы, смена порога отставляет и при version=1.
+    """
+    import json as _json
+    import tempfile
+    import shutil
+    import train as T
+
+    d = tempfile.mkdtemp()
+    try:
+        b = os.path.join(d, "model_h24b")
+        os.makedirs(b)
+        man = {"horizon_h": 24, "echo_of": "model_h24",
+               "basket_take_share": 0.05, "basket_floor_share": None}
+        with open(os.path.join(b, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            _json.dump(man, f)
+        rules = {"basket_take_share": 0.05, "basket_floor_share": None}
+        same = T.fresh_sit_on_rules_change(b, lambda m: None,
+                                           version=1, rules=dict(rules))
+        check("совпадающие правила эха книгу не отставляют",
+              same is None, str(same))
+        wrong = T.fresh_sit_on_rules_change(b, lambda m: None,
+                                            rules=dict(rules))
+        check("умолчание версии отставило бы эхо — потому version=1",
+              wrong is not None, str(wrong))
+        moved = T.fresh_sit_on_rules_change(
+            b, lambda m: None, version=1,
+            rules={"basket_take_share": 0.04,
+                   "basket_floor_share": None})
+        check("смена порога корзины отставляет книгу",
+              moved is not None and ".rules-v1" in moved, str(moved))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_sit_absorb_lives_in_one_module():
     """Поглощение живых событий: и сборщик, и цикл зовут один код.
 
@@ -4354,6 +4522,8 @@ def main():
     test_non_crypto_split_by_book_kind()
     test_fixed_risk_sizing_equalises_dollar_risk()
     test_no_outcome_returns_principal()
+    test_basket_echo_books()
+    test_fresh_sit_version_for_echo_books()
     test_sit_absorb_lives_in_one_module()
     test_trade_ids_are_stable()
     test_entry_floor_gates_the_main_book()

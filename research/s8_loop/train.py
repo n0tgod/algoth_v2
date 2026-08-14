@@ -1425,7 +1425,8 @@ def fresh_book_on_rank_change(mdir, want, log_=None, floor=None):
     return dst
 
 
-def fresh_sit_on_rules_change(mdir, log_=None, rules=None):
+def fresh_sit_on_rules_change(mdir, log_=None, rules=None,
+                              version=None):
     """Сменились правила ситуационной книги — старая уходит в архив.
 
     Книга не удаляется, а переезжает в архивный каталог: история
@@ -1439,6 +1440,12 @@ def fresh_sit_on_rules_change(mdir, log_=None, rules=None):
     кривые, писанные разными правилами, не сшиваются. Отсутствие поля
     в манифесте — тоже смена: книга, писанная до правила, не писалась
     по нему.
+
+    `version` — какая версия общих правил ожидается в манифесте; по
+    умолчанию `SIT_RULES_VERSION`. Корзинные книги-эхо передают 1: их
+    манифесты версию ситуационных правил не несут вовсе, и сравнение
+    с ней отставляло бы книгу каждый цикл — у них решает словарь
+    `rules`.
     """
     try:
         with open(os.path.join(mdir, "manifest.json"),
@@ -1447,9 +1454,10 @@ def fresh_sit_on_rules_change(mdir, log_=None, rules=None):
         was = int(man.get("rules_version") or 1)
     except (OSError, ValueError):
         return None                # каталога нет или пуст — нечего
+    want_ver = SIT_RULES_VERSION if version is None else int(version)
     diff = [(k, man.get(k), v) for k, v in (rules or {}).items()
             if man.get(k) != v]
-    if was == SIT_RULES_VERSION and not diff:
+    if was == want_ver and not diff:
         return None
     dst = f"{mdir}.rules-v{was}"
     n = 0
@@ -1458,8 +1466,8 @@ def fresh_sit_on_rules_change(mdir, log_=None, rules=None):
         dst = f"{mdir}.rules-v{was}-{n}"
     if archive_book(mdir, dst, log_) is None:
         return None
-    why = (f"v{was} → v{SIT_RULES_VERSION}"
-           if was != SIT_RULES_VERSION
+    why = (f"v{was} → v{want_ver}"
+           if was != want_ver
            else "; ".join(f"{k}: {w if w is not None else 'нет'} → {v}"
                           for k, w, v in diff))
     if log_:
@@ -1685,6 +1693,30 @@ H4_FLOOR_BP = 30.0
 # видно без единой сделки.
 REMOVED_BOOKS = {1}
 
+# Корзинные книги-эхо 24 ч (решение владельца 2026-08-14): под-модель,
+# которая смотрит не на сделку, а на ОБЩИЙ нереализованный результат
+# всех открытых позиций руки разом, и при пороге закрывает корзину
+# целиком. Пороги — доли капитала руки, объявлены до прогона и
+# выведены из замера шума собственной кривой: суточная σ PnL руки
+# книги 24 ч ≈ 160 $ ≈ 5.3 % капитала 3000 $, медианный суточный
+# размах 145–190 $ — тейк равен одному суточному ходу, пол
+# диагностической книги симметричен ему.
+#
+# Честная теория записана до прогона: правило «закрыть, когда сумма
+# дошла до X» ожидания НЕ создаёт — остановка по порогу не меняет
+# среднего, а входы идут по расписанию источника независимо от
+# корзины, то есть и комиссия та же. Оно меняет ФОРМУ распределения:
+# частые фиксации у тейка против редких глубоких минусов — та же
+# carry-форма, которой Sharpe льстит. Судить книги по просадке и
+# хвосту ПАРНО против источника, а не по среднему. Мартингейла
+# («открывать дальше и ждать плюса») забор не допускает: касса и так
+# вкладывает всё, что позволяют потолки, доливать нечем.
+BASKET_H = 24                     # книга-источник — model_h24
+BASKET_TAKE_SHARE = 0.05          # тейк корзины: +5 % капитала руки
+BASKET_FLOOR_SHARE = 0.05         # пол (только у …bf): −5 % капитала
+BASKET_TAKE_REASON = "корзина дошла до цели"
+BASKET_FLOOR_REASON = "корзина дошла до предела убытка"
+
 
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
               nov_lo, nov_hi, book_root, log_, names=None,
@@ -1853,6 +1885,172 @@ def rebuild_accounts(mdir, hold_h, slots=None):
         os.replace(apath + ".tmp", apath)
         out[arm] = (hist, bal)
     return out
+
+
+def echo_picks(mdir, src_dir, cur_hour):
+    """Скопировать в книгу-эхо выборы источника за текущий час.
+
+    Эхо не выбирает ничего само — его сделки суть сделки источника, и
+    копия обязана быть дословной (запись целиком): любое переложение
+    полей однажды разошлось бы с оригиналом. Берётся только текущий
+    час: эхо начинается с развёртывания, а не импортирует историю
+    источника — по прошлой истории корзинное правило не применялось,
+    и унаследованная кривая выдавала бы чужую книгу за свою.
+    """
+    if not cur_hour:
+        return 0
+    n = 0
+    for pk in _read_jsonl(os.path.join(src_dir, "picks.jsonl")):
+        if pk.get("hour") == cur_hour and write_pick(mdir, pk):
+            n += 1
+    return n
+
+
+def echo_reviews(mdir, src_dir):
+    """Скопировать разборы источника для выборов, живущих в эхе.
+
+    Ключ — (рука, час). Закрытие корзины уже занимает его, поэтому
+    таймерный разбор источника, пришедший ПОЗЖЕ, не копируется:
+    позиция в эхе закрыта раньше, чем в источнике, и второй разбор
+    описывал бы сделку, которой в этой книге нет.
+    """
+    have = {((p.get("arm") or "gbm"), p.get("hour"))
+            for p in _read_jsonl(os.path.join(mdir, "picks.jsonl"))}
+    seen = {((r.get("arm") or "gbm"), r.get("hour"))
+            for r in _read_jsonl(os.path.join(mdir, "review.jsonl"))}
+    add = []
+    for rv in _read_jsonl(os.path.join(src_dir, "review.jsonl")):
+        key = ((rv.get("arm") or "gbm"), rv.get("hour"))
+        if key in have and key not in seen:
+            add.append(rv)
+            seen.add(key)
+    if add:
+        with open(os.path.join(mdir, "review.jsonl"), "a",
+                  encoding="utf-8") as f:
+            for rv in add:
+                f.write(json.dumps(rv, ensure_ascii=False) + "\n")
+    return len(add)
+
+
+def basket_state(trades, arm):
+    """Деньги корзины руки: сумма нереализованного нетто открытых.
+
+    Возвращает `(pnl, открытые, без цены)`. Деньги — только по
+    позициям с размером и переоценкой, та же арифметика, что у
+    `unreal_pnl` сводки (size × unreal_net_bp): вторая формула
+    разошлась бы с той, которую владелец видит на странице. Позиция
+    БЕЗ цены блокирует решение у вызывающего: её минус мог быть
+    любым, и закрывать корзину, не видя одной ноги, значило бы
+    решать вслепую. Позиция без размера (кассе не хватило денег)
+    экспозиции не несёт и в сумму не входит, но закрывается вместе
+    со всеми — корзина закрывается целиком, а не по описи.
+    """
+    op = [t for t in trades
+          if t.get("arm") == arm and t.get("state") == "открыта"]
+    unpriced = [t for t in op if t.get("unreal_bp") is None]
+    pnl = round(sum(t["size"] * t["unreal_net_bp"] / 1e4
+                    for t in op
+                    if t.get("size")
+                    and t.get("unreal_net_bp") is not None), 2)
+    return pnl, op, unpriced
+
+
+def basket_close_records(op, arm, reason, now, books=None):
+    """Записи разбора закрытия корзины — по одной на час выбора.
+
+    Форма строки та же, что у таймерного разбора, с полями раннего
+    выхода, как у живых выходов ситуационной книги: `got` — сырой ход
+    цены (переоценка, у шорта с обратным знаком), `net` — ход по
+    позиции минус круг, `exit_ts` — секунда решения: касса возвращает
+    деньги тогда, когда закрытие случилось, а не концом часа.
+    """
+    ex_hour = datetime.fromtimestamp(now, timezone.utc)\
+        .strftime("%Y-%m-%d-%H")
+    by_hour = {}
+    for t in op:
+        by_hour.setdefault(t.get("hour"), []).append(t)
+    recs = []
+    for hour in sorted(by_hour):
+        rows = []
+        for t in sorted(by_hour[hour], key=lambda q: q.get("sym") or ""):
+            raw = (t["unreal_bp"] if t.get("side") == "long"
+                   else -t["unreal_bp"])
+            r = {"sym": t.get("sym"), "side": t.get("side"),
+                 "expected": t.get("expected_bp"),
+                 "got": round(raw, 1),
+                 "net": t.get("unreal_net_bp"),
+                 "exit_hour": ex_hour,
+                 "exit_ts": round(now, 3),
+                 "reason": reason,
+                 "exit_px": t.get("cur_px")}
+            cum = (books or {}).get(t.get("sym"))
+            if cum is not None:
+                r["cum"] = cum
+            rows.append(r)
+        recs.append({"arm": arm, "hour": hour,
+                     "cost_bp": TR.ROUND_COST_BP,
+                     "at_ts": round(now, 3), "rows": rows})
+    return recs
+
+
+def basket_echo_cycle(mdir, src_dir, cur_hour, take_share, floor_share,
+                      book_root, log_, now=None, prices=None):
+    """Один проход корзинной книги-эха: копия, переоценка, решение.
+
+    Проверка ЧАСОВАЯ — раз в цикл, вместе с остальными книгами: у
+    порогов масштаб суточного хода кривой, минутная точность им не
+    нужна, а отдельный сторож был бы второй реализацией переоценки.
+    `prices` — цены для переоценки (тестам); живой прогон берёт
+    середину книги в момент решения (`live_px`).
+
+    Возвращает `{рука: (причина, деньги, позиций)}` по закрытым.
+    """
+    now = now if now is not None else time.time()
+    os.makedirs(mdir, exist_ok=True)
+    echo_picks(mdir, src_dir, cur_hour)
+    echo_reviews(mdir, src_dir)
+    picks = _read_jsonl(os.path.join(mdir, "picks.jsonl"))
+    closed = {}
+    for arm, _ in ARMS:
+        reviews = _read_jsonl(os.path.join(mdir, "review.jsonl"))
+        trades = TR.build(picks, reviews, now=now, hold_h=BASKET_H)
+        TR.account(trades, arm, hold_h=BASKET_H)
+        op = [t for t in trades
+              if t.get("arm") == arm and t.get("state") == "открыта"]
+        if not op:
+            continue
+        syms = sorted({t["sym"] for t in op})
+        px = (prices if prices is not None
+              else {s: v[0] for s, v in
+                    live_px(syms, book_root).items()})
+        TR.mark(trades, px)
+        pnl, op, unpriced = basket_state(trades, arm)
+        if unpriced:
+            # Пропуск, а не ноль: непереоценённая нога могла быть в
+            # любом минусе, и решение по неполной сумме было бы
+            # решением вслепую. Причина видна журналом, а не молчит.
+            log_(f"корзина {os.path.basename(mdir)}/{arm}: у "
+                 f"{len(unpriced)} позиций из {len(op)} нет цены — "
+                 "решение не принимается")
+            continue
+        cap = TR.START_BALANCE
+        if pnl >= take_share * cap:
+            reason = BASKET_TAKE_REASON
+        elif floor_share is not None and pnl <= -floor_share * cap:
+            reason = BASKET_FLOOR_REASON
+        else:
+            continue
+        bk = stamp_book(syms, now, book_root, log_, "выхода корзины")
+        recs = basket_close_records(op, arm, reason, now, books=bk)
+        with open(os.path.join(mdir, "review.jsonl"), "a",
+                  encoding="utf-8") as f:
+            for rv in recs:
+                f.write(json.dumps(rv, ensure_ascii=False) + "\n")
+        closed[arm] = (reason, pnl, len(op))
+        log_(f"корзина {os.path.basename(mdir)}/{arm}: {reason} "
+             f"({pnl:+.2f} $ по {len(op)} позициям) — закрыта целиком")
+    rebuild_accounts(mdir, BASKET_H)
+    return closed
 
 
 def live_px(syms, book_root, now=None, log_=None):
@@ -2383,6 +2581,58 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         os.replace(zp + ".tmp", zp)
     except Exception as e:                                # noqa: BLE001
         log_(f"книга в σ не сведена: {type(e).__name__}: {e}")
+
+    # Корзинные книги-эхо 24 ч (решение владельца 2026-08-14): те же
+    # выборы, что у model_h24, но раз в цикл проверяется ОБЩИЙ
+    # нереализованный результат открытых позиций руки, и порог
+    # закрывает корзину целиком. `model_h24b` — только тейк (+5 %
+    # капитала руки), `model_h24bf` — тейк плюс симметричный пол −5 %:
+    # диагностическая рука вопроса владельца «пересиживать общий минус
+    # или резать». В лигу и суммы корня книги не входят (эхо чужих
+    # решений); порядок сечения им не проверяется — он унаследован
+    # копией выборов источника.
+    for bdir, b_take, b_floor in (
+            (MODEL_DIR + "_h24b", BASKET_TAKE_SHARE, None),
+            (MODEL_DIR + "_h24bf", BASKET_TAKE_SHARE,
+             BASKET_FLOOR_SHARE)):
+        try:
+            # У манифестов эха нет версии ситуационных правил —
+            # сравнение с ней отставляло бы книгу каждый цикл; решает
+            # словарь правил самой книги (version=1).
+            fresh_sit_on_rules_change(bdir, log_, version=1, rules={
+                "basket_take_share": b_take,
+                "basket_floor_share": b_floor})
+            os.makedirs(bdir, exist_ok=True)
+            bkf = f"fwd_{BASKET_H}h"
+            n_rows = (int((elig & np.isfinite(targets[bkf])).sum())
+                      if bkf in targets else 0)
+            bkm = {"version": MODEL_VERSION, "horizon_h": BASKET_H,
+                   "hedge": man["hedge"],
+                   "trained_at": man["trained_at"],
+                   "sections": n_sections, "symbols": len(syms),
+                   "canary_ic": man["canary_ic"],
+                   # Эхо: сделки — копия model_h24, своё только
+                   # корзинное правило. Пороги — в артефакт: страница
+                   # объясняет книгу по ним, а `fresh_…` ловит их
+                   # смену и отставляет несшиваемую историю.
+                   "echo_of": "model_h24",
+                   "basket_take_share": b_take,
+                   "basket_floor_share": b_floor,
+                   "rank_target": rank_key_for(BASKET_H),
+                   "target": bkf, "target_rows": n_rows,
+                   "target_need": MIN_TARGET_ROWS,
+                   "probe": PROBE, "pretest": PRETEST}
+            bmp = os.path.join(bdir, "manifest.json")
+            with open(bmp + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(bkm, f, ensure_ascii=False, indent=1)
+            os.replace(bmp + ".tmp", bmp)
+            basket_echo_cycle(bdir, book_dir(BASKET_H),
+                              grid[j_last] if j_last is not None
+                              else None,
+                              b_take, b_floor, book_root, log_)
+        except Exception as e:                        # noqa: BLE001
+            log_(f"корзинная книга {os.path.basename(bdir)} не "
+                 f"сведена: {type(e).__name__}: {e}")
 
     # Ситуационная книга: вход когда модель видит ситуацию, выход когда
     # ситуация кончилась. Сигнал — цели главного горизонта; своя касса
