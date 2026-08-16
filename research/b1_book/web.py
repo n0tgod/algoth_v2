@@ -5864,7 +5864,15 @@ body{margin:0;background:
 .nt{font-weight:600;font-size:12.5px;line-height:1.35}
 .ns{font-size:11px;color:var(--muted);margin-top:3px;
  font-family:ui-monospace,Menlo,Consolas,monospace;
- font-variant-numeric:tabular-nums;word-break:break-all}
+ font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+/* Число — неразрывный атом. Прежнее правило переноса (жадное,
+   по любому месту) рвало строку где придётся, и на узком узле
+   «+349.38 $ (+11.65 %)» выходило «+11.» и «65 %» — разорванное
+   пополам число читается как другое число. Перенос допускается
+   только между величинами, по разделителю; длинный ключ варианта
+   турнира рвётся по-прежнему — для него оставлен `overflow-wrap`,
+   который делает это последним средством, а не первым. */
+.nb{white-space:nowrap}
 .ibtn{position:absolute;top:4px;right:4px;width:18px;height:18px;
  line-height:15px;padding:0;border-radius:50%;font-size:11px;
  font-style:italic;font-family:Georgia,serif;background:var(--chip);
@@ -6024,16 +6032,20 @@ function tx(o, f){ return LANG === "ru" ? o[f + "_ru"] || o[f]
 function money(v){
   if (v == null) return "";
   const c = v > 0 ? "good" : v < 0 ? "bad" : "";
-  return `<span class="${c} mono">${v > 0 ? "+" : ""}${
+  return `<span class="${c} mono nb">${v > 0 ? "+" : ""}${
     v.toFixed(2)} $</span>`;
 }
+// Неразрывная величина: пробел внутри числа («52 %», «open 138»,
+// «Σ 1848») — такой же разрыв, как внутри дроби, и переносить по
+// нему нельзя.
+function nb(s){ return `<span class="nb">${s}</span>`; }
 // Доля к депозиту — рядом с каждой денежной цифрой (просьба
 // владельца): «+59.95 $» без знаменателя не говорит, много это или
 // пыль. Знаменатель едет из ответа сервера; без него доля не
 // печатается вовсе — выдуманное число хуже пропуска.
 function share(v, cap){
   if (v == null || !cap) return "";
-  return ` <span class="mono" style="color:var(--muted)">(${
+  return ` <span class="mono nb" style="color:var(--muted)">(${
     pct(v / cap * 1e4)})</span>`;
 }
 // Депозит руки — сумма депозитов её ТОРГУЕМЫХ книг: наблюдательная
@@ -6059,8 +6071,10 @@ function openLine(s){
   if (!s || !s.open) return "";
   const m = s.open_pnl == null ? "\u2014"
     : money(s.open_pnl) + share(s.open_pnl, DATA && DATA.cap);
-  const part = s.marked < s.open ? ` · ${s.marked}/${s.open}` : "";
-  return `<div class="ns">${T("openw")} ${s.open} · ${m}${part}</div>`;
+  const part = s.marked < s.open
+    ? ` · ${nb(s.marked + "/" + s.open)}` : "";
+  return `<div class="ns">${nb(T("openw") + " " + s.open)} · ${
+    m}${part}</div>`;
 }
 function bookStat(b, arm){
   if (b.key === "sit_obs") return T("nomoney");
@@ -6072,7 +6086,7 @@ function bookStat(b, arm){
   // ровно это владелец увидел у книги в σ. Нет закрытых — так и
   // сказано, а деньги открытых идут своей строкой ниже.
   if (!s || !s.closed) return T("none");
-  return `${s.closed} · ${Math.round(s.win * 100)} % · ${
+  return `${nb(s.closed + " · " + Math.round(s.win * 100) + " %")} · ${
     money(s.pnl)}${share(s.pnl, DATA && DATA.cap)}`;
 }
 function rootSum(arm){
@@ -6087,8 +6101,8 @@ function rootSum(arm){
     if (!s || !s.closed) continue;
     any = true; n += s.closed; p += s.pnl;
   }
-  return any ? `\u03a3 ${n} · ${money(Math.round(p * 100) / 100)}${
-      share(p, rootCap())}`
+  return any ? `${nb("\u03a3 " + n)} · ${
+      money(Math.round(p * 100) / 100)}${share(p, rootCap())}`
              : T("none");
 }
 function rootOpen(arm){
@@ -6104,8 +6118,9 @@ function rootOpen(arm){
   const mv = priced
     ? money(Math.round(p * 100) / 100) + share(p, rootCap())
     : "\u2014";
-  const part = m < n ? ` · ${m}/${n}` : "";
-  return `<div class="ns">${T("openw")} ${n} · ${mv}${part}</div>`;
+  const part = m < n ? ` · ${nb(m + "/" + n)}` : "";
+  return `<div class="ns">${nb(T("openw") + " " + n)} · ${
+    mv}${part}</div>`;
 }
 function nodeCard(key, cls, title, stat, extra){
   return `<div class="node ${cls}" data-key="${esc(key)}">
