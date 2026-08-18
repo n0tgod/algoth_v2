@@ -2654,6 +2654,121 @@ class Collector:
         self._league_cache = (now, out)
         return out
 
+    @staticmethod
+    def _spearman(xs, ys):
+        """Ранговая связь — одна реализация на весь сборщик."""
+        n = len(xs)
+        if n < 5:
+            return None
+        rx, ry = [0] * n, [0] * n
+        for r, i in enumerate(sorted(range(n), key=lambda i: xs[i])):
+            rx[i] = r
+        for r, i in enumerate(sorted(range(n), key=lambda i: ys[i])):
+            ry[i] = r
+        mu = (n - 1) / 2.0
+        num = sum((rx[i] - mu) * (ry[i] - mu) for i in range(n))
+        den = (sum((rx[i] - mu) ** 2 for i in range(n))
+               * sum((ry[i] - mu) ** 2 for i in range(n))) ** 0.5
+        return round(num / den, 3) if den else None
+
+    def learning(self):
+        """Умнеет ли модель и переходит ли это в деньги — по дням.
+
+        Вопрос владельца. Отвечают три ряда, и путать их нельзя:
+
+        1. НАВЫК — живой IC по сечению (`ic_history.jsonl`): ранговая
+           связь прогноза с фактом по ВСЕМУ сечению, а не по шести
+           выбранным именам. Пишется с первого дня по каждому часу и
+           каждой цели; в ответ `/model` уезжают последние 90 строк,
+           то есть одиннадцать часов, — поэтому свод считается здесь,
+           по файлу целиком.
+        2. ДЕНЬГИ — закрытые сделки того же дня, тем же `closed_rows`,
+           что у лиги (книги-эхо исключены: те же решения).
+        3. РАЗМЕР ЗНАНИЯ — сколько сечений видело обучение и что
+           показала канарейка (`train_log.jsonl`, пишет цикл).
+
+        Чего этот замер НЕ докажет, и это сказано на странице: часовое
+        переобучение не может сделать модель заметно умнее — M2
+        намерил, что сутки против месяца дают +0.000…+0.004 IC, а
+        новый час есть 1/40000 выборки. Меняются в этом ряду две
+        другие вещи: растёт сама выборка и меняются правила книг.
+        Поэтому тренд IC читается как «не деградирует ли», а рост
+        ищется в связи IC с деньгами, а не в номере обучения.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_learn_cache", (0.0, None))
+        if cached is not None and now - at < 120:
+            return cached
+        s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+        mdir = os.path.join(s8, self.BOOK_DIRS["h4"])
+        out = {"present": False, "generated_at": round(now, 1)}
+        ic = self._jsonl(os.path.join(mdir, "ic_history.jsonl"))
+        # День берётся из ЧАСА сечения, а не из времени записи: запись
+        # идёт позже закрытия форварда, и на границе суток час уехал
+        # бы в чужой день.
+        days = {}
+        for r in ic:
+            if r.get("kind") != "section" or r.get("median_ic") is None:
+                continue
+            h = r.get("hour") or ""
+            if len(h) < 10:
+                continue
+            d = days.setdefault(h[:10], {})
+            d.setdefault((r.get("arm"), r.get("target")), []).append(
+                float(r["median_ic"]))
+        rows, errors, scanned, _ = self.closed_rows()
+        rows = [r for r in rows if r["hz"] not in self.ECHO_BOOKS]
+        money, ntr = {}, {}
+        for r in rows:
+            d = datetime.fromtimestamp(r["at"] or 0, timezone.utc)\
+                .strftime("%Y-%m-%d")
+            money[d] = money.get(d, 0.0) + (r["pnl"] or 0.0)
+            ntr[d] = ntr.get(d, 0) + 1
+        log = {}
+        for r in self._jsonl(os.path.join(mdir, "train_log.jsonl")):
+            h = r.get("hour") or ""
+            if len(h) >= 10:
+                log.setdefault(h[:10], []).append(r)
+        series = []
+        for d in sorted(set(days) | set(money)):
+            per = days.get(d) or {}
+            def med(target):
+                v = sorted(x for k, vs in per.items() if k[1] == target
+                           for x in vs)
+                return (round(v[len(v) // 2], 4), len(v)) if v else (None, 0)
+            ic4, n4 = med("fwd_4h")
+            ic24, n24 = med("fwd_24h")
+            lg = log.get(d) or []
+            series.append({
+                "day": d, "ic_4h": ic4, "sections_4h": n4,
+                "ic_24h": ic24, "sections_24h": n24,
+                "pnl": round(money.get(d, 0.0), 2),
+                "trades": ntr.get(d, 0),
+                # Размер знания на конец дня: последняя запись цикла.
+                "trainings": len(lg),
+                "train_seq": max((x.get("seq") or 0 for x in lg),
+                                 default=None),
+                "sections": (lg[-1].get("sections") if lg else None),
+                "canary_ic": (lg[-1].get("canary_ic") if lg else None)})
+        # Связи считаются ЗДЕСЬ: страница не считает статистику, иначе
+        # у неё завелась бы вторая её реализация. Дни без IC или без
+        # сделок в связь не входят — пропуск не есть ноль.
+        pair = [(s["ic_4h"], s["pnl"]) for s in series
+                if s["ic_4h"] is not None and s["trades"]]
+        trend = [(i, s["ic_4h"]) for i, s in enumerate(series)
+                 if s["ic_4h"] is not None]
+        out.update({
+            "present": bool(series), "days": series,
+            "ic_vs_money": self._spearman([x for x, _ in pair],
+                                          [y for _, y in pair]),
+            "ic_vs_money_n": len(pair),
+            "ic_vs_time": self._spearman([x for x, _ in trend],
+                                         [y for _, y in trend]),
+            "ic_vs_time_n": len(trend),
+            "errors": errors})
+        self._learn_cache = (now, out)
+        return out
+
     def market_vol(self):
         """Волатильность рынка по часам — из наших же почасовых сводок.
 

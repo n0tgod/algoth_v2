@@ -431,6 +431,10 @@ def test_pages_run_headless():
                 ("справочник", web.GLOSSARY_PAGE, "?k=xxx"),
                 # Волатильность рынка против результата книг.
                 ("волатильность", web.VOLPAGE, "?k=xxx"),
+                # Обучение: умнеет ли модель и переходит ли это в
+                # деньги. Числа связей — из ответа, рамка предмета
+                # обязана стоять первой.
+                ("обучение", web.LEARNPAGE, "?k=xxx"),
                 # Дерево моделей: две руки и логика каждой ветки.
                 ("дерево моделей", web.TREEPAGE, "?k=xxx"),
                 # Турнир политик: весь лист веток отдельной страницей.
@@ -3015,6 +3019,111 @@ def test_pending_live_exit_is_shown_before_the_review():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_learning_day_by_day():
+    """Сводка обучения: навык по сечению, деньги дня и связь между ними.
+
+    Вопрос владельца «насколько модель умнеет и как это влияет на
+    результат». Три ряда считаются РАЗНЫМИ источниками и путать их
+    нельзя: IC — по `ic_history.jsonl` (всё сечение, не шесть
+    выбранных имён), деньги — тем же `closed_rows`, что у лиги,
+    размер выборки — по журналу обучений цикла.
+
+    Проверяются числами: день берётся из ЧАСА сечения, а не из
+    времени записи (запись идёт позже закрытия форварда, и на границе
+    суток час уехал бы в чужой день); медиана по дню, а не среднее;
+    день без журнала обучений даёт ПРОПУСК, а не ноль; связи считает
+    сервер.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        mdir = os.path.join(d, "s8_loop", "out", "model")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"version": 2, "horizon_h": 4}, f)
+        # Подменяя HERE, уводим и путь до ядра расчёта: настоящий
+        # каталог кладём в sys.path заранее.
+        sys.path.insert(0, os.path.join(os.path.dirname(was),
+                                        "s8_loop"))
+        # Запись СДЕЛАНА в следующие сутки — день обязан взяться из
+        # часа сечения (23:00 первого дня), а не из «at».
+        ic = [{"arm": "gbm", "target": "fwd_4h", "kind": "section",
+               "hour": "2026-08-08-23", "median_ic": 0.10,
+               "at": "2026-08-09 00:40"},
+              {"arm": "nn", "target": "fwd_4h", "kind": "section",
+               "hour": "2026-08-08-22", "median_ic": 0.30,
+               "at": "2026-08-09 00:40"},
+              {"arm": "gbm", "target": "fwd_4h", "kind": "section",
+               "hour": "2026-08-08-21", "median_ic": -0.50,
+               "at": "2026-08-09 00:40"},
+              {"arm": "gbm", "target": "fwd_24h", "kind": "section",
+               "hour": "2026-08-09-05", "median_ic": 0.04,
+               "at": "2026-08-10 06:10"},
+              # Запись другого вида в свод сечений не входит вовсе.
+              {"arm": "gbm", "target": "fwd_4h", "kind": "window",
+               "hour": "2026-08-09-05", "median_ic": 0.99,
+               "at": "2026-08-10 06:10"}]
+        with open(os.path.join(mdir, "ic_history.jsonl"), "w",
+                  encoding="utf-8") as f:
+            for r in ic:
+                f.write(json.dumps(r) + "\n")
+        # Журнал обучений — только у второго дня: у первого его ещё
+        # не было, и «размер знания» обязан остаться пропуском.
+        with open(os.path.join(mdir, "train_log.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({"seq": 40, "hour": "2026-08-09-05",
+                                "sections": 120,
+                                "canary_ic": 0.008}) + "\n")
+            f.write(json.dumps({"seq": 41, "hour": "2026-08-09-06",
+                                "sections": 121,
+                                "canary_ic": 0.011}) + "\n")
+
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        lr = col.learning()
+        days = {r["day"]: r for r in lr["days"]}
+        check("день взят из часа сечения, а не из времени записи",
+              "2026-08-08" in days and days["2026-08-08"]["sections_4h"] == 3,
+              str(sorted(days)))
+        # Медиана трёх значений (−0.50, 0.10, 0.30) — 0.10, а не
+        # среднее (−0.033): один час гуляет на десятые.
+        check("навык дня — медиана сечений, а не среднее",
+              days["2026-08-08"]["ic_4h"] == 0.1,
+              str(days["2026-08-08"]["ic_4h"]))
+        check("запись не по сечению в свод не входит",
+              days["2026-08-09"]["ic_4h"] is None
+              and days["2026-08-09"]["ic_24h"] == 0.04,
+              str(days["2026-08-09"]))
+        check("день без журнала обучений — пропуск, а не ноль",
+              days["2026-08-08"]["sections"] is None
+              and days["2026-08-08"]["canary_ic"] is None,
+              str(days["2026-08-08"]))
+        check("размер выборки — по последней записи дня",
+              days["2026-08-09"]["sections"] == 121
+              and days["2026-08-09"]["trainings"] == 2,
+              str(days["2026-08-09"]))
+        # Связи считает СЕРВЕР: у страницы не должно заводиться второй
+        # реализации статистики. На двух днях их посчитать нельзя —
+        # ответ обязан быть пропуском, а не нулём.
+        check("связь на двух днях не выдумывается",
+              lr["ic_vs_money"] is None and lr["ic_vs_time"] is None,
+              f'{lr["ic_vs_money"]} {lr["ic_vs_time"]}')
+        # Две соседние перестановки на пяти точках: Σd² = 4, то
+        # есть 1 − 6·4/(5·24) = 0.8. Число выведено, а не вспомнено —
+        # ожидание «на глаз» уже трижды ошибалось в этом проекте.
+        r = col._spearman([1, 2, 3, 4, 5], [2, 1, 4, 3, 5])
+        check("ранговая связь считается верно", r == 0.8, str(r))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_league_counts_a_decision_once():
     """Разбивка ситуаций «одно решение — один голос».
 
@@ -4450,6 +4559,7 @@ def main():
     test_take_limit_fill_and_exit_event()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
+    test_learning_day_by_day()
     test_league_counts_a_decision_once()
     test_league_ranks_by_realised_money()
     test_model_tree_names_every_book()

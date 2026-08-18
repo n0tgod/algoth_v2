@@ -2828,6 +2828,24 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
          f"{man['woke_after_hour_sec']:.0f} с после закрытия часа, "
          f"цикл {man['cycle_sec']:.0f} с ("
          + ", ".join(f"{k} {v:.0f} с" for k, v in steps.items()) + ")")
+    # Строка на обучение: чем модель РАСПОЛАГАЛА в этот раз. Манифест
+    # хранит только текущее состояние и переписывается каждый час, то
+    # есть ряд «сколько сечений видело обучение» не восстановим ничем
+    # — задним числом его взять неоткуда, а без него на вопрос «умнеет
+    # ли модель» отвечать нечем, кроме самого IC. Одна строка в час.
+    try:
+        with open(os.path.join(MODEL_DIR, "train_log.jsonl"), "a",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(
+                {"seq": train_seq, "hour": grid[-1], "at": at,
+                 "sections": n_sections, "symbols": len(syms),
+                 "canary_ic": man["canary_ic"],
+                 "canary_target": cname,
+                 "hedge": man["hedge"],
+                 "cycle_sec": man["cycle_sec"]},
+                ensure_ascii=False) + "\n")
+    except OSError as e:
+        log_(f"журнал обучений не дописан: {e}")
 
     lines = all_lines
     with open(os.path.join(MODEL_DIR, "thoughts.jsonl"), "a",

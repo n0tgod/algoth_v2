@@ -98,6 +98,7 @@ const NAV_ITEMS = [
   ["/trades-page", "trades", "сделки"],
   ["/league-page", "league", "лига"],
   ["/vol-page", "volatility", "волатильность"],
+  ["/learning-page", "learning", "обучение"],
   ["/glossary-page", "playbook", "справочник"],
   ["/tree-page", "models", "модели"],
   ["/tournament-page", "tournament", "турнир"],
@@ -5305,6 +5306,168 @@ load();
 # намеренно НЕ является картинкой волатильности: главное на ней —
 # разбивка наших же закрытых сделок по режиму часа входа, а кривая
 # стоит рядом контекстом. Все агрегаты приходят с сервера готовыми.
+LEARNPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>learning — is the model getting smarter, and does it pay</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+.thin{color:var(--muted)}
+a{color:var(--accent)}
+.scroll{overflow-x:auto}
+.big{font-size:19px;font-weight:700}
+""" + NAVCSS + r"""
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">learning — is the model getting smarter, and does
+    it pay</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + PCTJS + r"""
+navMount("/learning-page");
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function num(v, dg){ return v == null ? "&mdash;"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(dg == null ? 3 : dg); }
+
+// Рамка предмета — первым абзацем, как на листе турнира: без неё
+// «модель умнеет» читается из любой зелёной строки.
+function intro(d){
+  const n = (d.days || []).length;
+  return `<div class="cap">what this page can and cannot show</div>
+  <div>Three rows that must not be confused. <b>Skill</b> is the live
+  IC — the rank agreement between the forecast and what happened,
+  over the WHOLE section, not over the six names the book picked.
+  <b>Money</b> is the closed trades of the same day. <b>Knowledge</b>
+  is how many sections the training had and what the canary read.</div>
+  <div class="k" style="margin-top:6px">Hourly retraining cannot make
+  the model measurably smarter, and that was measured before it was
+  built: a fresh hour is 1/40000 of the sample, and M2 found daily
+  against monthly retraining worth +0.000…+0.004 IC. So the trend of
+  IC is read as «is it degrading», not as «is it learning»; growth,
+  if it comes, comes from the sample getting longer and from rules
+  changing — and it shows up in the link between skill and money, not
+  in the training number. ${n} days of record so far: at this length
+  a rank correlation is a hint, not a finding.</div>`;
+}
+function headline(d){
+  const m = d.ic_vs_money, t = d.ic_vs_time;
+  const say = (v, n, good, bad) => v == null
+    ? `<span class="dim">not enough days</span>`
+    : `<span class="${v > 0 ? "good" : "bad"}">${num(v)}</span>
+       <span class="k">over ${n} days — ${v > 0 ? good : bad}</span>`;
+  return `<div class="panel"><div class="cap">the two questions</div>
+    <table><tr><td>does a smarter day earn more?</td>
+      <td class="mono big">${say(m, d.ic_vs_money_n,
+        "days when the forecasts ranked the outcomes better are the "
+        + "days the books earned more", "the link points the wrong "
+        + "way: better-ranked days earned less")}</td></tr>
+    <tr><td>is skill drifting with time?</td>
+      <td class="mono big">${say(t, d.ic_vs_time_n,
+        "IC is drifting up over the record",
+        "IC is drifting down — worth watching, not yet a verdict")}</td>
+    </tr></table>
+    <div class="k" style="margin-top:6px">Both are rank correlations
+    over DAYS, not over trades: hours inside a day share the same
+    market and the same weights, so counting them as observations
+    would inflate the certainty. A day with no closed trades or no
+    scored section is left out entirely — a gap is not a zero.</div>
+    </div>`;
+}
+function table(d){
+  const rows = (d.days || []);
+  if (!rows.length)
+    return `<div class="panel"><div class="dim">no scored sections
+      yet — the model writes one per hour per target, and the first
+      appear once the forward closes</div></div>`;
+  return `<div class="panel"><div class="cap">day by day</div>
+   <div class="scroll"><table><tr><th>day</th><th>IC 4 h</th>
+   <th>sections</th><th>IC 24 h</th><th>sections</th>
+   <th>trades</th><th>$</th><th>trainings</th><th>sample</th>
+   <th>canary</th></tr>` + rows.map(r => `<tr>
+     <td class="mono">${esc(r.day)}</td>
+     <td class="mono ${r.ic_4h == null ? "dim"
+        : (r.ic_4h > 0 ? "good" : "bad")}">${num(r.ic_4h)}</td>
+     <td class="mono ${r.sections_4h < 5 ? "thin" : ""}">${
+        r.sections_4h || "&mdash;"}</td>
+     <td class="mono ${r.ic_24h == null ? "dim"
+        : (r.ic_24h > 0 ? "good" : "bad")}">${num(r.ic_24h)}</td>
+     <td class="mono ${r.sections_24h < 5 ? "thin" : ""}">${
+        r.sections_24h || "&mdash;"}</td>
+     <td class="mono">${r.trades || "&mdash;"}</td>
+     <td class="mono ${r.pnl > 0 ? "good" : "bad"}">${num(r.pnl, 2)}</td>
+     <td class="mono">${r.trainings || "&mdash;"}</td>
+     <td class="mono">${r.sections == null ? "&mdash;" : r.sections}</td>
+     <td class="mono">${num(r.canary_ic)}</td></tr>`).join("")
+   + `</table></div><div class="k">A day whose section count is small
+   is greyed: one section is a rank correlation over four hundred
+   names in one hour, and it swings by tenths. «Sample» is how many
+   sections the last training of that day had — the row that says
+   whether the model knows more than it did; it is empty for days
+   recorded before the training log existed, and that is a gap, not
+   a zero.</div></div>`;
+}
+async function load(){
+  try {
+    const r = await fetch("/learning?k=" + encodeURIComponent(KEY));
+    const d = await r.json();
+    document.getElementById("intro").innerHTML = intro(d);
+    document.getElementById("box").innerHTML =
+      headline(d) + table(d)
+      + ((d.errors || []).length
+         ? `<div class="panel"><div class="cap">books that did not
+            build</div><div class="dim">${(d.errors || [])
+            .map(esc).join("<br>")}</div><div class="k">their trades
+            are missing from the money column — the numbers here are
+            NOT the whole story</div></div>` : "");
+    document.getElementById("lead").textContent =
+      (d.days || []).length + " days";
+  } catch (e) {
+    document.getElementById("box").innerHTML =
+      `<div class="panel"><div class="dim">no answer from the
+       collector — the page shows nothing rather than guessing</div>
+       </div>`;
+  }
+}
+load();
+setInterval(load, 60000);
+</script>
+"""
+
 VOLPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>volatility — does the market regime move our results</title>
@@ -7152,6 +7315,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/vol-page":
                 return self._ok(VOLPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/learning":
+                return self._ok(json.dumps(
+                    collector.learning(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/learning-page":
+                return self._ok(LEARNPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/model_tree":
                 return self._ok(json.dumps(

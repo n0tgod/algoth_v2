@@ -26,6 +26,8 @@ const isInfo = /id="whybox"/.test(src);
 const isLeague = /league — what works best/.test(src);
 const isGloss = /playbook — what the model can read/.test(src);
 const isVol = /does the market regime move our results/.test(src);
+const isLearn = /is the model getting smarter, and does it pay/
+  .test(src);
 const isTree = /model tree — which logic each branch tests/.test(src);
 const isTour = /tournament — all 72 branches/.test(src);
 const isTrades = /id="tb"/.test(src);
@@ -194,6 +196,26 @@ global.fetch = async (url) => {
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
+             : url.startsWith("/learning")
+             ? {present: true, ic_vs_money: 0.673, ic_vs_money_n: 11,
+                ic_vs_time: -0.118, ic_vs_time_n: 11, errors: [],
+                days: [
+                  // День до появления журнала обучений: «размер
+                  // знания» пуст, и это ПРОПУСК, а не ноль.
+                  {day: "2026-08-08", ic_4h: 0.031, sections_4h: 12,
+                   ic_24h: 0.052, sections_24h: 9, trades: 162,
+                   pnl: 310.7, trainings: 10, train_seq: 10,
+                   sections: null, canary_ic: null},
+                  // Тонкий день: сечений мало, строка обязана быть
+                  // приглушена — одно сечение гуляет на десятые.
+                  {day: "2026-08-09", ic_4h: -0.024, sections_4h: 2,
+                   ic_24h: 0.011, sections_24h: 1, trades: 274,
+                   pnl: -125.4, trainings: 24, train_seq: 34,
+                   sections: 120, canary_ic: 0.008},
+                  {day: "2026-08-10", ic_4h: 0.047, sections_4h: 21,
+                   ic_24h: 0.038, sections_24h: 18, trades: 266,
+                   pnl: 96.8, trainings: 24, train_seq: 58,
+                   sections: 373, canary_ic: 0.01}]}
              : url.startsWith("/volatility") && /voldown=1/.test(SEARCH)
              ? (() => { throw new Error("сборщик молчит"); })()
              : url.startsWith("/volatility")
@@ -959,14 +981,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1151,7 +1173,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -1626,6 +1648,42 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                + ` (обёрток ${nScroll} из 7)`);
   }
 
+  // Обучение: умнеет ли модель и переходит ли это в деньги.
+  if (isLearn) {
+    if (!seen.some(u => u.startsWith("/learning")))
+      bad.push("обучение: данные не запрошены");
+    const bx = global.__el
+      ? String(global.__el("box").innerHTML || "")
+        + String(global.__el("intro").innerHTML || "") : "";
+    const bf = String(bx).replace(/\s+/g, " ");
+    // Две связи — числами ответа и с честным чтением: +0.673 это
+    // «умный день зарабатывает больше», −0.118 это «навык не растёт».
+    if (!/\+0\.673/.test(bf) || !/-0\.118/.test(bf))
+      bad.push("обучение: связи не числами ответа");
+    if (!/over 11 days/.test(bf))
+      bad.push("обучение: не сказано, на скольких днях считано");
+    // Рамка предмета: часовое переобучение не может сделать модель
+    // заметно умнее, и это ИЗМЕРЕНО (M2), а не мнение. Без этой
+    // строки любая зелёная клетка читается как «модель учится».
+    if (!/1\/40000 of the sample/.test(bf))
+      bad.push("обучение: не сказано, почему час обучения ничего не даёт");
+    if (!/WHOLE section/.test(bf))
+      bad.push("обучение: не сказано, что IC по всему сечению");
+    // Таблица: дни, IC обеих целей, деньги, размер выборки.
+    if (!/2026-08-10/.test(bf) || !/373/.test(bf))
+      bad.push("обучение: таблица дней не показана");
+    // Пропуск обязан быть прочерком, а не нулём: у первого дня
+    // журнала обучений ещё не было.
+    if (/>0<\/td>/.test(bx))
+      bad.push("обучение: пропуск показан нулём");
+    if (!/gap, not a zero/.test(bf))
+      bad.push("обучение: не сказано, что пустая клетка — пропуск");
+    // Тонкий день приглушён числом: одно сечение — не измерение.
+    const thin = (bx.match(/class="mono thin"/g) || []).length;
+    if (thin !== 2)
+      bad.push(`обучение: тонкие дни не помечены (${thin} из 2)`);
+  }
+
   // Дерево моделей — родовое дерево: по умолчанию узел несёт ТОЛЬКО
   // имя и главную статистику, проза открывается кнопкой «i» (просьба
   // владельца). Проверяется числами и в обе стороны: статистика видна
@@ -1969,8 +2027,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 8)
-      bad.push(`меню: пунктов ${links}, а страниц восемь`);
+    if (links !== 9)
+      bad.push(`меню: пунктов ${links}, а страниц девять`);
+    if (!/href="\/learning-page\?k=xxx"/.test(nh))
+      bad.push("меню: нет страницы обучения");
     if (!/href="\/league-page\?k=xxx"/.test(nh)
         || !/href="\/glossary-page\?k=xxx"/.test(nh)
         || !/href="\/tree-page\?k=xxx"/.test(nh)
@@ -2366,7 +2426,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -2666,7 +2726,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour) {
+             || isTree || isTour || isLearn) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {
