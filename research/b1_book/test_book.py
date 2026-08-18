@@ -3015,6 +3015,83 @@ def test_pending_live_exit_is_shown_before_the_review():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_league_counts_a_decision_once():
+    """Разбивка ситуаций «одно решение — один голос».
+
+    Вопрос владельца: входят ли в статистику одинаковые сделки разных
+    книг. Входят: четыре торгуемые книги ранжируют одно сечение
+    одними весами, и обе руки берут его же — на живых данных 5098
+    строк лиги стоят на 3770 решениях, а 78 % денег сидит на
+    повторяющихся.
+
+    Фикстура делает ровно этот случай числами: ОДНО решение (AUSDT
+    лонг, один час) взято тремя книгами с разными исходами, и рядом
+    второе решение, взятое единожды. Проверяется, что в разделе по
+    решениям первое считается один раз, деньги ему идут СРЕДНИМ по
+    копиям, а ярлык — большинством голосов.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        s8 = os.path.join(d, "s8_loop", "out")
+        now = time.time()
+        hour = time.strftime("%Y-%m-%d-%H", time.gmtime(now - 7200))
+        rows = [
+            # три копии ОДНОГО решения: ярлыки 2:1, исходы разные
+            {"hz": "h4", "arm": "gbm", "hour": hour, "sym": "AUSDT",
+             "side": "long", "at": now - 100, "pnl": 9.0,
+             "net_bp": 90.0, "setup": "book"},
+            {"hz": "h24", "arm": "gbm", "hour": hour, "sym": "AUSDT",
+             "side": "long", "at": now - 100, "pnl": 3.0,
+             "net_bp": 30.0, "setup": "book"},
+            {"hz": "z", "arm": "nn", "hour": hour, "sym": "AUSDT",
+             "side": "long", "at": now - 100, "pnl": -3.0,
+             "net_bp": -30.0, "setup": "oi"},
+            # решение, взятое единожды
+            {"hz": "sit", "arm": "nn", "hour": hour, "sym": "BUSDT",
+             "side": "short", "at": now - 100, "pnl": 2.0,
+             "net_bp": 20.0, "setup": "oi"},
+        ]
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        lg = col._league_from(rows, [], [], now)
+        p = lg["periods"]["30d"]
+        check("решений меньше, чем строк",
+              p["n"] == 4 and p["decisions"] == 2,
+              f'{p["n"]} строк, {p.get("decisions")} решений')
+        every = {g["key"]: g for g in p["groups"]["setup"]}
+        once = {g["key"]: g for g in p["groups"]["setup_once"]}
+        check("как считалось: три строки у book, деньги суммой",
+              every["book"]["n"] == 2 and every["book"]["pnl"] == 12.0
+              and every["oi"]["n"] == 2 and every["oi"]["pnl"] == -1.0,
+              str(every))
+        # Решение AUSDT: ярлык большинства — book, деньги — среднее
+        # трёх копий (9 + 3 − 3) / 3 = 3.0. Решение BUSDT: oi, +2.
+        check("по решениям: одно решение — одна строка",
+              once["book"]["n"] == 1 and once["oi"]["n"] == 1,
+              str(once))
+        check("деньги решения — среднее копий, а не сумма",
+              once["book"]["pnl"] == 3.0 and once["oi"]["pnl"] == 2.0,
+              str([once["book"]["pnl"], once["oi"]["pnl"]]))
+        check("ярлык решения — большинство копий",
+              once["book"]["key"] == "book", str(list(once)))
+        # Ничья ярлыков решается ИМЕНЕМ семейства: иначе результат
+        # зависел бы от порядка чтения книг и гулял между прогонами.
+        tie = [dict(r) for r in rows[:2]]
+        tie[1]["setup"] = "oi"
+        lg2 = col._league_from(tie, [], [], now)
+        keys = [g["key"] for g in lg2["periods"]["30d"]
+                ["groups"]["setup_once"]]
+        check("ничья ярлыков решается устойчиво, а не порядком чтения",
+              keys == ["book"], str(keys))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_league_ranks_by_realised_money():
     """Лига: агрегаты по рукам/книгам/ситуациям и топ по деньгам.
 
@@ -4373,6 +4450,7 @@ def main():
     test_take_limit_fill_and_exit_event()
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
+    test_league_counts_a_decision_once()
     test_league_ranks_by_realised_money()
     test_model_tree_names_every_book()
     test_tournament_page_reads_artifact()

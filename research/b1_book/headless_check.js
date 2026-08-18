@@ -380,7 +380,7 @@ global.fetch = async (url) => {
                 periods: {
                  today: {n: 0, groups: {}, best: [], worst: [],
                          setup_known: 0},
-                 "30d": {n: 3, setup_known: 2, groups: {
+                 "30d": {n: 3, setup_known: 2, decisions: 1, groups: {
                      arm: [{key: "nn", n: 2, win: 0.5, pnl: 4.1,
                             net_bp_avg: 12.0, top_sym: "TUTUSDT",
                             top_pnl: 9.0, pnl_wo_top: -4.9, syms: 2},
@@ -392,8 +392,18 @@ global.fetch = async (url) => {
                              net_bp_avg: 12.0},
                             {key: "h24", n: 1, win: 0, pnl: -3.0,
                              net_bp_avg: -51.0}],
-                     setup: [{key: "liq", n: 1, win: 1, pnl: 8.0,
-                              net_bp_avg: 49.0}],
+                     setup: [{key: "liq", n: 3, win: 1, pnl: 8.0,
+                              net_bp_avg: 49.0, top_sym: "AAAUSDT",
+                              top_pnl: 6.0, pnl_wo_top: 2.0,
+                              syms: 2}],
+                     // Тот же разрез по РЕШЕНИЯМ: строк втрое
+                     // меньше, деньги средним по копиям. Числа
+                     // нарочно различаются — иначе перепутанные
+                     // местами разделы выглядели бы исправными.
+                     setup_once: [{key: "liq", n: 1, win: 1,
+                                   pnl: 2.67, net_bp_avg: 16.3,
+                                   top_sym: "AAAUSDT", top_pnl: 2.0,
+                                   pnl_wo_top: 0.67, syms: 2}],
                      side: [{key: "long", n: 3, win: 0.33, pnl: 1.1,
                              net_bp_avg: -5.0}]},
                    best: [{hz: "sit", arm: "nn", hour: "2026-08-03-14",
@@ -1587,10 +1597,33 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     } else if (/has no closed trades yet/.test(bx)) {
       bad.push("лига: полная пара названа пустой");
     }
+    // Два раздела ситуаций (решение владельца): сперва «одно
+    // решение — один голос», затем «как считалось». Проверяются ОБА
+    // и их порядок: четыре книги ранжируют одно сечение, и без
+    // первого раздела «2610 сделок» читается как 2610 наблюдений,
+    // тогда как решений там 1991.
+    // Читаем ТЕКСТ, а не разметку: подписи разделов сверстаны
+    // многострочными шаблонами, и regex по сырому innerHTML спотыкался
+    // о перенос строки — проверка падала на исправной странице.
+    const bf = String(bx).replace(/\s+/g, " ");
+    const iOnce = bx.indexOf("one decision, one vote");
+    const iEvery = bx.indexOf("every trade counted");
+    if (iOnce < 0 || iEvery < 0)
+      bad.push("лига: разделов ситуаций не два");
+    else if (iOnce > iEvery)
+      bad.push("лига: раздел по решениям стоит не первым");
+    // Числа разделов обязаны РАЗЛИЧАТЬСЯ — иначе перепутанные
+    // местами таблицы выглядели бы исправными.
+    if (!/\+2\.67/.test(bx))
+      bad.push("лига: деньги по решениям не средним по копиям");
+    if (!/1<\/b> decisions behind <b>3<\/b> trades/.test(bf))
+      bad.push("лига: не сказано, сколько решений стоит за строками");
+    if (!/its own capital and its own position/.test(bf))
+      bad.push("лига: не сказано, почему второй раздел не двойной счёт");
     const nScroll = (bx.match(/class="scroll"/g) || []).length;
-    if (nScroll < 6)
+    if (nScroll < 7)
       bad.push("лига: таблицы групп не в прокрутке, колонки срезаются"
-               + ` (обёрток ${nScroll} из 6)`);
+               + ` (обёрток ${nScroll} из 7)`);
   }
 
   // Дерево моделей — родовое дерево: по умолчанию узел несёт ТОЛЬКО

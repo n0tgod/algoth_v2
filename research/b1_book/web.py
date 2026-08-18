@@ -6789,10 +6789,36 @@ function pairPanel(){
       </div>`;
   }).join("");
 }
-function groupTable(cap, rows, names){
+// Две разбивки по ситуациям различаются ЕДИНИЦЕЙ СЧЁТА, и без
+// объяснения они выглядели бы как две противоречивые таблицы. Вопрос
+// владельца, из которого раздел и вырос: входят ли в статистику
+// одинаковые сделки разных книг.
+function ONCE_NOTE(p){
+  const n = p.n || 0, d = p.decisions || 0;
+  return `A decision is one name, one hour, one side. Four traded
+    books rank the SAME section with the same weights — they differ in
+    horizon and rules — and both arms take it too, so one decision
+    enters the table up to seven times. Here it votes once:
+    <b>${d}</b> decisions behind <b>${n}</b> trades. Its money is the
+    MEAN of its copies — the sum is the table below, and picking the
+    best copy would be choosing the outcome afterwards. The label is
+    what most copies read; copies disagree about half the time,
+    because each book predicts its own horizon.`;
+}
+function EVERY_NOTE(p){
+  const n = p.n || 0, d = p.decisions || 0;
+  return `The same breakdown counted as the books traded it: every
+    position is its own row, because every book has its own capital
+    and its own position on the exchange. The money here is real —
+    what is not real is the count of observations: <b>${n}</b> rows
+    stand on <b>${d}</b> decisions, and a name that several books
+    picked at the same hour speaks here with several voices.`;
+}
+function groupTable(cap, rows, names, note){
   if (!rows || !rows.length)
     return `<div class="panel"><div class="cap">${cap}</div>
-      <div class="dim">nothing closed in this period</div></div>`;
+      <div class="dim">nothing closed in this period</div>${
+        note ? `<div class="k">${note}</div>` : ""}</div>`;
   // Лидер — просто верхняя строка сортировки по деньгам. При малом
   // числе сделок это шум, и число стоит в той же строке нарочно.
   // Таблица завёрнута в прокрутку, как таблицы топа: панель узкая, и
@@ -6825,7 +6851,7 @@ function groupTable(cap, rows, names){
        best-earning name of each group. A group whose money survives
        only with that one name is a pump, not a behaviour: a thousand
        trades look like statistics, and one name can still be all of
-       it.</div></div>`;
+       it.</div>${note ? `<div class="k">${note}</div>` : ""}</div>`;
 }
 function tradeRows(list){
   return list.map(t => {
@@ -6886,7 +6912,10 @@ function render(){
     ${groupTable("models (arms)", g.arm, ARM_EN)}
     ${groupTable("books (horizon \u00b7 ordering)", g.book, BOOK_EN)}
     ${pairPanel()}
-    ${groupTable("situations (dominant family)", g.setup, FAM_EN)}
+    ${groupTable("situations \u00b7 one decision, one vote",
+                 g.setup_once, FAM_EN, ONCE_NOTE(p))}
+    ${groupTable("situations \u00b7 every trade counted",
+                 g.setup, FAM_EN, EVERY_NOTE(p))}
     ${groupTable("sides", g.side, {long:"long", short:"short"})}
     </div>
     <div class="panel"><div class="cap">top trades — ${
