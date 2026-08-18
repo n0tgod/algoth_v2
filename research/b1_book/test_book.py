@@ -488,6 +488,108 @@ def test_pages_run_headless():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_overview_and_trades_page_agree():
+    """Обзор и страница сделок считают книгу ОДНИМ кодом.
+
+    Найдено владельцем по вопросу «почему paper pnl = 0»: обзор строил
+    книгу по ПОСЛЕДНИМ 200 строкам `picks.jsonl` и `review.jsonl`, а
+    страница — по файлам целиком. Окна двух файлов покрывают разные
+    периоды: часть позиций теряла свой разбор и висела незакрытой,
+    касса их денег не возвращала, свежие входы получали размер 0 — и
+    весь бумажный PnL ситуационной книги выходил ровно нулём (на
+    странице в тот же момент +94.84 $). У книги 24 ч обзор показывал
+    765 закрытых и +285 $ против 2170 и +717 $.
+
+    Фикстура нарочно ДЛИННЕЕ прежнего окна: 260 часов на две руки —
+    520 строк выборов и столько же разборов. При урезании до 200 обе
+    дороги обязаны разойтись, при общем коде — совпасть.
+    """
+    import json as _json
+    import shutil
+    import tempfile
+    from datetime import datetime, timezone
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    was_here = C.HERE
+    # Подменяя HERE, мы уводим и путь до ядра расчёта — настоящий
+    # каталог кладём в sys.path заранее, иначе `import trades` внутри
+    # обеих дорог упадёт на пустом временном корне.
+    sys.path.insert(0, os.path.join(os.path.dirname(was_here), "s8_loop"))
+    try:
+        C.HERE = os.path.join(root, "b1_book")
+        mdir = os.path.join(root, "s8_loop", "out", "model")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            _json.dump({"version": 2, "horizon_h": 4}, f)
+        base = 1786000000
+        pk, rv = [], []
+        for i in range(260):
+            hour = datetime.fromtimestamp(
+                base + i * 3600, timezone.utc).strftime("%Y-%m-%d-%H")
+            for arm in ("gbm", "nn"):
+                pk.append({"arm": arm, "hour": hour,
+                           "at_ts": base + i * 3600 + 3900,
+                           "long": [{"sym": "AAAUSDT", "fwd": 60.0,
+                                     "mae": -30.0, "mfe": 90.0,
+                                     "px": 100.0,
+                                     "cum": {"mid": 100.0,
+                                             "b": [[99.9, 10.0]]}}],
+                           "short": [{"sym": "BBBUSDT", "fwd": -60.0,
+                                      "mae": 30.0, "mfe": -90.0,
+                                      "px": 50.0,
+                                      "cum": {"mid": 50.0,
+                                              "b": [[49.9, 10.0]]}}]})
+                rv.append({"arm": arm, "hour": hour, "cost_bp": 11.0,
+                           "at_ts": base + (i + 4) * 3600 + 60,
+                           "rows": [{"sym": "AAAUSDT", "side": "long",
+                                     "expected": 60.0, "got": 40.0,
+                                     "net": 29.0},
+                                    {"sym": "BBBUSDT", "side": "short",
+                                     "expected": -60.0, "got": -40.0,
+                                     "net": 29.0}]})
+        for name, rows in (("picks.jsonl", pk), ("review.jsonl", rv)):
+            with open(os.path.join(mdir, name), "w",
+                      encoding="utf-8") as f:
+                for r in rows:
+                    f.write(_json.dumps(r, ensure_ascii=False) + "\n")
+
+        c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        ov = c._model_dir_state(mdir)
+        pg = c.model_trades(per=500)
+        a = (ov.get("trade_stats") or {}).get("all") or {}
+        b = (pg.get("stats") or {}).get("all") or {}
+        check("обзор построил книгу по ВСЕЙ истории",
+              a.get("closed") == 1040, str(a.get("closed")))
+        check("закрытых сделок поровну на обеих дорогах",
+              a.get("closed") == b.get("closed"),
+              f'{a.get("closed")} против {b.get("closed")}')
+        check("деньги книги совпадают на обеих дорогах",
+              a.get("pnl") == b.get("pnl") and (a.get("pnl") or 0) > 0,
+              f'{a.get("pnl")} против {b.get("pnl")}')
+        check("сделок всего поровну",
+              ov.get("trades_total") == pg.get("grand_total"),
+              f'{ov.get("trades_total")} против {pg.get("grand_total")}')
+        # Хвост для показа: последний выбор каждой руки и БЕЗ лесенок.
+        # Именно они делали ответ обзора в 17.5 МБ.
+        pks = ov.get("picks") or []
+        check("в обзор едет по одному выбору на руку",
+              len(pks) == 2, str(len(pks)))
+        legs = [p for x in pks for side in ("long", "short")
+                for p in (x.get(side) or [])]
+        check("лесенки стакана из ответа обзора убраны",
+              legs and not any("cum" in p for p in legs),
+              str(legs[:1]))
+        last_hour = max(x["hour"] for x in pk)
+        check("в обзор едет ПОСЛЕДНИЙ выбор каждой руки",
+              all(x.get("hour") == last_hour for x in pks),
+              str([x.get("hour") for x in pks]))
+    finally:
+        C.HERE = was_here
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_model_trades_lite_matches_full():
     """Лёгкий ответ /model_trades несёт те же строки, что полный.
 
@@ -4227,6 +4329,7 @@ def main():
     test_pages_do_not_shadow_platform_globals()
     test_pages_run_headless()
     test_trades_table_columns_line_up()
+    test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()
     test_sit_absorb_now_makes_pnl_immediate()
     test_trade_by_id_finds_across_books()

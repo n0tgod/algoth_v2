@@ -1610,6 +1610,108 @@ class Collector:
             t["closes_in_sec"] = None
         return tr
 
+    def _book_view(self, mdir, mman, rr_min=None, lite=False):
+        """Сделки, деньги и сводки книги — ОДНИМ кодом на обе дороги.
+
+        Обзор и страница сделок читали одну книгу двумя разными
+        кусками кода, и куски разошлись ровно так, как расходятся все
+        вторые копии в этом проекте. Обзор строил книгу по ПОСЛЕДНИМ
+        200 строкам `picks.jsonl` и `review.jsonl`, а страница — по
+        файлам целиком; окна двух файлов покрывают разные периоды, и
+        у ситуационной книги это давало 141 позицию «вышла, ждёт
+        разбора» при том, что их разбор давно записан на диск. Касса
+        деньги таких позиций не возвращает (они не «закрыта»), свежие
+        входы получали размер 0, и **весь бумажный PnL книги выходил
+        ровно нулём** — найдено владельцем.
+
+        Числа расходились у ВСЕХ книг, где файл длиннее окна: у 24 ч
+        обзор показывал 765 закрытых и +285 $ против 2170 и +717 $ у
+        страницы. Урезание при этом ничего не экономило — ответ
+        `/model` весил 17.5 МБ и строился 8.5 с, потому что в него
+        уезжали те же 200 строк с лесенками стакана.
+
+        Счёт — величина от ВСЕЙ истории: касса занимает и возвращает
+        деньги последовательно с первого дня, и книга, начатая с
+        середины, считает другие размеры позиций. Поэтому окна здесь
+        нет вовсе, а урезается только то, что отдаётся странице.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
+        import trades as TR
+        sit = bool(mman.get("situational"))
+        hold = None if sit else int(mman.get("horizon_h") or TR.HOLD_H)
+        path_h = int(mman.get("max_age_h") or 24) if sit else hold
+        picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
+        revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
+        tr = TR.build(picks, revs, hold_h=hold,
+                      px_at=self.entry_px(picks),
+                      books=TR.load_books(
+                          os.path.join(mdir, "books.jsonl")))
+        # Живые события — ДО переоценки: строка, наложенная после
+        # `TR.mark`, оставалась без отметки. Разборы передаются
+        # ЦЕЛИКОМ: наложение по ним и решает, какие выходы уже
+        # записаны, и урезанный список воскрешал закрытые позиции.
+        if sit:
+            self.live_overlay(mdir, tr, revs)
+        TR.mark(tr, self.marks(tr))
+        tr, rr_cut, rr_unknown = TR.by_rr(tr, rr_min if sit else None)
+        cap = {}
+        for a in ("gbm", "nn"):
+            cap[a] = TR.account(tr, a, hold_h=hold or TR.HOLD_H,
+                                slots=mman.get("slots"),
+                                sizing=mman.get("sizing"))[1]
+        out = {"trades": tr, "cap": cap, "hold": hold, "path_h": path_h,
+               "sit": sit, "rr_min": rr_min or 0, "rr_cut": rr_cut,
+               "rr_unknown": rr_unknown, "picks": picks, "review": revs}
+        if lite:
+            return out
+        hrows = self.paths(tr, hold_h=path_h)
+        TR.dd_money(tr)
+        stats = {a: TR.summary(tr, a, capital=cap[a],
+                               start=TR.START_BALANCE)
+                 for a in ("gbm", "nn")}
+        both = sum(v for v in cap.values() if v) or None
+        stats["all"] = TR.summary(tr, capital=both,
+                                  start=2 * TR.START_BALANCE)
+        curves = {a: TR.equity(tr, a, hrows, hold_h=path_h)
+                  for a in ("gbm", "nn")}
+        for a in ("gbm", "nn"):
+            stats[a]["dd_book"] = TR.max_dd(curves[a])
+            stats[a]["dd_open_book"] = TR.worst_open(curves[a])
+        both_c = TR.merge(curves.values())
+        stats["all"]["dd_book"] = TR.max_dd(both_c)
+        stats["all"]["dd_open_book"] = TR.worst_open(
+            both_c, deposit=2 * TR.START_BALANCE)
+        out["stats"] = stats
+        out["curves"] = curves
+        out["both_curve"] = both_c
+        return out
+
+    @staticmethod
+    def slim_pick(pk):
+        """Строка выбора без лесенок стакана — то, что читает обзор.
+
+        Странице нужны сторона, имя, прогноз, обещание пути и новизна;
+        лесенка книги в каждой ноге весит на порядок больше и в показе
+        не участвует вовсе. Это она делала ответ `/model` в 17.5 МБ.
+        """
+        if not isinstance(pk, dict):
+            return pk
+        out = {k: v for k, v in pk.items() if k not in ("long", "short")}
+        for side in ("long", "short"):
+            out[side] = [{k: v for k, v in (p or {}).items()
+                          if k != "cum"} for p in (pk.get(side) or [])]
+        return out
+
+    @staticmethod
+    def slim_review(rv):
+        """Строка разбора без лесенок — обзор берёт из неё «last: got»."""
+        if not isinstance(rv, dict):
+            return rv
+        out = {k: v for k, v in rv.items() if k != "rows"}
+        out["rows"] = [{k: v for k, v in (r or {}).items() if k != "cum"}
+                       for r in (rv.get("rows") or [])]
+        return out
+
     def _model_dir_state(self, mdir, rr_min=None):
         out = {"present": False}
         try:
@@ -1635,10 +1737,11 @@ class Collector:
                     out.setdefault("accounts", {})[arm] = json.load(f)
             except (OSError, ValueError):
                 pass
+        # Выборы и разборы здесь НЕ читаются: их читает `_book_view`
+        # целиком, и урезанное окно давало книге чужие числа. Сюда
+        # едет только хвост для показа — и уже без лесенок.
         for name, key, keep in (("thoughts.jsonl", "thoughts", 60),
-                                ("ic_history.jsonl", "ic", 90),
-                                ("picks.jsonl", "picks", 200),
-                                ("review.jsonl", "review", 200)):
+                                ("ic_history.jsonl", "ic", 90)):
             rows = []
             try:
                 with open(os.path.join(mdir, name), encoding="utf-8") as f:
@@ -1657,84 +1760,37 @@ class Collector:
                 out["last_run"] = json.load(f)
         except (OSError, ValueError):
             pass
-        # Сделки собираются ОДНИМ кодом с отчётами (`s8_loop/trades.py`),
-        # а не своим у страницы: выбор и разбор лежат в разных файлах, и
-        # соединять их глазами — то же, что не иметь сделок вовсе.
+        # Сделки, деньги и сводки — ТЕМ ЖЕ кодом, что у страницы
+        # сделок (`_book_view`). Две реализации здесь уже разошлись
+        # однажды: обзор строил книгу по последним 200 строкам файлов
+        # и показывал у ситуационной книги ноль денег при +94.84 $ на
+        # странице. Одна дорога — расхождению неоткуда взяться.
         try:
-            sys.path.insert(0, os.path.join(os.path.dirname(HERE),
-                                            "s8_loop"))
-            import trades as TR
-            # Горизонт книги — из её же манифеста: каталог сам говорит,
-            # на сколько часов живут его позиции. Иначе часовая книга
-            # считалась бы четырёхчасовым сроком — и «открыта» там, где
-            # позиция давно закрыта. У ситуационной книги срока нет —
-            # закрытия приходят разбором, а путь меряется до предела
-            # возраста.
             mman = out.get("manifest") or {}
-            sit = bool(mman.get("situational"))
-            hold = None if sit else int(mman.get("horizon_h")
-                                        or TR.HOLD_H)
-            path_h = int(mman.get("max_age_h") or 24) if sit else hold
-            # Книги, дописанные пересчётом задним числом. Отдельный
-            # файл, потому что историю выборов правит только цикл.
-            tr = TR.build(out.get("picks"), out.get("review"),
-                          hold_h=hold,
-                          px_at=self.entry_px(out.get("picks")),
-                          books=TR.load_books(
-                              os.path.join(mdir, "books.jsonl")))
-            # Живые события сборщика (вход в моменте, выход по
-            # уровню) накладываются на историю ОДНОЙ функцией — её же
-            # зовёт страница сделок, и ДО переоценки: строка,
-            # наложенная после TR.mark, оставалась без отметки.
-            if sit:
-                self.live_overlay(mdir, tr, out.get("review"))
-            TR.mark(tr, self.marks(tr))
-            hrows = self.paths(tr, hold_h=path_h)
-            # Фильтр владельца по обещанному отношению: показ и СЧЁТ
-            # считаются по отобранному подмножеству одним и тем же
-            # ядром. Отфильтрованная кривая — это «что было бы, если
-            # брать только такие сделки», а не деньги книги, и страница
-            # обязана сказать это словами: числа сами по себе выглядят
-            # как результат книги.
-            tr, cut, unknown = TR.by_rr(tr, rr_min)
-            out["rr_min"] = rr_min or 0
-            out["rr_cut"] = cut
-            out["rr_unknown"] = unknown
-            out["trades"] = tr[:300]
-            out["trades_total"] = len(tr)
-            cap, st, curves = {}, {}, {}
-            for a in ("gbm", "nn"):
-                # Капитал берётся из ПЕРЕСЧЁТА, а не из файла счёта.
-                # Файл пишет цикл при разборе, то есть у свежей книги
-                # его ещё нет — и экспозиция оставалась без знаменателя,
-                # превращаясь в голое «500 $». Владелец прочитал это как
-                # «депозит стал 500». Пересчёт есть всегда и совпадает с
-                # тем, что показано в таблице, потому что считается по
-                # тем же сделкам.
-                cap[a] = TR.account(tr, a, hold_h=hold or TR.HOLD_H,
-                                    slots=mman.get("slots"),
-                                    sizing=mman.get("sizing"))[1]
-                TR.dd_money(tr)
-                st[a] = TR.summary(tr, a, capital=cap[a])
-                cur = TR.equity(tr, a, hrows, hold_h=path_h)
-                st[a]["dd_book"] = TR.max_dd(cur)
-                st[a]["dd_open_book"] = TR.worst_open(cur)
-                curves[a] = cur
-            # Общая сводка по книге: на вкладке «обе» владельцу нужен
-            # ИТОГ, а не две колонки, между которыми надо складывать
-            # глазами. Капитал складывается — у каждой руки свой счёт
-            # по тысяче, и делить прибыль двух счетов на один значило
-            # бы завышать доходность вдвое.
-            both_cap = sum(v for v in cap.values() if v) or None
-            st["all"] = TR.summary(tr, capital=both_cap,
-                                   start=2 * TR.START_BALANCE)
-            both_curve = TR.merge(curves.values())
-            st["all"]["dd_book"] = TR.max_dd(both_curve)
-            st["all"]["dd_open_book"] = TR.worst_open(
-                both_curve, deposit=2 * TR.START_BALANCE)
-            out["trade_stats"] = st
+            v = self._book_view(mdir, mman, rr_min=rr_min)
+            out["rr_min"] = v["rr_min"]
+            out["rr_cut"] = v["rr_cut"]
+            out["rr_unknown"] = v["rr_unknown"]
+            out["trades"] = v["trades"][:300]
+            out["trades_total"] = len(v["trades"])
+            out["trade_stats"] = v["stats"]
+            # Странице обзора нужны ПОСЛЕДНИЙ выбор и последний разбор
+            # каждой руки — она сама берёт из списка последний. Всё,
+            # что раньше ехало сверх этого (200 строк с лесенками на
+            # книгу), было чистым весом: 17.5 МБ на опрос.
+            last_p, last_r = {}, {}
+            for pk in v["picks"]:
+                last_p[pk.get("arm") or "gbm"] = pk
+            for rv in v["review"]:
+                last_r[rv.get("arm") or "gbm"] = rv
+            out["picks"] = [self.slim_pick(p)
+                            for _, p in sorted(last_p.items())]
+            out["review"] = [self.slim_review(r)
+                             for _, r in sorted(last_r.items())]
         except Exception as e:                            # noqa: BLE001
             out["trades_error"] = f"{type(e).__name__}: {e}"
+            out.setdefault("picks", [])
+            out.setdefault("review", [])
         return out
 
     def model_trades(self, page=0, per=100, arm=None, state=None,
@@ -1787,25 +1843,17 @@ class Collector:
                 mman = json.load(f)
         except (OSError, ValueError):
             mman = {}
-        sit = bool(mman.get("situational"))
-        hold = None if sit else int(mman.get("horizon_h") or TR.HOLD_H)
-        path_h = int(mman.get("max_age_h") or 24) if sit else hold
-        picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
-        revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
-        tr = TR.build(picks, revs, hold_h=hold,
-                      px_at=self.entry_px(picks),
-                      books=TR.load_books(
-                          os.path.join(mdir, "books.jsonl")))
-        # Живые события — ДО переоценки: строка, наложенная после
-        # TR.mark, оставалась без отметки, и владелец видел прочерки
-        # в UNREAL у всех входов сканера свежее последнего цикла.
-        if sit:
-            self.live_overlay(mdir, tr, revs)
-        TR.mark(tr, self.marks(tr))
-        # Порог обещанного отношения — только у книги без срока: у
-        # часовых обещания пути не решают ни входа, ни выхода.
-        tr, rr_cut, rr_unknown = TR.by_rr(tr, rr_min if sit else None)
-        accs, cap = {}, {}
+        # Сделки и деньги — ОБЩИМ кодом с обзором: у книги одна
+        # правда, и вторая дорога к ней однажды разошлась (обзор
+        # считал по урезанному окну и показывал ноль там, где здесь
+        # +94.84 $). Капитал берётся из ПЕРЕСЧЁТА, а не из файла
+        # счёта: файл пишет цикл при разборе, у свежей книги его ещё
+        # нет, и экспозиция оставалась без знаменателя.
+        v = self._book_view(mdir, mman, rr_min=rr_min, lite=lite)
+        tr, cap = v["trades"], v["cap"]
+        sit, hold, path_h = v["sit"], v["hold"], v["path_h"]
+        rr_cut, rr_unknown = v["rr_cut"], v["rr_unknown"]
+        accs = {}
         for a in ("gbm", "nn"):
             try:
                 with open(os.path.join(mdir, f"account_{a}.json"),
@@ -1813,17 +1861,6 @@ class Collector:
                     accs[a] = json.load(f)
             except (OSError, ValueError):
                 pass
-            # Размеры позиций проставляет счёт — он единственный, кто
-            # знает капитал и занятость. Сводка их только складывает.
-            #
-            # Капитал берётся отсюда же, из пересчёта, а НЕ из файла:
-            # файл пишет цикл при разборе, у свежей книги его ещё нет, и
-            # экспозиция оставалась без знаменателя — голое «500 $»
-            # читается как «депозит стал 500». Пересчёт есть всегда и
-            # согласован с показанными сделками по построению.
-            cap[a] = TR.account(tr, a, hold_h=hold or TR.HOLD_H,
-                                slots=mman.get("slots"),
-                                sizing=mman.get("sizing"))[1]
 
         def sliced():
             rows = tr
@@ -1866,36 +1903,10 @@ class Collector:
                     "filtered": bool(arm or state or sym),
                     "grand_total": len(tr),
                     "rows": rows[g * p:(g + 1) * p]}
-        hrows = self.paths(tr, hold_h=path_h)
-        # Капитал у каждой руки свой — по тысяче. На вкладке «обе»
-        # капитал складывается: иначе экспозиция 1504 $ читалась бы как
-        # полтора плеча, хотя капитала там две тысячи.
-        # Деньги просадки — после счёта: размер позиции знает только он.
-        TR.dd_money(tr)
-        # `start` — знаменатель для долей по сторонам: депозит на
-        # старте, а не нынешний капитал. У «обеих» он двойной, как и у
-        # просадки ниже: иначе прибыль двух счетов делилась бы на один.
-        stats = {a: TR.summary(tr, a, capital=cap[a],
-                               start=TR.START_BALANCE)
-                 for a in ("gbm", "nn")}
-        both = sum(v for v in cap.values() if v) or None
-        stats["all"] = TR.summary(tr, capital=both,
-                                  start=2 * TR.START_BALANCE)
-        # Просадка счёта считается по кривой с переоценкой открытых, а
-        # не по одним закрытиям: позиция, уходившая в минус и
-        # вернувшаяся, в кривой закрытий выглядит мелким убытком, и
-        # пережитая просадка из неё не видна вовсе.
-        curves = {a: TR.equity(tr, a, hrows, hold_h=path_h)
-                  for a in ("gbm", "nn")}
-        for a in ("gbm", "nn"):
-            stats[a]["dd_book"] = TR.max_dd(curves[a])
-            stats[a]["dd_open_book"] = TR.worst_open(curves[a])
-        both_c = TR.merge(curves.values())
-        stats["all"]["dd_book"] = TR.max_dd(both_c)
-        # На общей вкладке знаменателем служит сумма депозитов: иначе
-        # просадка двух счетов делилась бы на один и выходила вдвое.
-        stats["all"]["dd_open_book"] = TR.worst_open(
-            both_c, deposit=2 * TR.START_BALANCE)
+        # Сводки, кривые и просадка посчитаны общим видом — здесь их
+        # только раскладывают по ответу. Второй расчёт тех же величин
+        # и был источником расхождения обзора со страницей.
+        stats, curves, both_c = v["stats"], v["curves"], v["both_curve"]
         rows, per, page = sliced()
         total = len(rows)
         # Кривые счёта — на страницу. Прежде они считались здесь ради
