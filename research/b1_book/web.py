@@ -2015,7 +2015,12 @@ function hourLocal(h) {
 // значило бы разойтись с уже записанными файлами.
 const ST_EN = {"закрыта": "closed", "открыта": "open",
                "без исхода": "no outcome", "ждёт разбора": "awaiting",
-               "вышла, ждёт разбора": "exited, pnl pending"};
+               "вышла, ждёт разбора": "exited, pnl pending",
+               // Решение, НЕ ставшее позицией: встречный сигнал в том
+               // же имени закрывает существующий лот, а второй не
+               // открывает — на одном счёте в одностороннем режиме
+               // площадка поступает так же.
+               "схлопнула позицию": "netted a position (not opened)"};
 // Причины выхода ситуационной книги — перевод на границе показа.
 // Вид ситуации — семейство признаков, на котором стоит прогноз
 // сделки. Ключи объявлены в bookfeat.FAMILY_*; это ЧТЕНИЕ вкладов, а
@@ -5062,7 +5067,8 @@ function utc(ts){ if (!ts) return "—";
 // Состояния и причины выхода приходят по-русски: это ключи файлов.
 const ST_EN = {"закрыта":"closed","открыта":"open",
   "вышла, ждёт разбора":"exited, pnl pending",
-  "ждёт разбора":"awaiting review","без исхода":"no outcome"};
+  "ждёт разбора":"awaiting review","без исхода":"no outcome",
+  "схлопнула позицию":"netted a position (not opened)"};
 const EXIT_EN = {"прогноз развернулся":"the forecast flipped sign",
   "цена прошла обещанный ход против":"price hit the stop",
   "цена дошла до обещанной цели":"price reached the target",
@@ -5277,6 +5283,33 @@ function render(d, t){
       || t.exit_reason}) at ${utc(t.exit_ts)}; money is booked at the
       hourly review — the shadowed bot reads the same files, and the
       page must not run ahead of it.</p>`;
+  } else if (t.state === "схлопнула позицию") {
+    // Найдено владельцем: карточка писала «Still open» там, где
+    // позиции не открывалось вовсе. Состояние существует потому, что
+    // решение модели не должно пропадать из записи, — но сделкой оно
+    // не стало: ни входа, ни размера, ни денег.
+    out = `<p><b>No position was opened.</b> The book already held the
+      opposite side in this coin, and on one account in one-way mode
+      an opposite order does not open a second position — it closes
+      the existing one. So this signal <b>closed the older lot</b>${
+      t.netted_with ? ` (entered at hour ${
+        String(t.netted_with).replace(/[^0-9-]/g, "")})` : ""}
+      at this signal's price; that lot carries the money, with the
+      exit reason «a counter signal closed the position».</p>
+      <p class="dim">This record has no entry time, no size and no
+      money of its own — the cash account skips it. It is kept so the
+      model's decision stays visible: a signal that did not become a
+      trade is not the same as a signal that never happened. If the
+      book held several lots, only the oldest is closed (FIFO, as the
+      exchange does), so the rest of the position stays open.</p>`;
+  } else if (t.state === "без исхода") {
+    out = `<p>No outcome could be computed — the forward was never
+      closed for this coin (a gap in the record, or the coin left the
+      universe). The principal returns to the cash account, but no
+      result is invented for it.</p>`;
+  } else if (t.state === "ждёт разбора") {
+    out = `<p>The hold is over and the hourly review has not reached
+      this trade yet — the money appears when it does.</p>`;
   } else {
     out = `<p>Still open${t.unreal_net_bp != null
       ? `; running at ${pct(t.unreal_net_bp)} after costs` : ""}.</p>`;

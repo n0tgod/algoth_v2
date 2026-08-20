@@ -557,6 +557,20 @@ global.fetch = async (url) => {
                         nn: {closed: 0, open: 0, no_outcome: 0,
                              marked: 0}},
                 rows: [
+                  // Решение, НЕ ставшее позицией: встречный сигнал в
+                  // том же имени. Живая форма записи — ни времени
+                  // входа, ни размера, ни денег; карточка писала у
+                  // такой «Still open», то есть утверждала позицию,
+                  // которой не открывалось (найдено владельцем).
+                  ...(/infonet=1/.test(SEARCH) ? [{
+                   arm: "nn", hour: "2026-08-03-15", sym: "BTCUSDT",
+                   side: "short", tid: "ne7t2ed",
+                   opened_at: null, closes_at: null, size: null,
+                   pnl: null, net_bp: null, entry_px: 64650,
+                   state: "схлопнула позицию",
+                   netted_with: "2026-08-03-11",
+                   expected_bp: -648, mae_bp: 120, mfe_bp: -727,
+                   train_seq: 343, odd: 0.0}] : []),
                   {arm: "gbm", hour: "2026-08-03-18", sym: "BTCUSDT",
                    side: "long", tid: "ab3k2mq",
                    opened_at: Date.UTC(2026,7,3,19)/1000,
@@ -1688,6 +1702,27 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // имя и главную статистику, проза открывается кнопкой «i» (просьба
   // владельца). Проверяется числами и в обе стороны: статистика видна
   // без нажатия, описание БЕЗ нажатия не видно.
+  // Разбор схлопнувшего решения: позиции не было, и страница обязана
+  // сказать это, а не «Still open».
+  if (isInfo && /infonet=1/.test(SEARCH)) {
+    const bf = String(global.__el ? global.__el("whybox").innerHTML : "")
+      .replace(/\s+/g, " ");
+    if (/Still open/.test(bf))
+      bad.push("разбор: у схлопнувшего решения написано «открыта»");
+    if (!/No position was opened/.test(bf))
+      bad.push("разбор: не сказано, что позиции не открывалось");
+    if (!/closed the older lot/.test(bf) || !/2026-08-03-11/.test(bf))
+      bad.push("разбор: не назван лот, который закрыт этим сигналом");
+    if (!/FIFO/.test(bf))
+      bad.push("разбор: не сказано, что закрывается только старший лот");
+    // Состояние в заголовке — по-английски, как вся страница.
+    const hd = String(global.__el ? global.__el("ttl").textContent : "");
+    if (/схлопнула/.test(hd))
+      bad.push("разбор: состояние в заголовке осталось по-русски");
+    if (!/netted a position/.test(hd))
+      bad.push("разбор: заголовок не называет состояние по-английски");
+  }
+
   if (isTree) {
     if (!seen.some(u => u.startsWith("/model_tree")))
       bad.push("дерево: страница не запросила /model_tree");
@@ -2208,7 +2243,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     }
   }
 
-  if (isInfo) {
+  if (isInfo && !/infonet=1/.test(SEARCH)) {
     const wb = global.__el
       ? String(global.__el("whybox").innerHTML || "") : "";
     const sub = global.__el
