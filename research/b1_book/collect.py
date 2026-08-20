@@ -1653,6 +1653,16 @@ class Collector:
         if sit:
             self.live_overlay(mdir, tr, revs)
         TR.mark(tr, self.marks(tr))
+        # Решение, схлопнувшее встречный лот, СДЕЛКОЙ не является и в
+        # списках сделок ему не место (правило владельца): позиции по
+        # нему не открывалось, у записи нет ни входа, ни размера, ни
+        # денег, и в таблице она выглядела сделкой на ноль долларов.
+        # Из записи оно не исчезает — остаётся у закрытого им лота
+        # причиной выхода «встречный сигнал закрыл позицию» и
+        # достаётся по своему id, — но числом идёт отдельно: молча
+        # потерять решение модели нельзя.
+        netted = [t for t in tr if t.get("state") == "схлопнула позицию"]
+        tr = [t for t in tr if t.get("state") != "схлопнула позицию"]
         tr, rr_cut, rr_unknown = TR.by_rr(tr, rr_min if sit else None)
         cap = {}
         for a in ("gbm", "nn"):
@@ -1661,7 +1671,8 @@ class Collector:
                                 sizing=mman.get("sizing"))[1]
         out = {"trades": tr, "cap": cap, "hold": hold, "path_h": path_h,
                "sit": sit, "rr_min": rr_min or 0, "rr_cut": rr_cut,
-               "rr_unknown": rr_unknown, "picks": picks, "review": revs}
+               "rr_unknown": rr_unknown, "picks": picks, "review": revs,
+               "netted": len(netted)}
         if lite:
             return out
         hrows = self.paths(tr, hold_h=path_h)
@@ -1672,6 +1683,12 @@ class Collector:
         both = sum(v for v in cap.values() if v) or None
         stats["all"] = TR.summary(tr, capital=both,
                                   start=2 * TR.START_BALANCE)
+        # Схлопнувшие решения — рядом со счётчиками сделок, но НЕ в
+        # них: в `trades` их нет, потому что сделками они не стали.
+        for a in ("gbm", "nn"):
+            stats[a]["netted"] = sum(1 for t in netted
+                                     if t.get("arm") == a)
+        stats["all"]["netted"] = len(netted)
         curves = {a: TR.equity(tr, a, hrows, hold_h=path_h)
                   for a in ("gbm", "nn")}
         for a in ("gbm", "nn"):
@@ -1774,6 +1791,7 @@ class Collector:
             out["trades"] = v["trades"][:300]
             out["trades_total"] = len(v["trades"])
             out["trade_stats"] = v["stats"]
+            out["netted"] = v.get("netted", 0)
             # Странице обзора нужны ПОСЛЕДНИЙ выбор и последний разбор
             # каждой руки — она сама берёт из списка последний. Всё,
             # что раньше ехало сверх этого (200 строк с лесенками на
@@ -1935,6 +1953,10 @@ class Collector:
                 # отфильтрованный счёт неотличим от счёта книги.
                 "rr_min": rr_min or 0, "rr_cut": rr_cut,
                 "rr_unknown": rr_unknown,
+                # Решения, схлопнувшие встречный лот: сделками не
+                # стали и в таблице не показываются, но число обязано
+                # быть видно — иначе выбор модели пропадает молча.
+                "netted": v.get("netted", 0),
                 "curves": curve_out, "start": TR.START_BALANCE,
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),

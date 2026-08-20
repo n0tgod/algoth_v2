@@ -942,6 +942,10 @@ function tradeStats(p) {
              s.expected_over_got > 3 ? "bad" : "")
       + (s.awaiting ? cell("awaiting", s.awaiting) : "")
       + (s.no_outcome ? cell("no outcome", s.no_outcome, "bad") : "")
+      // Решения, схлопнувшие встречный лот: позиции по ним не
+      // открывалось, и в списке сделок их нет — но число стоит
+      // рядом, иначе выбор модели пропадает молча.
+      + (s.netted ? cell("netted (no position)", s.netted) : "")
       + `</div>` + exitLine(s);
   }).join("");
 }
@@ -2201,7 +2205,12 @@ async function load() {
     // Красным — только окончательная потеря: разбор до неё дошёл и
     // цель посчитать не смог. Ожидание разбора красным быть не должно,
     // иначе тревога станет фоном и её перестанут читать.
-    + (st.no_outcome ? cell("no outcome", st.no_outcome, "bad") : "");
+    + (st.no_outcome ? cell("no outcome", st.no_outcome, "bad") : "")
+    // Решения, схлопнувшие встречный лот: позиции по ним не
+    // открывалось, поэтому в списке сделок их нет и в счётчик они не
+    // входят — но число стоит рядом, иначе выбор модели пропадает
+    // молча. Владелец увидел их в таблице строками на ноль долларов.
+    + (st.netted ? cell("netted (no position)", st.netted) : "");
   if (st.closed) {
     html += cell(st.hit_basis === "levels" ? "sign right (at a level)"
                  : "sign right",

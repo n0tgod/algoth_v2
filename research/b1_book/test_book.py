@@ -498,6 +498,93 @@ def test_pages_run_headless():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_netted_signal_is_not_shown_as_a_trade():
+    """Решение, схлопнувшее встречный лот, — не сделка (правило владельца).
+
+    Позиции по нему не открывалось: `net_positions` снимает время
+    входа, касса такую запись пропускает, размера и денег у неё нет.
+    В таблице она стояла строкой на ноль долларов и читалась как
+    сделка — владелец увидел это на FARTCOIN.
+
+    Проверяется числами: в списке сделок её НЕТ ни на одной дороге,
+    счётчик сделок её не считает, но число схлопнувших решений
+    названо отдельно (молча терять решение модели нельзя), и лот,
+    который она закрыла, остаётся закрытым с СВОЕЙ причиной выхода.
+    """
+    import json as _json
+    import shutil
+    import tempfile
+    from datetime import datetime, timezone
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    was_here = C.HERE
+    sys.path.insert(0, os.path.join(os.path.dirname(was_here), "s8_loop"))
+    try:
+        C.HERE = os.path.join(root, "b1_book")
+        mdir = os.path.join(root, "s8_loop", "out", "model")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            _json.dump({"version": 2, "horizon_h": 4}, f)
+        base = 1786000000
+        def hour(i):
+            return datetime.fromtimestamp(
+                base + i * 3600, timezone.utc).strftime("%Y-%m-%d-%H")
+        # Лонг в первый час, встречный шорт в третий: шорт закрывает
+        # лонг и сам позицией не становится.
+        pk = [{"arm": "gbm", "hour": hour(0), "at_ts": base + 3900,
+               "long": [{"sym": "AAAUSDT", "fwd": 60.0, "mae": -30.0,
+                         "mfe": 90.0, "px": 100.0}], "short": []},
+              {"arm": "gbm", "hour": hour(2), "at_ts": base + 11100,
+               "long": [], "short": [{"sym": "AAAUSDT", "fwd": -60.0,
+                                      "mae": 30.0, "mfe": -90.0,
+                                      "px": 106.0}]}]
+        with open(os.path.join(mdir, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            for p in pk:
+                f.write(_json.dumps(p, ensure_ascii=False) + "\n")
+        open(os.path.join(mdir, "review.jsonl"), "w").close()
+
+        c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        pg = c.model_trades(per=500)
+        ov = c._model_dir_state(mdir)
+        for name, rows in (("страница сделок", pg["rows"]),
+                           ("обзор", ov["trades"])):
+            check(f"{name}: схлопнувшего решения в списке нет",
+                  not any(t["state"] == "схлопнула позицию"
+                          for t in rows),
+                  str([t["state"] for t in rows]))
+        st = (pg.get("stats") or {}).get("all") or {}
+        check("счётчик сделок его не считает",
+              st.get("trades") == 1, str(st.get("trades")))
+        check("число схлопнувших решений названо отдельно",
+              st.get("netted") == 1 and pg.get("netted") == 1
+              and ov.get("netted") == 1,
+              f'{st.get("netted")} {pg.get("netted")} {ov.get("netted")}')
+        # Лот, который оно закрыло, обязан остаться закрытым со своей
+        # причиной: сам факт схлопывания из записи не исчезает.
+        v = [t for t in pg["rows"] if t["state"] == "закрыта"]
+        check("закрытый лот несёт причину «встречный сигнал»",
+              len(v) == 1
+              and v[0]["exit_reason"] == "встречный сигнал закрыл позицию"
+              and v[0]["side"] == "long", str(v))
+        # По id решение по-прежнему находится: прямая ссылка обязана
+        # объяснять случай, а не отвечать «сделки нет».
+        tid = None
+        sys.path.insert(0, os.path.join(os.path.dirname(was_here), "s8_loop"))
+        import trades as TR
+        for t in TR.build(pk, [], hold_h=4):
+            if t["state"] == "схлопнула позицию":
+                tid = t["tid"]
+        got = c.trade_by_id(tid)
+        check("решение достаётся по своему id",
+              got and got.get("hits"), str(got)[:120])
+    finally:
+        C.HERE = was_here
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_overview_and_trades_page_agree():
     """Обзор и страница сделок считают книгу ОДНИМ кодом.
 
@@ -4521,6 +4608,7 @@ def main():
     test_pages_do_not_shadow_platform_globals()
     test_pages_run_headless()
     test_trades_table_columns_line_up()
+    test_netted_signal_is_not_shown_as_a_trade()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()
     test_sit_absorb_now_makes_pnl_immediate()
