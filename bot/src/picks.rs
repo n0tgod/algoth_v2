@@ -84,7 +84,7 @@ pub struct Review {
     pub rows: Vec<ReviewRow>,
 }
 
-fn read_lines<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
+pub(crate) fn read_lines<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
     let Ok(text) = std::fs::read_to_string(path) else {
         return Vec::new();
     };

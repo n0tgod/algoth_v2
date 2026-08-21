@@ -4,6 +4,7 @@ pub mod daemon;
 pub mod engine;
 pub mod events;
 pub mod journal;
+pub mod live;
 pub mod paper;
 pub mod picks;
 pub mod state;

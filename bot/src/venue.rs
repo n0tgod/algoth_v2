@@ -382,6 +382,82 @@ impl Venue {
         self.post("/v5/order/cancel", &body).map(|_| ())
     }
 
+    /// Статус заявки: (status, cumExecQty, avgPrice, cumExecFee).
+    ///
+    /// Сначала `realtime` (открытые и свежезакрытые), затем `history`:
+    /// IOC живёт мгновение, и у нерасторопного опроса она уже в
+    /// истории. Не нашлась нигде — отказ словами, а не выдуманный
+    /// статус: заявка, о которой площадка молчит, не «не исполнилась».
+    pub fn order_status(
+        &self,
+        symbol: &str,
+        order_id: &str,
+    ) -> Result<(String, f64, f64, f64), String> {
+        for path in ["/v5/order/realtime", "/v5/order/history"] {
+            let r = self.get(
+                path,
+                &format!("category=linear&symbol={symbol}&orderId={order_id}"),
+            )?;
+            let list = r
+                .get("list")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
+            if let Some(o) = list.first() {
+                let f = |k: &str| {
+                    o.get(k)
+                        .and_then(Value::as_str)
+                        .and_then(|s| s.parse::<f64>().ok())
+                        .unwrap_or(0.0)
+                };
+                let status = o
+                    .get("orderStatus")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                return Ok((status, f("cumExecQty"), f("avgPrice"), f("cumExecFee")));
+            }
+        }
+        Err(format!("order_status: заявка {order_id} не найдена ни в realtime, ни в history"))
+    }
+
+    /// Живой справочник инструмента: (tick_size, qty_step,
+    /// min_order_qty, min_notional_value). Снимок A1 на диске годится
+    /// исследованиям; живая заявка округляется по живому справочнику —
+    /// шаги цены площадка меняет, и устаревший файл дал бы отказ
+    /// «invalid price» на каждой заявке.
+    pub fn instrument(&self, symbol: &str) -> Result<(f64, f64, f64, f64), String> {
+        let r = self.get(
+            "/v5/market/instruments-info",
+            &format!("category=linear&symbol={symbol}"),
+        )?;
+        let list = r
+            .get("list")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let i = list
+            .first()
+            .ok_or_else(|| format!("instruments-info: {symbol} не найден"))?;
+        let s = |v: Option<&Value>| {
+            v.and_then(Value::as_str)
+                .and_then(|s| s.parse::<f64>().ok())
+                .unwrap_or(0.0)
+        };
+        let pf = i.get("priceFilter");
+        let lf = i.get("lotSizeFilter");
+        let tick = s(pf.and_then(|x| x.get("tickSize")));
+        let step = s(lf.and_then(|x| x.get("qtyStep")));
+        let min_qty = s(lf.and_then(|x| x.get("minOrderQty")));
+        let min_notional = s(lf.and_then(|x| x.get("minNotionalValue")));
+        if tick <= 0.0 || step <= 0.0 {
+            return Err(format!(
+                "instruments-info: {symbol} без шага цены или объёма (tick {tick}, step {step})"
+            ));
+        }
+        Ok((tick, step, min_qty, min_notional))
+    }
+
     /// Исполнения по символу за последние `hours` часов:
     /// (orderLinkId, side, qty, price, fee).
     pub fn executions(

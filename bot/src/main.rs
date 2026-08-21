@@ -261,6 +261,118 @@ fn main() {
             }
             println!("probe: всё прошло");
         }
+        Some("live") => {
+            // bot live --s8 DIR --journal DIR --keys FILE --base URL
+            //          [--arm gbm] [--capital 300] [--interval-sec 5]
+            //          [--dry] [--once] [--clear-halt]
+            //
+            // Живой исполнитель X1–X3 (спека 12). Вся логика в
+            // bot::live — двоичный файл тестами не покрывается, и
+            // правка здесь однажды уже дала ложную тревогу панели.
+            let mut s8 = None;
+            let mut jr = None;
+            let mut keys_path = None;
+            let mut base: Option<String> = None;
+            let mut arm = "gbm".to_string();
+            // 300 $ — капитал ЗАМЕРА (спека 12 §2), не бумажные 3000.
+            let mut capital = 300.0_f64;
+            let mut interval = 5u64;
+            let mut dry = false;
+            let mut once = false;
+            let mut clear_halt = false;
+            let mut it = args[2..].iter();
+            while let Some(a) = it.next() {
+                let mut val = || it.next().cloned().unwrap_or_default();
+                match a.as_str() {
+                    "--s8" => s8 = Some(val()),
+                    "--journal" => jr = Some(val()),
+                    "--keys" => keys_path = Some(val()),
+                    "--base" => base = Some(val()),
+                    "--arm" => arm = val(),
+                    "--capital" => capital = val().parse().unwrap_or(300.0),
+                    "--interval-sec" => interval = val().parse().unwrap_or(5),
+                    "--dry" => dry = true,
+                    "--once" => once = true,
+                    "--clear-halt" => clear_halt = true,
+                    other => {
+                        eprintln!("неизвестный ключ {other}");
+                        exit(2);
+                    }
+                }
+            }
+            let (Some(s8), Some(jr), Some(kp)) = (s8, jr, keys_path) else {
+                eprintln!("нужны --s8, --journal и --keys");
+                exit(2);
+            };
+            // База обязательна СЛОВОМ: живой счёт не должен зависеть
+            // от того, какое умолчание кто-то однажды поменял.
+            let Some(base) = base else {
+                eprintln!("нужна --base (https://api.bybit.com)");
+                exit(2);
+            };
+            let keys = match bot::venue::Keys::load(Path::new(&kp)) {
+                Ok(k) => k,
+                Err(e) => {
+                    eprintln!("ключ не читается: {e}");
+                    exit(2);
+                }
+            };
+            let mut v = bot::venue::Venue::new(&base, keys);
+            match v.sync_clock() {
+                Ok(skew) => eprintln!("часы: сдвиг {skew} мс"),
+                Err(e) => {
+                    eprintln!("часы не синхронизируются: {e}");
+                    exit(1);
+                }
+            }
+            let cfg = bot::live::LiveCfg {
+                s8_dir: s8.into(),
+                journal_dir: jr.into(),
+                arm,
+                capital_usd: capital,
+                name_cap_share: 0.10,
+                entry_cap_bp: 30.0,
+                stop_cap_bp: 100.0,
+                day_stop_usd: 15.0,
+                total_stop_usd: 45.0,
+                max_rejects: 3,
+                stale_cycle_h: 3.0,
+                dry,
+            };
+            eprintln!(
+                "исполнитель: капитал {capital} $, нога {:.0} $, {} — {}",
+                cfg.leg_usd(),
+                if dry { "СУХОЙ прогон (заявки не отправляются)" } else { "ЖИВЫЕ заявки" },
+                base
+            );
+            let ex = match bot::live::Executor::open(cfg, v, clear_halt) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("исполнитель не поднялся: {e}");
+                    exit(2);
+                }
+            };
+            if once {
+                let mut ex = ex;
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0);
+                let rep = ex.tick(now);
+                eprintln!(
+                    "такт: входов {}, выходов {}, отказов {}, остановка: {}",
+                    rep.opened,
+                    rep.closed,
+                    rep.rejected,
+                    rep.halted.as_deref().unwrap_or("нет")
+                );
+                if rep.halted.is_some() {
+                    exit(1);
+                }
+            } else {
+                bot::live::run_loop(ex, interval);
+            }
+        }
         Some("shadow") => {
             // bot shadow --s8 DIR --journal DIR [--arm gbm]
             //            [--capital 1000] [--fees PATH] [--now-ms N]
