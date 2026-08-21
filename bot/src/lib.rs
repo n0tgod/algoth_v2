@@ -7,3 +7,4 @@ pub mod journal;
 pub mod paper;
 pub mod picks;
 pub mod state;
+pub mod venue;

@@ -160,6 +160,107 @@ fn main() {
                 exit(1);
             }
         }
+        Some("probe") => {
+            // X1: проверка связи с площадкой — подпись, часы, чтение.
+            // `--order` дополнительно ставит и отменяет заведомо
+            // неисполнимую PostOnly-заявку: это единственный способ
+            // проверить ПРАВО торговать, не совершив сделки. Без
+            // флага команда только читает.
+            //
+            //   bot probe --keys ~/.bybit/live.env             //             --base https://api-testnet.bybit.com [--order]
+            let mut keys_path = String::new();
+            let mut base = String::from("https://api-testnet.bybit.com");
+            let mut with_order = false;
+            let mut it = args[2..].iter();
+            while let Some(a) = it.next() {
+                match a.as_str() {
+                    "--keys" => keys_path = it.next().cloned().unwrap_or_default(),
+                    "--base" => base = it.next().cloned().unwrap_or_default(),
+                    "--order" => with_order = true,
+                    _ => {}
+                }
+            }
+            if keys_path.is_empty() {
+                eprintln!("нужен --keys <файл>");
+                exit(2);
+            }
+            let keys = match bot::venue::Keys::load(Path::new(&keys_path)) {
+                Ok(k) => k,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(2);
+                }
+            };
+            println!("ключ: {keys:?}");
+            let mut v = bot::venue::Venue::new(&base, keys);
+            match v.sync_clock() {
+                Ok(skew) => println!("часы: сдвиг {skew} мс (наши против площадки)"),
+                Err(e) => {
+                    eprintln!("площадка недоступна: {e}");
+                    exit(1);
+                }
+            }
+            match v.wallet_usdt() {
+                Ok((eq, bal)) => println!("кошелёк USDT: equity {eq:.2}, balance {bal:.2}"),
+                Err(e) => {
+                    eprintln!("кошелёк не читается: {e}");
+                    exit(1);
+                }
+            }
+            match v.positions() {
+                Ok(p) => {
+                    println!("открытых позиций: {}", p.len());
+                    for (sym, side, size, px, upnl) in &p {
+                        println!("  {sym} {side} {size} @ {px} (unreal {upnl:+.2})");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("позиции не читаются: {e}");
+                    exit(1);
+                }
+            }
+            match v.open_orders() {
+                Ok(o) => println!("открытых заявок: {}", o.len()),
+                Err(e) => {
+                    eprintln!("заявки не читаются: {e}");
+                    exit(1);
+                }
+            }
+            if with_order {
+                // BTCUSDT: бид минус 20 % — PostOnly туда не
+                // исполнится никогда; количество минимальное (0.001).
+                let (bid, _ask) = match v.best_prices("BTCUSDT") {
+                    Ok(x) => x,
+                    Err(e) => {
+                        eprintln!("цены не читаются: {e}");
+                        exit(1);
+                    }
+                };
+                let far = (bid * 0.8 / 100.0).round() * 100.0;
+                let px = format!("{far:.1}");
+                let link = format!("probe-{}", std::process::id());
+                println!("ставлю PostOnly BTCUSDT Buy 0.001 @ {px} (бид {bid})");
+                match v.place_limit("BTCUSDT", "Buy", "0.001", &px, "PostOnly", &link, false) {
+                    Ok(id) => {
+                        println!("заявка принята: {id}");
+                        std::thread::sleep(std::time::Duration::from_secs(1));
+                        match v.cancel("BTCUSDT", &id) {
+                            Ok(()) => println!("заявка отменена — круг пройден"),
+                            Err(e) => {
+                                eprintln!("ОТМЕНА НЕ ПРОШЛА: {e}");
+                                eprintln!("снимите заявку {id} руками");
+                                exit(1);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("заявка не принята: {e}");
+                        exit(1);
+                    }
+                }
+            }
+            println!("probe: всё прошло");
+        }
         Some("shadow") => {
             // bot shadow --s8 DIR --journal DIR [--arm gbm]
             //            [--capital 1000] [--fees PATH] [--now-ms N]

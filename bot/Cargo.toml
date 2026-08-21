@@ -10,3 +10,11 @@ edition = "2021"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 flate2 = "1"
+# X1 (спека 12): живое исполнение. ureq — блокирующий HTTP с rustls
+# (без tokio: такт адаптера секундный, асинхронность не нужна);
+# hmac/sha2/hex — подпись Bybit V5. Появились вместе с адаптером,
+# не раньше.
+ureq = { version = "2", features = ["json"] }
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
