@@ -30,6 +30,12 @@ pub struct BookMode {
     pub sit: bool,
     /// Фиксированные слоты кассы (у ситуационной книги их 6).
     pub slots: Option<f64>,
+    /// Сколько часов позиция живёт ЗАКОННО: горизонт у книги со
+    /// сроком, предел возраста у ситуационной. Проверка «застряла»
+    /// считала это число зашитой четвёркой и кричала на позиции
+    /// книги без срока, прожившие законные 15 часов, — тревога,
+    /// которая кричит ложно, перестаёт быть сигналом.
+    pub hold_h: Option<i64>,
 }
 
 /// Версия правил книги из её манифеста; `None`, если книга правил не
@@ -111,6 +117,10 @@ pub fn book_mode(s8_dir: &Path) -> BookMode {
         situational: bool,
         #[serde(default)]
         slots: Option<f64>,
+        #[serde(default)]
+        max_age_h: Option<i64>,
+        #[serde(default)]
+        horizon_h: Option<i64>,
     }
     let Ok(text) = std::fs::read_to_string(s8_dir.join("manifest.json"))
     else {
@@ -120,6 +130,11 @@ pub fn book_mode(s8_dir: &Path) -> BookMode {
         Ok(m) if m.situational => BookMode {
             sit: true,
             slots: Some(m.slots.unwrap_or(6.0)),
+            hold_h: Some(m.max_age_h.unwrap_or(24)),
+        },
+        Ok(m) => BookMode {
+            hold_h: m.horizon_h,
+            ..BookMode::default()
         },
         _ => BookMode::default(),
     }

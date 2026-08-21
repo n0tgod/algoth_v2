@@ -260,3 +260,96 @@ fn выключатель_отвергает_входы_и_отказ_терми
     assert_eq!(rep2.opened, 0, "отказ терминален");
     assert_eq!(rep2.appended, 1, "дописан только поворот выключателя");
 }
+
+/// Срок жизни позиции берётся у КНИГИ журнала, а не зашит четвёркой.
+///
+/// Живой случай: тень ведёт ситуационную книгу (без срока, предел
+/// возраста 24 ч), а проверка считала сроком 4 ч и объявляла
+/// «застряла» позиции, прожившие законные 15 часов. Панель ядра
+/// выглядела отказом на исправном ядре — тревога, которая кричит
+/// ложно, перестаёт быть сигналом.
+#[test]
+fn срок_позиции_читается_у_книги_журнала() {
+    use std::io::Write;
+    let d = tmp("hold-from-book");
+    let s8 = d.join("model_sit");
+    std::fs::create_dir_all(&s8).unwrap();
+    std::fs::write(
+        s8.join("manifest.json"),
+        br#"{"situational": true, "slots": 6, "max_age_h": 24}"#,
+    )
+    .unwrap();
+    let jr = d.join("journal");
+    std::fs::create_dir_all(&jr).unwrap();
+    // Маркер несёт ДВА поля: путь и версию правила кассы. Разбирать
+    // надо первым полем — целиком он однажды уже ломал показ.
+    let mut f = std::fs::File::create(jr.join("source.txt")).unwrap();
+    write!(f, "{} cash=5\n", s8.display()).unwrap();
+    assert_eq!(bot::check::hold_from_journal(&jr), 24);
+
+    // Книга со сроком отдаёт свой горизонт, а не умолчание.
+    let s24 = d.join("model_h24");
+    std::fs::create_dir_all(&s24).unwrap();
+    std::fs::write(s24.join("manifest.json"), br#"{"horizon_h": 24}"#)
+        .unwrap();
+    let jr2 = d.join("journal24");
+    std::fs::create_dir_all(&jr2).unwrap();
+    std::fs::write(jr2.join("source.txt"), format!("{}\n", s24.display()))
+        .unwrap();
+    assert_eq!(bot::check::hold_from_journal(&jr2), 24);
+
+    // Нет маркера — прежнее умолчание, а не паника.
+    let jr3 = d.join("journal-bare");
+    std::fs::create_dir_all(&jr3).unwrap();
+    assert_eq!(bot::check::hold_from_journal(&jr3), 4);
+
+    // И главное — ДОРОГА до проверки: позиция книги без срока,
+    // прожившая 15 часов, законна, и «застряла» о ней говорить
+    // нельзя. Отрицательный контроль на зашитую четвёрку кусается
+    // только через эту связку.
+    let now = 1_787_318_000_000i64;
+    let recs = vec![bot::events::Record {
+        seq: 1,
+        event: Event::Open {
+            pos: "gbm:2026-08-20-20:SUNUSDT:long".into(),
+            sym: "SUNUSDT".into(),
+            side: bot::events::Side::Long,
+            notional_usd: 300.0,
+            entry_px: Some(1.0),
+            fee_usd: 0.02,
+            partial: false,
+            ver: Some(3),
+            at_ms: now - 15 * 3_600_000,
+        },
+    }];
+    let st = bot::state::derive(3000.0, &recs).unwrap();
+    let rep = bot::check::verify_journal(&jr, 3000.0, &recs, &st, now);
+    assert!(
+        !rep.warnings.iter().any(|w| w.contains("застряла")),
+        "законная позиция книги без срока объявлена застрявшей: {:?}",
+        rep.warnings
+    );
+    // Встречная сторона: у книги 4 ч та же позиция застряла, и
+    // проверка обязана это сказать — иначе, починив ложную тревогу,
+    // мы потеряли бы настоящую. У книги 24 ч она законна (срок плюс
+    // запас в 3 ч), и это тоже проверяется числом.
+    let s4 = d.join("model_h4");
+    std::fs::create_dir_all(&s4).unwrap();
+    std::fs::write(s4.join("manifest.json"), br#"{"horizon_h": 4}"#)
+        .unwrap();
+    let jr4 = d.join("journal4");
+    std::fs::create_dir_all(&jr4).unwrap();
+    std::fs::write(jr4.join("source.txt"), format!("{}\n", s4.display()))
+        .unwrap();
+    let rep4 = bot::check::verify_journal(&jr4, 3000.0, &recs, &st, now);
+    assert!(
+        rep4.warnings.iter().any(|w| w.contains("застряла")),
+        "у книги 4 ч позиция 15 ч обязана считаться застрявшей: {:?}",
+        rep4.warnings
+    );
+    let rep2 = bot::check::verify_journal(&jr2, 3000.0, &recs, &st, now);
+    assert!(
+        !rep2.warnings.iter().any(|w| w.contains("застряла")),
+        "у книги 24 ч позиция 15 ч застрявшей не является"
+    );
+}

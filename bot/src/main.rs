@@ -143,11 +143,17 @@ fn main() {
                     exit(2);
                 }
             };
-            let rep = bot::check::verify(
+            // Срок жизни позиции берётся у КНИГИ, которую ведёт
+            // журнал: путь к ней лежит в маркере источника, режим — в
+            // её манифесте. Зашитая четвёрка кричала «застряла» на
+            // законных позициях книги без срока (предел возраста 24 ч),
+            // и панель выглядела отказом на исправном ядре.
+            let rep = bot::check::verify_journal(
+                Path::new(&dir),
                 capital,
                 &records,
                 &st,
-                &bot::check::CheckOpts { now_ms, ..Default::default() },
+                now_ms,
             );
             println!("{}", serde_json::to_string_pretty(&rep).expect("json"));
             if !rep.ok {

@@ -15,6 +15,49 @@ use crate::events::{Event, Record};
 use crate::state::State;
 use serde::Serialize;
 use std::collections::BTreeMap;
+use std::path::Path;
+
+/// Сколько часов позиция живёт ЗАКОННО — по книге, которую ведёт этот
+/// журнал. Путь к книге лежит в маркере источника (`source.txt`,
+/// пишет `run_bot.sh`), режим и срок — в её манифесте.
+///
+/// Маркер несёт два поля: путь и версию правила кассы (`… cash=N`), и
+/// разбирать его надо ПЕРВЫМ полем — целиком он однажды уже сломал
+/// показ, когда версию добавили. Нет маркера или нет манифеста —
+/// остаётся умолчание, то есть прежнее поведение.
+/// Проверка журнала со сроком, взятым у ЕГО книги. Связка живёт
+/// здесь, а не в `main`: правку в двоичном файле не проверить тестом,
+/// и отрицательный контроль на неё не кусается — проверено.
+pub fn verify_journal(
+    journal_dir: &Path,
+    capital: f64,
+    records: &[Record],
+    st: &State,
+    now_ms: i64,
+) -> CheckReport {
+    verify(
+        capital,
+        records,
+        st,
+        &CheckOpts {
+            now_ms,
+            hold_h: hold_from_journal(journal_dir),
+            ..Default::default()
+        },
+    )
+}
+
+pub fn hold_from_journal(journal_dir: &Path) -> i64 {
+    let def = CheckOpts::default().hold_h;
+    let Ok(text) = std::fs::read_to_string(journal_dir.join("source.txt"))
+    else {
+        return def;
+    };
+    let Some(first) = text.split_whitespace().next() else {
+        return def;
+    };
+    crate::engine::book_mode(Path::new(first)).hold_h.unwrap_or(def)
+}
 
 pub struct CheckOpts {
     pub hold_h: i64,
