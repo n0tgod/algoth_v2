@@ -99,7 +99,7 @@ const NAV_ITEMS = [
   ["/league-page", "league", "лига"],
   ["/vol-page", "volatility", "волатильность"],
   ["/learning-page", "learning", "обучение"],
-  ["/glossary-page", "playbook", "справочник"],
+  ["/live-page", "playbook", "бот live"],
   ["/tree-page", "models", "модели"],
   ["/tournament-page", "tournament", "турнир"],
   ["/bot-page", "core", "ядро"]];
@@ -5510,6 +5510,249 @@ setInterval(load, 60000);
 </script>
 """
 
+LIVEPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>playbook — live execution vs the paper signal</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+.thin{color:var(--muted)}
+a{color:var(--accent)}
+.scroll{overflow-x:auto}
+.big{font-size:19px;font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,
+ minmax(180px,1fr));gap:10px}
+.tile{background:var(--chip);border:1px solid var(--rule-soft);
+ border-radius:10px;padding:8px 10px}
+.tile .v{font-size:17px;font-weight:700}
+.mode{display:inline-block;padding:2px 10px;border-radius:8px;
+ font-weight:700;letter-spacing:.08em}
+.mode.live{background:rgba(255,100,115,.16);color:var(--ask);
+ border:1px solid var(--ask)}
+.mode.dry{background:rgba(142,136,173,.14);color:var(--muted);
+ border:1px solid var(--rule)}
+.halt{border-left:2px solid var(--ask);padding-left:10px;
+ color:var(--ask);font-weight:600;margin-top:8px}
+""" + NAVCSS + r"""
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">playbook — live execution vs the paper signal</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + PCTJS + r"""
+navMount("/live-page");
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function bp(v){ return v == null ? "&mdash;"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(1); }
+function usd(v){ return v == null ? "&mdash;"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(2) + " $"; }
+function ts(t){ return t ? new Date(t * 1000).toISOString()
+  .slice(5, 16).replace("T", " ") : "&mdash;"; }
+
+// Рамка предмета — первым абзацем: без неё зелёная строка читается
+// как заработок, а страница меряет МЕХАНИКУ (спека 12).
+function intro(d){
+  return `<div class="cap">what this page compares</div>
+  <div>Every live trade of the executor is THE SAME trade the paper
+  situational book recorded — one decision, two ledgers. The page
+  shows what differs: the fill against the <b>signal price</b> the
+  scanner saw at the decision second (entry slippage), whether the
+  take-profit <b>filled as a resting limit at the level</b> (the
+  live test of rule v13), and the live net in bp of its own notional
+  against the paper <b>net_bp</b> of the same record.</div>
+  <div class="k" style="margin-top:6px">Money is compared in
+  BASIS POINTS, never in dollars: the paper position is 300&nbsp;$,
+  the live one 30&nbsp;$. This is a measurement of execution
+  mechanics, not of profit — a week of it cannot say anything about
+  returns. The old playbook (what the model can read) lives at
+  <a href="/glossary-page?k=${encodeURIComponent(KEY)
+  }">the glossary page</a>.</div>`;
+}
+function strip(d){
+  const st = d.status || {};
+  const mode = d.mode === "live"
+    ? `<span class="mode live">LIVE</span>`
+    : d.mode === "dry" ? `<span class="mode dry">DRY — orders are
+       formed, not sent</span>`
+    : `<span class="dim">executor not deployed</span>`;
+  const w = st.wallet || {};
+  const age = st.age_sec == null ? "&mdash;" : st.age_sec + " s";
+  return `<div class="panel"><div class="cap">executor</div>
+  <div>${mode}
+   <span class="k" style="margin-left:10px">status age ${age}
+   &nbsp;·&nbsp; wallet ${w.equity == null ? "&mdash;"
+     : Number(w.equity).toFixed(2) + " $"}
+   &nbsp;·&nbsp; open ${((d.summary || {}).open) ?? "&mdash;"}
+   &nbsp;·&nbsp; rejects in a row ${st.rejects_row ?? "&mdash;"}
+   &nbsp;·&nbsp; stale entries skipped ${
+     st.stale_entries_skipped ?? "&mdash;"}</span></div>
+  ${st.halted ? `<div class="halt">HALTED: ${esc(st.halted)}</div>`
+    : ""}
+  ${d.journal_error ? `<div class="halt">journal:
+     ${esc(d.journal_error)}</div>` : ""}</div>`;
+}
+function tiles(d){
+  const s = d.summary || {}, c = d.counts || {};
+  const t = (name, val, sub) => `<div class="tile">
+    <div class="k">${name}</div><div class="v mono">${val}</div>
+    <div class="k">${sub || ""}</div></div>`;
+  const v13 = (s.level_fills || s.level_misses)
+    ? `${s.level_fills} / ${s.level_fills + s.level_misses}`
+    : "&mdash;";
+  return `<div class="panel"><div class="cap">the measurement so far
+    </div><div class="tiles">
+    ${t("entry slippage, median", bp(s.entry_slip_med_bp) + " bp",
+        (s.entry_slip_n || 0) + " fills vs signal price")}
+    ${t("fees paid, median", bp(s.fee_med_bp) + " bp",
+        s.model_round_bp == null ? "model round unknown"
+        : "model round " + s.model_round_bp + " bp")}
+    ${t("take filled at level (v13)", v13,
+        s.level_misses ? s.level_misses + " missed" :
+        "of target exits")}
+    ${t("live pnl, closed", usd(s.pnl_live),
+        (s.closed || 0) + " closed of " + (c.opened || 0) + " opened")}
+    ${t("live vs paper, median", bp(s.net_delta_med_bp) + " bp",
+        (s.net_delta_n || 0) + " matched closes")}
+    ${t("decisions", (c.decisions ?? "&mdash;"),
+        (c.rejects_exec || 0) + " exec rejects · "
+        + (c.rejects_dry || 0) + " dry-formed")}
+  </div>
+  <div class="k" style="margin-top:8px">Slippage is signed so that
+  positive is ALWAYS worse for us, on both sides. A row the paper
+  book has no record for is counted, not hidden: matched
+  ${s.matched ?? 0} / unmatched ${s.unmatched ?? 0}.</div></div>`;
+}
+function table(d){
+  const rows = d.rows || [];
+  if (!rows.length)
+    return `<div class="panel"><div class="dim">no live trades yet —
+      the first appears with the first fresh scanner entry</div>
+      </div>`;
+  const info = r => r.tid && r.hour ? `<a class="open"
+    title="the paper record of this decision"
+    href="/trade-info?k=${encodeURIComponent(KEY)}&sym=${
+    encodeURIComponent(r.sym)}&arm=${r.arm}&hour=${r.hour}&side=${
+    r.side}&hz=sit" style="text-decoration:none">&#9432;</a>` : "";
+  return `<div class="panel"><div class="cap">live trades, newest
+   first</div><div class="scroll"><table>
+   <tr><th>opened</th><th>sym</th><th>side</th><th>size $</th>
+   <th>signal px</th><th>fill px</th><th>slip bp</th>
+   <th>exit px</th><th>live net bp</th><th>paper net bp</th>
+   <th>&Delta; bp</th><th>pnl $</th><th>fees bp</th>
+   <th>exit</th><th>v13</th><th>i</th></tr>`
+   + rows.map(r => `<tr>
+     <td class="mono">${ts(r.opened_at)}</td>
+     <td class="mono">${esc(r.sym)}</td>
+     <td>${esc(r.side)}</td>
+     <td class="mono">${r.size == null ? "&mdash;"
+        : Number(r.size).toFixed(2)}</td>
+     <td class="mono">${r.sig_px ?? "&mdash;"}</td>
+     <td class="mono">${r.entry_px ?? "&mdash;"}</td>
+     <td class="mono ${r.slip_bp > 0 ? "bad" : "good"}">${
+        bp(r.slip_bp)}</td>
+     <td class="mono">${r.exit_px ?? (r.state === "открыта"
+        ? '<span class="dim">open</span>' : "&mdash;")}</td>
+     <td class="mono">${bp(r.live_net_bp)}</td>
+     <td class="mono">${bp(r.paper_net_bp)}</td>
+     <td class="mono ${r.delta_bp == null ? "dim"
+        : (r.delta_bp >= 0 ? "good" : "bad")}">${bp(r.delta_bp)}</td>
+     <td class="mono ${r.pnl > 0 ? "good" : r.pnl < 0 ? "bad" : ""}">${
+        r.pnl == null ? "&mdash;" : Number(r.pnl).toFixed(2)}</td>
+     <td class="mono">${bp(r.fee_bp)}</td>
+     <td class="k" title="${esc(r.reason)}">${
+        esc((r.reason || "").slice(0, 26))}${
+        (r.reason || "").length > 26 ? "&hellip;" : ""}</td>
+     <td>${r.level_fill === true ? '<span class="good">level</span>'
+        : r.level_fill === false
+        ? '<span class="bad">missed</span>' : ""}</td>
+     <td>${info(r)}</td></tr>`).join("")
+   + `</table></div>
+   <div class="k">&Delta; is live net minus paper net of the SAME
+   record, in bp of each ledger&rsquo;s own notional. Positive means
+   the live fill did better than the paper model assumed — expect it
+   negative by roughly the extra costs the model does not see.</div>
+   </div>`;
+}
+function rejectsPanel(d){
+  const rj = d.rejects || [];
+  if (!rj.length) return "";
+  return `<div class="panel"><div class="cap">decisions that did not
+   become trades</div><div class="scroll"><table>
+   <tr><th>when</th><th>sym</th><th>side</th><th>reason</th></tr>`
+   + rj.map(r => `<tr><td class="mono">${ts(r.at)}</td>
+     <td class="mono">${esc(r.sym)}</td><td>${esc(r.side)}</td>
+     <td class="k" style="white-space:normal">${esc(r.reason)}</td>
+     </tr>`).join("")
+   + `</table></div><div class="k">In DRY mode every formed order
+   lands here by design — that is the X2 record. In LIVE mode a row
+   here is an execution fact: an IOC that did not fill inside its
+   price cap, a leg below the exchange minimum, a netted signal.
+   </div></div>`;
+}
+async function load(){
+  try {
+    const r = await fetch("/live_exec?k=" + encodeURIComponent(KEY));
+    const d = await r.json();
+    if (!d.present) {
+      document.getElementById("intro").innerHTML = intro(d);
+      document.getElementById("box").innerHTML =
+        `<div class="panel"><div class="dim">the live executor has
+         not been deployed on the server yet — no journal, no status.
+         This is a named state, not an error.</div></div>`;
+      return;
+    }
+    document.getElementById("intro").innerHTML = intro(d);
+    document.getElementById("box").innerHTML =
+      strip(d) + tiles(d) + table(d) + rejectsPanel(d);
+    document.getElementById("lead").textContent =
+      (d.mode || "") + " · " + ((d.rows || []).length) + " trades";
+  } catch (e) {
+    document.getElementById("box").innerHTML =
+      `<div class="panel"><div class="dim">no answer from the
+       collector — the page shows nothing rather than guessing</div>
+       </div>`;
+  }
+}
+load();
+setInterval(load, 15000);
+</script>
+"""
+
 VOLPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>volatility — does the market regime move our results</title>
@@ -7365,6 +7608,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/learning-page":
                 return self._ok(LEARNPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/live_exec":
+                return self._ok(json.dumps(
+                    collector.live_exec(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/live-page":
+                return self._ok(LIVEPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/model_tree":
                 return self._ok(json.dumps(

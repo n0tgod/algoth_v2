@@ -25,6 +25,7 @@ const isChart = /id="px"/.test(src);
 const isInfo = /id="whybox"/.test(src);
 const isLeague = /league — what works best/.test(src);
 const isGloss = /playbook — what the model can read/.test(src);
+const isLive = /live execution vs the paper signal/.test(src);
 const isVol = /does the market regime move our results/.test(src);
 const isLearn = /is the model getting smarter, and does it pay/
   .test(src);
@@ -196,6 +197,59 @@ global.fetch = async (url) => {
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
+             : url.startsWith("/live_exec")
+             ? {present: true,
+                mode: /livedry=1/.test(SEARCH) ? "dry" : "live",
+                server_now: Date.UTC(2026,7,21,20,0,10)/1000,
+                status: {dry: /livedry=1/.test(SEARCH), halted: null,
+                         rejects_row: 0, stale_entries_skipped: 355,
+                         age_sec: 4.0,
+                         wallet: {equity: 300.42, balance: 300.42}},
+                counts: {decisions: 5, opened: 3, closed: 2,
+                         rejects_dry: 1, rejects_exec: 1},
+                summary: {open: 1, closed: 2,
+                          entry_slip_med_bp: 3.4, entry_slip_n: 3,
+                          fee_med_bp: 12.1, fee_n: 2,
+                          model_round_bp: 11.0,
+                          level_fills: 1, level_misses: 1,
+                          pnl_live: 0.42,
+                          net_delta_med_bp: -8.3, net_delta_n: 2,
+                          matched: 3, unmatched: 0},
+                rows: [
+                  {pos: "gbm:2026-08-21-19:ARBUSDT:long", arm: "gbm",
+                   hour: "2026-08-21-19", sym: "ARBUSDT",
+                   side: "long", size: 29.93, sig_px: 1.0,
+                   entry_px: 1.0003, slip_bp: 3.0, exit_px: 1.012,
+                   live_net_bp: 108.0, paper_net_bp: 116.3,
+                   delta_bp: -8.3, pnl: 0.32, fee_bp: 12.1,
+                   state: "закрыта", level_fill: true, tid: "abc2345",
+                   reason: "цена дошла до обещанной цели — лимитка "
+                           + "исполнилась",
+                   opened_at: Date.UTC(2026,7,21,19,5,7)/1000,
+                   closed_at: Date.UTC(2026,7,21,19,42,0)/1000},
+                  {pos: "gbm:2026-08-21-18:HANAUSDT:short",
+                   arm: "gbm", hour: "2026-08-21-18", sym: "HANAUSDT",
+                   side: "short", size: 29.8, sig_px: 0.02064,
+                   entry_px: 0.02063, slip_bp: 4.8, exit_px: 0.02041,
+                   live_net_bp: 95.0, paper_net_bp: 121.0,
+                   delta_bp: -26.0, pnl: 0.28, fee_bp: 12.3,
+                   state: "закрыта", level_fill: false,
+                   tid: "def6789",
+                   reason: "книга дошла до цели, лимитка на уровне "
+                           + "НЕ исполнилась — правило v13 разошлось",
+                   opened_at: Date.UTC(2026,7,21,18,11,2)/1000,
+                   closed_at: Date.UTC(2026,7,21,18,55,0)/1000},
+                  {pos: "gbm:2026-08-21-20:AIOZUSDT:long",
+                   arm: "gbm", hour: "2026-08-21-20", sym: "AIOZUSDT",
+                   side: "long", size: 30.05, sig_px: 0.055,
+                   entry_px: 0.05503, slip_bp: 5.5, state: "открыта",
+                   tid: "ghi2345", paper_net_bp: null,
+                   opened_at: Date.UTC(2026,7,21,20,1,44)/1000}],
+                rejects: [
+                  {sym: "IONQUSDT", side: "short",
+                   reason: "IOC не исполнилась в потолке 30 б.п. "
+                           + "(запрошено 0.66)",
+                   at: Date.UTC(2026,7,21,19,20,0)/1000}]}
              : url.startsWith("/learning")
              ? {present: true, ic_vs_money: 0.673, ic_vs_money_n: 11,
                 ic_vs_time: -0.118, ic_vs_time_n: 11, errors: [],
@@ -1007,14 +1061,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1199,7 +1253,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -2075,6 +2129,64 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     }
   }
 
+  if (isLive) {
+    if (!seen.some(u => u.startsWith("/live_exec")))
+      bad.push("живое исполнение: данные не запрошены");
+    const bx = (global.__el
+      ? String(global.__el("box").innerHTML || "")
+        + String(global.__el("intro").innerHTML || "")
+      : "").replace(/\s+/g, " ");
+    if (/livedry=1/.test(SEARCH)) {
+      // Сухой режим обязан быть назван громко: страница с живыми
+      // числами и молчаливым режимом читалась бы как торговля.
+      if (!/DRY — orders are formed, not sent/.test(bx))
+        bad.push("живое исполнение: сухой режим не назван");
+      if (/class="mode live">LIVE/.test(bx))
+        bad.push("живое исполнение: сухой прогон подписан как LIVE");
+    } else {
+      if (!/class="mode live">LIVE/.test(bx))
+        bad.push("живое исполнение: режим LIVE не назван");
+    }
+    // Числа сводки — из ответа, не из вёрстки: проскальзывание,
+    // комиссия против модельного круга, v13, дельта к бумаге.
+    if (!/\+3\.4 bp/.test(bx))
+      bad.push("живое исполнение: медиана проскальзывания не видна");
+    if (!/model round 11 bp/.test(bx))
+      bad.push("живое исполнение: модельный круг не назван рядом с "
+               + "фактической комиссией");
+    if (!/1 \/ 2/.test(bx) || !/1 missed/.test(bx))
+      bad.push("живое исполнение: счёт v13 (лимитка на уровне) не "
+               + "виден");
+    // Число −8.3 живёт и в строке таблицы — проверка без подписи
+    // плитки проходила при снятой плитке (первый контроль не укусил).
+    if (!/live vs paper, median/.test(bx) || !/-8\.3/.test(bx))
+      bad.push("живое исполнение: дельта к бумаге не видна");
+    if (!/2 matched closes/.test(bx))
+      bad.push("живое исполнение: число сопоставленных закрытий не "
+               + "видно");
+    // Таблица: обе метки v13 и полная причина в подсказке.
+    if (!/>level</.test(bx) || !/>missed</.test(bx))
+      bad.push("живое исполнение: метки level/missed не стоят в "
+               + "строках");
+    if (!/title="книга дошла до цели, лимитка на уровне НЕ/.test(bx))
+      bad.push("живое исполнение: полная причина выхода потеряна из "
+               + "подсказки");
+    // Отказы — с причиной дословно: в LIVE это факт исполнения.
+    if (!/IOC не исполнилась в потолке 30 б\.п\./.test(bx))
+      bad.push("живое исполнение: отказ без причины");
+    // Открытая позиция не выдумывает выход.
+    if (!/>open</.test(bx))
+      bad.push("живое исполнение: открытая позиция не названа "
+               + "открытой");
+    // Справочник ушёл из меню — достижимость держит ссылка отсюда.
+    if (!/href="\/glossary-page\?k=xxx"/.test(bx))
+      bad.push("живое исполнение: ссылка на прежний справочник "
+               + "потеряна");
+    // Рамка сравнения: деньги в б.п., не в долларах.
+    if (!/BASIS POINTS/.test(bx))
+      bad.push("живое исполнение: рамка «сравнение в б.п.» потеряна");
+  }
+
   // Меню страниц — на каждой самостоятельной странице, и проверяется
   // ЧИСЛАМИ: пять пунктов, ключ в каждой ссылке, текущая помечена.
   // «Блок есть» прошло бы и на пустом меню, а пустое меню неотличимо
@@ -2088,11 +2200,19 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/href="\/learning-page\?k=xxx"/.test(nh))
       bad.push("меню: нет страницы обучения");
     if (!/href="\/league-page\?k=xxx"/.test(nh)
-        || !/href="\/glossary-page\?k=xxx"/.test(nh)
+        || !/href="\/live-page\?k=xxx"/.test(nh)
         || !/href="\/tree-page\?k=xxx"/.test(nh)
         || !/href="\/tournament-page\?k=xxx"/.test(nh))
       bad.push("меню: ссылка без ключа или страница потеряна");
-    if (!/aria-current="page"/.test(nh))
+    // Справочник из меню ушёл (пункт playbook ведёт на живое
+    // исполнение — решение владельца 2026-08-21), его страница
+    // «текущей» не помечается: пометка на несуществующем пункте
+    // была бы ложью меню. Достижимость держит ссылка со страницы
+    // живого исполнения, и она проверяется там.
+    if (/href="\/glossary-page\?k=xxx"/.test(nh))
+      bad.push("меню: справочник вернулся в меню — пункт playbook "
+               + "теперь живое исполнение");
+    if (!isGloss && !/aria-current="page"/.test(nh))
       bad.push("меню: текущая страница не помечена");
   }
 
@@ -2259,7 +2379,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // Меню переезжает на русский вместе со страницей.
       const nh2 = global.__el
         ? String(global.__el("nav").innerHTML || "") : "";
-      if (!/справочник/.test(nh2))
+      if (!/обзор/.test(nh2) || !/бот live/.test(nh2))
         bad.push("справочник: меню осталось на другом языке");
     }
   }
@@ -2482,7 +2602,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))
@@ -2782,7 +2902,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour || isLearn) {
+             || isTree || isTour || isLearn || isLive) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {

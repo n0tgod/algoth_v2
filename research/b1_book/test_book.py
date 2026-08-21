@@ -435,6 +435,12 @@ def test_pages_run_headless():
                 # деньги. Числа связей — из ответа, рамка предмета
                 # обязана стоять первой.
                 ("обучение", web.LEARNPAGE, "?k=xxx"),
+                # Живое исполнение (пункт меню playbook): живые сделки
+                # исполнителя против бумажного сигнала. Второй прогон —
+                # сухой режим, он обязан быть назван громко.
+                ("живое исполнение", web.LIVEPAGE, "?k=xxx"),
+                ("живое исполнение, сухой режим", web.LIVEPAGE,
+                 "?k=xxx&livedry=1"),
                 # Дерево моделей: две руки и логика каждой ветки.
                 ("дерево моделей", web.TREEPAGE, "?k=xxx"),
                 # Турнир политик: весь лист веток отдельной страницей.
@@ -495,6 +501,160 @@ def test_pages_run_headless():
             check(f"{name}: {out[-1] if out else 'нет вывода'}",
                   r.returncode == 0, r.stderr[-400:])
     finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_live_exec_measures_slippage_against_signal():
+    """Живое исполнение против бумажного сигнала — арифметика чисел.
+
+    Журнал исполнителя несёт цену СИГНАЛА в Decision (то, что видел
+    сканер в секунду решения) и факт исполнения в Open/Close; бумажная
+    книга несёт ту же запись своим счётом. Страница playbook сводит
+    их, и каждое число проверяется здесь настоящим `live_exec` на
+    настоящем журнале: подделка в фикстуре — «мой тест прошёл, потому
+    что положил pnl руками» — уже стоила пустой лиги.
+
+    Проверяются: знак и величина проскальзывания (вход 1.003 против
+    сигнала 1.0 у лонга = +30 б.п., хуже для нас), правило v13 по
+    причине закрытия, комиссия в б.п. нотионала, сопоставление с
+    бумажной записью по ключу позиции и честное «нет сигнала — нет
+    измерения» у входа без Decision.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "research", "b1_book")
+        os.makedirs(C.HERE, exist_ok=True)
+        # Журнал исполнителя: bot/out/live от корня фикстуры.
+        jdir = os.path.join(d, "bot", "out", "live")
+        os.makedirs(jdir, exist_ok=True)
+        # Чтение журнала — настоящей sverka.read_journal: копия файла
+        # кладётся в фикстурный bot/, как его положил бы деплой.
+        shutil.copy(os.path.join(os.path.dirname(HERE), "..", "bot",
+                                 "sverka.py"),
+                    os.path.join(d, "bot", "sverka.py"))
+        hour = "2026-08-21-19"
+        ms = 1787340000000
+        rows = [
+            {"seq": 1, "ev": "decision", "arm": "gbm", "hour": hour,
+             "sym": "AUSDT", "side": "long", "px": 1.0,
+             "src_ts": ms / 1000.0 - 3600, "at_ms": ms},
+            {"seq": 2, "ev": "open", "pos": f"gbm:{hour}:AUSDT:long",
+             "sym": "AUSDT", "side": "long", "notional_usd": 30.09,
+             "entry_px": 1.003, "fee_usd": 0.0165, "partial": False,
+             "at_ms": ms + 1000},
+            {"seq": 3, "ev": "close", "pos": f"gbm:{hour}:AUSDT:long",
+             "exit_px": 1.012, "fee_usd": 0.0167, "pnl_usd": 0.236,
+             "reason": "цена дошла до обещанной цели — лимитка "
+                       "исполнилась",
+             "at_ms": ms + 60000},
+            # Вход без Decision: сигнала нет — проскальзывание не
+            # измеряется, а не равно нулю.
+            {"seq": 4, "ev": "open", "pos": f"gbm:{hour}:CUSDT:long",
+             "sym": "CUSDT", "side": "long", "notional_usd": 29.5,
+             "entry_px": 2.0, "fee_usd": 0.016, "partial": False,
+             "at_ms": ms + 2000},
+            {"seq": 5, "ev": "reject", "sym": "BUSDT", "side": "short",
+             "reason": "IOC не исполнилась в потолке 30 б.п.",
+             "at_ms": ms + 3000},
+        ]
+        with open(os.path.join(jdir, "journal-2026-08-21.jsonl"),
+                  "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        with open(os.path.join(jdir, "live_status.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"at_ms": ms, "dry": False, "halted": None,
+                       "rejects_row": 0}, f)
+        with open(os.path.join(jdir, "mode.txt"), "w",
+                  encoding="utf-8") as f:
+            f.write("live\n")
+        # Бумажная сторона: та же запись в торгуемой ситуационной
+        # книге, net 85 б.п. — сравнение обязано дать дельту.
+        mdir = os.path.join(d, "research", "s8_loop", "out",
+                            "model_sit")
+        os.makedirs(mdir, exist_ok=True)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"situational": True, "slots": 6,
+                       "min_rr": 2.0}, f)
+        with open(os.path.join(mdir, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": hour,
+                "at_ts": ms / 1000.0 - 3600,
+                "long": [{"sym": "AUSDT", "px": 1.0, "mae": -40.0,
+                          "mfe": 120.0,
+                          "at_ts": ms / 1000.0 - 3600}],
+                "short": []}, ensure_ascii=False) + "\n")
+        with open(os.path.join(mdir, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": hour,
+                "at_ts": ms / 1000.0 + 100,
+                "rows": [{"sym": "AUSDT", "side": "long", "net": 85.0,
+                          "got": 96.0, "exit_hour": hour,
+                          "exit_ts": ms / 1000.0 + 60,
+                          "exit_px": 1.012,
+                          "reason": "цена дошла до обещанной цели"}],
+            }, ensure_ascii=False) + "\n")
+
+        # Подмена HERE уносит путь к ядру расчёта — настоящий
+        # s8_loop кладётся в path заранее (урок теста сводимости:
+        # ModuleNotFoundError: trades).
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "..",
+                                        "s8_loop"))
+        import trades as _TR  # noqa: F401 — прогрев sys.modules
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col.books = {}
+        col._px_cache = {}
+        out = col.live_exec()
+        check("бумажная книга построена без ошибки",
+              out.get("paper_error") is None,
+              str(out.get("paper_error")))
+        check("журнал исполнителя прочитан",
+              out.get("present") is True and out.get("mode") == "live",
+              str({k: out.get(k) for k in ("present", "mode",
+                                           "journal_error")}))
+        rws = {r["sym"]: r for r in out.get("rows") or []}
+        a = rws.get("AUSDT") or {}
+        check("проскальзывание входа: +30 б.п. против сигнала",
+              a.get("slip_bp") == 30.0, str(a.get("slip_bp")))
+        check("v13: лимитка на уровне исполнилась",
+              a.get("level_fill") is True
+              and out["summary"]["level_fills"] == 1,
+              str(a.get("level_fill")))
+        check("комиссия — в б.п. нотионала живой сделки",
+              abs((a.get("fee_bp") or 0) - 11.0) < 0.2,
+              str(a.get("fee_bp")))
+        check("нетто живой сделки — из pnl и нотионала",
+              abs((a.get("live_net_bp") or 0) - 78.4) < 0.2,
+              str(a.get("live_net_bp")))
+        check("бумажная запись сопоставлена и дельта посчитана",
+              a.get("paper_net_bp") == 85.0
+              and abs((a.get("delta_bp") or 0) - (-6.6)) < 0.2,
+              str({k: a.get(k) for k in ("paper_net_bp",
+                                         "delta_bp", "tid")}))
+        check("у сопоставленной строки есть id бумажной сделки",
+              bool(a.get("tid")), str(a.get("tid")))
+        c = rws.get("CUSDT") or {}
+        check("нет сигнала — нет измерения, а не ноль",
+              c.get("slip_bp") is None and c.get("state") == "открыта",
+              str(c.get("slip_bp")))
+        check("несопоставленная строка считается числом",
+              out["summary"]["matched"] == 1
+              and out["summary"]["unmatched"] == 1,
+              str(out["summary"]))
+        check("отказ исполнения отделён от сухого",
+              out["counts"]["rejects_exec"] == 1
+              and out["counts"]["rejects_dry"] == 0,
+              str(out["counts"]))
+    finally:
+        C.HERE = was
+        C._live = None if hasattr(C, "_live") else None
         shutil.rmtree(d, ignore_errors=True)
 
 
@@ -4609,6 +4769,7 @@ def main():
     test_pages_run_headless()
     test_trades_table_columns_line_up()
     test_netted_signal_is_not_shown_as_a_trade()
+    test_live_exec_measures_slippage_against_signal()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()
     test_sit_absorb_now_makes_pnl_immediate()

@@ -1452,6 +1452,214 @@ class Collector:
         )
         return st
 
+    @staticmethod
+    def _model_round_bp():
+        """Модельный круг издержек — у самого ядра расчёта, не числом
+        здесь: две записи одной константы однажды разошлись бы (тот же
+        довод, что у версии кассы в run_bot.sh)."""
+        try:
+            sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                            "s8_loop"))
+            import trades as TR
+            return float(TR.ROUND_COST_BP)
+        except Exception:                             # noqa: BLE001
+            return None
+
+    def live_exec(self):
+        """Живые сделки исполнителя ПРОТИВ бумажного сигнала книги.
+
+        Предмет страницы playbook (решение владельца 2026-08-21):
+        каждая живая сделка X3 — та же сделка, что бумажная запись
+        ситуационной книги, посчитанная двумя счетами, и расхождение
+        между ними и есть то, что замер живых денег меряет. Вход:
+        цена исполнения против цены СИГНАЛА (Decision несёт цену
+        события — её видел сканер в секунду решения). Выход: тейк по
+        уровню лимиткой (правило v13) — исполнилась или нет. Деньги:
+        нетто живой сделки в б.п. её нотионала против бумажного
+        `net_bp` той же записи — доллары сравнивать нельзя, у бумажной
+        позиции 300 $, у живой 30.
+
+        Журнал читается `sverka.read_journal` — той же реализацией,
+        что у панели ядра: вторая копия чтения однажды разошлась бы.
+        Бумажная сторона — `_book_view` торгуемой ситуационной книги,
+        тем же кодом, что обзор и страница сделок. Сопоставление — по
+        ключу позиции (рука:час:имя:сторона): его пишут оба счёта.
+
+        Отсутствие журнала — состояние словами, не ошибка: исполнитель
+        может быть не развёрнут. В сухом прогоне страница работает
+        тоже: сформированные заявки видны отказами с текстом.
+        """
+        now = time.time()
+        c = getattr(self, "_live_exec_cache", None)
+        if c and now - c[0] < 10:
+            return c[1]
+        root = os.path.join(os.path.dirname(os.path.dirname(HERE)), "bot")
+        jdir = os.path.join(root, "out", "live")
+        out = {"present": False, "server_now": now}
+        try:
+            with open(os.path.join(jdir, "live_status.json"),
+                      encoding="utf-8") as f:
+                st = json.load(f)
+            try:
+                st["age_sec"] = round(
+                    now - float(st.get("at_ms", 0)) / 1000.0, 1)
+            except (TypeError, ValueError):
+                st["age_sec"] = None
+            out["status"] = st
+            out["present"] = True
+        except (OSError, ValueError):
+            out["status"] = None
+        try:
+            with open(os.path.join(jdir, "mode.txt"),
+                      encoding="utf-8") as f:
+                out["mode"] = f.read().strip() or None
+        except OSError:
+            out["mode"] = None
+
+        sys.path.insert(0, root)
+        recs = []
+        try:
+            import sverka as SV
+            recs = SV.read_journal(jdir)
+        except SystemExit as e:
+            out["journal_error"] = str(e)
+        except Exception as e:                        # noqa: BLE001
+            out["journal_error"] = str(e)[:200]
+        if recs:
+            out["present"] = True
+
+        decisions, opens, closes, rejects = {}, {}, {}, []
+        counts = {"decisions": 0, "opened": 0, "closed": 0,
+                  "rejects_dry": 0, "rejects_exec": 0}
+        for r in recs:
+            ev = r.get("ev")
+            if ev == "decision":
+                counts["decisions"] += 1
+                k = ":".join((r.get("arm") or "", r.get("hour") or "",
+                              r.get("sym") or "", r.get("side") or ""))
+                decisions[k] = r
+            elif ev == "open":
+                counts["opened"] += 1
+                opens[r.get("pos")] = r
+            elif ev == "close":
+                counts["closed"] += 1
+                closes[r.get("pos")] = r
+            elif ev == "reject":
+                reason = r.get("reason") or ""
+                if "сухой прогон" in reason:
+                    counts["rejects_dry"] += 1
+                else:
+                    counts["rejects_exec"] += 1
+                rejects.append({"sym": r.get("sym"),
+                                "side": r.get("side"),
+                                "reason": reason,
+                                "at": (r.get("at_ms") or 0) / 1000.0})
+
+        # Бумажная сторона: торгуемая ситуационная книга, обе руки.
+        paper, paper_error = {}, None
+        try:
+            s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
+            mdir = os.path.join(s8, "model_sit")
+            with open(os.path.join(mdir, "manifest.json"),
+                      encoding="utf-8") as f:
+                mman = json.load(f)
+            v = self._book_view(mdir, mman, lite=True)
+            for pt in v["trades"]:
+                paper[(pt.get("arm"), pt.get("hour"), pt.get("sym"),
+                       pt.get("side"))] = pt
+        except Exception as e:                        # noqa: BLE001
+            paper_error = str(e)[:200]
+
+        rows = []
+        slips, fees, deltas = [], [], []
+        level_fills = level_misses = 0
+        pnl_live = 0.0
+        matched = unmatched = 0
+        for pos, o in opens.items():
+            parts = (str(pos).split(":", 3) + ["", "", "", ""])[:4]
+            arm, hour, sym, side = parts
+            d = decisions.get(pos)
+            cl = closes.get(pos)
+            sig = d.get("px") if d else None
+            entry = o.get("entry_px")
+            notional = float(o.get("notional_usd") or 0.0)
+            sgn = 1.0 if side == "long" else -1.0
+            # Проскальзывание входа: положительное = хуже для нас, у
+            # обеих сторон. Нет цены сигнала — нет измерения, не ноль.
+            slip = None
+            if sig and entry:
+                slip = round((entry / sig - 1.0) * 1e4 * sgn, 1)
+                slips.append(slip)
+            row = {"pos": pos, "arm": arm, "hour": hour, "sym": sym,
+                   "side": side, "size": round(notional, 2),
+                   "sig_px": sig, "entry_px": entry, "slip_bp": slip,
+                   "opened_at": (o.get("at_ms") or 0) / 1000.0,
+                   "state": "открыта"}
+            pt = paper.get((arm, hour, sym, side))
+            if pt is not None:
+                matched += 1
+                row["tid"] = pt.get("tid")
+                row["paper_net_bp"] = pt.get("net_bp")
+                row["paper_pnl"] = pt.get("pnl")
+                row["paper_state"] = pt.get("state")
+            else:
+                unmatched += 1
+            if cl is not None:
+                row["state"] = "закрыта"
+                row["exit_px"] = cl.get("exit_px")
+                row["closed_at"] = (cl.get("at_ms") or 0) / 1000.0
+                pnl = float(cl.get("pnl_usd") or 0.0)
+                pnl_live += pnl
+                row["pnl"] = round(pnl, 2)
+                fee = (float(o.get("fee_usd") or 0.0)
+                       + float(cl.get("fee_usd") or 0.0))
+                if notional:
+                    row["live_net_bp"] = round(pnl / notional * 1e4, 1)
+                    row["fee_bp"] = round(fee / notional * 1e4, 1)
+                    fees.append(row["fee_bp"])
+                reason = cl.get("reason") or ""
+                row["reason"] = reason
+                # Правило v13 живьём: тейк-лимитка на уровне.
+                if "лимитка исполнилась" in reason:
+                    row["level_fill"] = True
+                    level_fills += 1
+                elif "НЕ исполнилась" in reason:
+                    row["level_fill"] = False
+                    level_misses += 1
+                if (row.get("live_net_bp") is not None
+                        and isinstance(row.get("paper_net_bp"),
+                                       (int, float))):
+                    row["delta_bp"] = round(
+                        row["live_net_bp"] - row["paper_net_bp"], 1)
+                    deltas.append(row["delta_bp"])
+            rows.append(row)
+        rows.sort(key=lambda r: r.get("opened_at") or 0.0)
+
+        med = (lambda a: round(sorted(a)[len(a) // 2], 1) if a else None)
+        out.update(
+            counts=counts,
+            rows=rows[-200:][::-1],
+            rejects=rejects[-50:][::-1],
+            paper_error=paper_error,
+            summary={
+                "open": sum(1 for r in rows if r["state"] == "открыта"),
+                "closed": counts["closed"],
+                "entry_slip_med_bp": med(slips),
+                "entry_slip_n": len(slips),
+                "fee_med_bp": med(fees),
+                "fee_n": len(fees),
+                "model_round_bp": self._model_round_bp(),
+                "level_fills": level_fills,
+                "level_misses": level_misses,
+                "pnl_live": round(pnl_live, 2),
+                "net_delta_med_bp": med(deltas),
+                "net_delta_n": len(deltas),
+                "matched": matched,
+                "unmatched": unmatched,
+            })
+        self._live_exec_cache = (now, out)
+        return out
+
     # Ситуационная книга на странице ОДНА, а записей две: торгуемая
     # (свой гейт по отношению, 6 мест, её ведёт тень бота) и
     # наблюдательная (те же правила входа, требование к отношению
