@@ -49,6 +49,7 @@ fn чистый_журнал_проходит_и_несёт_числа() {
     let d = tmp("clean");
     let (mut j, _, _) = Journal::open(&d).unwrap();
     j.append(Event::Decision {
+        src_ts: None,
         arm: "gbm".into(),
         hour: "2026-08-05-11".into(),
         sym: "AUSDT".into(),
@@ -117,6 +118,7 @@ fn застрявшая_позиция_и_тишина_решений_это_п�
     let d = tmp("stuck");
     let (mut j, _, _) = Journal::open(&d).unwrap();
     j.append(Event::Decision {
+        src_ts: None,
         arm: "gbm".into(),
         hour: "2026-08-05-11".into(),
         sym: "AUSDT".into(),

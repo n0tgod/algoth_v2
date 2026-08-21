@@ -372,9 +372,15 @@ impl<E: Exchange> Executor<E> {
         let mut realized_by_day: BTreeMap<String, f64> = BTreeMap::new();
         for r in &records {
             match &r.event {
-                Event::Decision { arm, hour, sym, side, at_ms, .. } => {
+                Event::Decision { arm, hour, sym, side, src_ts, at_ms, .. } => {
                     let k = pos_key(arm, hour, sym, *side);
-                    seen.insert(format!("{k}@{at_ms}"));
+                    // Дедуп — по секунде СОБЫТИЯ: она едет в src_ts;
+                    // у записей прежнего образца событие лежало в
+                    // at_ms, читаем его оттуда же.
+                    let ev_ms = src_ts
+                        .map(|t| (t * 1000.0) as i64)
+                        .unwrap_or(*at_ms);
+                    seen.insert(format!("{k}@{ev_ms}"));
                     pending.insert(k, (sym.clone(), *side, *at_ms));
                 }
                 Event::Reject { sym, side, at_ms, .. } => {
@@ -1047,19 +1053,22 @@ impl<E: Exchange> Executor<E> {
             }
             let Some(side) = side_of(&ev.side) else { continue };
             let key = pos_key(&arm, &ev.hour, &ev.sym, side);
-            let at_ms = (ev.at_ts * 1000.0) as i64;
+            let ev_ms = (ev.at_ts * 1000.0) as i64;
             // Старое событие не торгуется, не журналируется и не
             // трогает биржу: оно останется старым и завтра, возраст
             // отсеет его на каждом такте. Число видно в статусе.
-            if now_ms - at_ms > self.cfg.stale_entry_sec * 1000 {
+            if now_ms - ev_ms > self.cfg.stale_entry_sec * 1000 {
                 self.stale_entries += 1;
                 continue;
             }
-            let seen_key = format!("{key}@{at_ms}");
+            let seen_key = format!("{key}@{ev_ms}");
             if self.seen.contains(&seen_key) {
                 continue;
             }
             // Write-ahead: решение записано ДО каких-либо действий.
+            // Метка журнала — момент ЗАПИСИ: журнал режется на сутки
+            // по ней, и метка события клала бы строку в чужой суточный
+            // файл, перемешивая номера (об это упал первый прогон X2).
             self.append(Event::Decision {
                 arm: arm.clone(),
                 hour: ev.hour.clone(),
@@ -1067,7 +1076,8 @@ impl<E: Exchange> Executor<E> {
                 side,
                 px: Some(ev.px),
                 ver: None,
-                at_ms,
+                src_ts: Some(ev.at_ts),
+                at_ms: now_ms,
             });
             self.seen.insert(seen_key);
             self.try_enter(&key, &ev, side, now_ms, rep);
@@ -1337,11 +1347,16 @@ fn now_ms_wall() -> i64 {
 /// Цикл демона: такт раз в `interval_sec`, часы пересинхронизируются
 /// снаружи (в `main`) — здесь только логика.
 pub fn run_loop<E: Exchange>(mut ex: Executor<E>, interval_sec: u64) -> ! {
+    let mut said: Option<String> = None;
     loop {
         let now = now_ms_wall();
         let rep = ex.tick(now);
-        if let Some(r) = &rep.halted {
-            eprintln!("исполнитель остановлен: {r}");
+        if rep.halted != said {
+            match &rep.halted {
+                Some(r) => eprintln!("исполнитель остановлен: {r}"),
+                None => eprintln!("исполнитель работает"),
+            }
+            said = rep.halted.clone();
         }
         std::thread::sleep(std::time::Duration::from_secs(interval_sec.max(1)));
     }

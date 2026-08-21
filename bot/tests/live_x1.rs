@@ -619,6 +619,7 @@ fn перезапуск_берёт_количество_у_биржи() {
     {
         let (mut jr, _, _) = bot::journal::Journal::open(&fx.jr).unwrap();
         jr.append(Event::Decision {
+            src_ts: None,
             arm: "gbm".into(),
             hour: "2026-08-20-16".into(),
             sym: "ZUSDT".into(),
@@ -700,6 +701,46 @@ fn историческое_событие_не_торгуется_и_не_шу�
     // И на следующем такте оно так же старо.
     let rep2 = ex.tick(NOW + 5_000);
     assert_eq!(rep2.opened, 0);
+}
+
+/// Журнал режется на сутки по метке записи, и свежее событие,
+/// случившееся ЗА СЕКУНДЫ до полуночи, не вправе класть строку во
+/// вчерашний файл: первый сухой прогон X2 именно так перемешал
+/// номера строк между суточными файлами, и исполнитель отказался
+/// подниматься («номер вне очереди»). Все строки обязаны лечь в
+/// сегодняшний файл, и журнал обязан перечитываться.
+#[test]
+fn событие_у_полуночи_не_рвёт_журнал() {
+    let fx = Fx::new("midnight");
+    let m = Mock::new()
+        .with_sym("AUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0)
+        .with_sym("BUSDT", 1.9999, 2.0001, 0.0001, 0.1, 0.1, 5.0);
+    // Полночь суток NOW и момент «30 секунд после неё».
+    let day = bot::journal::utc_day(NOW);
+    let midnight_ms = bot::picks::hour_ms(&format!("{day}-00")).unwrap();
+    let now2 = midnight_ms + 30_000;
+    // Сначала сегодняшнее событие, затем вчерашнее — но свежее
+    // (90 секунд назад): порядок, на котором старая метка ломала
+    // журнал (поздний номер уезжал в РАННИЙ суточный файл).
+    fx.entry("gbm", "2026-08-20-00", "AUSDT", "long", 1.0, -50.0, 120.0,
+             (now2 as f64) / 1000.0 - 10.0);
+    fx.entry("gbm", "2026-08-19-23", "BUSDT", "long", 2.0, -50.0, 120.0,
+             (midnight_ms as f64) / 1000.0 - 60.0);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    let rep = ex.tick(now2);
+    assert_eq!(rep.opened, 2, "оба свежих события обязаны войти");
+    // Все строки — в одном, сегодняшнем файле.
+    let files: Vec<String> = std::fs::read_dir(&fx.jr)
+        .unwrap()
+        .flatten()
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|n| n.starts_with("journal-"))
+        .collect();
+    assert_eq!(files.len(), 1, "строки разъехались по суткам: {files:?}");
+    assert!(files[0].contains(&day), "{files:?} против {day}");
+    // И журнал перечитывается — на этом падал живой сервер.
+    let (recs, _) = bot::journal::read_all(&fx.jr).expect("журнал не перечитался");
+    assert!(recs.len() >= 4);
 }
 
 /// Потолок цены — служебная арифметика уровня заявки.

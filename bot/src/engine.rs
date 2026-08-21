@@ -443,6 +443,7 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
             // Решение журналируется один раз — до всякого риска.
             if seen_decision.insert(t.key.clone()) {
                 journal.append(Event::Decision {
+                    src_ts: None,
                     arm: cfg.arm.clone(),
                     hour: t.hour.clone(),
                     sym: t.sym.clone(),

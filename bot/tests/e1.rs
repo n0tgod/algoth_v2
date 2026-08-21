@@ -54,6 +54,7 @@ fn close_ev(pos: &str, pnl: f64, at: i64) -> Event {
 fn six_events() -> Vec<Event> {
     vec![
         Event::Decision {
+            src_ts: None,
             arm: "gbm".into(),
             hour: "2026-08-05-11".into(),
             sym: "AUSDT".into(),
