@@ -5577,8 +5577,9 @@ document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
 navMount("/live-page");
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function bp(v){ return v == null ? "&mdash;"
-  : (v > 0 ? "+" : "") + Number(v).toFixed(1); }
+function lvl(v){ if (v == null) return "&mdash;";
+  const d = Math.abs(v) >= 10 ? 2 : 3;
+  return (v / 100).toFixed(d) + " %"; }
 function usd(v){ return v == null ? "&mdash;"
   : (v > 0 ? "+" : "") + Number(v).toFixed(2) + " $"; }
 function ts(t){ return t ? new Date(t * 1000).toISOString()
@@ -5593,10 +5594,10 @@ function intro(d){
   shows what differs: the fill against the <b>signal price</b> the
   scanner saw at the decision second (entry slippage), whether the
   take-profit <b>filled as a resting limit at the level</b> (the
-  live test of rule v13), and the live net in bp of its own notional
-  against the paper <b>net_bp</b> of the same record.</div>
+  live test of rule v13), and the live net in PERCENT of its own
+  notional against the paper net of the same record.</div>
   <div class="k" style="margin-top:6px">Money is compared in
-  BASIS POINTS, never in dollars: the paper position is 300&nbsp;$,
+  PERCENT OF NOTIONAL, never in dollars: the paper position is 300&nbsp;$,
   the live one 30&nbsp;$. This is a measurement of execution
   mechanics, not of profit — a week of it cannot say anything about
   returns. The old playbook (what the model can read) lives at
@@ -5636,11 +5637,11 @@ function tiles(d){
     : "&mdash;";
   return `<div class="panel"><div class="cap">the measurement so far
     </div><div class="tiles">
-    ${t("entry slippage, median", bp(s.entry_slip_med_bp) + " bp",
+    ${t("entry slippage, median", pct(s.entry_slip_med_bp),
         (s.entry_slip_n || 0) + " fills vs signal price")}
-    ${t("fees paid, median", bp(s.fee_med_bp) + " bp",
+    ${t("fees paid, median", lvl(s.fee_med_bp),
         s.model_round_bp == null ? "model round unknown"
-        : "model round " + s.model_round_bp + " bp")}
+        : "model round " + lvl(s.model_round_bp))}
     ${t("take filled at level (v13)", v13,
         s.level_misses ? s.level_misses + " missed" :
         "of target exits")}
@@ -5650,7 +5651,7 @@ function tiles(d){
         : "&mdash;",
         (s.open_priced || 0) + "/" + (s.open || 0)
         + " priced &middot; a mark, not an outcome")}
-    ${t("live vs paper, median", bp(s.net_delta_med_bp) + " bp",
+    ${t("live vs paper, median", pct(s.net_delta_med_bp),
         (s.net_delta_n || 0) + " matched closes")}
     ${t("decisions", (c.decisions ?? "&mdash;"),
         (c.rejects_exec || 0) + " exec rejects · "
@@ -5680,10 +5681,10 @@ function table(d){
   return `<div class="panel"><div class="cap">live trades, newest
    first</div><div class="scroll"><table>
    <tr><th>opened</th><th>sym</th><th>side</th><th>size $</th>
-   <th>signal px</th><th>fill px</th><th>slip bp</th>
-   <th>exit px</th><th>mark bp</th><th>live net bp</th>
-   <th>paper net bp</th>
-   <th>&Delta; bp</th><th>pnl $</th><th>fees bp</th>
+   <th>signal px</th><th>fill px</th><th>slip</th>
+   <th>exit px</th><th>mark</th><th>live net</th>
+   <th>paper net</th>
+   <th>&Delta;</th><th>pnl $</th><th>fees</th>
    <th>exit</th><th>v13</th><th>i</th></tr>`
    + rows.map(r => `<tr>
      <td class="mono">${ts(r.opened_at)}</td>
@@ -5694,19 +5695,19 @@ function table(d){
      <td class="mono">${r.sig_px ?? "&mdash;"}</td>
      <td class="mono">${r.entry_px ?? "&mdash;"}</td>
      <td class="mono ${r.slip_bp > 0 ? "bad" : "good"}">${
-        bp(r.slip_bp)}</td>
+        pct(r.slip_bp)}</td>
      <td class="mono">${r.exit_px ?? (r.state === "открыта"
         ? '<span class="dim">open</span>' : "&mdash;")}</td>
      <td class="mono thin" title="mark at the current mid — not an
       outcome; it will be anything until the exit">${
-        r.state === "открыта" ? bp(r.unreal_bp) : "&mdash;"}</td>
-     <td class="mono">${bp(r.live_net_bp)}</td>
-     <td class="mono">${bp(r.paper_net_bp)}</td>
+        r.state === "открыта" ? pct(r.unreal_bp) : "&mdash;"}</td>
+     <td class="mono">${pct(r.live_net_bp)}</td>
+     <td class="mono">${pct(r.paper_net_bp)}</td>
      <td class="mono ${r.delta_bp == null ? "dim"
-        : (r.delta_bp >= 0 ? "good" : "bad")}">${bp(r.delta_bp)}</td>
+        : (r.delta_bp >= 0 ? "good" : "bad")}">${pct(r.delta_bp)}</td>
      <td class="mono ${r.pnl > 0 ? "good" : r.pnl < 0 ? "bad" : ""}">${
         r.pnl == null ? "&mdash;" : Number(r.pnl).toFixed(2)}</td>
-     <td class="mono">${bp(r.fee_bp)}</td>
+     <td class="mono">${lvl(r.fee_bp)}</td>
      <td class="k" title="${esc(r.reason)}">${
         esc((r.reason || "").slice(0, 26))}${
         (r.reason || "").length > 26 ? "&hellip;" : ""}</td>
@@ -5716,7 +5717,8 @@ function table(d){
      <td>${info(r)}</td></tr>`).join("")
    + `</table></div>
    <div class="k">&Delta; is live net minus paper net of the SAME
-   record, in bp of each ledger&rsquo;s own notional. Positive means
+   record, in percent of each ledger&rsquo;s own notional. Positive
+   means
    the live fill did better than the paper model assumed — expect it
    negative by roughly the extra costs the model does not see.</div>
    </div>`;
