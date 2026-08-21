@@ -272,6 +272,16 @@ pub struct LiveCfg {
     pub total_stop_usd: f64,
     pub max_rejects: u32,
     pub stale_cycle_h: f64,
+    /// Свежесть события входа, секунды. Файл событий перечитывается
+    /// целиком, и на первом запуске ВСЯ история книги выглядит новыми
+    /// решениями — без порога первые же шесть исторических входов
+    /// открыли бы живые позиции по старым сигналам (найдено сухим
+    /// прогоном X2: первый такт ушёл в обход сотен старых событий по
+    /// два запроса к бирже на каждое). Вход привязан к секунде
+    /// события — исполнять его позже значит торговать прошлое.
+    /// Выходы порогом НЕ гасятся никогда: вход — возможность,
+    /// выход — обязанность перед открытой позицией.
+    pub stale_entry_sec: i64,
     /// Сухой прогон X2: заявки формируются и проверяются по живому
     /// справочнику, но НЕ отправляются; выдуманных исполнений нет —
     /// позиции в сухом прогоне не открываются вовсе.
@@ -334,6 +344,10 @@ pub struct Executor<E: Exchange> {
     /// Позиции, чей выход уже записан книгой, но IOC не исполнился:
     /// повтор следующим тактом, каждый — строкой журнала.
     exit_pending: BTreeMap<String, String>,
+    /// Событий входа в файле, слишком старых чтобы действовать
+    /// (пересчитывается каждый такт, едет в статус): молча выброшенное
+    /// обязано быть видно числом.
+    stale_entries: u64,
 }
 
 impl<E: Exchange> Executor<E> {
@@ -474,6 +488,7 @@ impl<E: Exchange> Executor<E> {
             realized_total,
             realized_by_day,
             exit_pending: BTreeMap::new(),
+            stale_entries: 0,
         })
     }
 
@@ -1024,6 +1039,7 @@ impl<E: Exchange> Executor<E> {
     fn process_entries(&mut self, now_ms: i64, rep: &mut TickReport) {
         let events: Vec<EntryEv> =
             picks::read_lines(&self.cfg.s8_dir.join("entries_live.jsonl"));
+        self.stale_entries = 0;
         for ev in events {
             let arm = ev.arm.clone().unwrap_or_else(|| "gbm".into());
             if arm != self.cfg.arm {
@@ -1032,6 +1048,13 @@ impl<E: Exchange> Executor<E> {
             let Some(side) = side_of(&ev.side) else { continue };
             let key = pos_key(&arm, &ev.hour, &ev.sym, side);
             let at_ms = (ev.at_ts * 1000.0) as i64;
+            // Старое событие не торгуется, не журналируется и не
+            // трогает биржу: оно останется старым и завтра, возраст
+            // отсеет его на каждом такте. Число видно в статусе.
+            if now_ms - at_ms > self.cfg.stale_entry_sec * 1000 {
+                self.stale_entries += 1;
+                continue;
+            }
             let seen_key = format!("{key}@{at_ms}");
             if self.seen.contains(&seen_key) {
                 continue;
@@ -1290,6 +1313,7 @@ impl<E: Exchange> Executor<E> {
             "realized_today_usd": self.realized_by_day.get(&today).copied().unwrap_or(0.0),
             "realized_total_usd": self.realized_total,
             "rejects_row": self.rejects_row,
+            "stale_entries_skipped": self.stale_entries,
             "wallet": wallet.map(|(eq, bal)| json!({"equity": eq, "balance": bal})),
         });
         let path = self.cfg.journal_dir.join("live_status.json");

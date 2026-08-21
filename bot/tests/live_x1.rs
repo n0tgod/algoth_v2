@@ -249,6 +249,7 @@ impl Fx {
             total_stop_usd: 45.0,
             max_rejects: 3,
             stale_cycle_h: 1e9, // свежесть манифеста в тестах не предмет
+            stale_entry_sec: 120,
             dry,
         }
     }
@@ -284,7 +285,7 @@ const NOW: i64 = 1_755_700_000_000;
 fn вход_ставит_ioc_и_цель_на_уровне() {
     let fx = Fx::new("entry");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     let rep = ex.tick(NOW);
     assert_eq!(rep.opened, 1, "вход не открылся");
@@ -330,9 +331,9 @@ fn ioc_без_исполнения_отказ_и_три_подряд_остан�
         .with_sym("BUSDT", 1.9999, 2.0001, 0.0001, 0.1, 0.1, 5.0)
         .with_sym("CUSDT", 2.9999, 3.0001, 0.0001, 0.1, 0.1, 5.0);
     m.set_ioc_fills(false);
-    fx.entry("gbm", "2026-08-20-15", "AUSDT", "long", 1.0, -50.0, 100.0, 1755699001.0);
-    fx.entry("gbm", "2026-08-20-15", "BUSDT", "long", 2.0, -50.0, 100.0, 1755699002.0);
-    fx.entry("gbm", "2026-08-20-15", "CUSDT", "long", 3.0, -50.0, 100.0, 1755699003.0);
+    fx.entry("gbm", "2026-08-20-15", "AUSDT", "long", 1.0, -50.0, 100.0, 1755699951.0);
+    fx.entry("gbm", "2026-08-20-15", "BUSDT", "long", 2.0, -50.0, 100.0, 1755699952.0);
+    fx.entry("gbm", "2026-08-20-15", "CUSDT", "long", 3.0, -50.0, 100.0, 1755699953.0);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     let rep = ex.tick(NOW);
     assert_eq!(rep.opened, 0);
@@ -352,7 +353,7 @@ fn ioc_без_исполнения_отказ_и_три_подряд_остан�
 fn выход_по_стопу_снимает_цель_и_закрывает() {
     let fx = Fx::new("stop");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
     assert_eq!(ex.pos.len(), 1);
@@ -397,7 +398,7 @@ fn выход_по_стопу_снимает_цель_и_закрывает() {
 fn цель_исполнилась_закрытие_по_уровню() {
     let fx = Fx::new("target-fill");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
     let target_id = m.placed().last().unwrap().id.clone();
@@ -437,7 +438,7 @@ fn цель_исполнилась_закрытие_по_уровню() {
 fn цель_книги_без_исполнения_лимитки_это_расхождение_v13() {
     let fx = Fx::new("target-miss");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
 
@@ -464,7 +465,7 @@ fn цель_книги_без_исполнения_лимитки_это_рас�
 fn расхождение_с_биржей_останавливает_без_закрытий() {
     let fx = Fx::new("mismatch");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
     let placed_before = m.placed().len();
@@ -488,7 +489,7 @@ fn расхождение_с_биржей_останавливает_без_за
 fn kill_означает_руки_прочь() {
     let fx = Fx::new("kill");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
     let before = (m.placed().len(), m.cancelled().len());
@@ -507,7 +508,7 @@ fn kill_означает_руки_прочь() {
 fn предел_дня_закрывает_всё() {
     let fx = Fx::new("daystop");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
 
@@ -543,7 +544,7 @@ fn предел_дня_закрывает_всё() {
 fn сухой_прогон_не_отправляет_ничего() {
     let fx = Fx::new("dry");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(true), m.clone(), false).unwrap();
     let rep = ex.tick(NOW);
     assert_eq!(rep.opened, 0);
@@ -569,7 +570,7 @@ fn сухой_прогон_не_отправляет_ничего() {
 fn встречный_сигнал_закрывает_и_не_открывается() {
     let fx = Fx::new("netted");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
     assert_eq!(ex.pos.len(), 1);
@@ -592,7 +593,7 @@ fn встречный_сигнал_закрывает_и_не_открывает
 fn мелкая_нога_отвергается_без_заявки() {
     let fx = Fx::new("minlot");
     let m = Mock::new().with_sym("BTCUSDT", 114999.0, 115001.0, 0.1, 0.001, 0.001, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "BTCUSDT", "long", 115000.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "BTCUSDT", "long", 115000.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     let rep = ex.tick(NOW);
     assert_eq!(rep.opened, 0);
@@ -609,7 +610,7 @@ fn мелкая_нога_отвергается_без_заявки() {
 fn перезапуск_берёт_количество_у_биржи() {
     let fx = Fx::new("restart");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     {
         let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
         ex.tick(NOW);
@@ -651,7 +652,7 @@ fn перезапуск_берёт_количество_у_биржи() {
 fn старое_событие_не_входит_после_закрытия() {
     let fx = Fx::new("dedup-after-close");
     let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
-    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699000.5);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
     let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
     ex.tick(NOW);
     fx.exit("gbm", "2026-08-20-15", "ARBUSDT", "long",
@@ -668,6 +669,37 @@ fn старое_событие_не_входит_после_закрытия() {
     let recs = fx.records();
     let decisions = recs.iter().filter(|r| matches!(r.event, Event::Decision { .. })).count();
     assert_eq!(decisions, 1, "решение записано больше одного раза");
+}
+
+/// Первый запуск на живой книге: файл событий несёт ИСТОРИЮ, и без
+/// порога свежести первые шесть старых входов открыли бы живые
+/// позиции по прошлым сигналам (найдено сухим прогоном X2). Старое
+/// событие не торгуется, не трогает биржу и не порождает ни строки
+/// журнала; свежее рядом с ним работает как обычно.
+#[test]
+fn историческое_событие_не_торгуется_и_не_шумит() {
+    let fx = Fx::new("stale");
+    let m = Mock::new()
+        .with_sym("OLDUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0)
+        .with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    // Событие часовой давности — история книги до нашего запуска.
+    fx.entry("gbm", "2026-08-20-14", "OLDUSDT", "long", 1.0, -50.0, 120.0, 1755696400.0);
+    // Свежее событие — 50 секунд до NOW.
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    let rep = ex.tick(NOW);
+    assert_eq!(rep.opened, 1, "свежее событие обязано войти");
+    assert!(ex.pos.keys().all(|k| k.contains("ARBUSDT")), "{:?}", ex.pos.keys());
+    // Историческое не оставило следа: ни заявки, ни строки журнала.
+    let placed = m.placed();
+    assert!(placed.iter().all(|p| p.sym != "OLDUSDT"), "{placed:?}");
+    let recs = fx.records();
+    assert!(recs.iter().all(|r| !matches!(&r.event,
+        Event::Decision { sym, .. } | Event::Reject { sym, .. } if sym == "OLDUSDT")),
+        "историческое событие попало в журнал");
+    // И на следующем такте оно так же старо.
+    let rep2 = ex.tick(NOW + 5_000);
+    assert_eq!(rep2.opened, 0);
 }
 
 /// Потолок цены — служебная арифметика уровня заявки.

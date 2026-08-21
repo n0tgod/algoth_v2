@@ -337,6 +337,7 @@ fn main() {
                 total_stop_usd: 45.0,
                 max_rejects: 3,
                 stale_cycle_h: 3.0,
+                stale_entry_sec: 120,
                 dry,
             };
             eprintln!(
