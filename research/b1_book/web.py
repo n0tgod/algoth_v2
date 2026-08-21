@@ -5667,11 +5667,16 @@ function table(d){
     return `<div class="panel"><div class="dim">no live trades yet —
       the first appears with the first fresh scanner entry</div>
       </div>`;
-  const info = r => r.tid && r.hour ? `<a class="open"
+  const info = r => (r.tid && r.hour ? `<a class="open"
     title="the paper record of this decision"
     href="/trade-info?k=${encodeURIComponent(KEY)}&sym=${
     encodeURIComponent(r.sym)}&arm=${r.arm}&hour=${r.hour}&side=${
-    r.side}&hz=sit" style="text-decoration:none">&#9432;</a>` : "";
+    r.side}&hz=sit" style="text-decoration:none">&#9432;</a> ` : "")
+    + (r.sym && r.hour ? `<a class="open"
+    title="open this trade on the live chart"
+    href="/chart?k=${encodeURIComponent(KEY)}&sym=${
+    encodeURIComponent(r.sym)}&arm=${r.arm}&hour=${
+    r.hour}&hz=sit">chart</a>` : "");
   return `<div class="panel"><div class="cap">live trades, newest
    first</div><div class="scroll"><table>
    <tr><th>opened</th><th>sym</th><th>side</th><th>size $</th>
