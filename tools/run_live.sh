@@ -73,6 +73,28 @@ if pgrep -f "$PAT" >/dev/null; then
 fi
 
 mkdir -p "$JOURNAL" bot/out
+
+# Журнал сухого прогона и журнал живых заявок описывают РАЗНОЕ: первый
+# полон записей «сформирована, не отправлена», и смешав их, отчёт X4
+# посчитал бы сухие отказы настоящими — доля отказов, проскальзывание и
+# число кругов вышли бы из смеси гипотетического с реальным. Тот же
+# приём, что маркер источника у тени: смена режима отставляет журнал в
+# архив, а не дописывает поверх. Файл KILL переносится в свежий каталог
+# — аварийный выключатель не снимается сменой режима.
+WANT_MODE=$([ -n "$MODE_FLAG" ] && echo dry || echo live)
+MODE_MARK="$JOURNAL/mode.txt"
+CUR_MODE=$(cat "$MODE_MARK" 2>/dev/null || true)
+if [ "$CUR_MODE" != "$WANT_MODE" ] \
+        && ls "$JOURNAL"/journal-*.jsonl* >/dev/null 2>&1; then
+    ARCH="${JOURNAL}-${CUR_MODE:-unmarked}-$(date -u +%Y%m%d-%H%M%S)"
+    echo "== журнал писан в режиме «${CUR_MODE:-без маркера}» =="
+    echo "   архивирую в $ARCH и начинаю чистый"
+    mv "$JOURNAL" "$ARCH" || { echo "ОШИБКА: не смог отставить журнал"; exit 1; }
+    mkdir -p "$JOURNAL"
+    [ -f "$ARCH/KILL" ] && cp "$ARCH/KILL" "$JOURNAL/KILL"
+fi
+printf '%s\n' "$WANT_MODE" > "$MODE_MARK"
+
 echo "== запускаю: $MODE_NAME =="
 ( setsid nohup "$BIN" live \
     --s8 "$S8" \
