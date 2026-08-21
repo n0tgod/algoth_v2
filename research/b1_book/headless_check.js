@@ -208,6 +208,7 @@ global.fetch = async (url) => {
                 counts: {decisions: 5, opened: 3, closed: 2,
                          rejects_dry: 1, rejects_exec: 1},
                 summary: {open: 1, closed: 2,
+                          open_priced: 1, open_marked_usd: 0.31,
                           entry_slip_med_bp: 3.4, entry_slip_n: 3,
                           fee_med_bp: 12.1, fee_n: 2,
                           model_round_bp: 11.0,
@@ -244,6 +245,8 @@ global.fetch = async (url) => {
                    side: "long", size: 30.05, sig_px: 0.055,
                    entry_px: 0.05503, slip_bp: 5.5, state: "открыта",
                    tid: "ghi2345", paper_net_bp: null,
+                   cur_px: 0.0556, unreal_bp: 103.6,
+                   unreal_usd: 0.31,
                    opened_at: Date.UTC(2026,7,21,20,1,44)/1000}],
                 rejects: [
                   {sym: "IONQUSDT", side: "short",
@@ -2178,6 +2181,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/>open</.test(bx))
       bad.push("живое исполнение: открытая позиция не названа "
                + "открытой");
+    // Отметка открытой позиции: своя плитка с покрытием и подписью
+    // «отметка, не исход», своя колонка в строке. Числа — из ответа.
+    if (!/open, marked/.test(bx) || !/\+0\.31 \$/.test(bx)
+        || !/1\/1 priced/.test(bx)
+        || !/a mark, not an outcome/.test(bx))
+      bad.push("живое исполнение: отметка открытых не показана "
+               + "плиткой с покрытием");
+    if (!/mark at the current mid/.test(bx) || !/\+103\.6/.test(bx))
+      bad.push("живое исполнение: отметка не стоит в строке открытой "
+               + "позиции");
     // Справочник ушёл из меню — достижимость держит ссылка отсюда.
     if (!/href="\/glossary-page\?k=xxx"/.test(bx))
       bad.push("живое исполнение: ссылка на прежний справочник "

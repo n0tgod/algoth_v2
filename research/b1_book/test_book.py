@@ -609,7 +609,13 @@ def test_live_exec_measures_slippage_against_signal():
         import trades as _TR  # noqa: F401 — прогрев sys.modules
         col = C.Collector.__new__(C.Collector)
         col.log = lambda m: None
-        col.books = {}
+
+        # Открытая позиция обязана нести ОТМЕТКУ по текущей середине —
+        # подставная книга цен отдаёт лучшие цены, как живая.
+        class _Bk:
+            def best(self):
+                return (2.02, 2.022)
+        col.books = {"CUSDT": _Bk()}
         col._px_cache = {}
         out = col.live_exec()
         check("бумажная книга построена без ошибки",
@@ -644,6 +650,23 @@ def test_live_exec_measures_slippage_against_signal():
         check("нет сигнала — нет измерения, а не ноль",
               c.get("slip_bp") is None and c.get("state") == "открыта",
               str(c.get("slip_bp")))
+        # Отметка открытой позиции: середина 2.021 против входа 2.0 у
+        # лонга = +105 б.п., деньги от нотионала 29.5 $; сводка несёт
+        # покрытие числом. У ЗАКРЫТОЙ строки отметки нет.
+        check("открытая позиция несёт отметку по середине",
+              c.get("unreal_bp") == 105.0
+              and abs((c.get("unreal_usd") or 0) - 0.31) < 0.01,
+              str({k: c.get(k) for k in ("unreal_bp", "unreal_usd")}))
+        check("сводка отметки — с покрытием числом",
+              out["summary"]["open_priced"] == 1
+              and out["summary"]["open_marked_usd"] == 0.31,
+              str({k: out["summary"].get(k)
+                   for k in ("open_priced", "open_marked_usd")}))
+        check("у закрытой строки отметки нет",
+              a.get("unreal_bp") is None, str(a.get("unreal_bp")))
+        check("медиана на чётном числе — середина, не верхнее",
+              C.Collector._median([3.0, 17.1]) == 10.1,
+              str(C.Collector._median([3.0, 17.1])))
         check("несопоставленная строка считается числом",
               out["summary"]["matched"] == 1
               and out["summary"]["unmatched"] == 1,

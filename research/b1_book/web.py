@@ -5646,6 +5646,10 @@ function tiles(d){
         "of target exits")}
     ${t("live pnl, closed", usd(s.pnl_live),
         (s.closed || 0) + " closed of " + (c.opened || 0) + " opened")}
+    ${t("open, marked", s.open_priced ? usd(s.open_marked_usd)
+        : "&mdash;",
+        (s.open_priced || 0) + "/" + (s.open || 0)
+        + " priced &middot; a mark, not an outcome")}
     ${t("live vs paper, median", bp(s.net_delta_med_bp) + " bp",
         (s.net_delta_n || 0) + " matched closes")}
     ${t("decisions", (c.decisions ?? "&mdash;"),
@@ -5672,7 +5676,8 @@ function table(d){
    first</div><div class="scroll"><table>
    <tr><th>opened</th><th>sym</th><th>side</th><th>size $</th>
    <th>signal px</th><th>fill px</th><th>slip bp</th>
-   <th>exit px</th><th>live net bp</th><th>paper net bp</th>
+   <th>exit px</th><th>mark bp</th><th>live net bp</th>
+   <th>paper net bp</th>
    <th>&Delta; bp</th><th>pnl $</th><th>fees bp</th>
    <th>exit</th><th>v13</th><th>i</th></tr>`
    + rows.map(r => `<tr>
@@ -5687,6 +5692,9 @@ function table(d){
         bp(r.slip_bp)}</td>
      <td class="mono">${r.exit_px ?? (r.state === "открыта"
         ? '<span class="dim">open</span>' : "&mdash;")}</td>
+     <td class="mono thin" title="mark at the current mid — not an
+      outcome; it will be anything until the exit">${
+        r.state === "открыта" ? bp(r.unreal_bp) : "&mdash;"}</td>
      <td class="mono">${bp(r.live_net_bp)}</td>
      <td class="mono">${bp(r.paper_net_bp)}</td>
      <td class="mono ${r.delta_bp == null ? "dim"

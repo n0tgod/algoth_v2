@@ -1453,6 +1453,18 @@ class Collector:
         return st
 
     @staticmethod
+    def _median(a):
+        """Медиана с честной серединой на чётном числе: sorted[n//2]
+        на двух заполнениях выдавал верхнее из двух за медиану —
+        первые же живые сделки показали +17.1 вместо +10.1."""
+        if not a:
+            return None
+        a = sorted(a)
+        n = len(a)
+        m = a[n // 2] if n % 2 else (a[n // 2 - 1] + a[n // 2]) / 2.0
+        return round(m, 1)
+
+    @staticmethod
     def _model_round_bp():
         """Модельный круг издержек — у самого ядра расчёта, не числом
         здесь: две записи одной константы однажды разошлись бы (тот же
@@ -1604,6 +1616,27 @@ class Collector:
                 row["paper_state"] = pt.get("state")
             else:
                 unmatched += 1
+            if cl is None:
+                # Открытая позиция несёт ОТМЕТКУ по текущей середине —
+                # тем же способом, что панель ядра. Отметка не исход:
+                # своя колонка, своя плитка, с закрытым не складывается;
+                # нет цены — прочерк, а не ноль.
+                mid = None
+                bk = self.books.get(sym)
+                if bk is not None:
+                    try:
+                        bid, ask = bk.best()
+                        if bid and ask:
+                            mid = (bid + ask) / 2.0
+                    except Exception:                 # noqa: BLE001
+                        mid = None
+                if mid and entry:
+                    mv = (mid / entry - 1.0) * 1e4
+                    row["cur_px"] = round(mid, 8)
+                    row["unreal_bp"] = round(
+                        mv if side == "long" else -mv, 1)
+                    row["unreal_usd"] = round(
+                        notional * row["unreal_bp"] / 1e4, 2)
             if cl is not None:
                 row["state"] = "закрыта"
                 row["exit_px"] = cl.get("exit_px")
@@ -1635,7 +1668,7 @@ class Collector:
             rows.append(row)
         rows.sort(key=lambda r: r.get("opened_at") or 0.0)
 
-        med = (lambda a: round(sorted(a)[len(a) // 2], 1) if a else None)
+        med = self._median
         out.update(
             counts=counts,
             rows=rows[-200:][::-1],
@@ -1643,6 +1676,13 @@ class Collector:
             paper_error=paper_error,
             summary={
                 "open": sum(1 for r in rows if r["state"] == "открыта"),
+                "open_priced": sum(
+                    1 for r in rows if r.get("unreal_usd") is not None),
+                "open_marked_usd": (round(sum(
+                    r["unreal_usd"] for r in rows
+                    if r.get("unreal_usd") is not None), 2)
+                    if any(r.get("unreal_usd") is not None
+                           for r in rows) else None),
                 "closed": counts["closed"],
                 "entry_slip_med_bp": med(slips),
                 "entry_slip_n": len(slips),
