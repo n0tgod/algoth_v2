@@ -601,6 +601,9 @@ def test_live_exec_paper_side_follows_the_book_marker():
         d0 = col.live_exec()
         check("без маркера бумажная сторона — model_sit",
               d0.get("book") == "model_sit", str(d0.get("book")))
+        # Ключ книги для ссылок страницы: журнал без маркера — sit.
+        check("без маркера ключ ссылок — sit",
+              d0.get("book_hz") == "sit", str(d0.get("book_hz")))
         r0 = [r for r in d0.get("rows") or [] if r.get("sym") == "LUSDT"]
         check("без маркера сделка бумаги не находит",
               r0 and r0[0].get("paper_net_bp") is None, str(r0[:1]))
@@ -613,6 +616,11 @@ def test_live_exec_paper_side_follows_the_book_marker():
         d1 = col.live_exec()
         check("маркер переводит бумажную сторону на книгу низкого RR",
               d1.get("book") == "model_sit_lo", str(d1.get("book")))
+        # Обратная карта BOOK_DIRS: ссылки графика и разбора обязаны
+        # нести ключ КНИГИ ЖУРНАЛА — зашитое hz=sit после перевода
+        # вело бы в чужую запись.
+        check("маркер переводит и ключ ссылок (book_hz)",
+              d1.get("book_hz") == "sit_lo", str(d1.get("book_hz")))
         r1 = [r for r in d1.get("rows") or [] if r.get("sym") == "LUSDT"]
         check("сделка сопоставлена с бумагой книги низкого RR",
               r1 and r1[0].get("paper_net_bp") == 69.0, str(r1[:1]))

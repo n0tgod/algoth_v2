@@ -5532,67 +5532,130 @@ LIVEPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>playbook — live execution vs the paper signal</title>
 <style>
+/* Дизайн — тот же, что у панели ядра (наследник algoth_v1): тёмный
+   сине-фиолетовый фон, пурпурный акцент, тонкие рамки, воздух,
+   крупные числа (просьба владельца: страница bot live в дизайне
+   прежней core). Тема одна, переключателей внешнего вида нет (v2). */
 :root{color-scheme:dark;
- --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --ground:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
  --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
- --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
-*{box-sizing:border-box}
-body{margin:0;background:
+ --accent:#9747ff;--accent2:#694ef0;
+ --good:#3ddc7f;--bad:#ff6473;
+ --good-soft:rgba(61,220,127,.1);--bad-soft:rgba(255,100,115,.1)}
+*{box-sizing:border-box;margin:0}
+body{background:
   radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
-    transparent 65%) fixed,var(--bg);color:var(--ink);
- font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
-   sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
-.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
- margin-bottom:12px}
+    transparent 65%) fixed,
+  var(--ground);
+ color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-font-smoothing:antialiased}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.wrap{max-width:1160px;margin:0 auto;padding:0 16px 72px}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;
+ gap:10px;flex-wrap:wrap;padding:14px 0 12px;margin-bottom:12px;
+ background:rgba(11,8,32,.82);backdrop-filter:blur(10px);
+ border-bottom:1px solid var(--rule-soft)}
 .brand{font-weight:800;letter-spacing:.24em;font-size:15px;
- color:var(--ink);text-decoration:none}
-.brand b{color:var(--accent)}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+ color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand b{color:var(--accent);font-weight:800}
+.tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 10px;background:rgba(151,71,255,.06);white-space:nowrap}
+.sp{flex:1 1 auto}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;
+ color:var(--muted);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 11px;background:var(--chip);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good);
+ box-shadow:0 0 6px var(--good);flex:none}
+.hb-stale .dot{background:var(--bad);box-shadow:0 0 6px var(--bad)}
+.chip{display:inline-flex;align-items:baseline;gap:8px;
+ border:1px solid var(--rule);border-radius:10px;padding:5px 12px;
+ background:var(--chip)}
+.ck{font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+ color:var(--muted)}
+.cv{font-size:14px;font-weight:650}
 .k{color:var(--muted);font-size:12px}
-.dim{color:var(--muted)}
-.panel{background:var(--panel);border:1px solid var(--rule);
- border-radius:14px;padding:12px 14px;margin:12px 0}
-.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
- color:var(--muted);margin-bottom:8px}
-table{border-collapse:collapse;width:100%}
-td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
- var(--rule-soft);font-size:13px;white-space:nowrap}
-th{color:var(--muted);font-weight:600}
-.good{color:var(--bid)}.bad{color:var(--ask)}
-.thin{color:var(--muted)}
+.good{color:var(--good)} .bad{color:var(--bad)}
+.dim{color:var(--muted)} .thin{color:var(--muted)}
 a{color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,
+ minmax(155px,1fr));gap:10px;margin:0 0 14px}
+.st{background:linear-gradient(180deg,rgba(151,71,255,.06),
+  rgba(151,71,255,0) 55%),var(--panel);
+ border:1px solid var(--rule);border-radius:14px;padding:11px 13px}
+.st .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.st .v{font-size:17px;font-weight:600;margin-top:5px}
+.st .s{font-size:10.5px;color:var(--muted);margin-top:4px;
+ line-height:1.45}
+.card{background:var(--panel);border:1px solid var(--rule);
+ border-radius:16px;padding:14px 16px;margin-bottom:14px}
+.cap{display:flex;justify-content:space-between;align-items:baseline;
+ gap:10px;flex-wrap:wrap;font-size:10.5px;letter-spacing:.12em;
+ text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.meta{letter-spacing:0;text-transform:none;font-size:11.5px;
+ color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:10px;
+ letter-spacing:.1em;text-transform:uppercase;
+ padding:6px 10px 7px 0;border-bottom:1px solid var(--rule)}
+td{padding:7px 10px 7px 0;white-space:nowrap;
+ border-bottom:1px solid var(--rule-soft)}
+tbody tr:hover td{background:rgba(151,71,255,.04)}
+tr[data-pos]{cursor:pointer}
+#tchart{width:100%;height:520px;border:0;border-radius:12px;
+ background:var(--ground);display:block}
 .scroll{overflow-x:auto}
-.big{font-size:19px;font-weight:700}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,
- minmax(180px,1fr));gap:10px}
-.tile{background:var(--chip);border:1px solid var(--rule-soft);
- border-radius:10px;padding:8px 10px}
-.tile .v{font-size:17px;font-weight:700}
+.side{display:inline-block;min-width:22px;text-align:center;
+ border-radius:6px;font-size:11px;font-weight:700;padding:1px 6px}
+.side.l{color:var(--good);background:var(--good-soft)}
+.side.s{color:var(--bad);background:var(--bad-soft)}
+canvas{width:100%;display:block}
+.alarm{border:1px solid rgba(255,100,115,.5);background:var(--bad-soft);
+ color:var(--bad);font-weight:600;border-radius:12px;
+ padding:9px 12px;margin-top:10px}
 .mode{display:inline-block;padding:2px 10px;border-radius:8px;
  font-weight:700;letter-spacing:.08em}
-.mode.live{background:rgba(255,100,115,.16);color:var(--ask);
- border:1px solid var(--ask)}
+.mode.live{background:rgba(255,100,115,.16);color:var(--bad);
+ border:1px solid var(--bad)}
 .mode.dry{background:rgba(142,136,173,.14);color:var(--muted);
  border:1px solid var(--rule)}
-.halt{border-left:2px solid var(--ask);padding-left:10px;
- color:var(--ask);font-weight:600;margin-top:8px}
-""" + NAVCSS + r"""
-</style>
+.foot{color:var(--muted);font-size:12px;margin-top:20px;line-height:1.7}
+@media(max-width:640px){
+ .wrap{padding:0 10px 60px}
+ .stats{grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:8px}
+ .card{padding:12px;border-radius:14px}}
+""" + NAVCSS + r"""</style>
 <div class="wrap">
-<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
-  <span class="k">playbook — live execution vs the paper signal</span>
-  <span style="flex:1"></span>
-  <span class="k" id="lead"></span></div>
+<header class="top">
+  <a id="home" href="#" class="brand" title="to overview">ALG<b>O</b>TH</a>
+  <span class="tag">playbook · live execution</span>
+  <span class="sp"></span>
+  <span id="hb" class="pill"><span class="dot"></span><span
+    id="topage" class="mono">&hellip;</span></span>
+  <span id="lead" class="pill mono">&hellip;</span>
+  <span class="chip"><span class="ck">wallet</span><span
+    id="topbal" class="cv mono">&hellip;</span></span>
+</header>
 <div id="nav"></div>
-<div class="panel" id="intro"></div>
+<div class="card" id="intro"></div>
+<section class="card" id="tcard" style="display:none">
+  <div class="cap"><span>trade on chart</span>
+    <span id="tlab" class="mono meta"></span></div>
+  <iframe id="tchart" title="trade chart"></iframe></section>
 <div id="box">&hellip;</div>
+<footer class="foot">this page only reads: the executor trades by the
+  scanner&rsquo;s own decisions, the emergency stop is the KILL file
+  on the server · refreshes every 15 s</footer>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
 """ + NAVJS + PCTJS + r"""
 navMount("/live-page");
+const css = k => getComputedStyle(document.documentElement)
+  .getPropertyValue(k).trim();
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function lvl(v){ if (v == null) return "&mdash;";
@@ -5602,11 +5665,15 @@ function usd(v){ return v == null ? "&mdash;"
   : (v > 0 ? "+" : "") + Number(v).toFixed(2) + " $"; }
 function ts(t){ return t ? new Date(t * 1000).toISOString()
   .slice(5, 16).replace("T", " ") : "&mdash;"; }
+// Ключ книги журнала — из ОТВЕТА сервера (book_hz по маркеру
+// book.txt): зашитое hz=sit после перевода исполнителя на другую
+// книгу вело бы ссылки графика и разбора в чужую запись.
+let HZ = "sit";
 
 // Рамка предмета — первым абзацем: без неё зелёная строка читается
 // как заработок, а страница меряет МЕХАНИКУ (спека 12).
 function intro(d){
-  return `<div class="cap">what this page compares</div>
+  return `<div class="cap"><span>what this page compares</span></div>
   <div>Every live trade of the executor is THE SAME trade the paper
   situational book recorded — one decision, two ledgers. The page
   shows what differs: the fill against the <b>signal price</b> the
@@ -5630,37 +5697,34 @@ function strip(d){
     : d.mode === "dry" ? `<span class="mode dry">DRY — orders are
        formed, not sent</span>`
     : `<span class="dim">executor not deployed</span>`;
-  const w = st.wallet || {};
-  const age = st.age_sec == null ? "&mdash;" : st.age_sec + " s";
-  return `<div class="panel"><div class="cap">executor</div>
+  return `<section class="card"><div class="cap"><span>executor</span>
+    <span class="meta mono">${d.book ? "book " + esc(d.book) : ""
+    }</span></div>
   <div>${mode}
-   <span class="k" style="margin-left:10px">status age ${age}
-   &nbsp;·&nbsp; wallet ${w.equity == null ? "&mdash;"
-     : Number(w.equity).toFixed(2) + " $"}
-   &nbsp;·&nbsp; open ${((d.summary || {}).open) ?? "&mdash;"}
+   <span class="k" style="margin-left:10px">open ${
+     ((d.summary || {}).open) ?? "&mdash;"}
    &nbsp;·&nbsp; rejects in a row ${st.rejects_row ?? "&mdash;"}
    &nbsp;·&nbsp; stale entries skipped ${
      st.stale_entries_skipped ?? "&mdash;"}</span></div>
-  ${st.halted ? `<div class="halt">HALTED: ${esc(st.halted)}</div>`
+  ${st.halted ? `<div class="alarm">HALTED: ${esc(st.halted)}</div>`
     : ""}
-  ${st.lev_errors ? `<div class="halt">leverage 1&times; was NOT set
+  ${st.lev_errors ? `<div class="alarm">leverage 1&times; was NOT set
     (the venue refused; entries proceed — size is the fence, not
     margin): ${Object.keys(st.lev_errors).map(esc).join(", ")}
     &mdash; ${esc(String(Object.values(st.lev_errors)[0] || ""))
     }</div>` : ""}
-  ${d.journal_error ? `<div class="halt">journal:
-     ${esc(d.journal_error)}</div>` : ""}</div>`;
+  ${d.journal_error ? `<div class="alarm">journal:
+     ${esc(d.journal_error)}</div>` : ""}</section>`;
 }
-function tiles(d){
+function stats(d){
   const s = d.summary || {}, c = d.counts || {};
-  const t = (name, val, sub) => `<div class="tile">
+  const t = (name, val, sub) => `<div class="st">
     <div class="k">${name}</div><div class="v mono">${val}</div>
-    <div class="k">${sub || ""}</div></div>`;
+    <div class="s">${sub || ""}</div></div>`;
   const v13 = (s.level_fills || s.level_misses)
     ? `${s.level_fills} / ${s.level_fills + s.level_misses}`
     : "&mdash;";
-  return `<div class="panel"><div class="cap">the measurement so far
-    </div><div class="tiles">
+  return `<div class="stats">
     ${t("entry slippage, median", pct(s.entry_slip_med_bp),
         (s.entry_slip_n || 0) + " fills vs signal price")}
     ${t("fees paid, median", lvl(s.fee_med_bp),
@@ -5681,39 +5745,124 @@ function tiles(d){
         (c.rejects_exec || 0) + " exec rejects · "
         + (c.rejects_dry || 0) + " dry-formed")}
   </div>
-  <div class="k" style="margin-top:8px">Slippage is signed so that
+  <div class="k" style="margin:0 2px 14px">Slippage is signed so that
   positive is ALWAYS worse for us, on both sides. A row the paper
   book has no record for is counted, not hidden: matched
-  ${s.matched ?? 0} / unmatched ${s.unmatched ?? 0}.</div></div>`;
+  ${s.matched ?? 0} / unmatched ${s.unmatched ?? 0}.</div>`;
 }
+// Кривая реализованных закрытий — та же подача, что equity на панели
+// ядра, только базой служит ноль: стартовый капитал страница не
+// выдумывает (урок фолбэка «1000»), а Σ pnl закрытых сделок — числа
+// самого журнала.
+function eqCard(rows){
+  const cl = (rows || []).filter(r => r.pnl != null && r.closed_at)
+    .sort((a, b) => a.closed_at - b.closed_at);
+  if (cl.length < 2) return null;
+  let s = 0;
+  const curve = cl.map(r => [r.closed_at, +(s += r.pnl).toFixed(4)]);
+  return {curve,
+    html: `<section class="card"><div class="cap"><span>realised
+      closes &middot; &Sigma; pnl</span><span class="mono meta">${
+      cl.length} closes &middot; ${usd(curve[curve.length - 1][1])
+      }</span></div><canvas id="eq" height="200"></canvas></section>`};
+}
+function drawEq(curve){
+  const cv = document.getElementById("eq");
+  if (!cv || !cv.getContext) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 700, H = 200;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  if (!curve || curve.length < 2) return;
+  let lo = 0, hi = 0;
+  for (const [, v] of curve) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+  const x = i => 8 + (W - 66) * i / (curve.length - 1);
+  const y = v => 10 + (H - 34) * (hi - v) / (hi - lo);
+  // Заливка под кривой — фирменный пурпур v1; в headless-прогоне
+  // createLinearGradient заглушен и возвращает пустоту, поэтому охрана.
+  const fill = g.createLinearGradient
+    ? g.createLinearGradient(0, 0, 0, H) : null;
+  if (fill && fill.addColorStop) {
+    fill.addColorStop(0, "rgba(151,71,255,.26)");
+    fill.addColorStop(1, "rgba(151,71,255,0)");
+    g.beginPath();
+    curve.forEach(([, v], i) =>
+      i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)));
+    g.lineTo(x(curve.length - 1), H - 6); g.lineTo(x(0), H - 6);
+    g.closePath(); g.fillStyle = fill; g.fill();
+  }
+  g.setLineDash([4, 4]); g.strokeStyle = css("--rule");
+  g.beginPath(); g.moveTo(8, y(0)); g.lineTo(W - 58, y(0));
+  g.stroke(); g.setLineDash([]);
+  g.strokeStyle = css("--accent"); g.lineWidth = 2;
+  g.lineJoin = "round"; g.lineCap = "round";
+  g.beginPath();
+  curve.forEach(([, v], i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)));
+  g.stroke();
+  const lastV = curve[curve.length - 1][1];
+  g.fillStyle = css("--accent");
+  g.beginPath(); g.arc(x(curve.length - 1), y(lastV), 3, 0, 7); g.fill();
+  g.fillStyle = css("--muted"); g.font = "11px ui-monospace,Menlo,monospace";
+  g.fillText(hi.toFixed(2), W - 52, 16);
+  g.fillText(lo.toFixed(2), W - 52, H - 10);
+}
+// Клик по строке открывает сделку на графике НАД таблицей — тот же
+// встроенный чарт (embed), что на панели ядра: вторая реализация
+// графика однажды разошлась бы с первой. Клик по ссылке в строке —
+// не клик по строке.
+function showTrade(pos){
+  const m = String(pos || "").split(":");
+  if (m.length < 4) return;
+  const p = new URLSearchParams({k: KEY, sym: m[2], arm: m[0],
+                                 hour: m[1], embed: 1, hz: HZ});
+  const card = document.getElementById("tcard");
+  card.style.display = "";
+  const f = document.getElementById("tchart");
+  const src = "/chart?" + p.toString();
+  if (f.src !== src) f.src = src;
+  document.getElementById("tlab").textContent =
+    `${m[2].replace("USDT", "")} · ${m[3]} · signal hour ${m[1]}`;
+  if (card.scrollIntoView) card.scrollIntoView({behavior: "smooth"});
+}
+document.getElementById("box").addEventListener("click", e => {
+  if (e.target && e.target.closest && e.target.closest("a")) return;
+  const tr = e.target && e.target.closest
+    ? e.target.closest("[data-pos]") : null;
+  if (tr) showTrade(tr.dataset.pos);
+});
 function table(d){
   const rows = d.rows || [];
   if (!rows.length)
-    return `<div class="panel"><div class="dim">no live trades yet —
-      the first appears with the first fresh scanner entry</div>
-      </div>`;
+    return `<section class="card"><span class="dim">no live trades yet
+      — the first appears with the first fresh scanner entry</span>
+      </section>`;
   const info = r => (r.tid && r.hour ? `<a class="open"
     title="the paper record of this decision"
     href="/trade-info?k=${encodeURIComponent(KEY)}&sym=${
     encodeURIComponent(r.sym)}&arm=${r.arm}&hour=${r.hour}&side=${
-    r.side}&hz=sit" style="text-decoration:none">&#9432;</a> ` : "")
+    r.side}&hz=${HZ}" style="text-decoration:none">&#9432;</a> ` : "")
     + (r.sym && r.hour ? `<a class="open"
     title="open this trade on the live chart"
     href="/chart?k=${encodeURIComponent(KEY)}&sym=${
     encodeURIComponent(r.sym)}&arm=${r.arm}&hour=${
-    r.hour}&hz=sit">chart</a>` : "");
-  return `<div class="panel"><div class="cap">live trades, newest
-   first</div><div class="scroll"><table>
-   <tr><th>opened</th><th>sym</th><th>side</th><th>size $</th>
+    r.hour}&hz=${HZ}">chart</a>` : "");
+  return `<section class="card"><div class="cap"><span>live trades
+   </span><span class="meta">newest first &middot; click a row to see
+   it on the chart</span></div><div class="scroll"><table>
+   <thead><tr><th>opened</th><th>coin</th><th>side</th><th>size $</th>
    <th>signal px</th><th>fill px</th><th>slip</th>
    <th>exit px</th><th>mark</th><th>live net</th>
    <th>paper net</th>
    <th>&Delta;</th><th>pnl $</th><th>fees</th>
-   <th>exit</th><th>v13</th><th>i</th></tr>`
-   + rows.map(r => `<tr>
+   <th>exit</th><th>v13</th><th>i</th></tr></thead><tbody>`
+   + rows.map(r => `<tr${r.pos ? ` data-pos="${esc(r.pos)}"` : ""}>
      <td class="mono">${ts(r.opened_at)}</td>
-     <td class="mono">${esc(r.sym)}</td>
-     <td>${esc(r.side)}</td>
+     <td class="mono">${esc(String(r.sym || "")
+        .replace("USDT", ""))}</td>
+     <td><span class="side ${r.side === "long" ? "l" : "s"}">${
+        r.side === "long" ? "L" : "S"}</span></td>
      <td class="mono">${r.size == null ? "&mdash;"
         : Number(r.size).toFixed(2)}</td>
      <td class="mono">${r.sig_px ?? "&mdash;"}</td>
@@ -5743,52 +5892,72 @@ function table(d){
         : r.level_fill === false
         ? '<span class="bad">missed</span>' : ""}</td>
      <td>${info(r)}</td></tr>`).join("")
-   + `</table></div>
-   <div class="k">&Delta; is live net minus paper net of the SAME
+   + `</tbody></table></div>
+   <div class="k" style="margin-top:8px">&Delta; is live net minus
+   paper net of the SAME
    record, in percent of each ledger&rsquo;s own notional. Positive
    means
    the live fill did better than the paper model assumed — expect it
    negative by roughly the extra costs the model does not see.</div>
-   </div>`;
+   </section>`;
 }
 function rejectsPanel(d){
   const rj = d.rejects || [];
   if (!rj.length) return "";
-  return `<div class="panel"><div class="cap">decisions that did not
-   become trades</div><div class="scroll"><table>
-   <tr><th>when</th><th>sym</th><th>side</th><th>reason</th></tr>`
+  return `<section class="card"><div class="cap"><span>decisions that
+   did not become trades</span></div><div class="scroll"><table>
+   <thead><tr><th>when</th><th>sym</th><th>side</th><th>reason</th>
+   </tr></thead><tbody>`
    + rj.map(r => `<tr><td class="mono">${ts(r.at)}</td>
-     <td class="mono">${esc(r.sym)}</td><td>${esc(r.side)}</td>
+     <td class="mono">${esc(String(r.sym || "")
+        .replace("USDT", ""))}</td>
+     <td><span class="side ${r.side === "long" ? "l" : "s"}">${
+        r.side === "long" ? "L" : "S"}</span></td>
      <td class="k" style="white-space:normal">${esc(r.reason)}</td>
      </tr>`).join("")
-   + `</table></div><div class="k">In DRY mode every formed order
+   + `</tbody></table></div><div class="k" style="margin-top:8px">In
+   DRY mode every formed order
    lands here by design — that is the X2 record. In LIVE mode a row
    here is an execution fact: an IOC that did not fill inside its
    price cap, a leg below the exchange minimum, a netted signal.
-   </div></div>`;
+   </div></section>`;
 }
 async function load(){
   try {
     const r = await fetch("/live_exec?k=" + encodeURIComponent(KEY));
     const d = await r.json();
+    HZ = d.book_hz || "sit";
+    document.getElementById("intro").innerHTML = intro(d);
+    const st = d.status || {};
+    const hb = document.getElementById("hb");
+    hb.className = "pill"
+      + (st.age_sec == null || st.age_sec > 120 ? " hb-stale" : "");
+    document.getElementById("topage").textContent =
+      st.age_sec == null ? "no status"
+      : `${Math.round(st.age_sec)} s`;
+    const w = st.wallet || {};
+    document.getElementById("topbal").textContent =
+      w.equity == null ? "—" : Number(w.equity).toFixed(2) + " $";
     if (!d.present) {
-      document.getElementById("intro").innerHTML = intro(d);
+      document.getElementById("lead").textContent = "not deployed";
       document.getElementById("box").innerHTML =
-        `<div class="panel"><div class="dim">the live executor has
+        `<section class="card"><span class="dim">the live executor has
          not been deployed on the server yet — no journal, no status.
-         This is a named state, not an error.</div></div>`;
+         This is a named state, not an error.</span></section>`;
       return;
     }
-    document.getElementById("intro").innerHTML = intro(d);
+    const eq = eqCard(d.rows);
     document.getElementById("box").innerHTML =
-      strip(d) + tiles(d) + table(d) + rejectsPanel(d);
+      strip(d) + stats(d) + (eq ? eq.html : "")
+      + table(d) + rejectsPanel(d);
+    if (eq) drawEq(eq.curve);
     document.getElementById("lead").textContent =
       (d.mode || "") + " · " + ((d.rows || []).length) + " trades";
   } catch (e) {
     document.getElementById("box").innerHTML =
-      `<div class="panel"><div class="dim">no answer from the
-       collector — the page shows nothing rather than guessing</div>
-       </div>`;
+      `<section class="card"><span class="dim">no answer from the
+       collector — the page shows nothing rather than guessing</span>
+       </section>`;
   }
 }
 load();

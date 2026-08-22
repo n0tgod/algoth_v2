@@ -1607,6 +1607,15 @@ class Collector:
             except OSError:
                 pass
             out["book"] = book_base
+            # Ключ книги для ссылок страницы (график, разбор сделки):
+            # зашитое hz=sit после перевода журнала на другую книгу
+            # вело бы в чужую запись — тот же класс дефекта, что
+            # список книг в восьми местах. Обратная карта от
+            # единственной BOOK_DIRS; неизвестный каталог падает на
+            # sit, как все прежние журналы без маркера.
+            out["book_hz"] = next(
+                (k for k, v2 in self.BOOK_DIRS.items()
+                 if v2 == book_base), "sit")
             s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
             mdir = os.path.join(s8, book_base)
             with open(os.path.join(mdir, "manifest.json"),
