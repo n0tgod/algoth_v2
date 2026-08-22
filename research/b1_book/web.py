@@ -92,6 +92,12 @@ const HZ_KEYS = BOOK_LIST.map(x => x[0]).filter(k => k !== "h4")
   .concat(["sit_obs"]);
 """
 
+# Состав меню — решение владельца (2026-08-22): пункт playbook ВЕРНУЛСЯ
+# на справочник (перепутал при прошлой просьбе), живой исполнитель занял
+# слот панели ядра, а сама панель из меню ушла («достаточно затестили»).
+# Страница ядра не удалена: живёт по своему адресу, достижимость держит
+# ссылка со страницы живого исполнения — тот же приём, что был у
+# справочника, пока из меню уходил он.
 NAVJS = r"""
 const NAV_ITEMS = [
   ["/", "overview", "обзор"],
@@ -99,10 +105,10 @@ const NAV_ITEMS = [
   ["/league-page", "league", "лига"],
   ["/vol-page", "volatility", "волатильность"],
   ["/learning-page", "learning", "обучение"],
-  ["/live-page", "playbook", "бот live"],
+  ["/glossary-page", "playbook", "справочник"],
   ["/tree-page", "models", "модели"],
   ["/tournament-page", "tournament", "турнир"],
-  ["/bot-page", "core", "ядро"]];
+  ["/live-page", "bot live", "бот live"]];
 function navMount(current){
   const el = document.getElementById("nav");
   if (!el) return;
@@ -5600,9 +5606,10 @@ function intro(d){
   PERCENT OF NOTIONAL, never in dollars: the paper position is 300&nbsp;$,
   the live one 30&nbsp;$. This is a measurement of execution
   mechanics, not of profit — a week of it cannot say anything about
-  returns. The old playbook (what the model can read) lives at
-  <a href="/glossary-page?k=${encodeURIComponent(KEY)
-  }">the glossary page</a>.</div>`;
+  returns. The core panel (the shadow ledger and its parity checks)
+  left the menu and lives at
+  <a href="/bot-page?k=${encodeURIComponent(KEY)
+  }">the core page</a>.</div>`;
 }
 function strip(d){
   const st = d.status || {};
