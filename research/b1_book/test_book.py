@@ -559,6 +559,24 @@ def test_live_exec_measures_slippage_against_signal():
             {"seq": 5, "ev": "reject", "sym": "BUSDT", "side": "short",
              "reason": "IOC не исполнилась в потолке 30 б.п.",
              "at_ms": ms + 3000},
+            # Сделка, закрытая мимо исполнителя: запись закрытия несёт
+            # ноль и оговорку, настоящие деньги доехали с биржи
+            # поправкой (closed-pnl) — ровно так журнал выглядит после
+            # инцидента MONUSDT и перезапуска с починкой.
+            {"seq": 6, "ev": "open", "pos": f"gbm:{hour}:MUSDT:short",
+             "sym": "MUSDT", "side": "short", "notional_usd": 29.9,
+             "entry_px": 0.02932, "fee_usd": 0.0164, "partial": False,
+             "at_ms": ms + 4000},
+            {"seq": 7, "ev": "close", "pos": f"gbm:{hour}:MUSDT:short",
+             "exit_px": None, "fee_usd": 0.0, "pnl_usd": 0.0,
+             "reason": "позиция закрыта вне исполнителя (вручную либо "
+                       "биржей) — денег этой сделки журнал не знает",
+             "at_ms": ms + 70000},
+            {"seq": 8, "ev": "adjust",
+             "pos": f"gbm:{hour}:MUSDT:short", "pnl_usd": 2.64,
+             "reason": "деньги взяты с биржи задним числом "
+                       "(closed-pnl, записей 1)",
+             "at_ms": ms + 80000},
         ]
         with open(os.path.join(jdir, "journal-2026-08-21.jsonl"),
                   "w", encoding="utf-8") as f:
@@ -667,9 +685,22 @@ def test_live_exec_measures_slippage_against_signal():
         check("медиана на чётном числе — середина, не верхнее",
               C.Collector._median([3.0, 17.1]) == 10.1,
               str(C.Collector._median([3.0, 17.1])))
+        # Деньги, доехавшие с биржи поправкой: запись закрытия несла
+        # ноль, показ обязан нести настоящую сумму, пометку источника
+        # и нетто от неё же — а сводка складывать её в общий pnl.
+        mn = rws.get("MUSDT") or {}
+        check("поправка с биржи сложена с нулевым закрытием",
+              mn.get("pnl") == 2.64 and mn.get("pnl_exch") is True,
+              str({k: mn.get(k) for k in ("pnl", "pnl_exch")}))
+        check("нетто строки — от денег поправки, не от нуля",
+              abs((mn.get("live_net_bp") or 0) - 882.9) < 0.2,
+              str(mn.get("live_net_bp")))
+        check("сводка живого pnl включает поправку",
+              abs((out["summary"]["pnl_live"] or 0) - 2.88) < 0.01,
+              str(out["summary"]["pnl_live"]))
         check("несопоставленная строка считается числом",
               out["summary"]["matched"] == 1
-              and out["summary"]["unmatched"] == 1,
+              and out["summary"]["unmatched"] == 2,
               str(out["summary"]))
         check("отказ исполнения отделён от сухого",
               out["counts"]["rejects_exec"] == 1

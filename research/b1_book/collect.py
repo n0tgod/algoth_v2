@@ -1541,6 +1541,7 @@ class Collector:
             out["present"] = True
 
         decisions, opens, closes, rejects = {}, {}, {}, []
+        adjusts = {}
         counts = {"decisions": 0, "opened": 0, "closed": 0,
                   "rejects_dry": 0, "rejects_exec": 0}
         for r in recs:
@@ -1556,6 +1557,14 @@ class Collector:
             elif ev == "close":
                 counts["closed"] += 1
                 closes[r.get("pos")] = r
+            elif ev == "adjust":
+                # Поправка денег после закрытия: сделка «вне
+                # исполнителя» несла ноль, а биржа деньги знала
+                # (closed-pnl) — исполнитель дописал их отдельной
+                # записью при перезапуске. Переписать строку закрытия
+                # нельзя (журнал write-ahead), поэтому знание живёт
+                # рядом и складывается при показе.
+                adjusts[r.get("pos")] = r
             elif ev == "reject":
                 reason = r.get("reason") or ""
                 if "сухой прогон" in reason:
@@ -1642,6 +1651,15 @@ class Collector:
                 row["exit_px"] = cl.get("exit_px")
                 row["closed_at"] = (cl.get("at_ms") or 0) / 1000.0
                 pnl = float(cl.get("pnl_usd") or 0.0)
+                adj = adjusts.get(pos)
+                if adj is not None:
+                    # Деньги, доехавшие с биржи задним числом: у самой
+                    # записи закрытия ноль, настоящая сумма — в
+                    # поправке. Складывает СЕРВЕР, той же строкой, что
+                    # считает нетто, — страница не вправе делать это
+                    # сама (вторая касса).
+                    pnl += float(adj.get("pnl_usd") or 0.0)
+                    row["pnl_exch"] = True
                 pnl_live += pnl
                 row["pnl"] = round(pnl, 2)
                 fee = (float(o.get("fee_usd") or 0.0)
@@ -1652,6 +1670,10 @@ class Collector:
                     fees.append(row["fee_bp"])
                 reason = cl.get("reason") or ""
                 row["reason"] = reason
+                # Свежее закрытие «вне исполнителя» берёт деньги с
+                # биржи прямо в записи — помечается тем же флагом.
+                if "взяты с биржи" in reason:
+                    row["pnl_exch"] = True
                 # Правило v13 живьём: тейк-лимитка на уровне.
                 if "лимитка исполнилась" in reason:
                     row["level_fill"] = True

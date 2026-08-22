@@ -46,6 +46,12 @@ use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
+/// Оговорка закрытия «вне исполнителя», когда денег взять неоткуда.
+/// По ней же перезапуск находит записи прежнего образца и доправляет
+/// их с биржи: строка-маркер обязана быть одной константой на запись
+/// и поиск — два дословных текста однажды разошлись бы.
+const OUTSIDE_UNKNOWN: &str = "денег этой сделки журнал не знает";
+
 // --- биржа как трейт ---------------------------------------------------
 
 /// Справочник инструмента: (шаг цены, шаг объёма, мин. лот,
@@ -111,6 +117,15 @@ pub trait Exchange {
     fn order_status(&self, symbol: &str, order_id: &str) -> Result<OrderStatus, String>;
     fn positions(&self) -> Result<Vec<ExchPos>, String>;
     fn wallet_usdt(&self) -> Result<(f64, f64), String>;
+    /// Реализованный результат закрытых позиций имени за окно:
+    /// (момент мс, деньги $). Деньги сделки, закрытой мимо
+    /// исполнителя, знает только биржа.
+    fn closed_pnl(
+        &self,
+        symbol: &str,
+        start_ms: i64,
+        end_ms: i64,
+    ) -> Result<Vec<(i64, f64)>, String>;
 }
 
 impl Exchange for crate::venue::Venue {
@@ -172,6 +187,14 @@ impl Exchange for crate::venue::Venue {
     }
     fn wallet_usdt(&self) -> Result<(f64, f64), String> {
         crate::venue::Venue::wallet_usdt(self)
+    }
+    fn closed_pnl(
+        &self,
+        symbol: &str,
+        start_ms: i64,
+        end_ms: i64,
+    ) -> Result<Vec<(i64, f64)>, String> {
+        crate::venue::Venue::closed_pnl(self, symbol, start_ms, end_ms)
     }
 }
 
@@ -405,6 +428,10 @@ impl<E: Exchange> Executor<E> {
         let mut halted = None;
         let mut realized_total = 0.0;
         let mut realized_by_day: BTreeMap<String, f64> = BTreeMap::new();
+        // Закрытия «вне исполнителя» с нулём и без поправки — кандидаты
+        // спросить биржу задним числом: (ключ, имя, открыта, закрыта).
+        let mut outside_zero: Vec<(String, String, i64, i64)> = Vec::new();
+        let mut adjusted: BTreeSet<String> = BTreeSet::new();
         for r in &records {
             match &r.event {
                 Event::Decision { arm, hour, sym, side, src_ts, at_ms, .. } => {
@@ -440,8 +467,24 @@ impl<E: Exchange> Executor<E> {
                          *fee_usd, *at_ms, *qty, *target_px),
                     );
                 }
-                Event::Close { pos, pnl_usd, at_ms, .. } => {
+                Event::Close { pos, pnl_usd, reason, at_ms, .. } => {
+                    // Запись прежнего образца «денег журнал не знает»:
+                    // окно жизни позиции берётся, пока Open ещё не снят.
+                    if reason.contains(OUTSIDE_UNKNOWN) {
+                        if let Some(ev) = open_ev.get(pos) {
+                            outside_zero.push(
+                                (pos.clone(), ev.0.clone(), ev.5, *at_ms),
+                            );
+                        }
+                    }
                     open_ev.remove(pos);
+                    realized_total += pnl_usd;
+                    *realized_by_day
+                        .entry(crate::journal::utc_day(*at_ms))
+                        .or_insert(0.0) += pnl_usd;
+                }
+                Event::Adjust { pos, pnl_usd, at_ms, .. } => {
+                    adjusted.insert(pos.clone());
                     realized_total += pnl_usd;
                     *realized_by_day
                         .entry(crate::journal::utc_day(*at_ms))
@@ -501,18 +544,41 @@ impl<E: Exchange> Executor<E> {
                 .find(|p| p.sym == *sym && p.side == *side);
             let entry = entry_px.unwrap_or(0.0);
             let Some(px) = found else {
+                // Деньги сделки, закрытой мимо нас, знает биржа:
+                // closed-pnl отдаёт реализованный результат и ручных
+                // закрытий (нетто, комиссии вычтены площадкой). Окно —
+                // жизнь позиции по журналу до сего момента; пусто или
+                // отказ сети — честный ноль с прежней оговоркой, а не
+                // выдумка.
+                let now = now_ms_wall();
+                let (pnl, reason) = match ex.closed_pnl(sym, *at, now) {
+                    Ok(list) if !list.is_empty() => {
+                        let sum: f64 = list.iter().map(|(_, p)| p).sum();
+                        (sum, format!(
+                            "позиция закрыта вне исполнителя (вручную \
+                             либо биржей) — деньги взяты с биржи \
+                             (closed-pnl, записей {})",
+                            list.len()
+                        ))
+                    }
+                    _ => (0.0, format!(
+                        "позиция закрыта вне исполнителя (вручную либо \
+                         биржей) — {OUTSIDE_UNKNOWN}"
+                    )),
+                };
                 jr.append(Event::Close {
                     pos: key.clone(),
                     exit_px: None,
                     fee_usd: 0.0,
-                    pnl_usd: 0.0,
-                    reason: "позиция закрыта вне исполнителя (вручную \
-                             либо биржей) — денег этой сделки журнал \
-                             не знает"
-                        .into(),
-                    at_ms: now_ms_wall(),
+                    pnl_usd: pnl,
+                    reason,
+                    at_ms: now,
                 })
                 .map_err(|e| format!("журнал: {e}"))?;
+                realized_total += pnl;
+                *realized_by_day
+                    .entry(crate::journal::utc_day(now))
+                    .or_insert(0.0) += pnl;
                 continue;
             };
             let ins = ex.instrument(sym)?;
@@ -546,6 +612,49 @@ impl<E: Exchange> Executor<E> {
                     opened_at_ms: *at,
                 },
             );
+        }
+
+        // Деньги сделок, закрытых «вне исполнителя» с нулём (журнал
+        // прежнего образца — MONUSDT), доправляются с биржи задним
+        // числом ОТДЕЛЬНОЙ записью: журнал write-ahead, переписать
+        // старую строку нельзя. Окно — жизнь позиции по журналу
+        // (ручное закрытие случилось строго до того, как перезапуск
+        // записал «вне исполнителя»). Ответ «записей нет» тоже
+        // пишется — иначе вопрос задавался бы каждый перезапуск;
+        // отказ сети — пропуск, спросим следующим
+        for (key, sym, opened_at, closed_at) in outside_zero {
+            if adjusted.contains(&key) {
+                continue;
+            }
+            match ex.closed_pnl(&sym, opened_at, closed_at) {
+                Ok(list) => {
+                    let sum: f64 = list.iter().map(|(_, p)| p).sum();
+                    let reason = if list.is_empty() {
+                        "биржа записей closed-pnl в окне сделки не \
+                         нашла — деньги остаются неизвестными"
+                            .to_string()
+                    } else {
+                        format!(
+                            "деньги взяты с биржи задним числом \
+                             (closed-pnl, записей {})",
+                            list.len()
+                        )
+                    };
+                    let now = now_ms_wall();
+                    jr.append(Event::Adjust {
+                        pos: key.clone(),
+                        pnl_usd: sum,
+                        reason,
+                        at_ms: now,
+                    })
+                    .map_err(|e| format!("журнал: {e}"))?;
+                    realized_total += sum;
+                    *realized_by_day
+                        .entry(crate::journal::utc_day(now))
+                        .or_insert(0.0) += sum;
+                }
+                Err(e) => eprintln!("closed-pnl {sym}: {e}"),
+            }
         }
 
         Ok(Executor {

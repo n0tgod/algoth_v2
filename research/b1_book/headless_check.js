@@ -247,7 +247,22 @@ global.fetch = async (url) => {
                    tid: "ghi2345", paper_net_bp: null,
                    cur_px: 0.0556, unreal_bp: 103.6,
                    unreal_usd: 0.31,
-                   opened_at: Date.UTC(2026,7,21,20,1,44)/1000}],
+                   opened_at: Date.UTC(2026,7,21,20,1,44)/1000},
+                  // Закрыта мимо исполнителя: деньги доехали с биржи
+                  // (closed-pnl) поправкой — ячейка pnl обязана нести
+                  // и число, и пометку источника.
+                  {pos: "gbm:2026-08-21-17:MONUSDT:short",
+                   arm: "gbm", hour: "2026-08-21-17", sym: "MONUSDT",
+                   side: "short", size: 29.9, sig_px: 0.02932,
+                   entry_px: 0.02932, slip_bp: 1.7,
+                   live_net_bp: 879.0, paper_net_bp: 879.0,
+                   delta_bp: 0.0, pnl: 2.64, pnl_exch: true,
+                   fee_bp: 5.5, state: "закрыта", tid: "jkl4567",
+                   reason: "позиция закрыта вне исполнителя (вручную "
+                           + "либо биржей) — деньги взяты с биржи "
+                           + "(closed-pnl, записей 1)",
+                   opened_at: Date.UTC(2026,7,21,17,9,5)/1000,
+                   closed_at: Date.UTC(2026,7,21,21,40,0)/1000}],
                 rejects: [
                   {sym: "IONQUSDT", side: "short",
                    reason: "IOC не исполнилась в потолке 30 б.п. "
@@ -2197,6 +2212,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         || !/\+1\.04 %/.test(bx))
       bad.push("живое исполнение: отметка не стоит в строке открытой "
                + "позиции");
+    // Деньги сделки, закрытой мимо исполнителя, доезжают с биржи
+    // (closed-pnl): ячейка pnl несёт ЧИСЛО и пометку источника —
+    // голое число читалось бы как посчитанное журналом, а раньше
+    // там стоял ноль (инцидент MONUSDT).
+    if (!/2\.64.*<span class="dim">exch<\/span>/.test(bx)
+        || !/money taken from the exchange record/.test(bx))
+      bad.push("живое исполнение: деньги с биржи не подписаны "
+               + "источником");
     // Латинского «bp» на странице не осталось: б.п. в цитатах причин
     // исполнителя — данные, а не формат, и они кириллицей.
     if (/\bbp\b/.test(bx.replace(/б\.п\./g, "")))

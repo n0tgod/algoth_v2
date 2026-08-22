@@ -79,6 +79,42 @@ fn чистый_журнал_проходит_и_несёт_числа() {
     assert_eq!((rep.events, rep.open_positions), (3, 0));
 }
 
+/// Поправка денег после закрытия («вне исполнителя», биржевой
+/// closed-pnl) обязана считаться ОДИНАКОВО выводом состояния и
+/// независимым пересчётом сторожа: сними её любая из двух сторон —
+/// сверка кассы объявит расхождение, и этот тест укусит.
+#[test]
+fn поправка_денег_сходится_в_обеих_кассах() {
+    let d = tmp("adjust");
+    let (mut j, _, _) = Journal::open(&d).unwrap();
+    j.append(open_ev("p1", 41.66, T0)).unwrap();
+    j.append(Event::Close {
+        pos: "p1".into(),
+        exit_px: None,
+        fee_usd: 0.0,
+        pnl_usd: 0.0,
+        reason: "позиция закрыта вне исполнителя — денег этой сделки \
+                 журнал не знает"
+            .into(),
+        at_ms: T0 + 3_600_000,
+    })
+    .unwrap();
+    j.append(Event::Adjust {
+        pos: "p1".into(),
+        pnl_usd: 2.64,
+        reason: "деньги взяты с биржи задним числом (closed-pnl)".into(),
+        at_ms: T0 + 2 * 3_600_000,
+    })
+    .unwrap();
+    let (records, _) = read_all(&d).unwrap();
+    let st = derive(1000.0, &records).unwrap();
+    assert!((st.realized_pnl_usd - 2.64).abs() < 1e-9,
+            "поправка не дошла до реализованного: {}", st.realized_pnl_usd);
+    assert!(st.positions.is_empty());
+    let rep = verify(1000.0, &records, &st, &opts(T0 + 3 * 3_600_000));
+    assert!(rep.ok, "{:?}", rep.violations);
+}
+
 #[test]
 fn расхождение_кассы_с_историей_названо() {
     // Состояние подделывается мимо `derive` — ровно тот случай, когда

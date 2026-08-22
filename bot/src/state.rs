@@ -135,6 +135,14 @@ pub fn derive(capital_usd: f64, records: &[Record]) -> Result<State, StateError>
                 st.realized_pnl_usd += pnl_usd;
                 st.closed += 1;
             }
+            Event::Adjust { pnl_usd, .. } => {
+                // Деньги, узнанные после закрытия (биржевой closed-pnl
+                // у сделки «вне исполнителя»). Позиция уже снята её же
+                // Close — здесь только деньги, тем же движением, что у
+                // закрытия: в кассу и в реализованное.
+                st.cash_usd += pnl_usd;
+                st.realized_pnl_usd += pnl_usd;
+            }
             Event::Kill { on, .. } => st.kill = *on,
         }
     }

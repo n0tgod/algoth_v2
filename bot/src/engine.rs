@@ -224,6 +224,9 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
                 }
                 let _ = (sym, side);
             }
+            // Поправку денег пишет только живой исполнитель; тени она
+            // не встречается и на дедуп решений не влияет.
+            Event::Adjust { .. } => {}
             Event::Kill { .. } => {}
         }
     }

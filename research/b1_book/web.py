@@ -5705,8 +5705,12 @@ function table(d){
      <td class="mono">${pct(r.paper_net_bp)}</td>
      <td class="mono ${r.delta_bp == null ? "dim"
         : (r.delta_bp >= 0 ? "good" : "bad")}">${pct(r.delta_bp)}</td>
-     <td class="mono ${r.pnl > 0 ? "good" : r.pnl < 0 ? "bad" : ""}">${
-        r.pnl == null ? "&mdash;" : Number(r.pnl).toFixed(2)}</td>
+     <td class="mono ${r.pnl > 0 ? "good" : r.pnl < 0 ? "bad" : ""}"${
+        r.pnl_exch ? ' title="money taken from the exchange record'
+        + ' (closed-pnl) — the journal did not see this close itself"'
+        : ""}>${
+        r.pnl == null ? "&mdash;" : Number(r.pnl).toFixed(2)}${
+        r.pnl_exch ? ' <span class="dim">exch</span>' : ""}</td>
      <td class="mono">${lvl(r.fee_bp)}</td>
      <td class="k" title="${esc(r.reason)}">${
         esc((r.reason || "").slice(0, 26))}${

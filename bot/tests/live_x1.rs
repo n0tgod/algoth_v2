@@ -43,6 +43,9 @@ struct Inner {
     entry_error: Option<String>,
     next_id: u64,
     fee_bp: f64,
+    /// Записи closed-pnl биржи: (имя, момент мс, деньги $).
+    closed_pnl: Vec<(String, i64, f64)>,
+    closed_pnl_calls: u64,
 }
 
 #[derive(Clone)]
@@ -86,6 +89,12 @@ impl Mock {
     }
     fn set_order(&self, id: &str, st: OrderStatus) {
         self.0.borrow_mut().order_states.insert(id.into(), st);
+    }
+    fn push_closed_pnl(&self, sym: &str, at_ms: i64, pnl: f64) {
+        self.0.borrow_mut().closed_pnl.push((sym.into(), at_ms, pnl));
+    }
+    fn closed_pnl_calls(&self) -> u64 {
+        self.0.borrow().closed_pnl_calls
     }
     fn apply_fill(i: &mut Inner, sym: &str, side: &str, qty: f64, reduce: bool) {
         let long = side == "Buy";
@@ -213,6 +222,21 @@ impl Exchange for Mock {
     }
     fn wallet_usdt(&self) -> Result<(f64, f64), String> {
         Ok((300.0, 300.0))
+    }
+    fn closed_pnl(
+        &self,
+        symbol: &str,
+        start_ms: i64,
+        end_ms: i64,
+    ) -> Result<Vec<(i64, f64)>, String> {
+        let mut i = self.0.borrow_mut();
+        i.closed_pnl_calls += 1;
+        Ok(i
+            .closed_pnl
+            .iter()
+            .filter(|(s, t, _)| s == symbol && *t >= start_ms && *t <= end_ms)
+            .map(|(_, t, p)| (*t, *p))
+            .collect())
     }
 }
 
@@ -903,6 +927,72 @@ fn закрытое_руками_закрывается_записью_вне_и
         "нет записи о закрытии вне исполнителя");
     let rep = ex.tick(NOW + 10_000);
     assert!(rep.halted.is_none(), "{rep:?}");
+}
+
+/// Деньги сделки, закрытой мимо исполнителя, знает биржа — и запись
+/// закрытия обязана нести ИХ, а не ноль: closed-pnl отдаёт
+/// реализованный результат ручных закрытий (инцидент MONUSDT — на
+/// странице стоял pnl 0 при настоящих деньгах в кошельке).
+#[test]
+fn закрытое_руками_берёт_деньги_с_биржи() {
+    let fx = Fx::new("manual-close-pnl");
+    let m = Mock::new().with_sym("MONUSDT", 0.0299, 0.0301, 0.00001, 1.0, 1.0, 5.0);
+    fx.entry("gbm", "2026-08-21-21", "MONUSDT", "short", 0.03, 60.0, -140.0, 1755699950.5);
+    {
+        let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+        ex.tick(NOW);
+        assert_eq!(ex.pos.len(), 1);
+    }
+    // Владелец закрыл руками; биржа помнит деньги этого закрытия.
+    m.0.borrow_mut().positions.clear();
+    m.push_closed_pnl("MONUSDT", NOW + 60_000, 2.64);
+    let ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    assert!(ex.pos.is_empty());
+    let recs = fx.records();
+    assert!(recs.iter().any(|r| matches!(&r.event,
+        Event::Close { reason, pnl_usd, .. }
+            if reason.contains("взяты с биржи")
+               && (*pnl_usd - 2.64).abs() < 1e-9)),
+        "закрытие вне исполнителя не взяло деньги с биржи: {recs:?}");
+}
+
+/// Запись прежнего образца («денег журнал не знает», pnl 0)
+/// доправляется с биржи задним числом ОТДЕЛЬНОЙ записью при
+/// перезапуске — и ровно один раз: повторный подъём не спрашивает
+/// биржу заново и второй поправки не пишет.
+#[test]
+fn нулевое_вне_исполнителя_доправляется_поправкой() {
+    let fx = Fx::new("adjust-pnl");
+    let m = Mock::new().with_sym("MONUSDT", 0.0299, 0.0301, 0.00001, 1.0, 1.0, 5.0);
+    fx.entry("gbm", "2026-08-21-21", "MONUSDT", "short", 0.03, 60.0, -140.0, 1755699950.5);
+    {
+        let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+        ex.tick(NOW);
+    }
+    // Ручное закрытие при бирже, ещё НЕ отдающей записей, — рождается
+    // запись прежнего образца с нулём и оговоркой.
+    m.0.borrow_mut().positions.clear();
+    drop(Executor::open(fx.cfg(false), m.clone(), false).unwrap());
+    assert!(fx.records().iter().any(|r| matches!(&r.event,
+        Event::Close { reason, pnl_usd, .. }
+            if reason.contains("не знает") && *pnl_usd == 0.0)));
+    // Биржа знает деньги — следующий подъём доправляет их поправкой.
+    m.push_closed_pnl("MONUSDT", NOW + 60_000, 2.64);
+    drop(Executor::open(fx.cfg(false), m.clone(), false).unwrap());
+    let adj: Vec<f64> = fx.records().iter().filter_map(|r| match &r.event {
+        Event::Adjust { pnl_usd, .. } => Some(*pnl_usd),
+        _ => None,
+    }).collect();
+    assert_eq!(adj, vec![2.64], "поправка не записана либо не одна");
+    // Четвёртый подъём: поправка уже есть — биржу не спрашиваем,
+    // второй не пишем.
+    let calls = m.closed_pnl_calls();
+    drop(Executor::open(fx.cfg(false), m.clone(), false).unwrap());
+    assert_eq!(m.closed_pnl_calls(), calls,
+               "повторный подъём снова спрашивает биржу");
+    let n = fx.records().iter().filter(|r| matches!(&r.event,
+        Event::Adjust { .. })).count();
+    assert_eq!(n, 1, "поправка задвоилась");
 }
 
 /// Отказ 110126 «подпишите соглашение» — ограничение счёта по
