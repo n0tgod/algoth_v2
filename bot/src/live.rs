@@ -79,8 +79,22 @@ pub struct ExchPos {
 /// вежливость: без него логику заявок нельзя прогнать тестами, а
 /// правка в непроверяемом месте уже давала ложную тревогу панели
 /// (урок `verify_journal`).
+/// Лежащая заявка на бирже — для восстановления своих целей после
+/// перезапуска (метка `tp-<sym>-<ms>` реконструируется из журнала).
+#[derive(Clone, Debug)]
+pub struct Resting {
+    pub sym: String,
+    pub id: String,
+    pub link: String,
+    pub qty: f64,
+    pub px: f64,
+}
+
 pub trait Exchange {
     fn best_prices(&self, symbol: &str) -> Result<(f64, f64), String>;
+    fn open_orders(&self) -> Result<Vec<Resting>, String>;
+    /// Плечо 1× — спека 12 §2; отказ не блокирует вход, но пишется.
+    fn set_leverage(&self, symbol: &str, lev: &str) -> Result<(), String>;
     fn instrument(&self, symbol: &str) -> Result<Instrument, String>;
     #[allow(clippy::too_many_arguments)]
     fn place_limit(
@@ -102,6 +116,17 @@ pub trait Exchange {
 impl Exchange for crate::venue::Venue {
     fn best_prices(&self, symbol: &str) -> Result<(f64, f64), String> {
         crate::venue::Venue::best_prices(self, symbol)
+    }
+    fn open_orders(&self) -> Result<Vec<Resting>, String> {
+        Ok(crate::venue::Venue::open_orders(self)?
+            .into_iter()
+            .map(|(sym, id, link, qty, px)| Resting {
+                sym, id, link, qty, px,
+            })
+            .collect())
+    }
+    fn set_leverage(&self, symbol: &str, lev: &str) -> Result<(), String> {
+        crate::venue::Venue::set_leverage(self, symbol, lev)
     }
     fn instrument(&self, symbol: &str) -> Result<Instrument, String> {
         let (tick, step, min_qty, min_notional) =
@@ -313,6 +338,10 @@ pub struct LivePos {
     /// правило v13 обещает уровень книги, его и проверяем.
     pub target_px: Option<f64>,
     pub target_id: Option<String>,
+    /// Деньги частичных исполнений цели: уровень взяли не целиком,
+    /// позиция уменьшилась, а Close в журнале один — реализованная
+    /// часть копится здесь и входит в итоговый pnl закрытия.
+    pub part_pnl: f64,
     pub step: f64,
     pub tick: f64,
     pub opened_at_ms: i64,
@@ -348,6 +377,8 @@ pub struct Executor<E: Exchange> {
     /// (пересчитывается каждый такт, едет в статус): молча выброшенное
     /// обязано быть видно числом.
     stale_entries: u64,
+    /// Имена с выставленным плечом 1× (спека 12 §2) — раз на имя.
+    lev_set: BTreeSet<String>,
 }
 
 impl<E: Exchange> Executor<E> {
@@ -364,8 +395,12 @@ impl<E: Exchange> Executor<E> {
             Journal::open(&cfg.journal_dir).map_err(|e| format!("журнал: {e}"))?;
 
         let mut seen = BTreeSet::new();
-        let mut open_ev: BTreeMap<String, (String, Side, f64, Option<f64>, f64, i64)> =
-            BTreeMap::new();
+        #[allow(clippy::type_complexity)]
+        let mut open_ev: BTreeMap<
+            String,
+            (String, Side, f64, Option<f64>, f64, i64,
+             Option<f64>, Option<f64>),
+        > = BTreeMap::new();
         let mut pending: BTreeMap<String, (String, Side, i64)> = BTreeMap::new();
         let mut halted = None;
         let mut realized_total = 0.0;
@@ -396,11 +431,13 @@ impl<E: Exchange> Executor<E> {
                         pending.remove(&k);
                     }
                 }
-                Event::Open { pos, sym, side, notional_usd, entry_px, fee_usd, at_ms, .. } => {
+                Event::Open { pos, sym, side, notional_usd, entry_px,
+                              fee_usd, qty, target_px, at_ms, .. } => {
                     pending.remove(pos);
                     open_ev.insert(
                         pos.clone(),
-                        (sym.clone(), *side, *notional_usd, *entry_px, *fee_usd, *at_ms),
+                        (sym.clone(), *side, *notional_usd, *entry_px,
+                         *fee_usd, *at_ms, *qty, *target_px),
                     );
                 }
                 Event::Close { pos, pnl_usd, at_ms, .. } => {
@@ -444,25 +481,53 @@ impl<E: Exchange> Executor<E> {
             .map_err(|e| format!("журнал: {e}"))?;
         }
 
-        // Количество и цену держит биржа; журнал держит состав. Пока
-        // стороны и имена сходятся — берём её числа, иначе первая
-        // сверка остановит.
+        // Количество держит биржа; журнал держит состав, цену входа и
+        // уровень цели. После перезапуска: количество — с биржи (цель
+        // могла исполниться частично, пока нас не было, и нотионал
+        // пересчитывается от фактического количества); позиция,
+        // которой биржа не знает, закрывается записью «вне
+        // исполнителя» — денег той сделки журнал не знает и не
+        // выдумывает; лежащие цели ВОЗВРАЩАЮТСЯ по метке заявки, а
+        // без лежащей — переставляются от уровня из журнала. Инцидент
+        // MONUSDT: остановка сняла цели, перезапуск их не возвращал,
+        // и бумажная книга закрылась, пока живая позиция висела.
         let exch = ex.positions()?;
+        let resting = ex.open_orders().unwrap_or_default();
         let mut pos = BTreeMap::new();
-        for (key, (sym, side, notional, entry_px, fee, at)) in &open_ev {
+        for (key, (sym, side, notional, entry_px, fee, at, j_qty,
+                   j_target)) in &open_ev {
             let found = exch
                 .iter()
                 .find(|p| p.sym == *sym && p.side == *side);
-            let (qty, tick, step) = match found {
-                Some(p) => {
-                    let ins = ex.instrument(sym)?;
-                    (p.qty, ins.tick, ins.step)
-                }
-                // Биржа позиции не знает — количество нулевое; сверка
-                // первого такта объявит расхождение и остановит.
-                None => (0.0, 0.0, 0.0),
-            };
             let entry = entry_px.unwrap_or(0.0);
+            let Some(px) = found else {
+                jr.append(Event::Close {
+                    pos: key.clone(),
+                    exit_px: None,
+                    fee_usd: 0.0,
+                    pnl_usd: 0.0,
+                    reason: "позиция закрыта вне исполнителя (вручную \
+                             либо биржей) — денег этой сделки журнал \
+                             не знает"
+                        .into(),
+                    at_ms: now_ms_wall(),
+                })
+                .map_err(|e| format!("журнал: {e}"))?;
+                continue;
+            };
+            let ins = ex.instrument(sym)?;
+            let qty = px.qty;
+            // Расхождение количества с журналом — не порча, а
+            // исполнение цели без нас: нотионал пересчитывается.
+            let notional = if entry > 0.0
+                && j_qty.map(|q| (q - qty).abs() > 1e-9).unwrap_or(true)
+            {
+                qty * entry
+            } else {
+                *notional
+            };
+            let link = format!("tp-{sym}-{at}");
+            let held = resting.iter().find(|r| r.link == link);
             pos.insert(
                 key.clone(),
                 LivePos {
@@ -471,12 +536,13 @@ impl<E: Exchange> Executor<E> {
                     side: *side,
                     qty,
                     entry_px: entry,
-                    notional_usd: *notional,
+                    notional_usd: notional,
                     fee_usd: *fee,
-                    target_px: None,
-                    target_id: None,
-                    step,
-                    tick,
+                    target_px: held.map(|r| r.px).or(*j_target),
+                    target_id: held.map(|r| r.id.clone()),
+                    part_pnl: 0.0,
+                    step: ins.step,
+                    tick: ins.tick,
                     opened_at_ms: *at,
                 },
             );
@@ -495,6 +561,7 @@ impl<E: Exchange> Executor<E> {
             realized_by_day,
             exit_pending: BTreeMap::new(),
             stale_entries: 0,
+            lev_set: BTreeSet::new(),
         })
     }
 
@@ -749,6 +816,37 @@ impl<E: Exchange> Executor<E> {
                         now_ms,
                         rep,
                     );
+                }
+                Ok(st) if st.status == "PartiallyFilled"
+                    && st.filled_qty > 0.0 =>
+                {
+                    // Уровень взят НЕ целиком: биржа уменьшила позицию,
+                    // а Close в журнале один — реализованная часть
+                    // копится в part_pnl, количество и нотионал
+                    // уменьшаются, лимитка переставляется на остаток
+                    // тем же уровнем. Без этой ветки частичное
+                    // исполнение читалось сверкой как расхождение и
+                    // останавливало исполнитель (инцидент IMXUSDT:
+                    // у нас 240.5, у биржи 194.4 — MONUSDT после
+                    // этого висела без управления)
+                    if let Err(e) = self.ex.cancel(&sym, &id) {
+                        eprintln!("частичная цель {sym} не снялась: {e}");
+                        continue;
+                    }
+                    if let Some(p) = self.pos.get_mut(&key) {
+                        let sgn = if p.side == Side::Long { 1.0 } else { -1.0 };
+                        p.part_pnl +=
+                            sgn * (st.avg_px - p.entry_px) * st.filled_qty;
+                        p.fee_usd += st.fee_usd;
+                        p.qty = (p.qty - st.filled_qty).max(0.0);
+                        p.notional_usd = p.qty * p.entry_px;
+                        p.target_id = None;
+                        eprintln!(
+                            "{sym}: цель исполнилась частично ({} по {}), \
+                             остаток {} — лимитка переставляется",
+                            st.filled_qty, st.avg_px, p.qty
+                        );
+                    }
                 }
                 Ok(_) => {}
                 Err(e) => eprintln!("статус цели {sym} {id}: {e}"),
@@ -1023,7 +1121,7 @@ impl<E: Exchange> Executor<E> {
         } else {
             0.0
         };
-        let pnl = gross - p.fee_usd - exit_fee;
+        let pnl = gross + p.part_pnl - p.fee_usd - exit_fee;
         self.append(Event::Close {
             pos: key.into(),
             exit_px: if exit_px > 0.0 { Some(exit_px) } else { None },
@@ -1216,6 +1314,16 @@ impl<E: Exchange> Executor<E> {
             return;
         }
 
+        // Плечо 1× — спека 12 §2; выставляется раз на имя. Отказ не
+        // блокирует вход (забор — размер, не маржа), но пишется.
+        if !self.lev_set.contains(&ev.sym) {
+            match self.ex.set_leverage(&ev.sym, "1") {
+                Ok(()) => {
+                    self.lev_set.insert(ev.sym.clone());
+                }
+                Err(e) => eprintln!("плечо {} не выставилось: {e}", ev.sym),
+            }
+        }
         let link = format!("in-{}-{at}", ev.sym, at = (ev.at_ts * 1000.0) as i64);
         let oid = match self.ex.place_limit(
             &ev.sym,
@@ -1228,7 +1336,28 @@ impl<E: Exchange> Executor<E> {
         ) {
             Ok(id) => id,
             Err(e) => {
-                self.reject_entry(ev, side, format!("заявка входа отвергнута: {e}"), now_ms, rep, true);
+                // 110126 — площадка требует подписать соглашение по
+                // этому инструменту: ограничение СЧЁТА, детерминированное
+                // по имени, а не отказ исполнения — серию §5 не двигает
+                // (двух таких уже хватало, чтобы стоять в шаге от
+                // остановки).
+                let agreement = e.contains("110126");
+                self.reject_entry(
+                    ev,
+                    side,
+                    if agreement {
+                        format!(
+                            "вход недоступен счёту: площадка требует \
+                             подписать соглашение по инструменту в \
+                             приложении Bybit ({e})"
+                        )
+                    } else {
+                        format!("заявка входа отвергнута: {e}")
+                    },
+                    now_ms,
+                    rep,
+                    !agreement,
+                );
                 return;
             }
         };
@@ -1267,6 +1396,8 @@ impl<E: Exchange> Executor<E> {
             entry_px: Some(st.avg_px),
             fee_usd: st.fee_usd,
             partial: st.filled_qty + 1e-12 < qty,
+            qty: Some(st.filled_qty),
+            target_px,
             ver: None,
             at_ms: now_ms,
         });
@@ -1282,6 +1413,7 @@ impl<E: Exchange> Executor<E> {
                 fee_usd: st.fee_usd,
                 target_px,
                 target_id: None,
+                part_pnl: 0.0,
                 step: ins.step,
                 tick: ins.tick,
                 opened_at_ms: now_ms,

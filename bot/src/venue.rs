@@ -309,7 +309,9 @@ impl Venue {
             out.push((
                 o.get("symbol").and_then(Value::as_str).unwrap_or("").into(),
                 o.get("orderId").and_then(Value::as_str).unwrap_or("").into(),
-                o.get("side").and_then(Value::as_str).unwrap_or("").into(),
+                // Метка заявки — по ней восстановление после
+                // перезапуска находит СВОЮ лежащую цель.
+                o.get("orderLinkId").and_then(Value::as_str).unwrap_or("").into(),
                 f("qty"),
                 f("price"),
             ));
@@ -371,6 +373,21 @@ impl Venue {
             .and_then(Value::as_str)
             .map(String::from)
             .ok_or_else(|| "order/create: нет orderId".into())
+    }
+
+    /// Плечо 1× — спека 12 §2. «Не изменилось» (110043) — не отказ.
+    pub fn set_leverage(&self, symbol: &str, lev: &str) -> Result<(), String> {
+        let body = serde_json::json!({
+            "category": "linear",
+            "symbol": symbol,
+            "buyLeverage": lev,
+            "sellLeverage": lev,
+        });
+        match self.post("/v5/position/set-leverage", &body) {
+            Ok(_) => Ok(()),
+            Err(e) if e.contains("110043") => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 
     pub fn cancel(&self, symbol: &str, order_id: &str) -> Result<(), String> {

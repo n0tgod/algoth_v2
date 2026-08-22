@@ -318,6 +318,8 @@ fn срок_позиции_читается_у_книги_журнала() {
             entry_px: Some(1.0),
             fee_usd: 0.02,
             partial: false,
+        qty: None,
+        target_px: None,
             ver: Some(3),
             at_ms: now - 15 * 3_600_000,
         },

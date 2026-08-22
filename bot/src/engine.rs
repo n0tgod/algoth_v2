@@ -521,6 +521,8 @@ pub fn shadow(cfg: &Cfg) -> Result<(PassReport, State), EngineError> {
                 entry_px,
                 fee_usd: 0.0,
                 partial: false,
+                qty: None,
+                target_px: None,
                 ver: t.ver,
                 at_ms: at,
             })?;

@@ -33,6 +33,8 @@ fn open_ev(pos: &str, notional: f64, at: i64) -> Event {
         entry_px: Some(100.0),
         fee_usd: 0.02,
         partial: false,
+        qty: None,
+        target_px: None,
         ver: Some(3),
         at_ms: at,
     }

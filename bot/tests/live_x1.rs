@@ -8,7 +8,7 @@
 use bot::events::{Event, Side};
 use bot::live::{
     cap_price, pos_key, Exchange, ExchPos, Executor, Instrument, LiveCfg,
-    OrderStatus,
+    OrderStatus, Resting,
 };
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -38,6 +38,9 @@ struct Inner {
     cancelled: Vec<(String, String)>,
     positions: Vec<ExchPos>,
     order_states: BTreeMap<String, OrderStatus>,
+    resting: Vec<Resting>,
+    lev_calls: Vec<String>,
+    entry_error: Option<String>,
     next_id: u64,
     fee_bp: f64,
 }
@@ -66,6 +69,9 @@ impl Mock {
     }
     fn set_ioc_fills(&self, on: bool) {
         self.0.borrow_mut().ioc_fills = on;
+    }
+    fn set_entry_error(&self, e: Option<&str>) {
+        self.0.borrow_mut().entry_error = e.map(String::from);
     }
     fn placed(&self) -> Vec<Placed> {
         self.0.borrow().placed.clone()
@@ -129,6 +135,11 @@ impl Exchange for Mock {
         reduce_only: bool,
     ) -> Result<String, String> {
         let mut i = self.0.borrow_mut();
+        if !reduce_only {
+            if let Some(e) = i.entry_error.clone() {
+                return Err(e);
+            }
+        }
         i.next_id += 1;
         let id = format!("o{}", i.next_id);
         let q: f64 = qty.parse().map_err(|_| "qty не число")?;
@@ -192,6 +203,13 @@ impl Exchange for Mock {
     }
     fn positions(&self) -> Result<Vec<ExchPos>, String> {
         Ok(self.0.borrow().positions.clone())
+    }
+    fn open_orders(&self) -> Result<Vec<Resting>, String> {
+        Ok(self.0.borrow().resting.clone())
+    }
+    fn set_leverage(&self, symbol: &str, _lev: &str) -> Result<(), String> {
+        self.0.borrow_mut().lev_calls.push(symbol.into());
+        Ok(())
     }
     fn wallet_usdt(&self) -> Result<(f64, f64), String> {
         Ok((300.0, 300.0))
@@ -741,6 +759,192 @@ fn событие_у_полуночи_не_рвёт_журнал() {
     // И журнал перечитывается — на этом падал живой сервер.
     let (recs, _) = bot::journal::read_all(&fx.jr).expect("журнал не перечитался");
     assert!(recs.len() >= 4);
+}
+
+/// Инцидент IMXUSDT: цель исполнилась ЧАСТИЧНО, биржа уменьшила
+/// позицию, а обнаружение понимало только «Filled» целиком — сверка
+/// видела расхождение и останавливала исполнитель; MONUSDT после
+/// этого висела без управления, пока владелец не закрыл руками.
+/// Теперь частичное исполнение уменьшает позицию, копит реализованную
+/// часть и переставляет лимитку на остаток тем же уровнем.
+#[test]
+fn частичная_цель_не_останавливает_а_переставляется() {
+    let fx = Fx::new("partial");
+    let m = Mock::new().with_sym("IMXUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-21-21", "IMXUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    ex.tick(NOW);
+    let target_id = m.placed().last().unwrap().id.clone();
+
+    // Биржа исполнила 10 из 30 по уровню и держит остаток 20.
+    m.set_order(&target_id, OrderStatus {
+        status: "PartiallyFilled".into(),
+        filled_qty: 10.0,
+        avg_px: 1.012,
+        fee_usd: 0.002,
+    });
+    {
+        let mut i = m.0.borrow_mut();
+        i.positions.clear();
+        i.positions.push(ExchPos {
+            sym: "IMXUSDT".into(), side: Side::Long, qty: 20.0,
+        });
+    }
+    let rep = ex.tick(NOW + 10_000);
+    assert!(rep.halted.is_none(),
+            "частичное исполнение цели прочитано как расхождение: {rep:?}");
+    let key = pos_key("gbm", "2026-08-21-21", "IMXUSDT", Side::Long);
+    let p = ex.pos.get(&key).expect("позиция пропала").clone();
+    assert!((p.qty - 20.0).abs() < 1e-9, "{}", p.qty);
+    assert!((p.notional_usd - 20.0 * p.entry_px).abs() < 1e-6);
+    // Реализованная часть: (1.012 − 1.003) × 10 = 0.09.
+    assert!((p.part_pnl - 0.09).abs() < 1e-9, "{}", p.part_pnl);
+    // Лимитка переставлена на остаток тем же уровнем.
+    let last = m.placed();
+    let re = last.last().unwrap().clone();
+    assert_eq!(re.tif, "GTC");
+    assert!((re.qty - 20.0).abs() < 1e-9, "{}", re.qty);
+    assert!((re.px - 1.012).abs() < 1e-9, "{}", re.px);
+
+    // Остаток дошёл до цели целиком: закрытие несёт И часть.
+    m.set_order(&re.id, OrderStatus {
+        status: "Filled".into(),
+        filled_qty: 20.0,
+        avg_px: 1.012,
+        fee_usd: 0.004,
+    });
+    {
+        m.0.borrow_mut().positions.clear();
+    }
+    let rep = ex.tick(NOW + 20_000);
+    assert_eq!(rep.closed, 1);
+    let recs = fx.records();
+    let Some(Event::Close { pnl_usd, .. }) = recs
+        .iter()
+        .rev()
+        .find(|r| matches!(r.event, Event::Close { .. }))
+        .map(|r| r.event.clone())
+    else { panic!("нет Close") };
+    // Остаток: (1.012−1.003)/1.003 × 20.06 ≈ 0.18; часть 0.09; минус
+    // комиссии входа и частей.
+    assert!(pnl_usd > 0.22 && pnl_usd < 0.28, "{pnl_usd}");
+}
+
+/// Перезапуск возвращает ЛЕЖАЩУЮ цель по метке заявки, а не оставляет
+/// позицию без неё (инцидент MONUSDT: перезапуск терял цели). И
+/// количество берётся с биржи: цель могла исполниться частично, пока
+/// исполнитель не работал, — нотионал пересчитывается.
+#[test]
+fn перезапуск_возвращает_цель_и_считает_частичное() {
+    let fx = Fx::new("restart-target");
+    let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let (open_at, target_px) = {
+        let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+        ex.tick(NOW);
+        let key = pos_key("gbm", "2026-08-20-15", "ARBUSDT", Side::Long);
+        let p = ex.pos.get(&key).unwrap();
+        (p.opened_at_ms, p.target_px.unwrap())
+    };
+    // Пока исполнитель лежал: цель исполнилась на 12 из 30, остаток
+    // заявки стоит в книге со СВОЕЙ меткой.
+    {
+        let mut i = m.0.borrow_mut();
+        i.positions.clear();
+        i.positions.push(ExchPos {
+            sym: "ARBUSDT".into(), side: Side::Long, qty: 18.0,
+        });
+        i.resting.push(Resting {
+            sym: "ARBUSDT".into(), id: "rest1".into(),
+            link: format!("tp-ARBUSDT-{open_at}"),
+            qty: 18.0, px: target_px,
+        });
+    }
+    let placed_before = m.placed().len();
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    let key = pos_key("gbm", "2026-08-20-15", "ARBUSDT", Side::Long);
+    {
+        let p = ex.pos.get(&key).expect("позиция не поднялась");
+        assert!((p.qty - 18.0).abs() < 1e-9, "{}", p.qty);
+        assert!((p.notional_usd - 18.0 * p.entry_px).abs() < 1e-6,
+                "нотионал не пересчитан: {}", p.notional_usd);
+        assert_eq!(p.target_id.as_deref(), Some("rest1"),
+                   "лежащая цель не возвращена");
+    }
+    // И такт НЕ ставит вторую цель поверх возвращённой.
+    let rep = ex.tick(NOW + 30_000);
+    assert!(rep.halted.is_none(), "{rep:?}");
+    assert_eq!(m.placed().len(), placed_before,
+               "перезапуск поставил дубль цели");
+}
+
+/// Позиция, закрытая вне исполнителя (владелец закрыл руками), при
+/// перезапуске закрывается записью с причиной — а не висит нулевым
+/// количеством и не выдумывает денег.
+#[test]
+fn закрытое_руками_закрывается_записью_вне_исполнителя() {
+    let fx = Fx::new("manual-close");
+    let m = Mock::new().with_sym("MONUSDT", 0.0299, 0.0301, 0.00001, 1.0, 1.0, 5.0);
+    fx.entry("gbm", "2026-08-21-21", "MONUSDT", "short", 0.03, 60.0, -140.0, 1755699950.5);
+    {
+        let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+        ex.tick(NOW);
+        assert_eq!(ex.pos.len(), 1);
+    }
+    // Владелец закрыл позицию в приложении.
+    m.0.borrow_mut().positions.clear();
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    assert!(ex.pos.is_empty(), "позиция-призрак после ручного закрытия");
+    let recs = fx.records();
+    assert!(recs.iter().any(|r| matches!(&r.event,
+        Event::Close { reason, pnl_usd, .. }
+            if reason.contains("вне исполнителя")
+               && *pnl_usd == 0.0)),
+        "нет записи о закрытии вне исполнителя");
+    let rep = ex.tick(NOW + 10_000);
+    assert!(rep.halted.is_none(), "{rep:?}");
+}
+
+/// Отказ 110126 «подпишите соглашение» — ограничение счёта по
+/// конкретному имени, детерминированное и не про исполнение: серию
+/// «три отказа подряд» он двигать не должен (на живом счёте два таких
+/// уже стояли в шаге от остановки всего замера).
+#[test]
+fn отказ_по_соглашению_не_входит_в_серию() {
+    let fx = Fx::new("agreement");
+    let m = Mock::new()
+        .with_sym("GEUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0)
+        .with_sym("WMTUSDT", 1.9999, 2.0001, 0.0001, 0.1, 0.1, 5.0)
+        .with_sym("XUSDT", 2.9999, 3.0001, 0.0001, 0.1, 0.1, 5.0);
+    m.set_entry_error(Some(
+        "/v5/order/create: retCode 110126 You must sign the required \
+         agreement before trading"));
+    fx.entry("gbm", "2026-08-21-21", "GEUSDT", "long", 1.0, -50.0, 100.0, 1755699951.0);
+    fx.entry("gbm", "2026-08-21-21", "WMTUSDT", "long", 2.0, -50.0, 100.0, 1755699952.0);
+    fx.entry("gbm", "2026-08-21-21", "XUSDT", "long", 3.0, -50.0, 100.0, 1755699953.0);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    let rep = ex.tick(NOW);
+    assert_eq!(rep.rejected, 3);
+    assert!(rep.halted.is_none(),
+            "отказы по соглашению остановили замер: {rep:?}");
+    let recs = fx.records();
+    assert!(recs.iter().any(|r| matches!(&r.event,
+        Event::Reject { reason, .. }
+            if reason.contains("подписать соглашение"))));
+}
+
+/// Плечо 1× (спека 12 §2) выставляется раз на имя перед первым входом.
+#[test]
+fn плечо_выставляется_раз_на_имя() {
+    let fx = Fx::new("lev");
+    let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    ex.tick(NOW);
+    ex.tick(NOW + 5_000);
+    let calls = m.0.borrow().lev_calls.clone();
+    assert_eq!(calls, vec!["ARBUSDT".to_string()],
+               "плечо не выставлено либо выставлялось повторно: {calls:?}");
 }
 
 /// Потолок цены — служебная арифметика уровня заявки.

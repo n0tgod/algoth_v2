@@ -94,6 +94,8 @@ pub fn derive(capital_usd: f64, records: &[Record]) -> Result<State, StateError>
                 sym,
                 side,
                 notional_usd,
+                qty: _,
+                target_px: _,
                 entry_px,
                 fee_usd,
                 partial,
