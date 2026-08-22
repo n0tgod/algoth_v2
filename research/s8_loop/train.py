@@ -2161,6 +2161,431 @@ def stamp_book(syms, ts, book_root, log_=None, what=""):
     return out
 
 
+def load_prev_models(names):
+    """Веса ПРОШЛОГО цикла с диска — для шага книг до обучения.
+
+    Ранний шаг книг законен только на полном и совместимом наборе:
+    манифест читается (он даёт номер обучения и поля для манифестов
+    книг), на диске лежит ВСЯ сетка весов ARMS×TARGETS, и каждый блоб
+    обучен на том же списке признаков той же версии модели. Любое
+    несовпадение — честный отказ (None): книги в этом цикле пойдут
+    после обучения, как раньше. Полнота требуется нарочно: считать
+    часть целей прошлыми весами, а часть свежими значило бы смешать
+    две модели в одном листе, ничем этого не выдав.
+    """
+    try:
+        with open(os.path.join(MODEL_DIR, "manifest.json"),
+                  encoding="utf-8") as f:
+            man_prev = json.load(f) or {}
+    except (OSError, ValueError):
+        return None, 0, None
+    if not man_prev.get("train_seq"):
+        return None, 0, None
+    models = {}
+    for arm, _ in ARMS:
+        for tgt in TARGETS:
+            wp = os.path.join(MODEL_DIR, f"weights_{arm}_{tgt}.pkl")
+            try:
+                with open(wp, "rb") as f:
+                    blob = pickle.load(f)
+            except (OSError, EOFError, AttributeError, ImportError,
+                    pickle.UnpicklingError):
+                return None, 0, None
+            if (blob.get("version") != MODEL_VERSION
+                    or blob.get("features") != names):
+                return None, 0, None
+            models[(arm, tgt)] = blob["model"]
+    return models, int(man_prev["train_seq"]), man_prev
+
+
+def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
+              grid, si, j_last, rows_m, nov_lo, nov_hi, names,
+              book_root, log_, n_sections):
+    """Шаг книг: разбор, выборы, лист сканера и счета всех книг.
+
+    Вынесен из тела цикла, чтобы идти ДО обучения, на весах прошлого
+    часа (правка по SCRTUSDT): цена циклового выхода — закрытие часа,
+    исполняет его живой исполнитель в момент записи, и всё, что стоит
+    в цикле перед этим шагом, живая сделка оплачивает ходом цены.
+    `models_b`/`seq_b`/`man_b` — веса, номер обучения и манифест,
+    КОТОРЫМИ считаются выборы: у раннего пути это прошлый цикл, у
+    запасного — только что обученные. Номер обучения в записи выбора
+    и в листе — номер этих весов, а не текущего цикла: сделка обязана
+    называть веса, которыми посчитана. Возвращает разборы и выборы по
+    рукам и строки счёта — мысли пишутся позже, по свежему манифесту.
+    """
+    out = {"arms": {}, "acct_lines": []}
+    # Выбор -> ожидание -> факт, по каждой руке турнира отдельно:
+    # сводка по смеси рук осмысленна на вид и бессмысленна по сути.
+    # Разбираются ВСЕ неразобранные выборы, а не только последний
+    # (`review_arm`); выбор пишется один на (руку, час) — дубли
+    # перезапусков снимает `write_pick`.
+    # Порядок сечения главной книги сменился — прежние сделки в архив.
+    fresh_book_on_rank_change(MODEL_DIR, rank_key_for(TR.HOLD_H), log_,
+                              floor=H4_FLOOR_BP)
+    for arm, _ in ARMS:
+        # Последний ЗАПИСАННЫЙ разбор, а не последняя итерация цикла:
+        # у свежего выбора форвард ещё не закрыт, разбор выходит пустым,
+        # и мысли молчали бы о разборе, который на деле состоялся.
+        review = review_arm(MODEL_DIR, arm, TR.HOLD_H, targets, si,
+                            grid, book_root, log_)
+        picks = make_pick(arm, TR.HOLD_H, models_b, x, mats, syms, rows_m,
+                          j_last, grid, nov_lo, nov_hi, book_root, log_,
+                          names=names, train_seq=seq_b,
+                          rank_key=rank_key_for(TR.HOLD_H),
+                          floor_bp=H4_FLOOR_BP)
+        if picks:
+            write_pick(MODEL_DIR, picks)
+        # Разбор и выбор — в итог: мысли пишутся ПОЗЖЕ, по СВЕЖЕМУ
+        # манифесту, а не по тому, чьими весами шли книги.
+        out["arms"][arm] = {"review": review, "picks": picks}
+    # Счёт пересобирается ЦЕЛИКОМ из выборов и разборов, а не
+    # накапливается по шагам (`rebuild_accounts`).
+    try:
+        for arm, (hist, bal) in rebuild_accounts(
+                MODEL_DIR, TR.HOLD_H).items():
+            if hist:
+                who = "деревья" if arm == "gbm" else "сеть"
+                out["acct_lines"].append(
+                    f"[{who}] счёт: {bal:+.2f} $ из {TR.START_BALANCE:.0f} "
+                    f"после {len(hist)} закрытых сделок "
+                    f"({pct((bal / TR.START_BALANCE - 1) * 1e4)} "
+                    f"от старта, плечо 1×, издержки учтены).")
+    except (OSError, ValueError) as e:
+        log_(f"счёт пересобрать не вышло: {e}")
+
+    # Книги остальных горизонтов — турнир темпов. Те же веса и то же
+    # сечение, различаются целью (`fwd_{h}h`), сроком закрытия и числом
+    # слотов кассы. Каждая живёт своим каталогом; вердикта по ним нет —
+    # это наблюдение «какой темп учится быстрее», а не отдельная
+    # гипотеза. Ошибка книги не роняет цикл: главная книга и веса уже
+    # записаны, а сломанная книга обязана быть видна журналом.
+    for h in FB.HORIZONS:
+        if h == TR.HOLD_H or h in REMOVED_BOOKS:
+            continue
+        try:
+            mdir = book_dir(h)
+            fresh_book_on_rank_change(mdir, rank_key_for(h), log_)
+            os.makedirs(mdir, exist_ok=True)
+            for arm, _ in ARMS:
+                review_arm(mdir, arm, h, targets, si, grid,
+                           book_root, log_)
+                pk = make_pick(arm, h, models_b, x, mats, syms, rows_m,
+                               j_last, grid, nov_lo, nov_hi,
+                               book_root, log_, names=names,
+                               train_seq=seq_b,
+                               rank_key=rank_key_for(h))
+                if pk:
+                    write_pick(mdir, pk)
+            rebuild_accounts(mdir, h)
+            # Манифест книги минимален: страница берёт из него
+            # присутствие, версию и ГОРИЗОНТ — по нему же сборщик
+            # строит сделки с верным сроком закрытия.
+            kf = f"fwd_{h}h"
+            rk_h = rank_key_for(h)
+            n_rows = (int((elig & np.isfinite(targets[kf])).sum())
+                      if kf in targets else 0)
+            sm = {"version": MODEL_VERSION, "horizon_h": h,
+                  "hedge": man_b.get("hedge"),
+                  "trained_at": man_b.get("trained_at"),
+                  "sections": n_sections, "symbols": len(syms),
+                  "canary_ic": man_b.get("canary_ic"),
+                  # Готовность цели книги: строка обучения требует
+                  # закрытого форварда своего горизонта, и медленная
+                  # книга стартует позже быстрых. Без этих чисел пустая
+                  # книга неотличима от сломанной.
+                  "target": kf, "target_rows": n_rows,
+                  "target_need": MIN_TARGET_ROWS,
+                  # Чем упорядочено сечение — В АРТЕФАКТЕ, а не в имени
+                  # каталога: по нему же следующий цикл узнаёт смену
+                  # порядка и отставляет прежнюю книгу.
+                  "rank_target": rk_h,
+                  "probe": PROBE, "pretest": PRETEST}
+            smp = os.path.join(mdir, "manifest.json")
+            with open(smp + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(sm, f, ensure_ascii=False, indent=1)
+            os.replace(smp + ".tmp", smp)
+        except Exception as e:                            # noqa: BLE001
+            log_(f"книга {h} ч не сведена: {type(e).__name__}: {e}")
+
+    # Контрольная пара горизонта 24 ч: тот же горизонт, то же сечение и
+    # та же геометрия, отличается РОВНО порядок — по прогнозу,
+    # делённому на волатильность монеты. Прежде такая пара стояла на
+    # 4 ч (`model_z`); с переводом главной книги на σ она стала бы
+    # дубликатом, и вопрос «помогает ли per σ» решать было бы нечем.
+    # Пара переехала на 24 ч решением владельца: сравнение сохраняется,
+    # но на том горизонте, который не переводится.
+    #
+    # Прежний каталог `model_z` больше не пишется. Его история — это и
+    # есть накопленная запись торговли в σ на 4 ч, и трогать её нельзя:
+    # с ней сравнивают то, что главная книга начнёт писать теперь.
+    try:
+        zdir = book_dir(24, sigma=True)
+        os.makedirs(zdir, exist_ok=True)
+        for arm, _ in ARMS:
+            review_arm(zdir, arm, 24, targets, si, grid,
+                       book_root, log_)
+            pk = make_pick(arm, 24, models_b, x, mats, syms,
+                           rows_m, j_last, grid, nov_lo, nov_hi,
+                           book_root, log_, names=names, train_seq=seq_b,
+                           rank_key=rank_key_for(24, sigma=True))
+            if pk:
+                write_pick(zdir, pk)
+        rebuild_accounts(zdir, 24)
+        zkey = rank_key_for(24, sigma=True)
+        n_z = (int((elig & np.isfinite(targets[zkey])).sum())
+               if zkey in targets else 0)
+        zm = {"version": MODEL_VERSION, "horizon_h": 24,
+              "hedge": man_b.get("hedge"), "trained_at": man_b.get("trained_at"),
+              "sections": n_sections, "symbols": len(syms),
+              "canary_ic": man_b.get("canary_ic"),
+              # Чем эта книга отличается от главной — В АРТЕФАКТЕ, а не
+              # в имени каталога: через месяц по записи должно быть
+              # видно, каким правилом её сечение упорядочено.
+              "rank_target": zkey, "target": "fwd_24h",
+              "target_rows": n_z, "target_need": MIN_TARGET_ROWS,
+              "probe": PROBE, "pretest": PRETEST}
+        zp = os.path.join(zdir, "manifest.json")
+        with open(zp + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(zm, f, ensure_ascii=False, indent=1)
+        os.replace(zp + ".tmp", zp)
+    except Exception as e:                                # noqa: BLE001
+        log_(f"книга в σ не сведена: {type(e).__name__}: {e}")
+
+    # Корзинные книги-эхо 24 ч (решение владельца 2026-08-14): те же
+    # выборы, что у model_h24, но раз в цикл проверяется ОБЩИЙ
+    # нереализованный результат открытых позиций руки, и порог
+    # закрывает корзину целиком. `model_h24b` — только тейк (+5 %
+    # капитала руки), `model_h24bf` — тейк плюс симметричный пол −5 %:
+    # диагностическая рука вопроса владельца «пересиживать общий минус
+    # или резать». В лигу и суммы корня книги не входят (эхо чужих
+    # решений); порядок сечения им не проверяется — он унаследован
+    # копией выборов источника.
+    for bdir, b_take, b_floor in (
+            (MODEL_DIR + "_h24b", BASKET_TAKE_SHARE, None),
+            (MODEL_DIR + "_h24bf", BASKET_TAKE_SHARE,
+             BASKET_FLOOR_SHARE)):
+        try:
+            # У манифестов эха нет версии ситуационных правил —
+            # сравнение с ней отставляло бы книгу каждый цикл; решает
+            # словарь правил самой книги (version=1).
+            fresh_sit_on_rules_change(bdir, log_, version=1, rules={
+                "basket_take_share": b_take,
+                "basket_floor_share": b_floor})
+            os.makedirs(bdir, exist_ok=True)
+            bkf = f"fwd_{BASKET_H}h"
+            n_rows = (int((elig & np.isfinite(targets[bkf])).sum())
+                      if bkf in targets else 0)
+            bkm = {"version": MODEL_VERSION, "horizon_h": BASKET_H,
+                   "hedge": man_b.get("hedge"),
+                   "trained_at": man_b.get("trained_at"),
+                   "sections": n_sections, "symbols": len(syms),
+                   "canary_ic": man_b.get("canary_ic"),
+                   # Эхо: сделки — копия model_h24, своё только
+                   # корзинное правило. Пороги — в артефакт: страница
+                   # объясняет книгу по ним, а `fresh_…` ловит их
+                   # смену и отставляет несшиваемую историю.
+                   "echo_of": "model_h24",
+                   "basket_take_share": b_take,
+                   "basket_floor_share": b_floor,
+                   "rank_target": rank_key_for(BASKET_H),
+                   "target": bkf, "target_rows": n_rows,
+                   "target_need": MIN_TARGET_ROWS,
+                   "probe": PROBE, "pretest": PRETEST}
+            bmp = os.path.join(bdir, "manifest.json")
+            with open(bmp + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(bkm, f, ensure_ascii=False, indent=1)
+            os.replace(bmp + ".tmp", bmp)
+            basket_echo_cycle(bdir, book_dir(BASKET_H),
+                              grid[j_last] if j_last is not None
+                              else None,
+                              b_take, b_floor, book_root, log_)
+        except Exception as e:                        # noqa: BLE001
+            log_(f"корзинная книга {os.path.basename(bdir)} не "
+                 f"сведена: {type(e).__name__}: {e}")
+
+    # Ситуационная книга: вход когда модель видит ситуацию, выход когда
+    # ситуация кончилась. Сигнал — цели главного горизонта; своя касса
+    # с фиксированными слотами; правила и пороги — у `situational_arm`.
+    try:
+        mdir = MODEL_DIR + "_sit"
+        fresh_sit_on_rules_change(mdir, log_)
+        os.makedirs(mdir, exist_ok=True)
+        # Манифест — ДО первых выборов: тень бота читает режим книги
+        # из него, и книга с выборами без манифеста один такт
+        # считалась бы часовой — с чужими слотами и чужим сроком.
+        kf = f"fwd_{SIT_SIGNAL_H}h"
+        n_rows = (int((elig & np.isfinite(targets[kf])).sum())
+                  if kf in targets else 0)
+        sm = {"version": MODEL_VERSION, "situational": True,
+              "rules_version": SIT_RULES_VERSION,
+              "horizon_h": None, "slots": SIT_SLOTS,
+              "hedge": man_b.get("hedge"), "trained_at": man_b.get("trained_at"),
+              "sections": n_sections, "symbols": len(syms),
+              "canary_ic": man_b.get("canary_ic"),
+              # Правила — в артефакт: отчёт обязан описывать тот
+              # прогон, который породил файл, а не текущие исходники.
+              "min_edge_bp": SIT_MIN_EDGE_BP, "min_rr": SIT_MIN_RR,
+              "min_disc_bp": SIT_MIN_DISC_BP,
+              "arm_band_bp": SIT_ARM_BAND_BP,
+              "max_eaten": SIT_MAX_EATEN,
+              "max_age_h": SIT_MAX_AGE_H, "stop_tau": STOP_TAU,
+              "target": kf, "target_rows": n_rows,
+              "target_need": MIN_TARGET_ROWS,
+              "probe": PROBE, "pretest": PRETEST}
+        smp = os.path.join(mdir, "manifest.json")
+        with open(smp + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(sm, f, ensure_ascii=False, indent=1)
+        os.replace(smp + ".tmp", smp)
+        # Бета по имени — из признака сечения: сканеру она нужна,
+        # чтобы вычесть волну из живого хода и сравнить остаток с
+        # прогнозом в одних единицах.
+        # Решение владельца (2026-08-13): ситуационная книга вправе
+        # торговать НЕ-КРИПТО — её выход по уровню, а не по времени,
+        # и календарная компонента спреда (базовый актив стоит в
+        # выходные) не держит позицию через закрытую биржу неделями.
+        # Книги со сроком не-крипто по-прежнему не видят (rows_m).
+        rows_sit = (np.flatnonzero(elig[:, j_last])
+                    if j_last is not None else rows_m)
+        beta_row = None
+        if j_last is not None and "beta" in names:
+            beta_row = x[rows_sit, j_last, names.index("beta")]
+        sheets = {}
+        for arm, _ in ARMS:
+            sh = situational_arm(mdir, arm, models_b, x, mats, syms,
+                                 rows_sit, j_last, grid, nov_lo, nov_hi,
+                                 book_root, log_, beta_row=beta_row,
+                                 names=names, train_seq=seq_b)
+            if sh:
+                sheets[arm] = sh
+        if sheets and j_last is not None:
+            sp = os.path.join(mdir, "scan_sheet.json")
+            with open(sp + ".tmp", "w", encoding="utf-8") as f:
+                json.dump({"hour": grid[j_last],
+                           "written_at": round(time.time(), 1),
+                           "train_seq": seq_b,
+                           # По какой очереди сканер раздаёт слоты:
+                           # гейт ситуационной книги не менялся, а
+                           # приоритет менялся, и без этого поля запись
+                           # о нём молчала бы.
+                           "scan_rank": rank_z(SIT_SIGNAL_H),
+                           "min_edge_bp": SIT_MIN_EDGE_BP,
+                           "min_rr": SIT_MIN_RR,
+                           "min_disc_bp": SIT_MIN_DISC_BP,
+                           "arm_band_bp": SIT_ARM_BAND_BP,
+                           "max_eaten": SIT_MAX_EATEN,
+                           "slots": SIT_SLOTS, "stop_tau": STOP_TAU,
+                           # Книги, которые ведёт сканер. Торгуемая
+                           # идёт первой и не меняется; наблюдательная
+                           # берёт всё, что прошло остальные гейты, —
+                           # иначе фильтру владельца нечего добавлять
+                           # ниже боевого порога. Обход кандидатов
+                           # ОДИН на обе: второй считал бы ту же волну
+                           # дважды и мог бы разойтись с первой.
+                           "books": [
+                               {"dir": os.path.basename(mdir),
+                                "min_rr": SIT_MIN_RR,
+                                "slots": SIT_SLOTS},
+                               {"dir": os.path.basename(mdir) + "_obs",
+                                "min_rr": SIT_OBS_MIN_RR,
+                                "slots": SIT_OBS_SLOTS},
+                               # Книга равного риска: те же гейты и
+                               # места, что у торгуемой, — различие
+                               # ровно одно, правило РАЗМЕРА (равный
+                               # доллар риска, манифест sizing).
+                               # Контрольная рука: другой состав
+                               # сделок не позволил бы приписать
+                               # разницу правилу.
+                               # Её же правило запаса: стоп не
+                               # тоньше полутора живых шумов (после
+                               # #ptadyrc — стоп в один фитиль).
+                               {"dir": os.path.basename(mdir) + "_r",
+                                "min_rr": SIT_MIN_RR,
+                                "slots": SIT_SLOTS,
+                                "noise_mult": SIT_R_NOISE_MULT,
+                                "min_stop_bp": SIT_R_MIN_STOP_BP},
+                           ],
+                           "arms": sheets}, f, ensure_ascii=False)
+            os.replace(sp + ".tmp", sp)
+            # Лист ПЕРЕЗАПИСЫВАЕТСЯ каждый час, то есть история решений
+            # не хранится нигде: перебрать пороги задним числом можно
+            # было бы только по шести выбранным именам, а не по всему
+            # сечению. Дописываем копию в журнал — 500 имён на час это
+            # около мегабайта в сутки, а без него любой вопрос «а если
+            # бы порог был другим» упирается в то, что спрашивать не у
+            # чего.
+            with open(os.path.join(mdir, "sheets.jsonl"), "a",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(
+                    {"hour": grid[j_last],
+                     "written_at": round(time.time(), 1),
+                     "train_seq": seq_b,
+                     "scan_rank": rank_z(SIT_SIGNAL_H),
+                     "min_edge_bp": SIT_MIN_EDGE_BP,
+                     "min_rr": SIT_MIN_RR,
+                     "min_disc_bp": SIT_MIN_DISC_BP,
+                     "arm_band_bp": SIT_ARM_BAND_BP,
+                     "max_eaten": SIT_MAX_EATEN,
+                     "slots": SIT_SLOTS, "stop_tau": STOP_TAU,
+                     "arms": sheets},
+                    ensure_ascii=False) + "\n")
+        rebuild_accounts(mdir, None, slots=SIT_SLOTS)
+        # Наблюдательная книга: та же ситуация без требования к
+        # отношению. Свой каталог, свой счёт, своя запись — торгуемая
+        # не меняется ни чем, и тень бота её не читает. Лист сечения
+        # один на обе: он лежит у торгуемой, сканер берёт из него
+        # состав книг.
+        obs = mdir + "_obs"
+        fresh_sit_on_rules_change(obs, log_)
+        os.makedirs(obs, exist_ok=True)
+        som = dict(sm, slots=SIT_OBS_SLOTS, min_rr=SIT_OBS_MIN_RR,
+                   observation=True)
+        with open(os.path.join(obs, "manifest.json.tmp"), "w",
+                  encoding="utf-8") as f:
+            json.dump(som, f, ensure_ascii=False, indent=1)
+        os.replace(os.path.join(obs, "manifest.json.tmp"),
+                   os.path.join(obs, "manifest.json"))
+        for arm, _ in ARMS:
+            situational_arm(obs, arm, models_b, x, mats, syms,
+                            rows_m, j_last, grid, nov_lo, nov_hi,
+                            book_root, log_, beta_row=beta_row,
+                            names=names, train_seq=seq_b)
+        rebuild_accounts(obs, None, slots=SIT_OBS_SLOTS)
+        # Книга равного риска (просьба владельца): при одном RR тейк
+        # приносил то 20 $, то 5 $, а стоп забирал 15 — уровни у
+        # сделок разной ширины, а размер один, и доллар риска пляшет.
+        # Здесь размер обратен исполняемому стопу: стоп всегда −R,
+        # тейк при RR r — +r·R. Сделки ТЕ ЖЕ, что у торгуемой
+        # (гейты и места совпадают): меняется только распределение
+        # размера, и разница результатов принадлежит правилу.
+        rbk = mdir + "_r"
+        fresh_sit_on_rules_change(rbk, log_, rules={
+            "exit_policy": SIT_R_EXIT_POLICY,
+            "noise_mult": SIT_R_NOISE_MULT,
+            "min_stop_bp": SIT_R_MIN_STOP_BP})
+        os.makedirs(rbk, exist_ok=True)
+        srm = dict(sm, sizing="fixed_risk",
+                   risk_share=TR.FIXED_RISK_SHARE,
+                   exit_policy=SIT_R_EXIT_POLICY,
+                   noise_mult=SIT_R_NOISE_MULT,
+                   min_stop_bp=SIT_R_MIN_STOP_BP)
+        with open(os.path.join(rbk, "manifest.json.tmp"), "w",
+                  encoding="utf-8") as f:
+            json.dump(srm, f, ensure_ascii=False, indent=1)
+        os.replace(os.path.join(rbk, "manifest.json.tmp"),
+                   os.path.join(rbk, "manifest.json"))
+        for arm, _ in ARMS:
+            situational_arm(rbk, arm, models_b, x, mats, syms,
+                            rows_m, j_last, grid, nov_lo, nov_hi,
+                            book_root, log_, beta_row=beta_row,
+                            names=names, train_seq=seq_b)
+        rebuild_accounts(rbk, None, slots=SIT_SLOTS)
+    except Exception as e:                                # noqa: BLE001
+        log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
+
+    return out
+
+
 def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     t0 = time.time()
     # Из чего складывается запаздывание входа. Владелец увидел шесть
@@ -2218,6 +2643,53 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                       need=MIN_TRAIN_SECTIONS, hours_per_symbol=int(hist_h),
                       beta_min_hours=FB.BETA_MIN)
         return False
+
+    # Данные, нужные шагу книг — и раннему, и запасному.
+    at = datetime.now(timezone.utc).strftime("%m-%d %H:%M")
+    si = {s: i for i, s in enumerate(syms)}
+    j_last = max((jj for jj in range(len(grid))
+                  if elig[:, jj].sum() >= FB.MIN_SECTION), default=None)
+    # Не-крипто не торгуется (решение владельца, A1 и 2026-08-07). Из
+    # ОБУЧЕНИЯ имена не выдёргиваются: запись по ним останавливается, и
+    # ряды уходят из матриц сами. Сечение общее для всех книг.
+    rows_m = (tradable_rows(np.flatnonzero(elig[:, j_last]), syms)
+              if j_last is not None else [])
+
+    # ПОРЯДОК ЦИКЛА (правка по SCRTUSDT): книги — разбор, выборы и
+    # лист сканера — идут ДО обучения, на весах ПРОШЛОГО часа. Цена
+    # циклового выхода — закрытие часа, а исполняет его живой
+    # исполнитель в момент записи; пока перед шагом книг стояли
+    # обучение (~17 мин) и канарейка (~4 мин), живая сделка оплачивала
+    # зазор ходом цены (SCRT: −3.2 % живьём при −0.11 % бумаги).
+    # Свежесть весов на один час не стоит ничего — М2: сутки против
+    # месяца переобучения дают +0.000…+0.004 IC. Ранний шаг требует
+    # ПОЛНОГО набора совместимых весов; иначе (первый запуск, смена
+    # признаков или версии) книги идут после обучения, как раньше.
+    # Побочное следствие названо, а не спрятано: кричащая канарейка
+    # больше не замораживает книги — она про СВЕЖЕЕ обучение, а книги
+    # считаются прошлыми весами, прошедшими свою канарейку; выход —
+    # обязанность перед открытой позицией (урок X2).
+    booked = None
+    nov_lo = nov_hi = None
+    prev_models, prev_seq, prev_used = load_prev_models(names)
+    if prev_models is not None:
+        ts = time.time()
+        nov_lo, nov_hi = novelty_bounds(x, elig)
+        try:
+            booked = run_books(
+                prev_models, prev_seq, prev_used, x=x, mats=mats,
+                syms=syms, targets=targets, elig=elig, grid=grid,
+                si=si, j_last=j_last, rows_m=rows_m, nov_lo=nov_lo,
+                nov_hi=nov_hi, names=names, book_root=book_root,
+                log_=log_, n_sections=n_sections)
+        except Exception as e:                            # noqa: BLE001
+            # Ранний шаг не вправе ронять цикл: упавшие книги пойдут
+            # запасным путём после обучения — повтор безопасен, дубли
+            # выборов и разборов снимаются при записи.
+            log_(f"ранний шаг книг упал: {type(e).__name__}: {e} — "
+                 f"книги пойдут после обучения")
+            booked = None
+        ts = step("книги", ts)
 
     # Две меры, а не одна. `score_preds` оценивает сохранённые векторы
     # по мере закрытия форварда — это и есть живой IC при переобучении
@@ -2303,7 +2775,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     ts = time.time()
-    nov_lo, nov_hi = novelty_bounds(x, elig)
+    if nov_lo is None:
+        nov_lo, nov_hi = novelty_bounds(x, elig)
     # Номер обучения — просьба владельца: у каждой сделки должно быть
     # видно, КАКИМ обучением она открыта. Возраст весов для этого не
     # годится (он меняется каждую минуту), час обучения — коряво в
@@ -2429,38 +2902,26 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         json.dump(man, f, ensure_ascii=False, indent=1)
     os.replace(mp + ".tmp", mp)
 
-    # Выбор -> ожидание -> факт, по каждой руке турнира отдельно:
-    # сводка по смеси рук осмысленна на вид и бессмысленна по сути.
-    # Разбираются ВСЕ неразобранные выборы, а не только последний
-    # (`review_arm`); выбор пишется один на (руку, час) — дубли
-    # перезапусков снимает `write_pick`.
-    at = datetime.now(timezone.utc).strftime("%m-%d %H:%M")
-    all_lines = []
-    si = {s: i for i, s in enumerate(syms)}
-    j_last = max((jj for jj in range(len(grid))
-                  if elig[:, jj].sum() >= FB.MIN_SECTION), default=None)
-    # Не-крипто не торгуется (решение владельца, A1 и 2026-08-07). Из
-    # ОБУЧЕНИЯ имена не выдёргиваются: запись по ним останавливается, и
-    # ряды уходят из матриц сами. Сечение общее для всех книг.
-    rows_m = (tradable_rows(np.flatnonzero(elig[:, j_last]), syms)
-              if j_last is not None else [])
-    # Порядок сечения главной книги сменился — прежние сделки в архив.
-    fresh_book_on_rank_change(MODEL_DIR, rank_key_for(TR.HOLD_H), log_,
-                              floor=H4_FLOOR_BP)
-    for arm, _ in ARMS:
-        # Последний ЗАПИСАННЫЙ разбор, а не последняя итерация цикла:
-        # у свежего выбора форвард ещё не закрыт, разбор выходит пустым,
-        # и мысли молчали бы о разборе, который на деле состоялся.
-        review = review_arm(MODEL_DIR, arm, TR.HOLD_H, targets, si,
-                            grid, book_root, log_)
-        picks = make_pick(arm, TR.HOLD_H, models, x, mats, syms, rows_m,
-                          j_last, grid, nov_lo, nov_hi, book_root, log_,
-                          names=names, train_seq=train_seq,
-                          rank_key=rank_key_for(TR.HOLD_H),
-                          floor_bp=H4_FLOOR_BP)
-        if picks:
-            write_pick(MODEL_DIR, picks)
+    # Запасной путь: ранние книги не шли (первый запуск, смена
+    # признаков или версии, падение раннего шага) — книги идут здесь,
+    # на только что обученных весах, как было до правки порядка.
+    if booked is None:
+        ts = time.time()
+        booked = run_books(
+            models, train_seq, man, x=x, mats=mats, syms=syms,
+            targets=targets, elig=elig, grid=grid, si=si,
+            j_last=j_last, rows_m=rows_m, nov_lo=nov_lo,
+            nov_hi=nov_hi, names=names, book_root=book_root,
+            log_=log_, n_sections=n_sections)
+        ts = step("книги", ts)
 
+    # Мысли — по СВЕЖЕМУ манифесту и живому IC: выборы и разборы к
+    # этому моменту уже записаны, и записаны номером тех весов,
+    # которыми посчитаны (у ранних книг — прошлым).
+    all_lines = []
+    for arm, _ in ARMS:
+        got = booked["arms"].get(arm) or {}
+        review, picks = got.get("review"), got.get("picks")
         man_arm = dict(man, importance=imp_all.get(arm) or {})
         prev_arm = None
         if prev_man:
@@ -2472,9 +2933,6 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         if review:
             hits = sum(1 for r in review
                        if (r["got"] > 0) == (r["side"] == "long"))
-            # Про счёт мысль пишется ПОСЛЕ его пересборки, ниже: тут его
-            # ещё нет, а брать прежний баланс значило бы говорить о
-            # состоянии до этой самой сделки.
             lines.insert(0, f"разбор прошлых выборов ({len(review)} имён, "
                             f"угадан знак у {hits}): " + "; ".join(
                                 f"{r['sym'].replace('USDT','')} "
@@ -2483,356 +2941,10 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                                 f"{pct(r['got'])}" for r in review))
         all_lines += [f"[{'деревья' if arm == 'gbm' else 'сеть'}] {t}"
                       for t in lines]
-    # Счёт пересобирается ЦЕЛИКОМ из выборов и разборов, а не
-    # накапливается по шагам (`rebuild_accounts`).
-    try:
-        for arm, (hist, bal) in rebuild_accounts(
-                MODEL_DIR, TR.HOLD_H).items():
-            if hist:
-                who = "деревья" if arm == "gbm" else "сеть"
-                all_lines.append(
-                    f"[{who}] счёт: {bal:+.2f} $ из {TR.START_BALANCE:.0f} "
-                    f"после {len(hist)} закрытых сделок "
-                    f"({pct((bal / TR.START_BALANCE - 1) * 1e4)} "
-                    f"от старта, плечо 1×, издержки учтены).")
-    except (OSError, ValueError) as e:
-        log_(f"счёт пересобрать не вышло: {e}")
-
-    # Книги остальных горизонтов — турнир темпов. Те же веса и то же
-    # сечение, различаются целью (`fwd_{h}h`), сроком закрытия и числом
-    # слотов кассы. Каждая живёт своим каталогом; вердикта по ним нет —
-    # это наблюдение «какой темп учится быстрее», а не отдельная
-    # гипотеза. Ошибка книги не роняет цикл: главная книга и веса уже
-    # записаны, а сломанная книга обязана быть видна журналом.
-    for h in FB.HORIZONS:
-        if h == TR.HOLD_H or h in REMOVED_BOOKS:
-            continue
-        try:
-            mdir = book_dir(h)
-            fresh_book_on_rank_change(mdir, rank_key_for(h), log_)
-            os.makedirs(mdir, exist_ok=True)
-            for arm, _ in ARMS:
-                review_arm(mdir, arm, h, targets, si, grid,
-                           book_root, log_)
-                pk = make_pick(arm, h, models, x, mats, syms, rows_m,
-                               j_last, grid, nov_lo, nov_hi,
-                               book_root, log_, names=names,
-                               train_seq=train_seq,
-                               rank_key=rank_key_for(h))
-                if pk:
-                    write_pick(mdir, pk)
-            rebuild_accounts(mdir, h)
-            # Манифест книги минимален: страница берёт из него
-            # присутствие, версию и ГОРИЗОНТ — по нему же сборщик
-            # строит сделки с верным сроком закрытия.
-            kf = f"fwd_{h}h"
-            rk_h = rank_key_for(h)
-            n_rows = (int((elig & np.isfinite(targets[kf])).sum())
-                      if kf in targets else 0)
-            sm = {"version": MODEL_VERSION, "horizon_h": h,
-                  "hedge": man["hedge"],
-                  "trained_at": man["trained_at"],
-                  "sections": n_sections, "symbols": len(syms),
-                  "canary_ic": man["canary_ic"],
-                  # Готовность цели книги: строка обучения требует
-                  # закрытого форварда своего горизонта, и медленная
-                  # книга стартует позже быстрых. Без этих чисел пустая
-                  # книга неотличима от сломанной.
-                  "target": kf, "target_rows": n_rows,
-                  "target_need": MIN_TARGET_ROWS,
-                  # Чем упорядочено сечение — В АРТЕФАКТЕ, а не в имени
-                  # каталога: по нему же следующий цикл узнаёт смену
-                  # порядка и отставляет прежнюю книгу.
-                  "rank_target": rk_h,
-                  "probe": PROBE, "pretest": PRETEST}
-            smp = os.path.join(mdir, "manifest.json")
-            with open(smp + ".tmp", "w", encoding="utf-8") as f:
-                json.dump(sm, f, ensure_ascii=False, indent=1)
-            os.replace(smp + ".tmp", smp)
-        except Exception as e:                            # noqa: BLE001
-            log_(f"книга {h} ч не сведена: {type(e).__name__}: {e}")
-
-    # Контрольная пара горизонта 24 ч: тот же горизонт, то же сечение и
-    # та же геометрия, отличается РОВНО порядок — по прогнозу,
-    # делённому на волатильность монеты. Прежде такая пара стояла на
-    # 4 ч (`model_z`); с переводом главной книги на σ она стала бы
-    # дубликатом, и вопрос «помогает ли per σ» решать было бы нечем.
-    # Пара переехала на 24 ч решением владельца: сравнение сохраняется,
-    # но на том горизонте, который не переводится.
-    #
-    # Прежний каталог `model_z` больше не пишется. Его история — это и
-    # есть накопленная запись торговли в σ на 4 ч, и трогать её нельзя:
-    # с ней сравнивают то, что главная книга начнёт писать теперь.
-    try:
-        zdir = book_dir(24, sigma=True)
-        os.makedirs(zdir, exist_ok=True)
-        for arm, _ in ARMS:
-            review_arm(zdir, arm, 24, targets, si, grid,
-                       book_root, log_)
-            pk = make_pick(arm, 24, models, x, mats, syms,
-                           rows_m, j_last, grid, nov_lo, nov_hi,
-                           book_root, log_, names=names, train_seq=train_seq,
-                           rank_key=rank_key_for(24, sigma=True))
-            if pk:
-                write_pick(zdir, pk)
-        rebuild_accounts(zdir, 24)
-        zkey = rank_key_for(24, sigma=True)
-        n_z = (int((elig & np.isfinite(targets[zkey])).sum())
-               if zkey in targets else 0)
-        zm = {"version": MODEL_VERSION, "horizon_h": 24,
-              "hedge": man["hedge"], "trained_at": man["trained_at"],
-              "sections": n_sections, "symbols": len(syms),
-              "canary_ic": man["canary_ic"],
-              # Чем эта книга отличается от главной — В АРТЕФАКТЕ, а не
-              # в имени каталога: через месяц по записи должно быть
-              # видно, каким правилом её сечение упорядочено.
-              "rank_target": zkey, "target": "fwd_24h",
-              "target_rows": n_z, "target_need": MIN_TARGET_ROWS,
-              "probe": PROBE, "pretest": PRETEST}
-        zp = os.path.join(zdir, "manifest.json")
-        with open(zp + ".tmp", "w", encoding="utf-8") as f:
-            json.dump(zm, f, ensure_ascii=False, indent=1)
-        os.replace(zp + ".tmp", zp)
-    except Exception as e:                                # noqa: BLE001
-        log_(f"книга в σ не сведена: {type(e).__name__}: {e}")
-
-    # Корзинные книги-эхо 24 ч (решение владельца 2026-08-14): те же
-    # выборы, что у model_h24, но раз в цикл проверяется ОБЩИЙ
-    # нереализованный результат открытых позиций руки, и порог
-    # закрывает корзину целиком. `model_h24b` — только тейк (+5 %
-    # капитала руки), `model_h24bf` — тейк плюс симметричный пол −5 %:
-    # диагностическая рука вопроса владельца «пересиживать общий минус
-    # или резать». В лигу и суммы корня книги не входят (эхо чужих
-    # решений); порядок сечения им не проверяется — он унаследован
-    # копией выборов источника.
-    for bdir, b_take, b_floor in (
-            (MODEL_DIR + "_h24b", BASKET_TAKE_SHARE, None),
-            (MODEL_DIR + "_h24bf", BASKET_TAKE_SHARE,
-             BASKET_FLOOR_SHARE)):
-        try:
-            # У манифестов эха нет версии ситуационных правил —
-            # сравнение с ней отставляло бы книгу каждый цикл; решает
-            # словарь правил самой книги (version=1).
-            fresh_sit_on_rules_change(bdir, log_, version=1, rules={
-                "basket_take_share": b_take,
-                "basket_floor_share": b_floor})
-            os.makedirs(bdir, exist_ok=True)
-            bkf = f"fwd_{BASKET_H}h"
-            n_rows = (int((elig & np.isfinite(targets[bkf])).sum())
-                      if bkf in targets else 0)
-            bkm = {"version": MODEL_VERSION, "horizon_h": BASKET_H,
-                   "hedge": man["hedge"],
-                   "trained_at": man["trained_at"],
-                   "sections": n_sections, "symbols": len(syms),
-                   "canary_ic": man["canary_ic"],
-                   # Эхо: сделки — копия model_h24, своё только
-                   # корзинное правило. Пороги — в артефакт: страница
-                   # объясняет книгу по ним, а `fresh_…` ловит их
-                   # смену и отставляет несшиваемую историю.
-                   "echo_of": "model_h24",
-                   "basket_take_share": b_take,
-                   "basket_floor_share": b_floor,
-                   "rank_target": rank_key_for(BASKET_H),
-                   "target": bkf, "target_rows": n_rows,
-                   "target_need": MIN_TARGET_ROWS,
-                   "probe": PROBE, "pretest": PRETEST}
-            bmp = os.path.join(bdir, "manifest.json")
-            with open(bmp + ".tmp", "w", encoding="utf-8") as f:
-                json.dump(bkm, f, ensure_ascii=False, indent=1)
-            os.replace(bmp + ".tmp", bmp)
-            basket_echo_cycle(bdir, book_dir(BASKET_H),
-                              grid[j_last] if j_last is not None
-                              else None,
-                              b_take, b_floor, book_root, log_)
-        except Exception as e:                        # noqa: BLE001
-            log_(f"корзинная книга {os.path.basename(bdir)} не "
-                 f"сведена: {type(e).__name__}: {e}")
-
-    # Ситуационная книга: вход когда модель видит ситуацию, выход когда
-    # ситуация кончилась. Сигнал — цели главного горизонта; своя касса
-    # с фиксированными слотами; правила и пороги — у `situational_arm`.
-    try:
-        mdir = MODEL_DIR + "_sit"
-        fresh_sit_on_rules_change(mdir, log_)
-        os.makedirs(mdir, exist_ok=True)
-        # Манифест — ДО первых выборов: тень бота читает режим книги
-        # из него, и книга с выборами без манифеста один такт
-        # считалась бы часовой — с чужими слотами и чужим сроком.
-        kf = f"fwd_{SIT_SIGNAL_H}h"
-        n_rows = (int((elig & np.isfinite(targets[kf])).sum())
-                  if kf in targets else 0)
-        sm = {"version": MODEL_VERSION, "situational": True,
-              "rules_version": SIT_RULES_VERSION,
-              "horizon_h": None, "slots": SIT_SLOTS,
-              "hedge": man["hedge"], "trained_at": man["trained_at"],
-              "sections": n_sections, "symbols": len(syms),
-              "canary_ic": man["canary_ic"],
-              # Правила — в артефакт: отчёт обязан описывать тот
-              # прогон, который породил файл, а не текущие исходники.
-              "min_edge_bp": SIT_MIN_EDGE_BP, "min_rr": SIT_MIN_RR,
-              "min_disc_bp": SIT_MIN_DISC_BP,
-              "arm_band_bp": SIT_ARM_BAND_BP,
-              "max_eaten": SIT_MAX_EATEN,
-              "max_age_h": SIT_MAX_AGE_H, "stop_tau": STOP_TAU,
-              "target": kf, "target_rows": n_rows,
-              "target_need": MIN_TARGET_ROWS,
-              "probe": PROBE, "pretest": PRETEST}
-        smp = os.path.join(mdir, "manifest.json")
-        with open(smp + ".tmp", "w", encoding="utf-8") as f:
-            json.dump(sm, f, ensure_ascii=False, indent=1)
-        os.replace(smp + ".tmp", smp)
-        # Бета по имени — из признака сечения: сканеру она нужна,
-        # чтобы вычесть волну из живого хода и сравнить остаток с
-        # прогнозом в одних единицах.
-        # Решение владельца (2026-08-13): ситуационная книга вправе
-        # торговать НЕ-КРИПТО — её выход по уровню, а не по времени,
-        # и календарная компонента спреда (базовый актив стоит в
-        # выходные) не держит позицию через закрытую биржу неделями.
-        # Книги со сроком не-крипто по-прежнему не видят (rows_m).
-        rows_sit = (np.flatnonzero(elig[:, j_last])
-                    if j_last is not None else rows_m)
-        beta_row = None
-        if j_last is not None and "beta" in names:
-            beta_row = x[rows_sit, j_last, names.index("beta")]
-        sheets = {}
-        for arm, _ in ARMS:
-            sh = situational_arm(mdir, arm, models, x, mats, syms,
-                                 rows_sit, j_last, grid, nov_lo, nov_hi,
-                                 book_root, log_, beta_row=beta_row,
-                                 names=names, train_seq=train_seq)
-            if sh:
-                sheets[arm] = sh
-        if sheets and j_last is not None:
-            sp = os.path.join(mdir, "scan_sheet.json")
-            with open(sp + ".tmp", "w", encoding="utf-8") as f:
-                json.dump({"hour": grid[j_last],
-                           "written_at": round(time.time(), 1),
-                           "train_seq": train_seq,
-                           # По какой очереди сканер раздаёт слоты:
-                           # гейт ситуационной книги не менялся, а
-                           # приоритет менялся, и без этого поля запись
-                           # о нём молчала бы.
-                           "scan_rank": rank_z(SIT_SIGNAL_H),
-                           "min_edge_bp": SIT_MIN_EDGE_BP,
-                           "min_rr": SIT_MIN_RR,
-                           "min_disc_bp": SIT_MIN_DISC_BP,
-                           "arm_band_bp": SIT_ARM_BAND_BP,
-                           "max_eaten": SIT_MAX_EATEN,
-                           "slots": SIT_SLOTS, "stop_tau": STOP_TAU,
-                           # Книги, которые ведёт сканер. Торгуемая
-                           # идёт первой и не меняется; наблюдательная
-                           # берёт всё, что прошло остальные гейты, —
-                           # иначе фильтру владельца нечего добавлять
-                           # ниже боевого порога. Обход кандидатов
-                           # ОДИН на обе: второй считал бы ту же волну
-                           # дважды и мог бы разойтись с первой.
-                           "books": [
-                               {"dir": os.path.basename(mdir),
-                                "min_rr": SIT_MIN_RR,
-                                "slots": SIT_SLOTS},
-                               {"dir": os.path.basename(mdir) + "_obs",
-                                "min_rr": SIT_OBS_MIN_RR,
-                                "slots": SIT_OBS_SLOTS},
-                               # Книга равного риска: те же гейты и
-                               # места, что у торгуемой, — различие
-                               # ровно одно, правило РАЗМЕРА (равный
-                               # доллар риска, манифест sizing).
-                               # Контрольная рука: другой состав
-                               # сделок не позволил бы приписать
-                               # разницу правилу.
-                               # Её же правило запаса: стоп не
-                               # тоньше полутора живых шумов (после
-                               # #ptadyrc — стоп в один фитиль).
-                               {"dir": os.path.basename(mdir) + "_r",
-                                "min_rr": SIT_MIN_RR,
-                                "slots": SIT_SLOTS,
-                                "noise_mult": SIT_R_NOISE_MULT,
-                                "min_stop_bp": SIT_R_MIN_STOP_BP},
-                           ],
-                           "arms": sheets}, f, ensure_ascii=False)
-            os.replace(sp + ".tmp", sp)
-            # Лист ПЕРЕЗАПИСЫВАЕТСЯ каждый час, то есть история решений
-            # не хранится нигде: перебрать пороги задним числом можно
-            # было бы только по шести выбранным именам, а не по всему
-            # сечению. Дописываем копию в журнал — 500 имён на час это
-            # около мегабайта в сутки, а без него любой вопрос «а если
-            # бы порог был другим» упирается в то, что спрашивать не у
-            # чего.
-            with open(os.path.join(mdir, "sheets.jsonl"), "a",
-                      encoding="utf-8") as f:
-                f.write(json.dumps(
-                    {"hour": grid[j_last],
-                     "written_at": round(time.time(), 1),
-                     "train_seq": train_seq,
-                     "scan_rank": rank_z(SIT_SIGNAL_H),
-                     "min_edge_bp": SIT_MIN_EDGE_BP,
-                     "min_rr": SIT_MIN_RR,
-                     "min_disc_bp": SIT_MIN_DISC_BP,
-                     "arm_band_bp": SIT_ARM_BAND_BP,
-                     "max_eaten": SIT_MAX_EATEN,
-                     "slots": SIT_SLOTS, "stop_tau": STOP_TAU,
-                     "arms": sheets},
-                    ensure_ascii=False) + "\n")
-        rebuild_accounts(mdir, None, slots=SIT_SLOTS)
-        # Наблюдательная книга: та же ситуация без требования к
-        # отношению. Свой каталог, свой счёт, своя запись — торгуемая
-        # не меняется ни чем, и тень бота её не читает. Лист сечения
-        # один на обе: он лежит у торгуемой, сканер берёт из него
-        # состав книг.
-        obs = mdir + "_obs"
-        fresh_sit_on_rules_change(obs, log_)
-        os.makedirs(obs, exist_ok=True)
-        som = dict(sm, slots=SIT_OBS_SLOTS, min_rr=SIT_OBS_MIN_RR,
-                   observation=True)
-        with open(os.path.join(obs, "manifest.json.tmp"), "w",
-                  encoding="utf-8") as f:
-            json.dump(som, f, ensure_ascii=False, indent=1)
-        os.replace(os.path.join(obs, "manifest.json.tmp"),
-                   os.path.join(obs, "manifest.json"))
-        for arm, _ in ARMS:
-            situational_arm(obs, arm, models, x, mats, syms,
-                            rows_m, j_last, grid, nov_lo, nov_hi,
-                            book_root, log_, beta_row=beta_row,
-                            names=names, train_seq=train_seq)
-        rebuild_accounts(obs, None, slots=SIT_OBS_SLOTS)
-        # Книга равного риска (просьба владельца): при одном RR тейк
-        # приносил то 20 $, то 5 $, а стоп забирал 15 — уровни у
-        # сделок разной ширины, а размер один, и доллар риска пляшет.
-        # Здесь размер обратен исполняемому стопу: стоп всегда −R,
-        # тейк при RR r — +r·R. Сделки ТЕ ЖЕ, что у торгуемой
-        # (гейты и места совпадают): меняется только распределение
-        # размера, и разница результатов принадлежит правилу.
-        rbk = mdir + "_r"
-        fresh_sit_on_rules_change(rbk, log_, rules={
-            "exit_policy": SIT_R_EXIT_POLICY,
-            "noise_mult": SIT_R_NOISE_MULT,
-            "min_stop_bp": SIT_R_MIN_STOP_BP})
-        os.makedirs(rbk, exist_ok=True)
-        srm = dict(sm, sizing="fixed_risk",
-                   risk_share=TR.FIXED_RISK_SHARE,
-                   exit_policy=SIT_R_EXIT_POLICY,
-                   noise_mult=SIT_R_NOISE_MULT,
-                   min_stop_bp=SIT_R_MIN_STOP_BP)
-        with open(os.path.join(rbk, "manifest.json.tmp"), "w",
-                  encoding="utf-8") as f:
-            json.dump(srm, f, ensure_ascii=False, indent=1)
-        os.replace(os.path.join(rbk, "manifest.json.tmp"),
-                   os.path.join(rbk, "manifest.json"))
-        for arm, _ in ARMS:
-            situational_arm(rbk, arm, models, x, mats, syms,
-                            rows_m, j_last, grid, nov_lo, nov_hi,
-                            book_root, log_, beta_row=beta_row,
-                            names=names, train_seq=train_seq)
-        rebuild_accounts(rbk, None, slots=SIT_SLOTS)
-    except Exception as e:                                # noqa: BLE001
-        log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
-
-    # Работа с книгами (разбор, выборы, лист сканера, счета четырёх
-    # книг) идёт ПОСЛЕ манифеста, то есть в прежнее `cycle_sec` не
-    # входила вовсе — а запаздывание входа задаёт именно момент
-    # записи выбора. Манифест дописывается итогом: одно место, где
-    # хранится время цикла, а не два расходящихся.
-    step("книги", ts)
+    all_lines += booked.get("acct_lines") or []
+    # Манифест дописывается итогом — одно место, где хранится время
+    # цикла. Шаг книг замерен у своего вызова: у раннего пути он уже
+    # лежал в steps при первой записи манифеста.
     man["steps_sec"] = steps
     man["cycle_sec"] = round(time.time() - t0, 1)
     with open(mp + ".tmp", "w", encoding="utf-8") as f:

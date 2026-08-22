@@ -3570,15 +3570,18 @@ def test_train_cycle_end_to_end():
               len(picks) == 4 and {p["arm"] for p in picks} ==
               {"gbm", "nn"} and "fwd" in picks[0]["long"][0],
               str(picks[0])[:100])
-        # Номер обучения — просьба владельца: каждое обучение получает
-        # версию, и каждая запись выбора несёт её. Два цикла обязаны
-        # дать номера 1 и 2 — не свойство «растёт», а сами числа.
+        # Номер обучения — просьба владельца: каждая запись выбора несёт
+        # номер ВЕСОВ, которыми посчитана. С правкой порядка цикла
+        # (книги ДО обучения — по SCRTUSDT) второй цикл выбирает
+        # ранними книгами на весах №1, а обучение №2 идёт после: его
+        # номер понесут выборы СЛЕДУЮЩЕГО часа. Сами числа, не
+        # свойство «растёт».
         man2 = json.load(open(os.path.join(T.MODEL_DIR,
                                            "manifest.json")))
         check("номер обучения второго цикла равен 2",
               man2.get("train_seq") == 2, str(man2.get("train_seq")))
-        check("записи выбора несут номер своего обучения",
-              [p.get("train_seq") for p in picks] == [1, 1, 2, 2],
+        check("записи выбора несут номер весов, которыми посчитаны",
+              [p.get("train_seq") for p in picks] == [1, 1, 1, 1],
               str([p.get("train_seq") for p in picks]))
         import pickle as _pk
         blob = _pk.load(open(os.path.join(
@@ -3664,6 +3667,93 @@ def test_train_cycle_end_to_end():
         T.gbm.fit = orig_fit
         T.nn.fit = orig_nn
         T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+
+
+def test_books_run_before_training_on_prev_weights():
+    """Книги идут ДО обучения, на весах прошлого часа (правка SCRTUSDT).
+
+    Три утверждения. Выборы и разборы не заложники обучения: цикл со
+    сломанным обучением всё равно записывает выборы нового часа — на
+    весах прошлого цикла и с ЕГО номером. Отрицательный контроль: с
+    выключенным загрузчиком прошлых весов тот же сломанный цикл не
+    пишет ничего — выборы спасает именно ранний шаг, а не случайность.
+    И гейт совместимости: блоб с чужим списком признаков выключает
+    ранний путь, книги идут после обучения и несут свежий номер.
+    """
+    import pickle as _pk
+
+    import train as T
+
+    orig_fit = T.gbm.fit
+    orig_nn = T.nn.fit
+    orig_load = T.load_prev_models
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 orig_fit(x, y, seed, n_trees=25, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                orig_nn(x, y, seed, epochs=4, **kw))
+    T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+    try:
+        d = tempfile.mkdtemp()
+        sd = os.path.join(d, "summary")
+        _write_summaries(sd, D=260)
+        T.MODEL_DIR = os.path.join(d, "model")
+        check("подготовительный цикл прошёл",
+              T.cycle(sd, lambda m: None, book_root=None))
+        pf = os.path.join(T.MODEL_DIR, "picks.jsonl")
+        n1 = sum(1 for _ in open(pf, encoding="utf-8"))
+
+        def boom(*a, **kw):
+            raise RuntimeError("обучение сломано нарочно")
+        T.ARMS = (("gbm", boom), ("nn", boom))
+        _write_summaries(sd, D=300)
+        try:
+            ok = T.cycle(sd, lambda m: None, book_root=None)
+        except RuntimeError:
+            ok = False
+        check("цикл со сломанным обучением не отчитался успехом",
+              not ok)
+        picks = [json.loads(x) for x in open(pf, encoding="utf-8")]
+        check("выборы нового часа записаны ДО обучения",
+              len(picks) == n1 + 2, f"{len(picks)} при прежних {n1}")
+        check("ранние выборы несут номер прошлых весов",
+              all(p.get("train_seq") == 1 for p in picks[n1:]),
+              str([p.get("train_seq") for p in picks[n1:]]))
+
+        # Отрицательный контроль: без загрузчика прошлых весов тот же
+        # сломанный цикл не записывает ни одного выбора.
+        T.load_prev_models = lambda names: (None, 0, None)
+        _write_summaries(sd, D=320)
+        try:
+            T.cycle(sd, lambda m: None, book_root=None)
+        except RuntimeError:
+            pass
+        n3 = sum(1 for _ in open(pf, encoding="utf-8"))
+        check("контроль: без прошлых весов сломанный цикл выборов "
+              "не пишет", n3 == n1 + 2, f"{n3} против {n1 + 2}")
+        T.load_prev_models = orig_load
+
+        # Гейт совместимости: блоб с чужим списком признаков выключает
+        # ранний путь целиком; обучение чинит веса, книги идут после
+        # него запасным путём и несут СВЕЖИЙ номер.
+        T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+        wp = os.path.join(T.MODEL_DIR, "weights_gbm_fwd_4h.pkl")
+        with open(wp, "rb") as f:
+            blob = _pk.load(f)
+        blob["features"] = list(blob["features"]) + ["fake_feature"]
+        with open(wp, "wb") as f:
+            _pk.dump(blob, f)
+        check("цикл с негодным блобом прошёл запасным путём",
+              T.cycle(sd, lambda m: None, book_root=None))
+        picks = [json.loads(x) for x in open(pf, encoding="utf-8")]
+        check("запасной путь: выборы несут номер свежего обучения",
+              len(picks) == n1 + 4
+              and all(p.get("train_seq") == 2 for p in picks[n1 + 2:]),
+              str([p.get("train_seq") for p in picks[n1 + 2:]]))
+    finally:
+        T.gbm.fit = orig_fit
+        T.nn.fit = orig_nn
+        T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+        T.load_prev_models = orig_load
 
 
 def test_nn_learns_and_sees_missing():
@@ -4616,6 +4706,7 @@ def main():
     test_live_ic_survives_hourly_retraining()
     test_live_ic_shown_as_median_not_last_hour()
     test_train_cycle_end_to_end()
+    test_books_run_before_training_on_prev_weights()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")
