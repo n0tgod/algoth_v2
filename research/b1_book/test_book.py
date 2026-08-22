@@ -489,7 +489,13 @@ def test_pages_run_headless():
                 # Книга без срока: час — ключ листа, а не время
                 # сделки, и первым столбцом обязан идти вход.
                 ("сделки ситуационной книги", web.TRADES, "?k=xxx&hz=sit"),
-                ("ядро", web.BOTPAGE, None)):
+                ("ядро", web.BOTPAGE, None),
+                # Тень выключена решением владельца: панель и страница
+                # обязаны назвать состояние словами, а не выдать его за
+                # «не развёрнуто» или поломку.
+                ("обзор, тень выключена", web.PAGE, "?k=xxx&botoff=1"),
+                ("ядро, тень выключена", web.BOTPAGE,
+                 "?k=xxx&botoff=1")):
             p = os.path.join(d, "p.html")
             with open(p, "w", encoding="utf-8") as f:
                 f.write(src)
@@ -4801,6 +4807,99 @@ def test_switcher_says_how_the_book_is_ordered():
           "подписана как σ")
 
 
+def test_shadow_off_marker_is_a_state_not_an_alarm():
+    """Маркер выключения тени — состояние, не поломка.
+
+    Маркер пишет tools/run_bot.sh --off (решение владельца 2026-08-22).
+    С маркером статус ядра обязан нести off и причину словами; без
+    маркера и без status.json — прежнее «не запущено» БЕЗ off, иначе
+    неразвёрнутая тень читалась бы как выключенная.
+    """
+    import shutil
+    import tempfile
+
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    root = os.path.join(d, "store")
+    os.makedirs(root, exist_ok=True)
+    keep_off, keep_st = C.SHADOW_OFF, C.SHADOW_STATUS
+    C.SHADOW_OFF = os.path.join(d, "SHADOW_OFF")
+    C.SHADOW_STATUS = os.path.join(d, "shadow", "status.json")
+    try:
+        c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        st = c.bot_status()
+        check("без маркера и статуса — не запущено, БЕЗ off",
+              st.get("present") is False and not st.get("off"), str(st))
+        with open(C.SHADOW_OFF, "w", encoding="utf-8") as f:
+            f.write("остановлена решением владельца 2026-08-22\n")
+        st = c.bot_status()
+        check("с маркером — off с причиной словами",
+              st.get("present") is False and st.get("off") is True
+              and "решением владельца" in (st.get("off_note") or ""),
+              str(st))
+        check("полные данные ядра несут то же состояние",
+              (c.bot_full() or {}).get("off") is True)
+    finally:
+        C.SHADOW_OFF, C.SHADOW_STATUS = keep_off, keep_st
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_watchdog_respects_shadow_off_marker():
+    """Сторож не воскрешает выключенную тень — настоящим блоком скрипта.
+
+    Секция ядра вырезается из tools/watchdog_book.sh и гоняется с
+    заглушками (pgrep молчит — процесса нет, run_bot.sh пишет след).
+    Обе стороны: без маркера мёртвый процесс перезапускается, с
+    маркером секция молчит целиком — перезапуск при маркере воскрешал
+    бы то, что владелец выключил.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+
+    wd = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                      "tools", "watchdog_book.sh")
+    src = open(wd, encoding="utf-8").read()
+    a = src.index("# --- исполнительное ядро")
+    b = src.index("# --- место на диске")
+    block = src[a:b]
+    d = tempfile.mkdtemp()
+    try:
+        os.makedirs(os.path.join(d, "bot", "target", "release"))
+        os.makedirs(os.path.join(d, "bot", "out"))
+        os.makedirs(os.path.join(d, "tools"))
+        bin_p = os.path.join(d, "bot", "target", "release", "bot")
+        open(bin_p, "w").write("#!/bin/sh\n")
+        os.chmod(bin_p, 0o755)
+        stub = os.path.join(d, "tools", "run_bot.sh")
+        open(stub, "w").write(
+            "#!/bin/sh\necho called >> restarts.log\n")
+        os.chmod(stub, 0o755)
+        pg = os.path.join(d, "stubs")
+        os.makedirs(pg)
+        open(os.path.join(pg, "pgrep"), "w").write("#!/bin/sh\nexit 1\n")
+        os.chmod(os.path.join(pg, "pgrep"), 0o755)
+        env = dict(os.environ, PATH=pg + os.pathsep + os.environ["PATH"])
+        wrap = "now() { date; }\n" + block
+
+        def run():
+            try:
+                os.remove(os.path.join(d, "restarts.log"))
+            except OSError:
+                pass
+            subprocess.run(["bash", "-c", wrap], cwd=d, env=env,
+                           capture_output=True, text=True, timeout=60)
+            return os.path.exists(os.path.join(d, "restarts.log"))
+
+        check("без маркера мёртвая тень перезапускается", run())
+        open(os.path.join(d, "bot", "out", "SHADOW_OFF"), "w")\
+            .write("остановлена решением владельца\n")
+        check("с маркером сторож тень не поднимает", not run())
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -4821,6 +4920,8 @@ def main():
     test_page_has_no_external_loads()
     test_pages_do_not_shadow_platform_globals()
     test_pages_run_headless()
+    test_shadow_off_marker_is_a_state_not_an_alarm()
+    test_watchdog_respects_shadow_off_marker()
     test_trades_table_columns_line_up()
     test_netted_signal_is_not_shown_as_a_trade()
     test_live_exec_measures_slippage_against_signal()

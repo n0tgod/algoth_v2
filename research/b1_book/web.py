@@ -744,7 +744,13 @@ async function pullBot() {
   const box = document.getElementById("botbox");
   const cap = document.getElementById("cap-bot");
   if (!d || !d.present) {
-    box.textContent = "core not running — the shadow is not deployed yet";
+    // Выключена решением владельца — состояние словами, не «не
+    // развёрнуто»: остановленная тень не должна читаться как поломка.
+    box.textContent = d && d.off
+      ? "shadow stopped by the owner — enough tested, server load "
+        + "trimmed; not a failure. The live executor reconciles with "
+        + "the exchange itself."
+      : "core not running — the shadow is not deployed yet";
     cap.textContent = "";
     return;
   }
@@ -2786,8 +2792,13 @@ async function load() {
     return;
   }
   if (!d.present) {
-    document.getElementById("alarm").innerHTML =
-      `<div class="card">core not running — the shadow is not deployed
+    document.getElementById("alarm").innerHTML = d.off
+      ? `<div class="card">shadow stopped by the owner — enough
+         tested, server load trimmed; not a failure. The live
+         executor reconciles with the exchange on every tact.
+         Turn back on: <span class="mono">tools/run_bot.sh --on</span>
+         ${d.off_note ? "<br>" + d.off_note : ""}</div>`
+      : `<div class="card">core not running — the shadow is not deployed
        yet</div>`;
     return;
   }

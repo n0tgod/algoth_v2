@@ -65,6 +65,14 @@ from collections import deque
 from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# Файлы тени ядра: статус пишет `bot run`, маркер выключения —
+# `tools/run_bot.sh --off` (решение владельца 2026-08-22). Констан-
+# тами, а не строками в методе: их подменяет тест, и вторая копия
+# пути разошлась бы с первой.
+SHADOW_STATUS = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                             "bot", "out", "shadow", "status.json")
+SHADOW_OFF = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                          "bot", "out", "SHADOW_OFF")
 OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
@@ -1271,10 +1279,18 @@ class Collector:
         считается ЗДЕСЬ, по часам сервера: у страницы свои часы, и на
         телефоне они уходят.
         """
-        p = os.path.join(os.path.dirname(os.path.dirname(HERE)),
-                         "bot", "out", "shadow", "status.json")
+        # Выключена решением владельца — это СОСТОЯНИЕ, не поломка и
+        # не «не развёрнуто»: маркер пишет tools/run_bot.sh --off, и
+        # панель обязана назвать причину словами, иначе остановленная
+        # тень неотличима от сломанной.
         try:
-            with open(p, encoding="utf-8") as f:
+            with open(SHADOW_OFF, encoding="utf-8") as f:
+                return {"present": False, "off": True,
+                        "off_note": f.readline().strip()}
+        except OSError:
+            pass
+        try:
+            with open(SHADOW_STATUS, encoding="utf-8") as f:
                 st = json.load(f)
         except (OSError, ValueError):
             return {"present": False}

@@ -85,7 +85,11 @@ fi
 # движется (свежесть status.json; ядро пишет его каждый такт, минута).
 BOT_BIN=bot/target/release/bot
 BOT_STATUS=bot/out/shadow/status.json
-if [ -x "$BOT_BIN" ]; then
+# Маркер выключения (пишет tools/run_bot.sh --off) — СОСТОЯНИЕ, не
+# поломка: секция молчит целиком, как молчит при несобранном бинарнике.
+# Перезапуск при маркере воскрешал бы то, что владелец выключил.
+SHADOW_OFF=bot/out/SHADOW_OFF
+if [ -x "$BOT_BIN" ] && [ ! -f "$SHADOW_OFF" ]; then
     bot_restart=""
     if ! pgrep -f "bot run --s8" >/dev/null; then
         bot_restart="процесс ядра не найден"

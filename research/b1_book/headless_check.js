@@ -908,7 +908,12 @@ global.fetch = async (url) => {
                                    trained_at:
                                      "2026-08-01T10:00:00+00:00"}}}}
              : url.startsWith("/bot-full")
-               ? {present: true, age_sec: 42.0, arm: "gbm",
+               // Тень выключена решением владельца: оба ответа ядра
+               // несут off, и страница обязана назвать состояние.
+               ? /botoff=1/.test(SEARCH)
+                 ? {present: false, off: true,
+                    off_note: "остановлена решением владельца"}
+                 : {present: true, age_sec: 42.0, arm: "gbm",
                   capital_usd: 1000.0, balance_usd: 1125.01,
                   cash_usd: 0.0, busy_usd: 1125.01, open: 1, kill: false,
                   check: {ok: true, violations: [], warnings: [],
@@ -942,7 +947,10 @@ global.fetch = async (url) => {
              : url.startsWith("/bot")
                // Статус исполнительного ядра: живой, с чистыми
                // вердиктами и числами — панель обязана их ПОКАЗАТЬ.
-               ? {present: true, age_sec: 42.0, arm: "gbm",
+               ? /botoff=1/.test(SEARCH)
+                 ? {present: false, off: true,
+                    off_note: "остановлена решением владельца"}
+                 : {present: true, age_sec: 42.0, arm: "gbm",
                   balance_usd: 990.08, cash_usd: 490.08, busy_usd: 500.0,
                   open: 12, kill: false,
                   pass_report: {appended: 0, opened: 0, closed: 0,
@@ -1363,7 +1371,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Страница ядра: числа из подставного ответа обязаны дойти до
   // разметки — баланс, доля, позиция с переоценкой, закрытая сделка,
   // вердикт сверки.
-  if (isBot) {
+  // В off-режиме содержимого страницы не существует ПО ДЕЛУ — его
+  // заменяют проверки состояния «выключена решением владельца» ниже.
+  if (isBot && !/botoff=1/.test(SEARCH)) {
     const alarm = String(global.__el("alarm").innerHTML || "");
     // Журнал писан прежним правилом кассы. Сверка при этом краснеет
     // навсегда — красное, которое всегда красное, перестаёт быть
@@ -2288,6 +2298,28 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("меню: текущая страница не помечена");
   }
 
+  if (/botoff=1/.test(SEARCH) && !isBot && !isChart && !isInfo) {
+    // Обзор: панель ядра обязана назвать выключение решением
+    // владельца, а не выдать его за «не развёрнуто» или поломку.
+    const bb = String(global.__el
+      ? (global.__el("botbox") || {}).textContent || "" : "");
+    if (!/stopped by the owner/.test(bb))
+      bad.push("панель ядра: выключение тени не названо решением");
+    if (/not deployed/.test(bb))
+      bad.push("панель ядра: выключенная тень выдана за неразвёрнутую");
+  }
+  if (isBot && /botoff=1/.test(SEARCH)) {
+    const al = String(global.__el
+      ? (global.__el("alarm") || {}).innerHTML || "" : "");
+    if (!/stopped by the owner/.test(al))
+      bad.push("страница ядра: выключение тени не названо решением");
+    if (!/run_bot\.sh --on/.test(al))
+      bad.push("страница ядра: не сказано, как включить обратно");
+    if (/not deployed/.test(al))
+      bad.push("страница ядра: выключенная тень выдана за "
+               + "неразвёрнутую");
+  }
+
   if (isVol && /voldown=1/.test(SEARCH)) {
     // Медленный счёт не есть отсутствие данных. Первый обход суток
     // отваливается по времени, и страница писала «делить нечего» —
@@ -2674,7 +2706,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive
+      && !/botoff=1/.test(SEARCH)) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
     if (!/990\.08/.test(bb))

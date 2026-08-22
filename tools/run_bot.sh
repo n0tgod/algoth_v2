@@ -22,6 +22,43 @@ JOURNAL=bot/out/shadow
 # (книга model) отставится в архив сам при первом запуске.
 S8=research/s8_loop/out/model_sit
 
+# Выключатель тени (решение владельца 2026-08-22: «достаточно
+# затестили, разгружаем сервер»). Маркер — файл, а не память процесса:
+# его уважают и этот скрипт, и сторож (не перезапускает), и панель
+# (называет состояние словами). Живой исполнитель (`bot live`,
+# tools/run_live.sh) от маркера НЕ зависит ничем.
+OFF=bot/out/SHADOW_OFF
+if [ "${1:-}" = "--off" ]; then
+    mkdir -p bot/out
+    printf 'тень остановлена решением владельца %s: достаточно затестили, разгружаем сервер\n'         "$(date -u +%Y-%m-%d)" > "$OFF"
+    echo "== выключаю тень =="
+    pkill -f "$PAT" 2>/dev/null
+    for i in $(seq 1 20); do
+        pgrep -f "$PAT" >/dev/null || break
+        sleep 1
+    done
+    if pgrep -f "$PAT" >/dev/null; then
+        echo "не закрылся — добиваю"
+        pkill -9 -f "$PAT" 2>/dev/null; sleep 2
+    fi
+    if pgrep -f "$PAT" >/dev/null; then
+        echo "ОШИБКА: процесс тени всё ещё жив"; exit 1
+    fi
+    echo "== тень остановлена, маркер $OFF записан — сторож её не поднимет =="
+    echo "   включить обратно: tools/run_bot.sh --on"
+    exit 0
+fi
+if [ "${1:-}" = "--on" ]; then
+    rm -f "$OFF"
+    echo "== маркер снят — обычный запуск =="
+    shift || true
+fi
+if [ -f "$OFF" ]; then
+    echo "ОТКАЗ: $(cat "$OFF")"
+    echo "включить обратно: tools/run_bot.sh --on"
+    exit 1
+fi
+
 if [ "${1:-}" != "--no-build" ]; then
     echo "== собираю =="
     if ! command -v cargo >/dev/null 2>&1 \
