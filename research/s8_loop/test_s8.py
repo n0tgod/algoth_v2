@@ -3669,6 +3669,60 @@ def test_train_cycle_end_to_end():
         T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
 
 
+def test_low_rr_book_is_declared_with_a_ceiling():
+    """Книга низкого RR объявлена листом и манифестом (владелец, 2026-08-22).
+
+    Лист сечения — единственный источник состава книг для сканера:
+    четвёртая книга обязана лежать в нём с потолком отношения и своими
+    местами. Манифест книги несёт потолок и нулевой пол; у торгуемой
+    книги потолка НЕТ — иначе правило расползлось бы на неё молча.
+    """
+    import train as T
+
+    orig_fit = T.gbm.fit
+    orig_nn = T.nn.fit
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 orig_fit(x, y, seed, n_trees=25, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                orig_nn(x, y, seed, epochs=4, **kw))
+    T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+    try:
+        d = tempfile.mkdtemp()
+        sd = os.path.join(d, "summary")
+        _write_summaries(sd, D=260)
+        T.MODEL_DIR = os.path.join(d, "model")
+        check("цикл прошёл", T.cycle(sd, lambda m: None, book_root=None))
+        sheet = json.load(open(os.path.join(
+            T.MODEL_DIR + "_sit", "scan_sheet.json")))
+        lo = [b for b in sheet.get("books") or []
+              if (b.get("dir") or "").endswith("_lo")]
+        check("лист несёт книгу низкого RR с потолком и местами",
+              len(lo) == 1 and lo[0].get("max_rr") == T.SIT_LO_MAX_RR
+              and lo[0].get("slots") == T.SIT_LO_SLOTS
+              and lo[0].get("min_rr") == 0.0, str(lo))
+        others = [b for b in sheet.get("books") or []
+                  if not (b.get("dir") or "").endswith("_lo")]
+        check("у остальных книг листа потолка нет",
+              all("max_rr" not in b for b in others), str(others))
+        man = json.load(open(os.path.join(
+            T.MODEL_DIR + "_sit_lo", "manifest.json")))
+        check("манифест книги низкого RR: потолок, нулевой пол, места",
+              man.get("max_rr") == T.SIT_LO_MAX_RR
+              and man.get("min_rr") == 0.0
+              and man.get("slots") == T.SIT_LO_SLOTS
+              and man.get("situational") is True,
+              str({k: man.get(k) for k in
+                   ("max_rr", "min_rr", "slots")}))
+        sman = json.load(open(os.path.join(
+            T.MODEL_DIR + "_sit", "manifest.json")))
+        check("у торгуемой книги потолка в манифесте нет",
+              "max_rr" not in sman, str(sman.get("max_rr")))
+    finally:
+        T.gbm.fit = orig_fit
+        T.nn.fit = orig_nn
+        T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+
+
 def test_books_run_before_training_on_prev_weights():
     """Книги идут ДО обучения, на весах прошлого часа (правка SCRTUSDT).
 
@@ -4706,6 +4760,7 @@ def main():
     test_live_ic_survives_hourly_retraining()
     test_live_ic_shown_as_median_not_last_hour()
     test_train_cycle_end_to_end()
+    test_low_rr_book_is_declared_with_a_ceiling()
     test_books_run_before_training_on_prev_weights()
     print()
     if FAILED:

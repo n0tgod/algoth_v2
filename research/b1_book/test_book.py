@@ -510,6 +510,117 @@ def test_pages_run_headless():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_live_exec_paper_side_follows_the_book_marker():
+    """Бумажная сторона страницы live — книга из МАРКЕРА журнала.
+
+    Исполнитель переводится между книгами (--book у run_live.sh), и
+    зашитая model_sit после перевода сопоставляла бы живые сделки с
+    чужой бумагой, ничем себя не выдав. Маркер book.txt пишет
+    запускалка; журнал без маркера писан до его появления — с
+    model_sit, и трактовать отсутствие иначе нельзя. Обе стороны:
+    с маркером сделка находит бумагу в книге низкого RR, без маркера
+    та же сделка бумаги не находит (её там нет).
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "research", "b1_book")
+        os.makedirs(C.HERE, exist_ok=True)
+        jdir = os.path.join(d, "bot", "out", "live")
+        os.makedirs(jdir, exist_ok=True)
+        shutil.copy(os.path.join(os.path.dirname(HERE), "..", "bot",
+                                 "sverka.py"),
+                    os.path.join(d, "bot", "sverka.py"))
+        hour = "2026-08-21-19"
+        ms = 1787340000000
+        rows = [
+            {"seq": 1, "ev": "decision", "arm": "gbm", "hour": hour,
+             "sym": "LUSDT", "side": "long", "px": 1.0,
+             "src_ts": ms / 1000.0 - 3600, "at_ms": ms},
+            {"seq": 2, "ev": "open", "pos": f"gbm:{hour}:LUSDT:long",
+             "sym": "LUSDT", "side": "long", "notional_usd": 30.0,
+             "entry_px": 1.001, "fee_usd": 0.0165, "partial": False,
+             "at_ms": ms + 1000},
+            {"seq": 3, "ev": "close", "pos": f"gbm:{hour}:LUSDT:long",
+             "exit_px": 1.009, "fee_usd": 0.0166, "pnl_usd": 0.21,
+             "reason": "цена дошла до обещанной цели — лимитка "
+                       "исполнилась",
+             "at_ms": ms + 60000},
+        ]
+        with open(os.path.join(jdir, "journal-2026-08-21.jsonl"),
+                  "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        with open(os.path.join(jdir, "live_status.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"at_ms": ms, "dry": False, "halted": None,
+                       "rejects_row": 0}, f)
+        with open(os.path.join(jdir, "mode.txt"), "w",
+                  encoding="utf-8") as f:
+            f.write("live\n")
+        # Бумага живёт ТОЛЬКО в книге низкого RR.
+        mdir = os.path.join(d, "research", "s8_loop", "out",
+                            "model_sit_lo")
+        os.makedirs(mdir, exist_ok=True)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"situational": True, "slots": 6,
+                       "min_rr": 0.0, "max_rr": 1.5}, f)
+        with open(os.path.join(mdir, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": hour,
+                "at_ts": ms / 1000.0 - 3600,
+                "long": [{"sym": "LUSDT", "px": 1.0, "mae": -120.0,
+                          "mfe": 60.0,
+                          "at_ts": ms / 1000.0 - 3600}],
+                "short": []}, ensure_ascii=False) + "\n")
+        with open(os.path.join(mdir, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({
+                "arm": "gbm", "hour": hour,
+                "at_ts": ms / 1000.0 + 100,
+                "rows": [{"sym": "LUSDT", "side": "long", "net": 69.0,
+                          "got": 80.0, "exit_hour": hour,
+                          "exit_ts": ms / 1000.0 + 60,
+                          "exit_px": 1.008,
+                          "reason": "цена дошла до обещанной цели"}],
+            }, ensure_ascii=False) + "\n")
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "..",
+                                        "s8_loop"))
+        import trades as _TR  # noqa: F401
+
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col.books = {}
+        col._px_cache = {}
+
+        # Без маркера — model_sit: бумаги там нет, сделка не сопоставлена.
+        d0 = col.live_exec()
+        check("без маркера бумажная сторона — model_sit",
+              d0.get("book") == "model_sit", str(d0.get("book")))
+        r0 = [r for r in d0.get("rows") or [] if r.get("sym") == "LUSDT"]
+        check("без маркера сделка бумаги не находит",
+              r0 and r0[0].get("paper_net_bp") is None, str(r0[:1]))
+
+        # С маркером — книга низкого RR, сделка находит свою бумагу.
+        with open(os.path.join(jdir, "book.txt"), "w",
+                  encoding="utf-8") as f:
+            f.write("model_sit_lo\n")
+        col._live_exec_cache = None
+        d1 = col.live_exec()
+        check("маркер переводит бумажную сторону на книгу низкого RR",
+              d1.get("book") == "model_sit_lo", str(d1.get("book")))
+        r1 = [r for r in d1.get("rows") or [] if r.get("sym") == "LUSDT"]
+        check("сделка сопоставлена с бумагой книги низкого RR",
+              r1 and r1[0].get("paper_net_bp") == 69.0, str(r1[:1]))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_live_exec_measures_slippage_against_signal():
     """Живое исполнение против бумажного сигнала — арифметика чисел.
 
@@ -2843,6 +2954,87 @@ def test_sit_scan_stop_is_the_quantile_level():
                                          0.0, 0.0, 1.0) or {}))
 
 
+def test_sit_scan_max_rr_takes_the_other_end():
+    """Потолок отношения — правило книги низкого RR (владелец, 2026-08-22).
+
+    Кандидат считается один на все книги, различаются требования.
+    Кандидат с низким переякоренным отношением входит в книгу с
+    потолком и не входит в торгуемую (пол 2); с высоким — наоборот.
+    Книга без поля потолка берёт обоих: отсутствие поля — «потолка
+    нет», а не ноль (ноль запретил бы вход всем).
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        col = C.Collector.__new__(C.Collector)
+        col.books = {}
+        col.log = lambda m: None
+        col.sit_noise = lambda sym, now: 0.0
+
+        class B:
+            def __init__(self, px):
+                self.px = px
+
+            def best(self):
+                return self.px * 0.9999, self.px * 1.0001
+
+        rows = [{"sym": f"S{i}USDT", "fwd": 40.0, "mae": -40.0,
+                 "mfe": 90.0, "beta": 1.0, "px": 100.0}
+                for i in range(30)]
+        # Два интересных имени. HIGH — обещания из соседнего теста:
+        # при ходе −20 б.п. переякоренное отношение 110/20 = 5.5.
+        # LOW — широкий стоп: (60+20)/|−120+20| = 0.8.
+        rows[0] = {"sym": "HIGHUSDT", "fwd": 40.0, "mae": -40.0,
+                   "mfe": 90.0, "beta": 1.0, "px": 100.0}
+        rows[1] = {"sym": "LOWUSDT", "fwd": 40.0, "mae": -120.0,
+                   "mfe": 60.0, "beta": 1.0, "px": 100.0}
+        sheet = {"hour": "2026-08-22-10", "min_edge_bp": 22.0,
+                 "min_rr": 2.0, "min_disc_bp": 11.0, "slots": 6,
+                 "arms": {"gbm": rows}}
+        for r in rows:
+            col.books[r["sym"]] = B(100.0)
+        want = [{"dir": "trd", "min_rr": 2.0, "slots": 6},
+                {"dir": "low", "min_rr": 0.0, "max_rr": 1.5,
+                 "slots": 6},
+                {"dir": "any", "min_rr": 0.0, "slots": 6}]
+        books = {}
+        for b in want:
+            bd = os.path.join(d, b["dir"])
+            os.makedirs(bd, exist_ok=True)
+            books[bd] = {"dir": bd, "signalled": set(),
+                         "entered": set(), "pos": []}
+        armed = set()
+        # Взведение: оба имени дальше полосы от крючка.
+        col.books["HIGHUSDT"] = B(100.10)
+        col.books["LOWUSDT"] = B(100.10)
+        col._sit_scan(d, sheet, want, books, 1000.0, armed)
+        # Пересечение на наших глазах.
+        col.books["HIGHUSDT"] = B(99.80)
+        col.books["LOWUSDT"] = B(99.80)
+        col._sit_scan(d, sheet, want, books, 1005.0, armed)
+
+        rd = lambda b: C.Collector._jsonl(
+            os.path.join(d, b, "entries_live.jsonl"))
+        trd = {e["sym"] for e in rd("trd")}
+        low = {e["sym"] for e in rd("low")}
+        any_ = {e["sym"] for e in rd("any")}
+        check("торгуемая берёт высокое отношение и не берёт низкое",
+              trd == {"HIGHUSDT"}, str(trd))
+        check("книга с потолком берёт низкое и не берёт высокое",
+              low == {"LOWUSDT"}, str(low))
+        check("книга без поля потолка берёт обоих",
+              any_ == {"HIGHUSDT", "LOWUSDT"}, str(any_))
+        ev = rd("low")[0]
+        check("потолок — числом в записи входа",
+              ev.get("max_rr") == 1.5, str(ev.get("max_rr")))
+        check("у входа торгуемой книги поля потолка нет",
+              all("max_rr" not in e for e in rd("trd")))
+    finally:
+        import shutil
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_sit_scan_enters_only_on_a_crossing_it_saw():
     """Вход — событие, а не состояние, в котором имя застали.
 
@@ -4924,6 +5116,7 @@ def main():
     test_watchdog_respects_shadow_off_marker()
     test_trades_table_columns_line_up()
     test_netted_signal_is_not_shown_as_a_trade()
+    test_live_exec_paper_side_follows_the_book_marker()
     test_live_exec_measures_slippage_against_signal()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()
@@ -4963,6 +5156,7 @@ def main():
     test_sit_scan_v11_room_and_eaten()
     test_sit_noise_is_median_minute_range()
     test_sit_scan_stop_is_the_quantile_level()
+    test_sit_scan_max_rr_takes_the_other_end()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_sit_scan_book_noise_multiplier()
     test_sit_scan_min_stop_book_rule()

@@ -83,6 +83,7 @@ const BOOK_LIST = [["h4", "4 h \u00b7 per \u03c3"], ["h24", "24 h"],
                    ["h24b", "24 h \u00b7 basket"],
                    ["h24bf", "24 h \u00b7 basket \u00b1 floor"],
                    ["sit", "situational \u00b7 per \u03c3"],
+                   ["sit_lo", "situational · low RR"],
                    ["sit_r", "situational \u00b7 fixed risk"],
                    ["z", "24 h \u00b7 per \u03c3"]];
 // Ключи, законные в адресе. Главная книга — умолчание и в адрес не

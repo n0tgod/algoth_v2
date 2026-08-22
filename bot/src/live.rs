@@ -400,6 +400,11 @@ pub struct Executor<E: Exchange> {
     /// (пересчитывается каждый такт, едет в статус): молча выброшенное
     /// обязано быть видно числом.
     stale_entries: u64,
+    /// Входы выключены файлом NO_ENTRIES в каталоге журнала — штатная
+    /// процедура перевода на другую книгу: выходы обязанность, вход
+    /// возможность, и пока флаг лежит, исполнитель только сопровождает
+    /// открытое. Состояние, не отказ — едет в статус и на страницу.
+    entries_paused: bool,
     /// Имена с выставленным плечом 1× (спека 12 §2) — раз на имя.
     lev_set: BTreeSet<String>,
     /// Имена, у которых плечо 1× НЕ выставилось, с текстом отказа.
@@ -676,6 +681,7 @@ impl<E: Exchange> Executor<E> {
             realized_by_day,
             exit_pending: BTreeMap::new(),
             stale_entries: 0,
+            entries_paused: false,
             lev_set: BTreeSet::new(),
             lev_errors: BTreeMap::new(),
         })
@@ -1257,6 +1263,17 @@ impl<E: Exchange> Executor<E> {
     // --- входы ----------------------------------------------------------
 
     fn process_entries(&mut self, now_ms: i64, rep: &mut TickReport) {
+        // Файл NO_ENTRIES — штатная пауза входов (перевод на другую
+        // книгу): ни решения, ни строки журнала, ни запроса к бирже.
+        // Пропущенные события не помечаются виденными нарочно: снятый
+        // флаг не воскресит их — порог свежести отсеет сам, — а
+        // помеченные исчезли бы молча и при возврате флага в ту же
+        // секунду. Выходов пауза не касается никогда.
+        self.entries_paused =
+            self.cfg.journal_dir.join("NO_ENTRIES").exists();
+        if self.entries_paused {
+            return;
+        }
         let events: Vec<EntryEv> =
             picks::read_lines(&self.cfg.s8_dir.join("entries_live.jsonl"));
         self.stale_entries = 0;
@@ -1579,6 +1596,7 @@ impl<E: Exchange> Executor<E> {
             "realized_total_usd": self.realized_total,
             "rejects_row": self.rejects_row,
             "stale_entries_skipped": self.stale_entries,
+            "entries_paused": self.entries_paused,
             "lev_errors": if self.lev_errors.is_empty() { serde_json::Value::Null }
                 else { json!(self.lev_errors) },
             "wallet": wallet.map(|(eq, bal)| json!({"equity": eq, "balance": bal})),

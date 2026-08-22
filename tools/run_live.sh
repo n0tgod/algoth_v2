@@ -21,6 +21,14 @@ PAT='bot live --s8'
 BIN=bot/target/release/bot
 LOG=bot/out/live.log
 JOURNAL=bot/out/live
+# Книга исполнителя — ключом --book (sit | sit_lo). Умолчание — sit:
+# живой счёт не меняет книгу от чьей-то забывчивости. Перевод на
+# другую книгу — процедура из двух шагов (решение владельца
+# 2026-08-22): сперва --no-entries (входы гаснут, выходы сопровождают
+# открытое), затем, когда позиций ноль, --book sit_lo — журнал
+# отставляется в архив вместе с флагом паузы, и чистый начинается уже
+# на новой книге.
+BOOK=sit
 S8=research/s8_loop/out/model_sit
 KEYS="$HOME/.bybit/live.env"
 BASE="https://api.bybit.com"
@@ -37,13 +45,27 @@ fi
 MODE_FLAG="--dry"
 MODE_NAME="СУХОЙ прогон (X2) — заявки НЕ отправляются"
 EXTRA=""
+NO_ENTRIES=""
+expect_book=""
 for a in "$@"; do
+    if [ -n "$expect_book" ]; then
+        case "$a" in
+            sit)    BOOK=sit;    S8=research/s8_loop/out/model_sit ;;
+            sit_lo) BOOK=sit_lo; S8=research/s8_loop/out/model_sit_lo ;;
+            *) echo "неизвестная книга: $a (жду sit / sit_lo)"; exit 2 ;;
+        esac
+        expect_book=""
+        continue
+    fi
     case "$a" in
         --live) MODE_FLAG=""; MODE_NAME="ЖИВЫЕ заявки (X3), капитал $CAPITAL \$" ;;
         --clear-halt) EXTRA="--clear-halt" ;;
-        *) echo "неизвестный ключ: $a (жду --live / --stop / --clear-halt)"; exit 2 ;;
+        --book) expect_book=1 ;;
+        --no-entries) NO_ENTRIES=1 ;;
+        *) echo "неизвестный ключ: $a (жду --live / --stop / --clear-halt / --book / --no-entries)"; exit 2 ;;
     esac
 done
+[ -n "$expect_book" ] && { echo "--book требует имени книги (sit / sit_lo)"; exit 2; }
 
 [ -f "$KEYS" ] || { echo "ОШИБКА: нет файла ключа $KEYS"; exit 1; }
 
@@ -84,18 +106,38 @@ mkdir -p "$JOURNAL" bot/out
 WANT_MODE=$([ -n "$MODE_FLAG" ] && echo dry || echo live)
 MODE_MARK="$JOURNAL/mode.txt"
 CUR_MODE=$(cat "$MODE_MARK" 2>/dev/null || true)
-if [ "$CUR_MODE" != "$WANT_MODE" ] \
+# Маркер КНИГИ — тем же правилом: журнал описывает одну книгу, и
+# записи другой поверх старых обессмыслили бы сопоставление с бумагой.
+# Отсутствие маркера при непустом журнале означает model_sit — все
+# журналы до появления маркера писаны с неё; трактовать отсутствие как
+# «неизвестно» значило бы отставить живой журнал с ОТКРЫТЫМИ
+# позициями на пустом месте, и сверка с биржей встала бы красной.
+BOOK_MARK="$JOURNAL/book.txt"
+CUR_BOOK=$(cat "$BOOK_MARK" 2>/dev/null || echo model_sit)
+WANT_BOOK=$(basename "$S8")
+if { [ "$CUR_MODE" != "$WANT_MODE" ] || [ "$CUR_BOOK" != "$WANT_BOOK" ]; } \
         && ls "$JOURNAL"/journal-*.jsonl* >/dev/null 2>&1; then
     ARCH="${JOURNAL}-${CUR_MODE:-unmarked}-$(date -u +%Y%m%d-%H%M%S)"
-    echo "== журнал писан в режиме «${CUR_MODE:-без маркера}» =="
-    echo "   архивирую в $ARCH и начинаю чистый"
+    echo "== журнал писан иначе (режим «${CUR_MODE:-без маркера}», книга «$CUR_BOOK») =="
+    echo "   архивирую в $ARCH и начинаю чистый (режим $WANT_MODE, книга $WANT_BOOK)"
     mv "$JOURNAL" "$ARCH" || { echo "ОШИБКА: не смог отставить журнал"; exit 1; }
     mkdir -p "$JOURNAL"
+    # KILL переезжает (аварийный выключатель не снимается сменой
+    # журнала); NO_ENTRIES — НЕТ: пауза входов и была процедурой
+    # перевода, смена книги её завершает.
     [ -f "$ARCH/KILL" ] && cp "$ARCH/KILL" "$JOURNAL/KILL"
 fi
 printf '%s\n' "$WANT_MODE" > "$MODE_MARK"
+printf '%s\n' "$WANT_BOOK" > "$BOOK_MARK"
+if [ -n "$NO_ENTRIES" ]; then
+    : > "$JOURNAL/NO_ENTRIES"
+    echo "== входы ВЫКЛЮЧЕНЫ файлом NO_ENTRIES — исполнитель только сопровождает открытое =="
+elif [ -f "$JOURNAL/NO_ENTRIES" ]; then
+    echo "ВНИМАНИЕ: лежит $JOURNAL/NO_ENTRIES — входы выключены с прошлого запуска."
+    echo "  Снять: rm $JOURNAL/NO_ENTRIES (либо перевод книги --book, он начинает чистый журнал)"
+fi
 
-echo "== запускаю: $MODE_NAME =="
+echo "== запускаю: $MODE_NAME, книга $WANT_BOOK =="
 ( setsid nohup "$BIN" live \
     --s8 "$S8" \
     --journal "$JOURNAL" \

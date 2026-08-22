@@ -1154,6 +1154,19 @@ def review_arm(mdir, arm, hold_h, targets, si, grid, book_root, log_):
 SIT_SLOTS = 6                     # одновременных позиций не больше
 SIT_MIN_EDGE_BP = 3 * ROUND_COST_BP
 SIT_MIN_RR = 2.0
+# Книга НИЗКОГО RR (решение владельца 2026-08-22). Замер по
+# наблюдательной записи (2321 закрытая сделка, неделя 08-14…08-21)
+# дал монотонный градиент ПРОТИВ высокого отношения: доля побед
+# 54 % при RR<1 против 34 % при RR≥2 и 22 % при RR≥4, а механизм —
+# узкий стоп, не крупная цель (медиана обещанного стопа сжимается
+# 354 → 57 б.п. при почти постоянной цели, доля выходов по стопу
+# растёт 17 % → 78 %). Порог 1.5 объявлен ДО проверочных данных;
+# лучшую корзину 0–1 нарочно не берём — резать тоньше после
+# просмотра поверхности есть ошибка R5. Нижнего порога нет: гейт
+# книги — «обещание есть и RR не выше потолка», остальные правила
+# v13 (край, скидка, полоса, шум, съеденное) общие.
+SIT_LO_MAX_RR = 1.5
+SIT_LO_SLOTS = 6
 # Цена обязана ПРИЙТИ К НАМ, а не лист — объявить. Остаток хода
 # обязан превышать то, что обещал сам лист, на круг издержек ноги.
 # Без этого требования гейт пускал имя в первый же такт после свежего
@@ -2504,6 +2517,14 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                                 "slots": SIT_SLOTS,
                                 "noise_mult": SIT_R_NOISE_MULT,
                                 "min_stop_bp": SIT_R_MIN_STOP_BP},
+                               # Книга низкого RR: тот же кандидат,
+                               # другой конец распределения отношения.
+                               # Потолок вместо пола — и это ЕДИНСТ-
+                               # венное отличие от торгуемой.
+                               {"dir": os.path.basename(mdir) + "_lo",
+                                "min_rr": 0.0,
+                                "max_rr": SIT_LO_MAX_RR,
+                                "slots": SIT_LO_SLOTS},
                            ],
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
@@ -2580,6 +2601,28 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                             book_root, log_, beta_row=beta_row,
                             names=names, train_seq=seq_b)
         rebuild_accounts(rbk, None, slots=SIT_SLOTS)
+        # Книга низкого RR (решение владельца 2026-08-22): вход при
+        # обещанном отношении НЕ ВЫШЕ потолка. Правило — потолок в
+        # манифесте; его смена отставляет книгу, как любая смена
+        # правил. Сделки дизъюнктны с торгуемой по построению
+        # (rr ≤ 1.5 против rr ≥ 2) — двойного счёта в лиге нет.
+        lo = mdir + "_lo"
+        fresh_sit_on_rules_change(lo, log_, rules={
+            "max_rr": SIT_LO_MAX_RR})
+        os.makedirs(lo, exist_ok=True)
+        slm = dict(sm, slots=SIT_LO_SLOTS, min_rr=0.0,
+                   max_rr=SIT_LO_MAX_RR)
+        with open(os.path.join(lo, "manifest.json.tmp"), "w",
+                  encoding="utf-8") as f:
+            json.dump(slm, f, ensure_ascii=False, indent=1)
+        os.replace(os.path.join(lo, "manifest.json.tmp"),
+                   os.path.join(lo, "manifest.json"))
+        for arm, _ in ARMS:
+            situational_arm(lo, arm, models_b, x, mats, syms,
+                            rows_m, j_last, grid, nov_lo, nov_hi,
+                            book_root, log_, beta_row=beta_row,
+                            names=names, train_seq=seq_b)
+        rebuild_accounts(lo, None, slots=SIT_LO_SLOTS)
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
 

@@ -1592,11 +1592,23 @@ class Collector:
                                 "reason": reason,
                                 "at": (r.get("at_ms") or 0) / 1000.0})
 
-        # Бумажная сторона: торгуемая ситуационная книга, обе руки.
+        # Бумажная сторона — КНИГА ИЗ МАРКЕРА журнала (book.txt пишет
+        # run_live.sh): исполнитель переводится между книгами, и
+        # зашитая model_sit после перевода сопоставляла бы живые
+        # сделки с чужой бумагой, ничем себя не выдав. Журнал без
+        # маркера писан до его появления — с model_sit.
         paper, paper_error = {}, None
         try:
+            book_base = "model_sit"
+            try:
+                with open(os.path.join(jdir, "book.txt"),
+                          encoding="utf-8") as f:
+                    book_base = f.read().strip() or "model_sit"
+            except OSError:
+                pass
+            out["book"] = book_base
             s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-            mdir = os.path.join(s8, "model_sit")
+            mdir = os.path.join(s8, book_base)
             with open(os.path.join(mdir, "manifest.json"),
                       encoding="utf-8") as f:
                 mman = json.load(f)
@@ -2195,6 +2207,7 @@ class Collector:
                     # манифеста, как в полном ответе.
                     "min_edge_bp": mman.get("min_edge_bp"),
                     "min_rr": mman.get("min_rr"),
+                    "max_rr": mman.get("max_rr"),
                     "min_disc_bp": mman.get("min_disc_bp"),
                     "max_eaten": mman.get("max_eaten"),
                     "exit_policy": mman.get("exit_policy"),
@@ -2230,6 +2243,7 @@ class Collector:
                 "rules_version": mman.get("rules_version"),
                 "min_edge_bp": mman.get("min_edge_bp"),
                 "min_rr": mman.get("min_rr"),
+                "max_rr": mman.get("max_rr"),
                 "min_disc_bp": mman.get("min_disc_bp"),
                 "max_eaten": mman.get("max_eaten"),
                 "noise_mult": mman.get("noise_mult"),
@@ -2370,13 +2384,17 @@ class Collector:
     BOOK_DIRS = {"h4": "model", "h24": "model_h24",
                  "h24b": "model_h24b", "h24bf": "model_h24bf",
                  "sit": "model_sit", "sit_obs": "model_sit_obs",
-                 "sit_r": "model_sit_r", "z": "model_h24z"}
+                 "sit_r": "model_sit_r", "sit_lo": "model_sit_lo",
+                 "z": "model_h24z"}
     # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
     # счётах по книгам её быть не должно.
     BOOKS = (("h4", "model"),
              ("h24", "model_h24"),
              ("h24b", "model_h24b"), ("h24bf", "model_h24bf"),
              ("sit", "model_sit"),
+             # Книга низкого RR дизъюнктна с торгуемой по построению
+             # (rr ≤ 1.5 против rr ≥ 2) — двойного счёта решений нет.
+             ("sit_lo", "model_sit_lo"),
              ("sit_r", "model_sit_r"), ("z", "model_h24z"))
     # Книги-эхо: ТЕ ЖЕ решения, что у книги-источника, под другим
     # правилом — размера (sit_r, равный доллар риска) либо выхода
@@ -2538,6 +2556,44 @@ class Collector:
                         "записывает те же кандидаты без требования к "
                         "отношению, чтобы фильтр по RR мог показать "
                         "сделки ниже боевого гейта."},
+        "sit_lo": {
+            "title": "Situational, low RR — the other end",
+            "title_ru": "Ситуационная низкого RR — другой конец",
+            "plain": "Same situational machinery and the same "
+                     "candidates as the traded book, with ONE inverted "
+                     "rule: the promised reward/risk must be at most "
+                     "1.5 instead of at least 2. Born from a "
+                     "measurement over the observation record (2321 "
+                     "closed trades in a week): the win share falls "
+                     "monotonically as the promised RR grows (54% "
+                     "below 1 vs 34% above 2), because a high ratio "
+                     "is not a bigger target but a TIGHTER stop — the "
+                     "median promised stop shrinks 354 to 57 bp while "
+                     "the target stays put, and the share of "
+                     "stop-exits climbs 17% to 78%. The 1.5 ceiling "
+                     "was declared before any confirming data; the "
+                     "single best bucket (0–1) is deliberately not "
+                     "cherry-picked. The live executor trades this "
+                     "book by the owner’s decision.",
+            "plain_ru": "Та же ситуационная механика и те же "
+                        "кандидаты, что у торгуемой книги, с ОДНИМ "
+                        "перевёрнутым правилом: обещанное отношение "
+                        "прибыли к риску не выше 1.5 вместо «не ниже "
+                        "2». Родилась из замера по наблюдательной "
+                        "записи (2321 закрытая сделка за неделю): "
+                        "доля побед падает монотонно с ростом "
+                        "обещанного RR (54 % ниже 1 против 34 % выше "
+                        "2), потому что высокое отношение — это не "
+                        "крупная цель, а УЗКИЙ стоп: медиана "
+                        "обещанного стопа сжимается 354 → 57 б.п. при "
+                        "почти той же цели, и доля выходов по стопу "
+                        "растёт 17 % → 78 %. Потолок 1.5 объявлен до "
+                        "проверочных данных; лучшую корзину 0–1 "
+                        "нарочно не берём — резать тоньше после "
+                        "просмотра поверхности есть ошибка R5. Живой "
+                        "исполнитель торгует эту книгу решением "
+                        "владельца.",
+        },
         "sit_r": {
             "title": "situational · fixed risk — equal dollar risk "
                      "per trade",
@@ -3568,8 +3624,10 @@ class Collector:
             if man.get("situational"):
                 if man.get("min_edge_bp") is not None:
                     facts.append(f"gate {man['min_edge_bp']:g} bp")
-                if man.get("min_rr") is not None:
+                if man.get("min_rr"):
                     facts.append(f"RR ≥ {man['min_rr']:g}")
+                if man.get("max_rr") is not None:
+                    facts.append(f"RR ≤ {man['max_rr']:g}")
                 if man.get("min_disc_bp") is not None:
                     facts.append(f"disc {man['min_disc_bp']:g} bp")
                 if man.get("stop_tau") is not None:
@@ -4327,8 +4385,13 @@ class Collector:
                 if stt is None:
                     continue
                 held = {p["sym"] for p in stt["pos"] if p["arm"] == arm}
+                # Потолок отношения — правило книги низкого RR; лист
+                # без поля означает «потолка нет» (None, не ноль —
+                # ноль запретил бы вход всем).
+                mx = b.get("max_rr")
                 free[d] = (int(b.get("slots") or 6) - len(held), held,
                            float(b.get("min_rr") or 0.0),
+                           None if mx is None else float(mx),
                            # Множитель шума и минимальный стоп —
                            # правила книги, как min_rr; лист без поля
                            # — прежнее поведение (1 шум, порога нет).
@@ -4398,13 +4461,18 @@ class Collector:
                     # секундой, которую владелец видел трижды.
                     continue
                 took = False
-                for d, (n_free, held, min_rr, n_mult, m_stop,
+                for d, (n_free, held, min_rr, max_rr, n_mult, m_stop,
                         stt) in list(free.items()):
                     if n_free <= 0 or sym in held:
                         continue
                     if key in stt["entered"]:
                         continue
                     if got["rr"] < min_rr:
+                        continue
+                    # Книга низкого RR берёт ДРУГОЙ конец распределения
+                    # отношения: замер по наблюдательной записи показал,
+                    # что высокий RR — это узкий стоп, а не крупная цель.
+                    if max_rr is not None and got["rr"] > max_rr:
                         continue
                     # Правило книги равного риска (после #ptadyrc:
                     # стоп 39 б.п. при шуме 37.3 — запас в один
@@ -4427,6 +4495,11 @@ class Collector:
                           "at_ts": round(now, 3),
                           "scan_rank": scan_rank,
                           "reason": "вход по ситуации", **got}
+                    if max_rr is not None:
+                        # Потолок — числом в запись, как noise_mult:
+                        # сработало ли правило книги, проверяется
+                        # записью, а не доверием к коду.
+                        ev["max_rr"] = max_rr
                     if n_mult != 1.0:
                         # Множитель — числом в запись: сработало ли
                         # правило книги, проверяется записью, а не
@@ -4447,8 +4520,8 @@ class Collector:
                                 + "\n")
                     stt["entered"].add(key)
                     held.add(sym)
-                    free[d] = (n_free - 1, held, min_rr, n_mult,
-                               m_stop, stt)
+                    free[d] = (n_free - 1, held, min_rr, max_rr,
+                               n_mult, m_stop, stt)
                     # Свежий вход сторожится с этой же секунды, не
                     # дожидаясь перечитывания файлов. `at_ts` обязателен:
                     # по нему страж свежести отличает позицию, открытую
