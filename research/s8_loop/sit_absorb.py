@@ -88,7 +88,11 @@ def sit_open_positions(picks, reviews, arm):
                 out.append({"hour": pk.get("hour"), "sym": p.get("sym"),
                             "side": side, "px": p.get("px"),
                             "fwd": p.get("fwd"), "mae": p.get("mae"),
-                            "mfe": p.get("mfe")})
+                            "mfe": p.get("mfe"),
+                            # Секунда входа — для стража цикла: судить
+                            # позицию ценой, которая старше её входа,
+                            # нельзя (седьмой дефект кассы).
+                            "at_ts": p.get("at_ts")})
     return out
 
 

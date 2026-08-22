@@ -1416,6 +1416,41 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d2, ignore_errors=True)
 
+        # Седьмой дефект кассы: цена суда — закрытие разбираемого
+        # часа, и позиция, ОТКРЫТАЯ ПОЗЖЕ этого закрытия (вход
+        # сканера в окно запаздывания цикла), судилась бы ценой из
+        # прошлого — выход раньше входа (ENSUSDT: +363 б.п., которых
+        # у сделки не было ни секунды). Проверка двусторонняя: вход
+        # до закрытия часа судится, вход после — не судится вовсе.
+        d3 = tempfile.mkdtemp()
+        try:
+            cut = TR.hour_end("2026-08-07-11")
+            with open(os.path.join(d3, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(
+                    {"arm": "gbm", "hour": "2026-08-07-10",
+                     "long": [
+                         {"sym": "AUSDT", "fwd": 30.0, "px": 100.0,
+                          "mae": -10.0, "mfe": 25.0,
+                          "at_ts": cut - 600},
+                         {"sym": "CUSDT", "fwd": 40.0, "px": 100.0,
+                          "mae": -10.0, "mfe": 25.0,
+                          "at_ts": cut + 300}],
+                     "short": []}) + "\n")
+            T.situational_arm(d3, "gbm", models2, x, mats, syms,
+                              rows_m, 1, grid, lo, hi, None,
+                              lambda m: None)
+            rv3 = T._read_jsonl(os.path.join(d3, "review.jsonl"))
+            rows3 = {r["sym"]: r for rec in rv3 for r in rec["rows"]}
+            check("вход до закрытия часа — цикл судит как прежде",
+                  rows3.get("AUSDT", {}).get("reason")
+                  == "прогноз развернулся", str(rows3.get("AUSDT")))
+            check("вход после закрытия часа — цикл НЕ судит: цена "
+                  "суда старше входа",
+                  "CUSDT" not in rows3, str(rows3.get("CUSDT")))
+        finally:
+            shutil.rmtree(d3, ignore_errors=True)
+
         # Книга «только уровни» (решение владельца: у равного риска
         # сделка закрывается либо стопом, либо тейком). Разворот
         # прогноза и предел возраста позиций НЕ трогают, уровень —
