@@ -402,6 +402,12 @@ pub struct Executor<E: Exchange> {
     stale_entries: u64,
     /// Имена с выставленным плечом 1× (спека 12 §2) — раз на имя.
     lev_set: BTreeSet<String>,
+    /// Имена, у которых плечо 1× НЕ выставилось, с текстом отказа.
+    /// Отказ не блокирует вход (размер держит забор, не маржа), но
+    /// обязан быть видим: строка в логе, который никто не читает, —
+    /// отказ, неотличимый от тишины, и владелец увидел его позициями
+    /// 5х и 10х в приложении раньше, чем мы в числах.
+    lev_errors: BTreeMap<String, String>,
 }
 
 impl<E: Exchange> Executor<E> {
@@ -671,6 +677,7 @@ impl<E: Exchange> Executor<E> {
             exit_pending: BTreeMap::new(),
             stale_entries: 0,
             lev_set: BTreeSet::new(),
+            lev_errors: BTreeMap::new(),
         })
     }
 
@@ -1429,8 +1436,12 @@ impl<E: Exchange> Executor<E> {
             match self.ex.set_leverage(&ev.sym, "1") {
                 Ok(()) => {
                     self.lev_set.insert(ev.sym.clone());
+                    self.lev_errors.remove(&ev.sym);
                 }
-                Err(e) => eprintln!("плечо {} не выставилось: {e}", ev.sym),
+                Err(e) => {
+                    eprintln!("плечо {} не выставилось: {e}", ev.sym);
+                    self.lev_errors.insert(ev.sym.clone(), e);
+                }
             }
         }
         let link = format!("in-{}-{at}", ev.sym, at = (ev.at_ts * 1000.0) as i64);
@@ -1535,7 +1546,10 @@ impl<E: Exchange> Executor<E> {
 
     /// Статус — атомарным файлом: полусписанный JSON у читателя был бы
     /// отказом, неотличимым от «исполнитель не работает».
-    fn write_status(&mut self, now_ms: i64, note: Option<&str>) {
+    /// Статус — тем же JSON, что уходит в файл: тест проверяет
+    /// дорогу до показа, а не приватное поле (урок model_marks).
+    pub fn status_json(&mut self, now_ms: i64, note: Option<&str>)
+        -> serde_json::Value {
         let today = crate::journal::utc_day(now_ms);
         let wallet = self.ex.wallet_usdt().ok();
         let positions: Vec<serde_json::Value> = self
@@ -1565,8 +1579,15 @@ impl<E: Exchange> Executor<E> {
             "realized_total_usd": self.realized_total,
             "rejects_row": self.rejects_row,
             "stale_entries_skipped": self.stale_entries,
+            "lev_errors": if self.lev_errors.is_empty() { serde_json::Value::Null }
+                else { json!(self.lev_errors) },
             "wallet": wallet.map(|(eq, bal)| json!({"equity": eq, "balance": bal})),
         });
+        st
+    }
+
+    fn write_status(&mut self, now_ms: i64, note: Option<&str>) {
+        let st = self.status_json(now_ms, note);
         let path = self.cfg.journal_dir.join("live_status.json");
         let tmp = self.cfg.journal_dir.join("live_status.json.tmp");
         if std::fs::write(&tmp, serde_json::to_vec_pretty(&st).unwrap_or_default())

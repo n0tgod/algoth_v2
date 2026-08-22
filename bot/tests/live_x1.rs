@@ -40,6 +40,7 @@ struct Inner {
     order_states: BTreeMap<String, OrderStatus>,
     resting: Vec<Resting>,
     lev_calls: Vec<String>,
+    lev_error: Option<String>,
     entry_error: Option<String>,
     next_id: u64,
     fee_bp: f64,
@@ -89,6 +90,9 @@ impl Mock {
     }
     fn set_order(&self, id: &str, st: OrderStatus) {
         self.0.borrow_mut().order_states.insert(id.into(), st);
+    }
+    fn set_lev_error(&self, e: Option<&str>) {
+        self.0.borrow_mut().lev_error = e.map(String::from);
     }
     fn push_closed_pnl(&self, sym: &str, at_ms: i64, pnl: f64) {
         self.0.borrow_mut().closed_pnl.push((sym.into(), at_ms, pnl));
@@ -217,8 +221,12 @@ impl Exchange for Mock {
         Ok(self.0.borrow().resting.clone())
     }
     fn set_leverage(&self, symbol: &str, _lev: &str) -> Result<(), String> {
-        self.0.borrow_mut().lev_calls.push(symbol.into());
-        Ok(())
+        let mut i = self.0.borrow_mut();
+        i.lev_calls.push(symbol.into());
+        match &i.lev_error {
+            Some(e) => Err(e.clone()),
+            None => Ok(()),
+        }
     }
     fn wallet_usdt(&self) -> Result<(f64, f64), String> {
         Ok((300.0, 300.0))
@@ -1035,6 +1043,41 @@ fn плечо_выставляется_раз_на_имя() {
     let calls = m.0.borrow().lev_calls.clone();
     assert_eq!(calls, vec!["ARBUSDT".to_string()],
                "плечо не выставлено либо выставлялось повторно: {calls:?}");
+}
+
+/// Отказ постановки плеча не блокирует вход (размер держит забор, не
+/// маржа), но обязан быть ВИДИМ в статусе — строка в логе, который
+/// никто не читает, есть отказ, неотличимый от тишины: владелец
+/// увидел позиции 5х и 10х в приложении раньше, чем мы в числах.
+/// Успех следующей попытки того же имени отказ снимает.
+#[test]
+fn отказ_плеча_виден_в_статусе_и_снимается_успехом() {
+    let fx = Fx::new("lev-err");
+    let m = Mock::new()
+        .with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0)
+        .with_sym("OPUSDT", 1.9999, 2.0001, 0.0001, 0.1, 0.1, 5.0);
+    m.set_lev_error(Some("retCode 110043x недоступно"));
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    ex.tick(NOW);
+    let st = ex.status_json(NOW, None);
+    let le = st.get("lev_errors").cloned().unwrap_or_default();
+    assert!(le.get("ARBUSDT").is_some(),
+            "отказ плеча не виден в статусе: {st}");
+    // Вход при этом состоялся — отказ плеча не запирает замер.
+    assert_eq!(ex.pos.len(), 1, "отказ плеча заблокировал вход");
+    // Биржа починилась: следующее имя ставит плечо, отказов в
+    // статусе не остаётся у него; у ARB отказ снимется только его же
+    // успешной попыткой (имя не в lev_set — попытка повторится).
+    m.set_lev_error(None);
+    fx.entry("gbm", "2026-08-20-15", "OPUSDT", "long", 2.0, -50.0, 120.0, 1755699951.5);
+    ex.tick(NOW + 5_000);
+    let st = ex.status_json(NOW + 5_000, None);
+    let le = st.get("lev_errors").cloned().unwrap_or_default();
+    assert!(le.get("OPUSDT").is_none(),
+            "успешная постановка оставила отказ в статусе: {st}");
+    assert!(le.get("ARBUSDT").is_some(),
+            "чужой успех снял отказ ARB без его попытки");
 }
 
 /// Потолок цены — служебная арифметика уровня заявки.

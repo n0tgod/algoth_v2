@@ -5624,6 +5624,11 @@ function strip(d){
      st.stale_entries_skipped ?? "&mdash;"}</span></div>
   ${st.halted ? `<div class="halt">HALTED: ${esc(st.halted)}</div>`
     : ""}
+  ${st.lev_errors ? `<div class="halt">leverage 1&times; was NOT set
+    (the venue refused; entries proceed — size is the fence, not
+    margin): ${Object.keys(st.lev_errors).map(esc).join(", ")}
+    &mdash; ${esc(String(Object.values(st.lev_errors)[0] || ""))
+    }</div>` : ""}
   ${d.journal_error ? `<div class="halt">journal:
      ${esc(d.journal_error)}</div>` : ""}</div>`;
 }

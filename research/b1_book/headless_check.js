@@ -204,6 +204,11 @@ global.fetch = async (url) => {
                 status: {dry: /livedry=1/.test(SEARCH), halted: null,
                          rejects_row: 0, stale_entries_skipped: 355,
                          age_sec: 4.0,
+                         // Отказ постановки плеча 1× — виден только в
+                         // живом варианте стаба: сухой прогон заявок
+                         // не шлёт, и проверка держит обе стороны.
+                         lev_errors: /livedry=1/.test(SEARCH) ? null
+                           : {MONUSDT: "retCode 110043x недоступно"},
                          wallet: {equity: 300.42, balance: 300.42}},
                 counts: {decisions: 5, opened: 3, closed: 2,
                          rejects_dry: 1, rejects_exec: 1},
@@ -2220,6 +2225,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         || !/money taken from the exchange record/.test(bx))
       bad.push("живое исполнение: деньги с биржи не подписаны "
                + "источником");
+    // Отказ постановки плеча 1× кричит со страницы (владелец увидел
+    // 5х и 10х в приложении раньше, чем мы в числах); в сухом стабе
+    // отказов нет — и тревога обязана молчать, иначе она не сигнал.
+    if (/livedry=1/.test(SEARCH)) {
+      if (/leverage 1&times; was NOT set/.test(bx))
+        bad.push("живое исполнение: тревога плеча кричит без отказа");
+    } else if (!/leverage 1&times; was NOT set/.test(bx)
+               || !/110043x/.test(bx))
+      bad.push("живое исполнение: отказ постановки плеча не виден");
     // Латинского «bp» на странице не осталось: б.п. в цитатах причин
     // исполнителя — данные, а не формат, и они кириллицей.
     if (/\bbp\b/.test(bx.replace(/б\.п\./g, "")))
