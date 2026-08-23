@@ -60,6 +60,16 @@ AGE_H = 24                        # предел возраста живой к�
 SLOTS_NOTE = "слоты и одна позиция на имя — моделью турнира"
 
 
+def edge_pass(fwd):
+    """Нога слабее гейта входа не торгуется НИ в одной ячейке (край
+    один на всю сетку), поэтому и не хранится. Первый прогон держал
+    все 1.26 млн ног двенадцати сочетаний (~1 ГБ словарей) и был убит
+    ядром по памяти на 2.6 ГБ RSS рядом с часовым обучением цикла.
+    Тождество предфильтра с гейтом `simulate` закреплено тестом.
+    """
+    return fwd is not None and abs(fwd) >= EDGE_BP
+
+
 def train_cols(n_hours, split_j, h):
     """Колонки обучения горизонта `h` при разрезе `split_j`.
 
@@ -127,6 +137,13 @@ def main():
     t0 = time.time()
     out_dir = os.path.join(HERE, "out")
     os.makedirs(out_dir, exist_ok=True)   # урок турнира: до счёта
+    try:
+        with open("/proc/meminfo") as f:
+            avail = next(int(ln.split()[1]) // 1024 for ln in f
+                         if ln.startswith("MemAvailable:"))
+        print(f"память доступна: {avail} МБ", flush=True)
+    except (OSError, StopIteration):
+        pass
 
     import summary as SM
     sum_dir = args.summary_dir or SM.OUT
@@ -167,6 +184,7 @@ def main():
                     break
                 tt = time.time()
                 model = fit_fn(xs, ys, seed=T.SEED0 + 17 * h)
+                del xs, ys          # пик памяти: рядом учится цикл
                 preds[kind] = T.predict_matrix(model, x, elig)
                 print(f"{arm}/{key}: строк {len(ys)}, обучение "
                       f"{time.time() - tt:.0f} с", flush=True)
@@ -193,7 +211,7 @@ def main():
                         row[kind] = (round(float(v), 2)
                                      if np.isfinite(v) else None)
                     lg = TN._leg(row, arm, grid[j], at)
-                    if lg is not None:
+                    if lg is not None and edge_pass(lg["fwd"]):
                         legs.append(lg)
             legs.sort(key=lambda g: (g["at"], -abs(g["fwd"]),
                                      g["sym"]))
@@ -203,29 +221,32 @@ def main():
             print(f"{arm}/{h}h: ног после гейта знаков {len(legs)}",
                   flush=True)
 
-    # Бары — один раз на имя, окном всех его ног (плюс возраст).
-    need = {}
-    for legs in legs_by.values():
+    # Матрицы признаков и целей реплею не нужны — освободить ДО баров:
+    # первый прогон умер по памяти, урок D1 «пик считается составом».
+    del x, targets, elig, mats
+
+    # Исходы: бары по ОДНОМУ имени за раз — пик памяти не растёт с
+    # универсумом (все ~500 имён разом стоили бы сотни МБ).
+    by_sym = {}
+    for combo, legs in legs_by.items():
         for lg in legs:
-            if abs(lg["fwd"]) < EDGE_BP:
-                continue
-            a, b = need.get(lg["sym"], (lg["at"], lg["at"]))
-            need[lg["sym"]] = (min(a, lg["at"]), max(b, lg["at"]))
-    bars = {}
-    for k, (sym, (a, b)) in enumerate(sorted(need.items())):
-        bars[sym] = SW.read_bars(args.root, sym, a - 60,
-                                 b + AGE_H * 3600 + 60)
+            by_sym.setdefault(lg["sym"], []).append((combo, lg))
+    outs_by = {combo: {} for combo in legs_by}
+    for k, (sym, items) in enumerate(sorted(by_sym.items())):
+        a = min(lg["at"] for _, lg in items)
+        b = max(lg["at"] for _, lg in items)
+        sym_bars = SW.read_bars(args.root, sym, a - 60,
+                                b + AGE_H * 3600 + 60)
+        for combo, lg in items:
+            outs_by[combo][(lg["id"], "m", True, AGE_H)] = TN.outcome(
+                sym_bars, lg["at"], lg["side"], lg["adv_m"],
+                lg["fav"], AGE_H)
         if k % 25 == 0:
-            print(f"бары: {k}/{len(need)} имён", flush=True)
+            print(f"бары: {k}/{len(by_sym)} имён", flush=True)
+        del sym_bars
 
     for (h, arm), legs in legs_by.items():
-        outs = {}
-        for lg in legs:
-            if abs(lg["fwd"]) < EDGE_BP:
-                continue
-            outs[(lg["id"], "m", True, AGE_H)] = TN.outcome(
-                bars.get(lg["sym"], []), lg["at"], lg["side"],
-                lg["adv_m"], lg["fav"], AGE_H)
+        outs = outs_by[(h, arm)]
         for gate, rr_min, rr_max in GATES:
             pool = gate_pool(legs, rr_max)
             var = {"edge": EDGE_BP, "rr": rr_min, "stop": "m",

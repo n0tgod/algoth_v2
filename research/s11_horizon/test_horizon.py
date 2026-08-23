@@ -83,10 +83,36 @@ def test_gate_pool_rr_ceiling():
     check("без потолка — все ноги", HP.gate_pool(legs, None) is legs)
 
 
+def test_edge_prefilter_matches_simulate_gate():
+    # Предфильтр появился как правка памяти (первый прогон убит OOM
+    # на хранении всех ног); правка памяти, меняющая состав сделок,
+    # была бы другой мерой — тождество с гейтом ядра держит этот тест.
+    import tournament as TN
+    legs = []
+    for i, (f, sym) in enumerate([(32.99, "A"), (33.0, "B"),
+                                  (-33.0, "C"), (-32.99, "D"),
+                                  (40.0, "E")]):
+        legs.append({"id": i, "sym": sym, "arm": "gbm",
+                     "side": "long" if f > 0 else "short",
+                     "fwd": f, "rr": 9.9, "at": 1000 + i})
+    outs = {(lg["id"], "m", True, HP.AGE_H):
+            ("age", 0.0, lg["at"] + 60, 1.0) for lg in legs}
+    var = {"edge": HP.EDGE_BP, "rr": 0.0, "stop": "m", "take": True,
+           "age": HP.AGE_H}
+    entered = {t["sym"] for t in TN.simulate(legs, outs, var)}
+    kept = {lg["sym"] for lg in legs if HP.edge_pass(lg["fwd"])}
+    check("предфильтр по краю тождествен гейту симуляции",
+          entered == kept == {"B", "C", "E"},
+          f"simulate {sorted(entered)} против фильтра {sorted(kept)}")
+    check("нога без прогноза не проходит предфильтр",
+          not HP.edge_pass(None))
+
+
 def main():
     test_default_targets_unchanged()
     test_split_boundary_is_m2_rule()
     test_gate_pool_rr_ceiling()
+    test_edge_prefilter_matches_simulate_gate()
     if not all(OK):
         print("ЕСТЬ ПАДЕНИЯ")
         return 1
