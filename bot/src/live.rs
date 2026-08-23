@@ -44,7 +44,7 @@ use crate::picks;
 use serde::Deserialize;
 use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Оговорка закрытия «вне исполнителя», когда денег взять неоткуда.
 /// По ней же перезапуск находит записи прежнего образца и доправляет
@@ -415,14 +415,68 @@ pub struct Executor<E: Exchange> {
     lev_errors: BTreeMap<String, String>,
 }
 
+/// Версия правил книги и журнал ЖИВЫХ денег: никакого само-архива.
+///
+/// Инцидент 2026-08-23: при переводе на новую книгу исполнитель
+/// стартовал РАНЬШЕ, чем часовой цикл создал её манифест, — версию
+/// правил узнать было не у кого, маркер молча не записался, и
+/// следующий перезапуск отставил журнал с пятью открытыми позициями
+/// как «не умеющий доказать свою версию» (engine включил бы сюда
+/// общий с тенью само-архив). Тени архив можно — она бумага; живому
+/// журналу нельзя: позиции остались бы на бирже без управления,
+/// без тейков и без записи. Обе стороны жёсткие: без манифеста не
+/// стартуем (иначе снова журнал без маркера), при несовпадении не
+/// архивируем, а останавливаемся словами с названным лечением.
+fn journal_rules_guard(s8_dir: &Path, journal_dir: &Path) -> Result<(), String> {
+    let Some(ver) = engine::book_rules_version(s8_dir) else {
+        return Err(format!(
+            "у книги {} нет манифеста с версией правил — стартовать не на \
+             чем: журнал остался бы без маркера версии, и следующий \
+             запуск отставил бы его с открытыми позициями. Дождаться \
+             часового цикла (он пишет манифест) и повторить",
+            s8_dir.display()
+        ));
+    };
+    let marker = journal_dir.join("rules_version.txt");
+    let was: Option<i64> = std::fs::read_to_string(&marker)
+        .ok()
+        .and_then(|t| t.trim().parse().ok());
+    if was == Some(ver) {
+        return Ok(());
+    }
+    let has_journal = std::fs::read_dir(journal_dir)
+        .map(|it| {
+            it.flatten().any(|e| {
+                e.file_name().to_string_lossy().starts_with("journal-")
+            })
+        })
+        .unwrap_or(false);
+    if !has_journal {
+        std::fs::create_dir_all(journal_dir)
+            .map_err(|e| format!("каталог журнала: {e}"))?;
+        return std::fs::write(&marker, format!("{ver}\n"))
+            .map_err(|e| format!("маркер версии правил: {e}"));
+    }
+    Err(format!(
+        "журнал несёт версию правил {}, книга объявляет {ver} — живой \
+         журнал сам не отставляется (позиции остались бы без \
+         управления). Журнал писан теми же правилами, а маркер потерян \
+         (класс инцидента 2026-08-23)? Тогда: echo {ver} > {} — и \
+         повторить. Настоящую смену правил проходить без открытых \
+         позиций",
+        was.map(|v| v.to_string())
+            .unwrap_or_else(|| "«без маркера»".into()),
+        marker.display()
+    ))
+}
+
 impl<E: Exchange> Executor<E> {
     /// Поднять исполнителя: журнал перечитывается, позиции сверяются с
     /// биржей (точное количество знает она), решения без исхода
     /// закрываются отказом — вход привязан к секунде, и исполнять его
     /// после перезапуска значило бы торговать прошлое.
     pub fn open(cfg: LiveCfg, ex: E, clear_halt: bool) -> Result<Executor<E>, String> {
-        engine::fresh_journal_on_rules_change(&cfg.s8_dir, &cfg.journal_dir)
-            .map_err(|e| format!("смена правил книги: {e}"))?;
+        journal_rules_guard(&cfg.s8_dir, &cfg.journal_dir)?;
         std::fs::create_dir_all(&cfg.journal_dir)
             .map_err(|e| format!("каталог журнала: {e}"))?;
         let (mut jr, records, _) =
