@@ -38,6 +38,10 @@ struct Inner {
     cancelled: Vec<(String, String)>,
     positions: Vec<ExchPos>,
     order_states: BTreeMap<String, OrderStatus>,
+    /// Состояние заявки СО ВТОРОГО опроса: моделирует исполнение,
+    /// легшее между опросом статусов и опросом позиций одного такта.
+    order_later: BTreeMap<String, OrderStatus>,
+    status_seen: BTreeMap<String, u64>,
     resting: Vec<Resting>,
     lev_calls: Vec<String>,
     lev_error: Option<String>,
@@ -90,6 +94,9 @@ impl Mock {
     }
     fn set_order(&self, id: &str, st: OrderStatus) {
         self.0.borrow_mut().order_states.insert(id.into(), st);
+    }
+    fn set_order_later(&self, id: &str, st: OrderStatus) {
+        self.0.borrow_mut().order_later.insert(id.into(), st);
     }
     fn set_lev_error(&self, e: Option<&str>) {
         self.0.borrow_mut().lev_error = e.map(String::from);
@@ -207,9 +214,18 @@ impl Exchange for Mock {
         Ok(())
     }
     fn order_status(&self, _symbol: &str, order_id: &str) -> Result<OrderStatus, String> {
-        self.0
-            .borrow()
-            .order_states
+        let mut i = self.0.borrow_mut();
+        let seen = {
+            let n = i.status_seen.entry(order_id.into()).or_insert(0);
+            *n += 1;
+            *n
+        };
+        if seen > 1 {
+            if let Some(st) = i.order_later.get(order_id) {
+                return Ok(st.clone());
+            }
+        }
+        i.order_states
             .get(order_id)
             .cloned()
             .ok_or_else(|| format!("нет заявки {order_id}"))
@@ -479,6 +495,58 @@ fn цель_исполнилась_закрытие_по_уровню() {
     assert_eq!(exit_px, Some(1.012), "выход обязан быть по цене уровня");
     assert!(reason.contains("лимитка исполнилась"), "{reason}");
     assert!(pnl_usd > 0.2, "{pnl_usd}");
+}
+
+/// Тейк исполнился ВНУТРИ такта — между опросом статусов заявок и
+/// опросом позиций: первая сверка видит «у нас N, у биржи 0», и до
+/// правки это останавливало исполнитель и снимало цели у всей книги
+/// (инцидент DOGEUSDT). Второй взгляд обязан увидеть исполнение,
+/// записать закрытие по уровню и НЕ останавливать; настоящее
+/// расхождение он обязан подтверждать — обе стороны в одном тесте.
+#[test]
+fn тейк_внутри_такта_не_останавливает_а_закрывает() {
+    let fx = Fx::new("midtact-fill");
+    let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    ex.tick(NOW);
+    let target_id = m.placed().last().unwrap().id.clone();
+
+    // Позиции на бирже уже нет (цель исполнилась), а первый опрос
+    // статуса ещё не видит исполнения — ровно живой такт DOGEUSDT.
+    {
+        let mut i = m.0.borrow_mut();
+        i.positions.clear();
+    }
+    m.set_order_later(&target_id, OrderStatus {
+        status: "Filled".into(),
+        filled_qty: 30.0,
+        avg_px: 1.012,
+        fee_usd: 0.006,
+    });
+    let rep = ex.tick(NOW + 10_000);
+    assert!(rep.halted.is_none(),
+            "второй взгляд обязан снять ложное расхождение: {:?}",
+            rep.halted);
+    assert_eq!(rep.closed, 1, "исполненная цель не записана закрытием");
+    let recs = fx.records();
+    let Some(Event::Close { exit_px, reason, .. }) = recs
+        .iter()
+        .rev()
+        .find(|r| matches!(r.event, Event::Close { .. }))
+        .map(|r| r.event.clone())
+    else {
+        panic!("нет Close");
+    };
+    assert_eq!(exit_px, Some(1.012), "выход обязан быть по цене уровня");
+    assert!(reason.contains("лимитка исполнилась"), "{reason}");
+
+    // Настоящее расхождение второй взгляд не глотает: чужую позицию
+    // не объясняет никакая цель — остановка обязана остаться.
+    m.push_position("GHOSTUSDT", Side::Long, 5.0);
+    let rep2 = ex.tick(NOW + 20_000);
+    assert!(rep2.halted.is_some(), "настоящее расхождение потеряно");
+    assert!(rep2.halted.as_ref().unwrap().contains("сверка"), "{rep2:?}");
 }
 
 /// Книга записала «дошла до цели», а лимитка на бирже НЕ исполнилась:

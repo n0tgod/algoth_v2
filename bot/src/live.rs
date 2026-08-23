@@ -751,7 +751,25 @@ impl<E: Exchange> Executor<E> {
         // безопасно и на разъехавшемся состоянии.
         self.discover_target_fills(now_ms, &mut rep);
 
-        if let Err(e) = self.reconcile(now_ms) {
+        // Сверка §4 — со вторым взглядом. Обнаружение целей идёт до
+        // сверки, но такт не мгновенен: лежащая лимитка законно
+        // исполняется МЕЖДУ опросом статусов заявок и опросом позиций
+        // ЭТОГО ЖЕ такта, и первая сверка видит «у нас N, у биржи 0»
+        // на расхождении, которого нет, — инцидент DOGEUSDT
+        // (остановка сняла цели у всей книги). Повторный взгляд — те
+        // же два чтения в том же порядке: свежий тейк он записывает
+        // закрытием, настоящее расхождение подтверждает и
+        // останавливает, как раньше.
+        let mut rec = self.reconcile(now_ms);
+        if let Err(first) = &rec {
+            eprintln!(
+                "сверка разошлась ({first}) — второй взгляд: не \
+                 исполнилась ли цель внутри такта"
+            );
+            self.discover_target_fills(now_ms, &mut rep);
+            rec = self.reconcile(now_ms);
+        }
+        if let Err(e) = rec {
             self.halt(e, false, now_ms);
             rep.halted = self.halted.clone();
             self.write_status(now_ms, None);
