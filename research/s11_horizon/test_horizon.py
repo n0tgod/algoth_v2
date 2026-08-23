@@ -135,12 +135,52 @@ def test_fit_predict_executes_end_to_end():
           and all(p.shape == elig.shape for p in preds.values()))
 
 
+def test_cell_stats_and_report_execute():
+    # Второе падение прогона случилось ПОСЛЕ часа счёта — на
+    # композиции daily/curve_dd в cell_stats. Исполняем весь хвост
+    # зонда: статистику ячейки (числа закреплены) и сборку отчёта.
+    import os
+    import tempfile
+    day = 86400
+    trades = [
+        {"net": 50.0, "why": "target", "at": 0, "exit": day // 2},
+        {"net": -80.0, "why": "stop", "at": day, "exit": day + 60},
+        {"net": 30.0, "why": "age", "at": 2 * day, "exit": 2 * day + 60},
+    ]
+    c = HP.cell_stats(trades)
+    check("статистика ячейки: число и итог",
+          c["n"] == 3 and c["total_bp"] == 0.0, str(c))
+    check("просадка кривой — по дням, числом",
+          c["curve_dd_bp"] == -80.0, str(c.get("curve_dd_bp")))
+    check("раскладка выходов по причинам",
+          c["by_why"] == {"target": 1, "stop": 1, "age": 1})
+    check("пустая ячейка — не измерена, а не нулевая",
+          HP.cell_stats([]) == {"n": 0})
+    art = {"tag": "t", "horizons": [4], "split_hour": "2026-08-14-02",
+           "hours": 10, "train_hours": 6, "test_hours": 4,
+           "edge_bp": 33.0, "age_h": 24, "stop": "mean-mae",
+           "gates": [{"name": "sit", "rr_min": 2.0, "rr_max": None},
+                     {"name": "lo", "rr_min": 0.0, "rr_max": 1.5}],
+           "ic_test": {"h4_gbm": (0.0412, 9), "h4_nn": (None, 0)},
+           "cells": {"h4_sit_gbm": c, "h4_lo_gbm": {"n": 0}},
+           "took_sec": 1.0}
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "r.md")
+        HP.write_report(art, p)
+        body = open(p, encoding="utf-8").read()
+    check("отчёт собрался и несёт измеренную ячейку",
+          "| h4 | gbm | 3 |" in body and "+0.0412" in body, body[:200])
+    check("пустая ячейка в отчёте — прочерки, не нули",
+          "| h4 | gbm | 0 | — | — | — | — | — | — |" in body)
+
+
 def main():
     test_default_targets_unchanged()
     test_split_boundary_is_m2_rule()
     test_gate_pool_rr_ceiling()
     test_edge_prefilter_matches_simulate_gate()
     test_fit_predict_executes_end_to_end()
+    test_cell_stats_and_report_execute()
     if not all(OK):
         print("ЕСТЬ ПАДЕНИЯ")
         return 1

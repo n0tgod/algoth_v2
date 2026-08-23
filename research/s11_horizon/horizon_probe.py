@@ -104,7 +104,12 @@ def cell_stats(trades):
     if not trades:
         return {"n": 0}
     nets = [t["net"] for t in trades]
-    dd, tot = TN.curve_dd(TN.daily(trades))
+    # daily() отдаёт «день → [сумма, счётчик]», curve_dd ждёт «день →
+    # сумма» и возвращает (итог, просадка) — на этой композиции первый
+    # прогон упал на ПОСЛЕДНЕМ шаге, после часа счёта; дорога
+    # исполняется тестом.
+    run, dd = TN.curve_dd({d: rec[0]
+                           for d, rec in TN.daily(trades).items()})
     return {"n": len(trades),
             "win": round(sum(1 for v in nets if v > 0) / len(nets), 3),
             "mean_bp": round(float(np.mean(nets)), 1),
