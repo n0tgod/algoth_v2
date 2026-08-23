@@ -437,8 +437,12 @@ def context_mats(syms, grid):
     return out
 
 
-def assemble(mats):
-    """Матрицы сводки → (X, имена признаков, цели, elig, r)."""
+def assemble(mats, horizons=None):
+    """Матрицы сводки → (X, имена признаков, цели, elig, r).
+
+    `horizons` — сетка горизонтов целей для зонда; умолчание — ось
+    наблюдения FB.HORIZONS, и оно обязано давать прежнее бит в бит.
+    """
     feats, r, elig = FB.feature_pack(mats)
     beta = feats["beta"]
     if PRETEST:
@@ -467,7 +471,7 @@ def assemble(mats):
         # пометка едет во все артефакты и на страницу, а не в
         # комментарий.
         beta = np.where(np.isfinite(beta), beta, 1.0)
-    targets = FB.target_pack(mats, r, elig, beta)
+    targets = FB.target_pack(mats, r, elig, beta, horizons=horizons)
     names = sorted(feats)
     S, H = mats["mid_close"].shape
     x = np.stack([feats[n] for n in names], axis=-1)    # (S, H, F)

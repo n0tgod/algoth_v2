@@ -386,7 +386,7 @@ def feature_pack(s):
     return f, r, elig
 
 
-def target_pack(s, r, elig, beta):
+def target_pack(s, r, elig, beta, horizons=None):
     """Цели: остаток к волне + путь, по каждому горизонту.
 
     Рядом с сырыми — те же цели в единицах СОБСТВЕННОЙ волатильности
@@ -411,7 +411,10 @@ def target_pack(s, r, elig, beta):
     close = s["mid_close"]
     r_sig = F.trailing_std(r, SIGMA_WIN, SIGMA_MIN)
     out = {}
-    for h in HORIZONS:
+    # Ось наблюдения по умолчанию не перебирается (HORIZONS); зонд
+    # горизонта сигнала передаёт свою сетку явно. Умолчание обязано
+    # давать прежние цели бит в бит — под тестом.
+    for h in (HORIZONS if horizons is None else horizons):
         resid, _ = F.forward_residual(close, r, elig, beta, h)
         mfe, mae = forward_path(close, s["mid_high"], s["mid_low"], h)
         out[f"fwd_{h}h"] = resid
