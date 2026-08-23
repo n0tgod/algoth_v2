@@ -108,11 +108,39 @@ def test_edge_prefilter_matches_simulate_gate():
           not HP.edge_pass(None))
 
 
+def test_fit_predict_executes_end_to_end():
+    # Дефект «del ys раньше печати» жил только на дороге исполнения:
+    # py_compile молчал, живой прогон падал UnboundLocalError на первом
+    # обучении. Смоук исполняет настоящий fit_predict на синтетике
+    # test_s8 — той же, на которой гоняется цикл.
+    import numpy as np
+    import train as T
+    from test_s8 import synth_summary
+    # D=300, а не меньше: хеджированной цели нужна бета (BETA_MIN=96
+    # часов), и на коротком окне обучение честно пустое — «строк 0».
+    s = synth_summary(S=40, D=300)
+    x, names, targets, elig = T.assemble(s, horizons=(4,))
+    n = s["mid_close"].shape[1]
+    cols = HP.train_cols(n, int(n * 0.6), 4)
+    el_tr = elig.copy()
+    keep = np.zeros(n, dtype=bool)
+    keep[cols] = True
+    el_tr[:, ~keep] = False
+    arm, fit_fn = T.ARMS[0]
+    preds = HP.fit_predict(4, arm, fit_fn, x, targets, elig, el_tr)
+    check("обучение горизонта исполняется от начала до конца",
+          preds is not None and set(preds) == {"fwd", "mae", "mfe"})
+    check("предсказание покрывает всю сетку",
+          preds is not None
+          and all(p.shape == elig.shape for p in preds.values()))
+
+
 def main():
     test_default_targets_unchanged()
     test_split_boundary_is_m2_rule()
     test_gate_pool_rr_ceiling()
     test_edge_prefilter_matches_simulate_gate()
+    test_fit_predict_executes_end_to_end()
     if not all(OK):
         print("ЕСТЬ ПАДЕНИЯ")
         return 1

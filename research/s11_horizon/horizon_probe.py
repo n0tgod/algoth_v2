@@ -116,6 +116,34 @@ def cell_stats(trades):
                        for w in {t["why"] for t in trades}}}
 
 
+def fit_predict(h, arm, fit_fn, x, targets, elig, el_tr):
+    """Обучение трёх целей горизонта и предсказание на всей сетке.
+
+    Вынесено из main() ради ИСПОЛНЯЕМОГО теста: дефект «печать читает
+    `ys` после `del`» жил только на дороге исполнения — py_compile
+    молчал, а первый живой прогон падал UnboundLocalError на первом же
+    обучении. Смоук на синтетике исполняет ровно эти строки.
+    None — ячейка горизонта не измерена (мало строк).
+    """
+    import train as T
+    preds = {}
+    for kind in ("fwd", "mae", "mfe"):
+        key = f"{kind}_{h}h"
+        xs, ys, _ = T.flatten(x, targets[key], el_tr)
+        n_rows = len(ys)
+        if n_rows < T.MIN_TARGET_ROWS:
+            print(f"{arm}/{key}: строк {n_rows} — ячейка не измерена",
+                  flush=True)
+            return None
+        tt = time.time()
+        model = fit_fn(xs, ys, seed=T.SEED0 + 17 * h)
+        del xs, ys          # пик памяти: рядом учится цикл
+        preds[kind] = T.predict_matrix(model, x, elig)
+        print(f"{arm}/{key}: строк {n_rows}, обучение "
+              f"{time.time() - tt:.0f} с", flush=True)
+    return preds
+
+
 def main():
     import numpy as np
     import train as T
@@ -172,23 +200,9 @@ def main():
         keep[cols_tr] = True
         el_tr[:, ~keep] = False
         for arm, fit_fn in T.ARMS:
-            preds = {}
-            ok = True
-            for kind in ("fwd", "mae", "mfe"):
-                key = f"{kind}_{h}h"
-                xs, ys, _ = T.flatten(x, targets[key], el_tr)
-                if len(ys) < T.MIN_TARGET_ROWS:
-                    print(f"{arm}/{key}: строк {len(ys)} — ячейка не "
-                          f"измерена", flush=True)
-                    ok = False
-                    break
-                tt = time.time()
-                model = fit_fn(xs, ys, seed=T.SEED0 + 17 * h)
-                del xs, ys          # пик памяти: рядом учится цикл
-                preds[kind] = T.predict_matrix(model, x, elig)
-                print(f"{arm}/{key}: строк {len(ys)}, обучение "
-                      f"{time.time() - tt:.0f} с", flush=True)
-            if not ok:
+            preds = fit_predict(h, arm, fit_fn, x, targets, elig,
+                                el_tr)
+            if preds is None:
                 continue
             cols_te = list(range(split_j, n))
             ic = T.section_ic(preds["fwd"], targets[f"fwd_{h}h"],
