@@ -15,8 +15,14 @@
 
 ```bash
 cd ~/algoth_v2 && git pull
+cd ~/algoth_v2 && mkdir -p research/s11_horizon/out
 cd ~/algoth_v2 && setsid nohup nice -n 19 .venv/bin/python research/s11_horizon/horizon_probe.py >> research/s11_horizon/out/run.log 2>&1 &
 ```
+
+`mkdir -p` обязателен: перенаправление лога выполняет шелл ДО старта
+питона, и на свежем чекауте `out/` ещё не существует — запуск падает
+«No such file or directory», не начав счёта. Сам зонд каталог создаёт,
+но это происходит позже редиректа.
 
 Ход прогона (печатает каждое обучение):
 
