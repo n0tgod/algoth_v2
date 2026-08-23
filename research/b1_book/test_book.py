@@ -5045,6 +5045,65 @@ def test_shadow_off_marker_is_a_state_not_an_alarm():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_run_live_refuses_to_archive_open_positions():
+    """Журнал с открытыми позициями не отставляется молча — блоком скрипта.
+
+    Инцидент 2026-08-23: команда дошла без --book (телефонная вставка
+    рвёт строку), умолчание sit отставило журнал книги sit_lo с пятью
+    живыми позициями — биржа осталась с позициями без управления, без
+    тейков и без записи. Настоящий блок «решение об архиве» из
+    tools/run_live.sh гоняется на четырёх сторонах: смена книги при
+    открытых позициях — ОТКАЗ и журнал на месте; при нуле позиций —
+    архив; при открытых с явным --archive-with-open — архив; без
+    смены — блок молчит и журнал на месте.
+    """
+    import subprocess
+    import tempfile
+
+    rl = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                      "tools", "run_live.sh")
+    src = open(rl, encoding="utf-8").read()
+    a = src.index("# --- решение об архиве журнала")
+    b = src.index("# --- конец решения об архиве")
+    block = src[a:b]
+
+    def run(cur_book, want_book, n_pos, archive_open):
+        d = tempfile.mkdtemp()
+        j = os.path.join(d, "live")
+        os.makedirs(j)
+        open(os.path.join(j, "journal-2026-08-23.jsonl"), "w").write(
+            "{}\n")
+        open(os.path.join(j, "book.txt"), "w").write(cur_book + "\n")
+        open(os.path.join(j, "mode.txt"), "w").write("live\n")
+        json.dump({"positions": [{"sym": f"S{i}"} for i in range(n_pos)]},
+                  open(os.path.join(j, "live_status.json"), "w"))
+        head = (f'JOURNAL="{j}"\nCUR_MODE=live\nWANT_MODE=live\n'
+                f'CUR_BOOK={cur_book}\nWANT_BOOK={want_book}\n'
+                f'ARCHIVE_OPEN="{archive_open}"\n')
+        # Хвост блока — [ -f KILL ] && cp: при отсутствии KILL его
+        # статус 1 стал бы кодом выхода ВЫРЕЗКИ (в скрипте за блоком
+        # идут другие строки); true возвращает семантику скрипта.
+        r = subprocess.run(["bash", "-c",
+                            "set -u\n" + head + block + "\ntrue\n"],
+                           capture_output=True, text=True, timeout=60,
+                           cwd=d)
+        moved = not os.path.exists(os.path.join(j, "book.txt"))
+        return r.returncode, r.stdout + r.stderr, moved
+
+    rc, out, moved = run("model_sit_lo", "model_sit", 5, "")
+    check("смена книги при открытых позициях — отказ",
+          rc != 0 and "ОТКАЗ" in out and "5 откр" in out, out[-300:])
+    check("журнал при отказе остаётся на месте", not moved, "")
+    rc, out, moved = run("model_sit_lo", "model_sit", 0, "")
+    check("при нуле позиций архив идёт", rc == 0 and moved, out[-300:])
+    rc, out, moved = run("model_sit_lo", "model_sit", 5, "1")
+    check("явный --archive-with-open отставляет и с открытыми",
+          rc == 0 and moved, out[-300:])
+    rc, out, moved = run("model_sit_lo", "model_sit_lo", 5, "")
+    check("без смены книги блок не трогает журнал",
+          rc == 0 and not moved, out[-300:])
+
+
 def test_watchdog_respects_shadow_off_marker():
     """Сторож не воскрешает выключенную тень — настоящим блоком скрипта.
 
@@ -5121,6 +5180,7 @@ def main():
     test_pages_do_not_shadow_platform_globals()
     test_pages_run_headless()
     test_shadow_off_marker_is_a_state_not_an_alarm()
+    test_run_live_refuses_to_archive_open_positions()
     test_watchdog_respects_shadow_off_marker()
     test_trades_table_columns_line_up()
     test_netted_signal_is_not_shown_as_a_trade()

@@ -46,6 +46,7 @@ MODE_FLAG="--dry"
 MODE_NAME="СУХОЙ прогон (X2) — заявки НЕ отправляются"
 EXTRA=""
 NO_ENTRIES=""
+ARCHIVE_OPEN=""
 expect_book=""
 for a in "$@"; do
     if [ -n "$expect_book" ]; then
@@ -62,7 +63,8 @@ for a in "$@"; do
         --clear-halt) EXTRA="--clear-halt" ;;
         --book) expect_book=1 ;;
         --no-entries) NO_ENTRIES=1 ;;
-        *) echo "неизвестный ключ: $a (жду --live / --stop / --clear-halt / --book / --no-entries)"; exit 2 ;;
+        --archive-with-open) ARCHIVE_OPEN=1 ;;
+        *) echo "неизвестный ключ: $a (жду --live / --stop / --clear-halt / --book / --no-entries / --archive-with-open)"; exit 2 ;;
     esac
 done
 [ -n "$expect_book" ] && { echo "--book требует имени книги (sit / sit_lo)"; exit 2; }
@@ -115,8 +117,36 @@ CUR_MODE=$(cat "$MODE_MARK" 2>/dev/null || true)
 BOOK_MARK="$JOURNAL/book.txt"
 CUR_BOOK=$(cat "$BOOK_MARK" 2>/dev/null || echo model_sit)
 WANT_BOOK=$(basename "$S8")
+# --- решение об архиве журнала ---------------------------------------
 if { [ "$CUR_MODE" != "$WANT_MODE" ] || [ "$CUR_BOOK" != "$WANT_BOOK" ]; } \
         && ls "$JOURNAL"/journal-*.jsonl* >/dev/null 2>&1; then
+    # Журнал с ОТКРЫТЫМИ позициями не отставляется молча: позиции на
+    # бирже остались бы без управления, без тейков и без записи —
+    # инцидент 2026-08-23 (команда дошла без --book: телефонная
+    # вставка переносит строку, хвост уходит отдельной командой, и
+    # умолчание sit отставило журнал книги sit_lo с пятью живыми
+    # позициями). Штатный перевод книги и так требует нуля позиций
+    # (--no-entries, дождаться нуля) — отказ ничему законному не
+    # мешает. Позиции берутся из статуса только что остановленного
+    # исполнителя; нет статуса — защищать нечего. Тот же род правила,
+    # что «команда публикации не вправе записывать удаления».
+    OPEN_POS=$(python3 - "$JOURNAL" <<'PYG'
+import json, sys
+try:
+    st = json.load(open(sys.argv[1] + "/live_status.json"))
+    print(len(st.get("positions") or []))
+except Exception:
+    print(0)
+PYG
+)
+    if [ "${OPEN_POS:-0}" -gt 0 ] && [ -z "$ARCHIVE_OPEN" ]; then
+        echo "ОТКАЗ: журнал (режим «${CUR_MODE:-без маркера}», книга «$CUR_BOOK») держит $OPEN_POS откр. позиций,"
+        echo "  а команда просит режим $WANT_MODE, книгу $WANT_BOOK — отставить журнал значит бросить"
+        echo "  позиции без управления и записи. Либо та же книга: --book прежним значением,"
+        echo "  либо штатный перевод (--no-entries, дождаться нуля позиций),"
+        echo "  либо явно: --archive-with-open (позиции останутся на бирже без записи)."
+        exit 1
+    fi
     ARCH="${JOURNAL}-${CUR_MODE:-unmarked}-$(date -u +%Y%m%d-%H%M%S)"
     echo "== журнал писан иначе (режим «${CUR_MODE:-без маркера}», книга «$CUR_BOOK») =="
     echo "   архивирую в $ARCH и начинаю чистый (режим $WANT_MODE, книга $WANT_BOOK)"
@@ -127,6 +157,7 @@ if { [ "$CUR_MODE" != "$WANT_MODE" ] || [ "$CUR_BOOK" != "$WANT_BOOK" ]; } \
     # перевода, смена книги её завершает.
     [ -f "$ARCH/KILL" ] && cp "$ARCH/KILL" "$JOURNAL/KILL"
 fi
+# --- конец решения об архиве -----------------------------------------
 printf '%s\n' "$WANT_MODE" > "$MODE_MARK"
 printf '%s\n' "$WANT_BOOK" > "$BOOK_MARK"
 if [ -n "$NO_ENTRIES" ]; then
