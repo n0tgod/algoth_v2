@@ -662,8 +662,15 @@ impl<E: Exchange> Executor<E> {
             } else {
                 *notional
             };
-            let link = format!("tp-{sym}-{at}");
-            let held = resting.iter().find(|r| r.link == link);
+            // Метка нового образца несёт суффикс попытки — ищется
+            // ПРЕФИКСОМ (до последнего дефиса); заявка, поставленная
+            // до этой правки, несёт старую точную метку — обе формы
+            // законны, терять лежащую цель из-за формата нельзя.
+            let legacy = format!("tp-{sym}-{at}");
+            let prefix = format!("tp-{sym}-{}-", at % 1_000_000_000);
+            let held = resting
+                .iter()
+                .find(|r| r.link == legacy || r.link.starts_with(&prefix));
             pos.insert(
                 key.clone(),
                 LivePos {
@@ -952,7 +959,7 @@ impl<E: Exchange> Executor<E> {
 
     /// Цель ставится с входа и переставляется, пока не встанет: позиция
     /// без лежащей цели проверяет не то правило, которым живёт книга.
-    fn ensure_targets(&mut self, _now_ms: i64) {
+    fn ensure_targets(&mut self, now_ms: i64) {
         if self.cfg.dry {
             return;
         }
@@ -969,7 +976,22 @@ impl<E: Exchange> Executor<E> {
                 Side::Long => "Sell",
                 Side::Short => "Buy",
             };
-            let link = format!("tp-{}-{}", p.sym, p.opened_at_ms);
+            // Метка уникальна на ПОСТАНОВКУ, а не на позицию: биржа
+            // отвергает повтор метки (retCode 110072 «OrderLinkedID
+            // is duplicate»), и после снятия целей остановкой
+            // перестановка с той же меткой билась в отказ каждый
+            // такт — четыре позиции стояли без тейков (инцидент
+            // 2026-08-23). Предел Bybit — 36 знаков, поэтому
+            // миллисекунды входа ужаты по модулю (10^9 — с запасом
+            // длиннее жизни позиции), суффикс — младшие цифры
+            // момента попытки; редкая коллизия суффикса лечится
+            // следующим тактом сама.
+            let link = format!(
+                "tp-{}-{}-{}",
+                p.sym,
+                p.opened_at_ms % 1_000_000_000,
+                now_ms % 1_000_000
+            );
             match self.ex.place_limit(
                 &p.sym,
                 side,

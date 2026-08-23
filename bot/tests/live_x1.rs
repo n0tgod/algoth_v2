@@ -1290,6 +1290,64 @@ fn отказ_постановки_цели_виден_в_статусе_и_сн
             "цель так и не встала");
 }
 
+/// Метка цели уникальна на ПОСТАНОВКУ, а не на позицию: биржа
+/// отвергает повтор метки (retCode 110072), и после снятия целей
+/// остановкой перестановка с той же меткой билась в отказ каждый
+/// такт — четыре позиции стояли без тейков (инцидент 2026-08-23).
+#[test]
+fn повторная_постановка_цели_не_дублирует_метку() {
+    let fx = Fx::new("tp-link");
+    let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    ex.tick(NOW);
+    let l1 = m.placed().last().unwrap().link.clone();
+    // Цель снята (класс: остановка), перестановка следующим тактом.
+    for p in ex.pos.values_mut() {
+        p.target_id = None;
+    }
+    ex.tick(NOW + 5_000);
+    let l2 = m.placed().last().unwrap().link.clone();
+    assert!(l2.starts_with("tp-ARBUSDT-"), "{l2}");
+    assert_ne!(l1, l2, "метка дословно та же — биржа ответит duplicate");
+    // Обе метки принадлежат одной позиции: общий префикс до попытки.
+    let pre = |s: &str| s.rsplitn(2, '-').nth(1).unwrap().to_string();
+    assert_eq!(pre(&l1), pre(&l2), "{l1} против {l2}");
+    // Предел Bybit — 36 знаков; длинные имена обязаны помещаться.
+    assert!(l2.len() + "1000000MOGUSDT".len() - "ARBUSDT".len() <= 36,
+            "метка не помещается в предел биржи: {l2}");
+}
+
+/// Перезапуск находит лежащую цель по метке НОВОГО образца: заявка,
+/// поставленная этим же кодом, обязана быть узнана после подъёма —
+/// иначе исполнитель поставил бы вторую поверх лежащей.
+#[test]
+fn перезапуск_находит_цель_по_метке_нового_образца() {
+    let fx = Fx::new("tp-link-restart");
+    let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let (link, qty, px) = {
+        let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+        ex.tick(NOW);
+        let t = m.placed().last().unwrap().clone();
+        (t.link, t.qty, t.px)
+    };
+    {
+        let mut i = m.0.borrow_mut();
+        i.resting.push(Resting {
+            sym: "ARBUSDT".into(), id: "rest7".into(),
+            link, qty, px,
+        });
+    }
+    let placed_before = m.placed().len();
+    let ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    let p = ex.pos.values().next().expect("позиция");
+    assert_eq!(p.target_id.as_deref(), Some("rest7"),
+               "лежащая цель нового образца не узнана");
+    assert_eq!(m.placed().len(), placed_before,
+               "поверх лежащей цели поставлена вторая");
+}
+
 /// Потолок цены — служебная арифметика уровня заявки.
 #[test]
 fn потолок_является_потолком() {
