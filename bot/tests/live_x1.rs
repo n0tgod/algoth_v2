@@ -46,6 +46,8 @@ struct Inner {
     lev_calls: Vec<String>,
     lev_error: Option<String>,
     entry_error: Option<String>,
+    /// Отказ биржи на reduceOnly-заявке (постановка цели).
+    target_error: Option<String>,
     next_id: u64,
     fee_bp: f64,
     /// Записи closed-pnl биржи: (имя, момент мс, деньги $).
@@ -80,6 +82,9 @@ impl Mock {
     }
     fn set_entry_error(&self, e: Option<&str>) {
         self.0.borrow_mut().entry_error = e.map(String::from);
+    }
+    fn set_target_error(&self, e: Option<&str>) {
+        self.0.borrow_mut().target_error = e.map(String::from);
     }
     fn placed(&self) -> Vec<Placed> {
         self.0.borrow().placed.clone()
@@ -159,6 +164,8 @@ impl Exchange for Mock {
             if let Some(e) = i.entry_error.clone() {
                 return Err(e);
             }
+        } else if let Some(e) = i.target_error.clone() {
+            return Err(e);
         }
         i.next_id += 1;
         let id = format!("o{}", i.next_id);
@@ -1248,6 +1255,39 @@ fn отказ_плеча_виден_в_статусе_и_снимается_ус
             "успешная постановка оставила отказ в статусе: {st}");
     assert!(le.get("ARBUSDT").is_some(),
             "чужой успех снял отказ ARB без его попытки");
+}
+
+/// Не вставшая цель видна в СТАТУСЕ, а не только в логе: отказ,
+/// повторяющийся каждый такт в eprintln, трижды за ночь 2026-08-23
+/// прятал живые проблемы. Успешная постановка отказ снимает.
+#[test]
+fn отказ_постановки_цели_виден_в_статусе_и_снимается_успехом() {
+    let fx = Fx::new("tp-err");
+    let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    ex.tick(NOW);
+    assert_eq!(ex.pos.len(), 1);
+    // Цель потеряна (класс: остановка сняла лимитки), а биржа
+    // отказывает в новой постановке.
+    for p in ex.pos.values_mut() {
+        p.target_id = None;
+    }
+    m.set_target_error(Some("retCode 110072x duplicate id"));
+    ex.tick(NOW + 5_000);
+    let st = ex.status_json(NOW + 5_000, None);
+    let te = st.get("tp_errors").cloned().unwrap_or_default();
+    assert!(te.get("ARBUSDT").is_some(),
+            "отказ постановки цели не виден в статусе: {st}");
+    // Биржа починилась: цель встаёт, отказ уходит из статуса.
+    m.set_target_error(None);
+    ex.tick(NOW + 10_000);
+    let st = ex.status_json(NOW + 10_000, None);
+    assert!(st.get("tp_errors").cloned().unwrap_or_default()
+            .get("ARBUSDT").is_none(),
+            "успешная постановка не сняла отказ: {st}");
+    assert!(ex.pos.values().all(|p| p.target_id.is_some()),
+            "цель так и не встала");
 }
 
 /// Потолок цены — служебная арифметика уровня заявки.

@@ -5713,6 +5713,11 @@ function strip(d){
     margin): ${Object.keys(st.lev_errors).map(esc).join(", ")}
     &mdash; ${esc(String(Object.values(st.lev_errors)[0] || ""))
     }</div>` : ""}
+  ${st.tp_errors ? `<div class="alarm">take-profit limits are NOT
+    resting — the executor retries every tact and the venue refuses:
+    ${Object.keys(st.tp_errors).map(esc).join(", ")}
+    &mdash; ${esc(String(Object.values(st.tp_errors)[0] || ""))
+    }</div>` : ""}
   ${d.journal_error ? `<div class="alarm">journal:
      ${esc(d.journal_error)}</div>` : ""}</section>`;
 }

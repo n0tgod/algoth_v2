@@ -213,6 +213,10 @@ global.fetch = async (url) => {
                          // не шлёт, и проверка держит обе стороны.
                          lev_errors: /livedry=1/.test(SEARCH) ? null
                            : {MONUSDT: "retCode 110043x недоступно"},
+                         // Не вставшая цель — тревога статуса, не
+                         // строчка в логе (инцидент 2026-08-23).
+                         tp_errors: /livedry=1/.test(SEARCH) ? null
+                           : {SANDUSDT: "retCode 110072x dup"},
                          wallet: {equity: 300.42, balance: 300.42}},
                 counts: {decisions: 5, opened: 3, closed: 2,
                          rejects_dry: 1, rejects_exec: 1},
@@ -2250,6 +2254,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     } else if (!/leverage 1&times; was NOT set/.test(bx)
                || !/110043x/.test(bx))
       bad.push("живое исполнение: отказ постановки плеча не виден");
+    // Не вставший тейк кричит со страницы; в сухом стабе отказов нет
+    // — и тревога обязана молчать (иначе она не сигнал).
+    if (/livedry=1/.test(SEARCH)) {
+      if (/take-profit limits are NOT resting/.test(bx))
+        bad.push("живое исполнение: тревога тейков кричит без отказа");
+    } else if (!/take-profit limits are NOT resting/.test(bx)
+               || !/110072x/.test(bx))
+      bad.push("живое исполнение: отказ постановки тейка не виден");
     // Латинского «bp» на странице не осталось: б.п. в цитатах причин
     // исполнителя — данные, а не формат, и они кириллицей.
     if (/\bbp\b/.test(bx.replace(/б\.п\./g, "")))

@@ -413,6 +413,11 @@ pub struct Executor<E: Exchange> {
     /// отказ, неотличимый от тишины, и владелец увидел его позициями
     /// 5х и 10х в приложении раньше, чем мы в числах.
     lev_errors: BTreeMap<String, String>,
+    /// Отказы постановки цели по имени: лимитка, не вставшая с
+    /// повторами каждый такт, видна только здесь и на странице —
+    /// eprintln в логе, который никто не читает, уже трижды за ночь
+    /// прятал именно этот класс отказа.
+    tp_errors: BTreeMap<String, String>,
 }
 
 /// Версия правил книги и журнал ЖИВЫХ денег: никакого само-архива.
@@ -738,6 +743,7 @@ impl<E: Exchange> Executor<E> {
             entries_paused: false,
             lev_set: BTreeSet::new(),
             lev_errors: BTreeMap::new(),
+            tp_errors: BTreeMap::new(),
         })
     }
 
@@ -977,11 +983,22 @@ impl<E: Exchange> Executor<E> {
                     if let Some(q) = self.pos.get_mut(&k) {
                         q.target_id = Some(id);
                     }
+                    self.tp_errors.remove(&p.sym);
                 }
-                Err(e) => eprintln!(
-                    "цель {} @ {level} не встала (повтор следующим тактом): {e}",
-                    p.sym
-                ),
+                Err(e) => {
+                    // Печать при СМЕНЕ текста: отказ повторяется
+                    // каждый такт, и одинаковая строка раз в 5 секунд
+                    // перестаёт быть сигналом. Сам отказ едет в статус
+                    // (tp_errors) — страница обязана его кричать.
+                    if self.tp_errors.get(&p.sym) != Some(&e) {
+                        eprintln!(
+                            "цель {} @ {level} не встала (повтор \
+                             каждым тактом): {e}",
+                            p.sym
+                        );
+                    }
+                    self.tp_errors.insert(p.sym.clone(), e);
+                }
             }
         }
     }
@@ -1671,6 +1688,8 @@ impl<E: Exchange> Executor<E> {
             "entries_paused": self.entries_paused,
             "lev_errors": if self.lev_errors.is_empty() { serde_json::Value::Null }
                 else { json!(self.lev_errors) },
+            "tp_errors": if self.tp_errors.is_empty() { serde_json::Value::Null }
+                else { json!(self.tp_errors) },
             "wallet": wallet.map(|(eq, bal)| json!({"equity": eq, "balance": bal})),
         });
         st
