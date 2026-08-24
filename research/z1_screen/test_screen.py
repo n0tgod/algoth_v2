@@ -212,6 +212,11 @@ def test_accumulator_does_not_grow_with_months():
             Z.measure(ev, P, times, acc, rng)
         size4 = sum(x.nbytes for a in acc.values()
                     for x in a["buckets"] + a["null"])
+        # Порог считается ЗДЕСЬ, пока PERMS ещё уменьшен для теста:
+        # посчитанный после восстановления, он выходил в одиннадцать
+        # раз мягче и пропускал подделку — отрицательный контроль
+        # молчал, то есть проверка не защищала ничего.
+        per_month = Z.BUCKET_QUOTA * (1 + Z.PERMS) * 4
     finally:
         Z.PERMS = old_p
     key = ("тест", 1, 5)
@@ -219,7 +224,6 @@ def test_accumulator_does_not_grow_with_months():
           all(k in ("events", "sum", "n", "cross", "share", "buckets",
                     "null", "seen", "group") for k in acc[key]),
           str(list(acc[key])))
-    per_month = Z.BUCKET_QUOTA * (1 + Z.PERMS) * 4
     check("память растёт квотой корзин, а не числом событий",
           size4 <= 4 * size1 * 1.05 and size4 / 4 <= per_month * len(acc),
           f"{size1} → {size4} байт на ячейку-месяц {per_month}")
