@@ -224,6 +224,8 @@ def test_smoke_runs_every_road_to_the_report():
         check("отчёт написан файлом", len(txt) > 800, str(len(txt)))
         check("в отчёте есть таблица семейств и сверка",
               "## Семейства" in txt and "## Сверка" in txt, txt[:200])
+        check("в отчёте есть мера с вычтенным направлением",
+              "внутри стороны" in txt and "остаток" in txt, txt[:200])
         check("настоящий сетап виден в отчёте", "tape" in txt,
               txt[:200])
         check("публикация выключена флагом и НЕ звалась", not called,
@@ -246,30 +248,80 @@ def test_smoke_runs_every_road_to_the_report():
                 os.remove(p)
 
 
-def test_account_check_catches_a_wrong_walk():
-    """Сверка со счётом цикла обязана заметить расхождение.
+def test_side_excess_removes_the_direction_confound():
+    """Семейство из одних лонгов в растущей книге НЕ получает превышения.
 
-    Мой обход журналов и счёт, писанный циклом, — две дороги к одним
-    деньгам. Если они расходятся, я считаю не ту книгу, и это обязано
-    быть числом в отчёте, а не выясняться потом.
+    Ловушка названа историей проекта («переодетый шорт беты», спека
+    04): если лонги книги в этом периоде бьют шорты, то любое
+    длинное семейство выглядит сетапом — за направление, а не за
+    ситуацию. Сравнение внутри стороны обязано это снимать.
+    """
+    # Состав подобран так, чтобы медиана ЯЧЕЙКИ была нулём, а медиана
+    # лонгов — плюс сотней: только тогда видно, что даёт направление, а
+    # что ситуация. Семейство `beta` — одни лонги с тем же результатом,
+    # что у остальных лонгов, то есть сетапа в нём нет вовсе.
+    rows = []
+    for i in range(60):
+        rows.append(row("h4", "gbm", f"L{i}", f"h{i}", "long", 100,
+                        "book"))
+    for i in range(100):
+        rows.append(row("h4", "gbm", f"S{i}", f"g{i}", "short", -100,
+                        "book"))
+    for i in range(40):
+        rows.append(row("h4", "gbm", f"B{i}", f"b{i}", "long", 100,
+                        "beta"))
+    a = S.analyse(rows)
+    c = a["fc"]["beta"][("h4", "gbm")]
+    check("над всей ячейкой превышение крупное",
+          c["exc_med"] > 90, str(c["exc_med"]))
+    check("внутри стороны превышения нет",
+          abs(c["exc_side"]) < 1e-9, str(c["exc_side"]))
+    check("доля лонгов семейства названа числом",
+          abs(c["long_share"] - 1.0) < 1e-9, str(c["long_share"]))
+
+
+def test_account_check_counts_only_what_the_file_could_know():
+    """Закрытое ПОСЛЕ записи файла счёта — не расхождение реализаций.
+
+    Файл пишет цикл раз в час, а ситуационная книга закрывает позиции
+    живым сторожем: между циклами мой обход честно богаче файла.
+    Голая разность выглядела бы отказом сверки — и на первом же живом
+    прогоне так и вышло (+25 и +44 доллара у ситуационных книг).
     """
     root = tempfile.mkdtemp()
     try:
         d = mkbook(root, "model", "h4", hours=10)
-        rows, _, real = S.book_rows(d, "h4")
+        rows, _, real, when = S.book_rows(d, "h4")
+        for a in ("gbm", "nn"):
+            with open(os.path.join(d, f"account_{a}.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"balance": 3000.0 + real[a], "start": 3000.0},
+                          f)
+        got = S.account_check(d, real, when)
+        check("сошедшийся счёт даёт ноль",
+              abs(got["gbm"]["resid"]) < 0.01, str(got["gbm"]))
+        # Файл, записанный ДО последних закрытий: разность крупная, а
+        # остаток обязан остаться нулём.
+        late = sum(p for t, p in when["gbm"] if t >= sorted(
+            t for t, _ in when["gbm"])[len(when["gbm"]) // 2])
         with open(os.path.join(d, "account_gbm.json"), "w",
                   encoding="utf-8") as f:
-            json.dump({"balance": 3000.0 + real["gbm"], "start": 3000.0},
-                      f)
+            json.dump({"balance": 3000.0 + real["gbm"] - late,
+                       "start": 3000.0}, f)
+        mid = sorted(t for t, _ in when["gbm"])[len(when["gbm"]) // 2]
+        os.utime(os.path.join(d, "account_gbm.json"), (mid - 1, mid - 1))
+        got = S.account_check(d, real, when)
+        check("отставший файл счёта расхождением не назван",
+              abs(got["gbm"]["resid"]) < 0.01
+              and abs(got["gbm"]["delta"]) > 0.01, str(got["gbm"]))
+        # А настоящее расхождение обязано остаться видимым.
         with open(os.path.join(d, "account_nn.json"), "w",
                   encoding="utf-8") as f:
             json.dump({"balance": 3000.0 + real["nn"] + 7.0,
                        "start": 3000.0}, f)
-        got = S.account_check(d, real)
-        check("сошедшийся счёт даёт ноль", abs(got["gbm"]) < 0.01,
-              str(got))
-        check("разошедшийся счёт назван числом",
-              abs(got["nn"] - 7.0) < 0.01, str(got))
+        got = S.account_check(d, real, when)
+        check("настоящее расхождение названо числом",
+              abs(got["nn"]["resid"] - 7.0) < 0.01, str(got["nn"]))
         check("сделки прочитаны с ярлыком сетапа",
               rows and any(r["fam"] for r in rows), str(rows[:1]))
     finally:
@@ -282,8 +334,9 @@ TESTS = [test_label_is_taken_per_decision,
          test_finds_a_real_setup_and_rejects_noise,
          test_pure_noise_names_nobody,
          test_duplicate_null_is_harder_than_incell_null,
+         test_side_excess_removes_the_direction_confound,
          test_smoke_runs_every_road_to_the_report,
-         test_account_check_catches_a_wrong_walk]
+         test_account_check_counts_only_what_the_file_could_know]
 
 
 def main():

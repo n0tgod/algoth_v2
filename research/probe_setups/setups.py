@@ -106,6 +106,7 @@ OBS = ("sit_obs", "model_sit_obs")
 ARMS = ("gbm", "nn")
 
 MIN_CELL = 30            # сделок в ячейке, иначе ячейка не измерена
+MIN_SIDE = 10            # сделок семейства на сторону внутри ячейки
 MIN_DEC = 100            # различных решений у семейства
 MIN_CELLS = 4            # в скольких ячейках семейство обязано быть
 STABLE_SHARE = 2.0 / 3   # доля ячеек с положительным превышением
@@ -162,11 +163,12 @@ def book_rows(mdir, hz):
                   read_jsonl(os.path.join(mdir, "review.jsonl")),
                   hold_h=hold,
                   books=TR.load_books(os.path.join(mdir, "books.jsonl")))
-    real = {}
+    real, when = {}, {}
     for a in ARMS:
         TR.account(tr, a, hold_h=hold or TR.HOLD_H,
                    slots=mman.get("slots"), sizing=mman.get("sizing"))
         real[a] = 0.0
+        when[a] = []
     rows = []
     for t in tr:
         if t.get("state") != "закрыта" or t.get("pnl") is None:
@@ -179,6 +181,7 @@ def book_rows(mdir, hz):
             continue
         arm = t.get("arm") or "gbm"
         real[arm] = real.get(arm, 0.0) + float(t["pnl"])
+        when.setdefault(arm, []).append((float(ts), float(t["pnl"])))
         su = t.get("setup") or []
         rows.append({
             "hz": hz, "arm": arm, "hour": t.get("hour"),
@@ -190,10 +193,10 @@ def book_rows(mdir, hz):
             "fam": (su[0][0] if su and su[0] else None),
             "share": (su[0][1] if su and su[0] else None),
             "reason": t.get("exit_reason")})
-    return rows, mman, real
+    return rows, mman, real, when
 
 
-def account_check(mdir, real):
+def account_check(mdir, real, closed_after=None):
     """Встроенная сверка: мои деньги против счёта, писанного циклом.
 
     Счёт книги пересобирается циклом целиком (`rebuild_accounts`) и
@@ -215,7 +218,25 @@ def account_check(mdir, real):
         if bal is None or start is None:
             out[a] = None
             continue
-        out[a] = round(float(bal) - float(start) - real.get(a, 0.0), 2)
+        # Файл счёта пишет ЦИКЛ раз в час, а ситуационная книга
+        # закрывает позиции живым сторожем и пишет разбор сразу.
+        # Значит между последним циклом и этой минутой мой обход
+        # честно богаче файла, и голая разность выглядела бы
+        # расхождением реализаций. Вычитается ровно то, что закрылось
+        # ПОСЛЕ записи файла; остаток обязан быть нулём.
+        late = 0.0
+        try:
+            mt = os.path.getmtime(os.path.join(mdir,
+                                               f"account_{a}.json"))
+            late = sum(p for t, p in (closed_after or {}).get(a, [])
+                       if t > mt)
+        except OSError:
+            mt = None
+        out[a] = {"delta": round(float(bal) - float(start)
+                                 - real.get(a, 0.0), 2),
+                  "after_write": round(late, 2),
+                  "resid": round(float(bal) - float(start)
+                                 - real.get(a, 0.0) + late, 2)}
     return out
 
 
@@ -286,38 +307,77 @@ def cells(rows):
 
 
 def family_cells(cs, labels):
-    """Превышение семейства над своей ячейкой, по каждой ячейке."""
+    """Превышение семейства над своей ячейкой, по каждой ячейке.
+
+    Считается ДВА превышения, и второе — не украшение.
+
+    `exc_med` — над медианой ВСЕЙ ячейки. Оно отвечает на вопрос «лучше
+    ли эта ситуация средней сделки книги», но у него есть известный
+    конфаунд: в растущем рынке лонги книги бьют шорты, и семейство,
+    состоящее преимущественно из лонгов, получает превышение даром —
+    не за ситуацию, а за направление. Проект уже называл этот класс
+    ловушки «переодетым шортом беты» (спека 04) и завёл ради него
+    критерий по бете в F2.
+
+    `exc_side` — над медианой ячейки ТОЙ ЖЕ СТОРОНЫ, средневзвешенно
+    по сторонам семейства. Направление из меры вычтено: сравниваются
+    лонги с лонгами, шорты с шортами. Сторона тоньше `MIN_SIDE` в меру
+    не идёт — это пропуск, а не ноль.
+    """
     out = {}
     for f in labels:
         out[f] = {}
     for ck, c in cs.items():
-        by = {}
+        base_side = {}
+        for r in c["rows"]:
+            base_side.setdefault(r["side"], []).append(r["net"])
+        base_med = {sd: median(v) for sd, v in base_side.items()}
+        by, by_side = {}, {}
         for r in c["rows"]:
             if r["label"]:
                 by.setdefault(r["label"], []).append(r["net"])
+                by_side.setdefault(r["label"], {}).setdefault(
+                    r["side"], []).append(r["net"])
         for f, nets in by.items():
             if len(nets) < MIN_CELL:
                 continue
+            num = den = 0.0
+            longs = 0
+            for sd, v in by_side[f].items():
+                if sd == "long":
+                    longs = len(v)
+                if len(v) < MIN_SIDE or base_med.get(sd) is None:
+                    continue
+                num += len(v) * (median(v) - base_med[sd])
+                den += len(v)
             out.setdefault(f, {})[ck] = {
                 "n": len(nets),
                 "med": median(nets), "mean": sum(nets) / len(nets),
                 "exc_med": median(nets) - c["med"],
+                "exc_side": (num / den) if den else None,
+                "long_share": longs / len(nets),
                 "exc_mean": sum(nets) / len(nets) - c["mean"],
                 "win": sum(1 for x in nets if x > 0) / len(nets)}
     return out
 
 
-def stability(fc):
-    """S1 — доля ячеек с положительным превышением; S2 — его величина."""
+def stability(fc, key="exc_med"):
+    """S1 — доля ячеек с положительным превышением; S2 — его величина.
+
+    `key` выбирает меру: превышение над всей ячейкой либо превышение
+    внутри стороны. Одна функция на обе, иначе два счёта одной величины
+    однажды разойдутся.
+    """
     out = {}
     for f, cellmap in fc.items():
-        if not cellmap:
+        cm = {k: c for k, c in cellmap.items() if c.get(key) is not None}
+        if not cm:
             continue
-        pos = sum(1 for c in cellmap.values() if c["exc_med"] > 0)
-        tot = sum(c["n"] for c in cellmap.values())
-        s2 = sum(c["exc_med"] * c["n"] for c in cellmap.values()) / tot
-        out[f] = {"cells": len(cellmap), "pos": pos,
-                  "s1": pos / len(cellmap), "s2": s2, "n": tot}
+        pos = sum(1 for c in cm.values() if c[key] > 0)
+        tot = sum(c["n"] for c in cm.values())
+        s2 = sum(c[key] * c["n"] for c in cm.values()) / tot
+        out[f] = {"cells": len(cm), "pos": pos,
+                  "s1": pos / len(cm), "s2": s2, "n": tot}
     return out
 
 
@@ -342,27 +402,37 @@ def null_decisions(rows, decs, qual, perms=PERMS, seed=SEED):
     labs = [d["label"] for d in decs]
     rnd = random.Random(seed)
     base = [dict(r) for r in rows]
-    m1, m2, per_fam = [], [], {f: [] for f in qual}
+    m1, m2, ms = [], [], []
+    per_fam = {f: [] for f in qual}
+    per_side = {f: [] for f in qual}
     for _ in range(perms):
         sh = labs[:]
         rnd.shuffle(sh)
         m = dict(zip(keys, sh))
         for r in base:
             r["label"] = m.get(r["key"])
-        st = stability(family_cells(cells(base), qual))
+        fc = family_cells(cells(base), qual)
+        st = stability(fc)
+        sts = stability(fc, key="exc_side")
         v1 = [st[f]["s1"] for f in qual if f in st]
         v2 = [st[f]["s2"] for f in qual if f in st]
+        vs = [sts[f]["s2"] for f in qual if f in sts]
         m1.append(max(v1) if v1 else 0.0)
         m2.append(max(v2) if v2 else 0.0)
+        ms.append(max(vs) if vs else 0.0)
         for f in qual:
             per_fam[f].append(st[f]["s2"] if f in st else 0.0)
+            per_side[f].append(sts[f]["s2"] if f in sts else 0.0)
     m1.sort()
     m2.sort()
+    ms.sort()
     return {"bar": m1[int(0.95 * (len(m1) - 1))],
             "bar_s2": m2[int(0.95 * (len(m2) - 1))],
+            "bar_side": ms[int(0.95 * (len(ms) - 1))],
             "max_mean": sum(m1) / len(m1),
             "max_mean_s2": sum(m2) / len(m2),
-            "per_fam": per_fam}
+            "max_mean_side": sum(ms) / len(ms),
+            "per_fam": per_fam, "per_side": per_side}
 
 
 def null_incell(rows, qual, perms=200, seed=SEED + 1):
@@ -421,9 +491,12 @@ def halves(rows, qual):
     out = {}
     for name, sel in (("early", [r for r in rows if r["ts"] < cut]),
                       ("late", [r for r in rows if r["ts"] >= cut])):
-        st = stability(family_cells(cells(sel), qual))
+        fc = family_cells(cells(sel), qual)
+        st = stability(fc)
+        sts = stability(fc, key="exc_side")
         for f in qual:
             out.setdefault(f, {})[name] = (st[f]["s2"] if f in st else None)
+            out[f][name + "_side"] = (sts[f]["s2"] if f in sts else None)
     return out
 
 
@@ -445,14 +518,32 @@ def analyse(rows):
     all_fams = sorted({r["label"] for r in rows if r["label"]})
     fc = family_cells(cs, all_fams)
     st = stability(fc)
+    sts = stability(fc, key="exc_side")
     qual = qualified(fc, decs)
     res = {}
     for f in sorted(qual, key=lambda x: -st[x]["s1"]):
         mine = [d["net"] for d in decs if d["label"] == f]
         top, wo = without_top(decs, f)
+        mine_rows = [d for d in decs if d["label"] == f]
+        syms = {}
+        for d in mine_rows:
+            syms[d["sym"]] = syms.get(d["sym"], 0) + 1
+        top3 = sum(sorted(syms.values(), reverse=True)[:3])
         res[f] = {"decisions": qual[f], "cells": st[f]["cells"],
                   "pos": st[f]["pos"], "s1": st[f]["s1"],
                   "s2": st[f]["s2"],
+                  # Сторона и концентрация — рядом с результатом, а не
+                  # в отдельном замере: семейство из одних лонгов в
+                  # растущем рынке и семейство из трёх имён выглядят
+                  # как сетап одинаково убедительно.
+                  "s1_side": (sts[f]["s1"] if f in sts else None),
+                  "s2_side": (sts[f]["s2"] if f in sts else None),
+                  "cells_side": (sts[f]["cells"] if f in sts else 0),
+                  "long_share": (sum(1 for d in mine_rows
+                                     if d["side"] == "long")
+                                 / max(1, len(mine_rows))),
+                  "syms": len(syms),
+                  "top3_share": top3 / max(1, len(mine_rows)),
                   "med": median(mine), "mean": sum(mine) / len(mine),
                   "win": sum(1 for x in mine if x > 0) / len(mine),
                   "top_sym": top, "mean_wo_top": wo,
@@ -461,13 +552,23 @@ def analyse(rows):
             "stab": st, "qual": qual, "res": res, "fc": fc}
 
 
-def verdict(res, n2, hv):
-    """Шесть объявленных условий, каждое — отдельным флагом."""
+def verdict(res, n2, hv, key=""):
+    """Шесть объявленных условий, каждое — отдельным флагом.
+
+    `key="_side"` — та же шестёрка по превышению ВНУТРИ СТОРОНЫ, то
+    есть с вычтенным направлением. Условия и пороги не меняются:
+    меняется только величина, которую они судят.
+    """
     out = {}
     for f, r in res.items():
         h = hv.get(f, {})
+        s1 = r["s1_side"] if key else r["s1"]
+        s2 = r["s2_side"] if key else r["s2"]
+        if s1 is None or s2 is None:
+            out[f] = {"cond": {"измерено": False}, "stable": False}
+            continue
         cond = {
-            "s1": r["s1"] >= STABLE_SHARE,
+            "s1": s1 >= STABLE_SHARE,
             "med": (r["med"] or 0) > 0,
             "mean": r["mean"] > 0,
             "wo_top": (r["mean_wo_top"] is not None
@@ -477,11 +578,11 @@ def verdict(res, n2, hv):
             # насыщается — один и тот же набор решений даёт согласие
             # всех ячеек и у перемешанных ярлыков тоже. Найдено
             # тестом на синтетике ДО прогона на живых данных.
-            "null": r["s2"] > n2["bar_s2"],
-            "halves": (h.get("early") is not None
-                       and h.get("late") is not None
-                       and (h["early"] > 0) == (h["late"] > 0)
-                       and h["early"] > 0)}
+            "null": s2 > (n2["bar_side"] if key else n2["bar_s2"]),
+            "halves": (h.get("early" + key) is not None
+                       and h.get("late" + key) is not None
+                       and (h["early" + key] > 0) == (h["late" + key] > 0)
+                       and h["early" + key] > 0)}
         out[f] = {"cond": cond, "stable": all(cond.values())}
     return out
 
@@ -490,12 +591,12 @@ def load(root, books):
     rows, checks = [], []
     for hz, name in books:
         mdir = os.path.join(root, name)
-        rs, mman, real = book_rows(mdir, hz)
+        rs, mman, real, when = book_rows(mdir, hz)
         if mman is None:
             checks.append({"book": name, "missing": True})
             continue
         checks.append({"book": name, "trades": len(rs),
-                       "account_delta": account_check(mdir, real)})
+                       "account_delta": account_check(mdir, real, when)})
         rows.extend(rs)
     return rows, checks
 
@@ -577,6 +678,38 @@ def write_report(path, data, meta):
     L.append("\n`p` — доля перестановок нуля 2, где у ЭТОГО семейства "
              "превышение вышло не меньше наблюдаемого (без поправки на "
              "число семейств; поправку несёт планка выше).\n")
+    L.append("\n## То же внутри стороны (направление вычтено)\n")
+    L.append("В растущем рынке лонги книги бьют шорты, и семейство из "
+             "одних лонгов получает превышение даром — за направление, "
+             "а не за ситуацию. Здесь лонги сравниваются с лонгами "
+             "своей ячейки, шорты с шортами; сторона тоньше "
+             f"{MIN_SIDE} сделок в меру не идёт. Планка нуля 2 по этой "
+             f"мере — **{n2['bar_side']:+.1f} б.п.** (среднее "
+             f"максимума {n2['max_mean_side']:+.1f}).\n\n")
+    L.append("| сетап | лонгов | имён | топ-3 | ячеек | доля | "
+             "превышение, б.п. | p | устойчив |\n")
+    L.append("|---|--:|--:|--:|--:|--:|--:|--:|:--|\n")
+    for f, r in sorted(res.items(),
+                       key=lambda kv: -(kv[1]["s2_side"] or -9e9)):
+        v = data["vd_side"][f]
+        mark = "**да**" if v["stable"] else ", ".join(
+            k for k, ok in v["cond"].items() if not ok)
+        pf = n2["per_side"].get(f) or []
+        pv = ((sum(1 for x in pf if x >= (r["s2_side"] or 0)) + 1)
+              / (len(pf) + 1) if pf and r["s2_side"] is not None
+              else None)
+        sh = r["s1_side"]
+        sh = "—" if sh is None else f"{sh:.2f}"
+        pvs = "—" if pv is None else f"{pv:.3f}"
+        L.append(f"| {f} | {r['long_share']:.2f} | {r['syms']} | "
+                 f"{r['top3_share']:.2f} | {r['cells_side']} | {sh} | "
+                 f"{fmt(r['s2_side'])} | {pvs} | {mark} |\n")
+    L.append("\n«лонгов» — доля длинных решений семейства, «имён» — "
+             "сколько разных монет, «топ-3» — доля решений в трёх "
+             "самых частых именах. Семейство из одних лонгов или из "
+             "трёх имён выглядит сетапом ровно так же убедительно, "
+             "как настоящий, — поэтому числа стоят рядом с "
+             "результатом.\n")
     L.append("\nСтолбец «устойчив» перечисляет условия, которые НЕ "
              "выполнены: `s1` — согласие ячеек, `med`/`mean` — знак по "
              "решениям, `wo_top` — знак без лучшего имени, `null` — "
@@ -595,11 +728,13 @@ def write_report(path, data, meta):
     L.append("\n«·» — ячейка не измерена (меньше "
              f"{MIN_CELL} сделок), это пропуск, а не ноль.\n")
     L.append("\n## Половины истории (взвешенное превышение, б.п.)\n")
-    L.append("| сетап | ранняя | поздняя |\n|---|--:|--:|\n")
+    L.append("| сетап | ранняя | поздняя | ранняя (сторона) | "
+             "поздняя (сторона) |\n|---|--:|--:|--:|--:|\n")
     for f in sorted(res, key=lambda x: -res[x]["s1"]):
         h = hv.get(f, {})
         L.append(f"| {f} | {fmt(h.get('early'))} | "
-                 f"{fmt(h.get('late'))} |\n")
+                 f"{fmt(h.get('late'))} | {fmt(h.get('early_side'))} | "
+                 f"{fmt(h.get('late_side'))} |\n")
     if data.get("obs"):
         o = data["obs"]
         L.append("\n## Наблюдательная запись (не входит в вердикт)\n")
@@ -614,15 +749,28 @@ def write_report(path, data, meta):
                      f"{fmt(r['mean'])} | {r['win']:.2f} |\n")
     L.append("\n## Сверка\n")
     L.append("Деньги обхода против счёта, писанного циклом "
-             "(`balance − start`); расхождение обязано быть нулём.\n\n")
-    L.append("| книга | сделок | Δ gbm, $ | Δ nn, $ |\n|---|--:|--:|--:|\n")
+             "(`balance − start`). Файл счёта пишется раз в час, а "
+             "ситуационная книга закрывает позиции живым сторожем — "
+             "поэтому вычитается то, что закрылось ПОСЛЕ записи файла; "
+             "нулю обязан равняться остаток.\n\n")
+    L.append("| книга | сделок | Δ gbm | после записи | остаток | "
+             "Δ nn | после записи | остаток |\n"
+             "|---|--:|--:|--:|--:|--:|--:|--:|\n")
     for c in data["checks"]:
         if c.get("missing"):
-            L.append(f"| {c['book']} | — | книги нет | |\n")
+            L.append(f"| {c['book']} | — | книги нет | | | | | |\n")
             continue
         d = c.get("account_delta") or {}
+        cells_ = []
+        for a in ARMS:
+            v = d.get(a)
+            if not isinstance(v, dict):
+                cells_ += ["—", "—", "—"]
+            else:
+                cells_ += [fmt(v["delta"], 2), fmt(v["after_write"], 2),
+                           fmt(v["resid"], 2)]
         L.append(f"| {c['book']} | {c['trades']} | "
-                 f"{fmt(d.get('gbm'), 2)} | {fmt(d.get('nn'), 2)} |\n")
+                 + " | ".join(cells_) + " |\n")
     L.append("\n## Чего этот замер НЕ означает\n")
     L.append("- Семейство — чтение вкладов, а не исполненная "
              "стратегия: модель одна на все ситуации и никогда не "
@@ -641,7 +789,7 @@ def write_report(path, data, meta):
 
 def obs_block(root):
     """Наблюдательная запись отдельным блоком — по копиям, без ячеек."""
-    rows, _, _ = book_rows(os.path.join(root, OBS[1]), OBS[0])
+    rows = book_rows(os.path.join(root, OBS[1]), OBS[0])[0]
     by = {}
     for r in rows:
         if r["fam"]:
@@ -691,6 +839,7 @@ def main(argv=None):
     print("нуль 1: перемешивание внутри ячейки…", flush=True)
     n1 = null_incell(a["rows"], qual)
     vd = verdict(a["res"], n2, hv)
+    vd_side = verdict(a["res"], n2, hv, key="_side")
     try:
         obs = obs_block(args.root)
     except Exception as e:                                # noqa: BLE001
@@ -699,6 +848,7 @@ def main(argv=None):
     tag = args.tag or "1m"
     path = os.path.join(out, f"SETUPS-report-{tag}.md")
     write_report(path, {"a": a, "n2": n2, "n1": n1, "hv": hv, "vd": vd,
+                        "vd_side": vd_side,
                         "checks": checks, "obs": obs},
                  {"when": datetime.now(timezone.utc)
                   .strftime("%Y-%m-%d %H:%M UTC"),
@@ -710,14 +860,19 @@ def main(argv=None):
                    "n2_bar_s2": n2["bar_s2"], "n1_bar": n1["bar"],
                    "perms": args.perms,
                    "verdict": {k: v["stable"] for k, v in vd.items()},
+                   "verdict_side": {k: v["stable"]
+                                    for k, v in vd_side.items()},
                    "res": {k: {x: y for x, y in v.items()
                                if x != "cellmap"}
                            for k, v in a["res"].items()},
                    "checks": checks}, f, ensure_ascii=False)
     stable = [f for f, v in vd.items() if v["stable"]]
+    st_side = [f for f, v in vd_side.items() if v["stable"]]
     print(f"отчёт: {path}", flush=True)
     print("устойчивых сетапов: "
           + (", ".join(stable) if stable else "ни одного"), flush=True)
+    print("из них переживают вычитание направления: "
+          + (", ".join(st_side) if st_side else "ни одного"), flush=True)
     if not args.no_publish:
         publish("зонд сетапов: устойчивость по книгам и рукам")
     return 0
