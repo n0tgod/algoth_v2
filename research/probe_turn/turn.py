@@ -51,6 +51,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
 
 DAY = 86400
 PERMS = 2000
+# Сколько дней истории нужно книге, чтобы участвовать в мере
+# синхронности: у книги, заведённой вчера, общих дней с остальными нет
+# по построению.
+MIN_DAYS = 10
 SEED = 20260824          # зерно числом, а не от часов запуска
 
 # Торгуемые книги: та же карта, что у сервера. Эхо-книги (тот же
@@ -214,12 +218,23 @@ def sync_stats(books, seed=SEED):
     ломая только совпадение по календарю.
     """
     import numpy as np
-    keys = sorted(books)
+    # Пересечение ВСЕХ книг равно пересечению с самой молодой: одна
+    # книга, заведённая вчера, обнуляла бы меру для всех остальных.
+    # Поэтому синхронность считается по книгам с достаточной
+    # историей, а молодые называются отдельно — иначе «мера не
+    # построена» выглядело бы как «синхронности нет».
+    long_enough = {k: v for k, v in books.items() if len(v) >= MIN_DAYS}
+    skipped = sorted(set(books) - set(long_enough))
+    keys = sorted(long_enough)
     if len(keys) < 2:
-        return {"books": len(keys)}
-    common = sorted(set.intersection(*[set(books[k]) for k in keys]))
+        return {"books": len(keys), "skipped": skipped,
+                "why": "книг с историей меньше двух"}
+    common = sorted(set.intersection(*[set(long_enough[k]) for k in keys]))
     if len(common) < 5:
-        return {"books": len(keys), "common_days": len(common)}
+        return {"books": len(keys), "common_days": len(common),
+                "skipped": skipped,
+                "why": "общих дней меньше пяти"}
+    books = long_enough
     m = np.array([[books[k].get(d, 0.0) for d in common] for k in keys])
     all_down = float(np.mean(np.all(m < 0, axis=0)))
     all_up = float(np.mean(np.all(m > 0, axis=0)))
@@ -238,6 +253,7 @@ def sync_stats(books, seed=SEED):
             if a.std() > 0 and b.std() > 0:
                 cors.append(float(np.corrcoef(a, b)[0, 1]))
     return {"books": len(keys), "common_days": len(common),
+            "skipped": skipped, "names": keys,
             "all_down": round(all_down, 3),
             "all_down_null": round(float(np.median(downs)), 3),
             "p_all_down": round(float((np.array(downs) >= all_down).mean()),
@@ -381,7 +397,7 @@ def write_report(art, path):
           "«момента» нет — есть распределение.",
           "",
           "## Синхронность книг", ""]
-    if s.get("common_days"):
+    if s.get("all_down") is not None:
         L += [f"Общих дней {s['common_days']}, книг {s['books']}, пар "
               f"{s.get('pairs')}.", "",
               f"- дней, когда в минусе ВСЕ книги разом: "
@@ -393,7 +409,14 @@ def write_report(art, path):
               f"{s.get('corr_med')}, от {s.get('corr_min')} до "
               f"{s.get('corr_max')}"]
     else:
-        L.append("Общих дней слишком мало — синхронность не измеряется.")
+        L.append(f"Синхронность не измерена: {s.get('why', '—')} "
+                 f"(книг с историей {s.get('books', 0)}, общих дней "
+                 f"{s.get('common_days', 0)}). Это НЕ значит, что "
+                 f"синхронности нет: мера просто не построена.")
+    if s.get("skipped"):
+        L.append("")
+        L.append(f"Молодые книги вне меры: {', '.join(s['skipped'])} "
+                 f"(история короче {MIN_DAYS} дней).")
     L += ["", "## Что изменилось в сделках до и после пика", "",
           "| книга | часть | сделок | $ | побед | медиана б.п. | "
           "доля лонгов | лучшее имя | $ без него | выходы |",

@@ -89,6 +89,42 @@ def test_sync_separates_common_from_independent():
           ss["corr_med"] > 0.8, str(ss["corr_med"]))
 
 
+def test_sync_survives_a_young_book():
+    """Одна молодая книга не вправе обнулять меру для всех.
+
+    Серверный прогон упал в отчёте на `KeyError: all_down`: книга
+    возрастом в двое суток свела общее пересечение к трём дням, мера
+    честно отказалась считаться — а отчёт печатал её так, будто она
+    посчитана. Оба конца закрыты: молодые книги называются отдельно, а
+    ветка показа решается наличием САМОЙ величины, а не соседней.
+    """
+    rng = np.random.default_rng(21)
+    n = 60
+    common = rng.normal(0, 1, n)
+    books = {f"b{i}": days_from(common + rng.normal(0, 0.2, n))
+             for i in range(3)}
+    books["young"] = days_from(rng.normal(0, 1, 3), start=20050)
+    st = T.sync_stats(books, seed=T.SEED)
+    check("мера построена, несмотря на молодую книгу",
+          st.get("all_down") is not None, str(st))
+    check("молодая книга названа отдельно",
+          st.get("skipped") == ["young"], str(st.get("skipped")))
+    check("в мере остались книги с историей",
+          st.get("books") == 3 and st.get("common_days") == n, str(st))
+    # Отчёт обязан собираться и когда мера НЕ построена.
+    import tempfile
+    art = {"tag": "t", "perms": 10, "seed": 1, "books": {},
+           "sync": {"books": 1, "common_days": 3, "skipped": ["young"],
+                    "why": "общих дней меньше пяти"},
+           "took_sec": 0.1}
+    path = os.path.join(tempfile.mkdtemp(), "r.md")
+    T.write_report(art, path)
+    body = open(path, encoding="utf-8").read()
+    check("непостроенная мера объясняется словами, а не роняет отчёт",
+          "Синхронность не измерена" in body
+          and "мера просто не построена" in body, body[-300:])
+
+
 def test_split_by_peak_reports_both_sides():
     tr = []
     for i in range(10):
@@ -215,6 +251,7 @@ def main():
     test_noise_gives_no_turning_point()
     test_real_break_is_caught()
     test_sync_separates_common_from_independent()
+    test_sync_survives_a_young_book()
     test_split_by_peak_reports_both_sides()
     if not all(OK):
         print("ЕСТЬ ПАДЕНИЯ")
