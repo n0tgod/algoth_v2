@@ -433,30 +433,14 @@ def dedup_rows(hit, dedup_min=DEDUP_MIN):
     return rows[keep], cols[keep]
 
 
-def cell_stats(exc, ep, wide, share):
-    """Сводка ячейки. Медиана — по эпизодам, а не по событиям.
-
-    Событий у одного рыночного окна бывают сотни, и считать их
-    независимыми наблюдениями значит подделать бюджет доказательства.
-    """
-    ok = np.isfinite(exc)
-    if int(ok.sum()) < MIN_EVENTS:
-        return None
-    e, p = exc[ok], ep[ok]
-    per = {}
-    for v, k in zip(e, p):
-        per.setdefault(int(k), []).append(float(v))
-    med_ep = np.array([np.median(v) for v in per.values()])
-    return {"events": int(ok.sum()), "episodes": len(per),
-            "med_bp": float(np.median(e) * 1e4),
-            "med_ep_bp": float(np.median(med_ep) * 1e4),
-            "mean_bp": float(np.mean(e) * 1e4),
-            "win": float(np.mean(med_ep > 0)),
-            "cross": float(np.median(wide[ok])),
-            "share": float(np.median(share[ok]))}
-
-
 NULL_CAP = 3000                   # событий на ячейку в нулевой выборке
+BUCKET_QUOTA = 100                # корзин на ячейку и МЕСЯЦ в памяти
+# Накопитель не хранит сырых событий. Первый прогон хранил, и его убило
+# ядро: 1.87 млн событий в месяц на четыре горизонта и две стороны — это
+# гигабайты массивов, растущих линейно с числом месяцев. Считать надо
+# сразу: медиана по корзинам месяца берётся на месте, а в память едут
+# только сами медианы (и их квота), потому что итоговая статистика есть
+# медиана по корзинам, а не по событиям.
 
 
 def month_units(symbols, mon, times, log=log_):
@@ -719,20 +703,23 @@ for _c in CONDITIONS:
 
 
 def measure(events, P, times, acc, rng, log=log_):
-    """Превышение по каждой ячейке плюс нулевые розыгрыши.
+    """Превышение по ячейкам, свёрнутое ДО корзин прямо в месяце.
 
     Нуль переставляет, КАКОЙ символ сработал, оставляя минуту на месте:
     так сохраняются и календарь событий, и состояние рынка в эти
-    минуты, а рвётся ровно связь «этот символ ↔ этот исход». Розыгрыши
-    копятся вместе с событиями, потому что семейственная планка берётся
-    по ВСЕМУ прогону, а не по месяцу.
+    минуты, а рвётся ровно связь «этот символ ↔ этот исход».
+
+    В память едут медианы по корзинам, а не события: итоговая мера и
+    есть медиана по корзинам, а сырые события первого прогона стоили
+    убийства по памяти.
     """
     for h in HORIZONS:
         F = fwd_ret(P, h)
-        colmed = np.full(P.shape[1], np.nan, dtype=np.float64)
         fin_any = np.isfinite(F)
-        need = np.unique(np.concatenate([c for _, _, c in events.values()])) \
-            if events else np.array([], dtype=np.int64)
+        fin_n = np.maximum(fin_any.sum(axis=0), 1)
+        need = (np.unique(np.concatenate([c for _, _, c in events.values()]))
+                if events else np.array([], dtype=np.int64))
+        colmed = np.full(P.shape[1], np.nan, dtype=np.float64)
         for j in need:
             col = F[:, j]
             m = np.isfinite(col)
@@ -743,12 +730,11 @@ def measure(events, P, times, acc, rng, log=log_):
             med, wide = cross_median(F, cols, rows)
             ep = times[cols] // (h * 60)     # корзина длиной в горизонт
             cnt = np.bincount(cols, minlength=P.shape[1]).astype(np.float64)
-            fin_n = np.maximum(fin_any.sum(axis=0), 1)
             share = cnt[cols] / fin_n[cols]
             n = len(rows)
             take = min(n, NULL_CAP)
-            sub = rng.choice(n, size=take, replace=False) if take < n \
-                else np.arange(n)
+            sub = (rng.choice(n, size=take, replace=False) if take < n
+                   else np.arange(n))
             draws = np.empty((take, PERMS), dtype=np.float32)
             for pi in range(PERMS):
                 pick = rng.integers(0, P.shape[0], size=take)
@@ -762,18 +748,46 @@ def measure(events, P, times, acc, rng, log=log_):
                                 - colmed[cols[sub]]).astype(np.float32)
             for cond in CONDS_BY_NAME[name]:
                 key = (name, cond["side"], h)
-                a = acc.setdefault(key, {"exc": [], "ep": [], "wide": [],
-                                         "share": [], "null": [],
-                                         "sub_exc": [], "sub_ep": [],
+                a = acc.setdefault(key, {"events": 0, "sum": 0.0, "n": 0,
+                                         "cross": 0.0, "share": 0.0,
+                                         "buckets": [], "null": [],
+                                         "seen": 0,
                                          "group": cond["group"]})
-                a["exc"].append(cond["side"] * (f - med))
-                a["ep"].append(ep)
-                a["wide"].append(wide)
-                a["share"].append(share)
-                a["null"].append(cond["side"] * draws)
-                a["sub_exc"].append(cond["side"]
-                                    * (f[sub] - colmed[cols[sub]]))
-                a["sub_ep"].append(ep[sub])
+                exc = cond["side"] * (f - med)
+                ok = np.isfinite(exc)
+                if not ok.any():
+                    continue
+                a["events"] += int(ok.sum())
+                a["sum"] += float(np.sum(exc[ok]))
+                a["n"] += int(ok.sum())
+                a["cross"] += float(np.sum(wide[ok]))
+                a["share"] += float(np.sum(share[ok]))
+                order, edges = bucket_groups(ep[ok])
+                bmed = np.asarray(med_by_groups_all(exc[ok], order, edges))
+                sub_exc = cond["side"] * (f[sub] - colmed[cols[sub]])
+                sub_ok = np.isfinite(sub_exc)
+                nb = np.full((len(bmed), PERMS), np.nan, dtype=np.float32)
+                if sub_ok.any():
+                    o2, e2 = bucket_groups(ep[sub][sub_ok])
+                    nn = med_by_groups_all(
+                        (cond["side"] * draws[sub_ok]).astype(np.float64),
+                        o2, e2)
+                    nb = nn.astype(np.float32)
+                # Квота на месяц: корзины выбираются случайно с
+                # закреплённым зерном — держать все значило бы вернуть
+                # ту же линейную по месяцам память, из-за которой
+                # прогон убило.
+                a["seen"] += len(bmed)
+                if len(bmed) > BUCKET_QUOTA:
+                    idx = rng.choice(len(bmed), size=BUCKET_QUOTA,
+                                     replace=False)
+                    bmed = bmed[idx]
+                a["buckets"].append(bmed.astype(np.float32))
+                if nb.shape[0] > BUCKET_QUOTA:
+                    idx2 = rng.choice(nb.shape[0], size=BUCKET_QUOTA,
+                                      replace=False)
+                    nb = nb[idx2]
+                a["null"].append(nb)
         del F
     return acc
 
@@ -827,6 +841,17 @@ class warnings_ignored:
         self._e.__exit__(*a)
 
 
+def med_by_groups_all(V, order, edges):
+    """Медианы по КАЖДОЙ корзине, без свёртки в одно число."""
+    X = V[order] if V.ndim == 1 else V[order, :]
+    out = []
+    for a, b in zip(edges[:-1], edges[1:]):
+        chunk = X[a:b] if X.ndim == 1 else X[a:b, :]
+        with warnings_ignored():
+            out.append(np.nanmedian(chunk, axis=0))
+    return np.array(out)
+
+
 def med_by_episode(v, ep):
     ok = np.isfinite(v)
     if not ok.any():
@@ -836,64 +861,44 @@ def med_by_episode(v, ep):
 
 
 def summarize(acc):
-    """Сводка по ячейкам и семейственная планка нуля."""
-    cells, nulls = {}, []
+    """Сводка по ячейкам и семейственная планка нуля.
+
+    Обе величины считаются по КОРЗИНАМ: медиана по корзинам-медианам у
+    наблюдения и то же самое у каждой перестановки. Планка берётся по
+    максимуму среди ячеек — «эта ячейка хороша» при двухстах сорока
+    восьми ячейках не значит ничего.
+    """
+    cells, per_cell = {}, []
     for key, a in acc.items():
-        exc = np.concatenate(a["exc"])
-        ep = np.concatenate(a["ep"])
-        ok = np.isfinite(exc)
-        if int(ok.sum()) < MIN_EVENTS:
+        if a["events"] < MIN_EVENTS or not a["buckets"]:
             continue
-        wide = np.concatenate(a["wide"])
-        share = np.concatenate(a["share"])
+        b = np.concatenate(a["buckets"]).astype(np.float64)
+        ok = np.isfinite(b)
+        if not ok.any():
+            continue
         cells[key] = {
-            "group": a["group"], "events": int(ok.sum()),
-            "buckets": len({int(x) for x in ep[ok]}),
-            "med_bp": med_by_episode(exc, ep) * 1e4,
-            "mean_bp": float(np.mean(exc[ok])) * 1e4,
-            "win": float(np.mean([np.median(v) > 0 for v in
-                                  _by_ep(exc[ok], ep[ok]).values()])),
-            "cross": float(np.median(wide[ok])),
-            "share": float(np.median(share[ok])),
+            "group": a["group"], "events": a["events"],
+            "buckets": int(ok.sum()), "buckets_seen": a["seen"],
+            "med_bp": float(np.median(b[ok])) * 1e4,
+            "mean_bp": (a["sum"] / a["n"]) * 1e4 if a["n"] else float("nan"),
+            "win": float(np.mean(b[ok] > 0)),
+            "cross": a["cross"] / max(a["n"], 1),
+            "share": a["share"] / max(a["n"], 1),
         }
-    # Планка считается на ПОДВЫБОРКЕ (до NULL_CAP событий на ячейку), и
-    # наблюдаемый максимум на той же подвыборке печатается рядом:
-    # сравнивать планку с полной выборкой было бы сравнением разных
-    # величин.
-    sub_obs = {}
-    for key, a in acc.items():
-        if key not in cells:
-            continue
-        se = np.concatenate(a["sub_exc"])
-        sp = np.concatenate(a["sub_ep"])
-        sub_obs[key] = med_by_episode(se, sp) * 1e4
-    # Все перестановки ячейки считаются ОДНИМ проходом по её корзинам:
-    # группировка от перестановки не зависит.
-    per_cell = []
-    for key, a in acc.items():
-        if key not in cells:
-            continue
-        V = np.concatenate(a["null"], axis=0).astype(np.float64)
-        sp = np.concatenate(a["sub_ep"])
-        order, edges = bucket_groups(sp)
-        per_cell.append(med_by_groups(V, order, edges) * 1e4)
+        N = np.concatenate(a["null"], axis=0).astype(np.float64)
+        with warnings_ignored():
+            per_cell.append(np.nanmedian(N, axis=0) * 1e4)
+    nulls = []
     if per_cell:
         M = np.vstack(per_cell)              # ячейки × перестановки
         with warnings_ignored():
-            nulls = list(np.nanmax(M, axis=0))
-        nulls = [float(x) for x in nulls if np.isfinite(x)]
+            nulls = [float(x) for x in np.nanmax(M, axis=0)
+                     if np.isfinite(x)]
     nulls.sort()
     bar = nulls[int(0.95 * (len(nulls) - 1))] if nulls else float("nan")
     return cells, {"bar": bar,
                    "mean": float(np.mean(nulls)) if nulls else float("nan"),
-                   "perms": len(nulls), "sub_obs": sub_obs}
-
-
-def _by_ep(v, ep):
-    per = {}
-    for x, k in zip(v, ep):
-        per.setdefault(int(k), []).append(float(x))
-    return per
+                   "perms": len(nulls)}
 
 
 def write_report(path, cells, null, meta):
@@ -1030,8 +1035,7 @@ def main(argv=None):
               encoding="utf-8") as f:
         json.dump({"cells": {f"{k[0]}|{k[1]}|{k[2]}": v
                              for k, v in cells.items()},
-                   "null": {k: v for k, v in null.items()
-                            if k != "sub_obs"},
+                   "null": null,
                    "conds": len(CONDITIONS), "perms": PERMS,
                    "start": args.start, "end": args.end}, f,
                   ensure_ascii=False)

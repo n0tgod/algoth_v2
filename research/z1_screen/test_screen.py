@@ -188,6 +188,46 @@ def test_matrix_medians_equal_the_naive_count():
           np.allclose(got, want, atol=1e-12), f"{got[:3]} против {want[:3]}")
 
 
+def test_accumulator_does_not_grow_with_months():
+    """Накопитель не хранит сырых событий — иначе ядро убьёт прогон.
+
+    Пилот на трёх месяцах был убит по памяти ровно из-за этого: 1.87
+    млн событий в месяц на четыре горизонта и две стороны копились
+    массивами и росли линейно с числом месяцев. Свёртка до корзин
+    делается в самом месяце, а в память едет квота корзин.
+    """
+    P, rows, cols = synth(n_min=4000)
+    times = np.arange(P.shape[1], dtype=np.int64) * 60
+    ev = {"тест": ({"name": "тест", "side": 1, "group": "тест"},
+                   rows.astype(np.int64), cols.astype(np.int64))}
+    Z.CONDS_BY_NAME["тест"] = [{"name": "тест", "side": 1, "group": "тест"}]
+    old_p = Z.PERMS
+    Z.PERMS = 8
+    try:
+        acc, rng = {}, np.random.default_rng(1)
+        Z.measure(ev, P, times, acc, rng)
+        size1 = sum(x.nbytes for a in acc.values()
+                    for x in a["buckets"] + a["null"])
+        for _ in range(3):                      # ещё три «месяца»
+            Z.measure(ev, P, times, acc, rng)
+        size4 = sum(x.nbytes for a in acc.values()
+                    for x in a["buckets"] + a["null"])
+    finally:
+        Z.PERMS = old_p
+    key = ("тест", 1, 5)
+    check("накопитель не держит сырых событий",
+          all(k in ("events", "sum", "n", "cross", "share", "buckets",
+                    "null", "seen", "group") for k in acc[key]),
+          str(list(acc[key])))
+    per_month = Z.BUCKET_QUOTA * (1 + Z.PERMS) * 4
+    check("память растёт квотой корзин, а не числом событий",
+          size4 <= 4 * size1 * 1.05 and size4 / 4 <= per_month * len(acc),
+          f"{size1} → {size4} байт на ячейку-месяц {per_month}")
+    check("число событий при этом СЧИТАЕТСЯ полностью",
+          acc[key]["events"] == 4 * acc[key]["n"] // 4
+          and acc[key]["events"] > 100, str(acc[key]["events"]))
+
+
 def test_report_names_the_degenerate_control():
     """Доля универсума в событии обязана доезжать до отчёта.
 
@@ -249,6 +289,7 @@ TESTS = [test_forward_never_touches_the_signal_bar,
          test_buckets_do_not_degenerate_on_a_frequent_signal,
          test_side_flips_the_sign,
          test_matrix_medians_equal_the_naive_count,
+         test_accumulator_does_not_grow_with_months,
          test_report_names_the_degenerate_control,
          test_units_are_yesterdays_and_zero_noise_is_a_gap,
          test_since_shock_and_rolling_sum]
