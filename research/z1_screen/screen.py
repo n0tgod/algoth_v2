@@ -101,7 +101,14 @@ DEDUP_MIN = 60                    # серия срабатываний одно
 # зонд возврата уже ловил на непрерывном сигнале.
 PERMS = 100                       # перестановок для семейственной планки
 SEED = 20260824                   # зерно ЧИСЛОМ, а не от часов запуска
-ROUND_COST_BP = 11.0              # круг тейкера в долях гросса
+ROUND_COST_BP = 11.0              # круг тейкера ОДНОЙ ноги
+# Превышение над кросс-секцией есть PnL рыночно-нейтральной книги: наша
+# нога плюс хедж об остальное сечение. Значит и платить надо за ДВЕ
+# ноги, а не за одну — сравнивать превышение с одним кругом значит
+# сравнивать числитель одной сделки со знаменателем другой. Ровно эту
+# ошибку единиц R4 нашла в §8.2 спеки 03 («на ногу» против «на пару
+# ног»), и повторять её нельзя.
+NEUTRAL_COST_BP = 2 * ROUND_COST_BP
 WARM_DAYS = 2                     # дней разогрева собственных единиц
 MIN_EVENTS = 30                   # ячейка тоньше — НЕ измерена
 MIN_BUCKETS = 50                  # корзин меньше — вне планки и вне находок
@@ -263,11 +270,19 @@ def cross_median(F, cols, rows):
 # это трижды (порог объёма T1, шум T4, гейт B1).
 
 def roll_sum(X, w):
-    """Сумма за `w` минут назад, включая текущую."""
+    """Сумма за `w` минут, кончающаяся на ПРОШЛОМ баре.
+
+    Объём бара `j` известен только в конце этого бара, то есть в
+    момент `j+1`. Сумма, включающая текущий бар, дала бы минуту
+    будущего каждому объёмному примитиву — незаметно, потому что
+    прогон от этого не падает и число событий не меняется.
+    """
     c = np.nancumsum(np.nan_to_num(X, nan=0.0), axis=1, dtype=np.float64)
     out = np.full(X.shape, np.nan, dtype=np.float32)
-    out[:, w - 1:] = (c[:, w - 1:] - np.concatenate(
-        [np.zeros((X.shape[0], 1)), c[:, :-w]], axis=1)).astype(np.float32)
+    if w + 1 <= X.shape[1]:
+        out[:, w:] = (c[:, w - 1:-1] - np.concatenate(
+            [np.zeros((X.shape[0], 1)), c[:, :-w - 1]],
+            axis=1)).astype(np.float32)
     return out
 
 
@@ -503,20 +518,29 @@ def month_units(symbols, mon, times, log=log_):
     # (около двух месяцев суток). Это честный, известный в момент
     # решения двойник делистинга: дату снятия мы знаем только задним
     # числом, а падение своего оборота видно сразу.
+    # Ранг считается по суткам СТРОГО ДО текущих: ранг против всего
+    # загруженного окна включал бы будущие дни месяца. Утечка такого
+    # рода не даёт ярких ячеек — она равномерно улучшает всё, включая
+    # нули, и потому невидима.
     R = np.full(U["med_qv"].shape, np.nan, dtype=np.float32)
-    for r in range(U["med_qv"].shape[0]):
-        vals = np.array([per[(r, d)][1] for d in
-                         sorted({dd for (rr, dd) in per if rr == r})],
-                        dtype=np.float64) if any(
-                            rr == r for (rr, dd) in per) else None
-        if vals is None or len(vals) < 10:
-            continue
-        row = U["med_qv"][r]
-        ok = np.isfinite(row)
-        if not ok.any():
-            continue
-        R[r, ok] = (np.searchsorted(np.sort(vals), row[ok], side="left")
-                    / len(vals)).astype(np.float32)
+    by_row = {}
+    for (r, dd), vals in per.items():
+        by_row.setdefault(r, {})[dd] = vals[1]
+    for r, hist in by_row.items():
+        days_sorted = sorted(hist)
+        for i, d in enumerate(days_sorted):
+            past = [hist[x] for x in days_sorted[:i]
+                    if np.isfinite(hist[x])]
+            if len(past) < 10:
+                continue
+            sel = day == d + 1          # единицы дня d применяются НАЗАВТРА
+            if not sel.any():
+                continue
+            v = hist[d]
+            if not np.isfinite(v):
+                continue
+            R[r, sel] = float(np.searchsorted(np.sort(past), v,
+                                              side="left") / len(past))
     U["qv_rank"] = R
     log(f"  единицы: {len(per):,} символо-суток")
     return U
@@ -536,8 +560,23 @@ def age_matrix(symbols, times, uni):
     return A
 
 
+OI_PUBLISH_SEC = 300              # строка metrics с меткой t готова в t+5
+
+
 def oi_matrices(symbols, times):
-    """Изменение открытого интереса за 15 и 60 минут (ряд с 2024)."""
+    """Изменение открытого интереса за 15 и 60 минут (ряд с 2024).
+
+    Лаг публикации добирается ВО ВРЕМЕНИ. Слой L3 сдвигает ряд на один
+    ШАГ сетки, и на его пятиминутной сетке это ровно те пять минут,
+    которые требует замер `l1_cascades/lag.py`. На нашей МИНУТНОЙ сетке
+    один шаг — это одна минута, то есть четыре минуты будущего в каждой
+    ячейке с интересом. Дефект не роняет прогон и не меняет числа
+    событий: значения просто стоят на четыре минуты раньше, чем их
+    можно было знать, — и в отчёте это выглядит как «условие на интерес
+    работает».
+    """
+    step = int(times[1] - times[0]) if len(times) > 1 else 60
+    extra = max(0, -(-OI_PUBLISH_SEC // step) - 1)   # L3 уже сдвинул на шаг
     shape = (len(symbols), len(times))
     o15 = np.full(shape, np.nan, dtype=np.float32)
     o60 = np.full(shape, np.nan, dtype=np.float32)
@@ -548,6 +587,8 @@ def oi_matrices(symbols, times):
             continue
         have += 1
         c = C.astype(np.float64)
+        if extra:
+            c = np.concatenate([np.full(extra, np.nan), c[:-extra]])
         for w, dst in ((15, o15), (60, o60)):
             with np.errstate(invalid="ignore", divide="ignore"):
                 dst[r, w:] = (c[w:] / c[:-w] - 1.0).astype(np.float32)
@@ -592,10 +633,25 @@ def base_prims(P, U, uni, symbols, times):
     занять четверть гигабайта ради повторения одного числа.
     """
     p = {}
+    # Пол шума берётся из САМОГО сечения (10-й процентиль суток), а не
+    # константой: обратная величина без пола — это ловушка замороженных
+    # рядов, из-за которой в S1 одно имя забирало 92.7 % книги. Пол по
+    # сечению держит его ровно там, где рынок в этот день, — константа
+    # связывала бы то слишком сильно, то никак.
+    noise = U["noise"].copy()
+    day = (times // 86400).astype(np.int64)
+    for d in np.unique(day):
+        sel = day == d
+        col = noise[:, sel]
+        v = col[np.isfinite(col)]
+        if v.size:
+            floor = float(np.percentile(v, 10))
+            col[np.isfinite(col) & (col < floor)] = floor
+            noise[:, sel] = col
     for w in (5, 15, 60):
         with np.errstate(invalid="ignore", divide="ignore"):
             p[f"z{w}"] = (back_ret(P, w)
-                          / (U["noise"] * np.sqrt(w))).astype(np.float32)
+                          / (noise * np.sqrt(w))).astype(np.float32)
     sh = np.abs(p["z15"]) >= 2.0
     fin = np.isfinite(p["z15"])
     with np.errstate(invalid="ignore", divide="ignore"):
@@ -758,12 +814,25 @@ def measure(events, P, times, acc, rng, log=log_):
                 a = acc.setdefault(key, {"events": 0, "sum": 0.0, "n": 0,
                                          "cross": 0.0, "share": 0.0,
                                          "buckets": [], "null": [],
+                                         "raw": [], "found": 0,
+                                         "mkt": 0.0, "mkt2": 0.0,
+                                         "exm": 0.0, "raw_sum": 0.0,
                                          "seen": 0,
                                          "group": cond["group"]})
                 exc = cond["side"] * (f - med)
                 ok = np.isfinite(exc)
+                # Событий НАЙДЕНО и событий, у которых контроль удалось
+                # построить, — разные числа. Ячейка меряется на втором
+                # множестве, и отбирает его контроль: печатать надо оба,
+                # иначе смещение выборки невидимо.
+                a["found"] += len(exc)
                 if not ok.any():
                     continue
+                mk = cond["side"] * med[ok]
+                a["mkt"] += float(np.sum(mk))
+                a["mkt2"] += float(np.sum(mk * mk))
+                a["exm"] += float(np.sum(exc[ok] * mk))
+                a["raw_sum"] += float(np.sum(cond["side"] * f[ok]))
                 a["events"] += int(ok.sum())
                 a["sum"] += float(np.sum(exc[ok]))
                 a["n"] += int(ok.sum())
@@ -785,11 +854,17 @@ def measure(events, P, times, acc, rng, log=log_):
                 # ту же линейную по месяцам память, из-за которой
                 # прогон убило.
                 a["seen"] += len(bmed)
+                rawb = np.asarray(med_by_groups_all(
+                    (cond["side"] * f[ok]).astype(np.float64), order, edges))
+                # Квота на месяц: наблюдаемое и сырое режутся ОДНИМИ И
+                # ТЕМИ ЖЕ корзинами — иначе две колонки описывали бы
+                # разные подмножества и сравнивать их было бы нельзя.
                 if len(bmed) > BUCKET_QUOTA:
                     idx = rng.choice(len(bmed), size=BUCKET_QUOTA,
                                      replace=False)
-                    bmed = bmed[idx]
+                    bmed, rawb = bmed[idx], rawb[idx]
                 a["buckets"].append(bmed.astype(np.float32))
+                a["raw"].append(rawb.astype(np.float32))
                 if nb.shape[0] > BUCKET_QUOTA:
                     idx2 = rng.choice(nb.shape[0], size=BUCKET_QUOTA,
                                       replace=False)
@@ -883,11 +958,29 @@ def summarize(acc):
         ok = np.isfinite(b)
         if not ok.any():
             continue
+        r = (np.concatenate(a["raw"]).astype(np.float64)
+             if a.get("raw") else np.array([np.nan]))
+        rok = np.isfinite(r)
+        n = max(a["n"], 1)
+        mu_m = a.get("mkt", 0.0) / n
+        var_m = a.get("mkt2", 0.0) / n - mu_m * mu_m
+        cov = a.get("exm", 0.0) / n - (a["sum"] / n) * mu_m
         cells[key] = {
             "group": a["group"], "events": a["events"],
+            "found": a.get("found", a["events"]),
+            "coverage": a["events"] / max(a.get("found", a["events"]), 1),
             "buckets": int(ok.sum()), "buckets_seen": a["seen"],
             "med_bp": float(np.median(b[ok])) * 1e4,
             "mean_bp": (a["sum"] / a["n"]) * 1e4 if a["n"] else float("nan"),
+            "raw_med_bp": float(np.median(r[rok])) * 1e4 if rok.any()
+            else float("nan"),
+            "raw_mean_bp": (a.get("raw_sum", 0.0) / a["n"]) * 1e4 if a["n"]
+            else float("nan"),
+            # Наклон превышения на ход РЫНКА: кросс-секция снимает
+            # уровень рынка, но не экспозицию — у события с крупным
+            # ходом бета выше единицы, и остаток (β−1)·m сидит в
+            # превышении. Наклон делает этот остаток видимым числом.
+            "beta_leak": float(cov / var_m) if var_m > 0 else float("nan"),
             "win": float(np.mean(b[ok] > 0)),
             "cross": a["cross"] / max(a["n"], 1),
             "share": a["share"] / max(a["n"], 1),
@@ -933,8 +1026,9 @@ def verdict_of(c, null):
     """
     if c["buckets"] < MIN_BUCKETS:
         return "тонкая"
-    if not (c["med_bp"] > ROUND_COST_BP and c["mean_bp"] > ROUND_COST_BP):
-        if c["med_bp"] > ROUND_COST_BP > c["mean_bp"]:
+    if not (c["med_bp"] > NEUTRAL_COST_BP
+            and c["mean_bp"] > NEUTRAL_COST_BP):
+        if c["med_bp"] > NEUTRAL_COST_BP > c["mean_bp"]:
             return "короткая волатильность"
         return ""
     if not (np.isfinite(c.get("z", np.nan)) and c["z"] > null["bar_z"]):
@@ -967,8 +1061,22 @@ def write_report(path, cells, null, meta):
              f"{MIN_BUCKETS}: у тонкой ячейки шумны и наблюдение, и её "
              "собственный нуль. Пилот показал это числом — 34 события "
              "дали медиану +669 б.п. и подняли планку всем;\n")
-    L.append(f"- круг издержек тейкера {ROUND_COST_BP:.0f} б.п.; в стрессе "
-             "со спредом до 17.4;\n")
+    L.append(f"- издержка вердикта — **{NEUTRAL_COST_BP:.0f} б.п.**, а не "
+             f"{ROUND_COST_BP:.0f}: превышение над кросс-секцией есть PnL "
+             "рыночно-НЕЙТРАЛЬНОЙ книги (наша нога плюс хедж об "
+             "сечение), значит платятся две ноги. Сравнение превышения "
+             "с одним кругом было бы числителем одной сделки против "
+             "знаменателя другой — та же ошибка единиц, что R4 нашла в "
+             "спеке 03. «Сырая медиана» рядом — та же сделка БЕЗ хеджа, "
+             f"её круг {ROUND_COST_BP:.0f} б.п.;\n")
+    L.append("- **β-утечка** — наклон превышения на ход рынка: "
+             "кросс-секция снимает уровень рынка, но не экспозицию, и у "
+             "события с крупным ходом бета выше единицы. Наклон заметно "
+             "отличный от нуля означает, что часть «превышения» есть "
+             "остаток рыночной экспозиции;\n")
+    L.append("- **покр** — доля найденных событий, у которых контроль "
+             "удалось построить: ячейка меряется на этом подмножестве, "
+             "и отбирает его контроль;\n")
     L.append(f"- ячейка тоньше {MIN_EVENTS} событий не измерена, а не "
              "равна нулю.\n")
     # Порядок — по Z, а не по медиане: тонкая ячейка с крупной
@@ -978,14 +1086,17 @@ def write_report(path, cells, null, meta):
                                    np.isfinite(kv[1].get("z", np.nan))
                                    else -9e9))
     L.append("\n## Все ячейки, по Z\n")
-    L.append("| условие | стор | гор | событий | корзин | медиана, б.п. | "
-             "СРЕДНЕЕ | z | побед | сечение | доля | вердикт |\n")
-    L.append("|---|:--|--:|--:|--:|--:|--:|--:|--:|--:|--:|:--|\n")
+    L.append("| условие | стор | гор | событий | покр | корзин | "
+             "медиана | СРЕДНЕЕ | сырая медиана | z | β-утечка | побед | "
+             "сечение | доля | вердикт |\n")
+    L.append("|---|:--|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|:--|\n")
     for (name, side, h), c in best:
         L.append(f"| {name} | {'L' if side > 0 else 'S'} | {h} | "
-                 f"{c['events']} | {c['buckets']} | {c['med_bp']:+.1f} | "
-                 f"{c['mean_bp']:+.1f} | "
-                 f"{c.get('z', float('nan')):+.1f} | {c['win']:.2f} | "
+                 f"{c['events']} | {c['coverage']:.2f} | {c['buckets']} | "
+                 f"{c['med_bp']:+.1f} | {c['mean_bp']:+.1f} | "
+                 f"{c['raw_med_bp']:+.1f} | "
+                 f"{c.get('z', float('nan')):+.1f} | "
+                 f"{c['beta_leak']:+.2f} | {c['win']:.2f} | "
                  f"{c['cross']:.0f} | {c['share']:.3f} | "
                  f"{verdict_of(c, null)} |\n")
     L.append("\n**«короткая волатильность»** в вердикте означает: медиана "

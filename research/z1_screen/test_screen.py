@@ -223,7 +223,8 @@ def test_accumulator_does_not_grow_with_months():
     key = ("тест", 1, 5)
     check("накопитель не держит сырых событий",
           all(k in ("events", "sum", "n", "cross", "share", "buckets",
-                    "null", "seen", "group") for k in acc[key]),
+                    "null", "raw", "found", "mkt", "mkt2", "exm",
+                    "raw_sum", "seen", "group") for k in acc[key]),
           str(list(acc[key])))
     check("память растёт квотой корзин, а не числом событий",
           size4 <= 4 * size1 * 1.05 and size4 / 4 <= per_month * len(acc),
@@ -243,9 +244,12 @@ def test_short_vol_shape_is_named_not_reported_as_a_find():
     """
     null = {"bar_z": 1.0}
     shape = {"buckets": 300, "med_bp": 41.0, "mean_bp": -17.0, "z": 5.0}
-    good = {"buckets": 300, "med_bp": 41.0, "mean_bp": 20.0, "z": 5.0}
+    # Издержка вердикта — ДВЕ ноги (22 б.п.): превышение над
+    # кросс-секцией есть PnL нейтральной книги, а не одной сделки.
+    marg = {"buckets": 300, "med_bp": 41.0, "mean_bp": 15.0, "z": 5.0}
+    good = {"buckets": 300, "med_bp": 41.0, "mean_bp": 30.0, "z": 5.0}
     thin = {"buckets": 16, "med_bp": 669.0, "mean_bp": 500.0, "z": 9.0}
-    low = {"buckets": 300, "med_bp": 41.0, "mean_bp": 20.0, "z": 0.4}
+    low = {"buckets": 300, "med_bp": 41.0, "mean_bp": 30.0, "z": 0.4}
     check("короткая волатильность названа, а не предъявлена",
           Z.verdict_of(shape, null) == "короткая волатильность",
           Z.verdict_of(shape, null))
@@ -254,6 +258,9 @@ def test_short_vol_shape_is_named_not_reported_as_a_find():
           Z.verdict_of(good, null))
     check("тонкая ячейка кандидатом не становится ни при каком z",
           Z.verdict_of(thin, null) == "тонкая", Z.verdict_of(thin, null))
+    check("среднее выше одного круга, но ниже двух — не кандидат",
+          Z.verdict_of(marg, null) == "короткая волатильность",
+          Z.verdict_of(marg, null))
     check("ниже планки — не кандидат",
           Z.verdict_of(low, null) == "ниже планки", Z.verdict_of(low, null))
 
@@ -294,6 +301,40 @@ def test_thin_cell_does_not_set_the_bar_for_everyone():
           Z.verdict_of(cells[("тонкая", 1, 5)], null))
 
 
+def test_open_interest_lag_is_time_not_steps():
+    """Строка интереса с меткой t известна только в t+5 минут.
+
+    Слой L3 сдвигает ряд на ОДИН ШАГ сетки, и на его пятиминутной
+    сетке это ровно требуемые пять минут. На минутной сетке тот же шаг
+    даёт четыре минуты будущего в каждой ячейке с интересом — дефект,
+    который не роняет прогон, не меняет числа событий и в отчёте
+    выглядит как «условие на интерес работает».
+    """
+    import data as D
+    d = tempfile.mkdtemp()
+    old_dir = D.OI_SERIES
+    try:
+        D.OI_SERIES = d
+        t0 = 1_700_000_000
+        times = np.arange(t0, t0 + 3600, 60, dtype=np.int64)
+        tt = np.arange(t0, t0 + 3600, 300, dtype=np.int64)
+        oi = np.ones(len(tt), dtype=np.float32)
+        oi[tt >= t0 + 1800] = 2.0          # скачок ровно на метке
+        np.savez(os.path.join(d, "AAAUSDT.npz"), t=tt, oi=oi,
+                 oi_usd=oi * 100)
+        o15, o60, have = Z.oi_matrices(["AAAUSDT"], times)
+        jump = np.flatnonzero(np.isfinite(o15[0]) & (o15[0] > 0.5))
+        first = int(times[jump[0]]) if len(jump) else None
+        check("ряд интереса прочитан", have == 1, str(have))
+        check("скачок не виден раньше метки плюс пять минут",
+              first is not None and first >= t0 + 1800 + 300,
+              f"первое появление {None if first is None else first - t0} с "
+              f"после начала, метка на 1800")
+    finally:
+        D.OI_SERIES = old_dir
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_report_names_the_degenerate_control():
     """Доля универсума в событии обязана доезжать до отчёта.
 
@@ -314,7 +355,8 @@ def test_report_names_the_degenerate_control():
               "планка" in txt and "доля" in txt and "сечение" in txt,
               txt[:200])
         check("в отчёте есть столбец СРЕДНЕГО рядом с медианой",
-              "СРЕДНЕЕ" in txt and "медиана, б.п." in txt, txt[:400])
+              "СРЕДНЕЕ" in txt and "сырая медиана" in txt
+              and "β-утечка" in txt, txt[:400])
         check("в отчёте сказано, чего скрин не говорит",
               "НЕ говорит" in txt, txt[-300:])
     finally:
@@ -345,8 +387,10 @@ def test_since_shock_and_rolling_sum():
           float(d[0, 3]) == 0.0 and float(d[0, 6]) == 3.0, str(d))
     X = np.ones((1, 5), dtype=np.float32)
     s = Z.roll_sum(X, 3)
-    check("скользящая сумма смотрит назад",
-          not np.isfinite(s[0, 1]) and float(s[0, 2]) == 3.0, str(s))
+    # Окно кончается на ПРОШЛОМ баре: объём бара j известен только в
+    # j+1, поэтому первое годное значение стоит в j = w, а не w−1.
+    check("скользящая сумма кончается на прошлом баре",
+          not np.isfinite(s[0, 2]) and float(s[0, 3]) == 3.0, str(s))
 
 
 TESTS = [test_forward_never_touches_the_signal_bar,
@@ -360,6 +404,7 @@ TESTS = [test_forward_never_touches_the_signal_bar,
          test_accumulator_does_not_grow_with_months,
          test_short_vol_shape_is_named_not_reported_as_a_find,
          test_thin_cell_does_not_set_the_bar_for_everyone,
+         test_open_interest_lag_is_time_not_steps,
          test_report_names_the_degenerate_control,
          test_units_are_yesterdays_and_zero_noise_is_a_gap,
          test_since_shock_and_rolling_sum]
