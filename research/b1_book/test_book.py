@@ -924,6 +924,156 @@ def test_netted_signal_is_not_shown_as_a_trade():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_jsonl_cache_matches_plain_read():
+    """Кеш чтения `.jsonl` обязан отдавать РОВНО то, что в файле.
+
+    Он заведён потому, что девятнадцать мест читали файлы книг заново
+    и `/model` перестал укладываться в минуту. Правка скорости,
+    меняющая числа, есть другая мера — поэтому здесь сверяется не
+    «быстро ли», а «то же ли»: после дописи, после перезаписи с другим
+    началом, после усечения и на недописанной строке.
+    """
+    import json as _json
+    import tempfile
+    import collect as C
+
+    def plain(path):
+        out = []
+        try:
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        out.append(_json.loads(line))
+                    except ValueError:
+                        continue
+        except OSError:
+            pass
+        return out
+
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "picks.jsonl")
+    # Строки НАРОЧНО длиннее заголовка кеша: на файле короче него
+    # первые байты меняются с каждой дописью, и ветка дочитывания
+    # хвоста не исполняется вовсе. Первая версия этого теста работала
+    # на строках по тридцать байт — и отрицательный контроль (сдвиг
+    # смещения за недописанную строку) её не ронял: проверялась
+    # ветка, которой в жизни не бывает.
+    pad = "x" * (C.Collector._JSONL_HEAD + 64)
+    rows = [{"i": i, "sym": "AAAUSDT", "pad": pad} for i in range(5)]
+    with open(path, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(_json.dumps(r) + "\n")
+    first = C.Collector._jsonl(path)
+    check("первое чтение совпадает с простым", first == plain(path))
+    again = C.Collector._jsonl(path)
+    check("повтор без правок отдаёт то же самое", again == plain(path))
+
+    # Дописан хвост — видны новые строки, старые не задвоены.
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(_json.dumps({"i": 5, "sym": "BBBUSDT",
+                             "pad": pad}) + "\n")
+    grown = C.Collector._jsonl(path)
+    check("дописанная строка видна без перечитывания файла",
+          grown == plain(path) and len(grown) == 6, str(len(grown)))
+    check("прежде отданный список не изменился под страницей",
+          len(first) == 5)
+
+    # Недописанная строка: половина записи — не наблюдение.
+    with open(path, "a", encoding="utf-8") as f:
+        f.write('{"i": 6, "pad": "%s", "sym": "CC' % pad)
+    half = C.Collector._jsonl(path)
+    check("половина строки не считается записью",
+          half == plain(path) and len(half) == 6, str(len(half)))
+    with open(path, "a", encoding="utf-8") as f:
+        f.write('CUSDT"}\n')
+    whole = C.Collector._jsonl(path)
+    check("дописанный остаток строки появляется ровно один раз",
+          whole == plain(path) and len(whole) == 7
+          and [r["i"] for r in whole] == list(range(7)),
+          str([r.get("i") for r in whole]))
+
+    # Перезапись целиком (архивация книги, пересчёт истории).
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(_json.dumps({"i": 99, "sym": "ZZZUSDT",
+                             "pad": pad}) + "\n")
+    fresh = C.Collector._jsonl(path)
+    check("перезаписанный файл читается заново, а не дополняется",
+          fresh == plain(path) and len(fresh) == 1, str(len(fresh)))
+    # Перезапись с ДРУГИМ началом и БОЛЬШИМ размером — единственный
+    # случай, ради которого сверяется заголовок: по длине и времени
+    # правки он неотличим от обычной дописи, и без сверки кеш
+    # склеил бы историю двух разных книг. (Перезапись «в меньшее»
+    # ловится размером и потому ничего не проверяет.)
+    other = [{"i": 500 + i, "sym": "QQQUSDT", "pad": pad}
+             for i in range(9)]
+    with open(path, "w", encoding="utf-8") as f:
+        for r in other:
+            f.write(_json.dumps(r) + "\n")
+    swapped = C.Collector._jsonl(path)
+    check("подменённый файл не склеивается с прежним",
+          swapped == plain(path) and len(swapped) == 9
+          and swapped[0]["i"] == 500, str(len(swapped)))
+    os.unlink(path)
+    check("исчезнувший файл — пусто, а не прежние строки",
+          C.Collector._jsonl(path) == [])
+
+
+def test_book_built_twice_gives_same_numbers():
+    """Две сборки книги подряд обязаны дать одинаковые числа.
+
+    Кеш отдаёт ОДИН и тот же список строк всем потребителям, поэтому
+    порча кешированной строки чужой мутацией была бы невидимой: первый
+    ответ верен, а следующий — уже нет. Проверка идёт по настоящей
+    книге, а не по кешу самому по себе.
+    """
+    import json as _json
+    import tempfile
+    from datetime import datetime, timezone
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    was_here = C.HERE
+    sys.path.insert(0, os.path.join(os.path.dirname(was_here), "s8_loop"))
+    try:
+        C.HERE = os.path.join(root, "b1_book")
+        mdir = os.path.join(root, "s8_loop", "out", "model")
+        os.makedirs(mdir)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            _json.dump({"version": 2, "horizon_h": 4}, f)
+        base = 1786000000
+        pk, rv = [], []
+        for i in range(40):
+            hour = datetime.fromtimestamp(
+                base + i * 3600, timezone.utc).strftime("%Y-%m-%d-%H")
+            pk.append({"arm": "gbm", "hour": hour,
+                       "at_ts": base + i * 3600 + 3900,
+                       "long": [{"sym": "AAAUSDT", "fwd": 60.0,
+                                 "mae": -30.0, "mfe": 90.0, "px": 100.0,
+                                 "cum": {"mid": 100.0,
+                                         "b": [[99.9, 10.0]]}}],
+                       "short": []})
+            rv.append({"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+                       "at_ts": base + (i + 4) * 3600 + 60,
+                       "rows": [{"sym": "AAAUSDT", "side": "long",
+                                 "expected": 60.0, "got": 40.0,
+                                 "net": 29.0}]})
+        for name, rowset in (("picks.jsonl", pk), ("review.jsonl", rv)):
+            with open(os.path.join(mdir, name), "w",
+                      encoding="utf-8") as f:
+                for r in rowset:
+                    f.write(_json.dumps(r, ensure_ascii=False) + "\n")
+        c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        a = (c._model_dir_state(mdir).get("trade_stats") or {}).get("all")
+        b = (c._model_dir_state(mdir).get("trade_stats") or {}).get("all")
+        check("вторая сборка книги даёт те же числа",
+              a == b, f"{a} против {b}")
+        check("книга не пуста — иначе сравнивались бы два пустяка",
+              (a or {}).get("closed", 0) > 0, str(a))
+    finally:
+        C.HERE = was_here
+
+
 def test_overview_and_trades_page_agree():
     """Обзор и страница сделок считают книгу ОДНИМ кодом.
 
@@ -5186,6 +5336,8 @@ def main():
     test_netted_signal_is_not_shown_as_a_trade()
     test_live_exec_paper_side_follows_the_book_marker()
     test_live_exec_measures_slippage_against_signal()
+    test_jsonl_cache_matches_plain_read()
+    test_book_built_twice_gives_same_numbers()
     test_overview_and_trades_page_agree()
     test_model_trades_lite_matches_full()
     test_sit_absorb_now_makes_pnl_immediate()

@@ -1798,7 +1798,16 @@ class Collector:
         # Порог применяется ТОЛЬКО к книге без срока: у часовых книг
         # обещания пути не служат ни входом, ни выходом, и фильтровать
         # их тем же числом значило бы сравнивать разные вещи.
+        # Время сборки — ЧИСЛОМ в ответе, по каждой книге отдельно.
+        # «Страницы медленные» невозможно чинить на ощупь: пока не
+        # видно, какая книга и какой шаг стоят секунд, оптимизируется
+        # наугад. Ответ `/model` в какой-то момент перестал
+        # укладываться в минуту, и понять это можно было только
+        # таймаутом снаружи.
+        took = {}
+        t_book = time.time()
         out = self._model_dir_state(os.path.join(s8, self.BOOK_DIRS["h4"]))
+        took["h4"] = round((time.time() - t_book) * 1000)
         # Турнир темпов: книги остальных горизонтов — те же веса, свой
         # срок удержания и свой счёт. Отдаются отдельными ключами, а не
         # подмешаны: смесь двух книг в одной таблице выглядела бы
@@ -1812,9 +1821,11 @@ class Collector:
         # каталог не выводился соглашением.
         books = {}
         for key in (k for k in self.BOOK_DIRS if k != "h4"):
+            t_book = time.time()
             st = self._model_dir_state(
                 os.path.join(s8, self.BOOK_DIRS[key]),
                 rr_min=rr_min if key.startswith("sit") else None)
+            took[key] = round((time.time() - t_book) * 1000)
             if st.get("present"):
                 books[key] = st
         # Ситуационная секция одна: под ключом `sit` едет та запись,
@@ -1830,6 +1841,8 @@ class Collector:
                                 traded_gate=gate)
         if books:
             out["books"] = books
+        out["took_ms"] = took
+        out["took_total_ms"] = round((time.time() - now) * 1000)
         self._model_cache = (now, out, rr_min)
         return out
 
@@ -3024,6 +3037,7 @@ class Collector:
                "periods": periods,
                "books": scanned, "errors": errors,
                "generated_at": round(now, 1)}
+        out["took_ms"] = round((time.time() - now) * 1000)
         self._league_cache = (now, out)
         return out
 
@@ -3891,19 +3905,94 @@ class Collector:
         return {"tid": tid, "hits": hits,
                 "at": round(time.time(), 1)}
 
+    # Разобранные строки `.jsonl` — ОДИН кеш на класс.
+    #
+    # Файлы книг читают девятнадцать мест (обзор, страница сделок,
+    # лига, отметки, волатильность, дерево, обучение), и каждое читало
+    # их заново. У ситуационной книги строка выбора несёт лесенки
+    # стакана — десятки килобайт, — поэтому `/model`, собирающий ВСЕ
+    # книги, перестал укладываться в минуту: страница не открывалась
+    # вовсе, а лига отвечала 25 с.
+    #
+    # Числа кеш не меняет и менять не вправе: он отдаёт ровно те
+    # строки, что лежат в файле. Признак «файл тот же» — не время
+    # правки и не длина (перезапись даёт и то, и другое), а совпадение
+    # ПЕРВЫХ байт: архивация книги и пересчёт истории меняют начало
+    # файла, и такой файл перечитывается целиком.
+    _JSONL_CACHE = {}
+    _JSONL_HEAD = 512
+    # Рядом пишется стакан, и память здесь дороже секунд: при
+    # превышении бюджета выбрасываются самые давние по последнему
+    # обращению.
+    _JSONL_BUDGET = 192 * 1024 * 1024
+
     @staticmethod
     def _jsonl(path):
-        out = []
+        cache = Collector._JSONL_CACHE
         try:
-            with open(path, encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        out.append(json.loads(line))
-                    except ValueError:
-                        continue
+            st = os.stat(path)
         except OSError:
-            pass
-        return out
+            cache.pop(path, None)
+            return []
+        # В подпись входит и номер узла: перезапись через
+        # переименование даёт новый файл на том же пути, и
+        # совпадение длины со временем правки тогда ничего не
+        # значит.
+        sig = (st.st_mtime_ns, st.st_size, st.st_ino)
+        hit = cache.get(path)
+        if hit is not None and hit["sig"] == sig:
+            hit["used"] = time.time()
+            return hit["rows"]
+        rows, offset, head = [], 0, b""
+        if (hit is not None and st.st_size > hit["sig"][1]
+                and st.st_ino == hit["sig"][2]):
+            try:
+                with open(path, "rb") as f:
+                    head = f.read(Collector._JSONL_HEAD)
+            except OSError:
+                head = b""
+            if head and head == hit["head"]:
+                # Дописан хвост. Список копируется, а не дополняется на
+                # месте: страницы держат ссылку на прежний ответ, и
+                # дописывать его под ними значило бы менять уже отданное.
+                rows, offset = list(hit["rows"]), hit["offset"]
+        try:
+            with open(path, "rb") as f:
+                if offset:
+                    f.seek(offset)
+                elif not head:
+                    head = f.read(Collector._JSONL_HEAD)
+                    f.seek(0)
+                buf = f.read()
+        except OSError:
+            return hit["rows"] if hit is not None else []
+        # Разбираются только ЦЕЛЫЕ строки: файл дописывается прямо
+        # сейчас, и хвост без перевода строки — половина записи, а не
+        # порча. Смещение двигается до конца последней целой строки,
+        # иначе такая запись потерялась бы навсегда.
+        cut = buf.rfind(b"\n") + 1
+        for line in buf[:cut].split(b"\n"):
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                continue
+        cache[path] = {"sig": sig, "head": head, "offset": offset + cut,
+                       "rows": rows, "used": time.time()}
+        Collector._jsonl_trim()
+        return rows
+
+    @staticmethod
+    def _jsonl_trim():
+        cache = Collector._JSONL_CACHE
+        total = sum(v["sig"][1] for v in cache.values())
+        if total <= Collector._JSONL_BUDGET:
+            return
+        for path, _ in sorted(cache.items(), key=lambda kv: kv[1]["used"]):
+            total -= cache.pop(path)["sig"][1]
+            if total <= Collector._JSONL_BUDGET:
+                break
 
     def trades(self, sym=None):
         """История бумажных сделок и сводка — по требованию, не в опросе.
