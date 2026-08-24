@@ -778,14 +778,61 @@ def measure(events, P, times, acc, rng, log=log_):
     return acc
 
 
+def bucket_groups(ep):
+    """Порядок и границы корзин — считаются ОДИН раз на ячейку.
+
+    Корзины у наблюдаемой величины и у всех перестановок нуля одни и те
+    же, поэтому сортировать заново на каждую перестановку незачем: сто
+    перестановок по двести сорок восемь ячеек превращали бы сводку в
+    получасовое молчание, а молчание неотличимо от зависания.
+    """
+    order = np.argsort(ep, kind="stable")
+    e = ep[order]
+    edges = np.flatnonzero(np.concatenate(([True], e[1:] != e[:-1])))
+    return order, np.append(edges, len(e))
+
+
+def med_by_groups(V, order, edges):
+    """Медиана по корзинам, затем медиана по корзинам-медианам.
+
+    `V` — одномерный вектор или матрица «событие × перестановка»:
+    группировка одна, и матричный вид даёт сотню перестановок за один
+    проход по корзинам вместо сотни проходов.
+    """
+    X = V[order] if V.ndim == 1 else V[order, :]
+    meds = []
+    for a, b in zip(edges[:-1], edges[1:]):
+        chunk = X[a:b] if X.ndim == 1 else X[a:b, :]
+        with warnings_ignored():
+            meds.append(np.nanmedian(chunk, axis=0))
+    M = np.array(meds)
+    with warnings_ignored():
+        return float(np.nanmedian(M)) if V.ndim == 1 \
+            else np.nanmedian(M, axis=0)
+
+
+class warnings_ignored:
+    """Пустая медиана по корзине даёт предупреждение, а не ошибку."""
+
+    def __enter__(self):
+        self._e = np.errstate(invalid="ignore")
+        self._e.__enter__()
+        import warnings
+        self._w = warnings.catch_warnings()
+        self._w.__enter__()
+        warnings.simplefilter("ignore", RuntimeWarning)
+
+    def __exit__(self, *a):
+        self._w.__exit__(*a)
+        self._e.__exit__(*a)
+
+
 def med_by_episode(v, ep):
     ok = np.isfinite(v)
     if not ok.any():
         return np.nan
-    per = {}
-    for x, k in zip(v[ok], ep[ok]):
-        per.setdefault(int(k), []).append(float(x))
-    return float(np.median([np.median(u) for u in per.values()]))
+    order, edges = bucket_groups(ep[ok])
+    return med_by_groups(v[ok], order, edges)
 
 
 def summarize(acc):
@@ -820,18 +867,21 @@ def summarize(acc):
         se = np.concatenate(a["sub_exc"])
         sp = np.concatenate(a["sub_ep"])
         sub_obs[key] = med_by_episode(se, sp) * 1e4
-    for pi in range(PERMS):
-        best = -np.inf
-        for key, a in acc.items():
-            if key not in cells:
-                continue
-            v = np.concatenate([d[:, pi] for d in a["null"]])
-            sp = np.concatenate(a["sub_ep"])
-            m = med_by_episode(v.astype(np.float64), sp)
-            if np.isfinite(m):
-                best = max(best, m * 1e4)
-        if np.isfinite(best):
-            nulls.append(best)
+    # Все перестановки ячейки считаются ОДНИМ проходом по её корзинам:
+    # группировка от перестановки не зависит.
+    per_cell = []
+    for key, a in acc.items():
+        if key not in cells:
+            continue
+        V = np.concatenate(a["null"], axis=0).astype(np.float64)
+        sp = np.concatenate(a["sub_ep"])
+        order, edges = bucket_groups(sp)
+        per_cell.append(med_by_groups(V, order, edges) * 1e4)
+    if per_cell:
+        M = np.vstack(per_cell)              # ячейки × перестановки
+        with warnings_ignored():
+            nulls = list(np.nanmax(M, axis=0))
+        nulls = [float(x) for x in nulls if np.isfinite(x)]
     nulls.sort()
     bar = nulls[int(0.95 * (len(nulls) - 1))] if nulls else float("nan")
     return cells, {"bar": bar,
@@ -967,6 +1017,7 @@ def main(argv=None):
     if not acc:
         log_("ни одного события — считать нечего")
         return 1
+    log_("считаю сводку и семейственную планку…")
     cells, null = summarize(acc)
     path = os.path.join(OUT, f"Z1-screen-{args.tag}.md")
     write_report(path, cells, null,

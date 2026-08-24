@@ -159,6 +159,35 @@ def test_side_flips_the_sign():
           a > 0 > b and abs(a + b) < 0.3 * abs(a), f"{a:.1f} {b:.1f}")
 
 
+def test_matrix_medians_equal_the_naive_count():
+    """Матричный счёт нулей обязан совпасть с поэлементным.
+
+    Правило проекта: правка скорости не меняет чисел. Сводка была
+    переписана матрицей ради полного прогона (248 ячеек × 100
+    перестановок), и здесь рядом стоит наивная реализация — та самая,
+    что была до ускорения.
+    """
+    rng = np.random.default_rng(5)
+    v = rng.normal(size=400)
+    ep = rng.integers(0, 40, size=400).astype(np.int64)
+
+    def naive(vec, buckets):
+        per = {}
+        for x, k in zip(vec, buckets):
+            per.setdefault(int(k), []).append(float(x))
+        return float(np.median([np.median(u) for u in per.values()]))
+
+    check("одномерный случай совпадает",
+          abs(Z.med_by_episode(v, ep) - naive(v, ep)) < 1e-12,
+          f"{Z.med_by_episode(v, ep)} против {naive(v, ep)}")
+    V = rng.normal(size=(400, 7))
+    order, edges = Z.bucket_groups(ep)
+    got = Z.med_by_groups(V, order, edges)
+    want = np.array([naive(V[:, i], ep) for i in range(V.shape[1])])
+    check("матричный случай совпадает по всем перестановкам",
+          np.allclose(got, want, atol=1e-12), f"{got[:3]} против {want[:3]}")
+
+
 def test_report_names_the_degenerate_control():
     """Доля универсума в событии обязана доезжать до отчёта.
 
@@ -219,6 +248,7 @@ TESTS = [test_forward_never_touches_the_signal_bar,
          test_pure_noise_stays_under_the_bar,
          test_buckets_do_not_degenerate_on_a_frequent_signal,
          test_side_flips_the_sign,
+         test_matrix_medians_equal_the_naive_count,
          test_report_names_the_degenerate_control,
          test_units_are_yesterdays_and_zero_noise_is_a_gap,
          test_since_shock_and_rolling_sum]
