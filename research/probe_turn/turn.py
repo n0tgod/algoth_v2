@@ -115,8 +115,15 @@ def book_trades(mdir):
               or t.get("opened_at"))
         if not ts:
             continue
+        # Причина выхода — `exit_reason`. Поле `why` у живой сделки
+        # занято ДРУГИМ: это объяснение ВХОДА, до трёх признаков с
+        # вкладом, то есть список. Первый прогон на сервере упал на
+        # нём («unhashable type: list»), а смоук прошёл, потому что
+        # фикстура несла строку — подставной артефакт обязан
+        # выглядеть как живой (урок лиги).
         out.append({"day": int(ts // DAY), "pnl": float(t["pnl"]),
-                    "net": t.get("net_bp"), "why": t.get("why"),
+                    "net": t.get("net_bp"),
+                    "reason": t.get("exit_reason") or "срок",
                     "side": t.get("side"), "sym": t.get("sym"),
                     "arm": t.get("arm")})
     return out, mman
@@ -268,7 +275,10 @@ def split_by_peak(trades, days):
         top_sym = max(by_sym, key=lambda s: abs(by_sym[s]))
         whys = {}
         for t in part:
-            whys[t["why"] or "—"] = whys.get(t["why"] or "—", 0) + 1
+            key = t.get("reason") or "—"
+            if not isinstance(key, str):
+                key = str(key)      # причина обязана быть ярлыком
+            whys[key] = whys.get(key, 0) + 1
         out[name] = {
             "n": len(part), "pnl": round(sum(pnl), 2),
             "win": round(sum(1 for v in pnl if v > 0) / len(pnl), 3),

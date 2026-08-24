@@ -93,11 +93,15 @@ def test_split_by_peak_reports_both_sides():
     tr = []
     for i in range(10):
         tr.append({"day": 20000 + i, "pnl": 1.0, "net": 50.0,
-                   "why": "цель", "side": "long", "sym": "AAAUSDT",
+                   "reason": "цена дошла до обещанной цели",
+                   "why": [["eat_bid", 12.0]],
+                   "side": "long", "sym": "AAAUSDT",
                    "arm": "gbm"})
     for i in range(10):
         tr.append({"day": 20010 + i, "pnl": -1.0, "net": -60.0,
-                   "why": "стоп", "side": "short", "sym": "BBBUSDT",
+                   "reason": "цена прошла обещанный ход против",
+                   "why": [["imb_1", -8.0]],
+                   "side": "short", "sym": "BBBUSDT",
                    "arm": "gbm"})
     parts = T.split_by_peak(tr, T.daily(tr))
     check("до пика — прибыльная часть",
@@ -107,8 +111,9 @@ def test_split_by_peak_reports_both_sides():
           parts["after"]["n"] == 10 and parts["after"]["pnl"] == -10.0,
           str(parts["after"]))
     check("состав выходов различается по сторонам пика",
-          "цель" in parts["before"]["why"]
-          and "стоп" in parts["after"]["why"])
+          any("цел" in k for k in parts["before"]["why"])
+          and any("против" in k for k in parts["after"]["why"]),
+          str(parts["before"]["why"]) + str(parts["after"]["why"]))
     check("вклад лучшего имени назван отдельно",
           parts["before"]["top_sym"] == "AAAUSDT"
           and parts["before"]["pnl_wo_top"] == 0.0,
@@ -143,9 +148,15 @@ def test_whole_run_executes_to_report():
                 base + i * 3600, timezone.utc).strftime("%Y-%m-%d-%H")
             pk.append({"arm": "gbm", "hour": hour,
                        "at_ts": base + i * 3600 + 3900,
+                       # `why` — объяснение ВХОДА и в живой записи
+                       # это СПИСОК признаков с вкладами. Ровно на нём
+                       # первый серверный прогон и упал: фикстура без
+                       # него исполняла другую дорогу.
                        "long": [{"sym": "AAAUSDT", "fwd": 60.0,
                                  "mae": -30.0, "mfe": 90.0,
-                                 "px": 100.0}],
+                                 "px": 100.0,
+                                 "why": [["eat_bid", 12.0],
+                                         ["imb_1", -3.5]]}],
                        "short": []})
             # Первая половина прибыльна, вторая — нет: у прогона
             # обязан получиться непустой разбор по обе стороны пика.
@@ -178,6 +189,9 @@ def test_whole_run_executes_to_report():
         check("книга посчитана, сделки найдены",
               (data["books"]["h4"]["n"] or 0) > 0,
               str(data["books"]["h4"].get("n")))
+        why0 = data["books"]["h4"]["parts"]["before"]["why"]
+        check("ярлыки выходов — строки, а не объяснения входа",
+              all(isinstance(k, str) for k in why0), str(why0))
         check("обе стороны пика непусты",
               data["books"]["h4"]["parts"]["before"]["n"] > 0
               and data["books"]["h4"]["parts"]["after"]["n"] > 0)
