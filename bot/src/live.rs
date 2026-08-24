@@ -26,7 +26,10 @@
 //!
 //! Остановки §5 (все — до прогона): день хуже −15 $, итог −45 $, три
 //! отказа подряд, файл KILL, молчание часового цикла дольше 3 ч,
-//! расхождение с биржей. После KILL не совершается НИЧЕГО — даже
+//! расхождение с биржей. ДЕНЕЖНЫЕ два предела (день и итог) снимает
+//! файл LIMITS_OFF — решение владельца о риске, и только они: прочие
+//! остановки не про аппетит к риску, а про то, что автоматика
+//! работает вслепую, и маркером не снимаются. После KILL не совершается НИЧЕГО — даже
 //! отмен: аварийный выключатель значит «руки прочь», владелец может
 //! разбирать счёт руками. Прочие остановки закрывают позиции
 //! reduceOnly-IOC: позиция без работающего сканера не управляется
@@ -343,6 +346,15 @@ impl LiveCfg {
     pub fn kill_file(&self) -> PathBuf {
         self.journal_dir.join("KILL")
     }
+    /// Файл LIMITS_OFF в каталоге журнала — снятые ДЕНЕЖНЫЕ пределы §5
+    /// (день и итог), решение владельца о риске. Маркером, а не ключом
+    /// командной строки, по двум причинам: снимается и возвращается
+    /// БЕЗ перезапуска (перезапуск живого исполнителя уже стоил
+    /// проекту журнала — длинная команда с телефона потеряла `--book`),
+    /// и «пока» — это то, что кладут и убирают.
+    pub fn limits_off_file(&self) -> PathBuf {
+        self.journal_dir.join("LIMITS_OFF")
+    }
 }
 
 // --- исполнитель -------------------------------------------------------
@@ -405,6 +417,11 @@ pub struct Executor<E: Exchange> {
     /// возможность, и пока флаг лежит, исполнитель только сопровождает
     /// открытое. Состояние, не отказ — едет в статус и на страницу.
     entries_paused: bool,
+    /// Денежные пределы §5 сняты маркером LIMITS_OFF (пересчитывается
+    /// каждый такт, едет в статус). Снятый предохранитель обязан быть
+    /// виден так же громко, как сработавший: молча снятый делает
+    /// «остановки не было» и «остановка выключена» неотличимыми.
+    limits_off: bool,
     /// Имена с выставленным плечом 1× (спека 12 §2) — раз на имя.
     lev_set: BTreeSet<String>,
     /// Имена, у которых плечо 1× НЕ выставилось, с текстом отказа.
@@ -748,6 +765,7 @@ impl<E: Exchange> Executor<E> {
             exit_pending: BTreeMap::new(),
             stale_entries: 0,
             entries_paused: false,
+            limits_off: false,
             lev_set: BTreeSet::new(),
             lev_errors: BTreeMap::new(),
             tp_errors: BTreeMap::new(),
@@ -906,16 +924,23 @@ impl<E: Exchange> Executor<E> {
 
     // --- остановки §5 ---------------------------------------------------
 
-    fn limits_breached(&self, now_ms: i64) -> Option<String> {
+    fn limits_breached(&mut self, now_ms: i64) -> Option<String> {
+        // Маркер снимает ТОЛЬКО денежные пределы — те, что суть аппетит
+        // к риску, и решает их владелец. Всё остальное остаётся
+        // взведённым при любом маркере: расхождение с биржей (наше
+        // состояние уже неверно), три отказа подряд, KILL и молчание
+        // часового цикла (позицию без сканера не ведёт никто) — это
+        // не про риск, а про то, что автоматика работает вслепую.
+        self.limits_off = self.cfg.limits_off_file().exists();
         let today = crate::journal::utc_day(now_ms);
         let day = self.realized_by_day.get(&today).copied().unwrap_or(0.0);
-        if day <= -self.cfg.day_stop_usd {
+        if !self.limits_off && day <= -self.cfg.day_stop_usd {
             return Some(format!(
                 "день {today}: {day:+.2} $ хуже предела −{:.0} $ (§5)",
                 self.cfg.day_stop_usd
             ));
         }
-        if self.realized_total <= -self.cfg.total_stop_usd {
+        if !self.limits_off && self.realized_total <= -self.cfg.total_stop_usd {
             return Some(format!(
                 "итог {:+.2} $ хуже предела −{:.0} $ (§5)",
                 self.realized_total, self.cfg.total_stop_usd
@@ -1708,6 +1733,7 @@ impl<E: Exchange> Executor<E> {
             "rejects_row": self.rejects_row,
             "stale_entries_skipped": self.stale_entries,
             "entries_paused": self.entries_paused,
+            "limits_off": self.limits_off,
             "lev_errors": if self.lev_errors.is_empty() { serde_json::Value::Null }
                 else { json!(self.lev_errors) },
             "tp_errors": if self.tp_errors.is_empty() { serde_json::Value::Null }

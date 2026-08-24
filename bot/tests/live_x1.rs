@@ -716,6 +716,73 @@ fn предел_дня_закрывает_всё() {
     assert!(close.reduce_only && close.tif == "IOC");
 }
 
+/// Маркер LIMITS_OFF снимает ДЕНЕЖНЫЕ пределы §5 — и только их.
+///
+/// Три стороны в одном сценарии, потому что порознь каждая проходила
+/// бы на неверной реализации: минус дня глубже предела НЕ останавливает
+/// при маркере (иначе решение владельца не исполнено); чужая позиция на
+/// бирже останавливает и при маркере (иначе выключатель риска молча
+/// выключил бы защиту состояния); снятие файла возвращает предел БЕЗ
+/// перезапуска — тем же исполнителем, потому что маркер читается
+/// каждый такт.
+#[test]
+fn маркер_снимает_денежные_пределы_и_только_их() {
+    let fx = Fx::new("limitsoff");
+    let m = Mock::new().with_sym("ARBUSDT", 0.9999, 1.0001, 0.0001, 0.1, 0.1, 5.0);
+    fx.entry("gbm", "2026-08-20-15", "ARBUSDT", "long", 1.0, -50.0, 120.0, 1755699950.5);
+    let mut ex = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    ex.tick(NOW);
+
+    // Тот же минус дня, что закрывает всё в тесте предела.
+    {
+        let (mut jr, _, _) = bot::journal::Journal::open(&fx.jr).unwrap();
+        jr.append(Event::Close {
+            pos: "gbm:x:YUSDT:long".into(),
+            exit_px: None,
+            fee_usd: 0.0,
+            pnl_usd: -20.0,
+            reason: "тестовый минус".into(),
+            at_ms: NOW,
+        })
+        .unwrap();
+    }
+
+    std::fs::write(fx.jr.join("LIMITS_OFF"), b"").unwrap();
+    let mut ex2 = Executor::open(fx.cfg(false), m.clone(), false).unwrap();
+    let rep = ex2.tick(NOW + 10_000);
+    assert!(rep.halted.is_none(), "маркер обязан снять предел дня: {rep:?}");
+    assert_eq!(rep.closed, 0, "снятый предел не закрывает позиций");
+    assert_eq!(ex2.pos.len(), 1);
+
+    // Снятый предохранитель обязан быть виден в статусе.
+    let st: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(fx.jr.join("live_status.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(st["limits_off"], serde_json::json!(true),
+               "статус обязан называть снятый предел");
+
+    // Снятие файла возвращает предел на СЛЕДУЮЩЕМ такте того же
+    // исполнителя — перезапуска не требуется.
+    std::fs::remove_file(fx.jr.join("LIMITS_OFF")).unwrap();
+    let back = ex2.tick(NOW + 20_000);
+    assert!(back.halted.as_deref().map(|s| s.contains("день")).unwrap_or(false),
+            "без маркера предел дня обязан вернуться: {back:?}");
+    assert_eq!(back.closed, 1, "остановка дня закрывает позиции");
+
+    // ...и только денежные: при маркере расхождение с биржей
+    // останавливает как прежде.
+    // Остановка живёт в журнале и переживает перезапуск — снимаем её
+    // так же, как это делает владелец ключом `--clear-halt`.
+    std::fs::write(fx.jr.join("LIMITS_OFF"), b"").unwrap();
+    let mut ex3 = Executor::open(fx.cfg(false), m.clone(), true).unwrap();
+    ex3.tick(NOW + 30_000);
+    m.push_position("GHOSTUSDT", Side::Long, 5.0);
+    let ghost = ex3.tick(NOW + 40_000);
+    assert!(ghost.halted.as_deref().map(|s| s.contains("сверка")).unwrap_or(false),
+            "маркер не снимает сверку с биржей: {ghost:?}");
+}
+
 /// Сухой прогон X2: заявка сформирована и проверена по справочнику,
 /// но НЕ отправлена; позиций не существует, выдуманных исполнений нет.
 #[test]
