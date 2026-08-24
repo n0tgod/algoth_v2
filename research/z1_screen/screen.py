@@ -104,6 +104,13 @@ SEED = 20260824                   # зерно ЧИСЛОМ, а не от час
 ROUND_COST_BP = 11.0              # круг тейкера в долях гросса
 WARM_DAYS = 2                     # дней разогрева собственных единиц
 MIN_EVENTS = 30                   # ячейка тоньше — НЕ измерена
+MIN_BUCKETS = 50                  # корзин меньше — вне планки и вне находок
+# Планка считается по Z, а не по базисным пунктам. Пилот показал,
+# почему: ячейка на 34 событиях и 16 корзинах дала медиану +669 б.п. и
+# одна подняла планку до +55 б.п. — то есть самая шумная ячейка
+# назначала порог всем остальным. Z снимает это по построению:
+# наблюдение делится на СВОЙ разброс под нулём, и ячейки становятся
+# сравнимыми независимо от того, сколько у них наблюдений.
 CHUNK = 200                       # символов за раз в памяти
 
 
@@ -887,7 +894,19 @@ def summarize(acc):
         }
         N = np.concatenate(a["null"], axis=0).astype(np.float64)
         with warnings_ignored():
-            per_cell.append(np.nanmedian(N, axis=0) * 1e4)
+            nmed = np.nanmedian(N, axis=0) * 1e4
+        mu = float(np.nanmean(nmed)) if np.isfinite(nmed).any() else np.nan
+        sd = float(np.nanstd(nmed)) if np.isfinite(nmed).any() else np.nan
+        cells[key]["null_mu"] = mu
+        cells[key]["null_sd"] = sd
+        cells[key]["z"] = ((cells[key]["med_bp"] - mu) / sd
+                           if sd and np.isfinite(sd) and sd > 0
+                           else float("nan"))
+        # В планку идут только ячейки с достаточным числом корзин:
+        # у тонкой ячейки и наблюдение, и её собственный нуль шумны, и
+        # максимум по всем ячейкам определялся бы шумом.
+        if cells[key]["buckets"] >= MIN_BUCKETS and sd and sd > 0:
+            per_cell.append((nmed - mu) / sd)
     nulls = []
     if per_cell:
         M = np.vstack(per_cell)              # ячейки × перестановки
@@ -896,9 +915,31 @@ def summarize(acc):
                      if np.isfinite(x)]
     nulls.sort()
     bar = nulls[int(0.95 * (len(nulls) - 1))] if nulls else float("nan")
-    return cells, {"bar": bar,
-                   "mean": float(np.mean(nulls)) if nulls else float("nan"),
-                   "perms": len(nulls)}
+    return cells, {"bar_z": bar,
+                   "mean_z": float(np.mean(nulls)) if nulls else float("nan"),
+                   "perms": len(nulls),
+                   "cells_in_bar": len(per_cell)}
+
+
+def verdict_of(c, null):
+    """Вердикт ячейки. Четыре условия, и все объявлены до прогона.
+
+    Главное из них — согласие МЕДИАНЫ И СРЕДНЕГО. Пилот показал, зачем
+    оно: у семейства «шорт после роста» медиана давала +41 б.п. при
+    среднем −17 и доле побед 0.79, то есть ровно форму короткой
+    волатильности — выигрывать часто и по мелочи, отдавать разом. Эта
+    форма уже убила гипотезы 3 и 4, и отчёт, печатающий одну медиану,
+    предъявил бы её как находку.
+    """
+    if c["buckets"] < MIN_BUCKETS:
+        return "тонкая"
+    if not (c["med_bp"] > ROUND_COST_BP and c["mean_bp"] > ROUND_COST_BP):
+        if c["med_bp"] > ROUND_COST_BP > c["mean_bp"]:
+            return "короткая волатильность"
+        return ""
+    if not (np.isfinite(c.get("z", np.nan)) and c["z"] > null["bar_z"]):
+        return "ниже планки"
+    return "**кандидат**"
 
 
 def write_report(path, cells, null, meta):
@@ -919,25 +960,39 @@ def write_report(path, cells, null, meta):
              "символ сработал, оставляя минуту на месте. Это защита от "
              "ошибки R5, где при 96 испытаниях лучшая пустышка давала "
              f"Sharpe 1.19.\n")
-    L.append(f"\n- планка (95-й процентиль максимума): **{null['bar']:+.1f} "
-             f"б.п.**, средний максимум {null['mean']:+.1f};\n")
+    L.append(f"\n- планка по Z (95-й процентиль максимума среди "
+             f"{null['cells_in_bar']} годных ячеек): **{null['bar_z']:+.2f} "
+             f"σ**, средний максимум {null['mean_z']:+.2f};\n")
+    L.append(f"- ячейка идёт в планку и в находки при корзинах ≥ "
+             f"{MIN_BUCKETS}: у тонкой ячейки шумны и наблюдение, и её "
+             "собственный нуль. Пилот показал это числом — 34 события "
+             "дали медиану +669 б.п. и подняли планку всем;\n")
     L.append(f"- круг издержек тейкера {ROUND_COST_BP:.0f} б.п.; в стрессе "
              "со спредом до 17.4;\n")
     L.append(f"- ячейка тоньше {MIN_EVENTS} событий не измерена, а не "
              "равна нулю.\n")
-    best = sorted(cells.items(), key=lambda kv: -kv[1]["med_bp"])
-    L.append("\n## Все ячейки, по величине превышения\n")
-    L.append("| условие | стор | гор | событий | корзин | превышение, б.п. |"
-             " нетто | побед | сечение | доля | выше планки |\n")
-    L.append("|---|:--|--:|--:|--:|--:|--:|--:|--:|--:|:--|\n")
+    # Порядок — по Z, а не по медиане: тонкая ячейка с крупной
+    # медианой встала бы первой строкой и читалась бы как находка.
+    best = sorted(cells.items(),
+                  key=lambda kv: -(kv[1].get("z") if
+                                   np.isfinite(kv[1].get("z", np.nan))
+                                   else -9e9))
+    L.append("\n## Все ячейки, по Z\n")
+    L.append("| условие | стор | гор | событий | корзин | медиана, б.п. | "
+             "СРЕДНЕЕ | z | побед | сечение | доля | вердикт |\n")
+    L.append("|---|:--|--:|--:|--:|--:|--:|--:|--:|--:|--:|:--|\n")
     for (name, side, h), c in best:
-        net = c["med_bp"] - ROUND_COST_BP
-        mark = "**да**" if (c["med_bp"] > null["bar"]
-                            and net > 0) else ""
         L.append(f"| {name} | {'L' if side > 0 else 'S'} | {h} | "
                  f"{c['events']} | {c['buckets']} | {c['med_bp']:+.1f} | "
-                 f"{net:+.1f} | {c['win']:.2f} | {c['cross']:.0f} | "
-                 f"{c['share']:.3f} | {mark} |\n")
+                 f"{c['mean_bp']:+.1f} | "
+                 f"{c.get('z', float('nan')):+.1f} | {c['win']:.2f} | "
+                 f"{c['cross']:.0f} | {c['share']:.3f} | "
+                 f"{verdict_of(c, null)} |\n")
+    L.append("\n**«короткая волатильность»** в вердикте означает: медиана "
+             "выше круга издержек, а СРЕДНЕЕ ниже. Такая ячейка выигрывает "
+             "часто и по мелочи, а отдаёт разом — форма, убившая гипотезы "
+             "3 и 4. Отчёт, печатающий одну медиану, предъявил бы её как "
+             "находку.\n")
     L.append("\n«сечение» — сколько символов было в контроле, «доля» — "
              "какая часть универсума срабатывала в ту же минуту. Доля "
              "близкая к единице означает, что условие ловит состояние "
@@ -1040,14 +1095,15 @@ def main(argv=None):
                    "start": args.start, "end": args.end}, f,
                   ensure_ascii=False)
     over = [k for k, c in cells.items()
-            if c["med_bp"] > null["bar"] and c["med_bp"] > ROUND_COST_BP]
+            if verdict_of(c, null) == "**кандидат**"]
     log_(f"отчёт: {path}")
-    log_(f"ячеек измерено: {len(cells)}; планка {null['bar']:+.1f} б.п.; "
-         f"выше планки и круга: {len(over)}")
+    log_(f"ячеек измерено: {len(cells)}; планка {null['bar_z']:+.2f} σ "
+         f"по {null['cells_in_bar']} годным; кандидатов: {len(over)}")
     for k in sorted(over, key=lambda x: -cells[x]["med_bp"])[:10]:
         c = cells[k]
         log_(f"  {k[0]} [{'L' if k[1] > 0 else 'S'}] {k[2]}м: "
-             f"{c['med_bp']:+.1f} б.п., корзин {c['buckets']}")
+             f"медиана {c['med_bp']:+.1f}, среднее {c['mean_bp']:+.1f} "
+             f"б.п., z {c['z']:+.1f}, корзин {c['buckets']}")
     if not args.no_publish:
         publish("Z1: скрин закономерностей по записанным данным")
     return 0

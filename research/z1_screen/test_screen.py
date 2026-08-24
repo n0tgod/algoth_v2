@@ -122,16 +122,17 @@ def test_real_effect_beats_the_family_bar():
     check("ячейка измерена", key in cells, str(list(cells)[:3]))
     if key in cells:
         check("настоящий эффект выше планки нуля",
-              cells[key]["med_bp"] > null["bar"] > 0,
-              f"{cells[key]['med_bp']:.1f} против планки {null['bar']:.1f}")
+              cells[key]["z"] > null["bar_z"] > 0,
+              f"z {cells[key]['z']:.1f} против планки {null['bar_z']:.1f}")
 
 
 def test_pure_noise_stays_under_the_bar():
     P, rows, cols = synth(edge=0.0, seed=11)
     cells, null = run_cells(P, rows, cols)
-    over = [k for k, c in cells.items() if c["med_bp"] > null["bar"]]
+    over = [k for k, c in cells.items()
+            if np.isfinite(c.get("z", np.nan)) and c["z"] > null["bar_z"]]
     check("на шуме ни одна ячейка не выше планки", not over,
-          f"{over} планка {null['bar']:.1f}")
+          f"{over} планка {null['bar_z']:.2f}")
 
 
 def test_buckets_do_not_degenerate_on_a_frequent_signal():
@@ -232,6 +233,67 @@ def test_accumulator_does_not_grow_with_months():
           and acc[key]["events"] > 100, str(acc[key]["events"]))
 
 
+def test_short_vol_shape_is_named_not_reported_as_a_find():
+    """Медиана выше круга при отрицательном среднем — не находка.
+
+    Пилот дал ровно это: «шорт после роста» с медианой +41 б.п.,
+    средним −17 и долей побед 0.79. Отчёт, печатающий одну медиану,
+    предъявил бы такую ячейку как закономерность, а это форма короткой
+    волатильности, убившая гипотезы 3 и 4.
+    """
+    null = {"bar_z": 1.0}
+    shape = {"buckets": 300, "med_bp": 41.0, "mean_bp": -17.0, "z": 5.0}
+    good = {"buckets": 300, "med_bp": 41.0, "mean_bp": 20.0, "z": 5.0}
+    thin = {"buckets": 16, "med_bp": 669.0, "mean_bp": 500.0, "z": 9.0}
+    low = {"buckets": 300, "med_bp": 41.0, "mean_bp": 20.0, "z": 0.4}
+    check("короткая волатильность названа, а не предъявлена",
+          Z.verdict_of(shape, null) == "короткая волатильность",
+          Z.verdict_of(shape, null))
+    check("согласие медианы и среднего даёт кандидата",
+          Z.verdict_of(good, null) == "**кандидат**",
+          Z.verdict_of(good, null))
+    check("тонкая ячейка кандидатом не становится ни при каком z",
+          Z.verdict_of(thin, null) == "тонкая", Z.verdict_of(thin, null))
+    check("ниже планки — не кандидат",
+          Z.verdict_of(low, null) == "ниже планки", Z.verdict_of(low, null))
+
+
+def test_thin_cell_does_not_set_the_bar_for_everyone():
+    """Планка считается без тонких ячеек — иначе её назначает шум.
+
+    В пилоте ячейка на 34 событиях и 16 корзинах дала медиану +669 б.п.
+    и одна подняла планку до +55 б.п., то есть самая шумная ячейка
+    назначила порог всем остальным.
+    """
+    rng = np.random.default_rng(9)
+    acc = {}
+
+    def cell(key, nb, scale, group="тест"):
+        acc[key] = {"events": nb * 10, "sum": 0.0, "n": nb * 10,
+                    "cross": 400.0 * nb * 10, "share": 0.01 * nb * 10,
+                    "buckets": [rng.normal(0, 1e-4, size=nb)
+                                .astype(np.float32)],
+                    "null": [rng.normal(0, scale, size=(nb, 20))
+                             .astype(np.float32)],
+                    "seen": nb, "group": group}
+
+    cell(("толстая", 1, 5), 300, 1e-4)
+    cell(("тонкая", 1, 5), 16, 1e-2)      # шумная в сто раз
+    old_p = Z.PERMS
+    Z.PERMS = 20
+    try:
+        cells, null = Z.summarize(acc)
+    finally:
+        Z.PERMS = old_p
+    check("тонкая ячейка не пошла в планку",
+          null["cells_in_bar"] == 1, str(null))
+    check("обе ячейки при этом показаны",
+          len(cells) == 2, str(list(cells)))
+    check("тонкая помечена вердиктом «тонкая»",
+          Z.verdict_of(cells[("тонкая", 1, 5)], null) == "тонкая",
+          Z.verdict_of(cells[("тонкая", 1, 5)], null))
+
+
 def test_report_names_the_degenerate_control():
     """Доля универсума в событии обязана доезжать до отчёта.
 
@@ -251,6 +313,8 @@ def test_report_names_the_degenerate_control():
         check("в отчёте есть планка, доля и сечение",
               "планка" in txt and "доля" in txt and "сечение" in txt,
               txt[:200])
+        check("в отчёте есть столбец СРЕДНЕГО рядом с медианой",
+              "СРЕДНЕЕ" in txt and "медиана, б.п." in txt, txt[:400])
         check("в отчёте сказано, чего скрин не говорит",
               "НЕ говорит" in txt, txt[-300:])
     finally:
@@ -294,6 +358,8 @@ TESTS = [test_forward_never_touches_the_signal_bar,
          test_side_flips_the_sign,
          test_matrix_medians_equal_the_naive_count,
          test_accumulator_does_not_grow_with_months,
+         test_short_vol_shape_is_named_not_reported_as_a_find,
+         test_thin_cell_does_not_set_the_bar_for_everyone,
          test_report_names_the_degenerate_control,
          test_units_are_yesterdays_and_zero_noise_is_a_gap,
          test_since_shock_and_rolling_sum]
