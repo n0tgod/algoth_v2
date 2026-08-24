@@ -1,0 +1,453 @@
+{
+ "tag": "1m",
+ "perms": 2000,
+ "seed": 20260824,
+ "books": {
+  "h4": {
+   "n": 2861,
+   "echo": false,
+   "first_day": 20677,
+   "last_day": 20689,
+   "peak": {
+    "days": 13,
+    "peak_i": 12,
+    "peak": 501.32,
+    "end": 501.32,
+    "drop": 0.0,
+    "share_before": 1.0,
+    "dd": -166.93
+   },
+   "perm": {
+    "n": 2000,
+    "drop_obs": 0.0,
+    "drop_null_med": 6.37,
+    "drop_null_p95": 139.94,
+    "p_drop": 1.0,
+    "share_obs": 1.0,
+    "share_null_med": 0.917,
+    "p_share": 0.495
+   },
+   "parts": {
+    "before": {
+     "n": 2861,
+     "pnl": 501.32,
+     "win": 0.485,
+     "median_bp": -1.2,
+     "long_share": 0.484,
+     "top_sym": "AKEUSDT",
+     "top_sym_pnl": -135.06,
+     "pnl_wo_top": 636.38,
+     "why": {
+      "срок": 2763,
+      "встречный сигнал закрыл позицию": 98
+     }
+    },
+    "after": {
+     "n": 0
+    }
+   }
+  },
+  "h24": {
+   "n": 3749,
+   "echo": false,
+   "first_day": 20673,
+   "last_day": 20689,
+   "peak": {
+    "days": 17,
+    "peak_i": 15,
+    "peak": 1678.75,
+    "end": 1594.45,
+    "drop": 84.3,
+    "share_before": 0.938,
+    "dd": -249.22
+   },
+   "perm": {
+    "n": 2000,
+    "drop_obs": 84.3,
+    "drop_null_med": 15.02,
+    "drop_null_p95": 213.93,
+    "p_drop": 0.2605,
+    "share_obs": 0.938,
+    "share_null_med": 0.938,
+    "p_share": 0.485
+   },
+   "parts": {
+    "before": {
+     "n": 3560,
+     "pnl": 1678.75,
+     "win": 0.556,
+     "median_bp": 165.7,
+     "long_share": 0.467,
+     "top_sym": "APRUSDT",
+     "top_sym_pnl": -240.61,
+     "pnl_wo_top": 1919.36,
+     "why": {
+      "срок": 3353,
+      "встречный сигнал закрыл позицию": 207
+     }
+    },
+    "after": {
+     "n": 189,
+     "pnl": -84.3,
+     "win": 0.503,
+     "median_bp": 11.0,
+     "long_share": 0.534,
+     "top_sym": "UAIUSDT",
+     "top_sym_pnl": -71.39,
+     "pnl_wo_top": -12.91,
+     "why": {
+      "срок": 183,
+      "встречный сигнал закрыл позицию": 6
+     }
+    }
+   }
+  },
+  "h24b": {
+   "n": 2105,
+   "echo": true,
+   "first_day": 20680,
+   "last_day": 20689,
+   "peak": {
+    "days": 10,
+    "peak_i": 8,
+    "peak": 1062.77,
+    "end": 985.13,
+    "drop": 77.64,
+    "share_before": 0.889,
+    "dd": -77.64
+   },
+   "perm": {
+    "n": 2000,
+    "drop_obs": 77.64,
+    "drop_null_med": 0.0,
+    "drop_null_p95": 91.15,
+    "p_drop": 0.063,
+    "share_obs": 0.889,
+    "share_null_med": 1.0,
+    "p_share": 0.6505
+   },
+   "parts": {
+    "before": {
+     "n": 1916,
+     "pnl": 1062.77,
+     "win": 0.585,
+     "median_bp": 226.6,
+     "long_share": 0.488,
+     "top_sym": "BEATUSDT",
+     "top_sym_pnl": 179.75,
+     "pnl_wo_top": 883.02,
+     "why": {
+      "срок": 1424,
+      "корзина дошла до цели": 404,
+      "встречный сигнал закрыл позицию": 88
+     }
+    },
+    "after": {
+     "n": 189,
+     "pnl": -77.64,
+     "win": 0.503,
+     "median_bp": 11.0,
+     "long_share": 0.534,
+     "top_sym": "UAIUSDT",
+     "top_sym_pnl": -65.64,
+     "pnl_wo_top": -12.0,
+     "why": {
+      "срок": 183,
+      "встречный сигнал закрыл позицию": 6
+     }
+    }
+   }
+  },
+  "h24bf": {
+   "n": 2105,
+   "echo": true,
+   "first_day": 20680,
+   "last_day": 20689,
+   "peak": {
+    "days": 10,
+    "peak_i": 8,
+    "peak": 1068.17,
+    "end": 990.41,
+    "drop": 77.76,
+    "share_before": 0.889,
+    "dd": -77.76
+   },
+   "perm": {
+    "n": 2000,
+    "drop_obs": 77.76,
+    "drop_null_med": 0.0,
+    "drop_null_p95": 91.27,
+    "p_drop": 0.063,
+    "share_obs": 0.889,
+    "share_null_med": 1.0,
+    "p_share": 0.6505
+   },
+   "parts": {
+    "before": {
+     "n": 1916,
+     "pnl": 1068.17,
+     "win": 0.585,
+     "median_bp": 227.4,
+     "long_share": 0.488,
+     "top_sym": "BEATUSDT",
+     "top_sym_pnl": 182.09,
+     "pnl_wo_top": 886.08,
+     "why": {
+      "срок": 1424,
+      "корзина дошла до цели": 404,
+      "встречный сигнал закрыл позицию": 88
+     }
+    },
+    "after": {
+     "n": 189,
+     "pnl": -77.76,
+     "win": 0.503,
+     "median_bp": 11.0,
+     "long_share": 0.534,
+     "top_sym": "UAIUSDT",
+     "top_sym_pnl": -65.68,
+     "pnl_wo_top": -12.08,
+     "why": {
+      "срок": 183,
+      "встречный сигнал закрыл позицию": 6
+     }
+    }
+   }
+  },
+  "sit": {
+   "n": 1037,
+   "echo": false,
+   "first_day": 20679,
+   "last_day": 20689,
+   "peak": {
+    "days": 11,
+    "peak_i": 9,
+    "peak": 195.32,
+    "end": -15.42,
+    "drop": 210.74,
+    "share_before": 0.9,
+    "dd": -210.74
+   },
+   "perm": {
+    "n": 2000,
+    "drop_obs": 210.74,
+    "drop_null_med": 198.28,
+    "drop_null_p95": 414.27,
+    "p_drop": 0.419,
+    "share_obs": 0.9,
+    "share_null_med": 0.5,
+    "p_share": 0.1665
+   },
+   "parts": {
+    "before": {
+     "n": 941,
+     "pnl": 195.32,
+     "win": 0.395,
+     "median_bp": -52.7,
+     "long_share": 0.543,
+     "top_sym": "BTWUSDT",
+     "top_sym_pnl": -140.91,
+     "pnl_wo_top": 336.23,
+     "why": {
+      "цена прошла обещанный ход против": 473,
+      "прогноз развернулся": 274,
+      "цена дошла до обещанной цели": 184,
+      "предел возраста": 10
+     }
+    },
+    "after": {
+     "n": 96,
+     "pnl": -210.74,
+     "win": 0.229,
+     "median_bp": -104.3,
+     "long_share": 0.646,
+     "top_sym": "UAIUSDT",
+     "top_sym_pnl": -29.29,
+     "pnl_wo_top": -181.45,
+     "why": {
+      "цена прошла обещанный ход против": 72,
+      "прогноз развернулся": 15,
+      "цена дошла до обещанной цели": 8,
+      "предел возраста": 1
+     }
+    }
+   }
+  },
+  "sit_lo": {
+   "n": 120,
+   "echo": false,
+   "first_day": 20687,
+   "last_day": 20689,
+   "peak": {
+    "days": 3,
+    "peak_i": 1,
+    "peak": 77.65,
+    "end": 17.2,
+    "drop": 60.45,
+    "share_before": 0.5,
+    "dd": -60.45
+   },
+   "perm": {
+    "n": 0
+   },
+   "parts": {
+    "before": {
+     "n": 65,
+     "pnl": 77.65,
+     "win": 0.662,
+     "median_bp": 102.7,
+     "long_share": 0.831,
+     "top_sym": "ENAUSDT",
+     "top_sym_pnl": -36.03,
+     "pnl_wo_top": 113.68,
+     "why": {
+      "цена дошла до обещанной цели": 31,
+      "прогноз развернулся": 24,
+      "цена прошла обещанный ход против": 10
+     }
+    },
+    "after": {
+     "n": 55,
+     "pnl": -60.45,
+     "win": 0.527,
+     "median_bp": 18.8,
+     "long_share": 0.382,
+     "top_sym": "SUPERUSDT",
+     "top_sym_pnl": 55.37,
+     "pnl_wo_top": -115.82,
+     "why": {
+      "прогноз развернулся": 21,
+      "цена дошла до обещанной цели": 18,
+      "цена прошла обещанный ход против": 15,
+      "предел возраста": 1
+     }
+    }
+   }
+  },
+  "sit_r": {
+   "n": 414,
+   "echo": true,
+   "first_day": 20679,
+   "last_day": 20689,
+   "peak": {
+    "days": 11,
+    "peak_i": 7,
+    "peak": 25.24,
+    "end": -59.83,
+    "drop": 85.07,
+    "share_before": 0.7,
+    "dd": -85.07
+   },
+   "perm": {
+    "n": 2000,
+    "drop_obs": 85.07,
+    "drop_null_med": 90.78,
+    "drop_null_p95": 167.95,
+    "p_drop": 0.5605,
+    "share_obs": 0.7,
+    "share_null_med": 0.2,
+    "p_share": 0.1415
+   },
+   "parts": {
+    "before": {
+     "n": 295,
+     "pnl": 25.24,
+     "win": 0.322,
+     "median_bp": -138.1,
+     "long_share": 0.492,
+     "top_sym": "TUTUSDT",
+     "top_sym_pnl": 20.54,
+     "pnl_wo_top": 4.7,
+     "why": {
+      "цена прошла обещанный ход против": 200,
+      "цена дошла до обещанной цели": 95
+     }
+    },
+    "after": {
+     "n": 119,
+     "pnl": -85.07,
+     "win": 0.277,
+     "median_bp": -196.9,
+     "long_share": 0.639,
+     "top_sym": "ACEUSDT",
+     "top_sym_pnl": -23.27,
+     "pnl_wo_top": -61.8,
+     "why": {
+      "цена прошла обещанный ход против": 86,
+      "цена дошла до обещанной цели": 33
+     }
+    }
+   }
+  },
+  "z": {
+   "n": 2772,
+   "echo": false,
+   "first_day": 20676,
+   "last_day": 20689,
+   "peak": {
+    "days": 14,
+    "peak_i": 13,
+    "peak": 606.82,
+    "end": 606.82,
+    "drop": 0.0,
+    "share_before": 1.0,
+    "dd": -223.29
+   },
+   "perm": {
+    "n": 2000,
+    "drop_obs": 0.0,
+    "drop_null_med": 0.0,
+    "drop_null_p95": 212.9,
+    "p_drop": 1.0,
+    "share_obs": 1.0,
+    "share_null_med": 1.0,
+    "p_share": 0.5215
+   },
+   "parts": {
+    "before": {
+     "n": 2772,
+     "pnl": 606.82,
+     "win": 0.563,
+     "median_bp": 82.1,
+     "long_share": 0.458,
+     "top_sym": "AKEUSDT",
+     "top_sym_pnl": -321.67,
+     "pnl_wo_top": 928.49,
+     "why": {
+      "срок": 2571,
+      "встречный сигнал закрыл позицию": 201
+     }
+    },
+    "after": {
+     "n": 0
+    }
+   }
+  }
+ },
+ "sync": {
+  "books": 7,
+  "common_days": 10,
+  "skipped": [
+   "sit_lo"
+  ],
+  "names": [
+   "h24",
+   "h24b",
+   "h24bf",
+   "h4",
+   "sit",
+   "sit_r",
+   "z"
+  ],
+  "all_down": 0.0,
+  "all_down_null": 0.0,
+  "p_all_down": 1.0,
+  "all_up": 0.1,
+  "all_up_null": 0.0,
+  "corr_med": -0.055,
+  "corr_min": -0.707,
+  "corr_max": 1.0,
+  "pairs": 21
+ },
+ "took_sec": 2.1
+}
