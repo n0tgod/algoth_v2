@@ -329,12 +329,66 @@ def test_norms_come_from_yesterday_only():
           not np.isfinite(N["spread"][1, 0]), str(N["spread"][1]))
 
 
+def test_cell_row_carries_the_drift_of_its_own_horizon():
+    """Снос своего горизонта обязан стоять В СТРОКЕ ячейки.
+
+    Прогон на 22 сутках дал снос ±1.44 б.п. на часовом горизонте при
+    ±0.02…0.09 на прочих — и ровно там сидели самые крупные медианы
+    таблицы (+5…+7). Отдельная табличка сноса наверху этого не
+    показывает: читатель видит «+6.8» и не видит, что случайная нога
+    того же горизонта даёт половину этой величины сама.
+    """
+    cells = {
+        ("условие А", 1, 60): {"events": 10, "coverage": 0.9,
+                               "buckets": 100, "med_bp": 6.8,
+                               "mean_bp": 2.0, "raw_med_bp": 1.0,
+                               "z": 5.0, "beta_leak": 0.1, "win": 0.7,
+                               "cross": 600, "share": 0.02},
+        ("условие Б", 1, 5): {"events": 10, "coverage": 0.9,
+                              "buckets": 100, "med_bp": 1.0,
+                              "mean_bp": 2.0, "raw_med_bp": 0.5,
+                              "z": 4.0, "beta_leak": 0.1, "win": 0.6,
+                              "cross": 600, "share": 0.02},
+    }
+    # Подставной артефакт обязан выглядеть как ЖИВОЙ: у нуля четыре
+    # поля, и первая версия фикстуры несла три — отчёт упал на
+    # `perms`. То же правило однажды скрыло дефект лиги.
+    null = {"cells_in_bar": 2, "bar_z": 3.0, "mean_z": 2.0, "perms": 100}
+    drift = {"60|1": 1.44, "5|1": 0.09}
+    root = tempfile.mkdtemp()
+    try:
+        path = os.path.join(root, "rep.md")
+        P.write_report(path, cells, null, drift,
+                       {"when": "now", "days": 1, "first": "2026-08-04",
+                        "last": "2026-08-04", "width": [], "store": {}})
+        txt = open(path, encoding="utf-8").read()
+        row = [l for l in txt.splitlines() if l.startswith("| условие А")]
+        check("снос горизонта стоит в строке ячейки",
+              row and "+1.44" in row[0], str(row))
+        check("остаток сверх сноса посчитан",
+              row and "+0.6" in row[0], str(row))
+        other = [l for l in txt.splitlines() if l.startswith("| условие Б")]
+        check("у другого горизонта свой снос, а не общий",
+              other and "+0.09" in other[0] and "+1.9" in other[0],
+              str(other))
+        # Проверка требует ту часть фразы, которая несёт ПРАВИЛО, а не
+        # первые её слова: подделка «...не перебивает собственный снос,
+        # всё равно годится» оставляла бы начало на месте и проходила.
+        check("правило чтения названо словами",
+              "не перебивает собственный снос" in txt
+              and "описывает снос, а не условие" in txt,
+              txt[txt.find("снос гор."):][:600])
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 TESTS = [test_end_to_end_over_real_files,
          test_drift_is_zero_with_the_mean_control,
          test_declared_horizons_are_the_measured_ones,
          test_norms_wiring_uses_the_previous_day,
          test_thin_minute_and_missing_norms_are_gaps,
-         test_norms_come_from_yesterday_only]
+         test_norms_come_from_yesterday_only,
+         test_cell_row_carries_the_drift_of_its_own_horizon]
 
 
 def main():
