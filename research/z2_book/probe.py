@@ -113,12 +113,28 @@ FIELDS = ("mid_open", "spread", "depth_b", "depth_a", "imb", "reach",
           "snaps", "pull_bid", "pull_ask")
 
 
+PROGRESS_EVERY = 50               # символов между строками прогресса
+
+
 def day_matrices(syms, day, log=log_):
-    """Матрицы «символ × минута» за сутки плюс ширина записи числом."""
+    """Матрицы «символ × минута» за сутки плюс ширина записи числом.
+
+    Прогресс печатается через каждые `PROGRESS_EVERY` имён. Правило
+    проекта: прогон, который молчит дольше минуты, неотличим от
+    повисшего — а сутки записи по семистам именам читаются заметно
+    дольше. Первый прогон Z2 молчал шестнадцать минут, и снаружи было
+    не сказать, работает он или встал.
+    """
+    import time as _t
     M = {f: np.full((len(syms), MIN_PER_DAY), np.nan, dtype=np.float32)
          for f in FIELDS}
     have = 0
+    t0 = _t.time()
     for r, sym in enumerate(syms):
+        if r and r % PROGRESS_EVERY == 0:
+            el = _t.time() - t0
+            log(f"    {day}: прочитано имён {r}/{len(syms)}, "
+                f"{el:.0f} с, осталось ~{el / r * (len(syms) - r):.0f} с")
         got = symbol_day(sym, day)
         if got is None:
             continue
