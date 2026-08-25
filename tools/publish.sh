@@ -137,7 +137,13 @@ for attempt in 1 2 3 4; do
   fi
   echo "push не прошёл, подтягиваю ветку и пробую снова "
   echo "(попытка $attempt из 4)"
-  if ! git pull --rebase origin "$branch"; then
+  # `--autostash`, а не голый rebase: пока идёт длинное задание, его
+  # собственный лог (`jobs/done/<имя>.log`) дописывается каждые
+  # несколько минут, и rebase отказывается начинаться словами «You have
+  # unstaged changes». Публикация тогда оставляла коммит локально, а
+  # очередь после этого замирала навсегда — она отказывается работать
+  # на разошедшемся дереве. Один флаг убирает всю эту цепочку.
+  if ! git pull --rebase --autostash origin "$branch"; then
     if ! finish_rebase; then
       git rebase --abort 2>/dev/null || true
       echo "ветка разошлась и свести автоматически не вышло."
