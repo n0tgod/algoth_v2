@@ -437,7 +437,8 @@ def main(argv=None):
                   .replace(tzinfo=timezone.utc).timestamp())
         ev = collect_events(M["mid_open"], prim, times)
         Z.measure(ev, M["mid_open"], times, acc, rng,
-                  conds_by_name=CONDS_BY_NAME, control="mean")
+                  conds_by_name=CONDS_BY_NAME, control="mean",
+                  horizons=HORIZONS)
         prev = M
     if not acc:
         log_("ни одного события — считать нечего")

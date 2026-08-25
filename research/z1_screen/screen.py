@@ -775,7 +775,7 @@ for _c in CONDITIONS:
 
 
 def measure(events, P, times, acc, rng, log=log_,
-            conds_by_name=None, control="median"):
+            conds_by_name=None, control="median", horizons=None):
     """Превышение по ячейкам, свёрнутое ДО корзин прямо в месяце.
 
     Нуль переставляет, КАКОЙ символ сработал, оставляя минуту на месте:
@@ -786,7 +786,12 @@ def measure(events, P, times, acc, rng, log=log_,
     есть медиана по корзинам, а сырые события первого прогона стоили
     убийства по памяти.
     """
-    for h in HORIZONS:
+    # Горизонты приходят ПАРАМЕТРОМ, а не из константы модуля. Пилот
+    # Z2 объявил 1/5/15/60 минут, а измерены оказались 5/15/60/240 —
+    # ядро брало свои. Дефект не роняет прогон и не выдаёт себя ничем:
+    # таблица выглядит исправной, просто описывает другие горизонты.
+    # Тот же класс, что лаг интереса в шагах вместо времени.
+    for h in (horizons or HORIZONS):
         F = fwd_ret(P, h)
         fin_any = np.isfinite(F)
         fin_n = np.maximum(fin_any.sum(axis=0), 1)

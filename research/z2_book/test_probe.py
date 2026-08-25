@@ -198,6 +198,38 @@ def test_drift_is_zero_with_the_mean_control():
                 os.remove(p)
 
 
+def test_declared_horizons_are_the_measured_ones():
+    """Горизонты замера обязаны совпасть с объявленными в Z2.
+
+    Пилот объявил 1/5/15/60 минут, а измерены оказались 5/15/60/240:
+    ядро брало горизонты из СВОЕЙ константы. Дефект не роняет прогон и
+    ничем себя не выдаёт — таблица выглядит исправной, просто описывает
+    другие горизонты. Тот же класс, что лаг интереса в шагах вместо
+    времени: переиспользованный слой несёт свои константы.
+    """
+    root = tempfile.mkdtemp()
+    syms = [f"H{i:03d}USDT" for i in range(70)]
+    days = ["2026-08-10", "2026-08-11"]
+    try:
+        ev = {(r, days[1], h, (r * 5 + k * 19) % 60)
+              for r in range(0, 70, 2) for h in (10, 11)
+              for k in range(2)}
+        write_rec(root, syms, days, seed=11, event_rows=ev,
+                  event_edge=0.002)
+        run(root, syms, days, tag="hz")
+        js = json.load(open(os.path.join(P.OUT, "z2-hz.json"),
+                            encoding="utf-8"))
+        got = sorted({int(k.split("|")[2]) for k in js["cells"]})
+        check("измерены ровно объявленные горизонты",
+              got == sorted(P.HORIZONS), f"{got} против {sorted(P.HORIZONS)}")
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+        for t in ("Z2-book-hz.md", "z2-hz.json"):
+            p = os.path.join(P.OUT, t)
+            if os.path.exists(p):
+                os.remove(p)
+
+
 def test_norms_wiring_uses_the_previous_day():
     """Нормы обязаны ДОЕХАТЬ до замера от вчерашних суток.
 
@@ -282,6 +314,7 @@ def test_norms_come_from_yesterday_only():
 
 TESTS = [test_end_to_end_over_real_files,
          test_drift_is_zero_with_the_mean_control,
+         test_declared_horizons_are_the_measured_ones,
          test_norms_wiring_uses_the_previous_day,
          test_thin_minute_and_missing_norms_are_gaps,
          test_norms_come_from_yesterday_only]
