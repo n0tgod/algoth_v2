@@ -27,3 +27,4 @@
 
 == сигнал 1787693463 ==
 [2026-08-25T21:31:05Z] задание z3-state2 запущено: research/z3_ladder/fold_ladder.py
+_: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
