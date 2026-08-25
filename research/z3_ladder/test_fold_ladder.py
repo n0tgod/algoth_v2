@@ -227,6 +227,40 @@ def test_interval_boundary_is_strict_on_the_left():
           nxt[0][0] == 99.0 and nxt[0][1] == -1, str(nxt))
 
 
+def test_symbols_can_be_given_by_a_repeated_key():
+    """Имена можно давать повторным ключом, а не только через запятую.
+
+    Очередь заданий пропускает аргументы только из [A-Za-z0-9._/=-], и
+    список через запятую она отвергает — страж прав, править надо здесь.
+    Первое задание на смоук отказом и кончилось.
+    """
+    days = ["2026-08-20"]
+    syms = ["AAAUSDT", "BBBUSDT"]
+    root, old = _setup(days, syms, per_min=30)
+    seen = {}
+    orig = F.fold_day
+
+    def spy(day, syms=None, **kw):
+        seen["syms"] = list(syms or [])
+        return "ok"
+
+    try:
+        F.fold_day = spy
+        FL.main(["--start", days[0], "--end", days[0],
+                 "--symbols", "AAAUSDT", "--symbols", "BBBUSDT",
+                 "--no-publish"])
+        check("повторный ключ собрал оба имени",
+              seen.get("syms") == syms, str(seen))
+        FL.main(["--start", days[0], "--end", days[0],
+                 "--symbols", "AAAUSDT,BBBUSDT", "--no-publish"])
+        check("запятая по-прежнему работает",
+              seen.get("syms") == syms, str(seen))
+    finally:
+        F.fold_day = orig
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_observation_moment_is_the_later_of_two_times():
     """Момент наблюдения — позднее из метки сборщика и метки биржи.
 
@@ -258,6 +292,7 @@ def main():
         test_flows_reach_the_minute_grid_with_real_numbers,
         test_trades_are_matched_to_their_own_interval,
         test_interval_boundary_is_strict_on_the_left,
+        test_symbols_can_be_given_by_a_repeated_key,
         test_observation_moment_is_the_later_of_two_times,
     )
     for t in tests:

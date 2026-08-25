@@ -197,13 +197,19 @@ def main(argv=None):
     ap.add_argument("--start", default=None)
     ap.add_argument("--end", default=None)
     ap.add_argument("--jobs", type=int, default=1)
-    ap.add_argument("--symbols", default=None)
+    # Ключ можно повторять: очередь заданий пропускает аргументы только
+    # из [A-Za-z0-9._/=-], и запятая в список имён не проходит. Страж
+    # прав, править надо здесь. Запятая при этом остаётся — руками с
+    # шелла так удобнее.
+    ap.add_argument("--symbols", action="append", default=None)
     ap.add_argument("--refold", action="store_true")
     ap.add_argument("--restat", action="store_true")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     os.makedirs(STORE, exist_ok=True)
-    syms = a.symbols.split(",") if a.symbols else None
+    syms = None
+    if a.symbols:
+        syms = [x for chunk in a.symbols for x in chunk.split(",") if x]
     if not a.restat:
         days = [d for d in F.days_with_records(syms=syms)
                 if F.day_is_closed(d)]
