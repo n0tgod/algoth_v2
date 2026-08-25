@@ -493,20 +493,37 @@ def test_flow_tells_market_from_our_load_one_way():
     Довод работает в одну сторону, и отчёт обязан это говорить: под
     нашей нагрузкой замедляется и запись ленты, поэтому обычная лента
     при упавших снимках нашей нагрузки не исключает.
+
+    Фикстура нарочно ловит второй дефект — АГРЕГАТОР. Поток взлетает у
+    ОДНОГО имени из трёх, то есть медиана по символам не шевелится
+    вовсе, а средний поток на имя растёт втрое. Так живой отчёт и
+    напечатал «лента 2 против 2»: медианное имя универсума торгует
+    один-два принта в минуту, и мера выглядела мерой, ею не будучи.
     """
     root = tempfile.mkdtemp()
     old = (F.BOOK, F.TRADES, F.STORE)
     F.BOOK = os.path.join(root, "book")
     F.TRADES = os.path.join(root, "trades")
     F.STORE = os.path.join(root, "store")
-    syms = ["AAAUSDT", "BBBUSDT"]
+    syms = ["AAAUSDT", "BBBUSDT", "CCCUSDT"]
     far = time.time() + 10 * 86400
     days = ["2026-08-19", "2026-08-20", "2026-08-21"]
     try:
-        for d, n, tr in zip(days, (6, 6, 3), (2, 2, 9)):
-            write_rec(root, syms, [d], hours=(12,), per_min=n, seed=41,
-                      trades_per_min=tr)
+        for d, n, heavy in zip(days, (6, 6, 3), (1, 1, 30)):
+            write_rec(root, [syms[0]], [d], hours=(12,), per_min=n, seed=41,
+                      trades_per_min=heavy)
+            for k, sym in enumerate(syms[1:]):
+                write_rec(root, [sym], [d], hours=(12,), per_min=n,
+                          seed=42 + k, trades_per_min=1)
             F.fold_day(d, syms=syms, log=lambda m: None, now=far)
+        p = os.path.join(F.STORE, days[-1] + ".npz")
+        by_med = F.hour_series(p, "trades", log=lambda m: None)[12]
+        by_mean = F.hour_series(p, "trades", agg="mean_sym",
+                                log=lambda m: None)[12]
+        check("медиана по символам взлёт ОДНОГО имени не видит",
+              abs(by_med - 1.0) < 1e-9, str(by_med))
+        check("средний поток на имя взлёт видит",
+              by_mean > 3 * by_med, f"{by_mean} против {by_med}")
         rows, off = F.hour_table(F.STORE, days, log=lambda m: None)
         check("просевший час назван", [o["h"] for o in off] == [12],
               str(off))
@@ -516,11 +533,15 @@ def test_flow_tells_market_from_our_load_one_way():
               and o["flow"] > o["flow_med"], str(o))
         rep = F.write_report(syms=syms, log=lambda m: None)
         txt = open(rep["path"], encoding="utf-8").read()
-        check("лента стоит в строке отклонения", "лента 9 против 2" in txt,
+        check("лента стоит в строке отклонения числом с дробью",
+              "лента 10.7 против 1.0" in txt,
               txt[txt.find("реже медианы"):][:400])
+        check("единица ленты названа",
+              "средний поток принтов на имя" in txt,
+              txt[txt.find("реже медианы"):][:900])
         check("односторонность довода названа",
               "Обратное доводом НЕ является" in txt,
-              txt[txt.find("реже медианы"):][:900])
+              txt[txt.find("реже медианы"):][:1200])
     finally:
         (F.BOOK, F.TRADES, F.STORE) = old
         shutil.rmtree(root, ignore_errors=True)

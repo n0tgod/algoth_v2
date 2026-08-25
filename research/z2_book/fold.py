@@ -59,6 +59,8 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
+import warnings
+
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -411,13 +413,25 @@ def _med(v):
     return float(s[n // 2]) if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
 
 
-def hour_series(path, field="snaps", log=log_):
-    """Медиана поля ПО ЧАСАМ суток — по символам и минутам часа.
+def hour_series(path, field="snaps", agg="med_sym", log=log_):
+    """Медиана поля ПО ЧАСАМ суток.
 
     Это и есть контроль, которого не даёт сравнение разных часов одного
     дня: проход сборщика зависит от потока обновлений книги, а тот
     растёт с активностью рынка, поэтому утро и середина дня несравнимы
     по построению. Сравнивать надо ОДИН И ТОТ ЖЕ час по разным суткам.
+
+    `agg` решает, как сводятся СИМВОЛЫ, и для разных полей ответ разный:
+
+    * `med_sym` — медиана по символам, годится плотности снимков: она
+      у всех имён примерно одна (проход общий), и медиана её и меряет;
+    * `mean_sym` — среднее по символам, то есть суммарный поток,
+      делённый на число записываемых имён. Ленте годится только оно:
+      медианное имя универсума торгует один-два принта в минуту, и на
+      такой дробности не различается НИЧЕГО — первый живой отчёт
+      напечатал «лента 2 против 2» и выглядел мерой, ею не будучи.
+      Делить на число имён обязательно: состав записи менялся
+      ступенями (713 → 725), и голая сумма несла бы этот скачок.
     """
     try:
         with np.load(path) as z:
@@ -425,9 +439,16 @@ def hour_series(path, field="snaps", log=log_):
     except Exception as e:                                # noqa: BLE001
         log(f"{field} по часам {path}: не прочиталась ({e})")
         return None
+    if agg == "mean_sym":
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            per_min = np.nanmean(a, axis=0)
     out = []
     for h in range(24):
-        v = a[:, h * 60:(h + 1) * 60]
+        if agg == "mean_sym":
+            v = per_min[h * 60:(h + 1) * 60]
+        else:
+            v = a[:, h * 60:(h + 1) * 60]
         v = v[np.isfinite(v)]
         out.append(float(np.median(v)) if v.size else None)
     return out
@@ -471,7 +492,7 @@ def hour_table(store, days, back=HOURS_BACK, log=log_):
         got = hour_series(p, "snaps", log=log)
         if got:
             rows[d] = got
-            fl = hour_series(p, "trades", log=log)
+            fl = hour_series(p, "trades", agg="mean_sym", log=log)
             if fl:
                 flow[d] = fl
     if len(rows) < 2:
@@ -618,13 +639,18 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
                 t = (f"{o['h']:02d} ({o['cur']:.0f} против {o['med']:.0f}, "
                      f"у соседей {o['lo']:.0f}–{o['hi']:.0f}")
                 if o["flow"] is not None and o["flow_med"]:
-                    t += (f"; лента {o['flow']:.0f} против "
-                          f"{o['flow_med']:.0f}")
+                    t += (f"; лента {o['flow']:.1f} против "
+                          f"{o['flow_med']:.1f}")
                 return t + ")"
             L.append(f"\n**Последние сутки ({last}) реже медианы тех же "
                      f"часов больше чем на {HOUR_DEV:.0%} в часах:** "
                      + ", ".join(_one(o) for o in off) + ".\n")
-            L.append("\nЛента в скобках разделяет две причины, но только в "
+            L.append("\nЛента в скобках — средний поток принтов на имя в "
+                     "минуту (суммарный поток, делённый на число "
+                     "записываемых имён): медианное имя универсума "
+                     "торгует один-два раза в минуту, и на такой "
+                     "дробности не различается ничего. Она разделяет две "
+                     "причины, но только в "
                      "одну сторону: **выросшая лента при упавших снимках "
                      "означает рынок** — книга обновляется чаще, проход "
                      "сборщика длиннее. Обратное доводом НЕ является: под "
