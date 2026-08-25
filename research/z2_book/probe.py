@@ -416,6 +416,37 @@ def store_note(days, args):
             "days": len(days), "off": False}
 
 
+def start_day(asked, have_days, use_store=True, log=log_):
+    """С каких суток начинать замер.
+
+    По умолчанию — с первых ПОЛНЫХ и ШИРОКИХ суток склада, а не с
+    первых суток записи. Состав сборщика рос ступенями (25 → 30 → 540 →
+    725 имён), и на ранних сутках кросс-секции, которой меряется
+    превышение, нет вовсе: урок T1, где при четырёх символах медианный
+    фон был 0–2 имени, а величины печатались и выглядели результатом.
+    Сутки, взятые огрызком по времени, портят то же самое.
+
+    Явно названное начало сильнее умолчания и не трогается: у прогона
+    может быть своя причина (пилот, повтор окна).
+    """
+    if asked:
+        return asked
+    if not use_store:
+        log("склад не читается — начало по первым суткам записи; "
+            "ранние сутки узки по составу, читать с оглядкой")
+        return have_days[0]
+    full = F.full_days(F.scan(F.STORE))
+    if not full:
+        log("на складе нет полных и широких суток — начало по записи")
+        return have_days[0]
+    d = max(full[0], have_days[0])
+    if d != have_days[0]:
+        log(f"начало замера — первые полные и широкие сутки склада {d} "
+            f"(в записи с {have_days[0]}): на ранних сутках имён 25–30, "
+            "и кросс-секции, которой меряется превышение, там нет вовсе")
+    return d
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="скрин по записи стакана")
     ap.add_argument("--start", default="")
@@ -435,8 +466,9 @@ def main(argv=None):
                         for s in syms[:50]
                         for f in os.listdir(os.path.join(BOOK, s))
                         if f[:2] == "20"})
-    days = days_between(args.start or have_days[0],
-                        args.end or have_days[-1])
+    days = days_between(
+        start_day(args.start, have_days, use_store=not args.no_store),
+        args.end or have_days[-1])
     log_(f"символов {len(syms)}, суток {len(days)} "
          f"({days[0]}…{days[-1]})")
     acc, rng = {}, np.random.default_rng(Z.SEED)

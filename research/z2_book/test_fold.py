@@ -547,6 +547,49 @@ def test_flow_tells_market_from_our_load_one_way():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_screen_starts_at_the_first_full_and_wide_day():
+    """Замер начинается с полных и ШИРОКИХ суток, а не с первых суток.
+
+    Состав сборщика рос ступенями (25 → 30 → 540 → 725 имён), и на
+    ранних сутках кросс-секции, которой меряется превышение, нет вовсе.
+    Взять их в замер значило бы считать ячейки против фона, которого не
+    построено, — урок T1.
+    """
+    root = tempfile.mkdtemp()
+    old = (F.BOOK, F.TRADES, F.STORE, P.BOOK, P.TRADES, P.STORE)
+    F.BOOK = P.BOOK = os.path.join(root, "book")
+    F.TRADES = P.TRADES = os.path.join(root, "trades")
+    F.STORE = P.STORE = os.path.join(root, "store")
+    far = time.time() + 10 * 86400
+    narrow = ["AAAUSDT"]
+    wide = [f"S{i:03d}USDT" for i in range(120)]
+    try:
+        # 08-19 — узкие сутки (одно имя), 08-20 и 08-21 — широкие.
+        write_rec(root, narrow, ["2026-08-19"], hours=(10,), per_min=2,
+                  seed=51)
+        for d in ("2026-08-20", "2026-08-21"):
+            write_rec(root, wide, [d], hours=tuple(range(24)), per_min=2,
+                      seed=52)
+        for d in ("2026-08-19", "2026-08-20", "2026-08-21"):
+            F.fold_day(d, syms=narrow + wide, log=lambda m: None, now=far)
+        st = F.scan(F.STORE)
+        full = F.full_days(st)
+        check("узкие сутки полными не считаются",
+              "2026-08-19" not in full, str(full))
+        got = P.start_day("", ["2026-08-19", "2026-08-20", "2026-08-21"],
+                          log=lambda m: None)
+        check("замер начат с первых широких суток", got == full[0],
+              f"{got} против {full[0]}")
+        asked = P.start_day("2026-08-19",
+                            ["2026-08-19", "2026-08-20", "2026-08-21"],
+                            log=lambda m: None)
+        check("явно названное начало не трогается", asked == "2026-08-19",
+              asked)
+    finally:
+        (F.BOOK, F.TRADES, F.STORE, P.BOOK, P.TRADES, P.STORE) = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_publish_is_part_of_the_run():
     """С ключом публикации нет, без ключа она ОБЯЗАНА случиться.
 
@@ -584,6 +627,7 @@ def main():
         test_hour_grid_is_the_control_that_same_day_hours_are_not,
         test_even_base_uses_a_true_median_not_the_upper_middle,
         test_flow_tells_market_from_our_load_one_way,
+        test_screen_starts_at_the_first_full_and_wide_day,
         test_publish_is_part_of_the_run,
     )
     for t in tests:
