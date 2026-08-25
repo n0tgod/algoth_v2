@@ -32,3 +32,13 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-08-25T20:48:09Z
+публикуется в ветку main:
+ jobs/done/probe-canal-1.log | 34 ++++++++++++++++++++++++++++++++++
+ jobs/done/z3-smoke.done     |  1 +
+ jobs/done/z3-smoke.log      |  4 ++++
+ jobs/poke.log               |  2 ++
+ 4 files changed, 41 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   ac7df2f..e0a00c9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
