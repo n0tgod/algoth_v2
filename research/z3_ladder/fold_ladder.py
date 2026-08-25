@@ -227,6 +227,14 @@ def main(argv=None):
         for d in days:
             F.fold_day(d, syms=syms, jobs=a.jobs, store=STORE,
                        refold=a.refold, log=log_, kind="ladder")
+            # Отчёт публикуется ПОСЛЕ КАЖДЫХ суток, а не в конце:
+            # проход по всей записи идёт десятки часов, а очередь
+            # отдаёт лог задания только по завершении — то есть прогон
+            # всё это время неотличим от повисшего. Урок D1, где
+            # молчание часового прогона стоило круга переписки.
+            if not a.no_publish:
+                write_report(store=STORE)
+                publish(f"Z3: склад лесенки, свёрнуты сутки {d}")
     write_report(store=STORE)
     if not a.no_publish:
         publish("Z3: состояние склада лесенки")

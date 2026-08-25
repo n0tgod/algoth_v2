@@ -1,2 +1,4 @@
-out/
+out/run.log
+out/store/*.npz
+out/store/*.tmp*
 __pycache__/
