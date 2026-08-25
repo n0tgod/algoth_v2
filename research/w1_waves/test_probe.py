@@ -148,6 +148,30 @@ def test_pure_random_walks_give_nothing():
           f"{r['ic_null']:+.4f}")
 
 
+def test_break_even_ic_is_computed_from_the_measured_spread():
+    """Порог окупаемости считается из σ ячейки, а не назначается.
+
+    Он и решает, какие ячейки мертвы по построению: при разбросе
+    исходов за час окупить круг издержек требуется IC, которого не
+    бывает, а за сутки — вполне обычный. Печатать один IC без этого
+    числа значит сравнивать несравнимое.
+    """
+    with Cfg(ROUND_COST_BP=11.0):
+        hour = P.ic_break_even(0.01)          # σ 100 б.п. — часовой масштаб
+        day = P.ic_break_even(0.05)           # σ 500 б.п. — суточный
+    check("порог обратен разбросу", hour > day, f"{hour:.4f} / {day:.4f}")
+    check("часовой порог заведомо высок", hour > 0.05, f"{hour:.4f}")
+    check("суточный порог достижим", day < 0.02, f"{day:.4f}")
+    # Арифметика проверяется числом, а не свойством: прибыль книги есть
+    # половина спреда, спред есть IC·σ·3.51.
+    ic = P.ic_break_even(0.05)
+    book_bp = ic * 0.05 * P.DECILE_K / 2 * 1e4
+    check("на пороге книга ровно окупает круг",
+          abs(book_bp - 11.0) < 1e-6, f"{book_bp:.4f}")
+    check("нулевой разброс порога не даёт",
+          not np.isfinite(P.ic_break_even(0.0)))
+
+
 def test_pool_is_strictly_in_the_past():
     """Соседи берутся только из прошлого — проверяется САМА граница.
 
@@ -276,7 +300,8 @@ def test_report_is_written_and_its_verdict_comes_from_the_numbers():
     d = tempfile.mkdtemp()
     try:
         base = {"W": 24, "h": 4, "sections": 500, "rev_ic": 0.05,
-                "spread_bp": 4.0, "book_bp": 2.0, "bands": {}}
+                "spread_bp": 4.0, "book_bp": 2.0, "bands": {},
+                "sigma_bp": 500.0, "ic_need": 0.0125}
         weak = [dict(base, ic=0.010, ic_null=0.020, resid_ic=0.001)]
         pathw = P.write_report(os.path.join(d, "w.md"), weak, {},
                                {"when": "т", "start": "a", "end": "b",
@@ -430,6 +455,7 @@ def main():
     tests = (
         test_probe_finds_a_wave_that_is_really_there,
         test_pure_random_walks_give_nothing,
+        test_break_even_ic_is_computed_from_the_measured_spread,
         test_pool_is_strictly_in_the_past,
         test_sample_pool_respects_its_bounds,
         test_excess_is_over_the_equal_weight_section,
