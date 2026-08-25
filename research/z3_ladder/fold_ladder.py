@@ -156,6 +156,11 @@ def write_report(path=None, store=None, log=log_):
     os.makedirs(store, exist_ok=True)
     path = path or os.path.join(store, "Z3-store.md")
     st = F.scan(store)
+    # Файл суток на складе — ещё не «сутки свёрнуты»: смоук по трём
+    # именам оставляет файл, неотличимый по имени от полного. Такие
+    # сутки считаются НЕсвёрнутыми и здесь, и при возобновлении —
+    # обе дороги зовут одну `day_gap`.
+    narrow = F.partial_days(st, store=store)
     days = sorted(st)
     L = ["# Z3 — состояние склада лесенки\n\n",
          f"Версия свёртки {VERSION} · полей {len(LD.FIELDS)} · "
@@ -170,13 +175,24 @@ def write_report(path=None, store=None, log=log_):
     for d in days:
         h = st[d]
         tot += h.get("minutes", 0)
-        L.append(f"| {d} | {h.get('rows', 0)} | {h.get('minutes', 0):,} | "
+        mark = " ⚠ узкие" if d in narrow else ""
+        L.append(f"| {d}{mark} | {h.get('rows', 0)} | "
+                 f"{h.get('minutes', 0):,} | "
                  f"{h.get('bytes', 0) / 2**20:.1f} |\n".replace(",", " "))
     L.append(f"| **итого** | | **{tot:,}** | |\n".replace(",", " "))
     raw = [d for d in F.days_with_records() if F.day_is_closed(d)]
-    miss = [d for d in raw if d not in st]
-    L.append(f"\n**Суток в сырье {len(raw)}, на складе {len(days)}, "
+    miss = [d for d in raw if d not in st or d in narrow]
+    full = len(days) - len(narrow)
+    L.append(f"\n**Суток в сырье {len(raw)}, свёрнуто полностью {full}, "
              f"не свёрнуто {len(miss)}.**\n")
+    if narrow:
+        L.append("\nСвёрнуты по УЗКОМУ списку имён (файл есть, имён в нём "
+                 "меньше "
+                 "запрошенного — так остаётся смоук): "
+                 + ", ".join(f"{d} (не хватает {n})"
+                             for d, n in sorted(narrow.items()))
+                 + ". Такие сутки считаются несвёрнутыми, и полный "
+                 "проход сворачивает их заново.\n")
     if miss:
         L.append("\nНе свёрнуты: " + ", ".join(miss) + ".\n")
         L.append("\nСырьё сегодня не удаляет ничто — проверено, чистки "
@@ -188,9 +204,11 @@ def write_report(path=None, store=None, log=log_):
                  "придётся стереть, чтобы сбор продолжился.\n")
     with open(path, "w", encoding="utf-8") as f:
         f.write("".join(L))
-    log(f"отчёт склада лесенки: {path}; не свёрнуто суток {len(miss)}")
+    log(f"отчёт склада лесенки: {path}; не свёрнуто суток {len(miss)}"
+        + (f" (из них по узкому списку имён {len(narrow)})"
+           if narrow else ""))
     return {"path": path, "days": len(days), "missing": len(miss),
-            "minutes": tot}
+            "partial": len(narrow), "minutes": tot}
 
 
 def publish(msg):

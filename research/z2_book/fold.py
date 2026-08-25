@@ -219,17 +219,30 @@ def fold_day(day, syms=None, jobs=1, book=None, trades=None, store=None,
     if not day_is_closed(day, now):
         log(f"  {day}: сутки не кончились — не сворачиваю")
         return "не кончились"
-    path = os.path.join(store, day + ".npz")
-    if os.path.exists(path) and not refold:
-        head = _head(path)
-        if head and head["version"] == ver:
-            return "есть"
-        log(f"  {day}: на складе версия {head and head['version']}, "
-            f"пересворачиваю под {ver}")
     syms = list(syms if syms is not None else symbols(book or BOOK))
     if not syms:
         log(f"  {day}: имён в записи нет")
         return "пусто"
+    path = os.path.join(store, day + ".npz")
+    if os.path.exists(path) and not refold:
+        head = _head(path, names=True)
+        if head and head["version"] == ver:
+            # Файл на месте — это ещё не «сутки свёрнуты». Смоук по трём
+            # именам оставляет файл, неотличимый по имени от полного, и
+            # следующий проход молча прошёл бы мимо: тот же класс, что
+            # готовность символа по существованию файла в L2 и дельта
+            # прогона вместо состояния в A2. Годным считается склад,
+            # ПОКРЫВАЮЩИЙ запрошенное; имя без сырья за эти сутки не
+            # требует пересвёртки — свёртка положила бы ему пропуск.
+            gap = day_gap(day, head["names"], syms=syms, book=book)
+            if not gap:
+                return "есть"
+            log(f"  {day}: на складе {head['symbols']} имён, у {len(gap)} "
+                f"из запрошенных есть сырьё и нет свёртки "
+                f"({', '.join(gap[:3])}…) — пересворачиваю")
+        else:
+            log(f"  {day}: на складе версия {head and head['version']}, "
+                f"пересворачиваю под {ver}")
     os.makedirs(store, exist_ok=True)
     n = len(syms)
     A = np.full((len(fields), n, MIN_PER_DAY), np.nan, dtype=np.float32)
@@ -281,17 +294,73 @@ def _progress(day, done, n, have, t_start, log, every=50):
         f"{el:.0f} с, осталось ~{el / done * (n - done):.0f} с")
 
 
-def _head(path):
-    """Заголовок суток со СКЛАДА: версия, имена, объём — с диска."""
+def _head(path, names=False):
+    """Заголовок суток со СКЛАДА: версия, имена, объём — с диска.
+
+    `names=True` дочитывает сам СПИСОК имён: по числу нельзя решить,
+    покрывает ли лежащее на складе то, что просят сейчас.
+    """
     try:
         with np.load(path) as z:
-            return {"version": int(z["version"][0]),
+            head = {"version": int(z["version"][0]),
                     "symbols": int(len(z["symbols"])),
                     "rows": int(z["rows"][0]),
                     "minutes": int(z["minutes"][0]),
                     "bytes": os.path.getsize(path)}
+            if names:
+                head["names"] = [str(x) for x in z["symbols"]]
+            return head
     except Exception:                                     # noqa: BLE001
         return None
+
+
+def has_record(sym, day, book=None):
+    """Есть ли у имени сырьё за эти сутки — хоть один часовой файл.
+
+    Нужно, чтобы отличить «склад не покрывает имя» от «имя в эти сутки
+    не писалось вовсе»: во втором случае свёртка всё равно положила бы
+    пропуск, и пересворачивать сутки из-за свежего листинга незачем.
+    """
+    hours, _ = hours_of_day(day)
+    d = os.path.join(book or BOOK, sym)
+    for h in hours:
+        for ext in (".jsonl", ".jsonl.gz"):
+            if os.path.exists(os.path.join(d, h + ext)):
+                return True
+    return False
+
+
+def day_gap(day, store_names, syms=None, book=None):
+    """Имена, у которых за эти сутки ЕСТЬ сырьё и НЕТ свёртки.
+
+    Одно определение на две дороги: возобновление (`fold_day`) и отчёт
+    склада. Разойдись они — прогон сворачивал бы одно, а отчёт называл
+    свёрнутым другое.
+    """
+    syms = list(syms if syms is not None else symbols(book or BOOK))
+    have = set(store_names)
+    return [s for s in syms
+            if s not in have and has_record(s, day, book or BOOK)]
+
+
+def partial_days(st, syms=None, book=None, store=None):
+    """Сутки на складе, свёрнутые УЖЕ запрошенного: день -> сколько имён.
+
+    Дорогую проверку по сырью зовём только там, где ширина склада
+    меньше нынешнего универсума: у полных суток она не считается вовсе.
+    """
+    syms = list(syms if syms is not None else symbols(book or BOOK))
+    out = {}
+    for day, head in st.items():
+        if head.get("symbols", 0) >= len(syms):
+            continue
+        h = _head(os.path.join(store or STORE, day + ".npz"), names=True)
+        if not h:
+            continue
+        gap = day_gap(day, h["names"], syms=syms, book=book)
+        if gap:
+            out[day] = len(gap)
+    return out
 
 
 def scan(store=None):
@@ -597,7 +666,12 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
     store = store or STORE
     st = scan(store)
     have = days_with_records(book=book, syms=syms)
-    missing = [d for d in have if d not in st]
+    # Файл суток — ещё не «сутки свёрнуты»: свёртка по нескольким
+    # именам оставляет файл, неотличимый по имени от полного. Одна
+    # классификация на оба склада и на возобновление; у полных суток
+    # она не стоит ничего (ширина совпала — сырьё не читается).
+    narrow = partial_days(st, syms=syms, book=book, store=store)
+    missing = [d for d in have if d not in st or d in narrow]
     path = path or os.path.join(store, "Z2-store.md")
     L = ["# Z2 — состояние минутного склада\n"]
     L.append(f"\nВерсия свёртки {FOLD_VERSION} · полоса глубины ±{B.BAND} · "
@@ -615,7 +689,8 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
         cov = coverage(v)
         d = density(os.path.join(store, day + ".npz"), log=lambda m: None)
         dens[day] = d
-        L.append(f"| {day} | {v['symbols']} | {v['rows']} | "
+        mark = " ⚠ узкие" if day in narrow else ""
+        L.append(f"| {day}{mark} | {v['symbols']} | {v['rows']} | "
                  f"{v['minutes']:,} | "
                  + ("—" if cov is None else f"{cov * 100:.0f} %")
                  + " | " + ("—" if d is None else f"{d['med']:.1f}")
@@ -719,6 +794,14 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
     L.append(f"Суток в сырье {len(have)}"
              + (f" ({have[0]}…{have[-1]})" if have else "")
              + f", на складе {len(st)}, **не свёрнуто {len(missing)}**.\n")
+    if narrow:
+        L.append("\nСвёрнуты по УЗКОМУ списку имён (файл есть, имён в нём "
+                 "меньше запрошенного — так остаётся смоук): "
+                 + ", ".join(f"{d} (не хватает {n})"
+                             for d, n in sorted(narrow.items()))
+                 + ". Это не то же, что огрызок по времени выше: там "
+                 "неполны сутки, здесь неполон состав. Такие сутки "
+                 "считаются несвёрнутыми.\n")
     if missing:
         L.append("\nНе свёрнуты: " + ", ".join(missing) + ".\n")
         L.append("\nСегодняшние сутки в этом списке стоят ПО ДЕЛУ — "

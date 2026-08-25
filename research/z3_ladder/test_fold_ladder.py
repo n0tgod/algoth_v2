@@ -286,6 +286,47 @@ def test_observation_moment_is_the_later_of_two_times():
           f"{B2.snap_line(line)[0]} против {got['t']}")
 
 
+def test_report_counts_a_smoke_day_as_not_folded():
+    """Сутки, свёрнутые смоуком, отчёт называет частичными, а не готовыми.
+
+    Проверяется не сама классификация (её держит `test_fold`), а её
+    ДОРОГА до отчёта: величина может считаться верно и не попадать в
+    показ — ровно так колонка просадки турнира встала прочерками.
+    """
+    days = ["2026-08-20"]
+    syms = ["AAAUSDT", "BBBUSDT", "CCCUSDT"]
+    root, old = _setup(days, syms, per_min=6)
+    later = time.time() + 10 * 86400
+    try:
+        F.fold_day(days[0], syms=syms[:1], jobs=1, log=lambda m: None,
+                   now=later, kind="ladder")
+        path = os.path.join(FL.STORE, "Z3-store.md")
+        got = FL.write_report(path=path, store=FL.STORE,
+                              log=lambda m: None)
+        txt = open(path, encoding="utf-8").read()
+        check("частичные сутки посчитаны числом", got["partial"] == 1,
+              str(got))
+        check("и в свёрнутые полностью не попали",
+              "свёрнуто полностью 0" in txt, txt[-400:])
+        check("сутки помечены в самой таблице", "⚠ узкие" in txt,
+              txt[-600:])
+        check("названо, скольких имён не хватает",
+              "не хватает 2" in txt, txt[-600:])
+        check("и они считаются несвёрнутыми",
+              got["missing"] == 1, str(got))
+
+        F.fold_day(days[0], syms=syms, jobs=1, log=lambda m: None,
+                   now=later, kind="ladder")
+        got = FL.write_report(path=path, store=FL.STORE,
+                              log=lambda m: None)
+        txt = open(path, encoding="utf-8").read()
+        check("после полной свёртки пометки нет",
+              got["partial"] == 0 and "⚠ узкие" not in txt, str(got))
+    finally:
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     tests = (
         test_ladder_folds_into_its_own_store_and_leaves_the_book_alone,
@@ -293,6 +334,7 @@ def main():
         test_trades_are_matched_to_their_own_interval,
         test_interval_boundary_is_strict_on_the_left,
         test_symbols_can_be_given_by_a_repeated_key,
+        test_report_counts_a_smoke_day_as_not_folded,
         test_observation_moment_is_the_later_of_two_times,
     )
     for t in tests:

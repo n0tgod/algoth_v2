@@ -611,11 +611,67 @@ def test_publish_is_part_of_the_run():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_partial_day_is_not_taken_for_folded():
+    """Сутки, свёрнутые по одному имени из трёх, свёрнутыми не считаются.
+
+    Смоук оставляет файл, неотличимый ПО ИМЕНИ от полного, и следующий
+    проход прошёл бы мимо: тот же класс отказа, что готовность символа
+    по существованию файла в L2 и дельта прогона вместо состояния в A2.
+    Обратная сторона тут же: имя, у которого за эти сутки сырья НЕТ,
+    пересвёртки не требует — иначе свежий листинг заставлял бы
+    пересворачивать всю запись ради пропуска.
+    """
+    day = "2026-08-20"
+    syms = ["AAAUSDT", "BBBUSDT", "CCCUSDT"]
+    root, old = _setup([day], syms)
+    later = time.time() + 10 * 86400
+    path = None
+    try:
+        path = os.path.join(F.STORE, day + ".npz")
+        F.fold_day(day, syms=syms[:1], jobs=1, log=lambda m: None,
+                   now=later)
+        head = F._head(path, names=True)
+        check("смоук оставил сутки на складе",
+              bool(head) and head["symbols"] == 1, str(head))
+
+        part = F.partial_days(F.scan(F.STORE), syms=syms, store=F.STORE)
+        check("отчёт называет такие сутки частичными числом",
+              part.get(day) == 2, str(part))
+
+        said = []
+        got = F.fold_day(day, syms=syms, jobs=1, log=said.append,
+                         now=later)
+        check("полный проход не принимает смоук за свёрнутые сутки",
+              got == "ok", got)
+        # Число берётся из САМОЙ фразы, а не «двойка где-то в строке»:
+        # «2» есть и в дате 2026-08-20, то есть слабая проверка прошла
+        # бы на молчащем правиле.
+        check("и говорит, скольких имён не хватало",
+              any("у 2 из запрошенных" in m and "нет свёртки" in m
+                  for m in said), str(said))
+        head = F._head(path, names=True)
+        check("после пересвёртки на складе все имена",
+              head["symbols"] == 3, str(head))
+
+        os.makedirs(os.path.join(F.BOOK, "DDDUSDT"), exist_ok=True)
+        wide = syms + ["DDDUSDT"]
+        got = F.fold_day(day, syms=wide, jobs=1, log=lambda m: None,
+                         now=later)
+        check("имя без сырья за эти сутки пересвёртки не требует",
+              got == "есть", got)
+        part = F.partial_days(F.scan(F.STORE), syms=wide, store=F.STORE)
+        check("и частичными такие сутки не называются", not part, str(part))
+    finally:
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     tests = (
         test_store_reproduces_raw_bit_for_bit,
         test_unfinished_day_is_not_folded,
         test_state_is_read_from_disk_not_from_the_run,
+        test_partial_day_is_not_taken_for_folded,
         test_foreign_version_falls_back_loudly,
         test_symbol_absent_that_day_is_a_gap_and_order_is_the_asked_one,
         test_fields_of_the_screen_are_a_subset_of_the_fold,
