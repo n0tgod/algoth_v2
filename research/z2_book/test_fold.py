@@ -426,7 +426,7 @@ def test_hour_grid_is_the_control_that_same_day_hours_are_not():
         rows, off = F.hour_table(F.STORE, days, log=lambda m: None)
         check("сетка собрана по всем суткам", sorted(rows) == days,
               str(sorted(rows)))
-        hs = [h for h, _c, _m in off]
+        hs = [o["h"] for o in off]
         check("просевший против ТЕХ ЖЕ часов час назван", hs == [11],
               str(off))
         check("тихий у всех суток час дефектом НЕ назван", 10 not in hs,
@@ -436,8 +436,91 @@ def test_hour_grid_is_the_control_that_same_day_hours_are_not():
         check("сетка доехала до отчёта", "Плотность по часам" in txt
               and "| 2026-08-22 |" in txt, txt[:300])
         check("отклонение названо словами и числом",
-              "реже соседних" in txt and "11 (3 против 6)" in txt,
+              "реже медианы тех же" in txt and "11 (3 против 6" in txt,
               txt[txt.find("Плотность по часам"):][:800])
+    finally:
+        (F.BOOK, F.TRADES, F.STORE) = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_even_base_uses_a_true_median_not_the_upper_middle():
+    """`sorted(x)[n // 2]` на чётной длине берёт ВЕРХНЕЕ из двух средних.
+
+    Тот же дефект уже ловился однажды на живой странице
+    (`Collector._median`) и повторился здесь: на живой сетке из шести
+    суток он поднял базу и объявил прорежением ПЯТЬ часов вместо двух.
+    Фикстура строится так, чтобы два счёта разошлись в ВЕРДИКТЕ, а не
+    в третьем знаке: соседние сутки дают 4, 4, 10, 10 — верхнее среднее
+    равно 10, честная медиана 7, и час с шестью снимками флагуется
+    только по первой.
+    """
+    root = tempfile.mkdtemp()
+    old = (F.BOOK, F.TRADES, F.STORE)
+    F.BOOK = os.path.join(root, "book")
+    F.TRADES = os.path.join(root, "trades")
+    F.STORE = os.path.join(root, "store")
+    syms = ["AAAUSDT", "BBBUSDT"]
+    far = time.time() + 10 * 86400
+    days = ["2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20",
+            "2026-08-21"]
+    try:
+        for d, n in zip(days, (4, 4, 10, 10, 6)):
+            write_rec(root, syms, [d], hours=(12,), per_min=n, seed=31)
+            F.fold_day(d, syms=syms, log=lambda m: None, now=far)
+        med = F._med([4, 4, 10, 10])
+        check("медиана чётной длины — среднее двух средних", med == 7.0,
+              str(med))
+        rows, off = F.hour_table(F.STORE, days, log=lambda m: None)
+        check("час внутри честной базы прорежением НЕ назван",
+              [o["h"] for o in off] == [], str(off))
+        sp = F.hour_spread(rows)
+        check("размах часа по суткам измерен числом",
+              sp is not None and sp > 0, str(sp))
+        rep = F.write_report(syms=syms, log=lambda m: None)
+        txt = open(rep["path"], encoding="utf-8").read()
+        check("калибровка порога напечатана",
+              "Размах ОДНОГО И ТОГО ЖЕ часа" in txt
+              and "диагностика, а не тревога" in txt,
+              txt[txt.find("Плотность по часам"):][:900])
+    finally:
+        (F.BOOK, F.TRADES, F.STORE) = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_flow_tells_market_from_our_load_one_way():
+    """Выросшая лента при упавших снимках означает рынок.
+
+    Довод работает в одну сторону, и отчёт обязан это говорить: под
+    нашей нагрузкой замедляется и запись ленты, поэтому обычная лента
+    при упавших снимках нашей нагрузки не исключает.
+    """
+    root = tempfile.mkdtemp()
+    old = (F.BOOK, F.TRADES, F.STORE)
+    F.BOOK = os.path.join(root, "book")
+    F.TRADES = os.path.join(root, "trades")
+    F.STORE = os.path.join(root, "store")
+    syms = ["AAAUSDT", "BBBUSDT"]
+    far = time.time() + 10 * 86400
+    days = ["2026-08-19", "2026-08-20", "2026-08-21"]
+    try:
+        for d, n, tr in zip(days, (6, 6, 3), (2, 2, 9)):
+            write_rec(root, syms, [d], hours=(12,), per_min=n, seed=41,
+                      trades_per_min=tr)
+            F.fold_day(d, syms=syms, log=lambda m: None, now=far)
+        rows, off = F.hour_table(F.STORE, days, log=lambda m: None)
+        check("просевший час назван", [o["h"] for o in off] == [12],
+              str(off))
+        o = off[0]
+        check("поток ленты приехал к отклонению",
+              o["flow"] is not None and o["flow_med"] is not None
+              and o["flow"] > o["flow_med"], str(o))
+        rep = F.write_report(syms=syms, log=lambda m: None)
+        txt = open(rep["path"], encoding="utf-8").read()
+        check("лента стоит в строке отклонения", "лента 9 против 2" in txt,
+              txt[txt.find("реже медианы"):][:400])
+        check("односторонность довода названа",
+              "Обратное доводом НЕ является" in txt,
+              txt[txt.find("реже медианы"):][:900])
     finally:
         (F.BOOK, F.TRADES, F.STORE) = old
         shutil.rmtree(root, ignore_errors=True)
@@ -465,24 +548,33 @@ def test_publish_is_part_of_the_run():
 
 
 def main():
-    test_store_reproduces_raw_bit_for_bit()
-    test_unfinished_day_is_not_folded()
-    test_state_is_read_from_disk_not_from_the_run()
-    test_foreign_version_falls_back_loudly()
-    test_symbol_absent_that_day_is_a_gap_and_order_is_the_asked_one()
-    test_fields_of_the_screen_are_a_subset_of_the_fold()
-    test_parallel_fold_equals_single_threaded()
-    test_cli_runs_the_whole_road()
-    test_report_names_the_days_the_store_is_missing()
-    test_report_separates_full_days_from_stumps_and_names_recording_gaps()
-    test_density_catches_thinning_that_coverage_cannot()
-    test_hour_grid_is_the_control_that_same_day_hours_are_not()
-    test_publish_is_part_of_the_run()
+    tests = (
+        test_store_reproduces_raw_bit_for_bit,
+        test_unfinished_day_is_not_folded,
+        test_state_is_read_from_disk_not_from_the_run,
+        test_foreign_version_falls_back_loudly,
+        test_symbol_absent_that_day_is_a_gap_and_order_is_the_asked_one,
+        test_fields_of_the_screen_are_a_subset_of_the_fold,
+        test_parallel_fold_equals_single_threaded,
+        test_cli_runs_the_whole_road,
+        test_report_names_the_days_the_store_is_missing,
+        test_report_separates_full_days_from_stumps_and_names_recording_gaps,
+        test_density_catches_thinning_that_coverage_cannot,
+        test_hour_grid_is_the_control_that_same_day_hours_are_not,
+        test_even_base_uses_a_true_median_not_the_upper_middle,
+        test_flow_tells_market_from_our_load_one_way,
+        test_publish_is_part_of_the_run,
+    )
+    for t in tests:
+        t()
     print()
     if FAILED:
         print(f"ПРОВАЛЕНО: {len(FAILED)} — {', '.join(FAILED)}")
         return 1
-    print("все проверки прошли (13 блоков)")
+    # Число блоков СЧИТАЕТСЯ, а не пишется литералом: прежняя строка
+    # печатала «13» и до добавления двух проверок, и после — то есть
+    # прогон выглядел прежним при изменившемся составе.
+    print(f"все проверки прошли ({len(tests)} блоков)")
     return 0
 
 

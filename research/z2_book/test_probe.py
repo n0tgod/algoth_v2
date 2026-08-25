@@ -34,8 +34,14 @@ def check(name, cond, extra=""):
 
 
 def write_rec(root, syms, days, hours=(10, 11), per_min=4, seed=1,
-              event_rows=(), event_edge=0.004):
-    """Записать поддельную запись ровно в том виде, что пишет сборщик."""
+              event_rows=(), event_edge=0.004, trades_per_min=None):
+    """Записать поддельную запись ровно в том виде, что пишет сборщик.
+
+    `trades_per_min` расцепляет ленту со снимками: у живого сборщика это
+    разные потоки, и просевшая плотность снимков при выросшей ленте —
+    признак рынка, а не нашей нагрузки. Умолчание `None` оставляет
+    прежнее поведение (принт на снимок) бит в бит.
+    """
     rng = np.random.default_rng(seed)
     for day in days:
         d0 = int(datetime.strptime(day, "%Y-%m-%d")
@@ -84,6 +90,17 @@ def write_rec(root, syms, days, hours=(10, 11), per_min=4, seed=1,
                              "side": 1 if k % 2 else -1,
                              "p": round(px, 6), "v": 1.0},
                             separators=(",", ":")))
+                if trades_per_min is not None:
+                    tl = []
+                    for m in range(60):
+                        for j in range(trades_per_min):
+                            t = (d0 + h * 3600 + m * 60
+                                 + j * (60 // trades_per_min))
+                            tl.append(json.dumps(
+                                {"ts": int(t * 1000), "s": sym,
+                                 "side": 1 if j % 2 else -1,
+                                 "p": round(px, 6), "v": 1.0},
+                                separators=(",", ":")))
                 with open(os.path.join(bd, hour + ".jsonl"), "w",
                           encoding="utf-8") as f:
                     f.write("\n".join(bl) + "\n")

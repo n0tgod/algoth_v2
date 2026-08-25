@@ -394,8 +394,25 @@ HOURS_BACK = 7          # сколько последних суток пока�
 HOUR_DEV = 0.20         # отклонение часа от соседних суток, ниже которого молчим
 
 
-def hour_density(path, log=log_):
-    """Медиана снимков в минуте ПО ЧАСАМ суток.
+def _med(v):
+    """Медиана без дефекта `sorted(x)[n // 2]`.
+
+    На ЧЁТНОЙ длине тот индекс даёт верхнее из двух средних, то есть
+    завышенную базу. На живой сетке из шести суток это подняло планку и
+    объявило прорежением пять часов вместо двух. Ровно этот дефект уже
+    ловился однажды на живой странице (`Collector._median`) — и
+    повторился в свежем коде: записанный урок не защищает новый модуль
+    сам собой.
+    """
+    s = sorted(x for x in v if x is not None)
+    n = len(s)
+    if not n:
+        return None
+    return float(s[n // 2]) if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
+
+
+def hour_series(path, field="snaps", log=log_):
+    """Медиана поля ПО ЧАСАМ суток — по символам и минутам часа.
 
     Это и есть контроль, которого не даёт сравнение разных часов одного
     дня: проход сборщика зависит от потока обновлений книги, а тот
@@ -404,9 +421,9 @@ def hour_density(path, log=log_):
     """
     try:
         with np.load(path) as z:
-            a = z["snaps"]
+            a = z[field]
     except Exception as e:                                # noqa: BLE001
-        log(f"плотность по часам {path}: не прочиталась ({e})")
+        log(f"{field} по часам {path}: не прочиталась ({e})")
         return None
     out = []
     for h in range(24):
@@ -416,31 +433,66 @@ def hour_density(path, log=log_):
     return out
 
 
+def hour_density(path, log=log_):
+    """Снимков в минуте по часам — частный случай `hour_series`."""
+    return hour_series(path, "snaps", log=log)
+
+
+def hour_spread(rows):
+    """Размах ОДНОГО И ТОГО ЖЕ часа по суткам, в долях его медианы.
+
+    Калибровка самой меры: пока размах не измерен, порог `HOUR_DEV`
+    остаётся догадкой, и по сработавшему флагу нельзя сказать, что он
+    означает. Первая живая сетка дала 0.40 — то есть вдвое больше
+    порога, и список часов непуст даже в сутки без единого тяжёлого
+    прогона.
+    """
+    out = []
+    for h in range(24):
+        v = [r[h] for r in rows.values() if r[h] is not None]
+        m = _med(v)
+        if v and m:
+            out.append((max(v) - min(v)) / m)
+    return _med(out)
+
+
 def hour_table(store, days, back=HOURS_BACK, log=log_):
     """Сетка «сутки × час» за последние `back` суток плюс отклонения.
 
     Последние сутки сравниваются с МЕДИАНОЙ тех же часов у предыдущих —
     так тяжёлый счёт рядом со сбором отделяется от активности рынка.
+    Рядом с каждым отклонением едут диапазон тех же часов у соседей и
+    поток ленты: выросшая лента при упавших снимках означает рынок.
     """
     take = sorted(days)[-back:]
-    rows = {}
+    rows, flow = {}, {}
     for d in take:
-        got = hour_density(os.path.join(store, d + ".npz"), log=log)
+        p = os.path.join(store, d + ".npz")
+        got = hour_series(p, "snaps", log=log)
         if got:
             rows[d] = got
+            fl = hour_series(p, "trades", log=log)
+            if fl:
+                flow[d] = fl
     if len(rows) < 2:
         return rows, []
     last = sorted(rows)[-1]
-    prev = [rows[d] for d in sorted(rows)[:-1]]
+    prev = sorted(rows)[:-1]
     off = []
     for h in range(24):
-        base = [r[h] for r in prev if r[h] is not None]
+        base = [rows[d][h] for d in prev if rows[d][h] is not None]
         cur = rows[last][h]
         if not base or cur is None:
             continue
-        med = sorted(base)[len(base) // 2]
-        if med > 0 and cur < med * (1 - HOUR_DEV):
-            off.append((h, cur, med))
+        med = _med(base)
+        if not med or cur >= med * (1 - HOUR_DEV):
+            continue
+        fb = [flow[d][h] for d in prev
+              if d in flow and flow[d][h] is not None]
+        off.append({"h": h, "cur": cur, "med": med,
+                    "lo": min(base), "hi": max(base),
+                    "flow": flow.get(last, [None] * 24)[h],
+                    "flow_med": _med(fb)})
     return rows, off
 
 
@@ -550,14 +602,36 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
         for d in sorted(rows):
             L.append(f"| {d} | " + " | ".join(
                 "—" if x is None else f"{x:.0f}" for x in rows[d]) + " |\n")
+        sp = hour_spread(rows)
+        if sp:
+            L.append(f"\nРазмах ОДНОГО И ТОГО ЖЕ часа по разным суткам — "
+                     f"**{sp:.0%} его медианы**, то есть больше порога "
+                     f"{HOUR_DEV:.0%}, по которому ниже назван список часов. "
+                     "Значит список — диагностика, а не тревога: рынок "
+                     "двигает плотность сильнее порога сам, и на сутках без "
+                     "единого тяжёлого прогона список тоже непуст. Порог не "
+                     "трогаю (он объявлен до прогона) — рядом печатается "
+                     "измеренное, чтобы флаг читался тем, чем является.\n")
+
         if off:
-            L.append(f"\n**Последние сутки ({last}) реже соседних больше "
-                     f"чем на {HOUR_DEV:.0%} в часах:** "
-                     + ", ".join(f"{h:02d} ({c:.0f} против {m:.0f})"
-                                 for h, c, m in off) + ".\n")
-            L.append("\nЕсли в эти часы шёл тяжёлый счёт — это его цена, и "
-                     "она невосполнима: архива стакана нет нигде. Если не "
-                     "шёл — это рынок, и трогать нечего.\n")
+            def _one(o):
+                t = (f"{o['h']:02d} ({o['cur']:.0f} против {o['med']:.0f}, "
+                     f"у соседей {o['lo']:.0f}–{o['hi']:.0f}")
+                if o["flow"] is not None and o["flow_med"]:
+                    t += (f"; лента {o['flow']:.0f} против "
+                          f"{o['flow_med']:.0f}")
+                return t + ")"
+            L.append(f"\n**Последние сутки ({last}) реже медианы тех же "
+                     f"часов больше чем на {HOUR_DEV:.0%} в часах:** "
+                     + ", ".join(_one(o) for o in off) + ".\n")
+            L.append("\nЛента в скобках разделяет две причины, но только в "
+                     "одну сторону: **выросшая лента при упавших снимках "
+                     "означает рынок** — книга обновляется чаще, проход "
+                     "сборщика длиннее. Обратное доводом НЕ является: под "
+                     "нашей нагрузкой замедляется и запись ленты, поэтому "
+                     "обычная лента при упавших снимках нашей нагрузки не "
+                     "исключает. Если прорежение всё же наше — оно "
+                     "невосполнимо: архива стакана нет нигде.\n")
         else:
             L.append(f"\nПо часам последние сутки ({last}) от соседних не "
                      "отличаются: прорежения нет.\n")
