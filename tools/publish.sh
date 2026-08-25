@@ -25,7 +25,7 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 # «нечего публиковать» звучало одинаково для трёх разных случаев:
 # файлов нет, файлы гасит .gitignore, add сломался на пути. Отчёт
 # прогона при этом лежал на диске, а в ветке было пусто.
-if ! add_err="$(git add --ignore-removal research/*/out docs 2>&1)"; then
+if ! add_err="$(git add --ignore-removal research/*/out docs jobs 2>&1)"; then
     echo "git add отказал: $add_err"
 fi
 [ -n "${add_err:-}" ] && echo "git add сказал: $add_err"
