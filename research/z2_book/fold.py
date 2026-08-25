@@ -333,6 +333,53 @@ def write_manifest(store=None, log=log_):
     return man
 
 
+# Полные сутки и годный состав. Числа объявлены здесь, а не в тексте
+# отчёта: порог, живущий словом в прозе, однажды разойдётся с тем, по
+# которому считали.
+FULL_DAY = 0.95
+THIN_ROWS = 100
+
+
+def coverage(head):
+    """Доля заполненных символо-минут: полные ли это сутки.
+
+    Знаменатель — имена С ЗАПИСЬЮ, а не весь список сборщика: имя,
+    которого в те сутки не было, не есть пропуск наблюдения.
+    """
+    if not head or not head.get("rows"):
+        return None
+    return head["minutes"] / (head["rows"] * MIN_PER_DAY)
+
+
+def calendar_gaps(days):
+    """Календарные сутки внутри окна записи, которых в СЫРЬЕ нет вовсе."""
+    if len(days) < 2:
+        return []
+    a = datetime.strptime(days[0], "%Y-%m-%d")
+    b = datetime.strptime(days[-1], "%Y-%m-%d")
+    have = set(days)
+    out, cur = [], a
+    while cur <= b:
+        d = cur.strftime("%Y-%m-%d")
+        if d not in have:
+            out.append(d)
+        cur += timedelta(days=1)
+    return out
+
+
+def full_days(st):
+    """Сутки, годные к замеру: полные по времени И широкие по составу.
+
+    Два условия, а не одно: сутки могут быть полными по времени и
+    узкими по составу (ранние 25–30 имён), и тогда кросс-секции нет
+    вовсе — урок T1, где при четырёх символах медианный фон был 0–2
+    имени, а величины печатались и выглядели как результат.
+    """
+    return [d for d in sorted(st)
+            if (coverage(st[d]) or 0) >= FULL_DAY
+            and st[d].get("rows", 0) >= THIN_ROWS]
+
+
 def write_report(path=None, store=None, book=None, syms=None, log=log_):
     """Отчёт о состоянии склада — ФАЙЛОМ, который уезжает в git.
 
@@ -356,16 +403,38 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
              "равенство сырому счёту бит в бит закреплено тестом. Порог "
              "тонкой минуты здесь НЕ применён — он объявляется замером.\n")
     L.append("\n### Сутки склада\n\n")
-    L.append("| сутки | символов | с записью | символо-минут | МиБ |\n")
-    L.append("|---|--:|--:|--:|--:|\n")
+    L.append("| сутки | символов | с записью | символо-минут | покрытие | "
+             "МиБ |\n")
+    L.append("|---|--:|--:|--:|--:|--:|\n")
     for day in sorted(st):
         v = st[day]
+        cov = coverage(v)
         L.append(f"| {day} | {v['symbols']} | {v['rows']} | "
-                 f"{v['minutes']:,} | {v['bytes'] / 2**20:.1f} |\n")
+                 f"{v['minutes']:,} | "
+                 + ("—" if cov is None else f"{cov * 100:.0f} %")
+                 + f" | {v['bytes'] / 2**20:.1f} |\n")
     tot_min = sum(v["minutes"] for v in st.values())
     tot_b = sum(v["bytes"] for v in st.values())
-    L.append(f"| **итого** | | | **{tot_min:,}** | "
+    L.append(f"| **итого** | | | **{tot_min:,}** | | "
              f"**{tot_b / 2**20:.0f}** |\n")
+    L.append("\nПокрытие — символо-минуты против «имён с записью × 1440», "
+             "то есть ПОЛНЫЕ ли это сутки. Без него 491 тыс. минут выглядят "
+             "как много, а это две трети дня; замер, посчитанный по огрызку "
+             "суток вперемешку с полными, описывает не то, что подписано.\n")
+    part = [d for d in sorted(st) if (coverage(st[d]) or 0) < FULL_DAY]
+    thin = [d for d in sorted(st) if st[d]["rows"] < THIN_ROWS]
+    if part or thin:
+        L.append(f"\nНеполные сутки (покрытие ниже {FULL_DAY:.0%}): "
+                 + (", ".join(part) if part else "нет") + ". ")
+        L.append(f"Узкие по составу (имён с записью меньше {THIN_ROWS}): "
+                 + (", ".join(thin) if thin else "нет")
+                 + " — на таком составе кросс-секции нет вовсе (урок T1: "
+                 "при четырёх символах медианный фон 0–2 имени), и "
+                 "замер по этим суткам ничего не измеряет.\n")
+    ok_days = full_days(st)
+    if ok_days:
+        L.append(f"\n**Полных и широких суток {len(ok_days)}**, первые — "
+                 f"{ok_days[0]}.\n")
     L.append("\n### Догнал ли склад запись\n\n")
     L.append(f"Суток в сырье {len(have)}"
              + (f" ({have[0]}…{have[-1]})" if have else "")
@@ -379,12 +448,19 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
                  "`fold.py --jobs 2`.\n")
     else:
         L.append("\nСклад покрывает запись целиком.\n")
+    gaps = calendar_gaps(have)
+    if gaps:
+        L.append(f"\n**Дыры САМОЙ записи: {len(gaps)}** — "
+                 + ", ".join(gaps) + ". Этих суток нет в сырье вовсе "
+                 "(сборщик стоял), склад тут ни при чём и докачать их "
+                 "неоткуда: архива стакана не существует нигде.\n")
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write("".join(L))
     log(f"отчёт склада: {path}; не свёрнуто суток {len(missing)}")
     return {"path": path, "days": len(st), "missing": missing,
-            "minutes": tot_min, "bytes": tot_b}
+            "minutes": tot_min, "bytes": tot_b, "gaps": gaps,
+            "full": ok_days}
 
 
 def publish(msg):

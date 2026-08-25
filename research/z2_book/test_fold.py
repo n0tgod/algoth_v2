@@ -290,6 +290,67 @@ def test_report_names_the_days_the_store_is_missing():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_report_separates_full_days_from_stumps_and_names_recording_gaps():
+    """Покрытие и дыры записи — числами, а не арифметикой в уме.
+
+    Без покрытия 491 тыс. символо-минут выглядят как много, а это две
+    трети дня; замер по огрызку вперемешку с полными сутками описывает
+    не то, что подписано.
+    """
+    st = {
+        "2026-08-03": {"rows": 543, "minutes": 491_459, "bytes": 20 << 20,
+                       "symbols": 728, "version": F.FOLD_VERSION},
+        "2026-08-04": {"rows": 546, "minutes": 782_256, "bytes": 30 << 20,
+                       "symbols": 728, "version": F.FOLD_VERSION},
+        "2026-07-30": {"rows": 25, "minutes": 4_285, "bytes": 1 << 18,
+                       "symbols": 728, "version": F.FOLD_VERSION},
+        # Сутки ПОЛНЫЕ по времени и УЗКИЕ по составу: без отдельного
+        # условия на ширину они прошли бы как годные, а кросс-секции на
+        # тридцати именах нет (урок T1).
+        "2026-07-31": {"rows": 30, "minutes": 30 * 1440, "bytes": 1 << 20,
+                       "symbols": 728, "version": F.FOLD_VERSION},
+    }
+    check("покрытие полных суток около единицы",
+          abs(F.coverage(st["2026-08-04"]) - 0.995) < 0.01,
+          str(F.coverage(st["2026-08-04"])))
+    check("покрытие огрызка ловится",
+          abs(F.coverage(st["2026-08-03"]) - 0.629) < 0.01,
+          str(F.coverage(st["2026-08-03"])))
+    check("суток без строк с записью — не ноль, а пропуск",
+          F.coverage({"rows": 0, "minutes": 0}) is None)
+    check("дыра записи найдена",
+          F.calendar_gaps(["2026-08-01", "2026-08-03"]) == ["2026-08-02"],
+          str(F.calendar_gaps(["2026-08-01", "2026-08-03"])))
+    check("сплошной ряд дыр не имеет",
+          F.calendar_gaps(["2026-08-01", "2026-08-02"]) == [])
+    check("годны только полные И широкие сутки",
+          F.full_days(st) == ["2026-08-04"], str(F.full_days(st)))
+    check("полные, но узкие сутки годными не считаются",
+          abs(F.coverage(st["2026-07-31"]) - 1.0) < 1e-9
+          and "2026-07-31" not in F.full_days(st))
+
+    root, old = _setup(["2026-08-20", "2026-08-22"], ["AAAUSDT"])
+    try:
+        F.fold_day("2026-08-20", syms=["AAAUSDT"], log=lambda m: None,
+                   now=time.time() + 10 * 86400)
+        rep = F.write_report(syms=["AAAUSDT"], log=lambda m: None)
+        txt = open(rep["path"], encoding="utf-8").read()
+        check("дыра записи названа в отчёте",
+              rep["gaps"] == ["2026-08-21"] and "2026-08-21" in txt
+              and "Дыры САМОЙ записи" in txt, str(rep["gaps"]))
+        check("отчёт говорит, что докачать их неоткуда",
+              "неоткуда" in txt)
+        check("колонка покрытия есть", "покрытие" in txt, txt[:400])
+        # Наши сутки узки по составу (одно имя) — отчёт обязан это сказать,
+        # а не считать их годными.
+        check("узкие сутки не объявлены годными", not rep["full"],
+              str(rep["full"]))
+        check("узость названа словами", "Узкие по составу" in txt)
+    finally:
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_publish_is_part_of_the_run():
     """С ключом публикации нет, без ключа она ОБЯЗАНА случиться.
 
@@ -321,12 +382,13 @@ def main():
     test_parallel_fold_equals_single_threaded()
     test_cli_runs_the_whole_road()
     test_report_names_the_days_the_store_is_missing()
+    test_report_separates_full_days_from_stumps_and_names_recording_gaps()
     test_publish_is_part_of_the_run()
     print()
     if FAILED:
         print(f"ПРОВАЛЕНО: {len(FAILED)} — {', '.join(FAILED)}")
         return 1
-    print("все проверки прошли (10 блоков)")
+    print("все проверки прошли (11 блоков)")
     return 0
 
 
