@@ -6,3 +6,22 @@
   2026-08-24: свёрнуто, имён с записью 3 из 3, символо-минут 4,013, 0.1 МиБ, 36 с
 отчёт склада лесенки: /root/algoth_v2/research/z3_ladder/out/store/Z3-store.md; не свёрнуто суток 24
 конец: 2026-08-25T21:05:39Z, код 0
+git add отказал: The following paths are ignored by one of your .gitignore files:
+research/z3_ladder/out
+hint: Use -f if you really want to add them.
+hint: Turn this message off by running
+hint: "git config advice.addIgnoredFile false"
+git add сказал: The following paths are ignored by one of your .gitignore files:
+research/z3_ladder/out
+hint: Use -f if you really want to add them.
+hint: Turn this message off by running
+hint: "git config advice.addIgnoredFile false"
+публикуется в ветку main:
+ jobs/done/live-2.log     | 10 ++++++++++
+ jobs/done/z3-smoke2.done |  1 +
+ jobs/done/z3-smoke2.log  |  8 ++++++++
+ 3 files changed, 19 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   db5fe14..526c3eb  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
