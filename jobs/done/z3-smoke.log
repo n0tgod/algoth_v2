@@ -1,0 +1,4 @@
+== задание z3-smoke ==
+строка: run research/z3_ladder/fold_ladder.py --start 2026-08-24 --end 2026-08-24 --symbols ARBUSDT,SANDUSDT,STXUSDT --no-publish
+начало: 2026-08-25T20:40:02Z
+ОТКАЗ: недопустимый символ в аргументе: ARBUSDT,SANDUSDT,STXUSDT
