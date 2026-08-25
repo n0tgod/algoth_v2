@@ -62,15 +62,24 @@ def main():
     print(f"\n=== журнал: {len(rs)} записей ===")
     kinds = {}
     for r in rs:
-        kinds[r.get("kind") or r.get("ev") or "?"] = 1 + kinds.get(
-            r.get("kind") or r.get("ev") or "?", 0)
+        k = str(r.get("kind") or r.get("ev") or "?").lower()
+        kinds[k] = 1 + kinds.get(k, 0)
     print("состав:", kinds)
 
-    closes = [r for r in rs if (r.get("kind") or r.get("ev")) == "Close"]
+    # Вид записи сравнивается БЕЗ регистра: журнал пишет «close», а
+    # первая версия искала «Close» и честно печатала ноль закрытий —
+    # отказ, неотличимый от «сделок не было».
+    def kind(r):
+        return str(r.get("kind") or r.get("ev") or "").lower()
+
+    closes = [r for r in rs if kind(r) == "close"]
+    if closes:
+        print("\nполя записи закрытия:", sorted(closes[-1].keys()))
     print(f"\n=== последние {args.last} закрытий ===")
     tot = 0.0
     for r in closes[-args.last:]:
-        pnl = r.get("pnl_usd")
+        pnl = (r.get("pnl_usd") if r.get("pnl_usd") is not None
+               else r.get("pnl"))
         tot += float(pnl or 0)
         print(f"{when(r.get('at_ms'))}  {r.get('sym', '?'):14s} "
               f"{r.get('side', '?'):5s}  pnl {pnl}  "
@@ -82,7 +91,8 @@ def main():
     by_day = {}
     for r in closes:
         d = time.strftime("%m-%d", time.gmtime((r.get("at_ms") or 0) / 1000))
-        by_day[d] = round(by_day.get(d, 0.0) + float(r.get("pnl_usd") or 0), 2)
+        v = r.get("pnl_usd") if r.get("pnl_usd") is not None else r.get("pnl")
+        by_day[d] = round(by_day.get(d, 0.0) + float(v or 0), 2)
     print("\n=== по суткам ===")
     for d in sorted(by_day):
         print(f"{d}: {by_day[d]:+.2f} $")
