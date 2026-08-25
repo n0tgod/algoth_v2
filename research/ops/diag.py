@@ -86,6 +86,27 @@ def main():
         a = age(path)
         print(f"{name}: {'нет файла' if a is None else a}")
 
+    print("\n=== живое ядро: собрано ли из свежего кода ===", flush=True)
+    b = os.path.join(ROOT, "bot", "target", "release", "bot")
+    if os.path.exists(b):
+        built = time.time() - os.path.getmtime(b)
+        print(f"бинарник собран {round(built / 3600, 1)} ч назад")
+    else:
+        print("бинарника нет")
+    src = os.path.join(ROOT, "bot", "src", "live.rs")
+    try:
+        with open(src, encoding="utf-8") as f:
+            body = f.read()
+        # Метка цели уникальна на ПОСТАНОВКУ (починка дубля 110072):
+        # три поля вместо двух. Если в исходнике старая форма, дефект
+        # жив в коде; если новая, а на бирже дубль — старый бинарник.
+        print("в исходнике метка на постановку: "
+              + ("да" if 'tp-{}-{}-{}' in body else "НЕТ (старая форма)"))
+    except OSError as e:
+        print(f"исходник не прочитан: {e}")
+    print(run(["git", "log", "-1", "--format=%h %ad %s", "--date=short",
+               "--", "bot/src/live.rs"]))
+
     for name, path in LOGS:
         print(f"\n=== {name}: {path} ===", flush=True)
         print(tail(path, n))
