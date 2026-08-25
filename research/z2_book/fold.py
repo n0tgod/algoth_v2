@@ -82,6 +82,49 @@ MIN_PER_DAY = 1440
 # молча посчитать старыми числами хуже, чем посчитать медленно.
 FOLD_VERSION = 1
 
+# Реестр сворачивателей. Машинерия склада — обход суток, состояние с
+# диска, параллельность, отчёт, публикация — написана и работает, и
+# второй её копии не будет: этим в проекте дважды кончались `nulls.py` и
+# загрузчик funding. Новый склад регистрирует СВОЙ набор полей, свою
+# функцию суток символа и свой каталог, а всё остальное общее.
+FOLDERS = {}
+
+
+def register_folder(name, module, day_fn, fields, store, version=1,
+                    mins_field=None, band=None):
+    """Объявить сворачиватель. `mins_field` — поле, по которому
+    считаются годные символо-минуты: у книги это `mid_open`, у лесенки
+    своё, и подставлять чужое значило бы считать покрытие не тем."""
+    FOLDERS[name] = {"name": name, "module": module, "day_fn": day_fn,
+                     "fields": tuple(fields), "store": store,
+                     "version": version, "band": band,
+                     "mins": mins_field or fields[0]}
+    return FOLDERS[name]
+
+
+def folder(kind=None):
+    """Сворачиватель по имени; без имени — книжный, как было."""
+    return FOLDERS[kind or "book"]
+
+
+def folder_store(spec):
+    """Каталог склада разрешается В МОМЕНТ ВЫЗОВА, а не на импорте.
+
+    Реестр, запомнивший путь при регистрации, ломает и тесты, и всякую
+    подмену каталога: первая версия правки заморозила `STORE` и молча
+    писала мимо подменённого каталога. Поэтому у книжного склада путь
+    берётся из модуля, а у прочих — из их собственного, и оба через
+    вызываемое значение.
+    """
+    st = spec.get("store")
+    if st is None:
+        return STORE
+    return st() if callable(st) else st
+
+
+register_folder("book", "fold", "symbol_day", B.FOLD_FIELDS, None,
+                version=FOLD_VERSION, mins_field="mid_open", band=B.BAND)
+
 
 def log_(m):
     print(m, flush=True)
@@ -134,10 +177,11 @@ def symbol_day(sym, day, book=None, trades=None):
     return B.fold(snaps, trs, t0, MIN_PER_DAY)
 
 
-def _row(got):
+def _row(got, fields=None):
     """Словарь списков -> матрица (поле × минута) float32."""
-    A = np.full((len(B.FOLD_FIELDS), MIN_PER_DAY), np.nan, dtype=np.float32)
-    for i, f in enumerate(B.FOLD_FIELDS):
+    fields = fields or B.FOLD_FIELDS
+    A = np.full((len(fields), MIN_PER_DAY), np.nan, dtype=np.float32)
+    for i, f in enumerate(fields):
         v = got.get(f)
         if v is None:
             continue
@@ -148,45 +192,54 @@ def _row(got):
 _JOB = {}
 
 
-def _init(book, trades):
-    _JOB["book"], _JOB["trades"] = book, trades
+def _init(book, trades, kind=None):
+    _JOB["book"], _JOB["trades"], _JOB["kind"] = book, trades, kind
 
 
 def _one(arg):
     sym, day = arg
-    got = symbol_day(sym, day, book=_JOB.get("book"),
-                     trades=_JOB.get("trades"))
-    return sym, (None if got is None else _row(got))
+    spec = folder(_JOB.get("kind"))
+    if spec["name"] == "book":
+        day_fn = symbol_day
+    else:
+        import importlib
+        day_fn = getattr(importlib.import_module(spec["module"]),
+                         spec["day_fn"])
+    got = day_fn(sym, day, book=_JOB.get("book"),
+                 trades=_JOB.get("trades"))
+    return sym, (None if got is None else _row(got, spec["fields"]))
 
 
 def fold_day(day, syms=None, jobs=1, book=None, trades=None, store=None,
-             refold=False, log=log_, now=None):
+             refold=False, log=log_, now=None, kind=None):
     """Свернуть сутки на склад. Возвращает 'ok' / 'есть' / причину отказа."""
-    store = store or STORE
+    spec = folder(kind)
+    fields, ver = spec["fields"], spec["version"]
+    store = store or folder_store(spec)
     if not day_is_closed(day, now):
         log(f"  {day}: сутки не кончились — не сворачиваю")
         return "не кончились"
     path = os.path.join(store, day + ".npz")
     if os.path.exists(path) and not refold:
         head = _head(path)
-        if head and head["version"] == FOLD_VERSION:
+        if head and head["version"] == ver:
             return "есть"
         log(f"  {day}: на складе версия {head and head['version']}, "
-            f"пересворачиваю под {FOLD_VERSION}")
+            f"пересворачиваю под {ver}")
     syms = list(syms if syms is not None else symbols(book or BOOK))
     if not syms:
         log(f"  {day}: имён в записи нет")
         return "пусто"
     os.makedirs(store, exist_ok=True)
     n = len(syms)
-    A = np.full((len(B.FOLD_FIELDS), n, MIN_PER_DAY), np.nan,
-                dtype=np.float32)
+    A = np.full((len(fields), n, MIN_PER_DAY), np.nan, dtype=np.float32)
     t_start = time.time()
     done = have = 0
     if jobs and jobs > 1:
         import multiprocessing as mp
         with mp.Pool(jobs, initializer=_init,
-                     initargs=(book or BOOK, trades or TRADES)) as pool:
+                     initargs=(book or BOOK, trades or TRADES,
+                               spec["name"])) as pool:
             it = pool.imap_unordered(_one, [(s, day) for s in syms],
                                      chunksize=1)
             idx = {s: r for r, s in enumerate(syms)}
@@ -197,7 +250,7 @@ def fold_day(day, syms=None, jobs=1, book=None, trades=None, store=None,
                     have += 1
                 _progress(day, done, n, have, t_start, log)
     else:
-        _init(book or BOOK, trades or TRADES)
+        _init(book or BOOK, trades or TRADES, spec["name"])
         for r, sym in enumerate(syms):
             _, row = _one((sym, day))
             done += 1
@@ -205,10 +258,10 @@ def fold_day(day, syms=None, jobs=1, book=None, trades=None, store=None,
                 A[:, r, :] = row
                 have += 1
             _progress(day, done, n, have, t_start, log)
-    mins = int(np.isfinite(A[B.FOLD_FIELDS.index("mid_open")]).sum())
-    payload = {f: A[i] for i, f in enumerate(B.FOLD_FIELDS)}
+    mins = int(np.isfinite(A[fields.index(spec["mins"])]).sum())
+    payload = {f: A[i] for i, f in enumerate(fields)}
     payload["symbols"] = np.array(syms)
-    payload["version"] = np.array([FOLD_VERSION], dtype=np.int32)
+    payload["version"] = np.array([ver], dtype=np.int32)
     payload["rows"] = np.array([have], dtype=np.int32)
     payload["minutes"] = np.array([mins], dtype=np.int64)
     tmp = path + ".tmp.npz"

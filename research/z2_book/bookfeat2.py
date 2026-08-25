@@ -148,13 +148,25 @@ def snap_line_slow(line):
             min(rb, ra), bq, aq)
 
 
-def trade_line(line):
-    """Принт: момент, сторона агрессора, нотионал."""
+def trade_line_px(line):
+    """Принт: момент, сторона агрессора, ЦЕНА, размер.
+
+    Лесенке нужна цена принта: без неё нельзя сказать, объяснена ли
+    убыль уровня сделкой НА ЭТОЙ ЦЕНЕ. Нотиональная версия ниже зовёт
+    эту — второго разбора ленты не заводим, иначе они однажды
+    разойдутся, как уже расходились загрузчики funding.
+    """
     ts, _ = _num(line, '"ts":')
     side, _ = _num(line, '"side":')
     p, _ = _num(line, '"p":')
     v, _ = _num(line, '"v":')
-    return ts / 1000.0, int(side), p * v
+    return ts / 1000.0, int(side), p, v
+
+
+def trade_line(line):
+    """Принт: момент, сторона агрессора, нотионал."""
+    ts, side, p, v = trade_line_px(line)
+    return ts, side, p * v
 
 
 def minute_of(t, t0):
