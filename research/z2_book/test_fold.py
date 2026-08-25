@@ -173,6 +173,43 @@ def test_foreign_version_falls_back_loudly():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_store_version_is_asked_not_taken_from_the_book_constant():
+    """Версию склада сверяет ПАРАМЕТР, а не константа книжного склада.
+
+    Складов теперь два — книжный и ладдерный, — и версию каждый пишет
+    свою (`spec["version"]`). Читатель же сверял константу книжного, и
+    годность ладдерного склада держалась на совпадении чисел: подними
+    версию у одного, и годный склад ДРУГОГО объявился бы негодным —
+    молча, с откатом на чтение сырья, которого у лесенки нет вовсе.
+    """
+    days = ["2026-08-20"]
+    syms = ["AAAUSDT", "BBBUSDT"]
+    root, old = _setup(days, syms)
+    try:
+        F.fold_day(days[0], syms=syms, log=lambda m: None,
+                   now=time.time() + 10 * 86400)
+        mine = F.FOLD_VERSION                 # версия, КОТОРОЙ склад писан
+        said = []
+        F.FOLD_VERSION += 1                   # у соседнего склада уехала
+        try:
+            got = F.read_day(days[0], syms, fields=P.FIELDS,
+                             store=F.STORE, log=lambda m: None,
+                             version=mine)
+            bad = F.read_day(days[0], syms, fields=P.FIELDS,
+                             store=F.STORE, log=said.append,
+                             version=mine + 5)
+        finally:
+            F.FOLD_VERSION -= 1
+        check("свой склад читается своей версией",
+              got is not None and np.isfinite(got["mid_open"]).any())
+        check("чужая версия параметром отвергается", bad is None)
+        check("отказ по версии назван словами",
+              any("верси" in m for m in said), str(said))
+    finally:
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_symbol_absent_that_day_is_a_gap_and_order_is_the_asked_one():
     """Состав записи растёт по дням: чужое имя — строка пропусков."""
     days = ["2026-08-20"]
@@ -673,6 +710,7 @@ def main():
         test_state_is_read_from_disk_not_from_the_run,
         test_partial_day_is_not_taken_for_folded,
         test_foreign_version_falls_back_loudly,
+        test_store_version_is_asked_not_taken_from_the_book_constant,
         test_symbol_absent_that_day_is_a_gap_and_order_is_the_asked_one,
         test_fields_of_the_screen_are_a_subset_of_the_fold,
         test_parallel_fold_equals_single_threaded,

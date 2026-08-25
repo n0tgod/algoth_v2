@@ -381,23 +381,32 @@ def scan(store=None):
     return out
 
 
-def read_day(day, syms, fields=None, store=None, log=log_):
+def read_day(day, syms, fields=None, store=None, log=log_, version=None):
     """Матрицы «символ × минута» со склада, или None — читайте сырьё.
 
     Порядок строк — запрошенный, а не складской: состав записи растёт
     по дням, и склад каждых суток знает СВОИ имена. Имя, которого в тех
     сутках не было, остаётся строкой пропусков — это и есть правда.
+
+    Версия свёртки приходит ПАРАМЕТРОМ. Писала её всегда версия своего
+    сворачивателя (`spec["version"]`), а сверял читатель — константу
+    книжного склада; пока складов был один, это совпадало. Со вторым
+    складом (лесенка) совпадение стало случайным: подними версию у
+    одного — и годный склад ДРУГОГО объявится негодным, молча, с
+    откатом на чтение сырья, которого у лесенки нет вовсе. Умолчание
+    оставлено прежним, чтобы старые вызовы считали ровно то же.
     """
     path = os.path.join(store or STORE, day + ".npz")
     if not os.path.exists(path):
         return None
+    want = FOLD_VERSION if version is None else int(version)
     fields = tuple(fields or B.FOLD_FIELDS)
     try:
         with np.load(path) as z:
             ver = int(z["version"][0])
-            if ver != FOLD_VERSION:
+            if ver != want:
                 log(f"  склад {day}: версия свёртки {ver} при нужной "
-                    f"{FOLD_VERSION} — читаю сырьё")
+                    f"{want} — читаю сырьё")
                 return None
             names = [str(s) for s in z["symbols"]]
             idx = {s: i for i, s in enumerate(names)}
