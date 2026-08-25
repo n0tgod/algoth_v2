@@ -90,3 +90,13 @@ SUPERUSDT: цель исполнилась частично (153 по 0.11621), 
 == сигнал 1787691077 ==
 [2026-08-25T20:51:19Z] задание diag-2 запущено: research/ops/diag.py
 конец: 2026-08-25T20:51:19Z, код 0
+публикуется в ветку main:
+ jobs/done/diag-1.log  | 11 ++++++
+ jobs/done/diag-2.done |  1 +
+ jobs/done/diag-2.log  | 92 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log         |  3 ++
+ 4 files changed, 107 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   bc86316..27319ed  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
