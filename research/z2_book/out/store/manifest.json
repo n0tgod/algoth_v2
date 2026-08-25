@@ -1,0 +1,99 @@
+{
+ "band": "0.0025",
+ "days": {
+  "2026-07-30": {
+   "bytes": 297421,
+   "minutes": 4285,
+   "rows": 25,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-07-31": {
+   "bytes": 1132609,
+   "minutes": 21815,
+   "rows": 30,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-01": {
+   "bytes": 2603655,
+   "minutes": 44907,
+   "rows": 540,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-03": {
+   "bytes": 20863830,
+   "minutes": 491459,
+   "rows": 543,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-04": {
+   "bytes": 31789366,
+   "minutes": 782256,
+   "rows": 546,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-05": {
+   "bytes": 32188607,
+   "minutes": 788397,
+   "rows": 550,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-06": {
+   "bytes": 32694663,
+   "minutes": 792945,
+   "rows": 553,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-07": {
+   "bytes": 31871068,
+   "minutes": 776368,
+   "rows": 556,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-08": {
+   "bytes": 29454959,
+   "minutes": 730270,
+   "rows": 515,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-09": {
+   "bytes": 31203656,
+   "minutes": 741600,
+   "rows": 515,
+   "symbols": 728,
+   "version": 1
+  }
+ },
+ "fields": [
+  "mid_open",
+  "mid_close",
+  "mid_hi",
+  "mid_lo",
+  "spread",
+  "depth_b",
+  "depth_a",
+  "imb",
+  "reach",
+  "upd",
+  "path",
+  "path_quiet",
+  "buy",
+  "sell",
+  "trades",
+  "snaps",
+  "pull_bid",
+  "pull_ask"
+ ],
+ "total_bytes": 214099834,
+ "total_days": 10,
+ "total_minutes": 5174302,
+ "version": 1
+}
