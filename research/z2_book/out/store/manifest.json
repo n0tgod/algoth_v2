@@ -70,6 +70,111 @@
    "rows": 515,
    "symbols": 728,
    "version": 1
+  },
+  "2026-08-10": {
+   "bytes": 32071764,
+   "minutes": 744084,
+   "rows": 518,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-11": {
+   "bytes": 31303483,
+   "minutes": 747180,
+   "rows": 522,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-12": {
+   "bytes": 30696531,
+   "minutes": 753072,
+   "rows": 526,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-13": {
+   "bytes": 36042186,
+   "minutes": 910518,
+   "rows": 707,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-14": {
+   "bytes": 39643245,
+   "minutes": 1018960,
+   "rows": 713,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-15": {
+   "bytes": 36724369,
+   "minutes": 1026720,
+   "rows": 713,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-16": {
+   "bytes": 36364992,
+   "minutes": 1026720,
+   "rows": 713,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-17": {
+   "bytes": 39621385,
+   "minutes": 1026720,
+   "rows": 713,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-18": {
+   "bytes": 40151428,
+   "minutes": 1029323,
+   "rows": 716,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-19": {
+   "bytes": 42164957,
+   "minutes": 1031040,
+   "rows": 716,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-20": {
+   "bytes": 42763740,
+   "minutes": 1032088,
+   "rows": 724,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-21": {
+   "bytes": 44728202,
+   "minutes": 1041117,
+   "rows": 727,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-22": {
+   "bytes": 43338763,
+   "minutes": 1041825,
+   "rows": 725,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-23": {
+   "bytes": 41888026,
+   "minutes": 1036761,
+   "rows": 725,
+   "symbols": 728,
+   "version": 1
+  },
+  "2026-08-24": {
+   "bytes": 43993215,
+   "minutes": 1044000,
+   "rows": 725,
+   "symbols": 728,
+   "version": 1
   }
  },
  "fields": [
@@ -92,8 +197,8 @@
   "pull_bid",
   "pull_ask"
  ],
- "total_bytes": 214099834,
- "total_days": 10,
- "total_minutes": 5174302,
+ "total_bytes": 795596120,
+ "total_days": 25,
+ "total_minutes": 19684430,
  "version": 1
 }
