@@ -351,6 +351,47 @@ def test_report_separates_full_days_from_stumps_and_names_recording_gaps():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_density_catches_thinning_that_coverage_cannot():
+    """Прорежение видно плотностью и НЕ видно покрытием.
+
+    Проверяется и сама величина, и её ДОРОГА до строки отчёта: урок
+    `curve_dd` — формула считалась верно, а попадает ли она в таблицу,
+    не покрывал ни один тест, и владелец увидел колонку прочерков.
+    """
+    root = tempfile.mkdtemp()
+    old = (F.BOOK, F.TRADES, F.STORE, P.BOOK, P.TRADES, P.STORE)
+    F.BOOK = P.BOOK = os.path.join(root, "book")
+    F.TRADES = P.TRADES = os.path.join(root, "trades")
+    F.STORE = P.STORE = os.path.join(root, "store")
+    syms = ["AAAUSDT", "BBBUSDT"]
+    far = time.time() + 10 * 86400
+    try:
+        # Густые сутки и вдвое реже записанные — часы и имена те же.
+        write_rec(root, syms, ["2026-08-20"], per_min=6, seed=11)
+        write_rec(root, syms, ["2026-08-21"], per_min=3, seed=12)
+        for d in ("2026-08-20", "2026-08-21"):
+            F.fold_day(d, syms=syms, log=lambda m: None, now=far)
+        thick = F.density(os.path.join(F.STORE, "2026-08-20.npz"))
+        thin = F.density(os.path.join(F.STORE, "2026-08-21.npz"))
+        check("плотность густых суток", thick and abs(thick["med"] - 6) < 1e-6,
+              str(thick))
+        check("плотность редких суток", thin and abs(thin["med"] - 3) < 1e-6,
+              str(thin))
+        st = F.scan(F.STORE)
+        c1 = F.coverage(st["2026-08-20"])
+        c2 = F.coverage(st["2026-08-21"])
+        check("покрытие прорежения НЕ видит", abs(c1 - c2) < 1e-9,
+              f"{c1} против {c2}")
+        rep = F.write_report(syms=syms, log=lambda m: None)
+        txt = open(rep["path"], encoding="utf-8").read()
+        check("плотность доехала до строки отчёта",
+              "| 6.0 |" in txt and "| 3.0 |" in txt, txt[:900])
+        check("колонка названа", "снимков/мин" in txt)
+    finally:
+        (F.BOOK, F.TRADES, F.STORE, P.BOOK, P.TRADES, P.STORE) = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_publish_is_part_of_the_run():
     """С ключом публикации нет, без ключа она ОБЯЗАНА случиться.
 
@@ -383,12 +424,13 @@ def main():
     test_cli_runs_the_whole_road()
     test_report_names_the_days_the_store_is_missing()
     test_report_separates_full_days_from_stumps_and_names_recording_gaps()
+    test_density_catches_thinning_that_coverage_cannot()
     test_publish_is_part_of_the_run()
     print()
     if FAILED:
         print(f"ПРОВАЛЕНО: {len(FAILED)} — {', '.join(FAILED)}")
         return 1
-    print("все проверки прошли (11 блоков)")
+    print("все проверки прошли (12 блоков)")
     return 0
 
 

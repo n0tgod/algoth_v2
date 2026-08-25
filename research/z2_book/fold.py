@@ -367,6 +367,29 @@ def calendar_gaps(days):
     return out
 
 
+def density(path, log=log_):
+    """Медиана снимков в минуте за сутки — ПРЯМАЯ мера прорежения записи.
+
+    Покрытие на неё слепо по построению: минута с одним снимком и
+    минута с шестьюдесятью дают одну и ту же заполненную ячейку, и
+    сутки, записанные вдвое реже, показывают те же 100 %. Плотность —
+    единственное, что различает «запись есть» и «запись густа», а на
+    ней стоит вся ось задержек гипотезы 7.
+
+    Читается ОДНО поле склада (`snaps`), а не все восемнадцать.
+    """
+    try:
+        with np.load(path) as z:
+            a = z["snaps"]
+    except Exception as e:                                # noqa: BLE001
+        log(f"плотность {path}: не прочиталась ({e})")
+        return None
+    v = a[np.isfinite(a)]
+    if not v.size:
+        return None
+    return {"med": float(np.median(v)), "p10": float(np.percentile(v, 10))}
+
+
 def full_days(st):
     """Сутки, годные к замеру: полные по времени И широкие по составу.
 
@@ -404,14 +427,18 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
              "тонкой минуты здесь НЕ применён — он объявляется замером.\n")
     L.append("\n### Сутки склада\n\n")
     L.append("| сутки | символов | с записью | символо-минут | покрытие | "
-             "МиБ |\n")
-    L.append("|---|--:|--:|--:|--:|--:|\n")
+             "снимков/мин | МиБ |\n")
+    L.append("|---|--:|--:|--:|--:|--:|--:|\n")
+    dens = {}
     for day in sorted(st):
         v = st[day]
         cov = coverage(v)
+        d = density(os.path.join(store, day + ".npz"), log=lambda m: None)
+        dens[day] = d
         L.append(f"| {day} | {v['symbols']} | {v['rows']} | "
                  f"{v['minutes']:,} | "
                  + ("—" if cov is None else f"{cov * 100:.0f} %")
+                 + " | " + ("—" if d is None else f"{d['med']:.1f}")
                  + f" | {v['bytes'] / 2**20:.1f} |\n")
     tot_min = sum(v["minutes"] for v in st.values())
     tot_b = sum(v["bytes"] for v in st.values())
@@ -421,6 +448,25 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
              "то есть ПОЛНЫЕ ли это сутки. Без него 491 тыс. минут выглядят "
              "как много, а это две трети дня; замер, посчитанный по огрызку "
              "суток вперемешку с полными, описывает не то, что подписано.\n")
+    L.append("\n**Снимков в минуте — плотность, и покрытие на неё слепо.** "
+             "Минута с одним снимком и минута с шестьюдесятью дают одну и ту "
+             "же заполненную ячейку, поэтому сутки, записанные вдвое реже, "
+             "показывают те же 100 % покрытия. На плотности стоит вся ось "
+             "задержек гипотезы 7: раз в секунду — это ~60 снимков в минуте, "
+             "и просевшая колонка означает, что секундные задержки в те "
+             "сутки записью НЕ разрешаются. Сравнивать сутки с соседними "
+             "сутками, а не с ожиданием: это и есть контроль, которого не "
+             "даёт сравнение разных часов одного дня.\n")
+    live = [d for d in sorted(dens) if dens[d]]
+    if len(live) >= 3:
+        med = sorted(dens[d]["med"] for d in live)[len(live) // 2]
+        low = [d for d in live if dens[d]["med"] < 0.8 * med]
+        L.append(f"\nМедиана плотности по суткам склада — {med:.1f} "
+                 "снимка в минуте. "
+                 + (f"Заметно реже (ниже 80 % от неё): "
+                    + ", ".join(f"{d} ({dens[d]['med']:.1f})" for d in low)
+                    + ".\n" if low
+                    else "Суток, записанных заметно реже, нет.\n"))
     part = [d for d in sorted(st) if (coverage(st[d]) or 0) < FULL_DAY]
     thin = [d for d in sorted(st) if st[d]["rows"] < THIN_ROWS]
     if part or thin:
