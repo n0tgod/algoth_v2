@@ -167,6 +167,66 @@ def test_sweep_is_notional_per_basis_point():
           and out["sweep"] > 0, str(out["sweep"]))
 
 
+def test_fast_merge_equals_the_reference_bit_for_bit():
+    """Быстрый путь обязан совпасть с образцовым БИТ В БИТ.
+
+    Ускорение, меняющее числа, есть другая мера — правило, которым
+    закреплены и лёгкий разбор Z2, и пачки матрицы запретов в D1.
+    Проверяется на случайных лесенках с дырами, нулями и сделками, на
+    обеих сторонах книги.
+    """
+    import random
+    rng = random.Random(7)
+    bad = 0
+    for _ in range(400):
+        n = rng.randint(1, 30)
+        base = round(rng.uniform(0.5, 200.0), 2)
+        tick = round(base * 1e-4, 6) or 1e-6
+        desc = rng.random() < 0.5
+        prices = [round(base + tick * k, 6) for k in range(n)]
+        if desc:
+            prices.reverse()
+        prev, cur, traded = [], [], {}
+        for p in prices:
+            if rng.random() < 0.85:
+                prev.append([p, round(rng.uniform(0, 5), 3)])
+            if rng.random() < 0.85:
+                cur.append([p, round(rng.choice((0.0, rng.uniform(0, 5))),
+                                     3)])
+            if rng.random() < 0.3:
+                traded[p] = round(rng.uniform(0, 3), 3)
+        f = LD.side_flows(prev, cur, traded)
+        g = LD.side_flows_slow(prev, cur, traded)
+        if f != g:
+            bad += 1
+            if bad == 1:
+                print(f"     расхождение: {f} против {g}")
+    check("быстрый путь совпал с образцовым на 400 лесенках", bad == 0,
+          f"расхождений {bad}")
+
+
+def test_unsorted_ladder_falls_back_instead_of_zeroing():
+    """Перемешанная лесенка считается ОБРАЗЦОВЫМ путём, а не обнуляется.
+
+    Слияние на неотсортированном списке не сломалось бы — оно просто не
+    нашло бы пересечения, и мера обнулилась бы молча. Это худший исход
+    из возможных: ноль читался бы как «уровни ушли за край».
+    """
+    prev = [[100.0, 5.0], [99.0, 4.0], [98.0, 3.0], [97.0, 2.0]]
+    cur = [[100.0, 1.0], [99.0, 4.0], [98.0, 3.0], [97.0, 2.0]]
+    good = LD.side_flows(prev, cur, {})
+    mixed_prev = [prev[2], prev[0], prev[3], prev[1]]
+    mixed_cur = [cur[1], cur[3], cur[0], cur[2]]
+    got = LD.side_flows(mixed_prev, mixed_cur, {})
+    ref = LD.side_flows_slow(mixed_prev, mixed_cur, {})
+    check("перемешанная лесенка не дала молчаливого нуля",
+          got["vis"] > 0, str(got))
+    check("перемешанная посчитана образцовым путём", got == ref,
+          f"{got} против {ref}")
+    check("и совпала с той же лесенкой в порядке", got == good,
+          f"{got} против {good}")
+
+
 def main():
     tests = (
         test_price_leaving_the_visible_ladder_is_not_a_cancel,
@@ -177,6 +237,8 @@ def main():
         test_aggressor_side_eats_the_right_book,
         test_minute_is_a_gap_when_pairs_are_few,
         test_sweep_is_notional_per_basis_point,
+        test_fast_merge_equals_the_reference_bit_for_bit,
+        test_unsorted_ladder_falls_back_instead_of_zeroing,
     )
     for t in tests:
         t()
