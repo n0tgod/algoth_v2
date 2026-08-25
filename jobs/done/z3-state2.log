@@ -3,3 +3,15 @@
 начало: 2026-08-25T21:31:05Z
 запускаю: .venv/bin/python research/z3_ladder/fold_ladder.py --restat
 отчёт склада лесенки: /root/algoth_v2/research/z3_ladder/out/store/Z3-store.md; не свёрнуто суток 24
+публикуется в ветку main:
+ jobs/done/z3-state.log                   | 17 +++++++++++++++++
+ jobs/done/z3-state2.done                 |  1 +
+ jobs/done/z3-state2.log                  |  5 +++++
+ jobs/poke.log                            |  3 +++
+ research/z3_ladder/out/store/Z3-store.md | 16 ++++++++++++++++
+ 5 files changed, 42 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   fc20d72..3be3494  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-25T21:31:07Z, код 0
