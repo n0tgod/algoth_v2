@@ -56,6 +56,15 @@ import re
 # (`reach`) едет рядом числом, чтобы вырождение было видно.
 BAND = "0.0025"
 
+# Состав свёртки и его ПОРЯДОК. Одно определение на всех: минутный
+# склад хранит поля этим порядком, скрин берёт из него своё
+# подмножество. Второй список полей разошёлся бы со складом молча —
+# матрица просто описывала бы не то, что подписано.
+FOLD_FIELDS = ("mid_open", "mid_close", "mid_hi", "mid_lo", "spread",
+               "depth_b", "depth_a", "imb", "reach", "upd", "path",
+               "path_quiet", "buy", "sell", "trades", "snaps",
+               "pull_bid", "pull_ask")
+
 
 def _num(line, key, start=0):
     """Число по ключу в кавычках. Быстрее json.loads в разы.
@@ -165,11 +174,7 @@ def fold(snaps, trades, t0, n_min):
     что объяснено сделками, а суммы сделок известны только после
     второго прохода. Считать их в одном значило бы вычитать нули.
     """
-    keys = ("mid_open", "mid_close", "mid_hi", "mid_lo", "spread",
-            "depth_b", "depth_a", "imb", "reach", "upd", "path",
-            "path_quiet", "buy", "sell", "trades", "snaps",
-            "pull_bid", "pull_ask")
-    out = {k: [None] * n_min for k in keys}
+    out = {k: [None] * n_min for k in FOLD_FIELDS}
     tr_sec = {}
     for ts, side, notional in trades:
         a = tr_sec.setdefault(int(ts), [0.0, 0.0])

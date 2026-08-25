@@ -57,12 +57,16 @@ sys.path.insert(0, os.path.join(RESEARCH, "z1_screen"))
 sys.path.insert(0, os.path.join(RESEARCH, "b1_book"))
 
 import bookfeat2 as B                                     # noqa: E402
+import fold as F                                          # noqa: E402
 import screen as Z                                        # noqa: E402
-from store import read_hour                               # noqa: E402
 
-BOOK = os.path.join(RESEARCH, "b1_book", "out", "book")
-TRADES = os.path.join(RESEARCH, "b1_book", "out", "trades")
-MIN_PER_DAY = 1440
+# Пути, склад и свёртка живут в `fold`, здесь только имена для вызова:
+# тесты подменяют их, поэтому они передаются в свёртку аргументом, а не
+# читаются ею из своего модуля.
+BOOK = F.BOOK
+TRADES = F.TRADES
+STORE = F.STORE
+MIN_PER_DAY = F.MIN_PER_DAY
 HORIZONS = (1, 5, 15, 60)         # минуты
 MIN_SNAPS = 30                    # снимков в минуте, иначе минута — пропуск
 NORM_MIN_MIN = 600                # минут вчерашней истории для нормы
@@ -80,34 +84,14 @@ def symbols(root=BOOK):
         return []
 
 
-def hours_of_day(day):
-    d = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    return [(d + timedelta(hours=h)).strftime("%Y-%m-%d-%H")
-            for h in range(24)], int(d.timestamp())
-
-
 def symbol_day(sym, day, log=log_):
     """Минутные признаки одного символа за сутки. Пропуск — это None."""
-    hours, t0 = hours_of_day(day)
-    snaps, trades = [], []
-    for h in hours:
-        try:
-            snaps += read_hour(os.path.join(BOOK, sym), h,
-                               parse=B.snap_line)
-        except Exception:                                 # noqa: BLE001
-            pass
-        try:
-            trades += read_hour(os.path.join(TRADES, sym), h,
-                                parse=B.trade_line)
-        except Exception:                                 # noqa: BLE001
-            pass
-    if not snaps:
-        return None
-    snaps.sort(key=lambda r: r[0])
-    trades.sort(key=lambda r: r[0])
-    return B.fold(snaps, trades, t0, MIN_PER_DAY)
+    return F.symbol_day(sym, day, book=BOOK, trades=TRADES)
 
 
+# Из восемнадцати полей свёртки скрину нужны пятнадцать. Список —
+# подмножество `B.FOLD_FIELDS` и проверяется тестом: поле, которого нет
+# в свёртке, дало бы матрицу пропусков, ничем себя не выдав.
 FIELDS = ("mid_open", "spread", "depth_b", "depth_a", "imb", "reach",
           "upd", "path", "path_quiet", "buy", "sell", "trades",
           "snaps", "pull_bid", "pull_ask")
@@ -116,7 +100,7 @@ FIELDS = ("mid_open", "spread", "depth_b", "depth_a", "imb", "reach",
 PROGRESS_EVERY = 50               # символов между строками прогресса
 
 
-def day_matrices(syms, day, log=log_):
+def day_matrices(syms, day, log=log_, use_store=True):
     """Матрицы «символ × минута» за сутки плюс ширина записи числом.
 
     Прогресс печатается через каждые `PROGRESS_EVERY` имён. Правило
@@ -125,10 +109,31 @@ def day_matrices(syms, day, log=log_):
     дольше. Первый прогон Z2 молчал шестнадцать минут, и снаружи было
     не сказать, работает он или встал.
     """
+    M = None
+    if use_store:
+        M = F.read_day(day, syms, fields=FIELDS, store=STORE, log=log)
+    src = "склад"
+    if M is None:
+        src = "сырьё"
+        M = _raw_matrices(syms, day, log=log)
+    # Минута с редкими снимками — не наблюдение: у неё и путь, и
+    # медианы стоят на двух-трёх точках. Порог объявлен до прогона и
+    # живёт ЗДЕСЬ, а не на складе: смена порога не должна требовать
+    # пересвёртки, поэтому склад хранит `snaps`, а маску кладёт замер.
+    have = int(np.isfinite(M["snaps"]).any(axis=1).sum())
+    thin = M["snaps"] < MIN_SNAPS
+    for f in FIELDS:
+        M[f][thin] = np.nan
+    log(f"  {day} ({src}): имён с записью {have} из {len(syms)}, "
+        f"годных символо-минут {int(np.isfinite(M['mid_open']).sum()):,}")
+    return M, have
+
+
+def _raw_matrices(syms, day, log=log_):
+    """Тот же день, собранный чтением СЫРЬЯ. Запасной путь склада."""
     import time as _t
     M = {f: np.full((len(syms), MIN_PER_DAY), np.nan, dtype=np.float32)
          for f in FIELDS}
-    have = 0
     t0 = _t.time()
     for r, sym in enumerate(syms):
         if r and r % PROGRESS_EVERY == 0:
@@ -138,20 +143,12 @@ def day_matrices(syms, day, log=log_):
         got = symbol_day(sym, day)
         if got is None:
             continue
-        have += 1
         for f in FIELDS:
             v = got.get(f)
             if v is None:
                 continue
             M[f][r] = [np.nan if x is None else x for x in v]
-    # Минута с редкими снимками — не наблюдение: у неё и путь, и
-    # медианы стоят на двух-трёх точках. Порог объявлен до прогона.
-    thin = M["snaps"] < MIN_SNAPS
-    for f in FIELDS:
-        M[f][thin] = np.nan
-    log(f"  {day}: имён с записью {have} из {len(syms)}, "
-        f"годных символо-минут {int(np.isfinite(M['mid_open']).sum()):,}")
-    return M, have
+    return M
 
 
 def norms(prev):
@@ -312,6 +309,13 @@ def write_report(path, cells, null, drift, meta):
              f"({meta['first']}…{meta['last']}) · условий "
              f"{len(CONDITIONS)} · ячеек {len(cells)} · перестановок "
              f"{null['perms']}\n")
+    st = meta.get("store") or {}
+    if st:
+        L.append(f"\nЧитано со склада суток {st.get('used', 0)} из "
+                 f"{st.get('days', 0)}"
+                 + (" (склад выключен ключом)" if st.get("off") else "")
+                 + "; минутный склад — свёртка сырья, а не другая "
+                 "мера: равенство закреплено тестом.\n")
     L.append("\n**Что здесь меряется и почему этого нет в Z1.** Свечи "
              "показывают состоявшееся, лента — исполненное. Снятая "
              "заявка не оставляет следа ни там, ни там. Записанная "
@@ -398,6 +402,20 @@ def days_between(start, end):
     return out
 
 
+def store_note(days, args):
+    """Откуда читались сутки — со склада или из сырья.
+
+    Считается ОБХОДОМ склада, а не памятью прогона: отчёт обязан
+    описывать тот прогон, который породил файл, а «читал ли я склад»
+    есть факт о диске.
+    """
+    if args.no_store:
+        return {"used": 0, "days": len(days), "off": True}
+    st = F.scan(STORE)
+    return {"used": sum(1 for d in days if d in st),
+            "days": len(days), "off": False}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="скрин по записи стакана")
     ap.add_argument("--start", default="")
@@ -405,6 +423,8 @@ def main(argv=None):
     ap.add_argument("--symbols", default="")
     ap.add_argument("--tag", default="1m")
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--no-store", action="store_true",
+                    help="читать сырьё, минуя минутный склад")
     args = ap.parse_args(argv)
     os.makedirs(OUT, exist_ok=True)
     syms = [s for s in args.symbols.split(",") if s] or symbols()
@@ -422,7 +442,7 @@ def main(argv=None):
     acc, rng = {}, np.random.default_rng(Z.SEED)
     prev, width = None, []
     for day in days:
-        M, have = day_matrices(syms, day)
+        M, have = day_matrices(syms, day, use_store=not args.no_store)
         mins = int(np.isfinite(M["mid_open"]).sum())
         width.append((day, have, mins))
         N = norms(prev)
@@ -451,7 +471,7 @@ def main(argv=None):
                  {"when": datetime.now(timezone.utc)
                   .strftime("%Y-%m-%d %H:%M UTC"),
                   "days": len(days), "first": days[0], "last": days[-1],
-                  "width": width})
+                  "width": width, "store": store_note(days, args)})
     with open(os.path.join(OUT, f"z2-{args.tag}.json"), "w",
               encoding="utf-8") as f:
         json.dump({"cells": {f"{k[0]}|{k[1]}|{k[2]}": v

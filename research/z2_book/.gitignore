@@ -3,3 +3,6 @@ out/*-test.json
 out/*-drift.*
 out/*-wire.*
 out/run.log
+out/fold.log
+out/store/*.npz
+out/store/*.tmp*

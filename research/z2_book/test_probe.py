@@ -250,8 +250,8 @@ def test_norms_wiring_uses_the_previous_day():
                   event_edge=0.0)
         orig_dm, orig_norms = P.day_matrices, P.norms
 
-        def dm(sy, day, log=P.log_):
-            M, have = orig_dm(sy, day, log)
+        def dm(sy, day, log=P.log_, **kw):
+            M, have = orig_dm(sy, day, log, **kw)
             M["_day"] = day            # метка для проверки дороги
             return M, have
 
