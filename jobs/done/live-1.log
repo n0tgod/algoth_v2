@@ -16,3 +16,13 @@ bot/out/live/live_status.json: 0.0
 
 === по суткам ===
 конец: 2026-08-25T20:53:15Z, код 0
+публикуется в ветку main:
+ jobs/done/diag-2.log  | 10 ++++++++++
+ jobs/done/live-1.done |  1 +
+ jobs/done/live-1.log  | 18 ++++++++++++++++++
+ jobs/poke.log         |  3 +++
+ 4 files changed, 32 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   ef60b99..913ca8e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
