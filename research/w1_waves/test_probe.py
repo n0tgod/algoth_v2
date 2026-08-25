@@ -255,6 +255,16 @@ def test_path_ends_in_its_own_column():
           and float(got[1, -1]) == float(L[1, 12]))
     check("первый элемент отстоит на W",
           float(got[0, 0]) == float(L[0, 6]))
+    # Отрицательный индекс в numpy — не ошибка, а отсчёт с конца: путь,
+    # начинающийся раньше начала матрицы, склеился бы из ХВОСТА записи,
+    # то есть из будущего, и форма вышла бы настоящая, просто чужая.
+    try:
+        P.paths(L, np.array([0]), np.array([2]), 4)
+        check("путь за начало записи отвергается", False, "не упало")
+    except ValueError as e:
+        check("путь за начало записи отвергается", True)
+        check("отказ называет колонку и длину",
+              "2" in str(e) and "4" in str(e), str(e))
 
 
 def test_report_is_written_and_its_verdict_comes_from_the_numbers():

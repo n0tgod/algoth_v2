@@ -235,7 +235,19 @@ def excess_forward(L, h, min_cross=MIN_CROSS):
 
 
 def paths(L, rows, cols, W):
-    """Сырые пути `W+1` баров, кончающиеся в своей колонке."""
+    """Сырые пути `W+1` баров, кончающиеся в своей колонке.
+
+    Отрицательный индекс в numpy не ошибка, а отсчёт с конца: путь,
+    начинающийся раньше начала матрицы, молча склеился бы из ХВОСТА
+    записи, то есть из будущего. Ошибка была бы невидима — форма
+    получилась бы настоящая, просто чужая. Поэтому здесь громкий отказ,
+    а не обрезка: обрезка сдвинула бы состав выборки, ничего об этом не
+    сказав.
+    """
+    if len(cols) and int(np.min(cols)) < W:
+        raise ValueError(
+            f"путь длиной {W} просят с колонки {int(np.min(cols))} — "
+            "он ушёл бы за начало записи и склеился с её хвостом")
     off = np.arange(-W, 1, dtype=np.int64)[None, :]
     return L[rows[:, None], cols[:, None] + off]
 
@@ -348,6 +360,9 @@ def run_knn(L, times, symbols, rng, log=log_):
         if len(qcols) == 0:
             continue
         for w in WINDOWS:
+            qc = qcols[qcols >= w]
+            if len(qc) == 0:
+                continue
             pool = sample_pool(L, ok_cols, pool_lo, ja, w, rng)
             if pool is None:
                 continue
@@ -359,7 +374,7 @@ def run_knn(L, times, symbols, rng, log=log_):
                 continue
             pf = {h: fwd[h][pr, pc] for h in HORIZONS}
             t0 = time.time()
-            for j in qcols:
+            for j in qc:
                 rows = np.flatnonzero(np.isfinite(L[:, j]))
                 if len(rows) < MIN_CROSS:
                     continue
@@ -387,7 +402,7 @@ def run_knn(L, times, symbols, rng, log=log_):
                     section_stats(pred, act, rev, msim, acc, w, h)
                     p0 = _median_of(pf[h][ridx], len(rows), g)
                     section_stats(p0, act, rev, msim, acc0, w, h)
-            log(f"  {qa.date()} W={w}: сечений {len(qcols)}, пул "
+            log(f"  {qa.date()} W={w}: сечений {len(qc)}, пул "
                 f"{len(pr):,}, {time.time() - t0:.0f} с")
     return acc, acc0
 
