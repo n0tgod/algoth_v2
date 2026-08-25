@@ -1,0 +1,5 @@
+== задание z3-state ==
+строка: run research/z3_ladder/fold_ladder.py --restat
+начало: 2026-08-25T21:29:59Z
+запускаю: .venv/bin/python research/z3_ladder/fold_ladder.py --restat
+отчёт склада лесенки: /root/algoth_v2/research/z3_ladder/out/store/Z3-store.md; не свёрнуто суток 24
