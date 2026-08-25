@@ -57,6 +57,38 @@ def test_light_parse_matches_json():
           f"{got} против {want}")
 
 
+def test_fast_and_slow_parsers_agree():
+    """Быстрый разбор обязан совпасть с медленным и с `json.loads`.
+
+    Правило проекта: правка скорости не меняет чисел. Быстрый путь
+    читает края строки регексами (втрое дешевле), медленный ищет ключи
+    подряд — и разойтись им нельзя.
+    """
+    import random
+    rnd = random.Random(4)
+    for _ in range(50):
+        bid = round(rnd.uniform(0.0001, 90000), 6)
+        line = snap(rnd.uniform(1.7e9, 1.8e9), int(rnd.uniform(1.7e12, 1.8e12)),
+                    bid, bid * (1 + rnd.uniform(1e-5, 0.01)),
+                    bq=rnd.uniform(1, 1e6), aq=rnd.uniform(1, 1e6),
+                    upd=rnd.randint(0, 900))
+        fast, slow = B.snap_line(line), B.snap_line_slow(line)
+        if any(abs(a - b) > 1e-9 for a, b in zip(fast, slow)):
+            check("быстрый разбор совпал с медленным", False,
+                  f"{fast} против {slow}")
+            return
+    check("быстрый разбор совпал с медленным на полусотне строк", True)
+    # Строка прежнего образца (без части ключей) обязана уходить на
+    # медленный путь, а не давать выдуманные числа.
+    d = json.loads(snap(1700000000.0, 1700000000000, 100.0, 100.2))
+    d.pop("reach_a")
+    try:
+        B.snap_line(json.dumps(d, separators=(",", ":")))
+        check("строка без ключа отвергнута", False, "разбор вернул число")
+    except ValueError:
+        check("строка без ключа отвергнута, а не додумана", True)
+
+
 def test_observation_moment_is_the_later_of_two_stamps():
     """Метка `t` ставится ОДИН РАЗ на весь проход по символам.
 
@@ -144,6 +176,7 @@ def test_path_is_not_stitched_across_minutes():
 
 
 TESTS = [test_light_parse_matches_json,
+         test_fast_and_slow_parsers_agree,
          test_observation_moment_is_the_later_of_two_stamps,
          test_empty_minute_is_a_gap_not_zeros,
          test_quiet_path_counts_moves_without_trades,

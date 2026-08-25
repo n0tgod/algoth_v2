@@ -47,6 +47,7 @@ Z2 — признаки СОБСТВЕННОЙ записи стакана, св
 """
 
 import json
+import re
 
 # Полоса глубины, по которой считается выедание. Узкая (±0.05 %) у
 # плотных имён вырождается — у BTCUSDT все полсотни уровней помещались
@@ -74,7 +75,43 @@ def _num(line, key, start=0):
     return float(line[i:j]), j
 
 
+# Скаляры снимка лежат по КРАЯМ строки: `bid/ask/upd` в первой сотне
+# байт, `reach/bq/aq/t` — в последних двухстах, а между ними шесть
+# килобайт лесенки. Поиск каждого ключа от начала строки пробегал эту
+# лесенку одиннадцать раз и стоил 14.8 мкс; два регекса по краям стоят
+# 4.5 мкс, то есть втрое дешевле. Совпадение с прежним разбором и с
+# `json.loads` закреплено тестом: быстрый путь, разошедшийся с
+# медленным, — это другая мера, а не ускорение.
+_NUM = r"(-?[\d.eE+-]+)"
+_HEAD = re.compile(r'"ts":' + _NUM + r'.*?"bid":' + _NUM + r',"ask":' + _NUM
+                   + r',"bid_sz":' + _NUM + r',"ask_sz":' + _NUM
+                   + r',"upd":' + _NUM)
+_TAIL = re.compile(r'"reach_b":' + _NUM + r',"reach_a":' + _NUM
+                   + r'.*"bq' + BAND.replace(".", r"\.") + r'":' + _NUM
+                   + r',"aq' + BAND.replace(".", r"\.") + r'":' + _NUM
+                   + r'.*,"t":' + _NUM)
+HEAD_SPAN = 300                   # где заведомо кончаются ключи головы
+TAIL_SPAN = 400                   # где заведомо начинаются ключи хвоста
+
+
 def snap_line(line):
+    """Снимок: момент наблюдения и скаляры книги, разбор по краям."""
+    h = _HEAD.search(line, 0, HEAD_SPAN)
+    t = _TAIL.search(line, max(0, len(line) - TAIL_SPAN))
+    if h is None or t is None:
+        # Строка прежнего образца или обрезанная — не наблюдение с
+        # нулями, а пропуск: хранилище отбросит её наравне с битой.
+        return snap_line_slow(line)
+    ts, bid, ask, bsz, asz, upd = (float(x) for x in h.groups())
+    rb, ra, bq, aq, tt = (float(x) for x in t.groups())
+    mid = (bid + ask) / 2.0
+    if mid <= 0:
+        raise ValueError("нулевая середина")
+    return (max(tt, ts / 1000.0), mid, (ask - bid) / mid * 1e4, bsz, asz,
+            upd, min(rb, ra), bq, aq)
+
+
+def snap_line_slow(line):
     """Снимок: момент наблюдения и скаляры книги.
 
     Возвращает кортеж
