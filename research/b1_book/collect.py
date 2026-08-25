@@ -53,6 +53,7 @@ import argparse
 import gzip
 import json
 import os
+import subprocess
 import random
 import secrets
 import shutil
@@ -1269,6 +1270,45 @@ class Collector:
             signals.STRUCTURAL_STOP = keep
             self.rec["busy"] = False
             self.save_recount()
+
+    # Не чаще раза в это число секунд: сигнал открыт в сеть, и
+    # долбёжка им превратилась бы в непрерывный `git fetch` рядом с
+    # живым сбором. Отказ по частоте — не ошибка, а состояние.
+    POKE_MIN_GAP = 10.0
+
+    def jobs_poke(self):
+        """Немедленно посмотреть очередь заданий (`jobs/`).
+
+        Сторож ходит раз в пять минут, и владельцу это долго. Сигнал
+        сокращает ожидание до секунд, НЕ расширяя полномочий: он не
+        несёт ни команды, ни аргумента, а лишь запускает тот же
+        `tools/jobs.sh`, который зовёт сторож. Что позволено —
+        решает белый список внутри, задания приходят коммитом.
+        """
+        now = time.time()
+        last = getattr(self, "_poke_at", 0.0)
+        if now - last < self.POKE_MIN_GAP:
+            return {"ok": False, "why": "слишком часто",
+                    "retry_in": round(self.POKE_MIN_GAP - (now - last), 1)}
+        self._poke_at = now
+        root = os.path.dirname(os.path.dirname(HERE))
+        sh = os.path.join(root, "tools", "jobs.sh")
+        if not os.path.exists(sh):
+            return {"ok": False, "why": "очередь не развёрнута"}
+        try:
+            # Фоном: `jobs.sh` делает `git fetch`, а ответ странице
+            # нужен сразу. Вывод идёт в журнал очереди — сигнал не
+            # вправе становиться вторым местом, где живут результаты.
+            log = os.path.join(root, "jobs", "poke.log")
+            with open(log, "a", encoding="utf-8") as f:
+                f.write(f"\n== сигнал {int(now)} ==\n")
+                f.flush()
+                subprocess.Popen(["bash", sh], cwd=root, stdout=f,
+                                 stderr=subprocess.STDOUT,
+                                 start_new_session=True)
+        except OSError as e:
+            return {"ok": False, "why": f"не запустилось: {e}"}
+        return {"ok": True, "at": round(now, 1)}
 
     def bot_status(self):
         """Статус исполнительного ядра (Rust-тень) — из его файла.

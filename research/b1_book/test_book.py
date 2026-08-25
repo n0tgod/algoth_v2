@@ -5195,6 +5195,56 @@ def test_shadow_off_marker_is_a_state_not_an_alarm():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_jobs_poke_runs_queue_and_holds_rate():
+    """Сигнал очереди: запускает `tools/jobs.sh` и не даёт долбить.
+
+    Сигнал открыт в сеть, поэтому проверяется трижды: он ДЕЙСТВИТЕЛЬНО
+    зовёт очередь (иначе «мгновенно» окажется тишиной), он не несёт ни
+    команды, ни аргумента (полномочий не прибавляет), и частые вызовы
+    отвергаются состоянием, а не ошибкой — иначе один открытый порт
+    превратился бы в непрерывный `git fetch` рядом с живым сбором.
+    """
+    import tempfile
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    os.makedirs(os.path.join(root, "tools"))
+    os.makedirs(os.path.join(root, "jobs"))
+    mark = os.path.join(root, "jobs", "ran.txt")
+    with open(os.path.join(root, "tools", "jobs.sh"), "w",
+              encoding="utf-8") as f:
+        f.write("#!/bin/sh\necho ЗАПУЩЕНО >> '%s'\n" % mark)
+    os.chmod(os.path.join(root, "tools", "jobs.sh"), 0o755)
+
+    was = C.HERE
+    try:
+        # HERE указывает на research/b1_book — корень на два уровня выше.
+        C.HERE = os.path.join(root, "research", "b1_book")
+        c = C.Collector.__new__(C.Collector)
+        r1 = c.jobs_poke()
+        check("сигнал принят", r1.get("ok") is True, str(r1))
+        for _ in range(50):
+            if os.path.exists(mark):
+                break
+            time.sleep(0.05)
+        check("очередь действительно запущена", os.path.exists(mark))
+        r2 = c.jobs_poke()
+        check("частый повтор отвергается состоянием, а не ошибкой",
+              r2.get("ok") is False and "часто" in (r2.get("why") or ""),
+              str(r2))
+        check("сказано, когда можно снова",
+              isinstance(r2.get("retry_in"), (int, float)), str(r2))
+        # Развёрнутость очереди — состояние, а не поломка.
+        c2 = C.Collector.__new__(C.Collector)
+        C.HERE = os.path.join(tempfile.mkdtemp(), "research", "b1_book")
+        r3 = c2.jobs_poke()
+        check("без очереди сигнал честно отказывает",
+              r3.get("ok") is False and "развёрнут" in (r3.get("why") or ""),
+              str(r3))
+    finally:
+        C.HERE = was
+
+
 def test_run_live_refuses_to_archive_open_positions():
     """Журнал с открытыми позициями не отставляется молча — блоком скрипта.
 
@@ -5330,6 +5380,7 @@ def main():
     test_pages_do_not_shadow_platform_globals()
     test_pages_run_headless()
     test_shadow_off_marker_is_a_state_not_an_alarm()
+    test_jobs_poke_runs_queue_and_holds_rate()
     test_run_live_refuses_to_archive_open_positions()
     test_watchdog_respects_shadow_off_marker()
     test_trades_table_columns_line_up()

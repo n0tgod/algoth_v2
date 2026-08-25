@@ -7705,6 +7705,18 @@ def serve(collector, port, token, log):
                     collector.trades(q.get("sym", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
+            if u.path == "/jobs-poke":
+                # Звонок в дверь, а не пульт: сигнал НЕ несёт ни
+                # команды, ни аргумента — сервер лишь смотрит очередь
+                # заданий в git раньше, чем до неё дойдёт сторож.
+                # Что выполнять, решает `tools/jobs.sh` белым списком,
+                # а задания попадают в очередь коммитом. Поэтому даже
+                # утечка ключа страницы не даёт исполнения: она даёт
+                # право попросить сервер перечитать наш же git.
+                return self._ok(json.dumps(
+                    collector.jobs_poke(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
             if u.path == "/groups":
                 return self._ok(json.dumps(
                     {"groups": collector.groups},
