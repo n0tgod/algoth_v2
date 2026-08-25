@@ -58,8 +58,16 @@ def test_ladder_parse_matches_json_and_is_measured_on_live_lines():
         check("три разбора измерены числами",
               all(r[k] and r[k] > 0 for k in ("light", "json", "ladder")),
               str(r))
+        # Числа закреплены ЧИСЛОМ: два имени × 4 снимка в минуту × 60
+        # минут = 480 снимков, и плотность обязана выйти 4.0 на имя, а
+        # не 240 (первая версия делила на число ВЫБРАННЫХ имён и
+        # завышала её в 66 раз на живых данных).
         check("число снимков взято из склада, а не из допущения",
-              res["snaps"] == 2 * 4 * 60, str(res["snaps"]))
+              res["snaps"]["total"] == 2 * 4 * 60,
+              str(res["snaps"]))
+        check("плотность делится на символо-минуты склада",
+              abs(res["snaps"]["per_min"] - 4.0) < 1e-9,
+              str(res["snaps"]))
     finally:
         (F.BOOK, F.TRADES, F.STORE, BL.F.BOOK, BL.F.STORE) = old
         shutil.rmtree(root, ignore_errors=True)
@@ -81,6 +89,12 @@ def test_report_names_the_price_of_both_passes():
         check("сплошной проход назван",
               "Сплошной проход по лесенке" in txt and "ч на КАЖДЫЕ сутки"
               in txt, txt[:600])
+        # Вердикт обязан следовать ЧИСЛУ: у крошечной фикстуры проход
+        # заведомо дешёвый, и фраза «считать так нельзя» была бы
+        # утверждением вопреки собственному замеру.
+        check("вердикт следует числу, а не ожиданию",
+              "проход выполним" in txt and "нельзя" not in txt,
+              txt[txt.find("Сколько стоит"):][:500])
         # Строки таблицы считаются ЧИСЛОМ: заголовок стоит и у пустой
         # таблицы, и первый отрицательный контроль прошёл мимо ровно
         # поэтому — «блок есть» проходит на пустом блоке.
@@ -93,6 +107,24 @@ def test_report_names_the_price_of_both_passes():
               "лесенка/лёгкий" in txt, txt[:600])
         check("прочерк вместо нуля у неизмеренного",
               "0.0×" not in txt, txt[:600])
+    finally:
+        (F.BOOK, F.TRADES, F.STORE, BL.F.BOOK, BL.F.STORE) = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_heavy_pair_is_sampled_explicitly():
+    """BTC и ETH пишутся темой в 200 уровней — строка вчетверо тяжелее.
+
+    Ровный шаг по алфавиту их пропустил, и первый живой отчёт мерил
+    цену без самых дорогих строк. Выборка обязана брать их явно.
+    """
+    days = ["2026-08-20"]
+    syms = ["AAAUSDT", "BTCUSDT", "CCCUSDT", "DDDUSDT", "ETHUSDT"]
+    root, old = _setup(days, syms)
+    try:
+        got = BL.sample_lines(days[0], n_sym=2, log=lambda m: None)
+        check("тяжёлая пара в выборке есть",
+              "BTCUSDT" in got and "ETHUSDT" in got, str(sorted(got)))
     finally:
         (F.BOOK, F.TRADES, F.STORE, BL.F.BOOK, BL.F.STORE) = old
         shutil.rmtree(root, ignore_errors=True)
@@ -120,6 +152,7 @@ def main():
     tests = (
         test_ladder_parse_matches_json_and_is_measured_on_live_lines,
         test_report_names_the_price_of_both_passes,
+        test_heavy_pair_is_sampled_explicitly,
         test_publish_is_part_of_the_run,
     )
     for t in tests:
