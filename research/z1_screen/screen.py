@@ -234,8 +234,8 @@ def fwd_ret(P, h):
     return out
 
 
-def cross_median(F, cols, rows):
-    """Медиана одновременной кросс-секции с исключением своих событий.
+def cross_stat(F, cols, rows, how="median"):
+    """Одновременная кросс-секция с исключением своих событий.
 
     Считается только для минут, где события есть: у скрина сотни
     условий, и полная матрица масок была бы дороже самого замера.
@@ -256,7 +256,16 @@ def cross_median(F, cols, rows):
         mask[cr[start:end]] = False        # свои события вне сечения
         k = int(mask.sum())
         if k >= MIN_CROSS:
-            m = float(np.median(col[mask]))
+            # Медиана робастна и годится для ОБНАРУЖЕНИЯ сигнала, но
+            # она не портфель: хеджировать об статистику нельзя. У
+            # превышения над медианой есть структурный снос — на 240
+            # минутах +10.7 б.п. у любого лонга и −10.7 у любого шорта
+            # (замер Z1), потому что распределение доходностей скошено
+            # вправо и среднее сечения выше медианы. Для ТОРГУЕМОЙ
+            # величины контролем служит равновзвешенная корзина, то
+            # есть среднее.
+            m = float(np.median(col[mask]) if how == "median"
+                      else np.mean(col[mask]))
             med[order[start:end]] = m
             wide[order[start:end]] = k
         start = end
@@ -765,7 +774,8 @@ for _c in CONDITIONS:
     CONDS_BY_NAME.setdefault(_c["name"], []).append(_c)
 
 
-def measure(events, P, times, acc, rng, log=log_):
+def measure(events, P, times, acc, rng, log=log_,
+            conds_by_name=None, control="median"):
     """Превышение по ячейкам, свёрнутое ДО корзин прямо в месяце.
 
     Нуль переставляет, КАКОЙ символ сработал, оставляя минуту на месте:
@@ -787,10 +797,12 @@ def measure(events, P, times, acc, rng, log=log_):
             col = F[:, j]
             m = np.isfinite(col)
             if int(m.sum()) >= MIN_CROSS:
-                colmed[j] = float(np.median(col[m].astype(np.float64)))
+                v = col[m].astype(np.float64)
+                colmed[j] = float(np.median(v) if control == "median"
+                                  else np.mean(v))
         for name, (_, rows, cols) in events.items():
             f = F[rows, cols].astype(np.float64)
-            med, wide = cross_median(F, cols, rows)
+            med, wide = cross_stat(F, cols, rows, control)
             ep = times[cols] // (h * 60)     # корзина длиной в горизонт
             cnt = np.bincount(cols, minlength=P.shape[1]).astype(np.float64)
             share = cnt[cols] / fin_n[cols]
@@ -809,7 +821,7 @@ def measure(events, P, times, acc, rng, log=log_):
                                              size=int(bad.sum()))
                 draws[:, pi] = (F[pick, cols[sub]]
                                 - colmed[cols[sub]]).astype(np.float32)
-            for cond in CONDS_BY_NAME[name]:
+            for cond in (conds_by_name or CONDS_BY_NAME)[name]:
                 key = (name, cond["side"], h)
                 a = acc.setdefault(key, {"events": 0, "sum": 0.0, "n": 0,
                                          "cross": 0.0, "share": 0.0,

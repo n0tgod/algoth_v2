@@ -69,12 +69,12 @@ def test_cross_section_excludes_own_events_and_thins_out():
     F = np.full((60, 3), 0.01, dtype=np.float32)
     F[0, 1] = 0.50                        # наше событие — выброс
     rows = np.array([0]); cols = np.array([1])
-    med, wide = Z.cross_median(F, cols, rows)
+    med, wide = Z.cross_stat(F, cols, rows)
     check("своё событие не входит в свой же контроль",
           abs(float(med[0]) - 0.01) < 1e-9 and int(wide[0]) == 59,
           f"{med} {wide}")
     thin = np.full((4, 2), 0.01, dtype=np.float32)
-    med2, wide2 = Z.cross_median(thin, np.array([1]), np.array([0]))
+    med2, wide2 = Z.cross_stat(thin, np.array([1]), np.array([0]))
     check("узкое сечение — пропуск, а не число",
           not np.isfinite(med2[0]), str(med2))
 
