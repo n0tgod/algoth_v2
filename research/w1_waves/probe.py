@@ -505,6 +505,15 @@ def write_report(path, rows, zz, meta):
              f"{K} ближайших форм ИЗ ПРОШЛОГО (пул за год перед "
              "кварталом), их будущее — предсказание. Всё сверх "
              "одновременной равновзвешенной кросс-секции.\n")
+    if not rows:
+        # Пустая таблица без объяснения неотличима от сломанного счёта:
+        # колонка просадки в турнире однажды встала прочерками, и
+        # владелец справедливо спросил, что сломалось.
+        L.append("\n**Прочитка не считалась** — "
+                 + ("прогон запущен с ключом пропуска."
+                    if "knn" in meta.get("skipped", ())
+                    else "ни одной измеренной ячейки: сечений с "
+                         f"{MIN_CROSS}+ символами не набралось.") + "\n")
     L.append("\n| W, ч | h, ч | сечений | IC | IC нуля | IC возврата | "
              "IC остатка | спред дециля, б.п. | книга, б.п. |")
     L.append("|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
@@ -570,6 +579,13 @@ def write_report(path, rows, zz, meta):
              "видна не в вершине, а когда цена отошла на порог. "
              "Разметка, берущая вершину задним числом, заглядывает в "
              "будущее.\n")
+    if not zz:
+        L.append("\n**Прочитка не считалась** — "
+                 + ("прогон запущен с ключом пропуска."
+                    if "zigzag" in meta.get("skipped", ())
+                    else "ни у одного символа не набралось "
+                         f"{MIN_HOURS_ZZ // 24} суток истории и пяти ног.")
+                 + "\n")
     lv = list(W.FIB_LEVELS)
     L.append("\n| порог | символов | ног | задержка, ч | медиана ноги, "
              "б.п. | медиана отката | " + " | ".join(f"{f:.3f}"
@@ -658,7 +674,11 @@ def main(argv=None):
     L = load_prices(symbols, times, a.interval)
     rng = np.random.default_rng(SEED)
 
-    rows, zz = [], {}
+    rows, zz, skipped = [], {}, []
+    if a.skip_knn:
+        skipped.append("knn")
+    if a.skip_zigzag:
+        skipped.append("zigzag")
     if not a.skip_knn:
         log_("прочитка 1: повторяется ли форма…")
         acc, acc0 = run_knn(L, times, symbols, rng)
@@ -669,7 +689,8 @@ def main(argv=None):
 
     path = os.path.join(OUT, f"W1-waves-{a.tag}.md")
     meta = {"when": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-            "start": START, "end": END, "symbols": len(symbols)}
+            "start": START, "end": END, "symbols": len(symbols),
+            "skipped": tuple(skipped)}
     write_report(path, rows, zz, meta)
     with open(os.path.join(OUT, f"w1-{a.tag}.json"), "w",
               encoding="utf-8") as f:

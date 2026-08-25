@@ -292,6 +292,24 @@ def test_report_is_written_and_its_verdict_comes_from_the_numbers():
               "R5" in tr)
         check("все объявленные ячейки в таблице",
               tr.count("| 24 | 4 |") >= 2, str(tr.count("| 24 | 4 |")))
+        # Пустая таблица обязана объяснять СЕБЯ, и по-разному: пропуск
+        # по ключу и «не набралось» — разные состояния, а выглядят
+        # одинаково. Колонка просадки турнира встала прочерками именно
+        # так, и владелец справедливо спросил, что сломалось.
+        sk = open(P.write_report(os.path.join(d, "s.md"), [], {},
+                                 {"when": "т", "start": "a", "end": "b",
+                                  "symbols": 3,
+                                  "skipped": ("knn", "zigzag")}),
+                  encoding="utf-8").read()
+        check("пропуск по ключу назван пропуском по ключу",
+              sk.count("ключом пропуска") == 2, str(sk.count("ключом")))
+        no = open(P.write_report(os.path.join(d, "n.md"), [], {},
+                                 {"when": "т", "start": "a", "end": "b",
+                                  "symbols": 3, "skipped": ()}),
+                  encoding="utf-8").read()
+        check("несобравшаяся выборка названа несобравшейся",
+              "не набралось" in no and "ключом пропуска" not in no,
+              no[:200])
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
