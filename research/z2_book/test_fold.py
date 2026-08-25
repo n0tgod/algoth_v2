@@ -239,8 +239,14 @@ def test_cli_runs_the_whole_road():
         found = F.days_with_records(book=F.BOOK)
         check("сутки найдены по именам часовых файлов", found == days,
               str(found))
-        rc = F.main(["--symbols", ",".join(syms), "--jobs", "1"])
+        said = []
+        orig_pub, F.publish = F.publish, said.append
+        try:
+            rc = F.main(["--symbols", ",".join(syms), "--jobs", "1"])
+        finally:
+            F.publish = orig_pub
         check("прогон вернул ноль", rc == 0, str(rc))
+        check("прогон опубликовал состояние сам", len(said) == 1, str(said))
         man = os.path.join(F.STORE, "manifest.json")
         check("сводка склада написана", os.path.exists(man))
         with open(man, encoding="utf-8") as f:
@@ -249,11 +255,58 @@ def test_cli_runs_the_whole_road():
               str(got.get("total_days")))
         check("сводка несёт состав свёртки",
               got["fields"] == list(B.FOLD_FIELDS))
+        rep = os.path.join(F.STORE, "Z2-store.md")
+        check("отчёт склада написан", os.path.exists(rep))
+        txt = open(rep, encoding="utf-8").read() if os.path.exists(rep) else ""
+        check("отчёт называет обе свёрнутые сутки",
+              all(d in txt for d in days), txt[:200])
+        check("отчёт говорит, сколько НЕ свёрнуто",
+              "не свёрнуто 0" in txt, txt[-300:])
         # Скрин читает то, что склад написал.
         M, have = P.day_matrices(syms, days[0], log=lambda m: None)
         check("скрин прочитал склад", have == 2 and
               np.isfinite(M["mid_open"]).sum() > 100, f"имён {have}")
     finally:
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_report_names_the_days_the_store_is_missing():
+    """Главное число отчёта — сутки записи, которых на складе нет."""
+    days = ["2026-08-20", "2026-08-21"]
+    root, old = _setup(days, ["AAAUSDT"])
+    try:
+        F.fold_day(days[0], syms=["AAAUSDT"], log=lambda m: None,
+                   now=time.time() + 10 * 86400)
+        rep = F.write_report(syms=["AAAUSDT"], log=lambda m: None)
+        check("отставшие сутки названы", rep["missing"] == [days[1]],
+              str(rep["missing"]))
+        txt = open(rep["path"], encoding="utf-8").read()
+        check("отставшие сутки стоят в отчёте числом и именем",
+              "не свёрнуто 1" in txt and days[1] in txt, txt[-300:])
+        check("и сказано, что делать", "fold.py --jobs" in txt)
+    finally:
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_publish_is_part_of_the_run():
+    """С ключом публикации нет, без ключа она ОБЯЗАНА случиться.
+
+    «Публикует по умолчанию» однажды окажется выключенным молча, если
+    проверять только одну сторону.
+    """
+    days = ["2026-08-20"]
+    root, old = _setup(days, ["AAAUSDT"])
+    said = []
+    orig, F.publish = F.publish, said.append
+    try:
+        F.main(["--symbols", "AAAUSDT", "--jobs", "1", "--no-publish"])
+        check("с ключом публикации нет", not said, str(said))
+        F.main(["--symbols", "AAAUSDT", "--jobs", "1", "--restat"])
+        check("без ключа публикация случилась", len(said) == 1, str(said))
+    finally:
+        F.publish = orig
         _restore(old)
         shutil.rmtree(root, ignore_errors=True)
 
@@ -267,11 +320,13 @@ def main():
     test_fields_of_the_screen_are_a_subset_of_the_fold()
     test_parallel_fold_equals_single_threaded()
     test_cli_runs_the_whole_road()
+    test_report_names_the_days_the_store_is_missing()
+    test_publish_is_part_of_the_run()
     print()
     if FAILED:
         print(f"ПРОВАЛЕНО: {len(FAILED)} — {', '.join(FAILED)}")
         return 1
-    print("все проверки прошли (8 блоков)")
+    print("все проверки прошли (10 блоков)")
     return 0
 
 

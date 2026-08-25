@@ -333,6 +333,80 @@ def write_manifest(store=None, log=log_):
     return man
 
 
+def write_report(path=None, store=None, book=None, syms=None, log=log_):
+    """Отчёт о состоянии склада — ФАЙЛОМ, который уезжает в git.
+
+    Сам склад в git не идёт (двоичные сутки), и без этого отчёта прогон
+    свёртки не оставляет снаружи ни следа: снаружи он неотличим от «не
+    запускали». Тот же урок, что дважды стоил потерянных прогонов
+    (`width.py`, первый D1) — публикация есть ЧАСТЬ прогона.
+
+    Главное число отчёта — не объём, а **сутки записи, которых на
+    складе нет**: по нему видно, догнал склад запись или отстал.
+    """
+    store = store or STORE
+    st = scan(store)
+    have = days_with_records(book=book, syms=syms)
+    missing = [d for d in have if d not in st]
+    path = path or os.path.join(store, "Z2-store.md")
+    L = ["# Z2 — состояние минутного склада\n"]
+    L.append(f"\nВерсия свёртки {FOLD_VERSION} · полоса глубины ±{B.BAND} · "
+             f"полей {len(B.FOLD_FIELDS)} · суток на складе {len(st)}\n")
+    L.append("\nСклад — свёртка сырья по минутам, а не другая мера: "
+             "равенство сырому счёту бит в бит закреплено тестом. Порог "
+             "тонкой минуты здесь НЕ применён — он объявляется замером.\n")
+    L.append("\n### Сутки склада\n\n")
+    L.append("| сутки | символов | с записью | символо-минут | МиБ |\n")
+    L.append("|---|--:|--:|--:|--:|\n")
+    for day in sorted(st):
+        v = st[day]
+        L.append(f"| {day} | {v['symbols']} | {v['rows']} | "
+                 f"{v['minutes']:,} | {v['bytes'] / 2**20:.1f} |\n")
+    tot_min = sum(v["minutes"] for v in st.values())
+    tot_b = sum(v["bytes"] for v in st.values())
+    L.append(f"| **итого** | | | **{tot_min:,}** | "
+             f"**{tot_b / 2**20:.0f}** |\n")
+    L.append("\n### Догнал ли склад запись\n\n")
+    L.append(f"Суток в сырье {len(have)}"
+             + (f" ({have[0]}…{have[-1]})" if have else "")
+             + f", на складе {len(st)}, **не свёрнуто {len(missing)}**.\n")
+    if missing:
+        L.append("\nНе свёрнуты: " + ", ".join(missing) + ".\n")
+        L.append("\nСегодняшние сутки в этом списке стоят ПО ДЕЛУ — "
+                 "незакончившийся день не сворачивается: свёрнутый "
+                 "наполовину он неотличим по имени файла от полного. "
+                 "Всё остальное означает, что свёртку надо догнать: "
+                 "`fold.py --jobs 2`.\n")
+    else:
+        L.append("\nСклад покрывает запись целиком.\n")
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("".join(L))
+    log(f"отчёт склада: {path}; не свёрнуто суток {len(missing)}")
+    return {"path": path, "days": len(st), "missing": missing,
+            "minutes": tot_min, "bytes": tot_b}
+
+
+def publish(msg):
+    """Публикация — ЧАСТЬ прогона, а не отдельный шаг (урок `width.py`)."""
+    import subprocess
+    sh = os.path.abspath(os.path.join(RESEARCH, os.pardir, "tools",
+                                      "publish.sh"))
+    if not os.path.exists(sh):
+        log_(f"публиковать нечем: нет {sh}")
+        return
+    log_("публикую состояние склада")
+    try:
+        r = subprocess.run(["bash", sh, msg],
+                           cwd=os.path.dirname(os.path.dirname(sh)),
+                           timeout=600)
+        if r.returncode != 0:
+            log_(f"публикация не прошла (код {r.returncode}); отчёт на "
+                 f"диске, повторить: tools/publish.sh '{msg}'")
+    except Exception as e:                                # noqa: BLE001
+        log_(f"публикация не прошла ({e}); отчёт на диске")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Z2: минутный склад стакана")
     ap.add_argument("--start", default=None)
@@ -342,11 +416,16 @@ def main(argv=None):
     ap.add_argument("--refold", action="store_true")
     ap.add_argument("--restat", action="store_true",
                     help="только пересобрать сводку склада")
+    ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
+    syms0 = a.symbols.split(",") if a.symbols else None
     if a.restat:
         write_manifest()
+        write_report(syms=syms0)
+        if not a.no_publish:
+            publish("Z2: состояние минутного склада")
         return 0
-    syms = a.symbols.split(",") if a.symbols else None
+    syms = syms0
     days = days_with_records(syms=syms)
     if a.start:
         days = [d for d in days if d >= a.start]
@@ -356,12 +435,19 @@ def main(argv=None):
     if not days:
         log_("суток к свёртке нет")
         write_manifest()
+        write_report(syms=syms)
+        if not a.no_publish:
+            publish("Z2: состояние минутного склада")
         return 0
     log_(f"свёртка: суток {len(days)} ({days[0]}…{days[-1]}), "
          f"потоков {a.jobs}")
     for day in days:
         fold_day(day, syms=syms, jobs=a.jobs, refold=a.refold)
     write_manifest()
+    rep = write_report(syms=syms)
+    if not a.no_publish:
+        publish(f"Z2: склад свёрнут, суток {rep['days']}, "
+                f"символо-минут {rep['minutes']:,}")
     return 0
 
 
