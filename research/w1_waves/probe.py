@@ -411,7 +411,13 @@ def run_zigzag(L, times, symbols, rng, log=log_):
     sig = sigma_hour(L, 0, ja) * np.sqrt(24.0)      # суточная σ
     out = {}
     for mult in THETAS:
-        real, sur, lags, sizes = [], [], [], []
+        real, sur, lags, sizes, durs = [], [], [], [], []
+        # Связь СОСЕДНИХ ног — это и есть «повторяемость» в том смысле,
+        # в каком её понимает трейдер: сказала ли текущая нога
+        # что-нибудь о следующей. Считается парами (нога n, нога n+1) и
+        # у факта, и у суррогата: у случайного блуждания связи нет по
+        # построению, и разница есть искомое.
+        ar, br, asu, bsu = [], [], [], []
         used = 0
         for r, sym in enumerate(symbols):
             if not np.isfinite(sig[r]) or sig[r] <= 0:
@@ -428,6 +434,10 @@ def run_zigzag(L, times, symbols, rng, log=log_):
             real.extend(v["ratio"] for v in lg)
             lags.extend(v["i_confirm"] - v["i_to"] for v in lg)
             sizes.extend(v["size"] for v in lg)
+            durs.extend(v["bars"] for v in lg)
+            sz = [v["size"] for v in lg]
+            ar.extend(sz[:-1])
+            br.extend(sz[1:])
             d = np.diff(x)
             for _ in range(BOOT):
                 s = W.block_bootstrap(d, BLOCK_H, rng)
@@ -439,7 +449,11 @@ def run_zigzag(L, times, symbols, rng, log=log_):
                 y[0] = x[0]
                 y[1:] = x[0] + np.cumsum(np.where(fin, s, 0.0))
                 y[1:][~fin] = np.nan
-                sur.extend(v["ratio"] for v in W.legs(y, W.zigzag(y, th)))
+                slg = W.legs(y, W.zigzag(y, th))
+                sur.extend(v["ratio"] for v in slg)
+                ssz = [v["size"] for v in slg]
+                asu.extend(ssz[:-1])
+                bsu.extend(ssz[1:])
         out[mult] = {
             "symbols": used,
             "legs": int(np.isfinite(real).sum()),
@@ -449,6 +463,10 @@ def run_zigzag(L, times, symbols, rng, log=log_):
                              else float("nan")),
             "size_median_bp": (float(np.median(sizes)) * 1e4 if sizes
                                else float("nan")),
+            "dur_median_h": (float(np.median(durs)) if durs
+                             else float("nan")),
+            "next_leg": W.spearman(ar, br),
+            "next_leg_sur": W.spearman(asu, bsu),
             "ratio_median": (float(np.nanmedian(real)) if real
                              else float("nan")),
             "ratio_median_sur": (float(np.nanmedian(sur)) if sur
@@ -456,7 +474,9 @@ def run_zigzag(L, times, symbols, rng, log=log_):
         }
         log(f"  порог {mult}σ: символов {used}, ног "
             f"{out[mult]['legs']:,}, задержка подтверждения "
-            f"{out[mult]['lag_median_h']:.0f} ч")
+            f"{out[mult]['lag_median_h']:.0f} ч, связь соседних ног "
+            f"{out[mult]['next_leg']:+.3f} против "
+            f"{out[mult]['next_leg_sur']:+.3f} у суррогата")
     return out
 
 
@@ -627,6 +647,26 @@ def write_report(path, rows, zz, meta):
             L.append("\n**Читается так:** доли отличаются от "
                      "суррогатных — величину надо читать по таблице "
                      "уровень за уровнем, а не в среднем.\n")
+
+    if zz:
+        L.append("\n### Говорит ли нога о следующей\n")
+        L.append("«Повторяющаяся волна» в том смысле, в каком её понимает "
+                 "трейдер, означает ровно это: сказала ли текущая нога "
+                 "что-нибудь о следующей. У случайного блуждания связи "
+                 "нет по построению, поэтому смотреть надо на разницу с "
+                 "суррогатом, а не на само число.\n")
+        L.append("\n| порог | связь соседних ног | у суррогата | разница "
+                 "| медиана длительности ноги, ч |")
+        L.append("|--:|--:|--:|--:|--:|")
+        for mult in THETAS:
+            d = zz.get(mult)
+            if not d:
+                continue
+            a, b = d.get("next_leg", np.nan), d.get("next_leg_sur", np.nan)
+            dd = (a - b) if (np.isfinite(a) and np.isfinite(b)) else np.nan
+            L.append(f"| {mult:.0f}σ | {a:+.3f} | {b:+.3f} | "
+                     + (f"{dd:+.3f}" if np.isfinite(dd) else "—")
+                     + f" | {d.get('dur_median_h', float('nan')):.0f} |")
 
     L.append("\n## Чего зонд не мерил\n")
     L.append("- Разметку по правилам Эллиотта (счёт волн 1–5 и A–B–C): "

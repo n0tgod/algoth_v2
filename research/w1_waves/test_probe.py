@@ -333,6 +333,10 @@ def test_zigzag_report_road_runs_and_compares_to_surrogate():
           str(d.get("surrogate", {}).get("n")))
     check("задержка подтверждения положительна",
           d.get("lag_median_h", 0) > 0, str(d.get("lag_median_h")))
+    check("связь соседних ног посчитана и у факта, и у суррогата",
+          np.isfinite(d.get("next_leg", np.nan))
+          and np.isfinite(d.get("next_leg_sur", np.nan)),
+          f"{d.get('next_leg')} / {d.get('next_leg_sur')}")
     dd = tempfile.mkdtemp()
     try:
         t = open(P.write_report(os.path.join(dd, "z.md"), [], zz,
@@ -340,6 +344,9 @@ def test_zigzag_report_road_runs_and_compares_to_surrogate():
                                  "symbols": 6}), encoding="utf-8").read()
         check("в отчёте обе строки — факт и суррогат",
               "факт" in t and "суррогат" in t)
+        check("связь соседних ног доехала до отчёта",
+              "Говорит ли нога о следующей" in t and "разница" in t,
+              t[-600:])
         check("задержка подтверждения названа платой за честность",
               "цена честности" in t)
     finally:
