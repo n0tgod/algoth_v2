@@ -392,6 +392,57 @@ def test_density_catches_thinning_that_coverage_cannot():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_hour_grid_is_the_control_that_same_day_hours_are_not():
+    """Просевший ЧАС последних суток ловится сравнением с теми же часами.
+
+    Именно этого контроля не было, когда я сравнил загруженные часы с
+    утренними и объявил цену свёртки: у сборщика проход зависит от
+    потока обновлений книги, а тот растёт с активностью рынка.
+    """
+    root = tempfile.mkdtemp()
+    old = (F.BOOK, F.TRADES, F.STORE)
+    F.BOOK = os.path.join(root, "book")
+    F.TRADES = os.path.join(root, "trades")
+    F.STORE = os.path.join(root, "store")
+    syms = ["AAAUSDT", "BBBUSDT"]
+    far = time.time() + 10 * 86400
+    days = ["2026-08-20", "2026-08-21", "2026-08-22"]
+    try:
+        # Час 10 РЕДОК у ВСЕХ суток, час 11 густ у всех — это суточный
+        # ритм рынка, а не прорежение. Сверх того у последних суток
+        # проседает час 11 — вот это уже нагрузка.
+        #
+        # Фикстура нарочно устроена так, чтобы два контроля РАЗОШЛИСЬ:
+        # сравнение с соседними часами ТОГО ЖЕ дня объявило бы дефектом
+        # тихий час 10 у всех суток. Первая версия этой проверки такого
+        # различения не давала, и контроль не кусался.
+        for d in days:
+            write_rec(root, syms, [d], hours=(10,), per_min=2, seed=21)
+        for d in days[:2]:
+            write_rec(root, syms, [d], hours=(11,), per_min=6, seed=22)
+        write_rec(root, syms, [days[2]], hours=(11,), per_min=3, seed=23)
+        for d in days:
+            F.fold_day(d, syms=syms, log=lambda m: None, now=far)
+        rows, off = F.hour_table(F.STORE, days, log=lambda m: None)
+        check("сетка собрана по всем суткам", sorted(rows) == days,
+              str(sorted(rows)))
+        hs = [h for h, _c, _m in off]
+        check("просевший против ТЕХ ЖЕ часов час назван", hs == [11],
+              str(off))
+        check("тихий у всех суток час дефектом НЕ назван", 10 not in hs,
+              str(off))
+        rep = F.write_report(syms=syms, log=lambda m: None)
+        txt = open(rep["path"], encoding="utf-8").read()
+        check("сетка доехала до отчёта", "Плотность по часам" in txt
+              and "| 2026-08-22 |" in txt, txt[:300])
+        check("отклонение названо словами и числом",
+              "реже соседних" in txt and "11 (3 против 6)" in txt,
+              txt[txt.find("Плотность по часам"):][:800])
+    finally:
+        (F.BOOK, F.TRADES, F.STORE) = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_publish_is_part_of_the_run():
     """С ключом публикации нет, без ключа она ОБЯЗАНА случиться.
 
@@ -425,12 +476,13 @@ def main():
     test_report_names_the_days_the_store_is_missing()
     test_report_separates_full_days_from_stumps_and_names_recording_gaps()
     test_density_catches_thinning_that_coverage_cannot()
+    test_hour_grid_is_the_control_that_same_day_hours_are_not()
     test_publish_is_part_of_the_run()
     print()
     if FAILED:
         print(f"ПРОВАЛЕНО: {len(FAILED)} — {', '.join(FAILED)}")
         return 1
-    print("все проверки прошли (12 блоков)")
+    print("все проверки прошли (13 блоков)")
     return 0
 
 

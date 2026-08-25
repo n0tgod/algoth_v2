@@ -390,6 +390,60 @@ def density(path, log=log_):
     return {"med": float(np.median(v)), "p10": float(np.percentile(v, 10))}
 
 
+HOURS_BACK = 7          # сколько последних суток показывать по часам
+HOUR_DEV = 0.20         # отклонение часа от соседних суток, ниже которого молчим
+
+
+def hour_density(path, log=log_):
+    """Медиана снимков в минуте ПО ЧАСАМ суток.
+
+    Это и есть контроль, которого не даёт сравнение разных часов одного
+    дня: проход сборщика зависит от потока обновлений книги, а тот
+    растёт с активностью рынка, поэтому утро и середина дня несравнимы
+    по построению. Сравнивать надо ОДИН И ТОТ ЖЕ час по разным суткам.
+    """
+    try:
+        with np.load(path) as z:
+            a = z["snaps"]
+    except Exception as e:                                # noqa: BLE001
+        log(f"плотность по часам {path}: не прочиталась ({e})")
+        return None
+    out = []
+    for h in range(24):
+        v = a[:, h * 60:(h + 1) * 60]
+        v = v[np.isfinite(v)]
+        out.append(float(np.median(v)) if v.size else None)
+    return out
+
+
+def hour_table(store, days, back=HOURS_BACK, log=log_):
+    """Сетка «сутки × час» за последние `back` суток плюс отклонения.
+
+    Последние сутки сравниваются с МЕДИАНОЙ тех же часов у предыдущих —
+    так тяжёлый счёт рядом со сбором отделяется от активности рынка.
+    """
+    take = sorted(days)[-back:]
+    rows = {}
+    for d in take:
+        got = hour_density(os.path.join(store, d + ".npz"), log=log)
+        if got:
+            rows[d] = got
+    if len(rows) < 2:
+        return rows, []
+    last = sorted(rows)[-1]
+    prev = [rows[d] for d in sorted(rows)[:-1]]
+    off = []
+    for h in range(24):
+        base = [r[h] for r in prev if r[h] is not None]
+        cur = rows[last][h]
+        if not base or cur is None:
+            continue
+        med = sorted(base)[len(base) // 2]
+        if med > 0 and cur < med * (1 - HOUR_DEV):
+            off.append((h, cur, med))
+    return rows, off
+
+
 def full_days(st):
     """Сутки, годные к замеру: полные по времени И широкие по составу.
 
@@ -481,6 +535,33 @@ def write_report(path=None, store=None, book=None, syms=None, log=log_):
     if ok_days:
         L.append(f"\n**Полных и широких суток {len(ok_days)}**, первые — "
                  f"{ok_days[0]}.\n")
+    rows, off = hour_table(store, list(st), log=lambda m: None)
+    if len(rows) >= 2:
+        last = sorted(rows)[-1]
+        L.append(f"\n### Плотность по часам, последние {len(rows)} суток\n\n")
+        L.append("Один и тот же час по разным суткам — единственный честный "
+                 "контроль: у сборщика проход зависит от потока обновлений "
+                 "книги, а тот растёт с активностью рынка, поэтому утро и "
+                 "середина дня несравнимы по построению. Тяжёлый счёт рядом "
+                 "со сбором отделяется от рынка только так.\n\n")
+        L.append("| сутки | " + " | ".join(f"{h:02d}" for h in range(24))
+                 + " |\n")
+        L.append("|---" * 25 + "|\n")
+        for d in sorted(rows):
+            L.append(f"| {d} | " + " | ".join(
+                "—" if x is None else f"{x:.0f}" for x in rows[d]) + " |\n")
+        if off:
+            L.append(f"\n**Последние сутки ({last}) реже соседних больше "
+                     f"чем на {HOUR_DEV:.0%} в часах:** "
+                     + ", ".join(f"{h:02d} ({c:.0f} против {m:.0f})"
+                                 for h, c, m in off) + ".\n")
+            L.append("\nЕсли в эти часы шёл тяжёлый счёт — это его цена, и "
+                     "она невосполнима: архива стакана нет нигде. Если не "
+                     "шёл — это рынок, и трогать нечего.\n")
+        else:
+            L.append(f"\nПо часам последние сутки ({last}) от соседних не "
+                     "отличаются: прорежения нет.\n")
+
     L.append("\n### Догнал ли склад запись\n\n")
     L.append(f"Суток в сырье {len(have)}"
              + (f" ({have[0]}…{have[-1]})" if have else "")
