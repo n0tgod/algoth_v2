@@ -274,3 +274,14 @@ Already up to date.
 == сигнал 1787690976 ==
 [2026-08-25T20:49:38Z] задание diag-1 запущено: research/ops/diag.py
 конец: 2026-08-25T20:49:38Z, код 0
+публикуется в ветку main:
+ jobs/done/diag-1.done        |   1 +
+ jobs/done/diag-1.log         | 276 +++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/probe-canal-1.done |   1 +
+ jobs/done/probe-canal-1.log  |  10 ++
+ jobs/poke.log                |   4 +
+ 5 files changed, 292 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   1d14eb5..6208840  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
