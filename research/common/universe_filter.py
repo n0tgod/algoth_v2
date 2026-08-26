@@ -42,6 +42,10 @@ NON_CRYPTO_NEW = {
     "MEITUANUSDT", "XIAOMIUSDT", "KUAISHOUUSDT", "SMICUSDT",
     "RIOTUSDT", "OUSTUSDT", "KLACUSDT", "WDCUSDT", "CRCLUSDT",
     "SAMSUNGUSDT", "TSMUSDT", "AEHRUSDT",
+    # Найден зондом спокойного рынка: ISRG = Intuitive Surgical,
+    # тождество тикера точное; 1224 записи за 23 суток против ~5500
+    # у крипты — календарная подпись стоящей вне биржи котировки.
+    "ISRGUSDT",
     "BRKBUSDT", "CIFRUSDT", "CLSKUSDT", "CXMTUSDT", "EBAYUSDT",
     "GDXUSDT", "GEUSDT", "GIGADEVICEUSDT", "GILDUSDT", "GMESTOCKUSDT",
     "JNJUSDT", "JPMUSDT", "KOUSDT", "MAUSDT", "MINIMAXUSDT", "MOUSDT",
