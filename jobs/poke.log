@@ -46,3 +46,9 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787732057 ==
 [2026-08-26T08:14:19Z] задание diag-queue-2 запущено: tools/diag_queue.py
+
+== сигнал 1787733988 ==
+[2026-08-26T08:46:29Z] задание w1-full-1 запущено: research/w1_waves/probe.py
+
+== сигнал 1787734798 ==
+[2026-08-26T09:00:00Z] задание z3-stats-1 запущено: research/z3_ladder/screen3.py
