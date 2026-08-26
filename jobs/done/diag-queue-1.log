@@ -89,3 +89,12 @@ fatal: No rebase in progress?
 ветка разошлась и свести автоматически не вышло.
 коммит на месте; разобрать вручную: git pull --rebase origin main
 конец: 2026-08-26T06:00:04Z, код 0
+публикуется в ветку main:
+ jobs/done/diag-queue-1.log | 87 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/w1-smoke.log     |  2 ++
+ jobs/done/z3-progress.log  |  7 ++++
+ 3 files changed, 96 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   636bf58..9a7c7fa  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
