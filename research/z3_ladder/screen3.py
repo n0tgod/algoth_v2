@@ -121,7 +121,22 @@ def norms(prev):
     return out
 
 
-def primitives(L, N):
+def price_moves(mid):
+    """Ход самой цены за минуту — БЕЗ единого взгляда в лесенку.
+
+    Это контроль 2 из L3, перенесённый дословно: если условие по
+    лесенке даёт то же превышение, что голое «цена резко сходила», то
+    лесенка не добавляет ничего, а мы открыли уже открытое (после
+    падения бывает отскок — измерено в D1 и в зонде возврата, и там оно
+    умирало об издержки). Считается из ТОГО ЖЕ склада, что и форвард.
+    """
+    out = np.full_like(mid, np.nan)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        out[:, 1:] = mid[:, 1:] / mid[:, :-1] - 1.0
+    return out
+
+
+def primitives(L, N, mid=None):
     """Признаки лесенки в долях показанного — и в разах от своей нормы."""
     p = {}
     with np.errstate(invalid="ignore", divide="ignore"):
@@ -158,6 +173,8 @@ def primitives(L, N):
         p["eat_skew"] = (L["eat_a"] - L["eat_b"]) / both
         p["vis_b_rel"] = vb / N["vis_b"]
         p["vis_a_rel"] = va / N["vis_a"]
+        if mid is not None:
+            p["ret_1m"] = price_moves(mid)
     return p
 
 
@@ -246,6 +263,20 @@ def build_conditions():
             lambda p: p["eat_skew"] >= 0.3, "перекос")
         add("едят биды, а не аски", s,
             lambda p: p["eat_skew"] <= -0.3, "перекос")
+        # КОНТРОЛЬ БЕЗ ЛЕСЕНКИ — главный в этом пространстве. Условие
+        # на голый ход цены за минуту: если превышение у него такое же,
+        # как у условий по лесенке, то лесенка не добавляет ничего, а
+        # измерен отскок после резкого хода — величина, уже измеренная
+        # в D1 и в зонде возврата и умершая там об издержки. Это
+        # контроль 2 спеки 06, перенесённый дословно.
+        add("цена упала на 1 % за минуту", s,
+            lambda p: p["ret_1m"] <= -0.01, "контроль без лесенки")
+        add("цена выросла на 1 % за минуту", s,
+            lambda p: p["ret_1m"] >= 0.01, "контроль без лесенки")
+        add("цена упала на 2 % за минуту", s,
+            lambda p: p["ret_1m"] <= -0.02, "контроль без лесенки")
+        add("цена выросла на 2 % за минуту", s,
+            lambda p: p["ret_1m"] >= 0.02, "контроль без лесенки")
         # Показанное против своей нормы — контрольная группа: то же
         # есть в Z2, и совпадение подтверждает, что склады описывают
         # один рынок.
@@ -523,7 +554,7 @@ def main(argv=None):
                  f"{price:,})".replace(",", " "))
             prev, prev_key = Lm, day
             continue
-        prim = primitives(Lm, N)
+        prim = primitives(Lm, N, mid=M["mid_open"])
         times = np.arange(M["mid_open"].shape[1], dtype=np.int64) * 60 \
             + int(datetime.strptime(day, "%Y-%m-%d")
                   .replace(tzinfo=timezone.utc).timestamp())
