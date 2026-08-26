@@ -1,0 +1,27 @@
+== задание z3-screen-1 ==
+строка: run research/z3_ladder/screen3.py --tag 3d
+начало: 2026-08-26T16:06:04Z
+запускаю: .venv/bin/python research/z3_ladder/screen3.py --tag 3d
+скрин лесенки: суток 4 (2026-08-04…2026-08-24), символов 731, условий 44
+  2026-08-04 (склад): имён с записью 546 из 731, годных символо-минут 781,855
+  2026-08-04: нет вчерашних норм — сутки идут только в историю (минут лесенки 781 815  цены 781 855)
+  2026-08-05 (склад): имён с записью 550 из 731, годных символо-минут 786,456
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-05: минут лесенки 786 228  цены 786 456
+  условий сработало 19, событий 200,635
+  2026-08-06 (склад): имён с записью 553 из 731, годных символо-минут 786,227
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-06: минут лесенки 785 136  цены 786 227
+  условий сработало 20, событий 201,376
+  2026-08-24 (склад): имён с записью 725 из 731, годных символо-минут 934,942
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-24: минут лесенки 3 781  цены 934 942
+  условий сработало 16, событий 2,899
+считаю сводку и семейственную планку…
+отчёт: /root/algoth_v2/research/z3_ladder/out/Z3-ladder-3d.md
+ячеек измерено: 144; планка +3.34 σ; кандидатов: 1
+  сняли 30 % показанных асков [L] 15м: медиана +27.6, среднее +30.6 б.п., z +35.3, корзин 193
+снос по стороне (обязан быть около нуля): 15|-1: -2.18, 15|1: +2.18, 1|-1: -0.06, 1|1: +0.06, 5|-1: -0.55, 5|1: +0.55, 60|-1: -3.77, 60|1: +3.77
