@@ -123,3 +123,15 @@
 [09:39:10]   порог 3.0σ: символов 143, ног 9,089, задержка подтверждения 97 ч, связь соседних ног +0.049 против +0.111 у суррогата
 [09:39:10] отчёт: /root/algoth_v2/research/w1_waves/out/W1-waves-1h.md
 [09:39:10] медиана по сетке: IC +0.0102, нуль +0.0007, книга +1.3 б.п.
+публикуется в ветку main:
+ jobs/done/w1-full-1.log              |  40 +++++++++++++
+ jobs/done/z3-fold-2.log              |   2 +
+ jobs/done/z3-stats-1.log             |  13 +++++
+ research/w1_waves/out/W1-waves-1h.md | 106 +++++++++++++++++++++++++++++++++++
+ research/w1_waves/out/w1-1h.json     |   1 +
+ 5 files changed, 162 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   4a4190f..fe60e79  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T09:39:14Z, код 0
