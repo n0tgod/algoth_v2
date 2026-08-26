@@ -1,0 +1,13 @@
+== задание calm-smoke ==
+строка: run research/probe_calm_exec/probe.py --days 2 --take 6 --tag smoke --no-publish
+начало: 2026-08-26T20:39:56Z
+запускаю: .venv/bin/python research/probe_calm_exec/probe.py --days 2 --take 6 --tag smoke --no-publish
+имён 6, суток 2 (2026-08-25 … 2026-08-26), памяти свободно 3630 МБ
+  1/6 0GUSDT: записей 0, всего 0, 0.0 мин
+  2/6 BTCUSDT: записей 0, всего 0, 0.4 мин
+  3/6 CLANKERUSDT: записей 0, всего 0, 0.5 мин
+  4/6 ETHUSDT: записей 0, всего 0, 0.8 мин
+  5/6 KNCUSDT: записей 0, всего 0, 0.9 мин
+  6/6 SAHARAUSDT: записей 0, всего 0, 0.9 мин
+записей нет — см. счётчики пропусков
+конец: 2026-08-26T20:40:52Z, код 1
