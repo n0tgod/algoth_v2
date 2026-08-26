@@ -1,0 +1,78 @@
+{
+ "run_at": "2026-08-26 22:11 UTC",
+ "interval": "1m",
+ "tag": "30d",
+ "funding_assets": 722,
+ "uncovered_max": 0.1,
+ "cells": {
+  "k14_h30": {
+   "sections": 44,
+   "net0_median_bp": 141.3,
+   "net0_mean_bp": 92.9,
+   "funding_median_bp": 17.4,
+   "funding_mean_bp": 15.3,
+   "funding_long_mean_bp": -0.7,
+   "funding_short_mean_bp": 16.0,
+   "netf_median_bp": 129.3,
+   "netf_mean_bp": 77.6,
+   "netf_t": 1.12,
+   "netf_pos_share": 0.614,
+   "netf_worst_bp": -733.2,
+   "uncovered_median": 0.0
+  },
+  "k30_h30": {
+   "sections": 43,
+   "net0_median_bp": 137.0,
+   "net0_mean_bp": 78.8,
+   "funding_median_bp": 17.5,
+   "funding_mean_bp": 12.5,
+   "funding_long_mean_bp": -3.4,
+   "funding_short_mean_bp": 15.8,
+   "netf_median_bp": 96.5,
+   "netf_mean_bp": 66.4,
+   "netf_t": 1.03,
+   "netf_pos_share": 0.581,
+   "netf_worst_bp": -1164.2,
+   "uncovered_median": 0.0
+  },
+  "k60_h30": {
+   "sections": 42,
+   "net0_median_bp": 79.9,
+   "net0_mean_bp": 17.5,
+   "funding_median_bp": 10.0,
+   "funding_mean_bp": 27.2,
+   "funding_long_mean_bp": 14.0,
+   "funding_short_mean_bp": 13.2,
+   "netf_median_bp": -0.5,
+   "netf_mean_bp": -9.7,
+   "netf_t": -0.12,
+   "netf_pos_share": 0.5,
+   "netf_worst_bp": -1281.2,
+   "uncovered_median": 0.0
+  },
+  "k90_h30": {
+   "sections": 41,
+   "net0_median_bp": 41.1,
+   "net0_mean_bp": 30.7,
+   "funding_median_bp": 4.6,
+   "funding_mean_bp": 13.8,
+   "funding_long_mean_bp": 10.5,
+   "funding_short_mean_bp": 3.4,
+   "netf_median_bp": 31.1,
+   "netf_mean_bp": 16.9,
+   "netf_t": 0.27,
+   "netf_pos_share": 0.512,
+   "netf_worst_bp": -820.4,
+   "uncovered_median": 0.0
+  }
+ },
+ "skipped": {
+  "нет прошлого для сигнала": 6,
+  "нет будущего для форварда": 4,
+  "дециль вырождается": 0,
+  "funding недоучтён": 0
+ },
+ "crosscheck_bad": 0,
+ "verdict": "funding книгу не убивает: издержка в среднем +15.3 б.п. за период, нетто +92.9 → +77.6 (медиана +129.3) — обе меры остаются в плюсе",
+ "took_min": 0.1
+}

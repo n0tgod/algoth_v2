@@ -1,0 +1,8 @@
+== задание monthly-funding ==
+строка: run research/probe_monthly/funding_cost.py --interval 1m --tag 30d
+начало: 2026-08-26T22:11:36Z
+запускаю: .venv/bin/python research/probe_monthly/funding_cost.py --interval 1m --tag 30d
+векторов 1330 дат, рядов funding 722
+готово: /root/algoth_v2/research/probe_monthly/out/MONTHLY-funding-30d.json (0.1 мин)
+  funding книгу не убивает: издержка в среднем +15.3 б.п. за период, нетто +92.9 → +77.6 (медиана +129.3) — обе меры остаются в плюсе
+публикую отчёт
