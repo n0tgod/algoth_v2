@@ -77,3 +77,16 @@
 [17:46:20]   vectors_h1_day.npz · wv_dir_move: шире случайного 0.45, лучшая треть 0.34
 [17:46:20]   vectors_h1_day.npz · wv_imp_rules: шире случайного 0.45, лучшая треть 0.37
 [17:46:20] отчёт: /root/algoth_v2/research/w1_waves/out/W3-wavefilter-1h.md
+публикуется в ветку main:
+ jobs/done/w3-filter-2.log                 |  7 +++
+ jobs/done/w3-filter-3.done                |  1 +
+ jobs/done/w3-filter-3.log                 | 79 +++++++++++++++++++++++++++++++
+ jobs/poke.log                             |  3 ++
+ research/w1_waves/out/W3-wavefilter-1h.md | 24 +++++-----
+ research/w1_waves/out/w3-1h.json          |  2 +-
+ 6 files changed, 103 insertions(+), 13 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   25edae7..3815dd2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T17:46:21Z, код 0
