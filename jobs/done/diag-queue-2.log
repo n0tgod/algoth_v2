@@ -1,0 +1,92 @@
+== задание diag-queue-2 ==
+строка: run tools/diag_queue.py
+начало: 2026-08-26T08:14:19Z
+запускаю: .venv/bin/python tools/diag_queue.py 
+=== ветка и расхождение ===
+## main...origin/main
+ M jobs/done/w1-smoke.log
+ M jobs/poke.log
+?? bot/out/
+?? jobs/done/diag-queue-2.done
+?? jobs/done/diag-queue-2.log
+?? jobs/done/z3-fold-2.done
+?? jobs/done/z3-fold-2.log
+?? research/d1_seconds/out/d1.log
+?? research/d1_seconds/out/passive.log
+?? research/m1_features/out/build.log
+?? research/s10_policy/out/tournament.log
+?? research/z1_screen/out/run.log
+
+=== последние коммиты ===
+ca5ff00 job: diag-queue-2 — идёт ли новый проход лесенки
+de67cc9 job: z3-fold-2 — полный проход лесенки на почасовом чтении
+2624563 [research] Z3: свёртка читает сутки по часам — иначе её убивает ядро
+98ba99d Z3: состояние склада лесенки
+47fed80 job: w1-smoke
+
+=== впереди / позади origin/main ===
+впереди: 0
+позади:  0
+
+=== git fetch (проверка доступа) ===
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+
+=== состояние очереди ===
+jobs/queue-state.md: файла нет
+
+=== хвост журнала сигнала ===
+[2026-08-25T21:31:05Z] задание z3-state2 запущено: research/z3_ladder/fold_ladder.py
+_: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
+
+== сигнал 1787694952 ==
+[2026-08-25T21:55:53Z] задания: дерево разошлось с origin/main — не трогаю
+
+== сигнал 1787695390 ==
+[2026-08-25T22:03:12Z] задания: дерево разошлось с origin/main — не трогаю
+
+== сигнал 1787696050 ==
+[2026-08-25T22:14:11Z] задания: дерево разошлось с origin/main — не трогаю
+
+== сигнал 1787697173 ==
+[2026-08-25T22:32:54Z] задания: дерево разошлось с origin/main — не трогаю
+
+== сигнал 1787731967 ==
+[2026-08-26T08:12:48Z] задание z3-fold-2 запущено: research/z3_ladder/fold_ladder.py
+
+== сигнал 1787732057 ==
+[2026-08-26T08:14:19Z] задание diag-queue-2 запущено: tools/diag_queue.py
+
+=== идущие прогоны ===
+961 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+688405 .venv/bin/python research/b1_book/collect.py --http 8765
+688700 .venv/bin/python research/s8_loop/train.py
+701138 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/z3-fold-2.log research/z3_ladder/fold_ladder.py --start 2026-08-04 --jobs 1
+701146 .venv/bin/python research/z3_ladder/fold_ladder.py --start 2026-08-04 --jobs 1
+701197 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/diag-queue-2.log tools/diag_queue.py
+701201 .venv/bin/python tools/diag_queue.py
+
+=== склад лесенки ===
+total 164
+drwxr-xr-x 2 root root   4096 Aug 26 08:12 .
+drwxr-xr-x 3 root root   4096 Aug 25 21:05 ..
+-rw-r--r-- 1 root root 155646 Aug 25 21:11 2026-08-24.npz
+-rw-r--r-- 1 root root   1648 Aug 26 08:12 Z3-store.md
+
+=== хвост лога свёртки ===
+(попытка 1 из 4)
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+ветка разошлась и свести автоматически не вышло.
+коммит на месте; разобрать вручную: git pull --rebase origin main
+конец: 2026-08-26T08:14:20Z, код 0

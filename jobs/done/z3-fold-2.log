@@ -1,0 +1,5 @@
+== задание z3-fold-2 ==
+строка: run research/z3_ladder/fold_ladder.py --start 2026-08-04 --jobs 1
+начало: 2026-08-26T08:12:48Z
+запускаю: .venv/bin/python research/z3_ladder/fold_ladder.py --start 2026-08-04 --jobs 1
+свёртка лесенки: суток 22, потоков 1, доступно 4450 МБ
