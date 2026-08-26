@@ -15,3 +15,14 @@ Traceback (most recent call last):
            ~~~~^^^^^^^^^^
 KeyError: 'symbol'
 конец: 2026-08-26T17:36:14Z, код 1
+публикуется в ветку main:
+ jobs/done/w2-grammar-1.log |  7 +++++++
+ jobs/done/w3-filter-1.done |  1 +
+ jobs/done/w3-filter-1.log  | 17 +++++++++++++++++
+ jobs/done/z3-fold-2.log    |  3 +++
+ jobs/poke.log              |  3 +++
+ 5 files changed, 31 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   8e33e37..977458e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

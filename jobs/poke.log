@@ -70,3 +70,8 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787765770 ==
 [2026-08-26T17:36:12Z] задание w3-filter-1 запущено: research/w1_waves/filter_probe.py
+
+== сигнал 1787765962 ==
+
+== сигнал 1787765992 ==
+[2026-08-26T17:39:54Z] задание w3-filter-2 запущено: research/w1_waves/filter_probe.py
