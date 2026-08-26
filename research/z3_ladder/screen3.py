@@ -47,7 +47,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
@@ -256,6 +256,24 @@ def build_conditions():
     return C
 
 
+def twin_of(name):
+    """Имя условия для ДРУГОЙ стороны книги, или None.
+
+    Нужно для главной диагностики отчёта: если условие и его близнец
+    дают один и тот же знак, триггер выбирает не направление, а
+    СОСТОЯНИЕ — и таблица описывает поведение рынка в такие минуты, а
+    не сведение из лесенки. Тот же класс, что асимметрия хода в T1,
+    которую я едва не прочёл как эдж.
+    """
+    pairs = (("бидов", "асков"), ("биды", "аски"), ("Биды", "Аски"))
+    for a, b in pairs:
+        if a in name:
+            return name.replace(a, b)
+        if b in name:
+            return name.replace(b, a)
+    return None
+
+
 CONDITIONS = build_conditions()
 CONDS_BY_NAME = {}
 for _c in CONDITIONS:
@@ -379,6 +397,37 @@ def write_report(path, cells, null, drift, meta):
                  + ". Если эти числа заметно отличны от нуля, читать "
                  "таблицу нельзя — контроль считается не тем, чем "
                  "задумано.\n")
+    # Главная диагностика отчёта, и она стоит ДО таблицы: если условие
+    # и его близнец с другой стороны книги дают один и тот же знак,
+    # триггер выбирает не направление, а СОСТОЯНИЕ. Тогда таблица
+    # описывает, что рынок делает в такие минуты, а не сведение из
+    # лесенки — и крупные числа читать как сигнал нельзя.
+    same, seen = [], set()
+    for (name, side, h), c in cells.items():
+        tw = twin_of(name)
+        if side != 1 or tw is None or (name, h) in seen:
+            continue
+        other = cells.get((tw, side, h))
+        if not other:
+            continue
+        seen.add((tw, h))
+        a1, a2 = c["mean_bp"] - drift.get(f"{h}|{side}", 0.0), \
+            other["mean_bp"] - drift.get(f"{h}|{side}", 0.0)
+        if a1 * a2 > 0 and min(abs(a1), abs(a2)) > 1.0:
+            same.append((name, tw, h, a1, a2))
+    if same:
+        L.append("\n**Зеркало сторон книги: у "
+                 f"{len(same)} пар условий обе стороны дают ОДИН знак.** "
+                 "Снятие бидов и снятие асков — противоположные события; "
+                 "если после обоих цена идёт в одну сторону, условие "
+                 "выбрало не направление, а состояние (обычно резкую "
+                 "минуту), и таблица описывает поведение рынка в такие "
+                 "минуты, а не сведение из лесенки. Так же выглядела "
+                 "асимметрия хода в T1, которую кросс-секция обнулила.\n\n")
+        L.append("| условие | близнец | гор. | сверх сноса | у близнеца |\n")
+        L.append("|---|---|--:|--:|--:|\n")
+        for name, tw, h, a1, a2 in sorted(same, key=lambda x: -abs(x[3])):
+            L.append(f"| {name} | {tw} | {h}м | {a1:+.1f} | {a2:+.1f} |\n")
     L.append(f"\nПланка семейственная: **{null['bar_z']:+.2f} σ** "
              f"(95-й процентиль максимума по семействам под нулём).\n")
     L.append("\n| условие | стор. | гор. | событий | корзин | медиана | "
@@ -417,6 +466,17 @@ def main(argv=None):
              "нельзя; правьте в одном месте")
         return 1
     have = store_days()
+    # Узкие сутки (свёрнутые по нескольким именам — так остаётся смоук)
+    # в замер не идут вовсе: кросс-секции там нет, а нормы соседних
+    # суток они всё равно не дают. Первый прогон включил такие сутки —
+    # три имени против семисот, и нормы им достались от суток
+    # восемнадцатидневной давности.
+    narrow = F.partial_days(F.scan(STORE), store=STORE)
+    if narrow:
+        log_("узкие сутки в замер не идут: "
+             + ", ".join(f"{d} (не хватает {n})"
+                         for d, n in sorted(narrow.items())))
+        have = [d for d in have if d not in narrow]
     if a.start:
         have = [d for d in have if d >= a.start]
     if a.end:
@@ -439,23 +499,29 @@ def main(argv=None):
     log_(f"скрин лесенки: суток {len(have)} ({have[0]}…{have[-1]}), "
          f"символов {len(syms)}, условий {len(CONDITIONS)}")
     acc, rng = {}, np.random.default_rng(Z.SEED)
-    prev, width = None, []
+    prev, prev_key, width = None, None, []
     for day in have:
         Lm = day_ladder(syms, day)
         if Lm is None:
             log_(f"  {day}: склада лесенки нет — пропускаю")
-            prev = None
+            prev, prev_key = None, None
             continue
         M, _ = P2.day_matrices(syms, day, log=log_, use_store=True)
         pairs = int(np.isfinite(Lm["pairs"]).sum())
         price = int(np.isfinite(M["mid_open"]).sum())
         width.append((day, pairs, price))
-        N = norms(prev)
+        # Норма берётся только с КАЛЕНДАРНО вчерашних суток. Склад
+        # катящийся и наполняется по порядку, но пропуск в нём (сутки
+        # не свернулись, сутки узкие) означал бы норму трёхнедельной
+        # давности, выданную за вчерашнюю.
+        prev_day = (datetime.strptime(day, "%Y-%m-%d")
+                    - timedelta(days=1)).strftime("%Y-%m-%d")
+        N = norms(prev) if prev_key == prev_day else None
         if N is None:
-            log_(f"  {day}: нет вчерашних норм — сутки идут только в "
-                 f"историю (минут лесенки {pairs:,}, цены {price:,})"
-                 .replace(",", " "))
-            prev = Lm
+            log_(f"  {day}: нет КАЛЕНДАРНО вчерашних норм — сутки идут "
+                 f"только в историю (минут лесенки {pairs:,}, цены "
+                 f"{price:,})".replace(",", " "))
+            prev, prev_key = Lm, day
             continue
         prim = primitives(Lm, N)
         times = np.arange(M["mid_open"].shape[1], dtype=np.int64) * 60 \
@@ -467,7 +533,7 @@ def main(argv=None):
         Z.measure(ev, M["mid_open"], times, acc, rng,
                   conds_by_name=CONDS_BY_NAME, control="mean",
                   horizons=HORIZONS)
-        prev = Lm
+        prev, prev_key = Lm, day
     if not acc:
         log_("ни одного события — считать нечего")
         return 1

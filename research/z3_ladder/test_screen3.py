@@ -212,6 +212,68 @@ def test_stats_mode_looks_at_features_and_never_at_outcomes():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_narrow_days_and_stale_norms_are_kept_out():
+    """Узкие сутки не считаются, а норма — только с КАЛЕНДАРНО вчера.
+
+    Первый живой прогон включил сутки смоука: три имени против семисот,
+    и нормы им достались от суток восемнадцатидневной давности. Обе
+    дыры невидимы в отчёте — таблица выглядит исправной.
+    """
+    root, old = _setup()
+    keep = _thin_judge()
+    try:
+        # Узкие сутки — это сутки, у которых сырьё ЕСТЬ по всем
+        # именам, а свёрнуто одно: ровно то, что оставляет смоук.
+        # Сутки без сырья вовсе узкими не считаются и не должны — там
+        # сворачивать нечего (правило `day_gap`).
+        later = time.time() + 10 * 86400
+        write_ladder_rec(root, SYMS, ["2026-08-22"], hours=(10, 11, 12),
+                         per_min=40, seed=77, pull=0.05)
+        F.fold_day("2026-08-22", syms=SYMS[:1], jobs=1, store=S.STORE,
+                   log=lambda m: None, now=later, kind="ladder")
+        said = []
+        S.log_, keep_log = said.append, S.log_
+        try:
+            S.main(["--no-publish", "--tag", "narrow",
+                    "--symbols", ",".join(SYMS)])
+        finally:
+            S.log_ = keep_log
+        txt = " ".join(said)
+        check("узкие сутки названы и выброшены",
+              "узкие сутки в замер не идут" in txt and "2026-08-22" in txt,
+              txt[:300])
+        got = json.load(open(os.path.join(S.OUT, "z3-narrow.json"),
+                             encoding="utf-8"))
+        days = [w[0] for w in got["width"]]
+        check("узких суток в замере нет", "2026-08-22" not in days,
+              str(days))
+        # Сутки ПОСЛЕ ПРОПУСКА: сырьё есть, свёрнуто широко, но
+        # календарного вчера на складе нет. Норму им дать неоткуда, и
+        # проверка требует, чтобы это было сказано про КОНКРЕТНЫЙ день:
+        # слово «КАЛЕНДАРНО» само по себе печатается и для первых суток,
+        # то есть проверка на одно слово прошла бы на молчащем правиле.
+        write_ladder_rec(root, SYMS, ["2026-08-25"], hours=(10, 11, 12),
+                         per_min=40, seed=99, pull=0.05)
+        F.fold_day("2026-08-25", syms=SYMS, jobs=1, store=S.STORE,
+                   log=lambda m: None, now=later, kind="ladder")
+        F.fold_day("2026-08-25", syms=SYMS, jobs=1, store=P2.STORE,
+                   log=lambda m: None, now=later)
+        said2 = []
+        S.log_, keep_log = said2.append, S.log_
+        try:
+            S.main(["--no-publish", "--tag", "gap",
+                    "--symbols", ",".join(SYMS)])
+        finally:
+            S.log_ = keep_log
+        gap = [m for m in said2 if "2026-08-25" in m and "КАЛЕНДАРНО" in m]
+        check("сутки после пропуска нормы не получают", bool(gap),
+              " | ".join(m for m in said2 if "2026-08-25" in m)[:300])
+    finally:
+        _fat_judge(keep)
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     tests = (
         test_screen_runs_the_whole_road_and_says_it_is_diagnostics,
@@ -219,6 +281,7 @@ def main():
         test_one_day_is_refused_because_norms_come_from_yesterday,
         test_horizons_must_match_the_book_screen,
         test_stats_mode_looks_at_features_and_never_at_outcomes,
+        test_narrow_days_and_stale_norms_are_kept_out,
     )
     for t in tests:
         t()
