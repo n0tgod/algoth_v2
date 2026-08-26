@@ -6,3 +6,17 @@
 готово: /root/algoth_v2/research/probe_monthly/out/MONTHLY-30d.json (0.0 мин)
   месячная книга живёт по обеим мерам: нетто в среднем +92.9 б.п. за 30 дней (медиана +141.3) при издержках 9.6 — брутто +102.5 покрывает круг в 10.7 раза
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/calm-full.log                     |   7 +
+ jobs/done/monthly-30d.done                  |   1 +
+ jobs/done/monthly-30d.log                   |   8 ++
+ jobs/done/z3-fold-2.log                     |   6 +
+ jobs/poke.log                               |   3 +
+ research/probe_monthly/out/MONTHLY-30d.json | 207 ++++++++++++++++++++++++++++
+ research/probe_monthly/out/MONTHLY-30d.md   |  49 +++++++
+ 7 files changed, 281 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   356cf77..f567c58  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T21:59:19Z, код 0
