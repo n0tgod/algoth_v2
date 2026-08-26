@@ -221,7 +221,12 @@ def judge(cols, pred, key, log=log_):
     old = R.REGIMES
     try:
         R.REGIMES = WAVE_REGIMES
-        out, n_days = R.run(cols, pred, key, log=log)
+        # Нуль — корзины ТЕХ ЖЕ размеров, что у признака: среди
+        # состояний есть дискретное (правила импульса 0–3), его трети
+        # неравны, и против равных третей его разброс расширялся бы
+        # механикой меньшей корзины, а не рынком. Первый прогон W3
+        # поймал ровно это.
+        out, n_days = R.run(cols, pred, key, log=log, matched=True)
         rows = R.summarise(out)
     finally:
         R.REGIMES = old

@@ -118,7 +118,20 @@ def _day_index(col):
     return np.searchsorted(uniq, col).astype(np.int64)
 
 
-def run(cols, pred, key, log=print):
+def run(cols, pred, key, log=print, matched=False):
+    """`matched=False` — прежний нуль: случайные РАВНЫЕ трети, один
+    набор на день. Для непрерывных признаков это честно — их трети по
+    квантилям и есть равные.
+
+    `matched=True` — случайные корзины ТЕХ ЖЕ РАЗМЕРОВ, что корзины
+    признака, перестановкой его собственной разметки. Нужен признакам
+    ДИСКРЕТНЫМ: у них квантильные трети выходят неравными, меньшая
+    корзина шумнее по построению, и разброс против равных третей
+    расширяется механикой, а не рынком — волновой зонд W3 поймал ровно
+    это (единственное дискретное состояние «обошло» нуль, все
+    непрерывные легли на него). Умолчание не тронуто: опубликованные
+    отчёты этого зонда считались прежним нулём.
+    """
     day = _day_index(cols["day"])
     fwd = cols[key].astype(np.float64)
     good = np.isfinite(pred) & np.isfinite(fwd)
@@ -144,16 +157,17 @@ def run(cols, pred, key, log=print):
         # Их несколько: разброс ОДНОГО деления сам шумен, и сравнивать
         # с ним значило бы мерить шум шумом.
         rspreads = []
-        for _ in range(RANDOM_DRAWS):
-            order = rng.permutation(p.size)
-            rb = np.empty(p.size, dtype=np.int64)
-            rb[order] = (np.arange(p.size) * BINS) // p.size
-            ics = [spearman(p[rb == i], f[rb == i])
-                   for i in range(BINS)]
-            ics = [v for v in ics if np.isfinite(v)]
-            if len(ics) == BINS:
-                rspreads.append(max(ics) - min(ics))
-        for feat, _ in REGIMES:
+        if not matched:
+            for _ in range(RANDOM_DRAWS):
+                order = rng.permutation(p.size)
+                rb = np.empty(p.size, dtype=np.int64)
+                rb[order] = (np.arange(p.size) * BINS) // p.size
+                ics = [spearman(p[rb == i], f[rb == i])
+                       for i in range(BINS)]
+                ics = [v for v in ics if np.isfinite(v)]
+                if len(ics) == BINS:
+                    rspreads.append(max(ics) - min(ics))
+        for fi, (feat, _) in enumerate(REGIMES):
             if feat not in out:
                 continue
             v = cols[feat][m].astype(np.float64)
@@ -170,7 +184,25 @@ def run(cols, pred, key, log=print):
                 sel = ok & (b == i)
                 ics.append(spearman(p[sel], f[sel])
                            if sel.sum() >= 10 else np.nan)
-            if not np.isfinite(ics).all() or not rspreads:
+            if not np.isfinite(ics).all():
+                continue
+            if matched:
+                # Перестановка СОБСТВЕННОЙ разметки признака: размеры
+                # корзин в точности его, случайна только привязка имён.
+                # Зерно — числом из дня и НОМЕРА признака: имя признака
+                # через hash солится на процесс (урок R3).
+                rngf = np.random.default_rng(
+                    SEED + int(d) * 7919 + 104_729 * (fi + 1))
+                rspreads = []
+                idx = np.flatnonzero(ok)
+                for _ in range(RANDOM_DRAWS):
+                    per = b[idx][rngf.permutation(len(idx))]
+                    ric = [spearman(p[idx[per == i]], f[idx[per == i]])
+                           for i in range(BINS)]
+                    ric = [v for v in ric if np.isfinite(v)]
+                    if len(ric) == BINS:
+                        rspreads.append(max(ric) - min(ric))
+            if not rspreads:
                 continue
             out[feat]["all"].append(ic_all)
             for i in range(BINS):

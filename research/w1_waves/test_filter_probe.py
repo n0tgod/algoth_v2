@@ -162,6 +162,65 @@ def test_planted_heterogeneity_is_found_and_flat_skill_is_flat():
           str(r0.get("wv_depth", {}).get("wider")))
 
 
+def test_discrete_state_needs_a_matched_null():
+    """Дискретное состояние без неоднородности: честный нуль молчит,
+    нуль равных третей кричит.
+
+    Ровно это случилось на первом живом прогоне W3: единственное
+    дискретное состояние (правила импульса 0–3) «обошло» нуль на 0.63,
+    все непрерывные легли на 0.5. Трети дискретного признака неравны,
+    меньшая корзина шумнее по построению — разброс расширяет механика,
+    а не рынок. Проверка двусторонняя: она же — отрицательный контроль
+    на возврат старого нуля в judge.
+    """
+    rng = np.random.default_rng(13)
+    n_days, n_names = 150, 120
+    day, sym, wv, pred, fwd = [], [], [], [], []
+    for d in range(n_days):
+        sig = rng.normal(size=n_names)
+        # Дискретно и неравно: ~15 % / 45 % / 40 % — как правила
+        # импульса. Навыка по корзинам НЕТ: исход от корзины не зависит.
+        v = rng.choice([0.0, 1.0, 2.0], size=n_names, p=[0.15, 0.45, 0.4])
+        f = sig * 0.4 + rng.normal(size=n_names)
+        day += [f"2025-{d // 28 + 1:02d}-{d % 28 + 1:02d}"] * n_names
+        sym += [f"S{i}" for i in range(n_names)]
+        wv += list(v)
+        pred += list(sig)
+        fwd += list(f)
+    cols = {"day": np.array(day), "symbol": np.array(sym),
+            "fwd_5": np.array(fwd), "wv_imp_rules": np.array(wv)}
+    for k, _ in FP.WAVE_REGIMES:
+        cols.setdefault(k, np.full(len(day), np.nan))
+    pred = np.array(pred)
+    rows, _ = FP.judge(cols, pred, "fwd_5", log=lambda m: None)
+    r = {v["feat"]: v for v in rows}
+    check("честный нуль на дискретном без навыка молчит",
+          "wv_imp_rules" in r
+          and 0.35 < r["wv_imp_rules"]["wider"] < 0.65,
+          str(r.get("wv_imp_rules", {}).get("wider")))
+    # Та же матрица под ПРЕЖНИМ нулём равных третей — артефакт обязан
+    # воспроизвестись. Сравнивается РАЗНОСТЬ двух нулей на одних
+    # данных, а не абсолютный порог: величина вздутия зависит от того,
+    # насколько неравны корзины, и порог, снятый с живого числа, на
+    # фикстуре не обязан достигаться (первая версия проверки была
+    # именно такой и падала на верном коде).
+    old = FP.R.REGIMES
+    try:
+        FP.R.REGIMES = FP.WAVE_REGIMES
+        out0, _ = FP.R.run(cols, pred, "fwd_5", log=lambda m: None,
+                           matched=False)
+        rows0 = FP.R.summarise(out0)
+    finally:
+        FP.R.REGIMES = old
+    r0 = {v["feat"]: v for v in rows0}
+    check("нуль равных третей вздут против честного (артефакт есть)",
+          "wv_imp_rules" in r0 and "wv_imp_rules" in r
+          and r0["wv_imp_rules"]["wider"]
+          > r["wv_imp_rules"]["wider"] + 0.04,
+          f"равные {r0.get('wv_imp_rules', {}).get('wider')} против "
+          f"честного {r.get('wv_imp_rules', {}).get('wider')}")
+
+
 def test_reading_comes_from_the_numbers():
     """Фраза вывода — из чисел: три ветки, и каждая по своему числу."""
     flat = [{"feat": "wv_depth", "name": "x", "wider": 0.46,
@@ -256,6 +315,7 @@ def main():
         test_stale_price_gives_no_state,
         test_day_hour_maps_to_the_last_hour_of_the_day,
         test_planted_heterogeneity_is_found_and_flat_skill_is_flat,
+        test_discrete_state_needs_a_matched_null,
         test_reading_comes_from_the_numbers,
         test_wave_columns_map_assets_to_symbols_and_rows,
         test_main_road_and_publish_gating,
