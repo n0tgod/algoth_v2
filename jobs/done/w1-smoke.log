@@ -27,3 +27,16 @@
 [06:01:55]   2025-01-01 W=168: сечений 180, пул 19,360, 23 с
 [06:01:55] отчёт: /root/algoth_v2/research/w1_waves/out/W1-waves-q1-2025.md
 [06:01:55] медиана по сетке: IC +0.0057, нуль +0.0006, книга +1.2 б.п.
+публикуется в ветку main:
+ jobs/done/diag-queue-1.log                |  9 ++++
+ jobs/done/w1-smoke.log                    | 23 +++++++++
+ jobs/done/z3-progress.done                |  1 +
+ jobs/done/z3-progress.log                 |  4 ++
+ research/w1_waves/out/W1-waves-q1-2025.md | 86 +++++++++++++++++++++++++++++++
+ research/w1_waves/out/w1-q1-2025.json     |  1 +
+ 6 files changed, 124 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   9a7c7fa..6d35ee9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T06:01:57Z, код 0
