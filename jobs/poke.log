@@ -64,3 +64,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787761327 ==
 [2026-08-26T16:22:08Z] задание z3-screen-3 запущено: research/z3_ladder/screen3.py
+
+== сигнал 1787762563 ==
+[2026-08-26T16:42:44Z] задание w2-grammar-1 запущено: research/w1_waves/grammar_probe.py
