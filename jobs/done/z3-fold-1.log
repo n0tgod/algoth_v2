@@ -6,3 +6,32 @@
     2026-08-04: свёрнуто имён 50/731 (с записью 42), 472 с, осталось ~6427 с
     2026-08-04: свёрнуто имён 100/731 (с записью 79), 879 с, осталось ~5545 с
 конец: 2026-08-25T21:48:34Z, код 137
+публикуется в ветку main:
+ jobs/done/z3-fold-1.log | 3 +++
+ jobs/done/z3-state2.log | 7 +++++++
+ jobs/poke.log           | 1 +
+ 3 files changed, 11 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+ветка разошлась и свести автоматически не вышло.
+коммит на месте; разобрать вручную: git pull --rebase origin main
