@@ -1,0 +1,207 @@
+{
+ "run_at": "2026-08-26 21:59 UTC",
+ "interval": "1m",
+ "dates": 1330,
+ "date_first": "2022-10-11",
+ "date_last": "2026-06-01",
+ "ks": [
+  14,
+  30,
+  60,
+  90
+ ],
+ "hs": [
+  10,
+  30
+ ],
+ "width": 0.1,
+ "taker_bp": 5.5,
+ "seeds": [
+  1,
+  2,
+  3,
+  4,
+  5
+ ],
+ "main_cell": "k14_h30",
+ "cells": {
+  "k14_h10": {
+   "sections": 133,
+   "ic_mean": 0.0553,
+   "ic_t": 4.53,
+   "ic_pos_share": 0.662,
+   "spread_median_bp": 157.7,
+   "spread_mean_bp": 145.6,
+   "turnover_mean": 1.479,
+   "cost_mean_bp": 8.1,
+   "net_median_bp": 70.3,
+   "net_mean_bp": 64.7,
+   "net_t": 2.24,
+   "net_pos_share": 0.586,
+   "net_worst_bp": -822.1,
+   "coverage_median": 0.993
+  },
+  "k14_h30": {
+   "sections": 44,
+   "ic_mean": 0.052,
+   "ic_t": 2.75,
+   "ic_pos_share": 0.682,
+   "spread_median_bp": 303.8,
+   "spread_mean_bp": 204.9,
+   "turnover_mean": 1.748,
+   "cost_mean_bp": 9.6,
+   "net_median_bp": 141.3,
+   "net_mean_bp": 92.9,
+   "net_t": 1.42,
+   "net_pos_share": 0.705,
+   "net_worst_bp": -734.8,
+   "coverage_median": 0.986
+  },
+  "k30_h10": {
+   "sections": 130,
+   "ic_mean": 0.0482,
+   "ic_t": 3.55,
+   "ic_pos_share": 0.631,
+   "spread_median_bp": 72.6,
+   "spread_mean_bp": 65.1,
+   "turnover_mean": 1.065,
+   "cost_mean_bp": 5.9,
+   "net_median_bp": 30.0,
+   "net_mean_bp": 26.7,
+   "net_t": 0.85,
+   "net_pos_share": 0.538,
+   "net_worst_bp": -893.5,
+   "coverage_median": 0.95
+  },
+  "k30_h30": {
+   "sections": 43,
+   "ic_mean": 0.0606,
+   "ic_t": 4.0,
+   "ic_pos_share": 0.767,
+   "spread_median_bp": 295.1,
+   "spread_mean_bp": 176.7,
+   "turnover_mean": 1.737,
+   "cost_mean_bp": 9.6,
+   "net_median_bp": 137.0,
+   "net_mean_bp": 78.8,
+   "net_t": 1.32,
+   "net_pos_share": 0.628,
+   "net_worst_bp": -1137.0,
+   "coverage_median": 0.945
+  },
+  "k60_h10": {
+   "sections": 127,
+   "ic_mean": 0.04,
+   "ic_t": 2.89,
+   "ic_pos_share": 0.614,
+   "spread_median_bp": 106.3,
+   "spread_mean_bp": 76.3,
+   "turnover_mean": 0.811,
+   "cost_mean_bp": 4.5,
+   "net_median_bp": 48.4,
+   "net_mean_bp": 33.7,
+   "net_t": 1.19,
+   "net_pos_share": 0.551,
+   "net_worst_bp": -627.7,
+   "coverage_median": 0.915
+  },
+  "k60_h30": {
+   "sections": 42,
+   "ic_mean": 0.0335,
+   "ic_t": 1.73,
+   "ic_pos_share": 0.571,
+   "spread_median_bp": 173.5,
+   "spread_mean_bp": 49.4,
+   "turnover_mean": 1.304,
+   "cost_mean_bp": 7.2,
+   "net_median_bp": 79.9,
+   "net_mean_bp": 17.5,
+   "net_t": 0.23,
+   "net_pos_share": 0.548,
+   "net_worst_bp": -1249.7,
+   "coverage_median": 0.905
+  },
+  "k90_h10": {
+   "sections": 124,
+   "ic_mean": 0.0411,
+   "ic_t": 2.58,
+   "ic_pos_share": 0.605,
+   "spread_median_bp": 41.6,
+   "spread_mean_bp": 60.1,
+   "turnover_mean": 0.688,
+   "cost_mean_bp": 3.8,
+   "net_median_bp": 16.8,
+   "net_mean_bp": 26.3,
+   "net_t": 0.76,
+   "net_pos_share": 0.524,
+   "net_worst_bp": -903.9,
+   "coverage_median": 0.878
+  },
+  "k90_h30": {
+   "sections": 41,
+   "ic_mean": 0.0331,
+   "ic_t": 1.73,
+   "ic_pos_share": 0.634,
+   "spread_median_bp": 96.0,
+   "spread_mean_bp": 73.9,
+   "turnover_mean": 1.132,
+   "cost_mean_bp": 6.2,
+   "net_median_bp": 41.1,
+   "net_mean_bp": 30.7,
+   "net_t": 0.5,
+   "net_pos_share": 0.585,
+   "net_worst_bp": -788.6,
+   "coverage_median": 0.867
+  }
+ },
+ "nulls": {
+  "k14_h10": {
+   "ic_mean_seeds": 0.0015,
+   "ic_max_seeds": 0.0068,
+   "seeds": 5
+  },
+  "k14_h30": {
+   "ic_mean_seeds": 0.0018,
+   "ic_max_seeds": 0.0181,
+   "seeds": 5
+  },
+  "k30_h10": {
+   "ic_mean_seeds": -0.0062,
+   "ic_max_seeds": 0.0067,
+   "seeds": 5
+  },
+  "k30_h30": {
+   "ic_mean_seeds": -0.0058,
+   "ic_max_seeds": 0.0143,
+   "seeds": 5
+  },
+  "k60_h10": {
+   "ic_mean_seeds": -0.0033,
+   "ic_max_seeds": 0.017,
+   "seeds": 5
+  },
+  "k60_h30": {
+   "ic_mean_seeds": -0.0021,
+   "ic_max_seeds": 0.0176,
+   "seeds": 5
+  },
+  "k90_h10": {
+   "ic_mean_seeds": -0.0033,
+   "ic_max_seeds": 0.0013,
+   "seeds": 5
+  },
+  "k90_h30": {
+   "ic_mean_seeds": -0.0,
+   "ic_max_seeds": 0.0086,
+   "seeds": 5
+  }
+ },
+ "skipped": {
+  "нет прошлого для сигнала": 24,
+  "нет будущего для форварда": 4,
+  "сечение вырождено": 0,
+  "дециль вырождается": 0
+ },
+ "verdict": "месячная книга живёт по обеим мерам: нетто в среднем +92.9 б.п. за 30 дней (медиана +141.3) при издержках 9.6 — брутто +102.5 покрывает круг в 10.7 раза",
+ "took_min": 0.0
+}

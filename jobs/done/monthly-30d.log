@@ -1,0 +1,8 @@
+== задание monthly-30d ==
+строка: run research/probe_monthly/probe.py --interval 1m --tag 30d
+начало: 2026-08-26T21:59:16Z
+запускаю: .venv/bin/python research/probe_monthly/probe.py --interval 1m --tag 30d
+векторов 1330 дат (2022-10-11 … 2026-06-01)
+готово: /root/algoth_v2/research/probe_monthly/out/MONTHLY-30d.json (0.0 мин)
+  месячная книга живёт по обеим мерам: нетто в среднем +92.9 б.п. за 30 дней (медиана +141.3) при издержках 9.6 — брутто +102.5 покрывает круг в 10.7 раза
+публикую отчёт
