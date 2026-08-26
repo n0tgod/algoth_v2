@@ -70,3 +70,14 @@
 [17:03:50]   2σ real: IC +0.6001, нуль -0.0003, запросов 30,000 из 44,668
 [17:05:46]   2σ surr: IC +0.6057, нуль +0.0034, запросов 30,000 из 45,363
 [17:05:55] отчёт: /root/algoth_v2/research/w1_waves/out/W2-grammar-1h.md
+публикуется в ветку main:
+ jobs/done/w2-grammar-1.log             |   9 +++
+ jobs/done/z3-fold-2.log                |  13 ++++
+ research/w1_waves/out/W2-grammar-1h.md | 128 +++++++++++++++++++++++++++++++++
+ research/w1_waves/out/w2-1h.json       |   1 +
+ 4 files changed, 151 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   2e3006b..3630484  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T17:05:58Z, код 0
