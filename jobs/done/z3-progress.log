@@ -33,3 +33,10 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-08-26T06:00:03Z
+публикуется в ветку main:
+ jobs/done/diag-queue-1.done |  1 +
+ jobs/done/diag-queue-1.log  |  4 ++++
+ jobs/done/w1-smoke.done     |  1 +
+ jobs/done/w1-smoke.log      |  4 ++++
+ jobs/done/z3-progress.log   | 35 +++++++++++++++++++++++++++++++++++
+ 5 files changed, 45 insertions(+)

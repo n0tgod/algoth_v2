@@ -2,3 +2,5 @@
 строка: run research/w1_waves/probe.py --start 2025-01-01 --end 2025-04-01 --tag q1-2025 --skip-zigzag
 начало: 2026-08-26T06:00:02Z
 запускаю: .venv/bin/python research/w1_waves/probe.py --start 2025-01-01 --end 2025-04-01 --tag q1-2025 --skip-zigzag
+[06:00:03] символов 632, часов 10,920
+[06:00:03] память: нужно ~233 МБ, доступно 4865 МБ
