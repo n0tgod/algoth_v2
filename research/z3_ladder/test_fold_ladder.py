@@ -22,7 +22,7 @@ LEVELS = 12
 
 
 def write_ladder_rec(root, syms, days, hour=10, per_min=30, seed=3,
-                     hours=None, spill=0.0):
+                     hours=None, spill=0.0, pull=0.0):
     """Запись с НАСТОЯЩЕЙ лесенкой: уровни на сетке шага цены.
 
     Общий помощник `write_rec` кладёт один уровень на сторону, и у него
@@ -44,7 +44,7 @@ def write_ladder_rec(root, syms, days, hour=10, per_min=30, seed=3,
     for day in days:
         d0 = int(datetime.strptime(day, "%Y-%m-%d")
                  .replace(tzinfo=timezone.utc).timestamp())
-        for sym in syms:
+        for si, sym in enumerate(syms):
             bd = os.path.join(root, "book", sym)
             td = os.path.join(root, "trades", sym)
             os.makedirs(bd, exist_ok=True)
@@ -63,8 +63,27 @@ def write_ladder_rec(root, syms, days, hour=10, per_min=30, seed=3,
                         # пересечения не будет вовсе.
                         if rng.random() < 0.05:
                             base = round(base + TICK * rng.choice((-1, 1)), 2)
+                        # `pull` съедает показанный бид на части минут,
+                        # не убирая сами цены: уровень, ИСЧЕЗНУВШИЙ из
+                        # лесенки, мерой снятия не считается вовсе (он
+                        # ушёл за край видимого), поэтому фикстура, где
+                        # уровни просто пропадают, не породила бы ни
+                        # одного события — и дорога скрина осталась бы
+                        # неисполненной.
+                        # Через снимок, а не один раз за минуту: меры
+                        # минуты — это СУММЫ по парам, и одиночная
+                        # просадка среди сорока пар даёт долю 1/40, то
+                        # есть ни одно объявленное условие не сработает
+                        # и дорога скрина останется неисполненной.
+                        # Фаза «дикой» минуты СВОЯ у каждого имени:
+                        # синхронный сигнал не оставляет фона — все
+                        # символы в эти минуты запрещены как соседи, и
+                        # контроль не строится ни для одного события
+                        # (урок T1 и L3, воспроизведённый фикстурой).
+                        thin = pull if (pull and m % 5 == si % 5
+                                        and k % 2 == 1) else 1.0
                         b = [[round(base - TICK * i, 2),
-                              round(2.0 + rng.random(), 3)]
+                              round((2.0 + rng.random()) * thin, 3)]
                              for i in range(LEVELS)]
                         a = [[round(base + TICK * (i + 1), 2),
                               round(2.0 + rng.random(), 3)]
