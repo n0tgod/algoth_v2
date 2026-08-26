@@ -44,3 +44,17 @@
 готово: /root/algoth_v2/research/probe_calm_exec/out/CALM-exec-1s.json
   в спокойный час медиана выгоды РОВНО ноль: типичная лимитка не исполняется и доисполняется тейкером по почти той же цене — читать среднее и разрез по исполненным, медиана здесь вырождена
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/calm-full.done                       |   1 +
+ jobs/done/calm-full.log                        |  46 ++
+ jobs/done/calm-smoke-2.log                     |  12 +
+ jobs/done/z3-fold-2.log                        |   3 +
+ jobs/poke.log                                  |   3 +
+ research/probe_calm_exec/out/CALM-exec-1s.json | 819 +++++++++++++++++++++++++
+ research/probe_calm_exec/out/CALM-exec-1s.md   | 106 ++++
+ 7 files changed, 990 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   a9215f0..5a5c3ba  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T21:10:43Z, код 0
