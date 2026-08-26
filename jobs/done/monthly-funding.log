@@ -6,3 +6,17 @@
 готово: /root/algoth_v2/research/probe_monthly/out/MONTHLY-funding-30d.json (0.1 мин)
   funding книгу не убивает: издержка в среднем +15.3 б.п. за период, нетто +92.9 → +77.6 (медиана +129.3) — обе меры остаются в плюсе
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/monthly-30d.log                          |  7 ++
+ jobs/done/monthly-funding.done                     |  1 +
+ jobs/done/monthly-funding.log                      |  8 +++
+ jobs/done/z3-fold-2.log                            |  1 +
+ jobs/poke.log                                      |  3 +
+ .../probe_monthly/out/MONTHLY-funding-30d.json     | 78 ++++++++++++++++++++++
+ research/probe_monthly/out/MONTHLY-funding-30d.md  | 31 +++++++++
+ 7 files changed, 129 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   23f1cb0..c54988b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T22:11:46Z, код 0
