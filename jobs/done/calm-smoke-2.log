@@ -1,0 +1,14 @@
+== задание calm-smoke-2 ==
+строка: run research/probe_calm_exec/probe.py --days 5 --take 6 --tag smoke --no-publish
+начало: 2026-08-26T20:42:22Z
+запускаю: .venv/bin/python research/probe_calm_exec/probe.py --days 5 --take 6 --tag smoke --no-publish
+имён 6, суток 5 (2026-08-22 … 2026-08-26), памяти свободно 3583 МБ
+  1/6 0GUSDT: записей 492, всего 492, 0.1 мин
+  2/6 BTCUSDT: записей 480, всего 972, 1.0 мин
+  3/6 CLANKERUSDT: записей 504, всего 1476, 1.1 мин
+  4/6 ETHUSDT: записей 492, всего 1968, 2.0 мин
+  5/6 KNCUSDT: записей 504, всего 2472, 2.1 мин
+  6/6 SAHARAUSDT: записей 492, всего 2964, 2.2 мин
+готово: /root/algoth_v2/research/probe_calm_exec/out/CALM-exec-smoke.json
+  в спокойный час лимитка на лучшей НЕ платит: +0.0 б.п. против тейкерского входа — отбор съедает экономию спреда и комиссии
+конец: 2026-08-26T20:44:35Z, код 0
