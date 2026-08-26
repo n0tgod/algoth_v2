@@ -277,6 +277,35 @@ def run_main(root, out, min_obs=12):
                           encoding="utf-8"))
 
 
+def test_empty_run_names_its_reasons():
+    """Пустой прогон печатает счётчики пропусков В ЛОГ.
+
+    Первый смоук на сервере упал с «см. счётчики пропусков», которых
+    никто не напечатал, — отказ, неотличимый от тишины. Диагноз должен
+    читаться из самого лога задания.
+    """
+    import io
+    import contextlib
+    tmp = tempfile.mkdtemp()
+    try:
+        root = os.path.join(tmp, "store")
+        build_store(root, n_days=1)          # суток истории для σ нет
+        out = os.path.join(tmp, "out")
+        buf = io.StringIO()
+        raised = False
+        try:
+            with contextlib.redirect_stdout(buf):
+                run_main(root, out)
+        except SystemExit:
+            raised = True
+        text = buf.getvalue()
+        check("пустой прогон падает", raised, "прошёл")
+        check("причина пропусков напечатана",
+              "нет σ (мало истории)" in text, text[-300:])
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_end_to_end():
     """Сквозной прогон настоящим main(): плоская цена и продающая лента
     у S000 — покупка «на лучшей» исполняется и выгода в её ячейках
@@ -324,6 +353,7 @@ def main():
     test_sigma_is_causal_first_days_are_not_measured()
     test_pick_symbols_filters_non_crypto()
     print("сквозной прогон")
+    test_empty_run_names_its_reasons()
     test_end_to_end()
     print()
     if FAILED:
