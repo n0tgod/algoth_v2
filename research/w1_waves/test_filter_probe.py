@@ -176,6 +176,45 @@ def test_reading_comes_from_the_numbers():
           "не из чего" in FP.reading([]))
 
 
+def test_wave_columns_map_assets_to_symbols_and_rows():
+    """Актив матрицы → символ Binance → своя строка, не чужая.
+
+    Первый живой прогон упал ровно здесь: матрица держит имена активов
+    («ADA»), цены грузятся по символам («ADAUSDT»), а сквозной тест
+    подменял всю функцию и её дорогу не исполнял. Проверять надо каждую
+    дорогу до показа, а не одну из них.
+    """
+    uni = {"AAAUSDT": {"asset": "AAA"}, "BBBUSDT": {"asset": "BBB"}}
+    rng = np.random.default_rng(7)
+    n_h = len(FP.P.grid(FP.START, FP.END))
+    L = np.vstack([np.cumsum(rng.normal(0, 0.01, n_h)),
+                   np.cumsum(rng.normal(0, 0.03, n_h))]).astype(
+                       np.float32)
+    asked = []
+    old = FP.P.load_prices
+    FP.P.load_prices = lambda syms, *a, **k: (asked.append(list(syms)),
+                                              L)[1]
+    try:
+        cols = {"asset": np.array(["AAA", "BBB", "AAA", "XXX"]),
+                "day": np.array(["2023-05-02"] * 4)}
+        wave = FP.build_wave_columns(cols, log=lambda m: None, uni=uni)
+    finally:
+        FP.P.load_prices = old
+    check("цены запрошены по СИМВОЛАМ, не по активам",
+          asked and asked[0] == ["AAAUSDT", "BBBUSDT"], str(asked))
+    check("строки одного актива получили одно состояние",
+          np.isclose(wave["wv_depth"][0], wave["wv_depth"][2],
+                     equal_nan=True))
+    check("разные активы — разные ряды (состояния различаются)",
+          not np.isclose(wave["wv_dir_move"][0], wave["wv_dir_move"][1],
+                         equal_nan=True)
+          or not np.isclose(wave["wv_leg_age"][0],
+                            wave["wv_leg_age"][1], equal_nan=True),
+          str((wave["wv_dir_move"][:2], wave["wv_leg_age"][:2])))
+    check("актив без символа остался без состояния",
+          not np.isfinite(wave["wv_depth"][3]))
+
+
 def test_main_road_and_publish_gating():
     """Сквозная дорога main: отчёт написан, публикация обеих сторон."""
     said = []
@@ -218,6 +257,7 @@ def main():
         test_day_hour_maps_to_the_last_hour_of_the_day,
         test_planted_heterogeneity_is_found_and_flat_skill_is_flat,
         test_reading_comes_from_the_numbers,
+        test_wave_columns_map_assets_to_symbols_and_rows,
         test_main_road_and_publish_gating,
     )
     for t in tests:

@@ -162,28 +162,42 @@ def wave_states(x, theta, queries):
     return out
 
 
-def build_wave_columns(cols, log=log_):
-    """Волновые колонки, выровненные со строками матрицы M1."""
-    syms = cols["symbol"]
+def build_wave_columns(cols, log=log_, uni=None):
+    """Волновые колонки, выровненные со строками матрицы M1.
+
+    Матрица держит ИМЕНА АКТИВОВ («ADA»), а цены грузятся по символам
+    Binance («ADAUSDT») — карта между ними живёт в универсуме A1, и
+    первый живой прогон упал ровно на этом: сквозной тест подменял эту
+    функцию целиком и её дорогу не исполнял. Актив без символа честно
+    остаётся без состояния и считается числом, а не молчит.
+    """
+    if uni is None:
+        import data as D
+        uni = D.universe()
+    asset_arr = np.array([str(v) for v in cols["asset"]])
     days = cols["day"]
-    uniq = sorted(set(str(s) for s in syms))
+    sym_of = {v["asset"]: s for s, v in uni.items()}
+    uniq = sorted(set(asset_arr))
+    missing = [a for a in uniq if a not in sym_of]
+    if missing:
+        log(f"  активов без символа Binance: {len(missing)} "
+            f"(напр. {missing[:4]}) — их строки без состояния")
+    assets = [a for a in uniq if a in sym_of]
+    syms = [sym_of[a] for a in assets]
     times = P.grid(START, END)
     grid0 = int(times[0])
-    log(f"волновое состояние: символов {len(uniq)}, строк {len(syms):,}")
-    L = P.load_prices(uniq, times, "1m", log=log)
-    row_of = {s: i for i, s in enumerate(uniq)}
-    wave = {k: np.full(len(syms), np.nan) for k, _ in WAVE_REGIMES}
-    sym_arr = np.array([str(v) for v in syms])
+    log(f"волновое состояние: активов {len(assets)}, "
+        f"строк {len(asset_arr):,}")
+    L = P.load_prices(syms, times, "1m", log=log)
+    wave = {k: np.full(len(asset_arr), np.nan) for k, _ in WAVE_REGIMES}
     hours = np.array([day_hour(d, grid0) for d in days], dtype=np.int64)
     t0 = time.time()
-    done = 0
-    for s in uniq:
-        rows = np.flatnonzero(sym_arr == s)
-        x_full = L[row_of[s]].astype(np.float64)
+    for done, a in enumerate(assets, 1):
+        rows = np.flatnonzero(asset_arr == a)
+        x_full = L[assets.index(a)].astype(np.float64)
         theta, start = GP.own_theta(x_full)
-        done += 1
         if done % 50 == 0:
-            log(f"  {done}/{len(uniq)} символов, {time.time() - t0:.0f} с")
+            log(f"  {done}/{len(assets)} активов, {time.time() - t0:.0f} с")
         if theta is None:
             continue
         st = wave_states(x_full[start:], theta,
@@ -192,8 +206,8 @@ def build_wave_columns(cols, log=log_):
             wave[k][rows] = st[k]
     for k, _ in WAVE_REGIMES:
         n = int(np.isfinite(wave[k]).sum())
-        log(f"  {k}: заполнено {n:,} из {len(syms):,} "
-            f"({n / len(syms):.0%})")
+        log(f"  {k}: заполнено {n:,} из {len(asset_arr):,} "
+            f"({n / len(asset_arr):.0%})")
     return wave
 
 
