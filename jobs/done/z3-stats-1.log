@@ -29,3 +29,16 @@
 2026-08-24  pairs                3 781   1.00         54         60         61         61
 ВНИМАНИЕ: `dead` равен нулю во всех минутах — уровень, ушедший в ноль, площадка, видимо, просто убирает из лесенки. Тогда это структурный ноль меры, а не рынка, и условия по нему из пространства надо снимать ДО прогона.
 конец: 2026-08-26T09:00:01Z, код 0
+публикуется в ветку main:
+ jobs/done/diag-queue-2.log | 12 +++++++
+ jobs/done/w1-full-1.done   |  1 +
+ jobs/done/w1-full-1.log    | 85 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/z3-fold-2.log    |  5 +++
+ jobs/done/z3-stats-1.done  |  1 +
+ jobs/done/z3-stats-1.log   | 31 +++++++++++++++++
+ jobs/poke.log              |  6 ++++
+ 7 files changed, 141 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   915ec0d..4a4190f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
