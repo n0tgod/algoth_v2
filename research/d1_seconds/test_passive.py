@@ -123,6 +123,54 @@ def test_own_size_must_also_pass():
           "не исполнилось")
 
 
+def test_sell_side_is_a_mirror():
+    """Продажа лимиткой: исполняет ПОКУПАЮЩАЯ агрессия не ниже цены.
+
+    Расширение для зонда спокойного рынка. Сторона продажи зеркальна
+    покупке, и спутанный знак дал бы исполнение на падении — ровно там,
+    где пассивная продажа исполниться не может.
+    """
+    tt, tp, tv, ts = tape([[1.0, 100.0, 10.0, +1]])
+    check("покупатель сквозь наш аск исполняет продажу",
+          PS.fill_at(tt, tp, tv, ts, 0.0, 100.0, 8.0, 1.0, side=-1) == 1.0,
+          "не исполнилось")
+    tt2, tp2, tv2, ts2 = tape([[1.0, 100.0, 10.0, -1]])
+    check("продающая агрессия продажу не исполняет",
+          PS.fill_at(tt2, tp2, tv2, ts2, 0.0, 100.0, 8.0, 1.0, side=-1)
+          is None, "исполнилось")
+    tt3, tp3, tv3, ts3 = tape([[1.0, 99.5, 10.0, +1]])
+    check("покупка ниже нашего аска продажу не трогает",
+          PS.fill_at(tt3, tp3, tv3, ts3, 0.0, 100.0, 0.0, 1.0, side=-1)
+          is None, "исполнилось")
+
+
+def test_default_side_is_bitwise_the_old_buy():
+    """Умолчание `side` — прежняя покупка, счёт D1 не шевелится."""
+    tt, tp, tv, ts = tape([[1.0, 100.0, 4.0, -1],
+                           [2.0, 100.0, 4.0, -1],
+                           [3.0, 100.0, 4.0, -1],
+                           [4.0, 100.5, 9.0, +1]])
+    old = PS.fill_at(tt, tp, tv, ts, 0.0, 100.0, 9.0, 1.0)
+    new = PS.fill_at(tt, tp, tv, ts, 0.0, 100.0, 9.0, 1.0, side=1)
+    check("умолчание равно side=1", old == new == 3.0, f"{old} / {new}")
+
+
+def test_book_line_carries_ask_sz():
+    """Разбор снимка отдаёт размер очереди на аске.
+
+    Порядок полей — как пишет сборщик (`book.py`): bid, ask, bid_sz,
+    ask_sz, лесенка, метка `t` в конце.
+    """
+    line = ('{"s":"XUSDT","ts":1723000000123,"u":7,"bid":1.5,"ask":1.6,'
+            '"bid_sz":100.0,"ask_sz":250.0,"upd":3,'
+            '"b":[[1.5,100.0]],"a":[[1.6,250.0]],"t":1723000000.5}')
+    t, b, a, q, qa = PS.book_line(line)
+    check("ask_sz разобран", qa == 250.0, f"{qa}")
+    check("остальные поля не сдвинулись",
+          (t, b, a, q) == (1723000000.5, 1.5, 1.6, 100.0),
+          f"{(t, b, a, q)}")
+
+
 def build_day(root, *, fill_side):
     """Сутки из 60 имён; у одного падение 4 % и отскок.
 
@@ -211,6 +259,10 @@ def main():
     test_wait_window_is_respected()
     test_trades_before_placement_do_not_count()
     test_own_size_must_also_pass()
+    print("сторона заявки")
+    test_sell_side_is_a_mirror()
+    test_default_side_is_bitwise_the_old_buy()
+    test_book_line_carries_ask_sz()
     print("сквозной прогон")
     test_end_to_end_fills_and_misses()
     print()

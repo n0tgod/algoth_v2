@@ -75,7 +75,13 @@ ARMS = ("тейкер", "мейкер на биде", "мейкер на сер�
 
 
 def book_line(line):
-    """Время, бид, аск и размер лучшего бида."""
+    """Время, бид, аск и размеры лучших уровней обеих сторон.
+
+    `ask_sz` добавлен для зонда пассивного входа в спокойном рынке:
+    продажа лимиткой стоит в очереди НА АСКЕ, и без размера этого
+    уровня сторону продажи мерить нечем. Поле пишется сборщиком с
+    первого дня (`book.py`: `"ask_sz": self.asks[ask]`).
+    """
     def num(key, start=0):
         i = line.find(key, start)
         if i < 0:
@@ -87,7 +93,8 @@ def book_line(line):
         return float(line[i:j]), j
     bid, p = num('"bid":')
     ask, p = num('"ask":', p)
-    sz, _ = num('"bid_sz":')
+    sz, p = num('"bid_sz":', p)
+    asz, _ = num('"ask_sz":', p)
     i = line.rfind(',"t":')
     if i < 0:
         raise ValueError("нет метки времени")
@@ -95,7 +102,7 @@ def book_line(line):
     j = i
     while j < len(line) and line[j] not in ",}":
         j += 1
-    return float(line[i:j]), bid, ask, sz
+    return float(line[i:j]), bid, ask, sz, asz
 
 
 def trade_line(line):
@@ -114,20 +121,22 @@ def trade_line(line):
 
 
 def book_grids(root, sym, hours, t0, n):
-    """Бид, аск и размер лучшего бида на секундной сетке."""
-    ts, bid, ask, sz = [], [], [], []
+    """Бид, аск и размеры лучших уровней на секундной сетке."""
+    ts, bid, ask, sz, asz = [], [], [], [], []
     d = os.path.join(root, "book", sym)
     for h in hours:
-        for t, b, a, q in read_hour(d, h, parse=book_line):
+        for t, b, a, q, qa in read_hour(d, h, parse=book_line):
             if b <= 0 or a <= 0:
                 continue
             ts.append(t)
             bid.append(b)
             ask.append(a)
             sz.append(q)
+            asz.append(qa)
     return (D.place(ts, bid, t0, n).astype(np.float32),
             D.place(ts, ask, t0, n).astype(np.float32),
-            D.place(ts, sz, t0, n).astype(np.float32))
+            D.place(ts, sz, t0, n).astype(np.float32),
+            D.place(ts, asz, t0, n).astype(np.float32))
 
 
 def trade_arrays(root, sym, hours, t0):
@@ -148,13 +157,17 @@ def trade_arrays(root, sym, hours, t0):
 
 
 def fill_at(tt, tp, tv, tside, t_place, limit, queue, size,
-            wait=WAIT_SEC):
-    """Когда исполнится пассивная покупка по цене `limit`.
+            wait=WAIT_SEC, side=1):
+    """Когда исполнится пассивная заявка по цене `limit`.
+
+    `side=+1` — покупка: её исполняет ПРОДАЮЩАЯ агрессия по цене не
+    выше нашей. `side=-1` — продажа, зеркально: покупающая агрессия по
+    цене не ниже. Умолчание — прежняя покупка, счёт D1 бит в бит.
 
     Очередь впереди — `queue` в единицах базового актива. Исполнение
-    наступает, когда накопленная ПРОДАЮЩАЯ агрессия по цене не выше
-    нашей превысит очередь плюс наш размер: пока сквозь уровень не
-    прошло чужого объёма больше, чем стояло перед нами, наша заявка не
+    наступает, когда накопленная встречная агрессия сквозь наш уровень
+    превысит очередь плюс наш размер: пока сквозь уровень не прошло
+    чужого объёма больше, чем стояло перед нами, наша заявка не
     тронута.
 
     Возвращает секунду исполнения от `t_place` либо `None`.
@@ -165,7 +178,10 @@ def fill_at(tt, tp, tv, tside, t_place, limit, queue, size,
     hi = int(np.searchsorted(tt, t_place + wait, side="right"))
     if hi <= lo:
         return None
-    m = (tside[lo:hi] < 0) & (tp[lo:hi] <= limit)
+    if side > 0:
+        m = (tside[lo:hi] < 0) & (tp[lo:hi] <= limit)
+    else:
+        m = (tside[lo:hi] > 0) & (tp[lo:hi] >= limit)
     if not m.any():
         return None
     need = queue + size
@@ -196,7 +212,7 @@ def measure_day(root, syms, day, jobs, log=print):
     out = []
     for k, (r, js) in enumerate(sorted(by_sym.items())):
         sym = syms[r]
-        bid, ask, bsz = book_grids(root, sym, hours, t0, n)
+        bid, ask, bsz, _ = book_grids(root, sym, hours, t0, n)
         _, bnxt = D.fill_index(bid)
         tt, tp, tv, tside = trade_arrays(root, sym, hours, t0)
         for j in js:
