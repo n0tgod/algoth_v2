@@ -91,6 +91,47 @@ def test_gap_breaks_the_wave():
           any(ip >= edge for ip, _, _ in piv), str(piv))
 
 
+def test_leg_over_a_gap_is_a_splice_not_a_leg():
+    """Нога через дыру записи — склейка, и с `max_gap` её не существует.
+
+    Найденный дефект: зигзаг после дыры начинается заново, но плоский
+    список вершин об этом молчит, и `legs` спаривал последнюю вершину
+    до дыры с первой после — «нога» из двух кусков под видом движения.
+    Для одиночных откатов W1 это редкий шум; для окон из пяти ног —
+    систематическая порча. Умолчание сохраняет прежний счёт бит в бит:
+    опубликованный отчёт считался без фильтра.
+    """
+    a = saw([0.10, 0.02, 0.12], step=0.005)
+    b = saw([0.10, 0.02, 0.12], step=0.005) + 0.50
+    gap = W.MAX_GAP + 3
+    x = np.concatenate([a, np.full(gap, np.nan), b])
+    piv = W.zigzag(x, theta=0.03)
+    edge = len(a)
+
+    def splices(lg):
+        return [(v["i_from"], v["i_to"]) for v in lg
+                if v["i_from"] < edge <= v["i_to"]]
+
+    old = W.legs(x, piv)
+    new = W.legs(x, piv, max_gap=W.MAX_GAP)
+    check("без фильтра склейка существует (дефект виден)",
+          len(splices(old)) > 0, str(splices(old)))
+    check("с фильтром ноги через дыру нет", not splices(new),
+          str(splices(new)))
+    check("остальные ноги не тронуты",
+          [v["i_to"] for v in new]
+          == [v["i_to"] for v in old if (v["i_from"], v["i_to"])
+              not in splices(old)])
+    after = [v for v in new if v["i_from"] >= edge]
+    check("первая нога после дыры не наследует ratio через шов",
+          bool(after) and not np.isfinite(after[0]["ratio"]),
+          str(after[:1]))
+    check("цены концов едут в ноге",
+          all(np.isfinite(v["px_from"]) and np.isfinite(v["px_to"])
+              and abs(abs(v["px_to"] - v["px_from"]) - v["size"]) < 1e-12
+              for v in new))
+
+
 def test_leg_ratio_is_what_a_trader_would_measure():
     """Коэффициент отката — отношение ноги к предыдущей, карандашом."""
     x = saw([0.10, 0.04, 0.14], step=0.005)     # ноги 0.10, 0.06, 0.10
@@ -234,6 +275,7 @@ def main():
         test_zigzag_is_causal,
         test_zigzag_costs_confirmation_lag_and_it_grows_with_theta,
         test_gap_breaks_the_wave,
+        test_leg_over_a_gap_is_a_splice_not_a_leg,
         test_leg_ratio_is_what_a_trader_would_measure,
         test_fib_shares_count_what_they_say,
         test_surrogate_keeps_the_values_and_the_gaps,
