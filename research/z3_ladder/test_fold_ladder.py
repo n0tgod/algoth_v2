@@ -21,7 +21,8 @@ TICK = 0.01
 LEVELS = 12
 
 
-def write_ladder_rec(root, syms, days, hour=10, per_min=30, seed=3):
+def write_ladder_rec(root, syms, days, hour=10, per_min=30, seed=3,
+                     hours=None, spill=0.0):
     """Запись с НАСТОЯЩЕЙ лесенкой: уровни на сетке шага цены.
 
     Общий помощник `write_rec` кладёт один уровень на сторону, и у него
@@ -29,11 +30,17 @@ def write_ladder_rec(root, syms, days, hour=10, per_min=30, seed=3):
     всегда, и любая мера по уровням выходит тождественным нулём. Такая
     фикстура прошла бы проверку, ничего не проверив; поэтому здесь своя,
     с уровнями, которые стоят на месте.
+
+    `spill` двигает биржевую метку ПОСЛЕДНЕГО снимка часа за его
+    границу: момент наблюдения — позднее из двух времён, значит запись
+    лежит в файле своего часа, а по времени принадлежит следующему.
+    Ровно этот перенос обязано пережить почасовое чтение.
     """
     import json
     import random
     from datetime import datetime, timezone
     rng = random.Random(seed)
+    hh_list = tuple(hours) if hours else (hour,)
     for day in days:
         d0 = int(datetime.strptime(day, "%Y-%m-%d")
                  .replace(tzinfo=timezone.utc).timestamp())
@@ -42,45 +49,65 @@ def write_ladder_rec(root, syms, days, hour=10, per_min=30, seed=3):
             td = os.path.join(root, "trades", sym)
             os.makedirs(bd, exist_ok=True)
             os.makedirs(td, exist_ok=True)
-            hh = (datetime.fromtimestamp(d0 + hour * 3600, timezone.utc)
-                  .strftime("%Y-%m-%d-%H"))
             base = 100.0
-            bl, tl = [], []
-            for m in range(60):
-                for k in range(per_min):
-                    t = d0 + hour * 3600 + m * 60 + k * (60 / per_min)
-                    # Лучшая цена стоит на месте почти всегда: уровни
-                    # обязаны переживать соседние снимки, иначе
-                    # пересечения не будет вовсе.
-                    if rng.random() < 0.05:
-                        base = round(base + TICK * rng.choice((-1, 1)), 2)
-                    b = [[round(base - TICK * i, 2),
-                          round(2.0 + rng.random(), 3)]
-                         for i in range(LEVELS)]
-                    a = [[round(base + TICK * (i + 1), 2),
-                          round(2.0 + rng.random(), 3)]
-                         for i in range(LEVELS)]
-                    bl.append(json.dumps(
-                        {"s": sym, "ts": int(t * 1000), "u": 1,
-                         "bid": b[0][0], "ask": a[0][0],
-                         "bid_sz": b[0][1], "ask_sz": a[0][1], "upd": 5,
-                         "b": b, "a": a, "reach_b": 50.0, "reach_a": 60.0,
-                         "bq0.0005": 10.0, "aq0.0005": 11.0,
-                         "bq0.001": 20.0, "aq0.001": 21.0,
-                         "bq0.0025": 100.0, "aq0.0025": 110.0,
-                         "bq0.005": 200.0, "aq0.005": 210.0,
-                         "t": round(t, 3)}, separators=(",", ":")))
-                    if k % 5 == 0:
-                        tl.append(json.dumps(
-                            {"ts": int(t * 1000), "s": sym, "side": -1,
-                             "p": b[0][0], "v": 0.5},
-                            separators=(",", ":")))
-            with open(os.path.join(bd, hh + ".jsonl"), "w",
-                      encoding="utf-8") as f:
-                f.write("\n".join(bl) + "\n")
-            with open(os.path.join(td, hh + ".jsonl"), "w",
-                      encoding="utf-8") as f:
-                f.write("\n".join(tl) + "\n")
+            for hour_i in hh_list:
+                hh = (datetime.fromtimestamp(d0 + hour_i * 3600,
+                                             timezone.utc)
+                      .strftime("%Y-%m-%d-%H"))
+                bl, tl = [], []
+                for m in range(60):
+                    for k in range(per_min):
+                        t = d0 + hour_i * 3600 + m * 60 + k * (60 / per_min)
+                        # Лучшая цена стоит на месте почти всегда: уровни
+                        # обязаны переживать соседние снимки, иначе
+                        # пересечения не будет вовсе.
+                        if rng.random() < 0.05:
+                            base = round(base + TICK * rng.choice((-1, 1)), 2)
+                        b = [[round(base - TICK * i, 2),
+                              round(2.0 + rng.random(), 3)]
+                             for i in range(LEVELS)]
+                        a = [[round(base + TICK * (i + 1), 2),
+                              round(2.0 + rng.random(), 3)]
+                             for i in range(LEVELS)]
+                        last = (m == 59 and k == per_min - 1)
+                        ts = t + (spill if last else 0.0)
+                        bl.append(json.dumps(
+                            {"s": sym, "ts": int(ts * 1000), "u": 1,
+                             "bid": b[0][0], "ask": a[0][0],
+                             "bid_sz": b[0][1], "ask_sz": a[0][1], "upd": 5,
+                             "b": b, "a": a, "reach_b": 50.0,
+                             "reach_a": 60.0,
+                             "bq0.0005": 10.0, "aq0.0005": 11.0,
+                             "bq0.001": 20.0, "aq0.001": 21.0,
+                             "bq0.0025": 100.0, "aq0.0025": 110.0,
+                             "bq0.005": 200.0, "aq0.005": 210.0,
+                             "t": round(t, 3)}, separators=(",", ":")))
+                        if k % 5 == 0:
+                            tl.append(json.dumps(
+                                {"ts": int(t * 1000), "s": sym, "side": -1,
+                                 "p": b[0][0], "v": 0.5},
+                                separators=(",", ":")))
+                        # Принты ПОСЛЕ последнего снимка часа: они
+                        # объясняют убыль в первой паре следующего часа,
+                        # и почасовое чтение обязано донести их туда.
+                        # Их несколько и на разных уровнях нарочно:
+                        # съеденное есть min(убыль, объём сделок на этой
+                        # цене), и один принт на случайной сетке размеров
+                        # с половинной вероятностью попадает на выросший
+                        # уровень — то есть не меняет ничего, и подделка
+                        # переноса теста не роняет.
+                        if last:
+                            for lv in range(6):
+                                tl.append(json.dumps(
+                                    {"ts": int((t + 0.5) * 1000), "s": sym,
+                                     "side": -1, "p": b[lv][0], "v": 0.7},
+                                    separators=(",", ":")))
+                with open(os.path.join(bd, hh + ".jsonl"), "w",
+                          encoding="utf-8") as f:
+                    f.write("\n".join(bl) + "\n")
+                with open(os.path.join(td, hh + ".jsonl"), "w",
+                          encoding="utf-8") as f:
+                    f.write("\n".join(tl) + "\n")
 
 
 def _setup(days, syms, per_min=4):
@@ -327,6 +354,84 @@ def test_report_counts_a_smoke_day_as_not_folded():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_hourly_reading_equals_the_whole_day_bit_for_bit():
+    """Почасовое чтение обязано совпасть с посуточным ТОЧНО.
+
+    Правка сделана не ради скорости: первый полный проход убило ядро
+    (код 137) на сто первом имени — сутки снимков BTC с лесенкой в 200
+    уровней это около 3.9 ГБ питоновских объектов. Но правка памяти,
+    меняющая числа, была бы другой мерой, поэтому здесь сравнение с
+    образцом — посуточным счётом на тех же файлах.
+
+    Фикстура несёт ровно те два случая, ради которых нужен перенос:
+    последний снимок часа заезжает за его границу (момент наблюдения —
+    позднее из двух времён), и принт стоит ПОСЛЕ него, то есть
+    объясняет убыль уже в первой паре следующего часа.
+    """
+    day = "2026-08-20"
+    sym = "AAAUSDT"
+    root = tempfile.mkdtemp()
+    old = (F.BOOK, F.TRADES)
+    try:
+        F.BOOK = os.path.join(root, "book")
+        F.TRADES = os.path.join(root, "trades")
+        # per_min=30, а не меньше: минута закрывается только при
+        # `MIN_PAIRS` парах, и на редкой сетке обе стороны сравнения
+        # вышли бы пустыми — равенство выполнилось бы, ничего не
+        # проверив (первый прогон этой проверки так и сделал).
+        # Снос БОЛЬШЕ шага сетки (3 с против 2): при сносе ровно в шаг
+        # заехавший снимок встаёт на границу и в общем порядке
+        # оказывается ПЕРЕД первой записью следующего часа — то есть
+        # там же, где и без переноса, и подделка переноса теста не
+        # роняет. Проверка, которую нельзя провалить, не защищает.
+        # per_min=60 (шаг 1 с), а не реже: пара с разрывом больше
+        # `MAX_DT = 3 с` наблюдением не является вовсе, и на шаге 2 с
+        # пара через границу часа выпадала — вместе с ней выпадали и
+        # перенесённые принты, то есть подделка переноса ленты теста не
+        # роняла.
+        write_ladder_rec(root, [sym], [day], hours=(10, 11, 12),
+                         per_min=60, spill=3.0)
+        hours, t0 = F.hours_of_day(day)
+        snaps, trs = [], []
+        for h in hours:
+            snaps += FL._read(os.path.join(F.BOOK, sym), h, FL.snap_full)
+            trs += FL._read(os.path.join(F.TRADES, sym), h,
+                            __import__("bookfeat2").trade_line_px)
+        snaps.sort(key=lambda r: r["t"])
+        trs.sort(key=lambda r: r[0])
+        check("фикстура несёт перенос через границу часа",
+              any(r["t"] >= t0 + 11 * 3600 for r in snaps[:len(snaps) // 3]),
+              "ни один снимок не заехал за свой час")
+        want = FL.fold_symbol(snaps, trs, t0)
+        got = FL.symbol_day(sym, day)
+
+        def same(a, b):
+            # NaN — это «меры нет» (ход середины нулевой, делить не на
+            # что), и таких минут здесь 36. Голое сравнение списков
+            # объявило бы их расхождением, потому что NaN не равен сам
+            # себе, — и любая будущая правка памяти выглядела бы
+            # изменившей числа.
+            if len(a) != len(b):
+                return False
+            for x, y in zip(a, b):
+                if x is None or y is None:
+                    if x is not y:
+                        return False
+                elif x != y and not (x != x and y != y):
+                    return False
+            return True
+
+        bad = [f for f in LD.FIELDS if not same(want[f], got[f])]
+        check("почасовой счёт равен посуточному бит в бит", not bad,
+              f"разошлись поля: {bad[:4]}")
+        live = [m for m in range(len(want["pairs"]))
+                if want["pairs"][m] is not None]
+        check("и это не пустое равенство", len(live) > 100, str(len(live)))
+    finally:
+        (F.BOOK, F.TRADES) = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     tests = (
         test_ladder_folds_into_its_own_store_and_leaves_the_book_alone,
@@ -336,6 +441,7 @@ def main():
         test_symbols_can_be_given_by_a_repeated_key,
         test_report_counts_a_smoke_day_as_not_folded,
         test_observation_moment_is_the_later_of_two_times,
+        test_hourly_reading_equals_the_whole_day_bit_for_bit,
     )
     for t in tests:
         t()
