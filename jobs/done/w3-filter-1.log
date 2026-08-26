@@ -1,0 +1,17 @@
+== задание w3-filter-1 ==
+строка: run research/w1_waves/filter_probe.py --tag 1h
+начало: 2026-08-26T17:36:12Z
+запускаю: .venv/bin/python research/w1_waves/filter_probe.py --tag 1h
+[17:36:14] вектор vectors_h5_day.npz: горизонт 5 д, цель fwd_5, предсказаний 187733
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/w1_waves/filter_probe.py", line 313, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/root/algoth_v2/research/w1_waves/filter_probe.py", line 289, in main
+    wave = build_wave_columns(cols)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/w1_waves/filter_probe.py", line 167, in build_wave_columns
+    syms = cols["symbol"]
+           ~~~~^^^^^^^^^^
+KeyError: 'symbol'
+конец: 2026-08-26T17:36:14Z, код 1
