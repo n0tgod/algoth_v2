@@ -84,3 +84,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787776941 ==
 [2026-08-26T20:42:22Z] задание calm-smoke-2 запущено: research/probe_calm_exec/probe.py
+
+== сигнал 1787777252 ==
+[2026-08-26T20:47:33Z] задание calm-full запущено: research/probe_calm_exec/probe.py

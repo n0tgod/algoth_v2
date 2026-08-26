@@ -12,3 +12,15 @@
 готово: /root/algoth_v2/research/probe_calm_exec/out/CALM-exec-smoke.json
   в спокойный час лимитка на лучшей НЕ платит: +0.0 б.п. против тейкерского входа — отбор съедает экономию спреда и комиссии
 конец: 2026-08-26T20:44:35Z, код 0
+публикуется в ветку main:
+ jobs/done/calm-smoke-2.done                       |   1 +
+ jobs/done/calm-smoke-2.log                        |  14 +
+ jobs/done/calm-smoke.log                          |  10 +
+ jobs/poke.log                                     |   3 +
+ research/probe_calm_exec/out/CALM-exec-smoke.json | 758 ++++++++++++++++++++++
+ research/probe_calm_exec/out/CALM-exec-smoke.md   | 106 +++
+ 6 files changed, 892 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   40e5fad..34f08ae  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
