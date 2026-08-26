@@ -21,3 +21,17 @@
 ячеек измерено: 144; планка +3.17 σ; кандидатов: 1
   сняли 30 % показанных асков [L] 15м: медиана +28.8, среднее +30.7 б.п., z +36.5, корзин 190
 снос по стороне (обязан быть около нуля): 15|-1: -2.23, 15|1: +2.23, 1|-1: -0.06, 1|1: +0.06, 5|-1: -0.56, 5|1: +0.56
+публикуется в ветку main:
+ jobs/done/z3-fold-2.log                |   2 +
+ jobs/done/z3-screen-1.log              |   7 ++
+ jobs/done/z3-screen-2.done             |   1 +
+ jobs/done/z3-screen-2.log              |  23 +++++
+ jobs/poke.log                          |   3 +
+ research/z3_ladder/out/Z3-ladder-d1.md | 179 +++++++++++++++++++++++++++++++++
+ research/z3_ladder/out/z3-d1.json      |   1 +
+ 7 files changed, 216 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   297b651..71f5029  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-26T16:19:48Z, код 0
