@@ -150,12 +150,17 @@ def test_band_edges():
 
 
 def test_ep_median_one_hour_one_vote():
-    """Час — один голос: три записи одного часа не переголосуют одну
-    запись другого."""
-    med, n, share = P._ep_median([1.0, 1.0, 1.0, -5.0],
-                                 [10, 10, 10, 20])
-    check("медиана почасовых медиан", (med, n, share) == (-2.0, 2, 0.5),
-          f"{(med, n, share)}")
+    """Час — один голос, и медиана со средним считаются ОБЕ.
+
+    Фикстура нарочно разводит их: медианы часов [1, 3, −5] дают
+    медиану 1 и среднее −0.33 — совпади они, тест не отличал бы одну
+    величину под двумя именами (урок Z1)."""
+    med, n, share, mean = P._ep_median([1.0, 1.0, 1.0, 3.0, -5.0],
+                                       [10, 10, 10, 20, 30])
+    check("медиана почасовых медиан",
+          (med, n, share) == (1.0, 3, 0.667), f"{(med, n, share)}")
+    check("среднее почасовых медиан", mean == -0.33, f"{mean}")
+    check("медиана и среднее различимы", med != mean, f"{med}")
 
 
 def test_verdict_phrase_follows_the_number():
@@ -167,6 +172,9 @@ def test_verdict_phrase_follows_the_number():
           pos)
     check("минус называется НЕ платит",
           "НЕ платит" in neg and "-3.0" in neg, neg)
+    zero = P.verdict_phrase({"benefit_ep_bp": 0.0})
+    check("ноль называется вырожденной медианой",
+          "вырождена" in zero and "среднее" in zero, zero)
     check("нет числа — нет фразы",
           "не измерена" in P.verdict_phrase(None), "")
 

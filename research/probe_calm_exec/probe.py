@@ -246,13 +246,18 @@ def measure_symbol(root, sym, days, counters, min_obs=None,
 
 
 def _ep_median(vals, hours):
-    """Медиана почасовых медиан: час — один голос, не одно имя."""
+    """Медиана И среднее почасовых медиан: час — один голос.
+
+    Среднее обязательно рядом с медианой (урок Z1: у целого семейства
+    условий они расходились в знаке — типичный исход хороший, хвост
+    съедает всё; по одной медиане это не отличить)."""
     by = {}
     for v, h in zip(vals, hours):
         by.setdefault(h, []).append(v)
     per = [float(np.median(v)) for v in by.values()]
     return (round(float(np.median(per)), 2), len(per),
-            round(float(np.mean(np.array(per) > 0)), 3))
+            round(float(np.mean(np.array(per) > 0)), 3),
+            round(float(np.mean(per)), 2))
 
 
 def summarise(events):
@@ -268,14 +273,14 @@ def summarise(events):
         hrs = [r[9] for r in rows]
         drift_all = [r[7] for r in rows]
         drift_f = [r[7] for r in fills]
-        ep, n_ep, share = _ep_median(ben, hrs)
+        ep, n_ep, share, ep_mean = _ep_median(ben, hrs)
         rec = {
             "n": len(rows), "filled": len(fills),
             "fill_rate": round(len(fills) / len(rows), 3),
             "wait_median": (round(float(np.median(
                 [r[5] for r in fills])), 1) if fills else None),
-            "benefit_ep_bp": ep, "episodes": n_ep,
-            "share_pos_ep": share,
+            "benefit_ep_bp": ep, "benefit_ep_mean_bp": ep_mean,
+            "episodes": n_ep, "share_pos_ep": share,
             "benefit_ev_bp": round(float(np.median(ben)), 2),
             "adverse_bp": (round(float(np.median(drift_f))
                            - float(np.median(drift_all)), 2)
@@ -294,13 +299,14 @@ def headline(events):
             if e[1] == CALM_BAND and e[2] == WAITS[0] and e[3] == 0]
     if not rows:
         return None
-    ep, n_ep, share = _ep_median([r[6] for r in rows],
-                                 [r[9] for r in rows])
+    ep, n_ep, share, ep_mean = _ep_median([r[6] for r in rows],
+                                          [r[9] for r in rows])
     fills = [r for r in rows if r[4]]
     drift_all = [r[7] for r in rows]
     drift_f = [r[7] for r in fills]
     return {
-        "benefit_ep_bp": ep, "episodes": n_ep, "share_pos_ep": share,
+        "benefit_ep_bp": ep, "benefit_ep_mean_bp": ep_mean,
+        "episodes": n_ep, "share_pos_ep": share,
         "n": len(rows),
         "fill_rate": round(len(fills) / len(rows), 3),
         "adverse_bp": (round(float(np.median(drift_f))
@@ -319,6 +325,11 @@ def verdict_phrase(h):
         return (f"в спокойный час лимитка на лучшей ПЛАТИТ: "
                 f"{v:+.1f} б.п. выгоды против тейкерского входа "
                 f"(медиана по эпизодам)")
+    if v == 0:
+        return ("в спокойный час медиана выгоды РОВНО ноль: типичная "
+                "лимитка не исполняется и доисполняется тейкером по "
+                "почти той же цене — читать среднее и разрез по "
+                "исполненным, медиана здесь вырождена")
     return (f"в спокойный час лимитка на лучшей НЕ платит: "
             f"{v:+.1f} б.п. против тейкерского входа — отбор съедает "
             f"экономию спреда и комиссии")
@@ -346,9 +357,11 @@ def report(art, path):
         L += ["## 1. Главная ячейка (объявлена до прогона)\n",
               "Полоса «спокойно», ожидание 60 с, рука «на лучшей», обе "
               "стороны, счёт по эпизодам (час — один голос).\n",
-              f"- выгода: **{h['benefit_ep_bp']:+.2f} б.п.** на "
+              f"- выгода: медиана **{h['benefit_ep_bp']:+.2f}**, "
+              f"среднее **{h['benefit_ep_mean_bp']:+.2f} б.п.** на "
               f"{h['episodes']} эпизодах, доля часов в плюс "
-              f"{h['share_pos_ep']:.3f}",
+              f"{h['share_pos_ep']:.3f} (расхождение медианы и "
+              f"среднего — подпись хвоста, урок Z1)",
               f"- исполнение {h['fill_rate']:.3f}, отбор "
               f"{h['adverse_bp'] if h['adverse_bp'] is not None else '—'}"
               f" б.п., медиана спреда {h['spread_med_bp']:.2f} б.п.",
@@ -359,8 +372,8 @@ def report(art, path):
     for arm in range(len(ARMS)):
         L += [f"## {2 + arm}. Рука «{ARMS[arm]}»\n",
               "| сторона | полоса | T, с | n | исполн. | ждали, с | "
-              "выгода (эп.) | доля>0 | эп. | отбор | спред |",
-              "|---|---|---|---|---|---|---|---|---|---|---|"]
+              "выгода мед. | выгода ср. | доля>0 | эп. | отбор | спред |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for side in SIDES:
             for band in range(len(BAND_NAMES)):
                 for wait in WAITS:
@@ -369,7 +382,7 @@ def report(art, path):
                     nm = "покупка" if side > 0 else "продажа"
                     if r is None:
                         L.append(f"| {nm} | {BAND_NAMES[band]} | {wait} "
-                                 f"| 0 | — | — | — | — | — | — | — |")
+                                 f"| 0 | — | — | — | — | — | — | — | — |")
                         continue
                     d = lambda v, f: "—" if v is None else format(v, f)
                     L.append(
@@ -377,6 +390,7 @@ def report(art, path):
                         f"{r['n']} | {r['fill_rate']:.3f} | "
                         f"{d(r['wait_median'], '.0f')} | "
                         f"{r['benefit_ep_bp']:+.2f} | "
+                        f"{r['benefit_ep_mean_bp']:+.2f} | "
                         f"{r['share_pos_ep']:.3f} | {r['episodes']} | "
                         f"{d(r['adverse_bp'], '+.1f')} | "
                         f"{r['spread_med_bp']:.2f} |")
