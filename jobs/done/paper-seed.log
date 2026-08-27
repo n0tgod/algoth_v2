@@ -1,0 +1,9 @@
+== задание paper-seed ==
+строка: run research/paper_monthly/book.py --catchup
+начало: 2026-08-27T09:37:03Z
+запускаю: .venv/bin/python research/paper_monthly/book.py --catchup
+универсум 949, рядов funding 722
+новых решений 0, новых разборов 0
+готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (2.9 мин)
+  настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 0 — кривая восстановленной части есть бэктест, а не трек
+публикую отчёт
