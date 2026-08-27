@@ -8,3 +8,14 @@
 готово: /root/algoth_v2/research/probe_listings/out/LISTINGS-1d.json (59.3 мин)
   новичок в первый месяц ОТСТАЁТ от рынка: медиана когорт -1568 б.п., среднее -1525 — знак согласован обеими мерами
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/listings-1d.log                    |   4 +
+ jobs/done/z3-fold-2.log                      |  12 ++
+ research/probe_listings/out/LISTINGS-1d.json | 176 +++++++++++++++++++++++++++
+ research/probe_listings/out/LISTINGS-1d.md   |  61 ++++++++++
+ 4 files changed, 253 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   bd8d67b..f668d00  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-27T01:14:33Z, код 0
