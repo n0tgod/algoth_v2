@@ -217,3 +217,17 @@
 готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (23.9 мин)
   настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 105 — кривая восстановленной части есть бэктест, а не трек
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/paper-diag.done                 |   1 +
+ jobs/done/paper-diag.log                  | 219 ++++++++++++++++++++++++++++++
+ jobs/done/paper-seed.log                  |   7 +
+ jobs/done/z3-fold-2.log                   |   1 +
+ jobs/poke.log                             |   3 +
+ research/paper_monthly/out/PAPER-30d.json |  25 +++-
+ research/paper_monthly/out/PAPER-30d.md   |   8 +-
+ 7 files changed, 254 insertions(+), 10 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   20504eb..a45fd36  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-27T10:06:49Z, код 0
