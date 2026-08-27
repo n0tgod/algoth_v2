@@ -151,14 +151,16 @@ def read_manifest(path):
     with open(path, encoding="utf-8") as f:
         m = json.load(f)
     if isinstance(m, list):
-        return {"symbols": m, "rows": None, "duplicates": None}
+        return {"symbols": m, "rows": None, "duplicates": None,
+                "files": None}
     return {"symbols": m["symbols"], "rows": m.get("rows"),
-            "duplicates": m.get("duplicates")}
+            "duplicates": m.get("duplicates"), "files": m.get("files")}
 
 
-def write_manifest(path, symbols, rows, dups):
+def write_manifest(path, symbols, rows, dups, files=None):
     with open(path, "w", encoding="utf-8") as f:
-        json.dump({"symbols": symbols, "rows": rows, "duplicates": dups}, f)
+        json.dump({"symbols": symbols, "rows": rows, "duplicates": dups,
+                   "files": files}, f)
 
 
 def scan_store(dest):
@@ -201,6 +203,10 @@ def main():
                     help="каталог сырых архивов этапа A1")
     ap.add_argument("--rebuild", action="store_true",
                     help="перезаписать готовые партиции")
+    ap.add_argument("--dest", default="",
+                    help="куда писать партиции (по умолчанию out/parquet)")
+    ap.add_argument("--months", default="",
+                    help="только эти месяцы, через запятую (докачка)")
     ap.add_argument("--restat", action="store_true",
                     help="дочитать числа партиций, собранных ранним кодом; "
                          "сами партиции не переписываются")
@@ -224,7 +230,13 @@ def main():
         for ym, paths in files_by_month(d, sym, args.interval).items():
             by_month[ym][sym] = paths
 
-    dest = os.path.join(PARQUET, args.interval)
+    if args.months:
+        want_months = {m.strip() for m in args.months.split(",") if m.strip()}
+        by_month = {k: v for k, v in by_month.items() if k in want_months}
+        if not by_month:
+            raise SystemExit(f"нет сырья за месяцы: {sorted(want_months)}")
+
+    dest = os.path.join(args.dest or PARQUET, args.interval)
     os.makedirs(dest, exist_ok=True)
 
     skipped = 0
@@ -240,8 +252,17 @@ def main():
         # рода уже дважды встречалась в загрузчиках: признаком состояния
         # служило то, что сделал текущий прогон, а не то, что лежит на диске.
         done = read_manifest(manifest)
+        # Число файлов сырья — часть признака готовности, а не украшение.
+        # Состав символов при ДОЗАКАЧКЕ не меняется (те же имена, новые
+        # суточные файлы), и партиция молча считалась бы готовой: месяц
+        # остался бы без свежих дней навсегда. Тот же класс ошибки, что
+        # «готовность символа по существованию файла» в L2 — признаком
+        # результата служило неполное свойство.
+        n_files = sum(len(v) for v in by_month[ym].values())
+        fresh = (done is not None and done.get("files") is not None
+                 and done["files"] != n_files)
         if os.path.exists(path) and done and done["symbols"] == want \
-                and not args.rebuild:
+                and not fresh and not args.rebuild:
             if done["duplicates"] is not None or not args.restat:
                 skipped += 1
                 continue
@@ -279,7 +300,7 @@ def main():
                 continue
             writer.close()
             os.replace(tmp, path)              # партиция появляется целиком
-        write_manifest(manifest, want, rows, dups)
+        write_manifest(manifest, want, rows, dups, n_files)
         print(f"  {i}/{len(by_month)} {ym}: {rows} строк, дублей {dups}"
               + (" (пересчёт)" if restat else ""),
               file=sys.stderr, flush=True)
