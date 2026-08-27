@@ -519,6 +519,33 @@ def test_partial_failure_is_named_too():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_archive_journal_moves_and_names_the_reason():
+    """Отставка журнала: файлы уезжают, причина записана, запись
+    начинается с чистого листа. Строку из append-only журнала не
+    правят — недействительную запись отставляют целиком."""
+    tmp = tempfile.mkdtemp()
+    try:
+        for name in ("decisions.jsonl", "resolutions.jsonl"):
+            with open(os.path.join(tmp, name), "w",
+                      encoding="utf-8") as f:
+                f.write('{"at": "2026-08-27"}\n')
+        moved = B.archive_journal("решение принято по вчерашним данным",
+                                  out=tmp)
+        check("оба файла отставлены", len(moved) == 2, f"{moved}")
+        check("исходных файлов больше нет",
+              not os.path.exists(os.path.join(tmp, "decisions.jsonl")),
+              "")
+        marks = [f for f in os.listdir(tmp) if f.startswith("ARCHIVED.")]
+        check("причина записана рядом", len(marks) == 1, f"{marks}")
+        txt = open(os.path.join(tmp, marks[0]), encoding="utf-8").read()
+        check("причина названа словами",
+              "вчерашним данным" in txt, txt)
+        check("пустой каталог отставлять нечего",
+              B.archive_journal("повтор", out=tmp) == [], "")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_report_writes_and_marks_backfill():
     tmp = tempfile.mkdtemp()
     try:
@@ -565,6 +592,7 @@ def main():
     test_catchup_is_idempotent()
     test_empty_run_explains_itself()
     test_partial_failure_is_named_too()
+    test_archive_journal_moves_and_names_the_reason()
     test_report_writes_and_marks_backfill()
     print()
     if FAILED:

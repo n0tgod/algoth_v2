@@ -146,6 +146,31 @@ def append_jsonl(path, rec):
         os.fsync(f.fileno())
 
 
+def archive_journal(reason, out=None):
+    """Отставить журнал целиком, назвав причину.
+
+    Журнал append-only: строку из него не правят и не удаляют. Но
+    запись, сделанная ДЕФЕКТНЫМ кодом, недействительна — и оставлять её
+    рядом с честными нельзя, иначе свод считает по смеси. Механизм тот
+    же, что у ситуационной книги при смене правил: каталог уезжает в
+    архив с меткой времени и причиной, запись начинается заново.
+    """
+    out = out or OUT
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    moved = []
+    for name in ("decisions.jsonl", "resolutions.jsonl"):
+        src = os.path.join(out, name)
+        if os.path.exists(src):
+            dst = os.path.join(out, f"{name}.{stamp}")
+            os.replace(src, dst)
+            moved.append(os.path.basename(dst))
+    if moved:
+        with open(os.path.join(out, f"ARCHIVED.{stamp}.txt"), "w",
+                  encoding="utf-8") as f:
+            f.write(f"{stamp}\n{reason}\n" + "\n".join(moved) + "\n")
+    return moved
+
+
 def note(why, reason):
     """Счётчик причины отказа. Пустой прогон обязан объяснять себя.
 
@@ -601,6 +626,8 @@ def main():
     ap.add_argument("--start", default=START)
     ap.add_argument("--end", default=None)
     ap.add_argument("--catchup", action="store_true")
+    ap.add_argument("--archive-journal", default="",
+                    help="отставить журнал в архив с указанной причиной")
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--tag", default="30d")
@@ -608,6 +635,10 @@ def main():
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     t_start = time.time()
+
+    if a.archive_journal:
+        moved = archive_journal(a.archive_journal, a.out)
+        print(f"журнал отставлен: {moved or 'нечего отставлять'}")
 
     if a.catchup or not a.report:
         liq, universe = PR.load_liquidity(a.interval)
