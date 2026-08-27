@@ -307,3 +307,15 @@ branch 'main' set up to track 'origin/main'.
   2026-08-15: свёрнуто, имён с записью 713 из 731, символо-минут 1,026,106, 25.5 МиБ, 10638 с
   память: пик 594 МБ, доступно 3644 МБ
 отчёт склада лесенки: /root/algoth_v2/research/z3_ladder/out/store/Z3-store.md; не свёрнуто суток 15 (из них по узкому списку имён 1)
+публикуется в ветку main:
+ jobs/done/a2-refresh-full.done           |  1 +
+ jobs/done/a2-refresh-full.log            | 21 +++++++++++++++++++++
+ jobs/done/a2-refresh-pilot2.log          |  7 +++++++
+ jobs/done/z3-fold-2.log                  |  6 ++++++
+ jobs/poke.log                            |  3 +++
+ research/z3_ladder/out/store/Z3-store.md |  9 +++++----
+ 6 files changed, 43 insertions(+), 4 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   745a0e6..7ea9c80  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
