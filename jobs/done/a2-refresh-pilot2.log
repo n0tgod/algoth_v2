@@ -12,3 +12,18 @@
 готово: /root/algoth_v2/research/a2_storage/out/A2-refresh-1m.json (1.8 мин)
   край хранилища сдвинут 2026-06-30 → 2026-08-26: скачано 1713 файлов, пересобрано партиций 1
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/a2-refresh-pilot.log             | 11 +++++++++++
+ jobs/done/a2-refresh-pilot2.done           |  1 +
+ jobs/done/a2-refresh-pilot2.log            | 14 ++++++++++++++
+ jobs/done/z3-fold-2.log                    |  1 +
+ jobs/poke.log                              |  3 +++
+ research/a2_storage/out/A2-refresh-1m.json | 13 +++++++++++++
+ research/a2_storage/out/A2-refresh-1m.md   | 24 ++++++++++++++++++++++++
+ research/a2_storage/out/build_1m.json      |  6 +++---
+ 8 files changed, 70 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   2f79095..12a76d3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-27T11:59:48Z, код 0
