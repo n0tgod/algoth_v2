@@ -309,8 +309,16 @@ def main():
     stats["symbols"] = len(symbols)
     stats["skipped_existing"] = skipped
     stats["interval"] = args.interval
-    with open(os.path.join(OUT, f"build_{args.interval}.json"), "w",
-              encoding="utf-8") as f:
+    # Сводка ложится РЯДОМ с партициями: при явном `--dest` (пилот,
+    # тест) она описывает то хранилище, которое собирали, и не трогает
+    # рабочее. Первая версия писала в общий OUT всегда — тестовый
+    # прогон на одном символе затёр сводку настоящего хранилища
+    # (78 партиций и 759 млн строк превратились в 1 и 120), и это тот
+    # же класс, что подмена артефакта прогона смоуком в F2.
+    stats_dir = os.path.dirname(dest) if args.dest else OUT
+    os.makedirs(stats_dir, exist_ok=True)
+    with open(os.path.join(stats_dir, f"build_{args.interval}.json"),
+              "w", encoding="utf-8") as f:
         json.dump(stats, f, ensure_ascii=False, indent=1)
     print(json.dumps(stats, ensure_ascii=False, indent=2))
 

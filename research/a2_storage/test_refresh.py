@@ -145,6 +145,19 @@ def test_readiness_accounts_for_new_files():
         check("новый файл вызвал пересборку",
               m2.get("files") == 2 and m2["rows"] > m1["rows"],
               f"{m1} → {m2}")
+        # Сводка обязана лечь рядом с ПОДСТАВНЫМИ партициями, а не в
+        # рабочий каталог проекта: первая версия теста затёрла сводку
+        # настоящего хранилища числами на одном символе.
+        check("сводка легла в свой каталог",
+              os.path.exists(os.path.join(tmp, "parquet",
+                                          "build_1m.json")),
+              f"{sorted(os.listdir(os.path.join(tmp, 'parquet')))}")
+        real = os.path.join(HERE, "out", "build_1m.json")
+        if os.path.exists(real):
+            with open(real, encoding="utf-8") as f:
+                got = json.load(f)
+            check("рабочая сводка не тронута тестом",
+                  got.get("symbols", 0) > 1, f"{got}")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
