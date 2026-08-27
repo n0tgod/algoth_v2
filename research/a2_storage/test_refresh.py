@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import zipfile
 from datetime import date, timedelta
 
@@ -226,6 +227,86 @@ def test_days_pilot_takes_the_FIRST_days():
     check("ноль — все", RF.limit_days(days, 0) == days, "")
 
 
+def test_watchdog_daily_window():
+    """Секция сторожа гоняется НАСТОЯЩИМ блоком скрипта с заглушками.
+
+    Проверяются все ветки триггера: свежий артефакт в окно не
+    запускает; в окно при возрасте больше половины суток — запускает;
+    вне окна не запускает; протухший (больше 36 ч) догоняет в любой
+    час; идущий прогон не дублируется. Порядок «докачка, потом книга»
+    закреплён отдельно: книга считается ПО хранилищу, и обратный
+    порядок оставил бы её на день позади.
+    """
+    import subprocess
+
+    wd = os.path.join(RESEARCH, os.pardir, "tools", "watchdog_book.sh")
+    src = open(os.path.abspath(wd), encoding="utf-8").read()
+    a = src.index("# --- свежие данные и бумажная месячная книга")
+    b = src.index("# --- очередь заданий")
+    block = src[a:b]
+    d = tempfile.mkdtemp()
+    try:
+        os.makedirs(os.path.join(d, "research", "paper_monthly", "out"))
+        os.makedirs(os.path.join(d, "stubs"))
+        art = os.path.join(d, "research", "paper_monthly", "out",
+                           "PAPER-30d.json")
+
+        def stub(name, body):
+            p = os.path.join(d, "stubs", name)
+            with open(p, "w") as f:
+                f.write(body)
+            os.chmod(p, 0o755)
+
+        stub("pgrep", "#!/bin/sh\nexit ${PGREP_RC:-1}\n")
+        # setsid/nohup подменяются, чтобы «прогон» только оставил след
+        stub("setsid", '#!/bin/sh\nshift 2\necho "$@" >> ran.log\n')
+        env = dict(os.environ,
+                   PATH=os.path.join(d, "stubs") + os.pathsep
+                   + os.environ["PATH"])
+        wrap = "now() { date; }\n" + block
+
+        def run(hour, age_sec, busy=False):
+            for f in ("ran.log",):
+                try:
+                    os.remove(os.path.join(d, f))
+                except OSError:
+                    pass
+            if age_sec is None:
+                if os.path.exists(art):
+                    os.remove(art)
+            else:
+                with open(art, "w") as f:
+                    f.write("{}")
+                t = time.time() - age_sec
+                os.utime(art, (t, t))
+            e = dict(env, PGREP_RC=("0" if busy else "1"))
+            # час подменяется через date: блок зовёт `date -u +%H`
+            stub("date", f'#!/bin/sh\nif [ "$1" = "-u" ] && '
+                         f'[ "$2" = "+%H" ]; then echo {hour}; else '
+                         f'exec /bin/date "$@"; fi\n')
+            subprocess.run(["bash", "-c", wrap], cwd=d, env=e,
+                           capture_output=True, text=True, timeout=60)
+            p = os.path.join(d, "ran.log")
+            return open(p).read() if os.path.exists(p) else ""
+
+        check("в окно при свежем артефакте не запускается",
+              run("06", 3600) == "", "запустился")
+        got = run("06", 50000)
+        check("в окно при старом артефакте запускается", got != "", "")
+        check("сперва докачка, потом книга",
+              got.index("refresh.py") < got.index("book.py"), got)
+        check("вне окна при том же возрасте молчит",
+              run("13", 50000) == "", "запустился")
+        check("протухший артефакт догоняется вне окна",
+              run("13", 200000) != "", "не запустился")
+        check("первый прогон на чистом каталоге — сразу",
+              run("13", None) != "", "не запустился")
+        check("идущий прогон не дублируется",
+              run("06", 50000, busy=True) == "", "запустился")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_verdict_says_when_edge_did_not_move():
     """Неподвижный край при непустой докачке — отказ, и он называется."""
     src = open(os.path.join(HERE, "refresh.py"), encoding="utf-8").read()
@@ -246,6 +327,8 @@ def main():
     test_storage_edge_reads_a_real_partition()
     test_edge_is_the_end_of_CONTINUOUS_coverage()
     test_days_pilot_takes_the_FIRST_days()
+    print("сторож")
+    test_watchdog_daily_window()
     print("вердикт")
     test_verdict_says_when_edge_did_not_move()
     print()
