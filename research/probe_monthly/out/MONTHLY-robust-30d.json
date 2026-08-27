@@ -1,0 +1,214 @@
+{
+ "run_at": "2026-08-27 09:11 UTC",
+ "interval": "1m",
+ "dates": 1330,
+ "main_cell": "k14_h30",
+ "seeds": [
+  1,
+  2,
+  3,
+  4,
+  5
+ ],
+ "survivorship": {
+  "k14_h30": {
+   "sections": 44,
+   "base_mean_bp": 92.9,
+   "base_median_bp": 141.3,
+   "alive_mean_bp": 48.5,
+   "alive_median_bp": 85.6,
+   "diff_mean_bp": -44.4,
+   "diff_t": -1.96,
+   "base_t": 1.42,
+   "alive_t": 0.71,
+   "partial_long_per_section": 0.43,
+   "partial_short_per_section": 0.2,
+   "legs_per_section": 18.8,
+   "dropped_by_base_total": 77
+  },
+  "k30_h30": {
+   "sections": 43,
+   "base_mean_bp": 78.8,
+   "base_median_bp": 137.0,
+   "alive_mean_bp": 50.2,
+   "alive_median_bp": 66.3,
+   "diff_mean_bp": -28.6,
+   "diff_t": -1.62,
+   "base_t": 1.32,
+   "alive_t": 0.8,
+   "partial_long_per_section": 0.44,
+   "partial_short_per_section": 0.09,
+   "legs_per_section": 18.2,
+   "dropped_by_base_total": 77
+  },
+  "k60_h30": {
+   "sections": 42,
+   "base_mean_bp": 17.5,
+   "base_median_bp": 79.9,
+   "alive_mean_bp": -10.1,
+   "alive_median_bp": -21.0,
+   "diff_mean_bp": -27.6,
+   "diff_t": -1.92,
+   "base_t": 0.23,
+   "alive_t": -0.13,
+   "partial_long_per_section": 0.48,
+   "partial_short_per_section": 0.1,
+   "legs_per_section": 17.6,
+   "dropped_by_base_total": 75
+  },
+  "k90_h30": {
+   "sections": 41,
+   "base_mean_bp": 30.7,
+   "base_median_bp": 41.1,
+   "alive_mean_bp": 16.2,
+   "alive_median_bp": 23.8,
+   "diff_mean_bp": -14.5,
+   "diff_t": -1.06,
+   "base_t": 0.5,
+   "alive_t": 0.26,
+   "partial_long_per_section": 0.39,
+   "partial_short_per_section": 0.07,
+   "legs_per_section": 17.2,
+   "dropped_by_base_total": 75
+  }
+ },
+ "overlap": {
+  "k14_h30": {
+   "sections": 1310,
+   "mean_bp": 46.0,
+   "median_bp": 72.6,
+   "t_naive": 3.43,
+   "t_nw": 1.06,
+   "pos_share": 0.553,
+   "gross_mean_bp": 48.7,
+   "gross_t_naive": 3.64,
+   "gross_t_nw": 1.12
+  },
+  "k30_h30": {
+   "sections": 1280,
+   "mean_bp": 106.4,
+   "median_bp": 114.9,
+   "t_naive": 8.0,
+   "t_nw": 2.28,
+   "pos_share": 0.605,
+   "gross_mean_bp": 108.4,
+   "gross_t_naive": 8.15,
+   "gross_t_nw": 2.33
+  },
+  "k60_h30": {
+   "sections": 1250,
+   "mean_bp": 71.6,
+   "median_bp": 91.9,
+   "t_naive": 5.0,
+   "t_nw": 1.26,
+   "pos_share": 0.569,
+   "gross_mean_bp": 73.1,
+   "gross_t_naive": 5.1,
+   "gross_t_nw": 1.28
+  },
+  "k90_h30": {
+   "sections": 1220,
+   "mean_bp": 88.1,
+   "median_bp": 63.5,
+   "t_naive": 5.86,
+   "t_nw": 1.43,
+   "pos_share": 0.566,
+   "gross_mean_bp": 89.3,
+   "gross_t_naive": 5.94,
+   "gross_t_nw": 1.45
+  }
+ },
+ "halves": {
+  "k14_h30": {
+   "первая": {
+    "sections": 23,
+    "mean_bp": 62.7,
+    "median_bp": 89.7,
+    "t": 0.61,
+    "pos_share": 0.696,
+    "from": "2022-10-11",
+    "to": "2024-08-05"
+   },
+   "вторая": {
+    "sections": 22,
+    "mean_bp": 112.0,
+    "median_bp": 179.2,
+    "t": 1.4,
+    "pos_share": 0.545,
+    "from": "2024-08-06",
+    "to": "2026-06-01"
+   }
+  },
+  "k30_h30": {
+   "первая": {
+    "sections": 22,
+    "mean_bp": 110.3,
+    "median_bp": 167.3,
+    "t": 1.63,
+    "pos_share": 0.682,
+    "from": "2022-10-11",
+    "to": "2024-08-05"
+   },
+   "вторая": {
+    "sections": 22,
+    "mean_bp": 177.7,
+    "median_bp": 143.2,
+    "t": 2.1,
+    "pos_share": 0.636,
+    "from": "2024-08-06",
+    "to": "2026-06-01"
+   }
+  },
+  "k60_h30": {
+   "первая": {
+    "sections": 21,
+    "mean_bp": 54.1,
+    "median_bp": 35.8,
+    "t": 0.51,
+    "pos_share": 0.524,
+    "from": "2022-10-11",
+    "to": "2024-08-05"
+   },
+   "вторая": {
+    "sections": 22,
+    "mean_bp": 82.9,
+    "median_bp": 69.8,
+    "t": 0.82,
+    "pos_share": 0.5,
+    "from": "2024-08-06",
+    "to": "2026-06-01"
+   }
+  },
+  "k90_h30": {
+   "первая": {
+    "sections": 20,
+    "mean_bp": 5.4,
+    "median_bp": 32.5,
+    "t": 0.06,
+    "pos_share": 0.55,
+    "from": "2022-10-11",
+    "to": "2024-08-05"
+   },
+   "вторая": {
+    "sections": 22,
+    "mean_bp": 176.7,
+    "median_bp": 156.8,
+    "t": 1.69,
+    "pos_share": 0.636,
+    "from": "2024-08-06",
+    "to": "2026-06-01"
+   }
+  }
+ },
+ "null_t_naive": -0.18,
+ "null_t_nw": -0.13,
+ "null_net_mean_bp": -11.4,
+ "nw_calibrated": true,
+ "skipped": {
+  "нет прошлого для сигнала": 186,
+  "нет будущего для форварда": 84,
+  "дециль вырождается": 0
+ },
+ "took_min": 0.1,
+ "verdict": "смещение выживших съедает 44 б.п./мес (базовая +93 → живая +48); t по Ньюи–Уэсту 1.06 — бюджета доказательства нет и на перекрытых данных; знак держится в обеих половинах истории (+63 и +112)"
+}
