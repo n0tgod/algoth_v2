@@ -1,7 +1,8 @@
-== задание paper-live ==
-строка: run research/paper_monthly/book.py --catchup
-начало: 2026-08-27T12:39:26Z
-запускаю: .venv/bin/python research/paper_monthly/book.py --catchup
+== задание paper-reset2 ==
+строка: run research/paper_monthly/book.py --archive-journal decisions-past-storage-edge --catchup
+начало: 2026-08-27T13:23:51Z
+запускаю: .venv/bin/python research/paper_monthly/book.py --archive-journal decisions-past-storage-edge --catchup
+журнал отставлен: ['decisions.jsonl.20260827T132352Z', 'resolutions.jsonl.20260827T132352Z']
 универсум 949, рядов funding 722
   решение 2026-08-01: ног 70, универсум 352
   решение 2026-08-02: ног 70, универсум 352
@@ -29,28 +30,9 @@
   решение 2026-08-24: ног 70, универсум 364
   решение 2026-08-25: ног 70, универсум 364
   решение 2026-08-26: ног 70, универсум 364
-  решение 2026-08-27: ног 70, универсум 365
-новых решений 27, новых разборов 0
-готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (2.6 мин)
-  настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 105 — кривая восстановленной части есть бэктест, а не трек
+  отказов при отборе дат: 1. Хранилище A2: 80 партиций, 2020-01 … 2026-08; просили 2026-08-01 … 2026-08-27
+  причина — нет наблюдений в день решения: 1
+новых решений 26, новых разборов 0
+готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (6.3 мин)
+  настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 0 — кривая восстановленной части есть бэктест, а не трек
 публикую отчёт
-публикуется в ветку main:
- jobs/done/a2-refresh-full.log             |  7 ++++++
- jobs/done/paper-live.done                 |  1 +
- jobs/done/paper-live.log                  | 36 +++++++++++++++++++++++++++++++
- jobs/poke.log                             |  3 +++
- research/paper_monthly/out/PAPER-30d.json |  7 +++---
- research/paper_monthly/out/PAPER-30d.md   |  6 ++++--
- 6 files changed, 55 insertions(+), 5 deletions(-)
-To github.com:n0tgod/algoth_v2.git
-   a6ba008..dcd87e7  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
-конец: 2026-08-27T12:42:07Z, код 0
-публикуется в ветку main:
- jobs/done/paper-live.log | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
-To github.com:n0tgod/algoth_v2.git
-   dcd87e7..03cc7dc  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
