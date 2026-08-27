@@ -1,0 +1,59 @@
+== задание z3-screen-4 ==
+строка: run research/z3_ladder/screen3.py --tag d10
+начало: 2026-08-27T09:04:55Z
+запускаю: .venv/bin/python research/z3_ladder/screen3.py --tag d10
+узкие сутки в замер не идут: 2026-08-24 (не хватает 722)
+скрин лесенки: суток 10 (2026-08-04…2026-08-13), символов 731, условий 52
+  2026-08-04 (склад): имён с записью 546 из 731, годных символо-минут 781,855
+  2026-08-04: нет КАЛЕНДАРНО вчерашних норм — сутки идут только в историю (минут лесенки 781 815  цены 781 855)
+  2026-08-05 (склад): имён с записью 550 из 731, годных символо-минут 786,456
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-05: минут лесенки 786 228  цены 786 456
+  условий сработало 23, событий 203,668
+  2026-08-06 (склад): имён с записью 553 из 731, годных символо-минут 786,227
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-06: минут лесенки 785 136  цены 786 227
+  условий сработало 24, событий 204,632
+  2026-08-07 (склад): имён с записью 556 из 731, годных символо-минут 774,863
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-07: минут лесенки 774 782  цены 774 863
+  условий сработало 24, событий 194,979
+  2026-08-08 (склад): имён с записью 515 из 731, годных символо-минут 727,164
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-08: минут лесенки 726 394  цены 727 164
+  условий сработало 25, событий 174,650
+  2026-08-09 (склад): имён с записью 515 из 731, годных символо-минут 733,098
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-09: минут лесенки 731 510  цены 733 098
+  условий сработало 25, событий 197,432
+  2026-08-10 (склад): имён с записью 518 из 731, годных символо-минут 739,981
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-10: минут лесенки 738 575  цены 739 981
+  условий сработало 25, событий 200,138
+  2026-08-11 (склад): имён с записью 522 из 731, годных символо-минут 737,530
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-11: минут лесенки 735 968  цены 737 530
+  условий сработало 23, событий 195,297
+  2026-08-12 (склад): имён с записью 526 из 731, годных символо-минут 750,221
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-12: минут лесенки 749 573  цены 750 221
+  условий сработало 22, событий 190,149
+  2026-08-13 (склад): имён с записью 707 из 731, годных символо-минут 906,612
+/root/algoth_v2/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1215: RuntimeWarning: All-NaN slice encountered
+  return fnb._ureduce(a, func=_nanmedian, keepdims=keepdims,
+  2026-08-13: минут лесенки 905 296  цены 906 612
+  условий сработало 23, событий 199,787
+считаю сводку и семейственную планку…
+отчёт: /root/algoth_v2/research/z3_ladder/out/Z3-ladder-d10.md
+ячеек измерено: 176; планка +3.50 σ; кандидатов: 2
+  цена выросла на 2 % за минуту [S] 60м: медиана +63.0, среднее +33.3 б.п., z +38.9, корзин 206
+  сняли 30 % показанных бидов [S] 60м: медиана +28.5, среднее +23.2 б.п., z +26.8, корзин 207
+снос по стороне (обязан быть около нуля): 15|-1: -0.02, 15|1: +0.02, 1|-1: +0.01, 1|1: -0.01, 5|-1: -0.02, 5|1: +0.02, 60|-1: +0.80, 60|1: -0.80
