@@ -91,7 +91,7 @@ def make_zip(path, rows):
                    buf.getvalue())
 
 
-def build_store(tmp, interval="1m", extra_day=False):
+def build_store(tmp, interval="1m", extra_day=False, gap_day=False):
     """Сырьё месяца и сборка партиции НАСТОЯЩИМ build.py."""
     raw = os.path.join(tmp, "klines", interval, "AAAUSDT")
     base = int(date(2026, 7, 1).strftime("%s")) * 1000
@@ -101,6 +101,12 @@ def build_store(tmp, interval="1m", extra_day=False):
         d2 = base + 86_400_000
         make_zip(os.path.join(raw, f"AAAUSDT-{interval}-2026-07-02.zip"),
                  [(d2 + i * 60000, 101.0) for i in range(60)])
+    if gap_day:
+        # 1 июля есть, 2–4 нет, 5 есть: ровно та дыра, которую сделал
+        # живой пилот, взяв последние дни вместо первых.
+        d5 = base + 4 * 86_400_000
+        make_zip(os.path.join(raw, f"AAAUSDT-{interval}-2026-07-05.zip"),
+                 [(d5 + i * 60000, 105.0) for i in range(60)])
     out = os.path.join(tmp, "out")
     os.makedirs(out, exist_ok=True)
     env = dict(os.environ)
@@ -188,6 +194,38 @@ def test_storage_edge_reads_a_real_partition():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_edge_is_the_end_of_CONTINUOUS_coverage():
+    """Край — конец НЕПРЕРЫВНОГО покрытия, а не максимальная метка.
+
+    Живой пилот это и вскрыл: `--days 3` взял последние три дня, край
+    прыгнул с 30 июня на 26 августа, а полтора месяца внутри остались
+    дырой — и следующий прогон счёл бы хранилище свежим навсегда.
+    Признаком результата служило неполное свойство: тот же класс, что
+    «готовность партиции по составу символов».
+    """
+    tmp = tempfile.mkdtemp()
+    orig = RF.PARQUET
+    try:
+        r = build_store(tmp, gap_day=True)
+        check("партиция с дырой собрана", r.returncode == 0,
+              (r.stderr or "")[-300:])
+        RF.PARQUET = os.path.join(tmp, "parquet")
+        got = RF.storage_edge("1m")
+        check("край остановился ПЕРЕД дырой",
+              got == date(2026, 7, 1), f"{got}")
+    finally:
+        RF.PARQUET = orig
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_days_pilot_takes_the_FIRST_days():
+    """Пилот берёт дни ОТ КРАЯ, а не с конца: иначе он сам делает дыру."""
+    days = [date(2026, 7, d) for d in range(1, 11)]
+    check("первые три", RF.limit_days(days, 3) == days[:3],
+          f"{RF.limit_days(days, 3)}")
+    check("ноль — все", RF.limit_days(days, 0) == days, "")
+
+
 def test_verdict_says_when_edge_did_not_move():
     """Неподвижный край при непустой докачке — отказ, и он называется."""
     src = open(os.path.join(HERE, "refresh.py"), encoding="utf-8").read()
@@ -206,6 +244,8 @@ def main():
     test_readiness_accounts_for_new_files()
     print("край хранилища")
     test_storage_edge_reads_a_real_partition()
+    test_edge_is_the_end_of_CONTINUOUS_coverage()
+    test_days_pilot_takes_the_FIRST_days()
     print("вердикт")
     test_verdict_says_when_edge_did_not_move()
     print()

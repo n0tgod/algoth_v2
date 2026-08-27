@@ -57,12 +57,25 @@ WORKERS = 16          # у BK свои 6: там месячные файлы п�
 MAX_DAYS = 120        # предохранитель: больше — это не докачка, а A1
 
 
-def storage_edge(interval="1m"):
-    """Последний день, покрытый хранилищем. `None` — хранилища нет.
+EDGE_MONTHS = 3       # сколько последних партиций смотреть на дыры
 
-    Читается ПО ДАННЫМ последней партиции: имя партиции говорит лишь
-    про месяц, а внутри он может быть неполным — ровно так и выглядит
-    край живого архива.
+
+def storage_edge(interval="1m", months=EDGE_MONTHS):
+    """Конец НЕПРЕРЫВНОГО покрытия хранилища. `None` — хранилища нет.
+
+    Не максимальная метка времени: живой пилот скачал последние три
+    дня августа, максимум прыгнул с 30 июня на 26 августа, а полтора
+    месяца внутри остались дырой — и следующий прогон счёл бы
+    хранилище свежим навсегда. Признаком результата служило неполное
+    свойство, тот же класс, что «готовность партиции по составу
+    символов».
+
+    Поэтому берутся дни С ДАННЫМИ из последних партиций, и край — это
+    день перед первым разрывом. Дальше первого разрыва не смотрим:
+    докачка обязана закрыть его прежде, чем идти вперёд.
+
+    Дата возвращается СТРОКОЙ из самого SQL: чтобы отдать TIMESTAMPTZ
+    в Python, duckdb требует `pytz`, а его на сервере нет.
     """
     d = os.path.join(PARQUET, interval)
     if not os.path.isdir(d):
@@ -72,18 +85,31 @@ def storage_edge(interval="1m"):
         return None
     import duckdb
     con = duckdb.connect()
-    path = os.path.join(d, parts[-1]).replace("'", "''")
-    # Дата возвращается СТРОКОЙ из самого SQL, а не объектом времени:
-    # чтобы отдать TIMESTAMPTZ в Python, duckdb требует `pytz`, а его
-    # на сервере нет — живой пилот упал ровно здесь, на первом же
-    # шаге. Строка не зависит ни от какого стороннего модуля.
-    row = con.execute(
-        "SELECT strftime(max(open_time), '%Y-%m-%d') "
-        f"FROM read_parquet('{path}')").fetchone()
+    files = ", ".join("'" + os.path.join(d, p).replace("'", "''") + "'"
+                      for p in parts[-months:])
+    rows = con.execute(
+        "SELECT DISTINCT strftime(open_time, '%Y-%m-%d') AS d "
+        f"FROM read_parquet([{files}]) ORDER BY d").fetchall()
     con.close()
-    if not row or row[0] is None:
+    days = [date.fromisoformat(str(r[0])) for r in rows if r and r[0]]
+    if not days:
         return None
-    return date.fromisoformat(str(row[0]))
+    edge = days[0]
+    for d1 in days[1:]:
+        if d1 - edge > timedelta(days=1):
+            break            # дыра: дальше не смотрим
+        edge = d1
+    return edge
+
+
+def limit_days(days, n):
+    """Пилот берёт дни ОТ КРАЯ, а не с конца.
+
+    Живой пилот с `--days 3` взял последние три дня августа и сам
+    сделал дыру в полтора месяца: докачка обязана двигать край
+    непрерывно, иначе она портит хранилище, рапортуя успех.
+    """
+    return days[:n] if n else days
 
 
 def live_symbols(universe_path=None, on_day=None):
@@ -218,9 +244,7 @@ def main():
     edge = storage_edge(a.interval)
     if edge is None:
         raise SystemExit(f"нет хранилища {a.interval} — сначала A2")
-    days = days_to_fetch(edge)
-    if a.days:
-        days = days[-a.days:]
+    days = limit_days(days_to_fetch(edge), a.days)
     print(f"край хранилища {edge}, дней к докачке {len(days)}")
     if not days:
         print("  хранилище свежее, качать нечего")
