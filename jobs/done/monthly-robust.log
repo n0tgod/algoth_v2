@@ -15,3 +15,16 @@
 готово: /root/algoth_v2/research/probe_monthly/out/MONTHLY-robust-30d.json (0.1 мин)
   смещение выживших съедает 44 б.п./мес (базовая +93 → живая +48); t по Ньюи–Уэсту 1.06 — бюджета доказательства нет и на перекрытых данных; знак держится в обеих половинах истории (+63 и +112)
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/monthly-robust.done                      |   1 +
+ jobs/done/monthly-robust.log                       |  17 ++
+ jobs/done/z3-screen-4.log                          |   7 +
+ jobs/poke.log                                      |   3 +
+ research/probe_monthly/out/MONTHLY-robust-30d.json | 214 +++++++++++++++++++++
+ research/probe_monthly/out/MONTHLY-robust-30d.md   |  56 ++++++
+ 6 files changed, 298 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   52c50b3..58fa882  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-27T09:11:10Z, код 0
