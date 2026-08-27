@@ -93,3 +93,8 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787782294 ==
 [2026-08-26T22:11:36Z] задание monthly-funding запущено: research/probe_monthly/funding_cost.py
+
+== сигнал 1787789706 ==
+[2026-08-27T00:15:08Z] задание listings-1d запущено: research/probe_listings/probe.py
+
+== сигнал 1787790697 ==
