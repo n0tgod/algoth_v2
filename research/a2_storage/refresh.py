@@ -73,12 +73,17 @@ def storage_edge(interval="1m"):
     import duckdb
     con = duckdb.connect()
     path = os.path.join(d, parts[-1]).replace("'", "''")
+    # Дата возвращается СТРОКОЙ из самого SQL, а не объектом времени:
+    # чтобы отдать TIMESTAMPTZ в Python, duckdb требует `pytz`, а его
+    # на сервере нет — живой пилот упал ровно здесь, на первом же
+    # шаге. Строка не зависит ни от какого стороннего модуля.
     row = con.execute(
-        f"SELECT max(open_time) FROM read_parquet('{path}')").fetchone()
+        "SELECT strftime(max(open_time), '%Y-%m-%d') "
+        f"FROM read_parquet('{path}')").fetchone()
     con.close()
     if not row or row[0] is None:
         return None
-    return row[0].date() if hasattr(row[0], "date") else None
+    return date.fromisoformat(str(row[0]))
 
 
 def live_symbols(universe_path=None, on_day=None):

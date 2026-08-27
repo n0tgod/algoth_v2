@@ -162,6 +162,32 @@ def test_readiness_accounts_for_new_files():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_storage_edge_reads_a_real_partition():
+    """Край читается с НАСТОЯЩЕЙ партиции и без сторонних модулей.
+
+    Живой пилот упал ровно здесь: duckdb не может отдать TIMESTAMPTZ в
+    Python без `pytz`, которого на сервере нет. Значит дату обязан
+    возвращать сам SQL — строкой. Тест воспроизводит серверный отказ:
+    в песочнице `pytz` тоже отсутствует.
+    """
+    tmp = tempfile.mkdtemp()
+    orig = RF.PARQUET
+    try:
+        r = build_store(tmp)
+        check("партиция собрана", r.returncode == 0,
+              (r.stderr or "")[-300:])
+        RF.PARQUET = os.path.join(tmp, "parquet")
+        got = RF.storage_edge("1m")
+        check("край — дата последнего бара партиции",
+              got == date(2026, 7, 1), f"{got}")
+        RF.PARQUET = os.path.join(tmp, "нет-такого")
+        check("нет хранилища — нет края",
+              RF.storage_edge("1m") is None, "")
+    finally:
+        RF.PARQUET = orig
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_verdict_says_when_edge_did_not_move():
     """Неподвижный край при непустой докачке — отказ, и он называется."""
     src = open(os.path.join(HERE, "refresh.py"), encoding="utf-8").read()
@@ -178,6 +204,8 @@ def main():
     test_live_symbols_skips_the_dead()
     print("готовность партиции")
     test_readiness_accounts_for_new_files()
+    print("край хранилища")
+    test_storage_edge_reads_a_real_partition()
     print("вердикт")
     test_verdict_says_when_edge_did_not_move()
     print()
