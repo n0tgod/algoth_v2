@@ -128,3 +128,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787832171 ==
 [2026-08-27T12:02:52Z] задание a2-refresh-full запущено: research/a2_storage/refresh.py
+
+== сигнал 1787834364 ==
+[2026-08-27T12:39:26Z] задание paper-live запущено: research/paper_monthly/book.py

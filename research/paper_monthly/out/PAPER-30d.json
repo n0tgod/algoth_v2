@@ -1,11 +1,11 @@
 {
- "run_at": "2026-08-27 10:13 UTC",
+ "run_at": "2026-08-27 12:42 UTC",
  "rules": 1,
  "k": 14,
  "h": 30,
  "width": 0.1,
  "cost_bp": 11.0,
- "decisions": 105,
+ "decisions": 132,
  "resolutions": 105,
  "summary": {
   "ahead": {
@@ -26,9 +26,10 @@
    "net_mean_independent_bp": -31.7,
    "funding_mean_bp": -14.6,
    "truncated_legs_total": 5830,
+   "elapsed_median": null,
    "coverage_median": null
   }
  },
  "verdict": "настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 105 — кривая восстановленной части есть бэктест, а не трек",
- "took_min": 2.1
+ "took_min": 2.6
 }
