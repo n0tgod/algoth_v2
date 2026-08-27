@@ -296,12 +296,18 @@ def verdict_phrase(cell):
 
 def report(art, path):
     a = art
+    x = a.get("extras", {})
     L = ["# Зонд: первые дни жизни инструмента\n",
-         f"Прогон: {a['run_at']}. События — листинги крипто-перпов "
-         f"{a['main_from']}+ (ранние годы — диагностика); вход по "
-         "закрытию дня `листинг + d`, превышение над равновзвешенной "
-         "кросс-секцией зрелых (возраст ≥ 365 дн) за то же окно. Зонд, "
-         "не гипотеза: порогов нет, решение за владельцем.\n",
+         f"Прогон: {a['run_at']}. Событие A (вердиктовое) — РОЖДЕНИЕ "
+         "ряда Binance, взятое из самих данных (первый день с ценой; "
+         "поле `listed` справочника — дата листинга Bybit и датой "
+         f"рождения не является: месяц расходится у "
+         f"{x.get('born_vs_listed_month_mismatch', '—')} имён из "
+         f"{x.get('events_born', '—')}). События {a['main_from']}+ "
+         "(ранние годы — диагностика); вход по закрытию дня "
+         "`рождение + d`, превышение над равновзвешенной кросс-секцией "
+         "зрелых (возраст ≥ 365 дн ПО ДАННЫМ) за то же окно. Зонд, не "
+         "гипотеза: порогов нет, решение за владельцем.\n",
          f"**{a['verdict']}**\n",
          "## Сетка (события с " + a["main_from"] + ")\n",
          "| d | h | событий | оборв. | медиана (соб.) | среднее (соб.) "
@@ -334,6 +340,21 @@ def report(art, path):
                  f"{nz['coh_median_mean']:+.1f} б.п., наибольшая по "
                  f"модулю {nz['coh_median_absmax']:+.1f}; у прогона "
                  f"{a['cells'][MAIN_CELL]['coh_median_bp']:+.1f}")
+    bc = x.get("bybit_cell")
+    L += ["", "## Событие B: листинг Bybit у зрелого на Binance имени\n",
+          "Другое событие, не рождение: инструмент уже торгуется на "
+          "Binance ≥ 30 дней, и появляется перп площадки исполнения "
+          "(приток шортовой площадки). Геометрия главной ячейки "
+          "(d = 1, h = 30).\n"]
+    if bc:
+        L.append(f"- событий {bc['events']}, когорт {bc['cohorts']}: "
+                 f"медиана (соб.) {bc['ev_median_bp']:+.0f}, среднее "
+                 f"{bc['ev_mean_bp']:+.0f}; медиана (ког.) "
+                 f"**{bc['coh_median_bp']:+.0f}**, среднее "
+                 f"**{bc['coh_mean_bp']:+.0f} б.п.**, доля когорт > 0 "
+                 f"{bc['coh_pos_share']:.2f}")
+    else:
+        L.append("- не измерено (событий нет либо база тоньше пола)")
     L += ["", "## По годам листинга (главная ячейка, диагностика)\n",
           "| год | n | медиана | среднее |", "|---|---|---|---|"]
     for y, v in a.get("years", {}).items():
@@ -357,9 +378,9 @@ def report(art, path):
     for kk, v in sorted(a["skipped"].items()):
         L.append(f"- {kk}: {v}")
     L += ["", "## Оговорки, не снимаемые замером\n",
-          "- цены и даты листинга — архив Binance; листинг Bybit у "
-          "того же имени случается в другой день, и эффект площадки "
-          "исполнения может отличаться;",
+          "- цены — архив Binance; событие A — рождение ряда Binance, "
+          "торговать же придётся на Bybit, где перп появляется в "
+          "другой день (событие B меряет ровно этот разрыв);",
           "- издержки не вычтены: круг ноги 11 б.п., с хеджем об "
           "кросс-секцию 22 — против величин таблицы это справка, а не "
           "порог;",
@@ -371,24 +392,63 @@ def report(art, path):
     open(path, "w", encoding="utf-8").write("\n".join(L) + "\n")
 
 
+def born_index(M):
+    """День рождения каждого ряда — ПО ДАННЫМ: первый конечный день.
+
+    Поле `listed` справочника — дата листинга ПЛОЩАДКИ ИСПОЛНЕНИЯ
+    (Bybit), а не Binance: у 171 имени Binance торгует раньше неё, у
+    135 — позже. Первый прогон зонда прочёл его как дату рождения ряда
+    и измерил СМЕСЬ двух событий, а в контрольную базу пускал имена с
+    завышенным возрастом. Источник правды — сама матрица.
+    """
+    born = np.full(M.shape[1], 10**9)
+    for j in range(M.shape[1]):
+        fin = np.flatnonzero(np.isfinite(M[:, j]))
+        if len(fin):
+            born[j] = int(fin[0])
+    return born
+
+
 def run(M, syms, universe, events_all, counters):
-    """Вся сетка + нуль + по-годам. Вынесено ради тестов на синтетике."""
+    """Вся сетка + нуль + по-годам. Вынесено ради тестов на синтетике.
+
+    Событие A (вердиктовое) — рождение ряда Binance, взятое ИЗ ДАННЫХ
+    (первый конечный день колонки). Событие B (отдельная секция) —
+    листинг Bybit (`listed`) у имени, уже зрелого на Binance: это
+    другое событие — приток площадки шортов, не рождение инструмента.
+    """
     col_of = {s: j for j, s in enumerate(syms)}
-    listed_idx = np.full(len(syms), 10**9)
-    by_sym = {}
-    for a, v in universe.items():
-        s = v.get("binance_symbol")
-        if s in col_of and v.get("listed"):
-            by_sym[s] = v["listed"]
-    for s, li in by_sym.items():
-        listed_idx[col_of[s]] = day_index(T_START, li)
-    ages = np.arange(len(M))[:, None] - listed_idx[None, :]
+    born = born_index(M)
+    ages = np.arange(len(M))[:, None] - born[None, :]
     end_idx = len(M)
+
+    # события A: рождение ряда по данным; дата — из матрицы
+    events_born, mism = [], 0
+    for asset, sym, listed in events_all:
+        j = col_of.get(sym)
+        if j is None or born[j] >= 10**9:
+            counters["нет ряда в хранилище"] += 1
+            continue
+        b_iso = (date.fromisoformat(T_START)
+                 + timedelta(days=int(born[j]))).isoformat()
+        if b_iso[:7] != listed[:7]:
+            mism += 1
+        events_born.append((asset, sym, b_iso))
+
+    # события B: листинг Bybit у зрелого на Binance имени (возраст ≥ 30)
+    events_bybit = []
+    for asset, sym, listed in events_all:
+        j = col_of.get(sym)
+        if j is None or born[j] >= 10**9:
+            continue
+        li = day_index(T_START, listed)
+        if 0 <= li < end_idx and li - born[j] >= 30:
+            events_bybit.append((asset, sym, listed))
 
     cells, main_records = {}, None
     for d in DELAYS:
         for h in HORIZONS:
-            rec = measure_events(M, col_of, ages, events_all, d, h,
+            rec = measure_events(M, col_of, ages, events_born, d, h,
                                  counters, end_idx)
             rec_main = [r for r in rec if r["listed"] >= MAIN_FROM]
             got = summarise(rec_main)
@@ -397,6 +457,18 @@ def run(M, syms, universe, events_all, counters):
             if f"d{d}_h{h}" == MAIN_CELL:
                 main_records = rec_main
     years = by_year(main_records) if main_records else {}
+
+    # событие B меряется только в главной геометрии (d=1, h=30):
+    # это отдельный вопрос, а не ось сетки — плодить ячейки незачем
+    bybit_cell = None
+    if events_bybit:
+        nc = {k: 0 for k in counters}
+        rec_b = [r for r in measure_events(M, col_of, ages, events_bybit,
+                                           1, 30, nc, end_idx)
+                 if r["listed"] >= MAIN_FROM]
+        bybit_cell = summarise(rec_b)
+        if bybit_cell:
+            bybit_cell["skipped"] = {k: v for k, v in nc.items() if v}
 
     null = None
     if cells.get(MAIN_CELL):
@@ -417,7 +489,11 @@ def run(M, syms, universe, events_all, counters):
                     "coh_median_mean": round(float(np.mean(meds)), 1),
                     "coh_median_absmax": round(
                         float(max(np.abs(meds))), 1)}
-    return cells, years, null
+    extras = {"born_vs_listed_month_mismatch": mism,
+              "events_born": len(events_born),
+              "events_bybit": len(events_bybit),
+              "bybit_cell": bybit_cell}
+    return cells, years, null, extras
 
 
 def main():
@@ -451,7 +527,8 @@ def main():
         "форвард упирается в край данных",
         "ряд оборван сразу после входа",
         "контрольная база тоньше пола")}
-    cells, years, null = run(M, syms, universe, events_all, counters)
+    cells, years, null, extras = run(M, syms, universe, events_all,
+                                     counters)
     if not cells:
         for kk, v in sorted(counters.items()):
             print(f"  пропуск — {kk}: {v}")
@@ -467,6 +544,7 @@ def main():
         "delays": list(DELAYS), "horizons": list(HORIZONS),
         "main_cell": MAIN_CELL, "main_from": MAIN_FROM,
         "mature_age": MATURE_AGE, "events_total": len(events_all),
+        "extras": extras,
         "cells": cells, "years": years, "null": null,
         "funding": fund, "skipped": counters,
         "verdict": verdict_phrase(cells.get(MAIN_CELL)),

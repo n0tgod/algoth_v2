@@ -92,7 +92,7 @@ def counters():
 def test_planted_drift_is_found():
     """Подсаженный дрейф −30 б.п./день найден; нуль около ноля."""
     M, syms, uni, ev = synth(drift_bp_day=-30.0)
-    cells, years, null = P.run(M, syms, uni, ev, counters())
+    cells, years, null, _x = P.run(M, syms, uni, ev, counters())
     c = cells.get(P.MAIN_CELL)
     check("дрейф найден (медиана когорт < −400)",
           c is not None and c["coh_median_bp"] < -400,
@@ -104,7 +104,7 @@ def test_planted_drift_is_found():
 
 def test_no_drift_is_zero():
     M, syms, uni, ev = synth(drift_bp_day=0.0)
-    cells, _, _ = P.run(M, syms, uni, ev, counters())
+    cells, _, _, _x = P.run(M, syms, uni, ev, counters())
     c = cells.get(P.MAIN_CELL)
     check("без дрейфа ноль (|медиана| < 250)",
           c is not None and abs(c["coh_median_bp"]) < 250,
@@ -115,7 +115,7 @@ def test_delay_skips_the_listing_day():
     """Цена дня листинга задрана в полтора раза — вход по закрытию
     следующего дня её не видит, и «распад пампа» не выдумывается."""
     M, syms, uni, ev = synth(pump_day0=0.5)
-    cells, _, _ = P.run(M, syms, uni, ev, counters())
+    cells, _, _, _x = P.run(M, syms, uni, ev, counters())
     c = cells.get(P.MAIN_CELL)
     check("памп дня листинга не попадает в меру",
           c is not None and abs(c["coh_median_bp"]) < 250,
@@ -126,9 +126,7 @@ def test_base_is_mature_and_computed_by_hand():
     """База события — среднее зрелых, сверено с ручным счётом числом."""
     M, syms, uni, ev = synth(n_new=1, drift_bp_day=0.0)
     col_of = {s: j for j, s in enumerate(syms)}
-    li = {s: uni[s.replace("USDT", "")]["listed"] for s in syms}
-    listed_idx = np.array([P.day_index(P.T_START, li[s]) for s in syms])
-    ages = np.arange(len(M))[:, None] - listed_idx[None, :]
+    ages = np.arange(len(M))[:, None] - P.born_index(M)[None, :]
     rec = P.measure_events(M, col_of, ages, ev, 1, 30, counters(),
                            len(M))
     check("событие измерено", len(rec) == 1, f"{len(rec)}")
@@ -153,9 +151,7 @@ def test_young_dirty_neighbor_stays_out_of_base():
     M, syms, uni, ev = synth(n_new=2, drift_bp_day=-300.0,
                              list_days=(720, 740))
     col_of = {s: j for j, s in enumerate(syms)}
-    li = {s: uni[s.replace("USDT", "")]["listed"] for s in syms}
-    listed_idx = np.array([P.day_index(P.T_START, li[s]) for s in syms])
-    ages = np.arange(len(M))[:, None] - listed_idx[None, :]
+    ages = np.arange(len(M))[:, None] - P.born_index(M)[None, :]
     late = [e for e in ev if e[0] == "NEW001"]
     rec = P.measure_events(M, col_of, ages, late, 1, 30, counters(),
                            len(M))
@@ -178,7 +174,7 @@ def test_delisted_counts_to_last_bar():
     j = syms.index("NEW000USDT")
     L = P.day_index(P.T_START, uni["NEW000"]["listed"])
     M[L + 12:, j] = np.nan
-    cells, _, _ = P.run(M, syms, uni, ev, counters())
+    cells, _, _, _x = P.run(M, syms, uni, ev, counters())
     c = cells.get(P.MAIN_CELL)
     check("оборванное событие измерено",
           c is not None and c["events"] == 1 and
@@ -189,7 +185,7 @@ def test_edge_of_data_is_a_skip():
     """Форвард за краем данных — пропуск, а не укороченное окно."""
     M, syms, uni, ev = synth(n_new=1, list_days=(880, 881))
     cnt = counters()
-    cells, _, _ = P.run(M, syms, uni, ev, cnt)
+    cells, _, _, _x = P.run(M, syms, uni, ev, cnt)
     check("край данных — пропуск",
           P.MAIN_CELL not in cells
           and cnt["форвард упирается в край данных"] > 0,
@@ -203,9 +199,7 @@ def test_hole_at_entry_is_a_skip():
     L = P.day_index(P.T_START, uni["NEW000"]["listed"])
     M[L + 1, j] = np.nan          # закрытие дня входа d=1
     col_of = {s: i for i, s in enumerate(syms)}
-    listed_idx = np.array([P.day_index(
-        P.T_START, uni[s.replace("USDT", "")]["listed"]) for s in syms])
-    ages = np.arange(len(M))[:, None] - listed_idx[None, :]
+    ages = np.arange(len(M))[:, None] - P.born_index(M)[None, :]
     cnt = counters()
     rec = P.measure_events(M, col_of, ages, ev, 1, 30, cnt, len(M))
     check("дыра входа — пропуск события",
@@ -215,10 +209,99 @@ def test_hole_at_entry_is_a_skip():
 def test_thin_base_is_a_skip():
     M, syms, uni, ev = synth(n_old=5, n_new=1)
     cnt = counters()
-    cells, _, _ = P.run(M, syms, uni, ev, cnt)
+    cells, _, _, _x = P.run(M, syms, uni, ev, cnt)
     check("тонкая база — пропуск",
           P.MAIN_CELL not in cells
           and cnt["контрольная база тоньше пола"] > 0, f"{cnt}")
+
+
+def test_event_comes_from_data_not_listed_field():
+    """Событие A — рождение ряда ПО ДАННЫМ, а не поле `listed`.
+
+    Живой дефект первого прогона: `listed` справочника — дата листинга
+    Bybit, у 135 имён Binance-ряд начинается позже неё. Фикстура врёт
+    полем на 10 дней раньше рождения — дрейф всё равно обязан быть
+    найден (событие от первого дня ряда); возьми код дату из поля,
+    входа не существовало бы и ячейка вышла бы пустой."""
+    M, syms, uni, ev = synth(drift_bp_day=-30.0)
+    ev_lied = [(a, s, iso(P.day_index(P.T_START, li) - 10))
+               for a, s, li in ev]
+    for a, s, li in ev_lied:
+        uni[a]["listed"] = li
+    cells, _, _, x = P.run(M, syms, uni, ev_lied, counters())
+    c = cells.get(P.MAIN_CELL)
+    check("событие от данных: дрейф найден при врущем поле",
+          c is not None and c["coh_median_bp"] < -400,
+          f"{c and c['coh_median_bp']}")
+    check("расхождение поля с данными посчитано",
+          x["born_vs_listed_month_mismatch"] > 0,
+          f"{x['born_vs_listed_month_mismatch']}")
+
+
+def test_short_history_name_stays_out_of_base():
+    """Имя с давним `listed`, но коротким РЯДОМ — не зрелое.
+
+    Второй зуб того же дефекта: возраст от поля пускал в контрольную
+    базу имена, чей ряд живёт меньше года. OLD000 объявлен листнутым в
+    день 0, а ряд начинается с дня 500 — на событие дня ~741 его
+    возраст по данным 241 день, и в базе его быть не должно."""
+    M, syms, uni, ev = synth(n_new=1)
+    j0 = syms.index("OLD000USDT")
+    M[:500, j0] = np.nan
+    col_of = {s: i for i, s in enumerate(syms)}
+    ages = np.arange(len(M))[:, None] - P.born_index(M)[None, :]
+    rec = P.measure_events(M, col_of, ages, ev, 1, 30, counters(),
+                           len(M))
+    check("событие измерено", len(rec) == 1, f"{len(rec)}")
+    if rec:
+        i0 = P.day_index(P.T_START, rec[0]["listed"]) + 1
+        i1 = i0 + 30
+        old = [j for j, s in enumerate(syms)
+               if s.startswith("OLD") and j != j0]
+        want = float(np.mean(M[i1, old] / M[i0, old] - 1.0)) * 1e4
+        check("короткий ряд не в базе, база сходится с ручным счётом",
+              abs(rec[0]["base_bp"] - want) < 1e-6,
+              f"{rec[0]['base_bp']} против {want}")
+
+
+def test_short_history_out_of_base_through_run():
+    """Тот же зуб, но через ДОРОГУ run(): прямой тест строил ages сам
+    и подделку внутри run не исполнял — контроль не кусался.
+
+    Короткому ряду (born 500 при listed «день 0») дан рост ×90 за месяц
+    событий: пусти его возраст от поля в зрелую базу — база задралась
+    бы и медиана excess ушла бы на тысячи б.п. вниз; честный код держит
+    её около ноля."""
+    M, syms, uni, ev = synth(n_new=3, drift_bp_day=0.0)
+    j0 = syms.index("OLD000USDT")
+    M[:500, j0] = np.nan
+    t = np.arange(len(M), dtype=float)
+    M[:, j0] = M[:, j0] * np.exp(np.where(t >= 500,
+                                          0.15 * (t - 500), 0.0))
+    cells, _, _, _x = P.run(M, syms, uni, ev, counters())
+    c = cells.get(P.MAIN_CELL)
+    check("короткий ряд не загрязняет базу через run",
+          c is not None and abs(c["coh_median_bp"]) < 300,
+          f"{c and c['coh_median_bp']}")
+
+
+def test_bybit_listing_is_a_separate_event():
+    """Листинг Bybit у зрелого на Binance имени — событие B, отдельной
+    секцией; свежерождённое имя в B не входит (возраст < 30)."""
+    M, syms, uni, ev = synth(n_new=2, list_days=(500, 740))
+    ev2 = []
+    for a, s, li in ev:
+        if a == "NEW000":                 # ряд с дня 500, Bybit в 780
+            uni[a]["listed"] = iso(780)   # 2022-02-19 — внутри MAIN_FROM
+            ev2.append((a, s, iso(780)))
+        else:                             # рождение = listed, молодой
+            ev2.append((a, s, li))
+    cells, _, _, x = P.run(M, syms, uni, ev2, counters())
+    check("зрелое на Binance имя вошло в событие B",
+          x["events_bybit"] == 1, f"{x['events_bybit']}")
+    check("ячейка события B посчитана",
+          x["bybit_cell"] is not None and x["bybit_cell"]["events"] == 1,
+          f"{x['bybit_cell']}")
 
 
 def test_cohort_is_one_vote():
@@ -277,7 +360,7 @@ def test_report_writes():
     try:
         M, syms, uni, ev = synth(drift_bp_day=-30.0)
         cnt = counters()
-        cells, years, null = P.run(M, syms, uni, ev, cnt)
+        cells, years, null, _x = P.run(M, syms, uni, ev, cnt)
         art = {"run_at": "t", "main_from": P.MAIN_FROM,
                "cells": cells, "years": years, "null": null,
                "funding": None, "skipped": cnt,
@@ -311,6 +394,10 @@ def main():
     test_edge_of_data_is_a_skip()
     test_hole_at_entry_is_a_skip()
     test_thin_base_is_a_skip()
+    test_event_comes_from_data_not_listed_field()
+    test_short_history_name_stays_out_of_base()
+    test_short_history_out_of_base_through_run()
+    test_bybit_listing_is_a_separate_event()
     test_cohort_is_one_vote()
     print("funding и показ")
     test_funding_newborns()
