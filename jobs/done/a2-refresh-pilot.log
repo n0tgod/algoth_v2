@@ -1,0 +1,16 @@
+== задание a2-refresh-pilot ==
+строка: run research/a2_storage/refresh.py --interval 1m --days 3
+начало: 2026-08-27T11:55:07Z
+запускаю: .venv/bin/python research/a2_storage/refresh.py --interval 1m --days 3
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/a2_storage/refresh.py", line 265, in <module>
+    main()
+  File "/root/algoth_v2/research/a2_storage/refresh.py", line 213, in main
+    edge = storage_edge(a.interval)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/a2_storage/refresh.py", line 77, in storage_edge
+    f"SELECT max(open_time) FROM read_parquet('{path}')").fetchone()
+                                                          ^^^^^^^^^^
+_duckdb.InvalidInputException: Invalid Input Error: Required module 'pytz' failed to import, due to the following Python exception:
+ModuleNotFoundError: No module named 'pytz'
+конец: 2026-08-27T11:55:07Z, код 1
