@@ -1,5 +1,5 @@
 {
- "run_at": "2026-08-27 10:06 UTC",
+ "run_at": "2026-08-27 10:13 UTC",
  "rules": 1,
  "k": 14,
  "h": 30,
@@ -25,9 +25,10 @@
    "t_independent": -0.17,
    "net_mean_independent_bp": -31.7,
    "funding_mean_bp": -14.6,
-   "truncated_legs_total": 5830
+   "truncated_legs_total": 5830,
+   "coverage_median": null
   }
  },
  "verdict": "настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 105 — кривая восстановленной части есть бэктест, а не трек",
- "took_min": 23.9
+ "took_min": 2.1
 }

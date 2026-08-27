@@ -116,3 +116,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787823770 ==
 [2026-08-27T09:42:52Z] задание paper-diag запущено: research/paper_monthly/book.py
+
+== сигнал 1787825451 ==
+[2026-08-27T10:10:53Z] задание paper-edge запущено: research/paper_monthly/book.py
