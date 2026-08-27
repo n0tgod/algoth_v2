@@ -57,3 +57,16 @@
   цена выросла на 2 % за минуту [S] 60м: медиана +63.0, среднее +33.3 б.п., z +38.9, корзин 206
   сняли 30 % показанных бидов [S] 60м: медиана +28.5, среднее +23.2 б.п., z +26.8, корзин 207
 снос по стороне (обязан быть около нуля): 15|-1: -0.02, 15|1: +0.02, 1|-1: +0.01, 1|1: -0.01, 5|-1: -0.02, 5|1: +0.02, 60|-1: +0.80, 60|1: -0.80
+публикуется в ветку main:
+ jobs/done/z3-fold-2.log                 |  20 ++++
+ jobs/done/z3-screen-4.done              |   1 +
+ jobs/done/z3-screen-4.log               |  59 ++++++++++
+ jobs/poke.log                           |   3 +
+ research/z3_ladder/out/Z3-ladder-d10.md | 202 ++++++++++++++++++++++++++++++++
+ research/z3_ladder/out/z3-d10.json      |   1 +
+ 6 files changed, 286 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   43b5813..c1c8c55  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-27T09:07:45Z, код 0
