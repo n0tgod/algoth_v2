@@ -375,6 +375,36 @@ def test_catchup_is_idempotent():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_empty_run_explains_itself():
+    """Пустой прогон обязан назвать причины и край хранилища.
+
+    Первый живой прогон дал «новых решений 0» и ни слова о том,
+    почему: тот же класс отказа, что чинился в зонде спокойного рынка.
+    Здесь сечение пустое (ни одного живого имени), и прогон обязан
+    сказать это счётчиком, а не промолчать."""
+    tmp = tempfile.mkdtemp()
+    f = Fake()
+    undo = install(f)
+    old = (B.DEC, B.RES, B.PR.state_at)
+    B.DEC = os.path.join(tmp, "d.jsonl")
+    B.RES = os.path.join(tmp, "r.jsonl")
+    B.PR.state_at = lambda liq, uni, at: {}
+    lines = []
+    try:
+        a, b = B.catchup(None, None, f.universe(), None, {},
+                         start="2026-06-15", end="2026-06-17",
+                         log=lines.append)
+        check("ничего не посчитано", a == 0 and b == 0, f"{a} {b}")
+        txt = "\n".join(lines)
+        check("причина названа",
+              "живых и ликвидных имён меньше пола" in txt, txt)
+        check("край хранилища напечатан", "Хранилище A2" in txt, txt)
+    finally:
+        undo()
+        B.DEC, B.RES, B.PR.state_at = old
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_report_writes_and_marks_backfill():
     tmp = tempfile.mkdtemp()
     try:
@@ -417,6 +447,7 @@ def main():
     test_verdict_says_when_there_is_no_track()
     print("журнал и отчёт")
     test_catchup_is_idempotent()
+    test_empty_run_explains_itself()
     test_report_writes_and_marks_backfill()
     print()
     if FAILED:

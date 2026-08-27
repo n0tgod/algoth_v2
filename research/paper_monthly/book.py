@@ -134,7 +134,36 @@ def append_jsonl(path, rec):
         os.fsync(f.fileno())
 
 
-def build(con, at, liq, universe, of_group, forward):
+def note(why, reason):
+    """Счётчик причины отказа. Пустой прогон обязан объяснять себя.
+
+    Первый живой прогон дал «новых решений 0» и ни слова о том,
+    почему, — тот же класс отказа, что чинился в зонде спокойного
+    рынка: отсылка к причинам, которых никто не печатает.
+    """
+    if why is not None:
+        why[reason] = why.get(reason, 0) + 1
+
+
+def storage_span(interval="1m"):
+    """Первая и последняя партиция хранилища A2 — как есть на диске.
+
+    Нужна, чтобы пустой прогон объяснял себя числом: книга считается по
+    хранилищу, а оно снимок, и если его край раньше запрошенных дат,
+    решений не будет ни одного — это состояние данных, а не дефект
+    сигнала, и путать их нельзя.
+    """
+    d = os.path.join(S.PARQUET, interval)
+    if not os.path.isdir(d):
+        return None, None, 0
+    parts = sorted(f[:-len(".parquet")] for f in os.listdir(d)
+                   if f.endswith(".parquet"))
+    if not parts:
+        return None, None, 0
+    return parts[0], parts[-1], len(parts)
+
+
+def build(con, at, liq, universe, of_group, forward, why=None):
     """Сечение даты `at`: β, сигнал и — при `forward` — исход.
 
     Одно окно данных `[at−90, at+30)`: факторы строятся на всём
@@ -164,16 +193,19 @@ def build(con, at, liq, universe, of_group, forward):
     sym_of = {a: universe[a]["binance_symbol"] for a in live
               if universe[a].get("binance_symbol")}
     if len(sym_of) < MIN_ASSETS:
+        note(why, "живых и ликвидных имён меньше пола")
         return None
     raw = S.load(con, sorted(sym_of.values()), t0, t1, step=STEP,
                  interval="1m")
     by_asset = {a: raw[s] for a, s in sym_of.items() if s in raw}
     if len(by_asset) < MIN_ASSETS:
+        note(why, "хранилище вернуло меньше имён, чем пол сечения")
         return None
     grid, cols, PX = FA.price_grid(by_asset, STEP, ms(t0), ms(t1))
     i_t = int(np.searchsorted(grid, ms(at)))
     i_form = 0
     if i_t - i_form < FORM_DAYS * BARS_PER_DAY // 2:
+        note(why, "баров до даты меньше половины окна оценки β")
         return None
 
     Rm = FA.log_returns(PX)
@@ -229,14 +261,15 @@ def pick(names, beta, sig, width=WIDTH):
     return legs
 
 
-def decide(con, at, liq, universe, of_group):
+def decide(con, at, liq, universe, of_group, why=None):
     """Решение даты `at`. Данных после `at` не касается вовсе."""
-    got = build(con, at, liq, universe, of_group, forward=False)
+    got = build(con, at, liq, universe, of_group, forward=False, why=why)
     if got is None:
         return None
     names, beta, sig, _f, _b, n = got
     legs = pick(names, beta, sig)
     if legs is None:
+        note(why, "дециль вырождается")
         return None
     return {"at": at, "written_at": round(time.time(), 1),
             "rules": RULES, "k": K_DAYS, "h": H_DAYS,
@@ -310,13 +343,14 @@ def catchup(con, liq, universe, of_group, funding, start=START,
     have_d = {r["at"] for r in read_jsonl(DEC)}
     have_r = {r["at"] for r in read_jsonl(RES)}
     made_d = made_r = 0
+    why = {}
     d = date.fromisoformat(start)
     last = date.fromisoformat(end)
     while d <= last:
         at = d.isoformat()
         d += timedelta(days=1)
         if at not in have_d:
-            rec = decide(con, at, liq, universe, of_group)
+            rec = decide(con, at, liq, universe, of_group, why=why)
             if rec:
                 append_jsonl(DEC, rec)
                 have_d.add(at)
@@ -332,6 +366,15 @@ def catchup(con, liq, universe, of_group, funding, start=START,
             append_jsonl(RES, got)
             made_r += 1
             log(f"  разбор {at}: нетто {got['net_bp']:+.1f} б.п.")
+    if not made_d and not made_r:
+        first, last_p, n_p = storage_span()
+        log(f"  ничего не посчитано. Хранилище A2: {n_p} партиций, "
+            f"{first} … {last_p}; просили {start} … {end}")
+        for r, c in sorted(why.items(), key=lambda x: -x[1]):
+            log(f"  причина — {r}: {c}")
+        if last_p and start[:7] > last_p:
+            log("  край хранилища РАНЬШЕ запрошенных дат: книга "
+                "считается по A2, а он снимок и сам не пополняется")
     return made_d, made_r
 
 
