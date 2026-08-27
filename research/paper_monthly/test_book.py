@@ -179,6 +179,37 @@ def test_changing_the_past_does_change_the_decision():
         undo()
 
 
+def test_no_bar_on_the_decision_day_is_a_refusal():
+    """Нет наблюдений в день решения — решения НЕТ.
+
+    Живой прогон записал решение на 27 августа при крае хранилища 26-го:
+    сигнал кончался на 26-м, то есть решение принято по вчерашним
+    данным, но помечено сегодняшним числом. При ежедневном запуске
+    таким было бы КАЖДОЕ решение — книга выглядела бы честнее, чем
+    есть: `elapsed` около нуля при сигнале на день короче объявленного
+    и цене входа, которой ещё не существует.
+    """
+    f = Fake()
+    undo = install(f)
+    try:
+        at = "2026-06-15"
+        uni = f.universe()
+        cut = int(np.datetime64(at + "T00:00:00", "ms").astype("int64"))
+        for s in f.syms:                     # данных в день решения нет
+            f.dead[s] = cut
+        why = {}
+        rec = B.decide(None, at, None, uni, None, why=why)
+        check("решения без бара его даты не существует", rec is None,
+              f"{rec and rec['at']}")
+        check("причина названа",
+              "нет наблюдений в день решения" in why, f"{why}")
+        f.dead.clear()
+        check("с баром даты решение есть",
+              B.decide(None, at, None, uni, None) is not None, "")
+    finally:
+        undo()
+
+
 def test_book_weights():
     f = Fake()
     undo = install(f)
@@ -520,6 +551,7 @@ def main():
     test_signal_identical_with_and_without_future_loaded()
     test_changing_the_past_does_change_the_decision()
     print("книга и исход")
+    test_no_bar_on_the_decision_day_is_a_refusal()
     test_book_weights()
     test_reversion_is_found_and_random_walk_is_not()
     test_delisted_leg_is_held_to_the_last_bar()
