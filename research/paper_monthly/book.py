@@ -235,7 +235,15 @@ def build(con, at, liq, universe, of_group, forward, why=None):
         # стоило зонду 44 б.п./мес.
         acc, nb = RS.accumulate_resid(E, w0, w1)
         fwd = np.where(fitted & (nb > 0), acc, np.nan)
-        bars = nb
+        # Число баров и ОБРЫВ РЯДА — разные вещи, и путать их нельзя.
+        # Пропуски есть почти у каждого имени (бар без сделок — не
+        # наблюдение), поэтому «баров меньше полного месяца» верно для
+        # 82 % ног и делистингом не является. Обрыв — это когда
+        # ПОСЛЕДНИЙ бар с наблюдением стоит заметно раньше конца окна.
+        win = np.isfinite(E[w0:w1])
+        idx = np.where(win, np.arange(w1 - w0)[:, None], -1)
+        last = idx.max(axis=0)
+        bars = np.vstack([nb, last])
     return cols, B[:, 0], sig, fwd, bars, len(cols)
 
 
@@ -286,20 +294,27 @@ def resolve(con, rec, liq, universe, of_group, funding=None):
     names, beta, _sig, fwd, bars, _n = got
     idx = {s: i for i, s in enumerate(names)}
     full = H_DAYS * BARS_PER_DAY
+    # Обрывом считается ряд, чей последний бар отстоит от конца окна
+    # больше чем на сутки: суточный допуск отделяет делистинг от
+    # обычной вечерней дыры тонкого имени.
+    cut = full - BARS_PER_DAY
     legs, gross, missing = [], 0.0, 0.0
     for lg in rec["legs"]:
         i = idx.get(lg["sym"])
         if i is None or not np.isfinite(fwd[i]):
             missing += abs(lg["w"])
             legs.append({"sym": lg["sym"], "w": lg["w"],
-                         "resid_bp": None, "bars": 0,
+                         "resid_bp": None, "bars": 0, "last_bar": None,
                          "truncated": None})
             continue
         r = float(fwd[i]) * 1e4
         gross += lg["w"] * r
+        nb, last = int(bars[0, i]), int(bars[1, i])
         legs.append({"sym": lg["sym"], "w": lg["w"],
-                     "resid_bp": round(r, 2), "bars": int(bars[i]),
-                     "truncated": bool(bars[i] < full),
+                     "resid_bp": round(r, 2), "bars": nb,
+                     "last_bar": last,
+                     "coverage": round(nb / full, 3),
+                     "truncated": bool(last < cut),
                      "beta_now": round(float(beta[i]), 6)})
     fund = None
     if funding:
@@ -321,6 +336,10 @@ def resolve(con, rec, liq, universe, of_group, funding=None):
             "net_bp": round(net, 2),
             "missing_weight": round(missing, 4),
             "truncated_legs": sum(1 for l in legs if l.get("truncated")),
+            "coverage_median": round(float(np.median(
+                [l["coverage"] for l in legs
+                 if l.get("coverage") is not None])), 3)
+            if any(l.get("coverage") is not None for l in legs) else None,
             "legs": legs}
 
 
@@ -366,10 +385,16 @@ def catchup(con, liq, universe, of_group, funding, start=START,
             append_jsonl(RES, got)
             made_r += 1
             log(f"  разбор {at}: нетто {got['net_bp']:+.1f} б.п.")
-    if not made_d and not made_r:
+    # Причины отказа печатаются ВСЕГДА, когда они были, а не только
+    # при полном нуле: первый диагностический прогон записал 105
+    # решений и молча оборвался на 2026-07-14, потому что счётчики
+    # показывались лишь при нулевом итоге. Частичный отказ так же
+    # неотличим от тишины, как полный.
+    if why:
         first, last_p, n_p = storage_span()
-        log(f"  ничего не посчитано. Хранилище A2: {n_p} партиций, "
-            f"{first} … {last_p}; просили {start} … {end}")
+        log(f"  отказов при отборе дат: {sum(why.values())}. "
+            f"Хранилище A2: {n_p} партиций, {first} … {last_p}; "
+            f"просили {start} … {end}")
         for r, c in sorted(why.items(), key=lambda x: -x[1]):
             log(f"  причина — {r}: {c}")
         if last_p and start[:7] > last_p:
@@ -426,6 +451,11 @@ def summarise(decisions, resolutions):
                                 if fund else None),
             "truncated_legs_total": sum(r.get("truncated_legs", 0)
                                         for r in rows),
+            "coverage_median": (round(float(np.median(
+                [r["coverage_median"] for r in rows
+                 if r.get("coverage_median") is not None])), 3)
+                if any(r.get("coverage_median") is not None
+                       for r in rows) else None),
         }
     return out
 
@@ -467,14 +497,14 @@ def report(art, path):
          "наполовину пересчётом.\n",
          "| группа | траншей | период | брутто | нетто ср. | нетто мед. "
          "| >0 | t наив. | t Ньюи–Уэста | независ. | t независ. | "
-         "funding | оборв. ног |",
-         "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+         "funding | оборв. ног | покрытие |",
+         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for key, nm in (("ahead", "записано вперёд"),
                     ("backfilled", "восстановлено")):
         s = a["summary"].get(key, {})
         if not s.get("tranches"):
             L.append(f"| {nm} | 0 | — | — | — | — | — | — | — | — | — "
-                     f"| — | — |")
+                     f"| — | — | — |")
             continue
         L.append(
             f"| {nm} | {s['tranches']} | {s['from']} … {s['to']} | "
@@ -482,8 +512,13 @@ def report(art, path):
             f"{s['net_median_bp']:+.1f} | {s['net_pos_share']:.2f} | "
             f"{s['t_naive']} | {s['t_nw']} | {s['independent']} | "
             f"{s['t_independent']} | {s['funding_mean_bp']} | "
-            f"{s['truncated_legs_total']} |")
-    L += ["", "Транши перекрываются (каждый день открывается новый), "
+            f"{s['truncated_legs_total']} | {s.get('coverage_median')} |")
+    L += ["", "«Оборв. ног» — ноги, чей последний бар отстоит от "
+          "конца окна больше чем на сутки (делистинг); «покрытие» — "
+          "медианная доля часов с наблюдением. Пропуски есть почти у "
+          "каждого имени, поэтому считать обрывом «баров меньше "
+          "полного месяца» нельзя: так помечались бы 82 % ног.\n",
+          "Транши перекрываются (каждый день открывается новый), "
           "поэтому наивный t завышен по построению; честные меры — "
           "по Ньюи–Уэсту и по независимым (каждый 30-й транш). "
           "Замер `robust.py` намерил, что на месячных окнах перекрытие "

@@ -242,19 +242,36 @@ def test_delisted_leg_is_held_to_the_last_bar():
         uni = f.universe()
         rec = B.decide(None, at, None, uni, None)
         victim = rec["legs"][0]["sym"]
+        # Запись книги несёт АКТИВ ("S016"), а фейковый источник
+        # индексируется СИМВОЛОМ ("S016USDT"). Первая версия теста
+        # ставила обрыв по неверному ключу и была ложно-зелёной:
+        # ряд не обрывался вовсе, а старая мера («баров меньше
+        # полного месяца») считала обрывом потерю ОДНОГО бара из 720
+        # — ровно поэтому живой прогон насчитал 5830 «оборванных» ног
+        # из 7140.
         cut = int(np.datetime64("2026-06-25T00:00:00", "ms")
                   .astype("int64"))
-        f.dead[victim] = cut
+        f.dead[victim + "USDT"] = cut
         got = B.resolve(None, rec, None, uni, None)
         leg = next(l for l in got["legs"] if l["sym"] == victim)
         check("оборванная нога посчитана",
               leg["resid_bp"] is not None, f"{leg}")
         check("оборванная нога помечена", leg["truncated"] is True,
               f"{leg}")
-        check("баров меньше полного месяца",
-              0 < leg["bars"] < B.H_DAYS * 24, f"{leg['bars']}")
+        check("последний бар задолго до конца окна",
+              0 <= leg["last_bar"] < B.H_DAYS * 24 - B.BARS_PER_DAY,
+              f"{leg['last_bar']}")
+        check("покрытие заметно меньше единицы",
+              leg["coverage"] < 0.5, f"{leg['coverage']}")
         check("вес не потерян", got["missing_weight"] == 0.0,
               f"{got['missing_weight']}")
+
+        whole = next(l for l in got["legs"] if l["sym"] != victim
+                     and l["resid_bp"] is not None)
+        check("целая нога обрывом НЕ помечена",
+              whole["truncated"] is False, f"{whole}")
+        check("у целой ноги пропуски бывают, но покрытие высокое",
+              whole["coverage"] > 0.9, f"{whole['coverage']}")
     finally:
         undo()
 
@@ -405,6 +422,38 @@ def test_empty_run_explains_itself():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_partial_failure_is_named_too():
+    """ЧАСТИЧНЫЙ отказ так же неотличим от тишины, как полный.
+
+    Живой прогон записал 105 решений и молча оборвался на середине
+    периода: причины печатались только при нулевом итоге. Здесь часть
+    дат считается, часть отказывает — лог обязан назвать причину."""
+    tmp = tempfile.mkdtemp()
+    f = Fake()
+    undo = install(f)
+    old = (B.DEC, B.RES, B.PR.state_at)
+    B.DEC = os.path.join(tmp, "d.jsonl")
+    B.RES = os.path.join(tmp, "r.jsonl")
+    good = f.state_at
+    B.PR.state_at = (lambda liq, uni, at:
+                     good(liq, uni, at) if at <= "2026-06-16" else {})
+    lines = []
+    try:
+        a, b = B.catchup(None, None, f.universe(), None, {},
+                         start="2026-06-15", end="2026-06-18",
+                         log=lines.append)
+        check("часть дат посчиталась", a == 2, f"{a}")
+        txt = "\n".join(lines)
+        check("частичный отказ назван причиной",
+              "живых и ликвидных имён меньше пола" in txt, txt)
+        check("число отказов напечатано", "отказов при отборе дат: 2"
+              in txt, txt)
+    finally:
+        undo()
+        B.DEC, B.RES, B.PR.state_at = old
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_report_writes_and_marks_backfill():
     tmp = tempfile.mkdtemp()
     try:
@@ -448,6 +497,7 @@ def main():
     print("журнал и отчёт")
     test_catchup_is_idempotent()
     test_empty_run_explains_itself()
+    test_partial_failure_is_named_too()
     test_report_writes_and_marks_backfill()
     print()
     if FAILED:
