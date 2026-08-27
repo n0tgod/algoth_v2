@@ -311,11 +311,45 @@ def test_ahead_flag():
     t = B.ms(at) / 1000.0
     check("записано в день сечения — вперёд",
           B.ahead({"at": at, "written_at": t + 3600}), "")
-    check("записано через сутки — ещё вперёд",
+    check("записано через сутки — ещё вперёд (структурная задержка "
+          "архива)",
           B.ahead({"at": at, "written_at": t + 86000}), "")
     check("записано через неделю — восстановлено",
           not B.ahead({"at": at, "written_at": t + 7 * 86400}), "")
     check("без метки — восстановлено", not B.ahead({"at": at}), "")
+
+
+def test_structural_delay_is_ahead_and_measured():
+    """Решение, записанное через сутки, — ВПЕРЁД, и доля форварда
+    названа числом.
+
+    Архив Binance публикует день `D` после конца суток `D`, а решению
+    на `D` нужен бар с меткой `D`: раньше `D + 1` его не посчитать ни
+    при каком расписании. Значит суточная задержка структурная, и
+    книга обязана её признать — но измерив: к моменту записи прожита
+    одна тридцатая форварда."""
+    at = "2026-06-15"
+    t = B.ms(at) / 1000.0
+    check("сутки задержки — вперёд",
+          B.ahead({"at": at, "written_at": t + 86400 + 3600}), "")
+    check("трое суток — уже восстановлено",
+          not B.ahead({"at": at, "written_at": t + 3 * 86400}), "")
+    f = Fake()
+    undo = install(f)
+    try:
+        rec = B.decide(None, "2026-06-15", None, f.universe(), None)
+        check("доля прожитого форварда посчитана",
+              rec.get("elapsed") is not None and rec["elapsed"] >= 0.0,
+              f"{rec.get('elapsed')}")
+    finally:
+        undo()
+    sm = B.summarise(
+        [{"at": at, "written_at": t + 86400, "elapsed": 0.033}],
+        [{"at": at, "net_bp": 10.0, "gross_bp": 21.0,
+          "truncated_legs": 0, "funding_bp": None}])
+    check("медиана прожитого в своде",
+          sm["ahead"]["elapsed_median"] == 0.033,
+          f"{sm['ahead'].get('elapsed_median')}")
 
 
 def test_summary_never_mixes_groups():
@@ -492,6 +526,7 @@ def main():
     test_net_arithmetic_with_funding()
     print("честное против восстановленного")
     test_ahead_flag()
+    test_structural_delay_is_ahead_and_measured()
     test_summary_never_mixes_groups()
     test_verdict_says_when_there_is_no_track()
     print("журнал и отчёт")

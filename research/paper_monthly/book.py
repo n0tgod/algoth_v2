@@ -94,9 +94,21 @@ MIN_ASSETS = 30
 MODEL = "market"
 START = "2026-08-01"     # засев: раньше — уже измерено зондом
 # Решение считается записанным ВПЕРЁД, если попало в журнал не позже
-# чем через сутки после даты сечения. Сутки — на задержку прогона, не
-# на подглядывание: форвардное окно к этому моменту прожито на 1/30.
-AHEAD_TOL_SEC = 86400
+# чем через двое суток после даты сечения.
+#
+# Двое, а не одни: задержка структурная, а не случайная. Суточный архив
+# Binance за день `D` публикуется ПОСЛЕ конца суток `D`, а решению на
+# дату `D` нужен бар с меткой `D` — значит раньше `D + 1` его посчитать
+# нечем ни при каком расписании прогонов. Запас во вторые сутки — на
+# сам прогон и на задержку публикации архива.
+#
+# Цена названа числом и меряется на каждой записи (`elapsed`): к
+# моменту записи прожита ОДНА тридцатая форварда, 3.3 %. Это не
+# подглядывание в сигнал — сигнал по-прежнему кончается на `D`, — но
+# знать, что первый день форварда уже случился, честнее, чем молчать.
+# Полностью снять задержку может только другой источник свежих баров
+# (REST площадки вместо архива), и это отдельная работа.
+AHEAD_TOL_SEC = 2 * 86400
 
 DEC = os.path.join(OUT, "decisions.jsonl")
 RES = os.path.join(OUT, "resolutions.jsonl")
@@ -280,6 +292,8 @@ def decide(con, at, liq, universe, of_group, why=None):
         note(why, "дециль вырождается")
         return None
     return {"at": at, "written_at": round(time.time(), 1),
+            "elapsed": round(max(0.0, (time.time() - ms(at) / 1000.0)
+                                 / (H_DAYS * 86400.0)), 4),
             "rules": RULES, "k": K_DAYS, "h": H_DAYS,
             "width": WIDTH, "model": MODEL, "assets": n,
             "legs": legs}
@@ -418,6 +432,7 @@ def summarise(decisions, resolutions):
         dec = by_at.get(res["at"])
         if dec is None:
             continue
+        res = dict(res, elapsed=dec.get("elapsed"))
         groups["ahead" if ahead(dec) else "backfilled"].append(res)
     out = {}
     for name, rows in groups.items():
@@ -451,6 +466,11 @@ def summarise(decisions, resolutions):
                                 if fund else None),
             "truncated_legs_total": sum(r.get("truncated_legs", 0)
                                         for r in rows),
+            "elapsed_median": (round(float(np.median(
+                [r["elapsed"] for r in rows
+                 if r.get("elapsed") is not None])), 4)
+                if any(r.get("elapsed") is not None for r in rows)
+                else None),
             "coverage_median": (round(float(np.median(
                 [r["coverage_median"] for r in rows
                  if r.get("coverage_median") is not None])), 3)
@@ -513,7 +533,17 @@ def report(art, path):
             f"{s['t_naive']} | {s['t_nw']} | {s['independent']} | "
             f"{s['t_independent']} | {s['funding_mean_bp']} | "
             f"{s['truncated_legs_total']} | {s.get('coverage_median')} |")
-    L += ["", "«Оборв. ног» — ноги, чей последний бар отстоит от "
+    a_el = a["summary"].get("ahead", {}).get("elapsed_median")
+    L += ["",
+          "**Задержка записи структурная.** Суточный архив Binance за "
+          "день `D` выходит после конца суток `D`, а решению на дату "
+          "`D` нужен бар с меткой `D`: раньше `D + 1` его посчитать "
+          "нечем ни при каком расписании. К моменту записи прожита "
+          f"доля форварда — медиана честной группы "
+          f"{a_el if a_el is not None else '—'} (одна тридцатая — это "
+          "0.033). Сигнал по-прежнему кончается на `D`; снять задержку "
+          "может только другой источник свежих баров.\n",
+          "«Оборв. ног» — ноги, чей последний бар отстоит от "
           "конца окна больше чем на сутки (делистинг); «покрытие» — "
           "медианная доля часов с наблюдением. Пропуски есть почти у "
           "каждого имени, поэтому считать обрывом «баров меньше "
