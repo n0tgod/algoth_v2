@@ -1,0 +1,176 @@
+{
+ "run_at": "2026-08-27 01:14 UTC",
+ "delays": [
+  1,
+  3,
+  7
+ ],
+ "horizons": [
+  7,
+  30,
+  90
+ ],
+ "main_cell": "d1_h30",
+ "main_from": "2022-01-01",
+ "mature_age": 365,
+ "events_total": 632,
+ "cells": {
+  "d1_h7": {
+   "events": 315,
+   "truncated_share": 0.0,
+   "ev_median_bp": -938.2,
+   "ev_mean_bp": 328.1,
+   "ev_pos_share": 0.321,
+   "cohorts": 42,
+   "coh_median_bp": -970.3,
+   "coh_mean_bp": -980.1,
+   "coh_pos_share": 0.119
+  },
+  "d1_h30": {
+   "events": 310,
+   "truncated_share": 0.0,
+   "ev_median_bp": -2050.1,
+   "ev_mean_bp": -925.9,
+   "ev_pos_share": 0.265,
+   "cohorts": 41,
+   "coh_median_bp": -1568.2,
+   "coh_mean_bp": -1525.1,
+   "coh_pos_share": 0.146
+  },
+  "d1_h90": {
+   "events": 303,
+   "truncated_share": 0.007,
+   "ev_median_bp": -2865.6,
+   "ev_mean_bp": -1540.5,
+   "ev_pos_share": 0.215,
+   "cohorts": 39,
+   "coh_median_bp": -2736.9,
+   "coh_mean_bp": -3044.3,
+   "coh_pos_share": 0.077
+  },
+  "d3_h7": {
+   "events": 328,
+   "truncated_share": 0.0,
+   "ev_median_bp": -936.5,
+   "ev_mean_bp": 460.1,
+   "ev_pos_share": 0.329,
+   "cohorts": 42,
+   "coh_median_bp": -990.0,
+   "coh_mean_bp": -952.5,
+   "coh_pos_share": 0.167
+  },
+  "d3_h30": {
+   "events": 323,
+   "truncated_share": 0.0,
+   "ev_median_bp": -1860.1,
+   "ev_mean_bp": -805.4,
+   "ev_pos_share": 0.272,
+   "cohorts": 41,
+   "coh_median_bp": -1841.6,
+   "coh_mean_bp": -1277.6,
+   "coh_pos_share": 0.122
+  },
+  "d3_h90": {
+   "events": 315,
+   "truncated_share": 0.006,
+   "ev_median_bp": -2787.0,
+   "ev_mean_bp": -1471.9,
+   "ev_pos_share": 0.216,
+   "cohorts": 39,
+   "coh_median_bp": -2434.0,
+   "coh_mean_bp": -2742.5,
+   "coh_pos_share": 0.077
+  },
+  "d7_h7": {
+   "events": 342,
+   "truncated_share": 0.0,
+   "ev_median_bp": -830.9,
+   "ev_mean_bp": 14.0,
+   "ev_pos_share": 0.33,
+   "cohorts": 42,
+   "coh_median_bp": -581.9,
+   "coh_mean_bp": -377.8,
+   "coh_pos_share": 0.167
+  },
+  "d7_h30": {
+   "events": 338,
+   "truncated_share": 0.0,
+   "ev_median_bp": -1816.6,
+   "ev_mean_bp": -318.0,
+   "ev_pos_share": 0.278,
+   "cohorts": 41,
+   "coh_median_bp": -1629.7,
+   "coh_mean_bp": -1160.6,
+   "coh_pos_share": 0.146
+  },
+  "d7_h90": {
+   "events": 328,
+   "truncated_share": 0.015,
+   "ev_median_bp": -2440.0,
+   "ev_mean_bp": -626.9,
+   "ev_pos_share": 0.229,
+   "cohorts": 39,
+   "coh_median_bp": -2355.3,
+   "coh_mean_bp": -2372.2,
+   "coh_pos_share": 0.077
+  }
+ },
+ "years": {
+  "2022": {
+   "n": 1,
+   "median_bp": -2873.8,
+   "mean_bp": -2873.8
+  },
+  "2023": {
+   "n": 53,
+   "median_bp": -1568.2,
+   "mean_bp": -1622.1
+  },
+  "2024": {
+   "n": 60,
+   "median_bp": -1640.7,
+   "mean_bp": -566.8
+  },
+  "2025": {
+   "n": 172,
+   "median_bp": -2355.1,
+   "mean_bp": -1022.3
+  },
+  "2026": {
+   "n": 24,
+   "median_bp": -1247.3,
+   "mean_bp": 485.6
+  }
+ },
+ "null": {
+  "seeds": 5,
+  "coh_median_mean": -346.2,
+  "coh_median_absmax": 437.7
+ },
+ "funding": {
+  "covered": 632,
+  "d0_7": {
+   "n": 632,
+   "median_bp_day": 3.0,
+   "q25": -11.29,
+   "q75": 6.52,
+   "neg_share": 0.383
+  },
+  "d7_30": {
+   "n": 632,
+   "median_bp_day": 2.54,
+   "q25": -2.69,
+   "q75": 4.46,
+   "neg_share": 0.328
+  }
+ },
+ "skipped": {
+  "нет ряда в хранилище": 18,
+  "нет цены входа": 1473,
+  "форвард упирается в край данных": 77,
+  "ряд оборван сразу после входа": 0,
+  "контрольная база тоньше пола": 1218
+ },
+ "verdict": "новичок в первый месяц ОТСТАЁТ от рынка: медиана когорт -1568 б.п., среднее -1525 — знак согласован обеими мерами",
+ "took_min": 59.3
+}
