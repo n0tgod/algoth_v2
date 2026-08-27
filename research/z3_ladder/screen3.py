@@ -461,20 +461,45 @@ def write_report(path, cells, null, drift, meta):
             L.append(f"| {name} | {tw} | {h}м | {a1:+.1f} | {a2:+.1f} |\n")
     L.append(f"\nПланка семейственная: **{null['bar_z']:+.2f} σ** "
              f"(95-й процентиль максимума по семействам под нулём).\n")
+    hv = meta.get("halves") or {}
+    L.append("\n**Устойчивость по половинам записи** (граница "
+             f"{meta.get('mid_day', '—')}): у каждой ячейки среднее "
+             "посчитано отдельно на первой и второй половине суток. "
+             "Разошедшийся ЗНАК означает режим рынка, а не свойство "
+             "книги — так уже рассыпался градиент горизонта в S11, и "
+             "так первый прогон этого скрина на трёх сутках дал знак, "
+             "противоположный десятидневному.\n")
     L.append("\n| условие | стор. | гор. | событий | корзин | медиана | "
-             "среднее | сверх сноса | доля+ | z | вердикт |\n")
-    L.append("|---|:--:|--:|--:|--:|--:|--:|--:|--:|--:|---|\n")
+             "среднее | сверх сноса | 1-я пол. | 2-я пол. | доля+ | z | "
+             "вердикт |\n")
+    L.append("|---|:--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|\n")
     rows = sorted(cells.items(),
                   key=lambda kv: -(kv[1].get("z") or -9e9))
     for (name, side, h), c in rows:
         d = drift.get(f"{h}|{side}", 0.0)
+        h1 = (hv.get(0) or {}).get((name, side, h))
+        h2 = (hv.get(1) or {}).get((name, side, h))
+        v1 = h1["mean_bp"] if h1 else float("nan")
+        v2 = h2["mean_bp"] if h2 else float("nan")
+        flip = ("⚠" if (h1 and h2 and v1 * v2 < 0) else "")
         L.append(
             f"| {name} | {'L' if side > 0 else 'S'} | {h}м | "
             f"{c['events']:,} | {c['buckets']:,} | {c['med_bp']:+.1f} | "
             f"{c['mean_bp']:+.1f} | {c['mean_bp'] - d:+.1f} | "
+            f"{v1:+.1f} | {v2:+.1f}{flip} | "
             f"{c.get('win', float('nan')):.2f} | "
             f"{c.get('z', float('nan')):+.1f} | "
             f"{Z.verdict_of(c, null)} |\n".replace(",", " "))
+    if hv.get(0) and hv.get(1):
+        both = [(k, hv[0][k]["mean_bp"], hv[1][k]["mean_bp"])
+                for k in cells if k in hv[0] and k in hv[1]]
+        flips = [x for x in both if x[1] * x[2] < 0]
+        if both:
+            L.append(f"\nЗнак разошёлся между половинами у "
+                     f"**{len(flips)} ячеек из {len(both)}** "
+                     f"({len(flips) / len(both):.0%}). При настоящем "
+                     "свойстве книги половины расходились бы редко и "
+                     "по мелочи.\n")
     with open(path, "w", encoding="utf-8") as f:
         f.write("".join(L))
     return path
@@ -527,9 +552,19 @@ def main(argv=None):
              "двое подряд")
         return 1
     syms = [s for s in a.symbols.split(",") if s] or P2.symbols()
+    mid_day = have[(len(have) - 1) // 2]
     log_(f"скрин лесенки: суток {len(have)} ({have[0]}…{have[-1]}), "
-         f"символов {len(syms)}, условий {len(CONDITIONS)}")
+         f"символов {len(syms)}, условий {len(CONDITIONS)}; "
+         f"половины делятся по {mid_day}")
     acc, rng = {}, np.random.default_rng(Z.SEED)
+    # Второй накопитель — ПОЛОВИНЫ записи. Устойчивость по половинам и
+    # есть та мера, которой не хватило трижды: градиент горизонта в S11
+    # рассыпался между двумя разрезами одной записи, смоук варианта C в
+    # гипотезе 4 давал Sharpe 1.12 на годе и 0.55 на четырёх, а первый
+    # прогон этого скрина на трёх сутках дал знак, противоположный
+    # десятидневному. Считается тем же ядром и теми же событиями —
+    # второго прохода по складу нет.
+    half, halves = {}, {}
     prev, prev_key, width = None, None, []
     for day in have:
         Lm = day_ladder(syms, day)
@@ -564,16 +599,29 @@ def main(argv=None):
         Z.measure(ev, M["mid_open"], times, acc, rng,
                   conds_by_name=CONDS_BY_NAME, control="mean",
                   horizons=HORIZONS)
+        which = 0 if day <= mid_day else 1
+        half.setdefault(which, {})
+        Z.measure(ev, M["mid_open"], times, half[which],
+                  np.random.default_rng(Z.SEED + which),
+                  conds_by_name=CONDS_BY_NAME, control="mean",
+                  horizons=HORIZONS)
         prev, prev_key = Lm, day
     if not acc:
         log_("ни одного события — считать нечего")
         return 1
     log_("считаю сводку и семейственную планку…")
     cells, null = Z.summarize(acc)
+    # Имя цикла НЕ `a`: так называется разбор аргументов в этой же
+    # функции, и первый прогон упал на `a.tag` — «dict has no attribute
+    # tag». Дешёвая ошибка, но она стоила бы прогона на сервере.
+    for w, hacc in sorted(half.items()):
+        if hacc:
+            halves[w] = Z.summarize(hacc)[0]
     drift = P2.side_drift(cells)
     path = os.path.join(OUT, f"Z3-ladder-{a.tag}.md")
     write_report(path, cells, null, drift,
-                 {"when": datetime.now(timezone.utc)
+                 {"halves": halves, "mid_day": mid_day,
+                  "when": datetime.now(timezone.utc)
                   .strftime("%Y-%m-%d %H:%M UTC"),
                   "days": len(width), "first": (width[0][0] if width else "—"),
                   "last": (width[-1][0] if width else "—"),
