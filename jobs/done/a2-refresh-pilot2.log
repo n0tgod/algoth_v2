@@ -1,0 +1,14 @@
+== задание a2-refresh-pilot2 ==
+строка: run research/a2_storage/refresh.py --interval 1m --days 3
+начало: 2026-08-27T11:58:00Z
+запускаю: .venv/bin/python research/a2_storage/refresh.py --interval 1m --days 3
+край хранилища 2026-06-30, дней к докачке 3
+символов 573, файлов к обходу 1719
+скачано 1713, нет в архиве 6
+  пересборка партиций: --interval 1m --months 2026-08
+      "skipped_existing": 0,
+      "interval": "1m"
+    }
+готово: /root/algoth_v2/research/a2_storage/out/A2-refresh-1m.json (1.8 мин)
+  край хранилища сдвинут 2026-06-30 → 2026-08-26: скачано 1713 файлов, пересобрано партиций 1
+публикую отчёт
