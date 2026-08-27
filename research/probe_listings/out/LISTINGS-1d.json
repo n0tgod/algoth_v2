@@ -1,5 +1,5 @@
 {
- "run_at": "2026-08-27 01:14 UTC",
+ "run_at": "2026-08-27 02:53 UTC",
  "delays": [
   1,
   3,
@@ -14,138 +14,158 @@
  "main_from": "2022-01-01",
  "mature_age": 365,
  "events_total": 632,
+ "extras": {
+  "born_vs_listed_month_mismatch": 304,
+  "events_born": 630,
+  "events_bybit": 148,
+  "bybit_cell": {
+   "events": 63,
+   "truncated_share": 0.016,
+   "ev_median_bp": -771.4,
+   "ev_mean_bp": -643.6,
+   "ev_pos_share": 0.238,
+   "cohorts": 20,
+   "coh_median_bp": -607.1,
+   "coh_mean_bp": -1045.3,
+   "coh_pos_share": 0.1,
+   "skipped": {
+    "нет цены входа": 1,
+    "контрольная база тоньше пола": 17
+   }
+  }
+ },
  "cells": {
   "d1_h7": {
-   "events": 315,
+   "events": 495,
    "truncated_share": 0.0,
-   "ev_median_bp": -938.2,
-   "ev_mean_bp": 328.1,
-   "ev_pos_share": 0.321,
-   "cohorts": 42,
-   "coh_median_bp": -970.3,
-   "coh_mean_bp": -980.1,
-   "coh_pos_share": 0.119
+   "ev_median_bp": -880.4,
+   "ev_mean_bp": -145.4,
+   "ev_pos_share": 0.315,
+   "cohorts": 51,
+   "coh_median_bp": -702.5,
+   "coh_mean_bp": -835.7,
+   "coh_pos_share": 0.157
   },
   "d1_h30": {
-   "events": 310,
+   "events": 490,
    "truncated_share": 0.0,
-   "ev_median_bp": -2050.1,
-   "ev_mean_bp": -925.9,
-   "ev_pos_share": 0.265,
-   "cohorts": 41,
-   "coh_median_bp": -1568.2,
-   "coh_mean_bp": -1525.1,
-   "coh_pos_share": 0.146
+   "ev_median_bp": -1921.7,
+   "ev_mean_bp": 0.4,
+   "ev_pos_share": 0.294,
+   "cohorts": 50,
+   "coh_median_bp": -1687.0,
+   "coh_mean_bp": -1466.7,
+   "coh_pos_share": 0.2
   },
   "d1_h90": {
-   "events": 303,
-   "truncated_share": 0.007,
-   "ev_median_bp": -2865.6,
-   "ev_mean_bp": -1540.5,
-   "ev_pos_share": 0.215,
-   "cohorts": 39,
-   "coh_median_bp": -2736.9,
-   "coh_mean_bp": -3044.3,
-   "coh_pos_share": 0.077
+   "events": 481,
+   "truncated_share": 0.01,
+   "ev_median_bp": -2708.8,
+   "ev_mean_bp": 6154.5,
+   "ev_pos_share": 0.239,
+   "cohorts": 48,
+   "coh_median_bp": -2551.2,
+   "coh_mean_bp": -2482.1,
+   "coh_pos_share": 0.062
   },
   "d3_h7": {
-   "events": 328,
+   "events": 495,
    "truncated_share": 0.0,
-   "ev_median_bp": -936.5,
-   "ev_mean_bp": 460.1,
-   "ev_pos_share": 0.329,
-   "cohorts": 42,
-   "coh_median_bp": -990.0,
-   "coh_mean_bp": -952.5,
-   "coh_pos_share": 0.167
+   "ev_median_bp": -700.2,
+   "ev_mean_bp": -96.5,
+   "ev_pos_share": 0.349,
+   "cohorts": 51,
+   "coh_median_bp": -600.2,
+   "coh_mean_bp": -521.2,
+   "coh_pos_share": 0.196
   },
   "d3_h30": {
-   "events": 323,
+   "events": 490,
    "truncated_share": 0.0,
-   "ev_median_bp": -1860.1,
-   "ev_mean_bp": -805.4,
-   "ev_pos_share": 0.272,
-   "cohorts": 41,
-   "coh_median_bp": -1841.6,
-   "coh_mean_bp": -1277.6,
-   "coh_pos_share": 0.122
+   "ev_median_bp": -1701.7,
+   "ev_mean_bp": -108.1,
+   "ev_pos_share": 0.28,
+   "cohorts": 50,
+   "coh_median_bp": -1601.4,
+   "coh_mean_bp": -1139.4,
+   "coh_pos_share": 0.18
   },
   "d3_h90": {
-   "events": 315,
-   "truncated_share": 0.006,
-   "ev_median_bp": -2787.0,
-   "ev_mean_bp": -1471.9,
-   "ev_pos_share": 0.216,
-   "cohorts": 39,
-   "coh_median_bp": -2434.0,
-   "coh_mean_bp": -2742.5,
-   "coh_pos_share": 0.077
+   "events": 480,
+   "truncated_share": 0.01,
+   "ev_median_bp": -2482.0,
+   "ev_mean_bp": 3244.3,
+   "ev_pos_share": 0.242,
+   "cohorts": 48,
+   "coh_median_bp": -2164.7,
+   "coh_mean_bp": -2224.9,
+   "coh_pos_share": 0.104
   },
   "d7_h7": {
-   "events": 342,
+   "events": 494,
    "truncated_share": 0.0,
-   "ev_median_bp": -830.9,
-   "ev_mean_bp": 14.0,
-   "ev_pos_share": 0.33,
-   "cohorts": 42,
-   "coh_median_bp": -581.9,
-   "coh_mean_bp": -377.8,
-   "coh_pos_share": 0.167
+   "ev_median_bp": -655.2,
+   "ev_mean_bp": 179.7,
+   "ev_pos_share": 0.336,
+   "cohorts": 51,
+   "coh_median_bp": -581.8,
+   "coh_mean_bp": -329.8,
+   "coh_pos_share": 0.275
   },
   "d7_h30": {
-   "events": 338,
-   "truncated_share": 0.0,
-   "ev_median_bp": -1816.6,
-   "ev_mean_bp": -318.0,
-   "ev_pos_share": 0.278,
-   "cohorts": 41,
-   "coh_median_bp": -1629.7,
-   "coh_mean_bp": -1160.6,
-   "coh_pos_share": 0.146
+   "events": 488,
+   "truncated_share": 0.002,
+   "ev_median_bp": -1644.8,
+   "ev_mean_bp": -363.1,
+   "ev_pos_share": 0.27,
+   "cohorts": 50,
+   "coh_median_bp": -1256.4,
+   "coh_mean_bp": -1026.6,
+   "coh_pos_share": 0.14
   },
   "d7_h90": {
-   "events": 328,
+   "events": 479,
    "truncated_share": 0.015,
-   "ev_median_bp": -2440.0,
-   "ev_mean_bp": -626.9,
-   "ev_pos_share": 0.229,
-   "cohorts": 39,
-   "coh_median_bp": -2355.3,
-   "coh_mean_bp": -2372.2,
-   "coh_pos_share": 0.077
+   "ev_median_bp": -2197.0,
+   "ev_mean_bp": 1405.9,
+   "ev_pos_share": 0.257,
+   "cohorts": 48,
+   "coh_median_bp": -2105.3,
+   "coh_mean_bp": -1903.7,
+   "coh_pos_share": 0.125
   }
  },
  "years": {
   "2022": {
-   "n": 1,
-   "median_bp": -2873.8,
-   "mean_bp": -2873.8
+   "n": 23,
+   "median_bp": -1730.9,
+   "mean_bp": 103.6
   },
   "2023": {
-   "n": 53,
-   "median_bp": -1568.2,
-   "mean_bp": -1622.1
+   "n": 97,
+   "median_bp": -1781.5,
+   "mean_bp": -554.1
   },
   "2024": {
-   "n": 60,
-   "median_bp": -1640.7,
-   "mean_bp": -566.8
+   "n": 122,
+   "median_bp": -2133.1,
+   "mean_bp": -1358.7
   },
   "2025": {
-   "n": 172,
-   "median_bp": -2355.1,
-   "mean_bp": -1022.3
+   "n": 216,
+   "median_bp": -2038.1,
+   "mean_bp": 911.6
   },
   "2026": {
-   "n": 24,
-   "median_bp": -1247.3,
-   "mean_bp": 485.6
+   "n": 32,
+   "median_bp": -1173.4,
+   "mean_bp": 638.5
   }
  },
  "null": {
   "seeds": 5,
-  "coh_median_mean": -346.2,
-  "coh_median_absmax": 437.7
+  "coh_median_mean": -315.7,
+  "coh_median_absmax": 371.6
  },
  "funding": {
   "covered": 632,
@@ -165,12 +185,12 @@
   }
  },
  "skipped": {
-  "нет ряда в хранилище": 18,
-  "нет цены входа": 1473,
-  "форвард упирается в край данных": 77,
+  "нет ряда в хранилище": 2,
+  "нет цены входа": 6,
+  "форвард упирается в край данных": 84,
   "ряд оборван сразу после входа": 0,
-  "контрольная база тоньше пола": 1218
+  "контрольная база тоньше пола": 1008
  },
- "verdict": "новичок в первый месяц ОТСТАЁТ от рынка: медиана когорт -1568 б.п., среднее -1525 — знак согласован обеими мерами",
- "took_min": 59.3
+ "verdict": "новичок в первый месяц ОТСТАЁТ от рынка: медиана когорт -1687 б.п., среднее -1467 — знак согласован обеими мерами",
+ "took_min": 90.5
 }
