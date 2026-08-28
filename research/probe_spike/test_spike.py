@@ -197,6 +197,13 @@ def test_round_trip_charges_both_legs_by_half_spread():
     solo = S.LEGS / 2 * S.FEE_BP + (6.8 + 6.1) / 2
     check("конвенция D1 воспроизведена", abs(solo - 17.45) < 0.01,
           f"{solo}")
+    # Голая нога: 11 + (7 + 5)/2 = 17.0 — ровно половина хеджированной
+    # без спреда второй ноги. Две прочитки вопроса «платит ли» обязаны
+    # иметь РАЗНЫЕ знаменатели, иначе одна из них выдумана.
+    one = S.solo_trip(a)
+    check("круг голой ноги = 17.0", abs(one - 17.0) < 1e-9, f"{one}")
+    check("круги двух прочиток различны", abs(one - rnd) > 1.0,
+          f"{one} против {rnd}")
 
 
 def test_report_names_hedge_spread():
@@ -306,6 +313,14 @@ def test_cost_table_agrees_in_sign_with_verdict_table():
                 vals.append(v)
                 by_name.setdefault(cells[1], {})[cells[2]] = v
         check("строки таблицы цены есть", len(vals) >= 2, str(vals))
+        # Проверяется ШАПКА таблицы, а не раздел: обе фразы стоят ещё и
+        # в объясняющем абзаце, и поиск по разделу проходил бы на
+        # таблице без этих колонок вовсе («блок есть на пустом блоке»).
+        head = [ln for ln in cost.split("\n") if ln.startswith("| условие")]
+        check("шапка таблицы цены найдена", len(head) == 1, str(head))
+        check("обе прочитки — колонки таблицы",
+              "нетто книги" in head[0] and "нетто голой ноги" in head[0],
+              head[0] if head else "шапки нет")
         check("превышение не тождественный ноль",
               any(abs(v) > 1.0 for v in vals), str(vals))
         # Сторона обязана переворачивать знак: у лонга и шорта одного

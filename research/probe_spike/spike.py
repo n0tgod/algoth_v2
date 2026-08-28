@@ -216,6 +216,20 @@ def round_trip(a):
     return LEGS * FEE_BP + (si + so) / 2 + (hi + ho) / 2, si, so, hi, ho
 
 
+def solo_trip(a):
+    """Круг ОДНОЙ ноги: голая направленная сделка без хеджа.
+
+    У вопроса «платит ли» две прочитки, и они требуют разных
+    знаменателей. Хеджированная книга платит за две ноги, но и мерится
+    превышением над сечением. Голая нога платит вдвое меньше — и несёт
+    рынок: Z1 намерил, что снос случайной ноги растёт пропорционально
+    горизонту (+0.4 → +10.7 б.п. от 5 к 240 минутам над медианой), и
+    превышение его снимает, а сырой ход нет.
+    """
+    si, so = _q(a["spread_in"]), _q(a["spread_out"])
+    return FEE_BP + (si + so) / 2
+
+
 def write_report(path, cells, null, dg, meta):
     L = ["# Зонд минутного всплеска: цена или котировка, и что после круга\n"]
     L.append(f"\nПрогон {meta['when']} · суток {meta['days']} "
@@ -258,14 +272,17 @@ def write_report(path, cells, null, dg, meta):
                  f"{Z.verdict_of(c, null)} |\n".replace(",", " "))
     L.append("\n### Цена сделки и на чём она держится (горизонт 60 минут)\n\n")
     L.append("| условие | стор. | событий | спред наш | спред хеджа | "
-             "круг двух ног | превышение | нетто | без лучшего имени |\n")
-    L.append("|---|:--:|--:|--:|--:|--:|--:|--:|--:|\n")
+             "круг двух ног | превышение | нетто книги | сырой ход | "
+             "нетто голой ноги | без лучшего имени |\n")
+    L.append("|---|:--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|\n")
     rows_ = []
     for name, a in sorted(dg.items()):
         if not a["exc"]:
             continue
         rnd, si, so, hi, ho = round_trip(a)
+        solo = solo_trip(a)
         base = float(np.mean(a["exc"]))
+        braw = float(np.mean(a["raw"])) if a["raw"] else float("nan")
         best, bexc = None, 0.0
         tot, cnt = sum(v[0] for v in a["by_sym"].values()), a["n"]
         for sym, v in a["by_sym"].items():
@@ -275,13 +292,25 @@ def write_report(path, cells, null, dg, meta):
                if best else float("nan"))
         for c in CONDS_BY_NAME.get(name, []):
             sd = c["side"]
-            rows_.append((-(sd * base), name, sd, a, rnd, si, so, hi, ho,
-                          sd * base, sd * wo0, best))
-    for _, name, sd, a, rnd, si, so, hi, ho, exc, wo, best in sorted(rows_):
+            rows_.append((-(sd * base), name, sd, a, rnd, solo, si, so,
+                          hi, ho, sd * base, sd * braw, sd * wo0, best))
+    for (_, name, sd, a, rnd, solo, si, so, hi, ho,
+         exc, raw, wo, best) in sorted(rows_):
         L.append(f"| {name} | {'L' if sd > 0 else 'S'} | {a['n']:,} | "
                  f"{si:.1f}/{so:.1f} | {hi:.1f}/{ho:.1f} | {rnd:.1f} | "
-                 f"{exc:+.1f} | {exc - rnd:+.1f} | "
-                 f"{wo:+.1f} ({best}) |\n".replace(",", " "))
+                 f"{exc:+.1f} | {exc - rnd:+.1f} | {raw:+.1f} | "
+                 f"{raw - solo:+.1f} | {wo:+.1f} ({best}) |\n"
+                 .replace(",", " "))
+    L.append("\n**У вопроса «платит ли» две прочитки, и знаменатели у них "
+             "разные.** Хеджированная книга платит за ДВЕ ноги (колонка "
+             "«нетто книги») и мерится превышением над сечением — рынок "
+             "из неё вычтен. Голая направленная сделка платит вдвое "
+             "меньше (комиссия одной ноги плюс половина своего спреда, "
+             "колонка «нетто голой ноги»), но её числитель — СЫРОЙ ход "
+             "цены, то есть вместе с рынком: Z1 намерил, что снос "
+             "случайной ноги растёт пропорционально горизонту, и в "
+             "сыром ходе он сидит целиком. Ни одну из колонок нельзя "
+             "читать без своей пары.\n")
     L.append("\nВсё в базисных пунктах. Превышение здесь считается прямым "
              "проходом (среднее по событиям против среднего сечения в ту "
              "же минуту), а главная таблица — судьёй по корзинам с "
