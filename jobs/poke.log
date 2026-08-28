@@ -146,3 +146,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787913824 ==
 [2026-08-28T10:43:46Z] задание spike-2 запущено: research/probe_spike/spike.py
+
+== сигнал 1787914014 ==
+[2026-08-28T10:46:56Z] задание spike-3 запущено: research/probe_spike/spike.py
