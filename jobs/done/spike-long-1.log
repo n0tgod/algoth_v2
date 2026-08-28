@@ -117,3 +117,15 @@
   2026-08: заполнено 61.2%  событий 12 184  12 с
 отчёт: /root/algoth_v2/research/probe_spike/out/SPIKE-long-1m.md
   ячейка вердикта: событий 143 844  корзин 5 593  медиана +63.6  среднее +4.9  доля+ 0.61  нетто книги -30.3 б.п.
+публикуется в ветку main:
+ jobs/done/paper-page-deploy.log             | 12 +++++++
+ jobs/done/spike-long-1.log                  | 35 ++++++++++++++++++++
+ jobs/done/z3-fold-2.log                     |  1 +
+ research/probe_spike/out/SPIKE-long-1m.md   | 50 +++++++++++++++++++++++++++++
+ research/probe_spike/out/spike-long-1m.json |  1 +
+ 5 files changed, 99 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   a616457..30d3569  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-28T11:53:47Z, код 0
