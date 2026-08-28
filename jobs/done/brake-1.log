@@ -4,3 +4,16 @@
 запускаю: .venv/bin/python research/probe_drain/brake.py --tag 0824
 сделок в реплее: 11459
 отчёт: /root/algoth_v2/research/probe_drain/out/DRAIN-brake-0824.md · 16.5 с
+публикуется в ветку main:
+ jobs/done/brake-1.done                       |   1 +
+ jobs/done/brake-1.log                        |   6 +
+ jobs/done/drain-1.log                        |   7 +
+ jobs/poke.log                                |   3 +
+ research/probe_drain/out/DRAIN-brake-0824.md |  48 +++++
+ research/probe_drain/out/brake-0824.json     | 291 +++++++++++++++++++++++++++
+ 6 files changed, 356 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   dab45f8..95c92f9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-28T22:34:11Z, код 0
