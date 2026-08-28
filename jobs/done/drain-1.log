@@ -11,3 +11,16 @@ sit_lo: базовых сделок 65, в окне 275
 sit_r: базовых сделок 381, в окне 191
 z: базовых сделок 2524, в окне 656
 отчёт: /root/algoth_v2/research/probe_drain/out/DRAIN-report-0824.md · 4.0 с
+публикуется в ветку main:
+ jobs/done/drain-1.done                        |    1 +
+ jobs/done/drain-1.log                         |   13 +
+ jobs/done/z3-fold-2.log                       |    7 +
+ jobs/poke.log                                 |    5 +
+ research/probe_drain/out/DRAIN-report-0824.md |  123 +++
+ research/probe_drain/out/drain-0824.json      | 1066 +++++++++++++++++++++++++
+ 6 files changed, 1215 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   a78da5c..32b5732  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-28T22:19:22Z, код 0
