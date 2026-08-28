@@ -129,6 +129,9 @@ def book_trades(mdir):
                     "net": t.get("net_bp"),
                     "reason": t.get("exit_reason") or "срок",
                     "side": t.get("side"), "sym": t.get("sym"),
+                    # id сделки едет дальше, чтобы разбор слива мог
+                    # назвать худшие сделки поимённо, а не по памяти
+                    "tid": t.get("tid"),
                     "arm": t.get("arm")})
     return out, mman
 
