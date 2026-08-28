@@ -77,65 +77,50 @@ import series as S                                        # noqa: E402
 import pairs as PR                                        # noqa: E402
 import crosssection as CS                                 # noqa: E402
 import run_d1 as R                                        # noqa: E402
+import paper_journal as PJ                                # noqa: E402
 from common import funding_series as FS                   # noqa: E402
 
 # --- конструкция, объявлена до первого прогона ------------------------
-RULES = 1
-K_DAYS = 14              # формация сигнала
-H_DAYS = 30              # удержание транша
-FORM_DAYS = 90           # окно оценки β
-WIDTH = 0.10             # дециль
+#
+# Живёт в `paper_journal.py` — стандартная библиотека, ноль тяжёлых
+# импортов, — потому что те же величины читает страница наблюдения, а
+# сборщик стакана не вправе тянуть numpy и duckdb. Здесь только имена:
+# вторая запись любой из этих констант однажды разошлась бы с первой, и
+# страница называла бы настоящим наблюдением то, что книга считает
+# бэктестом.
+#
+# Цена задержки записи названа числом и меряется на каждой записи
+# (`elapsed`): к моменту записи прожита ОДНА тридцатая форварда, 3.3 %.
+# Это не подглядывание в сигнал — сигнал по-прежнему кончается на `D`,
+# — но знать, что первый день форварда уже случился, честнее, чем
+# молчать. Полностью снять задержку может только другой источник свежих
+# баров (REST площадки вместо архива), и это отдельная работа.
+RULES = PJ.RULES
+K_DAYS = PJ.K_DAYS       # формация сигнала
+H_DAYS = PJ.H_DAYS       # удержание транша
+FORM_DAYS = PJ.FORM_DAYS  # окно оценки β
+WIDTH = PJ.WIDTH         # дециль
 STEP = "1h"
 BARS_PER_DAY = 24
-TAKER_BP = 5.5
-TURNOVER = 2.0           # транш открывается и закрывается целиком
-COST_BP = TURNOVER * TAKER_BP
+TAKER_BP = PJ.TAKER_BP
+TURNOVER = PJ.TURNOVER   # транш открывается и закрывается целиком
+COST_BP = PJ.COST_BP
 MIN_ASSETS = 30
 MODEL = "market"
 START = "2026-08-01"     # засев: раньше — уже измерено зондом
-# Решение считается записанным ВПЕРЁД, если попало в журнал не позже
-# чем через двое суток после даты сечения.
-#
-# Двое, а не одни: задержка структурная, а не случайная. Суточный архив
-# Binance за день `D` публикуется ПОСЛЕ конца суток `D`, а решению на
-# дату `D` нужен бар с меткой `D` — значит раньше `D + 1` его посчитать
-# нечем ни при каком расписании прогонов. Запас во вторые сутки — на
-# сам прогон и на задержку публикации архива.
-#
-# Цена названа числом и меряется на каждой записи (`elapsed`): к
-# моменту записи прожита ОДНА тридцатая форварда, 3.3 %. Это не
-# подглядывание в сигнал — сигнал по-прежнему кончается на `D`, — но
-# знать, что первый день форварда уже случился, честнее, чем молчать.
-# Полностью снять задержку может только другой источник свежих баров
-# (REST площадки вместо архива), и это отдельная работа.
-AHEAD_TOL_SEC = 2 * 86400
+AHEAD_TOL_SEC = PJ.AHEAD_TOL_SEC
 
 DEC = os.path.join(OUT, "decisions.jsonl")
 RES = os.path.join(OUT, "resolutions.jsonl")
 
 
-def ms(day):
-    return int(np.datetime64(day + "T00:00:00", "ms").astype("int64"))
-
-
-def shift(day, n):
-    return (date.fromisoformat(day) + timedelta(days=n)).isoformat()
-
-
-def today():
-    return datetime.now(timezone.utc).date().isoformat()
-
-
-def read_jsonl(path):
-    if not os.path.exists(path):
-        return []
-    out = []
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                out.append(json.loads(line))
-    return out
+# Календарь и чтение журнала — из общего модуля: те же функции зовёт
+# страница наблюдения. Прежняя `ms` считалась через numpy, новая через
+# datetime; совпадение закреплено тестом числом.
+ms = PJ.ms
+shift = PJ.shift
+today = PJ.today
+read_jsonl = PJ.read_jsonl
 
 
 def append_jsonl(path, rec):
@@ -394,12 +379,10 @@ def resolve(con, rec, liq, universe, of_group, funding=None):
             "legs": legs}
 
 
-def ahead(rec):
-    """Записано ли решение ВПЕРЁД, до начала форвардного окна."""
-    w = rec.get("written_at")
-    if w is None:
-        return False
-    return w <= ms(rec["at"]) / 1000.0 + AHEAD_TOL_SEC
+# Правило «записано вперёд» — одно на книгу и на страницу. Две его
+# реализации означали бы, что показ и свод по-разному делят запись на
+# настоящую и восстановленную, оставаясь оба правдоподобными на вид.
+ahead = PJ.ahead
 
 
 def catchup(con, liq, universe, of_group, funding, start=START,

@@ -3098,6 +3098,99 @@ class Collector:
                * sum((ry[i] - mu) ** 2 for i in range(n))) ** 0.5
         return round(num / den, 3) if den else None
 
+    # Порог свежести артефакта бумажной книги. Прогон суточный (сторож
+    # в окне 06:xx UTC, догон при 36 ч), поэтому старше 36 часов —
+    # состояние, о котором страница обязана КРИЧАТЬ: молчащий ночной
+    # прогон неотличим от работающего, и это уже случалось с турниром.
+    PAPER_STALE = 36 * 3600
+
+    def paper_book(self, at=None):
+        """Бумажная месячная книга: свод из артефакта, транши из журнала.
+
+        Разделение источников здесь принципиально, а не техническое.
+
+        **Свод берётся ИЗ АРТЕФАКТА и не пересчитывается.** Все его
+        числа — нетто, t по Ньюи–Уэсту, доля прибыльных, funding —
+        считает сама книга; вторая их реализация на странице однажды
+        разошлась бы с той, что публикуется отчётом, и владелец видел
+        бы на экране одно, а в git другое. По той же причине страница
+        не считает деньги ни в одной другой книге.
+
+        **Транши берутся из журнала**, потому что артефакт их не
+        содержит вовсе: он свод. Здесь не считается ничего сверх
+        календаря — числа исхода переносятся из разбора как есть, а
+        деление на честное и восстановленное делает `paper_journal`,
+        то есть ровно то правило, которым делит сама книга.
+
+        Журнал живёт ТОЛЬКО на машине, где книга считается: в git идут
+        одни отчёты. Значит «траншей нет» и «мы не на той машине» —
+        разные состояния, и различает их поле `journal_present`.
+        """
+        now = time.time()
+        key = at or ""
+        cat, cached = getattr(self, "_paper_cache", (0.0, {}))
+        if now - cat < 120 and key in cached:
+            return cached[key]
+        if now - cat >= 120:
+            cached = {}
+        root = os.path.join(os.path.dirname(HERE), "paper_monthly")
+        sys.path.insert(0, root)
+        try:
+            import paper_journal as PJ
+        except Exception as e:                              # pragma: no cover
+            return {"present": False, "reason": f"модуль журнала: {e}"}
+        out = os.path.join(root, "out")
+        art_path = os.path.join(out, "PAPER-30d.json")
+        dec_path = os.path.join(out, "decisions.jsonl")
+        res_path = os.path.join(out, "resolutions.jsonl")
+        r = {"present": False, "generated_at": round(now, 1),
+             "journal_present": os.path.exists(dec_path),
+             "stale_after_sec": self.PAPER_STALE}
+        if not os.path.exists(art_path):
+            r["reason"] = ("прогона книги на этой машине не было: "
+                           "артефакт PAPER-30d.json отсутствует")
+            return r
+        try:
+            with open(art_path, encoding="utf-8") as f:
+                art = json.load(f)
+        except Exception as e:
+            r["reason"] = f"артефакт не читается: {e}"
+            return r
+        age = now - os.path.getmtime(art_path)
+        dec = PJ.read_jsonl(dec_path)
+        res = PJ.read_jsonl(res_path)
+        r.update({
+            "present": True,
+            "run_at": art.get("run_at"),
+            "run_age_sec": round(age),
+            "stale": age > self.PAPER_STALE,
+            "verdict": art.get("verdict"),
+            "rules": {"rules": art.get("rules"), "k": art.get("k"),
+                      "h": art.get("h"), "width": art.get("width"),
+                      "cost_bp": art.get("cost_bp"),
+                      "ahead_tol_sec": PJ.AHEAD_TOL_SEC},
+            # Свод — как посчитан прогоном, породившим файл. Число
+            # решений артефакта и число строк журнала печатаются
+            # рядом: разойдясь, они говорят, что журнал ушёл вперёд
+            # свода, и это состояние, а не поломка.
+            "summary": art.get("summary") or {},
+            "art_decisions": art.get("decisions"),
+            "art_resolutions": art.get("resolutions"),
+            "decisions": len(dec), "resolutions": len(res),
+            "tranches": PJ.tranches(dec, res, now=now),
+        })
+        if at:
+            d = next((x for x in dec if x.get("at") == at), None)
+            if d is None:
+                r["legs_reason"] = f"решения на {at} в журнале нет"
+            else:
+                s = next((x for x in res if x.get("at") == at), None)
+                r["legs_at"] = at
+                r["legs"] = PJ.leg_rows(d, s)
+        cached[key] = r
+        self._paper_cache = (now if now - cat >= 120 else cat, cached)
+        return r
+
     def learning(self):
         """Умнеет ли модель и переходит ли это в деньги — по дням.
 

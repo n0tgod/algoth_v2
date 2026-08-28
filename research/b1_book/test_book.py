@@ -441,6 +441,20 @@ def test_pages_run_headless():
                 ("живое исполнение", web.LIVEPAGE, "?k=xxx"),
                 ("живое исполнение, сухой режим", web.LIVEPAGE,
                  "?k=xxx&livedry=1"),
+                # Бумажная месячная книга: свод из артефакта, транши из
+                # журнала. Честное и восстановленное не смешиваются, у
+                # незрелого транша прочерки, ноги открываются кликом.
+                ("месячная книга", web.PAPERPAGE, "?k=xxx"),
+                # Суточный прогон не пришёл: страница обязана кричать,
+                # а не выглядеть сегодняшней.
+                ("месячная книга с устаревшим прогоном", web.PAPERPAGE,
+                 "?k=xxx&paperstale=1"),
+                # Машина без журнала (так выглядит песочница: отчёт
+                # приезжает в git, журнал остаётся на сервере). Пустая
+                # таблица обязана назвать причину, а не читаться как
+                # «книга ничего не наторговала».
+                ("месячная книга без журнала", web.PAPERPAGE,
+                 "?k=xxx&papernojournal=1"),
                 # Дерево моделей: две руки и логика каждой ветки.
                 ("дерево моделей", web.TREEPAGE, "?k=xxx"),
                 # Турнир политик: весь лист веток отдельной страницей.
@@ -3787,6 +3801,154 @@ def test_learning_day_by_day():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_paper_book_summary_comes_from_the_artefact():
+    """Месячная книга: свод из артефакта, транши из журнала.
+
+    Три вещи, каждая из которых уже ломалась в проекте на другом месте:
+
+    1. **Свод не пересчитывается.** Все его числа считает сама книга и
+       публикует отчётом; вторая их реализация на странице разошлась
+       бы с той, что уехала в git. Проверяется числом, которого из
+       журнала не получить ни при каком счёте.
+    2. **Честное и восстановленное делит правило КНИГИ** (`ahead` в
+       `paper_journal`), а не своё на странице. Иначе показ назвал бы
+       настоящим наблюдением то, что свод считает бэктестом.
+    3. **Незрелый транш — не нулевой.** У него нет ни нетто, ни
+       исхода ног: ноль читался бы как «ничего не заработал».
+    """
+    from datetime import datetime, timezone
+
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "b1_book")
+        out = os.path.join(d, "paper_monthly", "out")
+        os.makedirs(out)
+        # Правило берём НАСТОЯЩЕЕ (модуль книги), данные — подставные.
+        sys.path.insert(0, os.path.join(os.path.dirname(was),
+                                        "paper_monthly"))
+        day_fwd, day_back = "2026-08-26", "2026-08-01"
+        day_open = "2026-08-28"
+
+        def at_ms(s):
+            return datetime.strptime(s, "%Y-%m-%d").replace(
+                tzinfo=timezone.utc).timestamp()
+
+        legs = [{"sym": "ARBUSDT", "w": 0.5, "beta": 1.0, "sig": 0.04},
+                {"sym": "SOLUSDT", "w": -0.5, "beta": 0.9, "sig": -0.04}]
+        dec = [
+            # Записано вперёд: в журнал попало через сутки после даты.
+            {"at": day_fwd, "written_at": at_ms(day_fwd) + 86400,
+             "elapsed": 0.033, "rules": 1, "assets": 440, "legs": legs},
+            # Восстановлено задним числом: записано месяцем позже.
+            {"at": day_back, "written_at": at_ms(day_back) + 26 * 86400,
+             "elapsed": 0.87, "rules": 1, "assets": 438, "legs": legs},
+            # Незрелый транш: разбора нет и быть не может.
+            {"at": day_open, "written_at": at_ms(day_open) + 86400,
+             "elapsed": 0.0, "rules": 1, "assets": 441, "legs": legs}]
+        res = [
+            {"at": day_fwd, "gross_bp": 152.3, "cost_bp": 11.0,
+             "funding_bp": 15.3, "net_bp": 126.0, "truncated_legs": 1,
+             "coverage_median": 0.97, "missing_weight": 0.0,
+             "legs": [{"sym": "ARBUSDT", "resid_bp": 318.0, "bars": 700,
+                       "coverage": 0.97, "truncated": False},
+                      {"sym": "SOLUSDT", "resid_bp": -142.0, "bars": 300,
+                       "coverage": 0.41, "truncated": True}]},
+            {"at": day_back, "gross_bp": 60.2, "cost_bp": 11.0,
+             "funding_bp": 14.1, "net_bp": 35.1, "truncated_legs": 0,
+             "coverage_median": 0.96, "missing_weight": 0.0,
+             "legs": [{"sym": "ARBUSDT", "resid_bp": 40.0, "bars": 710,
+                       "coverage": 0.98, "truncated": False},
+                      {"sym": "SOLUSDT", "resid_bp": 20.0, "bars": 705,
+                       "coverage": 0.98, "truncated": False}]}]
+        for name, rows in (("decisions.jsonl", dec),
+                           ("resolutions.jsonl", res)):
+            with open(os.path.join(out, name), "w", encoding="utf-8") as f:
+                for r in rows:
+                    f.write(json.dumps(r) + "\n")
+        # Число свода намеренно НЕ выводимо из журнала: получить 777.0
+        # из двух разборов (126.0 и 35.1) нельзя ни средним, ни суммой,
+        # ни медианой. Появись оно в ответе — свод взят из артефакта.
+        with open(os.path.join(out, "PAPER-30d.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"run_at": "2026-08-28 06:12 UTC", "rules": 1,
+                       "k": 14, "h": 30, "width": 0.1, "cost_bp": 11.0,
+                       "decisions": 3, "resolutions": 2,
+                       "verdict": "копим календарь, вердикта нет",
+                       "summary": {
+                           "ahead": {"tranches": 1, "net_mean_bp": 777.0},
+                           "backfilled": {"tranches": 1,
+                                          "net_mean_bp": 35.1}}}, f)
+
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        p = col.paper_book()
+        check("свод взят из артефакта, а не пересчитан",
+              p["summary"]["ahead"]["net_mean_bp"] == 777.0,
+              str(p.get("summary")))
+        by = {r["at"]: r for r in p["tranches"]}
+        check("решение суток спустя — записано вперёд",
+              by[day_fwd]["ahead"] is True, str(by[day_fwd]))
+        check("решение месяцем позже — восстановлено",
+              by[day_back]["ahead"] is False, str(by[day_back]))
+        check("незрелый транш назван открытым",
+              by[day_open]["state"] == "open"
+              and by[day_open]["matures_at"] == "2026-09-27",
+              str(by[day_open]))
+        check("у открытого транша нет ни нетто, ни исхода",
+              "net_bp" not in by[day_open]
+              and "gross_bp" not in by[day_open],
+              str(by[day_open]))
+        check("у закрытого транша числа перенесены из разбора",
+              by[day_fwd]["net_bp"] == 126.0
+              and by[day_fwd]["truncated_legs"] == 1,
+              str(by[day_fwd]))
+        check("состав транша считается по сторонам",
+              by[day_fwd]["long_n"] == 1 and by[day_fwd]["short_n"] == 1,
+              str(by[day_fwd]))
+        # Ноги — только по запросу: 26 траншей по 88 ног в общем ответе
+        # весили бы сотни килобайт на каждый опрос страницы. Урок
+        # обзора, где такой ответ вырос до 17.5 МБ.
+        check("ног в общем ответе нет", "legs" not in p, str(p.keys()))
+        lg = col.paper_book(day_fwd)
+        names = {r["sym"]: r for r in lg["legs"]}
+        check("ноги отданы по запросу транша",
+              names["ARBUSDT"]["resid_bp"] == 318.0
+              and names["ARBUSDT"]["side"] == "long", str(lg["legs"]))
+        check("оборванная нога помечена",
+              names["SOLUSDT"]["truncated"] is True,
+              str(names["SOLUSDT"]))
+        op = col.paper_book(day_open)
+        check("у ног открытого транша исхода нет, а не ноль",
+              all(r["resid_bp"] is None for r in op["legs"]),
+              str(op["legs"]))
+        # Свежесть: суточный контур молчит — страница обязана узнать
+        # это из ответа, а не решать сама.
+        check("свежий артефакт не объявлен устаревшим",
+              p["stale"] is False and p["stale_after_sec"] == 36 * 3600,
+              f'{p["stale"]} {p["stale_after_sec"]}')
+        old = time.time() - 40 * 3600
+        os.utime(os.path.join(out, "PAPER-30d.json"), (old, old))
+        col._paper_cache = (0.0, {})
+        check("устаревший артефакт назван устаревшим",
+              col.paper_book()["stale"] is True, "")
+        # Журнал живёт только там, где книга считается: «нет журнала» и
+        # «нет траншей» — разные состояния.
+        os.remove(os.path.join(out, "decisions.jsonl"))
+        col._paper_cache = (0.0, {})
+        p2 = col.paper_book()
+        check("отсутствие журнала названо отдельно",
+              p2["journal_present"] is False and not p2["tranches"],
+              str(p2.get("journal_present")))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_league_counts_a_decision_once():
     """Разбивка ситуаций «одно решение — один голос».
 
@@ -5435,6 +5597,7 @@ def main():
     test_collector_keeps_its_public_methods()
     test_pending_live_exit_is_shown_before_the_review()
     test_learning_day_by_day()
+    test_paper_book_summary_comes_from_the_artefact()
     test_league_counts_a_decision_once()
     test_league_ranks_by_realised_money()
     test_model_tree_names_every_book()

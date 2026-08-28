@@ -109,6 +109,7 @@ const NAV_ITEMS = [
   ["/glossary-page", "playbook", "справочник"],
   ["/tree-page", "models", "модели"],
   ["/tournament-page", "tournament", "турнир"],
+  ["/paper-page", "monthly", "месячная"],
   ["/live-page", "bot live", "бот live"]];
 function navMount(current){
   const el = document.getElementById("nav");
@@ -5528,6 +5529,346 @@ setInterval(load, 60000);
 </script>
 """
 
+# Бумажная месячная книга (`research/paper_monthly`). Своего показа у
+# неё не было вовсе: книга писала отчёт файлом в git, и состав траншей —
+# что именно она купила и продала — не был виден нигде. Просьба
+# владельца: вывести на страницу наблюдения.
+#
+# Страница НИЧЕГО не считает: свод берётся из артефакта прогона, числа
+# исхода — из журнала как есть. Причина та же, по которой показ не
+# считает деньги живых книг: вторая реализация однажды разойдётся с
+# первой, и экран будет утверждать не то, что опубликовано отчётом.
+PAPERPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>monthly book — one construction, recorded forward</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+.thin{color:var(--muted)}
+a{color:var(--accent)}
+.scroll{overflow-x:auto}
+.big{font-size:19px;font-weight:700}
+.alarm{border-color:var(--ask);background:rgba(255,100,115,.08)}
+.two{display:grid;gap:12px;
+ grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+tr.pick{cursor:pointer}
+tr.pick:hover td{background:var(--chip)}
+tr.on td{background:var(--chip)}
+.tag{display:inline-block;font-size:10px;letter-spacing:.1em;
+ text-transform:uppercase;border:1px solid var(--rule);border-radius:999px;
+ padding:1px 8px;color:var(--muted)}
+.tag.fwd{border-color:var(--accent);color:var(--accent)}
+""" + NAVCSS + r"""
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">monthly book — one construction, recorded forward</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div id="box">&hellip;</div>
+<div id="legs"></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + PCTJS + r"""
+navMount("/paper-page");
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function num(v, dg){ return v == null ? "&mdash;"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(dg == null ? 2 : dg); }
+let DATA = null, OPEN = null;
+
+// Рамка предмета — первым абзацем. Без неё страница читается как ещё
+// одна книга живого цикла, а это другая конструкция и другой смысл:
+// здесь нет ни модели, ни слотов, ни кассы — одна объявленная
+// кросс-секция, транш в день, удержание месяц, бумага.
+function intro(d){
+  const r = d.rules || {};
+  return `<div class="cap">what this page is</div>
+  <div>A <b>paper</b> book, not one of the live model books: no model,
+  no slots, no cash account. One construction declared before the first
+  run — formation ${r.k} d, hold ${r.h} d, decile, market wave,
+  β over 90 d, ${r.cost_bp} bp cost per tranche — and a new tranche
+  opened every day. There is no grid here: the book tests ONE
+  construction rather than picking the best of many.</div>
+  <div class="k" style="margin-top:6px"><b>Recorded forward</b> means
+  the decision was in the journal before its forward window began; it
+  is a real observation. <b>Backfilled</b> means it was computed after
+  the fact — a backtest, no better and no worse than the probe that
+  preceded this book. The two are never added together and never share
+  a curve: half a curve of hindsight would still look like a track
+  record. The probe measured this signal at roughly +33 bp a month
+  after the survivorship fix, with t = 1.06 by Newey–West — which is
+  why no spec was written and why the only lever left is the calendar.
+  This book exists to spend it.</div>`;
+}
+
+function fresh(d){
+  if (!d.stale) return "";
+  const h = Math.round((d.run_age_sec || 0) / 3600);
+  const lim = Math.round((d.stale_after_sec || 0) / 3600);
+  return `<div class="panel alarm"><b>the nightly run did not come
+    through</b> — this table is ${h} h old, and anything past ${lim} h
+    means the daily chain (storage refresh, then the book) did not
+    finish. The numbers below describe the run that produced the file,
+    not today.</div>`;
+}
+
+// Свод — ДВЕ панели рядом, и они не складываются никогда. Это то же
+// правило, по которому открытые деньги не суммируются с закрытыми:
+// величины разного вида под одной чертой читаются как одна.
+function summary(d){
+  const s = d.summary || {};
+  const card = (key, name, note) => {
+    const g = s[key] || {};
+    if (!g.tranches)
+      return `<div class="panel"><div class="cap">${name}</div>
+        <div class="dim">no tranches in this group yet</div>
+        <div class="k" style="margin-top:6px">${note}</div></div>`;
+    return `<div class="panel"><div class="cap">${name}</div>
+      <div class="mono big ${g.net_mean_bp > 0 ? "good" : "bad"}">${
+        pct(g.net_mean_bp)}</div>
+      <div class="k">net per tranche, mean over ${g.tranches}
+        tranches (${esc(g.from)} … ${esc(g.to)})</div>
+      <table style="margin-top:8px">
+        <tr><td>gross</td><td class="mono">${pct(g.gross_mean_bp)}</td>
+            <td>net median</td>
+            <td class="mono">${pct(g.net_median_bp)}</td></tr>
+        <tr><td>share &gt; 0</td>
+            <td class="mono">${g.net_pos_share == null ? "&mdash;"
+              : (100 * g.net_pos_share).toFixed(0) + " %"}</td>
+            <td>funding</td>
+            <td class="mono">${pct(g.funding_mean_bp)}</td></tr>
+        <tr><td>t naive</td><td class="mono">${num(g.t_naive)}</td>
+            <td>t Newey–West</td>
+            <td class="mono">${num(g.t_nw)}</td></tr>
+        <tr><td>independent</td>
+            <td class="mono">${g.independent == null ? "&mdash;"
+              : g.independent}</td>
+            <td>t independent</td>
+            <td class="mono">${num(g.t_independent)}</td></tr>
+      </table><div class="k" style="margin-top:6px">${note}</div></div>`;
+  };
+  return `<div class="two">` + card("ahead", "recorded forward",
+      "the honest group: these decisions were written before their "
+      + "forward window opened. The threshold declared for it is t ≥ 3 "
+      + "over independent sections — twelve of those a year, so this "
+      + "is a matter of years.")
+    + card("backfilled", "backfilled",
+      "computed after the fact. Not a track record, and it is kept "
+      + "apart from the honest group rather than merged into it: the "
+      + "two numbers are never summed.")
+    + `</div>`;
+}
+
+function tranches(d){
+  const rows = d.tranches || [];
+  if (!rows.length)
+    return `<div class="panel"><div class="dim">${d.journal_present
+      ? "the journal holds no decisions yet"
+      : "no journal on this machine — the book writes it where it "
+        + "runs, and only the reports travel in git. This is not "
+        + "«no tranches», it is «not the machine that keeps them»"
+      }</div></div>`;
+  return `<div class="panel"><div class="cap">tranches — one per day,
+    click a row for its legs</div>
+   <div class="scroll"><table><tr><th>date</th><th>group</th>
+   <th>legs</th><th>state</th><th>gross</th><th>funding</th>
+   <th>net</th><th>cut legs</th><th>coverage</th></tr>`
+   + rows.slice().reverse().map(r => {
+     const open = r.state === "open";
+     return `<tr class="pick${OPEN === r.at ? " on" : ""}"
+       data-at="${esc(r.at)}">
+     <td class="mono">${esc(r.at)}</td>
+     <td><span class="tag ${r.ahead ? "fwd" : ""}">${
+        r.ahead ? "forward" : "backfilled"}</span></td>
+     <td class="mono">${r.legs_n} <span class="k">${r.long_n}L/${
+        r.short_n}S</span></td>
+     <td class="${open ? "dim" : ""}">${open
+        ? `matures ${esc(r.matures_at)} <span class="k">(${
+            r.days_left} d)</span>` : "closed"}</td>
+     <td class="mono">${open ? "&mdash;" : pct(r.gross_bp)}</td>
+     <td class="mono">${open ? "&mdash;" : pct(r.funding_bp)}</td>
+     <td class="mono ${open ? "dim"
+        : (r.net_bp > 0 ? "good" : "bad")}">${
+        open ? "&mdash;" : pct(r.net_bp)}</td>
+     <td class="mono ${open ? "dim" : ""}">${open ? "&mdash;"
+        : (r.truncated_legs == null ? "&mdash;" : r.truncated_legs)}</td>
+     <td class="mono ${open ? "dim" : ""}">${open ? "&mdash;"
+        : (r.coverage_median == null ? "&mdash;"
+           : r.coverage_median.toFixed(2))}</td></tr>`; }).join("")
+   + `</table></div>` + legend(d) + `</div>`;
+}
+
+// Расшифровка ВСЕХ пометок, а не тех, о которых уже спросили: на листе
+// турнира владелец спрашивал по очереди про четыре из них, и это было
+// признаком, что объяснять надо все сразу.
+function legend(d){
+  const r = d.rules || {};
+  const tol = Math.round((r.ahead_tol_sec || 0) / 3600);
+  return `<details class="k" style="margin-top:8px">
+   <summary style="cursor:pointer">what the columns mean</summary>
+   <div style="margin-top:6px">
+   <b>group</b> — «forward» if the decision reached the journal within
+   ${tol} h of its date, «backfilled» otherwise. The delay is
+   structural, not sloppiness: Binance publishes a day's archive after
+   that day ends, and a decision dated D needs a bar stamped D, so
+   D + 1 is the earliest any schedule can produce it.<br>
+   <b>state</b> — a tranche is judged ${r.h} days after its date. An
+   open one shows dashes, never zeros: it has no outcome yet, and a
+   zero would read as «it made nothing».<br>
+   <b>gross / net</b> — the tranche's residual return; net is gross
+   minus ${r.cost_bp} bp of cost and minus funding. Both come from the
+   book's own resolution record, not from anything this page computes.<br>
+   <b>funding</b> — what the book PAID over the hold (positive means it
+   cost); rates come from the venue of execution.<br>
+   <b>cut legs</b> — legs whose series ended more than a day before the
+   window closed, i.e. delistings. They are held to their last bar
+   rather than dropped: dropping them flattered the probe by 44 bp a
+   month.<br>
+   <b>coverage</b> — median share of hours with an observation. Gaps
+   are normal (a bar with no trade is not an observation), which is why
+   «fewer bars than a full month» is not the definition of a cut leg —
+   it would flag 82 % of them.</div></details>`;
+}
+
+// Ноги транша: состав решения и, у закрытого, исход каждой ноги. У
+// открытого исхода нет — прочерк, не ноль.
+function legs(d){
+  if (d.legs_reason)
+    return `<div class="panel"><div class="dim">${esc(d.legs_reason)}
+      </div></div>`;
+  const rows = d.legs || [];
+  if (!rows.length) return "";
+  const any = rows.some(r => r.resid_bp != null);
+  return `<div class="panel"><div class="cap">legs of ${esc(d.legs_at)}
+    — ${rows.length} names, long first</div>
+   <div class="scroll"><table><tr><th>name</th><th>side</th>
+   <th>weight</th><th>signal</th><th>β</th><th>outcome</th>
+   <th>coverage</th></tr>` + rows.map(r => `<tr>
+     <td class="mono">${esc(r.sym)}</td>
+     <td class="${r.side === "long" ? "good" : "bad"}">${r.side}</td>
+     <td class="mono">${r.w == null ? "&mdash;"
+        : (100 * r.w).toFixed(2) + " %"}</td>
+     <td class="mono">${num(r.sig, 4)}</td>
+     <td class="mono">${num(r.beta, 3)}</td>
+     <td class="mono ${r.resid_bp == null ? "dim"
+        : (r.resid_bp > 0 ? "good" : "bad")}">${
+        r.resid_bp == null ? "&mdash;" : pct(r.resid_bp)}</td>
+     <td class="mono ${r.truncated ? "bad" : ""}">${r.coverage == null
+        ? "&mdash;" : r.coverage.toFixed(2)
+          + (r.truncated ? " cut" : "")}</td></tr>`).join("")
+   + `</table></div><div class="k">${any
+     ? "«outcome» is the leg's residual over the hold — what it did "
+       + "beyond the market wave, which is what the book actually "
+       + "trades. Weights sum to 1 in absolute value, so the two sides "
+       + "are half the book each."
+     : "this tranche is still open: the legs are the position, and "
+       + "none of them has an outcome yet — dashes, not zeros"}</div>
+   </div>`;
+}
+
+function bind(){
+  const tb = document.getElementById("box");
+  if (!tb || !tb.querySelectorAll) return;
+  (tb.querySelectorAll("tr.pick") || []).forEach(tr => {
+    tr.addEventListener("click", () => openLegs(tr.dataset.at));
+  });
+}
+async function openLegs(at){
+  if (!at) return;
+  OPEN = (OPEN === at) ? null : at;
+  if (!OPEN) { document.getElementById("legs").innerHTML = ""; render(); return; }
+  try {
+    const r = await fetch("/paper?k=" + encodeURIComponent(KEY)
+      + "&at=" + encodeURIComponent(at));
+    const d = await r.json();
+    document.getElementById("legs").innerHTML = legs(d);
+  } catch (e) {
+    document.getElementById("legs").innerHTML =
+      `<div class="panel"><div class="dim">no answer from the
+       collector</div></div>`;
+  }
+  render();
+}
+function render(){
+  const d = DATA;
+  if (!d) return;
+  document.getElementById("intro").innerHTML = intro(d);
+  document.getElementById("box").innerHTML =
+    fresh(d) + `<div class="panel"><div class="cap">verdict of the run
+      that produced the file</div><div>${esc(d.verdict)}</div>
+      <div class="k" style="margin-top:6px">run ${esc(d.run_at)};
+      the summary was computed over ${d.art_decisions} decisions.
+      ${d.journal_present
+        ? `The journal here holds ${d.decisions}${
+            d.art_decisions !== d.decisions
+            ? " — it has moved ahead of the summary, which describes "
+              + "the run that produced the file"
+            : ""}.`
+        : `No journal on this machine: the book keeps it where it
+           runs, and only the reports travel in git — so the table
+           below is empty for that reason, not for lack of tranches.`}
+      </div></div>`
+    + summary(d) + tranches(d);
+  bind();
+  document.getElementById("lead").textContent =
+    d.decisions + " tranches";
+}
+async function load(){
+  try {
+    const r = await fetch("/paper?k=" + encodeURIComponent(KEY));
+    const d = await r.json();
+    if (!d.present) {
+      document.getElementById("box").innerHTML =
+        `<div class="panel"><div class="dim">${esc(d.reason
+          || "the book has not run here")}</div></div>`;
+      return;
+    }
+    DATA = d;
+    render();
+  } catch (e) {
+    document.getElementById("box").innerHTML =
+      `<div class="panel"><div class="dim">no answer from the
+       collector — the page shows nothing rather than guessing</div>
+       </div>`;
+  }
+}
+load();
+setInterval(load, 120000);
+</script>
+"""
+
 LIVEPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>playbook — live execution vs the paper signal</title>
@@ -7837,6 +8178,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/learning-page":
                 return self._ok(LEARNPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/paper":
+                return self._ok(json.dumps(
+                    collector.paper_book(q.get("at", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/paper-page":
+                return self._ok(PAPERPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/live_exec":
                 return self._ok(json.dumps(

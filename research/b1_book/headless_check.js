@@ -31,6 +31,8 @@ const isLearn = /is the model getting smarter, and does it pay/
   .test(src);
 const isTree = /model tree — which logic each branch tests/.test(src);
 const isTour = /tournament — all 72 branches/.test(src);
+const isPaper =
+  /monthly book — one construction, recorded forward/.test(src);
 const isTrades = /id="tb"/.test(src);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
@@ -187,6 +189,85 @@ const recount = {busy: false, done: 2, total: 2, hours: 24,
                  stats: hist.stats,
                  by_rule: hist.by_rule, equity: hist.equity};
 
+// Стаб бумажной месячной книги. Вынесен функцией, потому что её
+// числа нужны и заглушке, и проверке: список чисел в двух местах
+// разошёлся бы, и проверка на смешение групп ловила бы не ту
+// сумму — ровно так первый отрицательный контроль прошёл мимо.
+const paperStub = (url) => {
+                 const d = {
+                   present: true, journal_present: true,
+                   run_at: "2026-08-28 06:12 UTC",
+                   run_age_sec: /paperstale=1/.test(SEARCH)
+                     ? 190000 : 7200,
+                   stale: /paperstale=1/.test(SEARCH),
+                   stale_after_sec: 129600,
+                   verdict: "настоящих наблюдений пока НЕТ: записано "
+                     + "вперёд 0 траншей",
+                   rules: {rules: 1, k: 14, h: 30, width: 0.1,
+                           cost_bp: 11.0, ahead_tol_sec: 172800},
+                   decisions: 27, resolutions: 2,
+                   art_decisions: 27, art_resolutions: 2,
+                   summary: {
+                     ahead: {tranches: 3, from: "2026-08-26",
+                             to: "2026-08-28", gross_mean_bp: 152.3,
+                             net_mean_bp: 141.3, net_median_bp: 129.3,
+                             net_pos_share: 0.67, t_naive: 3.43,
+                             t_nw: 1.06, independent: 1,
+                             t_independent: null, funding_mean_bp: 15.3,
+                             truncated_legs_total: 2,
+                             coverage_median: 0.97},
+                     backfilled: {tranches: 24, from: "2026-08-01",
+                             to: "2026-08-24", gross_mean_bp: 60.2,
+                             net_mean_bp: 49.2, net_median_bp: 41.0,
+                             net_pos_share: 0.58, t_naive: 2.75,
+                             t_nw: 0.98, independent: 1,
+                             t_independent: null, funding_mean_bp: 14.1,
+                             truncated_legs_total: 9,
+                             coverage_median: 0.96}},
+                   tranches: [
+                     {at: "2026-08-01", ahead: false, legs_n: 88,
+                      long_n: 44, short_n: 44, matures_at: "2026-08-31",
+                      state: "closed", gross_bp: 60.2, cost_bp: 11.0,
+                      funding_bp: 14.1, net_bp: 35.1, truncated_legs: 1,
+                      coverage_median: 0.96, days_left: null},
+                     {at: "2026-08-26", ahead: true, legs_n: 90,
+                      long_n: 45, short_n: 45, matures_at: "2026-09-25",
+                      state: "closed", gross_bp: 152.3, cost_bp: 11.0,
+                      funding_bp: 15.3, net_bp: 126.0, truncated_legs: 2,
+                      coverage_median: 0.97, days_left: null},
+                     // Незрелый транш: исхода нет вовсе, и страница
+                     // обязана показать прочерки, а не нули.
+                     {at: "2026-08-28", ahead: true, legs_n: 90,
+                      long_n: 45, short_n: 45, matures_at: "2026-09-27",
+                      state: "open", days_left: 29.4}]};
+                 // Машина без журнала: артефакт приезжает в git, а
+                 // журнал живёт там, где книга считается. «Пусто» и
+                 // «не та машина» — разные состояния (ровно так
+                 // выглядит песочница разработки).
+                 if (/papernojournal=1/.test(SEARCH)) {
+                   d.journal_present = false;
+                   d.tranches = [];
+                   d.decisions = 0;
+                   d.resolutions = 0;
+                 }
+                 if (/[?&]at=/.test(url)) {
+                   d.legs_at = "2026-08-26";
+                   d.legs = [
+                     {sym: "ARBUSDT", side: "long", w: 0.0111,
+                      sig: 0.0421, beta: 1.02, resid_bp: 318.0,
+                      bars: 700, coverage: 0.97, truncated: false},
+                     {sym: "SOLUSDT", side: "short", w: -0.0111,
+                      sig: -0.0388, beta: 0.94, resid_bp: -142.0,
+                      bars: 690, coverage: 0.96, truncated: false},
+                     // Нога, чей ряд оборвался: делистинг помечается,
+                     // а не молча роняет покрытие.
+                     {sym: "DEADUSDT", side: "short", w: -0.0111,
+                      sig: -0.0402, beta: 1.11, resid_bp: -890.0,
+                      bars: 300, coverage: 0.41, truncated: true}];
+                 }
+                 return d;
+               };
+
 let full = true, calls = 0;
 const seen = [];
 global.fetch = async (url) => {
@@ -281,6 +362,8 @@ global.fetch = async (url) => {
                    reason: "IOC не исполнилась в потолке 30 б.п. "
                            + "(запрошено 0.66)",
                    at: Date.UTC(2026,7,21,19,20,0)/1000}]}
+             : url.startsWith("/paper")
+             ? paperStub(url)
              : url.startsWith("/learning")
              ? {present: true, ic_vs_money: 0.673, ic_vs_money_n: 11,
                 ic_vs_time: -0.118, ic_vs_time_n: 11, errors: [],
@@ -1034,6 +1117,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? showInfo : null;"
                 + "\nglobal.__sort = typeof sortBy === 'function' "
                 + "? sortBy : null;"
+                // Ноги транша месячной книги открываются КЛИКОМ по
+                // строке, а `querySelectorAll` здесь пуст — обработчик
+                // до проверки не доезжает вовсе, и «клик по строке»
+                // шёл бы вхолостую. Дёргается сама функция страницы.
+                + "\nglobal.__legs = typeof openLegs === 'function' "
+                + "? openLegs : null;"
+                // Формат чисел — самой страницы. Ожидание, написанное
+                // по ПАМЯТИ о правиле («+1.905 %» вместо «+1.91 %»),
+                // уже трижды промахивалось в этом проекте, и один раз
+                // из-за этого холостым оказался отрицательный контроль:
+                // страница складывала то, что складывать нельзя, а
+                // проверка искала не ту строку.
+                + "\nglobal.__pct = typeof pct === 'function' "
+                + "? pct : null;"
                 + "\nglobal.__infoClose = typeof closeInfo === "
                 + "'function' ? closeInfo : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
@@ -1100,14 +1197,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1292,7 +1389,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -1816,6 +1913,90 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push(`обучение: тонкие дни не помечены (${thin} из 2)`);
   }
 
+  // Бумажная месячная книга: свод из артефакта, транши из журнала.
+  // Главное требование — честное и восстановленное не смешиваются
+  // НИКОГДА, и проверяется это числом: сумма двух групп на странице
+  // появиться не может.
+  if (isPaper && /papernojournal=1/.test(SEARCH)) {
+    const bx = String(global.__el ? global.__el("box").innerHTML : "")
+      .replace(/\s+/g, " ");
+    if (!/No journal on this machine/.test(bx))
+      bad.push("месячная: отсутствие журнала не названо");
+    if (!/not for lack of tranches/.test(bx))
+      bad.push("месячная: пустая таблица выдана за «траншей нет»");
+  } else if (isPaper) {
+    if (!seen.some(u => u.startsWith("/paper")))
+      bad.push("месячная: данные не запрошены");
+    const flat = s => String(s || "").replace(/\s+/g, " ");
+    const bx = flat(global.__el ? global.__el("box").innerHTML : "");
+    const ix = flat(global.__el ? global.__el("intro").innerHTML : "");
+    // Рамка предмета: это НЕ книга живого цикла, и вход у неё другой.
+    if (!/paper<\/b> book, not one of the live model books/.test(ix))
+      bad.push("месячная: не сказано, что книга бумажная и не из цикла");
+    if (!/never added together/.test(ix))
+      bad.push("месячная: не сказано, что группы не складываются");
+    if (!/t = 1\.06/.test(ix))
+      bad.push("месячная: не названа цена вопроса — t зонда");
+    // Обе группы — числами ответа, каждая своим.
+    if (!/\+1\.41 %/.test(bx))
+      bad.push("месячная: нетто честной группы не числом ответа");
+    if (!/\+0\.49 %/.test(bx))
+      bad.push("месячная: нетто восстановленной группы не числом");
+    // Смешение групп. Ожидаемая строка считается ФОРМАТОМ САМОЙ
+    // страницы, а не переписывается сюда числом: первая версия этой
+    // проверки искала «1.905 %», тогда как правило даёт «+1.91 %», и
+    // отрицательный контроль прошёл мимо — страница складывала
+    // честное с восстановленным, а проверка молчала.
+    const sm = paperStub("/paper").summary;
+    const gA = sm.ahead.net_mean_bp, gB = sm.backfilled.net_mean_bp;
+    if (global.__pct && gA != null && gB != null) {
+      const mix = global.__pct(gA + gB);
+      if (bx.indexOf(mix) >= 0 || bx.indexOf(String(gA + gB)) >= 0)
+        bad.push("месячная: группы сложены в одно число (" + mix + ")");
+    } else {
+      bad.push("месячная: формат страницы не виден проверке");
+    }
+    // Незрелый транш: прочерки, не нули, и сказано, когда созреет.
+    if (!/matures 2026-09-27/.test(bx))
+      bad.push("месячная: у открытого транша не названа дата разбора");
+    if (/>\+0\.000 %<|>0\.00 %</.test(bx))
+      bad.push("месячная: у открытого транша исход показан нулём");
+    // Расшифровка колонок — вся сразу, а не та, о которой спросят.
+    if (!/what the columns mean/.test(bx))
+      bad.push("месячная: колонки не расшифрованы");
+    if (!/it would flag 82 % of them/.test(bx))
+      bad.push("месячная: не сказано, почему обрыв — не «мало баров»");
+    // Ноги открываются вызовом самой функции страницы.
+    if (!global.__legs) {
+      bad.push("месячная: функции открытия ног нет");
+    } else {
+      await global.__legs("2026-08-26");
+      const lg = flat(global.__el ? global.__el("legs").innerHTML : "");
+      if (!seen.some(u => /\/paper\?.*at=2026-08-26/.test(u)))
+        bad.push("месячная: ноги не запрошены у сервера");
+      if (!/ARBUSDT/.test(lg) || !/\+3\.18 %/.test(lg))
+        bad.push("месячная: состав транша не показан");
+      if (!/DEADUSDT/.test(lg) || !/cut/.test(lg))
+        bad.push("месячная: оборванная нога не помечена");
+    }
+  }
+  if (isPaper && /paperstale=1/.test(SEARCH)) {
+    const bx = String(global.__el ? global.__el("box").innerHTML : "")
+      .replace(/\s+/g, " ");
+    // Устаревший прогон обязан КРИЧАТЬ: молчащий суточный контур
+    // неотличим от работающего — этим уже отличился турнир.
+    if (!/nightly run did not come through/.test(bx))
+      bad.push("месячная: устаревший прогон не назван");
+    if (!/53 h old/.test(bx))
+      bad.push("месячная: возраст прогона не числом ответа");
+  } else if (isPaper) {
+    const bx = String(global.__el ? global.__el("box").innerHTML : "");
+    // И в обратную сторону: свежий прогон обязан МОЛЧАТЬ, иначе
+    // тревога висит всегда и перестаёт быть сигналом.
+    if (/nightly run did not come through/.test(bx))
+      bad.push("месячная: свежий прогон объявлен устаревшим");
+  }
+
   // Дерево моделей — родовое дерево: по умолчанию узел несёт ТОЛЬКО
   // имя и главную статистику, проза открывается кнопкой «i» (просьба
   // владельца). Проверяется числами и в обе стороны: статистика видна
@@ -2302,10 +2483,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 9)
-      bad.push(`меню: пунктов ${links}, а страниц девять`);
+    if (links !== 10)
+      bad.push(`меню: пунктов ${links}, а страниц десять`);
     if (!/href="\/learning-page\?k=xxx"/.test(nh))
       bad.push("меню: нет страницы обучения");
+    if (!/href="\/paper-page\?k=xxx"/.test(nh))
+      bad.push("меню: нет страницы месячной книги");
     if (!/href="\/league-page\?k=xxx"/.test(nh)
         || !/href="\/live-page\?k=xxx"/.test(nh)
         || !/href="\/tree-page\?k=xxx"/.test(nh)
@@ -2734,7 +2917,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper
       && !/botoff=1/.test(SEARCH)) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
@@ -3035,7 +3218,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour || isLearn || isLive) {
+             || isTree || isTour || isLearn || isLive || isPaper) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {
