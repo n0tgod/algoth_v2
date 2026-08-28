@@ -106,3 +106,16 @@
 ячеек измерено: 192; планка +3.73 σ; кандидатов: 1
   цена выросла на 2 % за минуту [S] 60м: медиана +82.1, среднее +33.1 б.п., z +70.8, корзин 427
 снос по стороне (обязан быть около нуля): 15|-1: -0.15, 15|1: +0.15, 1|-1: -0.05, 1|1: +0.05, 5|-1: -0.10, 5|1: +0.10, 60|-1: +0.27, 60|1: -0.27
+публикуется в ветку main:
+ jobs/done/z3-fold-2.log                 |  13 ++
+ jobs/done/z3-screen-6.done              |   1 +
+ jobs/done/z3-screen-6.log               | 108 ++++++++++++++++
+ jobs/poke.log                           |   3 +
+ research/z3_ladder/out/Z3-ladder-d20.md | 219 ++++++++++++++++++++++++++++++++
+ research/z3_ladder/out/z3-d20.json      |   1 +
+ 6 files changed, 345 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   dfd4e63..af07e82  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-28T08:22:32Z, код 0
