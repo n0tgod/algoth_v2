@@ -166,3 +166,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1787955555 ==
 [2026-08-28T22:19:16Z] задание drain-1 запущено: research/probe_drain/drain.py
+
+== сигнал 1787956431 ==
+[2026-08-28T22:33:53Z] задание brake-1 запущено: research/probe_drain/brake.py
