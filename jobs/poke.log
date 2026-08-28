@@ -154,3 +154,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-08-28T11:39:06Z] задание spike-long-1 запущено: research/probe_spike/long_history.py
 
 == сигнал 1787917376 ==
+[2026-08-28T11:43:00Z] задание status-live-1: состояние снято
+
+== сигнал 1787917720 ==
