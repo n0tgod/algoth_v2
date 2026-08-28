@@ -146,6 +146,17 @@ def diag(ev, M, syms, acc, h=60):
     Считается напрямую, а не судьёй: судья отдаёт сводку по ячейке, а
     здесь нужны величины, из которых складывается ЦЕНА сделки, и имя,
     на котором всё держится.
+
+    ВСЁ хранится в базисных пунктах. `fwd_ret` отдаёт долю, судья
+    домножает на 1e4 только в своей сводке, и первый прогон напечатал в
+    таблице цены сделки «−0.0» при +38.5 б.п. в главной таблице: одна
+    таблица отчёта противоречила другой, и меньшая читалась как «эффекта
+    нет». Та же ошибка единиц, что спред «на ногу» против цикла «на пару
+    ног» в R4.
+
+    Сторона здесь НЕ применяется: копится длинная сторона, а знак
+    ставит отчёт по стороне условия — иначе у имени, входящего в сетку
+    обеими сторонами, пришлось бы держать две копии одних чисел.
     """
     P = M["mid_open"]
     F = Z.fwd_ret(P, h)
@@ -173,8 +184,8 @@ def diag(ev, M, syms, acc, h=60):
         hg_in, hg_out = hedge[cols], hedge[out_c]
         a["hedge_in"] += [float(x) for x in hg_in[np.isfinite(hg_in)]]
         a["hedge_out"] += [float(x) for x in hg_out[np.isfinite(hg_out)]]
-        raw = F[rows, cols]
-        exc = raw - colm[cols]
+        raw = F[rows, cols] * 1e4
+        exc = raw - colm[cols] * 1e4
         ok = np.isfinite(exc)
         a["n"] += int(ok.sum())
         a["spread_in"] += [float(x) for x in sp_in[np.isfinite(sp_in)]]
@@ -246,26 +257,37 @@ def write_report(path, cells, null, dg, meta):
                  f"{c.get('z', float('nan')):+.1f} | "
                  f"{Z.verdict_of(c, null)} |\n".replace(",", " "))
     L.append("\n### Цена сделки и на чём она держится (горизонт 60 минут)\n\n")
-    L.append("| условие | событий | спред наш | спред хеджа | "
+    L.append("| условие | стор. | событий | спред наш | спред хеджа | "
              "круг двух ног | превышение | нетто | без лучшего имени |\n")
-    L.append("|---|--:|--:|--:|--:|--:|--:|--:|\n")
+    L.append("|---|:--:|--:|--:|--:|--:|--:|--:|--:|\n")
+    rows_ = []
     for name, a in sorted(dg.items()):
         if not a["exc"]:
             continue
         rnd, si, so, hi, ho = round_trip(a)
-        exc = float(np.mean(a["exc"]))
+        base = float(np.mean(a["exc"]))
         best, bexc = None, 0.0
         tot, cnt = sum(v[0] for v in a["by_sym"].values()), a["n"]
-        for s, v in a["by_sym"].items():
+        for sym, v in a["by_sym"].items():
             if abs(v[0]) > abs(bexc):
-                best, bexc = s, v[0]
-        wo = ((tot - bexc) / max(cnt - a["by_sym"].get(best, [0, 0])[1], 1)
-              if best else float("nan"))
-        L.append(f"| {name} | {a['n']:,} | {si:.1f}/{so:.1f} | "
-                 f"{hi:.1f}/{ho:.1f} | {rnd:.1f} | {exc:+.1f} | "
-                 f"{exc - rnd:+.1f} | {wo:+.1f} ({best}) |\n"
-                 .replace(",", " "))
-    L.append("\nСпреды в базисных пунктах (вход/выход), взяты из той же "
+                best, bexc = sym, v[0]
+        wo0 = ((tot - bexc) / max(cnt - a["by_sym"].get(best, [0, 0])[1], 1)
+               if best else float("nan"))
+        for c in CONDS_BY_NAME.get(name, []):
+            sd = c["side"]
+            rows_.append((-(sd * base), name, sd, a, rnd, si, so, hi, ho,
+                          sd * base, sd * wo0, best))
+    for _, name, sd, a, rnd, si, so, hi, ho, exc, wo, best in sorted(rows_):
+        L.append(f"| {name} | {'L' if sd > 0 else 'S'} | {a['n']:,} | "
+                 f"{si:.1f}/{so:.1f} | {hi:.1f}/{ho:.1f} | {rnd:.1f} | "
+                 f"{exc:+.1f} | {exc - rnd:+.1f} | "
+                 f"{wo:+.1f} ({best}) |\n".replace(",", " "))
+    L.append("\nВсё в базисных пунктах. Превышение здесь считается прямым "
+             "проходом (среднее по событиям против среднего сечения в ту "
+             "же минуту), а главная таблица — судьёй по корзинам с "
+             "запретом соседей: числа обязаны совпадать по знаку и "
+             "порядку, а не дословно. "
+             "Спреды (вход/выход) взяты из той же "
              "записи. «Круг двух ног» = "
              f"{LEGS} × {FEE_BP:.0f} + (наш вход + наш выход)/2 + "
              "(хедж вход + хедж выход)/2. «Нетто» — превышение минус "
@@ -337,10 +359,10 @@ def main(argv=None):
             continue
         rnd, si, so, hi, ho = round_trip(aa)
         exc = float(np.mean(aa["exc"]))
-        log_(f"  {name}: событий {aa['n']:,}, спред {si:.1f}/{so:.1f}, "
-             f"хедж {hi:.1f}/{ho:.1f}, круг {rnd:.1f}, "
-             f"превышение {exc:+.1f}, нетто {exc - rnd:+.1f} б.п."
-             .replace(",", " "))
+        log_(f"  {name}: событий {aa['n']:,}, "
+             f"спред {si:.1f}/{so:.1f}, хедж {hi:.1f}/{ho:.1f}, "
+             f"круг {rnd:.1f}, превышение лонга {exc:+.1f}, "
+             f"нетто лонга {exc - rnd:+.1f} б.п.".replace(",", " "))
     if not a.no_publish:
         Z.publish("зонд минутного всплеска: цена или котировка")
     return 0

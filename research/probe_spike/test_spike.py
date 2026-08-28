@@ -247,12 +247,89 @@ def test_narrow_early_day_is_not_measured():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_diag_counts_in_basis_points():
+    """Таблица цены сделки считает в БАЗИСНЫХ ПУНКТАХ, а не в долях.
+
+    `fwd_ret` отдаёт долю, судья домножает на 1e4 у себя, и первый
+    живой прогон напечатал «−0.0» превышения при +38.5 б.п. в главной
+    таблице: одна таблица отчёта противоречила другой, и меньшая
+    читалась как «эффекта нет». Числа закреплены прямо.
+    """
+    n, mins, h = 3, 300, 60
+    M = {f: np.full((n, mins), np.nan, dtype=np.float32)
+         for f in B.FOLD_FIELDS}
+    for r in range(n):
+        M["mid_open"][r] = 100.0
+        M["spread"][r] = 4.0
+    # Вход по открытию 11-й минуты, выход по 71-й (h = 60): у символа 0
+    # цена там на 1 % выше, у остальных та же. Значит его сырой ход
+    # +100 б.п., среднее сечения +33.3, превышение +66.7.
+    M["mid_open"][0, 71:] = 101.0
+    syms = [f"S{i}USDT" for i in range(n)]
+    cond = {"name": "проба", "side": +1, "fn": None, "group": "проба"}
+    ev = {"проба": (cond, np.array([0]), np.array([10]))}
+    acc = {}
+    S.diag(ev, M, syms, acc, h=h)
+    a = acc["проба"]
+    exc = float(np.mean(a["exc"]))
+    check("превышение в б.п., а не в долях", abs(exc - 66.7) < 0.5,
+          f"{exc:.4f} — доля вместо б.п. дала бы 0.0067")
+    check("спред взят из записи", abs(_median(a["spread_in"]) - 4.0) < 1e-6,
+          str(a["spread_in"][:3]))
+    check("спред хеджа посчитан", abs(_median(a["hedge_in"]) - 4.0) < 1e-6,
+          str(a["hedge_in"][:3]))
+
+
+def _median(v):
+    return float(np.percentile(v, 50)) if len(v) else float("nan")
+
+
+def test_cost_table_agrees_in_sign_with_verdict_table():
+    """Две таблицы отчёта не вправе противоречить друг другу по знаку.
+
+    Главная таблица считается судьёй по корзинам, таблица цены сделки —
+    прямым проходом; совпадать дословно они не обязаны, а расходиться
+    в знаке — не вправе: расхождение и было подписью ошибки единиц.
+    """
+    root, old = _setup()
+    keep = _thin_judge()
+    try:
+        S.main(["--no-publish", "--tag", "s", "--symbols", ",".join(SYMS)])
+        txt = open(os.path.join(S.OUT, "SPIKE-report-s.md"),
+                   encoding="utf-8").read()
+        cost = txt.split("### Цена сделки")[1]
+        vals, by_name = [], {}
+        for line in cost.split("\n"):
+            cells = [c.strip() for c in line.split("|")]
+            if len(cells) > 9 and cells[1].startswith("всплеск"):
+                v = float(cells[7].replace("+", ""))
+                vals.append(v)
+                by_name.setdefault(cells[1], {})[cells[2]] = v
+        check("строки таблицы цены есть", len(vals) >= 2, str(vals))
+        check("превышение не тождественный ноль",
+              any(abs(v) > 1.0 for v in vals), str(vals))
+        # Сторона обязана переворачивать знак: у лонга и шорта одного
+        # условия ход цены один, а исход противоположен. Строка без
+        # стороны печатала бы длинную сторону под обеими метками.
+        pairs = [(n, d) for n, d in by_name.items() if len(d) == 2]
+        check("обе стороны в таблице", bool(pairs), str(list(by_name)[:2]))
+        bad = [(n, d) for n, d in pairs
+               if abs(d["L"]) > 1.0 and d["L"] * d["S"] >= 0]
+        check("знак стороны перевёрнут", not bad, str(bad[:2]))
+    finally:
+        _fat_judge(keep)
+        _restore(old)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main():
     tests = (test_probe_runs_and_separates_quote_from_price,
              test_quote_only_day_gives_no_confirmed_events,
              test_round_trip_charges_both_legs_by_half_spread,
              test_report_names_hedge_spread,
-             test_narrow_early_day_is_not_measured)
+             test_narrow_early_day_is_not_measured,
+             test_diag_counts_in_basis_points,
+             test_cost_table_agrees_in_sign_with_verdict_table)
     for t in tests:
         t()
     print()
