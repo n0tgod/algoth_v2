@@ -5553,6 +5553,320 @@ setInterval(load, 60000);
 </script>
 """
 
+# Дневная статистика ОДНОЙ книги — просьба владельца: «кликаем на
+# 4-hour book, и открывается страница, где статистика по этой книге
+# отдельно по каждому дню, примерно как на странице learning».
+#
+# Итог книги на дереве отвечает «сколько всего» и молчит о том, КОГДА:
+# сумма за две недели может стоять на одном дне, и по ней нельзя
+# отличить ровный ряд от одного разгона. Числа считает сервер той же
+# кассой, что видит владелец на остальных страницах, — вторая
+# реализация счёта здесь разошлась бы с обзором ровно так, как уже
+# расходились две дороги одной книги.
+BOOKDAYS = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>book, day by day</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+.thin{color:var(--muted)}
+a{color:var(--accent)}
+.scroll{overflow-x:auto}
+.big{font-size:19px;font-weight:700}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.st{background:var(--chip);border:1px solid var(--rule);
+ border-radius:12px;padding:8px 12px;min-width:120px}
+.st .v{font-size:17px;font-weight:700}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.tab{padding:4px 12px;border-radius:999px;font-size:12px;
+ border:1px solid var(--rule);background:var(--chip);
+ color:var(--muted);cursor:pointer}
+.tab[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+.nb{white-space:nowrap}
+""" + NAVCSS + r"""
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k" id="strap">book, day by day</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div id="arms"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const KEY = Q.get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + PCTJS + BOOKJS + EXITJS + r"""
+navMount("/book-page");
+// Книга берётся из ОБЩЕГО списка, а не собирается из ключа строковой
+// хирургией: у графика так уже выходило «z h book», и подпись врала о
+// том, что показано.
+const HZ = HZ_KEYS.concat(["h4"]).includes(Q.get("hz"))
+  ? Q.get("hz") : "h4";
+const BOOK_NAME = (BOOK_LIST.find(x => x[0] === HZ) || [HZ, HZ])[1];
+const ARMS = ["all", "gbm", "nn"];
+let ARM = ARMS.includes(Q.get("arm")) ? Q.get("arm") : "all";
+let DATA = null;
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function money(v){
+  if (v == null) return "&mdash;";
+  const c = v > 0 ? "good" : v < 0 ? "bad" : "";
+  return `<span class="${c} mono nb">${v > 0 ? "+" : ""}${
+    Number(v).toFixed(2)} $</span>`;
+}
+function share(v, cap){
+  if (v == null || !cap) return "";
+  return ` <span class="mono nb dim">(${pct(v / cap * 1e4)})</span>`;
+}
+function exits(e){
+  const ks = Object.keys(e || {});
+  if (!ks.length) return "&mdash;";
+  return ks.map(k => `${esc(EXIT_EN[k] || k)}&nbsp;${e[k]}`)
+    .sort().join(" · ");
+}
+function cell(row){ return (row.arms || {})[ARM] || null; }
+
+// Рамка предмета — первым абзацем, как на листе турнира и на странице
+// обучения: без неё дневная кривая читается как «книга зарабатывает»,
+// а она отвечает на другой вопрос — РОВНО ли она это делает.
+function intro(d){
+  if (d.unknown) return `<div class="cap">no daily money for this
+    book</div><div>«${esc(BOOK_NAME)}» is not one of the traded books:
+    the observation record takes the same candidates as the traded one
+    and holds no money of its own, so there is nothing to break down by
+    day. This is a different thing from a book that traded nothing.
+    </div>`;
+  const n = (d.days || []).length;
+  return `<div class="cap">what this page shows</div>
+  <div>Closed trades of <b>${esc(BOOK_NAME)}</b>, split by calendar day
+  (UTC). A day owns a trade by the moment its money became known — the
+  live exit or the review — not by when it was opened: a trade opened
+  yesterday and closed today belongs to today, otherwise yesterday's
+  line would keep changing behind our back.</div>
+  <div class="k" style="margin-top:6px">Open positions are NOT in these
+  numbers and are never added to them: an open position has no outcome,
+  only a mark that will be a different number tomorrow. They are shown
+  once, as the state of right now.${d.echo ? " This book is an ECHO: "
+  + "its decisions are copies of another book's, differing by one "
+  + "declared rule — its money is real, but it is not an independent "
+  + "observation." : ""} ${n} days of record: at this length a good day
+  is a day, not a property of the book.</div>`;
+}
+function tiles(d){
+  const t = (d.totals || {})[ARM];
+  if (!t) return `<div class="panel"><div class="dim">no closed trades
+    in this book for this arm yet</div></div>`;
+  const days = (d.days || []).filter(r => cell(r));
+  const best = days.reduce((a, b) =>
+    !a || cell(b).pnl > cell(a).pnl ? b : a, null);
+  const worst = days.reduce((a, b) =>
+    !a || cell(b).pnl < cell(a).pnl ? b : a, null);
+  const st = (cap, v, sub) => `<div class="st"><div class="k">${
+    cap}</div><div class="v">${v}</div>${
+    sub ? `<div class="k">${sub}</div>` : ""}</div>`;
+  const green = days.filter(r => cell(r).pnl > 0).length;
+  return `<div class="panel"><div class="cap">the book so far</div>
+   <div class="stats">
+    ${st("days", days.length, green + " green · "
+         + (days.length - green) + " red")}
+    ${st("trades", t.trades, Math.round(t.win * 100) + " % won")}
+    ${st("realised", money(t.pnl) + share(t.pnl, d.cap),
+         "closed trades only")}
+    ${st("median trade", t.net_med == null ? "&mdash;"
+         : pct(t.net_med), "mean " + (t.net_avg == null ? "&mdash;"
+         : pct(t.net_avg)))}
+    ${st("without the best trade", money(t.pnl_wo_top),
+         "best: " + esc(t.top_sym) + " " + money(t.top_pnl))}
+    ${best ? st("best day", money(cell(best).pnl), esc(best.day)) : ""}
+    ${worst ? st("worst day", money(cell(worst).pnl),
+                 esc(worst.day)) : ""}
+    ${openTile(d)}
+   </div>
+   <div class="k" style="margin-top:8px">«Without the best trade» is
+   here for the same reason it is in the league: a fortnight whose
+   money belongs to one name looks like statistics until that column
+   is put next to it.</div></div>`;
+}
+// Открытое стоит ОТДЕЛЬНОЙ плиткой и никогда не складывается с
+// реализованным. Переоценить нечего — прочерк, а не ноль: ноль
+// объявил бы позицию ровной там, где по инструменту просто нет цены.
+function openTile(d){
+  const o = d.open || {};
+  const arms = ARM === "all" ? ["gbm", "nn"] : [ARM];
+  let n = 0, m = 0, p = 0.0, priced = false;
+  for (const a of arms) {
+    const s = o[a];
+    if (!s || !s.open) continue;
+    n += s.open; m += s.marked || 0;
+    if (s.unreal_pnl != null) { p += s.unreal_pnl; priced = true; }
+  }
+  if (!n) return "";
+  const v = priced ? money(Math.round(p * 100) / 100) : "&mdash;";
+  return `<div class="st"><div class="k">open now</div>
+    <div class="v">${v}</div><div class="k">${n} open${
+    m < n ? " · " + m + "/" + n + " priced" : ""} · a mark, not an
+    outcome</div></div>`;
+}
+// Кривая — накопленные ДЕНЬГИ по дням, с честным нулём: база не
+// подрисовывается под минимум, иначе убыточная книга выглядела бы
+// растущей.
+function curve(d){
+  const pts = (d.days || []).filter(r => cell(r))
+    .map(r => ({day: r.day, v: cell(r).cum}));
+  if (pts.length < 2) return "";
+  const W = 900, H = 110;
+  const hi = Math.max(0, ...pts.map(p => p.v));
+  const lo = Math.min(0, ...pts.map(p => p.v));
+  const y = v => H - (v - lo) / ((hi - lo) || 1) * H;
+  const line = pts.map((p, i) => `${(i / (pts.length - 1) * W)
+    .toFixed(1)},${y(p.v).toFixed(1)}`).join(" ");
+  return `<div class="panel"><div class="cap">money of the book,
+    day by day (cumulative)</div>
+   <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;
+     display:block">
+     <line x1="0" y1="${y(0).toFixed(1)}" x2="${W}"
+       y2="${y(0).toFixed(1)}" stroke="#8e88ad" stroke-width="1"
+       stroke-dasharray="3 3"/>
+     <polyline points="${line}" fill="none" stroke="#9747ff"
+       stroke-width="1.4"/></svg>
+   <div class="k">${esc(pts[0].day)} &rarr; ${
+     esc(pts[pts.length - 1].day)} UTC · zero is the dashed line ·
+     realised money only</div></div>`;
+}
+function table(d){
+  const rows = (d.days || []).filter(r => cell(r));
+  if (!rows.length)
+    return `<div class="panel"><div class="dim">no closed trades for
+      this arm yet — a book with open positions and no closed ones
+      says nothing about money, and that is a state, not a zero</div>
+      </div>`;
+  return `<div class="panel"><div class="cap">day by day</div>
+   <div class="scroll"><table><tr><th>day</th><th>trades</th>
+   <th>won</th><th>median</th><th>mean</th><th>$</th>
+   <th>&Sigma; $</th><th>$ w/o best</th><th>best trade</th>
+   <th>worst trade</th><th>exits</th></tr>` + rows.map(r => {
+     const c = cell(r);
+     const thin = c.trades < 5;
+     return `<tr class="${thin ? "thin" : ""}"
+       data-day="${esc(r.day)}">
+       <td class="mono">${esc(r.day)}</td>
+       <td class="mono">${c.trades}</td>
+       <td class="mono">${Math.round(c.win * 100)} %</td>
+       <td class="mono ${c.net_med > 0 ? "good" : "bad"}">${
+         c.net_med == null ? "&mdash;" : pct(c.net_med)}</td>
+       <td class="mono ${c.net_avg > 0 ? "good" : "bad"}">${
+         c.net_avg == null ? "&mdash;" : pct(c.net_avg)}</td>
+       <td class="mono">${money(c.pnl)}</td>
+       <td class="mono">${money(c.cum)}</td>
+       <td class="mono">${money(c.pnl_wo_top)}</td>
+       <td class="mono">${esc(c.top_sym)} ${money(c.top_pnl)}</td>
+       <td class="mono">${money(c.worst_pnl)}</td>
+       <td class="k">${exits(c.exits)}</td></tr>`; }).join("")
+   + `</table></div><div class="k">A day with fewer than five closed
+   trades is greyed: it is an anecdote, not a measurement. «Median»
+   and «mean» are the trade itself in per cent of its own notional,
+   after costs; the money column is what the cash box actually
+   credited, and it depends on position size as well. Exits are why
+   the trades of that day ended — for the situational books the share
+   of stops is the number that moves first when the geometry stops
+   working.</div></div>`;
+}
+function armBar(){
+  const lbl = {all: "both arms", gbm: "trees (gbm)", nn: "net (nn)"};
+  document.getElementById("arms").innerHTML =
+    `<div class="tabs">` + ARMS.map(a => `<button class="tab"
+      data-arm="${a}" aria-pressed="${String(a === ARM)}">${
+      lbl[a]}</button>`).join("") + `</div>`;
+  document.querySelectorAll("#arms button").forEach(b =>
+    b.onclick = () => setArm(b.dataset.arm));
+}
+function setArm(a){
+  if (!ARMS.includes(a)) return;
+  ARM = a;
+  // Выбранная рука едет в адрес, чтобы страницу можно было переслать
+  // уже на нужной. Адрес собирается из `location.search`, а не через
+  // `new URL(location.href)`: показ не вправе зависеть от того, какие
+  // поля навигации доступны, — таблицу переключить надо в любом
+  // случае.
+  const q = new URLSearchParams(location.search || "");
+  q.set("arm", a);
+  window.history.replaceState(null, "", "?" + q.toString());
+  render(DATA);
+}
+function render(d){
+  DATA = d;
+  if (!d) return;
+  document.getElementById("strap").textContent =
+    BOOK_NAME + " — day by day";
+  document.getElementById("intro").innerHTML = intro(d);
+  armBar();
+  document.getElementById("box").innerHTML = d.unknown ? "" :
+    (tiles(d) + curve(d) + table(d)
+     + `<div class="panel"><div class="cap">where else to look</div>
+        <div><a href="/trades-page?k=${encodeURIComponent(KEY)}${
+        HZ === "h4" ? "" : "&hz=" + encodeURIComponent(HZ)}">every
+        trade of this book</a> &nbsp;·&nbsp; <a href="/tree-page?k=${
+        encodeURIComponent(KEY)}">the model tree</a>
+        &nbsp;·&nbsp; <a href="/league-page?k=${
+        encodeURIComponent(KEY)}">the league</a></div></div>`
+     + ((d.errors || []).length
+        ? `<div class="panel"><div class="cap">books that did not
+           build</div><div class="dim">${(d.errors || [])
+           .map(esc).join("<br>")}</div><div class="k">the day rows
+           are built from the same pass, so a book that failed to
+           build is missing from them</div></div>` : ""));
+  document.getElementById("lead").textContent =
+    (d.days || []).length + " days · " + HZ;
+}
+async function load(){
+  try {
+    const r = await fetch("/book_days?k=" + encodeURIComponent(KEY)
+      + "&hz=" + encodeURIComponent(HZ));
+    render(await r.json());
+  } catch (e) {
+    document.getElementById("box").innerHTML =
+      `<div class="panel"><div class="dim">no answer from the
+       collector — the page shows nothing rather than guessing</div>
+       </div>`;
+  }
+}
+load();
+setInterval(load, 60000);
+</script>
+"""
+
+
 # Бумажная месячная книга (`research/paper_monthly`). Своего показа у
 # неё не было вовсе: книга писала отчёт файлом в git, и состав траншей —
 # что именно она купила и продала — не был виден нигде. Просьба
@@ -6892,6 +7206,11 @@ body{margin:0;background:
 .node.root{border-color:var(--accent);max-width:240px}
 .node.off{opacity:.55}
 .nt{font-weight:600;font-size:12.5px;line-height:1.35}
+/* Имя ветки-ссылки выглядит как имя, а не как ссылка: цвет
+   узла сохраняется, подчёркивание приходит на наведение —
+   иначе шесть пурпурных заголовков читались бы как меню. */
+a.nt{display:block;color:inherit;text-decoration:none}
+a.nt:hover{text-decoration:underline;color:var(--accent)}
 .ns{font-size:11px;color:var(--muted);margin-top:3px;
  font-family:ui-monospace,Menlo,Consolas,monospace;
  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
@@ -7034,6 +7353,7 @@ const UI = {
   nomoneyL: {en: "not traded and not in the league money",
              ru: "не торгуется и в деньги лиги не входит"},
   history: {en: "history →", ru: "история →"},
+  bydays: {en: "day by day →", ru: "по дням →"},
   offbook: {en: "not started", ru: "не заведена"},
   offbookL: {en: "book not started on the server",
              ru: "книга на сервере ещё не заведена"},
@@ -7084,8 +7404,11 @@ function share(v, cap){
 // «обе» в сводке.
 function rootCap(){
   if (!DATA || !DATA.cap) return null;
+  // «Держит ли книга деньги» решает поле сервера, а не ключ в этой
+  // строке: перечень книг уже жил в восьми местах, и зашитое имя
+  // однажды разойдётся с картой книг на сервере.
   const n = (DATA.books || []).filter(
-    b => b.present && b.key !== "sit_obs" && !b.echo).length;
+    b => b.present && b.traded && !b.echo).length;
   return n ? DATA.cap * n : null;
 }
 // Короткое имя узла: часть заголовка до тире. Полный заголовок и
@@ -7152,12 +7475,31 @@ function rootOpen(arm){
   return `<div class="ns">${nb(T("openw") + " " + n)} · ${
     mv}${part}</div>`;
 }
-function nodeCard(key, cls, title, stat, extra){
+// Имя ветки — ССЫЛКА на дневную статистику этой книги (просьба
+// владельца: «кликаем на 4-hour book — открывается страница со
+// статистикой по каждому дню»). Ссылку получают только книги, у
+// которых деньги есть: наблюдательная запись их не держит вовсе, и
+// ссылка на неё вела бы в пустую страницу, неотличимую от сломанной.
+// Кнопка «i» остаётся тем же, чем была, — прозой ветки.
+function nodeCard(key, cls, title, stat, extra, href){
+  const nm = href
+    ? `<a class="nt" href="${esc(href)}">${esc(title)}</a>`
+    : `<div class="nt">${esc(title)}</div>`;
   return `<div class="node ${cls}" data-key="${esc(key)}">
     <button class="ibtn" onclick="showInfo('${key}')"
       title="what this branch tests">i</button>
-    <div class="nt">${esc(title)}</div>
+    ${nm}
     <div class="ns">${stat}</div>${extra || ""}</div>`;
+}
+// Адрес дневной статистики книги: ключ доступа, книга и рука. Рука
+// едет в адрес, потому что узел дерева и есть «книга × рука» — открыв
+// его без руки, владелец увидел бы сумму двух и не понял бы, почему
+// числа не совпали с узлом, по которому нажал.
+function daysHref(b, arm){
+  if (!b.traded || !b.present) return "";
+  return "/book-page?k=" + encodeURIComponent(KEY)
+    + "&hz=" + encodeURIComponent(b.key)
+    + "&arm=" + encodeURIComponent(arm);
 }
 function rootCard(r){
   const kids = (DATA.books || []).map(b => {
@@ -7169,7 +7511,7 @@ function rootCard(r){
          </li></ul>` : "";
     return `<li>${nodeCard(b.key + ":" + r.arm,
       b.present ? "" : "off", label(b), bookStat(b, r.arm),
-      openLine((b.stats || {})[r.arm]))}${
+      openLine((b.stats || {})[r.arm]), daysHref(b, r.arm))}${
       kid}</li>`;
   }).join("");
   return `<div class="panel" data-root="${esc(r.arm)}">
@@ -7205,6 +7547,7 @@ function infoHTML(){
     : !b.present ? T("offbookL")
     : s && s.closed ? T("closedL")(s) + money(s.pnl) : T("none");
   const hz = b.key === "h4" ? "" : "&hz=" + encodeURIComponent(b.key);
+  const dh = daysHref(b, arm);
   const so = (b.stats || {})[arm];
   const openRow = so && so.open
     ? `<div class="stat">${T("openL")(so, so.open_pnl == null
@@ -7215,7 +7558,8 @@ function infoHTML(){
     <div class="plain">${esc(tx(b, "plain"))}</div>
     <div class="stat">${st} &nbsp;
       <a href="/trades-page?k=${encodeURIComponent(KEY)}${hz}">${
-        T("history")}</a></div>${openRow}`;
+        T("history")}</a>${dh ? ` &nbsp; <a href="${esc(dh)}">${
+        T("bydays")}</a>` : ""}</div>${openRow}`;
 }
 function render(d){
   DATA = d;
@@ -8218,6 +8562,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/live-page":
                 return self._ok(LIVEPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/book_days":
+                return self._ok(json.dumps(
+                    collector.book_days(q.get("hz", ["h4"])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/book-page":
+                return self._ok(BOOKDAYS.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/model_tree":
                 return self._ok(json.dumps(

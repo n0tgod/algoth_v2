@@ -3308,6 +3308,138 @@ class Collector:
         self._learn_cache = (now, out)
         return out
 
+    def book_days(self, hz):
+        """Дневная статистика ОДНОЙ книги — по просьбе владельца.
+
+        «Кликаем на 4-hour book — открывается страница, где статистика
+        по этой книге отдельно по каждому дню». Итог книги на дереве
+        отвечает «сколько всего», а на вопрос «когда книга зарабатывала
+        и когда сливала» не отвечает вовсе: сумма за две недели стоит
+        на нескольких днях, и по ней нельзя отличить ровный ряд от
+        одного разгона (это уже находил зонд `probe_turn`).
+
+        Считается ТЕМ ЖЕ `closed_rows`, что лига, разбивка
+        волатильности и страница обучения: деньги штампует касса, и
+        второй обход однажды разошёлся бы с первым — на лиге это уже
+        случилось (она не звала кассу и показывала ноль закрытых при
+        сотнях сделок).
+
+        Книги-эхо ЗДЕСЬ не исключаются, в отличие от лиги: там их
+        решения складывались бы с решениями книги-источника и считались
+        дважды, а тут книга смотрится сама на себя — её деньги
+        настоящие и принадлежат ей. Что книга есть эхо, ответ говорит
+        полем, чтобы страница могла это назвать.
+
+        День — календарные сутки UTC по моменту, когда деньги стали
+        известны (живой выход либо разбор), а не по времени открытия:
+        то же правило, что у лиги. Сделка, открытая вчера и закрытая
+        сегодня, принадлежит сегодняшнему дню — иначе кривая дня
+        менялась бы задним числом.
+
+        Открытые позиции в дневные числа НЕ входят и с закрытыми не
+        складываются (правило `summary`): у открытой позиции исхода не
+        существует, а «сколько она стоит сегодня» — отметка, которая к
+        завтрашнему дню станет другой.
+        """
+        now = time.time()
+        key = str(hz)
+        # Кеш ключуется КНИГОЙ: без ключа переход между книгами отдавал
+        # бы соседнюю под своим именем две минуты подряд — та же
+        # молчаливая подмена, что резолв книги соглашением имени.
+        cat, cached, ckey = getattr(self, "_bdays_cache",
+                                    (0.0, None, None))
+        if cached is not None and ckey == key and now - cat < 120:
+            return cached
+        traded = dict(self.BOOKS)
+        out = {"hz": key, "generated_at": round(now, 1),
+               "present": False, "days": [], "errors": [],
+               "echo": key in self.ECHO_BOOKS,
+               "dir": self.BOOK_DIRS.get(key)}
+        if key not in traded:
+            # Книги нет в карте торгуемых — это НЕ пустая книга.
+            # Наблюдательная запись денег не держит вовсе, и молчаливый
+            # пустой ряд читался бы как «книга ничего не наторговала».
+            out["unknown"] = True
+            self._bdays_cache = (now, out, key)
+            return out
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        out["cap"] = TR.START_BALANCE
+        rows, errors, scanned, opens = self.closed_rows()
+        out["errors"] = errors
+        rows = [r for r in rows if r["hz"] == key]
+        out["present"] = bool(rows)
+        # Открытое стоит ОТДЕЛЬНОЙ строкой ответа: оно есть состояние
+        # на сейчас, а не величина какого-то дня.
+        out["open"] = {o["arm"]: {"open": o["open"],
+                                  "marked": o["marked"],
+                                  "unreal_pnl": o["unreal_pnl"]}
+                       for o in opens if o["hz"] == key}
+        by = {}
+        for r in rows:
+            d = datetime.fromtimestamp(r["at"] or 0, timezone.utc)\
+                .strftime("%Y-%m-%d")
+            by.setdefault(d, {}).setdefault(r["arm"] or "gbm",
+                                            []).append(r)
+        days = []
+        cum = {}
+        for d in sorted(by):
+            per = by[d]
+            cell = {}
+            for arm in ("gbm", "nn", "all"):
+                got = (per.get(arm) if arm != "all"
+                       else [x for v in per.values() for x in v])
+                if not got:
+                    continue
+                c = self._day_cell(got)
+                cum[arm] = round(cum.get(arm, 0.0) + c["pnl"], 2)
+                c["cum"] = cum[arm]
+                cell[arm] = c
+            days.append({"day": d, "arms": cell})
+        out["days"] = days
+        out["totals"] = {}
+        for arm in ("gbm", "nn", "all"):
+            got = [r for r in rows
+                   if arm == "all" or (r["arm"] or "gbm") == arm]
+            if got:
+                out["totals"][arm] = self._day_cell(got)
+        self._bdays_cache = (now, out, key)
+        return out
+
+    @staticmethod
+    def _day_cell(rows):
+        """Числа одной клетки «день × рука». Одно определение на день,
+        на итог и на обе руки: три реализации одного счёта разошлись бы
+        так же, как разошлись два расчёта книги в обзоре и на странице
+        сделок.
+
+        Колонка «без лучшей сделки» стоит здесь по той же причине, по
+        которой она стоит в лиге: день из десяти сделок с одним
+        разгоном выглядит статистикой, хотя все деньги в нём
+        принадлежат одному имени.
+        """
+        pnls = [r["pnl"] or 0.0 for r in rows]
+        nets = [r["net_bp"] for r in rows if r.get("net_bp") is not None]
+        top = max(rows, key=lambda r: r["pnl"] or 0.0)
+        total = sum(pnls)
+        exits = {}
+        for r in rows:
+            exits[r.get("reason") or "?"] = \
+                exits.get(r.get("reason") or "?", 0) + 1
+        return {
+            "trades": len(rows),
+            "wins": sum(1 for x in pnls if x > 0),
+            "win": round(sum(1 for x in pnls if x > 0) / len(rows), 3),
+            "pnl": round(total, 2),
+            "net_med": (round(_median(nets), 1) if nets else None),
+            "net_avg": (round(sum(nets) / len(nets), 1)
+                        if nets else None),
+            "top_sym": top["sym"], "top_pnl": round(top["pnl"] or 0.0, 2),
+            "pnl_wo_top": round(total - (top["pnl"] or 0.0), 2),
+            "worst_pnl": round(min(pnls), 2),
+            "exits": exits}
+
     def market_vol(self):
         """Волатильность рынка по часам — из наших же почасовых сводок.
 
@@ -3782,7 +3914,12 @@ class Collector:
                 "title": key, "title_ru": key,
                 "plain": "", "plain_ru": "", "no_text": True}
             row.update(key=key, dir=name,
-                       echo=key in self.ECHO_BOOKS)
+                       echo=key in self.ECHO_BOOKS,
+                       # Дневная статистика есть только у торгуемых:
+                       # наблюдательная запись денег не держит вовсе,
+                       # и ссылка на неё вела бы в пустую страницу,
+                       # неотличимую от сломанной.
+                       traded=any(key == h for h, _ in self.BOOKS))
             man = {}
             try:
                 with open(os.path.join(s8, name, "manifest.json"),

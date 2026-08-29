@@ -30,6 +30,7 @@ const isVol = /does the market regime move our results/.test(src);
 const isLearn = /is the model getting smarter, and does it pay/
   .test(src);
 const isTree = /model tree — which logic each branch tests/.test(src);
+const isDays = /<title>book, day by day<\/title>/.test(src);
 const isTour = /tournament — all 72 branches/.test(src);
 const isPaper =
   /monthly book — one construction, recorded forward/.test(src);
@@ -268,6 +269,75 @@ const paperStub = (url) => {
                  return d;
                };
 
+// Стаб дневной статистики книги. Числа живут в ОДНОЙ функции,
+// которую читают и заглушка, и проверка: список чисел в двух местах
+// разошёлся бы, и ожидание, написанное по памяти о правиле формата,
+// уже трижды делало отрицательный контроль холостым.
+const DAYS_STUB = {
+  hz: "sit", dir: "model_sit", present: true, echo: false,
+  cap: 3000.0, errors: [],
+  // Открытое — ОТДЕЛЬНО от закрытого и никогда в одной цифре с ним:
+  // у открытой позиции исхода нет, есть отметка. Переоценено 2 из 3 —
+  // частичность обязана быть названа числом.
+  open: {gbm: {open: 3, marked: 2, unreal_pnl: -1.50}},
+  totals: {
+    all: {trades: 9, wins: 5, win: 0.556, pnl: 10.00,
+          net_med: 12.5, net_avg: -4.0, top_sym: "TUTUSDT",
+          top_pnl: 44.00, pnl_wo_top: -34.00, worst_pnl: -19.00,
+          exits: {"цена дошла до обещанной цели": 4,
+                  "цена прошла обещанный ход против": 5}},
+    gbm: {trades: 8, wins: 5, win: 0.625, pnl: 12.20,
+          net_med: 15.0, net_avg: -1.0, top_sym: "TUTUSDT",
+          top_pnl: 44.00, pnl_wo_top: -31.80, worst_pnl: -19.00,
+          exits: {"цена дошла до обещанной цели": 4,
+                  "цена прошла обещанный ход против": 4}},
+    nn: {trades: 1, wins: 0, win: 0.0, pnl: -2.20,
+         net_med: -73.0, net_avg: -73.0, top_sym: "ENSUSDT",
+         top_pnl: -2.20, pnl_wo_top: 0.0, worst_pnl: -2.20,
+         exits: {"цена прошла обещанный ход против": 1}}},
+  days: [
+    {day: "2026-08-24", arms: {
+      gbm: {trades: 6, wins: 4, win: 0.667, pnl: 31.00, cum: 31.00,
+            net_med: 22.0, net_avg: 9.0, top_sym: "TUTUSDT",
+            top_pnl: 44.00, pnl_wo_top: -13.00, worst_pnl: -11.00,
+            exits: {"цена дошла до обещанной цели": 4,
+                    "цена прошла обещанный ход против": 2}},
+      all: {trades: 6, wins: 4, win: 0.667, pnl: 31.00, cum: 31.00,
+            net_med: 22.0, net_avg: 9.0, top_sym: "TUTUSDT",
+            top_pnl: 44.00, pnl_wo_top: -13.00, worst_pnl: -11.00,
+            exits: {"цена дошла до обещанной цели": 4,
+                    "цена прошла обещанный ход против": 2}}}},
+    // Тонкий день: две сделки — это анекдот, а не замер, и строка
+    // обязана быть приглушена.
+    {day: "2026-08-25", arms: {
+      gbm: {trades: 2, wins: 1, win: 0.5, pnl: -18.80, cum: 12.20,
+            net_med: -40.0, net_avg: -41.0, top_sym: "ARBUSDT",
+            top_pnl: 0.20, pnl_wo_top: -19.00, worst_pnl: -19.00,
+            exits: {"цена прошла обещанный ход против": 2}},
+      all: {trades: 2, wins: 1, win: 0.5, pnl: -18.80, cum: 12.20,
+            net_med: -40.0, net_avg: -41.0, top_sym: "ARBUSDT",
+            top_pnl: 0.20, pnl_wo_top: -19.00, worst_pnl: -19.00,
+            exits: {"цена прошла обещанный ход против": 2}}}},
+    // День, где торговала только рука сети: переключатель рук обязан
+    // менять СОСТАВ таблицы, а не только числа.
+    {day: "2026-08-26", arms: {
+      nn: {trades: 1, wins: 0, win: 0.0, pnl: -2.20, cum: -2.20,
+           net_med: -73.0, net_avg: -73.0, top_sym: "ENSUSDT",
+           top_pnl: -2.20, pnl_wo_top: 0.0, worst_pnl: -2.20,
+           exits: {"цена прошла обещанный ход против": 1}},
+      all: {trades: 1, wins: 0, win: 0.0, pnl: -2.20, cum: 10.00,
+            net_med: -73.0, net_avg: -73.0, top_sym: "ENSUSDT",
+            top_pnl: -2.20, pnl_wo_top: 0.0, worst_pnl: -2.20,
+            exits: {"цена прошла обещанный ход против": 1}}}}]};
+const bookDaysStub = (url) => {
+  // Книга не из торгуемых: денег у неё нет вовсе, и это НЕ пустая
+  // книга. Сервер говорит это полем, а не пустым рядом.
+  if (/hz=sit_obs/.test(url))
+    return {hz: "sit_obs", present: false, unknown: true,
+            days: [], errors: [], dir: "model_sit_obs"};
+  return DAYS_STUB;
+};
+
 let full = true, calls = 0;
 const seen = [];
 global.fetch = async (url) => {
@@ -364,6 +434,8 @@ global.fetch = async (url) => {
                    at: Date.UTC(2026,7,21,19,20,0)/1000}]}
              : url.startsWith("/paper")
              ? paperStub(url)
+             : url.startsWith("/book_days")
+             ? bookDaysStub(url)
              : url.startsWith("/learning")
              ? {present: true, ic_vs_money: 0.673, ic_vs_money_n: 11,
                 ic_vs_time: -0.118, ic_vs_time_n: 11, errors: [],
@@ -461,6 +533,7 @@ global.fetch = async (url) => {
                    plain_ru: "Гладко смешивает много признаков."}],
                 books: [
                   {key: "h4", dir: "model", present: true,
+                   traded: true,
                    title: "4-hour book — the main one",
                    title_ru: "Книга 4 часа — главная",
                    plain: "Does ranking the cross-section make money.",
@@ -471,6 +544,7 @@ global.fetch = async (url) => {
                                  open: 2, marked: 2, open_pnl: 14.83},
                            nn: {closed: 4, win: 0.25, pnl: -3.21}}},
                   {key: "sit", dir: "model_sit", present: true,
+                   traded: true,
                    title: "situational book — price pulls the trigger",
                    title_ru: "Ситуационная книга — курок у цены",
                    plain: "Does picking the moment add anything.",
@@ -489,7 +563,7 @@ global.fetch = async (url) => {
                   // корня съехала с +0.27 %: существующие проверки
                   // ниже и есть страж от двойного счёта.
                   {key: "sit_r", dir: "model_sit_r", present: true,
-                   echo: true,
+                   echo: true, traded: true,
                    title: "situational · fixed risk",
                    title_ru: "Ситуационная · равный риск",
                    plain: "Same trades, size inverse to the stop.",
@@ -499,9 +573,23 @@ global.fetch = async (url) => {
                   // Книга без манифеста на сервере: ветка обязана
                   // сказать «не заведена», а не выглядеть пустой.
                   {key: "h24", dir: "model_h24", present: false,
+                   traded: true,
                    title: "24-hour book", title_ru: "Книга 24 часа",
                    plain: "Slow end.", plain_ru: "Медленный край.",
-                   facts: "", stats: {}}],
+                   facts: "", stats: {}},
+                  // Наблюдательная запись: заведена, но денег не
+                  // держит — её входы те же кандидаты, что у
+                  // торгуемой. Ссылки на дневную статистику у неё
+                  // быть НЕ должно: страница по ней честно скажет
+                  // «денег нет», но узел, ведущий в такое, читался бы
+                  // как сломанный.
+                  {key: "sit_obs", dir: "model_sit_obs",
+                   present: true, traded: false,
+                   title: "observation record — any RR",
+                   title_ru: "Наблюдательная запись — любой RR",
+                   plain: "Not traded; it exists for the RR filter.",
+                   plain_ru: "Не торгуется; живёт ради фильтра RR.",
+                   facts: "24 slots", stats: {}}],
                 tournament: {
                   title: "policy tournament (spec 10)",
                   title_ru: "Турнир политик исполнения (спека 10)",
@@ -1129,6 +1217,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? setLang : null;"
                 + "\nglobal.__info = typeof showInfo === 'function' "
                 + "? showInfo : null;"
+                // Переключатель рук дневной статистики книги — по той
+                // же причине, что переключатель языка: `querySelectorAll`
+                // здесь пуст, обработчик до проверки не доезжает, и
+                // «клик по кнопке» шёл бы вхолостую.
+                + "\nglobal.__bookArm = typeof setArm === 'function' "
+                + "? setArm : null;"
                 + "\nglobal.__sort = typeof sortBy === 'function' "
                 + "? sortBy : null;"
                 // Ноги транша месячной книги открываются КЛИКОМ по
@@ -1211,14 +1305,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1421,7 +1515,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -1945,6 +2039,98 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push(`обучение: тонкие дни не помечены (${thin} из 2)`);
   }
 
+  // Дневная статистика ОДНОЙ книги (просьба владельца: с дерева на
+  // «4-hour book» — и там она по каждому дню).
+  if (isDays && /hz=sit_obs/.test(SEARCH)) {
+    const bf = String(global.__el
+      ? String(global.__el("intro").innerHTML || "")
+        + String(global.__el("box").innerHTML || "") : "")
+      .replace(/\s+/g, " ");
+    // Книга без денег обязана НАЗВАТЬ причину. Пустая таблица здесь
+    // читалась бы как «книга ничего не наторговала», а это другое
+    // утверждение — то же различие, что «нет журнала» против «нет
+    // траншей» на месячной странице.
+    if (!/not one of the traded books/.test(bf))
+      bad.push("дни: книга без денег не названа");
+    if (!/different thing from a book that traded nothing/.test(bf))
+      bad.push("дни: пустота выдана за «ничего не наторговала»");
+    if (/day by day<\/div>/.test(bf) || /&Sigma; \$/.test(bf))
+      bad.push("дни: у книги без денег нарисована таблица дней");
+  } else if (isDays) {
+    if (!seen.some(u => u.startsWith("/book_days")))
+      bad.push("дни: данные не запрошены");
+    if (!seen.some(u => /\/book_days[^ ]*hz=sit/.test(u)))
+      bad.push("дни: книга не поехала в запрос");
+    const html = () => String(global.__el
+      ? String(global.__el("box").innerHTML || "")
+        + String(global.__el("intro").innerHTML || "") : "");
+    const flat = x => String(x || "").replace(/\s+/g, " ");
+    const txt = x => flat(String(x || "").replace(/<[^>]*>/g, " "));
+    let bx = html(), bt = txt(bx);
+    // Имя книги — из общего списка, а не собрано из ключа: у графика
+    // такая хирургия давала «z h book», и подпись врала о показанном.
+    if (!/situational · per σ/.test(
+          flat(global.__el("strap").textContent)))
+      bad.push("дни: книга названа не из общего списка");
+    // Строки считаются ЧИСЛОМ: «таблица есть» прошло бы и на пустой.
+    const rows = (bx.match(/data-day="/g) || []).length;
+    if (rows !== 3)
+      bad.push(`дни: строк дней ${rows}, а в ответе три`);
+    if (!/2026-08-24/.test(bt) || !/2026-08-26/.test(bt))
+      bad.push("дни: дни ответа не в таблице");
+    // Накопленная кривая — числами ответа, а не пересчётом страницы.
+    if (!/\+12\.20 \$/.test(bt))
+      bad.push("дни: накопленный итог не из ответа");
+    // Колонка «без лучшей сделки» — та самая, что переворачивала знак
+    // у групп лиги: день из шести сделок с одним разгоном выглядит
+    // статистикой, пока она не стоит рядом.
+    if (!/-13\.00 \$/.test(bt))
+      bad.push("дни: «без лучшей сделки» не показана");
+    if (!/TUTUSDT/.test(bt))
+      bad.push("дни: лучшая сделка дня не названа именем");
+    // Открытое НИКОГДА не складывается с закрытым: +10.00 и −1.50
+    // рядом, а 8.50 на странице — падение (правило `summary`).
+    if (!/a mark, not an outcome/.test(bt))
+      bad.push("дни: открытое не названо отметкой");
+    if (!/2\/3 priced/.test(bt))
+      bad.push("дни: частичная переоценка не названа числом");
+    if (/8\.50/.test(bt))
+      bad.push("дни: открытое сложено с закрытым");
+    // Причины выхода — короткими словами общей карты (`EXITJS`).
+    if (!/stop/.test(bt) || !/target/.test(bt))
+      bad.push("дни: причины выхода не показаны");
+    if (/прошёл|обещанный/.test(bt))
+      bad.push("дни: причина выхода длинной фразой в ячейке");
+    // Тонкие дни приглушены: две сделки и одна — анекдот, а не
+    // замер. Считаются ЧИСЛОМ, и день из шести сделок в это число не
+    // входит — иначе «приглушено где-то» проходило бы на странице,
+    // где приглушено всё.
+    const thin = (bx.match(/tr class="thin"/g) || []).length;
+    if (thin !== 2)
+      bad.push(`дни: тонкие дни не помечены (${thin} из 2)`);
+    // Переключатель рук дёргается НАСТОЯЩЕЙ функцией страницы:
+    // подставная кнопка исполняла бы не ту дорогу. У руки сети день
+    // ровно один — состав таблицы обязан смениться, а не только
+    // числа.
+    const setArm = global.__bookArm;
+    if (typeof setArm !== "function")
+      bad.push("дни: переключателя рук нет");
+    else {
+      setArm("nn");
+      bx = html(); bt = txt(bx);
+      const r2 = (bx.match(/data-day="/g) || []).length;
+      if (r2 !== 1)
+        bad.push(`дни: у руки сети строк ${r2}, а сделка одна`);
+      if (!/-2\.20 \$/.test(bt))
+        bad.push("дни: числа руки сети не показаны");
+      if (/TUTUSDT/.test(bt))
+        bad.push("дни: после переключения руки видны чужие сделки");
+      setArm("all");
+      if ((html().match(/data-day="/g) || []).length !== 3)
+        bad.push("дни: возврат к обеим рукам не вернул все дни");
+    }
+  }
+
   // Бумажная месячная книга: свод из артефакта, транши из журнала.
   // Главное требование — честное и восстановленное не смешиваются
   // НИКОГДА, и проверяется это числом: сумма двух групп на странице
@@ -2066,14 +2252,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const roots = (bx.match(/data-root="/g) || []).length;
     if (roots !== 2)
       bad.push(`дерево: корней ${roots}, а рук две`);
-    // Узлов на руку: корень + четыре книги (включая ветку равного
-    // риска) + лист турнира = 6.
+    // Узлов на руку: корень + пять книг (включая ветку равного риска
+    // и наблюдательную запись) + лист турнира = 7.
     const nodes = (bx.match(/data-key="/g) || []).length;
-    if (nodes !== 12)
-      bad.push(`дерево: узлов ${nodes}, а должно быть 12`);
+    if (nodes !== 14)
+      bad.push(`дерево: узлов ${nodes}, а должно быть 14`);
     const ibtns = (bx.match(/class="ibtn"/g) || []).length;
-    if (ibtns !== 12)
-      bad.push(`дерево: кнопок «i» ${ibtns} на 12 узлов`);
+    if (ibtns !== 14)
+      bad.push(`дерево: кнопок «i» ${ibtns} на 14 узлов`);
     // Статистика — видна по умолчанию, это и есть лицо узла.
     if (!/\+12\.34 \$/.test(bt) || !/-3\.21 \$/.test(bt))
       bad.push("дерево: деньги веток не из ответа");
@@ -2096,6 +2282,26 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("дерево: счётчик открытых рвётся переносом");
     if (!/not started/.test(bx))
       bad.push("дерево: отсутствующая на сервере книга не помечена");
+    // Имя ветки ведёт на её дневную статистику (просьба владельца).
+    // Ссылок ровно шесть: h4, sit и книга равного риска на каждой
+    // из двух рук — все три держат свои деньги. Ни
+    // ненаведённая книга (h24), ни книга без денег (наблюдательная
+    // запись) ссылки не получают — она вела бы в пустоту, а пустая
+    // страница неотличима от сломанной. Рука едет в адрес: узел и
+    // есть «книга × рука», и без неё числа страницы не совпали бы с
+    // узлом, по которому нажали.
+    const dl = (bx.match(/href="\/book-page\?[^"]*"/g) || []);
+    if (dl.length !== 6)
+      bad.push(`дерево: ссылок на дневную статистику ${dl.length}, `
+               + "а ждём шесть (три книги с деньгами × две руки)");
+    if (!dl.some(h => /hz=h4/.test(h) && /arm=gbm/.test(h))
+        || !dl.some(h => /hz=sit/.test(h) && /arm=nn/.test(h)))
+      bad.push("дерево: в ссылке нет книги или руки");
+    if (!dl.every(h => /k=xxx/.test(h)))
+      bad.push("дерево: ссылка на дневную статистику без ключа");
+    if (/href="\/book-page[^"]*hz=h24/.test(bx)
+        || /href="\/book-page[^"]*hz=sit_obs/.test(bx))
+      bad.push("дерево: ссылка на книгу, у которой дневных денег нет");
     // Открытые деньги — отдельной строкой у каждой таблички: узла
     // книги и корня. Прочерк — не ноль (переоценить нечем), частичная
     // переоценка названа числом, и открытое НЕ складывается с
@@ -2537,8 +2743,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/href="\/bot-page\?k=xxx"/.test(nh))
       bad.push("меню: панель ядра вернулась в меню — её слот занял "
                + "живой исполнитель");
-    if (!isBot && !/aria-current="page"/.test(nh))
+    // Страница дневной статистики книги в меню не стоит по той же
+    // причине, что график и разбор сделки: она существует только для
+    // КОНКРЕТНОЙ книги, и пункт без книги вёл бы в пустоту. Меню на
+    // ней есть целиком, просто текущего пункта в нём нет.
+    if (!isBot && !isDays && !/aria-current="page"/.test(nh))
       bad.push("меню: текущая страница не помечена");
+    if (isDays && /aria-current="page"/.test(nh))
+      bad.push("меню: страница книги помечена текущей, а пункта нет");
   }
 
   if (/botoff=1/.test(SEARCH) && !isBot && !isChart && !isInfo) {
@@ -2949,7 +3161,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays
       && !/botoff=1/.test(SEARCH)) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
@@ -3250,7 +3462,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour || isLearn || isLive || isPaper) {
+             || isTree || isTour || isLearn || isLive || isPaper || isDays) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {

@@ -516,7 +516,15 @@ def test_pages_run_headless():
                 ("обзор, состояние тормоза устарело", web.PAGE,
                  "?k=xxx&brakestale=1"),
                 ("ядро, тень выключена", web.BOTPAGE,
-                 "?k=xxx&botoff=1")):
+                 "?k=xxx&botoff=1"),
+                # Дневная статистика книги: с дерева по имени ветки.
+                ("дневная статистика книги", web.BOOKDAYS,
+                 "?k=xxx&hz=sit"),
+                # Книга, у которой денег нет вовсе: страница обязана
+                # назвать причину, а не показать пустую таблицу —
+                # пустота неотличима от «книга ничего не наторговала».
+                ("дневная статистика книги без денег", web.BOOKDAYS,
+                 "?k=xxx&hz=sit_obs")):
             p = os.path.join(d, "p.html")
             with open(p, "w", encoding="utf-8") as f:
                 f.write(src)
@@ -4074,6 +4082,163 @@ def test_paper_book_summary_comes_from_the_artefact():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_book_days_splits_one_book_by_day():
+    """Дневная статистика книги: разбивка по календарным суткам UTC.
+
+    Просьба владельца: с дерева на «4-hour book» — и там числа по
+    каждому дню. Считается настоящим кодом на настоящих файлах;
+    подставной разбор `pnl` НЕ несёт — деньги штампует касса, и
+    фикстура обязана выглядеть как живая запись. Ровно на этом
+    однажды прошёл тест лиги, которая кассу не звала.
+
+    Проверяются: день берётся по моменту, когда деньги стали известны;
+    сутки не смешиваются; накопленный итог складывается; книга не из
+    торгуемых говорит об этом словом, а не пустым рядом; кеш ключуется
+    книгой.
+    """
+    import collect as C
+    import calendar
+
+    def ts(y, mo, d, h, mi=0):
+        return float(calendar.timegm((y, mo, d, h, mi, 0, 0, 0, 0)))
+
+    dtmp = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(dtmp, "b1_book")
+        s8 = os.path.join(dtmp, "s8_loop", "out")
+
+        def put(name, man, picks, revs):
+            mdir = os.path.join(s8, name)
+            os.makedirs(mdir)
+            with open(os.path.join(mdir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump(man, f)
+            with open(os.path.join(mdir, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                for x in picks:
+                    f.write(json.dumps(x) + "\n")
+            with open(os.path.join(mdir, "review.jsonl"), "w",
+                      encoding="utf-8") as f:
+                for x in revs:
+                    f.write(json.dumps(x) + "\n")
+
+        h1, h2 = "2026-08-24-10", "2026-08-25-10"
+        # Ситуационная книга: две сделки 24-го (одна из них — весь
+        # плюс дня) и одна 25-го. Слот 3000/6 = 500, потолок на имя
+        # 10 % режет до 300 — те же числа, что у лиги.
+        put("model_sit",
+            {"situational": True, "slots": 6, "rules_version": 13},
+            [{"arm": "gbm", "hour": h1, "at_ts": ts(2026, 8, 24, 10),
+              "long": [{"sym": "AUSDT", "px": 100.0, "fwd": 40.0,
+                        "mae": -20.0, "mfe": 60.0, "scan": True,
+                        "at_ts": ts(2026, 8, 24, 10)},
+                       {"sym": "BUSDT", "px": 100.0, "fwd": 40.0,
+                        "mae": -20.0, "mfe": 60.0, "scan": True,
+                        "at_ts": ts(2026, 8, 24, 10, 5)}],
+              "short": []},
+             {"arm": "gbm", "hour": h2, "at_ts": ts(2026, 8, 25, 10),
+              "long": [{"sym": "CUSDT", "px": 100.0, "fwd": 40.0,
+                        "mae": -20.0, "mfe": 60.0, "scan": True,
+                        "at_ts": ts(2026, 8, 25, 10)}],
+              "short": []}],
+            [{"arm": "gbm", "hour": h1, "cost_bp": 11.0,
+              "at_ts": ts(2026, 8, 24, 12),
+              "rows": [{"sym": "AUSDT", "side": "long", "got": 60.0,
+                        "net": 49.0, "exit_ts": ts(2026, 8, 24, 12),
+                        "exit_hour": h1,
+                        "reason": "цена дошла до обещанной цели"},
+                       {"sym": "BUSDT", "side": "long", "got": -20.0,
+                        "net": -31.0, "exit_ts": ts(2026, 8, 24, 13),
+                        "exit_hour": h1,
+                        "reason": "цена прошла обещанный ход против"}]},
+             {"arm": "gbm", "hour": h2, "cost_bp": 11.0,
+              "at_ts": ts(2026, 8, 25, 12),
+              "rows": [{"sym": "CUSDT", "side": "long", "got": -20.0,
+                        "net": -31.0, "exit_ts": ts(2026, 8, 25, 12),
+                        "exit_hour": h2,
+                        "reason": "цена прошла обещанный ход против"}]}])
+        # Соседняя книга: её сделки в разбивку попасть НЕ должны.
+        put("model_h24",
+            {"horizon_h": 24},
+            [{"arm": "nn", "hour": h1, "at_ts": ts(2026, 8, 24, 10),
+              "long": [{"sym": "ZUSDT", "px": 50.0, "fwd": 20.0,
+                        "mae": -30.0}], "short": []}],
+            [{"arm": "nn", "hour": h1, "cost_bp": 11.0,
+              "at_ts": ts(2026, 8, 25, 11),
+              "rows": [{"sym": "ZUSDT", "side": "long", "got": -40.0,
+                        "net": -51.0}]}])
+
+        # Подмена HERE уносит путь к ядру расчёта — настоящий s8_loop
+        # кладётся в path заранее (урок теста сводимости:
+        # ModuleNotFoundError: trades). Без этого тест проходил бы
+        # только вслед за соседним, который путь уже вставил.
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as _TR  # noqa: F401 — прогрев sys.modules
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        d = col.book_days("sit")
+        check("дневная статистика собралась",
+              d.get("present") is True, str(d)[:160])
+        days = {x["day"]: x["arms"] for x in d["days"]}
+        check("суток ровно две, и это те сутки, в которые деньги "
+              "стали известны",
+              sorted(days) == ["2026-08-24", "2026-08-25"],
+              str(sorted(days)))
+        a1 = days["2026-08-24"]["gbm"]
+        a2 = days["2026-08-25"]["gbm"]
+        # Деньги считает касса: 300 $ на ногу, 49 б.п. → +1.47,
+        # −31 б.п. → −0.93. Числа выведены из размера, а не взяты из
+        # разбора — в разборе денег нет вовсе.
+        check("деньги дня — из кассы, а не из разбора",
+              a1["trades"] == 2 and a1["pnl"] == 0.54
+              and a2["pnl"] == -0.93,
+              f"{a1.get('pnl')} и {a2.get('pnl')}")
+        check("накопленный итог складывается по дням",
+              a1["cum"] == 0.54 and a2["cum"] == -0.39,
+              f"{a1.get('cum')} и {a2.get('cum')}")
+        # «Без лучшей сделки» — тот же приём, что переворачивал знак
+        # у групп лиги: день из двух сделок, где весь плюс на одном
+        # имени.
+        check("лучшая сделка дня названа именем, и день без неё "
+              "показан отдельно",
+              a1["top_sym"] == "AUSDT" and a1["pnl_wo_top"] == -0.93,
+              str(a1))
+        check("причины выхода разложены числом",
+              a1["exits"].get("цена дошла до обещанной цели") == 1
+              and a1["exits"].get(
+                  "цена прошла обещанный ход против") == 1,
+              str(a1.get("exits")))
+        check("чужая книга в разбивку не попала",
+              all("ZUSDT" != c.get("top_sym")
+                  for x in d["days"] for c in x["arms"].values()),
+              str(d["days"])[:160])
+        t = d["totals"]["gbm"]
+        check("итог книги — сумма её дней",
+              t["trades"] == 3 and t["pnl"] == round(0.54 - 0.93, 2),
+              str(t))
+        # Книга не из торгуемых — это НЕ пустая книга: наблюдательная
+        # запись денег не держит вовсе, и молчаливый пустой ряд
+        # читался бы как «ничего не наторговала».
+        o = col.book_days("sit_obs")
+        check("книга без денег названа словом, а не пустым рядом",
+              o.get("unknown") is True and o.get("days") == [],
+              str(o)[:160])
+        # Кеш ключуется КНИГОЙ: без ключа соседняя книга две минуты
+        # отдавалась бы под чужим именем — та же молчаливая подмена,
+        # что резолв каталога соглашением имени.
+        again = col.book_days("sit")
+        check("кеш не отдаёт соседнюю книгу под чужим именем",
+              again["hz"] == "sit" and again["present"] is True,
+              str(again)[:120])
+    finally:
+        C.HERE = was
+        shutil.rmtree(dtmp, ignore_errors=True)
+
+
 def test_league_counts_a_decision_once():
     """Разбивка ситуаций «одно решение — один голос».
 
@@ -5726,6 +5891,7 @@ def main():
     test_paper_book_summary_comes_from_the_artefact()
     test_league_counts_a_decision_once()
     test_league_ranks_by_realised_money()
+    test_book_days_splits_one_book_by_day()
     test_model_tree_names_every_book()
     test_tournament_page_reads_artifact()
     test_tree_page_fits_the_phone()
