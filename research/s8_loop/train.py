@@ -2232,6 +2232,36 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
     рукам и строки счёта — мысли пишутся позже, по свежему манифесту.
     """
     out = {"arms": {}, "acct_lines": []}
+    # Дневной тормоз (забор владельца 2026-08-29): состояние пишет
+    # сборщик (`day_brake.json`, единственный писатель — деньги считает
+    # та же касса, что у страниц), цикл только читает. Тормоз закрывает
+    # ВХОДЫ часовых книг (выборы часа не пишутся); разбор, выходы,
+    # счета и лист сканера идут как шли — выход есть обязанность.
+    # Устаревшее или отсутствующее состояние не тормозит (fail-open):
+    # сборщик мог стоять, и молча замереть без входов было бы отказом,
+    # неотличимым от тишины. Факт блокировки — строкой в журнал
+    # тормоза: час без выборов обязан читаться работой правила.
+    # Файл лежит РЯДОМ с каталогами книг (родитель MODEL_DIR): в бою
+    # это s8_loop/out, в тестах — временный корень фикстуры.
+    brake_st, braked = TR.read_day_brake(
+        os.path.join(os.path.dirname(MODEL_DIR), TR.DAY_BRAKE_FILE),
+        time.time())
+    if braked:
+        log_(f"ДНЕВНОЙ ТОРМОЗ: день {brake_st.get('realized', 0):+.2f} $ "
+             f"при пороге −{brake_st.get('limit', 0):.0f} — выборы часа "
+             f"{grid[j_last] if j_last is not None else '—'} не пишутся; "
+             f"разбор и выходы идут")
+        try:
+            with open(os.path.join(MODEL_DIR, "brake_log.jsonl"), "a",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(
+                    {"hour": grid[j_last] if j_last is not None else None,
+                     "at": round(time.time(), 1),
+                     "realized": brake_st.get("realized"),
+                     "limit": brake_st.get("limit")},
+                    ensure_ascii=False) + "\n")
+        except OSError as e:
+            log_(f"журнал тормоза не записан: {e}")
     # Выбор -> ожидание -> факт, по каждой руке турнира отдельно:
     # сводка по смеси рук осмысленна на вид и бессмысленна по сути.
     # Разбираются ВСЕ неразобранные выборы, а не только последний
@@ -2246,11 +2276,12 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
         # и мысли молчали бы о разборе, который на деле состоялся.
         review = review_arm(MODEL_DIR, arm, TR.HOLD_H, targets, si,
                             grid, book_root, log_)
-        picks = make_pick(arm, TR.HOLD_H, models_b, x, mats, syms, rows_m,
-                          j_last, grid, nov_lo, nov_hi, book_root, log_,
-                          names=names, train_seq=seq_b,
-                          rank_key=rank_key_for(TR.HOLD_H),
-                          floor_bp=H4_FLOOR_BP)
+        picks = [] if braked else make_pick(
+            arm, TR.HOLD_H, models_b, x, mats, syms, rows_m,
+            j_last, grid, nov_lo, nov_hi, book_root, log_,
+            names=names, train_seq=seq_b,
+            rank_key=rank_key_for(TR.HOLD_H),
+            floor_bp=H4_FLOOR_BP)
         if picks:
             write_pick(MODEL_DIR, picks)
         # Разбор и выбор — в итог: мысли пишутся ПОЗЖЕ, по СВЕЖЕМУ
@@ -2287,11 +2318,12 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
             for arm, _ in ARMS:
                 review_arm(mdir, arm, h, targets, si, grid,
                            book_root, log_)
-                pk = make_pick(arm, h, models_b, x, mats, syms, rows_m,
-                               j_last, grid, nov_lo, nov_hi,
-                               book_root, log_, names=names,
-                               train_seq=seq_b,
-                               rank_key=rank_key_for(h))
+                pk = [] if braked else make_pick(
+                    arm, h, models_b, x, mats, syms, rows_m,
+                    j_last, grid, nov_lo, nov_hi,
+                    book_root, log_, names=names,
+                    train_seq=seq_b,
+                    rank_key=rank_key_for(h))
                 if pk:
                     write_pick(mdir, pk)
             rebuild_accounts(mdir, h)
@@ -2505,7 +2537,12 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                                 "slots": SIT_SLOTS},
                                {"dir": os.path.basename(mdir) + "_obs",
                                 "min_rr": SIT_OBS_MIN_RR,
-                                "slots": SIT_OBS_SLOTS},
+                                "slots": SIT_OBS_SLOTS,
+                                # Наблюдательную запись дневной тормоз
+                                # НЕ трогает: она и есть контрольная
+                                # рука — без неё цену тормоза потом
+                                # нечем измерить. Денег она не держит.
+                                "no_brake": True},
                                # Книга равного риска: те же гейты и
                                # места, что у торгуемой, — различие
                                # ровно одно, правило РАЗМЕРА (равный

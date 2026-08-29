@@ -826,6 +826,20 @@ global.fetch = async (url) => {
                              canary_ic: 0.003, importance: {},
                              entry_floor_bp: 30,
                              trained_at: "2026-08-01T10:00:00+00:00"},
+                  // Дневной тормоз: три состояния — тихо, СРАБОТАЛ,
+                  // неизвестен. Страница обязана различать их словами:
+                  // сработавший без строки читался бы как отказ
+                  // сборщика, умерший счёт — как работающий забор.
+                  day_brake: /brakestale=1/.test(SEARCH)
+                    ? {at: 1, limit: 300, realized: -12.3, on: false,
+                       stale: true, active: false}
+                    : /brakeon=1/.test(SEARCH)
+                      ? {at: Date.now() / 1000, limit: 300,
+                         realized: -312.4, on: true, stale: false,
+                         active: true}
+                      : {at: Date.now() / 1000, limit: 300,
+                         realized: -12.3, on: false, stale: false,
+                         active: false},
                   thoughts: [{at: "08-01 10:00", text: "проверка"}],
                   ic: [{target: "fwd_4h", median_ic: 0.021, sections: 24}],
                   accounts: {gbm: {balance: 998.3,
@@ -1258,6 +1272,24 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     }
     if (!/paper equity/.test(mb) || !/<svg/.test(mb))
       bad.push("обзор: кривая бумажного счёта не нарисована");
+    // Дневной тормоз: состояние обязано стоять на странице ВСЕГДА и
+    // различаться словами. Проверяется числами подставного ответа —
+    // «строка есть» прошла бы и на пустой строке.
+    if (/brakeon=1/.test(SEARCH)) {
+      if (!/DAY BRAKE/.test(mb) || !/312\.40/.test(mb))
+        bad.push("обзор: сработавший тормоз не кричит числом");
+      if (/day brake quiet/.test(mb))
+        bad.push("обзор: сработавший тормоз назван тихим");
+    } else if (/brakestale=1/.test(SEARCH)) {
+      if (!/UNKNOWN/.test(mb) || !/NOT braked/.test(mb))
+        bad.push("обзор: устаревшее состояние тормоза молчит — "
+                 + "защита, которой молча нет");
+    } else {
+      if (!/day brake quiet/.test(mb) || !/300/.test(mb)
+          || !/12\.30/.test(mb))
+        bad.push("обзор: тихий тормоз не назван числом (порог и "
+                 + "реализованный день)");
+    }
     if (!/trades-page/.test(mb))
       bad.push("обзор: нет ссылки на полную историю сделок");
     // Турнир темпов: переключатель книг есть, и книга 1 ч показывает

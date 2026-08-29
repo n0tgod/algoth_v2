@@ -4678,6 +4678,100 @@ def test_trade_ids_are_stable():
           len({x["tid"] for x in tr}) == len(tr))
 
 
+def test_day_brake_math_and_activation():
+    """Арифметика дневного тормоза и правило «действует сейчас».
+
+    Порог ВЫВОДИТСЯ из капитала и состава книг, а не повторяется
+    числом; активность решает одно правило на файл и на память
+    сборщика. Смена START_BALANCE законно сдвинет 300 — тогда это
+    ожидание надо пересмотреть вместе с решением владельца, а не
+    подогнать молча.
+    """
+    import trades as TR
+    lim = TR.day_brake_limit(5)
+    check("порог из капитала: 1 % × 3000 × 2 руки × 5 книг = 300",
+          abs(lim - 300.0) < 1e-9
+          and abs(lim - TR.DAY_BRAKE_SHARE * TR.START_BALANCE * 2 * 5)
+          < 1e-9, str(lim))
+    now = 1787900000.0
+    day0 = (now // 86400) * 86400
+    check("день суммирует только свои моменты денег",
+          abs(TR.day_realized(
+              [(day0 + 10, -5.0), (day0 - 10, -70.0),
+               (day0 + 20, 2.5), (None, -9.0)], now) + 2.5) < 1e-9)
+    st = {"at": now - 60, "on": True}
+    check("свежее сработавшее — действует",
+          TR.day_brake_active(st, now))
+    check("устаревшее не действует (fail-open)",
+          not TR.day_brake_active({"at": now - 3600, "on": True}, now))
+    check("вчерашнее не действует: правило живёт внутри суток",
+          not TR.day_brake_active({"at": day0 - 100, "on": True},
+                                  day0 + 100))
+    check("тихое не действует",
+          not TR.day_brake_active({"at": now - 60, "on": False}, now))
+    check("None — тормоз неизвестен и не действует",
+          not TR.day_brake_active(None, now))
+
+
+def test_day_brake_blocks_entries_not_reviews():
+    """Сквозной цикл: тормоз закрывает ВХОДЫ часовых книг, не разбор.
+
+    Дорога до вызова, а не только формула (урок Rust-проверки): цикл с
+    файлом тормоза не пишет ни одного нового выбора, пишет журнал
+    тормоза и остаётся успешным; устаревший файл не тормозит —
+    сборщик мог стоять, и молча замереть без входов было бы отказом,
+    неотличимым от тишины.
+    """
+    import train as T
+    import trades as TR
+
+    orig_fit, orig_nn, orig_arms = T.gbm.fit, T.nn.fit, T.ARMS
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 orig_fit(x, y, seed, n_trees=25, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                orig_nn(x, y, seed, epochs=4, **kw))
+    T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+    md_was = T.MODEL_DIR
+    try:
+        d = tempfile.mkdtemp()
+        sd = os.path.join(d, "summary")
+        _write_summaries(sd, D=260)
+        T.MODEL_DIR = os.path.join(d, "model")
+        check("подготовительный цикл прошёл",
+              T.cycle(sd, lambda m: None, book_root=None))
+        pf = os.path.join(T.MODEL_DIR, "picks.jsonl")
+        n1 = sum(1 for _ in open(pf, encoding="utf-8"))
+
+        bp = os.path.join(d, TR.DAY_BRAKE_FILE)
+        with open(bp, "w", encoding="utf-8") as f:
+            json.dump({"at": time.time(), "limit": 300.0,
+                       "realized": -312.4, "on": True}, f)
+        _write_summaries(sd, D=300)
+        check("цикл под тормозом прошёл",
+              T.cycle(sd, lambda m: None, book_root=None))
+        n2 = sum(1 for _ in open(pf, encoding="utf-8"))
+        check("новых выборов под тормозом нет", n2 == n1,
+              f"{n2} при прежних {n1}")
+        bl = os.path.join(T.MODEL_DIR, "brake_log.jsonl")
+        check("журнал тормоза назвал заблокированный час",
+              os.path.exists(bl) and any(
+                  json.loads(x).get("realized") == -312.4
+                  for x in open(bl, encoding="utf-8")), bl)
+        # Устаревшее состояние: тормоза нет, входы идут (fail-open).
+        with open(bp, "w", encoding="utf-8") as f:
+            json.dump({"at": time.time() - 4000, "limit": 300.0,
+                       "realized": -312.4, "on": True}, f)
+        _write_summaries(sd, D=340)
+        check("цикл с устаревшим тормозом прошёл",
+              T.cycle(sd, lambda m: None, book_root=None))
+        n3 = sum(1 for _ in open(pf, encoding="utf-8"))
+        check("устаревший тормоз не запирает входы", n3 > n2,
+              f"{n3} при прежних {n2}")
+    finally:
+        T.gbm.fit, T.nn.fit, T.ARMS = orig_fit, orig_nn, orig_arms
+        T.MODEL_DIR = md_was
+
+
 def main():
     print("сводка часа")
     test_summary_censors_bands_by_reach()
@@ -4762,6 +4856,9 @@ def main():
     test_train_cycle_end_to_end()
     test_low_rr_book_is_declared_with_a_ceiling()
     test_books_run_before_training_on_prev_weights()
+    print("дневной тормоз")
+    test_day_brake_math_and_activation()
+    test_day_brake_blocks_entries_not_reviews()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

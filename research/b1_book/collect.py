@@ -743,6 +743,12 @@ class Collector:
         # ровно между чтением и сбросом, теряется — одна сделка из
         # сотен, и это дешевле, чем блокировка на каждом принте.
         self.px_ext = {}
+        # Дневной тормоз (забор владельца 2026-08-29): состояние
+        # считает фоновый поток, сканер и страницы только читают.
+        # None до первого счёта — тормоз НЕИЗВЕСТЕН и не тормозит,
+        # но состояние обязано быть видно (fail-open с криком).
+        self._brake = None
+        self.brake_skips = 0
         # Живой шум монеты для правила v11 сканера: кеш на минуту,
         # состав целых минут меняется раз в минуту, а сканер
         # спрашивает раз в пять секунд по всем кандидатам.
@@ -1881,6 +1887,19 @@ class Collector:
                                 traded_gate=gate)
         if books:
             out["books"] = books
+        # Дневной тормоз — состояние на страницу: без строки на экране
+        # час без входов при сработавшем тормозе читался бы как отказ,
+        # а тормоз, молча умерший, — как работающий (класс «защита,
+        # которой молча нет»). None до первого счёта — тоже состояние.
+        bs = getattr(self, "_brake", None)
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        out["day_brake"] = dict(
+            bs or {}, active=TR.day_brake_active(bs, now),
+            stale=(bs is None
+                   or now - float(bs.get("at") or 0)
+                   > TR.DAY_BRAKE_STALE_SEC))
         out["took_ms"] = took
         out["took_total_ms"] = round((time.time() - now) * 1000)
         self._model_cache = (now, out, rr_min)
@@ -4566,6 +4585,15 @@ class Collector:
         # обязано остановить входы, а не торговать прошлым).
         if now - (sheet.get("written_at") or 0) > 2 * 3600:
             return
+        # Дневной тормоз (забор): действует ли — решает ОДНО правило
+        # ядра (`day_brake_active`), то же, что у файла состояния.
+        # Неизвестное или устаревшее состояние не тормозит: fail-open,
+        # но состояние видно странице и статусу — защита, которой
+        # молча нет, хуже отсутствия защиты (урок ionice).
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        braked = TR.day_brake_active(getattr(self, "_brake", None), now)
         min_edge = float(sheet.get("min_edge_bp") or 22.0)
         # Отсутствие поля — не «правила нет»: лист прежнего образца
         # писался до требования скидки, и молчаливый ноль вернул бы
@@ -4627,7 +4655,13 @@ class Collector:
                            # правила книги, как min_rr; лист без поля
                            # — прежнее поведение (1 шум, порога нет).
                            float(b.get("noise_mult") or 1.0),
-                           float(b.get("min_stop_bp") or 0.0), stt)
+                           float(b.get("min_stop_bp") or 0.0),
+                           # Кого тормоз НЕ касается — объявляет лист
+                           # (наблюдательная запись: без неё цену
+                           # тормоза потом нечем измерить). Отсутствие
+                           # поля — книга тормозится: молчаливое
+                           # исключение сняло бы забор незаметно.
+                           bool(b.get("no_brake")), stt)
             # Порядок просмотра кандидатов — в единицах собственной σ
             # монеты (решение владельца о переводе ситуационных сделок
             # на per σ). Мест меньше, чем проходящих гейт, и слот
@@ -4692,9 +4726,21 @@ class Collector:
                     # секундой, которую владелец видел трижды.
                     continue
                 took = False
+                braked_hit = False
                 for d, (n_free, held, min_rr, max_rr, n_mult, m_stop,
-                        stt) in list(free.items()):
+                        no_brake, stt) in list(free.items()):
                     if n_free <= 0 or sym in held:
+                        continue
+                    # Дневной тормоз: вход торгуемой книги не берётся.
+                    # Выходов это не касается вовсе — их ведёт сторож
+                    # другой дорогой (вход — возможность, выход —
+                    # обязанность).
+                    if braked and not no_brake:
+                        braked_hit = True
+                        # Пропуск считается ЧИСЛОМ по каждой книге:
+                        # немаркированная тишина неотличима от отказа.
+                        self.brake_skips = getattr(
+                            self, "brake_skips", 0) + 1
                         continue
                     if key in stt["entered"]:
                         continue
@@ -4752,7 +4798,7 @@ class Collector:
                     stt["entered"].add(key)
                     held.add(sym)
                     free[d] = (n_free - 1, held, min_rr, max_rr,
-                               n_mult, m_stop, stt)
+                               n_mult, m_stop, no_brake, stt)
                     # Свежий вход сторожится с этой же секунды, не
                     # дожидаясь перечитывания файлов. `at_ts` обязателен:
                     # по нему страж свежести отличает позицию, открытую
@@ -4768,6 +4814,11 @@ class Collector:
                     took = True
                 if took:
                     armed.discard(key)
+                elif braked_hit:
+                    # Момент прошёл ПРИ тормозе: после полуночи гнаться
+                    # за пройденным движением нельзя (правило v5), имя
+                    # развзводится.
+                    armed.discard(key)
                     self.log(
                         f"ситуационная [{arm}]: живой вход {sym} "
                         f"{got['side']} (остаток {got['fwd']:+.0f} б.п. "
@@ -4775,6 +4826,72 @@ class Collector:
                         f"{abs(got['fwd']) - abs(got['fwd0']):+.0f}, RR "
                         f"{got['rr']}) — поймано в моменте")
 
+
+    BRAKE_TTL = 300           # период пересчёта тормоза, секунд
+
+    def brake_watch(self):
+        """Дневной тормоз: реализованный день торгуемых книг против
+        порога −1 % суммарного капитала (`trades.DAY_BRAKE_SHARE`).
+
+        Один ПИСАТЕЛЬ состояния на весь проект: сумму считает та же
+        дорога, что у лиги (`closed_rows` — деньги штампует касса), и
+        состояние уходит атомарным файлом `s8_loop/out/day_brake.json`
+        — его читают часовой цикл и страницы. Второй расчёт того же
+        числа в цикле однажды разошёлся бы с этим.
+
+        Пересчёт раз в BRAKE_TTL, в СВОЁМ потоке: обход книг стоит
+        секунды, а 5-секундный тик сторожа делит нить с ВЫХОДАМИ, и
+        блокировать его счётом нельзя. Плата — запаздывание тормоза до
+        пяти минут; реплей закладывал ноль, значит живой тормоз чуть
+        слабее замеренного, и это записано, а не спрятано.
+        """
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as TR
+        path = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                            TR.DAY_BRAKE_FILE)
+        n_books = len([k for k, _ in self.BOOKS
+                       if k not in self.ECHO_BOOKS])
+        limit = TR.day_brake_limit(n_books)
+        said = None
+        while not self.stop.wait(self.BRAKE_TTL):
+            now = time.time()
+            try:
+                rows, _err, _sc, _op = self.closed_rows()
+                realized = TR.day_realized(
+                    ((r["at"], r["pnl"]) for r in rows
+                     if r["hz"] not in self.ECHO_BOOKS), now)
+                st = {"at": round(now, 1), "limit": limit,
+                      "realized": round(realized, 2),
+                      "on": realized <= -limit,
+                      "skips": self.brake_skips}
+            except Exception as e:                    # noqa: BLE001
+                # Ошибка счёта — не молчание: состояние несёт причину,
+                # тормоз при этом не действует (fail-open), и страница
+                # обязана это показать.
+                st = {"at": round(now, 1), "limit": limit,
+                      "error": f"{type(e).__name__}: {e}"}
+            self._brake = st
+            try:
+                with open(path + ".tmp", "w", encoding="utf-8") as f:
+                    json.dump(st, f, ensure_ascii=False)
+                os.replace(path + ".tmp", path)
+            except OSError as e:
+                self.log(f"тормоз: состояние не записано: {e}")
+            state = (st.get("on"), st.get("error") is not None)
+            if state != said:
+                # Печать при СМЕНЕ состояния, не каждый тик: тревога,
+                # повторяющаяся вечно, перестаёт быть сигналом.
+                if st.get("error"):
+                    self.log(f"тормоз: счёт не удался — {st['error']}")
+                elif st.get("on"):
+                    self.log(f"ДНЕВНОЙ ТОРМОЗ: день {st['realized']:+.2f} $ "
+                             f"при пороге −{limit:.0f} — новые входы до "
+                             f"конца суток закрыты")
+                else:
+                    self.log(f"тормоз тих: день {st['realized']:+.2f} $ "
+                             f"при пороге −{limit:.0f}")
+                said = state
 
     def run(self, hours):
         deadline = self.started + hours * 3600 if hours else None
@@ -4784,6 +4901,7 @@ class Collector:
         threading.Thread(target=self.reporter, daemon=True).start()
         threading.Thread(target=self.diskstat, daemon=True).start()
         threading.Thread(target=self.sit_watch, daemon=True).start()
+        threading.Thread(target=self.brake_watch, daemon=True).start()
         if self.paper:
             threading.Thread(target=self._recount_watch,
                              daemon=True).start()

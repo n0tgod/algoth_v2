@@ -1321,7 +1321,31 @@ function renderModel() {
   // обещания пути не решают ни входа, ни выхода, и фильтровать их тем
   // же числом значило бы сравнивать разные вещи.
   const rrLine = isSit(d) ? rrControl(d) : "";
-  box.innerHTML = armBtns + rrLine + lagLine + gateLine
+  // Дневной тормоз — забор поверх ВСЕХ книг, и его состояние обязано
+  // стоять на странице всегда: сработавший тормоз без строки читался
+  // бы как отказ сборщика (час без входов), а тормоз, чьё состояние
+  // устарело, — как работающий. Три состояния — тихо / СРАБОТАЛ /
+  // неизвестен — различаются словами и числом.
+  const bk = full.day_brake;
+  const brakeLine = bk && bk.limit
+    ? (bk.error || bk.stale
+       ? `<div class="mline alarm">day brake state is UNKNOWN (${
+            bk.error ? "error: " + bk.error : "stale"}) — entries are
+          NOT braked; a fence that silently is not there is worse
+          than none, so this line shouts instead.</div>`
+       : (bk.active
+          ? `<div class="mline alarm">DAY BRAKE: realized today
+             <b>${(+bk.realized).toFixed(2)} $</b> is past
+             −<b>${(+bk.limit).toFixed(0)} $</b> (1 % of combined
+             book capital) — no new entries until the UTC day ends;
+             exits keep working.</div>`
+          : `<div class="mline dim">day brake quiet: realized today
+             <b>${(+bk.realized).toFixed(2)} $</b>, entries stop for
+             the day at −<b>${(+bk.limit).toFixed(0)} $</b> (replay
+             of the 08-24…27 drain: would have cut +572 $ of −2061
+             at a cost of ≈0 $ in the profitable base).</div>`))
+    : "";
+  box.innerHTML = armBtns + rrLine + brakeLine + lagLine + gateLine
     + stopLine + floorLine
     + `<div class="mline">trained on ${m.sections ?? "—"}
       cross-sections, ${m.symbols ?? "—"} coins · noise check ${

@@ -508,6 +508,13 @@ def test_pages_run_headless():
                 # обязаны назвать состояние словами, а не выдать его за
                 # «не развёрнуто» или поломку.
                 ("обзор, тень выключена", web.PAGE, "?k=xxx&botoff=1"),
+                # Дневной тормоз: сработавший обязан кричать числом,
+                # устаревшее состояние — кричать «неизвестен», а не
+                # молчать (защита, которой молча нет, хуже отсутствия).
+                ("обзор, дневной тормоз сработал", web.PAGE,
+                 "?k=xxx&brakeon=1"),
+                ("обзор, состояние тормоза устарело", web.PAGE,
+                 "?k=xxx&brakestale=1"),
                 ("ядро, тень выключена", web.BOTPAGE,
                  "?k=xxx&botoff=1")):
             p = os.path.join(d, "p.html")
@@ -3207,6 +3214,124 @@ def test_sit_scan_max_rr_takes_the_other_end():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_sit_scan_day_brake_blocks_traded_not_observation():
+    """Дневной тормоз в сканере: торгуемая книга не входит,
+    наблюдательная запись пишет (контрольная рука — без неё цену
+    тормоза потом нечем измерить), пропуски считаются числом, имя
+    развзводится (после полуночи гнаться за пройденным нельзя), а
+    устаревшее состояние не тормозит (fail-open — защита, которой
+    молча нет, хуже отсутствия)."""
+    import collect as C
+
+    def fresh_col():
+        col = C.Collector.__new__(C.Collector)
+        col.books = {}
+        col.log = lambda m: None
+        col.sit_noise = lambda sym, now: 0.0
+        col.brake_skips = 0
+        return col
+
+    class B:
+        def __init__(self, px):
+            self.px = px
+
+        def best(self):
+            return self.px * 0.9999, self.px * 1.0001
+
+    def setup(d, col, dirs):
+        rows = [{"sym": f"S{i}USDT", "fwd": 40.0, "mae": -40.0,
+                 "mfe": 90.0, "beta": 1.0, "px": 100.0}
+                for i in range(30)]
+        sheet = {"hour": "2026-08-29-10", "min_edge_bp": 22.0,
+                 "min_rr": 2.0, "min_disc_bp": 11.0, "slots": 6,
+                 "written_at": 1000.0, "arms": {"gbm": rows}}
+        for r in rows:
+            col.books[r["sym"]] = B(100.0)
+        want = [dict(w) for w in dirs]
+        books = {}
+        for b in want:
+            bd = os.path.join(d, b["dir"])
+            os.makedirs(bd, exist_ok=True)
+            books[bd] = {"dir": bd, "signalled": set(),
+                         "entered": set(), "pos": []}
+        return rows, sheet, want, books
+
+    rd = lambda d, b: C.Collector._jsonl(                 # noqa: E731
+        os.path.join(d, b, "entries_live.jsonl"))
+    d = tempfile.mkdtemp()
+    try:
+        # 1) Тормоз сработал: торгуемая молчит, наблюдательная пишет.
+        col = fresh_col()
+        rows, sheet, want, books = setup(d, col, (
+            {"dir": "trd", "min_rr": 2.0, "slots": 6},
+            {"dir": "obs", "min_rr": 0.0, "slots": 6,
+             "no_brake": True}))
+        col._brake = {"at": 1000.0, "on": True, "limit": 300.0,
+                      "realized": -312.4}
+        armed = set()
+        # Двигается ТОЛЬКО кандидат: общий ход всех имён и есть волна,
+        # и остаток у всех вышел бы нулевым (гейт не сработал бы, а
+        # тест проверял бы пустоту). Тот же приём, что в тесте потолка
+        # отношения.
+        col.books[rows[0]["sym"]] = B(100.10)
+        col._sit_scan(d, sheet, want, books, 1000.0, armed)
+        col.books[rows[0]["sym"]] = B(99.80)
+        col._sit_scan(d, sheet, want, books, 1005.0, armed)
+        check("торгуемая книга под тормозом не входит",
+              not rd(d, "trd"), str([e.get("sym")
+                                     for e in rd(d, "trd")]))
+        check("наблюдательная запись пишет и под тормозом",
+              len(rd(d, "obs")) > 0, "контрольная рука пропала")
+        check("пропуски тормоза считаются числом",
+              col.brake_skips > 0, str(col.brake_skips))
+
+        # 2) Только торгуемая: имя развзводится, и после снятия
+        # тормоза вход НЕ происходит — момент прошёл при тормозе.
+        d2 = os.path.join(d, "solo")
+        os.makedirs(d2, exist_ok=True)
+        col2 = fresh_col()
+        rows2, sheet2, want2, books2 = setup(d2, col2, (
+            {"dir": "trd", "min_rr": 2.0, "slots": 6},))
+        col2._brake = {"at": 1000.0, "on": True, "limit": 300.0}
+        armed2 = set()
+        key2 = ("gbm", sheet2["hour"], rows2[0]["sym"])
+        col2.books[rows2[0]["sym"]] = B(100.10)
+        col2._sit_scan(d2, sheet2, want2, books2, 1000.0, armed2)
+        was_armed = key2 in armed2
+        col2.books[rows2[0]["sym"]] = B(99.80)
+        col2._sit_scan(d2, sheet2, want2, books2, 1005.0, armed2)
+        # Развзводится ИМЯ-кандидат: остальные имена взводятся своим
+        # чередом, и требовать пустого множества значило бы проверять
+        # чужое поведение.
+        check("пересечение при тормозе развзводит имя",
+              was_armed and key2 not in armed2,
+              f"взведено: {was_armed}, осталось взведённым: "
+              f"{key2 in armed2}")
+        col2._brake = {"at": 1010.0, "on": False}
+        col2._sit_scan(d2, sheet2, want2, books2, 1010.0, armed2)
+        check("после снятия тормоза пройденный момент не торгуется",
+              not rd(d2, "trd"),
+              str([e.get("sym") for e in rd(d2, "trd")]))
+
+        # 3) Устаревшее состояние не тормозит (fail-open).
+        d3 = os.path.join(d, "stale")
+        os.makedirs(d3, exist_ok=True)
+        col3 = fresh_col()
+        rows3, sheet3, want3, books3 = setup(d3, col3, (
+            {"dir": "trd", "min_rr": 2.0, "slots": 6},))
+        col3._brake = {"at": 1000.0 - 4000, "on": True, "limit": 300.0}
+        armed3 = set()
+        col3.books[rows3[0]["sym"]] = B(100.10)
+        col3._sit_scan(d3, sheet3, want3, books3, 1000.0, armed3)
+        col3.books[rows3[0]["sym"]] = B(99.80)
+        col3._sit_scan(d3, sheet3, want3, books3, 1005.0, armed3)
+        check("устаревшее состояние тормоза не запирает вход",
+              len(rd(d3, "trd")) > 0, "fail-open сломан")
+    finally:
+        import shutil
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_sit_scan_enters_only_on_a_crossing_it_saw():
     """Вход — событие, а не состояние, в котором имя застали.
 
@@ -5591,6 +5716,7 @@ def main():
     test_sit_scan_stop_is_the_quantile_level()
     test_sit_scan_max_rr_takes_the_other_end()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
+    test_sit_scan_day_brake_blocks_traded_not_observation()
     test_sit_scan_book_noise_multiplier()
     test_sit_scan_min_stop_book_rule()
     test_take_limit_fill_and_exit_event()
