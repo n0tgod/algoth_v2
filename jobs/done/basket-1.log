@@ -5,3 +5,17 @@
 gbm: часов 447, ячеек 20
 nn: часов 447, ячеек 20
 отчёт: /root/algoth_v2/research/probe_basket/out/BASKET-report-1m.md · 16.3 с
+публикуется в ветку main:
+ jobs/done/basket-1.done                       |   1 +
+ jobs/done/basket-1.log                        |   7 +
+ jobs/done/bookdays-probe.log                  |  10 +
+ jobs/poke.log                                 |   3 +
+ research/probe_basket/out/BASKET-report-1m.md |  61 ++
+ research/probe_basket/out/basket-1m.json      | 861 ++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json           |   2 +-
+ 7 files changed, 944 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   ba4d5eb..b5a83b6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-29T22:01:50Z, код 0
