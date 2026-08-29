@@ -1,0 +1,861 @@
+{
+ "leg_usd": 20.833333333333332,
+ "capital": 3000.0,
+ "cells": {
+  "gbm": [
+   {
+    "take": 0.025,
+    "floor": 0.025,
+    "realized": 139.98,
+    "open_mark": -0.14,
+    "open_legs": 6,
+    "baskets": 16,
+    "n_take": 9,
+    "n_floor": 7,
+    "worst_basket": -107.33,
+    "age_med_h": 28,
+    "age_max_h": 104,
+    "max_dd": -306.06,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 515,
+     "name_cap": 37,
+     "opposite": 196,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": 0.05,
+    "realized": 258.79,
+    "open_mark": -69.29,
+    "open_legs": 98,
+    "baskets": 11,
+    "n_take": 8,
+    "n_floor": 3,
+    "worst_basket": -187.31,
+    "age_med_h": 35,
+    "age_max_h": 84,
+    "max_dd": -402.09,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 962,
+     "name_cap": 18,
+     "opposite": 168,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": 0.1,
+    "realized": 370.03,
+    "open_mark": -175.23,
+    "open_legs": 144,
+    "baskets": 4,
+    "n_take": 4,
+    "n_floor": 0,
+    "worst_basket": 76.59,
+    "age_med_h": 23,
+    "age_max_h": 247,
+    "max_dd": -275.41,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1796,
+     "name_cap": 1,
+     "opposite": 244,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": 0.2,
+    "realized": 370.03,
+    "open_mark": -175.23,
+    "open_legs": 144,
+    "baskets": 4,
+    "n_take": 4,
+    "n_floor": 0,
+    "worst_basket": 76.59,
+    "age_med_h": 23,
+    "age_max_h": 247,
+    "max_dd": -275.41,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1796,
+     "name_cap": 1,
+     "opposite": 244,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": null,
+    "realized": 370.03,
+    "open_mark": -175.23,
+    "open_legs": 144,
+    "baskets": 4,
+    "n_take": 4,
+    "n_floor": 0,
+    "worst_basket": 76.59,
+    "age_med_h": 23,
+    "age_max_h": 247,
+    "max_dd": -275.41,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1796,
+     "name_cap": 1,
+     "opposite": 244,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.025,
+    "realized": 604.42,
+    "open_mark": 110.34,
+    "open_legs": 144,
+    "baskets": 11,
+    "n_take": 6,
+    "n_floor": 5,
+    "worst_basket": -95.09,
+    "age_med_h": 33,
+    "age_max_h": 98,
+    "max_dd": -221.53,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 833,
+     "name_cap": 33,
+     "opposite": 243,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.05,
+    "realized": 639.44,
+    "open_mark": -5.81,
+    "open_legs": 24,
+    "baskets": 10,
+    "n_take": 7,
+    "n_floor": 3,
+    "worst_basket": -186.35,
+    "age_med_h": 54,
+    "age_max_h": 83,
+    "max_dd": -393.63,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1016,
+     "name_cap": 42,
+     "opposite": 236,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.1,
+    "realized": 639.07,
+    "open_mark": -2.26,
+    "open_legs": 144,
+    "baskets": 7,
+    "n_take": 6,
+    "n_floor": 1,
+    "worst_basket": -309.79,
+    "age_med_h": 54,
+    "age_max_h": 98,
+    "max_dd": -522.98,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1270,
+     "name_cap": 64,
+     "opposite": 214,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.2,
+    "realized": 948.86,
+    "open_mark": -297.15,
+    "open_legs": 144,
+    "baskets": 6,
+    "n_take": 6,
+    "n_floor": 0,
+    "worst_basket": 151.3,
+    "age_med_h": 54,
+    "age_max_h": 96,
+    "max_dd": -577.53,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1430,
+     "name_cap": 64,
+     "opposite": 198,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": null,
+    "realized": 948.86,
+    "open_mark": -297.15,
+    "open_legs": 144,
+    "baskets": 6,
+    "n_take": 6,
+    "n_floor": 0,
+    "worst_basket": 151.3,
+    "age_med_h": 54,
+    "age_max_h": 96,
+    "max_dd": -577.53,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1430,
+     "name_cap": 64,
+     "opposite": 198,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.025,
+    "realized": 314.63,
+    "open_mark": 125.42,
+    "open_legs": 144,
+    "baskets": 1,
+    "n_take": 1,
+    "n_floor": 0,
+    "worst_basket": 314.63,
+    "age_med_h": 101,
+    "age_max_h": 101,
+    "max_dd": -266.32,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2157,
+     "name_cap": 14,
+     "opposite": 223,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.05,
+    "realized": 314.63,
+    "open_mark": 125.42,
+    "open_legs": 144,
+    "baskets": 1,
+    "n_take": 1,
+    "n_floor": 0,
+    "worst_basket": 314.63,
+    "age_med_h": 101,
+    "age_max_h": 101,
+    "max_dd": -266.32,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2157,
+     "name_cap": 14,
+     "opposite": 223,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.1,
+    "realized": 314.63,
+    "open_mark": 125.42,
+    "open_legs": 144,
+    "baskets": 1,
+    "n_take": 1,
+    "n_floor": 0,
+    "worst_basket": 314.63,
+    "age_med_h": 101,
+    "age_max_h": 101,
+    "max_dd": -266.32,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2157,
+     "name_cap": 14,
+     "opposite": 223,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.2,
+    "realized": 314.63,
+    "open_mark": 125.42,
+    "open_legs": 144,
+    "baskets": 1,
+    "n_take": 1,
+    "n_floor": 0,
+    "worst_basket": 314.63,
+    "age_med_h": 101,
+    "age_max_h": 101,
+    "max_dd": -266.32,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2157,
+     "name_cap": 14,
+     "opposite": 223,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": null,
+    "realized": 314.63,
+    "open_mark": 125.42,
+    "open_legs": 144,
+    "baskets": 1,
+    "n_take": 1,
+    "n_floor": 0,
+    "worst_basket": 314.63,
+    "age_med_h": 101,
+    "age_max_h": 101,
+    "max_dd": -266.32,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2157,
+     "name_cap": 14,
+     "opposite": 223,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.025,
+    "realized": 0.0,
+    "open_mark": 328.79,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -225.99,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2306,
+     "name_cap": 0,
+     "opposite": 232,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.05,
+    "realized": 0.0,
+    "open_mark": 328.79,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -225.99,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2306,
+     "name_cap": 0,
+     "opposite": 232,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.1,
+    "realized": 0.0,
+    "open_mark": 328.79,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -225.99,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2306,
+     "name_cap": 0,
+     "opposite": 232,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.2,
+    "realized": 0.0,
+    "open_mark": 328.79,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -225.99,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2306,
+     "name_cap": 0,
+     "opposite": 232,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": null,
+    "realized": 0.0,
+    "open_mark": 328.79,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -225.99,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2306,
+     "name_cap": 0,
+     "opposite": 232,
+     "no_price": 0
+    }
+   }
+  ],
+  "nn": [
+   {
+    "take": 0.025,
+    "floor": 0.025,
+    "realized": 452.65,
+    "open_mark": -3.15,
+    "open_legs": 77,
+    "baskets": 18,
+    "n_take": 11,
+    "n_floor": 7,
+    "worst_basket": -99.5,
+    "age_med_h": 25,
+    "age_max_h": 60,
+    "max_dd": -247.92,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 283,
+     "name_cap": 66,
+     "opposite": 156,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": 0.05,
+    "realized": 517.46,
+    "open_mark": 13.51,
+    "open_legs": 144,
+    "baskets": 11,
+    "n_take": 9,
+    "n_floor": 2,
+    "worst_basket": -152.79,
+    "age_med_h": 35,
+    "age_max_h": 94,
+    "max_dd": -252.99,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 751,
+     "name_cap": 73,
+     "opposite": 274,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": 0.1,
+    "realized": 404.84,
+    "open_mark": -194.33,
+    "open_legs": 144,
+    "baskets": 9,
+    "n_take": 8,
+    "n_floor": 1,
+    "worst_basket": -335.79,
+    "age_med_h": 24,
+    "age_max_h": 140,
+    "max_dd": -482.18,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1095,
+     "name_cap": 63,
+     "opposite": 244,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": 0.2,
+    "realized": -61.52,
+    "open_mark": -14.6,
+    "open_legs": 89,
+    "baskets": 7,
+    "n_take": 6,
+    "n_floor": 1,
+    "worst_basket": -633.59,
+    "age_med_h": 24,
+    "age_max_h": 319,
+    "max_dd": -773.98,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1467,
+     "name_cap": 58,
+     "opposite": 204,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.025,
+    "floor": null,
+    "realized": 572.07,
+    "open_mark": -522.06,
+    "open_legs": 144,
+    "baskets": 6,
+    "n_take": 6,
+    "n_floor": 0,
+    "worst_basket": 75.58,
+    "age_med_h": 24,
+    "age_max_h": 52,
+    "max_dd": -697.58,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1557,
+     "name_cap": 58,
+     "opposite": 203,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.025,
+    "realized": 252.82,
+    "open_mark": -3.15,
+    "open_legs": 77,
+    "baskets": 7,
+    "n_take": 3,
+    "n_floor": 4,
+    "worst_basket": -99.5,
+    "age_med_h": 35,
+    "age_max_h": 227,
+    "max_dd": -247.92,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1449,
+     "name_cap": 30,
+     "opposite": 214,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.05,
+    "realized": 155.52,
+    "open_mark": -96.39,
+    "open_legs": 144,
+    "baskets": 3,
+    "n_take": 2,
+    "n_floor": 1,
+    "worst_basket": -159.97,
+    "age_med_h": 83,
+    "age_max_h": 120,
+    "max_dd": -341.09,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1856,
+     "name_cap": 18,
+     "opposite": 232,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.1,
+    "realized": 9.89,
+    "open_mark": -161.4,
+    "open_legs": 144,
+    "baskets": 3,
+    "n_take": 2,
+    "n_floor": 1,
+    "worst_basket": -305.59,
+    "age_med_h": 83,
+    "age_max_h": 244,
+    "max_dd": -557.63,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1831,
+     "name_cap": 18,
+     "opposite": 257,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": 0.2,
+    "realized": 315.49,
+    "open_mark": -455.35,
+    "open_legs": 144,
+    "baskets": 2,
+    "n_take": 2,
+    "n_floor": 0,
+    "worst_basket": 151.48,
+    "age_med_h": 83,
+    "age_max_h": 83,
+    "max_dd": -640.3,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2015,
+     "name_cap": 18,
+     "opposite": 217,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.05,
+    "floor": null,
+    "realized": 315.49,
+    "open_mark": -455.35,
+    "open_legs": 144,
+    "baskets": 2,
+    "n_take": 2,
+    "n_floor": 0,
+    "worst_basket": 151.48,
+    "age_med_h": 83,
+    "age_max_h": 83,
+    "max_dd": -640.3,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2015,
+     "name_cap": 18,
+     "opposite": 217,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.025,
+    "realized": 457.5,
+    "open_mark": 9.77,
+    "open_legs": 144,
+    "baskets": 8,
+    "n_take": 3,
+    "n_floor": 5,
+    "worst_basket": -99.5,
+    "age_med_h": 56,
+    "age_max_h": 103,
+    "max_dd": -247.92,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1091,
+     "name_cap": 71,
+     "opposite": 224,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.05,
+    "realized": -191.09,
+    "open_mark": -0.07,
+    "open_legs": 24,
+    "baskets": 4,
+    "n_take": 1,
+    "n_floor": 3,
+    "worst_basket": -183.07,
+    "age_med_h": 144,
+    "age_max_h": 242,
+    "max_dd": -580.14,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1851,
+     "name_cap": 26,
+     "opposite": 215,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.1,
+    "realized": -360.33,
+    "open_mark": -0.07,
+    "open_legs": 24,
+    "baskets": 3,
+    "n_take": 1,
+    "n_floor": 2,
+    "worst_basket": -336.07,
+    "age_med_h": 144,
+    "age_max_h": 274,
+    "max_dd": -749.38,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1986,
+     "name_cap": 28,
+     "opposite": 212,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": 0.2,
+    "realized": 305.31,
+    "open_mark": -382.42,
+    "open_legs": 144,
+    "baskets": 1,
+    "n_take": 1,
+    "n_floor": 0,
+    "worst_basket": 305.31,
+    "age_med_h": 144,
+    "age_max_h": 144,
+    "max_dd": -571.91,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2207,
+     "name_cap": 12,
+     "opposite": 175,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.1,
+    "floor": null,
+    "realized": 305.31,
+    "open_mark": -382.42,
+    "open_legs": 144,
+    "baskets": 1,
+    "n_take": 1,
+    "n_floor": 0,
+    "worst_basket": 305.31,
+    "age_med_h": 144,
+    "age_max_h": 144,
+    "max_dd": -571.91,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2207,
+     "name_cap": 12,
+     "opposite": 175,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.025,
+    "realized": -466.92,
+    "open_mark": -0.07,
+    "open_legs": 24,
+    "baskets": 5,
+    "n_take": 0,
+    "n_floor": 5,
+    "worst_basket": -123.22,
+    "age_med_h": 35,
+    "age_max_h": 365,
+    "max_dd": -732.43,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 1769,
+     "name_cap": 43,
+     "opposite": 216,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.05,
+    "realized": 0.0,
+    "open_mark": 265.62,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -258.02,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2340,
+     "name_cap": 4,
+     "opposite": 194,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.1,
+    "realized": 0.0,
+    "open_mark": 265.62,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -258.02,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2340,
+     "name_cap": 4,
+     "opposite": 194,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": 0.2,
+    "realized": 0.0,
+    "open_mark": 265.62,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -258.02,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2340,
+     "name_cap": 4,
+     "opposite": 194,
+     "no_price": 0
+    }
+   },
+   {
+    "take": 0.2,
+    "floor": null,
+    "realized": 0.0,
+    "open_mark": 265.62,
+    "open_legs": 144,
+    "baskets": 0,
+    "n_take": 0,
+    "n_floor": 0,
+    "worst_basket": null,
+    "age_med_h": null,
+    "age_max_h": null,
+    "max_dd": -258.02,
+    "blocked_hours": 0,
+    "skipped": {
+     "no_cash": 2340,
+     "name_cap": 4,
+     "opposite": 194,
+     "no_price": 0
+    }
+   }
+  ]
+ },
+ "baseline": {
+  "gbm": {
+   "n": 2386,
+   "pnl": 623.94
+  },
+  "nn": {
+   "n": 2095,
+   "pnl": 421.66
+  }
+ },
+ "took_sec": 16.3
+}

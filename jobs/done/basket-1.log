@@ -1,0 +1,7 @@
+== задание basket-1 ==
+строка: run research/probe_basket/basket.py --tag 1m
+начало: 2026-08-29T22:01:31Z
+запускаю: .venv/bin/python research/probe_basket/basket.py --tag 1m
+gbm: часов 447, ячеек 20
+nn: часов 447, ячеек 20
+отчёт: /root/algoth_v2/research/probe_basket/out/BASKET-report-1m.md · 16.3 с

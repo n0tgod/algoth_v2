@@ -14,3 +14,13 @@ z                 19    3438   54.2 %      +400.33 $  2026-08-11   2026-08-29
 
 sit_obs: unknown=True суток=0 (ожидание: unknown=True, суток 0)
 конец: 2026-08-29T14:35:14Z, код 0
+публикуется в ветку main:
+ jobs/done/bookdays-probe.done       |  1 +
+ jobs/done/bookdays-probe.log        | 16 ++++++++++++++++
+ jobs/done/deploy-bookdays.log       | 10 ++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 28 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   8c96f02..bc38741  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
