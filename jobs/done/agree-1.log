@@ -15,3 +15,18 @@
 [22:14:44] sit_obs · gbm: обе 313, одна 2041, Δ -44.3 б.п. (p 0.939)
 [22:14:45] sit_obs · nn: обе 313, одна 2383, Δ +23.5 б.п. (p 0.136)
 [22:14:45] отчёт: /root/algoth_v2/research/probe_agree/out/AGREE-1m.md
+публикуется в ветку main:
+ jobs/done/agree-1.done                 |   1 +
+ jobs/done/agree-1.log                  |  17 +++
+ jobs/done/status-after-tree.done       |   1 +
+ jobs/done/status-after-tree.log        |   8 ++
+ jobs/poke.log                          |   3 +
+ research/probe_agree/out/AGREE-1m.md   |  34 +++++
+ research/probe_agree/out/agree-1m.json | 231 +++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 8 files changed, 296 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   180cd25..9de3d37  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-30T22:14:47Z, код 0
