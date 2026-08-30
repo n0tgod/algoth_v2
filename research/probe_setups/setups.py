@@ -187,6 +187,11 @@ def book_rows(mdir, hz):
             "hz": hz, "arm": arm, "hour": t.get("hour"),
             "sym": t.get("sym"), "side": t.get("side"),
             "ts": float(ts), "net": float(t.get("net_bp") or 0.0),
+            # Момент ВХОДА отдельно от момента денег: состояние толпы
+            # (funding, интерес) существует в момент решения, а `ts`
+            # выше — выход; судья хвостов читает это поле.
+            "opened_at": (float(t["opened_at"])
+                          if t.get("opened_at") else None),
             "pnl": float(t["pnl"]),
             # Ярлык КОПИИ. Ярлык решения считается отдельно и заменяет
             # его: одно решение не вправе входить в два семейства.
