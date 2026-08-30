@@ -25,3 +25,17 @@
 [22:50:16] V1 funding (толпа в лонге): sit_lo · nn — шортов 164
 [22:50:16] V2 прирост интереса 24 ч: sit_lo · nn — шортов 159
 [22:50:16] отчёт: /root/algoth_v2/research/probe_tailveto/out/TAILVETO-1m.md · 27 с
+публикуется в ветку main:
+ jobs/done/tailveto-1.log                     | 10 ++++
+ jobs/done/tailveto-2.done                    |  1 +
+ jobs/done/tailveto-2.log                     | 27 +++++++++++
+ jobs/poke.log                                |  3 ++
+ research/probe_tailveto/out/TAILVETO-1m.md   | 70 ++++++++++++++++++++++++++++
+ research/probe_tailveto/out/tailveto-1m.json |  1 +
+ research/s8_loop/out/day_brake.json          |  2 +-
+ 7 files changed, 113 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e53dfb5..78dc330  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-30T22:50:18Z, код 0
