@@ -1,0 +1,61 @@
+{
+ "blocks": [
+  {
+   "vector": "vectors_h5_day.npz",
+   "rows": [
+    {
+     "feat": "mkt_corr",
+     "name": "корреляция с волной рынка, 90 дней, без себя",
+     "ic_all": -0.0018856766123223163,
+     "bins": [
+      0.0119,
+      -0.0026,
+      -0.0033
+     ],
+     "spread_med": 0.24,
+     "rand_spread_med": 0.2552,
+     "wider": 0.464,
+     "best_share": [
+      0.357,
+      0.324,
+      0.32
+     ],
+     "top_bin": 0,
+     "top_share": 0.357,
+     "sections": 1326
+    }
+   ],
+   "days": 1326
+  },
+  {
+   "vector": "vectors_h1_day.npz",
+   "rows": [
+    {
+     "feat": "mkt_corr",
+     "name": "корреляция с волной рынка, 90 дней, без себя",
+     "ic_all": -0.0009113095339603613,
+     "bins": [
+      -0.0029,
+      0.0063,
+      -0.0031
+     ],
+     "spread_med": 0.2438,
+     "rand_spread_med": 0.2553,
+     "wider": 0.465,
+     "best_share": [
+      0.341,
+      0.339,
+      0.32
+     ],
+     "top_bin": 0,
+     "top_share": 0.341,
+     "sections": 1330
+    }
+   ],
+   "days": 1330
+  }
+ ],
+ "meta": {
+  "when": "2026-08-30 21:52 UTC"
+ }
+}
