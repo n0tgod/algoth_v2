@@ -178,3 +178,6 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788040890 ==
 [2026-08-29T22:01:31Z] задание basket-1 запущено: research/probe_basket/basket.py
+
+== сигнал 1788076937 ==
+[2026-08-30T08:02:18Z] задание basket-2 запущено: research/probe_basket/basket.py

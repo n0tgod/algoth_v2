@@ -1,0 +1,7 @@
+== задание basket-2 ==
+строка: run research/probe_basket/basket.py --rules
+начало: 2026-08-30T08:02:18Z
+запускаю: .venv/bin/python research/probe_basket/basket.py --rules
+gbm: часов 452, вариантов 6
+nn: часов 452, вариантов 6
+отчёт: /root/algoth_v2/research/probe_basket/out/BASKET-rules-1m.md · 26.2 с
