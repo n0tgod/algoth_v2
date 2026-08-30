@@ -1,0 +1,15 @@
+== задание tailveto-1 ==
+строка: run research/probe_tailveto/tailveto.py
+начало: 2026-08-30T22:48:10Z
+запускаю: .venv/bin/python research/probe_tailveto/tailveto.py 
+[22:48:10] сводки → матрицы
+[22:48:37] матрицы 739 имён × 749 часов
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/probe_tailveto/tailveto.py", line 330, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/root/algoth_v2/research/probe_tailveto/tailveto.py", line 280, in main
+    rows, mman, _real, _when = SP.book_rows(mdir, hz)
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 4, got 3)
+конец: 2026-08-30T22:48:37Z, код 1
