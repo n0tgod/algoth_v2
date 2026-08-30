@@ -77,6 +77,19 @@ def log_(m):
     print(f"[{time.strftime('%H:%M:%S')}] {m}", flush=True)
 
 
+def mem_avail_mb():
+    """Свободная память машины: реплей живёт рядом со сборщиком, чья
+    запись невосполнима, и первый прогон зонда убило ядро по памяти
+    (код 137) на матрице запретов."""
+    try:
+        for ln in open("/proc/meminfo"):
+            if ln.startswith("MemAvailable"):
+                return int(ln.split()[1]) // 1024
+    except OSError:
+        pass
+    return -1
+
+
 def fmt_bp(v):
     return "—" if v is None or not np.isfinite(v) else f"{v * 1e4:+.1f}"
 
@@ -202,7 +215,8 @@ def main(argv=None):
             sub = {k: v[mask] for k, v in rec.items()}
             arms = []
             for arm in ("event", "control2"):
-                log_(f"замер: {part}, рука {arm}")
+                log_(f"замер: {part}, рука {arm} "
+                     f"(память: {mem_avail_mb()} МБ свободно)")
                 arms.append((
                     "событие (рост + падение интереса)"
                     if arm == "event"

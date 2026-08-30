@@ -133,7 +133,7 @@ def by_episode(values, ep):
 
 
 def ban_matrix(shape, rows, j_list, guard_min=CROSS_GUARD_MIN,
-               step_min=STEP_MIN):
+               step_min=STEP_MIN, chunk_rows=128):
     """Кто в какой момент считается «каскадящим» и не входит в фон.
 
     Матрицей, а не словарём множеств: на минутной сетке защитное окно в
@@ -147,16 +147,32 @@ def ban_matrix(shape, rows, j_list, guard_min=CROSS_GUARD_MIN,
     присваиваний. Разностный массив стоит O(событий + строк × ячеек)
     независимо от ширины окна; результат тождествен прямой записи и это
     закреплено тестом.
+
+    Строки заполняются пачками по `chunk_rows`: разностный int32 на
+    полном срезе (618 × 262657) держал ~1.3 ГБ поверх готового
+    результата, и зонд каскада вверх был убит ядром по памяти рядом с
+    часовым обучением цикла. Строки независимы, пачка даёт ТОТ ЖЕ
+    результат (закреплено тестом на размерах пачки 1/2/128) — тот же
+    приём, что `guard_matrix` в D1.
     """
     g = steps(guard_min, step_min)
     n = shape[1]
-    acc = np.zeros((shape[0], n + 1), dtype=np.int32)
     r = np.asarray(rows, dtype=np.int64)
     j = np.asarray(j_list, dtype=np.int64)
-    if len(j):
-        np.add.at(acc, (r, np.clip(j - g, 0, n)), 1)
-        np.add.at(acc, (r, np.clip(j + g + 1, 0, n)), -1)
-    return np.cumsum(acc[:, :n], axis=1) > 0
+    out = np.zeros(shape, dtype=bool)
+    if len(j) == 0:
+        return out
+    step_r = max(1, int(chunk_rows))
+    for lo in range(0, shape[0], step_r):
+        hi = min(lo + step_r, shape[0])
+        m = (r >= lo) & (r < hi)
+        if not m.any():
+            continue
+        acc = np.zeros((hi - lo, n + 1), dtype=np.int32)
+        np.add.at(acc, (r[m] - lo, np.clip(j[m] - g, 0, n)), 1)
+        np.add.at(acc, (r[m] - lo, np.clip(j[m] + g + 1, 0, n)), -1)
+        out[lo:hi] = np.cumsum(acc[:, :n], axis=1) > 0
+    return out
 
 
 def cross_section(P, j_list, rows, horizon_min,

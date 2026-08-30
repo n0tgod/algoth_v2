@@ -156,6 +156,14 @@ def test_ban_matrix_matches_direct_fill():
         check(f"защитное окно {guard}: совпало с прямой записью",
               bool(np.array_equal(got, want)),
               f"расхождений {int((got != want).sum())}")
+        # Пачечное заполнение обязано давать тот же результат при
+        # любом размере пачки — граница пачки внутри ряда событий.
+        for ch in (1, 2, 128):
+            got_c = E.ban_matrix(shape, rows, cols, guard_min=guard,
+                                 step_min=1, chunk_rows=ch)
+            check(f"окно {guard}, пачка {ch}: бит в бит",
+                  bool(np.array_equal(got_c, want)),
+                  f"расхождений {int((got_c != want).sum())}")
     empty = E.ban_matrix(shape, np.array([], dtype=np.int64),
                          np.array([], dtype=np.int64), guard_min=5,
                          step_min=1)
