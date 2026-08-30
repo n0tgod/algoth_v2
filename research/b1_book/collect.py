@@ -2017,8 +2017,9 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         sit = bool(mman.get("situational"))
-        hold = None if sit else int(mman.get("horizon_h") or TR.HOLD_H)
-        path_h = int(mman.get("max_age_h") or 24) if sit else hold
+        hold = self.book_hold(mman, TR.HOLD_H)
+        path_h = (int(mman.get("max_age_h") or 24) if hold is None
+                  else hold)
         picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
         revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
         tr = TR.build(picks, revs, hold_h=hold,
@@ -2294,6 +2295,11 @@ class Collector:
                     "exit_policy": mman.get("exit_policy"),
                     "noise_mult": mman.get("noise_mult"),
                     "min_stop_bp": mman.get("min_stop_bp"),
+                    "no_timer": bool(mman.get("no_timer")),
+                    "basket_take_share": mman.get("basket_take_share"),
+                    "basket_floor_share":
+                        mman.get("basket_floor_share"),
+                    "basket_age_h": mman.get("basket_age_h"),
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
@@ -2464,6 +2470,7 @@ class Collector:
     # целиком. Каталог `model_h1` на диске остаётся записью.
     BOOK_DIRS = {"h4": "model", "h24": "model_h24",
                  "h24b": "model_h24b", "h24bf": "model_h24bf",
+                 "h24c": "model_h24c",
                  "sit": "model_sit", "sit_obs": "model_sit_obs",
                  "sit_r": "model_sit_r", "sit_lo": "model_sit_lo",
                  "z": "model_h24z"}
@@ -2472,18 +2479,35 @@ class Collector:
     BOOKS = (("h4", "model"),
              ("h24", "model_h24"),
              ("h24b", "model_h24b"), ("h24bf", "model_h24bf"),
+             ("h24c", "model_h24c"),
              ("sit", "model_sit"),
              # Книга низкого RR дизъюнктна с торгуемой по построению
              # (rr ≤ 1.5 против rr ≥ 2) — двойного счёта решений нет.
              ("sit_lo", "model_sit_lo"),
              ("sit_r", "model_sit_r"), ("z", "model_h24z"))
+
+    @staticmethod
+    def book_hold(mman, default_h):
+        """Срок сборки сделок книги; None — у книги нет таймера.
+
+        Без срока живут ситуационные книги (выход по уровню, не по
+        времени) и корзинная `h24c` (`no_timer` в манифесте:
+        единственный выход — закрытие корзины целиком). Сборка с
+        горизонтом переводила бы их позиции в «ждёт разбора» по часам
+        и возвращала бы кассе деньги, которые позиция ещё держит.
+        Правило жило четырьмя копиями выражения — четвёртая дорога до
+        показа однажды разошлась бы с остальными.
+        """
+        if mman.get("situational") or mman.get("no_timer"):
+            return None
+        return int(mman.get("horizon_h") or default_h)
     # Книги-эхо: ТЕ ЖЕ решения, что у книги-источника, под другим
     # правилом — размера (sit_r, равный доллар риска) либо выхода
     # (h24b/h24bf, корзинный тейк и пол). Свои деньги у них
     # настоящие, но в сводных суммах (лига, корень дерева, разбивка
     # волатильности) они считали бы одни решения дважды — исключаются
     # там по этому множеству, а не по имени в каждом месте.
-    ECHO_BOOKS = {"sit_r", "h24b", "h24bf"}
+    ECHO_BOOKS = {"sit_r", "h24b", "h24bf", "h24c"}
 
     # Дерево моделей: что за логику проверяет каждая ветка, простыми
     # словами и на обоих языках разом (правило справочника: разъехавшись,
@@ -2772,6 +2796,42 @@ class Collector:
                         "различаются ровно этим правилом, и разница "
                         "их кривых принадлежит полу. В лигу и сумму "
                         "корня не входит."},
+        "h24c": {
+            "title": "24 h · basket only — no per-leg exits",
+            "title_ru": "24 ч · только корзина — без отдельных "
+                        "выходов",
+            "plain": "The owner's construction from the basket "
+                     "replay: the SAME picks as the 24 h book, but a "
+                     "leg NEVER closes on its own — no timer, no "
+                     "individual stop or target. The whole basket "
+                     "closes at once on one of three declared "
+                     "triggers: +5 % of capital, −5 %, or basket age "
+                     "24 h (the signal's own horizon — the only "
+                     "threshold with an anchor; 48 h looked better "
+                     "in the replay but picking it would be choosing "
+                     "by the seen surface). The age limit is what "
+                     "keeps the book from the replay's diseases: a "
+                     "fully-invested blind book and legs living past "
+                     "anything the model claimed. Not in league or "
+                     "root sums: an echo of the same decisions; the "
+                     "verdict needs calendar, not weeks.",
+            "plain_ru": "Конструкция владельца из корзинного реплея: "
+                        "ТЕ ЖЕ выборы, что у книги 24 ч, но нога не "
+                        "закрывается сама НИКОГДА — ни таймера, ни "
+                        "отдельного стопа или цели. Корзина "
+                        "закрывается только целиком по одному из "
+                        "трёх объявленных поводов: +5 % капитала, "
+                        "−5 % либо возраст корзины 24 ч (горизонт "
+                        "самого сигнала — единственный порог с "
+                        "якорем; 48 ч в реплее выглядел лучше, но "
+                        "взять его значило бы выбрать по "
+                        "просмотренной поверхности). Именно лимит "
+                        "возраста снимает болезни реплея — слепую "
+                        "вложенную книгу и ноги, живущие дольше "
+                        "того, о чём модель что-то утверждала. В "
+                        "лигу и сумму корня не входит: эхо тех же "
+                        "решений; вердикт даст календарь, а не "
+                        "недели."},
     }
     # Ночной прогон турнира приходит раз в сутки (сторож, окно 02:xx
     # UTC). Запас на одно пропущенное окно: 36 ч — это «одну ночь
@@ -2830,8 +2890,7 @@ class Collector:
                 continue
             try:
                 sit = bool(mman.get("situational"))
-                hold = None if sit else int(mman.get("horizon_h")
-                                            or TR.HOLD_H)
+                hold = self.book_hold(mman, TR.HOLD_H)
                 picks = self._jsonl(os.path.join(mdir, "picks.jsonl"))
                 revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
                 tr = TR.build(picks, revs, hold_h=hold,
@@ -3946,6 +4005,19 @@ class Collector:
                     facts.append(f"stop τ {man['stop_tau']:g}")
                 if man.get("max_age_h"):
                     facts.append(f"age ≤ {man['max_age_h']} h")
+            elif man.get("no_timer"):
+                # Корзина без отдельных выходов: «hold N h» была бы
+                # ложью — таймера у ног нет, срок задаёт возраст
+                # КОРЗИНЫ. Пороги — из манифеста, как у ситуационных.
+                if man.get("basket_take_share") is not None:
+                    facts.append(
+                        f"take +{man['basket_take_share'] * 100:g} %")
+                if man.get("basket_floor_share") is not None:
+                    facts.append(
+                        f"floor −{man['basket_floor_share'] * 100:g} %")
+                if man.get("basket_age_h"):
+                    facts.append(f"basket age ≤ {man['basket_age_h']} h")
+                facts.append("no per-leg exits")
             elif man:
                 # Манифест главной книги старше турнира темпов и
                 # `horizon_h` не несёт; срок у неё тот, что берёт
@@ -4115,7 +4187,7 @@ class Collector:
         # Горизонт — из манифеста книги, как в полной выдаче: без него
         # позиции 24-часовой книги старше четырёх часов считались бы
         # «ждёт разбора» и выпадали из переоценки.
-        hold = None if sit else int(mman.get("horizon_h") or TR.HOLD_H)
+        hold = self.book_hold(mman, TR.HOLD_H)
         tr = TR.build(pk, revs, hold_h=hold,
                       px_at=self.entry_px(pk),
                       books=TR.load_books(
@@ -4171,8 +4243,7 @@ class Collector:
                 sit = bool(mman.get("situational"))
                 if not pk and not revs and not sit:
                     continue
-                hold = (None if sit
-                        else int(mman.get("horizon_h") or TR.HOLD_H))
+                hold = self.book_hold(mman, TR.HOLD_H)
                 tr = TR.build(pk, revs, hold_h=hold,
                               px_at=self.entry_px(pk),
                               books=TR.load_books(

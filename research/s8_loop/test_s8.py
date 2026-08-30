@@ -4528,6 +4528,117 @@ def test_basket_echo_books():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_basket_only_book():
+    """h24c: ни одного отдельного выхода — таймерные разборы источника
+    не копируются вовсе, закрывает только корзина: цель, предел либо
+    ВОЗРАСТ старейшей открытой ноги (24 ч, приоритет у порогов).
+
+    Возрастное закрытие само доказывает и сборку без срока: собери
+    цикл сделки с `hold_h=24`, к 25-му часу позиции стояли бы «ждёт
+    разбора», `basket_state` не нашёл бы открытых, и закрывать было
+    бы нечего.
+    """
+    import json as _json
+    import tempfile
+    import shutil
+    import train as T
+    import trades as TR
+
+    d = tempfile.mkdtemp()
+    logs = []
+    log = logs.append
+    hour = "2026-08-14-01"
+    t0 = TR.hour_end(hour)
+    src = os.path.join(d, "model_h24")
+    dst = os.path.join(d, "model_h24c")
+    pick = {"arm": "gbm", "hour": hour, "at_ts": t0 + 300.0,
+            "long": [{"sym": "AAAUSDT", "fwd": 40.0, "px": 100.0},
+                     {"sym": "BBBUSDT", "fwd": 35.0, "px": 50.0}],
+            "short": []}
+    flat = {"AAAUSDT": 100.0, "BBBUSDT": 50.0}
+    up = {"AAAUSDT": 200.0, "BBBUSDT": 100.0}
+    down = {"AAAUSDT": 70.0, "BBBUSDT": 35.0}
+    src_rv = {"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+              "at_ts": t0 + 2 * 3600.0,
+              "rows": [{"sym": "AAAUSDT", "side": "long",
+                        "expected": 40.0, "got": 12.0, "net": 1.0},
+                       {"sym": "BBBUSDT", "side": "long",
+                        "expected": 35.0, "got": 8.0, "net": -3.0}]}
+    kw = dict(age_h=T.BASKET_AGE_H, timer_exits=False,
+              slots=T.BASKET_SLOTS)
+    try:
+        os.makedirs(src)
+        with open(os.path.join(src, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(pick, ensure_ascii=False) + "\n")
+        # Разбор источника лежит С САМОГО НАЧАЛА — у h24b он бы
+        # скопировался, у h24c не должен ни при каком проходе.
+        with open(os.path.join(src, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(src_rv, ensure_ascii=False) + "\n")
+        # 1) до порогов и возраста: копия есть, разборов НЕТ
+        T.basket_echo_cycle(dst, src, hour, 0.05, 0.05, None, log,
+                            now=t0 + 3 * 3600.0, prices=flat, **kw)
+        check("выбор источника скопирован в книгу без выходов",
+              len(T._read_jsonl(os.path.join(dst, "picks.jsonl")))
+              == 1)
+        check("таймерный разбор источника НЕ скопирован",
+              not T._read_jsonl(os.path.join(dst, "review.jsonl")))
+        # 2) возраст: 25 часов, пороги молчат — корзина закрыта
+        # целиком с причиной возраста
+        now2 = t0 + 25 * 3600.0
+        T.basket_echo_cycle(dst, src, hour, 0.05, 0.05, None, log,
+                            now=now2, prices=flat, **kw)
+        rv = T._read_jsonl(os.path.join(dst, "review.jsonl"))
+        check("возраст корзины закрыл всё разом",
+              len(rv) == 1 and len(rv[0]["rows"]) == 2
+              and all(r.get("reason") == T.BASKET_AGE_REASON
+                      and r["exit_ts"] == round(now2, 3)
+                      for r in rv[0]["rows"]), str(rv))
+        tr = TR.build(T._read_jsonl(os.path.join(dst, "picks.jsonl")),
+                      rv, now=now2 + 60, hold_h=None)
+        check("обе ноги закрыты возрастом корзины, не таймером",
+              len(tr) == 2 and all(
+                  t["state"] == "закрыта"
+                  and t.get("exit_reason") == T.BASKET_AGE_REASON
+                  for t in tr),
+              str([(t["state"], t.get("exit_reason")) for t in tr]))
+        # 3) повторный проход не закрывает закрытое
+        T.basket_echo_cycle(dst, src, hour, 0.05, 0.05, None, log,
+                            now=now2 + 3600, prices=flat, **kw)
+        check("повторный проход не плодит разборов",
+              len(T._read_jsonl(os.path.join(dst,
+                                             "review.jsonl"))) == 1)
+        # 4) приоритет порогов: задетая цель называется целью, даже
+        # когда возраст тоже вышел
+        dst2 = os.path.join(d, "c_take")
+        T.basket_echo_cycle(dst2, src, hour, 0.01, 0.05, None, log,
+                            now=now2, prices=up, **kw)
+        rv2 = T._read_jsonl(os.path.join(dst2, "review.jsonl"))
+        check("цель старше возраста при одновременном пороге",
+              rv2 and all(r.get("reason") == T.BASKET_TAKE_REASON
+                          for r in rv2[0]["rows"]), str(rv2))
+        # 5) предел работает и у книги без выходов. Слоты реплея дают
+        # ногу 3000/144 ≈ 20.83 $ — до порога 1 % (30 $) двум ногам
+        # нужно падение глубже 72 %, не −30 % фикстуры h24bf.
+        down = {"AAAUSDT": 20.0, "BBBUSDT": 10.0}
+        dst3 = os.path.join(d, "c_floor")
+        T.basket_echo_cycle(dst3, src, hour, 0.05, 0.01, None, log,
+                            now=t0 + 3 * 3600.0, prices=down, **kw)
+        rv3 = T._read_jsonl(os.path.join(dst3, "review.jsonl"))
+        check("предел закрыл корзину книги без выходов",
+              rv3 and all(r.get("reason") == T.BASKET_FLOOR_REASON
+                          for r in rv3[0]["rows"]), str(rv3))
+        # 6) счёт: сделки без срока получили размер от слотов реплея
+        TR.account(tr, "gbm", hold_h=T.BASKET_H, slots=T.BASKET_SLOTS)
+        check("размер ноги — капитал на слоты реплея (6 × 24)",
+              tr and abs(tr[0]["size"]
+                         - TR.START_BALANCE / T.BASKET_SLOTS) < 0.5,
+              str([t.get("size") for t in tr]))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_fresh_sit_version_for_echo_books():
     """`version=1` у эха: решает словарь правил, а не версия v13.
 
@@ -4796,6 +4907,7 @@ def main():
     test_fixed_risk_sizing_equalises_dollar_risk()
     test_no_outcome_returns_principal()
     test_basket_echo_books()
+    test_basket_only_book()
     test_fresh_sit_version_for_echo_books()
     test_sit_absorb_lives_in_one_module()
     test_trade_ids_are_stable()

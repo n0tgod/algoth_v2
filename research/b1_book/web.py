@@ -63,7 +63,8 @@ const EXIT_EN = {"прогноз развернулся": "flip",
                  "предел возраста": "age",
                  "встречный сигнал закрыл позицию": "netted",
                  "корзина дошла до цели": "basket",
-                 "корзина дошла до предела убытка": "basket floor"};
+                 "корзина дошла до предела убытка": "basket floor",
+                 "корзина дошла до предела возраста": "basket age"};
 """
 
 BOOKJS = r"""
@@ -82,6 +83,7 @@ BOOKJS = r"""
 const BOOK_LIST = [["h4", "4 h \u00b7 per \u03c3"], ["h24", "24 h"],
                    ["h24b", "24 h \u00b7 basket"],
                    ["h24bf", "24 h \u00b7 basket \u00b1 floor"],
+                   ["h24c", "24 h \u00b7 basket only"],
                    ["sit", "situational \u00b7 per \u03c3"],
                    ["sit_lo", "situational · low RR"],
                    ["sit_r", "situational \u00b7 fixed risk"],
@@ -5125,6 +5127,9 @@ const EXIT_EN = {"прогноз развернулся":"the forecast flipped s
   "цена прошла обещанный ход против":"price hit the stop",
   "цена дошла до обещанной цели":"price reached the target",
   "предел возраста":"the 24 h age limit",
+  "корзина дошла до цели":"the whole basket hit its profit target",
+  "корзина дошла до предела убытка":"the whole basket hit its loss floor",
+  "корзина дошла до предела возраста":"the whole basket hit its age limit",
   "вход по ситуации":"situational entry"};
 const FAM_EN = {absorption:"the order book being eaten through",
   book:"order-book imbalance and depth",

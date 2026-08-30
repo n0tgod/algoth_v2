@@ -1747,6 +1747,19 @@ BASKET_TAKE_SHARE = 0.05          # тейк корзины: +5 % капитал
 BASKET_FLOOR_SHARE = 0.05         # пол (только у …bf): −5 % капитала
 BASKET_TAKE_REASON = "корзина дошла до цели"
 BASKET_FLOOR_REASON = "корзина дошла до предела убытка"
+# Третья корзинная книга `model_h24c` (решение владельца 2026-08-30,
+# по реплею probe_basket серии 1–2): у ног НЕТ отдельных выходов
+# вовсе — ни таймера, ни разборов источника, — корзина закрывается
+# ТОЛЬКО целиком: цель +5 %, предел −5 % либо возраст 24 ч. Возраст —
+# горизонт самого сигнала (единственный порог с якорем; 48 ч в
+# реплее выглядел лучше, но выбрать его значило бы выбрать по
+# просмотренной поверхности — ошибка R5). Правило «один минус в
+# день» НЕ взято: парная медиана его эффекта в реплее ровно 0.00.
+# Слоты кассы фиксированы числом реплея (6 имён × 24 ч) — у книги
+# без срока кассе не из чего вывести «имена × горизонт».
+BASKET_AGE_H = 24
+BASKET_AGE_REASON = "корзина дошла до предела возраста"
+BASKET_SLOTS = 6 * BASKET_H
 
 
 def make_pick(arm, hold_h, models, x, mats, syms, rows_m, j_last, grid,
@@ -2025,7 +2038,8 @@ def basket_close_records(op, arm, reason, now, books=None):
 
 
 def basket_echo_cycle(mdir, src_dir, cur_hour, take_share, floor_share,
-                      book_root, log_, now=None, prices=None):
+                      book_root, log_, now=None, prices=None,
+                      age_h=None, timer_exits=True, slots=None):
     """Один проход корзинной книги-эха: копия, переоценка, решение.
 
     Проверка ЧАСОВАЯ — раз в цикл, вместе с остальными книгами: у
@@ -2034,18 +2048,29 @@ def basket_echo_cycle(mdir, src_dir, cur_hour, take_share, floor_share,
     `prices` — цены для переоценки (тестам); живой прогон берёт
     середину книги в момент решения (`live_px`).
 
+    `timer_exits=False` — книга БЕЗ отдельных выходов (`model_h24c`):
+    разборы источника не копируются вовсе, сделки собираются без
+    срока (`hold_h=None` — сборка с горизонтом перевела бы ноги в
+    «ждёт разбора» по часам и вернула бы кассе деньги, которые
+    позиция ещё держит), а `age_h` даёт третий повод закрыть корзину
+    целиком — возраст старейшей открытой ноги. Приоритет у порогов:
+    задетые цель и предел называются своим именем, возраст решает
+    только когда пороги молчат (порядок реплея probe_basket).
+
     Возвращает `{рука: (причина, деньги, позиций)}` по закрытым.
     """
     now = now if now is not None else time.time()
     os.makedirs(mdir, exist_ok=True)
     echo_picks(mdir, src_dir, cur_hour)
-    echo_reviews(mdir, src_dir)
+    if timer_exits:
+        echo_reviews(mdir, src_dir)
+    build_h = BASKET_H if timer_exits else None
     picks = _read_jsonl(os.path.join(mdir, "picks.jsonl"))
     closed = {}
     for arm, _ in ARMS:
         reviews = _read_jsonl(os.path.join(mdir, "review.jsonl"))
-        trades = TR.build(picks, reviews, now=now, hold_h=BASKET_H)
-        TR.account(trades, arm, hold_h=BASKET_H)
+        trades = TR.build(picks, reviews, now=now, hold_h=build_h)
+        TR.account(trades, arm, hold_h=BASKET_H, slots=slots)
         op = [t for t in trades
               if t.get("arm") == arm and t.get("state") == "открыта"]
         if not op:
@@ -2069,6 +2094,10 @@ def basket_echo_cycle(mdir, src_dir, cur_hour, take_share, floor_share,
             reason = BASKET_TAKE_REASON
         elif floor_share is not None and pnl <= -floor_share * cap:
             reason = BASKET_FLOOR_REASON
+        elif age_h is not None and now - min(
+                (t.get("opened_at") or now) for t in op) \
+                >= age_h * 3600:
+            reason = BASKET_AGE_REASON
         else:
             continue
         bk = stamp_book(syms, now, book_root, log_, "выхода корзины")
@@ -2080,7 +2109,7 @@ def basket_echo_cycle(mdir, src_dir, cur_hour, take_share, floor_share,
         closed[arm] = (reason, pnl, len(op))
         log_(f"корзина {os.path.basename(mdir)}/{arm}: {reason} "
              f"({pnl:+.2f} $ по {len(op)} позициям) — закрыта целиком")
-    rebuild_accounts(mdir, BASKET_H)
+    rebuild_accounts(mdir, build_h, slots=slots)
     return closed
 
 
@@ -2410,17 +2439,32 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
     # или резать». В лигу и суммы корня книги не входят (эхо чужих
     # решений); порядок сечения им не проверяется — он унаследован
     # копией выборов источника.
-    for bdir, b_take, b_floor in (
-            (MODEL_DIR + "_h24b", BASKET_TAKE_SHARE, None),
+    # …а `model_h24c` (решение владельца 2026-08-30) — корзина БЕЗ
+    # отдельных выходов вовсе: закрытие только целиком — цель +5 %,
+    # предел −5 % либо возраст 24 ч (горизонт сигнала — единственный
+    # порог с якорем; 48 ч из реплея выглядел лучше, но был бы
+    # выбором по просмотренной поверхности). Слоты у книги без срока
+    # фиксированы числом реплея.
+    for bdir, b_take, b_floor, b_age, b_timer in (
+            (MODEL_DIR + "_h24b", BASKET_TAKE_SHARE, None, None, True),
             (MODEL_DIR + "_h24bf", BASKET_TAKE_SHARE,
-             BASKET_FLOOR_SHARE)):
+             BASKET_FLOOR_SHARE, None, True),
+            (MODEL_DIR + "_h24c", BASKET_TAKE_SHARE,
+             BASKET_FLOOR_SHARE, BASKET_AGE_H, False)):
         try:
             # У манифестов эха нет версии ситуационных правил —
             # сравнение с ней отставляло бы книгу каждый цикл; решает
-            # словарь правил самой книги (version=1).
-            fresh_sit_on_rules_change(bdir, log_, version=1, rules={
-                "basket_take_share": b_take,
-                "basket_floor_share": b_floor})
+            # словарь правил самой книги (version=1). Новые ключи
+            # (возраст, отсутствие таймера) в правила h24b/h24bf НЕ
+            # добавляются: отсутствие поля в манифесте — тоже смена,
+            # и их истории отставились бы ни за что.
+            rules = {"basket_take_share": b_take,
+                     "basket_floor_share": b_floor}
+            if not b_timer:
+                rules["basket_age_h"] = b_age
+                rules["no_timer"] = True
+            fresh_sit_on_rules_change(bdir, log_, version=1,
+                                      rules=rules)
             os.makedirs(bdir, exist_ok=True)
             bkf = f"fwd_{BASKET_H}h"
             n_rows = (int((elig & np.isfinite(targets[bkf])).sum())
@@ -2441,6 +2485,10 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                    "target": bkf, "target_rows": n_rows,
                    "target_need": MIN_TARGET_ROWS,
                    "probe": PROBE, "pretest": PRETEST}
+            if not b_timer:
+                bkm.update({"basket_age_h": b_age, "no_timer": True,
+                            "slots": BASKET_SLOTS,
+                            "max_age_h": b_age})
             bmp = os.path.join(bdir, "manifest.json")
             with open(bmp + ".tmp", "w", encoding="utf-8") as f:
                 json.dump(bkm, f, ensure_ascii=False, indent=1)
@@ -2448,7 +2496,10 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
             basket_echo_cycle(bdir, book_dir(BASKET_H),
                               grid[j_last] if j_last is not None
                               else None,
-                              b_take, b_floor, book_root, log_)
+                              b_take, b_floor, book_root, log_,
+                              age_h=b_age, timer_exits=b_timer,
+                              slots=(None if b_timer
+                                     else BASKET_SLOTS))
         except Exception as e:                        # noqa: BLE001
             log_(f"корзинная книга {os.path.basename(bdir)} не "
                  f"сведена: {type(e).__name__}: {e}")
