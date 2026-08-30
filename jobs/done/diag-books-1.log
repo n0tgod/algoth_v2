@@ -49,3 +49,15 @@ model_h24c: выборов 2, манифест: no_timer=True age=24 take=0.05 s
 [08-30 09:24:23] gbm/mfe_4h: обучена на 417,916 строках за 391 с; топ: eat_ask 0.3328, traded_share 0.2692, eat_bid 0.13
 [08-30 09:28:13] gbm/mfe_24h: обучена на 402,015 строках за 230 с; топ: age_rec 0.2236, eat_ask 0.1889, traded_share 0.1801
 конец: 2026-08-30T09:31:38Z, код 0
+публикуется в ветку main:
+ jobs/done/diag-books-1.done         |  1 +
+ jobs/done/diag-books-1.log          | 51 +++++++++++++++++++++++++++++++++++++
+ jobs/done/h24c-status.done          |  1 +
+ jobs/done/h24c-status.log           | 10 ++++++++
+ jobs/poke.log                       |  4 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 68 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   f0c3992..d69f6f2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
