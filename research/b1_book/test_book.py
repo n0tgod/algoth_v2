@@ -1268,6 +1268,16 @@ def test_model_trades_lite_matches_full():
               all(k in lite for k in gate_keys)
               and all(lite[k] == full[k] for k in gate_keys),
               str([k for k in gate_keys if k not in lite]))
+        # Корзинные правила (h24c) обязаны ехать в ОБОИХ ответах:
+        # поле только в лёгком уже случилось живьём — полный ответ
+        # отдавал no_timer=None при живом манифесте, и страница
+        # печатала бы «hold 4 h» про книгу без таймера.
+        bk_keys = ("no_timer", "basket_take_share",
+                   "basket_floor_share", "basket_age_h")
+        check("корзинные правила в обоих ответах",
+              all(k in lite and k in full and lite[k] == full[k]
+                  for k in bk_keys),
+              str([(k, k in lite, k in full) for k in bk_keys]))
         closed = [t for t in lite["rows"] if t.get("state") == "закрыта"]
         check("деньги в строках остались (счёт не выброшен)",
               bool(closed) and all(t.get("pnl") is not None

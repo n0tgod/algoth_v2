@@ -2214,11 +2214,17 @@ async function load() {
     document.getElementById("cnt").textContent = "no link to collector";
     return;
   }
-  document.getElementById("src").textContent = "live model · hold "
-    + (d.horizon_h || 4) + " h";
+  // У корзинной книги без отдельных выходов срока НЕТ — «hold 4 h»
+  // был бы ложью показа: у её ног нет таймера вовсе.
+  const holdWord = d.no_timer
+    ? "basket only (no per-leg exits)"
+    : "hold " + (d.horizon_h || 4) + " h";
+  document.getElementById("src").textContent = "live model · "
+    + holdWord;
   // Горизонт — в заголовок вкладки: открытые рядом страницы двух книг
   // иначе неотличимы друг от друга.
-  document.title = "model trades · " + (d.horizon_h || 4) + " h";
+  document.title = "model trades · " + (d.no_timer
+    ? "basket" : (d.horizon_h || 4) + " h");
   document.getElementById("warn").innerHTML = "";
   const cell = (k, v, cls) => `<div class="st"><div class="k">${k}</div>
     <div class="v mono ${cls||""}">${v}</div></div>`;
@@ -3461,6 +3467,10 @@ async function pullModelTrades() {
     MDL.rules = {stop_tau: d.stop_tau, min_edge_bp: d.min_edge_bp,
                  min_rr: d.min_rr, min_disc_bp: d.min_disc_bp,
                  rules_version: d.rules_version,
+                 no_timer: !!d.no_timer,
+                 basket_take_share: d.basket_take_share,
+                 basket_floor_share: d.basket_floor_share,
+                 basket_age_h: d.basket_age_h,
                  situational: !!d.situational};
     legendLevels();
     MDL.sym = sym; MDL.at = Date.now();
@@ -4420,7 +4430,17 @@ function explainTrade(t) {
         ? " ≥ " + r.min_rr : " over the gate"} against the
       executable stop`);
   }
-  if (t.mae_bp != null && !actsOnLevels()) {
+  if (t.mae_bp != null && !actsOnLevels() && r.no_timer) {
+    // Книга без отдельных выходов: «exits by time» была бы ложью —
+    // ногу закрывает только корзина целиком, правила из ответа.
+    bits.push(`path forecast (not orders): expected extreme against
+      ${pct(t.mae_bp)}${t.mfe_bp != null
+      ? `, in favour ${pct(t.mfe_bp)}` : ""} — this leg has NO exit of
+      its own: the whole basket closes at once (target +${
+      (r.basket_take_share || 0.05) * 100} % of capital, floor −${
+      (r.basket_floor_share || 0.05) * 100} %, or basket age ${
+      r.basket_age_h || 24} h)`);
+  } else if (t.mae_bp != null && !actsOnLevels()) {
     bits.push(`path forecast (not orders): expected extreme against
       ${pct(t.mae_bp)}${t.mfe_bp != null
       ? `, in favour ${pct(t.mfe_bp)}` : ""} — this book exits by
@@ -5194,6 +5214,7 @@ function render(d, t){
     return;
   }
   const bookName = d.situational ? "situational book"
+    : d.no_timer ? "basket-only book (no per-leg exits)"
     : `${d.horizon_h || 4} h book`;
   document.getElementById("ttl").textContent =
     `${SYM.replace("USDT","")} · ${t.side} · ${bookName} · ${

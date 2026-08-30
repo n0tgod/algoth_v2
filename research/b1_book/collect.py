@@ -2336,6 +2336,14 @@ class Collector:
                 "noise_mult": mman.get("noise_mult"),
                 "min_stop_bp": mman.get("min_stop_bp"),
                 "exit_policy": mman.get("exit_policy"),
+                # Корзинные правила — как гейты: страница объясняет
+                # книгу по ответу, и поле только в лёгком ответе
+                # оставило бы полный без правил (найдено живым
+                # ответом h24c: no_timer=None при живом манифесте).
+                "no_timer": bool(mman.get("no_timer")),
+                "basket_take_share": mman.get("basket_take_share"),
+                "basket_floor_share": mman.get("basket_floor_share"),
+                "basket_age_h": mman.get("basket_age_h"),
                 # Порог владельца и его цена в сделках: без этих чисел
                 # отфильтрованный счёт неотличим от счёта книги.
                 "rr_min": rr_min or 0, "rr_cut": rr_cut,
