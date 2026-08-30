@@ -276,9 +276,14 @@ def main(argv=None):
     cells_by_rule = {k: [] for k in states}
     diag_rows = []
     for hz, mdir_name in SP.BOOKS:
-        mdir = os.path.join(RESEARCH, "b1_book", "out", mdir_name)
-        rows, mman, _real, _when = SP.book_rows(mdir, hz)
+        # Книги живут в s8_loop/out (корень зонда сетапов, а не
+        # сборщика); ранний возврат book_rows несёт ТРИ значения
+        # против четырёх у полного — распаковка по счёту падала ровно
+        # на пустой книге. Первый живой прогон упал на обоих разом.
+        mdir = os.path.join(RESEARCH, "s8_loop", "out", mdir_name)
+        rows = SP.book_rows(mdir, hz)[0]
         if not rows:
+            log_(f"{hz}: книги нет либо пуста — пропуск")
             continue
         for arm in SP.ARMS:
             arm_rows = [r for r in rows if r["arm"] == arm

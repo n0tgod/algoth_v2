@@ -119,6 +119,17 @@ def test_terciles_and_entry_state():
           == (None, None), "")
 
 
+def test_missing_book_unpack():
+    """Ранний возврат book_rows несёт ТРИ значения, полный — четыре:
+    распаковка по счёту уронила первый живой прогон на пустой книге.
+    Дорога зонда берёт [0] и обязана переживать несуществующий
+    каталог."""
+    got = TV.SP.book_rows(os.path.join(tempfile.gettempdir(),
+                                       "no_such_book_dir"), "h4")
+    check("пустая книга — пустой список, а не падение",
+          got[0] == [], str(got[:1]))
+
+
 def test_report_smoke():
     good = TV.tail_judge(synth(planted=True))
     thin = TV.tail_judge(synth(n_days=2, per_day=10))
@@ -151,6 +162,7 @@ def main():
     tests = (test_judge_finds_planted_and_stays_silent,
              test_day_effect_not_mistaken_for_state,
              test_terciles_and_entry_state,
+             test_missing_book_unpack,
              test_report_smoke)
     for t in tests:
         print(t.__name__)
