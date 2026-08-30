@@ -50,8 +50,13 @@ def stamp(sec):
     return datetime.fromtimestamp(int(sec), timezone.utc).isoformat()
 
 
-def scan_symbols(symbols, times, P, uni, share, min_share, log):
-    """Отбор событий по всем символам. Возвращает векторы."""
+def scan_symbols(symbols, times, P, uni, share, min_share, log,
+                 direction=-1):
+    """Отбор событий по всем символам. Возвращает векторы.
+
+    `direction` — знак хода цены (−1 падение, умолчание бит в бит;
+    +1 рост — зонд продолжения сквиза переиспользует ЭТУ функцию, а
+    не копирует её)."""
     hours = np.array([datetime.fromtimestamp(int(t), timezone.utc).hour
                       for t in times], dtype=np.int8)
     rec = {k: [] for k in ("row", "col", "sym", "oi_change", "price_change",
@@ -71,7 +76,8 @@ def scan_symbols(symbols, times, P, uni, share, min_share, log):
         valid_by_row[r] = ok
         w = E.steps(E.WINDOW_MIN)
         for arm, need_oi in (("event", True), ("control2", False)):
-            idx = E.detect(oi_c, px, ok, OI_DROP, MOVE, require_oi=need_oi)
+            idx = E.detect(oi_c, px, ok, OI_DROP, MOVE, require_oi=need_oi,
+                             direction=direction)
             for j in idx:
                 rec["row"].append(r)
                 rec["col"].append(int(j))

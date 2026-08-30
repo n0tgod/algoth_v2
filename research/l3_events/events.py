@@ -46,7 +46,8 @@ def steps(minutes, step_min=STEP_MIN):
 
 
 def detect(oi_c, price, ok, oi_drop, move, require_oi=True,
-           step_min=STEP_MIN, window_min=WINDOW_MIN, dedup_min=DEDUP_MIN):
+           step_min=STEP_MIN, window_min=WINDOW_MIN, dedup_min=DEDUP_MIN,
+           direction=-1):
     """Индексы моментов, где сработало условие §5.1.
 
     `ok` — маска допустимых моментов (ликвидность, делистинг, размер).
@@ -54,6 +55,12 @@ def detect(oi_c, price, ok, oi_drop, move, require_oi=True,
     падение интереса. Наличие самой величины при этом сохраняется —
     иначе сравнивались бы разные множества моментов, и разница
     объяснялась бы составом, а не условием.
+
+    `direction` — знак хода цены: −1 — падение (умолчание, бит в бит
+    прежнее поведение: −d_px ≥ move ⇔ d_px ≤ −move), +1 — РОСТ (каскад
+    вверх: принудительно закрывают шортов, интерес падает при росте
+    цены). Условие на интерес в обе стороны одно — интерес ПАДАЕТ:
+    каскад есть исчезновение позиций, а не их приток.
     """
     w = steps(window_min, step_min)
     n = len(price)
@@ -64,7 +71,8 @@ def detect(oi_c, price, ok, oi_drop, move, require_oi=True,
     with np.errstate(invalid="ignore", divide="ignore"):
         d_px[w:] = price[w:] / price[:-w] - 1.0
         d_oi[w:] = oi_c[w:] / oi_c[:-w] - 1.0
-    hit = np.isfinite(d_px) & np.isfinite(d_oi) & ok & (d_px <= -move)
+    hit = (np.isfinite(d_px) & np.isfinite(d_oi) & ok
+           & (direction * d_px >= move))
     if require_oi:
         hit &= d_oi <= -oi_drop
     idx = np.flatnonzero(hit)
