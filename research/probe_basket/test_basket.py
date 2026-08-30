@@ -117,6 +117,58 @@ def test_cash_and_name_caps_count():
           str(c3["skipped"]))
 
 
+def test_age_limit_closes_basket():
+    """Лимит возраста закрывает корзину целиком по отметке; пороги
+    старше возраста — задетая цель называется целью, не возрастом."""
+    picks = {T0: [{"sym": "AAA", "side": "long", "px": 100.0}]}
+    mids = flat_mids({"AAA": [100.0] * 10})
+    c = BS.replay(picks, mids, take=9.0, floor=None, age_h=3)
+    check("возраст закрыл корзину один раз",
+          c["baskets"] == 1 and c["n_age"] == 1
+          and c["age_med_h"] == 3, str(c))
+    # Плоская цена: итог = −круг на ногу. 20.83 × 0.0011 = 0.02 $.
+    check("итог возрастного закрытия — ровно круг издержек",
+          abs(c["realized"] + 0.02) < 0.005,
+          f"{c['realized']} против −0.02")
+    check("хвост пуст: корзина закрыта, не отметка",
+          c["open_legs"] == 0 and c["open_mark"] is None, str(c))
+    # Цель, задетая РАНЬШЕ лимита, остаётся целью. Одна нога ×3 даёт
+    # +41.6 $, цель 1 % капитала (30 $) задета в час 1 — до возраста.
+    mids2 = flat_mids({"AAA": [100, 300, 300, 300, 300]})
+    c2 = BS.replay(picks, mids2, take=0.01, floor=None, age_h=3)
+    check("цель раньше возраста — закрытие целью",
+          c2["n_take"] == 1 and c2["n_age"] == 0, str(c2))
+    # Умолчание age_h=None — прежнее поведение: корзина живёт.
+    c3 = BS.replay(picks, mids, take=9.0, floor=None)
+    check("без лимита возраст не закрывает",
+          c3["baskets"] == 0 and c3["open_legs"] == 1, str(c3))
+
+
+def test_one_loss_day_blocks_entries():
+    """После минусового закрытия новые входы того же дня UTC не
+    берутся и считаются числом; следующий день входит."""
+    picks = {T0: [{"sym": "AAA", "side": "long", "px": 100.0}],
+             T0 + 2 * H: [{"sym": "BBB", "side": "long", "px": 100.0}],
+             T0 + 26 * H: [{"sym": "CCC", "side": "long",
+                            "px": 100.0}]}
+    mids = flat_mids({"AAA": [100.0] + [10.0] * 29,
+                      "BBB": [100.0] * 30, "CCC": [100.0] * 30})
+    # AAA −90 % пробивает предел 0.5 % капитала в час T0+1 (минус).
+    c = BS.replay(picks, mids, take=9.0, floor=0.005,
+                  one_loss_day=True)
+    check("минусовое закрытие случилось",
+          c["baskets"] == 1 and c["n_floor"] == 1, str(c))
+    check("вход того же дня пропущен и посчитан",
+          c["skipped"]["loss_day"] == 1, str(c["skipped"]))
+    check("вход следующего дня взят",
+          c["open_legs"] == 1, str(c))
+    # Без правила тот же день входит: к концу открыты BBB и CCC.
+    c2 = BS.replay(picks, mids, take=9.0, floor=0.005)
+    check("без правила оба поздних входа взяты",
+          c2["open_legs"] == 2
+          and c2["skipped"]["loss_day"] == 0, str(c2))
+
+
 def test_unpriced_leg_blocks_decision():
     """Нога без единой цены блокирует решение корзины (правило живой
     книги), и часы блокировки считаются."""
@@ -198,6 +250,41 @@ def test_whole_run_writes_report():
         check("с флагом публикации нет", not published, str(published))
         BS.main(["--s8", s8, "--tag", "p"])
         check("без флага публикация случилась", bool(published))
+        # Вторая серия: свой отчёт, база не затирается.
+        rc2 = BS.main(["--s8", s8, "--tag", "t", "--rules",
+                       "--no-publish"])
+        check("прогон правил дошёл до конца", rc2 == 0, str(rc2))
+        rep2 = os.path.join(BS.HERE, "out", "BASKET-rules-t.md")
+        check("отчёт правил написан отдельным файлом",
+              os.path.exists(rep2), rep2)
+        t2 = open(rep2, encoding="utf-8").read()
+        # Каждый ярлык стоит дважды: строкой свода и колонкой
+        # поячеечной таблицы — присутствие проверяется по всем шести.
+        labels6 = [BS.vlabel(*v) for v in BS.VARIANTS]
+        check("все шесть вариантов в отчёте (свод + колонки)",
+              len(labels6) == 6
+              and all(t2.count(f"| {lb} |") >= 2 for lb in labels6),
+              str([(lb, t2.count(f"| {lb} |")) for lb in labels6]))
+        check("поячеечная таблица правил: 20 строк",
+              t2.count("| +2.5% |") + t2.count("| +5.0% |")
+              + t2.count("| +10.0% |") + t2.count("| +20.0% |")
+              == 20, "строк не 20")
+        check("оговорка R5 в отчёте правил", "ошибка R5" in t2)
+        check("базовый отчёт не затёрт прогоном правил",
+              os.path.exists(rep), rep)
+        art2 = json.load(open(os.path.join(
+            BS.HERE, "out", "basket-rules-t.json"), encoding="utf-8"))
+        gv = art2["variants"]["gbm"]
+        base_tot = {(c["take"], c["floor"]): c["realized"]
+                    for c in gv["без лимита"]}
+        same = {(c["take"], c["floor"]): c["realized"]
+                for c in art["cells"]["gbm"]}
+        check("база второй серии = первая серия бит в бит",
+              base_tot == same, str((base_tot, same))[:200])
+        aged = gv["возраст ≤ 24 ч"]
+        check("лимит возраста держит возраст закрытий в пределе",
+              all((c["age_max_h"] or 0) <= 24 for c in aged),
+              str([c["age_max_h"] for c in aged]))
     finally:
         BS.HERE, BK.SUMMARY = here_was, sum_was
         PT.publish = keep_pub
@@ -208,6 +295,8 @@ def main():
     tests = (test_take_closes_all_at_once,
              test_floor_and_no_individual_exits,
              test_cash_and_name_caps_count,
+             test_age_limit_closes_basket,
+             test_one_loss_day_blocks_entries,
              test_unpriced_leg_blocks_decision,
              test_whole_run_writes_report)
     for t in tests:

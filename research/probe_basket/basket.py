@@ -80,6 +80,17 @@ NAME_CAP = TR.NAME_CAP_SHARE * CAPITAL
 COST = TR.ROUND_COST_BP / 1e4        # полный круг на ногу, при входе
 HOUR = 3600
 
+# Вторая серия (вопрос владельца): лимит ВОЗРАСТА корзины и правило
+# «один минус в день». Оси объявлены до прогона; базовый вариант
+# (None, False) обязан совпадать с первой серией бит в бит.
+# 24 ч — горизонт сигнала (дальше модель ничего не утверждала),
+# 48 ч — вдвое; «минусовое» закрытие — любое закрытие корзины с
+# отрицательным итогом (предел ИЛИ возраст), после него новые входы
+# не берутся до конца суток UTC — родня живого дневного тормоза,
+# только событием, а не суммой дня.
+AGES = (None, 24, 48)
+ONE_LOSS = (False, True)
+
 
 def log_(m):
     print(m, flush=True)
@@ -125,12 +136,21 @@ def mid_at(mids, sym, ts, last):
     return last.get(sym)
 
 
-def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD):
+def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
+           age_h=None, one_loss_day=False):
     """Одна ячейка: корзина закрывается ТОЛЬКО целиком.
 
     Порядок такта — как у живой корзины: сперва решение по порогу на
     отметке часа, потом входы этого часа. Порог сравнивается с
     нереализованным результатом всей корзины в долях капитала.
+
+    Два правила второй серии, оба выключены по умолчанию (база — бит
+    в бит первая серия): `age_h` — корзина старше стольких часов
+    закрывается целиком по отметке (приоритет у порогов: задетая цель
+    или предел называются своим именем, возраст решает только когда
+    пороги молчат); `one_loss_day` — после закрытия корзины в минус
+    новые входы не берутся до конца суток UTC (вход — возможность,
+    закрытие корзины правилом не гасится никогда).
     """
     if not picks:
         return None
@@ -143,9 +163,10 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD):
     legs, last = [], {}
     realized, baskets, curve = 0.0, [], []
     skipped = {"no_cash": 0, "name_cap": 0, "opposite": 0,
-               "no_price": 0}
+               "no_price": 0, "loss_day": 0}
     blocked_hours = 0
     basket_open_ts = None
+    last_loss_day = None
     equity_peak, max_dd = 0.0, 0.0
     for ts in range(t0, t_end + HOUR, HOUR):
         # 1) отметка и решение корзины
@@ -165,12 +186,17 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD):
                 hit_take = unreal >= take * capital
                 hit_floor = (floor is not None
                              and unreal <= -floor * capital)
-                if hit_take or hit_floor:
+                hit_age = (age_h is not None
+                           and ts - basket_open_ts >= age_h * HOUR)
+                if hit_take or hit_floor or hit_age:
                     realized += unreal
                     baskets.append({
-                        "why": "take" if hit_take else "floor",
+                        "why": ("take" if hit_take
+                                else "floor" if hit_floor else "age"),
                         "pnl": round(unreal, 2), "legs": len(legs),
                         "age_h": (ts - basket_open_ts) // HOUR})
+                    if unreal < 0:
+                        last_loss_day = ts // 86400
                     legs, basket_open_ts = [], None
                 eq = realized + (0.0 if not legs else unreal)
                 equity_peak = max(equity_peak, eq)
@@ -178,6 +204,10 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD):
                 curve.append(eq)
         # 2) входы часа
         for g in picks.get(ts) or []:
+            if (one_loss_day and last_loss_day is not None
+                    and ts // 86400 == last_loss_day):
+                skipped["loss_day"] += 1
+                continue
             held = {x["sym"]: x["side"] for x in legs}
             if g["sym"] in held and held[g["sym"]] != g["side"]:
                 skipped["opposite"] += 1
@@ -210,8 +240,11 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD):
             unreal += g["size"] * (sign * (m / g["px"] - 1.0) - COST)
         open_mark = round(unreal, 2) if priced else None
     n_take = sum(1 for b in baskets if b["why"] == "take")
-    n_floor = len(baskets) - n_take
+    n_floor = sum(1 for b in baskets if b["why"] == "floor")
+    n_age = sum(1 for b in baskets if b["why"] == "age")
     return {"take": take, "floor": floor,
+            "age_h_lim": age_h, "one_loss_day": one_loss_day,
+            "n_age": n_age,
             "realized": round(realized, 2),
             "open_mark": open_mark, "open_legs": open_legs,
             "baskets": len(baskets), "n_take": n_take,
@@ -303,11 +336,111 @@ def write_report(path, cells, base, meta):
     return path
 
 
+VARIANTS = [(a, o) for o in ONE_LOSS for a in AGES]
+
+
+def vlabel(age, ol):
+    base = "без лимита" if age is None else f"возраст ≤ {age} ч"
+    return base + (" + один минус/день" if ol else "")
+
+
+def total_of(c):
+    return c["realized"] + (c["open_mark"] or 0.0)
+
+
+def med(vals):
+    s = sorted(vals)
+    n = len(s)
+    if not n:
+        return None
+    return (s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0)
+
+
+def write_rules_report(path, arms, base_fact, meta):
+    """arms: {arm: {(age, ol): {(take, floor): cell}}}."""
+    L = ["# Корзина: лимит возраста и «один минус в день»\n",
+         f"\nПрогон {meta['when']} · окно {meta['span']} · часов "
+         f"{meta['hours']} · нога {LEG_USD:.2f} $ при капитале "
+         f"{CAPITAL:.0f} · круг {TR.ROUND_COST_BP:g} б.п. на ногу\n",
+         "\nВопрос владельца ко второй серии: что меняют лимит "
+         "времени удержания корзины и запрет новых входов после "
+         "одного минусового закрытия за сутки. Оси объявлены до "
+         "прогона: возраст {нет, 24, 48 ч} × правило минуса "
+         "{выкл, вкл}; base = первая серия. Сравнение ПАРНОЕ — тот "
+         "же (цель, предел), итог = реализовано + отметка хвоста.\n",
+         "\n**Диагностика, не вердикт: те же ~3 недели одного "
+         "режима, выбор лучшей ячейки — ошибка R5.** Лимит 24 ч "
+         "возвращает конструкцию к книге со сроком (ноги живут не "
+         "дольше горизонта сигнала), «один минус/день» — родня "
+         "живого дневного тормоза, событием вместо суммы.\n"]
+    for arm in sorted(arms):
+        by_var = arms[arm]
+        base = by_var.get((None, False)) or {}
+        if not base:
+            continue
+        bf = base_fact.get(arm) or {}
+        L.append(f"\n## Рука {arm} — факт живой h24 за то же окно: "
+                 f"{fmt(bf.get('pnl'))} $ на {bf.get('n', 0)} "
+                 f"закрытых\n\n")
+        L.append("| вариант | медиана итога, $ | парная Δ к базе "
+                 "(медиана) | ячеек лучше базы | лучшая ячейка | "
+                 "худшая корзина | пропуски кассы (мед.) | закрытий "
+                 "(мед.) | возраст макс (мед.) |\n")
+        L.append("|--|--:|--:|--:|--|--:|--:|--:|--:|\n")
+        for var in VARIANTS:
+            rows = by_var.get(var)
+            if not rows:
+                continue
+            keys = sorted(rows, key=lambda k: (k[0], k[1] or 9.9))
+            tot = {k: total_of(rows[k]) for k in keys}
+            deltas = [tot[k] - total_of(base[k]) for k in keys
+                      if k in base]
+            best_k = max(keys, key=lambda k: tot[k])
+            worst = min((rows[k]["worst_basket"] for k in keys
+                         if rows[k]["worst_basket"] is not None),
+                        default=None)
+            L.append(
+                f"| {vlabel(*var)} | {fmt(med(list(tot.values())))} | "
+                f"{fmt(med(deltas)) if var != (None, False) else '—'} | "
+                f"{(sum(1 for d in deltas if d > 0)) if var != (None, False) else '—'}"
+                f"{'/' + str(len(deltas)) if var != (None, False) else ''} | "
+                f"+{best_k[0]:.1%}/"
+                f"{('−' + format(best_k[1], '.1%')) if best_k[1] else 'нет'}"
+                f" → {tot[best_k]:+.2f} | {fmt(worst)} | "
+                f"{med([rows[k]['skipped']['no_cash'] for k in keys]):g} | "
+                f"{med([rows[k]['baskets'] for k in keys]):g} | "
+                f"{med([rows[k]['age_max_h'] or 0 for k in keys]):g} |\n")
+        L.append("\nИтог каждой ячейки по вариантам (реализовано + "
+                 "отметка хвоста, $):\n\n")
+        hdr = " | ".join(vlabel(*v) for v in VARIANTS)
+        L.append(f"| цель | предел | {hdr} |\n")
+        L.append("|--:|--:|" + "--:|" * len(VARIANTS) + "\n")
+        for k in sorted(base, key=lambda k: (k[0], k[1] or 9.9)):
+            cells = []
+            for var in VARIANTS:
+                c = (by_var.get(var) or {}).get(k)
+                cells.append(f"{total_of(c):+.2f}" if c else "—")
+            L.append(
+                f"| +{k[0]:.1%} | "
+                f"{('−' + format(k[1], '.1%')) if k[1] else 'нет'} | "
+                + " | ".join(cells) + " |\n")
+    L.append("\nПропуски кассы («сигнал получил размер 0») — мера "
+             "слепоты вложенной книги: лимит возраста обязан её "
+             "снижать, и насколько — видно в колонке. «Один "
+             "минус/день» режет входы после минусового закрытия; "
+             "его цена и польза — та же парная Δ.\n")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("".join(L))
+    return path
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="корзина без своих выходов")
     ap.add_argument("--s8", default=os.path.join(
         ROOT, "research", "s8_loop", "out"))
     ap.add_argument("--tag", default="1m")
+    ap.add_argument("--rules", action="store_true",
+                    help="вторая серия: возраст × один минус/день")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     t0 = time.time()
@@ -323,36 +456,65 @@ def main(argv=None):
     mids = BK.load_mids(syms)
     lo = min(min(by) for by in picks.values())
     hi = max(max(by) for by in picks.values())
-    cells, spans = {}, []
-    for arm, by in sorted(picks.items()):
-        rows = []
-        for take in TAKES:
-            for floor in FLOORS:
-                c = replay(by, mids, take, floor)
-                if c:
-                    rows.append(c)
-        cells[arm] = rows
-        log_(f"{arm}: часов {len(by)}, ячеек {len(rows)}")
     base = baseline(a.s8, lo, hi + 86400 * 2)
-
-    art = {"leg_usd": LEG_USD, "capital": CAPITAL,
-           "cells": {arm: rows for arm, rows in cells.items()},
-           "baseline": base,
-           "took_sec": round(time.time() - t0, 1)}
-    with open(os.path.join(out_dir, f"basket-{a.tag}.json"), "w",
-              encoding="utf-8") as f:
-        json.dump(art, f, ensure_ascii=False, indent=1)
     span = (datetime.fromtimestamp(lo, timezone.utc)
             .strftime("%Y-%m-%d %H:%M") + " … "
             + datetime.fromtimestamp(hi, timezone.utc)
             .strftime("%Y-%m-%d %H:%M UTC"))
-    path = write_report(
-        os.path.join(out_dir, f"BASKET-report-{a.tag}.md"),
-        cells, base,
-        {"when": datetime.now(timezone.utc)
-         .strftime("%Y-%m-%d %H:%M UTC"), "span": span,
-         "hours": (hi - lo) // HOUR})
-    log_(f"отчёт: {path} · {art['took_sec']} с")
+    meta = {"when": datetime.now(timezone.utc)
+            .strftime("%Y-%m-%d %H:%M UTC"), "span": span,
+            "hours": (hi - lo) // HOUR}
+
+    if a.rules:
+        arms = {}
+        for arm, by in sorted(picks.items()):
+            by_var = {}
+            for var in VARIANTS:
+                rows = {}
+                for take in TAKES:
+                    for floor in FLOORS:
+                        c = replay(by, mids, take, floor,
+                                   age_h=var[0], one_loss_day=var[1])
+                        if c:
+                            rows[(take, floor)] = c
+                by_var[var] = rows
+            arms[arm] = by_var
+            log_(f"{arm}: часов {len(by)}, вариантов {len(by_var)}")
+        art = {"leg_usd": LEG_USD, "capital": CAPITAL,
+               "variants": {
+                   arm: {vlabel(*v): list(rows.values())
+                         for v, rows in by_var.items()}
+                   for arm, by_var in arms.items()},
+               "baseline": base,
+               "took_sec": round(time.time() - t0, 1)}
+        with open(os.path.join(out_dir, f"basket-rules-{a.tag}.json"),
+                  "w", encoding="utf-8") as f:
+            json.dump(art, f, ensure_ascii=False, indent=1)
+        path = write_rules_report(
+            os.path.join(out_dir, f"BASKET-rules-{a.tag}.md"),
+            arms, base, meta)
+    else:
+        cells = {}
+        for arm, by in sorted(picks.items()):
+            rows = []
+            for take in TAKES:
+                for floor in FLOORS:
+                    c = replay(by, mids, take, floor)
+                    if c:
+                        rows.append(c)
+            cells[arm] = rows
+            log_(f"{arm}: часов {len(by)}, ячеек {len(rows)}")
+        art = {"leg_usd": LEG_USD, "capital": CAPITAL,
+               "cells": {arm: rows for arm, rows in cells.items()},
+               "baseline": base,
+               "took_sec": round(time.time() - t0, 1)}
+        with open(os.path.join(out_dir, f"basket-{a.tag}.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(art, f, ensure_ascii=False, indent=1)
+        path = write_report(
+            os.path.join(out_dir, f"BASKET-report-{a.tag}.md"),
+            cells, base, meta)
+    log_(f"отчёт: {path} · {round(time.time() - t0, 1)} с")
     if not a.no_publish:
         PT.publish()
     return 0
