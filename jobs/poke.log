@@ -200,3 +200,10 @@ _: line 3: 689678 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1788128692 ==
 [2026-08-30T22:24:53Z] задание upcascade-1 запущено: research/probe_upcascade/up.py
 _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
+
+== сигнал 1788129013 ==
+[2026-08-30T22:30:14Z] задание upcascade-2 запущено: research/probe_upcascade/up.py
+
+== сигнал 1788129829 ==
+
+== сигнал 1788129958 ==

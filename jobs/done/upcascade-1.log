@@ -47,3 +47,23 @@
 [22:26:17] событий всего 109,058 (84 с)
 [22:26:17] замер: Подтверждающая, рука event
 конец: 2026-08-30T22:26:21Z, код 137
+публикуется в ветку main:
+ jobs/done/agree-1.log               |  7 ++++++
+ jobs/done/upcascade-1.done          |  1 +
+ jobs/done/upcascade-1.log           | 49 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  4 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 62 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+   df97b18..3396a9a  main       -> origin/main
