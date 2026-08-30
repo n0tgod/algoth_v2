@@ -7208,6 +7208,18 @@ body{margin:0;background:
 .treewrap{overflow-x:auto;padding:4px 0 8px}
 .tree,.tree ul{display:flex;justify-content:center;padding:0;margin:0;
  list-style:none}
+/* Ширина дерева — по содержимому, и это несущее правило, а не отделка.
+   Без него `.tree` шириной в контейнер, ряд веток шире её, а
+   `justify-content:center` разливает переполнение В ОБЕ стороны —
+   правая половина прокручивается, левая недостижима: первая карточка
+   стоит на 86 px ЛЕВЕЕ края при scrollLeft 0 и уезжает до −177 при
+   прокрутке вправо (измерено в браузере). При ширине по содержимому
+   переполнения внутри дерева нет вовсе, прокрутке достаётся вся
+   ширина, а `margin` центрирует дерево, пока оно помещается: у
+   переполняющего блока автоматические поля обращаются в ноль, и он
+   встаёт по левому краю — то есть с нулевой прокрутки виден его
+   настоящий левый край. */
+.tree{width:max-content;margin-left:auto;margin-right:auto}
 .tree ul{padding-top:18px;position:relative}
 .tree li{display:flex;flex-direction:column;align-items:center;
  position:relative;padding:18px 5px 0}
@@ -7283,6 +7295,7 @@ button[aria-pressed="true"]{border-color:var(--accent);
 @media (max-width:720px){
   .treewrap{overflow:visible;padding:0}
   .tree,.tree ul{display:block}
+  .tree{width:auto;margin:0}
   .tree ul{margin:0;padding:0 0 0 16px;position:relative}
   .tree ul::before{content:"";position:absolute;left:0;top:0;
     bottom:0;height:auto;width:0;border-left:1px solid var(--rule)}
