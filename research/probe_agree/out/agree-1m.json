@@ -1,0 +1,231 @@
+{
+ "cells": {
+  "h4 · gbm": {
+   "n_agree": 325,
+   "n_solo": 1557,
+   "share_agree": 0.17268862911795962,
+   "measured": true,
+   "med_agree": 86.0,
+   "med_solo": -0.1,
+   "mean_agree": 9.0,
+   "mean_solo": 12.1,
+   "win_agree": 0.582,
+   "win_solo": 0.499,
+   "delta_mean": -3.1,
+   "delta_med": 86.1,
+   "p_perm": 0.496,
+   "top_sym": "ONGUSDT",
+   "delta_wo_top": 19.8,
+   "halves": [
+    80.6,
+    -105.7
+   ]
+  },
+  "h4 · nn": {
+   "n_agree": 321,
+   "n_solo": 1435,
+   "share_agree": 0.18280182232346243,
+   "measured": true,
+   "med_agree": 95.2,
+   "med_solo": -27.0,
+   "mean_agree": 3.0,
+   "mean_solo": -39.8,
+   "win_agree": 0.586,
+   "win_solo": 0.432,
+   "delta_mean": 42.8,
+   "delta_med": 122.2,
+   "p_perm": 0.145,
+   "top_sym": "ONGUSDT",
+   "delta_wo_top": 65.0,
+   "halves": [
+    123.2,
+    -48.6
+   ]
+  },
+  "h24 · gbm": {
+   "n_agree": 463,
+   "n_solo": 1984,
+   "share_agree": 0.18921127911728647,
+   "measured": true,
+   "med_agree": 551.0,
+   "med_solo": 33.8,
+   "mean_agree": 460.5,
+   "mean_solo": 19.0,
+   "win_agree": 0.65,
+   "win_solo": 0.518,
+   "delta_mean": 441.4,
+   "delta_med": 517.2,
+   "p_perm": 0.0,
+   "top_sym": "BLUAIUSDT",
+   "delta_wo_top": 351.8,
+   "halves": [
+    379.5,
+    520.7
+   ]
+  },
+  "h24 · nn": {
+   "n_agree": 465,
+   "n_solo": 1678,
+   "share_agree": 0.21698553429771347,
+   "measured": true,
+   "med_agree": 565.8,
+   "med_solo": 30.8,
+   "mean_agree": 401.4,
+   "mean_solo": 43.2,
+   "win_agree": 0.652,
+   "win_solo": 0.515,
+   "delta_mean": 358.2,
+   "delta_med": 535.0,
+   "p_perm": 0.0,
+   "top_sym": "BLUAIUSDT",
+   "delta_wo_top": 247.3,
+   "halves": [
+    232.9,
+    496.6
+   ]
+  },
+  "z · gbm": {
+   "n_agree": 285,
+   "n_solo": 1594,
+   "share_agree": 0.15167642362959022,
+   "measured": true,
+   "med_agree": 191.4,
+   "med_solo": 42.2,
+   "mean_agree": 104.9,
+   "mean_solo": 41.1,
+   "win_agree": 0.621,
+   "win_solo": 0.543,
+   "delta_mean": 63.8,
+   "delta_med": 149.2,
+   "p_perm": 0.063,
+   "top_sym": "AKEUSDT",
+   "delta_wo_top": 225.7,
+   "halves": [
+    259.8,
+    -226.2
+   ]
+  },
+  "z · nn": {
+   "n_agree": 292,
+   "n_solo": 1404,
+   "share_agree": 0.1721698113207547,
+   "measured": true,
+   "med_agree": 176.5,
+   "med_solo": 28.3,
+   "mean_agree": 64.8,
+   "mean_solo": 15.3,
+   "win_agree": 0.627,
+   "win_solo": 0.53,
+   "delta_mean": 49.4,
+   "delta_med": 148.2,
+   "p_perm": 0.319,
+   "top_sym": "AKEUSDT",
+   "delta_wo_top": 206.3,
+   "halves": [
+    99.7,
+    -81.7
+   ]
+  },
+  "sit · gbm": {
+   "n_agree": 45,
+   "n_solo": 686,
+   "share_agree": 0.06155950752393981,
+   "measured": true,
+   "med_agree": -200.1,
+   "med_solo": -59.0,
+   "mean_agree": -78.3,
+   "mean_solo": 14.2,
+   "win_agree": 0.333,
+   "win_solo": 0.402,
+   "delta_mean": -92.5,
+   "delta_med": -141.1,
+   "p_perm": 0.857,
+   "top_sym": "BTWUSDT",
+   "delta_wo_top": -60.1,
+   "halves": [
+    -217.7,
+    -10.0
+   ]
+  },
+  "sit · nn": {
+   "n_agree": 45,
+   "n_solo": 785,
+   "share_agree": 0.05421686746987952,
+   "measured": true,
+   "med_agree": -178.7,
+   "med_solo": -72.7,
+   "mean_agree": -15.7,
+   "mean_solo": -22.7,
+   "win_agree": 0.4,
+   "win_solo": 0.34,
+   "delta_mean": 7.0,
+   "delta_med": -106.0,
+   "p_perm": 0.377,
+   "top_sym": "BTWUSDT",
+   "delta_wo_top": 51.4,
+   "halves": [
+    -55.0,
+    43.6
+   ]
+  },
+  "sit_lo · gbm": {
+   "n_agree": 21,
+   "n_solo": 239,
+   "share_agree": 0.08076923076923077,
+   "measured": false
+  },
+  "sit_lo · nn": {
+   "n_agree": 22,
+   "n_solo": 256,
+   "share_agree": 0.07913669064748201,
+   "measured": false
+  }
+ },
+ "obs": {
+  "sit_obs · gbm": {
+   "n_agree": 313,
+   "n_solo": 2041,
+   "share_agree": 0.13296516567544606,
+   "measured": true,
+   "med_agree": 2.5,
+   "med_solo": 2.9,
+   "mean_agree": -18.1,
+   "mean_solo": 26.1,
+   "win_agree": 0.505,
+   "win_solo": 0.507,
+   "delta_mean": -44.3,
+   "delta_med": -0.4,
+   "p_perm": 0.939,
+   "top_sym": "CASHCATUSDT",
+   "delta_wo_top": -26.9,
+   "halves": [
+    -86.6,
+    -10.5
+   ]
+  },
+  "sit_obs · nn": {
+   "n_agree": 313,
+   "n_solo": 2383,
+   "share_agree": 0.11609792284866469,
+   "measured": true,
+   "med_agree": 25.5,
+   "med_solo": -9.0,
+   "mean_agree": 14.6,
+   "mean_solo": -8.9,
+   "win_agree": 0.527,
+   "win_solo": 0.475,
+   "delta_mean": 23.5,
+   "delta_med": 34.5,
+   "p_perm": 0.136,
+   "top_sym": "TACUSDT",
+   "delta_wo_top": 45.7,
+   "halves": [
+    20.0,
+    28.1
+   ]
+  }
+ },
+ "meta": {
+  "when": "2026-08-30 22:14 UTC"
+ }
+}
