@@ -5,3 +5,16 @@
 gbm: часов 452, вариантов 6
 nn: часов 452, вариантов 6
 отчёт: /root/algoth_v2/research/probe_basket/out/BASKET-rules-1m.md · 26.2 с
+публикуется в ветку main:
+ jobs/done/basket-2.done                        |    1 +
+ jobs/done/basket-2.log                         |    7 +
+ jobs/poke.log                                  |    3 +
+ research/probe_basket/out/BASKET-rules-1m.md   |   81 +
+ research/probe_basket/out/basket-rules-1m.json | 6045 ++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json            |    2 +-
+ 6 files changed, 6138 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e447446..4d577eb  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-30T08:02:47Z, код 0
