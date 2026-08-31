@@ -175,6 +175,24 @@ def test_null_keeps_the_book_and_shuffles_the_future():
         R.SW.read_bars = was_b
 
 
+def test_only_needed_legs_are_priced():
+    """Бары читаются только за ногами, которые кто-то возьмёт.
+
+    Отбор спрашивает саму `passes` — ту же функцию, которой книга
+    потом берёт ногу. Оценка «слабейшим гейтом» разошлась бы с ней при
+    первом же добавлении оси, и состав сделок изменился бы молча.
+    """
+    import candidate as C
+    legs = [{"fwd": 10.0, "rr": 3.0, "sym": "A", "id": 0},
+            {"fwd": 90.0, "rr": 3.0, "sym": "B", "id": 1}]
+    rules = [C.with_geometry(dict(SP.index_to_rule(0), floor_bp=30))]
+    got = R.needed_legs(legs, rules, log=lambda *a: None)
+    check("нога ниже гейта не оценивается",
+          [g["sym"] for g in got] == ["B"], str([g["sym"] for g in got]))
+    check("без кандидатов берутся все",
+          len(R.needed_legs(legs, [], log=lambda *a: None)) == 2)
+
+
 def test_zero_outcomes_is_a_failure_not_a_quiet_day():
     """Ноль исходов при непустых ногах — поломка чтения баров.
 
@@ -202,6 +220,7 @@ def test_zero_outcomes_is_a_failure_not_a_quiet_day():
 
 def main():
     tests = (test_end_to_end,
+             test_only_needed_legs_are_priced,
              test_zero_outcomes_is_a_failure_not_a_quiet_day, test_null_keeps_the_book_and_shuffles_the_future)
     for t in tests:
         print(t.__name__)
