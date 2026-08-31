@@ -243,3 +243,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788173219 ==
 [2026-08-31T10:47:01Z] задание agree-width-1 запущено: research/probe_agree/basket_width.py
+
+== сигнал 1788173657 ==
+[2026-08-31T10:54:19Z] задание agree-width-2 запущено: research/probe_agree/basket_width.py

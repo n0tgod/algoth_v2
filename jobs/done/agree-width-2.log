@@ -1,0 +1,6 @@
+== задание agree-width-2 ==
+строка: run research/probe_agree/basket_width.py --tag 1m
+начало: 2026-08-31T10:54:19Z
+запускаю: .venv/bin/python research/probe_agree/basket_width.py --tag 1m
+[10:54:20] сечений 20 по 2 рукам (10 на руку), пол 0 б.п.
+[10:54:20] истории сечения 10 ч на руку при нужных 72 — preds.jsonl это ОЧЕРЕДЬ на оценку, а не архив (score_preds убирает оценённые). Ширину на истории мерить нечем
