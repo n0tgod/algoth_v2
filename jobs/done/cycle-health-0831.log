@@ -4,3 +4,21 @@
 запускаю: .venv/bin/python research/s8_loop/cycle_health.py --tag deploy0831
 [14:55:02] строк 217, суток 14: цикл НЕ укладывается в час: за 2026-08-31 5 из 6 прогонов длиннее часа, медиана 5665 с; так с 2026-08-25
 [14:55:02] отчёт: /root/algoth_v2/research/s8_loop/out/CYCLE-health-deploy0831.md
+публикуется в ветку main:
+ jobs/done/books-registry-status.done              |    1 +
+ jobs/done/books-registry-status.log               |    9 +
+ jobs/done/cycle-health-0831.done                  |    1 +
+ jobs/done/cycle-health-0831.log                   |    6 +
+ jobs/done/status-after-0831.log                   |   35 +
+ jobs/poke.log                                     |    4 +
+ research/d1_seconds/out/d1.log                    |  379 ++
+ research/d1_seconds/out/passive.log               |  138 +
+ research/m1_features/out/build.log                |   21 +
+ research/paper_monthly/out/daily.log              |  142 +
+ research/s10_policy/out/tournament.log            | 4959 +++++++++++++++++++++
+ research/s8_loop/out/CYCLE-health-deploy0831.md   |   39 +
+ research/s8_loop/out/cycle-health-deploy0831.json |  177 +
+ research/z1_screen/out/run.log                    |  178 +
+ 14 files changed, 6089 insertions(+)
+Aborting commit due to empty commit message.
+конец: 2026-08-31T14:55:02Z, код 0

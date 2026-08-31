@@ -33,3 +33,19 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-08-31T14:55:02Z
+публикуется в ветку main:
+ jobs/done/books-registry-status.done              |    1 +
+ jobs/done/books-registry-status.log               |    9 +
+ jobs/done/cycle-health-0831.done                  |    1 +
+ jobs/done/cycle-health-0831.log                   |    6 +
+ jobs/done/status-after-0831.log                   |   35 +
+ jobs/poke.log                                     |    4 +
+ research/d1_seconds/out/d1.log                    |  379 ++
+ research/d1_seconds/out/passive.log               |  138 +
+ research/m1_features/out/build.log                |   21 +
+ research/paper_monthly/out/daily.log              |  142 +
+ research/s10_policy/out/tournament.log            | 4959 +++++++++++++++++++++
+ research/s8_loop/out/CYCLE-health-deploy0831.md   |   39 +
+ research/s8_loop/out/cycle-health-deploy0831.json |  177 +
+ research/z1_screen/out/run.log                    |  178 +
+ 14 files changed, 6089 insertions(+)
