@@ -13,3 +13,17 @@
 [10:47:20] N=30 gbm: base +0.00, agreed +0.00, ног в час 30.0/2.3
 [10:47:20] N=30 nn: base +0.00, agreed +0.00, ног в час 30.0/3.0
 [10:47:20] отчёт: /root/algoth_v2/research/probe_agree/out/AGREE-width-1m.md · 19.0 с
+публикуется в ветку main:
+ jobs/done/agree-basket-1.log                 |   7 +
+ jobs/done/agree-width-1.done                 |   1 +
+ jobs/done/agree-width-1.log                  |  15 +
+ jobs/poke.log                                |   3 +
+ research/probe_agree/out/AGREE-width-1m.md   |  62 +++
+ research/probe_agree/out/agree-width-1m.json | 547 +++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json          |   2 +-
+ 7 files changed, 636 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   4924843..c2af3e0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-31T10:47:22Z, код 0
