@@ -1,0 +1,113 @@
+== задание diag-liq-1 ==
+строка: run tools/diag_queue.py
+начало: 2026-08-31T05:20:02Z
+запускаю: .venv/bin/python tools/diag_queue.py 
+=== ветка и расхождение ===
+## main...origin/main
+ M jobs/done/liqsplit-1.log
+?? bot/out/
+?? jobs/done/diag-liq-1.done
+?? jobs/done/diag-liq-1.log
+?? research/d1_seconds/out/d1.log
+?? research/d1_seconds/out/passive.log
+?? research/m1_features/out/build.log
+?? research/paper_monthly/out/daily.log
+?? research/s10_policy/out/tournament.log
+?? research/z1_screen/out/run.log
+
+=== последние коммиты ===
+5d3d246 job: liqsplit-1
+27f1b02 зонд ликвидаций: деление падений D1 (1m)
+7ad3b68 [research] замок очереди не наследуется отвязанными заданиями (9>&-): идущий прогон замораживал очередь на всю длину
+e01300c [research] job: diag-liq-1 (жив ли прогон ликвидаций)
+6f582f9 [research] журнал: судья хвостов (№3 очереди)
+
+=== впереди / позади origin/main ===
+впереди: 0
+позади:  0
+
+=== git fetch (проверка доступа) ===
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+
+=== состояние очереди ===
+2026-08-28T01:50:04Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
+2026-08-30T22:43:52Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+2026-08-30T22:45:04Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+
+=== хвост журнала сигнала ===
+_: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
+
+== сигнал 1788129013 ==
+[2026-08-30T22:30:14Z] задание upcascade-2 запущено: research/probe_upcascade/up.py
+
+== сигнал 1788129829 ==
+
+== сигнал 1788129958 ==
+
+== сигнал 1788130089 ==
+[2026-08-30T22:48:10Z] задание tailveto-1 запущено: research/probe_tailveto/tailveto.py
+
+== сигнал 1788130187 ==
+[2026-08-30T22:49:49Z] задание tailveto-2 запущено: research/probe_tailveto/tailveto.py
+
+== сигнал 1788130270 ==
+[2026-08-30T22:51:12Z] задание liqsplit-1 запущено: research/probe_liqsplit/liqsplit.py
+
+== сигнал 1788145861 ==
+[2026-08-31T03:11:01Z] задания: проход уже идёт — выхожу
+
+=== идущие прогоны ===
+961 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+890447 .venv/bin/python research/b1_book/collect.py --http 8765
+890578 .venv/bin/python research/s8_loop/train.py
+915287 bash -c              nice -n 10 .venv/bin/python research/s10_policy/tournament.py                 >> research/s10_policy/out/tournament.log 2>&1             && tools/publish.sh 'V1: суточный прогон турнира политик'                 >> research/s10_policy/out/tournament.log 2>&1
+915289 .venv/bin/python research/s10_policy/tournament.py
+918650 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/diag-liq-1.log tools/diag_queue.py
+918654 .venv/bin/python tools/diag_queue.py
+
+=== склад лесенки ===
+total 533236
+drwxr-xr-x 2 root root     4096 Aug 28 12:15 .
+drwxr-xr-x 3 root root     4096 Aug 28 08:22 ..
+-rw-r--r-- 1 root root 21783799 Aug 26 10:32 2026-08-04.npz
+-rw-r--r-- 1 root root 22023972 Aug 26 12:35 2026-08-05.npz
+-rw-r--r-- 1 root root 22123385 Aug 26 14:41 2026-08-06.npz
+-rw-r--r-- 1 root root 21750539 Aug 26 16:45 2026-08-07.npz
+-rw-r--r-- 1 root root 20288879 Aug 26 18:45 2026-08-08.npz
+-rw-r--r-- 1 root root 21076377 Aug 26 20:39 2026-08-09.npz
+-rw-r--r-- 1 root root 21321631 Aug 26 22:38 2026-08-10.npz
+-rw-r--r-- 1 root root 21220589 Aug 27 00:51 2026-08-11.npz
+-rw-r--r-- 1 root root 21248771 Aug 27 04:22 2026-08-12.npz
+-rw-r--r-- 1 root root 25076741 Aug 27 06:59 2026-08-13.npz
+-rw-r--r-- 1 root root 27499100 Aug 27 09:34 2026-08-14.npz
+-rw-r--r-- 1 root root 26786884 Aug 27 12:32 2026-08-15.npz
+-rw-r--r-- 1 root root 26598821 Aug 27 15:12 2026-08-16.npz
+-rw-r--r-- 1 root root 27680334 Aug 27 17:53 2026-08-17.npz
+-rw-r--r-- 1 root root 27721791 Aug 27 20:16 2026-08-18.npz
+-rw-r--r-- 1 root root 27836842 Aug 27 22:28 2026-08-19.npz
+-rw-r--r-- 1 root root 26741407 Aug 28 00:25 2026-08-20.npz
+-rw-r--r-- 1 root root 27094201 Aug 28 02:27 2026-08-21.npz
+-rw-r--r-- 1 root root 26764617 Aug 28 04:53 2026-08-22.npz
+-rw-r--r-- 1 root root 27750890 Aug 28 07:32 2026-08-23.npz
+-rw-r--r-- 1 root root 27448021 Aug 28 09:52 2026-08-24.npz
+-rw-r--r-- 1 root root 28135815 Aug 28 12:15 2026-08-25.npz
+-rw-r--r-- 1 root root     2273 Aug 28 12:15 Z3-store.md
+
+=== хвост лога свёртки ===
+(попытка 1 из 4)
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+ветка разошлась и свести автоматически не вышло.
+коммит на месте; разобрать вручную: git pull --rebase origin main
+конец: 2026-08-31T05:20:04Z, код 0
