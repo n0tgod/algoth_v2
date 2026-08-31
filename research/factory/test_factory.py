@@ -1,0 +1,190 @@
+"""Проверки реестра и пространства фабрики.
+
+Главное здесь — не поведение функций, а два числа, которые обязаны
+быть неподвижны: размер объявленного пространства (знаменатель всех
+чисел фабрики) и воспроизводимость жребия контрольной руки. Первое
+меняется только событием (§10 спеки), второе — никогда: нуль, который
+нельзя повторить, не является проверяемым.
+"""
+
+import json
+import os
+import sys
+import tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+import ledger as L   # noqa: E402
+import space as S    # noqa: E402
+
+FAILED = []
+
+
+def check(name, ok, got=""):
+    print(("  ok   " if ok else "  ПРОВАЛ ") + name
+          + ("" if ok else f" — {got}"))
+    if not ok:
+        FAILED.append(name)
+
+
+# Снимок пространства на день объявления. Числа ЛИТЕРАЛАМИ: формула от
+# самих осей была бы тавтологией и не заметила бы снятого значения.
+AXES_SNAPSHOT = (
+    ("target", ("fwd_4h", "fwd_24h")),
+    ("rank", ("raw", "sigma")),
+    ("floor_bp", (0, 22, 30, 44)),
+    ("width", (3, 5, 10)),
+    ("geom", ("timer", "stop_take", "levels")),
+    ("rr_band", ("none", "lo", "hi")),
+    ("sizing", ("equal", "risk", "inv_sigma")),
+    ("basket", ("no", "whole")),
+    ("agree", ("no", "yes")),
+)
+
+
+def test_space_is_declared_and_frozen():
+    check("пространство ровно 5184 сочетания", S.TOTAL == 5184, str(S.TOTAL))
+    check("оси и значения как объявлены", S.AXES == AXES_SNAPSHOT,
+          str(S.AXES))
+    keys = {S.key(S.index_to_rule(i)) for i in range(S.TOTAL)}
+    check("у каждого сочетания свой ключ", len(keys) == S.TOTAL,
+          f"{len(keys)} ключей на {S.TOTAL} сочетаний")
+    ch = set("abcdefghijklmnopqrstuvwxyz0123456789_")
+    bad = [k for k in keys if set(k) - ch]
+    check("ключ годится для адреса и пути", not bad, str(bad[:3]))
+
+
+def test_validate_bites_on_both_sides():
+    good = S.index_to_rule(0)
+    check("годное правило принято", S.validate(good) is None,
+          str(S.validate(good)))
+    miss = dict(good)
+    miss.pop("sizing")
+    check("пропущенная ось отвергнута", S.validate(miss) is not None)
+    extra = dict(good, whatever=1)
+    check("лишняя ось отвергнута", S.validate(extra) is not None)
+    wrong = dict(good, width=7)
+    check("необъявленное значение отвергнуто",
+          S.validate(wrong) is not None)
+
+
+def test_draw_is_reproducible_and_random():
+    a = [S.key(r) for r in S.draw(777, 25)]
+    b = [S.key(r) for r in S.draw(777, 25)]
+    check("тот же номер зерна — тот же жребий", a == b, str(a[:2]))
+    c = [S.key(r) for r in S.draw(778, 25)]
+    # Иначе «случайная» рука не случайна: зерно ничего не решает, и
+    # контроль сравнивал бы отобранных с одним и тем же набором.
+    check("другое зерно — другой жребий", a != c, "жребий не зависит от зерна")
+    check("повторов в жребии нет", len(set(a)) == len(a))
+    ex = a[:5]
+    d = [S.key(r) for r in S.draw(777, 5, exclude=ex)]
+    check("занятые ключи не выпадают", not (set(d) & set(ex)), str(d))
+    check("жребий берёт только исполнимое",
+          all(S.unavailable(r) is None for r in S.draw(777, 40)))
+
+
+def test_unavailable_is_named_by_number():
+    # Половина пространства сегодня не исполнима, и это надо говорить
+    # числом: «кандидатов нет» и «кандидаты невозможны» снаружи
+    # неотличимы.
+    check("исполнимо ровно половина", S.available_total() == 2592,
+          str(S.available_total()))
+    r24 = dict(S.index_to_rule(0), target="fwd_24h")
+    why = S.unavailable(r24)
+    check("причина названа словами", bool(why) and "лист" in why, str(why))
+    check("горизонт сигнала исполним",
+          S.unavailable(dict(r24, target="fwd_4h")) is None)
+
+
+def test_describe_names_every_axis():
+    r = {"target": "fwd_24h", "rank": "sigma", "floor_bp": 30, "width": 5,
+         "geom": "levels", "rr_band": "lo", "sizing": "risk",
+         "basket": "whole", "agree": "yes"}
+    t = S.describe(r)
+    for must in ("24 ч", "σ", "30", "5+5", "уровни", "1.5", "риск",
+                 "целиком", "согласн"):
+        check(f"объяснение несёт «{must}»", must in t, t)
+
+
+def test_ledger_is_a_journal_not_a_table():
+    d = tempfile.mkdtemp()
+    r1, r2 = S.index_to_rule(3), S.index_to_rule(9)
+    k1, k2 = S.key(r1), S.key(r2)
+    check("объявление принято",
+          L.declare(k1, r1, "selected", seed=1, at=100.0, base=d) is None)
+    check("дубль отвергнут",
+          L.declare(k1, r1, "selected", at=101.0, base=d) is not None)
+    check("необъявленная полоса отвергнута",
+          L.declare(k2, r2, "whatever", at=101.0, base=d) is not None)
+    L.declare(k2, r2, "control", seed=777, at=102.0, base=d)
+    st = L.state(L.read(d)[0])
+    check("момент объявления сохранён дословно",
+          st[k1]["declared_at"] == 100.0, str(st[k1]))
+    check("вылет неизвестного отвергнут",
+          L.retire("нет-такого", "x", base=d) is not None)
+    check("вылет записан",
+          L.retire(k1, "ниже медианы нуля", at=200.0, base=d) is None)
+    check("повторный вылет отвергнут",
+          L.retire(k1, "x", base=d) is not None)
+    st = L.state(L.read(d)[0])
+    sp = L.spent(st)
+    check("испытание вылетом не возвращается",
+          sp["total"] == 2 and sp["retired"] == 1 and sp["active"] == 1,
+          str(sp))
+    check("полосы считаются врозь",
+          sp["selected"] == 1 and sp["control"] == 1
+          and sp["control_active"] == 1, str(sp))
+    check("причина вылета сохранена",
+          st[k1]["why"] == "ниже медианы нуля", str(st[k1]))
+
+
+def test_broken_line_is_counted_not_swallowed():
+    d = tempfile.mkdtemp()
+    r = S.index_to_rule(5)
+    L.declare(S.key(r), r, "selected", at=1.0, base=d)
+    with open(L.path(d), "a", encoding="utf-8") as f:
+        f.write("{это не json\n")
+        f.write(json.dumps({"ev": "странное", "id": "x"}) + "\n")
+    rows, bad = L.read(d)
+    check("битые строки посчитаны", bad == 2, str(bad))
+    check("годная строка уцелела", len(rows) == 1, str(rows))
+
+
+def test_effective_n_is_measured():
+    same = {"a": {1: 1.0, 2: 2.0, 3: 3.0, 4: 4.0},
+            "b": {1: 1.0, 2: 2.0, 3: 3.0, 4: 4.0},
+            "c": {1: 1.0, 2: 2.0, 3: 3.0, 4: 4.0}}
+    n_eff, r = L.effective_n(same)
+    check("три одинаковых книги — одно испытание", n_eff < 1.05,
+          f"{n_eff:.2f} при связи {r:.2f}")
+    ind = {"a": {1: 1.0, 2: -1.0, 3: 2.0, 4: -2.0},
+           "b": {1: -1.0, 2: 1.0, 3: -2.0, 4: 2.0}}
+    n_eff, r = L.effective_n(ind)
+    check("несвязанные книги — своё число", n_eff >= 1.9,
+          f"{n_eff:.2f} при связи {r:.2f}")
+
+
+def main():
+    tests = (test_space_is_declared_and_frozen,
+             test_validate_bites_on_both_sides,
+             test_draw_is_reproducible_and_random,
+             test_unavailable_is_named_by_number,
+             test_describe_names_every_axis,
+             test_ledger_is_a_journal_not_a_table,
+             test_broken_line_is_counted_not_swallowed,
+             test_effective_n_is_measured)
+    for t in tests:
+        print(t.__name__)
+        t()
+    print()
+    if FAILED:
+        print(f"ПРОВАЛЕНО: {len(FAILED)} — {', '.join(FAILED)}")
+        return 1
+    print(f"все проверки прошли ({len(tests)} блоков)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
