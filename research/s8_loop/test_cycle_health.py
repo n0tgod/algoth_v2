@@ -40,8 +40,12 @@ def write_log(mdir, rows):
 
 
 def row(day, h, sec, seq, sections):
+    """Строка ЖИВОГО образца: метка `at` идёт форматом `%m-%d %H:%M`,
+    то есть без года — ровно так её пишет цикл. Первая версия фикстуры
+    несла ISO-метку, и дефект ключа суток прошёл мимо проверок: на
+    живом журнале вышло 216 «суток» на 216 строк."""
     return {"seq": seq, "hour": f"{day}-{h:02d}",
-            "at": f"{day}T{h:02d}:30:00+00:00",
+            "at": f"{day[5:]} {h:02d}:30",
             "sections": sections, "symbols": 700,
             "canary_ic": 0.03, "cycle_sec": sec}
 
@@ -98,6 +102,30 @@ def test_verdict_comes_from_numbers():
               CH.verdict(CH.summarize([], None)))
     finally:
         shutil.rmtree(d, ignore_errors=True)
+
+
+def test_day_key_survives_a_live_record():
+    """Ключ суток обязан пережить живую метку без года.
+
+    Проверяется числом: у суток из 24 строк обязано выйти ОДНИ сутки,
+    а не двадцать четыре."""
+    rows = [row("2026-08-30", h, 1200, 100 + h, 500) for h in range(24)]
+    s = CH.summarize(rows, None)
+    check("сутки из 24 строк — это одни сутки",
+          len(s["per_day"]) == 1 and s["per_day"][0]["n"] == 24,
+          str([(p["day"], p["n"]) for p in s["per_day"]]))
+    check("ключ суток — календарная дата",
+          s["per_day"][0]["day"] == "2026-08-30",
+          str(s["per_day"][0]["day"]))
+    # Запись прежнего образца (только ISO-метка, без часа сечения)
+    # обязана читаться тоже: журнал переживает смену формата.
+    iso = [{"seq": 1, "at": "2026-08-30T05:30:00+00:00",
+            "sections": 500, "symbols": 700, "cycle_sec": 1200}]
+    si = CH.summarize(iso, None)
+    check("ISO-запись прежнего образца читается",
+          len(si["per_day"]) == 1
+          and si["per_day"][0]["day"] == "2026-08-30",
+          str([p["day"] for p in si["per_day"]]))
 
 
 def test_growth_is_measured_not_assumed():
@@ -165,6 +193,7 @@ def test_e2e_report():
 def main():
     tests = (test_median_is_a_median,
              test_verdict_comes_from_numbers,
+             test_day_key_survives_a_live_record,
              test_growth_is_measured_not_assumed,
              test_e2e_report)
     for t in tests:
