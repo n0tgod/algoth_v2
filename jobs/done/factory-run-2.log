@@ -2,3 +2,37 @@
 строка: run research/factory/run_day.py --tag 1m
 начало: 2026-08-31T16:07:41Z
 запускаю: .venv/bin/python research/factory/run_day.py --tag 1m
+публикуется в ветку main:
+ jobs/done/factory-first-run.log          |   7 +++
+ jobs/done/factory-run-2.done             |   1 +
+ jobs/done/factory-run-2.log              |   4 ++
+ jobs/poke.log                            |   5 ++
+ research/factory/out/FACTORY-day-1m.md   |  28 ++++++---
+ research/factory/out/factory-day-1m.json | 101 ++++++++++++++++++++++++++-----
+ research/factory/out/ledger.jsonl        |   1 +
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 8 files changed, 123 insertions(+), 26 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   956167c..6e9fed1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+объявлено: 1 (0 случайных)
+sheets.jsonl: ног 707413
+ног из журнала листов: 707413
+  бары: 50 имён из 743
+  бары: 100 имён из 743
+  бары: 150 имён из 743
+  бары: 200 имён из 743
+  бары: 250 имён из 743
+  бары: 300 имён из 743
+  бары: 350 имён из 743
+  бары: 400 имён из 743
+  бары: 450 имён из 743
+  бары: 500 имён из 743
+  бары: 550 имён из 743
+  бары: 600 имён из 743
+  бары: 650 имён из 743
+  бары: 700 имён из 743
+исходов посчитано: 2122077
+отчёт: /root/algoth_v2/research/factory/out/FACTORY-day-1m.md
+конец: 2026-08-31T18:07:24Z, код 0
