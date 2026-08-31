@@ -3244,6 +3244,12 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                  "canary_ic": man["canary_ic"],
                  "canary_target": cname,
                  "hedge": man["hedge"],
+                 # Секунды ПО ШАГАМ — в журнал, а не только в манифест:
+                 # манифест переписывается каждый час, то есть ряда
+                 # «куда уходило время» задним числом взять неоткуда, а
+                 # именно он отвечает, чем чинить переполнение цикла.
+                 # Тот же довод, по которому в журнал попали сечения.
+                 "steps_sec": steps,
                  "cycle_sec": man["cycle_sec"]},
                 ensure_ascii=False) + "\n")
     except OSError as e:

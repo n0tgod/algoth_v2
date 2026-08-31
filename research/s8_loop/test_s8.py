@@ -3494,6 +3494,19 @@ def test_train_cycle_end_to_end():
         check("записано, насколько поздно цикл проснулся",
               0 <= man["woke_after_hour_sec"] < 3600,
               str(man.get("woke_after_hour_sec")))
+        # Те же секунды по шагам — в ЖУРНАЛ обучений: манифест хранит
+        # только текущий час, и ряда «куда уходило время» задним числом
+        # взять неоткуда. Без него на вопрос «чем чинить переполнение
+        # цикла» отвечать нечем, кроме снимка одного часа.
+        lg = [json.loads(x) for x in open(
+            os.path.join(T.MODEL_DIR, "train_log.jsonl"),
+            encoding="utf-8") if x.strip()]
+        check("журнал обучений несёт секунды по шагам",
+              lg and (lg[-1].get("steps_sec") or {}).keys() == st.keys(),
+              str(lg[-1].get("steps_sec") if lg else None))
+        check("шаги журнала совпадают с манифестом числом",
+              lg and lg[-1]["steps_sec"] == st,
+              str(lg[-1].get("steps_sec") if lg else None))
         check("веса всех целей обеих рук на месте",
               all(os.path.exists(os.path.join(
                   T.MODEL_DIR, f"weights_{a}_{t}.pkl"))
