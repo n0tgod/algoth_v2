@@ -4086,17 +4086,46 @@ class Collector:
         root = os.path.dirname(research)
         sys.path.insert(0, os.path.join(research, "factory"))
         import agents as AG
+        import runlog as RL
+        # Прогоны ролей: у РОЛИ существования промпта мало. Промпт
+        # есть рецепт, а не работа, и объявить роль построенной по
+        # файлу значило бы сказать «работает» про то, что ни разу не
+        # звали. Сухой прогон в счёт не идёт — модель в нём не
+        # вызывается вовсе.
+        runs, broken = RL.read(os.path.join(
+            os.path.dirname(HERE), "factory", "out", RL.RUNS))
+        last = RL.last_by_role(runs)
+        ran = RL.ok_runs(runs)
         steps = []
         for st in AG.pipeline():
             proof = st.get("proof") or ""
-            steps.append(dict(st, built=bool(
-                proof and os.path.exists(os.path.join(root, proof)))))
+            has = bool(proof and os.path.exists(
+                os.path.join(root, proof)))
+            role = st["kind"] == "role"
+            lr = last.get(st["key"])
+            steps.append(dict(
+                st, built=(has and (not role or st["key"] in ran)),
+                prompt=has,
+                last_run=({"status": lr.get("status"),
+                           "at": lr.get("at"),
+                           "age_sec": round(now - (lr.get("at") or now), 1),
+                           "note": lr.get("note")} if lr else None)))
         built = [s for s in steps if s["built"]]
         # Следующий шаг — ПЕРВЫЙ непостроенный по порядку конвейера,
         # а не назначенный словом: порядок постройки обязан следовать
         # из состояния, иначе он стареет молча.
         nxt = next((s["key"] for s in steps if not s["built"]), None)
+        # Расписания ещё нет, и пока его нет, тишина роли тревогой
+        # НЕ является: тревога, кричащая всегда, перестаёт быть
+        # сигналом. Признак считается по факту, а не по намерению.
+        sched = os.path.exists(os.path.join(
+            root, "tools", "watchdog_book.sh")) and (
+            "agents_run.sh" in open(os.path.join(
+                root, "tools", "watchdog_book.sh"),
+                encoding="utf-8", errors="ignore").read())
         out = {"steps": steps, "built_n": len(built),
+               "runs_n": len(runs), "runs_broken": broken,
+               "scheduled": bool(sched),
                "total_n": len(steps),
                "roles_n": sum(1 for s in steps if s["kind"] == "role"),
                "next_key": nxt,

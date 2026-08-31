@@ -75,8 +75,8 @@ PIPELINE = [
         "key": "brief", "kind": "role", "model": "дешёвая",
         "title": "keeper and briefer",
         "title_ru": "сторож и брифер",
-        "cadence": "hourly",
-        "cadence_ru": "каждый час",
+        "cadence": "daily, before the proposer",
+        "cadence_ru": "раз в сутки, перед предлагающим",
         "plain": "Gathers the state into a brief with a hard token "
                  "budget, and writes the owner's summary from the "
                  "same gathering. Two readers, one pass.",
@@ -101,7 +101,10 @@ PIPELINE = [
         "why_ru": "Память проекта — 475 169 символов, около 216 тысяч "
                   "токенов. Платить за неё каждым вызовом дороже "
                   "самой работы, а модель, читающая её целиком, "
-                  "предложит из начала файла.",
+                  "предложит из начала файла. Каденция суточная, "
+                  "а не часовая, потому что единственный "
+                  "потребитель брифа — предлагающий, и он ходит "
+                  "раз в сутки: чаще платить за память незачем.",
         "proof": "research/factory/agents/brief.md",
     },
     {

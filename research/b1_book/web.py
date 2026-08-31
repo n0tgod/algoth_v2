@@ -8499,6 +8499,7 @@ body{margin:0;background:
 .f{font-size:12.5px}
 .f .lab{color:var(--muted);font-size:10.5px;letter-spacing:.09em;
  text-transform:uppercase;display:block}
+.run{font-size:11.5px;color:var(--muted);margin:6px 0 0}
 .why{font-size:12.5px;color:var(--muted);margin:8px 0 0;
  padding-left:10px;border-left:1px solid var(--rule-soft)}
 .why b{color:var(--ink);font-weight:600}
@@ -8579,7 +8580,17 @@ const UI = {
   reason: {en: "why", ru: "почему"},
   fail: {en: "failure", ru: "отказ"},
   guard: {en: "guard", ru: "защита"},
-  none: {en: "no daily run yet", ru: "суточного прогона ещё не было"}
+  none: {en: "no daily run yet", ru: "суточного прогона ещё не было"},
+  runs: {en: "role runs", ru: "прогонов ролей"},
+  lastrun: {en: "last run", ru: "последний прогон"},
+  never: {en: "never run", ru: "не запускалась ни разу"},
+  hasprompt: {en: "prompt only", ru: "только промпт"},
+  nosched: {en: "There is no schedule yet, so a silent role is not an "
+                + "alarm here. It becomes one the moment the runner is "
+                + "wired into the watchdog.",
+            ru: "Расписания ещё нет, поэтому молчащая роль здесь не "
+                + "тревога. Она станет тревогой в тот момент, когда "
+                + "запускалку впишут в сторожа."}
 };
 function T(k){ const v = UI[k]; return v[LANG] || v.en; }
 function tx(o, f){ return LANG === "ru" ? (o[f + "_ru"] || o[f] || "")
@@ -8641,6 +8652,7 @@ function render(){
     [T("built"), `${d.built_n}<small> / ${d.total_n}</small>`],
     [T("roles"), `${d.roles_n}<small> / ${d.total_n}</small>`],
     [T("next"), nx ? esc(tx(nx, "title")) : "&mdash;"],
+    [T("runs"), num(d.runs_n)],
     [T("pool"), num(p.alive)],
     [T("effn"), num(p.eff_n, 1)],
     [T("days"), num(p.days)]];
@@ -8661,6 +8673,10 @@ function render(){
           Math.round(p.run_age_sec / 3600)} h old`) + `</p>`;
   if (p.verdict)
     al += `<p class="warn"><b>&#8226;</b> ${esc(p.verdict)}</p>`;
+  // Тревога, кричащая всегда, перестаёт быть сигналом: пока
+  // расписания нет, молчание ролей есть состояние, а не отказ.
+  if (d.scheduled === false)
+    al += `<p class="frame" data-nosched="1">${T("nosched")}</p>`;
   document.getElementById("alarm").innerHTML = al;
 
   document.getElementById("pcap").textContent = T("pcap");
@@ -8680,8 +8696,15 @@ function render(){
         <span class="chip ${s.built ? "on" : "off"}"
           data-built="${s.built ? 1 : 0}">${
             s.built ? T("yes") : T("no")}</span>
+        ${(!s.built && s.prompt) ? `<span class="chip"
+          data-prompt="1">${T("hasprompt")}</span>` : ""}
       </div>
       <div class="sbody">${esc(tx(s, "plain"))}</div>
+      ${s.kind === "role" ? `<div class="run mono">${T("lastrun")}:
+        ${s.last_run
+          ? esc(s.last_run.status) + " &middot; "
+            + Math.round(s.last_run.age_sec / 60) + " min"
+          : T("never")}</div>` : ""}
       <div class="grid">
         <div class="f"><span class="lab">${T("reads")}</span>${
           esc(tx(s, "reads"))}</div>

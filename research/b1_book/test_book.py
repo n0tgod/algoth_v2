@@ -6030,9 +6030,19 @@ def test_agents_state_reads_the_registry_and_the_disk():
 
     root = os.path.dirname(os.path.dirname(HERE))
     for s in st["steps"]:
-        want = os.path.exists(os.path.join(root, s["proof"]))
-        if s["built"] != want:
+        # Механический шаг судится файлом. У РОЛИ файл — это промпт,
+        # то есть рецепт, а не работа: она построена, только если её
+        # хоть раз действительно звали (сухой прогон не в счёт).
+        has = os.path.exists(os.path.join(root, s["proof"]))
+        if s["prompt"] != has:
+            check(f"агенты: наличие файла {s['key']} не с диска", False)
+            break
+        if s["kind"] == "mech" and s["built"] != has:
             check(f"агенты: построенность {s['key']} не с диска", False)
+            break
+        if s["kind"] == "role" and s["built"] and not has:
+            check(f"агенты: роль {s['key']} без промпта объявлена "
+                  "построенной", False)
             break
     else:
         check("агенты: построенность каждого шага взята с диска", True)
@@ -6041,6 +6051,24 @@ def test_agents_state_reads_the_registry_and_the_disk():
     check("агенты: шаг без файла не считается построенным",
           all(s["built"] is False for s in st["steps"]
               if not os.path.exists(os.path.join(root, s["proof"]))))
+    # У РОЛИ существования промпта мало: промпт есть рецепт, а не
+    # работа. Роль, которую ни разу не звали, построенной не
+    # считается — иначе страница сказала бы «работает» про то, что
+    # никогда не работало.
+    roles = [x for x in st["steps"] if x["kind"] == "role"]
+    check("агенты: роль с промптом, но без прогонов не построена",
+          all(not x["built"] for x in roles if x.get("prompt")
+              and not x.get("last_run")),
+          str([(x["key"], x["prompt"], x["built"]) for x in roles]))
+    check("агенты: механический шаг судится файлом, а не прогоном",
+          all(x["built"] for x in st["steps"]
+              if x["kind"] == "mech"
+              and os.path.exists(os.path.join(
+                  os.path.dirname(os.path.dirname(HERE)), x["proof"]))))
+    # Пока запускалки нет в стороже, молчание роли — состояние, а не
+    # отказ: тревога, кричащая всегда, перестаёт быть сигналом.
+    check("агенты: наличие расписания взято из сторожа",
+          isinstance(st.get("scheduled"), bool), st.get("scheduled"))
     # Следующий шаг выводится из состояния, а не назначается словом.
     first_unbuilt = next((s["key"] for s in st["steps"]
                           if not s["built"]), None)

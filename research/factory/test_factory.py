@@ -9,6 +9,8 @@
 
 import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -16,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import agents as AG  # noqa: E402
+import runlog as RL  # noqa: E402
 import ledger as L   # noqa: E402
 import space as S    # noqa: E402
 
@@ -217,6 +220,124 @@ def test_agents_registry_is_one_source_and_complete():
           len(AG.BOUNDARIES) >= 3 and len(AG.RISKS) >= 3)
 
 
+def test_run_log_counts_every_wake_up():
+    """Журнал прогонов: тишина запрещена, сухой прогон не работа.
+
+    Остановившаяся запускалка выглядит ровно как спокойный день —
+    это самый дешёвый отказ из всех, и ловится он только тем, что
+    КАЖДОЕ пробуждение оставляет строку, включая отказ.
+
+    Сухой прогон модель не зовёт вовсе, поэтому засчитывать его за
+    работу роли значило бы объявить построенным то, что ни разу не
+    работало.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        p = os.path.join(d, "runs.jsonl")
+        RL.append(p, "brief", "ok", 100.0, ended=101.0, dry=True)
+        RL.append(p, "brief", "no-key", 200.0, ended=200.5,
+                  note="ключа API нет")
+        RL.append(p, "propose", "ok", 300.0, ended=340.0)
+        rows, broken = RL.read(p)
+        check("строк столько же, сколько пробуждений", len(rows) == 3,
+              str(len(rows)))
+        check("битых нет", broken == 0)
+        check("сухой прогон не считается работой роли",
+              RL.ok_runs(rows) == {"propose"}, str(RL.ok_runs(rows)))
+        last = RL.last_by_role(rows)
+        check("последний прогон роли — по времени, а не по порядку",
+              last["brief"]["status"] == "no-key", str(last["brief"]))
+        with open(p, "a", encoding="utf-8") as f:
+            f.write("{обрыв записи\n")
+        rows, broken = RL.read(p)
+        check("битая строка сосчитана, а не проглочена",
+              broken == 1 and len(rows) == 3, f"{broken}/{len(rows)}")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_brief_contract_is_mechanical():
+    """Контракт брифа проверяет машина, и проверяет ровно проверяемое.
+
+    Главный отказ схемы — агенты пишут друг другу правдоподобный
+    текст, и он становится фактом без сверки с данными. Просить
+    модель проверить себя бесполезно. Машина умеет две вещи: посчитать
+    размер и убедиться, что названные файлы существуют. Бриф,
+    сославшийся на несуществующий файл, есть выдумка, пойманная без
+    читателя.
+    """
+    root = os.path.dirname(HERE)
+    root = os.path.dirname(root)
+    good = ("- гипотеза закрыта хвостом "
+            "(research/f3_nulls/out/F3-report-1m.md)\n"
+            "- пул и вылет: research/factory/pool.py\n"
+            "- публикация: tools/publish.sh\n")
+    ok, why, got = RL.check_brief(good, root)
+    check("годный бриф проходит", ok, str(why))
+    check("указатели найдены", len(got) == 3, str(got))
+
+    ok, why, _ = RL.check_brief(good.replace(
+        "research/factory/pool.py", "research/factory/nosuch.py"), root)
+    check("выдуманный файл ловится машиной", not ok
+          and any("несуществующ" in w for w in why), str(why))
+
+    ok, why, _ = RL.check_brief("возврат работает, модель стала лучше",
+                                root)
+    check("бриф без указателей отвергается", not ok
+          and any("указател" in w for w in why), str(why))
+
+    ok, why, _ = RL.check_brief(good + "x" * RL.BRIEF_BUDGET_CHARS, root)
+    check("потолок размера кусается", not ok
+          and any("потолк" in w for w in why), str(why))
+
+    ok, why, _ = RL.check_brief("", root)
+    check("пустой бриф не годен", not ok, str(why))
+
+
+def test_runner_leaves_a_line_on_every_refusal():
+    """Запускалка: отказ называется и всё равно оставляет строку.
+
+    Гоняется НАСТОЯЩИЙ скрипт — пересказ проверял бы мой пересказ.
+    Каталог артефактов уведён, чтобы проверка не писала в журнал
+    прогонов сервера.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    sh = os.path.join(root, "tools", "agents_run.sh")
+    if not os.path.exists(sh):
+        check("запускалка на месте", False, sh)
+        return
+    d = tempfile.mkdtemp()
+    try:
+        env = dict(os.environ, AGENTS_OUT=d, ANTHROPIC_KEY_FILE="/nope")
+        env.pop("ANTHROPIC_API_KEY", None)
+        r1 = subprocess.run([sh, "nosuchrole"], cwd=root, env=env,
+                            capture_output=True, text=True, timeout=120)
+        r2 = subprocess.run([sh, "brief"], cwd=root, env=env,
+                            capture_output=True, text=True, timeout=120)
+        r3 = subprocess.run([sh, "brief", "--dry"], cwd=root, env=env,
+                            capture_output=True, text=True, timeout=120)
+        check("роль без промпта отвергнута кодом", r1.returncode != 0,
+              r1.stdout[-200:])
+        check("причина названа: нет промпта",
+              "промпта роли нет" in r1.stdout, r1.stdout[-200:])
+        check("боевой прогон без ключа отвергнут", r2.returncode != 0)
+        check("причина названа: нет ключа",
+              "ключа API нет" in r2.stdout, r2.stdout[-200:])
+        check("сухой прогон проходит и модель не зовёт",
+              r3.returncode == 0 and "модель НЕ вызывается" in r3.stdout,
+              r3.stdout[-200:])
+        rows, _ = RL.read(os.path.join(d, RL.RUNS))
+        got = sorted((r["role"], r["status"]) for r in rows)
+        check("обе беды оставили строку в журнале",
+              got == [("brief", "no-key"), ("nosuchrole", "no-prompt")],
+              str(got))
+        dry, _ = RL.read(os.path.join(d, "agents-runs-dry.jsonl"))
+        check("сухой прогон пишет в свой журнал и в общий не лезет",
+              len(dry) == 1 and dry[0]["dry"] is True, str(dry))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def main():
     tests = (test_space_is_declared_and_frozen,
              test_control_share_is_of_the_pool_not_the_batch,
@@ -234,7 +355,10 @@ def main():
              test_ledger_is_a_journal_not_a_table,
              test_broken_line_is_counted_not_swallowed,
              test_effective_n_is_measured,
-             test_agents_registry_is_one_source_and_complete)
+             test_agents_registry_is_one_source_and_complete,
+             test_run_log_counts_every_wake_up,
+             test_brief_contract_is_mechanical,
+             test_runner_leaves_a_line_on_every_refusal)
     for t in tests:
         print(t.__name__)
         t()

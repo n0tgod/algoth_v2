@@ -378,7 +378,8 @@ global.fetch = async (url) => {
                     doubt_ru: "ноль исходов: не пишет ничего",
                     why: "publish only the interesting IS the R5 machine",
                     why_ru: "публиковать только интересное и есть машина R5",
-                    proof: "research/factory/run_day.py", built: true},
+                    proof: "research/factory/run_day.py", built: true,
+                    prompt: true, last_run: null},
                    {key: "propose", kind: "role", model: "дорогая",
                     title: "proposer", title_ru: "предлагающий",
                     cadence: "daily", cadence_ru: "раз в сутки",
@@ -394,7 +395,9 @@ global.fetch = async (url) => {
                     why: "throughput is set by the calendar",
                     why_ru: "пропускную способность задаёт календарь",
                     proof: "research/factory/agents/propose.md",
-                    built: false},
+                    built: false, prompt: true,
+                    last_run: {status: "no-key", at: 1788215000,
+                               age_sec: 900, note: "ключа API нет"}},
                    {key: "publish", kind: "mech", model: "нет",
                     title: "publication", title_ru: "публикация",
                     cadence: "after every run",
@@ -412,9 +415,12 @@ global.fetch = async (url) => {
                          + "never happened",
                     why_ru: "отчёт, оставшийся на сервере, есть прогон, "
                             + "которого не было",
-                    proof: "tools/publish.sh", built: true}];
+                    proof: "tools/publish.sh", built: true,
+                    prompt: true, last_run: null}];
                  const out = {steps: steps, built_n: 2, total_n: 3,
                    roles_n: 1, next_key: "propose",
+                   runs_n: 4, runs_broken: 0,
+                   scheduled: /agentssched=1/.test(SEARCH),
                    stale_after_sec: 129600,
                    boundaries: [
                      {what: "exchange keys", what_ru: "ключи биржи",
@@ -3798,6 +3804,24 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push(`агенты: у роли нет поля «${lab}»`);
     if (!/research\/factory\/agents\/propose\.md/.test(pipe))
       bad.push("агенты: у шага не назван файл-доказательство");
+    // У РОЛИ существования промпта мало: промпт — рецепт, а не
+    // работа. Роль с промптом и без прогонов обязана читаться как
+    // «только промпт», иначе страница скажет «работает» про то, что
+    // ни разу не звали.
+    if (!/data-prompt="1"/.test(pipe))
+      bad.push("агенты: роль с промптом без прогонов не помечена");
+    if (!/last run[\s\S]{0,60}no-key/.test(pipe))
+      bad.push("агенты: последний прогон роли не показан со статусом");
+    if (!/>4</.test(strip))
+      bad.push("агенты: число прогонов ролей не показано");
+    // Пока расписания нет, молчание роли — состояние, а не отказ.
+    if (/agentssched=1/.test(SEARCH)) {
+      if (/data-nosched="1"/.test(E("alarm")))
+        bad.push("агенты: расписание есть, а оговорка о его отсутствии "
+                 + "осталась");
+    } else if (!/data-nosched="1"/.test(E("alarm"))) {
+      bad.push("агенты: отсутствие расписания не названо");
+    }
     const bnd = (E("bounds").match(/<tr>/g) || []).length;
     const rsk = (E("risks").match(/<tr>/g) || []).length;
     if (bnd !== 3) bad.push(`агенты: строк границ ${bnd}, а с шапкой три`);
