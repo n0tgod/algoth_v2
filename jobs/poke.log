@@ -275,3 +275,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-08-31T14:50:37Z] задание books-registry-deploy: перезапуск сборщика
 
 == сигнал 1788187927 ==
+[2026-08-31T14:52:10Z] задание books-registry-status: состояние снято
+
+== сигнал 1788188100 ==
+[2026-08-31T14:55:02Z] задание cycle-health-0831 запущено: research/s8_loop/cycle_health.py

@@ -1,0 +1,142 @@
+край хранилища 2026-08-26, дней к докачке 1
+символов 0, файлов к обходу 0
+скачано 0, нет в архиве 0
+  пересборка партиций: --interval 1m --months 2026-08
+      "skipped_existing": 1,
+      "interval": "1m"
+    }
+готово: /root/algoth_v2/research/a2_storage/out/A2-refresh-1m.json (0.3 мин)
+  край хранилища НЕ сдвинулся (2026-08-26) при 0 скачанных файлах — докачка не дошла до партиций
+публикую отчёт
+публикуется в ветку main:
+ jobs/done/z3-fold-2.log                    | 13 +++++++++++++
+ research/a2_storage/out/A2-refresh-1m.json | 18 +++++++++---------
+ research/a2_storage/out/A2-refresh-1m.md   | 18 +++++++++---------
+ research/a2_storage/out/build_1m.json      |  2 +-
+ 4 files changed, 32 insertions(+), 19 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   7a0e77f..bfe6c83  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+универсум 949, рядов funding 722
+  отказов при отборе дат: 2. Хранилище A2: 80 партиций, 2020-01 … 2026-08; просили 2026-08-01 … 2026-08-28
+  причина — нет наблюдений в день решения: 2
+новых решений 0, новых разборов 0
+готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (0.3 мин)
+  настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 0 — кривая восстановленной части есть бэктест, а не трек
+публикую отчёт
+публикуется в ветку main:
+ research/paper_monthly/out/PAPER-30d.json | 4 ++--
+ research/paper_monthly/out/PAPER-30d.md   | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   bfe6c83..f34db60  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+край хранилища 2026-08-26, дней к докачке 2
+символов 0, файлов к обходу 0
+скачано 0, нет в архиве 0
+  пересборка партиций: --interval 1m --months 2026-08
+      "skipped_existing": 1,
+      "interval": "1m"
+    }
+готово: /root/algoth_v2/research/a2_storage/out/A2-refresh-1m.json (0.3 мин)
+  край хранилища НЕ сдвинулся (2026-08-26) при 0 скачанных файлах — докачка не дошла до партиций
+публикую отчёт
+публикуется в ветку main:
+ jobs/done/brake-1.log                      | 7 +++++++
+ research/a2_storage/out/A2-refresh-1m.json | 4 ++--
+ research/a2_storage/out/A2-refresh-1m.md   | 4 ++--
+ 3 files changed, 11 insertions(+), 4 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   8b737c9..41d4964  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+универсум 949, рядов funding 722
+  отказов при отборе дат: 3. Хранилище A2: 80 партиций, 2020-01 … 2026-08; просили 2026-08-01 … 2026-08-29
+  причина — нет наблюдений в день решения: 3
+новых решений 0, новых разборов 0
+готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (0.3 мин)
+  настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 0 — кривая восстановленной части есть бэктест, а не трек
+публикую отчёт
+публикуется в ветку main:
+ research/paper_monthly/out/PAPER-30d.json | 2 +-
+ research/paper_monthly/out/PAPER-30d.md   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   41d4964..9ab478b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+край хранилища 2026-08-26, дней к докачке 3
+символов 0, файлов к обходу 0
+скачано 0, нет в архиве 0
+  пересборка партиций: --interval 1m --months 2026-08
+      "skipped_existing": 1,
+      "interval": "1m"
+    }
+готово: /root/algoth_v2/research/a2_storage/out/A2-refresh-1m.json (0.3 мин)
+  край хранилища НЕ сдвинулся (2026-08-26) при 0 скачанных файлах — докачка не дошла до партиций
+публикую отчёт
+публикуется в ветку main:
+ jobs/done/basket-1.log                     | 7 +++++++
+ research/a2_storage/out/A2-refresh-1m.json | 4 ++--
+ research/a2_storage/out/A2-refresh-1m.md   | 4 ++--
+ research/s8_loop/out/day_brake.json        | 2 +-
+ 4 files changed, 12 insertions(+), 5 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   d1ed5e7..ffb6a79  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+универсум 949, рядов funding 722
+  отказов при отборе дат: 4. Хранилище A2: 80 партиций, 2020-01 … 2026-08; просили 2026-08-01 … 2026-08-30
+  причина — нет наблюдений в день решения: 4
+новых решений 0, новых разборов 0
+готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (0.4 мин)
+  настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 0 — кривая восстановленной части есть бэктест, а не трек
+публикую отчёт
+публикуется в ветку main:
+ research/paper_monthly/out/PAPER-30d.json | 4 ++--
+ research/paper_monthly/out/PAPER-30d.md   | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   ffb6a79..0d2aa0b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+край хранилища 2026-08-26, дней к докачке 4
+символов 0, файлов к обходу 0
+скачано 0, нет в архиве 0
+  пересборка партиций: --interval 1m --months 2026-08
+      "skipped_existing": 1,
+      "interval": "1m"
+    }
+готово: /root/algoth_v2/research/a2_storage/out/A2-refresh-1m.json (1.2 мин)
+  край хранилища НЕ сдвинулся (2026-08-26) при 0 скачанных файлах — докачка не дошла до партиций
+публикую отчёт
+публикуется в ветку main:
+ jobs/done/diag-liq-1.log                   | 9 +++++++++
+ research/a2_storage/out/A2-refresh-1m.json | 6 +++---
+ research/a2_storage/out/A2-refresh-1m.md   | 6 +++---
+ research/s8_loop/out/day_brake.json        | 2 +-
+ 4 files changed, 16 insertions(+), 7 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   06a04f9..3aeb377  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+универсум 949, рядов funding 722
+  разбор 2026-08-01: нетто -32.0 б.п.
+  отказов при отборе дат: 5. Хранилище A2: 80 партиций, 2020-01 … 2026-08; просили 2026-08-01 … 2026-08-31
+  причина — нет наблюдений в день решения: 4
+  причина — живых и ликвидных имён меньше пола: 1
+новых решений 0, новых разборов 1
+готово: /root/algoth_v2/research/paper_monthly/out/PAPER-30d.json (1.7 мин)
+  настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 1 — кривая восстановленной части есть бэктест, а не трек
+публикую отчёт
+публикуется в ветку main:
+ research/paper_monthly/out/PAPER-30d.json | 25 ++++++++++++++++++++-----
+ research/paper_monthly/out/PAPER-30d.md   |  8 ++++----
+ research/s8_loop/out/day_brake.json       |  2 +-
+ 3 files changed, 25 insertions(+), 10 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3aeb377..0eb0b05  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

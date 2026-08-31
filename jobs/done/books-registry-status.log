@@ -32,3 +32,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-08-31T14:52:08Z
+публикуется в ветку main:
+ jobs/done/books-registry-deploy.log | 11 +++++++++++
+ jobs/done/books-registry-status.log | 34 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  2 ++
+ 3 files changed, 47 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   758989d..16311d7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

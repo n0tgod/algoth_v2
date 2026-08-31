@@ -1,0 +1,177 @@
+{
+ "meta": {
+  "when": "2026-08-31 14:55 UTC"
+ },
+ "summary": {
+  "cycles": 217,
+  "per_day": [
+   {
+    "day": "2026-08-18",
+    "n": 2,
+    "n_train": 2,
+    "med": 1092.0,
+    "p90": 1174.2,
+    "over_hour": 0,
+    "over_share": 0.0,
+    "sections": 374.5,
+    "symbols": 717.0
+   },
+   {
+    "day": "2026-08-19",
+    "n": 24,
+    "n_train": 24,
+    "med": 1252.2,
+    "p90": 1415.8,
+    "over_hour": 0,
+    "over_share": 0.0,
+    "sections": 387.5,
+    "symbols": 717.0
+   },
+   {
+    "day": "2026-08-20",
+    "n": 24,
+    "n_train": 24,
+    "med": 1460.1,
+    "p90": 1614.0,
+    "over_hour": 0,
+    "over_share": 0.0,
+    "sections": 411.5,
+    "symbols": 717.0
+   },
+   {
+    "day": "2026-08-21",
+    "n": 23,
+    "n_train": 23,
+    "med": 1545.2,
+    "p90": 1781.0,
+    "over_hour": 0,
+    "over_share": 0.0,
+    "sections": 435,
+    "symbols": 725
+   },
+   {
+    "day": "2026-08-22",
+    "n": 25,
+    "n_train": 25,
+    "med": 1534.0,
+    "p90": 2348.6,
+    "over_hour": 0,
+    "over_share": 0.0,
+    "sections": 459,
+    "symbols": 728
+   },
+   {
+    "day": "2026-08-23",
+    "n": 24,
+    "n_train": 24,
+    "med": 1782.1,
+    "p90": 2820.1,
+    "over_hour": 1,
+    "over_share": 0.042,
+    "sections": 482.5,
+    "symbols": 728.0
+   },
+   {
+    "day": "2026-08-24",
+    "n": 20,
+    "n_train": 20,
+    "med": 2680.6,
+    "p90": 3766.8,
+    "over_hour": 3,
+    "over_share": 0.15,
+    "sections": 506.5,
+    "symbols": 728.0
+   },
+   {
+    "day": "2026-08-25",
+    "n": 12,
+    "n_train": 12,
+    "med": 4955.0,
+    "p90": 5750.3,
+    "over_hour": 12,
+    "over_share": 1.0,
+    "sections": 533.0,
+    "symbols": 728.0
+   },
+   {
+    "day": "2026-08-26",
+    "n": 12,
+    "n_train": 12,
+    "med": 5839.8,
+    "p90": 6389.0,
+    "over_hour": 12,
+    "over_share": 1.0,
+    "sections": 556.0,
+    "symbols": 731.0
+   },
+   {
+    "day": "2026-08-27",
+    "n": 12,
+    "n_train": 12,
+    "med": 6240.0,
+    "p90": 6503.4,
+    "over_hour": 12,
+    "over_share": 1.0,
+    "sections": 580.0,
+    "symbols": 731.0
+   },
+   {
+    "day": "2026-08-28",
+    "n": 11,
+    "n_train": 11,
+    "med": 5554.3,
+    "p90": 6676.7,
+    "over_hour": 11,
+    "over_share": 1.0,
+    "sections": 605,
+    "symbols": 739
+   },
+   {
+    "day": "2026-08-29",
+    "n": 12,
+    "n_train": 12,
+    "med": 5653.5,
+    "p90": 5772.2,
+    "over_hour": 12,
+    "over_share": 1.0,
+    "sections": 628.0,
+    "symbols": 739.0
+   },
+   {
+    "day": "2026-08-30",
+    "n": 10,
+    "n_train": 10,
+    "med": 5940.4,
+    "p90": 6334.2,
+    "over_hour": 10,
+    "over_share": 1.0,
+    "sections": 652.0,
+    "symbols": 739.0
+   },
+   {
+    "day": "2026-08-31",
+    "n": 6,
+    "n_train": 5,
+    "med": 5664.9,
+    "p90": 7211.5,
+    "over_hour": 5,
+    "over_share": 0.833,
+    "sections": 671.0,
+    "symbols": 739.0
+   }
+  ],
+  "rho_sections": 0.886704262800415,
+  "rho_seq": 0.8866403916821942,
+  "first_over_day": "2026-08-25",
+  "steps_last": {
+   "сведение часа": 7.8,
+   "матрица": 41.8,
+   "книги": 25.5,
+   "оценка и канарейка": 1142.4,
+   "обучение": 3989.5
+  },
+  "woke_last": 1202.2,
+  "cycle_last": 5207.1,
+  "sections_last": 675
+ }
+}

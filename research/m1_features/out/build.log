@@ -1,0 +1,21 @@
+=== 2026-07-31T22:19:37Z прогон: research/m1_features/build.py
+дневная сводка: месяцев 78 (готово было 78), 0 с
+универсум: 632 крипто-активов, 1492 дней 2022-07-01…2026-07-31
+матрицы загружены: 2 с
+funding: рядов 632
+открытый интерес: рядов 618
+признаки посчитаны: 3 с
+строк 271,183 · активов 442 · сечений 1402 · полных строк 216,491
+артефакты: /root/algoth_v2/research/m1_features/out/features_1m.parquet
+          /root/algoth_v2/research/m1_features/out/m1_summary_1m.json
+          /root/algoth_v2/research/m1_features/out/M1-report-1m.md
+=== прогон кончился, публикую
+публикуется в ветку claude/claude-md-stage-a1-pqrhnx:
+ research/m1_features/out/M1-report-1m.md     |   9 +++++----
+ research/m1_features/out/features_1m.parquet | Bin 45177734 -> 45499526 bytes
+ research/m1_features/out/m1_summary_1m.json  |  12 +++++++-----
+ 3 files changed, 12 insertions(+), 9 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   77bab15..9717719  claude/claude-md-stage-a1-pqrhnx -> claude/claude-md-stage-a1-pqrhnx
+branch 'claude/claude-md-stage-a1-pqrhnx' set up to track 'origin/claude/claude-md-stage-a1-pqrhnx'.
+опубликовано
