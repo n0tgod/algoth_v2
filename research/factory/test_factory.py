@@ -168,6 +168,13 @@ def test_effective_n_is_measured():
 
 def main():
     tests = (test_space_is_declared_and_frozen,
+             test_control_share_is_of_the_pool_not_the_batch,
+             test_batch_respects_the_owners_limits,
+             test_window_is_calendar_not_last_entries,
+             test_retire_rule_follows_the_owner_by_sum,
+             test_young_candidate_is_not_judged,
+             test_silence_frees_the_slot,
+             test_sweep_judges_control_by_the_same_rule,
              test_validate_bites_on_both_sides,
              test_draw_is_reproducible_and_random,
              test_unavailable_is_named_by_number,
@@ -184,6 +191,100 @@ def main():
         return 1
     print(f"все проверки прошли ({len(tests)} блоков)")
     return 0
+
+
+
+import pool as P  # noqa: E402
+
+
+def test_control_share_is_of_the_pool_not_the_batch():
+    sel, ctl, _ = P.plan_batch(0, 0, 5)
+    check("пустой пул: 4 отобранных и 1 случайный", (sel, ctl) == (4, 1),
+          f"{sel}/{ctl}")
+    # Доля считается от ПУЛА: контроль, отставший от четверти, забирает
+    # партию целиком. При доле «четверть каждой партии» он так и остался
+    # бы отставшим навсегда.
+    sel, ctl, _ = P.plan_batch(40, 2, 5)
+    check("отставший контроль догоняет", ctl == 5 and sel == 0,
+          f"{sel}/{ctl}")
+    sel, ctl, _ = P.plan_batch(40, 12, 5)
+    check("догнавший контроль не растёт сверх доли", ctl <= 1,
+          f"{sel}/{ctl}")
+
+
+def test_batch_respects_the_owners_limits():
+    sel, ctl, why = P.plan_batch(0, 0, 9)
+    check("предел суток — пять", sel + ctl == 5, f"{sel}+{ctl}")
+    check("усечение названо словами", bool(why), str(why))
+    sel, ctl, why = P.plan_batch(98, 25, 5)
+    check("пул не переполняется", sel + ctl == 2, f"{sel}+{ctl}")
+    sel, ctl, why = P.plan_batch(100, 25, 5)
+    check("полный пул не принимает никого", sel + ctl == 0, f"{sel}+{ctl}")
+    check("причина полного пула названа", bool(why), str(why))
+
+
+def test_window_is_calendar_not_last_entries():
+    now = 1000 * P.DAY
+    # Три дня внутри окна и один далеко за ним: старая крупная прибыль
+    # не имеет права спасать книгу, слившую последние десять суток.
+    daily = {now - 1 * P.DAY: -5.0, now - 3 * P.DAY: -4.0,
+             now - 9 * P.DAY: -3.0, now - 40 * P.DAY: +500.0}
+    net, n = P.window_net(daily, now)
+    check("окно берёт только свои сутки", abs(net + 12.0) < 1e-9 and n == 3,
+          f"{net} за {n} дней")
+
+
+def test_retire_rule_follows_the_owner_by_sum():
+    now = 1000 * P.DAY
+    born = now - 20 * P.DAY
+    losing = {now - i * P.DAY: -2.0 for i in range(1, 10)}
+    why = P.should_retire(losing, now, 0.0, born)
+    check("сумма ниже медианы нуля — вылет", bool(why), str(why))
+    # Копеечная зелёная свеча не обнуляет счётчик: правило по СУММЕ, а
+    # не по серии — иначе мёртвая книга вылетала бы раз в полтора года.
+    losing_with_green = dict(losing)
+    losing_with_green[now - 5 * P.DAY] = +0.5
+    check("зелёный день серию не обнуляет",
+          bool(P.should_retire(losing_with_green, now, 0.0, born)))
+    winning = {now - i * P.DAY: +2.0 for i in range(1, 10)}
+    check("книга выше нуля живёт",
+          P.should_retire(winning, now, 0.0, born) is None)
+    # Сравнение со СВОИМ нулём: та же книга при нуле выше неё вылетает.
+    check("нуль выше книги — вылет",
+          bool(P.should_retire(winning, now, +100.0, born)))
+
+
+def test_young_candidate_is_not_judged():
+    now = 1000 * P.DAY
+    young = now - 3 * P.DAY
+    losing = {now - i * P.DAY: -9.0 for i in range(1, 3)}
+    check("окна ещё нет — вердикта нет",
+          P.should_retire(losing, now, 0.0, young) is None,
+          str(P.should_retire(losing, now, 0.0, young)))
+
+
+def test_silence_frees_the_slot():
+    now = 1000 * P.DAY
+    check("молчание дольше предела — вылет",
+          bool(P.should_retire({}, now, 0.0, now - 40 * P.DAY)))
+    check("молчание в пределах — не вылет",
+          P.should_retire({}, now, 0.0, now - 20 * P.DAY) is None)
+
+
+def test_sweep_judges_control_by_the_same_rule():
+    now = 1000 * P.DAY
+    born = now - 20 * P.DAY
+    st = {"s1": {"lane": "selected", "declared_at": born, "retired_at": None},
+          "c1": {"lane": "control", "declared_at": born, "retired_at": None},
+          "s2": {"lane": "selected", "declared_at": born,
+                 "retired_at": 5.0}}
+    daily = {"s1": {now - 1 * P.DAY: -5.0},
+             "c1": {now - 1 * P.DAY: -5.0},
+             "s2": {now - 1 * P.DAY: -5.0}}
+    got = dict(P.sweep(st, daily, now, 0.0))
+    check("контрольная рука судится тем же правилом", "c1" in got, str(got))
+    check("отобранная тоже", "s1" in got, str(got))
+    check("уже отставленный не судится дважды", "s2" not in got, str(got))
 
 
 if __name__ == "__main__":
