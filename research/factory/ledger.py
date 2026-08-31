@@ -85,6 +85,7 @@ def state(rows):
                 continue          # дубль объявления — первое главнее
             st[cid] = {"id": cid, "rule": r.get("rule"),
                        "lane": r.get("lane"), "seed": r.get("seed"),
+                       "note": r.get("note"),
                        "declared_at": r.get("at"),
                        "retired_at": None, "why": None}
         elif cid in st and st[cid]["retired_at"] is None:
@@ -108,7 +109,8 @@ def _append(row, base=None):
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def declare(cid, rule, lane, seed=None, at=None, base=None, source=None):
+def declare(cid, rule, lane, seed=None, at=None, base=None, source=None,
+            note=None):
     """Объявить кандидата. Возвращает причину отказа или None.
 
     Отказ, а не исключение: суточный прогон объявляет пятерых, и
@@ -120,8 +122,12 @@ def declare(cid, rule, lane, seed=None, at=None, base=None, source=None):
     st = state(read(base)[0])
     if cid in st:
         return f"кандидат {cid} уже в реестре"
+    # Довод, по которому кандидат предложен, хранится вместе с ним:
+    # судится ВЫБОР ассистента, и запись без причины выбора описывала
+    # бы результат, но не то, что его породило.
     _append({"ev": DECLARE, "id": cid, "at": at or _now(), "rule": rule,
-             "lane": lane, "seed": seed, "source": source}, base)
+             "lane": lane, "seed": seed, "source": source,
+             "note": note}, base)
     return None
 
 

@@ -177,6 +177,7 @@ def test_effective_n_is_measured():
 def main():
     tests = (test_space_is_declared_and_frozen,
              test_control_share_is_of_the_pool_not_the_batch,
+             test_control_share_converges,
              test_batch_respects_the_owners_limits,
              test_window_is_calendar_not_last_entries,
              test_retire_rule_follows_the_owner_by_sum,
@@ -218,6 +219,21 @@ def test_control_share_is_of_the_pool_not_the_batch():
     sel, ctl, _ = P.plan_batch(40, 12, 5)
     check("догнавший контроль не растёт сверх доли", ctl <= 1,
           f"{sel}/{ctl}")
+
+
+def test_control_share_converges():
+    """Доля контроля обязана сходиться к четверти, а не совпадать с ней
+    в каждой партии: при пуле из двух четверть равна нулю, и требовать
+    случайного в первой же партии значит требовать больше, чем сказано
+    в §3."""
+    n_act = n_ctl = 0
+    for _ in range(30):
+        sel, ctl, _ = P.plan_batch(n_act, n_ctl, 3)
+        n_act += sel + ctl
+        n_ctl += ctl
+    share = n_ctl / n_act
+    check("доля случайных сошлась к четверти", abs(share - 0.25) <= 0.02,
+          f"{share:.3f} при {n_ctl} из {n_act}")
 
 
 def test_batch_respects_the_owners_limits():
