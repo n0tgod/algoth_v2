@@ -1,0 +1,54 @@
+== задание agree-books-diag-1 ==
+строка: run research/s8_loop/diag_books.py
+начало: 2026-08-31T09:33:58Z
+запускаю: .venv/bin/python research/s8_loop/diag_books.py 
+model: выборов 708, манифест: no_timer=None age=None take=None agree=None echo_of=None seq=515 trained_at=2026-08-31T08:42:25+00:00
+model_h24: выборов 912, манифест: no_timer=None age=None take=None agree=None echo_of=None seq=None trained_at=2026-08-31T08:42:25+00:00
+model_h24b: выборов 584, манифест: no_timer=None age=None take=0.05 agree=None echo_of=model_h24 seq=None trained_at=2026-08-31T08:42:25+00:00
+model_h24bf: выборов 584, манифест: no_timer=None age=None take=0.05 agree=None echo_of=model_h24 seq=None trained_at=2026-08-31T08:42:25+00:00
+model_h24c: выборов 8, манифест: no_timer=True age=24 take=0.05 agree=None echo_of=model_h24 seq=None trained_at=2026-08-31T08:42:25+00:00
+model_h24z: выборов 766, манифест: no_timer=None age=None take=None agree=None echo_of=None seq=None trained_at=2026-08-31T08:42:25+00:00
+model_h24a: выборов 0, манифест: no_timer=None age=None take=None agree=True echo_of=model_h24 seq=None trained_at=2026-08-31T08:42:25+00:00
+model_h24za: выборов 2, манифест: no_timer=None age=None take=None agree=True echo_of=model_h24z seq=None trained_at=2026-08-31T08:42:25+00:00 last_agree_kept=[1, 6]
+--- хвост train.log ---
+[08-31 09:07:04]   сводка: 410/739 символов, новых часов 816
+[08-31 09:07:34]   сводка: 450/739 символов, новых часов 896
+[08-31 09:08:04]   сводка: 490/739 символов, новых часов 976
+[08-31 09:08:34]   сводка: 531/739 символов, новых часов 1058
+[08-31 09:09:05]   сводка: 570/739 символов, новых часов 1136
+[08-31 09:09:35]   сводка: 613/739 символов, новых часов 1222
+[08-31 09:10:06]   сводка: 655/739 символов, новых часов 1306
+[08-31 09:10:36]   сводка: 699/739 символов, новых часов 1390
+[08-31 09:11:06] сводка: символов с записью 739, новых часов 1470, 546 с
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+[08-31 09:11:48] матрица: 739 символов × 761 часов, сечений с ≥30 именами: 672, признаков 50
+[08-31 09:11:49] ДНЕВНОЙ ТОРМОЗ: день -373.92 $ при пороге −300 — выборы часа 2026-08-31-08 не пишутся; разбор и выходы идут
+[08-31 09:12:37] корзина model_h24c/gbm: корзина дошла до предела возраста (-13.17 $ по 24 позициям) — закрыта целиком
+[08-31 09:12:38] корзина model_h24c/nn: корзина дошла до предела возраста (+23.70 $ по 24 позициям) — закрыта целиком
+[08-31 09:12:39] ситуационная [nn]: закрыто 1 (GUNUSDT — прогноз развернулся)
+[08-31 09:12:41] ситуационная [gbm]: закрыто 1 (DDOGUSDT — прогноз развернулся)
+[08-31 09:12:41] ситуационная [gbm]: закрыто 1 (SONICUSDT — прогноз развернулся)
+[08-31 09:12:41] ситуационная [gbm]: закрыто 3 (0GUSDT — прогноз развернулся; MINIMAXUSDT — прогноз развернулся; ZHIPUUSDT — прогноз развернулся)
+[08-31 09:12:43] ситуационная [nn]: закрыто 1 (TRUSTUSDT — прогноз развернулся)
+[08-31 09:12:43] ситуационная [nn]: закрыто 5 (GUNUSDT — прогноз развернулся; NILUSDT — прогноз развернулся; AXLUSDT — прогноз развернулся; ZBTUSDT — прогноз развернулся; MOCAUSDT — прогноз развернулся)
+[08-31 09:12:44] ситуационная [nn]: закрыто 1 (MAVIAUSDT — прогноз развернулся)
+[08-31 09:12:45] живой IC [gbm]: fwd_4h +0.1043 по 1 закрывшимся сечениям
+[08-31 09:12:45] живой IC [nn]: fwd_4h +0.1306 по 1 закрывшимся сечениям
+[08-31 09:18:59] канарейка (перемешанные цели, fwd_4h): медианный IC -0.0073
+[08-31 09:22:23] канарейка (перемешанные цели, fwd_4h): медианный IC -0.0011
+[08-31 09:25:45] канарейка (перемешанные цели, fwd_4h): медианный IC -0.0027
+[08-31 09:30:19] сводка: символов с записью 739, новых часов 0, 17 с
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+[08-31 09:31:01] матрица: 739 символов × 761 часов, сечений с ≥30 именами: 672, признаков 50
+[08-31 09:31:02] ДНЕВНОЙ ТОРМОЗ: день -378.05 $ при пороге −300 — выборы часа 2026-08-31-08 не пишутся; разбор и выходы идут
+конец: 2026-08-31T09:33:59Z, код 0
