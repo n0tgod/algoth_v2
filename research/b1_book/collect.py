@@ -77,6 +77,7 @@ SHADOW_OFF = os.path.join(os.path.dirname(os.path.dirname(HERE)),
 OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
 sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 from book import BANDS, STORE_LADDER, Book, parse_trades                 # noqa: E402
 import paper                                              # noqa: E402
@@ -84,6 +85,10 @@ import signals                                            # noqa: E402
 from signals import RULES_VERSION, Signals                # noqa: E402
 from store import Writer, read_hour, read_jsonl            # noqa: E402
 from common import universe_filter as UF                   # noqa: E402
+# Реестр книг — ОДИН на цикл, страницы и дерево. Импортируется прямо
+# (а не лениво, как `trades`), потому что модуль без импортов вовсе:
+# он не тянет ни numpy, ни математику признаков.
+import books as BK                                        # noqa: E402
 import web                                                # noqa: E402
 
 WS_URL = "wss://stream.bybit.com/v5/public/linear"
@@ -1645,11 +1650,12 @@ class Collector:
         # маркера писан до его появления — с model_sit.
         paper, paper_error = {}, None
         try:
-            book_base = "model_sit"
+            book_base = self.BOOK_DIRS["sit"]
             try:
                 with open(os.path.join(jdir, "book.txt"),
                           encoding="utf-8") as f:
-                    book_base = f.read().strip() or "model_sit"
+                    book_base = (f.read().strip()
+                                 or self.BOOK_DIRS["sit"])
             except OSError:
                 pass
             out["book"] = book_base
@@ -2226,14 +2232,15 @@ class Collector:
         src_book = "traded"
         if hz == "sit":
             try:
-                with open(os.path.join(s8, "model_sit", "manifest.json"),
+                with open(os.path.join(s8, self.BOOK_DIRS["sit"],
+                                       "manifest.json"),
                           encoding="utf-8") as f:
                     gate = (json.load(f) or {}).get("min_rr")
             except (OSError, ValueError):
                 gate = None
             src_book = self.sit_source(rr_min, gate)
             if src_book == "observation":
-                name = "model_sit_obs"
+                name = self.BOOK_DIRS["sit_obs"]
         mdir = os.path.join(s8, name)
         try:
             with open(os.path.join(mdir, "manifest.json"),
@@ -2492,35 +2499,18 @@ class Collector:
     # появилась в трёх из них: страница сделок молча падала на главную
     # книгу, то есть показывала ЧУЖИЕ сделки под именем выбранной —
     # отказ, неотличимый от «у книги пока пусто».
-    # Ключ `z` теперь указывает на пару горизонта 24 ч. Прежняя пара
-    # стояла на 4 ч, но решением владельца главная книга сама перешла
-    # на порядок в единицах σ — и пара стала бы её дубликатом. Каталог
-    # `model_z` не удалён: его сделки остаются накопленной записью
-    # торговли в σ на 4 ч, но живой книгой он больше не является.
-    # Часовой книги в карте НЕТ: удалена решением владельца
-    # (2026-08-12) по зонду крайности — из показа и статистики
-    # целиком. Каталог `model_h1` на диске остаётся записью.
-    BOOK_DIRS = {"h4": "model", "h24": "model_h24",
-                 "h24b": "model_h24b", "h24bf": "model_h24bf",
-                 "h24c": "model_h24c",
-                 "h24a": "model_h24a", "h24za": "model_h24za",
-                 "sit": "model_sit", "sit_obs": "model_sit_obs",
-                 "sit_r": "model_sit_r", "sit_lo": "model_sit_lo",
-                 "z": "model_h24z"}
+    # Состав книг живёт ОДНИМ реестром (`s8_loop/books.py`): какие
+    # книги существуют, где их каталоги, что показывать кнопкой. Пока
+    # список стоял литералом здесь, его копии расходились трижды —
+    # страница сделок отдавала главную книгу под именем выбранной,
+    # сводка собирала каталог соглашением `model_<ключ>`, лига звала
+    # книги своими ярлыками. Каталог НЕ выводится из ключа намеренно:
+    # у четырёх книг из пяти соглашение совпадало, а пятая молча
+    # читала чужой каталог.
+    BOOK_DIRS = BK.dirs()
     # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
     # счётах по книгам её быть не должно.
-    BOOKS = (("h4", "model"),
-             ("h24", "model_h24"),
-             ("h24b", "model_h24b"), ("h24bf", "model_h24bf"),
-             ("h24c", "model_h24c"),
-             ("sit", "model_sit"),
-             # Книга низкого RR дизъюнктна с торгуемой по построению
-             # (rr ≤ 1.5 против rr ≥ 2) — двойного счёта решений нет.
-             ("sit_lo", "model_sit_lo"),
-             ("sit_r", "model_sit_r"), ("z", "model_h24z"),
-             # Согласные эхо (решение владельца 2026-08-31): у
-             # источника остаётся пересечение рук.
-             ("h24a", "model_h24a"), ("h24za", "model_h24za"))
+    BOOKS = BK.traded()
 
     @staticmethod
     def book_hold(mman, default_h):
@@ -2537,27 +2527,17 @@ class Collector:
         if mman.get("situational") or mman.get("no_timer"):
             return None
         return int(mman.get("horizon_h") or default_h)
-    # Книги-эхо: ТЕ ЖЕ решения, что у книги-источника, под другим
-    # правилом — размера (sit_r, равный доллар риска) либо выхода
-    # (h24b/h24bf, корзинный тейк и пол). Свои деньги у них
-    # настоящие, но в сводных суммах (лига, корень дерева, разбивка
-    # волатильности) они считали бы одни решения дважды — исключаются
-    # там по этому множеству, а не по имени в каждом месте.
-    ECHO_BOOKS = {"sit_r", "h24b", "h24bf", "h24c", "h24a", "h24za"}
+    # Эхо и согласные — флаги реестра, а не списки здесь: почему они
+    # существуют, записано там же, где сам состав книг.
+    ECHO_BOOKS = BK.echo_keys()
 
-    # Согласные книги на дереве живут ПОД ТРЕТЬИМ КОРНЕМ (просьба
-    # владельца): их руки тождественны по построению (пересечение
-    # выборов симметрично), и под корнями ML и AI каждая стояла бы
-    # дважды с одинаковыми числами — дубль показа, не два результата.
-    # Членство объявлено множеством, а не выведено из манифеста:
-    # книга без манифеста иначе МОЛЧА вернулась бы под руки.
-    AGREE_BOOKS = {"h24a", "h24za"}
+    AGREE_BOOKS = BK.agree_keys()
 
     # Показ согласной книги сводится к ОДНОЙ руке — канонической, той
     # же, что на дереве. Это не украшение, а двойной счёт: фильтр руки
     # по умолчанию «обе», значит каждая её сделка стояла в таблице
     # ДВАЖДЫ, а вкладка «all» считала её дважды.
-    CANON_ARM = "gbm"
+    CANON_ARM = BK.CANON_ARM
 
     @staticmethod
     def arms_twins(trades):
@@ -4684,7 +4664,7 @@ class Collector:
         стать.
         """
         base = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
-                            "model_sit")
+                            self.BOOK_DIRS["sit"])
         # Книг может быть больше одной: торгуемая и наблюдательная (та
         # же ситуация без требования к отношению — иначе фильтру
         # владельца нечего показывать ниже боевого порога). Состояние

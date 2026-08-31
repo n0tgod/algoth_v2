@@ -49,6 +49,7 @@ pyenv.need("numpy")
 
 import numpy as np                                        # noqa: E402
 
+import books as BK                                         # noqa: E402
 import bookfeat as FB                                      # noqa: E402
 import gbm                                                 # noqa: E402
 import nn                                                  # noqa: E402
@@ -1062,15 +1063,26 @@ def rank_key_for(h, sigma=None):
     return rank_z(h) if want else None
 
 
+def book_key(h, sigma=False):
+    """Ключ книги по горизонту и порядку сечения.
+
+    Соглашение (h, σ) → ключ живёт здесь, а имя каталога — в реестре:
+    цикл, страницы и дерево обязаны звать книгу одним каталогом, и
+    вторая запись имени однажды развела бы их — цикл писал бы туда,
+    куда страница не смотрит.
+    """
+    if sigma and not RANK_BY_HORIZON.get(h, False):
+        return "z"
+    return "h4" if h == TR.HOLD_H else f"h{h}"
+
+
 def book_dir(h, sigma=False):
     """Каталог книги горизонта `h` часов рядом с главным каталогом.
 
     У книги 24 ч вариант в σ живёт своим каталогом: две книги в одном
     означали бы смешанную историю, по которой ничего не сравнить.
     """
-    if sigma and not RANK_BY_HORIZON.get(h, False):
-        return MODEL_DIR + f"_h{h}z"
-    return MODEL_DIR if h == TR.HOLD_H else MODEL_DIR + f"_h{h}"
+    return MODEL_DIR + BK.suffix(book_key(h, sigma))
 
 
 def review_arm(mdir, arm, hold_h, targets, si, grid, book_root, log_):
@@ -1729,14 +1741,9 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
 # имени +8.3). Нога мельче пола не входит; тихий час — книга не
 # торгует. Порог объявлен до внедрения и по исходам не подгонялся.
 H4_FLOOR_BP = 30.0
-# Часовая книга УДАЛЕНА решением владельца (2026-08-12): даже зашкал
-# прогноза даёт +2.9 б.п. брутто при круге 11 — фильтр не лечит
-# знаменатель. Книга не ведётся и не показывается нигде; каталог
-# `model_h1` остаётся на диске записью, но не читается и не пишется.
-# Цели fwd_1h продолжают обучаться, IC на 1 ч меряется бесплатно
-# через save_preds — если сигнал дорастёт до экономики, это будет
-# видно без единой сделки.
-REMOVED_BOOKS = {1}
+# Снятые горизонты турнира темпов — из реестра книг, а не числом
+# здесь: почему часовая удалена, записано там же, где состав книг.
+REMOVED_BOOKS = set(BK.REMOVED_HORIZONS)
 
 # Корзинные книги-эхо 24 ч (решение владельца 2026-08-14): под-модель,
 # которая смотрит не на сделку, а на ОБЩИЙ нереализованный результат
@@ -2609,10 +2616,11 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
     # выбором по просмотренной поверхности). Слоты у книги без срока
     # фиксированы числом реплея.
     for bdir, b_take, b_floor, b_age, b_timer in (
-            (MODEL_DIR + "_h24b", BASKET_TAKE_SHARE, None, None, True),
-            (MODEL_DIR + "_h24bf", BASKET_TAKE_SHARE,
+            (MODEL_DIR + BK.suffix("h24b"),
+             BASKET_TAKE_SHARE, None, None, True),
+            (MODEL_DIR + BK.suffix("h24bf"), BASKET_TAKE_SHARE,
              BASKET_FLOOR_SHARE, None, True),
-            (MODEL_DIR + "_h24c", BASKET_TAKE_SHARE,
+            (MODEL_DIR + BK.suffix("h24c"), BASKET_TAKE_SHARE,
              BASKET_FLOOR_SHARE, BASKET_AGE_H, False)):
         try:
             # У манифестов эха нет версии ситуационных правил —
@@ -2677,8 +2685,9 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
     # книги не входят. Согласие — фильтр середины, не хвоста (в слив
     # согласные теряли наравне) — от хвоста остаётся дневной тормоз.
     for adir, a_srcdir, a_src in (
-            (MODEL_DIR + "_h24a", book_dir(BASKET_H), "model_h24"),
-            (MODEL_DIR + "_h24za", book_dir(24, sigma=True),
+            (MODEL_DIR + BK.suffix("h24a"), book_dir(BASKET_H),
+             "model_h24"),
+            (MODEL_DIR + BK.suffix("h24za"), book_dir(24, sigma=True),
              "model_h24z")):
         try:
             fresh_sit_on_rules_change(adir, log_, version=1,
@@ -2717,7 +2726,7 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
     # ситуация кончилась. Сигнал — цели главного горизонта; своя касса
     # с фиксированными слотами; правила и пороги — у `situational_arm`.
     try:
-        mdir = MODEL_DIR + "_sit"
+        mdir = MODEL_DIR + BK.suffix("sit")
         fresh_sit_on_rules_change(mdir, log_)
         os.makedirs(mdir, exist_ok=True)
         # Манифест — ДО первых выборов: тень бота читает режим книги
