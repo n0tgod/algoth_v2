@@ -2251,6 +2251,23 @@ class Collector:
         tr, cap = v["trades"], v["cap"]
         sit, hold, path_h = v["sit"], v["hold"], v["path_h"]
         rr_cut, rr_unknown = v["rr_cut"], v["rr_unknown"]
+        # Согласная книга: руки несут ОДНИ И ТЕ ЖЕ сделки —
+        # пересечение выборов симметрично по построению. Показ
+        # сводится к канонической руке ЗДЕСЬ, а не на странице: список
+        # согласных книг на странице стал бы девятым местом, где живёт
+        # одно и то же знание, и однажды разошёлся бы с картой.
+        # Тождество проверяется числом: разойдись руки — показ
+        # остаётся полным, а страница об этом кричит.
+        agree = hz in self.AGREE_BOOKS
+        arms_match = self.arms_twins(tr) if agree else None
+        keep_arm = None
+        if agree and arms_match:
+            # Спросили руку явно (ссылка графика, разбора сделки) —
+            # отдаём ЕЁ копию: иначе уже разосланные ссылки с arm=nn
+            # находили бы пустоту. Не спросили — каноническую.
+            keep_arm = arm or self.CANON_ARM
+            tr = [t for t in tr if (t.get("arm") or "gbm") == keep_arm]
+            arm = None          # выбирать между копиями больше нечего
         accs = {}
         for a in ("gbm", "nn"):
             try:
@@ -2301,6 +2318,9 @@ class Collector:
                         mman.get("basket_floor_share"),
                     "basket_age_h": mman.get("basket_age_h"),
                     "rr_min": rr_min or 0, "rr_cut": rr_cut,
+                    "agree": agree,
+                    "arms_match": arms_match,
+                    "arm_forced": keep_arm,
                     "lite": True, "start": TR.START_BALANCE,
                     "page": g, "per": p, "total": len(rows),
                     "pages": max(1, (len(rows) + p - 1) // p),
@@ -2352,6 +2372,10 @@ class Collector:
                 # стали и в таблице не показываются, но число обязано
                 # быть видно — иначе выбор модели пропадает молча.
                 "netted": v.get("netted", 0),
+                # Согласная книга показывается ОДНОЙ рукой;
+                # `arms_match` — та самая проверка числом.
+                "agree": agree, "arms_match": arms_match,
+                "arm_forced": keep_arm,
                 "curves": curve_out, "start": TR.START_BALANCE,
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),
@@ -2528,6 +2552,31 @@ class Collector:
     # Членство объявлено множеством, а не выведено из манифеста:
     # книга без манифеста иначе МОЛЧА вернулась бы под руки.
     AGREE_BOOKS = {"h24a", "h24za"}
+
+    # Показ согласной книги сводится к ОДНОЙ руке — канонической, той
+    # же, что на дереве. Это не украшение, а двойной счёт: фильтр руки
+    # по умолчанию «обе», значит каждая её сделка стояла в таблице
+    # ДВАЖДЫ, а вкладка «all» считала её дважды.
+    CANON_ARM = "gbm"
+
+    @staticmethod
+    def arms_twins(trades):
+        """Тождественны ли руки книги — проверка ЧИСЛОМ, не словом.
+
+        Сводить показ к одной руке законно, только пока пересечение
+        симметрично на самом деле. Разойдись руки (дефект эха,
+        недописанный час) — половина результата исчезла бы с экрана
+        молча, а страница выглядела бы исправной. Сравниваются состав
+        и деньги; поля сводятся в строку, потому что `None` рядом с
+        числом сортировке не поддаётся.
+        """
+        def key(a):
+            return sorted(
+                "|".join(str(t.get(f)) for f in
+                         ("hour", "sym", "side", "state", "net_bp",
+                          "pnl"))
+                for t in trades if (t.get("arm") or "gbm") == a)
+        return key("gbm") == key("nn")
 
     # Дерево моделей: что за логику проверяет каждая ветка, простыми
     # словами и на обоих языках разом (правило справочника: разъехавшись,

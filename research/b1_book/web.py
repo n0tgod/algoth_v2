@@ -1793,6 +1793,8 @@ a{color:var(--accent)}
 .note{color:var(--muted);font-size:12px;margin-bottom:8px}
 .warn{border-left:3px solid var(--accent);padding-left:9px;
  color:var(--muted);font-size:12px;margin-bottom:10px}
+.alarm{border-left:3px solid var(--ask);padding-left:9px;
+ color:var(--ask);font-size:12px;margin-bottom:10px}
 /* Плотная таблица «подпись — значение», а не крупные плитки. Плитки
    занимали втрое больше высоты, чем сами числа, и страница
    пролистывалась ради семи величин. */
@@ -1948,10 +1950,10 @@ canvas{width:100%;display:block;touch-action:pan-y}
 
   <div class="card">
     <div class="bar">
-      <span class="k">arm</span>
+      <span id="armf" style="display:contents"><span class="k">arm</span>
       <select id="arm"><option value="">both</option>
         <option value="gbm">trees (ML)</option>
-        <option value="nn">neural (AI)</option></select>
+        <option value="nn">neural (AI)</option></select></span>
       <span class="k">state</span>
       <select id="state"><option value="">any</option>
         <option value="закрыта">closed</option>
@@ -2099,7 +2101,12 @@ function drawEq(d) {
   const cv = document.getElementById("eq");
   if (!cv) return;
   const cur = d.curves || {};
-  const arms = ["gbm", "nn"].filter(a => (cur[a] || []).length > 1);
+  // У согласной книги кривые рук совпадают: вторая линия легла бы
+  // ровно на первую и читалась бы как «две руки сошлись», тогда как
+  // это одна книга, нарисованная дважды.
+  const arms = (d.agree && d.arms_match !== false
+                ? ["gbm"] : ["gbm", "nn"])
+    .filter(a => (cur[a] || []).length > 1);
   const lab = document.getElementById("eqlab");
   if (!arms.length) {
     if (lab) lab.textContent = "not enough hours yet";
@@ -2233,10 +2240,27 @@ async function load() {
   // Статистика делится по рукам турнира: all / ml / ai. Смотреть их
   // вместе можно, но решает сравнение — они учатся на одних данных, и
   // общий блок скрывает, какая именно из двух даёт результат.
-  const which = S.arm || "all";
+  // Согласная книга: пересечение выборов симметрично, значит её руки
+  // несут ОДНИ И ТЕ ЖЕ сделки, и сервер уже свёл ответ к одной.
+  // Переключатель рук предлагал бы выбор между копиями, а вкладка
+  // «all» складывала бы книгу с самой собой.
+  const AG = !!d.agree && d.arms_match !== false;
+  if (d.agree && d.arms_match === false)
+    document.getElementById("warn").innerHTML = `<div class="alarm">agreed
+      book: both arms must hold <b>identical</b> trades by construction
+      &mdash; they do not. Showing both arms until that is explained;
+      neither column is the book on its own.</div>`;
+  const af = document.getElementById("armf");
+  if (af) af.style.display = AG ? "none" : "contents";
+  const which = AG ? (d.arm_forced || "gbm") : (S.arm || "all");
   const st = (d.stats||{})[which] || {};
   const acc = (d.accounts||{})[which];
-  const armBtns = `<div class="bar">` +
+  const armBtns = AG
+    ? `<div class="note">One book, not two arms: both heads picked the
+       same name and side in the same hour, so the arms hold
+       <b>identical</b> trades by construction &mdash; shown once, on
+       the trees-arm account.</div>`
+    : `<div class="bar">` +
     [["all","all"],["gbm","ml (trees)"],["nn","ai (neural)"]].map(x =>
       `<button data-sa="${x[0]}" aria-pressed="${
         String(which === x[0])}">${x[1]}</button>`).join(" ")
@@ -2432,7 +2456,20 @@ async function load() {
       ((d.stats[a]||{}).dd_open_book||{}).cap_bp;
       return v == null ? "—" : (v/100).toFixed(2) + " %"; }],
   ];
-  html += `<div class="gt">arms side by side</div>`
+  html += AG
+    ? `<div class="gt">the agreed book</div>`
+      + `<details class="hint"><summary>how to read</summary>
+         <div class="note">One column, because the two arms are the
+         same book here. What a second column measures elsewhere
+         &mdash; the <b>measurement error</b> between two models
+         &mdash; is zero by construction once only agreed decisions
+         are traded.</div></details>`
+      + `<div class="scroll"><table class="cmp"><tr><th></th>`
+      + `<th style="color:${ARMC.gbm}">agreed (both heads)</th></tr>`
+      + CMP.map(r => `<tr><td>${r[0]}</td><td>${r[1]("gbm")}</td></tr>`)
+          .join("")
+      + `</table></div>`
+    : `<div class="gt">arms side by side</div>`
     + `<details class="hint"><summary>how to read</summary>
        <div class="note">Same data, same universe, same hour, same
        slots &mdash; only the model differs. The gap between the two
@@ -2444,14 +2481,17 @@ async function load() {
     + CMP.map(r => `<tr><td>${r[0]}</td><td>${r[1]("gbm")}</td>`
                  + `<td>${r[1]("nn")}</td></tr>`).join("")
     + `</table></div>`;
-  const accLine = ["gbm","nn"].map(a => {
+  const accLine = (AG ? ["gbm"] : ["gbm","nn"]).map(a => {
     const x = (d.accounts||{})[a];
-    return x ? `${a === "gbm" ? "ml" : "ai"} ${x.balance} $` : null;
+    return x ? `${AG ? "agreed" : (a === "gbm" ? "ml" : "ai")} ${
+      x.balance} $` : null;
   }).filter(Boolean).join(" · ");
   if (accLine)
-    html += `<div class="note" style="margin-top:8px">paper accounts: ${
-      accLine} <span class="k">(start ${d.start ?? "—"} $ each, one
-      capital, leverage 1&times;)</span></div>`;
+    html += `<div class="note" style="margin-top:8px">${
+      AG ? "paper account" : "paper accounts"}: ${accLine} <span class="k">(start ${
+      d.start ?? "—"} $${AG ? "" : " each"}, one capital, leverage 1&times;${
+      AG ? "; the neural-arm copy carries the same trades"
+         : ""})</span></div>`;
   document.getElementById("stats").innerHTML = html;
   drawEq(d);
   document.getElementById("stats").querySelectorAll("[data-sa]")
@@ -2484,7 +2524,8 @@ async function load() {
       <td class="mono hide-s">${hhmm(t.closes_at)}</td>
       <td class="mono hide-s" style="color:var(--muted)">${t.lag_sec == null
         ? "—" : Math.round(t.lag_sec/60) + "m"}</td>
-      <td class="hide-s">${t.arm === "nn" ? "neural" : "trees"}</td>
+      <td class="hide-s">${AG ? "both"
+        : (t.arm === "nn" ? "neural" : "trees")}</td>
       <td class="mono">${t.sym.replace("USDT","")}</td>
       <td>${t.side === "long" ? "L" : "S"}</td>
       <td class="mono hide-s">${pct(t.expected_bp)}</td>

@@ -35,6 +35,10 @@ const isTour = /tournament — all 72 branches/.test(src);
 const isPaper =
   /monthly book — one construction, recorded forward/.test(src);
 const isTrades = /id="tb"/.test(src);
+// Согласная книга: руки тождественны по построению, показ сводится к
+// одной. Флаг нужен и структурным проверкам, и проверкам сводки.
+const AGREED = /hz=h24a/.test(SEARCH);
+const AGREED_SPLIT = /agreesplit=1/.test(SEARCH);
 const isBot = /id="botlike-page"|Исполнительное ядро — тень/.test(src);
 // Страницу открыли ссылкой на конкретную сделку модели.
 const FOCUS = /hour=/.test(SEARCH);
@@ -725,7 +729,17 @@ global.fetch = async (url) => {
                  "365d": {n: 3, groups: {}, best: [], worst: [],
                           setup_known: 2}}}
              : url.startsWith("/model_trades")
-             ? {source: "model", page: 0, per: 100,
+             ? (r => (!/hz=h24a/.test(url) ? r
+                : /agreesplit=1/.test(SEARCH)
+                ? {...r, agree: true, arms_match: false,
+                   arm_forced: null}
+                : {...r, agree: true, arms_match: true,
+                   arm_forced: "gbm",
+                   // Канонической руке принадлежит ВСЯ книга: ответ
+                   // сведён к ней, и вторая рука пуста.
+                   stats: {...r.stats, gbm: r.stats.all},
+                   curves: {...r.curves, nn: []}}))(
+               {source: "model", page: 0, per: 100,
                 // Слитая позиция: два лота одного имени. График обязан
                 // нарисовать ОДНУ позицию, точку долива и засечку
                 // разгрузки — четыре наложенных прямоугольника были
@@ -915,7 +929,7 @@ global.fetch = async (url) => {
                    closes_at: null,
                    state: "открыта", expected_bp: 150, mae_bp: -60,
                    mfe_bp: 210, entry_px: 64700,
-                   unreal_bp: 30, unreal_net_bp: 19}]}
+                   unreal_bp: 30, unreal_net_bp: 19}]})
              // Выключенный детектор — это ОТВЕТ сервера, а не пустая
              // история: страница обязана назвать причину, иначе
              // выключенное наблюдение читается как поломка записи.
@@ -1586,7 +1600,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("страница сделок: вкладка удалённой часовой книги");
     if (!/hz=z/.test(bb))
       bad.push("страница сделок: нет вкладки книги в единицах σ");
-    const act = /hz=sit/.test(SEARCH) ? "sit" : "h4";
+    const act = (SEARCH.match(/[?&]hz=([a-z0-9_]+)/) || [])[1] || "h4";
     if (!new RegExp(`data-hz="${act}" aria-pressed="true"`).test(bb))
       bad.push("страница сделок: активная книга не помечена");
     // Горизонт книги обязан дойти до подписи: страницы двух книг
@@ -1602,12 +1616,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       global.__el("eqlab").innerHTML || "") : "";
     // Кривая: подпись обязана назвать обе руки и их итог в процентах
     // от старта. 1012.5 при старте 1000 — это +1.25 %.
-    if (!/\+1\.25 %/.test(lab) || !/-1\.88 %/.test(lab))
+    if (AGREED && !AGREED_SPLIT) {
+      if (!/\+1\.25 %/.test(lab) || /-1\.88 %/.test(lab))
+        bad.push("согласная книга: кривая нарисована дважды");
+    } else if (!/\+1\.25 %/.test(lab) || !/-1\.88 %/.test(lab))
       bad.push("кривая счёта не подписала итог обеих рук");
     if (!/3 hours/.test(lab))
       bad.push("кривая счёта не сказала, на скольких часах построена");
     // Группы: без заголовков блоки налипают друг на друга.
-    for (const g of ["result", "risk", "execution", "arms side by side"])
+    for (const g of ["result", "risk", "execution",
+                     AGREED && !AGREED_SPLIT ? "the agreed book"
+                       : "arms side by side"])
       if (!new RegExp(">" + g + "<").test(st))
         bad.push("нет группы величин: " + g);
     // Сравнение рук: обе колонки с числами, а не одна.
@@ -3428,9 +3447,42 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("общая статистика не показана");
     // Разбиение по рукам турнира: без него не видно, какая из двух
     // моделей даёт результат, а он у них общий на вид.
-    if (!/data-sa="gbm"/.test(stats) || !/data-sa="nn"/.test(stats)
-        || !/data-sa="all"/.test(stats))
+    const AGP = AGREED, AGSP = AGREED_SPLIT;
+    if (!AGP && (!/data-sa="gbm"/.test(stats)
+                 || !/data-sa="nn"/.test(stats)
+                 || !/data-sa="all"/.test(stats)))
       bad.push("статистика не делится на all / ml / ai");
+    // Согласная книга: руки несут одни и те же сделки. Переключателя
+    // рук быть не должно (вкладка «all» складывала бы книгу с самой
+    // собой), второй колонки сравнения — тоже: она повторила бы
+    // первую. Проверяется текстом И числом, «блок есть» прошло бы.
+    if (AGP && !AGSP) {
+      if (/data-sa=/.test(stats))
+        bad.push("согласная книга: переключатель рук остался");
+      if (!/One book, not two arms/.test(stats))
+        bad.push("согласная книга: не сказано, почему рука одна");
+      if (!/agreed \(both heads\)/.test(stats))
+        bad.push("согласная книга: единственная колонка не подписана");
+      if (/ml \(trees\)/.test(stats) || /ai \(neural\)/.test(stats))
+        bad.push("согласная книга: колонки рук остались в сравнении");
+      if (!/paper account:/.test(stats) || /paper accounts:/.test(stats))
+        bad.push("согласная книга: счёт назван во множественном числе");
+      if (!/>both</.test(html))
+        bad.push("согласная книга: колонка руки не названа «both»");
+      const af = global.__el ? global.__el("armf") : null;
+      if (af && String((af.style || {}).display || "") !== "none")
+        bad.push("согласная книга: фильтр руки не скрыт");
+    }
+    // И обратная сторона: разойдись руки — сведение к одной спрятало
+    // бы половину результата молча. Показ обязан остаться полным.
+    if (AGP && AGSP) {
+      const w = global.__el
+        ? String((global.__el("warn") || {}).innerHTML || "") : "";
+      if (!/must hold/.test(w))
+        bad.push("руки согласной книги разошлись — тревоги нет");
+      if (!/ml \(trees\)/.test(stats))
+        bad.push("руки разошлись: показ обязан остаться полным");
+    }
     // Нереализованное в сводке: 89 б.п. = +0.89 %, и деньги отдельно.
     if (!/\+0\.89 %/.test(stats))
       bad.push("нереализованное не попало в общую статистику");

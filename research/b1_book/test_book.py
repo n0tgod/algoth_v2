@@ -503,6 +503,15 @@ def test_pages_run_headless():
                 # Книга без срока: час — ключ листа, а не время
                 # сделки, и первым столбцом обязан идти вход.
                 ("сделки ситуационной книги", web.TRADES, "?k=xxx&hz=sit"),
+                # Согласная книга: её руки несут одни и те же сделки
+                # (пересечение выборов симметрично), и показ обязан
+                # свестись к одной — иначе книга стоит на экране
+                # дважды, а вкладка «all» считает её дважды.
+                ("сделки согласной книги", web.TRADES, "?k=xxx&hz=h24a"),
+                # И обратная сторона: разойдись руки — сведение
+                # спрятало бы половину результата молча.
+                ("сделки согласной книги, руки разошлись", web.TRADES,
+                 "?k=xxx&hz=h24a&agreesplit=1"),
                 ("ядро", web.BOTPAGE, None),
                 # Тень выключена решением владельца: панель и страница
                 # обязаны назвать состояние словами, а не выдать его за
@@ -864,6 +873,112 @@ def test_live_exec_measures_slippage_against_signal():
         C.HERE = was
         C._live = None if hasattr(C, "_live") else None
         shutil.rmtree(d, ignore_errors=True)
+
+
+def test_agreed_book_is_shown_once_not_twice():
+    """Согласная книга показывается ОДНОЙ рукой — и это не украшение.
+
+    Пересечение выборов симметрично, значит обе руки согласной книги
+    несут одни и те же сделки. Фильтр руки на странице по умолчанию
+    «обе», поэтому каждая сделка стояла в таблице ДВАЖДЫ, а вкладка
+    «all» считала её дважды: двойной счёт, а не лишняя колонка.
+
+    Проверяется числом в обе стороны: у согласной книги ответ сведён к
+    канонической руке, у обычной — нет; а разойдись руки — сведение
+    отменяется, потому что иначе половина результата исчезла бы с
+    экрана молча.
+    """
+    import json as _json
+    import shutil
+    import tempfile
+    from datetime import datetime, timezone
+    import collect as C
+
+    root = tempfile.mkdtemp()
+    was_here = C.HERE
+    sys.path.insert(0, os.path.join(os.path.dirname(was_here), "s8_loop"))
+    base = 1786000000
+
+    def hour(i):
+        return datetime.fromtimestamp(
+            base + i * 3600, timezone.utc).strftime("%Y-%m-%d-%H")
+
+    def write_book(name, nn_sym):
+        mdir = os.path.join(root, "s8_loop", "out", name)
+        os.makedirs(mdir, exist_ok=True)
+        with open(os.path.join(mdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            _json.dump({"version": 2, "horizon_h": 24, "book": name}, f)
+        leg = {"fwd": 60.0, "mae": -30.0, "mfe": 90.0, "px": 100.0}
+        rows = [{"arm": "gbm", "hour": hour(0), "at_ts": base + 60,
+                 "long": [dict(leg, sym="AAAUSDT")], "short": []},
+                {"arm": "nn", "hour": hour(0), "at_ts": base + 60,
+                 "long": [dict(leg, sym=nn_sym)], "short": []}]
+        with open(os.path.join(mdir, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            for r in rows:
+                f.write(_json.dumps(r, ensure_ascii=False) + "\n")
+        open(os.path.join(mdir, "review.jsonl"), "w").close()
+        return mdir
+
+    try:
+        C.HERE = os.path.join(root, "b1_book")
+        os.makedirs(C.HERE, exist_ok=True)
+        # Согласная книга: обе руки несут ОДНУ И ТУ ЖЕ ногу.
+        write_book("model_h24a", "AAAUSDT")
+        # Контроль — обычная книга с теми же записями: у неё руки
+        # разные по смыслу, и сводить её к одной нельзя.
+        write_book("model_h24", "BBBUSDT")
+        c = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+
+        pg = c.model_trades(hz="h24a", per=500)
+        check("согласная книга названа ветвью ответа",
+              pg.get("agree") is True, str(pg.get("agree")))
+        check("тождество рук проверено числом, а не объявлено",
+              pg.get("arms_match") is True, str(pg.get("arms_match")))
+        check("показ сведён к канонической руке",
+              pg.get("arm_forced") == "gbm", str(pg.get("arm_forced")))
+        arms = sorted({t["arm"] for t in pg["rows"]})
+        check("сделка стоит в таблице ОДИН раз, а не по разу на руку",
+              len(pg["rows"]) == 1 and arms == ["gbm"],
+              str([(t["arm"], t["sym"]) for t in pg["rows"]]))
+        check("счётчик сделок не считает книгу дважды",
+              pg.get("grand_total") == 1, str(pg.get("grand_total")))
+
+        # Спрошенная явно рука обязана дойти: ссылки графика и разбора
+        # сделки несут `arm`, и уже разосланные с arm=nn после
+        # сведения находили бы пустоту — отказ, неотличимый от «такой
+        # сделки не было».
+        pn = c.model_trades(hz="h24a", per=500, arm="nn")
+        check("явно спрошенная рука отдаётся, а не подменяется",
+              len(pn["rows"]) == 1
+              and pn["rows"][0]["arm"] == "nn"
+              and pn.get("arm_forced") == "nn",
+              str([(t["arm"], t["sym"]) for t in pn["rows"]]))
+
+        # Обычная книга: сведения быть не должно — руки там разные.
+        pl = c.model_trades(hz="h24", per=500)
+        check("обычная книга ветвью не помечена",
+              not pl.get("agree") and pl.get("arm_forced") is None,
+              str((pl.get("agree"), pl.get("arm_forced"))))
+        check("у обычной книги обе руки на месте",
+              sorted({t["arm"] for t in pl["rows"]}) == ["gbm", "nn"],
+              str([(t["arm"], t["sym"]) for t in pl["rows"]]))
+
+        # Руки разошлись: сведение отменяется, показ остаётся полным.
+        shutil.rmtree(os.path.join(root, "s8_loop", "out", "model_h24a"))
+        write_book("model_h24a", "CCCUSDT")
+        c2 = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        pd = c2.model_trades(hz="h24a", per=500)
+        check("разошедшиеся руки названы числом, а не сведены",
+              pd.get("agree") is True and pd.get("arms_match") is False,
+              str((pd.get("agree"), pd.get("arms_match"))))
+        check("при расхождении показ остаётся полным",
+              sorted({t["arm"] for t in pd["rows"]}) == ["gbm", "nn"],
+              str([(t["arm"], t["sym"]) for t in pd["rows"]]))
+    finally:
+        C.HERE = was_here
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_netted_signal_is_not_shown_as_a_trade():
@@ -5892,6 +6007,7 @@ def main():
     test_run_live_refuses_to_archive_open_positions()
     test_watchdog_respects_shadow_off_marker()
     test_trades_table_columns_line_up()
+    test_agreed_book_is_shown_once_not_twice()
     test_netted_signal_is_not_shown_as_a_trade()
     test_live_exec_paper_side_follows_the_book_marker()
     test_live_exec_measures_slippage_against_signal()
