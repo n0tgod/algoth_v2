@@ -49,6 +49,11 @@ now() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 # «сторож размножает идущее задание» — неверно, задание отвязано и
 # помечено сразу; OOM зонда каскада делали соседи по памяти, не
 # дубли.) Занятый замок — не тревога: в queue-state не пишется.
+# Отвязанным заданиям fd замка НЕ передаётся (`9>&-` на их запуске):
+# унаследованный fd держит flock, пока жив ЛЮБОЙ держатель, — и
+# многочасовой прогон замораживал бы очередь на всю свою длину.
+# Ровно так первый прогон liqsplit держал её ~4 часа (2026-08-31,
+# второй урок того же замка за сутки).
 exec 9>"$JOBS/.lock"
 if ! flock -n 9; then
     echo "[$(now)] задания: проход уже идёт — выхожу"
@@ -156,14 +161,14 @@ for job in "$JOBS"/*.job; do
                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"
                     tools/publish.sh "job: $(basename "$log" .log)" \
                         >> "$log" 2>&1
-                ' _ "$log" "$script" "${parts[@]:2}" &
+                ' _ "$log" "$script" "${parts[@]:2}" 9>&- &
                 echo "[$(now)] задание $name запущено: $script"
             fi
             ;;
         restart-book)
             echo "перезапуск сборщика и циклов" >> "$log"
             setsid nohup bash -c "tools/restart_book.sh >> '$log' 2>&1
-                tools/publish.sh 'job: $name' >> '$log' 2>&1" &
+                tools/publish.sh 'job: $name' >> '$log' 2>&1" 9>&- &
             echo "[$(now)] задание $name: перезапуск сборщика"
             ;;
         status)
