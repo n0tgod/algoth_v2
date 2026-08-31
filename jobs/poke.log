@@ -267,3 +267,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788184403 ==
 [2026-08-31T13:53:25Z] задание cycle-health-2 запущено: research/s8_loop/cycle_health.py
+
+== сигнал 1788185775 ==
+[2026-08-31T14:16:16Z] задание cycle-cadence-deploy: перезапуск сборщика
