@@ -3468,6 +3468,12 @@ def test_train_cycle_end_to_end():
     T.nn.fit = (lambda x, y, seed, **kw:
                 orig_nn(x, y, seed, epochs=4, **kw))
     T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+    # Тест про ОБУЧЕНИЕ, поэтому каденцию он объявляет своей: два цикла
+    # подряд обязаны обучиться оба, иначе оконный замер прежних весов
+    # (`eval_previous`) не считается вовсе. Каденция по умолчанию —
+    # предмет отдельного теста.
+    was_every = T.TRAIN_EVERY_H
+    T.TRAIN_EVERY_H = 0
     try:
         d = tempfile.mkdtemp()
         sd = os.path.join(d, "summary")
@@ -3486,8 +3492,9 @@ def test_train_cycle_end_to_end():
         # даже работу с книгами — то есть описывало не то, что ждут.
         st = man.get("steps_sec") or {}
         check("манифест несёт секунды по шагам цикла",
-              set(st) == {"сведение часа", "матрица", "оценка и канарейка",
-                          "обучение", "книги"}, str(sorted(st)))
+              set(st) == {"сведение часа", "матрица", "оценка",
+                          "канарейка", "обучение", "книги"},
+              str(sorted(st)))
         check("шаги в сумме дают время цикла",
               abs(sum(st.values()) - man["cycle_sec"]) < 1.0,
               f"{sum(st.values())} против {man['cycle_sec']}")
@@ -3677,6 +3684,7 @@ def test_train_cycle_end_to_end():
         check("новизна названа в мыслях как замер, не правило",
               any("новизна выбора" in t for t in th), str(th[-2:]))
     finally:
+        T.TRAIN_EVERY_H = was_every
         T.gbm.fit = orig_fit
         T.nn.fit = orig_nn
         T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
@@ -4837,6 +4845,115 @@ def test_day_brake_math_and_activation():
           not TR.day_brake_active(None, now))
 
 
+def test_training_runs_on_a_cadence_not_every_hour():
+    """Обучение ушло из ЧАСОВОГО пути на объявленную каденцию.
+
+    Замер `cycle_health` (2026-08-31): цикл перевалил за час 08-23 и с
+    08-25 не укладывался ни разу — медиана 6025 с при 3600, прогонов в
+    сутки 10–12 вместо 24, то есть половина часов оставалась без
+    свежего листа и без цикловых выходов, а исполняет их живой
+    исполнитель настоящими деньгами. Из 5207 с обучение занимало 3990,
+    канарейка 1142, книги — 26.
+
+    Проверяется обе стороны: в свежий час обучения НЕТ, но книги,
+    разбор и лист идут и час записан в журнал своим видом; когда веса
+    старше каденции — обучение возвращается. Односторонняя проверка
+    пропустила бы цикл, который перестал обучаться совсем.
+    """
+    import train as T
+
+    orig_fit, orig_nn, orig_arms = T.gbm.fit, T.nn.fit, T.ARMS
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 orig_fit(x, y, seed, n_trees=25, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                orig_nn(x, y, seed, epochs=4, **kw))
+    T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+    md_was = T.MODEL_DIR
+    try:
+        # Предикат — числом, четырьмя ветками. Час назад при каденции
+        # 24 — рано, 25 часов назад — пора; будущее время обязано
+        # считаться поводом обучить, иначе переставленные часы держали
+        # бы веса необновлёнными вечно.
+        now = time.time()
+        def at(dh):
+            return {"trained_at": datetime.fromtimestamp(
+                now - dh * 3600, timezone.utc).isoformat(
+                    timespec="seconds")}
+        check("час назад при каденции 24 — не пора",
+              T.train_due(at(1), now, 24)[0] is False,
+              str(T.train_due(at(1), now, 24)))
+        check("25 часов назад — пора",
+              T.train_due(at(25), now, 24)[0] is True,
+              str(T.train_due(at(25), now, 24)))
+        check("весов нет — пора, и причина названа",
+              T.train_due(None, now, 24) == (
+                  True, "весов прошлого цикла нет"),
+              str(T.train_due(None, now, 24)))
+        check("время обучения в будущем — пора",
+              T.train_due(at(-5), now, 24)[0] is True,
+              str(T.train_due(at(-5), now, 24)))
+
+        d = tempfile.mkdtemp()
+        sd = os.path.join(d, "summary")
+        _write_summaries(sd, D=260)
+        T.MODEL_DIR = os.path.join(d, "model")
+        check("первый цикл обучается: весов ещё нет",
+              T.cycle(sd, lambda m: None, book_root=None))
+        mp = os.path.join(T.MODEL_DIR, "manifest.json")
+        man1 = json.load(open(mp, encoding="utf-8"))
+        wp = os.path.join(T.MODEL_DIR, "weights_gbm_fwd_4h.pkl")
+        mt1 = os.path.getmtime(wp)
+        pf = os.path.join(T.MODEL_DIR, "picks.jsonl")
+        n1 = sum(1 for _ in open(pf, encoding="utf-8"))
+
+        # Следующий час: веса свежие — обучения быть не должно.
+        _write_summaries(sd, D=300)
+        ok2 = T.cycle(sd, lambda m: None, book_root=None)
+        check("в свежий час цикл не обучается", ok2 is False, str(ok2))
+        man2 = json.load(open(mp, encoding="utf-8"))
+        check("номер обучения не сдвинулся",
+              man2["train_seq"] == man1["train_seq"],
+              f"{man2['train_seq']} против {man1['train_seq']}")
+        check("веса не переписаны", os.path.getmtime(wp) == mt1, "")
+        n2 = sum(1 for _ in open(pf, encoding="utf-8"))
+        check("книги при этом отработали: выборы нового часа записаны",
+              n2 > n1, f"{n2} при прежних {n1}")
+        lg = [json.loads(x) for x in open(
+            os.path.join(T.MODEL_DIR, "train_log.jsonl"),
+            encoding="utf-8") if x.strip()]
+        check("часовой цикл записан в журнал СВОИМ видом",
+              lg[-1].get("kind") == "books"
+              and lg[0].get("kind") == "train",
+              str([r.get("kind") for r in lg]))
+        check("часовая строка несёт секунды по шагам",
+              (lg[-1].get("steps_sec") or {}).get("книги") is not None
+              and "обучение" not in (lg[-1].get("steps_sec") or {}),
+              str(lg[-1].get("steps_sec")))
+        lr = json.load(open(os.path.join(T.MODEL_DIR, "last_run.json"),
+                            encoding="utf-8"))
+        check("исход часа назвал причину пропуска словами",
+              lr.get("train_due") is False and "каденции"
+              in str(lr.get("train_why")), str(lr))
+
+        # Веса состарились — обучение обязано вернуться.
+        man2["trained_at"] = datetime.fromtimestamp(
+            time.time() - (T.TRAIN_EVERY_H + 1) * 3600,
+            timezone.utc).isoformat(timespec="seconds")
+        with open(mp, "w", encoding="utf-8") as f:
+            json.dump(man2, f)
+        _write_summaries(sd, D=340)
+        check("состарившиеся веса возвращают обучение",
+              T.cycle(sd, lambda m: None, book_root=None))
+        man3 = json.load(open(mp, encoding="utf-8"))
+        check("номер обучения вырос",
+              man3["train_seq"] == man1["train_seq"] + 1,
+              f"{man3['train_seq']} против {man1['train_seq']}")
+    finally:
+        T.gbm.fit, T.nn.fit, T.ARMS = orig_fit, orig_nn, orig_arms
+        T.MODEL_DIR = md_was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_day_brake_blocks_entries_not_reviews():
     """Сквозной цикл: тормоз закрывает ВХОДЫ часовых книг, не разбор.
 
@@ -4856,6 +4973,11 @@ def test_day_brake_blocks_entries_not_reviews():
                 orig_nn(x, y, seed, epochs=4, **kw))
     T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
     md_was = T.MODEL_DIR
+    # Тест про ТОРМОЗ, а не про каденцию: три цикла подряд обязаны
+    # пройти полностью, иначе второй и третий были бы пропущены по
+    # свежести весов и проверять стало бы нечего.
+    was_every = T.TRAIN_EVERY_H
+    T.TRAIN_EVERY_H = 0
     try:
         d = tempfile.mkdtemp()
         sd = os.path.join(d, "summary")
@@ -4892,6 +5014,7 @@ def test_day_brake_blocks_entries_not_reviews():
         check("устаревший тормоз не запирает входы", n3 > n2,
               f"{n3} при прежних {n2}")
     finally:
+        T.TRAIN_EVERY_H = was_every
         T.gbm.fit, T.nn.fit, T.ARMS = orig_fit, orig_nn, orig_arms
         T.MODEL_DIR = md_was
 
@@ -5113,6 +5236,7 @@ def main():
     test_books_run_before_training_on_prev_weights()
     print("дневной тормоз")
     test_day_brake_math_and_activation()
+    test_training_runs_on_a_cadence_not_every_hour()
     test_day_brake_blocks_entries_not_reviews()
     print()
     if FAILED:

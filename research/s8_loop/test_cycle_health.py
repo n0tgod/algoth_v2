@@ -128,6 +128,28 @@ def test_day_key_survives_a_live_record():
           str([p["day"] for p in si["per_day"]]))
 
 
+def test_kinds_are_counted_apart():
+    """Часовой цикл и цикл с обучением считаются раздельно.
+
+    После правки каденции в журнале лежат оба вида, и без разделения
+    суточная медиана смешала бы двухминутный прогон с полуторачасовым
+    — сказав неправду про оба. Запись прежнего образца метки не несёт
+    и обязана читаться как обучение."""
+    rows = [dict(row("2026-08-31", h, 120, 300 + h, 670), kind="books")
+            for h in range(23)]
+    rows.append(dict(row("2026-08-31", 23, 5300, 301, 670),
+                     kind="train"))
+    s = CH.summarize(rows, None)
+    p = s["per_day"][0]
+    check("обучений за сутки — одно из двадцати четырёх",
+          p["n"] == 24 and p["n_train"] == 1,
+          f"{p['n']} / {p['n_train']}")
+    old = [row("2026-08-20", h, 1200, 100 + h, 600) for h in range(3)]
+    check("запись прежнего образца считается обучением",
+          CH.summarize(old, None)["per_day"][0]["n_train"] == 3,
+          str(CH.summarize(old, None)["per_day"][0]))
+
+
 def test_growth_is_measured_not_assumed():
     """Растёт ли цикл с данными — ранговой связью, а не на глаз."""
     rows = [row("2026-08-20", h % 24, 1000 + 40 * h, 100 + h, 500 + h)
@@ -194,6 +216,7 @@ def main():
     tests = (test_median_is_a_median,
              test_verdict_comes_from_numbers,
              test_day_key_survives_a_live_record,
+             test_kinds_are_counted_apart,
              test_growth_is_measured_not_assumed,
              test_e2e_report)
     for t in tests:

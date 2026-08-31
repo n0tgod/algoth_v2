@@ -169,8 +169,14 @@ def summarize(rows, man):
         if not cs:
             continue
         over = sum(1 for c in cs if c > HOUR)
+        # Вид цикла: с обучением или часовой. Запись прежнего образца
+        # метки не несёт — она вся про обучение, и отсутствие читается
+        # как `train`. Без разделения суточная медиана смешала бы
+        # двухминутный прогон с полуторачасовым.
+        n_train = sum(1 for r in days[d]
+                      if (r.get("kind") or "train") == "train")
         per_day.append({
-            "day": d, "n": len(cs),
+            "day": d, "n": len(cs), "n_train": n_train,
             "med": round(median(cs) or 0.0, 1),
             "p90": round(pct(cs, 0.9) or 0.0, 1),
             "over_hour": over,
@@ -233,15 +239,16 @@ def write_report(path, s, meta):
              "своего часа; исполняет их живой исполнитель настоящими "
              "деньгами (тот же зазор стоил SCRTUSDT −3.2 % живьём при "
              "−0.11 % бумаги).\n")
-    L.append("| сутки | прогонов | медиана с | 90-й проц. | длиннее "
-             "часа | доля | сечений | имён |")
-    L.append("|---|--:|--:|--:|--:|--:|--:|--:|")
+    L.append("| сутки | прогонов | из них обучений | медиана с | "
+             "90-й проц. | длиннее часа | доля | сечений | имён |")
+    L.append("|---|--:|--:|--:|--:|--:|--:|--:|--:|")
     shown = s["per_day"][-DAYS_SHOWN:]
     if len(s["per_day"]) > len(shown):
-        L.append(f"| … | | | | | | | ранее {len(s['per_day']) - len(shown)} "
-                 f"суток |")
+        L.append(f"| … | | | | | | | | ранее "
+                 f"{len(s['per_day']) - len(shown)} суток |")
     for p in shown:
-        L.append(f"| {p['day']} | {p['n']} | {p['med']:.0f} | "
+        L.append(f"| {p['day']} | {p['n']} | {p.get('n_train', p['n'])} "
+                 f"| {p['med']:.0f} | "
                  f"{p['p90']:.0f} | {p['over_hour']} | "
                  f"{p['over_share']:.2f} | {fmt(p['sections'], '.0f')} "
                  f"| {fmt(p['symbols'], '.0f')} |")
