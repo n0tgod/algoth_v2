@@ -260,3 +260,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-08-31T12:19:56Z] задание agreed-page-status: состояние снято
 
 == сигнал 1788178870 ==
+[2026-08-31T12:21:13Z] задание agreed-page-status2: состояние снято
+
+== сигнал 1788184290 ==
+[2026-08-31T13:51:31Z] задание cycle-health-1 запущено: research/s8_loop/cycle_health.py
