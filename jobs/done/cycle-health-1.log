@@ -4,3 +4,18 @@
 запускаю: .venv/bin/python research/s8_loop/cycle_health.py --tag 1m
 [13:51:31] строк 216, суток 216: цикл НЕ укладывается в час: за 08-31 12:2 1 из 1 прогонов длиннее часа, медиана 5207 с; так с 08-23 17:1
 [13:51:31] отчёт: /root/algoth_v2/research/s8_loop/out/CYCLE-health-1m.md
+публикуется в ветку main:
+ jobs/done/agreed-page-status2.done        |    1 +
+ jobs/done/agreed-page-status2.log         |   10 +
+ jobs/done/cycle-health-1.done             |    1 +
+ jobs/done/cycle-health-1.log              |    6 +
+ jobs/poke.log                             |    4 +
+ research/s8_loop/out/CYCLE-health-1m.md   |  241 ++++
+ research/s8_loop/out/cycle-health-1m.json | 2183 +++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json       |    2 +-
+ 8 files changed, 2447 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   a6d0f98..8a55a73  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-31T13:51:33Z, код 0
