@@ -1976,6 +1976,101 @@ def echo_reviews(mdir, src_dir):
     return len(add)
 
 
+def agree_keys(src_dir, hour):
+    """Что выбрала КАЖДАЯ рука источника за час: {(имя, сторона)}.
+
+    Согласие считается из ВЫБОРОВ, не из исходов (правило зонда
+    согласия): флаг обязан быть известен в момент входа. Выбор с
+    нулевым размером — всё равно решение руки: согласие меряет
+    модель, а не кассу.
+    """
+    keys = {a: set() for a, _ in ARMS}
+    for p in _read_jsonl(os.path.join(src_dir, "picks.jsonl")):
+        if p.get("hour") != hour:
+            continue
+        arm = p.get("arm") or "gbm"
+        if arm not in keys:
+            continue
+        for side in ("long", "short"):
+            for leg in p.get(side) or []:
+                if leg.get("sym"):
+                    keys[arm].add((leg["sym"], side))
+    return keys
+
+
+def agree_echo_cycle(mdir, src_dir, cur_hour, hold_h, log_):
+    """Один проход согласной книги-эха: пересечение рук источника.
+
+    Решение владельца (2026-08-31) по зонду согласия: у книги 24 ч
+    решения, взятые ОБЕИМИ руками, дают +441/+358 б.п. на сделку
+    против одиночных (p = 0.000, переживает «без лучшего имени» и
+    половины истории). Правило книги одно — нога живёт, только если
+    ДРУГАЯ рука в тот же час выбрала то же (имя, сторона); всё
+    остальное — дословная копия источника: выбор с отфильтрованными
+    ногами, таймерный разбор источника, отфильтрованный до СВОИХ ног
+    (лишняя нога разбора описывала бы сделку, которой в книге нет).
+
+    Час без единого согласия выбора НЕ пишет: книга редкая, как
+    ситуационная, и пустая строка выдавала бы решение, которого не
+    было. Слоты кассе не назначаются — касса выводит их из потока
+    самой книги, как у всякой книги со сроком.
+
+    Замер-предупреждение, вписанный при заведении (разрез слива
+    2026-08-31): согласие — фильтр СЕРЕДИНЫ, не хвоста. В дни слива
+    08-24…27 согласные теряли наравне с одиночными (−297…−391 б.п.
+    на сделку); от хвоста книгу держит дневной тормоз, не фильтр.
+    """
+    os.makedirs(mdir, exist_ok=True)
+    other = {"gbm": "nn", "nn": "gbm"}
+    if cur_hour:
+        keys = agree_keys(src_dir, cur_hour)
+        for pk in _read_jsonl(os.path.join(src_dir, "picks.jsonl")):
+            if pk.get("hour") != cur_hour:
+                continue
+            arm = pk.get("arm") or "gbm"
+            if arm not in other:
+                continue
+            cp = dict(pk)
+            kept = total = 0
+            for side in ("long", "short"):
+                legs = pk.get(side) or []
+                total += len(legs)
+                cp[side] = [g for g in legs
+                            if (g.get("sym"), side)
+                            in keys[other[arm]]]
+                kept += len(cp[side])
+            if kept:
+                # Сколько отфильтровано — в саму запись: правило
+                # проверяется числом по артефакту, а не доверием.
+                cp["agree_kept"] = [kept, total]
+                write_pick(mdir, cp)
+    # Разборы источника — для своих часов и ТОЛЬКО своих ног.
+    have = {}
+    for p in _read_jsonl(os.path.join(mdir, "picks.jsonl")):
+        k = ((p.get("arm") or "gbm"), p.get("hour"))
+        have[k] = {(g.get("sym"), s) for s in ("long", "short")
+                   for g in p.get(s) or []}
+    seen = {((r.get("arm") or "gbm"), r.get("hour"))
+            for r in _read_jsonl(os.path.join(mdir, "review.jsonl"))}
+    add = []
+    for rv in _read_jsonl(os.path.join(src_dir, "review.jsonl")):
+        key = ((rv.get("arm") or "gbm"), rv.get("hour"))
+        if key not in have or key in seen:
+            continue
+        cp = dict(rv)
+        cp["rows"] = [r for r in rv.get("rows") or []
+                      if (r.get("sym"), r.get("side")) in have[key]]
+        add.append(cp)
+        seen.add(key)
+    if add:
+        with open(os.path.join(mdir, "review.jsonl"), "a",
+                  encoding="utf-8") as f:
+            for rv in add:
+                f.write(json.dumps(rv, ensure_ascii=False) + "\n")
+    rebuild_accounts(mdir, hold_h)
+    return len(add)
+
+
 def basket_state(trades, arm):
     """Деньги корзины руки: сумма нереализованного нетто открытых.
 
@@ -2502,6 +2597,52 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                                      else BASKET_SLOTS))
         except Exception as e:                        # noqa: BLE001
             log_(f"корзинная книга {os.path.basename(bdir)} не "
+                 f"сведена: {type(e).__name__}: {e}")
+
+    # Согласные книги-эхо (решение владельца 2026-08-31, по зонду
+    # согласия и разрезу слива): у источника остаётся ровно
+    # ПЕРЕСЕЧЕНИЕ рук — нога живёт, только если обе руки в тот же час
+    # выбрали то же (имя, сторона). `model_h24a` — от model_h24,
+    # `model_h24za` — от model_h24z (per σ). Выходы — таймерные
+    # разборы источника по своим ногам; правило одно, различие
+    # результатов принадлежит ему. Эхо: в лигу, суммы корня и тормоз
+    # книги не входят. Согласие — фильтр середины, не хвоста (в слив
+    # согласные теряли наравне) — от хвоста остаётся дневной тормоз.
+    for adir, a_srcdir, a_src in (
+            (MODEL_DIR + "_h24a", book_dir(BASKET_H), "model_h24"),
+            (MODEL_DIR + "_h24za", book_dir(24, sigma=True),
+             "model_h24z")):
+        try:
+            fresh_sit_on_rules_change(adir, log_, version=1,
+                                      rules={"agree_filter": True})
+            os.makedirs(adir, exist_ok=True)
+            akey = (rank_key_for(24, sigma=True)
+                    if a_src == "model_h24z"
+                    else rank_key_for(BASKET_H))
+            n_a = (int((elig & np.isfinite(targets[akey])).sum())
+                   if akey in targets else 0)
+            am = {"version": MODEL_VERSION, "horizon_h": BASKET_H,
+                  "hedge": man_b.get("hedge"),
+                  "trained_at": man_b.get("trained_at"),
+                  "sections": n_sections, "symbols": len(syms),
+                  "canary_ic": man_b.get("canary_ic"),
+                  # Эхо: сделки — пересечение рук источника, своё
+                  # только правило согласия. Оно в артефакте: страница
+                  # объясняет книгу по нему, `fresh_…` ловит смену.
+                  "echo_of": a_src, "agree_filter": True,
+                  "rank_target": akey, "target": f"fwd_{BASKET_H}h",
+                  "target_rows": n_a, "target_need": MIN_TARGET_ROWS,
+                  "probe": PROBE, "pretest": PRETEST}
+            amp = os.path.join(adir, "manifest.json")
+            with open(amp + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(am, f, ensure_ascii=False, indent=1)
+            os.replace(amp + ".tmp", amp)
+            agree_echo_cycle(adir, a_srcdir,
+                             grid[j_last] if j_last is not None
+                             else None,
+                             BASKET_H, log_)
+        except Exception as e:                        # noqa: BLE001
+            log_(f"согласная книга {os.path.basename(adir)} не "
                  f"сведена: {type(e).__name__}: {e}")
 
     # Ситуационная книга: вход когда модель видит ситуацию, выход когда

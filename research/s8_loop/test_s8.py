@@ -4883,6 +4883,135 @@ def test_day_brake_blocks_entries_not_reviews():
         T.MODEL_DIR = md_was
 
 
+
+
+def test_agree_echo_book():
+    """Согласное эхо: у источника остаётся ровно пересечение рук.
+
+    Ответ известен заранее: согласны (AAA, long) и (CCC, short) —
+    только они и вправе жить в книге; BBB и DDD, взятые одной рукой,
+    не существуют ни в выборах, ни в разборах. Разбор источника
+    фильтруется до СВОИХ ног — лишняя нога разбора описывала бы
+    сделку, которой в книге нет.
+    """
+    import json as _json
+    import tempfile
+    import shutil
+    import train as T
+    import trades as TR
+
+    d = tempfile.mkdtemp()
+    logs = []
+    log = logs.append
+    hour = "2026-08-31-01"
+    t0 = TR.hour_end(hour)
+
+    def leg(sym):
+        return {"sym": sym, "fwd": 40.0, "px": 100.0}
+
+    def rvrow(sym, side):
+        return {"sym": sym, "side": side, "expected": 40.0,
+                "got": 12.0, "net": 1.0}
+
+    src = os.path.join(d, "model_h24")
+    dst = os.path.join(d, "model_h24a")
+    try:
+        os.makedirs(src)
+        with open(os.path.join(src, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(
+                {"arm": "gbm", "hour": hour, "at_ts": t0 + 300.0,
+                 "long": [leg("AAAUSDT"), leg("BBBUSDT")],
+                 "short": [leg("CCCUSDT")]},
+                ensure_ascii=False) + "\n")
+            f.write(_json.dumps(
+                {"arm": "nn", "hour": hour, "at_ts": t0 + 300.0,
+                 "long": [leg("AAAUSDT")],
+                 "short": [leg("CCCUSDT"), leg("DDDUSDT")]},
+                ensure_ascii=False) + "\n")
+        with open(os.path.join(src, "review.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(
+                {"arm": "gbm", "hour": hour, "cost_bp": 11.0,
+                 "at_ts": t0 + 25 * 3600.0,
+                 "rows": [rvrow("AAAUSDT", "long"),
+                          rvrow("BBBUSDT", "long"),
+                          rvrow("CCCUSDT", "short")]},
+                ensure_ascii=False) + "\n")
+            f.write(_json.dumps(
+                {"arm": "nn", "hour": hour, "cost_bp": 11.0,
+                 "at_ts": t0 + 25 * 3600.0,
+                 "rows": [rvrow("AAAUSDT", "long"),
+                          rvrow("CCCUSDT", "short"),
+                          rvrow("DDDUSDT", "short")]},
+                ensure_ascii=False) + "\n")
+        T.agree_echo_cycle(dst, src, hour, 24, log)
+        pks = T._read_jsonl(os.path.join(dst, "picks.jsonl"))
+        check("выборов два — по одному на руку", len(pks) == 2,
+              str(len(pks)))
+        by = {(p["arm"]): p for p in pks}
+        check("у деревьев остались ровно согласные ноги",
+              [g["sym"] for g in by["gbm"]["long"]] == ["AAAUSDT"]
+              and [g["sym"] for g in by["gbm"]["short"]]
+              == ["CCCUSDT"], str(by.get("gbm")))
+        check("одиночная нога сети (DDD) не существует",
+              all(g["sym"] != "DDDUSDT"
+                  for p in pks for sd in ("long", "short")
+                  for g in p.get(sd) or []), "")
+        check("сколько отфильтровано — числом в записи",
+              by["gbm"].get("agree_kept") == [2, 3]
+              and by["nn"].get("agree_kept") == [2, 3],
+              str([p.get("agree_kept") for p in pks]))
+        rvs = T._read_jsonl(os.path.join(dst, "review.jsonl"))
+        check("разборы скопированы по одному на руку",
+              len(rvs) == 2, str(len(rvs)))
+        check("разбор отфильтрован до своих ног",
+              all(sorted((r["sym"], r["side"]) for r in rv["rows"])
+                  == [("AAAUSDT", "long"), ("CCCUSDT", "short")]
+                  for rv in rvs), str(rvs))
+        # Повторный проход не двоит ни выборов, ни разборов.
+        T.agree_echo_cycle(dst, src, hour, 24, log)
+        check("повтор не двоит",
+              len(T._read_jsonl(os.path.join(dst, "picks.jsonl")))
+              == 2 and
+              len(T._read_jsonl(os.path.join(dst, "review.jsonl")))
+              == 2, "")
+        check("счёт книги пересобран",
+              os.path.exists(os.path.join(dst, "account_gbm.json")),
+              "")
+        tr = TR.build(T._read_jsonl(os.path.join(dst, "picks.jsonl")),
+                      T._read_jsonl(os.path.join(dst,
+                                                 "review.jsonl")),
+                      now=t0 + 26 * 3600.0, hold_h=24)
+        check("сделки книги — четыре согласные ноги, все закрыты",
+              len(tr) == 4 and all(t["state"] == "закрыта"
+                                   for t in tr)
+              and {t["sym"] for t in tr}
+              == {"AAAUSDT", "CCCUSDT"},
+              str([(t["sym"], t["state"]) for t in tr]))
+        # Час без единого согласия: выбор не пишется вовсе — пустая
+        # строка выдавала бы решение, которого не было.
+        src2 = os.path.join(d, "src2")
+        dst2 = os.path.join(d, "dst2")
+        os.makedirs(src2)
+        with open(os.path.join(src2, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(_json.dumps(
+                {"arm": "gbm", "hour": hour, "at_ts": t0 + 300.0,
+                 "long": [leg("AAAUSDT")], "short": []},
+                ensure_ascii=False) + "\n")
+            f.write(_json.dumps(
+                {"arm": "nn", "hour": hour, "at_ts": t0 + 300.0,
+                 "long": [leg("BBBUSDT")], "short": []},
+                ensure_ascii=False) + "\n")
+        T.agree_echo_cycle(dst2, src2, hour, 24, log)
+        check("час без согласия не пишет выбора",
+              not T._read_jsonl(os.path.join(dst2, "picks.jsonl")),
+              "")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def main():
     print("сводка часа")
     test_summary_censors_bands_by_reach()
@@ -4908,6 +5037,7 @@ def main():
     test_no_outcome_returns_principal()
     test_basket_echo_books()
     test_basket_only_book()
+    test_agree_echo_book()
     test_fresh_sit_version_for_echo_books()
     test_sit_absorb_lives_in_one_module()
     test_trade_ids_are_stable()

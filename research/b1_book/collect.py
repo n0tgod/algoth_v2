@@ -2479,6 +2479,7 @@ class Collector:
     BOOK_DIRS = {"h4": "model", "h24": "model_h24",
                  "h24b": "model_h24b", "h24bf": "model_h24bf",
                  "h24c": "model_h24c",
+                 "h24a": "model_h24a", "h24za": "model_h24za",
                  "sit": "model_sit", "sit_obs": "model_sit_obs",
                  "sit_r": "model_sit_r", "sit_lo": "model_sit_lo",
                  "z": "model_h24z"}
@@ -2492,7 +2493,10 @@ class Collector:
              # Книга низкого RR дизъюнктна с торгуемой по построению
              # (rr ≤ 1.5 против rr ≥ 2) — двойного счёта решений нет.
              ("sit_lo", "model_sit_lo"),
-             ("sit_r", "model_sit_r"), ("z", "model_h24z"))
+             ("sit_r", "model_sit_r"), ("z", "model_h24z"),
+             # Согласные эхо (решение владельца 2026-08-31): у
+             # источника остаётся пересечение рук.
+             ("h24a", "model_h24a"), ("h24za", "model_h24za"))
 
     @staticmethod
     def book_hold(mman, default_h):
@@ -2515,7 +2519,7 @@ class Collector:
     # настоящие, но в сводных суммах (лига, корень дерева, разбивка
     # волатильности) они считали бы одни решения дважды — исключаются
     # там по этому множеству, а не по имени в каждом месте.
-    ECHO_BOOKS = {"sit_r", "h24b", "h24bf", "h24c"}
+    ECHO_BOOKS = {"sit_r", "h24b", "h24bf", "h24c", "h24a", "h24za"}
 
     # Дерево моделей: что за логику проверяет каждая ветка, простыми
     # словами и на обоих языках разом (правило справочника: разъехавшись,
@@ -2840,6 +2844,67 @@ class Collector:
                         "лигу и сумму корня не входит: эхо тех же "
                         "решений; вердикт даст календарь, а не "
                         "недели."},
+        "h24a": {
+            "title": "24 h · agreed — both heads picked it",
+            "title_ru": "24 ч · согласные — выбрали обе руки",
+            "plain": "The agreement probe (2026-08-30) found the "
+                     "first live-positive filter of the project: on "
+                     "the 24 h book, decisions taken by BOTH heads "
+                     "(trees and net picked the same name, side and "
+                     "hour) earned +441/+358 bp per trade over solo "
+                     "ones at p = 0.000, surviving the no-best-name "
+                     "cut and both halves of history. This book "
+                     "keeps exactly that intersection of the 24 h "
+                     "book's picks — one declared rule, everything "
+                     "else copied verbatim, so the difference in "
+                     "curves belongs to agreement. Caveat measured "
+                     "before the book existed: agreement is a filter "
+                     "of the MIDDLE, not the tail — in the 08-24…27 "
+                     "drain agreed trades lost the same as solo "
+                     "ones; the tail stays with the day brake. Not "
+                     "in league or root sums: an echo of the same "
+                     "decisions.",
+            "plain_ru": "Зонд согласия (2026-08-30) нашёл первый "
+                        "живой положительный фильтр проекта: у книги "
+                        "24 ч решения, взятые ОБЕИМИ руками (деревья "
+                        "и сеть выбрали одно имя, сторону и час), "
+                        "дают +441/+358 б.п. на сделку против "
+                        "одиночных при p = 0.000 — переживает «без "
+                        "лучшего имени» и обе половины истории. Эта "
+                        "книга держит ровно то пересечение выборов "
+                        "книги 24 ч: правило одно, всё остальное — "
+                        "дословная копия, и разница кривых "
+                        "принадлежит согласию. Оговорка, измеренная "
+                        "ДО заведения книги: согласие — фильтр "
+                        "СЕРЕДИНЫ, не хвоста — в слив 08-24…27 "
+                        "согласные теряли наравне с одиночными; "
+                        "хвост остаётся дневному тормозу. В лигу и "
+                        "сумму корня не входит: эхо тех же решений."},
+        "h24za": {
+            "title": "24 h · per σ · agreed",
+            "title_ru": "24 ч · per σ · согласные",
+            "plain": "The same agreement rule applied to the per-σ "
+                     "24 h book: only names both heads picked. A "
+                     "side observation of the drain split (57 "
+                     "trades): the per-σ book's agreed trades "
+                     "survived the drain in the black — thin and "
+                     "unproven (the σ book's halves flipped sign in "
+                     "the main probe), which is exactly why it runs "
+                     "as its own book: the calendar will answer, "
+                     "not a cell picked off a seen surface. Not in "
+                     "league or root sums: an echo of the same "
+                     "decisions.",
+            "plain_ru": "То же правило согласия на книге 24 ч per σ: "
+                        "остаются только имена, выбранные обеими "
+                        "руками. Побочное наблюдение разреза слива "
+                        "(57 сделок): согласные сделки σ-книги "
+                        "пережили слив в плюс — тонко и не доказано "
+                        "(в основном зонде у σ-книги половины "
+                        "истории меняли знак), и ровно поэтому она "
+                        "заведена отдельной книгой: ответит "
+                        "календарь, а не ячейка с просмотренной "
+                        "поверхности. В лигу и сумму корня не "
+                        "входит: эхо тех же решений."},
     }
     # Ночной прогон турнира приходит раз в сутки (сторож, окно 02:xx
     # UTC). Запас на одно пропущенное окно: 36 ч — это «одну ночь

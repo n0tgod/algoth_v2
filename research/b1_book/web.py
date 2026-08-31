@@ -87,7 +87,9 @@ const BOOK_LIST = [["h4", "4 h \u00b7 per \u03c3"], ["h24", "24 h"],
                    ["sit", "situational \u00b7 per \u03c3"],
                    ["sit_lo", "situational · low RR"],
                    ["sit_r", "situational \u00b7 fixed risk"],
-                   ["z", "24 h \u00b7 per \u03c3"]];
+                   ["z", "24 h \u00b7 per \u03c3"],
+                   ["h24a", "24 h \u00b7 agreed"],
+                   ["h24za", "24 h \u00b7 \u03c3 \u00b7 agreed"]];
 // Ключи, законные в адресе. Главная книга — умолчание и в адрес не
 // пишется; наблюдательная запись адресуема, потому что на неё уводит
 // порог отношения.
