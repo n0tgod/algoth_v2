@@ -51,7 +51,7 @@ def section(shift):
             for i in range(10)]
 
 
-def write_fixture(s8, hours=30, arms=("gbm", "nn")):
+def write_fixture(s8, hours=100, arms=("gbm", "nn")):
     """Живой образец: `preds.jsonl` в каталоге МОДЕЛИ, `picks.jsonl` в
     каталоге книги; выборы согласованы с сечением — топ-3 с каждого
     конца, как их делает train.py."""
@@ -88,7 +88,7 @@ def write_fixture(s8, hours=30, arms=("gbm", "nn")):
     return s8
 
 
-def mids_fixture(hours=60):
+def mids_fixture(hours=140):
     """Середины дрожат, как живые: ровный ряд вырождает любую меру."""
     out = {}
     for i, s in enumerate(SYMS):
@@ -258,9 +258,59 @@ def test_bridge_refuses():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_short_history_refuses():
+    """Короткая история — диагноз отчётом, а не таблица нулей.
+
+    Живой прогон дал ровно это: `preds.jsonl` — очередь на оценку, в
+    ней лежат часы с незакрытым форвардом, и на такой истории не
+    закрывается ни одна корзина. Таблица вышла бы из `+0.00`, а ноль
+    читается как «денег нет» вместо «не измерено».
+    """
+    d = tempfile.mkdtemp()
+    was_out, was_mids, was_pub = BW.OUT, BB.BK.load_mids, BW.PT.publish
+    try:
+        s8 = write_fixture(os.path.join(d, "s8"), hours=10)
+        BW.OUT = os.path.join(d, "out")
+        BB.BK.load_mids = lambda syms, log=None: mids_fixture()
+        BW.PT.publish = lambda *a, **k: None
+        rc = BW.main(["--s8", s8, "--tag", "sh", "--no-publish"])
+        check("короткая история роняет прогон", rc == 1, str(rc))
+        path = os.path.join(BW.OUT, "AGREE-width-sh.md")
+        check("диагноз написан отчётом", os.path.exists(path), path)
+        md = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+        check("отчёт называет ОЧЕРЕДЬ причиной",
+              "ОЧЕРЕДЬ на оценку" in md, md[:200])
+        check("отчёт говорит, чего отказ НЕ означает",
+              "не измерена вовсе" in md, "")
+        check("таблицы ширин в диагнозе нет",
+              "N=12 · gbm · base" not in md, "")
+    finally:
+        BW.OUT, BB.BK.load_mids, BW.PT.publish = (was_out, was_mids,
+                                                  was_pub)
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_unclosed_is_mark_not_zero():
+    """Корзина без единого закрытия — отметка, а не реализованный ноль."""
+    c = {"realized": 0.0, "baskets": 0, "n_take": 0, "n_floor": 0,
+         "n_age": 0, "worst_basket": None, "max_dd": 0.0,
+         "open_mark": -12.5}
+    row = BW.cell_row("N=6 · gbm · agreed", c)
+    check("не закрывшаяся корзина названа словом",
+          "не закрылась ни разу" in row, row)
+    check("реализованного нуля в строке нет",
+          "+0.00" not in row, row)
+    check("отметка хвоста названа числом", "-12.50" in row, row)
+    closed = dict(c, baskets=3, n_age=3, realized=7.25,
+                  worst_basket=-2.0)
+    check("закрывшаяся корзина печатает реализованное",
+          "+7.25" in BW.cell_row("x", closed), BW.cell_row("x", closed))
+
+
 def main():
     tests = (test_pick_rule, test_leg_scales, test_bridge,
-             test_e2e_report, test_bridge_refuses)
+             test_e2e_report, test_bridge_refuses,
+             test_short_history_refuses, test_unclosed_is_mark_not_zero)
     for t in tests:
         print(t.__name__)
         t()
