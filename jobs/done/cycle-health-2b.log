@@ -4,3 +4,16 @@
 запускаю: .venv/bin/python research/s8_loop/cycle_health.py --tag after-deploy2
 [15:06:13] строк 218, суток 14: цикл НЕ укладывается в час: за 2026-08-31 5 из 7 прогонов длиннее часа, медиана 5304 с; так с 2026-08-25
 [15:06:13] отчёт: /root/algoth_v2/research/s8_loop/out/CYCLE-health-after-deploy2.md
+публикуется в ветку main:
+ jobs/done/books-registry-deploy2.log               |  13 ++
+ jobs/done/cycle-health-2b.done                     |   1 +
+ jobs/done/cycle-health-2b.log                      |   6 +
+ jobs/poke.log                                      |   3 +
+ research/s8_loop/out/CYCLE-health-after-deploy2.md |  39 +++++
+ .../s8_loop/out/cycle-health-after-deploy2.json    | 177 +++++++++++++++++++++
+ 6 files changed, 239 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   6406166..ab9ac48  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-31T15:06:15Z, код 0
