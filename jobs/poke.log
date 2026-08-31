@@ -231,3 +231,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788168837 ==
 [2026-08-31T09:33:58Z] задание agree-books-diag-1 запущено: research/s8_loop/diag_books.py
+
+== сигнал 1788170030 ==
+[2026-08-31T09:53:52Z] задание agree-root-deploy-1: перезапуск сборщика

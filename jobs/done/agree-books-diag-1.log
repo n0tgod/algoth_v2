@@ -52,3 +52,14 @@ model_h24za: выборов 2, манифест: no_timer=None age=None take=Non
 [08-31 09:31:01] матрица: 739 символов × 761 часов, сечений с ≥30 именами: 672, признаков 50
 [08-31 09:31:02] ДНЕВНОЙ ТОРМОЗ: день -378.05 $ при пороге −300 — выборы часа 2026-08-31-08 не пишутся; разбор и выходы идут
 конец: 2026-08-31T09:33:59Z, код 0
+публикуется в ветку main:
+ jobs/done/agree-books-diag-1.done   |  1 +
+ jobs/done/agree-books-diag-1.log    | 54 +++++++++++++++++++++++++++++++++++++
+ jobs/done/agree-books-status-1.done |  1 +
+ jobs/done/agree-books-status-1.log  | 10 +++++++
+ jobs/poke.log                       |  4 +++
+ 5 files changed, 70 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   acef00d..83c3b25  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
