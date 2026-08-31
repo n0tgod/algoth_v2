@@ -530,7 +530,14 @@ global.fetch = async (url) => {
                   {arm: "nn", title: "AI — neural net",
                    title_ru: "AI — нейросеть",
                    plain: "Blends many features smoothly.",
-                   plain_ru: "Гладко смешивает много признаков."}],
+                   plain_ru: "Гладко смешивает много признаков."},
+                  // Третий корень — согласие рук: его книги стоят
+                  // ТОЛЬКО здесь и один раз (руки тождественны по
+                  // построению, канонической идёт gbm).
+                  {arm: "agree", title: "ML + AI — agreed",
+                   title_ru: "ML + AI — согласие рук",
+                   plain: "Both heads picked the same name and side.",
+                   plain_ru: "Обе руки выбрали одно имя и сторону."}],
                 books: [
                   {key: "h4", dir: "model", present: true,
                    traded: true,
@@ -589,7 +596,30 @@ global.fetch = async (url) => {
                    title_ru: "Наблюдательная запись — любой RR",
                    plain: "Not traded; it exists for the RR filter.",
                    plain_ru: "Не торгуется; живёт ради фильтра RR.",
-                   facts: "24 slots", stats: {}}],
+                   facts: "24 slots", stats: {}},
+                  // Согласные книги: agreed=true уводит их под третий
+                  // корень и ТОЛЬКО туда. Деньги нарочно крупные:
+                  // протеки в Σ корней ML/AI сломали бы «Σ 8» и
+                  // «+0.27 %» выше. Руки h24a тождественны по
+                  // построению — стаб несёт обе, рисуется gbm.
+                  {key: "h24a", dir: "model_h24a", present: true,
+                   echo: true, agreed: true, traded: true,
+                   title: "24 h · agreed — both heads picked it",
+                   title_ru: "24 ч · согласные — выбрали обе руки",
+                   plain: "Only decisions both heads took.",
+                   plain_ru: "Только решения, взятые обеими руками.",
+                   facts: "hold 24 h",
+                   stats: {gbm: {closed: 2, win: 1.0, pnl: 50.0},
+                           nn: {closed: 2, win: 1.0, pnl: 50.0}}},
+                  {key: "h24za", dir: "model_h24za", present: true,
+                   echo: true, agreed: true, traded: true,
+                   title: "24 h · per σ · agreed",
+                   title_ru: "24 ч · per σ · согласные",
+                   plain: "Same rule on the per-σ book.",
+                   plain_ru: "То же правило на σ-книге.",
+                   facts: "hold 24 h",
+                   stats: {gbm: {closed: 1, win: 0.0,
+                                 pnl: -8.0}}}],
                 tournament: {
                   title: "policy tournament (spec 10)",
                   title_ru: "Турнир политик исполнения (спека 10)",
@@ -2250,16 +2280,33 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // не величины, — она проверяла бы вёрстку вместо смысла.
     const bt = flat(bx.replace(/<[^>]*>/g, " "));
     const roots = (bx.match(/data-root="/g) || []).length;
-    if (roots !== 2)
-      bad.push(`дерево: корней ${roots}, а рук две`);
-    // Узлов на руку: корень + пять книг (включая ветку равного риска
-    // и наблюдательную запись) + лист турнира = 7.
+    if (roots !== 3)
+      bad.push(`дерево: корней ${roots}, а их три — две руки и `
+               + "согласие");
+    // Узлов: на руку корень + пять книг (включая ветку равного риска
+    // и наблюдательную запись) + лист турнира = 7; у согласного корня
+    // корень + две книги = 3. Итого 17.
     const nodes = (bx.match(/data-key="/g) || []).length;
-    if (nodes !== 14)
-      bad.push(`дерево: узлов ${nodes}, а должно быть 14`);
+    if (nodes !== 17)
+      bad.push(`дерево: узлов ${nodes}, а должно быть 17`);
     const ibtns = (bx.match(/class="ibtn"/g) || []).length;
-    if (ibtns !== 14)
-      bad.push(`дерево: кнопок «i» ${ibtns} на 14 узлов`);
+    if (ibtns !== 17)
+      bad.push(`дерево: кнопок «i» ${ibtns} на 17 узлов`);
+    // Согласная книга стоит на дереве ОДИН раз — под своим корнем,
+    // канонической рукой gbm. Второе появление и было дублем, ради
+    // снятия которого корень заведён (руки тождественны по
+    // построению); счёт ЧИСЛОМ — «узел есть» прошёл бы и на трёх.
+    const agr = (bx.match(/data-key="h24a:/g) || []).length;
+    if (agr !== 1)
+      bad.push(`дерево: узлов согласной книги ${agr}, а должен быть `
+               + "один под своим корнем");
+    if (/data-key="h24a:nn"|data-key="h24za:nn"/.test(bx))
+      bad.push("дерево: согласная книга нарисована рукой nn");
+    // Сумма согласного корня — по СВОИМ книгам (они эхо к источникам,
+    // но для этого корня они и есть семья): 2 + 1 закрытых,
+    // 50 − 8 = 42 $ на депозите двух книг 6000 → +0.70 %.
+    if (!/Σ 3 ·/.test(bt) || !/\(\+0\.70 %\)/.test(bt))
+      bad.push("дерево: у согласного корня нет суммы своих книг");
     // Статистика — видна по умолчанию, это и есть лицо узла.
     if (!/\+12\.34 \$/.test(bt) || !/-3\.21 \$/.test(bt))
       bad.push("дерево: деньги веток не из ответа");
@@ -2291,16 +2338,23 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // есть «книга × рука», и без неё числа страницы не совпали бы с
     // узлом, по которому нажали.
     const dl = (bx.match(/href="\/book-page\?[^"]*"/g) || []);
-    if (dl.length !== 6)
+    if (dl.length !== 8)
       bad.push(`дерево: ссылок на дневную статистику ${dl.length}, `
-               + "а ждём шесть (три книги с деньгами × две руки)");
+               + "а ждём восемь (три книги с деньгами × две руки + "
+               + "две согласные по разу)");
     if (!dl.some(h => /hz=h4/.test(h) && /arm=gbm/.test(h))
         || !dl.some(h => /hz=sit/.test(h) && /arm=nn/.test(h)))
       bad.push("дерево: в ссылке нет книги или руки");
+    // Согласная книга ведёт на дневную статистику КАНОНИЧЕСКОЙ руки:
+    // узел один, и адрес обязан совпадать с показанными числами.
+    if (!dl.some(h => /hz=h24a/.test(h) && /arm=gbm/.test(h)))
+      bad.push("дерево: у согласной книги нет ссылки руки gbm");
     if (!dl.every(h => /k=xxx/.test(h)))
       bad.push("дерево: ссылка на дневную статистику без ключа");
-    if (/href="\/book-page[^"]*hz=h24/.test(bx)
-        || /href="\/book-page[^"]*hz=sit_obs/.test(bx))
+    // Граница ключа обязательна: `hz=h24a` согласной книги начинается
+    // с `hz=h24`, и проверка без границы ловила бы законную ссылку.
+    if (/href="\/book-page[^"]*hz=h24&/.test(bx)
+        || /href="\/book-page[^"]*hz=sit_obs&/.test(bx))
       bad.push("дерево: ссылка на книгу, у которой дневных денег нет");
     // Открытые деньги — отдельной строкой у каждой таблички: узла
     // книги и корня. Прочерк — не ноль (переоценить нечем), частичная
@@ -2394,6 +2448,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push("дерево: карточка не сказала «закрытых нет»");
       if (!/open <b>2<\/b>/.test(md))
         bad.push("дерево: открытые ветки без закрытых не в карточке");
+      // Карточка согласного корня: проза и сумма своих книг — ветка
+      // infoHTML для arm="agree" исполняется только здесь. Идёт ДО
+      // карточки турнира: проверка переключения языка ниже читает ту
+      // карточку, что осталась открытой.
+      global.__info("root:agree");
+      md = flat(global.__el("modal").innerHTML);
+      if (!/Both heads picked the same name/.test(md))
+        bad.push("дерево: проза согласного корня не открылась");
+      if (!/Σ 3/.test(md))
+        bad.push("дерево: сумма согласного корня не в карточке");
       // Карточка турнира: статус целиком.
       global.__info("tourney:gbm");
       md = flat(global.__el("modal").innerHTML);

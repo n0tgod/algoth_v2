@@ -2521,6 +2521,14 @@ class Collector:
     # там по этому множеству, а не по имени в каждом месте.
     ECHO_BOOKS = {"sit_r", "h24b", "h24bf", "h24c", "h24a", "h24za"}
 
+    # Согласные книги на дереве живут ПОД ТРЕТЬИМ КОРНЕМ (просьба
+    # владельца): их руки тождественны по построению (пересечение
+    # выборов симметрично), и под корнями ML и AI каждая стояла бы
+    # дважды с одинаковыми числами — дубль показа, не два результата.
+    # Членство объявлено множеством, а не выведено из манифеста:
+    # книга без манифеста иначе МОЛЧА вернулась бы под руки.
+    AGREE_BOOKS = {"h24a", "h24za"}
+
     # Дерево моделей: что за логику проверяет каждая ветка, простыми
     # словами и на обоих языках разом (правило справочника: разъехавшись,
     # переводы стали бы двумя разными утверждениями о модели). Ключи
@@ -2552,6 +2560,30 @@ class Collector:
                         "и ловит взаимодействия, которых деревья не "
                         "видят, но легче переобучается, и её "
                         "объяснения приблизительны."},
+        "agree": {
+            "title": "ML + AI — agreed",
+            "title_ru": "ML + AI — согласие рук",
+            "plain": "Books that trade only where BOTH heads picked "
+                     "the same name and side in the same hour. The "
+                     "intersection is symmetric, so the two arms of "
+                     "an agreed book hold identical trades by "
+                     "construction — the tree shows each book once, "
+                     "with the trees-arm account as the canonical "
+                     "one. Echo books: their money never joins the "
+                     "ML or AI root sums. Caveat measured before "
+                     "they existed: agreement filters the MIDDLE, "
+                     "not the tail — the day brake holds the tail.",
+            "plain_ru": "Книги, торгующие только там, где ОБЕ руки "
+                        "выбрали одно имя и сторону в один час. "
+                        "Пересечение симметрично, поэтому руки "
+                        "согласной книги несут тождественные сделки "
+                        "по построению — дерево показывает каждую "
+                        "книгу один раз, каноническим идёт счёт руки "
+                        "деревьев. Книги-эхо: их деньги не входят в "
+                        "суммы корней ML и AI. Оговорка, измеренная "
+                        "до их заведения: согласие фильтрует "
+                        "СЕРЕДИНУ, не хвост — хвост держит дневной "
+                        "тормоз."},
     }
     BOOK_TREE = {
         "h4": {
@@ -4047,6 +4079,10 @@ class Collector:
                 "plain": "", "plain_ru": "", "no_text": True}
             row.update(key=key, dir=name,
                        echo=key in self.ECHO_BOOKS,
+                       # Согласная книга живёт под третьим корнем и
+                       # только там: руки тождественны по построению,
+                       # под ML и AI она стояла бы дважды.
+                       agreed=key in self.AGREE_BOOKS,
                        # Дневная статистика есть только у торгуемых:
                        # наблюдательная запись денег не держит вовсе,
                        # и ссылка на неё вела бы в пустую страницу,
@@ -4152,8 +4188,12 @@ class Collector:
             tourney.update(present=False,
                            status=tj.get("status")
                            or "ждёт первого прогона на VPS")
+        # Третий корень — согласие рук: у его книг руки тождественны
+        # по построению, и arm здесь имя корня, а не рука кассы;
+        # канонической рукой показа страница берёт gbm.
         out = {"roots": [dict(self.ROOT_TREE["gbm"], arm="gbm"),
-                         dict(self.ROOT_TREE["nn"], arm="nn")],
+                         dict(self.ROOT_TREE["nn"], arm="nn"),
+                         dict(self.ROOT_TREE["agree"], arm="agree")],
                "books": books, "tournament": tourney,
                # Депозит книги (на руку): страница печатает рядом с
                # деньгами долю к нему (просьба владельца). Число — из

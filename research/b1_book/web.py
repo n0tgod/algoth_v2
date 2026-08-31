@@ -7443,13 +7443,28 @@ function share(v, cap){
 // запись денег не держит, незаведённая книга — тоже. Делить сумму
 // двух счетов на один депозит нельзя — то же правило, что у вкладки
 // «обе» в сводке.
-function rootCap(){
+// Книги корня: под ML и AI идут все, КРОМЕ согласных; согласные —
+// только под третьим корнем. Руки согласной книги тождественны по
+// построению (пересечение симметрично), и под руками каждая стояла
+// бы дважды с одинаковыми числами — дубль показа, не два результата.
+function rootBooks(r){
+  return (DATA && DATA.books || []).filter(
+    b => r.arm === "agree" ? b.agreed : !b.agreed);
+}
+// Рука ПОКАЗА для корня: у согласного корня руки кассы тождественны,
+// канонической идёт gbm — это конвенция показа, не выбор лучшей.
+function armOf(r){ return r.arm === "agree" ? "gbm" : r.arm; }
+// Эхо в сумму корня не входит — но у согласного корня его книги и
+// ЕСТЬ семья (эхо они по отношению к ИСТОЧНИКАМ под другими корнями,
+// и туда их Σ не попадает по построению rootBooks).
+function inSum(r, b){ return r.arm === "agree" || !b.echo; }
+function rootCap(r){
   if (!DATA || !DATA.cap) return null;
   // «Держит ли книга деньги» решает поле сервера, а не ключ в этой
   // строке: перечень книг уже жил в восьми местах, и зашитое имя
   // однажды разойдётся с картой книг на сервере.
-  const n = (DATA.books || []).filter(
-    b => b.present && b.traded && !b.echo).length;
+  const n = rootBooks(r).filter(
+    b => b.present && b.traded && inSum(r, b)).length;
   return n ? DATA.cap * n : null;
 }
 // Короткое имя узла: часть заголовка до тире. Полный заголовок и
@@ -7483,34 +7498,35 @@ function bookStat(b, arm){
   return `${nb(s.closed + " · " + Math.round(s.win * 100) + " %")} · ${
     money(s.pnl)}${share(s.pnl, DATA && DATA.cap)}`;
 }
-function rootSum(arm){
+function rootSum(r){
   let n = 0, p = 0.0, any = false;
-  for (const b of (DATA.books || [])) {
-    // Книга-эхо (равный риск) — те же решения, что у торгуемой: в
-    // сумме корня они считались бы дважды. Флаг шлёт сервер.
-    if (b.echo) continue;
-    const s = (b.stats || {})[arm];
+  for (const b of rootBooks(r)) {
+    // Книга-эхо (равный риск, корзины) — те же решения, что у
+    // торгуемой: в сумме корня они считались бы дважды. Флаг шлёт
+    // сервер; у согласного корня его книги и есть семья (`inSum`).
+    if (!inSum(r, b)) continue;
+    const s = (b.stats || {})[armOf(r)];
     // Ветка без закрытых сделок в сумму не входит вовсе: сложить с ней
     // значит получить NaN, то есть потерять и те ветки, что посчитаны.
     if (!s || !s.closed) continue;
     any = true; n += s.closed; p += s.pnl;
   }
   return any ? `${nb("\u03a3 " + n)} · ${
-      money(Math.round(p * 100) / 100)}${share(p, rootCap())}`
+      money(Math.round(p * 100) / 100)}${share(p, rootCap(r))}`
              : T("none");
 }
-function rootOpen(arm){
+function rootOpen(r){
   let n = 0, m = 0, p = 0.0, priced = false;
-  for (const b of (DATA.books || [])) {
-    if (b.echo) continue;
-    const s = (b.stats || {})[arm];
+  for (const b of rootBooks(r)) {
+    if (!inSum(r, b)) continue;
+    const s = (b.stats || {})[armOf(r)];
     if (!s || !s.open) continue;
     n += s.open; m += s.marked;
     if (s.open_pnl != null) { p += s.open_pnl; priced = true; }
   }
   if (!n) return "";
   const mv = priced
-    ? money(Math.round(p * 100) / 100) + share(p, rootCap())
+    ? money(Math.round(p * 100) / 100) + share(p, rootCap(r))
     : "\u2014";
   const part = m < n ? ` · ${nb(m + "/" + n)}` : "";
   return `<div class="ns">${nb(T("openw") + " " + n)} · ${
@@ -7543,23 +7559,28 @@ function daysHref(b, arm){
     + "&arm=" + encodeURIComponent(arm);
 }
 function rootCard(r){
-  const kids = (DATA.books || []).map(b => {
+  // Рука узлов корня: у согласного корня руки тождественны по
+  // построению, узлы идут ОДИН раз канонической рукой gbm — под ML и
+  // AI согласные книги не рисуются вовсе (rootBooks), иначе каждая
+  // стояла бы на дереве дважды с одинаковыми числами.
+  const arm = armOf(r);
+  const kids = rootBooks(r).map(b => {
     // Турнир политик — лист ситуационной ветки: правила этой книги и
     // есть то, что он перебирает.
     const kid = b.key === "sit" && DATA.tournament
-      ? `<ul><li>${nodeCard("tourney:" + r.arm, "leaf",
+      ? `<ul><li>${nodeCard("tourney:" + arm, "leaf",
           label(DATA.tournament), T("tnode")(DATA.tournament))}
          </li></ul>` : "";
-    return `<li>${nodeCard(b.key + ":" + r.arm,
-      b.present ? "" : "off", label(b), bookStat(b, r.arm),
-      openLine((b.stats || {})[r.arm]), daysHref(b, r.arm))}${
+    return `<li>${nodeCard(b.key + ":" + arm,
+      b.present ? "" : "off", label(b), bookStat(b, arm),
+      openLine((b.stats || {})[arm]), daysHref(b, arm))}${
       kid}</li>`;
   }).join("");
   return `<div class="panel" data-root="${esc(r.arm)}">
     <div class="cap">${esc(r.arm)}</div>
     <div class="treewrap"><ul class="tree"><li>
       ${nodeCard("root:" + r.arm, "root", tx(r, "title"),
-                 rootSum(r.arm), rootOpen(r.arm))}
+                 rootSum(r), rootOpen(r))}
       <ul>${kids}</ul></li></ul></div></div>`;
 }
 function infoHTML(){
@@ -7571,7 +7592,7 @@ function infoHTML(){
     if (!r) return "";
     return `<div class="mt">${esc(tx(r, "title"))}</div>
       <div class="plain">${esc(tx(r, "plain"))}</div>
-      <div class="stat mono">${rootSum(arm)}</div>${rootOpen(arm)}`;
+      <div class="stat mono">${rootSum(r)}</div>${rootOpen(r)}`;
   }
   if (kind === "tourney") {
     const t = DATA.tournament || {};

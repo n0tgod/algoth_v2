@@ -4555,6 +4555,18 @@ def test_model_tree_names_every_book():
         got = {b["key"] for b in tr["books"]}
         check("живой ответ несёт все книги карты",
               got == set(C.Collector.BOOK_DIRS), str(got))
+        # Третий корень — согласие рук; членство в нём объявлено
+        # множеством и едет полем: страница по нему разводит книги
+        # по корням, и молчаливая потеря флага вернула бы дубль.
+        check("корней три: руки и согласие",
+              [r["arm"] for r in tr["roots"]] == ["gbm", "nn",
+                                                  "agree"],
+              str([r.get("arm") for r in tr["roots"]]))
+        check("флаг согласной книги — ровно у согласных",
+              {b["key"] for b in tr["books"] if b.get("agreed")}
+              == C.Collector.AGREE_BOOKS,
+              str({b["key"] for b in tr["books"]
+                   if b.get("agreed")}))
         check("ветки без текста в живом ответе нет",
               not any(b.get("no_text") for b in tr["books"]),
               str([b["key"] for b in tr["books"]
