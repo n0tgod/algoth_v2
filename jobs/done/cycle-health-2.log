@@ -1,0 +1,6 @@
+== задание cycle-health-2 ==
+строка: run research/s8_loop/cycle_health.py --tag 1m
+начало: 2026-08-31T13:53:25Z
+запускаю: .venv/bin/python research/s8_loop/cycle_health.py --tag 1m
+[13:53:25] строк 216, суток 14: цикл НЕ укладывается в час: за 2026-08-31 5 из 5 прогонов длиннее часа, медиана 6025 с; так с 2026-08-25
+[13:53:25] отчёт: /root/algoth_v2/research/s8_loop/out/CYCLE-health-1m.md
