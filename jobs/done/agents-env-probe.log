@@ -1,0 +1,16 @@
+== задание agents-env-probe ==
+строка: run research/factory/probe_env.py
+начало: 2026-08-31T22:46:35Z
+запускаю: .venv/bin/python research/factory/probe_env.py 
+Что нужно запускалке ролей
+
+  да   команда claude — /usr/bin/claude, 2.1.220 (Claude Code)
+  НЕТ  ключ API — положить в /root/.anthropic/key с правами 600
+  да   замок flock — нужен, чтобы роли не писали в репозиторий разом
+  да   запускалка
+  да   промпты ролей — brief
+
+Боевой прогон невозможен — недостающее названо выше.
+Сухой прогон работает всегда и модель не зовёт:
+  tools/agents_run.sh brief --dry
+конец: 2026-08-31T22:46:36Z, код 0

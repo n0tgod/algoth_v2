@@ -315,3 +315,8 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788216312 ==
 [2026-08-31T22:45:13Z] задание agents-runner-deploy: перезапуск сборщика
+
+== сигнал 1788216378 ==
+
+== сигнал 1788216394 ==
+[2026-08-31T22:46:35Z] задание agents-env-probe запущено: research/factory/probe_env.py
