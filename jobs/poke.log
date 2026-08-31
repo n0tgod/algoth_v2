@@ -288,3 +288,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-08-31T15:06:13Z] задание cycle-health-2b запущено: research/s8_loop/cycle_health.py
 
 == сигнал 1788188978 ==
+[2026-08-31T15:09:41Z] задание final-check-0831: состояние снято
+
+== сигнал 1788189826 ==
