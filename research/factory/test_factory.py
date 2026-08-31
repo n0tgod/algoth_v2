@@ -89,13 +89,21 @@ def test_unavailable_is_named_by_number():
     # Половина пространства сегодня не исполнима, и это надо говорить
     # числом: «кандидатов нет» и «кандидаты невозможны» снаружи
     # неотличимы.
-    check("исполнимо ровно половина", S.available_total() == 2592,
+    # Четверть: горизонт 24 ч не лежит в листе, корзина требует пути
+    # открытых ног. Обе причины снимаются кодом, и до тех пор число
+    # обязано стоять рядом с любым числом фабрики.
+    check("исполнима ровно четверть", S.available_total() == 1296,
           str(S.available_total()))
-    r24 = dict(S.index_to_rule(0), target="fwd_24h")
+    r24 = dict(S.index_to_rule(0), target="fwd_24h", basket="no")
     why = S.unavailable(r24)
-    check("причина названа словами", bool(why) and "лист" in why, str(why))
-    check("горизонт сигнала исполним",
-          S.unavailable(dict(r24, target="fwd_4h")) is None)
+    check("причина по горизонту названа словами",
+          bool(why) and "лист" in why, str(why))
+    bk = dict(r24, target="fwd_4h", basket="whole")
+    why = S.unavailable(bk)
+    check("причина по корзине названа словами",
+          bool(why) and "корзина" in why, str(why))
+    check("исполнимое правило проходит",
+          S.unavailable(dict(bk, basket="no")) is None)
 
 
 def test_describe_names_every_axis():
