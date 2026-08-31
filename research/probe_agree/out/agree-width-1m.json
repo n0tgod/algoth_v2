@@ -1,0 +1,547 @@
+{
+ "meta": {
+  "when": "2026-08-31 10:47 UTC",
+  "span": "2026-08-30 11:00 … 2026-08-31 08:00 UTC",
+  "bridge": 1.0,
+  "bridge_n": 6,
+  "floor_bp": 0.0
+ },
+ "cell": {
+  "take": 0.05,
+  "floor": 0.05,
+  "age_h": 24
+ },
+ "widths": [
+  6,
+  12,
+  20,
+  30
+ ],
+ "seeds": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10
+ ],
+ "res": {
+  "6": {
+   "arms": {
+    "gbm": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 8.35,
+      "open_legs": 57,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -33.25,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 3,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 0.1,
+      "open_legs": 4,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -16.26,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -5.6899999999999995
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 6.0,
+     "n_agreed": 2.0
+    },
+    "nn": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 16.7,
+      "open_legs": 55,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -39.05,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 5,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 0.1,
+      "open_legs": 4,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -16.26,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -7.0280000000000005
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 6.0,
+     "n_agreed": 2.0
+    }
+   }
+  },
+  "12": {
+   "arms": {
+    "gbm": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 17.73,
+      "open_legs": 109,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -15.24,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 11,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 1.45,
+      "open_legs": 6,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -10.11,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -2.054
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 12.0,
+     "n_agreed": 2.0
+    },
+    "nn": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 10.92,
+      "open_legs": 103,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -19.35,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 17,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 0.28,
+      "open_legs": 5,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -5.75,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -3.191
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 12.0,
+     "n_agreed": 2.5
+    }
+   }
+  },
+  "20": {
+   "arms": {
+    "gbm": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 14.06,
+      "open_legs": 178,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -11.28,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 22,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 1.85,
+      "open_legs": 7,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -4.44,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -2.2030000000000003
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 20.0,
+     "n_agreed": 2.3333333333333335
+    },
+    "nn": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 5.88,
+      "open_legs": 175,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -17.38,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 25,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": -0.52,
+      "open_legs": 7,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -3.76,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -1.585
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 20.0,
+     "n_agreed": 2.3333333333333335
+    }
+   }
+  },
+  "30": {
+   "arms": {
+    "gbm": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 10.39,
+      "open_legs": 277,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -8.16,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 23,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 1.23,
+      "open_legs": 7,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -2.96,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -1.003
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 30.0,
+     "n_agreed": 2.3333333333333335
+    },
+    "nn": {
+     "base": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": 7.75,
+      "open_legs": 268,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -9.45,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 32,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "agreed": {
+      "take": 0.05,
+      "floor": 0.05,
+      "age_h_lim": 24,
+      "one_loss_day": false,
+      "n_age": 0,
+      "realized": 0.0,
+      "open_mark": -0.67,
+      "open_legs": 9,
+      "baskets": 0,
+      "n_take": 0,
+      "n_floor": 0,
+      "worst_basket": null,
+      "age_med_h": null,
+      "age_max_h": null,
+      "max_dd": -2.13,
+      "blocked_hours": 0,
+      "skipped": {
+       "no_cash": 0,
+       "name_cap": 0,
+       "opposite": 0,
+       "no_price": 0,
+       "loss_day": 0
+      }
+     },
+     "null_summary": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "worst_mean": null,
+      "dd_mean": -1.009
+     },
+     "verdict": "неотличимо от случайного сужения той же ширины: realized внутри распределения десяти зёрен нуля",
+     "n_base": 30.0,
+     "n_agreed": 3.0
+    }
+   }
+  }
+ },
+ "took_sec": 19.0
+}
