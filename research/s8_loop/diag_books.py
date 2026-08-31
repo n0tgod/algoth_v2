@@ -15,7 +15,8 @@ OUT = os.path.join(HERE, "out")
 
 def main():
     for name in ("model", "model_h24", "model_h24b", "model_h24bf",
-                 "model_h24c"):
+                 "model_h24c", "model_h24z", "model_h24a",
+                 "model_h24za"):
         d = os.path.join(OUT, name)
         if not os.path.isdir(d):
             print(f"{name}: каталога нет")
@@ -31,12 +32,26 @@ def main():
         pk = os.path.join(d, "picks.jsonl")
         n_pk = sum(1 for _ in open(pk, encoding="utf-8")) \
             if os.path.exists(pk) else 0
+        last_kept = None
+        if os.path.exists(pk):
+            with open(pk, encoding="utf-8") as f:
+                for ln in f:
+                    try:
+                        row = json.loads(ln)
+                    except ValueError:
+                        continue
+                    if "agree_kept" in row:
+                        last_kept = row["agree_kept"]
         print(f"{name}: выборов {n_pk}, манифест: "
               f"no_timer={man.get('no_timer')} "
               f"age={man.get('basket_age_h')} "
               f"take={man.get('basket_take_share')} "
+              f"agree={man.get('agree_filter')} "
+              f"echo_of={man.get('echo_of')} "
               f"seq={man.get('train_seq')} "
-              f"trained_at={man.get('trained_at')}")
+              f"trained_at={man.get('trained_at')}"
+              + (f" last_agree_kept={last_kept}"
+                 if last_kept is not None else ""))
     lp = os.path.join(OUT, "train.log")
     if os.path.exists(lp):
         with open(lp, encoding="utf-8", errors="replace") as f:
