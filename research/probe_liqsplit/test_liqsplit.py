@@ -47,7 +47,7 @@ def snap(sym, t, bid, ask):
             "t": round(float(t), 3)}
 
 
-def liq(sym, t, side="Sell", p=96.0, v=10.0):
+def liq(sym, t, side="Buy", p=96.0, v=10.0):
     return {"ts": int(t * 1000), "side": side, "p": p, "v": v}
 
 
@@ -131,8 +131,10 @@ def test_split_and_window():
           a["liq_usd_med"] and a["liq_usd_med"] > 0, str(a))
     check("превышение помеченной группы измерено",
           a["excess_bp"] is not None and a["excess_bp"] > 0, str(a))
-    check("доля Sell = 1.0 (падение сносит лонгов)",
-          g["_sell_share"] == 1.0, str(g["_sell_share"]))
+    # Живой прогон установил: ликвидацию лонга на этом потоке
+    # маркирует Buy — фикстура кладёт Buy, доля Sell обязана быть 0.
+    check("доля Sell посчитана по метке (фикстура Buy)",
+          g["_sell_share"] == 0.0, str(g["_sell_share"]))
     check("градиент при <30 событиях пуст, а не выдуман",
           g["_gradient"] == [], str(g["_gradient"]))
     check("молчащих суток ноль", art["dead_days"] == 0, "")
