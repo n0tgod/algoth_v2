@@ -213,3 +213,9 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788130187 ==
 [2026-08-30T22:49:49Z] задание tailveto-2 запущено: research/probe_tailveto/tailveto.py
+
+== сигнал 1788130270 ==
+[2026-08-30T22:51:12Z] задание liqsplit-1 запущено: research/probe_liqsplit/liqsplit.py
+
+== сигнал 1788145861 ==
+[2026-08-31T03:11:01Z] задания: проход уже идёт — выхожу

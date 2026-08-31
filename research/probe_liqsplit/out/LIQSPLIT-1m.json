@@ -1,0 +1,72 @@
+{
+ "run_at": "2026-08-31 05:16 UTC",
+ "days": 29,
+ "dead_days": 2,
+ "events": 15477,
+ "groups": {
+  "с ликвидациями": {
+   "events": 8761,
+   "episodes": 2764,
+   "excess_bp": 25.11,
+   "share_pos": 0.551,
+   "own_bp": 24.86,
+   "bg_bp": 0.0,
+   "liq_usd_med": 958.3462,
+   "n_liq_med": 3.0
+  },
+  "без ликвидаций": {
+   "events": 6716,
+   "episodes": 2533,
+   "excess_bp": 17.26,
+   "share_pos": 0.545,
+   "own_bp": 17.01,
+   "bg_bp": 0.0,
+   "liq_usd_med": null,
+   "n_liq_med": 0.0
+  },
+  "_gradient": [
+   [
+    "нижняя треть $",
+    {
+     "events": 2921,
+     "episodes": 1794,
+     "excess_bp": 28.61,
+     "share_pos": 0.55,
+     "own_bp": 25.54,
+     "bg_bp": 0.0,
+     "liq_usd_med": 68.3525,
+     "n_liq_med": 1.0
+    }
+   ],
+   [
+    "середина",
+    {
+     "events": 2919,
+     "episodes": 1826,
+     "excess_bp": 17.91,
+     "share_pos": 0.527,
+     "own_bp": 19.65,
+     "bg_bp": 0.0,
+     "liq_usd_med": 958.3462,
+     "n_liq_med": 3.0
+    }
+   ],
+   [
+    "верхняя треть $",
+    {
+     "events": 2921,
+     "episodes": 1858,
+     "excess_bp": 23.11,
+     "share_pos": 0.538,
+     "own_bp": 26.78,
+     "bg_bp": 0.0,
+     "liq_usd_med": 7138.8734939999995,
+     "n_liq_med": 12.0
+    }
+   ]
+  ],
+  "_sell_share": 0.336
+ },
+ "took_min": 385.1,
+ "reading": "Группа с ликвидациями выше голого падения (+25.1 против +17.3 б.п.), но валового порога 35 б.п. не достигает — экономика D1 остаётся несходящейся."
+}
