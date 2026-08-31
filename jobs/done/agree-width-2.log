@@ -4,3 +4,16 @@
 запускаю: .venv/bin/python research/probe_agree/basket_width.py --tag 1m
 [10:54:20] сечений 20 по 2 рукам (10 на руку), пол 0 б.п.
 [10:54:20] истории сечения 10 ч на руку при нужных 72 — preds.jsonl это ОЧЕРЕДЬ на оценку, а не архив (score_preds убирает оценённые). Ширину на истории мерить нечем
+публикуется в ветку main:
+ jobs/done/agree-width-1.log                |  7 ++++
+ jobs/done/agree-width-2.done               |  1 +
+ jobs/done/agree-width-2.log                |  6 +++
+ jobs/poke.log                              |  3 ++
+ research/probe_agree/out/AGREE-width-1m.md | 62 +++---------------------------
+ research/s8_loop/out/day_brake.json        |  2 +-
+ 6 files changed, 23 insertions(+), 58 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3ecef7d..124c949  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-31T10:54:22Z, код 1
