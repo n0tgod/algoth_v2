@@ -2801,10 +2801,12 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                            # ОДИН на обе: второй считал бы ту же волну
                            # дважды и мог бы разойтись с первой.
                            "books": [
-                               {"dir": os.path.basename(mdir),
+                               {"dir": os.path.basename(
+                                    MODEL_DIR + BK.suffix("sit")),
                                 "min_rr": SIT_MIN_RR,
                                 "slots": SIT_SLOTS},
-                               {"dir": os.path.basename(mdir) + "_obs",
+                               {"dir": os.path.basename(
+                                    MODEL_DIR + BK.suffix("sit_obs")),
                                 "min_rr": SIT_OBS_MIN_RR,
                                 "slots": SIT_OBS_SLOTS,
                                 # Наблюдательную запись дневной тормоз
@@ -2822,7 +2824,8 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                                # Её же правило запаса: стоп не
                                # тоньше полутора живых шумов (после
                                # #ptadyrc — стоп в один фитиль).
-                               {"dir": os.path.basename(mdir) + "_r",
+                               {"dir": os.path.basename(
+                                    MODEL_DIR + BK.suffix("sit_r")),
                                 "min_rr": SIT_MIN_RR,
                                 "slots": SIT_SLOTS,
                                 "noise_mult": SIT_R_NOISE_MULT,
@@ -2831,7 +2834,8 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                                # другой конец распределения отношения.
                                # Потолок вместо пола — и это ЕДИНСТ-
                                # венное отличие от торгуемой.
-                               {"dir": os.path.basename(mdir) + "_lo",
+                               {"dir": os.path.basename(
+                                    MODEL_DIR + BK.suffix("sit_lo")),
                                 "min_rr": 0.0,
                                 "max_rr": SIT_LO_MAX_RR,
                                 "slots": SIT_LO_SLOTS},
@@ -2866,7 +2870,7 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
         # не меняется ни чем, и тень бота её не читает. Лист сечения
         # один на обе: он лежит у торгуемой, сканер берёт из него
         # состав книг.
-        obs = mdir + "_obs"
+        obs = MODEL_DIR + BK.suffix("sit_obs")
         fresh_sit_on_rules_change(obs, log_)
         os.makedirs(obs, exist_ok=True)
         som = dict(sm, slots=SIT_OBS_SLOTS, min_rr=SIT_OBS_MIN_RR,
@@ -2889,7 +2893,7 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
         # тейк при RR r — +r·R. Сделки ТЕ ЖЕ, что у торгуемой
         # (гейты и места совпадают): меняется только распределение
         # размера, и разница результатов принадлежит правилу.
-        rbk = mdir + "_r"
+        rbk = MODEL_DIR + BK.suffix("sit_r")
         fresh_sit_on_rules_change(rbk, log_, rules={
             "exit_policy": SIT_R_EXIT_POLICY,
             "noise_mult": SIT_R_NOISE_MULT,
@@ -2916,7 +2920,7 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
         # манифесте; его смена отставляет книгу, как любая смена
         # правил. Сделки дизъюнктны с торгуемой по построению
         # (rr ≤ 1.5 против rr ≥ 2) — двойного счёта в лиге нет.
-        lo = mdir + "_lo"
+        lo = MODEL_DIR + BK.suffix("sit_lo")
         fresh_sit_on_rules_change(lo, log_, rules={
             "max_rr": SIT_LO_MAX_RR})
         os.makedirs(lo, exist_ok=True)
