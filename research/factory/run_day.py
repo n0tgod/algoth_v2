@@ -39,7 +39,7 @@ for _p in (os.path.join(RESEARCH, "s10_policy"),
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-import book as BK                                          # noqa: E402
+import candidate as CD                                     # noqa: E402
 import ledger as LG                                        # noqa: E402
 import pool as PL                                          # noqa: E402
 import space as SP                                         # noqa: E402
@@ -190,7 +190,7 @@ def geometries():
     """Все тройки геометрии, какие может попросить пространство."""
     seen = []
     for g in SP.VALUES["geom"]:
-        t = BK.geometry({"geom": g})
+        t = CD.geometry({"geom": g})
         if t not in seen:
             seen.append(t)
     return seen
@@ -204,8 +204,8 @@ def run_candidates(state, legs, outs, log=print):
         if SP.validate(rule):
             log(f"{cid}: правило в реестре негодно — пропуск")
             continue
-        tr = BK.simulate(legs, outs, BK.with_geometry(rule))
-        res[cid] = {"trades": len(tr), "daily": BK.daily_net(tr),
+        tr = CD.simulate(legs, outs, CD.with_geometry(rule))
+        res[cid] = {"trades": len(tr), "daily": CD.daily_net(tr),
                     "lane": rec.get("lane"), "rule": rule}
     return res
 
@@ -237,8 +237,8 @@ def null_daily(legs, outs, rule, seeds=NULL_SEEDS):
             src = remap.get(lid)
             if src is not None:
                 shifted[(src, st, tk, ag)] = got
-        tr = BK.simulate(legs, shifted, BK.with_geometry(rule))
-        out.append(BK.daily_net(tr))
+        tr = CD.simulate(legs, shifted, CD.with_geometry(rule))
+        out.append(CD.daily_net(tr))
     return out
 
 
@@ -412,6 +412,15 @@ def main(argv=None):
     log(f"ног из журнала листов: {len(legs)}")
     outs = outcomes_for(legs, a.root, geometries(), log=log) if legs else {}
     log(f"исходов посчитано: {len(outs)}")
+    if legs and not outs:
+        # Ноль исходов при непустых ногах означает, что сломано чтение
+        # баров, а не что рынок молчал. Первый живой прогон отчитался
+        # кодом 0 и пустым отчётом ровно так: имя модуля перекрыло
+        # чужое, загрузчик падал на каждом символе, а снаружи это
+        # выглядело исправной фабрикой без сделок.
+        log("исходов нет ни у одной ноги — чтение баров сломано; "
+            "отчёт не пишется, чтобы пустота не выдала себя за прогон")
+        return 1
     cands = run_candidates(st, legs, outs, log=log) if outs else {}
     # Нуль общий для группы: одно сечение и один форвард на всех.
     base_rule = None

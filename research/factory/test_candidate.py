@@ -12,7 +12,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
-import book as B    # noqa: E402
+import candidate as B   # noqa: E402
 import space as S   # noqa: E402
 
 FAILED = []

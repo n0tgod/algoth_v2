@@ -161,7 +161,7 @@ def test_null_keeps_the_book_and_shuffles_the_future():
         outs = R.outcomes_for(legs, tmp, R.geometries(),
                               log=lambda *a: None)
         rule = SP.index_to_rule(0)
-        import book as B
+        import candidate as B
         real = B.simulate(legs, outs, B.with_geometry(rule))
         nulls = R.null_daily(legs, outs, rule, seeds=3)
         check("нуль посчитан", len(nulls) == 3, str(len(nulls)))
@@ -175,8 +175,34 @@ def test_null_keeps_the_book_and_shuffles_the_future():
         R.SW.read_bars = was_b
 
 
+def test_zero_outcomes_is_a_failure_not_a_quiet_day():
+    """Ноль исходов при непустых ногах — поломка чтения баров.
+
+    Первый живой прогон отчитался кодом 0 и пустым отчётом: имя модуля
+    перекрыло чужое, загрузчик падал на каждом символе, а снаружи это
+    выглядело исправной фабрикой без сделок.
+    """
+    tmp = tempfile.mkdtemp()
+    base, sheets, props, _t0 = setup(tmp)
+    was_p, was_b, was_pub = R.PROPOSALS, R.SW.read_bars, R.publish
+    R.PROPOSALS = props
+    R.SW.read_bars = lambda *a, **k: []
+    R.publish = lambda *a, **k: None
+    try:
+        out = os.path.join(tmp, "out")
+        rc = R.main(["--sheets", sheets, "--root", tmp, "--out", out,
+                     "--base", base, "--tag", "t", "--seed", "1",
+                     "--no-publish"])
+        check("прогон отказал, а не отчитался нулём", rc == 1, str(rc))
+        check("пустой отчёт не написан",
+              not os.path.exists(os.path.join(out, "FACTORY-day-t.md")))
+    finally:
+        R.PROPOSALS, R.SW.read_bars, R.publish = was_p, was_b, was_pub
+
+
 def main():
-    tests = (test_end_to_end, test_null_keeps_the_book_and_shuffles_the_future)
+    tests = (test_end_to_end,
+             test_zero_outcomes_is_a_failure_not_a_quiet_day, test_null_keeps_the_book_and_shuffles_the_future)
     for t in tests:
         print(t.__name__)
         t()
