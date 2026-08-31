@@ -1,0 +1,9 @@
+== задание agree-basket-1 ==
+строка: run research/probe_agree/basket_agree.py --tag 1m
+начало: 2026-08-31T10:32:32Z
+запускаю: .venv/bin/python research/probe_agree/basket_agree.py --tag 1m
+[10:32:33] gbm: ног всего 2736, согласных 530
+[10:32:33] nn: ног всего 2736, согласных 530
+[10:32:45] gbm: base +204.07, agreed +194.03, нулей 10
+[10:32:45] nn: base +475.97, agreed +194.03, нулей 10
+[10:32:45] отчёт: /root/algoth_v2/research/probe_agree/out/AGREE-basket-1m.md · 13.0 с

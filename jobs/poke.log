@@ -236,3 +236,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-08-31T09:53:52Z] задание agree-root-deploy-1: перезапуск сборщика
 
 == сигнал 1788170408 ==
+[2026-08-31T10:00:12Z] задание agree-root-status-1: состояние снято
+
+== сигнал 1788172351 ==
+[2026-08-31T10:32:32Z] задание agree-basket-1 запущено: research/probe_agree/basket_agree.py
