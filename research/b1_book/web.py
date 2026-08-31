@@ -108,6 +108,7 @@ const NAV_ITEMS = [
   ["/tree-page", "models", "модели"],
   ["/tournament-page", "tournament", "турнир"],
   ["/paper-page", "monthly", "месячная"],
+  ["/agents-page", "agents", "агенты"],
   ["/live-page", "bot live", "бот live"]];
 function navMount(current){
   const el = document.getElementById("nav");
@@ -8420,6 +8421,324 @@ setInterval(pull, 60000);
 """
 
 
+
+# Страница автономной системы: конвейер ролей и механических шагов,
+# границы и то, что уже построено.
+#
+# Тексты — из реестра `research/factory/agents.py`, того самого, из
+# которого запускалка позже соберёт промпты. Прозы в самой странице
+# нет намеренно: описание, живущее только в HTML, разошлось бы с
+# системой при первой же правке — и страница осталась бы выглядеть
+# исправной.
+#
+# Рамка предмета стоит ПЕРВЫМ абзацем и объясняет, что агент — не
+# живая сессия, а рецепт запуска. Урок листа турнира: объяснение,
+# живущее только на соседней странице, эту не защищает, а сюда
+# приходят прямо из меню.
+AGENTSPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>autonomous system — agents and the conveyor</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:14px 16px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+.frame{border-left:2px solid var(--accent);padding-left:10px;
+ font-size:13px;margin:0 0 10px}
+.frame b{color:var(--accent);font-weight:600}
+.warn{border-left:2px solid var(--ask);padding-left:10px;
+ font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.warn b{color:var(--ask);font-weight:600}
+.strip{display:grid;gap:8px;
+ grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+ margin:10px 0 0}
+.st{background:linear-gradient(180deg,rgba(151,71,255,.06),
+ rgba(151,71,255,0));border:1px solid var(--rule);border-radius:12px;
+ padding:9px 11px}
+.st .lab{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+ color:var(--muted)}
+.st .val{font-size:17px;font-weight:700;margin-top:2px}
+.st .val small{font-size:11.5px;font-weight:500;color:var(--muted)}
+.step{border:1px solid var(--rule);border-radius:12px;padding:11px 13px;
+ margin:9px 0;background:rgba(255,255,255,.012)}
+.step.role{border-left:3px solid var(--accent)}
+.step.mech{border-left:3px solid var(--rule)}
+.step.next{box-shadow:0 0 0 1px rgba(151,71,255,.35) inset}
+.shead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.num{font-size:11px;color:var(--muted)}
+.sname{font-weight:700}
+.chip{font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+ border:1px solid var(--rule);border-radius:999px;padding:2px 8px;
+ color:var(--muted);white-space:nowrap}
+.chip.role{border-color:var(--accent);color:var(--accent)}
+.chip.on{border-color:var(--bid);color:var(--bid)}
+.chip.off{border-color:var(--ask);color:var(--ask)}
+.sbody{margin:7px 0 0;font-size:13px}
+.grid{display:grid;gap:6px 14px;margin:8px 0 0;
+ grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.f{font-size:12.5px}
+.f .lab{color:var(--muted);font-size:10.5px;letter-spacing:.09em;
+ text-transform:uppercase;display:block}
+.why{font-size:12.5px;color:var(--muted);margin:8px 0 0;
+ padding-left:10px;border-left:1px solid var(--rule-soft)}
+.why b{color:var(--ink);font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 8px;text-align:left;vertical-align:top;
+ border-bottom:1px solid var(--rule-soft)}
+th{color:var(--muted);font-weight:600}
+td.name{white-space:normal;color:var(--ink);font-weight:600;width:31%}
+.scroll{overflow-x:auto}
+a{color:var(--accent)}
+button{background:var(--chip);border:1px solid var(--rule);
+ color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;
+ cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+@media (max-width:720px){ td.name{width:auto} }
+""" + NAVCSS + r"""</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k" id="strap"></span>
+  <span style="flex:1"></span>
+  <span id="lang"></span></div>
+<div id="nav"></div>
+<div class="panel"><div id="frame"></div><div id="strip"></div>
+  <div id="alarm"></div></div>
+<div class="panel"><div class="cap" id="pcap"></div>
+  <div id="pipe">&hellip;</div></div>
+<div class="panel"><div class="cap" id="bcap"></div>
+  <div class="frame" id="bnote"></div>
+  <div class="scroll"><table id="bounds"></table></div></div>
+<div class="panel"><div class="cap" id="rcap"></div>
+  <div class="frame" id="rnote"></div>
+  <div class="scroll"><table id="risks"></table></div></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+let LANG = new URLSearchParams(location.search).get("lang")
+  || (function(){ try { return localStorage.getItem("algoth_lang"); }
+                  catch (e) { return null; } })() || "en";
+let DATA = null;
+
+// Подписи страницы переключаются вместе с текстами реестра: половина
+// страницы по-русски и половина по-английски выглядела бы исправной
+// и читалась бы как недоделка.
+const UI = {
+  strap: {en: "autonomous system", ru: "автономная система"},
+  pcap: {en: "the conveyor, in order",
+         ru: "конвейер в порядке исполнения"},
+  bcap: {en: "what no agent touches", ru: "чего не касается ни один агент"},
+  rcap: {en: "failures this design creates by itself",
+         ru: "отказы, которые схема создаёт сама"},
+  bnote: {en: "An autonomous session cannot be stopped mid-run, so it "
+              + "is limited by RIGHTS, not by supervision.",
+          ru: "Автономную сессию нельзя остановить посреди прогона, "
+              + "поэтому ограничивают её ПРАВА, а не надзор."},
+  rnote: {en: "Named before building: what is named in advance is "
+              + "caught cheaper.",
+          ru: "Названы до постройки: то, что названо заранее, ловится "
+              + "дешевле."},
+  built: {en: "built", ru: "построено"},
+  roles: {en: "run by a model", ru: "ведёт модель"},
+  next: {en: "next to build", ru: "следующий шаг"},
+  pool: {en: "candidates alive", ru: "кандидатов живо"},
+  effn: {en: "effective N", ru: "эффективное N"},
+  days: {en: "calendar, days", ru: "календарь, суток"},
+  reads: {en: "reads", ru: "читает"},
+  writes: {en: "writes", ru: "пишет"},
+  forbid: {en: "may not", ru: "нельзя"},
+  doubt: {en: "at doubt", ru: "при сомнении"},
+  why: {en: "why this step exists", ru: "зачем этот шаг"},
+  role: {en: "role", ru: "роль"},
+  mech: {en: "mechanical", ru: "механика"},
+  yes: {en: "built", ru: "построен"},
+  no: {en: "not built", ru: "не построен"},
+  what: {en: "what", ru: "что"},
+  reason: {en: "why", ru: "почему"},
+  fail: {en: "failure", ru: "отказ"},
+  guard: {en: "guard", ru: "защита"},
+  none: {en: "no daily run yet", ru: "суточного прогона ещё не было"}
+};
+function T(k){ const v = UI[k]; return v[LANG] || v.en; }
+function tx(o, f){ return LANG === "ru" ? (o[f + "_ru"] || o[f] || "")
+                                        : (o[f] || ""); }
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+// Прочерк, а не ноль: величины, которой нет, ноль приписывает
+// смысл «измерено и равно нулю».
+function num(v, d){ return (v === null || v === undefined) ? "&mdash;"
+  : (d ? Number(v).toFixed(d) : String(v)); }
+
+// Рамка предмета. Стоит первой и объясняет ИМЕННО то, чем страница
+// может быть неверно прочитана: список из десяти шагов с ролями
+// читается как «десять работающих программ», а работает сегодня
+// меньше половины, и ни одна из них не «живёт» непрерывно.
+function frameHtml(d){
+  const ru = LANG === "ru";
+  const built = d.built_n, total = d.total_n;
+  if (ru) return `<p class="frame"><b>Агент здесь — не живая сессия.</b>
+    Это рецепт запуска: промпт роли, права, что прочитать, что оставить
+    на диске. Сессию будит запускалка, она работает минуты и умирает;
+    памяти между вызовами нет вовсе, и роли разговаривают только через
+    файлы в репозитории. Поэтому состояние живёт на диске, шаги
+    повторяемы без вреда, а упавший прогон обязан кричать.</p>
+    <p class="frame"><b>Половина конвейера — не агенты.</b> Шесть шагов
+    из десяти механические, и это сделано нарочно: механический шаг
+    нельзя уговорить. Отбор публикации, объявление в журнал, вылет и
+    счёт знаменателя механические именно потому, что там живёт соблазн,
+    который в этом проекте уже стоил месяца работы.</p>`;
+  return `<p class="frame"><b>An agent here is not a live session.</b>
+    It is a recipe for starting one: the role prompt, its rights, what
+    to read, what to leave on disk. A scheduler wakes it, it works for
+    minutes and dies; there is no memory between calls, and the roles
+    speak to each other only through files in the repository. Hence:
+    state lives on disk, every step is repeatable without harm, and a
+    run that dies must scream.</p>
+    <p class="frame"><b>Half of the conveyor is not agents.</b> Six of
+    the ten steps are mechanical on purpose: a mechanical step cannot
+    be talked into anything. Publication, declaration, retirement and
+    the count of trials are mechanical precisely because that is where
+    the temptation lives &mdash; the one that already cost this project
+    a month of work.</p>`;
+}
+
+function render(){
+  const d = DATA;
+  document.getElementById("strap").textContent = T("strap");
+  navMount("/agents-page");
+  langBox();
+  if (!d) return;
+  document.getElementById("frame").innerHTML = frameHtml(d);
+
+  // Плитки. «Построено N из M» — величина, а не заявление: порядок
+  // постройки и следующий шаг выводятся из состояния файлов, поэтому
+  // страница не может утверждать прогресс, которого нет.
+  const p = d.pool || {};
+  const nx = d.steps.filter(s => s.key === d.next_key)[0];
+  const cells = [
+    [T("built"), `${d.built_n}<small> / ${d.total_n}</small>`],
+    [T("roles"), `${d.roles_n}<small> / ${d.total_n}</small>`],
+    [T("next"), nx ? esc(tx(nx, "title")) : "&mdash;"],
+    [T("pool"), num(p.alive)],
+    [T("effn"), num(p.eff_n, 1)],
+    [T("days"), num(p.days)]];
+  document.getElementById("strip").innerHTML = cells.map(c =>
+    `<div class="st"><div class="lab">${c[0]}</div>
+      <div class="val">${c[1]}</div></div>`).join("");
+
+  // Тревоги. Пустая величина обязана объяснять себя: прочерк без
+  // причины неотличим от сломанного счёта.
+  let al = "";
+  if (d.pool_status)
+    al += `<p class="warn"><b>&#9888;</b> ${esc(d.pool_status)}</p>`;
+  if (p.stale)
+    al += `<p class="warn"><b>&#9888;</b> ` + (LANG === "ru"
+      ? `суточный прогон не пришёл, артефакту ${
+          Math.round(p.run_age_sec / 3600)} ч`
+      : `the daily run did not arrive, the artifact is ${
+          Math.round(p.run_age_sec / 3600)} h old`) + `</p>`;
+  if (p.verdict)
+    al += `<p class="warn"><b>&#8226;</b> ${esc(p.verdict)}</p>`;
+  document.getElementById("alarm").innerHTML = al;
+
+  document.getElementById("pcap").textContent = T("pcap");
+  document.getElementById("pipe").innerHTML = d.steps.map((s, i) => {
+    const isNext = s.key === d.next_key;
+    return `<div class="step ${s.kind === "role" ? "role" : "mech"}${
+        isNext ? " next" : ""}" data-step="${esc(s.key)}">
+      <div class="shead">
+        <span class="num mono">${String(i + 1).padStart(2, "0")}</span>
+        <span class="sname">${esc(tx(s, "title"))}</span>
+        <span class="chip ${s.kind === "role" ? "role" : ""}">${
+          s.kind === "role" ? T("role") : T("mech")}</span>
+        <span class="chip">${esc(tx(s, "cadence"))}</span>
+        ${s.kind === "role"
+          ? `<span class="chip">${esc(s.model)}</span>` : ""}
+        <span style="flex:1"></span>
+        <span class="chip ${s.built ? "on" : "off"}"
+          data-built="${s.built ? 1 : 0}">${
+            s.built ? T("yes") : T("no")}</span>
+      </div>
+      <div class="sbody">${esc(tx(s, "plain"))}</div>
+      <div class="grid">
+        <div class="f"><span class="lab">${T("reads")}</span>${
+          esc(tx(s, "reads"))}</div>
+        <div class="f"><span class="lab">${T("writes")}</span>${
+          esc(tx(s, "writes"))}</div>
+        <div class="f"><span class="lab">${T("forbid")}</span>${
+          esc(tx(s, "forbid"))}</div>
+        <div class="f"><span class="lab">${T("doubt")}</span>${
+          esc(tx(s, "doubt"))}</div>
+      </div>
+      <div class="why"><b>${T("why")}:</b> ${esc(tx(s, "why"))}
+        <span class="mono dim"> &middot; ${esc(s.proof)}</span></div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("bcap").textContent = T("bcap");
+  document.getElementById("bnote").textContent = T("bnote");
+  document.getElementById("bounds").innerHTML =
+    `<tr><th>${T("what")}</th><th>${T("reason")}</th></tr>` +
+    (d.boundaries || []).map(b =>
+      `<tr><td class="name">${esc(tx(b, "what"))}</td>
+        <td>${esc(tx(b, "why"))}</td></tr>`).join("");
+
+  document.getElementById("rcap").textContent = T("rcap");
+  document.getElementById("rnote").textContent = T("rnote");
+  document.getElementById("risks").innerHTML =
+    `<tr><th>${T("fail")}</th><th>${T("guard")}</th></tr>` +
+    (d.risks || []).map(r =>
+      `<tr><td class="name">${esc(tx(r, "title"))}</td>
+        <td>${esc(tx(r, "guard"))}</td></tr>`).join("");
+}
+
+function setLang(v){
+  LANG = v;
+  try { localStorage.setItem("algoth_lang", v); } catch (e) {}
+  render();
+}
+function langBox(){
+  document.getElementById("lang").innerHTML =
+    ["en", "ru"].map(v => `<button data-lang="${v}"
+      aria-pressed="${String(LANG === v)}">${v.toUpperCase()}</button>`)
+      .join(" ");
+  document.querySelectorAll("#lang button").forEach(b => {
+    b.onclick = () => setLang(b.getAttribute("data-lang")); });
+}
+// Оба языка приходят ОДНИМ ответом: переключение не ходит на сервер,
+// иначе смена языка на потерянной связи гасила бы страницу.
+fetch("/agents?k=" + encodeURIComponent(KEY))
+  .then(r => r.json()).then(j => { DATA = j; render(); })
+  .catch(() => { DATA = null; render();
+    document.getElementById("pipe").textContent =
+      LANG === "ru" ? "сборщик не ответил" : "no answer from the collector";
+  });
+render();
+</script>
+"""
+
 def serve(collector, port, token, log):
     """Поднять сервер наблюдения в отдельном потоке."""
 
@@ -8686,6 +9005,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/tournament-page":
                 return self._ok(TOURPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/agents":
+                return self._ok(json.dumps(
+                    collector.agents_state(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/agents-page":
+                return self._ok(AGENTSPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),

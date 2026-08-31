@@ -34,6 +34,8 @@ const isDays = /<title>book, day by day<\/title>/.test(src);
 const isTour = /tournament — all 72 branches/.test(src);
 const isPaper =
   /monthly book — one construction, recorded forward/.test(src);
+const isAgents =
+  /autonomous system — agents and the conveyor/.test(src);
 const isTrades = /id="tb"/.test(src);
 // Согласная книга: руки тождественны по построению, показ сводится к
 // одной. Флаг нужен и структурным проверкам, и проверкам сводки.
@@ -352,6 +354,96 @@ global.fetch = async (url) => {
                         sym: "BTCUSDT", side: "long", cur_px: 101.0,
                         unreal_bp: 100.0, unreal_net_bp: 89.0,
                         closes_in_sec: 13800}]}
+             : url.startsWith("/agents")
+             // Подставной ответ обязан выглядеть как живой: поля ровно
+             // те, что кладёт `agents_state`, и ни одного, которого
+             // живой писатель не пишет. Порядок шагов НАРОЧНО не
+             // совпадает с боевым — иначе проверка могла бы пройти на
+             // настоящем состоянии вместо стаба.
+             ? (function(){
+                 const nosum = /agentsnosum=1/.test(SEARCH);
+                 const stale = /agentsstale=1/.test(SEARCH);
+                 const steps = [
+                   {key: "judge", kind: "mech", model: "нет",
+                    title: "judge", title_ru: "судья",
+                    cadence: "daily", cadence_ru: "раз в сутки",
+                    plain: "publishes ALL candidates",
+                    plain_ru: "публикует ВСЕХ кандидатов",
+                    reads: "the ledger", reads_ru: "журнал",
+                    writes: "the daily report",
+                    writes_ru: "суточный отчёт",
+                    forbid: "no top without the null line",
+                    forbid_ru: "нет топа без строки нуля",
+                    doubt: "zero outcomes: writes nothing",
+                    doubt_ru: "ноль исходов: не пишет ничего",
+                    why: "publish only the interesting IS the R5 machine",
+                    why_ru: "публиковать только интересное и есть машина R5",
+                    proof: "research/factory/run_day.py", built: true},
+                   {key: "propose", kind: "role", model: "дорогая",
+                    title: "proposer", title_ru: "предлагающий",
+                    cadence: "daily", cadence_ru: "раз в сутки",
+                    plain: "returns a candidate and what kills it",
+                    plain_ru: "даёт кандидата и чем он убивается",
+                    reads: "the brief", reads_ru: "бриф",
+                    writes: "a proposal and a spec",
+                    writes_ru: "предложение и спеку",
+                    forbid: "no re-declaring a retired candidate",
+                    forbid_ru: "не объявляет вылетевшего заново",
+                    doubt: "proposes nothing",
+                    doubt_ru: "не предлагает ничего",
+                    why: "throughput is set by the calendar",
+                    why_ru: "пропускную способность задаёт календарь",
+                    proof: "research/factory/agents/propose.md",
+                    built: false},
+                   {key: "publish", kind: "mech", model: "нет",
+                    title: "publication", title_ru: "публикация",
+                    cadence: "after every run",
+                    cadence_ru: "после каждого прогона",
+                    plain: "commits the report to the branch",
+                    plain_ru: "коммитит отчёт в ветку",
+                    reads: "the artifacts", reads_ru: "артефакты",
+                    writes: "the branch and the page",
+                    writes_ru: "ветку и страницу",
+                    forbid: "never records deletions",
+                    forbid_ru: "не записывает удалений",
+                    doubt: "refuses files with conflict markers",
+                    doubt_ru: "отказывает файлу с маркерами конфликта",
+                    why: "a report left on the server is a run that "
+                         + "never happened",
+                    why_ru: "отчёт, оставшийся на сервере, есть прогон, "
+                            + "которого не было",
+                    proof: "tools/publish.sh", built: true}];
+                 const out = {steps: steps, built_n: 2, total_n: 3,
+                   roles_n: 1, next_key: "propose",
+                   stale_after_sec: 129600,
+                   boundaries: [
+                     {what: "exchange keys", what_ru: "ключи биржи",
+                      why: "live money is never automatic",
+                      why_ru: "живые деньги никогда автоматом"},
+                     {what: "the recording", what_ru: "запись стакана",
+                      why: "the only irreplaceable thing",
+                      why_ru: "единственное невосстановимое"}],
+                   risks: [
+                     {title: "agents write plausible text",
+                      title_ru: "агенты пишут правдоподобный текст",
+                      guard: "every claim carries a pointer",
+                      guard_ru: "каждое утверждение с указателем"}]};
+                 out.pool = {total: nosum ? null : 5,
+                   alive: nosum ? null : 5, retired: nosum ? null : 0,
+                   selected: nosum ? null : 4,
+                   control: nosum ? null : 1,
+                   eff_n: nosum ? null : 2.1,
+                   mean_r: nosum ? null : 0.348,
+                   days: nosum ? null : 24,
+                   verdict: nosum ? null
+                     : "вердикта нет: календаря 24 суток при требуемых 90",
+                   at: "2026-08-31 16:07 UTC", legs: 707413,
+                   has_summary: !nosum,
+                   run_age_sec: stale ? 190000 : 7200, stale: stale};
+                 if (nosum) out.pool_status = "прогон сделан до "
+                   + "появления сводки числами";
+                 return out;
+               })()
              : url.startsWith("/live_exec")
              ? {present: true,
                 mode: /livedry=1/.test(SEARCH) ? "dry" : "live",
@@ -1362,14 +1454,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1572,7 +1664,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -2830,8 +2922,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 10)
-      bad.push(`меню: пунктов ${links}, а страниц десять`);
+    if (links !== 11)
+      bad.push(`меню: пунктов ${links}, а страниц одиннадцать`);
+    if (!/href="\/agents-page\?k=xxx"/.test(nh))
+      bad.push("меню: нет страницы автономной системы");
     if (!/href="\/learning-page\?k=xxx"/.test(nh))
       bad.push("меню: нет страницы обучения");
     if (!/href="\/paper-page\?k=xxx"/.test(nh))
@@ -3270,7 +3364,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents
       && !/botoff=1/.test(SEARCH)) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
@@ -3604,7 +3698,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour || isLearn || isLive || isPaper || isDays) {
+             || isTree || isTour || isLearn || isLive || isPaper || isDays || isAgents) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {
@@ -3662,6 +3756,99 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                  + JSON.stringify(note));
     }
   }
+  // ---- страница автономной системы -------------------------------
+  // Проверяется не «блок есть», а ЧИСЛА: сколько шагов нарисовано,
+  // сколько из них помечено построенными, сколько строк в границах и
+  // отказах. «Блок есть» проходило бы и на пустом блоке — этот класс
+  // ошибки ловился в проекте уже четырежды.
+  if (isAgents) {
+    const E = (id) => String((global.__el(id) || {}).innerHTML || "");
+    const Etx = (id) => String((global.__el(id) || {}).textContent || "");
+    const pipe = E("pipe"), strip = E("strip"), frame = E("frame");
+    const steps = (pipe.match(/class="step /g) || []).length;
+    if (steps !== 3)
+      bad.push(`агенты: шагов нарисовано ${steps}, а в ответе три`);
+    const on = (pipe.match(/data-built="1"/g) || []).length;
+    const off = (pipe.match(/data-built="0"/g) || []).length;
+    if (on !== 2 || off !== 1)
+      bad.push(`агенты: построенных ${on} и непостроенных ${off}, `
+               + "а в ответе два и один");
+    // Рамка предмета: страница обязана объяснять СВОЙ предмет сама —
+    // сюда приходят прямо из меню, и список из ролей читается как
+    // «десять работающих программ».
+    if (!/not a live session/.test(frame))
+      bad.push("агенты: рамка не говорит, что агент — не живая сессия");
+    if (!/mechanical on purpose|not agents/.test(frame))
+      bad.push("агенты: рамка не говорит, что половина шагов "
+               + "механическая");
+    // Следующий шаг выводится из состояния файлов, а не назначается
+    // словом: назначенный стареет молча.
+    if (!/proposer/.test(strip))
+      bad.push("агенты: плитка следующего шага не называет "
+               + "непостроенный шаг");
+    if (!/\b2<small> \/ 3<\/small>/.test(strip))
+      bad.push("агенты: плитка построенного не показывает 2 из 3");
+    // Поля роли: без них карточка описывает шаг, но не то, чем он
+    // ограничен, — а ограничения и есть предмет.
+    for (const [lab, val] of [["reads", "the brief"],
+                              ["writes", "a proposal and a spec"],
+                              ["may not", "retired candidate"],
+                              ["at doubt", "proposes nothing"]])
+      if (!(new RegExp(lab + "[\\s\\S]{0,80}" + val)).test(pipe))
+        bad.push(`агенты: у роли нет поля «${lab}»`);
+    if (!/research\/factory\/agents\/propose\.md/.test(pipe))
+      bad.push("агенты: у шага не назван файл-доказательство");
+    const bnd = (E("bounds").match(/<tr>/g) || []).length;
+    const rsk = (E("risks").match(/<tr>/g) || []).length;
+    if (bnd !== 3) bad.push(`агенты: строк границ ${bnd}, а с шапкой три`);
+    if (rsk !== 2) bad.push(`агенты: строк отказов ${rsk}, а с шапкой две`);
+
+    if (/agentsnosum=1/.test(SEARCH)) {
+      // Пустая величина обязана объяснять себя. Ноль на её месте
+      // читался бы как «пул пуст» — то же, что молчаливый ноль на
+      // месте пропуска.
+      if (!/&mdash;/.test(strip))
+        bad.push("агенты: пустой пул показан без прочерка");
+      if (/>0<\/div>|>0<small/.test(strip))
+        bad.push("агенты: на месте неизвестной величины напечатан ноль");
+      if (!/сводки числами/.test(E("alarm")))
+        bad.push("агенты: причина пустого пула не названа");
+    } else {
+      if (!/>5</.test(strip))
+        bad.push("агенты: живые кандидаты не показаны числом");
+      if (!/>2\.1</.test(strip))
+        bad.push("агенты: эффективное N не показано");
+      if (!/календаря 24 суток/.test(E("alarm")))
+        bad.push("агенты: вердикт прогона не показан");
+    }
+    if (/agentsstale=1/.test(SEARCH)) {
+      const al = E("alarm");
+      if (!/did not arrive|не пришёл/.test(al))
+        bad.push("агенты: устаревший прогон не назван");
+      if (!/\b\d+ (h|ч)\b/.test(al))
+        bad.push("агенты: возраст устаревшего прогона не назван числом");
+    } else if (/did not arrive|не пришёл/.test(E("alarm"))) {
+      bad.push("агенты: свежий прогон объявлен устаревшим");
+    }
+    // Язык переключается НАСТОЯЩЕЙ функцией страницы: подставная
+    // кнопка исполняла бы чужую дорогу.
+    if (!global.__lang) {
+      bad.push("агенты: у страницы нет переключателя языка");
+    } else {
+      global.__lang("ru");
+      const fr = E("frame"), pr = E("pipe");
+      if (!/не живая сессия/.test(fr))
+        bad.push("агенты: русская рамка не переведена");
+      if (!/предлагающий/.test(pr))
+        bad.push("агенты: русские имена шагов не переведены");
+      if (!/не построен/.test(pr))
+        bad.push("агенты: русская метка построенности не переведена");
+      if (/not a live session/.test(fr))
+        bad.push("агенты: после переключения осталась английская рамка");
+      global.__lang("en");
+    }
+  }
+
   if (bad.length) { console.error("ПАДЕНИЕ: " + bad.join("; "));
                     process.exit(1); }
   console.log(`логика страницы отработала без ошибок, запросов ${calls}, `

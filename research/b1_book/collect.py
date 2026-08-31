@@ -4053,6 +4053,90 @@ class Collector:
         self._tour_cache = (now, out)
         return out
 
+    # Порог свежести суточного прогона фабрики: запас на одно
+    # пропущенное окно, как у турнира. Молчащая запускалка обязана
+    # быть ВИДНА — иначе остановившаяся система выглядит спокойным
+    # днём, и это самый дешёвый отказ из всех.
+    AGENTS_STALE = 36 * 3600
+
+    def agents_state(self):
+        """Автономная система: конвейер, границы и что уже построено.
+
+        Тексты — из реестра `research/factory/agents.py`, того самого,
+        из которого запускалка позже соберёт промпты ролей: страница
+        обязана описывать ту систему, которая работает, а не соседнюю.
+
+        Построенность шага решается СУЩЕСТВОВАНИЕМ файла из поля
+        `proof`, а не записью в реестре. Иначе страница рассказывала
+        бы о системе, которой нет, и выглядела бы исправной — тот же
+        класс, что молчаливый ноль на месте пропуска. Пути проверяются
+        от настоящего корня репозитория, а не от `HERE`: `HERE` тесты
+        подменяют, чтобы подложить артефакты.
+
+        Числа пула — из АРТЕФАКТА суточного прогона (урок R1:
+        страница описывает тот прогон, который породил файл), а не
+        пересчётом.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_agents_cache", (0.0, None))
+        if cached is not None and now - at < 60:
+            return cached
+        research = os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))
+        root = os.path.dirname(research)
+        sys.path.insert(0, os.path.join(research, "factory"))
+        import agents as AG
+        steps = []
+        for st in AG.pipeline():
+            proof = st.get("proof") or ""
+            steps.append(dict(st, built=bool(
+                proof and os.path.exists(os.path.join(root, proof)))))
+        built = [s for s in steps if s["built"]]
+        # Следующий шаг — ПЕРВЫЙ непостроенный по порядку конвейера,
+        # а не назначенный словом: порядок постройки обязан следовать
+        # из состояния, иначе он стареет молча.
+        nxt = next((s["key"] for s in steps if not s["built"]), None)
+        out = {"steps": steps, "built_n": len(built),
+               "total_n": len(steps),
+               "roles_n": sum(1 for s in steps if s["kind"] == "role"),
+               "next_key": nxt,
+               "boundaries": AG.BOUNDARIES, "risks": AG.RISKS,
+               "stale_after_sec": self.AGENTS_STALE,
+               "generated_at": round(now, 1), "pool": None}
+        fp = os.path.join(os.path.dirname(HERE), "factory", "out",
+                          "factory-day-1m.json")
+        try:
+            with open(fp, encoding="utf-8") as f:
+                fj = json.load(f)
+            age = now - os.path.getmtime(fp)
+            sm = fj.get("summary") or {}
+            sp = sm.get("spent") or {}
+            # Артефакт ПРЕЖНЕГО образца сводки не несёт. Ноль на её
+            # месте читался бы как «пул пуст», поэтому величины
+            # остаются пустыми, а причина называется словами.
+            out["pool"] = {
+                "total": sp.get("total"), "alive": sp.get("active"),
+                "retired": sp.get("retired"),
+                "selected": sp.get("selected_active"),
+                "control": sp.get("control_active"),
+                "eff_n": sm.get("eff_n"), "mean_r": sm.get("mean_r"),
+                "days": sm.get("days"), "verdict": sm.get("verdict"),
+                "at": (fj.get("meta") or {}).get("at"),
+                "legs": (fj.get("meta") or {}).get("legs"),
+                "has_summary": bool(sm),
+                "run_age_sec": round(age, 1),
+                "stale": age > self.AGENTS_STALE}
+            if not sm:
+                out["pool_status"] = ("прогон сделан до появления "
+                                      "сводки числами — величины "
+                                      "заполнит ближайший суточный")
+        except OSError:
+            out["pool_status"] = "суточного прогона ещё не было"
+        except ValueError as e:
+            out["pool_status"] = f"артефакт не читается: {e}"
+        self._agents_cache = (now, out)
+        return out
+
     def model_tree(self):
         """Дерево моделей: две руки и их книги, с логикой каждой ветки.
 

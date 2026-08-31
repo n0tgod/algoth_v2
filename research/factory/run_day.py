@@ -393,6 +393,14 @@ def write_report(path, meta, cands, st, nulls_med, log=print):
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L))
     log(f"отчёт: {path}")
+    # Сводка возвращается ЧИСЛАМИ и уезжает в json рядом с отчётом:
+    # страница наблюдения обязана читать величины, а не разбирать
+    # прозу отчёта — разбор прозы стареет молча при первой же правке
+    # формулировки.
+    return {"spent": sp, "eff_n": round(n_eff, 2),
+            "mean_r": round(mean_r, 4), "days": n_days,
+            "verdict": verdict(sel_net, ctl_net, n_days),
+            "null_median": nulls_med}
 
 
 def publish(path, log=print):
@@ -474,10 +482,11 @@ def main(argv=None):
     meta = {"at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime(now)),
             "legs": len(legs), "declared": declared, "retired": retired}
     path = os.path.join(a.out, f"FACTORY-day-{a.tag}.md")
-    write_report(path, meta, cands, st, nmed, log=log)
+    summary = write_report(path, meta, cands, st, nmed, log=log)
     with open(os.path.join(a.out, f"factory-day-{a.tag}.json"), "w",
               encoding="utf-8") as f:
         json.dump({"meta": meta,
+                   "summary": summary,
                    "null_median": nmed,
                    "candidates": {k: {"lane": v["lane"],
                                       "trades": v["trades"],

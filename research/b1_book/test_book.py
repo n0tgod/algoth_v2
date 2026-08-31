@@ -457,6 +457,20 @@ def test_pages_run_headless():
                  "?k=xxx&papernojournal=1"),
                 # Дерево моделей: две руки и логика каждой ветки.
                 ("дерево моделей", web.TREEPAGE, "?k=xxx"),
+                # Автономная система: конвейер ролей и механических
+                # шагов. Построенность каждого шага — из состояния
+                # файлов, поэтому страница не может утверждать
+                # прогресс, которого нет.
+                ("автономная система", web.AGENTSPAGE, "?k=xxx"),
+                # Прогон прежнего образца сводки числами не несёт:
+                # величины обязаны стоять прочерком с названной
+                # причиной, а не нулём.
+                ("автономная система без сводки", web.AGENTSPAGE,
+                 "?k=xxx&agentsnosum=1"),
+                # Суточный прогон не пришёл: страница обязана кричать,
+                # а не выглядеть сегодняшней.
+                ("автономная система с устаревшим прогоном",
+                 web.AGENTSPAGE, "?k=xxx&agentsstale=1"),
                 # Турнир политик: весь лист веток отдельной страницей.
                 ("турнир политик", web.TOURPAGE, "?k=xxx"),
                 # Ночной прогон не пришёл: старая таблица обязана
@@ -5982,6 +5996,88 @@ def test_watchdog_respects_shadow_off_marker():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_agents_state_reads_the_registry_and_the_disk():
+    """Автономная система: тексты из реестра, построенность — с диска.
+
+    Два утверждения проверяются раздельно, потому что ломаются по
+    отдельности. Первое: страница берёт шаги из
+    `research/factory/agents.py`, а не из своей прозы, — иначе
+    описание разошлось бы с системой при первой правке. Второе:
+    построенность решает СУЩЕСТВОВАНИЕ файла из `proof`, а не запись
+    в реестре, — иначе страница рассказывала бы о системе, которой
+    нет, и выглядела бы исправной.
+
+    Отдельно: пул читается из АРТЕФАКТА суточного прогона, и артефакт
+    прежнего образца (без сводки числами) обязан давать пустые
+    величины с НАЗВАННОЙ причиной, а не нули: ноль на месте
+    неизвестного читался бы как «пул пуст».
+    """
+    import collect
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "factory"))
+    import agents as AG
+    c = collect.Collector.__new__(collect.Collector)
+    st = collect.Collector.agents_state(c)
+
+    check("агенты: состав шагов взят из реестра",
+          [s["key"] for s in st["steps"]]
+          == [s["key"] for s in AG.pipeline()])
+    check("агенты: конвейер не пуст и роли в нём есть",
+          st["total_n"] == len(AG.pipeline()) and st["roles_n"] > 0)
+    # Реестр обязан быть полон на двух языках: приписать шаг и забыть
+    # перевод — молчаливый отказ, страница выглядела бы исправной.
+    check("агенты: переводов не потеряно",
+          AG.missing_translations() == [], AG.missing_translations())
+
+    root = os.path.dirname(os.path.dirname(HERE))
+    for s in st["steps"]:
+        want = os.path.exists(os.path.join(root, s["proof"]))
+        if s["built"] != want:
+            check(f"агенты: построенность {s['key']} не с диска", False)
+            break
+    else:
+        check("агенты: построенность каждого шага взята с диска", True)
+    # Несуществующий путь обязан читаться как «не построен»: иначе
+    # страница объявила бы построенным то, чего нет.
+    check("агенты: шаг без файла не считается построенным",
+          all(s["built"] is False for s in st["steps"]
+              if not os.path.exists(os.path.join(root, s["proof"]))))
+    # Следующий шаг выводится из состояния, а не назначается словом.
+    first_unbuilt = next((s["key"] for s in st["steps"]
+                          if not s["built"]), None)
+    check("агенты: следующий шаг — первый непостроенный по порядку",
+          st["next_key"] == first_unbuilt,
+          f"{st['next_key']} против {first_unbuilt}")
+
+    d = tempfile.mkdtemp()
+    try:
+        out = os.path.join(d, "factory", "out")
+        os.makedirs(out)
+        with open(os.path.join(out, "factory-day-1m.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"meta": {"at": "2026-08-31 16:07 UTC",
+                                "legs": 707413},
+                       "null_median": 0.0, "candidates": {}}, f)
+        old_here = collect.HERE
+        collect.HERE = os.path.join(d, "b1_book")
+        try:
+            c2 = collect.Collector.__new__(collect.Collector)
+            st2 = collect.Collector.agents_state(c2)
+        finally:
+            collect.HERE = old_here
+        pool = st2.get("pool") or {}
+        check("агенты: артефакт без сводки не даёт нулей",
+              pool.get("alive") is None and pool.get("eff_n") is None,
+              pool)
+        check("агенты: причина пустого пула названа словами",
+              "сводк" in (st2.get("pool_status") or ""),
+              st2.get("pool_status"))
+        check("агенты: прогон опознан числом ног",
+              pool.get("legs") == 707413)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -6097,6 +6193,7 @@ def main():
     test_collected_symbols_are_not_lost()
     test_candles_window_can_end_in_the_past()
     test_recount_survives_restart()
+    test_agents_state_reads_the_registry_and_the_disk()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")

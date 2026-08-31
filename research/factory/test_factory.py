@@ -15,6 +15,7 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+import agents as AG  # noqa: E402
 import ledger as L   # noqa: E402
 import space as S    # noqa: E402
 
@@ -174,6 +175,48 @@ def test_effective_n_is_measured():
           f"{n_eff:.2f} при связи {r:.2f}")
 
 
+def test_agents_registry_is_one_source_and_complete():
+    """Реестр автономной системы: один источник и полон на двух языках.
+
+    Реестр читает страница, а позже будет читать запускалка ролей —
+    она соберёт промпт из той же записи, которой страница объясняет
+    владельцу, что этот агент делает. Значит ломаться реестр обязан
+    громко: потерянный перевод дал бы страницу с английским абзацем
+    среди русских, а `proof` мимо репозитория — вечное «не построен»
+    у построенного шага.
+    """
+    keys = [x["key"] for x in AG.pipeline()]
+    check("ключи шагов уникальны", len(keys) == len(set(keys)),
+          str(keys))
+    check("вид шага только role или mech",
+          all(x["kind"] in ("role", "mech") for x in AG.pipeline()))
+    check("роли и механика вместе дают весь конвейер",
+          len(AG.roles()) + len(AG.mech()) == len(AG.pipeline()))
+    check("у роли назван класс модели",
+          all((x.get("model") or "").strip() for x in AG.roles()))
+    check("оба языка на месте", AG.missing_translations() == [],
+          str(AG.missing_translations()))
+    root = os.path.dirname(HERE)
+    root = os.path.dirname(root)
+    bad = [x["key"] for x in AG.pipeline()
+           if not x.get("proof")
+           or os.path.isabs(x["proof"])
+           or ".." in x["proof"].split("/")]
+    check("путь-доказательство относительный и без выхода вверх",
+          not bad, str(bad))
+    # Хотя бы один шаг обязан быть построен и хотя бы один нет: реестр,
+    # у которого всё построено, ничего не проверяет, а реестр, у
+    # которого не построено ничего, означает потерянные пути.
+    ex = [os.path.exists(os.path.join(root, x["proof"]))
+          for x in AG.pipeline()]
+    check("пути-доказательства ведут в репозиторий", any(ex), str(root))
+    check("по каждому шагу известно, чем он ограничен",
+          all((x.get("forbid") or "").strip() and (x.get("doubt") or "")
+              for x in AG.pipeline()))
+    check("границы и отказы не пусты",
+          len(AG.BOUNDARIES) >= 3 and len(AG.RISKS) >= 3)
+
+
 def main():
     tests = (test_space_is_declared_and_frozen,
              test_control_share_is_of_the_pool_not_the_batch,
@@ -190,7 +233,8 @@ def main():
              test_describe_names_every_axis,
              test_ledger_is_a_journal_not_a_table,
              test_broken_line_is_counted_not_swallowed,
-             test_effective_n_is_measured)
+             test_effective_n_is_measured,
+             test_agents_registry_is_one_source_and_complete)
     for t in tests:
         print(t.__name__)
         t()
