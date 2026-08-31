@@ -155,8 +155,48 @@ def test_report_and_reading():
         shutil.rmtree(root, ignore_errors=True)
 
 
+
+
+def test_drain_split_boundaries():
+    """Разрез окна слива: границы ВКЛЮЧИТЕЛЬНО, день — UTC по моменту
+    денег, худшее имя — по сумме $ группы."""
+    import drain as DR
+    from datetime import datetime, timezone
+
+    def at(day, h=12):
+        return datetime.fromisoformat(day + "T00:00:00+00:00") \
+            .timestamp() + h * 3600
+    rows = [
+        {"ts": at("2026-08-23"), "sym": "A", "net": 10, "pnl": 1.0,
+         "agree": True},
+        {"ts": at("2026-08-24", 0), "sym": "B", "net": -100,
+         "pnl": -5.0, "agree": True},
+        {"ts": at("2026-08-27", 23), "sym": "C", "net": -300,
+         "pnl": -9.0, "agree": False},
+        {"ts": at("2026-08-28", 0), "sym": "D", "net": 20, "pnl": 2.0,
+         "agree": False},
+    ]
+    out = DR.split_cell(rows)
+    check("границы окна включительно (24-е 00ч и 27-е 23ч внутри)",
+          out["слив"]["agree"]["n"] == 1
+          and out["слив"]["solo"]["n"] == 1, str(out["слив"]))
+    check("соседние дни — вне окна",
+          out["вне"]["agree"]["n"] == 1
+          and out["вне"]["solo"]["n"] == 1, str(out["вне"]))
+    check("худшее имя одиночных в сливе — C",
+          out["слив"]["solo"]["worst_sym"] == "C",
+          str(out["слив"]["solo"]))
+    check("тонкая часть помечена, p не считается",
+          out["слив"]["thin"] and out["слив"]["p"] is None, "")
+    days = DR.by_day_table(rows, ["2026-08-24", "2026-08-25"])
+    check("дневная таблица: 24-е несёт согласную, 25-е пусто",
+          days[0][1]["n"] == 1 and days[1][1]["n"] == 0
+          and days[1][2]["n"] == 0, str(days))
+
+
 def main():
     tests = (test_flag_from_picks_not_rows,
+             test_drain_split_boundaries,
              test_pick_keys_reads_both_sides,
              test_null_finds_planted_and_stays_silent,
              test_null_preserves_day_counts,
