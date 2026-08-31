@@ -252,3 +252,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788174150 ==
 [2026-08-31T11:02:31Z] задание agree-basket-full2 запущено: research/probe_agree/basket_agree.py
+
+== сигнал 1788178614 ==
+[2026-08-31T12:16:55Z] задание agreed-page-deploy: перезапуск сборщика
