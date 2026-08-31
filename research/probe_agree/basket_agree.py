@@ -147,6 +147,27 @@ def leg_rule(invest):
     return size
 
 
+def name_stats(by):
+    """Сколько РАЗНЫХ имён в ногах и как они сгущены.
+
+    Число ног отвечает «насколько узка книга по счёту», а забор
+    (потолок 10 % капитала на имя) связывает по ИМЕНАМ: если согласие
+    выпадает на одни и те же инструменты, вложить капитал нельзя не
+    из-за рынка, а из-за собственного правила. Мера прямая — доля ног
+    у пяти самых частых имён."""
+    cnt = {}
+    for legs in by.values():
+        for g in legs:
+            cnt[g["sym"]] = cnt.get(g["sym"], 0) + 1
+    n = sum(cnt.values())
+    if not n:
+        return None
+    top = sorted(cnt.values(), reverse=True)
+    return {"legs": n, "names": len(cnt),
+            "top1": round(top[0] / n, 3),
+            "top5": round(sum(top[:5]) / n, 3)}
+
+
 def run_arm(by, mids, leg_usd=BB.LEG_USD):
     return BB.replay(by, mids, CELL["take"], CELL["floor"],
                      age_h=CELL["age_h"], leg_usd=leg_usd)
@@ -250,6 +271,29 @@ def write_report(path, res, meta):
             f"[{fmt(ns['min'])} … {fmt(ns['max'])}] | — | — | "
             f"{fmt(ns['worst_mean'])} | {fmt(ns['dd_mean'])} | "
             f"{fmt(ns['gross_mean'], '.2f')} | — |")
+    L.append("\nНа сколько РАЗНЫХ имён ложатся ноги — забор стоит на "
+             "имени (потолок 10 % капитала), и книга, согласная на "
+             "одних и тех же инструментах, упирается не в рынок, а в "
+             "собственное правило:\n")
+    L.append("| голова · рука | ног | имён | доля верхнего | доля "
+             "пяти верхних | срез по имени |")
+    L.append("|---|--:|--:|--:|--:|--:|")
+    for arm in sorted(res):
+        ns = res[arm].get("names") or {}
+        caps = {"base": (res[arm]["base"] or {}).get("skipped", {}),
+                "agreed": (res[arm]["agreed"] or {}).get("skipped",
+                                                         {})}
+        nulls = res[arm]["nulls"]
+        caps["null"] = {"name_cap": (
+            round(sum(c["skipped"]["name_cap"] for c in nulls)
+                  / len(nulls), 1) if nulls else None)}
+        for name in ("base", "agreed", "null"):
+            s = ns.get(name)
+            if not s:
+                continue
+            L.append(f"| {arm} · {name} | {s['legs']} | {s['names']} "
+                     f"| {s['top1']:.3f} | {s['top5']:.3f} | "
+                     f"{fmt(caps[name].get('name_cap'), '.0f')} |")
     for arm in sorted(res):
         L.append(f"\n**Вердикт {arm} (выведен из чисел):** "
                  f"{res[arm]['verdict']}. Согласных ног "
@@ -328,10 +372,29 @@ def main(argv=None):
             c = run_arm(nb, mids, rule)
             if c:
                 nulls.append(c)
+        nn_stats = [s for s in
+                    (name_stats(null_picks({arm: by}, agreed, seed)
+                                .get(arm) or {}) for seed in SEEDS)
+                    if s]
         res[arm] = {"base": base, "agreed": agr, "nulls": nulls,
                     "verdict": verdict(agr, nulls),
                     "n_all": n_all.get(arm, 0),
-                    "n_agree": n_agr.get(arm, 0)}
+                    "n_agree": n_agr.get(arm, 0),
+                    "names": {
+                        "base": name_stats(by),
+                        "agreed": name_stats(agreed.get(arm) or {}),
+                        "null": ({
+                            "legs": nn_stats[0]["legs"],
+                            "names": round(sum(s["names"] for s in
+                                               nn_stats)
+                                           / len(nn_stats), 1),
+                            "top1": round(sum(s["top1"] for s in
+                                              nn_stats)
+                                          / len(nn_stats), 3),
+                            "top5": round(sum(s["top5"] for s in
+                                              nn_stats)
+                                          / len(nn_stats), 3)}
+                            if nn_stats else None)}}
         log_(f"{arm}: base {fmt(base and base['realized'])}, agreed "
              f"{fmt(agr and agr['realized'])}, нулей {len(nulls)}")
 

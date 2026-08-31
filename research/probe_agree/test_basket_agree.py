@@ -208,6 +208,24 @@ def test_invest_full():
           t_leg["gross_share"] is not None
           and t_leg["gross_share"] > 0, str(t_leg["gross_share"]))
 
+    # Сгущение по именам: забор стоит на имени, и книга из одного
+    # имени упирается в правило, а не в рынок.
+    # Ноги РОВНЫМ слоем по именам сделали бы «долю верхнего»
+    # неотличимой от 1/имён: перекос обязан быть в самой фикстуре,
+    # иначе проверка проходит и на подделке.
+    skew = {T0 + h * H: [{"sym": "AAAUSDT" if h < 4 else "BBBUSDT",
+                          "side": "long", "px": 10.0}]
+            for h in range(5)}
+    many = {T0 + h * H: [{"sym": f"S{h}USDT", "side": "long",
+                          "px": 10.0}] for h in range(5)}
+    s1, sm = BA.name_stats(skew), BA.name_stats(many)
+    check("перекос виден: два имени, доля верхнего 0.8",
+          s1["names"] == 2 and s1["top1"] == 0.8, str(s1))
+    check("разные имена — доля верхнего мала",
+          sm["names"] == 5 and sm["top1"] == 0.2, str(sm))
+    check("пустая книга — меры нет, а не ноль",
+          BA.name_stats({}) is None, "")
+
 
 def test_e2e_report():
     d = tempfile.mkdtemp()
@@ -262,6 +280,10 @@ def test_e2e_report():
               in mdf, mdf[:400])
         check("гросс стоит колонкой числом",
               "| гросс |" in mdf, "")
+        check("сгущение по именам названо таблицей",
+              "доля верхнего" in mdf
+              and "| gbm · agreed |" in mdf.split("доля верхнего")[1],
+              "")
         check("прежний отчёт не затёрт",
               open(path, encoding="utf-8").read() == md, "")
     finally:
