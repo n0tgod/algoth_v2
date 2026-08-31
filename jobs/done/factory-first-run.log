@@ -398,3 +398,10 @@ ZRXUSDT: баров нет (ImportError: cannot import name 'BANDS' from 'book' 
 исходов посчитано: 0
 отчёт: /root/algoth_v2/research/factory/out/FACTORY-day-1m.md
 конец: 2026-08-31T16:05:23Z, код 0
+публикуется в ветку main:
+ jobs/done/factory-first-run.log | 407 ++++------------------------------------
+ 1 file changed, 38 insertions(+), 369 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   d1c47d7..e9d97ad  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

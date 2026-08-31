@@ -304,3 +304,8 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788192312 ==
 [2026-08-31T16:05:13Z] задание factory-first-run запущено: research/factory/run_day.py
+
+== сигнал 1788192460 ==
+[2026-08-31T16:07:41Z] задание factory-run-2 запущено: research/factory/run_day.py
+
+== сигнал 1788194831 ==

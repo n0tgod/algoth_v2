@@ -1,27 +1,96 @@
 {
  "meta": {
-  "at": "2026-08-31 16:05 UTC",
-  "legs": 705939,
+  "at": "2026-08-31 16:07 UTC",
+  "legs": 707413,
   "declared": [
    [
-    "h4_z_f30_w5_gl_rrlo_se_b0_a0",
+    "h4_r_f30_w5_gl_rrlo_se_b0_a0",
     "selected"
-   ],
-   [
-    "h4_z_f30_w5_gl_rrlo_sr_b0_a0",
-    "selected"
-   ],
-   [
-    "h4_z_f30_w5_gt_rrlo_se_b0_a0",
-    "selected"
-   ],
-   [
-    "h4_z_f30_w10_gl_rrhi_se_b0_a1",
-    "control"
    ]
   ],
   "retired": []
  },
  "null_median": 0.0,
- "candidates": {}
+ "candidates": {
+  "h4_r_f30_w5_gl_rrlo_se_b0_a0": {
+   "lane": "selected",
+   "trades": 1183,
+   "net": 491.25346172499053,
+   "rule": {
+    "target": "fwd_4h",
+    "rank": "raw",
+    "floor_bp": 30,
+    "width": 5,
+    "geom": "levels",
+    "rr_band": "lo",
+    "sizing": "equal",
+    "basket": "no",
+    "agree": "no"
+   }
+  },
+  "h4_z_f30_w10_gl_rrhi_se_b0_a1": {
+   "lane": "control",
+   "trades": 568,
+   "net": -180.6917606354511,
+   "rule": {
+    "agree": "yes",
+    "basket": "no",
+    "sizing": "equal",
+    "rr_band": "hi",
+    "geom": "levels",
+    "width": 10,
+    "floor_bp": 30,
+    "rank": "sigma",
+    "target": "fwd_4h"
+   }
+  },
+  "h4_z_f30_w5_gl_rrlo_se_b0_a0": {
+   "lane": "selected",
+   "trades": 863,
+   "net": -354.44809270709135,
+   "rule": {
+    "target": "fwd_4h",
+    "rank": "sigma",
+    "floor_bp": 30,
+    "width": 5,
+    "geom": "levels",
+    "rr_band": "lo",
+    "sizing": "equal",
+    "basket": "no",
+    "agree": "no"
+   }
+  },
+  "h4_z_f30_w5_gl_rrlo_sr_b0_a0": {
+   "lane": "selected",
+   "trades": 863,
+   "net": -182.87354679955288,
+   "rule": {
+    "target": "fwd_4h",
+    "rank": "sigma",
+    "floor_bp": 30,
+    "width": 5,
+    "geom": "levels",
+    "rr_band": "lo",
+    "sizing": "risk",
+    "basket": "no",
+    "agree": "no"
+   }
+  },
+  "h4_z_f30_w5_gt_rrlo_se_b0_a0": {
+   "lane": "selected",
+   "trades": 400,
+   "net": -629.5738888888886,
+   "rule": {
+    "target": "fwd_4h",
+    "rank": "sigma",
+    "floor_bp": 30,
+    "width": 5,
+    "geom": "timer",
+    "rr_band": "lo",
+    "sizing": "equal",
+    "basket": "no",
+    "agree": "no"
+   }
+  }
+ }
 }
