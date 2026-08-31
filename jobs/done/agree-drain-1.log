@@ -1,0 +1,15 @@
+== задание agree-drain-1 ==
+строка: run research/probe_agree/drain.py
+начало: 2026-08-31T09:00:40Z
+запускаю: .venv/bin/python research/probe_agree/drain.py 
+[09:00:41] h4 · gbm: слив 59+265
+[09:00:42] h4 · nn: слив 60+234
+[09:00:43] h24 · gbm: слив 66+323
+[09:00:43] h24 · nn: слив 65+244
+[09:00:44] z · gbm: слив 57+303
+[09:00:45] z · nn: слив 57+239
+[09:00:45] sit · gbm: слив 16+184
+[09:00:45] sit · nn: слив 15+184
+[09:00:45] sit_lo · gbm: слив 12+114
+[09:00:45] sit_lo · nn: слив 12+137
+[09:00:45] отчёт: /root/algoth_v2/research/probe_agree/out/AGREE-drain-1m.md
