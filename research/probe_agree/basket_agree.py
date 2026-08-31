@@ -28,11 +28,21 @@
   динамику выходов само по себе — нуль несёт это искажение ровно
   так же, и разность agreed − null принадлежит содержанию согласия.
 
-Оговорки, объявленные до прогона и не снимаемые результатом:
-- размер ноги НЕ меняется (LEG_USD живой книги) — меняется ровно
-  состав; согласная корзина потому вложена в разы мельче, и пороги
-  ±5 % капитала в долях её гросса дальше. Это свойство ЖИВОЙ
+Две ветви размера, и вторая отвечает на вопрос владельца «а если
+шире» (`--invest`):
+- `leg` (умолчание) — размер ноги живой книги (`LEG_USD`), меняется
+  ровно состав. Согласная корзина потому вложена в разы мельче, и
+  пороги ±5 % капитала в долях её гросса дальше. Это свойство ЖИВОЙ
   согласной корзины с теми же порогами, а не дефект замера;
+- `full` — час получает `капитал / возраст` и делит его между СВОИМИ
+  ногами, сколько бы их ни было. Правило причинное (число ног часа
+  известно в момент входа) и обобщает первое ТОЧНО: при шести ногах
+  в часе `3000/24/6` и есть `LEG_USD`, то есть база не сдвигается ни
+  на цент — закреплено тестом. Ширина корзины при этом не «12 ног»:
+  согласных ног ~1 в час, то есть в корзине их и так больше двадцати
+  разом; узок был не состав, а ВЛОЖЕННЫЙ ГРОСС, и это ветвь его и
+  чинит. Достигнутая доля капитала печатается числом — вложить
+  больше, чем нашлось согласных часов, нельзя;
 - записи ~месяц одного режима, внутри слив 08-24…27; согласие —
   фильтр СЕРЕДИНЫ, не хвоста (замер слива);
 - это зонд: порогов вердикта нет, вердиктовая фраза выводится из
@@ -120,9 +130,26 @@ def null_picks(picks, agreed, seed):
     return out
 
 
-def run_arm(by, mids):
+def leg_rule(invest):
+    """Размер ноги: живой `LEG_USD` либо полный капитал по часам.
+
+    `full` даёт часу `капитал / возраст` и делит его между ногами
+    ЭТОГО часа. Тождество, которое делает ветвь обобщением, а не
+    другой книгой: при шести ногах выходит ровно `LEG_USD` живой
+    книги 24 ч. Час без ног ничего не получает — вложить в пустоту
+    нельзя, и достигнутый гросс печатается числом."""
+    if invest != "full":
+        return BB.LEG_USD
+    per_hour = BB.CAPITAL / float(CELL["age_h"])
+
+    def size(_ts, n):
+        return per_hour / float(n) if n else 0.0
+    return size
+
+
+def run_arm(by, mids, leg_usd=BB.LEG_USD):
     return BB.replay(by, mids, CELL["take"], CELL["floor"],
-                     age_h=CELL["age_h"])
+                     age_h=CELL["age_h"], leg_usd=leg_usd)
 
 
 def verdict(agr, nulls):
@@ -153,64 +180,98 @@ def null_summary(nulls):
     worst = [n["worst_basket"] for n in nulls
              if n["worst_basket"] is not None]
     dd = [n["max_dd"] for n in nulls]
+    gr = [n["gross_share"] for n in nulls
+          if n.get("gross_share") is not None]
     return {"mean": sum(vals) / len(vals), "min": vals[0],
             "max": vals[-1],
             "worst_mean": (sum(worst) / len(worst) if worst else None),
-            "dd_mean": sum(dd) / len(dd)}
+            "dd_mean": sum(dd) / len(dd),
+            "gross_mean": (sum(gr) / len(gr) if gr else None)}
 
 
 def write_report(path, res, meta):
+    invest = meta.get("invest", "leg")
     L = ["# Согласие голов на корзине без своих выходов (правило "
          "h24c)\n"]
     L.append(f"Прогон {meta['when']} · окно {meta['span']} · ячейка "
              f"ОДНА — правило живой h24c: цель +{CELL['take'] * 100:g}"
              f" %, предел −{CELL['floor'] * 100:g} %, возраст "
              f"{CELL['age_h']} ч · нуль — случайное подмножество ТОЙ "
-             f"ЖЕ ширины, {len(SEEDS)} зёрен числом\n")
+             f"ЖЕ ширины, {len(SEEDS)} зёрен числом · размер ноги: "
+             f"{invest}\n")
     L.append("**Это зонд, порогов вердикта нет; вердиктовая фраза "
              "выведена из чисел.** У h24b/h24bf по-ножная часть под "
              "согласием уже измерена основным зондом (+441/+358 "
              "б.п., p = 0.000) — это те же сделки h24; здесь меряется "
              "единственно новое: корзина, закрывающаяся ТОЛЬКО "
-             "целиком, на согласном составе. Размер ноги не менялся — "
-             "согласная корзина вложена в разы мельче, и пороги в "
-             "долях капитала в долях её гросса дальше; нуль той же "
-             "ширины несёт то же искажение, разность принадлежит "
-             "согласию.\n")
+             "целиком, на согласном составе.\n")
+    if invest == "full":
+        L.append("**Размер ноги: ВЛОЖЕНО ПОЛНОСТЬЮ.** Час получает "
+                 f"капитал / {CELL['age_h']} ч и делит его между "
+                 "своими ногами — правило причинное (число ног часа "
+                 "известно в момент входа) и при шести ногах даёт "
+                 "ровно размер живой книги. Отвечает на вопрос «а "
+                 "если шире»: у согласной корзины узок был не состав "
+                 "(ног в ней и так больше двадцати разом), а "
+                 "вложенный гросс — пороги ±5 % КАПИТАЛА в долях "
+                 "мелкого гросса стоят вшестеро дальше, и корзина "
+                 "закрывалась одним возрастом. Достигнутая доля "
+                 "капитала — колонка «гросс»: вложить больше, чем "
+                 "нашлось согласных часов, нельзя.\n")
+    else:
+        L.append("Размер ноги не менялся — согласная корзина вложена "
+                 "в разы мельче, и пороги в долях капитала в долях "
+                 "её гросса дальше; нуль той же ширины несёт то же "
+                 "искажение, разность принадлежит согласию. Ветвь "
+                 "`--invest full` вкладывает капитал полностью и "
+                 "лежит отдельным отчётом.\n")
     L.append("| голова · рука | realized $ | отметка хвоста | корзин "
-             "(цель/предел/возраст) | худшая | просадка | ног в "
-             "открытой |")
-    L.append("|---|--:|--:|--:|--:|--:|--:|")
+             "(цель/предел/возраст) | худшая | просадка | гросс | ног "
+             "в открытой |")
+    L.append("|---|--:|--:|--:|--:|--:|--:|--:|")
     for arm in sorted(res):
         r = res[arm]
         for name in ("base", "agreed"):
             c = r[name]
             if not c:
-                L.append(f"| {arm} · {name} | — | — | — | — | — | — |")
+                L.append(f"| {arm} · {name} | — | — | — | — | — | — |"
+                         " — |")
                 continue
             L.append(
                 f"| {arm} · {name} | {fmt(c['realized'])} | "
                 f"{fmt(c['open_mark'])} | {c['baskets']} "
                 f"({c['n_take']}/{c['n_floor']}/{c['n_age']}) | "
                 f"{fmt(c['worst_basket'])} | {fmt(c['max_dd'])} | "
+                f"{fmt(c.get('gross_share'), '.2f')} | "
                 f"{c['open_legs']} |")
         ns = null_summary(r["nulls"])
         L.append(
             f"| {arm} · null×{len(SEEDS)} | {fmt(ns['mean'])} "
             f"[{fmt(ns['min'])} … {fmt(ns['max'])}] | — | — | "
-            f"{fmt(ns['worst_mean'])} | {fmt(ns['dd_mean'])} | — |")
+            f"{fmt(ns['worst_mean'])} | {fmt(ns['dd_mean'])} | "
+            f"{fmt(ns['gross_mean'], '.2f')} | — |")
     for arm in sorted(res):
         L.append(f"\n**Вердикт {arm} (выведен из чисел):** "
                  f"{res[arm]['verdict']}. Согласных ног "
                  f"{res[arm]['n_agree']} из {res[arm]['n_all']}.")
-    L.append("\nЧитать: `base` — полная корзина (якорь того же "
-             "прогона), `agreed` — только ноги, выбранные обеими "
-             "головами, `null` — случайное подмножество той же "
-             "ширины. Согласных ног мало, корзина узкая — сравнивать "
-             "agreed с base в долларах нельзя (разный гросс), "
-             "сравнение идёт agreed против null. Запись ~месяц "
-             "одного режима, внутри слив 08-24…27; согласие — фильтр "
-             "середины, не хвоста.\n")
+    tail = ("\nЧитать: `base` — полная корзина (якорь того же "
+            "прогона), `agreed` — только ноги, выбранные обеими "
+            "головами, `null` — случайное подмножество той же "
+            "ширины. ")
+    if invest == "full":
+        tail += ("Гросс выровнен по построению, поэтому доллары "
+                 "сравнимы и с `base` — но у `base` они принадлежат "
+                 "другому составу, а вопрос «добавляет ли согласие» "
+                 "решает по-прежнему только пара agreed / null: "
+                 "случайное сужение той же ширины вложено ровно так "
+                 "же. ")
+    else:
+        tail += ("Согласных ног мало, корзина узкая — сравнивать "
+                 "agreed с base в долларах нельзя (разный гросс), "
+                 "сравнение идёт agreed против null. ")
+    tail += ("Запись ~месяц одного режима, внутри слив 08-24…27; "
+             "согласие — фильтр середины, не хвоста.\n")
+    L.append(tail)
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
     return path
@@ -222,6 +283,10 @@ def main(argv=None):
     ap.add_argument("--s8", default=os.path.join(
         RESEARCH, "s8_loop", "out"))
     ap.add_argument("--tag", default="1m")
+    ap.add_argument("--invest", choices=("leg", "full"),
+                    default="leg",
+                    help="leg — размер ноги живой книги; full — час "
+                         "делит капитал/возраст между своими ногами")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     t0 = time.time()
@@ -252,14 +317,15 @@ def main(argv=None):
             + datetime.fromtimestamp(hi, timezone.utc)
             .strftime("%Y-%m-%d %H:%M UTC"))
 
+    rule = leg_rule(a.invest)
     res = {}
     for arm, by in sorted(picks.items()):
-        base = run_arm(by, mids)
-        agr = run_arm(agreed.get(arm) or {}, mids)
+        base = run_arm(by, mids, rule)
+        agr = run_arm(agreed.get(arm) or {}, mids, rule)
         nulls = []
         for seed in SEEDS:
             nb = null_picks({arm: by}, agreed, seed).get(arm) or {}
-            c = run_arm(nb, mids)
+            c = run_arm(nb, mids, rule)
             if c:
                 nulls.append(c)
         res[arm] = {"base": base, "agreed": agr, "nulls": nulls,
@@ -270,15 +336,19 @@ def main(argv=None):
              f"{fmt(agr and agr['realized'])}, нулей {len(nulls)}")
 
     meta = {"when": datetime.now(timezone.utc)
-            .strftime("%Y-%m-%d %H:%M UTC"), "span": span}
-    with open(os.path.join(OUT, f"agree-basket-{a.tag}.json"), "w",
-              encoding="utf-8") as f:
+            .strftime("%Y-%m-%d %H:%M UTC"), "span": span,
+            "invest": a.invest}
+    # Имя артефакта несёт ветвь размера: два прогона на один файл уже
+    # приводили к склейке конфликта (урок S9-sweep).
+    sfx = "" if a.invest == "leg" else f"-{a.invest}"
+    with open(os.path.join(OUT, f"agree-basket-{a.tag}{sfx}.json"),
+              "w", encoding="utf-8") as f:
         json.dump({"meta": meta, "cell": CELL, "seeds": list(SEEDS),
                    "res": res,
                    "took_sec": round(time.time() - t0, 1)},
                   f, ensure_ascii=False, indent=1, default=str)
     path = write_report(
-        os.path.join(OUT, f"AGREE-basket-{a.tag}.md"), res, meta)
+        os.path.join(OUT, f"AGREE-basket-{a.tag}{sfx}.md"), res, meta)
     log_(f"отчёт: {path} · {round(time.time() - t0, 1)} с")
     if not a.no_publish:
         PT.publish()

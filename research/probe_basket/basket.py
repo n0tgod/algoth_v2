@@ -151,6 +151,13 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
     пороги молчат); `one_loss_day` — после закрытия корзины в минус
     новые входы не берутся до конца суток UTC (вход — возможность,
     закрытие корзины правилом не гасится никогда).
+
+    `leg_usd` — число либо ФУНКЦИЯ `(ts, ног в часе) -> размер`.
+    Функция нужна книге, у которой ширина часа меняется (согласные
+    ноги): вложить капитал полностью можно только зная, на сколько
+    ног делить час. Правило причинное — число ног часа известно в
+    момент входа; размер считается ОДИН раз на час, иначе ноги
+    одного часа получили бы разные размеры по порядку чтения.
     """
     if not picks:
         return None
@@ -162,6 +169,7 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
     t_end = max([t1] + [max(d) for d in mids.values() if d])
     legs, last = [], {}
     realized, baskets, curve = 0.0, [], []
+    gross_sum, gross_n = 0.0, 0
     skipped = {"no_cash": 0, "name_cap": 0, "opposite": 0,
                "no_price": 0, "loss_day": 0}
     blocked_hours = 0
@@ -169,6 +177,11 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
     last_loss_day = None
     equity_peak, max_dd = 0.0, 0.0
     for ts in range(t0, t_end + HOUR, HOUR):
+        # Вложенный гросс этого часа — по ВСЕМ часам окна, включая
+        # пустые: «насколько книга вообще вложена» есть доля капитала
+        # в среднем по календарю, а не по часам с позициями.
+        gross_sum += sum(x["size"] for x in legs)
+        gross_n += 1
         # 1) отметка и решение корзины
         if legs:
             unreal, priced = 0.0, True
@@ -203,7 +216,10 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
                 max_dd = min(max_dd, eq - equity_peak)
                 curve.append(eq)
         # 2) входы часа
-        for g in picks.get(ts) or []:
+        hour_legs = picks.get(ts) or []
+        size = (leg_usd(ts, len(hour_legs)) if callable(leg_usd)
+                else leg_usd)
+        for g in hour_legs:
             if (one_loss_day and last_loss_day is not None
                     and ts // 86400 == last_loss_day):
                 skipped["loss_day"] += 1
@@ -213,12 +229,12 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
                 skipped["opposite"] += 1
                 continue
             gross = sum(x["size"] for x in legs)
-            if gross + leg_usd > capital + 1e-9:
+            if gross + size > capital + 1e-9:
                 skipped["no_cash"] += 1
                 continue
             by_name = sum(x["size"] for x in legs
                           if x["sym"] == g["sym"])
-            if by_name + leg_usd > NAME_CAP + 1e-9:
+            if by_name + size > NAME_CAP + 1e-9:
                 skipped["name_cap"] += 1
                 continue
             if g["sym"] not in mids and g["sym"] not in last:
@@ -226,7 +242,7 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
                 continue
             if not legs:
                 basket_open_ts = ts
-            legs.append({**g, "size": leg_usd})
+            legs.append({**g, "size": size})
     # хвост записи: открытая корзина — отметкой, не реализованным
     open_mark, open_legs = None, len(legs)
     if legs:
@@ -256,6 +272,8 @@ def replay(picks, mids, take, floor, capital=CAPITAL, leg_usd=LEG_USD,
             "age_max_h": max((b["age_h"] for b in baskets),
                              default=None),
             "max_dd": round(max_dd, 2),
+            "gross_share": (round(gross_sum / gross_n / capital, 3)
+                            if gross_n else None),
             "blocked_hours": blocked_hours, "skipped": skipped}
 
 
