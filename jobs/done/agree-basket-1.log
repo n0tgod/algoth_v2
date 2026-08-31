@@ -7,3 +7,18 @@
 [10:32:45] gbm: base +204.07, agreed +194.03, нулей 10
 [10:32:45] nn: base +475.97, agreed +194.03, нулей 10
 [10:32:45] отчёт: /root/algoth_v2/research/probe_agree/out/AGREE-basket-1m.md · 13.0 с
+публикуется в ветку main:
+ jobs/done/agree-basket-1.done                 |   1 +
+ jobs/done/agree-basket-1.log                  |   9 +
+ jobs/done/agree-root-status-1.done            |   1 +
+ jobs/done/agree-root-status-1.log             |  10 +
+ jobs/poke.log                                 |   4 +
+ research/probe_agree/out/AGREE-basket-1m.md   |  21 +
+ research/probe_agree/out/agree-basket-1m.json | 640 ++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json           |   2 +-
+ 8 files changed, 687 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   00a89ac..9e75efd  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-08-31T10:32:47Z, код 0
