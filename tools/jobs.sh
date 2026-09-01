@@ -25,6 +25,7 @@
 # Формат задания: `jobs/<имя>.job`, одна строка:
 #     run research/probe_turn/turn.py --tag 1m
 #     restart-book
+#     agents-run <роль>
 #     status
 #
 # Выполненное задание помечается `jobs/done/<имя>.done` и больше не
@@ -163,6 +164,35 @@ for job in "$JOBS"/*.job; do
                         >> "$log" 2>&1
                 ' _ "$log" "$script" "${parts[@]:2}" 9>&- &
                 echo "[$(now)] задание $name запущено: $script"
+            fi
+            ;;
+        agents-run)
+            # Роль автономной системы. Аргумент один и проверяется
+            # ОТДЕЛЬНО от общего белого списка символов: имя роли —
+            # это имя файла промпта, и всё, кроме букв и подчёркивания,
+            # здесь означает попытку, а не опечатку.
+            role="${parts[1]:-}"
+            case "$role" in
+                *[!a-z_]*|"") role="";; esac
+            if [ -z "$role" ] \
+               || [ ! -f "research/factory/agents/$role.md" ]; then
+                echo "ОТКАЗ: роли нет: ${parts[1]:-—}" >> "$log"
+            else
+                echo "запускаю роль: $role ${parts[*]:2}" >> "$log"
+                # Фоном: прогон роли идёт минуты. Публикует себя сам —
+                # и запускалка публикует свой артефакт, и очередь свой
+                # лог, поэтому «прогона не было» и «прогон был, но
+                # молча» различимы.
+                setsid nohup nice -n 15 bash -c '
+                    log="$1"; shift
+                    tools/agents_run.sh "$@" >> "$log" 2>&1
+                    rc=$?
+                    echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"
+                    tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"
+                    tools/publish.sh "job: $(basename "$log" .log)" \
+                        >> "$log" 2>&1
+                ' _ "$log" "$role" "${parts[@]:2}" 9>&- &
+                echo "[$(now)] задание $name: роль $role"
             fi
             ;;
         restart-book)

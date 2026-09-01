@@ -26,6 +26,10 @@ printf '#!/bin/sh\necho "ОПУБЛИКОВАНО $1" >> jobs/publish.log\n' \
 printf '#!/bin/sh\necho "СБОРЩИК ПЕРЕЗАПУЩЕН"\n' > tools/restart_book.sh
 chmod +x .venv/bin/python tools/publish.sh tools/restart_book.sh tools/jobs.sh
 echo "print(1)" > research/probe_x/probe.py
+mkdir -p research/factory/agents
+echo "# роль" > research/factory/agents/brief.md
+printf '#!/bin/sh\necho "РОЛЬ $*"\n' > tools/agents_run.sh
+chmod +x tools/agents_run.sh
 git add -A >/dev/null; git -c core.hooksPath=/dev/null commit -qm init
 
 run() { JOBS_NO_FETCH=1 bash tools/jobs.sh >/dev/null 2>&1; }
@@ -163,6 +167,29 @@ check "непубликованных коммитов не осталось" 0 
 dirty=$( (cd "$pub" && git status --porcelain research/x/out/run.log | wc -l) )
 check "лог идущего задания вернулся в дерево" 1 "${dirty:-нет}"
 rm -rf "$pub"
+
+# 8b. Роль автономной системы: объявленная запускается, выдуманная
+# отвергается. Имя роли — это имя файла промпта, и всё, кроме букв,
+# здесь означает попытку, а не опечатку.
+# Приманка ВНЕ каталога ролей: имя `../evil` собирается в
+# `research/factory/agents/../evil.md`, то есть в существующий файл, и
+# проверку «файл есть» проходит. Отвергнуть его может ТОЛЬКО проверка
+# имени — без неё чужой файл стал бы промптом роли. Первый вариант
+# теста этого не различал: `../../etc/passwd` отвергался существованием.
+echo "# чужой файл" > research/factory/evil.md
+printf 'agents-run brief\n' > jobs/role-ok.job
+printf 'agents-run ../evil\n' > jobs/role-bad.job
+printf 'agents-run nosuch\n' > jobs/role-none.job
+git add -A >/dev/null; git -c core.hooksPath=/dev/null commit -qm roles
+bash tools/jobs.sh > /dev/null 2>&1
+sleep 1
+has "роль запущена" jobs/done/role-ok.log "запускаю роль: brief"
+has "подставная запускалка позвана" jobs/done/role-ok.log "РОЛЬ brief"
+has "путь наружу отвергнут проверкой ИМЕНИ" jobs/done/role-bad.log "ОТКАЗ"
+has "несуществующая роль отвергнута" jobs/done/role-none.log "ОТКАЗ"
+if grep -q "РОЛЬ" jobs/done/role-bad.log 2>/dev/null; then
+    say "  ПАДЕНИЕ отвергнутая роль всё же звалась"; fail=$((fail+1))
+else say "  ok   отвергнутая роль не звалась"; ok=$((ok+1)); fi
 
 # 9. Сторож обязан звать очередь: секция, которую легко потерять при
 # правке соседней.
