@@ -393,3 +393,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788295579 ==
 [2026-09-01T20:46:21Z] задание zzz-scout-run4: роль scout
+
+== сигнал 1788295753 ==
+[2026-09-01T20:49:15Z] задание aaa-cli-update отвергнуто (действие: cli-update)
+[2026-09-01T20:49:15Z] задание zzzz-build-ceiling-fix6: роль build
