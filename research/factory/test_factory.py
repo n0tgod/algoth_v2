@@ -436,6 +436,66 @@ def test_proposal_must_be_checkable_not_persuasive():
     check("неразбираемая заявка отвергнута", not ok, str(why))
 
 
+def test_prompt_actually_reaches_the_model():
+    """Промпт обязан ДОЙТИ до модели, а не потеряться в аргументах.
+
+    Первый прогон предлагающего умер ровно так: `--allowedTools` берёт
+    список переменной длины и, стоя перед промптом, проглотил его
+    целиком — слова промпта стали «правилами доступа», а модель
+    осталась без задания. Отказ был громким, но слот и время сгорели.
+
+    Гоняется настоящий скрипт с подставным `claude`, который
+    записывает, сколько байт получил на вход. Роль взята та, чей
+    продукт в репозитории отсутствует, — тогда прогон останавливается
+    на контракте и не доходит до публикации.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    sh = os.path.join(root, "tools", "agents_run.sh")
+    d = tempfile.mkdtemp()
+    try:
+        bin_d = os.path.join(d, "bin")
+        os.makedirs(bin_d)
+        seen = os.path.join(d, "seen.txt")
+        with open(os.path.join(bin_d, "claude"), "w",
+                  encoding="utf-8") as f:
+            f.write('#!/bin/sh\n'
+                    'if [ "$1" = "auth" ]; then\n'
+                    '  echo \'{ "loggedIn": true }\'\n'
+                    '  exit 0\n'
+                    'fi\n'
+                    'wc -c > "%s"\n'
+                    'echo "подставная модель отработала"\n' % seen)
+        os.chmod(os.path.join(bin_d, "claude"), 0o755)
+        env = dict(os.environ, AGENTS_OUT=d, AGENTS_NO_PUBLISH="1",
+                   PATH=bin_d + os.pathsep + os.environ.get("PATH", ""))
+        env.pop("ANTHROPIC_API_KEY", None)
+        # stdin ЗАКРЫТ намеренно: при сломанной форме вызова
+        # подставная модель ждала бы ввода вечно, и контроль вешал бы
+        # проверку вместо того, чтобы её ронять. Закрытый вход
+        # превращает поломку в ноль байт, то есть в честный провал.
+        try:
+            r = subprocess.run([sh, "propose"], cwd=root, env=env,
+                               capture_output=True, text=True,
+                               stdin=subprocess.DEVNULL, timeout=120)
+        except subprocess.TimeoutExpired:
+            check("прогон роли не зависает", False, "120 с")
+            return
+        got = 0
+        if os.path.exists(seen):
+            with open(seen, encoding="utf-8") as f:
+                got = int((f.read() or "0").strip() or 0)
+        check("промпт дошёл до модели целиком", got > 2000, str(got))
+        check("прогон остановился на контракте, а не на запуске",
+              "КОНТРАКТ" in r.stdout and r.returncode != 0,
+              r.stdout[-300:])
+        rows, _ = RL.read(os.path.join(d, RL.RUNS))
+        got_st = [x["status"] for x in rows]
+        check("в журнале начало и вердикт контракта",
+              got_st == ["start", "contract"], str(got_st))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_runner_leaves_a_line_on_every_refusal():
     """Запускалка: отказ называется и всё равно оставляет строку.
 
@@ -534,7 +594,8 @@ def main():
              test_running_now_is_a_separate_question,
              test_brief_contract_is_mechanical,
              test_proposal_must_be_checkable_not_persuasive,
-             test_runner_leaves_a_line_on_every_refusal)
+             test_runner_leaves_a_line_on_every_refusal,
+             test_prompt_actually_reaches_the_model)
     for t in tests:
         print(t.__name__)
         t()
