@@ -364,3 +364,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788283125 ==
 [2026-09-01T17:18:47Z] задание build-ceiling-fix2: роль build
+
+== сигнал 1788286895 ==
+[2026-09-01T18:21:36Z] задание adversary-ceiling-3: роль adversary
