@@ -20,3 +20,17 @@
 **Что знать до первого живого вызова:** на сегодняшнем артефакте (он прежнего образца — без `pending` и без дневных рядов) потолок честно отвечает `undetermined` с названной причиной. Проверено прогоном; числа появятся первым же суточным прогоном на новом коде.
 КОНТРАКТ: выполнен
 прогон роли build завершён
+публикуется в ветку main:
+ jobs/done/build-ceiling.done           |  1 +
+ jobs/done/build-ceiling.log            | 22 +++++++++++++
+ jobs/done/propose-run-3.log            |  7 +++++
+ jobs/poke.log                          |  3 ++
+ research/factory/out/agents-runs.jsonl |  2 ++
+ research/factory/out/build.json        | 56 ++++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |  2 +-
+ 7 files changed, 92 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   dad4d50..5053cd8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-01T16:15:36Z, код 0
