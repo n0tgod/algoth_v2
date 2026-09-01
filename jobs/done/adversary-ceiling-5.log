@@ -25,3 +25,26 @@
 Все подделки шли по копии дерева в `/tmp`; в рабочей копии изменён только мой файл.
 КОНТРАКТ: выполнен
 прогон роли adversary завершён
+публикуется в ветку main:
+ jobs/done/adversary-ceiling-5.log      |  21 ++++++
+ jobs/done/zz-deploy-summary.log        |   8 +++
+ jobs/done/zzz-scout-run4.log           |   3 +
+ jobs/queue-state.md                    |   1 +
+ research/factory/out/adversary.json    | 114 ++++++++++++++++++---------------
+ research/factory/out/agents-runs.jsonl |   1 +
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 7 files changed, 98 insertions(+), 52 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+   4ec4cef..468f8a3  main       -> origin/main
+конец: 2026-09-01T20:45:06Z, код 0
