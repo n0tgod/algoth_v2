@@ -417,6 +417,23 @@ def test_proposal_must_be_checkable_not_persuasive():
     check("заявка без содержания отвергнута",
           not ok and any("hypothesis" in w for w in why), str(why))
 
+    # Голое имя файла указателем не считается: первый прогон
+    # предлагающего был отвергнут за три упоминания в прозе, каждое из
+    # которых было верным, — «candidate.py:186» не говорит, какой из
+    # десятка одноимённых файлов имеется в виду.
+    check("голое имя файла не указатель",
+          RL.cites("см. candidate.py и FACTORY-day-1m.md") == [],
+          str(RL.cites("см. candidate.py и FACTORY-day-1m.md")))
+    # Проза не сканируется: путь в ней бывает назван затем, чтобы
+    # сказать «его ещё нет», и такое утверждение полезно.
+    ok, why = chk(dict(good, ceiling=good["ceiling"]
+                       + " шага research/factory/ceiling.py пока нет"))
+    check("отсутствующий путь в прозе заявку не валит", ok, str(why))
+    ok, why = chk(dict(good, cites=good["cites"]
+                       + ["research/factory/ceiling.py"]))
+    check("отсутствующий путь в cites заявку валит",
+          not ok and any("cites" in w for w in why), str(why))
+
     ok, why = chk(dict(good, cites=["research/factory/space.py",
                                     "research/factory/pool.py",
                                     "research/factory/ledger.py"]))
