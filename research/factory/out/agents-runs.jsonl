@@ -20,3 +20,6 @@
 {"at": 1788288001.414, "role": "ceiling", "status": "start", "started": 1788288001.414, "ended": 1788288001.414, "dry": false, "pid": 1027917}
 {"at": 1788288190.172, "role": "build", "status": "start", "started": 1788288190.0, "ended": 1788288190.172, "dry": false, "pid": 1028207}
 {"at": 1788288803.724, "role": "build", "status": "ok", "started": 1788288190.0, "ended": 1788288803.724, "dry": false, "note": "модель opus, усилие xhigh"}
+{"at": 1788288902.067, "role": "judge", "status": "start", "started": 1788288902.067, "ended": 1788288902.067, "dry": false, "pid": 1029869}
+{"at": 1788290068.694, "role": "adversary", "status": "start", "started": 1788290068.0, "ended": 1788290068.694, "dry": false, "pid": 1030641}
+{"at": 1788290803.741, "role": "adversary", "status": "ok", "started": 1788290068.0, "ended": 1788290803.741, "dry": false, "note": "модель opus, усилие xhigh"}
