@@ -100,6 +100,25 @@ def artifact(pend_daily, pend_trades, live, pend_rule=None,
                         "trades": pend_trades, "daily": pd}}
 
 
+def three_book_pool():
+    """Пул из ТРЁХ живых книг, где теснейшая связь не первая и не самая
+    длинная.
+
+    Боевой пул многокнижный (в живом артефакте пять книг, предел ста), а
+    ни одна фикстура его не строила — и потому обе величины вердикта, КАК
+    выбрана теснейшая книга и весь ли пул прочитан, не были закреплены
+    ничем. Здесь заявка есть точная копия `live_b` в других единицах
+    (`3·b + 5`), у `live_b` МЕНЬШЕ всего общих суток, а первой по
+    алфавиту идёт слабо связанная `live_a`. Значит любая из трёх
+    естественных подмен — взять первую измеренную, взять самую длинную
+    пару, прочитать только первую книгу — даёт `pass` вместо `closed`.
+    """
+    b = noise(313, n=10)
+    live = {"live_a": noise(323, n=40), "live_b": b, "live_c": noise(333)}
+    pend = [3.0 * v + 5.0 for v in b] + noise(343, n=30)
+    return pend, live
+
+
 def flip(run):
     """Знак ВСЕХ дневных денег наоборот — и заявки, и живых книг."""
     return _scale(run, -1.0)
@@ -126,8 +145,18 @@ def test_profit_never_decides():
     закреплённое на единственном случае, не защищает остальные.
     """
     a = noise(101)
+    mix_p, mix_live = None, None
+    la, lb, lc = noise(401), noise(402), noise(403)
+    mix_live = {"live_a": la, "live_b": lb, "live_c": lc}
+    mix_p = [(x + y) / 2.0 for x, y in zip(la, lb)]
+    three_p, three_live = three_book_pool()
     cases = {
         "проходит": artifact(a, 400, {"live_a": noise(202)}),
+        # Многокнижные ветки судятся тем же правилом: правило,
+        # закреплённое на пуле из одной книги, боевой пул не защищает.
+        "копия одной из трёх": artifact(three_p, 400, three_live),
+        "смесь двух из трёх": artifact(mix_p, 400, mix_live),
+        "независимая при трёх": artifact(noise(404), 400, mix_live),
         # Семь сделок — семь суток в ряду: столько, сколько живой
         # писатель и может завести. Запись при этом длиной в сорок.
         "тонкая книга": artifact(noise(102, n=7), 7, {"live_a": noise(202)},
@@ -189,6 +218,196 @@ def test_the_pool_measure_is_not_reimplemented():
     check("связь считается кодом реестра", abs(r - want) < 1e-12,
           f"{r} против {want}")
     check("общие сутки посчитаны", days == len(a), str(days))
+    # Эффективное `N` пула — тем же `effective_n`, что печатает суточный
+    # отчёт: вторая копия дала бы потолку своё число, и он закрывал бы
+    # заявки величиной, которой у фабрики нигде больше нет.
+    # Пул обязан нести ПОЛОЖИТЕЛЬНУЮ среднюю связь, иначе `effective_n`
+    # подрезает её нулём и возвращает ровно номинальное число — тогда
+    # сравнение «реестр против номинала» проходит на подмене молча.
+    live = {"live_a": {i: v for i, v in enumerate(a)},
+            "live_b": {i: v for i, v in enumerate(b)},
+            "live_c": {i: 0.5 * x + 0.5 * y for i, (x, y)
+                       in enumerate(zip(a, b))}}
+    check("средняя связь пула положительна — номинал и эффективное "
+          "разошлись", R.LG.effective_n(live)[1] > 0.05,
+          str(R.LG.effective_n(live)))
+    pend = {i: v for i, v in enumerate(noise(707))}
+    check("N пула считается кодом реестра",
+          abs(CL.pool_eff_n(live) - R.LG.effective_n(live)[0]) < 1e-12,
+          f"{CL.pool_eff_n(live)} против {R.LG.effective_n(live)[0]}")
+    with_p = dict(live, p=pend)
+    check("N пула с заявкой — он же",
+          abs(CL.pool_eff_n(live, pend, "p")
+              - R.LG.effective_n(with_p)[0]) < 1e-12,
+          str(CL.pool_eff_n(live, pend, "p")))
+    check("номинальное число испытаний — не эффективное",
+          abs(CL.pool_eff_n(with_p) - len(with_p)) > 1e-9,
+          str(CL.pool_eff_n(with_p)))
+    # Условие длины ряда тоже не копируется: спрашивается сам реестр.
+    check("ряд короче того, что берёт реестр, пулом не считается",
+          not CL.counted_by_pool({1: 1.0, 2: 2.0}), "двухдневный ряд учтён")
+    check("ряд, который реестр берёт, считается",
+          CL.counted_by_pool({1: 1.0, 2: 2.0, 3: 3.0}), "трёхдневный не учтён")
+
+
+# --- многокнижный пул -------------------------------------------------
+
+def test_the_whole_pool_is_read_and_the_closest_link_decides():
+    """Теснейшая связь выбирается ПО ВЕЛИЧИНЕ, и читается весь пул.
+
+    Обе величины вердикта — какая книга теснейшая и все ли книги
+    прочитаны — до этой проверки не были закреплены ничем: ни одна
+    фикстура не давала потолку больше одной живой книги, а в бою их
+    пять при пределе в сто. Цена подмены здесь показана числом: заявка
+    есть точная копия `live_b`, но первая по алфавиту `live_a` связана
+    с ней слабо, и по ней вышел бы `pass` — то есть объявилась бы копия
+    уже живой книги, а испытание тратится навсегда.
+    """
+    pend, live = three_book_pool()
+    res = CL.judge(artifact(pend, 400, live))
+    check("копия ВТОРОЙ книги пула закрыта", res["verdict"] == CL.CLOSED,
+          f"{res['verdict']}: {res['why']}")
+    check("теснейшей названа именно она",
+          res["closest"]["id"] == "live_b", str(res.get("closest")))
+    check("связь с ней стоит числом в причине", "+1.000" in res["why"],
+          res["why"])
+    ids = [lk["id"] for lk in res["links"]]
+    check("прочитаны ВСЕ три живые книги",
+          ids == ["live_a", "live_b", "live_c"], str(ids))
+    first = res["links"][0]
+    check("первая по порядку связана слабо — по ней был бы pass",
+          first["id"] != res["closest"]["id"]
+          and first["r"] < res["max_corr"], str(first))
+    longest = max(res["links"], key=lambda lk: lk["days"])
+    check("теснейшая — не самая длинная пара",
+          longest["id"] != res["closest"]["id"]
+          and longest["days"] > res["closest"]["days"],
+          f"{longest} против {res['closest']}")
+
+
+def test_the_pools_effective_n_must_grow():
+    """Заявка, от которой эффективное `N` пула не растёт, закрывается.
+
+    Это второе условие независимости, и оно ЗНАК, а не порог: сравнение
+    идёт с нулём, подкручивать нечего. Ловит то, чего порог связи не
+    видит, — заявку, смешанную из двух живых книг: с каждой по
+    отдельности она связана ниже предела, а `N` пула роняет, потому что
+    порог берёт максимум по парам только с заявкой, а пул усредняет
+    связь по ВСЕМ парам.
+    """
+    la, lb, lc = noise(401), noise(402), noise(403)
+    live = {"live_a": la, "live_b": lb, "live_c": lc}
+    mix = [(x + y) / 2.0 for x, y in zip(la, lb)]
+    res = CL.judge(artifact(mix, 400, live))
+    check("смесь двух живых книг закрыта", res["verdict"] == CL.CLOSED,
+          f"{res['verdict']}: {res['why']}")
+    check("порог связи она при этом ДЕРЖИТ — закрыл не он",
+          res["closest"]["r"] < res["max_corr"], str(res["closest"]))
+    check("N пула от неё падает",
+          res["pool_eff_n_with"] < res["pool_eff_n"],
+          f"{res.get('pool_eff_n')} → {res.get('pool_eff_n_with')}")
+    check("оба числа стоят в причине",
+          f"{res['pool_eff_n']:.2f}" in res["why"]
+          and f"{res['pool_eff_n_with']:.2f}" in res["why"], res["why"])
+    check("причина названа ростом N, а не связью",
+          "не растёт" in res["why"], res["why"])
+    # Калибровочная пара: на ТОМ ЖЕ пуле независимая заявка обязана
+    # пройти, иначе правило означало бы «закрывать всех подряд».
+    good = CL.judge(artifact(noise(404), 400, live))
+    check("независимая заявка на том же пуле проходит",
+          good["verdict"] == CL.PASS, f"{good['verdict']}: {good['why']}")
+    check("и N пула от неё растёт",
+          good["pool_eff_n_with"] > good["pool_eff_n"],
+          f"{good.get('pool_eff_n')} → {good.get('pool_eff_n_with')}")
+    check("рост назван числами в причине pass",
+          f"{good['pool_eff_n']:.2f} → {good['pool_eff_n_with']:.2f}"
+          in good["why"], good["why"])
+    # Величина не та же, которой мерит порог связи, — и это весь смысл
+    # второго условия. Совпади они, оно было бы переодетым первым.
+    check("N пула — не N пары",
+          abs(res["pool_eff_n_with"] - res["pair_eff_n"]) > 0.05,
+          f"{res['pool_eff_n_with']} против {res['pair_eff_n']}")
+    tmp = tempfile.mkdtemp()
+    md = CL.write_report(os.path.join(tmp, "C.md"), res, log=lambda *a: None)
+    text = open(md, encoding="utf-8").read()
+    check("оба числа пула стоят в отчёте",
+          f"| эффективное N пула без заявки | {res['pool_eff_n']:.2f} |"
+          in text
+          and f"| эффективное N пула с заявкой | "
+              f"{res['pool_eff_n_with']:.2f} |" in text, text[:900])
+
+
+def test_the_growth_condition_is_not_rendered_on_a_degenerate_pool():
+    """На пустом и единичном пуле `N_eff` вырожден — и это СЛОВАМИ.
+
+    Прочерк в таблице читался бы как «посчитали и ничего не вышло»,
+    тогда как условия там не существует вовсе. Вырожденность считается
+    по книгам, чей ряд пул ВООБЩЕ берёт: пул, где виден один ряд, для
+    `N_eff` ничем не лучше пула из одной книги.
+    """
+    one = CL.judge(artifact(noise(411), 400, {"live_a": noise(412)}))
+    check("на пуле из одной книги число не считалось",
+          one.get("pool_eff_n") is None and one.get("pool_eff_n_with") is None,
+          f"{one.get('pool_eff_n')}/{one.get('pool_eff_n_with')}")
+    check("причина названа словами",
+          "не выносится вовсе" in (one.get("pool_eff_n_why") or ""),
+          str(one.get("pool_eff_n_why")))
+    check("книга при этом всё равно проходит",
+          one["verdict"] == CL.PASS, f"{one['verdict']}: {one['why']}")
+    tmp = tempfile.mkdtemp()
+    md = CL.write_report(os.path.join(tmp, "C.md"), one, log=lambda *a: None)
+    text = open(md, encoding="utf-8").read()
+    check("в отчёте условие снято СЛОВАМИ, а не прочерком",
+          "По этому условию вердикт НЕ выносился" in text
+          and one["pool_eff_n_why"] in text, text[-900:])
+    check("числа пула при этом прочерками",
+          "| эффективное N пула без заявки | — |" in text, text[:900])
+    # Книга, которую пул не считает, в двойку живых не идёт: иначе
+    # «рост с 1.00 до 2.00» означал бы только то, что заявка существует.
+    run = artifact(noise(421), 400,
+                   {"live_a": noise(422), "live_b": noise(423)})
+    run["candidates"]["live_b"]["daily"] = series([1.0, 2.0])
+    res = CL.judge(run)
+    check("слишком короткий ряд соседа в двойку не идёт",
+          res.get("pool_eff_n") is None
+          and "считает, 1 " in (res.get("pool_eff_n_why") or ""),
+          str(res.get("pool_eff_n_why")))
+    # И обратная сторона: на двух ПОЛНЫХ книгах условие выносится.
+    ok = CL.judge(artifact(noise(421), 400,
+                           {"live_a": noise(422), "live_b": noise(423)}))
+    check("на двух полных книгах условие выносится",
+          ok.get("pool_eff_n") is not None
+          and not ok.get("pool_eff_n_why"), str(ok.get("pool_eff_n_why")))
+
+
+def test_pending_days_are_counted_not_zeroed():
+    """«Суток со сделками у заявки» — посчитанное число, а не ноль.
+
+    Строка добавлена ради того, чтобы отделить ДЛИНУ ЗАПИСИ от суток
+    книги; занулись она молча, и таблица утверждала бы «измерено и
+    равно нулю» — ровно то, от чего отделяет прочерк в соседних
+    строках.
+    """
+    run = artifact(noise(431, n=12), 400, {"live_a": noise(432)},
+                   record_days=40)
+    res = CL.judge(run)
+    check("суток заявки посчитаны", res.get("pending_days") == 12,
+          str(res.get("pending_days")))
+    check("и это не длина записи",
+          res["pending_days"] != res["days"],
+          f"{res['pending_days']} и {res['days']}")
+    tmp = tempfile.mkdtemp()
+    md = CL.write_report(os.path.join(tmp, "C.md"), res, log=lambda *a: None)
+    text = open(md, encoding="utf-8").read()
+    check("в отчёте стоит посчитанное число, а не ноль",
+          "| из них суток со сделками у заявки | 12 |" in text, text[:600])
+    # Та же строка на закрытой ветке: величина кладётся до развилки, и
+    # проверка одной ветки не защищает остальные.
+    thin = CL.judge(artifact(noise(433, n=7), 7, {"live_a": noise(434)},
+                             record_days=40))
+    check("на закрытой ветке суток заявки тоже посчитаны",
+          thin["verdict"] == CL.CLOSED and thin.get("pending_days") == 7,
+          f"{thin['verdict']}/{thin.get('pending_days')}")
 
 
 # --- измеримость ------------------------------------------------------
@@ -774,6 +993,10 @@ def main():
     tests = (test_profit_never_decides,
              test_calibration_finds_a_planted_link_and_is_silent_on_noise,
              test_the_pool_measure_is_not_reimplemented,
+             test_the_whole_pool_is_read_and_the_closest_link_decides,
+             test_the_pools_effective_n_must_grow,
+             test_the_growth_condition_is_not_rendered_on_a_degenerate_pool,
+             test_pending_days_are_counted_not_zeroed,
              test_the_fixture_is_possible_for_a_live_writer,
              test_the_denominator_is_the_record_not_the_books,
              test_an_old_artifact_has_no_denominator_and_waits,

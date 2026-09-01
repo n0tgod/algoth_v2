@@ -1,0 +1,28 @@
+== задание build-ceiling-fix2 ==
+строка: agents-run build
+начало: 2026-09-01T17:18:47Z
+запускаю роль: build 
+авторизация: вход CLI (подписка)
+llow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
+Ignoring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in allow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
+Ignoring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in allow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
+Ignoring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in allow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
+Built. Both halves of the veto are closed, plus the new rule.
+
+**1. The multi-book pool now exists in the harness.** `three_book_pool()` gives three live books where the proposal is an exact copy of the *second* (`3·live_b + 5`, r = +1.000) and that book has the *fewest* shared days (10 vs 40). One fixture catches all three forgeries the adversary named. The two verdict quantities are pinned separately — which book is closest (by correlation magnitude, not order, not shared-day count) and that all three appear in `links`. Multi-book cases also went into `test_profit_never_decides`: the "profit never decides" rule was pinned only on single-book pools.
+
+**2. `pending_days` can no longer print zero silently** — checked in the verdict and in the report table, on both a passing and a closed branch (the value is set before the fork, so checking one branch doesn't protect the others).
+
+**3. The growth rule is in.** `pool_eff_n` calls `ledger.effective_n` — no second copy, pinned by comparison against it. A proposal that doesn't grow the pool's effective `N` is closed; comparison is against zero, no threshold. The calibration pair sits next to it: on the *same* pool the two-book mix closes (2.90 → 2.29, with links +0.78/+0.69, both under the 0.95 limit) and an independent proposal passes and lifts `N` (2.90 → 3.52).
+
+Three things worth your attention:
+
+- **I made an interpretation choice and am naming it rather than burying it.** The task says the condition is meaningful with "two or more live books," justified by `N_eff` degeneracy. I count books whose daily series `effective_n` actually *takes*, not nominal live books — a pool of three where two are too short is as degenerate for `N_eff` as a pool of one, and "growth from 1.00 to 2.00" there would only mean the proposal exists. The length condition isn't copied: `counted_by_pool` asks the ledger itself. If you meant nominal count literally, it's one line.
+
+- **A number of the adversary's changed, and I'd rather say so than let it stand.** Under the forgery `best = measured[0]`, my three-book fixture still comes out `closed` — by the new growth rule (2.39 → 2.19), not by correlation. So the cost he demonstrated ("an exact copy would be declared") is no longer the cost: the two independence conditions overlap on copies. That's why the first control's `expect` names the closest-book check, not the verdict.
+
+- **The control pass paid for itself again.** `n_eff = float(len(series))` initially failed to bite the named check, and the reason was a defect in *my test*: two uncorrelated books give `effective_n` exactly the nominal 2.0 (mean correlation clips to zero), so "ledger vs nominal" passed under the forgery. The pool fixture now carries positive mean correlation, pinned by its own check.
+
+All nine controls bite and drop the named check; suites green (ceiling 27 blocks, run_day 4, factory 25, candidate 8). `run_day.py` wasn't touched this round, so `touched` is empty.
+КОНТРАКТ: выполнен
+прогон роли build завершён
