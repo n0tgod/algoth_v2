@@ -641,6 +641,66 @@ def test_closed_by_ceiling_is_not_proposed_again():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_rights_reach_the_model_whole():
+    """Право с пробелом внутри доезжает до модели ЦЕЛИКОМ.
+
+    Права передавались одной строкой через пробел, и `Bash(cat *)`
+    доезжало двумя словами: CLI честно печатал «Ignoring
+    --allowedTools rule "*)"», то есть половина объявленных прав молча
+    не действовала, а роль получала отказ там, где право у неё было.
+    Найдено на первом живом прогоне разведчика.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    sh = os.path.join(root, "tools", "agents_run.sh")
+    d = tempfile.mkdtemp()
+    try:
+        bin_d = os.path.join(d, "bin")
+        os.makedirs(bin_d)
+        seen = os.path.join(d, "rules.txt")
+        # Подставной CLI пишет КАЖДОЕ правило своей строкой: только так
+        # видно, что правило не разорвано.
+        with open(os.path.join(bin_d, "claude"), "w",
+                  encoding="utf-8") as f:
+            f.write('#!/bin/sh\n'
+                    'if [ "$1" = "auth" ]; then\n'
+                    '  echo \'{ "loggedIn": true }\'\n'
+                    '  exit 0\n'
+                    'fi\n'
+                    'take=0\n'
+                    'while [ $# -gt 0 ]; do\n'
+                    '  case "$1" in\n'
+                    '    --allowedTools) take=1 ;;\n'
+                    '    --*) take=0 ;;\n'
+                    '    *) [ "$take" = 1 ] && echo "$1" >> "%s" ;;\n'
+                    '  esac\n'
+                    '  shift\n'
+                    'done\n'
+                    'cat > /dev/null\n'
+                    'echo "подставная модель отработала"\n' % seen)
+        os.chmod(os.path.join(bin_d, "claude"), 0o755)
+        env = dict(os.environ, AGENTS_OUT=d, AGENTS_NO_PUBLISH="1",
+                   PATH=bin_d + os.pathsep + os.environ.get("PATH", ""))
+        env.pop("ANTHROPIC_API_KEY", None)
+        subprocess.run([sh, "brief"], cwd=root, env=env,
+                       capture_output=True, text=True,
+                       stdin=subprocess.DEVNULL, timeout=180)
+        got = []
+        if os.path.exists(seen):
+            with open(seen, encoding="utf-8") as f:
+                got = [x.strip() for x in f if x.strip()]
+        want = AG.tools("brief")
+        check("прав дошло столько, сколько объявлено",
+              len(got) == len(want), f"{len(got)} против {len(want)}")
+        check("право с пробелом не разорвано",
+              any(" " in x and x.endswith(")") for x in got),
+              str(got[:6]))
+        check("обрывков правил не приехало",
+              not any(x == "*)" or x.endswith("(cat") for x in got),
+              str(got))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_prompt_actually_reaches_the_model():
     """Промпт обязан ДОЙТИ до модели, а не потеряться в аргументах.
 
@@ -1362,6 +1422,7 @@ def main():
              test_build_contract_makes_the_controls_bite,
              test_adversary_must_show_what_it_tried,
              test_runner_leaves_a_line_on_every_refusal,
+             test_rights_reach_the_model_whole,
              test_prompt_actually_reaches_the_model,
              test_fallback_happens_only_on_a_limit_and_is_recorded,
              test_cycle_advances_one_step_and_obeys_the_safeties,

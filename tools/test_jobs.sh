@@ -211,6 +211,17 @@ sleep 1
 has "после освобождения роль запущена" jobs/done/role-busy.log \
     "запускаю роль: brief"
 
+# 8c. Обновление CLI: команда объявлена и зовётся, а не собирается
+# из строки задания. Аргументов у неё нет — расширять её нечем.
+printf '#!/bin/sh\ncase "$1" in --version) echo "1.0.0";; update)\n  echo "ОБНОВЛЕНО";; esac\n' > tools/claude
+chmod +x tools/claude
+printf 'cli-update\n' > jobs/cli.job
+git add -A >/dev/null; git -c core.hooksPath=/dev/null commit -qm cli
+PATH="$PWD/tools:$PATH" bash tools/jobs.sh > /dev/null 2>&1
+sleep 1
+has "обновление CLI выполнено" jobs/done/cli.log "ОБНОВЛЕНО"
+has "версия названа до и после" jobs/done/cli.log "версия после"
+
 # 9. Сторож обязан звать очередь: секция, которую легко потерять при
 # правке соседней.
 cd - >/dev/null || exit 1

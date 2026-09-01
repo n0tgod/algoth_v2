@@ -161,13 +161,21 @@ echo "авторизация: $AUTH"
 # бы с ним. Пусто — зовём без ограничения списком (модель тогда
 # попросит разрешение и в неинтерактивном прогоне получит отказ; это
 # видно в журнале, а не молча).
-ALLOW="$("$PY" - "$ROLE" <<'PYTOOLS'
+# Права читаются в МАССИВ по одному на строку. Через пробел они
+# рвались на пробеле внутри правила: `Bash(cat *)` доезжало до CLI
+# двумя словами, и тот честно печатал «Ignoring --allowedTools rule
+# "*)"» — то есть половина объявленных прав молча не действовала, а
+# роль получала отказ там, где право у неё было.
+ALLOW=()
+while IFS= read -r line; do
+    [ -n "$line" ] && ALLOW+=("$line")
+done < <("$PY" - "$ROLE" <<'PYTOOLS'
 import sys, os
 sys.path.insert(0, os.path.join(os.getcwd(), "research", "factory"))
 import agents as AG
-print(" ".join(AG.tools(sys.argv[1])))
+print("\n".join(AG.tools(sys.argv[1])))
 PYTOOLS
-)"
+)
 
 # Модель и усилие берутся из реестра и передаются ЯВНО. Прежде не
 # передавалось ни того, ни другого — роли шли на умолчании CLI, то
@@ -190,10 +198,9 @@ trap 'rm -f "$TMP" "${AGENTS_SELF_COPY:-}"' EXIT
 # его целиком: слова промпта становятся «правилами доступа», а модель
 # остаётся без задания. Первый прогон предлагающего умер ровно так.
 call_model() {                                # модель → код возврата
-    if [ -n "$ALLOW" ]; then
-        # shellcheck disable=SC2086
+    if [ "${#ALLOW[@]}" -gt 0 ]; then
         claude -p --model "$1" --effort "$EFFORT" \
-            --allowedTools $ALLOW < "$PROMPT" >"$TMP" 2>&1
+            --allowedTools "${ALLOW[@]}" < "$PROMPT" >"$TMP" 2>&1
     else
         claude -p --model "$1" --effort "$EFFORT" < "$PROMPT" >"$TMP" 2>&1
     fi
