@@ -30,3 +30,4 @@
 {"at": 1788294484.181, "role": "build", "status": "ok", "started": 1788293434.0, "ended": 1788294484.181, "dry": false, "note": "модель opus, усилие xhigh"}
 {"at": 1788294613.078, "role": "adversary", "status": "start", "started": 1788294613.0, "ended": 1788294613.078, "dry": false, "pid": 1040163}
 {"at": 1788294613.184, "role": "scout", "status": "busy", "started": 1788294613.0, "ended": 1788294613.184, "dry": false, "note": "другая роль уже работает (замок /root/algoth_v2/research/factory/out/agents.lock)"}
+{"at": 1788295049.436, "role": "scout", "status": "busy", "started": 1788295049.0, "ended": 1788295049.436, "dry": false, "note": "другая роль уже работает (замок /root/algoth_v2/research/factory/out/agents.lock)"}
