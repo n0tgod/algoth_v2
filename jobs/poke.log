@@ -382,3 +382,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788294398 ==
 [2026-09-01T20:26:39Z] задание scout-first-run: роль scout
+
+== сигнал 1788294611 ==
+[2026-09-01T20:30:13Z] задание adversary-ceiling-5: роль adversary
+[2026-09-01T20:30:13Z] задание scout-first-run2: роль scout
