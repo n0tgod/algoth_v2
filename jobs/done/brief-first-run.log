@@ -31,3 +31,18 @@
 Замеров рынка за сутки не было: по исследованию сутки пустые, система строилась, а не считала.
 КОНТРАКТ: выполнен
 прогон роли brief завершён
+публикуется в ветку main:
+ jobs/done/agents-env-probe3.log        |  11 +
+ jobs/done/brief-first-run.done         |   1 +
+ jobs/done/brief-first-run.log          |  33 +++
+ jobs/poke.log                          |   3 +
+ research/factory/out/agents-runs.jsonl |   1 +
+ research/factory/out/brief.md          | 400 +++++++++++++++++++++++++++++++++
+ research/factory/out/summary.md        |  96 ++++++++
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 8 files changed, 546 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   5efd88b..db91174  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-01T12:10:35Z, код 0
