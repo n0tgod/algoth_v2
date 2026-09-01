@@ -48,12 +48,20 @@ CITE_RE = re.compile(
 
 
 def append(path, role, status, started, ended=None, note=None,
-           dry=False, out_bytes=None):
-    """Дозаписать строку прогона. Возвращает записанную строку."""
+           dry=False, out_bytes=None, pid=None):
+    """Дозаписать строку прогона. Возвращает записанную строку.
+
+    Статус `start` пишется В НАЧАЛЕ прогона и несёт номер процесса.
+    Без него «работает сейчас» неотличимо от «не запускалась»: роль
+    оставляла бы след только по завершении, а владелец спрашивает
+    состояние именно во время работы.
+    """
     row = {"at": round(time.time(), 3), "role": role, "status": status,
            "started": round(started, 3),
            "ended": round(ended if ended is not None else time.time(), 3),
            "dry": bool(dry)}
+    if pid is not None:
+        row["pid"] = int(pid)
     if note:
         row["note"] = str(note)[:2000]
     if out_bytes is not None:
@@ -157,3 +165,51 @@ def check_brief(text, root, budget=BRIEF_BUDGET_CHARS,
         bad.append("названы несуществующие файлы: "
                    + ", ".join(sorted(missing)[:5]))
     return (not bad), bad, got
+
+
+def alive(pid):
+    """Жив ли процесс. Мёртвый номер значит «прогон оборван»."""
+    try:
+        os.kill(int(pid), 0)
+    except (OSError, TypeError, ValueError):
+        return False
+    return True
+
+
+def state_of(rows):
+    """По каждой роли: идёт ли прогон сейчас и чем кончился прошлый.
+
+    Различать обязательно. «Работает» и «последний прогон» — разные
+    вопросы, и склеив их, страница показывала бы старый отказ во время
+    исправного прогона.
+
+    Оборванный прогон (строка `start`, чей процесс мёртв) НЕ считается
+    идущим: иначе убитая роль вечно выглядела бы работающей — тревога,
+    которой нет, хуже её отсутствия.
+    """
+    out = {}
+    for r in sorted(rows, key=lambda x: (x.get("at") or 0)):
+        k = r.get("role")
+        if not k:
+            continue
+        st = out.setdefault(k, {"running": None, "last": None,
+                                "broken": None})
+        if r.get("status") == "start":
+            st["running"] = r
+        else:
+            # Любая незапускающая строка закрывает начатый прогон.
+            st["running"] = None
+            st["last"] = r
+    for k, st in out.items():
+        r = st["running"]
+        if r is not None and not alive(r.get("pid")):
+            st["running"] = None
+            st["broken"] = r
+    return out
+
+
+def history(rows, role, limit=20):
+    """Последние строки роли, новые сверху."""
+    got = [r for r in rows if r.get("role") == role]
+    got.sort(key=lambda x: (x.get("at") or 0), reverse=True)
+    return got[:limit]

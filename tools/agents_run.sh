@@ -59,14 +59,15 @@ STARTED="$(date +%s)"
 # Строка прогона пишется ЯДРОМ журнала, а не echo в файл: формат один
 # на запускалку, страницу и проверки, и второй писатель однажды
 # разошёлся бы с первым.
-log_run() {                                   # статус, пояснение
-    "$PY" - "$RUNS" "$ROLE" "$1" "$STARTED" "${2:-}" "$DRY" <<'PYEOF'
+log_run() {                              # статус, пояснение [, pid]
+    "$PY" - "$RUNS" "$ROLE" "$1" "$STARTED" "${2:-}" "$DRY" "${3:-}" \
+        <<'PYEOF'
 import sys, os
 sys.path.insert(0, os.path.join(os.getcwd(), "research", "factory"))
 import runlog as R
-path, role, status, started, note, dry = sys.argv[1:7]
+path, role, status, started, note, dry, pid = sys.argv[1:8]
 R.append(path, role, status, float(started), note=note or None,
-         dry=(dry == "1"))
+         dry=(dry == "1"), pid=int(pid) if pid else None)
 PYEOF
 }
 
@@ -87,6 +88,12 @@ exec 9>"$LOCK"
 if ! flock -n 9; then
     die "busy" "другая роль уже работает (замок $LOCK)"
 fi
+
+# Строка НАЧАЛА с номером процесса. Без неё «работает сейчас»
+# неотличимо от «не запускалась»: роль оставляла бы след только по
+# завершении, а спрашивают состояние именно во время работы.
+# Мёртвый номер читается как «прогон оборван», а не как идущий.
+log_run "start" "" "$$"
 
 if [ "$DRY" = "1" ]; then
     echo "=== сухой прогон роли $ROLE: модель НЕ вызывается ==="

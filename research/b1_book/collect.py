@@ -4059,6 +4059,46 @@ class Collector:
     # днём, и это самый дешёвый отказ из всех.
     AGENTS_STALE = 36 * 3600
 
+    @staticmethod
+    def _run_row(r, now):
+        """Строка прогона для показа: заметка урезается, не выбрасывается."""
+        if not r:
+            return None
+        note = r.get("note") or ""
+        out = {"status": r.get("status"), "at": r.get("at"),
+               "age_sec": round(now - (r.get("at") or now), 1),
+               "dry": bool(r.get("dry")),
+               "took_sec": round(max(0.0, (r.get("ended") or 0)
+                                     - (r.get("started") or 0)), 1)}
+        if note:
+            out["note"] = note[:400]
+            if len(note) > 400:
+                out["note_cut"] = True
+        return out
+
+    @staticmethod
+    def _produced(root, rel, now):
+        """Файл, который роль обязана была оставить.
+
+        Отсутствие файла — состояние, а не ноль: «роль отработала» без
+        её продукта есть утверждение, которое нечем проверить.
+        """
+        p = os.path.join(root, rel)
+        out = {"path": rel, "exists": os.path.exists(p)}
+        if not out["exists"]:
+            return out
+        try:
+            st = os.stat(p)
+            out["bytes"] = st.st_size
+            out["age_sec"] = round(now - st.st_mtime, 1)
+            with open(p, encoding="utf-8", errors="replace") as f:
+                head = f.read(1400)
+            out["head"] = head
+            out["head_cut"] = st.st_size > len(head.encode("utf-8"))
+        except OSError as e:
+            out["error"] = str(e)
+        return out
+
     def agents_state(self):
         """Автономная система: конвейер, границы и что уже построено.
 
@@ -4096,6 +4136,10 @@ class Collector:
             os.path.dirname(HERE), "factory", "out", RL.RUNS))
         last = RL.last_by_role(runs)
         ran = RL.ok_runs(runs)
+        # Состояние роли — ДВА разных вопроса: идёт ли прогон сейчас и
+        # чем кончился прошлый. Склеив их, страница показывала бы
+        # старый отказ во время исправного прогона.
+        rstate = RL.state_of(runs)
         steps = []
         for st in AG.pipeline():
             proof = st.get("proof") or ""
@@ -4103,13 +4147,20 @@ class Collector:
                 os.path.join(root, proof)))
             role = st["kind"] == "role"
             lr = last.get(st["key"])
+            rs = rstate.get(st["key"]) or {}
             steps.append(dict(
                 st, built=(has and (not role or st["key"] in ran)),
                 prompt=has,
                 last_run=({"status": lr.get("status"),
                            "at": lr.get("at"),
                            "age_sec": round(now - (lr.get("at") or now), 1),
-                           "note": lr.get("note")} if lr else None)))
+                           "note": lr.get("note")} if lr else None),
+                running=self._run_row(rs.get("running"), now),
+                broken_run=self._run_row(rs.get("broken"), now),
+                runs=[self._run_row(r, now)
+                      for r in RL.history(runs, st["key"], 20)],
+                produced=[self._produced(root, rel, now)
+                          for rel in (st.get("produces") or [])]))
         built = [s for s in steps if s["built"]]
         # Следующий шаг — ПЕРВЫЙ непостроенный по порядку конвейера,
         # а не назначенный словом: порядок постройки обязан следовать

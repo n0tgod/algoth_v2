@@ -8500,6 +8500,25 @@ body{margin:0;background:
 .f .lab{color:var(--muted);font-size:10.5px;letter-spacing:.09em;
  text-transform:uppercase;display:block}
 .run{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+.step{cursor:pointer}
+.chip.live{border-color:var(--bid);color:var(--bid)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+ background:var(--bid);margin-right:5px;vertical-align:middle;
+ animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+.veil{position:fixed;inset:0;background:rgba(6,4,18,.72);z-index:40;
+ display:flex;align-items:flex-start;justify-content:center;
+ padding:24px 12px;overflow:auto}
+.sheet{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:16px 18px;max-width:820px;width:100%}
+.sheet h3{margin:0 0 2px;font-size:15px}
+.sheet .x{float:right;cursor:pointer;color:var(--muted);
+ border:1px solid var(--rule);border-radius:999px;padding:2px 10px;
+ font-size:12px;background:var(--chip)}
+.pre{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-size:11.5px;color:var(--muted);background:var(--chip);
+ border:1px solid var(--rule-soft);border-radius:10px;padding:9px 11px;
+ max-height:280px;overflow:auto;margin:6px 0 0}
 .why{font-size:12.5px;color:var(--muted);margin:8px 0 0;
  padding-left:10px;border-left:1px solid var(--rule-soft)}
 .why b{color:var(--ink);font-weight:600}
@@ -8585,6 +8604,16 @@ const UI = {
   lastrun: {en: "last run", ru: "последний прогон"},
   never: {en: "never run", ru: "не запускалась ни разу"},
   hasprompt: {en: "prompt only", ru: "только промпт"},
+  live: {en: "running now", ru: "работает сейчас"},
+  broke: {en: "run was cut off", ru: "прогон оборван"},
+  jrn: {en: "run log", ru: "журнал прогонов"},
+  made: {en: "what it produced", ru: "что произвела"},
+  nojrn: {en: "no runs recorded yet", ru: "прогонов ещё не было"},
+  nomade: {en: "the file is not there", ru: "файла нет"},
+  when: {en: "when", ru: "когда"},
+  took: {en: "took", ru: "длилось"},
+  tap: {en: "tap a step for its log",
+        ru: "нажмите на шаг — увидите его журнал"},
   nosched: {en: "There is no schedule yet, so a silent role is not an "
                 + "alarm here. It becomes one the moment the runner is "
                 + "wired into the watchdog.",
@@ -8679,7 +8708,8 @@ function render(){
     al += `<p class="frame" data-nosched="1">${T("nosched")}</p>`;
   document.getElementById("alarm").innerHTML = al;
 
-  document.getElementById("pcap").textContent = T("pcap");
+  document.getElementById("pcap").textContent =
+    T("pcap") + " \u00b7 " + T("tap");
   document.getElementById("pipe").innerHTML = d.steps.map((s, i) => {
     const isNext = s.key === d.next_key;
     return `<div class="step ${s.kind === "role" ? "role" : "mech"}${
@@ -8698,6 +8728,10 @@ function render(){
             s.built ? T("yes") : T("no")}</span>
         ${(!s.built && s.prompt) ? `<span class="chip"
           data-prompt="1">${T("hasprompt")}</span>` : ""}
+        ${s.running ? `<span class="chip live" data-live="1"><span
+          class="dot"></span>${T("live")}</span>` : ""}
+        ${s.broken_run ? `<span class="chip off"
+          data-broken="1">${T("broke")}</span>` : ""}
       </div>
       <div class="sbody">${esc(tx(s, "plain"))}</div>
       ${s.kind === "role" ? `<div class="run mono">${T("lastrun")}:
@@ -8720,6 +8754,9 @@ function render(){
     </div>`;
   }).join("");
 
+  document.querySelectorAll("#pipe .step").forEach(el => {
+    el.onclick = () => openStep(el.getAttribute("data-step")); });
+
   document.getElementById("bcap").textContent = T("bcap");
   document.getElementById("bnote").textContent = T("bnote");
   document.getElementById("bounds").innerHTML =
@@ -8737,10 +8774,111 @@ function render(){
         <td>${esc(tx(r, "guard"))}</td></tr>`).join("");
 }
 
+// Карточка шага: состояние, журнал прогонов и произведённое.
+// Просьба владельца: нажав на агента, видеть, когда он отработал в
+// последний раз, работает ли сейчас, что сделал и чего не смог.
+//
+// Состояние и «последний прогон» стоят ПОРОЗНЬ намеренно: склеив их,
+// страница показывала бы старый отказ во время исправного прогона.
+let OPEN = null;
+function fmtAge(sec){
+  if (sec == null) return "&mdash;";
+  const m = Math.round(sec / 60);
+  if (m < 60) return m + " min";
+  const h = Math.round(sec / 3600);
+  return h < 48 ? h + " h" : Math.round(sec / 86400) + " d";
+}
+function stepHtml(s){
+  let h = `<button class="x" id="sheetx">&times;</button>
+    <h3>${esc(tx(s, "title"))}</h3>
+    <div class="k">${s.kind === "role" ? T("role") : T("mech")} &middot;
+      ${esc(tx(s, "cadence"))}${s.kind === "role"
+        ? " &middot; " + esc(s.model) : ""}</div>
+    <div class="sbody">${esc(tx(s, "plain"))}</div>`;
+  let state;
+  if (s.running)
+    state = `<b class="good"><span class="dot"></span>${T("live")}</b>
+      &middot; ${fmtAge(s.running.age_sec)}`;
+  else if (s.broken_run)
+    state = `<b class="bad">${T("broke")}</b> &middot;
+      ${fmtAge(s.broken_run.age_sec)}`;
+  else if (s.last_run)
+    state = `${T("lastrun")}: <b>${esc(s.last_run.status)}</b> &middot;
+      ${fmtAge(s.last_run.age_sec)}${s.last_run.note
+        ? " &middot; " + esc(s.last_run.note) : ""}`;
+  else
+    state = `<span class="dim">${T("never")}</span>`;
+  h += `<div class="run" data-state="1" style="font-size:13px">${state}</div>`;
+
+  // Журнал показывается ЦЕЛИКОМ, включая отказы: тишина запрещена, и
+  // показывать только удачное значило бы вернуть её через показ.
+  h += `<div class="cap" style="margin-top:12px">${T("jrn")}</div>`;
+  if (!s.runs || !s.runs.length) {
+    h += `<div class="dim" data-nojrn="1">${T("nojrn")}</div>`;
+  } else {
+    h += `<div class="scroll"><table data-jrn="1"><tr>
+      <th>${T("when")}</th><th>status</th><th>${T("took")}</th>
+      <th>${T("reason")}</th></tr>` + s.runs.map(r => `<tr>
+      <td class="mono">${fmtAge(r.age_sec)}</td>
+      <td class="mono ${r.status === "ok" ? "good"
+        : (r.status === "start" ? "" : "bad")}">${esc(r.status)}${
+        r.dry ? ' <span class="dim">dry</span>' : ""}</td>
+      <td class="mono">${r.took_sec ? r.took_sec + " s" : "&mdash;"}</td>
+      <td>${esc(r.note || "")}${r.note_cut ? "&hellip;" : ""}</td>
+      </tr>`).join("") + `</table></div>`;
+  }
+
+  // Произведённое. Отсутствие файла — состояние, а не пустота:
+  // «роль отработала» без её продукта нечем проверить.
+  if (s.produced && s.produced.length) {
+    h += `<div class="cap" style="margin-top:12px">${T("made")}</div>`;
+    h += s.produced.map(f => `<div data-made="1">
+      <span class="mono">${esc(f.path)}</span> &middot;
+      ${f.exists ? (f.bytes + " B &middot; " + fmtAge(f.age_sec))
+                 : `<span class="bad">${T("nomade")}</span>`}
+      ${f.head ? `<div class="pre">${esc(f.head)}${
+        f.head_cut ? "\n…" : ""}</div>` : ""}</div>`).join("");
+  }
+  h += `<div class="why" style="margin-top:12px"><b>${T("why")}:</b>
+    ${esc(tx(s, "why"))}
+    <span class="mono dim"> &middot; ${esc(s.proof)}</span></div>`;
+  return h;
+}
+function openStep(key){
+  const s = (DATA && DATA.steps || []).filter(x => x.key === key)[0];
+  if (!s) return;
+  OPEN = key;
+  let v = document.getElementById("veil");
+  if (!v) {
+    v = document.createElement("div");
+    v.id = "veil"; v.className = "veil";
+    document.body.appendChild(v);
+    v.onclick = (e) => { if (e.target === v) closeStep(); };
+  }
+  v.innerHTML = `<div class="sheet" id="sheet">${stepHtml(s)}</div>`;
+  const x = document.getElementById("sheetx");
+  if (x) x.onclick = closeStep;
+}
+function closeStep(){
+  OPEN = null;
+  const v = document.getElementById("veil");
+  if (!v) return;
+  // Гасим содержимое И убираем узел: полагаться на parentNode нельзя —
+  // проверка страницы работает на заглушке DOM, где его нет, и
+  // «карточка закрылась» проверялась бы там вхолостую.
+  v.innerHTML = "";
+  if (typeof v.remove === "function") v.remove();
+}
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeStep(); });
+
 function setLang(v){
   LANG = v;
   try { localStorage.setItem("algoth_lang", v); } catch (e) {}
   render();
+  // Открытая карточка перерисовывается вместе со страницей: половина
+  // по-русски и половина по-английски выглядела бы исправной.
+  if (OPEN) openStep(OPEN);
 }
 function langBox(){
   document.getElementById("lang").innerHTML =

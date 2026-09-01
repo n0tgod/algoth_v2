@@ -379,7 +379,8 @@ global.fetch = async (url) => {
                     why: "publish only the interesting IS the R5 machine",
                     why_ru: "публиковать только интересное и есть машина R5",
                     proof: "research/factory/run_day.py", built: true,
-                    prompt: true, last_run: null},
+                    prompt: true, last_run: null, running: null,
+                    broken_run: null, runs: [], produced: []},
                    {key: "propose", kind: "role", model: "дорогая",
                     title: "proposer", title_ru: "предлагающий",
                     cadence: "daily", cadence_ru: "раз в сутки",
@@ -396,8 +397,48 @@ global.fetch = async (url) => {
                     why_ru: "пропускную способность задаёт календарь",
                     proof: "research/factory/agents/propose.md",
                     built: false, prompt: true,
-                    last_run: {status: "no-key", at: 1788215000,
-                               age_sec: 900, note: "ключа API нет"}},
+                    last_run: {status: "no-auth", at: 1788215000,
+                               age_sec: 900, took_sec: 0.4,
+                               note: "авторизации нет ни одним путём"},
+                    running: null, broken_run: null,
+                    runs: [{status: "no-auth", age_sec: 900,
+                            took_sec: 0.4, dry: false,
+                            note: "авторизации нет ни одним путём"},
+                           {status: "ok", age_sec: 90000, took_sec: 62.0,
+                            dry: false},
+                           {status: "ok", age_sec: 100000, took_sec: 3.0,
+                            dry: true}],
+                    produced: [{path: "research/factory/out/x.md",
+                                exists: false}]},
+                   // Роль, которая РАБОТАЕТ ПРЯМО СЕЙЧАС: без неё
+                   // «идёт прогон» неотличимо от «не запускалась», а
+                   // владелец спрашивает именно это.
+                   {key: "brief", kind: "role", model: "дешёвая",
+                    title: "briefer", title_ru: "брифер",
+                    cadence: "daily", cadence_ru: "раз в сутки",
+                    plain: "gathers the state into a brief",
+                    plain_ru: "собирает состояние в бриф",
+                    reads: "the ledger", reads_ru: "журнал",
+                    writes: "brief and summary",
+                    writes_ru: "бриф и сводку",
+                    forbid: "no claim without a pointer",
+                    forbid_ru: "нет утверждения без указателя",
+                    doubt: "writes not measured",
+                    doubt_ru: "пишет «не измерено»",
+                    why: "memory is 216 thousand tokens",
+                    why_ru: "память — 216 тысяч токенов",
+                    proof: "research/factory/agents/brief.md",
+                    built: false, prompt: true, last_run: null,
+                    running: {status: "start", age_sec: 130,
+                              took_sec: 0, dry: false},
+                    broken_run: null,
+                    runs: [{status: "start", age_sec: 130, took_sec: 0,
+                            dry: false}],
+                    produced: [{path: "research/factory/out/brief.md",
+                                exists: true, bytes: 12040,
+                                age_sec: 300,
+                                head: "# Бриф\n- гипотеза закрыта",
+                                head_cut: true}]},
                    {key: "publish", kind: "mech", model: "нет",
                     title: "publication", title_ru: "публикация",
                     cadence: "after every run",
@@ -416,9 +457,10 @@ global.fetch = async (url) => {
                     why_ru: "отчёт, оставшийся на сервере, есть прогон, "
                             + "которого не было",
                     proof: "tools/publish.sh", built: true,
-                    prompt: true, last_run: null}];
-                 const out = {steps: steps, built_n: 2, total_n: 3,
-                   roles_n: 1, next_key: "propose",
+                    prompt: true, last_run: null, running: null,
+                    broken_run: null, runs: [], produced: []}];
+                 const out = {steps: steps, built_n: 2, total_n: 4,
+                   roles_n: 2, next_key: "propose",
                    runs_n: 4, runs_broken: 0,
                    scheduled: /agentssched=1/.test(SEARCH),
                    stale_after_sec: 129600,
@@ -1368,6 +1410,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // заглушен, `querySelectorAll` пуст, и проверка «клик
                 // по кнопке» шла бы вхолостую — обработчик до неё не
                 // доезжает вовсе.
+                + "\nglobal.__openStep = typeof openStep === "
+                + "'function' ? openStep : null;"
+                + "\nglobal.__closeStep = typeof closeStep === "
+                + "'function' ? closeStep : null;"
                 + "\nglobal.__lang = typeof setLang === 'function' "
                 + "? setLang : null;"
                 + "\nglobal.__info = typeof showInfo === 'function' "
@@ -3772,13 +3818,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const Etx = (id) => String((global.__el(id) || {}).textContent || "");
     const pipe = E("pipe"), strip = E("strip"), frame = E("frame");
     const steps = (pipe.match(/class="step /g) || []).length;
-    if (steps !== 3)
-      bad.push(`агенты: шагов нарисовано ${steps}, а в ответе три`);
+    if (steps !== 4)
+      bad.push(`агенты: шагов нарисовано ${steps}, а в ответе четыре`);
     const on = (pipe.match(/data-built="1"/g) || []).length;
     const off = (pipe.match(/data-built="0"/g) || []).length;
-    if (on !== 2 || off !== 1)
+    if (on !== 2 || off !== 2)
       bad.push(`агенты: построенных ${on} и непостроенных ${off}, `
-               + "а в ответе два и один");
+               + "а в ответе по два");
     // Рамка предмета: страница обязана объяснять СВОЙ предмет сама —
     // сюда приходят прямо из меню, и список из ролей читается как
     // «десять работающих программ».
@@ -3792,8 +3838,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/proposer/.test(strip))
       bad.push("агенты: плитка следующего шага не называет "
                + "непостроенный шаг");
-    if (!/\b2<small> \/ 3<\/small>/.test(strip))
-      bad.push("агенты: плитка построенного не показывает 2 из 3");
+    if (!/\b2<small> \/ 4<\/small>/.test(strip))
+      bad.push("агенты: плитка построенного не показывает 2 из 4");
     // Поля роли: без них карточка описывает шаг, но не то, чем он
     // ограничен, — а ограничения и есть предмет.
     for (const [lab, val] of [["reads", "the brief"],
@@ -3810,8 +3856,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // ни разу не звали.
     if (!/data-prompt="1"/.test(pipe))
       bad.push("агенты: роль с промптом без прогонов не помечена");
-    if (!/last run[\s\S]{0,60}no-key/.test(pipe))
+    if (!/last run[\s\S]{0,60}no-auth/.test(pipe))
       bad.push("агенты: последний прогон роли не показан со статусом");
+    // Идущий прогон обязан быть виден НА КАРТОЧКЕ, а не только внутри:
+    // владелец спрашивает «работает ли сейчас», глядя на список.
+    if (!/data-live="1"/.test(pipe))
+      bad.push("агенты: работающая роль не помечена в списке");
     if (!/>4</.test(strip))
       bad.push("агенты: число прогонов ролей не показано");
     // Пока расписания нет, молчание роли — состояние, а не отказ.
@@ -3854,6 +3904,68 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     } else if (/did not arrive|не пришёл/.test(E("alarm"))) {
       bad.push("агенты: свежий прогон объявлен устаревшим");
     }
+    // Карточка шага — просьба владельца: нажав на агента, видеть,
+    // когда он отработал, работает ли сейчас, что сделал и чего не
+    // смог. Дёргается НАСТОЯЩЕЙ функцией страницы.
+    // Дорога до карточки, а не только сама карточка: заглушка DOM
+    // не отдаёт узлы по селектору, и клик по шагу тут не наблюдаем.
+    // Проверка источника слабее прогона и ловит ровно снятие
+    // привязки — но без неё карточка осталась бы недостижимой, а
+    // проверки её содержимого проходили бы.
+    if (!/el\.onclick = \(\) => openStep\(/.test(src))
+      bad.push("агенты: клик по шагу не открывает карточку");
+    if (!global.__openStep) {
+      bad.push("агенты: у страницы нет карточки шага (нет openStep)");
+    } else {
+      global.__openStep("propose");
+      const sh = String((global.__el("veil") || {}).innerHTML || "");
+      if (!/no-auth/.test(sh))
+        bad.push("агенты: карточка не показала состояние последнего прогона");
+      const rows = (sh.match(/<tr>/g) || []).length;
+      if (rows !== 4)
+        bad.push(`агенты: в журнале карточки строк ${rows}, `
+                 + "а прогонов три плюс шапка");
+      if (!/dry/.test(sh))
+        bad.push("агенты: сухой прогон в журнале не помечен");
+      if (!/data-made="1"/.test(sh) || !/research\/factory\/out\/x\.md/
+          .test(sh))
+        bad.push("агенты: карточка не назвала, что роль обязана произвести");
+      // Отсутствие файла — состояние, а не пустота.
+      if (!/the file is not there/.test(sh))
+        bad.push("агенты: недостающий продукт роли не назван");
+
+      global.__openStep("brief");
+      const sb = String((global.__el("veil") || {}).innerHTML || "");
+      if (!/running now/.test(sb))
+        bad.push("агенты: у работающей роли карточка не говорит «работает»");
+      if (!/12040 B/.test(sb))
+        bad.push("агенты: размер произведённого файла не показан");
+      if (!/# Бриф/.test(sb))
+        bad.push("агенты: начало произведённого файла не показано");
+
+      // Механический шаг тоже открывается, и пустой журнал обязан
+      // называть себя, а не выглядеть поломкой.
+      global.__openStep("judge");
+      const sj = String((global.__el("veil") || {}).innerHTML || "");
+      if (!/data-nojrn="1"/.test(sj))
+        bad.push("агенты: пустой журнал шага не назван");
+
+      // Карточка обязана переводиться вместе со страницей.
+      global.__openStep("brief");
+      global.__lang("ru");
+      const sr = String((global.__el("veil") || {}).innerHTML || "");
+      if (!/работает сейчас/.test(sr))
+        bad.push("агенты: открытая карточка не перерисовалась по-русски");
+      global.__lang("en");
+
+      if (global.__closeStep) {
+        global.__closeStep();
+        const sc = String((global.__el("veil") || {}).innerHTML || "");
+        if (sc.trim() !== "")
+          bad.push("агенты: карточка не закрылась");
+      }
+    }
+
     // Язык переключается НАСТОЯЩЕЙ функцией страницы: подставная
     // кнопка исполняла бы чужую дорогу.
     if (!global.__lang) {

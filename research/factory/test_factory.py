@@ -256,6 +256,51 @@ def test_run_log_counts_every_wake_up():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_running_now_is_a_separate_question():
+    """«Работает сейчас» и «последний прогон» — разные вопросы.
+
+    Просьба владельца: нажав на агента, видеть, работает ли он прямо
+    сейчас. Склеив это с последним прогоном, страница показывала бы
+    старый отказ во время исправной работы.
+
+    Оборванный прогон (строка `start`, чей процесс мёртв) идущим НЕ
+    считается: иначе убитая роль вечно выглядела бы работающей —
+    тревога, которой нет, хуже её отсутствия.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        p = os.path.join(d, "runs.jsonl")
+        RL.append(p, "brief", "start", 100.0, pid=os.getpid())
+        rows, _ = RL.read(p)
+        st = RL.state_of(rows)["brief"]
+        check("идущий прогон виден", st["running"] is not None)
+        check("законченного прогона ещё нет", st["last"] is None)
+
+        RL.append(p, "brief", "ok", 100.0, ended=160.0)
+        rows, _ = RL.read(p)
+        st = RL.state_of(rows)["brief"]
+        check("после конца прогон не идёт", st["running"] is None)
+        check("последний прогон — законченный",
+              st["last"] and st["last"]["status"] == "ok")
+
+        # Мёртвый номер процесса: прогон оборван, а не идёт.
+        RL.append(p, "brief", "start", 200.0, pid=2 ** 22 + 7)
+        rows, _ = RL.read(p)
+        st = RL.state_of(rows)["brief"]
+        check("мёртвый процесс не считается идущим",
+              st["running"] is None, str(st["running"]))
+        check("оборванный прогон назван отдельно",
+              st["broken"] is not None)
+
+        hist = RL.history(rows, "brief")
+        check("в истории все строки, включая отказы",
+              len(hist) == 3, str(len(hist)))
+        check("история новыми сверху",
+              (hist[0].get("at") or 0) >= (hist[-1].get("at") or 0))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_brief_contract_is_mechanical():
     """Контракт брифа проверяет машина, и проверяет ровно проверяемое.
 
@@ -351,12 +396,21 @@ def test_runner_leaves_a_line_on_every_refusal():
               r3.stdout[-200:])
         rows, _ = RL.read(os.path.join(d, RL.RUNS))
         got = sorted((r["role"], r["status"]) for r in rows)
+        # Отказ ПОСЛЕ взятия замка оставляет две строки: начало и
+        # причину. Отказ ДО замка (нет промпта) — только причину:
+        # прогон не начинался, и объявлять начало было бы выдумкой.
         check("обе беды оставили строку в журнале",
-              got == [("brief", "no-auth"), ("nosuchrole", "no-prompt")],
-              str(got))
+              got == [("brief", "no-auth"), ("brief", "start"),
+                      ("nosuchrole", "no-prompt")], str(got))
+        st = RL.state_of(rows)
+        check("после отказа роль не числится работающей",
+              st["brief"]["running"] is None, str(st["brief"]))
+        check("причина отказа — последний прогон роли",
+              st["brief"]["last"]["status"] == "no-auth")
         dry, _ = RL.read(os.path.join(d, "agents-runs-dry.jsonl"))
         check("сухой прогон пишет в свой журнал и в общий не лезет",
-              len(dry) == 1 and dry[0]["dry"] is True, str(dry))
+              len(dry) == 2 and all(r["dry"] for r in dry)
+              and [r["status"] for r in dry] == ["start", "ok"], str(dry))
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -380,6 +434,7 @@ def main():
              test_effective_n_is_measured,
              test_agents_registry_is_one_source_and_complete,
              test_run_log_counts_every_wake_up,
+             test_running_now_is_a_separate_question,
              test_brief_contract_is_mechanical,
              test_runner_leaves_a_line_on_every_refusal)
     for t in tests:
