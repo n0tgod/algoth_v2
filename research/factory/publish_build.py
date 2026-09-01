@@ -78,7 +78,19 @@ def main(argv=None):
     # нужна для восстановления, когда роль писалась до появления поля
     # `touched`. Тот же запрет на путь наружу.
     ap.add_argument("--also", action="append", default=[])
+    # Публиковать непроверенную постройку нельзя: контракт и есть то,
+    # что отличает «роль отработала» от «роль оставила файлы».
+    ap.add_argument("--no-recheck", action="store_true")
     a = ap.parse_args(argv)
+
+    if not a.no_recheck:
+        sys.path.insert(0, HERE)
+        import runlog as RL
+        ok, why = RL.check_role("build", ROOT)
+        print("контракт: " + ("выполнен" if ok else "; ".join(why)))
+        if not ok:
+            print("не публикую — контракт не выполнен")
+            return 1
 
     rels = paths_of(a.report)
     for rel in a.also:
