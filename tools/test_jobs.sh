@@ -191,6 +191,26 @@ if grep -q "РОЛЬ" jobs/done/role-bad.log 2>/dev/null; then
     say "  ПАДЕНИЕ отвергнутая роль всё же звалась"; fail=$((fail+1))
 else say "  ok   отвергнутая роль не звалась"; ok=$((ok+1)); fi
 
+# 8b. Занятая роль: задание НЕ сгорает, а ждёт следующей развёртки.
+# Прогон роли отцеплен, поэтому развёртка доходит до следующего
+# задания роли, пока первое ещё идёт: прежде второе получало честный
+# отказ по замку и помечалось выполненным — то есть работа терялась.
+mkdir -p research/factory/out
+printf 'agents-run brief\n' > jobs/role-busy.job
+git add -A >/dev/null; git -c core.hooksPath=/dev/null commit -qm busy
+exec 7>>research/factory/out/agents.lock
+flock -n 7        # держим замок роли, как это делает идущий прогон
+bash tools/jobs.sh > /dev/null 2>&1
+sleep 1
+if [ -f jobs/done/role-busy.done ]; then
+    say "  ПАДЕНИЕ занятое задание помечено выполненным"; fail=$((fail+1))
+else say "  ok   занятое задание осталось в очереди"; ok=$((ok+1)); fi
+exec 7>&-         # замок отпущен — задание обязано выполниться
+bash tools/jobs.sh > /dev/null 2>&1
+sleep 1
+has "после освобождения роль запущена" jobs/done/role-busy.log \
+    "запускаю роль: brief"
+
 # 9. Сторож обязан звать очередь: секция, которую легко потерять при
 # правке соседней.
 cd - >/dev/null || exit 1
