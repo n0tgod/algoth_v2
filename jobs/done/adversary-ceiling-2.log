@@ -12,3 +12,17 @@
 Граница моей проверки названа в отчёте честно: сегодняшний живой артефакт прежнего образца, потолок на нём отвечает `undetermined` — починенный конвейер живьём ещё не отрабатывал ни разу.
 КОНТРАКТ: выполнен
 прогон роли adversary завершён
+публикуется в ветку main:
+ jobs/done/adversary-ceiling-2.done     |   1 +
+ jobs/done/adversary-ceiling-2.log      |  14 ++++
+ jobs/done/rescue-ceiling-fix.log       |   7 ++
+ jobs/poke.log                          |   3 +
+ research/factory/out/adversary.json    | 146 +++++++++++++++------------------
+ research/factory/out/agents-runs.jsonl |   2 +
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 7 files changed, 95 insertions(+), 80 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   8eb4519..06b3632  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-01T17:17:29Z, код 0
