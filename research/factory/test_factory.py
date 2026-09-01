@@ -218,6 +218,19 @@ def test_agents_registry_is_one_source_and_complete():
               for x in AG.pipeline()))
     check("границы и отказы не пусты",
           len(AG.BOUNDARIES) >= 3 and len(AG.RISKS) >= 3)
+    # Инвариант, найденный первым боевым прогоном: роль, которая
+    # обязана оставить файл, обязана иметь право его написать. Иначе
+    # прогон уходит в обход и тратит время на борьбу с харнессом.
+    for st in AG.roles():
+        if st.get("produces"):
+            t = AG.tools(st["key"])
+            check(f"роль {st['key']} умеет писать то, что производит",
+                  "Write" in t, str(t))
+    # Права — списком, а не режимом «разрешить всё»: граница взрыва у
+    # автономной сессии держится правами.
+    check("ни одна роль не просит обхода проверок",
+          all("bypass" not in x.lower()
+              for st in AG.roles() for x in AG.tools(st["key"])))
 
 
 def test_run_log_counts_every_wake_up():
@@ -337,6 +350,20 @@ def test_brief_contract_is_mechanical():
 
     ok, why, _ = RL.check_brief("", root)
     check("пустой бриф не годен", not ok, str(why))
+
+    # Дефект, найденный ПЕРВЫМ БОЕВЫМ прогоном роли: альтернация в
+    # питоне берёт первое совпадение, а не самое длинное, и при
+    # порядке «json | jsonl» путь `ledger.jsonl` обрезался до
+    # несуществующего `ledger.json` — бриф объявлялся выдумкой целиком.
+    # Практически это запрещало ролям ссылаться ровно на два файла,
+    # которые описывают состояние фабрики.
+    got = RL.cites("см. research/factory/out/ledger.jsonl и "
+                   "research/factory/out/agents-runs.jsonl")
+    check("путь с расширением jsonl не обрезается",
+          got == ["research/factory/out/ledger.jsonl",
+                  "research/factory/out/agents-runs.jsonl"], str(got))
+    check("расширение внутри слова указателем не считается",
+          RL.cites("y.jsonlx") == [], str(RL.cites("y.jsonlx")))
 
 
 def test_runner_leaves_a_line_on_every_refusal():

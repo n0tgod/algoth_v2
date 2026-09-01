@@ -111,6 +111,14 @@ PIPELINE = [
         # продукта — утверждение, которое нечем проверить.
         "produces": ["research/factory/out/brief.md",
                      "research/factory/out/summary.md"],
+        # Права роли списком, а не режимом «разрешить всё». Первый
+        # боевой прогон уткнулся в то, что запись была запрещена, и
+        # роль обходила это как могла; лечится это перечнем, а не
+        # снятием проверок — граница взрыва у автономной сессии
+        # держится правами.
+        "tools": ["Read", "Glob", "Grep", "Write", "Edit",
+                  "Bash(cat *)", "Bash(tail *)", "Bash(head *)",
+                  "Bash(ls *)", "Bash(sed *)", "Bash(wc *)"],
     },
     {
         "key": "propose", "kind": "role", "model": "дорогая",
@@ -561,3 +569,9 @@ def missing_translations():
                 elif not (r.get(f + "_ru") or "").strip():
                     bad.append((f"{name}[{i}]", f + "_ru"))
     return bad
+
+
+def tools(key):
+    """Разрешённые роли инструменты. Пусто — значит не объявлены."""
+    st = by_key(key) or {}
+    return list(st.get("tools") or [])
