@@ -349,3 +349,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788279470 ==
 [2026-09-01T16:17:51Z] задание rescue-ceiling запущено: research/factory/publish_build.py
+
+== сигнал 1788279548 ==
+[2026-09-01T16:19:09Z] задание adversary-ceiling: роль adversary
