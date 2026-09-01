@@ -86,22 +86,30 @@ def launch(key, kind, argv, log=print):
     часами, и такт сторожа, повисший на нём, перестал бы делать всё
     остальное.
     """
+    started = time.time()
     if kind == "role":
         cmd = [os.path.join(ROOT, "tools", "agents_run.sh"), key]
     else:
         py = os.path.join(ROOT, ".venv", "bin", "python")
-        cmd = [py if os.path.exists(py) else sys.executable] + argv
+        py = py if os.path.exists(py) else sys.executable
+        # Механический шаг идёт ПОД ОБЁРТКОЙ, и это не украшение:
+        # обёртка живёт ровно столько же, сколько шаг, и пишет строку
+        # конца с кодом возврата. Без неё законно кончившийся шаг
+        # оставался в журнале начатым навсегда.
+        cmd = [py, os.path.join(HERE, "mech_run.py"), key,
+               "%.3f" % started, "--", py] + argv
     log(f"запускаю шаг {key}: {' '.join(cmd)}")
     lf = open(os.path.join(OUT, f"cycle-{key}.log"), "a",
               encoding="utf-8")
     p = subprocess.Popen(cmd, cwd=ROOT, stdout=lf, stderr=lf,
-                         start_new_session=True)
+                         start_new_session=True,
+                         env=dict(os.environ, AGENTS_OUT=OUT))
     # Роль пишет своё начало сама (`agents_run.sh`), и вторая строка
-    # была бы вторым прогоном в журнале. У механического шага писателя
-    # нет — начало пишем здесь, иначе идущий шаг неотличим от
-    # несделанного и следующий такт запустит его заново.
+    # была бы вторым прогоном в журнале. У механического шага начало
+    # пишем здесь — номер процесса известен только тут, — а конец
+    # напишет обёртка.
     if kind != "role":
-        RL.append(os.path.join(OUT, RL.RUNS), key, "start", time.time(),
+        RL.append(os.path.join(OUT, RL.RUNS), key, "start", started,
                   pid=p.pid)
     return p.pid
 

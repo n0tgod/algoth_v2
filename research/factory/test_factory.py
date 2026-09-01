@@ -859,7 +859,11 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
 
     d = tempfile.mkdtemp()
     try:
+        # Подмена ВОЗВРАЩАЕТСЯ в finally: стаб, оставленный в модуле,
+        # исполняет чужую дорогу в следующей проверке — она честно
+        # скажет «не вызвано», а виноват будет предыдущий тест.
         old_out, old_stop = CY.OUT, CY.STOP
+        old_launch = CY.launch
         CY.OUT = d
         CY.STOP = os.path.join(d, "STOP")
         runs = os.path.join(d, RL.RUNS)
@@ -920,8 +924,103 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             check("предел суток останавливает роль",
                   launched == [], str(launched))
         finally:
-            CY.OUT, CY.STOP = old_out, old_stop
+            CY.OUT, CY.STOP, CY.launch = old_out, old_stop, old_launch
     finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_mech_step_leaves_its_end_line():
+    """У механического шага есть писатель КОНЦА, и круг им пользуется.
+
+    Найдено владельцем по живой странице: у потолка стояло «прогон
+    оборван» при том, что прогон отработал и оставил оба артефакта.
+    Причина — конца механического шага не писал НИКТО: круг писал
+    начало, шаг кончался, и строка `start` с мёртвым номером процесса
+    навсегда читалась как обрыв. Нормальное завершение было
+    неотличимо от убитого процесса.
+
+    Проверяется и правило (конец пишется с кодом возврата), и ДОРОГА
+    до него: круг обязан звать шаг через обёртку, иначе правило верно
+    и не исполняется.
+    """
+    sys.path.insert(0, HERE)
+    import mech_run as MR
+    import cycle as CY
+
+    d = tempfile.mkdtemp()
+    runs = os.path.join(d, RL.RUNS)
+    old_env = os.environ.get("AGENTS_OUT")
+    os.environ["AGENTS_OUT"] = d
+    try:
+        t0 = time.time() - 5
+        rc = MR.main(["ceiling", "%.3f" % t0, "--",
+                      sys.executable, "-c", "raise SystemExit(0)"])
+        rows, _ = RL.read(runs)
+        # Строки может не быть вовсе — это и есть проверяемый отказ.
+        # Взяв её индексом, проверка УРОНИЛА бы сюиту вместо провала.
+        one = rows[0] if rows else {}
+        check("удачный шаг оставил строку конца",
+              rc == 0 and len(rows) == 1 and one.get("status") == "ok",
+              str(rows))
+        check("в строке назван код возврата",
+              "код возврата 0" in (one.get("note") or ""),
+              str(one.get("note")))
+        check("момент старта не потерян",
+              abs((one.get("started") or 0) - t0) < 0.01,
+              str(one.get("started")))
+
+        rc = MR.main(["ceiling", "%.3f" % time.time(), "--",
+                      sys.executable, "-c", "raise SystemExit(3)"])
+        rows, _ = RL.read(runs)
+        last = rows[-1] if rows else {}
+        check("упавший шаг назван отказом, а не удачей",
+              rc == 3 and last.get("status") == "fail"
+              and "3" in (last.get("note") or ""), str(last))
+
+        # Дорога до показа: со строкой конца «оборван» исчезает,
+        # без неё — остаётся. Иначе значок значил бы не то, что говорит.
+        dead = 2 ** 22          # заведомо чужой/мёртвый номер
+        st = RL.state_of([{"at": 1.0, "role": "ceiling",
+                           "status": "start", "pid": dead},
+                          {"at": 2.0, "role": "ceiling",
+                           "status": "ok"}])["ceiling"]
+        check("конец снимает «прогон оборван»",
+              st["broken"] is None and (st["last"] or {}).get("status")
+              == "ok", str(st))
+        st = RL.state_of([{"at": 1.0, "role": "ceiling",
+                           "status": "start", "pid": dead}])["ceiling"]
+        check("без конца обрыв по-прежнему виден",
+              st["broken"] is not None, str(st))
+
+        # Дорога круга: механический шаг обязан идти ПОД обёрткой.
+        seen = {}
+
+        class _P:
+            pid = 4242
+
+        def _popen(cmd, **kw):
+            seen["cmd"] = cmd
+            return _P()
+
+        old_out, old_popen = CY.OUT, CY.subprocess.Popen
+        CY.OUT = d
+        CY.subprocess.Popen = _popen
+        try:
+            CY.launch("ceiling", "mech", ["research/factory/ceiling.py"],
+                      log=lambda *a: None)
+        finally:
+            CY.OUT, CY.subprocess.Popen = old_out, old_popen
+        check("круг зовёт механический шаг через обёртку",
+              any("mech_run.py" in str(x) for x in seen.get("cmd", [])),
+              str(seen.get("cmd")))
+        check("сама команда шага в строке запуска осталась",
+              any("ceiling.py" in str(x) for x in seen.get("cmd", [])),
+              str(seen.get("cmd")))
+    finally:
+        if old_env is None:
+            os.environ.pop("AGENTS_OUT", None)
+        else:
+            os.environ["AGENTS_OUT"] = old_env
         shutil.rmtree(d, ignore_errors=True)
 
 
@@ -1029,7 +1128,8 @@ def main():
              test_runner_leaves_a_line_on_every_refusal,
              test_prompt_actually_reaches_the_model,
              test_fallback_happens_only_on_a_limit_and_is_recorded,
-             test_cycle_advances_one_step_and_obeys_the_safeties)
+             test_cycle_advances_one_step_and_obeys_the_safeties,
+             test_mech_step_leaves_its_end_line)
     for t in tests:
         print(t.__name__)
         t()
