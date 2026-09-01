@@ -22,3 +22,17 @@
 Файлы, которые я подделывал (`ceiling.py`, `run_day.py`), возвращены копиями из `/tmp/adv` и сверены по sha256 — совпадают байт в байт. Писал я только в свой файл.
 КОНТРАКТ: выполнен
 прогон роли adversary завершён
+публикуется в ветку main:
+ jobs/done/adversary-ceiling.done       |  1 +
+ jobs/done/adversary-ceiling.log        | 24 +++++++++
+ jobs/done/rescue-ceiling.log           |  7 +++
+ jobs/poke.log                          |  3 ++
+ research/factory/out/adversary.json    | 93 ++++++++++++++++++++++++++++++++++
+ research/factory/out/agents-runs.jsonl |  2 +
+ research/s8_loop/out/day_brake.json    |  2 +-
+ 7 files changed, 131 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   f2864b1..12e28c8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-01T16:31:23Z, код 0
