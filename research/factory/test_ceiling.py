@@ -18,16 +18,42 @@
 живую запись, исполняет другую дорогу, а выглядит исправной.
 """
 
+import atexit
+import glob
 import json
 import os
 import random
+import shutil
+import struct
+import subprocess
 import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+# Байткод — В СВОЙ каталог, и это не гигиена, а исправление дефекта,
+# стоившего целого захода. Питон считает лежащий `.pyc` свежим по паре
+# (mtime исходника в ЦЕЛЫХ секундах, размер), и правка, уложившаяся в ту
+# же секунду при том же размере, кеш не обесценивает: прогон исполняет
+# ПРЕЖНИЙ код, печатая при этом фразы, собранные новым. Ровно так эта
+# сюита однажды доложила пять провалов в
+# `test_the_pools_effective_n_must_grow`: вердикт говорил «эффективное N
+# пула растёт 2.90 → 2.29», противореча собственным числам, потому что
+# фразу собирал исходник, а ветку выбирал байткод прежней правки.
+#
+# Вердикт сюиты обязан относиться к исходнику на диске — поэтому кеш
+# уводится в свой каталог ДО импорта проверяемых модулей. Само дерево
+# при этом проверяется отдельно (`test_the_tree_under_test_...`): увести
+# свой кеш и промолчать о заслоне в ветке значило бы вылечить симптом,
+# оставив суточный цикл исполнять прежний код.
+_PYC = tempfile.mkdtemp(prefix="pyc-suite-")
+sys.pycache_prefix = _PYC
+atexit.register(shutil.rmtree, _PYC, ignore_errors=True)
+
 import ceiling as CL                                         # noqa: E402
+import ledger as LG                                          # noqa: E402
+import pycguard as PG                                        # noqa: E402
 import run_day as R                                          # noqa: E402
 import space as SP                                           # noqa: E402
 import test_run_day as TRD                                   # noqa: E402
@@ -60,9 +86,23 @@ def noise(seed, n=40, scale=30.0):
     return [rnd.gauss(0.0, scale) for _ in range(n)]
 
 
-def artifact(pend_daily, pend_trades, live, pend_rule=None,
-             record_days=None, live_trades=500):
-    """Артефакт суточного прогона с заявкой и живыми книгами.
+def daymap(vals, start=DAY0, step=1):
+    """Дневной ряд ЯВНЫМИ номерами суток: {день: деньги}.
+
+    Начало и шаг — не украшение фикстуры, а её несущая часть. У живого
+    писателя сутки НЕ вложены: день заводит только закрытая сделка, книги
+    торгуют в разные дни, и пересечение пары почти никогда не равно длине
+    более короткого ряда. Ряды, начинающиеся с одного дня и идущие
+    подряд, делают «общих суток у пары» неотличимым от «длины короткого
+    ряда» — и подмена одного другим проходит зелёной вместе с оракулом,
+    написанным на такой фикстуре.
+    """
+    return {start + i * step: float(v) for i, v in enumerate(vals)}
+
+
+def artifact_days(pend_daily, pend_trades, live, pend_rule=None,
+                  record_days=None, live_trades=500):
+    """Артефакт суточного прогона по ЯВНЫМ номерам суток.
 
     Фикстура обязана быть ВОЗМОЖНОЙ для живого писателя: дневной ряд
     заводит день только от закрытой сделки (`candidate.daily_net`),
@@ -77,15 +117,15 @@ def artifact(pend_daily, pend_trades, live, pend_rule=None,
     """
     rule = pend_rule or dict(SP.index_to_rule(0), geom="stop_take")
     cands = {}
-    for cid, vals in live.items():
-        d = series(vals)
+    for cid, dm in live.items():
+        d = {str(k): float(v) for k, v in dm.items()}
         if len(d) > live_trades:
             raise ValueError(f"невозможная фикстура {cid}: суток {len(d)} "
                              f"при {live_trades} сделках")
         cands[cid] = {"lane": "selected", "trades": live_trades,
                       "net": sum(d.values()), "daily": d,
                       "rule": SP.index_to_rule(0)}
-    pd = series(pend_daily)
+    pd = {str(k): float(v) for k, v in pend_daily.items()}
     if len(pd) > pend_trades:
         raise ValueError(f"невозможная фикстура: суток {len(pd)} при "
                          f"{pend_trades} сделках — живой писатель заводит "
@@ -98,6 +138,20 @@ def artifact(pend_daily, pend_trades, live, pend_rule=None,
             "pending_why": None,
             "pending": {"key": SP.key(rule), "rule": rule,
                         "trades": pend_trades, "daily": pd}}
+
+
+def artifact(pend_daily, pend_trades, live, pend_rule=None,
+             record_days=None, live_trades=500):
+    """Тот же артефакт по СПИСКАМ: сутки подряд от `DAY0`.
+
+    Форма для проверок, которым день безразличен. Всё, что о сутках
+    что-то утверждает, обязано звать `artifact_days` и задавать их явно:
+    здесь пересечение любой пары равно длине короткого ряда, то есть
+    «общих суток» и «длина короткого» тут одно и то же число.
+    """
+    return artifact_days(daymap(pend_daily), pend_trades,
+                         {cid: daymap(v) for cid, v in live.items()},
+                         pend_rule, record_days, live_trades)
 
 
 def three_book_pool():
@@ -157,6 +211,160 @@ def key_sensitive_pool():
               for v, w in zip(p[:10], noise(1043, n=10, scale=1.0))]
     return p, {"live_a_broad": broad, "live_b_tight": tight,
                "live_c_mirror": mirror}
+
+
+def growth_live_pool(seed=531):
+    """Пул, на котором условие роста `N` ЖИВОЕ, и обе его стороны видны.
+
+    `key_sensitive_pool` для этого не годится, и это измерено: зеркало
+    утягивает среднюю связь ниже нуля, `ledger.effective_n` подрезает её
+    нулём, и `N_eff` там тождественно равно НОМИНАЛЬНОМУ числу книг —
+    значит `after > before` выполняется при любой мыслимой заявке, и
+    проверка не может провалиться. Проверка, которая не может провалиться,
+    ничего не проверяет.
+
+    Здесь все три живые книги связаны положительно, средняя связь пула
+    заметно выше нуля, и `N_eff` = 1.38 при трёх номинальных: условию есть
+    куда падать. Дальше пул отвечает на два разных вопроса одной
+    конструкцией:
+
+    * `pend` — почти копия короткой `live_b_tight` (связь +0.998 по пяти
+      общим суткам) и слабый спутник широких книг (+0.39 и +0.40 по сорока).
+      Взвешенный ключ выбирает широкую книгу — та стоит НИЖЕ предела, и
+      заявка прошла бы; знаковый выбирает `live_b_tight` и закрывает. При
+      этом `N` пула от этой копии РАСТЁТ (1.38 → 1.44), то есть второе
+      условие независимости ошибку ключа не ловит — вот этот факт и
+      закрепляет фикстура;
+    * `faller` — заявка, которая порог связи ДЕРЖИТ (теснейшая +0.87 при
+      пределе 0.95) и роняет `N` пула (1.38 → 1.31), то есть закрывается
+      именно условием роста. Без неё первая сторона была бы
+      неопровержимой ровно так же, как на пуле с зеркалом.
+
+    Сутки не вложены: у `live_b_tight` семь суток, из них пять общих с
+    заявкой, — то есть «общих суток» и «длина короткого ряда» здесь
+    разные числа. Фикстура возможна для живого писателя: суток у каждой
+    книги много меньше, чем сделок.
+    """
+    rnd = random.Random(seed)
+    u = {DAY0 + i: rnd.gauss(0.0, 30.0) for i in range(40)}
+    a = {d: v + rnd.gauss(0.0, 9.0) for d, v in u.items()}
+    c = {d: v + rnd.gauss(0.0, 9.0) for d, v in u.items()}
+    pend = {d: 0.5 * v + rnd.gauss(0.0, 26.0) for d, v in u.items()}
+    tight = {DAY0 + i: 1.4 * pend[DAY0 + i] + 3.0 + rnd.gauss(0.0, 4.0)
+             for i in (2, 7, 13, 21, 33)}
+    # Двое СВОИХ суток: пересечение с заявкой (5) меньше длины ряда (7).
+    tight[DAY0 + 60] = rnd.gauss(0.0, 30.0)
+    tight[DAY0 + 61] = rnd.gauss(0.0, 30.0)
+    faller = {d: v + rnd.gauss(0.0, 14.0) for d, v in u.items()}
+    return pend, {"live_a_broad": a, "live_b_tight": tight,
+                  "live_c_broad": c}, faller
+
+
+# --- случайные пулы: правило проверяется свойством, а не перечнем -----
+#
+# Перечень подделок не сходится в принципе: пространство переписей ключа
+# бесконечно, а список конечен — адверсарий каждый раз пишет ключ,
+# которого в нём нет. Поэтому правило формулируется НЕЗАВИСИМО от
+# реализации (оракул ниже), считается своей строкой и сверяется с
+# потолком на многих случайно порождённых пулах при закреплённом зерне.
+# Любая неэквивалентная перепись ключа расходится с оракулом хотя бы на
+# одном пуле — и падает, не будучи названной заранее.
+
+POOLS = 400               # пулов в свойстве
+POOL_SEED = 90210         # зерно ЧИСЛОМ: нуль, который нельзя повторить,
+                          # не является проверяемым (урок R3)
+MIN_USABLE = 300          # меньше — генератор выродился, и это ОТКАЗ
+MIN_WITNESSES = 10        # свидетелей на каждую названную перепись ключа
+
+# Разрешение, на котором потолок ВООБЩЕ различает книги: в `links` связь
+# кладётся округлённой (`round(r, 4)`), и выбор идёт по этому числу.
+# Значит перепись ключа, сдвигающая связь меньше чем на 1e-4, неотличима
+# от правила не по слабости сверки, а по устройству самой реализации, и
+# доказать про неё оракулом нельзя ничего.
+#
+# Отсюда ворота на сам генератор: зазор между первой и второй книгой
+# обязан оставаться заметно ВЫШЕ этого разрешения. Сойдись он под него —
+# округление начнёт менять порядок, и сверка с оракулом провалится на
+# ЧЕСТНОМ коде, то есть станет шумом вместо проверки. Измерено: сегодня
+# наименьший зазор 0.00084, запас 8.4 раза.
+JUDGE_RESOLUTION = 1e-4
+MIN_TOP_GAP = 5 * JUDGE_RESOLUTION
+
+
+def random_pool(rnd, span=60):
+    """Случайный пул: число книг, длины рядов, знаки связи, сутки.
+
+    Что генератор обязан воспроизводить, чтобы свойство вообще что-то
+    значило:
+
+    * **сутки не вложены** — у каждого ряда своё начало и свой шаг, так
+      что пересечение пары есть собственное подмножество обоих;
+    * **все знаки связи** — множитель общей компоненты берётся из
+      `(-2, +2)`, то есть в пуле есть и зеркала, и почти независимые
+      книги, и спутники;
+    * **короткие книги рядом с длинными** — у живого писателя ряд заводит
+      только закрытая сделка, и книга на три-восемь суток обычное дело.
+      Ровно на таких парах расходятся взвешенные ключи: высокая связь по
+      пяти суткам против средней по сорока.
+    """
+    latent = {DAY0 + i: rnd.gauss(0.0, 30.0) for i in range(span)}
+
+    def days(minlen, maxlen):
+        step = rnd.choice([1, 1, 2, 3])
+        start = rnd.randrange(0, 12)
+        n = rnd.randint(minlen, maxlen)
+        return [d for d in (DAY0 + start + i * step for i in range(n))
+                if d in latent]
+
+    pend = {d: latent[d] + rnd.gauss(0.0, 12.0) for d in days(6, 40)}
+    live = {}
+    for i in range(rnd.randint(2, 5)):
+        if rnd.random() < 0.45:
+            ds, scale = days(3, 8), rnd.uniform(1.0, 20.0)
+        else:
+            ds, scale = days(10, 40), rnd.uniform(5.0, 60.0)
+        mult = rnd.uniform(-2.0, 2.0)
+        live[f"live_{i}"] = {d: mult * latent[d] + rnd.gauss(0.0, scale)
+                             for d in ds}
+    return pend, live
+
+
+def oracle_links(pend, live, min_days=CL.MIN_PAIR_DAYS):
+    """Правило потолка, записанное здесь СВОЕЙ строкой.
+
+    Теснейшая живая книга — та, у которой ЗНАКОВАЯ связь дневных денег с
+    заявкой максимальна; связь считается по ОБЩИМ суткам пары, и пара
+    короче `min_days` не измеряется вовсе.
+
+    Общие сутки оракул считает сам (`set(a) & set(b)`), а не спрашивает у
+    `ceiling.pair_corr`: подмена внутри потолка изменила бы тогда обе
+    стороны сверки разом, и сверка прошла бы зелёной. Связь при этом
+    берётся у `ledger._corr` — это не вторая копия формулы, а тот самый
+    код, которым фабрика считает своё эффективное `N`; своя копия
+    однажды разошлась бы с ним и проверяла бы другую величину.
+    """
+    out = []
+    for cid in sorted(live):
+        common = sorted(set(pend) & set(live[cid]))
+        if len(common) < min_days:
+            continue
+        r = LG._corr([pend[d] for d in common],
+                     [live[cid][d] for d in common])
+        if r is not None:
+            out.append({"id": cid, "r": r, "days": len(common)})
+    return out
+
+
+# Названные переписи ключа — только ради ЧИСЛА чувствительности: сверка
+# с оракулом ловит и те, которых в списке нет. Две первые строки —
+# подделки адверсария, прошедшие прошлую сюиту зелёной.
+ALT_KEYS = (("r·days**0.25", lambda lk: lk["r"] * lk["days"] ** 0.25),
+            ("r·min(days,5)", lambda lk: lk["r"] * min(lk["days"], 5)),
+            ("r·days", lambda lk: lk["r"] * lk["days"]),
+            ("r·days**0.5", lambda lk: lk["r"] * lk["days"] ** 0.5),
+            ("|r|", lambda lk: abs(lk["r"])),
+            ("round(r,1)", lambda lk: round(lk["r"], 1)),
+            ("первая измеренная", lambda lk: 0.0))
 
 
 def flip(run):
@@ -335,12 +543,18 @@ def test_the_whole_pool_is_read_and_the_closest_link_decides():
 def test_the_closest_link_is_chosen_by_the_signed_correlation_itself():
     """Теснейшая — по ЗНАКОВОЙ связи: не по модулю и не со взвешиванием.
 
-    Проверяется САМО ПРАВИЛО, а не список поимённо названных подмен.
-    Оракул считается здесь же тремя строками и сверяется с тем, что
-    выбрал потолок; фикстура при этом обязана быть чувствительной —
-    первой же проверкой требуется, чтобы три ключа выбрали ТРИ РАЗНЫЕ
-    книги. Иначе сверка исполняет одну дорогу и проходит на любой из
-    подмен молча, как это и было с `three_book_pool`.
+    Это ПРИМЕР, а не доказательство правила, и прежняя docstring врала,
+    обещая второе. Замерено адверсарием: фикстура ловит взвешивание силой
+    не ниже `days**0.32` и молчит на всём, что слабее, — а показатель
+    0.32 не решение, он выпал из чисел двух шумовых рядов. Само правило
+    закреплено свойством на случайных пулах
+    (`test_the_key_is_fixed_by_an_oracle_on_random_pools`); здесь стоят
+    три поимённо названные подмены, каждая со своей ценой числом.
+
+    Фикстура при этом обязана быть чувствительной — первой же проверкой
+    требуется, чтобы три ключа выбрали ТРИ РАЗНЫЕ книги. Иначе сверка
+    исполняет одну дорогу и проходит на любой из подмен молча, как это и
+    было с `three_book_pool`.
     """
     pend, live = key_sensitive_pool()
     run = artifact(pend, 400, live)
@@ -375,16 +589,143 @@ def test_the_closest_link_is_chosen_by_the_signed_correlation_itself():
     check("обе неверные книги стоят НИЖЕ предела — любой из двух "
           "неверных ключей пропустил бы копию",
           all(lk["r"] < res["max_corr"] for lk in wrong), str(wrong))
-    # И второе условие независимости от этой ошибки НЕ спасает. Это не
-    # рассуждение: то же `pool_eff_n`, которым судит потолок.
+    # Чего на ЭТОМ пуле проверить нельзя, и это сказано, а не обойдено
+    # молчанием: второе условие независимости здесь ВЫРОЖДЕНО. Зеркало
+    # утягивает среднюю связь ниже нуля, `ledger.effective_n` подрезает
+    # её нулём, и `N_eff` тождественно равно номинальному числу книг —
+    # значит `after > before` выполнялось бы при любой мыслимой заявке.
+    # Прежде здесь стояла именно такая проверка, и она не могла
+    # провалиться. Живое условие и обе его стороны — в
+    # `test_the_key_error_is_not_rescued_by_the_growth_condition`.
     L = {cid: CL._days(c["daily"]) for cid, c in run["candidates"].items()}
-    pd = CL._days(run["pending"]["daily"])
-    before, after = CL.pool_eff_n(L), CL.pool_eff_n(L, pd, res["id"])
-    check("рост N пула копию НЕ закрывает — выбор книги несущий",
-          after > before, f"{before:.2f} → {after:.2f}")
+    n_eff, mean_r = LG.effective_n(L)
+    check("второе условие на этом пуле вырождено, и это измерено, а не "
+          "объявлено", mean_r == 0.0 and abs(n_eff - len(L)) < 1e-9,
+          f"средняя связь {mean_r:+.4f}, N {n_eff:.4f} при {len(L)} книгах")
     check("зеркало в пуле при этом не выдаёт себя за теснейшую",
           min(ms, key=lambda lk: lk["r"])["id"] == "live_c_mirror"
           and min(lk["r"] for lk in ms) < -0.99, str(ms))
+
+
+def test_the_key_is_fixed_by_an_oracle_on_random_pools():
+    """Ключ закреплён СВОЙСТВОМ, а не перечнем подделок.
+
+    Прошлый заход закреплял правило списком: назван ключ — построена
+    фикстура, на которой он расходится. Так доказательство не сходится в
+    принципе — пространство переписей ключа бесконечно, перечень конечен,
+    и адверсарий каждый раз писал ключ, которого в списке нет (`r·days**
+    0.25` и `r·min(days,5)` проходили сюиту ЗЕЛЁНОЙ и переворачивали
+    вердикт `closed` в `pass`, то есть объявили бы почти точную копию
+    живой книги).
+
+    Здесь правило записано оракулом (`oracle_links`) независимо от
+    реализации и сверяется с потолком на четырёхстах случайных пулах при
+    зерне, закреплённом числом: неэквивалентная запись ключа расходится с
+    оракулом на каком-то из пулов и падает, не будучи названной заранее.
+    Универсальным это не делает — предел замерен и назван ниже.
+
+    Сверяются три величины разом, потому что порознь они уже расходились:
+    какая книга названа теснейшей, сколько у ЭТОЙ пары общих суток и
+    какое `N` несёт ЭТА пара.
+
+    Докуда свойство достаёт — ЗАМЕРЕНО подделками файла, а не объявлено.
+    Взвешивание на длину пары падает вплоть до `days**0.05` (свидетелей
+    10 и больше), у `days**0.02` свидетелей трое, `days**0.01` не падает.
+    Прежняя фикстура ловила только от `days**0.32` — то есть шестикратно
+    грубее. Ниже 1e-4 никакая сверка не докажет ничего в принципе: сам
+    потолок выбирает по связи, округлённой до четырёх знаков
+    (`links` хранит `round(r, 4)`), и переписи мельче этого он не
+    различает. Между `days**0.01` и `days**0.05` свойство слабеет
+    постепенно — это предел выборки, а не порог.
+
+    Проверка обязана уметь провалиться, поэтому у неё есть собственные
+    ворота: пулов, где правило применимо, должно быть не меньше
+    `MIN_USABLE`, сутки в парах — не вложены, связи — всех знаков, а у
+    каждой названной переписи ключа — не меньше `MIN_WITNESSES`
+    расхождений. Выродись генератор — тест ОТКАЖЕТ, а не пройдёт молча.
+    """
+    rnd = random.Random(POOL_SEED)
+    usable = ties = pairs = nested = 0
+    neg = near = pos = 0
+    verdicts = {}
+    bad_book, bad_days, bad_pair_n = [], [], []
+    div = {name: 0 for name, _ in ALT_KEYS}
+    gaps = []
+    for i in range(POOLS):
+        pend, live = random_pool(rnd)
+        want = oracle_links(pend, live)
+        res = CL.judge(artifact_days(pend, 400, live))
+        verdicts[res["verdict"]] = verdicts.get(res["verdict"], 0) + 1
+        if not want:
+            # Оракулу мерить нечего — потолку тоже: выбранной книги в
+            # вердикте быть не должно.
+            if res.get("closest"):
+                bad_book.append((i, "оракул пуст, а книга выбрана"))
+            continue
+        usable += 1
+        order = sorted(want, key=lambda lk: -lk["r"])
+        best = order[0]
+        if len(order) > 1:
+            gaps.append(order[0]["r"] - order[1]["r"])
+            if gaps[-1] < 1e-9:
+                ties += 1
+        for lk in want:
+            pairs += 1
+            if lk["days"] < min(len(pend), len(live[lk["id"]])):
+                nested += 1
+            if lk["r"] < -0.2:
+                neg += 1
+            elif lk["r"] > 0.2:
+                pos += 1
+            else:
+                near += 1
+        for name, key in ALT_KEYS:
+            if max(want, key=key)["id"] != best["id"]:
+                div[name] += 1
+        got = res.get("closest")
+        if not got or got["id"] != best["id"]:
+            bad_book.append((i, f"{got and got['id']} против {best['id']}"))
+            continue
+        if got["days"] != best["days"]:
+            bad_days.append((i, f"{got['days']} против {best['days']}"))
+        n_want = LG.effective_n({"pending": pend,
+                                 "live": live[best["id"]]})[0]
+        if abs(res.get("pair_eff_n", -1) - n_want) > 1e-3:
+            bad_pair_n.append((i, f"{res.get('pair_eff_n')} против "
+                                  f"{n_want:.3f}"))
+    # Ворота самой проверки — раньше её выводов.
+    check(f"пулов, где правило применимо, хватает: {usable} из {POOLS}",
+          usable >= MIN_USABLE, f"{usable} < {MIN_USABLE}")
+    check("вердикты обеих сторон встречаются — свойство не гоняется в "
+          "одном углу", verdicts.get(CL.PASS, 0) > 20
+          and verdicts.get(CL.CLOSED, 0) > 20, str(verdicts))
+    share_nested = nested / float(pairs or 1)
+    check(f"сутки в парах НЕ вложены: {share_nested:.3f} пар, у которых "
+          f"общих суток меньше длины короткого ряда", share_nested >= 0.5,
+          f"{nested} из {pairs}")
+    check(f"связи всех знаков: минус {neg}, около нуля {near}, плюс {pos}",
+          neg >= 50 and near >= 20 and pos >= 50,
+          f"{neg}/{near}/{pos} из {pairs}")
+    check("ничьих в знаковой связи нет — сверка по имени книги однозначна",
+          ties == 0, f"{ties} пулов с ничьёй")
+    gap = min(gaps) if gaps else 0.0
+    check(f"зазор до второй книги ({gap:.5f}) выше разрешения, на котором "
+          f"потолок различает книги ({JUDGE_RESOLUTION}) — иначе сверка "
+          f"падала бы на честном коде", gap >= MIN_TOP_GAP,
+          f"{gap:.6f} < {MIN_TOP_GAP}")
+    # Само свойство.
+    check("теснейшая книга совпала с оракулом на ВСЕХ пулах",
+          not bad_book, str(bad_book[:3]))
+    check("общих суток названо столько же, сколько у ЭТОЙ пары, на всех "
+          "пулах", not bad_days, str(bad_days[:3]))
+    check("N пары посчитано по ЭТОЙ же книге на всех пулах",
+          not bad_pair_n, str(bad_pair_n[:3]))
+    # Чувствительность — числом на каждую названную перепись ключа.
+    for name, _key in ALT_KEYS:
+        n = div[name]
+        check(f"перепись ключа `{name}` расходится с оракулом на {n} пулах "
+              f"({n / float(usable):.3f})", n >= MIN_WITNESSES,
+              f"{n} < {MIN_WITNESSES} — свойство перестало её ловить")
 
 
 def test_the_pair_numbers_belong_to_the_closest_book():
@@ -484,6 +825,73 @@ def test_the_pools_effective_n_must_grow():
           in text
           and f"| эффективное N пула с заявкой | "
               f"{res['pool_eff_n_with']:.2f} |" in text, text[:900])
+
+
+def test_the_key_error_is_not_rescued_by_the_growth_condition():
+    """Ошибку ключа второе условие НЕ ловит — и это показано там, где
+    второе условие ЖИВОЕ.
+
+    Прежде это утверждение стояло в шапке `ceiling.py` как общее свойство,
+    а показано было на пуле с зеркалом: там средняя связь уходит ниже
+    нуля, `ledger.effective_n` подрезает её нулём, `N_eff` тождественно
+    равно номинальному числу книг, и `after > before` выполняется при
+    ЛЮБОЙ заявке. Утверждение было истинно не потому, что измерено, а
+    потому, что не могло быть ложным.
+
+    Здесь пул связан положительно, `N_eff` = 1.38 при трёх номинальных —
+    условию есть куда падать, — и на нём показаны ОБЕ стороны: заявка, от
+    которой `N` растёт, и заявка, от которой падает. Только после этого
+    «рост не спасает» что-то значит.
+    """
+    pend, live, faller = growth_live_pool()
+    L = {cid: dict(dm) for cid, dm in live.items()}
+    before, mean_r = LG.effective_n(L)
+    # Ворота проверки: условие обязано быть живым. Без этой строки всё
+    # остальное здесь неопровержимо ровно так же, как было на зеркале.
+    check(f"условие роста на этом пуле ЖИВОЕ: средняя связь {mean_r:+.3f}, "
+          f"N пула {before:.2f} при {len(L)} номинальных",
+          mean_r > 0.05 and before < len(L) - 0.5,
+          f"средняя связь {mean_r:+.3f}, N {before:.2f}")
+    run = artifact_days(pend, 400, live)
+    res = CL.judge(run)
+    ms = [lk for lk in res["links"] if lk["r"] is not None]
+    by_signed = max(ms, key=lambda lk: lk["r"])
+    by_weight = max(ms, key=lambda lk: lk["r"] * lk["days"])
+    check("знаковый ключ выбирает почти копию и закрывает заявку",
+          res["verdict"] == CL.CLOSED
+          and res["closest"]["id"] == by_signed["id"] == "live_b_tight"
+          and res["closest"]["r"] >= res["max_corr"],
+          f"{res['verdict']}: {res['closest']}")
+    check("взвешенный ключ выбрал бы другую книгу — и она НИЖЕ предела, "
+          "то есть копия была бы объявлена",
+          by_weight["id"] != by_signed["id"]
+          and by_weight["r"] < res["max_corr"],
+          f"взвешенный {by_weight} против знакового {by_signed}")
+    # Главное: на этом пуле рост N ошибку ключа не ловит.
+    after = CL.pool_eff_n(L, CL._days(run["pending"]["daily"]), res["id"])
+    check(f"и рост N её НЕ ловит: {before:.2f} → {after:.2f} — второе "
+          f"условие пропустило бы копию", after > before,
+          f"{before:.2f} → {after:.2f}")
+    # Обратная сторона: на ТОМ ЖЕ пуле условие умеет закрыть.
+    fres = CL.judge(artifact_days(faller, 400, live))
+    check("на том же пуле другая заявка условием роста ЗАКРЫТА",
+          fres["verdict"] == CL.CLOSED and "не растёт" in fres["why"],
+          f"{fres['verdict']}: {fres['why']}")
+    check("и закрыл её именно рост, а не порог связи: теснейшая ниже "
+          "предела", fres["closest"]["r"] < fres["max_corr"],
+          str(fres["closest"]))
+    check(f"N пула от неё падает {fres.get('pool_eff_n')} → "
+          f"{fres.get('pool_eff_n_with')}",
+          fres["pool_eff_n_with"] < fres["pool_eff_n"],
+          f"{fres.get('pool_eff_n')} → {fres.get('pool_eff_n_with')}")
+    # Сутки этой фикстуры не вложены — «общих» и «длина короткого» здесь
+    # разные числа, и подмена одного другим видна.
+    tight = live["live_b_tight"]
+    common = len(set(CL._days(run["pending"]["daily"])) & set(tight))
+    check("общих суток у теснейшей пары меньше длины её ряда",
+          res["closest"]["days"] == common == 5 and len(tight) == 7,
+          f"общих {common}, в ряду {len(tight)}, "
+          f"в вердикте {res['closest']['days']}")
 
 
 def test_the_growth_condition_is_not_rendered_on_a_degenerate_pool():
@@ -1145,14 +1553,149 @@ def test_declared_proposal_is_not_pending_anymore():
           got is None and "заявки нет" in (why or ""), str(why))
 
 
+# --- байткод, заслоняющий исходник ------------------------------------
+
+def _child(tmp, code):
+    """Прогон в ЧИСТОМ питоне из каталога `tmp`; вывод строкой.
+
+    Переменные окружения, уводящие кеш, снимаются нарочно. Машина
+    негативных контролей гоняет эту сюиту с `PYTHONDONTWRITEBYTECODE=1`,
+    и унаследуй их ребёнок — кеш не написался бы вовсе, яд не собрался,
+    а проверка «яд кусается» падала бы ТОЛЬКО внутри контракта, то есть
+    там, где её никто не читает глазами.
+    """
+    env = dict(os.environ, PYTHONPATH=HERE)
+    env.pop("PYTHONPYCACHEPREFIX", None)
+    env.pop("PYTHONDONTWRITEBYTECODE", None)
+    r = subprocess.run([sys.executable, "-c", code], cwd=tmp, env=env,
+                       capture_output=True, text=True, timeout=120)
+    return (r.stdout + r.stderr).strip()
+
+
+def _poison(tmp, name="victim"):
+    """Собрать кеш, который питон СЧИТАЕТ свежим, а код в нём другой.
+
+    Тот же случай, что случился с `ceiling.py`: две версии одинаковой
+    длины и общая секунда mtime. Собирается он настоящим импортом в
+    настоящем питоне, а не подделкой заголовка руками: заголовок,
+    написанный нами, доказывал бы только то, что мы умеем писать
+    заголовки.
+    """
+    src = os.path.join(tmp, name + ".py")
+    one, two = "def answer():\n    return 1\n", "def answer():\n    return 2\n"
+    # Разной длины яд не собрался бы: размер исходника питон сверяет, и
+    # на этом равенстве держится вся фикстура.
+    check("две версии яда одной длины", len(one) == len(two),
+          f"{len(one)} против {len(two)}")
+    with open(src, "w", encoding="utf-8") as f:
+        f.write(one)
+    _child(tmp, f"import {name}")
+    # Кеш ищем САМИ и читаем заголовок сами. Фикстура, которая находит
+    # свой артефакт тем же кодом, который проверяет, не заметила бы, если
+    # бы страж стал искать не там: сверка сдвинулась бы вместе с ним.
+    cached = sorted(glob.glob(os.path.join(tmp, "__pycache__",
+                                           name + ".*.pyc")))
+    check("кеш яда написан, и ровно один", len(cached) == 1, str(cached))
+    pyc = cached[0]
+    with open(pyc, "rb") as f:
+        mtime = struct.unpack("<4sIII", f.read(PG.HEADER))[2]
+    with open(src, "w", encoding="utf-8") as f:
+        f.write(two)
+    # Не украшение, а защита от флака: обе записи почти всегда попадают в
+    # одну секунду, и тогда заголовок совпадает сам — ровно так заслон и
+    # рождается в жизни. Но упади они по разные стороны секунды, яд не
+    # собрался бы, и сюита краснела бы по часам, а не по коду.
+    os.utime(src, (mtime, mtime))
+    return src, pyc
+
+
+def test_stale_bytecode_shadow_is_found_and_named():
+    """Кеш, заслоняющий исходник, обязан быть найден и НАЗВАН.
+
+    Питон сверяет ЗАГОЛОВОК кеша (mtime в целых секундах и размер), и в
+    опасном случае заголовок совпадает по построению — иначе питон
+    перекомпилировал бы сам и вреда не было бы вовсе. Значит сверка
+    заголовков здесь не осторожнее, а бесполезна, и это закреплено
+    отдельным контролем: страж, переписанный на заголовки, обязан
+    перестать находить яд.
+
+    Калибровочная пара обязательна: подсаженный заслон найти, а на
+    чистом модуле промолчать. Без второй половины страж, кричащий на
+    всё подряд, выглядел бы работающим ровно так же.
+    """
+    tmp = tempfile.mkdtemp()
+    src, pyc = _poison(tmp)
+    # Ворота на саму фикстуру. Без них всё остальное здесь — «блок есть»
+    # на пустом блоке: яд, который не кусается, доказывает только то, что
+    # страж молчит.
+    got = _child(tmp, "import victim; print(victim.answer())")
+    check("яд кусается: исходник говорит 2, а исполняется 1",
+          got == "1", f"исполнилось {got!r}")
+    check("питон считает такой кеш свежим — заголовком заслон не найти",
+          PG.looks_fresh(src, pyc), f"{PG.header(pyc)}")
+    check("страж спрашивает про дерево, а не про наш временный кеш",
+          PG.cache_file(src) == pyc
+          and os.path.realpath(pyc).startswith(os.path.realpath(tmp)),
+          f"{PG.cache_file(src)} против {pyc}")
+    f = PG.shadow(src)
+    check("страж находит подмену и называет функцию",
+          f is not None and f["differ"] == ["answer"], str(f))
+    # Калибровка: на чистом модуле страж обязан МОЛЧАТЬ.
+    clean = os.path.join(tmp, "clean.py")
+    with open(clean, "w", encoding="utf-8") as fh:
+        fh.write("def answer():\n    return 3\n")
+    _child(tmp, "import clean")
+    check("на чистом модуле страж молчит", PG.shadow(clean) is None,
+          str(PG.shadow(clean)))
+    check("и чистый модуль исполняется своим исходником",
+          _child(tmp, "import clean; print(clean.answer())") == "3")
+    gone, refused = PG.clear([f])
+    check("убран ровно кеш и ничего кроме",
+          gone == [pyc] and not refused, f"{gone}, отказано {refused}")
+    check("после уборки исполняется исходник",
+          _child(tmp, "import victim; print(victim.answer())") == "2")
+    check("и заслона больше нет", PG.shadow(src) is None, str(PG.shadow(src)))
+    # Не-кеш страж не удаляет даже по просьбе: `--clear` обязан быть
+    # безопасен на любом входе, иначе однажды снесёт исходник.
+    gone2, refused2 = PG.clear([{"cache": src}])
+    check("исходник по просьбе удалить страж отказывается",
+          not gone2 and refused2 == [src] and os.path.exists(src),
+          f"убрано {gone2}, отказано {refused2}")
+
+
+def test_the_tree_under_test_is_not_shadowed_by_stale_bytecode():
+    """Дерево, в котором лежит проверяемый код, обязано быть чистым.
+
+    Сюита увела свой кеш в сторону и потому судит исходник; обычный
+    прогон — суточный цикл, сторож, рука владельца в терминале — кеш не
+    уводит и прочтёт то, что лежит в `__pycache__`. Заслон там означает,
+    что цикл исполняет ПРЕЖНИЙ код, ничем себя не выдавая, — то есть
+    отказ, неотличимый от тишины. Поэтому здесь провал с названным
+    лечением, а не печатная заметка сбоку.
+
+    Ложных тревог у этой проверки нет по построению: устаревший честно
+    кеш (заголовок разошёлся) питон перекомпилирует сам и находкой не
+    считается.
+    """
+    srcs = PG.loaded_here(HERE)
+    finds = PG.find_shadows(srcs)
+    check(f"модули под проверкой не заслонены прежним байткодом "
+          f"({len(srcs)} импортировано из каталога фабрики)",
+          not finds,
+          "; ".join(PG.describe(x) for x in finds)
+          + " — убрать: python3 research/factory/pycguard.py --clear")
+
+
 def main():
     tests = (test_profit_never_decides,
              test_calibration_finds_a_planted_link_and_is_silent_on_noise,
              test_the_pool_measure_is_not_reimplemented,
              test_the_whole_pool_is_read_and_the_closest_link_decides,
              test_the_closest_link_is_chosen_by_the_signed_correlation_itself,
+             test_the_key_is_fixed_by_an_oracle_on_random_pools,
              test_the_pair_numbers_belong_to_the_closest_book,
              test_the_pools_effective_n_must_grow,
+             test_the_key_error_is_not_rescued_by_the_growth_condition,
              test_the_growth_condition_is_not_rendered_on_a_degenerate_pool,
              test_pending_days_are_counted_not_zeroed,
              test_the_fixture_is_possible_for_a_live_writer,
@@ -1174,7 +1717,9 @@ def main():
              test_missing_run_is_a_named_refusal_not_zeros,
              test_the_record_window_is_measured_before_the_gates,
              test_pending_is_replayed_but_not_declared,
-             test_declared_proposal_is_not_pending_anymore)
+             test_declared_proposal_is_not_pending_anymore,
+             test_stale_bytecode_shadow_is_found_and_named,
+             test_the_tree_under_test_is_not_shadowed_by_stale_bytecode)
     for t in tests:
         print(t.__name__)
         t()

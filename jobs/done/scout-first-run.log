@@ -4,3 +4,15 @@
 запускаю роль: scout 
 ОТКАЗ: другая роль уже работает (замок /root/algoth_v2/research/factory/out/agents.lock)
 конец: 2026-09-01T20:26:39Z, код 1
+публикуется в ветку main:
+ jobs/done/scout-first-run.done         |  1 +
+ jobs/done/scout-first-run.log          |  6 ++++++
+ jobs/poke.log                          |  3 +++
+ research/factory/out/agents-runs.jsonl |  1 +
+ research/factory/out/build.json        | 35 ++++++++++++++++++++++++++++------
+ research/s8_loop/out/day_brake.json    |  2 +-
+ 6 files changed, 41 insertions(+), 7 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   8205536..8515b51  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
