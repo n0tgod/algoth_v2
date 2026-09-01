@@ -5,3 +5,5 @@
 {"at": 1788266123.494, "role": "propose", "status": "contract", "started": 1788265729.0, "ended": 1788266123.494, "dry": false, "note": "роль отработала, но контракт не выполнен"}
 {"at": 1788266260.262, "role": "propose", "status": "start", "started": 1788266260.0, "ended": 1788266260.262, "dry": false, "pid": 1001196}
 {"at": 1788266734.773, "role": "propose", "status": "ok", "started": 1788266260.0, "ended": 1788266734.773, "dry": false}
+{"at": 1788278524.68, "role": "build", "status": "start", "started": 1788278524.0, "ended": 1788278524.68, "dry": false, "pid": 1012830}
+{"at": 1788279334.674, "role": "build", "status": "ok", "started": 1788278524.0, "ended": 1788279334.674, "dry": false}
