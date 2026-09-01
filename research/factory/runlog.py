@@ -374,6 +374,16 @@ def check_role(role, root):
             ok, why, _ = check_brief(texts.get(rel, ""), root, budget, mn)
             if not ok:
                 bad.append(rel + ": " + "; ".join(why))
+    elif role == "adversary":
+        ok, why = check_adversary(
+            texts.get("research/factory/out/adversary.json", ""), root)
+        if not ok:
+            bad.append("adversary.json: " + "; ".join(why))
+    elif role == "build":
+        ok, why = check_build(
+            texts.get("research/factory/out/build.json", ""), root)
+        if not ok:
+            bad.append("build.json: " + "; ".join(why))
     elif role == "propose":
         import ledger as LG
         import space as SP
@@ -385,4 +395,175 @@ def check_role(role, root):
             root, ledger_ids=ids, space=SP)
         if not ok:
             bad.append("proposal.json: " + "; ".join(why))
+    return (not bad), bad
+
+
+# --- контракт строителя ----------------------------------------------
+
+BUILD_MIN_WHY = 120
+BUILD_MAX_CONTROLS = 8
+# Сколько ждать прогон тестов кандидата. Больше — и проверка контракта
+# станет дороже самой постройки.
+BUILD_TEST_TIMEOUT = 900
+
+
+def _run_tests(root, tests):
+    """Прогнать тесты кандидата. Возвращает (прошли, вывод)."""
+    import subprocess
+    import sys
+    py = os.path.join(root, ".venv", "bin", "python")
+    if not os.path.exists(py):
+        py = sys.executable
+    try:
+        r = subprocess.run([py, tests], cwd=root, capture_output=True,
+                           text=True, timeout=BUILD_TEST_TIMEOUT)
+    except Exception as e:                                # noqa: BLE001
+        return False, f"{type(e).__name__}: {e}"
+    return r.returncode == 0, (r.stdout + r.stderr)[-4000:]
+
+
+def check_build(text, root):
+    """Постройка годна? Возвращает (годно, список бед).
+
+    Главное здесь — не «тесты зелёные», а **кусаются ли негативные
+    контроли**. Проверка, которая не кусается, не проверяет ничего, и
+    таких в этом проекте находили десятками. Поэтому каждая подделка
+    применяется к КОПИИ файла, тесты прогоняются заново и обязаны
+    упасть; контроль, который не укусил, валит весь прогон.
+
+    Отсюда же следует, что отчёт «построено» без кусающихся контролей
+    получить нельзя: их проверяет машина, а не автор.
+    """
+    bad = []
+    try:
+        d = json.loads(text or "")
+    except ValueError as e:
+        return False, [f"отчёт постройки не разбирается как JSON: {e}"]
+    if not isinstance(d, dict) or not isinstance(d.get("built"), bool):
+        return False, ["нет поля built (да/нет)"]
+    if not d["built"]:
+        why = (d.get("why") or "").strip()
+        if len(why) < BUILD_MIN_WHY:
+            bad.append(f"неудача не объяснена: {len(why)} символов при "
+                       f"минимуме {BUILD_MIN_WHY}")
+        return (not bad), bad
+
+    mod = (d.get("module") or "").strip()
+    tests = (d.get("tests") or "").strip()
+    for name, rel in (("модуль", mod), ("тесты", tests)):
+        if not rel:
+            bad.append(f"{name}: путь не назван")
+        elif not os.path.exists(os.path.join(root, rel)):
+            bad.append(f"{name}: файла нет — {rel}")
+    if bad:
+        return False, bad
+
+    ok, out = _run_tests(root, tests)
+    if not ok:
+        return False, ["тесты кандидата не проходят: "
+                       + out.strip().splitlines()[-1][:300]
+                       if out.strip() else "тесты кандидата не проходят"]
+
+    controls = d.get("controls") or []
+    if not isinstance(controls, list) or not controls:
+        return False, ["негативных контролей нет: проверка, которая не "
+                       "кусается, не проверяет ничего"]
+    if len(controls) > BUILD_MAX_CONTROLS:
+        return False, [f"контролей {len(controls)}, а предел "
+                       f"{BUILD_MAX_CONTROLS}: проверка контракта не "
+                       "должна стоить дороже постройки"]
+
+    for i, c in enumerate(controls, 1):
+        rel = (c.get("file") or "").strip()
+        old = c.get("old") or ""
+        new = c.get("new") or ""
+        want = (c.get("expect") or "").strip()
+        p = os.path.join(root, rel)
+        # Портить можно только СВОИ файлы: подделка чужого модуля
+        # проверяла бы чужую проверку, а заодно роняла бы соседей.
+        if not rel.startswith("research/factory/") or ".." in rel:
+            bad.append(f"контроль {i}: файл вне своего каталога — {rel}")
+            continue
+        if not os.path.exists(p):
+            bad.append(f"контроль {i}: файла нет — {rel}")
+            continue
+        with open(p, encoding="utf-8") as f:
+            src = f.read()
+        if not old or src.count(old) != 1:
+            bad.append(f"контроль {i}: строка встречается "
+                       f"{src.count(old) if old else 0} раз, а нужна "
+                       "ровно одна — подделка обязана быть точной")
+            continue
+        try:
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(src.replace(old, new, 1))
+            fell, out = _run_tests(root, tests)
+        finally:
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(src)
+        if fell:
+            bad.append(f"контроль {i} НЕ КУСАЕТСЯ: подделка прошла "
+                       "мимо тестов")
+        elif want and want not in out:
+            bad.append(f"контроль {i}: упало не то, что обещано "
+                       f"({want!r} в выводе нет)")
+    return (not bad), bad
+
+
+# --- контракт адверсария ---------------------------------------------
+
+ADV_MIN_TRIES = 3
+ADV_MIN_HOW = 40
+ADV_MIN_WHY = 100
+ADV_VERDICTS = ("veto", "pass", "undetermined")
+
+
+def check_adversary(text, root):
+    """Разбор адверсария годен? Возвращает (годно, список бед).
+
+    Проверяется ровно одно, зато главное: отличимо ли «не смог
+    сломать» от «не пробовал». Отличает их только список попыток, и
+    попытка настоящая, если названо КОНКРЕТНОЕ действие — какой файл
+    подделан, какая команда запущена, какое число пересчитано.
+
+    Содержательную силу атак это не проверяет и не притворяется, что
+    проверяет: сильнее адверсария в системе никого нет.
+    """
+    bad = []
+    try:
+        d = json.loads(text or "")
+    except ValueError as e:
+        return False, [f"разбор не читается как JSON: {e}"]
+    if not isinstance(d, dict):
+        return False, ["разбор не объект"]
+    v = d.get("verdict")
+    if v not in ADV_VERDICTS:
+        bad.append("вердикт обязан быть одним из "
+                   + ", ".join(ADV_VERDICTS)
+                   + ": «не смог сломать» и «не могу подтвердить» — "
+                     "разные ответы, и склеивать их нельзя")
+    tried = d.get("tried")
+    if not isinstance(tried, list) or len(tried) < ADV_MIN_TRIES:
+        bad.append(f"попыток {len(tried) if isinstance(tried, list) else 0}"
+                   f", а нужно не меньше {ADV_MIN_TRIES}: пустой список "
+                   "означает «не пробовал», а не «не сломалось»")
+        tried = []
+    for i, t in enumerate(tried, 1):
+        if not isinstance(t, dict):
+            bad.append(f"попытка {i}: не объект")
+            continue
+        for f, n in (("attack", 10), ("how", ADV_MIN_HOW), ("result", 10)):
+            got = (t.get(f) or "").strip()
+            if len(got) < n:
+                bad.append(f"попытка {i}: поле {f} короче {n} символов — "
+                           "«просмотрел код» попыткой не является")
+    if v == "veto" and len((d.get("why") or "").strip()) < ADV_MIN_WHY:
+        bad.append(f"вето без объяснения: нужно не меньше {ADV_MIN_WHY} "
+                   "символов о том, что именно сломано")
+    got = cites(" ".join(c for c in (d.get("cites") or [])
+                         if isinstance(c, str)))
+    missing = [c for c in got if not os.path.exists(os.path.join(root, c))]
+    if missing:
+        bad.append("в cites названы несуществующие файлы: "
+                   + ", ".join(sorted(missing)[:5]))
     return (not bad), bad

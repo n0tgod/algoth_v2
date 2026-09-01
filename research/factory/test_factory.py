@@ -502,15 +502,160 @@ def test_prompt_actually_reaches_the_model():
             with open(seen, encoding="utf-8") as f:
                 got = int((f.read() or "0").strip() or 0)
         check("промпт дошёл до модели целиком", got > 2000, str(got))
-        check("прогон остановился на контракте, а не на запуске",
-              "КОНТРАКТ" in r.stdout and r.returncode != 0,
+        # Чем кончился прогон, здесь не предмет: продукт роли может
+        # уже лежать в репозитории от настоящего прогона, и тогда
+        # контракт законно проходит. Предмет — дошёл ли промпт и
+        # оставил ли прогон след.
+        check("вердикт контракта вынесен", "КОНТРАКТ" in r.stdout,
               r.stdout[-300:])
         rows, _ = RL.read(os.path.join(d, RL.RUNS))
         got_st = [x["status"] for x in rows]
-        check("в журнале начало и вердикт контракта",
-              got_st == ["start", "contract"], str(got_st))
+        check("в журнале начало и терминальная строка",
+              len(got_st) == 2 and got_st[0] == "start"
+              and got_st[1] in ("ok", "contract"), str(got_st))
     finally:
         shutil.rmtree(d, ignore_errors=True)
+
+
+def test_build_contract_makes_the_controls_bite():
+    """Главное в постройке — не «тесты зелёные», а кусаются ли контроли.
+
+    Проверка, которая не кусается, не проверяет ничего, и таких в этом
+    проекте находили десятками. Поэтому каждая подделка применяется к
+    файлу, тесты прогоняются заново и ОБЯЗАНЫ упасть; контроль, не
+    укусивший, валит весь прогон — то есть отчёт «построено» без
+    кусающихся контролей получить нельзя.
+
+    Гоняется настоящий механизм на временных файлах в том же каталоге:
+    подделка чужого файла запрещена самим контрактом, и проверять это
+    надо там, где запрет действует.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    mod = "research/factory/_tmp_probe.py"
+    tst = "research/factory/_tmp_test_probe.py"
+    rule = "    if x < 0:\n        return None"
+    try:
+        with open(os.path.join(root, mod), "w", encoding="utf-8") as f:
+            f.write("def measure(x):\n"
+                    "    # правило: отрицательное — не наблюдение\n"
+                    + rule + "\n"
+                    "    return x * 2\n")
+        with open(os.path.join(root, tst), "w", encoding="utf-8") as f:
+            f.write("import os, sys\n"
+                    "sys.path.insert(0, os.path.dirname("
+                    "os.path.abspath(__file__)))\n"
+                    "import _tmp_probe as M\n"
+                    "bad = []\n"
+                    "if M.measure(2) != 4:\n"
+                    "    bad.append('обычное значение')\n"
+                    "if M.measure(-1) is not None:\n"
+                    "    bad.append('отрицательное не наблюдение')\n"
+                    "print('ПАДЕНИЕ ' + ';'.join(bad) if bad "
+                    "else 'все проверки прошли')\n"
+                    "sys.exit(1 if bad else 0)\n")
+
+        def rep(controls, **kw):
+            d = {"built": True, "module": mod, "tests": tst,
+                 "controls": controls}
+            d.update(kw)
+            return RL.check_build(json.dumps(d, ensure_ascii=False), root)
+
+        ok, why = rep([{"file": mod, "old": rule,
+                        "new": "    pass",
+                        "expect": "отрицательное не наблюдение"}])
+        check("постройка с кусающимся контролем принята", ok, str(why))
+
+        # Подделка, ничего не меняющая по существу: тесты остаются
+        # зелёными, и контракт обязан это назвать.
+        ok, why = rep([{"file": mod, "old": "    return x * 2",
+                        "new": "    return x + x", "expect": ""}])
+        check("контроль, который не кусается, валит постройку",
+              not ok and any("НЕ КУСАЕТСЯ" in w for w in why), str(why))
+
+        ok, why = rep([])
+        check("постройка без контролей отвергнута",
+              not ok and any("контрол" in w for w in why), str(why))
+
+        ok, why = rep([{"file": mod, "old": rule, "new": "    pass",
+                        "expect": "такой проверки нет"}])
+        check("упало не то, что обещано — тоже отказ",
+              not ok and any("не то, что обещано" in w for w in why),
+              str(why))
+
+        ok, why = rep([{"file": "research/s8_loop/trades.py",
+                        "old": "x", "new": "y", "expect": ""}])
+        check("подделка чужого файла запрещена",
+              not ok and any("вне своего каталога" in w for w in why),
+              str(why))
+
+        with open(os.path.join(root, mod), encoding="utf-8") as f:
+            check("файл восстановлен после каждой подделки",
+                  rule in f.read())
+
+        ok, why = RL.check_build(json.dumps(
+            {"built": False, "why": "коротко"}), root)
+        check("неудача без объяснения отвергнута", not ok, str(why))
+        ok, why = RL.check_build(json.dumps(
+            {"built": False, "why": "п" * 130}), root)
+        check("объяснённая неудача — законный ответ", ok, str(why))
+    finally:
+        for rel in (mod, tst):
+            try:
+                os.remove(os.path.join(root, rel))
+            except OSError:
+                pass
+
+
+def test_adversary_must_show_what_it_tried():
+    """«Не смог сломать» обязано отличаться от «не пробовал».
+
+    Отличает их только список попыток, и попытка настоящая, если в ней
+    названо конкретное действие: какой файл подделан, какая команда
+    запущена, какое число пересчитано. Иначе вето накладывать
+    некому — а сильнее адверсария в системе никого нет.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    good_try = {"attack": "контроль строителя",
+                "how": "подделал research/factory/_x.py строкой pass "
+                       "и прогнал тесты кандидата",
+                "result": "тесты упали на проверке возраста"}
+    base = {"verdict": "pass", "tried": [dict(good_try) for _ in range(3)],
+            "cites": ["research/factory/out/brief.md"]}
+
+    def chk(d):
+        return RL.check_adversary(json.dumps(d, ensure_ascii=False), root)
+
+    ok, why = chk(base)
+    check("разбор с тремя настоящими попытками принят", ok, str(why))
+
+    ok, why = chk(dict(base, tried=base["tried"][:2]))
+    check("двух попыток мало", not ok
+          and any("не пробовал" in w for w in why), str(why))
+
+    ok, why = chk(dict(base, tried=[{"attack": "смотрел",
+                                     "how": "просмотрел код",
+                                     "result": "ничего"}] * 3))
+    check("«просмотрел код» попыткой не считается",
+          not ok and any("попыткой не является" in w for w in why),
+          str(why))
+
+    ok, why = chk(dict(base, verdict="ok"))
+    check("вердикт вне трёх объявленных отвергнут",
+          not ok and any("вердикт" in w for w in why), str(why))
+
+    ok, why = chk(dict(base, verdict="veto", why="коротко"))
+    check("вето без объяснения отвергнуто",
+          not ok and any("вето" in w for w in why), str(why))
+
+    ok, why = chk(dict(base, verdict="veto", why="п" * 120))
+    check("объяснённое вето принято", ok, str(why))
+
+    ok, why = chk(dict(base, verdict="undetermined"))
+    check("«не могу подтвердить» — законный ответ", ok, str(why))
+
+    ok, why = chk(dict(base, cites=["research/factory/nosuch_probe.py"]))
+    check("несуществующий указатель отвергнут",
+          not ok and any("несуществующ" in w for w in why), str(why))
 
 
 def test_runner_leaves_a_line_on_every_refusal():
@@ -611,6 +756,8 @@ def main():
              test_running_now_is_a_separate_question,
              test_brief_contract_is_mechanical,
              test_proposal_must_be_checkable_not_persuasive,
+             test_build_contract_makes_the_controls_bite,
+             test_adversary_must_show_what_it_tried,
              test_runner_leaves_a_line_on_every_refusal,
              test_prompt_actually_reaches_the_model)
     for t in tests:

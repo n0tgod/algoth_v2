@@ -242,6 +242,15 @@ PIPELINE = [
                   "сессии читателя нет, значит проверки обязаны быть "
                   "машинными.",
         "proof": "research/factory/agents/build.md",
+        "produces": ["research/factory/out/build.json"],
+        # Строителю нужен прогон тестов — иначе он не сможет проверить
+        # то, что написал. Права шире, чем у остальных ролей, и это
+        # осознанно: он единственный, кто пишет код.
+        "tools": ["Read", "Glob", "Grep", "Write", "Edit",
+                  "Bash(cat *)", "Bash(tail *)", "Bash(head *)",
+                  "Bash(ls *)", "Bash(sed *)", "Bash(wc *)",
+                  "Bash(grep *)", "Bash(python3 *)",
+                  "Bash(.venv/bin/python *)"],
     },
     {
         "key": "adversary", "kind": "role", "model": "дорогая",
@@ -281,6 +290,16 @@ PIPELINE = [
                   "Ни у кого в этой цепочке нет задачи убить "
                   "находку.",
         "proof": "research/factory/agents/adversary.md",
+        "produces": ["research/factory/out/adversary.json"],
+        # Адверсарию нужно ЛОМАТЬ: подделывать файлы и гонять тесты.
+        # Права те же, что у строителя, кроме одного — чинить он не
+        # вправе, и это держится промптом, а не перечнем.
+        "tools": ["Read", "Glob", "Grep", "Write", "Edit",
+                  "Bash(cat *)", "Bash(tail *)", "Bash(head *)",
+                  "Bash(ls *)", "Bash(sed *)", "Bash(wc *)",
+                  "Bash(grep *)", "Bash(git diff *)",
+                  "Bash(git checkout *)", "Bash(cp *)",
+                  "Bash(python3 *)", "Bash(.venv/bin/python *)"],
     },
     {
         "key": "declare", "kind": "mech", "model": "нет",
