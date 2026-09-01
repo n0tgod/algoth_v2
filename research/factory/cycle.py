@@ -49,6 +49,13 @@ MAX_ROLE_RUNS_PER_DAY = 8
 # запись стакана — а её неоткуда докачать. Три попытки: одна на сбой,
 # две на то, чтобы сбой оказался не разовым.
 MAX_MECH_RUNS_PER_DAY = 3
+# Предел попыток ОДНОГО шага за сутки — общий для ролей и механики.
+# Исчерпав его, шаг ПРОПУСКАЕТСЯ, а не останавливает круг: сегодня
+# разведчик падал на старом CLI и держал за собой брифера,
+# предлагающего, потолок и объявление — то есть одна сломанная роль
+# останавливала всю систему. Пропуск называется строкой, а на странице
+# такой шаг и так кричит тревогой тишины.
+MAX_TRIES_PER_STEP = 3
 # Час UTC, раньше которого круг не начинается.
 START_HOUR = 2
 
@@ -214,25 +221,27 @@ def main(argv=None):
     for key, kind, argvv, proof in CIRCLE:
         if done_today(key, kind, proof, rows, now):
             continue
+        tries = sum(1 for r in rows
+                    if r.get("status") == "start" and not r.get("dry")
+                    and r.get("role") == key
+                    and day_of(r.get("at") or 0) == today)
+        if tries >= MAX_TRIES_PER_STEP:
+            # ПРОПУСКАЕМ, а не останавливаемся: сломанный шаг не вправе
+            # держать за собой остальной круг. Молчать при этом нельзя
+            # — иначе пропуск неотличим от сделанного.
+            print(f"шаг {key}: попыток сегодня {tries} при "
+                  f"{MAX_TRIES_PER_STEP} — пропускаю, иду дальше")
+            continue
         if kind == "role" and role_busy:
             print(f"идёт роль: {', '.join(role_busy)} — шаг {key} "
                   "не запускаю, писатель один за раз")
             return 0
         if kind == "role" and used >= MAX_ROLE_RUNS_PER_DAY:
+            # Общий бюджет ролей выбран: роли на сегодня кончились, а
+            # механические шаги идут — они модель не зовут.
             print(f"предел суток: прогонов ролей {used} при "
-                  f"{MAX_ROLE_RUNS_PER_DAY} — шаг {key} не запускаю")
-            return 0
-        if kind != "role":
-            tries = sum(1 for r in rows
-                        if r.get("status") == "start" and not r.get("dry")
-                        and r.get("role") == key
-                        and day_of(r.get("at") or 0) == today)
-            if tries >= MAX_MECH_RUNS_PER_DAY:
-                # Молчать нельзя: круг остановится, и без этой строки
-                # остановка будет неотличима от пройденного круга.
-                print(f"предел суток: шаг {key} запускался {tries} раз "
-                      f"при {MAX_MECH_RUNS_PER_DAY} — не запускаю")
-                return 0
+                  f"{MAX_ROLE_RUNS_PER_DAY} — роль {key} пропускаю")
+            continue
         if a.dry:
             print(f"сделал бы шаг: {key} ({kind})")
             return 0

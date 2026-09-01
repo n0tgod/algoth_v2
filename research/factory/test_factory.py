@@ -1171,8 +1171,12 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
                 RL.append(runs, "judge", "fail", time.time())
             launched.clear()
             CY.main(["--force"])
-            check("предел суток останавливает и механический шаг",
-                  launched == [], str(launched))
+            # Исчерпавший попытки шаг ПРОПУСКАЕТСЯ, и круг идёт
+            # дальше: сломанная роль не вправе держать за собой
+            # потолок и объявление — сегодня именно это остановило
+            # систему на весь вечер.
+            check("исчерпавший попытки шаг пропускается, круг идёт",
+                  launched == ["ceiling"], str(launched))
             os.remove(runs)
             RL.append(runs, "scout", "ok", time.time())
             RL.append(runs, "brief", "ok", time.time())
@@ -1191,7 +1195,19 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
                 RL.append(runs, "brief", "fail", time.time())
             launched.clear()
             CY.main(["--force"])
-            check("предел суток останавливает роль",
+            # Общий бюджет ролей выбран — роли на сегодня кончились, а
+            # механика идёт: она модель не зовёт.
+            check("бюджет ролей выбран, механика идёт",
+                  launched == ["judge"], str(launched))
+            # А если и механика исчерпана, круг доходит до конца и
+            # говорит об этом словами.
+            for k in ("judge", "ceiling", "declare"):
+                for _ in range(CY.MAX_TRIES_PER_STEP):
+                    RL.append(runs, k, "start", time.time(), pid=1)
+                    RL.append(runs, k, "fail", time.time())
+            launched.clear()
+            CY.main(["--force"])
+            check("всё исчерпано — не запускается ничего",
                   launched == [], str(launched))
         finally:
             CY.OUT, CY.STOP, CY.launch = old_out, old_stop, old_launch
