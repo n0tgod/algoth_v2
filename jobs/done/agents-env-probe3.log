@@ -1,0 +1,15 @@
+== задание agents-env-probe3 ==
+строка: run research/factory/probe_env.py
+начало: 2026-09-01T11:56:00Z
+запускаю: .venv/bin/python research/factory/probe_env.py 
+Что нужно запускалке ролей
+
+  да   команда claude — /usr/bin/claude, 2.1.220 (Claude Code)
+  да   авторизация — вход CLI по подписке (claude auth login)
+  да   замок flock — нужен, чтобы роли не писали в репозиторий разом
+  да   запускалка
+  да   промпты ролей — brief
+
+Всё на месте: боевой прогон роли возможен.
+  tools/agents_run.sh brief
+конец: 2026-09-01T11:56:00Z, код 0
