@@ -22,3 +22,17 @@ Ignoring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in a
 **Потолок способен убить её до объявления:** доля сделок живого `gl`-соседа с удержанием дольше 24 ч и число ног, пропущенных правилом мест при слоте, занятом такой позицией. Read-only реплей одного кандидата, минуты. Шага `ceiling` в конвейере ещё нет (`research/factory/ceiling.py` отсутствует) — считать придётся вручную либо этим шагом, когда он появится.
 КОНТРАКТ: proposal.json: названы несуществующие файлы: FACTORY-day-1m.md, candidate.py, ledger.jsonl, research/factory/ceiling.py
 конец: 2026-09-01T12:35:23Z, код 1
+публикуется в ветку main:
+ jobs/done/propose-first-run.log        |  12 +++
+ jobs/done/propose-run-2.done           |   1 +
+ jobs/done/propose-run-2.log            |  24 ++++++
+ jobs/poke.log                          |   3 +
+ research/factory/out/agents-runs.jsonl |   2 +
+ research/factory/out/proposal.json     |  30 +++++++
+ research/factory/out/proposal.md       | 152 +++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 8 files changed, 225 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   988d028..51d0a1e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
