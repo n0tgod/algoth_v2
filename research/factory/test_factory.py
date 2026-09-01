@@ -673,6 +673,89 @@ def test_adversary_must_show_what_it_tried():
           not ok and any("несуществующ" in w for w in why), str(why))
 
 
+def test_fallback_happens_only_on_a_limit_and_is_recorded():
+    """Откат на запасную модель — только по лимиту, ровно раз, и в журнал.
+
+    Решение владельца: предлагающему — самая способная модель, а на
+    исчерпанном лимите переходить на запасную, иначе роль в такой день
+    молча выпадает из суточного круга.
+
+    Молчаливый перебор моделей превратил бы «роль отработала» в
+    «отработала неизвестно чем», поэтому проверяется не только сам
+    откат, но и то, что строка прогона называет ФАКТИЧЕСКУЮ модель.
+
+    Нераспознанный отказ отката вызывать не должен: это безопасное
+    направление ошибки — прогон падает громко, а не тратит вторую
+    модель на беду, которая повторится.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    sh = os.path.join(root, "tools", "agents_run.sh")
+
+    def run(first_fails_with):
+        d = tempfile.mkdtemp()
+        bin_d = os.path.join(d, "bin")
+        os.makedirs(bin_d)
+        seen = os.path.join(d, "models.txt")
+        with open(os.path.join(bin_d, "claude"), "w",
+                  encoding="utf-8") as f:
+            f.write('#!/bin/sh\n'
+                    'if [ "$1" = "auth" ]; then\n'
+                    '  echo \'{ "loggedIn": true }\'\n'
+                    '  exit 0\n'
+                    'fi\n'
+                    'm=""\n'
+                    'while [ $# -gt 0 ]; do\n'
+                    '  if [ "$1" = "--model" ]; then m="$2"; fi\n'
+                    '  shift\n'
+                    'done\n'
+                    'cat > /dev/null\n'
+                    'echo "$m" >> "%s"\n'
+                    'if [ "$m" = "fable" ]; then\n'
+                    '  echo "%s"; exit 1\n'
+                    'fi\n'
+                    'echo "подставная модель отработала"\n'
+                    % (seen, first_fails_with))
+        os.chmod(os.path.join(bin_d, "claude"), 0o755)
+        env = dict(os.environ, AGENTS_OUT=d, AGENTS_NO_PUBLISH="1",
+                   PATH=bin_d + os.pathsep + os.environ.get("PATH", ""))
+        env.pop("ANTHROPIC_API_KEY", None)
+        r = subprocess.run([sh, "propose"], cwd=root, env=env,
+                           capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, timeout=180)
+        used = []
+        if os.path.exists(seen):
+            with open(seen, encoding="utf-8") as f:
+                used = [x.strip() for x in f if x.strip()]
+        rows, _ = RL.read(os.path.join(d, RL.RUNS))
+        shutil.rmtree(d, ignore_errors=True)
+        return r, used, rows
+
+    r, used, rows = run("Error: usage limit reached for this model")
+    check("на лимите зовётся запасная модель",
+          used == ["fable", "opus"], str(used))
+    st = [x["status"] for x in rows]
+    check("откат оставил свою строку в журнале",
+          "fallback" in st, str(st))
+    last = [x for x in rows if x["status"] in ("ok", "contract")]
+    check("строка прогона называет ФАКТИЧЕСКУЮ модель",
+          bool(last) and "opus" in (last[-1].get("note") or ""),
+          str(last[-1].get("note") if last else None))
+    check("о переходе сказано громко",
+          "ЛИМИТ" in r.stdout, r.stdout[-200:])
+
+    # Отказ, не похожий на лимит: откат не делается, прогон падает.
+    r, used, rows = run("Error: something else entirely went wrong")
+    check("на чужом отказе запасная не зовётся",
+          used == ["fable"], str(used))
+    check("прогон упал, а не откатился",
+          r.returncode != 0
+          and [x["status"] for x in rows] == ["start", "fail"],
+          str([x["status"] for x in rows]))
+    check("в строке падения названа модель",
+          any("fable" in (x.get("note") or "") for x in rows),
+          str([x.get("note") for x in rows]))
+
+
 def test_runner_leaves_a_line_on_every_refusal():
     """Запускалка: отказ называется и всё равно оставляет строку.
 
@@ -774,7 +857,8 @@ def main():
              test_build_contract_makes_the_controls_bite,
              test_adversary_must_show_what_it_tried,
              test_runner_leaves_a_line_on_every_refusal,
-             test_prompt_actually_reaches_the_model)
+             test_prompt_actually_reaches_the_model,
+             test_fallback_happens_only_on_a_limit_and_is_recorded)
     for t in tests:
         print(t.__name__)
         t()

@@ -168,7 +168,8 @@ PYTOOLS
 # журнале прогонов не осталось бы ни следа.
 MODEL="$("$PY" -c "import sys,os;sys.path.insert(0,os.path.join(os.getcwd(),'research','factory'));import agents as AG;print(AG.model_of(sys.argv[1]))" "$ROLE")"
 EFFORT="$("$PY" -c "import sys,os;sys.path.insert(0,os.path.join(os.getcwd(),'research','factory'));import agents as AG;print(AG.effort_of(sys.argv[1]))" "$ROLE")"
-echo "модель: $MODEL · усилие: $EFFORT"
+FALLBACK="$("$PY" -c "import sys,os;sys.path.insert(0,os.path.join(os.getcwd(),'research','factory'));import agents as AG;print(AG.fallback_of(sys.argv[1]))" "$ROLE")"
+echo "модель: $MODEL · усилие: $EFFORT${FALLBACK:+ · запасная: $FALLBACK}"
 
 TMP="$(mktemp)"
 # Ловушка ОДНА на выход: вторая заменила бы первую, и копия скрипта
@@ -181,20 +182,43 @@ trap 'rm -f "$TMP" "${AGENTS_SELF_COPY:-}"' EXIT
 # берёт список переменной длины и, стоя перед промптом, проглатывает
 # его целиком: слова промпта становятся «правилами доступа», а модель
 # остаётся без задания. Первый прогон предлагающего умер ровно так.
-if [ -n "$ALLOW" ]; then
-    # shellcheck disable=SC2086
-    claude -p --model "$MODEL" --effort "$EFFORT" \
-        --allowedTools $ALLOW < "$PROMPT" >"$TMP" 2>&1
-else
-    claude -p --model "$MODEL" --effort "$EFFORT" < "$PROMPT" \
-        >"$TMP" 2>&1
-fi
+call_model() {                                # модель → код возврата
+    if [ -n "$ALLOW" ]; then
+        # shellcheck disable=SC2086
+        claude -p --model "$1" --effort "$EFFORT" \
+            --allowedTools $ALLOW < "$PROMPT" >"$TMP" 2>&1
+    else
+        claude -p --model "$1" --effort "$EFFORT" < "$PROMPT" >"$TMP" 2>&1
+    fi
+}
+
+# Откат на запасную модель — ТОЛЬКО на отказ по лимиту и ровно один
+# раз. Молчаливый перебор моделей превратил бы «роль отработала» в
+# «отработала неизвестно чем»; поэтому откат громкий, а `USED`
+# штампуется в строку прогона.
+#
+# Нераспознанный отказ отката НЕ вызывает: это безопасное направление
+# ошибки — прогон падает громко, и его причина лежит в логе, а не
+# тратит вторую модель на беду, которая повторится.
+limit_hit() {
+    grep -Eiq 'usage limit|rate.?limit|limit reached|out of (usage|credit)|quota|лимит|429|overloaded|capacity' "$TMP"
+}
+
+USED="$MODEL"
+call_model "$MODEL"
 RC=$?
+if [ "$RC" != "0" ] && [ -n "$FALLBACK" ] && limit_hit; then
+    echo "ЛИМИТ модели $MODEL — перехожу на запасную $FALLBACK"
+    log_run "fallback" "лимит $MODEL, перехожу на $FALLBACK" "$$"
+    USED="$FALLBACK"
+    call_model "$FALLBACK"
+    RC=$?
+fi
 BYTES="$(wc -c < "$TMP")"
 tail -c 4000 "$TMP"
 
 if [ "$RC" != "0" ]; then
-    log_run "fail" "claude вышел с кодом $RC: $(tail -c 500 "$TMP" | tr '\n' ' ')"
+    log_run "fail" "модель $USED, код $RC: $(tail -c 400 "$TMP" | tr '\n' ' ')"
     exit 1
 fi
 
@@ -216,7 +240,7 @@ if [ "$CRC" != "0" ]; then
     exit 1
 fi
 
-log_run "ok" "модель $MODEL, усилие $EFFORT" \
+log_run "ok" "модель $USED, усилие $EFFORT" \
     && echo "прогон роли $ROLE завершён"
 # Публикацию можно выключить на время проверки: тест обязан гонять
 # НАСТОЯЩИЙ скрипт, но не коммитить и не пушить репозиторий.
