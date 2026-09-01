@@ -465,6 +465,9 @@ global.fetch = async (url) => {
                    roles_n: 2, next_key: "propose",
                    runs_n: 4, runs_broken: 0,
                    scheduled: /agentssched=1/.test(SEARCH),
+                   summary: /agentsnosumry=1/.test(SEARCH) ? null
+                     : {text: "СВОДКА ЗА СУТКИ\nкруг прошёл целиком",
+                        cut: false, age_sec: 7200},
                    circle: ["brief", "propose"],
                    stale_keys: (/agentssched=1/.test(SEARCH)
                      && !/agentsquiet=1/.test(SEARCH)) ? ["propose"] : [],
@@ -3894,6 +3897,23 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       }
     } else if (!/data-nosched="1"/.test(E("alarm"))) {
       bad.push("агенты: отсутствие расписания не названо");
+    }
+    // Сводка владельцу — предмет всей системы, и она обязана стоять
+    // НА СТРАНИЦЕ, а не внутри карточки шага. Отсутствие сводки —
+    // названное состояние, а не пустая панель.
+    const sy = E("sumry");
+    if (/agentsnosumry=1/.test(SEARCH)) {
+      if (!/data-nosum="1"/.test(sy))
+        bad.push("агенты: отсутствие сводки не названо");
+      if (/data-sum="1"/.test(sy))
+        bad.push("агенты: сводки нет, а панель её показывает");
+    } else {
+      if (!/data-sum="1"/.test(sy))
+        bad.push("агенты: сводка владельцу не показана");
+      if (!/СВОДКА ЗА СУТКИ/.test(sy))
+        bad.push("агенты: в панели сводки нет её текста");
+      if (!/data-sumage="1"/.test(sy) || !/2 ч/.test(sy))
+        bad.push("агенты: возраст сводки не назван числом");
     }
     const bnd = (E("bounds").match(/<tr>/g) || []).length;
     const rsk = (E("risks").match(/<tr>/g) || []).length;

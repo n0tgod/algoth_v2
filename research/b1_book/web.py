@@ -8544,6 +8544,8 @@ button[aria-pressed="true"]{border-color:var(--accent);
 <div id="nav"></div>
 <div class="panel"><div id="frame"></div><div id="strip"></div>
   <div id="alarm"></div></div>
+<div class="panel"><div class="cap" id="scap"></div>
+  <div id="sumry"></div></div>
 <div class="panel"><div class="cap" id="pcap"></div>
   <div id="pipe">&hellip;</div></div>
 <div class="panel"><div class="cap" id="bcap"></div>
@@ -8627,7 +8629,14 @@ const UI = {
   staleq: {en: "ran, but not since", ru: "отработал, но не позже чем"},
   stalen: {en: "never ran", ru: "не отрабатывал ни разу"},
   quiet: {en: "the circle is on schedule and every step of it has run",
-          ru: "круг на расписании, и каждый его шаг отработал"}
+          ru: "круг на расписании, и каждый его шаг отработал"},
+  scap: {en: "the daily summary for the owner",
+         ru: "суточная сводка владельцу"},
+  nosum: {en: "no summary yet: the briefer has not produced one",
+          ru: "сводки ещё нет: сторож-брифер её не произвёл"},
+  sumold: {en: "the summary is", ru: "сводке"},
+  sumcut: {en: "shown in part, the rest is in the file",
+           ru: "показана не целиком, остальное в файле"}
 };
 function T(k){ const v = UI[k]; return v[LANG] || v.en; }
 function tx(o, f){ return LANG === "ru" ? (o[f + "_ru"] || o[f] || "")
@@ -8730,6 +8739,19 @@ function render(){
     al += `<p class="frame" data-quiet="1">${T("quiet")}</p>`;
   document.getElementById("alarm").innerHTML = al;
 
+  document.getElementById("scap").textContent = T("scap");
+  // Сводка — это то, ради чего система и заводилась, поэтому она
+  // стоит на странице, а не внутри карточки шага: ежедневный отчёт,
+  // который надо искать, читают один раз. Отсутствие сводки —
+  // НАЗВАННОЕ состояние, а не пустая панель.
+  const sm = d.summary;
+  document.getElementById("sumry").innerHTML =
+    (!sm || sm.error || !(sm.text || "").trim())
+      ? `<p class="frame" data-nosum="1">${T("nosum")}</p>`
+      : `<p class="k" data-sumage="1">${T("sumold")} ${
+          Math.round((sm.age_sec || 0) / 3600)} ч${
+          sm.cut ? " \u00b7 " + T("sumcut") : ""}</p>`
+        + `<pre class="frame" data-sum="1">${esc(sm.text)}</pre>`;
   document.getElementById("pcap").textContent =
     T("pcap") + " \u00b7 " + T("tap");
   document.getElementById("pipe").innerHTML = d.steps.map((s, i) => {

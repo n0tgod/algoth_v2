@@ -4206,7 +4206,23 @@ class Collector:
                      or now - okrun[k] > self.AGENTS_STALE))
             if st["stale"]:
                 stale.append(k)
-        out = {"steps": steps, "built_n": len(built),
+        # Сводка владельцу — то, ради чего вся система и заводилась,
+        # поэтому она стоит НА СТРАНИЦЕ, а не внутри карточки шага:
+        # ежедневный отчёт, который надо искать, читают раз.
+        sm = os.path.join(os.path.dirname(HERE), "factory", "out",
+                          "summary.md")
+        summary = None
+        if os.path.exists(sm):
+            try:
+                with open(sm, encoding="utf-8", errors="replace") as f:
+                    txt = f.read(9000)
+                summary = {"text": txt,
+                           "cut": os.path.getsize(sm) > len(
+                               txt.encode("utf-8")),
+                           "age_sec": round(now - os.path.getmtime(sm), 1)}
+            except OSError as e:
+                summary = {"error": str(e)}
+        out = {"steps": steps, "built_n": len(built), "summary": summary,
                "runs_n": len(runs), "runs_broken": broken,
                "scheduled": bool(sched), "stale_keys": stale,
                "circle": circle,
