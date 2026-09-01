@@ -26,3 +26,17 @@
 контракт: build.json: тесты кандидата не проходят: ПРОВАЛЕНО: 5 — смесь двух живых книг закрыта, причина названа ростом N, а не связью, независимая заявка на том же пуле проходит, рост назван числами в причине pass, на том же пуле другая заявка условием роста ЗАКРЫТА
 не публикую — контракт не выполнен
 конец: 2026-09-01T19:55:40Z, код 0
+публикуется в ветку main:
+ jobs/done/adversary-ceiling-4.log       |   7 ++
+ jobs/done/build-ceiling-fix4.done       |   1 +
+ jobs/done/build-ceiling-fix4.log        |  28 +++++++
+ jobs/poke.log                           |   3 +
+ research/factory/out/_controls_check.py |  36 ++++++++-
+ research/factory/out/agents-runs.jsonl  |   2 +
+ research/factory/out/build.json         | 131 ++++++++++++++++++++++----------
+ research/s8_loop/out/day_brake.json     |   2 +-
+ 8 files changed, 168 insertions(+), 42 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   0e73615..1743bb8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
