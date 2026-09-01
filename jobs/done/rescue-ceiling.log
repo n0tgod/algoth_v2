@@ -2,3 +2,21 @@
 строка: run research/factory/publish_build.py --also research/factory/run_day.py
 начало: 2026-09-01T16:17:51Z
 запускаю: .venv/bin/python research/factory/publish_build.py --also research/factory/run_day.py
+публикуется в ветку main:
+ jobs/done/build-ceiling.log      |   7 +
+ jobs/done/rescue-ceiling.done    |   1 +
+ jobs/done/rescue-ceiling.log     |   4 +
+ jobs/poke.log                    |   3 +
+ research/factory/ceiling.py      | 434 ++++++++++++++++++++++++++++++++
+ research/factory/run_day.py      |  96 +++++++-
+ research/factory/test_ceiling.py | 518 +++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 1061 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   0a059bb..4ed3eaa  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+публикую:
+  research/factory/ceiling.py
+  research/factory/run_day.py
+  research/factory/test_ceiling.py
+конец: 2026-09-01T16:17:53Z, код 0
