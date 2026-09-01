@@ -26,3 +26,23 @@ Three things worth your attention:
 All nine controls bite and drop the named check; suites green (ceiling 27 blocks, run_day 4, factory 25, candidate 8). `run_day.py` wasn't touched this round, so `touched` is empty.
 КОНТРАКТ: выполнен
 прогон роли build завершён
+публикуется в ветку main:
+ jobs/done/adversary-ceiling-2.log      |   7 ++
+ jobs/done/build-ceiling-fix2.done      |   1 +
+ jobs/done/build-ceiling-fix2.log       |  28 +++++
+ jobs/poke.log                          |   3 +
+ research/factory/ceiling.py            | 125 +++++++++++++++++-
+ research/factory/out/agents-runs.jsonl |   2 +
+ research/factory/out/build.json        |  69 +++++-----
+ research/factory/test_ceiling.py       | 223 +++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 9 files changed, 419 insertions(+), 41 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   401c3a7..65e17ae  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+контракт: выполнен
+публикую:
+  research/factory/ceiling.py
+  research/factory/test_ceiling.py
+конец: 2026-09-01T17:28:58Z, код 0
