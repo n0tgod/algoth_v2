@@ -4,3 +4,5 @@
 # от прогона, которого не было.
 out/agents-runs-dry.jsonl
 out/agents.lock
+out/cycle.log
+out/cycle-*.log

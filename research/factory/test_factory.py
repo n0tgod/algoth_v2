@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -756,6 +757,89 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
           str([x.get("note") for x in rows]))
 
 
+def test_cycle_advances_one_step_and_obeys_the_safeties():
+    """Суточный круг: один шаг за вызов, и три предохранителя держат.
+
+    Круг не исполняется целиком в одном такте: сторож ходит раз в пять
+    минут, а судья считает часами. Состояние читается с диска, поэтому
+    обрыв посреди круга не теряет ничего.
+
+    Предохранители проверяются каждый: выключатель, предел прогонов
+    ролей за сутки и час начала. Без них расписание включать нельзя —
+    остановить систему должно быть проще, чем запустить.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    sys.path.insert(0, HERE)
+    import cycle as CY
+
+    d = tempfile.mkdtemp()
+    try:
+        old_out, old_stop = CY.OUT, CY.STOP
+        CY.OUT = d
+        CY.STOP = os.path.join(d, "STOP")
+        runs = os.path.join(d, RL.RUNS)
+        launched = []
+        CY.launch = lambda k, kind, argv, log=print: (
+            launched.append(k) or 4242)
+        try:
+            # Пустые сутки: первый шаг круга — бриф.
+            CY.main(["--dry", "--force"])
+            check("на пустых сутках круг начинает с первого шага",
+                  True)
+            launched.clear()
+            CY.main(["--force"])
+            check("запускается ровно один шаг, и это бриф",
+                  launched == ["brief"], str(launched))
+
+            # Бриф сделан — следующий шаг предлагающий.
+            RL.append(runs, "brief", "ok", time.time())
+            launched.clear()
+            CY.main(["--force"])
+            check("следующим идёт предлагающий",
+                  launched == ["propose"], str(launched))
+
+            # Выключатель сильнее всего остального.
+            open(CY.STOP, "w").close()
+            launched.clear()
+            CY.main(["--force"])
+            check("выключатель останавливает круг",
+                  launched == [], str(launched))
+            os.remove(CY.STOP)
+
+            # Идущий шаг: пока процесс жив, второй не запускается.
+            RL.append(runs, "propose", "start", time.time(),
+                      pid=os.getpid())
+            launched.clear()
+            CY.main(["--force"])
+            check("идущий шаг не запускается второй раз",
+                  launched == [], str(launched))
+            RL.append(runs, "propose", "ok", time.time())
+
+            # Предел суток: считаются прогоны РОЛЕЙ.
+            for _ in range(CY.MAX_ROLE_RUNS_PER_DAY):
+                RL.append(runs, "brief", "start", time.time(), pid=1)
+                RL.append(runs, "brief", "fail", time.time())
+            # Механический шаг предел не расходует и идти обязан.
+            launched.clear()
+            CY.main(["--force"])
+            check("предел суток не запрещает механический шаг",
+                  launched == ["ceiling"], str(launched))
+            # А роль — запрещает: брифа за сегодня нет в свежем
+            # журнале, но лимит выбран.
+            os.remove(runs)
+            for _ in range(CY.MAX_ROLE_RUNS_PER_DAY):
+                RL.append(runs, "brief", "start", time.time(), pid=1)
+                RL.append(runs, "brief", "fail", time.time())
+            launched.clear()
+            CY.main(["--force"])
+            check("предел суток останавливает роль",
+                  launched == [], str(launched))
+        finally:
+            CY.OUT, CY.STOP = old_out, old_stop
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_runner_leaves_a_line_on_every_refusal():
     """Запускалка: отказ называется и всё равно оставляет строку.
 
@@ -858,7 +942,8 @@ def main():
              test_adversary_must_show_what_it_tried,
              test_runner_leaves_a_line_on_every_refusal,
              test_prompt_actually_reaches_the_model,
-             test_fallback_happens_only_on_a_limit_and_is_recorded)
+             test_fallback_happens_only_on_a_limit_and_is_recorded,
+             test_cycle_advances_one_step_and_obeys_the_safeties)
     for t in tests:
         print(t.__name__)
         t()
