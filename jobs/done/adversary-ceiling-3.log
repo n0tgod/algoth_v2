@@ -22,3 +22,17 @@ Ignoring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in a
 Рядом, не вето и не просьба смягчить порог: новое правило роста работает, но действует как порог на среднюю связь с пулом (зависит от состава пула, а не от заявки), и на многокнижном пуле `MAX_CORR=0.95` почти ничего не решает. Ограничение захода названо честно: живой артефакт прежнего образца, настоящий прогон стоит ~2 ч рядом с записью стакана — починенный код живьём не отрабатывал ни разу.
 КОНТРАКТ: выполнен
 прогон роли adversary завершён
+публикуется в ветку main:
+ jobs/done/adversary-ceiling-3.done     |  1 +
+ jobs/done/adversary-ceiling-3.log      | 24 +++++++++
+ jobs/done/build-ceiling-fix2.log       |  7 +++
+ jobs/poke.log                          |  3 ++
+ research/factory/out/adversary.json    | 99 +++++++++++++++++-----------------
+ research/factory/out/agents-runs.jsonl |  2 +
+ research/s8_loop/out/day_brake.json    |  2 +-
+ 7 files changed, 86 insertions(+), 52 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   23630b6..7231976  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-01T18:37:38Z, код 0
