@@ -19,3 +19,11 @@ Already up to date.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/zz-deploy-summary.log | 17 ++++++++++++++++-
+ jobs/done/zz-scout-run3.log     | 15 +++++++++++++++
+ 2 files changed, 31 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   2858878..f4c010e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
