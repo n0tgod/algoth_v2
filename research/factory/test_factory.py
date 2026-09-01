@@ -377,6 +377,93 @@ def test_brief_contract_is_mechanical():
           RL.cites("y.jsonlx") == [], str(RL.cites("y.jsonlx")))
 
 
+def test_scout_brings_mechanisms_not_verdicts():
+    """Разведка проверяется по форме, и повтор ловит МАШИНА.
+
+    Роль смотрит наружу, наших замеров у неё нет, и «работает» в чужом
+    тексте стоит бесплатно. Поэтому у идеи обязаны быть механизм (не
+    наблюдение), то, чем её убить, и источник ссылкой: без них до
+    предлагающего доедет настроение, а не работа.
+
+    Журнал принесённого ведёт машина: список, который роль пишет сама,
+    она сама и перепишет, и защита от повтора станет украшением.
+    """
+    long = "x" * 120
+    def idea(**kw):
+        d = {"title": "поглощение в опционных потоках",
+             "claim": long, "mechanism": long, "kills_it": long,
+             "novelty": long, "sources": ["https://example.org/a"]}
+        d.update(kw)
+        return d
+
+    def chk(d, seen=()):
+        return RL.check_scout(json.dumps(d, ensure_ascii=False),
+                              seen=seen)
+
+    ok, why = chk({"found": True, "ideas": [idea()]})
+    check("годное меню проходит", ok, str(why))
+
+    ok, why = chk({"found": True, "ideas": [idea(mechanism="коротко")]})
+    check("идея без механизма отвергнута",
+          not ok and any("mechanism" in w for w in why), str(why))
+    ok, why = chk({"found": True, "ideas": [idea(kills_it="")]})
+    check("идея без «чем убить» отвергнута",
+          not ok and any("kills_it" in w for w in why), str(why))
+    ok, why = chk({"found": True, "ideas": [idea(sources=[])]})
+    check("идея без источника отвергнута",
+          not ok and any("источник" in w for w in why), str(why))
+    ok, why = chk({"found": True,
+                   "ideas": [idea(sources=["см. твиттер"])]})
+    check("источник не ссылкой не считается",
+          not ok and any("источник" in w for w in why), str(why))
+    ok, why = chk({"found": True,
+                   "ideas": [idea() for _ in
+                             range(RL.SCOUT_MAX_IDEAS + 1)]})
+    check("меню длиннее предела отвергнуто",
+          not ok and any("предел" in w for w in why), str(why))
+    ok, why = chk({"found": True, "ideas": [idea(), idea()]})
+    check("две одинаковые идеи в одном меню отвергнуты",
+          not ok and any("соседнюю" in w for w in why), str(why))
+    ok, why = chk({"found": True, "ideas": [idea()]},
+                  seen=["Поглощение в опционных потоках"])
+    check("уже принесённая идея отвергнута",
+          not ok and any("уже приносилась" in w for w in why), str(why))
+    ok, why = chk({"found": False, "why": "коротко"})
+    check("пустой день без обоснования отвергнут",
+          not ok and any("не обоснован" in w for w in why), str(why))
+    ok, why = chk({"found": False, "why": "п" * 150})
+    check("обоснованный пустой день — законный ответ", ok, str(why))
+
+    # Журнал ведёт машина, и только на ГОДНОМ меню: записав негодное,
+    # мы запретили бы роли принести ту же идею исправленной.
+    d = tempfile.mkdtemp()
+    try:
+        n = RL.scout_record(json.dumps({"found": True,
+                                        "ideas": [idea()]},
+                                       ensure_ascii=False), d)
+        seen = RL.scout_seen(d)
+        check("принесённое записано машиной",
+              n == 1 and seen == ["поглощение в опционных потоках"],
+              str(seen))
+        ok, why = chk({"found": True, "ideas": [idea()]}, seen=seen)
+        check("повтор ловится по журналу машины", not ok, str(why))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+    # Разведка доезжает до предлагающего РАЗДЕЛОМ БРИФА: он читает
+    # только бриф, и второй вход обессмыслил бы его потолок токенов.
+    root = os.path.dirname(os.path.dirname(HERE))
+    with open(os.path.join(root, "research/factory/agents/brief.md"),
+              encoding="utf-8") as f:
+        bp = f.read()
+    check("брифер обязан нести раздел разведки",
+          "scout.json" in bp and "разведчик" in bp.lower(), "")
+    import cycle as CY
+    order = [k for k, _kind, _argv, _proof in CY.CIRCLE]
+    check("разведчик идёт перед брифером",
+          order.index("scout") < order.index("brief"), str(order))
+
+
 def test_proposal_must_be_checkable_not_persuasive():
     """Заявка на испытание проверяется машиной по форме, не по красоте.
 
@@ -819,6 +906,10 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
     """
     root = os.path.dirname(os.path.dirname(HERE))
     sh = os.path.join(root, "tools", "agents_run.sh")
+    # Имена моделей берутся ИЗ РЕЕСТРА, а не пишутся здесь руками:
+    # владелец меняет модель решением, и тест, назвавший её словом,
+    # краснеет на верном коде (случилось при переходе на Fable 5.1).
+    MAIN, BACK = AG.model_of("propose"), AG.fallback_of("propose")
 
     def run(first_fails_with):
         d = tempfile.mkdtemp()
@@ -839,11 +930,11 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
                     'done\n'
                     'cat > /dev/null\n'
                     'echo "$m" >> "%s"\n'
-                    'if [ "$m" = "fable" ]; then\n'
+                    'if [ "$m" = "%s" ]; then\n'
                     '  echo "%s"; exit 1\n'
                     'fi\n'
                     'echo "подставная модель отработала"\n'
-                    % (seen, first_fails_with))
+                    % (seen, MAIN, first_fails_with))
         os.chmod(os.path.join(bin_d, "claude"), 0o755)
         env = dict(os.environ, AGENTS_OUT=d, AGENTS_NO_PUBLISH="1",
                    PATH=bin_d + os.pathsep + os.environ.get("PATH", ""))
@@ -861,13 +952,13 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
 
     r, used, rows = run("Error: usage limit reached for this model")
     check("на лимите зовётся запасная модель",
-          used == ["fable", "opus"], str(used))
+          used == [MAIN, BACK], str(used))
     st = [x["status"] for x in rows]
     check("откат оставил свою строку в журнале",
           "fallback" in st, str(st))
     last = [x for x in rows if x["status"] in ("ok", "contract")]
     check("строка прогона называет ФАКТИЧЕСКУЮ модель",
-          bool(last) and "opus" in (last[-1].get("note") or ""),
+          bool(last) and BACK in (last[-1].get("note") or ""),
           str(last[-1].get("note") if last else None))
     check("о переходе сказано громко",
           "ЛИМИТ" in r.stdout, r.stdout[-200:])
@@ -875,13 +966,13 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
     # Отказ, не похожий на лимит: откат не делается, прогон падает.
     r, used, rows = run("Error: something else entirely went wrong")
     check("на чужом отказе запасная не зовётся",
-          used == ["fable"], str(used))
+          used == [MAIN], str(used))
     check("прогон упал, а не откатился",
           r.returncode != 0
           and [x["status"] for x in rows] == ["start", "fail"],
           str([x["status"] for x in rows]))
     check("в строке падения названа модель",
-          any("fable" in (x.get("note") or "") for x in rows),
+          any(MAIN in (x.get("note") or "") for x in rows),
           str([x.get("note") for x in rows]))
 
 
@@ -920,10 +1011,15 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
                   True)
             launched.clear()
             CY.main(["--force"])
-            check("запускается ровно один шаг, и это бриф",
-                  launched == ["brief"], str(launched))
+            check("запускается ровно один шаг, и это разведчик",
+                  launched == ["scout"], str(launched))
 
-            # Бриф сделан — следующий шаг предлагающий.
+            # Разведчик отработал — следующим бриф, потом предлагающий.
+            RL.append(runs, "scout", "ok", time.time())
+            launched.clear()
+            CY.main(["--force"])
+            check("следующим идёт брифер",
+                  launched == ["brief"], str(launched))
             RL.append(runs, "brief", "ok", time.time())
             launched.clear()
             CY.main(["--force"])
@@ -948,6 +1044,7 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             RL.append(runs, "propose", "ok", time.time())
 
             # Предел суток: считаются прогоны РОЛЕЙ.
+            RL.append(runs, "scout", "ok", time.time())
             for _ in range(CY.MAX_ROLE_RUNS_PER_DAY):
                 RL.append(runs, "brief", "start", time.time(), pid=1)
                 RL.append(runs, "brief", "fail", time.time())
@@ -966,6 +1063,7 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             check("предел суток останавливает и механический шаг",
                   launched == [], str(launched))
             os.remove(runs)
+            RL.append(runs, "scout", "ok", time.time())
             RL.append(runs, "brief", "ok", time.time())
             RL.append(runs, "propose", "ok", time.time())
             launched.clear()
@@ -976,6 +1074,7 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             # А роль — запрещает: брифа за сегодня нет в свежем
             # журнале, но лимит выбран.
             os.remove(runs)
+            RL.append(runs, "scout", "ok", time.time())
             for _ in range(CY.MAX_ROLE_RUNS_PER_DAY):
                 RL.append(runs, "brief", "start", time.time(), pid=1)
                 RL.append(runs, "brief", "fail", time.time())
@@ -1181,6 +1280,7 @@ def main():
              test_run_log_counts_every_wake_up,
              test_running_now_is_a_separate_question,
              test_brief_contract_is_mechanical,
+             test_scout_brings_mechanisms_not_verdicts,
              test_proposal_must_be_checkable_not_persuasive,
              test_closed_by_ceiling_is_not_proposed_again,
              test_the_control_machine_is_not_fooled_by_stale_bytecode,

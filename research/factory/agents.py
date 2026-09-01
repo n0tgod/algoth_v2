@@ -72,6 +72,79 @@ PIPELINE = [
         "proof": "tools/agents_run.sh",
     },
     {
+        # Решение владельца (2026-09-01): роль, которая ежедневно
+        # смотрит НАРУЖУ — что нового в алго-трейдинге и в трейдинге
+        # вообще — и приносит идеи предлагающему.
+        #
+        # Отдаёт она МЕНЮ МЕХАНИЗМОВ, а не выводы: внешний текст есть
+        # утверждение чужого человека, и «работает» в нём стоит
+        # бесплатно. Поэтому у каждой идеи обязаны быть механизм,
+        # источник и то, чем её убить у НАС; проверять её всё равно
+        # будет потолок, а объявлять — реестр.
+        #
+        # Читает предлагающий по-прежнему ТОЛЬКО бриф: разведка
+        # попадает к нему разделом брифа, а не вторым входом. Иначе
+        # потолок токенов брифа перестал бы что-либо значить, а
+        # «предлагающий читает одно» — быть правдой.
+        "key": "scout", "kind": "role", "model": "дорогая",
+        # Решение владельца (2026-09-01): Fable 5.1, запасной Opus 5.
+        # Идентификатор ТОЧНЫЙ, а не псевдоним: псевдоним однажды
+        # разрешится в другую модель, и прогон сменит модель молча.
+        "model_id": "claude-fable-5-1", "fallback": "claude-opus-5",
+        "effort": "high",
+        "title": "scout",
+        "title_ru": "разведчик",
+        "cadence": "daily, before the briefer",
+        "cadence_ru": "раз в сутки, перед брифером",
+        "plain": "Looks OUTWARD: what is new in algo trading and in "
+                 "trading at large. Brings a menu of MECHANISMS with "
+                 "sources and with what would kill each one here — "
+                 "not conclusions, and never a claim that something "
+                 "works.",
+        "plain_ru": "Смотрит НАРУЖУ: что нового в алго-трейдинге и в "
+                    "трейдинге вообще. Приносит меню МЕХАНИЗМОВ с "
+                    "источниками и с тем, чем каждый убивается у нас, "
+                    "— не выводы и никогда не утверждение «работает».",
+        "reads": "the outside world and the list of what this project "
+                 "has already closed",
+        "reads_ru": "внешний мир и список того, что проект уже "
+                    "закрыл",
+        "writes": "a menu of ideas, machine-checkable in form",
+        "writes_ru": "меню идей, проверяемое машиной по форме",
+        "forbid": "no numbers about OUR data, no verdicts, no rules "
+                  "of the declared space: it does not know our "
+                  "measurements and must not pretend to",
+        "forbid_ru": "никаких чисел о НАШИХ данных, никаких вердиктов "
+                     "и никаких правил объявленного пространства: наших "
+                     "замеров она не знает и не вправе изображать, "
+                     "будто знает",
+        "doubt": "an idea it cannot source or cannot say how to kill "
+                 "is not brought at all",
+        "doubt_ru": "идею, которой нечем подтвердить источник или "
+                    "нечем убить, не приносит вовсе",
+        "why": "The proposer reads only our own state, so its space "
+               "of ideas is bounded by what we have already thought "
+               "of. Six hypotheses in a row were closed by the same "
+               "stand; the cheapest way to widen the search is to "
+               "look outside — provided what comes back is treated as "
+               "a claim to be tested, not as evidence.",
+        "why_ru": "Предлагающий читает только наше собственное "
+                  "состояние, поэтому пространство его идей ограничено "
+                  "тем, что мы уже придумали. Шесть гипотез подряд "
+                  "закрыл один и тот же стенд; дешевле всего расширить "
+                  "поиск взглядом наружу — при условии, что "
+                  "принесённое считается утверждением, которое надо "
+                  "проверить, а не свидетельством.",
+        "proof": "research/factory/agents/scout.md",
+        "produces": ["research/factory/out/scout.json",
+                     "research/factory/out/scout.md"],
+        # Права: смотреть наружу и писать своё меню. Наших данных ей
+        # не нужно — она о них не судит; сеть у неё есть, а записи и
+        # реестра нет.
+        "tools": ["WebSearch", "WebFetch", "Read", "Write", "Edit",
+                  "Bash(cat *)", "Bash(ls *)", "Bash(wc *)"],
+    },
+    {
         "key": "brief", "kind": "role", "model": "дешёвая",
         "model_id": "opus", "effort": "medium",
         "title": "keeper and briefer",
@@ -127,7 +200,8 @@ PIPELINE = [
         # Запасная нужна не для экономии, а на случай исчерпанного
         # лимита: роль, которая в такой день просто не отработает,
         # молча выбывает из суточного круга.
-        "model_id": "fable", "fallback": "opus", "effort": "xhigh",
+        "model_id": "claude-fable-5-1", "fallback": "claude-opus-5",
+        "effort": "xhigh",
         "title": "proposer",
         "title_ru": "предлагающий",
         "cadence": "daily",

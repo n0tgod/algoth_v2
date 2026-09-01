@@ -353,6 +353,124 @@ def check_proposal(text, root, ledger_ids=(), space=None,
     return (not bad), bad
 
 
+# --- контракт разведчика ---------------------------------------------
+
+SCOUT_MIN = {"title": 8, "claim": 40, "mechanism": 80,
+             "kills_it": 40, "novelty": 40}
+SCOUT_MAX_IDEAS = 5
+SCOUT_MIN_WHY = 120
+SCOUT_SEEN = "scout.jsonl"
+
+
+def scout_seen(base):
+    """Заголовки уже принесённых идей. Журнал ведёт машина."""
+    seen = []
+    try:
+        with open(os.path.join(base, SCOUT_SEEN), encoding="utf-8") as f:
+            for ln in f:
+                ln = ln.strip()
+                if not ln:
+                    continue
+                try:
+                    r = json.loads(ln)
+                except ValueError:
+                    continue
+                t = (r.get("title") or "").strip().lower()
+                if t:
+                    seen.append(t)
+    except OSError:
+        return []
+    return seen
+
+
+def scout_record(text, base):
+    """Дописать принесённое в журнал. Возвращает число записанных.
+
+    Журнал ведёт машина, а не роль: список, который роль пишет сама,
+    она сама и перепишет, и защита от повтора станет украшением.
+    """
+    try:
+        d = json.loads(text or "")
+        ideas = d.get("ideas") or []
+    except ValueError:
+        return 0
+    if not isinstance(ideas, list):
+        return 0
+    n = 0
+    os.makedirs(base, exist_ok=True)
+    with open(os.path.join(base, SCOUT_SEEN), "a", encoding="utf-8") as f:
+        for it in ideas:
+            if not isinstance(it, dict):
+                continue
+            t = (it.get("title") or "").strip()
+            if not t:
+                continue
+            f.write(json.dumps(
+                {"at": round(time.time(), 3), "title": t,
+                 "sources": [c for c in (it.get("sources") or [])
+                             if isinstance(c, str)][:5]},
+                ensure_ascii=False) + "\n")
+            n += 1
+    return n
+
+
+def check_scout(text, seen=()):
+    """Меню разведчика проверяемо? Возвращает (годно, список бед).
+
+    Проверяется ФОРМА, и только она: убедительность идеи проверит
+    потолок, когда предлагающий превратит её в заявку. Но идея без
+    механизма и без того, чем её убить, до предлагающего доезжать не
+    должна — иначе разведка приносит настроение, а не работу.
+    """
+    bad = []
+    try:
+        d = json.loads(text or "")
+    except ValueError as e:
+        return False, [f"меню не разбирается как JSON: {e}"]
+    if not isinstance(d, dict):
+        return False, ["меню не объект"]
+    if "found" not in d or not isinstance(d["found"], bool):
+        return False, ["нет поля found (да/нет): пустой день обязан "
+                       "быть назван, а не подразумеваться"]
+    if not d["found"]:
+        why = (d.get("why") or "").strip()
+        if len(why) < SCOUT_MIN_WHY:
+            bad.append(f"пустой день не обоснован: {len(why)} символов "
+                       f"при минимуме {SCOUT_MIN_WHY}")
+        return (not bad), bad
+
+    ideas = d.get("ideas")
+    if not isinstance(ideas, list) or not ideas:
+        return False, ["found=true, а идей нет"]
+    if len(ideas) > SCOUT_MAX_IDEAS:
+        bad.append(f"идей {len(ideas)} при пределе {SCOUT_MAX_IDEAS}: "
+                   "меню, которое не прочитать, не меню")
+    was = {str(t).strip().lower() for t in seen}
+    titles = set()
+    for i, it in enumerate(ideas, 1):
+        if not isinstance(it, dict):
+            bad.append(f"идея {i} не объект")
+            continue
+        for f, n in SCOUT_MIN.items():
+            v = (it.get(f) or "").strip()
+            if len(v) < n:
+                bad.append(f"идея {i}, поле {f}: {len(v)} символов "
+                           f"при минимуме {n}")
+        src = [c for c in (it.get("sources") or [])
+               if isinstance(c, str) and c.strip().startswith("http")]
+        if not src:
+            bad.append(f"идея {i} без источника ссылкой: механику без "
+                       "источника нечем оспорить")
+        t = (it.get("title") or "").strip().lower()
+        if t and t in was:
+            bad.append(f"идея {i} уже приносилась: «{it.get('title')}» "
+                       "— повтор тратит день предлагающего")
+        if t and t in titles:
+            bad.append(f"идея {i} повторяет соседнюю в этом же меню")
+        titles.add(t)
+    return (not bad), bad
+
+
 def check_role(role, root):
     """Контракт роли: выполнен ли. Возвращает (годно, список бед).
 
@@ -384,6 +502,19 @@ def check_role(role, root):
             ok, why, _ = check_brief(texts.get(rel, ""), root, budget, mn)
             if not ok:
                 bad.append(rel + ": " + "; ".join(why))
+    elif role == "scout":
+        out = os.path.join(root, "research", "factory", "out")
+        ok, why = check_scout(
+            texts.get("research/factory/out/scout.json", ""),
+            seen=scout_seen(out))
+        if not ok:
+            bad.append("scout.json: " + "; ".join(why))
+        else:
+            # Журнал принесённого ведёт МАШИНА и только на годном
+            # меню: записав негодное, мы запретили бы роли принести
+            # ту же идею в исправленном виде.
+            scout_record(texts.get("research/factory/out/scout.json",
+                                   ""), out)
     elif role == "adversary":
         ok, why = check_adversary(
             texts.get("research/factory/out/adversary.json", ""), root)
