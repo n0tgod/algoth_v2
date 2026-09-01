@@ -618,6 +618,49 @@ def test_prompt_actually_reaches_the_model():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_the_control_machine_is_not_fooled_by_stale_bytecode():
+    """Машина контролей обязана исполнять ТОТ код, который написала.
+
+    Найдено ролью строителя на её копии этой машины. Питон считает
+    `.pyc` свежим по паре (mtime в ЦЕЛЫХ секундах, размер исходника), а
+    подделки пишутся в один файл подряд: замена одной строки часто даёт
+    файл того же размера в ту же секунду — и прогон исполняет байткод
+    ПРЕДЫДУЩЕЙ подделки. Врёт в обе стороны: кусающийся контроль
+    объявляется прошедшим и наоборот, а через эту машину проходили все
+    контроли фабрики.
+
+    Проверка воспроизводит столкновение точно: тот же размер и та же
+    метка времени. Со своим каталогом байткода второй прогон обязан
+    увидеть НОВЫЙ исходник.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        mod = os.path.join(d, "m.py")
+        tst = os.path.join(d, "t.py")
+        with open(tst, "w", encoding="utf-8") as f:
+            f.write("import sys, os\n"
+                    "sys.path.insert(0, os.path.dirname("
+                    "os.path.abspath(__file__)))\n"
+                    "import m\n"
+                    "raise SystemExit(0 if m.V == 1 else 1)\n")
+        stamp = time.time() - 10
+
+        def put(v):
+            with open(mod, "w", encoding="utf-8") as f:
+                f.write(f"V = {v}\n")
+            os.utime(mod, (stamp, stamp))
+
+        put(1)
+        ok1, _ = RL._run_tests(d, tst)
+        put(2)          # тот же размер, та же метка времени
+        ok2, _ = RL._run_tests(d, tst)
+        check("первый прогон видит свой код", ok1, "")
+        check("второй прогон видит НОВЫЙ код, а не прежний байткод",
+              not ok2, "исполнён байткод предыдущей подделки")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_build_contract_makes_the_controls_bite():
     """Главное в постройке — не «тесты зелёные», а кусаются ли контроли.
 
@@ -1123,6 +1166,7 @@ def main():
              test_brief_contract_is_mechanical,
              test_proposal_must_be_checkable_not_persuasive,
              test_closed_by_ceiling_is_not_proposed_again,
+             test_the_control_machine_is_not_fooled_by_stale_bytecode,
              test_build_contract_makes_the_controls_bite,
              test_adversary_must_show_what_it_tried,
              test_runner_leaves_a_line_on_every_refusal,

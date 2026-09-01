@@ -441,17 +441,35 @@ BUILD_TEST_TIMEOUT = 900
 
 
 def _run_tests(root, tests):
-    """Прогнать тесты кандидата. Возвращает (прошли, вывод)."""
+    """Прогнать тесты кандидата. Возвращает (прошли, вывод).
+
+    Байткод складывается в СВОЙ каталог на каждый прогон, и это не
+    гигиена, а исправление дефекта самой машины. Питон считает `.pyc`
+    свежим по паре (mtime в целых секундах, размер исходника), а
+    подделки пишутся в один файл подряд: замена одной строки часто
+    даёт файл ТОГО ЖЕ размера в ту же секунду — и прогон исполняет
+    байткод предыдущей подделки. Врёт это в обе стороны: кусающийся
+    контроль объявляется прошедшим и наоборот. Найдено ролью
+    строителя на своей копии этой машины (`out/_controls_check.py`);
+    здесь тот же дефект был у всех контролей фабрики.
+    """
     import subprocess
     import sys
+    import tempfile
     py = os.path.join(root, ".venv", "bin", "python")
     if not os.path.exists(py):
         py = sys.executable
+    cache = tempfile.mkdtemp(prefix="pyc-")
+    env = dict(os.environ, PYTHONPYCACHEPREFIX=cache)
     try:
         r = subprocess.run([py, tests], cwd=root, capture_output=True,
-                           text=True, timeout=BUILD_TEST_TIMEOUT)
+                           text=True, timeout=BUILD_TEST_TIMEOUT,
+                           env=env)
     except Exception as e:                                # noqa: BLE001
         return False, f"{type(e).__name__}: {e}"
+    finally:
+        import shutil
+        shutil.rmtree(cache, ignore_errors=True)
     return r.returncode == 0, (r.stdout + r.stderr)[-4000:]
 
 
