@@ -426,11 +426,16 @@ def test_proposal_must_be_checkable_not_persuasive():
           str(RL.cites("см. candidate.py и FACTORY-day-1m.md")))
     # Проза не сканируется: путь в ней бывает назван затем, чтобы
     # сказать «его ещё нет», и такое утверждение полезно.
+    # Путь взят ЗАВЕДОМО НЕСУЩЕСТВУЮЩИЙ навсегда. Первая версия
+    # использовала `research/factory/ceiling.py` — файл, который
+    # заданием велено было создать; строитель его создал, и фикстура
+    # протухла. Нашёл это он же и чинить отказался: ослаблять чужую
+    # проверку ради своей нельзя.
+    gone = "research/factory/_never_exists_probe.py"
     ok, why = chk(dict(good, ceiling=good["ceiling"]
-                       + " шага research/factory/ceiling.py пока нет"))
+                       + f" шага {gone} пока нет"))
     check("отсутствующий путь в прозе заявку не валит", ok, str(why))
-    ok, why = chk(dict(good, cites=good["cites"]
-                       + ["research/factory/ceiling.py"]))
+    ok, why = chk(dict(good, cites=good["cites"] + [gone]))
     check("отсутствующий путь в cites заявку валит",
           not ok and any("cites" in w for w in why), str(why))
 
