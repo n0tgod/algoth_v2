@@ -337,3 +337,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788265446 ==
 [2026-09-01T12:24:08Z] задание propose-first-run: роль propose
+
+== сигнал 1788265728 ==
+[2026-09-01T12:28:49Z] задание propose-run-2: роль propose

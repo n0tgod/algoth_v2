@@ -38,3 +38,15 @@ Ignoring --allowedTools rule "предлагай.**": Wildcard tool name "пре
 Ignoring --allowedTools rule "**условно**": Wildcard tool name "**условно**" is not supported in allow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
 Error: Input must be provided either through stdin or as a prompt argument when using --print
 конец: 2026-09-01T12:24:10Z, код 1
+публикуется в ветку main:
+ jobs/done/agents-card-deploy.log       | 11 ++++++++++
+ jobs/done/propose-first-run.done       |  1 +
+ jobs/done/propose-first-run.log        | 40 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log                          |  3 +++
+ research/factory/out/agents-runs.jsonl |  2 ++
+ research/s8_loop/out/day_brake.json    |  2 +-
+ 6 files changed, 58 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   92778d2..ad57d02  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
