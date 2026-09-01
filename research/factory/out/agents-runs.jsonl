@@ -9,3 +9,5 @@
 {"at": 1788279334.674, "role": "build", "status": "ok", "started": 1788278524.0, "ended": 1788279334.674, "dry": false}
 {"at": 1788279549.846, "role": "adversary", "status": "start", "started": 1788279549.0, "ended": 1788279549.846, "dry": false, "pid": 1014482}
 {"at": 1788280281.836, "role": "adversary", "status": "ok", "started": 1788279549.0, "ended": 1788280281.836, "dry": false}
+{"at": 1788280364.464, "role": "build", "status": "start", "started": 1788280364.0, "ended": 1788280364.464, "dry": false, "pid": 1016234}
+{"at": 1788281123.088, "role": "build", "status": "contract", "started": 1788280364.0, "ended": 1788281123.088, "dry": false, "note": "роль отработала, но контракт не выполнен"}
