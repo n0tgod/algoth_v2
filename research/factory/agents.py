@@ -184,7 +184,10 @@ PIPELINE = [
         "plain_ru": "Считает дешёвый расчёт, объявленный в "
                     "предложении, при необходимости с идеальным "
                     "знанием будущего. Не прошёл — кода не пишется "
-                    "вовсе.",
+                    "вовсе. Числа берёт из суточного прогона, который "
+                    "реплеит заявку отдельной рукой, — поэтому в "
+                    "суточном круге потолок стоит ПОСЛЕ судьи, а не "
+                    "перед ним.",
         "reads": "the spec and the record",
         "reads_ru": "спеку и запись",
         "writes": "«closed by ceiling» into the ledger",
@@ -317,10 +320,15 @@ PIPELINE = [
         "cadence_ru": "когда адверсарий пропустил",
         "plain": "Writes the candidate into an append-only ledger "
                  "with the COMMIT of its code, not a path to a file. "
-                 "From this moment it is judged only forward.",
+                 "From this moment it is judged only forward. One gate: "
+                 "a ceiling verdict of pass, for THAT proposal, on "
+                 "TODAY's numbers; anything else is a named refusal.",
         "plain_ru": "Пишет кандидата в append-only журнал вместе с "
                     "КОММИТОМ его кода, а не путём к файлу. С этого "
-                    "момента он судится только вперёд.",
+                    "момента он судится только вперёд. Ворота одни: "
+                    "вердикт потолка «прошёл» по ТОЙ ЖЕ заявке и по "
+                    "СЕГОДНЯШНИМ числам; всё остальное — названный "
+                    "отказ, а не молчание.",
         "reads": "the verdict of the adversary",
         "reads_ru": "вердикт адверсария",
         "writes": "one immutable line in the ledger",
@@ -340,7 +348,7 @@ PIPELINE = [
                   "R5, которую нельзя обойти задним числом. Без "
                   "пришпиленного коммита «оставляю выживших» тихо "
                   "становится «правил, пока не выжило».",
-        "proof": "research/factory/ledger.py",
+        "proof": "research/factory/declare.py",
     },
     {
         "key": "judge", "kind": "mech", "model": "нет",

@@ -912,7 +912,7 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             launched.clear()
             CY.main(["--force"])
             check("предел суток не запрещает механический шаг",
-                  launched == ["ceiling"], str(launched))
+                  launched == ["judge"], str(launched))
             # А роль — запрещает: брифа за сегодня нет в свежем
             # журнале, но лимит выбран.
             os.remove(runs)

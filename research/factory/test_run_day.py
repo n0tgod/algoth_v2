@@ -13,6 +13,7 @@ D1 звал настоящий `publish.sh` и уцелел только пот�
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 
@@ -218,8 +219,113 @@ def test_zero_outcomes_is_a_failure_not_a_quiet_day():
         R.PROPOSALS, R.SW.read_bars, R.publish = was_p, was_b, was_pub
 
 
+def test_declaration_passes_only_the_ceiling_gate():
+    """Объявляется ТОЛЬКО то, что потолок пропустил, и только сегодня.
+
+    Объявление — единственное необратимое действие фабрики: с этой
+    минуты кандидат тратит испытание и судится вперёд. Поэтому каждый
+    отказ обязан быть НАЗВАН: «не прошёл» и «не считался» лечатся
+    по-разному, а молчание одинаково выглядит и там, и там.
+
+    Проверяется и правило, и дорога: круг обязан звать объявление
+    ПОСЛЕ потолка, а суточный прогон в круге — не объявлять сам.
+    """
+    import declare as DEC
+    import cycle as CY
+
+    d = tempfile.mkdtemp()
+    was_pub = R.publish
+    R.publish = lambda *a, **k: None
+    try:
+        rule = SP.index_to_rule(0)
+        key = SP.key(rule)
+        run_path = os.path.join(d, "factory-day-t.json")
+
+        def put(verdict="pass", cid=None, prop_rule=None, run_age=0.0):
+            with open(os.path.join(d, "ceiling.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"verdict": verdict, "why": "проба",
+                           "id": cid or key, "rule": rule}, f)
+            with open(os.path.join(d, R.PROPOSAL_NAME), "w",
+                      encoding="utf-8") as f:
+                json.dump({"proposed": True,
+                           "rule": prop_rule or rule}, f)
+            with open(run_path, "w", encoding="utf-8") as f:
+                json.dump({"meta": {}}, f)
+            if run_age:
+                t = os.path.getmtime(run_path) - run_age
+                os.utime(run_path, (t, t))
+
+        def run():
+            DEC.main(["--out", d, "--base", d, "--tag", "t",
+                      "--seed", "7", "--no-publish"])
+            with open(os.path.join(d, "declare.json"),
+                      encoding="utf-8") as f:
+                res = json.load(f)
+            return res, LG.state(LG.read(d)[0])
+
+        # Потолок сказал «нет» — в реестре пусто, причина названа.
+        put(verdict="closed")
+        res, st = run()
+        check("закрытое потолком не объявляется",
+              key not in st and "closed" in (res.get("why") or ""),
+              str(res.get("why")))
+        # Контроль добирается и в день без заявки: его доля — свойство
+        # пула, а не заявки.
+        check("случайная рука добирается и без заявки",
+              res["controls"] == len(st) and len(st) > 0,
+              f"{res['controls']} против {len(st)}")
+
+        # Вердикт о ДРУГОМ кандидате не объявляет сегодняшнюю заявку.
+        put(prop_rule=SP.index_to_rule(1))
+        res, st = run()
+        check("вердикт о другом кандидате отвергнут",
+              key not in st and "другом" in (res.get("why") or ""),
+              str(res.get("why")))
+
+        # Вчерашние числа описывают другой пул.
+        put(run_age=2 * 86400.0)
+        res, st = run()
+        check("вердикт по вчерашнему прогону отвергнут",
+              key not in st and "прогону за" in (res.get("why") or ""),
+              str(res.get("why")))
+
+        # Всё сошлось — объявляем.
+        put()
+        res, st = run()
+        check("прошедшее потолок объявлено",
+              key in st and res.get("candidate") == key, str(res))
+        # Источник живёт в СОБЫТИИ реестра, а не в сводном состоянии:
+        # сводка отвечает «что живо», журнал — «чем это объявлено».
+        rows = [r for r in LG.read(d)[0]
+                if r.get("id") == key and r.get("ev") == LG.DECLARE]
+        check("источник объявления назван потолком",
+              bool(rows) and rows[-1].get("source") == "ceiling",
+              str(rows[-1:]))
+
+        # Повтор испытания не тратит.
+        res, st2 = run()
+        check("повтор не объявляется дважды",
+              "уже в реестре" in (res.get("why") or ""),
+              str(res.get("why")))
+
+        # Дорога круга: объявление стоит ПОСЛЕ потолка, а судья в
+        # круге не объявляет сам.
+        order = [k for k, _kind, _argv, _proof in CY.CIRCLE]
+        check("объявление идёт после потолка",
+              order.index("declare") > order.index("ceiling")
+              > order.index("judge"), str(order))
+        judge = [c for c in CY.CIRCLE if c[0] == "judge"][0]
+        check("судья в круге не объявляет сам",
+              "--no-declare" in (judge[2] or []), str(judge[2]))
+    finally:
+        R.publish = was_pub
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def main():
     tests = (test_end_to_end,
+             test_declaration_passes_only_the_ceiling_gate,
              test_only_needed_legs_are_priced,
              test_zero_outcomes_is_a_failure_not_a_quiet_day, test_null_keeps_the_book_and_shuffles_the_future)
     for t in tests:

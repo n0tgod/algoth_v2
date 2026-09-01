@@ -169,6 +169,25 @@ def declare_today(base, now, seed, log=print, per_day=None):
         if k in st or any(k == SP.key(r) for r, _n in fresh):
             continue
         fresh.append((rule, note))
+    return declare_rules(base, now, seed, fresh, log=log, per_day=per_day,
+                         source="assistant")
+
+
+def declare_rules(base, now, seed, fresh, log=print, per_day=None,
+                  source="assistant"):
+    """Объявить названные правила и добрать контрольную руку жребием.
+
+    Одна реализация на оба канала объявления — ручной список и вердикт
+    потолка. Второе место, пишущее в реестр по своим правилам, однажды
+    разошлось бы с первым, а реестр и есть знаменатель доказательства:
+    испытание, потраченное дважды, отменить нечем.
+
+    Контроль добирается ВСЕГДА, даже когда объявлять нечего: его доля —
+    свойство пула, а не заявки. Иначе день без заявки молча ронял бы
+    долю случайной руки, и сравнивать отобранных стало бы не с чем.
+    """
+    per_day = PL.PER_DAY if per_day is None else per_day
+    st = LG.state(LG.read(base)[0])
     n_act = len(LG.active(st))
     n_ctl = sum(1 for v in LG.active(st).values()
                 if v["lane"] == "control")
@@ -180,7 +199,7 @@ def declare_today(base, now, seed, log=print, per_day=None):
     for rule, note in fresh[:n_sel]:
         k = SP.key(rule)
         if LG.declare(k, rule, "selected", seed=None, at=now, base=base,
-                      source="assistant", note=note) is None:
+                      source=source, note=note) is None:
             declared.append((k, "selected"))
     taken = set(LG.state(LG.read(base)[0]))
     for rule in SP.draw(seed, n_ctl_new, exclude=taken):
@@ -510,7 +529,7 @@ def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
             "null_median": nulls_med}
 
 
-def publish(path, log=print):
+def publish(path, log=print, msg="фабрика: суточный прогон"):
     """Публикация — часть прогона, а не отдельный шаг: шаг, который
     можно забыть, рано или поздно забывают (урок D1).
 
@@ -520,8 +539,7 @@ def publish(path, log=print):
     пока его видно.
     """
     try:
-        subprocess.run([os.path.join(ROOT, "tools", "publish.sh"),
-                        "фабрика: суточный прогон"],
+        subprocess.run([os.path.join(ROOT, "tools", "publish.sh"), msg],
                        cwd=ROOT, check=False, timeout=600)
     except Exception as e:                                # noqa: BLE001
         log(f"публикация не удалась: {type(e).__name__}: {e}")
