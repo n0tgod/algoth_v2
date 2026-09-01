@@ -956,6 +956,23 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             CY.main(["--force"])
             check("предел суток не запрещает механический шаг",
                   launched == ["judge"], str(launched))
+            # У механического шага свой предел: падающий судья без
+            # него перезапускался бы каждые пять минут круглые сутки.
+            for _ in range(CY.MAX_MECH_RUNS_PER_DAY):
+                RL.append(runs, "judge", "start", time.time(), pid=1)
+                RL.append(runs, "judge", "fail", time.time())
+            launched.clear()
+            CY.main(["--force"])
+            check("предел суток останавливает и механический шаг",
+                  launched == [], str(launched))
+            os.remove(runs)
+            RL.append(runs, "brief", "ok", time.time())
+            RL.append(runs, "propose", "ok", time.time())
+            launched.clear()
+            CY.main(["--force"])
+            check("до предела механический шаг идёт",
+                  launched == ["judge"], str(launched))
+
             # А роль — запрещает: брифа за сегодня нет в свежем
             # журнале, но лимит выбран.
             os.remove(runs)
