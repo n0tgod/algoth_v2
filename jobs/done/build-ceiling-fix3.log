@@ -32,3 +32,24 @@ Both wrong books sit *below* the 0.95 limit, so either wrong key turns `closed` 
 Two things I am not claiming as done. The adversary's tie counterfeit (`after < before`) is still unpinned — I traced reachability and the tie needs exact float equality on continuous data, with the structural tie case cut off earlier by `counted_by_pool`; I did not change `<=`, since that is a verdict rule. And `out/_controls_check.py` is a leftover I could not delete (`research/*/out` is protected from deletion, while `publish.sh` sweeps that directory wholesale), so I declared it in `touched` and documented it rather than letting an unannounced file into the commit.
 КОНТРАКТ: выполнен
 прогон роли build завершён
+публикуется в ветку main:
+ jobs/done/build-ceiling-fix3.done       |   1 +
+ jobs/done/build-ceiling-fix3.log        |  34 +++++++
+ jobs/poke.log                           |   3 +
+ research/factory/ceiling.py             |  24 ++++-
+ research/factory/out/_controls_check.py |  94 ++++++++++++++++++
+ research/factory/out/agents-runs.jsonl  |   2 +
+ research/factory/out/build.json         |  22 ++++-
+ research/factory/test_ceiling.py        | 162 +++++++++++++++++++++++++++++++-
+ research/s8_loop/out/day_brake.json     |   2 +-
+ 9 files changed, 333 insertions(+), 11 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   ae3b22b..759c25b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+контракт: выполнен
+публикую:
+  research/factory/ceiling.py
+  research/factory/out/_controls_check.py
+  research/factory/test_ceiling.py
+конец: 2026-09-01T18:53:28Z, код 0
