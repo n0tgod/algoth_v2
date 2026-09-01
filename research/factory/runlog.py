@@ -225,3 +225,143 @@ def history(rows, role, limit=20):
     got = [r for r in rows if r.get("role") == role]
     got.sort(key=lambda x: (x.get("at") or 0), reverse=True)
     return got[:limit]
+
+
+# --- контракты ролей -------------------------------------------------
+#
+# Модель производит, машина проверяет. Содержательную верность это не
+# проверяет и не притворяется, что проверяет: для неё есть адверсарий.
+# Здесь ловится ровно то, что ловится без читателя — форма, размер,
+# существование названных файлов и согласие с уже объявленным.
+
+PROPOSAL_MIN = {"hypothesis": 80, "kills_it": 60, "ceiling": 80,
+                "differs_from_live": 60}
+PROPOSAL_MIN_CITES = 3
+BRIEF_PATH = "research/factory/out/brief.md"
+# Пустой день — законный ответ, но он обязан быть ОБОСНОВАН: иначе
+# «сегодня нечего предложить» станет способом не работать, и отличить
+# его от отказа будет нечем.
+PROPOSAL_MIN_WHY = 120
+
+
+def check_proposal(text, root, ledger_ids=(), space=None):
+    """Предложение проверяемо? Возвращает (годно, список бед).
+
+    Предложение — это заявка на ИСПЫТАНИЕ, и каждое испытание тратит
+    бюджет доказательства. Поэтому форма жёсткая: что утверждается,
+    чем убивается, каким дешёвым расчётом закрывается и чем отличается
+    от уже живых. Красноречие здесь ничего не стоит, а проверяемость —
+    всё.
+    """
+    bad = []
+    try:
+        d = json.loads(text or "")
+    except ValueError as e:
+        return False, [f"предложение не разбирается как JSON: {e}"]
+    if not isinstance(d, dict):
+        return False, ["предложение не объект"]
+
+    if "proposed" not in d or not isinstance(d["proposed"], bool):
+        return False, ["нет поля proposed (да/нет) — а пустой день "
+                       "обязан быть назван, а не подразумеваться"]
+    if not d["proposed"]:
+        why = (d.get("why") or "").strip()
+        if len(why) < PROPOSAL_MIN_WHY:
+            bad.append(f"пустой день не обоснован: {len(why)} символов "
+                       f"при минимуме {PROPOSAL_MIN_WHY}")
+        return (not bad), bad
+
+    kind = d.get("kind")
+    if kind not in ("row", "mechanism"):
+        bad.append("kind обязан быть row или mechanism: строку из "
+                   "объявленного пространства судья умеет прогнать "
+                   "сегодня, механизм ждёт строителя")
+    if not (d.get("title") or "").strip():
+        bad.append("нет названия")
+    for f, n in PROPOSAL_MIN.items():
+        v = (d.get(f) or "").strip()
+        if len(v) < n:
+            bad.append(f"поле {f}: {len(v)} символов при минимуме {n}")
+
+    got = cites(json.dumps(d, ensure_ascii=False))
+    missing = [c for c in got if not os.path.exists(os.path.join(root, c))]
+    if len(got) < PROPOSAL_MIN_CITES:
+        bad.append(f"указателей {len(got)}, а нужно не меньше "
+                   f"{PROPOSAL_MIN_CITES}: заявка без ссылок на замеры "
+                   "неотличима от догадки")
+    if missing:
+        bad.append("названы несуществующие файлы: "
+                   + ", ".join(sorted(missing)[:5]))
+    # Предложение обязано опираться на БРИФ. Что роль читала только
+    # его, машине не проверить; что она на него сослалась — проверить
+    # можно, и это отделяет заявку из состояния проекта от заявки из
+    # общих соображений.
+    if BRIEF_PATH not in got:
+        bad.append(f"предложение не ссылается на {BRIEF_PATH}: заявка "
+                   "не из состояния проекта, а из общих соображений")
+
+    if kind == "row":
+        rule = d.get("rule")
+        if space is None:
+            bad.append("строку проверить нечем: пространство не подано")
+        else:
+            why = space.validate(rule if isinstance(rule, dict) else {})
+            if why:
+                bad.append(f"правило вне объявленного пространства: {why}")
+            else:
+                un = space.unavailable(rule)
+                if un:
+                    bad.append(f"строка сегодня неисполнима: {un}")
+                k = space.key(rule)
+                if k in set(ledger_ids):
+                    bad.append(f"кандидат {k} уже объявлен — повтор "
+                               "тратит бюджет доказательства впустую")
+    elif kind == "mechanism":
+        if not (d.get("needs") or "").strip():
+            bad.append("механизм не назвал, какого шага конвейера ждёт")
+    return (not bad), bad
+
+
+def check_role(role, root):
+    """Контракт роли: выполнен ли. Возвращает (годно, список бед).
+
+    Одно место на все роли — иначе перечень того, что роль обязана
+    оставить, разошёлся бы с реестром и с промптом.
+    """
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import agents as AG
+    st = AG.by_key(role) or {}
+    files = list(st.get("produces") or [])
+    bad = []
+    texts = {}
+    for rel in files:
+        p = os.path.join(root, rel)
+        if not os.path.exists(p):
+            bad.append(f"{rel}: не создан")
+            continue
+        with open(p, encoding="utf-8") as f:
+            texts[rel] = f.read()
+    if bad:
+        return False, bad
+
+    if role == "brief":
+        for rel, budget, mn in (
+                ("research/factory/out/brief.md", BRIEF_BUDGET_CHARS,
+                 BRIEF_MIN_CITES),
+                ("research/factory/out/summary.md", 6000, 1)):
+            ok, why, _ = check_brief(texts.get(rel, ""), root, budget, mn)
+            if not ok:
+                bad.append(rel + ": " + "; ".join(why))
+    elif role == "propose":
+        import ledger as LG
+        import space as SP
+        rows, _ = LG.read(os.path.join(root, "research", "factory",
+                                       "out", "ledger.jsonl"))
+        ids = list(LG.state(rows).keys())
+        ok, why = check_proposal(
+            texts.get("research/factory/out/proposal.json", ""),
+            root, ledger_ids=ids, space=SP)
+        if not ok:
+            bad.append("proposal.json: " + "; ".join(why))
+    return (not bad), bad

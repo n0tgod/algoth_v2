@@ -159,6 +159,12 @@ PIPELINE = [
                   "кандидатов запись способна рассудить, а не тем, "
                   "как быстро пишется код.",
         "proof": "research/factory/agents/propose.md",
+        "produces": ["research/factory/out/proposal.json",
+                     "research/factory/out/proposal.md"],
+        # Права уже: предлагающий читает бриф и пишет заявку. Ни
+        # обхода проверок, ни правки чужих файлов ему не нужно.
+        "tools": ["Read", "Write", "Edit",
+                  "Bash(cat *)", "Bash(ls *)", "Bash(wc *)"],
     },
     {
         "key": "ceiling", "kind": "mech", "model": "нет",

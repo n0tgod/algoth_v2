@@ -185,31 +185,17 @@ if [ "$RC" != "0" ]; then
 fi
 
 # --- проверка того, что роль произвела ------------------------------
-# Модель производит, машина проверяет контракт. Просить модель
-# проверить себя бесполезно; посчитать размер и убедиться, что
-# названные файлы существуют, машина умеет.
-"$PY" - "$ROLE" "$ROOT" <<'PYEOF'
+# Модель производит, машина проверяет контракт. Что именно проверяется
+# по каждой роли — в `runlog.check_role`: одно место, иначе перечень
+# разошёлся бы с реестром и с промптом.
+"$PY" - "$ROLE" "$ROOT" <<'PYCHECK'
 import os, sys
 sys.path.insert(0, os.path.join(sys.argv[2], "research", "factory"))
 import runlog as R
-role, root = sys.argv[1], sys.argv[2]
-if role != "brief":
-    sys.exit(0)
-files = [("research/factory/out/brief.md", R.BRIEF_BUDGET_CHARS, R.BRIEF_MIN_CITES),
-         ("research/factory/out/summary.md", 6000, 1)]
-bad = []
-for rel, budget, mn in files:
-    p = os.path.join(root, rel)
-    if not os.path.exists(p):
-        bad.append(f"{rel}: не создан")
-        continue
-    with open(p, encoding="utf-8") as f:
-        ok, why, _ = R.check_brief(f.read(), root, budget, mn)
-    if not ok:
-        bad.append(rel + ": " + "; ".join(why))
-print("КОНТРАКТ: " + ("; ".join(bad) if bad else "выполнен"))
-sys.exit(1 if bad else 0)
-PYEOF
+ok, bad = R.check_role(sys.argv[1], sys.argv[2])
+print("КОНТРАКТ: " + ("выполнен" if ok else "; ".join(bad)))
+sys.exit(0 if ok else 1)
+PYCHECK
 CRC=$?
 if [ "$CRC" != "0" ]; then
     log_run "contract" "роль отработала, но контракт не выполнен"

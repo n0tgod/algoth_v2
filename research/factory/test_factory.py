@@ -366,6 +366,76 @@ def test_brief_contract_is_mechanical():
           RL.cites("y.jsonlx") == [], str(RL.cites("y.jsonlx")))
 
 
+def test_proposal_must_be_checkable_not_persuasive():
+    """Заявка на испытание проверяется машиной по форме, не по красоте.
+
+    Каждое объявленное испытание тратит бюджет доказательства: оно
+    ухудшает поправку всем остальным и занимает слот на месяцы, потому
+    что вердикт выносится только вперёд. Поэтому форма жёсткая — что
+    утверждается, чем убивается, каким дешёвым расчётом закрывается,
+    чем отличается от живых, — а красноречие ничего не стоит.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    long = "x" * 200
+    rule = {"target": "fwd_4h", "rank": "sigma", "floor_bp": 30,
+            "width": 5, "geom": "levels", "rr_band": "lo",
+            "sizing": "equal", "basket": "no", "agree": "no"}
+    good = {"proposed": True, "kind": "row", "title": "проба",
+            "hypothesis": long, "kills_it": long, "ceiling": long,
+            "differs_from_live": long,
+            "cites": ["research/factory/out/brief.md",
+                      "research/factory/space.py",
+                      "research/factory/pool.py"],
+            "rule": rule}
+
+    def chk(d, ids=()):
+        return RL.check_proposal(json.dumps(d, ensure_ascii=False), root,
+                                 ledger_ids=ids, space=S)
+
+    ok, why = chk(good)
+    # Бриф на диске песочницы может отсутствовать — тогда годной
+    # заявка быть и не должна, и это тоже верное поведение.
+    if os.path.exists(os.path.join(root, RL.BRIEF_PATH)):
+        check("годная заявка проходит", ok, str(why))
+    else:
+        check("без брифа заявка не годна", not ok, str(why))
+
+    ok, why = chk(dict(good, rule=dict(rule, width=7)))
+    check("значение вне объявленного пространства отвергнуто",
+          not ok and any("пространств" in w for w in why), str(why))
+
+    ok, why = chk(dict(good, rule={k: v for k, v in rule.items()
+                                   if k != "agree"}))
+    check("пропущенная ось отвергнута",
+          not ok and any("нет оси" in w for w in why), str(why))
+
+    ok, why = chk(good, ids=[S.key(rule)])
+    check("повтор уже объявленного отвергнут",
+          not ok and any("уже объявлен" in w for w in why), str(why))
+
+    ok, why = chk(dict(good, hypothesis="коротко"))
+    check("заявка без содержания отвергнута",
+          not ok and any("hypothesis" in w for w in why), str(why))
+
+    ok, why = chk(dict(good, cites=["research/factory/space.py",
+                                    "research/factory/pool.py",
+                                    "research/factory/ledger.py"]))
+    check("заявка без ссылки на бриф отвергнута",
+          not ok and any("brief.md" in w for w in why), str(why))
+
+    ok, why = chk(dict(good, kind="mechanism", rule=None))
+    check("механизм без названного шага отвергнут",
+          not ok and any("шага конвейера" in w for w in why), str(why))
+
+    ok, why = chk({"proposed": False, "why": "коротко"})
+    check("пустой день без обоснования отвергнут",
+          not ok and any("не обоснован" in w for w in why), str(why))
+    ok, why = chk({"proposed": False, "why": "п" * 150})
+    check("обоснованный пустой день — законный ответ", ok, str(why))
+    ok, why = RL.check_proposal("не json", root, space=S)
+    check("неразбираемая заявка отвергнута", not ok, str(why))
+
+
 def test_runner_leaves_a_line_on_every_refusal():
     """Запускалка: отказ называется и всё равно оставляет строку.
 
@@ -463,6 +533,7 @@ def main():
              test_run_log_counts_every_wake_up,
              test_running_now_is_a_separate_question,
              test_brief_contract_is_mechanical,
+             test_proposal_must_be_checkable_not_persuasive,
              test_runner_leaves_a_line_on_every_refusal)
     for t in tests:
         print(t.__name__)
