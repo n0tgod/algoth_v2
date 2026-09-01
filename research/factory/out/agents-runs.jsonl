@@ -23,3 +23,5 @@
 {"at": 1788288902.067, "role": "judge", "status": "start", "started": 1788288902.067, "ended": 1788288902.067, "dry": false, "pid": 1029869}
 {"at": 1788290068.694, "role": "adversary", "status": "start", "started": 1788290068.0, "ended": 1788290068.694, "dry": false, "pid": 1030641}
 {"at": 1788290803.741, "role": "adversary", "status": "ok", "started": 1788290068.0, "ended": 1788290803.741, "dry": false, "note": "модель opus, усилие xhigh"}
+{"at": 1788290893.376, "role": "build", "status": "start", "started": 1788290893.0, "ended": 1788290893.376, "dry": false, "pid": 1032367}
+{"at": 1788292540.648, "role": "build", "status": "ok", "started": 1788290893.0, "ended": 1788292540.648, "dry": false, "note": "модель opus, усилие xhigh"}
