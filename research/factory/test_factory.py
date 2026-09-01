@@ -1075,8 +1075,37 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             CY.main(["--force"])
             check("предел суток не запрещает механический шаг",
                   launched == ["judge"], str(launched))
+            # Артефакт шага СТАРШЕ его входа: шаг судил вчерашнее и
+            # обязан пойти заново. Сегодня ровно это остановило круг
+            # на весь вечер, а страница показывала пройденный шаг.
+            os.remove(runs)
+            for k in ("scout", "brief", "propose"):
+                RL.append(runs, k, "ok", time.time())
+            day = os.path.join(d, "factory-day-1m.json")
+            ceil = os.path.join(d, "ceiling.json")
+            open(os.path.join(d, "FACTORY-day-1m.md"), "w").close()
+            open(day, "w").close()
+            open(ceil, "w").close()
+            old_t = time.time() - 3600
+            os.utime(ceil, (old_t, old_t))   # вердикт старше чисел
+            launched.clear()
+            CY.main(["--force"])
+            check("шаг со старым артефактом идёт заново",
+                  launched == ["ceiling"], str(launched))
+            os.utime(ceil, None)             # вердикт свежее чисел
+            launched.clear()
+            CY.main(["--force"])
+            check("свежий артефакт шага не переделывается",
+                  launched == ["declare"], str(launched))
+            os.remove(day)
+            os.remove(ceil)
+            os.remove(os.path.join(d, "FACTORY-day-1m.md"))
+            os.remove(runs)
+
             # У механического шага свой предел: падающий судья без
             # него перезапускался бы каждые пять минут круглые сутки.
+            for k in ("scout", "brief", "propose"):
+                RL.append(runs, k, "ok", time.time())
             for _ in range(CY.MAX_MECH_RUNS_PER_DAY):
                 RL.append(runs, "judge", "start", time.time(), pid=1)
                 RL.append(runs, "judge", "fail", time.time())

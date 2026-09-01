@@ -65,6 +65,12 @@ START_HOUR = 2
 # после вердикта потолка. Второй канал объявления (ручной список
 # `proposals.jsonl`) остаётся для владельца и в круг не входит — иначе
 # заявка попадала бы в реестр мимо ворот.
+# У механического шага мало «артефакт сегодняшний»: потолок судит
+# ЧИСЛА судьи, а объявление — вердикт потолка, и артефакт, сделанный
+# раньше своего входа, описывает вчерашнее. Сегодня это и остановило
+# круг: потолок отработал в 18:40 по вчерашним числам, судья принёс
+# новые в 21:10, и шаг считался сделанным. Поэтому у шага объявляется
+# ВХОД, и сделанным он считается, только если его артефакт новее.
 CIRCLE = [
     # Разведчик идёт ПЕРВЫМ: его меню попадает к предлагающему
     # разделом брифа, а бриф собирается следующим шагом. Пойди он
@@ -80,6 +86,13 @@ CIRCLE = [
     ("declare", "mech", ["research/factory/declare.py"],
      "declare.json"),
 ]
+
+# Шаг → артефакт, который он читает. Пусто — входа нет (шаг читает
+# журналы и хранилище, а не продукт соседа).
+AFTER = {
+    "ceiling": "factory-day-1m.json",
+    "declare": "ceiling.json",
+}
 
 
 def day_of(ts):
@@ -101,7 +114,18 @@ def done_today(key, kind, proof, rows, now):
     p = os.path.join(OUT, proof)
     if not os.path.exists(p):
         return False
-    return day_of(os.path.getmtime(p)) == today
+    if day_of(os.path.getmtime(p)) != today:
+        return False
+    src = AFTER.get(key)
+    if src:
+        sp = os.path.join(OUT, src)
+        # Входа нет вовсе — шагу нечего читать, и «сделан» он не
+        # станет от этого: пусть идёт и скажет об отсутствии сам.
+        if not os.path.exists(sp):
+            return True
+        if os.path.getmtime(sp) > os.path.getmtime(p):
+            return False
+    return True
 
 
 def launch(key, kind, argv, log=print):
