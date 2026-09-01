@@ -1150,6 +1150,30 @@ def test_mech_step_leaves_its_end_line():
               abs((one.get("started") or 0) - t0) < 0.01,
               str(one.get("started")))
 
+        # Шаг круга обязан исполнять СВЕЖИЙ код: тот же дефект
+        # байткода, что в машине контролей, здесь означал бы суточный
+        # прогон на прежнем коде после деплоя — молча.
+        mod = os.path.join(d, "mm.py")
+        chk = os.path.join(d, "cc.py")
+        with open(chk, "w", encoding="utf-8") as f:
+            f.write("import sys, os\n"
+                    "sys.path.insert(0, os.path.dirname("
+                    "os.path.abspath(__file__)))\n"
+                    "import mm\n"
+                    "raise SystemExit(0 if mm.V == 1 else 7)\n")
+        stamp2 = time.time() - 10
+        for v in (1, 2):
+            with open(mod, "w", encoding="utf-8") as f:
+                f.write(f"V = {v}\n")
+            os.utime(mod, (stamp2, stamp2))
+            rc = MR.main(["ceiling", "%.3f" % time.time(), "--",
+                          sys.executable, chk])
+            if v == 1:
+                check("шаг видит свой код", rc == 0, str(rc))
+            else:
+                check("шаг видит НОВЫЙ код, а не прежний байткод",
+                      rc == 7, str(rc))
+
         rc = MR.main(["ceiling", "%.3f" % time.time(), "--",
                       sys.executable, "-c", "raise SystemExit(3)"])
         rows, _ = RL.read(runs)

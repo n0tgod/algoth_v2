@@ -17,8 +17,10 @@
 """
 
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -46,15 +48,25 @@ def main(argv=None):
 
     runs = os.path.join(out_dir(), RL.RUNS)
     note, rc = None, 1
+    # Свой каталог байткода на прогон. Тот же дефект, что в машине
+    # контролей: питон считает `.pyc` свежим по паре «mtime в целых
+    # секундах, размер», и правка модуля, попавшая в ту же секунду при
+    # неизменной длине, оставляет ПРЕЖНИЙ байткод. Здесь цена выше:
+    # суточный шаг считал бы старым кодом, ничем себя не выдавая, — а
+    # деплой у нас как раз «git pull и следующий такт».
+    cache = tempfile.mkdtemp(prefix="pyc-")
+    env = dict(os.environ, PYTHONPYCACHEPREFIX=cache)
     try:
         rc = subprocess.call(cmd, cwd=os.path.dirname(
-            os.path.dirname(HERE)))
+            os.path.dirname(HERE)), env=env)
         note = f"код возврата {rc}"
     except OSError as e:                                  # noqa: BLE001
         # Шаг не запустился вовсе — это тоже конец прогона, и молчать
         # о нём нельзя: иначе несостоявшийся запуск выглядел бы
         # оборванным на полпути.
         note = f"шаг не запустился: {e}"
+    finally:
+        shutil.rmtree(cache, ignore_errors=True)
     RL.append(runs, key, "ok" if rc == 0 else "fail", started,
               note=note)
     return rc
