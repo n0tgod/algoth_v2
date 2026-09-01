@@ -255,7 +255,8 @@ BRIEF_PATH = "research/factory/out/brief.md"
 PROPOSAL_MIN_WHY = 120
 
 
-def check_proposal(text, root, ledger_ids=(), space=None):
+def check_proposal(text, root, ledger_ids=(), space=None,
+                   closed_ids=()):
     """Предложение проверяемо? Возвращает (годно, список бед).
 
     Предложение — это заявка на ИСПЫТАНИЕ, и каждое испытание тратит
@@ -337,6 +338,15 @@ def check_proposal(text, root, ledger_ids=(), space=None):
                 if k in set(ledger_ids):
                     bad.append(f"кандидат {k} уже объявлен — повтор "
                                "тратит бюджет доказательства впустую")
+                # Закрытое ПОТОЛКОМ повторять тоже нельзя, и это
+                # отдельная проверка: такая заявка испытанием не
+                # становилась, в реестре её нет, и без своего журнала
+                # она вернулась бы на следующий же круг.
+                elif k in set(closed_ids):
+                    bad.append(f"кандидат {k} уже закрыт потолком — "
+                               "если изменилось что-то, из-за чего "
+                               "закрытие больше не верно, скажи об "
+                               "этом словами, а не подавай заново")
     elif kind == "mechanism":
         if not (d.get("needs") or "").strip():
             bad.append("механизм не назвал, какого шага конвейера ждёт")
@@ -387,12 +397,26 @@ def check_role(role, root):
     elif role == "propose":
         import ledger as LG
         import space as SP
-        rows, _ = LG.read(os.path.join(root, "research", "factory",
-                                       "out", "ledger.jsonl"))
+        # Реестру подаётся КАТАЛОГ, а не файл: `ledger.read` дописывает
+        # имя журнала сам. Первая версия передавала сюда путь к файлу,
+        # реестр читал `…/ledger.jsonl/ledger.jsonl`, всегда получал
+        # пусто — и повтор уже объявленного через эту дорогу не ловился
+        # ни разу. Прямая проверка правила при этом проходила: ей
+        # список ключей подавали руками.
+        out_dir = os.path.join(root, "research", "factory", "out")
+        rows, _ = LG.read(out_dir)
         ids = list(LG.state(rows).keys())
+        # Что уже закрыто потолком — из его собственного журнала.
+        closed = []
+        try:
+            import ceiling as CL
+            closed = [r.get("id") for r in CL.read_journal(out_dir)[0]
+                      if r.get("verdict") == CL.CLOSED and r.get("id")]
+        except Exception:                                 # noqa: BLE001
+            closed = []
         ok, why = check_proposal(
             texts.get("research/factory/out/proposal.json", ""),
-            root, ledger_ids=ids, space=SP)
+            root, ledger_ids=ids, space=SP, closed_ids=closed)
         if not ok:
             bad.append("proposal.json: " + "; ".join(why))
     return (not bad), bad

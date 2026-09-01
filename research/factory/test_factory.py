@@ -469,6 +469,91 @@ def test_proposal_must_be_checkable_not_persuasive():
     check("неразбираемая заявка отвергнута", not ok, str(why))
 
 
+def test_closed_by_ceiling_is_not_proposed_again():
+    """Закрытое дешёвым расчётом не возвращается на следующий круг.
+
+    Повтор уже ОБЪЯВЛЕННОГО ловился ключом с первого дня: такая строка
+    лежит в реестре. А заявка, убитая потолком, испытанием не
+    становилась — в реестре её нет, памяти между вызовами у роли нет
+    тоже, и без своего журнала она вернулась бы тем же ключом уже
+    завтра.
+
+    Проверяется не только правило, но и ДОРОГА до него: контракт роли
+    обязан прочитать оба журнала САМ. Ровно на этой дороге и нашёлся
+    дефект — реестру подавали путь к файлу там, где он ждёт каталог, и
+    повтор объявленного через настоящую дорогу не ловился ни разу,
+    хотя прямая проверка правила проходила: ей ключи подавали руками.
+    """
+    import ceiling as CL
+    long = "x" * 200
+    rule = {"target": "fwd_4h", "rank": "sigma", "floor_bp": 30,
+            "width": 5, "geom": "levels", "rr_band": "lo",
+            "sizing": "equal", "basket": "no", "agree": "no"}
+    key = S.key(rule)
+    prop = {"proposed": True, "kind": "row", "title": "проба",
+            "hypothesis": long, "kills_it": long, "ceiling": long,
+            "differs_from_live": long,
+            "cites": ["research/factory/out/brief.md",
+                      "research/factory/space.py",
+                      "research/factory/pool.py"],
+            "rule": rule}
+
+    root = tempfile.mkdtemp(prefix="closed-")
+    try:
+        out = os.path.join(root, "research", "factory", "out")
+        os.makedirs(out)
+        for rel in ("research/factory/space.py",
+                    "research/factory/pool.py",
+                    "research/factory/out/brief.md",
+                    "research/factory/out/proposal.md"):
+            with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
+                f.write("проба\n")
+        with open(os.path.join(out, "proposal.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(prop, f, ensure_ascii=False)
+
+        ok, why = RL.check_role("propose", root)
+        check("чистая заявка проходит контракт роли", ok, str(why))
+
+        # Дорога до реестра: объявленное не подаётся заново.
+        led = os.path.join(out, "ledger.jsonl")
+        with open(led, "w", encoding="utf-8") as f:
+            f.write(json.dumps({"ev": L.DECLARE, "id": key, "rule": rule,
+                                "lane": "selected", "at": 1.0},
+                               ensure_ascii=False) + "\n")
+        ok, why = RL.check_role("propose", root)
+        check("повтор объявленного ловится ЧЕРЕЗ ДОРОГУ",
+              not ok and any("уже объявлен" in w for w in why), str(why))
+        os.remove(led)
+
+        # Дорога до потолка: закрытое им — тоже.
+        with open(CL.journal_path(out), "w", encoding="utf-8") as f:
+            f.write(json.dumps({"id": key, "verdict": CL.CLOSED,
+                                "why": "сделок меньше предела"},
+                               ensure_ascii=False) + "\n")
+        ok, why = RL.check_role("propose", root)
+        check("закрытое потолком заново не подаётся",
+              not ok and any("закрыт потолком" in w for w in why),
+              str(why))
+
+        # ПРОШЕДШЕЕ потолок закрытым не считается: иначе годная заявка
+        # умирала бы от собственного удачного расчёта.
+        with open(CL.journal_path(out), "w", encoding="utf-8") as f:
+            f.write(json.dumps({"id": key, "verdict": CL.PASS,
+                                "why": "сделок хватает"},
+                               ensure_ascii=False) + "\n")
+        ok, why = RL.check_role("propose", root)
+        check("прошедшее потолок с закрытым не путается", ok, str(why))
+
+        # И правило само по себе, помимо дороги.
+        ok, why = RL.check_proposal(json.dumps(prop, ensure_ascii=False),
+                                    root, space=S, closed_ids=[key])
+        check("правило закрытого ключа кусается", not ok
+              and any("закрыт потолком" in w for w in why), str(why))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_prompt_actually_reaches_the_model():
     """Промпт обязан ДОЙТИ до модели, а не потеряться в аргументах.
 
@@ -938,6 +1023,7 @@ def main():
              test_running_now_is_a_separate_question,
              test_brief_contract_is_mechanical,
              test_proposal_must_be_checkable_not_persuasive,
+             test_closed_by_ceiling_is_not_proposed_again,
              test_build_contract_makes_the_controls_bite,
              test_adversary_must_show_what_it_tried,
              test_runner_leaves_a_line_on_every_refusal,
