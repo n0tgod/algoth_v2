@@ -53,7 +53,7 @@ def read_json(path):
         return None, f"{os.path.basename(path)} не разбирается: {e}"
 
 
-def gate(ceil, prop, run_at, now, state):
+def gate(ceil, prop, run_at, now, state, ceil_at=None):
     """Можно ли объявлять. Возвращает (правило, причина отказа).
 
     Причина — всегда слова. Пустой ответ здесь означал бы «объявлять
@@ -85,6 +85,19 @@ def gate(ceil, prop, run_at, now, state):
     if _day(run_at) != _day(now):
         return None, (f"вердикт вынесен по прогону за {_day(run_at)}, "
                       f"а сегодня {_day(now)}: числа описывают другой пул")
+    # Свежесть проверяется у ОБОИХ: числа сегодняшние — это про
+    # артефакт прогона, а вердикт мог остаться вчерашним (шаг потолка
+    # сегодня не отработал), и тогда сегодняшние числа судил бы
+    # позавчерашний вердикт. Вердикт обязан быть посчитан ПОСЛЕ чисел,
+    # которые судит, — иначе он судил не их.
+    if ceil_at is None:
+        return None, "неизвестно, когда вынесен вердикт"
+    if _day(ceil_at) != _day(now):
+        return None, (f"вердикт потолка за {_day(ceil_at)}, а сегодня "
+                      f"{_day(now)}: шаг потолка сегодня не отработал")
+    if ceil_at < run_at:
+        return None, ("вердикт вынесен РАНЬШЕ чисел, которые судит: "
+                      "он судил не этот прогон")
     if cid in state:
         return None, f"кандидат {cid} уже в реестре"
     return rule, None
@@ -108,10 +121,12 @@ def main(argv=None):
     prop, _ = read_json(os.path.join(a.out, RD.PROPOSAL_NAME))
     run_path = os.path.join(a.out, f"factory-day-{a.tag}.json")
     run_at = os.path.getmtime(run_path) if os.path.exists(run_path) else None
+    cpath = os.path.join(a.out, "ceiling.json")
+    ceil_at = os.path.getmtime(cpath) if os.path.exists(cpath) else None
 
     st = LG.state(LG.read(base)[0])
     rule, why = gate(ceil if ceil is not None else None, prop, run_at,
-                     now, st)
+                     now, st, ceil_at=ceil_at)
     if ceil is None and why_c:
         why = f"вердикта потолка нет ({why_c})"
     fresh = []

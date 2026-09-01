@@ -242,10 +242,9 @@ def test_declaration_passes_only_the_ceiling_gate():
         run_path = os.path.join(d, "factory-day-t.json")
 
         def put(verdict="pass", cid=None, prop_rule=None, run_age=0.0):
-            with open(os.path.join(d, "ceiling.json"), "w",
-                      encoding="utf-8") as f:
-                json.dump({"verdict": verdict, "why": "проба",
-                           "id": cid or key, "rule": rule}, f)
+            # Порядок записи повторяет круг: сперва числа судьи, потом
+            # вердикт потолка. Вердикт, оказавшийся старше чисел,
+            # судил не их — на этом и стоит одни из ворот.
             with open(os.path.join(d, R.PROPOSAL_NAME), "w",
                       encoding="utf-8") as f:
                 json.dump({"proposed": True,
@@ -255,6 +254,12 @@ def test_declaration_passes_only_the_ceiling_gate():
             if run_age:
                 t = os.path.getmtime(run_path) - run_age
                 os.utime(run_path, (t, t))
+            cp = os.path.join(d, "ceiling.json")
+            with open(cp, "w", encoding="utf-8") as f:
+                json.dump({"verdict": verdict, "why": "проба",
+                           "id": cid or key, "rule": rule}, f)
+            t = os.path.getmtime(run_path) + 1.0
+            os.utime(cp, (t, t))
 
         def run():
             DEC.main(["--out", d, "--base", d, "--tag", "t",
@@ -288,6 +293,26 @@ def test_declaration_passes_only_the_ceiling_gate():
         res, st = run()
         check("вердикт по вчерашнему прогону отвергнут",
               key not in st and "прогону за" in (res.get("why") or ""),
+              str(res.get("why")))
+
+        # Вердикт вчерашний: числа сегодняшние, а судил их вердикт,
+        # вынесенный до них.
+        put()
+        cp = os.path.join(d, "ceiling.json")
+        t = os.path.getmtime(cp) - 2 * 86400.0
+        os.utime(cp, (t, t))
+        res, st = run()
+        check("вчерашний вердикт сегодня не объявляет",
+              key not in st and "вердикт потолка за" in (res.get("why") or ""),
+              str(res.get("why")))
+
+        # Вердикт старше чисел, которые судит, — он судил не их.
+        put()
+        t = os.path.getmtime(run_path) - 60.0
+        os.utime(cp, (t, t))
+        res, st = run()
+        check("вердикт раньше чисел отвергнут",
+              key not in st and "РАНЬШЕ" in (res.get("why") or ""),
               str(res.get("why")))
 
         # Всё сошлось — объявляем.
