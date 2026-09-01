@@ -397,6 +397,8 @@ global.fetch = async (url) => {
                     why_ru: "пропускную способность задаёт календарь",
                     proof: "research/factory/agents/propose.md",
                     built: false, prompt: true,
+                    in_circle: true, stale: true,
+                    last_ok_age_sec: 201600,
                     last_run: {status: "no-auth", at: 1788215000,
                                age_sec: 900, took_sec: 0.4,
                                note: "авторизации нет ни одним путём"},
@@ -463,6 +465,9 @@ global.fetch = async (url) => {
                    roles_n: 2, next_key: "propose",
                    runs_n: 4, runs_broken: 0,
                    scheduled: /agentssched=1/.test(SEARCH),
+                   circle: ["brief", "propose"],
+                   stale_keys: (/agentssched=1/.test(SEARCH)
+                     && !/agentsquiet=1/.test(SEARCH)) ? ["propose"] : [],
                    stale_after_sec: 129600,
                    boundaries: [
                      {what: "exchange keys", what_ru: "ключи биржи",
@@ -3865,10 +3870,28 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/>4</.test(strip))
       bad.push("агенты: число прогонов ролей не показано");
     // Пока расписания нет, молчание роли — состояние, а не отказ.
+    // С расписанием молчание ШАГА КРУГА становится отказом и обязано
+    // кричать, называя шаг и возраст последнего успеха: «круг стоит»
+    // без имени и числа лечить нечем.
     if (/agentssched=1/.test(SEARCH)) {
-      if (/data-nosched="1"/.test(E("alarm")))
+      const al = E("alarm");
+      if (/data-nosched="1"/.test(al))
         bad.push("агенты: расписание есть, а оговорка о его отсутствии "
                  + "осталась");
+      if (/agentsquiet=1/.test(SEARCH)) {
+        if (/data-stale="1"/.test(al))
+          bad.push("агенты: круг отработал, а тревога тишины кричит");
+        if (!/data-quiet="1"/.test(al))
+          bad.push("агенты: отработавший круг не назван словами");
+      } else {
+        if (!/data-stale="1"/.test(al))
+          bad.push("агенты: молчание шага круга не кричит");
+        if (!/proposer|предлагающий/.test(al))
+          bad.push("агенты: тревога тишины не называет шаг");
+        if (!/56 ч|56 h|never|ни разу/.test(al))
+          bad.push("агенты: тревога тишины не называет возраст "
+                   + "последнего успеха");
+      }
     } else if (!/data-nosched="1"/.test(E("alarm"))) {
       bad.push("агенты: отсутствие расписания не названо");
     }

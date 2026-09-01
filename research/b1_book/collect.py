@@ -4166,17 +4166,50 @@ class Collector:
         # а не назначенный словом: порядок постройки обязан следовать
         # из состояния, иначе он стареет молча.
         nxt = next((s["key"] for s in steps if not s["built"]), None)
-        # Расписания ещё нет, и пока его нет, тишина роли тревогой
-        # НЕ является: тревога, кричащая всегда, перестаёт быть
-        # сигналом. Признак считается по факту, а не по намерению.
-        sched = os.path.exists(os.path.join(
-            root, "tools", "watchdog_book.sh")) and (
-            "agents_run.sh" in open(os.path.join(
-                root, "tools", "watchdog_book.sh"),
-                encoding="utf-8", errors="ignore").read())
+        # Расписание считается по ФАКТУ, а не по намерению: сторож
+        # зовёт круг (`cycle.py`), а тот будит роли запускалкой.
+        # Признак «в стороже есть agents_run.sh» был верен, пока
+        # запускалку звали напрямую, и молча устарел бы с появлением
+        # круга — расписание работало бы, а страница говорила бы, что
+        # его нет.
+        try:
+            with open(os.path.join(root, "tools", "watchdog_book.sh"),
+                      encoding="utf-8", errors="ignore") as f:
+                wd = f.read()
+        except OSError:
+            wd = ""
+        sched = ("agents_run.sh" in wd) or ("factory/cycle.py" in wd)
+        # Тишина становится тревогой ровно с появлением расписания, и
+        # только у шагов КРУГА: остальные зовутся руками, и их
+        # молчание есть состояние. Состав круга берётся у самого
+        # круга — второй список разошёлся бы с ним молча.
+        try:
+            import cycle as CY
+            circle = [k for k, _kind, _argv, _proof in CY.CIRCLE]
+        except Exception:                                 # noqa: BLE001
+            circle = []
+        okrun = {}
+        for r in runs:
+            if r.get("status") == "ok" and not r.get("dry"):
+                k = r.get("role")
+                if k and (r.get("at") or 0) > okrun.get(k, 0):
+                    okrun[k] = r.get("at") or 0
+        stale = []
+        for st in steps:
+            k = st["key"]
+            st["in_circle"] = k in circle
+            st["last_ok_age_sec"] = (round(now - okrun[k], 1)
+                                     if k in okrun else None)
+            st["stale"] = bool(
+                sched and st["in_circle"]
+                and (k not in okrun
+                     or now - okrun[k] > self.AGENTS_STALE))
+            if st["stale"]:
+                stale.append(k)
         out = {"steps": steps, "built_n": len(built),
                "runs_n": len(runs), "runs_broken": broken,
-               "scheduled": bool(sched),
+               "scheduled": bool(sched), "stale_keys": stale,
+               "circle": circle,
                "total_n": len(steps),
                "roles_n": sum(1 for s in steps if s["kind"] == "role"),
                "next_key": nxt,

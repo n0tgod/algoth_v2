@@ -8619,7 +8619,15 @@ const UI = {
                 + "wired into the watchdog.",
             ru: "Расписания ещё нет, поэтому молчащая роль здесь не "
                 + "тревога. Она станет тревогой в тот момент, когда "
-                + "запускалку впишут в сторожа."}
+                + "запускалку впишут в сторожа."},
+  // Расписание есть — значит молчание круга больше не состояние.
+  // Тревога называет ШАГИ поимённо: «круг стоит» без имён лечить
+  // нечем, а имена и есть первый шаг разбора.
+  stale: {en: "the circle is silent", ru: "круг молчит"},
+  staleq: {en: "ran, but not since", ru: "отработал, но не позже чем"},
+  stalen: {en: "never ran", ru: "не отрабатывал ни разу"},
+  quiet: {en: "the circle is on schedule and every step of it has run",
+          ru: "круг на расписании, и каждый его шаг отработал"}
 };
 function T(k){ const v = UI[k]; return v[LANG] || v.en; }
 function tx(o, f){ return LANG === "ru" ? (o[f + "_ru"] || o[f] || "")
@@ -8706,6 +8714,20 @@ function render(){
   // расписания нет, молчание ролей есть состояние, а не отказ.
   if (d.scheduled === false)
     al += `<p class="frame" data-nosched="1">${T("nosched")}</p>`;
+  else if ((d.stale_keys || []).length) {
+    // Молчание шага круга при работающем расписании — отказ, и он
+    // обязан кричать. Возраст последнего УСПЕХА печатается числом:
+    // «молчит» без числа неотличимо от «только что запустили».
+    const names = (d.stale_keys || []).map(k => {
+      const s = (d.steps || []).find(x => x.key === k) || {};
+      const a = s.last_ok_age_sec;
+      return `${esc(tx(s, "title") || k)} — ` + (a == null ? T("stalen")
+        : `${T("staleq")} ${Math.round(a / 3600)} ч`);
+    }).join("; ");
+    al += `<p class="alarm" data-stale="1"><b>&#9888;</b> ${
+      T("stale")}: ${names}</p>`;
+  } else if ((d.circle || []).length)
+    al += `<p class="frame" data-quiet="1">${T("quiet")}</p>`;
   document.getElementById("alarm").innerHTML = al;
 
   document.getElementById("pcap").textContent =
