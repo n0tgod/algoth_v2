@@ -13,3 +13,14 @@
 Всё на месте: боевой прогон роли возможен.
   tools/agents_run.sh brief
 конец: 2026-09-01T11:56:00Z, код 0
+публикуется в ветку main:
+ jobs/done/agents-env-probe2.log     | 10 ++++++++++
+ jobs/done/agents-env-probe3.done    |  1 +
+ jobs/done/agents-env-probe3.log     | 15 +++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 30 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   ff99023..5b8a588  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

@@ -328,3 +328,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788263758 ==
 [2026-09-01T11:56:00Z] задание agents-env-probe3 запущено: research/factory/probe_env.py
+
+== сигнал 1788263790 ==
+[2026-09-01T11:56:31Z] задание brief-first-run: роль brief
