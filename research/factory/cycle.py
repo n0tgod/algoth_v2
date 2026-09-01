@@ -155,9 +155,22 @@ def main(argv=None):
     rows, broken = RL.read(os.path.join(OUT, RL.RUNS))
     st = RL.state_of(rows)
     running = [k for k, v in st.items() if v.get("running")]
-    if running:
-        print(f"идёт шаг: {', '.join(running)} — жду")
+    circle_keys = {k for k, _kind, _argv, _proof in CIRCLE}
+    # Ждём ТОЛЬКО шаги самого круга. Прежде круг стоял, пока идёт
+    # любой прогон роли, а роли зовут и руками — заход адверсария или
+    # строителя длится час, и суточный круг молча стоял всё это время.
+    # Со стороны это выглядело спокойным днём, то есть было тем самым
+    # отказом, неотличимым от тишины.
+    busy = [k for k in running if k in circle_keys]
+    if busy:
+        print(f"идёт шаг круга: {', '.join(busy)} — жду")
         return 0
+    # Роль при этом не запускается, пока идёт ЛЮБАЯ роль: писатель в
+    # репозиторий один за раз, и замок запускалки всё равно откажет —
+    # лучше не будить её вовсе, чем получать отказ строкой в журнале.
+    import agents as AG0
+    role_busy = [k for k in running
+                 if k in {x["key"] for x in AG0.roles()}]
 
     hour = int(time.strftime("%H", time.gmtime(now)))
     if hour < START_HOUR and not a.force:
@@ -177,6 +190,10 @@ def main(argv=None):
     for key, kind, argvv, proof in CIRCLE:
         if done_today(key, kind, proof, rows, now):
             continue
+        if kind == "role" and role_busy:
+            print(f"идёт роль: {', '.join(role_busy)} — шаг {key} "
+                  "не запускаю, писатель один за раз")
+            return 0
         if kind == "role" and used >= MAX_ROLE_RUNS_PER_DAY:
             print(f"предел суток: прогонов ролей {used} при "
                   f"{MAX_ROLE_RUNS_PER_DAY} — шаг {key} не запускаю")

@@ -1043,6 +1043,28 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
                   launched == [], str(launched))
             RL.append(runs, "propose", "ok", time.time())
 
+            # Роль ВНЕ круга (заход строителя руками) круг не
+            # останавливает: иначе часовой заход адверсария молча
+            # съедал бы сутки, а страница показывала спокойный день.
+            RL.append(runs, "build", "start", time.time(),
+                      pid=os.getpid())
+            launched.clear()
+            CY.main(["--force"])
+            check("ручной заход роли не останавливает круг",
+                  launched == ["judge"], str(launched))
+            # Но РОЛЬ при идущей роли не будится: писатель один за раз.
+            os.remove(runs)
+            RL.append(runs, "build", "start", time.time(),
+                      pid=os.getpid())
+            launched.clear()
+            CY.main(["--force"])
+            check("роль при идущей роли не запускается",
+                  launched == [], str(launched))
+            os.remove(runs)
+            RL.append(runs, "scout", "ok", time.time())
+            RL.append(runs, "brief", "ok", time.time())
+            RL.append(runs, "propose", "ok", time.time())
+
             # Предел суток: считаются прогоны РОЛЕЙ.
             RL.append(runs, "scout", "ok", time.time())
             for _ in range(CY.MAX_ROLE_RUNS_PER_DAY):
