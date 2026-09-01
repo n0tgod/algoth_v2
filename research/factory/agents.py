@@ -142,7 +142,8 @@ PIPELINE = [
         # не нужно — она о них не судит; сеть у неё есть, а записи и
         # реестра нет.
         "tools": ["WebSearch", "WebFetch", "Read", "Write", "Edit",
-                  "Bash(cat *)", "Bash(ls *)", "Bash(wc *)"],
+                  "Bash(cat *)", "Bash(ls *)", "Bash(wc *)",
+                  "Bash(head *)", "Bash(tail *)"],
     },
     {
         "key": "brief", "kind": "role", "model": "дешёвая",
