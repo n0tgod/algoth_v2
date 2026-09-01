@@ -1,0 +1,34 @@
+== задание build-ceiling-fix3 ==
+строка: agents-run build
+начало: 2026-09-01T18:43:10Z
+запускаю роль: build 
+авторизация: вход CLI (подписка)
+модель: opus · усилие: xhigh
+ring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in allow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
+Ignoring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in allow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
+Ignoring --allowedTools rule "*)": Wildcard tool name "*)" is not supported in allow rules. An allow pattern must name the scope it widens — globs are permitted only in the tool position after a literal mcp__<server>__ prefix. Deny and ask rules accept wildcards anywhere.
+Built and verified by machine.
+
+**What was wrong and what I did.** The adversary's veto was correct: the previous round closed the three counterfeits it was told about by name and never pinned the *rule*. `best = max(measured, key=lambda lk: lk["r"])` was defended by one fixture (`three_book_pool`) that is insensitive to the two most natural ways of writing the same key differently — both passed the suite green.
+
+**The fixture.** `key_sensitive_pool()` splits the pool so four keys pick four different books:
+
+| книга | связь | общих суток | побеждает по |
+|---|--:|--:|---|
+| `live_a_broad` | +0.502 | 40 | весу `r·days` (20.1 против 4.9) — и по алфавиту, и по длине пары |
+| `live_b_tight` | +0.982 | 5 | **знаковой связи** — единственный ключ, дающий `closed` |
+| `live_c_mirror` | −1.000 | 10 | модулю |
+
+Both wrong books sit *below* the 0.95 limit, so either wrong key turns `closed` into `pass` — a near-copy of a live book gets declared and the trial is spent forever. The test's first check demands the three keys diverge: a fixture where they coincide executes one road and looks fine, which is exactly how `three_book_pool` failed.
+
+**The previous round's claim is refuted and now pinned.** "Two independence conditions cover each other on a copy" is false — on this pool the pool's effective `N` *grows* 3.00 → 4.00, computed by the same `pool_eff_n` the ceiling judges with. The choice of book is load-bearing, and that statement is a check now, not prose.
+
+**Pair numbers bound to the same book.** `pair_eff_n` is verified against an independent recomputation for the closest book (1.009), with a guard that substitution actually changes the number (`live_a_broad` → 1.332, mirror → 2.000) — otherwise the check would be empty. Common days (5), book name, and the number are pinned in the verdict phrase and in three report rows.
+
+**Module changes are text only** — `git diff` shows no logic, no thresholds, no sign, no second copy of `ledger.effective_n`, `run_day.py` untouched. I also rewrote the docstring of `test_a_mirror_book_is_not_closed`: it literally promised protection against an `abs()` edit it never caught, and a docstring promising absent protection is the same defect class as a silent zero.
+
+**Machine-verified before reporting:** 12 of 12 controls bite and each drops the *named* check; base green in all four suites (29 / 4 / 28 / 8 blocks), and the three new check names were confirmed present in the run output rather than assumed.
+
+Two things I am not claiming as done. The adversary's tie counterfeit (`after < before`) is still unpinned — I traced reachability and the tie needs exact float equality on continuous data, with the structural tie case cut off earlier by `counted_by_pool`; I did not change `<=`, since that is a verdict rule. And `out/_controls_check.py` is a leftover I could not delete (`research/*/out` is protected from deletion, while `publish.sh` sweeps that directory wholesale), so I declared it in `touched` and documented it rather than letting an unannounced file into the commit.
+КОНТРАКТ: выполнен
+прогон роли build завершён

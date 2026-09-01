@@ -18,3 +18,5 @@
 {"at": 1788286896.731, "role": "adversary", "status": "start", "started": 1788286896.0, "ended": 1788286896.731, "dry": false, "pid": 1024703}
 {"at": 1788287856.362, "role": "adversary", "status": "ok", "started": 1788286896.0, "ended": 1788287856.362, "dry": false, "note": "модель opus, усилие xhigh"}
 {"at": 1788288001.414, "role": "ceiling", "status": "start", "started": 1788288001.414, "ended": 1788288001.414, "dry": false, "pid": 1027917}
+{"at": 1788288190.172, "role": "build", "status": "start", "started": 1788288190.0, "ended": 1788288190.172, "dry": false, "pid": 1028207}
+{"at": 1788288803.724, "role": "build", "status": "ok", "started": 1788288190.0, "ended": 1788288803.724, "dry": false, "note": "модель opus, усилие xhigh"}

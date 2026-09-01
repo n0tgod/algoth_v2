@@ -1,0 +1,94 @@
+"""Машина негативных контролей: подделка -> сюита обязана упасть.
+
+Каждая подделка из `build.json` применяется к КОПИИ файла, прогоняется
+`test_ceiling.py`, файл восстанавливается и сверяется по sha256.
+Требуется не просто падение, а падение ИМЕННО названной проверки:
+контроль, роняющий что-то другое, ничего не доказывает о том правиле,
+ради которого написан.
+
+    python3 research/factory/out/_controls_check.py \
+            research/factory/out/build.json
+
+Файл лежит в `out/` потому, что роль строителя пишет только туда и в
+названный заданием каталог; удалить его после прогона нельзя —
+`research/*/out` защищён от удаления правилами сохранности данных
+(`docs/DATA-SAFETY.md`), поэтому он объявлен в `touched`, а не оставлен
+молча. Предыдущие заходы адверсарий писал такую машину заново каждый
+раз; здесь она лежит рядом с отчётом, чтобы проверку можно было
+ПОВТОРИТЬ, а не пересказать.
+"""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+
+ROOT = "/root/algoth_v2"
+SUITES = ["research/factory/test_ceiling.py",
+          "research/factory/test_run_day.py",
+          "research/factory/test_factory.py",
+          "research/factory/test_candidate.py"]
+
+
+def sha(p):
+    return hashlib.sha256(open(p, "rb").read()).hexdigest()
+
+
+def run(suite):
+    """Код возврата и ИМЕНА провалившихся проверок, а не только код.
+
+    Одного кода мало: контроль, роняющий сюиту чем-то посторонним,
+    выглядел бы кусающимся, ничего не проверив о своём правиле.
+    """
+    r = subprocess.run([sys.executable, os.path.join(ROOT, suite)],
+                       cwd=ROOT, capture_output=True, text=True)
+    fails = [l.split("ПРОВАЛ", 1)[1].split(" — ")[0].strip()
+             for l in r.stdout.splitlines() if "ПРОВАЛ " in l]
+    return r.returncode, fails
+
+
+def main(report):
+    controls = json.load(open(report, encoding="utf-8"))["controls"]
+    print("=== база ===")
+    base_ok = True
+    for s in SUITES:
+        rc, f = run(s)
+        print(f"  {s}: rc={rc} провалов={len(f)}")
+        base_ok = base_ok and rc == 0 and not f
+    print("база зелёная" if base_ok else "БАЗА КРАСНАЯ")
+
+    print("\n=== контроли ===")
+    bad = []
+    for i, c in enumerate(controls, 1):
+        p = os.path.join(ROOT, c["file"])
+        before, orig = sha(p), open(p, encoding="utf-8").read()
+        # Подделка обязана быть ОДНОЗНАЧНОЙ: строка, встречающаяся
+        # дважды, подменила бы заодно и то место, о котором контроль
+        # ничего не утверждает.
+        if orig.count(c["old"]) != 1:
+            print(f"  #{i} НЕПРИМЕНИМ: строка встречается "
+                  f"{orig.count(c['old'])} раз")
+            bad.append(i)
+            continue
+        open(p, "w", encoding="utf-8").write(orig.replace(c["old"], c["new"]))
+        try:
+            rc, fails = run("research/factory/test_ceiling.py")
+        finally:
+            open(p, "w", encoding="utf-8").write(orig)
+        assert sha(p) == before, f"#{i}: файл не восстановлен"
+        hit = [f for f in fails if c["expect"] in f]
+        ok = rc != 0 and hit
+        print(f"  #{i} {'кусается' if ok else 'ХОЛОСТОЙ'}: rc={rc}, "
+              f"провалов={len(fails)}, названная={'да' if hit else 'НЕТ'}"
+              f"  [{c['expect'][:52]}]")
+        if not ok:
+            print(f"      провалились: {fails}")
+            bad.append(i)
+
+    print(f"\nитог: {len(controls) - len(bad)} из {len(controls)} кусаются"
+          + ("" if not bad else f"; ХОЛОСТЫЕ: {bad}"))
+    return 1 if bad or not base_ok else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1]))

@@ -119,6 +119,46 @@ def three_book_pool():
     return pend, live
 
 
+def key_sensitive_pool():
+    """Пул, на котором ЧЕТЫРЕ естественных ключа выбирают РАЗНЫЕ книги.
+
+    `three_book_pool` закрывает три поимённо названные подмены и к двум
+    другим НЕЧУВСТВИТЕЛЕН по построению: там у копии связь +1.000 при
+    десяти общих сутках, и взвешенный ключ (`r·days` = 10.0) выбирает ту
+    же книгу, что знаковый, а зеркала в пуле нет вовсе. Фикстура, на
+    которой ключи не расходятся, исполняет одну дорогу и выглядит
+    исправной — ровно тот класс, которым в этом проекте кончались
+    «блок есть» на пустом блоке.
+
+    Здесь книги разведены так, что каждый ключ даёт своего победителя:
+
+    * `live_a_broad` — 40 общих суток, связь около +0.50: побеждает по
+      весу (`r·days` = 20.1 против 4.9 у настоящей теснейшей);
+    * `live_b_tight` — почти копия заявки, связь +0.982 по 5 общим
+      суткам: побеждает по ЗНАКОВОЙ связи, и только этот выбор даёт
+      `closed`;
+    * `live_c_mirror` — зеркало, связь −1.000 по 10 суткам: побеждает по
+      модулю.
+
+    Обе неверные книги стоят НИЖЕ предела связи, то есть любой из двух
+    неверных ключей пропустил бы почти точную копию живой книги, а
+    испытание тратится навсегда. Второе условие независимости здесь не
+    выручает — эффективное `N` пула от этой заявки растёт.
+
+    Фикстура возможна для живого писателя: суток у каждой книги много
+    меньше, чем сделок, а короткий ряд `live_b_tight` — обычное дело,
+    день в ряду заводит только закрытая сделка.
+    """
+    p = noise(1013, n=40)
+    broad = [0.5 * v + w for v, w in zip(p, noise(1023, n=40, scale=30.0))]
+    tight = [1.4 * v + 3.0 + w
+             for v, w in zip(p[:5], noise(1033, n=5, scale=10.0))]
+    mirror = [-2.0 * v + w
+              for v, w in zip(p[:10], noise(1043, n=10, scale=1.0))]
+    return p, {"live_a_broad": broad, "live_b_tight": tight,
+               "live_c_mirror": mirror}
+
+
 def flip(run):
     """Знак ВСЕХ дневных денег наоборот — и заявки, и живых книг."""
     return _scale(run, -1.0)
@@ -150,11 +190,18 @@ def test_profit_never_decides():
     mix_live = {"live_a": la, "live_b": lb, "live_c": lc}
     mix_p = [(x + y) / 2.0 for x, y in zip(la, lb)]
     three_p, three_live = three_book_pool()
+    key_p, key_live = key_sensitive_pool()
     cases = {
         "проходит": artifact(a, 400, {"live_a": noise(202)}),
         # Многокнижные ветки судятся тем же правилом: правило,
         # закреплённое на пуле из одной книги, боевой пул не защищает.
         "копия одной из трёх": artifact(three_p, 400, three_live),
+        # Пул с зеркалом отдельной веткой: переворот знака денег меняет
+        # знак каждой пары на противоположный дважды, то есть связь и
+        # выбор книги обязаны остаться теми же — а книга, выбранная по
+        # модулю, на зеркале «не заметила бы» переворота тоже, и без
+        # этой ветки правило проверялось бы только там, где зеркала нет.
+        "ключи расходятся": artifact(key_p, 400, key_live),
         "смесь двух из трёх": artifact(mix_p, 400, mix_live),
         "независимая при трёх": artifact(noise(404), 400, mix_live),
         # Семь сделок — семь суток в ряду: столько, сколько живой
@@ -283,6 +330,108 @@ def test_the_whole_pool_is_read_and_the_closest_link_decides():
           longest["id"] != res["closest"]["id"]
           and longest["days"] > res["closest"]["days"],
           f"{longest} против {res['closest']}")
+
+
+def test_the_closest_link_is_chosen_by_the_signed_correlation_itself():
+    """Теснейшая — по ЗНАКОВОЙ связи: не по модулю и не со взвешиванием.
+
+    Проверяется САМО ПРАВИЛО, а не список поимённо названных подмен.
+    Оракул считается здесь же тремя строками и сверяется с тем, что
+    выбрал потолок; фикстура при этом обязана быть чувствительной —
+    первой же проверкой требуется, чтобы три ключа выбрали ТРИ РАЗНЫЕ
+    книги. Иначе сверка исполняет одну дорогу и проходит на любой из
+    подмен молча, как это и было с `three_book_pool`.
+    """
+    pend, live = key_sensitive_pool()
+    run = artifact(pend, 400, live)
+    res = CL.judge(run)
+    ms = [lk for lk in res["links"] if lk["r"] is not None]
+    by_signed = max(ms, key=lambda lk: lk["r"])["id"]
+    by_weight = max(ms, key=lambda lk: lk["r"] * lk["days"])["id"]
+    by_abs = max(ms, key=lambda lk: abs(lk["r"]))["id"]
+    # Чувствительность фикстуры — раньше всего остального: проверка на
+    # вырожденном пуле выглядела бы исправной, ничего не проверяя.
+    check("фикстура чувствительна к ключу: три ключа — три разные книги",
+          len({by_signed, by_weight, by_abs}) == 3,
+          f"знаковый {by_signed}, взвешенный {by_weight}, "
+          f"по модулю {by_abs}")
+    check("измерены все три живые книги",
+          len(ms) == 3, str(res["links"]))
+    check("теснейшая выбрана по знаковой связи",
+          res["closest"]["id"] == by_signed == "live_b_tight",
+          f"{res['closest']} при знаковом максимуме {by_signed}")
+    check("а не со взвешиванием на число общих суток",
+          res["closest"]["id"] != by_weight,
+          f"{res['closest']['id']} совпал с взвешенным {by_weight}")
+    check("и не по модулю связи",
+          res["closest"]["id"] != by_abs,
+          f"{res['closest']['id']} совпал с модульным {by_abs}")
+    # Цена ошибки — числом, а не рассуждением: только знаковый ключ
+    # приводит к закрытию, обе неверные книги стоят ниже предела связи.
+    check("по знаковому ключу заявка закрыта",
+          res["verdict"] == CL.CLOSED and res["closest"]["r"] >= res["max_corr"],
+          f"{res['verdict']}: {res['why']}")
+    wrong = [lk for lk in ms if lk["id"] in (by_weight, by_abs)]
+    check("обе неверные книги стоят НИЖЕ предела — любой из двух "
+          "неверных ключей пропустил бы копию",
+          all(lk["r"] < res["max_corr"] for lk in wrong), str(wrong))
+    # И второе условие независимости от этой ошибки НЕ спасает. Это не
+    # рассуждение: то же `pool_eff_n`, которым судит потолок.
+    L = {cid: CL._days(c["daily"]) for cid, c in run["candidates"].items()}
+    pd = CL._days(run["pending"]["daily"])
+    before, after = CL.pool_eff_n(L), CL.pool_eff_n(L, pd, res["id"])
+    check("рост N пула копию НЕ закрывает — выбор книги несущий",
+          after > before, f"{before:.2f} → {after:.2f}")
+    check("зеркало в пуле при этом не выдаёт себя за теснейшую",
+          min(ms, key=lambda lk: lk["r"])["id"] == "live_c_mirror"
+          and min(lk["r"] for lk in ms) < -0.99, str(ms))
+
+
+def test_the_pair_numbers_belong_to_the_closest_book():
+    """`N` пары и общие сутки описывают ТУ ЖЕ книгу, что названа теснейшей.
+
+    Подмена книги здесь вердикта не меняет, и потому проходила молча, а
+    фраза отчёта становилась самоопровергающей: «повторяют `X` со связью
+    +0.98 по 5 общим суткам — пара несёт эффективное N 1.33», тогда как
+    эта пара несёт 1.01. Одна строка отчёта описывала бы другую пару, чем
+    соседняя.
+    """
+    pend, live = key_sensitive_pool()
+    run = artifact(pend, 400, live)
+    res = CL.judge(run)
+    cid = res["closest"]["id"]
+    pd = CL._days(run["pending"]["daily"])
+    L = {k: CL._days(c["daily"]) for k, c in run["candidates"].items()}
+    want = CL.pair_eff_n(pd, L[cid])
+    check("N пары посчитано по ТЕСНЕЙШЕЙ книге",
+          abs(res["pair_eff_n"] - want) < 1e-3,
+          f"{res['pair_eff_n']} против {want:.3f} у `{cid}`")
+    # Проверка не пустая только там, где подмена число МЕНЯЕТ.
+    others = {k: CL.pair_eff_n(pd, v) for k, v in L.items() if k != cid}
+    check("на этой фикстуре любая другая книга дала бы другое число",
+          all(abs(v - want) > 0.05 for v in others.values()),
+          f"{want:.3f} против {others}")
+    first = res["links"][0]["id"]
+    check("первая измеренная книга — не теснейшая: подмена видна",
+          first != cid and abs(others[first] - want) > 0.3,
+          f"{first} даёт {others.get(first)}, теснейшая {want:.3f}")
+    check("общих суток названо столько же, сколько у этой пары",
+          res["closest"]["days"] == len(set(pd) & set(L[cid])) == 5,
+          f"{res['closest']['days']} против "
+          f"{len(set(pd) & set(L[cid]))}")
+    check("число пары стоит в самой причине вердикта",
+          f"{res['pair_eff_n']:.2f}" in res["why"], res["why"])
+    tmp = tempfile.mkdtemp()
+    md = CL.write_report(os.path.join(tmp, "C.md"), res, log=lambda *a: None)
+    text = open(md, encoding="utf-8").read()
+    check("в отчёте названа та же книга",
+          f"| с какой книгой | {cid} |" in text, text[:900])
+    check("в отчёте те же общие сутки этой пары",
+          f"| общих суток у этой пары | {res['closest']['days']} |" in text,
+          text[:900])
+    check("в отчёте то же N пары",
+          f"| эффективное N этой пары | {res['pair_eff_n']:.2f} |" in text,
+          text[:900])
 
 
 def test_the_pools_effective_n_must_grow():
@@ -521,8 +670,15 @@ def test_a_mirror_book_is_not_closed():
 
     Это решение, а не описка: пул считает информацию положительной
     связью — отрицательная подрезается нулём в `ledger.effective_n`, —
-    и потолок обязан мерить ту же величину. Держалось одной прозой, то
-    есть перевернулось бы молча первой же правкой на `abs()`.
+    и потолок обязан мерить ту же величину.
+
+    Что ловит ИМЕННО эта проверка, а что нет: здесь закреплено
+    СРАВНЕНИЕ с порогом — правка `abs(best["r"]) >= max_corr` её роняет.
+    Правку `abs()` в ВЫБОРЕ книги она не ловит и никогда не ловила: в
+    пуле из одной живой книги выбирать не из чего, и её прежняя
+    docstring обещала защиту, которой не было. Выбор закреплён отдельно,
+    на пуле с расходящимися ключами
+    (`test_the_closest_link_is_chosen_by_the_signed_correlation_itself`).
     """
     live = noise(303)
     res = CL.judge(artifact([-v for v in live], 400, {"live_a": live}))
@@ -994,6 +1150,8 @@ def main():
              test_calibration_finds_a_planted_link_and_is_silent_on_noise,
              test_the_pool_measure_is_not_reimplemented,
              test_the_whole_pool_is_read_and_the_closest_link_decides,
+             test_the_closest_link_is_chosen_by_the_signed_correlation_itself,
+             test_the_pair_numbers_belong_to_the_closest_book,
              test_the_pools_effective_n_must_grow,
              test_the_growth_condition_is_not_rendered_on_a_degenerate_pool,
              test_pending_days_are_counted_not_zeroed,
