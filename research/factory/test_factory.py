@@ -308,7 +308,24 @@ def test_runner_leaves_a_line_on_every_refusal():
         return
     d = tempfile.mkdtemp()
     try:
-        env = dict(os.environ, AGENTS_OUT=d, ANTHROPIC_KEY_FILE="/nope")
+        # Подставной `claude`, который докладывает «не вошёл». Без него
+        # проверка отказа на машине с ЖИВЫМ входом пошла бы дальше и
+        # позвала настоящую модель — то есть проверяла бы не отказ, а
+        # кошелёк владельца.
+        bin_d = os.path.join(d, "bin")
+        os.makedirs(bin_d)
+        fake = os.path.join(bin_d, "claude")
+        with open(fake, "w", encoding="utf-8") as f:
+            f.write('#!/bin/sh\n'
+                    'if [ "$1" = "auth" ]; then\n'
+                    '  echo \'{ "loggedIn": false }\'\n'
+                    '  exit 0\n'
+                    'fi\n'
+                    'echo "подставной claude звать не положено" >&2\n'
+                    'exit 9\n')
+        os.chmod(fake, 0o755)
+        env = dict(os.environ, AGENTS_OUT=d, ANTHROPIC_KEY_FILE="/nope",
+                   PATH=bin_d + os.pathsep + os.environ.get("PATH", ""))
         env.pop("ANTHROPIC_API_KEY", None)
         r1 = subprocess.run([sh, "nosuchrole"], cwd=root, env=env,
                             capture_output=True, text=True, timeout=120)
@@ -320,16 +337,22 @@ def test_runner_leaves_a_line_on_every_refusal():
               r1.stdout[-200:])
         check("причина названа: нет промпта",
               "промпта роли нет" in r1.stdout, r1.stdout[-200:])
-        check("боевой прогон без ключа отвергнут", r2.returncode != 0)
-        check("причина названа: нет ключа",
-              "ключа API нет" in r2.stdout, r2.stdout[-200:])
+        check("боевой прогон без авторизации отвергнут",
+              r2.returncode != 0)
+        check("причина названа и оба пути перечислены",
+              "авторизации нет" in r2.stdout
+              and "auth login" in r2.stdout
+              and "ключ" in r2.stdout, r2.stdout[-300:])
+        check("модель при отказе не звалась",
+              "подставной claude звать не положено" not in r2.stdout,
+              r2.stdout[-200:])
         check("сухой прогон проходит и модель не зовёт",
               r3.returncode == 0 and "модель НЕ вызывается" in r3.stdout,
               r3.stdout[-200:])
         rows, _ = RL.read(os.path.join(d, RL.RUNS))
         got = sorted((r["role"], r["status"]) for r in rows)
         check("обе беды оставили строку в журнале",
-              got == [("brief", "no-key"), ("nosuchrole", "no-prompt")],
+              got == [("brief", "no-auth"), ("nosuchrole", "no-prompt")],
               str(got))
         dry, _ = RL.read(os.path.join(d, "agents-runs-dry.jsonl"))
         check("сухой прогон пишет в свой журнал и в общий не лезет",

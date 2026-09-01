@@ -98,19 +98,32 @@ if [ "$DRY" = "1" ]; then
 fi
 
 # --- боевой прогон --------------------------------------------------
-# Ключ живёт файлом с правами 600 рядом с ключами биржи и НИКОГДА не
-# печатается. Отсутствие ключа — отдельная беда с отдельным лечением,
-# а не «не запустилось».
+command -v claude >/dev/null 2>&1 || die "no-cli" \
+    "команды claude нет в PATH — роль позвать нечем"
+
+# Путей авторизации ДВА, и требовать только первый было ошибкой: CLI
+# умеет работать и от подписки (claude auth login / setup-token), и
+# тогда никакого ключа в окружении нет вовсе, а роль звать можно.
+#
+# Ключ, если он есть, живёт файлом с правами 600 рядом с ключами биржи
+# и НИКОГДА не печатается.
 KEYFILE="${ANTHROPIC_KEY_FILE:-$HOME/.anthropic/key}"
 if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -f "$KEYFILE" ]; then
     ANTHROPIC_API_KEY="$(tr -d '[:space:]' < "$KEYFILE")"
     export ANTHROPIC_API_KEY
 fi
-[ -n "${ANTHROPIC_API_KEY:-}" ] || die "no-key" \
-    "ключа API нет: положите его в $KEYFILE (права 600) или задайте ANTHROPIC_API_KEY"
-
-command -v claude >/dev/null 2>&1 || die "no-cli" \
-    "команды claude нет в PATH — роль позвать нечем"
+AUTH=""
+if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+    AUTH="ключ API"
+elif claude auth status 2>/dev/null | grep -q '"loggedIn": *true'; then
+    # Спрашиваем САМ CLI, а не гадаем по файлам: где он держит
+    # состояние входа, знает только он, и наш пересказ однажды
+    # разошёлся бы с ним.
+    AUTH="вход CLI (подписка)"
+fi
+[ -n "$AUTH" ] || die "no-auth" \
+    "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в $KEYFILE (права 600)"
+echo "авторизация: $AUTH"
 
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT

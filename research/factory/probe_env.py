@@ -45,21 +45,40 @@ def main():
         ready &= line("команда claude", False,
                       "роль позвать нечем; ставится отдельно от репозитория")
 
+    # Путей авторизации ДВА: ключ API и вход CLI по подписке. Роль
+    # можно звать любым, и требовать первый было бы лишним расходом.
     kf = os.environ.get("ANTHROPIC_KEY_FILE") or os.path.join(
         os.path.expanduser("~"), ".anthropic", "key")
+    auth = None
     if os.environ.get("ANTHROPIC_API_KEY"):
-        ready &= line("ключ API", True, "взят из окружения")
+        auth = "ключ API взят из окружения"
     elif os.path.exists(kf):
         mode = stat.S_IMODE(os.stat(kf).st_mode)
         # Права важнее наличия: ключ, открытый всем, — это ключ,
         # который уже утёк. Значение не печатается никогда.
-        ok = mode & 0o077 == 0
-        ready &= line("ключ API", ok,
-                      f"{kf}, права {oct(mode)}"
-                      + ("" if ok else " — открыт лишним, нужно 600"))
+        if mode & 0o077:
+            ready &= line("авторизация", False,
+                          f"ключ {kf} открыт лишним (права {oct(mode)}), "
+                          "нужно 600")
+        else:
+            auth = f"ключ API из {kf}, права {oct(mode)}"
+    elif p:
+        # Спрашиваем сам CLI: где он держит состояние входа, знает
+        # только он.
+        try:
+            out = subprocess.run([p, "auth", "status"], timeout=30,
+                                 capture_output=True, text=True).stdout
+            if '"loggedIn": true' in out.replace('"loggedIn":true',
+                                                 '"loggedIn": true'):
+                auth = "вход CLI по подписке (claude auth login)"
+        except Exception:                                 # noqa: BLE001
+            pass
+    if auth:
+        ready &= line("авторизация", True, auth)
     else:
-        ready &= line("ключ API", False,
-                      f"положить в {kf} с правами 600")
+        ready &= line("авторизация", False,
+                      "нужен ЛИБО вход по подписке (claude auth login), "
+                      f"ЛИБО ключ API в {kf} с правами 600")
 
     ready &= line("замок flock", bool(shutil.which("flock")),
                   "нужен, чтобы роли не писали в репозиторий разом")
