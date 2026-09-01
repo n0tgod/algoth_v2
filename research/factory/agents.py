@@ -73,6 +73,7 @@ PIPELINE = [
     },
     {
         "key": "brief", "kind": "role", "model": "дешёвая",
+        "model_id": "opus", "effort": "medium",
         "title": "keeper and briefer",
         "title_ru": "сторож и брифер",
         "cadence": "daily, before the proposer",
@@ -122,6 +123,7 @@ PIPELINE = [
     },
     {
         "key": "propose", "kind": "role", "model": "дорогая",
+        "model_id": "opus", "effort": "xhigh",
         "title": "proposer",
         "title_ru": "предлагающий",
         "cadence": "daily",
@@ -205,6 +207,7 @@ PIPELINE = [
     },
     {
         "key": "build", "kind": "role", "model": "средняя",
+        "model_id": "opus", "effort": "xhigh",
         "title": "builder",
         "title_ru": "строитель",
         "cadence": "on demand",
@@ -254,6 +257,7 @@ PIPELINE = [
     },
     {
         "key": "adversary", "kind": "role", "model": "дорогая",
+        "model_id": "opus", "effort": "xhigh",
         "title": "adversary",
         "title_ru": "адверсарий",
         "cadence": "before every declaration, with a veto",
@@ -600,3 +604,29 @@ def tools(key):
     """Разрешённые роли инструменты. Пусто — значит не объявлены."""
     st = by_key(key) or {}
     return list(st.get("tools") or [])
+
+
+# Модель и усилие роли — НАСТРОЙКА, а не умолчание среды.
+#
+# До этого запускалка не передавала ни того, ни другого: роли шли на
+# том, что стоит у CLI по умолчанию. Это молчаливая зависимость от
+# внешнего состояния — смена умолчания изменила бы поведение системы,
+# и в журнале прогонов не осталось бы ни следа. Теперь и то, и другое
+# объявлено здесь и штампуется в строку прогона: артефакт обязан
+# говорить, чем он произведён.
+#
+# Усилие различается по роли и выведено из работы, а не из вкуса:
+# брифер пересказывает состояние (medium), а предлагающий, строитель и
+# адверсарий рассуждают и пишут код — там xhigh.
+DEFAULT_MODEL = "opus"
+DEFAULT_EFFORT = "high"
+
+
+def model_of(key):
+    st = by_key(key) or {}
+    return st.get("model_id") or DEFAULT_MODEL
+
+
+def effort_of(key):
+    st = by_key(key) or {}
+    return st.get("effort") or DEFAULT_EFFORT

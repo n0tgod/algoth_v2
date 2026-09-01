@@ -216,6 +216,16 @@ def test_agents_registry_is_one_source_and_complete():
     check("по каждому шагу известно, чем он ограничен",
           all((x.get("forbid") or "").strip() and (x.get("doubt") or "")
               for x in AG.pipeline()))
+    # Модель и усилие — НАСТРОЙКА роли, а не умолчание среды. Прежде
+    # запускалка не передавала ни того, ни другого: роли шли на том,
+    # что стоит у CLI, и смена умолчания изменила бы поведение молча.
+    for st in AG.roles():
+        m, e = AG.model_of(st["key"]), AG.effort_of(st["key"])
+        check(f"у роли {st['key']} объявлена модель и усилие",
+              bool(m) and e in ("low", "medium", "high", "xhigh", "max"),
+              f"{m}/{e}")
+    check("механический шаг модели не требует",
+          all(not (x.get("model_id") or "") for x in AG.mech()))
     check("границы и отказы не пусты",
           len(AG.BOUNDARIES) >= 3 and len(AG.RISKS) >= 3)
     # Инвариант, найденный первым боевым прогоном: роль, которая

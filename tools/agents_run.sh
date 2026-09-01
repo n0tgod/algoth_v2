@@ -162,6 +162,14 @@ print(" ".join(AG.tools(sys.argv[1])))
 PYTOOLS
 )"
 
+# Модель и усилие берутся из реестра и передаются ЯВНО. Прежде не
+# передавалось ни того, ни другого — роли шли на умолчании CLI, то
+# есть на внешнем состоянии, которое может смениться под нами, и в
+# журнале прогонов не осталось бы ни следа.
+MODEL="$("$PY" -c "import sys,os;sys.path.insert(0,os.path.join(os.getcwd(),'research','factory'));import agents as AG;print(AG.model_of(sys.argv[1]))" "$ROLE")"
+EFFORT="$("$PY" -c "import sys,os;sys.path.insert(0,os.path.join(os.getcwd(),'research','factory'));import agents as AG;print(AG.effort_of(sys.argv[1]))" "$ROLE")"
+echo "модель: $MODEL · усилие: $EFFORT"
+
 TMP="$(mktemp)"
 # Ловушка ОДНА на выход: вторая заменила бы первую, и копия скрипта
 # осталась бы в /tmp после каждого прогона.
@@ -175,9 +183,11 @@ trap 'rm -f "$TMP" "${AGENTS_SELF_COPY:-}"' EXIT
 # остаётся без задания. Первый прогон предлагающего умер ровно так.
 if [ -n "$ALLOW" ]; then
     # shellcheck disable=SC2086
-    claude -p --allowedTools $ALLOW < "$PROMPT" >"$TMP" 2>&1
+    claude -p --model "$MODEL" --effort "$EFFORT" \
+        --allowedTools $ALLOW < "$PROMPT" >"$TMP" 2>&1
 else
-    claude -p < "$PROMPT" >"$TMP" 2>&1
+    claude -p --model "$MODEL" --effort "$EFFORT" < "$PROMPT" \
+        >"$TMP" 2>&1
 fi
 RC=$?
 BYTES="$(wc -c < "$TMP")"
@@ -206,7 +216,8 @@ if [ "$CRC" != "0" ]; then
     exit 1
 fi
 
-log_run "ok" "" && echo "прогон роли $ROLE завершён"
+log_run "ok" "модель $MODEL, усилие $EFFORT" \
+    && echo "прогон роли $ROLE завершён"
 # Публикацию можно выключить на время проверки: тест обязан гонять
 # НАСТОЯЩИЙ скрипт, но не коммитить и не пушить репозиторий.
 if [ -z "${AGENTS_NO_PUBLISH:-}" ]; then
