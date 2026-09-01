@@ -1,0 +1,6 @@
+== задание scout-first-run ==
+строка: agents-run scout
+начало: 2026-09-01T20:26:39Z
+запускаю роль: scout 
+ОТКАЗ: другая роль уже работает (замок /root/algoth_v2/research/factory/out/agents.lock)
+конец: 2026-09-01T20:26:39Z, код 1
