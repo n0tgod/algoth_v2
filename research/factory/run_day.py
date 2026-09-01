@@ -209,6 +209,36 @@ def needed_legs(legs, rules, log=print):
     return need
 
 
+def record_days(legs):
+    """Длина ЗАПИСИ в сутках — сколько календарных суток вообще есть в
+    журнале листов сечения.
+
+    Это знаменатель измеримости у потолка, и считать его обязан прогон,
+    а не потолок: в артефакте до сих пор не было ни одного числа,
+    описывающего длину записи, — `summary.days` есть объединение суток
+    КНИГ, то есть величина, зависящая от того, сколько они наторговали.
+
+    Два свойства, каждое из которых и делает число знаменателем:
+
+    * считается по ВСЕМ ногам журнала, ДО отсева `needed_legs` — гейты
+      кандидата не вправе укорачивать собственный знаменатель, иначе
+      книга, берущая ноги трёх часов, судилась бы окном в трое суток и
+      проходила бы ворота построением;
+    * сутки СЧИТАЮТСЯ, а не берутся размахом: дня, которого в записи нет
+      (сборщик стоял), книге торговать не давали, и ставить его в
+      знаменатель значило бы наказывать кандидата за нашу дыру.
+
+    Что число НЕ учитывает, и это сказано, чтобы не читалось шире:
+    сутки, в которые лист есть, а баров нет, входят сюда наравне с
+    остальными — книга там торговать не могла. Направление ошибки в
+    сторону строгости (знаменатель завышен), и оно предпочтительнее
+    обратного; чтобы учесть и это, пришлось бы мерить окно по исходам,
+    а исходы считаются только за ногами, прошедшими чьи-то гейты, то
+    есть знаменатель снова стал бы зависеть от кандидата.
+    """
+    return len({int(g["at"] // DAY) for g in legs if g.get("at")})
+
+
 def load_legs(sheets, log=print):
     paths = [sheets] if os.path.isfile(sheets) else []
     if not paths:
@@ -401,7 +431,16 @@ def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
     L.append(f"| средняя связь дневных денег | {mean_r:+.3f} |")
     L.append(f"| пространство объявлено | {SP.TOTAL} |")
     L.append(f"| из него исполнимо сегодня | {SP.available_total()} |")
+    rec = meta.get("record_days")
+    L.append(f"| суток записи в журнале листов | "
+             f"{'—' if rec is None else rec} |")
+    L.append(f"| суток со сделками хоть у кого-то | {n_days} |")
     L.append("")
+    L.append("Суток ЗАПИСИ и суток со сделками — разные числа, и путать "
+             "их нельзя: второе есть функция от того, сколько книги "
+             "наторговали, и знаменателем измеримости служить не может. "
+             "Дневной ряд книги заводит день только от закрытой сделки, "
+             "то есть суток у неё никогда не больше, чем сделок.\n")
     L.append("Эффективное `N` меряется, а не считается номинально: "
              "параметрические соседи — почти одна ставка, и сто книг со "
              "связью 0.9 несут информации меньше десяти независимых.\n")
@@ -466,6 +505,7 @@ def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
     # формулировки.
     return {"spent": sp, "eff_n": round(n_eff, 2),
             "mean_r": round(mean_r, 4), "days": n_days,
+            "record_days": meta.get("record_days"),
             "verdict": verdict(sel_net, ctl_net, n_days),
             "null_median": nulls_med}
 
@@ -528,7 +568,12 @@ def main(argv=None):
     # ног не оценивали. Потолок закрыл бы её этим числом молча.
     if pend_rule is not None:
         rules.append(CD.with_geometry(pend_rule))
+    # Длина записи меряется ДО гейтов: после `needed_legs` в журнале
+    # остаются только ноги, которые кто-то берёт, и знаменатель
+    # измеримости стал бы функцией от гейтов самого кандидата.
+    rec_days = record_days(legs)
     legs = needed_legs(legs, rules, log=log)
+    log(f"суток записи в журнале листов: {rec_days}")
     outs = outcomes_for(legs, a.root, geometries(), log=log) if legs else {}
     log(f"исходов посчитано: {len(outs)}")
     if legs and not outs:
@@ -564,7 +609,8 @@ def main(argv=None):
             log(f"вылетело: {len(retired)}")
     st = LG.state(LG.read(a.base)[0])
     meta = {"at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime(now)),
-            "legs": len(legs), "declared": declared, "retired": retired}
+            "legs": len(legs), "record_days": rec_days,
+            "declared": declared, "retired": retired}
     path = os.path.join(a.out, f"FACTORY-day-{a.tag}.md")
     summary = write_report(path, meta, cands, st, nmed, log=log,
                            pending=pending)
