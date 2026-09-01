@@ -48,6 +48,13 @@ import tournament as TN                                    # noqa: E402
 
 OUT = os.path.join(HERE, "out")
 PROPOSALS = os.path.join(HERE, "proposals.jsonl")
+# Заявка предлагающего — та самая, которую судит ПОТОЛОК, и она ещё не
+# объявлена: между ней и реестром стоит шаг потолка. Файл отдельный от
+# `proposals.jsonl` потому, что это разные состояния одного пути —
+# «предложено ролью» и «допущено к объявлению». Путь берётся от
+# каталога прогона, а не от каталога модуля: иначе прогон в песочнице
+# читал бы боевую заявку и судил бы её по своим синтетическим числам.
+PROPOSAL_NAME = "proposal.json"
 NULL_SEEDS = 10
 DAY = 86400.0
 
@@ -86,6 +93,56 @@ def read_proposals(path=None):
     except OSError:
         return [], 0
     return out, bad
+
+
+def pending_rule(state, path):
+    """Заявка, которую судит потолок: (правило, причина отсутствия).
+
+    Правило возвращается ТОЛЬКО если оно годно как строка объявленного
+    пространства, исполнимо сегодня и ещё НЕ объявлено. Во всех
+    остальных случаях причина называется словами: «заявки нет» и
+    «заявка негодна» лечатся по-разному, а потолок, увидев пустоту,
+    обязан сказать, чем она вызвана, а не пропустить кандидата по
+    умолчанию.
+
+    Путь приходит АРГУМЕНТОМ, а не берётся из константы модуля: иначе
+    прогон в песочнице читал бы боевую заявку и судил бы её по своим
+    синтетическим числам, оставаясь на вид исправным.
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+    except OSError as e:
+        return None, f"заявки нет ({os.path.basename(path)}): {e.strerror}"
+    except ValueError as e:
+        return None, f"заявка не разбирается: {e}"
+    if not isinstance(d, dict) or not isinstance(d.get("rule"), dict):
+        return None, "в заявке нет правила"
+    rule = d["rule"]
+    why = SP.validate(rule)
+    if why:
+        return None, f"правило заявки негодно: {why}"
+    why = SP.unavailable(rule)
+    if why:
+        return None, f"заявка неисполнима: {why}"
+    k = SP.key(rule)
+    if k in state:
+        return None, (f"заявка {k} уже в реестре: испытание потрачено, "
+                      f"судить её потолком поздно")
+    return rule, None
+
+
+def run_pending(rule, legs, outs):
+    """Числа заявки тем же реплеем, что у живых кандидатов.
+
+    Это НЕ объявление: заявка испытанием не стала, в число потраченных
+    не входит и в реестр не пишется. Прогоняется она здесь потому, что
+    ноги и исходы уже загружены — отдельный проход по хранилищу ради
+    одной книги был бы стократной платой за то же число.
+    """
+    tr = CD.simulate(legs, outs, CD.with_geometry(rule))
+    return {"key": SP.key(rule), "rule": rule, "trades": len(tr),
+            "daily": CD.daily_net(tr)}
 
 
 def declare_today(base, now, seed, log=print, per_day=None):
@@ -316,7 +373,7 @@ def verdict(sel, ctl, n_days):
             f"б.п. — предъявлять можно только вместе с числом испытаний")
 
 
-def write_report(path, meta, cands, st, nulls_med, log=print):
+def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     sp = LG.spent(st)
     sel = [c for c in cands.values() if c["lane"] == "selected"]
@@ -381,6 +438,16 @@ def write_report(path, meta, cands, st, nulls_med, log=print):
                      f"{sum(c['daily'].values()):+.1f} | "
                      f"{SP.describe(c['rule'])} |")
         L.append("")
+    if pending:
+        L.append("## Заявка на рассмотрении потолка\n")
+        L.append(f"`{pending['key']}` — сделок {pending['trades']}, "
+                 f"суток {len(pending['daily'])}. "
+                 f"{SP.describe(pending['rule'])}\n")
+        L.append("Это НЕ объявление: заявка испытанием не стала, в число "
+                 "потраченных не входит и в реестр не пишется. Числа "
+                 "здесь существуют затем, чтобы потолок ответил, можно "
+                 "ли её вообще измерить, — и по доходности он её не "
+                 "судит.\n")
     if meta.get("retired"):
         L.append("## Вылетели этим прогоном\n")
         for cid, why in meta["retired"]:
@@ -430,6 +497,9 @@ def main(argv=None):
     ap.add_argument("--tag", default="1m")
     ap.add_argument("--base", default=OUT)
     ap.add_argument("--seed", type=int, default=None)
+    ap.add_argument("--proposal", default=None,
+                    help="заявка предлагающего (по умолчанию "
+                         "<out>/proposal.json)")
     ap.add_argument("--no-declare", action="store_true")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
@@ -449,6 +519,15 @@ def main(argv=None):
     log(f"ног из журнала листов: {len(legs)}")
     rules = [CD.with_geometry(v["rule"]) for v in LG.active(st).values()
              if v.get("rule") and not SP.validate(v["rule"])]
+    pend_rule, pend_why = pending_rule(
+        st, a.proposal or os.path.join(a.out, PROPOSAL_NAME))
+    log(f"заявка: {SP.key(pend_rule) if pend_rule else pend_why}")
+    # Гейты заявки могут быть шире гейтов живых, и без её правила
+    # `needed_legs` отсекла бы её собственные ноги — заявка вышла бы
+    # мёртвой по числу сделок не потому, что мертва, а потому, что её
+    # ног не оценивали. Потолок закрыл бы её этим числом молча.
+    if pend_rule is not None:
+        rules.append(CD.with_geometry(pend_rule))
     legs = needed_legs(legs, rules, log=log)
     outs = outcomes_for(legs, a.root, geometries(), log=log) if legs else {}
     log(f"исходов посчитано: {len(outs)}")
@@ -462,6 +541,11 @@ def main(argv=None):
             "отчёт не пишется, чтобы пустота не выдала себя за прогон")
         return 1
     cands = run_candidates(st, legs, outs, log=log) if outs else {}
+    pending = (run_pending(pend_rule, legs, outs)
+               if pend_rule is not None and outs else None)
+    if pending:
+        log(f"заявка прогнана: сделок {pending['trades']}, суток "
+            f"{len(pending['daily'])} — объявлением это НЕ является")
     # Нуль общий для группы: одно сечение и один форвард на всех.
     base_rule = None
     for c in cands.values():
@@ -482,15 +566,23 @@ def main(argv=None):
     meta = {"at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime(now)),
             "legs": len(legs), "declared": declared, "retired": retired}
     path = os.path.join(a.out, f"FACTORY-day-{a.tag}.md")
-    summary = write_report(path, meta, cands, st, nmed, log=log)
+    summary = write_report(path, meta, cands, st, nmed, log=log,
+                           pending=pending)
     with open(os.path.join(a.out, f"factory-day-{a.tag}.json"), "w",
               encoding="utf-8") as f:
+        # Дневной ряд едет в артефакт целиком: потолок мерит СВЯЗЬ
+        # дневных денег, и по одному итогу её не посчитать. Ключ дня —
+        # число, JSON превратит его в строку, и читатель обязан вернуть
+        # обратно (иначе ряды не пересекутся ни одним днём).
         json.dump({"meta": meta,
                    "summary": summary,
                    "null_median": nmed,
+                   "pending": pending,
+                   "pending_why": pend_why,
                    "candidates": {k: {"lane": v["lane"],
                                       "trades": v["trades"],
                                       "net": sum(v["daily"].values()),
+                                      "daily": v["daily"],
                                       "rule": v["rule"]}
                                   for k, v in cands.items()}},
                   f, ensure_ascii=False, indent=1)
