@@ -21,3 +21,18 @@ rted in allow rules. An allow pattern must name the scope it widens — globs ar
 3. **Подозрение для адверсария:** `weight()` для `sizing = inv_sigma` возвращает `1/σ` без пола из сечения, а `daily_net` нормирует веса внутри дня — по виду ловушка S1 (актив с σ в 140 раз ниже медианы забирал 92.7 % половины книги). Я это не считал и утверждать как измеренное не могу; до проверки такого кандидата объявлять нельзя.
 КОНТРАКТ: выполнен
 прогон роли propose завершён
+публикуется в ветку main:
+ jobs/done/propose-run-2.log            |  14 ++
+ jobs/done/propose-run-3.done           |   1 +
+ jobs/done/propose-run-3.log            |  23 +++
+ jobs/poke.log                          |   3 +
+ research/factory/out/agents-runs.jsonl |   2 +
+ research/factory/out/proposal.json     |  13 +-
+ research/factory/out/proposal.md       | 300 ++++++++++++++++++---------------
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 8 files changed, 216 insertions(+), 142 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   810de67..6aafd86  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-01T12:45:36Z, код 0
