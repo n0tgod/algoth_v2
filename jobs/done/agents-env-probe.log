@@ -14,3 +14,13 @@
 Сухой прогон работает всегда и модель не зовёт:
   tools/agents_run.sh brief --dry
 конец: 2026-08-31T22:46:36Z, код 0
+публикуется в ветку main:
+ jobs/done/agents-env-probe.done    |  1 +
+ jobs/done/agents-env-probe.log     | 16 ++++++++++++++++
+ jobs/done/agents-runner-deploy.log | 11 +++++++++++
+ jobs/poke.log                      |  5 +++++
+ 4 files changed, 33 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   7241a22..dc93bbf  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
