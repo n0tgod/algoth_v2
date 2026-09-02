@@ -2,3 +2,18 @@
 строка: run research/factory/stability.py --tag live
 начало: 2026-09-02T16:46:16Z
 запускаю: .venv/bin/python research/factory/stability.py --tag live
+публикуется в ветку main:
+ jobs/done/deploy-btmoney.log             |  11 +
+ jobs/done/stab1.done                     |   1 +
+ jobs/done/stab1.log                      |   4 +
+ jobs/poke.log                            |   3 +
+ research/factory/out/STABILITY-live.md   |  69 +++++
+ research/factory/out/stability-live.json | 483 +++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json      |   2 +-
+ 7 files changed, 572 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   3602d08..9b40a7c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+отчёт: /root/algoth_v2/research/factory/out/STABILITY-live.md
+конец: 2026-09-02T16:46:41Z, код 0
