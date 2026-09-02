@@ -9431,6 +9431,13 @@ const UI = {
   stale: {en: "the circle is silent", ru: "круг молчит"},
   staleq: {en: "ran, but not since", ru: "отработал, но не позже чем"},
   stalen: {en: "never ran", ru: "не отрабатывал ни разу"},
+  // Тишина и повторяющийся ОТКАЗ лечатся по-разному: первая означает
+  // «расписание не дошло», второй — «дошло, и вот причина». Пока
+  // страница звала это молчанием, живой отказ («CLI не знает такую
+  // модель», трое суток подряд у scout и propose) был неотличим от
+  // тишины уже на показе.
+  stalef: {en: "was called", ru: "звали"},
+  stalefn: {en: "times, every one refused", ru: "раза, и каждый — отказ"},
   quiet: {en: "the circle is on schedule and every step of it has run",
           ru: "круг на расписании, и каждый его шаг отработал"},
   scap: {en: "the daily summary for the owner",
@@ -9533,8 +9540,16 @@ function render(){
     const names = (d.stale_keys || []).map(k => {
       const s = (d.steps || []).find(x => x.key === k) || {};
       const a = s.last_ok_age_sec;
-      return `${esc(tx(s, "title") || k)} — ` + (a == null ? T("stalen")
-        : `${T("staleq")} ${Math.round(a / 3600)} ч`);
+      const head = `${esc(tx(s, "title") || k)} — `
+        + (a == null ? T("stalen")
+           : `${T("staleq")} ${Math.round(a / 3600)} ч`);
+      // Отказ называется ПРИЧИНОЙ и числом попыток: «молчит» лечат
+      // расписанием, а «CLI не знает модель» — обновлением машины, и
+      // без причины владелец начинает не с того.
+      return s.fails_row
+        ? `${head}; ${T("stalef")} ${s.fails_row} ${T("stalefn")}: ${
+            esc(String(s.fail_why || "").slice(0, 160))}`
+        : head;
     }).join("; ");
     al += `<p class="alarm" data-stale="1"><b>&#9888;</b> ${
       T("stale")}: ${names}</p>`;

@@ -4293,6 +4293,14 @@ class Collector:
             # ожидание тревога перестаёт быть сигналом.
             w = RL.limit_wait(runs, k, now)
             st["limit_wait_sec"] = round(w, 1) if w > 0 else None
+            # Тишина и повторяющийся ОТКАЗ лечатся по-разному, и
+            # страница обязана их различать: `scout` трижды звали, и
+            # каждый раз CLI отвечал «не знаю такую модель», а
+            # тревога говорила «не отрабатывал ни разу» — то есть
+            # отказ был неотличим от тишины уже на показе.
+            fn, fw = RL.fails_since_ok(runs, k)
+            st["fails_row"] = fn or None
+            st["fail_why"] = fw if fn else None
             st["stale"] = bool(
                 sched and st["in_circle"] and not w
                 and (k not in okrun

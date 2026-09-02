@@ -991,12 +991,17 @@ def test_a_broken_character_does_not_swallow_the_journal_row():
         shutil.rmtree(d, ignore_errors=True)
 
 
-def test_fallback_happens_only_on_a_limit_and_is_recorded():
-    """Откат на запасную модель — только по лимиту, ровно раз, и в журнал.
+def test_fallback_happens_on_a_limit_or_an_unknown_model():
+    """Откат на запасную модель — по двум причинам, ровно раз, и в журнал.
 
     Решение владельца: предлагающему — самая способная модель, а на
     исчерпанном лимите переходить на запасную, иначе роль в такой день
     молча выпадает из суточного круга.
+
+    Вторая причина добавлена 2026-09-02 по живому отказу: CLI на
+    сервере (2.1.220) не знает объявленной модели `claude-fable-5-1` и
+    отвечает 400. Отказ постоянный — роль не отработает никогда, пока
+    машину не обновят, — и запасная модель заведена ровно для этого.
 
     Молчаливый перебор моделей превратил бы «роль отработала» в
     «отработала неизвестно чем», поэтому проверяется не только сам
@@ -1083,6 +1088,27 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
           str(r.returncode))
     check("о лимите аккаунта сказано громко",
           "ЛИМИТ АККАУНТА" in r.stdout, r.stdout[-200:])
+
+    # Вторая причина отката — CLI НЕ ЗНАЕТ объявленной модели. Это
+    # отказ постоянный: завтра он повторится дословно, и роль не
+    # отработает никогда. Найдено на живом сервере — `scout` и
+    # `propose` молчали трое суток, каждая попытка кончалась
+    # «Claude Code 2.1.220 does not support this model».
+    r, used, rows = run("API Error: 400 Claude Code 2.1.220 does not "
+                        "support this model; version 2.1.251 or newer "
+                        "is required.")
+    check("на неизвестной CLI модели зовётся запасная",
+          used == [MAIN, BACK], str(used))
+    check("о подмене модели сказано громко и названа причина",
+          "НЕ ПРИНЯТА" in r.stdout, r.stdout[-300:])
+    fb = [x for x in rows if x["status"] == "fallback"]
+    check("причина отката записана словами, а не как лимит",
+          bool(fb) and "не знает" in (fb[-1].get("note") or ""),
+          str(fb[-1].get("note") if fb else None))
+    last = [x for x in rows if x["status"] in ("ok", "contract")]
+    check("строка прогона называет модель, которая отработала",
+          bool(last) and BACK in (last[-1].get("note") or ""),
+          str(last[-1].get("note") if last else None))
 
     r, used, rows = run("Error: something else entirely went wrong")
     check("на чужом отказе запасная не зовётся",
@@ -1757,7 +1783,7 @@ def main():
              test_a_broken_character_does_not_swallow_the_journal_row,
              test_a_usage_limit_is_a_wait_and_the_role_resumes_itself,
              test_limit_reset_time_is_read_not_guessed,
-             test_fallback_happens_only_on_a_limit_and_is_recorded,
+             test_fallback_happens_on_a_limit_or_an_unknown_model,
              test_cycle_advances_one_step_and_obeys_the_safeties,
              test_mech_step_leaves_its_end_line,
              test_candidate_diagnostic_counts_trades_not_journal_lines,

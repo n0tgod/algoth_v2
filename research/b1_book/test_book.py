@@ -6652,6 +6652,27 @@ def test_agents_limit_wait_is_a_state_not_a_silence_alarm():
         check("роль не попала в список молчащих",
               "brief" not in (got.get("stale_keys") or []),
               str(got.get("stale_keys")))
+        # Повторяющийся ОТКАЗ — не тишина: `scout` трижды звали, и
+        # каждый раз CLI отвечал «не знаю такую модель», а страница
+        # называла это молчанием. Число попыток и причина обязаны
+        # доехать до показа — проверяется ДОРОГА, а не только
+        # `runlog.fails_since_ok`.
+        for i in range(3):
+            RL.append(runs, "propose", "fail", now - 300 + i,
+                      note="модель X, код 1: does not support this model")
+        c3 = collect.Collector.__new__(collect.Collector)
+        st3 = {x["key"]: x for x in
+               collect.Collector.agents_state(c3)["steps"]}
+        check("число отказавших попыток подряд доехало до показа",
+              st3["propose"]["fails_row"] == 3, str(st3["propose"]))
+        check("причина отказа названа словами",
+              "does not support" in (st3["propose"]["fail_why"] or ""),
+              str(st3["propose"].get("fail_why")))
+        # Обратная сторона: у роли без отказов величины НЕТ, а не ноль
+        # — ноль читался бы как «попытки были и все прошли».
+        check("у роли без отказов величина не выдумывается",
+              st3["brief"]["fails_row"] is None
+              and st3["brief"]["fail_why"] is None, str(st3["brief"]))
     finally:
         collect.HERE = was
         shutil.rmtree(d, ignore_errors=True)
