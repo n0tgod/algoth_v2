@@ -174,3 +174,13 @@
 [09-02 08:26:44] обучение пропущено по каденции: весам 16.8 ч при каденции 24; цикл 103 с (сведение часа 10 с, матрица 46 с, книги 47 с, оценка 0 с)
 [09-02 08:26:44] следующая попытка через 35 мин (обучения не было)
 конец: 2026-09-02T08:33:30Z, код 0
+публикуется в ветку main:
+ jobs/done/timer-entries.log |  10 +++
+ jobs/done/timer-when.done   |   1 +
+ jobs/done/timer-when.log    | 176 ++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log               |   3 +
+ 4 files changed, 190 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   3dae195..4db6961  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
