@@ -1141,6 +1141,74 @@ def test_fallback_happens_on_a_limit_or_an_unknown_model():
           str([x.get("note") for x in rows]))
 
 
+def test_a_hanging_role_is_killed_by_the_clock_and_named():
+    """Повисшая роль убивается по времени, и это НАЗЫВАЕТСЯ словом.
+
+    До 2026-09-02 предела не было ни в запускалке, ни в очереди
+    заданий, ни в круге: зависший вызов держал бы замок ролей вечно, а
+    вместе с ним очередь заданий (единственный доступ сессии к
+    серверу) и суточный круг. Правило проекта: прогон, который молчит
+    дольше минуты, неотличим от повисшего.
+
+    Убийство по времени НЕ откатывается на запасную модель — это не
+    отказ модели, а зависание, и второй час ждать незачем.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    sh = os.path.join(root, "tools", "agents_run.sh")
+    MAIN, BACK = AG.model_of("propose"), AG.fallback_of("propose")
+    d = tempfile.mkdtemp()
+    bin_d = os.path.join(d, "bin")
+    os.makedirs(bin_d)
+    seen = os.path.join(d, "models.txt")
+    try:
+        with open(os.path.join(bin_d, "claude"), "w",
+                  encoding="utf-8") as f:
+            f.write('#!/bin/sh\n'
+                    'if [ "$1" = "auth" ]; then\n'
+                    '  echo \'{ "loggedIn": true }\'\n'
+                    '  exit 0\n'
+                    'fi\n'
+                    'm=""\n'
+                    'while [ $# -gt 0 ]; do\n'
+                    '  if [ "$1" = "--model" ]; then m="$2"; fi\n'
+                    '  shift\n'
+                    'done\n'
+                    'cat > /dev/null\n'
+                    'echo "$m" >> "%s"\n'
+                    # Спит ДОЛЬШЕ допуска проверки: со сном короче
+                    # «убит по пределу» проходило бы и без предела.
+                    'sleep 90\n' % seen)
+        os.chmod(os.path.join(bin_d, "claude"), 0o755)
+        env = dict(os.environ, AGENTS_OUT=d, AGENTS_NO_PUBLISH="1",
+                   AGENTS_TIMEOUT_SEC="2",
+                   PATH=bin_d + os.pathsep + os.environ.get("PATH", ""))
+        env.pop("ANTHROPIC_API_KEY", None)
+        t0 = time.time()
+        r = subprocess.run([sh, "propose"], cwd=root, env=env,
+                           capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, timeout=120)
+        took = time.time() - t0
+        rows, _ = RL.read(os.path.join(d, RL.RUNS))
+        used = []
+        if os.path.exists(seen):
+            with open(seen, encoding="utf-8") as f:
+                used = [x.strip() for x in f if x.strip()]
+        check("повисший вызов убит по пределу, а не ждёт вечно",
+              took < 60, f"{took:.1f} с")
+        check("прогон упал", r.returncode != 0, str(r.returncode))
+        check("причина названа временем, а не кодом",
+              any("по времени" in (x.get("note") or "") for x in rows),
+              str([x.get("note") for x in rows]))
+        check("о пределе сказано громко",
+              "ПРЕДЕЛ ВРЕМЕНИ" in r.stdout, r.stdout[-200:])
+        check("зависание не тратит запасную модель",
+              used == [MAIN], str(used))
+        check("предел настраивается снаружи, а не зашит",
+              "AGENTS_TIMEOUT_SEC" in open(sh, encoding="utf-8").read())
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_a_usage_limit_is_a_wait_and_the_role_resumes_itself():
     """Лимит аккаунта — ОЖИДАНИЕ: бюджета не тратит, снимется — сам.
 
@@ -1800,6 +1868,7 @@ def main():
              test_rights_reach_the_model_whole,
              test_prompt_actually_reaches_the_model,
              test_a_broken_character_does_not_swallow_the_journal_row,
+             test_a_hanging_role_is_killed_by_the_clock_and_named,
              test_a_usage_limit_is_a_wait_and_the_role_resumes_itself,
              test_limit_reset_time_is_read_not_guessed,
              test_fallback_happens_on_a_limit_or_an_unknown_model,
