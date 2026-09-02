@@ -434,6 +434,44 @@ PIPELINE = [
         "proof": "research/factory/declare.py",
     },
     {
+        "key": "task", "kind": "mech", "model": "нет",
+        "title": "task for the builder",
+        "title_ru": "задание строителю",
+        "cadence": "daily, after the declaration",
+        "cadence_ru": "раз в сутки, после объявления",
+        "plain": "Takes the oldest mechanic the engine cannot do yet "
+                 "out of the queue and writes the builder's task in "
+                 "the WORDS OF THE PROPOSAL. It never puts a second "
+                 "task on top of an unfinished one: a builder handed "
+                 "two tasks builds half of each.",
+        "plain_ru": "Берёт из очереди самую старую механику, которой "
+                    "движок ещё не умеет, и пишет задание строителю "
+                    "СЛОВАМИ ЗАЯВКИ. Поверх незакрытого задания "
+                    "второе не кладёт: строитель, получивший два "
+                    "задания, построит половину каждого.",
+        "reads": "the queue of mechanics",
+        "reads_ru": "очередь механик",
+        "writes": "the builder's task and a trace of what it decided",
+        "writes_ru": "задание строителю и след того, что решено",
+        "forbid": "no rewriting of a task that is still open, and no "
+                  "task invented beyond the proposal",
+        "forbid_ru": "не переписывает незакрытое задание и не "
+                     "выдумывает сверх заявки",
+        "doubt": "an empty queue is a RESULT: it says so and leaves "
+                 "a trace, so the step is not asked again every five "
+                 "minutes",
+        "doubt_ru": "пустая очередь — РЕЗУЛЬТАТ: шаг говорит об этом "
+                    "и оставляет след, чтобы его не переспрашивали "
+                    "каждые пять минут",
+        "why": "A mechanic used to live in `proposal.json`, which the "
+               "next round overwrites — so a proposal the engine "
+               "cannot run yet survived exactly one day.",
+        "why_ru": "Механика жила в `proposal.json`, который "
+                  "перезаписывает следующий круг: заявка, которой "
+                  "движок не умеет, существовала ровно сутки.",
+        "proof": "research/factory/mech_queue.py",
+    },
+    {
         "key": "judge", "kind": "mech", "model": "нет",
         "title": "judge",
         "title_ru": "судья",

@@ -990,6 +990,13 @@ def test_circle_calls_the_builder_only_with_a_task():
     check("шаги задания и строителя стоят в круге по порядку",
           keys.index("task") > keys.index("declare")
           and keys.index("build") == keys.index("task") + 1, str(keys))
+    # Круг и реестр описывают ОДИН конвейер: шаг, которого нет в
+    # реестре, страница не покажет вовсе — и владелец не узнает, что
+    # система его делает.
+    import agents as AG
+    known = {x["key"] for x in AG.pipeline()}
+    check("каждый шаг круга описан в реестре",
+          not (set(keys) - known), str(set(keys) - known))
 
     long = "q" * 130
     d = tempfile.mkdtemp(prefix="gate-")
