@@ -1072,13 +1072,13 @@ def test_contract_check_gets_the_start_moment():
         stub = os.path.join(d, "py")
         with open(stub, "w", encoding="utf-8") as f:
             f.write('#!/bin/sh\nprintf "%s\\n" "$@" > "' + got +
-                    '"\ncat > /dev/null\n')
+                    '"\ncat > "' + os.path.join(d, "body.py") + '"\n')
         os.chmod(stub, 0o755)
         sh = os.path.join(d, "block.sh")
         with open(sh, "w", encoding="utf-8") as f:
             f.write('set -uo pipefail\nROLE=scout\nROOT=%s\n'
-                    'STARTED=1788371000\nPY=%s\n%s\n'
-                    % (d, stub, block))
+                    'STARTED=1788371000\nOUT=%s/своё\nPY=%s\n%s\n'
+                    % (d, d, stub, block))
         subprocess.run(["bash", sh], capture_output=True, text=True,
                        timeout=60)
         argv = []
@@ -1086,9 +1086,23 @@ def test_contract_check_gets_the_start_moment():
             with open(got, encoding="utf-8") as f:
                 argv = [ln.rstrip("\n") for ln in f]
         check("момент начала доехал до проверки",
-              argv[-1:] == ["1788371000"], str(argv))
+              "1788371000" in argv, str(argv))
         check("роль и корень доехали тоже",
               argv[1:3] == ["scout", d], str(argv))
+        # Каталог прогона — та же дорога: без него проверка судила бы
+        # БОЕВЫЕ артефакты и писала бы в боевые журналы (2026-09-02).
+        check("каталог прогона доехал до проверки",
+              argv[-1:] == [os.path.join(d, "своё")], str(argv))
+        # Довезти аргумент мало: тело проверки обязано его ВЗЯТЬ.
+        # Смотрится тот текст, который запускалка подала питону, а не
+        # исходник рядом.
+        body = ""
+        if os.path.exists(os.path.join(d, "body.py")):
+            with open(os.path.join(d, "body.py"), encoding="utf-8") as f:
+                body = f.read()
+        check("проверка берёт каталог прогона, а не выводит из корня",
+              "out=sys.argv[4]" in body.replace(" ", "")
+              .replace("\n", ""), body[-300:])
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1802,6 +1816,69 @@ def test_a_usage_limit_is_a_wait_and_the_role_resumes_itself():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_the_contract_judges_the_run_not_the_live_artifacts():
+    """Проверка контракта смотрит В КАТАЛОГ ПРОГОНА, а не в боевой.
+
+    Найдено 2026-09-02 строкой в ЖИВОЙ очереди механик, оставленной
+    прогоном в песочнице: роль пишет туда, куда её послали
+    (`AGENTS_OUT`), а `check_role` выводила каталог из корня — то есть
+    судила боевые артефакты вместо произведённых и, что хуже, писала
+    в боевые журналы (принесённое разведчиком, просьбы владельцу,
+    очередь механик).
+
+    Оба следствия проверяются: годным считается артефакт ПРОГОНА, а
+    боевой каталог остаётся нетронутым.
+    """
+    import mech_queue as MQ
+    long = "z" * 200
+    root = tempfile.mkdtemp(prefix="live-")
+    run = tempfile.mkdtemp(prefix="run-")
+    try:
+        live = os.path.join(root, "research", "factory", "out")
+        os.makedirs(live)
+        for rel in ("research/factory/space.py",
+                    "research/factory/pool.py"):
+            with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
+                f.write("проба\n")
+        # В БОЕВОМ каталоге лежит своя заявка — её судить не должны.
+        for d, title in ((live, "боевая механика"),
+                         (run, "механика прогона")):
+            with open(os.path.join(d, "proposal.md"), "w",
+                      encoding="utf-8") as f:
+                f.write("заявка человеческим текстом\n")
+            with open(os.path.join(d, "brief.md"), "w",
+                      encoding="utf-8") as f:
+                f.write("бриф\n")
+            with open(os.path.join(d, "proposal.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"proposed": True, "kind": "mechanism",
+                           "title": title, "hypothesis": long,
+                           "kills_it": long, "ceiling": long,
+                           "differs_from_live": long, "shape": long,
+                           "needs": "строителя",
+                           "cites": ["research/factory/out/brief.md",
+                                     "research/factory/space.py",
+                                     "research/factory/pool.py"]},
+                          f, ensure_ascii=False)
+
+        ok, why = RL.check_role("propose", root, out=run)
+        check("контракт прогона выполнен", ok, str(why))
+        check("в очередь встала механика ПРОГОНА",
+              [r["title"] for r in MQ.state(run)[0]]
+              == ["механика прогона"], str(MQ.state(run)[0]))
+        check("боевая очередь не тронута",
+              not os.path.exists(os.path.join(live, MQ.QUEUE)),
+              live)
+        # Умолчание прежнее: без указания каталога судится корень.
+        ok, why = RL.check_role("propose", root)
+        check("без указания каталога судится корень",
+              [r["title"] for r in MQ.state(live)[0]]
+              == ["боевая механика"], str(MQ.state(live)[0]))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+        shutil.rmtree(run, ignore_errors=True)
+
+
 def test_limit_reset_time_is_read_not_guessed():
     """Момент снятия берётся из ответа, а выдумка называется запасом.
 
@@ -2424,6 +2501,7 @@ def main():
              test_a_hanging_role_is_killed_by_the_clock_and_named,
              test_a_usage_limit_is_a_wait_and_the_role_resumes_itself,
              test_limit_reset_time_is_read_not_guessed,
+             test_the_contract_judges_the_run_not_the_live_artifacts,
              test_fallback_happens_on_a_limit_or_an_unknown_model,
              test_cycle_advances_one_step_and_obeys_the_safeties,
              test_mech_step_leaves_its_end_line,

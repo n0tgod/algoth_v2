@@ -730,7 +730,10 @@ def _close_mechanism(out, d):
         MQ.mark(out, "built", mid, (d.get("module") or "").strip())
 
 
-def check_role(role, root, since=None):
+OUT_REL = "research/factory/out"
+
+
+def check_role(role, root, since=None, out=None):
     """Контракт роли: выполнен ли. Возвращает (годно, список бед).
 
     Одно место на все роли — иначе перечень того, что роль обязана
@@ -739,16 +742,28 @@ def check_role(role, root, since=None):
     `since` — момент начала прогона. Он нужен ровно одному правилу:
     повтор разведчика судится по тому, что принесли РАНЬШЕ, а не по
     записям этого же прогона (см. `scout_seen`).
+
+    `out` — каталог артефактов прогона. Он ОТДЕЛЬНЫЙ от корня, потому
+    что роль пишет туда, куда её послали (`AGENTS_OUT`), а проверка
+    прежде выводила каталог из корня и потому судила БОЕВЫЕ артефакты
+    вместо тех, что произвёл прогон, — и, что хуже, писала в боевые
+    журналы (принесённое разведчиком, просьбы владельцу, очередь
+    механик). Найдено 2026-09-02: прогон в песочнице оставил строку
+    в живой очереди механик. Умолчание прежнее — каталог под корнем.
     """
     import sys
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import agents as AG
+    out = out or os.path.join(root, "research", "factory", "out")
     st = AG.by_key(role) or {}
     files = list(st.get("produces") or [])
     bad = []
     texts = {}
     for rel in files:
-        p = os.path.join(root, rel)
+        # Артефакты прогона ищутся в ЕГО каталоге, всё прочее — под
+        # корнем: перечень в реестре один, а живут файлы врозь.
+        p = (os.path.join(out, rel[len(OUT_REL) + 1:])
+             if rel.startswith(OUT_REL + "/") else os.path.join(root, rel))
         if not os.path.exists(p):
             bad.append(f"{rel}: не создан")
             continue
@@ -766,7 +781,6 @@ def check_role(role, root, since=None):
             if not ok:
                 bad.append(rel + ": " + "; ".join(why))
     elif role == "scout":
-        out = os.path.join(root, "research", "factory", "out")
         ok, why = check_scout(
             texts.get("research/factory/out/scout.json", ""),
             seen=scout_seen(out, before=since))
@@ -792,7 +806,6 @@ def check_role(role, root, since=None):
             # Просьбы к владельцу и судьба механики записываются
             # МАШИНОЙ и только на годном отчёте: журнал, который роль
             # ведёт сама, она сама и перепишет.
-            out = os.path.join(root, "research", "factory", "out")
             d = json.loads(texts.get(
                 "research/factory/out/build.json", "") or "{}")
             _owner_asks(out, d, "строитель")
@@ -806,7 +819,7 @@ def check_role(role, root, since=None):
         # пусто — и повтор уже объявленного через эту дорогу не ловился
         # ни разу. Прямая проверка правила при этом проходила: ей
         # список ключей подавали руками.
-        out_dir = os.path.join(root, "research", "factory", "out")
+        out_dir = out
         rows, _ = LG.read(out_dir)
         ids = list(LG.state(rows).keys())
         # Что уже закрыто потолком — из его собственного журнала.

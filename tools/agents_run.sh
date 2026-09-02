@@ -335,11 +335,16 @@ fi
 # по тому, что принесли раньше, а записи этого же прогона повтором
 # быть не могут (иначе роль отвергают её собственные идеи — так она и
 # не могла отработать 2026-09-02).
-CHK="$("$PY" - "$ROLE" "$ROOT" "$STARTED" <<'PYCHECK'
+CHK="$("$PY" - "$ROLE" "$ROOT" "$STARTED" "$OUT" <<'PYCHECK'
 import os, sys
 sys.path.insert(0, os.path.join(sys.argv[2], "research", "factory"))
 import runlog as R
-ok, bad = R.check_role(sys.argv[1], sys.argv[2], since=float(sys.argv[3]))
+# Каталог прогона передаётся ЯВНО: роль пишет туда, куда её послали
+# (AGENTS_OUT), а проверка прежде выводила каталог из корня — то есть
+# судила боевые артефакты вместо произведённых и писала в боевые
+# журналы. Найдено 2026-09-02 строкой в живой очереди механик.
+ok, bad = R.check_role(sys.argv[1], sys.argv[2], since=float(sys.argv[3]),
+                       out=sys.argv[4])
 print("КОНТРАКТ: " + ("выполнен" if ok else "; ".join(bad)))
 sys.exit(0 if ok else 1)
 PYCHECK
