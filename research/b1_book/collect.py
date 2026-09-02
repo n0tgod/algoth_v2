@@ -4426,6 +4426,7 @@ class Collector:
         fdir = os.path.join(os.path.dirname(HERE), "factory", "out")
         sys.path.insert(0, os.path.join(research, "factory"))
         import ledger as LG
+        import live_books as LB
         import pool as PL
         import space as SP
         rows, broken = LG.read(fdir)
@@ -4466,6 +4467,13 @@ class Collector:
             # ровно те деньги, что видят страницы книг: второй расчёт
             # того же числа однажды разошёлся бы с первым.
             b["live"] = self._cand_live(cid)
+            # Почему книги НЕТ — тем же кодом, что решает, заводить ли
+            # её: «книги ещё нет» и «книга не заводится по правилу» —
+            # разные утверждения, и первое на месте второго читалось
+            # бы как «вот-вот появится». Причину называет `live_books`,
+            # а не эта страница: два места, решающих одно, разошлись
+            # бы, и страница объясняла бы не то, что делает цикл.
+            b["live_why"] = LB.gap(rec) if b["live"] is None else None
             if c:
                 # Ключ дня в JSON стал строкой — вернуть обратно
                 # обязан читатель, иначе ряды не пересекутся ни одним

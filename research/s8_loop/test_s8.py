@@ -3513,13 +3513,16 @@ def test_declared_candidate_gets_a_live_book():
     стратегии». Проверяется вся дорога, а не отображение правила:
     реестр испытаний → состав книг → каталог, манифест, лист сечения.
 
-    Три утверждения, ломающиеся порознь. (1) Книга заводится ОБЕИМ
-    полосам: отобранной и случайной — иначе полосы измерялись бы
-    разными системами, и знаменатель испытаний потерян. (2) Гейты
+    Три утверждения, ломающиеся порознь. (1) Живая книга заводится
+    ТОЛЬКО прошедшим проверки и отбор (решение владельца 2026-09-02):
+    случайная контрольная рука живой книги не получает, и это не
+    теряет знаменателя — обе полосы по-прежнему реплеятся одним кодом
+    в суточном прогоне, где сравнение полос и живёт. (2) Гейты
     кандидата доезжают до ЛИСТА, по которому живёт сканер: правило,
-    не доехавшее до листа, есть книга не того кандидата. (3) Правило,
-    которого живая машинерия не умеет, книгой не становится МОЛЧА —
-    причина называется словами.
+    не доехавшее до листа, есть книга не того кандидата. (3) Причина
+    отсутствия книги называется СЛОВАМИ — «книги ещё нет» и «книга не
+    заводится по правилу» разные вещи, и первое на месте второго
+    читается как «вот-вот появится».
     """
     import train as T
     import books as BK
@@ -3539,17 +3542,27 @@ def test_declared_candidate_gets_a_live_book():
         sel = dict(base, target="fwd_4h", geom="levels", rank="sigma",
                    floor_bp=30, width=5, rr_band="lo", sizing="equal",
                    basket="no", agree="no")
-        ctl = dict(sel, rank="raw", agree="yes", rr_band="hi", width=3)
+        # Второй ОТОБРАННЫЙ — на нём проверяются оси согласия рук и
+        # полосы отношения: раньше их нёс контрольный кандидат, а он
+        # живой книги больше не получает, и проверять гейты стало бы
+        # не на чем.
+        agr = dict(sel, rank="raw", agree="yes", rr_band="hi", width=3)
         tmr = dict(sel, geom="timer")
+        ctl = dict(sel, floor_bp=44)
         now = time.time()
-        for r, lane in ((sel, "selected"), (ctl, "control"),
-                        (tmr, "selected")):
+        for r, lane in ((sel, "selected"), (agr, "selected"),
+                        (tmr, "selected"), (ctl, "control")):
             LGF.declare(SPF.key(r), r, lane, at=now, base=fout)
         lines = []
         books = T.candidate_books(lines.append)
         keys = {b["key"] for b in books}
-        check("книга заведена обеим полосам",
-              {SPF.key(sel), SPF.key(ctl)} <= keys, str(sorted(keys)))
+        check("живая книга заведена отобранному",
+              SPF.key(sel) in keys, str(sorted(keys)))
+        check("случайной контрольной руке живая книга НЕ заводится",
+              SPF.key(ctl) not in keys, str(sorted(keys)))
+        check("причина названа полосой, а не молчанием",
+              any("полоса control" in x for x in lines),
+              " | ".join(lines))
         # Ось «выход по времени» тоже становится книгой — но БЕЗ
         # уровней: ни стопа, ни цели у неё нет вовсе, и 5-секундный
         # сторож обязан знать об этом, иначе он закроет позицию по
@@ -3571,7 +3584,7 @@ def test_declared_candidate_gets_a_live_book():
         check("ширина едет местами по сторонам",
               s_e.get("per_side") == 5 and s_e.get("slots") == 10,
               str(s_e))
-        c_e = e[SPF.key(ctl)]
+        c_e = e[SPF.key(agr)]
         check("согласие рук едет в лист",
               c_e.get("agree") is True and s_e.get("agree") is None,
               f"{c_e} / {s_e}")
@@ -3591,15 +3604,15 @@ def test_declared_candidate_gets_a_live_book():
               (CDF.geometry(tmr)[2], CDF.geometry(sel)[2]) == (24, 72),
               str((CDF.geometry(tmr), CDF.geometry(sel))))
         # Вылетевший книгу сохраняет, но входов не берёт.
-        LGF.retire(SPF.key(ctl), "нетто ниже нуля", at=now + 1,
+        LGF.retire(SPF.key(agr), "нетто ниже нуля", at=now + 1,
                    base=fout)
         books2 = T.candidate_books(lambda *a: None)
         check("вылетевший остался книгой",
-              SPF.key(ctl) in {b["key"] for b in books2},
+              SPF.key(agr) in {b["key"] for b in books2},
               str([b["key"] for b in books2]))
         live = [b for b in books2 if not b.get("retired_at")]
         check("вылетевший новых входов не берёт",
-              SPF.key(ctl) not in {b["key"] for b in live},
+              SPF.key(agr) not in {b["key"] for b in live},
               str([b["key"] for b in live]))
     finally:
         (T.MODEL_DIR, T.LIVE_MODEL_DIR, T.FACTORY_OUT,

@@ -8701,7 +8701,8 @@ function branchHtml(b){
     : `<div class="nums">
         <div class="f"><span class="lab">${T("live")}</span>
           ${b.live == null
-            ? `<span class="dim" title="${T("nobook")}">&mdash;</span>`
+            ? `<span class="dim" title="${esc(b.live_why
+                 || T("nobook"))}">&mdash;</span>`
             : (b.live.pnl == null
                ? `<span class="dim">&mdash;</span>`
                : `<span class="${sgn(b.live.pnl)}"
@@ -8757,6 +8758,8 @@ function branchHtml(b){
         >${b.alive ? T("on") : T("out")}</span>
       <span style="flex:1"></span>${trl}${btn}</div>
     <div class="plain">${esc(b.plain)}</div>
+    ${b.live_why
+      ? `<div class="note">${esc(b.live_why)}</div>` : ""}
     ${b.why ? `<div class="note">${esc(b.why)}</div>` : ""}
     ${b.note ? `<div class="note">&laquo;${esc(b.note)}&raquo;</div>` : ""}
     ${nums}${tail}</div>`;

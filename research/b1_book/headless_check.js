@@ -401,6 +401,7 @@ global.fetch = async (url) => {
                      plain: "горизонт 4 ч, стоп и тейк по обещаниям пути",
                      declared_at: 1788296000, retired_at: null,
                      why: null, note: null,
+                     live_why: "полоса control: живая книга заводится только прошедшим проверки и отбор",
                      trades: null, fwd: null, pre: null,
                      fwd_days: null, pre_days: null, last: [],
                      no_tail: null,
@@ -4185,6 +4186,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // ссылки быть не должно — она вела бы в пустоту.
     if (/trades-page/.test(blockOf("h4_z_f30_w5_gs_rrhi_se_b0_a1")))
       bad.push("построено: ссылка на сделки книги, которой нет");
+    // Причина отсутствия книги названа СЛОВАМИ. «Книги ещё нет» на
+    // месте «книга не заводится по правилу» читается как «вот-вот
+    // появится», а это другое утверждение о полосе.
+    if (!/живая книга заводится только прошедшим/.test(
+          blockOf("h4_z_f30_w5_gs_rrhi_se_b0_a1")))
+      bad.push("построено: не названа причина, по которой живой "
+               + "книги нет");
     if (!/-281\.6/.test(tree))
       bad.push("построено: реплей прошлого не показан отдельно");
     if (/-348\.9/.test(tree))
