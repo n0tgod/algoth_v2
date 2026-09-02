@@ -465,6 +465,14 @@ def test_scout_brings_mechanisms_not_verdicts():
         check("принесённое записано машиной",
               n == 1 and seen == ["поглощение в опционных потоках"],
               str(seen))
+        # Меню перезаписывается каждым прогоном, поэтому журнал обязан
+        # хранить идею ЦЕЛИКОМ: иначе он запрещает повтор и не отдаёт
+        # взамен ничего, и идея теряется вместе со свежим `scout.json`.
+        with open(os.path.join(d, RL.SCOUT_SEEN), encoding="utf-8") as f:
+            rec = json.loads(f.readline())
+        check("журнал хранит идею целиком, а не заголовок",
+              all(rec.get(k) for k in ("claim", "mechanism", "kills_it",
+                                       "novelty")), str(sorted(rec)))
         ok, why = chk({"found": True, "ideas": [idea()]}, seen=seen)
         check("повтор ловится по журналу машины", not ok, str(why))
 

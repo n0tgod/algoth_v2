@@ -563,11 +563,21 @@ def scout_record(text, base):
             if not t or t.lower() in was:
                 continue
             was.add(t.lower())
-            f.write(json.dumps(
-                {"at": round(time.time(), 3), "title": t,
-                 "sources": [c for c in (it.get("sources") or [])
-                             if isinstance(c, str)][:5]},
-                ensure_ascii=False) + "\n")
+            # Пишется ИДЕЯ ЦЕЛИКОМ, а не только заголовок. Меню
+            # живёт в `scout.json`, а его каждый прогон перезаписывает
+            # свежим: журнал, хранящий один заголовок, объявлял бы идею
+            # принесённой, когда её текста уже нет нигде, кроме истории
+            # git. Тогда запись запрещает повтор и не отдаёт взамен
+            # ничего — то есть идея молча теряется.
+            rec = {"at": round(time.time(), 3), "title": t,
+                   "sources": [c for c in (it.get("sources") or [])
+                               if isinstance(c, str)][:5]}
+            for k in ("claim", "mechanism", "kills_it", "novelty",
+                      "needs"):
+                v = (it.get(k) or "").strip()
+                if v:
+                    rec[k] = v
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
             n += 1
     return n
 
