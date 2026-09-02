@@ -67,6 +67,41 @@ def main(argv=None):
         if not os.path.exists(bp):
             continue
         print(f"  {d}: {age(bp) / 3600:.2f} ч")
+    # Живой исполнитель: КОГДА он встал и на чём. Остановка хранится
+    # до ручного снятия, поэтому её причина описывает МОМЕНТ отказа, а
+    # не сейчас, — и без метки времени она читается как свежая.
+    if "--live" in (argv or []):
+        print("\n=== журнал живого исполнителя ===")
+        ld = os.path.join(ROOT, "bot", "out", "live")
+        fs = sorted(x for x in (os.listdir(ld) if os.path.isdir(ld)
+                                else []) if x.endswith(".jsonl"))
+        if not fs:
+            print(f"журнала нет: {ld}")
+        else:
+            rows = []
+            for x in fs[-2:]:
+                with open(os.path.join(ld, x), encoding="utf-8",
+                          errors="replace") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            rows.append((x, line))
+            print(f"файлов {len(fs)}, строк в двух последних "
+                  f"{len(rows)}")
+            for x, line in rows[-12:]:
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    print(f"  {x}: битая строка")
+                    continue
+                ms = r.get("at_ms")
+                t = (time.strftime("%m-%d %H:%M:%S",
+                                   time.gmtime(ms / 1000.0))
+                     if ms else "—")
+                ev = r.get("ev")
+                note = r.get("note") or r.get("why") or ""
+                print(f"  {t} {ev} {r.get('sym') or ''} "
+                      f"{str(note)[:120]}")
     print("\n=== хвост train.log ===")
     lp = os.path.join(OUT, "train.log")
     if not os.path.exists(lp):
