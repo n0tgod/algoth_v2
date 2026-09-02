@@ -174,3 +174,15 @@
   v = fn(sl, axis=1)
 [09-02 09:55:52] матрица: 748 символов × 809 часов, сечений с ≥30 именами: 720, признаков 50
 конец: 2026-09-02T09:56:39Z, код 0
+публикуется в ветку main:
+ jobs/done/after-lane2.done          |   1 +
+ jobs/done/after-lane2.log           | 176 ++++++++++++++++++++++++++++++++++++
+ jobs/done/cycle-up3.done            |   1 +
+ jobs/done/cycle-up3.log             |  10 ++
+ jobs/poke.log                       |   4 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 6 files changed, 193 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   ddb040d..53e2c59  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
