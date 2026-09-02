@@ -10,3 +10,13 @@ claude-opus-5        код 0: ок
 opus                 код 0: ок
 sonnet               код 0: ок
 конец: 2026-09-02T18:35:28Z, код 0
+публикуется в ветку main:
+ jobs/done/cli-models-2.done  |  1 +
+ jobs/done/cli-models-2.log   | 12 ++++++++++++
+ jobs/done/scout-backfill.log |  7 +++++++
+ jobs/poke.log                |  3 +++
+ 4 files changed, 23 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   8173379..0e996ca  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

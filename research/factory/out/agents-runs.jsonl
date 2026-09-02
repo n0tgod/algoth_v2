@@ -68,3 +68,5 @@
 {"at": 1788372617.687, "role": "scout", "status": "start", "started": 1788372617.0, "ended": 1788372617.687, "dry": false, "pid": 1124077}
 {"at": 1788372622.136, "role": "scout", "status": "fallback", "started": 1788372617.0, "ended": 1788372622.136, "dry": false, "pid": 1124077, "note": "CLI не знает модель claude-fable-5-1, перехожу на claude-opus-5"}
 {"at": 1788373220.069, "role": "scout", "status": "ok", "started": 1788372617.0, "ended": 1788373220.07, "dry": false, "note": "модель claude-opus-5, усилие high"}
+{"at": 1788379188.52, "role": "brief", "status": "start", "started": 1788379188.0, "ended": 1788379188.52, "dry": false, "pid": 1131417}
+{"at": 1788379775.587, "role": "brief", "status": "ok", "started": 1788379188.0, "ended": 1788379775.587, "dry": false, "note": "модель opus, усилие medium"}
