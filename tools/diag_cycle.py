@@ -23,6 +23,25 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "research", "s8_loop", "out")
 
 
+def _rows(p):
+    """Строки журнала книги. Файла нет — пусто, но это НЕ ошибка:
+    книга, заведённая в этот час, разбора ещё не имеет."""
+    out = []
+    try:
+        with open(p, encoding="utf-8", errors="replace") as f:
+            for ln in f:
+                ln = ln.strip()
+                if not ln:
+                    continue
+                try:
+                    out.append(json.loads(ln))
+                except ValueError:
+                    pass
+    except OSError:
+        return out
+    return out
+
+
 def age(p):
     try:
         return time.time() - os.path.getmtime(p)
@@ -119,6 +138,58 @@ def main(argv=None):
                   f"{age(sp) / 60:.1f} мин")
             for b in sh.get("books") or []:
                 print("  " + json.dumps(b, ensure_ascii=False))
+    # Книги кандидатов фабрики: завелись ли и берёт ли КАЖДАЯ РУКА
+    # входы. Сводка страницы `built` считает закрытые сделки, и рука,
+    # не взявшая ни одного входа, там неотличима от руки, у которой
+    # позиции ещё открыты: обе показывают ноль закрытых. Различает их
+    # только счёт выборов и разбора по каждой руке.
+    if "--cand" in (argv or []):
+        print("\n=== книги кандидатов ===")
+        ep = os.path.join(ROOT, "research", "s8_loop",
+                          "books_extra.json")
+        try:
+            with open(ep, encoding="utf-8") as f:
+                ex = json.load(f)
+        except OSError:
+            ex = None
+            print(f"состава книг нет: {ep} — цикл его ещё не писал")
+        except ValueError as e:
+            ex = None
+            print(f"состав книг не читается: {e}")
+        if ex is not None:
+            print(f"книг в составе: {len(ex)}")
+            for b in ex:
+                d = os.path.join(OUT, b.get("dir") or "")
+                if not os.path.isdir(d):
+                    print(f"  {b.get('key')}: каталога нет — {d}")
+                    continue
+                g = b.get("gate") or {}
+                print(f"  {b.get('key')} [{b.get('lane')}] "
+                      f"слотов {g.get('slots')} "
+                      f"пол {g.get('floor_bp')} "
+                      f"rr {g.get('min_rr')}..{g.get('max_rr')} "
+                      f"на сторону {g.get('per_side')} "
+                      f"согласие {g.get('agree')}")
+                for arm in ("gbm", "nn"):
+                    picks = _rows(os.path.join(d, "picks.jsonl"))
+                    revs = _rows(os.path.join(d, "review.jsonl"))
+                    pa = [r for r in picks if r.get("arm") == arm]
+                    ra = [r for r in revs if r.get("arm") == arm]
+                    # Открытая позиция — выбор, у которого разбора ещё
+                    # нет. Ключ тот же, каким их сводит показ.
+                    done = {(r.get("hour"), r.get("sym"))
+                            for r in ra}
+                    op = sum(1 for r in pa
+                             if (r.get("hour"), r.get("sym"))
+                             not in done)
+                    last = max((r.get("at_ts") or 0) for r in pa) \
+                        if pa else 0
+                    la = (f"{(time.time() - last) / 60:.0f} мин назад"
+                          if last else "выборов не было")
+                    print(f"    {arm}: выборов {len(pa)}, "
+                          f"разобрано {len(ra)}, открыто {op}, "
+                          f"последний {la}")
+
     print("\n=== хвост train.log ===")
     lp = os.path.join(OUT, "train.log")
     if not os.path.exists(lp):
