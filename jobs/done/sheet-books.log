@@ -1,0 +1,86 @@
+== задание sheet-books ==
+строка: run tools/diag_cycle.py --tail=2 --sheet
+начало: 2026-09-02T07:15:11Z
+запускаю: .venv/bin/python tools/diag_cycle.py --tail=2 --sheet
+=== процесс цикла ===
+1075594 .venv/bin/python research/s8_loop/train.py
+
+=== манифест модели ===
+возраст 15.6 ч
+  trained_at: 2026-09-01T15:36:42+00:00
+  train_seq: 518
+  cycle_sec: 5683.0
+  woke_after_hour_sec: 120.0
+  steps_sec: {'сведение часа': 184.5, 'матрица': 45.7, 'книги': 24.3, 'оценка': 0.1, 'канарейка': 1217.4, 'обучение': 4210.9}
+  canary_ic: 0.006
+
+=== манифесты книг ===
+  model: 15.64 ч
+  model.rank-floor0: 494.11 ч
+  model.rank-raw: 515.41 ч
+  model_c_h4_r_f30_w5_gl_rrlo_se_b0_a0: 0.03 ч
+  model_c_h4_z_f22_w10_gl_rr0_sv_b0_a1: 0.03 ч
+  model_c_h4_z_f30_w10_gl_rrhi_se_b0_a1: 0.03 ч
+  model_c_h4_z_f30_w5_gl_rrlo_se_b0_a0: 0.03 ч
+  model_c_h4_z_f30_w5_gl_rrlo_sr_b0_a0: 0.03 ч
+  model_c_h4_z_f30_w5_gs_rrhi_se_b0_a1: 0.03 ч
+  model_demo: 708.11 ч
+  model_h1: 493.90 ч
+  model_h1.rank-raw: 517.08 ч
+  model_h24: 0.04 ч
+  model_h24a: 0.04 ч
+  model_h24b: 0.04 ч
+  model_h24bf: 0.04 ч
+  model_h24c: 0.04 ч
+  model_h24z: 0.04 ч
+  model_h24za: 0.04 ч
+  model_pretest: 615.98 ч
+  model_pretest.was-выключен__бета_не_оценима_: 696.15 ч
+  model_probe: 709.75 ч
+  model_sit: 0.04 ч
+  model_sit.rules-v1: 613.48 ч
+  model_sit.rules-v10: 474.88 ч
+  model_sit.rules-v11: 474.06 ч
+  model_sit.rules-v12: 455.61 ч
+  model_sit.rules-v2: 613.19 ч
+  model_sit.rules-v3: 611.06 ч
+  model_sit.rules-v4: 609.98 ч
+  model_sit.rules-v5: 609.15 ч
+  model_sit.rules-v6: 596.89 ч
+  model_sit.rules-v7: 596.15 ч
+  model_sit.rules-v8: 493.11 ч
+  model_sit.rules-v9: 478.09 ч
+  model_sit_lo: 0.03 ч
+  model_sit_obs: 0.04 ч
+  model_sit_obs.rules-v10: 474.88 ч
+  model_sit_obs.rules-v11: 474.06 ч
+  model_sit_obs.rules-v12: 455.61 ч
+  model_sit_obs.rules-v6: 596.89 ч
+  model_sit_obs.rules-v7: 596.15 ч
+  model_sit_obs.rules-v8: 493.10 ч
+  model_sit_obs.rules-v9: 478.09 ч
+  model_sit_r: 0.03 ч
+  model_sit_r.rules-v12: 465.94 ч
+  model_sit_r.rules-v12-1: 464.79 ч
+  model_sit_r.rules-v12-2: 455.61 ч
+  model_sit_r.rules-v13: 440.84 ч
+  model_z: 517.07 ч
+
+=== книги в листе сечения ===
+час 2026-09-02-06, возраст 2.1 мин
+  {"dir": "model_sit", "min_rr": 2.0, "slots": 6}
+  {"dir": "model_sit_obs", "min_rr": 0.0, "slots": 24, "no_brake": true}
+  {"dir": "model_sit_r", "min_rr": 2.0, "slots": 6, "noise_mult": 1.5, "min_stop_bp": 100.0}
+  {"dir": "model_sit_lo", "min_rr": 0.0, "max_rr": 1.5, "slots": 6}
+  {"dir": "model_c_h4_r_f30_w5_gl_rrlo_se_b0_a0", "slots": 10, "min_rr": 0.0, "max_rr": 1.5, "floor_bp": 30.0, "per_side": 5}
+  {"dir": "model_c_h4_z_f22_w10_gl_rr0_sv_b0_a1", "slots": 20, "min_rr": 0.0, "floor_bp": 22.0, "per_side": 10, "agree": true}
+  {"dir": "model_c_h4_z_f30_w10_gl_rrhi_se_b0_a1", "slots": 20, "min_rr": 2.0, "floor_bp": 30.0, "per_side": 10, "agree": true}
+  {"dir": "model_c_h4_z_f30_w5_gl_rrlo_se_b0_a0", "slots": 10, "min_rr": 0.0, "max_rr": 1.5, "floor_bp": 30.0, "per_side": 5}
+  {"dir": "model_c_h4_z_f30_w5_gl_rrlo_sr_b0_a0", "slots": 10, "min_rr": 0.0, "max_rr": 1.5, "floor_bp": 30.0, "per_side": 5}
+  {"dir": "model_c_h4_z_f30_w5_gs_rrhi_se_b0_a1", "slots": 10, "min_rr": 2.0, "floor_bp": 30.0, "per_side": 5, "agree": true}
+
+=== хвост train.log ===
+возраст 2.0 мин, размер 7964911 Б
+[09-02 07:13:12] обучение пропущено по каденции: весам 15.6 ч при каденции 24; цикл 191 с (сведение часа 95 с, матрица 48 с, книги 48 с, оценка 0 с)
+[09-02 07:13:12] следующая попытка через 48 мин (обучения не было)
+конец: 2026-09-02T07:15:11Z, код 0

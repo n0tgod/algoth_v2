@@ -94,3 +94,13 @@
 [09-02 07:13:12] обучение пропущено по каденции: весам 15.6 ч при каденции 24; цикл 191 с (сведение часа 95 с, матрица 48 с, книги 48 с, оценка 0 с)
 [09-02 07:13:12] следующая попытка через 48 мин (обучения не было)
 конец: 2026-09-02T07:14:24Z, код 0
+публикуется в ветку main:
+ jobs/done/cand-live-check.done |  1 +
+ jobs/done/cand-live-check.log  | 96 ++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/live-halt-when.log   | 10 +++++
+ jobs/poke.log                  |  3 ++
+ 4 files changed, 110 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   8014bc7..082799a  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

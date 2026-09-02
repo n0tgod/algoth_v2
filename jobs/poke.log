@@ -421,3 +421,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788333263 ==
 [2026-09-02T07:14:24Z] задание cand-live-check запущено: tools/diag_cycle.py
+
+== сигнал 1788333310 ==
+[2026-09-02T07:15:11Z] задание sheet-books запущено: tools/diag_cycle.py
