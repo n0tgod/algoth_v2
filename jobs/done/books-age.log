@@ -1,0 +1,71 @@
+== задание books-age ==
+строка: run tools/diag_cycle.py --tail=6
+начало: 2026-09-02T07:11:06Z
+запускаю: .venv/bin/python tools/diag_cycle.py --tail=6
+=== процесс цикла ===
+1075594 .venv/bin/python research/s8_loop/train.py
+
+=== манифест модели ===
+возраст 15.6 ч
+  trained_at: 2026-09-01T15:36:42+00:00
+  train_seq: 518
+  cycle_sec: 5683.0
+  woke_after_hour_sec: 120.0
+  steps_sec: {'сведение часа': 184.5, 'матрица': 45.7, 'книги': 24.3, 'оценка': 0.1, 'канарейка': 1217.4, 'обучение': 4210.9}
+  canary_ic: 0.006
+
+=== манифесты книг ===
+  model: 15.57 ч
+  model.rank-floor0: 494.04 ч
+  model.rank-raw: 515.35 ч
+  model_demo: 708.04 ч
+  model_h1: 493.83 ч
+  model_h1.rank-raw: 517.01 ч
+  model_h24: 1.04 ч
+  model_h24a: 1.04 ч
+  model_h24b: 1.04 ч
+  model_h24bf: 1.04 ч
+  model_h24c: 1.04 ч
+  model_h24z: 1.04 ч
+  model_h24za: 1.03 ч
+  model_pretest: 615.91 ч
+  model_pretest.was-выключен__бета_не_оценима_: 696.08 ч
+  model_probe: 709.68 ч
+  model_sit: 1.03 ч
+  model_sit.rules-v1: 613.41 ч
+  model_sit.rules-v10: 474.81 ч
+  model_sit.rules-v11: 474.00 ч
+  model_sit.rules-v12: 455.54 ч
+  model_sit.rules-v2: 613.12 ч
+  model_sit.rules-v3: 610.99 ч
+  model_sit.rules-v4: 609.91 ч
+  model_sit.rules-v5: 609.08 ч
+  model_sit.rules-v6: 596.82 ч
+  model_sit.rules-v7: 596.08 ч
+  model_sit.rules-v8: 493.04 ч
+  model_sit.rules-v9: 478.02 ч
+  model_sit_lo: 1.03 ч
+  model_sit_obs: 1.03 ч
+  model_sit_obs.rules-v10: 474.81 ч
+  model_sit_obs.rules-v11: 474.00 ч
+  model_sit_obs.rules-v12: 455.54 ч
+  model_sit_obs.rules-v6: 596.82 ч
+  model_sit_obs.rules-v7: 596.08 ч
+  model_sit_obs.rules-v8: 493.03 ч
+  model_sit_obs.rules-v9: 478.02 ч
+  model_sit_r: 1.03 ч
+  model_sit_r.rules-v12: 465.87 ч
+  model_sit_r.rules-v12-1: 464.72 ч
+  model_sit_r.rules-v12-2: 455.54 ч
+  model_sit_r.rules-v13: 440.77 ч
+  model_z: 517.01 ч
+
+=== хвост train.log ===
+возраст 0.1 мин, размер 7962841 Б
+[09-02 07:03:31]   сводка: 218/745 символов, новых часов 217
+[09-02 07:04:02]   сводка: 289/745 символов, новых часов 288
+[09-02 07:04:32]   сводка: 362/745 символов, новых часов 360
+[09-02 07:05:02]   сводка: 438/745 символов, новых часов 436
+[09-02 07:10:32]   сводка: 537/745 символов, новых часов 83
+[09-02 07:11:02]   сводка: 635/745 символов, новых часов 181
+конец: 2026-09-02T07:11:06Z, код 0
