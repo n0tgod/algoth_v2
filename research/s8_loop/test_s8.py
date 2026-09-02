@@ -1496,6 +1496,53 @@ def test_situational_book_enters_and_exits_by_situation():
         finally:
             shutil.rmtree(d3, ignore_errors=True)
 
+        # Книга «выход по времени» (ось `geom: timer` фабрики): ни
+        # стопа, ни цели, ни разворота — закрывает ТОЛЬКО предел
+        # возраста. Проверяется обеими сторонами на одной цене: тот
+        # же стоп, что закрыл книгу «только уровни» выше, здесь
+        # закрыть НЕ вправе, а старая позиция обязана выйти по
+        # возрасту.
+        d4 = tempfile.mkdtemp()
+        try:
+            with open(os.path.join(d4, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps({"exit_policy": T.SIT_AGE_ONLY,
+                                     "max_age_h": 24}))
+            fresh4 = {"arm": "gbm", "hour": "2026-08-07-10",
+                      "long": [{"sym": "AUSDT", "fwd": 30.0,
+                                "px": 100.0, "mae": -10.0,
+                                "mfe": 25.0}], "short": []}
+            with open(os.path.join(d4, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(fresh4) + "\n")
+            mats4 = {"mid_close": np.array([[100.0, 99.85],
+                                            [100.0, 100.0],
+                                            [100.0, 100.0],
+                                            [100.0, 100.0]])}
+            T.situational_arm(d4, "gbm", models2, x, mats4, syms,
+                              rows_m, 1, grid, lo, hi, None,
+                              lambda m: None)
+            rv4 = T._read_jsonl(os.path.join(d4, "review.jsonl"))
+            check("«выход по времени»: стоп НЕ закрывает",
+                  not [r for rec in rv4 for r in rec["rows"]],
+                  str(rv4))
+            # Та же книга, но позиция старше суток: возраст закрывает.
+            with open(os.path.join(d4, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(_json.dumps(dict(fresh4,
+                                         hour="2026-08-05-10")) + "\n")
+            T.situational_arm(d4, "gbm", models2, x, mats4, syms,
+                              rows_m, 1, grid, lo, hi, None,
+                              lambda m: None)
+            rv4 = T._read_jsonl(os.path.join(d4, "review.jsonl"))
+            got4 = [r for rec in rv4 for r in rec["rows"]
+                    if r["sym"] == "AUSDT"]
+            check("«выход по времени»: возраст закрывает",
+                  got4 and got4[0]["reason"] == "предел возраста",
+                  str(got4))
+        finally:
+            shutil.rmtree(d4, ignore_errors=True)
+
         # Смена правил книги отставляет старые сделки в архив: часовую
         # логику v1 (с дефектом сторон у шортов) нельзя сводить в один
         # счёт с живым сканером. Той же версии каталог не трогается.
@@ -3503,11 +3550,12 @@ def test_declared_candidate_gets_a_live_book():
         keys = {b["key"] for b in books}
         check("книга заведена обеим полосам",
               {SPF.key(sel), SPF.key(ctl)} <= keys, str(sorted(keys)))
-        check("правило без живой машинерии книгой не стало",
-              SPF.key(tmr) not in keys, str(sorted(keys)))
-        check("причина отсутствия названа словами",
-              any("выход по времени" in x for x in lines),
-              " | ".join(lines))
+        # Ось «выход по времени» тоже становится книгой — но БЕЗ
+        # уровней: ни стопа, ни цели у неё нет вовсе, и 5-секундный
+        # сторож обязан знать об этом, иначе он закроет позицию по
+        # уровню, которого правилу не объявляли.
+        check("«выход по времени» тоже стал книгой",
+              SPF.key(tmr) in keys, str(sorted(keys)))
         # Состав книг читается ТЕМ ЖЕ реестром, что у страниц.
         all_b, why = BK.load(T.EXTRAS_PATH)
         check("реестр принял книги кандидатов", why is None
@@ -3529,6 +3577,19 @@ def test_declared_candidate_gets_a_live_book():
               f"{c_e} / {s_e}")
         check("пол отношения у полосы hi", c_e.get("min_rr") == 2.0,
               str(c_e))
+        # Геометрия приходит ИЗ ОДНОЙ таблицы с реплеем: у «выхода по
+        # времени» уровней нет и предел возраста 24 ч, у «только
+        # уровни» уровни есть и предел 72 ч. Разойдись таблицы —
+        # живая книга торговала бы не то правило, которое её судит.
+        t_e = e[SPF.key(tmr)]
+        check("у «выхода по времени» уровней нет",
+              t_e.get("no_levels") is True, str(t_e))
+        check("у книги с уровнями флага нет",
+              s_e.get("no_levels") is None, str(s_e))
+        import candidate as CDF
+        check("предел возраста тот же, что у реплея",
+              (CDF.geometry(tmr)[2], CDF.geometry(sel)[2]) == (24, 72),
+              str((CDF.geometry(tmr), CDF.geometry(sel))))
         # Вылетевший книгу сохраняет, но входов не берёт.
         LGF.retire(SPF.key(ctl), "нетто ниже нуля", at=now + 1,
                    base=fout)

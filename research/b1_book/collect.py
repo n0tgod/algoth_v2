@@ -5195,13 +5195,15 @@ class Collector:
                     if d not in books:
                         os.makedirs(d, exist_ok=True)
                         books[d] = fresh_state(d)
+                watched = sit_watched(want, root)
                 if now - pos_at > 60:
                     for d, stt in books.items():
                         stt["pos"] = sit_open_levels(
                             self._jsonl(os.path.join(d, "picks.jsonl")),
                             self._jsonl(os.path.join(d, "review.jsonl")),
                             self._jsonl(os.path.join(
-                                d, "entries_live.jsonl")))
+                                d, "entries_live.jsonl"))) \
+                            if d in watched else []
                     pos_at = now
                 sh_hour = (sheet or {}).get("hour")
                 if sh_hour != armed_hour:
@@ -6085,6 +6087,24 @@ def sit_exit_event(pos, mid, hi, lo, now):
             ev["fill"] = "level"
             ev["thru_px"] = fill[1]
     return ev
+
+
+def sit_watched(want, root):
+    """Каталоги книг, у которых 5-секундный сторож ведёт УРОВНИ.
+
+    Книга «выход по времени» (ось `geom: timer` фабрики) уровней не
+    имеет вовсе: ни стопа, ни цели правилу не объявляли, и сторож,
+    закрывающий её по уровню, торговал бы не то правило, которое
+    судит её реплей. Флаг приходит ЛИСТОМ сечения: состав книг
+    объявляет цикл, и второго списка у сканера нет — два места,
+    решающих одно, однажды разойдутся.
+
+    Флага нет (книга ядра, лист прежнего образца) — уровни В СИЛЕ:
+    умолчание обязано быть прежним поведением, иначе правка молча
+    сняла бы сторожа с книг владельца.
+    """
+    return {os.path.join(root, b.get("dir") or "") for b in want
+            if not b.get("no_levels")}
 
 
 def sit_open_levels(picks, reviews, entries=None):

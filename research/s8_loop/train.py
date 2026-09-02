@@ -1263,6 +1263,12 @@ SIT_R_EXIT_POLICY = "levels_only"
 # (стоп, тейк, возраст): живая книга и её реплей обязаны закрываться
 # одними причинами, иначе расхождение между ними ничего не означает.
 SIT_LEVELS_AGE = "levels_age"
+
+# Только предел возраста: ни стопа, ни цели, ни разворота прогноза.
+# Так устроена ось `geom: timer` фабрики — «выход по времени». Живая
+# книга обязана закрываться ТЕМИ ЖЕ причинами, что её реплей, иначе
+# сравнивать её с собственным реплеем нечем.
+SIT_AGE_ONLY = "age_only"
 # Второе правило той же книги (решение владельца после #ptadyrc):
 # запас до стопа обязан быть не тоньше ПОЛУТОРА живых минутных шумов
 # монеты. Базовый гейт v11 требует один шум, и сделка #ptadyrc прошла
@@ -1589,7 +1595,12 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     #   `levels_age` — уровни и возраст, без разворота: так устроен
     #       реплей кандидата фабрики (стоп, тейк, предел возраста), и
     #       живая книга обязана закрываться теми же причинами, иначе
-    #       сравнивать её с собственным реплеем нечем.
+    #       сравнивать её с собственным реплеем нечем;
+    #   `age_only` — ТОЛЬКО предел возраста: ось `geom: timer` фабрики
+    #       («выход по времени») не ставит ни стопа, ни цели. Уровни у
+    #       такой книги гасятся и здесь, и у 5-секундного сторожа —
+    #       иначе сторож закрывал бы по уровню то, чему уровня не
+    #       объявляли, и книга торговала бы не своё правило.
     # Предел возраста тоже из манифеста: у кандидатов он ось правила
     # (24 ч либо 72), и глобальная константа сделала бы книгу не той,
     # которую объявили.
@@ -1601,7 +1612,8 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         _mm = {}
     _pol = _mm.get("exit_policy")
     lvl_only = _pol == SIT_R_EXIT_POLICY
-    no_flip = lvl_only or _pol == SIT_LEVELS_AGE
+    age_only = _pol == SIT_AGE_ONLY
+    no_flip = lvl_only or _pol in (SIT_LEVELS_AGE, SIT_AGE_ONLY)
     max_age_h = float(_mm.get("max_age_h") or SIT_MAX_AGE_H)
 
     # --- выходы: ситуация кончилась (часовые причины) ----------------
@@ -1650,14 +1662,14 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         #
         # Это страховка на случай, когда живой сторож не видел
         # цены: часовой замер берёт цену конца часа.
-        if adv is not None and (
+        if not age_only and adv is not None and (
                 (p["side"] == "long" and move <= adv)
                 or (p["side"] == "short" and move >= adv)):
             reason = "цена прошла обещанный ход против"
         # ЦЕЛЬ. До версии 6 её не существовало вовсе: стоп стоял,
         # тейка не было, и сделка, дошедшая до обещанного уровня,
         # висела до разворота прогноза или суток возраста.
-        elif fav is not None and (
+        elif not age_only and fav is not None and (
                 (p["side"] == "long" and move >= fav)
                 or (p["side"] == "short" and move <= fav)):
             reason = "цена дошла до обещанной цели"
@@ -2470,6 +2482,13 @@ def cand_sheet_entry(b):
         e["per_side"] = int(g["per_side"])
     if g.get("agree"):
         e["agree"] = True
+    # Книга «выход по времени» уровней не имеет вовсе, и 5-секундный
+    # сторож обязан знать об этом: иначе он закрывал бы по стопу и
+    # цели то, чему уровней не объявляли, и книга торговала бы не своё
+    # правило. Флаг едет ЛИСТОМ, а не выводится сканером из имени
+    # каталога, — состав книг объявляет цикл, второго списка нет.
+    if g.get("no_levels"):
+        e["no_levels"] = True
     return e
 
 
@@ -2491,7 +2510,8 @@ def cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, grid,
     """
     g = b.get("gate") or {}
     cdir = MODEL_DIR + BK.suffix(b["key"], BK.load()[0])
-    rules = {"exit_policy": SIT_LEVELS_AGE,
+    rules = {"exit_policy": (SIT_AGE_ONLY if g.get("no_levels")
+                            else SIT_LEVELS_AGE),
              "min_rr": float(g.get("min_rr") or 0.0),
              "max_rr": g.get("max_rr"),
              "floor_bp": g.get("floor_bp"),
@@ -2506,8 +2526,7 @@ def cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, grid,
               slots=int(g.get("slots") or 6),
               # Предел возраста — ось правила (24 ч либо 72), и часовые
               # выходы берут его отсюда, а не из глобальной константы.
-              max_age_h=(72 if (b.get("rule") or {}).get("geom")
-                         == "levels" else 24),
+              max_age_h=float(g.get("age_h") or 24),
               **rules)
     mp = os.path.join(cdir, "manifest.json")
     with open(mp + ".tmp", "w", encoding="utf-8") as f:

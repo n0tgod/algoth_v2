@@ -39,6 +39,7 @@ for _p in (os.path.join(RESEARCH, "s10_policy"),
 
 import tournament as TN                                   # noqa: E402
 import trades as TR                                       # noqa: E402
+import space as SP                                        # noqa: E402
 
 DAY = 86400.0
 
@@ -190,11 +191,9 @@ def geometry(rule):
     квантильный уровень, тейк — обещанный ход в пользу, предел
     возраста — сутки горизонта сигнала.
     """
-    if rule["geom"] == "timer":
-        return ("no", False, 24)
-    if rule["geom"] == "stop_take":
-        return ("q", True, 24)
-    return ("q", True, 72)
+    # Таблица живёт в `space` — модуле пространства, а не здесь:
+    # её читает и заводчик живой книги, и две копии разошлись бы.
+    return SP.GEOMETRY[rule["geom"]]
 
 
 def with_geometry(rule):
