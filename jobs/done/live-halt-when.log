@@ -81,3 +81,13 @@
   v = fn(sl, axis=1)
 [09-02 07:12:24] матрица: 745 символов × 807 часов, сечений с ≥30 именами: 718, признаков 50
 конец: 2026-09-02T07:12:32Z, код 0
+публикуется в ветку main:
+ jobs/done/books-age.log       | 11 ++++++
+ jobs/done/live-halt-when.done |  1 +
+ jobs/done/live-halt-when.log  | 83 +++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                 |  3 ++
+ 4 files changed, 98 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   b252ad5..01875ed  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

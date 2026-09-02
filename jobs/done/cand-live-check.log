@@ -1,0 +1,96 @@
+== задание cand-live-check ==
+строка: run tools/diag_cycle.py --tail=25
+начало: 2026-09-02T07:14:24Z
+запускаю: .venv/bin/python tools/diag_cycle.py --tail=25
+=== процесс цикла ===
+1075594 .venv/bin/python research/s8_loop/train.py
+
+=== манифест модели ===
+возраст 15.6 ч
+  trained_at: 2026-09-01T15:36:42+00:00
+  train_seq: 518
+  cycle_sec: 5683.0
+  woke_after_hour_sec: 120.0
+  steps_sec: {'сведение часа': 184.5, 'матрица': 45.7, 'книги': 24.3, 'оценка': 0.1, 'канарейка': 1217.4, 'обучение': 4210.9}
+  canary_ic: 0.006
+
+=== манифесты книг ===
+  model: 15.63 ч
+  model.rank-floor0: 494.10 ч
+  model.rank-raw: 515.40 ч
+  model_c_h4_r_f30_w5_gl_rrlo_se_b0_a0: 0.02 ч
+  model_c_h4_z_f22_w10_gl_rr0_sv_b0_a1: 0.02 ч
+  model_c_h4_z_f30_w10_gl_rrhi_se_b0_a1: 0.02 ч
+  model_c_h4_z_f30_w5_gl_rrlo_se_b0_a0: 0.02 ч
+  model_c_h4_z_f30_w5_gl_rrlo_sr_b0_a0: 0.02 ч
+  model_c_h4_z_f30_w5_gs_rrhi_se_b0_a1: 0.02 ч
+  model_demo: 708.10 ч
+  model_h1: 493.89 ч
+  model_h1.rank-raw: 517.06 ч
+  model_h24: 0.03 ч
+  model_h24a: 0.02 ч
+  model_h24b: 0.03 ч
+  model_h24bf: 0.03 ч
+  model_h24c: 0.02 ч
+  model_h24z: 0.03 ч
+  model_h24za: 0.02 ч
+  model_pretest: 615.96 ч
+  model_pretest.was-выключен__бета_не_оценима_: 696.13 ч
+  model_probe: 709.73 ч
+  model_sit: 0.02 ч
+  model_sit.rules-v1: 613.47 ч
+  model_sit.rules-v10: 474.87 ч
+  model_sit.rules-v11: 474.05 ч
+  model_sit.rules-v12: 455.60 ч
+  model_sit.rules-v2: 613.17 ч
+  model_sit.rules-v3: 611.05 ч
+  model_sit.rules-v4: 609.97 ч
+  model_sit.rules-v5: 609.13 ч
+  model_sit.rules-v6: 596.88 ч
+  model_sit.rules-v7: 596.14 ч
+  model_sit.rules-v8: 493.09 ч
+  model_sit.rules-v9: 478.08 ч
+  model_sit_lo: 0.02 ч
+  model_sit_obs: 0.02 ч
+  model_sit_obs.rules-v10: 474.87 ч
+  model_sit_obs.rules-v11: 474.05 ч
+  model_sit_obs.rules-v12: 455.60 ч
+  model_sit_obs.rules-v6: 596.88 ч
+  model_sit_obs.rules-v7: 596.14 ч
+  model_sit_obs.rules-v8: 493.09 ч
+  model_sit_obs.rules-v9: 478.08 ч
+  model_sit_r: 0.02 ч
+  model_sit_r.rules-v12: 465.93 ч
+  model_sit_r.rules-v12-1: 464.78 ч
+  model_sit_r.rules-v12-2: 455.60 ч
+  model_sit_r.rules-v13: 440.83 ч
+  model_z: 517.06 ч
+
+=== хвост train.log ===
+возраст 1.2 мин, размер 7964911 Б
+[09-02 07:03:01]   сводка: 147/745 символов, новых часов 146
+[09-02 07:03:31]   сводка: 218/745 символов, новых часов 217
+[09-02 07:04:02]   сводка: 289/745 символов, новых часов 288
+[09-02 07:04:32]   сводка: 362/745 символов, новых часов 360
+[09-02 07:05:02]   сводка: 438/745 символов, новых часов 436
+[09-02 07:10:32]   сводка: 537/745 символов, новых часов 83
+[09-02 07:11:02]   сводка: 635/745 символов, новых часов 181
+[09-02 07:11:32]   сводка: 731/745 символов, новых часов 275
+[09-02 07:11:36] сводка: символов с записью 745, новых часов 289, 95 с
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+[09-02 07:12:24] матрица: 745 символов × 807 часов, сечений с ≥30 именами: 718, признаков 50
+[09-02 07:13:03] кандидаты фабрики: книг 6 (живых 6), без живой книги 1
+[09-02 07:13:03]   h4_z_f30_w5_gt_rrlo_se_b0_a0: живой книги нет — выход по времени: живой книге со сроком нужны РАЗНЫЕ цель отбора и горизонт удержания (отбор по 4 ч, удержание 24 ч), а цикл сегодня их не разделяет
+[09-02 07:13:03] ситуационная [gbm]: закрыто 1 (FUTUUSDT — прогноз развернулся)
+[09-02 07:13:06] ситуационная [gbm]: закрыто 2 (FUTUUSDT — прогноз развернулся; MINIMAXUSDT — прогноз развернулся)
+[09-02 07:13:06] ситуационная [gbm]: закрыто 1 (UNIUSDT — прогноз развернулся)
+[09-02 07:13:12] живой IC [gbm]: fwd_4h +0.0562 по 2 закрывшимся сечениям
+[09-02 07:13:12] живой IC [nn]: fwd_4h +0.0223 по 2 закрывшимся сечениям
+[09-02 07:13:12] обучение пропущено по каденции: весам 15.6 ч при каденции 24; цикл 191 с (сведение часа 95 с, матрица 48 с, книги 48 с, оценка 0 с)
+[09-02 07:13:12] следующая попытка через 48 мин (обучения не было)
+конец: 2026-09-02T07:14:24Z, код 0
