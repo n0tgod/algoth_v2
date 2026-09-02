@@ -536,3 +536,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-09-02T16:48:43Z] задание stab2 запущено: research/factory/stability.py
 
 == сигнал 1788369942 ==
+[2026-09-02T17:25:46Z] задание stab-deploy: состояние снято
+
+== сигнал 1788370001 ==
+[2026-09-02T17:26:42Z] задание stab-check запущено: research/factory/test_ceiling.py
