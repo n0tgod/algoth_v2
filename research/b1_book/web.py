@@ -85,11 +85,17 @@ const EXIT_EN = {"прогноз развернулся": "flip",
 BOOKJS = (
     "\nconst BOOK_LIST = "
     + json.dumps([list(x) for x in BK.menu()]) + ";\n"
-    # Ключи, законные в адресе. Главная книга — умолчание и в адрес не
-    # пишется; наблюдательная запись адресуема, потому что на неё
-    # уводит порог отношения. Правило живёт в реестре, а не выводится
-    # здесь фильтром: два места, решающих одно, однажды разойдутся.
-    + "const HZ_KEYS = " + json.dumps(list(BK.addressable())) + ";\n")
+    # Ключ книги из адреса проверяется ПО ФОРМЕ, а существование
+    # решает сервер. Прежде страница держала список законных ключей
+    # (`BK.addressable()`), собранный на импорте, — и с появлением
+    # книг фабрики он стал вторым списком книг: кандидат объявляется
+    # каждый час, страница о нём не знает до перезапуска, ключ
+    # отбрасывается как чужой, и ссылка МОЛЧА открывает главную книгу.
+    # Ровно этот отказ уже трижды случался с каталогом книги. Форма
+    # проверяется здесь потому, что ключ уезжает и в адрес, и в путь
+    # на диске; чего не существует — называет сервер словами.
+    + "function hzOf(v){return (v && /^[a-z0-9_]+$/.test(v))"
+    + " ? v : \"\";}\n")
 
 # Состав меню — решение владельца (2026-08-22): пункт playbook ВЕРНУЛСЯ
 # на справочник (перепутал при прошлой просьбе), живой исполнитель занял
@@ -2005,9 +2011,7 @@ const RRQ = (() => {
   return isNaN(v) ? null : v;
 })();
 let RR_MIN = RRQ;
-const HZ = HZ_KEYS.includes(
-  new URLSearchParams(location.search).get("hz"))
-  ? new URLSearchParams(location.search).get("hz") : "";
+const HZ = hzOf(new URLSearchParams(location.search).get("hz"));
 const S = {page: 0};
 // У каждой книги турнира темпов своя страница статистики; здесь —
 // переход между ними. Смена книги — НАВИГАЦИЯ, а не подмена данных на
@@ -3412,8 +3416,7 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              // темпов: сделка часовой книги живёт в своём каталоге, и
              // без метки график молча показал бы книгу 4 ч.
              hour: Q.get("hour") || "",
-             hz: (HZ_KEYS.includes(Q.get("hz"))
-                  ? Q.get("hz") : ""),
+             hz: hzOf(Q.get("hz")),
              // Порог обещанного отношения из ссылки: он выбирает
              // ЗАПИСЬ, из которой сервер отдаёт сделки. `null` —
              // «не задан», и тогда график берёт книгу как она
@@ -5163,7 +5166,7 @@ a{color:var(--accent)}
 const Q = new URLSearchParams(location.search);
 const KEY = Q.get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-const HZ = HZ_KEYS.includes(Q.get("hz")) ? Q.get("hz") : "";
+const HZ = hzOf(Q.get("hz"));
 const ARM = Q.get("arm") === "nn" ? "nn" : "gbm";
 const HOUR = Q.get("hour") || "";
 const SYM = Q.get("sym") || "";
@@ -5696,8 +5699,7 @@ navMount("/book-page");
 // Книга берётся из ОБЩЕГО списка, а не собирается из ключа строковой
 // хирургией: у графика так уже выходило «z h book», и подпись врала о
 // том, что показано.
-const HZ = HZ_KEYS.concat(["h4"]).includes(Q.get("hz"))
-  ? Q.get("hz") : "h4";
+const HZ = hzOf(Q.get("hz")) || "h4";
 const BOOK_NAME = (BOOK_LIST.find(x => x[0] === HZ) || [HZ, HZ])[1];
 const ARMS = ["all", "gbm", "nn"];
 let ARM = ARMS.includes(Q.get("arm")) ? Q.get("arm") : "all";
@@ -8513,6 +8515,7 @@ body{margin:0;background:
  width:12px;height:1px;background:var(--rule)}
 .branch.out{opacity:.62}
 .bhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tolink{font-size:12px;color:#2f6feb;text-decoration:none;white-space:nowrap}
 .bkey{font-weight:700;font-size:12.5px;font-family:ui-monospace,
  Menlo,Consolas,monospace}
 .plain{font-size:13px;margin:6px 0 0}
@@ -8572,6 +8575,7 @@ const UI = {
   live: {en: "live book, $", ru: "живая книга, $"},
   lclosed: {en: "closed live", ru: "закрыто вживую"},
   nobook: {en: "no live book yet", ru: "живой книги ещё нет"},
+  totrades: {en: "live trades \u2192", ru: "сделки живой книги \u2192"},
   fwd: {en: "replay forward, bp", ru: "реплей вперёд, б.п."},
   pre: {en: "replay of the past, bp", ru: "реплей прошлого, б.п."},
   trades: {en: "trades", ru: "сделок"},
@@ -8737,12 +8741,21 @@ function branchHtml(b){
   const btn = (b.trades || b.no_tail)
     ? `<button data-key="${esc(b.key)}" aria-pressed="${open}"
         >${open ? T("hide") : T("show")}</button>` : "";
+  // Ссылка на СДЕЛКИ живой книги кандидата. Книга кандидата кнопкой
+  // на странице сделок не является (их бывает сотня), но адресуема —
+  // и без этой ссылки живая книга существовала бы только числом в
+  // сводке: посмотреть, ЧЕМ она торговала, было бы нечем. Ссылка
+  // ставится лишь там, где книга есть: у кандидата без живой книги
+  // (её ось живая машинерия не умеет) она вела бы в пустоту.
+  const trl = b.live == null ? "" :
+    `<a class="tolink" href="/trades-page?k=${encodeURIComponent(KEY)
+      }&hz=${encodeURIComponent(b.key)}">${T("totrades")}</a>`;
   return `<div class="branch${b.alive ? "" : " out"}">
     <div class="bhead"><span class="bkey">${esc(b.key)}</span>
       <span class="chip ${lane}">${T(lane)}</span>
       <span class="chip ${b.alive ? "on" : "out"}"
         >${b.alive ? T("on") : T("out")}</span>
-      <span style="flex:1"></span>${btn}</div>
+      <span style="flex:1"></span>${trl}${btn}</div>
     <div class="plain">${esc(b.plain)}</div>
     ${b.why ? `<div class="note">${esc(b.why)}</div>` : ""}
     ${b.note ? `<div class="note">&laquo;${esc(b.note)}&raquo;</div>` : ""}

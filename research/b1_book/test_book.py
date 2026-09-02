@@ -548,6 +548,11 @@ def test_pages_run_headless():
                 # свестись к одной — иначе книга стоит на экране
                 # дважды, а вкладка «all» считает её дважды.
                 ("сделки согласной книги", web.TRADES, "?k=xxx&hz=h24a"),
+                # Книга кандидата фабрики: кнопкой не является, но
+                # адресуема. Ключ обязан доехать до запроса — иначе
+                # ссылка молча откроет главную книгу.
+                ("сделки книги кандидата", web.TRADES,
+                 "?k=xxx&hz=h4_z_f30_w5_gl_rrlo_se_b0_a0"),
                 # И обратная сторона: разойдись руки — сведение
                 # спрятало бы половину результата молча.
                 ("сделки согласной книги, руки разошлись", web.TRADES,
@@ -6264,6 +6269,94 @@ def test_factory_built_splits_forward_from_replay():
         shutil.rmtree(d, ignore_errors=True)
 
 
+
+def test_candidate_book_is_addressable_and_unknown_key_is_refused():
+    """Книга кандидата открывается своим ключом; чужой ключ — отказ.
+
+    Карты книг собраны НА ИМПОРТЕ и описывают ядро, а кандидаты
+    фабрики объявляются каждый час. Пока резолв стоял на
+    `BOOK_DIRS.get(hz) or "model"`, ссылка на книгу кандидата молча
+    открывала ГЛАВНУЮ книгу под её именем — тот же отказ, который в
+    этом проекте уже трижды случался с каталогом книги и каждый раз
+    выглядел исправной страницей.
+
+    Проверяется обе стороны: свежий кандидат читается из СВОЕГО
+    каталога, а ключ, которого нет нигде, называется словами и не
+    подменяется главной книгой.
+    """
+    import collect as C
+
+    dtmp = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(dtmp, "b1_book")
+        s8 = os.path.join(dtmp, "s8_loop", "out")
+        os.makedirs(s8)
+        hour = "2026-09-02-05"
+        for name, sym in (("model", "MAINUSDT"),
+                          ("model_c_x", "CANDUSDT")):
+            mdir = os.path.join(s8, name)
+            os.makedirs(mdir)
+            with open(os.path.join(mdir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"situational": True, "slots": 6,
+                           "candidate": name != "model"}, f)
+            with open(os.path.join(mdir, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(
+                    {"arm": "gbm", "hour": hour,
+                     "at_ts": time.time() - 3600,
+                     "long": [{"sym": sym, "px": 10.0, "fwd": 40.0,
+                               "mae": -20.0, "mfe": 60.0,
+                               "scan": True,
+                               "at_ts": time.time() - 3600}],
+                     "short": []}) + "\n")
+            open(os.path.join(mdir, "review.jsonl"), "w").close()
+        # Состав книг фабрики — ДАННЫЕ, и лежит он рядом с книгами.
+        with open(os.path.join(dtmp, "s8_loop", "books_extra.json"),
+                  "w", encoding="utf-8") as f:
+            json.dump([{"key": "cx", "dir": "model_c_x",
+                        "label": "кандидат", "family": "situational",
+                        "lane": "selected", "traded": True,
+                        "gate": {"slots": 6}}], f)
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "s8_loop"))
+        import trades as _TR  # noqa: F401
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col._jsonl_cache = {}
+        # Переоценке открытой позиции нужны живые середины; их у
+        # проверки нет, и это НЕ повод выдумывать цену — пустой стакан
+        # честно оставит отметку прочерком.
+        col.books = {}
+        d, err = col.book_dir_of("cx")
+        check("каталог кандидата найден по его ключу",
+              (d, err) == ("model_c_x", None), f"{d} / {err}")
+        r = col.model_trades(hz="cx")
+        syms = {t.get("sym") for t in (r.get("rows") or [])}
+        check("отдана книга КАНДИДАТА, а не главная",
+              syms == {"CANDUSDT"}, str(syms))
+        bad = col.model_trades(hz="net_takoy_knigi")
+        check("неизвестный ключ назван отказом, а не подменён "
+              "главной книгой",
+              bool(bad.get("error")) and not bad.get("rows"),
+              str(bad)[:200])
+        # Дневная статистика кандидата обязана быть его собственной:
+        # ядро его не содержит, и общий обход дал бы пустой ряд —
+        # «книга не торговала» о книге с открытой позицией.
+        bd = col.book_days("cx")
+        check("книга кандидата не объявлена «денег не держит»",
+              not bd.get("unknown"), str(bd)[:200])
+        check("открытая позиция кандидата видна его же странице",
+              (bd.get("open") or {}).get("gbm", {}).get("open") == 1,
+              str(bd.get("open")))
+    finally:
+        C.HERE = was
+        shutil.rmtree(dtmp, ignore_errors=True)
+
+
+
 def test_agents_limit_wait_is_a_state_not_a_silence_alarm():
     """Роль, ждущая снятия лимита, тревогой тишины НЕ помечается.
 
@@ -6552,6 +6645,7 @@ def main():
     test_candles_window_can_end_in_the_past()
     test_recount_survives_restart()
     test_factory_built_splits_forward_from_replay()
+    test_candidate_book_is_addressable_and_unknown_key_is_refused()
     test_agents_limit_wait_is_a_state_not_a_silence_alarm()
     test_agents_state_reads_the_registry_and_the_disk()
     print()

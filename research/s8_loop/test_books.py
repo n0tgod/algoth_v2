@@ -95,9 +95,8 @@ def test_registry_is_self_consistent():
     check("эхо держит деньги",
           BK.echo_keys() <= {k for k, _ in BK.traded()},
           str(BK.echo_keys()))
-    check("главная книга не адресуема", "h4" not in BK.addressable(), "")
-    check("наблюдательная запись адресуема без кнопки",
-          "sit_obs" in BK.addressable()
+    check("наблюдательная запись существует без кнопки",
+          BK.by_key("sit_obs") is not None
           and "sit_obs" not in dict(BK.menu()), "")
 
 
@@ -119,6 +118,7 @@ def _web_book_list():
 
 
 def _web_hz_keys():
+    """Список законных ключей на СТРАНИЦЕ — его там быть не должно."""
     import re
     import web as W
     m = re.search(r"const HZ_KEYS = (\[.*?\]);", W.BOOKJS, re.S)
@@ -141,9 +141,21 @@ def test_readers_agree_with_the_registry():
     got = _web_book_list()
     check("кнопки страницы: web", got is not None and got == list(BK.menu()),
           str(got))
-    hz = _web_hz_keys()
-    check("законные ключи адреса: web", hz == list(BK.addressable()),
-          str(hz))
+    # Правило ПЕРЕВЁРНУТО осознанно: страница больше не держит списка
+    # законных ключей. Держа его, она отбрасывала бы как чужой ключ
+    # книги кандидата (их объявляют каждый час, а константа собрана на
+    # импорте) — и ссылка молча открывала бы ГЛАВНУЮ книгу. Форму
+    # ключа страница проверяет сама, существование решает сервер.
+    import web as W
+    check("страница не держит своего списка ключей книг",
+          _web_hz_keys() is None, str(_web_hz_keys()))
+    check("ключ из адреса проверяется по форме", "function hzOf(" in
+          W.BOOKJS and "[a-z0-9_]" in W.BOOKJS, "")
+    check("книга кандидата достижима резолвером сервера, а не списком",
+          hasattr(C.Collector, "book_dir_of")
+          and C.Collector.book_dir_of(
+              C.Collector.__new__(C.Collector), None)[0]
+          == BK.dirs()["h4"], "")
     import train as T
     check("снятые горизонты: цикл",
           set(T.REMOVED_BOOKS) == set(BK.REMOVED_HORIZONS),

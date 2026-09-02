@@ -2224,7 +2224,12 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
-        name = self.BOOK_DIRS.get(hz) or "model"
+        name, hz_err = self.book_dir_of(hz)
+        if hz_err:
+            # Неизвестный ключ книги — отказ СЛОВАМИ. Прежде здесь
+            # стоял молчаливый откат на главную книгу, и ссылка на
+            # книгу кандидата открывала бы чужие сделки под её именем.
+            return {"error": hz_err, "hz": hz}
         # Та же развилка, что у обзора, и тем же правилом: ниже гейта
         # торгуемой книги ответить может только наблюдательная запись.
         # Считается ДО чтения файлов — иначе страница сделок и обзор
@@ -2511,6 +2516,58 @@ class Collector:
     # Торгуемые: наблюдательная запись повторяет входы торгуемой, и в
     # счётах по книгам её быть не должно.
     BOOKS = BK.traded()
+
+    def book_dir_of(self, hz):
+        """Ключ книги → (каталог, причина отказа).
+
+        Карты выше собраны НА ИМПОРТЕ и описывают ядро. Кандидаты
+        фабрики появляются каждый час (цикл объявляет книгу и пишет
+        `books_extra.json`), значит на импорте их знать невозможно: с
+        неподвижной картой книга жила бы на диске, а страница о ней
+        молчала — и, что хуже, ключ отбрасывался бы как чужой, а
+        `BOOK_DIRS.get(hz) or "model"` МОЛЧА отдавал бы главную книгу
+        под именем выбранной. Ровно этот отказ уже трижды случался с
+        каталогом книги, и каждый раз выглядел исправной страницей.
+
+        Поэтому: ядро — из карты, кандидаты — с диска с коротким
+        кешем, а неизвестный ключ есть ОТКАЗ СЛОВАМИ, а не подмена
+        книги. Пустой ключ — главная книга, это умолчание адреса.
+        """
+        if not hz:
+            return self.BOOK_DIRS["h4"], None
+        b, why = self.book_rec(hz)
+        if b:
+            return b["dir"], None
+        return None, (f"книги {hz!r} нет"
+                      + (f"; кандидаты не читаются: {why}" if why
+                         else ""))
+
+    def book_rec(self, hz):
+        """Запись книги по ключу — (запись или None, причина отказа).
+
+        Ядро отвечает картой, кандидаты читаются с диска. Кеш короткий
+        и общий на всех читателей: два кеша одного состава разошлись
+        бы так же, как расходились две карты книг.
+        """
+        for b in BK.REGISTRY:
+            if b["key"] == hz:
+                return b, None
+        now = time.time()
+        at, cached = getattr(self, "_extras_cache", (0.0, None))
+        if cached is None or now - at > 60:
+            # Состав кандидатов — ДАННЫЕ, и путь к ним строится от
+            # `HERE`, как у всех прочих файлов книг: тесты подменяют
+            # `HERE`, и резолвер, читающий состав от `__file__`,
+            # исполнял бы на проверке живой сервер.
+            ex, why = BK.extras(os.path.join(
+                os.path.dirname(HERE), "s8_loop", BK.EXTRAS_FILE))
+            self._extras_cache = (now, (ex, why))
+            cached = (ex, why)
+        ex, why = cached
+        for b in ex:
+            if b["key"] == hz:
+                return b, why
+        return None, why
 
     @staticmethod
     def book_hold(mman, default_h):
@@ -2993,8 +3050,16 @@ class Collector:
                     "тех же вариантов — иначе самоподстройка есть "
                     "украшение."}
 
-    def closed_rows(self):
+    def closed_rows(self, books=None):
         """Закрытые сделки всех торгуемых книг — с деньгами.
+
+        `books` — обойти НЕ ядро, а названный список пар (ключ,
+        каталог). Заведено для книг кандидатов фабрики: в лигу, на
+        дерево и в разбивку волатильности они не входят намеренно
+        (там их решения складывались бы с решениями книг владельца), а
+        собственная дневная статистика у них обязана быть — иначе
+        страница книги отвечала бы «сделок нет» о книге, у которой они
+        есть. Умолчание — ядро, то есть прежнее поведение бит в бит.
 
         Одно определение «закрытой сделки с деньгами» на все страницы,
         которые по ним считают: лига ранжирует, замер волатильности
@@ -3011,7 +3076,7 @@ class Collector:
         import trades as TR
         s8 = os.path.join(os.path.dirname(HERE), "s8_loop", "out")
         rows, errors, scanned, opens = [], [], [], []
-        for hz, name in self.BOOKS:
+        for hz, name in (books if books is not None else self.BOOKS):
             mdir = os.path.join(s8, name)
             try:
                 with open(os.path.join(mdir, "manifest.json"),
@@ -3543,12 +3608,15 @@ class Collector:
                                     (0.0, None, None))
         if cached is not None and ckey == key and now - cat < 120:
             return cached
-        traded = dict(self.BOOKS)
+        # Книга ищется среди ЯДРА И КАНДИДАТОВ: у кандидата фабрики
+        # деньги настоящие, и ответ «денег не держит вовсе» по карте
+        # ядра был бы прямой ложью о живой книге.
+        rec, _why = self.book_rec(key)
         out = {"hz": key, "generated_at": round(now, 1),
                "present": False, "days": [], "errors": [],
-               "echo": key in self.ECHO_BOOKS,
-               "dir": self.BOOK_DIRS.get(key)}
-        if key not in traded:
+               "echo": bool(rec and rec["echo"]),
+               "dir": rec["dir"] if rec else None}
+        if not (rec and rec["traded"]):
             # Книги нет в карте торгуемых — это НЕ пустая книга.
             # Наблюдательная запись денег не держит вовсе, и молчаливый
             # пустой ряд читался бы как «книга ничего не наторговала».
@@ -3559,7 +3627,12 @@ class Collector:
                                         "s8_loop"))
         import trades as TR
         out["cap"] = TR.START_BALANCE
-        rows, errors, scanned, opens = self.closed_rows()
+        # Кандидат обходится ПОИМЕННО: ядро его не содержит, и общий
+        # обход вернул бы пустой ряд — «книга не торговала» о книге с
+        # десятками сделок.
+        rows, errors, scanned, opens = self.closed_rows(
+            books=None if key in dict(self.BOOKS)
+            else [(key, rec["dir"])])
         out["errors"] = errors
         rows = [r for r in rows if r["hz"] == key]
         out["present"] = bool(rows)
@@ -4717,7 +4790,9 @@ class Collector:
         # Опрос обслуживает ТУ книгу, которую смотрят: зашитая главная
         # оставляла прочие без переоценки — владелец видел прочерки в
         # UNREAL у входов ситуационного сканера.
-        name = self.BOOK_DIRS.get(hz or "h4", "model")
+        name, hz_err = self.book_dir_of(hz)
+        if hz_err:
+            return {"error": hz_err, "hz": hz, "rows": []}
         mdir = os.path.join(s8, name)
         pk = self._jsonl(os.path.join(mdir, "picks.jsonl"))
         revs = self._jsonl(os.path.join(mdir, "review.jsonl"))
