@@ -162,3 +162,15 @@
 [09-02 10:11:25] обучение пропущено по каденции: весам 18.6 ч при каденции 24; цикл 84 с (сведение часа 5 с, матрица 45 с, книги 34 с, оценка 0 с)
 [09-02 10:11:25] следующая попытка через 50 мин (обучения не было)
 конец: 2026-09-02T10:17:07Z, код 0
+публикуется в ветку main:
+ jobs/done/after-livewhy.done        |   1 +
+ jobs/done/after-livewhy.log         | 164 ++++++++++++++++++++++++++++++++++++
+ jobs/done/cycle-up4.done            |   1 +
+ jobs/done/cycle-up4.log             |   9 ++
+ jobs/poke.log                       |   4 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 6 files changed, 180 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   ad9bc2d..235f52c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
