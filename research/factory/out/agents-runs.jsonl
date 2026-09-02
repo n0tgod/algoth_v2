@@ -50,3 +50,10 @@
 {"at": 1788315901.353, "role": "brief", "status": "contract", "started": 1788315301.0, "ended": 1788315901.353, "dry": false, "note": "роль отработала, но контракт не выполнен"}
 {"at": 1788315901.517, "role": "brief", "status": "start", "started": 1788315901.0, "ended": 1788315901.517, "dry": false, "pid": 1058513}
 {"at": 1788316224.092, "role": "brief", "status": "ok", "started": 1788315901.0, "ended": 1788316224.092, "dry": false, "note": "модель opus, усилие medium"}
+{"at": 1788316501.627, "role": "propose", "status": "start", "started": 1788316501.0, "ended": 1788316501.627, "dry": false, "pid": 1059585}
+{"at": 1788316504.966, "role": "propose", "status": "fail", "started": 1788316501.0, "ended": 1788316504.966, "dry": false, "note": "модель claude-fable-5-1, код 1: API Error: 400 Claude Code 2.1.220 does not support this model; version 2.1.251 or newer is required. Run 'claude update', or update the Claude desktop app, then try again. "}
+{"at": 1788316801.106, "role": "propose", "status": "start", "started": 1788316801.0, "ended": 1788316801.106, "dry": false, "pid": 1059836}
+{"at": 1788316804.582, "role": "propose", "status": "fail", "started": 1788316801.0, "ended": 1788316804.582, "dry": false, "note": "модель claude-fable-5-1, код 1: API Error: 400 Claude Code 2.1.220 does not support this model; version 2.1.251 or newer is required. Run 'claude update', or update the Claude desktop app, then try again. "}
+{"at": 1788317101.694, "role": "propose", "status": "start", "started": 1788317101.0, "ended": 1788317101.694, "dry": false, "pid": 1060094}
+{"at": 1788317105.094, "role": "propose", "status": "fail", "started": 1788317101.0, "ended": 1788317105.094, "dry": false, "note": "модель claude-fable-5-1, код 1: API Error: 400 Claude Code 2.1.220 does not support this model; version 2.1.251 or newer is required. Run 'claude update', or update the Claude desktop app, then try again. "}
+{"at": 1788317401.193, "role": "judge", "status": "start", "started": 1788317401.193, "ended": 1788317401.193, "dry": false, "pid": 1060342}
