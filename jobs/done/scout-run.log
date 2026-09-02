@@ -22,3 +22,14 @@
 **Файлы:** `research/factory/out/scout.json`, `research/factory/out/scout.md`. Журнал `scout.jsonl` заполнит машина — роль его не пишет.
 КОНТРАКТ: scout.json: идея 1 уже приносилась: «Насыщение потолка funding и принудительный переход на часовое начисление» — повтор тратит день предлагающего; идея 2 уже приносилась: «ADL административно срезает правый хвост любой конструкции на перпах» — повтор тратит день предлагающего; идея 3 уже приносилась: «Расхождение последней цены с маркой как механически закреплённая величина» — повтор тратит день предлагающего
 конец: 2026-09-02T17:56:27Z, код 1
+публикуется в ветку main:
+ jobs/done/scout-run.log                |  17 +++
+ jobs/done/state-fix.log                |  15 +++
+ research/factory/out/agents-runs.jsonl |   1 +
+ research/factory/out/scout.jsonl       |   3 +
+ research/factory/out/scout.md          | 230 +++++++++++++++++++++++++++++++++
+ 5 files changed, 266 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   b5fb5d1..436236d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
