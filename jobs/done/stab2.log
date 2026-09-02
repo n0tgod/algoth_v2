@@ -2,3 +2,17 @@
 строка: run research/factory/stability.py --tag live
 начало: 2026-09-02T16:48:43Z
 запускаю: .venv/bin/python research/factory/stability.py --tag live
+публикуется в ветку main:
+ jobs/done/stab1.log                      |  7 +++++++
+ jobs/done/stab2.done                     |  1 +
+ jobs/done/stab2.log                      |  4 ++++
+ jobs/poke.log                            |  3 +++
+ research/factory/out/STABILITY-live.md   | 34 +++++++++++++++++---------------
+ research/factory/out/stability-live.json |  2 +-
+ 6 files changed, 34 insertions(+), 17 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   851c4bf..dc271e2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+отчёт: /root/algoth_v2/research/factory/out/STABILITY-live.md
+конец: 2026-09-02T16:49:07Z, код 0
