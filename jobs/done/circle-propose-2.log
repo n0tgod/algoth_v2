@@ -20,3 +20,20 @@
 Следующий шаг за машиной: контракт роли поставит механику в очередь, круг выдаст задание строителю.
 КОНТРАКТ: выполнен
 прогон роли propose завершён
+публикуется в ветку main:
+ jobs/done/circle-propose-2.done        |   1 +
+ jobs/done/circle-propose-2.log         |  22 ++++
+ jobs/done/circle-propose-fable.log     |  13 +++
+ jobs/poke.log                          |   3 +
+ research/factory/out/agents-runs.jsonl |   4 +
+ research/factory/out/mech_task.json    |   1 +
+ research/factory/out/mechanisms.jsonl  |   1 +
+ research/factory/out/proposal.json     |  27 ++---
+ research/factory/out/proposal.md       | 186 +++++++++++++++++++++------------
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 10 files changed, 180 insertions(+), 80 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   70d6f76..b9ef32b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-02T22:36:51Z, код 0
