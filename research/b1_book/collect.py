@@ -2050,11 +2050,17 @@ class Collector:
         netted = [t for t in tr if t.get("state") == "схлопнула позицию"]
         tr = [t for t in tr if t.get("state") != "схлопнула позицию"]
         tr, rr_cut, rr_unknown = TR.by_rr(tr, rr_min if sit else None)
+        # Депозит — из МАНИФЕСТА книги: у стратегий автономной
+        # системы он свой (1000 $ на руку), у книг ядра прежний. Два
+        # места, решающих капитал, разошлись бы так же, как расходился
+        # каждый второй список в этом проекте.
+        start = TR.start_of(mman)
         cap = {}
         for a in ("gbm", "nn"):
             cap[a] = TR.account(tr, a, hold_h=hold or TR.HOLD_H,
                                 slots=mman.get("slots"),
-                                sizing=mman.get("sizing"))[1]
+                                sizing=mman.get("sizing"),
+                                start=start)[1]
         out = {"trades": tr, "cap": cap, "hold": hold, "path_h": path_h,
                "sit": sit, "rr_min": rr_min or 0, "rr_cut": rr_cut,
                "rr_unknown": rr_unknown, "picks": picks, "review": revs,
@@ -2062,20 +2068,19 @@ class Collector:
         if lite:
             return out
         hrows = self.paths(tr, hold_h=path_h)
-        TR.dd_money(tr)
-        stats = {a: TR.summary(tr, a, capital=cap[a],
-                               start=TR.START_BALANCE)
+        TR.dd_money(tr, deposit=start)
+        stats = {a: TR.summary(tr, a, capital=cap[a], start=start)
                  for a in ("gbm", "nn")}
         both = sum(v for v in cap.values() if v) or None
-        stats["all"] = TR.summary(tr, capital=both,
-                                  start=2 * TR.START_BALANCE)
+        stats["all"] = TR.summary(tr, capital=both, start=2 * start)
         # Схлопнувшие решения — рядом со счётчиками сделок, но НЕ в
         # них: в `trades` их нет, потому что сделками они не стали.
         for a in ("gbm", "nn"):
             stats[a]["netted"] = sum(1 for t in netted
                                      if t.get("arm") == a)
         stats["all"]["netted"] = len(netted)
-        curves = {a: TR.equity(tr, a, hrows, hold_h=path_h)
+        curves = {a: TR.equity(tr, a, hrows, hold_h=path_h,
+                               start=start)
                   for a in ("gbm", "nn")}
         for a in ("gbm", "nn"):
             stats[a]["dd_book"] = TR.max_dd(curves[a])
@@ -2083,7 +2088,7 @@ class Collector:
         both_c = TR.merge(curves.values())
         stats["all"]["dd_book"] = TR.max_dd(both_c)
         stats["all"]["dd_open_book"] = TR.worst_open(
-            both_c, deposit=2 * TR.START_BALANCE)
+            both_c, deposit=2 * start)
         out["stats"] = stats
         out["curves"] = curves
         out["both_curve"] = both_c
@@ -2333,7 +2338,7 @@ class Collector:
                     "agree": agree,
                     "arms_match": arms_match,
                     "arm_forced": keep_arm,
-                    "lite": True, "start": TR.START_BALANCE,
+                    "lite": True, "start": TR.start_of(mman),
                     "page": g, "per": p, "total": len(rows),
                     "pages": max(1, (len(rows) + p - 1) // p),
                     "filtered": bool(arm or state or sym),
@@ -2388,7 +2393,7 @@ class Collector:
                 # `arms_match` — та самая проверка числом.
                 "agree": agree, "arms_match": arms_match,
                 "arm_forced": keep_arm,
-                "curves": curve_out, "start": TR.START_BALANCE,
+                "curves": curve_out, "start": TR.start_of(mman),
                 "page": page, "per": per, "total": total,
                 "pages": max(1, (total + per - 1) // per),
                 "filtered": bool(arm or state or sym),
@@ -3626,7 +3631,16 @@ class Collector:
         sys.path.insert(0, os.path.join(os.path.dirname(HERE),
                                         "s8_loop"))
         import trades as TR
-        out["cap"] = TR.START_BALANCE
+        # Депозит — той книги, о которой страница: у стратегий
+        # автономной системы он свой, и доля к депозиту, посчитанная
+        # от чужого числа, была бы просто неверной.
+        try:
+            with open(os.path.join(
+                    os.path.dirname(HERE), "s8_loop", "out",
+                    rec["dir"], "manifest.json"), encoding="utf-8") as f:
+                out["cap"] = TR.start_of(json.load(f) or {})
+        except (OSError, ValueError):
+            out["cap"] = TR.START_BALANCE
         # Кандидат обходится ПОИМЕННО: ядро его не содержит, и общий
         # обход вернул бы пустой ряд — «книга не торговала» о книге с
         # десятками сделок.
@@ -4640,6 +4654,7 @@ class Collector:
         # МАНИФЕСТА книги, а не из `rule` в нём же: `rule` есть копия
         # инструкции и совпадёт с реестром всегда, то есть проверяла бы
         # сама себя.
+        import trades as TR
         rows = []
         for ax in sorted(out.get("rule") or {}):
             fld = self.APPLIED_FIELD.get(ax, "?")
@@ -4665,9 +4680,30 @@ class Collector:
                                  else str(mman.get(k)) for k in fld)
             else:
                 got = mman.get(fld)
-            rows.append({"axis": ax, "want": want, "got": got,
-                         "field": fld if isinstance(fld, str)
-                         else " / ".join(fld)})
+            r = {"axis": ax, "want": want, "got": got,
+                 "field": fld if isinstance(fld, str)
+                 else " / ".join(fld)}
+            # Пол входа: гейт СЕЧЕНИЯ может быть строже объявленного, и
+            # тогда книга торгует не то правило, которое судит её
+            # реплей. Кандидат считается сканером один раз на все
+            # книги, порог этого расчёта берётся из листа — значит
+            # мягкий пол недостижим, и молчать об этом нельзя: строка
+            # «применено 0.30 %» читалась бы как исполненное правило.
+            # Эффективный пол считается ЗДЕСЬ из того, что и так
+            # лежит в манифесте: гейт сечения плюс объявленный
+            # пол. Отдельное поле пришлось бы писать второму
+            # модулю, и разъехаться им было бы нечем помешать.
+            eff = mman.get("min_edge_bp")
+            if ax == "floor_bp" and eff is not None and got is not None:
+                try:
+                    if float(eff) > float(got) + 1e-9:
+                        r["narrowed"] = (
+                            f"вход идёт по {TR.lvl(float(eff))}: гейт "
+                            f"сечения строже объявленного пола, и "
+                            f"кандидат считается один раз на все книги")
+                except (TypeError, ValueError):
+                    pass
+            rows.append(r)
         out["applied"] = rows
         out["applied_from"] = (rec["dir"] if rec else None)
         # Близнецы считаются только среди книг, у которых решения ЕСТЬ:
@@ -4811,7 +4847,7 @@ class Collector:
                     f"hold {man.get('horizon_h') or TR.HOLD_H} h")
                 if man.get("entry_floor_bp"):
                     facts.append(
-                        f"entry ≥ {man['entry_floor_bp']:g} bp")
+                        f"entry ≥ {TR.lvl(man['entry_floor_bp'])}")
             if man.get("stopped"):
                 facts.append("STOPPED")
             if man.get("rank_target"):

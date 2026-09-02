@@ -1958,20 +1958,24 @@ def rebuild_accounts(mdir, hold_h, slots=None):
                       hold_h=hold_h)
     # Правило размера — из манифеста САМОЙ книги: его же читают
     # страницы, и два места, решающих одно, однажды разошлись бы.
+    # Оттуда же — ДЕПОЗИТ книги: у стратегий автономной системы он
+    # свой (решение владельца), и счёт обязан строиться на нём, а не
+    # на константе ядра. Книга без поля — книга ядра, числа прежние.
     try:
         with open(os.path.join(mdir, "manifest.json"),
                   encoding="utf-8") as f:
-            sizing = (json.load(f) or {}).get("sizing")
+            man = json.load(f) or {}
+        sizing, start = man.get("sizing"), TR.start_of(man)
     except (OSError, ValueError):
-        sizing = None
+        sizing, start = None, TR.START_BALANCE
     out = {}
     for arm, _ in ARMS:
         hist, bal = TR.account(all_tr, arm, hold_h=hold_h or TR.HOLD_H,
-                               slots=slots, sizing=sizing)
+                               slots=slots, sizing=sizing, start=start)
         apath = os.path.join(mdir, f"account_{arm}.json")
         with open(apath + ".tmp", "w", encoding="utf-8") as f:
             json.dump({"balance": bal, "history": hist[-500:],
-                       "start": TR.START_BALANCE,
+                       "start": start,
                        "leverage": 1.0}, f, ensure_ascii=False)
         os.replace(apath + ".tmp", apath)
         out[arm] = (hist, bal)
@@ -2503,7 +2507,16 @@ def cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, grid,
              "sizing": b.get("sizing")}
     fresh_sit_on_rules_change(cdir, log_, rules=rules)
     os.makedirs(cdir, exist_ok=True)
+    # Гейт сечения (`min_edge_bp`) едет в манифест кандидата вместе с
+    # остальным шаблоном — по нему читатель видит, что объявленный пол
+    # ниже гейта недостижим: кандидат считается сканером ОДИН раз на
+    # все книги, и порог того расчёта берётся из листа.
     cm = dict(sm, candidate=True, lane=b.get("lane"),
+              # Депозит стратегии — решение владельца: 1000 $ на руку
+              # по умолчанию, и проценты с долларами считаются от него.
+              # Число едет в ЗАПИСЬ книги, потому что счёт строится по
+              # ней, а не по константе того, кто читает.
+              start_balance=TR.CAND_START_BALANCE,
               rule=b.get("rule"), declared_at=b.get("declared_at"),
               retired_at=b.get("retired_at"),
               slots=int(g.get("slots") or 6),

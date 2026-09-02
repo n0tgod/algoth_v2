@@ -6415,6 +6415,14 @@ def test_strategy_card_shows_applied_beside_declared_and_twins():
                 json.dump({"situational": True, "slots": 10,
                            "min_rr": 0.0, "max_rr": 1.5,
                            "floor_bp": 30, "per_side": 5,
+                           # Гейт СЕЧЕНИЯ: кандидат считается сканером
+                           # один раз на все книги, и порог того
+                           # расчёта — этот. У первой книги он строже
+                           # объявленного пола, у второй равен ему:
+                           # проверка нужна в обе стороны, иначе
+                           # «сузилось» неотличимо от «печатается
+                           # всегда».
+                           "min_edge_bp": 33 if k == k1 else 30,
                            "agree": False, "sizing": None,
                            "exit_policy": "levels_age"}, f)
             with open(os.path.join(mdir, "picks.jsonl"), "w",
@@ -6446,6 +6454,14 @@ def test_strategy_card_shows_applied_beside_declared_and_twins():
         check("стратегия: пол входа взят из ЗАПИСИ книги",
               ax.get("floor_bp", {}).get("got") == 30,
               str(ax.get("floor_bp")))
+        check("стратегия: сужение общим гейтом названо числом",
+              "0.33 %" in (ax.get("floor_bp", {}).get("narrowed") or ""),
+              str(ax.get("floor_bp")))
+        ax2 = {a["axis"]: a for a in
+               (C.Collector.factory_strategy(col, k2).get("applied") or [])}
+        check("стратегия: совпавший пол сужением не объявлен",
+              ax2.get("floor_bp", {}).get("narrowed") is None,
+              str(ax2.get("floor_bp")))
         check("стратегия: ось без поля названа словами",
               bool(ax.get("rank", {}).get("gap")), str(ax.get("rank")))
         # Ось, которую держит гейт заведения, пробелом НЕ считается:
@@ -6497,8 +6513,12 @@ def test_candidate_book_is_addressable_and_unknown_key_is_refused():
             os.makedirs(mdir)
             with open(os.path.join(mdir, "manifest.json"), "w",
                       encoding="utf-8") as f:
+                # Депозит — в записи КНИГИ: у стратегии свой (1000 $
+                # на руку, решение владельца), у книги ядра прежний.
                 json.dump({"situational": True, "slots": 6,
-                           "candidate": name != "model"}, f)
+                           "candidate": name != "model",
+                           **({"start_balance": 1000.0}
+                              if name != "model" else {})}, f)
             with open(os.path.join(mdir, "picks.jsonl"), "w",
                       encoding="utf-8") as f:
                 f.write(json.dumps(
@@ -6549,6 +6569,19 @@ def test_candidate_book_is_addressable_and_unknown_key_is_refused():
         check("открытая позиция кандидата видна его же странице",
               (bd.get("open") or {}).get("gbm", {}).get("open") == 1,
               str(bd.get("open")))
+        # Депозит стратегии — её собственный: доля к депозиту,
+        # посчитанная от чужого числа, была бы просто неверной, а
+        # выглядела бы исправной.
+        import trades as TRt
+        check("страница взяла депозит стратегии",
+              bd.get("cap") == 1000.0, str(bd.get("cap")))
+        # У книги ЯДРА депозит прежний, и проверяется это на книге,
+        # чей манифест в фикстуре ЕСТЬ (`model`): на книге без файла
+        # ответ дал бы то же число запасным путём, то есть проверка
+        # прошла бы, ничего не проверив.
+        check("у книги ядра депозит прежний",
+              col.book_days("h4").get("cap") == TRt.START_BALANCE,
+              str(col.book_days("h4").get("cap")))
     finally:
         C.HERE = was
         shutil.rmtree(dtmp, ignore_errors=True)

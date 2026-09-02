@@ -3710,6 +3710,79 @@ def test_a_book_dropped_from_the_composition_is_retired():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_a_strategy_keeps_its_own_deposit():
+    """Депозит стратегии — 1000 $ на руку, и счёт строится на нём.
+
+    Решение владельца (2026-09-02): каждой стратегии автономной
+    системы по умолчанию назначается 1000 $, и проценты с долларами
+    считаются от него. Книги ядра владелец назначил на 3000 отдельным
+    решением, и подтягивать одно за другим нельзя — забор менялся бы
+    молча.
+
+    Проверка двусторонняя и по ДОРОГЕ, а не по константе: манифест без
+    поля обязан дать прежние числа бит в бит, манифест кандидата —
+    свои. Число берётся из ЗАПИСИ книги: два места, решающих капитал,
+    разошлись бы так же, как расходился каждый второй список здесь.
+    """
+    import train as T
+    import trades as TR
+
+    d = tempfile.mkdtemp()
+    try:
+        hour = "2026-09-02-10"
+        ms = 1788400000.0
+        got = {}
+        for name, man in (("core", {"situational": True, "slots": 6}),
+                          ("cand", {"situational": True, "slots": 6,
+                                    "start_balance":
+                                        TR.CAND_START_BALANCE})):
+            mdir = os.path.join(d, name)
+            os.makedirs(mdir, exist_ok=True)
+            with open(os.path.join(mdir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump(man, f)
+            with open(os.path.join(mdir, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "arm": "gbm", "hour": hour, "at_ts": ms,
+                    "long": [{"sym": "LUSDT", "px": 1.0, "mae": -120.0,
+                              "mfe": 60.0, "at_ts": ms}],
+                    "short": []}, ensure_ascii=False) + "\n")
+            # Сделка обязана ЗАКРЫТЬСЯ: деньги считаются от размера,
+            # а размер — от депозита, и на открытой позиции разница
+            # депозитов в файл счёта не попадает вовсе.
+            with open(os.path.join(mdir, "review.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "arm": "gbm", "hour": hour, "cost_bp": 11.0,
+                    "rows": [{"sym": "LUSDT", "side": "long",
+                              "expected": 100.0, "got": 100.0,
+                              "net": 89.0, "exit_hour": hour,
+                              "exit_ts": ms + 3600}]},
+                    ensure_ascii=False) + "\n")
+            T.rebuild_accounts(mdir, None, slots=6)
+            with open(os.path.join(mdir, "account_gbm.json"),
+                      encoding="utf-8") as f:
+                got[name] = json.load(f)
+        check("книга ядра осталась на своём депозите",
+              got["core"]["start"] == TR.START_BALANCE,
+              str(got["core"]["start"]))
+        check("стратегия считается от 1000 $",
+              got["cand"]["start"] == 1000.0, str(got["cand"]["start"]))
+        # Деньги обязаны отмасштабироваться ВТРОЕ: размер позиции есть
+        # доля капитала, и не доедь депозит до кассы — числа совпали
+        # бы, а поле в файле всё равно печаталось бы новое.
+        won = {k: round(v["balance"] - v["start"], 6)
+               for k, v in got.items()}
+        check("деньги считаны от депозита книги",
+              won["core"] and won["cand"]
+              and abs(won["core"] / won["cand"]
+                      - TR.START_BALANCE / 1000.0) < 1e-6,
+              str(won))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_candidate_books_are_not_written_by_a_sandbox_run():
     """Песочный прогон боевой состав книг НЕ переписывает.
 
@@ -5508,6 +5581,7 @@ def main():
     test_live_ic_survives_hourly_retraining()
     test_live_ic_shown_as_median_not_last_hour()
     test_declared_candidate_gets_a_live_book()
+    test_a_strategy_keeps_its_own_deposit()
     test_a_book_dropped_from_the_composition_is_retired()
     test_candidate_books_are_not_written_by_a_sandbox_run()
     test_train_cycle_end_to_end()

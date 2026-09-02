@@ -8702,7 +8702,12 @@ function rowHtml(b){
     ? `<span class="dim" title="${esc(b.live_why || T("nobook"))}"
         >&mdash;</span>`
     : `<span class="${sgn(b.live.pnl)}">${b.live.pnl > 0 ? "+" : ""}${
-        Number(b.live.pnl).toFixed(2)}</span>`;
+        Number(b.live.pnl).toFixed(2)}</span>` + (
+        // Доля к ДЕПОЗИТУ книги: у стратегии он свой (1000 $ на руку,
+        // решение владельца), и делить её деньги на чужое число
+        // значило бы показать неверный процент исправной таблицей.
+        b.live.start ? `<span class="dim"> ${
+          pct((b.live.pnl / b.live.start) * 1e4)}</span>` : "");
   const num = (v, cls) => v == null
     ? `<span class="dim" title="${esc(b.no_numbers || "")}">&mdash;</span>`
     : `<span class="${cls || ""}">${v}</span>`;
@@ -8904,6 +8909,7 @@ let DATA = null, DAYS = null;
 const UI = {
   strap: {en: "strategy of the autonomous system",
           ru: "стратегия автономной системы"},
+  dep: {en: "deposit", ru: "депозит"},
   infocap: {en: "what this strategy is", ru: "что это за стратегия"},
   daycap: {en: "live paper book, day by day",
            ru: "живая бумажная книга по дням"},
@@ -9004,6 +9010,10 @@ function infoHtml(d){
   // вещи, и красным помечается только первая: покрась обе, и та
   // единственная, где правило может не доехать до сканера, утонет
   // среди законных.
+  // Третье состояние — правило ЗАПИСАНО, но СУЖЕНО общим гейтом: книга
+  // торгует строже объявленного, а реплей судит по объявленному.
+  // Молчать об этом нельзя — строка «применено» читалась бы как
+  // исполненное правило.
   const rows = (d.applied || []).map(a => `<tr${
     a.gap || a.by_gate ? ' class="thin"' : ''}>
     <td class="mono">${esc(a.axis)}</td>
@@ -9011,7 +9021,8 @@ function infoHtml(d){
     <td class="mono">${a.gap ? '<span class="gapv">&mdash;</span>'
       : (a.by_gate ? "&mdash;" : esc(a.got == null ? "—" : a.got))}</td>
     <td class="dim">${a.gap ? esc(a.gap)
-      : esc(a.by_gate || a.field || "")}</td>
+      : (a.narrowed ? '<span class="gapv">' + esc(a.narrowed) + '</span>'
+         : esc(a.by_gate || a.field || ""))}</td>
     </tr>`).join("");
   return `<p>${esc(d.plain || "")}</p>
     ${d.note ? `<div class="note">&laquo;${esc(d.note)}&raquo;</div>` : ""}
@@ -9140,7 +9151,12 @@ function render(){
      ${frameHtml()}`;
   document.getElementById("strip").innerHTML =
     [[T("live"), d.live == null || d.live.pnl == null ? null
-        : usd(d.live.pnl)],
+        : usd(d.live.pnl) + (d.live.start
+            ? " · " + pct((d.live.pnl / d.live.start) * 1e4) : "")],
+     // Депозит — число, от которого считаются и проценты, и доллары.
+     // Без него доля на экране висит без знаменателя.
+     [T("dep"), d.live == null || !d.live.start ? null
+        : Number(d.live.start).toFixed(0) + " $"],
      [T("lclosed"), d.live == null ? null : d.live.closed],
      [T("fwd"), d.fwd == null ? null : pct(d.fwd)],
      [T("days"), d.fwd_days],
