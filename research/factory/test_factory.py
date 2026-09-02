@@ -1748,7 +1748,8 @@ def main():
              test_mech_step_leaves_its_end_line,
              test_candidate_diagnostic_counts_trades_not_journal_lines,
              test_overfilled_book_record_is_retired_not_kept,
-             test_dropped_book_dir_is_found_and_the_archive_is_not)
+             test_dropped_book_dir_is_found_and_the_archive_is_not,
+             test_stability_asks_how_not_how_much)
     for t in tests:
         print(t.__name__)
         t()
@@ -1902,6 +1903,90 @@ def test_sweep_judges_control_by_the_same_rule():
     check("отобранная тоже", "s1" in got, str(got))
     check("уже отставленный не судится дважды", "s2" not in got, str(got))
 
+
+def test_stability_asks_how_not_how_much():
+    """Устойчивость: сколько хороших дней съедает один плохой.
+
+    Решение владельца (2026-09-02): важнее стабильность — книга,
+    которая приносит немного, но ровно, и не забирает за один день
+    прибыль недели. Мера объявлена ДО чтения живых чисел, и главная
+    из них — «укус»: |худший день| / медиана прибыльного дня. Проект
+    пришёл к этой же величине с другой стороны: критерий 8 спеки 04
+    объявлен первичным для carry ровно потому, что Sharpe льстит
+    конструкции «часто по копейке, редко по многу».
+
+    Проверяется ДОРОГА, а не формула: ряды берутся у самого сервера
+    (`/book_days`, `/factory_built`) — второй обход файлов дал бы
+    вторую реализацию кассы, и отчёт разошёлся бы со страницей.
+    """
+    import stability as ST
+
+    # Граница тонких данных — одна на пул: правило вылета судит по
+    # десяти суткам, и вторая граница у той же выборки разошлась бы.
+    check("граница тонких данных та же, что у правила вылета",
+          ST.MIN_DAYS == P.WINDOW_D, f"{ST.MIN_DAYS} / {P.WINDOW_D}")
+    st = ST.stats({"d1": 1.0, "d2": 1.0, "d3": -8.0, "d4": 1.0})
+    check("укус считает, сколько хороших дней съел плохой",
+          st["bite"] == 8.0, str(st))
+    # Накопленное 1, 2, −6, −5: пик 2, провал −8 (а итог −5 — это
+    # другая величина, и путать их нельзя).
+    check("под водой считается сутками, а не глубиной",
+          st["under"] == 2 and st["dd"] == -8.0 and st["tot"] == -5.0,
+          str(st))
+    check("тонкая выборка помечена, а не выброшена",
+          st["thin"] is True and st["days"] == 4, str(st))
+    check("пустой ряд — не ноль, а отсутствие меры",
+          ST.stats({}) is None, str(ST.stats({})))
+    # Без прибыльных суток укуса НЕ существует: ноль читался бы как
+    # «не кусает», а кусать просто нечего.
+    only_red = ST.stats({"d1": -1.0, "d2": -2.0})
+    check("без прибыльных дней укус не выдумывается",
+          only_red["bite"] is None, str(only_red))
+
+    seen = []
+
+    def fake(base, path, key, timeout=120):
+        seen.append(path)
+        if path == "/factory_built":
+            return {"roots": [{"branches": [
+                {"key": "c1", "lane": "selected", "alive": True,
+                 "declared_at": 20700 * 86400,
+                 "daily": [[20695, 10.0], [20696, -80.0],
+                           [20701, 5.0]]}]}]}
+        if path.startswith("/book_days?hz=obs"):
+            return {"unknown": True}
+        return {"cap": 3000.0, "days": [
+            {"day": "2026-09-01", "arms": {"all": {"pnl": 2.0}}},
+            {"day": "2026-09-02", "arms": {"all": {"pnl": -9.0}}}]}
+
+    was, ST._get = ST._get, fake
+    try:
+        cand = ST.cand_rows("http://x", "k")
+        live = ST.live_rows("http://x", "k", ["h4", "obs"])
+    finally:
+        ST._get = was
+    # Бэктест и форвард считаются РАЗДЕЛЬНО: сложить их значило бы
+    # выдать пересчёт по уже виденному прошлому за трек.
+    check("форвард и бэктест кандидата разделены",
+          cand[0]["fwd"]["days"] == 1 and cand[0]["pre"]["days"] == 2,
+          str(cand[0]))
+    check("книга, не держащая денег, названа словами",
+          live[1].get("skip") and live[1].get("st") is None,
+          str(live[1]))
+    check("живая книга посчитана деньгами своего счёта",
+          live[0]["st"]["worst"] == -9.0 and live[0]["cap"] == 3000.0,
+          str(live[0]))
+    # Числа берутся у сервера, а не пересчитываются обходом файлов.
+    check("ряды взяты у самого сервера",
+          "/factory_built" in seen and any(
+              x.startswith("/book_days") for x in seen), str(seen))
+    txt = ST.report(live, cand, "http://x", 1788370000)
+    check("деньги живой книги печатаются с долей к депозиту",
+          "-9.00 $ (-0.30 %)" in txt, txt[:200])
+    check("реплей печатается процентом, а не базисным пунктом",
+          "-0.80 %" in txt and " bp" not in txt, txt[:200])
+    check("тонкая выборка помечена в самом отчёте",
+          "⚠" in txt, txt[:200])
 
 if __name__ == "__main__":
     raise SystemExit(main())
