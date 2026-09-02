@@ -57,6 +57,16 @@ def main(argv=None):
                   "woke_after_hour_sec", "steps_sec", "canary_ic"):
             if k in m:
                 print(f"  {k}: {m[k]}")
+    # Возраст манифеста КАЖДОЙ книги: живой исполнитель встаёт по
+    # возрасту манифеста СВОЕЙ книги, а не по общему манифесту модели,
+    # и «цикл молчит» у него означает ровно это. Без этих чисел
+    # причина остановки живых денег остаётся догадкой.
+    print("\n=== манифесты книг ===")
+    for d in sorted(os.listdir(OUT) if os.path.isdir(OUT) else []):
+        bp = os.path.join(OUT, d, "manifest.json")
+        if not os.path.exists(bp):
+            continue
+        print(f"  {d}: {age(bp) / 3600:.2f} ч")
     print("\n=== хвост train.log ===")
     lp = os.path.join(OUT, "train.log")
     if not os.path.exists(lp):
