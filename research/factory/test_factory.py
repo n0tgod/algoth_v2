@@ -1025,6 +1025,22 @@ def test_circle_calls_the_builder_only_with_a_task():
         check("без задания строитель не зовётся",
               launched == [], str(launched))
 
+        # Механика пришла ПОСЛЕ того, как шаг сказал «нечего»: он
+        # обязан открыться заново, иначе заявка ждёт до завтра молча.
+        # Так и вышло 2026-09-02: «нечего» в 20:30, механика в 22:36,
+        # и круг за сегодня был пройден целиком.
+        MQ.queue(d, {"kind": "mechanism", "title": "поздняя механика",
+                     "hypothesis": long, "needs": long})
+        os.utime(os.path.join(d, MQ.QUEUE),
+                 (time.time() + 5, time.time() + 5))
+        launched.clear()
+        CY.main(["--force"])
+        check("поздняя механика открывает шаг задания заново",
+              launched == ["task"], str(launched))
+        MQ.main(["--out", d, "--next"])
+        MQ.mark(d, "built", MQ.key_of("поздняя механика"), "готово")
+        MQ.main(["--out", d, "--next"])
+
         # Механика в очереди — задание выдано, строитель зовётся.
         MQ.queue(d, {"kind": "mechanism", "title": "механика проба",
                      "hypothesis": long, "needs": long})
