@@ -5124,6 +5124,25 @@ class Collector:
                     self.log(f"опрос тикеров не прошёл ({fails} подряд): "
                              f"{type(e).__name__}: {e}")
 
+    def sit_load_positions(self, books):
+        """Открытые позиции КАЖДОЙ книги сканера, без исключений.
+
+        Список нужен двум разным делам, и путать их нельзя: по нему
+        сторож ведёт уровни, и по нему же считаются ЗАНЯТЫЕ МЕСТА и
+        стороны (`held`, `side_n` в `_sit_scan`). Книга «выход по
+        времени» уровней не имеет — но места занимает как всякая
+        другая, и опустевший список сделал бы её книгой без предела:
+        каждый тик она видела бы все слоты свободными и входила бы
+        снова. Дефект найден до того, как выстрелил, поэтому правило
+        записано ЗДЕСЬ: гасится проверка уровней, а не позиции.
+        """
+        for d, stt in books.items():
+            stt["pos"] = sit_open_levels(
+                self._jsonl(os.path.join(d, "picks.jsonl")),
+                self._jsonl(os.path.join(d, "review.jsonl")),
+                self._jsonl(os.path.join(d, "entries_live.jsonl")))
+        return books
+
     def sit_watch(self):
         """Живой сторож выходов ситуационной книги.
 
@@ -5195,15 +5214,16 @@ class Collector:
                     if d not in books:
                         os.makedirs(d, exist_ok=True)
                         books[d] = fresh_state(d)
+                # Кого сторож ведёт ПО УРОВНЯМ. Список позиций при
+                # этом строится ВСЕГДА и для всех: из него же берутся
+                # занятые места и стороны, и опустошив его у книги без
+                # уровней, я лишил бы её собственного счёта слотов —
+                # она входила бы каждый тик без предела. Дефект найден
+                # до того, как выстрелил: у книги «выход по времени»
+                # входов ещё не было.
                 watched = sit_watched(want, root)
                 if now - pos_at > 60:
-                    for d, stt in books.items():
-                        stt["pos"] = sit_open_levels(
-                            self._jsonl(os.path.join(d, "picks.jsonl")),
-                            self._jsonl(os.path.join(d, "review.jsonl")),
-                            self._jsonl(os.path.join(
-                                d, "entries_live.jsonl"))) \
-                            if d in watched else []
+                    self.sit_load_positions(books)
                     pos_at = now
                 sh_hour = (sheet or {}).get("hour")
                 if sh_hour != armed_hour:
@@ -5232,6 +5252,13 @@ class Collector:
                 since = last_look
                 last_look = now
                 for d, stt in books.items():
+                    if d not in watched:
+                        # Книга «выход по времени»: уровней у неё нет
+                        # вовсе, и закрывать её по стопу или цели
+                        # значило бы торговать не то правило, которое
+                        # судит её реплей. Позиции при этом на месте —
+                        # их закроет часовой цикл по возрасту.
+                        continue
                     for p in stt["pos"]:
                         key = (p["arm"], p["hour"], p["sym"], p["side"])
                         if key in stt["signalled"]:

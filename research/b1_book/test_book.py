@@ -5543,6 +5543,38 @@ def test_sit_watch_levels_and_crossing():
           "/s8/model_c_x" not in w, str(sorted(w)))
     check("книги ядра и прочие кандидаты сторожатся как прежде",
           w == {"/s8/model_sit", "/s8/model_c_y"}, str(sorted(w)))
+
+    # А ПОЗИЦИИ строятся у всех книг без исключения. Список нужен
+    # двум делам: по нему сторож ведёт уровни И по нему считаются
+    # занятые места (`held`, `side_n`). Опустев у книги без уровней,
+    # он сделал бы её книгой без предела — каждый тик все слоты
+    # свободны, и она входит снова. Первая версия правки именно это и
+    # делала; выстрелить не успела только потому, что у книги «выход
+    # по времени» ещё не было ни одного входа.
+    dd = tempfile.mkdtemp()
+    try:
+        for name in ("model_sit", "model_c_x"):
+            b = os.path.join(dd, name)
+            os.makedirs(b)
+            with open(os.path.join(b, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps(
+                    {"arm": "gbm", "hour": "2026-09-02-05",
+                     "long": [{"sym": "AUSDT", "px": 10.0,
+                               "fwd": 40.0, "mae": -20.0,
+                               "mfe": 60.0, "scan": True,
+                               "at_ts": 1.0}], "short": []}) + "\n")
+            open(os.path.join(b, "review.jsonl"), "w").close()
+        col = C.Collector.__new__(C.Collector)
+        col._jsonl_cache = {}
+        bk = {os.path.join(dd, n): {"pos": []}
+              for n in ("model_sit", "model_c_x")}
+        col.sit_load_positions(bk)
+        check("позиции строятся и у книги без уровней",
+              all(len(v["pos"]) == 1 for v in bk.values()),
+              str({k: len(v["pos"]) for k, v in bk.items()}))
+    finally:
+        shutil.rmtree(dd, ignore_errors=True)
     mv, hit = C.sit_cross("short", 100.0, 20.0, 99.60, -30.0)
     check("шорт: падение до цели — выход",
           hit == "в пользу" and round(mv) == -40, f"{mv} {hit}")
