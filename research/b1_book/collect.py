@@ -4186,6 +4186,48 @@ class Collector:
             out["error"] = str(e)
         return out
 
+    def owner_asks(self):
+        """Чего система ждёт ОТ ВЛАДЕЛЬЦА, и чем это подтверждено.
+
+        Агент не заводит аккаунтов, не платит и не кладёт ключи. Пока
+        такая просьба живёт в прозе отчёта, её читают один раз, и
+        система молча стоит — отказ, неотличимый от спокойного дня.
+
+        Состояние считается СЕЙЧАС по проверке (существование файла), а
+        не хранится: сохранённое «сделано» старело бы молча. Проверки
+        нет — состояние по слову владельца, и это говорится словами, а
+        не выдаётся за измерение.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_asks_cache", (0.0, None))
+        if cached is not None and now - at < 30:
+            return cached
+        research = os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))
+        root = os.path.dirname(research)
+        sys.path.insert(0, os.path.join(research, "factory"))
+        import asks as AK
+        import mech_queue as MQ
+        out = os.path.join(research, "factory", "out")
+        rows, broken = AK.state(out, root)
+        mech, mbroken = MQ.state(out)
+        res = {
+            "at": now,
+            "asks": rows,
+            "broken": broken,
+            "open": sum(1 for r in rows if r.get("open")),
+            # Механики, упершиеся в владельца: просьба без того, что
+            # она разблокирует, читается как список желаний.
+            "blocked": [{"id": m["id"], "title": m["title"],
+                         "note": m.get("note") or ""}
+                        for m in mech if m["state"] == "ждёт владельца"],
+            "queue": [{"id": m["id"], "title": m["title"],
+                       "state": m["state"]} for m in mech],
+            "queue_broken": mbroken,
+        }
+        self._asks_cache = (now, res)
+        return res
+
     def agents_state(self):
         """Автономная система: конвейер, границы и что уже построено.
 

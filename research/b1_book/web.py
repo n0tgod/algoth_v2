@@ -129,6 +129,7 @@ const NAV_ITEMS = [
   ["/tournament-page", "tournament", "турнир"],
   ["/paper-page", "monthly", "месячная"],
   ["/agents-page", "agents", "агенты"],
+  ["/asks-page", "needs you", "нужно от вас"],
   ["/built-page", "built", "построено"],
   ["/live-page", "bot live", "бот live"]];
 function navMount(current){
@@ -9236,6 +9237,174 @@ setInterval(tick, 60000);
 """
 
 
+ASKSPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>what the system needs from you</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:6px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;vertical-align:top}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+a{color:var(--accent)}
+.big{font-size:19px;font-weight:700}
+.alarm{border-color:var(--ask);background:rgba(255,100,115,.08)}
+.tag{display:inline-block;font-size:10px;letter-spacing:.1em;
+ text-transform:uppercase;border:1px solid var(--rule);
+ border-radius:999px;padding:1px 8px;color:var(--muted)}
+.tag.wait{border-color:var(--ask);color:var(--ask)}
+.tag.done{border-color:var(--bid);color:var(--bid)}
+""" + NAVCSS + r"""
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">what the system needs from you</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+navMount("/asks-page");
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function when(ts){ if (!ts) return "&mdash;";
+  const d = new Date(ts * 1000);
+  return d.toISOString().slice(0, 16).replace("T", " ") + " UTC"; }
+
+// Рамка предмета первым абзацем: страница отвечает на ОДИН вопрос —
+// что не могут сделать агенты сами. Пустая страница здесь означает
+// «система ничего не ждёт», а не «страница сломалась», и это надо
+// сказать словами: пустота, не объяснившая себя, читается как отказ.
+function intro(d){
+  return `<div class="cap">what this page is</div>
+  <div>Everything here is an action <b>an agent cannot take</b>: an
+  account, a paid access, an API key, a decision about money. Agents
+  write code and run measurements; they do not sign up, do not pay and
+  never put a key anywhere. A request recorded here is what the system
+  is waiting on — anywhere else it would live in the prose of one
+  report and be read once.</div>
+  <div class="k" style="margin-top:6px">State is computed <b>now</b>,
+  not stored: where a request names a check (a path that exists once
+  the thing is done), the machine looks and says so. Where it does not,
+  the state is your word — and the page says that plainly instead of
+  dressing a guess as a measurement. An empty page means the system is
+  waiting on nothing.</div>`;
+}
+
+function askRow(a){
+  const wait = a.open;
+  const tag = wait ? `<span class="tag wait">waiting</span>`
+                   : `<span class="tag done">done</span>`;
+  const un = a.unblocks ? `<div class="k">unblocks: ${
+    esc(a.unblocks)}</div>` : "";
+  const note = a.said_done && a.check_ok !== true
+    ? `<div class="k">you said it is done${
+        a.done_note ? ": " + esc(a.done_note) : ""}</div>` : "";
+  return `<tr><td class="mono">${esc(a.id)}</td>
+    <td><b>${esc(a.what)}</b><div class="k">${esc(a.why)}</div>${un}
+      ${note}</td>
+    <td>${tag}<div class="k">${esc(a.check_how)}</div></td>
+    <td class="k">${esc(a.from)}<br>${when(a.at)}</td></tr>`;
+}
+
+function render(d){
+  const rows = d.asks || [];
+  const open = rows.filter(a => a.open);
+  const done = rows.filter(a => !a.open);
+  let h = "";
+  if (open.length)
+    h += `<div class="panel alarm"><div class="big">${open.length}
+      ${open.length === 1 ? "request is" : "requests are"} waiting on
+      you</div><div class="k">Until they are answered the steps below
+      cannot move — the machinery is built, the resource is not
+      ours to get.</div></div>`;
+  else
+    h += `<div class="panel"><div class="big good">nothing is waiting
+      on you</div><div class="k">No agent has reported anything it
+      cannot do itself. This is a real state, not an empty page:
+      requests appear here the moment a role reports one.</div></div>`;
+
+  if (rows.length)
+    h += `<div class="panel"><div class="cap">requests</div>
+      <table><tr><th>id</th><th>what and why</th><th>state</th>
+      <th>asked by</th></tr>
+      ${open.map(askRow).join("")}${done.map(askRow).join("")}
+      </table>
+      <div class="k" style="margin-top:8px">A request with no machine
+      check is closed by your word, not by the page:
+      <span class="mono">jobs/&lt;name&gt;.job</span> with
+      <span class="mono">run research/factory/asks.py --done ID</span>.
+      A check beats a word: a file that does not exist does not start
+      existing because someone said so.</div></div>`;
+
+  const bl = d.blocked || [];
+  if (bl.length)
+    h += `<div class="panel">
+      <div class="cap">mechanics stopped by a request</div><table><tr><th>id</th><th>mechanic</th>
+      <th>why it stopped</th></tr>${bl.map(m =>
+        `<tr><td class="mono">${esc(m.id)}</td><td>${esc(m.title)}</td>
+         <td class="k">${esc(m.note)}</td></tr>`).join("")}</table>
+      <div class="k" style="margin-top:8px">The builder built what
+      could be built without the missing piece and stopped there; it
+      never invents data.</div></div>`;
+
+  const q = (d.queue || []).filter(m => m.state !== "ждёт владельца");
+  if (q.length)
+    h += `<div class="panel"><div class="cap">mechanics queue (for
+      context — nothing here needs you)</div>
+      <table><tr><th>id</th><th>mechanic</th><th>state</th></tr>
+      ${q.map(m => `<tr><td class="mono">${esc(m.id)}</td>
+        <td>${esc(m.title)}</td><td class="k">${esc(m.state)}</td>
+        </tr>`).join("")}</table></div>`;
+
+  if (d.broken)
+    h += `<div class="panel alarm">broken lines in the journal:
+      ${d.broken} — counted, not swallowed.</div>`;
+  document.getElementById("box").innerHTML = h;
+  document.getElementById("lead").textContent =
+    open.length ? open.length + " waiting" : "all clear";
+}
+
+fetch("/asks?k=" + encodeURIComponent(KEY))
+  .then(r => r.json())
+  .then(d => { document.getElementById("intro").innerHTML = intro(d);
+               render(d); })
+  .catch(e => { document.getElementById("box").innerHTML =
+    `<div class="panel alarm">no answer from the collector:
+     ${esc(e)} — the page cannot tell "nothing is waiting" from
+     "cannot ask", so it says neither.</div>`; });
+</script>
+"""
+
 AGENTSPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>autonomous system — agents and the conveyor</title>
@@ -10032,6 +10201,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/tournament-page":
                 return self._ok(TOURPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/asks":
+                return self._ok(json.dumps(
+                    collector.owner_asks(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/asks-page":
+                return self._ok(ASKSPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/agents":
                 return self._ok(json.dumps(

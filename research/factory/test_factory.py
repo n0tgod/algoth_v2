@@ -754,6 +754,290 @@ def test_scout_backlog_survives_the_next_menu():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_owner_ask_is_measured_not_assumed():
+    """Просьба к владельцу: записана один раз, состояние — проверкой.
+
+    Агент не заводит аккаунтов и не кладёт ключей. Просьба, сказанная
+    прозой отчёта, читается один раз, и система молча стоит — отказ,
+    неотличимый от спокойного дня.
+
+    Два правила проверяются здесь и оба непослушны интуиции: повтор
+    той же просьбы не пишется (иначе страница станет шумом, а шум не
+    читают), и **проверка сильнее слова** — файл, которого нет, не
+    начинает существовать оттого, что о нём сказали «сделано».
+    """
+    import asks as AK
+    d = tempfile.mkdtemp(prefix="asks-")
+    try:
+        есть = os.path.join(d, "ключ.txt")
+        with open(есть, "w", encoding="utf-8") as f:
+            f.write("x")
+        items = [
+            {"what": "ключ площадки только на чтение",
+             "why": "без него механику ликвидаций не построить вовсе",
+             "unblocks": "поток ликвидаций", "check": есть},
+            {"what": "аккаунт с оплатой запросов к архиву",
+             "why": "архив стакана лежит в requester-pays и платный",
+             "check": os.path.join(d, "нет.txt")},
+            {"what": "решение", "why": "коротко"},
+        ]
+        n = AK.record(d, items, "строитель")
+        check("негодная форма не записывается", n == 2, str(n))
+        check("повтор не записывается",
+              AK.record(d, items, "строитель") == 0, "")
+
+        rows, broken = AK.state(d, root=d)
+        by = {r["what"][:10]: r for r in rows}
+        check("просьба с пройденной проверкой закрыта",
+              by["ключ площа"]["open"] is False, str(rows))
+        check("просьба с непройденной проверкой ждёт",
+              by["аккаунт с "]["open"] is True, str(rows))
+
+        AK.done(d, by["аккаунт с "]["id"], "сделал")
+        rows, _ = AK.state(d, root=d)
+        by = {r["what"][:10]: r for r in rows}
+        check("проверка сильнее слова",
+              by["аккаунт с "]["open"] is True
+              and by["аккаунт с "]["said_done"] is True, str(rows))
+
+        # Просьбы без проверки закрывает слово — и только оно.
+        n2 = AK.record(d, [{"what": "оплатить доступ к календарю",
+                            "why": "иначе события без истории и мерить "
+                                   "их не на чем"}], "предлагающий")
+        rows, _ = AK.state(d, root=d)
+        no_check = [r for r in rows if r["check_ok"] is None][0]
+        check("просьба без проверки ждёт слова",
+              n2 == 1 and no_check["open"] is True
+              and "нечем" in no_check["check_how"], str(no_check))
+        AK.done(d, no_check["id"])
+        rows, _ = AK.state(d, root=d)
+        no_check = [r for r in rows if r["check_ok"] is None][0]
+        check("слово закрывает просьбу без проверки",
+              no_check["open"] is False, str(no_check))
+
+        with open(os.path.join(d, AK.ASKS), "a", encoding="utf-8") as f:
+            f.write("{битая\n")
+        _rows, broken = AK.state(d, root=d)
+        check("битая строка считается, а не глотается",
+              broken == 1, str(broken))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_mechanic_waits_in_a_queue_not_in_a_file():
+    """Механика переживает следующий прогон предлагающего.
+
+    `proposal.json` перезаписывается каждым кругом: заявка, которой
+    движок не умеет, жила ровно сутки — тот же дефект, что журнал
+    разведчика из одних заголовков. Здесь она стоит в очереди, задание
+    строителю выдаётся по ней, и пока оно не закрыто, второе не
+    выдаётся: строитель, получивший два задания, построит половину
+    каждого.
+    """
+    import mech_queue as MQ
+    long = "z" * 130
+    d = tempfile.mkdtemp(prefix="mech-")
+    try:
+        prop = {"proposed": True, "kind": "mechanism",
+                "title": "поток ликвидаций поимённо",
+                "hypothesis": long, "kills_it": long, "ceiling": long,
+                "needs": long, "shape": long,
+                "cites": ["research/factory/out/brief.md"]}
+        k = MQ.queue(d, prop)
+        check("механика встала в очередь", bool(k), str(k))
+        check("повтор в очередь не встаёт",
+              MQ.queue(d, prop) is None, "")
+        check("строка пространства в очередь механик не идёт",
+              MQ.queue(d, dict(prop, kind="row")) is None, "")
+
+        check("строить есть что", MQ.pending(d) and not MQ.build_ready(d),
+              "задания ещё нет, а механика ждёт")
+        MQ.main(["--out", d, "--next"])
+        task = os.path.join(d, MQ.TASK)
+        check("задание положено и помечено механикой",
+              MQ.task_id(task) == k, str(MQ.task_id(task)))
+        with open(task, encoding="utf-8") as f:
+            txt = f.read()
+        check("задание несёт слова заявки, а не пересказ",
+              long in txt and prop["title"] in txt, txt[:200])
+        check("гейт строителя открыт", MQ.build_ready(d) is True, "")
+
+        # Второе задание поверх незакрытого не кладётся.
+        prop2 = dict(prop, title="вторая механика")
+        MQ.queue(d, prop2)
+        MQ.main(["--out", d, "--next"])
+        check("поверх незакрытого задания второе не кладётся",
+              MQ.task_id(task) == k, str(MQ.task_id(task)))
+        st = json.load(open(os.path.join(d, MQ.STATE), encoding="utf-8"))
+        check("шаг оставил след даже ничего не сделав",
+              st["decided"] == "занято", str(st))
+
+        MQ.mark(d, "built", k, "research/x/y.py")
+        check("построенная механика гейт закрывает",
+              MQ.build_ready(d) is False, "")
+        MQ.main(["--out", d, "--next"])
+        check("следующая механика получает задание",
+              MQ.task_id(task) == MQ.key_of("вторая механика"),
+              str(MQ.task_id(task)))
+        prev = os.path.join(d, MQ.TASK_PREV)
+        check("прежнее задание не потеряно", os.path.exists(prev), "")
+
+        rows, _ = MQ.state(d)
+        states = {r["title"]: r["state"] for r in rows}
+        check("состояния очереди читаются перечитыванием",
+              states["поток ликвидаций поимённо"] == "построена"
+              and states["вторая механика"] == "отдана строителю",
+              str(states))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_the_conveyor_records_asks_and_the_mechanic():
+    """Дорога: контракт роли САМ ставит механику и записывает просьбы.
+
+    Правило, до которого не доходит дорога, не работает: журнал
+    разведчика уже ловил это дважды. Заявка проверяется настоящим
+    `check_role`, а запись строителя — теми же помощниками, которых
+    зовёт его ветка (её собственный контракт гоняет тесты кандидата и
+    подделки, и это отдельный, дорогой прогон).
+    """
+    import asks as AK
+    import mech_queue as MQ
+    long = "w" * 200
+    root = tempfile.mkdtemp(prefix="road-")
+    try:
+        out = os.path.join(root, "research", "factory", "out")
+        os.makedirs(out)
+        for rel in ("research/factory/space.py",
+                    "research/factory/pool.py",
+                    "research/factory/out/brief.md",
+                    "research/factory/out/proposal.md"):
+            with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
+                f.write("проба\n")
+        prop = {"proposed": True, "kind": "mechanism",
+                "title": "календарь разблокировок",
+                "hypothesis": long, "kills_it": long, "ceiling": long,
+                "differs_from_live": long, "shape": long,
+                "needs": "строителя и внешний календарь с историей",
+                "cites": ["research/factory/out/brief.md",
+                          "research/factory/space.py",
+                          "research/factory/pool.py"],
+                "needs_owner": [
+                    {"what": "доступ к календарю разблокировок",
+                     "why": "у нас нет истории прошедших дат, а без "
+                            "неё событие не проверить walk-forward",
+                     "unblocks": "календарь разблокировок"}]}
+        with open(os.path.join(out, "proposal.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(prop, f, ensure_ascii=False)
+
+        ok, why = RL.check_role("propose", root)
+        check("заявка-механика проходит контракт", ok, str(why))
+        check("механика встала в очередь ДОРОГОЙ",
+              [r["title"] for r in MQ.state(out)[0]]
+              == ["календарь разблокировок"], str(MQ.state(out)[0]))
+        rows, _ = AK.state(out, root)
+        check("просьба записана дорогой", len(rows) == 1
+              and rows[0]["from"] == "предлагающий", str(rows))
+
+        # Негодная форма просьбы — беда контракта, а не пропуск: молча
+        # выброшенная просьба означает, что система стоит.
+        bad_prop = dict(prop, needs_owner=[{"what": "ключ",
+                                            "why": "надо"}])
+        with open(os.path.join(out, "proposal.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(bad_prop, f, ensure_ascii=False)
+        ok, why = RL.check_role("propose", root)
+        check("негодная просьба валит контракт, а не теряется",
+              not ok and any("просьба 1" in w for w in why), str(why))
+
+        # Строитель уперся в владельца: механика не «построена», а
+        # ждёт — иначе круг переспрашивал бы её каждый день.
+        MQ.main(["--out", out, "--next"])
+        mid = MQ.task_id(os.path.join(out, MQ.TASK))
+        RL._owner_asks(out, {"needs_owner": [
+            {"what": "аккаунт с оплатой запросов к архиву",
+             "why": "архив стакана лежит в requester-pays и платный"}]},
+            "строитель")
+        RL._close_mechanism(out, {"built": False, "needs_owner": [1]})
+        states = {r["id"]: r["state"] for r in MQ.state(out)[0]}
+        check("механика, упершаяся в владельца, ждёт его",
+              states[mid] == "ждёт владельца", str(states))
+        rows, _ = AK.state(out, root)
+        check("просьба строителя записана", len(rows) == 2, str(rows))
+
+        RL._close_mechanism(out, {"built": True,
+                                  "module": "research/x/y.py"})
+        states = {r["id"]: r["state"] for r in MQ.state(out)[0]}
+        check("построенная механика закрыта", states[mid] == "построена",
+              str(states))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_circle_calls_the_builder_only_with_a_task():
+    """Круг зовёт строителя ТОЛЬКО когда задание есть.
+
+    Строитель без задания стоит столько же, сколько строитель с
+    заданием, — и модель зовётся впустую каждый день. Проверяется не
+    сам гейт, а ДОРОГА: круг гоняется настоящий, с подставным запуском,
+    и смотрится, какой шаг он выбрал. Прямая проверка функции здесь не
+    годится — она проходит и при гейте, никуда не подключённом.
+    """
+    import cycle as CY
+    import mech_queue as MQ
+    keys = [k for k, _kind, _a, _p in CY.CIRCLE]
+    check("шаги задания и строителя стоят в круге по порядку",
+          keys.index("task") > keys.index("declare")
+          and keys.index("build") == keys.index("task") + 1, str(keys))
+
+    long = "q" * 130
+    d = tempfile.mkdtemp(prefix="gate-")
+    old = (CY.OUT, CY.STOP, CY.launch)
+    launched = []
+    try:
+        CY.OUT = d
+        CY.STOP = os.path.join(d, "STOP")
+        CY.launch = lambda key, kind, argv, log=None: (
+            launched.append(key) or 1)
+        runs = os.path.join(d, RL.RUNS)
+        for k in ("scout", "brief", "propose"):
+            RL.append(runs, k, "ok", time.time())
+        for name in ("FACTORY-day-1m.md", "factory-day-1m.json",
+                     "ceiling.json", "declare.json"):
+            open(os.path.join(d, name), "w").close()
+
+        CY.main(["--force"])
+        check("первым недостающим идёт шаг задания",
+              launched == ["task"], str(launched))
+
+        # Очередь пуста: шаг задания оставил след, строитель не зовётся.
+        MQ.main(["--out", d, "--next"])
+        launched.clear()
+        CY.main(["--force"])
+        check("без задания строитель не зовётся",
+              launched == [], str(launched))
+
+        # Механика в очереди — задание выдано, строитель зовётся.
+        MQ.queue(d, {"kind": "mechanism", "title": "механика проба",
+                     "hypothesis": long, "needs": long})
+        MQ.main(["--out", d, "--next"])
+        launched.clear()
+        CY.main(["--force"])
+        check("с заданием строитель зовётся",
+              launched == ["build"], str(launched))
+
+        # Механика закрыта — гейт закрывается снова.
+        MQ.mark(d, "built", MQ.key_of("механика проба"), "готово")
+        launched.clear()
+        CY.main(["--force"])
+        check("построенное задание гейт закрывает",
+              launched == [], str(launched))
+    finally:
+        CY.OUT, CY.STOP, CY.launch = old
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_contract_check_gets_the_start_moment():
     """Дорога до правила: момент начала прогона обязан ДОЙТИ до проверки.
 
@@ -1594,10 +1878,12 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
                   launched == [], str(launched))
             RL.append(runs, "propose", "ok", time.time())
 
-            # Роль ВНЕ круга (заход строителя руками) круг не
-            # останавливает: иначе часовой заход адверсария молча
-            # съедал бы сутки, а страница показывала спокойный день.
-            RL.append(runs, "build", "start", time.time(),
+            # Роль ВНЕ круга (заход адверсария руками) круг не
+            # останавливает: иначе часовой заход молча съедал бы
+            # сутки, а страница показывала спокойный день. Строитель
+            # для этой проверки больше не годится — он теперь ШАГ
+            # круга, и идущая постройка круг ждать обязана.
+            RL.append(runs, "adversary", "start", time.time(),
                       pid=os.getpid())
             launched.clear()
             CY.main(["--force"])
@@ -1605,7 +1891,7 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
                   launched == ["judge"], str(launched))
             # Но РОЛЬ при идущей роли не будится: писатель один за раз.
             os.remove(runs)
-            RL.append(runs, "build", "start", time.time(),
+            RL.append(runs, "adversary", "start", time.time(),
                       pid=os.getpid())
             launched.clear()
             CY.main(["--force"])
@@ -1691,8 +1977,11 @@ def test_cycle_advances_one_step_and_obeys_the_safeties():
             check("бюджет ролей выбран, механика идёт",
                   launched == ["judge"], str(launched))
             # А если и механика исчерпана, круг доходит до конца и
-            # говорит об этом словами.
-            for k in ("judge", "ceiling", "declare"):
+            # говорит об этом словами. Список берётся ИЗ САМОГО КРУГА:
+            # перечень здесь означал бы, что новый шаг тихо выпадает
+            # из проверки и «ничего не запускается» проходит на
+            # запускающемся шаге.
+            for k in [x[0] for x in CY.CIRCLE if x[1] == "mech"]:
                 for _ in range(CY.MAX_TRIES_PER_STEP):
                     RL.append(runs, k, "start", time.time(), pid=1)
                     RL.append(runs, k, "fail", time.time())
@@ -2076,6 +2365,10 @@ def main():
              test_scout_is_not_rejected_by_its_own_ideas,
              test_contract_check_gets_the_start_moment,
              test_scout_backlog_survives_the_next_menu,
+             test_owner_ask_is_measured_not_assumed,
+             test_mechanic_waits_in_a_queue_not_in_a_file,
+             test_the_conveyor_records_asks_and_the_mechanic,
+             test_circle_calls_the_builder_only_with_a_task,
              test_proposal_must_be_checkable_not_persuasive,
              test_closed_by_ceiling_is_not_proposed_again,
              test_the_control_machine_is_not_fooled_by_stale_bytecode,

@@ -372,6 +372,30 @@ def test_trades_table_columns_line_up():
           b is not None and b[2] != b[3], str(b))
 
 
+def test_owner_asks_road_reaches_the_journal():
+    """Дорога сервера до журнала просьб: путь тот же, что у записи.
+
+    Страница — не единственное место, где правило может сломаться:
+    метод сервера строит путь сам, и ошибись он в нём, страница вечно
+    показывала бы «ничего не ждёт». Это ровно тот класс отказа, ради
+    которого в проекте проверяют ДОРОГУ, а не только величину.
+    """
+    import collect as C
+    research = os.path.dirname(HERE)
+    sys.path.insert(0, os.path.join(research, "factory"))
+    import asks as AK
+    out = os.path.join(research, "factory", "out")
+    c = C.Collector.__new__(C.Collector)
+    d = c.owner_asks()
+    for k in ("asks", "open", "blocked", "queue", "broken"):
+        check(f"в ответе есть поле {k}", k in d, str(sorted(d)))
+    live = AK.state(out)[0]
+    check("сервер читает ТОТ ЖЕ журнал, что пишет запись",
+          len(d["asks"]) == len(live)
+          and d["open"] == sum(1 for r in live if r["open"]),
+          "%d против %d" % (len(d["asks"]), len(live)))
+
+
 def test_pages_run_headless():
     """Логика страниц обязана отработать на подставном ответе.
 
@@ -488,6 +512,12 @@ def test_pages_run_headless():
                 # поднимется сама, и карточка обязана назвать срок.
                 ("автономная система: ждёт снятия лимита",
                  web.AGENTSPAGE, "?k=xxx&agentssched=1&agentslimit=1"),
+                # Чего система ждёт ОТ ВЛАДЕЛЬЦА: ключи, аккаунты,
+                # оплата. Проверка сильнее слова — просьба, названная
+                # сделанной при непройденной проверке, остаётся
+                # ждущей; иначе страница закрывала бы дело по слову и
+                # молча расходилась бы с машиной.
+                ("нужно от вас", web.ASKSPAGE, "?k=xxx"),
                 # Построенное системой: дерево механик и книг под
                 # ними. Проверяется и то, что форвард не сложен с
                 # реплеем прошлого, и что вылетевшая книга видна:
@@ -6807,6 +6837,7 @@ def main():
     test_view_does_not_reset_counter()
     test_page_has_no_external_loads()
     test_pages_do_not_shadow_platform_globals()
+    test_owner_asks_road_reaches_the_journal()
     test_pages_run_headless()
     test_shadow_off_marker_is_a_state_not_an_alarm()
     test_jobs_poke_runs_queue_and_holds_rate()

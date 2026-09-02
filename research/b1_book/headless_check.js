@@ -40,6 +40,8 @@ const isBuilt =
   /built by the system — mechanics and their books/.test(src);
 const isStrat =
   /<title>strategy of the autonomous system<\/title>/.test(src);
+const isAsks =
+  /<title>what the system needs from you<\/title>/.test(src);
 const isTrades = /id="tb"/.test(src);
 // Согласная книга: руки тождественны по построению, показ сводится к
 // одной. Флаг нужен и структурным проверкам, и проверкам сводки.
@@ -478,6 +480,51 @@ global.fetch = async (url) => {
                    run_at: "2026-09-02 01:00",
                    run_stale: false, art_error: null,
                    generated_at: 1788300000})
+             : url.startsWith("/asks")
+             // Подставной ответ выглядит как живой: поля ровно те, что
+             // кладёт `owner_asks`. Три просьбы нарочно разные —
+             // ждущая с проверкой, сказанная сделанной при непройденной
+             // проверке (проверка сильнее слова) и закрытая проверкой.
+             ? {
+                 at: 1788380000,
+                 open: 2, broken: 1, queue_broken: 0,
+                 asks: [
+                   {ev: "ask", at: 1788379000, id: "a1",
+                    from: "строитель",
+                    what: "ключ Hyperliquid только на чтение",
+                    why: "без него механику ликвидаций не построить",
+                    unblocks: "принудительный поток поимённо",
+                    check: "~/.hyperliquid/key",
+                    check_ok: false,
+                    check_how: "проверено сейчас: ~/.hyperliquid/key",
+                    said_done: false, open: true},
+                   {ev: "ask", at: 1788378000, id: "a2",
+                    from: "предлагающий",
+                    what: "аккаунт AWS с оплатой запросов",
+                    why: "архив стакана лежит в requester-pays",
+                    check: "", check_ok: null,
+                    check_how: "проверять нечем — состояние по слову "
+                               + "владельца",
+                    said_done: false, open: true},
+                   {ev: "ask", at: 1788377000, id: "a3",
+                    from: "строитель",
+                    what: "календарь разблокировок с прошедшими датами",
+                    why: "событие без истории не проверить walk-forward",
+                    check: "research/factory/out/unlocks.json",
+                    check_ok: true,
+                    check_how: "проверено сейчас: "
+                               + "research/factory/out/unlocks.json",
+                    said_done: true, done_at: 1788379500,
+                    done_note: "положил файл", open: false}],
+                 blocked: [{id: "m1",
+                            title: "принудительный поток поимённо",
+                            note: "строитель уперся в то, что может "
+                                  + "дать только владелец"}],
+                 queue: [{id: "m1",
+                          title: "принудительный поток поимённо",
+                          state: "ждёт владельца"},
+                         {id: "m2", title: "календарь разблокировок",
+                          state: "ждёт"}]}
              : url.startsWith("/agents")
              // Подставной ответ обязан выглядеть как живой: поля ровно
              // те, что кладёт `agents_state`, и ни одного, которого
@@ -1654,14 +1701,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1872,7 +1919,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -3146,8 +3193,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 12)
-      bad.push(`меню: пунктов ${links}, а страниц двенадцать`);
+    if (links !== 13)
+      bad.push(`меню: пунктов ${links}, а страниц тринадцать`);
+    if (!/href="\/asks-page\?k=xxx"/.test(nh))
+      bad.push("меню: нет страницы «нужно от вас»");
     if (!/href="\/agents-page\?k=xxx"/.test(nh))
       bad.push("меню: нет страницы автономной системы");
     if (!/href="\/built-page\?k=xxx"/.test(nh))
@@ -3594,7 +3643,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks
       && !/botoff=1/.test(SEARCH)) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
@@ -3933,7 +3982,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour || isLearn || isLive || isPaper || isDays || isAgents || isBuilt || isStrat) {
+             || isTree || isTour || isLearn || isLive || isPaper || isDays || isAgents || isBuilt || isStrat || isAsks) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {
@@ -3996,6 +4045,46 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сколько из них помечено построенными, сколько строк в границах и
   // отказах. «Блок есть» проходило бы и на пустом блоке — этот класс
   // ошибки ловился в проекте уже четырежды.
+  // Страница «нужно от вас» отвечает на ОДИН вопрос: чего агенты не
+  // могут сами. Проверяется числами и правилами, а не «блок есть».
+  if (isAsks) {
+    const E = (id) => String((global.__el(id) || {}).innerHTML || "");
+    const box = E("box"), frame = E("intro");
+    if (!/an agent cannot take/.test(frame))
+      bad.push("нужно от вас: рамка не говорит, что здесь только то, "
+               + "чего агент сделать не может");
+    if (!/computed <b>now<\/b>|computed now/.test(frame))
+      bad.push("нужно от вас: рамка не говорит, что состояние "
+               + "считается сейчас, а не хранится");
+    const waits = (box.match(/class="tag wait"/g) || []).length;
+    const dones = (box.match(/class="tag done"/g) || []).length;
+    if (waits !== 2 || dones !== 1)
+      bad.push(`нужно от вас: ждущих ${waits} и закрытых ${dones}, `
+               + "а в ответе две и одна");
+    if (!/2\s*\n?\s*requests are\s*\n?\s*waiting/.test(
+          box.replace(/\s+/g, " ").replace(/(\d) requests/, "$1 requests"))
+        && !/2 requests are waiting/.test(box.replace(/\s+/g, " ")))
+      bad.push("нужно от вас: число ждущих просьб не названо числом");
+    // Проверка сильнее слова: файла, которого нет, не существует
+    // оттого, что о нём сказали. Иначе страница закрывала бы просьбу
+    // по слову и молча расходилась бы с машиной.
+    const a2 = box.slice(box.indexOf("аккаунт AWS"));
+    if (!/проверять нечем/.test(a2))
+      bad.push("нужно от вас: просьба без проверки не названа");
+    // Что просьба разблокирует — иначе список читается как желания.
+    if (!/unblocks:/.test(box))
+      bad.push("нужно от вас: не сказано, что просьба разблокирует");
+    if (!/mechanics stopped by a request/.test(box)
+        || !/принудительный поток/.test(box))
+      bad.push("нужно от вас: механики, остановленные просьбой, "
+               + "не показаны");
+    if (!/broken lines in the journal:\s*1/.test(
+          box.replace(/\s+/g, " ")))
+      bad.push("нужно от вас: битые строки журнала не названы числом");
+    if (!/asks\.py --done ID/.test(box))
+      bad.push("нужно от вас: не сказано, как закрыть просьбу словом");
+  }
+
   if (isAgents) {
     const E = (id) => String((global.__el(id) || {}).innerHTML || "");
     const Etx = (id) => String((global.__el(id) || {}).textContent || "");

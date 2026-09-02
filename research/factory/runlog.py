@@ -486,6 +486,7 @@ def check_proposal(text, root, ledger_ids=(), space=None,
     elif kind == "mechanism":
         if not (d.get("needs") or "").strip():
             bad.append("механизм не назвал, какого шага конвейера ждёт")
+    bad += check_needs_owner(d)
     return (not bad), bad
 
 
@@ -639,6 +640,68 @@ def check_scout(text, seen=()):
     return (not bad), bad
 
 
+# --- просьбы к владельцу ----------------------------------------------
+
+def check_needs_owner(d):
+    """Форма просьб к владельцу в отчёте роли. Возвращает список бед.
+
+    Агент не заводит аккаунтов, не платит и не кладёт ключи. Просьба,
+    сказанная только прозой отчёта, теряется в тот же день; поэтому у
+    неё объявлена форма, и негодная форма — беда, а не пропуск: молча
+    выброшенная просьба означает, что система стоит, а снаружи это
+    спокойный день.
+    """
+    items = d.get("needs_owner")
+    if items is None:
+        return []
+    bad = []
+    if not isinstance(items, list):
+        return ["needs_owner обязан быть списком просьб"]
+    import asks as AK
+    for i, it in enumerate(items, 1):
+        if not isinstance(it, dict):
+            bad.append(f"просьба {i} не объект")
+            continue
+        w = (it.get("what") or "").strip()
+        y = (it.get("why") or "").strip()
+        if len(w) < AK.MIN_WHAT:
+            bad.append(f"просьба {i}: что именно нужно — {len(w)} "
+                       f"символов при минимуме {AK.MIN_WHAT}")
+        if len(y) < AK.MIN_WHY:
+            bad.append(f"просьба {i}: зачем — {len(y)} символов при "
+                       f"минимуме {AK.MIN_WHY}")
+    return bad
+
+
+def _owner_asks(out, d, src):
+    """Записать просьбы к владельцу. Молча не теряем ни одной."""
+    try:
+        import asks as AK
+        return AK.record(out, d.get("needs_owner"), src)
+    except Exception:                                     # noqa: BLE001
+        return 0
+
+
+def _close_mechanism(out, d):
+    """Отметить механику построенной либо упершейся в владельца.
+
+    Чью — говорит метка в задании, а не отчёт: отчёт пишет модель, и
+    ключ в нём был бы её словом о самой себе.
+    """
+    try:
+        import mech_queue as MQ
+    except Exception:                                     # noqa: BLE001
+        return
+    mid = MQ.task_id(os.path.join(out, MQ.TASK))
+    if not mid:
+        return
+    if d.get("needs_owner"):
+        MQ.mark(out, "blocked", mid,
+                "строитель уперся в то, что может дать только владелец")
+    elif d.get("built"):
+        MQ.mark(out, "built", mid, (d.get("module") or "").strip())
+
+
 def check_role(role, root, since=None):
     """Контракт роли: выполнен ли. Возвращает (годно, список бед).
 
@@ -697,6 +760,15 @@ def check_role(role, root, since=None):
             texts.get("research/factory/out/build.json", ""), root)
         if not ok:
             bad.append("build.json: " + "; ".join(why))
+        else:
+            # Просьбы к владельцу и судьба механики записываются
+            # МАШИНОЙ и только на годном отчёте: журнал, который роль
+            # ведёт сама, она сама и перепишет.
+            out = os.path.join(root, "research", "factory", "out")
+            d = json.loads(texts.get(
+                "research/factory/out/build.json", "") or "{}")
+            _owner_asks(out, d, "строитель")
+            _close_mechanism(out, d)
     elif role == "propose":
         import ledger as LG
         import space as SP
@@ -722,6 +794,18 @@ def check_role(role, root, since=None):
             root, ledger_ids=ids, space=SP, closed_ids=closed)
         if not ok:
             bad.append("proposal.json: " + "; ".join(why))
+        else:
+            # Механика живёт в очереди, а не в `proposal.json`: тот
+            # перезаписывается следующим прогоном, и заявка, которой
+            # движок ещё не умеет, теряется через сутки.
+            d = json.loads(texts.get(
+                "research/factory/out/proposal.json", "") or "{}")
+            _owner_asks(out_dir, d, "предлагающий")
+            try:
+                import mech_queue as MQ
+                MQ.queue(out_dir, d)
+            except Exception as e:                        # noqa: BLE001
+                bad.append("механика не поставлена в очередь: %s" % e)
     return (not bad), bad
 
 
@@ -795,6 +879,7 @@ def check_build(text, root):
         return False, [f"отчёт постройки не разбирается как JSON: {e}"]
     if not isinstance(d, dict) or not isinstance(d.get("built"), bool):
         return False, ["нет поля built (да/нет)"]
+    bad += check_needs_owner(d)
     if not d["built"]:
         why = (d.get("why") or "").strip()
         if len(why) < BUILD_MIN_WHY:
