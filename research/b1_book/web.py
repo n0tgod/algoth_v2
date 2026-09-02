@@ -8508,12 +8508,20 @@ body{margin:0;background:
 .chip.ctl{border-color:var(--rule);color:var(--muted)}
 .chip.out{border-color:var(--ask);color:var(--ask)}
 .chip.on{border-color:var(--bid);color:var(--bid)}
+/* Стратегии идут СПИСКОМ БЛОКОВ, а не деревом (просьба
+   владельца): у корня механика, под ней карточки с главными числами,
+   и каждая открывается своей страницей. Соединительных линий нет
+   намеренно — они рисовали родство там, где его нет: книги под одной
+   механикой не потомки друг друга, а параллельные испытания. */
+.grid{display:grid;gap:10px;margin:10px 0 0;
+ grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
 .branch{border:1px solid var(--rule-soft);border-radius:12px;
- padding:10px 12px;margin:9px 0 0 14px;background:var(--panel);
- position:relative}
-.branch:before{content:"";position:absolute;left:-14px;top:18px;
- width:12px;height:1px;background:var(--rule)}
+ padding:10px 12px;background:var(--panel);cursor:pointer;
+ transition:border-color .12s,transform .12s}
+.branch:hover{border-color:var(--accent);transform:translateY(-1px)}
 .branch.out{opacity:.62}
+.open{font-size:11.5px;color:var(--accent);text-decoration:none;
+ white-space:nowrap}
 .bhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .tolink{font-size:12px;color:#2f6feb;text-decoration:none;white-space:nowrap}
 .bkey{font-weight:700;font-size:12.5px;font-family:ui-monospace,
@@ -8560,13 +8568,12 @@ let LANG = new URLSearchParams(location.search).get("lang")
   || (function(){ try { return localStorage.getItem("algoth_lang"); }
                   catch (e) { return null; } })() || "en";
 let DATA = null;
-const OPEN = new Set();          // какие книги развёрнуты — состояние ПОКАЗА
 
 const UI = {
   strap: {en: "built by the autonomous system",
           ru: "построено автономной системой"},
-  tcap: {en: "mechanics and the books under them",
-         ru: "механики и книги под ними"},
+  tcap: {en: "mechanics and the strategies under them",
+         ru: "механики и стратегии под ними"},
   declared: {en: "declared", ru: "объявлено"},
   alive: {en: "alive", ru: "живо"},
   retired: {en: "retired", ru: "вылетело"},
@@ -8577,15 +8584,16 @@ const UI = {
   nobook: {en: "no live book yet", ru: "живой книги ещё нет"},
   totrades: {en: "live trades \u2192", ru: "сделки живой книги \u2192"},
   fwd: {en: "replay forward, bp", ru: "реплей вперёд, б.п."},
-  pre: {en: "replay of the past, bp", ru: "реплей прошлого, б.п."},
+  pre: {en: "backtest (replay of the past), bp",
+        ru: "бэктест (реплей прошлого), б.п."},
   trades: {en: "trades", ru: "сделок"},
   days: {en: "days forward", ru: "суток вперёд"},
   sel: {en: "selected", ru: "отобран"},
   ctl: {en: "control", ru: "случайный"},
   out: {en: "retired", ru: "вылетел"},
   on: {en: "alive", ru: "жив"},
-  show: {en: "trades", ru: "сделки"},
-  hide: {en: "hide", ru: "скрыть"},
+  openone: {en: "open the strategy \u2192",
+            ru: "открыть стратегию \u2192"},
   none: {en: "nothing declared yet — the system has not passed a "
              + "candidate through the ceiling",
          ru: "не объявлено ничего — система ещё не провела ни одного "
@@ -8695,7 +8703,6 @@ function frameHtml(d){
 
 function branchHtml(b){
   const lane = b.lane === "selected" ? "sel" : "ctl";
-  const open = OPEN.has(b.key);
   const nums = b.no_numbers
     ? `<div class="note">&mdash; ${esc(b.no_numbers)}</div>`
     : `<div class="nums">
@@ -8719,59 +8726,38 @@ function branchHtml(b){
         <div class="f"><span class="lab">${T("pre")}</span>
           <span class="dim">${bp(b.pre)}</span></div>
       </div>`;
-  let tail = "";
-  if (open){
-    if (b.no_tail){
-      tail = `<div class="note">&mdash; ${esc(b.no_tail)}</div>`;
-    } else if ((b.last || []).length){
-      tail = `<div class="scroll"><table>
-        <tr><th>${T("tat")}</th><th>${T("tsym")}</th>
-          <th>${T("tside")}</th><th>${T("tarm")}</th>
-          <th class="num">${T("tnet")}</th><th>${T("twhy")}</th></tr>` +
-        b.last.map(t => `<tr>
-          <td class="mono dim">${ts(t.at)}</td>
-          <td class="mono">${esc(t.sym)}</td>
-          <td>${t.side > 0 ? "L" : "S"}</td>
-          <td class="dim">${esc(t.arm || "")}</td>
-          <td class="num mono ${sgn(t.net_bp)}">${bp(t.net_bp)}</td>
-          <td class="dim">${esc(t.why || "")}</td></tr>`).join("") +
-        `</table></div>
-        <div class="note">${T("tail")}</div>`;
-    }
-  }
-  const btn = (b.trades || b.no_tail)
-    ? `<button data-key="${esc(b.key)}" aria-pressed="${open}"
-        >${open ? T("hide") : T("show")}</button>` : "";
-  // Ссылка на СДЕЛКИ живой книги кандидата. Книга кандидата кнопкой
-  // на странице сделок не является (их бывает сотня), но адресуема —
-  // и без этой ссылки живая книга существовала бы только числом в
-  // сводке: посмотреть, ЧЕМ она торговала, было бы нечем. Ссылка
-  // ставится лишь там, где книга есть: у кандидата без живой книги
-  // (её ось живая машинерия не умеет) она вела бы в пустоту.
-  const trl = b.live == null ? "" :
-    `<a class="tolink" href="/trades-page?k=${encodeURIComponent(KEY)
-      }&hz=${encodeURIComponent(b.key)}">${T("totrades")}</a>`;
-  return `<div class="branch${b.alive ? "" : " out"}">
+  return `<div class="branch${b.alive ? "" : " out"}"
+      data-open="${esc(b.key)}">
     <div class="bhead"><span class="bkey">${esc(b.key)}</span>
+      <span style="flex:1"></span>
       <span class="chip ${lane}">${T(lane)}</span>
       <span class="chip ${b.alive ? "on" : "out"}"
-        >${b.alive ? T("on") : T("out")}</span>
-      <span style="flex:1"></span>${trl}${btn}</div>
+        >${b.alive ? T("on") : T("out")}</span></div>
     <div class="plain">${esc(b.plain)}</div>
     ${b.live_why
       ? `<div class="note">${esc(b.live_why)}</div>` : ""}
     ${b.why ? `<div class="note">${esc(b.why)}</div>` : ""}
-    ${b.note ? `<div class="note">&laquo;${esc(b.note)}&raquo;</div>` : ""}
-    ${nums}${tail}</div>`;
+    ${nums}
+    <div class="note"><a class="open" href="${stratHref(b.key)}"
+      >${T("openone")}</a></div></div>`;
 }
 
-// Какие книги развёрнуты — состояние ПОКАЗА, и живёт оно в наборе, из
-// которого собирается разметка: страница перерисовывается опросом раз в
-// минуту, и разворот, живший только в DOM, схлопывался бы сам.
-function toggleTrades(k){
-  if (!k) return;
-  if (OPEN.has(k)) OPEN.delete(k); else OPEN.add(k);
-  render();
+// Адрес страницы стратегии живёт ОДНОЙ функцией: карточка кликается
+// целиком, а внутри стоит настоящая ссылка (её видно в строке
+// состояния и можно открыть в новой вкладке), и два места, строящие
+// один адрес, однажды разошлись бы.
+function stratHref(key){
+  return "/strategy-page?k=" + encodeURIComponent(KEY)
+    + "&id=" + encodeURIComponent(key);
+}
+
+// Карточка кликается целиком — но клик по ССЫЛКЕ внутри неё браузер
+// обрабатывает сам, и перехватывать его значило бы ломать открытие в
+// новой вкладке (тот же случай, что клик по ссылке в строке таблицы
+// на панели ядра).
+function cardClick(ev, key){
+  if (ev.target && ev.target.closest && ev.target.closest("a")) return;
+  location.href = stratHref(key);
 }
 
 function render(){
@@ -8811,10 +8797,11 @@ function render(){
     ? roots.map(r => `<div class="root">
         <div class="rhead"><span class="rname">${esc(r.title)}</span>
           <span class="chip">${r.alive}/${r.n}</span></div>
-        ${r.branches.map(branchHtml).join("")}</div>`).join("")
+        <div class="grid">${r.branches.map(branchHtml).join("")}</div>
+        </div>`).join("")
     : `<div class="note">${T("none")}</div>`;
-  document.getElementById("tree").querySelectorAll("button")
-    .forEach(b => b.onclick = () => toggleTrades(b.dataset.key));
+  document.getElementById("tree").querySelectorAll("[data-open]")
+    .forEach(el => el.onclick = ev => cardClick(ev, el.dataset.open));
 }
 
 async function tick(){
@@ -8822,6 +8809,392 @@ async function tick(){
     const r = await fetch("/factory_built?k=" + encodeURIComponent(KEY));
     if (r.ok) DATA = await r.json();
   } catch (e) {}
+  render();
+}
+render();
+tick();
+setInterval(tick, 60000);
+</script>
+"""
+
+
+STRATPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>strategy of the autonomous system</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:14px 16px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+.frame{border-left:2px solid var(--accent);padding-left:10px;
+ font-size:13px;margin:0 0 10px}
+.frame b{color:var(--accent);font-weight:600}
+.warn{border-left:2px solid var(--ask);padding-left:10px;
+ font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.warn b{color:var(--ask);font-weight:600}
+.strip{display:grid;gap:8px;
+ grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:10px 0 0}
+.st{background:linear-gradient(180deg,rgba(151,71,255,.06),
+ rgba(151,71,255,0));border:1px solid var(--rule);border-radius:12px;
+ padding:9px 11px}
+.st .lab{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+ color:var(--muted)}
+.st .val{font-size:17px;font-weight:700;margin-top:2px}
+.st .val small{font-size:11.5px;font-weight:500;color:var(--muted)}
+.chip{font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+ border:1px solid var(--rule);border-radius:999px;padding:2px 8px;
+ color:var(--muted);white-space:nowrap}
+.chip.sel{border-color:var(--accent);color:var(--accent)}
+.chip.out{border-color:var(--ask);color:var(--ask)}
+.chip.on{border-color:var(--bid);color:var(--bid)}
+.title{font-weight:800;font-size:16px;font-family:ui-monospace,
+ Menlo,Consolas,monospace}
+.note{font-size:12px;color:var(--muted);margin:7px 0 0}
+.up{color:var(--bid)}
+.dn{color:var(--ask)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:5px 8px;text-align:left;white-space:nowrap;
+ border-bottom:1px solid var(--rule-soft)}
+th{color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right}
+tr.thin td{color:var(--muted)}
+.scroll{overflow-x:auto;margin:8px 0 0}
+.gapv{color:var(--ask)}
+a{color:var(--accent)}
+button{background:var(--chip);border:1px solid var(--rule);
+ color:var(--ink);border-radius:999px;padding:3px 11px;font-size:11.5px;
+ cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+</style>
+""" + NAVCSS + r"""</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k" id="strap"></span>
+  <span style="flex:1"></span>
+  <span id="lang"></span></div>
+<div id="nav"></div>
+<div class="panel"><div id="head">&hellip;</div><div id="strip"></div>
+  <div id="alarm"></div></div>
+<div class="panel"><div class="cap" id="infocap"></div>
+  <div id="info"></div></div>
+<div class="panel"><div class="cap" id="daycap"></div>
+  <div id="days"></div></div>
+<div class="panel"><div class="cap" id="btcap"></div>
+  <div id="bt"></div></div>
+<div class="panel"><div class="cap" id="twincap"></div>
+  <div id="twins"></div></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+const SID = new URLSearchParams(location.search).get("id") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+let LANG = new URLSearchParams(location.search).get("lang")
+  || (function(){ try { return localStorage.getItem("algoth_lang"); }
+                  catch (e) { return null; } })() || "en";
+let DATA = null, DAYS = null;
+
+const UI = {
+  strap: {en: "strategy of the autonomous system",
+          ru: "стратегия автономной системы"},
+  infocap: {en: "what this strategy is", ru: "что это за стратегия"},
+  daycap: {en: "live paper book, day by day",
+           ru: "живая бумажная книга по дням"},
+  btcap: {en: "replay over history", ru: "бэктест на истории"},
+  twincap: {en: "how much of it is a separate trial",
+            ru: "насколько это отдельное испытание"},
+  sel: {en: "selected", ru: "отобрана"},
+  ctl: {en: "control (random draw)", ru: "случайный жребий"},
+  out: {en: "retired", ru: "вылетела"},
+  on: {en: "alive", ru: "жива"},
+  live: {en: "live book, $", ru: "живая книга, $"},
+  lclosed: {en: "closed live", ru: "закрыто вживую"},
+  fwd: {en: "forward, bp", ru: "форвард, б.п."},
+  pre: {en: "backtest, bp", ru: "бэктест, б.п."},
+  days: {en: "days forward", ru: "суток вперёд"},
+  axis: {en: "axis", ru: "ось"},
+  want: {en: "declared", ru: "объявлено"},
+  got: {en: "applied", ru: "применено"},
+  field: {en: "field of the manifest", ru: "поле манифеста"},
+  dcol: {en: "day", ru: "день"},
+  trades: {en: "trades", ru: "сделок"},
+  win: {en: "won", ru: "побед"},
+  pnl: {en: "$", ru: "$"},
+  cum: {en: "cumulative $", ru: "накоплено $"},
+  wotop: {en: "$ without the best", ru: "$ без лучшей"},
+  arm: {en: "arm", ru: "рука"},
+  nodays: {en: "no closed trades yet — the book is younger than its "
+               + "first exit",
+           ru: "закрытых сделок ещё нет — книга моложе первого выхода"},
+  nobook: {en: "no live book", ru: "живой книги нет"},
+  nobt: {en: "the daily run has not produced numbers for this "
+             + "strategy yet",
+         ru: "суточный прогон ещё не дал чисел этой стратегии"},
+  notwins: {en: "nothing to compare with: no other candidate has a "
+                + "live book",
+            ru: "сравнивать не с чем: живой книги нет больше ни у "
+                + "одного кандидата"},
+  tid: {en: "strategy", ru: "стратегия"},
+  tinter: {en: "same decisions", ru: "одних решений"},
+  tshare: {en: "share", ru: "доля"},
+  declared: {en: "declared at", ru: "объявлена"},
+  retired: {en: "retired at", ru: "вылетела"},
+  open: {en: "open now", ru: "открыто сейчас"},
+  totrades: {en: "live trades \u2192", ru: "сделки живой книги \u2192"},
+  back: {en: "← all strategies", ru: "← все стратегии"}};
+
+function T(k){ const v = UI[k]; return v ? (v[LANG] || v.en) : k; }
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function sgn(v){ return v == null ? "dim" : (v > 0 ? "up"
+  : (v < 0 ? "dn" : "dim")); }
+function bp(v){ return v == null ? "—"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(1); }
+function usd(v){ return v == null ? "—"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(2); }
+function ts(t){ if (!t) return "—";
+  const d = new Date(t * 1000);
+  return d.toISOString().slice(0, 16).replace("T", " "); }
+
+function langBox(){
+  const el = document.getElementById("lang");
+  if (!el) return;
+  el.innerHTML = ["en", "ru"].map(l =>
+    `<button data-l="${l}" aria-pressed="${LANG === l}">${l}</button>`
+    ).join(" ");
+  el.querySelectorAll("button").forEach(b =>
+    b.onclick = () => setLang(b.dataset.l));
+}
+function setLang(l){
+  LANG = l;
+  try { localStorage.setItem("algoth_lang", l); } catch (e) {}
+  render();
+}
+
+// РАМКА страницы стратегии говорит ровно то, чем эти числа НЕ
+// являются, и повторяет её не из вежливости: на страницу стратегии
+// приходят по прямой ссылке, минуя список, а объяснение, живущее
+// только на соседней странице, соседнюю и защищает.
+function frameHtml(){
+  if (LANG === "ru") return `<p class="frame"><b>Это испытание
+    правила, а не отдельно обученная модель.</b> Веса те же, что у
+    книг ядра; различается правило обращения с прогнозом — потому
+    разницу результатов и можно приписать правилу.</p>
+    <p class="frame"><b>Бэктест и форвард не складываются.</b>
+    Бэктест прогнан по журналу листов за прошлое, которое ассистент
+    уже видел, когда предлагал стратегию; форвард идёт со дня
+    объявления и только он является предъявляемым.</p>`;
+  return `<p class="frame"><b>This is a trial of a rule, not a
+    separately trained model.</b> The weights are the same as the core
+    books'; what differs is the rule for handling the forecast, which
+    is why a difference in results can be attributed to the rule.</p>
+    <p class="frame"><b>Backtest and forward are never summed.</b> The
+    backtest is a replay over a past the assistant had already seen
+    when proposing the strategy; the forward runs from the day of
+    declaration and only it can be presented.</p>`;
+}
+
+function infoHtml(d){
+  const rows = (d.applied || []).map(a => `<tr${a.gap ? ' class="thin"' : ''}>
+    <td class="mono">${esc(a.axis)}</td>
+    <td class="mono">${esc(a.want)}</td>
+    <td class="mono">${a.gap ? '<span class="gapv">&mdash;</span>'
+      : esc(a.got == null ? "—" : a.got)}</td>
+    <td class="dim">${a.gap ? esc(a.gap) : esc(a.field || "")}</td>
+    </tr>`).join("");
+  return `<p>${esc(d.plain || "")}</p>
+    ${d.note ? `<div class="note">&laquo;${esc(d.note)}&raquo;</div>` : ""}
+    ${d.why ? `<div class="note">${esc(d.why)}</div>` : ""}
+    ${d.live_why ? `<div class="note">${esc(d.live_why)}</div>` : ""}
+    <div class="note">${T("declared")}: ${ts(d.declared_at)}${
+      d.retired_at ? " · " + T("retired") + ": " + ts(d.retired_at)
+                   : ""}</div>
+    <div class="scroll"><table>
+      <tr><th>${T("axis")}</th><th>${T("want")}</th>
+        <th>${T("got")}</th><th>${T("field")}</th></tr>
+      ${rows}</table></div>`;
+}
+
+function daysHtml(b){
+  if (!b) return `<div class="note">&hellip;</div>`;
+  if (b.unknown || !b.present)
+    return `<div class="note">&mdash; ${T("nodays")}</div>`;
+  const rows = (b.days || []).map(x => {
+    const c = (x.arms || {}).all;
+    if (!c) return "";
+    return `<tr><td class="mono">${esc(x.day)}</td>
+      <td class="num">${c.trades}</td>
+      <td class="num">${Math.round(c.win * 100)}%</td>
+      <td class="num mono ${sgn(c.pnl)}">${usd(c.pnl)}</td>
+      <td class="num mono ${sgn(c.cum)}">${usd(c.cum)}</td>
+      <td class="num mono ${sgn(c.pnl_wo_top)}">${usd(c.pnl_wo_top)}</td>
+      </tr>`;
+  }).join("");
+  const op = Object.keys(b.open || {}).map(a =>
+    `${esc(a)} ${b.open[a].open}`).join(" · ");
+  return `<div class="scroll"><table>
+      <tr><th>${T("dcol")}</th><th class="num">${T("trades")}</th>
+        <th class="num">${T("win")}</th><th class="num">${T("pnl")}</th>
+        <th class="num">${T("cum")}</th>
+        <th class="num">${T("wotop")}</th></tr>
+      ${rows}</table></div>
+    ${op ? `<div class="note">${T("open")}: ${op}</div>` : ""}`;
+}
+
+function btHtml(d){
+  const daily = d.daily || [];
+  if (!daily.length)
+    return `<div class="note">&mdash; ${esc(d.no_numbers || T("nobt"))}</div>`;
+  const cut = d.declared_at
+    ? Math.floor(d.declared_at / 86400) : null;
+  // Накопленное считается ВНУТРИ периода и обнуляется на границе
+  // объявления. Одна сквозная кривая складывала бы бэктест с
+  // форвардом — ровно то, что запрещено: до объявления это пересчёт
+  // по прошлому, которое ассистент уже видел, когда предлагал.
+  // Поймано собственной проверкой: колонка доходила до суммы обеих
+  // половин, и та стояла на странице как итог.
+  let cum = 0, was = null;
+  const rows = daily.map(p => {
+    const day = p[0], v = p[1];
+    const fwd = cut != null && day >= cut;
+    if (was !== null && fwd !== was) cum = 0;
+    was = fwd;
+    cum = Math.round((cum + v) * 10) / 10;
+    const dt = new Date(day * 86400 * 1000).toISOString().slice(0, 10);
+    return `<tr${fwd ? "" : ' class="thin"'}>
+      <td class="mono">${dt}</td>
+      <td>${fwd ? T("fwd") : T("pre")}</td>
+      <td class="num mono ${sgn(v)}">${bp(v)}</td>
+      <td class="num mono ${sgn(cum)}">${bp(cum)}</td></tr>`;
+  }).join("");
+  return `<div class="scroll"><table>
+    <tr><th>${T("dcol")}</th><th></th><th class="num">${T("pnl")}</th>
+      <th class="num">${T("cum")}</th></tr>${rows}</table></div>`;
+}
+
+function twinsHtml(d){
+  const tw = d.twins || [];
+  if (!tw.length)
+    return `<div class="note">&mdash; ${T("notwins")}</div>`;
+  const rows = tw.map(t => `<tr>
+    <td class="mono"><a href="/strategy-page?k=${
+      encodeURIComponent(KEY)}&id=${encodeURIComponent(t.id)}"
+      >${esc(t.id)}</a></td>
+    <td class="num">${t.inter} / ${t.union}</td>
+    <td class="num mono ${t.share >= 0.9 ? "dn" : ""}"
+      >${t.share == null ? "—" : t.share.toFixed(2)}</td></tr>`)
+    .join("");
+  const say = LANG === "ru"
+    ? "Доля — сколько решений (рука, час, имя, сторона) совпало с "
+      + "другой живой книгой. Единица означает, что это ОДНО испытание "
+      + "под двумя именами, и знаменатель, считающий их за два, врёт."
+    : "The share is how many decisions (arm, hour, name, side) "
+      + "coincide with another live book. One means these are ONE "
+      + "trial under two names, and a denominator counting them as "
+      + "two is lying.";
+  return `<div class="scroll"><table>
+      <tr><th>${T("tid")}</th><th class="num">${T("tinter")}</th>
+        <th class="num">${T("tshare")}</th></tr>${rows}</table></div>
+    <div class="note">${say}</div>`;
+}
+
+function render(){
+  document.getElementById("strap").textContent = T("strap");
+  navMount("/built-page");
+  langBox();
+  const d = DATA;
+  if (!d) return;
+  const back = `<a href="/built-page?k=${encodeURIComponent(KEY)}"
+    >${T("back")}</a>`;
+  if (d.error){
+    document.getElementById("head").innerHTML =
+      `<div class="warn"><b>&#9888;</b> ${esc(d.error)}</div>
+       <div class="note">${back}</div>`;
+    ["strip", "info", "days", "bt", "twins"].forEach(
+      i => document.getElementById(i).innerHTML = "");
+    ["infocap", "daycap", "btcap", "twincap"].forEach(
+      i => document.getElementById(i).textContent = "");
+    return;
+  }
+  const lane = d.lane === "selected" ? "sel" : "ctl";
+  document.getElementById("head").innerHTML =
+    `<div class="top"><span class="title">${esc(d.id)}</span>
+      <span class="chip ${lane}">${T(lane)}</span>
+      <span class="chip ${d.alive ? "on" : "out"}"
+        >${d.alive ? T("on") : T("out")}</span>
+      <span style="flex:1"></span>${d.live == null ? "" :
+        `<a href="/trades-page?k=${encodeURIComponent(KEY)}&hz=${
+          encodeURIComponent(d.id)}">${T("totrades")}</a> · `}${back}</div>
+     <div class="note">${esc((d.root || {}).title || "")}</div>
+     ${frameHtml()}`;
+  document.getElementById("strip").innerHTML =
+    [[T("live"), d.live == null || d.live.pnl == null ? null
+        : usd(d.live.pnl)],
+     [T("lclosed"), d.live == null ? null : d.live.closed],
+     [T("fwd"), d.fwd == null ? null : bp(d.fwd)],
+     [T("days"), d.fwd_days],
+     [T("pre"), d.pre == null ? null : bp(d.pre)]]
+    .map(c => `<div class="st"><div class="lab">${c[0]}</div>
+      <div class="val">${c[1] == null ? "&mdash;" : c[1]}</div></div>`)
+    .join("");
+  let al = "";
+  if (d.art_error)
+    al += `<div class="warn"><b>&#9888;</b> ${esc(d.art_error)}</div>`;
+  else if (d.run_stale)
+    al += `<div class="warn"><b>&#9888;</b> ` + (LANG === "ru"
+      ? "суточный прогон не приходил давно — числа бэктеста устарели"
+      : "no daily run for a long time — the backtest numbers are stale")
+      + `</div>`;
+  document.getElementById("alarm").innerHTML = al;
+  document.getElementById("infocap").textContent = T("infocap");
+  document.getElementById("info").innerHTML = infoHtml(d);
+  document.getElementById("daycap").textContent = T("daycap");
+  document.getElementById("days").innerHTML =
+    d.live == null ? `<div class="note">&mdash; ${esc(
+      d.live_why || T("nobook"))}</div>` : daysHtml(DAYS);
+  document.getElementById("btcap").textContent = T("btcap");
+  document.getElementById("bt").innerHTML = btHtml(d);
+  document.getElementById("twincap").textContent = T("twincap");
+  document.getElementById("twins").innerHTML = twinsHtml(d);
+}
+
+async function tick(){
+  try {
+    const r = await fetch("/factory_strategy?k=" + encodeURIComponent(KEY)
+      + "&id=" + encodeURIComponent(SID));
+    if (r.ok) DATA = await r.json();
+  } catch (e) {}
+  // Разбивку по дням считает ТОТ ЖЕ `book_days`, что и страницу книги
+  // ядра: второй расчёт дневных денег разошёлся бы с первым, и две
+  // страницы показывали бы разное об одной книге.
+  if (DATA && !DATA.error && DATA.live != null){
+    try {
+      const r2 = await fetch("/book_days?k=" + encodeURIComponent(KEY)
+        + "&hz=" + encodeURIComponent(SID));
+      if (r2.ok) DAYS = await r2.json();
+    } catch (e) {}
+  }
   render();
 }
 render();
@@ -9628,6 +10001,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/built-page":
                 return self._ok(BUILTPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/factory_strategy":
+                return self._ok(json.dumps(
+                    collector.factory_strategy(q.get("id", [""])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/strategy-page":
+                return self._ok(STRATPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),

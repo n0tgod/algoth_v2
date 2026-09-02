@@ -38,6 +38,8 @@ const isAgents =
   /autonomous system — agents and the conveyor/.test(src);
 const isBuilt =
   /built by the system — mechanics and their books/.test(src);
+const isStrat =
+  /<title>strategy of the autonomous system<\/title>/.test(src);
 const isTrades = /id="tb"/.test(src);
 // Согласная книга: руки тождественны по построению, показ сводится к
 // одной. Флаг нужен и структурным проверкам, и проверкам сводки.
@@ -417,6 +419,49 @@ global.fetch = async (url) => {
                 run_age_sec: /builtstale=1/.test(SEARCH) ? 200000 : 7200,
                 run_stale: /builtstale=1/.test(SEARCH),
                 art_error: null, generated_at: 1788300000}
+             : url.startsWith("/factory_strategy")
+             // Карточка стратегии: ось `rank` объявлена, а поля в
+             // манифесте у неё НЕТ — правило, не доехавшее до
+             // сканера, снаружи неотличимо от доехавшего, и страница
+             // обязана назвать это словами. Близнец с долей 1.00 —
+             // то самое «одно испытание под двумя именами».
+             ? (/stratbad=1/.test(SEARCH)
+                ? {id: "нетакой", generated_at: 1788300000,
+                   error: "стратегии 'нетакой' в реестре испытаний нет"}
+                : {id: "h4_z_f30_w5_gl_rrlo_se_b0_a0",
+                   lane: "selected", alive: true,
+                   root: {key: "fwd_4h|levels",
+                          title: "прогноз 4 ч · только уровни"},
+                   plain: "горизонт 4 ч, сечение по прогнозу в единицах σ",
+                   note: "проверяет низкое отношение",
+                   why: null, live_why: null,
+                   declared_at: 1788100000, retired_at: null,
+                   rule: {target: "fwd_4h", geom: "levels",
+                          rank: "sigma", floor_bp: 30},
+                   applied: [
+                     {axis: "floor_bp", want: 30, got: 30,
+                      field: "floor_bp"},
+                     {axis: "rank", want: "sigma", got: null,
+                      gap: "в записи книги этого правила нет — доехало "
+                           + "ли оно до сканера, проверить нечем"}],
+                   applied_from: "model_c_h4_z_f30_w5_gl_rrlo_se_b0_a0",
+                   live: {arms: {gbm: {closed: 7, pnl: 12.34}},
+                          closed: 7, pnl: 12.34, start: 3000},
+                   trades: 921, fwd: -67.3, pre: -281.6,
+                   fwd_days: 2, pre_days: 20,
+                   daily: [[20690, -140.8], [20691, -140.8],
+                           [20700, -30.0], [20701, -37.3]],
+                   last: [], mine_n: 33,
+                   twins: [{id: "h4_r_f30_w5_gl_rrlo_se_b0_a0",
+                            inter: 33, union: 33, share: 1.0},
+                           {id: "h4_z_f30_w5_gt_rrlo_se_b0_a0",
+                            inter: 2, union: 51, share: 0.04}],
+                   twins_unmeasured: [],
+                   verdict: "вердикта нет: календаря 25 суток",
+                   eff_n: 2.79, window_d: 10,
+                   run_at: "2026-09-02 01:00",
+                   run_stale: false, art_error: null,
+                   generated_at: 1788300000})
              : url.startsWith("/agents")
              // Подставной ответ обязан выглядеть как живой: поля ровно
              // те, что кладёт `agents_state`, и ни одного, которого
@@ -1515,12 +1560,6 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // проверка искала не ту строку.
                 + "\nglobal.__pct = typeof pct === 'function' "
                 + "? pct : null;"
-                // Сделки книги на странице построенного разворачиваются
-                // КНОПКОЙ, а `querySelectorAll` в заглушке пуст —
-                // обработчик до проверки не доезжает. Дёргается сама
-                // функция страницы, иначе «развернул» шло бы вхолостую.
-                + "\nglobal.__builtOpen = typeof toggleTrades === "
-                + "'function' ? toggleTrades : null;"
                 + "\nglobal.__builtBp = typeof bp === 'function' "
                 + "? bp : null;"
                 + "\nglobal.__infoClose = typeof closeInfo === "
@@ -1589,14 +1628,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1799,7 +1838,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -3514,7 +3553,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat
       && !/botoff=1/.test(SEARCH)) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
@@ -3848,7 +3887,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour || isLearn || isLive || isPaper || isDays || isAgents || isBuilt) {
+             || isTree || isTour || isLearn || isLive || isPaper || isDays || isAgents || isBuilt || isStrat) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {
@@ -4134,6 +4173,65 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛОМ — «корни есть» прошло бы и на одном корне из трёх, а
   // «ветки есть» — на списке без вылетевших, то есть на подделанном
   // знаменателе испытаний.
+  // СТРАНИЦА СТРАТЕГИИ — просьба владельца: по нажатию на блок
+  // открывается страница с разбивкой сделок по дням, бэктестом на
+  // истории и полной информацией. Проверяется, что каждая из трёх
+  // частей на месте и что бэктест не выдан за форвард.
+  if (isStrat) {
+    const E = (id) => String((global.__el(id) || {}).innerHTML || "");
+    const head = E("head"), info = E("info"), bt = E("bt");
+    const days = E("days"), twins = E("twins"), strip = E("strip");
+    if (/stratbad=1/.test(SEARCH)) {
+      // Неизвестный ключ — отказ СЛОВАМИ. Пустая карточка читалась бы
+      // как «стратегия есть, просто нечего показать».
+      if (!/в реестре испытаний нет/.test(head))
+        bad.push("стратегия: неизвестный ключ не назван словами");
+      if (/бэктест|backtest/i.test(E("btcap")))
+        bad.push("стратегия: у неизвестного ключа нарисованы разделы");
+    } else {
+      if (!/h4_z_f30_w5_gl_rrlo_se_b0_a0/.test(head))
+        bad.push("стратегия: ключ не показан");
+      // Полная информация: объявленное рядом с ПРИМЕНЁННЫМ, и ось,
+      // которой в записи книги нет, названа словами — иначе правило,
+      // не доехавшее до сканера, выглядит доехавшим.
+      if (!/floor_bp/.test(info))
+        bad.push("стратегия: таблица правил не показана");
+      if (!/доехало ли оно до сканера/.test(info))
+        bad.push("стратегия: пробел в записи правила не назван");
+      if (!/проверяет низкое отношение/.test(info))
+        bad.push("стратегия: довод предложения не показан");
+      // Бэктест и форвард — РАЗНЫЕ строки, и обе подписаны. Сумма
+      // (-67.3 + -281.6) на странице означала бы кривую, наполовину
+      // состоящую из прошлого, которое ассистент уже видел.
+      if (!/-67\.3/.test(strip))
+        bad.push("стратегия: форвард не показан");
+      if (!/-281\.6/.test(strip))
+        bad.push("стратегия: бэктест не показан");
+      if (/-348\.9/.test(strip + bt))
+        bad.push("стратегия: форвард сложен с бэктестом");
+      if (!/(backtest|бэктест)/i.test(bt))
+        bad.push("стратегия: дни бэктеста не подписаны бэктестом");
+      if (!/(forward|форвард)/i.test(bt))
+        bad.push("стратегия: дни форварда не подписаны форвардом");
+      // Разбивка по дням приходит от `book_days` — того же кода, что
+      // у страницы книги ядра. Без запроса раздел был бы пуст, а
+      // пустота читалась бы как «книга не торговала».
+      if (!seen.some(u => u.startsWith("/book_days")))
+        bad.push("стратегия: разбивка по дням не запрошена");
+      if (!/2026-08-24/.test(days))
+        bad.push("стратегия: дней живой книги не видно");
+      // Близнецы: доля 1.00 означает одно испытание под двумя
+      // именами, и страница обязана это СКАЗАТЬ, а не только
+      // напечатать число.
+      if (!/1\.00/.test(twins))
+        bad.push("стратегия: совпадение решений не показано");
+      if (!/(ОДНО испытание|ONE\s+trial)/.test(twins))
+        bad.push("стратегия: совпадение 1.00 не объяснено словами");
+      if (!/h4_r_f30_w5_gl_rrlo_se_b0_a0/.test(twins))
+        bad.push("стратегия: близнец не назван по имени");
+    }
+  }
+
   if (isBuilt) {
     const E = (id) => String((global.__el(id) || {}).innerHTML || "");
     const tree = E("tree"), frame = E("frame"), strip = E("strip");
@@ -4179,13 +4277,21 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // ссылку, которая была нарисована.
     const blocks = tree.split('class="branch').slice(1);
     const blockOf = (k) => blocks.find(x => x.includes(k)) || "";
-    if (!/hz=h4_z_f30_w5_gl_rrlo_se_b0_a0/.test(
-          blockOf("h4_z_f30_w5_gl_rrlo_se_b0_a0")))
-      bad.push("построено: нет ссылки на сделки живой книги");
-    // И обратная сторона: у книги, которой живая машинерия не умеет,
-    // ссылки быть не должно — она вела бы в пустоту.
-    if (/trades-page/.test(blockOf("h4_z_f30_w5_gs_rrhi_se_b0_a1")))
-      bad.push("построено: ссылка на сделки книги, которой нет");
+    // Стратегия открывается СВОЕЙ страницей — просьба владельца:
+    // список блоками, по нажатию страница стратегии. Ссылка стоит у
+    // КАЖДОЙ карточки, включая ту, у которой живой книги нет: там
+    // страница и объясняет, почему её нет.
+    for (const k of ["h4_z_f30_w5_gl_rrlo_se_b0_a0",
+                     "h4_z_f30_w5_gs_rrhi_se_b0_a1"])
+      if (!blockOf(k).includes("/strategy-page?k=") ||
+          !blockOf(k).includes("id=" + k))
+        bad.push("построено: карточка " + k + " не открывает свою "
+                 + "страницу стратегии");
+    // Сделок на списке нет вовсе — они на странице стратегии. Пока
+    // они жили тут разворотом, страница отвечала на два вопроса
+    // сразу и ни на один целиком.
+    if (/trades-page/.test(tree))
+      bad.push("построено: сырые сделки остались на списке");
     // Причина отсутствия книги названа СЛОВАМИ. «Книги ещё нет» на
     // месте «книга не заводится по правилу» читается как «вот-вот
     // появится», а это другое утверждение о полосе.
@@ -4230,39 +4336,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/never\s+summed|не складываются/i.test(frame))
       bad.push("построено: рамка не говорит про запрет складывать "
                + "форвард с реплеем");
-    // Сделки бумажной книги — по кнопке, и разворот есть состояние
-    // ПОКАЗА: страница перерисовывается опросом, и разворот, живший в
-    // DOM, схлопывался бы сам.
+    // Сделок на списке нет ни до, ни после нажатия: карточка ведёт
+    // на страницу стратегии, а не разворачивается на месте.
     if (/ARBUSDT/.test(tree))
-      bad.push("построено: сделки показаны до нажатия");
-    if (!global.__builtOpen) {
-      bad.push("построено: у страницы нет разворота сделок");
-    } else {
-      global.__builtOpen("h4_z_f30_w5_gl_rrlo_se_b0_a0");
-      const t2 = E("tree");
-      if (!/ARBUSDT/.test(t2) || !/TUTUSDT/.test(t2))
-        bad.push("построено: развёрнутые сделки не показаны");
-      const rows = (t2.match(/<tr>/g) || []).length;
-      if (rows !== 3)
-        bad.push(`построено: строк в таблице сделок ${rows}, `
-                 + "а сделок две плюс шапка");
-      if (!/-18\.4/.test(t2) || !/\+44\.9/.test(t2))
-        bad.push("построено: нетто сделки не показано");
-      if (!/срок/.test(t2) || !/уровень/.test(t2))
-        bad.push("построено: причина выхода сделки не показана");
-      // Перерисовка опросом не вправе схлопывать разворот.
-      global.__step && global.__step();
-      global.__builtOpen("h4_r_f30_w5_gl_rrlo_se_b0_a0");
-      const t3 = E("tree");
-      // Пустой хвост при сделках — прогон прежнего образца, а не
-      // «книга не торговала». Молчаливая пустота читалась бы как
-      // отсутствие сделок.
-      if (!/прогон сделан до появления хвоста сделок/.test(t3))
-        bad.push("построено: пустой хвост сделок не объяснён");
-      global.__builtOpen("h4_z_f30_w5_gl_rrlo_se_b0_a0");
-      if (/ARBUSDT/.test(E("tree")))
-        bad.push("построено: повторное нажатие не свернуло сделки");
-    }
+      bad.push("построено: сделки показаны на списке");
     if (/builtstale=1/.test(SEARCH)) {
       if (!/stale|устарели/i.test(E("alarm")))
         bad.push("построено: устаревший прогон не назван");

@@ -4542,6 +4542,151 @@ class Collector:
         self._built_cache = (now, res)
         return res
 
+    # Ось правила → поле манифеста живой книги, в котором она ЗАПИСАНА.
+    # Таблица нужна затем, чтобы страница могла показать объявленное
+    # рядом с применённым: реестр есть инструкция, манифест — запись о
+    # том, чем книга торговала на самом деле, и расхождение между ними
+    # обязано быть видно. Ось без поля (`None`) — не мелочь показа: это
+    # правило, которого в записи книги НЕТ, то есть проверить, доехало
+    # ли оно до сканера, нечем.
+    APPLIED_FIELD = {"floor_bp": "floor_bp", "rr_band": ("min_rr", "max_rr"),
+                     "width": "per_side", "geom": "exit_policy",
+                     "sizing": "sizing", "agree": "agree",
+                     "target": None, "rank": None, "basket": None}
+
+    def _cand_decisions(self, cid, rec):
+        """Множество РЕШЕНИЙ живой книги кандидата.
+
+        Решение — (рука, час, имя, сторона): именно оно, а не сделка,
+        отвечает на вопрос «две книги испытывают разное или одно».
+        Строится тем же `_book_view`, которым живут все страницы книг:
+        второй разбор `picks.jsonl` разошёлся бы с первым.
+        """
+        import json as _json
+        mdir = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                            rec["dir"])
+        try:
+            with open(os.path.join(mdir, "manifest.json"),
+                      encoding="utf-8") as f:
+                mman = _json.load(f) or {}
+        except (OSError, ValueError):
+            return None, None
+        v = self._book_view(mdir, mman, lite=True)
+        return {(t.get("arm"), t.get("hour"), t.get("sym"), t.get("side"))
+                for t in v["trades"]}, mman
+
+    def factory_strategy(self, cid):
+        """Полная карточка ОДНОЙ стратегии автономной системы.
+
+        Просьба владельца: список стратегий блоками, а по нажатию —
+        страница стратегии с разбивкой сделок по дням, бэктестом на
+        истории и полной информацией.
+
+        Карточка строится ПОВЕРХ `factory_built`, а не вторым чтением
+        реестра и артефакта: у списка и у страницы стратегии обязан
+        быть один источник, иначе они разойдутся ровно так, как в этом
+        проекте расходилась каждая вторая копия. Разбивку по дням
+        страница берёт у `book_days` — тем же кодом, что страница
+        книги ядра.
+
+        Три вещи, которых нет в списке и которые есть здесь.
+
+        **Применённое рядом с объявленным.** Реестр — инструкция,
+        манифест книги — запись; ось, у которой в записи нет поля,
+        названа словами, а не спрятана: правило, не доехавшее до
+        сканера, снаружи неотличимо от правила, которое доехало.
+
+        **Близнецы.** Доля решений, совпавших с другой живой книгой
+        кандидата. Это и есть проверяемый ответ на вопрос «есть ли
+        смысл тестить»: две книги с совпадением 1.00 суть одно
+        испытание под двумя именами, и знаменатель, считающий их за
+        два, врёт.
+
+        **Бэктест отделён от форварда** той же `split_forward`, что и
+        в списке: дни до объявления — пересчёт по прошлому, которое
+        ассистент видел, когда предлагал.
+        """
+        now = time.time()
+        cid = str(cid or "")
+        d = self.factory_built()
+        b = root = None
+        for r in d.get("roots") or []:
+            for x in r.get("branches") or []:
+                if x["key"] == cid:
+                    b, root = x, r
+        if b is None:
+            # Неизвестный ключ — отказ СЛОВАМИ, а не пустая карточка:
+            # «стратегии нет» и «стратегия пуста» лечатся разным.
+            return {"id": cid, "generated_at": round(now, 1),
+                    "error": f"стратегии {cid!r} в реестре испытаний нет"}
+        out = dict(b)
+        out.update(id=cid, generated_at=round(now, 1),
+                   root={"key": root["key"], "title": root["title"]},
+                   verdict=d.get("verdict"), eff_n=d.get("eff_n"),
+                   window_d=d.get("window_d"),
+                   run_at=d.get("run_at"), run_stale=d.get("run_stale"),
+                   art_error=d.get("art_error"))
+        rec, _why = self.book_rec(cid)
+        mine, mman = (None, None)
+        if rec:
+            mine, mman = self._cand_decisions(cid, rec)
+        # Объявлено против применённого. Значение поля берётся из
+        # МАНИФЕСТА книги, а не из `rule` в нём же: `rule` есть копия
+        # инструкции и совпадёт с реестром всегда, то есть проверяла бы
+        # сама себя.
+        rows = []
+        for ax in sorted(out.get("rule") or {}):
+            fld = self.APPLIED_FIELD.get(ax, "?")
+            want = (out.get("rule") or {}).get(ax)
+            if fld is None:
+                rows.append({"axis": ax, "want": want, "got": None,
+                             "gap": "в записи книги этого правила нет — "
+                                    "доехало ли оно до сканера, "
+                                    "проверить нечем"})
+                continue
+            if mman is None:
+                rows.append({"axis": ax, "want": want, "got": None,
+                             "gap": "живой книги нет — применять нечему"})
+                continue
+            if isinstance(fld, tuple):
+                got = " / ".join("—" if mman.get(k) is None
+                                 else str(mman.get(k)) for k in fld)
+            else:
+                got = mman.get(fld)
+            rows.append({"axis": ax, "want": want, "got": got,
+                         "field": fld if isinstance(fld, str)
+                         else " / ".join(fld)})
+        out["applied"] = rows
+        out["applied_from"] = (rec["dir"] if rec else None)
+        # Близнецы считаются только среди книг, у которых решения ЕСТЬ:
+        # книга без живой записи не «не совпадает», её просто не с чем
+        # сравнивать, и ноль на её месте читался бы как независимость.
+        twins, unmeasured = [], []
+        if mine:
+            for r2 in d.get("roots") or []:
+                for x in r2.get("branches") or []:
+                    if x["key"] == cid:
+                        continue
+                    rc2, _w2 = self.book_rec(x["key"])
+                    if not rc2:
+                        unmeasured.append(x["key"])
+                        continue
+                    other, _m2 = self._cand_decisions(x["key"], rc2)
+                    if not other:
+                        unmeasured.append(x["key"])
+                        continue
+                    inter = len(mine & other)
+                    uni = len(mine | other)
+                    twins.append({"id": x["key"], "inter": inter,
+                                  "union": uni,
+                                  "share": round(inter / uni, 2) if uni
+                                  else None})
+            twins.sort(key=lambda t: -(t["share"] or 0))
+        out["mine_n"] = None if mine is None else len(mine)
+        out["twins"] = twins
+        out["twins_unmeasured"] = unmeasured
+        return out
+
     def model_tree(self):
         """Дерево моделей: две руки и их книги, с логикой каждой ветки.
 

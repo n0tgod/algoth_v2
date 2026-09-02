@@ -497,6 +497,17 @@ def test_pages_run_headless():
                 # а не выглядеть сегодняшними.
                 ("построено системой, прогон устарел", web.BUILTPAGE,
                  "?k=xxx&builtstale=1"),
+                # Страница ОДНОЙ стратегии: разбивка по дням,
+                # бэктест на истории, полная информация. Сюда
+                # приходят и прямой ссылкой, минуя список, поэтому
+                # рамка и оговорки обязаны стоять на ней самой.
+                ("стратегия автономной системы", web.STRATPAGE,
+                 "?k=xxx&id=h4_z_f30_w5_gl_rrlo_se_b0_a0"),
+                # Ключа нет в реестре — отказ словами, а не пустая
+                # карточка: «стратегии нет» и «стратегия пуста»
+                # лечатся разным.
+                ("стратегия: ключа нет в реестре", web.STRATPAGE,
+                 "?k=xxx&id=нетакой&stratbad=1"),
                 # Турнир политик: весь лист веток отдельной страницей.
                 ("турнир политик", web.TOURPAGE, "?k=xxx"),
                 # Ночной прогон не пришёл: старая таблица обязана
@@ -6341,6 +6352,115 @@ def test_factory_built_splits_forward_from_replay():
 
 
 
+def test_strategy_card_shows_applied_beside_declared_and_twins():
+    """Карточка стратегии: применённое рядом с объявленным и близнецы.
+
+    Просьба владельца: по нажатию на стратегию открывается её
+    страница с полной информацией. «Полная» здесь значит два
+    утверждения, которых нет в списке.
+
+    ПЕРВОЕ. Реестр испытаний — инструкция, манифест живой книги —
+    запись о том, чем книга торговала. Ось, у которой в записи нет
+    поля, названа словами: правило, не доехавшее до сканера, снаружи
+    неотличимо от доехавшего, и молчание на его месте читается как
+    «применено».
+
+    ВТОРОЕ. Доля совпавших решений с другой живой книгой. Две книги с
+    совпадением 1.00 суть ОДНО испытание под двумя именами, и
+    знаменатель, считающий их за два, врёт — это ровно вопрос
+    владельца «есть ли смысл тестить их все», сделанный проверяемым.
+
+    Неизвестный ключ — отказ СЛОВАМИ: «стратегии нет» и «стратегия
+    пуста» лечатся разным.
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    was = C.HERE
+    try:
+        C.HERE = os.path.join(d, "research", "b1_book")
+        out = os.path.join(d, "research", "s8_loop", "out")
+        fout = os.path.join(d, "research", "factory", "out")
+        os.makedirs(out, exist_ok=True)
+        os.makedirs(fout, exist_ok=True)
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), "..",
+                                        "factory"))
+        import space as S
+        rule = dict(S.index_to_rule(0), target="fwd_4h", geom="levels",
+                    rank="sigma", floor_bp=30, width=5, rr_band="lo",
+                    sizing="equal", basket="no", agree="no")
+        twin = dict(rule, rank="raw")
+        k1, k2 = S.key(rule), S.key(twin)
+        dec = 1788100000.0
+        with open(os.path.join(fout, "ledger.jsonl"), "w",
+                  encoding="utf-8") as f:
+            for k, r in ((k1, rule), (k2, twin)):
+                f.write(json.dumps({"ev": "declare", "id": k, "at": dec,
+                                    "rule": r, "lane": "selected"},
+                                   ensure_ascii=False) + "\n")
+        with open(os.path.join(fout, "factory-day-1m.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"meta": {"at": "2026-09-02 01:00"},
+                       "summary": {"verdict": "вердикта нет"},
+                       "candidates": {}}, f)
+        hour = "2026-09-02-10"
+        ms = dec + 7200
+        # ДВЕ книги с ОДНИМИ решениями: ось порядка их не различает,
+        # и близнец обязан показать это долей 1.00.
+        for k in (k1, k2):
+            mdir = os.path.join(out, "model_c_" + k)
+            os.makedirs(mdir, exist_ok=True)
+            with open(os.path.join(mdir, "manifest.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"situational": True, "slots": 10,
+                           "min_rr": 0.0, "max_rr": 1.5,
+                           "floor_bp": 30, "per_side": 5,
+                           "agree": False, "sizing": None,
+                           "exit_policy": "levels_age"}, f)
+            with open(os.path.join(mdir, "picks.jsonl"), "w",
+                      encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "arm": "gbm", "hour": hour, "at_ts": ms,
+                    "long": [{"sym": "LUSDT", "px": 1.0, "mae": -120.0,
+                              "mfe": 60.0, "at_ts": ms}],
+                    "short": []}, ensure_ascii=False) + "\n")
+            open(os.path.join(mdir, "review.jsonl"), "w").close()
+        # Состав книг пишет цикл — и книга существует ИМЕННО им:
+        # каталог на диске без записи в составе есть брошенная книга,
+        # а не живая. Фикстура обязана выглядеть как живой сервер.
+        import live_books as LB
+        books, _sk = LB.build(
+            {k1: {"lane": "selected", "rule": rule, "declared_at": dec},
+             k2: {"lane": "selected", "rule": twin, "declared_at": dec}},
+            describe=S.describe)
+        LB.write(os.path.join(d, "research", "s8_loop",
+                              "books_extra.json"), books)
+        col = C.Collector.__new__(C.Collector)
+        col.log = lambda m: None
+        col._px_cache = {}
+        col.books = {}
+        got = C.Collector.factory_strategy(col, k1)
+        check("стратегия: карточка построена", got.get("error") is None,
+              str(got.get("error")))
+        ax = {a["axis"]: a for a in got.get("applied") or []}
+        check("стратегия: пол входа взят из ЗАПИСИ книги",
+              ax.get("floor_bp", {}).get("got") == 30,
+              str(ax.get("floor_bp")))
+        check("стратегия: ось без поля названа словами",
+              bool(ax.get("rank", {}).get("gap")), str(ax.get("rank")))
+        tw = {t["id"]: t for t in got.get("twins") or []}
+        check("стратегия: близнец найден и посчитан",
+              tw.get(k2, {}).get("share") == 1.0, str(tw))
+        check("стратегия: свои решения посчитаны числом",
+              got.get("mine_n") == 1, str(got.get("mine_n")))
+        bad = C.Collector.factory_strategy(col, "нетакой")
+        check("стратегия: неизвестный ключ — отказ словами",
+              "нет" in (bad.get("error") or ""), str(bad))
+    finally:
+        C.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_candidate_book_is_addressable_and_unknown_key_is_refused():
     """Книга кандидата открывается своим ключом; чужой ключ — отказ.
 
@@ -6716,6 +6836,7 @@ def main():
     test_candles_window_can_end_in_the_past()
     test_recount_survives_restart()
     test_factory_built_splits_forward_from_replay()
+    test_strategy_card_shows_applied_beside_declared_and_twins()
     test_candidate_book_is_addressable_and_unknown_key_is_refused()
     test_agents_limit_wait_is_a_state_not_a_silence_alarm()
     test_agents_state_reads_the_registry_and_the_disk()
