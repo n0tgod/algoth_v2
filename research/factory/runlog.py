@@ -59,8 +59,78 @@ CITE_RE = re.compile(
     r"\.(?:jsonl|json|py|md|sh|js|csv|txt)(?![A-Za-z0-9_])")
 
 
+# Отказ по лимиту аккаунта — ОЖИДАНИЕ, а не поломка, и статус у него
+# свой. Разница не косметическая: попытка, упёршаяся в лимит, не
+# должна тратить суточный бюджет попыток — иначе три лимита подряд
+# выбивают роль из круга на сутки, хотя лимит снимается через час.
+# Решение владельца (2026-09-02): роль, остановленная лимитом,
+# возобновляется САМА по его истечении.
+LIMIT = "limit"
+
+# Запас, когда ответ не назвал момента снятия. Не угадываем время по
+# тексту: лучше подождать объявленное и сказать, что ждём именно
+# запас, чем выдумать точность, которой нет.
+LIMIT_BACKOFF_SEC = 1800
+
+
+def limit_retry_at(text, now=None):
+    """Когда пробовать снова после отказа по лимиту: (момент, откуда).
+
+    CLI при исчерпании квоты называет момент снятия эпохой в секундах
+    (`...limit reached|1788350400`) либо не называет вовсе. Разбираются
+    обе формы плюс `retry-after`; чего в ответе нет, то не выдумывается
+    — берётся объявленный запас, и ОТКУДА взят момент, возвращается
+    рядом: «ждём до 14:30» и «ждём полчаса, потому что нам не сказали»
+    — разные утверждения, и владелец вправе их различать.
+    """
+    now = time.time() if now is None else now
+    t = str(text or "")
+    # Эпоха рядом со словом о лимите. Диапазон проверяется: число из
+    # чужой строки лога, принятое за момент снятия, увело бы роль в
+    # ожидание на годы.
+    for m in re.finditer(r"(?:limit|quota|лимит)[^\n]{0,80}?"
+                         r"(\b1[6-9]\d{8}\b)", t, re.I):
+        v = float(m.group(1))
+        if now < v < now + 30 * 86400:
+            return v, "момент снятия назван ответом"
+    m = re.search(r"retry[- ]after\D{0,10}(\d{1,6})", t, re.I)
+    if m:
+        v = now + float(m.group(1))
+        if v < now + 30 * 86400:
+            return v, "срок из retry-after"
+    return now + LIMIT_BACKOFF_SEC, "момент снятия не назван, запас"
+
+
+def limit_wait(rows, role, now=None):
+    """Сколько секунд роли ещё ждать снятия лимита (0 — не ждёт).
+
+    Смотрится ПОСЛЕДНЯЯ строка роли: за лимитом мог последовать
+    удачный прогон, и старая отметка держала бы роль в ожидании
+    после того, как она уже отработала.
+
+    Ничья решается в пользу ПОЗДНЕЙ строки — по той же причине, что в
+    `last_by_role`: метка округлена до миллисекунды, а два отказа
+    подряд её делят. Со строгим сравнением побеждала первая, то есть
+    роль ждала бы по ПРОШЛОМУ сроку снятия и не поднималась в тот
+    такт, когда лимит уже истёк, — ровно то, чего требует правило
+    «возобновляется сама».
+    """
+    now = time.time() if now is None else now
+    got = [r for r in rows if r.get("role") == role
+           and r.get("status") != "start"]
+    if not got:
+        return 0.0
+    last = got[0]
+    for r in got[1:]:
+        if (r.get("at") or 0) >= (last.get("at") or 0):
+            last = r
+    if last.get("status") != LIMIT:
+        return 0.0
+    return max(0.0, float(last.get("retry_at") or 0) - now)
+
+
 def append(path, role, status, started, ended=None, note=None,
-           dry=False, out_bytes=None, pid=None):
+           dry=False, out_bytes=None, pid=None, retry_at=None):
     """Дозаписать строку прогона. Возвращает записанную строку.
 
     Статус `start` пишется В НАЧАЛЕ прогона и несёт номер процесса.
@@ -85,6 +155,8 @@ def append(path, role, status, started, ended=None, note=None,
             "utf-8", "replace").decode("utf-8")
     if out_bytes is not None:
         row["out_bytes"] = int(out_bytes)
+    if retry_at is not None:
+        row["retry_at"] = round(float(retry_at), 3)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")

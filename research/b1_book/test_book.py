@@ -484,6 +484,10 @@ def test_pages_run_headless():
                 # кричащая всегда перестаёт быть сигналом.
                 ("автономная система: круг отработал", web.AGENTSPAGE,
                  "?k=xxx&agentssched=1&agentsquiet=1"),
+                # Лимит аккаунта — ожидание, а не молчание: роль
+                # поднимется сама, и карточка обязана назвать срок.
+                ("автономная система: ждёт снятия лимита",
+                 web.AGENTSPAGE, "?k=xxx&agentssched=1&agentslimit=1"),
                 # Построенное системой: дерево механик и книг под
                 # ними. Проверяется и то, что форвард не сложен с
                 # реплеем прошлого, и что вылетевшая книга видна:
@@ -6260,6 +6264,67 @@ def test_factory_built_splits_forward_from_replay():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_agents_limit_wait_is_a_state_not_a_silence_alarm():
+    """Роль, ждущая снятия лимита, тревогой тишины НЕ помечается.
+
+    Решение владельца (2026-09-02): роль, остановленная лимитом
+    аккаунта, возобновляется сама. Значит её молчание законно и
+    временно — а тревога, кричащая на законное ожидание, перестаёт
+    быть сигналом. Проверка в ОБЕ стороны: ждущая роль молчит, а та
+    же роль без ожидания обязана кричать, иначе правка снимает
+    защиту вместо того, чтобы её уточнить.
+    """
+    import collect
+
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "factory"))
+    import runlog as RL
+
+    d = tempfile.mkdtemp()
+    was = collect.HERE
+    try:
+        collect.HERE = os.path.join(d, "research", "b1_book")
+        out = os.path.join(d, "research", "factory", "out")
+        os.makedirs(out, exist_ok=True)
+        os.makedirs(collect.HERE, exist_ok=True)
+        runs = os.path.join(out, RL.RUNS)
+        now = time.time()
+        # Роль круга молчит третьи сутки — это тревога.
+        #
+        # Строка пишется НАПРЯМУЮ, а не через `RL.append`: тот
+        # штампует `at` моментом записи (и правильно — журнал говорит,
+        # когда его писали). Фикстуре нужен СТАРЫЙ прогон, а не старая
+        # метка `started` при свежем `at`, иначе возраст выходит нулём
+        # и проверка идёт мимо своего предмета.
+        with open(runs, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps({
+                "at": round(now - 259000, 3), "role": "brief",
+                "status": "ok", "started": round(now - 260000, 3),
+                "ended": round(now - 259000, 3), "dry": False,
+                "note": "давно"}, ensure_ascii=False) + "\n")
+        c = collect.Collector.__new__(collect.Collector)
+        st = {x["key"]: x for x in collect.Collector
+              .agents_state(c)["steps"]}
+        check("молчащая роль круга помечена тревогой",
+              st["brief"]["stale"] is True, str(st["brief"]))
+        # Та же роль, упёршаяся в лимит: ожидание, а не тревога.
+        RL.append(runs, "brief", RL.LIMIT, now - 60,
+                  note="лимит аккаунта", retry_at=now + 1200)
+        c2 = collect.Collector.__new__(collect.Collector)
+        got = collect.Collector.agents_state(c2)
+        st2 = {x["key"]: x for x in got["steps"]}
+        check("ждущая снятия лимита тревогой не помечена",
+              st2["brief"]["stale"] is False, str(st2["brief"]))
+        check("срок ожидания отдан числом",
+              900 < (st2["brief"]["limit_wait_sec"] or 0) <= 1200,
+              str(st2["brief"].get("limit_wait_sec")))
+        check("роль не попала в список молчащих",
+              "brief" not in (got.get("stale_keys") or []),
+              str(got.get("stale_keys")))
+    finally:
+        collect.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_agents_state_reads_the_registry_and_the_disk():
     """Автономная система: тексты из реестра, построенность — с диска.
 
@@ -6487,6 +6552,7 @@ def main():
     test_candles_window_can_end_in_the_past()
     test_recount_survives_restart()
     test_factory_built_splits_forward_from_replay()
+    test_agents_limit_wait_is_a_state_not_a_silence_alarm()
     test_agents_state_reads_the_registry_and_the_disk()
     print()
     if FAILED:

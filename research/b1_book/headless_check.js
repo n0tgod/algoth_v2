@@ -461,6 +461,10 @@ global.fetch = async (url) => {
                     built: false, prompt: true,
                     in_circle: true, stale: true,
                     last_ok_age_sec: 201600,
+                    // Ожидание снятия лимита — состояние: роль молчит
+                    // по делу и поднимется сама.
+                    limit_wait_sec: /agentslimit=1/.test(SEARCH)
+                      ? 1500 : null,
                     last_run: {status: "no-auth", at: 1788215000,
                                age_sec: 900, took_sec: 0.4,
                                note: "авторизации нет ни одним путём"},
@@ -3942,6 +3946,17 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // владелец спрашивает «работает ли сейчас», глядя на список.
     if (!/data-live="1"/.test(pipe))
       bad.push("агенты: работающая роль не помечена в списке");
+    // Лимит аккаунта — ОЖИДАНИЕ, и оно обязано стоять на карточке
+    // числом: «молчит» и «ждёт до срока» лечатся разным, а роль,
+    // ждущая лимита, поднимется сама.
+    if (/agentslimit=1/.test(SEARCH)) {
+      if (!/data-limitwait="1"/.test(pipe))
+        bad.push("агенты: ожидание лимита не помечено");
+      if (!/\b25 (min|мин)\b/.test(pipe))
+        bad.push("агенты: срок ожидания лимита не назван числом");
+    } else if (/data-limitwait="1"/.test(pipe)) {
+      bad.push("агенты: ожидание лимита показано там, где его нет");
+    }
     if (!/>4</.test(strip))
       bad.push("агенты: число прогонов ролей не показано");
     // Пока расписания нет, молчание роли — состояние, а не отказ.

@@ -4200,8 +4200,14 @@ class Collector:
             st["in_circle"] = k in circle
             st["last_ok_age_sec"] = (round(now - okrun[k], 1)
                                      if k in okrun else None)
+            # Ждёт снятия лимита аккаунта — это СОСТОЯНИЕ, и тревога
+            # тишины по нему не кричит: роль молчит по делу и
+            # поднимется сама по истечении срока. Кричащая на законное
+            # ожидание тревога перестаёт быть сигналом.
+            w = RL.limit_wait(runs, k, now)
+            st["limit_wait_sec"] = round(w, 1) if w > 0 else None
             st["stale"] = bool(
-                sched and st["in_circle"]
+                sched and st["in_circle"] and not w
                 and (k not in okrun
                      or now - okrun[k] > self.AGENTS_STALE))
             if st["stale"]:

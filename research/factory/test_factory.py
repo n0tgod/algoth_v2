@@ -1000,7 +1000,7 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
     # краснеет на верном коде (случилось при переходе на Fable 5.1).
     MAIN, BACK = AG.model_of("propose"), AG.fallback_of("propose")
 
-    def run(first_fails_with):
+    def run(first_fails_with, both=False):
         d = tempfile.mkdtemp()
         bin_d = os.path.join(d, "bin")
         os.makedirs(bin_d)
@@ -1019,11 +1019,12 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
                     'done\n'
                     'cat > /dev/null\n'
                     'echo "$m" >> "%s"\n'
-                    'if [ "$m" = "%s" ]; then\n'
+                    'if [ "%s" = "1" ] || [ "$m" = "%s" ]; then\n'
                     '  echo "%s"; exit 1\n'
                     'fi\n'
                     'echo "подставная модель отработала"\n'
-                    % (seen, MAIN, first_fails_with))
+                    % (seen, "1" if both else "0", MAIN,
+                       first_fails_with))
         os.chmod(os.path.join(bin_d, "claude"), 0o755)
         env = dict(os.environ, AGENTS_OUT=d, AGENTS_NO_PUBLISH="1",
                    PATH=bin_d + os.pathsep + os.environ.get("PATH", ""))
@@ -1053,6 +1054,23 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
           "ЛИМИТ" in r.stdout, r.stdout[-200:])
 
     # Отказ, не похожий на лимит: откат не делается, прогон падает.
+    # Лимитом кончились ОБЕ модели: уперлись не в модель, а в аккаунт.
+    # Строка `limit` с моментом повтора, код 3 — и ни слова «упал»:
+    # круг по этой строке разбудит роль сам.
+    r, used, rows = run("Error: usage limit reached for this model",
+                        both=True)
+    st = [x["status"] for x in rows]
+    check("лимит обеих моделей записан ожиданием, а не падением",
+          RL.LIMIT in st and "fail" not in st, str(st))
+    lim = [x for x in rows if x["status"] == RL.LIMIT]
+    check("в строке ожидания есть момент повтора",
+          lim and lim[-1].get("retry_at", 0) > time.time(),
+          str(lim[-1] if lim else None))
+    check("ожидание отличено кодом возврата", r.returncode == 3,
+          str(r.returncode))
+    check("о лимите аккаунта сказано громко",
+          "ЛИМИТ АККАУНТА" in r.stdout, r.stdout[-200:])
+
     r, used, rows = run("Error: something else entirely went wrong")
     check("на чужом отказе запасная не зовётся",
           used == [MAIN], str(used))
@@ -1063,6 +1081,110 @@ def test_fallback_happens_only_on_a_limit_and_is_recorded():
     check("в строке падения названа модель",
           any(MAIN in (x.get("note") or "") for x in rows),
           str([x.get("note") for x in rows]))
+
+
+def test_a_usage_limit_is_a_wait_and_the_role_resumes_itself():
+    """Лимит аккаунта — ОЖИДАНИЕ: бюджета не тратит, снимется — сам.
+
+    Решение владельца (2026-09-02): «если какой-то из агентов попал на
+    этот лимит и остановился, он должен автоматически потом сам
+    возобновлять работу по истечению этого лимита».
+
+    Три утверждения, ломающиеся порознь. (1) До срока роль НЕ
+    будится — звать модель на тот же отказ значит тратить квоту.
+    (2) Попытка, упёршаяся в лимит, суточного бюджета НЕ тратит:
+    иначе три лимита подряд выбивают роль на сутки при лимите на час,
+    и «возобновится сама» не выполняется ровно там, где нужно.
+    (3) По истечении срока шаг поднимается САМ, на обычном такте
+    круга — отдельного расписания для этого не заводится.
+    """
+    import cycle as CY
+
+    d = tempfile.mkdtemp()
+    old = (CY.OUT, CY.STOP, CY.launch)
+    try:
+        CY.OUT = d
+        CY.STOP = os.path.join(d, "STOP")
+        runs = os.path.join(d, RL.RUNS)
+        launched = []
+        CY.launch = lambda k, kind, argv, log=print: (
+            launched.append(k) or 4242)
+        now = time.time()
+        # Разведчик упёрся в лимит, снятие через полчаса.
+        RL.append(runs, "scout", "start", now - 60, pid=1)
+        RL.append(runs, "scout", RL.LIMIT, now - 60,
+                  note="лимит аккаунта", retry_at=now + 1800)
+        CY.main(["--force"])
+        check("до срока роль не будится", "scout" not in launched,
+              str(launched))
+        check("круг не встал: следующий шаг пошёл",
+              launched == ["brief"], str(launched))
+
+        # Тот же лимит ещё дважды: бюджет попыток не тратится.
+        for i in range(2):
+            RL.append(runs, "scout", "start", now - 50 + i, pid=1)
+            RL.append(runs, "scout", RL.LIMIT, now - 50 + i,
+                      note="лимит", retry_at=now + 1800)
+        rows, _ = RL.read(runs)
+        # Срок истёк — роль обязана подняться сама, без вмешательства.
+        RL.append(runs, "scout", "start", now - 40, pid=1)
+        RL.append(runs, "scout", RL.LIMIT, now - 40, note="лимит",
+                  retry_at=now - 1)
+        launched.clear()
+        CY.main(["--force"])
+        check("по истечении срока роль поднялась сама",
+              launched == ["scout"], str(launched))
+
+        # А четыре НАСТОЯЩИХ отказа подряд бюджет тратят и шаг
+        # пропускают: правило лимита не должно снимать защиту от
+        # бесконечного вызова модели.
+        d2 = tempfile.mkdtemp()
+        CY.OUT, CY.STOP = d2, os.path.join(d2, "STOP")
+        runs2 = os.path.join(d2, RL.RUNS)
+        for i in range(3):
+            RL.append(runs2, "scout", "start", now - 30 + i, pid=1)
+            RL.append(runs2, "scout", "fail", now - 30 + i,
+                      note="что-то другое")
+        launched.clear()
+        CY.main(["--force"])
+        check("настоящие отказы бюджет тратят",
+              launched == ["brief"], str(launched))
+        shutil.rmtree(d2, ignore_errors=True)
+    finally:
+        CY.OUT, CY.STOP, CY.launch = old
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_limit_reset_time_is_read_not_guessed():
+    """Момент снятия берётся из ответа, а выдумка называется запасом.
+
+    «Ждём до 14:30» и «ждём полчаса, потому что нам не сказали» —
+    разные утверждения, и владелец вправе их различать: первое можно
+    проверить, второе только принять.
+    """
+    now = 1788350000.0
+    at, src = RL.limit_retry_at(
+        "Claude AI usage limit reached|1788353600", now)
+    check("эпоха из ответа прочитана", at == 1788353600.0
+          and "ответом" in src, f"{at} / {src}")
+    at, src = RL.limit_retry_at("rate limit; retry-after: 120", now)
+    check("retry-after прочитан", at == now + 120
+          and "retry-after" in src, f"{at} / {src}")
+    at, src = RL.limit_retry_at("usage limit reached, try later", now)
+    check("без срока берётся объявленный запас",
+          at == now + RL.LIMIT_BACKOFF_SEC and "запас" in src,
+          f"{at} / {src}")
+    # Число из чужой строки лога, принятое за момент снятия, увело бы
+    # роль в ожидание на годы: диапазон проверяется.
+    at, src = RL.limit_retry_at("лимит; сделок 1999999999 за месяц", now)
+    check("число вне разумного окна за срок не принимается",
+          "запас" in src, f"{at} / {src}")
+    # За лимитом последовал удачный прогон — ожидание снято.
+    rows = [{"role": "scout", "status": RL.LIMIT, "at": now,
+             "retry_at": now + 999},
+            {"role": "scout", "status": "ok", "at": now + 1}]
+    check("удачный прогон снимает ожидание",
+          RL.limit_wait(rows, "scout", now + 2) == 0.0)
 
 
 def test_cycle_advances_one_step_and_obeys_the_safeties():
@@ -1470,6 +1592,8 @@ def main():
              test_rights_reach_the_model_whole,
              test_prompt_actually_reaches_the_model,
              test_a_broken_character_does_not_swallow_the_journal_row,
+             test_a_usage_limit_is_a_wait_and_the_role_resumes_itself,
+             test_limit_reset_time_is_read_not_guessed,
              test_fallback_happens_only_on_a_limit_and_is_recorded,
              test_cycle_advances_one_step_and_obeys_the_safeties,
              test_mech_step_leaves_its_end_line)

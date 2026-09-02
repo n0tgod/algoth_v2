@@ -214,17 +214,35 @@ def main(argv=None):
     # модели, а не против работы вообще.
     import agents as AG
     role_keys = {x["key"] for x in AG.roles()}
-    used = sum(1 for r in rows
-               if r.get("status") == "start" and not r.get("dry")
-               and r.get("role") in role_keys
-               and day_of(r.get("at") or 0) == today)
+    def burnt(pred):
+        """Попытки, ПОТРАЧЕННЫЕ сегодня: начатые минус упёршиеся в
+        лимит аккаунта. Прогон, остановленный лимитом, бюджета не
+        тратит — иначе три лимита подряд выбивают роль из круга на
+        сутки, хотя лимит снимается через час, и «возобновится сама»
+        не выполняется ровно там, где нужно (решение владельца
+        2026-09-02)."""
+        st = sum(1 for r in rows
+                 if r.get("status") == "start" and not r.get("dry")
+                 and pred(r) and day_of(r.get("at") or 0) == today)
+        lim = sum(1 for r in rows
+                  if r.get("status") == RL.LIMIT and not r.get("dry")
+                  and pred(r) and day_of(r.get("at") or 0) == today)
+        return max(0, st - lim)
+
+    used = burnt(lambda r: r.get("role") in role_keys)
     for key, kind, argvv, proof in CIRCLE:
         if done_today(key, kind, proof, rows, now):
             continue
-        tries = sum(1 for r in rows
-                    if r.get("status") == "start" and not r.get("dry")
-                    and r.get("role") == key
-                    and day_of(r.get("at") or 0) == today)
+        # Ждём снятия лимита — шаг ПРОПУСКАЕТСЯ, а не запускается:
+        # звать модель до срока значит тратить квоту на тот же отказ.
+        # Круг ходит каждые пять минут, поэтому по истечении срока шаг
+        # поднимется САМ, без отдельного расписания.
+        wait = RL.limit_wait(rows, key, now)
+        if wait > 0:
+            print(f"шаг {key}: лимит аккаунта, жду ещё "
+                  f"{wait / 60:.0f} мин — пропускаю, иду дальше")
+            continue
+        tries = burnt(lambda r, k=key: r.get("role") == k)
         if tries >= MAX_TRIES_PER_STEP:
             # ПРОПУСКАЕМ, а не останавливаемся: сломанный шаг не вправе
             # держать за собой остальной круг. Молчать при этом нельзя

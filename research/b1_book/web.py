@@ -8972,6 +8972,8 @@ const UI = {
   writes: {en: "writes", ru: "пишет"},
   forbid: {en: "may not", ru: "нельзя"},
   doubt: {en: "at doubt", ru: "при сомнении"},
+  waitlim: {en: "waiting out the account limit",
+            ru: "ждёт снятия лимита аккаунта"},
   why: {en: "why this step exists", ru: "зачем этот шаг"},
   role: {en: "role", ru: "роль"},
   mech: {en: "mechanical", ru: "механика"},
@@ -9156,6 +9158,10 @@ function render(){
           class="dot"></span>${T("live")}</span>` : ""}
         ${s.broken_run ? `<span class="chip off"
           data-broken="1">${T("broke")}</span>` : ""}
+        ${s.limit_wait_sec ? `<span class="chip"
+          data-limitwait="1" title="${T("waitlim")}">&#9203; ${
+            Math.ceil(s.limit_wait_sec / 60)} ${
+            LANG === "ru" ? "мин" : "min"}</span>` : ""}
       </div>
       <div class="sbody">${esc(tx(s, "plain"))}</div>
       ${s.kind === "role" ? `<div class="run mono">${T("lastrun")}:

@@ -231,6 +231,40 @@ fi
 BYTES="$(wc -c < "$TMP")"
 tail -c 4000 "$TMP"
 
+# Лимит аккаунта — ОЖИДАНИЕ, а не поломка (решение владельца
+# 2026-09-02: роль, остановленная лимитом, обязана возобновиться сама).
+# Сюда попадаем, когда лимитом кончились обе модели либо запасной нет:
+# значит уперлись не в модель, а в аккаунт, и звать кого-либо ещё
+# бессмысленно. Строка `limit` несёт МОМЕНТ ПОВТОРА, и по нему круг
+# сам разбудит роль — суточный бюджет попыток при этом не тратится,
+# иначе три лимита подряд выбивали бы роль на сутки при лимите на час.
+if [ "$RC" != "0" ] && limit_hit; then
+    RETRY="$("$PY" - "$TMP" <<'PYLIM'
+import os, sys
+sys.path.insert(0, os.path.join(os.getcwd(), "research", "factory"))
+import runlog as R
+with open(sys.argv[1], encoding="utf-8", errors="replace") as f:
+    at, src = R.limit_retry_at(f.read())
+print("%.3f\t%s" % (at, src))
+PYLIM
+)"
+    AT="${RETRY%%	*}"
+    SRC="${RETRY##*	}"
+    WHEN="$(date -u -d "@${AT%.*}" "+%H:%M:%S UTC" 2>/dev/null || echo "$AT")"
+    echo "ЛИМИТ АККАУНТА (модель $USED) — жду до $WHEN ($SRC)"
+    "$PY" - "$RUNS" "$ROLE" "$STARTED" "$AT" \
+        "модель $USED, лимит аккаунта; повтор после $WHEN ($SRC)" \
+        "$DRY" <<'PYEOF2'
+import sys, os
+sys.path.insert(0, os.path.join(os.getcwd(), "research", "factory"))
+import runlog as R
+path, role, started, at, note, dry = sys.argv[1:7]
+R.append(path, role, R.LIMIT, float(started), note=note,
+         dry=(dry == "1"), retry_at=float(at))
+PYEOF2
+    exit 3
+fi
+
 if [ "$RC" != "0" ]; then
     log_run "fail" "модель $USED, код $RC: $(tr '\n' ' ' < "$TMP" | cut -c1-400)"
     exit 1
