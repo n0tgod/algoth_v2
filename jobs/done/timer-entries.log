@@ -97,3 +97,13 @@
 [09-02 08:26:44] обучение пропущено по каденции: весам 16.8 ч при каденции 24; цикл 103 с (сведение часа 10 с, матрица 46 с, книги 47 с, оценка 0 с)
 [09-02 08:26:44] следующая попытка через 35 мин (обучения не было)
 конец: 2026-09-02T08:32:28Z, код 0
+публикуется в ветку main:
+ jobs/done/nolvl-fix.log      | 20 +++++++++
+ jobs/done/timer-entries.done |  1 +
+ jobs/done/timer-entries.log  | 99 ++++++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                |  3 ++
+ 4 files changed, 123 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   b85ce44..93f9be5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

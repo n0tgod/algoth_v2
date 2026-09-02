@@ -1,0 +1,176 @@
+== задание timer-when ==
+строка: run tools/diag_cycle.py --cand --entries --tail=2
+начало: 2026-09-02T08:33:30Z
+запускаю: .venv/bin/python tools/diag_cycle.py --cand --entries --tail=2
+=== процесс цикла ===
+НЕ НАЙДЕН — цикл не работает
+
+=== манифест модели ===
+возраст 16.9 ч
+  trained_at: 2026-09-01T15:36:42+00:00
+  train_seq: 518
+  cycle_sec: 5683.0
+  woke_after_hour_sec: 120.0
+  steps_sec: {'сведение часа': 184.5, 'матрица': 45.7, 'книги': 24.3, 'оценка': 0.1, 'канарейка': 1217.4, 'обучение': 4210.9}
+  canary_ic: 0.006
+
+=== манифесты книг ===
+  model: 16.95 ч
+  model.rank-floor0: 495.41 ч
+  model.rank-raw: 516.72 ч
+  model_c_h4_r_f30_w5_gl_rrlo_se_b0_a0: 0.11 ч
+  model_c_h4_z_f22_w10_gl_rr0_sv_b0_a1: 0.11 ч
+  model_c_h4_z_f30_w10_gl_rrhi_se_b0_a1: 0.11 ч
+  model_c_h4_z_f30_w5_gl_rrlo_se_b0_a0: 0.11 ч
+  model_c_h4_z_f30_w5_gl_rrlo_sr_b0_a0: 0.11 ч
+  model_c_h4_z_f30_w5_gs_rrhi_se_b0_a1: 0.11 ч
+  model_c_h4_z_f30_w5_gt_rrlo_se_b0_a0: 0.11 ч
+  model_demo: 709.42 ч
+  model_h1: 495.20 ч
+  model_h1.rank-raw: 518.38 ч
+  model_h24: 0.12 ч
+  model_h24a: 0.12 ч
+  model_h24b: 0.12 ч
+  model_h24bf: 0.12 ч
+  model_h24c: 0.12 ч
+  model_h24z: 0.12 ч
+  model_h24za: 0.12 ч
+  model_pretest: 617.28 ч
+  model_pretest.was-выключен__бета_не_оценима_: 697.45 ч
+  model_probe: 711.05 ч
+  model_sit: 0.12 ч
+  model_sit.rules-v1: 614.79 ч
+  model_sit.rules-v10: 476.19 ч
+  model_sit.rules-v11: 475.37 ч
+  model_sit.rules-v12: 456.92 ч
+  model_sit.rules-v2: 614.49 ч
+  model_sit.rules-v3: 612.37 ч
+  model_sit.rules-v4: 611.28 ч
+  model_sit.rules-v5: 610.45 ч
+  model_sit.rules-v6: 598.20 ч
+  model_sit.rules-v7: 597.46 ч
+  model_sit.rules-v8: 494.41 ч
+  model_sit.rules-v9: 479.40 ч
+  model_sit_lo: 0.11 ч
+  model_sit_obs: 0.12 ч
+  model_sit_obs.rules-v10: 476.19 ч
+  model_sit_obs.rules-v11: 475.37 ч
+  model_sit_obs.rules-v12: 456.92 ч
+  model_sit_obs.rules-v6: 598.20 ч
+  model_sit_obs.rules-v7: 597.46 ч
+  model_sit_obs.rules-v8: 494.40 ч
+  model_sit_obs.rules-v9: 479.40 ч
+  model_sit_r: 0.11 ч
+  model_sit_r.rules-v12: 467.25 ч
+  model_sit_r.rules-v12-1: 466.10 ч
+  model_sit_r.rules-v12-2: 456.92 ч
+  model_sit_r.rules-v13: 442.15 ч
+  model_z: 518.38 ч
+
+=== книги кандидатов ===
+книг в составе: 7
+  h4_r_f30_w5_gl_rrlo_se_b0_a0 [selected] слотов 10 пол 30.0 rr 0.0..1.5 на сторону 5 согласие False
+      вход 07:56:44 UAIUSDT long
+      вход 08:06:44 BLUAIUSDT short
+      вход 08:09:33 MAGMAUSDT long
+      вход 08:14:04 CYSUSDT long
+      вход 08:14:04 ETHFIUSDT long
+      вход 08:29:02 EWZUSDT short
+    gbm: сделок 12, закрыто 2, открыто 10, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 4 мин назад
+      вход 07:18:01 USUALUSDT long
+      вход 07:18:12 FILUSDT long
+      вход 07:22:57 OPUSDT long
+      вход 07:26:46 MSTUUSDT short
+      вход 07:48:02 ARBUSDT short
+      вход 08:19:02 CARVUSDT long
+    nn: сделок 13, закрыто 3, открыто 10, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 14 мин назад
+  h4_z_f22_w10_gl_rr0_sv_b0_a1 [control] слотов 20 пол 22.0 rr 0.0..None на сторону 10 согласие True
+      вход 07:49:03 OKTAUSDT short
+      вход 07:49:03 SYRUPUSDT short
+      вход 07:49:03 TEMUSDT short
+      вход 07:56:44 UAIUSDT long
+      вход 08:14:04 BTRUSDT short
+      вход 08:29:02 EWZUSDT short
+    gbm: сделок 13, закрыто 2, открыто 11, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 4 мин назад
+      вход 07:35:14 CELOUSDT short
+      вход 07:49:03 ICPUSDT long
+      вход 07:49:03 ZORAUSDT long
+      вход 07:49:03 OKTAUSDT short
+      вход 08:19:02 FILUSDT long
+      вход 08:29:02 MARSCOINUSDT short
+    nn: сделок 25, закрыто 5, открыто 20, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 4 мин назад
+  h4_z_f30_w10_gl_rrhi_se_b0_a1 [control] слотов 20 пол 30.0 rr 2.0..None на сторону 10 согласие True
+      вход 07:15:35 CASHCATUSDT short
+      вход 07:35:21 CELOUSDT short
+      вход 08:24:20 BNCUSDT short
+    gbm: сделок 3, закрыто 0, открыто 3, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 9 мин назад
+      вход 08:15:00 NIULAIUSDT short
+      вход 08:15:32 STORJUSDT long
+      вход 08:18:21 SOMIUSDT long
+      вход 08:20:36 SNXXUSDT long
+      вход 08:21:12 MUUUSDT long
+      вход 08:30:11 POWERUSDT short
+    nn: сделок 16, закрыто 2, открыто 14, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 3 мин назад
+  h4_z_f30_w5_gl_rrlo_se_b0_a0 [selected] слотов 10 пол 30.0 rr 0.0..1.5 на сторону 5 согласие False
+      вход 07:56:44 UAIUSDT long
+      вход 08:06:44 BLUAIUSDT short
+      вход 08:09:33 MAGMAUSDT long
+      вход 08:14:04 CYSUSDT long
+      вход 08:14:04 ETHFIUSDT long
+      вход 08:29:02 EWZUSDT short
+    gbm: сделок 12, закрыто 2, открыто 10, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 4 мин назад
+      вход 07:18:01 USUALUSDT long
+      вход 07:18:12 FILUSDT long
+      вход 07:22:57 OPUSDT long
+      вход 07:26:46 MSTUUSDT short
+      вход 07:48:02 ARBUSDT short
+      вход 08:19:02 CARVUSDT long
+    nn: сделок 13, закрыто 3, открыто 10, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 14 мин назад
+  h4_z_f30_w5_gl_rrlo_sr_b0_a0 [selected] слотов 10 пол 30.0 rr 0.0..1.5 на сторону 5 согласие False
+      вход 07:56:44 UAIUSDT long
+      вход 08:06:44 BLUAIUSDT short
+      вход 08:09:33 MAGMAUSDT long
+      вход 08:14:04 CYSUSDT long
+      вход 08:14:04 ETHFIUSDT long
+      вход 08:29:02 EWZUSDT short
+    gbm: сделок 12, закрыто 2, открыто 10, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 4 мин назад
+      вход 07:18:01 USUALUSDT long
+      вход 07:18:12 FILUSDT long
+      вход 07:22:57 OPUSDT long
+      вход 07:26:46 MSTUUSDT short
+      вход 07:48:02 ARBUSDT short
+      вход 08:19:02 CARVUSDT long
+    nn: сделок 13, закрыто 3, открыто 10, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 14 мин назад
+  h4_z_f30_w5_gs_rrhi_se_b0_a1 [control] слотов 10 пол 30.0 rr 2.0..None на сторону 5 согласие True
+      вход 07:15:35 CASHCATUSDT short
+      вход 07:35:21 CELOUSDT short
+      вход 08:24:20 BNCUSDT short
+    gbm: сделок 3, закрыто 0, открыто 3, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 9 мин назад
+      вход 07:50:06 STGUSDT long
+      вход 07:50:52 STBLUSDT short
+      вход 07:56:23 PIEVERSEUSDT short
+      вход 07:58:28 SKYUSDT long
+      вход 08:15:00 NIULAIUSDT short
+      вход 08:30:11 POWERUSDT short
+    nn: сделок 12, закрыто 2, открыто 10, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 3 мин назад
+  h4_z_f30_w5_gt_rrlo_se_b0_a0 [selected] слотов 10 пол 30.0 rr 0.0..1.5 на сторону 5 согласие False
+      вход 08:29:02 CLOUSDT short
+      вход 08:29:02 EWZUSDT short
+      вход 08:29:14 JELLYJELLYUSDT short
+      вход 08:30:00 TUSDT short
+      вход 08:30:00 PIEVERSEUSDT short
+      вход 08:30:36 BTRUSDT short
+    gbm: сделок 9, закрыто 0, открыто 9, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 3 мин назад
+      вход 08:30:31 BANUSDT long
+      вход 08:31:02 AKEUSDT short
+      вход 08:31:02 HEMIUSDT short
+      вход 08:31:02 PIEVERSEUSDT short
+      вход 08:31:07 BTWUSDT short
+      вход 08:31:07 BTRUSDT short
+    nn: сделок 23, закрыто 0, открыто 23, вышли без разбора 0, ждут разбора 0, схлопнули 0, последний вход 2 мин назад
+
+=== хвост train.log ===
+возраст 6.8 мин, размер 7971898 Б
+[09-02 08:26:44] обучение пропущено по каденции: весам 16.8 ч при каденции 24; цикл 103 с (сведение часа 10 с, матрица 46 с, книги 47 с, оценка 0 с)
+[09-02 08:26:44] следующая попытка через 35 мин (обучения не было)
+конец: 2026-09-02T08:33:30Z, код 0
