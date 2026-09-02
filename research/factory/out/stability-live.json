@@ -1,0 +1,483 @@
+{
+ "at": 1788367599.7822175,
+ "live": [
+  {
+   "key": "h4",
+   "cap": 3000.0,
+   "st": {
+    "days": 22,
+    "green": 0.5,
+    "med": -4.88,
+    "med_green": 75.03,
+    "worst": -228.62,
+    "bite": 3.0,
+    "dd": -946.9,
+    "under": 16,
+    "red": 4,
+    "tot": -415.5,
+    "thin": false
+   }
+  },
+  {
+   "key": "h24",
+   "cap": 3000.0,
+   "st": {
+    "days": 26,
+    "green": 0.462,
+    "med": -16.29,
+    "med_green": 142.68,
+    "worst": -304.25,
+    "bite": 2.1,
+    "dd": -1110.4,
+    "under": 17,
+    "red": 4,
+    "tot": 579.8,
+    "thin": false
+   }
+  },
+  {
+   "key": "h24b",
+   "cap": 3000.0,
+   "st": {
+    "days": 19,
+    "green": 0.474,
+    "med": -13.51,
+    "med_green": 89.68,
+    "worst": -277.06,
+    "bite": 3.1,
+    "dd": -1016.9,
+    "under": 12,
+    "red": 4,
+    "tot": 57.0,
+    "thin": false
+   }
+  },
+  {
+   "key": "h24bf",
+   "cap": 3000.0,
+   "st": {
+    "days": 19,
+    "green": 0.474,
+    "med": -10.02,
+    "med_green": 90.38,
+    "worst": -301.78,
+    "bite": 3.3,
+    "dd": -970.7,
+    "under": 12,
+    "red": 5,
+    "tot": 108.4,
+    "thin": false
+   }
+  },
+  {
+   "key": "h24c",
+   "cap": 3000.0,
+   "st": {
+    "days": 2,
+    "green": 1.0,
+    "med": 7.21,
+    "med_green": 7.21,
+    "worst": 5.27,
+    "bite": 0.7,
+    "dd": 0.0,
+    "under": 0,
+    "red": 0,
+    "tot": 14.4,
+    "thin": true
+   }
+  },
+  {
+   "key": "sit",
+   "cap": 3000.0,
+   "st": {
+    "days": 20,
+    "green": 0.5,
+    "med": -14.48,
+    "med_green": 96.49,
+    "worst": -322.43,
+    "bite": 3.3,
+    "dd": -701.8,
+    "under": 16,
+    "red": 4,
+    "tot": -235.7,
+    "thin": false
+   }
+  },
+  {
+   "key": "sit_lo",
+   "cap": 3000.0,
+   "st": {
+    "days": 12,
+    "green": 0.5,
+    "med": -0.51,
+    "med_green": 52.34,
+    "worst": -311.97,
+    "bite": 6.0,
+    "dd": -667.4,
+    "under": 10,
+    "red": 3,
+    "tot": -454.0,
+    "thin": false
+   }
+  },
+  {
+   "key": "sit_r",
+   "cap": 3000.0,
+   "st": {
+    "days": 20,
+    "green": 0.45,
+    "med": -7.06,
+    "med_green": 17.54,
+    "worst": -110.92,
+    "bite": 6.3,
+    "dd": -318.2,
+    "under": 19,
+    "red": 6,
+    "tot": -193.9,
+    "thin": false
+   }
+  },
+  {
+   "key": "z",
+   "cap": 3000.0,
+   "st": {
+    "days": 23,
+    "green": 0.435,
+    "med": -7.02,
+    "med_green": 62.73,
+    "worst": -188.33,
+    "bite": 3.0,
+    "dd": -568.5,
+    "under": 16,
+    "red": 8,
+    "tot": 34.7,
+    "thin": false
+   }
+  },
+  {
+   "key": "h24a",
+   "cap": 3000.0,
+   "st": {
+    "days": 1,
+    "green": 1.0,
+    "med": 4.87,
+    "med_green": 4.87,
+    "worst": 4.87,
+    "bite": 1.0,
+    "dd": 0.0,
+    "under": 0,
+    "red": 0,
+    "tot": 4.9,
+    "thin": true
+   }
+  },
+  {
+   "key": "h24za",
+   "cap": 3000.0,
+   "st": {
+    "days": 2,
+    "green": 0.0,
+    "med": -60.31,
+    "med_green": null,
+    "worst": -115.98,
+    "bite": null,
+    "dd": -120.6,
+    "under": 2,
+    "red": 2,
+    "tot": -120.6,
+    "thin": true
+   }
+  },
+  {
+   "key": "sit_obs",
+   "skip": "денег не держит"
+  },
+  {
+   "key": "h4_r_f30_w5_gl_rrlo_se_b0_a0",
+   "cap": 1000.0,
+   "st": {
+    "days": 1,
+    "green": 0.0,
+    "med": -43.03,
+    "med_green": null,
+    "worst": -43.03,
+    "bite": null,
+    "dd": -43.0,
+    "under": 1,
+    "red": 1,
+    "tot": -43.0,
+    "thin": true
+   }
+  },
+  {
+   "key": "h4_z_f22_w10_gl_rr0_sv_b0_a1",
+   "skip": "денег не держит"
+  },
+  {
+   "key": "h4_z_f30_w10_gl_rrhi_se_b0_a1",
+   "skip": "денег не держит"
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_se_b0_a0",
+   "cap": 1000.0,
+   "st": {
+    "days": 1,
+    "green": 0.0,
+    "med": -42.97,
+    "med_green": null,
+    "worst": -42.97,
+    "bite": null,
+    "dd": -43.0,
+    "under": 1,
+    "red": 1,
+    "tot": -43.0,
+    "thin": true
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_sr_b0_a0",
+   "cap": 1000.0,
+   "st": {
+    "days": 1,
+    "green": 0.0,
+    "med": -6.94,
+    "med_green": null,
+    "worst": -6.94,
+    "bite": null,
+    "dd": -6.9,
+    "under": 1,
+    "red": 1,
+    "tot": -6.9,
+    "thin": true
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gs_rrhi_se_b0_a1",
+   "skip": "денег не держит"
+  },
+  {
+   "key": "h4_z_f30_w5_gt_rrlo_se_b0_a0",
+   "cap": 1000.0,
+   "st": null
+  }
+ ],
+ "cands": [
+  {
+   "key": "h4_r_f30_w5_gl_rrlo_se_b0_a0",
+   "lane": "selected",
+   "alive": true,
+   "fwd": {
+    "days": 3,
+    "green": 0.333,
+    "med": -67.35,
+    "med_green": 14.36,
+    "worst": -74.63,
+    "bite": 5.2,
+    "dd": -142.0,
+    "under": 2,
+    "red": 2,
+    "tot": -127.6,
+    "thin": true
+   },
+   "pre": {
+    "days": 23,
+    "green": 0.478,
+    "med": -0.24,
+    "med_green": 103.18,
+    "worst": -324.21,
+    "bite": 3.1,
+    "dd": -637.1,
+    "under": 14,
+    "red": 4,
+    "tot": 532.9,
+    "thin": false
+   }
+  },
+  {
+   "key": "h4_z_f22_w10_gl_rr0_sv_b0_a1",
+   "lane": "control",
+   "alive": true,
+   "fwd": {
+    "days": 2,
+    "green": 0.5,
+    "med": -53.04,
+    "med_green": 7.34,
+    "worst": -113.42,
+    "bite": 15.5,
+    "dd": -113.4,
+    "under": 1,
+    "red": 1,
+    "tot": -106.1,
+    "thin": true
+   },
+   "pre": {
+    "days": 21,
+    "green": 0.667,
+    "med": 3.9,
+    "med_green": 48.17,
+    "worst": -152.98,
+    "bite": 3.2,
+    "dd": -175.1,
+    "under": 15,
+    "red": 2,
+    "tot": 177.6,
+    "thin": false
+   }
+  },
+  {
+   "key": "h4_z_f30_w10_gl_rrhi_se_b0_a1",
+   "lane": "control",
+   "alive": true,
+   "fwd": {
+    "days": 3,
+    "green": 0.333,
+    "med": -12.0,
+    "med_green": 246.8,
+    "worst": -77.25,
+    "bite": 0.3,
+    "dd": -77.2,
+    "under": 2,
+    "red": 1,
+    "tot": 157.6,
+    "thin": true
+   },
+   "pre": {
+    "days": 19,
+    "green": 0.421,
+    "med": -5.29,
+    "med_green": 72.57,
+    "worst": -176.76,
+    "bite": 2.4,
+    "dd": -243.1,
+    "under": 17,
+    "red": 4,
+    "tot": 12.3,
+    "thin": false
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_se_b0_a0",
+   "lane": "selected",
+   "alive": true,
+   "fwd": {
+    "days": 3,
+    "green": 0.333,
+    "med": -24.97,
+    "med_green": 0.51,
+    "worst": -76.36,
+    "bite": 149.7,
+    "dd": -100.8,
+    "under": 3,
+    "red": 1,
+    "tot": -100.8,
+    "thin": true
+   },
+   "pre": {
+    "days": 20,
+    "green": 0.4,
+    "med": -7.68,
+    "med_green": 47.42,
+    "worst": -286.86,
+    "bite": 6.0,
+    "dd": -375.9,
+    "under": 18,
+    "red": 5,
+    "tot": -281.6,
+    "thin": false
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_sr_b0_a0",
+   "lane": "selected",
+   "alive": true,
+   "fwd": {
+    "days": 3,
+    "green": 0.0,
+    "med": -16.29,
+    "med_green": null,
+    "worst": -41.55,
+    "bite": null,
+    "dd": -65.7,
+    "under": 3,
+    "red": 3,
+    "tot": -65.7,
+    "thin": true
+   },
+   "pre": {
+    "days": 20,
+    "green": 0.45,
+    "med": -4.23,
+    "med_green": 11.47,
+    "worst": -138.45,
+    "bite": 12.1,
+    "dd": -266.5,
+    "under": 20,
+    "red": 5,
+    "tot": -166.6,
+    "thin": false
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gs_rrhi_se_b0_a1",
+   "lane": "control",
+   "alive": true,
+   "fwd": {
+    "days": 2,
+    "green": 0.5,
+    "med": 117.4,
+    "med_green": 246.8,
+    "worst": -12.0,
+    "bite": 0.0,
+    "dd": -12.0,
+    "under": 1,
+    "red": 1,
+    "tot": 234.8,
+    "thin": true
+   },
+   "pre": {
+    "days": 20,
+    "green": 0.5,
+    "med": -5.89,
+    "med_green": 45.66,
+    "worst": -147.42,
+    "bite": 3.2,
+    "dd": -243.6,
+    "under": 18,
+    "red": 4,
+    "tot": -62.0,
+    "thin": false
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gt_rrlo_se_b0_a0",
+   "lane": "selected",
+   "alive": true,
+   "fwd": {
+    "days": 3,
+    "green": 0.333,
+    "med": -92.39,
+    "med_green": 68.68,
+    "worst": -406.39,
+    "bite": 5.9,
+    "dd": -498.8,
+    "under": 3,
+    "red": 2,
+    "tot": -430.1,
+    "thin": true
+   },
+   "pre": {
+    "days": 19,
+    "green": 0.579,
+    "med": 65.03,
+    "med_green": 166.09,
+    "worst": -751.09,
+    "bite": 4.5,
+    "dd": -1374.1,
+    "under": 13,
+    "red": 2,
+    "tot": -342.8,
+    "thin": false
+   }
+  }
+ ]
+}
