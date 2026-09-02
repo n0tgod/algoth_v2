@@ -22,6 +22,7 @@ import agents as AG  # noqa: E402
 import runlog as RL  # noqa: E402
 import ledger as L   # noqa: E402
 import space as S    # noqa: E402
+import live_books as LB  # noqa: E402
 
 FAILED = []
 
@@ -1746,7 +1747,8 @@ def main():
              test_cycle_advances_one_step_and_obeys_the_safeties,
              test_mech_step_leaves_its_end_line,
              test_candidate_diagnostic_counts_trades_not_journal_lines,
-             test_overfilled_book_record_is_retired_not_kept)
+             test_overfilled_book_record_is_retired_not_kept,
+             test_dropped_book_dir_is_found_and_the_archive_is_not)
     for t in tests:
         print(t.__name__)
         t()
@@ -1849,6 +1851,40 @@ def test_silence_frees_the_slot():
           bool(P.should_retire({}, now, 0.0, now - 40 * P.DAY)))
     check("молчание в пределах — не вылет",
           P.should_retire({}, now, 0.0, now - 20 * P.DAY) is None)
+
+
+def test_dropped_book_dir_is_found_and_the_archive_is_not():
+    """Каталог книги вне состава обязан быть НАЗВАН, архив — нет.
+
+    Состав книг меняется (полоса, ось, негодное правило), и брошенный
+    каталог держит открытые позиции, которых больше никто не судит.
+    Архив при этом трогать нельзя ни разу: он несёт точку в имени, и
+    различать их надо НАБОРОМ ЗНАКОВ ключа, а не догадкой о суффиксе.
+    """
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        for name in ("model", "model_sit", "model_c_alive", "model_c_gone",
+                     "model_c_gone.dropped-20260902-101010",
+                     "model_c_other.rules-v3"):
+            os.makedirs(os.path.join(d, name))
+        # Файл с подходящим именем каталогом не является.
+        with open(os.path.join(d, "model_c_notadir"), "w") as f:
+            f.write("x")
+        got = LB.dropped_dirs(d, "model", {"alive"})
+        check("брошенный каталог назван", got == ["model_c_gone"], str(got))
+        check("архив не тронут",
+              not any(".dropped-" in g or ".rules-" in g for g in got),
+              str(got))
+        check("книга состава не тронута", "model_c_alive" not in got, str(got))
+        check("ядро не тронуто",
+              "model" not in got and "model_sit" not in got, str(got))
+        check("файл каталогом не считается",
+              "model_c_notadir" not in got, str(got))
+        # Демо-прогон: каталог модели зовётся иначе — правило то же.
+        os.makedirs(os.path.join(d, "demo_c_gone"))
+        got2 = LB.dropped_dirs(d, "demo", set())
+        check("правило не зашито на имя главной книги",
+              got2 == ["demo_c_gone"], str(got2))
 
 
 def test_sweep_judges_control_by_the_same_rule():

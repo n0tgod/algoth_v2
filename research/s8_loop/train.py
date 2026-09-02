@@ -2540,6 +2540,64 @@ def cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, grid,
     rebuild_accounts(cdir, None, slots=int(g.get("slots") or 6))
 
 
+def retire_dropped_books(books, log_):
+    """Каталог книги кандидата вне состава — в архив.
+
+    Состав книг есть функция реестра испытаний, и он меняется: правило
+    полосы (живая книга только отобранным), снятие оси, негодное
+    правило. Каталог при этом остаётся на диске с ОТКРЫТЫМИ позициями,
+    которых больше никто не судит: цикл их не разбирает (книги нет в
+    составе), сторож не ведёт уровни (её нет в листе сечения), а показ
+    печатает «открыта» вечно. Это «отказ, неотличимый от тишины»,
+    перенесённый в бумажную книгу.
+
+    Зовётся ТОЛЬКО оттуда, где состав действительно посчитан: на всех
+    отказных путях `candidate_books` возвращает пустой список, и
+    архивировать по нему значило бы стереть запись из-за неудачного
+    чтения — тот же класс, что «признаком результата служило
+    утверждение, а не содержимое».
+
+    Оптовый сброс не делается автоматически: пустой состав при живых
+    каталогах есть подпись битого реестра (нулевой файл, оборванная
+    запись), а не решения. Такой случай называется словами и ждёт
+    человека.
+    """
+    root, main = os.path.dirname(MODEL_DIR), os.path.basename(MODEL_DIR)
+    try:
+        sys.path.insert(0, os.path.join(RESEARCH, "factory"))
+        import live_books as LB
+        gone = LB.dropped_dirs(root, main, {b["key"] for b in books})
+    except (ImportError, OSError) as e:
+        log_(f"брошенные книги не искали: {type(e).__name__}: {e}")
+        return []
+    if not gone:
+        return []
+    if not books:
+        log_(f"состав книг ПУСТ при {len(gone)} каталогах на диске — "
+             "оптовый сброс не делается автоматически, это подпись "
+             "битого реестра; каталоги: " + ", ".join(gone))
+        return []
+    stamp = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+    done = []
+    for name in gone:
+        mdir = os.path.join(root, name)
+        # Пустой каталог отставлять незачем: записи в нём нет, а архив
+        # без записи — шум, который потом читается как отставленная
+        # книга. Но и молчать нельзя, поэтому он считается числом.
+        has = any(os.path.exists(os.path.join(mdir, f)) for f in BOOK_FILES)
+        if not has:
+            continue
+        moved = archive_book(mdir, f"{mdir}.dropped-{stamp}", log_)
+        if moved is not None:
+            done.append(name)
+            log_(f"книга {name} вне состава — отставлена "
+                 f"({len(moved)} файлов)")
+    empty = len(gone) - len(done)
+    if empty:
+        log_(f"каталогов вне состава без записи: {empty} — не трогаем")
+    return done
+
+
 def candidate_books(log_):
     """Кандидаты фабрики → живые книги. Возвращает список записей.
 
@@ -2581,6 +2639,9 @@ def candidate_books(log_):
         st = LGF.state(rows)
         books, skipped = LB.build(st, describe=SPF.describe)
         LB.write(EXTRAS_PATH, books)
+        # Только здесь: состав посчитан по-настоящему, а не пуст от
+        # неудачного чтения.
+        retire_dropped_books(books, log_)
     except (OSError, ValueError) as e:
         log_(f"книги кандидатов не собраны: {type(e).__name__}: {e}")
         return []

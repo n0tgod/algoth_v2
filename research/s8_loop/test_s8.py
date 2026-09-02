@@ -3620,6 +3620,96 @@ def test_declared_candidate_gets_a_live_book():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_a_book_dropped_from_the_composition_is_retired():
+    """Книга, выпавшая из состава, отставляется, а не висит открытой.
+
+    Состав книг есть функция реестра испытаний, и он меняется (правило
+    полосы, снятие оси). Каталог при этом остаётся на диске с
+    открытыми позициями, которых больше никто не судит: цикл их не
+    разбирает, сторож не ведёт уровни, показ печатает «открыта»
+    вечно — «отказ, неотличимый от тишины» в бумажной книге.
+
+    Вторая половина проверки важнее первой: ОПТОВЫЙ сброс запрещён.
+    Пустой состав при живых каталогах есть подпись битого реестра
+    (нулевой файл, оборванная строка), а не решения, и стереть по нему
+    всю запись значило бы поверить утверждению вместо содержимого.
+    """
+    import train as T
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "factory"))
+    import ledger as LGF
+    import space as SPF
+
+    d = tempfile.mkdtemp()
+    was = (T.MODEL_DIR, T.LIVE_MODEL_DIR, T.FACTORY_OUT, T.EXTRAS_PATH)
+    try:
+        fout = os.path.join(d, "factory")
+        os.makedirs(fout, exist_ok=True)
+        T.MODEL_DIR = T.LIVE_MODEL_DIR = os.path.join(d, "model")
+        T.FACTORY_OUT = fout
+        T.EXTRAS_PATH = os.path.join(d, "books_extra.json")
+        base = SPF.index_to_rule(0)
+        sel = dict(base, target="fwd_4h", geom="levels", rank="sigma",
+                   floor_bp=30, width=5, rr_band="lo", sizing="equal",
+                   basket="no", agree="no")
+        ctl = dict(sel, floor_bp=44)
+        now = time.time()
+        LGF.declare(SPF.key(sel), sel, "selected", at=now, base=fout)
+        LGF.declare(SPF.key(ctl), ctl, "control", at=now, base=fout)
+        # Каталог книги, которой в составе больше нет (её завела
+        # прежняя версия правила полосы), и в нём — живая запись.
+        gone = os.path.join(d, "model_c_" + SPF.key(ctl))
+        os.makedirs(gone)
+        with open(os.path.join(gone, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write('{"hour": "2026-09-02-10", "arm": "gbm"}\n')
+        # И пустой каталог: записи в нём нет, архивировать нечего.
+        empty = os.path.join(d, "model_c_" + SPF.key(sel) + "x")
+        os.makedirs(empty)
+        # Каталог книги, которая В СОСТАВЕ и с записью: в первой
+        # половине её не вправе тронуть состав, во второй — оптовый
+        # сброс. Без неё второй половине нечего защищать.
+        keep = os.path.join(d, "model_c_" + SPF.key(sel))
+        os.makedirs(keep)
+        with open(os.path.join(keep, "picks.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write('{"hour": "2026-09-02-10", "arm": "gbm"}\n')
+        lines = []
+        T.candidate_books(lines.append)
+        check("брошенная книга отставлена",
+              not os.path.exists(os.path.join(gone, "picks.jsonl")),
+              str(sorted(os.listdir(d))))
+        arch = [x for x in os.listdir(d) if ".dropped-" in x]
+        check("запись уехала в архив, а не пропала",
+              len(arch) == 1 and os.path.exists(
+                  os.path.join(d, arch[0], "picks.jsonl")), str(arch))
+        check("отставленная названа в журнале",
+              any("вне состава — отставлена" in x for x in lines),
+              " | ".join(lines))
+        check("книга состава не тронута",
+              os.path.exists(os.path.join(keep, "picks.jsonl")),
+              str(sorted(os.listdir(d))))
+        check("пустой каталог не отставлен и посчитан",
+              os.path.isdir(empty)
+              and any("без записи" in x for x in lines),
+              " | ".join(lines))
+        # Оптовый сброс: состав пуст — каталоги остаются, причина
+        # названа. Реестр «ломается» так, как ломается на самом деле:
+        # файл на месте, читается, но записей в нём нет.
+        with open(LGF.path(fout), "w", encoding="utf-8") as f:
+            f.write("")
+        lines2 = []
+        T.candidate_books(lines2.append)
+        check("пустой состав каталоги НЕ трогает",
+              os.path.exists(os.path.join(keep, "picks.jsonl")),
+              str(sorted(os.listdir(d))))
+        check("оптовый сброс назван словами",
+              any("оптовый сброс" in x for x in lines2), " | ".join(lines2))
+    finally:
+        (T.MODEL_DIR, T.LIVE_MODEL_DIR, T.FACTORY_OUT,
+         T.EXTRAS_PATH) = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_candidate_books_are_not_written_by_a_sandbox_run():
     """Песочный прогон боевой состав книг НЕ переписывает.
 
@@ -5418,6 +5508,7 @@ def main():
     test_live_ic_survives_hourly_retraining()
     test_live_ic_shown_as_median_not_last_hour()
     test_declared_candidate_gets_a_live_book()
+    test_a_book_dropped_from_the_composition_is_retired()
     test_candidate_books_are_not_written_by_a_sandbox_run()
     test_train_cycle_end_to_end()
     test_low_rr_book_is_declared_with_a_ceiling()
