@@ -22,3 +22,18 @@
 **Чего в брифе нет намеренно:** оценок «перспективно/интересно» и величин без указателя; неизмеренное стоит прочерком (укус у книг с отрицательной медианой, форма кандидатов).
 КОНТРАКТ: выполнен
 прогон роли brief завершён
+публикуется в ветку main:
+ jobs/done/circle-brief-fable.done      |   1 +
+ jobs/done/circle-brief-fable.log       |  24 ++
+ jobs/done/cli-models-2.log             |  10 +
+ jobs/poke.log                          |   3 +
+ research/factory/out/agents-runs.jsonl |   2 +
+ research/factory/out/brief.md          | 565 +++++++++++++++++++--------------
+ research/factory/out/summary.md        | 155 +++++----
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 8 files changed, 459 insertions(+), 303 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   a3ec272..a5dab9d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-02T20:09:37Z, код 0
