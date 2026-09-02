@@ -4440,6 +4440,7 @@ class Collector:
         fdir = os.path.join(os.path.dirname(HERE), "factory", "out")
         sys.path.insert(0, os.path.join(research, "factory"))
         import ledger as LG
+        import trades as TR
         import live_books as LB
         import pool as PL
         import space as SP
@@ -4494,6 +4495,14 @@ class Collector:
             # объясняла бы не то, что делает цикл.
             b["live_why"] = LB.gap(rec)
             b["live"] = None if b["live_why"] else self._cand_live(cid)
+            # База пересчёта реплея в доллары. Реплей своей КАССЫ не
+            # имеет вовсе — он считает доли гросса, — поэтому доллары
+            # у него выводятся из депозита стратегии, и страница
+            # обязана сказать это словами. Депозит берётся у живой
+            # книги, а её нет — из ядра расчёта (1000 $ на руку,
+            # решение владельца), а не из константы страницы.
+            b["replay_cap"] = ((b["live"] or {}).get("start")
+                               or TR.CAND_START_BALANCE * 2)
             if c:
                 # Ключ дня в JSON стал строкой — вернуть обратно
                 # обязан читатель, иначе ряды не пересекутся ни одним

@@ -6474,6 +6474,14 @@ def test_strategy_card_shows_applied_beside_declared_and_twins():
         tw = {t["id"]: t for t in got.get("twins") or []}
         check("стратегия: близнец найден и посчитан",
               tw.get(k2, {}).get("share") == 1.0, str(tw))
+        # База пересчёта реплея в доллары: у реплея своей кассы нет,
+        # и доллары выводятся из депозита стратегии. Живой книги в
+        # фикстуре нет — значит база приходит из ЯДРА расчёта, а не
+        # из константы страницы.
+        import trades as TRs
+        check("стратегия: база пересчёта реплея названа числом",
+              got.get("replay_cap") == TRs.CAND_START_BALANCE * 2,
+              str(got.get("replay_cap")))
         check("стратегия: свои решения посчитаны числом",
               got.get("mine_n") == 1, str(got.get("mine_n")))
         bad = C.Collector.factory_strategy(col, "нетакой")

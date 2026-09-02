@@ -8932,8 +8932,13 @@ const UI = {
   dcol: {en: "day", ru: "день"},
   trades: {en: "trades", ru: "сделок"},
   win: {en: "won", ru: "побед"},
-  pnl: {en: "$", ru: "$"},
-  cum: {en: "cumulative $", ru: "накоплено $"},
+  // В строке реплея вид периода стоит БЕЗ единицы: она уехала в
+  // заголовок колонки, а повторять её в каждой строке значит
+  // вытеснить сами числа (владелец увидел эту таблицу такой).
+  fwds: {en: "forward", ru: "форвард"},
+  pres: {en: "backtest", ru: "бэктест"},
+  pnl: {en: "% of gross ($)", ru: "% гросса ($)"},
+  cum: {en: "cumulative, % ($)", ru: "накоплено, % ($)"},
   wotop: {en: "$ without the best", ru: "$ без лучшей"},
   arm: {en: "arm", ru: "рука"},
   nodays: {en: "no closed trades yet — the book is younger than its "
@@ -9065,6 +9070,12 @@ function daysHtml(b){
 
 function btHtml(d){
   const daily = d.daily || [];
+  // База денег приходит с СЕРВЕРА (депозит стратегии), а не считается
+  // страницей: два места, решающих капитал, разошлись бы.
+  const cap = d.replay_cap == null ? null : Number(d.replay_cap);
+  const money = (v) => cap == null ? ""
+    : ` <span class="dim">(${(v / 1e4 * cap > 0 ? "+" : "")}${
+        (v / 1e4 * cap).toFixed(2)} $)</span>`;
   if (!daily.length)
     return `<div class="note">&mdash; ${esc(d.no_numbers || T("nobt"))}</div>`;
   const cut = d.declared_at
@@ -9085,13 +9096,28 @@ function btHtml(d){
     const dt = new Date(day * 86400 * 1000).toISOString().slice(0, 10);
     return `<tr${fwd ? "" : ' class="thin"'}>
       <td class="mono">${dt}</td>
-      <td>${fwd ? T("fwd") : T("pre")}</td>
-      <td class="num mono ${sgn(v)}">${pct(v)}</td>
-      <td class="num mono ${sgn(cum)}">${pct(cum)}</td></tr>`;
+      <td>${fwd ? T("fwds") : T("pres")}</td>
+      <td class="num mono ${sgn(v)}">${pct(v)}${money(v)}</td>
+      <td class="num mono ${sgn(cum)}">${pct(cum)}${money(cum)}</td>
+      </tr>`;
   }).join("");
+  // Доллары у реплея ВЫВЕДЕНЫ, а не посчитаны кассой: своей кассы у
+  // него нет вовсе — он меряет доли гросса. База пересчёта названа
+  // числом прямо здесь, иначе доллары читались бы как деньги счёта.
+  const base = cap == null ? "" :
+    `<div class="note">${LANG === "ru"
+      ? "Доллары в скобках — процент от депозита стратегии ("
+        + cap.toFixed(0) + " $): у реплея своей кассы нет, он считает "
+        + "доли гросса, а деньги книги живут выше, в дневной "
+        + "разбивке её сделок."
+      : "Dollars in brackets are the percent applied to the "
+        + "strategy&rsquo;s deposit (" + cap.toFixed(0) + " $): the "
+        + "replay has no cash account of its own — it measures shares "
+        + "of gross. The book&rsquo;s real money is above, in the "
+        + "day-by-day breakdown of its trades."}</div>`;
   return `<div class="scroll"><table>
     <tr><th>${T("dcol")}</th><th></th><th class="num">${T("pnl")}</th>
-      <th class="num">${T("cum")}</th></tr>${rows}</table></div>`;
+      <th class="num">${T("cum")}</th></tr>${rows}</table></div>${base}`;
 }
 
 function twinsHtml(d){
