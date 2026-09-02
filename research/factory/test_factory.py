@@ -1561,6 +1561,80 @@ def test_runner_leaves_a_line_on_every_refusal():
         shutil.rmtree(d, ignore_errors=True)
 
 
+
+def test_candidate_diagnostic_counts_trades_not_journal_lines():
+    """Диагностика кандидатов считает СДЕЛКИ ядром, а не строки.
+
+    Первая версия считала строки `picks.jsonl`, а строка выбора одна
+    на (руку, час) и несёт СПИСОК ног: «выборов 12» читалось как
+    двенадцать сделок при шести ногах, и открытые позиции выходили
+    нулём там, где их шесть. Числа выглядели измерением, им не будучи,
+    — и первый же живой прогон увёл меня к ложному диагнозу «рука
+    деревьев не входит вовсе».
+
+    Поэтому сделки строит `trades.build` — то же ядро, которым их
+    считают деньги: своя склейка выбора с разбором однажды разошлась
+    бы с той, по которой считают кассу.
+    """
+    import subprocess
+
+    root = os.path.dirname(os.path.dirname(HERE))
+    d = tempfile.mkdtemp()
+    out = os.path.join(d, "research", "s8_loop", "out")
+    cdir = os.path.join(out, "model_c_x")
+    os.makedirs(cdir)
+    # Один час, ЧЕТЫРЕ ноги в одной строке выбора; разобрана одна.
+    legs = [{"sym": f"A{i}USDT", "px": 10.0 + i, "fwd": 40.0,
+             "mae": -100.0, "mfe": 200.0,
+             "at_ts": time.time() - 600} for i in range(4)]
+    with open(os.path.join(cdir, "picks.jsonl"), "w",
+              encoding="utf-8") as f:
+        f.write(json.dumps({"arm": "gbm", "hour": "2026-09-02-05",
+                            "at_ts": time.time() - 600,
+                            "long": legs, "short": []},
+                           ensure_ascii=False) + "\n")
+    with open(os.path.join(cdir, "review.jsonl"), "w",
+              encoding="utf-8") as f:
+        f.write(json.dumps({"arm": "gbm", "hour": "2026-09-02-05",
+                            "at_ts": time.time() - 300,
+                            "rows": [{"sym": "A0USDT", "side": "long",
+                                      "got": 12.0, "net_bp": 1.0,
+                                      "why": "стоп",
+                                      "exit_ts": time.time() - 300}]},
+                           ensure_ascii=False) + "\n")
+    with open(os.path.join(d, "research", "s8_loop",
+                           "books_extra.json"), "w",
+              encoding="utf-8") as f:
+        json.dump([{"key": "x", "dir": "model_c_x", "label": "x",
+                    "family": "situational", "lane": "selected",
+                    "gate": {"slots": 6, "floor_bp": 30.0,
+                             "min_rr": 0.0, "max_rr": 1.5,
+                             "per_side": 3, "agree": False}}], f)
+    src = os.path.join(root, "tools", "diag_cycle.py")
+    dst = os.path.join(d, "tools", "diag_cycle.py")
+    os.makedirs(os.path.dirname(dst))
+    shutil.copy(src, dst)
+    # Ядро сделок диагностика берёт из репозитория, а данные — из
+    # временного корня: копировать ради теста весь `s8_loop` значило
+    # бы проверять копию, а не тот код, который поедет на сервер.
+    os.symlink(os.path.join(root, "research", "s8_loop", "trades.py"),
+               os.path.join(d, "research", "s8_loop", "trades.py"))
+    os.symlink(os.path.join(root, "research", "common"),
+               os.path.join(d, "research", "common"))
+    r = subprocess.run([sys.executable, dst, "--cand"],
+                       capture_output=True, text=True, timeout=120)
+    txt = r.stdout + r.stderr
+    shutil.rmtree(d, ignore_errors=True)
+    line = [x for x in txt.splitlines() if x.strip().startswith("gbm:")]
+    check("строка руки напечатана", bool(line), txt[-600:])
+    ln = line[0] if line else ""
+    check("сделок четыре, а не одна строка выбора",
+          "сделок 4" in ln, ln)
+    check("закрыта одна", "закрыто 1" in ln, ln)
+    check("открыто три, а не ноль", "открыто 3" in ln, ln)
+
+
+
 def main():
     tests = (test_space_is_declared_and_frozen,
              test_control_share_is_of_the_pool_not_the_batch,
@@ -1596,7 +1670,8 @@ def main():
              test_limit_reset_time_is_read_not_guessed,
              test_fallback_happens_only_on_a_limit_and_is_recorded,
              test_cycle_advances_one_step_and_obeys_the_safeties,
-             test_mech_step_leaves_its_end_line)
+             test_mech_step_leaves_its_end_line,
+             test_candidate_diagnostic_counts_trades_not_journal_lines)
     for t in tests:
         print(t.__name__)
         t()

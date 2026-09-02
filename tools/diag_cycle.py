@@ -20,6 +20,9 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
+sys.path.insert(0, os.path.join(ROOT, "research"))
+import trades as TR                                       # noqa: E402
 OUT = os.path.join(ROOT, "research", "s8_loop", "out")
 
 
@@ -170,25 +173,37 @@ def main(argv=None):
                       f"rr {g.get('min_rr')}..{g.get('max_rr')} "
                       f"на сторону {g.get('per_side')} "
                       f"согласие {g.get('agree')}")
+                picks = _rows(os.path.join(d, "picks.jsonl"))
+                revs = _rows(os.path.join(d, "review.jsonl"))
                 for arm in ("gbm", "nn"):
-                    picks = _rows(os.path.join(d, "picks.jsonl"))
-                    revs = _rows(os.path.join(d, "review.jsonl"))
-                    pa = [r for r in picks if r.get("arm") == arm]
-                    ra = [r for r in revs if r.get("arm") == arm]
-                    # Открытая позиция — выбор, у которого разбора ещё
-                    # нет. Ключ тот же, каким их сводит показ.
-                    done = {(r.get("hour"), r.get("sym"))
-                            for r in ra}
-                    op = sum(1 for r in pa
-                             if (r.get("hour"), r.get("sym"))
-                             not in done)
-                    last = max((r.get("at_ts") or 0) for r in pa) \
-                        if pa else 0
+                    # Сделки строит ЯДРО, а не этот файл. Строка
+                    # выбора — одна на (руку, час) и несёт СПИСОК ног,
+                    # поэтому счёт строк читается как счёт сделок и
+                    # врёт в разы; своя же склейка выбора с разбором
+                    # однажды разошлась бы с той, по которой считают
+                    # деньги.
+                    tr = TR.build([r for r in picks
+                                   if (r.get("arm") or "gbm") == arm],
+                                  [r for r in revs
+                                   if (r.get("arm") or "gbm") == arm],
+                                  hold_h=None)
+                    # Раскладка по состояниям — тоже ядром: имена
+                    # состояний живут в `trades`, и свой перечень
+                    # («open»/«closed») молча дал бы нули на всех
+                    # строках, то есть «рука не входила» на живой
+                    # книге. Ровно это и случилось в первой версии.
+                    sm = TR.summary(tr, arm=arm)
+                    nt = sum(1 for t in tr
+                             if t.get("opened_at") is None)
+                    last = max((t.get("opened_at") or 0) for t in tr) \
+                        if tr else 0
                     la = (f"{(time.time() - last) / 60:.0f} мин назад"
-                          if last else "выборов не было")
-                    print(f"    {arm}: выборов {len(pa)}, "
-                          f"разобрано {len(ra)}, открыто {op}, "
-                          f"последний {la}")
+                          if last else "входов не было")
+                    print(f"    {arm}: сделок {sm['trades']}, закрыто "
+                          f"{sm['closed']}, открыто {sm['open']}, "
+                          f"вышли без разбора {sm['exiting']}, "
+                          f"ждут разбора {sm['awaiting']}, "
+                          f"схлопнули {nt}, последний вход {la}")
 
     print("\n=== хвост train.log ===")
     lp = os.path.join(OUT, "train.log")
