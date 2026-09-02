@@ -19,3 +19,16 @@ Already up to date.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/cycle-up7.done            |  1 +
+ jobs/done/cycle-up7.log             | 10 ++++++++++
+ jobs/done/deploy-pct.done           |  1 +
+ jobs/done/deploy-pct.log            | 21 +++++++++++++++++++++
+ jobs/poke.log                       |  4 ++++
+ jobs/queue-state.md                 |  1 +
+ research/s8_loop/out/day_brake.json |  2 +-
+ 7 files changed, 39 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   193fc32..9a57627  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
