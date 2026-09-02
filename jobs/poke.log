@@ -558,3 +558,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788374041 ==
 [2026-09-02T18:34:03Z] задание scout-backfill запущено: research/factory/scout_backfill.py
+
+== сигнал 1788374095 ==
+[2026-09-02T18:34:56Z] задание cli-models-2 запущено: tools/probe_cli_models.py

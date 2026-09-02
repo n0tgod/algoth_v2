@@ -1,0 +1,12 @@
+== задание cli-models-2 ==
+строка: run tools/probe_cli_models.py
+начало: 2026-09-02T18:34:56Z
+запускаю: .venv/bin/python tools/probe_cli_models.py 
+версия CLI: код 0, 2.1.258 (Claude Code)
+вход: код 0, {
+
+claude-fable-5-1     код 0: ок
+claude-opus-5        код 0: ок
+opus                 код 0: ок
+sonnet               код 0: ок
+конец: 2026-09-02T18:35:28Z, код 0
