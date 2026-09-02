@@ -654,7 +654,11 @@ def test_the_key_is_fixed_by_an_oracle_on_random_pools():
     for i in range(POOLS):
         pend, live = random_pool(rnd)
         want = oracle_links(pend, live)
-        res = CL.judge(artifact_days(pend, 400, live))
+        # Ворота измеримости ФОРМЫ сняты явно: предмет этой проверки —
+        # ключ выбора теснейшей книги, а не другое правило. На трёх пулах
+        # из четырёхсот заявка закрывалась бы раньше выбора (сутки со
+        # сделками редки), и база свидетелей молча уменьшилась бы.
+        res = CL.judge(artifact_days(pend, 400, live), min_active=0.0)
         verdicts[res["verdict"]] = verdicts.get(res["verdict"], 0) + 1
         if not want:
             # Оракулу мерить нечего — потолку тоже: выбранной книги в
@@ -1127,6 +1131,55 @@ def test_thin_book_is_closed_by_the_rate():
     fat = CL.judge(artifact(noise(707), 400, {"live_a": noise(808)}))
     check("та же книга с достаточным числом сделок проходит",
           fat["verdict"] == CL.PASS, fat["why"])
+
+
+def test_shape_must_be_measurable_at_all():
+    """Залп в редкие сутки — по ФОРМЕ неизмерим, сколько бы сделок ни был.
+
+    Главный критерий владельца (2026-09-02) — устойчивость, и правило
+    вылета судит её по СУТКАМ: медиана дня и укус считаются
+    `stability.stats`, а меньше `stability.MIN_DAYS` суток — вердикта нет
+    вовсе. Значит кандидат, закрывающий сделки в редкие дни, занимает
+    слот, по которому никогда не будет вердикта, — и ворота сделок этого
+    НЕ ловят: они мерят скорость, а тут скорость огромная.
+
+    Фикстура возможна для живого писателя: 600 сделок в шести сутках при
+    записи в тридцать. Порог не назначен, а выведен — `MIN_DAYS / IDLE_D`.
+    """
+    rare = CL.judge(artifact_days(daymap(noise(4242, n=6)), 600,
+                                  {"live_a": daymap(noise(808, n=30))},
+                                  record_days=30))
+    check("залп в редкие сутки закрыт", rare["verdict"] == CL.CLOSED,
+          rare["why"])
+    check("в причине стоят обе доли и число суток правила",
+          "0.20" in rare["why"] and "0.33" in rare["why"]
+          and f"{CL.SB.MIN_DAYS} суток со сделками" in rare["why"],
+          rare["why"])
+    check("скорость сделок тут ни при чём — она огромна",
+          rare["per_day"] > rare["min_trades_per_day"],
+          f"{rare['per_day']} против {rare['min_trades_per_day']}")
+    # Обратная сторона: те же сделки, размазанные по суткам записи,
+    # проходят — иначе ворота закрывали бы всех подряд.
+    wide = CL.judge(artifact_days(daymap(noise(4242, n=30)), 600,
+                                  {"live_a": daymap(noise(808, n=30))},
+                                  record_days=30))
+    check("та же книга, торгующая каждые сутки, проходит",
+          wide["verdict"] == CL.PASS, wide["why"])
+    check("доля суток названа числом в обоих вердиктах",
+          rare.get("active_share") == 0.2 and wide.get("active_share") == 1.0,
+          f"{rare.get('active_share')} / {wide.get('active_share')}")
+    # Порог ВЫВЕДЕН из двух объявленных чисел, а не записан литералом:
+    # сдвинь любое — сдвинется и он.
+    check("порог выведен из MIN_DAYS и IDLE_D",
+          abs(CL.MIN_ACTIVE_SHARE - CL.SB.MIN_DAYS / float(CL.PL.IDLE_D))
+          < 1e-12, str(CL.MIN_ACTIVE_SHARE))
+    # И это НЕ суд по доходности: те же сутки с перевёрнутым знаком
+    # денег дают тот же вердикт — считаются сутки, а не деньги.
+    flipped = CL.judge(artifact_days(
+        {d: -v for d, v in daymap(noise(4242, n=6)).items()}, 600,
+        {"live_a": daymap(noise(808, n=30))}, record_days=30))
+    check("вердикт не зависит от знака денег",
+          flipped["verdict"] == rare["verdict"], flipped["why"])
 
 
 def test_required_trades_grow_with_the_record():
@@ -1705,6 +1758,7 @@ def main():
              test_a_mirror_book_is_not_closed,
              test_day_keys_are_numbers_not_text,
              test_thin_book_is_closed_by_the_rate,
+             test_shape_must_be_measurable_at_all,
              test_required_trades_grow_with_the_record,
              test_empty_is_undetermined_and_never_pass,
              test_zero_trades_everywhere_is_a_broken_replay,

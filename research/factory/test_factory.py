@@ -481,7 +481,7 @@ def test_proposal_must_be_checkable_not_persuasive():
             "sizing": "equal", "basket": "no", "agree": "no"}
     good = {"proposed": True, "kind": "row", "title": "проба",
             "hypothesis": long, "kills_it": long, "ceiling": long,
-            "differs_from_live": long,
+            "differs_from_live": long, "shape": long,
             "cites": ["research/factory/out/brief.md",
                       "research/factory/space.py",
                       "research/factory/pool.py"],
@@ -515,6 +515,18 @@ def test_proposal_must_be_checkable_not_persuasive():
     ok, why = chk(dict(good, hypothesis="коротко"))
     check("заявка без содержания отвергнута",
           not ok and any("hypothesis" in w for w in why), str(why))
+
+    # Ожидаемая ФОРМА кривой — обязательное поле с 2026-09-02: главный
+    # критерий владельца устойчивость, и правило вылета судит именно
+    # её. Заявка, не сказавшая, какой формы кривую она ждёт и чем
+    # ограничен её хвост, подаётся вслепую под тот критерий, по
+    # которому её и будут судить.
+    ok, why = chk({k: v for k, v in good.items() if k != "shape"})
+    check("заявка без ожидаемой формы отвергнута",
+          not ok and any("shape" in w for w in why), str(why))
+    check("правило вылета и требуемое поле — про одно и то же",
+          "shape" in RL.PROPOSAL_MIN and hasattr(P, "shape_why"),
+          str(sorted(RL.PROPOSAL_MIN)))
 
     # Голое имя файла указателем не считается: первый прогон
     # предлагающего был отвергнут за три упоминания в прозе, каждое из
@@ -580,7 +592,7 @@ def test_closed_by_ceiling_is_not_proposed_again():
     key = S.key(rule)
     prop = {"proposed": True, "kind": "row", "title": "проба",
             "hypothesis": long, "kills_it": long, "ceiling": long,
-            "differs_from_live": long,
+            "differs_from_live": long, "shape": long,
             "cites": ["research/factory/out/brief.md",
                       "research/factory/space.py",
                       "research/factory/pool.py"],
@@ -1716,7 +1728,9 @@ def main():
              test_control_share_converges,
              test_batch_respects_the_owners_limits,
              test_window_is_calendar_not_last_entries,
+             test_the_window_speaks_day_numbers_not_seconds,
              test_retire_rule_follows_the_owner_by_sum,
+             test_shape_is_the_owners_main_criterion,
              test_young_candidate_is_not_judged,
              test_silence_frees_the_slot,
              test_sweep_judges_control_by_the_same_rule,
@@ -1806,52 +1820,149 @@ def test_batch_respects_the_owners_limits():
     check("причина полного пула названа", bool(why), str(why))
 
 
+# Фикстура правила вылета обязана выглядеть как ЖИВОЙ артефакт: ключ
+# дневного ряда — номер суток (`candidate.daily_net` кладёт
+# `exit // DAY`), а `now` приходит в секундах. Прежние фикстуры были
+# написаны целиком в секундах, то есть невозможной для писателя формой,
+# и ровно поэтому дефект единиц прожил в живом пуле незамеченным.
+NOW_S = 20698 * P.DAY          # момент «сейчас» в секундах
+D0 = P.day_no(NOW_S)           # он же номером суток
+
+
 def test_window_is_calendar_not_last_entries():
-    now = 1000 * P.DAY
     # Три дня внутри окна и один далеко за ним: старая крупная прибыль
     # не имеет права спасать книгу, слившую последние десять суток.
-    daily = {now - 1 * P.DAY: -5.0, now - 3 * P.DAY: -4.0,
-             now - 9 * P.DAY: -3.0, now - 40 * P.DAY: +500.0}
-    net, n = P.window_net(daily, now)
+    daily = {D0 - 1: -5.0, D0 - 3: -4.0, D0 - 9: -3.0, D0 - 40: +500.0}
+    net, n = P.window_net(daily, NOW_S)
     check("окно берёт только свои сутки", abs(net + 12.0) < 1e-9 and n == 3,
           f"{net} за {n} дней")
 
 
+def test_the_window_speaks_day_numbers_not_seconds():
+    """Единица ключа дневного ряда — НОМЕР СУТОК, и это было дефектом.
+
+    До 2026-09-02 окно сравнивало ключи ряда с моментом в секундах, и на
+    живых данных в него не попадало ни одних суток: за деньги не
+    отставлялся никто вовсе, а на тридцатые сутки после объявления любой
+    кандидат — хоть с полусотней сделок в сутки — попал бы под
+    «простой». Воспроизведено на живом артефакте: у всех семи книг пула
+    окно видело 0 суток при 22–26 сутках в ряду.
+
+    Ряд не в тех единицах теперь ОТВЕРГАЕТСЯ громко: молчание здесь
+    дороже падения — отказ виден в тот же прогон, а неотставленный
+    кандидат через месяц и не тем признаком.
+    """
+    live_shaped = {D0 - i: -2.0 for i in range(0, 5)}
+    _net, n = P.window_net(live_shaped, NOW_S)
+    check("живой ряд окно видит", n == 5, str(n))
+    seconds_shaped = {NOW_S - i * P.DAY: -2.0 for i in range(0, 5)}
+    try:
+        P.window_net(seconds_shaped, NOW_S)
+        check("ряд в секундах отвергнут", False, "прошёл молча")
+    except ValueError as e:
+        check("ряд в секундах отвергнут с названной причиной",
+              "секунды" in str(e), str(e))
+    # И то же самое из правила целиком, а не только из окна: дорога до
+    # вердикта одна, и проверять надо её.
+    try:
+        P.should_retire(seconds_shaped, NOW_S, 0.0, NOW_S - 20 * P.DAY)
+        check("правило на ряде в секундах не судит молча", False, "судило")
+    except ValueError:
+        check("правило на ряде в секундах отказывает", True)
+
+
 def test_retire_rule_follows_the_owner_by_sum():
-    now = 1000 * P.DAY
-    born = now - 20 * P.DAY
-    losing = {now - i * P.DAY: -2.0 for i in range(1, 10)}
-    why = P.should_retire(losing, now, 0.0, born)
+    born = NOW_S - 20 * P.DAY
+    losing = {D0 - i: -2.0 for i in range(1, 10)}
+    why = P.should_retire(losing, NOW_S, 0.0, born)
     check("сумма ниже медианы нуля — вылет", bool(why), str(why))
     # Копеечная зелёная свеча не обнуляет счётчик: правило по СУММЕ, а
     # не по серии — иначе мёртвая книга вылетала бы раз в полтора года.
     losing_with_green = dict(losing)
-    losing_with_green[now - 5 * P.DAY] = +0.5
+    losing_with_green[D0 - 5] = +0.5
     check("зелёный день серию не обнуляет",
-          bool(P.should_retire(losing_with_green, now, 0.0, born)))
-    winning = {now - i * P.DAY: +2.0 for i in range(1, 10)}
+          bool(P.should_retire(losing_with_green, NOW_S, 0.0, born)))
+    winning = {D0 - i: +2.0 for i in range(1, 10)}
     check("книга выше нуля живёт",
-          P.should_retire(winning, now, 0.0, born) is None)
+          P.should_retire(winning, NOW_S, 0.0, born) is None)
     # Сравнение со СВОИМ нулём: та же книга при нуле выше неё вылетает.
     check("нуль выше книги — вылет",
-          bool(P.should_retire(winning, now, +100.0, born)))
+          bool(P.should_retire(winning, NOW_S, +100.0, born)))
+
+
+def test_shape_is_the_owners_main_criterion():
+    """Вылет судит ФОРМУ, а не только сумму (решение владельца 2026-09-02).
+
+    «Интересны стратегии, которые приносят немного, но стабильно, и не
+    забирают за один день всю прибыль за неделю или месяц.» Прежнее
+    правило смотрело сумму окна: книга, отдающая недельную прибыль одним
+    днём, проходила его, пока сумма оставалась выше нуля.
+
+    Пороги объявлены в модуле ДО первого прогона правила: обычный день
+    не отрицателен, худший день не глубже десяти обычных прибыльных
+    (критерий 8 спеки 04 назвал десять терпимым, сорок — «год работы за
+    неделю»).
+    """
+    born = NOW_S - 40 * P.DAY
+    # Тринадцать ровных прибыльных суток и один день, забирающий всё.
+    # Провал стоит ЗА окном суммы, и это не подгонка фикстуры, а смысл
+    # правила: хвост есть свойство самого правила книги, а не последних
+    # десяти суток, и, забыв однажды случившийся срыв, пул переоткрывал
+    # бы его каждый месяц. Прежнее правило здесь молчит — сумма окна
+    # положительна.
+    bites = {D0 - i: +1.0 for i in range(0, 14)}
+    bites[D0 - 12] = -30.0
+    net, _n = P.window_net(bites, NOW_S)
+    check("сумма окна положительна — прежнее правило молчало бы",
+          net > 0, f"{net:+.1f}")
+    why = P.should_retire(bites, NOW_S, 0.0, born) or ""
+    check("укус глубже предела — вылет", "съедает" in why, str(why))
+    check("в причине стоят и укус, и предел",
+          "30.0" in why and "10" in why, str(why))
+    # Ровная мелкая прибыль — ровно то, что владелец просил, — живёт.
+    steady = {D0 - i: (+1.0 if i % 4 else -0.5) for i in range(0, 14)}
+    check("ровная мелкая прибыль живёт",
+          P.should_retire(steady, NOW_S, 0.0, born) is None,
+          str(P.should_retire(steady, NOW_S, 0.0, born)))
+    # Отрицательный обычный день — вылет, даже если хвост вытянул сумму.
+    tail = {D0 - i: -1.0 for i in range(0, 14)}
+    tail[D0 - 2] = +40.0
+    net2, _n2 = P.window_net(tail, NOW_S)
+    check("сумма окна и здесь положительна", net2 > 0, f"{net2:+.1f}")
+    why2 = P.should_retire(tail, NOW_S, 0.0, born) or ""
+    check("отрицательный обычный день — вылет",
+          "обычный день" in why2, str(why2))
+    # Форма судится ФОРВАРДОМ: дни до объявления — пересчёт по прошлому,
+    # которое ассистент видел, когда предлагал.
+    born_late = (D0 - 3) * P.DAY
+    check("бэктест в вердикт по форме не входит",
+          P.shape_why(bites, born_late) is None,
+          str(P.shape_why(bites, born_late)))
+    # Меньше десяти суток форварда — вердикта нет вовсе: не измерено не
+    # есть провал.
+    thin = {D0 - i: -5.0 for i in range(0, 6)}
+    check("тонкая выборка формы не судится",
+          P.shape_why(thin, born) is None, str(P.shape_why(thin, born)))
+    # Мера — общая, а не своя: правило зовёт `stability.stats`.
+    import stability as ST
+    check("правило считает ту же меру, что отчёт устойчивости",
+          ST.stats({d: bites[d] for d in bites})["bite"] == 30.0,
+          str(ST.stats(bites)))
 
 
 def test_young_candidate_is_not_judged():
-    now = 1000 * P.DAY
-    young = now - 3 * P.DAY
-    losing = {now - i * P.DAY: -9.0 for i in range(1, 3)}
+    young = NOW_S - 3 * P.DAY
+    losing = {D0 - i: -9.0 for i in range(1, 3)}
     check("окна ещё нет — вердикта нет",
-          P.should_retire(losing, now, 0.0, young) is None,
-          str(P.should_retire(losing, now, 0.0, young)))
+          P.should_retire(losing, NOW_S, 0.0, young) is None,
+          str(P.should_retire(losing, NOW_S, 0.0, young)))
 
 
 def test_silence_frees_the_slot():
-    now = 1000 * P.DAY
     check("молчание дольше предела — вылет",
-          bool(P.should_retire({}, now, 0.0, now - 40 * P.DAY)))
+          bool(P.should_retire({}, NOW_S, 0.0, NOW_S - 40 * P.DAY)))
     check("молчание в пределах — не вылет",
-          P.should_retire({}, now, 0.0, now - 20 * P.DAY) is None)
+          P.should_retire({}, NOW_S, 0.0, NOW_S - 20 * P.DAY) is None)
 
 
 def test_dropped_book_dir_is_found_and_the_archive_is_not():
@@ -1889,19 +2000,26 @@ def test_dropped_book_dir_is_found_and_the_archive_is_not():
 
 
 def test_sweep_judges_control_by_the_same_rule():
-    now = 1000 * P.DAY
-    born = now - 20 * P.DAY
+    born = NOW_S - 20 * P.DAY
     st = {"s1": {"lane": "selected", "declared_at": born, "retired_at": None},
           "c1": {"lane": "control", "declared_at": born, "retired_at": None},
           "s2": {"lane": "selected", "declared_at": born,
                  "retired_at": 5.0}}
-    daily = {"s1": {now - 1 * P.DAY: -5.0},
-             "c1": {now - 1 * P.DAY: -5.0},
-             "s2": {now - 1 * P.DAY: -5.0}}
-    got = dict(P.sweep(st, daily, now, 0.0))
+    daily = {"s1": {D0 - 1: -5.0}, "c1": {D0 - 1: -5.0},
+             "s2": {D0 - 1: -5.0}}
+    got = dict(P.sweep(st, daily, NOW_S, 0.0))
     check("контрольная рука судится тем же правилом", "c1" in got, str(got))
     check("отобранная тоже", "s1" in got, str(got))
     check("уже отставленный не судится дважды", "s2" not in got, str(got))
+    # И правило ФОРМЫ — тоже одно на обе полосы: жребий обязан умирать
+    # от той же медианы дня, иначе сравнение живучести сравнивало бы
+    # правила, а не полосы.
+    shape = {D0 - i: (+1.0 if i else -30.0) for i in range(0, 14)}
+    st2 = {k: dict(v, retired_at=None) for k, v in st.items()}
+    got2 = dict(P.sweep(st2, {k: shape for k in st2}, NOW_S, -1e9))
+    check("по форме судятся обе полосы",
+          all("съедает" in got2.get(k, "") for k in ("s1", "c1", "s2")),
+          str(got2))
 
 
 def test_stability_asks_how_not_how_much():

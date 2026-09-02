@@ -30,9 +30,11 @@ carry даёт ровную мелкую прибыль и редкий круп
 * `tot`       — итог за окно.
 
 Правило тонких данных: меньше `MIN_DAYS` суток — величины считаются, но
-книга помечается `thin`, и вердикта по ней не выносится. Десять суток
-взяты не с потолка: столько же требует правило вылета (`pool.WINDOW_D`),
-и две разные границы у одного пула разошлись бы.
+книга помечается `thin`, и вердикта по ней не выносится. Число не
+своё: это `pool.WINDOW_D`, окно правила вылета — две разные границы у
+одного пула разошлись бы, а с 2026-09-02 та же мера и есть правило
+вылета по форме (`pool.shape_why`), то есть граница у них общая не по
+совпадению.
 
 Единица не назначается модулем: у живой книги сутки приходят в
 долларах, у реплея — в долях гросса. Отношения (`bite`) безразмерны и
@@ -45,6 +47,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESEARCH = os.path.dirname(HERE)
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
 for _p in (os.path.join(RESEARCH, "s10_policy"),
            os.path.join(RESEARCH, "s8_loop"), os.path.join(RESEARCH, "s9_sweep")):
     if _p not in sys.path:
@@ -54,8 +58,14 @@ for _p in (os.path.join(RESEARCH, "s10_policy"),
 # вторая реализация однажды разошлась бы, и отчёт говорил бы одно, а
 # таблица другое.
 import tournament as TN                                     # noqa: E402
+import pool as PL                                           # noqa: E402
 
-MIN_DAYS = 10
+# Граница тонких данных — та же, что окно правила вылета, и берётся она
+# У ПРАВИЛА, а не повторяется числом: прежде здесь стояла десятка
+# литералом, и текст рядом обещал совпадение, которого код не
+# гарантировал. Обратного импорта нет: `pool` зовёт меру внутри
+# функции, поэтому круга не возникает ни при каком порядке ввоза.
+MIN_DAYS = PL.WINDOW_D
 
 
 def stats(daily):
@@ -113,7 +123,6 @@ import time                                                 # noqa: E402
 import urllib.request                                       # noqa: E402
 
 import books as BK                                          # noqa: E402
-import pool as PL                                           # noqa: E402
 
 OUT = os.path.join(HERE, "out")
 TOKEN = os.path.join(RESEARCH, "b1_book", "out", "token.txt")

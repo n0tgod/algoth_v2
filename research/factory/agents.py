@@ -255,14 +255,22 @@ PIPELINE = [
         "cadence_ru": "на каждое предложение",
         "plain": "Runs the cheap calculation the proposal declared, "
                  "with perfect foresight where that is the only way. "
-                 "Fails it and no code is written at all.",
+                 "Fails it and no code is written at all. It also "
+                 "checks the SHAPE will be measurable at all — in how "
+                 "many days of the record the candidate closes trades "
+                 "— but never judges the shape itself.",
         "plain_ru": "Считает дешёвый расчёт, объявленный в "
                     "предложении, при необходимости с идеальным "
                     "знанием будущего. Не прошёл — кода не пишется "
                     "вовсе. Числа берёт из суточного прогона, который "
                     "реплеит заявку отдельной рукой, — поэтому в "
                     "суточном круге потолок стоит ПОСЛЕ судьи, а не "
-                    "перед ним.",
+                    "перед ним. С 2026-09-02 к двум величинам "
+                    "добавлена третья: измеримость ФОРМЫ — в скольких "
+                    "сутках записи кандидат вообще закрывает сделки. "
+                    "Саму форму потолок не судит никогда: судить её по "
+                    "записи значило бы отбирать по прошлому, которое "
+                    "предлагающий уже видел, когда предлагал.",
         "reads": "the spec and the record",
         "reads_ru": "спеку и запись",
         "writes": "«closed by ceiling» into the ledger",
