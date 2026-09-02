@@ -462,3 +462,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788338378 ==
 [2026-09-02T08:39:40Z] задание retire-overfill запущено: tools/retire_overfilled_book.py
+
+== сигнал 1788338431 ==
+[2026-09-02T08:40:33Z] задание after-retire запущено: tools/diag_cycle.py
