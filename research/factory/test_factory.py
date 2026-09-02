@@ -517,6 +517,11 @@ def test_scout_brings_mechanisms_not_verdicts():
         bp = f.read()
     check("брифер обязан нести раздел разведки",
           "scout.json" in bp and "разведчик" in bp.lower(), "")
+    # Свежее меню и ЗАПАС — разные вещи: меню перезаписывается каждым
+    # прогоном, и без журнала идея, которую предлагающий не успел
+    # взять, теряется молча (повтор ей запрещён, текста больше нет).
+    check("брифер обязан нести запас принесённого раньше",
+          RL.SCOUT_SEEN in bp and "принесено раньше" in bp, "")
     import cycle as CY
     order = [k for k, _kind, _argv, _proof in CY.CIRCLE]
     check("разведчик идёт перед брифером",
@@ -682,6 +687,71 @@ def test_scout_is_not_rejected_by_its_own_ideas():
               str(why))
     finally:
         shutil.rmtree(root, ignore_errors=True)
+
+
+def test_scout_backlog_survives_the_next_menu():
+    """Запрет на повтор без текста идеи есть потеря идеи.
+
+    Меню живёт в `scout.json`, и каждый прогон перезаписывает его
+    свежим; журнал переживает прогон, но первая его версия хранила один
+    заголовок. Значит идея объявлялась принесённой — и запрещённой к
+    повтору — тогда, когда её текста уже нет нигде, кроме истории git.
+
+    Журнал write-ahead: строку не переписываем, знание доезжает
+    ОТДЕЛЬНОЙ записью (узор поправки `Adjust` у живого исполнителя), и
+    запись несёт исходный момент, полный текст и то, откуда он взят.
+    Второй прогон обязан промолчать: полнота решается по всему журналу.
+    """
+    import scout_backfill as BF
+    long = "y" * 130
+    d = tempfile.mkdtemp(prefix="backlog-")
+    try:
+        path = os.path.join(d, RL.SCOUT_SEEN)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(json.dumps({"at": 100.0, "title": "потолок funding",
+                                "sources": ["https://example.org/a"]},
+                               ensure_ascii=False) + "\n")
+            f.write(json.dumps({"at": 100.0, "title": "потерянная",
+                                "sources": []},
+                               ensure_ascii=False) + "\n")
+            f.write(json.dumps({"at": 200.0, "title": "свежая",
+                                "mechanism": long},
+                               ensure_ascii=False) + "\n")
+        menu = os.path.join(d, "old.json")
+        with open(menu, "w", encoding="utf-8") as f:
+            json.dump({"found": True, "ideas": [
+                {"title": "потолок funding", "claim": long,
+                 "mechanism": long, "kills_it": long, "novelty": long,
+                 "sources": ["https://example.org/a"]}]}, f,
+                ensure_ascii=False)
+
+        rows, _ = BF.read_journal(path)
+        check("без текста считаются только неполные",
+              BF.incomplete(rows) == ["потолок funding", "потерянная"],
+              str(BF.incomplete(rows)))
+
+        BF.main(["--menu", menu, "--out", d, "--no-publish"])
+        rows, _ = BF.read_journal(path)
+        got = [r for r in rows if r.get("restored_from")]
+        check("текст доехал отдельной записью", len(got) == 1, str(rows))
+        check("восстановленная запись несёт исходный момент и источник",
+              got and got[0]["at"] == 100.0
+              and got[0]["restored_from"] == "old.json"
+              and got[0]["mechanism"] == long, str(got[:1]))
+        check("чего нет в истории, то не выдумывается",
+              "потерянная" in BF.incomplete(rows),
+              str(BF.incomplete(rows)))
+        check("повтор всё ещё запрещён",
+              "потолок funding" in RL.scout_seen(d),
+              str(RL.scout_seen(d)))
+
+        n = len(rows)
+        BF.main(["--menu", menu, "--out", d, "--no-publish"])
+        rows2, _ = BF.read_journal(path)
+        check("второй прогон ничего не дописывает",
+              len(rows2) == n, "%d → %d" % (n, len(rows2)))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
 
 
 def test_contract_check_gets_the_start_moment():
@@ -2005,6 +2075,7 @@ def main():
              test_scout_brings_mechanisms_not_verdicts,
              test_scout_is_not_rejected_by_its_own_ideas,
              test_contract_check_gets_the_start_moment,
+             test_scout_backlog_survives_the_next_menu,
              test_proposal_must_be_checkable_not_persuasive,
              test_closed_by_ceiling_is_not_proposed_again,
              test_the_control_machine_is_not_fooled_by_stale_bytecode,
