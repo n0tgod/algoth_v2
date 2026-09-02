@@ -39,3 +39,14 @@
 {"at": 1788296101.119, "role": "ceiling", "status": "start", "started": 1788296101.118, "ended": 1788296101.119, "dry": false, "pid": 1044202}
 {"at": 1788296103.06, "role": "ceiling", "status": "ok", "started": 1788296101.118, "ended": 1788296103.06, "dry": false, "note": "код возврата 0"}
 {"at": 1788296401.637, "role": "declare", "status": "start", "started": 1788296401.636, "ended": 1788296401.637, "dry": false, "pid": 1044446}
+{"at": 1788296404.588, "role": "declare", "status": "ok", "started": 1788296401.636, "ended": 1788296404.588, "dry": false, "note": "код возврата 0"}
+{"at": 1788314401.54, "role": "scout", "status": "start", "started": 1788314401.0, "ended": 1788314401.54, "dry": false, "pid": 1056590}
+{"at": 1788314406.076, "role": "scout", "status": "fail", "started": 1788314401.0, "ended": 1788314406.076, "dry": false, "note": "модель claude-fable-5-1, код 1: API Error: 400 Claude Code 2.1.220 does not support this model; version 2.1.251 or newer is required. Run 'claude update', or update the Claude desktop app, then try again. "}
+{"at": 1788314701.174, "role": "scout", "status": "start", "started": 1788314701.0, "ended": 1788314701.174, "dry": false, "pid": 1056859}
+{"at": 1788314705.109, "role": "scout", "status": "fail", "started": 1788314701.0, "ended": 1788314705.109, "dry": false, "note": "модель claude-fable-5-1, код 1: API Error: 400 Claude Code 2.1.220 does not support this model; version 2.1.251 or newer is required. Run 'claude update', or update the Claude desktop app, then try again. "}
+{"at": 1788315001.902, "role": "scout", "status": "start", "started": 1788315001.0, "ended": 1788315001.902, "dry": false, "pid": 1057113}
+{"at": 1788315005.691, "role": "scout", "status": "fail", "started": 1788315001.0, "ended": 1788315005.691, "dry": false, "note": "модель claude-fable-5-1, код 1: API Error: 400 Claude Code 2.1.220 does not support this model; version 2.1.251 or newer is required. Run 'claude update', or update the Claude desktop app, then try again. "}
+{"at": 1788315301.429, "role": "brief", "status": "start", "started": 1788315301.0, "ended": 1788315301.429, "dry": false, "pid": 1057370}
+{"at": 1788315901.353, "role": "brief", "status": "contract", "started": 1788315301.0, "ended": 1788315901.353, "dry": false, "note": "роль отработала, но контракт не выполнен"}
+{"at": 1788315901.517, "role": "brief", "status": "start", "started": 1788315901.0, "ended": 1788315901.517, "dry": false, "pid": 1058513}
+{"at": 1788316224.092, "role": "brief", "status": "ok", "started": 1788315901.0, "ended": 1788316224.092, "dry": false, "note": "модель opus, усилие medium"}
