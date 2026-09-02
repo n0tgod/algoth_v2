@@ -97,3 +97,14 @@
 [09-02 07:04:32]   сводка: 362/745 символов, новых часов 360
 [09-02 07:05:02]   сводка: 438/745 символов, новых часов 436
 конец: 2026-09-02T07:09:00Z, код 0
+публикуется в ветку main:
+ jobs/done/check-cand.done       |  1 +
+ jobs/done/check-cand.log        |  9 ++++
+ jobs/done/why-cycle-silent.done |  1 +
+ jobs/done/why-cycle-silent.log  | 99 +++++++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                   |  4 ++
+ 5 files changed, 114 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   36cdde4..2f5d864  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
