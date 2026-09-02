@@ -199,6 +199,20 @@ def main(argv=None):
                         if tr else 0
                     la = (f"{(time.time() - last) / 60:.0f} мин назад"
                           if last else "входов не было")
+                    # Хронология входов: книга, у которой открытых
+                    # больше, чем мест, либо переполнилась дефектом,
+                    # либо набрала их до починки — и различает эти два
+                    # случая только время последних входов.
+                    if "--entries" in (argv or []):
+                        ent = [t for t in tr
+                               if t.get("opened_at")]
+                        ent.sort(key=lambda t: t["opened_at"])
+                        for t in ent[-6:]:
+                            print("      вход "
+                                  + time.strftime(
+                                      "%H:%M:%S",
+                                      time.gmtime(t["opened_at"]))
+                                  + f" {t.get('sym')} {t.get('side')}")
                     print(f"    {arm}: сделок {sm['trades']}, закрыто "
                           f"{sm['closed']}, открыто {sm['open']}, "
                           f"вышли без разбора {sm['exiting']}, "
