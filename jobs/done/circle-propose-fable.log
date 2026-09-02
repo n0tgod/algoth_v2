@@ -6,3 +6,16 @@
 модель: claude-fable-5-1 · усилие: xhigh · запасная: claude-opus-5
 You've hit your session limit · resets 10:20pm (UTC)
 конец: 2026-09-02T20:28:46Z, код 1
+публикуется в ветку main:
+ jobs/done/after-asks-deploy.done       |   1 +
+ jobs/done/after-asks-deploy.log        |  13 ++
+ jobs/done/circle-propose-fable.log     |   2 +
+ research/factory/out/agents-runs.jsonl |   1 +
+ research/factory/out/proposal.json     |  51 ++---
+ research/factory/out/proposal.md       | 399 ++++++++++++++++++++-------------
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 7 files changed, 285 insertions(+), 184 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   4df6ea5..0a47be8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
