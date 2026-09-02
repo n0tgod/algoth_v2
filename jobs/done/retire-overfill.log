@@ -1,0 +1,8 @@
+== задание retire-overfill ==
+строка: run tools/retire_overfilled_book.py model_c_h4_z_f30_w5_gt_rrlo_se_b0_a0
+начало: 2026-09-02T08:39:40Z
+запускаю: .venv/bin/python tools/retire_overfilled_book.py model_c_h4_z_f30_w5_gt_rrlo_se_b0_a0
+  gbm: занято имён 10 при 10 местах
+  nn: занято имён 23 при 10 местах
+превышено: {'nn': 23} — отставляю запись в model_c_h4_z_f30_w5_gt_rrlo_se_b0_a0.overfilled-20260902T083940Z
+конец: 2026-09-02T08:39:40Z, код 0

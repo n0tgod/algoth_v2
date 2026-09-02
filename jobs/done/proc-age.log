@@ -115,3 +115,14 @@
 [09-02 08:35:53] матрица: 745 символов × 808 часов, сечений с ≥30 именами: 719, признаков 50
 [09-02 08:36:42] кандидаты фабрики: книг 7 (живых 7), без живой книги 0
 конец: 2026-09-02T08:36:42Z, код 0
+публикуется в ветку main:
+ jobs/done/proc-age.done             |   1 +
+ jobs/done/proc-age.log              | 117 ++++++++++++++++++++++++++++++++++++
+ jobs/done/slots-check.log           |  10 +++
+ jobs/poke.log                       |   3 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 5 files changed, 132 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7784f74..64e1ab0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
