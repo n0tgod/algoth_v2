@@ -1,0 +1,83 @@
+== задание live-halt-when ==
+строка: run tools/diag_cycle.py --tail=3 --live
+начало: 2026-09-02T07:12:32Z
+запускаю: .venv/bin/python tools/diag_cycle.py --tail=3 --live
+=== процесс цикла ===
+1075594 .venv/bin/python research/s8_loop/train.py
+
+=== манифест модели ===
+возраст 15.6 ч
+  trained_at: 2026-09-01T15:36:42+00:00
+  train_seq: 518
+  cycle_sec: 5683.0
+  woke_after_hour_sec: 120.0
+  steps_sec: {'сведение часа': 184.5, 'матрица': 45.7, 'книги': 24.3, 'оценка': 0.1, 'канарейка': 1217.4, 'обучение': 4210.9}
+  canary_ic: 0.006
+
+=== манифесты книг ===
+  model: 15.60 ч
+  model.rank-floor0: 494.06 ч
+  model.rank-raw: 515.37 ч
+  model_demo: 708.07 ч
+  model_h1: 493.85 ч
+  model_h1.rank-raw: 517.03 ч
+  model_h24: 1.06 ч
+  model_h24a: 1.06 ч
+  model_h24b: 1.06 ч
+  model_h24bf: 1.06 ч
+  model_h24c: 1.06 ч
+  model_h24z: 1.06 ч
+  model_h24za: 1.06 ч
+  model_pretest: 615.93 ч
+  model_pretest.was-выключен__бета_не_оценима_: 696.10 ч
+  model_probe: 709.70 ч
+  model_sit: 1.06 ч
+  model_sit.rules-v1: 613.44 ч
+  model_sit.rules-v10: 474.84 ч
+  model_sit.rules-v11: 474.02 ч
+  model_sit.rules-v12: 455.57 ч
+  model_sit.rules-v2: 613.14 ч
+  model_sit.rules-v3: 611.02 ч
+  model_sit.rules-v4: 609.93 ч
+  model_sit.rules-v5: 609.10 ч
+  model_sit.rules-v6: 596.85 ч
+  model_sit.rules-v7: 596.11 ч
+  model_sit.rules-v8: 493.06 ч
+  model_sit.rules-v9: 478.05 ч
+  model_sit_lo: 1.06 ч
+  model_sit_obs: 1.06 ч
+  model_sit_obs.rules-v10: 474.84 ч
+  model_sit_obs.rules-v11: 474.02 ч
+  model_sit_obs.rules-v12: 455.57 ч
+  model_sit_obs.rules-v6: 596.85 ч
+  model_sit_obs.rules-v7: 596.11 ч
+  model_sit_obs.rules-v8: 493.06 ч
+  model_sit_obs.rules-v9: 478.05 ч
+  model_sit_r: 1.06 ч
+  model_sit_r.rules-v12: 465.90 ч
+  model_sit_r.rules-v12-1: 464.75 ч
+  model_sit_r.rules-v12-2: 455.57 ч
+  model_sit_r.rules-v13: 440.80 ч
+  model_z: 517.03 ч
+
+=== журнал живого исполнителя ===
+файлов 1, строк в двух последних 52
+  08-25 10:13:37 close  
+  08-25 10:15:46 decision TACUSDT 
+  08-25 10:15:46 open TACUSDT 
+  08-25 12:03:21 close  
+  08-25 12:04:41 decision HOLOUSDT 
+  08-25 12:04:41 open HOLOUSDT 
+  08-25 13:13:33 kill  
+  08-25 13:13:33 close  
+  08-25 13:13:33 close  
+  08-25 13:13:33 close  
+  08-25 13:13:33 close  
+  08-25 13:13:33 close  
+
+=== хвост train.log ===
+возраст 0.1 мин, размер 7963509 Б
+/root/algoth_v2/research/s8_loop/bookfeat.py:162: RuntimeWarning: All-NaN slice encountered
+  v = fn(sl, axis=1)
+[09-02 07:12:24] матрица: 745 символов × 807 часов, сечений с ≥30 именами: 718, признаков 50
+конец: 2026-09-02T07:12:32Z, код 0

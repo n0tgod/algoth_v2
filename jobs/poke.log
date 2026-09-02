@@ -415,3 +415,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788333064 ==
 [2026-09-02T07:11:06Z] задание books-age запущено: tools/diag_cycle.py
+
+== сигнал 1788333150 ==
+[2026-09-02T07:12:32Z] задание live-halt-when запущено: tools/diag_cycle.py

@@ -69,3 +69,14 @@
 [09-02 07:10:32]   сводка: 537/745 символов, новых часов 83
 [09-02 07:11:02]   сводка: 635/745 символов, новых часов 181
 конец: 2026-09-02T07:11:06Z, код 0
+публикуется в ветку main:
+ jobs/done/books-age.done            |  1 +
+ jobs/done/books-age.log             | 71 +++++++++++++++++++++++++++++++++++++
+ jobs/done/cycle-now.log             | 10 ++++++
+ jobs/poke.log                       |  3 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 86 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   75b3d6e..a04aa7f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
