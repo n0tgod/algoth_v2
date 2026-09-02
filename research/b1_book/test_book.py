@@ -6311,6 +6311,30 @@ def test_factory_built_splits_forward_from_replay():
         check("построено: живая книга и реплей — РАЗНЫЕ числа",
               a2["live"]["pnl"] != a2["fwd"],
               f'{a2["live"]["pnl"]} / {a2["fwd"]}')
+        # Книги НЕ положено по полосе — и решает это правило, а не
+        # диск. Каталог контрольной книги остаётся на месте после
+        # отставки (в нём лежит копия манифеста), и пока «есть ли
+        # книга» решал диск, страница читала его как «книга заведена
+        # этим часом, чисел ещё нет» — то есть обещала числа, которых
+        # не будет никогда. Это ровно то, против чего заведена
+        # `live_why`: «книги ещё нет» на месте «книги не положено».
+        cdir = os.path.join(d, "research", "s8_loop", "out",
+                            "model_c_" + k3)
+        os.makedirs(cdir, exist_ok=True)
+        with open(os.path.join(cdir, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"slots": 10}, f)
+        c3 = collect.Collector.__new__(collect.Collector)
+        b3 = collect.Collector.factory_built(c3)
+        ctl = [x for r in b3["roots"] for x in r["branches"]
+               if x["key"] == k3][0]
+        check("построено: у полосы без права на книгу живой НЕТ",
+              ctl["live"] is None, str(ctl["live"]))
+        check("построено: причина названа полосой, а не свежестью",
+              "полоса control" in (ctl["live_why"] or ""),
+              str(ctl["live_why"]))
+        check("построено: у отобранной книги причины нет",
+              a2["live_why"] is None, str(a2["live_why"]))
     finally:
         collect.HERE = was
         shutil.rmtree(d, ignore_errors=True)
