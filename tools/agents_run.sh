@@ -232,7 +232,7 @@ BYTES="$(wc -c < "$TMP")"
 tail -c 4000 "$TMP"
 
 if [ "$RC" != "0" ]; then
-    log_run "fail" "модель $USED, код $RC: $(tail -c 400 "$TMP" | tr '\n' ' ')"
+    log_run "fail" "модель $USED, код $RC: $(tr '\n' ' ' < "$TMP" | cut -c1-400)"
     exit 1
 fi
 
@@ -240,7 +240,7 @@ fi
 # Модель производит, машина проверяет контракт. Что именно проверяется
 # по каждой роли — в `runlog.check_role`: одно место, иначе перечень
 # разошёлся бы с реестром и с промптом.
-"$PY" - "$ROLE" "$ROOT" <<'PYCHECK'
+CHK="$("$PY" - "$ROLE" "$ROOT" <<'PYCHECK'
 import os, sys
 sys.path.insert(0, os.path.join(sys.argv[2], "research", "factory"))
 import runlog as R
@@ -248,9 +248,16 @@ ok, bad = R.check_role(sys.argv[1], sys.argv[2])
 print("КОНТРАКТ: " + ("выполнен" if ok else "; ".join(bad)))
 sys.exit(0 if ok else 1)
 PYCHECK
+)"
 CRC=$?
+echo "$CHK"
 if [ "$CRC" != "0" ]; then
-    log_run "contract" "роль отработала, но контракт не выполнен"
+    # Строку прогона, чем бы он ни кончился, обязана нести МОДЕЛЬ:
+    # «роль отработала» без имени модели есть «отработала неизвестно
+    # чем», и после отката на запасную это уже неразличимо. Причина
+    # отказа контракта едет тем же полем — иначе её пришлось бы
+    # искать в логе, которого у страницы нет.
+    log_run "contract" "модель $USED, контракт не выполнен: $(printf '%s' "$CHK" | tr '\n' ' ' | cut -c1-300)"
     exit 1
 fi
 

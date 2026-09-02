@@ -75,7 +75,14 @@ def append(path, role, status, started, ended=None, note=None,
     if pid is not None:
         row["pid"] = int(pid)
     if note:
-        row["note"] = str(note)[:2000]
+        # Пояснение приходит из чужого вывода (модель, обрезанный
+        # хвост лога), и обрезка по БАЙТАМ рвёт utf-8 посередине —
+        # `json.dumps` на одиноком суррогате бросает, и строка не
+        # пишется ВОВСЕ. Потерянная строка журнала есть отказ,
+        # неотличимый от тишины: страница вечно показывает прогон
+        # оборванным. Порченый знак заменяется, строка остаётся.
+        row["note"] = str(note)[:2000].encode(
+            "utf-8", "replace").decode("utf-8")
     if out_bytes is not None:
         row["out_bytes"] = int(out_bytes)
     os.makedirs(os.path.dirname(path), exist_ok=True)

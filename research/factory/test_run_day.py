@@ -219,6 +219,63 @@ def test_zero_outcomes_is_a_failure_not_a_quiet_day():
         R.PROPOSALS, R.SW.read_bars, R.publish = was_p, was_b, was_pub
 
 
+def test_candidate_trades_reach_the_artifact():
+    """У кандидата в артефакте есть не только сумма, но и СДЕЛКИ.
+
+    Без них страница показывает «книга заработала» и ничем это не
+    подтверждает: ни имён, ни сторон, ни причин выхода — оспорить
+    нечем. Хвост ограничен намеренно: показ не повод хранить всё.
+    """
+    tmp = tempfile.mkdtemp()
+    base, sheets, props, t0 = setup(tmp)
+    was_p, was_b, was_pub = R.PROPOSALS, R.SW.read_bars, R.publish
+    R.PROPOSALS = props
+    R.SW.read_bars = fake_bars(t0)
+    R.publish = lambda *a, **k: None
+    try:
+        out = os.path.join(tmp, "out")
+        R.main(["--sheets", sheets, "--root", tmp, "--out", out,
+                "--base", base, "--tag", "t", "--seed", "42",
+                "--no-publish"])
+        with open(os.path.join(out, "factory-day-t.json"),
+                  encoding="utf-8") as f:
+            art = json.load(f)
+        cands = art.get("candidates") or {}
+        withtr = [c for c in cands.values() if c.get("trades")]
+        check("кандидаты в артефакте есть", bool(cands), str(len(cands)))
+        if withtr:
+            c = withtr[0]
+            last = c.get("last") or []
+            check("у сделавшего сделки есть их хвост", bool(last),
+                  str(c.get("trades")))
+            check("хвост не длиннее объявленного",
+                  len(last) <= R.LAST_TRADES, str(len(last)))
+            f0 = last[0] if last else {}
+            check("в сделке названы имя, сторона, нетто и причина",
+                  all(k in f0 for k in ("sym", "side", "net_bp", "why")),
+                  str(sorted(f0)))
+            # Момент объявления едет вместе с числами: без него
+            # форвард от реплея по прошлому не отделить, а сумма
+            # читалась бы треком, будучи наполовину бэктестом.
+            check("у кандидата в артефакте есть момент объявления",
+                  c.get("declared_at") is not None,
+                  str(c.get("declared_at")))
+            fwd, pre = R.PL.split_forward(
+                {int(k): v for k, v in c["daily"].items()},
+                c.get("declared_at"))
+            check("форвард и реплей вместе дают весь ряд",
+                  len(fwd) + len(pre) == len(c["daily"]),
+                  f"{len(fwd)} + {len(pre)} против {len(c['daily'])}")
+            check("ни один день не попал в обе половины",
+                  not (set(fwd) & set(pre)))
+        else:
+            check("у сделавшего сделки есть их хвост", False,
+                  "ни один кандидат не наторговал — фикстура слаба")
+    finally:
+        R.PROPOSALS, R.SW.read_bars, R.publish = was_p, was_b, was_pub
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_declaration_passes_only_the_ceiling_gate():
     """Объявляется ТОЛЬКО то, что потолок пропустил, и только сегодня.
 
@@ -350,6 +407,7 @@ def test_declaration_passes_only_the_ceiling_gate():
 
 def main():
     tests = (test_end_to_end,
+             test_candidate_trades_reach_the_artifact,
              test_declaration_passes_only_the_ceiling_gate,
              test_only_needed_legs_are_priced,
              test_zero_outcomes_is_a_failure_not_a_quiet_day, test_null_keeps_the_book_and_shuffles_the_future)

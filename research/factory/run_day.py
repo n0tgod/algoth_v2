@@ -318,8 +318,20 @@ def geometries():
     return seen
 
 
+# Сколько последних сделок кандидата кладётся в артефакт. Полный
+# список — десятки тысяч строк на кандидата: артефакт стал бы
+# неподъёмным, а страница всё равно показывает хвост. Число невелико
+# намеренно: показ не должен становиться причиной хранить всё.
+LAST_TRADES = 40
+
+
 def run_candidates(state, legs, outs, log=print):
-    """Сделки и дневной нетто по каждому живому кандидату."""
+    """Сделки и дневной нетто по каждому живому кандидату.
+
+    В артефакт едет и ХВОСТ сделок: без него страница может показать
+    только суммы, а «книга заработала» без сделок нечем оспорить —
+    владелец не увидит ни имён, ни сторон, ни причин выхода.
+    """
     res = {}
     for cid, rec in sorted(LG.active(state).items()):
         rule = rec.get("rule") or {}
@@ -327,7 +339,14 @@ def run_candidates(state, legs, outs, log=print):
             log(f"{cid}: правило в реестре негодно — пропуск")
             continue
         tr = CD.simulate(legs, outs, CD.with_geometry(rule))
+        last = [{"at": t["at"], "exit": t["exit"], "sym": t["sym"],
+                 "side": t["side"], "arm": t["arm"],
+                 "net_bp": t["net"], "why": t["why"]}
+                for t in tr[-LAST_TRADES:]]
         res[cid] = {"trades": len(tr), "daily": CD.daily_net(tr),
+                    "last": last,
+                    "declared_at": rec.get("declared_at"),
+                    "note": rec.get("note"),
                     "lane": rec.get("lane"), "rule": rule}
     return res
 
@@ -487,15 +506,29 @@ def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
              "R5 в виде таблицы.\n")
     if cands:
         L.append("## Кандидаты\n")
-        L.append("| ключ | полоса | сделок | дней | нетто | правило |")
-        L.append("|---|---|--:|--:|--:|---|")
+        L.append("| ключ | полоса | сделок | дней | форвард | до объявл. "
+                 "| нетто | правило |")
+        L.append("|---|---|--:|--:|--:|--:|--:|---|")
         for cid, c in sorted(cands.items(),
                              key=lambda kv: -sum(kv[1]["daily"].values())):
+            fwd, pre = PL.split_forward(c["daily"], c.get("declared_at"))
             L.append(f"| `{cid}` | {c['lane']} | {c['trades']} | "
                      f"{len(c['daily'])} | "
+                     f"{sum(fwd.values()):+.1f} ({len(fwd)}) | "
+                     f"{sum(pre.values()):+.1f} ({len(pre)}) | "
                      f"{sum(c['daily'].values()):+.1f} | "
                      f"{SP.describe(c['rule'])} |")
         L.append("")
+        L.append("**Колонка «нетто» складывает форвард с реплеем по "
+                 "прошлому, и предъявлять её как результат нельзя.** "
+                 "Кандидат реплеится по всему журналу листов, а вперёд "
+                 "торгует только со дня объявления; до этого дня ряд "
+                 "есть пересчёт по прошлому, которое ассистент видел, "
+                 "когда предлагал. Правило вылета этим не задето — оно "
+                 "не судит книгу, пока ей меньше "
+                 f"{PL.WINDOW_D} суток, то есть судит уже по форварду. "
+                 "Полосы выше считаны по полному ряду и потому суть "
+                 "диагностика, а не сравнение полос.\n")
     if pending:
         L.append("## Заявка на рассмотрении потолка\n")
         L.append(f"`{pending['key']}` — сделок {pending['trades']}, "
@@ -647,6 +680,9 @@ def main(argv=None):
                                       "trades": v["trades"],
                                       "net": sum(v["daily"].values()),
                                       "daily": v["daily"],
+                                      "last": v.get("last") or [],
+                                      "declared_at": v.get("declared_at"),
+                                      "note": v.get("note"),
                                       "rule": v["rule"]}
                                   for k, v in cands.items()}},
                   f, ensure_ascii=False, indent=1)

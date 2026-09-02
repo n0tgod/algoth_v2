@@ -484,6 +484,15 @@ def test_pages_run_headless():
                 # кричащая всегда перестаёт быть сигналом.
                 ("автономная система: круг отработал", web.AGENTSPAGE,
                  "?k=xxx&agentssched=1&agentsquiet=1"),
+                # Построенное системой: дерево механик и книг под
+                # ними. Проверяется и то, что форвард не сложен с
+                # реплеем прошлого, и что вылетевшая книга видна:
+                # спрятав её, страница подделала бы знаменатель.
+                ("построено системой", web.BUILTPAGE, "?k=xxx"),
+                # Суточный прогон не пришёл — числа обязаны кричать,
+                # а не выглядеть сегодняшними.
+                ("построено системой, прогон устарел", web.BUILTPAGE,
+                 "?k=xxx&builtstale=1"),
                 # Турнир политик: весь лист веток отдельной страницей.
                 ("турнир политик", web.TOURPAGE, "?k=xxx"),
                 # Ночной прогон не пришёл: старая таблица обязана
@@ -6009,6 +6018,123 @@ def test_watchdog_respects_shadow_off_marker():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_factory_built_splits_forward_from_replay():
+    """Построенное системой: дерево читает РЕЕСТР и АРТЕФАКТ, и делит
+    деньги на форвард и реплей прошлого.
+
+    Три утверждения, и ломаются они порознь. (1) Полный список
+    кандидатов берётся из реестра, а не из артефакта: артефакт несёт
+    только ЖИВЫХ, и вылетевшие исчезли бы со страницы — то есть
+    знаменатель испытаний подделался бы сам собой. (2) Деньги делятся
+    той же функцией `pool.split_forward`, которой их делит отчёт;
+    складывать половины нельзя. (3) Кандидат, объявленный после
+    последнего прогона, получает прочерк с названной причиной, а не
+    нули: «чисел ещё нет» и «книга не заработала» снаружи неотличимы.
+    """
+    import collect
+    fdir = os.path.join(os.path.dirname(HERE), "factory")
+    sys.path.insert(0, fdir)
+    import pool as PL
+
+    d = tempfile.mkdtemp()
+    was = collect.HERE
+    try:
+        collect.HERE = os.path.join(d, "research", "b1_book")
+        out = os.path.join(d, "research", "factory", "out")
+        os.makedirs(out, exist_ok=True)
+        os.makedirs(collect.HERE, exist_ok=True)
+        # Подставные артефакты обязаны выглядеть как живые: реестр —
+        # журналом событий (объявление и отставка отдельными строками),
+        # артефакт — с ключами дня СТРОКАМИ, как их отдаёт JSON.
+        day = 86400.0
+        d0 = 20500                      # день объявления, epoch-сутки
+        dec = d0 * day + 3600
+        rule = {"target": "fwd_4h", "rank": "sigma", "floor_bp": 30,
+                "width": 5, "geom": "levels", "rr_band": "lo",
+                "sizing": "equal", "basket": "no", "agree": "no"}
+        gone = dict(rule, geom="timer")
+        fresh = dict(rule, geom="stop_take")
+        import space as SP
+        k1, k2, k3 = SP.key(rule), SP.key(gone), SP.key(fresh)
+        with open(os.path.join(out, "ledger.jsonl"), "w",
+                  encoding="utf-8") as f:
+            for row in ({"ev": "declare", "id": k1, "at": dec,
+                         "rule": rule, "lane": "selected",
+                         "note": "проверяет низкое отношение"},
+                        {"ev": "declare", "id": k2, "at": dec,
+                         "rule": gone, "lane": "control"},
+                        {"ev": "retire", "id": k2, "at": dec + 11 * day,
+                         "why": "нетто ниже медианы нуля"},
+                        {"ev": "declare", "id": k3, "at": dec + 12 * day,
+                         "rule": fresh, "lane": "control"}):
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        art = {"meta": {"at": "2026-09-02 01:00", "legs": 10},
+               "summary": {"verdict": "вердикта нет: календаря мало",
+                           "eff_n": 2.79, "record_days": 25},
+               "candidates": {k1: {
+                   "lane": "selected", "trades": 4,
+                   "declared_at": dec,
+                   "daily": {str(d0 - 2): -100.0, str(d0 - 1): -50.0,
+                             str(d0): 7.5, str(d0 + 1): 12.5},
+                   "net": -130.0, "rule": rule,
+                   "last": [{"at": dec, "exit": dec + 3600,
+                             "sym": "ARBUSDT", "side": -1,
+                             "arm": "gbm", "net_bp": 12.5,
+                             "why": "уровень"}]}}}
+        with open(os.path.join(out, "factory-day-1m.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(art, f, ensure_ascii=False)
+        c = collect.Collector.__new__(collect.Collector)
+        b = collect.Collector.factory_built(c)
+
+        keys = {x["key"] for r in b["roots"] for x in r["branches"]}
+        check("построено: в дереве все объявленные, включая вылетевшего",
+              keys == {k1, k2, k3}, str(sorted(keys)))
+        check("построено: вылетевший помечен и несёт причину",
+              [x for r in b["roots"] for x in r["branches"]
+               if x["key"] == k2][0]["why"] is not None)
+        check("построено: знаменатель считает вылетевших",
+              (b["totals"]["declared"], b["totals"]["retired"]) == (3, 1),
+              str(b["totals"]))
+        # Корень — механика (цель плюс геометрия), а не отдельная книга:
+        # разнеся по корням настройки, страница назвала бы механикой
+        # дозировку.
+        check("построено: корней столько же, сколько механик",
+              len(b["roots"]) == 3, str(len(b["roots"])))
+        alive = [x for r in b["roots"] for x in r["branches"]
+                 if x["key"] == k1][0]
+        fwd, pre = PL.split_forward(
+            {int(k): v for k, v in art["candidates"][k1]["daily"].items()},
+            dec)
+        check("построено: форвард посчитан той же функцией, что в отчёте",
+              alive["fwd"] == round(sum(fwd.values()), 1)
+              and alive["pre"] == round(sum(pre.values()), 1),
+              f'{alive["fwd"]} / {alive["pre"]}')
+        check("построено: форвард считает только дни от объявления",
+              (alive["fwd"], alive["fwd_days"]) == (20.0, 2),
+              f'{alive["fwd"]} за {alive["fwd_days"]} сут')
+        check("построено: реплей прошлого отделён",
+              (alive["pre"], alive["pre_days"]) == (-150.0, 2),
+              f'{alive["pre"]} за {alive["pre_days"]} сут')
+        check("построено: половины не сложены",
+              alive["fwd"] != art["candidates"][k1]["net"])
+        check("построено: хвост сделок доехал",
+              [t["sym"] for t in alive["last"]] == ["ARBUSDT"],
+              str(alive["last"]))
+        nn = [x for r in b["roots"] for x in r["branches"]
+              if x["key"] == k3][0]
+        check("построено: у книги без чисел прочерк, а не ноль",
+              nn["fwd"] is None and nn["trades"] is None,
+              f'{nn["fwd"]} / {nn["trades"]}')
+        check("построено: причина отсутствия чисел названа",
+              bool(nn["no_numbers"]), str(nn["no_numbers"]))
+        check("построено: вердикт прогона взят из артефакта",
+              b["verdict"] == art["summary"]["verdict"])
+    finally:
+        collect.HERE = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_agents_state_reads_the_registry_and_the_disk():
     """Автономная система: тексты из реестра, построенность — с диска.
 
@@ -6234,6 +6360,7 @@ def main():
     test_collected_symbols_are_not_lost()
     test_candles_window_can_end_in_the_past()
     test_recount_survives_restart()
+    test_factory_built_splits_forward_from_replay()
     test_agents_state_reads_the_registry_and_the_disk()
     print()
     if FAILED:

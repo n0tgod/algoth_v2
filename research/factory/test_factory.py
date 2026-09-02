@@ -949,6 +949,35 @@ def test_adversary_must_show_what_it_tried():
           not ok and any("несуществующ" in w for w in why), str(why))
 
 
+def test_a_broken_character_does_not_swallow_the_journal_row():
+    """Порченый знак в пояснении НЕ теряет строку журнала.
+
+    Пояснение приходит из чужого вывода и обрезается хвостом, а обрезка
+    по байтам рвёт utf-8 посередине. `json.dumps` на одиноком суррогате
+    бросает — и строка не пишется ВОВСЕ: прогон, который кончился,
+    навсегда читается как оборванный. Это тот же отказ, неотличимый от
+    тишины, только внутри самого журнала.
+
+    Живой случай: контракт роли отказал, пояснение обрезали `tail -c`,
+    и строки `contract` в журнале не появилось ни одной.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        path = os.path.join(d, RL.RUNS)
+        # Ровно то, что даёт байтовая обрезка: половина кириллической
+        # буквы, поднятая в строку через surrogateescape.
+        broken = "модель claude-x, контракт не выполнен: зан" + \
+            "яно".encode()[:1].decode("utf-8", "surrogateescape")
+        RL.append(path, "propose", "contract", time.time(), note=broken)
+        rows, bad = RL.read(path)
+        check("строка записана, а не потеряна", len(rows) == 1, str(rows))
+        check("битых строк нет", bad == 0, str(bad))
+        note = (rows[0].get("note") or "") if rows else ""
+        check("модель в строке названа", "claude-x" in note, note)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_fallback_happens_only_on_a_limit_and_is_recorded():
     """Откат на запасную модель — только по лимиту, ровно раз, и в журнал.
 
@@ -1440,6 +1469,7 @@ def main():
              test_runner_leaves_a_line_on_every_refusal,
              test_rights_reach_the_model_whole,
              test_prompt_actually_reaches_the_model,
+             test_a_broken_character_does_not_swallow_the_journal_row,
              test_fallback_happens_only_on_a_limit_and_is_recorded,
              test_cycle_advances_one_step_and_obeys_the_safeties,
              test_mech_step_leaves_its_end_line)

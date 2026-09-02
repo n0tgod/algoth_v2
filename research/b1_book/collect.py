@@ -4266,6 +4266,143 @@ class Collector:
         self._agents_cache = (now, out)
         return out
 
+    # Корень дерева построенного — ЦЕЛЬ плюс ГЕОМЕТРИЯ: что книга
+    # предсказывает и как ведёт сделку. Остальные оси (сечение, пол
+    # входа, ширина, отношение, размер, согласие рук) суть дозировка
+    # одной и той же механики, и разносить их по корням значило бы
+    # называть механикой настройку.
+    BUILT_ROOT = ("target", "geom")
+
+    def factory_built(self):
+        """Что автономная система объявила: механика в корне, книги ветками.
+
+        Просьба владельца: страница всего, что система построила и что
+        прошло проверки, — с описанием простыми словами и сделками
+        бумажной книги.
+
+        Читается ДВА источника, и это не две дороги к одному ответу:
+        РЕЕСТР (`ledger.jsonl`) — полный список кандидатов, включая
+        вылетевших, то есть знаменатель испытаний; АРТЕФАКТ суточного
+        прогона — числа, и только те, которые породил прогон (урок R1).
+        Кандидат, объявленный после последнего прогона, стоит в дереве
+        с прочерками и названной причиной: «чисел ещё нет» и «ноль»
+        снаружи неотличимы, а первое здесь — правда.
+
+        Деньги делятся на ФОРВАРД и РЕПЛЕЙ ПО ПРОШЛОМУ одной функцией
+        `pool.split_forward` — той же, которой их делит отчёт. Складывать
+        их нельзя: до объявления это пересчёт по прошлому, которое
+        ассистент видел, когда предлагал.
+        """
+        now = time.time()
+        at, cached = getattr(self, "_built_cache", (0.0, None))
+        if cached is not None and now - at < 60:
+            return cached
+        # КОД берётся от настоящего файла, ДАННЫЕ — от `HERE`: тесты
+        # подменяют `HERE`, чтобы подложить свой реестр и артефакт, и
+        # метод, читающий и то и другое от `__file__`, исполнял бы на
+        # проверке живые данные сервера — то есть проверял бы не себя.
+        research = os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))
+        fdir = os.path.join(os.path.dirname(HERE), "factory", "out")
+        sys.path.insert(0, os.path.join(research, "factory"))
+        import ledger as LG
+        import pool as PL
+        import space as SP
+        rows, broken = LG.read(fdir)
+        state = LG.state(rows)
+        art, art_err = {}, None
+        fp = os.path.join(fdir, "factory-day-1m.json")
+        try:
+            with open(fp, encoding="utf-8") as f:
+                art = json.load(f)
+            run_age = now - os.path.getmtime(fp)
+        except OSError:
+            art_err, run_age = "суточного прогона ещё не было", None
+        except ValueError as e:
+            art_err, run_age = f"артефакт не читается: {e}", None
+        nums = art.get("candidates") or {}
+        roots, tot = {}, {"declared": 0, "alive": 0, "retired": 0,
+                          "selected": 0, "control": 0, "no_numbers": 0}
+        for cid, rec in sorted(state.items()):
+            rule = rec.get("rule") or {}
+            if SP.validate(rule):
+                continue
+            tot["declared"] += 1
+            alive = rec.get("retired_at") is None
+            tot["alive" if alive else "retired"] += 1
+            if rec.get("lane") in ("selected", "control"):
+                tot[rec["lane"]] += 1
+            c = nums.get(cid)
+            b = {"key": cid, "lane": rec.get("lane"), "alive": alive,
+                 "rule": rule, "plain": SP.describe(rule),
+                 "declared_at": rec.get("declared_at"),
+                 "retired_at": rec.get("retired_at"),
+                 "why": rec.get("why"), "note": rec.get("note"),
+                 "trades": None, "fwd": None, "pre": None,
+                 "fwd_days": None, "pre_days": None, "last": [],
+                 "daily": None, "no_numbers": None, "no_tail": None}
+            if c:
+                # Ключ дня в JSON стал строкой — вернуть обратно
+                # обязан читатель, иначе ряды не пересекутся ни одним
+                # днём (то же правило, что у потолка).
+                daily = {int(k): v for k, v in (c.get("daily")
+                                                or {}).items()}
+                fwd, pre = PL.split_forward(daily, rec.get("declared_at"))
+                b.update(trades=c.get("trades"),
+                         fwd=round(sum(fwd.values()), 1),
+                         pre=round(sum(pre.values()), 1),
+                         fwd_days=len(fwd), pre_days=len(pre),
+                         daily=sorted((d, round(v, 2))
+                                      for d, v in daily.items()),
+                         last=list(reversed(c.get("last") or [])))
+                if c.get("trades") and not b["last"]:
+                    # Пустой хвост при сделках — не «сделок нет», а
+                    # прогон прежнего образца. Молчаливая пустота
+                    # читалась бы как «книга не торговала».
+                    b["no_tail"] = ("прогон сделан до появления хвоста "
+                                    "сделок — заполнит ближайший "
+                                    "суточный")
+            else:
+                tot["no_numbers"] += 1
+                b["no_numbers"] = ("объявлен после последнего суточного "
+                                   "прогона — первые числа придут "
+                                   "ближайшим" if alive else
+                                   "вылетел: живым кандидатам числа "
+                                   "считает прогон, вылетевшим — нет")
+            rk = "|".join(str(rule[a]) for a in self.BUILT_ROOT)
+            r = roots.setdefault(rk, {"key": rk, "branches": [],
+                                      "target": rule["target"],
+                                      "geom": rule["geom"]})
+            r["branches"].append(b)
+        out = []
+        for r in roots.values():
+            hz = "4 ч" if r["target"] == "fwd_4h" else "24 ч"
+            gm = {"timer": "выход по времени",
+                  "stop_take": "стоп и тейк по обещаниям пути",
+                  "levels": "только уровни, без отмены по времени"}
+            r["title"] = f"прогноз {hz} · {gm[r['geom']]}"
+            r["alive"] = sum(1 for b in r["branches"] if b["alive"])
+            r["n"] = len(r["branches"])
+            r["branches"].sort(key=lambda b: (not b["alive"], b["key"]))
+            out.append(r)
+        out.sort(key=lambda r: (-r["n"], r["key"]))
+        sm = art.get("summary") or {}
+        res = {"roots": out, "totals": tot, "broken": broken,
+               "verdict": sm.get("verdict"), "eff_n": sm.get("eff_n"),
+               "record_days": sm.get("record_days"),
+               "null_median": sm.get("null_median"),
+               "space_total": SP.TOTAL,
+               "space_available": SP.available_total(),
+               "window_d": PL.WINDOW_D, "cap": PL.CAP,
+               "run_at": (art.get("meta") or {}).get("at"),
+               "run_age_sec": None if run_age is None else round(run_age, 1),
+               "run_stale": (run_age is not None
+                             and run_age > self.AGENTS_STALE),
+               "art_error": art_err,
+               "generated_at": round(now, 1)}
+        self._built_cache = (now, res)
+        return res
+
     def model_tree(self):
         """Дерево моделей: две руки и их книги, с логикой каждой ветки.
 

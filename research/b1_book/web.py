@@ -109,6 +109,7 @@ const NAV_ITEMS = [
   ["/tournament-page", "tournament", "турнир"],
   ["/paper-page", "monthly", "месячная"],
   ["/agents-page", "agents", "агенты"],
+  ["/built-page", "built", "построено"],
   ["/live-page", "bot live", "бот live"]];
 function navMount(current){
   const el = document.getElementById("nav");
@@ -8435,6 +8436,357 @@ setInterval(pull, 60000);
 # живая сессия, а рецепт запуска. Урок листа турнира: объяснение,
 # живущее только на соседней странице, эту не защищает, а сюда
 # приходят прямо из меню.
+# --- страница построенного автономной системой -----------------------
+#
+# Просьба владельца: всё, что система объявила и что прошло проверки, —
+# механика в корне, ветки под ней, описание простыми словами и сделки
+# бумажной книги.
+#
+# Три правила показа, каждое из уроков проекта:
+#
+# * ФОРВАРД и РЕПЛЕЙ ПО ПРОШЛОМУ никогда не складываются. Кандидат
+#   реплеится по всему журналу листов, а вперёд торгует со дня
+#   объявления; сумма читалась бы треком, будучи наполовину бэктестом.
+# * Чисел ещё нет — прочерк с НАЗВАННОЙ причиной, а не ноль.
+# * Вылетевшие показываются вместе с живыми: «лучшая из семи» и
+#   «лучшая из семи, где четыре выбыли» — разные утверждения.
+BUILTPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>built by the system — mechanics and their books</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:14px 16px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+.frame{border-left:2px solid var(--accent);padding-left:10px;
+ font-size:13px;margin:0 0 10px}
+.frame b{color:var(--accent);font-weight:600}
+.warn{border-left:2px solid var(--ask);padding-left:10px;
+ font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.warn b{color:var(--ask);font-weight:600}
+.strip{display:grid;gap:8px;
+ grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+ margin:10px 0 0}
+.st{background:linear-gradient(180deg,rgba(151,71,255,.06),
+ rgba(151,71,255,0));border:1px solid var(--rule);border-radius:12px;
+ padding:9px 11px}
+.st .lab{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+ color:var(--muted)}
+.st .val{font-size:17px;font-weight:700;margin-top:2px}
+.st .val small{font-size:11.5px;font-weight:500;color:var(--muted)}
+.root{border:1px solid var(--rule);border-radius:14px;padding:12px 14px;
+ margin:11px 0;background:rgba(255,255,255,.012);
+ border-left:3px solid var(--accent)}
+.rhead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.rname{font-weight:700;font-size:15px}
+.chip{font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+ border:1px solid var(--rule);border-radius:999px;padding:2px 8px;
+ color:var(--muted);white-space:nowrap}
+.chip.sel{border-color:var(--accent);color:var(--accent)}
+.chip.ctl{border-color:var(--rule);color:var(--muted)}
+.chip.out{border-color:var(--ask);color:var(--ask)}
+.chip.on{border-color:var(--bid);color:var(--bid)}
+.branch{border:1px solid var(--rule-soft);border-radius:12px;
+ padding:10px 12px;margin:9px 0 0 14px;background:var(--panel);
+ position:relative}
+.branch:before{content:"";position:absolute;left:-14px;top:18px;
+ width:12px;height:1px;background:var(--rule)}
+.branch.out{opacity:.62}
+.bhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.bkey{font-weight:700;font-size:12.5px;font-family:ui-monospace,
+ Menlo,Consolas,monospace}
+.plain{font-size:13px;margin:6px 0 0}
+.nums{display:grid;gap:6px 14px;margin:8px 0 0;
+ grid-template-columns:repeat(auto-fit,minmax(132px,1fr))}
+.f{font-size:12.5px}
+.f .lab{color:var(--muted);font-size:10.5px;letter-spacing:.09em;
+ text-transform:uppercase;display:block}
+.up{color:var(--bid)}
+.dn{color:var(--ask)}
+.note{font-size:12px;color:var(--muted);margin:7px 0 0}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:5px 8px;text-align:left;white-space:nowrap;
+ border-bottom:1px solid var(--rule-soft)}
+th{color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right}
+.scroll{overflow-x:auto;margin:8px 0 0}
+a{color:var(--accent)}
+button{background:var(--chip);border:1px solid var(--rule);
+ color:var(--ink);border-radius:999px;padding:3px 11px;font-size:11.5px;
+ cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--accent);
+ color:var(--accent)}
+</style>
+""" + NAVCSS + r"""</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k" id="strap"></span>
+  <span style="flex:1"></span>
+  <span id="lang"></span></div>
+<div id="nav"></div>
+<div class="panel"><div id="frame"></div><div id="strip"></div>
+  <div id="alarm"></div></div>
+<div class="panel"><div class="cap" id="tcap"></div>
+  <div id="tree">&hellip;</div></div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + r"""
+let LANG = new URLSearchParams(location.search).get("lang")
+  || (function(){ try { return localStorage.getItem("algoth_lang"); }
+                  catch (e) { return null; } })() || "en";
+let DATA = null;
+const OPEN = new Set();          // какие книги развёрнуты — состояние ПОКАЗА
+
+const UI = {
+  strap: {en: "built by the autonomous system",
+          ru: "построено автономной системой"},
+  tcap: {en: "mechanics and the books under them",
+         ru: "механики и книги под ними"},
+  declared: {en: "declared", ru: "объявлено"},
+  alive: {en: "alive", ru: "живо"},
+  retired: {en: "retired", ru: "вылетело"},
+  effn: {en: "effective N", ru: "эффективное N"},
+  space: {en: "space declared", ru: "пространство"},
+  fwd: {en: "forward, bp", ru: "форвард, б.п."},
+  pre: {en: "replay of the past, bp", ru: "реплей прошлого, б.п."},
+  trades: {en: "trades", ru: "сделок"},
+  days: {en: "days forward", ru: "суток вперёд"},
+  sel: {en: "selected", ru: "отобран"},
+  ctl: {en: "control", ru: "случайный"},
+  out: {en: "retired", ru: "вылетел"},
+  on: {en: "alive", ru: "жив"},
+  show: {en: "trades", ru: "сделки"},
+  hide: {en: "hide", ru: "скрыть"},
+  none: {en: "nothing declared yet — the system has not passed a "
+             + "candidate through the ceiling",
+         ru: "не объявлено ничего — система ещё не провела ни одного "
+             + "кандидата через потолок"},
+  tsym: {en: "name", ru: "имя"},
+  tside: {en: "side", ru: "сторона"},
+  tnet: {en: "net", ru: "нетто"},
+  twhy: {en: "exit", ru: "выход"},
+  tat: {en: "entered", ru: "вход"},
+  tarm: {en: "arm", ru: "рука"},
+  tail: {en: "last trades of the paper book",
+         ru: "последние сделки бумажной книги"}};
+
+function T(k){ const v = UI[k]; return v ? (v[LANG] || v.en) : k; }
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function sgn(v){ return v == null ? "dim" : (v > 0 ? "up"
+  : (v < 0 ? "dn" : "dim")); }
+// Базисный пункт гросса — единица ФАБРИКИ: в ней считает и отчёт
+// суточного прогона, и потолок. Общий `pct` здесь не зовётся не по
+// забывчивости: он форматирует ПРОЦЕНТ движения цены, а это другая
+// величина, и печатать её тем же знаком значило бы обещать
+// сопоставимость, которой нет.
+function bp(v){ return v == null ? "&mdash;"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(1); }
+function ts(t){ if (!t) return "&mdash;";
+  const d = new Date(t * 1000);
+  return d.toISOString().slice(5, 16).replace("T", " "); }
+
+function langBox(){
+  const el = document.getElementById("lang");
+  if (!el) return;
+  el.innerHTML = ["en", "ru"].map(l =>
+    `<button data-l="${l}" aria-pressed="${LANG === l}">${l}</button>`
+    ).join(" ");
+  el.querySelectorAll("button").forEach(b =>
+    b.onclick = () => setLang(b.dataset.l));
+}
+function setLang(l){
+  LANG = l;
+  try { localStorage.setItem("algoth_lang", l); } catch (e) {}
+  render();
+}
+
+// РАМКА — первое, что читается, и она обязана сказать, чем эти деньги
+// НЕ являются. Без неё страница из книг с плюсами читается как список
+// работающих стратегий, а это ровно ошибка R5 в виде страницы.
+function frameHtml(d){
+  const cap = d.cap, win = d.window_d;
+  if (LANG === "ru") return `<p class="frame"><b>Это не список
+    работающих стратегий.</b> Здесь книги, которые автономная система
+    объявила испытаниями: каждая — строка параметров того, что движок
+    уже умеет, а не отдельно обученная модель. Веса у всех одни и те
+    же; различаются правила обращения с прогнозом, поэтому разницу
+    результатов и можно приписать правилу.</p>
+    <p class="frame"><b>Бумажная книга заводится на КАЖДОГО
+    объявленного</b> — и на отобранного ассистентом, и на случайного из
+    контрольной руки. Книга бумажная и реплейная: сделки считаются по
+    тому же часовому листу сечения, которым торгуют живые книги, вход
+    по следующему открытию, круг издержек снят. Живого сканера,
+    кассы и слотов у неё нет — то есть исполнение не моделируется
+    так, как у живых книг.</p>
+    <p class="frame"><b>Форвард и реплей прошлого не складываются
+    никогда.</b> Кандидат реплеится по всему журналу листов, а вперёд
+    торгует только со дня объявления. Дни до объявления — пересчёт по
+    прошлому, которое ассистент видел, когда предлагал; предъявлять их
+    как результат нельзя. Правило вылета этим не задето: книгу оно не
+    судит, пока ей меньше ${win} суток, то есть судит уже по
+    форварду.</p>`;
+  return `<p class="frame"><b>This is not a list of working
+    strategies.</b> These are books the autonomous system declared as
+    trials: each is a row of parameters over what the engine already
+    does, not a separately trained model. The weights are the same for
+    all of them; what differs is the rule for handling the forecast,
+    which is why a difference in results can be attributed to the
+    rule.</p>
+    <p class="frame"><b>A paper book is started for EVERY declared
+    candidate</b> — both the assistant-selected ones and the random
+    control arm. The book is paper and replayed: trades are computed on
+    the same hourly cross-section sheet the live books trade, entry at
+    the next open, the cost round subtracted. It has no live scanner,
+    no cash and no slots — execution is not modelled the way the live
+    books model it.</p>
+    <p class="frame"><b>Forward and replay-of-the-past are never
+    summed.</b> A candidate is replayed over the whole sheet journal but
+    trades forward only from the day it was declared. Days before that
+    are a recomputation over a past the assistant had already seen when
+    proposing. The retirement rule is untouched by this: it does not
+    judge a book younger than ${win} days, so it judges the forward
+    part.</p>`;
+}
+
+function branchHtml(b){
+  const lane = b.lane === "selected" ? "sel" : "ctl";
+  const open = OPEN.has(b.key);
+  const nums = b.no_numbers
+    ? `<div class="note">&mdash; ${esc(b.no_numbers)}</div>`
+    : `<div class="nums">
+        <div class="f"><span class="lab">${T("fwd")}</span>
+          <span class="${sgn(b.fwd)}">${bp(b.fwd)}</span></div>
+        <div class="f"><span class="lab">${T("days")}</span>
+          ${b.fwd_days == null ? "&mdash;" : b.fwd_days}</div>
+        <div class="f"><span class="lab">${T("trades")}</span>
+          ${b.trades == null ? "&mdash;" : b.trades}</div>
+        <div class="f"><span class="lab">${T("pre")}</span>
+          <span class="dim">${bp(b.pre)}</span></div>
+      </div>`;
+  let tail = "";
+  if (open){
+    if (b.no_tail){
+      tail = `<div class="note">&mdash; ${esc(b.no_tail)}</div>`;
+    } else if ((b.last || []).length){
+      tail = `<div class="scroll"><table>
+        <tr><th>${T("tat")}</th><th>${T("tsym")}</th>
+          <th>${T("tside")}</th><th>${T("tarm")}</th>
+          <th class="num">${T("tnet")}</th><th>${T("twhy")}</th></tr>` +
+        b.last.map(t => `<tr>
+          <td class="mono dim">${ts(t.at)}</td>
+          <td class="mono">${esc(t.sym)}</td>
+          <td>${t.side > 0 ? "L" : "S"}</td>
+          <td class="dim">${esc(t.arm || "")}</td>
+          <td class="num mono ${sgn(t.net_bp)}">${bp(t.net_bp)}</td>
+          <td class="dim">${esc(t.why || "")}</td></tr>`).join("") +
+        `</table></div>
+        <div class="note">${T("tail")}</div>`;
+    }
+  }
+  const btn = (b.trades || b.no_tail)
+    ? `<button data-key="${esc(b.key)}" aria-pressed="${open}"
+        >${open ? T("hide") : T("show")}</button>` : "";
+  return `<div class="branch${b.alive ? "" : " out"}">
+    <div class="bhead"><span class="bkey">${esc(b.key)}</span>
+      <span class="chip ${lane}">${T(lane)}</span>
+      <span class="chip ${b.alive ? "on" : "out"}"
+        >${b.alive ? T("on") : T("out")}</span>
+      <span style="flex:1"></span>${btn}</div>
+    <div class="plain">${esc(b.plain)}</div>
+    ${b.why ? `<div class="note">${esc(b.why)}</div>` : ""}
+    ${b.note ? `<div class="note">&laquo;${esc(b.note)}&raquo;</div>` : ""}
+    ${nums}${tail}</div>`;
+}
+
+// Какие книги развёрнуты — состояние ПОКАЗА, и живёт оно в наборе, из
+// которого собирается разметка: страница перерисовывается опросом раз в
+// минуту, и разворот, живший только в DOM, схлопывался бы сам.
+function toggleTrades(k){
+  if (!k) return;
+  if (OPEN.has(k)) OPEN.delete(k); else OPEN.add(k);
+  render();
+}
+
+function render(){
+  const d = DATA;
+  document.getElementById("strap").textContent = T("strap");
+  navMount("/built-page");
+  langBox();
+  if (!d) return;
+  document.getElementById("frame").innerHTML = frameHtml(d);
+  document.getElementById("tcap").textContent = T("tcap");
+  const t = d.totals || {};
+  document.getElementById("strip").innerHTML =
+    [[T("declared"), t.declared],
+     [T("alive"), t.alive],
+     [T("retired"), t.retired],
+     [T("effn"), d.eff_n == null ? "&mdash;" : d.eff_n],
+     [T("space"), `${t.declared}<small> / ${d.space_available}</small>`]]
+    .map(c => `<div class="st"><div class="lab">${c[0]}</div>
+      <div class="val">${c[1] == null ? "&mdash;" : c[1]}</div></div>`)
+    .join("");
+  // Вердикт печатается ДОСЛОВНО из артефакта прогона: он и говорит,
+  // что числа ниже суть диагностика, а не результат.
+  let al = "";
+  if (d.verdict)
+    al += `<div class="warn"><b>&#9888;</b> ${esc(d.verdict)}</div>`;
+  if (d.art_error)
+    al += `<div class="warn"><b>&#9888;</b> ${esc(d.art_error)}</div>`;
+  else if (d.run_stale)
+    al += `<div class="warn"><b>&#9888;</b> ` + (LANG === "ru"
+      ? `суточный прогон не приходил ${Math.round(
+          d.run_age_sec / 3600)} ч — числа устарели`
+      : `no daily run for ${Math.round(d.run_age_sec / 3600)} h — `
+        + `the numbers are stale`) + `</div>`;
+  document.getElementById("alarm").innerHTML = al;
+  const roots = d.roots || [];
+  document.getElementById("tree").innerHTML = roots.length
+    ? roots.map(r => `<div class="root">
+        <div class="rhead"><span class="rname">${esc(r.title)}</span>
+          <span class="chip">${r.alive}/${r.n}</span></div>
+        ${r.branches.map(branchHtml).join("")}</div>`).join("")
+    : `<div class="note">${T("none")}</div>`;
+  document.getElementById("tree").querySelectorAll("button")
+    .forEach(b => b.onclick = () => toggleTrades(b.dataset.key));
+}
+
+async function tick(){
+  try {
+    const r = await fetch("/factory_built?k=" + encodeURIComponent(KEY));
+    if (r.ok) DATA = await r.json();
+  } catch (e) {}
+  render();
+}
+render();
+tick();
+setInterval(tick, 60000);
+</script>
+"""
+
+
 AGENTSPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>autonomous system — agents and the conveyor</title>
@@ -9218,6 +9570,14 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/agents-page":
                 return self._ok(AGENTSPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
+            if u.path == "/factory_built":
+                return self._ok(json.dumps(
+                    collector.factory_built(),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/built-page":
+                return self._ok(BUILTPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
             if u.path == "/chart":
                 return self._ok(CHART.encode("utf-8"),
