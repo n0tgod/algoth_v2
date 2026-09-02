@@ -23,6 +23,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
 sys.path.insert(0, os.path.join(ROOT, "research"))
 import trades as TR                                       # noqa: E402
+# `collect` тянется ЛЕНИВО и только ради счёта занятых мест: это
+# тяжёлый модуль (numpy, страницы), и диагностика, падающая на его
+# отсутствии, была бы бесполезна ровно там, где нужна.
+sys.path.insert(0, os.path.join(ROOT, "research", "b1_book"))
 OUT = os.path.join(ROOT, "research", "s8_loop", "out")
 
 
@@ -175,6 +179,20 @@ def main(argv=None):
                       f"согласие {g.get('agree')}")
                 picks = _rows(os.path.join(d, "picks.jsonl"))
                 revs = _rows(os.path.join(d, "review.jsonl"))
+                # Число, которым СКАНЕР считает занятые места, — это
+                # длина `sit_open_levels`, а не число открытых сделок:
+                # места считаются по ИМЕНАМ, и книга, набравшая одно
+                # имя в разные часы, занимает одно место. Печатается
+                # рядом, потому что «открыто 23 при десяти местах»
+                # без него читается как переполнение, которого может
+                # не быть.
+                try:
+                    import collect as CO
+                    ents = _rows(os.path.join(d, "entries_live.jsonl"))
+                    held = CO.sit_open_levels(picks, revs, ents)
+                except Exception as e:            # noqa: BLE001
+                    held = None
+                    print(f"    места сканера не посчитаны: {e}")
                 for arm in ("gbm", "nn"):
                     # Сделки строит ЯДРО, а не этот файл. Строка
                     # выбора — одна на (руку, час) и несёт СПИСОК ног,
@@ -193,6 +211,13 @@ def main(argv=None):
                     # строках, то есть «рука не входила» на живой
                     # книге. Ровно это и случилось в первой версии.
                     sm = TR.summary(tr, arm=arm)
+                    hv, hs = None, {}
+                    if held is not None:
+                        hv = {q["sym"] for q in held
+                              if q["arm"] == arm}
+                        for q in held:
+                            if q["arm"] == arm:
+                                hs[q["side"]] = hs.get(q["side"], 0) + 1
                     nt = sum(1 for t in tr
                              if t.get("opened_at") is None)
                     last = max((t.get("opened_at") or 0) for t in tr) \
@@ -218,6 +243,9 @@ def main(argv=None):
                           f"вышли без разбора {sm['exiting']}, "
                           f"ждут разбора {sm['awaiting']}, "
                           f"схлопнули {nt}, последний вход {la}")
+                    if hv is not None:
+                        print("      мест занято сканером: имён "
+                              f"{len(hv)}, по сторонам {hs or '—'}")
 
     print("\n=== хвост train.log ===")
     lp = os.path.join(OUT, "train.log")
