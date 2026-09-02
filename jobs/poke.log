@@ -540,3 +540,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788370001 ==
 [2026-09-02T17:26:42Z] задание stab-check запущено: research/factory/test_ceiling.py
+
+== сигнал 1788370478 ==
+[2026-09-02T17:34:40Z] задание cli-models запущено: tools/probe_cli_models.py

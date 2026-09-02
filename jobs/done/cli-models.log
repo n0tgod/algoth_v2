@@ -1,0 +1,12 @@
+== задание cli-models ==
+строка: run tools/probe_cli_models.py
+начало: 2026-09-02T17:34:40Z
+запускаю: .venv/bin/python tools/probe_cli_models.py 
+версия CLI: код 0, 2.1.220 (Claude Code)
+вход: код 0, {
+
+claude-fable-5-1     код 1: API Error: 400 Claude Code 2.1.220 does not support this model; version 2.1.251 or newer is required. Run 'claude update', or update the Claude desktop app, then try again.
+claude-opus-5        код 0: ок
+opus                 код 0: ок
+sonnet               код 0: ок
+конец: 2026-09-02T17:35:00Z, код 0

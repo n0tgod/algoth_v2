@@ -275,3 +275,14 @@ test_the_tree_under_test_is_not_shadowed_by_stale_bytecode
 
 все проверки прошли (34 блоков)
 конец: 2026-09-02T17:26:43Z, код 0
+публикуется в ветку main:
+ jobs/done/stab-check.done  |   1 +
+ jobs/done/stab-check.log   | 277 +++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/stab-deploy.done |   1 +
+ jobs/done/stab-deploy.log  |  10 ++
+ jobs/poke.log              |   4 +
+ 5 files changed, 293 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   52b7804..bd8d0c8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
