@@ -33,3 +33,16 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-02T20:25:02Z
+публикуется в ветку main:
+ jobs/done/after-asks-deploy.log        | 35 ++++++++++++++++++++++++++++++++++
+ jobs/done/asks-page-deploy.log         | 11 +++++++++++
+ jobs/done/circle-propose-fable.done    |  1 +
+ jobs/done/circle-propose-fable.log     |  6 ++++++
+ jobs/poke.log                          |  3 +++
+ research/factory/out/agents-runs.jsonl |  1 +
+ research/s8_loop/out/day_brake.json    |  2 +-
+ 7 files changed, 58 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   9e3e1c1..4df6ea5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
