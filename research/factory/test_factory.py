@@ -1635,6 +1635,80 @@ def test_candidate_diagnostic_counts_trades_not_journal_lines():
 
 
 
+
+def test_overfilled_book_record_is_retired_not_kept():
+    """Запись сверх объявленной ширины отставляется, а не остаётся.
+
+    Книга кандидата есть испытание ОБЪЯВЛЕННОГО правила. Позиции,
+    набранные при дефекте сверх объявленных мест, описывают книгу
+    другой ширины — то есть другого кандидата под тем же именем; на
+    живом сервере такая книга держала 23 имени при десяти местах,
+    пока правка не доехала. Оставить их значило бы измерять не то,
+    что заявлено, и пометкой это не чинится: кривая складывается из
+    сделок.
+
+    Обе стороны: превышение отставляется, книга в пределах мест НЕ
+    трогается. Иначе инструмент, срабатывающий всегда, стирал бы
+    здоровые записи.
+    """
+    import subprocess
+
+    root = os.path.dirname(os.path.dirname(HERE))
+    tool = os.path.join(root, "tools", "retire_overfilled_book.py")
+
+    def make(n):
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"situational": True, "slots": 10}, f)
+        with open(os.path.join(d, "entries_live.jsonl"), "w",
+                  encoding="utf-8") as f:
+            for i in range(n):
+                f.write(json.dumps(
+                    {"arm": "gbm", "hour": "2026-09-02-09",
+                     "sym": f"S{i}USDT", "side": "long", "px": 100.0,
+                     "mae": -40.0, "mfe": 90.0,
+                     "at_ts": 1000.0}) + "\n")
+        for f_ in ("picks.jsonl", "review.jsonl"):
+            open(os.path.join(d, f_), "w").close()
+        return d
+
+    over = make(23)
+    ok = make(4)
+    try:
+        r = subprocess.run([sys.executable, tool, over],
+                           capture_output=True, text=True, timeout=300)
+        txt = r.stdout + r.stderr
+        arch = [x for x in os.listdir(os.path.dirname(over))
+                if x.startswith(os.path.basename(over) + ".overfilled")]
+        check("превышение названо числом", "занято имён 23" in txt,
+              txt[-300:])
+        check("запись отставлена в архив", len(arch) == 1, str(arch))
+        left = sorted(os.listdir(over))
+        check("сделки из книги уехали, манифест остался",
+              "entries_live.jsonl" not in left
+              and "manifest.json" in left, str(left))
+        r2 = subprocess.run([sys.executable, tool, over],
+                            capture_output=True, text=True, timeout=300)
+        check("повторный прогон вычищенную книгу не трогает",
+              "превышения нет" in (r2.stdout + r2.stderr),
+              (r2.stdout + r2.stderr)[-200:])
+        r3 = subprocess.run([sys.executable, tool, ok],
+                            capture_output=True, text=True, timeout=300)
+        check("книга в пределах мест не трогается",
+              "превышения нет" in (r3.stdout + r3.stderr)
+              and "entries_live.jsonl" in os.listdir(ok),
+              (r3.stdout + r3.stderr)[-200:])
+    finally:
+        for x in (over, ok):
+            shutil.rmtree(x, ignore_errors=True)
+            for y in os.listdir(os.path.dirname(x)):
+                if y.startswith(os.path.basename(x) + ".overfilled"):
+                    shutil.rmtree(os.path.join(os.path.dirname(x), y),
+                                  ignore_errors=True)
+
+
+
 def main():
     tests = (test_space_is_declared_and_frozen,
              test_control_share_is_of_the_pool_not_the_batch,
@@ -1671,7 +1745,8 @@ def main():
              test_fallback_happens_only_on_a_limit_and_is_recorded,
              test_cycle_advances_one_step_and_obeys_the_safeties,
              test_mech_step_leaves_its_end_line,
-             test_candidate_diagnostic_counts_trades_not_journal_lines)
+             test_candidate_diagnostic_counts_trades_not_journal_lines,
+             test_overfilled_book_record_is_retired_not_kept)
     for t in tests:
         print(t.__name__)
         t()
