@@ -456,3 +456,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788338106 ==
 [2026-09-02T08:35:08Z] задание slots-check запущено: tools/diag_cycle.py
+
+== сигнал 1788338200 ==
+[2026-09-02T08:36:42Z] задание proc-age запущено: tools/diag_cycle.py
