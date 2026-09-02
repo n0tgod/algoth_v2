@@ -467,6 +467,37 @@ def test_scout_brings_mechanisms_not_verdicts():
               str(seen))
         ok, why = chk({"found": True, "ideas": [idea()]}, seen=seen)
         check("повтор ловится по журналу машины", not ok, str(why))
+
+        # Дважды записанная идея — шум в защите от повтора.
+        n2 = RL.scout_record(json.dumps({"found": True,
+                                         "ideas": [idea()]},
+                                        ensure_ascii=False), d)
+        with open(os.path.join(d, RL.SCOUT_SEEN), encoding="utf-8") as f:
+            lines = [ln for ln in f if ln.strip()]
+        check("та же идея вторично в журнал не пишется",
+              n2 == 0 and len(lines) == 1, "%s / %s" % (n2, len(lines)))
+
+        # Запись ЭТОГО ЖЕ прогона повтором быть не может: иначе роль
+        # отвергают её собственные идеи (живой отказ 2026-09-02).
+        at = json.loads(lines[0])["at"]
+        check("своя запись прогон не блокирует",
+              RL.scout_seen(d, before=at - 1.0) == [],
+              str(RL.scout_seen(d, before=at - 1.0)))
+        check("запись прошлого прогона блокирует",
+              RL.scout_seen(d, before=at + 1.0) ==
+              ["поглощение в опционных потоках"],
+              str(RL.scout_seen(d, before=at + 1.0)))
+        # Строка без метки машиной не писана: держать по ней роль
+        # запертой значило бы ждать человека с уборкой.
+        with open(os.path.join(d, RL.SCOUT_SEEN), "a",
+                  encoding="utf-8") as f:
+            f.write(json.dumps({"title": "рукописная"},
+                               ensure_ascii=False) + "\n")
+        check("строка без метки прогон не судит",
+              "рукописная" not in RL.scout_seen(d, before=at + 1.0),
+              str(RL.scout_seen(d, before=at + 1.0)))
+        check("без границы журнал виден целиком",
+              len(RL.scout_seen(d)) == 2, str(RL.scout_seen(d)))
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -586,6 +617,111 @@ def test_proposal_must_be_checkable_not_persuasive():
     check("обоснованный пустой день — законный ответ", ok, str(why))
     ok, why = RL.check_proposal("не json", root, space=S)
     check("неразбираемая заявка отвергнута", not ok, str(why))
+
+
+def test_scout_is_not_rejected_by_its_own_ideas():
+    """Живой отказ 2026-09-02: разведчик отвергнут собственным меню.
+
+    Три идеи легли в журнал за 23 секунды ДО вердикта «уже приносилась»,
+    и роль не могла отработать вовсе: журнал повтора судил меню того же
+    прогона, который его и наполнил. Кто именно записал (машина после
+    проверки либо сама роль в обход промпта), для правила безразлично —
+    запись, сделанная ПОСЛЕ начала прогона, повтором быть не может.
+
+    Проверяется ДОРОГА (`check_role`), а не только `scout_seen`: живой
+    отказ пришёл именно оттуда.
+    """
+    long = "x" * 120
+    menu = {"found": True, "ideas": [
+        {"title": "Насыщение потолка funding",
+         "claim": long, "mechanism": long, "kills_it": long,
+         "novelty": long, "sources": ["https://example.org/a"]}]}
+    root = tempfile.mkdtemp(prefix="scout-")
+    try:
+        out = os.path.join(root, "research", "factory", "out")
+        os.makedirs(out)
+        with open(os.path.join(out, "scout.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(menu, f, ensure_ascii=False)
+        with open(os.path.join(out, "scout.md"), "w",
+                  encoding="utf-8") as f:
+            f.write("меню человеческим текстом\n")
+
+        started = time.time() - 600.0
+        ok, why = RL.check_role("scout", root, since=started)
+        check("чистое меню проходит контракт роли", ok, str(why))
+        check("машина записала принесённое",
+              RL.scout_seen(out) == ["насыщение потолка funding"],
+              str(RL.scout_seen(out)))
+
+        # Тот же прогон судится заново (так и случилось на сервере):
+        # запись этого прогона его блокировать не вправе.
+        ok, why = RL.check_role("scout", root, since=started)
+        check("своё же меню повтором не считается", ok, str(why))
+        with open(os.path.join(out, RL.SCOUT_SEEN), encoding="utf-8") as f:
+            n = len([ln for ln in f if ln.strip()])
+        check("журнал от повторной проверки не растёт", n == 1, str(n))
+
+        # А СЛЕДУЮЩИЙ прогон обязан упереться: иначе защита от повтора
+        # исчезла бы вместе с дефектом. Секунда запаса взята не для
+        # красоты: метка записи округлена до миллисекунды и может
+        # оказаться на полмиллисекунды ПОЗЖЕ момента, взятого сразу
+        # после неё, — на живых прогонах, разнесённых часами, это
+        # безразлично, а в тесте давало бы мигающий отказ.
+        ok, why = RL.check_role("scout", root, since=time.time() + 1.0)
+        check("следующий прогон повтор ловит",
+              not ok and any("уже приносилась" in w for w in why),
+              str(why))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_contract_check_gets_the_start_moment():
+    """Дорога до правила: момент начала прогона обязан ДОЙТИ до проверки.
+
+    Само правило («запись этого прогона повтором не считается») живёт в
+    `runlog`, но живой отказ пришёл из запускалки, а её вызов не
+    проверял никто. Гоняется НАСТОЯЩИЙ блок скрипта с подставным
+    питоном: он запоминает свои аргументы, и мы смотрим, что момент
+    доехал третьим — а не потерялся, как терялся промпт в первом
+    прогоне предлагающего.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    with open(os.path.join(root, "tools", "agents_run.sh"),
+              encoding="utf-8") as f:
+        src = f.read().splitlines(True)
+    beg = next(i for i, ln in enumerate(src)
+               if ln.startswith("# --- проверка того, что роль произвела"))
+    end = next(i for i in range(beg, len(src)) if src[i].startswith(')"'))
+    block = "".join(src[beg:end + 1])
+    check("блок проверки контракта найден", 'R.check_role(' in block,
+          block[:200])
+
+    d = tempfile.mkdtemp()
+    try:
+        got = os.path.join(d, "argv.txt")
+        stub = os.path.join(d, "py")
+        with open(stub, "w", encoding="utf-8") as f:
+            f.write('#!/bin/sh\nprintf "%s\\n" "$@" > "' + got +
+                    '"\ncat > /dev/null\n')
+        os.chmod(stub, 0o755)
+        sh = os.path.join(d, "block.sh")
+        with open(sh, "w", encoding="utf-8") as f:
+            f.write('set -uo pipefail\nROLE=scout\nROOT=%s\n'
+                    'STARTED=1788371000\nPY=%s\n%s\n'
+                    % (d, stub, block))
+        subprocess.run(["bash", sh], capture_output=True, text=True,
+                       timeout=60)
+        argv = []
+        if os.path.exists(got):
+            with open(got, encoding="utf-8") as f:
+                argv = [ln.rstrip("\n") for ln in f]
+        check("момент начала доехал до проверки",
+              argv[-1:] == ["1788371000"], str(argv))
+        check("роль и корень доехали тоже",
+              argv[1:3] == ["scout", d], str(argv))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
 
 
 def test_closed_by_ceiling_is_not_proposed_again():
@@ -1859,6 +1995,8 @@ def main():
              test_running_now_is_a_separate_question,
              test_brief_contract_is_mechanical,
              test_scout_brings_mechanisms_not_verdicts,
+             test_scout_is_not_rejected_by_its_own_ideas,
+             test_contract_check_gets_the_start_moment,
              test_proposal_must_be_checkable_not_persuasive,
              test_closed_by_ceiling_is_not_proposed_again,
              test_the_control_machine_is_not_fooled_by_stale_bytecode,

@@ -326,11 +326,15 @@ fi
 # Модель производит, машина проверяет контракт. Что именно проверяется
 # по каждой роли — в `runlog.check_role`: одно место, иначе перечень
 # разошёлся бы с реестром и с промптом.
-CHK="$("$PY" - "$ROLE" "$ROOT" <<'PYCHECK'
+# Момент НАЧАЛА прогона едет в проверку: у разведчика повтор судится
+# по тому, что принесли раньше, а записи этого же прогона повтором
+# быть не могут (иначе роль отвергают её собственные идеи — так она и
+# не могла отработать 2026-09-02).
+CHK="$("$PY" - "$ROLE" "$ROOT" "$STARTED" <<'PYCHECK'
 import os, sys
 sys.path.insert(0, os.path.join(sys.argv[2], "research", "factory"))
 import runlog as R
-ok, bad = R.check_role(sys.argv[1], sys.argv[2])
+ok, bad = R.check_role(sys.argv[1], sys.argv[2], since=float(sys.argv[3]))
 print("КОНТРАКТ: " + ("выполнен" if ok else "; ".join(bad)))
 sys.exit(0 if ok else 1)
 PYCHECK

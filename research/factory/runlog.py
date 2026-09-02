@@ -498,8 +498,21 @@ SCOUT_MIN_WHY = 120
 SCOUT_SEEN = "scout.jsonl"
 
 
-def scout_seen(base):
-    """Заголовки уже принесённых идей. Журнал ведёт машина."""
+def scout_seen(base, before=None):
+    """Заголовки уже принесённых идей. Журнал ведёт машина.
+
+    `before` — момент НАЧАЛА прогона, который судим. Запись, сделанная
+    ПОСЛЕ него, принадлежит этому же прогону и повтором быть не может:
+    иначе роль отвергается собственными идеями. Ровно это и случилось
+    на живом сервере 2026-09-02 — три идеи легли в журнал за 23 с до
+    отказа «уже приносилась», и разведчик не мог отработать вовсе.
+
+    Строка без числовой метки машиной не писана, значит свидетельством
+    «идею уже приносили» не является; блокировать по ней означало бы
+    держать роль запертой, пока файл не почистит человек, — тот самый
+    отказ, который эта правка и закрывает. При `before=None` (осмотр
+    журнала, а не суд над прогоном) возвращается всё.
+    """
     seen = []
     try:
         with open(os.path.join(base, SCOUT_SEEN), encoding="utf-8") as f:
@@ -512,8 +525,13 @@ def scout_seen(base):
                 except ValueError:
                     continue
                 t = (r.get("title") or "").strip().lower()
-                if t:
-                    seen.append(t)
+                if not t:
+                    continue
+                if before is not None:
+                    at = r.get("at")
+                    if not isinstance(at, (int, float)) or at >= before:
+                        continue
+                seen.append(t)
     except OSError:
         return []
     return seen
@@ -534,13 +552,17 @@ def scout_record(text, base):
         return 0
     n = 0
     os.makedirs(base, exist_ok=True)
+    # Дважды записанная идея так же вредна, как незаписанная: журнал
+    # и есть защита от повтора, и раздвоенная строка делает её шумом.
+    was = set(scout_seen(base))
     with open(os.path.join(base, SCOUT_SEEN), "a", encoding="utf-8") as f:
         for it in ideas:
             if not isinstance(it, dict):
                 continue
             t = (it.get("title") or "").strip()
-            if not t:
+            if not t or t.lower() in was:
                 continue
+            was.add(t.lower())
             f.write(json.dumps(
                 {"at": round(time.time(), 3), "title": t,
                  "sources": [c for c in (it.get("sources") or [])
@@ -607,11 +629,15 @@ def check_scout(text, seen=()):
     return (not bad), bad
 
 
-def check_role(role, root):
+def check_role(role, root, since=None):
     """Контракт роли: выполнен ли. Возвращает (годно, список бед).
 
     Одно место на все роли — иначе перечень того, что роль обязана
     оставить, разошёлся бы с реестром и с промптом.
+
+    `since` — момент начала прогона. Он нужен ровно одному правилу:
+    повтор разведчика судится по тому, что принесли РАНЬШЕ, а не по
+    записям этого же прогона (см. `scout_seen`).
     """
     import sys
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -642,7 +668,7 @@ def check_role(role, root):
         out = os.path.join(root, "research", "factory", "out")
         ok, why = check_scout(
             texts.get("research/factory/out/scout.json", ""),
-            seen=scout_seen(out))
+            seen=scout_seen(out, before=since))
         if not ok:
             bad.append("scout.json: " + "; ".join(why))
         else:
