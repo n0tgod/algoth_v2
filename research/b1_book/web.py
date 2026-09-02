@@ -9016,12 +9016,18 @@ function frameHtml(){
 }
 
 function infoHtml(d){
-  const rows = (d.applied || []).map(a => `<tr${a.gap ? ' class="thin"' : ''}>
+  // Пробел в записи и ось, которую держит гейт заведения, — разные
+  // вещи, и красным помечается только первая: покрась обе, и та
+  // единственная, где правило может не доехать до сканера, утонет
+  // среди законных.
+  const rows = (d.applied || []).map(a => `<tr${
+    a.gap || a.by_gate ? ' class="thin"' : ''}>
     <td class="mono">${esc(a.axis)}</td>
     <td class="mono">${esc(a.want)}</td>
     <td class="mono">${a.gap ? '<span class="gapv">&mdash;</span>'
-      : esc(a.got == null ? "—" : a.got)}</td>
-    <td class="dim">${a.gap ? esc(a.gap) : esc(a.field || "")}</td>
+      : (a.by_gate ? "&mdash;" : esc(a.got == null ? "—" : a.got))}</td>
+    <td class="dim">${a.gap ? esc(a.gap)
+      : esc(a.by_gate || a.field || "")}</td>
     </tr>`).join("");
   return `<p>${esc(d.plain || "")}</p>
     ${d.note ? `<div class="note">&laquo;${esc(d.note)}&raquo;</div>` : ""}

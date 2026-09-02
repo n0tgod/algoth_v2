@@ -4553,6 +4553,12 @@ class Collector:
                      "width": "per_side", "geom": "exit_policy",
                      "sizing": "sizing", "agree": "agree",
                      "target": None, "rank": None, "basket": None}
+    # Оси, которые держит САМ ГЕЙТ заведения книги (`live_books.rule_gap`):
+    # с другим значением живой книги не бывает вовсе, то есть поле в
+    # манифесте им не нужно. Их надо отделить от настоящего пробела —
+    # иначе таблица кричит на трёх осях, и та единственная, где правило
+    # действительно может не доехать до сканера, тонет среди них.
+    APPLIED_BY_GATE = ("target", "basket")
 
     def _cand_decisions(self, cid, rec):
         """Множество РЕШЕНИЙ живой книги кандидата.
@@ -4639,6 +4645,12 @@ class Collector:
             fld = self.APPLIED_FIELD.get(ax, "?")
             want = (out.get("rule") or {}).get(ax)
             if fld is None:
+                if ax in self.APPLIED_BY_GATE:
+                    rows.append({"axis": ax, "want": want, "got": None,
+                                 "by_gate": "держит гейт заведения книги: "
+                                            "с другим значением живой "
+                                            "книги не бывает вовсе"})
+                    continue
                 rows.append({"axis": ax, "want": want, "got": None,
                              "gap": "в записи книги этого правила нет — "
                                     "доехало ли оно до сканера, "

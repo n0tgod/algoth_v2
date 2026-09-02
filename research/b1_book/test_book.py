@@ -6448,6 +6448,13 @@ def test_strategy_card_shows_applied_beside_declared_and_twins():
               str(ax.get("floor_bp")))
         check("стратегия: ось без поля названа словами",
               bool(ax.get("rank", {}).get("gap")), str(ax.get("rank")))
+        # Ось, которую держит гейт заведения, пробелом НЕ считается:
+        # покрась её тем же красным, и настоящий пробел утонет среди
+        # законных — тревога, кричащая всегда, перестаёт быть сигналом.
+        check("стратегия: ось гейта отделена от пробела",
+              ax.get("target", {}).get("gap") is None
+              and bool(ax.get("target", {}).get("by_gate")),
+              str(ax.get("target")))
         tw = {t["id"]: t for t in got.get("twins") or []}
         check("стратегия: близнец найден и посчитан",
               tw.get(k2, {}).get("share") == 1.0, str(tw))
