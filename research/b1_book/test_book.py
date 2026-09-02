@@ -6229,6 +6229,32 @@ def test_factory_built_splits_forward_from_replay():
               bool(nn["no_numbers"]), str(nn["no_numbers"]))
         check("построено: вердикт прогона взят из артефакта",
               b["verdict"] == art["summary"]["verdict"])
+        # ЖИВАЯ книга кандидата — предмет страницы, и её деньги
+        # берутся из счёта, который пишет цикл, а не пересчётом:
+        # второй расчёт того же числа разошёлся бы с книгами.
+        # Каталога нет — прочерк, а не ноль: «книга не торговала» и
+        # «книги нет» лечатся разным.
+        check("построено: у книги без каталога живая не выдумана",
+              alive["live"] is None, str(alive["live"]))
+        bdir = os.path.join(d, "research", "s8_loop", "out",
+                            "model_c_" + k1)
+        os.makedirs(bdir, exist_ok=True)
+        for arm, bal, n in (("gbm", 3012.5, 4), ("nn", 2990.0, 2)):
+            with open(os.path.join(bdir, f"account_{arm}.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"balance": bal, "start": 3000.0,
+                           "history": [{"x": i} for i in range(n)]}, f)
+        c2 = collect.Collector.__new__(collect.Collector)
+        b2 = collect.Collector.factory_built(c2)
+        a2 = [x for r in b2["roots"] for x in r["branches"]
+              if x["key"] == k1][0]
+        check("построено: деньги живой книги сложены по рукам",
+              a2["live"]["pnl"] == 2.5, str(a2["live"]))
+        check("построено: закрытые живой книги посчитаны",
+              a2["live"]["closed"] == 6, str(a2["live"]))
+        check("построено: живая книга и реплей — РАЗНЫЕ числа",
+              a2["live"]["pnl"] != a2["fwd"],
+              f'{a2["live"]["pnl"]} / {a2["fwd"]}')
     finally:
         collect.HERE = was
         shutil.rmtree(d, ignore_errors=True)

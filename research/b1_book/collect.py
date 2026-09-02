@@ -4273,6 +4273,47 @@ class Collector:
     # называть механикой настройку.
     BUILT_ROOT = ("target", "geom")
 
+    def _cand_live(self, cid):
+        """Живая книга кандидата: закрытые сделки и деньги по рукам.
+
+        `None` — каталога нет вовсе (книга ещё не заведена циклом), и
+        это НЕ ноль: «книга не торговала» и «книги нет» лечатся
+        разным. Открытые деньги здесь не считаются — их знает
+        переоценка, и складывать закрытое с открытым нельзя.
+        """
+        import json as _json
+        d = os.path.join(os.path.dirname(HERE), "s8_loop", "out",
+                         "model_c_" + str(cid))
+        if not os.path.isdir(d):
+            return None
+        out = {"arms": {}, "closed": 0, "pnl": 0.0, "start": None}
+        for arm in ("gbm", "nn"):
+            p = os.path.join(d, f"account_{arm}.json")
+            try:
+                with open(p, encoding="utf-8") as f:
+                    a = _json.load(f) or {}
+            except (OSError, ValueError):
+                continue
+            hist = a.get("history") or []
+            start = a.get("start")
+            bal = a.get("balance")
+            pnl = (None if bal is None or start is None
+                   else round(bal - start, 2))
+            out["arms"][arm] = {"closed": len(hist), "pnl": pnl,
+                                "balance": bal, "start": start}
+            out["closed"] += len(hist)
+            if pnl is not None:
+                out["pnl"] = round(out["pnl"] + pnl, 2)
+            if start is not None:
+                out["start"] = (start if out["start"] is None
+                                else out["start"] + start)
+        if not out["arms"]:
+            # Каталог есть, счетов нет: книга заведена этим часом и
+            # ещё не считалась. Состояние, а не пустота.
+            return {"arms": {}, "closed": 0, "pnl": None,
+                    "start": None, "fresh": True}
+        return out
+
     def factory_built(self):
         """Что автономная система объявила: механика в корне, книги ветками.
 
@@ -4341,6 +4382,11 @@ class Collector:
                  "trades": None, "fwd": None, "pre": None,
                  "fwd_days": None, "pre_days": None, "last": [],
                  "daily": None, "no_numbers": None, "no_tail": None}
+            # ЖИВАЯ книга кандидата — своя касса, а не реплей. Читается
+            # счёт, который пишет цикл (`account_<рука>.json`), то есть
+            # ровно те деньги, что видят страницы книг: второй расчёт
+            # того же числа однажды разошёлся бы с первым.
+            b["live"] = self._cand_live(cid)
             if c:
                 # Ключ дня в JSON стал строкой — вернуть обратно
                 # обязан читатель, иначе ряды не пересекутся ни одним

@@ -8569,7 +8569,10 @@ const UI = {
   retired: {en: "retired", ru: "вылетело"},
   effn: {en: "effective N", ru: "эффективное N"},
   space: {en: "space declared", ru: "пространство"},
-  fwd: {en: "forward, bp", ru: "форвард, б.п."},
+  live: {en: "live book, $", ru: "живая книга, $"},
+  lclosed: {en: "closed live", ru: "закрыто вживую"},
+  nobook: {en: "no live book yet", ru: "живой книги ещё нет"},
+  fwd: {en: "replay forward, bp", ru: "реплей вперёд, б.п."},
   pre: {en: "replay of the past, bp", ru: "реплей прошлого, б.п."},
   trades: {en: "trades", ru: "сделок"},
   days: {en: "days forward", ru: "суток вперёд"},
@@ -8634,13 +8637,20 @@ function frameHtml(d){
     уже умеет, а не отдельно обученная модель. Веса у всех одни и те
     же; различаются правила обращения с прогнозом, поэтому разницу
     результатов и можно приписать правилу.</p>
-    <p class="frame"><b>Бумажная книга заводится на КАЖДОГО
-    объявленного</b> — и на отобранного ассистентом, и на случайного из
-    контрольной руки. Книга бумажная и реплейная: сделки считаются по
-    тому же часовому листу сечения, которым торгуют живые книги, вход
-    по следующему открытию, круг издержек снят. Живого сканера,
-    кассы и слотов у неё нет — то есть исполнение не моделируется
-    так, как у живых книг.</p>
+    <p class="frame"><b>У каждого объявленного кандидата — ЖИВАЯ
+    бумажная книга</b>, и у отобранного ассистентом, и у случайного
+    из контрольной руки. Живая значит настоящая машинерия: тот же
+    пятисекундный сканер, та же касса со слотами и потолком на имя,
+    те же издержки и те же выходы по уровням, что у книг ядра.
+    Различается ровно правило, объявленное реестром испытаний.
+    Случайная рука ведётся так же не из щедрости: заведи живую книгу
+    одной полосе и пересчёт другой — сравнивались бы две системы
+    измерения, а не две полосы.</p>
+    <p class="frame"><b>Рядом с живой книгой стоит её РЕПЛЕЙ</b> — то
+    же правило, прогнанное по журналу листов. Он отвечает на другой
+    вопрос («что бы вышло»), и держат его затем, что живая книга и
+    реплей обязаны сходиться на общих днях: расхождение при одном
+    правиле и одних данных есть дефект в одном из двух.</p>
     <p class="frame"><b>Форвард и реплей прошлого не складываются
     никогда.</b> Кандидат реплеится по всему журналу листов, а вперёд
     торгует только со дня объявления. Дни до объявления — пересчёт по
@@ -8655,13 +8665,21 @@ function frameHtml(d){
     all of them; what differs is the rule for handling the forecast,
     which is why a difference in results can be attributed to the
     rule.</p>
-    <p class="frame"><b>A paper book is started for EVERY declared
-    candidate</b> — both the assistant-selected ones and the random
-    control arm. The book is paper and replayed: trades are computed on
-    the same hourly cross-section sheet the live books trade, entry at
-    the next open, the cost round subtracted. It has no live scanner,
-    no cash and no slots — execution is not modelled the way the live
-    books model it.</p>
+    <p class="frame"><b>Every declared candidate gets a LIVE paper
+    book</b> — both the assistant-selected ones and the random
+    control arm. Live means the real machinery: the same five-second
+    scanner, the same cash with slots and the per-name cap, the same
+    costs and the same level exits as the core books. What differs is
+    exactly the rule the trials ledger declared. The control arm is run
+    the same way not out of generosity: give one lane a live book and
+    the other a recomputation, and you would be comparing two systems
+    of measurement rather than two lanes.</p>
+    <p class="frame"><b>Beside the live book stands its REPLAY</b>
+    — the same rule run over the sheet journal. It answers a
+    different question ("what would have come out"), and it is kept
+    because the live book and the replay must agree on the days they
+    share: a divergence under one rule and one data set is a defect in
+    one of the two.</p>
     <p class="frame"><b>Forward and replay-of-the-past are never
     summed.</b> A candidate is replayed over the whole sheet journal but
     trades forward only from the day it was declared. Days before that
@@ -8677,6 +8695,16 @@ function branchHtml(b){
   const nums = b.no_numbers
     ? `<div class="note">&mdash; ${esc(b.no_numbers)}</div>`
     : `<div class="nums">
+        <div class="f"><span class="lab">${T("live")}</span>
+          ${b.live == null
+            ? `<span class="dim" title="${T("nobook")}">&mdash;</span>`
+            : (b.live.pnl == null
+               ? `<span class="dim">&mdash;</span>`
+               : `<span class="${sgn(b.live.pnl)}"
+                    >${b.live.pnl > 0 ? "+" : ""}${
+                      Number(b.live.pnl).toFixed(2)}</span>`)}</div>
+        <div class="f"><span class="lab">${T("lclosed")}</span>
+          ${b.live == null ? "&mdash;" : b.live.closed}</div>
         <div class="f"><span class="lab">${T("fwd")}</span>
           <span class="${sgn(b.fwd)}">${bp(b.fwd)}</span></div>
         <div class="f"><span class="lab">${T("days")}</span>
