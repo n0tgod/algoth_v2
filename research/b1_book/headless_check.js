@@ -81,6 +81,13 @@ const elById = id => {
   return ELS.get(id);
 };
 global.__el = elById;
+// Весь отрисованный страницей текст одним куском: единица показа
+// проверяется НЕ по одной таблице, а по всей странице сразу — иначе
+// новая страница выносит базисные пункты молча, и ловит их только
+// сплошной просмотр исходников (так и нашлись четыре последних места).
+global.__allText = () => [...ELS.values()]
+  .map(e => String(e.innerHTML || "") + " " + String(e.textContent || ""))
+  .join(" ");
 global.document = {
   documentElement: mkEl(), getElementById: elById,
   querySelector: () => mkEl(), querySelectorAll: () => [],
@@ -186,7 +193,7 @@ const recTrade = i => Object.assign(trade(i, true),
 const noTrade = {id: "rec-нет", t: T0 - 300, sym: "BTCUSDT", long: true,
                  side: -1, entry: 64700, stop: null, target: null,
                  level: 64700, kind: "полка", state: "не открыта",
-                 why: "стоп 31.0 б.п., ни один уровень впереди не даёт 1:1.5",
+                 why: "стоп +0.31 %, ни один уровень впереди не даёт 1:1.5",
                  stop_bp: null, rr: null, held: null, pnl_bp: null, r: null,
                  exit: null, closed_at: null};
 // `at` намеренно СТАРЫЙ (три часа назад), а живые сделки в `hist`
@@ -693,7 +700,7 @@ global.fetch = async (url) => {
                    closed_at: Date.UTC(2026,7,21,21,40,0)/1000}],
                 rejects: [
                   {sym: "IONQUSDT", side: "short",
-                   reason: "IOC не исполнилась в потолке 30 б.п. "
+                   reason: "IOC не исполнилась в потолке 0.30 % "
                            + "(запрошено 0.66)",
                    at: Date.UTC(2026,7,21,19,20,0)/1000}]}
              : url.startsWith("/paper")
@@ -1560,8 +1567,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // проверка искала не ту строку.
                 + "\nglobal.__pct = typeof pct === 'function' "
                 + "? pct : null;"
-                + "\nglobal.__builtBp = typeof bp === 'function' "
-                + "? bp : null;"
+                // Беззнаковая величина (порог, издержка, граница
+                // корзины) считается ДРУГИМ форматом страницы, и
+                // ожидание к ней тоже берётся у самой страницы.
+                + "\nglobal.__lvl = typeof lvl === 'function' "
+                + "? lvl : null;"
                 + "\nglobal.__infoClose = typeof closeInfo === "
                 + "'function' ? closeInfo : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
@@ -1769,7 +1779,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // стоять рядом числом: иначе пустая книга неотличима от
       // сломанной. Требуем именно скидку — без неё сканер входил бы
       // в первый же такт после листа, то есть по часам цикла.
-      if (!/11 bp/.test(sb) || !/22 bp/.test(sb))
+      // Единица показа — ПРОЦЕНТ (решение владельца: «не выводи мне
+      // ничего в бп»), и ожидаемая строка считается форматом самой
+      // страницы: правило формата, писанное по памяти, уже трижды
+      // делало проверку холостой.
+      const PO = global.__pct;
+      if (!PO) bad.push("обзор: у страницы нет общего формата процента");
+      if (PO && (!sb.includes(PO(11)) || !sb.includes(PO(22))))
         bad.push("обзор: правило входа ситуационной книги не названо числом");
       // Полоса взведения — часть правила входа, и без неё пачки
       // возвращались четвёртый раз. Читателю страницы её надо видеть
@@ -1821,7 +1837,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       const h4x = (global.__el
         ? String(global.__el("modelbox").innerHTML || "") : "")
         .replace(/\s+/g, " ");
-      if (!/30 bp/.test(h4x) || !/not traded at all/.test(h4x))
+      const PF = global.__pct;
+      if (!/not traded at all/.test(h4x)
+          || (PF && !h4x.includes(PF(30))))
         bad.push("обзор: правило пола главной книги не названо");
       if (/STOPPED by the/.test(h4x))
         bad.push("обзор: главная книга названа остановленной");
@@ -2104,7 +2122,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         // Число гейта — из ОТВЕТА, не из константы страницы: стаб
         // несёт 33, и объяснение обязано печатать ровно его. Фолбэк
         // «22» печатал устаревшее число как действующее правило.
-        if (!/33 bp\s+entry gate/.test(mn.replace(/\s+/g, " ")))
+        const LVc = global.__lvl;
+        if (!LVc) bad.push("график: у страницы нет формата величины");
+        if (LVc && !mn.replace(/\s+/g, " ")
+              .includes(LVc(33) + " entry gate"))
           bad.push("график: гейт входа не взят числом из ответа");
       } else {
         if (!/no stop or take/.test(mn)
@@ -3027,7 +3048,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("живое исполнение: полная причина выхода потеряна из "
                + "подсказки");
     // Отказы — с причиной дословно: в LIVE это факт исполнения.
-    if (!/IOC не исполнилась в потолке 30 б\.п\./.test(bx))
+    if (!/IOC не исполнилась в потолке 0\.30 %/.test(bx))
       bad.push("живое исполнение: отказ без причины");
     // Открытая позиция не выдумывает выход.
     if (!/>open</.test(bx))
@@ -3198,7 +3219,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/opened<\/b> in/.test(intro) || !/never become a rule/.test(intro))
       bad.push("волатильность: не разделены час входа и час удержания");
     // Границы корзин объявлены до результата, и это сказано числом.
-    if (!/22 \/ 61 bp/.test(intro))
+    // Ожидание считает ФОРМАТ САМОЙ страницы: написанное по памяти о
+    // правиле уже трижды промахивалось в этом проекте.
+    const LV = global.__lvl;
+    if (!LV) bad.push("волатильность: у страницы нет формата величины");
+    if (LV && !intro.includes(LV(22) + " / " + LV(61)))
       bad.push("волатильность: границы корзин не названы числом");
     if (!/thresholds picked after seeing results/.test(intro))
       bad.push("волатильность: не сказано, что пороги не подбирались "
@@ -3838,15 +3863,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // цифрой, и покрытие ставок — числом. Умолчание, не отличимое от
     // измерения, есть ровно тот класс дефекта, который проект ловит
     // с A2: пустота выдаёт себя за результат.
-    if (!/18\.4 bp/.test(stats))
+    const LVs = global.__lvl;
+    if (!LVs) bad.push("сделки: у страницы нет формата величины");
+    if (LVs && !stats.includes(LVs(18.4)))
       bad.push("круг издержек не показан");
-    if (!/11 bp/.test(stats) || !/7\.4 bp/.test(stats))
+    if (LVs && (!stats.includes(LVs(11)) || !stats.includes(LVs(7.4))))
       bad.push("круг не разложен на комиссию и спред");
     if (!/1\/2/.test(stats))
       bad.push("покрытие настоящей ставкой не показано");
     if (!/recorded order book/.test(stats))
       bad.push("не сказано, что издержки считаны по записанной книге");
-    if (!/12\.4 bp/.test(stats))
+    // Подарок — движение цены со ЗНАКОМ (плюс значит вошли лучше),
+    // поэтому у него формат движения, а не беззнаковой величины.
+    const Pg = global.__pct;
+    if (Pg && !stats.includes(Pg(12.4)))
       bad.push("подарок входа не показан числом");
     if (!/393 s/.test(stats))
       bad.push("задержка решения не показана рядом с подарком");
@@ -4209,11 +4239,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // Бэктест и форвард — РАЗНЫЕ строки, и обе подписаны. Сумма
       // (-67.3 + -281.6) на странице означала бы кривую, наполовину
       // состоящую из прошлого, которое ассистент уже видел.
-      if (!/-67\.3/.test(strip))
+      const P = global.__pct;
+      if (!P) bad.push("стратегия: у страницы нет общего формата процента");
+      if (P && !strip.includes(P(-67.3)))
         bad.push("стратегия: форвард не показан");
-      if (!/-281\.6/.test(strip))
+      if (P && !strip.includes(P(-281.6)))
         bad.push("стратегия: бэктест не показан");
-      if (/-348\.9/.test(strip + bt))
+      if (P && (strip + bt).includes(P(-348.9)))
         bad.push("стратегия: форвард сложен с бэктестом");
       if (!/(backtest|бэктест)/i.test(bt))
         bad.push("стратегия: дни бэктеста не подписаны бэктестом");
@@ -4272,7 +4304,9 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // ФОРВАРД и РЕПЛЕЙ ПРОШЛОГО никогда не складываются. Сумма
     // (-67.3 + -281.6 = -348.9) на странице означала бы кривую,
     // читаемую треком и наполовину бэктестом.
-    if (!/-67\.3/.test(tree))
+    const P = global.__pct;
+    if (!P) bad.push("построено: у страницы нет общего формата процента");
+    if (P && !tree.includes(P(-67.3)))
       bad.push("построено: форвард книги не показан");
     // Живая книга — предмет страницы, и её деньги обязаны стоять в
     // ветке. У книги, которой ещё нет, прочерк с причиной, а не ноль:
@@ -4314,10 +4348,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
           blockOf("h4_z_f30_w5_gs_rrhi_se_b0_a1")))
       bad.push("построено: причина отсутствия книги не едет "
                + "подсказкой на прочерке");
-    if (!/-281\.6/.test(tree))
-      bad.push("построено: реплей прошлого не показан отдельно");
-    if (/-348\.9/.test(tree))
-      bad.push("построено: форвард сложен с реплеем прошлого");
+    if (P && !tree.includes(P(-281.6)))
+      bad.push("построено: бэктест не показан отдельно");
+    if (P && tree.includes(P(-348.9)))
+      bad.push("построено: форвард сложен с бэктестом");
     if (!/(backtest|бэктест)/i.test(tree))
       bad.push("построено: колонка бэктеста не подписана");
     // Чисел ещё нет — прочерк с НАЗВАННОЙ причиной, а не ноль.
@@ -4372,6 +4406,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       global.__lang("en");
     }
   }
+
+  // Решение владельца: наружу идут только доллары и проценты.
+  // Базисный пункт — единица ХРАНЕНИЯ (цели модели, издержки, счёт),
+  // и на экране его быть не должно ни на одной странице.
+  const shown = global.__allText();
+  const hitBp = /\bbp\b|б\.п\./.exec(shown);
+  if (hitBp)
+    bad.push("на странице остались базисные пункты: «"
+             + shown.slice(Math.max(0, hitBp.index - 60),
+                           hitBp.index + 20).replace(/\s+/g, " ") + "»");
 
   if (bad.length) { console.error("ПАДЕНИЕ: " + bad.join("; "));
                     process.exit(1); }

@@ -55,6 +55,20 @@ function pct(v) {
 }
 """
 
+# Величина БЕЗЗНАКОВАЯ: порог, издержка, граница корзины — это
+# настройка, а не движение цены, и «+0.22 %» у неё читалось бы как
+# прибыль. Знак решает вид величины, поэтому это ОТДЕЛЬНОЕ решение,
+# а не вторая копия `pct`. Две расходящиеся копии `lvl` уже жили на
+# странице живого исполнения и на листе турнира — одна из них
+# печатала два знака всегда, другая три у мелких величин.
+LVLJS = r"""
+function lvl(v) {
+  if (v == null) return "\u2014";
+  const d = Math.abs(v) >= 10 ? 2 : 3;
+  return (v / 100).toFixed(d) + " %";
+}
+"""
+
 # Причины выхода в ячейках таблиц — коротким словом. Длинная фраза
 # («price broke the promised adverse path») переносила ячейку
 # состояния на вторую строку, и ряд закрытой сделки распухал —
@@ -460,12 +474,12 @@ function render(d) {
     t.innerHTML =
       bk.a.slice().reverse().map(r => row(r, "a")).join("") +
       `<tr class="spread"><td colspan="3" class="mono">spread ${
-        fmt((bk.ask-bk.bid)/bk.bid*1e4, 1)} bp · mid ${
+        pct((bk.ask-bk.bid)/bk.bid*1e4)} · mid ${
         fmt((bk.ask+bk.bid)/2, 6)}</td></tr>` +
       bk.b.map(r => row(r, "b")).join("");
     document.getElementById("cap-book").textContent =
       `${bk.depth ?? "?"} levels · upd/s ${bk.upd} · reach ±${
-        bk.reach_b}/${bk.reach_a} bp`;
+        pct(bk.reach_b)}/${pct(bk.reach_a)}`;
     document.getElementById("bands").innerHTML = d.bands.map(b => {
       const tot = b.bid + b.ask || 1;
       // Полоса шире видимой книги содержит её целиком: подписка отдаёт
@@ -527,7 +541,8 @@ function render(d) {
   document.getElementById("cap-sig").textContent = paperOff
     ? (all.length ? "no new ones — history of a closed direction below"
                   : "off, history cleared")
-    : `open ${sg.open.length} · noise ${sg.noise_bp ?? "—"} bp · levels ${
+    : `open ${sg.open.length} · noise ${
+      sg.noise_bp == null ? "—" : pct(sg.noise_bp)} · levels ${
       sg.levels.length}`;
   document.getElementById("sig").innerHTML = all.length
     ? all.map(x => `<tr>
@@ -1271,14 +1286,14 @@ function renderModel() {
   const gateLine = isSit(d) && m.min_edge_bp
     ? `<div class="mline dim">entry rule: the sheet is a map, the
        price is the trigger — a name is taken only when the remaining
-       move is at least <b>${m.min_edge_bp} bp</b>, reward/risk at
+       move is at least <b>${pct(m.min_edge_bp)}</b>, reward/risk at
        least <b>${m.min_rr}</b>, and the price has given back
-       <b>${m.min_disc_bp ?? 0} bp</b> on top of what the sheet
+       <b>${pct(m.min_disc_bp ?? 0)}</b> on top of what the sheet
        promised. Without that last one every name the model likes
        would enter in the first tick after the sheet — a batch on the
        cycle clock, not a moment.${m.arm_band_bp
          ? ` And the crossing has to happen <b>in front of us</b>: the
-            name must first be seen at least <b>${m.arm_band_bp} bp</b>
+            name must first be seen at least <b>${pct(m.arm_band_bp)}</b>
             away from the trigger. A name found already parked at the
             line is skipped — its next tick is a wobble around a level
             it was standing on, not a move.` : ""}${m.max_eaten != null
@@ -1318,7 +1333,7 @@ function renderModel() {
   // работа правила, а не отказ сборщика.
   const floorLine = !isSit(d) && m.entry_floor_bp
     ? `<div class="mline dim">entry rule: a leg enters only if its
-       forecast clears <b>${m.entry_floor_bp} bp</b> (≈3× the cost
+       forecast clears <b>${pct(m.entry_floor_bp)}</b> (≈3× the cost
        round; the extremeness probe put all the edge in that top
        quintile) — a quiet hour is not traded at all, so an hour
        without picks is the rule working, not a failure.</div>`
@@ -1469,13 +1484,12 @@ function picksTable(d) {
       const g = got[p.sym];
       return `<tr><td class="${side === "long" ? "buy" : "sell"}">${
         side}</td><td>${p.sym.replace("USDT","")}</td>
-        <td class="mono">expects ${p.fwd > 0 ? "+" : ""}${p.fwd.toFixed(0)}
-          bp / ${hz}h</td>
-        <td class="mono">adverse ~${p.mae.toFixed(0)} bp</td>
+        <td class="mono">expects ${pct(p.fwd)} / ${hz}h</td>
+        <td class="mono">adverse ~${pct(p.mae)}</td>
         <td class="mono">${p.odd != null
           ? `unseen ${(p.odd * 100).toFixed(0)}%` : ""}</td>
-        <td class="mono">${g ? `last: got ${g.got > 0 ? "+" : ""}${
-          g.got} bp` : ""}</td></tr>`;
+        <td class="mono">${g ? `last: got ${pct(g.got)}` : ""}</td>
+        </tr>`;
     };
     return `<div class="mline" style="margin-top:6px">${title} — picks
         (hour ${pk.hour || "—"}):</div>
@@ -2036,7 +2050,7 @@ renderBooks();
 // Percent of price move — the display unit across the whole project
 // (owner's decision). Two decimals, three for small values: otherwise
 // net-after-costs collapses into "0.00 %".
-""" + PCTJS + r"""
+""" + PCTJS + LVLJS + r"""
 // Время показывается в часовом поясе владельца (Вена), а хранится и
 // ключуется в UTC. Смешивать нельзя: `signal hour` — это КЛЮЧ часа в
 // файлах и в журналах, и сдвинутый ключ ничему не соответствует.
@@ -2407,11 +2421,11 @@ async function load() {
       order is not filled just because the price touched it.</span>
       </div></details>
       <div class="stats">`
-      + cell("round trip, median", st.exec_med_bp + " bp",
+      + cell("round trip, median", lvl(st.exec_med_bp),
              st.exec_med_bp > 25 ? "bad" : "")
-      + cell("of it commission", st.fee_med_bp + " bp")
-      + cell("of it spread", st.slip_med_bp + " bp")
-      + cell("mean", st.exec_avg_bp + " bp")
+      + cell("of it commission", lvl(st.fee_med_bp))
+      + cell("of it spread", lvl(st.slip_med_bp))
+      + cell("mean", lvl(st.exec_avg_bp))
       + cell("real fee rate for", st.fee_known + "/" + st.exec_n,
              st.fee_known < st.exec_n ? "bad" : "")
       + (st.exec_partial ? cell("book too thin", st.exec_partial, "bad") : "")
@@ -2429,9 +2443,9 @@ async function load() {
       moving one end alone would be worse than the flaw itself.</span>
       </div></details>
       <div class="stats">`
-      + cell("gift, median", st.gift_med_bp + " bp",
+      + cell("gift, median", pct(st.gift_med_bp),
              st.gift_med_bp > 5 ? "bad" : "")
-      + cell("mean", st.gift_avg_bp + " bp")
+      + cell("mean", pct(st.gift_avg_bp))
       + (st.gift_lag_med == null ? "" :
          cell("decision lag", st.gift_lag_med + " s"))
       + cell("trades", st.gift_n)
@@ -2446,15 +2460,12 @@ async function load() {
     ["closed", a => (d.stats[a]||{}).closed ?? "—"],
     ["sign right", a => { const v = (d.stats[a]||{}).hit_rate;
       return v == null ? "—" : (v*100).toFixed(0) + " %"; }],
-    ["net per trade", a => { const v = (d.stats[a]||{}).net_bp_avg;
-      return v == null ? "—" : (v>0?"+":"") + v + " bp"; }],
-    ["round trip", a => { const v = (d.stats[a]||{}).exec_med_bp;
-      return v == null ? "—" : v + " bp"; }],
+    ["net per trade", a => pct((d.stats[a]||{}).net_bp_avg)],
+    ["round trip", a => lvl((d.stats[a]||{}).exec_med_bp)],
     ["account drawdown", a => { const v = ((d.stats[a]||{}).dd_book||{}).pct;
       return v == null ? "—" : v + " %"; }],
-    ["worst open moment", a => { const v =
-      ((d.stats[a]||{}).dd_open_book||{}).cap_bp;
-      return v == null ? "—" : (v/100).toFixed(2) + " %"; }],
+    ["worst open moment", a =>
+      lvl(((d.stats[a]||{}).dd_open_book||{}).cap_bp)],
   ];
   html += AG
     ? `<div class="gt">the agreed book</div>`
@@ -3755,7 +3766,7 @@ function shownTrades() {
 }
 // Процент движения цены вместо б.п. — решение владельца. Два знака, при
 // мелких величинах три: иначе мелкое нетто схлопывается в «0.00 %».
-""" + PCTJS + r"""
+""" + PCTJS + LVLJS + r"""
 // Цена выхода у сделки модели своей колонкой не записана: разбор пишет
 // ХОД цены за удержание, а это то же самое число с другой стороны.
 // Считать его здесь — не вторая копия расчёта, а перевод единицы.
@@ -4459,7 +4470,7 @@ function explainTrade(t) {
     bits.push(`strategy: hourly rebalance — this name ranked
       <b>#${t.rank} of ${t.of}</b> in the cross-section by expected
       move${t.floor_bp
-        ? ` and cleared the <b>${t.floor_bp} bp</b> entry floor`
+        ? ` and cleared the <b>${pct(t.floor_bp)}</b> entry floor`
         : ""}`);
   if (t.fwd0_bp != null && t.expected_bp != null) {
     const disc = Math.abs(t.expected_bp) - Math.abs(t.fwd0_bp);
@@ -4467,7 +4478,7 @@ function explainTrade(t) {
       ? " (rules v" + r.rules_version + ")" : ""} — the sheet promised
       ${pct(t.fwd0_bp)}, price gave back <b>${pct(disc)}</b> more, so
       the remaining move crossed the ${r.min_edge_bp != null
-        ? r.min_edge_bp + " bp " : ""}entry gate in
+        ? lvl(r.min_edge_bp) + " " : ""}entry gate in
       front of us with reward/risk${r.min_rr != null
         ? " ≥ " + r.min_rr : " over the gate"} against the
       executable stop`);
@@ -4898,9 +4909,7 @@ function hover(e) {
     // Процент движения цены, а не б.п. — решение владельца. Два знака,
     // при мелких величинах три: нетто после издержек иначе схлопнулось
     // бы в «0.00 %», а это как раз то число, ради которого смотрят.
-    const t = h.mdl, bp = v => v == null ? "—"
-      : (v > 0 ? "+" : "") + (v / 100).toFixed(Math.abs(v) >= 10 ? 2 : 3)
-        + " %";
+    const t = h.mdl;
     tip.innerHTML = `<div style="font-weight:650;margin-bottom:3px">
         model · ${t.side} · ${disp(t.state)}</div>`
       + row("arm", t.arm === "nn" ? "neural (AI)" : "trees (ML)")
@@ -4908,16 +4917,16 @@ function hover(e) {
       + row("entry", new Date(t.opened_at*1000).toISOString().slice(11,16)
             + " UTC" + (t.lag_sec == null ? ""
               : ` (+${Math.round(t.lag_sec/60)} min)`))
-      + row("expects", bp(t.expected_bp))
-      + row("adverse expected", bp(t.mae_bp))
+      + row("expects", pct(t.expected_bp))
+      + row("adverse expected", pct(t.mae_bp))
       // Ход в пользу — второй конец обещания. Пустой у сделок, записанных
       // до того, как поле появилось; показывать там ноль значило бы
       // выдать отсутствие данных за «модель не ждёт движения».
-      + (t.mfe_bp == null ? "" : row("favorable expected", bp(t.mfe_bp)))
+      + (t.mfe_bp == null ? "" : row("favorable expected", pct(t.mfe_bp)))
       + (t.state === "закрыта"
-         ? row("got", bp(t.got_bp), (t.got_bp>0)===(t.side==="long")
+         ? row("got", pct(t.got_bp), (t.got_bp>0)===(t.side==="long")
                ? "buy" : "sell")
-           + row("net after costs", bp(t.net_bp),
+           + row("net after costs", pct(t.net_bp),
                  t.net_bp>0?"buy":"sell")
            + row("P&L", (t.pnl>0?"+":"") + t.pnl + " $",
                  t.pnl>0?"buy":"sell")
@@ -5173,7 +5182,7 @@ const SYM = Q.get("sym") || "";
 const SIDE = Q.get("side") || "";
 const RR = Q.get("rr");
 
-""" + PCTJS + r"""
+""" + PCTJS + LVLJS + r"""
 function px_at(entry, bp){ if (entry == null || bp == null) return null;
   return +(entry * (1 + bp/1e4)).toPrecision(6); }
 function utc(ts){ if (!ts) return "—";
@@ -5311,7 +5320,7 @@ function render(d, t){
       than the model planned by more than the round cost — while the
       remaining expected move, <b>${pct(exp)}</b>, was still above the
       ${d.min_edge_bp != null
-        ? (d.min_edge_bp/100).toFixed(2) + " % " : ""}entry gate.</p>
+        ? lvl(d.min_edge_bp) + " " : ""}entry gate.</p>
       <p>Two more checks passed before entering: the crossing happened
       <b>in front of the scanner</b> (the name was first seen away
       from the trigger — so this was a move, not a wobble around a
@@ -5321,7 +5330,7 @@ function render(d, t){
       the distance to the actual stop.</p>${t.noise_bp != null
       ? `<p>Rules v11, both by the numbers of this entry: the stop
         room survived the coin's live minute noise of
-        <b>${t.noise_bp} bp</b>${d.noise_mult > 1
+        <b>${pct(t.noise_bp)}</b>${d.noise_mult > 1
           ? ` — cleared at this book's own bar of
              <b>${d.noise_mult}×</b> that noise (owner's rule: a
              stop one wick wide is a coin toss)` : ""}, and the
@@ -6005,7 +6014,7 @@ tr.on td{background:var(--chip)}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + PCTJS + r"""
+""" + NAVJS + PCTJS + LVLJS + r"""
 navMount("/paper-page");
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
@@ -6023,7 +6032,7 @@ function intro(d){
   <div>A <b>paper</b> book, not one of the live model books: no model,
   no slots, no cash account. One construction declared before the first
   run — formation ${r.k} d, hold ${r.h} d, decile, market wave,
-  β over 90 d, ${r.cost_bp} bp cost per tranche — and a new tranche
+  β over 90 d, ${lvl(r.cost_bp)} cost per tranche — and a new tranche
   opened every day. There is no grid here: the book tests ONE
   construction rather than picking the best of many.</div>
   <div class="k" style="margin-top:6px"><b>Recorded forward</b> means
@@ -6032,7 +6041,7 @@ function intro(d){
   the fact — a backtest, no better and no worse than the probe that
   preceded this book. The two are never added together and never share
   a curve: half a curve of hindsight would still look like a track
-  record. The probe measured this signal at roughly +33 bp a month
+  record. The probe measured this signal at roughly +0.33 % a month
   after the survivorship fix, with t = 1.06 by Newey–West — which is
   why no spec was written and why the only lever left is the calendar.
   This book exists to spend it.</div>`;
@@ -6153,13 +6162,13 @@ function legend(d){
    open one shows dashes, never zeros: it has no outcome yet, and a
    zero would read as «it made nothing».<br>
    <b>gross / net</b> — the tranche's residual return; net is gross
-   minus ${r.cost_bp} bp of cost and minus funding. Both come from the
+   minus ${lvl(r.cost_bp)} of cost and minus funding. Both come from the
    book's own resolution record, not from anything this page computes.<br>
    <b>funding</b> — what the book PAID over the hold (positive means it
    cost); rates come from the venue of execution.<br>
    <b>cut legs</b> — legs whose series ended more than a day before the
    window closed, i.e. delistings. They are held to their last bar
-   rather than dropped: dropping them flattered the probe by 44 bp a
+   rather than dropped: dropping them flattered the probe by 0.44 % a
    month.<br>
    <b>coverage</b> — median share of hours with an observation. Gaps
    are normal (a bar with no trade is not an observation), which is why
@@ -6398,15 +6407,12 @@ canvas{width:100%;display:block}
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + PCTJS + r"""
+""" + NAVJS + PCTJS + LVLJS + r"""
 navMount("/live-page");
 const css = k => getComputedStyle(document.documentElement)
   .getPropertyValue(k).trim();
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function lvl(v){ if (v == null) return "&mdash;";
-  const d = Math.abs(v) >= 10 ? 2 : 3;
-  return (v / 100).toFixed(d) + " %"; }
 function usd(v){ return v == null ? "&mdash;"
   : (v > 0 ? "+" : "") + Number(v).toFixed(2) + " $"; }
 function ts(t){ return t ? new Date(t * 1000).toISOString()
@@ -6778,7 +6784,7 @@ const BOOK_EN = Object.fromEntries(BOOK_LIST);
 const ARM_EN = {all:"both arms", gbm:"trees (ML)", nn:"neural (AI)"};
 const BUCKETS = ["quiet", "normal", "loud"];
 
-""" + PCTJS + r"""
+""" + PCTJS + LVLJS + r"""
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
@@ -6808,8 +6814,8 @@ function curveBlock(d){
     <div class="k">${s.length} hours shown${
       d.hours_measured > s.length
         ? ` of ${d.hours_measured} recorded` : ""} · dashed lines are
-      the bucket edges (${(d.cuts_bp||[]).map(c => c.toFixed(0))
-        .join(" and ")} bp) · from ${esc((s[0]||{}).hour)} to ${
+      the bucket edges (${(d.cuts_bp||[]).map(c => lvl(c))
+        .join(" and ")}) · from ${esc((s[0]||{}).hour)} to ${
       esc((s[s.length-1]||{}).hour)} UTC</div></div>`;
 }
 
@@ -6865,7 +6871,7 @@ function pickBlock(d){
       <td class="mono ${hot ? "bad" : ""}">${p.rel_med}&times;</td>
       <td class="mono ${p.above > 0.6 ? "bad" : ""}">${
         Math.round(p.above*100)} %</td>
-      <td class="mono">${p.own_med_bp} bp</td></tr>
+      <td class="mono">${pct(p.own_med_bp)}</td></tr>
     ${Object.entries(p.books || {}).map(([hz, b]) =>
       `<tr><td class="dim">${BOOK_EN[hz] || hz} <span class="mono">${
          b.n}</span></td>
@@ -6873,7 +6879,7 @@ function pickBlock(d){
          b.rel_med}&times;</td>
        <td class="mono ${b.above > 0.6 ? "bad" : ""}">${
          Math.round(b.above*100)} %</td>
-       <td class="mono">${b.own_med_bp} bp</td></tr>`).join("")}
+       <td class="mono">${pct(b.own_med_bp)}</td></tr>`).join("")}
     </table></div>
     <div class="k">The measured cause was the units: features are
       normalised by each coin's own volatility, targets were raw basis
@@ -6933,8 +6939,8 @@ function render(d){
      Volatility during the hold explains outcomes better and can never
      become a rule — it is not known when the trade is placed.</p>
     <p class="k">Bucket edges are the terciles of the volatility
-     distribution itself (${(d.cuts_bp||[]).map(c => c.toFixed(0))
-       .join(" / ")} bp), fixed before any outcome is looked at:
+     distribution itself (${(d.cuts_bp||[]).map(c => lvl(c))
+       .join(" / ")}), fixed before any outcome is looked at:
      thresholds picked after seeing results would be a search without a
      correction.${d.no_hour ? ` ${d.no_hour} closed trades had no
      summary for their entry hour and are left out rather than filed
@@ -7818,12 +7824,7 @@ function sortBy(col){
 }
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-""" + PCTJS + r"""
-// Порог — величина БЕЗЗНАКОВАЯ: это настройка ветки, а не движение
-// цены, и «+0.22 %» у неё читалось бы как прибыль. Формат величин
-// движения общий на весь проект (`pct`), у настройки свой намеренно.
-function lvl(v){ return v == null ? "\u2014"
-  : (v / 100).toFixed(2) + " %"; }
+""" + PCTJS + LVLJS + r"""
 const UI = {
   strap: {en: "policy tournament — all 72 branches",
           ru: "турнир политик — все 72 ветки"},
@@ -8564,7 +8565,7 @@ button[aria-pressed="true"]{border-color:var(--accent);
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + r"""
+""" + NAVJS + PCTJS + r"""
 let LANG = new URLSearchParams(location.search).get("lang")
   || (function(){ try { return localStorage.getItem("algoth_lang"); }
                   catch (e) { return null; } })() || "en";
@@ -8585,8 +8586,8 @@ const UI = {
   live: {en: "live, $", ru: "живая, $"},
   lclosed: {en: "closed", ru: "закрыто"},
   nobook: {en: "no live book", ru: "живой книги нет"},
-  fwd: {en: "forward, bp", ru: "форвард, б.п."},
-  pre: {en: "backtest, bp", ru: "бэктест, б.п."},
+  fwd: {en: "forward, % of gross", ru: "форвард, % гросса"},
+  pre: {en: "backtest, % of gross", ru: "бэктест, % гросса"},
   trades: {en: "trades", ru: "сделок"},
   days: {en: "days", ru: "суток"},
   sel: {en: "selected", ru: "отобран"},
@@ -8607,8 +8608,6 @@ function sgn(v){ return v == null ? "dim" : (v > 0 ? "up"
 // забывчивости: он форматирует ПРОЦЕНТ движения цены, а это другая
 // величина, и печатать её тем же знаком значило бы обещать
 // сопоставимость, которой нет.
-function bp(v){ return v == null ? "&mdash;"
-  : (v > 0 ? "+" : "") + Number(v).toFixed(1); }
 function ts(t){ if (!t) return "&mdash;";
   const d = new Date(t * 1000);
   return d.toISOString().slice(5, 16).replace("T", " "); }
@@ -8715,11 +8714,11 @@ function rowHtml(b){
     <td class="num mono">${money}</td>
     <td class="num mono">${b.live == null
       ? `<span class="dim">&mdash;</span>` : b.live.closed}</td>
-    <td class="num mono">${num(b.fwd == null ? null : bp(b.fwd),
+    <td class="num mono">${num(b.fwd == null ? null : pct(b.fwd),
       sgn(b.fwd))}</td>
     <td class="num mono">${num(b.fwd_days)}</td>
     <td class="num mono">${num(b.trades)}</td>
-    <td class="num mono dim">${num(b.pre == null ? null : bp(b.pre))}</td>
+    <td class="num mono dim">${num(b.pre == null ? null : pct(b.pre))}</td>
     </tr>`;
 }
 
@@ -8896,7 +8895,7 @@ button[aria-pressed="true"]{border-color:var(--accent);
 const KEY = new URLSearchParams(location.search).get("k") || "";
 const SID = new URLSearchParams(location.search).get("id") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + r"""
+""" + NAVJS + PCTJS + r"""
 let LANG = new URLSearchParams(location.search).get("lang")
   || (function(){ try { return localStorage.getItem("algoth_lang"); }
                   catch (e) { return null; } })() || "en";
@@ -8917,8 +8916,8 @@ const UI = {
   on: {en: "alive", ru: "жива"},
   live: {en: "live book, $", ru: "живая книга, $"},
   lclosed: {en: "closed live", ru: "закрыто вживую"},
-  fwd: {en: "forward, bp", ru: "форвард, б.п."},
-  pre: {en: "backtest, bp", ru: "бэктест, б.п."},
+  fwd: {en: "forward, % of gross", ru: "форвард, % гросса"},
+  pre: {en: "backtest, % of gross", ru: "бэктест, % гросса"},
   days: {en: "days forward", ru: "суток вперёд"},
   axis: {en: "axis", ru: "ось"},
   want: {en: "declared", ru: "объявлено"},
@@ -8956,8 +8955,6 @@ function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function sgn(v){ return v == null ? "dim" : (v > 0 ? "up"
   : (v < 0 ? "dn" : "dim")); }
-function bp(v){ return v == null ? "—"
-  : (v > 0 ? "+" : "") + Number(v).toFixed(1); }
 function usd(v){ return v == null ? "—"
   : (v > 0 ? "+" : "") + Number(v).toFixed(2); }
 function ts(t){ if (!t) return "—";
@@ -9078,8 +9075,8 @@ function btHtml(d){
     return `<tr${fwd ? "" : ' class="thin"'}>
       <td class="mono">${dt}</td>
       <td>${fwd ? T("fwd") : T("pre")}</td>
-      <td class="num mono ${sgn(v)}">${bp(v)}</td>
-      <td class="num mono ${sgn(cum)}">${bp(cum)}</td></tr>`;
+      <td class="num mono ${sgn(v)}">${pct(v)}</td>
+      <td class="num mono ${sgn(cum)}">${pct(cum)}</td></tr>`;
   }).join("");
   return `<div class="scroll"><table>
     <tr><th>${T("dcol")}</th><th></th><th class="num">${T("pnl")}</th>
@@ -9145,9 +9142,9 @@ function render(){
     [[T("live"), d.live == null || d.live.pnl == null ? null
         : usd(d.live.pnl)],
      [T("lclosed"), d.live == null ? null : d.live.closed],
-     [T("fwd"), d.fwd == null ? null : bp(d.fwd)],
+     [T("fwd"), d.fwd == null ? null : pct(d.fwd)],
      [T("days"), d.fwd_days],
-     [T("pre"), d.pre == null ? null : bp(d.pre)]]
+     [T("pre"), d.pre == null ? null : pct(d.pre)]]
     .map(c => `<div class="st"><div class="lab">${c[0]}</div>
       <div class="val">${c[1] == null ? "&mdash;" : c[1]}</div></div>`)
     .join("");

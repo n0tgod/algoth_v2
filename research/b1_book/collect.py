@@ -873,13 +873,13 @@ class Collector:
                 self.log(f"{ev['sym']}: сигнал [{ev['rule']}] "
                          f"{'лонг' if ev['long'] else 'шорт'} у уровня "
                          f"{ev['level']:.6g} ({ev['kind']}), стоп "
-                         f"{ev['stop_bp']:.0f} б.п., отношение 1:{ev['rr']}")
+                         f"{TR.pct(ev['stop_bp'])}, отношение 1:{ev['rr']}")
                 self.w.write("signals", ev["sym"], dict(ev, ev="open"), ts=now)
             for tr in closed:
                 self.n_closed += 1
                 self.log(f"{tr['sym']}: [{tr['rule']}] "
                          f"{tr['state']} — "
-                         f"{tr['pnl_bp']:+.1f} б.п. ({tr['r']:+.2f} R), "
+                         f"{TR.pct(tr['pnl_bp'])} ({tr['r']:+.2f} R), "
                          f"держали {tr['held']} с")
                 self.w.write("signals", tr["sym"], dict(tr, ev="close"), ts=now)
 
@@ -2685,7 +2685,7 @@ class Collector:
                      "market. The book’s history continues the pair "
                      "that already traded that order — it is the same "
                      "book, not a new one. Entries also pass a floor "
-                     "of 30 bp (≈3× the cost round, from the "
+                     "of 0.30 % (≈3× the cost round, from the "
                      "extremeness probe): a quiet hour is not traded "
                      "at all. Tests the core question of hypothesis "
                      "6: does ranking the cross-section make money at "
@@ -2700,7 +2700,7 @@ class Collector:
                         "имя выходило вшестеро размашистее рынка. "
                         "История книги продолжает пару, которая этим "
                         "порядком уже торговала, — это та же книга, а "
-                        "не новая. Вход проходит и пол в 30 б.п. "
+                        "не новая. Вход проходит и пол в 0.30 % "
                         "(≈3× круга, из зонда крайности): тихий час "
                         "не торгуется вовсе. Проверяет главный вопрос "
                         "гипотезы 6: зарабатывает ли само ранжирование "
@@ -2803,7 +2803,7 @@ class Collector:
                      "monotonically as the promised RR grows (54% "
                      "below 1 vs 34% above 2), because a high ratio "
                      "is not a bigger target but a TIGHTER stop — the "
-                     "median promised stop shrinks 354 to 57 bp while "
+                     "median promised stop shrinks 3.54 % to 0.57 % while "
                      "the target stays put, and the share of "
                      "stop-exits climbs 17% to 78%. The 1.5 ceiling "
                      "was declared before any confirming data; the "
@@ -2820,7 +2820,7 @@ class Collector:
                         "обещанного RR (54 % ниже 1 против 34 % выше "
                         "2), потому что высокое отношение — это не "
                         "крупная цель, а УЗКИЙ стоп: медиана "
-                        "обещанного стопа сжимается 354 → 57 б.п. при "
+                        "обещанного стопа сжимается 3.54 % → 0.57 % при "
                         "почти той же цели, и доля выходов по стопу "
                         "растёт 17 % → 78 %. Потолок 1.5 объявлен до "
                         "проверочных данных; лучшую корзину 0–1 "
@@ -2969,7 +2969,7 @@ class Collector:
                      "first live-positive filter of the project: on "
                      "the 24 h book, decisions taken by BOTH heads "
                      "(trees and net picked the same name, side and "
-                     "hour) earned +441/+358 bp per trade over solo "
+                     "hour) earned +4.41 %/+3.58 % per trade over solo "
                      "ones at p = 0.000, surviving the no-best-name "
                      "cut and both halves of history. This book "
                      "keeps exactly that intersection of the 24 h "
@@ -2986,7 +2986,7 @@ class Collector:
                         "живой положительный фильтр проекта: у книги "
                         "24 ч решения, взятые ОБЕИМИ руками (деревья "
                         "и сеть выбрали одно имя, сторону и час), "
-                        "дают +441/+358 б.п. на сделку против "
+                        "дают +4.41 %/+3.58 % на сделку против "
                         "одиночных при p = 0.000 — переживает «без "
                         "лучшего имени» и обе половины истории. Эта "
                         "книга держит ровно то пересечение выборов "
@@ -5465,7 +5465,7 @@ class Collector:
                                    if ev.get("fill") == "level" else "")
                             self.log(
                                 f"ситуационная: {p['sym']} {took} "
-                                f"({ev['move_bp']:+.0f} б.п.){lvl} — "
+                                f"({TR.pct(ev['move_bp'])}){lvl} — "
                                 f"выход замечен живьём")
                 # Живое поглощение: событие ЭТОГО тика становится
                 # строкой книги сейчас, а не ближайшим часом (просьба
@@ -5909,9 +5909,9 @@ class Collector:
                     armed.discard(key)
                     self.log(
                         f"ситуационная [{arm}]: живой вход {sym} "
-                        f"{got['side']} (остаток {got['fwd']:+.0f} б.п. "
-                        f"против {got['fwd0']:+.0f} у листа, скидка "
-                        f"{abs(got['fwd']) - abs(got['fwd0']):+.0f}, RR "
+                        f"{got['side']} (остаток {TR.pct(got['fwd'])} "
+                        f"против {TR.pct(got['fwd0'])} у листа, скидка "
+                        f"{TR.pct(abs(got['fwd']) - abs(got['fwd0']))}, RR "
                         f"{got['rr']}) — поймано в моменте")
 
 

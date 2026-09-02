@@ -51,6 +51,11 @@ import levels as LV                                       # noqa: E402
 sys.path.insert(0, HERE)
 import absorb as AB                                       # noqa: E402
 
+# Единица показа одна на весь проект — доллары и проценты; формат
+# живёт в ядре расчёта, второй копии у детектора нет.
+sys.path.insert(0, os.path.join(RESEARCH, "s8_loop"))
+import trades as TR                                       # noqa: E402
+
 WINDOW_SEC = 60
 VOL_MULT = 5.0
 MOVE_MULT = 0.5
@@ -505,7 +510,7 @@ class Live:
             # уровень впереди столько не даёт. Молча пропав, такой вход
             # выглядит на графике как исчезнувшая сделка — владелец
             # именно это и увидел.
-            self.last_refusal = (f"стоп {stop_bp:.1f} б.п., "
+            self.last_refusal = (f"стоп {TR.pct(stop_bp)}, "
                                  f"ни один уровень впереди не даёт 1:{MIN_RR}")
             return None
         if (long and tgt <= entry) or (not long and tgt >= entry):

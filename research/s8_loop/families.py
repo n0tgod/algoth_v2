@@ -177,7 +177,7 @@ GLOSSARY = (
         "caveat": "The rebound after a cascade was measured directly "
                   "(L1–L3) and, against the cross-section of "
                   "everything falling at the same minute, it was "
-                  "worth 4–11 bp against a round trip of 11.7 — the "
+                  "worth 0.04–0.11 % against a round trip of 0.12 % — the "
                   "market's rebound, not the coin's.",
         "title_ru": "Ликвидации — позиции закрывают принудительно",
         "plain_ru": "Не решение, а принуждение. Когда идёт каскад, "
@@ -191,7 +191,7 @@ GLOSSARY = (
         "caveat_ru": "Отскок после каскада измерен прямо (L1–L3): "
                      "против одновременной кросс-секции — то есть "
                      "против всех, кто падал в ту же минуту, — от него "
-                     "остаётся 4–11 б.п. при круге издержек 11.7. "
+                     "остаётся 0.04–0.11 % при круге издержек 0.12 %. "
                      "Отскакивал рынок, а не монета.",
     }),
     ("oi", {
