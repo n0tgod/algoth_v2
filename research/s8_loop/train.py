@@ -61,6 +61,18 @@ import wf                                                  # noqa: E402
 
 OUT = os.path.join(HERE, "out")
 MODEL_DIR = os.path.join(OUT, "model")
+# Боевой каталог, запомненный НА ИМПОРТЕ. Демо-прогон, песочный контур
+# и тесты подменяют `MODEL_DIR`, а состав книг кандидатов лежит рядом
+# с реестром книг — то есть один на все прогоны. Писать его вправе
+# только боевой цикл: песочница переписала бы боевой состав книг, и
+# отказ был бы невиден до следующего часа. Сравнение с этой
+# константой защищает и тот тест, который о ней не знает.
+LIVE_MODEL_DIR = MODEL_DIR
+# Откуда берутся кандидаты и куда пишется состав их книг. Константами,
+# а не выражением на месте: тест обязан подставить СВОИ пути, иначе он
+# исполняет чужую дорогу — либо не исполняет её вовсе.
+FACTORY_OUT = os.path.join(RESEARCH, "factory", "out")
+EXTRAS_PATH = os.path.join(HERE, BK.EXTRAS_FILE)
 
 MODEL_VERSION = 2
 
@@ -1246,6 +1258,11 @@ SIT_MAX_AGE_H = 24
 # заведена. Цена решения названа: позиция, не задевшая ни один
 # уровень, живёт дольше суток и держит слот.
 SIT_R_EXIT_POLICY = "levels_only"
+# Политика кандидата фабрики: уровни и предел возраста, без разворота
+# прогноза. Ровно то, чем закрывает сделку реплей `candidate.simulate`
+# (стоп, тейк, возраст): живая книга и её реплей обязаны закрываться
+# одними причинами, иначе расхождение между ними ничего не означает.
+SIT_LEVELS_AGE = "levels_age"
 # Второе правило той же книги (решение владельца после #ptadyrc):
 # запас до стопа обязан быть не тоньше ПОЛУТОРА живых минутных шумов
 # монеты. Базовый гейт v11 требует один шум, и сделка #ptadyrc прошла
@@ -1565,13 +1582,27 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
     # и «предел возраста» её позиций не трогают. Манифест пишет этот
     # же цикл до вызова руки; нет манифеста (свежий каталог, тесты) —
     # политика прежняя, все причины в силе.
+    #
+    # Политик три, и различаются они тем, какие ПРИЧИНЫ живы:
+    #   (умолчание) — уровни, разворот прогноза, предел возраста;
+    #   `levels_only` — только уровни (книга равного риска);
+    #   `levels_age` — уровни и возраст, без разворота: так устроен
+    #       реплей кандидата фабрики (стоп, тейк, предел возраста), и
+    #       живая книга обязана закрываться теми же причинами, иначе
+    #       сравнивать её с собственным реплеем нечем.
+    # Предел возраста тоже из манифеста: у кандидатов он ось правила
+    # (24 ч либо 72), и глобальная константа сделала бы книгу не той,
+    # которую объявили.
     try:
         with open(os.path.join(mdir, "manifest.json"),
                   encoding="utf-8") as f:
-            lvl_only = ((json.load(f) or {}).get("exit_policy")
-                        == SIT_R_EXIT_POLICY)
+            _mm = json.load(f) or {}
     except (OSError, ValueError):
-        lvl_only = False
+        _mm = {}
+    _pol = _mm.get("exit_policy")
+    lvl_only = _pol == SIT_R_EXIT_POLICY
+    no_flip = lvl_only or _pol == SIT_LEVELS_AGE
+    max_age_h = float(_mm.get("max_age_h") or SIT_MAX_AGE_H)
 
     # --- выходы: ситуация кончилась (часовые причины) ----------------
     # Событийные выходы уже поглощены выше; остаются причины, которым
@@ -1634,10 +1665,10 @@ def situational_arm(mdir, arm, models, x, mats, syms, rows_m, j_last,
         # чего входила. У книги «только уровни» ни разворот, ни
         # возраст позицию не трогают — каждый её исход обязан быть
         # −R либо +r·R.
-        elif not lvl_only and (p["side"] == "long") != (fresh > 0):
+        elif not no_flip and (p["side"] == "long") != (fresh > 0):
             reason = "прогноз развернулся"
         elif not lvl_only and age is not None \
-                and age >= SIT_MAX_AGE_H:
+                and age >= max_age_h:
             reason = "предел возраста"
         if reason is None:
             continue
@@ -2414,6 +2445,138 @@ def load_prev_models(names):
     return models, int(man_prev["train_seq"]), man_prev
 
 
+def cand_sheet_entry(b):
+    """Запись кандидата в списке книг листа сечения.
+
+    Гейт кандидата — правило из реестра испытаний, а не настройка
+    книги ядра: пол входа, полоса отношения, места и требование
+    согласия рук приходят из объявленного правила и переписаны быть
+    не могут. Каталог идёт БАЗОВЫМ ИМЕНЕМ, как у книг ядра: сканер
+    складывает его со своим корнем.
+    """
+    g = b.get("gate") or {}
+    e = {"dir": b["dir"], "slots": int(g.get("slots") or 6),
+         "min_rr": float(g.get("min_rr") or 0.0)}
+    if g.get("max_rr") is not None:
+        e["max_rr"] = float(g["max_rr"])
+    # Пол входа кандидата — на прогнозе ЛИСТА, как у правила v10: это
+    # та же величина, по которой отбирает реплей (`passes`), и она
+    # известна до всякого хода цены.
+    if g.get("floor_bp"):
+        e["floor_bp"] = float(g["floor_bp"])
+    # Места по СТОРОНАМ: реплей считает ширину на сторону, и общий
+    # счётчик пустил бы десять лонгов в книгу шириной пять.
+    if g.get("per_side"):
+        e["per_side"] = int(g["per_side"])
+    if g.get("agree"):
+        e["agree"] = True
+    return e
+
+
+def cand_book(b, sm, models_b, x, mats, syms, rows_sit, j_last, grid,
+              nov_lo, nov_hi, book_root, log_, *, beta_row, names,
+              train_seq):
+    """Свести одну книгу кандидата: манифест, выборы, счёт.
+
+    Манифест несёт ПРАВИЛО целиком (`rule`) и применённые пороги: файл
+    `books_extra.json` есть инструкция, а манифест — запись о том, чем
+    книга торговала на самом деле, и расхождение между ними обязано
+    быть видно. Смена правила отставляет книгу в архив тем же
+    механизмом, что у сестринских книг, — правило кандидата в реестре
+    неизменно, поэтому это страховка, а не рабочий путь.
+
+    Вылетевший кандидат книгу сохраняет и НЕ берёт новых входов: его
+    записи нет в списке книг листа, значит сканер её не видит, а
+    разбор и счёт идут — выход есть обязанность перед позицией.
+    """
+    g = b.get("gate") or {}
+    cdir = MODEL_DIR + BK.suffix(b["key"], BK.load()[0])
+    rules = {"exit_policy": SIT_LEVELS_AGE,
+             "min_rr": float(g.get("min_rr") or 0.0),
+             "max_rr": g.get("max_rr"),
+             "floor_bp": g.get("floor_bp"),
+             "per_side": g.get("per_side"),
+             "agree": bool(g.get("agree")),
+             "sizing": b.get("sizing")}
+    fresh_sit_on_rules_change(cdir, log_, rules=rules)
+    os.makedirs(cdir, exist_ok=True)
+    cm = dict(sm, candidate=True, lane=b.get("lane"),
+              rule=b.get("rule"), declared_at=b.get("declared_at"),
+              retired_at=b.get("retired_at"),
+              slots=int(g.get("slots") or 6),
+              # Предел возраста — ось правила (24 ч либо 72), и часовые
+              # выходы берут его отсюда, а не из глобальной константы.
+              max_age_h=(72 if (b.get("rule") or {}).get("geom")
+                         == "levels" else 24),
+              **rules)
+    mp = os.path.join(cdir, "manifest.json")
+    with open(mp + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(cm, f, ensure_ascii=False, indent=1)
+    os.replace(mp + ".tmp", mp)
+    for arm, _ in ARMS:
+        situational_arm(cdir, arm, models_b, x, mats, syms, rows_sit,
+                        j_last, grid, nov_lo, nov_hi, book_root, log_,
+                        beta_row=beta_row, names=names,
+                        train_seq=train_seq)
+    rebuild_accounts(cdir, None, slots=int(g.get("slots") or 6))
+
+
+def candidate_books(log_):
+    """Кандидаты фабрики → живые книги. Возвращает список записей.
+
+    Решение владельца (2026-09-02): объявленный кандидат обязан
+    получить ЖИВУЮ бумажную книгу, а не только реплей по журналу
+    листов. Реплей отвечает «что бы вышло», живая книга — «что
+    выходит», и второе и есть предмет поиска.
+
+    Состояние пишется ЦЕЛИКОМ из реестра испытаний каждый цикл, а не
+    дельтой: список книг есть функция реестра, и дописывание однажды
+    оставило бы книгу, которой в реестре уже нет (тот же дефект, что
+    сводка сборки в A2 — там признаком результата служила дельта
+    прогона вместо состояния диска).
+
+    Отказ здесь НЕ роняет цикл и не молчит: фабрики может не быть
+    вовсе (песочница, демо-прогон), и это норма; сломанный реестр —
+    строка в журнал, а книги ядра идут как шли.
+    """
+    # Демо- и песочный прогон книг кандидатов НЕ заводит: `MODEL_DIR`
+    # у него подменён, а файл состава лежит рядом с реестром книг —
+    # то есть один и тот же на боевой и на песочный прогон. Песочница
+    # переписала бы боевой состав книг, и это был бы отказ, невидимый
+    # до следующего часа.
+    if PROBE or PRETEST or MODEL_DIR != LIVE_MODEL_DIR:
+        return []
+    try:
+        sys.path.insert(0, os.path.join(RESEARCH, "factory"))
+        import ledger as LGF
+        import live_books as LB
+        import space as SPF
+    except ImportError as e:
+        log_(f"кандидаты фабрики не читаны: {type(e).__name__}: {e}")
+        return []
+    fdir = FACTORY_OUT
+    if not os.path.exists(LGF.path(fdir)):
+        return []                     # фабрика книг ещё не заводила
+    try:
+        rows, broken = LGF.read(fdir)
+        st = LGF.state(rows)
+        books, skipped = LB.build(st, describe=SPF.describe)
+        LB.write(EXTRAS_PATH, books)
+    except (OSError, ValueError) as e:
+        log_(f"книги кандидатов не собраны: {type(e).__name__}: {e}")
+        return []
+    live = sum(1 for b in books if not b.get("retired_at"))
+    # Пропущенные считаются ЧИСЛОМ и называются причиной: «книги нет»
+    # и «книга невозможна» снаружи неотличимы, а нам надо знать, какую
+    # часть пула мы судим вживую.
+    log_(f"кандидаты фабрики: книг {len(books)} (живых {live}), "
+         f"без живой книги {len(skipped)}"
+         + (", битых строк реестра %d" % broken if broken else ""))
+    for sk in skipped:
+        log_(f"  {sk['id']}: живой книги нет — {sk['why']}")
+    return books
+
+
 def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
               grid, si, j_last, rows_m, nov_lo, nov_hi, names,
               book_root, log_, n_sections):
@@ -2725,6 +2888,10 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
     # Ситуационная книга: вход когда модель видит ситуацию, выход когда
     # ситуация кончилась. Сигнал — цели главного горизонта; своя касса
     # с фиксированными слотами; правила и пороги — у `situational_arm`.
+    # Книги кандидатов фабрики: состав и гейты нужны ДО записи листа —
+    # состав книг сканера объявляет лист, и второго списка у сканера
+    # нет (два места, решающих одно, однажды разойдутся).
+    cands = candidate_books(log_)
     try:
         mdir = MODEL_DIR + BK.suffix("sit")
         fresh_sit_on_rules_change(mdir, log_)
@@ -2839,7 +3006,8 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                                 "min_rr": 0.0,
                                 "max_rr": SIT_LO_MAX_RR,
                                 "slots": SIT_LO_SLOTS},
-                           ],
+                           ] + [cand_sheet_entry(b) for b in cands
+                                if not b.get("retired_at")],
                            "arms": sheets}, f, ensure_ascii=False)
             os.replace(sp + ".tmp", sp)
             # Лист ПЕРЕЗАПИСЫВАЕТСЯ каждый час, то есть история решений
@@ -2937,6 +3105,22 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
                             book_root, log_, beta_row=beta_row,
                             names=names, train_seq=seq_b)
         rebuild_accounts(lo, None, slots=SIT_LO_SLOTS)
+        # Книги кандидатов фабрики. Та же машинерия, что у сестринских
+        # книг: свой каталог, свой манифест, своя касса; различается
+        # ровно правило, объявленное реестром испытаний.
+        #
+        # Ошибка ОДНОЙ книги не роняет остальные и не молчит: пул
+        # растёт сам собой, и сломанный кандидат не вправе останавливать
+        # ни ядро, ни соседей.
+        for b in cands:
+            try:
+                cand_book(b, sm, models_b, x, mats, syms, rows_sit,
+                          j_last, grid, nov_lo, nov_hi, book_root,
+                          log_, beta_row=beta_row, names=names,
+                          train_seq=seq_b)
+            except Exception as e:                        # noqa: BLE001
+                log_(f"книга кандидата {b.get('key')} не сведена: "
+                     f"{type(e).__name__}: {e}")
     except Exception as e:                                # noqa: BLE001
         log_(f"ситуационная книга не сведена: {type(e).__name__}: {e}")
 

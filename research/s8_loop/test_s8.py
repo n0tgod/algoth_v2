@@ -3458,6 +3458,118 @@ def test_live_ic_shown_as_median_not_last_hour():
               for r in out), str(out))
 
 
+def test_declared_candidate_gets_a_live_book():
+    """Объявленный кандидат получает ЖИВУЮ книгу, а не только реплей.
+
+    Решение владельца (2026-09-02): «именно живая книга должна
+    заводиться для отобранных кандидатов, иначе смысл тогда искать
+    стратегии». Проверяется вся дорога, а не отображение правила:
+    реестр испытаний → состав книг → каталог, манифест, лист сечения.
+
+    Три утверждения, ломающиеся порознь. (1) Книга заводится ОБЕИМ
+    полосам: отобранной и случайной — иначе полосы измерялись бы
+    разными системами, и знаменатель испытаний потерян. (2) Гейты
+    кандидата доезжают до ЛИСТА, по которому живёт сканер: правило,
+    не доехавшее до листа, есть книга не того кандидата. (3) Правило,
+    которого живая машинерия не умеет, книгой не становится МОЛЧА —
+    причина называется словами.
+    """
+    import train as T
+    import books as BK
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "factory"))
+    import ledger as LGF
+    import space as SPF
+
+    d = tempfile.mkdtemp()
+    was = (T.MODEL_DIR, T.LIVE_MODEL_DIR, T.FACTORY_OUT, T.EXTRAS_PATH)
+    try:
+        fout = os.path.join(d, "factory")
+        os.makedirs(fout, exist_ok=True)
+        T.MODEL_DIR = T.LIVE_MODEL_DIR = os.path.join(d, "model")
+        T.FACTORY_OUT = fout
+        T.EXTRAS_PATH = os.path.join(d, "books_extra.json")
+        base = SPF.index_to_rule(0)
+        sel = dict(base, target="fwd_4h", geom="levels", rank="sigma",
+                   floor_bp=30, width=5, rr_band="lo", sizing="equal",
+                   basket="no", agree="no")
+        ctl = dict(sel, rank="raw", agree="yes", rr_band="hi", width=3)
+        tmr = dict(sel, geom="timer")
+        now = time.time()
+        for r, lane in ((sel, "selected"), (ctl, "control"),
+                        (tmr, "selected")):
+            LGF.declare(SPF.key(r), r, lane, at=now, base=fout)
+        lines = []
+        books = T.candidate_books(lines.append)
+        keys = {b["key"] for b in books}
+        check("книга заведена обеим полосам",
+              {SPF.key(sel), SPF.key(ctl)} <= keys, str(sorted(keys)))
+        check("правило без живой машинерии книгой не стало",
+              SPF.key(tmr) not in keys, str(sorted(keys)))
+        check("причина отсутствия названа словами",
+              any("выход по времени" in x for x in lines),
+              " | ".join(lines))
+        # Состав книг читается ТЕМ ЖЕ реестром, что у страниц.
+        all_b, why = BK.load(T.EXTRAS_PATH)
+        check("реестр принял книги кандидатов", why is None
+              and {b["key"] for b in all_b} >= keys, str(why))
+        # Гейт правила доезжает до листа сечения.
+        e = {b["key"]: T.cand_sheet_entry(b) for b in books}
+        s_e = e[SPF.key(sel)]
+        check("пол входа кандидата в листе",
+              s_e.get("floor_bp") == 30.0, str(s_e))
+        check("полоса отношения в листе",
+              s_e.get("max_rr") == 1.5 and s_e.get("min_rr") == 0.0,
+              str(s_e))
+        check("ширина едет местами по сторонам",
+              s_e.get("per_side") == 5 and s_e.get("slots") == 10,
+              str(s_e))
+        c_e = e[SPF.key(ctl)]
+        check("согласие рук едет в лист",
+              c_e.get("agree") is True and s_e.get("agree") is None,
+              f"{c_e} / {s_e}")
+        check("пол отношения у полосы hi", c_e.get("min_rr") == 2.0,
+              str(c_e))
+        # Вылетевший книгу сохраняет, но входов не берёт.
+        LGF.retire(SPF.key(ctl), "нетто ниже нуля", at=now + 1,
+                   base=fout)
+        books2 = T.candidate_books(lambda *a: None)
+        check("вылетевший остался книгой",
+              SPF.key(ctl) in {b["key"] for b in books2},
+              str([b["key"] for b in books2]))
+        live = [b for b in books2 if not b.get("retired_at")]
+        check("вылетевший новых входов не берёт",
+              SPF.key(ctl) not in {b["key"] for b in live},
+              str([b["key"] for b in live]))
+    finally:
+        (T.MODEL_DIR, T.LIVE_MODEL_DIR, T.FACTORY_OUT,
+         T.EXTRAS_PATH) = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_candidate_books_are_not_written_by_a_sandbox_run():
+    """Песочный прогон боевой состав книг НЕ переписывает.
+
+    `MODEL_DIR` подменяют демо-прогон, песочный контур и каждый тест, а
+    файл состава лежит рядом с реестром книг — один на все прогоны.
+    Защита сравнением с боевым каталогом, запомненным на импорте:
+    тест, который о ней не знает, тоже защищён.
+    """
+    import train as T
+
+    d = tempfile.mkdtemp()
+    was = (T.MODEL_DIR, T.EXTRAS_PATH)
+    try:
+        T.MODEL_DIR = os.path.join(d, "model_demo")
+        T.EXTRAS_PATH = os.path.join(d, "books_extra.json")
+        books = T.candidate_books(lambda *a: None)
+        check("песочный прогон книг не завёл", books == [], str(books))
+        check("файла состава он не написал",
+              not os.path.exists(T.EXTRAS_PATH))
+    finally:
+        T.MODEL_DIR, T.EXTRAS_PATH = was
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_train_cycle_end_to_end():
     import train as T
 
@@ -5231,6 +5343,8 @@ def main():
     test_load_matrices_grid_is_continuous()
     test_live_ic_survives_hourly_retraining()
     test_live_ic_shown_as_median_not_last_hour()
+    test_declared_candidate_gets_a_live_book()
+    test_candidate_books_are_not_written_by_a_sandbox_run()
     test_train_cycle_end_to_end()
     test_low_rr_book_is_declared_with_a_ceiling()
     test_books_run_before_training_on_prev_weights()

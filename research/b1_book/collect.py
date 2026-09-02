@@ -5317,6 +5317,20 @@ class Collector:
         # Гейт по отношению у сканера снимается: его применяет КНИГА,
         # каждая своим порогом. Само событие входа от этого не
         # меняется — меняется, кто его к себе записывает.
+        # Согласие рук считается ПО ЛИСТУ, а не по сделкам — та же
+        # конвенция, что у реплея кандидата (`agreed_keys`): у второй
+        # руки сделки может не быть из-за мест, и «согласие» тогда
+        # означало бы «первой руке хватило места», а не «обе руки
+        # увидели одно». Сторона имени берётся из знака прогноза листа.
+        by_arm = {}
+        for a, rr in (sheet.get("arms") or {}).items():
+            by_arm[a] = {q.get("sym"): ("long" if float(
+                q.get("fwd") or 0.0) > 0 else "short") for q in rr}
+
+        def agreed(sym, side, arm):
+            return any(m.get(sym) == side
+                       for a, m in by_arm.items() if a != arm)
+
         for arm, rows in (sheet.get("arms") or {}).items():
             mids, moves = {}, []
             for r in rows:
@@ -5348,20 +5362,46 @@ class Collector:
                 # без поля означает «потолка нет» (None, не ноль —
                 # ноль запретил бы вход всем).
                 mx = b.get("max_rr")
-                free[d] = (int(b.get("slots") or 6) - len(held), held,
-                           float(b.get("min_rr") or 0.0),
-                           None if mx is None else float(mx),
-                           # Множитель шума и минимальный стоп —
-                           # правила книги, как min_rr; лист без поля
-                           # — прежнее поведение (1 шум, порога нет).
-                           float(b.get("noise_mult") or 1.0),
-                           float(b.get("min_stop_bp") or 0.0),
-                           # Кого тормоз НЕ касается — объявляет лист
-                           # (наблюдательная запись: без неё цену
-                           # тормоза потом нечем измерить). Отсутствие
-                           # поля — книга тормозится: молчаливое
-                           # исключение сняло бы забор незаметно.
-                           bool(b.get("no_brake")), stt)
+                ps = b.get("per_side")
+                # Гейт книги — СЛОВАРЬ: правил на книге стало
+                # одиннадцать (кандидаты фабрики принесли пол входа,
+                # места по сторонам и согласие рук), и кортеж такой
+                # длины читается только счётом запятых.
+                free[d] = {
+                    "free": int(b.get("slots") or 6) - len(held),
+                    "held": held,
+                    "min_rr": float(b.get("min_rr") or 0.0),
+                    "max_rr": None if mx is None else float(mx),
+                    # Множитель шума и минимальный стоп —
+                    # правила книги, как min_rr; лист без поля
+                    # — прежнее поведение (1 шум, порога нет).
+                    "noise_mult": float(b.get("noise_mult") or 1.0),
+                    "min_stop_bp": float(b.get("min_stop_bp") or 0.0),
+                    # Кого тормоз НЕ касается — объявляет лист
+                    # (наблюдательная запись: без неё цену
+                    # тормоза потом нечем измерить). Отсутствие
+                    # поля — книга тормозится: молчаливое
+                    # исключение сняло бы забор незаметно.
+                    "no_brake": bool(b.get("no_brake")),
+                    # Пол входа книги — на прогнозе ЛИСТА: та же
+                    # величина, по которой отбирает реплей кандидата.
+                    # Нет поля — пола нет (ноль запретил бы всё).
+                    "floor_bp": float(b.get("floor_bp") or 0.0),
+                    # Места ПО СТОРОНАМ: реплей считает ширину на
+                    # сторону, и общий счётчик пустил бы десять лонгов
+                    # в книгу шириной пять. Нет поля — прежнее
+                    # поведение, счёт по книге целиком.
+                    "per_side": None if ps is None else int(ps),
+                    "side_n": {"long": 0, "short": 0},
+                    # Согласие рук — ось правила кандидата: имя берётся,
+                    # только если ОБЕ руки выбрали его и одной стороной.
+                    "agree": bool(b.get("agree")),
+                    "stt": stt}
+                if free[d]["per_side"] is not None:
+                    for q in stt["pos"]:
+                        if q["arm"] == arm and q["side"] in ("long",
+                                                             "short"):
+                            free[d]["side_n"][q["side"]] += 1
             # Порядок просмотра кандидатов — в единицах собственной σ
             # монеты (решение владельца о переводе ситуационных сделок
             # на per σ). Мест меньше, чем проходящих гейт, и слот
@@ -5427,9 +5467,29 @@ class Collector:
                     continue
                 took = False
                 braked_hit = False
-                for d, (n_free, held, min_rr, max_rr, n_mult, m_stop,
-                        no_brake, stt) in list(free.items()):
-                    if n_free <= 0 or sym in held:
+                for d, gt in list(free.items()):
+                    held, stt = gt["held"], gt["stt"]
+                    min_rr, max_rr = gt["min_rr"], gt["max_rr"]
+                    n_mult, m_stop = gt["noise_mult"], gt["min_stop_bp"]
+                    no_brake = gt["no_brake"]
+                    if gt["free"] <= 0 or sym in held:
+                        continue
+                    # Места по сторонам — правило ширины кандидата.
+                    side = got.get("side")
+                    if gt["per_side"] is not None and (
+                            gt["side_n"].get(side, 0) >= gt["per_side"]):
+                        continue
+                    # Пол входа книги проверяется на прогнозе ЛИСТА
+                    # (`fwd0`), а не на остатке: остаток есть то, что
+                    # осталось после хода, и порог на нём отбирал бы по
+                    # другой величине, чем реплей кандидата.
+                    if gt["floor_bp"] and abs(
+                            float(got.get("fwd0") or 0.0)) < gt["floor_bp"]:
+                        continue
+                    # Согласие рук: имя берётся, только если ВТОРАЯ рука
+                    # выбрала его тем же направлением. Ось правила
+                    # кандидата; лист без поля — прежнее поведение.
+                    if gt["agree"] and not agreed(sym, side, arm):
                         continue
                     # Дневной тормоз: вход торгуемой книги не берётся.
                     # Выходов это не касается вовсе — их ведёт сторож
@@ -5497,8 +5557,9 @@ class Collector:
                                 + "\n")
                     stt["entered"].add(key)
                     held.add(sym)
-                    free[d] = (n_free - 1, held, min_rr, max_rr,
-                               n_mult, m_stop, no_brake, stt)
+                    gt["free"] -= 1
+                    if gt["per_side"] is not None:
+                        gt["side_n"][side] = gt["side_n"].get(side, 0) + 1
                     # Свежий вход сторожится с этой же секунды, не
                     # дожидаясь перечитывания файлов. `at_ts` обязателен:
                     # по нему страж свежести отличает позицию, открытую

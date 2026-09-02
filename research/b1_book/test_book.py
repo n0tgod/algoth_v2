@@ -3675,6 +3675,105 @@ def test_sit_scan_enters_only_on_a_crossing_it_saw():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_sit_scan_candidate_gates_floor_side_and_agree():
+    """Гейты книги кандидата: пол входа, места по сторонам, согласие рук.
+
+    Правило кандидата объявлено реестром испытаний, и живая книга
+    обязана торговать ИМЕННО его: гейт, не доехавший до сканера, даёт
+    книгу другого кандидата под его именем — то есть подделывает
+    испытание. Три оси проверяются раздельно, потому что ломаются
+    порознь.
+
+    Пол входа считается на прогнозе ЛИСТА (`fwd0`), а не на остатке:
+    остаток есть то, что осталось после хода цены, и порог на нём
+    отбирал бы по другой величине, чем реплей кандидата (`passes`).
+    """
+    import collect as C
+
+    d = tempfile.mkdtemp()
+    try:
+        col = C.Collector.__new__(C.Collector)
+        col.books = {}
+        col.log = lambda m: None
+        col.sit_noise = lambda sym, now: 5.0
+
+        class B:
+            def __init__(self, px):
+                self.px = px
+
+            def best(self):
+                return self.px * 0.9999, self.px * 1.0001
+
+        # Тридцать имён — волна считается; у S0 прогноз листа 40 б.п.,
+        # у S1 — 25: пол в 30 берёт первого и не берёт второго.
+        rows = [{"sym": f"S{i}USDT", "fwd": 40.0, "mae": -40.0,
+                 "mfe": 90.0, "beta": 1.0, "px": 100.0}
+                for i in range(30)]
+        rows[1]["fwd"] = 25.0
+        # Вторая рука видит S0 ЛОНГОМ, а S1 не видит вовсе: согласие
+        # считается по листу (как `agreed_keys` реплея), а не по
+        # сделкам — у второй руки места могло не хватить.
+        rows_nn = [dict(rows[0])]
+        sheet = {"hour": "2026-09-02-10", "min_edge_bp": 22.0,
+                 "min_disc_bp": 11.0, "slots": 6,
+                 "arms": {"gbm": rows, "nn": rows_nn}}
+        for r in rows:
+            col.books[r["sym"]] = B(100.0)
+        names = ("base", "floor", "agree")
+        ds = {k: os.path.join(d, k) for k in names}
+        for p in ds.values():
+            os.makedirs(p)
+        want = [{"dir": "base", "min_rr": 0.0, "slots": 6},
+                {"dir": "floor", "min_rr": 0.0, "slots": 6,
+                 "floor_bp": 30.0},
+                {"dir": "agree", "min_rr": 0.0, "slots": 6,
+                 "agree": True}]
+        books = {p: {"dir": p, "signalled": set(), "entered": set(),
+                     "pos": []} for p in ds.values()}
+        armed = set()
+        ev = lambda k: C.Collector._jsonl(
+            os.path.join(ds[k], "entries_live.jsonl"))
+        syms = lambda k: sorted(x["sym"] for x in ev(k)
+                                if x.get("arm") == "gbm")
+        # S1 (прогноз листа 25) и S0 (40) пересекают гейт при нас.
+        for s in ("S0USDT", "S1USDT"):
+            col.books[s] = B(100.10)
+        col._sit_scan(d, sheet, want, books, 2000.0, armed)
+        for s in ("S0USDT", "S1USDT"):
+            col.books[s] = B(99.80)
+        col._sit_scan(d, sheet, want, books, 2005.0, armed)
+        check("без пола книга берёт оба имени",
+              syms("base") == ["S0USDT", "S1USDT"], str(syms("base")))
+        check("пол входа отсекает имя, которого лист не обещал",
+              syms("floor") == ["S0USDT"], str(syms("floor")))
+        check("согласие рук берёт только имя, которое видят обе",
+              syms("agree") == ["S0USDT"], str(syms("agree")))
+
+        # Места ПО СТОРОНАМ: реплей считает ширину на сторону, и общий
+        # счётчик пустил бы два лонга в книгу шириной один.
+        side = os.path.join(d, "side")
+        os.makedirs(side)
+        want2 = [{"dir": "side", "min_rr": 0.0, "slots": 6,
+                  "per_side": 1}]
+        books2 = {side: {"dir": side, "signalled": set(),
+                         "entered": set(), "pos": []}}
+        armed2 = set()
+        for s in ("S0USDT", "S1USDT"):
+            col.books[s] = B(100.10)
+        col._sit_scan(d, sheet, want2, books2, 2100.0, armed2)
+        for s in ("S0USDT", "S1USDT"):
+            col.books[s] = B(99.80)
+        col._sit_scan(d, sheet, want2, books2, 2105.0, armed2)
+        got = C.Collector._jsonl(
+            os.path.join(side, "entries_live.jsonl"))
+        longs = [x for x in got
+                 if x.get("arm") == "gbm" and x.get("side") == "long"]
+        check("ширина на сторону: второй лонг в книгу не попал",
+              len(longs) == 1, str([x["sym"] for x in longs]))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_sit_scan_book_noise_multiplier():
     """Правило книги равного риска: запас до стопа не тоньше 1.5 шума.
 
@@ -6317,6 +6416,7 @@ def main():
     test_sit_scan_max_rr_takes_the_other_end()
     test_sit_scan_enters_only_on_a_crossing_it_saw()
     test_sit_scan_day_brake_blocks_traded_not_observation()
+    test_sit_scan_candidate_gates_floor_side_and_agree()
     test_sit_scan_book_noise_multiplier()
     test_sit_scan_min_stop_book_rule()
     test_take_limit_fill_and_exit_event()
