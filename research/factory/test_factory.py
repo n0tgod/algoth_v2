@@ -317,6 +317,25 @@ def test_running_now_is_a_separate_question():
         check("оборванный прогон назван отдельно",
               st["broken"] is not None)
 
+        # Откат на запасную модель — строка ТОГО ЖЕ прогона, а не его
+        # конец: её пишет тот же процесс посреди работы. Найдено на
+        # живом прогоне разведчика — идущая роль показывалась «не
+        # идёт», а оборвись она, не помечалась бы и оборванной.
+        RL.append(p, "scout", "start", 300.0, pid=os.getpid())
+        RL.append(p, "scout", "fallback", 300.0,
+                  note="CLI не знает модель A, перехожу на B")
+        rows, _ = RL.read(p)
+        st = RL.state_of(rows)["scout"]
+        check("откат прогона не закрывает",
+              st["running"] is not None and st["last"] is None,
+              str(st))
+        RL.append(p, "scout", "ok", 300.0, ended=400.0)
+        rows, _ = RL.read(p)
+        st = RL.state_of(rows)["scout"]
+        check("а конец — закрывает",
+              st["running"] is None
+              and (st["last"] or {}).get("status") == "ok", str(st))
+
         hist = RL.history(rows, "brief")
         check("в истории все строки, включая отказы",
               len(hist) == 3, str(len(hist)))
