@@ -1613,6 +1613,22 @@ def test_fallback_happens_on_a_limit_or_an_unknown_model():
     check("о лимите аккаунта сказано громко",
           "ЛИМИТ АККАУНТА" in r.stdout, r.stdout[-200:])
 
+    # Живая формулировка отказа, стоившая суток молчания 2026-09-02:
+    # предлагающий получил «You've hit your session limit · resets
+    # 10:20pm (UTC)», выражение её не узнало, и ОЖИДАНИЕ было записано
+    # ПОЛОМКОЙ — роль сожгла попытку из суточных трёх, момент повтора
+    # не записался никуда, и круг не поднял её сам, хотя лимит
+    # снимался через два часа. Слова аккаунта проверяются дословно.
+    r, used, rows = run("You've hit your session limit \u00b7 resets "
+                        "10:20pm (UTC)", both=True)
+    st = [x["status"] for x in rows]
+    check("лимит сессии — ожидание, а не поломка",
+          RL.LIMIT in st and "fail" not in st, str(st))
+    lim = [x for x in rows if x["status"] == RL.LIMIT]
+    check("названный час снятия доехал до строки ожидания",
+          bool(lim) and "часы UTC" in (lim[-1].get("note") or ""),
+          str(lim[-1].get("note") if lim else None))
+
     # Вторая причина отката — CLI НЕ ЗНАЕТ объявленной модели. Это
     # отказ постоянный: завтра он повторится дословно, и роль не
     # отработает никогда. Найдено на живом сервере — `scout` и
@@ -1801,6 +1817,26 @@ def test_limit_reset_time_is_read_not_guessed():
     at, src = RL.limit_retry_at("rate limit; retry-after: 120", now)
     check("retry-after прочитан", at == now + 120
           and "retry-after" in src, f"{at} / {src}")
+    # Человеческая форма момента снятия. Живой отказ 2026-09-02
+    # называл его словами, а мы брали объявленный запас — то есть
+    # теряли знание, которое нам дали, и будили роль не тогда.
+    day = time.strftime("%Y-%m-%d", time.gmtime(now))
+    at, src = RL.limit_retry_at(
+        "You've hit your session limit \u00b7 resets 10:20pm (UTC)", now)
+    check("названный час UTC прочитан",
+          time.strftime("%H:%M", time.gmtime(at)) == "22:20"
+          and "часы UTC" in src, f"{at} / {src}")
+    check("названный час впереди, а не позади", at > now, f"{at} {now}")
+    # Суточные часы без am/pm — та же дорога.
+    at, src = RL.limit_retry_at("limit; resets 07:05 (UTC)", now)
+    check("суточная форма часа прочитана",
+          time.strftime("%H:%M", time.gmtime(at)) == "07:05"
+          and "часы UTC" in src, f"{at} / {src} / {day}")
+    # Час НЕ в UTC не берётся вовсе: приняв чужие часы за наши, мы
+    # отправили бы роль ждать на часы мимо — хуже честного запаса.
+    at, src = RL.limit_retry_at("limit; resets 10:20pm (PST)", now)
+    check("час без UTC за срок не принимается",
+          "запас" in src, f"{at} / {src}")
     at, src = RL.limit_retry_at("usage limit reached, try later", now)
     check("без срока берётся объявленный запас",
           at == now + RL.LIMIT_BACKOFF_SEC and "запас" in src,

@@ -22,6 +22,7 @@
 есть выдумка, пойманная без читателя.
 """
 
+import calendar
 import json
 import os
 import re
@@ -93,6 +94,33 @@ def limit_retry_at(text, now=None):
         v = float(m.group(1))
         if now < v < now + 30 * 86400:
             return v, "момент снятия назван ответом"
+    # Человеческая форма: «resets 10:20pm (UTC)». Найдена живым
+    # отказом 2026-09-02 — момент снятия был НАЗВАН, а мы брали
+    # объявленный запас, то есть теряли знание, которое нам дали.
+    #
+    # Часовой пояс обязан быть назван UTC: приняв чужие часы за наши,
+    # мы отправили бы роль ждать не туда — на часы вперёд или назад, —
+    # и это было бы хуже честного запаса.
+    m = re.search(r"resets?\s+(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?"
+                  r"[^\n]{0,24}\bUTC\b|resets?\s+(\d{1,2}):(\d{2})"
+                  r"[^\n]{0,24}\bUTC\b", t, re.I)
+    if m:
+        if m.group(1) is not None:
+            hh, mm = int(m.group(1)), int(m.group(2) or 0)
+            ampm = (m.group(3) or "").lower()
+            if ampm == "p" and hh != 12:
+                hh += 12
+            elif ampm == "a" and hh == 12:
+                hh = 0
+        else:
+            hh, mm = int(m.group(4)), int(m.group(5))
+        if 0 <= hh < 24 and 0 <= mm < 60:
+            day = time.gmtime(now)
+            v = calendar.timegm((day.tm_year, day.tm_mon, day.tm_mday,
+                                 hh, mm, 0, 0, 0, 0))
+            if v <= now:
+                v += 86400.0
+            return v, "момент снятия назван ответом (часы UTC)"
     m = re.search(r"retry[- ]after\D{0,10}(\d{1,6})", t, re.I)
     if m:
         v = now + float(m.group(1))

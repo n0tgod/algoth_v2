@@ -245,7 +245,12 @@ call_model() {                                # модель → код возв
 # ошибки — прогон падает громко, и его причина лежит в логе, а не
 # тратит вторую модель на беду, которая повторится.
 limit_hit() {
-    grep -Eiq 'usage limit|rate.?limit|limit reached|out of (usage|credit)|quota|лимит|429|overloaded|capacity' "$TMP"
+    # «session limit» добавлен по живому отказу 2026-09-02: CLI сказал
+    # «You've hit your session limit · resets 10:20pm (UTC)», выражение
+    # его не узнало, и ОЖИДАНИЕ было записано ПОЛОМКОЙ — роль сожгла
+    # попытку из суточных трёх, момент повтора не записался никуда, и
+    # круг не поднял её сам, хотя лимит снимался через два часа.
+    grep -Eiq 'usage limit|rate.?limit|session limit|limit reached|hit your [a-z ]*limit|out of (usage|credit)|quota|лимит|429|overloaded|capacity' "$TMP"
 }
 
 # Отказ ИМЕННО модели, а не задания: CLI её не знает или не берёт.
