@@ -8508,20 +8508,21 @@ body{margin:0;background:
 .chip.ctl{border-color:var(--rule);color:var(--muted)}
 .chip.out{border-color:var(--ask);color:var(--ask)}
 .chip.on{border-color:var(--bid);color:var(--bid)}
-/* Стратегии идут СПИСКОМ БЛОКОВ, а не деревом (просьба
-   владельца): у корня механика, под ней карточки с главными числами,
-   и каждая открывается своей страницей. Соединительных линий нет
-   намеренно — они рисовали родство там, где его нет: книги под одной
-   механикой не потомки друг друга, а параллельные испытания. */
-.grid{display:grid;gap:10px;margin:10px 0 0;
- grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
-.branch{border:1px solid var(--rule-soft);border-radius:12px;
- padding:10px 12px;background:var(--panel);cursor:pointer;
- transition:border-color .12s,transform .12s}
-.branch:hover{border-color:var(--accent);transform:translateY(-1px)}
-.branch.out{opacity:.62}
-.open{font-size:11.5px;color:var(--accent);text-decoration:none;
- white-space:nowrap}
+/* Стратегии идут ТАБЛИЦЕЙ, а не карточками (просьба владельца:
+   «стратегии просто списком в виде таблицы, описание стратегий на
+   странице стратегии, тут так много текста не нужно»). Список
+   отвечает на один вопрос — какие испытания идут и как они стоят по
+   числам; всё, что требует абзаца (правило словами, довод
+   объявления, причина отсутствия книги), живёт на странице
+   стратегии. Соединительных линий дерева нет намеренно: книги под
+   одной механикой не потомки друг друга, а параллельные испытания. */
+tr.row{cursor:pointer}
+tr.row:hover td{background:rgba(151,71,255,.07)}
+tr.row.out{opacity:.62}
+td.key{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-weight:600}
+td.key a{color:var(--ink);text-decoration:none}
+tr.row:hover td.key a{color:var(--accent)}
 .bhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .tolink{font-size:12px;color:#2f6feb;text-decoration:none;white-space:nowrap}
 .bkey{font-weight:700;font-size:12.5px;font-family:ui-monospace,
@@ -8579,33 +8580,22 @@ const UI = {
   retired: {en: "retired", ru: "вылетело"},
   effn: {en: "effective N", ru: "эффективное N"},
   space: {en: "space declared", ru: "пространство"},
-  live: {en: "live book, $", ru: "живая книга, $"},
-  lclosed: {en: "closed live", ru: "закрыто вживую"},
-  nobook: {en: "no live book yet", ru: "живой книги ещё нет"},
-  totrades: {en: "live trades \u2192", ru: "сделки живой книги \u2192"},
-  fwd: {en: "replay forward, bp", ru: "реплей вперёд, б.п."},
-  pre: {en: "backtest (replay of the past), bp",
-        ru: "бэктест (реплей прошлого), б.п."},
+  hkey: {en: "strategy", ru: "стратегия"},
+  hlane: {en: "lane", ru: "полоса"},
+  live: {en: "live, $", ru: "живая, $"},
+  lclosed: {en: "closed", ru: "закрыто"},
+  nobook: {en: "no live book", ru: "живой книги нет"},
+  fwd: {en: "forward, bp", ru: "форвард, б.п."},
+  pre: {en: "backtest, bp", ru: "бэктест, б.п."},
   trades: {en: "trades", ru: "сделок"},
-  days: {en: "days forward", ru: "суток вперёд"},
+  days: {en: "days", ru: "суток"},
   sel: {en: "selected", ru: "отобран"},
   ctl: {en: "control", ru: "случайный"},
   out: {en: "retired", ru: "вылетел"},
-  on: {en: "alive", ru: "жив"},
-  openone: {en: "open the strategy \u2192",
-            ru: "открыть стратегию \u2192"},
   none: {en: "nothing declared yet — the system has not passed a "
              + "candidate through the ceiling",
          ru: "не объявлено ничего — система ещё не провела ни одного "
-             + "кандидата через потолок"},
-  tsym: {en: "name", ru: "имя"},
-  tside: {en: "side", ru: "сторона"},
-  tnet: {en: "net", ru: "нетто"},
-  twhy: {en: "exit", ru: "выход"},
-  tat: {en: "entered", ru: "вход"},
-  tarm: {en: "arm", ru: "рука"},
-  tail: {en: "last trades of the paper book",
-         ru: "последние сделки бумажной книги"}};
+             + "кандидата через потолок"}};
 
 function T(k){ const v = UI[k]; return v ? (v[LANG] || v.en) : k; }
 function esc(s){ return String(s == null ? "" : s)
@@ -8701,45 +8691,36 @@ function frameHtml(d){
     part.</p>`;
 }
 
-function branchHtml(b){
+// Строка списка: только числа и пометки. Прозу — правило словами,
+// довод объявления, причину отсутствия живой книги — печатает
+// страница стратегии; здесь она стояла бы стеной текста и прятала то,
+// ради чего список и открывают: как испытания стоят друг против
+// друга. Причина при этом не теряется: она едет подсказкой на самом
+// прочерке, а полностью читается на странице стратегии.
+function rowHtml(b){
   const lane = b.lane === "selected" ? "sel" : "ctl";
-  const nums = b.no_numbers
-    ? `<div class="note">&mdash; ${esc(b.no_numbers)}</div>`
-    : `<div class="nums">
-        <div class="f"><span class="lab">${T("live")}</span>
-          ${b.live == null
-            ? `<span class="dim" title="${esc(b.live_why
-                 || T("nobook"))}">&mdash;</span>`
-            : (b.live.pnl == null
-               ? `<span class="dim">&mdash;</span>`
-               : `<span class="${sgn(b.live.pnl)}"
-                    >${b.live.pnl > 0 ? "+" : ""}${
-                      Number(b.live.pnl).toFixed(2)}</span>`)}</div>
-        <div class="f"><span class="lab">${T("lclosed")}</span>
-          ${b.live == null ? "&mdash;" : b.live.closed}</div>
-        <div class="f"><span class="lab">${T("fwd")}</span>
-          <span class="${sgn(b.fwd)}">${bp(b.fwd)}</span></div>
-        <div class="f"><span class="lab">${T("days")}</span>
-          ${b.fwd_days == null ? "&mdash;" : b.fwd_days}</div>
-        <div class="f"><span class="lab">${T("trades")}</span>
-          ${b.trades == null ? "&mdash;" : b.trades}</div>
-        <div class="f"><span class="lab">${T("pre")}</span>
-          <span class="dim">${bp(b.pre)}</span></div>
-      </div>`;
-  return `<div class="branch${b.alive ? "" : " out"}"
+  const money = b.live == null || b.live.pnl == null
+    ? `<span class="dim" title="${esc(b.live_why || T("nobook"))}"
+        >&mdash;</span>`
+    : `<span class="${sgn(b.live.pnl)}">${b.live.pnl > 0 ? "+" : ""}${
+        Number(b.live.pnl).toFixed(2)}</span>`;
+  const num = (v, cls) => v == null
+    ? `<span class="dim" title="${esc(b.no_numbers || "")}">&mdash;</span>`
+    : `<span class="${cls || ""}">${v}</span>`;
+  return `<tr class="row${b.alive ? "" : " out"}"
       data-open="${esc(b.key)}">
-    <div class="bhead"><span class="bkey">${esc(b.key)}</span>
-      <span style="flex:1"></span>
-      <span class="chip ${lane}">${T(lane)}</span>
-      <span class="chip ${b.alive ? "on" : "out"}"
-        >${b.alive ? T("on") : T("out")}</span></div>
-    <div class="plain">${esc(b.plain)}</div>
-    ${b.live_why
-      ? `<div class="note">${esc(b.live_why)}</div>` : ""}
-    ${b.why ? `<div class="note">${esc(b.why)}</div>` : ""}
-    ${nums}
-    <div class="note"><a class="open" href="${stratHref(b.key)}"
-      >${T("openone")}</a></div></div>`;
+    <td class="key"><a href="${stratHref(b.key)}">${esc(b.key)}</a></td>
+    <td><span class="chip ${lane}">${T(lane)}</span>${b.alive ? ""
+      : ` <span class="chip out">${T("out")}</span>`}</td>
+    <td class="num mono">${money}</td>
+    <td class="num mono">${b.live == null
+      ? `<span class="dim">&mdash;</span>` : b.live.closed}</td>
+    <td class="num mono">${num(b.fwd == null ? null : bp(b.fwd),
+      sgn(b.fwd))}</td>
+    <td class="num mono">${num(b.fwd_days)}</td>
+    <td class="num mono">${num(b.trades)}</td>
+    <td class="num mono dim">${num(b.pre == null ? null : bp(b.pre))}</td>
+    </tr>`;
 }
 
 // Адрес страницы стратегии живёт ОДНОЙ функцией: карточка кликается
@@ -8793,11 +8774,17 @@ function render(){
         + `the numbers are stale`) + `</div>`;
   document.getElementById("alarm").innerHTML = al;
   const roots = d.roots || [];
+  const th = `<tr><th>${T("hkey")}</th><th>${T("hlane")}</th>
+    <th class="num">${T("live")}</th><th class="num">${T("lclosed")}</th>
+    <th class="num">${T("fwd")}</th><th class="num">${T("days")}</th>
+    <th class="num">${T("trades")}</th>
+    <th class="num">${T("pre")}</th></tr>`;
   document.getElementById("tree").innerHTML = roots.length
     ? roots.map(r => `<div class="root">
         <div class="rhead"><span class="rname">${esc(r.title)}</span>
           <span class="chip">${r.alive}/${r.n}</span></div>
-        <div class="grid">${r.branches.map(branchHtml).join("")}</div>
+        <div class="scroll"><table>${th}
+          ${r.branches.map(rowHtml).join("")}</table></div>
         </div>`).join("")
     : `<div class="note">${T("none")}</div>`;
   document.getElementById("tree").querySelectorAll("[data-open]")
