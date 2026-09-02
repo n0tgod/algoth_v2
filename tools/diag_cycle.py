@@ -102,6 +102,23 @@ def main(argv=None):
                 note = r.get("note") or r.get("why") or ""
                 print(f"  {t} {ev} {r.get('sym') or ''} "
                       f"{str(note)[:120]}")
+    # Состав книг, которые ведёт СКАНЕР: он объявлен листом сечения, и
+    # книга, не попавшая в этот список, не возьмёт ни одного входа —
+    # каталог и манифест у неё при этом будут, то есть снаружи она
+    # выглядит заведённой.
+    if "--sheet" in (argv or []):
+        print("\n=== книги в листе сечения ===")
+        sp = os.path.join(OUT, "model_sit", "scan_sheet.json")
+        try:
+            with open(sp, encoding="utf-8") as f:
+                sh = json.load(f)
+        except (OSError, ValueError) as e:
+            print(f"листа нет или он не читается: {e}")
+        else:
+            print(f"час {sh.get('hour')}, возраст "
+                  f"{age(sp) / 60:.1f} мин")
+            for b in sh.get("books") or []:
+                print("  " + json.dumps(b, ensure_ascii=False))
     print("\n=== хвост train.log ===")
     lp = os.path.join(OUT, "train.log")
     if not os.path.exists(lp):
