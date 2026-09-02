@@ -67,6 +67,22 @@ def main(argv=None):
     live = [x for x in r.stdout.splitlines() if x.strip()]
     print("=== процесс цикла ===")
     print("\n".join(live) if live else "НЕ НАЙДЕН — цикл не работает")
+    # Сборщик держит сканер ситуационных книг ПОТОКОМ, то есть его
+    # код обновляется только перезапуском. «Правка задеплоена» и
+    # «правка работает» — разные утверждения, и различает их момент
+    # запуска процесса против момента правки файла.
+    r2 = subprocess.run(["pgrep", "-af", "b1_book/collect.py"],
+                        capture_output=True, text=True)
+    print("\n=== процесс сборщика ===")
+    for ln in r2.stdout.splitlines():
+        pid = ln.split(None, 1)[0]
+        st = subprocess.run(["ps", "-o", "lstart=", "-p", pid],
+                            capture_output=True, text=True)
+        print(f"  {ln[:90]}\n    поднят: {st.stdout.strip()}")
+    cp = os.path.join(ROOT, "research", "b1_book", "collect.py")
+    a = age(cp)
+    print(f"  collect.py правлен {a / 60:.1f} мин назад"
+          if a is not None else "  collect.py не найден")
     print("\n=== манифест модели ===")
     mp = os.path.join(OUT, "model", "manifest.json")
     a = age(mp)
