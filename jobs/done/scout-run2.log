@@ -27,3 +27,19 @@
 **О прошлом прогоне.** Сегодняшнее раннее меню (потолок funding, ADL, марка против последней цены) машина записала в журнал и через 23 секунды отвергла как повтор самого себя; дефект уже закрыт в `runlog.py`. Те заголовки теперь заняты журналом, поэтому подать их заново нельзя, а полный текст перезаписан этим прогоном и остался в истории git. Идеи были не плохи — их отвергла арифметика проверки, не содержание; если они нужны предлагающему, их стоит достать из git.
 КОНТРАКТ: выполнен
 прогон роли scout завершён
+публикуется в ветку main:
+ jobs/done/scout-run.log                |  11 +
+ jobs/done/scout-run2.done              |   1 +
+ jobs/done/scout-run2.log               |  29 +++
+ jobs/poke.log                          |   3 +
+ research/factory/out/agents-runs.jsonl |   3 +
+ research/factory/out/scout.json        |  67 ++---
+ research/factory/out/scout.jsonl       |   4 +
+ research/factory/out/scout.md          | 444 +++++++++++++++++----------------
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 9 files changed, 322 insertions(+), 242 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   f0aa76d..93c2eba  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-02T18:20:22Z, код 0
