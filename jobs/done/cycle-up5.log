@@ -32,3 +32,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-02T13:44:36Z
+публикуется в ветку main:
+ jobs/done/cycle-up5.log     | 34 ++++++++++++++++++++++++++++++++++
+ jobs/done/deploy-strat2.log | 10 ++++++++++
+ jobs/poke.log               |  2 ++
+ 3 files changed, 46 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   c6b1b44..966f312  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
