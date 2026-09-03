@@ -1,0 +1,25 @@
+{
+ "asof": "2026-09-03T23:01:38Z",
+ "source": "bybit /v5/market/instruments-info category=option",
+ "method": "list",
+ "probed": 0,
+ "rows": 770,
+ "base_coins": [
+  "BTC"
+ ],
+ "by_coin": {
+  "BTC": {
+   "contracts": 770,
+   "first_ms": 1788508800000,
+   "last_ms": 1813910400000,
+   "first": "2026-09-04",
+   "last": "2027-06-25"
+  }
+ },
+ "universe_crypto": 813,
+ "universe_covered": [
+  "BTCUSDT"
+ ],
+ "probe_errors": [],
+ "secs": 0.8
+}
