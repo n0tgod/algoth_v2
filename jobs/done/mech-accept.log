@@ -1,0 +1,6 @@
+== задание mech-accept ==
+строка: run research/factory/mech_queue.py --accept 5d30427d --dir research/probe_fshift
+начало: 2026-09-03T08:16:26Z
+запускаю: .venv/bin/python research/factory/mech_queue.py --accept 5d30427d --dir research/probe_fshift
+механика 5d30427d принята: Смена интервала начисления funding как датированное событие 
+конец: 2026-09-03T08:16:26Z, код 0

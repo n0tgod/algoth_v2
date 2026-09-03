@@ -9,3 +9,19 @@
            задание положено
 задание fcbd3542 переписано: каталог механики research/mech_fcbd3542/
 конец: 2026-09-03T08:14:23Z, код 0
+публикуется в ветку main:
+ jobs/done/pull-mechdir.done             |  1 +
+ jobs/done/pull-mechdir.log              | 11 +++++++++++
+ jobs/done/task-rewrite.done             |  1 +
+ jobs/done/task-rewrite.log              | 11 +++++++++++
+ jobs/poke.log                           |  4 ++++
+ research/factory/out/build_task-prev.md | 30 +++++++++++++++---------------
+ research/factory/out/build_task.md      | 11 ++++++++---
+ research/factory/out/mech_task.json     |  2 +-
+ research/factory/out/mechanisms.jsonl   |  1 +
+ research/s8_loop/out/day_brake.json     |  2 +-
+ 10 files changed, 54 insertions(+), 20 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3edd81a..30ff71d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
