@@ -4,3 +4,15 @@
 запускаю: .venv/bin/python research/factory/asks.py --done 7c92ec21
 закрыта: 7c92ec21
 конец: 2026-09-03T08:23:41Z, код 0
+публикуется в ветку main:
+ jobs/done/ask-done.done             |  1 +
+ jobs/done/ask-done.log              |  6 ++++++
+ jobs/done/mech-accept.log           | 12 ++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/factory/out/asks.jsonl     |  1 +
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 24 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   04afa4e..dc6c255  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
