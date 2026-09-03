@@ -33,3 +33,14 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-03T07:56:54Z
+публикуется в ветку main:
+ jobs/done/fshift-controls.log          | 11 +++++++++++
+ jobs/done/pull-mechdir.log             | 35 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log                          |  2 ++
+ research/factory/out/agents-runs.jsonl |  2 ++
+ research/factory/out/mech_task.json    |  2 +-
+ 5 files changed, 51 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   116f55f..5c7728f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

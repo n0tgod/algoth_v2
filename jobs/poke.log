@@ -589,3 +589,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-09-03T07:54:54Z] задание fshift-controls запущено: research/probe_fshift/controls_check.py
 
 == сигнал 1788422213 ==
+[2026-09-03T07:56:56Z] задание pull-mechdir: состояние снято
+
+== сигнал 1788423262 ==
+[2026-09-03T08:14:23Z] задание task-rewrite запущено: research/factory/mech_queue.py
