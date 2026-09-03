@@ -1,0 +1,55 @@
+{
+ "positions": 400,
+ "skipped": 0,
+ "no_add": 259,
+ "secs": 344.9,
+ "avg_depth": 1.13,
+ "median_lev": 1.0,
+ "max_lev": 9.7,
+ "params": {
+  "BACK_H": 24,
+  "HOLD_H": 72,
+  "N_RUNGS": 4,
+  "MIN_ADD_GAP": 0.015,
+  "SURVIVE_MULT": 2.0,
+  "FLOOR_FRAC": 0.1
+ },
+ "arms": {
+  "B": {
+   "liq_freq": 0.0,
+   "ruin_freq": 0.0,
+   "median": 0.0079,
+   "mean": 0.0042,
+   "green": 0.735,
+   "worst": -0.105,
+   "bite": 10.9,
+   "curve_dd": 0.0
+  },
+  "H": {
+   "liq_freq": 0.0,
+   "ruin_freq": 0.0,
+   "median": 0.0083,
+   "mean": 0.003,
+   "green": 0.735,
+   "worst": -0.69,
+   "bite": 62.9,
+   "curve_dd": 0.0
+  },
+  "S": {
+   "liq_freq": 0.0,
+   "ruin_freq": 0.0,
+   "median": 0.0027,
+   "mean": -0.0022,
+   "green": 0.915,
+   "worst": -0.793,
+   "bite": 261.5,
+   "curve_dd": 0.0
+  }
+ },
+ "paired": {
+  "S_minus_B_median": -0.0053,
+  "S_beats_B_frac": 0.237,
+  "S_minus_H_median": -0.0066,
+  "S_beats_H_frac": 0.228
+ }
+}
