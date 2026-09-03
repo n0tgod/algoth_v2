@@ -1,0 +1,4 @@
+== задание mech-code ==
+строка: run tools/publish_mech_code.py --id 5d30427d --dir research/probe_fshift
+начало: 2026-09-03T07:54:07Z
+запускаю: .venv/bin/python tools/publish_mech_code.py --id 5d30427d --dir research/probe_fshift
