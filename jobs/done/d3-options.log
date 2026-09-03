@@ -21,3 +21,21 @@
 
 То есть **пут под нашу книгу купить не на что**: опционы живут на мажорах, а книга торгует альтами. Пут на мажор есть снова РЫНОЧНЫЙ хедж, а замер (б) уже показал, что рынок нашему хвосту не отвечает — хвост идиосинкратический, альт валится сам, рынок при этом часто растёт. Значит выпуклый путь закрыт не ценой премии, а отсутствием инструмента.
 
+публикуется в ветку main:
+ jobs/done/d2-shortbook.log                      |  7 +++++++
+ jobs/done/d3-fence.done                         |  1 +
+ jobs/done/d3-fence.log                          |  4 ++++
+ jobs/done/d3-options.done                       |  1 +
+ jobs/done/d3-options.log                        | 23 +++++++++++++++++++++++
+ jobs/poke.log                                   |  4 ++++
+ research/a1_universe/out/D3-options.md          | 18 ++++++++++++++++++
+ research/a1_universe/out/options_inventory.json | 25 +++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json             |  2 +-
+ 9 files changed, 84 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   65a8afb..e0d9fbc  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+крипто-символов универсума 813
+общий список опционов принят: строк 770
+конец: 2026-09-03T23:01:40Z, код 0
