@@ -25,3 +25,14 @@
 
 итог: 19 из 19 кусаются
 конец: 2026-09-03T07:55:00Z, код 0
+публикуется в ветку main:
+ jobs/done/fshift-controls.done      |  1 +
+ jobs/done/fshift-controls.log       | 27 +++++++++++++++++++++++++++
+ jobs/done/mech-code.log             |  8 ++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 40 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e8d6741..a5c983b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
