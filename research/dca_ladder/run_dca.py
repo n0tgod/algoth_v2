@@ -90,7 +90,12 @@ def universe(smoke):
         if s:
             syms.append(s)
     syms = sorted(set(syms))
-    return syms[:40] if smoke else syms
+    # Смоук берёт широкий срез намеренно: хранилище A2 — по символам Binance,
+    # а универсум предпочитает bybit_symbol, поэтому доля имён с рядом в A2
+    # ниже единицы (первый прогон: 14 из 40). Узкий срез не набирает
+    # MIN_SECTION, и ладдерный путь не исполняется вовсе — смоук обязан быть
+    # шире порога сечения, а не «первые сорок».
+    return syms[:160] if smoke else syms
 
 
 def read_name(con, sym, t0, t1, step, interval):
