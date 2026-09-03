@@ -82,6 +82,39 @@ def test_run_falls_back_to_probe():
           f"{s['base_coins']}, крипто-универсум {s['universe_crypto']}")
 
 
+def test_general_list_narrowing_is_named():
+    """Общий список без `baseCoin` подставляет умолчание — это НАЗЫВАЕТСЯ.
+
+    Живой отказ 2026-09-03: запрос без базового актива вернул 770 строк
+    ровно по BTC, и прогон объявил «базовый актив с опционами один». Ответ
+    выглядел исправным и был неверен. Опрос теперь идёт всегда, а сужение
+    печатается числом — иначе следующий читатель поверит той же строке.
+    """
+    orig = B.list_options
+
+    def stub(base_coin=None, pages=20):
+        if base_coin is None:                       # умолчание площадки
+            return True, [{"baseCoin": "BTC", "status": "Trading",
+                           "deliveryTime": "1767139200000"}], ""
+        if base_coin in ("BTC", "ETH"):
+            return True, [{"baseCoin": base_coin, "status": "Trading",
+                           "deliveryTime": "1767139200000"}], ""
+        return True, [], ""
+    B.list_options = stub
+    try:
+        s = B.run(smoke=True, log=lambda *a: None)
+    finally:
+        B.list_options = orig
+    assert s["list_coins"] == ["BTC"], s["list_coins"]
+    assert s["narrowed"] == ["ETH"], s["narrowed"]
+    assert s["method"] == "list+probe", s["method"]
+    assert set(s["base_coins"]) == {"BTC", "ETH"}, s["base_coins"]
+    r = B.report(s)
+    assert "сузил ответ молча" in r, r[:900]
+    print(f"ok  сужение общего списка названо: список {s['list_coins']}, "
+          f"опрос нашёл ещё {s['narrowed']}")
+
+
 def test_report_names_absence():
     s = {"asof": "x", "method": "probe", "probed": 5, "rows": 0, "secs": 1.0,
          "base_coins": [], "by_coin": {}, "universe_crypto": 600,
@@ -155,13 +188,44 @@ def _control_api_raises():
         B.api_get = orig
 
 
+def _control_trusts_general_list():
+    """Доверяя общему списку (опрос только при его отказе), мы повторили бы
+    живой отказ: «базовый актив ровно один» — проверка сужения обязана
+    упасть."""
+    orig = B.run
+
+    def trusting(smoke=False, log=print):
+        inst = B.load_instruments()
+        uni = B.universe_bases(inst)
+        ok, rows, _m = B.list_options(None)
+        if not (ok and rows):
+            rows = []
+        by = B.summarize(rows)
+        coins = sorted(by)
+        return {"asof": "x", "source": "s", "method": "list", "probed": 0,
+                "rows": len(rows), "list_coins": coins, "narrowed": [],
+                "base_coins": coins, "by_coin": by,
+                "universe_crypto": len(uni), "universe_covered": [],
+                "probe_errors": [], "secs": 0.0}
+    B.run = trusting
+    try:
+        try:
+            test_general_list_narrowing_is_named()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        B.run = orig
+
+
 TESTS = [test_summarize_only_trading, test_alias_set,
          test_api_get_refusal_is_data, test_run_falls_back_to_probe,
-         test_report_names_absence]
+         test_general_list_narrowing_is_named, test_report_names_absence]
 
 CONTROLS = [("снятые контракты считаются живыми", _control_count_closed),
             ("алиас без снятия множителя", _control_alias_no_strip),
-            ("отказ эндпоинта исключением", _control_api_raises)]
+            ("отказ эндпоинта исключением", _control_api_raises),
+            ("доверие общему списку эндпоинта", _control_trusts_general_list)]
 
 
 def main():

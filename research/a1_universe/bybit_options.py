@@ -22,11 +22,19 @@
 всякой калибровки — тем же приёмом «сначала самая дешёвая оценка,
 способная убить направление», что потолок рычагов S1.
 
-Порядок обхода. Сперва один запрос без `baseCoin` — если площадка отдаёт
-общий список, обхода не нужно вовсе. Отказ (эндпоинт требует базовый
-актив) — переходим к поимённому опросу базовых активов НАШЕГО универсума:
-так покрытие считается по тем именам, которыми мы торгуем, а не по
-рекламному списку площадки.
+Порядок обхода — и почему он такой. Первый прогон (2026-09-03) сделал
+один запрос без `baseCoin`, получил 770 строк и объявил: базовый актив с
+опционами РОВНО ОДИН, BTC. Ответ выглядел исправным и был неверен:
+эндпоинт без `baseCoin` подставляет умолчание, то есть отвечает на другой
+вопрос, чем задан. Тот же класс, что «справочник собирался только по
+торгуемым сейчас» (A1) и «покрытие меряет присутствие, а не плотность»
+(Z2) — сужение молчит, а число печатается.
+
+Поэтому поимённый опрос базовых активов НАШЕГО универсума идёт ВСЕГДА, а
+общий список служит лишь дополнением; если общий отдал строго меньше
+активов, чем опрос, это НАЗЫВАЕТСЯ в отчёте, а не сглаживается. Покрытие
+и так надо считать по тем именам, которыми мы торгуем, а не по рекламному
+списку площадки.
 
 Оговорка, названная до прогона: наличие контракта не есть исполнимость.
 Опцион на тонкий альт может существовать и не иметь ни спроса, ни
@@ -35,8 +43,8 @@
 
 Запуск:
 
-    python3 bybit_options.py            # общий список плюс наш универсум
-    python3 bybit_options.py --smoke    # только мажоры, без обхода
+    python3 bybit_options.py            # опрос по всему нашему универсуму
+    python3 bybit_options.py --smoke    # опрос только по мажорам
 
 Публикует отчёт сам; `--no-publish` выключает. Только stdlib.
 """
@@ -66,7 +74,7 @@ STORE = os.path.join(OUT, "options_inventory.json")
 UNIVERSE = os.path.join(OUT, "universe.json")
 INSTRUMENTS = os.path.join(OUT, "instruments.json")
 MAJORS = ["BTC", "ETH", "SOL", "XRP", "BNB", "DOGE"]
-WORKERS = 4
+WORKERS = 3
 
 
 def api_get(path, params, day=None):
@@ -199,47 +207,51 @@ def run(smoke=False, log=print):
     uni = universe_bases(inst)
     log(f"крипто-символов универсума {len(uni)}")
 
-    # 1) один запрос без базового актива — если площадка отдаёт всё сразу
+    # 1) общий список без базового актива — ДОПОЛНЕНИЕ, а не источник
     ok, rows, msg = list_options(None)
-    method, probed, probe_errors = "list", 0, []
     if ok and rows:
-        log(f"общий список опционов принят: строк {len(rows)}")
+        log(f"общий список принят: строк {len(rows)}")
     else:
-        log(f"общий список не отдан ({msg or 'пусто'}) — опрашиваю базовые "
-            f"активы поимённо")
-        method, rows = "probe", []
-        cands = list(dict.fromkeys(
-            MAJORS if smoke
-            else MAJORS + sorted({a for b in uni.values()
-                                  for a in alias_set(b)})))
-        log(f"кандидатов {len(cands)}")
-        said = time.time()
-        done = 0
+        log(f"общий список не отдан ({msg or 'пусто'})")
+        rows = []
+    list_coins = sorted(summarize(rows))
 
-        def one(b):
-            o, rr, m = list_options(b, pages=5)
-            return b, o, rr, m
+    # 2) поимённый опрос НАШИХ базовых активов — он и отвечает на вопрос
+    probed, probe_errors = 0, []
+    cands = list(dict.fromkeys(
+        MAJORS if smoke
+        else MAJORS + sorted({a for b in uni.values() for a in alias_set(b)})))
+    log(f"опрашиваю базовые активы поимённо: кандидатов {len(cands)}")
+    said, done = time.time(), 0
 
-        with ThreadPoolExecutor(max_workers=WORKERS) as ex:
-            for b, o, rr, m in ex.map(one, cands):
-                done += 1
-                probed += 1
-                if o:
-                    rows.extend(rr)
-                elif m and "retCode" not in m:
-                    probe_errors.append({"base": b, "msg": m})
-                if time.time() - said > 30:
-                    log(f"  опрошено {done}/{len(cands)}, контрактов "
-                        f"{len(rows)}")
-                    said = time.time()
+    def one(b):
+        o, rr, m = list_options(b, pages=5)
+        return b, o, rr, m
+
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        for b, o, rr, m in ex.map(one, cands):
+            done += 1
+            probed += 1
+            if o:
+                rows.extend(rr)
+            elif m and "retCode" not in m:
+                probe_errors.append({"base": b, "msg": m})
+            if time.time() - said > 30:
+                log(f"  опрошено {done}/{len(cands)}, строк {len(rows)}")
+                said = time.time()
 
     by = summarize(rows)
+    # общий список, отдавший СТРОГО меньше активов, чем опрос, — это
+    # подставленное умолчание, а не пустая площадка; называем числом
+    narrowed = sorted(set(by) - set(list_coins)) if list_coins else []
+    method = "list+probe" if list_coins else "probe"
     coins = sorted(by)
     cover = sorted({s for s, b in uni.items() if alias_set(b) & set(coins)})
     out = {
         "asof": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "source": "bybit /v5/market/instruments-info category=option",
         "method": method, "probed": probed, "rows": len(rows),
+        "list_coins": list_coins, "narrowed": narrowed,
         "base_coins": coins, "by_coin": by,
         "universe_crypto": len(uni),
         "universe_covered": cover,
@@ -258,10 +270,18 @@ def report(s):
              "хвоста, который страховала), выпуклый — единственный, у "
              "которого такой арифметики нет. Наличие контракта не есть "
              "исполнимость: ёмкость и премию этот прогон не меряет.\n")
-    P.append(f"Снято {s['asof']}, способ обхода: "
-             f"{'общий список' if s['method'] == 'list' else 'поимённый опрос'}"
-             + (f" ({s['probed']} базовых активов)" if s["probed"] else "")
-             + f", строк {s['rows']}, прогон {s['secs']} с.\n")
+    P.append(f"Снято {s['asof']}, поимённый опрос базовых активов нашего "
+             f"универсума ({s['probed']} штук), строк {s['rows']}, прогон "
+             f"{s['secs']} с.\n")
+    if s.get("narrowed"):
+        P.append(f"> **Общий список эндпоинта сузил ответ молча.** Запрос без "
+                 f"`baseCoin` вернул активы {s.get('list_coins')}, а "
+                 f"поимённый опрос нашёл ещё {len(s['narrowed'])}: "
+                 f"{', '.join(s['narrowed'])}. То есть эндпоинт без базового "
+                 f"актива подставляет умолчание и отвечает на другой вопрос, "
+                 f"чем задан, — первый прогон на этом объявил «базовый актив "
+                 f"ровно один». Поэтому опрос идёт всегда, а общий список "
+                 f"служит дополнением.\n")
     coins = s["base_coins"]
     if not coins:
         P.append("**Опционов не найдено ни на один базовый актив.** Если "
