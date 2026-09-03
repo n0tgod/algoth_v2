@@ -257,7 +257,33 @@ def main(argv=None):
     ap.add_argument("--out", default=os.path.join(HERE, "out"))
     ap.add_argument("--next", action="store_true",
                     help="выдать строителю следующую механику")
+    # Ручная приёмка постройки, которую машина не приняла по причине,
+    # уже устранённой (03.09 — каталог механики вне `research/factory/`).
+    # Свободного текста нет намеренно: заметку составляет машина, иначе
+    # запись очереди стала бы чьим-то словом о себе.
+    ap.add_argument("--accept", metavar="ID",
+                    help="принять постройку механики оператором")
+    ap.add_argument("--dir", default="", help="каталог кода для --accept")
     a = ap.parse_args(argv)
+
+    if a.accept:
+        rows, _ = state(a.out)
+        rec = {r["id"]: r for r in rows}.get(a.accept)
+        if not rec:
+            print("механики %s в очереди нет" % a.accept)
+            return 1
+        d = (a.dir or "").strip().rstrip("/")
+        if not d or not d.startswith("research/") or ".." in d:
+            print("каталог кода не назван либо вне research/: %r" % d)
+            return 1
+        if not os.path.isdir(os.path.join(ROOT, d)):
+            print("каталога нет: %s" % d)
+            return 1
+        mark(a.out, "built", a.accept,
+             "принято оператором: %s (код в git, контроли проверены "
+             "отдельным прогоном)" % d)
+        print("механика %s принята: %s" % (a.accept, rec["title"][:60]))
+        return 0
 
     rows, broken = state(a.out)
     print("механик в очереди: %d, битых строк: %d" % (len(rows), broken))
