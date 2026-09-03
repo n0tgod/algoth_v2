@@ -1,0 +1,336 @@
+== задание d0-risk-limits ==
+строка: run research/a1_universe/bybit_risk_limit.py
+начало: 2026-09-03T14:53:15Z
+запускаю: .venv/bin/python research/a1_universe/bybit_risk_limit.py 
+собрано 0, осталось 949 из 949
+  ! 10000000AIDOGEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000000CHEEMSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000000PEIPEIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000000VINUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000COQUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000ELONUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000LADYSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000NFTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000QUBICUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000STARLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000WENUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 10000WHYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000APUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000BEERUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000CATSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000IQ50USDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000MUMUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1000XUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! 1CATUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! A2ZUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! A8USDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ACXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AERGOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AGIXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AGTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AI16ZUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AIAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AINUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AKROUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ALEOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ALPACAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ALPHAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ALUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AMBUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ANCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ANTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  100/949
+  ! ATAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AUDIOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AVAILUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! AVLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BADGERUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BAKEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BALUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BDXNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BENDOGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BILLYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BLUEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BLZUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BNXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BOBBOBUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BONDUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BSUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BSWUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BTTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BUSDUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! BUZZUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  200/949
+  ! CAMPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CANTOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CEEKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CELRUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CHESSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CLOUDUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! COCOSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! COMBOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! COMMONUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! COOKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! COSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! COVALUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CPOOLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CREAMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CTKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CTSIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! CUDISUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DAMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DAOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DARKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DARUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DATAOLD01USDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DEGENUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DENTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DGBUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DMCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DODOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DOGSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DOGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DOP1USDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! DUCKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  300/949
+  ! ELXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! EOSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! EPTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ESUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ETHWUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FBUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FDUSDUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FETUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FIOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FIREUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FISUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FITFIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FLMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FORTHUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FOXYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FRAGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FRONTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FTMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FTNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FTTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FUELUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FUNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FWOGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! FXSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GALUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GEMSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GFTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GIGAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GLMRUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GMEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GNOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GODSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GOMININGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GORKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GPTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GSTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GTCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! GUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! HFTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! HIFIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! HIGHUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! HIPPOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! HOOKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! HOTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! HPOS10IUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! IDEXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! IGUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! IPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! JAILSTOOLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! JOEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! JUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! KDAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! KEEPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! KEYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! KLAYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! KOMAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! KUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! L3USDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LAIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LAUNCHCOINUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LEVERUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LFTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LINAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LISTAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LOOKSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LOOMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LTOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! LUCEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  500/949
+  ! LUNAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MAJORUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MANEKIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MAPOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MASAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MATICUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MAXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MBLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MBOXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MDTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MEMEFIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MICHIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MILKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MKRUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MLNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MOBILEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MOTHERUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MULTIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MVLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MYRIAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! MYROUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NEIROETHUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NFPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NKNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NODEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NTRNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NULSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! NYANUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OBOLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OBTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OCEANUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OMGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OMNIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ONEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  600/949
+  ! ORBSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ORNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OSMOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! OXTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PENGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PERPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PHBUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PIGGYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PIRATEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PIXFIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PONKEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PRAIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PRCLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PRIMEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PROMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PROSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PUMPBTCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PUMPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PUNDUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! PYRUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! QIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! QUICKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RADUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RAYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RDNTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! REEFUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RENUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! REQUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! REXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RFCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RHEAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RIFSOLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RIFUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RLSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  700/949
+  ! RNDRUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ROAMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RONUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! RSS3USDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SAROSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SCAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SCRUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SDUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SENDUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SERAPHUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SFPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SILLYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SKATEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SKYAIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SLERFUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SLFUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SOLOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SOLVUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SPECUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SPELLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SRMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! STMXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! STPTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! STRAXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SUNDOGUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SWARMSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SWEATUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SWELLUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SXPUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SYNUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! SYSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TAIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TANSSIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TOKENUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TOMIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TOMOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TONUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TROYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TRUUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! TSTBSCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! UNFIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! UROUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! USTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! UXLINKUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VANRYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VFYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VGXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VICUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VIDTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VINEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VOXELUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VRAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VRUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! VTHOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! WHITEWHALEUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! WSMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! XCHUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! XEMUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! XIONUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! XNOUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! XRDUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! XTERUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! YALAUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! YFIIUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! YZYUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ZBCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ZCXUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ZENTUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ZEUSUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ZKFUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ZKJUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+  ! ZRCUSDT: /v5/market/risk-limit: retCode=10001 params error: symbol is closed or invalid
+
+# D0 — таблица maintenance margin Bybit
+
+Символов универсума: 949
+С тирами: 647  ·  пустой ответ (снят с торгов?): 0  ·  не собрано: 302
+
+## MMR базового тира — сколько символов на ставке
+
+| MMR базового тира | символов |
+|---|--:|
+| 0.0033 | 2 |
+| 0.0050 | 14 |
+| 0.0067 | 54 |
+| 0.0075 | 6 |
+| 0.0080 | 17 |
+| 0.0100 | 36 |
+| 0.0150 | 41 |
+| 0.0200 | 305 |
+| 0.0250 | 96 |
+| 0.0400 | 36 |
+| 0.0500 | 9 |
+| 0.1000 | 31 |
+конец: 2026-09-03T14:54:09Z, код 0

@@ -610,3 +610,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-09-03T09:30:10Z] задание propose-own2: роль propose
 
 == сигнал 1788435402 ==
+[2026-09-03T11:36:45Z] задание status-now: состояние снято
+
+== сигнал 1788447193 ==
+[2026-09-03T14:53:15Z] задание d0-risk-limits запущено: research/a1_universe/bybit_risk_limit.py
