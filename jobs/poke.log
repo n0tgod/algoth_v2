@@ -653,3 +653,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788476672 ==
 [2026-09-03T23:04:34Z] задание d3-options2 запущено: research/a1_universe/bybit_options.py
+
+== сигнал 1788476816 ==
+[2026-09-03T23:06:58Z] задание d3-options3 запущено: research/a1_universe/bybit_options.py

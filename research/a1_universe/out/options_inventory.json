@@ -1,5 +1,5 @@
 {
- "asof": "2026-09-03T23:05:32Z",
+ "asof": "2026-09-03T23:06:58Z",
  "source": "bybit /v5/market/instruments-info category=option",
  "method": "list+probe",
  "probed": 874,
@@ -28,7 +28,7 @@
  ],
  "by_coin": {
   "BTC": {
-   "contracts": 1540,
+   "contracts": 770,
    "first_ms": 1788508800000,
    "last_ms": 1813910400000,
    "first": "2026-09-04",
@@ -96,5 +96,5 @@
   "XRPUSDT"
  ],
  "probe_errors": [],
- "secs": 58.0
+ "secs": 0.2
 }
