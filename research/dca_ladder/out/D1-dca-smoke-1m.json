@@ -1,11 +1,11 @@
 {
  "interval": "1m",
  "smoke": true,
- "positions": 0,
- "secs": 9.6,
- "liq_freq": null,
- "ruin_freq": null,
- "avg_depth": null,
+ "positions": 54,
+ "secs": 40.8,
+ "liq_freq": 0.0,
+ "ruin_freq": 0.0,
+ "avg_depth": 2.259259259259259,
  "skipped_fence": 0,
  "params": {
   "START": "2022-07-01",
@@ -16,5 +16,13 @@
   "SPACING_SIG": 2.0,
   "SURVIVE_MULT": 2.0,
   "FLAT_MMR": 0.02
- }
+ },
+ "lad_median": 0.05802276712644994,
+ "hold_median": 0.076096644595277,
+ "diff_median": 0.03736155156535992,
+ "lad_beats_hold_frac": 0.5740740740740741,
+ "green_frac": 0.6111111111111112,
+ "worst": -0.2000789044044327,
+ "bite": 1.6137785218618883,
+ "curve_dd": -1.120238858002371
 }

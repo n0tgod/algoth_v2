@@ -15,3 +15,16 @@
 
 **Позиций ноль** — сечение не собралось (мало имён/истории).
 конец: 2026-09-03T15:27:15Z, код 0
+публикуется в ветку main:
+ jobs/done/d0-risk-limits2.log                | 12 ++++++++++++
+ jobs/done/d1-dca-smoke.done                  |  1 +
+ jobs/done/d1-dca-smoke.log                   | 17 +++++++++++++++++
+ jobs/poke.log                                |  3 +++
+ research/dca_ladder/out/D1-dca-smoke-1m.json | 20 ++++++++++++++++++++
+ research/dca_ladder/out/D1-dca-smoke-1m.md   |  7 +++++++
+ research/s8_loop/out/day_brake.json          |  2 +-
+ 7 files changed, 61 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   2695000..496a395  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
