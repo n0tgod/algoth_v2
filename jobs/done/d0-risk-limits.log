@@ -334,3 +334,17 @@
 | 0.0500 | 9 |
 | 0.1000 | 31 |
 конец: 2026-09-03T14:54:09Z, код 0
+публикуется в ветку main:
+ jobs/done/d0-risk-limits.done              |      1 +
+ jobs/done/d0-risk-limits.log               |    336 +
+ jobs/done/status-now.done                  |      1 +
+ jobs/done/status-now.log                   |     10 +
+ jobs/poke.log                              |      4 +
+ research/a1_universe/out/D0-risk-limits.md |     21 +
+ research/a1_universe/out/risk_limits.json  | 135479 ++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json        |      2 +-
+ 8 files changed, 135853 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   67dd16b..44fbf94  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

@@ -614,3 +614,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788447193 ==
 [2026-09-03T14:53:15Z] задание d0-risk-limits запущено: research/a1_universe/bybit_risk_limit.py
+
+== сигнал 1788447495 ==
+[2026-09-03T14:58:16Z] задание d0-risk-limits2 запущено: research/a1_universe/bybit_risk_limit.py

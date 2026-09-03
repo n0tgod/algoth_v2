@@ -1,3 +1,12 @@
+== задание d0-risk-limits2 ==
+строка: run research/a1_universe/bybit_risk_limit.py
+начало: 2026-09-03T14:58:16Z
+запускаю: .venv/bin/python research/a1_universe/bybit_risk_limit.py 
+собрано 647, осталось 302 из 949
+  100/302
+  200/302
+  300/302
+
 # D0 — таблица maintenance margin Bybit
 
 Символов универсума: 949
@@ -23,3 +32,4 @@
 **Без тиров (302):** 10000000AIDOGEUSDT, 1000000CHEEMSUSDT, 1000000PEIPEIUSDT, 1000000VINUUSDT, 10000COQUSDT, 10000ELONUSDT, 10000LADYSUSDT, 10000NFTUSDT, 10000QUBICUSDT, 10000STARLUSDT, 10000WENUSDT, 10000WHYUSDT, 1000APUUSDT, 1000BEERUSDT, 1000CATSUSDT, 1000IQ50USDT, 1000MUMUUSDT, 1000XUSDT, 1CATUSDT, A2ZUSDT, A8USDT, ACXUSDT, AERGOUSDT, AGIXUSDT, AGTUSDT, AI16ZUSDT, AIAUSDT, AINUSDT, AIUSDT, AKROUSDT, ALEOUSDT, ALPACAUSDT, ALPHAUSDT, ALUUSDT, AMBUSDT, ANCUSDT, ANTUSDT, ATAUSDT, AUDIOUSDT, AVAILUSDT …
 
 Это ожидаемо для снятых контрактов и означает: D1 обязан назначать делистнутой ноге MMR правилом (дорогой тир по обороту), а не брать из данных.
+конец: 2026-09-03T14:58:17Z, код 0
