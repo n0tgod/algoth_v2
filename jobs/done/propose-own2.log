@@ -20,3 +20,19 @@
 Замечание адверсарию и строителю стоит в конце `proposal.md`: оба потолка по D1 сравнивают своё подмножество с планкой, выведенной из медиан, и статистик обязано быть две.
 КОНТРАКТ: выполнен
 прогон роли propose завершён
+публикуется в ветку main:
+ jobs/done/propose-own.log              |  13 +
+ jobs/done/propose-own2.done            |   1 +
+ jobs/done/propose-own2.log             |  22 ++
+ jobs/poke.log                          |   3 +
+ research/factory/out/agents-runs.jsonl |   2 +
+ research/factory/out/mechanisms.jsonl  |   1 +
+ research/factory/out/proposal.json     |  50 +--
+ research/factory/out/proposal.md       | 534 ++++++++++++++++++---------------
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 9 files changed, 354 insertions(+), 274 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   22120fa..a7e3d27  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-03T09:43:36Z, код 0
