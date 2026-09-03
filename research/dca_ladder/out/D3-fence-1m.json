@@ -1,0 +1,896 @@
+{
+ "positions": 8670,
+ "skipped": 1,
+ "secs": 1079.6,
+ "grid": {
+  "survive": [
+   2.0,
+   3.0,
+   4.0,
+   6.0,
+   "1x"
+  ],
+  "floor": [
+   "нет",
+   0.1,
+   0.25,
+   0.5
+  ]
+ },
+ "params": {
+  "BACK_H": 24,
+  "HOLD_H": 72,
+  "N_RUNGS": 4,
+  "MIN_ADD_GAP": 0.015,
+  "MIN_EDGE_BP": 33.0,
+  "MIN_RR": 2.0,
+  "TAIL_Q": 0.01,
+  "AVOID_Q": 0.1
+ },
+ "cells": {
+  "2.0|нет": {
+   "n": 8670,
+   "liq_freq": 0.00334,
+   "median": 0.0191,
+   "mean": 0.029,
+   "green": 0.906,
+   "worst": -1.0,
+   "bite": 46.7,
+   "curve_dd": -14.482,
+   "median_lev": 3.03,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7542,
+    "срок": 1099,
+    "ликвидация": 29
+   }
+  },
+  "2.0|0.1": {
+   "n": 8670,
+   "liq_freq": 0.00058,
+   "median": 0.0191,
+   "mean": 0.0288,
+   "green": 0.905,
+   "worst": -1.0,
+   "bite": 46.7,
+   "curve_dd": -11.35,
+   "median_lev": 3.03,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7539,
+    "срок": 1086,
+    "пол": 40,
+    "ликвидация": 5
+   }
+  },
+  "2.0|0.25": {
+   "n": 8670,
+   "liq_freq": 0.00023,
+   "median": 0.019,
+   "mean": 0.0271,
+   "green": 0.904,
+   "worst": -1.0,
+   "bite": 46.8,
+   "curve_dd": -9.342,
+   "median_lev": 3.03,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7531,
+    "срок": 1057,
+    "пол": 80,
+    "ликвидация": 2
+   }
+  },
+  "2.0|0.5": {
+   "n": 8670,
+   "liq_freq": 0.00023,
+   "median": 0.0189,
+   "mean": 0.0276,
+   "green": 0.9,
+   "worst": -1.0,
+   "bite": 46.9,
+   "curve_dd": -6.788,
+   "median_lev": 3.03,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7520,
+    "срок": 1019,
+    "пол": 129,
+    "ликвидация": 2
+   }
+  },
+  "3.0|нет": {
+   "n": 8670,
+   "liq_freq": 0.00138,
+   "median": 0.0174,
+   "mean": 0.0219,
+   "green": 0.907,
+   "worst": -1.0,
+   "bite": 51.9,
+   "curve_dd": -12.985,
+   "median_lev": 2.68,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7546,
+    "срок": 1112,
+    "ликвидация": 12
+   }
+  },
+  "3.0|0.1": {
+   "n": 8670,
+   "liq_freq": 0.00012,
+   "median": 0.0174,
+   "mean": 0.0219,
+   "green": 0.906,
+   "worst": -1.0,
+   "bite": 51.9,
+   "curve_dd": -10.711,
+   "median_lev": 2.68,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7544,
+    "срок": 1110,
+    "пол": 15,
+    "ликвидация": 1
+   }
+  },
+  "3.0|0.25": {
+   "n": 8670,
+   "liq_freq": 0.00012,
+   "median": 0.0174,
+   "mean": 0.0219,
+   "green": 0.906,
+   "worst": -1.0,
+   "bite": 51.9,
+   "curve_dd": -9.474,
+   "median_lev": 2.68,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7543,
+    "срок": 1103,
+    "пол": 23,
+    "ликвидация": 1
+   }
+  },
+  "3.0|0.5": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0173,
+   "mean": 0.0202,
+   "green": 0.903,
+   "worst": -0.692,
+   "bite": 36.0,
+   "curve_dd": -6.504,
+   "median_lev": 2.68,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7529,
+    "срок": 1053,
+    "пол": 88
+   }
+  },
+  "4.0|нет": {
+   "n": 8670,
+   "liq_freq": 0.00058,
+   "median": 0.0159,
+   "mean": 0.0183,
+   "green": 0.907,
+   "worst": -1.0,
+   "bite": 57.5,
+   "curve_dd": -9.467,
+   "median_lev": 2.39,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7547,
+    "срок": 1118,
+    "ликвидация": 5
+   }
+  },
+  "4.0|0.1": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0159,
+   "mean": 0.0183,
+   "green": 0.907,
+   "worst": -0.807,
+   "bite": 46.5,
+   "curve_dd": -8.21,
+   "median_lev": 2.39,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7546,
+    "срок": 1118,
+    "пол": 6
+   }
+  },
+  "4.0|0.25": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0159,
+   "mean": 0.0183,
+   "green": 0.907,
+   "worst": -0.696,
+   "bite": 40.1,
+   "curve_dd": -7.582,
+   "median_lev": 2.39,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7546,
+    "срок": 1112,
+    "пол": 12
+   }
+  },
+  "4.0|0.5": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0159,
+   "mean": 0.018,
+   "green": 0.906,
+   "worst": -0.582,
+   "bite": 33.5,
+   "curve_dd": -5.25,
+   "median_lev": 2.39,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7540,
+    "срок": 1092,
+    "пол": 38
+   }
+  },
+  "6.0|нет": {
+   "n": 8670,
+   "liq_freq": 0.00012,
+   "median": 0.0134,
+   "mean": 0.014,
+   "green": 0.907,
+   "worst": -1.0,
+   "bite": 69.8,
+   "curve_dd": -6.869,
+   "median_lev": 1.92,
+   "frac_1x": 0.235,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7547,
+    "срок": 1122,
+    "ликвидация": 1
+   }
+  },
+  "6.0|0.1": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0134,
+   "mean": 0.014,
+   "green": 0.907,
+   "worst": -0.824,
+   "bite": 57.5,
+   "curve_dd": -6.555,
+   "median_lev": 1.92,
+   "frac_1x": 0.235,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7547,
+    "срок": 1119,
+    "пол": 4
+   }
+  },
+  "6.0|0.25": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0134,
+   "mean": 0.0141,
+   "green": 0.907,
+   "worst": -0.685,
+   "bite": 47.8,
+   "curve_dd": -5.865,
+   "median_lev": 1.92,
+   "frac_1x": 0.235,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7547,
+    "срок": 1118,
+    "пол": 5
+   }
+  },
+  "6.0|0.5": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0134,
+   "mean": 0.0141,
+   "green": 0.906,
+   "worst": -0.548,
+   "bite": 38.3,
+   "curve_dd": -4.575,
+   "median_lev": 1.92,
+   "frac_1x": 0.235,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7544,
+    "срок": 1105,
+    "пол": 21
+   }
+  },
+  "1x|нет": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0066,
+   "mean": 0.006,
+   "green": 0.907,
+   "worst": -0.698,
+   "bite": 101.5,
+   "curve_dd": -6.834,
+   "median_lev": 1.0,
+   "frac_1x": 1.0,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7547,
+    "срок": 1123
+   }
+  },
+  "1x|0.1": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0066,
+   "mean": 0.006,
+   "green": 0.907,
+   "worst": -0.698,
+   "bite": 101.5,
+   "curve_dd": -6.834,
+   "median_lev": 1.0,
+   "frac_1x": 1.0,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7547,
+    "срок": 1123
+   }
+  },
+  "1x|0.25": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0066,
+   "mean": 0.006,
+   "green": 0.907,
+   "worst": -0.698,
+   "bite": 101.5,
+   "curve_dd": -6.834,
+   "median_lev": 1.0,
+   "frac_1x": 1.0,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7547,
+    "срок": 1123
+   }
+  },
+  "1x|0.5": {
+   "n": 8670,
+   "liq_freq": 0.0,
+   "median": 0.0066,
+   "mean": 0.0061,
+   "green": 0.907,
+   "worst": -0.477,
+   "bite": 69.4,
+   "curve_dd": -5.936,
+   "median_lev": 1.0,
+   "frac_1x": 1.0,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7545,
+    "срок": 1110,
+    "пол": 15
+   }
+  }
+ },
+ "crosscheck_d2": {
+  "have": true,
+  "d2_positions": 8670,
+  "d3_positions": 8670,
+  "mismatch": 0,
+  "fields": []
+ },
+ "tail": {
+  "q": 0.01,
+  "n": 87,
+  "liq_n": 5,
+  "tail_worst": -1.0,
+  "tail_cut": -0.108,
+  "tail_cost_pp": 46.2,
+  "book_sum_pp": 249.5,
+  "ruin_share_tail": 0.0,
+  "ruin_share_rest": 0.001,
+  "names": [
+   [
+    "BMTUSDT",
+    9
+   ],
+   [
+    "MUBARAKUSDT",
+    6
+   ],
+   [
+    "DEEPUSDT",
+    5
+   ],
+   [
+    "MUSDT",
+    5
+   ],
+   [
+    "TUTUSDT",
+    4
+   ],
+   [
+    "SUSDT",
+    4
+   ],
+   [
+    "ICNTUSDT",
+    4
+   ],
+   [
+    "CHRUSDT",
+    4
+   ],
+   [
+    "MINIMAXUSDT",
+    3
+   ],
+   [
+    "AGIUSDT",
+    3
+   ],
+   [
+    "NXPCUSDT",
+    2
+   ],
+   [
+    "CLANKERUSDT",
+    2
+   ],
+   [
+    "WOOUSDT",
+    2
+   ],
+   [
+    "DYDXUSDT",
+    2
+   ],
+   [
+    "OPUSDT",
+    2
+   ],
+   [
+    "TIAUSDT",
+    1
+   ],
+   [
+    "YGGUSDT",
+    1
+   ],
+   [
+    "MEUSDT",
+    1
+   ],
+   [
+    "MORPHOUSDT",
+    1
+   ],
+   [
+    "VETUSDT",
+    1
+   ],
+   [
+    "WUSDT",
+    1
+   ],
+   [
+    "STGUSDT",
+    1
+   ],
+   [
+    "KNCUSDT",
+    1
+   ],
+   [
+    "BLURUSDT",
+    1
+   ],
+   [
+    "ZETAUSDT",
+    1
+   ]
+  ],
+  "distinct_names": 45,
+  "bar": {
+   "bar95": 0.0908,
+   "bar_mean": 0.0586,
+   "perms": 200,
+   "seed": 20260904
+  },
+  "features": [
+   {
+    "key": "range_bp",
+    "title": "размах 24 ч до входа",
+    "unit": "bp",
+    "auc": 0.873,
+    "sep": 0.3727,
+    "clears": true,
+    "tail_med": 1448.0536,
+    "rest_med": 811.0119,
+    "measured": 8658,
+    "tail_n": 87,
+    "rest_n": 8571
+   },
+   {
+    "key": "sigma_bp",
+    "title": "σ минутных доходностей за 24 ч до входа",
+    "unit": "bp",
+    "auc": 0.844,
+    "sep": 0.3444,
+    "clears": true,
+    "tail_med": 25.3275,
+    "rest_med": 14.4428,
+    "measured": 8658,
+    "tail_n": 87,
+    "rest_n": 8571
+   },
+   {
+    "key": "n_rungs",
+    "title": "сколько структурных рунгов нашлось",
+    "unit": "x",
+    "auc": 0.812,
+    "sep": 0.3123,
+    "clears": true,
+    "tail_med": 4.0,
+    "rest_med": 3.0,
+    "measured": 8670,
+    "tail_n": 87,
+    "rest_n": 8583
+   },
+   {
+    "key": "lev",
+    "title": "плечо, выданное забором §5",
+    "unit": "x",
+    "auc": 0.735,
+    "sep": 0.2346,
+    "clears": true,
+    "tail_med": 7.3429,
+    "rest_med": 3.0205,
+    "measured": 8670,
+    "tail_n": 87,
+    "rest_n": 8583
+   },
+   {
+    "key": "hour",
+    "title": "час входа UTC (канарейка)",
+    "unit": "x",
+    "auc": 0.312,
+    "sep": 0.1883,
+    "clears": true,
+    "tail_med": 8.0,
+    "rest_med": 12.0,
+    "measured": 8670,
+    "tail_n": 87,
+    "rest_n": 8583
+   },
+   {
+    "key": "turnover",
+    "title": "медианный оборот минуты до входа",
+    "unit": "$",
+    "auc": 0.661,
+    "sep": 0.1606,
+    "clears": true,
+    "tail_med": 219.4811,
+    "rest_med": 100.2003,
+    "measured": 8658,
+    "tail_n": 87,
+    "rest_n": 8571
+   },
+   {
+    "key": "beta",
+    "title": "бета к волне рынка",
+    "unit": "x",
+    "auc": 0.659,
+    "sep": 0.1592,
+    "clears": true,
+    "tail_med": 1.4338,
+    "rest_med": 1.2667,
+    "measured": 8670,
+    "tail_n": 87,
+    "rest_n": 8583
+   },
+   {
+    "key": "fwd_bp",
+    "title": "обещание модели |fwd|",
+    "unit": "bp",
+    "auc": 0.622,
+    "sep": 0.1217,
+    "clears": true,
+    "tail_med": 61.5,
+    "rest_med": 52.94,
+    "measured": 8670,
+    "tail_n": 87,
+    "rest_n": 8583
+   },
+   {
+    "key": "gap1_bp",
+    "title": "до первого долива",
+    "unit": "bp",
+    "auc": 0.612,
+    "sep": 0.1119,
+    "clears": true,
+    "tail_med": 231.7033,
+    "rest_med": 190.5685,
+    "measured": 6661,
+    "tail_n": 87,
+    "rest_n": 6574
+   },
+   {
+    "key": "age_d",
+    "title": "возраст листинга на площадке",
+    "unit": "d",
+    "auc": 0.406,
+    "sep": 0.0941,
+    "clears": true,
+    "tail_med": 569.4369,
+    "rest_med": 935.1534,
+    "measured": 8483,
+    "tail_n": 84,
+    "rest_n": 8399
+   },
+   {
+    "key": "rr",
+    "title": "обещанное отношение RR",
+    "unit": "x",
+    "auc": 0.411,
+    "sep": 0.0891,
+    "clears": false,
+    "tail_med": 2.4537,
+    "rest_med": 2.5797,
+    "measured": 8670,
+    "tail_n": 87,
+    "rest_n": 8583
+   }
+  ],
+  "avoid": {
+   "range_bp": {
+    "dropped": 866,
+    "unmeasured_kept": 12,
+    "threshold": 1397.5916,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7804,
+     "median": 0.0191,
+     "mean": 0.0296,
+     "worst": -1.0,
+     "liq_freq": 0.00013,
+     "green": 0.917
+    }
+   },
+   "sigma_bp": {
+    "dropped": 866,
+    "unmeasured_kept": 12,
+    "threshold": 25.9883,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7804,
+     "median": 0.0202,
+     "mean": 0.0316,
+     "worst": -1.0,
+     "liq_freq": 0.00051,
+     "green": 0.926
+    }
+   },
+   "n_rungs": {
+    "dropped": 2487,
+    "unmeasured_kept": 0,
+    "threshold": 4.0,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 6183,
+     "median": 0.0129,
+     "mean": 0.0142,
+     "worst": -0.552,
+     "liq_freq": 0.0,
+     "green": 0.882
+    }
+   },
+   "lev": {
+    "dropped": 867,
+    "unmeasured_kept": 0,
+    "threshold": 9.3026,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7803,
+     "median": 0.0168,
+     "mean": 0.0224,
+     "worst": -1.0,
+     "liq_freq": 0.00064,
+     "green": 0.897
+    }
+   },
+   "hour": {
+    "dropped": 903,
+    "unmeasured_kept": 0,
+    "threshold": 6.0,
+    "hi_side": false,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7767,
+     "median": 0.0199,
+     "mean": 0.0315,
+     "worst": -1.0,
+     "liq_freq": 0.00013,
+     "green": 0.919
+    }
+   },
+   "turnover": {
+    "dropped": 866,
+    "unmeasured_kept": 12,
+    "threshold": 1912.6154,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7804,
+     "median": 0.0191,
+     "mean": 0.0289,
+     "worst": -1.0,
+     "liq_freq": 0.00026,
+     "green": 0.906
+    }
+   },
+   "beta": {
+    "dropped": 867,
+    "unmeasured_kept": 0,
+    "threshold": 1.6859,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7803,
+     "median": 0.0184,
+     "mean": 0.028,
+     "worst": -1.0,
+     "liq_freq": 0.00026,
+     "green": 0.909
+    }
+   },
+   "fwd_bp": {
+    "dropped": 869,
+    "unmeasured_kept": 0,
+    "threshold": 112.4,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7801,
+     "median": 0.0181,
+     "mean": 0.0285,
+     "worst": -1.0,
+     "liq_freq": 0.00051,
+     "green": 0.904
+    }
+   },
+   "gap1_bp": {
+    "dropped": 667,
+    "unmeasured_kept": 2009,
+    "threshold": 360.6609,
+    "hi_side": true,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 8003,
+     "median": 0.0188,
+     "mean": 0.0296,
+     "worst": -1.0,
+     "liq_freq": 0.0005,
+     "green": 0.903
+    }
+   },
+   "age_d": {
+    "dropped": 849,
+    "unmeasured_kept": 187,
+    "threshold": 286.9078,
+    "hi_side": false,
+    "before": {
+     "n": 8670,
+     "median": 0.0191,
+     "mean": 0.0288,
+     "worst": -1.0,
+     "liq_freq": 0.00058,
+     "green": 0.905
+    },
+    "after": {
+     "n": 7821,
+     "median": 0.0205,
+     "mean": 0.0304,
+     "worst": -1.0,
+     "liq_freq": 0.00064,
+     "green": 0.914
+    }
+   }
+  }
+ },
+ "options": {
+  "have": true,
+  "base_coins": 8,
+  "covered": 0,
+  "total": 87,
+  "names": [],
+  "asof": "2026-09-03T23:06:58Z"
+ }
+}
