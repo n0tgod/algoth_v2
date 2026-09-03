@@ -128,6 +128,15 @@ def collect(symbols, store):
                           {"category": CATEGORY, "symbol": sym},
                           cache_key=f"rl_{sym}")
             tiers = parse_tiers(res)
+        except RuntimeError as e:
+            # retCode 10001 «symbol is closed or invalid» — снятый контракт:
+            # это ОПРЕДЕЛЁННОЕ состояние «тиров нет», записываем как [], а
+            # не как сбой. Иначе каждый повтор бьёт все закрытые снова, а
+            # покрытие путает «закрыт» с «не собрано». Тот же класс, что
+            # закрытые символы у эндпоинта комиссий A1.
+            if "10001" in str(e):
+                return sym, [], None
+            return sym, None, str(e)
         except Exception as e:               # noqa: BLE001
             return sym, None, str(e)
         time.sleep(PAUSE_S)
