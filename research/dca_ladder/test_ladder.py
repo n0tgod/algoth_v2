@@ -196,6 +196,142 @@ def test_liquidation_on_gap():
     print("ok  разрыв сквозь забор ликвидирует, мелкий нырок — нет")
 
 
+# --- D2: стратегия на барах -----------------------------------------------
+
+def _bars(closes, lows, highs=None, entry=None):
+    """Собрать OHLC-бары из closes/lows для тестов D2; open первого = entry."""
+    highs = highs or list(closes)
+    bars = []
+    for i, (cl, lo, hi) in enumerate(zip(closes, lows, highs)):
+        op = entry if (i == 0 and entry is not None) else cl
+        bars.append((i, op, hi, lo, cl, 0.0))
+    return bars
+
+
+def test_dca_matches_ladder_bit_for_bit():
+    # Без тейка и пола, вход == база: simulate_dca обязан воспроизвести
+    # simulate_ladder ДОСЛОВНО — общий _fill_rungs, одна копия долива.
+    rungs = [100.0, 90.0, 80.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 90.0, 80.0, 90.0, 100.0]
+    lows = [100.0, 89.0, 79.0, 90.0, 100.0]
+    lad = L.simulate_ladder(closes, lows, rungs, w, capital=1.0,
+                            leverage=2.0, mmr=MMR)
+    dca = L.simulate_dca(_bars(closes, lows, entry=100.0), rungs, w,
+                         capital=1.0, leverage=2.0, mmr=MMR)
+    assert dca["exit"] == "срок", dca["exit"]
+    assert abs(dca["pnl_frac"] - lad["pnl_frac"]) < 1e-12, (dca, lad)
+    assert dca["depth"] == lad["depth"]
+    assert abs(dca["avg"] - lad["avg"]) < 1e-12
+    print(f"ok  simulate_dca == simulate_ladder бит-в-бит: "
+          f"+{dca['pnl_frac']*100:.1f}%")
+
+
+def test_dca_take_on_recovery():
+    # Цена ныряет на 80 (все рунги), возвращается с перелётом — верх бара
+    # доходит до 106, тейк на 104 (ВЫШЕ входа, это mfe модели) исполняется
+    # по уровню. Средняя 89.26, итог qty·(104−ср). Тейк лонга обязан быть
+    # выше входа, иначе он сработал бы в первом же баре у самого входа.
+    rungs = [100.0, 90.0, 80.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 80.0, 106.0]
+    lows = [100.0, 79.0, 90.0]
+    highs = [100.0, 80.0, 106.0]        # третий бар доходит верхом до 106
+    dca = L.simulate_dca(_bars(closes, lows, highs, entry=100.0), rungs, w,
+                         capital=1.0, leverage=2.0, mmr=MMR, take_px=104.0)
+    assert dca["exit"] == "тейк", dca["exit"]
+    assert dca["depth"] == 3, dca["depth"]
+    exp = 0.022407 * (104.0 - 89.26)        # qty·(тейк − средняя)
+    assert abs(dca["pnl_frac"] - exp) < 0.005, (dca["pnl_frac"], exp)
+    print(f"ok  DCA тейк по уровню на возврате: +{dca['pnl_frac']*100:.1f}%")
+
+
+def test_dca_capit_floor_in_the_red():
+    # Все рунги заполнены (ныряет на 80), затем низ подходит к ликвидации
+    # (≈44.85 при плече 2): пол капитуляции режет по ЗАКРЫТИЮ в минус, но
+    # НЕ −100 % (это не ликвидация).
+    rungs = [100.0, 90.0, 80.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 80.0, 55.0]
+    lows = [100.0, 79.0, 48.0]          # 48 < пол(≈50.4), > ликв(44.85)
+    dca = L.simulate_dca(_bars(closes, lows, entry=100.0), rungs, w,
+                         capital=1.0, leverage=2.0, mmr=MMR,
+                         take_px=200.0, floor_frac=0.10)
+    assert dca["exit"] == "пол", dca["exit"]
+    assert -1.0 < dca["pnl_frac"] < 0.0, dca["pnl_frac"]
+    print(f"ok  пол капитуляции режет в минус, не −100 %: "
+          f"{dca['pnl_frac']*100:.1f}%")
+
+
+def test_dca_liquidation_gap():
+    # Разрыв сквозь цену ликвидации — −100 %, раньше пола.
+    rungs = [100.0, 90.0, 80.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 80.0, 40.0]
+    lows = [100.0, 79.0, 40.0]          # 40 < ликв 44.85
+    dca = L.simulate_dca(_bars(closes, lows, entry=100.0), rungs, w,
+                         capital=1.0, leverage=2.0, mmr=MMR,
+                         take_px=200.0, floor_frac=0.10)
+    assert dca["exit"] == "ликвидация" and dca["pnl_frac"] == -1.0, dca
+    print("ok  разрыв сквозь ликвидацию → −100 %")
+
+
+def test_single_stop_and_take():
+    # Контроль: одиночный вход, стоп ниже входа и тейк выше.
+    stop = L.simulate_single(_bars([100.0, 88.0], [100.0, 89.0], entry=100.0),
+                             capital=1.0, leverage=2.0, mmr=MMR,
+                             take_px=110.0, stop_px=90.0)
+    assert stop["exit"] == "стоп", stop
+    assert abs(stop["pnl_frac"] - 0.02 * (90.0 - 100.0)) < 1e-9, stop
+    take = L.simulate_single(_bars([100.0, 112.0], [100.0, 100.0],
+                                   [100.0, 112.0], entry=100.0),
+                             capital=1.0, leverage=2.0, mmr=MMR,
+                             take_px=110.0, stop_px=90.0)
+    assert take["exit"] == "тейк", take
+    assert abs(take["pnl_frac"] - 0.02 * (110.0 - 100.0)) < 1e-9, take
+    print("ok  контроль: одиночный вход стоп/тейк по уровням")
+
+
+# --- отрицательные контроли -----------------------------------------------
+
+def _control_dca_no_floor():
+    """Пол игнорируется — сделка идёт до ликвидации/срока, не 'пол'."""
+    orig = L.simulate_dca
+
+    def no_floor(bars, rung_prices, weights, capital, leverage, mmr,
+                 take_px=None, floor_frac=None):
+        return orig(bars, rung_prices, weights, capital, leverage, mmr,
+                    take_px=take_px, floor_frac=None)
+    L.simulate_dca = no_floor
+    try:
+        try:
+            test_dca_capit_floor_in_the_red()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.simulate_dca = orig
+
+
+def _control_dca_take_ignored():
+    """Тейк игнорируется — возврат не закрывается по уровню, не 'тейк'."""
+    orig = L.simulate_dca
+
+    def no_take(bars, rung_prices, weights, capital, leverage, mmr,
+                take_px=None, floor_frac=None):
+        return orig(bars, rung_prices, weights, capital, leverage, mmr,
+                    take_px=None, floor_frac=floor_frac)
+    L.simulate_dca = no_take
+    try:
+        try:
+            test_dca_take_on_recovery()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.simulate_dca = orig
+
+
 # --- отрицательные контроли -----------------------------------------------
 
 def _control_no_liquidation_check():
@@ -256,6 +392,11 @@ TESTS = [
     test_ladder_beats_hold_on_recovery,
     test_ladder_partial_fill,
     test_liquidation_on_gap,
+    test_dca_matches_ladder_bit_for_bit,
+    test_dca_take_on_recovery,
+    test_dca_capit_floor_in_the_red,
+    test_dca_liquidation_gap,
+    test_single_stop_and_take,
 ]
 
 
@@ -266,7 +407,9 @@ def main():
     assert _control_leverage_unbounded(), "контроль плеча не кусается"
     assert _control_no_liquidation_check(), "контроль ликвидации не кусается"
     assert _control_rungs_never_fill(), "контроль заполнения рунгов не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 4 отрицательных контроля "
+    assert _control_dca_no_floor(), "контроль пола капитуляции не кусается"
+    assert _control_dca_take_ignored(), "контроль тейка не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; 6 отрицательных контролей "
           f"кусаются")
 
 

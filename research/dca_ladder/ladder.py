@@ -157,6 +157,23 @@ def sigma_rungs(base_px, sigma_frac, n_rungs, spacing_sig):
     return prices, d_max
 
 
+def _fill_rungs(filled, cash, qty, lo, rung_prices, weights, notional):
+    """Заполнить рунги долива вниз, до которых опустился минимум бара `lo`.
+
+    Одна копия логики долива на весь модуль: её зовут и потолок D1
+    (`simulate_ladder`), и стратегия D2 (`simulate_dca`). Рунг `j` (цена
+    ниже базы) заполняется по СВОЕЙ цене `rung_prices[j]` — структурный
+    уровень или узел σ-сетки, — когда низ бара до неё дошёл. Возвращает
+    обновлённые (filled, cash, qty).
+    """
+    for j in range(1, len(rung_prices)):
+        if not filled[j] and rung_prices[j] >= lo > 0:
+            filled[j] = True
+            cash += weights[j] * notional
+            qty += weights[j] * notional / rung_prices[j]
+    return filled, cash, qty
+
+
 def simulate_ladder(closes, lows, rung_prices, weights, capital, leverage, mmr):
     """Пройти путь цены лестницей доливов вниз. Чистая функция.
 
@@ -184,12 +201,8 @@ def simulate_ladder(closes, lows, rung_prices, weights, capital, leverage, mmr):
     cash = weights[0] * notional
     qty = cash / base
     for lo, cl in zip(lows, closes):
-        # заполнить рунги, до которых опустился минимум бара
-        for j in range(1, n):
-            if not filled[j] and rung_prices[j] >= lo > 0:
-                filled[j] = True
-                cash += weights[j] * notional
-                qty += weights[j] * notional / rung_prices[j]
+        filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
+                                        rung_prices, weights, notional)
         avg = cash / qty
         p_liq = liq_price(avg, qty, capital, mmr)
         if lo <= p_liq:                         # разрыв пробил забор
@@ -220,3 +233,102 @@ def simulate_hold(closes, lows, base_px, capital, leverage, mmr):
     final = closes[-1]
     pnl_frac = qty * (final - base_px) / capital
     return {"liquidated": False, "pnl_frac": pnl_frac}
+
+
+# ------------------------------------------------------ D2: стратегия на барах
+# Вход = выбор модели (первый рунг), доливы вниз на уровнях, выход тейк + пол
+# капитуляции (§6). Первый срез — ЛОНГИ (естественный DCA-вниз); шорты зеркало,
+# следом. Бары — OHLC минуты записи сборщика: (t, open, high, low, close, qv).
+
+def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None):
+    """Контроль D2: одиночный вход тем же капиталом и плечом, стоп/тейк.
+
+    Тот же вход (открытие ПЕРВОГО бара после решения, next_open), весь
+    нотионал разом — так книга торгует сейчас. Стоп `stop_px` (ниже входа)
+    по низу бара, тейк `take_px` (выше) по верху; стоп раньше тейка (ничья
+    против нас), ликвидация тоже по низу. Разница с `simulate_dca` и есть
+    замен «усреднять вниз против стопнуться».
+
+    Возвращает: exit ("ликвидация"/"стоп"/"тейк"/"срок"), pnl_frac.
+    """
+    if not bars:
+        raise ValueError("пустой путь")
+    entry = float(bars[0][1])
+    if entry <= 0:
+        raise ValueError("цена входа ≤ 0")
+    notional = capital * leverage
+    qty = notional / entry
+    p_liq = liq_price(entry, qty, capital, mmr)        # средняя не меняется
+    for (_t, _o, hi, lo, cl, _v) in bars:
+        if lo <= p_liq:
+            return {"exit": "ликвидация", "pnl_frac": -1.0}
+        if stop_px is not None and lo <= stop_px:
+            return {"exit": "стоп", "pnl_frac": qty * (stop_px - entry) / capital}
+        if take_px is not None and hi >= take_px:
+            return {"exit": "тейк", "pnl_frac": qty * (take_px - entry) / capital}
+    cl = float(bars[-1][4])
+    return {"exit": "срок", "pnl_frac": qty * (cl - entry) / capital}
+
+
+def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
+                 take_px=None, floor_frac=None):
+    """DCA-лонг на РЕАЛЬНЫХ барах: доливы вниз, тейк вверх, пол капитуляции.
+
+    Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
+    это база; `rung_prices[1:]` — цены доливов ВНИЗ (структурные уровни или
+    узлы σ-сетки, по убыванию), рунг `j` заполняется, когда НИЗ бара до неё
+    дошёл (`_fill_rungs`, одна копия долива на модуль). `rung_prices[0]` не
+    используется — база покупается по фактической цене входа.
+
+    Выход:
+    - **тейк** `take_px` (выше входа) — лимитка на уровне (правило v13):
+      когда ВЕРХ бара доходит до уровня, исполнение по уровню;
+    - **пол капитуляции** (§6, фенс): когда лестница ВЫЧЕРПАНА (все рунги
+      заполнены) И низ бара подошёл к цене ликвидации ближе `floor_frac` её
+      расстояния до входа — закрытие по ЗАКРЫТИЮ бара, в минус (разрыв не
+      держит на уровне, урок S1: закрываем по доступной цене);
+    - **ликвидация** — низ пробил цену ликвидации текущего состояния;
+    - **срок** — бары кончились.
+
+    Порядок в баре: заполнить рунги → ликвидация → пол → тейк
+    (неблагоприятное раньше благоприятного, ничья против нас). Ранняя
+    капитуляция (рулевой §6) здесь НЕ считается — она мерится против пола
+    отдельной рукой (пересчёт), вердикт по «только пол».
+
+    Возвращает: exit ("тейк"/"пол"/"ликвидация"/"срок"), pnl_frac (доля
+    капитала позиции; ликвидация = −1.0), depth, avg, filled_notional.
+    """
+    n = len(rung_prices)
+    if len(weights) != n:
+        raise ValueError("рунгов и весов разное число")
+    if not bars:
+        raise ValueError("пустой путь")
+    entry = float(bars[0][1])
+    if entry <= 0:
+        raise ValueError("цена входа ≤ 0")
+    notional = capital * leverage
+    filled = [False] * n
+    filled[0] = True                    # база заполнена входом
+    cash = weights[0] * notional
+    qty = cash / entry                  # по ФАКТИЧЕСКОЙ цене входа
+    for (_t, _o, hi, lo, cl, _v) in bars:
+        filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
+                                        rung_prices, weights, notional)
+        avg = cash / qty
+        p_liq = liq_price(avg, qty, capital, mmr)
+        if lo <= p_liq:
+            return {"exit": "ликвидация", "pnl_frac": -1.0,
+                    "depth": sum(filled), "avg": avg, "filled_notional": cash}
+        if floor_frac is not None and all(filled):
+            floor_px = p_liq + floor_frac * (entry - p_liq)
+            if lo <= floor_px:                 # подошли к ликвидации — режем
+                return {"exit": "пол", "pnl_frac": qty * (cl - avg) / capital,
+                        "depth": sum(filled), "avg": avg,
+                        "filled_notional": cash}
+        if take_px is not None and hi >= take_px:
+            return {"exit": "тейк", "pnl_frac": qty * (take_px - avg) / capital,
+                    "depth": sum(filled), "avg": avg, "filled_notional": cash}
+    cl = float(bars[-1][4])
+    avg = cash / qty
+    return {"exit": "срок", "pnl_frac": qty * (cl - avg) / capital,
+            "depth": sum(filled), "avg": avg, "filled_notional": cash}
