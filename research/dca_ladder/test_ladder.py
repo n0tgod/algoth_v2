@@ -135,6 +135,116 @@ def _control_leverage_unbounded():
         L.max_leverage = orig
 
 
+def test_sigma_rungs_descend():
+    px, d_max = L.sigma_rungs(100.0, sigma_frac=0.05, n_rungs=3,
+                              spacing_sig=2.0)
+    # шаг 2·0.05 = 0.10 → рунги 100, 90, 80
+    assert px == [100.0, 90.0, 80.0], px
+    assert abs(d_max - 0.20) < 1e-9, d_max
+    print(f"ok  σ-сетка вниз: {px}, глубина {d_max:.2f}")
+
+
+def test_ladder_beats_hold_on_recovery():
+    # 20%-лестница, плечо 2 (глубоко внутри забора). Цена ныряет на 80,
+    # заполняя все рунги, и возвращается на 100. Лестница купила дно —
+    # средняя 89.26, итог +24.1 % капитала; удержание вошло всё на 100 и
+    # к возврату даёт ровно ноль.
+    rungs = [100.0, 90.0, 80.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 90.0, 80.0, 90.0, 100.0]
+    lows = [100.0, 89.0, 79.0, 90.0, 100.0]
+    lad = L.simulate_ladder(closes, lows, rungs, w, capital=1.0,
+                            leverage=2.0, mmr=MMR)
+    hold = L.simulate_hold(closes, lows, 100.0, capital=1.0,
+                           leverage=2.0, mmr=MMR)
+    assert not lad["liquidated"] and not hold["liquidated"]
+    assert lad["depth"] == 3, lad["depth"]
+    assert abs(lad["avg"] - 89.26) < 0.1, lad["avg"]
+    assert abs(lad["pnl_frac"] - 0.241) < 0.01, lad["pnl_frac"]
+    assert abs(hold["pnl_frac"]) < 1e-9, hold["pnl_frac"]
+    assert lad["pnl_frac"] > hold["pnl_frac"]
+    print(f"ok  лестница бьёт удержание на возврате: "
+          f"+{lad['pnl_frac']*100:.1f}% против {hold['pnl_frac']*100:.1f}%")
+
+
+def test_ladder_partial_fill():
+    # Цена ныряет на 90, но не на 80 — заполнены база и первый рунг.
+    rungs = [100.0, 90.0, 80.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 92.0, 95.0, 100.0]
+    lows = [100.0, 89.0, 95.0, 100.0]
+    lad = L.simulate_ladder(closes, lows, rungs, w, capital=1.0,
+                            leverage=3.0, mmr=MMR)
+    assert lad["depth"] == 2, lad["depth"]
+    assert abs(lad["filled_notional"] - 2.0) < 1e-9, lad["filled_notional"]
+    print(f"ok  частичная загрузка: глубина {lad['depth']}, "
+          f"нотионал {lad['filled_notional']:.2f}")
+
+
+def test_liquidation_on_gap():
+    # Удержание с плечом 10 (ликвидация ≈ −9.6 %): нырок на 85 пробивает
+    # забор и теряет капитал позиции целиком.
+    closes = [100.0, 88.0, 95.0]
+    lows = [100.0, 85.0, 95.0]
+    hold = L.simulate_hold(closes, lows, 100.0, capital=1.0,
+                           leverage=10.0, mmr=MMR)
+    assert hold["liquidated"] and hold["pnl_frac"] == -1.0, hold
+    # тот же путь без разрыва к ликвидации — цел
+    ok = L.simulate_hold([100.0, 95.0, 100.0], [100.0, 92.0, 100.0],
+                         100.0, capital=1.0, leverage=10.0, mmr=MMR)
+    assert not ok["liquidated"], ok
+    print("ok  разрыв сквозь забор ликвидирует, мелкий нырок — нет")
+
+
+# --- отрицательные контроли -----------------------------------------------
+
+def _control_no_liquidation_check():
+    """Убрать проверку ликвидации в simulate_hold — разрыв обязан
+    перестать ловиться, тест разрыва падает."""
+    orig = L.simulate_hold
+
+    def no_liq(closes, lows, base_px, capital, leverage, mmr):
+        notional = capital * leverage
+        qty = notional / base_px
+        final = closes[-1]
+        return {"liquidated": False,
+                "pnl_frac": qty * (final - base_px) / capital}
+    L.simulate_hold = no_liq
+    try:
+        try:
+            test_liquidation_on_gap()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.simulate_hold = orig
+
+
+def _control_rungs_never_fill():
+    """Если рунги ниже базы не заполняются, лестница вырождается в базу
+    и на возврате не бьёт удержание — тест возврата падает."""
+    orig = L.simulate_ladder
+
+    def base_only(closes, lows, rung_prices, weights, capital, leverage, mmr):
+        base = rung_prices[0]
+        notional = capital * leverage
+        cash = weights[0] * notional
+        qty = cash / base
+        avg = cash / qty
+        final = closes[-1]
+        return {"liquidated": False, "pnl_frac": qty * (final - avg) / capital,
+                "depth": 1, "avg": avg, "filled_notional": cash}
+    L.simulate_ladder = base_only
+    try:
+        try:
+            test_ladder_beats_hold_on_recovery()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.simulate_ladder = orig
+
+
 TESTS = [
     test_liq_price_matches_spec5_table,
     test_one_x_long_cannot_liquidate,
@@ -142,6 +252,10 @@ TESTS = [
     test_fully_loaded_avg_and_notional,
     test_max_leverage_derived_from_fence,
     test_max_leverage_refuses_impossible_depth,
+    test_sigma_rungs_descend,
+    test_ladder_beats_hold_on_recovery,
+    test_ladder_partial_fill,
+    test_liquidation_on_gap,
 ]
 
 
@@ -150,7 +264,9 @@ def main():
         t()
     assert _control_no_mmr_term(), "контроль (1−mmr) не кусается"
     assert _control_leverage_unbounded(), "контроль плеча не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 2 отрицательных контроля "
+    assert _control_no_liquidation_check(), "контроль ликвидации не кусается"
+    assert _control_rungs_never_fill(), "контроль заполнения рунгов не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; 4 отрицательных контроля "
           f"кусаются")
 
 
