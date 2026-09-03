@@ -38,3 +38,16 @@ sheets.jsonl: ног 840611
   315/400  взято 315
   353/400  взято 353
 конец: 2026-09-03T19:01:20Z, код 0
+публикуется в ветку main:
+ jobs/done/d1-dca-full.log                 |  7 ++++
+ jobs/done/d2-dca-smoke.done               |  1 +
+ jobs/done/d2-dca-smoke.log                | 40 ++++++++++++++++++++++
+ jobs/poke.log                             |  3 ++
+ research/dca_ladder/out/D2-dca-smoke.json | 55 +++++++++++++++++++++++++++++++
+ research/dca_ladder/out/D2-dca-smoke.md   | 23 +++++++++++++
+ research/s8_loop/out/day_brake.json       |  2 +-
+ 7 files changed, 130 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   874843d..af827b5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
