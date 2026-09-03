@@ -94,6 +94,7 @@ WEIGHTS = [0.25, 0.25, 0.25, 0.25]
 SURVIVE_MULT = 2.0                # §5: ликвидация не ближе mult·d_max
 FLAT_MMR = 0.02                   # делистнутой ноге (§10 модальный)
 FLOOR_FRAC = 0.10                 # пол капитуляции: у ликвидации ближе 10 %
+SS_SHORT_BETA = 1.0               # рука SS (§а): нотионал короткого = β_s·нотионал лонга (полный хедж — потолок)
 
 
 def instruments_tiers():
@@ -201,7 +202,7 @@ def run(limit=None, src=None, log=print):
     log(f"символов {len(by_sym)}")
 
     arms = {a: {"pnl": [], "liq": 0, "ruin": 0, "day": {}, "ok": 0}
-            for a in ("B", "H", "S", "SH")}
+            for a in ("B", "H", "S", "SH", "SS")}
     depth_hist = []                                  # глубина лестницы S
     lev_hist = []                                    # плечо §5
     no_add = 0                                       # выборов без структурного долива
@@ -315,6 +316,21 @@ def _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist,
             hedge = -g["beta"] * s["filled_notional"] * (bx / be - 1.0)
             sh_pnl = s["pnl_frac"] + hedge
 
+    # рука SS — S плюс короткий на ТОЙ ЖЕ монете в просадке (§а, идея
+    # владельца): триггер = первый долив (`rungs[1]`), нотионал короткого
+    # β_s·нотионал лонга, закрывается ПО ВОССТАНОВЛЕНИЮ (просадка кончилась,
+    # лонг едет дальше сам — median не ест) либо с лонгом при продолжении
+    # падения (гасит хвост). Только у позиций с доливом (у 1× лестницы
+    # хвоста-ликвидации нет). SS = S, если короткий не активировался.
+    ss_pnl = s["pnl_frac"]
+    ss_active = False
+    if len(rungs) >= 2:
+        short = L.same_coin_short(hold, rungs[1], s["exit_ts"], s["exit_px"],
+                                  SS_SHORT_BETA * s["filled_notional"])
+        if short is not None:
+            ss_pnl = s["pnl_frac"] + short
+            ss_active = True
+
     day = time.strftime("%Y-%m-%d", time.gmtime(g["at"]))
     for nm, res in (("B", b), ("H", h), ("S", s)):
         arms[nm]["pnl"].append(res["pnl_frac"])
@@ -331,6 +347,15 @@ def _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist,
         a["liq"] += int(s.get("exit") == "ликвидация")   # ликвид. ЛОНГА
         a["ruin"] += is_ruin
         a["day"][day] = a["day"].get(day, 0.0) + sh_pnl
+    # SS — полная книга (= S там, где короткий не сработал); active считает,
+    # у скольких позиций короткий реально включался в просадке
+    a = arms["SS"]
+    a["pnl"].append(ss_pnl)
+    a["ok"] += 1
+    a["active"] = a.get("active", 0) + int(ss_active)
+    a["liq"] += int(s.get("exit") == "ликвидация")
+    a["ruin"] += is_ruin
+    a["day"][day] = a["day"].get(day, 0.0) + ss_pnl
     depth_hist.append(s["depth"])
     lev_hist.append(lev_s)
     return status
@@ -396,6 +421,14 @@ def measures(arms, n, skipped, no_add, depth_hist, lev_hist, secs):
             "SH_minus_B_median": round(float(np.median((SH - B)[m])), 4),
             "SH_beats_B_frac": round(float(np.mean(SH[m] > B[m])), 3),
         })
+    SS = np.array(arms["SS"]["pnl"], dtype=float)
+    out["paired"].update({
+        "short_active": int(arms["SS"].get("active", 0)),
+        "SS_minus_S_median": round(float(np.median(SS - S)), 4),
+        "SS_beats_S_frac": round(float(np.mean(SS > S)), 3),
+        "SS_minus_B_median": round(float(np.median(SS - B)), 4),
+        "SS_beats_B_frac": round(float(np.mean(SS > B)), 3),
+    })
     return out
 
 
@@ -418,8 +451,8 @@ def report(s):
              "худшая | укус | просадка |")
     P.append("|---|--:|--:|--:|--:|--:|--:|--:|--:|")
     names = {"B": "B книга 1×", "H": "H удержание §5", "S": "S DCA структ.",
-             "SH": "SH DCA + бета-хедж"}
-    for nm in ("B", "H", "S", "SH"):
+             "SH": "SH DCA + бета-хедж", "SS": "SS DCA + шорт той же монеты"}
+    for nm in ("B", "H", "S", "SH", "SS"):
         a = s["arms"][nm]
         if not a.get("ok"):                      # SH без единого хеджа
             P.append(f"| {names[nm]} | — | — | — | — | — | — | — | — |")
@@ -449,7 +482,29 @@ def report(s):
                  f"(на {pr['hedge_ok']} хеджированных)")
         P.append(f"- **SH − B (бета-хедж против нынешней книги): медиана "
                  f"{pr['SH_minus_B_median']*100:+.2f} %**, SH выше B в "
-                 f"{pr['SH_beats_B_frac']*100:.1f} % выборов\n")
+                 f"{pr['SH_beats_B_frac']*100:.1f} % выборов")
+    P.append(f"- **SS − S (шорт той же монеты против голого DCA): медиана "
+             f"{pr['SS_minus_S_median']*100:+.2f} %**, SS выше S в "
+             f"{pr['SS_beats_S_frac']*100:.1f} % выборов "
+             f"(короткий включался у {pr['short_active']} из {s['positions']})")
+    P.append(f"- **SS − B (шорт той же монеты против нынешней книги): медиана "
+             f"{pr['SS_minus_B_median']*100:+.2f} %**, SS выше B в "
+             f"{pr['SS_beats_B_frac']*100:.1f} % выборов\n")
+    P.append("\n**Шорт той же монеты (рука SS, §а):** параллельный короткий "
+             "на ТОЙ ЖЕ монете, включается когда цена доходит до первого "
+             "долива (просадка), нотионал β_s·нотионал лонга. Закрывается ПО "
+             "ВОССТАНОВЛЕНИЮ (цена вернулась к триггеру — просадка кончилась, "
+             "короткий вышел ~в ноль по уровню, лонг забирает отскок сам) "
+             "либо с лонгом при продолжении падения (гасит хвост). В отличие "
+             "от бета-хеджа короткий КОРРЕЛИРОВАН с хвостом (та же монета "
+             "падает), поэтому хвост режет, а не углубляет. Оговорки: "
+             "короткий ОДИН на позицию (второй провал после восстановления не "
+             "хеджируется — занижает пользу); вход/выход по уровню (модель "
+             "v13, как тейк) — оптимистично; β_s = 1.0 (полный хедж) — "
+             "потолок пользы, реальный размер меньше стоит меньше защиты; "
+             "триггер = первый долив (сдвинуть глубже — меньше активаций, "
+             "меньше защиты и меньше цены). Вопрос владельца про РИСК: смотреть "
+             "худшую/укус/просадку SS против S ценой в медиане.")
     P.append("\n**Хедж (рука SH):** короткий BTC на β·нотионал лонга, открыт "
              "с входом лонга, закрыт с его выходом; в обвале (лонг падает, "
              "BTC падает) даёт плюс — поддерживает деп в просадке. Вопрос "

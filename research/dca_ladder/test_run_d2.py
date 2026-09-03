@@ -102,7 +102,7 @@ def test_hedge_arm_arithmetic():
         g, bars, ts, btc, btc_ts, entry = _hedge_case()
         look = (lambda notl: D.L.mmr_for_notional([], notl, flat=D.FLAT_MMR))
         arms = {a: {"pnl": [], "liq": 0, "ruin": 0, "day": {}, "ok": 0}
-                for a in ("B", "H", "S", "SH")}
+                for a in ("B", "H", "S", "SH", "SS")}
         st = D._process_leg(g, bars, ts, look, arms, [], [], btc, btc_ts)
         assert st == "no_add", st
         # независимо пересчитать S и хедж

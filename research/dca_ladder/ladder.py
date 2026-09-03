@@ -261,15 +261,16 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None):
     p_liq = liq_price(entry, qty, capital, mmr)        # средняя не меняется
     for (bt, _o, hi, lo, cl, _v) in bars:
         if lo <= p_liq:
-            return {"exit": "ликвидация", "pnl_frac": -1.0, "exit_ts": bt}
+            return {"exit": "ликвидация", "pnl_frac": -1.0, "exit_ts": bt,
+                    "exit_px": p_liq}
         if stop_px is not None and lo <= stop_px:
-            return {"exit": "стоп", "exit_ts": bt,
+            return {"exit": "стоп", "exit_ts": bt, "exit_px": stop_px,
                     "pnl_frac": qty * (stop_px - entry) / capital}
         if take_px is not None and hi >= take_px:
-            return {"exit": "тейк", "exit_ts": bt,
+            return {"exit": "тейк", "exit_ts": bt, "exit_px": take_px,
                     "pnl_frac": qty * (take_px - entry) / capital}
     lb = bars[-1]
-    return {"exit": "срок", "exit_ts": lb[0],
+    return {"exit": "срок", "exit_ts": lb[0], "exit_px": float(lb[4]),
             "pnl_frac": qty * (float(lb[4]) - entry) / capital}
 
 
@@ -321,19 +322,63 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
         p_liq = liq_price(avg, qty, capital, mmr)
         if lo <= p_liq:
             return {"exit": "ликвидация", "pnl_frac": -1.0, "exit_ts": bt,
-                    "depth": sum(filled), "avg": avg, "filled_notional": cash}
+                    "exit_px": p_liq, "depth": sum(filled), "avg": avg,
+                    "filled_notional": cash}
         if floor_frac is not None and all(filled):
             floor_px = p_liq + floor_frac * (entry - p_liq)
             if lo <= floor_px:                 # подошли к ликвидации — режем
                 return {"exit": "пол", "pnl_frac": qty * (cl - avg) / capital,
-                        "exit_ts": bt, "depth": sum(filled), "avg": avg,
-                        "filled_notional": cash}
+                        "exit_ts": bt, "exit_px": cl, "depth": sum(filled),
+                        "avg": avg, "filled_notional": cash}
         if take_px is not None and hi >= take_px:
             return {"exit": "тейк", "pnl_frac": qty * (take_px - avg) / capital,
-                    "exit_ts": bt, "depth": sum(filled), "avg": avg,
-                    "filled_notional": cash}
+                    "exit_ts": bt, "exit_px": take_px, "depth": sum(filled),
+                    "avg": avg, "filled_notional": cash}
     lb = bars[-1]
     avg = cash / qty
     return {"exit": "срок", "pnl_frac": qty * (float(lb[4]) - avg) / capital,
-            "exit_ts": lb[0], "depth": sum(filled), "avg": avg,
-            "filled_notional": cash}
+            "exit_ts": lb[0], "exit_px": float(lb[4]), "depth": sum(filled),
+            "avg": avg, "filled_notional": cash}
+
+
+def same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notional):
+    """Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
+
+    Идея владельца: пока лонг в просадке, параллельный короткий на той же
+    монете поддерживает деп; когда просадка кончилась — короткий закрыт, и
+    лонг забирает отскок (свой эдж). Реализация как маленький автомат по
+    барам удержания (до выхода лонга `exit_ts`):
+
+    - **вход** короткого — когда низ бара впервые доходит до `trigger_px`
+      (уровень просадки, напр. первый долив): продажа НА ПРОБОЙ уровня вниз,
+      исполнение по уровню (та же модель, что тейк-лимитка v13);
+    - **выход по восстановлению** — когда верх бара впервые доходит до
+      `trigger_px` ПОСЛЕ входа: покупка на пробой вверх по уровню, pnl ровно
+      0 (вошли и вышли по одному уровню) — просадка кончилась, лонг едет
+      дальше сам, короткий median НЕ ест;
+    - **выход с лонгом** — если восстановления не было до `exit_ts`, короткий
+      закрывается там же, где лонг, по `exit_px` (ликвидация → p_liq, срок →
+      закрытие): при продолжении падения даёт плюс — гасит хвост.
+
+    Короткий ОДИН на позицию (после восстановления не переоткрывается —
+    второй провал не хеджируется; это занижает пользу, консервативно).
+    `short_notional` — нотионал короткого долей капитала (β_s·нотионал
+    лонга). Возвращает pnl короткого долей капитала, либо None, если
+    просадка до триггера не дошла (короткого не было вовсе). Чистая функция.
+    """
+    if trigger_px <= 0:
+        return None
+    opened = False
+    for (bt, _o, hi, lo, _cl, _v) in bars:
+        if bt > exit_ts:
+            break
+        if not opened:
+            if lo <= trigger_px:               # просадка пробила триггер вниз
+                opened = True                  # вход; восстановление — со след. бара
+            continue                            # на баре входа выхода не ищем
+        if hi >= trigger_px:                    # восстановление сквозь уровень
+            return 0.0                          # вошли и вышли по триггеру — pnl 0
+    if not opened:
+        return None                             # просадки до триггера не было
+    # восстановления не случилось — закрываем с лонгом по его цене выхода
+    return short_notional * (trigger_px - exit_px) / trigger_px

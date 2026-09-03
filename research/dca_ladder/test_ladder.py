@@ -292,7 +292,74 @@ def test_single_stop_and_take():
     print("ok  контроль: одиночный вход стоп/тейк по уровням")
 
 
+def test_same_coin_short_no_trigger():
+    # Цена не доходит до триггера 95 (просадки нет) — короткого не было → None.
+    bars = [(t, 100, 101, 99.0, 100, 0) for t in range(4)]
+    assert L.same_coin_short(bars, 95.0, 3, 90.0, 1.0) is None
+    print("ok  шорт той же монеты: нет просадки до триггера → None")
+
+
+def test_same_coin_short_recovers_to_zero():
+    # Ныряет к триггеру (низ 94 ≤ 95) на баре входа, СЛЕДУЮЩИЙ бар
+    # восстанавливает (верх 97 ≥ 95) — короткий вышел ~в ноль по уровню.
+    bars = [
+        (0, 100, 100.0, 100.0, 100, 0),
+        (1, 96, 96.0, 94.0, 95, 0),      # вход короткого (низ ≤ 95)
+        (2, 96, 97.0, 95.5, 96, 0),      # восстановление (верх ≥ 95)
+        (3, 98, 99.0, 97.0, 98, 0),
+    ]
+    r = L.same_coin_short(bars, 95.0, 5, 98.0, 1.0)
+    assert r == 0.0, r
+    print("ok  шорт: восстановление сквозь триггер → 0 (лонг едет сам)")
+
+
+def test_same_coin_short_crash_gains():
+    # Ныряет к триггеру и продолжает падать без восстановления; лонг вышел
+    # по 82 (напр. ликвидация) — короткий держится до выхода, гасит хвост.
+    bars = [
+        (0, 100, 100.0, 100.0, 100, 0),
+        (1, 96, 96.0, 94.0, 95, 0),      # вход короткого
+        (2, 90, 90.0, 88.0, 89, 0),      # верх 90 < 95 — держим
+        (3, 85, 85.0, 82.0, 83, 0),      # верх 85 < 95 — держим до выхода
+    ]
+    r = L.same_coin_short(bars, 95.0, 3, 82.0, 1.0)
+    exp = 1.0 * (95.0 - 82.0) / 95.0     # (триггер − цена выхода)/триггер
+    assert abs(r - exp) < 1e-12, (r, exp)
+    assert r > 0, r
+    print(f"ok  шорт: крах без восстановления → +{r*100:.1f}% (гасит хвост)")
+
+
 # --- отрицательные контроли -----------------------------------------------
+
+def _control_short_recovers_on_entry_bar():
+    """Если восстановление проверять НА баре входа (у него верх ≥ триггера
+    почти всегда), крах закрылся бы в ноль — тест краха обязан упасть."""
+    orig = L.same_coin_short
+
+    def buggy(bars, trigger_px, exit_ts, exit_px, short_notional):
+        if trigger_px <= 0:
+            return None
+        opened = False
+        for (bt, _o, hi, lo, _cl, _v) in bars:
+            if bt > exit_ts:
+                break
+            if not opened and lo <= trigger_px:
+                opened = True
+            if opened and hi >= trigger_px:      # БАГ: и на баре входа
+                return 0.0
+        if not opened:
+            return None
+        return short_notional * (trigger_px - exit_px) / trigger_px
+    L.same_coin_short = buggy
+    try:
+        try:
+            test_same_coin_short_crash_gains()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.same_coin_short = orig
+
 
 def _control_dca_no_floor():
     """Пол игнорируется — сделка идёт до ликвидации/срока, не 'пол'."""
@@ -397,6 +464,9 @@ TESTS = [
     test_dca_capit_floor_in_the_red,
     test_dca_liquidation_gap,
     test_single_stop_and_take,
+    test_same_coin_short_no_trigger,
+    test_same_coin_short_recovers_to_zero,
+    test_same_coin_short_crash_gains,
 ]
 
 
@@ -409,7 +479,9 @@ def main():
     assert _control_rungs_never_fill(), "контроль заполнения рунгов не кусается"
     assert _control_dca_no_floor(), "контроль пола капитуляции не кусается"
     assert _control_dca_take_ignored(), "контроль тейка не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 6 отрицательных контролей "
+    assert _control_short_recovers_on_entry_bar(), \
+        "контроль бара входа короткого не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; 7 отрицательных контролей "
           f"кусаются")
 
 
