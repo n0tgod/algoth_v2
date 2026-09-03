@@ -50,9 +50,9 @@ D1 открывал лестницу на каждом имени каждые 2
 """
 
 import argparse
+import bisect
 import json
 import os
-import statistics as st
 import subprocess
 import sys
 import time
@@ -77,6 +77,14 @@ import levels as LV                                          # noqa: E402
 # --- объявленная сетка (до прогона) ---------------------------------------
 SHEETS = os.path.join(RESEARCH, "s8_loop", "out", "model_sit", "sheets.jsonl")
 ROOT = os.path.join(RESEARCH, "b1_book", "out")
+# Гейт книги: реплеим ТОЛЬКО выборы, которые ситуационная книга реально
+# открывает (её вход = «сигнал модели», выбор владельца). Полное сечение
+# журнала — 840 тыс. ног, гейт режет до тех, что книга торгует; иначе
+# меряли бы весь кросс-срез, а не выборы, и 96 ч баров на ногу × 495 тыс.
+# лонгов неисполнимы. Скидку/взведение сканера v11–v13 реплей не
+# воспроизводит (как турнир) — гейтованные ноги суть кандидаты книги.
+MIN_EDGE_BP = 33.0                # SIT_MIN_EDGE_BP (гейт края)
+MIN_RR = 2.0                      # SIT_MIN_RR (гейт отношения)
 BACK_H = 24                       # окно перед входом для структурных уровней
 HOLD_H = 72                       # предельное удержание/капитуляция, часов
 N_RUNGS = 4                       # база + до трёх доливов вниз
@@ -116,26 +124,30 @@ def structural_rungs(entry, level_prices, min_gap, n_rungs):
     return rungs
 
 
-def read_split(root, sym, at, back_h, fwd_h, src=None):
-    """Бары [at−back_h, at+fwd_h] и индекс первого бара с t ≥ at.
+def split_window(bars, ts, at, back_h, fwd_h):
+    """Окно [at−back_h, at+fwd_h] из УЖЕ прочитанного ряда символа.
 
-    Возвращает (bars_all, now_i) или None, если баров нет либо первый бар
-    входа отсутствует. Бары — 6-кортежи (t, open, high, low, close, qv).
+    `bars` — весь ряд символа (сорт. по времени), `ts` — список его меток
+    (кэш, чтобы не пересобирать на каждую ногу). Возвращает (окно, now_i —
+    индекс первого бара с t ≥ at ВНУТРИ окна) или None. Много гейтованных
+    выборов делят символ, и читать перекрывающиеся 96-часовые окна на
+    каждую ногу — главная цена прогона; кэш на символ её снимает.
     """
     a = at - back_h * 3600
     b = at + fwd_h * 3600
-    get = src.bars if src else (lambda s, x, y: SW.read_bars(root, s, x, y))
-    bars = get(sym, a, b)
-    if not bars:
+    i0 = bisect.bisect_left(ts, a)
+    i1 = bisect.bisect_right(ts, b)
+    win = bars[i0:i1]
+    if not win:
         return None
     now_i = None
-    for i, bb in enumerate(bars):
+    for i, bb in enumerate(win):
         if bb[0] >= at:
             now_i = i
             break
-    if now_i is None or now_i >= len(bars) - 1:
+    if now_i is None or now_i >= len(win) - 1:
         return None                                  # нет баров после входа
-    return bars, now_i
+    return win, now_i
 
 
 def build_levels(bars, now_i):
@@ -157,11 +169,20 @@ def run(limit=None, src=None, log=print):
     t_run = time.time()
     tiers_all = instruments_tiers()
     legs = TNT.legs_from_sheets([SHEETS], log=log)
-    longs = [g for g in legs if g["side"] == "long"]
-    log(f"ног всего {len(legs)}, лонгов {len(longs)}"
+    longs = [g for g in legs if g["side"] == "long"
+             and abs(g["fwd"]) >= MIN_EDGE_BP and (g["rr"] or 0) >= MIN_RR]
+    log(f"ног всего {len(legs)}, лонгов под гейтом книги "
+        f"(край≥{MIN_EDGE_BP}, RR≥{MIN_RR}) {len(longs)}"
         + (f", лимит {limit}" if limit else ""))
     if limit:
         longs = longs[:limit]
+
+    # группируем выборы по символу: ряд символа читается ОДИН раз на весь
+    # его диапазон, окна нарезаются срезом (split_window)
+    by_sym = {}
+    for g in longs:
+        by_sym.setdefault(g["sym"], []).append(g)
+    log(f"символов {len(by_sym)}")
 
     arms = {a: {"pnl": [], "liq": 0, "ruin": 0, "day": {}}
             for a in ("B", "H", "S")}
@@ -171,72 +192,93 @@ def run(limit=None, src=None, log=print):
     n = 0
     skipped = 0
     said = time.time()
-    for k, g in enumerate(longs):
+    done_sym = 0
+    get = src.bars if src else (lambda s, x, y: SW.read_bars(ROOT, s, x, y))
+    for sym, glist in by_sym.items():
+        done_sym += 1
         if time.time() - said > 30:
-            log(f"  {k}/{len(longs)}  взято {n}")
+            log(f"  символ {done_sym}/{len(by_sym)}  взято {n}")
             said = time.time()
-        rs = read_split(ROOT, g["sym"], g["at"], BACK_H, HOLD_H, src=src)
-        if rs is None:
-            skipped += 1
+        a0 = min(gg["at"] for gg in glist) - BACK_H * 3600
+        b1 = max(gg["at"] for gg in glist) + HOLD_H * 3600
+        bars = get(sym, a0, b1)
+        if not bars:
+            skipped += len(glist)
             continue
-        bars, now_i = rs
-        hold = bars[now_i:]
-        entry = float(hold[0][1])
-        if entry <= 0:
-            skipped += 1
-            continue
-        # уровни выхода из обещаний модели, якорь — вход (как в турнире)
-        take_px = entry * (1 + g["fav"] / 1e4)       # mfe (выше входа у лонга)
-        stop_px = entry * (1 + g["adv_q"] / 1e4)     # исполняемый стоп книги
-        if not (take_px > entry and 0 < stop_px < entry):
-            skipped += 1
-            continue
-        tiers = tiers_all.get(g["sym"]) or []
+        ts = [bb[0] for bb in bars]
+        tiers = tiers_all.get(sym) or []
         look = lambda notl: L.mmr_for_notional(tiers, notl, flat=FLAT_MMR)
-
-        # структурные рунги и §5-плечо
-        lv = build_levels(bars, now_i)
-        rungs = structural_rungs(entry, list(lv), MIN_ADD_GAP, N_RUNGS)
-        if len(rungs) < 2:
-            no_add += 1
-            lev_s = 1.0                              # нет резерва — нет рычага
-            d_max = 0.0
-        else:
-            d_max = (entry - rungs[-1]) / entry
-            lev_s = L.max_leverage(rungs, WEIGHTS[:len(rungs)], 1.0, entry,
-                                   d_max, look, SURVIVE_MULT)
-            if lev_s <= 0:                           # забор отказал лестнице
+        for g in glist:
+            stt = _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist)
+            if stt is None:
+                skipped += 1
+                continue
+            if stt == "no_add":
                 no_add += 1
-                lev_s, d_max, rungs = 1.0, 0.0, [entry]
-
-        # руина: ряд имени кончился внутри окна удержания
-        is_ruin = int(hold[-1][0] < g["at"] + HOLD_H * 3600 - 3600
-                      and len(hold) < 30)
-
-        # рука B — книга: одиночный вход 1×, стоп + тейк
-        b = L.simulate_single(hold, 1.0, 1.0, look(1.0),
-                              take_px=take_px, stop_px=stop_px)
-        # рука H — одиночный вход при §5-плече лестницы, стоп + тейк
-        h = L.simulate_single(hold, 1.0, lev_s, look(1.0 * lev_s),
-                              take_px=take_px, stop_px=stop_px)
-        # рука S — DCA структурный: тейк + пол капитуляции
-        wS = WEIGHTS[:len(rungs)]
-        s = L.simulate_dca(hold, rungs, wS, 1.0, lev_s, look(1.0 * lev_s),
-                           take_px=take_px, floor_frac=FLOOR_FRAC)
-
-        for nm, res in (("B", b), ("H", h), ("S", s)):
-            arms[nm]["pnl"].append(res["pnl_frac"])
-            arms[nm]["liq"] += int(res.get("exit") == "ликвидация")
-            arms[nm]["ruin"] += is_ruin
-            day = time.strftime("%Y-%m-%d", time.gmtime(g["at"]))
-            arms[nm]["day"][day] = arms[nm]["day"].get(day, 0.0) \
-                + res["pnl_frac"]
-        depth_hist.append(s["depth"])
-        lev_hist.append(lev_s)
-        n += 1
-
+            n += 1
     return measures(arms, n, skipped, no_add, depth_hist, lev_hist,
                     time.time() - t_run)
+
+
+def _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist):
+    """Обработать один выбор на прочитанном ряде символа.
+
+    Возвращает: None — пропуск (нет окна/геометрии); "no_add" — без
+    структурного долива (лестница вырождается в одиночный вход); "ok".
+    Побочно дописывает pnl рук и гистограммы. Вынесено, чтобы кэш символа
+    и обработка ноги были раздельно проверяемы.
+    """
+    rs = split_window(bars, ts, g["at"], BACK_H, HOLD_H)
+    if rs is None:
+        return None
+    win, now_i = rs
+    hold = win[now_i:]
+    entry = float(hold[0][1])
+    if entry <= 0:
+        return None
+    # уровни выхода из обещаний модели, якорь — вход (как в турнире)
+    take_px = entry * (1 + g["fav"] / 1e4)       # mfe (выше входа у лонга)
+    stop_px = entry * (1 + g["adv_q"] / 1e4)     # исполняемый стоп книги
+    if not (take_px > entry and 0 < stop_px < entry):
+        return None
+
+    # структурные рунги и §5-плечо
+    lv = build_levels(win, now_i)
+    rungs = structural_rungs(entry, list(lv), MIN_ADD_GAP, N_RUNGS)
+    status = "ok"
+    if len(rungs) < 2:
+        status, lev_s = "no_add", 1.0            # нет резерва — нет рычага
+    else:
+        d_max = (entry - rungs[-1]) / entry
+        lev_s = L.max_leverage(rungs, WEIGHTS[:len(rungs)], 1.0, entry,
+                               d_max, look, SURVIVE_MULT)
+        if lev_s <= 0:                           # забор отказал лестнице
+            status, lev_s, rungs = "no_add", 1.0, [entry]
+
+    # руина: ряд имени кончился внутри окна удержания
+    is_ruin = int(hold[-1][0] < g["at"] + HOLD_H * 3600 - 3600
+                  and len(hold) < 30)
+
+    # рука B — книга: одиночный вход 1×, стоп + тейк
+    b = L.simulate_single(hold, 1.0, 1.0, look(1.0),
+                          take_px=take_px, stop_px=stop_px)
+    # рука H — одиночный вход при §5-плече лестницы, стоп + тейк
+    h = L.simulate_single(hold, 1.0, lev_s, look(1.0 * lev_s),
+                          take_px=take_px, stop_px=stop_px)
+    # рука S — DCA структурный: тейк + пол капитуляции
+    wS = WEIGHTS[:len(rungs)]
+    s = L.simulate_dca(hold, rungs, wS, 1.0, lev_s, look(1.0 * lev_s),
+                       take_px=take_px, floor_frac=FLOOR_FRAC)
+
+    day = time.strftime("%Y-%m-%d", time.gmtime(g["at"]))
+    for nm, res in (("B", b), ("H", h), ("S", s)):
+        arms[nm]["pnl"].append(res["pnl_frac"])
+        arms[nm]["liq"] += int(res.get("exit") == "ликвидация")
+        arms[nm]["ruin"] += is_ruin
+        arms[nm]["day"][day] = arms[nm]["day"].get(day, 0.0) + res["pnl_frac"]
+    depth_hist.append(s["depth"])
+    lev_hist.append(lev_s)
+    return status
 
 
 def measures(arms, n, skipped, no_add, depth_hist, lev_hist, secs):

@@ -42,6 +42,26 @@ def test_rungs_cap_at_n():
     print(f"ok  не больше N рунгов: {r}")
 
 
+def test_split_window():
+    # Часовые бары 0..19ч; окно вокруг 5ч, назад 2ч вперёд 3ч → бары 3..8ч,
+    # now_i указывает на 5ч.
+    bars = [(t, 1.0, 1.0, 1.0, 1.0, 0.0) for t in range(0, 20 * 3600, 3600)]
+    ts = [b[0] for b in bars]
+    win, now_i = D.split_window(bars, ts, 5 * 3600, 2, 3)
+    assert [b[0] for b in win] == [3 * 3600, 4 * 3600, 5 * 3600, 6 * 3600,
+                                   7 * 3600, 8 * 3600], [b[0] for b in win]
+    assert win[now_i][0] == 5 * 3600, win[now_i][0]
+    print(f"ok  окно среза: {len(win)} баров, вход на {win[now_i][0]//3600}ч")
+
+
+def test_split_window_no_future():
+    # Вход за последним баром — нет баров после входа → None.
+    bars = [(t, 1.0, 1.0, 1.0, 1.0, 0.0) for t in range(0, 5 * 3600, 3600)]
+    ts = [b[0] for b in bars]
+    assert D.split_window(bars, ts, 10 * 3600, 2, 3) is None
+    print("ok  вход за концом ряда → None")
+
+
 def _control_no_gap_check():
     """Без проверки запаса слишком близкие уровни попали бы в рунги —
     тест «слишком близкий пропущен» обязан упасть."""
@@ -67,6 +87,8 @@ TESTS = [
     test_rungs_skip_too_close,
     test_rungs_ignore_above,
     test_rungs_cap_at_n,
+    test_split_window,
+    test_split_window_no_future,
 ]
 
 
