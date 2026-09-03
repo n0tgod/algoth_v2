@@ -62,6 +62,86 @@ def test_split_window_no_future():
     print("ok  вход за концом ряда → None")
 
 
+def test_px_at():
+    # close = метка бара; минутные бары 0..9 мин.
+    bars = [(t, 0, 0, 0, float(t), 0) for t in range(0, 10 * 60, 60)]
+    ts = [b[0] for b in bars]
+    assert D.px_at(bars, ts, 5 * 60) == 5 * 60          # ровно на баре
+    assert D.px_at(bars, ts, 5 * 60 + 30) == 5 * 60     # между → предыдущий
+    assert D.px_at(bars, ts, -1) is None                # до первого бара
+    assert D.px_at([], [], 100) is None                 # нет баров
+    print("ok  px_at: последний бар ≤ t, None до начала ряда")
+
+
+def _hedge_case():
+    """Синтетика для бета-хеджа: build_levels пусто → один рунг, плечо 1×;
+    BTC ПАДАЕТ за окно → короткий BTC даёт плюс. Возвращает всё для сверки."""
+    entry = 100.0
+    at = 1000 * 3600
+    hours = list(range(998, 1006))                      # 998..1005ч
+    bars = []
+    for hh in hours:
+        px = 100.0 if hh < 1000 else 100.0 - (hh - 1000)   # 100,100,100,99,…95
+        bars.append((hh * 3600, px, px + 0.5, px - 0.5, px, 1000.0))
+    ts = [b[0] for b in bars]
+    # BTC падает 60000 → ниже, шаг 100 в час, шире окна выборки
+    btc = [(hh * 3600, 60000.0 - (hh - 998) * 100.0, 0.0, 0.0,
+            60000.0 - (hh - 998) * 100.0, 0.0) for hh in range(996, 1008)]
+    btc_ts = [b[0] for b in btc]
+    g = {"sym": "AAA", "at": float(at), "beta": 0.8, "fwd": 100.0,
+         "rr": 1.0, "side": "long", "fav": 5000.0, "adv_q": -5000.0}
+    return g, bars, ts, btc, btc_ts, entry
+
+
+def test_hedge_arm_arithmetic():
+    # build_levels пусто → рунг один, плечо §5 = 1×; SH = S + хедж, знак
+    # хеджа закреплён формулой −β·нотионал·(bx/be−1).
+    orig = D.build_levels
+    D.build_levels = lambda bars, now_i: D.np.array([])
+    try:
+        g, bars, ts, btc, btc_ts, entry = _hedge_case()
+        look = (lambda notl: D.L.mmr_for_notional([], notl, flat=D.FLAT_MMR))
+        arms = {a: {"pnl": [], "liq": 0, "ruin": 0, "day": {}, "ok": 0}
+                for a in ("B", "H", "S", "SH")}
+        st = D._process_leg(g, bars, ts, look, arms, [], [], btc, btc_ts)
+        assert st == "no_add", st
+        # независимо пересчитать S и хедж
+        win, now_i = D.split_window(bars, ts, g["at"], D.BACK_H, D.HOLD_H)
+        hold = win[now_i:]
+        take_px = entry * (1 + g["fav"] / 1e4)
+        s = D.L.simulate_dca(hold, [entry], D.WEIGHTS[:1], 1.0, 1.0, look(1.0),
+                             take_px=take_px, floor_frac=D.FLOOR_FRAC)
+        be = D.px_at(btc, btc_ts, hold[0][0])
+        bx = D.px_at(btc, btc_ts, s["exit_ts"])
+        hedge = -g["beta"] * s["filled_notional"] * (bx / be - 1.0)
+        exp = s["pnl_frac"] + hedge
+        got = arms["SH"]["pnl"][-1]
+        assert abs(got - exp) < 1e-12, (got, exp)
+        assert arms["SH"]["ok"] == 1, arms["SH"]["ok"]
+        # BTC упал → короткий BTC в плюс → SH ВЫШЕ голого S
+        assert got > arms["S"]["pnl"][-1], (got, arms["S"]["pnl"][-1])
+        print(f"ok  бета-хедж: SH={got:+.4f} = S{arms['S']['pnl'][-1]:+.4f} "
+              f"+ хедж{hedge:+.4f}")
+    finally:
+        D.build_levels = orig
+
+
+def _control_flat_btc():
+    """Если BTC не движется (be == bx), хедж = 0 и SH == S — проверка
+    «SH выше S при падении BTC» обязана упасть. Доказывает, что тест
+    ДЕЙСТВИТЕЛЬНО меряет хедж, а не проходит на любых числах."""
+    orig_px = D.px_at
+    D.px_at = lambda bars, ts, t: 60000.0
+    try:
+        try:
+            test_hedge_arm_arithmetic()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D.px_at = orig_px
+
+
 def _control_no_gap_check():
     """Без проверки запаса слишком близкие уровни попали бы в рунги —
     тест «слишком близкий пропущен» обязан упасть."""
@@ -89,6 +169,8 @@ TESTS = [
     test_rungs_cap_at_n,
     test_split_window,
     test_split_window_no_future,
+    test_px_at,
+    test_hedge_arm_arithmetic,
 ]
 
 
@@ -96,7 +178,8 @@ def main():
     for t in TESTS:
         t()
     assert _control_no_gap_check(), "контроль запаса не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; контроль запаса кусается")
+    assert _control_flat_btc(), "контроль плоского BTC не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; контроли запаса и хеджа кусаются")
 
 
 if __name__ == "__main__":

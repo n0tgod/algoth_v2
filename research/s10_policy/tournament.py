@@ -164,9 +164,11 @@ def _leg(row, arm, hour, at):
         return None
     risk = abs(adv_q)
     fz = row.get("fwd_z")
+    bta = row.get("beta")
     return {"arm": arm or "gbm", "sym": row.get("sym"), "hour": hour,
             "at": at, "side": side, "fwd": float(fwd), "px": float(px),
             "fz": None if fz is None else float(fz),
+            "beta": None if bta is None else float(bta),
             "adv_q": adv_q, "adv_m": adv_m, "fav": fav,
             "rr": abs(fav) / risk if risk else None}
 

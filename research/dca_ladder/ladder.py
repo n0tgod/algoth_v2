@@ -259,15 +259,18 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None):
     notional = capital * leverage
     qty = notional / entry
     p_liq = liq_price(entry, qty, capital, mmr)        # средняя не меняется
-    for (_t, _o, hi, lo, cl, _v) in bars:
+    for (bt, _o, hi, lo, cl, _v) in bars:
         if lo <= p_liq:
-            return {"exit": "ликвидация", "pnl_frac": -1.0}
+            return {"exit": "ликвидация", "pnl_frac": -1.0, "exit_ts": bt}
         if stop_px is not None and lo <= stop_px:
-            return {"exit": "стоп", "pnl_frac": qty * (stop_px - entry) / capital}
+            return {"exit": "стоп", "exit_ts": bt,
+                    "pnl_frac": qty * (stop_px - entry) / capital}
         if take_px is not None and hi >= take_px:
-            return {"exit": "тейк", "pnl_frac": qty * (take_px - entry) / capital}
-    cl = float(bars[-1][4])
-    return {"exit": "срок", "pnl_frac": qty * (cl - entry) / capital}
+            return {"exit": "тейк", "exit_ts": bt,
+                    "pnl_frac": qty * (take_px - entry) / capital}
+    lb = bars[-1]
+    return {"exit": "срок", "exit_ts": lb[0],
+            "pnl_frac": qty * (float(lb[4]) - entry) / capital}
 
 
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
@@ -311,24 +314,26 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     filled[0] = True                    # база заполнена входом
     cash = weights[0] * notional
     qty = cash / entry                  # по ФАКТИЧЕСКОЙ цене входа
-    for (_t, _o, hi, lo, cl, _v) in bars:
+    for (bt, _o, hi, lo, cl, _v) in bars:
         filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
                                         rung_prices, weights, notional)
         avg = cash / qty
         p_liq = liq_price(avg, qty, capital, mmr)
         if lo <= p_liq:
-            return {"exit": "ликвидация", "pnl_frac": -1.0,
+            return {"exit": "ликвидация", "pnl_frac": -1.0, "exit_ts": bt,
                     "depth": sum(filled), "avg": avg, "filled_notional": cash}
         if floor_frac is not None and all(filled):
             floor_px = p_liq + floor_frac * (entry - p_liq)
             if lo <= floor_px:                 # подошли к ликвидации — режем
                 return {"exit": "пол", "pnl_frac": qty * (cl - avg) / capital,
-                        "depth": sum(filled), "avg": avg,
+                        "exit_ts": bt, "depth": sum(filled), "avg": avg,
                         "filled_notional": cash}
         if take_px is not None and hi >= take_px:
             return {"exit": "тейк", "pnl_frac": qty * (take_px - avg) / capital,
-                    "depth": sum(filled), "avg": avg, "filled_notional": cash}
-    cl = float(bars[-1][4])
+                    "exit_ts": bt, "depth": sum(filled), "avg": avg,
+                    "filled_notional": cash}
+    lb = bars[-1]
     avg = cash / qty
-    return {"exit": "срок", "pnl_frac": qty * (cl - avg) / capital,
-            "depth": sum(filled), "avg": avg, "filled_notional": cash}
+    return {"exit": "срок", "pnl_frac": qty * (float(lb[4]) - avg) / capital,
+            "exit_ts": lb[0], "depth": sum(filled), "avg": avg,
+            "filled_notional": cash}

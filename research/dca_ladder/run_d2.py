@@ -77,6 +77,7 @@ import levels as LV                                          # noqa: E402
 # --- объявленная сетка (до прогона) ---------------------------------------
 SHEETS = os.path.join(RESEARCH, "s8_loop", "out", "model_sit", "sheets.jsonl")
 ROOT = os.path.join(RESEARCH, "b1_book", "out")
+MARKET = "BTCUSDT"                 # прокси рыночной волны для бета-хеджа (§б)
 # Гейт книги: реплеим ТОЛЬКО выборы, которые ситуационная книга реально
 # открывает (её вход = «сигнал модели», выбор владельца). Полное сечение
 # журнала — 840 тыс. ног, гейт режет до тех, что книга торгует; иначе
@@ -165,6 +166,21 @@ def build_levels(bars, now_i):
     return prices
 
 
+def px_at(bars, ts, t):
+    """Цена закрытия рыночной ноги (BTC) на последнем баре с временем ≤ t.
+
+    Хедж мерится закрытие-в-закрытие: вход хеджа — закрытие бара входа
+    лонга, выход — закрытие бара выхода лонга (bisect по меткам `ts`).
+    Нет бара ≤ t (событие раньше первого бара) — None, хедж не считается.
+    """
+    if not bars:
+        return None
+    i = bisect.bisect_right(ts, t) - 1
+    if i < 0:
+        return None
+    return float(bars[i][4])
+
+
 def run(limit=None, src=None, log=print):
     t_run = time.time()
     tiers_all = instruments_tiers()
@@ -184,8 +200,8 @@ def run(limit=None, src=None, log=print):
         by_sym.setdefault(g["sym"], []).append(g)
     log(f"символов {len(by_sym)}")
 
-    arms = {a: {"pnl": [], "liq": 0, "ruin": 0, "day": {}}
-            for a in ("B", "H", "S")}
+    arms = {a: {"pnl": [], "liq": 0, "ruin": 0, "day": {}, "ok": 0}
+            for a in ("B", "H", "S", "SH")}
     depth_hist = []                                  # глубина лестницы S
     lev_hist = []                                    # плечо §5
     no_add = 0                                       # выборов без структурного долива
@@ -194,6 +210,18 @@ def run(limit=None, src=None, log=print):
     said = time.time()
     done_sym = 0
     get = src.bars if src else (lambda s, x, y: SW.read_bars(ROOT, s, x, y))
+    # рыночная нога бета-хеджа (§б): BTC читается ОДИН раз на весь диапазон
+    # выборов; хедж = короткий BTC на β·нотионал лонга, открыт с входом лонга,
+    # закрыт с его выходом (`exit_ts`). Нет BTC — SH не считается (nan).
+    if longs:
+        ga = min(g["at"] for g in longs) - BACK_H * 3600
+        gb = max(g["at"] for g in longs) + HOLD_H * 3600
+        btc_bars = get(MARKET, ga, gb)
+    else:
+        btc_bars = []
+    btc_ts = [bb[0] for bb in btc_bars]
+    if not btc_bars:
+        log(f"BTC ({MARKET}) баров нет — бета-хедж (рука SH) не считается")
     for sym, glist in by_sym.items():
         done_sym += 1
         if time.time() - said > 30:
@@ -209,7 +237,8 @@ def run(limit=None, src=None, log=print):
         tiers = tiers_all.get(sym) or []
         look = lambda notl: L.mmr_for_notional(tiers, notl, flat=FLAT_MMR)
         for g in glist:
-            stt = _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist)
+            stt = _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist,
+                               btc_bars, btc_ts)
             if stt is None:
                 skipped += 1
                 continue
@@ -220,13 +249,15 @@ def run(limit=None, src=None, log=print):
                     time.time() - t_run)
 
 
-def _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist):
+def _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist,
+                 btc_bars=None, btc_ts=None):
     """Обработать один выбор на прочитанном ряде символа.
 
     Возвращает: None — пропуск (нет окна/геометрии); "no_add" — без
     структурного долива (лестница вырождается в одиночный вход); "ok".
     Побочно дописывает pnl рук и гистограммы. Вынесено, чтобы кэш символа
-    и обработка ноги были раздельно проверяемы.
+    и обработка ноги были раздельно проверяемы. `btc_bars`/`btc_ts` —
+    рыночная нога бета-хеджа (рука SH); нет их или беты — SH = nan.
     """
     rs = split_window(bars, ts, g["at"], BACK_H, HOLD_H)
     if rs is None:
@@ -270,12 +301,36 @@ def _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist):
     s = L.simulate_dca(hold, rungs, wS, 1.0, lev_s, look(1.0 * lev_s),
                        take_px=take_px, floor_frac=FLOOR_FRAC)
 
+    # рука SH — S плюс бета-хедж рынком (§б): короткий BTC на β·нотионал
+    # лонга, открыт с входом лонга (закрытие бара входа), закрыт с его
+    # выходом (`s["exit_ts"]`). Короткий BTC даёт плюс при падении BTC —
+    # поддерживает деп ровно в обвале, когда лонг проседает. Единицы те
+    # же, что у S (доля капитала позиции = 1.0): нотионал лонга уже
+    # захеджирован в `filled_notional`. Нет беты или BTC — SH = nan.
+    sh_pnl = float("nan")
+    if g.get("beta") is not None and btc_bars:
+        be = px_at(btc_bars, btc_ts, hold[0][0])
+        bx = px_at(btc_bars, btc_ts, s["exit_ts"])
+        if be and bx and be > 0:
+            hedge = -g["beta"] * s["filled_notional"] * (bx / be - 1.0)
+            sh_pnl = s["pnl_frac"] + hedge
+
     day = time.strftime("%Y-%m-%d", time.gmtime(g["at"]))
     for nm, res in (("B", b), ("H", h), ("S", s)):
         arms[nm]["pnl"].append(res["pnl_frac"])
+        arms[nm]["ok"] += 1
         arms[nm]["liq"] += int(res.get("exit") == "ликвидация")
         arms[nm]["ruin"] += is_ruin
         arms[nm]["day"][day] = arms[nm]["day"].get(day, 0.0) + res["pnl_frac"]
+    # SH хранится ВЫРОВНЕННО по позициям (тот же индекс, что B/H/S) —
+    # nan там, где хеджа нет; парная разность считается по маске (measures)
+    a = arms["SH"]
+    a["pnl"].append(sh_pnl)
+    if sh_pnl == sh_pnl:                             # не nan
+        a["ok"] += 1
+        a["liq"] += int(s.get("exit") == "ликвидация")   # ликвид. ЛОНГА
+        a["ruin"] += is_ruin
+        a["day"][day] = a["day"].get(day, 0.0) + sh_pnl
     depth_hist.append(s["depth"])
     lev_hist.append(lev_s)
     return status
@@ -296,33 +351,51 @@ def measures(arms, n, skipped, no_add, depth_hist, lev_hist, secs):
     if not n:
         return out
     for nm, a in arms.items():
-        pnl = np.array(a["pnl"])
-        win = pnl[pnl > 0]
+        pnl = np.array(a["pnl"], dtype=float)
+        good = pnl[~np.isnan(pnl)]              # у SH бывают nan (нет хеджа)
+        ok = a["ok"]
+        if len(good) == 0:
+            out["arms"][nm] = {"ok": 0}
+            continue
+        win = good[good > 0]
         med_win = float(np.median(win)) if len(win) else float("nan")
         days = sorted(a["day"])
         cur = np.cumsum([a["day"][d] for d in days]) if days else np.array([])
         dd = float(np.min(cur - np.maximum.accumulate(cur))) if len(cur) else 0.0
         out["arms"][nm] = {
-            "liq_freq": round(a["liq"] / n, 4),
-            "ruin_freq": round(a["ruin"] / n, 4),
-            "median": round(float(np.median(pnl)), 4),
-            "mean": round(float(np.mean(pnl)), 4),
-            "green": round(float(np.mean(pnl > 0)), 3),
-            "worst": round(float(np.min(pnl)), 3),
-            "bite": (round(abs(float(np.min(pnl))) / med_win, 1)
+            "ok": ok,
+            "liq_freq": round(a["liq"] / ok, 4) if ok else None,
+            "ruin_freq": round(a["ruin"] / ok, 4) if ok else None,
+            "median": round(float(np.median(good)), 4),
+            "mean": round(float(np.mean(good)), 4),
+            "green": round(float(np.mean(good > 0)), 3),
+            "worst": round(float(np.min(good)), 3),
+            "bite": (round(abs(float(np.min(good))) / med_win, 1)
                      if med_win and med_win > 0 else None),
             "curve_dd": round(dd, 3),
         }
-    # парные разности по позициям (те же выборы у всех рук)
-    B = np.array(arms["B"]["pnl"])
-    H = np.array(arms["H"]["pnl"])
-    S = np.array(arms["S"]["pnl"])
+    # парные разности по позициям (те же выборы у всех рук; выравнивание
+    # по индексу — один и тот же выбор во всех четырёх массивах)
+    B = np.array(arms["B"]["pnl"], dtype=float)
+    H = np.array(arms["H"]["pnl"], dtype=float)
+    S = np.array(arms["S"]["pnl"], dtype=float)
+    SH = np.array(arms["SH"]["pnl"], dtype=float)
     out["paired"] = {
         "S_minus_B_median": round(float(np.median(S - B)), 4),
         "S_beats_B_frac": round(float(np.mean(S > B)), 3),
         "S_minus_H_median": round(float(np.median(S - H)), 4),
         "S_beats_H_frac": round(float(np.mean(S > H)), 3),
     }
+    m = ~np.isnan(SH)                            # где хедж измерим
+    out["paired"]["hedge_ok"] = int(m.sum())
+    out["paired"]["hedge_missing"] = int((~m).sum())
+    if m.any():
+        out["paired"].update({
+            "SH_minus_S_median": round(float(np.median((SH - S)[m])), 4),
+            "SH_beats_S_frac": round(float(np.mean(SH[m] > S[m])), 3),
+            "SH_minus_B_median": round(float(np.median((SH - B)[m])), 4),
+            "SH_beats_B_frac": round(float(np.mean(SH[m] > B[m])), 3),
+        })
     return out
 
 
@@ -344,24 +417,50 @@ def report(s):
     P.append("| рука | ликвид. | руина | медиана | среднее | зелёных | "
              "худшая | укус | просадка |")
     P.append("|---|--:|--:|--:|--:|--:|--:|--:|--:|")
-    names = {"B": "B книга 1×", "H": "H удержание §5", "S": "S DCA структ."}
-    for nm in ("B", "H", "S"):
+    names = {"B": "B книга 1×", "H": "H удержание §5", "S": "S DCA структ.",
+             "SH": "SH DCA + бета-хедж"}
+    for nm in ("B", "H", "S", "SH"):
         a = s["arms"][nm]
+        if not a.get("ok"):                      # SH без единого хеджа
+            P.append(f"| {names[nm]} | — | — | — | — | — | — | — | — |")
+            continue
         bite = a["bite"]
-        P.append(f"| {names[nm]} | {a['liq_freq']*100:.2f} % | "
-                 f"{a['ruin_freq']*100:.2f} % | {a['median']*100:+.2f} % | "
+        lq = f"{a['liq_freq']*100:.2f} %" if a['liq_freq'] is not None else "—"
+        ru = f"{a['ruin_freq']*100:.2f} %" if a['ruin_freq'] is not None else "—"
+        P.append(f"| {names[nm]} | {lq} | {ru} | {a['median']*100:+.2f} % | "
                  f"{a['mean']*100:+.2f} % | {a['green']*100:.1f} % | "
                  f"{a['worst']*100:+.1f} % | "
                  f"{('%.1f' % bite) if bite else '—'} | "
                  f"{a['curve_dd']*100:+.1f} % |")
     pr = s["paired"]
+    P.append(f"\nХедж измерим у {pr['hedge_ok']} позиций, нет беты/BTC у "
+             f"{pr['hedge_missing']}.")
     P.append("\n## Парные разности (те же выборы)\n")
     P.append(f"- **S − B (DCA против нынешней книги): медиана "
              f"{pr['S_minus_B_median']*100:+.2f} %**, S выше B в "
              f"{pr['S_beats_B_frac']*100:.1f} % выборов")
     P.append(f"- **S − H (лестница при одном плече): медиана "
              f"{pr['S_minus_H_median']*100:+.2f} %**, S выше H в "
-             f"{pr['S_beats_H_frac']*100:.1f} % выборов\n")
+             f"{pr['S_beats_H_frac']*100:.1f} % выборов")
+    if "SH_minus_S_median" in pr:
+        P.append(f"- **SH − S (бета-хедж против голого DCA): медиана "
+                 f"{pr['SH_minus_S_median']*100:+.2f} %**, SH выше S в "
+                 f"{pr['SH_beats_S_frac']*100:.1f} % выборов "
+                 f"(на {pr['hedge_ok']} хеджированных)")
+        P.append(f"- **SH − B (бета-хедж против нынешней книги): медиана "
+                 f"{pr['SH_minus_B_median']*100:+.2f} %**, SH выше B в "
+                 f"{pr['SH_beats_B_frac']*100:.1f} % выборов\n")
+    P.append("\n**Хедж (рука SH):** короткий BTC на β·нотионал лонга, открыт "
+             "с входом лонга, закрыт с его выходом; в обвале (лонг падает, "
+             "BTC падает) даёт плюс — поддерживает деп в просадке. Вопрос "
+             "владельца про РИСК, не доход: смотреть худшую, укус и просадку "
+             "SH против S, ценой в медиане. Оговорки хеджа: β — к волне "
+             "универсума (M1), а инструмент хеджа BTC (прокси рынка) — "
+             "приближение; размер сматчен к ИТОГОВОМУ нотионалу лестницы "
+             "(реальный отслеживал бы заполнение, по базе недохеджировал бы — "
+             "но в хвосте лестница заполняется целиком, где хедж и нужен); "
+             "хедж мерится закрытие-в-закрытие BTC, лонг входит по открытию — "
+             "лёгкий базис входа.")
     P.append("\n**Оговорки:** веса видели эти часы (оценка сверху); ранняя "
              "капитуляция рулевого §6 не считается — вердикт по «только пол»; "
              "нуль §8.6 (структура против σ-сетки) отдельной рукой следом; "
