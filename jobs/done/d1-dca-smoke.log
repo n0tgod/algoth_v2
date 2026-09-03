@@ -1,0 +1,17 @@
+== задание d1-dca-smoke ==
+строка: run research/dca_ladder/run_dca.py --interval 1m --smoke --days-limit 3 --no-publish
+начало: 2026-09-03T15:27:05Z
+запускаю: .venv/bin/python research/dca_ladder/run_dca.py --interval 1m --smoke --days-limit 3 --no-publish
+чтение 40 имён…
+/root/algoth_v2/research/dca_ladder/run_dca.py:123: DeprecationWarning: fetch_arrow_table() is deprecated, use to_arrow_table() instead.
+  tbl = con.execute(q).fetch_arrow_table()
+рядов 14
+
+# D1 — потолок DCA-лестницы (смоук 1m)
+
+Диагностика, не вердикт: пороги §9 судит владелец. Реплей по хранилищу A2, забор §5 по тирам D0, уровни σ-сеткой.
+
+Позиций 0, прогон 9.6 с, отсеяно забором 0.
+
+**Позиций ноль** — сечение не собралось (мало имён/истории).
+конец: 2026-09-03T15:27:15Z, код 0

@@ -1,0 +1,20 @@
+{
+ "interval": "1m",
+ "smoke": true,
+ "positions": 0,
+ "secs": 9.6,
+ "liq_freq": null,
+ "ruin_freq": null,
+ "avg_depth": null,
+ "skipped_fence": 0,
+ "params": {
+  "START": "2022-07-01",
+  "STEP": "1h",
+  "EVAL_D": 30,
+  "HOLD_D": 20,
+  "N_RUNGS": 4,
+  "SPACING_SIG": 2.0,
+  "SURVIVE_MULT": 2.0,
+  "FLAT_MMR": 0.02
+ }
+}

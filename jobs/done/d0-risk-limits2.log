@@ -33,3 +33,15 @@
 
 Это ожидаемо для снятых контрактов и означает: D1 обязан назначать делистнутой ноге MMR правилом (дорогой тир по обороту), а не брать из данных.
 конец: 2026-09-03T14:58:17Z, код 0
+публикуется в ветку main:
+ jobs/done/d0-risk-limits.log               |  14 ++
+ jobs/done/d0-risk-limits2.done             |   1 +
+ jobs/done/d0-risk-limits2.log              |  35 ++++
+ jobs/poke.log                              |   3 +
+ research/a1_universe/out/D0-risk-limits.md |   6 +-
+ research/a1_universe/out/risk_limits.json  | 302 +++++++++++++++++++++++++++++
+ 6 files changed, 360 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   6548ac7..1d7ebfd  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
