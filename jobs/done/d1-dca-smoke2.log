@@ -38,3 +38,16 @@
 
 **Что НЕ в числах и оговорки:** нуль «структурные уровни против случайных» (§8.6) — отдельный проход; издержки посимвольной комиссии в pnl лестницы ещё не сняты (первый ответ — на брутто); вход в базу по закрытию бакета t0 — мелкий подарок на многодневном удержании; MMR делистнутой ноги плоский (§10), точный тир площадка не отдаёт. Убыль убытка от лестницы против удержания на 2022–2026 может льстить: выборка — в основном откупленные просадки.
 конец: 2026-09-03T15:32:11Z, код 0
+публикуется в ветку main:
+ jobs/done/d1-dca-smoke.log                   | 13 +++++++++
+ jobs/done/d1-dca-smoke2.done                 |  1 +
+ jobs/done/d1-dca-smoke2.log                  | 40 ++++++++++++++++++++++++++++
+ jobs/poke.log                                |  3 +++
+ research/dca_ladder/out/D1-dca-smoke-1m.json | 20 +++++++++-----
+ research/dca_ladder/out/D1-dca-smoke-1m.md   | 26 ++++++++++++++++--
+ research/s8_loop/out/day_brake.json          |  2 +-
+ 7 files changed, 96 insertions(+), 9 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3166b82..1b7f3f7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

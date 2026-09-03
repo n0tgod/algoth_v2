@@ -1,0 +1,28 @@
+{
+ "interval": "1m",
+ "smoke": false,
+ "positions": 19145,
+ "secs": 236.7,
+ "liq_freq": 0.03254113345521024,
+ "ruin_freq": 0.005327761817706973,
+ "avg_depth": 2.267067119352311,
+ "skipped_fence": 2392,
+ "params": {
+  "START": "2022-07-01",
+  "STEP": "1h",
+  "EVAL_D": 30,
+  "HOLD_D": 20,
+  "N_RUNGS": 4,
+  "SPACING_SIG": 2.0,
+  "SURVIVE_MULT": 2.0,
+  "FLAT_MMR": 0.02
+ },
+ "lad_median": 0.004132999735244349,
+ "hold_median": -0.08534793940362513,
+ "diff_median": 0.09462870326594958,
+ "lad_beats_hold_frac": 0.6393314181248367,
+ "green_frac": 0.5183076521284931,
+ "worst": -1.0,
+ "bite": 11.030798359077473,
+ "curve_dd": -595.9640804075533
+}
