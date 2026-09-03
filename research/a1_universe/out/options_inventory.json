@@ -1,25 +1,100 @@
 {
- "asof": "2026-09-03T23:01:38Z",
+ "asof": "2026-09-03T23:05:32Z",
  "source": "bybit /v5/market/instruments-info category=option",
- "method": "list",
- "probed": 0,
- "rows": 770,
- "base_coins": [
+ "method": "list+probe",
+ "probed": 874,
+ "rows": 4386,
+ "list_coins": [
   "BTC"
+ ],
+ "narrowed": [
+  "DOGE",
+  "ETH",
+  "HYPE",
+  "MNT",
+  "SOL",
+  "XAUT",
+  "XRP"
+ ],
+ "base_coins": [
+  "BTC",
+  "DOGE",
+  "ETH",
+  "HYPE",
+  "MNT",
+  "SOL",
+  "XAUT",
+  "XRP"
  ],
  "by_coin": {
   "BTC": {
-   "contracts": 770,
+   "contracts": 1540,
    "first_ms": 1788508800000,
    "last_ms": 1813910400000,
    "first": "2026-09-04",
    "last": "2027-06-25"
+  },
+  "ETH": {
+   "contracts": 666,
+   "first_ms": 1788508800000,
+   "last_ms": 1813910400000,
+   "first": "2026-09-04",
+   "last": "2027-06-25"
+  },
+  "SOL": {
+   "contracts": 368,
+   "first_ms": 1788508800000,
+   "last_ms": 1793347200000,
+   "first": "2026-09-04",
+   "last": "2026-10-30"
+  },
+  "XRP": {
+   "contracts": 358,
+   "first_ms": 1788508800000,
+   "last_ms": 1793347200000,
+   "first": "2026-09-04",
+   "last": "2026-10-30"
+  },
+  "DOGE": {
+   "contracts": 298,
+   "first_ms": 1788508800000,
+   "last_ms": 1793347200000,
+   "first": "2026-09-04",
+   "last": "2026-10-30"
+  },
+  "HYPE": {
+   "contracts": 374,
+   "first_ms": 1788508800000,
+   "last_ms": 1793347200000,
+   "first": "2026-09-04",
+   "last": "2026-10-30"
+  },
+  "MNT": {
+   "contracts": 342,
+   "first_ms": 1788508800000,
+   "last_ms": 1793347200000,
+   "first": "2026-09-04",
+   "last": "2026-10-30"
+  },
+  "XAUT": {
+   "contracts": 440,
+   "first_ms": 1788508800000,
+   "last_ms": 1793347200000,
+   "first": "2026-09-04",
+   "last": "2026-10-30"
   }
  },
  "universe_crypto": 813,
  "universe_covered": [
-  "BTCUSDT"
+  "BTCUSDT",
+  "DOGEUSDT",
+  "ETHUSDT",
+  "HYPEUSDT",
+  "MNTUSDT",
+  "SOLUSDT",
+  "XAUTUSDT",
+  "XRPUSDT"
  ],
  "probe_errors": [],
- "secs": 0.8
+ "secs": 58.0
 }
