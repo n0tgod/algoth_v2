@@ -329,6 +329,62 @@ def test_same_coin_short_crash_gains():
     print(f"ok  шорт: крах без восстановления → +{r*100:.1f}% (гасит хвост)")
 
 
+def test_liq_price_short_is_above():
+    # Шорт 1× ликвидируется при росте цены ~вдвое: capital = qty·entry,
+    # P_liq = (qty·entry + capital)/(qty·(1+mmr)) = 2·entry/(1+mmr).
+    entry, qty, cap = 100.0, 1.0, 100.0            # нотионал = qty·entry = cap
+    p = L.liq_price(entry, qty, cap, MMR, side="short")
+    assert abs(p - 2 * entry / (1 + MMR)) < 1e-9, p
+    assert p > entry                               # ликвидация ВЫШЕ входа
+    # тот же вызов лонгом — прежнее (ликвидация в нуле у 1×)
+    assert L.liq_price(entry, qty, cap, MMR, side="long") == 0.0
+    print(f"ok  ликвидация шорта выше входа: {p:.1f} (лонг 1× — 0)")
+
+
+def test_single_short_take_stop_liq():
+    # Плечо 2, шорт: ликвидация ≈149, тейк НИЖЕ входа, стоп ВЫШЕ.
+    tk = L.simulate_single(_bars([100.0, 88.0], [100.0, 89.0], [100.0, 95.0],
+                                 entry=100.0),
+                           capital=1.0, leverage=2.0, mmr=MMR,
+                           take_px=90.0, stop_px=112.0, side="short")
+    assert tk["exit"] == "тейк", tk
+    assert abs(tk["pnl_frac"] - 0.02 * (100.0 - 90.0)) < 1e-9, tk   # +
+    st = L.simulate_single(_bars([100.0, 108.0], [100.0, 100.0], [100.0, 112.0],
+                                 entry=100.0),
+                           capital=1.0, leverage=2.0, mmr=MMR,
+                           take_px=90.0, stop_px=110.0, side="short")
+    assert st["exit"] == "стоп", st
+    assert abs(st["pnl_frac"] - 0.02 * (100.0 - 110.0)) < 1e-9, st   # −
+    lq = L.simulate_single(_bars([100.0, 160.0], [100.0, 130.0], [100.0, 160.0],
+                                 entry=100.0),
+                           capital=1.0, leverage=2.0, mmr=MMR,
+                           take_px=90.0, stop_px=200.0, side="short")
+    assert lq["exit"] == "ликвидация" and lq["pnl_frac"] == -1.0, lq
+    print("ok  шорт: тейк ниже входа (плюс), стоп выше (минус), ликвид. вверху")
+
+
+# --- отрицательные контроли -----------------------------------------------
+
+def _control_short_side_ignored():
+    """Если сторону игнорировать (считать лонгом), шорт-геометрия ломается —
+    тест тейка/стопа/ликвидации шорта обязан упасть."""
+    orig = L.simulate_single
+
+    def as_long(bars, capital, leverage, mmr, take_px=None, stop_px=None,
+                side="long"):
+        return orig(bars, capital, leverage, mmr, take_px=take_px,
+                    stop_px=stop_px, side="long")   # игнорируем side
+    L.simulate_single = as_long
+    try:
+        try:
+            test_single_short_take_stop_liq()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.simulate_single = orig
+
+
 # --- отрицательные контроли -----------------------------------------------
 
 def _control_short_recovers_on_entry_bar():
@@ -467,6 +523,8 @@ TESTS = [
     test_same_coin_short_no_trigger,
     test_same_coin_short_recovers_to_zero,
     test_same_coin_short_crash_gains,
+    test_liq_price_short_is_above,
+    test_single_short_take_stop_liq,
 ]
 
 
@@ -481,7 +539,8 @@ def main():
     assert _control_dca_take_ignored(), "контроль тейка не кусается"
     assert _control_short_recovers_on_entry_bar(), \
         "контроль бара входа короткого не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 7 отрицательных контролей "
+    assert _control_short_side_ignored(), "контроль стороны шорта не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; 8 отрицательных контролей "
           f"кусаются")
 
 

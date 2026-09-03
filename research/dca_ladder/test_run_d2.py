@@ -126,6 +126,26 @@ def test_hedge_arm_arithmetic():
         D.build_levels = orig
 
 
+def test_short_stats_diversify_measure():
+    # Мера диверсификации (§в) обязана РАЗЛИЧАТЬ анти- и со-движущийся шорт.
+    days = ["2026-01-%02d" % i for i in range(1, 11)]
+    ldn = [10, -10, 5, -5, 8, -8, 3, -3, 6, -6]           # дни лонг-книги
+    long_day = dict(zip(days, ldn))
+    # анти-коррелированный шорт → corr<0, в худший день лонга шорт в ПЛЮСЕ
+    anti = [-3, 8, -1, 4, -2, 6, -1, 2, -2, 5]
+    a = D._short_stats(list(anti), dict(zip(days, anti)), 0, 10, long_day)
+    assert a["corr_daily"] < 0, a
+    assert a["long_worst_days"] == 1 and abs(a["long_worst_mean"] + 10) < 1e-9, a
+    assert a["short_on_long_worst_mean"] > 0, a
+    # со-движущийся шорт (= знак лонга) → corr>0, в худший день лонга МИНУС
+    co = ldn[:]
+    c = D._short_stats(list(co), dict(zip(days, co)), 0, 10, long_day)
+    assert c["corr_daily"] > 0 and c["short_on_long_worst_mean"] < 0, c
+    print(f"ok  шорт-контур различает: анти corr {a['corr_daily']:+.2f} / "
+          f"со-хвост {a['short_on_long_worst_mean']:+.1f}; "
+          f"со corr {c['corr_daily']:+.2f} / {c['short_on_long_worst_mean']:+.1f}")
+
+
 def _control_flat_btc():
     """Если BTC не движется (be == bx), хедж = 0 и SH == S — проверка
     «SH выше S при падении BTC» обязана упасть. Доказывает, что тест
@@ -171,6 +191,7 @@ TESTS = [
     test_split_window_no_future,
     test_px_at,
     test_hedge_arm_arithmetic,
+    test_short_stats_diversify_measure,
 ]
 
 

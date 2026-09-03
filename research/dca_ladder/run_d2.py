@@ -246,8 +246,95 @@ def run(limit=None, src=None, log=print):
             if stt == "no_add":
                 no_add += 1
             n += 1
-    return measures(arms, n, skipped, no_add, depth_hist, lev_hist,
-                    time.time() - t_run)
+    res = measures(arms, n, skipped, no_add, depth_hist, lev_hist,
+                   time.time() - t_run)
+    res["short"] = short_book(legs, get, log, arms["S"]["day"])
+    return res
+
+
+def short_book(legs, get, log, long_day):
+    """Отдельный шорт-контур (§в): ШОРТ-выборы модели, 1× одиночный вход.
+
+    Потолок СИГНАЛА до DCA-вверх и плеча (они добавили бы хвост сквиза,
+    F-серия): если и голый 1× шорт убыточен, усреднение вверх его не спасёт.
+    Отвечает на вопрос владельца (в): есть ли прибыльный шорт РЯДОМ и
+    ДИВЕРСИФИЦИРУЕТ ли он лонг-книгу — даёт ли плюс, когда лонг проседает.
+    Связь дневного PnL с лонг-книгой (`long_day` — дни arm S) и со-хвост в
+    худший дециль дней лонга. Хвост шорта — сквиз (ликвидация при росте
+    вдвое даже у 1×).
+    """
+    shorts = [g for g in legs if g["side"] == "short"
+              and abs(g["fwd"]) >= MIN_EDGE_BP and (g["rr"] or 0) >= MIN_RR]
+    by_sym = {}
+    for g in shorts:
+        by_sym.setdefault(g["sym"], []).append(g)
+    log(f"шортов под гейтом {len(shorts)}, символов {len(by_sym)}")
+    pnl, day, liq, n = [], {}, 0, 0
+    for sym, glist in by_sym.items():
+        a0 = min(gg["at"] for gg in glist) - BACK_H * 3600
+        b1 = max(gg["at"] for gg in glist) + HOLD_H * 3600
+        bars = get(sym, a0, b1)
+        if not bars:
+            continue
+        ts = [bb[0] for bb in bars]
+        for g in glist:
+            rs = split_window(bars, ts, g["at"], BACK_H, HOLD_H)
+            if rs is None:
+                continue
+            win, now_i = rs
+            hold = win[now_i:]
+            entry = float(hold[0][1])
+            if entry <= 0:
+                continue
+            take_px = entry * (1 + g["fav"] / 1e4)     # mfe < 0 у шорта → ниже
+            stop_px = entry * (1 + g["adv_q"] / 1e4)   # adv_q > 0 → выше
+            if not (0 < take_px < entry and stop_px > entry):
+                continue
+            r = L.simulate_single(hold, 1.0, 1.0, FLAT_MMR,   # 1× короткий
+                                  take_px=take_px, stop_px=stop_px, side="short")
+            pnl.append(r["pnl_frac"])
+            liq += int(r["exit"] == "ликвидация")
+            d = time.strftime("%Y-%m-%d", time.gmtime(g["at"]))
+            day[d] = day.get(d, 0.0) + r["pnl_frac"]
+            n += 1
+    return _short_stats(pnl, day, liq, n, long_day)
+
+
+def _short_stats(pnl, day, liq, n, long_day):
+    if not n:
+        return {"positions": 0}
+    p = np.array(pnl)
+    win = p[p > 0]
+    med_win = float(np.median(win)) if len(win) else float("nan")
+    days = sorted(day)
+    cur = np.cumsum([day[d] for d in days])
+    dd = float(np.min(cur - np.maximum.accumulate(cur)))
+    out = {
+        "positions": n,
+        "liq_freq": round(liq / n, 4),
+        "median": round(float(np.median(p)), 4),
+        "mean": round(float(np.mean(p)), 4),
+        "green": round(float(np.mean(p > 0)), 3),
+        "worst": round(float(np.min(p)), 3),
+        "bite": (round(abs(float(np.min(p))) / med_win, 1)
+                 if med_win and med_win > 0 else None),
+        "curve_dd": round(dd, 3),
+    }
+    # диверсификация: связь дневного PnL шорт-книги с лонг-книгой (arm S)
+    common = sorted(set(day) & set(long_day))
+    out["common_days"] = len(common)
+    if len(common) >= 5:
+        ls = np.array([long_day[d] for d in common])
+        ss = np.array([day[d] for d in common])
+        if ls.std() > 0 and ss.std() > 0:
+            out["corr_daily"] = round(float(np.corrcoef(ls, ss)[0, 1]), 3)
+        # со-хвост: худший ДЕЦИЛЬ дней лонг-книги — что делает шорт-книга?
+        k = max(1, len(common) // 10)
+        worst = np.argsort(ls)[:k]
+        out["long_worst_days"] = int(k)
+        out["long_worst_mean"] = round(float(np.mean(ls[worst])), 4)
+        out["short_on_long_worst_mean"] = round(float(np.mean(ss[worst])), 4)
+    return out
 
 
 def _process_leg(g, bars, ts, look, arms, depth_hist, lev_hist,
@@ -516,6 +603,36 @@ def report(s):
              "но в хвосте лестница заполняется целиком, где хедж и нужен); "
              "хедж мерится закрытие-в-закрытие BTC, лонг входит по открытию — "
              "лёгкий базис входа.")
+    sh = s.get("short") or {}
+    if sh.get("positions"):
+        P.append("\n## Отдельный шорт-контур (§в): шорт-выборы, 1× одиночный "
+                 "вход\n")
+        P.append(f"Шорт-позиций {sh['positions']}, ликвидаций "
+                 f"{sh['liq_freq']*100:.2f} %.\n")
+        P.append("| медиана | среднее | зелёных | худшая | укус | просадка |")
+        P.append("|--:|--:|--:|--:|--:|--:|")
+        bite = sh["bite"]
+        P.append(f"| {sh['median']*100:+.2f} % | {sh['mean']*100:+.2f} % | "
+                 f"{sh['green']*100:.1f} % | {sh['worst']*100:+.1f} % | "
+                 f"{('%.1f' % bite) if bite else '—'} | "
+                 f"{sh['curve_dd']*100:+.1f} % |")
+        if "corr_daily" in sh:
+            P.append(f"\n- **Связь дневного PnL шорт- и лонг-книги: "
+                     f"{sh['corr_daily']:+.3f}** (на {sh['common_days']} общих "
+                     f"днях) — диверсификация, если МИНУС")
+            P.append(f"- **В худший дециль дней лонг-книги** "
+                     f"({sh['long_worst_days']} дней, лонг в среднем "
+                     f"{sh['long_worst_mean']*100:+.1f} %): **шорт-книга "
+                     f"{sh['short_on_long_worst_mean']*100:+.1f} %** — "
+                     f"поддерживает деп, если ПЛЮС\n")
+        P.append("\n**Шорт-контур (§в):** отдельная книга на ШОРТ-выборах "
+                 "модели (fwd < 0), 1× одиночный вход — потолок СИГНАЛА до "
+                 "DCA-вверх и плеча (они добавили бы хвост сквиза, F-серия). "
+                 "Вопрос (в): есть ли прибыльный шорт рядом и гасит ли он "
+                 "просадку лонга. Хвост шорта — сквиз (ликвидация при росте "
+                 "цены вдвое даже у 1×). Если сигнал убыточен ИЛИ связь не "
+                 "отрицательна ИЛИ в худшие дни лонга шорт не в плюсе — (в) "
+                 "закрыт; жив — строить полный шорт-DCA следом.")
     P.append("\n**Оговорки:** веса видели эти часы (оценка сверху); ранняя "
              "капитуляция рулевого §6 не считается — вердикт по «только пол»; "
              "нуль §8.6 (структура против σ-сетки) отдельной рукой следом; "

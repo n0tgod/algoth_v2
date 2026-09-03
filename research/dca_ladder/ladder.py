@@ -27,8 +27,8 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 """
 
 
-def liq_price(p_avg, qty, capital, mmr):
-    """Цена ликвидации длинной позиции при кросс-марже.
+def liq_price(p_avg, qty, capital, mmr, side="long"):
+    """Цена ликвидации позиции при кросс-марже; сторона параметром.
 
     Вывод (лонг, кросс, выделенный капитал `capital` = маржа позиции):
         эквити при цене P:   capital + qty·(P − p_avg)
@@ -36,13 +36,21 @@ def liq_price(p_avg, qty, capital, mmr):
         ликвидация:          эквити = поддерживающая маржа
         ⇒ P_liq = (qty·p_avg − capital) / (qty·(1 − mmr))
 
-    При плече 1× (capital = qty·p_avg) числитель = 0 → P_liq = 0: лонг
-    без плеча не ликвидируется вовсе. Проверено таблицей §5.
+    Для ШОРТА знаки хода и маржи зеркальны: эквити = capital + qty·(p_avg − P),
+    ликвидация ВЫШЕ средней ⇒ P_liq = (qty·p_avg + capital)/(qty·(1 + mmr)).
+    Одна формула на обе стороны через `d` (+1 лонг, −1 шорт):
+        P_liq = (qty·p_avg − d·capital) / (qty·(1 − d·mmr)).
+
+    При лонге 1× (capital = qty·p_avg) числитель = 0 → P_liq = 0: лонг без
+    плеча не ликвидируется. Шорт 1× ликвидируется при росте цены вдвое
+    (P_liq ≈ 2·p_avg). Умолчание `long` — прежнее поведение бит-в-бит,
+    таблица §5 не тронута.
     """
-    denom = qty * (1.0 - mmr)
+    d = 1.0 if side == "long" else -1.0
+    denom = qty * (1.0 - d * mmr)
     if denom <= 0:
         return 0.0
-    p = (qty * p_avg - capital) / denom
+    p = (qty * p_avg - d * capital) / denom
     return p if p > 0 else 0.0
 
 
@@ -240,38 +248,44 @@ def simulate_hold(closes, lows, base_px, capital, leverage, mmr):
 # капитуляции (§6). Первый срез — ЛОНГИ (естественный DCA-вниз); шорты зеркало,
 # следом. Бары — OHLC минуты записи сборщика: (t, open, high, low, close, qv).
 
-def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None):
-    """Контроль D2: одиночный вход тем же капиталом и плечом, стоп/тейк.
+def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None,
+                    side="long"):
+    """Одиночный вход тем же капиталом и плечом, стоп/тейк; сторона параметром.
 
     Тот же вход (открытие ПЕРВОГО бара после решения, next_open), весь
-    нотионал разом — так книга торгует сейчас. Стоп `stop_px` (ниже входа)
-    по низу бара, тейк `take_px` (выше) по верху; стоп раньше тейка (ничья
-    против нас), ликвидация тоже по низу. Разница с `simulate_dca` и есть
-    замен «усреднять вниз против стопнуться».
+    нотионал разом — так книга торгует сейчас. Для ЛОНГА стоп/ликвидация по
+    НИЗУ бара (адверс — падение), тейк по ВЕРХУ; для ШОРТА зеркально —
+    адверс это РОСТ (по верху), тейк по низу. Стоп раньше тейка (ничья
+    против нас). Знак хода `d` (+1 лонг, −1 шорт): pnl = qty·d·(уровень −
+    вход). Умолчание `long` — прежнее поведение бит-в-бит.
 
-    Возвращает: exit ("ликвидация"/"стоп"/"тейк"/"срок"), pnl_frac.
+    Возвращает: exit ("ликвидация"/"стоп"/"тейк"/"срок"), pnl_frac, exit_ts,
+    exit_px.
     """
     if not bars:
         raise ValueError("пустой путь")
     entry = float(bars[0][1])
     if entry <= 0:
         raise ValueError("цена входа ≤ 0")
+    d = 1.0 if side == "long" else -1.0
     notional = capital * leverage
     qty = notional / entry
-    p_liq = liq_price(entry, qty, capital, mmr)        # средняя не меняется
+    p_liq = liq_price(entry, qty, capital, mmr, side)  # средняя не меняется
     for (bt, _o, hi, lo, cl, _v) in bars:
-        if lo <= p_liq:
+        adverse = lo if side == "long" else hi         # ход ПРОТИВ позиции
+        fav = hi if side == "long" else lo             # ход В ПОЛЬЗУ
+        if d * (adverse - p_liq) <= 0:                 # адверс дошёл до ликв.
             return {"exit": "ликвидация", "pnl_frac": -1.0, "exit_ts": bt,
                     "exit_px": p_liq}
-        if stop_px is not None and lo <= stop_px:
+        if stop_px is not None and d * (adverse - stop_px) <= 0:
             return {"exit": "стоп", "exit_ts": bt, "exit_px": stop_px,
-                    "pnl_frac": qty * (stop_px - entry) / capital}
-        if take_px is not None and hi >= take_px:
+                    "pnl_frac": qty * d * (stop_px - entry) / capital}
+        if take_px is not None and d * (fav - take_px) >= 0:
             return {"exit": "тейк", "exit_ts": bt, "exit_px": take_px,
-                    "pnl_frac": qty * (take_px - entry) / capital}
+                    "pnl_frac": qty * d * (take_px - entry) / capital}
     lb = bars[-1]
     return {"exit": "срок", "exit_ts": lb[0], "exit_px": float(lb[4]),
-            "pnl_frac": qty * (float(lb[4]) - entry) / capital}
+            "pnl_frac": qty * d * (float(lb[4]) - entry) / capital}
 
 
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
