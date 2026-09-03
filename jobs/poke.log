@@ -584,3 +584,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788422046 ==
 [2026-09-03T07:54:07Z] задание mech-code запущено: tools/publish_mech_code.py
+
+== сигнал 1788422092 ==
+[2026-09-03T07:54:54Z] задание fshift-controls запущено: research/probe_fshift/controls_check.py

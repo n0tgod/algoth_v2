@@ -1,0 +1,27 @@
+== задание fshift-controls ==
+строка: run research/probe_fshift/controls_check.py
+начало: 2026-09-03T07:54:54Z
+запускаю: .venv/bin/python research/probe_fshift/controls_check.py 
+=== база: rc=0, провалов=0 зелёная
+  #1 кусается: rc=1, провалов=1, названная=да  [test_no_lookahead_in_events]
+  #2 кусается: rc=1, провалов=2, названная=да  [test_side_sign_by_number]
+  #3 кусается: rc=1, провалов=4, названная=да  [test_funding_and_excess_signs]
+  #4 кусается: rc=1, провалов=3, названная=да  [test_only_first_short_accrual_is_event]
+  #5 кусается: rc=1, провалов=1, названная=да  [test_min_before_steps]
+  #6 кусается: rc=1, провалов=1, названная=да  [test_active_share_empty_is_none]
+  #7 кусается: rc=1, провалов=1, названная=да  [test_dedup_by_name]
+  #8 кусается: rc=1, провалов=2, названная=да  [test_fill_book_takes_first_price]
+  #9 кусается: rc=1, провалов=1, названная=да  [test_cross_mean_needs_min_cross]
+  #10 кусается: rc=1, провалов=1, названная=да  [test_cross_mean_excludes_banned]
+  #11 кусается: rc=1, провалов=1, названная=да  [test_decile_peers_same_sign]
+  #12 кусается: rc=1, провалов=1, названная=да  [test_calibration_finds_planted_move]
+  #13 кусается: rc=1, провалов=1, названная=да  [test_needed_minutes_never_before_anchor]
+  #14 кусается: rc=1, провалов=1, названная=да  [test_verdict_withholds_on_thin_sample]
+  #15 кусается: rc=1, провалов=1, названная=да  [test_null_is_calibration_not_a_kill]
+  #16 кусается: rc=1, провалов=1, названная=да  [test_funding_excludes_entry_accrual]
+  #17 кусается: rc=1, провалов=2, названная=да  [test_anchors_pre_window_mirrors_holding]
+  #18 кусается: rc=1, провалов=1, названная=да  [test_verdict_derived_from_numbers]
+  #19 кусается: rc=1, провалов=1, названная=да  [test_peer_funding_is_measured_from_peer_series]
+
+итог: 19 из 19 кусаются
+конец: 2026-09-03T07:55:00Z, код 0
