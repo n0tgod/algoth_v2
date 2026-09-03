@@ -82,3 +82,7 @@
 {"at": 1788401493.326, "role": "scout", "status": "ok", "started": 1788400801.0, "ended": 1788401493.326, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
 {"at": 1788401701.162, "role": "brief", "status": "start", "started": 1788401701.0, "ended": 1788401701.162, "dry": false, "pid": 1155458}
 {"at": 1788402114.918, "role": "brief", "status": "ok", "started": 1788401701.0, "ended": 1788402114.918, "dry": false, "note": "модель opus, усилие medium"}
+{"at": 1788402301.563, "role": "propose", "status": "start", "started": 1788402301.0, "ended": 1788402301.563, "dry": false, "pid": 1156220}
+{"at": 1788402468.774, "role": "propose", "status": "fallback", "started": 1788402301.0, "ended": 1788402468.774, "dry": false, "pid": 1156220, "note": "лимит claude-fable-5-1, перехожу на claude-opus-5"}
+{"at": 1788402472.045, "role": "propose", "status": "limit", "started": 1788402301.0, "ended": 1788402472.045, "dry": false, "note": "модель claude-opus-5, лимит аккаунта; повтор после 03:20:00 UTC (момент снятия назван ответом (часы UTC))", "retry_at": 1788405600.0}
+{"at": 1788402601.25, "role": "judge", "status": "start", "started": 1788402601.249, "ended": 1788402601.25, "dry": false, "pid": 1156607}
