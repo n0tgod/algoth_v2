@@ -2,3 +2,26 @@
 строка: run tools/publish_mech_code.py --id 5d30427d --dir research/probe_fshift
 начало: 2026-09-03T07:54:07Z
 запускаю: .venv/bin/python tools/publish_mech_code.py --id 5d30427d --dir research/probe_fshift
+публикуется в ветку main:
+ jobs/done/mech-code.done                |    1 +
+ jobs/done/mech-code.log                 |    4 +
+ jobs/poke.log                           |    3 +
+ research/probe_fshift/RUNBOOK.md        |   95 +++
+ research/probe_fshift/controls_check.py |   98 +++
+ research/probe_fshift/run_ceiling.py    | 1099 +++++++++++++++++++++++++++++++
+ research/probe_fshift/shift.py          |  303 +++++++++
+ research/probe_fshift/test_fshift.py    |  574 ++++++++++++++++
+ research/s8_loop/out/day_brake.json     |    2 +-
+ 9 files changed, 2178 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   fa237e8..98e2c7a  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+механика 5d30427d — Смена интервала начисления funding как датированное событие 
+публикую код:
+  research/probe_fshift/RUNBOOK.md
+  research/probe_fshift/controls_check.py
+  research/probe_fshift/run_ceiling.py
+  research/probe_fshift/shift.py
+  research/probe_fshift/test_fshift.py
+конец: 2026-09-03T07:54:10Z, код 0
