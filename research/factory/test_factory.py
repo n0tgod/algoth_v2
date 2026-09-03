@@ -2055,6 +2055,15 @@ def test_the_judge_does_not_write_the_journals():
               ok and {r["id"]: r["state"]
                       for r in MQ.state(out)[0]}.get(k) == "ждёт владельца",
               str(MQ.state(out)[0]))
+        # Отметка «код опубликован» состояния не трогает: затри она
+        # «ждёт владельца», просьба владельцу осталась бы без причины.
+        MQ.mark(out, "code", k, "код опубликован: research/mech_x")
+        st2 = {r["id"]: r for r in MQ.state(out)[0]}
+        check("отметка кода не затирает состояние",
+              st2[k]["state"] == "ждёт владельца"
+              and "research/mech_x" in (st2[k].get("code") or ""),
+              str(st2[k]))
+
         rows, _ = MQ.read(out)
         check("запись одна, а не две",
               len([r for r in rows if r.get("ev") == "blocked"]) == 1,
