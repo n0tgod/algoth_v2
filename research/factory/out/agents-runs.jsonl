@@ -92,3 +92,12 @@
 {"at": 1788410101.8, "role": "ceiling", "status": "start", "started": 1788410101.799, "ended": 1788410101.8, "dry": false, "pid": 1163690}
 {"at": 1788410104.168, "role": "ceiling", "status": "ok", "started": 1788410101.799, "ended": 1788410104.168, "dry": false, "note": "код возврата 0"}
 {"at": 1788410401.461, "role": "declare", "status": "start", "started": 1788410401.461, "ended": 1788410401.461, "dry": false, "pid": 1164029}
+{"at": 1788410403.649, "role": "declare", "status": "ok", "started": 1788410401.461, "ended": 1788410403.649, "dry": false, "note": "код возврата 0"}
+{"at": 1788410702.047, "role": "task", "status": "start", "started": 1788410702.044, "ended": 1788410702.047, "dry": false, "pid": 1164346}
+{"at": 1788410702.225, "role": "task", "status": "ok", "started": 1788410702.044, "ended": 1788410702.225, "dry": false, "note": "код возврата 0"}
+{"at": 1788411001.686, "role": "build", "status": "start", "started": 1788411001.0, "ended": 1788411001.686, "dry": false, "pid": 1164604}
+{"at": 1788413081.005, "role": "build", "status": "contract", "started": 1788411001.0, "ended": 1788413081.005, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: build.json: контроль 1: файл вне своего каталога — research/probe_fshift/shift.py; контроль 2: файл вне своего каталога — research/probe_fshift/shift.py; контроль 3: файл вне своего каталога "}
+{"at": 1788413101.798, "role": "build", "status": "start", "started": 1788413101.0, "ended": 1788413101.798, "dry": false, "pid": 1167165}
+{"at": 1788413600.125, "role": "build", "status": "ok", "started": 1788413101.0, "ended": 1788413600.125, "dry": false, "note": "модель opus, усилие xhigh"}
+{"at": 1788413702.005, "role": "task", "status": "start", "started": 1788413702.004, "ended": 1788413702.005, "dry": false, "pid": 1168036}
+{"at": 1788413702.208, "role": "task", "status": "ok", "started": 1788413702.004, "ended": 1788413702.208, "dry": false, "note": "код возврата 0"}
