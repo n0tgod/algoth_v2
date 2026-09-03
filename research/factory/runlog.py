@@ -733,7 +733,7 @@ def _close_mechanism(out, d):
 OUT_REL = "research/factory/out"
 
 
-def check_role(role, root, since=None, out=None):
+def check_role(role, root, since=None, out=None, record=False):
     """Контракт роли: выполнен ли. Возвращает (годно, список бед).
 
     Одно место на все роли — иначе перечень того, что роль обязана
@@ -742,6 +742,14 @@ def check_role(role, root, since=None, out=None):
     `since` — момент начала прогона. Он нужен ровно одному правилу:
     повтор разведчика судится по тому, что принесли РАНЬШЕ, а не по
     записям этого же прогона (см. `scout_seen`).
+
+    `record` — писать ли МАШИННЫЕ журналы (принесённое разведчиком,
+    просьбы владельцу, судьба механики). По умолчанию НЕ писать, и это
+    не осторожность, а разделение суда и записи: проверку запускает не
+    только запускалка — её может позвать сама судимая роль, чтобы
+    проверить себя. 03.09 так и вышло: строитель проверил свою работу
+    сам, и «ждёт владельца» легло в очередь дважды — одной записью от
+    роли, второй от запускалки. Пишет ровно тот, кто судит начисто.
 
     `out` — каталог артефактов прогона. Он ОТДЕЛЬНЫЙ от корня, потому
     что роль пишет туда, куда её послали (`AGENTS_OUT`), а проверка
@@ -790,8 +798,9 @@ def check_role(role, root, since=None, out=None):
             # Журнал принесённого ведёт МАШИНА и только на годном
             # меню: записав негодное, мы запретили бы роли принести
             # ту же идею в исправленном виде.
-            scout_record(texts.get("research/factory/out/scout.json",
-                                   ""), out)
+            if record:
+                scout_record(texts.get(
+                    "research/factory/out/scout.json", ""), out)
     elif role == "adversary":
         ok, why = check_adversary(
             texts.get("research/factory/out/adversary.json", ""), root)
@@ -799,7 +808,8 @@ def check_role(role, root, since=None, out=None):
             bad.append("adversary.json: " + "; ".join(why))
     elif role == "build":
         ok, why = check_build(
-            texts.get("research/factory/out/build.json", ""), root)
+            texts.get("research/factory/out/build.json", ""), root,
+            out_dir=out)
         if not ok:
             bad.append("build.json: " + "; ".join(why))
         else:
@@ -808,8 +818,9 @@ def check_role(role, root, since=None, out=None):
             # ведёт сама, она сама и перепишет.
             d = json.loads(texts.get(
                 "research/factory/out/build.json", "") or "{}")
-            _owner_asks(out, d, "строитель")
-            _close_mechanism(out, d)
+            if record:
+                _owner_asks(out, d, "строитель")
+                _close_mechanism(out, d)
     elif role == "propose":
         import ledger as LG
         import space as SP
@@ -841,12 +852,14 @@ def check_role(role, root, since=None, out=None):
             # движок ещё не умеет, теряется через сутки.
             d = json.loads(texts.get(
                 "research/factory/out/proposal.json", "") or "{}")
-            _owner_asks(out_dir, d, "предлагающий")
-            try:
-                import mech_queue as MQ
-                MQ.queue(out_dir, d)
-            except Exception as e:                        # noqa: BLE001
-                bad.append("механика не поставлена в очередь: %s" % e)
+            if record:
+                _owner_asks(out_dir, d, "предлагающий")
+                try:
+                    import mech_queue as MQ
+                    MQ.queue(out_dir, d)
+                except Exception as e:                    # noqa: BLE001
+                    bad.append("механика не поставлена в очередь: %s"
+                               % e)
     return (not bad), bad
 
 
@@ -901,7 +914,29 @@ def _run_tests(root, tests):
     return r.returncode == 0, (r.stdout + r.stderr)[-4000:]
 
 
-def check_build(text, root):
+def _own_path(rel, roots):
+    """Путь принадлежит одному из своих каталогов и не вылезает наружу."""
+    if not rel or ".." in rel:
+        return False
+    return any(rel.startswith(r) for r in roots)
+
+
+def mech_dir(out):
+    """Каталог механики, лежащей СЕЙЧАС в задании строителя.
+
+    Берётся из задания, а не из отчёта: метку механики в задание
+    кладёт машина, а каталог выводит `mech_queue.dir_of` от ключа
+    заявки. Роль, которую судят, повлиять на это имя не может.
+    """
+    try:
+        import mech_queue as MQ
+    except Exception:                                     # noqa: BLE001
+        return None
+    mid = MQ.task_id(os.path.join(out or "", MQ.TASK))
+    return MQ.dir_of(mid) if mid else None
+
+
+def check_build(text, root, out_dir=None):
     """Постройка годна? Возвращает (годно, список бед).
 
     Главное здесь — не «тесты зелёные», а **кусаются ли негативные
@@ -952,6 +987,16 @@ def check_build(text, root):
         return False, [f"контролей {len(controls)}, а предел "
                        f"{BUILD_MAX_CONTROLS}"]
 
+    # Имя `out_dir`, а не `out`: `out` внутри этой функции уже занят
+    # ВЫВОДОМ тестов (`ok, out = _run_tests(...)`), и параметр с тем
+    # же именем молча превращался в строку «все проверки прошли» —
+    # каталога механики не находилось, и приёмка отвергала свою же
+    # работу. Поймано тестом до первого прогона.
+    roots = ["research/factory/"]
+    md = mech_dir(out_dir)
+    if md:
+        roots.append(md)
+
     started = time.time()
     for i, c in enumerate(controls, 1):
         if time.time() - started > BUILD_CONTROLS_BUDGET:
@@ -966,8 +1011,16 @@ def check_build(text, root):
         p = os.path.join(root, rel)
         # Портить можно только СВОИ файлы: подделка чужого модуля
         # проверяла бы чужую проверку, а заодно роняла бы соседей.
-        if not rel.startswith("research/factory/") or ".." in rel:
-            bad.append(f"контроль {i}: файл вне своего каталога — {rel}")
+        #
+        # «Своих» каталогов два: сама фабрика (починка её же кода) и
+        # каталог механики из задания. Второй добавлен 03.09 по живому
+        # отказу: задание велело строить механику отдельным каталогом,
+        # а страж знал только первый — готовая работа (сюита 32/0, 19
+        # кусающихся контролей) не была принята, не записалось ничего,
+        # и строитель был позван строить то же самое заново.
+        if not _own_path(rel, roots):
+            bad.append(f"контроль {i}: файл вне своего каталога — {rel}"
+                       f" (свои: {', '.join(roots)})")
             continue
         if not os.path.exists(p):
             bad.append(f"контроль {i}: файла нет — {rel}")

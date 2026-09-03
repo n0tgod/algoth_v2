@@ -661,7 +661,10 @@ def test_scout_is_not_rejected_by_its_own_ideas():
             f.write("меню человеческим текстом\n")
 
         started = time.time() - 600.0
-        ok, why = RL.check_role("scout", root, since=started)
+        # record=True: здесь проверяется именно ЗАПИСЬ машины, а пишет
+        # её тот, кто судит начисто (запускалка), — самопроверка роли
+        # не пишет ничего, и это отдельный тест.
+        ok, why = RL.check_role("scout", root, since=started, record=True)
         check("чистое меню проходит контракт роли", ok, str(why))
         check("машина записала принесённое",
               RL.scout_seen(out) == ["насыщение потолка funding"],
@@ -669,7 +672,7 @@ def test_scout_is_not_rejected_by_its_own_ideas():
 
         # Тот же прогон судится заново (так и случилось на сервере):
         # запись этого прогона его блокировать не вправе.
-        ok, why = RL.check_role("scout", root, since=started)
+        ok, why = RL.check_role("scout", root, since=started, record=True)
         check("своё же меню повтором не считается", ok, str(why))
         with open(os.path.join(out, RL.SCOUT_SEEN), encoding="utf-8") as f:
             n = len([ln for ln in f if ln.strip()])
@@ -681,7 +684,8 @@ def test_scout_is_not_rejected_by_its_own_ideas():
         # оказаться на полмиллисекунды ПОЗЖЕ момента, взятого сразу
         # после неё, — на живых прогонах, разнесённых часами, это
         # безразлично, а в тесте давало бы мигающий отказ.
-        ok, why = RL.check_role("scout", root, since=time.time() + 1.0)
+        ok, why = RL.check_role("scout", root, since=time.time() + 1.0,
+                                record=True)
         check("следующий прогон повтор ловит",
               not ok and any("уже приносилась" in w for w in why),
               str(why))
@@ -931,7 +935,9 @@ def test_the_conveyor_records_asks_and_the_mechanic():
                   encoding="utf-8") as f:
             json.dump(prop, f, ensure_ascii=False)
 
-        ok, why = RL.check_role("propose", root)
+        # record=True: тест проверяет ДОРОГУ ЗАПИСИ, а пишет журналы
+        # тот, кто судит начисто; самопроверка роли не пишет ничего.
+        ok, why = RL.check_role("propose", root, record=True)
         check("заявка-механика проходит контракт", ok, str(why))
         check("механика встала в очередь ДОРОГОЙ",
               [r["title"] for r in MQ.state(out)[0]]
@@ -947,7 +953,7 @@ def test_the_conveyor_records_asks_and_the_mechanic():
         with open(os.path.join(out, "proposal.json"), "w",
                   encoding="utf-8") as f:
             json.dump(bad_prop, f, ensure_ascii=False)
-        ok, why = RL.check_role("propose", root)
+        ok, why = RL.check_role("propose", root, record=True)
         check("негодная просьба валит контракт, а не теряется",
               not ok and any("просьба 1" in w for w in why), str(why))
 
@@ -1119,6 +1125,16 @@ def test_contract_check_gets_the_start_moment():
         check("проверка берёт каталог прогона, а не выводит из корня",
               "out=sys.argv[4]" in body.replace(" ", "")
               .replace("\n", ""), body[-300:])
+        # Журналы машины пишет ТОТ, КТО СУДИТ НАЧИСТО. Роль ту же
+        # проверку зовёт для самопроверки и писать не должна — иначе
+        # запись двоится (03.09 «ждёт владельца» легло дважды).
+        # Ищется ВЫЗОВ, а не слово: рядом стоит комментарий про
+        # `record=True`, и проверка на голое слово проходила на
+        # подделке — текст рядом с кодом входит в источник наравне с
+        # кодом (тот же промах уже ловился на дереве моделей).
+        check("судья пишет журналы, а самопроверка роли — нет",
+              "out=sys.argv[4],record=True)" in
+              body.replace(" ", "").replace("\n", ""), body[-300:])
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1877,7 +1893,9 @@ def test_the_contract_judges_the_run_not_the_live_artifacts():
                                      "research/factory/pool.py"]},
                           f, ensure_ascii=False)
 
-        ok, why = RL.check_role("propose", root, out=run)
+        # record=True: проверяется, КУДА пишет машина, — значит зовём
+        # её так, как зовёт запускалка.
+        ok, why = RL.check_role("propose", root, out=run, record=True)
         check("контракт прогона выполнен", ok, str(why))
         check("в очередь встала механика ПРОГОНА",
               [r["title"] for r in MQ.state(run)[0]]
@@ -1886,13 +1904,163 @@ def test_the_contract_judges_the_run_not_the_live_artifacts():
               not os.path.exists(os.path.join(live, MQ.QUEUE)),
               live)
         # Умолчание прежнее: без указания каталога судится корень.
-        ok, why = RL.check_role("propose", root)
+        ok, why = RL.check_role("propose", root, record=True)
         check("без указания каталога судится корень",
               [r["title"] for r in MQ.state(live)[0]]
               == ["боевая механика"], str(MQ.state(live)[0]))
     finally:
         shutil.rmtree(root, ignore_errors=True)
         shutil.rmtree(run, ignore_errors=True)
+
+
+def test_the_mechanic_builds_in_a_directory_the_machine_named():
+    """Каталог механики назначает МАШИНА, и приёмка знает про него.
+
+    Живой отказ 03.09: задание велело строить механику отдельным
+    каталогом, а страж приёмки знал только `research/factory/` —
+    готовая работа (сюита 32 проверки, 19 кусающихся контролей,
+    прогнанный потолок) не была принята, машина не записала ничего,
+    механика осталась «отдана», и строитель был позван строить то же
+    самое заново. Публикатор при этом молчал так же, и в git уехал
+    ОТЧЁТ потолка без кода, который его посчитал.
+
+    Имя каталога выводится от ключа заявки: отчёт пишет судимая роль,
+    и взять каталог оттуда значило бы позволить ей назвать своим что
+    угодно; ключ же есть хеш заголовка ЗАЯВКИ, а её пишет другая роль.
+    """
+    import mech_queue as MQ
+    import publish_build as PB
+    long = "z" * 130
+    root = tempfile.mkdtemp(prefix="mech-dir-")
+    try:
+        out = os.path.join(root, "research", "factory", "out")
+        os.makedirs(out)
+        k = MQ.queue(out, {"kind": "mechanism", "title": "механика с кодом",
+                           "hypothesis": long, "needs": long})
+        rows, _ = MQ.state(out)
+        check("каталог назначен машиной и лежит в записи",
+              rows[0].get("dir") == MQ.dir_of(k)
+              == "research/mech_%s/" % k, str(rows[0].get("dir")))
+
+        MQ.main(["--out", out, "--next"])
+        task = open(os.path.join(out, MQ.TASK), encoding="utf-8").read()
+        check("задание называет каталог числом, а не «коротким именем»",
+              MQ.dir_of(k) in task and "короткое имя" not in task,
+              task[-400:])
+
+        # Приёмка берёт каталог ИЗ ЗАДАНИЯ, а не из отчёта.
+        check("приёмка знает каталог механики из задания",
+              RL.mech_dir(out) == MQ.dir_of(k), str(RL.mech_dir(out)))
+
+        # Настоящий круг: модуль и тесты механики в своём каталоге,
+        # контроль портит СВОЙ файл — обязано пройти.
+        mech = os.path.join(root, "research", "mech_" + k)
+        os.makedirs(mech)
+        with open(os.path.join(mech, "shift.py"), "w",
+                  encoding="utf-8") as f:
+            f.write("VALUE = 1\n")
+        with open(os.path.join(mech, "test_shift.py"), "w",
+                  encoding="utf-8") as f:
+            f.write("import os, sys\n"
+                    "sys.path.insert(0, os.path.dirname("
+                    "os.path.abspath(__file__)))\n"
+                    "import shift\n"
+                    "if shift.VALUE != 1:\n"
+                    "    print('test_value: не единица')\n"
+                    "    raise SystemExit(1)\n"
+                    "print('все проверки прошли')\n")
+        rep = {"built": True,
+               "module": "research/mech_%s/shift.py" % k,
+               "tests": "research/mech_%s/test_shift.py" % k,
+               "controls": [{"file": "research/mech_%s/shift.py" % k,
+                             "old": "VALUE = 1", "new": "VALUE = 2",
+                             "expect": "test_value"}]}
+        ok, why = RL.check_build(json.dumps(rep, ensure_ascii=False),
+                                 root, out_dir=out)
+        check("постройка в каталоге механики принимается", ok, str(why))
+
+        # А чужой каталог по-прежнему закрыт: страж не ослаблен.
+        bad_rep = dict(rep, controls=[
+            {"file": "research/factory/../tools/publish.sh",
+             "old": "x", "new": "y", "expect": "z"}])
+        ok2, why2 = RL.check_build(json.dumps(bad_rep, ensure_ascii=False),
+                                   root, out_dir=out)
+        check("чужой каталог остаётся закрытым",
+              not ok2 and any("вне своего каталога" in w for w in why2),
+              str(why2))
+
+        # Публикатор смотрит В ТОТ ЖЕ список каталогов, что приёмка:
+        # разойдись они, работа принималась бы и не публиковалась.
+        old_root, old_here = PB.ROOT, PB.HERE
+        try:
+            PB.ROOT, PB.HERE = root, os.path.join(root, "research",
+                                                  "factory")
+            rp = os.path.join(out, "build.json")
+            with open(rp, "w", encoding="utf-8") as f:
+                json.dump(rep, f, ensure_ascii=False)
+            got = PB.paths_of(rp, log=lambda *a: None,
+                              allowed=["research/factory/", MQ.dir_of(k)])
+            check("публикуется код механики, а не только тесты",
+                  got == sorted([rep["module"], rep["tests"]]), str(got))
+
+            # `built: false` — код всё равно публикуется: отчёт о нём
+            # уезжает в git общей публикацией, а код остался бы здесь.
+            with open(rp, "w", encoding="utf-8") as f:
+                json.dump(dict(rep, built=False, why="w" * 200), f,
+                          ensure_ascii=False)
+            got = PB.paths_of(rp, log=lambda *a: None,
+                              allowed=["research/factory/", MQ.dir_of(k)])
+            check("непринятая постройка публикует свой код",
+                  rep["module"] in got, str(got))
+        finally:
+            PB.ROOT, PB.HERE = old_root, old_here
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_the_judge_does_not_write_the_journals():
+    """Проверку зовёт и судимая роль — писать обязан только судья.
+
+    03.09 строитель проверил свою работу сам (право `python3` у него
+    есть), и «ждёт владельца» легло в очередь ДВАЖДЫ: одной записью от
+    роли, второй от запускалки, 51 мс спустя. Журнал машины, который
+    роль умеет наполнить своим вызовом, машинным больше не является.
+    """
+    import mech_queue as MQ
+    long = "z" * 130
+    root = tempfile.mkdtemp(prefix="rec-")
+    try:
+        out = os.path.join(root, "research", "factory", "out")
+        os.makedirs(out)
+        k = MQ.queue(out, {"kind": "mechanism", "title": "механика записи",
+                           "hypothesis": long, "needs": long})
+        MQ.main(["--out", out, "--next"])
+        rep = {"built": False, "why": "w" * 200,
+               "needs_owner": [{"what": "доступ к чужому архиву",
+                                "why": "без него события не собрать "
+                                       "walk-forward, а выдумывать их "
+                                       "нельзя"}]}
+        with open(os.path.join(out, "build.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(rep, f, ensure_ascii=False)
+
+        ok, why = RL.check_role("build", root, out=out)
+        check("самопроверка роли проходит", ok, str(why))
+        st = {r["id"]: r["state"] for r in MQ.state(out)[0]}
+        check("самопроверка НИЧЕГО не записала",
+              st.get(k) == "отдана строителю", str(st))
+
+        ok, why = RL.check_role("build", root, out=out, record=True)
+        check("прогон судьи записал судьбу механики",
+              ok and {r["id"]: r["state"]
+                      for r in MQ.state(out)[0]}.get(k) == "ждёт владельца",
+              str(MQ.state(out)[0]))
+        rows, _ = MQ.read(out)
+        check("запись одна, а не две",
+              len([r for r in rows if r.get("ev") == "blocked"]) == 1,
+              str([r.get("ev") for r in rows]))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_limit_reset_time_is_read_not_guessed():
@@ -2516,6 +2684,8 @@ def main():
              test_a_broken_character_does_not_swallow_the_journal_row,
              test_a_hanging_role_is_killed_by_the_clock_and_named,
              test_a_usage_limit_is_a_wait_and_the_role_resumes_itself,
+             test_the_mechanic_builds_in_a_directory_the_machine_named,
+             test_the_judge_does_not_write_the_journals,
              test_limit_reset_time_is_read_not_guessed,
              test_the_contract_judges_the_run_not_the_live_artifacts,
              test_fallback_happens_on_a_limit_or_an_unknown_model,

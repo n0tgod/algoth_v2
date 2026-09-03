@@ -31,10 +31,30 @@ REPORT = os.path.join(HERE, "out", "build.json")
 # Публиковать можно только СВОЙ каталог: путь наружу означает не
 # опечатку, а попытку, и белый список публикации — не то место, где
 # уместна доверчивость.
+#
+# «Своих» каталогов два, и второй не выбирается ролью: каталог
+# механики выводит машина от ключа заявки (`mech_queue.dir_of`), а в
+# задание его кладёт шаг круга. Тот же список, что у приёмки
+# (`runlog.check_build`) — разойдись они, работа принималась бы и не
+# публиковалась, что 03.09 и случилось.
 ALLOWED_PREFIX = "research/factory/"
 
 
-def paths_of(report, log=print):
+def roots(out=None):
+    """Свои каталоги: фабрика плюс каталог механики из задания."""
+    rs = [ALLOWED_PREFIX]
+    sys.path.insert(0, HERE)
+    try:
+        import runlog as RL
+        md = RL.mech_dir(out or os.path.join(HERE, "out"))
+    except Exception:                                     # noqa: BLE001
+        md = None
+    if md:
+        rs.append(md)
+    return rs
+
+
+def paths_of(report, log=print, allowed=None):
     """Пути, объявленные отчётом постройки. Чужое отсеивается."""
     try:
         with open(report, encoding="utf-8") as f:
@@ -45,26 +65,39 @@ def paths_of(report, log=print):
     except ValueError as e:
         log(f"отчёт постройки не читается: {e}")
         return []
-    if not d.get("built"):
-        log("постройка не состоялась — публиковать нечего")
-        return []
+    # Публикуется объявленное и при `built: false`. Отчёт «построил,
+    # но приёмка не пропустила» оставляет КОД на сервере, а отчёт
+    # прогона уезжает в git общей публикацией (`tools/publish.sh`
+    # кладёт `research/*/out`) — отчёт без своего кода невоспроизводим,
+    # и это ровно тот класс дефекта, против которого вся приёмка.
+    allow = allowed or roots()
     out = []
     for key in ("module", "tests"):
         rel = (d.get(key) or "").strip()
         if not rel:
             continue
-        if not rel.startswith(ALLOWED_PREFIX) or ".." in rel:
+        if not any(rel.startswith(r) for r in allow) or ".." in rel:
             log(f"путь вне своего каталога, не публикую: {rel}")
             continue
         if not os.path.exists(os.path.join(ROOT, rel)):
             log(f"файла нет, не публикую: {rel}")
             continue
         out.append(rel)
+    # Файлы, которые роль портила негативными контролями, — её же
+    # собственные по определению стража приёмки: сам контроль принят
+    # только потому, что путь лежит в своём каталоге. Без них отчёт с
+    # `built: false` публиковал бы тесты без модуля.
+    for c in d.get("controls") or []:
+        rel = (c.get("file") or "").strip() if isinstance(c, dict) else ""
+        if (rel and ".." not in rel
+                and any(rel.startswith(r) for r in allow)
+                and os.path.exists(os.path.join(ROOT, rel))):
+            out.append(rel)
     # Правки существующих файлов роль называет отдельно: они не её
     # собственность, и подхватывать их молча нельзя.
     for rel in d.get("touched") or []:
-        if (isinstance(rel, str) and rel.startswith(ALLOWED_PREFIX)
-                and ".." not in rel
+        if (isinstance(rel, str) and ".." not in rel
+                and any(rel.startswith(r) for r in allow)
                 and os.path.exists(os.path.join(ROOT, rel))):
             out.append(rel)
     return sorted(set(out))
@@ -86,15 +119,19 @@ def main(argv=None):
     if not a.no_recheck:
         sys.path.insert(0, HERE)
         import runlog as RL
-        ok, why = RL.check_role("build", ROOT)
+        # Каталог прогона передаётся явно: без него приёмка не знает,
+        # какая механика в задании, и отвергает её же контроли.
+        ok, why = RL.check_role("build", ROOT,
+                                out=os.path.join(HERE, "out"))
         print("контракт: " + ("выполнен" if ok else "; ".join(why)))
         if not ok:
             print("не публикую — контракт не выполнен")
             return 1
 
-    rels = paths_of(a.report)
+    allow = roots()
+    rels = paths_of(a.report, allowed=allow)
     for rel in a.also:
-        if (rel.startswith(ALLOWED_PREFIX) and ".." not in rel
+        if (any(rel.startswith(r) for r in allow) and ".." not in rel
                 and os.path.exists(os.path.join(ROOT, rel))):
             rels.append(rel)
         else:
