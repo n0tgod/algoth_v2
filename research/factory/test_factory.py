@@ -357,10 +357,14 @@ def test_brief_contract_is_mechanical():
     """
     root = os.path.dirname(HERE)
     root = os.path.dirname(root)
+    # Раздел открытых углов обязателен: без него предлагающий не
+    # видит ни одного нашего открытого вопроса. Фикстура выглядит как
+    # живой бриф, а не как её урезок.
     good = ("- гипотеза закрыта хвостом "
             "(research/f3_nulls/out/F3-report-1m.md)\n"
             "- пул и вылет: research/factory/pool.py\n"
-            "- публикация: tools/publish.sh\n")
+            "- публикация: tools/publish.sh\n"
+            "\n## 3. Что открыто — замера нет\n")
     ok, why, got = RL.check_brief(good, root)
     check("годный бриф проходит", ok, str(why))
     check("указатели найдены", len(got) == 3, str(got))
@@ -542,7 +546,8 @@ def test_proposal_must_be_checkable_not_persuasive():
     rule = {"target": "fwd_4h", "rank": "sigma", "floor_bp": 30,
             "width": 5, "geom": "levels", "rr_band": "lo",
             "sizing": "equal", "basket": "no", "agree": "no"}
-    good = {"proposed": True, "kind": "row", "title": "проба",
+    good = {"proposed": True, "kind": "row", "origin": "space",
+           "title": "проба",
             "hypothesis": long, "kills_it": long, "ceiling": long,
             "differs_from_live": long, "shape": long,
             "cites": ["research/factory/out/brief.md",
@@ -919,7 +924,7 @@ def test_the_conveyor_records_asks_and_the_mechanic():
             with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
                 f.write("проба\n")
         prop = {"proposed": True, "kind": "mechanism",
-                "title": "календарь разблокировок",
+                "origin": "scout", "title": "календарь разблокировок",
                 "hypothesis": long, "kills_it": long, "ceiling": long,
                 "differs_from_live": long, "shape": long,
                 "needs": "строителя и внешний календарь с историей",
@@ -1160,7 +1165,8 @@ def test_closed_by_ceiling_is_not_proposed_again():
             "width": 5, "geom": "levels", "rr_band": "lo",
             "sizing": "equal", "basket": "no", "agree": "no"}
     key = S.key(rule)
-    prop = {"proposed": True, "kind": "row", "title": "проба",
+    prop = {"proposed": True, "kind": "row", "origin": "space",
+            "title": "проба",
             "hypothesis": long, "kills_it": long, "ceiling": long,
             "differs_from_live": long, "shape": long,
             "cites": ["research/factory/out/brief.md",
@@ -1884,6 +1890,7 @@ def test_the_contract_judges_the_run_not_the_live_artifacts():
             with open(os.path.join(d, "proposal.json"), "w",
                       encoding="utf-8") as f:
                 json.dump({"proposed": True, "kind": "mechanism",
+                           "origin": "scout",
                            "title": title, "hypothesis": long,
                            "kills_it": long, "ceiling": long,
                            "differs_from_live": long, "shape": long,
@@ -2105,6 +2112,99 @@ def test_the_judge_does_not_write_the_journals():
               str([r.get("ev") for r in rows]))
     finally:
         shutil.rmtree(root, ignore_errors=True)
+
+
+def test_the_proposer_says_where_the_idea_came_from():
+    """Заявка называет ПРОИСХОЖДЕНИЕ, и «сам придумал» подтверждается.
+
+    Решение владельца 2026-09-03: предлагающий обязан придумывать
+    гипотезы сам, а не только выбирать из меню разведчика. Проверить
+    искренность машина не может — она проверяет ФОРМУ: origin из
+    закрытого набора; у собственной заявки названо НАШЕ измерение, из
+    которого она выросла, и хотя бы один указатель ведёт ВНЕ каталога
+    фабрики (её журналы говорят о ходе испытаний, а не о рынке).
+
+    Без этого различия «придумал» и «пересказал» неразличимы в
+    журнале, и узнать, придумывает ли роль вообще, будет нечем.
+    """
+    long = "q" * 130
+    root = tempfile.mkdtemp(prefix="origin-")
+    try:
+        out = os.path.join(root, "research", "factory", "out")
+        os.makedirs(out)
+        for rel in ("research/factory/space.py",
+                    "research/factory/out/brief.md",
+                    "research/factory/out/proposal.md",
+                    "research/d1_seconds/out/D1-report-1m.md"):
+            d = os.path.join(root, os.path.dirname(rel))
+            os.makedirs(d, exist_ok=True)
+            with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
+                f.write("проба\n")
+
+        def prop(**kw):
+            base = {"proposed": True, "kind": "mechanism",
+                    "title": "своя механика", "hypothesis": long,
+                    "kills_it": long, "ceiling": long,
+                    "differs_from_live": long, "shape": long,
+                    "needs": "строителя",
+                    "cites": ["research/factory/out/brief.md",
+                              "research/factory/space.py",
+                              "research/d1_seconds/out/D1-report-1m.md"]}
+            base.update(kw)
+            return json.dumps(base, ensure_ascii=False)
+
+        ok, why = RL.check_proposal(prop(origin="own", seed=long), root)
+        check("собственная заявка со своим замером проходит", ok, str(why))
+
+        ok, why = RL.check_proposal(prop(), root)
+        check("заявка без происхождения не принимается",
+              not ok and any("origin" in w for w in why), str(why))
+
+        ok, why = RL.check_proposal(prop(origin="выдумал"), root)
+        check("происхождение вне набора не принимается",
+              not ok and any("origin" in w for w in why), str(why))
+
+        ok, why = RL.check_proposal(prop(origin="own", seed="кажется"),
+                                    root)
+        check("«сам придумал» без нашего замера не принимается",
+              not ok and any("НАШЕ измерение" in w for w in why),
+              str(why))
+
+        # Указатели только в каталог фабрики: заявка выросла из
+        # процесса, а не из данных.
+        ok, why = RL.check_proposal(
+            prop(origin="own", seed=long,
+                 cites=["research/factory/out/brief.md",
+                        "research/factory/space.py",
+                        "research/factory/out/proposal.md"]), root)
+        check("своя заявка на одних журналах фабрики не принимается",
+              not ok and any("журналах процесса" in w for w in why),
+              str(why))
+
+        # Чужое меню — законное происхождение, поблажек не требует.
+        ok, why = RL.check_proposal(prop(origin="scout"), root)
+        check("заявка из меню разведчика проходит без seed", ok, str(why))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_the_brief_carries_the_open_corners():
+    """Бриф обязан нести раздел открытых углов — сырьё для своих заявок.
+
+    Предлагающий читает ТОЛЬКО бриф: чего в нём нет, для него не
+    существует. Без этого раздела он не видит ни одного нашего
+    открытого угла и неизбежно пересказывает чужое меню.
+    """
+    root = os.path.dirname(os.path.dirname(HERE))
+    body = ("# бриф\n\n`research/factory/space.py` и "
+            "`research/factory/pool.py`, а также "
+            "`research/factory/ceiling.py`\n")
+    ok, bad, _ = RL.check_brief(body, root)
+    check("бриф без открытых углов не принимается",
+          not ok and any(RL.BRIEF_OPEN_MARK in b for b in bad), str(bad))
+    ok, bad, _ = RL.check_brief(
+        body + "\n## 3. %s — замера нет\n" % RL.BRIEF_OPEN_MARK, root)
+    check("бриф с разделом проходит", ok, str(bad))
 
 
 def test_limit_reset_time_is_read_not_guessed():
@@ -2730,6 +2830,8 @@ def main():
              test_a_usage_limit_is_a_wait_and_the_role_resumes_itself,
              test_the_mechanic_builds_in_a_directory_the_machine_named,
              test_the_judge_does_not_write_the_journals,
+             test_the_proposer_says_where_the_idea_came_from,
+             test_the_brief_carries_the_open_corners,
              test_limit_reset_time_is_read_not_guessed,
              test_the_contract_judges_the_run_not_the_live_artifacts,
              test_fallback_happens_on_a_limit_or_an_unknown_model,
