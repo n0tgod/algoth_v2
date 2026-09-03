@@ -2,7 +2,7 @@
  "positions": 8670,
  "skipped": 1,
  "no_add": 2017,
- "secs": 1185.9,
+ "secs": 1147.9,
  "avg_depth": 1.21,
  "median_lev": 3.03,
  "max_lev": 13.27,
@@ -18,10 +18,10 @@
   "B": {
    "ok": 8670,
    "liq_freq": 0.0,
-   "ruin_freq": 0.0008,
+   "ruin_freq": 0.0007,
    "median": -0.0038,
    "mean": 0.0061,
-   "green": 0.44,
+   "green": 0.439,
    "worst": -0.167,
    "bite": 6.4,
    "curve_dd": -6.613
@@ -29,10 +29,10 @@
   "H": {
    "ok": 8670,
    "liq_freq": 0.0003,
-   "ruin_freq": 0.0008,
+   "ruin_freq": 0.0007,
    "median": -0.006,
    "mean": 0.0283,
-   "green": 0.44,
+   "green": 0.439,
    "worst": -1.0,
    "bite": 13.1,
    "curve_dd": -18.513
@@ -40,20 +40,20 @@
   "S": {
    "ok": 8670,
    "liq_freq": 0.0006,
-   "ruin_freq": 0.0008,
+   "ruin_freq": 0.0007,
    "median": 0.0191,
    "mean": 0.0288,
    "green": 0.906,
    "worst": -1.0,
-   "bite": 46.8,
+   "bite": 46.7,
    "curve_dd": -11.35
   },
   "SH": {
    "ok": 8670,
    "liq_freq": 0.0006,
-   "ruin_freq": 0.0008,
+   "ruin_freq": 0.0007,
    "median": 0.0056,
-   "mean": 0.0001,
+   "mean": 0.0,
    "green": 0.677,
    "worst": -1.499,
    "bite": 121.6,
@@ -62,10 +62,10 @@
   "SS": {
    "ok": 8670,
    "liq_freq": 0.0006,
-   "ruin_freq": 0.0008,
+   "ruin_freq": 0.0007,
    "median": 0.0191,
    "mean": 0.0296,
-   "green": 0.907,
+   "green": 0.906,
    "worst": -1.0,
    "bite": 46.7,
    "curve_dd": -10.42
@@ -79,7 +79,7 @@
   "hedge_ok": 8670,
   "hedge_missing": 0,
   "SH_minus_S_median": -0.011,
-  "SH_beats_S_frac": 0.135,
+  "SH_beats_S_frac": 0.134,
   "SH_minus_B_median": -0.0024,
   "SH_beats_B_frac": 0.468,
   "short_active": 1406,
@@ -87,5 +87,20 @@
   "SS_beats_S_frac": 0.001,
   "SS_minus_B_median": 0.017,
   "SS_beats_B_frac": 0.64
+ },
+ "short": {
+  "positions": 258,
+  "liq_freq": 0.0,
+  "median": -0.0054,
+  "mean": -0.003,
+  "green": 0.252,
+  "worst": -0.039,
+  "bite": 2.3,
+  "curve_dd": -0.971,
+  "common_days": 26,
+  "corr_daily": 0.066,
+  "long_worst_days": 2,
+  "long_worst_mean": -5.4783,
+  "short_on_long_worst_mean": 0.0111
  }
 }
