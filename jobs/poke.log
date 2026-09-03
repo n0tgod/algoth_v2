@@ -596,3 +596,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788423385 ==
 [2026-09-03T08:16:26Z] задание mech-accept запущено: research/factory/mech_queue.py
+
+== сигнал 1788423819 ==
+[2026-09-03T08:23:41Z] задание ask-done запущено: research/factory/asks.py

@@ -4,3 +4,15 @@
 запускаю: .venv/bin/python research/factory/mech_queue.py --accept 5d30427d --dir research/probe_fshift
 механика 5d30427d принята: Смена интервала начисления funding как датированное событие 
 конец: 2026-09-03T08:16:26Z, код 0
+публикуется в ветку main:
+ jobs/done/mech-accept.done            |  1 +
+ jobs/done/mech-accept.log             |  6 ++++++
+ jobs/done/task-rewrite.log            | 16 ++++++++++++++++
+ jobs/poke.log                         |  3 +++
+ research/factory/out/mechanisms.jsonl |  1 +
+ research/s8_loop/out/day_brake.json   |  2 +-
+ 6 files changed, 28 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   5b4b111..ee9b4ef  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
