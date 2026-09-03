@@ -273,6 +273,20 @@ def main(argv=None):
     if cur:
         alive = {r["id"]: r for r in rows}.get(cur)
         if alive and alive["state"] in ("ждёт", "отдана строителю"):
+            # Задание ТОЙ ЖЕ механики переписывается, если его текст
+            # старее правил: каталог механики назначает машина, а
+            # задание, писанное до этого правила, велит строителю
+            # выбрать имя самому — и приёмка его же работу отвергнет.
+            # Механика не меняется, значит это не выдача новой.
+            with open(p, encoding="utf-8") as f:
+                txt = f.read()
+            if dir_of(cur) not in txt:
+                write_task(a.out, alive)
+                mark(a.out, "given", cur, "задание переписано по правилам")
+                write_state(a.out, "переписано", cur, alive["title"])
+                print("задание %s переписано: каталог механики %s"
+                      % (cur, dir_of(cur)))
+                return 0
             print("задание уже лежит и не закрыто: %s (%s) — не трогаю"
                   % (cur, alive["state"]))
             write_state(a.out, "занято", cur, alive["state"])

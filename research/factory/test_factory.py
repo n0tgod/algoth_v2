@@ -1948,6 +1948,20 @@ def test_the_mechanic_builds_in_a_directory_the_machine_named():
               MQ.dir_of(k) in task and "короткое имя" not in task,
               task[-400:])
 
+        # Задание, писанное до правила, переписывается для ТОЙ ЖЕ
+        # механики: иначе строитель выберет имя сам, и приёмка
+        # отвергнет его же работу (03.09 так и вышло).
+        with open(os.path.join(out, MQ.TASK), "w", encoding="utf-8") as f:
+            f.write((MQ.MARK % k) + "\nстарое задание без каталога\n")
+        MQ.main(["--out", out, "--next"])
+        again = open(os.path.join(out, MQ.TASK), encoding="utf-8").read()
+        check("устаревшее задание переписано, механика та же",
+              MQ.task_id(os.path.join(out, MQ.TASK)) == k
+              and MQ.dir_of(k) in again, again[:120])
+        rows2, _ = MQ.state(out)
+        check("вторая механика в очередь не пролезла",
+              len(rows2) == 1, str([r["id"] for r in rows2]))
+
         # Приёмка берёт каталог ИЗ ЗАДАНИЯ, а не из отчёта.
         check("приёмка знает каталог механики из задания",
               RL.mech_dir(out) == MQ.dir_of(k), str(RL.mech_dir(out)))
