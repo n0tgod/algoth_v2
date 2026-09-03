@@ -106,3 +106,5 @@
 {"at": 1788425432.073, "role": "propose", "status": "start", "started": 1788425432.0, "ended": 1788425432.073, "dry": false, "pid": 1183012}
 {"at": 1788425930.686, "role": "propose", "status": "fallback", "started": 1788425432.0, "ended": 1788425930.686, "dry": false, "pid": 1183012, "note": "лимит claude-fable-5-1, перехожу на claude-opus-5"}
 {"at": 1788425934.506, "role": "propose", "status": "limit", "started": 1788425432.0, "ended": 1788425934.506, "dry": false, "note": "модель claude-opus-5, лимит аккаунта; повтор после 09:20:00 UTC (момент снятия назван ответом (часы UTC))", "retry_at": 1788427200.0}
+{"at": 1788427810.713, "role": "propose", "status": "start", "started": 1788427810.0, "ended": 1788427810.713, "dry": false, "pid": 1185716}
+{"at": 1788428614.083, "role": "propose", "status": "ok", "started": 1788427810.0, "ended": 1788428614.083, "dry": false, "note": "модель claude-fable-5-1, усилие xhigh"}
