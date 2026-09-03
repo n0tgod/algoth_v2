@@ -30,6 +30,24 @@ def test_summarize_only_trading():
           f"(BTC {by['BTC']['contracts']}, ETH нет)")
 
 
+def test_summarize_counts_contract_once():
+    """Строки приходят из ДВУХ обходов и пересекаются — контракт считается раз.
+
+    Живой отказ: после правки «опрос идёт всегда» у BTC вышло 1540
+    контрактов вместо 770, ровно вдвое, потому что общий список и опрос
+    дали одни и те же строки. Набор активов был верен, число в таблице —
+    нет; такое число читается как «у BTC вдвое богаче рынок опционов».
+    """
+    one = {"symbol": "BTC-26DEC26-100000-C", "baseCoin": "BTC",
+           "status": "Trading", "deliveryTime": "1767139200000"}
+    two = {"symbol": "BTC-26DEC26-120000-C", "baseCoin": "BTC",
+           "status": "Trading", "deliveryTime": "1767139200000"}
+    by = B.summarize([one, two, dict(one), dict(two)])   # два обхода подряд
+    assert by["BTC"]["contracts"] == 2, by
+    print(f"ok  контракт считается один раз: 4 строки двух обходов → "
+          f"{by['BTC']['contracts']} контракта")
+
+
 def test_alias_set():
     assert B.alias_set("1000PEPE") == {"1000PEPE", "PEPE"}
     assert B.alias_set("BTC") == {"BTC"}
@@ -218,14 +236,41 @@ def _control_trusts_general_list():
         B.run = orig
 
 
-TESTS = [test_summarize_only_trading, test_alias_set,
+def _control_no_dedup():
+    """Без снятия дублей число контрактов удваивается — проверка обязана
+    упасть (живой отказ: BTC 1540 вместо 770)."""
+    orig = B.summarize
+
+    def dup(rows):
+        by = {}
+        for r in rows:
+            if str(r.get("status") or "") not in ("", "Trading"):
+                continue
+            b = str(r.get("baseCoin") or "").upper()
+            d = by.setdefault(b, {"contracts": 0, "first": None, "last": None})
+            d["contracts"] += 1
+        return by
+    B.summarize = dup
+    try:
+        try:
+            test_summarize_counts_contract_once()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        B.summarize = orig
+
+
+TESTS = [test_summarize_only_trading, test_summarize_counts_contract_once,
+         test_alias_set,
          test_api_get_refusal_is_data, test_run_falls_back_to_probe,
          test_general_list_narrowing_is_named, test_report_names_absence]
 
 CONTROLS = [("снятые контракты считаются живыми", _control_count_closed),
             ("алиас без снятия множителя", _control_alias_no_strip),
             ("отказ эндпоинта исключением", _control_api_raises),
-            ("доверие общему списку эндпоинта", _control_trusts_general_list)]
+            ("доверие общему списку эндпоинта", _control_trusts_general_list),
+            ("дубли двух обходов не снимаются", _control_no_dedup)]
 
 
 def main():
