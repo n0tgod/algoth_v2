@@ -32,3 +32,16 @@ sheets.jsonl: ног 840611
   символ 18/157  взято 67
   символ 51/157  взято 152
 конец: 2026-09-03T19:10:21Z, код 0
+публикуется в ветку main:
+ jobs/done/d2-dca-smoke.log                | 13 +++++++
+ jobs/done/d2-dca-smoke2.done              |  1 +
+ jobs/done/d2-dca-smoke2.log               | 34 +++++++++++++++++++
+ jobs/poke.log                             |  3 ++
+ research/dca_ladder/out/D2-dca-smoke.json | 56 +++++++++++++++----------------
+ research/dca_ladder/out/D2-dca-smoke.md   | 14 ++++----
+ research/s8_loop/out/day_brake.json       |  2 +-
+ 7 files changed, 87 insertions(+), 36 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   ae0d4e0..da31269  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
