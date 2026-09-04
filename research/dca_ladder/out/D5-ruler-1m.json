@@ -58,11 +58,11 @@
     "ликвидация": 5
    },
    "book": {
-    "final": 0.0734,
+    "final": 0.0762,
     "max_dd": -0.1911,
     "day_median": 0.0027,
     "day_worst": -0.1166,
-    "day_green": 0.643,
+    "day_green": 0.679,
     "days": 28,
     "hours": 639
    },
@@ -83,7 +83,7 @@
      },
      "срок": {
       "n": 1086,
-      "mean_h": 70.38,
+      "mean_h": 70.39,
       "median_h": 71.97
      },
      "пол": {
@@ -97,6 +97,18 @@
       "median_h": 0.7
      }
     }
+   },
+   "exposure": {
+    "gross_mean": 288.5,
+    "gross_median": 32.8,
+    "gross_max": 3874.4,
+    "open_mean": 260.2,
+    "open_median": 70.0,
+    "open_max": 3206,
+    "notional_per_pos": 1.109,
+    "sum_pnl": 249.55,
+    "sum_over_gross": 0.865,
+    "final": 0.0762
    },
    "binder": {
     "лестница": 0.767,
@@ -123,11 +135,11 @@
     "ликвидация": 1
    },
    "book": {
-    "final": 0.0667,
+    "final": 0.0693,
     "max_dd": -0.1983,
     "day_median": 0.00263,
     "day_worst": -0.0995,
-    "day_green": 0.607,
+    "day_green": 0.643,
     "days": 28,
     "hours": 639
    },
@@ -148,7 +160,7 @@
      },
      "срок": {
       "n": 1110,
-      "mean_h": 70.41,
+      "mean_h": 70.42,
       "median_h": 71.97
      },
      "пол": {
@@ -162,6 +174,18 @@
       "median_h": 0.68
      }
     }
+   },
+   "exposure": {
+    "gross_mean": 234.6,
+    "gross_median": 30.9,
+    "gross_max": 2896.3,
+    "open_mean": 262.4,
+    "open_median": 72.0,
+    "open_max": 3206,
+    "notional_per_pos": 0.894,
+    "sum_pnl": 189.94,
+    "sum_over_gross": 0.8096,
+    "final": 0.0693
    },
    "binder": {
     "лестница": 0.767,
@@ -188,9 +212,9 @@
     "пол": 6
    },
    "book": {
-    "final": 0.1599,
+    "final": 0.1627,
     "max_dd": -0.1037,
-    "day_median": 0.00222,
+    "day_median": 0.00232,
     "day_worst": -0.0425,
     "day_green": 0.643,
     "days": 28,
@@ -213,7 +237,7 @@
      },
      "срок": {
       "n": 1117,
-      "mean_h": 70.42,
+      "mean_h": 70.43,
       "median_h": 71.97
      },
      "ликвидация": {
@@ -227,6 +251,18 @@
       "median_h": 37.58
      }
     }
+   },
+   "exposure": {
+    "gross_mean": 218.8,
+    "gross_median": 31.2,
+    "gross_max": 3168.5,
+    "open_mean": 263.0,
+    "open_median": 76.0,
+    "open_max": 3206,
+    "notional_per_pos": 0.832,
+    "sum_pnl": 207.06,
+    "sum_over_gross": 0.9463,
+    "final": 0.1627
    },
    "binder": {
     "σ": 0.765,
@@ -252,11 +288,11 @@
     "ликвидация": 1
    },
    "book": {
-    "final": 0.1627,
+    "final": 0.1652,
     "max_dd": -0.1039,
     "day_median": 0.00213,
     "day_worst": -0.0387,
-    "day_green": 0.607,
+    "day_green": 0.643,
     "days": 28,
     "hours": 639
    },
@@ -277,7 +313,7 @@
      },
      "срок": {
       "n": 1122,
-      "mean_h": 70.43,
+      "mean_h": 70.44,
       "median_h": 71.97
      },
      "ликвидация": {
@@ -286,6 +322,18 @@
       "median_h": 15.72
      }
     }
+   },
+   "exposure": {
+    "gross_mean": 183.3,
+    "gross_median": 28.8,
+    "gross_max": 2558.3,
+    "open_mean": 263.4,
+    "open_median": 76.0,
+    "open_max": 3206,
+    "notional_per_pos": 0.696,
+    "sum_pnl": 168.36,
+    "sum_over_gross": 0.9187,
+    "final": 0.1652
    },
    "binder": {
     "σ": 0.765,
@@ -310,11 +358,11 @@
     "срок": 1123
    },
    "book": {
-    "final": 0.147,
+    "final": 0.1493,
     "max_dd": -0.1151,
     "day_median": 0.002,
     "day_worst": -0.044,
-    "day_green": 0.607,
+    "day_green": 0.643,
     "days": 28,
     "hours": 639
    },
@@ -335,10 +383,22 @@
      },
      "срок": {
       "n": 1123,
-      "mean_h": 70.43,
+      "mean_h": 70.44,
       "median_h": 71.97
      }
     }
+   },
+   "exposure": {
+    "gross_mean": 143.7,
+    "gross_median": 26.9,
+    "gross_max": 1925.0,
+    "open_mean": 263.4,
+    "open_median": 76.0,
+    "open_max": 3206,
+    "notional_per_pos": 0.546,
+    "sum_pnl": 123.97,
+    "sum_over_gross": 0.8625,
+    "final": 0.1493
    },
    "binder": {
     "σ": 0.758,
@@ -363,11 +423,11 @@
     "срок": 1123
    },
    "book": {
-    "final": 0.1341,
+    "final": 0.1361,
     "max_dd": -0.1227,
     "day_median": 0.00191,
     "day_worst": -0.0479,
-    "day_green": 0.607,
+    "day_green": 0.643,
     "days": 28,
     "hours": 639
    },
@@ -388,10 +448,22 @@
      },
      "срок": {
       "n": 1123,
-      "mean_h": 70.43,
+      "mean_h": 70.44,
       "median_h": 71.97
      }
     }
+   },
+   "exposure": {
+    "gross_mean": 120.4,
+    "gross_median": 26.1,
+    "gross_max": 1582.5,
+    "open_mean": 263.4,
+    "open_median": 76.0,
+    "open_max": 3206,
+    "notional_per_pos": 0.457,
+    "sum_pnl": 99.26,
+    "sum_over_gross": 0.8247,
+    "final": 0.1361
    },
    "binder": {
     "σ": 0.742,
@@ -416,11 +488,11 @@
     "срок": 1123
    },
    "book": {
-    "final": 0.1195,
+    "final": 0.1212,
     "max_dd": -0.1334,
-    "day_median": 0.00146,
+    "day_median": 0.00162,
     "day_worst": -0.054,
-    "day_green": 0.571,
+    "day_green": 0.607,
     "days": 28,
     "hours": 639
    },
@@ -441,10 +513,22 @@
      },
      "срок": {
       "n": 1123,
-      "mean_h": 70.43,
+      "mean_h": 70.44,
       "median_h": 71.97
      }
     }
+   },
+   "exposure": {
+    "gross_mean": 92.1,
+    "gross_median": 25.0,
+    "gross_max": 1200.5,
+    "open_mean": 263.4,
+    "open_median": 76.0,
+    "open_max": 3206,
+    "notional_per_pos": 0.35,
+    "sum_pnl": 71.4,
+    "sum_over_gross": 0.7754,
+    "final": 0.1212
    },
    "binder": {
     "σ": 0.687,
@@ -458,14 +542,20 @@
   "mismatch": 0,
   "fields": [],
   "same_len": false,
-  "drift": [],
+  "drift": [
+   {
+    "поле": "final",
+    "было": 0.0732,
+    "стало": 0.0762
+   }
+  ],
   "positions": 8676,
   "positions_d4": 8673,
   "hours": 639,
   "hours_d4": 634,
   "robust_checked": 4
  },
- "secs": 1064.2,
+ "secs": 1079.1,
  "sigma_measured": 8664,
  "sigma_deciles": {
   "calm_max_bp": 10.16,
