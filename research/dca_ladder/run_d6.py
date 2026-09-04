@@ -65,6 +65,7 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 """
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -172,10 +173,15 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
     """
     order = queue(recs)
     equity, free = float(deposit), float(deposit)
+    # допуск кассы ОТНОСИТЕЛЕН счёту: абсолютный 1e-9 при разных депозитах
+    # решает пограничный вход по-разному, и «тот же замер на другом
+    # депозите» переставал быть тем же замером
+    eps = 1e-9 * float(deposit)
     live = []                       # (exit_ts, маржа, доля капитала, marks)
     taken, no_cash, too_small = 0, 0, 0
     dH, openN = {}, {}
     bysym, best_trade = {}, 0.0
+    ids, pnl_taken = [], 0.0
     for r in order:
         now = int(r["at"])
         # 1. деньги возвращаются раньше, чем тратятся
@@ -193,12 +199,14 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
         if notional * RUNG_SHARE < min_notional:
             too_small += 1
             continue
-        if margin > free + 1e-9:
+        if margin > free + eps:
             no_cash += 1
             continue
         free -= margin
         taken += 1
         live.append((r["exit_ts"], margin, r["pnl"], r["marks"]))
+        ids.append(f"{r['at']:.3f}:{r['sym']}")
+        pnl_taken += r["pnl"]
         got = r["pnl"] * margin
         bysym[r["sym"]] = bysym.get(r["sym"], 0.0) + got
         best_trade = max(best_trade, got)
@@ -239,6 +247,10 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
         "slots": int(round(1.0 / share)),
         "ticket": round(deposit * share, 2),
         # концентрация: вычитание, а не пересчёт (см. отчёт)
+        # отпечаток ВЗЯТОГО набора: без него «ячейки разошлись» неотличимо
+        # от «взяли разные сделки», а лечится это разным
+        "fp": hashlib.sha1("|".join(sorted(ids)).encode()).hexdigest()[:12],
+        "pnl_taken": round(pnl_taken, 4),
         "names": len(bysym),
         "top_sym": max(bysym, key=bysym.get) if bysym else None,
         "top_pnl": round(max(bysym.values()), 2) if bysym else 0.0,
@@ -269,7 +281,7 @@ def window(longs):
                           for g in longs})}
 
 
-def run(limit=None, src=None, log=print, deposit=DEPOSIT):
+def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
     t0 = time.time()
     legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
     get = src.bars if src else (lambda s, a, b: SW.read_bars(ROOT_B1, s, a, b))
@@ -316,6 +328,10 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT):
             skipped += (1 - got)
 
     shares = shares_for(deposit)
+    if anchor_dep:
+        # общий набор долей: опора обязана сравнивать ячейку с ячейкой
+        shares = sorted(set(shares) | set(shares_for(anchor_dep)),
+                        reverse=True)
     out = {"positions": n, "skipped": skipped,
            "grid": {"share": GRID_SHARE, "ticket": GRID_TICKET,
                     "shares_used": shares,
@@ -324,7 +340,8 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT):
                       "RUNG_SHARE": RUNG_SHARE, "HOLD_H": D2.HOLD_H,
                       "FLOOR_FRAC": D2.FLOOR_FRAC},
            "window": win,
-           "cells": {}, "unlimited": {}, "secs": 0.0}
+           "cells": {}, "anchor_cells": {}, "anchor_dep": anchor_dep,
+           "unlimited": {}, "secs": 0.0}
     for k in GRID_RULER:
         rs = recs[k]
         # опора: без нормировки кассы (то, что мерил D5) — доля 1.0 и
@@ -333,45 +350,50 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT):
         out["unlimited"][f"{k[0]}|{k[1]}"] = {
             "n": len(rs), "sum_pnl": round(sum(r["pnl"] for r in rs), 2)}
         for sh in shares:
-            out["cells"][f"{k[0]}|{k[1]}|{sh:.6f}"] = ration(
-                rs, sh, deposit=deposit)
+            key = f"{k[0]}|{k[1]}|{sh:.6f}"
+            out["cells"][key] = ration(rs, sh, deposit=deposit)
+            if anchor_dep:
+                out["anchor_cells"][key] = ration(rs, sh, deposit=anchor_dep)
     out["secs"] = round(time.time() - t0, 1)
     return out
 
 
-def anchor_deposit(s, ref_path):
-    """Сверка с прогоном на другом депозите — встроенная проверка меры.
+def anchor_deposit(s):
+    """Опора по депозиту — встроенная проверка меры, считается В ОДНОМ
+    прогоне на ОДНИХ исходах.
 
-    При фиксированной доле процент к депозиту от размера депозита НЕ
-    зависит: маржа пропорциональна счёту, а исход позиции — доля её
-    капитала. Единственный канал влияния — АБСОЛЮТНЫЙ пол биржи. Значит
-    ячейка, где ни один вход не отвергнут как «мельче $5», обязана
-    воспроизвестись ДОСЛОВНО, а разошедшаяся — обязана иметь отказы по
-    полу. Иначе мера сломана, и таблицу читать нельзя.
+    Сравнивать с артефактом прошлого прогона нельзя: хранилище баров
+    дописывается каждый час, и исходы позиций у двух прогонов слегка
+    расходятся сами — «мера сломана» тогда означало бы «данные подросли».
+
+    Правило: при фиксированной доле процент к депозиту от депозита не
+    зависит — маржа пропорциональна счёту, исход есть доля её капитала.
+    Значит ячейка, взявшая ТОТ ЖЕ набор сделок (отпечаток совпал), обязана
+    дать тот же процент; разошедшийся отпечаток обязан объясняться полом
+    биржи. Иначе мера сломана.
     """
-    if not os.path.exists(ref_path):
-        return None
-    with open(ref_path, encoding="utf-8") as f:
-        r = json.load(f)
-    dep_a = (s.get("params") or {}).get("DEPOSIT")
-    dep_b = (r.get("params") or {}).get("DEPOSIT")
-    if dep_a is None or dep_b is None or abs(dep_a - dep_b) < 1e-9:
+    ref = s.get("anchor_cells") or {}
+    if not ref:
         return None
     rows, bad = [], []
     for k, c in sorted(s.get("cells", {}).items()):
-        c0 = (r.get("cells") or {}).get(k)
+        c0 = ref.get(k)
         if not c0:
             continue
+        same_fp = c.get("fp") == c0.get("fp")
         same = abs(c["final"] - c0["final"]) < 1e-9
         floor = bool(c["too_small"] or c0["too_small"])
-        ok = same or floor
+        ok = (same if same_fp else floor)
         rows.append({"cell": k, "final": c["final"], "final_ref": c0["final"],
-                     "same": same, "floor": floor, "ok": ok,
+                     "same": same, "same_fp": same_fp, "floor": floor,
+                     "ok": ok, "pnl_taken": c.get("pnl_taken"),
+                     "pnl_taken_ref": c0.get("pnl_taken"),
                      "too_small": c["too_small"],
                      "too_small_ref": c0["too_small"]})
         if not ok:
             bad.append(k)
-    return {"ref": os.path.basename(ref_path), "dep": dep_a, "dep_ref": dep_b,
+    return {"dep": (s.get("params") or {}).get("DEPOSIT"),
+            "dep_ref": s.get("anchor_dep"),
             "rows": rows, "bad": bad,
             "n_same": sum(1 for x in rows if x["same"])}
 
@@ -381,17 +403,26 @@ def _anchor_block(a):
         return []
     L = ["## Опора: тот же замер на депозите "
          f"${a['dep_ref']:g}", "",
-         "Встроенная проверка меры, а не справка. При фиксированной доле "
-         "процент к депозиту от размера депозита НЕ зависит — маржа "
-         "пропорциональна счёту, исход позиции есть доля её капитала. "
-         "Единственный канал влияния — абсолютный пол биржи в $5. Значит "
-         "ячейка без отказов «мельче $5» обязана воспроизвестись "
-         "ДОСЛОВНО, а разошедшаяся — обязана иметь такие отказы.", "",
+         "Встроенная проверка меры, а не справка, и считается она В ЭТОМ "
+         "ЖЕ прогоне на ОДНИХ исходах: хранилище баров дописывается "
+         "каждый час, и сравнение с артефактом прошлого прогона называло "
+         "бы «мерой сломанной» подросшие данные.", "",
+         "При фиксированной доле процент к депозиту от размера депозита "
+         "НЕ зависит — маржа пропорциональна счёту, исход позиции есть "
+         "доля её капитала. Единственный канал влияния — абсолютный пол "
+         "биржи в $5. Значит ячейка, взявшая ТОТ ЖЕ набор сделок "
+         "(отпечаток совпал), обязана дать тот же процент, а разошедшийся "
+         "набор обязан объясняться полом.", "",
          "| ячейка | доход здесь | там | совпало | отказов по полу |",
          "|---|--:|--:|:--|--:|"]
     for x in a["rows"]:
-        mark = "да" if x["same"] else ("нет — пол биржи" if x["floor"]
-                                       else "**НЕТ, и пол ни при чём**")
+        if x["same"]:
+            mark = "да"
+        elif not x["same_fp"]:
+            mark = ("взят другой набор — пол биржи" if x["floor"]
+                    else "**взят другой набор БЕЗ пола — мера сломана**")
+        else:
+            mark = "**тот же набор, а процент другой — мера сломана**"
         L.append(f"| {x['cell']} | {_pct(x['final'])} | "
                  f"{_pct(x['final_ref'])} | {mark} | "
                  f"{x['too_small']} / {x['too_small_ref']} |")
@@ -589,9 +620,9 @@ def main():
             s = json.load(f)
         s["window"] = _restat_window(s, log=print)
     else:
-        s = run(limit=a.limit, deposit=a.deposit)
-        s["anchor_deposit"] = anchor_deposit(
-            s, os.path.join(OUT, f"D6-cash-{a.tag}.json"))
+        anc = DEPOSIT if abs(a.deposit - DEPOSIT) > 1e-9 else None
+        s = run(limit=a.limit, deposit=a.deposit, anchor_dep=anc)
+        s["anchor_deposit"] = anchor_deposit(s)
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
     txt = report(s)

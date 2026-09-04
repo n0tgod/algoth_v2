@@ -279,36 +279,62 @@ def test_percent_of_deposit_is_invariant_to_deposit():
           f"с полом взято {c['taken']} против {d['taken']}")
 
 
+def test_scale_invariance_holds_on_the_cash_boundary():
+    """Тот же набор сделок — тот же процент, на любом депозите.
+
+    Пограничный случай нарочно: шесть мест наполняют счёт ровно, и
+    абсолютный допуск кассы решал такой вход по-разному на разных
+    депозитах — «тот же замер на другом депозите» переставал быть тем же.
+    """
+    recs = [_rec(1_700_000_000 + i, hold_h=3.0, pnl=0.10 + 0.01 * (i % 5),
+                 lev=4.0, sym=f"C{i}USDT") for i in range(30)]
+    a = D6.ration(recs, 1.0 / 6, deposit=3000.0)
+    b = D6.ration(recs, 1.0 / 6, deposit=10000.0)
+    assert a["fp"] == b["fp"], (a["fp"], b["fp"])
+    assert abs(a["final"] - b["final"]) < 1e-9, (a["final"], b["final"])
+    assert abs(a["pnl_taken"] - b["pnl_taken"]) < 1e-9, (a, b)
+    # отпечаток обязан РАЗЛИЧАТЬ наборы, иначе он ничего не стережёт
+    # берём ДРУГИЕ первые шесть: обрезка хвоста набор не меняет — при
+    # шести местах входят первые шесть очереди
+    c = D6.ration(recs[5:], 1.0 / 6, deposit=3000.0)
+    assert c["fp"] != a["fp"], (c["fp"], a["fp"])
+    print(f"ok  масштаб: набор {a['fp']} и {_pc(a['final'])} на обоих "
+          "депозитах")
+
+
 def test_deposit_anchor_catches_a_broken_measure():
-    """Расхождение БЕЗ отказов по полу означает сломанную меру, не находку."""
-    import json
-    import tempfile
-    cells = {"depth|2.0|0.050000": {"final": 0.10, "too_small": 0},
-             "depth|2.0|0.001667": {"final": 0.20, "too_small": 3000}}
-    ref = {"params": {"DEPOSIT": 3000.0}, "cells": cells}
-    with tempfile.TemporaryDirectory() as td:
-        fp = os.path.join(td, "ref.json")
-        with open(fp, "w", encoding="utf-8") as f:
-            json.dump(ref, f)
-        good = {"params": {"DEPOSIT": 10000.0}, "cells": {
-            "depth|2.0|0.050000": {"final": 0.10, "too_small": 0},
-            "depth|2.0|0.001667": {"final": 0.25, "too_small": 0}}}
-        a = D6.anchor_deposit(good, fp)
-        assert a and not a["bad"], a
-        assert a["n_same"] == 1, a
-        bad = {"params": {"DEPOSIT": 10000.0}, "cells": {
-            "depth|2.0|0.050000": {"final": 0.17, "too_small": 0}}}
-        a2 = D6.anchor_deposit(bad, fp)
-        assert a2["bad"] == ["depth|2.0|0.050000"], a2
-        txt = D6.report({"positions": 1, "skipped": 0, "secs": 1.0,
-                         "grid": {}, "params": {"DEPOSIT": 10000.0},
-                         "cells": {}, "unlimited": {},
-                         "anchor_deposit": a2})
-        assert "Мера сломана" in txt, txt[-1200:]
-        # тот же депозит сверять не с чем — опоры нет вовсе
-        assert D6.anchor_deposit({"params": {"DEPOSIT": 3000.0},
-                                  "cells": {}}, fp) is None
-    print("ok  опора депозита: расхождение без пола названо сломанной мерой")
+    """Расхождение при СОВПАВШЕМ наборе — сломанная мера, не находка."""
+    ok = {"params": {"DEPOSIT": 10000.0}, "anchor_dep": 3000.0,
+          "cells": {"a": {"final": 0.10, "too_small": 0, "fp": "x"},
+                    "b": {"final": 0.25, "too_small": 0, "fp": "p"}},
+          "anchor_cells": {"a": {"final": 0.10, "too_small": 0, "fp": "x"},
+                           "b": {"final": 0.20, "too_small": 3000,
+                                 "fp": "q"}}}
+    a = D6.anchor_deposit(ok)
+    assert a and not a["bad"], a
+    assert a["n_same"] == 1, a
+    bad = {"params": {"DEPOSIT": 10000.0}, "anchor_dep": 3000.0,
+           "cells": {"a": {"final": 0.17, "too_small": 0, "fp": "x"}},
+           "anchor_cells": {"a": {"final": 0.10, "too_small": 0,
+                                  "fp": "x"}}}
+    a2 = D6.anchor_deposit(bad)
+    assert a2["bad"] == ["a"], a2
+    txt = D6.report({"positions": 1, "skipped": 0, "secs": 1.0, "grid": {},
+                     "params": {"DEPOSIT": 10000.0}, "cells": {},
+                     "unlimited": {}, "anchor_deposit": a2})
+    assert "Мера сломана" in txt, txt[-1200:]
+    assert "тот же набор, а процент другой" in txt, txt[-1200:]
+    # другой набор БЕЗ пола — тоже сломанная мера, и названа отдельно
+    drift = {"params": {"DEPOSIT": 10000.0}, "anchor_dep": 3000.0,
+             "cells": {"a": {"final": 0.17, "too_small": 0, "fp": "x"}},
+             "anchor_cells": {"a": {"final": 0.10, "too_small": 0,
+                                    "fp": "y"}}}
+    a3 = D6.anchor_deposit(drift)
+    assert a3["bad"] == ["a"], a3
+    # опоры нет вовсе, если сравнивать не с чем
+    assert D6.anchor_deposit({"params": {"DEPOSIT": 3000.0},
+                              "cells": {}}) is None
+    print("ok  опора депозита: расхождение при совпавшем наборе — сломано")
 
 
 def _control_no_window():
@@ -329,8 +355,8 @@ def _control_blind_anchor():
     """Опора, объявляющая совпадением всё подряд, не проверяет ничего."""
     orig = D6.anchor_deposit
 
-    def blind(s, ref):
-        a = orig(s, ref)
+    def blind(s):
+        a = orig(s)
         if a:
             a["bad"] = []
         return a
@@ -404,7 +430,8 @@ TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_window_is_measured_and_reported,
          test_restat_says_the_journal_grew,
          test_percent_of_deposit_is_invariant_to_deposit,
-         test_deposit_anchor_catches_a_broken_measure]
+         test_deposit_anchor_catches_a_broken_measure,
+         test_scale_invariance_holds_on_the_cash_boundary]
 
 CONTROLS = [("бюджет не вычитается", _control_no_budget),
             ("минимум биржи снят", _control_no_min_notional),
