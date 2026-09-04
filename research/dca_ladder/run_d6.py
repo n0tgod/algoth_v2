@@ -281,6 +281,95 @@ def window(longs):
                           for g in longs})}
 
 
+def peak_open(recs):
+    """Сколько позиций открыто РАЗОМ, если взять каждый сигнал.
+
+    Очередь событий та же, что у кассы: внутри секунды закрытие раньше
+    открытия (деньги возвращаются до того, как их размещают снова).
+    Иначе пик вышел бы завышенным ровно на число стыков.
+    """
+    ev = []
+    for r in recs:
+        ev.append((int(r["at"]), 1))
+        ev.append((int(r["exit_ts"]), -1))
+    ev.sort(key=lambda x: (x[0], x[1]))
+    cur = peak = 0
+    for _, d in ev:
+        cur += d
+        peak = max(peak, cur)
+    return peak
+
+
+def full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE,
+               log=print):
+    """Депозит, при котором НИ ОДИН сигнал не отвергнут.
+
+    Связывают ДВА условия сразу, и лечатся они одним и тем же депозитом
+    только вместе с числом мест:
+
+      мест   >= пик одновременных позиций   (иначе «нет кассы»)
+      билет  >= min_notional / rung / плечо  (иначе «мельче $5»)
+
+    Билет решает САМАЯ СЛАБАЯ по плечу позиция: взять «каждый сигнал»
+    значит взять и её. Отсюда арифметический пол депозита = пик × билет;
+    он и проверяется прогоном кассы, потому что маржа считается от
+    ТЕКУЩЕГО счёта, и в просадке она проседает вместе с ним.
+    """
+    if not recs:
+        return None
+    peak = peak_open(recs)
+    lev_min = min(float(r["lev"]) for r in recs)
+    ticket = min_notional / rung / lev_min
+    floor_dep = peak * ticket
+    share = 1.0 / peak
+    total = len(recs)
+    # арифметический пол проверяется кассой: ищем наименьший множитель,
+    # при котором взяты ВСЕ — иначе «хватает» осталось бы утверждением
+    lo, hi, best = 1.0, 1.0, None
+    for _ in range(12):
+        r = ration(recs, share, deposit=floor_dep * hi,
+                   min_notional=min_notional)
+        if r["taken"] == total:
+            best = (hi, r)
+            break
+        lo, hi = hi, hi * 1.25
+    if best is None:
+        log("  полный охват не достигнут даже при ×%.2f" % hi)
+        return {"peak": peak, "lev_min": round(lev_min, 3),
+                "ticket": round(ticket, 2), "floor_dep": round(floor_dep, 2),
+                "deposit": None, "cell": None, "total": total}
+    m_hi = best[0]
+    for _ in range(20):                       # уточняем вниз до 0.5 %
+        mid = (lo + m_hi) / 2.0
+        if m_hi - lo < 0.005:
+            break
+        r = ration(recs, share, deposit=floor_dep * mid,
+                   min_notional=min_notional)
+        if r["taken"] == total:
+            m_hi, best = mid, (mid, r)
+        else:
+            lo = mid
+    dep = floor_dep * best[0]
+    cell = best[1]
+    cell["ticket"] = round(dep * share, 2)
+    return {"peak": peak, "lev_min": round(lev_min, 3),
+            "ticket": round(ticket, 2), "floor_dep": round(floor_dep, 2),
+            "deposit": round(dep, 2), "mult": round(best[0], 3),
+            "cell": cell, "total": total}
+
+
+def coverage_curve(recs, peak, deps, min_notional=MIN_NOTIONAL):
+    """Сколько сигналов берётся при депозите меньше полного охвата."""
+    out = []
+    for d in deps:
+        r = ration(recs, 1.0 / peak, deposit=d, min_notional=min_notional)
+        out.append({"deposit": round(d, 2), "taken": r["taken"],
+                    "share_taken": round(r["taken"] / len(recs), 4),
+                    "no_cash": r["no_cash"], "too_small": r["too_small"],
+                    "final": r["final"], "max_dd": r["max_dd"]})
+    return out
+
+
 def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
     t0 = time.time()
     legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
@@ -341,7 +430,7 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
                       "FLOOR_FRAC": D2.FLOOR_FRAC},
            "window": win,
            "cells": {}, "anchor_cells": {}, "anchor_dep": anchor_dep,
-           "unlimited": {}, "secs": 0.0}
+           "unlimited": {}, "full": {}, "secs": 0.0}
     for k in GRID_RULER:
         rs = recs[k]
         # опора: без нормировки кассы (то, что мерил D5) — доля 1.0 и
@@ -349,6 +438,14 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
         # «мы просто дали больше денег»
         out["unlimited"][f"{k[0]}|{k[1]}"] = {
             "n": len(rs), "sum_pnl": round(sum(r["pnl"] for r in rs), 2)}
+        fc = full_cover(rs, log=log)
+        out["full"][f"{k[0]}|{k[1]}"] = fc
+        if fc and fc.get("deposit"):
+            log(f"  полный охват {k[0]} {k[1]}: пик {fc['peak']}, "
+                f"билет ${fc['ticket']:g}, депозит ${fc['deposit']:,.0f}")
+            out["full"][f"{k[0]}|{k[1]}"]["curve"] = coverage_curve(
+                rs, fc["peak"],
+                [fc["deposit"] * q for q in (0.1, 0.25, 0.5, 0.75, 1.0)])
         for sh in shares:
             key = f"{k[0]}|{k[1]}|{sh:.6f}"
             out["cells"][key] = ration(rs, sh, deposit=deposit)
@@ -437,6 +534,71 @@ def _anchor_block(a):
     return L
 
 
+def _full_block(s):
+    """Депозит, при котором берётся каждый сигнал, и что тогда выходит."""
+    full = s.get("full") or {}
+    if not full:
+        return []
+    L = ["## Полный охват: депозит, при котором не отвергнут НИ ОДИН сигнал",
+         "",
+         "Связывают два условия сразу, и порознь они не лечатся: мест "
+         "должно быть не меньше ПИКА одновременных позиций (иначе «нет "
+         "кассы»), а билет — не меньше `$5 / 0.25 / плечо` (иначе «мельче "
+         "$5»). Билет назначает САМАЯ СЛАБАЯ по плечу позиция: «каждый "
+         "сигнал» включает и её.", "",
+         "| линейка | сигналов | пик разом | мин. плечо | билет | депозит | "
+         "загрузка | доход | просадка | худший день |",
+         "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+    for rule, param in GRID_RULER:
+        f = full.get(f"{rule}|{param}")
+        if not f:
+            continue
+        name = ("нынешняя 2·d_max" if rule == "depth"
+                else f"σ-линейка {param:g}·σ")
+        c = f.get("cell")
+        if not c:
+            L.append(f"| {name} | {f['total']} | {f['peak']} | "
+                     f"{f['lev_min']:g}× | ${f['ticket']:g} | — | — | — | "
+                     "— | — |")
+            continue
+        u = c["open_mean"] * c["ticket"] / f["deposit"]
+        L.append(
+            f"| {name} | {f['total']} | {f['peak']} | {f['lev_min']:g}× | "
+            f"${c['ticket']:g} | ${f['deposit']:,.0f} | {100 * u:.1f} % | "
+            f"{_pct(c['final'])} | {_pct(c['max_dd'])} | "
+            f"{_pct(c['day_worst'])} |")
+    L += ["",
+          "**Итог полного охвата предсказуем арифметикой, и это проверка, "
+          "а не совпадение:** когда взяты ВСЕ сигналы и у каждого одна и "
+          "та же доля счёта `1/пик`, доход к депозиту равен сумме исходов, "
+          "делённой на пик. Депозит из формулы не выпадает вовсе — он "
+          "решает только, помещаются ли все, а не сколько они приносят.",
+          ""]
+    rows = []
+    for rule, param in GRID_RULER:
+        f = full.get(f"{rule}|{param}")
+        for x in (f or {}).get("curve") or []:
+            name = ("нынешняя 2·d_max" if rule == "depth"
+                    else f"σ-линейка {param:g}·σ")
+            rows.append((name, x))
+    if rows:
+        L += ["### Чем платит депозит меньше полного", "",
+              "| линейка | депозит | взято | нет кассы | мельче $5 | доход | "
+              "просадка |", "|---|--:|--:|--:|--:|--:|--:|"]
+        for name, x in rows:
+            L.append(
+                f"| {name} | ${x['deposit']:,.0f} | "
+                f"{x['taken']} ({100 * x['share_taken']:.0f} %) | "
+                f"{x['no_cash']} | {x['too_small']} | {_pct(x['final'])} | "
+                f"{_pct(x['max_dd'])} |")
+        L += ["", "Число мест здесь ОДНО и равно пику — меняется только "
+              "депозит, то есть размер билета. Поэтому падение охвата "
+              "читается по колонкам отказов: пока связывает «нет кассы», "
+              "помогут и деньги, и места; когда «мельче $5» — только "
+              "деньги.", ""]
+    return L
+
+
 def _shares_of(s):
     """Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать
     тот прогон, который породил файл (урок R1)."""
@@ -522,6 +684,7 @@ def report(s):
                 f"{c.get('top_sym') or '—'} | ${c['top_pnl']:g} | "
                 f"{_pct(c['final_wo_top'])} | ${c['top_trade']:g} |")
     L1.append("")
+    L1 += _full_block(s)
     L1 += _anchor_block(s.get("anchor_deposit"))
     u = s.get("unlimited") or {}
     if u:

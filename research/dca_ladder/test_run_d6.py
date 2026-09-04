@@ -337,6 +337,86 @@ def test_deposit_anchor_catches_a_broken_measure():
     print("ok  опора депозита: расхождение при совпавшем наборе — сломано")
 
 
+def test_peak_open_counts_simultaneous_positions():
+    """Пик — максимум одновременно открытых, и стык не задваивается."""
+    t0 = 1_700_000_000
+    # три позиции внахлёст: пик 3
+    recs = [_rec(t0, hold_h=3.0), _rec(t0 + 60, hold_h=3.0),
+            _rec(t0 + 120, hold_h=3.0)]
+    assert D6.peak_open(recs) == 3, D6.peak_open(recs)
+    # встык: закрытие в ту же секунду, что открытие — пик 1, не 2
+    a = _rec(t0, hold_h=1.0)
+    b = _rec(int(a["exit_ts"]), hold_h=1.0)
+    assert D6.peak_open([a, b]) == 1, D6.peak_open([a, b])
+    print("ok  пик: внахлёст 3, встык 1 — стык не задваивается")
+
+
+def test_full_cover_takes_every_signal():
+    """Депозит полного охвата берёт ВСЕ и выводится из слабейшего плеча."""
+    t0 = 1_700_000_000
+    # десять позиций внахлёст; у одной плечо 1 — она и назначает билет
+    recs = [_rec(t0 + i, hold_h=5.0, pnl=0.10, lev=4.0, sym=f"C{i}USDT")
+            for i in range(10)]
+    recs[3]["lev"] = 1.0
+    f = D6.full_cover(recs, log=lambda *_: None)
+    assert f["peak"] == 10, f
+    assert f["lev_min"] == 1.0, f
+    # билет = 5 / 0.25 / 1 = 20 $, пол депозита = 10 × 20 = 200 $
+    assert abs(f["ticket"] - 20.0) < 1e-9, f
+    assert abs(f["floor_dep"] - 200.0) < 1e-9, f
+    assert f["deposit"] is not None and f["cell"]["taken"] == 10, f
+    assert f["cell"]["no_cash"] == 0 and f["cell"]["too_small"] == 0, f
+    # тождество: доход = сумма исходов / пик (депозит не входит вовсе)
+    exp = round(sum(r["pnl"] for r in recs) / f["peak"], 4)
+    assert abs(f["cell"]["final"] - exp) < 5e-4, (f["cell"]["final"], exp)
+    # депозит МЕНЬШЕ пола обязан терять сигналы
+    thin = D6.ration(recs, 1.0 / f["peak"], deposit=f["floor_dep"] * 0.5)
+    assert thin["taken"] < 10, thin
+    print(f"ok  полный охват: пик {f['peak']}, билет ${f['ticket']:g}, "
+          f"депозит ${f['deposit']:.0f}, доход {_pc(f['cell']['final'])}")
+
+
+def test_report_carries_full_cover():
+    """Число, не доехавшее до отчёта, владельцу не существует."""
+    t0 = 1_700_000_000
+    recs = [_rec(t0 + i, hold_h=5.0, pnl=0.10, lev=4.0, sym=f"C{i}USDT")
+            for i in range(10)]
+    recs[3]["lev"] = 1.0
+    f = D6.full_cover(recs, log=lambda *_: None)
+    f["curve"] = D6.coverage_curve(recs, f["peak"],
+                                   [f["deposit"] * 0.5, f["deposit"]])
+    txt = D6.report({"positions": 10, "skipped": 0, "secs": 1.0, "grid": {},
+                     "params": {"DEPOSIT": 3000.0}, "cells": {},
+                     "unlimited": {}, "full": {"depth|2.0": f}})
+    assert "Полный охват" in txt, txt[:600]
+    assert "$200" in txt or "$201" in txt or "$2" in txt, txt[-2000:]
+    assert "САМАЯ СЛАБАЯ по плечу" in txt, txt[-2000:]
+    assert "Чем платит депозит меньше полного" in txt, txt[-2000:]
+    print("ok  отчёт: полный охват назван вместе с правилом билета")
+
+
+def _control_no_full_cover():
+    """Билет от МЕДИАННОГО плеча вместо слабейшего — охват неполон."""
+    orig = D6.full_cover
+
+    def loose(recs, min_notional=D6.MIN_NOTIONAL, rung=D6.RUNG_SHARE,
+              log=print):
+        f = orig(recs, min_notional, rung, log)
+        if f:
+            f["ticket"] = round(f["ticket"] / 4.0, 2)
+            f["floor_dep"] = round(f["peak"] * f["ticket"], 2)
+        return f
+    D6.full_cover = loose
+    try:
+        try:
+            test_full_cover_takes_every_signal()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D6.full_cover = orig
+
+
 def _control_no_window():
     """Отчёт без окна — доход в процентах непонятно за что."""
     orig = D6._window_line
@@ -431,7 +511,10 @@ TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_restat_says_the_journal_grew,
          test_percent_of_deposit_is_invariant_to_deposit,
          test_deposit_anchor_catches_a_broken_measure,
-         test_scale_invariance_holds_on_the_cash_boundary]
+         test_scale_invariance_holds_on_the_cash_boundary,
+         test_peak_open_counts_simultaneous_positions,
+         test_full_cover_takes_every_signal,
+         test_report_carries_full_cover]
 
 CONTROLS = [("бюджет не вычитается", _control_no_budget),
             ("минимум биржи снят", _control_no_min_notional),
@@ -439,7 +522,8 @@ CONTROLS = [("бюджет не вычитается", _control_no_budget),
             ("колонка без лучшего имени не считает",
              _control_no_concentration),
             ("окно замера не названо", _control_no_window),
-            ("опора депозита не сверяет", _control_blind_anchor)]
+            ("опора депозита не сверяет", _control_blind_anchor),
+            ("билет не от слабейшего плеча", _control_no_full_cover)]
 
 
 def main():
