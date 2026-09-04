@@ -78,3 +78,27 @@ sheets.jsonl: ног 865835
 ## Чего эти числа НЕ описывают
 
 Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а не сведён в позицию, то есть маржа и цена ликвидации по-прежнему считаются по каждой позиции отдельно — на бирже они считаются по слитой. Веса модели видели эти часы, поэтому пересчёт читается как оценка СВЕРХУ. Период один и режим рынка один.
+публикуется в ветку main:
+ jobs/done/dca-two-rulers.log          |   76 +
+ jobs/done/ps-dca2.done                |    1 +
+ jobs/done/ps-dca2.log                 |   10 +
+ jobs/poke.log                         |    2 +
+ research/dca_paper/out/DCA-paper.json |  335 ++-
+ research/dca_paper/out/DCA-paper.md   |   28 +-
+ research/dca_paper/out/journal.jsonl  | 5054 +++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 8 files changed, 5492 insertions(+), 16 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+   28e7d62..b3e3f1d  main       -> origin/main
+конец: 2026-09-04T12:09:35Z, код 0
