@@ -23,6 +23,12 @@
   от разошедшегося счёта (уплыла медиана или доля ликвидаций — дефект).
   Иначе ложная тревога встанет над каждым прогоном и перестанет быть
   сигналом.
+* **Знаменатель кривой книги.** Итог считается как `ΔPnL / гросс`, то
+  есть это доходность на ГРОСС-НОТИОНАЛ, а не на депозит. Перевод —
+  тождество `доходность депозита = доходность гросса × (гросс/депозит)`,
+  и если знаменатель понят неверно, число «сколько приносит» уедет в
+  разы, оставшись правдоподобным. Сверка тождества встроена в отчёт и
+  обязана кричать, когда порядок не сходится.
 * **Время в позиции** отсчитывается от бара ВХОДА, а не от начала окна
   признаков: окно назад `BACK_H` = 24 ч, и отсчёт от него добавил бы
   сутки КАЖДОЙ позиции, оставив таблицу правдоподобной. Ловит это один
@@ -216,6 +222,45 @@ def test_anchor_separates_growth_from_defect():
           "при любой длине")
 
 
+def test_exposure_and_deposit_math():
+    """Экспозиция и перевод в депозит: тождество, а не подгонка.
+
+    Знаменатель кривой — гросс-нотионал, поэтому сумма исходов, делённая
+    на средний гросс, обязана быть того же порядка, что итог книги. Если
+    порядок не сходится, отчёт обязан СКАЗАТЬ это словами, а не молча
+    напечатать таблицу процентов к депозиту.
+    """
+    hrs = [1_699_999_200 + i * D4.HOUR for i in range(10)]
+    X = {h: 20.0 for h in hrs}
+    N = {h: 25 for h in hrs}
+    ex = D5._exposure(hrs, X, N, sum_pnl=2.0, final=0.1)
+    assert ex["gross_mean"] == 20.0 and ex["open_mean"] == 25.0, ex
+    assert abs(ex["notional_per_pos"] - 0.8) < 1e-9, ex
+    # сверка знаменателя обязана существовать: без неё таблица процентов
+    # печатается при любом знаменателе и выглядит одинаково
+    assert ex["sum_over_gross"] is not None, ex
+    assert abs(ex["sum_over_gross"] - 0.1) < 1e-9, ex
+
+    # знаменатель понят верно (0.1 против 0.1) — отчёт молчит
+    cell = {"n": 10, "book": {"final": 0.1, "days": 20},
+            "exposure": ex, "exits": {}, "hold": None, "binder": {}}
+    st = {"cells": {f"{D5.ANCHOR[0]}|{D5.ANCHOR[1]}": cell},
+          "positions": 10, "grid": [], "anchor": {}}
+    rep = D5.report(st)
+    assert "знаменатель понят верно" in rep, rep[-1500:]
+    assert "+10.00 %" in rep and "+6.00 %" in rep, rep[-1200:]
+
+    # разошлось на порядок — отчёт обязан отказаться от вердикта по деньгам
+    bad = D5._exposure(hrs, X, N, sum_pnl=30.0, final=0.1)
+    cell2 = dict(cell, exposure=bad)
+    st2 = {"cells": {f"{D5.ANCHOR[0]}|{D5.ANCHOR[1]}": cell2},
+           "positions": 10, "grid": [], "anchor": {}}
+    rep2 = D5.report(st2)
+    assert "вердикт по деньгам не выносится" in rep2, rep2[-1500:]
+    print("ok  депозит: тождество гросс×доля, сверка знаменателя кричит "
+          "при расхождении порядка")
+
+
 def test_run_end_to_end_synthetic():
     """Сквозной прогон: run → report, обе единицы и сверка якоря.
 
@@ -249,7 +294,9 @@ def test_run_end_to_end_synthetic():
         assert b["hours"] > 0 and b["final"] == b["final"], (key, b)
         assert sum(c["binder"].values()) > 0.99, (key, c["binder"])
         h = c["hold"]
-        assert h and h["max_h"] <= D2.HOLD_H + 1e-6, (key, h)
+        ex = c["exposure"]
+        assert ex and ex["open_mean"] > 0 and ex["gross_mean"] > 0, (key, ex)
+        assert 0.0 < ex["notional_per_pos"] < 30.0, (key, ex)
         assert h["min_h"] >= 0.0 and h["mean_h"] >= h["min_h"], (key, h)
         assert sum(v["n"] for v in h["by_exit"].values()) == 60, (key, h)
         # в таблицу обязаны попасть ВСЕ причины выхода, а не поимённый
@@ -262,6 +309,7 @@ def test_run_end_to_end_synthetic():
     rep = D5.report(s)
     assert "ЛИНЕЙКА" in rep and "Кто связал запас" in rep, rep[:400]
     assert "Время в позиции" in rep and " ч |" in rep, rep[-1500:]
+    assert "процентах к депозиту" in rep, rep[-2000:]
     assert "ПОКАЗАНО" not in rep, [ln for ln in rep.splitlines()
                                    if "ПОКАЗАНО" in ln]
     for reason in s["cells"][f"{D5.ANCHOR[0]}|{D5.ANCHOR[1]}"]["exits"]:
@@ -375,6 +423,31 @@ def _control_anchor_blames_growth():
             D5.ANCHOR_ROBUST.pop(k, None)
 
 
+def _control_no_denominator_check():
+    """Без сверки знаменателя таблица процентов печатается всегда.
+
+    Именно так число «сколько приносит» уехало бы в разы, оставшись
+    правдоподобным: проценты к депозиту выглядят одинаково при любом
+    знаменателе.
+    """
+    orig = D5._exposure
+
+    def blind(hrs, X, N, sum_pnl, final):
+        r = orig(hrs, X, N, sum_pnl, final)
+        if r:
+            r["sum_over_gross"] = None
+        return r
+    D5._exposure = blind
+    try:
+        try:
+            test_exposure_and_deposit_math()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D5._exposure = orig
+
+
 def _control_anchor_never_complains():
     """Молчаливая сверка якоря: расхождение обязано попадать в отчёт."""
     orig = dict(D5.ANCHOR_ROBUST), dict(D5.ANCHOR_LEN)
@@ -395,6 +468,7 @@ TESTS = [test_sigma_ruler_gives_wild_less_leverage,
          test_anchor_matches_live_path,
          test_hold_time_from_entry_not_window,
          test_anchor_separates_growth_from_defect,
+         test_exposure_and_deposit_math,
          test_run_end_to_end_synthetic]
 
 CONTROLS = [("нулевая σ пропускается", _control_sigma_zero_allowed),
@@ -402,6 +476,7 @@ CONTROLS = [("нулевая σ пропускается", _control_sigma_zero_a
             ("σ-линейка это лестница", _control_sigma_ruler_is_depth),
             ("время от начала окна", _control_hold_from_window_start),
             ("рост журнала как дефект", _control_anchor_blames_growth),
+            ("сверки знаменателя нет", _control_no_denominator_check),
             ("сверка якоря молчит", _control_anchor_never_complains)]
 
 

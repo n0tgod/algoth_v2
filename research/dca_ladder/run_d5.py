@@ -236,6 +236,40 @@ def _hold_stats(hold, by_exit):
     return out
 
 
+def _exposure(hrs, X, N, sum_pnl, final):
+    """Чем книга занята: гросс-нотионал и сколько позиций открыто разом.
+
+    Без этих чисел «итог книги» прочесть нельзя. Знаменатель кривой —
+    ГРОСС-НОТИОНАЛ (`ret = ΔPnL / X`), то есть итог есть доходность на
+    гросс, а не на депозит. Перевод в депозит — тождество:
+
+        доходность депозита = доходность гросса × (гросс / депозит)
+
+    и второй множитель есть решение об ограде (сколько позиций разом и
+    какой потолок на имя), а не свойство рынка. Печатаем оба, иначе
+    читатель подставит своё.
+    """
+    if not hrs:
+        return None
+    x = np.array([X.get(h, 0.0) for h in hrs], dtype=float)
+    nn = np.array([N.get(h, 0) for h in hrs], dtype=float)
+    mx, mn = float(np.mean(x)), float(np.mean(nn))
+    return {
+        "gross_mean": round(mx, 1), "gross_median": round(float(np.median(x)), 1),
+        "gross_max": round(float(np.max(x)), 1),
+        "open_mean": round(mn, 1), "open_median": round(float(np.median(nn)), 1),
+        "open_max": int(np.max(nn)),
+        "notional_per_pos": round(mx / mn, 3) if mn > 0 else None,
+        "sum_pnl": round(sum_pnl, 2),
+        # сверка тождества: сумма исходов, делённая на средний гросс,
+        # обязана быть того же порядка, что итог книги. Разошлось на
+        # порядок — знаменатель понят неверно, и вердикт по деньгам не
+        # выносится
+        "sum_over_gross": round(sum_pnl / mx, 4) if mx > 0 else None,
+        "final": final,
+    }
+
+
 def _dec_stats(lev, liq, mask):
     """Медианное плечо и доля ликвидаций внутри среза σ."""
     if not mask.any():
@@ -262,7 +296,7 @@ def run(limit=None, src=None, log=print):
     keys = list(GRID_RULE)
     acc = {k: {"pnl": [], "liq": [], "lev": [], "depth": [], "exits": {},
                "binder": {}, "dP": {}, "X": {}, "day": {},
-               "hold": [], "hold_by": {}} for k in keys}
+               "hold": [], "hold_by": {}, "N": {}} for k in keys}
     sig, n, skipped = [], 0, 0
     said, done = time.time(), 0
     for sym, glist in by_sym.items():
@@ -302,6 +336,7 @@ def run(limit=None, src=None, log=print):
                 for (hr, cash, pnl) in c["track"]:
                     a["dP"][hr] = a["dP"].get(hr, 0.0) + (pnl - prev)
                     a["X"][hr] = a["X"].get(hr, 0.0) + cash
+                    a["N"][hr] = a["N"].get(hr, 0) + 1
                     prev = pnl
             n += 1
 
@@ -349,6 +384,8 @@ def run(limit=None, src=None, log=print):
         st["lev_wild"], st["liq_wild"] = lw, liqw
         st["lev_calm"], st["liq_calm"] = lc, liqc
         st["hold"] = _hold_stats(a["hold"], a["hold_by"])
+        st["exposure"] = _exposure(hrs, a["X"], a["N"], sum(a["pnl"]),
+                                   bs.get("final"))
         tot = sum(a["binder"].values()) or 1
         st["binder"] = {b: round(c / tot, 3) for b, c in a["binder"].items()}
         out["cells"][f"{k[0]}|{k[1]}"] = st
@@ -521,6 +558,62 @@ def report(s):
             f"| {name} | {buf} | {h['mean_h']:.1f} ч | "
             f"{h['median_h']:.1f} ч | {_mins(h['min_h'])} | "
             f"{h['max_h']:.1f} ч | {by} |")
+
+    a0 = s["cells"].get(f"{ANCHOR[0]}|{ANCHOR[1]}") or {}
+    ex = a0.get("exposure")
+    if ex:
+        L1 += ["", "## Сколько это в процентах к депозиту", "",
+               "Итог книги выше — доходность на ГРОСС-НОТИОНАЛ: кривая "
+               "считается как `ΔPnL / гросс`. Перевод в депозит есть "
+               "тождество, а не замер:", "",
+               "> доходность депозита = доходность гросса × "
+               "(гросс / депозит)", "",
+               "Второй множитель — решение об ограде (сколько позиций "
+               "разом, потолок на имя), а не свойство рынка. Поэтому "
+               "печатаются оба числа, и таблица ниже переводит одно в "
+               "другое при нескольких загрузках депозита.", "",
+               f"Книга держит открытыми в среднем **{ex['open_mean']} "
+               f"позиций** (медиана {ex['open_median']}, максимум "
+               f"{ex['open_max']}), гросс-нотионал в среднем "
+               f"{ex['gross_mean']} капиталов позиции "
+               f"({ex['notional_per_pos']} нотионала на позицию). Сумма "
+               f"исходов {ex['sum_pnl']}.", ""]
+        ident = ex.get("sum_over_gross")
+        if ident is not None and ex.get("final") is not None:
+            fin = ex["final"]
+            ratio = (abs(ident / fin) if fin else float("inf"))
+            L1.append(
+                f"> Сверка знаменателя: сумма исходов, делённая на средний "
+                f"гросс, равна {ident:+.4f} при итоге книги {fin:+.4f} — "
+                + ("того же порядка, знаменатель понят верно."
+                   if 0.2 <= ratio <= 5.0 else
+                   f"**расходится в {ratio:.1f} раз, то есть знаменатель "
+                   "кривой понят неверно — вердикт по деньгам не "
+                   "выносится, читать можно только меры риска.**"))
+            L1.append("")
+        L1 += ["| гросс к депозиту | что это значит | доходность депозита "
+               "за период | в месяц |", "|---|---|--:|--:|"]
+        days = (a0.get("book") or {}).get("days") or 0
+        for g, what in ((1.0, "весь депозит в позициях"),
+                        (0.6, "шесть слотов по 10 % — нынешняя ограда"),
+                        (0.3, "половина от неё")):
+            fin = (a0.get("book") or {}).get("final")
+            if fin is None:
+                continue
+            per = fin * g
+            mon = per * (30.0 / days) if days else None
+            L1.append(f"| {g:g}× | {what} | {per * 100:+.2f} % | "
+                      + (f"{mon * 100:+.2f} %" if mon is not None else "—")
+                      + " |")
+        L1 += ["", "**Чего эта таблица НЕ говорит.** Месячная колонка — "
+               "простое умножение периода, а не доказанная месячная "
+               "доходность: период один, режим рынка один. И главное — "
+               f"книга держит {ex['open_mean']} позиций разом, а нынешняя "
+               "ограда допускает шесть по 10 % капитала. То есть замер "
+               "описывает книгу ШИРЕ любой торгуемой, и перевод в депозит "
+               "у неё верен арифметически, но не исполним при этой ограде: "
+               "узкая книга — другая книга, и её разброс придётся мерить "
+               "отдельно.", ""]
 
     L1 += ["", "## Форма и хвост", "",
            "| линейка | запас | зелёных | худшая позиция | укус | "
