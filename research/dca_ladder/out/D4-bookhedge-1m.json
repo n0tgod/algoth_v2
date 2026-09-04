@@ -1,0 +1,224 @@
+{
+ "positions": 8673,
+ "skipped": 0,
+ "hours": 634,
+ "beta_coverage": 1.0,
+ "secs": 1738.5,
+ "grid": {
+  "dd": [
+   0.0,
+   0.03,
+   0.07,
+   0.15
+  ],
+  "mult": [
+   0.5,
+   1.0
+  ]
+ },
+ "params": {
+  "SURVIVE_MULT": 2.0,
+  "FLOOR_FRAC": 0.1,
+  "ROUND_COST_BP": 11.0,
+  "NULL_SEEDS": 10,
+  "NULL_SEED0": 20260904
+ },
+ "cells": {
+  "0.0|0.5": {
+   "hours": 634,
+   "final": -0.0437,
+   "max_dd": -0.1788,
+   "day_median": 0.00156,
+   "day_worst": -0.1058,
+   "day_green": 0.571,
+   "days": 28,
+   "duty": 0.998,
+   "cost": 5.916,
+   "vs_base_day_median": -0.00047,
+   "vs_base_day_better": 0.464
+  },
+  "0.0|1.0": {
+   "hours": 634,
+   "final": -0.1514,
+   "max_dd": -0.2376,
+   "day_median": -0.00368,
+   "day_worst": -0.0949,
+   "day_green": 0.464,
+   "days": 28,
+   "duty": 0.998,
+   "cost": 11.833,
+   "vs_base_day_median": -0.00094,
+   "vs_base_day_better": 0.464
+  },
+  "0.03|0.5": {
+   "hours": 634,
+   "final": -0.0398,
+   "max_dd": -0.1753,
+   "day_median": 0.00156,
+   "day_worst": -0.1004,
+   "day_green": 0.571,
+   "days": 28,
+   "duty": 0.942,
+   "cost": 5.904,
+   "vs_base_day_median": -0.00047,
+   "vs_base_day_better": 0.393
+  },
+  "0.03|1.0": {
+   "hours": 634,
+   "final": -0.1444,
+   "max_dd": -0.231,
+   "day_median": -0.00368,
+   "day_worst": -0.0841,
+   "day_green": 0.464,
+   "days": 28,
+   "duty": 0.942,
+   "cost": 11.808,
+   "vs_base_day_median": -0.00094,
+   "vs_base_day_better": 0.393
+  },
+  "0.07|0.5": {
+   "hours": 634,
+   "final": -0.0491,
+   "max_dd": -0.176,
+   "day_median": 0.00131,
+   "day_worst": -0.1012,
+   "day_green": 0.571,
+   "days": 28,
+   "duty": 0.918,
+   "cost": 7.176,
+   "vs_base_day_median": -0.00087,
+   "vs_base_day_better": 0.357
+  },
+  "0.07|1.0": {
+   "hours": 634,
+   "final": -0.1459,
+   "max_dd": -0.2323,
+   "day_median": -0.00368,
+   "day_worst": -0.0858,
+   "day_green": 0.464,
+   "days": 28,
+   "duty": 0.938,
+   "cost": 11.785,
+   "vs_base_day_median": -0.00094,
+   "vs_base_day_better": 0.393
+  },
+  "0.15|0.5": {
+   "hours": 634,
+   "final": 0.0738,
+   "max_dd": -0.1888,
+   "day_median": 0.0027,
+   "day_worst": -0.1166,
+   "day_green": 0.643,
+   "days": 28,
+   "duty": 0.084,
+   "cost": 0.077,
+   "vs_base_day_median": 0.0,
+   "vs_base_day_better": 0.036
+  },
+  "0.15|1.0": {
+   "hours": 634,
+   "final": 0.0741,
+   "max_dd": -0.1923,
+   "day_median": 0.0027,
+   "day_worst": -0.1166,
+   "day_green": 0.643,
+   "days": 28,
+   "duty": 0.084,
+   "cost": 0.153,
+   "vs_base_day_median": 0.0,
+   "vs_base_day_better": 0.036
+  }
+ },
+ "nulls": {
+  "0.0|0.5": {
+   "final_mean": -0.0437,
+   "final_p95": -0.0437,
+   "dd_mean": -0.1788,
+   "dd_best": -0.1788,
+   "duty_mean": 0.998,
+   "cell_duty": 0.998,
+   "seeds": 10
+  },
+  "0.0|1.0": {
+   "final_mean": -0.1514,
+   "final_p95": -0.1514,
+   "dd_mean": -0.2376,
+   "dd_best": -0.2376,
+   "duty_mean": 0.998,
+   "cell_duty": 0.998,
+   "seeds": 10
+  },
+  "0.03|0.5": {
+   "final_mean": -0.0549,
+   "final_p95": -0.033,
+   "dd_mean": -0.182,
+   "dd_best": -0.1774,
+   "duty_mean": 0.942,
+   "cell_duty": 0.942,
+   "seeds": 10
+  },
+  "0.03|1.0": {
+   "final_mean": -0.173,
+   "final_p95": -0.1419,
+   "dd_mean": -0.2526,
+   "dd_best": -0.2172,
+   "duty_mean": 0.942,
+   "cell_duty": 0.942,
+   "seeds": 10
+  },
+  "0.07|0.5": {
+   "final_mean": -0.0722,
+   "final_p95": -0.0556,
+   "dd_mean": -0.1828,
+   "dd_best": -0.1789,
+   "duty_mean": 0.918,
+   "cell_duty": 0.918,
+   "seeds": 10
+  },
+  "0.07|1.0": {
+   "final_mean": -0.1729,
+   "final_p95": -0.1525,
+   "dd_mean": -0.2522,
+   "dd_best": -0.2252,
+   "duty_mean": 0.938,
+   "cell_duty": 0.938,
+   "seeds": 10
+  },
+  "0.15|0.5": {
+   "final_mean": 0.0357,
+   "final_p95": 0.0529,
+   "dd_mean": -0.1924,
+   "dd_best": -0.1872,
+   "duty_mean": 0.084,
+   "cell_duty": 0.084,
+   "seeds": 10
+  },
+  "0.15|1.0": {
+   "final_mean": -0.0084,
+   "final_p95": 0.0581,
+   "dd_mean": -0.1982,
+   "dd_best": -0.1889,
+   "duty_mean": 0.084,
+   "cell_duty": 0.084,
+   "seeds": 10
+  }
+ },
+ "crosscheck": {
+  "sum_positions": 249.4968,
+  "sum_hourly": 249.4968,
+  "residual": -0.0
+ },
+ "market_hours": 634,
+ "base": {
+  "hours": 634,
+  "final": 0.0732,
+  "max_dd": -0.1911,
+  "day_median": 0.0027,
+  "day_worst": -0.1166,
+  "day_green": 0.643,
+  "days": 28,
+  "duty": 0.0,
+  "cost": 0.0
+ },
+ "eligible_hours": 633
+}
