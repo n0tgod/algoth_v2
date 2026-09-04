@@ -223,12 +223,14 @@ def test_anchor_separates_growth_from_defect():
 
 
 def test_exposure_and_deposit_math():
-    """Экспозиция и перевод в депозит: тождество, а не подгонка.
+    """Две нормировки дохода не смешиваются и обе названы.
 
-    Знаменатель кривой — гросс-нотионал, поэтому сумма исходов, делённая
-    на средний гросс, обязана быть того же порядка, что итог книги. Если
-    порядок не сходится, отчёт обязан СКАЗАТЬ это словами, а не молча
-    напечатать таблицу процентов к депозиту.
+    Живой случай 2026-09-04: гросс книги гуляет в 118 раз (медиана 32.8,
+    максимум 3874), поэтому «доход на вложенный доллар» и «доход на
+    депозит» расходятся в разы — у σ-линейки первый ВЫШЕ базы, а второй
+    НИЖЕ. Отчёт обязан печатать обе строки; одна строка вместо двух и
+    была бы тем самым числом, которое выглядит правдоподобно при любом
+    знаменателе.
     """
     hrs = [1_699_999_200 + i * D4.HOUR for i in range(10)]
     X = {h: 20.0 for h in hrs}
@@ -236,29 +238,20 @@ def test_exposure_and_deposit_math():
     ex = D5._exposure(hrs, X, N, sum_pnl=2.0, final=0.1)
     assert ex["gross_mean"] == 20.0 and ex["open_mean"] == 25.0, ex
     assert abs(ex["notional_per_pos"] - 0.8) < 1e-9, ex
-    # сверка знаменателя обязана существовать: без неё таблица процентов
-    # печатается при любом знаменателе и выглядит одинаково
-    assert ex["sum_over_gross"] is not None, ex
-    assert abs(ex["sum_over_gross"] - 0.1) < 1e-9, ex
+    assert ex["open_max"] == 25, ex
 
-    # знаменатель понят верно (0.1 против 0.1) — отчёт молчит
-    cell = {"n": 10, "book": {"final": 0.1, "days": 20},
-            "exposure": ex, "exits": {}, "hold": None, "binder": {}}
+    cell = {"n": 10, "book": {"final": 0.1, "days": 20}, "exposure": ex,
+            "exits": {}, "hold": None, "binder": {}, "curve_dd": -5.0}
     st = {"cells": {f"{D5.ANCHOR[0]}|{D5.ANCHOR[1]}": cell},
           "positions": 10, "grid": [], "anchor": {}}
     rep = D5.report(st)
-    assert "знаменатель понят верно" in rep, rep[-1500:]
-    assert "+10.00 %" in rep and "+6.00 %" in rep, rep[-1200:]
-
-    # разошлось на порядок — отчёт обязан отказаться от вердикта по деньгам
-    bad = D5._exposure(hrs, X, N, sum_pnl=30.0, final=0.1)
-    cell2 = dict(cell, exposure=bad)
-    st2 = {"cells": {f"{D5.ANCHOR[0]}|{D5.ANCHOR[1]}": cell2},
-           "positions": 10, "grid": [], "anchor": {}}
-    rep2 = D5.report(st2)
-    assert "вердикт по деньгам не выносится" in rep2, rep2[-1500:]
-    print("ok  депозит: тождество гросс×доля, сверка знаменателя кричит "
-          "при расхождении порядка")
+    # на вложенный доллар: +10.00 %, просадка из книги
+    assert "+10.00 %" in rep, rep[-2000:]
+    # на депозит под пик 25: доход 2.0/25 = +8.00 %, просадка -5.0/25 = -20 %
+    assert "+8.00 %" in rep and "-20.00 %" in rep, rep[-2000:]
+    assert "на депозит под пик" in rep and "простаивает" in rep, rep[-2000:]
+    print("ok  депозит: обе нормировки названы и считаются врозь "
+          "(+10.00 % на вложенный, +8.00 % на депозит под пик)")
 
 
 def test_run_end_to_end_synthetic():
@@ -423,19 +416,19 @@ def _control_anchor_blames_growth():
             D5.ANCHOR_ROBUST.pop(k, None)
 
 
-def _control_no_denominator_check():
-    """Без сверки знаменателя таблица процентов печатается всегда.
+def _control_one_normalisation_only():
+    """Одна строка вместо двух: доход на депозит теряется молча.
 
-    Именно так число «сколько приносит» уехало бы в разы, оставшись
-    правдоподобным: проценты к депозиту выглядят одинаково при любом
-    знаменателе.
+    Ровно так «итог книги» и был прочитан как «сколько приносит»: у
+    σ-линейки доход на вложенный доллар вдвое ВЫШЕ базы, а на депозит —
+    на треть НИЖЕ, и по одной строке этого не видно.
     """
     orig = D5._exposure
 
     def blind(hrs, X, N, sum_pnl, final):
         r = orig(hrs, X, N, sum_pnl, final)
         if r:
-            r["sum_over_gross"] = None
+            r["open_max"] = 0          # депозит не считается — строки нет
         return r
     D5._exposure = blind
     try:
@@ -476,7 +469,7 @@ CONTROLS = [("нулевая σ пропускается", _control_sigma_zero_a
             ("σ-линейка это лестница", _control_sigma_ruler_is_depth),
             ("время от начала окна", _control_hold_from_window_start),
             ("рост журнала как дефект", _control_anchor_blames_growth),
-            ("сверки знаменателя нет", _control_no_denominator_check),
+            ("одна нормировка вместо двух", _control_one_normalisation_only),
             ("сверка якоря молчит", _control_anchor_never_complains)]
 
 
