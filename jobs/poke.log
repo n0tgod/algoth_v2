@@ -665,3 +665,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788509774 ==
 [2026-09-04T08:16:15Z] задание d5-ruler-hold запущено: research/dca_ladder/run_d5.py
+
+== сигнал 1788510427 ==
+[2026-09-04T08:27:09Z] задание d5-final запущено: research/dca_ladder/run_d5.py
