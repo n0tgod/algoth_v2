@@ -3438,6 +3438,11 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              rr: (Q.get("rr") == null || Q.get("rr") === ""
                   ? null : parseFloat(Q.get("rr"))),
              obs: false,
+             // Книга DCA: график показывает ПОЗИЦИИ лестницы, а не
+             // выборы модели. Рука у неё одна (лестница не делится на
+             // деревья и сеть), уровней нет — и то и другое приходит
+             // ОТВЕТОМ сервера, а не решается здесь списком ключей.
+             dca: Q.get("dca") || "",
              fit: false};
 // Пункты легенды про уровни — только там, где уровни действуют:
 // подпись «stop» под графиком часовой книги утверждала бы правило,
@@ -3482,6 +3487,26 @@ async function pullModelTrades() {
   if (MDL.busy || (MDL.sym === sym && Date.now() - MDL.at < 60000)) return;
   MDL.busy = true;
   try {
+    if (MDL.dca) {
+      const p = new URLSearchParams({k: KEY, sym: sym, book: MDL.dca});
+      const r = await fetch("/dca_trades?" + p.toString());
+      const d = await r.json();
+      MDL.trades = (d.rows || []).filter(t => t.sym === sym);
+      MDL.merged = (d.merged || []).filter(t => t.sym === sym);
+      MDL.arm = "dca";
+      MDL.obs = false;
+      // Уровней у лестницы нет: обещания пути принадлежат ситуационной
+      // книге. Нарисовать их значило бы утверждать правило, которого у
+      // книги нет, — поэтому `situational` приходит ложью по делу.
+      MDL.rules = {rules_version: d.rules_version, situational: false,
+                   dca_book: d.book, dca_title: d.ruler_title,
+                   dca_deposit: d.deposit, why: d.why};
+      legendLevels();
+      MDL.sym = sym; MDL.at = Date.now();
+      armButtons();
+      if (focused() && !MDL.fit) { MDL.fit = true; fitFocus(); }
+      return;
+    }
     // Полная история по монете, а не последние двадцать из состояния:
     // страницу открывают ради сделки, которой может быть неделя.
     // `lite` — без сводок и кривых: графику нужны строки сделок, а
@@ -3538,6 +3563,18 @@ async function pullModelTrades() {
 
 function armButtons() {
   const box = document.getElementById("marm");
+  // У книги DCA рук нет вовсе: лестница одна, и переключатель «ml/ai»
+  // предлагал бы выбор, которого не существует. Вместо него — имя
+  // книги, чьи позиции на графике: молча показывать чужую книгу под
+  // прежним переключателем нельзя.
+  if (MDL.dca) {
+    box.innerHTML = "<span class=\"mono\">DCA · " +
+      String((MDL.rules && MDL.rules.dca_title) || MDL.dca) +
+      ((MDL.rules && MDL.rules.dca_deposit)
+        ? " · $" + Number(MDL.rules.dca_deposit).toLocaleString("en-US")
+        : "") + " · " + MDL.trades.length + "</span>";
+    return;
+  }
   const n = {};
   for (const [a] of ARMS) n[a] = MDL.trades.filter(t => t.arm === a).length;
   // Кнопки создаются ОДИН раз, дальше обновляются на месте. Пересборка
@@ -4212,6 +4249,44 @@ function draw() {
       g.lineWidth = me ? 2.6 : 2; g.strokeStyle = ring; g.stroke();
     };
     dot(xa, ye, css("--accent"));
+    // Плавающая ТВХ: средняя цена входа ПОСЛЕ каждого рунга лестницы.
+    // Линия входа стоит на ПЕРВОМ рунге и о позиции больше ничего не
+    // говорит — доливы опускают среднюю, и без ступеньки по графику не
+    // сказать, от какой цены считается результат. Величина приходит
+    // готовой с сервера (`rules.avg_walk`), второй арифметики здесь нет.
+    const wk = t.walk || [];
+    if (wk.length > 1) {
+      // Ступени собираются В СПИСОК, и только он решает, была ли линия
+      // нарисована: подпись рядом с ненарисованной линией однажды уже
+      // прошла бы проверку — она печатается из данных, а не из
+      // картинки, и проверять надо ОТРИСОВАННОЕ.
+      const seg = [];
+      for (let i = 0; i < wk.length; i++) {
+        const x0 = clamp(xt(wk[i].at));
+        const x1 = clamp(i + 1 < wk.length ? xt(wk[i + 1].at) : xb);
+        seg.push([x0, Math.max(x1, x0), y(wk[i].avg)]);
+      }
+      if (seg.length) {
+        g.save();
+        g.strokeStyle = css("--accent"); g.lineWidth = me ? 2 : 1.3;
+        g.setLineDash([4, 3]);
+        g.beginPath();
+        seg.forEach(([x0, x1, yv], i) => {
+          if (i === 0) g.moveTo(x0, yv); else g.lineTo(x0, yv);
+          g.lineTo(x1, yv);
+        });
+        g.stroke(); g.setLineDash([]);
+        if (me) {
+          g.fillStyle = css("--accent");
+          g.fillText("avg entry " + wk[wk.length - 1].avg.toFixed(dec),
+                     xa + 4, seg[seg.length - 1][2] - 4);
+        }
+        g.restore();
+        const last = seg[seg.length - 1];
+        HIT.push({mdl: t, avgline: seg.length, x0: last[0], x1: last[1],
+                  y0: last[2] - 4, y1: last[2] + 4});
+      }
+    }
     let drew = null;
     if (ex != null && ex >= lo && ex <= hi) {
       g.save(); g.globalAlpha = base * .6; g.strokeStyle = col;
@@ -6004,6 +6079,11 @@ a{color:var(--accent)}
  text-transform:uppercase;border:1px solid var(--rule);border-radius:999px;
  padding:1px 8px;color:var(--muted)}
 .tag.fwd{border-color:var(--accent);color:var(--accent)}
+tr.pos{cursor:pointer}
+tr.pos:hover{background:rgba(151,71,255,.10)}
+tr.sub td{background:rgba(255,255,255,.03);font-size:12px}
+table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
+ font-size:12px;padding:3px 8px}
 """ + NAVCSS + r"""
 </style>
 <div class="wrap">
@@ -6136,7 +6216,7 @@ function intro(d){
   return h;
 }
 
-function statBlock(st, dep, title, tag){
+function statBlock(st, dep, title, tag, op){
   if (!st) return "<div class=panel><div class=cap>" + esc(title) +
     "</div><p class=dim>Строк ещё нет. У книги это не пустота показа: " +
     "решение попадает в журнал только после того, как его позиция " +
@@ -6146,7 +6226,12 @@ function statBlock(st, dep, title, tag){
     " <span class='tag " + (tag || "") + "'>" + esc(tag === "fwd" ?
       "наблюдение" : "пересчёт") + "</span></div><div class=stats>";
   const cells = [
-    ["сделок", st.n, null], ["имён", st.names, null],
+    // ПОЗИЦИЙ, а не сделок: позиция есть лестница, и каждый её долив —
+    // свой вход. Числа стоят рядом, чтобы их нельзя было спутать.
+    ["закрытых позиций", st.n, null],
+    ["входов (с доливами)", st.fills == null ? "&mdash;" : st.fills, null],
+    ["из них бэктест", st.n_bt == null ? "&mdash;" : st.n_bt, null],
+    ["имён", st.names, null],
     ["дней", st.days, null],
     ["деньги", usd(st.usd), cls(st.usd)],
     ["к депозиту", pct(st.final), cls(st.final)],
@@ -6162,7 +6247,32 @@ function statBlock(st, dep, title, tag){
   for (const [k, v, c] of cells)
     h += "<div class=st><div class=k>" + k + "</div><div class='v mono " +
       (c || "") + "'>" + (v == null ? "&mdash;" : v) + "</div></div>";
+  // Открытое НИКОГДА не складывается с закрытым: у закрытой позиции
+  // исход известен, у открытой это ОТМЕТКА, и до выхода она станет
+  // любой. `live_known === false` значит «не считали» — прочерк с
+  // названной причиной, а не ноль.
+  if (op !== undefined){
+    const kn = op && op.known !== false;
+    const n = kn && op.positions ? op.positions.length : null;
+    const cut = kn && op.cut ? op.cut.length : null;
+    h += "<div class=st><div class=k>открытых позиций</div>" +
+      "<div class='v mono'>" + (kn ? n : "&mdash;") + "</div></div>";
+    h += "<div class=st><div class=k>открытый pnl</div>" +
+      "<div class='v mono " + (kn ? cls(op.mark_usd) : "") + "'>" +
+      (kn ? usd(op.mark_usd) : "&mdash;") + "</div></div>";
+    if (kn && cut) h += "<div class=st><div class=k>оборвано записью</div>" +
+      "<div class='v mono'>" + cut + "</div></div>";
+  }
   h += "</div>";
+  if (op !== undefined && !(op && op.known !== false))
+    h += "<div class=k style='margin-top:8px'>Открытых не считали: свод " +
+      "пересобран из журнала (<code>--restat</code>), а открытые позиции " +
+      "в журнал не идут вовсе &mdash; их отметка меняется каждый час. " +
+      "Прочерк здесь значит «не смотрели», а не «открытых нет».</div>";
+  else if (op !== undefined) h += "<div class=k style='margin-top:8px'>" +
+    "Открытый pnl &mdash; ОТМЕТКА по последней цене записи, а не исход: " +
+    "с закрытым счётом он не складывается нигде" +
+    (op.at ? " (снята " + tsq(op.at) + " UTC)" : "") + ".</div>";
   if (st.top_sym) h += "<div class=k style='margin-top:8px'>лучшее имя " +
     esc(st.top_sym) + " &mdash; колонка рядом показывает итог без него: " +
     "деньги из одного разгона статистикой не являются. Соседняя колонка " +
@@ -6173,23 +6283,140 @@ function statBlock(st, dep, title, tag){
   return h + "</div>";
 }
 
-function tradeTable(rows, title){
+// Какие позиции РАЗВЁРНУТЫ — состояние ПОКАЗА, и живёт оно в наборе
+// страницы, а не в разметке: страница перерисовывается каждую минуту, и
+// разворот, живущий в DOM, сворачивался бы сам (урок панели сделок).
+const OPEN = new Set();
+function rowKey(r){ return String(Math.trunc(r.at)) + ":" + r.sym; }
+
+// Плавающая ТВХ приходит ГОТОВОЙ с сервера (`rules.avg_walk`): долив
+// опускает среднюю цену входа, и по одной цене позицию из четырёх
+// рунгов не прочитать. Второй реализации здесь нет намеренно — она
+// разошлась бы с симуляцией, посчитавшей эту же позицию.
+
+function keyId(k){ return String(k).replace(/[^a-z0-9]+/gi, "-"); }
+// Ключ часа В ТОМ ЖЕ формате, что у книг модели: график ищет по нему
+// сделку, ради которой его открыли.
+function hourKey(ts){
+  const d = new Date(Number(ts) * 1000);
+  const p = n => String(n).padStart(2, "0");
+  return d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1) + "-" +
+    p(d.getUTCDate()) + "-" + p(d.getUTCHours());
+}
+
+// Разворот — состояние ПОКАЗА, и пишется оно в набор ДО работы с
+// разметкой: строки может не оказаться на месте (страница
+// перерисовывается раз в минуту), но намерение от этого не исчезает.
+function dcaToggle(key){
+  const id = keyId(key);
+  if (OPEN.has(key)) OPEN.delete(key); else OPEN.add(key);
+  const open = OPEN.has(key);
+  const r = document.getElementById("ddet-" + id);
+  const b = document.getElementById("dexp-" + id);
+  if (r) r.style.display = open ? "table-row" : "none";
+  if (b) b.innerHTML = open ? "&#9662;" : "&#9656;";
+}
+
+function fillRows(r, key){
+  // Раскрытая позиция: КАЖДЫЙ вход своей строкой и ТВХ после него.
+  // Свёрнутая строка описывает позицию целиком и молчит о том, чем её
+  // набирали и по какой цене она в итоге стоит.
+  const w = r.walk || [];
+  let h = "<table class=leg style='width:100%'><tr><th>когда<th>нога" +
+    "<th>цена<th>доля<th>ТВХ после<th>что это</tr>";
+  w.forEach((f, i) => {
+    h += "<tr><td class=mono>" + (f.at == null ? "&mdash;" : tsq(f.at)) +
+      "<td>" + (i ? "долив " + i : "вход") +
+      "<td class=mono>" + Number(f.px).toPrecision(6) +
+      "<td class=mono>" + (f.w * 100).toFixed(0) + " %" +
+      "<td class=mono>" + Number(f.avg).toPrecision(6) +
+      "<td class=dim>" + (i ? "цена дошла до структурного уровня" :
+        "первый рунг по сигналу модели") + "</tr>";
+  });
+  h += "<tr><td class=mono>" + tsq(r.exit_ts) + "<td>выход" +
+    "<td class=mono>" + (r.exit_px == null ? "&mdash;" :
+      Number(r.exit_px).toPrecision(6)) +
+    "<td class=mono>" + (r.depth == null ? "&mdash;" :
+      "рунгов " + r.depth) +
+    "<td class='mono " + (r.usd > 0 ? "good" : "bad") + "'>" +
+    pct(r.pnl_frac) + " &middot; " + usd(r.usd) +
+    "<td class=dim>" + esc(r.exit || "") + "</tr></table>";
+  return "<tr class=sub id='ddet-" + esc(keyId(key)) + "' style='display:" +
+    (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=8>" + h +
+    "</td></tr>";
+}
+
+function tradeTable(rows, title, shown, total){
   if (!rows || !rows.length) return "";
   let h = "<div class=panel><div class=cap>" + esc(title) + " &mdash; " +
-    rows.length + "</div><div class=scroll><table><tr><th>вход<th>выход" +
+    rows.length + (total && total > rows.length ? " из " + total : "") +
+    "</div>";
+  h += "<p class=k>Одна строка &mdash; ОДНА ПОЗИЦИЯ по паре: доливы " +
+    "лестницы живут внутри неё, а не отдельными сделками. Нажмите " +
+    "строку, чтобы увидеть каждый вход, ТВХ после него и выход. " +
+    "Пометка <span class=tag>бэктест</span> означает пересчёт по " +
+    "прошлому: он идёт в ОБЩЕЙ кривой, а числа групп стоят рядом " +
+    "отдельно.</p>";
+  h += "<div class=scroll><table><tr><th>вход<th>выход" +
     "<th>монета<th>плечо<th>маржа<th>ход<th>деньги<th>исход</tr>";
   for (const r of rows){
     const c = r.usd == null ? "" : (r.usd > 0 ? "good" : "bad");
-    h += "<tr><td class=mono>" + tsq(r.at) + "<td class=mono>" +
-      tsq(r.exit_ts) + "<td>" + esc(r.sym) + "<td class=mono>" +
+    const key = rowKey(r), id = keyId(key), op = OPEN.has(key);
+    const nf = (r.fills || []).length;
+    h += "<tr class=pos onclick=\"dcaToggle('" + esc(key) + "')\">" +
+      "<td class=mono><span id='dexp-" + esc(id) + "'>" +
+      (op ? "&#9662;" : "&#9656;") + "</span> " + tsq(r.at) +
+      "<td class=mono>" + tsq(r.exit_ts) + "<td>" + esc(r.sym) +
+      (r.bt ? " <span class=tag>бэктест</span>" : "") + "<td class=mono>" +
       (r.lev == null ? "&mdash;" : Number(r.lev).toFixed(2) + "&times;") +
       "<td class=mono>" + (r.margin == null ? "&mdash;" :
         Number(r.margin).toFixed(2) + " $") +
       "<td class='mono " + c + "'>" + pct(r.pnl_frac) +
       "<td class='mono " + c + "'>" + usd(r.usd) +
-      "<td>" + esc(r.exit || "") + "</tr>";
+      "<td>" + esc(r.exit || "") +
+      (nf > 1 ? " <span class=dim>&middot; рунгов " + nf + "</span>" : "") +
+      // График этой позиции: свечи записи, точки доливов и ступенчатая
+      // ТВХ. Ключ книги едет в ссылке — без него график молча показал
+      // бы выборы модели вместо лестницы.
+      " <a href='/chart?k=" + encodeURIComponent(KEY) + "&sym=" +
+      encodeURIComponent(r.sym) + "&dca=" +
+      encodeURIComponent(RUL + ":" + DEP) + "&hour=" +
+      encodeURIComponent(hourKey(r.at)) + "' onclick='event.stopPropagation()'" +
+      ">график</a>" +
+      "</tr>";
+    // Деталь стоит в разметке ВСЕГДА и лишь скрыта: разворот тогда не
+    // требует перерисовки страницы, а проверить его можно прогоном.
+    h += fillRows(r, key);
   }
   return h + "</table></div></div>";
+}
+
+function dayTable(st, dep, title){
+  // Итог книги отвечает «сколько всего» и молчит о том, КОГДА: сумма за
+  // месяц может стоять на одном дне. Тонкий день приглушён, но НЕ
+  // спрятан — прятать наблюдение значит подгонять картину.
+  const rs = (st && st.days_rows) || [];
+  if (!rs.length) return "";
+  let h = "<div class=panel><div class=cap>" + esc(title) + " &mdash; " +
+    rs.length + " суток</div><div class=scroll><table><tr><th>сутки UTC" +
+    "<th>позиций<th>из них бэктест<th>деньги<th>к депозиту" +
+    "<th>накопленным итогом</tr>";
+  let acc = 0;
+  for (const r of rs){
+    acc += Number(r.usd || 0);
+    const c = r.usd > 0 ? "good" : (r.usd < 0 ? "bad" : "");
+    h += "<tr" + (r.n < 5 ? " class=thin" : "") + "><td class=mono>" +
+      esc(r.d) + "<td class=mono>" + r.n +
+      "<td class=mono>" + (r.bt == null ? "&mdash;" : r.bt) +
+      "<td class='mono " + c + "'>" + usd(r.usd) +
+      "<td class='mono " + c + "'>" + (dep ? pct(r.usd / Number(dep), 3) :
+        "&mdash;") +
+      "<td class='mono " + (acc > 0 ? "good" : "bad") + "'>" + usd(acc) +
+      "</tr>";
+  }
+  return h + "</table></div><div class=k>Накопленный итог идёт по ОБЩЕЙ " +
+    "кривой: бэктест и записанное вперёд ведутся одним счётом, и " +
+    "колонка «из них бэктест» говорит, чем именно набран день.</div></div>";
 }
 
 function render(){
@@ -6239,13 +6466,21 @@ function render(){
     "<div class=st><div class=k>строк в журнале</div><div class='v mono'>" +
     (b.n_journal == null ? "&mdash;" : b.n_journal) + "</div></div>" +
     "</div></div>";
-  h += statBlock(b.forward, DEP, "записано вперёд", "fwd");
-  h += statBlock(b.restored, DEP, "пересчёт по прошлому", "back");
+  // Главный счёт — ОБЩИЙ: бэктест и записанное вперёд ведутся одной
+  // кривой (решение владельца), и открытые позиции стоят в нём же
+  // отдельными плитками. Числа групп идут следом и НЕ складываются.
+  const op = (b.live_known === false) ? {known: false}
+    : (b.open ? Object.assign({}, b.open, {known: true}) : undefined);
+  h += statBlock(b.all, DEP, "общий счёт: бэктест и записанное вперёд",
+                 "", op);
+  h += statBlock(b.forward, DEP, "из него записано вперёд", "fwd");
+  h += statBlock(b.restored, DEP, "из него пересчёт по прошлому", "back");
+  h += dayTable(b.all, b.deposit || DEP, "по суткам");
   if (!d.journal_present) h += "<div class=panel><p class=dim>Журнала на " +
     "этой машине нет вовсе &mdash; он живёт там, где книги считаются. " +
     "Это не то же самое, что «сделок нет».</p></div>";
-  h += tradeTable(b.trades_forward, "сделки, записанные вперёд");
-  h += tradeTable(b.trades_restored, "сделки, восстановленные пересчётом");
+  h += tradeTable(b.trades, "позиции книги", b.trades_shown,
+                  (b.all || {}).n);
   box.innerHTML = h;
   document.getElementById("lead").textContent = d.window
     ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")
@@ -10481,6 +10716,12 @@ def serve(collector, port, token, log):
                 return self._ok(json.dumps(
                     collector.dca_paper(q.get("dep", [None])[0],
                                         q.get("ruler", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/dca_trades":
+                return self._ok(json.dumps(
+                    collector.dca_trades(q.get("sym", [""])[0],
+                                         q.get("book", [""])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/dca-page":

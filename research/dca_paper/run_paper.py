@@ -53,6 +53,100 @@ import run_d6 as D6                                           # noqa: E402
 RULERS = {k: (v["rule"], v["param"]) for k, v in R.RULERS.items()}
 
 
+def cache_path():
+    """Путь кэша разрешается В МОМЕНТ ВЫЗОВА, а не на импорте.
+
+    Замороженный на импорте путь уже подводил проект (реестр складов
+    Z2/Z3): прогон с подменённым каталогом молча писал бы мимо него.
+    """
+    return os.path.join(R.OUT, "recs.jsonl")     # кэш реплея, в git не идёт
+
+
+def cache_sig():
+    """Подпись настроек, ОТ КОТОРЫХ ЗАВИСИТ РЕПЛЕЙ.
+
+    Кэш законен ровно потому, что прошлое не меняется: закрытая позиция
+    при тех же правилах даст тот же исход. Смени правило геометрии — и
+    кэш описывает другую книгу, поэтому подпись сверяется, а расхождение
+    гонит полный пересчёт вслух, а не молча.
+    """
+    import run_d2 as D2
+    return {"edge": D2.MIN_EDGE_BP, "rr": D2.MIN_RR, "hold_h": D2.HOLD_H,
+            "back_h": D2.BACK_H, "rungs": D2.N_RUNGS,
+            "weights": list(D2.WEIGHTS), "gap": D2.MIN_ADD_GAP,
+            "floor": D2.FLOOR_FRAC, "survive": R.SURVIVE_MULT,
+            "sigma_mult": R.SIGMA_MULT, "rulers": sorted(RULERS.values())}
+
+
+def read_cache(path=None):
+    """Кэш реплея: (пара, символ, момент) → запись позиции.
+
+    Возвращает (кэш, причина непригодности). Непригодный кэш не чинится
+    молча — прогон говорит словами и считает всё заново.
+    """
+    path = path or cache_path()
+    if not os.path.exists(path):
+        return {}, "кэша нет"
+    want = json.dumps(cache_sig(), sort_keys=True, ensure_ascii=False)
+    out, sig = {}, None
+    try:
+        with open(path, encoding="utf-8") as f:
+            for i, ln in enumerate(f):
+                ln = ln.strip()
+                if not ln:
+                    continue
+                r = json.loads(ln)
+                if i == 0 and r.get("sig") is not None:
+                    sig = json.dumps(r["sig"], sort_keys=True,
+                                     ensure_ascii=False)
+                    if sig != want:
+                        return {}, "правила реплея изменились"
+                    continue
+                out[(tuple(r["pair"]), r["sym"], round(float(r["at"]), 3))] = r
+    except (OSError, ValueError) as e:
+        return {}, f"кэш не читается: {e}"
+    if sig is None:
+        return {}, "кэш без подписи правил"
+    return out, None
+
+
+def write_cache(cache, path=None):
+    """Кэш пишется ЦЕЛИКОМ и атомарно: дозапись оставила бы в файле
+    записи двух подписей разом, а различить их потом нечем."""
+    path = path or cache_path()
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(json.dumps({"sig": cache_sig()}, ensure_ascii=False) + "\n")
+        for (pair, sym, at), r in cache.items():
+            r = dict(r, pair=list(pair), sym=sym, at=at)
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    os.replace(tmp, path)
+
+
+def needs_replay(cache, legs, pairs):
+    """Какие решения обязан пересчитать этот прогон.
+
+    Правило одно и оно про ВРЕМЯ, а не про экономию: закрытая позиция
+    окончательна — прошлые бары не меняются, значит её исход при тех же
+    правилах будет тот же. Всё остальное считается заново КАЖДЫЙ прогон:
+    у открытой отметка меняется с ценой, и вчерашняя была бы ложью, а
+    оборванная («cut») ждёт продолжения записи.
+
+    Решение нужно целиком, если хоть одной линейке его недостаёт: пары
+    считаются одним проходом по барам, и делить его по линейкам значило
+    бы читать те же бары дважды.
+    """
+    need = []
+    for g in legs:
+        sym, at = str(g["sym"]), round(float(g["at"]), 3)
+        for pr in pairs:
+            r = cache.get((tuple(pr), sym, at))
+            if r is None or r.get("state") != "closed":
+                need.append(g)
+                break
+    return need
+
+
 def _key(r):
     """Ключ решения: имя плюс секунда входа. Ими и дедуплицируется."""
     return f"{int(r['at'])}:{r['sym']}"
@@ -74,7 +168,7 @@ def build_rows(by_ruler, now=None, log=print):
     артефакт — числа отказов печатаются по каждой отдельно.
     """
     now = float(now if now is not None else time.time())
-    out, cells, one = [], {}, {}
+    out, cells, one, live = [], {}, {}, {}
     for rk in R.RULER_ORDER:
         recs = by_ruler.get(rk) or []
         # Гейт плеча — ПЕРВЫМ, до правила одной на имя. Порядок решает
@@ -111,32 +205,79 @@ def build_rows(by_ruler, now=None, log=print):
             + (f", гейт плеча ≥{ml:g}× отсеял {len(recs) - len(gated)}"
                if ml is not None else "")
             + f", после правила одной на имя {len(keep)}")
+        # Живая позиция держит деньги до ПЛАНОВОГО конца срока, а не до
+        # последнего бара записи: касса возвращает маржу по `exit_ts`, и
+        # оставив там конец записи, мы вернули бы деньги позиции, которая
+        # на бирже открыта. Исход при этом не начисляется — до планового
+        # конца очередь до него не доходит, то есть отметка открытой
+        # позиции в счёт книги не попадает.
+        plan = [(dict(r, exit_ts=float(r.get("sched_end") or r["exit_ts"]))
+                 if r.get("state") in ("open", "cut") else r)
+                for r in keep]
         for dep in R.DEPOSITS:
             rows = []
-            c = D6.ration(keep, R.share(dep, rk), deposit=dep,
+            c = D6.ration(plan, R.share(dep, rk), deposit=dep,
                           min_notional=R.MIN_NOTIONAL, keep_rows=rows)
             c["slots"] = R.slots(dep, rk)
-            cells[_cell(rk, dep)] = c
+            op, cut = [], []
             for (r, margin) in rows:
-                out.append({
-                    "dep": int(dep), "ruler": rk, "at": float(r["at"]),
-                    "exit_ts": float(r["exit_ts"]), "sym": r["sym"],
-                    "lev": round(float(r["lev"]), 3),
-                    "margin": round(float(margin), 4),
-                    "pnl_frac": round(float(r["pnl"]), 6),
-                    "usd": round(float(r["pnl"]) * float(margin), 4),
-                    "exit": r.get("exit"), "written_at": now,
-                    "rules": R.RULES})
+                st = r.get("state", "closed")
+                if st == "closed":
+                    out.append({
+                        "dep": int(dep), "ruler": rk, "at": float(r["at"]),
+                        "exit_ts": float(r["exit_ts"]), "sym": r["sym"],
+                        "lev": round(float(r["lev"]), 3),
+                        "margin": round(float(margin), 4),
+                        "pnl_frac": round(float(r["pnl"]), 6),
+                        "usd": round(float(r["pnl"]) * float(margin), 4),
+                        "exit": r.get("exit"),
+                        # цены позиции и её входы: без них позиция не
+                        # разворачивается, а средняя ТВХ неоткуда взяться
+                        "entry_px": r.get("entry_px"),
+                        "exit_px": r.get("exit_px"), "avg": r.get("avg"),
+                        "depth": r.get("depth"),
+                        "fills": r.get("fills"),
+                        "written_at": now, "rules": R.RULES})
+                    continue
+                item = {"sym": r["sym"], "at": float(r["at"]),
+                        "lev": round(float(r["lev"]), 3),
+                        "margin": round(float(margin), 4),
+                        # отметка, а не исход: позиция ещё живёт
+                        "mark_frac": round(float(r["pnl"]), 6),
+                        "mark_usd": round(float(r["pnl"]) * float(margin), 4),
+                        "entry_px": r.get("entry_px"), "avg": r.get("avg"),
+                        "depth": r.get("depth"), "fills": r.get("fills"),
+                        "last_ts": float(r.get("end_ts") or 0.0),
+                        "sched_end": float(r.get("sched_end") or 0.0),
+                        "state": st}
+                (op if st == "open" else cut).append(item)
+            c["open_n"], c["cut_n"] = len(op), len(cut)
+            cells[_cell(rk, dep)] = c
+            live[_cell(rk, dep)] = {
+                "positions": op, "cut": cut,
+                "mark_usd": round(sum(x["mark_usd"] for x in op), 2),
+                "priced": len(op), "at": now}
             log(f"  депозит ${dep:,.0f}: мест {c['slots']}, "
                 f"взято {c['taken']}, нет кассы {c['no_cash']}, "
-                f"мельче ${R.MIN_NOTIONAL:g} {c['too_small']}")
-    return out, cells, one
+                f"мельче ${R.MIN_NOTIONAL:g} {c['too_small']}, "
+                f"открытых {len(op)}, оборванных записью {len(cut)}")
+    return out, cells, one, live
 
 
-def append_journal(rows, path=R.JOURNAL, log=print):
+def append_journal(rows, path=None, log=print):
     """Дописывает только НОВЫЕ решения. Запись write-ahead: строка,
     однажды попавшая в журнал, не переписывается — иначе момент записи
-    можно было бы подвинуть, и «вперёд» перестало бы что-то значить."""
+    можно было бы подвинуть, и «вперёд» перестало бы что-то значить.
+
+    Путь разрешается В МОМЕНТ ВЫЗОВА. Прежде он стоял значением по
+    умолчанию, то есть замерзал на импорте: прогон с подменённым
+    `R.JOURNAL` (тест, демо) молча дописывал бы в НАСТОЯЩУЮ запись
+    книги — а журнал есть единственное здесь невосстановимое. Тот же
+    класс, что замороженный на импорте путь склада в Z2/Z3, и он уже
+    выстрелил: первый прогон проверки кэша положил подставные строки в
+    живой журнал.
+    """
+    path = path or R.JOURNAL
     old, bad = R.read_journal(path)
     # Ключ дедупа несёт ЛИНЕЙКУ: одно решение живёт в обеих книгах, и без
     # неё вторая книга целиком читалась бы повтором первой и не писалась
@@ -163,10 +304,16 @@ def _stats(rows, deposit):
     """Итог, просадка и форма по дням — на ЭТОМ подмножестве строк."""
     if not rows:
         return None
-    day = {}
+    day, cnt, bt = {}, {}, {}
     for r in rows:
         d = time.strftime("%Y-%m-%d", time.gmtime(float(r["exit_ts"])))
         day[d] = day.get(d, 0.0) + float(r["usd"])
+        cnt[d] = cnt.get(d, 0) + 1
+        # Сколько строк дня — пересчёт по прошлому. Предикат ТОТ ЖЕ, что
+        # делит книгу (`R.ahead`), а не его копия: разойдись они, день
+        # в таблице был бы помечен не тем, чем помечен в своде.
+        if R.ahead(r.get("at"), r.get("written_at")) is not True:
+            bt[d] = bt.get(d, 0) + 1
     ks = sorted(day)
     v = np.array([day[k] for k in ks], dtype=float)
     eq = float(deposit) + np.cumsum(v)
@@ -196,30 +343,60 @@ def _stats(rows, deposit):
         "top_day": ks[int(np.argmax(v))],
         "usd_wo_top3d": wo3d,
         "names": len({r["sym"] for r in rows}),
+        # Входов больше, чем позиций: позиция есть лестница, и каждый её
+        # долив — свой вход. Считаются числом, чтобы «позиций» и «сделок»
+        # нельзя было спутать.
+        "fills": sum(len(r.get("fills") or []) or 1 for r in rows),
+        # Разбивка по суткам: итог по книге отвечает «сколько всего» и
+        # молчит о том, КОГДА — сумма за месяц может стоять на одном дне.
+        "days_rows": [{"d": k, "usd": round(float(day[k]), 2),
+                       "n": int(cnt.get(k, 0)),
+                       "bt": int(bt.get(k, 0))} for k in ks],
+        "n_bt": int(sum(bt.values())),
     }
 
 
-def summarize(path=R.JOURNAL):
-    """Свод по книгам: наблюдение и пересчёт ПОРОЗНЬ, никогда не в сумме.
+def summarize(path=None, live=None):
+    """Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
 
-    Книга есть пара «линейка × депозит», и ключ свода несёт обе: склеив
-    их по депозиту, мы сложили бы две книги в одну кривую.
+    Решение владельца 2026-09-04: бэктест и live не разделять, а вести
+    одним счётом — у сделки бэктеста метка. Кривая книги оттого и
+    непрерывна: пересчёт по прошлому есть предыстория живой записи, а не
+    вторая книга. Числа обеих групп при этом стоят рядом отдельно, и это
+    не половинчатость: веса модели видели те часы, и без объёма бэктеста
+    общая кривая читалась бы как трек.
+
+    Книга есть пара «режим × депозит», и ключ свода несёт обе: склеив их
+    по депозиту, мы сложили бы две книги в одну кривую.
+
+    `live` — открытые позиции счётного прогона по ключу книги. В журнал
+    они не идут НИКОГДА: журнал есть запись случившегося и дописывается,
+    а отметка открытой позиции меняется каждый час. Их нет вовсе —
+    значит числа даёт пересборка, и «открытых нет» отличается от «мы не
+    считали» полем `live_known`.
     """
-    rows, bad = R.read_journal(path)
+    rows, bad = R.read_journal(path or R.JOURNAL)
+    live = live or {}
     out = {"bad_lines": bad, "books": {},
            "rulers": list(R.RULER_ORDER), "deposits": list(R.DEPOSITS)}
     for rk in R.RULER_ORDER:
         for dep in R.DEPOSITS:
+            key = _cell(rk, dep)
             mine = [r for r in rows if int(r.get("dep", 0)) == int(dep)
                     and int(r.get("rules", 0)) == R.RULES
                     and R.ruler_of(r) == rk]
             fwd, back = R.split_rows(mine)
-            out["books"][_cell(rk, dep)] = {
-                "deposit": dep, "ruler": rk, "ruler_title": R.ruler_title(rk),
-                "slots": R.slots(dep, rk),
-                "ticket": R.ticket(dep, rk),
-                "forward": _stats(fwd, dep), "restored": _stats(back, dep),
-                "n_forward": len(fwd), "n_restored": len(back)}
+            op = live.get(key)
+            b = {"deposit": dep, "ruler": rk, "ruler_title": R.ruler_title(rk),
+                 "slots": R.slots(dep, rk),
+                 "ticket": R.ticket(dep, rk),
+                 "all": _stats(mine, dep),
+                 "forward": _stats(fwd, dep), "restored": _stats(back, dep),
+                 "n_forward": len(fwd), "n_restored": len(back),
+                 "live_known": op is not None}
+            if op is not None:
+                b["open"] = op
+            out["books"][key] = b
     return out
 
 
@@ -291,11 +468,36 @@ def report(s):
           "одна, второй выбор по той же монете пропущен. Реплей D-серии "
           "этого не делал, и его «пик 3206» описывал ЛОТЫ, а не позиции.",
           "",
-          "**Наблюдение и пересчёт не складываются никогда.** Решение "
-          f"считается записанным вперёд, если попало в журнал не позже "
-          f"{R.AHEAD_H} ч после самого себя (предел жизни позиции "
-          f"{R.HOLD_H} ч плюс двое суток на прогон). Первый прогон "
-          "восстанавливает накопленное — оно всё помечено пересчётом.", "",
+          "**Кривая одна: бэктест и live в общем счёте** (решение "
+          "владельца 2026-09-04). Пересчёт по прошлому есть ПРЕДЫСТОРИЯ "
+          "живой записи, а не вторая книга, и рвать её надвое незачем — "
+          "у сделки бэктеста стоит метка. Решение считается записанным "
+          f"вперёд, если попало в журнал не позже {R.AHEAD_H} ч после "
+          f"самого себя (предел жизни позиции {R.HOLD_H} ч плюс двое "
+          "суток на прогон). Числа обеих групп стоят рядом отдельной "
+          "таблицей — и это не половинчатость: веса модели видели те "
+          "часы, и без объёма бэктеста общая кривая читалась бы треком.",
+          "",
+          "**Считаются ПОЗИЦИИ, а не сделки.** У имени позиция одна, а "
+          "входов у неё несколько: база плюс доливы лестницы. Поэтому в "
+          "таблице стоит число закрытых позиций, рядом число входов, а "
+          "открытые позиции идут ОТДЕЛЬНОЙ строкой с отметкой — до "
+          "выхода их результат станет любым, и складывать его с "
+          "закрытым нельзя.", "",
+          f"**Версия правил книг — {R.RULES}, и запись начата с неё.** "
+          "Смена версии отставляет прежние строки не из аккуратности: "
+          "правило, по которому они писаны, было другим, и сшивать две "
+          "кривые в одну значит показывать книгу, которой не было. "
+          "Версия поднята дважды: билетом (пол режима и его же пик) и "
+          "исходом позиции, чей срок ещё шёл (ниже).", "",
+          "**Позиция, чей срок ещё идёт, больше не закрывается «по "
+          "сроку».** Это дефект, найденный при этой правке: реплей "
+          "кончал позицию последним баром записи и выдавал это за исход "
+          "правила — тот же класс, что D7 нашла у обрыва ряда. Теперь "
+          "«срок» засчитывается, только если окно дошло до планового "
+          "конца; иначе позиция либо ЖИВА (её символ пишется до сих "
+          "пор), либо оборвана записью (ряд символа кончился раньше "
+          "остальных), и вторая в счёт не идёт вовсе.", "",
           "**Две колонки концентрации отвечают на РАЗНЫЕ вопросы.** «Без "
           "лучшего имени» ловит одну разогнанную монету; «без 3 лучших "
           "дней» ловит один рыночный эпизод, который раздаёт деньги "
@@ -311,14 +513,16 @@ def report(s):
           + " Имена — ярлыки, а не вердикт: какой режим лучше, покажет "
           "форвард, и все три ведутся параллельно ровно затем, чтобы "
           "вопрос решали числа, а не выбор задним числом.", ""]
-    for name, key in (("Наблюдение (записано вперёд)", "forward"),
-                      ("Пересчёт по прошлому", "restored")):
+    for name, key in (("Общий счёт: бэктест и live вместе", "all"),
+                      ("Из него записано вперёд (live)", "forward"),
+                      ("Из него пересчёт по прошлому (бэктест)", "restored")):
         L += [f"## {name}", "",
-              "| режим | депозит | билет | мест | сделок | имён | дней | "
+              "| режим | депозит | билет | мест | позиций | входов | "
+              "имён | дней | "
               "$ | к депозиту | просадка | медиана дня | худший день | "
               "зелёных | укус | $ без лучшего имени | $ без 3 лучших дней |",
               "|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"
-              "--:|--:|"]
+              "--:|--:|--:|"]
         # порядок «депозит, внутри линейки» ставит пару рядом: сравнивают
         # линейки при ОДНОМ депозите, а не депозиты при одной линейке
         for dep in R.DEPOSITS:
@@ -328,13 +532,14 @@ def report(s):
                 if not st:
                     L.append(f"| {nm} | ${dep:,.0f} | "
                              f"${R.ticket(dep, rk):g} | "
-                             f"{b.get('slots', '—')} | 0 | — | — | — | — | "
-                             "— | — | — | — | — | — | — |")
+                             f"{b.get('slots', '—')} | 0 | — | — | — | "
+                             "— | — | — | — | — | — | — | — | — |")
                     continue
                 L.append(
                     f"| {nm} | ${dep:,.0f} | "
                     f"${b.get('ticket', R.ticket(dep, rk)):g} | "
                     f"{b['slots']} | {st['n']} | "
+                    f"{st.get('fills', st['n'])} | "
                     f"{st['names']} | {st['days']} | {st['usd']:,.2f} | "
                     f"{_pct(st['final'])} | {_pct(st['max_dd'])} | "
                     f"{_pct(st['day_median'], 3)} | "
@@ -351,6 +556,58 @@ def report(s):
                   "показа: журнал начат сегодня, а решение попадает сюда "
                   "только после того, как его позиция закрылась. Первые "
                   "строки появятся следующим суточным прогоном.", ""]
+    # --- открытые позиции: отметка, а не исход ---------------------------
+    books = s.get("books") or {}
+    known = [k for k in books if books[k].get("live_known")]
+    L += ["## Открытые позиции", ""]
+    if not known:
+        L += ["Их числа даёт только счётный прогон: отметка живой позиции "
+              "меняется каждый час, поэтому в журнал она не идёт никогда, "
+              "а этот прогон был пересборкой свода. Прочерка тут нет — "
+              "величина не потеряна, её просто не считали сегодня.", ""]
+    else:
+        L += ["Отметка по последнему бару записи, а не исход: до выхода "
+              "результат станет любым. С закрытым счётом она не "
+              "складывается нигде. «Оборвана записью» — позиция, чей ряд "
+              "кончился раньше остальных (снятие с торгов либо дыра "
+              "записи): исхода у неё нет, и в счёт она не идёт.", "",
+              "| режим | депозит | открытых | отметка $ | к депозиту | "
+              "оборвано записью |", "|---|---|--:|--:|--:|--:|"]
+        for dep in R.DEPOSITS:
+            for rk in R.RULER_ORDER:
+                b = books.get(_cell(rk, dep)) or {}
+                op = b.get("open")
+                if not op:
+                    continue
+                n = len(op.get("positions") or [])
+                mk = float(op.get("mark_usd") or 0.0)
+                L.append(f"| {R.ruler_title(rk)} | ${dep:,.0f} | {n} | "
+                         f"{mk:,.2f} | {_pct(mk / float(dep))} | "
+                         f"{len(op.get('cut') or [])} |")
+        L.append("")
+    # --- разбивка по суткам: средний депозит, три режима рядом ----------
+    mid = R.DEPOSITS[len(R.DEPOSITS) // 2]
+    rows_by = {}
+    for rk in R.RULER_ORDER:
+        st = ((books.get(_cell(rk, mid)) or {}).get("all") or {})
+        for d in (st.get("days_rows") or []):
+            rows_by.setdefault(d["d"], {})[rk] = d
+    if rows_by:
+        L += [f"## По суткам, депозит ${mid:,.0f}", "",
+              "Итог книги отвечает «сколько всего» и молчит о том, КОГДА: "
+              "сумма за месяц может стоять на одном дне. Здесь общий счёт "
+              "(бэктест и live вместе).", "",
+              "| сутки | " + " | ".join(R.ruler_title(rk)
+                                        for rk in R.RULER_ORDER) + " |",
+              "|---|" + "--:|" * len(R.RULER_ORDER)]
+        for d in sorted(rows_by):
+            cells_ = []
+            for rk in R.RULER_ORDER:
+                x = rows_by[d].get(rk)
+                cells_.append("—" if not x
+                              else f"{x['usd']:,.2f} ({x['n']})")
+            L.append(f"| {d} | " + " | ".join(cells_) + " |")
+        L += ["", "В скобках — число закрытых позиций этого дня.", ""]
     one = s.get("one_name") or {}
     if one:
         L += ["## Гейт плеча и собственный пик режима", "",
@@ -440,12 +697,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--full", action="store_true",
+                    help="не брать кэш реплея, пересчитать всё заново")
     ap.add_argument("--restat", action="store_true",
                     help="пересобрать свод и отчёт из журнала, не считая")
     a = ap.parse_args()
     os.makedirs(R.OUT, exist_ok=True)
     t0 = time.time()
-    extra = {}
+    extra, live = {}, None
     if a.restat:
         # Пересборка ничего не считает, но и не вправе ТЕРЯТЬ числа
         # счётного прогона: отказы кассы, окно решений и число позиций
@@ -455,8 +714,18 @@ def main():
             with open(R.ARTIFACT, encoding="utf-8") as f:
                 was = json.load(f)
             extra = {k: was[k] for k in
-                     ("positions", "skipped", "window", "cells", "one_name")
+                     ("positions", "skipped", "window", "cells", "one_name",
+                      "states", "data_end")
                      if k in was}
+            # Открытые позиции переносятся ВМЕСТЕ с их меткой времени:
+            # отметка живой позиции стареет, и выдать вчерашнюю за
+            # сегодняшнюю значило бы соврать о деньгах, которых сейчас
+            # столько нет. Возраст печатает страница.
+            # `None` означает «не считали», пустой словарь — «считали, и
+            # открытых нет». Смешав их, страница показала бы «открытых 0»
+            # там, где просто не смотрели.
+            live = (was["live"] if isinstance(was.get("live"), dict)
+                    else None)
             if extra:
                 extra["computed_at"] = was.get("computed_at") or time.strftime(
                     "%Y-%m-%d %H:%M",
@@ -473,15 +742,44 @@ def main():
         for k in keys:
             if RULERS[k] not in pairs:
                 pairs.append(RULERS[k])
-        got = D6.collect_recs(limit=a.limit, rulers=pairs)
-        rows, cells, one = build_rows(
-            {k: got["recs"][RULERS[k]] for k in keys})
+        # --- инкрементальный проход -------------------------------------
+        # Дорого здесь чтение баров, а прошлое не меняется: закрытая
+        # позиция при тех же правилах даст тот же исход, и считать её
+        # заново каждый час незачем. Заново считаются НОВЫЕ решения и все
+        # незакрытые — у них отметка меняется, и вчерашняя была бы ложью.
+        cache, why = ((({}, "полный прогон по требованию") if a.full
+                       else read_cache()))
+        if why:
+            print(f"кэш реплея не используется: {why}")
+        legs = D6.gated_legs(limit=a.limit)
+        need = needs_replay(cache, legs, pairs)
+        print(f"решений под гейтом {len(legs)}, в кэше "
+              f"{len(cache) // max(1, len(pairs))}, считаю заново {len(need)}")
+        got = D6.collect_recs(rulers=pairs, legs=legs,
+                              only=[(g["sym"], g["at"]) for g in need])
+        for pr, lst in got["recs"].items():
+            for r in lst:
+                cache[(tuple(pr), r["sym"], round(float(r["at"]), 3))] = r
+        write_cache(cache)
+        by_pair = {tuple(pr): [] for pr in pairs}
+        for (pr, _sym, _at), r in cache.items():
+            if pr in by_pair:
+                by_pair[pr].append(r)
+        rows, cells, one, live = build_rows(
+            {k: by_pair[tuple(RULERS[k])] for k in keys})
         append_journal(rows)
-        extra = {"positions": got["positions"], "skipped": got["skipped"],
-                 "window": got["window"], "cells": cells, "one_name": one,
+        extra = {"positions": sum(len(v) for v in by_pair.values())
+                 // max(1, len(pairs)),
+                 "replayed": got["positions"], "skipped": got["skipped"],
+                 # окно считается по ВСЕМ решениям, а не по пересчитанным:
+                 # инкрементальный прогон иначе объявлял бы окном
+                 # последний час записи
+                 "window": D6.window(legs), "cells": cells, "one_name": one,
+                 "states": got.get("states"), "data_end": got.get("data_end"),
+                 "live": live,
                  "computed_at": time.strftime("%Y-%m-%d %H:%M",
                                               time.gmtime())}
-    s = summarize()
+    s = summarize(live=live)
     s.update(extra)
     s["secs"] = round(time.time() - t0, 1)
     s["rules"] = {"RULES": R.RULES, "TICKET": R.TICKET_MIN,

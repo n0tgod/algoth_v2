@@ -161,14 +161,54 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     out = {"at": float(g["at"]), "exit_ts": float(r["exit_ts"]),
            "pnl": float(r["pnl_frac"]), "lev": float(lev),
            "fwd": abs(float(g["fwd"])), "sym": g["sym"],
-           "exit": r["exit"], "marks": marks}
+           "exit": r["exit"], "marks": marks,
+           # Конец ОКНА и плановый конец срока. По их расхождению видно,
+           # кончился ли срок или кончилась ЗАПИСЬ: позиция, чей срок ещё
+           # идёт, иначе попадает в книгу закрытой «по сроку» — исходом,
+           # которого не было (тот же класс, что D7 нашла у обрыва ряда).
+           # Классифицирует `collect_recs`: ему видно, докуда дошла
+           # запись у всех символов разом.
+           "end_ts": float(hold[-1][0]),
+           "sched_end": float(g["at"]) + hold_h * HOUR,
+           # Входы позиции и её цены: без них позиция не разворачивается,
+           # а «плавающая ТВХ» неоткуда взяться.
+           "entry_px": float(r.get("entry_px") or entry),
+           "exit_px": float(r["exit_px"]), "avg": float(r["avg"]),
+           "depth": int(r["depth"]),
+           "fills": [[float(a), float(b), float(c)]
+                     for (a, b, c) in (r.get("fills") or [])]}
     if ckpt_h:
-        # `end_ts` — последний бар ОКНА, а не ряда: по нему видно, дожила
-        # ли запись до конца самого длинного срока. Без него длинные
-        # сроки судились бы по обрезанной выборке, а короткие по полной.
         out["ckpt"] = r.get("ckpt")
-        out["end_ts"] = float(hold[-1][0])
     return out
+
+
+# Допуски классификации. `SCHED_TOL` — тот же, что у D7: бар не встаёт
+# ровно на границу срока, и больше двух минут разрыва означает не
+# округление. `FRESH_TOL` — насколько последний бар символа вправе
+# отставать от конца ЗАПИСИ, чтобы позиция считалась живой: тонкое имя
+# отстаёт минутами, а снятое с торгов — сутками.
+SCHED_TOL = 120.0
+FRESH_TOL = 2 * HOUR
+
+
+def position_state(r, data_end):
+    """Закрыта / открыта / оборвана записью. Правило одно на всех.
+
+    Выход по ПРАВИЛУ (тейк, пол, ликвидация) закрывает позицию всегда.
+    «Срок» же означает лишь, что бары кончились, и это две разные вещи:
+    срок ИСЧЕРПАН, если окно дошло до планового конца; иначе кончилась
+    запись — и позиция либо ещё живёт (её символ пишется до сих пор),
+    либо оборвана записью (ряд символа кончился раньше остальных).
+    Считать вторую закрытой «по сроку» значит выдумать исход.
+    """
+    if r.get("exit") != "срок":
+        return "closed"
+    end = float(r.get("end_ts") or 0.0)
+    if end >= float(r.get("sched_end") or 0.0) - SCHED_TOL:
+        return "closed"
+    if data_end and end >= float(data_end) - FRESH_TOL:
+        return "open"
+    return "cut"
 
 
 def queue(recs):
@@ -455,8 +495,22 @@ def coverage_curve(recs, peak, deps, ticket=None,
     return out
 
 
+def gated_legs(limit=None, log=print):
+    """Гейтованные лонги журнала листов — БЕЗ реплея по барам.
+
+    Вынесено из `collect_recs`, потому что инкрементальному прогону надо
+    знать, какие решения ВООБЩЕ есть, прежде чем решать, какие из них
+    считать заново. Чтение журнала листов дёшево, чтение баров — нет.
+    """
+    legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
+    longs = [g for g in legs if g["side"] == "long"
+             and abs(g["fwd"]) >= D2.MIN_EDGE_BP
+             and (g["rr"] or 0) >= D2.MIN_RR]
+    return longs[:limit] if limit else longs
+
+
 def collect_recs(limit=None, src=None, log=print, rulers=None,
-                 hold_h=None, ckpt_h=None):
+                 hold_h=None, ckpt_h=None, legs=None, only=None):
     """Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
 
     Вынесен из `run`, потому что читателя стало два — сетка кассы D6 и
@@ -464,14 +518,19 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
     означала бы, что книга и её замер считают исходы разным кодом.
     """
     rulers = list(rulers or GRID_RULER)
-    legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
     get = src.bars if src else (lambda s, a, b: SW.read_bars(ROOT_B1, s, a, b))
     tiers_all = D2.instruments_tiers()
-    longs = [g for g in legs if g["side"] == "long"
-             and abs(g["fwd"]) >= D2.MIN_EDGE_BP
-             and (g["rr"] or 0) >= D2.MIN_RR]
-    if limit:
+    longs = list(legs) if legs is not None else gated_legs(limit=limit, log=log)
+    if legs is not None and limit:
         longs = longs[:limit]
+    if only is not None:
+        # Инкрементальный проход: реплеятся только названные решения.
+        # Кэш держит уже посчитанные, и это законно ровно для ЗАКРЫТЫХ:
+        # их исход окончателен, потому что данные прошлого не меняются.
+        # Открытая позиция обязана считаться заново каждый прогон.
+        want = {(str(x[0]), round(float(x[1]), 3)) for x in only}
+        longs = [g for g in longs
+                 if (str(g["sym"]), round(float(g["at"]), 3)) in want]
     by_sym = {}
     for g in longs:
         by_sym.setdefault(g["sym"], []).append(g)
@@ -509,7 +568,22 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
                     got = 1
             n += got
             skipped += (1 - got)
-    return {"recs": recs, "positions": n, "skipped": skipped, "window": win}
+    data_end = 0.0
+    for k in rulers:
+        for r in recs[k]:
+            if r.get("end_ts"):
+                data_end = max(data_end, float(r["end_ts"]))
+    st = {"closed": 0, "open": 0, "cut": 0}
+    for k in rulers:
+        for r in recs[k]:
+            r["state"] = position_state(r, data_end)
+            st[r["state"]] = st.get(r["state"], 0) + 1
+    if data_end:
+        log(f"запись доходит до {time.strftime('%Y-%m-%d %H:%M', time.gmtime(data_end))} UTC; "
+            f"позиций закрытых {st['closed']}, открытых {st['open']}, "
+            f"оборванных записью {st['cut']}")
+    return {"recs": recs, "positions": n, "skipped": skipped, "window": win,
+            "data_end": data_end, "states": st}
 
 
 def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):

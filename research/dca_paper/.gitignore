@@ -1,0 +1,6 @@
+# Кэш реплея: выводится из журнала листов и правил, в git не идёт.
+# Журнал книги (out/journal.jsonl) — наоборот, ЗАПИСЬ и коммитится.
+out/recs.jsonl
+out/recs.jsonl.tmp
+out/run.log
+out/*smoke*

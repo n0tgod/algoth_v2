@@ -165,7 +165,8 @@ def sigma_rungs(base_px, sigma_frac, n_rungs, spacing_sig):
     return prices, d_max
 
 
-def _fill_rungs(filled, cash, qty, lo, rung_prices, weights, notional):
+def _fill_rungs(filled, cash, qty, lo, rung_prices, weights, notional,
+                log=None, bt=None):
     """Заполнить рунги долива вниз, до которых опустился минимум бара `lo`.
 
     Одна копия логики долива на весь модуль: её зовут и потолок D1
@@ -173,12 +174,20 @@ def _fill_rungs(filled, cash, qty, lo, rung_prices, weights, notional):
     ниже базы) заполняется по СВОЕЙ цене `rung_prices[j]` — структурный
     уровень или узел σ-сетки, — когда низ бара до неё дошёл. Возвращает
     обновлённые (filled, cash, qty).
+
+    `log` — список, куда дописывается КАЖДЫЙ долив `(время бара, цена,
+    доля нотионала)`. Он нужен показу: позиция сворачивается в одну
+    строку, а разворачивается в свои входы, и средняя цена входа
+    («плавающая ТВХ») выводится из этого же списка. Счёт от журнала не
+    зависит ни на бит: список только записывает уже случившееся.
     """
     for j in range(1, len(rung_prices)):
         if not filled[j] and rung_prices[j] >= lo > 0:
             filled[j] = True
             cash += weights[j] * notional
             qty += weights[j] * notional / rung_prices[j]
+            if log is not None:
+                log.append((bt, float(rung_prices[j]), float(weights[j])))
     return filled, cash, qty
 
 
@@ -346,6 +355,11 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     filled[0] = True                    # база заполнена входом
     cash = weights[0] * notional
     qty = cash / entry                  # по ФАКТИЧЕСКОЙ цене входа
+    # Входы позиции: база плюс каждый долив. Позиция на показе одна, а
+    # входов у неё несколько — без этого списка развернуть её не во что,
+    # и «плавающую ТВХ» (среднюю цену, ступенькой уходящую вниз) неоткуда
+    # взять. Числа сделки от списка не зависят.
+    fills = [(float(bars[0][0]), entry, float(weights[0]))]
     tr = [] if track else None
     cps = [float(x) for x in (checkpoints or [])]
     ck = [None] * len(cps)
@@ -363,6 +377,8 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
             tr.append(rec)
 
     def _ret(res, bt):
+        res["fills"] = fills
+        res["entry_px"] = entry
         if tr is not None:
             _mark(bt, res["pnl_frac"])
             res["track"] = tr
@@ -379,7 +395,8 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
             ck[ck_i] = (cps[ck_i], last[0], last[1]) if last else None
             ck_i += 1
         filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
-                                        rung_prices, weights, notional)
+                                        rung_prices, weights, notional,
+                                        log=fills, bt=float(bt))
         avg = cash / qty
         mark = (qty * cl - cash) / capital
         if tr is not None:

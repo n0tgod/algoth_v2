@@ -18,11 +18,22 @@ import run_d6 as D6                                           # noqa: E402
 H = 3600
 
 
-def _rec(at, hold_h=1.0, pnl=0.10, lev=4.0, fwd=100.0, sym="AAAUSDT"):
+def _rec(at, hold_h=1.0, pnl=0.10, lev=4.0, fwd=100.0, sym="AAAUSDT",
+         state="closed", exit_="тейк"):
+    """Запись позиции, КАК ЕЁ ПИШЕТ живой реплей.
+
+    Поля состояния и входов обязательны: подставная запись без них
+    исполняла бы другую дорогу, а такая фикстура в этом проекте уже
+    трижды прятала дефект.
+    """
     ex = at + hold_h * H
     return {"at": float(at), "exit_ts": float(ex), "pnl": float(pnl),
             "lev": float(lev), "fwd": float(fwd), "sym": sym,
-            "exit": "тейк", "marks": [(int(at) - int(at) % H, float(pnl))]}
+            "exit": exit_, "marks": [(int(at) - int(at) % H, float(pnl))],
+            "state": state, "end_ts": float(ex),
+            "sched_end": float(at) + 72 * H,
+            "entry_px": 100.0, "exit_px": 110.0, "avg": 100.0, "depth": 1,
+            "fills": [[float(at), 100.0, 0.25]]}
 
 
 def test_ticket_clears_the_exchange_floor():
@@ -133,7 +144,7 @@ def test_one_per_name_applied_before_cash():
             _rec(t0 + 60, hold_h=5.0, sym="AAAUSDT"),
             _rec(t0 + 120, hold_h=5.0, sym="BBBUSDT")]
     rk = R.DEFAULT_RULER
-    rows, cells, one = P.build_rows({rk: recs}, now=t0 + 10 * H,
+    rows, cells, one, _live = P.build_rows({rk: recs}, now=t0 + 10 * H,
                                     log=lambda *_: None)
     assert one[rk]["skipped_repeats"] == 1 and one[rk]["kept"] == 2, one
     # у ВСЕХ книг состав один и тот же — повтор снят до кассы
@@ -143,8 +154,15 @@ def test_one_per_name_applied_before_cash():
     print("ok  одна на имя: повтор снят до кассы, состав книг одинаков")
 
 
-def test_forward_and_restored_never_mix():
-    """Наблюдение и пересчёт — два числа, и они не складываются."""
+def test_backtest_and_live_share_one_curve_and_stay_labelled():
+    """Кривая одна (решение владельца), но группы остаются числами.
+
+    Прежнее правило книги запрещало складывать наблюдение с пересчётом.
+    Владелец 2026-09-04 решил иначе: бэктест есть предыстория живой
+    записи, счёт общий, у сделки бэктеста метка. Проверяется ровно это —
+    общий счёт равен сумме групп ПО ПОСТРОЕНИЮ, и обе группы при этом
+    видны отдельно: без их объёма общая кривая читалась бы треком.
+    """
     t0 = 1_700_000_000
     fresh = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
              "usd": 10.0, "written_at": t0 + 3600, "rules": R.RULES}
@@ -164,11 +182,49 @@ def test_forward_and_restored_never_mix():
         b = s["books"][P._cell(R.DEFAULT_RULER, 1000)]
         assert b["forward"]["usd"] == 10.0, b["forward"]
         assert b["restored"]["usd"] == 5.0, b["restored"]
+        assert b["all"]["usd"] == 15.0, b["all"]
+        assert b["all"]["n"] == 2, b["all"]
         txt = P.report(s)
-        assert "не складываются никогда" in txt, txt[:800]
-        # 15.0 — сумма двух групп; её на странице быть не должно
-        assert "15.00" not in txt, txt
-    print("ok  запись: вперёд +10.00 и пересчёт +5.00 порознь, суммы нет")
+        assert "бэктест и live" in txt.lower(), txt[:900]
+        assert "15.00" in txt, txt          # общий счёт напечатан
+        assert "10.00" in txt and "5.00" in txt, txt   # и группы тоже
+    print("ok  кривая одна: общий счёт +15.00 при группах +10.00 и +5.00")
+
+
+def test_open_position_is_not_a_closed_one():
+    """Позиция, чей срок ещё идёт, — открытая, а не «закрыта по сроку».
+
+    Дефект, который этим чинится: реплей кончал позицию последним баром
+    записи и выдавал это за исход правила. Теперь такая позиция в журнал
+    НЕ идёт вовсе (журнал есть запись случившегося), её деньги остаются
+    занятыми до планового конца срока, а отметка стоит отдельно и с
+    закрытым счётом не складывается.
+    """
+    t0 = 1_700_000_000
+    done = _rec(t0, hold_h=2.0, pnl=0.10, sym="AAAUSDT")
+    live = _rec(t0 + H, hold_h=1.0, pnl=-0.05, sym="BBBUSDT",
+                state="open", exit_="срок")
+    cut = _rec(t0 + 2 * H, hold_h=1.0, pnl=-0.20, sym="CCCUSDT",
+               state="cut", exit_="срок")
+    rows, cells, _one, lv = P.build_rows({"optimal": [done, live, cut]},
+                                         now=t0 + 10 * H, log=lambda *_: None)
+    got = [r for r in rows if int(r["dep"]) == 1000]
+    assert [r["sym"] for r in got] == ["AAAUSDT"], got
+    cell = lv[P._cell("optimal", 1000)]
+    assert [x["sym"] for x in cell["positions"]] == ["BBBUSDT"], cell
+    assert [x["sym"] for x in cell["cut"]] == ["CCCUSDT"], cell
+    assert cell["mark_usd"] < 0, cell          # отметка, а не исход
+    c = cells[P._cell("optimal", 1000)]
+    assert c["open_n"] == 1 and c["cut_n"] == 1, c
+    # деньги живой позиции ЗАНЯТЫ до планового конца: касса не вернула их
+    # на последнем баре записи — иначе новый вход получил бы чужую маржу
+    assert c["taken"] == 3, c
+    txt = P.report({"books": {P._cell("optimal", 1000): {
+        "deposit": 1000.0, "ruler": "optimal", "slots": 40, "ticket": 25.0,
+        "live_known": True, "open": cell}}, "one_name": {}})
+    assert "Открытые позиции" in txt and "оборвана записью" in txt, txt[-900:]
+    print("ok  открытая позиция: в журнал не идёт, деньги заняты, "
+          "отметка отдельно")
 
 
 def test_journal_appends_only_new():
@@ -279,9 +335,9 @@ def test_two_rulers_are_two_books_and_optimal_is_untouched():
             _rec(t0 + 120, hold_h=5.0, sym="BBBUSDT", pnl=-0.04)]
     # у «безопасной» те же решения, но плечо (а с ним и ход) своё
     safe = [dict(r, lev=1.4, pnl=r["pnl"] * 0.35) for r in recs]
-    one_only, _, _ = P.build_rows({"optimal": recs}, now=t0 + 10 * H,
+    one_only, _, _, _ = P.build_rows({"optimal": recs}, now=t0 + 10 * H,
                                   log=lambda *_: None)
-    both, cells, one = P.build_rows({"optimal": recs, "safe": safe},
+    both, cells, one, _live = P.build_rows({"optimal": recs, "safe": safe},
                                     now=t0 + 10 * H, log=lambda *_: None)
     assert {"optimal", "safe"} <= set(one), one
     # режим, которому записей не досталось, не исчезает, а стоит нулём:
@@ -334,7 +390,7 @@ def test_aggressive_gate_takes_only_levered_entries():
             _rec(t0 + 60, hold_h=5.0, sym="MIDUSDT", lev=3.9),
             _rec(t0 + 120, hold_h=5.0, sym="HIUSDT", lev=4.0),
             _rec(t0 + 180, hold_h=5.0, sym="TOPUSDT", lev=8.0)]
-    rows, cells, one = P.build_rows({"optimal": recs, "aggr": recs},
+    rows, cells, one, _live = P.build_rows({"optimal": recs, "aggr": recs},
                                     now=t0 + 10 * H, log=lambda *_: None)
     assert one["optimal"]["gate_dropped"] == 0, one["optimal"]
     assert one["aggr"]["gate_dropped"] == 2, one["aggr"]
@@ -346,7 +402,7 @@ def test_aggressive_gate_takes_only_levered_entries():
     # (2) порядок: гейт до правила одной на имя
     pair = [_rec(t0, hold_h=5.0, sym="AAAUSDT", lev=1.0),
             _rec(t0 + 60, hold_h=5.0, sym="AAAUSDT", lev=8.0)]
-    rows2, _c2, one2 = P.build_rows({"optimal": pair, "aggr": pair},
+    rows2, _c2, one2, _l2 = P.build_rows({"optimal": pair, "aggr": pair},
                                     now=t0 + 10 * H, log=lambda *_: None)
     opt = [r for r in rows2 if r["ruler"] == "optimal" and r["dep"] == 1000]
     agg = [r for r in rows2 if r["ruler"] == "aggr" and r["dep"] == 1000]
@@ -368,7 +424,7 @@ def test_declared_peak_is_checked_against_the_measured_one():
     t0 = 1_700_000_000
     recs = [_rec(t0 + i * 60, hold_h=5.0, sym=f"S{i}USDT", lev=4.0 + i)
             for i in range(6)]
-    _rows, _cells, one = P.build_rows({"aggr": recs}, now=t0 + 10 * H,
+    _rows, _cells, one, _live = P.build_rows({"aggr": recs}, now=t0 + 10 * H,
                                       log=lambda *_: None)
     assert one["aggr"]["peak_names"] == 6, one["aggr"]
     assert one["aggr"]["peak_declared"] == R.peak_of("aggr")
@@ -473,6 +529,157 @@ def test_cash_refusals_reach_the_report_and_survive_restat():
     print("ok  отказы кассы: пересборка их не теряет (проверено main)")
 
 
+def _cache_run(cache_seed, legs, td):
+    """Настоящий `main` с подставным дорогим проходом.
+
+    Возвращает список решений, которые прогон отправил считать заново.
+    Ровно эта дорога и есть предмет: правило можно проверить прямым
+    вызовом, а вот доехало ли оно до прогона — только прогоном (урок
+    «дорогу до показа проверять отдельно от величины»).
+    """
+    seen = {}
+
+    def fake_legs(limit=None, log=print):
+        return list(legs)
+
+    def fake_collect(rulers=None, legs=None, only=None, **kw):
+        seen["only"] = [(str(x[0]), round(float(x[1]), 3))
+                        for x in (only or [])]
+        recs = {tuple(pr): [] for pr in (rulers or [])}
+        want = set(seen["only"])
+        for g in (legs or []):
+            k = (str(g["sym"]), round(float(g["at"]), 3))
+            if only is not None and k not in want:
+                continue
+            for pr in recs:
+                recs[pr].append(_rec(g["at"], sym=g["sym"],
+                                     state=g.get("state", "closed")))
+        return {"recs": recs, "positions": len(want), "skipped": 0,
+                "window": D6.window(legs or []), "data_end": 0.0,
+                "states": {}}
+
+    gl, cr = D6.gated_legs, D6.collect_recs
+    jp, ap, ot = R.JOURNAL, R.ARTIFACT, R.OUT
+    try:
+        D6.gated_legs, D6.collect_recs = fake_legs, fake_collect
+        R.JOURNAL = os.path.join(td, "j.jsonl")
+        R.ARTIFACT = os.path.join(td, "a.json")
+        R.OUT = P.R.OUT = td
+        if cache_seed is not None:
+            P.write_cache(cache_seed)
+        sys.argv = ["run_paper.py", "--no-publish"]
+        P.main()
+    finally:
+        D6.gated_legs, D6.collect_recs = gl, cr
+        R.JOURNAL, R.ARTIFACT, R.OUT = jp, ap, ot
+        P.R.OUT = ot
+    return seen.get("only", [])
+
+
+def test_journal_path_is_resolved_at_call_time():
+    """Прогон с подменённым журналом не смеет писать в НАСТОЯЩИЙ.
+
+    Журнал книги — единственное здесь невосстановимое: счёт есть чистая
+    функция от него, и подставная строка в нём навсегда становится
+    частью записи. Путь, замёрзший значением по умолчанию на импорте,
+    ровно это и делал — первый прогон проверки кэша положил в живую
+    запись девять выдуманных решений.
+    """
+    real = R.JOURNAL
+    with tempfile.TemporaryDirectory() as td:
+        mine = os.path.join(td, "j.jsonl")
+        t0 = 1_700_000_000
+        rows = [{"dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
+                 "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 1.0,
+                 "written_at": t0 + 60, "rules": R.RULES}]
+        before = (os.path.getsize(real) if os.path.exists(real) else None)
+        try:
+            R.JOURNAL = mine
+            P.append_journal(rows, log=lambda *a: None)
+        finally:
+            R.JOURNAL = real
+        assert os.path.exists(mine), "запись ушла мимо подменённого журнала"
+        got, _bad = R.read_journal(mine)
+        assert [r["sym"] for r in got] == ["AAAUSDT"], got
+        after = (os.path.getsize(real) if os.path.exists(real) else None)
+        assert after == before, "настоящий журнал книги тронут прогоном"
+    print("ok  журнал: путь берётся в момент вызова, живая запись цела")
+
+
+def test_cache_replays_new_and_open_but_not_closed():
+    """Кэш реплея законен ровно для ЗАКРЫТЫХ позиций.
+
+    Прошлые бары не меняются, значит исход закрытой окончателен и считать
+    его каждый час незачем. Открытая — наоборот: её отметка меняется
+    вместе с ценой, и переиспользовать вчерашнюю значило бы показать
+    деньги, которых сейчас нет.
+    """
+    t0 = 1_700_000_000
+    pairs = []
+    for k in R.RULER_ORDER:
+        if P.RULERS[k] not in pairs:
+            pairs.append(P.RULERS[k])
+    legs = [{"sym": "AAAUSDT", "at": float(t0)},
+            {"sym": "BBBUSDT", "at": float(t0 + 3600), "state": "open"}]
+    with tempfile.TemporaryDirectory() as td:
+        # первый прогон: кэша нет — считается всё
+        first = _cache_run(None, legs, td)
+        assert sorted(first) == [("AAAUSDT", float(t0)),
+                                 ("BBBUSDT", float(t0 + 3600))], first
+        # кэш после него уже на диске; добавилось новое решение
+        legs2 = legs + [{"sym": "CCCUSDT", "at": float(t0 + 7200)}]
+        second = _cache_run(None, legs2, td)
+        got = sorted(second)
+        assert ("AAAUSDT", float(t0)) not in got, \
+            f"закрытая позиция пересчитана заново: {got}"
+        assert got == [("BBBUSDT", float(t0 + 3600)),
+                       ("CCCUSDT", float(t0 + 7200))], got
+        # и прямой вызов правила — на кэше, оставшемся ПОСЛЕ второго
+        # прогона: там CCC уже закрыта (её только что посчитали), значит
+        # заново нужна одна открытая BBB. Читается тот самый файл, что
+        # написал прогон, — роундтрип кэша проверяется вместе с правилом.
+        cache, why = P.read_cache(os.path.join(td, "recs.jsonl"))
+        assert why is None, why
+        assert cache[(tuple(pairs[0]), "CCCUSDT",
+                      float(t0 + 7200))]["state"] == "closed"
+        need = P.needs_replay(cache, legs2, pairs)
+        assert {g["sym"] for g in need} == {"BBBUSDT"}, need
+    print("ok  кэш: закрытые не пересчитываются, открытые и новые — да")
+
+
+def test_cache_of_other_rules_is_refused_out_loud():
+    """Кэш чужих правил не чинится молча.
+
+    Смени геометрию — и записи кэша описывают ДРУГУЮ книгу. Подпись
+    сверяется, расхождение называется словами и гонит полный пересчёт;
+    молчаливое переиспользование выдало бы старую книгу за новую.
+    """
+    t0 = 1_700_000_000
+    legs = [{"sym": "AAAUSDT", "at": float(t0)},
+            {"sym": "BBBUSDT", "at": float(t0 + 3600)}]
+    with tempfile.TemporaryDirectory() as td:
+        path = os.path.join(td, "recs.jsonl")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(json.dumps({"sig": {"edge": -1}}) + "\n")
+            for g in legs:
+                for pr in {P.RULERS[k] for k in R.RULER_ORDER}:
+                    r = dict(_rec(g["at"], sym=g["sym"]),
+                             pair=list(pr), sym=g["sym"], at=g["at"])
+                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        cache, why = P.read_cache(path)
+        assert cache == {} and why == "правила реплея изменились", (cache, why)
+        # без подписи вовсе — тоже отказ, а не «пустой кэш»
+        with open(path + ".nosig", "w", encoding="utf-8") as f:
+            f.write("\n")
+        _c2, why2 = P.read_cache(path + ".nosig")
+        assert why2 == "кэш без подписи правил", why2
+        # и дорога: прогон считает ВСЁ заново
+        only = _cache_run(None, legs, td)
+        assert sorted(only) == [("AAAUSDT", float(t0)),
+                                ("BBBUSDT", float(t0 + 3600))], only
+    print("ok  кэш чужих правил: отказ назван словами, пересчёт полный")
+
+
 def test_rules_change_starts_a_fresh_record():
     """Смена правил (билета) начинает запись заново, а не дописывает.
 
@@ -508,7 +715,7 @@ def _control_no_split():
     R.split_rows = lambda rows, hours=R.AHEAD_H: (list(rows), [])
     try:
         try:
-            test_forward_and_restored_never_mix()
+            test_backtest_and_live_share_one_curve_and_stay_labelled()
         except AssertionError:
             return True
         return False
@@ -705,7 +912,8 @@ TESTS = [test_ticket_clears_the_exchange_floor,
     test_ticket_rule_is_one_formula_for_every_mode,
     test_gated_mode_is_deployed_at_its_own_peak,
          test_one_per_name_applied_before_cash,
-         test_forward_and_restored_never_mix, test_journal_appends_only_new,
+         test_backtest_and_live_share_one_curve_and_stay_labelled,
+    test_open_position_is_not_a_closed_one, test_journal_appends_only_new,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,
          test_short_record_says_not_measured_not_zero,
@@ -714,7 +922,93 @@ TESTS = [test_ticket_clears_the_exchange_floor,
          test_declared_peak_is_checked_against_the_measured_one,
          test_legacy_row_reads_as_the_ruler_it_was_written_with,
          test_cash_refusals_reach_the_report_and_survive_restat,
-         test_rules_change_starts_a_fresh_record]
+         test_rules_change_starts_a_fresh_record,
+         test_journal_path_is_resolved_at_call_time,
+         test_cache_replays_new_and_open_but_not_closed,
+         test_cache_of_other_rules_is_refused_out_loud]
+
+def _control_journal_path_frozen():
+    """Путь журнала снова берётся значением по умолчанию: прогон с
+    подменённым журналом пишет в настоящую запись книги."""
+    orig = P.append_journal
+    # Замерзает на ЧУЖОМ пути, а не на настоящем журнале: контроль
+    # воспроизводит дефект, а не совершает его — записи книги он
+    # трогать не вправе ни при какой подделке.
+    stuck = os.path.join(tempfile.mkdtemp(), "frozen.jsonl")
+
+    def frozen(rows, path=stuck, log=print):
+        return orig(rows, path=path, log=log)
+
+    P.append_journal = frozen
+    try:
+        try:
+            test_journal_path_is_resolved_at_call_time()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P.append_journal = orig
+
+
+def _control_cache_reuses_open():
+    """Состояние в кэше не читается: открытая позиция берётся вчерашней.
+
+    Ровно тот дефект, которого правило и не допускает — отметка живой
+    позиции меняется с ценой, и переиспользовать её значит показать
+    деньги, которых сейчас нет.
+    """
+    orig = P.needs_replay
+
+    def loose(cache, legs, pairs):
+        need = []
+        for g in legs:
+            sym, at = str(g["sym"]), round(float(g["at"]), 3)
+            if any(cache.get((tuple(pr), sym, at)) is None for pr in pairs):
+                need.append(g)
+        return need
+
+    P.needs_replay = loose
+    try:
+        try:
+            test_cache_replays_new_and_open_but_not_closed()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P.needs_replay = orig
+
+
+def _control_cache_sig_ignored():
+    """Подпись правил не сверяется: кэш чужой геометрии молча идёт в дело,
+    и книга новых правил считалась бы наполовину по старым."""
+    orig = P.read_cache
+
+    def blind(path=None):
+        path = path or P.cache_path()
+        out = {}
+        try:
+            with open(path, encoding="utf-8") as f:
+                for i, ln in enumerate(f):
+                    ln = ln.strip()
+                    if not ln or i == 0:
+                        continue
+                    r = json.loads(ln)
+                    out[(tuple(r["pair"]), r["sym"],
+                         round(float(r["at"]), 3))] = r
+        except (OSError, ValueError):
+            return {}, "кэш не читается"
+        return out, None
+
+    P.read_cache = blind
+    try:
+        try:
+            test_cache_of_other_rules_is_refused_out_loud()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P.read_cache = orig
+
 
 def _control_floor_one_for_everyone():
     """Пол назначен один на всех: режим с гейтом не может взять мелкий
@@ -747,7 +1041,35 @@ def _control_peak_from_the_pool():
         R.peak_of = orig
 
 
-CONTROLS = [("свод складывает вперёд и пересчёт", _control_no_split),
+def _control_state_ignored():
+    """Состояние позиции не читается: живая попадает в журнал закрытой —
+    ровно тот дефект, ради которого состояние и заведено."""
+    orig = D6.position_state
+    D6.position_state = lambda r, data_end: "closed"
+    # состояние приходит в записи, поэтому подделываем сам разбор строк
+    import run_paper as PP
+    was = PP.build_rows
+
+    def patched(by_ruler, now=None, log=print):
+        clean = {k: [dict(r, state="closed") for r in v]
+                 for k, v in by_ruler.items()}
+        return was(clean, now=now, log=log)
+    PP.build_rows = patched
+    try:
+        try:
+            test_open_position_is_not_a_closed_one()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        PP.build_rows = was
+        D6.position_state = orig
+
+
+CONTROLS = [("путь журнала замёрз на импорте", _control_journal_path_frozen),
+            ("кэш переиспользует открытую", _control_cache_reuses_open),
+            ("подпись правил кэша не сверяется", _control_cache_sig_ignored),
+            ("свод складывает вперёд и пересчёт", _control_no_split),
             ("билет ниже пола биржи", _control_ticket_below_floor),
             ("правило одной позиции снято", _control_one_per_name_off),
             ("журнал переписывает строку", _control_journal_overwrites),
@@ -763,7 +1085,8 @@ CONTROLS = [("свод складывает вперёд и пересчёт", _
             ("гейта плеча нет вовсе", _control_gate_is_gone),
             ("гейт назначен всем режимам", _control_gate_on_every_ruler),
             ("пол билета один на все режимы", _control_floor_one_for_everyone),
-            ("пик билета взят у пула", _control_peak_from_the_pool)]
+            ("пик билета взят у пула", _control_peak_from_the_pool),
+            ("состояние позиции не читается", _control_state_ignored)]
 
 
 def main():

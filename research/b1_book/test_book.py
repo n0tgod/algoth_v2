@@ -444,6 +444,12 @@ def test_pages_run_headless():
                 ("график книги равного риска", web.CHART,
                  "?k=xxx&sym=BTCUSDT&arm=nn&hour=2026-08-03-14"
                  "&hz=sit_r"),
+                # Позиция DCA-книги на графике: свечи записи, точки
+                # доливов и ПЛАВАЮЩАЯ ТВХ. Рук у лестницы нет, уровней
+                # тоже — и то и другое приходит ответом, а не списком
+                # ключей на странице.
+                ("график позиции DCA-книги", web.CHART,
+                 "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"),
                 # Лига: что ведёт себя лучше и топ сделок.
                 ("лига", web.LEAGUE, "?k=xxx"),
                 # Пара книг, у которой одна сторона ещё без закрытых:
@@ -490,6 +496,11 @@ def test_pages_run_headless():
                 # машине» — разные состояния.
                 ("DCA-книги без журнала", web.DCAPAGE,
                  "?k=xxx&dcanojournal=1"),
+                # Открытых не считали (свод пересобран из журнала):
+                # прочерк с названной причиной, а не ноль — «не
+                # смотрели» и «открытых нет» разные состояния.
+                ("DCA-книги без счёта открытых", web.DCAPAGE,
+                 "?k=xxx&dcanolive=1"),
                 # Дерево моделей: две руки и логика каждой ветки.
                 ("дерево моделей", web.TREEPAGE, "?k=xxx"),
                 # Автономная система: конвейер ролей и механических
@@ -6852,17 +6863,25 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         DR.ARTIFACT = os.path.join(td, "art.json")
         t0 = 1_700_000_000
 
-        def row(rk, usd, sym, legacy=False):
-            r = {"dep": 1000, "at": t0, "exit_ts": t0 + 3600, "sym": sym,
-                 "usd": usd, "written_at": t0 + 600, "rules": DR.RULES,
+        def row(rk, usd, sym, legacy=False, back=False, at=None):
+            at = t0 if at is None else at
+            # `written_at` и решает, бэктест это или запись вперёд —
+            # тем же предикатом, каким книга делит свой счёт
+            wa = at + (DR.AHEAD_H * 3600 + 600 if back else 600)
+            r = {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym,
+                 "usd": usd, "written_at": wa, "rules": DR.RULES,
                  "lev": 2.0, "margin": 25.0, "pnl_frac": usd / 25.0,
-                 "exit": "тейк"}
+                 "exit": "тейк",
+                 "entry_px": 2.0, "exit_px": 2.2, "avg": 1.9, "depth": 2,
+                 "fills": [[at, 2.0, 0.25], [at + 600, 1.8, 0.25]]}
             if not legacy:
                 r["ruler"] = rk
             return r
 
         rows = [row("safe", 1.0, "AAAUSDT"), row("optimal", 4.0, "AAAUSDT"),
-                row(None, 9.0, "BBBUSDT", legacy=True)]
+                row(None, 9.0, "BBBUSDT", legacy=True),
+                # пересчёт по прошлому: та же книга, метка бэктеста
+                row("safe", -2.0, "CCCUSDT", back=True, at=t0 + 7200)]
         with open(DR.JOURNAL, "w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
@@ -6886,10 +6905,21 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         bs = d.get("books") or {}
         check("DCA: книга ключуется линейкой и депозитом",
               set(bs) == {f"{k}:1000" for k in DR.RULER_ORDER}, str(sorted(bs)))
-        safe = bs["safe:1000"]["trades_forward"]
-        opt = bs["optimal:1000"]["trades_forward"]
-        check("DCA: у безопасной ровно своя сделка",
-              [r["usd"] for r in safe] == [1.0], str(safe))
+        # Список сделок ОДИН, и бэктест в нём помечен: кривая книги не
+        # делится (решение владельца 2026-09-04), а числа групп стоят
+        # рядом отдельно. Два списка означали бы два источника одной
+        # правды — им однажды было бы чем разойтись.
+        safe = bs["safe:1000"]["trades"]
+        opt = bs["optimal:1000"]["trades"]
+        check("DCA: у безопасной ровно свои сделки",
+              sorted(r["usd"] for r in safe) == [-2.0, 1.0], str(safe))
+        check("DCA: бэктест помечен, запись вперёд — нет",
+              {r["usd"]: r["bt"] for r in safe} == {1.0: False, -2.0: True},
+              str(safe))
+        # доливы едут вместе со сделкой: без них позиция не
+        # разворачивается, а плавающая ТВХ неоткуда взяться
+        check("DCA: входы позиции доехали до страницы",
+              all(len(r.get("fills") or []) == 2 for r in safe), str(safe))
         # прежняя строка (без поля) обязана лечь к глубине, а не пропасть
         check("DCA: строка без линейки читается прежней",
               sorted(r["usd"] for r in opt) == [4.0, 9.0], str(opt))
@@ -6908,6 +6938,79 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               str(sorted(b2)))
     finally:
         DR.JOURNAL, DR.ARTIFACT = jp0, ap0
+
+
+def test_dca_trades_speak_the_language_of_the_chart():
+    """Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
+
+    Второго рисовальщика ради лестницы заводить незачем: график умеет
+    сделку со спаном, доливами и выходом, и позиция журнала кладётся в
+    те же поля. Проверяется дорога целиком — настоящий сборщик, а не
+    заглушка страницы: именно на таких дорогах у нас дважды случалась
+    молчаливая подмена книги.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+
+    jp0 = DR.JOURNAL
+    td = tempfile.mkdtemp()
+    try:
+        DR.JOURNAL = os.path.join(td, "journal.jsonl")
+        t0 = 1_700_000_000
+        row = {"dep": 10000, "ruler": "safe", "at": t0,
+               "exit_ts": t0 + 7200, "sym": "AAAUSDT", "usd": 3.0,
+               "written_at": t0 + 600, "rules": DR.RULES, "lev": 2.0,
+               "margin": 25.0, "pnl_frac": 0.12, "exit": "тейк",
+               "entry_px": 100.0, "exit_px": 112.0, "depth": 2,
+               "fills": [[t0, 100.0, 0.25], [t0 + 600, 90.0, 0.25]]}
+        # средняя считается ТОЙ ЖЕ функцией, что рисует ТВХ
+        row["avg"] = DR.avg_walk(row["fills"])[-1]["avg"]
+        other = dict(row, sym="BBBUSDT")
+        with open(DR.JOURNAL, "w", encoding="utf-8") as f:
+            for r in (row, other):
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        d = c.dca_trades("AAAUSDT", "safe:10000")
+        rows = d.get("rows") or []
+        check("DCA-график: позиция одна и своя",
+              [r["sym"] for r in rows] == ["AAAUSDT"], str(rows))
+        t = rows[0] if rows else {}
+        check("DCA-график: рука одна и названа лестницей",
+              t.get("arm") == "dca", str(t.get("arm")))
+        check("DCA-график: час в формате книг модели",
+              t.get("hour") == time.strftime("%Y-%m-%d-%H",
+                                             time.gmtime(t0)),
+              str(t.get("hour")))
+        check("DCA-график: спан позиции от входа до выхода",
+              (t.get("opened_at"), t.get("closes_at")) == (t0, t0 + 7200),
+              str((t.get("opened_at"), t.get("closes_at"))))
+        # ТВХ — готовая, и её последний шаг равен средней записи:
+        # вторая арифметика на странице разошлась бы с симуляцией
+        walk = t.get("walk") or []
+        check("DCA-график: ТВХ плывёт и сходится со средней записи",
+              len(walk) == 2 and abs(walk[-1]["avg"] - row["avg"]) < 1e-9
+              and walk[0]["avg"] > walk[1]["avg"], str(walk))
+        check("DCA-график: долив отдан точкой, а не вторым спаном",
+              [a["px"] for a in (t.get("adds") or [])] == [90.0],
+              str(t.get("adds")))
+        # уровней у лестницы нет: их рисование утверждало бы правило,
+        # которого у книги нет
+        check("DCA-график: книга названа НЕситуационной",
+              d.get("situational") is False, str(d.get("situational")))
+        # неопознанная книга — отказ СЛОВАМИ, а не пустой список:
+        # пустота читалась бы как «по этой монете позиций нет»
+        bad = c.dca_trades("AAAUSDT", "нетакой:10000")
+        check("DCA-график: неизвестная книга названа отказом",
+              bad.get("present") is False and bool(bad.get("why")),
+              str(bad)[:200])
+    finally:
+        DR.JOURNAL = jp0
 
 
 def main():
@@ -6947,6 +7050,7 @@ def main():
     test_sit_absorb_now_makes_pnl_immediate()
     test_trade_by_id_finds_across_books()
     test_dca_serves_ruler_and_deposit_as_one_book()
+    test_dca_trades_speak_the_language_of_the_chart()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()

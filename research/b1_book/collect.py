@@ -75,6 +75,10 @@ SHADOW_STATUS = os.path.join(os.path.dirname(os.path.dirname(HERE)),
 SHADOW_OFF = os.path.join(os.path.dirname(os.path.dirname(HERE)),
                           "bot", "out", "SHADOW_OFF")
 OUT = os.path.join(HERE, "out")
+# Сколько сделок DCA-книги уезжает на страницу. Не «сколько их
+# есть»: счёт закрытых позиций считает свод, а урезать можно то,
+# что ОТДАЁШЬ, но не то, на чём считаешь (урок обзора книг).
+DCA_TRADES = 200
 
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "s8_loop"))
@@ -3386,6 +3390,78 @@ class Collector:
     # прогон неотличим от работающего, и это уже случалось с турниром.
     PAPER_STALE = 36 * 3600
 
+    def dca_trades(self, sym, book):
+        """Позиции DCA-книги по одной монете — В ФОРМЕ, ЖДАННОЙ ГРАФИКОМ.
+
+        График рисует сделку по полям `opened_at / entry_px / exit_px /
+        adds`, и второй рисовальщик ради DCA заводить незачем: дешевле
+        отдать позицию журнала в том же виде. Рука у книги одна (`dca`),
+        поэтому переключателя рук у графика в этом режиме нет — лестница
+        не делится на деревья и сеть.
+
+        Уровней у позиции нет: обещания пути живут у ситуационной книги,
+        а лестницей правят структурные рунги и пол капитуляции. Поэтому
+        `situational` здесь ложь по делу — линии стопа и цели график
+        рисовать НЕ должен, иначе он утверждал бы правило, которого у
+        книги нет.
+        """
+        root = os.path.join(os.path.dirname(HERE), "dca_paper")
+        sys.path.insert(0, root)
+        try:
+            import rules as DR
+        except Exception as e:
+            return {"present": False, "why": f"модуль правил не читается: {e}",
+                    "rows": [], "merged": []}
+        sym = str(sym or "").upper()
+        rk, _, dep = str(book or "").partition(":")
+        if rk not in DR.RULERS or not dep.isdigit():
+            return {"present": False, "why": f"книга «{book}» не опознана",
+                    "rows": [], "merged": []}
+        if not os.path.exists(DR.JOURNAL):
+            return {"present": False, "rows": [], "merged": [],
+                    "why": "журнала нет на этой машине — он живёт там, "
+                           "где книги считаются"}
+        rows, _bad = DR.read_journal(DR.JOURNAL)
+        mine = [r for r in rows
+                if str(r.get("sym", "")).upper() == sym
+                and int(r.get("dep", 0)) == int(dep)
+                and int(r.get("rules", 0)) == DR.RULES
+                and DR.ruler_of(r) == rk]
+        out = []
+        for r in sorted(mine, key=lambda x: float(x.get("at") or 0)):
+            at = float(r.get("at") or 0)
+            fills = r.get("fills") or []
+            walk = DR.avg_walk(fills, r.get("entry_px"))
+            pf = r.get("pnl_frac")
+            out.append({
+                "sym": sym, "arm": "dca",
+                # ключ часа — В ТОМ ЖЕ формате, что у книг модели:
+                # график ищет сделку по нему и печатает его подписью
+                "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at)),
+                "side": "long", "opened_at": at,
+                "closes_at": float(r.get("exit_ts") or at),
+                "entry_px": r.get("entry_px"), "exit_px": r.get("exit_px"),
+                "avg": r.get("avg"), "walk": walk,
+                "lots": max(1, len(fills)),
+                "adds": [{"at": f[0], "px": f[1], "size": f[2],
+                          "hour": time.strftime("%Y-%m-%d-%H",
+                                                time.gmtime(float(f[0])))}
+                         for f in fills[1:]],
+                "exits": [],
+                "net_bp": (None if pf is None else round(float(pf) * 1e4, 2)),
+                "pnl": r.get("usd"), "size": r.get("margin"),
+                "lev": r.get("lev"), "state": "закрыта",
+                "exit": r.get("exit"), "depth": r.get("depth"),
+                "bt": DR.ahead(r.get("at"), r.get("written_at")) is not True,
+            })
+        return {"present": True, "rows": out,
+                # слитой считается позиция С ДОЛИВАМИ — ровно как у книг
+                # модели: у остальных сливать нечего
+                "merged": [t for t in out if t["lots"] > 1],
+                "book": book, "ruler": rk, "ruler_title": DR.ruler_title(rk),
+                "deposit": int(dep), "rules_version": DR.RULES,
+                "situational": False, "no_timer": False}
+
     def dca_paper(self, dep=None, ruler=None):
         """Бумажные DCA-книги: свод из артефакта, сделки из журнала.
 
@@ -3478,15 +3554,32 @@ class Collector:
                 b["n_journal"] = len(mine)
                 b.setdefault("ruler", rk)
                 b.setdefault("ruler_title", DR.ruler_title(rk))
-                for nm, part in (("trades_forward", fwd),
-                                 ("trades_restored", back)):
-                    part = sorted(part, key=lambda r: -float(r.get("exit_ts", 0)))
-                    b[nm] = [{
-                        "at": r.get("at"), "exit_ts": r.get("exit_ts"),
-                        "sym": r.get("sym"), "lev": r.get("lev"),
-                        "margin": r.get("margin"), "usd": r.get("usd"),
-                        "pnl_frac": r.get("pnl_frac"), "exit": r.get("exit"),
-                    } for r in part[:60]]
+                # ОДИН список сделок, и в нём помечено, что бэктест
+                # (решение владельца 2026-09-04: кривая не делится, а
+                # ведётся общая). Числа групп при этом стоят рядом
+                # отдельно — складывать их по-прежнему нельзя, и об этом
+                # говорит сама страница.
+                seen = {id(r) for r in back}
+                merged = sorted(mine,
+                                key=lambda r: -float(r.get("exit_ts") or 0))
+                b["trades"] = [{
+                    "at": r.get("at"), "exit_ts": r.get("exit_ts"),
+                    "sym": r.get("sym"), "lev": r.get("lev"),
+                    "margin": r.get("margin"), "usd": r.get("usd"),
+                    "pnl_frac": r.get("pnl_frac"), "exit": r.get("exit"),
+                    # цены и входы позиции: без них позиция не
+                    # разворачивается, а плавающая ТВХ неоткуда взяться
+                    "entry_px": r.get("entry_px"), "exit_px": r.get("exit_px"),
+                    "avg": r.get("avg"), "depth": r.get("depth"),
+                    "fills": r.get("fills"),
+                    # Плавающая ТВХ считается ОДНОЙ функцией правил
+                    # (`rules.avg_walk`) и едет готовой: вторая её
+                    # реализация на странице разошлась бы с симуляцией,
+                    # и позиция рисовалась бы не там, где посчитана.
+                    "walk": DR.avg_walk(r.get("fills"), r.get("entry_px")),
+                    "bt": bool(id(r) in seen),
+                } for r in merged[:DCA_TRADES]]
+                b["trades_shown"] = len(b["trades"])
                 books[k] = b
         out["books"] = books
         rk0 = ruler if ruler in {x["key"] for x in out["rulers"]} else None

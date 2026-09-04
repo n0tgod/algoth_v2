@@ -223,14 +223,31 @@ const recount = {busy: false, done: 2, total: 2, hours: 24,
 // (прочерки с названной причиной), у $10000 есть обе группы, у $100000
 // только пересчёт — так проверяется, что группы не складываются.
 const dcaStub = (url) => {
-  const mk = (n, usd, dd, wd, top, wo, wo3) => ({
+  // Позиций и ВХОДОВ разное число: позиция есть лестница, и каждый её
+  // долив — свой вход. Разбивка по суткам несёт долю бэктеста: день
+  // обязан говорить, чем он набран.
+  const mk = (n, usd, dd, wd, top, wo, wo3, bt) => ({
     n: n, names: Math.max(1, Math.round(n * 0.8)), days: 6, usd: usd,
+    fills: Math.round(n * 1.6), n_bt: bt === undefined ? n : bt,
     final: usd / 10000, max_dd: dd, day_median: 0.0012, day_worst: wd,
     day_green: 0.62, bite: 7.4, top_sym: top, usd_wo_top: wo,
-    usd_wo_top3d: wo3 === undefined ? null : wo3});
-  const tr = (sym, usd, lev) => ({
+    usd_wo_top3d: wo3 === undefined ? null : wo3,
+    days_rows: [{d: "2026-09-01", usd: usd * 0.5, n: Math.ceil(n / 2),
+                 bt: bt === undefined ? Math.ceil(n / 2) : 0},
+                {d: "2026-09-02", usd: usd * 0.3, n: Math.floor(n / 3),
+                 bt: bt === undefined ? Math.floor(n / 3) : 0},
+                {d: "2026-09-03", usd: usd * 0.2, n: 3, bt: 0}]});
+  const tr = (sym, usd, lev, bt) => ({
     at: T0 - 7200, exit_ts: T0 - 3600, sym: sym, lev: lev, margin: 25.0,
-    usd: usd, pnl_frac: usd / 25.0, exit: usd > 0 ? "тейк" : "пол"});
+    usd: usd, pnl_frac: usd / 25.0, exit: usd > 0 ? "тейк" : "пол",
+    // позиция из ДВУХ рунгов: разворот обязан показать оба входа и ТВХ
+    // после каждого, иначе лестницу по строке не прочитать
+    entry_px: 2.0, exit_px: 2.2, avg: 1.8, depth: 2, bt: bt !== false,
+    fills: [[T0 - 7200, 2.0, 0.25], [T0 - 5400, 1.6, 0.25]],
+    // ТВХ приходит ГОТОВОЙ с сервера: страница её не считает, и
+    // заглушка обязана выглядеть как живой ответ
+    walk: [{at: T0 - 7200, px: 2.0, w: 0.25, avg: 2.0},
+           {at: T0 - 5400, px: 1.6, w: 0.25, avg: 1.8}]});
   const nojournal = /dcanojournal=1/.test(SEARCH);
   const RUL = [
     {key: "safe", title: "безопасная",
@@ -241,7 +258,7 @@ const dcaStub = (url) => {
     // двух его нет вовсе — отсутствие и ноль здесь разные значения
     {key: "aggr", title: "агрессивная", min_lev: 4.0,
      plain: "та же глубина плюс гейт входа по плечу."}];
-  return {
+  const D = {
     present: !/dcaabsent=1/.test(SEARCH),
     why: /dcaabsent=1/.test(SEARCH)
       ? "прогона ещё не было: артефакта нет на этой машине" : undefined,
@@ -342,6 +359,38 @@ const dcaStub = (url) => {
                                    1490.0, -70.0),
                       trades_forward: [],
                       trades_restored: [tr("TUTUSDT", 61.0, 6.4)]}}};
+  // Свод книги — ОДИН счёт: бэктест и записанное вперёд ведутся общей
+  // кривой (решение владельца 2026-09-04), и артефакт несёт его полем
+  // `all`. Группы стоят рядом отдельно. Открытые позиции живут в своём
+  // блоке и с закрытыми не складываются НИКОГДА.
+  const nolive = /dcanolive=1/.test(SEARCH);
+  for (const k of Object.keys(D.books)) {
+    const b = D.books[k];
+    const f = b.forward, r = b.restored;
+    b.all = mk((f ? f.n : 0) + (r ? r.n : 0),
+               ((f ? f.usd : 0) + (r ? r.usd : 0)),
+               Math.min(f ? f.max_dd : 0, r ? r.max_dd : 0),
+               Math.min(f ? f.day_worst : 0, r ? r.day_worst : 0),
+               (r || f || {}).top_sym,
+               ((f ? f.usd_wo_top : 0) + (r ? r.usd_wo_top : 0)),
+               ((f ? (f.usd_wo_top3d || 0) : 0)
+                + (r ? (r.usd_wo_top3d || 0) : 0)),
+               r ? r.n : 0);
+    b.trades = (b.trades_forward || []).map(x => Object.assign({}, x,
+                                                               {bt: false}))
+      .concat((b.trades_restored || []).map(x => Object.assign({}, x,
+                                                               {bt: true})));
+    b.trades_shown = b.trades.length;
+    delete b.trades_forward; delete b.trades_restored;
+    b.live_known = !nolive;
+    if (!nolive) b.open = {
+      positions: [{sym: "SUIUSDT", at: T0 - 1800, lev: 3.0, margin: 25.0,
+                   mark_frac: -0.02, mark_usd: -0.50, entry_px: 1.0,
+                   avg: 0.98, depth: 2, state: "open",
+                   fills: [[T0 - 1800, 1.0, 0.25]]}],
+      cut: [], mark_usd: -0.50, priced: 1, at: T0 - 60};
+  }
+  return D;
 };
 
 const paperStub = (url) => {
@@ -897,7 +946,11 @@ global.fetch = async (url) => {
                    reason: "IOC не исполнилась в потолке 0.30 % "
                            + "(запрошено 0.66)",
                    at: Date.UTC(2026,7,21,19,20,0)/1000}]}
-             : url.startsWith("/dca")
+             // Своим маршрутом, а не префиксом: `/dca_trades` тоже
+             // начинается с `/dca`, и общий префикс молча уводил
+             // позиции графика в свод книг — ответ выглядел исправным
+             // и был не тот.
+             : url.startsWith("/dca?") || url === "/dca"
              ? dcaStub(url)
              : url.startsWith("/paper")
              ? paperStub(url)
@@ -1204,6 +1257,41 @@ global.fetch = async (url) => {
                             net_bp: -51.0, pnl: -3.0, setup: null}]},
                  "365d": {n: 3, groups: {}, best: [], worst: [],
                           setup_known: 2}}}
+             // Позиции DCA-книги в форме, ждáнной графиком: рука одна
+             // (`dca`), уровней нет, у позиции ДВА рунга — ступенчатая
+             // ТВХ иначе не проверяется, а ради неё режим и заводился.
+             : url.startsWith("/dca_trades")
+             ? {present: true, book: "safe:10000", ruler: "safe",
+                ruler_title: "безопасная", deposit: 10000,
+                rules_version: 4, situational: false, no_timer: false,
+                rows: [{sym: "BTCUSDT", arm: "dca",
+                        hour: "2026-08-03-14", side: "long",
+                        opened_at: T0 - 7200, closes_at: T0 - 3600,
+                        entry_px: 62000.0, exit_px: 63000.0,
+                        avg: 61000.0, lots: 2,
+                        walk: [{at: T0 - 7200, px: 62000.0, w: 0.25,
+                                avg: 62000.0},
+                               {at: T0 - 6000, px: 60000.0, w: 0.25,
+                                avg: 60983.6}],
+                        adds: [{at: T0 - 6000, px: 60000.0, size: 0.25,
+                                hour: "2026-08-03-14"}],
+                        exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
+                        lev: 2.4, state: "закрыта", exit: "тейк",
+                        depth: 2, bt: true}],
+                merged: [{sym: "BTCUSDT", arm: "dca",
+                          hour: "2026-08-03-14", side: "long",
+                          opened_at: T0 - 7200, closes_at: T0 - 3600,
+                          entry_px: 62000.0, exit_px: 63000.0,
+                          avg: 61000.0, lots: 2,
+                          walk: [{at: T0 - 7200, px: 62000.0, w: 0.25,
+                                  avg: 62000.0},
+                                 {at: T0 - 6000, px: 60000.0, w: 0.25,
+                                  avg: 60983.6}],
+                          adds: [{at: T0 - 6000, px: 60000.0, size: 0.25,
+                                  hour: "2026-08-03-14"}],
+                          exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
+                          lev: 2.4, state: "закрыта", exit: "тейк",
+                          depth: 2, bt: true}]}
              : url.startsWith("/model_trades")
              ? (r => (!/hz=h24a/.test(url) ? r
                 : /agreesplit=1/.test(SEARCH)
@@ -1780,6 +1868,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // страница держит два независимых переключателя, и один
                 // экспорт на оба означал бы, что проверка «переключение
                 // меняет числа» гоняет не ту дорогу.
+                // Разворот позиции: своим именем и НАСТОЯЩЕЙ функцией
+                // страницы. Заглушка DOM ищет по id, поэтому деталь
+                // стоит в разметке всегда и лишь скрыта — проверку,
+                // которую нельзя выполнить, писать незачем.
+                + "\nglobal.__dcaToggle = typeof dcaToggle === 'function' "
+                + "? dcaToggle : null;"
                 + "\nglobal.__dcaSetRuler = typeof render === 'function' "
                 + "&& typeof RUL !== 'undefined' ? (function(x){ "
                 + "RUL = x; render(); }) : null;"
@@ -2244,7 +2338,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   }
   // Встроенный режим графика: с embed=1 шапка и сводка спрятаны, без
   // него — на месте. Ошибка в любую сторону — молчаливый отказ показа.
-  if (isChart) {
+  // Эти проверки описывают слой ВЫБОРОВ МОДЕЛИ: подставная бессрочная
+  // сделка, деньги руки, id строки. В режиме DCA-книги их не существует
+  // вовсе — там позиции лестницы и рук нет, — и требовать их значило бы
+  // проверять чужую страницу.
+  if (isChart && !/dca=/.test(SEARCH)) {
     // Живая позиция обязана быть нарисована СПАНОМ, а не точкой: у
     // ситуационной книги срока нет вовсе, и `closes_at` там пуст.
     // Проверяется отрисованная геометрия (зона наведения сделки), а
@@ -2804,15 +2902,77 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("DCA: деньги наблюдения книги $10000 не показаны");
     if (!/\+402\.60 \$/.test(b2))
       bad.push("DCA: деньги пересчёта книги $10000 не показаны");
-    // сумма двух групп (9.70 + 402.60 = 412.30) появиться не может
-    if (/412\.30/.test(b2))
-      bad.push("DCA: наблюдение сложено с пересчётом");
     // у наблюдения книги $10000 трёх дней ещё нет — прочерк с причиной
     if (!/вычитать нечего/.test(b2))
       bad.push("DCA: прочерк концентрации по дням не объяснён");
     if (!/наблюдение/.test(b2) || !/пересчёт/.test(b2))
       bad.push("DCA: группы не подписаны");
+    // ОБЩИЙ счёт: бэктест и записанное вперёд ведутся одной кривой, и
+    // сумма групп теперь появиться ОБЯЗАНА (решение владельца
+    // 2026-09-04). Прежняя проверка запрещала её — правило сменилось,
+    // и проверка сменилась вместе с ним.
+    if (!/\+412\.30 \$/.test(b2))
+      bad.push("DCA: общий счёт книги $10000 не показан");
+    if (!/закрытых позиций/.test(b2))
+      bad.push("DCA: закрытые ПОЗИЦИИ не названы (сделка ≠ позиция)");
+    if (!/входов \(с доливами\)/.test(b2))
+      bad.push("DCA: входы с доливами не показаны рядом с позициями");
+    // Открытые позиции и открытый pnl — СВОИ плитки, и с закрытым они
+    // не складываются нигде: у закрытой исход известен, у открытой это
+    // отметка.
+    if (!/открытых позиций/.test(b2))
+      bad.push("DCA: число открытых позиций не показано");
+    if (!/открытый pnl/.test(b2))
+      bad.push("DCA: открытый pnl не показан");
+    if (!/dcanolive=1/.test(SEARCH)) {
+      if (!/-0\.50 \$/.test(b2))
+        bad.push("DCA: отметка открытой позиции не показана числом");
+      // 412.30 закрытых плюс −0.50 отметки: у закрытой позиции исход
+      // известен, у открытой это отметка, и складывать их нельзя нигде
+      if (/411\.80/.test(b2))
+        bad.push("DCA: открытая отметка сложена с закрытым счётом");
+      if (!/ОТМЕТКА по последней цене/.test(b2))
+        bad.push("DCA: открытые деньги выданы за исход");
+    }
+    // Разбивка по суткам: строки числом, и день говорит, чем набран
+    const days = (b2.match(/2026-09-0/g) || []).length;
+    if (days < 3)
+      bad.push(`DCA: разбивки по суткам нет (строк ${days})`);
+    if (!/из них бэктест/.test(b2))
+      bad.push("DCA: день не говорит, какая его часть бэктест");
+    // Одна таблица позиций с пометкой, а не две таблицы групп
+    if (/сделки, записанные вперёд|восстановленные пересчётом/.test(b2))
+      bad.push("DCA: сделки по-прежнему разложены в два списка");
+    if (!/бэктест<\/span>/.test(b2))
+      bad.push("DCA: сделка бэктеста не помечена в общем списке");
+    // Разворот позиции: рунги и ТВХ появляются, а свёрнутая строка их
+    // не показывает
+    if (!/ddet-/.test(b2))
+      bad.push("DCA: у позиции нет разворота вовсе");
+    if (!/ТВХ после/.test(b2))
+      bad.push("DCA: плавающая ТВХ в развороте не показана");
+    if (!/display:none/.test(b2))
+      bad.push("DCA: деталь позиции показана без нажатия");
+    if (global.__dcaToggle) {
+      const key = String(Math.trunc(T0 - 7200)) + ":WUSDT";
+      const id = "ddet-" + key.replace(/[^a-z0-9]+/gi, "-");
+      global.__dcaToggle(key);
+      if (String(global.__el(id).style.display) !== "table-row")
+        bad.push("DCA: нажатие не раскрыло позицию");
+      global.__dcaToggle(key);
+      if (String(global.__el(id).style.display) !== "none")
+        bad.push("DCA: повторное нажатие не свернуло позицию");
+    } else bad.push("DCA: разворот позиции не выведен наружу");
     if (global.__dcaSetDep) global.__dcaSetDep("1000");
+  }
+  // Открытых НЕ СЧИТАЛИ — прочерк с названной причиной, а не ноль:
+  // свод пересобран из журнала, а открытые позиции в журнал не идут.
+  if (isDca && /dcanolive=1/.test(SEARCH)) {
+    const bx = flatBox();
+    if (!/Открытых не считали/.test(bx))
+      bad.push("DCA: «не считали» не отличено от «открытых нет»");
+    if (/открытых позиций<\/div><div class='v mono'>0/.test(bx))
+      bad.push("DCA: неизвестное число открытых показано нулём");
   }
   if (isDca && /dcastale=1/.test(SEARCH)) {
     const bx = flatBox();
@@ -3951,7 +4111,41 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // Сделки модели на графике. Это не украшение: страницу открывают
   // ссылкой из таблицы ради ответа «а что было с ценой», и слой,
   // который молча не рисуется, неотличим от «сделок по этой монете нет».
-  if (isChart) {
+  // График позиций DCA-книги: своя дорога данных и своя ТВХ.
+  // Проверяется числами, а не наличием блока: у лестницы средняя цена
+  // входа ПЛЫВЁТ, и линия входа на первом рунге о позиции молчит.
+  if (isChart && /dca=/.test(SEARCH)) {
+    if (!seen.some(u => u.startsWith("/dca_trades")))
+      bad.push("график: позиции DCA-книги не запрошены");
+    if (!seen.some(u => u.startsWith("/dca_trades") && /book=/.test(u)))
+      bad.push("график: ключ DCA-книги не доехал до запроса");
+    if (seen.some(u => u.startsWith("/model_trades")))
+      bad.push("график в режиме DCA просит ещё и выборы модели");
+    const arm = String(global.__el ? global.__el("marm").innerHTML : "");
+    if (!/DCA/.test(arm) || !/безопасная/.test(arm))
+      bad.push("график: книга DCA не названа вместо переключателя рук");
+    if (/data-arm=/.test(arm))
+      bad.push("график: у лестницы предложен выбор руки, которого нет");
+    const tx = (global.__texts || []).join(" ");
+    // Проверяется ОТРИСОВАННОЕ, а не подпись: подпись печатается из
+    // данных и осталась бы на месте при несуществующей линии (первая
+    // версия этого контроля прошла именно так). Ступени попадают в
+    // карту наведения, и число их — свидетельство рисунка.
+    const av = (global.__hit ? global.__hit() : []).filter(h => h.avgline);
+    if (!av.length)
+      bad.push("график: ступень ТВХ не нарисована");
+    else if (!av.some(h => h.avgline >= 2))
+      bad.push("график: ТВХ нарисована одной ступенью, а рунгов два");
+    if (!/avg entry/.test(tx))
+      bad.push("график: плавающая ТВХ не подписана");
+    if (!/60983|60984/.test(tx))
+      bad.push("график: ТВХ нарисована не по средней после долива");
+    // Уровней у лестницы нет: подпись стопа утверждала бы правило,
+    // которого у книги нет
+    if (/\bstop\b/.test(tx))
+      bad.push("график: у позиции DCA нарисован стоп, которого нет");
+  }
+  if (isChart && !/dca=/.test(SEARCH)) {
     if (!seen.some(u => u.startsWith("/model_trades")))
       bad.push("график не запросил сделок модели");
     // Графику нужны строки, а не сводки: полный расчёт занимал секунды

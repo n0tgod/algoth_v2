@@ -599,6 +599,59 @@ def _control_track_marks_hour_open():
         L.simulate_dca = orig
 
 
+def test_fills_describe_the_position_and_its_floating_entry():
+    """Входы позиции записаны, и средняя из них равна средней симуляции.
+
+    Позиция на показе одна, а входов у неё несколько: база плюс доливы.
+    Средняя цена входа («плавающая ТВХ») обязана выводиться ИЗ ЭТОГО
+    списка — вторая её реализация на странице однажды разошлась бы с той,
+    по которой считаются деньги. Проверяется тождеством: средняя,
+    собранная из записанных входов, совпадает с `avg` симуляции.
+    """
+    # цена уходит вниз, задевает два рунга, потом стоит
+    bars = [(0, 100.0, 100.0, 100.0, 100.0, 1),
+            (60, 100.0, 100.0, 94.0, 95.0, 1),
+            (120, 95.0, 95.0, 89.0, 90.0, 1),
+            (180, 90.0, 90.0, 90.0, 90.0, 1)]
+    rungs = [100.0, 95.0, 90.0, 85.0]
+    w = [0.25, 0.25, 0.25, 0.25]
+    r = L.simulate_dca(bars, rungs, w, 1.0, 2.0, 0.02)
+    fills = r["fills"]
+    assert [round(f[1], 2) for f in fills] == [100.0, 95.0, 90.0], fills
+    assert fills[0][0] == 0 and fills[1][0] == 60 and fills[2][0] == 120, fills
+    # Средняя из записанных входов = средняя симуляции (тождество), и
+    # считает её ТА ЖЕ функция, которой пользуются страница и график:
+    # `rules.avg_walk`. Своя арифметика в проверке означала бы, что
+    # тождество держится с формулой ТЕСТА, а не с той, что на экране, —
+    # первая версия этой функции считала среднее цен и расходилась.
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "dca_paper"))
+    import rules as PR
+    walk = PR.avg_walk(fills)
+    assert len(walk) == len(fills), walk
+    assert abs(walk[-1]["avg"] - r["avg"]) < 1e-9, (walk[-1], r["avg"])
+    # ТВХ ПЛЫВЁТ: каждый долив ниже опускает её, и первый шаг равен
+    # цене входа
+    assert abs(walk[0]["avg"] - 100.0) < 1e-9, walk[0]
+    assert walk[0]["avg"] > walk[1]["avg"] > walk[2]["avg"], walk
+    assert abs(r["entry_px"] - 100.0) < 1e-9
+    print(f"ok  входы позиции: {[round(f[1], 1) for f in fills]}, "
+          f"ТВХ {[round(x['avg'], 2) for x in walk]} совпала с симуляцией")
+
+
+def _control_fills_not_logged():
+    """Доливы не записываются: позиция не разворачивается во входы."""
+    orig = L._fill_rungs
+    L._fill_rungs = lambda *a, **k: orig(*a[:7])
+    try:
+        try:
+            test_fills_describe_the_position_and_its_floating_entry()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L._fill_rungs = orig
+
+
 TESTS = [
     test_liq_price_matches_spec5_table,
     test_one_x_long_cannot_liquidate,
@@ -623,6 +676,7 @@ TESTS = [
     test_track_does_not_change_numbers,
     test_track_last_equals_outcome,
     test_track_marks_hour_close,
+    test_fills_describe_the_position_and_its_floating_entry,
 ]
 
 
@@ -640,7 +694,8 @@ def main():
     assert _control_short_side_ignored(), "контроль стороны шорта не кусается"
     assert _control_track_marks_hour_open(), \
         "контроль отметки по началу часа не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 9 отрицательных контролей "
+    assert _control_fills_not_logged(), "контроль записи доливов не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; 10 отрицательных контролей "
           f"кусаются")
 
 
