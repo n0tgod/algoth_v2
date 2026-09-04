@@ -144,6 +144,74 @@ def test_report_names_both_refusals():
 
 # ------------------------------------------------------ отрицательные контроли
 
+def test_concentration_names_one_coin():
+    """Итог, принадлежащий одному имени, обязан быть виден числом.
+
+    Урок лиги и one_name.py: колонка «без лучшего имени» переворачивала
+    знак у целых групп. Здесь всё зарабатывает TUT, остальные в нуле —
+    итог без него обязан сойтись к нулю, а имя быть названо.
+    """
+    t0 = 1_700_000_000
+    recs = [_rec(t0 + i, hold_h=1.0, pnl=0.0, sym=f"C{i}USDT")
+            for i in range(5)]
+    recs.append(_rec(t0 + 5, hold_h=1.0, pnl=0.50, sym="TUTUSDT"))
+    r = D6.ration(recs, 1.0 / 6, deposit=3000.0)
+    assert r["taken"] == 6, r
+    assert r["names"] == 6, r
+    assert r["top_sym"] == "TUTUSDT", r
+    # 0.50 на позицию в 500 $ = 250 $ = 8.33 % депозита
+    assert abs(r["final"] - round(250.0 / 3000.0, 4)) < 1e-9, r
+    assert abs(r["final_wo_top"]) < 1e-9, r
+    assert abs(r["top_pnl"] - 250.0) < 1e-6, r
+    assert abs(r["top_trade"] - 250.0) < 1e-6, r
+    print(f"ok  концентрация: итог {_pc(r['final'])}, без "
+          f"{r['top_sym']} {_pc(r['final_wo_top'])}")
+
+
+def _pc(x):
+    return f"{100.0 * x:+.2f} %"
+
+
+def test_report_carries_concentration():
+    """Число, не доехавшее до отчёта, владельцу не существует."""
+    t0 = 1_700_000_000
+    recs = [_rec(t0 + i, hold_h=1.0, pnl=0.0, sym=f"C{i}USDT")
+            for i in range(5)]
+    recs.append(_rec(t0 + 5, hold_h=1.0, pnl=0.50, sym="TUTUSDT"))
+    cells = {}
+    for rule, param in D6.GRID_RULER:
+        for sh in D6.GRID_SHARE:
+            cells[f"{rule}|{param}|{sh:.6f}"] = D6.ration(
+                recs, sh, deposit=3000.0)
+    txt = D6.report({"positions": 6, "skipped": 0, "secs": 1.0,
+                     "grid": {}, "params": {"DEPOSIT": 3000.0},
+                     "cells": cells, "unlimited": {}})
+    assert "Концентрация" in txt, txt[:400]
+    assert "TUTUSDT" in txt, txt[-1500:]
+    assert "ВЫЧИТАНИЕ, а не пересчёт" in txt, txt[-1500:]
+    assert "Ячейки не парны" in txt, txt[-2500:]
+    print("ok  отчёт: концентрация названа именем и оговорена вычитанием")
+
+
+def _control_no_concentration():
+    """Итог без лучшего имени, равный итогу, — колонка ничего не считает."""
+    orig = D6.ration
+
+    def flat(recs, share, deposit=D6.DEPOSIT, min_notional=D6.MIN_NOTIONAL):
+        r = orig(recs, share, deposit, min_notional)
+        r["final_wo_top"] = r["final"]
+        return r
+    D6.ration = flat
+    try:
+        try:
+            test_concentration_names_one_coin()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D6.ration = orig
+
+
 def _control_no_budget():
     """Без вычета маржи любая доля берёт всё — ширина побеждает даром."""
     orig = D6.ration
@@ -198,11 +266,13 @@ def _control_arrival_order():
 TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_min_notional_rejects_not_rounds, test_leverage_sets_the_ticket,
          test_best_first_within_a_second, test_deposit_units_and_curve,
-         test_report_names_both_refusals]
+         test_report_names_both_refusals, test_concentration_names_one_coin,
+         test_report_carries_concentration]
 
 CONTROLS = [("бюджет не вычитается", _control_no_budget),
             ("минимум биржи снят", _control_no_min_notional),
-            ("раздача по порядку прихода", _control_arrival_order)]
+            ("раздача по порядку прихода", _control_arrival_order),
+            ("колонка без лучшего имени не считает", _control_no_concentration)]
 
 
 def main():

@@ -157,6 +157,7 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
     live = []                       # (exit_ts, маржа, доля капитала, marks)
     taken, no_cash, too_small = 0, 0, 0
     dH, openN = {}, {}
+    bysym, best_trade = {}, 0.0
     for r in order:
         now = int(r["at"])
         # 1. деньги возвращаются раньше, чем тратятся
@@ -180,6 +181,9 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
         free -= margin
         taken += 1
         live.append((r["exit_ts"], margin, r["pnl"], r["marks"]))
+        got = r["pnl"] * margin
+        bysym[r["sym"]] = bysym.get(r["sym"], 0.0) + got
+        best_trade = max(best_trade, got)
         for (hr, d) in r["marks"]:
             dH[hr] = dH.get(hr, 0.0) + d * margin
         h0 = now - (now % HOUR)
@@ -216,6 +220,13 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
         "open_max": int(np.max(nn)) if len(nn) else 0,
         "slots": int(round(1.0 / share)),
         "ticket": round(deposit * share, 2),
+        # концентрация: вычитание, а не пересчёт (см. отчёт)
+        "names": len(bysym),
+        "top_sym": max(bysym, key=bysym.get) if bysym else None,
+        "top_pnl": round(max(bysym.values()), 2) if bysym else 0.0,
+        "final_wo_top": (round((equity - max(bysym.values())) / deposit - 1.0,
+                               4) if bysym else None),
+        "top_trade": round(best_trade, 2),
     }
 
 
@@ -327,7 +338,36 @@ def report(s):
            "доле; «на позицию» — сколько денег ей достаётся. Отказы "
            "разделены намеренно: **нет кассы** лечится бо́льшим числом "
            "мест, **мельче $5** — только бо́льшим депозитом, и смешивать "
-           "их значит лечить не то.", ""]
+           "их значит лечить не то.", "",
+           "**Ячейки не парны, и складывать их разницу с шириной нельзя.** "
+           "При разном числе мест касса пускает РАЗНЫЕ выборы: у шести "
+           "мест это единицы процентов сигнала, у шестисот — пятая часть. "
+           "Значит различие итогов принадлежит и ширине, и составу "
+           "взятого, а разделить их эта сетка не умеет.", ""]
+    L1 += ["## Концентрация: сколько принадлежит одному имени", "",
+           "Итог из тысячи сделок выглядит статистикой, пока не сказано, "
+           "сколько денег в нём принадлежит одному разгону. Колонка "
+           "«без лучшего имени» — ВЫЧИТАНИЕ, а не пересчёт: убрав имя, "
+           "книга потратила бы освободившиеся деньги на другие входы. "
+           "Она отвечает на «чьи это деньги», а не на «что было бы».", "",
+           "| линейка | мест | имён | лучшее имя | его $ | итог без него | "
+           "лучшая сделка |",
+           "|---|--:|--:|---|--:|--:|--:|"]
+    for rule, param in GRID_RULER:
+        name = ("нынешняя 2·d_max" if rule == "depth"
+                else f"σ-линейка {param:g}·σ")
+        for sh in GRID_SHARE:
+            c = s["cells"].get(f"{rule}|{param}|{sh:.6f}")
+            if not c:
+                continue
+            if not c.get("names"):
+                L1.append(f"| {name} | {c['slots']} | 0 | — | — | — | — |")
+                continue
+            L1.append(
+                f"| {name} | {c['slots']} | {c['names']} | "
+                f"{c.get('top_sym') or '—'} | ${c['top_pnl']:g} | "
+                f"{_pct(c['final_wo_top'])} | ${c['top_trade']:g} |")
+    L1.append("")
     u = s.get("unlimited") or {}
     if u:
         L1 += ["## Опора: без нормировки кассы", "",
