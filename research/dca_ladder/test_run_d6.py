@@ -252,6 +252,65 @@ def test_restat_says_the_journal_grew():
     print("ok  restat: рост журнала назван числом, у ровного окна молчит")
 
 
+def test_percent_of_deposit_is_invariant_to_deposit():
+    """Пока пол биржи не связывает, процент к депозиту от депозита не зависит.
+
+    Это не удобство, а свойство конструкции: маржа пропорциональна счёту,
+    исход позиции есть доля её капитала. Значит «пересчитать таблицу на
+    другой депозит» меняет ровно то, что упирается в абсолютные $5.
+    """
+    recs = [_rec(1_700_000_000 + i, hold_h=2.0, pnl=0.10, lev=4.0,
+                 sym=f"C{i}USDT") for i in range(40)]
+    a = D6.ration(recs, 1.0 / 20, deposit=3000.0, min_notional=0.0)
+    b = D6.ration(recs, 1.0 / 20, deposit=10000.0, min_notional=0.0)
+    assert a["taken"] == b["taken"], (a, b)
+    assert abs(a["final"] - b["final"]) < 1e-12, (a["final"], b["final"])
+    assert abs(a["max_dd"] - b["max_dd"]) < 1e-12, (a, b)
+    # а с полом биржи мелкий депозит теряет входы, крупный — нет:
+    # при плече 3 билет $5 даёт рунг $3.75 (мельче минимума), билет
+    # $16.67 — рунг $12.5 (проходит)
+    thin = [_rec(1_700_000_000 + i, hold_h=2.0, pnl=0.10, lev=3.0,
+                 sym=f"C{i}USDT") for i in range(40)]
+    c = D6.ration(thin, 1.0 / 600, deposit=3000.0)
+    d = D6.ration(thin, 1.0 / 600, deposit=10000.0)
+    assert c["too_small"] > 0 and d["too_small"] == 0, (c, d)
+    assert d["taken"] > c["taken"], (c, d)
+    print(f"ok  инвариант: {_pc(a['final'])} на $3000 и $10000 без пола; "
+          f"с полом взято {c['taken']} против {d['taken']}")
+
+
+def test_deposit_anchor_catches_a_broken_measure():
+    """Расхождение БЕЗ отказов по полу означает сломанную меру, не находку."""
+    import json
+    import tempfile
+    cells = {"depth|2.0|0.050000": {"final": 0.10, "too_small": 0},
+             "depth|2.0|0.001667": {"final": 0.20, "too_small": 3000}}
+    ref = {"params": {"DEPOSIT": 3000.0}, "cells": cells}
+    with tempfile.TemporaryDirectory() as td:
+        fp = os.path.join(td, "ref.json")
+        with open(fp, "w", encoding="utf-8") as f:
+            json.dump(ref, f)
+        good = {"params": {"DEPOSIT": 10000.0}, "cells": {
+            "depth|2.0|0.050000": {"final": 0.10, "too_small": 0},
+            "depth|2.0|0.001667": {"final": 0.25, "too_small": 0}}}
+        a = D6.anchor_deposit(good, fp)
+        assert a and not a["bad"], a
+        assert a["n_same"] == 1, a
+        bad = {"params": {"DEPOSIT": 10000.0}, "cells": {
+            "depth|2.0|0.050000": {"final": 0.17, "too_small": 0}}}
+        a2 = D6.anchor_deposit(bad, fp)
+        assert a2["bad"] == ["depth|2.0|0.050000"], a2
+        txt = D6.report({"positions": 1, "skipped": 0, "secs": 1.0,
+                         "grid": {}, "params": {"DEPOSIT": 10000.0},
+                         "cells": {}, "unlimited": {},
+                         "anchor_deposit": a2})
+        assert "Мера сломана" in txt, txt[-1200:]
+        # тот же депозит сверять не с чем — опоры нет вовсе
+        assert D6.anchor_deposit({"params": {"DEPOSIT": 3000.0},
+                                  "cells": {}}, fp) is None
+    print("ok  опора депозита: расхождение без пола названо сломанной мерой")
+
+
 def _control_no_window():
     """Отчёт без окна — доход в процентах непонятно за что."""
     orig = D6._window_line
@@ -264,6 +323,26 @@ def _control_no_window():
         return False
     finally:
         D6._window_line = orig
+
+
+def _control_blind_anchor():
+    """Опора, объявляющая совпадением всё подряд, не проверяет ничего."""
+    orig = D6.anchor_deposit
+
+    def blind(s, ref):
+        a = orig(s, ref)
+        if a:
+            a["bad"] = []
+        return a
+    D6.anchor_deposit = blind
+    try:
+        try:
+            test_deposit_anchor_catches_a_broken_measure()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D6.anchor_deposit = orig
 
 
 def _control_no_budget():
@@ -323,14 +402,17 @@ TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_report_names_both_refusals, test_concentration_names_one_coin,
          test_report_carries_concentration,
          test_window_is_measured_and_reported,
-         test_restat_says_the_journal_grew]
+         test_restat_says_the_journal_grew,
+         test_percent_of_deposit_is_invariant_to_deposit,
+         test_deposit_anchor_catches_a_broken_measure]
 
 CONTROLS = [("бюджет не вычитается", _control_no_budget),
             ("минимум биржи снят", _control_no_min_notional),
             ("раздача по порядку прихода", _control_arrival_order),
             ("колонка без лучшего имени не считает",
              _control_no_concentration),
-            ("окно замера не названо", _control_no_window)]
+            ("окно замера не названо", _control_no_window),
+            ("опора депозита не сверяет", _control_blind_anchor)]
 
 
 def main():

@@ -95,6 +95,24 @@ MIN_NOTIONAL = 5.0                  # минимум ордера: ровно $5
 RUNG_SHARE = min(D2.WEIGHTS)        # 0.25 — самый мелкий рунг лестницы
 GRID_SHARE = [1.0 / 6, 1.0 / 20, 1.0 / 60, 1.0 / 200, 1.0 / 600]
 GRID_RULER = [("depth", 2.0), ("sigma", 6.0)]
+# Ось билета добавлена ПОСЛЕ первого прогона, под вопрос владельца о другом
+# депозите, и потому диагностика, а не часть объявленной сетки. Нужна она
+# потому, что связывает здесь АБСОЛЮТНЫЙ пол биржи ($5 на ордер): при
+# фиксированной доле процент к депозиту от размера депозита не зависит
+# вовсе, и единственный канал влияния — этот пол. Билет $7 и $5 при
+# депозите $3000 почти совпадают с долей 1/428 и 1/600, при $10000 дают
+# 1/1429 и 1/2000 — то есть показывают, докуда ширина доходит с деньгами.
+GRID_TICKET = [7.0, 5.0]
+
+
+def shares_for(deposit):
+    """Доли сетки плюс доли, задающие объявленные билеты при этом депозите."""
+    out = list(GRID_SHARE) + [t / float(deposit) for t in GRID_TICKET]
+    keep = []
+    for x in sorted(set(round(v, 9) for v in out), reverse=True):
+        if all(abs(x - y) > 1e-9 for y in keep):
+            keep.append(x)
+    return keep
 
 
 def one_position(g, bars, ts, look, rule, param):
@@ -251,7 +269,7 @@ def window(longs):
                           for g in longs})}
 
 
-def run(limit=None, src=None, log=print):
+def run(limit=None, src=None, log=print, deposit=DEPOSIT):
     t0 = time.time()
     legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
     get = src.bars if src else (lambda s, a, b: SW.read_bars(ROOT_B1, s, a, b))
@@ -297,10 +315,12 @@ def run(limit=None, src=None, log=print):
             n += got
             skipped += (1 - got)
 
+    shares = shares_for(deposit)
     out = {"positions": n, "skipped": skipped,
-           "grid": {"share": GRID_SHARE,
+           "grid": {"share": GRID_SHARE, "ticket": GRID_TICKET,
+                    "shares_used": shares,
                     "ruler": [[a, b] for a, b in GRID_RULER]},
-           "params": {"DEPOSIT": DEPOSIT, "MIN_NOTIONAL": MIN_NOTIONAL,
+           "params": {"DEPOSIT": float(deposit), "MIN_NOTIONAL": MIN_NOTIONAL,
                       "RUNG_SHARE": RUNG_SHARE, "HOLD_H": D2.HOLD_H,
                       "FLOOR_FRAC": D2.FLOOR_FRAC},
            "window": win,
@@ -312,10 +332,85 @@ def run(limit=None, src=None, log=print):
         # «мы просто дали больше денег»
         out["unlimited"][f"{k[0]}|{k[1]}"] = {
             "n": len(rs), "sum_pnl": round(sum(r["pnl"] for r in rs), 2)}
-        for sh in GRID_SHARE:
-            out["cells"][f"{k[0]}|{k[1]}|{sh:.6f}"] = ration(rs, sh)
+        for sh in shares:
+            out["cells"][f"{k[0]}|{k[1]}|{sh:.6f}"] = ration(
+                rs, sh, deposit=deposit)
     out["secs"] = round(time.time() - t0, 1)
     return out
+
+
+def anchor_deposit(s, ref_path):
+    """Сверка с прогоном на другом депозите — встроенная проверка меры.
+
+    При фиксированной доле процент к депозиту от размера депозита НЕ
+    зависит: маржа пропорциональна счёту, а исход позиции — доля её
+    капитала. Единственный канал влияния — АБСОЛЮТНЫЙ пол биржи. Значит
+    ячейка, где ни один вход не отвергнут как «мельче $5», обязана
+    воспроизвестись ДОСЛОВНО, а разошедшаяся — обязана иметь отказы по
+    полу. Иначе мера сломана, и таблицу читать нельзя.
+    """
+    if not os.path.exists(ref_path):
+        return None
+    with open(ref_path, encoding="utf-8") as f:
+        r = json.load(f)
+    dep_a = (s.get("params") or {}).get("DEPOSIT")
+    dep_b = (r.get("params") or {}).get("DEPOSIT")
+    if dep_a is None or dep_b is None or abs(dep_a - dep_b) < 1e-9:
+        return None
+    rows, bad = [], []
+    for k, c in sorted(s.get("cells", {}).items()):
+        c0 = (r.get("cells") or {}).get(k)
+        if not c0:
+            continue
+        same = abs(c["final"] - c0["final"]) < 1e-9
+        floor = bool(c["too_small"] or c0["too_small"])
+        ok = same or floor
+        rows.append({"cell": k, "final": c["final"], "final_ref": c0["final"],
+                     "same": same, "floor": floor, "ok": ok,
+                     "too_small": c["too_small"],
+                     "too_small_ref": c0["too_small"]})
+        if not ok:
+            bad.append(k)
+    return {"ref": os.path.basename(ref_path), "dep": dep_a, "dep_ref": dep_b,
+            "rows": rows, "bad": bad,
+            "n_same": sum(1 for x in rows if x["same"])}
+
+
+def _anchor_block(a):
+    if not a:
+        return []
+    L = ["## Опора: тот же замер на депозите "
+         f"${a['dep_ref']:g}", "",
+         "Встроенная проверка меры, а не справка. При фиксированной доле "
+         "процент к депозиту от размера депозита НЕ зависит — маржа "
+         "пропорциональна счёту, исход позиции есть доля её капитала. "
+         "Единственный канал влияния — абсолютный пол биржи в $5. Значит "
+         "ячейка без отказов «мельче $5» обязана воспроизвестись "
+         "ДОСЛОВНО, а разошедшаяся — обязана иметь такие отказы.", "",
+         "| ячейка | доход здесь | там | совпало | отказов по полу |",
+         "|---|--:|--:|:--|--:|"]
+    for x in a["rows"]:
+        mark = "да" if x["same"] else ("нет — пол биржи" if x["floor"]
+                                       else "**НЕТ, и пол ни при чём**")
+        L.append(f"| {x['cell']} | {_pct(x['final'])} | "
+                 f"{_pct(x['final_ref'])} | {mark} | "
+                 f"{x['too_small']} / {x['too_small_ref']} |")
+    L.append("")
+    if a["bad"]:
+        L += ["**Мера сломана: расхождение без отказов по полу в ячейках "
+              + ", ".join(a["bad"]) + ". Таблицу читать нельзя.**", ""]
+    else:
+        L += [f"Совпало дословно {a['n_same']} ячеек из {len(a['rows'])}; "
+              "остальные расходятся ровно там, где пол биржи связывает. "
+              "Проверка пройдена.", ""]
+    return L
+
+
+def _shares_of(s):
+    """Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать
+    тот прогон, который породил файл (урок R1)."""
+    g = s.get("grid") or {}
+    return g.get("shares_used") or g.get("share") or GRID_SHARE
 
 
 def _pct(x, d=2):
@@ -335,7 +430,7 @@ def report(s):
         "**Чего не хватало до этого.** Реплей D2–D5 кассу не нормирует "
         "вовсе: каждый прошедший гейт выбор получает полный капитал. "
         "Поэтому его числа — доход СИГНАЛА, а не счёта. Здесь депозит "
-        f"фиксирован (**${dep:g}**, капитал бумажной книги), доля на "
+        f"фиксирован (**${dep:g}**), доля на "
         "позицию объявлена, и вход, которому не хватило денег, не "
         "случается. Единица ответа одна у всех ячеек — проценты ДЕПОЗИТА.",
         "",
@@ -352,7 +447,7 @@ def report(s):
     ]
     for rule, param in GRID_RULER:
         name = ("нынешняя 2·d_max" if rule == "depth" else f"σ-линейка {param:g}·σ")
-        for sh in GRID_SHARE:
+        for sh in _shares_of(s):
             c = s["cells"].get(f"{rule}|{param}|{sh:.6f}")
             if not c:
                 continue
@@ -384,7 +479,7 @@ def report(s):
     for rule, param in GRID_RULER:
         name = ("нынешняя 2·d_max" if rule == "depth"
                 else f"σ-линейка {param:g}·σ")
-        for sh in GRID_SHARE:
+        for sh in _shares_of(s):
             c = s["cells"].get(f"{rule}|{param}|{sh:.6f}")
             if not c:
                 continue
@@ -396,6 +491,7 @@ def report(s):
                 f"{c.get('top_sym') or '—'} | ${c['top_pnl']:g} | "
                 f"{_pct(c['final_wo_top'])} | ${c['top_trade']:g} |")
     L1.append("")
+    L1 += _anchor_block(s.get("anchor_deposit"))
     u = s.get("unlimited") or {}
     if u:
         L1 += ["## Опора: без нормировки кассы", "",
@@ -466,6 +562,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--tag", default="1m")
+    ap.add_argument("--deposit", type=float, default=DEPOSIT)
     ap.add_argument("--no-publish", action="store_true")
     ap.add_argument("--window", action="store_true",
                     help="напечатать окно замера и выйти")
@@ -484,13 +581,17 @@ def main():
         return
     os.makedirs(OUT, exist_ok=True)
     tag = a.tag if not a.limit else f"smoke-{a.tag}"
+    if abs(a.deposit - DEPOSIT) > 1e-9:
+        tag = f"{tag}-d{int(round(a.deposit))}"
     base = os.path.join(OUT, f"D6-cash-{tag}")
     if a.restat:
         with open(base + ".json", encoding="utf-8") as f:
             s = json.load(f)
         s["window"] = _restat_window(s, log=print)
     else:
-        s = run(limit=a.limit)
+        s = run(limit=a.limit, deposit=a.deposit)
+        s["anchor_deposit"] = anchor_deposit(
+            s, os.path.join(OUT, f"D6-cash-{a.tag}.json"))
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
     txt = report(s)
