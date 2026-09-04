@@ -313,6 +313,23 @@ def main():
     os.makedirs(R.OUT, exist_ok=True)
     t0 = time.time()
     extra = {}
+    if a.restat:
+        # Пересборка ничего не считает, но и не вправе ТЕРЯТЬ числа
+        # счётного прогона: отказы кассы, окно решений и число позиций
+        # описывают тот же журнал. Переносятся с меткой ТОГО прогона —
+        # иначе они читались бы сегодняшними.
+        try:
+            with open(R.ARTIFACT, encoding="utf-8") as f:
+                was = json.load(f)
+            extra = {k: was[k] for k in
+                     ("positions", "skipped", "window", "cells", "one_name")
+                     if k in was}
+            if extra:
+                extra["computed_at"] = was.get("computed_at") or time.strftime(
+                    "%Y-%m-%d %H:%M",
+                    time.gmtime(os.path.getmtime(R.ARTIFACT)))
+        except (OSError, ValueError):
+            extra = {}
     if not a.restat:
         keys = list(R.RULER_ORDER)
         got = D6.collect_recs(limit=a.limit,
@@ -321,7 +338,9 @@ def main():
             {k: got["recs"][RULERS[k]] for k in keys})
         append_journal(rows)
         extra = {"positions": got["positions"], "skipped": got["skipped"],
-                 "window": got["window"], "cells": cells, "one_name": one}
+                 "window": got["window"], "cells": cells, "one_name": one,
+                 "computed_at": time.strftime("%Y-%m-%d %H:%M",
+                                              time.gmtime())}
     s = summarize()
     s.update(extra)
     s["secs"] = round(time.time() - t0, 1)

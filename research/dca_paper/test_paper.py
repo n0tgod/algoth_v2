@@ -288,7 +288,42 @@ def test_cash_refusals_reach_the_report_and_survive_restat():
     assert "| 594 | 1689 |" in txt, [l for l in txt.split("\n")
                                      if "594" in l]
     assert "2026-09-04 12:00" in txt
-    print("ok  отказы кассы: в отчёте числом, у пересборки — названы словом")
+
+    # И ГЛАВНОЕ — дорога, а не только формула: `--restat` гоняется
+    # настоящим `main`. Первая версия этой проверки звала один `report`
+    # и потому прошла, когда переноса в `main` не было вовсе, — тест,
+    # чьё имя обещает больше, чем он исполняет, хуже отсутствующего.
+    import runpy
+    jp, ap = R.JOURNAL, R.ARTIFACT
+    with tempfile.TemporaryDirectory() as td:
+        try:
+            R.JOURNAL = os.path.join(td, "j.jsonl")
+            R.ARTIFACT = os.path.join(td, "a.json")
+            P.R.OUT = td
+            t0 = 1_700_000_000
+            with open(R.JOURNAL, "w", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
+                    "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 2.0,
+                    "written_at": t0 + 600, "rules": R.RULES}) + "\n")
+            with open(R.ARTIFACT, "w", encoding="utf-8") as f:
+                json.dump({"cells": {P._cell(R.DEFAULT_RULER, 1000): {
+                    "slots": 40, "taken": 594, "no_cash": 1689,
+                    "too_small": 0}}, "positions": 8677,
+                    "computed_at": "2026-09-04 12:00"}, f)
+            sys.argv = ["run_paper.py", "--restat", "--no-publish"]
+            P.main()
+            with open(R.ARTIFACT, encoding="utf-8") as f:
+                got = json.load(f)
+            assert (got.get("cells") or {}), "пересборка потеряла отказы"
+            assert got.get("positions") == 8677, got.get("positions")
+            assert got.get("computed_at") == "2026-09-04 12:00", got
+            with open(os.path.join(td, "DCA-paper.md"), encoding="utf-8") as f:
+                md = f.read()
+            assert "| 594 | 1689 |" in md, md[-900:]
+        finally:
+            R.JOURNAL, R.ARTIFACT, P.R.OUT = jp, ap, os.path.dirname(ap)
+    print("ok  отказы кассы: пересборка их не теряет (проверено main)")
 
 
 def _control_no_split():
