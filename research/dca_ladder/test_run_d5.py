@@ -17,6 +17,12 @@
   собой.
 * **Якорь.** Ячейка ("depth", 2.0) обязана давать ровно то плечо, что
   считает живой путь D2/D4, иначе таблица описывает другую книгу.
+* **Сверка якоря на выросшем журнале.** Журнал листов дописывается
+  каждый час, поэтому «позиций столько же» не данность. Проверка обязана
+  отличать выросший журнал (среднее и накопленная книга уплыли — норма)
+  от разошедшегося счёта (уплыла медиана или доля ликвидаций — дефект).
+  Иначе ложная тревога встанет над каждым прогоном и перестанет быть
+  сигналом.
 * **Время в позиции** отсчитывается от бара ВХОДА, а не от начала окна
   признаков: окно назад `BACK_H` = 24 ч, и отсчёт от него добавил бы
   сутки КАЖДОЙ позиции, оставив таблицу правдоподобной. Ловит это один
@@ -159,6 +165,57 @@ def test_hold_time_from_entry_not_window():
           f"тейк в минуту входа = 0.0 ч, потолок {D2.HOLD_H} ч")
 
 
+def _anchor(cell, n, hours):
+    """Прогон сверки якоря на подставленной ячейке."""
+    out = {"cells": {f"{D5.ANCHOR[0]}|{D5.ANCHOR[1]}": cell}}
+    a = cell
+    same_len = (n == D5.ANCHOR_N["D4_positions"]
+                and hours == D5.ANCHOR_N["D4_hours"])
+    bad, drift = [], []
+    for f, want in D5.ANCHOR_ROBUST.items():
+        got = a.get(f)
+        if got is None or abs(got - want) > D5.TOL[f]:
+            bad.append({"поле": f, "было": want, "стало": got})
+    for f, want in D5.ANCHOR_LEN.items():
+        got = a.get(f) if f in a else (a.get("book") or {}).get(f)
+        off = got is None or abs(got - want) > D5.TOL[f]
+        if off and same_len:
+            bad.append({"поле": f, "было": want, "стало": got})
+        elif off:
+            drift.append({"поле": f, "было": want, "стало": got})
+    return {"mismatch": len(bad), "fields": bad, "same_len": same_len,
+            "drift": drift}
+
+
+def test_anchor_separates_growth_from_defect():
+    """Живой случай 2026-09-04: журнал вырос, счёт не разошёлся.
+
+    Первый прогон D5 дал 8676 позиций против 8673 у D4 и 639 часов против
+    634 — то есть журнал дописался на пять часов. Все медианы и доли
+    совпали дословно, уплыл только итог книги (+7.32 → +7.19 %). Прежняя
+    сверка объявила это «читать таблицу нельзя», то есть выдала рост
+    журнала за расхождение счёта.
+    """
+    good = dict(D5.ANCHOR_ROBUST)
+    good["mean"] = D5.ANCHOR_LEN["mean"]
+    good["book"] = {"final": 0.0719, "max_dd": -0.1911, "hours": 639}
+    a = _anchor(good, 8676, 639)
+    assert a["mismatch"] == 0, a
+    assert a["same_len"] is False and len(a["drift"]) == 1, a
+    assert a["drift"][0]["поле"] == "final", a
+
+    # тот же журнал — тогда итог обязан сойтись, и расхождение есть дефект
+    b = _anchor(good, D5.ANCHOR_N["D4_positions"], D5.ANCHOR_N["D4_hours"])
+    assert b["mismatch"] == 1 and b["fields"][0]["поле"] == "final", b
+
+    # уплыла медиана — дефект при ЛЮБОЙ длине журнала
+    broken = dict(good, median=0.05)
+    c = _anchor(broken, 8676, 639)
+    assert c["mismatch"] == 1 and c["fields"][0]["поле"] == "median", c
+    print("ok  якорь: рост журнала — справка, уплывшая медиана — дефект "
+          "при любой длине")
+
+
 def test_run_end_to_end_synthetic():
     """Сквозной прогон: run → report, обе единицы и сверка якоря.
 
@@ -177,8 +234,7 @@ def test_run_end_to_end_synthetic():
         g["fwd"] = 40.0 + i
         g["rr"] = 2.0 + (i % 3)
         legs.append(g)
-    o_legs, o_lv, o_anchor = (TNT.legs_from_sheets, D2.build_levels,
-                              dict(D5.ANCHOR_D3))
+    o_legs, o_lv = TNT.legs_from_sheets, D2.build_levels
     TNT.legs_from_sheets = lambda paths, log=None: legs
     D2.build_levels = lambda w, i: T3.LEVELS
     try:
@@ -296,10 +352,25 @@ def _control_hold_from_window_start():
         D5.leg_cells = orig
 
 
+def _control_anchor_blames_growth():
+    """Прежняя сверка: любое поле строго, рост журнала = «читать нельзя»."""
+    orig = dict(D5.ANCHOR_LEN)
+    D5.ANCHOR_ROBUST.update(orig)      # длинозависимые снова строгие
+    try:
+        try:
+            test_anchor_separates_growth_from_defect()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        for k in orig:
+            D5.ANCHOR_ROBUST.pop(k, None)
+
+
 def _control_anchor_never_complains():
     """Молчаливая сверка якоря: расхождение обязано попадать в отчёт."""
-    orig = dict(D5.ANCHOR_D3), dict(D5.ANCHOR_D4)
-    D5.ANCHOR_D3, D5.ANCHOR_D4 = {}, {}
+    orig = dict(D5.ANCHOR_ROBUST), dict(D5.ANCHOR_LEN)
+    D5.ANCHOR_ROBUST, D5.ANCHOR_LEN = {}, {}
     try:
         try:
             test_run_end_to_end_synthetic()
@@ -307,7 +378,7 @@ def _control_anchor_never_complains():
             return True
         return False
     finally:
-        D5.ANCHOR_D3, D5.ANCHOR_D4 = orig
+        D5.ANCHOR_ROBUST, D5.ANCHOR_LEN = orig
 
 
 TESTS = [test_sigma_ruler_gives_wild_less_leverage,
@@ -315,12 +386,14 @@ TESTS = [test_sigma_ruler_gives_wild_less_leverage,
          test_buffer_never_shallower_than_ladder,
          test_anchor_matches_live_path,
          test_hold_time_from_entry_not_window,
+         test_anchor_separates_growth_from_defect,
          test_run_end_to_end_synthetic]
 
 CONTROLS = [("нулевая σ пропускается", _control_sigma_zero_allowed),
             ("запас мельче лестницы", _control_buffer_may_be_shallower),
             ("σ-линейка это лестница", _control_sigma_ruler_is_depth),
             ("время от начала окна", _control_hold_from_window_start),
+            ("рост журнала как дефект", _control_anchor_blames_growth),
             ("сверка якоря молчит", _control_anchor_never_complains)]
 
 
