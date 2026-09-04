@@ -21,6 +21,7 @@
 
 Запуск из `.venv/bin/python` (тянет numpy).
 """
+import calendar
 import os
 import sys
 
@@ -212,6 +213,59 @@ def _control_no_concentration():
         D6.ration = orig
 
 
+def test_window_is_measured_and_reported():
+    """Доход в процентах без окна не читается — окно обязано быть в отчёте."""
+    t0 = calendar.timegm((2026, 8, 8, 0, 0, 0))   # не магическое число
+    longs = [{"at": t0 + 3 * H}, {"at": t0 + 27 * 24 * H + 5 * H}]
+    w = D6.window(longs)
+    assert w["from"].startswith("2026-08-08"), w
+    assert w["to"].startswith("2026-09-04"), w
+    assert abs(w["span_d"] - 27.1) < 0.15, w
+    assert D6.window([]) is None
+    txt = D6.report({"positions": 2, "skipped": 0, "secs": 1.0, "grid": {},
+                     "params": {"DEPOSIT": 3000.0}, "cells": {},
+                     "unlimited": {}, "window": w})
+    assert "Окно замера: 2026-08-08" in txt, txt[:900]
+    assert "27.1 суток" in txt, txt[:900]
+    # отчёт прежнего образца обязан СКАЗАТЬ, что окна нет, а не молчать
+    old = D6.report({"positions": 2, "skipped": 0, "secs": 1.0, "grid": {},
+                     "params": {"DEPOSIT": 3000.0}, "cells": {},
+                     "unlimited": {}})
+    assert "Окно замера не записано" in old, old[:900]
+    print(f"ok  окно: {w['from']} … {w['to']} UTC, {w['span_d']:g} суток")
+
+
+def test_restat_says_the_journal_grew():
+    """Окно, дописанное позже прогона, обязано назвать хвост числом."""
+    t0 = calendar.timegm((2026, 8, 8, 0, 0, 0))
+    w = D6.window([{"at": t0}, {"at": t0 + 27 * 24 * H}])
+    w["grown"] = 42
+    txt = D6.report({"positions": 8676, "skipped": 0, "secs": 1.0, "grid": {},
+                     "params": {"DEPOSIT": 3000.0}, "cells": {},
+                     "unlimited": {}, "window": w})
+    assert "вырос на 42 выборов" in txt, txt[:1200]
+    w.pop("grown")
+    clean = D6.report({"positions": 8676, "skipped": 0, "secs": 1.0,
+                       "grid": {}, "params": {"DEPOSIT": 3000.0},
+                       "cells": {}, "unlimited": {}, "window": w})
+    assert "вырос на" not in clean, clean[:1200]
+    print("ok  restat: рост журнала назван числом, у ровного окна молчит")
+
+
+def _control_no_window():
+    """Отчёт без окна — доход в процентах непонятно за что."""
+    orig = D6._window_line
+    D6._window_line = lambda w: ""
+    try:
+        try:
+            test_window_is_measured_and_reported()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D6._window_line = orig
+
+
 def _control_no_budget():
     """Без вычета маржи любая доля берёт всё — ширина побеждает даром."""
     orig = D6.ration
@@ -267,12 +321,16 @@ TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_min_notional_rejects_not_rounds, test_leverage_sets_the_ticket,
          test_best_first_within_a_second, test_deposit_units_and_curve,
          test_report_names_both_refusals, test_concentration_names_one_coin,
-         test_report_carries_concentration]
+         test_report_carries_concentration,
+         test_window_is_measured_and_reported,
+         test_restat_says_the_journal_grew]
 
 CONTROLS = [("бюджет не вычитается", _control_no_budget),
             ("минимум биржи снят", _control_no_min_notional),
             ("раздача по порядку прихода", _control_arrival_order),
-            ("колонка без лучшего имени не считает", _control_no_concentration)]
+            ("колонка без лучшего имени не считает",
+             _control_no_concentration),
+            ("окно замера не названо", _control_no_window)]
 
 
 def main():

@@ -230,6 +230,27 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
     }
 
 
+def window(longs):
+    """Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
+
+    Доход в процентах без окна не читается: «+20 %» за месяц и за год —
+    разные утверждения. Считается по секундам решений, попавших в реплей;
+    сутки — календарные UTC, как у дневного ряда книги.
+    """
+    if not longs:
+        return None
+    a0 = min(float(g["at"]) for g in longs)
+    b1 = max(float(g["at"]) for g in longs)
+    f = "%Y-%m-%d %H:%M"
+    return {"from": time.strftime(f, time.gmtime(a0)),
+            "to": time.strftime(f, time.gmtime(b1)),
+            "from_ts": a0, "to_ts": b1,
+            "span_h": round((b1 - a0) / HOUR, 1),
+            "span_d": round((b1 - a0) / (24.0 * HOUR), 1),
+            "dates": len({time.strftime("%Y-%m-%d", time.gmtime(float(g["at"])))
+                          for g in longs})}
+
+
 def run(limit=None, src=None, log=print):
     t0 = time.time()
     legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
@@ -243,7 +264,11 @@ def run(limit=None, src=None, log=print):
     by_sym = {}
     for g in longs:
         by_sym.setdefault(g["sym"], []).append(g)
+    win = window(longs)
     log(f"лонгов под гейтом {len(longs)}, символов {len(by_sym)}")
+    if win:
+        log(f"окно решений {win['from']} … {win['to']} UTC "
+            f"({win['span_d']:g} суток, дат {win['dates']})")
 
     recs = {k: [] for k in GRID_RULER}
     n, skipped = 0, 0
@@ -278,6 +303,7 @@ def run(limit=None, src=None, log=print):
            "params": {"DEPOSIT": DEPOSIT, "MIN_NOTIONAL": MIN_NOTIONAL,
                       "RUNG_SHARE": RUNG_SHARE, "HOLD_H": D2.HOLD_H,
                       "FLOOR_FRAC": D2.FLOOR_FRAC},
+           "window": win,
            "cells": {}, "unlimited": {}, "secs": 0.0}
     for k in GRID_RULER:
         rs = recs[k]
@@ -315,6 +341,8 @@ def report(s):
         "",
         f"Позиций {s.get('positions', 0)}, пропущено {s.get('skipped', 0)}, "
         f"прогон {s.get('secs', 0)} с.",
+        "",
+        _window_line(s.get("window")),
         "",
         "## Ячейки",
         "",
@@ -392,6 +420,41 @@ def report(s):
     return "\n".join(L1)
 
 
+def _restat_window(s, log=print):
+    """Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+
+    Журнал листов растёт каждый час, поэтому окно, посчитанное позже
+    прогона, может оказаться шире того, что прогон видел. Расхождение
+    называется числом, а не сглаживается (узор опоры D5).
+    """
+    legs = TNT.legs_from_sheets([D2.SHEETS])
+    longs = [g for g in legs if g["side"] == "long"
+             and abs(g["fwd"]) >= D2.MIN_EDGE_BP
+             and (g["rr"] or 0) >= D2.MIN_RR]
+    w = window(longs)
+    was = s.get("positions")
+    if w and was and len(longs) != was:
+        w["grown"] = len(longs) - was
+        log(f"журнал вырос с прогона: {was} → {len(longs)} выборов; "
+            "окно шире того, что видел прогон, на этот хвост")
+    return w
+
+
+def _window_line(w):
+    if not w:
+        return ("**Окно замера не записано** — прогон прежнего образца; "
+                "доход в процентах без окна не читается.")
+    return (f"**Окно замера: {w['from']} … {w['to']} UTC, это "
+            f"{w['span_d']:g} суток** ({w['dates']} календарных дат с "
+            "решениями). Весь доход в таблицах — за этот отрезок целиком, "
+            "а не за год: годовых здесь нет и приводить их к году на "
+            "одном месяце одного режима рынка нельзя."
+            + (f" Окно дописано в готовый артефакт позже прогона, и журнал "
+               f"с тех пор вырос на {w['grown']} выборов — то есть верхний "
+               "край окна шире того, что прогон видел, на этот хвост."
+               if w.get("grown") else ""))
+
+
 def publish(name):
     sh = os.path.join(os.path.dirname(os.path.dirname(HERE)), "tools",
                       "publish.sh")
@@ -404,11 +467,30 @@ def main():
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--tag", default="1m")
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--window", action="store_true",
+                    help="напечатать окно замера и выйти")
+    ap.add_argument("--restat", action="store_true",
+                    help="дописать окно в готовый артефакт и пересобрать "
+                         "отчёт, не пересчитывая ничего")
     a = ap.parse_args()
+    if a.window:
+        legs = TNT.legs_from_sheets([D2.SHEETS])
+        longs = [g for g in legs if g["side"] == "long"
+                 and abs(g["fwd"]) >= D2.MIN_EDGE_BP
+                 and (g["rr"] or 0) >= D2.MIN_RR]
+        w = window(longs)
+        print(f"лонгов под гейтом {len(longs)}")
+        print(_window_line(w))
+        return
     os.makedirs(OUT, exist_ok=True)
-    s = run(limit=a.limit)
     tag = a.tag if not a.limit else f"smoke-{a.tag}"
     base = os.path.join(OUT, f"D6-cash-{tag}")
+    if a.restat:
+        with open(base + ".json", encoding="utf-8") as f:
+            s = json.load(f)
+        s["window"] = _restat_window(s, log=print)
+    else:
+        s = run(limit=a.limit)
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
     txt = report(s)
