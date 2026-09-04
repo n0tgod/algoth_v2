@@ -48,14 +48,29 @@ def test_ticket_clears_the_exchange_floor():
           f"половина билета не проходит")
 
 
-def test_slots_grow_with_deposit():
-    """Три книги отличаются РОВНО числом мест: 40 / 400 / 4000."""
-    got = [R.slots(d) for d in R.DEPOSITS]
-    assert got == [40, 400, 4000], got
-    # доля на позицию при этом падает — билет один
+def test_ticket_is_squeezed_between_the_floor_and_the_peak():
+    """Билет зажат полом биржи снизу и пиком книги сверху.
+
+    Числа закреплены ЛИТЕРАЛОМ, а не формулой от констант: формула
+    повторила бы ошибку правила, а литерал ловит её. Главное свойство —
+    мелкий депозит наполнить НЕЛЬЗЯ: у $1k и $10k связывает пол, и
+    только у $100k потолок оказался выше пола.
+    """
+    got = [R.ticket(d) for d in R.DEPOSITS]
+    assert got == [25.0, 25.0, 145.0], got
+    assert [R.slots(d) for d in R.DEPOSITS] == [40, 400, 689]
+    # у первых двух связал ПОЛ: доля на все места была бы меньше него
+    for d in (1000.0, 10000.0):
+        assert d / (R.PEAK_SEEN * R.PEAK_MARGIN) < R.TICKET_MIN, d
+        assert R.ticket(d) == R.TICKET_MIN, d
+    # у третьего связал ПИК, и мест хватает на него с объявленным запасом
+    assert R.slots(100000.0) >= R.PEAK_SEEN * R.PEAK_MARGIN - 1
+    assert R.ticket(100000.0) > R.TICKET_MIN
+    # доля на позицию — ровно билет этого депозита
     for d in R.DEPOSITS:
-        assert abs(R.share(d) * d - R.TICKET) < 1e-9, d
-    print(f"ok  места: {got} при одном билете ${R.TICKET:g}")
+        assert abs(R.share(d) * d - R.ticket(d)) < 1e-9, d
+    print(f"ok  билет: {[f'${x:g}' for x in got]}, мест "
+          f"{[R.slots(d) for d in R.DEPOSITS]} — пол биржи и пик книги")
 
 
 def test_one_per_name_applied_before_cash():
@@ -326,6 +341,35 @@ def test_cash_refusals_reach_the_report_and_survive_restat():
     print("ok  отказы кассы: пересборка их не теряет (проверено main)")
 
 
+def test_rules_change_starts_a_fresh_record():
+    """Смена правил (билета) начинает запись заново, а не дописывает.
+
+    Решение, писанное ДРУГИМ билетом, той же строкой не является: без
+    версии в ключе дедупа книга новых правил осталась бы пустой навсегда
+    — прогон считал бы её записанной и не дописывал ни строки.
+    """
+    t0 = 1_700_000_000
+    was = {"dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
+           "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 5.0,
+           "margin": 25.0, "written_at": t0 + 600, "rules": R.RULES - 1}
+    now = dict(was)
+    now["rules"] = R.RULES
+    now["margin"] = 145.0
+    now["usd"] = 29.0
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "j.jsonl")
+        with open(jp, "w", encoding="utf-8") as f:
+            f.write(json.dumps(was) + "\n")
+        a = P.append_journal([now], jp, log=lambda *_: None)
+        assert a["added"] == 1, a
+        s = P.summarize(jp)
+        b = s["books"][P._cell(R.DEFAULT_RULER, 1000)]
+        # видна ТОЛЬКО запись действующих правил, и это её числа
+        assert b["forward"]["n"] == 1, b["forward"]
+        assert b["forward"]["usd"] == 29.0, b["forward"]
+    print("ok  смена правил: запись начата заново, прежняя не считается")
+
+
 def _control_no_split():
     """Свод, складывающий наблюдение с пересчётом, — то, ради чего split."""
     orig = R.split_rows
@@ -460,7 +504,38 @@ def _control_restat_drops_the_counts():
         P.report = orig
 
 
-TESTS = [test_ticket_clears_the_exchange_floor, test_slots_grow_with_deposit,
+def _control_dedup_without_rules_version():
+    """Контроль: дедуп БЕЗ версии правил — прежнее поведение дословно.
+
+    Здесь пять строк повторяют код до правки намеренно: контроль обязан
+    воспроизводить именно ту дорогу, которую правка закрыла.
+    """
+    orig = P.append_journal
+
+    def blind(rows, path=R.JOURNAL, log=print):
+        was, _ = R.read_journal(path)
+        seen = {(R.ruler_of(r), r.get("dep"), P._key(r)) for r in was}
+        fresh = [r for r in rows
+                 if (R.ruler_of(r), r["dep"], P._key(r)) not in seen]
+        if fresh:
+            with open(path, "a", encoding="utf-8") as f:
+                for r in fresh:
+                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        return {"had": len(was), "added": len(fresh), "bad": 0}
+
+    P.append_journal = blind
+    try:
+        try:
+            test_rules_change_starts_a_fresh_record()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P.append_journal = orig
+
+
+TESTS = [test_ticket_clears_the_exchange_floor,
+         test_ticket_is_squeezed_between_the_floor_and_the_peak,
          test_one_per_name_applied_before_cash,
          test_forward_and_restored_never_mix, test_journal_appends_only_new,
          test_report_names_what_is_not_modelled,
@@ -468,7 +543,8 @@ TESTS = [test_ticket_clears_the_exchange_floor, test_slots_grow_with_deposit,
          test_short_record_says_not_measured_not_zero,
          test_two_rulers_are_two_books_and_optimal_is_untouched,
          test_legacy_row_reads_as_the_ruler_it_was_written_with,
-         test_cash_refusals_reach_the_report_and_survive_restat]
+         test_cash_refusals_reach_the_report_and_survive_restat,
+         test_rules_change_starts_a_fresh_record]
 
 CONTROLS = [("свод складывает вперёд и пересчёт", _control_no_split),
             ("билет ниже пола биржи", _control_ticket_below_floor),
@@ -480,7 +556,9 @@ CONTROLS = [("свод складывает вперёд и пересчёт", _
             ("прежняя строка объявлена безопасной",
              _control_legacy_reads_as_safe),
             ("пересборка теряет числа счётного прогона",
-             _control_restat_drops_the_counts)]
+             _control_restat_drops_the_counts),
+            ("дедуп не видит версии правил",
+             _control_dedup_without_rules_version)]
 
 
 def main():

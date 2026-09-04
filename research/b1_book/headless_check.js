@@ -247,7 +247,10 @@ const dcaStub = (url) => {
     window: {from: "2026-08-08 18:07", to: "2026-09-04 10:08"},
     deposits: [1000, 10000, 100000],
     rulers: RUL,
-    rules: {RULES: 1, TICKET: 25.0, DEPOSITS: [1000, 10000, 100000],
+    rules: {RULES: 2, TICKET: 25.0, TICKET_MIN: 25.0,
+            TICKETS: {"1000": 25.0, "10000": 25.0, "100000": 145.0},
+            PEAK_SEEN: 457, PEAK_MARGIN: 1.5,
+            DEPOSITS: [1000, 10000, 100000],
             AHEAD_H: 120, HOLD_H: 72, ONE_PER_NAME: true,
             MIN_EDGE_BP: 33.0, MIN_RR: 2.0, SURVIVE_MULT: 2.0,
             FLOOR_FRAC: 0.1,
@@ -273,7 +276,7 @@ const dcaStub = (url) => {
                      trades_forward: [tr("WUSDT", 1.9, 1.5)],
                      trades_restored: [tr("TUTUSDT", 12.0, 1.6)]},
       "safe:100000": {deposit: 100000, ruler: "safe",
-                      ruler_title: "безопасная", slots: 4000, ticket: 25.0,
+                      ruler_title: "безопасная", slots: 689, ticket: 145.0,
                       n_journal: 5000, forward: null,
                       restored: mk(5000, 690.0, -0.021, -0.008, "TUTUSDT",
                                    500.0, -20.0),
@@ -297,8 +300,8 @@ const dcaStub = (url) => {
                         trades_restored: [tr("TUTUSDT", 31.7, 3.4),
                                           tr("MEUSDT", -8.5, 1.8)]},
       "optimal:100000": {deposit: 100000, ruler: "optimal",
-                         ruler_title: "оптимальная", slots: 4000,
-                         ticket: 25.0, n_journal: 5140, forward: null,
+                         ruler_title: "оптимальная", slots: 689,
+                         ticket: 145.0, n_journal: 5140, forward: null,
                          restored: mk(5140, 1580.0, -0.052, -0.017,
                                       "TUTUSDT", 1102.0, -42.0),
                          trades_forward: [],
@@ -2684,8 +2687,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push(`DCA: линейка «${t}» не названа в рамке`);
     if (!/ярлыки, а не вердикт/.test(intro))
       bad.push("DCA: имена линеек выданы за вердикт");
-    if (!/выведен из пола биржи/.test(intro))
-      bad.push("DCA: вывод билета из пола биржи не назван");
+    if (!/Пол задаёт биржа, потолок — книга/.test(intro))
+      bad.push("DCA: билет не объяснён полом и потолком");
+    if (!/мелкий депозит наполнить нельзя/.test(intro))
+      bad.push("DCA: не сказано, что мелкий депозит наполнить нельзя");
+    // билеты РАЗНЫЕ, и это видно числами, а не словом
+    if (!/\$25 \/ \$25 \/ \$145/.test(intro))
+      bad.push("DCA: билеты трёх книг не названы числами");
+    if (!/457/.test(intro) || !/1\.5/.test(intro))
+      bad.push("DCA: пик книги и запас не названы числом");
     if (!/У имени позиция одна/.test(intro))
       bad.push("DCA: биржевое правило одной позиции не названо");
     if (!/Живого исполнения здесь нет|реплеем по барам/.test(intro))
