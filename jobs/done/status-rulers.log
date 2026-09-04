@@ -33,3 +33,17 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-04T12:00:03Z
+публикуется в ветку main:
+ jobs/done/dca-restat.log            |  7 +++++++
+ jobs/done/dca-two-rulers.done       |  1 +
+ jobs/done/dca-two-rulers.log        |  4 ++++
+ jobs/done/deploy-dca-rulers.done    |  1 +
+ jobs/done/deploy-dca-rulers.log     |  6 ++++++
+ jobs/done/status-rulers.log         | 35 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 8 files changed, 58 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   560dfff..c6f287b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
