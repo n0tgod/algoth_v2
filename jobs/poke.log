@@ -735,3 +735,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788532923 ==
 [2026-09-04T14:42:05Z] задание d7full запущено: research/dca_ladder/run_d7.py
+
+== сигнал 1788534510 ==
+[2026-09-04T15:08:32Z] задание d7halves запущено: research/dca_ladder/run_d7.py
