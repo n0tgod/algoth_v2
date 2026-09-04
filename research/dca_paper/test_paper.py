@@ -131,6 +131,72 @@ def test_report_names_what_is_not_modelled():
     print("ok  отчёт: названы живое исполнение, слитая позиция и оценка сверху")
 
 
+
+def test_day_concentration_is_measured_and_not_faked():
+    """Один эпизод раздаёт деньги многим именам — колонка по именам слепа.
+
+    Строим запись, где три дня несут всё, а остальные тают: «без лучшего
+    имени» остаётся плюсовым, «без 3 лучших дней» обязано уйти в минус.
+    Числа закреплены литералом, а не формулой от констант модуля.
+    """
+    D = 86400
+    t0 = 1_767_225_600            # 2026-01-01 00:00 UTC, ровный день
+    rows = []
+    # десять тощих дней по -1 $, каждый своим именем
+    for i in range(10):
+        rows.append({"dep": 1000, "rules": R.RULES, "sym": f"T{i}USDT",
+                     "at": t0 + i * D, "exit_ts": t0 + i * D + 60,
+                     "usd": -1.0, "written_at": t0 + i * D + 120,
+                     "lev": 1.0, "margin": 25.0, "pnl_frac": -0.04,
+                     "exit": "стоп"})
+    # три жирных дня, деньги размазаны по РАЗНЫМ именам — по 20 $ на день
+    for j in range(3):
+        for k in range(4):
+            rows.append({"dep": 1000, "rules": R.RULES,
+                         "sym": f"F{j}{k}USDT",
+                         "at": t0 + (20 + j) * D, "exit_ts": t0 + (20 + j) * D + 60,
+                         "usd": 5.0, "written_at": t0 + (20 + j) * D + 120,
+                         "lev": 1.0, "margin": 25.0, "pnl_frac": 0.2,
+                         "exit": "тейк"})
+    st = P._stats(rows, 1000.0)
+    assert st["days"] == 13, st["days"]
+    assert abs(st["usd"] - 50.0) < 1e-6, st["usd"]          # -10 + 60
+    # ни одно имя не даёт больше 5 $ — по именам концентрации «не видно»
+    assert st["usd_wo_top"] > 40.0, st["usd_wo_top"]
+    # а по дням от итога не остаётся ничего: 50 - 60 = -10
+    assert abs(st["usd_wo_top3d"] + 10.0) < 1e-6, st["usd_wo_top3d"]
+    # колонка обязана доехать до отчёта строкой, а не остаться в json
+    s = {"books": {"1000": {"deposit": 1000, "slots": R.slots(1000),
+                            "ticket": R.TICKET, "forward": None,
+                            "restored": st, "n_forward": 0,
+                            "n_restored": len(rows)}}}
+    txt = P.report(s)
+    assert "$ без 3 лучших дней" in txt
+    assert "-10.00" in txt, txt
+    print("ok  дни: по именам +%.2f, без 3 лучших дней %.2f при итоге %.2f"
+          % (st["usd_wo_top"], st["usd_wo_top3d"], st["usd"]))
+
+
+def test_short_record_says_not_measured_not_zero():
+    """Три дня из трёх вычитать нечем: прочерк, а не ноль."""
+    D = 86400
+    t0 = 1_767_225_600
+    rows = [{"dep": 1000, "rules": R.RULES, "sym": f"S{i}USDT",
+             "at": t0 + i * D, "exit_ts": t0 + i * D + 60, "usd": 3.0,
+             "written_at": t0 + i * D + 120, "lev": 1.0, "margin": 25.0,
+             "pnl_frac": 0.12, "exit": "тейк"} for i in range(3)]
+    st = P._stats(rows, 1000.0)
+    assert st["days"] == 3, st["days"]
+    assert st["usd_wo_top3d"] is None, st["usd_wo_top3d"]
+    txt = P.report({"books": {"1000": {
+        "deposit": 1000, "slots": R.slots(1000), "ticket": R.TICKET,
+        "forward": None, "restored": st, "n_forward": 0,
+        "n_restored": len(rows)}}})
+    # прочерк стоит В СВОЕЙ ячейке, последней в строке, а не «где-то»
+    assert "| 6.00 | — |" in txt, [l for l in txt.split("\n") if "9.00" in l]
+    print("ok  короткая запись: три дня из трёх — прочерк, а не ноль")
+
+
 def _control_no_split():
     """Свод, складывающий наблюдение с пересчётом, — то, ради чего split."""
     orig = R.split_rows
@@ -193,15 +259,45 @@ def _control_journal_overwrites():
         P.append_journal = orig
 
 
+
+def _control_day_concentration_by_one_day():
+    """Контроль: вычесть ОДИН лучший день вместо трёх — проверка обязана пасть."""
+    src = P._stats
+
+    def broken(rows, deposit):
+        st = src(rows, deposit)
+        if st and st.get("usd_wo_top3d") is not None:
+            day = {}
+            for r in rows:
+                d = time.strftime("%Y-%m-%d", time.gmtime(float(r["exit_ts"])))
+                day[d] = day.get(d, 0.0) + float(r["usd"])
+            st["usd_wo_top3d"] = round(sum(day.values()) - max(day.values()), 2)
+        return st
+
+    P._stats = broken
+    try:
+        try:
+            test_day_concentration_is_measured_and_not_faked()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P._stats = src
+
+
 TESTS = [test_ticket_clears_the_exchange_floor, test_slots_grow_with_deposit,
          test_one_per_name_applied_before_cash,
          test_forward_and_restored_never_mix, test_journal_appends_only_new,
-         test_report_names_what_is_not_modelled]
+         test_report_names_what_is_not_modelled,
+         test_day_concentration_is_measured_and_not_faked,
+         test_short_record_says_not_measured_not_zero]
 
 CONTROLS = [("свод складывает вперёд и пересчёт", _control_no_split),
             ("билет ниже пола биржи", _control_ticket_below_floor),
             ("правило одной позиции снято", _control_one_per_name_off),
-            ("журнал переписывает строку", _control_journal_overwrites)]
+            ("журнал переписывает строку", _control_journal_overwrites),
+            ("концентрация по одному дню вместо трёх",
+             _control_day_concentration_by_one_day)]
 
 
 def main():
