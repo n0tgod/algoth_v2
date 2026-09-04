@@ -116,13 +116,21 @@ def shares_for(deposit):
     return keep
 
 
-def one_position(g, bars, ts, look, rule, param):
+def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     """Исход одной позиции при заданной линейке забора. Гейты — D2.
 
     Возвращает запись для раздачи: когда решение, когда выход, доля
     капитала, плечо и почасовые отметки (для кривой счёта).
+
+    `hold_h` — предел удержания; умолчание `D2.HOLD_H` даёт прежний счёт
+    бит в бит. `ckpt_h` — список сроков (часы) для замера D7: на каждом
+    возвращается переоценка позиции по закрытию последнего бара окна
+    этого срока, то есть ровно то, чем кончилась бы симуляция с таким
+    сроком. Один проход отвечает на все сроки; проход на каждый срок
+    считал бы то же самое заново.
     """
-    rs = D2.split_window(bars, ts, g["at"], D2.BACK_H, D2.HOLD_H)
+    hold_h = D2.HOLD_H if hold_h is None else float(hold_h)
+    rs = D2.split_window(bars, ts, g["at"], D2.BACK_H, hold_h)
     if rs is None:
         return None
     win, now_i = rs
@@ -140,17 +148,27 @@ def one_position(g, bars, ts, look, rule, param):
     sigma_bp, _r, _t = D3.window_stats(win, now_i)
     lev, rungs, _binder = D5.fence_leverage(rule, param, entry, rungs_full,
                                             look, sigma_bp)
+    cps = ([float(g["at"]) + float(h) * HOUR for h in ckpt_h]
+           if ckpt_h else None)
     r = L.simulate_dca(hold, rungs, D2.WEIGHTS[:len(rungs)], 1.0, lev,
                        look(1.0 * lev), take_px=take_px,
-                       floor_frac=D2.FLOOR_FRAC, track=True)
+                       floor_frac=D2.FLOOR_FRAC, track=True,
+                       checkpoints=cps)
     marks, prev = [], 0.0
     for (hr, _cash, pnl) in r["track"]:
         marks.append((hr, pnl - prev))     # приращение отметки за час
         prev = pnl
-    return {"at": float(g["at"]), "exit_ts": float(r["exit_ts"]),
-            "pnl": float(r["pnl_frac"]), "lev": float(lev),
-            "fwd": abs(float(g["fwd"])), "sym": g["sym"],
-            "exit": r["exit"], "marks": marks}
+    out = {"at": float(g["at"]), "exit_ts": float(r["exit_ts"]),
+           "pnl": float(r["pnl_frac"]), "lev": float(lev),
+           "fwd": abs(float(g["fwd"])), "sym": g["sym"],
+           "exit": r["exit"], "marks": marks}
+    if ckpt_h:
+        # `end_ts` — последний бар ОКНА, а не ряда: по нему видно, дожила
+        # ли запись до конца самого длинного срока. Без него длинные
+        # сроки судились бы по обрезанной выборке, а короткие по полной.
+        out["ckpt"] = r.get("ckpt")
+        out["end_ts"] = float(hold[-1][0])
+    return out
 
 
 def queue(recs):
@@ -437,7 +455,8 @@ def coverage_curve(recs, peak, deps, ticket=None,
     return out
 
 
-def collect_recs(limit=None, src=None, log=print, rulers=None):
+def collect_recs(limit=None, src=None, log=print, rulers=None,
+                 hold_h=None, ckpt_h=None):
     """Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
 
     Вынесен из `run`, потому что читателя стало два — сетка кассы D6 и
@@ -471,7 +490,8 @@ def collect_recs(limit=None, src=None, log=print, rulers=None):
             log(f"  символ {done}/{len(by_sym)}  взято {n}")
             said = time.time()
         a0 = min(gg["at"] for gg in glist) - D2.BACK_H * HOUR
-        b1 = max(gg["at"] for gg in glist) + D2.HOLD_H * HOUR
+        b1 = (max(gg["at"] for gg in glist)
+              + (D2.HOLD_H if hold_h is None else float(hold_h)) * HOUR)
         bars = get(sym, a0, b1)
         if not bars:
             skipped += len(glist)
@@ -482,7 +502,8 @@ def collect_recs(limit=None, src=None, log=print, rulers=None):
         for g in glist:
             got = 0
             for k in rulers:
-                r = one_position(g, bars, ts, look, k[0], k[1])
+                r = one_position(g, bars, ts, look, k[0], k[1],
+                                 hold_h=hold_h, ckpt_h=ckpt_h)
                 if r is not None:
                     recs[k].append(r)
                     got = 1

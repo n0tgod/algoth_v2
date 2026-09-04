@@ -289,7 +289,8 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None,
 
 
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
-                 take_px=None, floor_frac=None, track=False):
+                 take_px=None, floor_frac=None, track=False,
+                 checkpoints=None):
     """DCA-лонг на РЕАЛЬНЫХ барах: доливы вниз, тейк вверх, пол капитуляции.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -312,6 +313,15 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     (неблагоприятное раньше благоприятного, ничья против нас). Ранняя
     капитуляция (рулевой §6) здесь НЕ считается — она мерится против пола
     отдельной рукой (пересчёт), вердикт по «только пол».
+
+    `checkpoints` — возрастающий список АБСОЛЮТНЫХ меток времени; на
+    каждой возвращается переоценка позиции по закрытию последнего бара с
+    `t ≤ метка` (`ckpt`: список `(метка, время бара, pnl)` либо `None`,
+    если к этой метке сделка уже закрылась или ряд кончился раньше). Это
+    ровно то, чем кончилась бы симуляция со сроком до этой метки, —
+    отсюда замер срока удержания считается ОДНИМ проходом, а не проходом
+    на каждый срок. Равенство усечения прямой симуляции закреплено
+    тестом: пересчёт, дающий другие числа, есть другая мера.
 
     `track=True` добавляет почасовую отметку позиции: список
     `(час, занятый нотионал, pnl долей капитала)`, по одной записи на
@@ -337,6 +347,10 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     cash = weights[0] * notional
     qty = cash / entry                  # по ФАКТИЧЕСКОЙ цене входа
     tr = [] if track else None
+    cps = [float(x) for x in (checkpoints or [])]
+    ck = [None] * len(cps)
+    ck_i = 0
+    last = None                          # (время бара, pnl переоценки)
 
     def _mark(bt, pnl):
         """Отметка часа: последняя запись часа побеждает (переоценка по
@@ -352,14 +366,24 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
         if tr is not None:
             _mark(bt, res["pnl_frac"])
             res["track"] = tr
+        if cps:
+            res["ckpt"] = ck
         return res
 
     for (bt, _o, hi, lo, cl, _v) in bars:
+        # Границы срока закрываются ДО обработки бара: бар с `t > метка` в
+        # окно этого срока не входит, и переоценка на границе есть
+        # закрытие ПОСЛЕДНЕГО бара, который в окно вошёл. Считать после
+        # значило бы подарить сроку бар из будущего.
+        while ck_i < len(cps) and cps[ck_i] < bt:
+            ck[ck_i] = (cps[ck_i], last[0], last[1]) if last else None
+            ck_i += 1
         filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
                                         rung_prices, weights, notional)
         avg = cash / qty
+        mark = (qty * cl - cash) / capital
         if tr is not None:
-            _mark(bt, (qty * cl - cash) / capital)
+            _mark(bt, mark)
         p_liq = liq_price(avg, qty, capital, mmr)
         if lo <= p_liq:
             return _ret({"exit": "ликвидация", "pnl_frac": -1.0,
@@ -380,6 +404,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                          "exit_ts": bt, "exit_px": take_px,
                          "depth": sum(filled), "avg": avg,
                          "filled_notional": cash}, bt)
+        last = (bt, mark)
     lb = bars[-1]
     avg = cash / qty
     return _ret({"exit": "срок",
