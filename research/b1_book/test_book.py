@@ -7045,6 +7045,47 @@ def test_dca_trades_speak_the_language_of_the_chart():
         check("DCA-график: неизвестная книга названа отказом",
               bad.get("present") is False and bool(bad.get("why")),
               str(bad)[:200])
+
+        # ОТКРЫТАЯ позиция едет графику из АРТЕФАКТА: в журнал она не
+        # идёт вовсе (её отметка меняется каждый час), а страница даёт
+        # ссылку на график каждой строке — включая открытую. Без этого
+        # ссылка вела бы на график без своей позиции.
+        ap0 = DR.ARTIFACT
+        try:
+            DR.ARTIFACT = os.path.join(td, "art.json")
+            with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+                json.dump({"live": {"safe:10000": {"positions": [
+                    {"sym": "AAAUSDT", "at": t0 + 20000, "lev": 3.0,
+                     "margin": 25.0, "mark_frac": -0.04, "mark_usd": -1.0,
+                     "entry_px": 50.0, "avg": 50.0, "depth": 1,
+                     "last_ts": t0 + 26000,
+                     "fills": [[t0 + 20000, 50.0, 0.25]]}], "cut": []}}},
+                    f, ensure_ascii=False)
+            d2 = c.dca_trades("AAAUSDT", "safe:10000")
+            rs = d2.get("rows") or []
+            live = [r for r in rs if r.get("state") == "открыта"]
+            check("DCA-график: открытая позиция доехала из артефакта",
+                  len(live) == 1, str([r.get("state") for r in rs]))
+            t2 = live[0] if live else {}
+            # У ОТКРЫТОЙ выхода не существует: `closes_at` и `exit_px`
+            # пусты, а деньги идут ОТМЕТКОЙ. Подставить туда последнюю
+            # цену записи значило бы придумать сделке выход.
+            check("DCA-график: у открытой нет ни конца, ни цены выхода",
+                  t2.get("closes_at") is None and t2.get("exit_px") is None,
+                  str((t2.get("closes_at"), t2.get("exit_px"))))
+            check("DCA-график: деньги открытой взяты отметкой",
+                  t2.get("pnl") == -1.0 and t2.get("net_bp") == -400.0,
+                  str((t2.get("pnl"), t2.get("net_bp"))))
+            check("DCA-график: закрытая позиция при этом не потерялась",
+                  any(r.get("state") == "закрыта" for r in rs),
+                  str([r.get("state") for r in rs]))
+            # Порядок по времени входа: график ищет сделку по часу, и
+            # перемешанный список отдавал бы соседнюю
+            ats = [float(r["opened_at"]) for r in rs]
+            check("DCA-график: позиции упорядочены по входу",
+                  ats == sorted(ats), str(ats))
+        finally:
+            DR.ARTIFACT = ap0
     finally:
         DR.JOURNAL = jp0
 

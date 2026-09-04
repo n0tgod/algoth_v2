@@ -6084,19 +6084,33 @@ tr.pos:hover{background:rgba(151,71,255,.10)}
 tr.sub td{background:rgba(255,255,255,.03);font-size:12px}
 table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
  font-size:12px;padding:3px 8px}
+.btn{background:var(--chip);border:1px solid var(--rule);border-radius:999px;
+ padding:4px 12px;cursor:pointer;font-size:12.5px;color:var(--muted)}
+.btn:hover{border-color:var(--accent);color:var(--ink)}
+.btn[disabled]{opacity:.35;cursor:default}
+.mback{position:fixed;inset:0;background:rgba(5,3,18,.66);z-index:40}
+.mbox{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+ z-index:41;width:min(820px,94vw);max-height:84vh;overflow:auto;
+ background:var(--panel);border:1px solid var(--accent);
+ border-radius:14px;padding:16px 18px}
+.mx{position:absolute;top:6px;right:10px;background:none;border:0;
+ color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
+.pg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
 """ + NAVCSS + r"""
 </style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
   <span class="k">DCA paper books &mdash; three modes &times; three deposits</span>
+  <button class="btn" id="whatbtn">что это</button>
   <span style="flex:1"></span>
   <span class="k" id="lead"></span></div>
 <div id="nav"></div>
-<div class="panel" id="intro"></div>
+<div class="panel" id="why" style="display:none"></div>
 <div class="tabs" id="rtabs"></div>
 <div class="tabs" id="tabs"></div>
 <div class="tabs" id="gtabs"></div>
 <div id="box">&hellip;</div>
+<div id="modal"></div>
 </div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
@@ -6116,6 +6130,17 @@ function tsq(t){ return t == null ? "&mdash;"
 // умножение россыпью по вызовам однажды забылось бы в одном из них.
 function fpct(v){ return v == null ? "\u2014" : pct(Number(v) * 1e4); }
 let DATA = null, DEP = null, RUL = null, GRP = "all";
+// Состояние ПОКАЗА списка позиций. Оно живёт здесь, а не в разметке:
+// страница перерисовывается раз в минуту, и выбор, живущий в DOM,
+// сбрасывался бы сам (тот же урок, что разворот позиции).
+// `PST` — какие позиции показывать, `PAGE`/`SIZE` — окно списка,
+// `INTRO` — открыта ли модалка «что это».
+let PST = "all", PAGE = 0, SIZE = 20, INTRO = false;
+const SIZES = [20, 50];
+function dcaState(x){ PST = x; PAGE = 0; render(); }
+function dcaSize(n){ SIZE = Number(n); PAGE = 0; render(); }
+function dcaPage(n){ PAGE = Math.max(0, Number(n)); render(); }
+function dcaIntro(on){ INTRO = !!on; render(); }
 
 // Рамка предмета первым абзацем. Без неё три книги читаются как три
 // стратегии, а отличаются они РОВНО депозитом; и «бумажная» здесь
@@ -6431,156 +6456,164 @@ function fillRows(r, key, live){
     "<td class='mono " + (r.usd > 0 ? "good" : "bad") + "'>" +
     fpct(r.pnl_frac) + " &middot; " + usd(r.usd) +
     "<td class=dim>" + esc(r.exit || "") + "</tr></table>";
-  // Ширина детали равна ширине СВОЕЙ таблицы: у закрытых колонок
-  // восемь, у открытых девять (вместо выхода — возраст и состояние).
+  // Ширина детали равна ширине таблицы: список ОДИН на все состояния,
+  // и колонок в нём двенадцать.
   return "<tr class=sub id='ddet-" + esc(keyId(key)) + "' style='display:" +
-    (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=" +
-    (live ? 9 : 8) + ">" + h + "</td></tr>";
+    (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=12>" +
+    h + "</td></tr>";
 }
 
-function ageStr(sec){
-  if (sec == null || !(sec >= 0)) return "&mdash;";
-  const h = sec / 3600;
-  return h < 48 ? h.toFixed(1) + " ч" : (h / 24).toFixed(1) + " сут";
-}
-
-// Открытые позиции — ОТДЕЛЬНЫЙ список (просьба владельца). Он не
-// зависит от переключателя групп: открытая позиция есть состояние
-// СЕЙЧАС, а не часть выбранной кривой, и в счёт книги её отметка не
-// входит нигде.
+// Список позиций ОДИН на все состояния (решение владельца
+// 2026-09-04): закрытые, открытые и оборванные записью стоят вместе,
+// а какие показывать — выбирает переключатель. Три таблицы подряд
+// отвечали на один вопрос трижды, и найти в них позицию по монете
+// было нечем.
 //
-// Оборванные записью (`cut`) идут ВТОРЫМ списком, а не в общем. Их
-// на живой книге вшестеро больше открытых, и в одной таблице они
-// утопили бы ответ на вопрос «что сейчас открыто». Но и прятать их
-// нельзя: это позиции с НЕИЗВЕСТНЫМ исходом, и их число — наблюдение.
-const CUT_SHOW = 40;
-function posTable(rows, cap, cut){
-  let h = "<div class=scroll><table><tr><th>вход<th>монета<th>плечо" +
-    "<th>маржа<th>рунгов<th>ТВХ<th>отметка<th>возраст<th>состояние</tr>";
-  for (const r of rows){
-    const c = r.mark_usd == null ? "" : (r.mark_usd > 0 ? "good" : "bad");
-    const key = (cut ? "c" : "o") + rowKey(r), id = keyId(key);
-    const o = OPEN.has(key);
-    h += "<tr class=pos onclick=\"dcaToggle('" + esc(key) + "')\">" +
-      "<td class=mono><span id='dexp-" + esc(id) + "'>" +
-      (o ? "&#9662;" : "&#9656;") + "</span> " + tsq(r.at) +
-      "<td>" + esc(r.sym) +
-      "<td class=mono>" + (r.lev == null ? "&mdash;" :
-        Number(r.lev).toFixed(2) + "&times;") +
-      "<td class=mono>" + (r.margin == null ? "&mdash;" :
-        Number(r.margin).toFixed(2) + " $") +
-      "<td class=mono>" + (r.depth == null ? "&mdash;" : r.depth) +
-      "<td class=mono>" + (r.avg == null ? "&mdash;" :
-        Number(r.avg).toPrecision(6)) +
-      "<td class='mono " + c + "'>" + fpct(r.mark_frac) + " &middot; " +
-      usd(r.mark_usd) +
-      "<td class=mono>" + ageStr(r.last_ts && r.at ? r.last_ts - r.at : null) +
-      // Оборванная записью НЕ есть открытая на бирже: у неё просто
-      // кончился ряд цен, и назвать её открытой значило бы обещать
-      // позицию, о которой мы ничего больше не знаем.
-      "<td>" + (cut ? "<span class=dim>оборвана записью</span>" :
-        "открыта") +
-      "</tr>";
-    h += fillRows(r, key, true);
-  }
-  return h + "</table></div>";
+// Чего объединение НЕ отменяет: открытое не складывается с закрытым
+// нигде. Плитки счёта считают их порознь по-прежнему, а в строке
+// деньги не-закрытой позиции подписаны отметкой — до выхода она
+// станет любой.
+function unifiedRows(b){
+  const out = [];
+  for (const r of (b.trades || []))
+    out.push(Object.assign({}, r, {st: "closed"}));
+  const op = b.open || {};
+  for (const r of (op.positions || []))
+    out.push(Object.assign({}, r, {st: "open"}));
+  for (const r of (op.cut || []))
+    out.push(Object.assign({}, r, {st: "cut"}));
+  // Свежие сверху: список отвечает на «что происходит», а не на «с
+  // чего книга начиналась».
+  out.sort((a, b2) => (b2.at || 0) - (a.at || 0));
+  return out;
 }
 
-function openTable(op, at){
-  if (op === undefined) return "";
-  if (!op || op.known === false)
-    return "<div class=panel><div class=cap>открытые позиции</div>" +
-      "<p class=dim>Открытых не считали: свод пересобран из журнала " +
-      "(<code>--restat</code>), а открытые позиции в журнал не идут " +
-      "вовсе. Это не «открытых нет».</p></div>";
-  const ps = (op.positions || []).slice();
-  const cs = (op.cut || []).slice();
-  let h = "";
-  if (!ps.length) h += "<div class=panel><div class=cap>открытые " +
-    "позиции</div><p class=dim>Открытых позиций нет: всё, что книга " +
-    "набрала, закрыто. Это измерено, а не пропуск показа.</p></div>";
-  else {
-    // Глубже всех — СВЕРХУ: список заводился ради вопроса «что сейчас
-    // болит», и порядок по времени прятал бы ответ в середине.
-    ps.sort((a, b) => (a.mark_frac == null ? 1 : a.mark_frac) -
-                      (b.mark_frac == null ? 1 : b.mark_frac));
-    h += "<div class=panel><div class=cap>открытые позиции &mdash; " +
-      ps.length + "</div>";
-    h += "<p class=k>Отметка по последней цене записи, а НЕ исход: до " +
-      "выхода она станет любой, и с закрытым счётом не складывается " +
-      "нигде. Список один на обе группы &mdash; открытая позиция есть " +
-      "состояние сейчас, а не часть выбранной кривой. Глубже всех " +
-      "просевшие сверху; нажмите строку, чтобы увидеть рунги и ТВХ." +
-      (at ? " Отметка снята " + tsq(at) + " UTC." : "") + "</p>";
-    h += posTable(ps, null, false) + "</div>";
-  }
-  if (cs.length){
-    // Свежие сверху: у оборванной запись кончилась, и полезнее видеть
-    // те, у которых это случилось последними.
-    cs.sort((a, b) => (b.at || 0) - (a.at || 0));
-    const shown = cs.slice(0, CUT_SHOW);
-    h += "<div class=panel><div class=cap>оборванные записью &mdash; " +
-      cs.length + "</div>";
-    h += "<p class=k>Это НЕ открытые позиции на бирже: у них кончился " +
-      "ряд цен своего символа раньше, чем у остальных, и исход " +
-      "неизвестен. Закрытыми «по сроку» они не считаются &mdash; это " +
-      "значило бы выдумать исход, &mdash; и в счёт книги не входят. " +
-      "Число их само по себе наблюдение: на живой книге их вшестеро " +
-      "больше открытых." +
-      (shown.length < cs.length ? " Показаны " + shown.length + " из " +
-        cs.length + ", свежие сверху." : "") + "</p>";
-    h += posTable(shown, null, true) + "</div>";
-  }
-  return h;
+const STATES = [["all", "все"], ["closed", "закрытые"],
+                ["open", "открытые"], ["cut", "оборванные записью"]];
+function stTitle(k){
+  const f = STATES.find(x => x[0] === k);
+  return f ? f[1] : k;
 }
 
-function tradeTable(rows, title, shown, total, grp){
-  if (!rows || !rows.length) return "";
-  let h = "<div class=panel><div class=cap>" + esc(title) + " &mdash; " +
-    rows.length + (total && total > rows.length ? " из " + total : "") +
-    "</div>";
+function posBlock(b, grp){
+  const all = unifiedRows(b);
+  // Группа «без бэктеста» режет ЗАКРЫТЫЕ: пометки пересчёта у открытой
+  // не бывает вовсе — она не в журнале. Прятать её вместе с бэктестом
+  // значило бы объявить её пересчётом.
+  const inGrp = all.filter(r => grp !== "fwd" || r.st !== "closed" || !r.bt);
+  const cnt = {all: inGrp.length, closed: 0, open: 0, cut: 0};
+  for (const r of inGrp) cnt[r.st] = (cnt[r.st] || 0) + 1;
+  const rows = PST === "all" ? inGrp : inGrp.filter(r => r.st === PST);
+  const total = rows.length;
+  const pages = Math.max(1, Math.ceil(total / SIZE));
+  const pg = Math.min(PAGE, pages - 1);
+  const from = pg * SIZE;
+  const win = rows.slice(from, from + SIZE);
+  let h = "<div class=panel><div class=cap>позиции книги &mdash; " +
+    total + "</div>";
+  // Переключатель состояния: счётчик стоит В САМОМ чипе, иначе выбрать
+  // пустую вкладку можно вслепую.
+  h += "<div class=tabs>" + STATES.map(([k, t]) =>
+    "<div class='tab" + (k === PST ? " on" : "") + "' data-st='" + k +
+    "'>" + t + " <span class=dim>" + (cnt[k] || 0) + "</span></div>")
+    .join("") + "</div>";
   h += "<p class=k>Одна строка &mdash; ОДНА ПОЗИЦИЯ по паре: доливы " +
     "лестницы живут внутри неё, а не отдельными сделками. Нажмите " +
-    "строку, чтобы увидеть каждый вход, ТВХ после него и выход. " +
-    // Легенда пометки стоит только там, где помеченные строки бывают:
-    // в группе «без бэктеста» их нет по построению, и объяснять пометку
-    // значило бы обещать в таблице то, чего в ней не будет.
+    "строку, чтобы увидеть каждый вход, ТВХ после него и выход; " +
+    "ссылка справа открывает график этой позиции. " +
     (grp === "fwd"
       ? "Строк пересчёта по прошлому здесь нет вовсе: список следует за "
         + "переключателем группы."
       : "Пометка <span class=tag>бэктест</span> означает пересчёт по "
         + "прошлому: он идёт в ОБЩЕЙ кривой, а числа групп стоят рядом "
-        + "отдельно.") + "</p>";
-  h += "<div class=scroll><table><tr><th>вход<th>выход" +
-    "<th>монета<th>плечо<th>маржа<th>ход<th>деньги<th>исход</tr>";
-  for (const r of rows){
-    const c = r.usd == null ? "" : (r.usd > 0 ? "good" : "bad");
-    const key = rowKey(r), id = keyId(key), op = OPEN.has(key);
+        + "отдельно.") +
+    " У открытой и оборванной записью деньги &mdash; ОТМЕТКА по " +
+    "последней цене записи, а не исход, и с закрытым счётом они не " +
+    "складываются нигде." +
+    (b.live_known === false ? " Открытых в этом прогоне не считали " +
+      "(свод пересобран из журнала, а открытые в журнал не идут) " +
+      "&mdash; это не «открытых нет»." : "") + "</p>";
+  // Оборванная записью — НЕ открытая на бирже, и сказать это надо там,
+  // где такие строки есть: у них кончился ряд цен своего символа
+  // раньше, чем у остальных, и исход неизвестен. Закрытыми «по сроку»
+  // они не считаются — это значило бы выдумать исход.
+  if (cnt.cut) h += "<p class=k>Оборванных записью " + cnt.cut + ": это " +
+    "НЕ открытые позиции на бирже &mdash; у них кончился ряд цен своего " +
+    "символа раньше, чем у остальных. Закрытыми «по сроку» они не " +
+    "считаются: это значило бы выдумать исход, &mdash; и в счёт книги " +
+    "не входят. Число их само по себе наблюдение.</p>";
+  // Окно списка: владелец просил 20–50 строк за раз. Размер и страница
+  // — состояние показа, оно живёт в наборе страницы.
+  h += "<div class=pg>";
+  h += "<span class=k>в окне</span>";
+  for (const n of SIZES)
+    h += "<button class='btn" + (n === SIZE ? " on" : "") +
+      "' data-size='" + n + "'" + (n === SIZE ? " disabled" : "") + ">" +
+      n + "</button>";
+  h += "<span style='flex:1'></span>";
+  h += "<button class=btn data-page='" + (pg - 1) + "'" +
+    (pg <= 0 ? " disabled" : "") + ">&#8592;</button>";
+  h += "<span class='k mono'>" + (total ? (from + 1) : 0) + "&ndash;" +
+    Math.min(total, from + SIZE) + " из " + total + "</span>";
+  h += "<button class=btn data-page='" + (pg + 1) + "'" +
+    (pg >= pages - 1 ? " disabled" : "") + ">&#8594;</button>";
+  h += "</div>";
+  if (!total) return h + "<p class=dim>В выбранном состоянии («" +
+    esc(stTitle(PST)) + "») позиций нет. Это измерено, а не пропуск " +
+    "показа: счётчик в переключателе говорит, где они есть.</p></div>";
+  h += "<div class=scroll><table><tr><th>вход<th>выход<th>монета" +
+    "<th>плечо<th>маржа<th>цена входа<th>ТВХ<th>цена выхода" +
+    "<th>ход<th>деньги<th>исход<th>график</tr>";
+  for (const r of win){
+    const live = r.st !== "closed";
+    // Деньги закрытой — ИСХОД, у остальных ОТМЕТКА. Поля разные, и
+    // читать их одним именем значило бы выдать отметку за результат.
+    const frac = live ? r.mark_frac : r.pnl_frac;
+    const money = live ? r.mark_usd : r.usd;
+    const c = money == null ? "" : (money > 0 ? "good" : "bad");
+    const key = (live ? (r.st === "cut" ? "c" : "o") : "") + rowKey(r);
+    const id = keyId(key), o = OPEN.has(key);
     const nf = (r.fills || []).length;
     h += "<tr class=pos onclick=\"dcaToggle('" + esc(key) + "')\">" +
       "<td class=mono><span id='dexp-" + esc(id) + "'>" +
-      (op ? "&#9662;" : "&#9656;") + "</span> " + tsq(r.at) +
-      "<td class=mono>" + tsq(r.exit_ts) + "<td>" + esc(r.sym) +
-      (r.bt ? " <span class=tag>бэктест</span>" : "") + "<td class=mono>" +
-      (r.lev == null ? "&mdash;" : Number(r.lev).toFixed(2) + "&times;") +
+      (o ? "&#9662;" : "&#9656;") + "</span> " + tsq(r.at) +
+      // У открытой и оборванной выхода НЕ СУЩЕСТВУЕТ — прочерк, а не
+      // последняя цена записи: выдать отметку за выход значило бы
+      // придумать сделке цену, по которой никто не выходил.
+      "<td class=mono>" + (live ? "&mdash;" : tsq(r.exit_ts)) +
+      "<td>" + esc(r.sym) +
+      (r.bt ? " <span class=tag>бэктест</span>" : "") +
+      "<td class=mono>" + (r.lev == null ? "&mdash;" :
+        Number(r.lev).toFixed(2) + "&times;") +
       "<td class=mono>" + (r.margin == null ? "&mdash;" :
         Number(r.margin).toFixed(2) + " $") +
-      "<td class='mono " + c + "'>" + fpct(r.pnl_frac) +
-      "<td class='mono " + c + "'>" + usd(r.usd) +
-      "<td>" + esc(r.exit || "") +
+      "<td class=mono>" + (r.entry_px == null ? "&mdash;" :
+        Number(r.entry_px).toPrecision(6)) +
+      // ТВХ — плавающая средняя цена входа: долив опускает её, и по
+      // одной цене позицию из четырёх рунгов не прочитать. Приходит
+      // готовой с сервера (`rules.avg_walk`).
+      "<td class=mono>" + (r.avg == null ? "&mdash;" :
+        Number(r.avg).toPrecision(6)) +
+      "<td class=mono>" + (live || r.exit_px == null ? "&mdash;" :
+        Number(r.exit_px).toPrecision(6)) +
+      "<td class='mono " + c + "'>" + fpct(frac) +
+      "<td class='mono " + c + "'>" + usd(money) +
+      (live ? " <span class=tag>отметка</span>" : "") +
+      "<td>" + (r.st === "cut" ? "<span class=dim>оборвана записью</span>"
+        : (r.st === "open" ? "открыта" : esc(r.exit || ""))) +
       (nf > 1 ? " <span class=dim>&middot; рунгов " + nf + "</span>" : "") +
       // График этой позиции: свечи записи, точки доливов и ступенчатая
       // ТВХ. Ключ книги едет в ссылке — без него график молча показал
       // бы выборы модели вместо лестницы.
-      " <a href='/chart?k=" + encodeURIComponent(KEY) + "&sym=" +
+      "<td><a href='/chart?k=" + encodeURIComponent(KEY) + "&sym=" +
       encodeURIComponent(r.sym) + "&dca=" +
       encodeURIComponent(RUL + ":" + DEP) + "&hour=" +
       encodeURIComponent(hourKey(r.at)) + "' onclick='event.stopPropagation()'" +
-      ">график</a>" +
+      ">открыть</a>" +
       "</tr>";
     // Деталь стоит в разметке ВСЕГДА и лишь скрыта: разворот тогда не
     // требует перерисовки страницы, а проверить его можно прогоном.
-    h += fillRows(r, key);
+    h += fillRows(r, key, live);
   }
   return h + "</table></div></div>";
 }
@@ -6615,9 +6648,24 @@ function dayTable(st, dep, title){
 
 function render(){
   const d = DATA, box = document.getElementById("box");
-  document.getElementById("intro").innerHTML = d && d.present ? intro(d) :
-    "<div class=cap>что это</div><p class=dim>" +
-    esc((d && d.why) || "нет ответа сборщика") + "</p>";
+  // Рамка «что это» уехала в МОДАЛКУ (решение владельца 2026-09-04):
+  // она длинная, а страница нужна ради чисел. Утверждения из неё не
+  // выброшены — они по кнопке, и это разные вещи.
+  const mod = document.getElementById("modal");
+  mod.innerHTML = (INTRO && d && d.present)
+    ? "<div class=mback onclick='dcaIntro(false)'></div>" +
+      "<div class=mbox><button class=mx onclick='dcaIntro(false)'>" +
+      "&times;</button>" + intro(d) + "</div>"
+    : "";
+  const wb = document.getElementById("whatbtn");
+  if (wb) wb.onclick = () => dcaIntro(true);
+  // Отказ сборщика в модалку НЕ прячется: причину надо видеть сразу,
+  // а не по нажатию — иначе пустая страница выглядит просто пустой.
+  const why = document.getElementById("why");
+  why.style.display = (d && d.present) ? "none" : "block";
+  if (!(d && d.present))
+    why.innerHTML = "<div class=cap>что это</div><p class=dim>" +
+      esc((d && d.why) || "нет ответа сборщика") + "</p>";
   const tabs = document.getElementById("tabs");
   if (!d || !d.present){
     tabs.innerHTML = ""; box.innerHTML = "";
@@ -6687,21 +6735,26 @@ function render(){
                  GRP === "fwd" ? "счёт без бэктеста: записанное вперёд"
                                : "счёт с бэктестом: одна кривая",
                  op, GRP);
-  // Открытые ОТДЕЛЬНЫМ списком и сразу под счётом: это состояние
-  // сейчас, и оно одно на обе группы.
-  h += openTable(op, (b.open || {}).at);
   h += dayTable(st, b.deposit || DEP, "по суткам");
   if (!d.journal_present) h += "<div class=panel><p class=dim>Журнала на " +
     "этой машине нет вовсе &mdash; он живёт там, где книги считаются. " +
     "Это не то же самое, что «сделок нет».</p></div>";
-  // Список позиций следует за переключателем: показывать 200 строк
-  // бэктеста под числами группы «без бэктеста» значило бы, что таблица
-  // описывает не тот счёт, что стоит над ней.
-  const trs = (b.trades || []).filter(r => GRP !== "fwd" || !r.bt);
-  h += tradeTable(trs, GRP === "fwd" ? "позиции, записанные вперёд"
-                                     : "позиции книги",
-                  trs.length, (st || {}).n, GRP);
+  // ОДИН список на все состояния, окном по 20–50 строк. Он следует за
+  // переключателем группы: показывать строки бэктеста под числами
+  // группы «без бэктеста» значило бы, что таблица описывает не тот
+  // счёт, что стоит над ней.
+  h += posBlock(Object.assign({}, b, {open: op && op.known === false
+                                        ? null : op}), GRP);
   box.innerHTML = h;
+  // Обработчики нового блока вешаются ПОСЛЕ вставки разметки: чипы
+  // состояния и кнопки окна — состояние показа, и живёт оно в наборе
+  // страницы, а не в разметке.
+  for (const el of box.querySelectorAll("[data-st]"))
+    el.onclick = () => dcaState(el.dataset.st);
+  for (const el of box.querySelectorAll("[data-size]"))
+    el.onclick = () => dcaSize(el.dataset.size);
+  for (const el of box.querySelectorAll("[data-page]"))
+    el.onclick = () => dcaPage(el.dataset.page);
   document.getElementById("lead").textContent = d.window
     ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")
     : "";

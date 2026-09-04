@@ -3454,6 +3454,49 @@ class Collector:
                 "exit": r.get("exit"), "depth": r.get("depth"),
                 "bt": DR.ahead(r.get("at"), r.get("written_at")) is not True,
             })
+        # Открытые и оборванные записью — ИЗ АРТЕФАКТА, а не из журнала:
+        # в журнал они не идут вовсе (их отметка меняется каждый час), а
+        # страница книги ведёт их одним списком с закрытыми и даёт на
+        # каждую ссылку на график. Без этого ссылка вела бы на график
+        # без своей позиции — молчаливое обещание вместо ответа.
+        # Выхода у них не существует: `closes_at` пуст, деньги идут
+        # ОТМЕТКОЙ (`net_bp`/`pnl` по `mark_*`), состояние названо словом.
+        live = {}
+        if os.path.exists(DR.ARTIFACT):
+            try:
+                with open(DR.ARTIFACT, encoding="utf-8") as f:
+                    live = (json.load(f).get("live") or {})
+            except (OSError, ValueError):
+                live = {}
+        cell = (live.get(f"{rk}:{int(dep)}") or {})
+        for st, lst in (("открыта", cell.get("positions") or []),
+                        ("оборвана записью", cell.get("cut") or [])):
+            for r in lst:
+                if str(r.get("sym", "")).upper() != sym:
+                    continue
+                at = float(r.get("at") or 0)
+                fills = r.get("fills") or []
+                mf = r.get("mark_frac")
+                out.append({
+                    "sym": sym, "arm": "dca",
+                    "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at)),
+                    "side": "long", "opened_at": at, "closes_at": None,
+                    "entry_px": r.get("entry_px"), "exit_px": None,
+                    "avg": r.get("avg"),
+                    "walk": DR.avg_walk(fills, r.get("entry_px")),
+                    "lots": max(1, len(fills)),
+                    "adds": [{"at": f[0], "px": f[1], "size": f[2],
+                              "hour": time.strftime(
+                                  "%Y-%m-%d-%H", time.gmtime(float(f[0])))}
+                             for f in fills[1:]],
+                    "exits": [],
+                    "net_bp": (None if mf is None
+                               else round(float(mf) * 1e4, 2)),
+                    "pnl": r.get("mark_usd"), "size": r.get("margin"),
+                    "lev": r.get("lev"), "state": st,
+                    "exit": None, "depth": r.get("depth"), "bt": False,
+                })
+        out.sort(key=lambda x: float(x.get("opened_at") or 0))
         return {"present": True, "rows": out,
                 # слитой считается позиция С ДОЛИВАМИ — ровно как у книг
                 # модели: у остальных сливать нечего

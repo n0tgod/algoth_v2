@@ -387,6 +387,18 @@ const dcaStub = (url) => {
                                                                {bt: false}))
       .concat((b.trades_restored || []).map(x => Object.assign({}, x,
                                                                {bt: true})));
+    // Список ОДИН и режется окном 20–50 строк, значит проверять окно
+    // не на чем, пока строк меньше окна. У одной книги их нарочно
+    // больше: числа и монеты разные, иначе «страница переключилась»
+    // прошло бы и на неподвижном списке.
+    if (k === "safe:10000")
+      for (let i = 0; i < 24; i++)
+        b.trades.push(Object.assign({}, tr("P" + i + "USDT",
+                                           (i % 3 ? 1 : -1) * (i + 1),
+                                           1.2 + i / 10),
+                                    {at: T0 - 7200 - (i + 1) * 600,
+                                     exit_ts: T0 - 3600 - (i + 1) * 600,
+                                     bt: i % 2 === 0}));
     b.trades_shown = b.trades.length;
     delete b.trades_forward; delete b.trades_restored;
     b.live_known = !nolive;
@@ -1909,6 +1921,19 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__dcaSetGrp = typeof render === 'function' "
                 + "&& typeof GRP !== 'undefined' ? (function(x){ "
                 + "GRP = x; render(); }) : null;"
+                // Четвёртая ось показа — СОСТОЯНИЕ позиции (все /
+                // закрытые / открытые / оборванные), плюс окно списка
+                // и модалка «что это». Все своим именем: страница
+                // держит их независимо, и один экспорт на несколько
+                // означал бы, что проверка гоняет не ту дорогу.
+                + "\nglobal.__dcaState = typeof dcaState === 'function' "
+                + "? dcaState : null;"
+                + "\nglobal.__dcaSize = typeof dcaSize === 'function' "
+                + "? dcaSize : null;"
+                + "\nglobal.__dcaPage = typeof dcaPage === 'function' "
+                + "? dcaPage : null;"
+                + "\nglobal.__dcaIntro = typeof dcaIntro === 'function' "
+                + "? dcaIntro : null;"
                 // Перевод ДОЛИ в проценты берётся у самой страницы:
                 // ожидание, посчитанное по памяти о правиле формата,
                 // трижды за проект давало холостой контроль.
@@ -2849,8 +2874,23 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("DCA: данные не запрошены");
     const flat = () => String(global.__el ? global.__el("box").innerHTML : "")
       .replace(/\s+/g, " ");
-    const intro = String(global.__el ? global.__el("intro").innerHTML : "")
+    // Рамка «что это» уехала в МОДАЛКУ (решение владельца 2026-09-04).
+    // Проверяется ОБЕ стороны: без нажатия её на странице нет, по
+    // нажатию она есть целиком, по закрытию исчезает. Иначе «скрыли»
+    // неотличимо от «выбросили», а утверждения рамки — это то, чем
+    // страница отвечает за свои числа.
+    const mdlHtml = () => String(
+      global.__el ? global.__el("modal").innerHTML : "")
       .replace(/\s+/g, " ");
+    if (/РЕЖИМОМ и депозитом/.test(mdlHtml()))
+      bad.push("DCA: рамка «что это» показана без нажатия");
+    if (/РЕЖИМОМ и депозитом/.test(flat()))
+      bad.push("DCA: рамка «что это» осталась в теле страницы");
+    if (!global.__dcaIntro) bad.push("DCA: модалка «что это» не выведена");
+    else global.__dcaIntro(true);
+    const intro = mdlHtml();
+    if (!/class=mback/.test(intro))
+      bad.push("DCA: рамка открылась не модалкой");
     if (!/РЕЖИМОМ и депозитом/.test(intro))
       bad.push("DCA: рамка «режим и депозит» не названа");
     for (const t of ["безопасная", "оптимальная"])
@@ -2904,6 +2944,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // рискует больше, значит выбирать за владельца
     if (!/class='tab on' data-rul='safe'/.test(rtabs))
       bad.push("DCA: по умолчанию открыта не безопасная линейка");
+    // Модалка закрывается, и рамки на странице снова нет: «скрыли»
+    // проверяется в обе стороны, иначе кнопка могла бы открывать её
+    // навсегда.
+    if (global.__dcaIntro){
+      global.__dcaIntro(false);
+      if (/РЕЖИМОМ и депозитом/.test(mdlHtml()))
+        bad.push("DCA: модалка «что это» не закрывается");
+    }
     // Групп ДВЕ и они переключателем: «с бэктестом» и «без бэктеста».
     // Третьего блока («пересчёт по прошлому») быть не должно — он есть
     // первая группа минус вторая, и отдельным блоком приглашал бы их
@@ -3010,55 +3058,139 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push("DCA: просадка худшей открытой не названа числом");
       if (!/Глубже всех сейчас TIAUSDT/.test(b2))
         bad.push("DCA: худшая открытая позиция не названа по имени");
-      // ОТДЕЛЬНЫЙ СПИСОК открытых (просьба владельца). Разбор ведём по
-      // САМОМУ списку, а не по всей странице: имя худшей открытой стоит
-      // ещё и в подписи блока счёта, то есть «первым» оно оказывалось бы
-      // всегда — проверка мерила бы подпись, а не порядок строк.
-      const oi = b2.indexOf("открытые позиции &mdash;");
-      const oe = oi < 0 ? -1 : b2.indexOf("<div class=panel", oi + 1);
-      const ob = oi < 0 ? "" : b2.slice(oi, oe < 0 ? undefined : oe);
-      const opb = /открытые позиции &mdash; (\d+)/.exec(ob);
-      if (!opb) bad.push("DCA: отдельного списка открытых позиций нет");
-      else if (opb[1] !== "2")
-        bad.push(`DCA: в списке открытых ${opb[1]} строк, а позиций 2`);
-      if (!/TIAUSDT/.test(ob) || !/SUIUSDT/.test(ob))
-        bad.push("DCA: открытые позиции не перечислены поимённо");
-      // Оборванные записью — ВТОРЫМ списком: на живой книге их вшестеро
-      // больше открытых, и в одной таблице они утопили бы ответ на
-      // вопрос «что сейчас открыто». В список открытых они не входят.
-      if (/CUTUSDT/.test(ob))
-        bad.push("DCA: оборванная записью попала в список открытых");
-      const ci = b2.indexOf("оборванные записью &mdash;");
-      const ce = ci < 0 ? -1 : b2.indexOf("<div class=panel", ci + 1);
-      const cb = ci < 0 ? "" : b2.slice(ci, ce < 0 ? undefined : ce);
-      if (!/оборванные записью &mdash; 1/.test(cb))
-        bad.push("DCA: оборванные записью не показаны отдельным списком");
-      if (!/CUTUSDT/.test(cb))
-        bad.push("DCA: оборванная записью не названа поимённо");
-      if (!/НЕ открытые позиции на бирже/.test(cb))
-        bad.push("DCA: оборванная записью выдана за открытую на бирже");
-      if (!/выдумать исход/.test(cb))
-        bad.push("DCA: не сказано, почему оборванная не закрыта по сроку");
-      const iT = ob.indexOf("TIAUSDT"), iS = ob.indexOf("SUIUSDT");
-      if (!(iT >= 0 && iS >= 0 && iT < iS))
-        bad.push("DCA: глубже всех просевшая не стоит первой строкой");
+      // ОДИН список на все состояния (решение владельца 2026-09-04).
+      // Разбор ведём по САМОМУ списку, а не по всей странице: имя
+      // худшей открытой стоит ещё и в подписи блока счёта, то есть
+      // «первым» оно оказывалось бы всегда.
+      const pi = b2.indexOf("позиции книги &mdash;");
+      const pb = pi < 0 ? "" : b2.slice(pi);
+      if (pi < 0) bad.push("DCA: единого списка позиций нет");
+      // Три таблицы подряд больше не рисуются: вопрос один, и ответ на
+      // него обязан быть один
+      if (/открытые позиции &mdash;|оборванные записью &mdash;/.test(b2))
+        bad.push("DCA: позиции по-прежнему разложены в отдельные блоки");
+      // В общем списке стоят ВСЕ состояния, и каждое подписано
+      if (!/TIAUSDT/.test(pb) || !/SUIUSDT/.test(pb))
+        bad.push("DCA: открытых позиций нет в общем списке");
+      if (!/>открыта</.test(pb))
+        bad.push("DCA: открытая позиция не подписана состоянием");
+      if (!/оборвана записью/.test(b2))
+        bad.push("DCA: оборванная записью не названа состоянием");
+      // Деньги не-закрытой — ОТМЕТКА, и это стоит В СТРОКЕ: у закрытой
+      // исход известен, у открытой он станет любым
+      if (!/<span class=tag>отметка<\/span>/.test(pb))
+        bad.push("DCA: отметка открытой выдана за исход в строке");
+      // У открытой цены выхода НЕ СУЩЕСТВУЕТ. Проверяется в ЯЧЕЙКЕ
+      // строки, а не по странице: прочерк где-то нашёлся бы всегда.
+      const rowOf = (sym) => {
+        const i = pb.indexOf(">" + sym + "<");
+        if (i < 0) return "";
+        const a = pb.lastIndexOf("<tr class=pos", i);
+        const b3 = pb.indexOf("</tr>", i);
+        return a < 0 || b3 < 0 ? "" : pb.slice(a, b3);
+      };
+      const rTia = rowOf("TIAUSDT"), rW = rowOf("WUSDT");
+      if (!rTia) bad.push("DCA: строки открытой позиции нет в списке");
+      // Колонки цен: вход, ТВХ, выход — у ВСЕХ строк (просьба владельца)
+      if (!/цена входа/.test(pb) || !/ТВХ/.test(pb) || !/цена выхода/.test(pb))
+        bad.push("DCA: колонок цены входа, ТВХ и выхода нет");
+      if (rW && !/2\.2000/.test(rW) && rW.indexOf("2.20000") < 0)
+        bad.push("DCA: цена выхода закрытой позиции не показана");
+      if (rW && rW.indexOf("1.80000") < 0)
+        bad.push("DCA: ТВХ закрытой позиции не показана в строке");
+      if (rTia && rTia.indexOf("4.00000") < 0)
+        bad.push("DCA: цена входа открытой позиции не показана");
+      // У открытой ВЫХОДА не существует — ни времени, ни цены. Меток
+      // времени в строке ровно одна (вход): подставить туда последнюю
+      // цену записи значило бы придумать сделке выход.
+      const nTs = (rTia.match(/\d\d-\d\d \d\d:\d\d/g) || []).length;
+      if (rTia && nTs !== 1)
+        bad.push(`DCA: у открытой позиции ${nTs} меток времени, а вход один`);
+      // Ссылка на график — у КАЖДОЙ строки, включая открытую: без неё
+      // «открытие на графике» осталось бы только у закрытых
+      if (rTia && !/\/chart\?k=[^']*&sym=TIAUSDT/.test(rTia))
+        bad.push("DCA: у открытой позиции нет ссылки на график");
+      if (rW && !/\/chart\?k=[^']*&sym=WUSDT/.test(rW))
+        bad.push("DCA: у закрытой позиции нет ссылки на график");
+      if (rTia && !/dca=safe%3A10000/.test(rTia))
+        bad.push("DCA: ссылка на график не несёт ключ книги");
+      // Свежие сверху: список отвечает на «что происходит»
+      const iSui = pb.indexOf("SUIUSDT"), iTia2 = pb.indexOf("TIAUSDT");
+      const iW = pb.indexOf("WUSDT");
+      if (!(iSui >= 0 && iTia2 >= 0 && iW >= 0
+            && iSui < iTia2 && iTia2 < iW))
+        bad.push("DCA: список не упорядочен свежими сверху");
+      // ОКНО списка: 20 строк из 29, и переключатель размера
+      const wsz = /(\d+)&ndash;(\d+) из (\d+)/.exec(pb);
+      if (!wsz) bad.push("DCA: окна списка нет вовсе");
+      else {
+        if (wsz[3] !== "29")
+          bad.push(`DCA: в списке ${wsz[3]} позиций, а их 29`);
+        if (wsz[2] !== "20")
+          bad.push(`DCA: окно кончается на ${wsz[2]}, а размер окна 20`);
+      }
+      const nrows = (pb.match(/<tr class=pos/g) || []).length;
+      if (nrows !== 20)
+        bad.push(`DCA: строк в окне ${nrows}, а окно 20`);
+      // Вторая страница — ДРУГИЕ строки, а не та же двадцатка
+      if (global.__dcaPage){
+        global.__dcaPage(1);
+        const p2 = flat().slice(flat().indexOf("позиции книги &mdash;"));
+        if (!/21&ndash;29 из 29/.test(p2))
+          bad.push("DCA: вторая страница окна не открылась");
+        if (/SUIUSDT/.test(p2))
+          bad.push("DCA: вторая страница показывает те же строки");
+        if ((p2.match(/<tr class=pos/g) || []).length !== 9)
+          bad.push("DCA: на второй странице не остаток строк");
+        global.__dcaPage(0);
+      } else bad.push("DCA: переключатель страницы не выведен наружу");
+      if (global.__dcaSize){
+        global.__dcaSize(50);
+        const p50 = flat();
+        if (!/1&ndash;29 из 29/.test(p50))
+          bad.push("DCA: окно 50 не вместило все строки");
+        if ((p50.match(/<tr class=pos/g) || []).length !== 29)
+          bad.push("DCA: при окне 50 показаны не все строки");
+        global.__dcaSize(20);
+      } else bad.push("DCA: размер окна не выведен наружу");
+      // ПЕРЕКЛЮЧАТЕЛЬ СОСТОЯНИЯ: все / закрытые / открытые /
+      // оборванные. Четвёртый чип не украшение: без него позиции с
+      // НЕИЗВЕСТНЫМ исходом недостижимы, а их число — наблюдение.
+      for (const t of ["закрытые", "открытые", "оборванные записью"])
+        if (pb.indexOf(t) < 0)
+          bad.push(`DCA: в переключателе состояния нет «${t}»`);
+      if (global.__dcaState){
+        global.__dcaState("open");
+        const po = flat().slice(flat().indexOf("позиции книги &mdash;"));
+        if ((po.match(/<tr class=pos/g) || []).length !== 2)
+          bad.push("DCA: фильтр «открытые» показал не две позиции");
+        if (/WUSDT/.test(po))
+          bad.push("DCA: в «открытых» осталась закрытая позиция");
+        global.__dcaState("cut");
+        const pc = flat().slice(flat().indexOf("позиции книги &mdash;"));
+        if (!/CUTUSDT/.test(pc))
+          bad.push("DCA: фильтр «оборванные» не показал оборванную");
+        if (/TIAUSDT/.test(pc))
+          bad.push("DCA: в «оборванных» осталась открытая позиция");
+        global.__dcaState("closed");
+        const pcl = flat().slice(flat().indexOf("позиции книги &mdash;"));
+        if (/CUTUSDT|TIAUSDT/.test(pcl))
+          bad.push("DCA: в «закрытых» остались не закрытые позиции");
+        global.__dcaState("all");
+      } else bad.push("DCA: переключатель состояния не выведен наружу");
       // у ОТКРЫТОЙ выхода не существует: последняя строка разворота —
       // отметка, а не исход
-      if (!/ещё открыта/.test(ob))
+      if (!/ещё открыта/.test(pb))
         bad.push("DCA: у открытой позиции нарисован выход");
-      if (!/отметка, а не исход/.test(ob))
+      if (!/отметка, а не исход/.test(pb))
         bad.push("DCA: отметка открытой выдана за исход в развороте");
-      // список ОДИН на обе группы: открытая позиция есть состояние
-      // сейчас, а не часть выбранной кривой
-      if (!/Список один на обе группы/.test(ob))
-        bad.push("DCA: не сказано, что открытые не зависят от группы");
       // Разворот открытой позиции — СВОИМ ключом. Заглушка DOM заводит
       // элемент по первому обращению, поэтому «нажали и стало
       // table-row» проходит и на несуществующей строке: сперва
       // требуется, чтобы деталь с этим id БЫЛА в разметке.
       const ko = "o" + String(Math.trunc(T0 - 5400)) + ":TIAUSDT";
       const io = "ddet-" + ko.replace(/[^a-z0-9]+/gi, "-");
-      if (ob.indexOf("id='" + io + "'") < 0)
+      if (pb.indexOf("id='" + io + "'") < 0)
         bad.push("DCA: деталь открытой позиции стоит под чужим ключом");
       else if (global.__dcaToggle){
         global.__dcaToggle(ko);
@@ -3134,8 +3266,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("DCA: «не считали» не отличено от «открытых нет»");
     if (/открытых позиций<\/div><div class='v mono'>0/.test(bx))
       bad.push("DCA: неизвестное число открытых показано нулём");
-    if (!/Это не «открытых нет»/.test(bx))
-      bad.push("DCA: список открытых не отличил «не считали» от пустоты");
+    if (!/это не «открытых нет»/.test(bx))
+      bad.push("DCA: список позиций не отличил «не считали» от пустоты");
   }
   if (isDca && /dcastale=1/.test(SEARCH)) {
     const bx = flatBox();
