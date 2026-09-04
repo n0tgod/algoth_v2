@@ -289,7 +289,7 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None,
 
 
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
-                 take_px=None, floor_frac=None):
+                 take_px=None, floor_frac=None, track=False):
     """DCA-лонг на РЕАЛЬНЫХ барах: доливы вниз, тейк вверх, пол капитуляции.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -313,6 +313,13 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     капитуляция (рулевой §6) здесь НЕ считается — она мерится против пола
     отдельной рукой (пересчёт), вердикт по «только пол».
 
+    `track=True` добавляет почасовую отметку позиции: список
+    `(час, занятый нотионал, pnl долей капитала)`, по одной записи на
+    календарный час, значение — по ПОСЛЕДНЕМУ бару часа, последняя запись
+    равна итогу сделки. Она нужна книжным замерам (экспозиция и переоценка
+    книги во времени); сами возвращаемые числа от неё не меняются ни на
+    бит — умолчание `False` даёт прежний счёт, и это закреплено тестом.
+
     Возвращает: exit ("тейк"/"пол"/"ликвидация"/"срок"), pnl_frac (доля
     капитала позиции; ликвидация = −1.0), depth, avg, filled_notional.
     """
@@ -329,30 +336,57 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     filled[0] = True                    # база заполнена входом
     cash = weights[0] * notional
     qty = cash / entry                  # по ФАКТИЧЕСКОЙ цене входа
+    tr = [] if track else None
+
+    def _mark(bt, pnl):
+        """Отметка часа: последняя запись часа побеждает (переоценка по
+        концу часа), а на выходе кладётся сам исход сделки."""
+        hr = bt - (bt % 3600)
+        rec = (hr, cash, pnl)
+        if tr and tr[-1][0] == hr:
+            tr[-1] = rec
+        else:
+            tr.append(rec)
+
+    def _ret(res, bt):
+        if tr is not None:
+            _mark(bt, res["pnl_frac"])
+            res["track"] = tr
+        return res
+
     for (bt, _o, hi, lo, cl, _v) in bars:
         filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
                                         rung_prices, weights, notional)
         avg = cash / qty
+        if tr is not None:
+            _mark(bt, (qty * cl - cash) / capital)
         p_liq = liq_price(avg, qty, capital, mmr)
         if lo <= p_liq:
-            return {"exit": "ликвидация", "pnl_frac": -1.0, "exit_ts": bt,
-                    "exit_px": p_liq, "depth": sum(filled), "avg": avg,
-                    "filled_notional": cash}
+            return _ret({"exit": "ликвидация", "pnl_frac": -1.0,
+                         "exit_ts": bt, "exit_px": p_liq,
+                         "depth": sum(filled), "avg": avg,
+                         "filled_notional": cash}, bt)
         if floor_frac is not None and all(filled):
             floor_px = p_liq + floor_frac * (entry - p_liq)
             if lo <= floor_px:                 # подошли к ликвидации — режем
-                return {"exit": "пол", "pnl_frac": qty * (cl - avg) / capital,
-                        "exit_ts": bt, "exit_px": cl, "depth": sum(filled),
-                        "avg": avg, "filled_notional": cash}
+                return _ret({"exit": "пол",
+                             "pnl_frac": qty * (cl - avg) / capital,
+                             "exit_ts": bt, "exit_px": cl,
+                             "depth": sum(filled), "avg": avg,
+                             "filled_notional": cash}, bt)
         if take_px is not None and hi >= take_px:
-            return {"exit": "тейк", "pnl_frac": qty * (take_px - avg) / capital,
-                    "exit_ts": bt, "exit_px": take_px, "depth": sum(filled),
-                    "avg": avg, "filled_notional": cash}
+            return _ret({"exit": "тейк",
+                         "pnl_frac": qty * (take_px - avg) / capital,
+                         "exit_ts": bt, "exit_px": take_px,
+                         "depth": sum(filled), "avg": avg,
+                         "filled_notional": cash}, bt)
     lb = bars[-1]
     avg = cash / qty
-    return {"exit": "срок", "pnl_frac": qty * (float(lb[4]) - avg) / capital,
-            "exit_ts": lb[0], "exit_px": float(lb[4]), "depth": sum(filled),
-            "avg": avg, "filled_notional": cash}
+    return _ret({"exit": "срок",
+                 "pnl_frac": qty * (float(lb[4]) - avg) / capital,
+                 "exit_ts": lb[0], "exit_px": float(lb[4]),
+                 "depth": sum(filled), "avg": avg,
+                 "filled_notional": cash}, lb[0])
 
 
 def same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notional):

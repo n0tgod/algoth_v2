@@ -504,6 +504,101 @@ def _control_rungs_never_fill():
         L.simulate_ladder = orig
 
 
+
+# ------------------------------------------- почасовая отметка позиции (D4)
+
+def _track_bars(t0=1_699_999_200, hours=5):   # ровно на границе часа
+    """Бары трёх часов: ровно, затем провал до рунга, затем возврат."""
+    bars, px = [], 100.0
+    for i in range(hours * 60):
+        if i < 60:
+            px = 100.0
+        elif i < 120:
+            px = 100.0 - 6.0 * (i - 60) / 59.0      # к концу 2-го часа 94
+        else:
+            px = 94.0 + 4.0 * (i - 120) / (hours * 60 - 121)
+        bars.append((t0 + i * 60, px, px + 0.05, px - 0.05, px, 100.0))
+    return bars
+
+
+def test_track_does_not_change_numbers():
+    """Отметка — наблюдение, а не правило: числа обязаны совпасть бит в бит."""
+    bars = _track_bars()
+    rungs, w = [100.0, 96.0], [0.5, 0.5]
+    a = L.simulate_dca(bars, rungs, w, 1.0, 2.0, 0.01, take_px=140.0)
+    b = L.simulate_dca(bars, rungs, w, 1.0, 2.0, 0.01, take_px=140.0,
+                       track=True)
+    for k in ("exit", "pnl_frac", "depth", "avg", "filled_notional",
+              "exit_ts", "exit_px"):
+        assert a[k] == b[k], (k, a[k], b[k])
+    assert "track" not in a and b["track"], "отметка появилась не там"
+    print(f"ok  отметка не меняет счёт: {a['exit']} {a['pnl_frac']:+.4f} "
+          f"у обоих, записей {len(b['track'])}")
+
+
+def test_track_last_equals_outcome():
+    """Последняя запись отметки — сам исход сделки, а не переоценка."""
+    bars = _track_bars()
+    r = L.simulate_dca(bars, [100.0, 96.0], [0.5, 0.5], 1.0, 2.0, 0.01,
+                       take_px=140.0, track=True)
+    tr = r["track"]
+    hrs = [x[0] for x in tr]
+    assert hrs == sorted(set(hrs)), hrs               # по записи на час
+    assert abs(tr[-1][2] - r["pnl_frac"]) < 1e-12, (tr[-1], r["pnl_frac"])
+    assert tr[-1][1] == r["filled_notional"], (tr[-1][1],
+                                               r["filled_notional"])
+    # занятый нотионал только растёт: доливы добавляют, обратно не отдают
+    assert all(x[1] <= y[1] + 1e-12 for x, y in zip(tr, tr[1:])), tr
+    print(f"ok  отметка: {len(tr)} часов, нотионал {tr[0][1]:.2f} → "
+          f"{tr[-1][1]:.2f}, итог {tr[-1][2]:+.4f}")
+
+
+def test_track_marks_hour_close():
+    """Переоценка часа — по ПОСЛЕДНЕМУ бару часа, а не по первому.
+
+    Первый бар часа — цена, с которой час начался; отметив её, книга видела
+    бы свою экспозицию на час устаревшей, и просадка книги считалась бы по
+    вчерашним ценам.
+    """
+    bars = _track_bars()
+    r = L.simulate_dca(bars, [100.0], [1.0], 1.0, 1.0, 0.01, track=True)
+    tr = r["track"]
+    # второй час кончается на 94 → pnl первого часа ≈ 0, второго ≈ −6 %
+    assert abs(tr[0][2]) < 1e-9, tr[0]
+    assert tr[1][2] < -0.055, tr[1]
+    print(f"ok  переоценка по концу часа: час 1 {tr[0][2]:+.4f}, час 2 "
+          f"{tr[1][2]:+.4f}")
+
+
+def _control_track_marks_hour_open():
+    """Отметка по ПЕРВОМУ бару часа (запись не перезаписывается) —
+    экспозиция и переоценка книги отставали бы на час."""
+    orig = L.simulate_dca
+
+    def first_bar(bars, rung_prices, weights, capital, leverage, mmr,
+                  take_px=None, floor_frac=None, track=False):
+        r = orig(bars, rung_prices, weights, capital, leverage, mmr,
+                 take_px=take_px, floor_frac=floor_frac, track=track)
+        if track and r.get("track"):
+            seen, out = set(), []
+            for (hr, cash, pnl) in r["track"]:
+                if hr in seen:
+                    continue
+                seen.add(hr)
+                out.append((hr, cash, 0.0))       # «цена начала часа»
+            r["track"] = out
+        return r
+    L.simulate_dca = first_bar
+    try:
+        try:
+            test_track_marks_hour_close()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.simulate_dca = orig
+
+
 TESTS = [
     test_liq_price_matches_spec5_table,
     test_one_x_long_cannot_liquidate,
@@ -525,6 +620,9 @@ TESTS = [
     test_same_coin_short_crash_gains,
     test_liq_price_short_is_above,
     test_single_short_take_stop_liq,
+    test_track_does_not_change_numbers,
+    test_track_last_equals_outcome,
+    test_track_marks_hour_close,
 ]
 
 
@@ -540,7 +638,9 @@ def main():
     assert _control_short_recovers_on_entry_bar(), \
         "контроль бара входа короткого не кусается"
     assert _control_short_side_ignored(), "контроль стороны шорта не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 8 отрицательных контролей "
+    assert _control_track_marks_hour_open(), \
+        "контроль отметки по началу часа не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; 9 отрицательных контролей "
           f"кусаются")
 
 
