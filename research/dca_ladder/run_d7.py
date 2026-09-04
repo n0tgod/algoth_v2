@@ -157,6 +157,24 @@ def cell(recs, hold_h, idx, dep):
             "exits": _exits(rows), "fp": c["fp"]}
 
 
+def halves(base):
+    """Разрез выборки НАДВОЕ по времени решения — проверка на шум окна.
+
+    Купол по сроку на одном окне может быть свойством правила, а может —
+    свойством этих 26 суток. Половины не складываются в целое: у каждой
+    своя касса с полного депозита, то есть это две независимые книги по
+    13 суток, а не разложение одной. Отвечают они на один вопрос: держится
+    ли порядок сроков в обеих.
+    """
+    ts = sorted(float(r["at"]) for r in base)
+    if not ts:
+        return None, [], []
+    mid = ts[len(ts) // 2]
+    a = [r for r in base if float(r["at"]) < mid]
+    b = [r for r in base if float(r["at"]) >= mid]
+    return mid, a, b
+
+
 def run(limit=None, src=None, log=print):
     t0 = time.time()
     hold_max = max(HOLDS_H)
@@ -170,7 +188,19 @@ def run(limit=None, src=None, log=print):
         for dep in R.DEPOSITS:
             cells[f"{h}:{int(dep)}"] = cell(base, h, i, dep)
         log(f"  срок {h} ч посчитан")
+    # Половины считаются на самом крупном депозите: там касса не
+    # связывает вовсе, значит различие половин принадлежит правилу, а не
+    # нехватке денег.
+    mid, ha, hb = halves(base)
+    dep_h = R.DEPOSITS[-1]
+    half = {"mid_ts": mid, "n_a": len(ha), "n_b": len(hb),
+            "deposit": dep_h, "cells": {}}
+    for i, h in enumerate(HOLDS_H):
+        half["cells"][f"A:{h}"] = cell(ha, h, i, dep_h)
+        half["cells"][f"B:{h}"] = cell(hb, h, i, dep_h)
+    log(f"  половины: {len(ha)} и {len(hb)} решений")
     return {"holds_h": HOLDS_H, "ref_h": REF_H, "deposits": R.DEPOSITS,
+            "half": half,
             "ruler": list(RULER), "positions": len(recs),
             "sample": len(base), "lost_short_record": lost,
             "window": got["window"], "cells": cells,
@@ -255,6 +285,45 @@ def report(s):
     L += ["", f"(по книге ${R.DEPOSITS[-1]:,.0f} — там касса связывает "
           "меньше всего, то есть раскладка описывает сигнал, а не нехватку "
           "денег)", ""]
+    hf = s.get("half") or {}
+    if hf.get("cells"):
+        dep_h = hf.get("deposit") or 0
+        L += ["## Держится ли порядок на половинах окна", "",
+              "Купол по сроку на одном окне бывает свойством правила, а "
+              "бывает свойством этих суток. Выборка разрезана НАДВОЕ по "
+              f"времени решения ({hf.get('n_a')} и {hf.get('n_b')} "
+              "решений); половины не складываются в целое — у каждой своя "
+              f"касса с полного депозита ${dep_h:,.0f}, где касса не "
+              "связывает вовсе. **Разошёлся порядок сроков — различие "
+              "соседних ячеек есть шум окна, а не свойство срока.**", "",
+              "| срок | итог A | итог B | укус A | укус B | зелёных A | "
+              "зелёных B |", "|---|--:|--:|--:|--:|--:|--:|"]
+        for h in s.get("holds_h") or []:
+            a = hf["cells"].get(f"A:{h}") or {}
+            b = hf["cells"].get(f"B:{h}") or {}
+            ref = " ←" if h == s.get("ref_h") else ""
+            L.append(
+                f"| {h} ч{ref} | {_pct(a.get('final'))} | "
+                f"{_pct(b.get('final'))} | "
+                + ("—" if a.get("bite") is None else f"{a['bite']}") + " | "
+                + ("—" if b.get("bite") is None else f"{b['bite']}") + " | "
+                + ("—" if a.get("day_green") is None
+                   else f"{a['day_green']:.2f}") + " | "
+                + ("—" if b.get("day_green") is None
+                   else f"{b['day_green']:.2f}") + " |")
+        best_a = max((s.get("holds_h") or []),
+                     key=lambda h: (hf["cells"].get(f"A:{h}") or {})
+                     .get("final") or -9)
+        best_b = max((s.get("holds_h") or []),
+                     key=lambda h: (hf["cells"].get(f"B:{h}") or {})
+                     .get("final") or -9)
+        L += ["", f"Лучший по итогу срок: **{best_a} ч** в первой половине "
+              f"и **{best_b} ч** во второй — "
+              + ("совпал, то есть порядок пережил разрез окна."
+                 if best_a == best_b else
+                 "РАЗОШЁЛСЯ, то есть выбирать срок по итогу на этой "
+                 "длине записи нечем.") + " Это диагностика, а не вердикт: "
+              "половины по 13 суток шумят вдвое сильнее целого.", ""]
     L += ["## Чего этот замер НЕ говорит", "",
           "Правил книги он не меняет: срок двигает и правило записи "
           f"(`AHEAD_H = HOLD_H + 48`), и решение об этом за владельцем. "

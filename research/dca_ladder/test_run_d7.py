@@ -152,6 +152,39 @@ def test_grid_is_declared_and_holds_the_reference():
     print("ok  сетка объявлена, точка отсчёта помечена, вердикт по форме")
 
 
+def test_halves_split_by_time_and_never_overlap():
+    """Половины окна режутся ПО ВРЕМЕНИ решения и не пересекаются.
+
+    Разрез по порядку списка дал бы «половины», перемешанные во времени, —
+    и проверка на шум окна проверяла бы не то. Ещё: половины не
+    складываются в целое, у каждой своя касса с ПОЛНОГО депозита, поэтому
+    в отчёте они стоят отдельной таблицей, а не колонками итога.
+    """
+    base = [{"at": float(t), "sym": "A"} for t in
+            (500, 100, 900, 300, 700, 200, 800)]
+    mid, a, b = D7.halves(base)
+    assert len(a) + len(b) == len(base), (len(a), len(b))
+    assert all(x["at"] < mid for x in a), a
+    assert all(x["at"] >= mid for x in b), b
+    assert not ({id(x) for x in a} & {id(x) for x in b}), "половины пересеклись"
+    txt = D7.report({"holds_h": [24, 72], "ref_h": 72, "deposits": [1000.0],
+                     "sample": 7, "lost_short_record": 0, "cells": {},
+                     "half": {"deposit": 100000.0, "n_a": 3, "n_b": 4,
+                              "cells": {"A:24": {"final": 0.01, "bite": 3.0,
+                                                 "day_green": 0.6},
+                                        "B:24": {"final": 0.02, "bite": 4.0,
+                                                 "day_green": 0.5},
+                                        "A:72": {"final": 0.03, "bite": 2.0,
+                                                 "day_green": 0.7},
+                                        "B:72": {"final": 0.01, "bite": 5.0,
+                                                 "day_green": 0.4}}}})
+    assert "половинах окна" in txt, txt[:300]
+    assert "не складываются в целое" in txt, txt[-2000:]
+    # порядок разошёлся (A лучший 72, B лучший 24) — отчёт обязан сказать
+    assert "РАЗОШЁЛСЯ" in txt, txt[-1500:]
+    print("ok  половины: разрез по времени, расхождение порядка названо")
+
+
 def _control_truncate_ignores_checkpoint():
     """Усечение берёт исход полной сделки вместо переоценки на границе."""
     orig = D7.truncate
@@ -207,16 +240,34 @@ def _control_sample_not_common():
         D7.common_sample = orig
 
 
+def _control_halves_split_by_index():
+    """Половины режутся по порядку списка, а не по времени решения."""
+    orig = D7.halves
+    D7.halves = lambda base: (0.0, base[:len(base) // 2],
+                              base[len(base) // 2:])
+    try:
+        try:
+            test_halves_split_by_time_and_never_overlap()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D7.halves = orig
+
+
 TESTS = [test_truncation_equals_direct_simulation,
          test_marks_sum_to_the_truncated_outcome,
          test_sample_is_common_to_all_holds,
          test_shorter_hold_frees_the_name_and_the_slot,
-         test_grid_is_declared_and_holds_the_reference]
+         test_grid_is_declared_and_holds_the_reference,
+         test_halves_split_by_time_and_never_overlap]
 
 CONTROLS = [("усечение игнорирует контрольную точку",
              _control_truncate_ignores_checkpoint),
             ("приращения не поправлены", _control_marks_not_fixed),
-            ("выборка не общая", _control_sample_not_common)]
+            ("выборка не общая", _control_sample_not_common),
+            ("половины режутся по индексу",
+             _control_halves_split_by_index)]
 
 
 def main():
