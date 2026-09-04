@@ -6,3 +6,16 @@ sheets.jsonl: ног 861374
 лонгов под гейтом 8676
 **Окно замера: 2026-08-08 18:07 … 2026-09-04 07:08 UTC, это 26.5 суток** (28 календарных дат с решениями). Весь доход в таблицах — за этот отрезок целиком, а не за год: годовых здесь нет и приводить их к году на одном месяце одного режима рынка нельзя.
 конец: 2026-09-04T09:57:58Z, код 0
+публикуется в ветку main:
+ jobs/done/d6-cash.log               | 7 +++++++
+ jobs/done/d6-conc.done              | 1 +
+ jobs/done/d6-conc.log               | 4 ++++
+ jobs/done/d6-window.done            | 1 +
+ jobs/done/d6-window.log             | 8 ++++++++
+ jobs/poke.log                       | 6 ++++++
+ research/s8_loop/out/day_brake.json | 2 +-
+ 7 files changed, 28 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   0e4630f..428327f  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

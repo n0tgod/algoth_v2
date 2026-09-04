@@ -33,7 +33,7 @@
    "no_cash": 8580,
    "too_small": 0,
    "take_share": 0.0111,
-   "final": 0.1795,
+   "final": 0.179,
    "max_dd": -0.0867,
    "day_median": 0.00248,
    "day_worst": -0.0767,
@@ -43,14 +43,19 @@
    "open_median": 5.0,
    "open_max": 8,
    "slots": 6,
-   "ticket": 500.0
+   "ticket": 500.0,
+   "names": 68,
+   "top_sym": "LUNA2USDT",
+   "top_pnl": 134.89,
+   "final_wo_top": 0.134,
+   "top_trade": 122.65
   },
   "depth|2.0|0.050000": {
    "taken": 342,
    "no_cash": 8334,
    "too_small": 0,
    "take_share": 0.0394,
-   "final": 0.0716,
+   "final": 0.0714,
    "max_dd": -0.1096,
    "day_median": 0.00062,
    "day_worst": -0.047,
@@ -60,41 +65,56 @@
    "open_median": 18.0,
    "open_max": 26,
    "slots": 20,
-   "ticket": 150.0
+   "ticket": 150.0,
+   "names": 210,
+   "top_sym": "CCUSDT",
+   "top_pnl": 90.93,
+   "final_wo_top": 0.0411,
+   "top_trade": 90.93
   },
   "depth|2.0|0.016667": {
    "taken": 905,
    "no_cash": 7771,
    "too_small": 0,
    "take_share": 0.1043,
-   "final": 0.0915,
+   "final": 0.091,
    "max_dd": -0.1253,
    "day_median": 0.00064,
    "day_worst": -0.0619,
    "day_green": 0.679,
    "days": 28,
-   "open_mean": 40.9,
+   "open_mean": 40.8,
    "open_median": 45.0,
    "open_max": 76,
    "slots": 60,
-   "ticket": 50.0
+   "ticket": 50.0,
+   "names": 387,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 52.17,
+   "final_wo_top": 0.0736,
+   "top_trade": 38.37
   },
   "depth|2.0|0.005000": {
    "taken": 1549,
    "no_cash": 5105,
    "too_small": 2022,
    "take_share": 0.1785,
-   "final": 0.1581,
+   "final": 0.158,
    "max_dd": -0.1381,
-   "day_median": 0.00027,
+   "day_median": 0.00026,
    "day_worst": -0.0462,
    "day_green": 0.679,
    "days": 28,
    "open_mean": 45.8,
-   "open_median": 13.5,
+   "open_median": 13.0,
    "open_max": 249,
    "slots": 200,
-   "ticket": 15.0
+   "ticket": 15.0,
+   "names": 390,
+   "top_sym": "WUSDT",
+   "top_pnl": 36.47,
+   "final_wo_top": 0.1458,
+   "top_trade": 14.75
   },
   "depth|2.0|0.001667": {
    "taken": 1851,
@@ -107,18 +127,23 @@
    "day_worst": -0.0281,
    "day_green": 0.737,
    "days": 19,
-   "open_mean": 69.6,
+   "open_mean": 69.4,
    "open_median": 5.0,
    "open_max": 666,
    "slots": 600,
-   "ticket": 5.0
+   "ticket": 5.0,
+   "names": 321,
+   "top_sym": "WUSDT",
+   "top_pnl": 17.73,
+   "final_wo_top": 0.1992,
+   "top_trade": 5.27
   },
   "sigma|6.0|0.166667": {
    "taken": 99,
    "no_cash": 8577,
    "too_small": 0,
    "take_share": 0.0114,
-   "final": 0.0722,
+   "final": 0.0717,
    "max_dd": -0.0447,
    "day_median": 0.00125,
    "day_worst": -0.0416,
@@ -128,14 +153,19 @@
    "open_median": 5.0,
    "open_max": 8,
    "slots": 6,
-   "ticket": 500.0
+   "ticket": 500.0,
+   "names": 69,
+   "top_sym": "LUNA2USDT",
+   "top_pnl": 56.46,
+   "final_wo_top": 0.0529,
+   "top_trade": 46.8
   },
   "sigma|6.0|0.050000": {
    "taken": 331,
    "no_cash": 8345,
    "too_small": 0,
    "take_share": 0.0382,
-   "final": 0.0701,
+   "final": 0.0699,
    "max_dd": -0.0416,
    "day_median": 0.00019,
    "day_worst": -0.0193,
@@ -145,16 +175,21 @@
    "open_median": 18.0,
    "open_max": 25,
    "slots": 20,
-   "ticket": 150.0
+   "ticket": 150.0,
+   "names": 207,
+   "top_sym": "CCUSDT",
+   "top_pnl": 31.05,
+   "final_wo_top": 0.0596,
+   "top_trade": 31.05
   },
   "sigma|6.0|0.016667": {
    "taken": 873,
    "no_cash": 7803,
    "too_small": 0,
    "take_share": 0.1006,
-   "final": 0.0795,
+   "final": 0.0793,
    "max_dd": -0.0349,
-   "day_median": 0.00059,
+   "day_median": 0.00048,
    "day_worst": -0.0123,
    "day_green": 0.607,
    "days": 28,
@@ -162,7 +197,12 @@
    "open_median": 44.0,
    "open_max": 72,
    "slots": 60,
-   "ticket": 50.0
+   "ticket": 50.0,
+   "names": 377,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 18.57,
+   "final_wo_top": 0.0731,
+   "top_trade": 13.48
   },
   "sigma|6.0|0.005000": {
    "taken": 1485,
@@ -175,11 +215,16 @@
    "day_worst": -0.0154,
    "day_green": 0.679,
    "days": 28,
-   "open_mean": 45.7,
+   "open_mean": 45.6,
    "open_median": 13.0,
    "open_max": 239,
    "slots": 200,
-   "ticket": 15.0
+   "ticket": 15.0,
+   "names": 374,
+   "top_sym": "WUSDT",
+   "top_pnl": 10.26,
+   "final_wo_top": 0.1077,
+   "top_trade": 4.14
   },
   "sigma|6.0|0.001667": {
    "taken": 274,
@@ -196,18 +241,23 @@
    "open_median": 1.0,
    "open_max": 152,
    "slots": 600,
-   "ticket": 5.0
+   "ticket": 5.0,
+   "names": 68,
+   "top_sym": "MAGICUSDT",
+   "top_pnl": 2.37,
+   "final_wo_top": 0.014,
+   "top_trade": 1.22
   }
  },
  "unlimited": {
   "depth|2.0": {
    "n": 8676,
-   "sum_pnl": 249.57
+   "sum_pnl": 249.55
   },
   "sigma|6.0": {
    "n": 8676,
-   "sum_pnl": 123.98
+   "sum_pnl": 123.97
   }
  },
- "secs": 1035.1
+ "secs": 1037.5
 }
