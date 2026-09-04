@@ -32,3 +32,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-04T12:03:57Z
+публикуется в ветку main:
+ jobs/done/deploy-dca-rulers.log |  9 +++++++++
+ jobs/done/ps-dca.log            | 34 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log                   |  2 ++
+ 3 files changed, 45 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   55448d5..d0317bf  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
