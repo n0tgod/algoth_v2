@@ -252,12 +252,20 @@ def test_run_end_to_end_synthetic():
         assert h and h["max_h"] <= D2.HOLD_H + 1e-6, (key, h)
         assert h["min_h"] >= 0.0 and h["mean_h"] >= h["min_h"], (key, h)
         assert sum(v["n"] for v in h["by_exit"].values()) == 60, (key, h)
+        # в таблицу обязаны попасть ВСЕ причины выхода, а не поимённый
+        # список: первый прогон так потерял 40 выходов «пол» из 8676
+        for reason in c["exits"]:
+            assert reason in h["by_exit"], (key, reason, h["by_exit"])
     # синтетика не обязана совпасть с живым якорем — сверка обязана это
     # СКАЗАТЬ, а не промолчать
     assert s["anchor"]["mismatch"] > 0, s["anchor"]
     rep = D5.report(s)
     assert "ЛИНЕЙКА" in rep and "Кто связал запас" in rep, rep[:400]
     assert "Время в позиции" in rep and " ч |" in rep, rep[-1500:]
+    assert "ПОКАЗАНО" not in rep, [ln for ln in rep.splitlines()
+                                   if "ПОКАЗАНО" in ln]
+    for reason in s["cells"][f"{D5.ANCHOR[0]}|{D5.ANCHOR[1]}"]["exits"]:
+        assert reason in rep, (reason, rep[-1200:])
     assert "Сверка якоря НЕ сошлась" in rep, rep[:1200]
     assert "nan" not in rep.lower(), [ln for ln in rep.splitlines()
                                       if "nan" in ln.lower()][:3]
