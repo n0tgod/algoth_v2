@@ -3386,6 +3386,94 @@ class Collector:
     # прогон неотличим от работающего, и это уже случалось с турниром.
     PAPER_STALE = 36 * 3600
 
+    def dca_paper(self, dep=None):
+        """Бумажные DCA-книги: свод из артефакта, сделки из журнала.
+
+        Разделение источников то же, что у месячной книги, и по той же
+        причине. **Свод берётся ИЗ АРТЕФАКТА и не пересчитывается** —
+        его числа считает сам прогон и публикует отчётом; вторая их
+        реализация здесь однажды разошлась бы с тем, что уехало в git.
+        **Сделки берутся из журнала**, потому что артефакт их не
+        содержит: он свод. Деление на записанное ВПЕРЁД и восстановленное
+        пересчётом делает `rules.split_rows` — ровно то правило, которым
+        делит сам прогон, а не его копия.
+
+        Правила отдаются ИЗ АРТЕФАКТА, а не из констант модуля: страница
+        обязана описывать тот прогон, который породил файл (урок R1).
+
+        Журнал живёт только на машине, где книги считаются, и «сделок
+        нет» отличается от «мы не на той машине» полем `journal_present`.
+        """
+        now = time.time()
+        key = str(dep or "")
+        cat, cached = getattr(self, "_dca_cache", (0.0, {}))
+        if now - cat < 120 and key in cached:
+            return cached[key]
+        if now - cat >= 120:
+            cached = {}
+        root = os.path.join(os.path.dirname(HERE), "dca_paper")
+        sys.path.insert(0, root)
+        try:
+            import rules as DR
+        except Exception as e:
+            return {"present": False, "why": f"модуль правил не читается: {e}"}
+        out = {"present": False, "journal_present": os.path.exists(DR.JOURNAL)}
+        art = None
+        if os.path.exists(DR.ARTIFACT):
+            try:
+                with open(DR.ARTIFACT, encoding="utf-8") as f:
+                    art = json.load(f)
+            except Exception as e:
+                out["why"] = f"артефакт не читается: {e}"
+        if art is None:
+            out.setdefault(
+                "why", "прогона ещё не было: артефакта нет на этой машине")
+            cached[key] = out
+            self._dca_cache = (now if now - cat >= 120 else cat, cached)
+            return out
+        rows, bad = DR.read_journal(DR.JOURNAL)
+        out["present"] = True
+        out["bad_lines"] = bad
+        out["rules"] = art.get("rules") or {}
+        out["deposits"] = (out["rules"].get("DEPOSITS")
+                           or DR.DEPOSITS)
+        out["secs"] = art.get("secs")
+        out["window"] = art.get("window")
+        try:
+            out["age_h"] = round((now - os.path.getmtime(DR.ARTIFACT))
+                                 / 3600.0, 1)
+        except OSError:
+            out["age_h"] = None
+        # устаревший прогон обязан кричать сам: суточный, запас на одно
+        # пропущенное окно
+        out["stale"] = bool(out["age_h"] is not None and out["age_h"] > 36)
+        ahead_h = out["rules"].get("AHEAD_H") or DR.AHEAD_H
+        rules_v = out["rules"].get("RULES", DR.RULES)
+        books = {}
+        for d in out["deposits"]:
+            k = str(int(d))
+            b = dict(((art.get("books") or {}).get(k) or {}))
+            mine = [r for r in rows if int(r.get("dep", 0)) == int(d)
+                    and int(r.get("rules", 0)) == rules_v]
+            fwd, back = DR.split_rows(mine, ahead_h)
+            b["n_journal"] = len(mine)
+            for nm, part in (("trades_forward", fwd),
+                             ("trades_restored", back)):
+                part = sorted(part, key=lambda r: -float(r.get("exit_ts", 0)))
+                b[nm] = [{
+                    "at": r.get("at"), "exit_ts": r.get("exit_ts"),
+                    "sym": r.get("sym"), "lev": r.get("lev"),
+                    "margin": r.get("margin"), "usd": r.get("usd"),
+                    "pnl_frac": r.get("pnl_frac"), "exit": r.get("exit"),
+                } for r in part[:60]]
+            books[k] = b
+        out["books"] = books
+        if dep is not None and str(int(float(dep))) in books:
+            out["selected"] = str(int(float(dep)))
+        cached[key] = out
+        self._dca_cache = (now if now - cat >= 120 else cat, cached)
+        return out
+
     def paper_book(self, at=None):
         """Бумажная месячная книга: свод из артефакта, транши из журнала.
 

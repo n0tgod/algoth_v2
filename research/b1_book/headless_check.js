@@ -34,6 +34,10 @@ const isDays = /<title>book, day by day<\/title>/.test(src);
 const isTour = /tournament — all 72 branches/.test(src);
 const isPaper =
   /monthly book — one construction, recorded forward/.test(src);
+const isDca =
+  /DCA paper books — one rule set, three deposits/.test(src);
+const flatBox = () => String(global.__el ? global.__el("box").innerHTML : "")
+  .replace(/\s+/g, " ");
 const isAgents =
   /autonomous system — agents and the conveyor/.test(src);
 const isBuilt =
@@ -213,6 +217,54 @@ const recount = {busy: false, done: 2, total: 2, hours: 24,
 // числа нужны и заглушке, и проверке: список чисел в двух местах
 // разошёлся бы, и проверка на смешение групп ловила бы не ту
 // сумму — ровно так первый отрицательный контроль прошёл мимо.
+// Стаб бумажных DCA-книг. Числа живут ОДНОЙ функцией: список в двух
+// местах однажды разойдётся, и проверка станет сверять себя с собой.
+// Депозиты нарочно разные по наполненности: у $1000 наблюдения ещё нет
+// (прочерки с названной причиной), у $10000 есть обе группы, у $100000
+// только пересчёт — так проверяется, что группы не складываются.
+const dcaStub = (url) => {
+  const mk = (n, usd, dd, wd, top, wo) => ({
+    n: n, names: Math.max(1, Math.round(n * 0.8)), days: 6, usd: usd,
+    final: usd / 10000, max_dd: dd, day_median: 0.0012, day_worst: wd,
+    day_green: 0.62, bite: 7.4, top_sym: top, usd_wo_top: wo});
+  const tr = (sym, usd, lev) => ({
+    at: T0 - 7200, exit_ts: T0 - 3600, sym: sym, lev: lev, margin: 25.0,
+    usd: usd, pnl_frac: usd / 25.0, exit: usd > 0 ? "тейк" : "пол"});
+  const nojournal = /dcanojournal=1/.test(SEARCH);
+  return {
+    present: !/dcaabsent=1/.test(SEARCH),
+    why: /dcaabsent=1/.test(SEARCH)
+      ? "прогона ещё не было: артефакта нет на этой машине" : undefined,
+    journal_present: !nojournal,
+    bad_lines: 0, secs: 980.4, age_h: /dcastale=1/.test(SEARCH) ? 51.2 : 0.4,
+    stale: /dcastale=1/.test(SEARCH),
+    window: {from: "2026-08-08 18:07", to: "2026-09-04 10:08"},
+    deposits: [1000, 10000, 100000],
+    rules: {RULES: 1, TICKET: 25.0, DEPOSITS: [1000, 10000, 100000],
+            AHEAD_H: 120, HOLD_H: 72, ONE_PER_NAME: true,
+            MIN_EDGE_BP: 33.0, MIN_RR: 2.0, SURVIVE_MULT: 2.0,
+            FLOOR_FRAC: 0.1},
+    books: {
+      "1000": {deposit: 1000, slots: 40, ticket: 25.0, n_journal: 310,
+               forward: null,
+               restored: mk(310, 41.2, -0.061, -0.019, "TUTUSDT", 18.9),
+               trades_forward: [],
+               trades_restored: [tr("TUTUSDT", 12.4, 3.1),
+                                 tr("ARBUSDT", -2.2, 2.4)]},
+      "10000": {deposit: 10000, slots: 400, ticket: 25.0, n_journal: 2980,
+                forward: mk(64, 21.5, -0.012, -0.004, "WUSDT", 17.1),
+                restored: mk(2916, 902.3, -0.074, -0.022, "TUTUSDT", 611.0),
+                trades_forward: [tr("WUSDT", 4.1, 2.9)],
+                trades_restored: [tr("TUTUSDT", 31.7, 3.4),
+                                  tr("MEUSDT", -8.5, 1.8)]},
+      "100000": {deposit: 100000, slots: 4000, ticket: 25.0,
+                 n_journal: 5140, forward: null,
+                 restored: mk(5140, 1580.0, -0.052, -0.017, "TUTUSDT",
+                              1102.0),
+                 trades_forward: [],
+                 trades_restored: [tr("TUTUSDT", 44.0, 3.4)]}}};
+};
+
 const paperStub = (url) => {
                  const d = {
                    present: true, journal_present: true,
@@ -766,6 +818,8 @@ global.fetch = async (url) => {
                    reason: "IOC не исполнилась в потолке 0.30 % "
                            + "(запрошено 0.66)",
                    at: Date.UTC(2026,7,21,19,20,0)/1000}]}
+             : url.startsWith("/dca")
+             ? dcaStub(url)
              : url.startsWith("/paper")
              ? paperStub(url)
              : url.startsWith("/book_days")
@@ -1635,6 +1689,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // ожидание к ней тоже берётся у самой страницы.
                 + "\nglobal.__lvl = typeof lvl === 'function' "
                 + "? lvl : null;"
+                // Переключатель депозита DCA-книг. Своим именем, а не
+                // чужим: `global.__arm` уже занят переключателем рук
+                // обзора, и совпадение имён однажды молча затёрло
+                // экспорт — проверка тогда честно сказала «нет
+                // переключателя» на исправной странице.
+                + "\nglobal.__dcaSetDep = typeof render === 'function' "
+                + "&& typeof DEP !== 'undefined' ? (function(x){ "
+                + "DEP = x; render(); }) : null;"
                 + "\nglobal.__infoClose = typeof closeInfo === "
                 + "'function' ? closeInfo : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
@@ -1701,14 +1763,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // сделками модели — он тут же был принят за страницу сделок, и на
   // него посыпались чужие требования. Признак, выводимый из поведения,
   // ломается от изменения поведения; разметка страницы — это она сама.
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks && !isDca
       && !seen.some(u => u.startsWith("/state")))
     bad.push("страница не запросила состояние");
   // Панель сделок боевой модели — на обзоре, под переключателем рук.
   // Проверяется ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на
   // пустом блоке, а пустой блок неотличим от «сделок пока нет».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks) {
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks && !isDca) {
     const mb = global.__el ? String(
       global.__el("modelbox").innerHTML || "") : "";
     if (!/model trades|no model trades/.test(mb))
@@ -1919,7 +1981,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: порог из ссылки не доехал до запроса: "
                + q.join(" "));
   }
-  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks
+  if (!isTrades && !isBot && !isInfo && !isLeague && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks && !isDca
       && !seen.some(u => u.startsWith("/trades")))
     bad.push("страница не запросила историю сделок (/trades)");
   // Страница сделок: кривая счёта, группы величин, сравнение рук.
@@ -2554,6 +2616,67 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       if ((html().match(/data-day="/g) || []).length !== 3)
         bad.push("дни: возврат к обеим рукам не вернул все дни");
     }
+  }
+
+  // Бумажные DCA-книги: три депозита переключателем, одни правила.
+  // Главных требований три, и все проверяются числами: группы
+  // «вперёд» и «пересчёт» не складываются; переключение депозита
+  // меняет числа, а не только подсветку; пустая группа называет
+  // причину, а не читается как «книга ничего не наторговала».
+  if (isDca) {
+    if (!seen.some(u => u.startsWith("/dca")))
+      bad.push("DCA: данные не запрошены");
+    const flat = () => String(global.__el ? global.__el("box").innerHTML : "")
+      .replace(/\s+/g, " ");
+    const intro = String(global.__el ? global.__el("intro").innerHTML : "")
+      .replace(/\s+/g, " ");
+    if (!/отличаются ровно депозитом/.test(intro))
+      bad.push("DCA: рамка «отличаются ровно депозитом» не названа");
+    if (!/выведен из пола биржи/.test(intro))
+      bad.push("DCA: вывод билета из пола биржи не назван");
+    if (!/У имени позиция одна/.test(intro))
+      bad.push("DCA: биржевое правило одной позиции не названо");
+    if (!/Живого исполнения здесь нет|реплеем по барам/.test(intro))
+      bad.push("DCA: не сказано, что живого исполнения нет");
+    const tabs = String(global.__el ? global.__el("tabs").innerHTML : "");
+    const nTabs = (tabs.match(/class='tab/g) || []).length;
+    if (nTabs !== 3)
+      bad.push(`DCA: переключателей депозита ${nTabs}, а книг три`);
+    // $1000: наблюдения ещё нет — прочерки с НАЗВАННОЙ причиной
+    const b1 = flat();
+    if (!/40/.test(b1)) bad.push("DCA: число мест книги $1000 не показано");
+    if (!/только после того, как его позиция/.test(b1))
+      bad.push("DCA: пустое наблюдение не объяснено причиной");
+    if (/\+41\.20 \$/.test(b1) === false)
+      bad.push("DCA: деньги пересчёта книги $1000 не показаны");
+    // переключение обязано менять ЧИСЛА, а не только подсветку
+    if (global.__dcaSetDep) global.__dcaSetDep("10000");
+    const b2 = flat();
+    if (b2 === b1) bad.push("DCA: переключение депозита ничего не меняет");
+    if (!/400/.test(b2)) bad.push("DCA: число мест книги $10000 не показано");
+    if (!/\+21\.50 \$/.test(b2))
+      bad.push("DCA: деньги наблюдения книги $10000 не показаны");
+    if (!/\+902\.30 \$/.test(b2))
+      bad.push("DCA: деньги пересчёта книги $10000 не показаны");
+    // сумма двух групп (21.50 + 902.30 = 923.80) появиться не может
+    if (/923\.80/.test(b2))
+      bad.push("DCA: наблюдение сложено с пересчётом");
+    if (!/наблюдение/.test(b2) || !/пересчёт/.test(b2))
+      bad.push("DCA: группы не подписаны");
+    if (global.__dcaSetDep) global.__dcaSetDep("1000");
+  }
+  if (isDca && /dcastale=1/.test(SEARCH)) {
+    const bx = flatBox();
+    if (!/Суточный прогон не пришёл/.test(bx))
+      bad.push("DCA: устаревший прогон не назван");
+  } else if (isDca) {
+    if (/Суточный прогон не пришёл/.test(flatBox()))
+      bad.push("DCA: свежий прогон объявлен устаревшим");
+  }
+  if (isDca && /dcanojournal=1/.test(SEARCH)) {
+    const bx = flatBox();
+    if (!/Журнала на этой машине нет/.test(bx))
+      bad.push("DCA: отсутствие журнала не названо отдельно");
   }
 
   // Бумажная месячная книга: свод из артефакта, транши из журнала.
@@ -3193,8 +3316,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nv = global.__el ? global.__el("nav") : null;
     const nh = nv ? String(nv.innerHTML || "") : "";
     const links = (nh.match(/class="navlink/g) || []).length;
-    if (links !== 13)
-      bad.push(`меню: пунктов ${links}, а страниц тринадцать`);
+    if (links !== 14)
+      bad.push(`меню: пунктов ${links}, а страниц четырнадцать`);
     if (!/href="\/asks-page\?k=xxx"/.test(nh))
       bad.push("меню: нет страницы «нужно от вас»");
     if (!/href="\/agents-page\?k=xxx"/.test(nh))
@@ -3643,7 +3766,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // ЧИСЛАМИ подставного ответа: «блок есть» прошло бы и на пустом
   // блоке, а пустой блок неотличим от «ядро не запущено».
   if (!isTrades && !isChart && !isBot && !isInfo && !isLeague
-      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks
+      && !isGloss && !isVol && !isTree && !isTour && !isLearn && !isLive && !isPaper && !isDays && !isAgents && !isBuilt && !isStrat && !isAsks && !isDca
       && !/botoff=1/.test(SEARCH)) {
     const bb = global.__el ? String(
       global.__el("botbox").innerHTML || "") : "";
@@ -3982,7 +4105,7 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (/>-4\.12 %</.test(html))
       bad.push("в строке ведущим числом остался процент от позиции");
   } else if (isBot || isInfo || isLeague || isGloss || isVol
-             || isTree || isTour || isLearn || isLive || isPaper || isDays || isAgents || isBuilt || isStrat || isAsks) {
+             || isTree || isTour || isLearn || isLive || isPaper || isDays || isAgents || isBuilt || isStrat || isAsks || isDca) {
     // У страницы ядра и у разбора сделки нет ни пересчёта, ни
     // детекторных сделок — их проверки выше, своими числами.
   } else if (/paperoff=1/.test(SEARCH)) {

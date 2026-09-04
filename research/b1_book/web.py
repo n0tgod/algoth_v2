@@ -128,6 +128,7 @@ const NAV_ITEMS = [
   ["/tree-page", "models", "модели"],
   ["/tournament-page", "tournament", "турнир"],
   ["/paper-page", "monthly", "месячная"],
+  ["/dca-page", "DCA", "DCA"],
   ["/agents-page", "agents", "агенты"],
   ["/asks-page", "needs you", "нужно от вас"],
   ["/built-page", "built", "построено"],
@@ -5953,6 +5954,224 @@ setInterval(load, 60000);
 # исхода — из журнала как есть. Причина та же, по которой показ не
 # считает деньги живых книг: вторая реализация однажды разойдётся с
 # первой, и экран будет утверждать не то, что опубликовано отчётом.
+DCAPAGE = r"""<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DCA paper books — one rule set, three deposits</title>
+<style>
+:root{color-scheme:dark;
+ --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
+ --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
+ --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
+    transparent 65%) fixed,var(--bg);color:var(--ink);
+ font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+   sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:12px}
+.brand{font-weight:800;letter-spacing:.24em;font-size:15px;
+ color:var(--ink);text-decoration:none}
+.brand b{color:var(--accent)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+ font-variant-numeric:tabular-nums}
+.k{color:var(--muted);font-size:12px}
+.dim{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin:12px 0}
+.cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--muted);margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
+ var(--rule-soft);font-size:13px;white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+.good{color:var(--bid)}.bad{color:var(--ask)}
+.thin{color:var(--muted)}
+a{color:var(--accent)}
+.scroll{overflow-x:auto}
+.alarm{border-color:var(--ask);background:rgba(255,100,115,.08)}
+.stats{display:grid;gap:10px;
+ grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.st{background:var(--chip);border:1px solid var(--rule);border-radius:12px;
+ padding:8px 10px}
+.st .v{font-size:18px;font-weight:700}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}
+.tab{background:var(--chip);border:1px solid var(--rule);border-radius:999px;
+ padding:5px 14px;cursor:pointer;font-size:13px;color:var(--muted)}
+.tab.on{border-color:var(--accent);color:var(--ink)}
+.tag{display:inline-block;font-size:10px;letter-spacing:.1em;
+ text-transform:uppercase;border:1px solid var(--rule);border-radius:999px;
+ padding:1px 8px;color:var(--muted)}
+.tag.fwd{border-color:var(--accent);color:var(--accent)}
+""" + NAVCSS + r"""
+</style>
+<div class="wrap">
+<div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
+  <span class="k">DCA paper books &mdash; one rule set, three deposits</span>
+  <span style="flex:1"></span>
+  <span class="k" id="lead"></span></div>
+<div id="nav"></div>
+<div class="panel" id="intro"></div>
+<div class="tabs" id="tabs"></div>
+<div id="box">&hellip;</div>
+</div>
+<script>
+const KEY = new URLSearchParams(location.search).get("k") || "";
+document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+""" + NAVJS + PCTJS + LVLJS + r"""
+navMount("/dca-page");
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function usd(v){ return v == null ? "&mdash;"
+  : (v > 0 ? "+" : "") + Number(v).toFixed(2) + " $"; }
+function tsq(t){ return t == null ? "&mdash;"
+  : new Date(t * 1000).toISOString().slice(5, 16).replace("T", " "); }
+let DATA = null, DEP = null;
+
+// Рамка предмета первым абзацем. Без неё три книги читаются как три
+// стратегии, а отличаются они РОВНО депозитом; и «бумажная» здесь
+// значит реплей по барам записи, а не живой сканер на живой цене.
+function intro(d){
+  const r = d.rules || {};
+  const t = r.TICKET, dd = (r.DEPOSITS || []).map(x => "$" + x.toLocaleString(
+    "en-US")).join(" / ");
+  let h = "<div class=cap>что это</div>";
+  h += "<p><b>Три книги отличаются ровно депозитом</b> (" + esc(dd) +
+    "): правила, гейты, ограда и выходы у них одни. Билет тоже один &mdash; " +
+    (t == null ? "&mdash;" : "<b>$" + t + "</b>") +
+    ", &mdash; поэтому с деньгами растёт только число мест, и это и есть " +
+    "предмет сравнения: что депозит покупает.</p>";
+  h += "<p><b>Билет выведен из пола биржи, а не назначен.</b> " +
+    "Минимальный ордер площадки $5, мельчайший рунг лестницы 25 % " +
+    "нотионала, значит нотионал не бывает меньше $20, а маржа &mdash; " +
+    "меньше $20/плечо; ограда выдаёт от 1&times;, то есть худший случай " +
+    "требует ровно $20. Четверть сверху &mdash; запас на просадку.</p>";
+  h += "<p><b>У имени позиция одна</b>" +
+    (r.ONE_PER_NAME === false ? " &mdash; правило СНЯТО в этом прогоне" :
+     ": второй выбор по той же монете пропущен, как на бирже") + ".</p>";
+  h += "<p><b>Записанное вперёд и пересчёт по прошлому не складываются " +
+    "нигде.</b> Решение записано вперёд, если попало в журнал не позже " +
+    (r.AHEAD_H == null ? "&mdash;" : r.AHEAD_H + " ч") +
+    " после себя (предел жизни позиции " +
+    (r.HOLD_H == null ? "&mdash;" : r.HOLD_H + " ч") +
+    " плюс двое суток на прогон). Первый прогон восстанавливает " +
+    "накопленное, и оно всё помечено пересчётом.</p>";
+  h += "<p class=dim><b>Чего в числах нет:</b> живого исполнения. Сделки " +
+    "считаются реплеем по барам записи, а не сканером на живой цене &mdash; " +
+    "значит нет ни проскальзывания, ни очереди в стакане, ни задержки " +
+    "входа. Маржа и цена ликвидации считаются по каждой позиции отдельно, " +
+    "а биржа считает их по слитой. Веса модели видели эти часы, поэтому " +
+    "пересчёт читается как оценка сверху.</p>";
+  return h;
+}
+
+function statBlock(st, dep, title, tag){
+  if (!st) return "<div class=panel><div class=cap>" + esc(title) +
+    "</div><p class=dim>Строк ещё нет. У книги это не пустота показа: " +
+    "решение попадает в журнал только после того, как его позиция " +
+    "закрылась.</p></div>";
+  const cls = v => v == null ? "" : (v > 0 ? "good" : (v < 0 ? "bad" : ""));
+  let h = "<div class=panel><div class=cap>" + esc(title) +
+    " <span class='tag " + (tag || "") + "'>" + esc(tag === "fwd" ?
+      "наблюдение" : "пересчёт") + "</span></div><div class=stats>";
+  const cells = [
+    ["сделок", st.n, null], ["имён", st.names, null],
+    ["дней", st.days, null],
+    ["деньги", usd(st.usd), cls(st.usd)],
+    ["к депозиту", pct(st.final), cls(st.final)],
+    ["просадка", pct(st.max_dd), cls(st.max_dd)],
+    ["медиана дня", pct(st.day_median, 3), cls(st.day_median)],
+    ["худший день", pct(st.day_worst), cls(st.day_worst)],
+    ["зелёных дней", st.day_green == null ? "&mdash;" :
+      Number(st.day_green).toFixed(2), null],
+    ["укус", st.bite == null ? "&mdash;" : st.bite, null],
+    ["$ без лучшего имени", usd(st.usd_wo_top), cls(st.usd_wo_top)]];
+  for (const [k, v, c] of cells)
+    h += "<div class=st><div class=k>" + k + "</div><div class='v mono " +
+      (c || "") + "'>" + (v == null ? "&mdash;" : v) + "</div></div>";
+  h += "</div>";
+  if (st.top_sym) h += "<div class=k style='margin-top:8px'>лучшее имя " +
+    esc(st.top_sym) + " &mdash; колонка рядом показывает итог без него: " +
+    "деньги из одного разгона статистикой не являются</div>";
+  return h + "</div>";
+}
+
+function tradeTable(rows, title){
+  if (!rows || !rows.length) return "";
+  let h = "<div class=panel><div class=cap>" + esc(title) + " &mdash; " +
+    rows.length + "</div><div class=scroll><table><tr><th>вход<th>выход" +
+    "<th>монета<th>плечо<th>маржа<th>ход<th>деньги<th>исход</tr>";
+  for (const r of rows){
+    const c = r.usd == null ? "" : (r.usd > 0 ? "good" : "bad");
+    h += "<tr><td class=mono>" + tsq(r.at) + "<td class=mono>" +
+      tsq(r.exit_ts) + "<td>" + esc(r.sym) + "<td class=mono>" +
+      (r.lev == null ? "&mdash;" : Number(r.lev).toFixed(2) + "&times;") +
+      "<td class=mono>" + (r.margin == null ? "&mdash;" :
+        Number(r.margin).toFixed(2) + " $") +
+      "<td class='mono " + c + "'>" + pct(r.pnl_frac) +
+      "<td class='mono " + c + "'>" + usd(r.usd) +
+      "<td>" + esc(r.exit || "") + "</tr>";
+  }
+  return h + "</table></div></div>";
+}
+
+function render(){
+  const d = DATA, box = document.getElementById("box");
+  document.getElementById("intro").innerHTML = d && d.present ? intro(d) :
+    "<div class=cap>что это</div><p class=dim>" +
+    esc((d && d.why) || "нет ответа сборщика") + "</p>";
+  const tabs = document.getElementById("tabs");
+  if (!d || !d.present){ tabs.innerHTML = ""; box.innerHTML = ""; return; }
+  const deps = d.deposits || [];
+  if (DEP == null && deps.length) DEP = String(Math.trunc(deps[0]));
+  tabs.innerHTML = deps.map(x => {
+    const k = String(Math.trunc(x));
+    return "<div class='tab" + (k === DEP ? " on" : "") +
+      "' data-dep='" + k + "'>$" + Number(x).toLocaleString("en-US") +
+      "</div>";
+  }).join("");
+  for (const el of tabs.querySelectorAll(".tab"))
+    el.onclick = () => { DEP = el.dataset.dep; render(); };
+  const b = (d.books || {})[DEP] || {};
+  let h = "";
+  if (d.stale) h += "<div class='panel alarm'><b>Суточный прогон не " +
+    "пришёл</b>, артефакту " + (d.age_h == null ? "&mdash;" : d.age_h) +
+    " ч. Числа ниже описывают ТОТ прогон, а не сегодняшний день.</div>";
+  h += "<div class=panel><div class=cap>книга</div><div class=stats>" +
+    "<div class=st><div class=k>депозит</div><div class='v mono'>$" +
+    Number(b.deposit || DEP).toLocaleString("en-US") + "</div></div>" +
+    "<div class=st><div class=k>мест</div><div class='v mono'>" +
+    (b.slots == null ? "&mdash;" : b.slots) + "</div></div>" +
+    "<div class=st><div class=k>билет</div><div class='v mono'>" +
+    (b.ticket == null ? "&mdash;" : "$" + b.ticket) + "</div></div>" +
+    "<div class=st><div class=k>строк в журнале</div><div class='v mono'>" +
+    (b.n_journal == null ? "&mdash;" : b.n_journal) + "</div></div>" +
+    "</div></div>";
+  h += statBlock(b.forward, DEP, "записано вперёд", "fwd");
+  h += statBlock(b.restored, DEP, "пересчёт по прошлому", "back");
+  if (!d.journal_present) h += "<div class=panel><p class=dim>Журнала на " +
+    "этой машине нет вовсе &mdash; он живёт там, где книги считаются. " +
+    "Это не то же самое, что «сделок нет».</p></div>";
+  h += tradeTable(b.trades_forward, "сделки, записанные вперёд");
+  h += tradeTable(b.trades_restored, "сделки, восстановленные пересчётом");
+  box.innerHTML = h;
+  document.getElementById("lead").textContent = d.window
+    ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")
+    : "";
+}
+
+function load(){
+  fetch("/dca?k=" + encodeURIComponent(KEY))
+    .then(r => r.json()).then(j => { DATA = j; render(); })
+    .catch(() => { DATA = {present: false, why:
+      "сборщик не отвечает &mdash; это не «книг нет»"}; render(); });
+}
+load();
+setInterval(load, 60000);
+</script>
+"""
+
 PAPERPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>monthly book — one construction, recorded forward</title>
@@ -10167,6 +10386,14 @@ def serve(collector, port, token, log):
                     collector.paper_book(q.get("at", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
+            if u.path == "/dca":
+                return self._ok(json.dumps(
+                    collector.dca_paper(q.get("dep", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/dca-page":
+                return self._ok(DCAPAGE.encode("utf-8"),
+                                "text/html; charset=utf-8")
             if u.path == "/paper-page":
                 return self._ok(PAPERPAGE.encode("utf-8"),
                                 "text/html; charset=utf-8")
