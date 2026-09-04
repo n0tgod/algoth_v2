@@ -1,8 +1,133 @@
 {
  "bad_lines": 0,
  "books": {
-  "1000": {
+  "safe:1000": {
    "deposit": 1000.0,
+   "ruler": "safe",
+   "ruler_title": "безопасная",
+   "slots": 40,
+   "ticket": 25.0,
+   "forward": {
+    "n": 31,
+    "days": 4,
+    "usd": 2.9,
+    "final": 0.0029,
+    "max_dd": 0.0,
+    "day_median": 0.00073,
+    "day_worst": 0.0003,
+    "day_green": 1.0,
+    "bite": 0.4,
+    "top_sym": "CAKEUSDT",
+    "usd_wo_top": 2.17,
+    "top_day": "2026-09-04",
+    "usd_wo_top3d": 0.27,
+    "names": 30
+   },
+   "restored": {
+    "n": 549,
+    "days": 26,
+    "usd": 83.72,
+    "final": 0.0837,
+    "max_dd": -0.0236,
+    "day_median": 9e-05,
+    "day_worst": -0.0222,
+    "day_green": 0.538,
+    "bite": 5.2,
+    "top_sym": "EIGENUSDT",
+    "usd_wo_top": 74.36,
+    "top_day": "2026-08-21",
+    "usd_wo_top3d": -11.17,
+    "names": 348
+   },
+   "n_forward": 31,
+   "n_restored": 549
+  },
+  "safe:10000": {
+   "deposit": 10000.0,
+   "ruler": "safe",
+   "ruler_title": "безопасная",
+   "slots": 400,
+   "ticket": 25.0,
+   "forward": {
+    "n": 31,
+    "days": 4,
+    "usd": 2.85,
+    "final": 0.0003,
+    "max_dd": 0.0,
+    "day_median": 7e-05,
+    "day_worst": 0.0,
+    "day_green": 1.0,
+    "bite": 0.4,
+    "top_sym": "CAKEUSDT",
+    "usd_wo_top": 2.13,
+    "top_day": "2026-09-04",
+    "usd_wo_top3d": 0.26,
+    "names": 30
+   },
+   "restored": {
+    "n": 2175,
+    "days": 26,
+    "usd": 659.55,
+    "final": 0.066,
+    "max_dd": -0.0041,
+    "day_median": 2e-05,
+    "day_worst": -0.0035,
+    "day_green": 0.577,
+    "bite": 4.6,
+    "top_sym": "EIGENUSDT",
+    "usd_wo_top": 648.24,
+    "top_day": "2026-08-21",
+    "usd_wo_top3d": 15.8,
+    "names": 611
+   },
+   "n_forward": 31,
+   "n_restored": 2175
+  },
+  "safe:100000": {
+   "deposit": 100000.0,
+   "ruler": "safe",
+   "ruler_title": "безопасная",
+   "slots": 4000,
+   "ticket": 25.0,
+   "forward": {
+    "n": 31,
+    "days": 4,
+    "usd": 2.69,
+    "final": 0.0,
+    "max_dd": 0.0,
+    "day_median": 1e-05,
+    "day_worst": 0.0,
+    "day_green": 1.0,
+    "bite": 0.4,
+    "top_sym": "CAKEUSDT",
+    "usd_wo_top": 2.01,
+    "top_day": "2026-09-04",
+    "usd_wo_top3d": 0.25,
+    "names": 30
+   },
+   "restored": {
+    "n": 2237,
+    "days": 26,
+    "usd": 682.38,
+    "final": 0.0068,
+    "max_dd": -0.0004,
+    "day_median": 0.0,
+    "day_worst": -0.0003,
+    "day_green": 0.577,
+    "bite": 4.3,
+    "top_sym": "EIGENUSDT",
+    "usd_wo_top": 671.49,
+    "top_day": "2026-08-21",
+    "usd_wo_top3d": 12.33,
+    "names": 626
+   },
+   "n_forward": 31,
+   "n_restored": 2237
+  },
+  "optimal:1000": {
+   "deposit": 1000.0,
+   "ruler": "optimal",
+   "ruler_title": "оптимальная",
    "slots": 40,
    "ticket": 25.0,
    "forward": {
@@ -40,8 +165,10 @@
    "n_forward": 31,
    "n_restored": 563
   },
-  "10000": {
+  "optimal:10000": {
    "deposit": 10000.0,
+   "ruler": "optimal",
+   "ruler_title": "оптимальная",
    "slots": 400,
    "ticket": 25.0,
    "forward": {
@@ -79,8 +206,10 @@
    "n_forward": 31,
    "n_restored": 2190
   },
-  "100000": {
+  "optimal:100000": {
    "deposit": 100000.0,
+   "ruler": "optimal",
+   "ruler_title": "оптимальная",
    "slots": 4000,
    "ticket": 25.0,
    "forward": {
@@ -119,7 +248,185 @@
    "n_restored": 2252
   }
  },
- "secs": 0.0,
+ "rulers": [
+  "safe",
+  "optimal"
+ ],
+ "deposits": [
+  1000.0,
+  10000.0,
+  100000.0
+ ],
+ "positions": 8677,
+ "skipped": 0,
+ "window": {
+  "from": "2026-08-08 18:07",
+  "to": "2026-09-04 10:08",
+  "from_ts": 1786212452.7,
+  "to_ts": 1788516533.0,
+  "span_h": 640.0,
+  "span_d": 26.7,
+  "dates": 28
+ },
+ "cells": {
+  "safe:1000": {
+   "taken": 580,
+   "no_cash": 1688,
+   "too_small": 0,
+   "take_share": 0.2557,
+   "final": 0.0866,
+   "max_dd": -0.0787,
+   "day_median": 0.00065,
+   "day_worst": -0.0262,
+   "day_green": 0.643,
+   "days": 28,
+   "open_mean": 23.3,
+   "open_median": 26.0,
+   "open_max": 47,
+   "slots": 40,
+   "ticket": 25.0,
+   "fp": "c8a83239d1f3",
+   "pnl_taken": 3.375,
+   "names": 359,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 9.36,
+   "final_wo_top": 0.0773,
+   "top_trade": 6.81
+  },
+  "safe:10000": {
+   "taken": 2206,
+   "no_cash": 62,
+   "too_small": 0,
+   "take_share": 0.9727,
+   "final": 0.0662,
+   "max_dd": -0.029,
+   "day_median": 6e-05,
+   "day_worst": -0.0068,
+   "day_green": 0.607,
+   "days": 28,
+   "open_mean": 76.9,
+   "open_median": 35.0,
+   "open_max": 415,
+   "slots": 400,
+   "ticket": 25.0,
+   "fp": "85cbd2153d13",
+   "pnl_taken": 25.8871,
+   "names": 616,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 11.31,
+   "final_wo_top": 0.0651,
+   "top_trade": 6.69
+  },
+  "safe:100000": {
+   "taken": 2268,
+   "no_cash": 0,
+   "too_small": 0,
+   "take_share": 1.0,
+   "final": 0.0069,
+   "max_dd": -0.0029,
+   "day_median": 1e-05,
+   "day_worst": -0.0006,
+   "day_green": 0.607,
+   "days": 28,
+   "open_mean": 78.7,
+   "open_median": 35.0,
+   "open_max": 469,
+   "slots": 4000,
+   "ticket": 25.0,
+   "fp": "42be03e6cff8",
+   "pnl_taken": 27.3372,
+   "names": 629,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 10.89,
+   "final_wo_top": 0.0067,
+   "top_trade": 6.34
+  },
+  "optimal:1000": {
+   "taken": 594,
+   "no_cash": 1689,
+   "too_small": 0,
+   "take_share": 0.2602,
+   "final": 0.1076,
+   "max_dd": -0.2189,
+   "day_median": 0.00106,
+   "day_worst": -0.084,
+   "day_green": 0.643,
+   "days": 28,
+   "open_mean": 23.3,
+   "open_median": 25.0,
+   "open_max": 47,
+   "slots": 40,
+   "ticket": 25.0,
+   "fp": "7466d52047fb",
+   "pnl_taken": 4.5323,
+   "names": 366,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 27.72,
+   "final_wo_top": 0.0799,
+   "top_trade": 22.28
+  },
+  "optimal:10000": {
+   "taken": 2221,
+   "no_cash": 62,
+   "too_small": 0,
+   "take_share": 0.9728,
+   "final": 0.125,
+   "max_dd": -0.0831,
+   "day_median": 0.00017,
+   "day_worst": -0.0226,
+   "day_green": 0.643,
+   "days": 28,
+   "open_mean": 76.4,
+   "open_median": 35.0,
+   "open_max": 415,
+   "slots": 400,
+   "ticket": 25.0,
+   "fp": "ae14b7f02e51",
+   "pnl_taken": 48.1729,
+   "names": 616,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 34.58,
+   "final_wo_top": 0.1216,
+   "top_trade": 24.37
+  },
+  "optimal:100000": {
+   "taken": 2283,
+   "no_cash": 0,
+   "too_small": 0,
+   "take_share": 1.0,
+   "final": 0.0127,
+   "max_dd": -0.0084,
+   "day_median": 2e-05,
+   "day_worst": -0.002,
+   "day_green": 0.643,
+   "days": 28,
+   "open_mean": 78.1,
+   "open_median": 35.0,
+   "open_max": 469,
+   "slots": 4000,
+   "ticket": 25.0,
+   "fp": "8a6f2ac30cb1",
+   "pnl_taken": 50.6902,
+   "names": 629,
+   "top_sym": "EIGENUSDT",
+   "top_pnl": 31.97,
+   "final_wo_top": 0.0124,
+   "top_trade": 22.03
+  }
+ },
+ "one_name": {
+  "safe": {
+   "positions": 8677,
+   "kept": 2268,
+   "skipped_repeats": 6409
+  },
+  "optimal": {
+   "positions": 8677,
+   "kept": 2283,
+   "skipped_repeats": 6394
+  }
+ },
+ "secs": 1023.3,
  "rules": {
   "RULES": 1,
   "TICKET": 25.0,
@@ -134,6 +441,24 @@
   "MIN_EDGE_BP": 33.0,
   "MIN_RR": 2.0,
   "SURVIVE_MULT": 2.0,
-  "FLOOR_FRAC": 0.1
+  "FLOOR_FRAC": 0.1,
+  "RULERS": {
+   "safe": {
+    "rule": "sigma",
+    "param": 6.0,
+    "title": "безопасная",
+    "plain": "плечо от собственной σ имени: запас 6 суточных σ до ликвидации. Волатильному имени плеча достаётся меньше, и в замере D3 такая книга не ликвидировала ни одной позиции ценой примерно половины дохода."
+   },
+   "optimal": {
+    "rule": "depth",
+    "param": 2.0,
+    "title": "оптимальная",
+    "plain": "плечо от глубины лестницы: запас 2 · d_max до ликвидации. Доход выше, хвост тяжелее (в замере D3 ликвидировано 0.06 % позиций), и щедрее всего линейка ровно к волатильным именам."
+   }
+  },
+  "RULER_ORDER": [
+   "safe",
+   "optimal"
+  ]
  }
 }
