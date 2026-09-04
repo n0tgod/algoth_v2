@@ -32,3 +32,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-04T13:04:52Z
+публикуется в ветку main:
+ jobs/done/deploy-ticket.log | 10 ++++++++++
+ jobs/done/ps-ticket.log     | 34 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log               |  2 ++
+ 3 files changed, 46 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   80b0465..fce4f94  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
