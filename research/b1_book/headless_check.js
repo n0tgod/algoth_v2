@@ -256,6 +256,10 @@ const dcaStub = (url) => {
     walk: [{at: T0 - 7200, px: 2.0, w: 0.25, avg: 2.0},
            {at: T0 - 5400, px: 1.6, w: 0.25, avg: 1.8}]});
   const nojournal = /dcanojournal=1/.test(SEARCH);
+  // какую книгу просили целиком — решает САМ ЗАПРОС: страница шлёт
+  // ключ в `full`, и заглушка обязана отвечать на то, что спросили
+  const _fm = /[?&]full=([^&]*)/.exec(url);
+  const FULLK = _fm ? decodeURIComponent(_fm[1]) : "";
   const RUL = [
     {key: "safe", title: "безопасная",
      plain: "плечо от собственной σ имени: запас 6 суточных σ."},
@@ -399,7 +403,20 @@ const dcaStub = (url) => {
                                     {at: T0 - 7200 - (i + 1) * 600,
                                      exit_ts: T0 - 3600 - (i + 1) * 600,
                                      bt: i % 2 === 0}));
+    // Список приходит ХВОСТОМ журнала: у длинной книги сервер отдаёт
+    // последние строки, а «закрытых» в своде считаются по ВСЕМУ
+    // журналу. У одной книги хвост нарочно урезан — без урезанной
+    // книги пометку «хвост журнала» проверять не на чем; «показать
+    // все» снимает потолок РОВНО у названной книги.
+    const HID = k === "safe:10000" ? 40 : 0;
+    if (HID && FULLK === k)
+      for (let i = 0; i < HID; i++)
+        b.trades.push(Object.assign({}, tr("H" + i + "USDT", i + 1, 1.1),
+                                    {at: T0 - 40000 - i * 600,
+                                     exit_ts: T0 - 39000 - i * 600,
+                                     bt: true}));
     b.trades_shown = b.trades.length;
+    b.trades_total = b.trades.length + (FULLK === k ? 0 : HID);
     delete b.trades_forward; delete b.trades_restored;
     b.live_known = !nolive;
     // Открытых ДВЕ и одна оборванная записью: список обязан их
@@ -1899,9 +1916,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // обзора, и совпадение имён однажды молча затёрло
                 // экспорт — проверка тогда честно сказала «нет
                 // переключателя» на исправной странице.
-                + "\nglobal.__dcaSetDep = typeof render === 'function' "
-                + "&& typeof DEP !== 'undefined' ? (function(x){ "
-                + "DEP = x; render(); }) : null;"
+                + "\nglobal.__dcaSetDep = typeof dcaSetDep === 'function' "
+                + "? dcaSetDep : null;"
                 // Вторая ось книги — линейка плеча. Тоже своим именем:
                 // страница держит два независимых переключателя, и один
                 // экспорт на оба означал бы, что проверка «переключение
@@ -1912,9 +1928,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // которую нельзя выполнить, писать незачем.
                 + "\nglobal.__dcaToggle = typeof dcaToggle === 'function' "
                 + "? dcaToggle : null;"
-                + "\nglobal.__dcaSetRuler = typeof render === 'function' "
-                + "&& typeof RUL !== 'undefined' ? (function(x){ "
-                + "RUL = x; render(); }) : null;"
+                + "\nglobal.__dcaSetRuler = typeof dcaSetRuler === 'function' "
+                + "? dcaSetRuler : null;"
                 // Третья ось показа — группа: «с бэктестом» либо «без
                 // бэктеста». Своим именем по той же причине, что и две
                 // предыдущие.
@@ -1934,6 +1949,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? dcaPage : null;"
                 + "\nglobal.__dcaIntro = typeof dcaIntro === 'function' "
                 + "? dcaIntro : null;"
+                + "\nglobal.__dcaFull = typeof dcaFull === 'function' "
+                + "? dcaFull : null;"
                 // Перевод ДОЛИ в проценты берётся у самой страницы:
                 // ожидание, посчитанное по памяти о правиле формата,
                 // трижды за проект давало холостой контроль.
@@ -3256,6 +3273,49 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       if (String(global.__el(id).style.display) !== "none")
         bad.push("DCA: повторное нажатие не свернуло позицию");
     } else bad.push("DCA: разворот позиции не выведен наружу");
+    // ХВОСТ ЖУРНАЛА: список — последние строки, а плитка «закрытых
+    // позиций» считает по ВСЕМУ журналу. Владелец прочёл это как
+    // расхождение счёта, и правильно: числа стояли рядом, а о том, что
+    // множества разные, не говорилось нигде. Проверяется в ОБЕ
+    // стороны — урезанный список обязан звать себя хвостом, полный
+    // обязан молчать.
+    const tail = flat().slice(flat().indexOf("позиции книги &mdash;"));
+    if (!/\(хвост журнала\)/.test(tail))
+      bad.push("DCA: урезанный список не назван хвостом журнала");
+    // Числа берутся из САМОГО ответа, а не переписываются сюда: у
+    // заглушки скрыто ровно 40 строк, и проверять надо эту разницу, а
+    // не запомненную пару чисел (ожидание по памяти уже трижды делало
+    // проверку холостой).
+    const tw = /отдал последние (\d+) закрытых позиций из (\d+)/.exec(tail);
+    if (!tw) bad.push("DCA: обе величины хвоста не названы числами");
+    else if (Number(tw[2]) - Number(tw[1]) !== 40)
+      bad.push(`DCA: хвост назвал ${tw[1]} из ${tw[2]}, а скрыто 40`);
+    if (!tw || tail.indexOf("показать все " + tw[2]) < 0)
+      bad.push("DCA: полного списка нельзя попросить");
+    const win0 = /(\d+) из (\d+)/.exec(tail);
+    if (global.__dcaFull){
+      global.__dcaFull();
+      await new Promise(r => setTimeout(r, 20));
+      const fu = flat().slice(flat().indexOf("позиции книги &mdash;"));
+      if (/\(хвост журнала\)/.test(fu))
+        bad.push("DCA: полный список всё ещё назван хвостом");
+      if (/показать все/.test(fu))
+        bad.push("DCA: у полного списка осталась кнопка «показать все»");
+      const win1 = /(\d+) из (\d+)/.exec(fu);
+      if (!win0 || !win1 || Number(win1[2]) - Number(win0[2]) !== 40)
+        bad.push("DCA: полный список не дал скрытых сорока позиций");
+      // Смена книги СНИМАЕТ полный список: он спрошен у одной книги, и
+      // соседняя показывала бы поле, которого сервер ей не отдавал.
+      if (global.__dcaSetRuler){
+        global.__dcaSetRuler("optimal");
+        await new Promise(r => setTimeout(r, 20));
+        global.__dcaSetRuler("safe");
+        await new Promise(r => setTimeout(r, 20));
+        const bk = flat().slice(flat().indexOf("позиции книги &mdash;"));
+        if (!/\(хвост журнала\)/.test(bk))
+          bad.push("DCA: смена книги не сняла полный список");
+      }
+    } else bad.push("DCA: «показать все» не выведено наружу");
     if (global.__dcaSetDep) global.__dcaSetDep("1000");
   }
   // Открытых НЕ СЧИТАЛИ — прочерк с названной причиной, а не ноль:

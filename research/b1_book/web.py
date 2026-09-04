@@ -6136,11 +6136,19 @@ let DATA = null, DEP = null, RUL = null, GRP = "all";
 // `PST` — какие позиции показывать, `PAGE`/`SIZE` — окно списка,
 // `INTRO` — открыта ли модалка «что это».
 let PST = "all", PAGE = 0, SIZE = 20, INTRO = false;
+// Ключ книги, у которой список запрошен ЦЕЛИКОМ. Сервер отдаёт хвост
+// журнала (последние строки), потому что закрытых позиций тысячи на
+// книгу, а книг девять; целиком отдаётся ровно одна — по нажатию.
+let FULL = null;
 const SIZES = [20, 50];
 function dcaState(x){ PST = x; PAGE = 0; render(); }
 function dcaSize(n){ SIZE = Number(n); PAGE = 0; render(); }
 function dcaPage(n){ PAGE = Math.max(0, Number(n)); render(); }
 function dcaIntro(on){ INTRO = !!on; render(); }
+function dcaFull(){ FULL = RUL + ":" + DEP; PAGE = 0; load(); }
+function dcaPick(){ PAGE = 0; if (FULL) { FULL = null; load(); } else render(); }
+function dcaSetRuler(x){ RUL = x; dcaPick(); }
+function dcaSetDep(x){ DEP = x; dcaPick(); }
 
 // Рамка предмета первым абзацем. Без неё три книги читаются как три
 // стратегии, а отличаются они РОВНО депозитом; и «бумажная» здесь
@@ -6509,8 +6517,20 @@ function posBlock(b, grp){
   const pg = Math.min(PAGE, pages - 1);
   const from = pg * SIZE;
   const win = rows.slice(from, from + SIZE);
+  // Всего закрытых у книги считает СВОД (по всему журналу), а список
+  // приходит хвостом. Заголовок обязан говорить обе величины: «315» под
+  // плиткой «закрытых 2095» читалось как одно и то же множество.
+  const tot = b.trades_total;
+  const cut = tot != null && (b.trades || []).length < tot;
   let h = "<div class=panel><div class=cap>позиции книги &mdash; " +
-    total + "</div>";
+    total + (cut ? " <span class=dim>(хвост журнала)</span>" : "") +
+    "</div>";
+  if (cut) h += "<p class=k><b>Список &mdash; ХВОСТ журнала:</b> сервер " +
+    "отдал последние " + (b.trades || []).length + " закрытых позиций из " +
+    tot + ", и плитка «закрытых позиций» выше считает по ВСЕМУ журналу, " +
+    "а не по этому списку. Это разные множества, и складывать их " +
+    "нечего. <button class=btn data-full='1'>показать все " + tot +
+    "</button></p>";
   // Переключатель состояния: счётчик стоит В САМОМ чипе, иначе выбрать
   // пустую вкладку можно вслепую.
   h += "<div class=tabs>" + STATES.map(([k, t]) =>
@@ -6683,7 +6703,7 @@ function render(){
     "<div class='tab" + (r.key === RUL ? " on" : "") + "' data-rul='" +
     esc(r.key) + "'>" + esc(r.title || r.key) + "</div>").join("");
   for (const el of rtabs.querySelectorAll(".tab"))
-    el.onclick = () => { RUL = el.dataset.rul; render(); };
+    el.onclick = () => dcaSetRuler(el.dataset.rul);
   tabs.innerHTML = deps.map(x => {
     const k = String(Math.trunc(x));
     return "<div class='tab" + (k === DEP ? " on" : "") +
@@ -6691,7 +6711,7 @@ function render(){
       "</div>";
   }).join("");
   for (const el of tabs.querySelectorAll(".tab"))
-    el.onclick = () => { DEP = el.dataset.dep; render(); };
+    el.onclick = () => dcaSetDep(el.dataset.dep);
   // Умолчание — «с бэктестом»: это общий счёт книги, и он же кривая,
   // которую владелец просил не делить. «Без бэктеста» стоит рядом
   // ровно затем, чтобы вклад пересчёта по прошлому можно было снять
@@ -6755,13 +6775,19 @@ function render(){
     el.onclick = () => dcaSize(el.dataset.size);
   for (const el of box.querySelectorAll("[data-page]"))
     el.onclick = () => dcaPage(el.dataset.page);
+  // «Показать все» просит у сервера полный список ОДНОЙ книги: снять
+  // предел у всех разом значило бы вырастить ответ на порядок ради
+  // строк, которых никто не смотрит.
+  for (const el of box.querySelectorAll("[data-full]"))
+    el.onclick = () => dcaFull();
   document.getElementById("lead").textContent = d.window
     ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")
     : "";
 }
 
 function load(){
-  fetch("/dca?k=" + encodeURIComponent(KEY))
+  fetch("/dca?k=" + encodeURIComponent(KEY) +
+        (FULL ? "&full=" + encodeURIComponent(FULL) : ""))
     .then(r => r.json()).then(j => { DATA = j; render(); })
     .catch(() => { DATA = {present: false, why:
       "сборщик не отвечает &mdash; это не «книг нет»"}; render(); });
@@ -10986,9 +11012,14 @@ def serve(collector, port, token, log):
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/dca":
+                # `full` — ключ ОДНОЙ книги, у которой список отдаётся
+                # целиком. Снять предел у всех разом нельзя: закрытых
+                # позиций тысячи на книгу, а книг девять, и ответ вырос
+                # бы на порядок ради строк, которых никто не смотрит.
                 return self._ok(json.dumps(
                     collector.dca_paper(q.get("dep", [None])[0],
-                                        q.get("ruler", [None])[0]),
+                                        q.get("ruler", [None])[0],
+                                        q.get("full", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/dca_trades":

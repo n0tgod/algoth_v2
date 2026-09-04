@@ -6960,6 +6960,34 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                   deep["fills"], deep["entry_px"])[-1]["avg"]) < 1e-12,
               str(w))
 
+        # ХВОСТ журнала: список есть последние `DCA_TRADES` строк, а
+        # плитка «закрытых позиций» считает по ВСЕМУ журналу — это
+        # разные множества, и оба числа обязаны ехать рядом. Владелец
+        # увидел ровно это на живом сервере: 200 строк списка под
+        # «закрытых 2095». Урезать то, что ОТДАЁШЬ, законно; урезать
+        # молча — нет.
+        many = [row("safe", 1.0, "M%03dUSDT" % i, at=t0 + 10000 + i * 60)
+                for i in range(C.DCA_TRADES + 5)]
+        with open(DR.JOURNAL, "w", encoding="utf-8") as f:
+            for r in rows + many:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        c3 = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        b3 = (c3.dca_paper().get("books") or {})["safe:1000"]
+        check("DCA: длинная книга отдаётся хвостом, итог назван числом",
+              b3.get("trades_total") == C.DCA_TRADES + 7
+              and b3.get("trades_shown") == C.DCA_TRADES,
+              "%s / %s" % (b3.get("trades_total"), b3.get("trades_shown")))
+        # «показать все» снимает потолок РОВНО у названной книги: полные
+        # списки соседних стоили бы того же, из-за чего потолок и стоит.
+        c4 = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        d4 = c4.dca_paper(full="safe:1000")
+        b4 = (d4.get("books") or {})["safe:1000"]
+        o4 = (d4.get("books") or {})["optimal:1000"]
+        check("DCA: полный список отдаётся только запрошенной книге",
+              b4.get("trades_shown") == b4.get("trades_total")
+              == C.DCA_TRADES + 7 and o4.get("trades_shown") == 2,
+              "%s / %s" % (b4.get("trades_shown"), o4.get("trades_shown")))
+
         # свод ПРЕЖНЕГО образца (ключ — один депозит) не обязан быть пуст
         art["books"] = {"1000": {"deposit": 1000.0, "slots": 40, "zzz": 1}}
         art["rules"].pop("RULERS"); art["rules"].pop("RULER_ORDER")
