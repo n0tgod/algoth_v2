@@ -93,3 +93,19 @@ sheets.jsonl: ног 867333
 ## Чего эти числа НЕ описывают
 
 Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а не сведён в позицию, то есть маржа и цена ликвидации по-прежнему считаются по каждой позиции отдельно — на бирже они считаются по слитой. Веса модели видели эти часы, поэтому пересчёт читается как оценка СВЕРХУ. Период один и режим рынка один.
+публикуется в ветку main:
+ jobs/done/dca-recompute.log           |     7 +
+ jobs/done/dca-ticket.done             |     1 +
+ jobs/done/dca-ticket.log              |    95 +
+ jobs/poke.log                         |     3 +
+ research/dca_paper/out/DCA-paper.json |   244 +-
+ research/dca_paper/out/DCA-paper.md   |    44 +-
+ research/dca_paper/out/journal.jsonl  | 10158 ++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json   |     2 +-
+ 8 files changed, 10414 insertions(+), 140 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   544ae2c..70b10b2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-04T13:02:47Z, код 0
