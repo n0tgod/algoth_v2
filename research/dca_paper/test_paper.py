@@ -230,10 +230,14 @@ def test_two_rulers_are_two_books_and_optimal_is_untouched():
                                   log=lambda *_: None)
     both, cells, one = P.build_rows({"optimal": recs, "safe": safe},
                                     now=t0 + 10 * H, log=lambda *_: None)
-    assert set(one) == {"optimal", "safe"}, one
-    # каждая строка несёт свою линейку, и книг стало вдвое больше
+    assert {"optimal", "safe"} <= set(one), one
+    # режим, которому записей не досталось, не исчезает, а стоит нулём:
+    # молча пропавшая книга неотличима от книги, которой нечего показать
+    for k in set(one) - {"optimal", "safe"}:
+        assert one[k]["kept"] == 0 and one[k]["positions"] == 0, (k, one[k])
+    # каждая строка несёт свой режим, и книг стало по числу режимов
     assert {r["ruler"] for r in both} == {"optimal", "safe"}, "нет метки"
-    assert len(cells) == 2 * len(R.DEPOSITS), sorted(cells)
+    assert len(cells) == len(R.RULER_ORDER) * len(R.DEPOSITS), sorted(cells)
     opt = [r for r in both if r["ruler"] == "optimal"]
     assert opt == [dict(r, ruler="optimal") for r in one_only], "оптимальная сдвинулась"
     with tempfile.TemporaryDirectory() as td:
@@ -254,6 +258,79 @@ def test_two_rulers_are_two_books_and_optimal_is_untouched():
         for rk in R.RULER_ORDER:
             assert R.ruler_title(rk) in txt, (rk, txt[:400])
     print("ok  линейки: две книги на решение, «оптимальная» бит в бит прежняя")
+
+
+def test_aggressive_gate_takes_only_levered_entries():
+    """Третий режим = та же линейка глубины плюс ГЕЙТ по плечу.
+
+    Проверяется три вещи, и вторая важнее первой. (1) Гейт режет ровно по
+    объявленному порогу, и порог ВЫВЕДЕН из пола биржи при билете $5, а
+    не выбран. (2) Гейт стоит ПЕРЕД правилом одной на имя: у режима с
+    гейтом низкоплечевой ранний вход не случается, значит имя свободно и
+    позже по нему открывается рычажный — состав, а не только объём.
+    (3) Режим без поля `min_lev` гейта не несёт вовсе: отсутствие и ноль
+    здесь разные значения.
+    """
+    # порог — тождество, а не число в комментарии
+    assert abs(R.AGGR_MIN_LEV
+               - R.MIN_NOTIONAL / R.RUNG_SHARE / 5.0) < 1e-9, R.AGGR_MIN_LEV
+    assert R.min_lev_of("aggr") == R.AGGR_MIN_LEV
+    assert R.min_lev_of("optimal") is None and R.min_lev_of("safe") is None
+    t0 = 1_700_000_000
+    recs = [_rec(t0, hold_h=5.0, sym="LOWUSDT", lev=1.5),
+            _rec(t0 + 60, hold_h=5.0, sym="MIDUSDT", lev=3.9),
+            _rec(t0 + 120, hold_h=5.0, sym="HIUSDT", lev=4.0),
+            _rec(t0 + 180, hold_h=5.0, sym="TOPUSDT", lev=8.0)]
+    rows, cells, one = P.build_rows({"optimal": recs, "aggr": recs},
+                                    now=t0 + 10 * H, log=lambda *_: None)
+    assert one["optimal"]["gate_dropped"] == 0, one["optimal"]
+    assert one["aggr"]["gate_dropped"] == 2, one["aggr"]
+    assert one["aggr"]["kept"] == 2, one["aggr"]
+    syms = {k: {r["sym"] for r in rows if r["ruler"] == k and r["dep"] == 1000}
+            for k in ("optimal", "aggr")}
+    assert syms["aggr"] == {"HIUSDT", "TOPUSDT"}, syms
+    assert syms["aggr"] < syms["optimal"], syms
+    # (2) порядок: гейт до правила одной на имя
+    pair = [_rec(t0, hold_h=5.0, sym="AAAUSDT", lev=1.0),
+            _rec(t0 + 60, hold_h=5.0, sym="AAAUSDT", lev=8.0)]
+    rows2, _c2, one2 = P.build_rows({"optimal": pair, "aggr": pair},
+                                    now=t0 + 10 * H, log=lambda *_: None)
+    opt = [r for r in rows2 if r["ruler"] == "optimal" and r["dep"] == 1000]
+    agg = [r for r in rows2 if r["ruler"] == "aggr" and r["dep"] == 1000]
+    assert len(opt) == 1 and opt[0]["lev"] == 1.0, opt
+    assert len(agg) == 1 and agg[0]["lev"] == 8.0, agg
+    assert one2["optimal"]["skipped_repeats"] == 1, one2
+    assert one2["aggr"]["skipped_repeats"] == 0, one2
+    print(f"ok  гейт: плечо ≥ {R.AGGR_MIN_LEV:g}× (пол биржи при билете "
+          "$5), стоит до правила одной на имя")
+
+
+def test_aggressive_keeps_the_same_ticket_and_says_its_own_peak():
+    """Билет у режима с гейтом ТОТ ЖЕ, и это решение, а не недосмотр.
+
+    По своей арифметике его пол был бы вчетверо ниже ($20/4 = $5), но
+    другой билет дал бы другое число мест — то есть режим отличался бы от
+    «оптимальной» ДВУМЯ правилами, и разницу нельзя было бы приписать
+    гейту. Цена выбора обязана быть видна числом: свой пик режима и
+    отказы кассы печатаются, а отчёт называет плату словами.
+    """
+    for d in R.DEPOSITS:
+        assert R.ticket(d) == R.ticket(d), d       # один билет на все режимы
+    own_floor = R.MIN_NOTIONAL / R.RUNG_SHARE / R.AGGR_MIN_LEV
+    assert abs(own_floor - 5.0) < 1e-9, own_floor
+    assert R.TICKET_MIN > own_floor, (R.TICKET_MIN, own_floor)
+    t0 = 1_700_000_000
+    recs = [_rec(t0 + i * 60, hold_h=5.0, sym=f"S{i}USDT", lev=4.0 + i)
+            for i in range(6)]
+    _rows, _cells, one = P.build_rows({"aggr": recs}, now=t0 + 10 * H,
+                                      log=lambda *_: None)
+    assert one["aggr"]["peak_names"] == 6, one["aggr"]
+    assert one["aggr"]["lev_median"] is not None
+    txt = P.report({"books": {}, "one_name": one})
+    assert "Билет у режима с гейтом НЕ понижен" in txt, txt[:400]
+    assert "свой пик позиций" in txt and "6 |" in txt, txt[-1200:]
+    print(f"ok  билет тот же (${R.TICKET_MIN:g} против собственного пола "
+          f"${own_floor:g}), свой пик режима печатается числом")
 
 
 def test_legacy_row_reads_as_the_ruler_it_was_written_with():
@@ -534,6 +611,40 @@ def _control_dedup_without_rules_version():
         P.append_journal = orig
 
 
+def _control_gate_is_gone():
+    """Гейта нет вовсе: третий режим молча становится копией второй книги.
+
+    Порядок «гейт до правила одной на имя» этим контролем не проверяется —
+    он живёт в самом `build_rows`, и подделать его изнутри процесса
+    нечем; он проверяется порчей исходника (копия в scratchpad, возврат
+    копией), как остальные правки такого рода.
+    """
+    orig = R.min_lev_of
+    R.min_lev_of = lambda k: None
+    try:
+        try:
+            test_aggressive_gate_takes_only_levered_entries()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.min_lev_of = orig
+
+
+def _control_gate_on_every_ruler():
+    """Порог назначен всем режимам: книга без поля теряет свои входы."""
+    orig = R.min_lev_of
+    R.min_lev_of = lambda k: R.AGGR_MIN_LEV
+    try:
+        try:
+            test_aggressive_gate_takes_only_levered_entries()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.min_lev_of = orig
+
+
 TESTS = [test_ticket_clears_the_exchange_floor,
          test_ticket_is_squeezed_between_the_floor_and_the_peak,
          test_one_per_name_applied_before_cash,
@@ -542,6 +653,8 @@ TESTS = [test_ticket_clears_the_exchange_floor,
          test_day_concentration_is_measured_and_not_faked,
          test_short_record_says_not_measured_not_zero,
          test_two_rulers_are_two_books_and_optimal_is_untouched,
+         test_aggressive_gate_takes_only_levered_entries,
+         test_aggressive_keeps_the_same_ticket_and_says_its_own_peak,
          test_legacy_row_reads_as_the_ruler_it_was_written_with,
          test_cash_refusals_reach_the_report_and_survive_restat,
          test_rules_change_starts_a_fresh_record]
@@ -558,7 +671,9 @@ CONTROLS = [("свод складывает вперёд и пересчёт", _
             ("пересборка теряет числа счётного прогона",
              _control_restat_drops_the_counts),
             ("дедуп не видит версии правил",
-             _control_dedup_without_rules_version)]
+             _control_dedup_without_rules_version),
+            ("гейта плеча нет вовсе", _control_gate_is_gone),
+            ("гейт назначен всем режимам", _control_gate_on_every_ruler)]
 
 
 def main():

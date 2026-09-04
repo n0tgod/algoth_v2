@@ -35,7 +35,7 @@ const isTour = /tournament — all 72 branches/.test(src);
 const isPaper =
   /monthly book — one construction, recorded forward/.test(src);
 const isDca =
-  /DCA paper books — two leverage rulers/.test(src);
+  /DCA paper books — three modes/.test(src);
 const flatBox = () => String(global.__el ? global.__el("box").innerHTML : "")
   .replace(/\s+/g, " ");
 const isAgents =
@@ -236,7 +236,11 @@ const dcaStub = (url) => {
     {key: "safe", title: "безопасная",
      plain: "плечо от собственной σ имени: запас 6 суточных σ."},
     {key: "optimal", title: "оптимальная",
-     plain: "плечо от глубины лестницы: запас 2 · d_max."}];
+     plain: "плечо от глубины лестницы: запас 2 · d_max."},
+    // третий режим несёт ГЕЙТ входа: у него есть поле min_lev, у первых
+    // двух его нет вовсе — отсутствие и ноль здесь разные значения
+    {key: "aggr", title: "агрессивная", min_lev: 4.0,
+     plain: "та же глубина плюс гейт входа по плечу."}];
   return {
     present: !/dcaabsent=1/.test(SEARCH),
     why: /dcaabsent=1/.test(SEARCH)
@@ -254,8 +258,9 @@ const dcaStub = (url) => {
             AHEAD_H: 120, HOLD_H: 72, ONE_PER_NAME: true,
             MIN_EDGE_BP: 33.0, MIN_RR: 2.0, SURVIVE_MULT: 2.0,
             FLOOR_FRAC: 0.1,
-            RULERS: {safe: RUL[0], optimal: RUL[1]},
-            RULER_ORDER: ["safe", "optimal"]},
+            AGGR_MIN_LEV: 4.0,
+            RULERS: {safe: RUL[0], optimal: RUL[1], aggr: RUL[2]},
+            RULER_ORDER: ["safe", "optimal", "aggr"]},
     books: {
       // безопасная: та же запись, но плечо меньше — денег меньше, хвост
       // мельче. Числа нарочно РАЗНЫЕ у линеек: совпади они, проверка
@@ -305,7 +310,32 @@ const dcaStub = (url) => {
                          restored: mk(5140, 1580.0, -0.052, -0.017,
                                       "TUTUSDT", 1102.0, -42.0),
                          trades_forward: [],
-                         trades_restored: [tr("TUTUSDT", 44.0, 3.4)]}}};
+                         trades_restored: [tr("TUTUSDT", 44.0, 3.4)]},
+      // агрессивная: сделок меньше (гейт), плечо крупнее, числа СВОИ —
+      // совпади они с соседними, проверка переключения прошла бы на
+      // сломанном ключе
+      "aggr:1000": {deposit: 1000, ruler: "aggr",
+                    ruler_title: "агрессивная", slots: 40, ticket: 25.0,
+                    n_journal: 120, forward: null,
+                    restored: mk(120, 63.7, -0.094, -0.031, "TUTUSDT",
+                                 26.4, -21.8),
+                    trades_forward: [],
+                    trades_restored: [tr("TUTUSDT", 21.9, 6.2)]},
+      "aggr:10000": {deposit: 10000, ruler: "aggr",
+                     ruler_title: "агрессивная", slots: 400, ticket: 25.0,
+                     n_journal: 1180,
+                     forward: mk(28, 33.4, -0.021, -0.008, "WUSDT", 25.9),
+                     restored: mk(1152, 1310.5, -0.108, -0.036, "TUTUSDT",
+                                  840.0, -60.0),
+                     trades_forward: [tr("WUSDT", 7.7, 5.1)],
+                     trades_restored: [tr("TUTUSDT", 52.0, 6.4)]},
+      "aggr:100000": {deposit: 100000, ruler: "aggr",
+                      ruler_title: "агрессивная", slots: 689, ticket: 145.0,
+                      n_journal: 2040, forward: null,
+                      restored: mk(2040, 2210.0, -0.086, -0.029, "TUTUSDT",
+                                   1490.0, -70.0),
+                      trades_forward: [],
+                      trades_restored: [tr("TUTUSDT", 61.0, 6.4)]}}};
 };
 
 const paperStub = (url) => {
@@ -2680,8 +2710,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       .replace(/\s+/g, " ");
     const intro = String(global.__el ? global.__el("intro").innerHTML : "")
       .replace(/\s+/g, " ");
-    if (!/линейкой плеча и депозитом/.test(intro))
-      bad.push("DCA: рамка «линейка плеча и депозит» не названа");
+    if (!/РЕЖИМОМ и депозитом/.test(intro))
+      bad.push("DCA: рамка «режим и депозит» не названа");
     for (const t of ["безопасная", "оптимальная"])
       if (!new RegExp(t).test(intro))
         bad.push(`DCA: линейка «${t}» не названа в рамке`);
@@ -2706,10 +2736,20 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push(`DCA: переключателей депозита ${nTabs}, а книг три`);
     const rtabs = String(global.__el ? global.__el("rtabs").innerHTML : "");
     const nR = (rtabs.match(/class='tab/g) || []).length;
-    if (nR !== 2)
-      bad.push(`DCA: переключателей линейки ${nR}, а их две`);
-    if (!/безопасная/.test(rtabs) || !/оптимальная/.test(rtabs))
-      bad.push("DCA: линейки не подписаны своими именами");
+    if (nR !== 3)
+      bad.push(`DCA: переключателей режима ${nR}, а их три`);
+    if (!/безопасная/.test(rtabs) || !/оптимальная/.test(rtabs)
+        || !/агрессивная/.test(rtabs))
+      bad.push("DCA: режимы не подписаны своими именами");
+    // у режима с гейтом порог обязан стоять ЧИСЛОМ из ответа, а плата
+    // за неизменный билет — словами: иначе низкий процент читался бы
+    // как свойство правила, а он наполовину наш выбор
+    if (!/плечо не ниже 4/.test(intro))
+      bad.push("DCA: порог гейта не назван числом");
+    if (!/Билет ему НЕ понижен/.test(intro))
+      bad.push("DCA: цена неизменного билета у режима с гейтом не названа");
+    if (!/только запись вперёд|вердикт ему выносит/.test(intro))
+      bad.push("DCA: не сказано, что вердикт режиму с гейтом даёт форвард");
     // умолчание — безопасная: показывать по умолчанию книгу, которая
     // рискует больше, значит выбирать за владельца
     if (!/class='tab on' data-rul='safe'/.test(rtabs))
@@ -2734,6 +2774,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (r2 === b1) bad.push("DCA: переключение линейки ничего не меняет");
     if (!/\+41\.20 \$/.test(r2))
       bad.push("DCA: деньги пересчёта оптимальной книги $1000 не показаны");
+    if (global.__dcaSetRuler) global.__dcaSetRuler("aggr");
+    const r3 = flat();
+    if (r3 === r2) bad.push("DCA: переключение на агрессивную ничего не меняет");
+    if (!/\+63\.70 \$/.test(r3))
+      bad.push("DCA: деньги пересчёта агрессивной книги $1000 не показаны");
     if (global.__dcaSetRuler) global.__dcaSetRuler("safe");
     // переключение обязано менять ЧИСЛА, а не только подсветку
     if (global.__dcaSetDep) global.__dcaSetDep("10000");
