@@ -1,0 +1,213 @@
+{
+ "positions": 8676,
+ "skipped": 0,
+ "grid": {
+  "share": [
+   0.16666666666666666,
+   0.05,
+   0.016666666666666666,
+   0.005,
+   0.0016666666666666668
+  ],
+  "ruler": [
+   [
+    "depth",
+    2.0
+   ],
+   [
+    "sigma",
+    6.0
+   ]
+  ]
+ },
+ "params": {
+  "DEPOSIT": 3000.0,
+  "MIN_NOTIONAL": 5.0,
+  "RUNG_SHARE": 0.25,
+  "HOLD_H": 72,
+  "FLOOR_FRAC": 0.1
+ },
+ "cells": {
+  "depth|2.0|0.166667": {
+   "taken": 96,
+   "no_cash": 8580,
+   "too_small": 0,
+   "take_share": 0.0111,
+   "final": 0.1795,
+   "max_dd": -0.0867,
+   "day_median": 0.00248,
+   "day_worst": -0.0767,
+   "day_green": 0.714,
+   "days": 28,
+   "open_mean": 4.9,
+   "open_median": 5.0,
+   "open_max": 8,
+   "slots": 6,
+   "ticket": 500.0
+  },
+  "depth|2.0|0.050000": {
+   "taken": 342,
+   "no_cash": 8334,
+   "too_small": 0,
+   "take_share": 0.0394,
+   "final": 0.0716,
+   "max_dd": -0.1096,
+   "day_median": 0.00062,
+   "day_worst": -0.047,
+   "day_green": 0.571,
+   "days": 28,
+   "open_mean": 17.0,
+   "open_median": 18.0,
+   "open_max": 26,
+   "slots": 20,
+   "ticket": 150.0
+  },
+  "depth|2.0|0.016667": {
+   "taken": 905,
+   "no_cash": 7771,
+   "too_small": 0,
+   "take_share": 0.1043,
+   "final": 0.0915,
+   "max_dd": -0.1253,
+   "day_median": 0.00064,
+   "day_worst": -0.0619,
+   "day_green": 0.679,
+   "days": 28,
+   "open_mean": 40.9,
+   "open_median": 45.0,
+   "open_max": 76,
+   "slots": 60,
+   "ticket": 50.0
+  },
+  "depth|2.0|0.005000": {
+   "taken": 1549,
+   "no_cash": 5105,
+   "too_small": 2022,
+   "take_share": 0.1785,
+   "final": 0.1581,
+   "max_dd": -0.1381,
+   "day_median": 0.00027,
+   "day_worst": -0.0462,
+   "day_green": 0.679,
+   "days": 28,
+   "open_mean": 45.8,
+   "open_median": 13.5,
+   "open_max": 249,
+   "slots": 200,
+   "ticket": 15.0
+  },
+  "depth|2.0|0.001667": {
+   "taken": 1851,
+   "no_cash": 642,
+   "too_small": 6183,
+   "take_share": 0.2133,
+   "final": 0.2051,
+   "max_dd": -0.083,
+   "day_median": 0.00015,
+   "day_worst": -0.0281,
+   "day_green": 0.737,
+   "days": 19,
+   "open_mean": 69.6,
+   "open_median": 5.0,
+   "open_max": 666,
+   "slots": 600,
+   "ticket": 5.0
+  },
+  "sigma|6.0|0.166667": {
+   "taken": 99,
+   "no_cash": 8577,
+   "too_small": 0,
+   "take_share": 0.0114,
+   "final": 0.0722,
+   "max_dd": -0.0447,
+   "day_median": 0.00125,
+   "day_worst": -0.0416,
+   "day_green": 0.679,
+   "days": 28,
+   "open_mean": 5.0,
+   "open_median": 5.0,
+   "open_max": 8,
+   "slots": 6,
+   "ticket": 500.0
+  },
+  "sigma|6.0|0.050000": {
+   "taken": 331,
+   "no_cash": 8345,
+   "too_small": 0,
+   "take_share": 0.0382,
+   "final": 0.0701,
+   "max_dd": -0.0416,
+   "day_median": 0.00019,
+   "day_worst": -0.0193,
+   "day_green": 0.536,
+   "days": 28,
+   "open_mean": 16.7,
+   "open_median": 18.0,
+   "open_max": 25,
+   "slots": 20,
+   "ticket": 150.0
+  },
+  "sigma|6.0|0.016667": {
+   "taken": 873,
+   "no_cash": 7803,
+   "too_small": 0,
+   "take_share": 0.1006,
+   "final": 0.0795,
+   "max_dd": -0.0349,
+   "day_median": 0.00059,
+   "day_worst": -0.0123,
+   "day_green": 0.607,
+   "days": 28,
+   "open_mean": 39.9,
+   "open_median": 44.0,
+   "open_max": 72,
+   "slots": 60,
+   "ticket": 50.0
+  },
+  "sigma|6.0|0.005000": {
+   "taken": 1485,
+   "no_cash": 4851,
+   "too_small": 2340,
+   "take_share": 0.1712,
+   "final": 0.1111,
+   "max_dd": -0.053,
+   "day_median": 0.00011,
+   "day_worst": -0.0154,
+   "day_green": 0.679,
+   "days": 28,
+   "open_mean": 45.7,
+   "open_median": 13.0,
+   "open_max": 239,
+   "slots": 200,
+   "ticket": 15.0
+  },
+  "sigma|6.0|0.001667": {
+   "taken": 274,
+   "no_cash": 0,
+   "too_small": 8402,
+   "take_share": 0.0316,
+   "final": 0.0148,
+   "max_dd": -0.0017,
+   "day_median": 7e-05,
+   "day_worst": -0.0002,
+   "day_green": 0.889,
+   "days": 9,
+   "open_mean": 18.3,
+   "open_median": 1.0,
+   "open_max": 152,
+   "slots": 600,
+   "ticket": 5.0
+  }
+ },
+ "unlimited": {
+  "depth|2.0": {
+   "n": 8676,
+   "sum_pnl": 249.57
+  },
+  "sigma|6.0": {
+   "n": 8676,
+   "sum_pnl": 123.98
+  }
+ },
+ "secs": 1035.1
+}
