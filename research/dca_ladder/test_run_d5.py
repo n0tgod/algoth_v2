@@ -17,6 +17,10 @@
   собой.
 * **Якорь.** Ячейка ("depth", 2.0) обязана давать ровно то плечо, что
   считает живой путь D2/D4, иначе таблица описывает другую книгу.
+* **Время в позиции** отсчитывается от бара ВХОДА, а не от начала окна
+  признаков: окно назад `BACK_H` = 24 ч, и отсчёт от него добавил бы
+  сутки КАЖДОЙ позиции, оставив таблицу правдоподобной. Ловит это один
+  инвариант — время не бывает больше предела удержания.
 
 Запуск из `.venv/bin/python` (тянет numpy).
 """
@@ -121,6 +125,40 @@ def test_anchor_matches_live_path():
     print(f"ok  якорь: линейка воспроизвела живой путь D2 — {got:.4f}×")
 
 
+def test_hold_time_from_entry_not_window():
+    """Время в позиции: от входа, ноль законен, потолок — предел удержания."""
+    bars, at = T3._bars(pre=1440, drop_to=60.0, steps=400)
+    ts = [b[0] for b in bars]
+    o = D2.build_levels
+    D2.build_levels = lambda w, i: T3.LEVELS
+    try:
+        cells, sig = D5.leg_cells(T3._leg(at), bars, ts, LOOK)
+    finally:
+        D2.build_levels = o
+    for k, c in cells.items():
+        assert 0.0 <= c["hold_h"] <= D2.HOLD_H + 1e-6, (k, c["hold_h"])
+        # отсчёт именно от бара входа: окно назад в него не входит
+        assert c["hold_h"] < D2.BACK_H, (k, c["hold_h"])
+
+    # цель задета в ту же минуту, в которую вошли → ровно ноль, не пропуск
+    spike = list(bars[:1440])
+    t0 = bars[1439][0] + 60
+    spike.append((t0, 100.0, 107.0, 99.9, 106.0, 1000.0))
+    spike += [(t0 + 60 * (j + 1), 106.0, 106.1, 105.9, 106.0, 1000.0)
+              for j in range(30)]
+    D2.build_levels = lambda w, i: T3.LEVELS
+    try:
+        cells2, _s2 = D5.leg_cells(T3._leg(t0), spike, [b[0] for b in spike],
+                                   LOOK)
+    finally:
+        D2.build_levels = o
+    a = cells2[D5.ANCHOR]
+    assert a["exit"] == "тейк" and a["hold_h"] == 0.0, (a["exit"],
+                                                        a["hold_h"])
+    print(f"ok  время в позиции: от входа (< {D2.BACK_H} ч окна), "
+          f"тейк в минуту входа = 0.0 ч, потолок {D2.HOLD_H} ч")
+
+
 def test_run_end_to_end_synthetic():
     """Сквозной прогон: run → report, обе единицы и сверка якоря.
 
@@ -154,11 +192,16 @@ def test_run_end_to_end_synthetic():
         b = c["book"]
         assert b["hours"] > 0 and b["final"] == b["final"], (key, b)
         assert sum(c["binder"].values()) > 0.99, (key, c["binder"])
+        h = c["hold"]
+        assert h and h["max_h"] <= D2.HOLD_H + 1e-6, (key, h)
+        assert h["min_h"] >= 0.0 and h["mean_h"] >= h["min_h"], (key, h)
+        assert sum(v["n"] for v in h["by_exit"].values()) == 60, (key, h)
     # синтетика не обязана совпасть с живым якорем — сверка обязана это
     # СКАЗАТЬ, а не промолчать
     assert s["anchor"]["mismatch"] > 0, s["anchor"]
     rep = D5.report(s)
     assert "ЛИНЕЙКА" in rep and "Кто связал запас" in rep, rep[:400]
+    assert "Время в позиции" in rep and " ч |" in rep, rep[-1500:]
     assert "Сверка якоря НЕ сошлась" in rep, rep[:1200]
     assert "nan" not in rep.lower(), [ln for ln in rep.splitlines()
                                       if "nan" in ln.lower()][:3]
@@ -226,6 +269,33 @@ def _control_sigma_ruler_is_depth():
         D5.fence_leverage = orig
 
 
+def _control_hold_from_window_start():
+    """Отсчёт от начала окна признаков добавил бы сутки каждой позиции.
+
+    Таблица осталась бы правдоподобной — время просто выросло бы у всех
+    ячеек разом. Ловит только инвариант «не больше предела удержания».
+    """
+    orig = D5.leg_cells
+
+    def loose(g, bars, ts, look):
+        r = orig(g, bars, ts, look)
+        if r is None:
+            return None
+        cells, sig = r
+        for c in cells.values():
+            c["hold_h"] += D2.BACK_H
+        return cells, sig
+    D5.leg_cells = loose
+    try:
+        try:
+            test_hold_time_from_entry_not_window()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D5.leg_cells = orig
+
+
 def _control_anchor_never_complains():
     """Молчаливая сверка якоря: расхождение обязано попадать в отчёт."""
     orig = dict(D5.ANCHOR_D3), dict(D5.ANCHOR_D4)
@@ -244,11 +314,13 @@ TESTS = [test_sigma_ruler_gives_wild_less_leverage,
          test_no_sigma_no_leverage,
          test_buffer_never_shallower_than_ladder,
          test_anchor_matches_live_path,
+         test_hold_time_from_entry_not_window,
          test_run_end_to_end_synthetic]
 
 CONTROLS = [("нулевая σ пропускается", _control_sigma_zero_allowed),
             ("запас мельче лестницы", _control_buffer_may_be_shallower),
             ("σ-линейка это лестница", _control_sigma_ruler_is_depth),
+            ("время от начала окна", _control_hold_from_window_start),
             ("сверка якоря молчит", _control_anchor_never_complains)]
 
 

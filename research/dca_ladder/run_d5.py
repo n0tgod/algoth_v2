@@ -45,6 +45,13 @@ D3.window_stats). Одно число на всех: «ликвидация не
 нижнем дециле σ. Если правило работает, у бешеных плечо падает, у
 спокойных растёт, и это видно числом, а не рассуждением.
 
+Рядом — ВРЕМЯ В ПОЗИЦИИ (просьба владельца): среднее, минимум, максимум,
+медиана и разбивка по причине выхода. Оно не украшение таблицы: линейка
+меняет плечо, плечо двигает цену ликвидации и пол капитуляции, а те
+решают, ДОЖИВЁТ ли позиция до тейка или её вынесет раньше. Максимум
+упирается в предел удержания (`HOLD_H`), минимум может быть нулевым —
+это значит, что цель задета внутри той же минуты, в которую вошли.
+
 Встроенная сверка: ячейка ("depth", 2.0) обязана воспроизвести
 опубликованные D3 (`2.0|0.1`) и D4 (базовая книга). Разошлась — прогон
 описывает другую книгу, а обе таблицы выглядят исправными.
@@ -178,8 +185,35 @@ def leg_cells(g, bars, ts, look):
                            track=True)
         r["lev"] = lev
         r["binder"] = binder
+        # время в позиции: от бара входа до бара выхода, часов
+        r["hold_h"] = max(0.0, (float(r["exit_ts"]) - float(hold[0][0]))
+                          / HOUR)
         cells[(rule, param)] = r
     return cells, sigma_bp
+
+
+def _hold_stats(hold, by_exit):
+    """Время в позиции: среднее, медиана, край и разбивка по выходу.
+
+    Минимум ноль законен — цель задета внутри минуты входа; это НЕ пропуск
+    и прочерком не подменяется. Максимум обязан упираться в предел
+    удержания, и если он заметно больше, замер описывает не ту книгу.
+    """
+    if not hold:
+        return None
+    h = np.array(hold, dtype=float)
+    out = {"mean_h": round(float(np.mean(h)), 2),
+           "median_h": round(float(np.median(h)), 2),
+           "min_h": round(float(np.min(h)), 3),
+           "max_h": round(float(np.max(h)), 2),
+           "by_exit": {}}
+    for k, v in by_exit.items():
+        if v:
+            a = np.array(v, dtype=float)
+            out["by_exit"][k] = {"n": len(a),
+                                 "mean_h": round(float(np.mean(a)), 2),
+                                 "median_h": round(float(np.median(a)), 2)}
+    return out
 
 
 def _dec_stats(lev, liq, mask):
@@ -207,7 +241,8 @@ def run(limit=None, src=None, log=print):
 
     keys = list(GRID_RULE)
     acc = {k: {"pnl": [], "liq": [], "lev": [], "depth": [], "exits": {},
-               "binder": {}, "dP": {}, "X": {}, "day": {}} for k in keys}
+               "binder": {}, "dP": {}, "X": {}, "day": {},
+               "hold": [], "hold_by": {}} for k in keys}
     sig, n, skipped = [], 0, 0
     said, done = time.time(), 0
     for sym, glist in by_sym.items():
@@ -239,6 +274,8 @@ def run(limit=None, src=None, log=print):
                 a["lev"].append(c["lev"])
                 a["depth"].append(c["depth"])
                 a["exits"][c["exit"]] = a["exits"].get(c["exit"], 0) + 1
+                a["hold"].append(c["hold_h"])
+                a["hold_by"].setdefault(c["exit"], []).append(c["hold_h"])
                 a["binder"][c["binder"]] = a["binder"].get(c["binder"], 0) + 1
                 a["day"][day] = a["day"].get(day, 0.0) + c["pnl_frac"]
                 prev = 0.0
@@ -291,6 +328,7 @@ def run(limit=None, src=None, log=print):
         lc, liqc = _dec_stats(a["lev"], a["liq"], calm)
         st["lev_wild"], st["liq_wild"] = lw, liqw
         st["lev_calm"], st["liq_calm"] = lc, liqc
+        st["hold"] = _hold_stats(a["hold"], a["hold_by"])
         tot = sum(a["binder"].values()) or 1
         st["binder"] = {b: round(c / tot, 3) for b, c in a["binder"].items()}
         out["cells"][f"{k[0]}|{k[1]}"] = st
@@ -318,6 +356,13 @@ def _pct(x, d=2):
 
 def _lvl(x, d=2):
     return "—" if x is None else f"{x * 100:.{d}f} %"
+
+
+def _mins(h):
+    """Мелкое время читается в минутах: «0.02 ч» ничего не говорит."""
+    if h is None:
+        return "—"
+    return f"{h * 60:.0f} мин" if h < 1.0 else f"{h:.1f} ч"
 
 
 def report(s):
@@ -399,6 +444,35 @@ def report(s):
         buf = (f"{param:g} · d_max" if rule == "depth" else f"{param:g} · σ")
         name = ("глубины лестницы" if rule == "depth" else "суточные σ")
         L1.append(f"| {name} | {buf} | {parts} |")
+
+    L1 += ["", "## Время в позиции", "",
+           "Просьба владельца. Максимум упирается в предел удержания "
+           f"({D2.HOLD_H} ч) — это не рынок, а правило книги. Минимум ноль "
+           "означает, что цель задета внутри той же минуты, в которую "
+           "вошли: это факт записи, а не пропуск.", "",
+           "| линейка | запас | среднее | медиана | минимум | максимум | "
+           "до тейка | до ликвидации | до срока |",
+           "|---|---|--:|--:|--:|--:|--:|--:|--:|"]
+    for rule, param in GRID_RULE:
+        c = s["cells"].get(f"{rule}|{param}")
+        if not c:
+            continue
+        h = c.get("hold")
+        buf = (f"{param:g} · d_max" if rule == "depth" else f"{param:g} · σ")
+        name = ("глубины лестницы" if rule == "depth" else "суточные σ")
+        if not h:
+            L1.append(f"| {name} | {buf} | — | — | — | — | — | — | — |")
+            continue
+        be = h["by_exit"]
+
+        def _by(k):
+            r = be.get(k)
+            return "—" if not r else f"{r['mean_h']:.1f} ч ({r['n']})"
+        L1.append(
+            f"| {name} | {buf} | {h['mean_h']:.1f} ч | "
+            f"{h['median_h']:.1f} ч | {_mins(h['min_h'])} | "
+            f"{h['max_h']:.1f} ч | {_by('тейк')} | {_by('ликвидация')} | "
+            f"{_by('срок')} |")
 
     L1 += ["", "## Форма и хвост", "",
            "| линейка | запас | зелёных | худшая позиция | укус | "
