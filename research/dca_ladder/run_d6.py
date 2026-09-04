@@ -282,22 +282,62 @@ def window(longs):
 
 
 def peak_open(recs):
-    """Сколько позиций открыто РАЗОМ, если взять каждый сигнал.
+    """Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
+
+    Реплей D-серии считает каждый выбор независимой позицией, а на одном
+    счёте в одностороннем режиме у имени позиция ОДНА: второй выбор по той
+    же монете есть ДОЛИВ. Значит «пик 3206» описывает лоты, а не позиции,
+    и называть его позициями нельзя.
+
+    Деньги от этого не меняются: маржа лота та же, слитая позиция требует
+    их суммы, а PnL линеен (четыре лота дают то же, что одна позиция со
+    средней ценой). Меняются МАРЖА И ЛИКВИДАЦИЯ — биржа считает их по
+    слитой позиции, — и встречная сторона, которая на счёте схлопывает,
+    а не открывает вторую.
 
     Очередь событий та же, что у кассы: внутри секунды закрытие раньше
-    открытия (деньги возвращаются до того, как их размещают снова).
-    Иначе пик вышел бы завышенным ровно на число стыков.
+    открытия. Иначе пик завышен ровно на число стыков.
     """
     ev = []
     for r in recs:
-        ev.append((int(r["at"]), 1))
-        ev.append((int(r["exit_ts"]), -1))
+        ev.append((int(r["at"]), 1, r["sym"]))
+        ev.append((int(r["exit_ts"]), -1, r["sym"]))
     ev.sort(key=lambda x: (x[0], x[1]))
-    cur = peak = 0
-    for _, d in ev:
+    cnt, cur = {}, 0
+    lots = names_at_lots = names_max = per_max = 0
+    for _, d, sym in ev:
         cur += d
-        peak = max(peak, cur)
-    return peak
+        c = cnt.get(sym, 0) + d
+        if c > 0:
+            cnt[sym] = c
+        else:
+            cnt.pop(sym, None)
+        per_max = max(per_max, c)
+        names_max = max(names_max, len(cnt))
+        if cur > lots:
+            lots, names_at_lots = cur, len(cnt)
+    return {"lots": lots, "names_at_peak": names_at_lots,
+            "names_max": names_max, "max_lots_one_name": per_max}
+
+
+def one_per_name(recs):
+    """Строгое биржевое правило: второй выбор по открытому имени пропущен.
+
+    Диагностическая рука к вопросу владельца. Долив тут НЕ моделируется —
+    он равен независимому лоту по деньгам, и вопрос ровно в другом: во
+    сколько обойдётся, если такие сигналы просто не брать.
+    """
+    open_until = {}
+    keep, skip = [], 0
+    for r in sorted(recs, key=lambda x: (int(x["at"]), -x["fwd"])):
+        t = int(r["at"])
+        u = open_until.get(r["sym"])
+        if u is not None and u > t:
+            skip += 1
+            continue
+        open_until[r["sym"]] = int(r["exit_ts"])
+        keep.append(r)
+    return keep, skip
 
 
 def full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE,
@@ -317,7 +357,8 @@ def full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE,
     """
     if not recs:
         return None
-    peak = peak_open(recs)
+    pk = peak_open(recs)
+    peak = pk["lots"]
     lev_min = min(float(r["lev"]) for r in recs)
     ticket = min_notional / rung / lev_min
     floor_dep = peak * ticket
@@ -335,7 +376,10 @@ def full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE,
         lo, hi = hi, hi * 1.25
     if best is None:
         log("  полный охват не достигнут даже при ×%.2f" % hi)
-        return {"peak": peak, "lev_min": round(lev_min, 3),
+        return {"peak": peak, "peak_names": pk["names_at_peak"],
+                "names_max": pk["names_max"],
+                "max_lots_one_name": pk["max_lots_one_name"],
+                "lev_min": round(lev_min, 3),
                 "ticket": round(ticket, 2), "floor_dep": round(floor_dep, 2),
                 "deposit": None, "cell": None, "total": total}
     m_hi = best[0]
@@ -352,7 +396,10 @@ def full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE,
     dep = floor_dep * best[0]
     cell = best[1]
     cell["ticket"] = round(dep * share, 2)
-    return {"peak": peak, "lev_min": round(lev_min, 3),
+    return {"peak": peak, "peak_names": pk["names_at_peak"],
+            "names_max": pk["names_max"],
+            "max_lots_one_name": pk["max_lots_one_name"],
+            "lev_min": round(lev_min, 3),
             "ticket": round(ticket, 2), "floor_dep": round(floor_dep, 2),
             "deposit": round(dep, 2), "mult": round(best[0], 3),
             "cell": cell, "total": total}
@@ -439,6 +486,13 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
         out["unlimited"][f"{k[0]}|{k[1]}"] = {
             "n": len(rs), "sum_pnl": round(sum(r["pnl"] for r in rs), 2)}
         fc = full_cover(rs, log=log)
+        keep, skipped_rep = one_per_name(rs)
+        fc1 = full_cover(keep, log=log) if keep else None
+        if fc1:
+            fc1["skipped_repeats"] = skipped_rep
+            fc1["kept"] = len(keep)
+        out["one_name"] = out.get("one_name") or {}
+        out["one_name"][f"{k[0]}|{k[1]}"] = fc1
         out["full"][f"{k[0]}|{k[1]}"] = fc
         if fc and fc.get("deposit"):
             log(f"  полный охват {k[0]} {k[1]}: пик {fc['peak']}, "
@@ -546,9 +600,16 @@ def _full_block(s):
          "кассы»), а билет — не меньше `$5 / 0.25 / плечо` (иначе «мельче "
          "$5»). Билет назначает САМАЯ СЛАБАЯ по плечу позиция: «каждый "
          "сигнал» включает и её.", "",
-         "| линейка | сигналов | пик разом | мин. плечо | билет | депозит | "
-         "загрузка | доход | просадка | худший день |",
-         "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+         "**Пик считается в ЛОТАХ, а не в позициях, и путать их нельзя.** "
+         "Реплей берёт каждый выбор независимо, а на одном счёте в "
+         "одностороннем режиме у имени позиция ОДНА: второй выбор по той "
+         "же монете есть долив. Деньги от этого не меняются (маржа лота та "
+         "же, PnL линеен), а вот маржа и цена ликвидации на бирже "
+         "считаются по СЛИТОЙ позиции — этого реплей не моделирует.", "",
+         "| линейка | сигналов | пик лотов | имён в пике | макс. лотов на "
+         "имя | мин. плечо | билет | депозит | загрузка | доход | "
+         "просадка | худший день |",
+         "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for rule, param in GRID_RULER:
         f = full.get(f"{rule}|{param}")
         if not f:
@@ -556,16 +617,16 @@ def _full_block(s):
         name = ("нынешняя 2·d_max" if rule == "depth"
                 else f"σ-линейка {param:g}·σ")
         c = f.get("cell")
+        pre = (f"| {name} | {f['total']} | {f['peak']} | "
+               f"{f.get('peak_names', '—')} | "
+               f"{f.get('max_lots_one_name', '—')} | {f['lev_min']:g}× |")
         if not c:
-            L.append(f"| {name} | {f['total']} | {f['peak']} | "
-                     f"{f['lev_min']:g}× | ${f['ticket']:g} | — | — | — | "
-                     "— | — |")
+            L.append(pre + f" ${f['ticket']:g} | — | — | — | — | — |")
             continue
         u = c["open_mean"] * c["ticket"] / f["deposit"]
         L.append(
-            f"| {name} | {f['total']} | {f['peak']} | {f['lev_min']:g}× | "
-            f"${c['ticket']:g} | ${f['deposit']:,.0f} | {100 * u:.1f} % | "
-            f"{_pct(c['final'])} | {_pct(c['max_dd'])} | "
+            pre + f" ${c['ticket']:g} | ${f['deposit']:,.0f} | "
+            f"{100 * u:.1f} % | {_pct(c['final'])} | {_pct(c['max_dd'])} | "
             f"{_pct(c['day_worst'])} |")
     L += ["",
           "**Итог полного охвата предсказуем арифметикой, и это проверка, "
@@ -574,6 +635,29 @@ def _full_block(s):
           "делённой на пик. Депозит из формулы не выпадает вовсе — он "
           "решает только, помещаются ли все, а не сколько они приносят.",
           ""]
+    one = s.get("one_name") or {}
+    if any(one.values()):
+        L += ["### Строгое биржевое правило: одна позиция на имя", "",
+              "Второй выбор по уже открытому имени просто пропущен. Долив "
+              "здесь НЕ моделируется намеренно: по деньгам он равен "
+              "независимому лоту, и вопрос ровно в другом — во сколько "
+              "обойдётся, если такие сигналы не брать вовсе.", "",
+              "| линейка | взято | пропущено повторов | пик лотов | "
+              "депозит | доход | просадка |", "|---|--:|--:|--:|--:|--:|--:|"]
+        for rule, param in GRID_RULER:
+            f1 = one.get(f"{rule}|{param}")
+            if not f1:
+                continue
+            name = ("нынешняя 2·d_max" if rule == "depth"
+                    else f"σ-линейка {param:g}·σ")
+            c1 = f1.get("cell")
+            dep = (f"${f1['deposit']:,.0f}" if f1.get("deposit") else "—")
+            L.append(
+                f"| {name} | {f1.get('kept', '—')} | "
+                f"{f1.get('skipped_repeats', '—')} | {f1['peak']} | {dep} | "
+                + (f"{_pct(c1['final'])} | {_pct(c1['max_dd'])} |"
+                   if c1 else "— | — |"))
+        L.append("")
     rows = []
     for rule, param in GRID_RULER:
         f = full.get(f"{rule}|{param}")

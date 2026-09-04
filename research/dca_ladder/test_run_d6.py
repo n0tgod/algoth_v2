@@ -337,18 +337,43 @@ def test_deposit_anchor_catches_a_broken_measure():
     print("ok  опора депозита: расхождение при совпавшем наборе — сломано")
 
 
-def test_peak_open_counts_simultaneous_positions():
-    """Пик — максимум одновременно открытых, и стык не задваивается."""
+def test_peak_open_separates_lots_from_names():
+    """Пик в ЛОТАХ и пик в ИМЕНАХ — разные числа, и оба обязаны быть.
+
+    Возражение владельца: на счёте у имени позиция одна, значит «пик 3206»
+    не может означать 3206 позиций при семистах парах.
+    """
     t0 = 1_700_000_000
-    # три позиции внахлёст: пик 3
-    recs = [_rec(t0, hold_h=3.0), _rec(t0 + 60, hold_h=3.0),
-            _rec(t0 + 120, hold_h=3.0)]
-    assert D6.peak_open(recs) == 3, D6.peak_open(recs)
+    # три лота внахлёст, но ДВА имени: AAA дважды, BBB один раз
+    recs = [_rec(t0, hold_h=3.0, sym="AAAUSDT"),
+            _rec(t0 + 60, hold_h=3.0, sym="AAAUSDT"),
+            _rec(t0 + 120, hold_h=3.0, sym="BBBUSDT")]
+    p = D6.peak_open(recs)
+    assert p["lots"] == 3, p
+    assert p["names_at_peak"] == 2, p
+    assert p["max_lots_one_name"] == 2, p
     # встык: закрытие в ту же секунду, что открытие — пик 1, не 2
     a = _rec(t0, hold_h=1.0)
     b = _rec(int(a["exit_ts"]), hold_h=1.0)
-    assert D6.peak_open([a, b]) == 1, D6.peak_open([a, b])
-    print("ok  пик: внахлёст 3, встык 1 — стык не задваивается")
+    assert D6.peak_open([a, b])["lots"] == 1, D6.peak_open([a, b])
+    print(f"ok  пик: {p['lots']} лота в {p['names_at_peak']} именах, "
+          f"на одном имени до {p['max_lots_one_name']}")
+
+
+def test_one_per_name_skips_repeats():
+    """Строгое правило биржи: повтор по открытому имени не берётся."""
+    t0 = 1_700_000_000
+    recs = [_rec(t0, hold_h=3.0, sym="AAAUSDT"),
+            _rec(t0 + 60, hold_h=3.0, sym="AAAUSDT"),
+            _rec(t0 + 120, hold_h=3.0, sym="BBBUSDT")]
+    keep, skip = D6.one_per_name(recs)
+    assert skip == 1 and len(keep) == 2, (skip, keep)
+    assert D6.peak_open(keep)["max_lots_one_name"] == 1, keep
+    # после закрытия имя снова свободно — это не пожизненный запрет
+    later = _rec(int(recs[0]["exit_ts"]) + 60, hold_h=1.0, sym="AAAUSDT")
+    keep2, skip2 = D6.one_per_name(recs + [later])
+    assert skip2 == 1 and len(keep2) == 3, (skip2, keep2)
+    print("ok  одна на имя: повтор пропущен, после закрытия имя свободно")
 
 
 def test_full_cover_takes_every_signal():
@@ -360,6 +385,7 @@ def test_full_cover_takes_every_signal():
     recs[3]["lev"] = 1.0
     f = D6.full_cover(recs, log=lambda *_: None)
     assert f["peak"] == 10, f
+    assert f["peak_names"] == 10 and f["max_lots_one_name"] == 1, f
     assert f["lev_min"] == 1.0, f
     # билет = 5 / 0.25 / 1 = 20 $, пол депозита = 10 × 20 = 200 $
     assert abs(f["ticket"] - 20.0) < 1e-9, f
@@ -391,8 +417,29 @@ def test_report_carries_full_cover():
     assert "Полный охват" in txt, txt[:600]
     assert "$200" in txt or "$201" in txt or "$2" in txt, txt[-2000:]
     assert "САМАЯ СЛАБАЯ по плечу" in txt, txt[-2000:]
+    assert "в ЛОТАХ, а не в позициях" in txt, txt[-3000:]
     assert "Чем платит депозит меньше полного" in txt, txt[-2000:]
     print("ok  отчёт: полный охват назван вместе с правилом билета")
+
+
+def _control_lots_as_names():
+    """Пик лотов, выданный за пик имён, — ровно то, что нашёл владелец."""
+    orig = D6.peak_open
+
+    def flat(recs):
+        p = orig(recs)
+        p["names_at_peak"] = p["lots"]
+        p["max_lots_one_name"] = 1
+        return p
+    D6.peak_open = flat
+    try:
+        try:
+            test_peak_open_separates_lots_from_names()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D6.peak_open = orig
 
 
 def _control_no_full_cover():
@@ -512,7 +559,8 @@ TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_percent_of_deposit_is_invariant_to_deposit,
          test_deposit_anchor_catches_a_broken_measure,
          test_scale_invariance_holds_on_the_cash_boundary,
-         test_peak_open_counts_simultaneous_positions,
+         test_peak_open_separates_lots_from_names,
+         test_one_per_name_skips_repeats,
          test_full_cover_takes_every_signal,
          test_report_carries_full_cover]
 
@@ -523,7 +571,8 @@ CONTROLS = [("бюджет не вычитается", _control_no_budget),
              _control_no_concentration),
             ("окно замера не названо", _control_no_window),
             ("опора депозита не сверяет", _control_blind_anchor),
-            ("билет не от слабейшего плеча", _control_no_full_cover)]
+            ("билет не от слабейшего плеча", _control_no_full_cover),
+            ("пик лотов выдан за пик имён", _control_lots_as_names)]
 
 
 def main():
