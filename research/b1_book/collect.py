@@ -3580,6 +3580,15 @@ class Collector:
                     "bt": bool(id(r) in seen),
                 } for r in merged[:DCA_TRADES]]
                 b["trades_shown"] = len(b["trades"])
+                # Худшая из ОТКРЫТЫХ позиций — числом и ЗДЕСЬ, на
+                # сервере: страница показывает её и плиткой, и подписью,
+                # а два места, считающих одно, однажды разойдутся.
+                # Пересчитывается ровно то, чего в артефакте нет: число
+                # открытых, их отметку и покрытие считает сам прогон.
+                op = b.get("open")
+                if isinstance(op, dict):
+                    b["open"] = dict(op,
+                                     **DR.open_stats(op.get("positions")))
                 books[k] = b
         out["books"] = books
         rk0 = ruler if ruler in {x["key"] for x in out["rulers"]} else None

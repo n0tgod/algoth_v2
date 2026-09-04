@@ -6095,6 +6095,7 @@ table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
 <div class="panel" id="intro"></div>
 <div class="tabs" id="rtabs"></div>
 <div class="tabs" id="tabs"></div>
+<div class="tabs" id="gtabs"></div>
 <div id="box">&hellip;</div>
 </div>
 <script>
@@ -6108,7 +6109,13 @@ function usd(v){ return v == null ? "&mdash;"
   : (v > 0 ? "+" : "") + Number(v).toFixed(2) + " $"; }
 function tsq(t){ return t == null ? "&mdash;"
   : new Date(t * 1000).toISOString().slice(5, 16).replace("T", " "); }
-let DATA = null, DEP = null, RUL = null;
+// Свод книги хранит ДОЛИ (0.0684 — это 6.84 %), а общий `pct` говорит
+// на базисных пунктах: 0.0684 б.п. печатались как «+0.001 %», и целые
+// четыре колонки читались нулями. Перевод стоит ОДНОЙ названной
+// функцией — второй формат развёл бы страницу с остальными семью, а
+// умножение россыпью по вызовам однажды забылось бы в одном из них.
+function fpct(v){ return v == null ? "\u2014" : pct(Number(v) * 1e4); }
+let DATA = null, DEP = null, RUL = null, GRP = "all";
 
 // Рамка предмета первым абзацем. Без неё три книги читаются как три
 // стратегии, а отличаются они РОВНО депозитом; и «бумажная» здесь
@@ -6216,15 +6223,59 @@ function intro(d){
   return h;
 }
 
-function statBlock(st, dep, title, tag, op){
+// Кривая книги рисуется ИЗ ТОГО ЖЕ ряда, из которого посчитана
+// просадка: `days_rows` — суточные деньги, и `max_dd` в своде считан
+// по ним же. Своей просадки страница НЕ считает намеренно: два числа
+// под одним именем однажды разошлись бы, и картинка спорила бы с
+// плиткой. Здесь только линия, число приходит с сервера.
+function curveSvg(st, dep){
+  const rs = (st && st.days_rows) || [];
+  if (rs.length < 2) return "<div class=k>Кривой ещё нет: суток в этой " +
+    "группе " + rs.length + ". Из одной точки линии не бывает &mdash; " +
+    "это не «книга стоит на месте».</div>";
+  const W = 1000, H = 210, PL = 6, PR = 6, PT = 12, PB = 20;
+  const d0 = Number(dep) || 0;
+  let acc = 0;
+  const eq = rs.map(r => { acc += Number(r.usd || 0); return d0 + acc; });
+  const lo = Math.min(d0, ...eq), hi = Math.max(d0, ...eq);
+  const span = (hi - lo) || 1;
+  const xw = (W - PL - PR) / (eq.length - 1);
+  const yy = v => PT + (H - PT - PB) * (1 - (v - lo) / span);
+  const xx = i => PL + i * xw;
+  const pts = eq.map((v, i) => xx(i).toFixed(1) + "," + yy(v).toFixed(1));
+  const base = yy(d0).toFixed(1);
+  const up = eq[eq.length - 1] >= d0;
+  const col = up ? "var(--bid)" : "var(--ask)";
+  // Заливка до линии депозита: видно, когда книга ниже старта, и это
+  // не второе число — та же ломаная, замкнутая на базовую линию.
+  const area = "M" + pts[0].split(",")[0] + "," + base + " L" +
+    pts.join(" L") + " L" + xx(eq.length - 1).toFixed(1) + "," + base + " Z";
+  let h = "<svg viewBox='0 0 " + W + " " + H + "' " +
+    "preserveAspectRatio='none' style='width:100%;height:210px;display:block'>";
+  h += "<path d='" + area + "' fill='" + col + "' opacity='0.12'/>";
+  h += "<line x1='" + PL + "' y1='" + base + "' x2='" + (W - PR) +
+    "' y2='" + base + "' stroke='var(--rule)' stroke-dasharray='4 4'/>";
+  h += "<polyline points='" + pts.join(" ") + "' fill='none' stroke='" +
+    col + "' stroke-width='2' vector-effect='non-scaling-stroke'/>";
+  h += "</svg>";
+  h += "<div class=k style='display:flex;justify-content:space-between'>" +
+    "<span>" + esc(rs[0].d) + " &middot; $" + d0.toLocaleString("en-US") +
+    "</span><span>" + esc(rs[rs.length - 1].d) + " &middot; $" +
+    eq[eq.length - 1].toFixed(2) + "</span></div>";
+  return h;
+}
+
+function statBlock(st, dep, title, op, grp){
+  const gname = grp === "fwd" ? "записанное вперёд" : "бэктест и записанное вперёд";
   if (!st) return "<div class=panel><div class=cap>" + esc(title) +
     "</div><p class=dim>Строк ещё нет. У книги это не пустота показа: " +
     "решение попадает в журнал только после того, как его позиция " +
     "закрылась.</p></div>";
   const cls = v => v == null ? "" : (v > 0 ? "good" : (v < 0 ? "bad" : ""));
   let h = "<div class=panel><div class=cap>" + esc(title) +
-    " <span class='tag " + (tag || "") + "'>" + esc(tag === "fwd" ?
-      "наблюдение" : "пересчёт") + "</span></div><div class=stats>";
+    " <span class='tag " + (grp === "fwd" ? "fwd" : "") + "'>" +
+    esc(grp === "fwd" ? "наблюдение" : "общий счёт") + "</span></div>";
+  h += "<div class=stats>";
   const cells = [
     // ПОЗИЦИЙ, а не сделок: позиция есть лестница, и каждый её долив —
     // свой вход. Числа стоят рядом, чтобы их нельзя было спутать.
@@ -6234,10 +6285,19 @@ function statBlock(st, dep, title, tag, op){
     ["имён", st.names, null],
     ["дней", st.days, null],
     ["деньги", usd(st.usd), cls(st.usd)],
-    ["к депозиту", pct(st.final), cls(st.final)],
-    ["просадка", pct(st.max_dd), cls(st.max_dd)],
-    ["медиана дня", pct(st.day_median, 3), cls(st.day_median)],
-    ["худший день", pct(st.day_worst), cls(st.day_worst)],
+    ["к депозиту", fpct(st.final), cls(st.final)],
+    // Просадка ДЕПОЗИТА по закрытым позициям: глубочайший провал
+    // накопленного счёта от его же вершины. Считается по тем же суткам,
+    // по которым нарисована кривая выше.
+    ["просадка депозита", fpct(st.max_dd), cls(st.max_dd)],
+    // Доля прибыльных ПОЗИЦИЙ — не то же, что доля зелёных ДНЕЙ:
+    // знаменатели разные, и путать их значит отвечать не на тот вопрос.
+    ["прибыльных сделок", st.win == null ? "&mdash;" :
+      (st.win * 100).toFixed(1) + " %", null],
+    ["среднее время в сделке", st.hold_h == null ? "&mdash;" :
+      Number(st.hold_h).toFixed(1) + " ч", null],
+    ["медиана дня", fpct(st.day_median), cls(st.day_median)],
+    ["худший день", fpct(st.day_worst), cls(st.day_worst)],
     ["зелёных дней", st.day_green == null ? "&mdash;" :
       Number(st.day_green).toFixed(2), null],
     ["укус", st.bite == null ? "&mdash;" : st.bite, null],
@@ -6250,7 +6310,8 @@ function statBlock(st, dep, title, tag, op){
   // Открытое НИКОГДА не складывается с закрытым: у закрытой позиции
   // исход известен, у открытой это ОТМЕТКА, и до выхода она станет
   // любой. `live_known === false` значит «не считали» — прочерк с
-  // названной причиной, а не ноль.
+  // названной причиной, а не ноль. Открытые стоят в блоке при ЛЮБОЙ
+  // группе: это состояние СЕЙЧАС, а не часть выбранной кривой.
   if (op !== undefined){
     const kn = op && op.known !== false;
     const n = kn && op.positions ? op.positions.length : null;
@@ -6260,10 +6321,24 @@ function statBlock(st, dep, title, tag, op){
     h += "<div class=st><div class=k>открытый pnl</div>" +
       "<div class='v mono " + (kn ? cls(op.mark_usd) : "") + "'>" +
       (kn ? usd(op.mark_usd) : "&mdash;") + "</div></div>";
+    // Худшая ОТКРЫТАЯ — просадка, которую книга несёт прямо сейчас.
+    // Считает сервер (`rules.open_stats`): страница печатает её дважды,
+    // и вторая арифметика разошлась бы с первой.
+    h += "<div class=st><div class=k>худшая открытая</div>" +
+      "<div class='v mono " + (kn ? cls(op.worst_frac) : "") + "'>" +
+      (kn && op.worst_frac != null ? fpct(op.worst_frac) : "&mdash;") +
+      "</div></div>";
     if (kn && cut) h += "<div class=st><div class=k>оборвано записью</div>" +
       "<div class='v mono'>" + cut + "</div></div>";
   }
   h += "</div>";
+  // Кривая идёт СРАЗУ под числами и по той же группе: подпись говорит,
+  // чем она набрана, иначе «одна кривая» читается как живой трек.
+  h += "<div style='margin-top:10px'>" + curveSvg(st, dep) + "</div>";
+  h += "<div class=k>Кривая — накопленный счёт по ЗАКРЫТЫМ позициям от " +
+    "депозита; открытые в неё не входят. Группа: " + esc(gname) + ". " +
+    "Просадка в плитке считана по этому же ряду, и второго её счёта на " +
+    "странице нет.</div>";
   if (op !== undefined && !(op && op.known !== false))
     h += "<div class=k style='margin-top:8px'>Открытых не считали: свод " +
       "пересобран из журнала (<code>--restat</code>), а открытые позиции " +
@@ -6272,7 +6347,10 @@ function statBlock(st, dep, title, tag, op){
   else if (op !== undefined) h += "<div class=k style='margin-top:8px'>" +
     "Открытый pnl &mdash; ОТМЕТКА по последней цене записи, а не исход: " +
     "с закрытым счётом он не складывается нигде" +
-    (op.at ? " (снята " + tsq(op.at) + " UTC)" : "") + ".</div>";
+    (op.at ? " (снята " + tsq(op.at) + " UTC)" : "") +
+    (op.worst_sym ? ". Глубже всех сейчас " + esc(op.worst_sym) + " (" +
+      fpct(op.worst_frac) + " &middot; " + usd(op.worst_usd) + ")" : "") +
+    ".</div>";
   if (st.top_sym) h += "<div class=k style='margin-top:8px'>лучшее имя " +
     esc(st.top_sym) + " &mdash; колонка рядом показывает итог без него: " +
     "деньги из одного разгона статистикой не являются. Соседняя колонка " +
@@ -6339,14 +6417,14 @@ function fillRows(r, key){
     "<td class=mono>" + (r.depth == null ? "&mdash;" :
       "рунгов " + r.depth) +
     "<td class='mono " + (r.usd > 0 ? "good" : "bad") + "'>" +
-    pct(r.pnl_frac) + " &middot; " + usd(r.usd) +
+    fpct(r.pnl_frac) + " &middot; " + usd(r.usd) +
     "<td class=dim>" + esc(r.exit || "") + "</tr></table>";
   return "<tr class=sub id='ddet-" + esc(keyId(key)) + "' style='display:" +
     (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=8>" + h +
     "</td></tr>";
 }
 
-function tradeTable(rows, title, shown, total){
+function tradeTable(rows, title, shown, total, grp){
   if (!rows || !rows.length) return "";
   let h = "<div class=panel><div class=cap>" + esc(title) + " &mdash; " +
     rows.length + (total && total > rows.length ? " из " + total : "") +
@@ -6354,9 +6432,15 @@ function tradeTable(rows, title, shown, total){
   h += "<p class=k>Одна строка &mdash; ОДНА ПОЗИЦИЯ по паре: доливы " +
     "лестницы живут внутри неё, а не отдельными сделками. Нажмите " +
     "строку, чтобы увидеть каждый вход, ТВХ после него и выход. " +
-    "Пометка <span class=tag>бэктест</span> означает пересчёт по " +
-    "прошлому: он идёт в ОБЩЕЙ кривой, а числа групп стоят рядом " +
-    "отдельно.</p>";
+    // Легенда пометки стоит только там, где помеченные строки бывают:
+    // в группе «без бэктеста» их нет по построению, и объяснять пометку
+    // значило бы обещать в таблице то, чего в ней не будет.
+    (grp === "fwd"
+      ? "Строк пересчёта по прошлому здесь нет вовсе: список следует за "
+        + "переключателем группы."
+      : "Пометка <span class=tag>бэктест</span> означает пересчёт по "
+        + "прошлому: он идёт в ОБЩЕЙ кривой, а числа групп стоят рядом "
+        + "отдельно.") + "</p>";
   h += "<div class=scroll><table><tr><th>вход<th>выход" +
     "<th>монета<th>плечо<th>маржа<th>ход<th>деньги<th>исход</tr>";
   for (const r of rows){
@@ -6371,7 +6455,7 @@ function tradeTable(rows, title, shown, total){
       (r.lev == null ? "&mdash;" : Number(r.lev).toFixed(2) + "&times;") +
       "<td class=mono>" + (r.margin == null ? "&mdash;" :
         Number(r.margin).toFixed(2) + " $") +
-      "<td class='mono " + c + "'>" + pct(r.pnl_frac) +
+      "<td class='mono " + c + "'>" + fpct(r.pnl_frac) +
       "<td class='mono " + c + "'>" + usd(r.usd) +
       "<td>" + esc(r.exit || "") +
       (nf > 1 ? " <span class=dim>&middot; рунгов " + nf + "</span>" : "") +
@@ -6409,7 +6493,7 @@ function dayTable(st, dep, title){
       esc(r.d) + "<td class=mono>" + r.n +
       "<td class=mono>" + (r.bt == null ? "&mdash;" : r.bt) +
       "<td class='mono " + c + "'>" + usd(r.usd) +
-      "<td class='mono " + c + "'>" + (dep ? pct(r.usd / Number(dep), 3) :
+      "<td class='mono " + c + "'>" + (dep ? fpct(r.usd / Number(dep)) :
         "&mdash;") +
       "<td class='mono " + (acc > 0 ? "good" : "bad") + "'>" + usd(acc) +
       "</tr>";
@@ -6425,7 +6509,11 @@ function render(){
     "<div class=cap>что это</div><p class=dim>" +
     esc((d && d.why) || "нет ответа сборщика") + "</p>";
   const tabs = document.getElementById("tabs");
-  if (!d || !d.present){ tabs.innerHTML = ""; box.innerHTML = ""; return; }
+  if (!d || !d.present){
+    tabs.innerHTML = ""; box.innerHTML = "";
+    document.getElementById("rtabs").innerHTML = "";
+    document.getElementById("gtabs").innerHTML = "";
+    return; }
   const deps = d.deposits || [];
   const ruls = d.rulers || [];
   if (DEP == null && deps.length) DEP = String(Math.trunc(deps[0]));
@@ -6446,6 +6534,17 @@ function render(){
   }).join("");
   for (const el of tabs.querySelectorAll(".tab"))
     el.onclick = () => { DEP = el.dataset.dep; render(); };
+  // Умолчание — «с бэктестом»: это общий счёт книги, и он же кривая,
+  // которую владелец просил не делить. «Без бэктеста» стоит рядом
+  // ровно затем, чтобы вклад пересчёта по прошлому можно было снять
+  // одним нажатием, а не читать его в третьем блоке.
+  const gtabs = document.getElementById("gtabs");
+  const gl = [["all", "с бэктестом"], ["fwd", "без бэктеста"]];
+  gtabs.innerHTML = gl.map(([k, t]) =>
+    "<div class='tab" + (k === GRP ? " on" : "") + "' data-grp='" + k +
+    "'>" + t + "</div>").join("");
+  for (const el of gtabs.querySelectorAll(".tab"))
+    el.onclick = () => { GRP = el.dataset.grp; render(); };
   // ключ книги несёт ОБЕ оси: склеив их по депозиту, страница показала
   // бы одну книгу под именем другой
   const b = (d.books || {})[RUL + ":" + DEP] || {};
@@ -6466,21 +6565,29 @@ function render(){
     "<div class=st><div class=k>строк в журнале</div><div class='v mono'>" +
     (b.n_journal == null ? "&mdash;" : b.n_journal) + "</div></div>" +
     "</div></div>";
-  // Главный счёт — ОБЩИЙ: бэктест и записанное вперёд ведутся одной
-  // кривой (решение владельца), и открытые позиции стоят в нём же
-  // отдельными плитками. Числа групп идут следом и НЕ складываются.
+  // Групп ДВЕ, и они переключателем, а не тремя блоками подряд
+  // (решение владельца 2026-09-04): «с бэктестом» — общий счёт одной
+  // кривой, «без бэктеста» — только записанное вперёд. Третьей группы
+  // («пересчёт по прошлому») больше нет: она есть первая минус вторая,
+  // и держать её отдельным блоком значило приглашать сложить их.
+  const st = GRP === "fwd" ? b.forward : b.all;
   const op = (b.live_known === false) ? {known: false}
     : (b.open ? Object.assign({}, b.open, {known: true}) : undefined);
-  h += statBlock(b.all, DEP, "общий счёт: бэктест и записанное вперёд",
-                 "", op);
-  h += statBlock(b.forward, DEP, "из него записано вперёд", "fwd");
-  h += statBlock(b.restored, DEP, "из него пересчёт по прошлому", "back");
-  h += dayTable(b.all, b.deposit || DEP, "по суткам");
+  h += statBlock(st, b.deposit || DEP,
+                 GRP === "fwd" ? "счёт без бэктеста: записанное вперёд"
+                               : "счёт с бэктестом: одна кривая",
+                 op, GRP);
+  h += dayTable(st, b.deposit || DEP, "по суткам");
   if (!d.journal_present) h += "<div class=panel><p class=dim>Журнала на " +
     "этой машине нет вовсе &mdash; он живёт там, где книги считаются. " +
     "Это не то же самое, что «сделок нет».</p></div>";
-  h += tradeTable(b.trades, "позиции книги", b.trades_shown,
-                  (b.all || {}).n);
+  // Список позиций следует за переключателем: показывать 200 строк
+  // бэктеста под числами группы «без бэктеста» значило бы, что таблица
+  // описывает не тот счёт, что стоит над ней.
+  const trs = (b.trades || []).filter(r => GRP !== "fwd" || !r.bt);
+  h += tradeTable(trs, GRP === "fwd" ? "позиции, записанные вперёд"
+                                     : "позиции книги",
+                  trs.length, (st || {}).n, GRP);
   box.innerHTML = h;
   document.getElementById("lead").textContent = d.window
     ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")

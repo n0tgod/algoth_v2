@@ -6892,7 +6892,19 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                                     for k in DR.RULER_ORDER},
                          "RULER_ORDER": list(DR.RULER_ORDER)},
                "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k,
-                                       "slots": DR.slots(1000.0, DR.DEFAULT_RULER)}
+                                       "slots": DR.slots(1000.0, DR.DEFAULT_RULER),
+                                       # открытые позиции: их пишет
+                                       # счётный прогон, а худшую из них
+                                       # дописывает сборщик
+                                       "open": {"positions": [
+                                           {"sym": "OPNUSDT",
+                                            "mark_frac": -0.02,
+                                            "mark_usd": -0.5},
+                                           {"sym": "DEEPUSDT",
+                                            "mark_frac": -0.17,
+                                            "mark_usd": -4.25}],
+                                           "cut": [], "mark_usd": -4.75,
+                                           "priced": 2}}
                          for k in DR.RULER_ORDER}}
         with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
             json.dump(art, f)
@@ -6923,6 +6935,17 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         # прежняя строка (без поля) обязана лечь к глубине, а не пропасть
         check("DCA: строка без линейки читается прежней",
               sorted(r["usd"] for r in opt) == [4.0, 9.0], str(opt))
+        # Худшая ОТКРЫТАЯ дописывается СЕРВЕРОМ: страница печатает её и
+        # плиткой, и подписью, а два места, считающих одно, разойдутся.
+        op = bs["safe:1000"].get("open") or {}
+        check("DCA: худшая открытая посчитана сервером",
+              op.get("worst_sym") == "DEEPUSDT"
+              and abs(float(op.get("worst_frac") or 0) + 0.17) < 1e-9,
+              str(op))
+        # а числа самого прогона (сколько открытых, их отметка) обязаны
+        # доехать НЕТРОНУТЫМИ: второй их счёт разошёлся бы с артефактом
+        check("DCA: отметка открытых не пересчитана заново",
+              op.get("mark_usd") == -4.75 and op.get("priced") == 2, str(op))
 
         # свод ПРЕЖНЕГО образца (ключ — один депозит) не обязан быть пуст
         art["books"] = {"1000": {"deposit": 1000.0, "slots": 40, "zzz": 1}}

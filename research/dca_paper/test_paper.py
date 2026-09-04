@@ -907,7 +907,79 @@ def _control_gate_on_every_ruler():
         R.min_lev_of = orig
 
 
-TESTS = [test_ticket_clears_the_exchange_floor,
+def test_shape_counts_positions_not_days():
+    """Доля прибыльных СДЕЛОК и среднее время в сделке — свои меры.
+
+    Доля зелёных ДНЕЙ на вопрос «сколько сделок в плюс» не отвечает:
+    знаменатели разные, и один день может нести и прибыль, и убыток.
+    Числа закреплены ЛИТЕРАЛОМ: посчитанные формулой от тех же строк,
+    они прошли бы и на сломанной реализации.
+    """
+    D = 86400
+    t0 = 1_767_225_600
+    # три сделки одного дня: две в плюс, одна в минус — день зелёный,
+    # а доля прибыльных сделок 2/3
+    rows = [{"dep": 1000, "rules": R.RULES, "sym": "AUSDT",
+             "at": t0, "exit_ts": t0 + 3600 * 2, "usd": 5.0,
+             "written_at": t0 + 3600 * 3, "lev": 1.0, "margin": 25.0,
+             "pnl_frac": 0.2, "exit": "тейк"},
+            {"dep": 1000, "rules": R.RULES, "sym": "BUSDT",
+             "at": t0, "exit_ts": t0 + 3600 * 4, "usd": 3.0,
+             "written_at": t0 + 3600 * 5, "lev": 1.0, "margin": 25.0,
+             "pnl_frac": 0.12, "exit": "тейк"},
+            {"dep": 1000, "rules": R.RULES, "sym": "CUSDT",
+             "at": t0, "exit_ts": t0 + 3600 * 6, "usd": -2.0,
+             "written_at": t0 + 3600 * 7, "lev": 1.0, "margin": 25.0,
+             "pnl_frac": -0.08, "exit": "стоп"},
+            # второй день, ДВЕ убыточные сделки по 12 часов: доли
+            # нарочно РАЗНЫЕ (0.4 против 0.5) — совпади они, подмена
+            # одной меры другой прошла бы мимо проверки
+            {"dep": 1000, "rules": R.RULES, "sym": "DUSDT",
+             "at": t0 + D, "exit_ts": t0 + D + 3600 * 12, "usd": -1.0,
+             "written_at": t0 + D + 3600 * 13, "lev": 1.0, "margin": 25.0,
+             "pnl_frac": -0.04, "exit": "стоп"},
+            {"dep": 1000, "rules": R.RULES, "sym": "EUSDT",
+             "at": t0 + D, "exit_ts": t0 + D + 3600 * 12, "usd": -1.0,
+             "written_at": t0 + D + 3600 * 13, "lev": 1.0, "margin": 25.0,
+             "pnl_frac": -0.04, "exit": "стоп"}]
+    st = P._stats(rows, 1000.0)
+    assert st["win"] == 0.4, st["win"]                 # 2 из 5
+    assert st["day_green"] == 0.5, st["day_green"]     # 1 день из 2
+    # (2 + 4 + 6 + 12 + 12) / 5 = 7.2 ч от первого рунга до выхода
+    assert st["hold_h"] == 7.2, st["hold_h"]
+    assert st["hold_med_h"] == 6.0, st["hold_med_h"]
+    print("ok  форма: прибыльных сделок %.2f при зелёных днях %.2f, "
+          "в сделке %.1f ч" % (st["win"], st["day_green"], st["hold_h"]))
+
+
+def test_worst_open_is_measured_and_missing_is_not_zero():
+    """Худшая ОТКРЫТАЯ позиция считается сервером, а пустое — прочерк.
+
+    Отметка открытой позиции не есть исход, поэтому «худшая» здесь
+    значит «просевшая глубже всех сейчас». Позиция без отметки в
+    сравнение не идёт вовсе: неизмеренное не есть ноль, и вернуть ей
+    ноль значило бы объявить её ровной.
+    """
+    ps = [{"sym": "AUSDT", "mark_frac": -0.02, "mark_usd": -0.5},
+          {"sym": "BUSDT", "mark_frac": -0.31, "mark_usd": -7.75},
+          {"sym": "CUSDT", "mark_frac": 0.04, "mark_usd": 1.0}]
+    st = R.open_stats(ps)
+    assert st["worst_sym"] == "BUSDT", st
+    assert abs(st["worst_frac"] + 0.31) < 1e-9, st
+    assert abs(st["worst_usd"] + 7.75) < 1e-9, st
+    # ни числа открытых, ни их отметки здесь НЕ пересчитывается: их
+    # считает сам прогон и кладёт в артефакт, а второй счёт разошёлся бы
+    assert "mark_usd" not in st and "n" not in st, sorted(st)
+    empty = R.open_stats([{"sym": "DUSDT"}])
+    assert empty["worst_frac"] is None and empty["worst_sym"] is None, empty
+    assert R.open_stats([])["worst_frac"] is None
+    print("ok  открытые: глубже всех %s (%.2f %%), без отметки — прочерк"
+          % (st["worst_sym"], st["worst_frac"] * 100))
+
+
+TESTS = [test_shape_counts_positions_not_days,
+         test_worst_open_is_measured_and_missing_is_not_zero,
+         test_ticket_clears_the_exchange_floor,
          test_ticket_is_squeezed_between_the_floor_and_the_peak,
     test_ticket_rule_is_one_formula_for_every_mode,
     test_gated_mode_is_deployed_at_its_own_peak,
@@ -1066,7 +1138,52 @@ def _control_state_ignored():
         D6.position_state = orig
 
 
-CONTROLS = [("путь журнала замёрз на импорте", _control_journal_path_frozen),
+def _control_win_counts_days():
+    """Доля прибыльных считается по ДНЯМ, а не по сделкам: день с двумя
+    плюсами и одним минусом объявляется целиком выигранным."""
+    src = P._stats
+
+    def broken(rows, deposit):
+        st = src(rows, deposit)
+        if st:
+            st["win"] = st["day_green"]
+        return st
+    P._stats = broken
+    try:
+        try:
+            test_shape_counts_positions_not_days()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P._stats = src
+
+
+def _control_missing_mark_reads_as_zero():
+    """Позиция без отметки читается ровной: «не измерено» подменяется
+    нулём — ровно тот класс, от которого защищает прочерк."""
+    src = R.open_stats
+
+    def broken(positions):
+        ps = [dict(p, mark_frac=(p.get("mark_frac") or 0.0),
+                   mark_usd=(p.get("mark_usd") or 0.0))
+              for p in (positions or [])]
+        return src(ps)
+    R.open_stats = broken
+    try:
+        try:
+            test_worst_open_is_measured_and_missing_is_not_zero()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.open_stats = src
+
+
+CONTROLS = [("доля прибыльных считается по дням", _control_win_counts_days),
+            ("отметки нет — читается нулём",
+             _control_missing_mark_reads_as_zero),
+            ("путь журнала замёрз на импорте", _control_journal_path_frozen),
             ("кэш переиспользует открытую", _control_cache_reuses_open),
             ("подпись правил кэша не сверяется", _control_cache_sig_ignored),
             ("свод складывает вперёд и пересчёт", _control_no_split),

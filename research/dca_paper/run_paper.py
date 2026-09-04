@@ -319,6 +319,14 @@ def _stats(rows, deposit):
     eq = float(deposit) + np.cumsum(v)
     dd = float(np.min(eq / np.maximum.accumulate(eq) - 1.0))
     pos = [x for x in v if x > 0]
+    # Доля прибыльных ПОЗИЦИЙ и среднее время в сделке. Ничья (ровно
+    # ноль) прибыльной не считается — конвенция проекта разрешает её не
+    # в свою пользу. Время идёт от первого рунга до выхода: у лестницы
+    # доливы живут ВНУТРИ позиции, и считать их отдельными сделками
+    # значило бы мерить не то, чем книга торгует.
+    wins = sum(1 for r in rows if float(r["usd"]) > 0)
+    holds = [(float(r["exit_ts"]) - float(r["at"])) / 3600.0 for r in rows
+             if r.get("exit_ts") is not None and r.get("at") is not None]
     best = max(rows, key=lambda r: float(r["usd"]))
     wo = sum(float(r["usd"]) for r in rows if r["sym"] != best["sym"])
     # Концентрация по ДНЯМ — не то же, что по именам: один рыночный
@@ -335,6 +343,12 @@ def _stats(rows, deposit):
         "day_median": round(float(np.median(v)) / float(deposit), 5),
         "day_worst": round(float(np.min(v)) / float(deposit), 4),
         "day_green": round(float(np.mean(v > 0)), 3),
+        # Доля прибыльных позиций и среднее время в сделке: день и
+        # позиция — разные знаменатели, и «зелёных дней» на вопрос
+        # «сколько сделок в плюс» не отвечает.
+        "win": round(wins / len(rows), 3),
+        "hold_h": (round(float(np.mean(holds)), 1) if holds else None),
+        "hold_med_h": (round(float(np.median(holds)), 1) if holds else None),
         # укус: |худший день| / медиана прибыльного дня (мера устойчивости)
         "bite": (round(abs(float(np.min(v))) / float(np.median(pos)), 1)
                  if pos and float(np.median(pos)) > 0 else None),
