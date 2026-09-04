@@ -125,3 +125,18 @@ sheets.jsonl: ног 862861
 | σ-линейка 6·σ | 8677 | 123.96 |
 
 **Оговорки.** Веса модели видели эти часы (оценка сверху). Издержки круга в исходе позиции не сняты, а книга из сотен мелких ордеров платит проскальзывания больше — оно не моделируется вовсе. Период один и режим рынка один. Внутри секунды деньги достаются лучшим по |прогноз|: раздача по порядку прихода сравнивала бы удачу, а не ширину.
+публикуется в ветку main:
+ jobs/done/d6-10k.log                           |   7 +
+ jobs/done/d6-10k2.done                         |   1 +
+ jobs/done/d6-10k2.log                          | 127 +++++
+ jobs/poke.log                                  |   3 +
+ research/dca_ladder/out/D6-cash-1m-d10000.json | 738 ++++++++++++++++++++++---
+ research/dca_ladder/out/D6-cash-1m-d10000.md   |  84 +--
+ research/s8_loop/out/day_brake.json            |   2 +-
+ 7 files changed, 838 insertions(+), 124 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   f401dd4..eea833a  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-04T10:47:04Z, код 0
