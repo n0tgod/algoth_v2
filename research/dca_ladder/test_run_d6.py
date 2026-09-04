@@ -391,6 +391,13 @@ def test_full_cover_takes_every_signal():
     assert abs(f["ticket"] - 20.0) < 1e-9, f
     assert abs(f["floor_dep"] - 200.0) < 1e-9, f
     assert f["deposit"] is not None and f["cell"]["taken"] == 10, f
+    # запас берётся МЕСТАМИ: доля ровно 1/пик стоит на границе кассы,
+    # и увеличение ДЕПОЗИТА при ней не помогает — условие масштабно
+    # инвариантно (нашёл живой прогон: не сошлось даже при ×14.55)
+    assert f["slots_full"] >= f["peak"], f
+    edge = D6.ration(recs, 1.0 / f["peak"], deposit=f["floor_dep"] * 20)
+    assert edge["taken"] == D6.ration(
+        recs, 1.0 / f["peak"], deposit=f["floor_dep"])["taken"], edge
     assert f["cell"]["no_cash"] == 0 and f["cell"]["too_small"] == 0, f
     # тождество: доход = сумма исходов / пик (депозит не входит вовсе)
     exp = round(sum(r["pnl"] for r in recs) / f["peak"], 4)

@@ -365,18 +365,24 @@ def full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE,
     lev_min = min(float(r["lev"]) for r in recs)
     ticket = min_notional / rung / lev_min
     floor_dep = peak * ticket
-    share = 1.0 / peak
     total = len(recs)
-    # арифметический пол проверяется кассой: ищем наименьший множитель,
-    # при котором взяты ВСЕ — иначе «хватает» осталось бы утверждением
+    # Запас берётся МЕСТАМИ, а не деньгами, и это нашёл живой прогон.
+    # При доле ровно 1/пик касса стоит на границе тождественно: маржа
+    # равна `счёт/пик`, значит в пике занято ровно `счёт`. Дальше решает
+    # округление и то, что ранние лоты взяты при другом счёте — и охват
+    # срывается. Увеличение ДЕПОЗИТА при фиксированной доле тут не
+    # помогает вовсе: маржа и свободные деньги растут вместе, условие
+    # масштабно инвариантно (первая версия искала множитель к депозиту и
+    # честно не сошлась даже при ×14.55). Помогают только лишние места.
     lo, hi, best = 1.0, 1.0, None
     for _ in range(12):
-        r = ration(recs, share, deposit=floor_dep * hi,
+        sl = int(round(peak * hi))
+        r = ration(recs, 1.0 / sl, deposit=sl * ticket,
                    min_notional=min_notional)
         if r["taken"] == total:
             best = (hi, r)
             break
-        lo, hi = hi, hi * 1.25
+        lo, hi = hi, hi * 1.15
     if best is None:
         log("  полный охват не достигнут даже при ×%.2f" % hi)
         return {"peak": peak, "peak_names": pk["names_at_peak"],
@@ -390,30 +396,41 @@ def full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE,
         mid = (lo + m_hi) / 2.0
         if m_hi - lo < 0.005:
             break
-        r = ration(recs, share, deposit=floor_dep * mid,
+        sl = int(round(peak * mid))
+        r = ration(recs, 1.0 / sl, deposit=sl * ticket,
                    min_notional=min_notional)
         if r["taken"] == total:
             m_hi, best = mid, (mid, r)
         else:
             lo = mid
-    dep = floor_dep * best[0]
+    slots = int(round(peak * best[0]))
+    dep = slots * ticket
     cell = best[1]
-    cell["ticket"] = round(dep * share, 2)
+    cell["slots_full"] = slots
+    cell["ticket"] = round(ticket, 2)
     return {"peak": peak, "peak_names": pk["names_at_peak"],
             "names_max": pk["names_max"],
             "max_lots_one_name": pk["max_lots_one_name"],
             "lev_min": round(lev_min, 3),
             "ticket": round(ticket, 2), "floor_dep": round(floor_dep, 2),
             "deposit": round(dep, 2), "mult": round(best[0], 3),
-            "cell": cell, "total": total}
+            "slots_full": slots, "cell": cell, "total": total}
 
 
-def coverage_curve(recs, peak, deps, min_notional=MIN_NOTIONAL):
-    """Сколько сигналов берётся при депозите меньше полного охвата."""
+def coverage_curve(recs, peak, deps, ticket=None,
+                   min_notional=MIN_NOTIONAL):
+    """Сколько сигналов берётся при депозите меньше полного охвата.
+
+    Билет держится тем же, а МЕСТА падают вместе с деньгами — иначе
+    кривая мерила бы только пол биржи: при фиксированной доле процент к
+    депозиту от депозита не зависит вовсе.
+    """
     out = []
     for d in deps:
-        r = ration(recs, 1.0 / peak, deposit=d, min_notional=min_notional)
-        out.append({"deposit": round(d, 2), "taken": r["taken"],
+        sl = max(1, int(d // ticket)) if ticket else peak
+        r = ration(recs, 1.0 / sl, deposit=d, min_notional=min_notional)
+        out.append({"deposit": round(d, 2), "slots": sl,
+                    "taken": r["taken"],
                     "share_taken": round(r["taken"] / len(recs), 4),
                     "no_cash": r["no_cash"], "too_small": r["too_small"],
                     "final": r["final"], "max_dd": r["max_dd"]})
@@ -516,7 +533,8 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
                 f"билет ${fc['ticket']:g}, депозит ${fc['deposit']:,.0f}")
             out["full"][f"{k[0]}|{k[1]}"]["curve"] = coverage_curve(
                 rs, fc["peak"],
-                [fc["deposit"] * q for q in (0.1, 0.25, 0.5, 0.75, 1.0)])
+                [fc["deposit"] * q for q in (0.1, 0.25, 0.5, 0.75, 1.0)],
+                ticket=fc["ticket"])
         for sh in shares:
             key = f"{k[0]}|{k[1]}|{sh:.6f}"
             out["cells"][key] = ration(rs, sh, deposit=deposit)
@@ -684,19 +702,19 @@ def _full_block(s):
             rows.append((name, x))
     if rows:
         L += ["### Чем платит депозит меньше полного", "",
-              "| линейка | депозит | взято | нет кассы | мельче $5 | доход | "
-              "просадка |", "|---|--:|--:|--:|--:|--:|--:|"]
+              "| линейка | депозит | мест | взято | нет кассы | мельче $5 | "
+              "доход | просадка |", "|---|--:|--:|--:|--:|--:|--:|--:|"]
         for name, x in rows:
             L.append(
-                f"| {name} | ${x['deposit']:,.0f} | "
+                f"| {name} | ${x['deposit']:,.0f} | {x.get('slots', '—')} | "
                 f"{x['taken']} ({100 * x['share_taken']:.0f} %) | "
                 f"{x['no_cash']} | {x['too_small']} | {_pct(x['final'])} | "
                 f"{_pct(x['max_dd'])} |")
-        L += ["", "Число мест здесь ОДНО и равно пику — меняется только "
-              "депозит, то есть размер билета. Поэтому падение охвата "
-              "читается по колонкам отказов: пока связывает «нет кассы», "
-              "помогут и деньги, и места; когда «мельче $5» — только "
-              "деньги.", ""]
+        L += ["", "Билет здесь ОДИН, а места падают вместе с деньгами — "
+              "иначе кривая мерила бы только пол биржи: при фиксированной "
+              "доле процент к депозиту от депозита не зависит вовсе. "
+              "Отказы разделены: «нет кассы» лечится местами, «мельче $5» "
+              "— только билетом, то есть деньгами.", ""]
     return L
 
 
