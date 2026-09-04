@@ -1,0 +1,316 @@
+{
+ "positions": 8676,
+ "skipped": 0,
+ "grid": [
+  [
+   "depth",
+   2.0
+  ],
+  [
+   "depth",
+   3.0
+  ],
+  [
+   "sigma",
+   3.0
+  ],
+  [
+   "sigma",
+   4.0
+  ],
+  [
+   "sigma",
+   6.0
+  ],
+  [
+   "sigma",
+   8.0
+  ],
+  [
+   "sigma",
+   12.0
+  ]
+ ],
+ "params": {
+  "FLOOR_FRAC": 0.1,
+  "BACK_H": 24,
+  "HOLD_H": 72,
+  "MIN_PER_DAY": 1440,
+  "DECILE": 0.1
+ },
+ "cells": {
+  "depth|2.0": {
+   "n": 8676,
+   "liq_freq": 0.00058,
+   "median": 0.0191,
+   "mean": 0.0288,
+   "green": 0.905,
+   "worst": -1.0,
+   "bite": 46.7,
+   "curve_dd": -11.35,
+   "median_lev": 3.03,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7544,
+    "срок": 1087,
+    "пол": 40,
+    "ликвидация": 5
+   },
+   "book": {
+    "final": 0.0719,
+    "max_dd": -0.1911,
+    "day_median": 0.0027,
+    "day_worst": -0.1166,
+    "day_green": 0.643,
+    "days": 28,
+    "hours": 639
+   },
+   "lev_wild": 1.78,
+   "liq_wild": 0.00115,
+   "lev_calm": 1.0,
+   "liq_calm": 0.0,
+   "binder": {
+    "лестница": 0.767,
+    "нет лестницы": 0.232,
+    "забор отказал": 0.001
+   }
+  },
+  "depth|3.0": {
+   "n": 8676,
+   "liq_freq": 0.00012,
+   "median": 0.0174,
+   "mean": 0.0219,
+   "green": 0.906,
+   "worst": -1.0,
+   "bite": 51.9,
+   "curve_dd": -10.711,
+   "median_lev": 2.67,
+   "frac_1x": 0.233,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7549,
+    "срок": 1111,
+    "пол": 15,
+    "ликвидация": 1
+   },
+   "book": {
+    "final": 0.0654,
+    "max_dd": -0.1983,
+    "day_median": 0.00263,
+    "day_worst": -0.0995,
+    "day_green": 0.607,
+    "days": 28,
+    "hours": 639
+   },
+   "lev_wild": 1.66,
+   "liq_wild": 0.0,
+   "lev_calm": 1.0,
+   "liq_calm": 0.0,
+   "binder": {
+    "лестница": 0.767,
+    "нет лестницы": 0.232,
+    "забор отказал": 0.001
+   }
+  },
+  "sigma|3.0": {
+   "n": 8676,
+   "liq_freq": 0.00023,
+   "median": 0.0165,
+   "mean": 0.0239,
+   "green": 0.906,
+   "worst": -1.0,
+   "bite": 54.1,
+   "curve_dd": -3.353,
+   "median_lev": 2.5,
+   "frac_1x": 0.235,
+   "avg_depth": 1.21,
+   "exits": {
+    "тейк": 7550,
+    "срок": 1118,
+    "ликвидация": 2,
+    "пол": 6
+   },
+   "book": {
+    "final": 0.1585,
+    "max_dd": -0.1037,
+    "day_median": 0.00222,
+    "day_worst": -0.0425,
+    "day_green": 0.607,
+    "days": 28,
+    "hours": 639
+   },
+   "lev_wild": 1.18,
+   "liq_wild": 0.0,
+   "lev_calm": 1.0,
+   "liq_calm": 0.0,
+   "binder": {
+    "σ": 0.765,
+    "нет лестницы": 0.232,
+    "забор отказал": 0.003
+   }
+  },
+  "sigma|4.0": {
+   "n": 8676,
+   "liq_freq": 0.00012,
+   "median": 0.015,
+   "mean": 0.0194,
+   "green": 0.906,
+   "worst": -1.0,
+   "bite": 60.2,
+   "curve_dd": -2.359,
+   "median_lev": 2.21,
+   "frac_1x": 0.235,
+   "avg_depth": 1.2,
+   "exits": {
+    "тейк": 7552,
+    "срок": 1123,
+    "ликвидация": 1
+   },
+   "book": {
+    "final": 0.1614,
+    "max_dd": -0.1039,
+    "day_median": 0.00213,
+    "day_worst": -0.0387,
+    "day_green": 0.607,
+    "days": 28,
+    "hours": 639
+   },
+   "lev_wild": 1.0,
+   "liq_wild": 0.0,
+   "lev_calm": 1.0,
+   "liq_calm": 0.0,
+   "binder": {
+    "σ": 0.765,
+    "нет лестницы": 0.232,
+    "забор отказал": 0.003
+   }
+  },
+  "sigma|6.0": {
+   "n": 8676,
+   "liq_freq": 0.0,
+   "median": 0.0126,
+   "mean": 0.0143,
+   "green": 0.905,
+   "worst": -0.298,
+   "bite": 21.7,
+   "curve_dd": -2.234,
+   "median_lev": 1.8,
+   "frac_1x": 0.242,
+   "avg_depth": 1.2,
+   "exits": {
+    "тейк": 7552,
+    "срок": 1124
+   },
+   "book": {
+    "final": 0.1459,
+    "max_dd": -0.1151,
+    "day_median": 0.002,
+    "day_worst": -0.044,
+    "day_green": 0.607,
+    "days": 28,
+    "hours": 639
+   },
+   "lev_wild": 1.0,
+   "liq_wild": 0.0,
+   "lev_calm": 1.0,
+   "liq_calm": 0.0,
+   "binder": {
+    "σ": 0.758,
+    "нет лестницы": 0.232,
+    "забор отказал": 0.01
+   }
+  },
+  "sigma|8.0": {
+   "n": 8676,
+   "liq_freq": 0.0,
+   "median": 0.0108,
+   "mean": 0.0114,
+   "green": 0.904,
+   "worst": -0.252,
+   "bite": 21.6,
+   "curve_dd": -2.161,
+   "median_lev": 1.53,
+   "frac_1x": 0.258,
+   "avg_depth": 1.18,
+   "exits": {
+    "тейк": 7552,
+    "срок": 1124
+   },
+   "book": {
+    "final": 0.133,
+    "max_dd": -0.1227,
+    "day_median": 0.00191,
+    "day_worst": -0.0479,
+    "day_green": 0.607,
+    "days": 28,
+    "hours": 639
+   },
+   "lev_wild": 1.0,
+   "liq_wild": 0.0,
+   "lev_calm": 1.0,
+   "liq_calm": 0.0,
+   "binder": {
+    "σ": 0.742,
+    "нет лестницы": 0.232,
+    "забор отказал": 0.026
+   }
+  },
+  "sigma|12.0": {
+   "n": 8676,
+   "liq_freq": 0.0,
+   "median": 0.0085,
+   "mean": 0.0082,
+   "green": 0.899,
+   "worst": -0.192,
+   "bite": 21.3,
+   "curve_dd": -2.067,
+   "median_lev": 1.24,
+   "frac_1x": 0.313,
+   "avg_depth": 1.13,
+   "exits": {
+    "тейк": 7552,
+    "срок": 1124
+   },
+   "book": {
+    "final": 0.1185,
+    "max_dd": -0.1334,
+    "day_median": 0.00146,
+    "day_worst": -0.054,
+    "day_green": 0.571,
+    "days": 28,
+    "hours": 639
+   },
+   "lev_wild": 1.0,
+   "liq_wild": 0.0,
+   "lev_calm": 1.0,
+   "liq_calm": 0.0,
+   "binder": {
+    "σ": 0.687,
+    "забор отказал": 0.081,
+    "нет лестницы": 0.232
+   }
+  }
+ },
+ "anchor": {
+  "cell": "depth|2.0",
+  "mismatch": 1,
+  "fields": [
+   {
+    "поле": "final",
+    "D4": 0.0732,
+    "D5": 0.0719
+   }
+  ]
+ },
+ "secs": 1075.7,
+ "sigma_measured": 8664,
+ "sigma_deciles": {
+  "calm_max_bp": 10.16,
+  "wild_min_bp": 25.99,
+  "calm_n": 867,
+  "wild_n": 867,
+  "calm_day_pct": 2.72,
+  "wild_day_pct": 12.55
+ }
+}
