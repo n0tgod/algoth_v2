@@ -35,7 +35,7 @@ const isTour = /tournament — all 72 branches/.test(src);
 const isPaper =
   /monthly book — one construction, recorded forward/.test(src);
 const isDca =
-  /DCA paper books — one rule set, three deposits/.test(src);
+  /DCA paper books — two leverage rulers/.test(src);
 const flatBox = () => String(global.__el ? global.__el("box").innerHTML : "")
   .replace(/\s+/g, " ");
 const isAgents =
@@ -223,14 +223,20 @@ const recount = {busy: false, done: 2, total: 2, hours: 24,
 // (прочерки с названной причиной), у $10000 есть обе группы, у $100000
 // только пересчёт — так проверяется, что группы не складываются.
 const dcaStub = (url) => {
-  const mk = (n, usd, dd, wd, top, wo) => ({
+  const mk = (n, usd, dd, wd, top, wo, wo3) => ({
     n: n, names: Math.max(1, Math.round(n * 0.8)), days: 6, usd: usd,
     final: usd / 10000, max_dd: dd, day_median: 0.0012, day_worst: wd,
-    day_green: 0.62, bite: 7.4, top_sym: top, usd_wo_top: wo});
+    day_green: 0.62, bite: 7.4, top_sym: top, usd_wo_top: wo,
+    usd_wo_top3d: wo3 === undefined ? null : wo3});
   const tr = (sym, usd, lev) => ({
     at: T0 - 7200, exit_ts: T0 - 3600, sym: sym, lev: lev, margin: 25.0,
     usd: usd, pnl_frac: usd / 25.0, exit: usd > 0 ? "тейк" : "пол"});
   const nojournal = /dcanojournal=1/.test(SEARCH);
+  const RUL = [
+    {key: "safe", title: "безопасная",
+     plain: "плечо от собственной σ имени: запас 6 суточных σ."},
+    {key: "optimal", title: "оптимальная",
+     plain: "плечо от глубины лестницы: запас 2 · d_max."}];
   return {
     present: !/dcaabsent=1/.test(SEARCH),
     why: /dcaabsent=1/.test(SEARCH)
@@ -240,29 +246,63 @@ const dcaStub = (url) => {
     stale: /dcastale=1/.test(SEARCH),
     window: {from: "2026-08-08 18:07", to: "2026-09-04 10:08"},
     deposits: [1000, 10000, 100000],
+    rulers: RUL,
     rules: {RULES: 1, TICKET: 25.0, DEPOSITS: [1000, 10000, 100000],
             AHEAD_H: 120, HOLD_H: 72, ONE_PER_NAME: true,
             MIN_EDGE_BP: 33.0, MIN_RR: 2.0, SURVIVE_MULT: 2.0,
-            FLOOR_FRAC: 0.1},
+            FLOOR_FRAC: 0.1,
+            RULERS: {safe: RUL[0], optimal: RUL[1]},
+            RULER_ORDER: ["safe", "optimal"]},
     books: {
-      "1000": {deposit: 1000, slots: 40, ticket: 25.0, n_journal: 310,
-               forward: null,
-               restored: mk(310, 41.2, -0.061, -0.019, "TUTUSDT", 18.9),
-               trades_forward: [],
-               trades_restored: [tr("TUTUSDT", 12.4, 3.1),
-                                 tr("ARBUSDT", -2.2, 2.4)]},
-      "10000": {deposit: 10000, slots: 400, ticket: 25.0, n_journal: 2980,
-                forward: mk(64, 21.5, -0.012, -0.004, "WUSDT", 17.1),
-                restored: mk(2916, 902.3, -0.074, -0.022, "TUTUSDT", 611.0),
-                trades_forward: [tr("WUSDT", 4.1, 2.9)],
-                trades_restored: [tr("TUTUSDT", 31.7, 3.4),
-                                  tr("MEUSDT", -8.5, 1.8)]},
-      "100000": {deposit: 100000, slots: 4000, ticket: 25.0,
-                 n_journal: 5140, forward: null,
-                 restored: mk(5140, 1580.0, -0.052, -0.017, "TUTUSDT",
-                              1102.0),
-                 trades_forward: [],
-                 trades_restored: [tr("TUTUSDT", 44.0, 3.4)]}}};
+      // безопасная: та же запись, но плечо меньше — денег меньше, хвост
+      // мельче. Числа нарочно РАЗНЫЕ у линеек: совпади они, проверка
+      // «переключение что-то меняет» прошла бы на сломанном ключе
+      "safe:1000": {deposit: 1000, ruler: "safe", ruler_title: "безопасная",
+                    slots: 40, ticket: 25.0, n_journal: 300, forward: null,
+                    restored: mk(300, 19.8, -0.028, -0.009, "TUTUSDT", 11.2,
+                                 -3.1),
+                    trades_forward: [],
+                    trades_restored: [tr("TUTUSDT", 5.1, 1.4)]},
+      "safe:10000": {deposit: 10000, ruler: "safe", ruler_title: "безопасная",
+                     slots: 400, ticket: 25.0, n_journal: 2900,
+                     // у наблюдения дней ещё меньше четырёх: величина
+                     // НЕ измерена, и страница обязана сказать это словом
+                     forward: mk(60, 9.7, -0.005, -0.002, "WUSDT", 7.4),
+                     restored: mk(2840, 402.6, -0.031, -0.010, "TUTUSDT",
+                                  280.0, -14.0),
+                     trades_forward: [tr("WUSDT", 1.9, 1.5)],
+                     trades_restored: [tr("TUTUSDT", 12.0, 1.6)]},
+      "safe:100000": {deposit: 100000, ruler: "safe",
+                      ruler_title: "безопасная", slots: 4000, ticket: 25.0,
+                      n_journal: 5000, forward: null,
+                      restored: mk(5000, 690.0, -0.021, -0.008, "TUTUSDT",
+                                   500.0, -20.0),
+                      trades_forward: [],
+                      trades_restored: [tr("TUTUSDT", 16.0, 1.6)]},
+      "optimal:1000": {deposit: 1000, ruler: "optimal",
+                       ruler_title: "оптимальная", slots: 40, ticket: 25.0,
+                       n_journal: 310, forward: null,
+                       restored: mk(310, 41.2, -0.061, -0.019, "TUTUSDT",
+                                    18.9, -12.4),
+                       trades_forward: [],
+                       trades_restored: [tr("TUTUSDT", 12.4, 3.1),
+                                         tr("ARBUSDT", -2.2, 2.4)]},
+      "optimal:10000": {deposit: 10000, ruler: "optimal",
+                        ruler_title: "оптимальная", slots: 400, ticket: 25.0,
+                        n_journal: 2980,
+                        forward: mk(64, 21.5, -0.012, -0.004, "WUSDT", 17.1),
+                        restored: mk(2916, 902.3, -0.074, -0.022, "TUTUSDT",
+                                     611.0, -38.0),
+                        trades_forward: [tr("WUSDT", 4.1, 2.9)],
+                        trades_restored: [tr("TUTUSDT", 31.7, 3.4),
+                                          tr("MEUSDT", -8.5, 1.8)]},
+      "optimal:100000": {deposit: 100000, ruler: "optimal",
+                         ruler_title: "оптимальная", slots: 4000,
+                         ticket: 25.0, n_journal: 5140, forward: null,
+                         restored: mk(5140, 1580.0, -0.052, -0.017,
+                                      "TUTUSDT", 1102.0, -42.0),
+                         trades_forward: [],
+                         trades_restored: [tr("TUTUSDT", 44.0, 3.4)]}}};
 };
 
 const paperStub = (url) => {
@@ -1697,6 +1737,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__dcaSetDep = typeof render === 'function' "
                 + "&& typeof DEP !== 'undefined' ? (function(x){ "
                 + "DEP = x; render(); }) : null;"
+                // Вторая ось книги — линейка плеча. Тоже своим именем:
+                // страница держит два независимых переключателя, и один
+                // экспорт на оба означал бы, что проверка «переключение
+                // меняет числа» гоняет не ту дорогу.
+                + "\nglobal.__dcaSetRuler = typeof render === 'function' "
+                + "&& typeof RUL !== 'undefined' ? (function(x){ "
+                + "RUL = x; render(); }) : null;"
                 + "\nglobal.__infoClose = typeof closeInfo === "
                 + "'function' ? closeInfo : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
@@ -2630,8 +2677,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       .replace(/\s+/g, " ");
     const intro = String(global.__el ? global.__el("intro").innerHTML : "")
       .replace(/\s+/g, " ");
-    if (!/отличаются ровно депозитом/.test(intro))
-      bad.push("DCA: рамка «отличаются ровно депозитом» не названа");
+    if (!/линейкой плеча и депозитом/.test(intro))
+      bad.push("DCA: рамка «линейка плеча и депозит» не названа");
+    for (const t of ["безопасная", "оптимальная"])
+      if (!new RegExp(t).test(intro))
+        bad.push(`DCA: линейка «${t}» не названа в рамке`);
+    if (!/ярлыки, а не вердикт/.test(intro))
+      bad.push("DCA: имена линеек выданы за вердикт");
     if (!/выведен из пола биржи/.test(intro))
       bad.push("DCA: вывод билета из пола биржи не назван");
     if (!/У имени позиция одна/.test(intro))
@@ -2642,25 +2694,52 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const nTabs = (tabs.match(/class='tab/g) || []).length;
     if (nTabs !== 3)
       bad.push(`DCA: переключателей депозита ${nTabs}, а книг три`);
+    const rtabs = String(global.__el ? global.__el("rtabs").innerHTML : "");
+    const nR = (rtabs.match(/class='tab/g) || []).length;
+    if (nR !== 2)
+      bad.push(`DCA: переключателей линейки ${nR}, а их две`);
+    if (!/безопасная/.test(rtabs) || !/оптимальная/.test(rtabs))
+      bad.push("DCA: линейки не подписаны своими именами");
+    // умолчание — безопасная: показывать по умолчанию книгу, которая
+    // рискует больше, значит выбирать за владельца
+    if (!/class='tab on' data-rul='safe'/.test(rtabs))
+      bad.push("DCA: по умолчанию открыта не безопасная линейка");
     // $1000: наблюдения ещё нет — прочерки с НАЗВАННОЙ причиной
     const b1 = flat();
     if (!/40/.test(b1)) bad.push("DCA: число мест книги $1000 не показано");
     if (!/только после того, как его позиция/.test(b1))
       bad.push("DCA: пустое наблюдение не объяснено причиной");
-    if (/\+41\.20 \$/.test(b1) === false)
-      bad.push("DCA: деньги пересчёта книги $1000 не показаны");
+    // открыта БЕЗОПАСНАЯ книга $1000 — её числа, а не соседней линейки
+    if (!/\+19\.80 \$/.test(b1))
+      bad.push("DCA: деньги пересчёта безопасной книги $1000 не показаны");
+    if (/\+41\.20 \$/.test(b1))
+      bad.push("DCA: под безопасной линейкой показаны числа оптимальной");
+    if (!/без 3 лучших дней/.test(b1))
+      bad.push("DCA: концентрация по дням не показана");
+    if (!/-3\.10 \$/.test(b1))
+      bad.push("DCA: итог без трёх лучших дней не показан числом");
+    // переключение ЛИНЕЙКИ обязано менять числа, а не только подсветку
+    if (global.__dcaSetRuler) global.__dcaSetRuler("optimal");
+    const r2 = flat();
+    if (r2 === b1) bad.push("DCA: переключение линейки ничего не меняет");
+    if (!/\+41\.20 \$/.test(r2))
+      bad.push("DCA: деньги пересчёта оптимальной книги $1000 не показаны");
+    if (global.__dcaSetRuler) global.__dcaSetRuler("safe");
     // переключение обязано менять ЧИСЛА, а не только подсветку
     if (global.__dcaSetDep) global.__dcaSetDep("10000");
     const b2 = flat();
     if (b2 === b1) bad.push("DCA: переключение депозита ничего не меняет");
     if (!/400/.test(b2)) bad.push("DCA: число мест книги $10000 не показано");
-    if (!/\+21\.50 \$/.test(b2))
+    if (!/\+9\.70 \$/.test(b2))
       bad.push("DCA: деньги наблюдения книги $10000 не показаны");
-    if (!/\+902\.30 \$/.test(b2))
+    if (!/\+402\.60 \$/.test(b2))
       bad.push("DCA: деньги пересчёта книги $10000 не показаны");
-    // сумма двух групп (21.50 + 902.30 = 923.80) появиться не может
-    if (/923\.80/.test(b2))
+    // сумма двух групп (9.70 + 402.60 = 412.30) появиться не может
+    if (/412\.30/.test(b2))
       bad.push("DCA: наблюдение сложено с пересчётом");
+    // у наблюдения книги $10000 трёх дней ещё нет — прочерк с причиной
+    if (!/вычитать нечего/.test(b2))
+      bad.push("DCA: прочерк концентрации по дням не объяснён");
     if (!/наблюдение/.test(b2) || !/пересчёт/.test(b2))
       bad.push("DCA: группы не подписаны");
     if (global.__dcaSetDep) global.__dcaSetDep("1000");

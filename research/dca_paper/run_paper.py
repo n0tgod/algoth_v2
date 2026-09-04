@@ -12,9 +12,12 @@
 не сканером на живой цене. Что для настоящего живого контура пришлось бы
 достроить, названо в отчёте, а не подразумевается.
 
-Три книги отличаются РОВНО депозитом. Билет один и тот же ($25, вывод —
-`rules.TICKET`), поэтому число мест растёт вместе с деньгами: 40 / 400 /
-4000. Это и есть предмет сравнения: что покупает депозит.
+Книг шесть: две линейки плеча × три депозита. По депозиту книги
+отличаются РОВНО им — билет один и тот же ($25, вывод — `rules.TICKET`),
+поэтому число мест растёт вместе с деньгами: 40 / 400 / 4000. По линейке
+отличается то, из чего выводится плечо (`rules.RULERS`): «безопасная»
+считает запас от собственной σ имени, «оптимальная» — от глубины
+лестницы. Обе ведутся параллельно: какая лучше, решает форвард.
 
 Биржевое правило соблюдается с первого дня: у имени позиция ОДНА, второй
 выбор по той же монете пропускается (`rules.ONE_PER_NAME`).
@@ -40,7 +43,10 @@ sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
 import rules as R                                             # noqa: E402
 import run_d6 as D6                                           # noqa: E402
 
-RULER = ("depth", R.SURVIVE_MULT)      # ограда книг = база D3/D4
+# Линейки плеча объявлены В ПРАВИЛАХ, а не здесь: их читает и страница
+# наблюдения, и вторая запись однажды разошлась бы с той, по которой
+# книга торгует.
+RULERS = {k: (v["rule"], v["param"]) for k, v in R.RULERS.items()}
 
 
 def _key(r):
@@ -48,37 +54,51 @@ def _key(r):
     return f"{int(r['at'])}:{r['sym']}"
 
 
-def build_rows(recs, now=None, log=print):
+def _cell(ruler, dep):
+    """Ключ книги: линейка и депозит. Одно решение живёт в обеих книгах,
+    и склеив их одним ключом, мы потеряли бы вторую целиком."""
+    return f"{ruler}:{int(dep)}"
+
+
+def build_rows(by_ruler, now=None, log=print):
     """Решения, взятые каждой книгой, с деньгами в долларах.
 
     Одна позиция на имя применяется ДО раздачи кассы: правило биржи не
     зависит от депозита, и применив его после, мы дали бы разным книгам
-    разные составы по чужой причине.
+    разные составы по чужой причине. По линейкам состав РАЗЛИЧАЕТСЯ
+    законно: ограда отказывает по-разному, и это свойство линейки, а не
+    артефакт — числа отказов печатаются по каждой отдельно.
     """
     now = float(now if now is not None else time.time())
-    keep, skipped = (D6.one_per_name(recs) if R.ONE_PER_NAME
-                     else (list(recs), 0))
-    out, cells = [], {}
-    for dep in R.DEPOSITS:
-        rows = []
-        c = D6.ration(keep, R.share(dep), deposit=dep,
-                      min_notional=R.MIN_NOTIONAL, keep_rows=rows)
-        c["slots"] = R.slots(dep)
-        cells[str(int(dep))] = c
-        for (r, margin) in rows:
-            out.append({
-                "dep": int(dep), "at": float(r["at"]),
-                "exit_ts": float(r["exit_ts"]), "sym": r["sym"],
-                "lev": round(float(r["lev"]), 3),
-                "margin": round(float(margin), 4),
-                "pnl_frac": round(float(r["pnl"]), 6),
-                "usd": round(float(r["pnl"]) * float(margin), 4),
-                "exit": r.get("exit"), "written_at": now,
-                "rules": R.RULES})
-        log(f"  депозит ${dep:,.0f}: мест {c['slots']}, взято {c['taken']}, "
-            f"нет кассы {c['no_cash']}, мельче ${R.MIN_NOTIONAL:g} "
-            f"{c['too_small']}")
-    return out, cells, {"kept": len(keep), "skipped_repeats": skipped}
+    out, cells, one = [], {}, {}
+    for rk in R.RULER_ORDER:
+        recs = by_ruler.get(rk) or []
+        keep, skipped = (D6.one_per_name(recs) if R.ONE_PER_NAME
+                         else (list(recs), 0))
+        one[rk] = {"positions": len(recs), "kept": len(keep),
+                   "skipped_repeats": skipped}
+        log(f"линейка {R.ruler_title(rk)} ({rk}): позиций {len(recs)}, "
+            f"после правила одной на имя {len(keep)}")
+        for dep in R.DEPOSITS:
+            rows = []
+            c = D6.ration(keep, R.share(dep), deposit=dep,
+                          min_notional=R.MIN_NOTIONAL, keep_rows=rows)
+            c["slots"] = R.slots(dep)
+            cells[_cell(rk, dep)] = c
+            for (r, margin) in rows:
+                out.append({
+                    "dep": int(dep), "ruler": rk, "at": float(r["at"]),
+                    "exit_ts": float(r["exit_ts"]), "sym": r["sym"],
+                    "lev": round(float(r["lev"]), 3),
+                    "margin": round(float(margin), 4),
+                    "pnl_frac": round(float(r["pnl"]), 6),
+                    "usd": round(float(r["pnl"]) * float(margin), 4),
+                    "exit": r.get("exit"), "written_at": now,
+                    "rules": R.RULES})
+            log(f"  депозит ${dep:,.0f}: мест {c['slots']}, "
+                f"взято {c['taken']}, нет кассы {c['no_cash']}, "
+                f"мельче ${R.MIN_NOTIONAL:g} {c['too_small']}")
+    return out, cells, one
 
 
 def append_journal(rows, path=R.JOURNAL, log=print):
@@ -86,8 +106,12 @@ def append_journal(rows, path=R.JOURNAL, log=print):
     однажды попавшая в журнал, не переписывается — иначе момент записи
     можно было бы подвинуть, и «вперёд» перестало бы что-то значить."""
     old, bad = R.read_journal(path)
-    seen = {(r.get("dep"), _key(r)) for r in old}
-    fresh = [r for r in rows if (r["dep"], _key(r)) not in seen]
+    # Ключ дедупа несёт ЛИНЕЙКУ: одно решение живёт в обеих книгах, и без
+    # неё вторая книга целиком читалась бы повтором первой и не писалась
+    # бы никогда.
+    seen = {(R.ruler_of(r), r.get("dep"), _key(r)) for r in old}
+    fresh = [r for r in rows
+             if (R.ruler_of(r), r["dep"], _key(r)) not in seen]
     if fresh:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "a", encoding="utf-8") as f:
@@ -139,17 +163,25 @@ def _stats(rows, deposit):
 
 
 def summarize(path=R.JOURNAL):
-    """Свод по книгам: наблюдение и пересчёт ПОРОЗНЬ, никогда не в сумме."""
+    """Свод по книгам: наблюдение и пересчёт ПОРОЗНЬ, никогда не в сумме.
+
+    Книга есть пара «линейка × депозит», и ключ свода несёт обе: склеив
+    их по депозиту, мы сложили бы две книги в одну кривую.
+    """
     rows, bad = R.read_journal(path)
-    out = {"bad_lines": bad, "books": {}}
-    for dep in R.DEPOSITS:
-        mine = [r for r in rows if int(r.get("dep", 0)) == int(dep)
-                and int(r.get("rules", 0)) == R.RULES]
-        fwd, back = R.split_rows(mine)
-        out["books"][str(int(dep))] = {
-            "deposit": dep, "slots": R.slots(dep), "ticket": R.TICKET,
-            "forward": _stats(fwd, dep), "restored": _stats(back, dep),
-            "n_forward": len(fwd), "n_restored": len(back)}
+    out = {"bad_lines": bad, "books": {},
+           "rulers": list(R.RULER_ORDER), "deposits": list(R.DEPOSITS)}
+    for rk in R.RULER_ORDER:
+        for dep in R.DEPOSITS:
+            mine = [r for r in rows if int(r.get("dep", 0)) == int(dep)
+                    and int(r.get("rules", 0)) == R.RULES
+                    and R.ruler_of(r) == rk]
+            fwd, back = R.split_rows(mine)
+            out["books"][_cell(rk, dep)] = {
+                "deposit": dep, "ruler": rk, "ruler_title": R.ruler_title(rk),
+                "slots": R.slots(dep), "ticket": R.TICKET,
+                "forward": _stats(fwd, dep), "restored": _stats(back, dep),
+                "n_forward": len(fwd), "n_restored": len(back)}
     return out
 
 
@@ -185,34 +217,46 @@ def report(s):
          "десяткам имён разом, и первой колонке он невидим. Если вторая "
          "уводит итог в минус, книга описывает не правило, а тот эпизод. "
          "У книги моложе четырёх дней вычитать нечего, и там стоит "
-         "прочерк — величина не измерена, а не равна нулю.", ""]
+         "прочерк — величина не измерена, а не равна нулю.", "",
+         "**Линеек плеча две, и книг поэтому шесть.** Плечо не настройка "
+         "агрессивности: оно выводится из неравенства безопасности. "
+         + " ".join(f"**{v['title'].capitalize()}** — {v['plain']}"
+                    for k, v in ((k, R.RULERS[k]) for k in R.RULER_ORDER))
+         + " Имена — ярлыки, а не вердикт: какая линейка лучше, покажет "
+         "форвард, и обе ведутся параллельно ровно затем, чтобы вопрос "
+         "решали числа, а не выбор задним числом.", ""]
     for name, key in (("Наблюдение (записано вперёд)", "forward"),
                       ("Пересчёт по прошлому", "restored")):
         L += [f"## {name}", "",
-              "| депозит | мест | сделок | имён | дней | $ | к депозиту | "
-              "просадка | медиана дня | худший день | зелёных | укус | "
-              "$ без лучшего имени | $ без 3 лучших дней |",
-              "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+              "| линейка | депозит | мест | сделок | имён | дней | $ | "
+              "к депозиту | просадка | медиана дня | худший день | "
+              "зелёных | укус | $ без лучшего имени | $ без 3 лучших дней |",
+              "|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+        # порядок «депозит, внутри линейки» ставит пару рядом: сравнивают
+        # линейки при ОДНОМ депозите, а не депозиты при одной линейке
         for dep in R.DEPOSITS:
-            b = (s.get("books") or {}).get(str(int(dep))) or {}
-            st = b.get(key)
-            if not st:
-                L.append(f"| ${dep:,.0f} | {b.get('slots', '—')} | 0 | — | "
-                         "— | — | — | — | — | — | — | — | — | — |")
-                continue
-            L.append(
-                f"| ${dep:,.0f} | {b['slots']} | {st['n']} | {st['names']} | "
-                f"{st['days']} | {st['usd']:,.2f} | {_pct(st['final'])} | "
-                f"{_pct(st['max_dd'])} | {_pct(st['day_median'], 3)} | "
-                f"{_pct(st['day_worst'])} | {st['day_green']:.2f} | "
-                f"{'—' if st['bite'] is None else st['bite']} | "
-                f"{st['usd_wo_top']:,.2f} | "
-                + ("—" if st.get("usd_wo_top3d") is None
-                   else f"{st['usd_wo_top3d']:,.2f}") + " |")
+            for rk in R.RULER_ORDER:
+                b = (s.get("books") or {}).get(_cell(rk, dep)) or {}
+                nm, st = R.ruler_title(rk), b.get(key)
+                if not st:
+                    L.append(f"| {nm} | ${dep:,.0f} | "
+                             f"{b.get('slots', '—')} | 0 | — | — | — | — | "
+                             "— | — | — | — | — | — | — |")
+                    continue
+                L.append(
+                    f"| {nm} | ${dep:,.0f} | {b['slots']} | {st['n']} | "
+                    f"{st['names']} | {st['days']} | {st['usd']:,.2f} | "
+                    f"{_pct(st['final'])} | {_pct(st['max_dd'])} | "
+                    f"{_pct(st['day_median'], 3)} | "
+                    f"{_pct(st['day_worst'])} | {st['day_green']:.2f} | "
+                    f"{'—' if st['bite'] is None else st['bite']} | "
+                    f"{st['usd_wo_top']:,.2f} | "
+                    + ("—" if st.get("usd_wo_top3d") is None
+                       else f"{st['usd_wo_top3d']:,.2f}") + " |")
         L.append("")
         if key == "forward" and all(
-                not ((s.get("books") or {}).get(str(int(d))) or {}).get(key)
-                for d in R.DEPOSITS):
+                not ((s.get("books") or {}).get(_cell(rk, d)) or {}).get(key)
+                for d in R.DEPOSITS for rk in R.RULER_ORDER):
             L += ["Наблюдения ещё нет ни у одной книги, и это не пустота "
                   "показа: журнал начат сегодня, а решение попадает сюда "
                   "только после того, как его позиция закрылась. Первые "
@@ -246,8 +290,11 @@ def main():
     t0 = time.time()
     extra = {}
     if not a.restat:
-        got = D6.collect_recs(limit=a.limit, rulers=[RULER])
-        rows, cells, one = build_rows(got["recs"][RULER])
+        keys = list(R.RULER_ORDER)
+        got = D6.collect_recs(limit=a.limit,
+                              rulers=[RULERS[k] for k in keys])
+        rows, cells, one = build_rows(
+            {k: got["recs"][RULERS[k]] for k in keys})
         append_journal(rows)
         extra = {"positions": got["positions"], "skipped": got["skipped"],
                  "window": got["window"], "cells": cells, "one_name": one}
@@ -259,7 +306,9 @@ def main():
                   "HOLD_H": R.HOLD_H, "ONE_PER_NAME": R.ONE_PER_NAME,
                   "MIN_EDGE_BP": R.MIN_EDGE_BP, "MIN_RR": R.MIN_RR,
                   "SURVIVE_MULT": R.SURVIVE_MULT,
-                  "FLOOR_FRAC": R.FLOOR_FRAC}
+                  "FLOOR_FRAC": R.FLOOR_FRAC,
+                  "RULERS": {k: dict(R.RULERS[k]) for k in R.RULER_ORDER},
+                  "RULER_ORDER": list(R.RULER_ORDER)}
     with open(R.ARTIFACT, "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
     txt = report(s)
@@ -268,7 +317,7 @@ def main():
         f.write(txt)
     print(txt)
     if not a.no_publish:
-        publish("DCA: бумажные книги на трёх депозитах")
+        publish("DCA: бумажные книги, две линейки плеча × три депозита")
 
 
 if __name__ == "__main__":

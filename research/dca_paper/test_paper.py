@@ -64,8 +64,10 @@ def test_one_per_name_applied_before_cash():
     recs = [_rec(t0, hold_h=5.0, sym="AAAUSDT"),
             _rec(t0 + 60, hold_h=5.0, sym="AAAUSDT"),
             _rec(t0 + 120, hold_h=5.0, sym="BBBUSDT")]
-    rows, cells, one = P.build_rows(recs, now=t0 + 10 * H, log=lambda *_: None)
-    assert one["skipped_repeats"] == 1 and one["kept"] == 2, one
+    rk = R.DEFAULT_RULER
+    rows, cells, one = P.build_rows({rk: recs}, now=t0 + 10 * H,
+                                    log=lambda *_: None)
+    assert one[rk]["skipped_repeats"] == 1 and one[rk]["kept"] == 2, one
     # у ВСЕХ книг состав один и тот же — повтор снят до кассы
     for dep in R.DEPOSITS:
         got = {r["sym"] for r in rows if r["dep"] == int(dep)}
@@ -91,7 +93,7 @@ def test_forward_and_restored_never_mix():
             for r in (fresh, old):
                 f.write(json.dumps(r) + "\n")
         s = P.summarize(jp)
-        b = s["books"]["1000"]
+        b = s["books"][P._cell(R.DEFAULT_RULER, 1000)]
         assert b["forward"]["usd"] == 10.0, b["forward"]
         assert b["restored"]["usd"] == 5.0, b["restored"]
         txt = P.report(s)
@@ -166,10 +168,10 @@ def test_day_concentration_is_measured_and_not_faked():
     # а по дням от итога не остаётся ничего: 50 - 60 = -10
     assert abs(st["usd_wo_top3d"] + 10.0) < 1e-6, st["usd_wo_top3d"]
     # колонка обязана доехать до отчёта строкой, а не остаться в json
-    s = {"books": {"1000": {"deposit": 1000, "slots": R.slots(1000),
-                            "ticket": R.TICKET, "forward": None,
-                            "restored": st, "n_forward": 0,
-                            "n_restored": len(rows)}}}
+    s = {"books": {P._cell(R.DEFAULT_RULER, 1000): {
+        "deposit": 1000, "ruler": R.DEFAULT_RULER, "slots": R.slots(1000),
+        "ticket": R.TICKET, "forward": None, "restored": st,
+        "n_forward": 0, "n_restored": len(rows)}}}
     txt = P.report(s)
     assert "$ без 3 лучших дней" in txt
     assert "-10.00" in txt, txt
@@ -188,13 +190,75 @@ def test_short_record_says_not_measured_not_zero():
     st = P._stats(rows, 1000.0)
     assert st["days"] == 3, st["days"]
     assert st["usd_wo_top3d"] is None, st["usd_wo_top3d"]
-    txt = P.report({"books": {"1000": {
-        "deposit": 1000, "slots": R.slots(1000), "ticket": R.TICKET,
-        "forward": None, "restored": st, "n_forward": 0,
-        "n_restored": len(rows)}}})
+    txt = P.report({"books": {P._cell(R.DEFAULT_RULER, 1000): {
+        "deposit": 1000, "ruler": R.DEFAULT_RULER, "slots": R.slots(1000),
+        "ticket": R.TICKET, "forward": None, "restored": st,
+        "n_forward": 0, "n_restored": len(rows)}}})
     # прочерк стоит В СВОЕЙ ячейке, последней в строке, а не «где-то»
     assert "| 6.00 | — |" in txt, [l for l in txt.split("\n") if "9.00" in l]
     print("ok  короткая запись: три дня из трёх — прочерк, а не ноль")
+
+
+def test_two_rulers_are_two_books_and_optimal_is_untouched():
+    """Одно решение живёт в ОБЕИХ книгах, и вторая не читается повтором.
+
+    Плюс инвариант правки: числа «оптимальной» после появления второй
+    линейки обязаны совпасть с числами прогона, где линейка была одна, —
+    иначе мы молча переписали бы опубликованную книгу.
+    """
+    t0 = 1_700_000_000
+    recs = [_rec(t0, hold_h=5.0, sym="AAAUSDT", pnl=0.10),
+            _rec(t0 + 120, hold_h=5.0, sym="BBBUSDT", pnl=-0.04)]
+    # у «безопасной» те же решения, но плечо (а с ним и ход) своё
+    safe = [dict(r, lev=1.4, pnl=r["pnl"] * 0.35) for r in recs]
+    one_only, _, _ = P.build_rows({"optimal": recs}, now=t0 + 10 * H,
+                                  log=lambda *_: None)
+    both, cells, one = P.build_rows({"optimal": recs, "safe": safe},
+                                    now=t0 + 10 * H, log=lambda *_: None)
+    assert set(one) == {"optimal", "safe"}, one
+    # каждая строка несёт свою линейку, и книг стало вдвое больше
+    assert {r["ruler"] for r in both} == {"optimal", "safe"}, "нет метки"
+    assert len(cells) == 2 * len(R.DEPOSITS), sorted(cells)
+    opt = [r for r in both if r["ruler"] == "optimal"]
+    assert opt == [dict(r, ruler="optimal") for r in one_only], "оптимальная сдвинулась"
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "j.jsonl")
+        a = P.append_journal(both, jp, log=lambda *_: None)
+        assert a["added"] == len(both), a
+        # повтор того же прогона не дописывает ничего
+        b = P.append_journal(both, jp, log=lambda *_: None)
+        assert b["added"] == 0, b
+        s = P.summarize(jp)
+        ks = [P._cell(rk, d) for rk in R.RULER_ORDER for d in R.DEPOSITS]
+        assert all(k in s["books"] for k in ks), sorted(s["books"])
+        so = s["books"][P._cell("optimal", 1000)]
+        ss = s["books"][P._cell("safe", 1000)]
+        assert so["forward"] and ss["forward"], (so, ss)
+        assert so["forward"]["usd"] != ss["forward"]["usd"], "книги совпали"
+        txt = P.report(s)
+        for rk in R.RULER_ORDER:
+            assert R.ruler_title(rk) in txt, (rk, txt[:400])
+    print("ok  линейки: две книги на решение, «оптимальная» бит в бит прежняя")
+
+
+def test_legacy_row_reads_as_the_ruler_it_was_written_with():
+    """Строка без поля `ruler` писана глубиной — и обязана попасть к ней.
+
+    Не «в безопасную» и не в никуда: журнал write-ahead, переписать
+    прошлое нечем, поэтому умолчание доказуемо и закреплено числом.
+    """
+    t0 = 1_700_000_000
+    legacy = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
+              "usd": 7.0, "written_at": t0 + 3600, "rules": R.RULES}
+    assert R.ruler_of(legacy) == "optimal", R.ruler_of(legacy)
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "j.jsonl")
+        with open(jp, "w", encoding="utf-8") as f:
+            f.write(json.dumps(legacy) + "\n")
+        s = P.summarize(jp)
+        assert s["books"][P._cell("optimal", 1000)]["forward"]["usd"] == 7.0
+        assert s["books"][P._cell("safe", 1000)]["forward"] is None
+    print("ok  прежняя строка: читается оптимальной, в безопасную не течёт")
 
 
 def _control_no_split():
@@ -285,19 +349,52 @@ def _control_day_concentration_by_one_day():
         P._stats = src
 
 
+def _control_dedup_without_ruler():
+    """Контроль: дедуп без линейки — вторая книга не пишется вовсе."""
+    orig = R.ruler_of
+    R.ruler_of = lambda row: "optimal"          # линейку «не видим»
+    try:
+        try:
+            test_two_rulers_are_two_books_and_optimal_is_untouched()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.ruler_of = orig
+
+
+def _control_legacy_reads_as_safe():
+    """Контроль: прежняя строка объявлена безопасной — книга подменена."""
+    orig = R.DEFAULT_RULER
+    R.DEFAULT_RULER = "safe"
+    try:
+        try:
+            test_legacy_row_reads_as_the_ruler_it_was_written_with()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.DEFAULT_RULER = orig
+
+
 TESTS = [test_ticket_clears_the_exchange_floor, test_slots_grow_with_deposit,
          test_one_per_name_applied_before_cash,
          test_forward_and_restored_never_mix, test_journal_appends_only_new,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,
-         test_short_record_says_not_measured_not_zero]
+         test_short_record_says_not_measured_not_zero,
+         test_two_rulers_are_two_books_and_optimal_is_untouched,
+         test_legacy_row_reads_as_the_ruler_it_was_written_with]
 
 CONTROLS = [("свод складывает вперёд и пересчёт", _control_no_split),
             ("билет ниже пола биржи", _control_ticket_below_floor),
             ("правило одной позиции снято", _control_one_per_name_off),
             ("журнал переписывает строку", _control_journal_overwrites),
             ("концентрация по одному дню вместо трёх",
-             _control_day_concentration_by_one_day)]
+             _control_day_concentration_by_one_day),
+            ("дедуп не видит линейки", _control_dedup_without_ruler),
+            ("прежняя строка объявлена безопасной",
+             _control_legacy_reads_as_safe)]
 
 
 def main():

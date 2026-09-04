@@ -3386,7 +3386,7 @@ class Collector:
     # прогон неотличим от работающего, и это уже случалось с турниром.
     PAPER_STALE = 36 * 3600
 
-    def dca_paper(self, dep=None):
+    def dca_paper(self, dep=None, ruler=None):
         """Бумажные DCA-книги: свод из артефакта, сделки из журнала.
 
         Разделение источников то же, что у месячной книги, и по той же
@@ -3405,7 +3405,9 @@ class Collector:
         нет» отличается от «мы не на той машине» полем `journal_present`.
         """
         now = time.time()
-        key = str(dep or "")
+        # ключ кеша несёт и линейку: без неё соседняя книга две минуты
+        # отдавалась бы под чужим именем (урок страницы книги ядра)
+        key = f"{ruler or ''}:{dep or ''}"
         cat, cached = getattr(self, "_dca_cache", (0.0, {}))
         if now - cat < 120 and key in cached:
             return cached[key]
@@ -3437,6 +3439,17 @@ class Collector:
         out["rules"] = art.get("rules") or {}
         out["deposits"] = (out["rules"].get("DEPOSITS")
                            or DR.DEPOSITS)
+        # линейки берутся ИЗ АРТЕФАКТА: страница обязана описывать тот
+        # прогон, который породил файл. Артефакт прежнего образца линеек
+        # не несёт — тогда книга была одна и считалась глубиной.
+        rul = out["rules"].get("RULERS")
+        order = out["rules"].get("RULER_ORDER")
+        if not rul:
+            rul, order = {DR.DEFAULT_RULER: dict(
+                DR.RULERS[DR.DEFAULT_RULER])}, [DR.DEFAULT_RULER]
+            out["rulers_legacy"] = True
+        out["rulers"] = [dict(rul[k], key=k)
+                         for k in (order or sorted(rul)) if k in rul]
         out["secs"] = art.get("secs")
         out["window"] = art.get("window")
         try:
@@ -3450,26 +3463,37 @@ class Collector:
         ahead_h = out["rules"].get("AHEAD_H") or DR.AHEAD_H
         rules_v = out["rules"].get("RULES", DR.RULES)
         books = {}
-        for d in out["deposits"]:
-            k = str(int(d))
-            b = dict(((art.get("books") or {}).get(k) or {}))
-            mine = [r for r in rows if int(r.get("dep", 0)) == int(d)
-                    and int(r.get("rules", 0)) == rules_v]
-            fwd, back = DR.split_rows(mine, ahead_h)
-            b["n_journal"] = len(mine)
-            for nm, part in (("trades_forward", fwd),
-                             ("trades_restored", back)):
-                part = sorted(part, key=lambda r: -float(r.get("exit_ts", 0)))
-                b[nm] = [{
-                    "at": r.get("at"), "exit_ts": r.get("exit_ts"),
-                    "sym": r.get("sym"), "lev": r.get("lev"),
-                    "margin": r.get("margin"), "usd": r.get("usd"),
-                    "pnl_frac": r.get("pnl_frac"), "exit": r.get("exit"),
-                } for r in part[:60]]
-            books[k] = b
+        art_books = art.get("books") or {}
+        for rk in [x["key"] for x in out["rulers"]]:
+            for d in out["deposits"]:
+                k = f"{rk}:{int(d)}"
+                b = dict(art_books.get(k) or {})
+                if not b and rk == DR.DEFAULT_RULER:
+                    # свод прежнего образца ключевался одним депозитом
+                    b = dict(art_books.get(str(int(d))) or {})
+                mine = [r for r in rows if int(r.get("dep", 0)) == int(d)
+                        and int(r.get("rules", 0)) == rules_v
+                        and DR.ruler_of(r) == rk]
+                fwd, back = DR.split_rows(mine, ahead_h)
+                b["n_journal"] = len(mine)
+                b.setdefault("ruler", rk)
+                b.setdefault("ruler_title", DR.ruler_title(rk))
+                for nm, part in (("trades_forward", fwd),
+                                 ("trades_restored", back)):
+                    part = sorted(part, key=lambda r: -float(r.get("exit_ts", 0)))
+                    b[nm] = [{
+                        "at": r.get("at"), "exit_ts": r.get("exit_ts"),
+                        "sym": r.get("sym"), "lev": r.get("lev"),
+                        "margin": r.get("margin"), "usd": r.get("usd"),
+                        "pnl_frac": r.get("pnl_frac"), "exit": r.get("exit"),
+                    } for r in part[:60]]
+                books[k] = b
         out["books"] = books
-        if dep is not None and str(int(float(dep))) in books:
-            out["selected"] = str(int(float(dep)))
+        rk0 = ruler if ruler in {x["key"] for x in out["rulers"]} else None
+        if dep is not None and rk0:
+            k = f"{rk0}:{int(float(dep))}"
+            if k in books:
+                out["selected"] = k
         cached[key] = out
         self._dca_cache = (now if now - cat >= 120 else cat, cached)
         return out

@@ -5956,7 +5956,7 @@ setInterval(load, 60000);
 # первой, и экран будет утверждать не то, что опубликовано отчётом.
 DCAPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DCA paper books — one rule set, three deposits</title>
+<title>DCA paper books — two leverage rulers × three deposits</title>
 <style>
 :root{color-scheme:dark;
  --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
@@ -6008,11 +6008,12 @@ a{color:var(--accent)}
 </style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
-  <span class="k">DCA paper books &mdash; one rule set, three deposits</span>
+  <span class="k">DCA paper books &mdash; two leverage rulers &times; three deposits</span>
   <span style="flex:1"></span>
   <span class="k" id="lead"></span></div>
 <div id="nav"></div>
 <div class="panel" id="intro"></div>
+<div class="tabs" id="rtabs"></div>
 <div class="tabs" id="tabs"></div>
 <div id="box">&hellip;</div>
 </div>
@@ -6027,7 +6028,7 @@ function usd(v){ return v == null ? "&mdash;"
   : (v > 0 ? "+" : "") + Number(v).toFixed(2) + " $"; }
 function tsq(t){ return t == null ? "&mdash;"
   : new Date(t * 1000).toISOString().slice(5, 16).replace("T", " "); }
-let DATA = null, DEP = null;
+let DATA = null, DEP = null, RUL = null;
 
 // Рамка предмета первым абзацем. Без неё три книги читаются как три
 // стратегии, а отличаются они РОВНО депозитом; и «бумажная» здесь
@@ -6037,11 +6038,26 @@ function intro(d){
   const t = r.TICKET, dd = (r.DEPOSITS || []).map(x => "$" + x.toLocaleString(
     "en-US")).join(" / ");
   let h = "<div class=cap>что это</div>";
-  h += "<p><b>Три книги отличаются ровно депозитом</b> (" + esc(dd) +
-    "): правила, гейты, ограда и выходы у них одни. Билет тоже один &mdash; " +
+  h += "<p><b>Книги отличаются двумя вещами, и только ими: линейкой " +
+    "плеча и депозитом</b> (" + esc(dd) + "). Гейты входа, ограда, " +
+    "выходы и билет у всех одни; билет " +
     (t == null ? "&mdash;" : "<b>$" + t + "</b>") +
-    ", &mdash; поэтому с деньгами растёт только число мест, и это и есть " +
-    "предмет сравнения: что депозит покупает.</p>";
+    ", поэтому с деньгами растёт только число мест. Это и есть предмет " +
+    "сравнения: что покупает депозит и чего стоит линейка.</p>";
+  const rl = d.rulers || [];
+  if (rl.length){
+    h += "<p><b>Линейка плеча</b> &mdash; не настройка агрессивности: " +
+      "плечо выводится из неравенства безопасности. ";
+    for (const r of rl)
+      h += "<b>" + esc(r.title || r.key) + "</b> &mdash; " +
+        esc(r.plain || "") + " ";
+    h += "<span class=dim>Имена &mdash; ярлыки, а не вердикт: какая " +
+      "линейка лучше, покажет форвард, и обе ведутся параллельно ровно " +
+      "затем, чтобы вопрос решали числа, а не выбор задним числом." +
+      (d.rulers_legacy ? " Прогон, породивший артефакт, знал одну " +
+        "линейку &mdash; вторая появится ближайшим суточным." : "") +
+      "</span></p>";
+  }
   h += "<p><b>Билет выведен из пола биржи, а не назначен.</b> " +
     "Минимальный ордер площадки $5, мельчайший рунг лестницы 25 % " +
     "нотионала, значит нотионал не бывает меньше $20, а маржа &mdash; " +
@@ -6086,14 +6102,20 @@ function statBlock(st, dep, title, tag){
     ["зелёных дней", st.day_green == null ? "&mdash;" :
       Number(st.day_green).toFixed(2), null],
     ["укус", st.bite == null ? "&mdash;" : st.bite, null],
-    ["$ без лучшего имени", usd(st.usd_wo_top), cls(st.usd_wo_top)]];
+    ["$ без лучшего имени", usd(st.usd_wo_top), cls(st.usd_wo_top)],
+    ["$ без 3 лучших дней", st.usd_wo_top3d == null ? "&mdash;" :
+      usd(st.usd_wo_top3d), cls(st.usd_wo_top3d)]];
   for (const [k, v, c] of cells)
     h += "<div class=st><div class=k>" + k + "</div><div class='v mono " +
       (c || "") + "'>" + (v == null ? "&mdash;" : v) + "</div></div>";
   h += "</div>";
   if (st.top_sym) h += "<div class=k style='margin-top:8px'>лучшее имя " +
     esc(st.top_sym) + " &mdash; колонка рядом показывает итог без него: " +
-    "деньги из одного разгона статистикой не являются</div>";
+    "деньги из одного разгона статистикой не являются. Соседняя колонка " +
+    "вычитает три лучших ДНЯ: один рыночный эпизод раздаёт деньги " +
+    "десяткам имён разом, и по именам он невидим" +
+    (st.usd_wo_top3d == null ? " (у книги моложе четырёх дней вычитать " +
+      "нечего &mdash; там прочерк, а не ноль)" : "") + "</div>";
   return h + "</div>";
 }
 
@@ -6124,7 +6146,17 @@ function render(){
   const tabs = document.getElementById("tabs");
   if (!d || !d.present){ tabs.innerHTML = ""; box.innerHTML = ""; return; }
   const deps = d.deposits || [];
+  const ruls = d.rulers || [];
   if (DEP == null && deps.length) DEP = String(Math.trunc(deps[0]));
+  // умолчание — ПЕРВАЯ линейка порядка (безопасная): книга, которую
+  // показывают по умолчанию, не должна быть той, что рискует больше
+  if (RUL == null && ruls.length) RUL = ruls[0].key;
+  const rtabs = document.getElementById("rtabs");
+  rtabs.innerHTML = ruls.map(r =>
+    "<div class='tab" + (r.key === RUL ? " on" : "") + "' data-rul='" +
+    esc(r.key) + "'>" + esc(r.title || r.key) + "</div>").join("");
+  for (const el of rtabs.querySelectorAll(".tab"))
+    el.onclick = () => { RUL = el.dataset.rul; render(); };
   tabs.innerHTML = deps.map(x => {
     const k = String(Math.trunc(x));
     return "<div class='tab" + (k === DEP ? " on" : "") +
@@ -6133,12 +6165,17 @@ function render(){
   }).join("");
   for (const el of tabs.querySelectorAll(".tab"))
     el.onclick = () => { DEP = el.dataset.dep; render(); };
-  const b = (d.books || {})[DEP] || {};
+  // ключ книги несёт ОБЕ оси: склеив их по депозиту, страница показала
+  // бы одну книгу под именем другой
+  const b = (d.books || {})[RUL + ":" + DEP] || {};
   let h = "";
   if (d.stale) h += "<div class='panel alarm'><b>Суточный прогон не " +
     "пришёл</b>, артефакту " + (d.age_h == null ? "&mdash;" : d.age_h) +
     " ч. Числа ниже описывают ТОТ прогон, а не сегодняшний день.</div>";
+  const rmeta = (ruls.find(r => r.key === RUL) || {});
   h += "<div class=panel><div class=cap>книга</div><div class=stats>" +
+    "<div class=st><div class=k>линейка</div><div class='v'>" +
+    esc(rmeta.title || RUL || "&mdash;") + "</div></div>" +
     "<div class=st><div class=k>депозит</div><div class='v mono'>$" +
     Number(b.deposit || DEP).toLocaleString("en-US") + "</div></div>" +
     "<div class=st><div class=k>мест</div><div class='v mono'>" +
@@ -10388,7 +10425,8 @@ def serve(collector, port, token, log):
                     "application/json; charset=utf-8")
             if u.path == "/dca":
                 return self._ok(json.dumps(
-                    collector.dca_paper(q.get("dep", [None])[0]),
+                    collector.dca_paper(q.get("dep", [None])[0],
+                                        q.get("ruler", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/dca-page":

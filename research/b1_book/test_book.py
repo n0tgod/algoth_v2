@@ -6829,6 +6829,87 @@ def test_agents_state_reads_the_registry_and_the_disk():
 
 
 
+def test_dca_serves_ruler_and_deposit_as_one_book():
+    """Дорога сборщика до книги DCA: линейка и депозит вместе, не порознь.
+
+    Проверка гоняет НАСТОЯЩИЙ `Collector.dca_paper`, а не заглушку
+    страницы: до неё эту дорогу не исполнял ни один тест, а именно на
+    ней уже дважды случалась молчаливая подмена книги (свод по ключу
+    `model_<ключ>`, список ключей на импорте).
+    """
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+
+    jp0, ap0 = DR.JOURNAL, DR.ARTIFACT
+    td = tempfile.mkdtemp()
+    try:
+        DR.JOURNAL = os.path.join(td, "journal.jsonl")
+        DR.ARTIFACT = os.path.join(td, "art.json")
+        t0 = 1_700_000_000
+
+        def row(rk, usd, sym, legacy=False):
+            r = {"dep": 1000, "at": t0, "exit_ts": t0 + 3600, "sym": sym,
+                 "usd": usd, "written_at": t0 + 600, "rules": DR.RULES,
+                 "lev": 2.0, "margin": 25.0, "pnl_frac": usd / 25.0,
+                 "exit": "тейк"}
+            if not legacy:
+                r["ruler"] = rk
+            return r
+
+        rows = [row("safe", 1.0, "AAAUSDT"), row("optimal", 4.0, "AAAUSDT"),
+                row(None, 9.0, "BBBUSDT", legacy=True)]
+        with open(DR.JOURNAL, "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        art = {"rules": {"RULES": DR.RULES, "TICKET": DR.TICKET,
+                         "DEPOSITS": [1000.0], "AHEAD_H": DR.AHEAD_H,
+                         "HOLD_H": DR.HOLD_H,
+                         "RULERS": {k: dict(DR.RULERS[k])
+                                    for k in DR.RULER_ORDER},
+                         "RULER_ORDER": list(DR.RULER_ORDER)},
+               "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k,
+                                       "slots": DR.slots(1000.0)}
+                         for k in DR.RULER_ORDER}}
+        with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump(art, f)
+
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        d = c.dca_paper()
+        check("DCA: линейки взяты из артефакта",
+              [x["key"] for x in d.get("rulers", [])] == list(DR.RULER_ORDER),
+              str(d.get("rulers")))
+        bs = d.get("books") or {}
+        check("DCA: книга ключуется линейкой и депозитом",
+              set(bs) == {f"{k}:1000" for k in DR.RULER_ORDER}, str(sorted(bs)))
+        safe = bs["safe:1000"]["trades_forward"]
+        opt = bs["optimal:1000"]["trades_forward"]
+        check("DCA: у безопасной ровно своя сделка",
+              [r["usd"] for r in safe] == [1.0], str(safe))
+        # прежняя строка (без поля) обязана лечь к глубине, а не пропасть
+        check("DCA: строка без линейки читается прежней",
+              sorted(r["usd"] for r in opt) == [4.0, 9.0], str(opt))
+
+        # свод ПРЕЖНЕГО образца (ключ — один депозит) не обязан быть пуст
+        art["books"] = {"1000": {"deposit": 1000.0, "slots": 40, "zzz": 1}}
+        art["rules"].pop("RULERS"); art["rules"].pop("RULER_ORDER")
+        with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump(art, f)
+        c2 = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        d2 = c2.dca_paper()
+        check("DCA: артефакт прежнего образца назван прямо",
+              d2.get("rulers_legacy") is True, str(d2.get("rulers")))
+        b2 = (d2.get("books") or {}).get(f"{DR.DEFAULT_RULER}:1000") or {}
+        check("DCA: числа прежнего свода не потеряны", b2.get("zzz") == 1,
+              str(sorted(b2)))
+    finally:
+        DR.JOURNAL, DR.ARTIFACT = jp0, ap0
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -6865,6 +6946,7 @@ def main():
     test_model_trades_lite_matches_full()
     test_sit_absorb_now_makes_pnl_immediate()
     test_trade_by_id_finds_across_books()
+    test_dca_serves_ruler_and_deposit_as_one_book()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()
