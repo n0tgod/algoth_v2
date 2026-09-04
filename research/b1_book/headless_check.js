@@ -390,15 +390,31 @@ const dcaStub = (url) => {
     b.trades_shown = b.trades.length;
     delete b.trades_forward; delete b.trades_restored;
     b.live_known = !nolive;
+    // Открытых ДВЕ и одна оборванная записью: список обязан их
+    // различать, а порядок «глубже всех сверху» проверяется только
+    // тогда, когда отметки разные. ТВХ (`walk`) дописывает СЕРВЕР той
+    // же функцией, что закрытым, — заглушка обязана выглядеть живой.
     if (!nolive) b.open = {
       positions: [{sym: "SUIUSDT", at: T0 - 1800, lev: 3.0, margin: 25.0,
                    mark_frac: -0.02, mark_usd: -0.50, entry_px: 1.0,
-                   avg: 0.98, depth: 2, state: "open",
-                   fills: [[T0 - 1800, 1.0, 0.25]]}],
+                   avg: 0.98, depth: 2, state: "open", last_ts: T0 - 60,
+                   fills: [[T0 - 1800, 1.0, 0.25], [T0 - 1200, 0.96, 0.25]],
+                   walk: [{at: T0 - 1800, px: 1.0, w: 0.25, avg: 1.0},
+                          {at: T0 - 1200, px: 0.96, w: 0.25, avg: 0.98}]},
+                  {sym: "TIAUSDT", at: T0 - 5400, lev: 2.0, margin: 25.0,
+                   mark_frac: -0.14, mark_usd: -3.50, entry_px: 4.0,
+                   avg: 4.0, depth: 1, state: "open", last_ts: T0 - 60,
+                   fills: [[T0 - 5400, 4.0, 0.25]],
+                   walk: [{at: T0 - 5400, px: 4.0, w: 0.25, avg: 4.0}]}],
       // Худшую открытую дописывает СЕРВЕР (`rules.open_stats`), значит
       // живой ответ её несёт — заглушка обязана нести тоже.
-      cut: [], mark_usd: -0.50, priced: 1, at: T0 - 60,
-      worst_frac: -0.02, worst_sym: "SUIUSDT", worst_usd: -0.50};
+      cut: [{sym: "CUTUSDT", at: T0 - 9000, lev: 1.0, margin: 25.0,
+             mark_frac: 0.01, mark_usd: 0.25, entry_px: 10.0, avg: 10.0,
+             depth: 1, state: "cut", last_ts: T0 - 3600,
+             fills: [[T0 - 9000, 10.0, 0.25]],
+             walk: [{at: T0 - 9000, px: 10.0, w: 0.25, avg: 10.0}]}],
+      mark_usd: -4.00, priced: 2, at: T0 - 60,
+      worst_frac: -0.14, worst_sym: "TIAUSDT", worst_usd: -3.50};
   }
   return D;
 };
@@ -2982,18 +2998,60 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     if (!/худшая открытая/.test(b2))
       bad.push("DCA: просадка открытых позиций не показана");
     if (!/dcanolive=1/.test(SEARCH)) {
-      if (!/-0\.50 \$/.test(b2))
-        bad.push("DCA: отметка открытой позиции не показана числом");
-      // 412.30 закрытых плюс −0.50 отметки: у закрытой позиции исход
+      if (!/-4\.00 \$/.test(b2))
+        bad.push("DCA: отметка открытых позиций не показана числом");
+      // 412.30 закрытых плюс −4.00 отметки: у закрытой позиции исход
       // известен, у открытой это отметка, и складывать их нельзя нигде
-      if (/411\.80/.test(b2))
+      if (/408\.30/.test(b2))
         bad.push("DCA: открытая отметка сложена с закрытым счётом");
       if (!/ОТМЕТКА по последней цене/.test(b2))
         bad.push("DCA: открытые деньги выданы за исход");
-      if (global.__fpct && b2.indexOf(global.__fpct(-0.02)) < 0)
+      if (global.__fpct && b2.indexOf(global.__fpct(-0.14)) < 0)
         bad.push("DCA: просадка худшей открытой не названа числом");
-      if (!/Глубже всех сейчас SUIUSDT/.test(b2))
+      if (!/Глубже всех сейчас TIAUSDT/.test(b2))
         bad.push("DCA: худшая открытая позиция не названа по имени");
+      // ОТДЕЛЬНЫЙ СПИСОК открытых (просьба владельца). Разбор ведём по
+      // САМОМУ списку, а не по всей странице: имя худшей открытой стоит
+      // ещё и в подписи блока счёта, то есть «первым» оно оказывалось бы
+      // всегда — проверка мерила бы подпись, а не порядок строк.
+      const oi = b2.indexOf("открытые позиции &mdash;");
+      const oe = oi < 0 ? -1 : b2.indexOf("<div class=panel", oi + 1);
+      const ob = oi < 0 ? "" : b2.slice(oi, oe < 0 ? undefined : oe);
+      const opb = /открытые позиции &mdash; (\d+)/.exec(ob);
+      if (!opb) bad.push("DCA: отдельного списка открытых позиций нет");
+      else if (opb[1] !== "3")
+        bad.push(`DCA: в списке открытых ${opb[1]} строк, а позиций 3`);
+      if (!/TIAUSDT/.test(ob) || !/CUTUSDT/.test(ob))
+        bad.push("DCA: открытые позиции не перечислены поимённо");
+      if (!/оборвана записью/.test(ob))
+        bad.push("DCA: оборванная записью выдана за открытую на бирже");
+      const iT = ob.indexOf("TIAUSDT"), iS = ob.indexOf("SUIUSDT");
+      if (!(iT >= 0 && iS >= 0 && iT < iS))
+        bad.push("DCA: глубже всех просевшая не стоит первой строкой");
+      // у ОТКРЫТОЙ выхода не существует: последняя строка разворота —
+      // отметка, а не исход
+      if (!/ещё открыта/.test(ob))
+        bad.push("DCA: у открытой позиции нарисован выход");
+      if (!/отметка, а не исход/.test(ob))
+        bad.push("DCA: отметка открытой выдана за исход в развороте");
+      // список ОДИН на обе группы: открытая позиция есть состояние
+      // сейчас, а не часть выбранной кривой
+      if (!/Список один на обе группы/.test(ob))
+        bad.push("DCA: не сказано, что открытые не зависят от группы");
+      // Разворот открытой позиции — СВОИМ ключом. Заглушка DOM заводит
+      // элемент по первому обращению, поэтому «нажали и стало
+      // table-row» проходит и на несуществующей строке: сперва
+      // требуется, чтобы деталь с этим id БЫЛА в разметке.
+      const ko = "o" + String(Math.trunc(T0 - 5400)) + ":TIAUSDT";
+      const io = "ddet-" + ko.replace(/[^a-z0-9]+/gi, "-");
+      if (ob.indexOf("id='" + io + "'") < 0)
+        bad.push("DCA: деталь открытой позиции стоит под чужим ключом");
+      else if (global.__dcaToggle){
+        global.__dcaToggle(ko);
+        if (String(global.__el(io).style.display) !== "table-row")
+          bad.push("DCA: нажатие не раскрыло открытую позицию");
+        global.__dcaToggle(ko);
+      }
     }
     // Разбивка по суткам: строки числом, и день говорит, чем набран
     const days = (b2.match(/2026-09-0/g) || []).length;
@@ -3062,6 +3120,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("DCA: «не считали» не отличено от «открытых нет»");
     if (/открытых позиций<\/div><div class='v mono'>0/.test(bx))
       bad.push("DCA: неизвестное число открытых показано нулём");
+    if (!/Это не «открытых нет»/.test(bx))
+      bad.push("DCA: список открытых не отличил «не считали» от пустоты");
   }
   if (isDca && /dcastale=1/.test(SEARCH)) {
     const bx = flatBox();

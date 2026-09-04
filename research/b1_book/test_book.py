@@ -6902,7 +6902,10 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                                             "mark_usd": -0.5},
                                            {"sym": "DEEPUSDT",
                                             "mark_frac": -0.17,
-                                            "mark_usd": -4.25}],
+                                            "mark_usd": -4.25,
+                                            "entry_px": 2.0,
+                                            "fills": [[t0, 2.0, 0.25],
+                                                      [t0 + 600, 1.6, 0.25]]}],
                                            "cut": [], "mark_usd": -4.75,
                                            "priced": 2}}
                          for k in DR.RULER_ORDER}}
@@ -6946,6 +6949,16 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         # доехать НЕТРОНУТЫМИ: второй их счёт разошёлся бы с артефактом
         check("DCA: отметка открытых не пересчитана заново",
               op.get("mark_usd") == -4.75 and op.get("priced") == 2, str(op))
+        # Открытые идут ОТДЕЛЬНЫМ списком, и разворачиваются они так же,
+        # как закрытые: ТВХ считает ТА ЖЕ функция правил, второй её
+        # реализации на странице нет.
+        deep = [q for q in op.get("positions") or []
+                if q["sym"] == "DEEPUSDT"][0]
+        w = deep.get("walk") or []
+        check("DCA: у открытой позиции есть плавающая ТВХ",
+              len(w) == 2 and abs(w[-1]["avg"] - DR.avg_walk(
+                  deep["fills"], deep["entry_px"])[-1]["avg"]) < 1e-12,
+              str(w))
 
         # свод ПРЕЖНЕГО образца (ключ — один депозит) не обязан быть пуст
         art["books"] = {"1000": {"deposit": 1000.0, "slots": 40, "zzz": 1}}

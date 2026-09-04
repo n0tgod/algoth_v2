@@ -6395,7 +6395,7 @@ function dcaToggle(key){
   if (b) b.innerHTML = open ? "&#9662;" : "&#9656;";
 }
 
-function fillRows(r, key){
+function fillRows(r, key, live){
   // Раскрытая позиция: КАЖДЫЙ вход своей строкой и ТВХ после него.
   // Свёрнутая строка описывает позицию целиком и молчит о том, чем её
   // набирали и по какой цене она в итоге стоит.
@@ -6411,7 +6411,19 @@ function fillRows(r, key){
       "<td class=dim>" + (i ? "цена дошла до структурного уровня" :
         "первый рунг по сигналу модели") + "</tr>";
   });
-  h += "<tr><td class=mono>" + tsq(r.exit_ts) + "<td>выход" +
+  // У ОТКРЫТОЙ позиции выхода не существует: последняя строка — не
+  // исход, а отметка по последней цене записи, и подписана она так же.
+  // Выдать отметку строкой «выход» значило бы придумать сделке цену, по
+  // которой никто не выходил.
+  if (live) h += "<tr><td class=mono>" +
+    (r.last_ts ? tsq(r.last_ts) : "&mdash;") + "<td>ещё открыта" +
+    "<td class=mono>&mdash;" +
+    "<td class=mono>" + (r.depth == null ? "&mdash;" :
+      "рунгов " + r.depth) +
+    "<td class='mono " + (r.mark_usd > 0 ? "good" : "bad") + "'>" +
+    fpct(r.mark_frac) + " &middot; " + usd(r.mark_usd) +
+    "<td class=dim>отметка, а не исход</tr></table>";
+  else h += "<tr><td class=mono>" + tsq(r.exit_ts) + "<td>выход" +
     "<td class=mono>" + (r.exit_px == null ? "&mdash;" :
       Number(r.exit_px).toPrecision(6)) +
     "<td class=mono>" + (r.depth == null ? "&mdash;" :
@@ -6419,9 +6431,77 @@ function fillRows(r, key){
     "<td class='mono " + (r.usd > 0 ? "good" : "bad") + "'>" +
     fpct(r.pnl_frac) + " &middot; " + usd(r.usd) +
     "<td class=dim>" + esc(r.exit || "") + "</tr></table>";
+  // Ширина детали равна ширине СВОЕЙ таблицы: у закрытых колонок
+  // восемь, у открытых девять (вместо выхода — возраст и состояние).
   return "<tr class=sub id='ddet-" + esc(keyId(key)) + "' style='display:" +
-    (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=8>" + h +
-    "</td></tr>";
+    (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=" +
+    (live ? 9 : 8) + ">" + h + "</td></tr>";
+}
+
+function ageStr(sec){
+  if (sec == null || !(sec >= 0)) return "&mdash;";
+  const h = sec / 3600;
+  return h < 48 ? h.toFixed(1) + " ч" : (h / 24).toFixed(1) + " сут";
+}
+
+// Открытые позиции — ОТДЕЛЬНЫЙ список (просьба владельца). Он не
+// зависит от переключателя групп: открытая позиция есть состояние
+// СЕЙЧАС, а не часть выбранной кривой, и в счёт книги её отметка не
+// входит нигде. `cut` (оборванные записью) стоят в том же списке своим
+// состоянием: спрятать их значило бы показать книгу уже, чем она есть.
+function openTable(op, at){
+  if (op === undefined) return "";
+  if (!op || op.known === false)
+    return "<div class=panel><div class=cap>открытые позиции</div>" +
+      "<p class=dim>Открытых не считали: свод пересобран из журнала " +
+      "(<code>--restat</code>), а открытые позиции в журнал не идут " +
+      "вовсе. Это не «открытых нет».</p></div>";
+  const rows = (op.positions || []).map(x => Object.assign({}, x,
+                                                           {_cut: false}))
+    .concat((op.cut || []).map(x => Object.assign({}, x, {_cut: true})));
+  if (!rows.length) return "<div class=panel><div class=cap>открытые " +
+    "позиции</div><p class=dim>Открытых позиций нет: всё, что книга " +
+    "набрала, закрыто. Это измерено, а не пропуск показа.</p></div>";
+  // Глубже всех — СВЕРХУ: список заводился ради вопроса «что сейчас
+  // болит», и порядок по времени прятал бы ответ в середине.
+  rows.sort((a, b) => (a.mark_frac == null ? 1 : a.mark_frac) -
+                      (b.mark_frac == null ? 1 : b.mark_frac));
+  let h = "<div class=panel><div class=cap>открытые позиции &mdash; " +
+    rows.length + "</div>";
+  h += "<p class=k>Отметка по последней цене записи, а НЕ исход: до " +
+    "выхода она станет любой, и с закрытым счётом не складывается " +
+    "нигде. Список один на обе группы &mdash; открытая позиция есть " +
+    "состояние сейчас, а не часть выбранной кривой. Глубже всех " +
+    "просевшие сверху; нажмите строку, чтобы увидеть рунги и ТВХ." +
+    (at ? " Отметка снята " + tsq(at) + " UTC." : "") + "</p>";
+  h += "<div class=scroll><table><tr><th>вход<th>монета<th>плечо" +
+    "<th>маржа<th>рунгов<th>ТВХ<th>отметка<th>возраст<th>состояние</tr>";
+  for (const r of rows){
+    const c = r.mark_usd == null ? "" : (r.mark_usd > 0 ? "good" : "bad");
+    const key = "o" + rowKey(r), id = keyId(key), o = OPEN.has(key);
+    h += "<tr class=pos onclick=\"dcaToggle('" + esc(key) + "')\">" +
+      "<td class=mono><span id='dexp-" + esc(id) + "'>" +
+      (o ? "&#9662;" : "&#9656;") + "</span> " + tsq(r.at) +
+      "<td>" + esc(r.sym) +
+      "<td class=mono>" + (r.lev == null ? "&mdash;" :
+        Number(r.lev).toFixed(2) + "&times;") +
+      "<td class=mono>" + (r.margin == null ? "&mdash;" :
+        Number(r.margin).toFixed(2) + " $") +
+      "<td class=mono>" + (r.depth == null ? "&mdash;" : r.depth) +
+      "<td class=mono>" + (r.avg == null ? "&mdash;" :
+        Number(r.avg).toPrecision(6)) +
+      "<td class='mono " + c + "'>" + fpct(r.mark_frac) + " &middot; " +
+      usd(r.mark_usd) +
+      "<td class=mono>" + ageStr(r.last_ts && r.at ? r.last_ts - r.at : null) +
+      // Оборванная записью НЕ есть открытая на бирже: у неё просто
+      // кончился ряд цен, и назвать её открытой значило бы обещать
+      // позицию, о которой мы ничего больше не знаем.
+      "<td>" + (r._cut ? "<span class=dim>оборвана записью</span>" :
+        "открыта") +
+      "</tr>";
+    h += fillRows(r, key, true);
+  }
+  return h + "</table></div></div>";
 }
 
 function tradeTable(rows, title, shown, total, grp){
@@ -6577,6 +6657,9 @@ function render(){
                  GRP === "fwd" ? "счёт без бэктеста: записанное вперёд"
                                : "счёт с бэктестом: одна кривая",
                  op, GRP);
+  // Открытые ОТДЕЛЬНЫМ списком и сразу под счётом: это состояние
+  // сейчас, и оно одно на обе группы.
+  h += openTable(op, (b.open || {}).at);
   h += dayTable(st, b.deposit || DEP, "по суткам");
   if (!d.journal_present) h += "<div class=panel><p class=dim>Журнала на " +
     "этой машине нет вовсе &mdash; он живёт там, где книги считаются. " +

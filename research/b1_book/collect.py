@@ -3587,7 +3587,17 @@ class Collector:
                 # открытых, их отметку и покрытие считает сам прогон.
                 op = b.get("open")
                 if isinstance(op, dict):
-                    b["open"] = dict(op,
+                    # Плавающая ТВХ открытой позиции считается ТОЙ ЖЕ
+                    # функцией, что у закрытой (`rules.avg_walk`): список
+                    # открытых разворачивается по рунгам так же, как
+                    # список закрытых, и вторая её реализация показала бы
+                    # позицию не там, где её посчитала книга.
+                    def _walk(lst):
+                        return [dict(q, walk=DR.avg_walk(q.get("fills"),
+                                                         q.get("entry_px")))
+                                for q in (lst or [])]
+                    b["open"] = dict(op, positions=_walk(op.get("positions")),
+                                     cut=_walk(op.get("cut")),
                                      **DR.open_stats(op.get("positions")))
                 books[k] = b
         out["books"] = books
