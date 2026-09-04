@@ -3019,12 +3019,26 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       const ob = oi < 0 ? "" : b2.slice(oi, oe < 0 ? undefined : oe);
       const opb = /открытые позиции &mdash; (\d+)/.exec(ob);
       if (!opb) bad.push("DCA: отдельного списка открытых позиций нет");
-      else if (opb[1] !== "3")
-        bad.push(`DCA: в списке открытых ${opb[1]} строк, а позиций 3`);
-      if (!/TIAUSDT/.test(ob) || !/CUTUSDT/.test(ob))
+      else if (opb[1] !== "2")
+        bad.push(`DCA: в списке открытых ${opb[1]} строк, а позиций 2`);
+      if (!/TIAUSDT/.test(ob) || !/SUIUSDT/.test(ob))
         bad.push("DCA: открытые позиции не перечислены поимённо");
-      if (!/оборвана записью/.test(ob))
+      // Оборванные записью — ВТОРЫМ списком: на живой книге их вшестеро
+      // больше открытых, и в одной таблице они утопили бы ответ на
+      // вопрос «что сейчас открыто». В список открытых они не входят.
+      if (/CUTUSDT/.test(ob))
+        bad.push("DCA: оборванная записью попала в список открытых");
+      const ci = b2.indexOf("оборванные записью &mdash;");
+      const ce = ci < 0 ? -1 : b2.indexOf("<div class=panel", ci + 1);
+      const cb = ci < 0 ? "" : b2.slice(ci, ce < 0 ? undefined : ce);
+      if (!/оборванные записью &mdash; 1/.test(cb))
+        bad.push("DCA: оборванные записью не показаны отдельным списком");
+      if (!/CUTUSDT/.test(cb))
+        bad.push("DCA: оборванная записью не названа поимённо");
+      if (!/НЕ открытые позиции на бирже/.test(cb))
         bad.push("DCA: оборванная записью выдана за открытую на бирже");
+      if (!/выдумать исход/.test(cb))
+        bad.push("DCA: не сказано, почему оборванная не закрыта по сроку");
       const iT = ob.indexOf("TIAUSDT"), iS = ob.indexOf("SUIUSDT");
       if (!(iT >= 0 && iS >= 0 && iT < iS))
         bad.push("DCA: глубже всех просевшая не стоит первой строкой");
