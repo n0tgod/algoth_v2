@@ -164,7 +164,8 @@ def queue(recs):
     return sorted(recs, key=lambda r: (int(r["at"]), -r["fwd"]))
 
 
-def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
+def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
+           keep_rows=False):
     """Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
 
     Порядок объявлен: деньги возвращаются раньше, чем тратятся, а внутри
@@ -206,6 +207,8 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL):
         taken += 1
         live.append((r["exit_ts"], margin, r["pnl"], r["marks"]))
         ids.append(f"{r['at']:.3f}:{r['sym']}")
+        if keep_rows is not False:
+            keep_rows.append((r, margin))
         pnl_taken += r["pnl"]
         got = r["pnl"] * margin
         bysym[r["sym"]] = bysym.get(r["sym"], 0.0) + got
@@ -417,8 +420,14 @@ def coverage_curve(recs, peak, deps, min_notional=MIN_NOTIONAL):
     return out
 
 
-def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
-    t0 = time.time()
+def collect_recs(limit=None, src=None, log=print, rulers=None):
+    """Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+
+    Вынесен из `run`, потому что читателя стало два — сетка кассы D6 и
+    бумажные книги DCA (`research/dca_paper`). Вторая копия этого прохода
+    означала бы, что книга и её замер считают исходы разным кодом.
+    """
+    rulers = list(rulers or GRID_RULER)
     legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
     get = src.bars if src else (lambda s, a, b: SW.read_bars(ROOT_B1, s, a, b))
     tiers_all = D2.instruments_tiers()
@@ -436,7 +445,7 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
         log(f"окно решений {win['from']} … {win['to']} UTC "
             f"({win['span_d']:g} суток, дат {win['dates']})")
 
-    recs = {k: [] for k in GRID_RULER}
+    recs = {k: [] for k in rulers}
     n, skipped = 0, 0
     said, done = time.time(), 0
     for sym, glist in by_sym.items():
@@ -455,13 +464,21 @@ def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
         look = lambda notl: L.mmr_for_notional(tiers, notl, flat=D2.FLAT_MMR)
         for g in glist:
             got = 0
-            for k in GRID_RULER:
+            for k in rulers:
                 r = one_position(g, bars, ts, look, k[0], k[1])
                 if r is not None:
                     recs[k].append(r)
                     got = 1
             n += got
             skipped += (1 - got)
+    return {"recs": recs, "positions": n, "skipped": skipped, "window": win}
+
+
+def run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_dep=None):
+    t0 = time.time()
+    got = collect_recs(limit=limit, src=src, log=log)
+    recs, n, skipped, win = (got["recs"], got["positions"],
+                             got["skipped"], got["window"])
 
     shares = shares_for(deposit)
     if anchor_dep:
