@@ -6873,7 +6873,7 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                                     for k in DR.RULER_ORDER},
                          "RULER_ORDER": list(DR.RULER_ORDER)},
                "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k,
-                                       "slots": DR.slots(1000.0)}
+                                       "slots": DR.slots(1000.0, DR.DEFAULT_RULER)}
                          for k in DR.RULER_ORDER}}
         with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
             json.dump(art, f)

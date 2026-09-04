@@ -70,6 +70,13 @@ REF_H = D2.HOLD_H
 TOL_S = 120
 RULER = ("depth", D2.SURVIVE_MULT if hasattr(D2, "SURVIVE_MULT")
          else R.SURVIVE_MULT)
+# Ключ режима бумажной книги, чью кассу мы занимаем: билет считается из
+# пола и пика РЕЖИМА, поэтому имя обязано совпадать с линейкой выше.
+RULER_KEY = "optimal"
+# Два места, решающих одно, однажды разойдутся — поэтому совпадение
+# доказывается, а не подразумевается.
+assert RULER == (R.RULERS[RULER_KEY]["rule"], R.RULERS[RULER_KEY]["param"]), (
+    RULER, R.RULERS[RULER_KEY])
 
 
 def truncate(r, hold_h, idx):
@@ -137,7 +144,10 @@ def cell(recs, hold_h, idx, dep):
     tr = [x for x in tr if x is not None]
     keep, skipped = D6.one_per_name(tr)
     rows = []
-    c = D6.ration(keep, R.share(dep), deposit=dep,
+    # режим у замера один — тот, которым он считает (`RULER`), и билет
+    # берётся ЕГО: пол и пик у режимов свои, и чужой билет дал бы другое
+    # число мест, то есть другую книгу
+    c = D6.ration(keep, R.share(dep, RULER_KEY), deposit=dep,
                   min_notional=R.MIN_NOTIONAL, keep_rows=rows)
     # форма считается ТЕМ ЖЕ кодом, что печатает страница наблюдения
     st = PP._stats([{"exit_ts": r["exit_ts"], "sym": r["sym"],
@@ -204,7 +214,8 @@ def run(limit=None, src=None, log=print):
             "ruler": list(RULER), "positions": len(recs),
             "sample": len(base), "lost_short_record": lost,
             "window": got["window"], "cells": cells,
-            "tickets": {str(int(d)): R.ticket(d) for d in R.DEPOSITS},
+            "tickets": {str(int(d)): R.ticket(d, RULER_KEY)
+                        for d in R.DEPOSITS},
             "secs": round(time.time() - t0, 1),
             "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime())}
 

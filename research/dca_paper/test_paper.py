@@ -49,28 +49,81 @@ def test_ticket_clears_the_exchange_floor():
 
 
 def test_ticket_is_squeezed_between_the_floor_and_the_peak():
-    """Билет зажат полом биржи снизу и пиком книги сверху.
+    """Билет зажат полом РЕЖИМА снизу и его же пиком сверху.
 
     Числа закреплены ЛИТЕРАЛОМ, а не формулой от констант: формула
     повторила бы ошибку правила, а литерал ловит её. Главное свойство —
-    мелкий депозит наполнить НЕЛЬЗЯ: у $1k и $10k связывает пол, и
-    только у $100k потолок оказался выше пола.
+    мелкий депозит наполнить НЕЛЬЗЯ: у него связывает пол биржи.
     """
-    got = [R.ticket(d) for d in R.DEPOSITS]
-    assert got == [25.0, 25.0, 145.0], got
-    assert [R.slots(d) for d in R.DEPOSITS] == [40, 400, 689]
-    # у первых двух связал ПОЛ: доля на все места была бы меньше него
+    got = {rk: [R.ticket(d, rk) for d in R.DEPOSITS] for rk in R.RULER_ORDER}
+    assert got["safe"] == [25.0, 25.0, 145.0], got
+    assert got["optimal"] == [25.0, 25.0, 145.0], got
+    assert got["aggr"] == [6.25, 28.0, 281.0], got
+    assert [R.slots(d, "optimal") for d in R.DEPOSITS] == [40, 400, 689]
+    assert [R.slots(d, "aggr") for d in R.DEPOSITS] == [160, 357, 355]
+    # у книги без гейта на первых двух депозитах связал ПОЛ
     for d in (1000.0, 10000.0):
-        assert d / (R.PEAK_SEEN * R.PEAK_MARGIN) < R.TICKET_MIN, d
-        assert R.ticket(d) == R.TICKET_MIN, d
+        assert d / (R.peak_of("optimal") * R.PEAK_MARGIN) < R.TICKET_MIN, d
+        assert R.ticket(d, "optimal") == R.TICKET_MIN, d
     # у третьего связал ПИК, и мест хватает на него с объявленным запасом
-    assert R.slots(100000.0) >= R.PEAK_SEEN * R.PEAK_MARGIN - 1
-    assert R.ticket(100000.0) > R.TICKET_MIN
-    # доля на позицию — ровно билет этого депозита
-    for d in R.DEPOSITS:
-        assert abs(R.share(d) * d - R.ticket(d)) < 1e-9, d
-    print(f"ok  билет: {[f'${x:g}' for x in got]}, мест "
-          f"{[R.slots(d) for d in R.DEPOSITS]} — пол биржи и пик книги")
+    assert R.slots(100000.0, "optimal") >= R.peak_of("optimal") * R.PEAK_MARGIN - 1
+    assert R.ticket(100000.0, "optimal") > R.TICKET_MIN
+    # доля на позицию — ровно билет этой книги
+    for rk in R.RULER_ORDER:
+        for d in R.DEPOSITS:
+            assert abs(R.share(d, rk) * d - R.ticket(d, rk)) < 1e-9, (rk, d)
+    print(f"ok  билет: без гейта {got['optimal']}, с гейтом {got['aggr']} — "
+          "пол режима и его же пик")
+
+
+def test_ticket_rule_is_one_formula_for_every_mode():
+    """Билет не является отдельной осью: формула одна, числа свои.
+
+    Это и есть довод, по которому контрольная рука со старым билетом не
+    нужна: режимы по-прежнему различаются РОВНО одним объявленным
+    правилом (гейтом плеча), а билет у каждого выводится тем же
+    выражением из его собственных пола и пика.
+    """
+    for rk in R.RULER_ORDER:
+        for d in R.DEPOSITS:
+            want = max(R.floor_of(rk),
+                       float(int(d / (R.peak_of(rk) * R.PEAK_MARGIN))))
+            assert R.ticket(d, rk) == want, (rk, d)
+    # пол ВЫВОДИТСЯ из худшего плеча режима, а не назначен числом
+    assert R.floor_of("optimal") == R.MIN_NOTIONAL / R.RUNG_SHARE * R.HEADROOM
+    assert (R.floor_of("aggr")
+            == R.MIN_NOTIONAL / R.RUNG_SHARE / R.AGGR_MIN_LEV * R.HEADROOM)
+    assert R.floor_of("aggr") * R.AGGR_MIN_LEV == R.floor_of("optimal")
+    print(f"ok  одна формула: пол ${R.floor_of('optimal'):g} без гейта и "
+          f"${R.floor_of('aggr'):g} при гейте {R.AGGR_MIN_LEV:g}×")
+
+
+def test_gated_mode_is_deployed_at_its_own_peak():
+    """Режим с гейтом вложен на СВОЁМ пике, а не на чужом.
+
+    Ради этого правка и делалась: прежде билет считался от пика ПУЛА, и
+    режим с гейтом стоял недогруженным — при полном по его меркам
+    портфеле часть денег простаивала. Проверяется прямо: на депозитах,
+    где связывает пик, мест хватает на собственный пик, а сам он занимает
+    заметную долю депозита.
+    """
+    peak = R.peak_of("aggr")
+    assert peak < R.peak_of("optimal"), (peak, R.peak_of("optimal"))
+    for d in (10000.0, 100000.0):
+        assert R.slots(d, "aggr") >= peak, (d, R.slots(d, "aggr"))
+        used = peak * R.ticket(d, "aggr") / d       # доля депозита в пике
+        assert 0.6 <= used <= 1.0, (d, used)
+        # прежнее правило (пик пула) дало бы вдвое меньше
+        was = max(R.TICKET_MIN,
+                  float(int(d / (R.peak_of("optimal") * R.PEAK_MARGIN))))
+        assert R.ticket(d, "aggr") > was, (d, was)
+    # на мелком депозите связывает ПОЛ, и это честная граница: денег
+    # хватает не на все места режима
+    assert R.ticket(1000.0, "aggr") == R.floor_of("aggr")
+    assert R.slots(1000.0, "aggr") < peak
+    print(f"ok  свой пик {peak}: в пике занято "
+          f"{peak * R.ticket(10000.0, 'aggr') / 10000.0:.0%} депозита $10k "
+          f"против {peak * 25.0 / 10000.0:.0%} прежде")
 
 
 def test_one_per_name_applied_before_cash():
@@ -184,7 +237,7 @@ def test_day_concentration_is_measured_and_not_faked():
     assert abs(st["usd_wo_top3d"] + 10.0) < 1e-6, st["usd_wo_top3d"]
     # колонка обязана доехать до отчёта строкой, а не остаться в json
     s = {"books": {P._cell(R.DEFAULT_RULER, 1000): {
-        "deposit": 1000, "ruler": R.DEFAULT_RULER, "slots": R.slots(1000),
+        "deposit": 1000, "ruler": R.DEFAULT_RULER, "slots": R.slots(1000, R.DEFAULT_RULER),
         "ticket": R.TICKET, "forward": None, "restored": st,
         "n_forward": 0, "n_restored": len(rows)}}}
     txt = P.report(s)
@@ -206,7 +259,7 @@ def test_short_record_says_not_measured_not_zero():
     assert st["days"] == 3, st["days"]
     assert st["usd_wo_top3d"] is None, st["usd_wo_top3d"]
     txt = P.report({"books": {P._cell(R.DEFAULT_RULER, 1000): {
-        "deposit": 1000, "ruler": R.DEFAULT_RULER, "slots": R.slots(1000),
+        "deposit": 1000, "ruler": R.DEFAULT_RULER, "slots": R.slots(1000, R.DEFAULT_RULER),
         "ticket": R.TICKET, "forward": None, "restored": st,
         "n_forward": 0, "n_restored": len(rows)}}})
     # прочерк стоит В СВОЕЙ ячейке, последней в строке, а не «где-то»
@@ -305,32 +358,34 @@ def test_aggressive_gate_takes_only_levered_entries():
           "$5), стоит до правила одной на имя")
 
 
-def test_aggressive_keeps_the_same_ticket_and_says_its_own_peak():
-    """Билет у режима с гейтом ТОТ ЖЕ, и это решение, а не недосмотр.
+def test_declared_peak_is_checked_against_the_measured_one():
+    """Объявленный пик обязан быть не ниже измеренного, иначе крик.
 
-    По своей арифметике его пол был бы вчетверо ниже ($20/4 = $5), но
-    другой билет дал бы другое число мест — то есть режим отличался бы от
-    «оптимальной» ДВУМЯ правилами, и разницу нельзя было бы приписать
-    гейту. Цена выбора обязана быть видна числом: свой пик режима и
-    отказы кассы печатаются, а отчёт называет плату словами.
+    Из объявленного пика считается билет. Окажись он ниже настоящего —
+    билет велик, и книга берёт не все свои решения, а первые по очереди
+    за кассой: отказ меняет и СОСТАВ. Молчать об этом нельзя.
     """
-    for d in R.DEPOSITS:
-        assert R.ticket(d) == R.ticket(d), d       # один билет на все режимы
-    own_floor = R.MIN_NOTIONAL / R.RUNG_SHARE / R.AGGR_MIN_LEV
-    assert abs(own_floor - 5.0) < 1e-9, own_floor
-    assert R.TICKET_MIN > own_floor, (R.TICKET_MIN, own_floor)
     t0 = 1_700_000_000
     recs = [_rec(t0 + i * 60, hold_h=5.0, sym=f"S{i}USDT", lev=4.0 + i)
             for i in range(6)]
     _rows, _cells, one = P.build_rows({"aggr": recs}, now=t0 + 10 * H,
                                       log=lambda *_: None)
     assert one["aggr"]["peak_names"] == 6, one["aggr"]
+    assert one["aggr"]["peak_declared"] == R.peak_of("aggr")
+    assert one["aggr"]["peak_over"] is False, one["aggr"]
+    assert one["aggr"]["floor"] == R.floor_of("aggr")
     assert one["aggr"]["lev_median"] is not None
+    # тот же расклад, но объявленный пик занижен — обязан кричать
+    loud = {"aggr": dict(one["aggr"], peak_names=999, peak_over=True)}
+    txt = P.report({"books": {}, "one_name": loud})
+    # маркер ячейки, а не слова заголовка: заголовок про «не ниже
+    # измеренного» стоит в отчёте всегда и проверял бы сам себя
+    assert "⚠ ниже измеренного" in txt, txt[-1500:]
     txt = P.report({"books": {}, "one_name": one})
-    assert "Билет у режима с гейтом НЕ понижен" in txt, txt[:400]
-    assert "свой пик позиций" in txt and "6 |" in txt, txt[-1200:]
-    print(f"ok  билет тот же (${R.TICKET_MIN:g} против собственного пола "
-          f"${own_floor:g}), свой пик режима печатается числом")
+    assert "⚠ ниже измеренного" not in txt, txt[-1500:]
+    assert "свой пик позиций" in txt and "| 6 | " in txt, txt[-1200:]
+    print(f"ok  пик: измеренный 6 против объявленного "
+          f"{R.peak_of('aggr')}, занижение кричит")
 
 
 def test_legacy_row_reads_as_the_ruler_it_was_written_with():
@@ -647,6 +702,8 @@ def _control_gate_on_every_ruler():
 
 TESTS = [test_ticket_clears_the_exchange_floor,
          test_ticket_is_squeezed_between_the_floor_and_the_peak,
+    test_ticket_rule_is_one_formula_for_every_mode,
+    test_gated_mode_is_deployed_at_its_own_peak,
          test_one_per_name_applied_before_cash,
          test_forward_and_restored_never_mix, test_journal_appends_only_new,
          test_report_names_what_is_not_modelled,
@@ -654,10 +711,41 @@ TESTS = [test_ticket_clears_the_exchange_floor,
          test_short_record_says_not_measured_not_zero,
          test_two_rulers_are_two_books_and_optimal_is_untouched,
          test_aggressive_gate_takes_only_levered_entries,
-         test_aggressive_keeps_the_same_ticket_and_says_its_own_peak,
+         test_declared_peak_is_checked_against_the_measured_one,
          test_legacy_row_reads_as_the_ruler_it_was_written_with,
          test_cash_refusals_reach_the_report_and_survive_restat,
          test_rules_change_starts_a_fresh_record]
+
+def _control_floor_one_for_everyone():
+    """Пол назначен один на всех: режим с гейтом не может взять мелкий
+    билет, и на $1k у него остаётся вчетверо меньше мест, чем позволяет
+    его собственная арифметика."""
+    orig = R.floor_of
+    R.floor_of = lambda k: R.TICKET_MIN
+    try:
+        try:
+            test_ticket_is_squeezed_between_the_floor_and_the_peak()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.floor_of = orig
+
+
+def _control_peak_from_the_pool():
+    """Пик берётся общий (прежнее поведение): режим с гейтом снова стоит
+    недогруженным — ровно тот дефект, ради которого правка и делалась."""
+    orig = R.peak_of
+    R.peak_of = lambda k: R.PEAK_SEEN
+    try:
+        try:
+            test_gated_mode_is_deployed_at_its_own_peak()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.peak_of = orig
+
 
 CONTROLS = [("свод складывает вперёд и пересчёт", _control_no_split),
             ("билет ниже пола биржи", _control_ticket_below_floor),
@@ -673,7 +761,9 @@ CONTROLS = [("свод складывает вперёд и пересчёт", _
             ("дедуп не видит версии правил",
              _control_dedup_without_rules_version),
             ("гейта плеча нет вовсе", _control_gate_is_gone),
-            ("гейт назначен всем режимам", _control_gate_on_every_ruler)]
+            ("гейт назначен всем режимам", _control_gate_on_every_ruler),
+            ("пол билета один на все режимы", _control_floor_one_for_everyone),
+            ("пик билета взят у пула", _control_peak_from_the_pool)]
 
 
 def main():
