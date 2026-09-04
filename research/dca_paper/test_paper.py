@@ -261,6 +261,36 @@ def test_legacy_row_reads_as_the_ruler_it_was_written_with():
     print("ok  прежняя строка: читается оптимальной, в безопасную не течёт")
 
 
+def test_cash_refusals_reach_the_report_and_survive_restat():
+    """Отказы кассы — прямой ответ «что покупает депозит», и их нельзя
+    терять пересборкой свода: `--restat` ничего не считает, но и не
+    вправе выбрасывать числа счётного прогона. Тот же класс, что «урезать
+    можно то, что отдаёшь, но не то, на чём считаешь».
+    """
+    st = {"n": 5, "names": 5, "days": 5, "usd": 3.0, "final": 0.003,
+          "max_dd": -0.01, "day_median": 0.0, "day_worst": -0.002,
+          "day_green": 0.6, "bite": 2.0, "top_sym": "AAAUSDT",
+          "usd_wo_top": 2.0, "usd_wo_top3d": -1.0}
+    base = {"books": {P._cell(rk, 1000): {
+        "deposit": 1000, "ruler": rk, "slots": 40, "ticket": R.TICKET,
+        "forward": None, "restored": st, "n_forward": 0, "n_restored": 5}
+        for rk in R.RULER_ORDER}}
+    # без счётного прогона таблицы нет, и сказано ПОЧЕМУ
+    txt0 = P.report(dict(base))
+    assert "Что связывает депозит" in txt0
+    assert "пересборкой свода" in txt0, txt0[-700:]
+    assert "нет кассы" not in txt0
+    # со счётным прогоном — числа по каждой книге
+    s = dict(base, computed_at="2026-09-04 12:00", cells={
+        P._cell(rk, 1000): {"slots": 40, "taken": 594, "no_cash": 1689,
+                            "too_small": 0} for rk in R.RULER_ORDER})
+    txt = P.report(s)
+    assert "| 594 | 1689 |" in txt, [l for l in txt.split("\n")
+                                     if "594" in l]
+    assert "2026-09-04 12:00" in txt
+    print("ok  отказы кассы: в отчёте числом, у пересборки — названы словом")
+
+
 def _control_no_split():
     """Свод, складывающий наблюдение с пересчётом, — то, ради чего split."""
     orig = R.split_rows
@@ -377,6 +407,24 @@ def _control_legacy_reads_as_safe():
         R.DEFAULT_RULER = orig
 
 
+def _control_restat_drops_the_counts():
+    """Контроль: пересборка молча выбрасывает числа счётного прогона."""
+    orig = P.report
+
+    def blind(s):
+        return orig({k: v for k, v in s.items() if k != "cells"})
+
+    P.report = blind
+    try:
+        try:
+            test_cash_refusals_reach_the_report_and_survive_restat()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P.report = orig
+
+
 TESTS = [test_ticket_clears_the_exchange_floor, test_slots_grow_with_deposit,
          test_one_per_name_applied_before_cash,
          test_forward_and_restored_never_mix, test_journal_appends_only_new,
@@ -384,7 +432,8 @@ TESTS = [test_ticket_clears_the_exchange_floor, test_slots_grow_with_deposit,
          test_day_concentration_is_measured_and_not_faked,
          test_short_record_says_not_measured_not_zero,
          test_two_rulers_are_two_books_and_optimal_is_untouched,
-         test_legacy_row_reads_as_the_ruler_it_was_written_with]
+         test_legacy_row_reads_as_the_ruler_it_was_written_with,
+         test_cash_refusals_reach_the_report_and_survive_restat]
 
 CONTROLS = [("свод складывает вперёд и пересчёт", _control_no_split),
             ("билет ниже пола биржи", _control_ticket_below_floor),
@@ -394,7 +443,9 @@ CONTROLS = [("свод складывает вперёд и пересчёт", _
              _control_day_concentration_by_one_day),
             ("дедуп не видит линейки", _control_dedup_without_ruler),
             ("прежняя строка объявлена безопасной",
-             _control_legacy_reads_as_safe)]
+             _control_legacy_reads_as_safe),
+            ("пересборка теряет числа счётного прогона",
+             _control_restat_drops_the_counts)]
 
 
 def main():
