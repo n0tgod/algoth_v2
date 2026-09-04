@@ -110,3 +110,18 @@ sheets.jsonl: ног 871819
 ## Чего этот замер НЕ говорит
 
 Правил книги он не меняет: срок двигает и правило записи (`AHEAD_H = HOLD_H + 48`), и решение об этом за владельцем. Окно записи одно и режим рынка один; веса модели видели эти часы, значит оценка читается СВЕРХУ. Живого исполнения нет — сделки считаются реплеем по барам записи. Вторая линейка плеча («безопасная») не мерилась: у неё своё плечо, и перенос вывода требует своего прогона.
+публикуется в ветку main:
+ jobs/done/d7full.log                    |   7 +
+ jobs/done/d7halves.done                 |   1 +
+ jobs/done/d7halves.log                  | 112 ++++++++++++++
+ jobs/poke.log                           |   3 +
+ research/dca_ladder/out/D7-hold-1m.json | 267 +++++++++++++++++++++++++++++++-
+ research/dca_ladder/out/D7-hold-1m.md   |  14 ++
+ research/s8_loop/out/day_brake.json     |   2 +-
+ 7 files changed, 403 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   8d3a251..e98c38e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-04T15:31:29Z, код 0
