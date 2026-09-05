@@ -792,6 +792,190 @@ def _control_limit_fills_without_a_print():
         importlib.reload(L)
 
 
+# --- динамический тейк: якорь по ТВХ и трейлинг (D8) -------------------
+
+TAKE_RUNGS = [100.0, 90.0]
+TAKE_W = [0.5, 0.5]
+
+
+def _dca_take(bars, rule=None, take_px=None, rungs=None, w=None, lev=2.0):
+    return L.simulate_dca(bars, rungs or TAKE_RUNGS, w or TAKE_W,
+                          capital=1.0, leverage=lev, mmr=MMR,
+                          take_px=take_px, take_rule=rule)
+
+
+def test_entry_anchored_rule_equals_take_px():
+    """Якорь `entry` обязан совпасть со старым `take_px` БИТ В БИТ.
+
+    Иначе у одного правила две реализации: неподвижная цена и якорь,
+    который её изображает, — и однажды они разойдутся молча.
+    """
+    bars = _bars([100.0, 95.0, 106.0], [100.0, 89.0, 100.0],
+                 [100.0, 100.0, 106.0], entry=100.0)
+    a = _dca_take(bars, take_px=105.0)
+    b = _dca_take(bars, rule={"anchor": "entry", "frac": 0.05})
+    same = all(a[k] == b[k] for k in
+               ("exit", "pnl_frac", "exit_ts", "exit_px", "depth", "avg"))
+    assert same, (a, b)
+    assert a["exit"] == "тейк", a
+    print(f"ok  якорь entry == take_px бит в бит: {a['exit']} "
+          f"{a['pnl_frac']*100:+.2f}% по {a['exit_px']:.2f}")
+
+
+def test_avg_anchor_follows_the_ladder_and_pays_filled_leverage():
+    """Тейк от ТВХ едет вниз вместе со средней, и его pnl — тождество.
+
+    `pnl = qty·(ТВХ·(1+f) − ТВХ)/capital = заполненный нотионал · f`.
+    То есть тейк по ТВХ платит РОВНО «заполненное плечо × доля», и это
+    главное его свойство: он не зависит от того, где стоял вход.
+    """
+    bars = _bars([100.0, 95.0, 100.0], [100.0, 89.0, 95.0],
+                 [100.0, 100.0, 100.0], entry=100.0)
+    e = _dca_take(bars, rule={"anchor": "entry", "frac": 0.05})
+    a = _dca_take(bars, rule={"anchor": "avg", "frac": 0.05})
+    assert e["exit"] == "срок", e          # 105 недостижимы
+    assert a["exit"] == "тейк", a          # уровень уехал к 99.47
+    assert a["exit_px"] < 100.0, a
+    want = a["filled_notional"] / 1.0 * 0.05
+    assert abs(a["pnl_frac"] - want) < 1e-12, (a["pnl_frac"], want)
+    print(f"ok  тейк от ТВХ: уровень {a['exit_px']:.2f} при входе 100, "
+          f"pnl {a['pnl_frac']*100:+.2f}% = нотионал {a['filled_notional']:.2f} × 5%; "
+          f"якорь входа при том же пути даёт {e['exit']}")
+
+
+def test_take_level_uses_the_average_at_the_bar_start():
+    """Долив ЭТОЙ минуты уровень опускает, но заявку переставит следующая.
+
+    Иначе тейк, ставший достижимым только из-за долива в этом же баре,
+    засчитался бы нам внутрибарным путём, которого мы не видим.
+    """
+    bars = _bars([100.0, 95.0, 99.6], [100.0, 89.0, 95.0],
+                 [100.0, 99.6, 99.6], entry=100.0)
+    a = _dca_take(bars, rule={"anchor": "avg", "frac": 0.05})
+    assert a["exit"] == "тейк", a
+    assert a["exit_ts"] == 2, a            # не 1 — бар долива тейка не даёт
+    print(f"ok  уровень по ТВХ на начало бара: долив в баре 1, "
+          f"тейк в баре {int(a['exit_ts'])}")
+
+
+def test_trailing_arms_then_exits_below_the_peak():
+    """Трейл: взвод не закрывает, выход не получает цену уровня.
+
+    Взвод и выход в одном баре невозможны (выход проверяется раньше),
+    а исполнение — рыночное: `min(закрытие, уровень трейла)`.
+    """
+    bars = _bars([100.0, 105.0, 108.0, 107.5],
+                 [100.0, 100.0, 104.0, 107.0],
+                 [100.0, 106.0, 110.0, 110.0], entry=100.0)
+    rr = {"anchor": "avg", "frac": 0.05, "trail": 0.02}
+    t = _dca_take(bars, rule=rr, rungs=[100.0], w=[1.0], lev=1.0)
+    p = _dca_take(bars, rule={"anchor": "avg", "frac": 0.05},
+                  rungs=[100.0], w=[1.0], lev=1.0)
+    assert p["exit"] == "тейк" and p["exit_ts"] == 1, p     # взвод = выход
+    assert t["exit"] == "трейл" and t["exit_ts"] == 3, t    # взвод ≠ выход
+    assert abs(t["exit_px"] - 107.5) < 1e-9, t              # закрытие, не 107.8
+    assert t["pnl_frac"] > p["pnl_frac"], (t, p)
+    # Максимум растёт только на барах СО СДЕЛКАМИ: у минуты-котировки
+    # (хвост, дописанный серединой стакана) верх — рисованный, и подняв
+    # по нему трейл, мы вышли бы по цене, которой никто не торговал.
+    q = _bars([100.0, 105.0, 108.0, 108.0, 108.5, 107.5],
+              [100.0, 100.0, 104.0, 108.0, 108.0, 107.0],
+              [100.0, 106.0, 110.0, 200.0, 109.0, 109.0], entry=100.0,
+              vols=[1e3, 1e3, 1e3, 0.0, 1e3, 1e3])
+    qt = _dca_take(q, rule=rr, rungs=[100.0], w=[1.0], lev=1.0)
+    # Верх 200 у минуты-котировки максимум не двигает: трейл остаётся на
+    # 110·0.98, и выход случается только там, где низ до него дошёл.
+    assert qt["exit"] == "трейл" and qt["exit_ts"] == 5, qt
+    assert abs(qt["exit_px"] - t["exit_px"]) < 1e-9, (qt, t)
+    print(f"ok  трейл: взвод в баре 1, выход в баре {int(t['exit_ts'])} "
+          f"по {t['exit_px']:.2f} ({t['pnl_frac']*100:+.2f}% против "
+          f"{p['pnl_frac']*100:+.2f}% у обычного тейка); "
+          f"верх минуты-котировки максимум не двигает")
+
+
+def test_take_px_and_take_rule_together_are_refused():
+    """Два уровня разом неоднозначны — отказ, а не молчаливый выбор."""
+    bars = _bars([100.0, 106.0], [100.0, 100.0], entry=100.0)
+    try:
+        _dca_take(bars, take_px=105.0, rule={"anchor": "avg", "frac": 0.05})
+    except ValueError:
+        print("ok  take_px вместе с take_rule отвергнуты")
+        return
+    raise AssertionError("два уровня разом приняты молча")
+
+
+def _poison_ladder(lit, sub, fn):
+    """Подделка строки ядра и прогон проверки. True — контроль кусается."""
+    import importlib
+    import shutil
+    import tempfile
+    path = os.path.join(HERE, "ladder.py")
+    src = open(path, encoding="utf-8").read()
+    assert lit in src, f"подделка НЕ легла: литерала нет — {lit}"
+    keep = os.path.join(tempfile.mkdtemp(prefix="ladder-"), "ladder.py")
+    shutil.copy(path, keep)
+    try:
+        open(path, "w", encoding="utf-8").write(src.replace(lit, sub, 1))
+        cache = os.path.join(HERE, "__pycache__")
+        if os.path.isdir(cache):
+            for f in os.listdir(cache):
+                if f.startswith("ladder."):
+                    os.remove(os.path.join(cache, f))
+        importlib.reload(L)
+        try:
+            fn()
+        except Exception:
+            return True
+        return False
+    finally:
+        shutil.copy(keep, path)
+        importlib.reload(L)
+
+
+def _control_take_anchor_ignored():
+    """Якорь не читается — тейк всегда от входа."""
+    return _poison_ladder(
+        '(entry if take_rule["anchor"] == "entry" else avg_prev)',
+        "entry",
+        test_avg_anchor_follows_the_ladder_and_pays_filled_leverage)
+
+
+def _control_take_level_uses_this_bar_average():
+    """Уровень считается по ТВХ ПОСЛЕ долива этого же бара."""
+    return _poison_ladder(
+        '(entry if take_rule["anchor"] == "entry" else avg_prev)',
+        '(entry if take_rule["anchor"] == "entry" else avg)',
+        test_take_level_uses_the_average_at_the_bar_start)
+
+
+def _control_trail_gets_the_level_price():
+    """Трейл исполняется по уровню, а не по доступной цене."""
+    return _poison_ladder("px = min(cl, stop)", "px = stop",
+                          test_trailing_arms_then_exits_below_the_peak)
+
+
+def _control_trail_arms_and_exits_in_one_bar():
+    """Взвод переставлен ПЕРЕД выходом — трейл срабатывает в баре взвода."""
+    return _poison_ladder(
+        "            if peak is not None:\n"
+        "                stop = peak * (1.0 - trail)",
+        "            if peak is None and traded and hi >= lvl:\n"
+        "                peak = hi\n"
+        "            if peak is not None:\n"
+        "                stop = peak * (1.0 - trail)",
+        test_trailing_arms_then_exits_below_the_peak)
+
+
+def _control_trail_peak_grows_on_a_quote_bar():
+    """Максимум трейла растёт и на минуте без единого принта."""
+    return _poison_ladder(
+        "                if traded:\n"
+        "                    peak = max(peak, hi)",
+        "                if True:\n"
+        "                    peak = max(peak, hi)",
+        test_trailing_arms_then_exits_below_the_peak)
+
+
 TESTS = [
     test_open_mark_equals_the_simulation_pnl,
     test_liq_price_matches_spec5_table,
@@ -819,6 +1003,11 @@ TESTS = [
     test_track_marks_hour_close,
     test_fills_describe_the_position_and_its_floating_entry,
     test_limit_needs_a_print_market_exit_does_not,
+    test_entry_anchored_rule_equals_take_px,
+    test_avg_anchor_follows_the_ladder_and_pays_filled_leverage,
+    test_take_level_uses_the_average_at_the_bar_start,
+    test_trailing_arms_then_exits_below_the_peak,
+    test_take_px_and_take_rule_together_are_refused,
 ]
 
 
@@ -836,6 +1025,13 @@ CONTROLS = [
     ("доливы не записываются", _control_fills_not_logged),
     ("плечо забыто в живой отметке", _control_open_mark_forgets_leverage),
     ("лимитка заполняется без принта", _control_limit_fills_without_a_print),
+    ("якорь тейка не читается", _control_take_anchor_ignored),
+    ("уровень по ТВХ этого же бара", _control_take_level_uses_this_bar_average),
+    ("трейл получает цену уровня", _control_trail_gets_the_level_price),
+    ("трейл взводится и выходит одним баром",
+     _control_trail_arms_and_exits_in_one_bar),
+    ("максимум трейла растёт по котировке",
+     _control_trail_peak_grows_on_a_quote_bar),
 ]
 
 

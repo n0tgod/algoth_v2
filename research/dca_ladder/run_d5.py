@@ -141,13 +141,20 @@ def sigma_day(sigma_bp):
     return sigma_bp / 1e4 * math.sqrt(MIN_PER_DAY)
 
 
-def fence_leverage(rule, param, entry, rungs_full, look, sigma_bp):
+def fence_leverage(rule, param, entry, rungs_full, look, sigma_bp,
+                   weights=None):
     """Плечо по объявленной линейке. Возвращает (плечо, рунги, кто связал).
 
     `depth` — нынешнее правило: запас `param · d_max` (глубины лестницы).
     `sigma` — новая линейка: запас `param · σ_сут`, но не мельче самой
     лестницы. Обе идут через ОДНУ `L.max_leverage`: второй копии вывода
     плеча не заводится, меняется ровно требуемый запас.
+
+    `weights` — веса лестницы, если они не `D2.WEIGHTS`. Забор считает
+    цену ликвидации ПОЛНОСТЬЮ заполненной лестницы, поэтому веса обязаны
+    быть теми же, какими её потом торгуют: посчитав плечо по одним весам
+    и заполнив другими, мы получили бы запас, которого нет. Умолчание
+    даёт прежний счёт бит в бит.
     """
     if len(rungs_full) < 2:                    # нет резерва — нет рычага (D2)
         return 1.0, [entry], "нет лестницы"
@@ -165,8 +172,9 @@ def fence_leverage(rule, param, entry, rungs_full, look, sigma_bp):
         mult = max(buf, d_max) / d_max
     else:
         raise ValueError(f"неизвестная линейка: {rule}")
-    lev = L.max_leverage(rungs_full, D2.WEIGHTS[:len(rungs_full)], 1.0,
-                         entry, d_max, look, mult)
+    w = (list(weights) if weights is not None
+         else D2.WEIGHTS[:len(rungs_full)])
+    lev = L.max_leverage(rungs_full, w, 1.0, entry, d_max, look, mult)
     if lev <= 0:                               # забор отказал лестнице (D2)
         return 1.0, [entry], "забор отказал"
     return lev, rungs_full, binder

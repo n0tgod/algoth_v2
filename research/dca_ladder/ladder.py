@@ -352,7 +352,7 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None,
 
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  take_px=None, floor_frac=None, track=False,
-                 checkpoints=None):
+                 checkpoints=None, take_rule=None):
     """DCA-лонг на РЕАЛЬНЫХ барах: доливы вниз, тейк вверх, пол капитуляции.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
@@ -395,8 +395,30 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     книги во времени); сами возвращаемые числа от неё не меняются ни на
     бит — умолчание `False` даёт прежний счёт, и это закреплено тестом.
 
-    Возвращает: exit ("тейк"/"пол"/"ликвидация"/"срок"), pnl_frac (доля
-    капитала позиции; ликвидация = −1.0), depth, avg, filled_notional.
+    `take_rule` — ДИНАМИЧЕСКИЙ тейк вместо неподвижного `take_px`
+    (передавать оба нельзя — уровень стал бы неоднозначен). Словарь:
+    `anchor` (`"entry"` — от цены входа, как у `take_px`; `"avg"` — от
+    плавающей ТВХ, то есть цель едет вниз вместе со средней), `frac` —
+    доля цены (0.05 = 5 %), `trail` — доля трейла или None.
+
+    Уровень считается по ТВХ на НАЧАЛО бара: долив этой же минуты ТВХ
+    опускает, но заявку мы переставляем только следующим баром. Иначе
+    тейк, ставший достижимым ТОЛЬКО из-за долива в этом же баре,
+    засчитывался бы нам внутрибарным путём, которого мы не видим
+    (конвенция проекта: ничью решаем не в свою пользу).
+
+    Трейлинг: `hi ≥ уровень` не закрывает позицию, а ВЗВОДИТ её (`peak`);
+    дальше выход, когда низ бара опустился на `trail` от достигнутого
+    максимума. Взвод и выход в одном баре невозможны по построению
+    (выход проверяется раньше взвода), максимум растёт только на барах
+    со сделками, а сам выход — РЫНОЧНЫЙ (`min(закрытие, уровень трейла)`:
+    стоп не получает цену уровня, урок правила v13) и потому считается
+    и на баре без принтов, как пол и ликвидация. Исход помечается
+    отдельным `"трейл"`, чтобы его нельзя было спутать с тейком.
+
+    Возвращает: exit ("тейк"/"трейл"/"пол"/"ликвидация"/"срок"), pnl_frac
+    (доля капитала позиции; ликвидация = −1.0), depth, avg,
+    filled_notional.
     """
     n = len(rung_prices)
     if len(weights) != n:
@@ -416,6 +438,15 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     # и «плавающую ТВХ» (среднюю цену, ступенькой уходящую вниз) неоткуда
     # взять. Числа сделки от списка не зависят.
     fills = [(float(bars[0][0]), entry, float(weights[0]))]
+    if take_rule is not None:
+        if take_px is not None:
+            raise ValueError("take_px и take_rule вместе неоднозначны")
+        if take_rule.get("anchor") not in ("entry", "avg"):
+            raise ValueError(f"неизвестный якорь тейка: {take_rule.get('anchor')}")
+        if not float(take_rule.get("frac") or 0.0) > 0:
+            raise ValueError("доля тейка обязана быть > 0")
+    avg_prev = entry          # ТВХ на начало бара: заявка стоит с прошлого
+    peak = None               # максимум после взвода трейлинга
     tr = [] if track else None
     cps = [float(x) for x in (checkpoints or [])]
     ck = [None] * len(cps)
@@ -467,6 +498,11 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                                             rung_prices, weights, notional,
                                             log=fills, bt=float(bt))
         avg = cash / qty
+        # Уровень тейка — по ТВХ на НАЧАЛО бара (`avg_prev`), а не по той,
+        # что сложилась доливом ЭТОЙ минуты (см. докстроку).
+        lvl = (take_px if take_rule is None else
+               (entry if take_rule["anchor"] == "entry" else avg_prev)
+               * (1.0 + float(take_rule["frac"])))
         mark = (qty * cl - cash) / capital
         if tr is not None:
             _mark(bt, mark)
@@ -484,12 +520,29 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                              "exit_ts": bt, "exit_px": cl,
                              "depth": sum(filled), "avg": avg,
                              "filled_notional": cash}, bt)
-        if traded and take_px is not None and hi >= take_px:
+        trail = (float(take_rule.get("trail") or 0.0)
+                 if take_rule is not None else 0.0)
+        if trail > 0:
+            if peak is not None:
+                stop = peak * (1.0 - trail)
+                if lo <= stop:               # трейл — РЫНОЧНЫЙ выход
+                    px = min(cl, stop)
+                    return _ret({"exit": "трейл",
+                                 "pnl_frac": qty * (px - avg) / capital,
+                                 "exit_ts": bt, "exit_px": px,
+                                 "depth": sum(filled), "avg": avg,
+                                 "filled_notional": cash}, bt)
+                if traded:
+                    peak = max(peak, hi)
+            elif traded and hi >= lvl:
+                peak = hi                    # взвели; выход со следующего бара
+        elif traded and lvl is not None and hi >= lvl:
             return _ret({"exit": "тейк",
-                         "pnl_frac": qty * (take_px - avg) / capital,
-                         "exit_ts": bt, "exit_px": take_px,
+                         "pnl_frac": qty * (lvl - avg) / capital,
+                         "exit_ts": bt, "exit_px": lvl,
                          "depth": sum(filled), "avg": avg,
                          "filled_notional": cash}, bt)
+        avg_prev = avg
         last = (bt, mark)
     lb = bars[-1]
     avg = cash / qty
