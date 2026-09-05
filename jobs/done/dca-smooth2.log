@@ -2,3 +2,25 @@
 строка: run research/dca_paper/smoothing.py --tag 1m
 начало: 2026-09-05T23:19:20Z
 запускаю: .venv/bin/python research/dca_paper/smoothing.py --tag 1m
+публикуется в ветку main:
+ jobs/done/dca-repack.log                   | 47 ++++++++++++++++++++++++++++++
+ jobs/done/dca-smooth2.done                 |  1 +
+ jobs/done/dca-smooth2.log                  |  4 +++
+ jobs/poke.log                              |  3 ++
+ research/dca_paper/out/DCA-smoothing-1m.md | 24 +++++++++++++++
+ 5 files changed, 79 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   ba23370..cc58873  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+safe/1000: связь -0.416, сглаживает False
+safe/10000: связь -0.364, сглаживает False
+safe/100000: связь -0.358, сглаживает False
+optimal/1000: связь -0.168, сглаживает False
+optimal/10000: связь -0.228, сглаживает False
+optimal/100000: связь -0.221, сглаживает False
+aggr/1000: связь -0.009, сглаживает False
+aggr/10000: связь -0.054, сглаживает False
+aggr/100000: связь -0.054, сглаживает False
+отчёт: /root/algoth_v2/research/dca_paper/out/DCA-smoothing-1m.md
+конец: 2026-09-05T23:19:23Z, код 0
