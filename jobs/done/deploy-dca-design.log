@@ -1,0 +1,64 @@
+== задание deploy-dca-design ==
+строка: restart-book
+начало: 2026-09-05T23:00:03Z
+перезапуск сборщика и циклов
+== останавливаю прежний ==
+жду закрытия файлов........
+== обновляю код ==
+Already up to date.
+== запускаю ==
+== поднялся, хвост журнала ==
+[       3 с] шард 1: подключён, подписываюсь на 120 тем
+[       4 с] шард 2: подключён, подписываюсь на 120 тем
+[       5 с] шард 3: подключён, подписываюсь на 120 тем
+[       6 с] шард 4: подключён, подписываюсь на 120 тем
+[       7 с] шард 5: подключён, подписываюсь на 120 тем
+[       8 с] шард 6: подключён, подписываюсь на 120 тем
+[      11 с] шард 7: подключён, подписываюсь на 120 тем
+[      12 с] шард 8: подключён, подписываюсь на 120 тем
+== перезапускаю циклы обучения ==
+  не запущен: s8_loop/train.py --pretest
+  остановлен, сторож поднимет: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/dca-levcap.done                       |     1 +
+ jobs/done/dca-levcap.log                        |   365 +
+ jobs/done/dca-smooth.log                        |    10 +
+ jobs/done/deploy-dca-design.done                |     1 +
+ jobs/done/deploy-dca-design.log                 |    21 +
+ jobs/poke.log                                   |     3 +
+ research/dca_paper/out/DCA-paper.json           | 14886 +++++++++++++---------
+ research/dca_paper/out/DCA-paper.md             |   182 +-
+ research/dca_paper/out/journal-2026-08-08.jsonl |    66 +
+ research/dca_paper/out/journal-2026-08-09.jsonl |   211 +
+ research/dca_paper/out/journal-2026-08-10.jsonl |    45 +
+ research/dca_paper/out/journal-2026-08-11.jsonl |    77 +
+ research/dca_paper/out/journal-2026-08-12.jsonl |    15 +
+ research/dca_paper/out/journal-2026-08-13.jsonl |   277 +
+ research/dca_paper/out/journal-2026-08-14.jsonl |   145 +
+ research/dca_paper/out/journal-2026-08-15.jsonl |   175 +
+ research/dca_paper/out/journal-2026-08-16.jsonl |   106 +
+ research/dca_paper/out/journal-2026-08-17.jsonl |   126 +
+ research/dca_paper/out/journal-2026-08-18.jsonl |    72 +
+ research/dca_paper/out/journal-2026-08-19.jsonl |   959 ++
+ research/dca_paper/out/journal-2026-08-20.jsonl |  2301 ++++
+ research/dca_paper/out/journal-2026-08-21.jsonl |  2424 ++++
+ research/dca_paper/out/journal-2026-08-22.jsonl |  1410 ++
+ research/dca_paper/out/journal-2026-08-23.jsonl |   250 +
+ research/dca_paper/out/journal-2026-08-24.jsonl |   279 +
+ research/dca_paper/out/journal-2026-08-25.jsonl |   347 +
+ research/dca_paper/out/journal-2026-08-26.jsonl |    26 +
+ research/dca_paper/out/journal-2026-08-27.jsonl |    49 +
+ research/dca_paper/out/journal-2026-08-28.jsonl |    23 +
+ research/dca_paper/out/journal-2026-08-29.jsonl |    26 +
+ research/dca_paper/out/journal-2026-08-30.jsonl |   147 +
+ research/dca_paper/out/journal-2026-08-31.jsonl |    39 +
+ research/dca_paper/out/journal-2026-09-01.jsonl |    29 +
+ research/dca_paper/out/journal-2026-09-02.jsonl |    27 +
+ research/dca_paper/out/journal-2026-09-03.jsonl |    48 +
+ research/dca_paper/out/journal-2026-09-05.jsonl |     5 +
+ research/s8_loop/out/day_brake.json             |     2 +-
+ 37 files changed, 18929 insertions(+), 6246 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/journal-2026-08-21.jsonl (5 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md

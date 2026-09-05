@@ -22,3 +22,13 @@ Traceback (most recent call last):
                                    ^^^^^
 AttributeError: 'list' object has no attribute 'get'
 конец: 2026-09-05T21:56:21Z, код 1
+публикуется в ветку main:
+ jobs/done/dca-mirror.log  |  7 +++++++
+ jobs/done/dca-smooth.done |  1 +
+ jobs/done/dca-smooth.log  | 24 ++++++++++++++++++++++++
+ jobs/poke.log             |  3 +++
+ 4 files changed, 35 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   f61deee..60b9365  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

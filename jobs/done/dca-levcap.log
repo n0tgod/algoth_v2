@@ -1,3 +1,67 @@
+== задание dca-levcap ==
+строка: run research/dca_paper/run_paper.py
+начало: 2026-09-05T22:20:29Z
+запускаю: .venv/bin/python research/dca_paper/run_paper.py 
+кэш реплея не используется: правила реплея изменились
+sheets.jsonl: ног 938712
+решений под гейтом 9005, в кэше 0, считаю заново 9005
+ног под гейтом 9005 (шортов 313), символов 650
+окно решений 2026-08-08 18:07 … 2026-09-05 22:08 UTC (28.2 суток, дат 29)
+  символ 19/650  взято 481
+  символ 29/650  взято 757
+  символ 47/650  взято 1237
+  символ 54/650  взято 1393
+  символ 60/650  взято 1519
+  символ 69/650  взято 1674
+  символ 133/650  взято 2073
+  символ 165/650  взято 2361
+  символ 202/650  взято 2805
+  символ 228/650  взято 3056
+  символ 275/650  взято 3589
+  символ 320/650  взято 4263
+  символ 342/650  взято 4907
+  символ 378/650  взято 5768
+  символ 391/650  взято 6057
+  символ 428/650  взято 6751
+  символ 441/650  взято 7037
+  символ 469/650  взято 7607
+  символ 479/650  взято 7808
+  символ 521/650  взято 8181
+  символ 545/650  взято 8461
+  символ 548/650  взято 8508
+  символ 571/650  взято 8726
+  символ 587/650  взято 8821
+  символ 591/650  взято 8847
+  символ 603/650  взято 8905
+  символ 611/650  взято 8935
+  символ 621/650  взято 8959
+запись доходит до 2026-09-05 22:42 UTC; позиций закрытых 16719, открытых 197, оборванных записью 1094
+хвост: имён с дописанным 220, минут 3618, исходов по котировке 340, вход из котировки отклонён у 0 решений
+линейка безопасная (safe): позиций 7332, после правила одной на имя 1761
+  депозит $1,000: мест 40, взято 421, нет кассы 1340, мельче $5 0, открытых 22, оборванных записью 63
+  депозит $10,000: мест 400, взято 1694, нет кассы 67, мельче $5 0, открытых 22, оборванных записью 131
+  депозит $100,000: мест 689, взято 1761, нет кассы 0, мельче $5 0, открытых 22, оборванных записью 134
+линейка оптимальная (optimal): позиций 7332, после правила одной на имя 1770
+  депозит $1,000: мест 40, взято 437, нет кассы 1333, мельче $5 0, открытых 22, оборванных записью 63
+  депозит $10,000: мест 400, взято 1703, нет кассы 67, мельче $5 0, открытых 22, оборванных записью 130
+  депозит $100,000: мест 689, взято 1770, нет кассы 0, мельче $5 0, открытых 22, оборванных записью 133
+линейка агрессивная (aggr): позиций 7332, гейт плеча ≥4× отсеял 5380, после правила одной на имя 635
+  депозит $1,000: мест 160, взято 471, нет кассы 164, мельче $5 0, открытых 2, оборванных записью 9
+  депозит $10,000: мест 357, взято 635, нет кассы 0, мельче $5 0, открытых 2, оборванных записью 11
+  депозит $100,000: мест 355, взято 635, нет кассы 0, мельче $5 0, открытых 2, оборванных записью 11
+линейка безопасная (шорт) (safe_s): позиций 308, после правила одной на имя 208
+  депозит $1,000: мест 40, взято 196, нет кассы 12, мельче $5 0, открытых 30, оборванных записью 31
+  депозит $10,000: мест 400, взято 208, нет кассы 0, мельче $5 0, открытых 30, оборванных записью 32
+  депозит $100,000: мест 689, взято 208, нет кассы 0, мельче $5 0, открытых 30, оборванных записью 32
+линейка оптимальная (шорт) (optimal_s): позиций 308, после правила одной на имя 208
+  депозит $1,000: мест 40, взято 155, нет кассы 13, мельче $5 40, открытых 20, оборванных записью 28
+  депозит $10,000: мест 400, взято 208, нет кассы 0, мельче $5 0, открытых 30, оборванных записью 32
+  депозит $100,000: мест 689, взято 208, нет кассы 0, мельче $5 0, открытых 30, оборванных записью 32
+линейка агрессивная (шорт) (aggr_s): позиций 308, гейт плеча ≥4× отсеял 217, после правила одной на имя 69
+  депозит $1,000: мест 160, взято 69, нет кассы 0, мельче $5 0, открытых 6, оборванных записью 5
+  депозит $10,000: мест 714, взято 69, нет кассы 0, мельче $5 0, открытых 6, оборванных записью 5
+  депозит $100,000: мест 689, взято 69, нет кассы 0, мельче $5 0, открытых 6, оборванных записью 5
+журнал: было 56979, дописано 9704 в 28 суточных файлов
 # DCA — бумажные книги на трёх депозитах
 
 Книг девять: три РЕЖИМА × три депозита. Внутри режима книги отличаются РОВНО депозитом: правила, гейты, ограда и выходы у них одни. Билет при этом НЕ один и тот же, и это не третья ось: он считается ОДНОЙ формулой — `максимум(пол режима, депозит / (пик режима × запас))`, — просто пол и пик у каждого режима свои.
@@ -215,3 +279,87 @@
 ## Чего эти числа НЕ описывают
 
 Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а не сведён в позицию, то есть маржа и цена ликвидации по-прежнему считаются по каждой позиции отдельно — на бирже они считаются по слитой. Веса модели видели эти часы, поэтому пересчёт читается как оценка СВЕРХУ. Период один и режим рынка один.
+публикуется в ветку main:
+ jobs/done/dca-levcap.done                       |     1 +
+ jobs/done/dca-levcap.log                        |   281 +
+ jobs/done/dca-smooth.log                        |    10 +
+ jobs/poke.log                                   |     3 +
+ research/dca_paper/out/DCA-paper.json           | 14886 +++++++++++++---------
+ research/dca_paper/out/DCA-paper.md             |   182 +-
+ research/dca_paper/out/journal-2026-08-08.jsonl |    66 +
+ research/dca_paper/out/journal-2026-08-09.jsonl |   211 +
+ research/dca_paper/out/journal-2026-08-10.jsonl |    45 +
+ research/dca_paper/out/journal-2026-08-11.jsonl |    77 +
+ research/dca_paper/out/journal-2026-08-12.jsonl |    15 +
+ research/dca_paper/out/journal-2026-08-13.jsonl |   277 +
+ research/dca_paper/out/journal-2026-08-14.jsonl |   145 +
+ research/dca_paper/out/journal-2026-08-15.jsonl |   175 +
+ research/dca_paper/out/journal-2026-08-16.jsonl |   106 +
+ research/dca_paper/out/journal-2026-08-17.jsonl |   126 +
+ research/dca_paper/out/journal-2026-08-18.jsonl |    72 +
+ research/dca_paper/out/journal-2026-08-19.jsonl |   959 ++
+ research/dca_paper/out/journal-2026-08-20.jsonl |  2301 ++++
+ research/dca_paper/out/journal-2026-08-21.jsonl |  2424 ++++
+ research/dca_paper/out/journal-2026-08-22.jsonl |  1410 ++
+ research/dca_paper/out/journal-2026-08-23.jsonl |   250 +
+ research/dca_paper/out/journal-2026-08-24.jsonl |   279 +
+ research/dca_paper/out/journal-2026-08-25.jsonl |   347 +
+ research/dca_paper/out/journal-2026-08-26.jsonl |    26 +
+ research/dca_paper/out/journal-2026-08-27.jsonl |    49 +
+ research/dca_paper/out/journal-2026-08-28.jsonl |    23 +
+ research/dca_paper/out/journal-2026-08-29.jsonl |    26 +
+ research/dca_paper/out/journal-2026-08-30.jsonl |   147 +
+ research/dca_paper/out/journal-2026-08-31.jsonl |    39 +
+ research/dca_paper/out/journal-2026-09-01.jsonl |    29 +
+ research/dca_paper/out/journal-2026-09-02.jsonl |    27 +
+ research/dca_paper/out/journal-2026-09-03.jsonl |    48 +
+ research/dca_paper/out/journal-2026-09-05.jsonl |     5 +
+ research/s8_loop/out/day_brake.json             |     2 +-
+ 35 files changed, 18823 insertions(+), 6246 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/journal-2026-08-21.jsonl (5 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md
+
+конец: 2026-09-05T22:42:40Z, код 0
+публикуется в ветку main:
+ jobs/done/dca-levcap.done                       |     1 +
+ jobs/done/dca-levcap.log                        |   324 +
+ jobs/done/dca-smooth.log                        |    10 +
+ jobs/poke.log                                   |     3 +
+ research/dca_paper/out/DCA-paper.json           | 14886 +++++++++++++---------
+ research/dca_paper/out/DCA-paper.md             |   182 +-
+ research/dca_paper/out/journal-2026-08-08.jsonl |    66 +
+ research/dca_paper/out/journal-2026-08-09.jsonl |   211 +
+ research/dca_paper/out/journal-2026-08-10.jsonl |    45 +
+ research/dca_paper/out/journal-2026-08-11.jsonl |    77 +
+ research/dca_paper/out/journal-2026-08-12.jsonl |    15 +
+ research/dca_paper/out/journal-2026-08-13.jsonl |   277 +
+ research/dca_paper/out/journal-2026-08-14.jsonl |   145 +
+ research/dca_paper/out/journal-2026-08-15.jsonl |   175 +
+ research/dca_paper/out/journal-2026-08-16.jsonl |   106 +
+ research/dca_paper/out/journal-2026-08-17.jsonl |   126 +
+ research/dca_paper/out/journal-2026-08-18.jsonl |    72 +
+ research/dca_paper/out/journal-2026-08-19.jsonl |   959 ++
+ research/dca_paper/out/journal-2026-08-20.jsonl |  2301 ++++
+ research/dca_paper/out/journal-2026-08-21.jsonl |  2424 ++++
+ research/dca_paper/out/journal-2026-08-22.jsonl |  1410 ++
+ research/dca_paper/out/journal-2026-08-23.jsonl |   250 +
+ research/dca_paper/out/journal-2026-08-24.jsonl |   279 +
+ research/dca_paper/out/journal-2026-08-25.jsonl |   347 +
+ research/dca_paper/out/journal-2026-08-26.jsonl |    26 +
+ research/dca_paper/out/journal-2026-08-27.jsonl |    49 +
+ research/dca_paper/out/journal-2026-08-28.jsonl |    23 +
+ research/dca_paper/out/journal-2026-08-29.jsonl |    26 +
+ research/dca_paper/out/journal-2026-08-30.jsonl |   147 +
+ research/dca_paper/out/journal-2026-08-31.jsonl |    39 +
+ research/dca_paper/out/journal-2026-09-01.jsonl |    29 +
+ research/dca_paper/out/journal-2026-09-02.jsonl |    27 +
+ research/dca_paper/out/journal-2026-09-03.jsonl |    48 +
+ research/dca_paper/out/journal-2026-09-05.jsonl |     5 +
+ research/s8_loop/out/day_brake.json             |     2 +-
+ 35 files changed, 18866 insertions(+), 6246 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/journal-2026-08-21.jsonl (5 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md
