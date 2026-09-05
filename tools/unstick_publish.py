@@ -54,10 +54,16 @@ def main():
               "сперва разрезка (research/dca_paper/split_journal.py)")
         return 1
     before, _ = R.read_journal(path)
-    r = subprocess.run(["git", "checkout", "--", REL], cwd=ROOT,
+    # ИЗ HEAD и вместе с индексом: `git checkout -- <путь>` берёт файл
+    # ИЗ ИНДЕКСА, а на сервере он там и лежит — раздутый, ровно тот,
+    # что отвергает защита. Первая версия инструмента это и делала:
+    # на подставном репозитории с чистым индексом она выглядела
+    # исправной, а на живом не меняла ничего.
+    r = subprocess.run(["git", "restore", "--source=HEAD", "--staged",
+                        "--worktree", "--", REL], cwd=ROOT,
                        capture_output=True, text=True)
     if r.returncode != 0:
-        print("ОТКАЗ: git checkout не прошёл: "
+        print("ОТКАЗ: git restore не прошёл: "
               + (r.stderr or r.stdout).strip()[:200])
         return 1
     after, _ = R.read_journal(path)

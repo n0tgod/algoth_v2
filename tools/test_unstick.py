@@ -52,6 +52,12 @@ def main():
     # дозапись, которой в git нет: ровно то, что осталось на сервере
     with open(p, "a", encoding="utf-8") as f:
         f.write(json.dumps(row(t0 + 86400, "BBBUSDT")) + "\n")
+    # ...и она ЗАСТАВЛЕНА В ИНДЕКС — как на сервере, где публикация
+    # раз за разом добавляла файл и падала на защите. Без этого шага
+    # фикстура не выглядит живой: `git checkout -- <путь>` берёт файл
+    # из индекса, и на чистом индексе сломанный инструмент выглядит
+    # исправным (ровно так и вышло с первой версией).
+    run("git", "add", "--", "research/dca_paper/out/journal.jsonl")
 
     tool = os.path.join(repo, "tools", "unstick_publish.py")
     r1 = subprocess.run([sys.executable, tool], capture_output=True,
@@ -68,6 +74,10 @@ def main():
     whole = S.read_one(p)[0]
     assert len(rows) == 2, rows          # читатель видит оба решения
     assert len(whole) == 1, whole        # цельный файл вернулся к версии git
+    # и индекс тоже чист: пока раздутая версия стоит в индексе, защита
+    # отвергает публикацию, сколько ни правь рабочую копию
+    idx = run("git", "diff", "--cached", "--name-only").stdout.strip()
+    assert "journal.jsonl" not in idx, idx
     print("ok  размораживатель: файл вернулся к версии git, "
           f"решений по-прежнему {len(rows)}")
     print("\nвсе 2 проверки прошли")
