@@ -24,3 +24,10 @@ aggr/10000: связь -0.054, сглаживает False
 aggr/100000: связь -0.054, сглаживает False
 отчёт: /root/algoth_v2/research/dca_paper/out/DCA-smoothing-1m.md
 конец: 2026-09-05T23:19:23Z, код 0
+публикуется в ветку main:
+ jobs/done/dca-smooth2.log | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   cc58873..8ad5803  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
