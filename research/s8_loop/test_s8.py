@@ -1214,6 +1214,67 @@ def test_picks_never_take_non_crypto():
           list(got2) == [0, 1, 3], str(list(got2)))
 
 
+def test_flat_names_are_measured_not_listed():
+    """Плоское имя мерится по записи, а не ведётся списком.
+
+    Владелец увидел USDEUSDT на графике DCA-книги: свечи стоят на
+    0.9994, суточный размах ~6 б.п. при круге издержек 11 — торговать
+    нечем ни при каком сигнале. Поимённый список отставал от каждой
+    волны листингов трижды, поэтому правило снимается с наших же
+    почасовых сводок: имя, которое начало ходить, перестаёт быть
+    плоским само.
+
+    Три инварианта: плоское отсекается ОТ ОБЕИХ книг (со сроком и
+    ситуационной — стейбл не ходит ни для кого); ходячее остаётся;
+    имя с числом суток меньше `MIN_DAYS` НЕ считается плоским —
+    неизмеримое не есть плоское, иначе правило запретило бы каждый
+    свежий листинг на первые дни его жизни.
+    """
+    import json
+    import shutil
+    import tempfile
+    import numpy as np
+    import train as T
+    from research.common import flat_filter as FF
+    from research.common import universe_filter as UF
+
+    d = tempfile.mkdtemp()
+    try:
+        def put(sym, days, hi, lo):
+            os.makedirs(os.path.join(d, sym), exist_ok=True)
+            for i in range(days):
+                with open(os.path.join(d, sym, "2026-08-%02d.jsonl" % (i + 1)),
+                          "w", encoding="utf-8") as f:
+                    f.write(json.dumps({"mid_high": hi, "mid_low": lo,
+                                        "mid_close": 1.0}) + "\n")
+        # стейбл: размах 2 б.п. за сутки, суток хватает
+        put("USDEUSDT", 10, 1.0001, 0.9999)
+        # живое имя: 300 б.п.
+        put("ARBUSDT", 10, 1.015, 0.985)
+        # свежий листинг: размах стейбла, но суток МЕНЬШЕ порога
+        put("NEWUSDT", FF.MIN_DAYS - 1, 1.0001, 0.9999)
+        now = time.mktime(time.strptime("2026-08-11", "%Y-%m-%d"))
+        flat = FF.flat_names(summary=d, now=now)
+        check("плоским назван стейбл, и только он",
+              flat == {"USDEUSDT"}, str(sorted(flat)))
+        # правило доезжает до ВЫБОРА обеих книг
+        syms = ["USDEUSDT", "ARBUSDT", "NEWUSDT"]
+        got = T.tradable_rows(np.array([0, 1, 2]), syms,
+                              ref=UF.non_crypto_set(), flat=flat)
+        check("плоское имя не попадает в выбор книги со сроком",
+              list(got) == [1, 2], str(list(got)))
+        check("без множества правило не связывает никого",
+              list(T.tradable_rows(np.array([0, 1, 2]), syms,
+                                   ref=UF.non_crypto_set())) == [0, 1, 2],
+              "правило сработало там, где меры не давали")
+        # порог объявлен ДО замера и выведен из круга издержек
+        check("порог плоского выведен из круга издержек",
+              abs(FF.FLAT_MAX_BP - 50.0) < 1e-9
+              and FF.FLAT_MAX_BP > 2 * 11.0, str(FF.FLAT_MAX_BP))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_horizon_books_review_with_their_own_target():
     """Книга каждого горизонта разбирается СВОЕЙ целью и в СВОЙ каталог.
 
@@ -4039,6 +4100,71 @@ def test_train_cycle_end_to_end():
         T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
 
 
+def test_flat_name_never_reaches_the_scanner_sheet():
+    """Плоское имя не доезжает до ЛИСТА сканера, а не только до rows_m.
+
+    Ситуационная книга берёт сечение своим путём (`rows_sit`): решение
+    владельца 2026-08-13 позволило ей торговать не-крипто, и фильтр
+    книг со сроком её не касается. Стейбл — не календарь чужой биржи, а
+    отсутствие хода, и отсекается он у ОБЕИХ. Дорога проверяется
+    сквозным циклом: правило, доехавшее до одного списка и не доехавшее
+    до другого, снаружи неотличимо от работающего.
+    """
+    import shutil
+    import train as T
+    from research.common import flat_filter as FF
+
+    orig_fit, orig_nn = T.gbm.fit, T.nn.fit
+    T.gbm.fit = (lambda x, y, seed, **kw:
+                 orig_fit(x, y, seed, n_trees=25, **kw))
+    T.nn.fit = (lambda x, y, seed, **kw:
+                orig_nn(x, y, seed, epochs=4, **kw))
+    T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+    d = tempfile.mkdtemp()
+    was_dir = T.MODEL_DIR          # каталог модели ОБЯЗАН вернуться:
+    try:                           # соседний тест сверяет его с BF
+        sd = os.path.join(d, "summary")
+        _write_summaries(sd, D=260)
+        # S00 переписывается стейблом: цена почти стоит, суточный ход
+        # единицы б.п. Ряд не замораживается вовсе (нулевая дисперсия
+        # ушла бы из сечения по другой причине, и проверка стала бы
+        # пустой) — он ходит, но мельче круга издержек.
+        flat_sym = "S00USDT"
+        fd = os.path.join(sd, flat_sym)
+        for fn in sorted(os.listdir(fd)):
+            path = os.path.join(fd, fn)
+            out = []
+            for k, line in enumerate(open(path, encoding="utf-8")):
+                r = json.loads(line)
+                px = 1.0 + 0.000004 * ((k % 5) - 2)
+                r["mid_close"] = round(px, 9)
+                r["mid_high"] = round(px * 1.00002, 9)
+                r["mid_low"] = round(px * 0.99998, 9)
+                out.append(json.dumps(r, ensure_ascii=False))
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("\n".join(out) + "\n")
+        flat = FF.flat_names(summary=sd)
+        check("мера назвала плоским именно переписанное имя",
+              flat == {flat_sym}, str(sorted(flat)))
+        T.MODEL_DIR = os.path.join(d, "model")
+        check("цикл с плоским именем прошёл",
+              T.cycle(sd, lambda m: None, book_root=None))
+        sheet = json.load(open(os.path.join(
+            T.MODEL_DIR + "_sit", "scan_sheet.json")))
+        names = {r.get("sym")
+                 for rows in (sheet.get("arms") or {}).values()
+                 for r in rows}
+        check("плоское имя не доехало до листа сканера",
+              flat_sym not in names, str(sorted(names)[:8]))
+        check("остальные имена в листе остались",
+              len(names) > 10, str(len(names)))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+        T.MODEL_DIR = was_dir
+        T.gbm.fit, T.nn.fit = orig_fit, orig_nn
+        T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
+
+
 def test_low_rr_book_is_declared_with_a_ceiling():
     """Книга низкого RR объявлена листом и манифестом (владелец, 2026-08-22).
 
@@ -5546,6 +5672,8 @@ def main():
     test_rr_filter_is_one_definition_and_recounts_money()
     test_sverka_pairs_cash_reject_with_zero_size()
     test_picks_never_take_non_crypto()
+    test_flat_names_are_measured_not_listed()
+    test_flat_name_never_reaches_the_scanner_sheet()
     test_horizon_books_review_with_their_own_target()
     test_situational_book_enters_and_exits_by_situation()
     test_pretest_comes_after_the_summary_is_written()

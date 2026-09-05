@@ -33,72 +33,31 @@
 import argparse
 import json
 import os
-import statistics
 import subprocess
 import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SUMMARY = os.path.join(os.path.dirname(HERE), "s8_loop", "out", "summary")
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "common"))
+import flat_filter as FF                                       # noqa: E402
+
+SUMMARY = FF.SUMMARY
 OUT = os.path.join(HERE, "out")
 
-# Порог объявлен ДО прогона и выведен из круга издержек, а не из вида
-# распределения: 11 б.п. круг на ногу, двойной круг 22, порог 50.
+# Правило живёт ОДНИМ модулем (`common/flat_filter`): его читают и этот
+# замер, и цикл, решающий, чем торговать. Вторая копия меры разошлась бы
+# с той, по которой книга отбирает имена, и отчёт описывал бы не то
+# правило, которое действует.
 ROUND_COST_BP = 11.0
-STABLE_MAX_BP = 50.0
-
-
-def day_ranges(path):
-    """Суточный размах по часам одного дня, б.п. Нет данных — None."""
-    hi = lo = None
-    close = None
-    try:
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                try:
-                    r = json.loads(line)
-                except ValueError:
-                    continue
-                h, l, c = r.get("mid_high"), r.get("mid_low"), r.get("mid_close")
-                if h is None or l is None or not c:
-                    continue
-                hi = h if hi is None else max(hi, h)
-                lo = l if lo is None else min(lo, l)
-                close = c
-    except OSError:
-        return None
-    if hi is None or not close:
-        return None
-    return (hi - lo) / close * 1e4
+STABLE_MAX_BP = FF.FLAT_MAX_BP
 
 
 def scan(days, log=print):
-    """Медианный суточный размах по каждому имени, б.п."""
-    try:
-        syms = sorted(os.listdir(SUMMARY))
-    except OSError:
+    """Медианный суточный размах по каждому имени, б.п. — общей мерой."""
+    if not os.path.isdir(SUMMARY):
         raise SystemExit(f"нет сводок в {SUMMARY} — прогон не на той машине")
-    cut = time.strftime("%Y-%m-%d", time.gmtime(time.time() - days * 86400))
-    out, said = {}, time.time()
-    for i, sym in enumerate(syms):
-        d = os.path.join(SUMMARY, sym)
-        if not os.path.isdir(d):
-            continue
-        if time.time() - said > 30:
-            log(f"  {i}/{len(syms)} имён")
-            said = time.time()
-        vals = []
-        for f in sorted(os.listdir(d)):
-            if not f.endswith(".jsonl") or f[:10] < cut:
-                continue
-            v = day_ranges(os.path.join(d, f))
-            if v is not None:
-                vals.append(v)
-        # Меньше трёх суток — величина не измерена, а не мала: молодой
-        # листинг и стейбл различаются только числом суток под ней.
-        if len(vals) >= 3:
-            out[sym] = (round(statistics.median(vals), 2), len(vals))
-    return out
+    return {k: (round(v, 2), n)
+            for k, (v, n) in FF.scan(days=days, log=log).items()}
 
 
 def report(res, days, path):
@@ -162,7 +121,7 @@ def report(res, days, path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--days", type=int, default=14)
+    ap.add_argument("--days", type=int, default=FF.WINDOW_D)
     ap.add_argument("--tag", default="1m")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args()

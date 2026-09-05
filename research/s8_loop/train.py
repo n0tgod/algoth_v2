@@ -45,6 +45,7 @@ sys.path.insert(0, os.path.dirname(RESEARCH))
 # захода на сервер впустую.
 from research.common import pyenv                         # noqa: E402
 from research.common import universe_filter as UF          # noqa: E402
+from research.common import flat_filter as FF_FLAT   # noqa: E402
 pyenv.need("numpy")
 
 import numpy as np                                        # noqa: E402
@@ -964,8 +965,8 @@ def fresh_on_mode_change(mode, log_=None):
     return dst
 
 
-def tradable_rows(rows_m, syms, ref=None):
-    """Строки сечения, которыми МОЖНО торговать: не-крипто отсечено.
+def tradable_rows(rows_m, syms, ref=None, flat=None):
+    """Строки сечения, которыми МОЖНО торговать: не-крипто и плоское прочь.
 
     Фильтр общий со сборщиком (`research/common/universe_filter`) —
     два определения «не-крипто» однажды разошлись бы, и модель выбирала
@@ -973,10 +974,19 @@ def tradable_rows(rows_m, syms, ref=None):
     обучении: ряды исключённых уходят из матриц сами вместе с
     прекращением записи, а выдёргивать их из истории значило бы менять
     выборку задним числом.
+
+    Правил ДВА, и они разной природы. Не-крипто — КЛАСС актива (список
+    и признак справочника): такой перп не торгуется никогда. Плоское —
+    ИЗМЕРЕННОЕ состояние (`research/common/flat_filter`): у стейбла ход
+    суток мельче круга издержек, и торговать его нечем; имя, которое
+    начало ходить, перестаёт быть плоским само, без правки кода.
+    `flat` — готовое множество: мера стоит секунды, но считать её на
+    каждый вызов незачем.
     """
     ref = UF.non_crypto_set() if ref is None else ref
     return np.array([j for j in rows_m
-                     if not UF.is_non_crypto(syms[j], ref)], dtype=int)
+                     if not UF.is_non_crypto(syms[j], ref)
+                     and not FF_FLAT.is_flat(syms[j], flat)], dtype=int)
 
 
 def write_outcome(reason, **nums):
@@ -2655,7 +2665,7 @@ def candidate_books(log_):
 
 def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
               grid, si, j_last, rows_m, nov_lo, nov_hi, names,
-              book_root, log_, n_sections):
+              book_root, log_, n_sections, flat=None):
     """Шаг книг: разбор, выборы, лист сканера и счета всех книг.
 
     Вынесен из тела цикла, чтобы идти ДО обучения, на весах прошлого
@@ -3006,7 +3016,12 @@ def run_books(models_b, seq_b, man_b, *, x, mats, syms, targets, elig,
         # и календарная компонента спреда (базовый актив стоит в
         # выходные) не держит позицию через закрытую биржу неделями.
         # Книги со сроком не-крипто по-прежнему не видят (rows_m).
-        rows_sit = (np.flatnonzero(elig[:, j_last])
+        # Плоское отсечено и здесь: стейбл не ходит ни для книги со
+        # сроком, ни для ситуационной — это не календарь чужой биржи, а
+        # отсутствие хода как такового.
+        rows_sit = (np.array([j for j in np.flatnonzero(elig[:, j_last])
+                              if not FF_FLAT.is_flat(syms[j], flat)],
+                             dtype=int)
                     if j_last is not None else rows_m)
         beta_row = None
         if j_last is not None and "beta" in names:
@@ -3269,7 +3284,19 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # Не-крипто не торгуется (решение владельца, A1 и 2026-08-07). Из
     # ОБУЧЕНИЯ имена не выдёргиваются: запись по ним останавливается, и
     # ряды уходят из матриц сами. Сечение общее для всех книг.
-    rows_m = (tradable_rows(np.flatnonzero(elig[:, j_last]), syms)
+    # Плоские имена (стейблы) меряются ОДИН раз на цикл: у инструмента,
+    # чей суточный ход мельче круга издержек, торговать нечем ни книге
+    # со сроком, ни ситуационной. Число исключённых печатается — молча
+    # растущее отсечение неотличимо от поломки меры.
+    # Сводки берутся ТОЙ ЖЕ папкой, что и матрицы (`sum_dir`), а не
+    # зашитым путём модуля: демо-прогон и тест подменяют её целиком, и
+    # правило, читающее боевые сводки, судило бы чужую запись — тот же
+    # класс, что «путь замёрз на импорте».
+    flat = FF_FLAT.flat_names(summary=sum_dir)
+    if flat:
+        log_(f"плоских имён (ход суток < {FF_FLAT.FLAT_MAX_BP:g} б.п.): "
+             f"{len(flat)} — {', '.join(sorted(flat)[:8])}")
+    rows_m = (tradable_rows(np.flatnonzero(elig[:, j_last]), syms, flat=flat)
               if j_last is not None else [])
 
     # ПОРЯДОК ЦИКЛА (правка по SCRTUSDT): книги — разбор, выборы и
@@ -3296,7 +3323,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
             booked = run_books(
                 prev_models, prev_seq, prev_used, x=x, mats=mats,
                 syms=syms, targets=targets, elig=elig, grid=grid,
-                si=si, j_last=j_last, rows_m=rows_m, nov_lo=nov_lo,
+                si=si, j_last=j_last, rows_m=rows_m, flat=flat,
+                nov_lo=nov_lo,
                 nov_hi=nov_hi, names=names, book_root=book_root,
                 log_=log_, n_sections=n_sections)
         except Exception as e:                            # noqa: BLE001
@@ -3561,7 +3589,8 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         booked = run_books(
             models, train_seq, man, x=x, mats=mats, syms=syms,
             targets=targets, elig=elig, grid=grid, si=si,
-            j_last=j_last, rows_m=rows_m, nov_lo=nov_lo,
+            j_last=j_last, rows_m=rows_m, flat=flat,
+            nov_lo=nov_lo,
             nov_hi=nov_hi, names=names, book_root=book_root,
             log_=log_, n_sections=n_sections)
         ts = step("книги", ts)
