@@ -140,7 +140,14 @@ global.document = {
 };
 global.location = { search: SEARCH };
 global.history = { replaceState: () => {} };
-global.window = { devicePixelRatio: 2, addEventListener: () => {},
+// Голый `addEventListener` в браузере есть всегда, а в заглушке его не
+// было — страница, подписавшаяся на изменение ширины, падала на
+// загрузке. Слушатели запоминаются: подписка проверяется фактом, а не
+// строкой в источнике.
+const LISTEN = [];
+global.addEventListener = (ev, fn) => LISTEN.push([ev, fn]);
+global.__listeners = () => LISTEN.map(x => x[0]);
+global.window = { devicePixelRatio: 2, addEventListener: global.addEventListener,
                   history: global.history, location: global.location };
 global.getComputedStyle = () => ({ getPropertyValue: () => "#000000" });
 // Память страницы: в ней живёт состояние переключателя встречного счёта,
@@ -2169,6 +2176,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? dcaToggle : null;"
                 + "\nglobal.__dcaSetRuler = typeof dcaSetRuler === 'function' "
                 + "? dcaSetRuler : null;"
+                // Раскладка плиток: ПРАВИЛО выбора числа колонок
+                // проверяется как чистая функция — заглушка DOM
+                // размеров не считает, а правило считать можно.
+                + "\nglobal.__fitGrid = typeof fitGrid === 'function' "
+                + "? fitGrid : null;"
                 // Третья ось показа — группа: «с бэктестом» либо «без
                 // бэктеста». Своим именем по той же причине, что и две
                 // предыдущие.
@@ -3720,6 +3732,52 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const bx = flatBox();
     if (!/Журнала на этой машине нет/.test(bx))
       bad.push("DCA: отсутствие журнала не названо отдельно");
+  }
+  // Раскладка плиток. Владелец: «криво выглядит» — и криво было по
+  // двум измеренным причинам: последний ряд обрывался дырой (16 плиток
+  // в 9 колонок при его ширине — 336 px пустоты), а подпись из двух
+  // строк опускала значение на 18 px ниже соседних. Размеров заглушка
+  // DOM не считает, поэтому проверяется ПРАВИЛО выбора колонок как
+  // чистая функция, а несущие правила CSS — по источнику страницы.
+  if (isDca && global.__fitGrid) {
+    const grid = (n, w, min) => {
+      const kids = [];
+      for (let i = 0; i < n; i++) kids.push({style: {}});
+      const el = {children: kids, clientWidth: w, style: {},
+                  dataset: min ? {min: String(min)} : {}};
+      global.__fitGrid(el);
+      const m = /repeat\((\d+),/.exec(el.style.gridTemplateColumns || "");
+      const cols = m ? +m[1] : 0;
+      const sp = /span (\d+)/.exec(kids[n-1].style.gridColumn || "");
+      return {cols: cols, span: sp ? +sp[1] : 1};
+    };
+    // Ширина владельца: шестнадцать плиток обязаны лечь двумя полными
+    // рядами, а не девять и семь с дырой.
+    const wide = grid(16, 1502);
+    if (wide.cols !== 8)
+      bad.push("раскладка: 16 плиток на 1502 px не легли в 8 колонок: "
+               + wide.cols);
+    if (16 % wide.cols)
+      bad.push("раскладка: последний ряд остался неполным");
+    // Ряд не схлопывается в одну колонку: «ноль пустых» у одной
+    // колонки верен всегда, и без нижней границы пять главных плиток
+    // выстроились бы в пять рядов во всю ширину.
+    const nar = grid(5, 842, 210);
+    if (nar.cols < 2)
+      bad.push("раскладка: блок схлопнулся в одну колонку: " + nar.cols);
+    // Хвост, который не делится (пять — число простое), дотягивается
+    // последней плиткой: ряд кончается краем блока.
+    if ((nar.cols - 5 % nar.cols) % nar.cols !== nar.span - 1)
+      bad.push("раскладка: хвост не дотянут последней плиткой: колонок "
+               + nar.cols + ", растяжка " + nar.span);
+    // Минимальная ширина плитки — своя у блока: общая константа сжала
+    // бы главные до второстепенных.
+    if (grid(5, 842).cols <= nar.cols)
+      bad.push("раскладка: минимум плитки не читается из блока");
+    // Ширина меняется поворотом телефона и мышью: без подписки
+    // раскладка верна ровно в момент отрисовки.
+    if (!(global.__listeners() || []).includes("resize"))
+      bad.push("раскладка: страница не следит за изменением ширины");
   }
 
   // Бумажная месячная книга: свод из артефакта, транши из журнала.

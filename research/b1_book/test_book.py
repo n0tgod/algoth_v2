@@ -5101,6 +5101,43 @@ def test_tree_page_fits_the_phone():
               frag in web.TREEPAGE, "правило снято из TREEPAGE")
 
 
+def test_dca_tiles_line_up_and_fill_the_row():
+    """Плитки сводки DCA: значения на одной линии, ряд без хвоста.
+
+    Владелец: «криво выглядит». Померено браузером на настоящем CSS
+    страницы (`research/b1_book/layout_check.py`), и криво было по трём
+    причинам. Подпись «среднее время в сделке» переносится на две
+    строки, и значение уезжало на 18 px ниже соседних, а сам ряд был на
+    18 px выше остальных. Сетка `auto-fit` о числе плиток не знает: на
+    ширине владельца шестнадцать плиток ложились в девять колонок, и
+    последний ряд обрывался дырой в 336 px (на 1200 px — 822). И
+    главные плитки ничем не отличались от второстепенных: правило
+    `.stats.main` было написано для панели ядра, где класс `stats main`
+    не стоит ни на одном блоке.
+
+    Число колонок считает `fitGrid` — его правило проверяет харнесс
+    числами. Здесь — несущие правила CSS в источнике: раскладку
+    харнесс не считает, проверка источника слабее прогона, но ловит
+    ровно снятие правила.
+    """
+    import web
+    check("подпись держит две строки",
+          ".st > .k:first-child{line-height:1.25;min-height:2.5em}"
+          in web.DCAPAGE,
+          "снят запас под вторую строку подписи: значение при переносе "
+          "уедет ниже соседних")
+    check("главные плитки крупнее второстепенных",
+          ".stats.main .st .v{font-size:26px}" in web.DCAPAGE,
+          "правило главных плиток снято со страницы DCA")
+    check("главные плитки по центру и с запасом",
+          ".stats.main .st{padding:14px 16px;text-align:center}"
+          in web.DCAPAGE, "снято оформление главных плиток")
+    check("раскладка зовётся после отрисовки",
+          "fitGrids();\n}" in web.DCAPAGE,
+          "число плиток меняется вместе с книгой — без вызова после "
+          "render раскладка описывает прошлую")
+
+
 def test_tree_scrolls_to_its_left_edge():
     """Первая карточка дерева обязана быть достижима прокруткой.
 
@@ -7456,6 +7493,7 @@ def main():
     test_model_tree_names_every_book()
     test_tournament_page_reads_artifact()
     test_tree_page_fits_the_phone()
+    test_dca_tiles_line_up_and_fill_the_row()
     test_tree_scrolls_to_its_left_edge()
     test_volatility_splits_results_by_regime()
     test_marks_poll_serves_the_book_in_view()

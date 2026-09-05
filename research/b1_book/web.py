@@ -2717,14 +2717,6 @@ body{background:
  border:1px solid var(--rule);border-radius:14px;padding:11px 13px}
 .st .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 .st .v{font-size:17px;font-weight:600;margin-top:5px}
-/* Главные плитки (просьба владельца): крупнее, по центру и своим
-   рядом. Второстепенные остаются как были — акцент не работает, если
-   выделено всё. */
-.stats.main{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
- justify-content:center;margin-bottom:10px}
-.stats.main .st{padding:16px 18px;text-align:center}
-.stats.main .st .v{font-size:26px;margin-top:8px}
-.stats.main .st .k{font-size:11px}
 .card{background:var(--panel);border:1px solid var(--rule);
  border-radius:16px;padding:14px 16px;margin-bottom:14px}
 .cap{display:flex;justify-content:space-between;align-items:baseline;
@@ -6279,11 +6271,29 @@ th{color:var(--muted);font-weight:600}
 a{color:var(--accent)}
 .scroll{overflow-x:auto}
 .alarm{border-color:var(--ask);background:rgba(255,100,115,.08)}
+/* Плитки сводки. Число колонок ставит `fitGrid` по числу плиток —
+   сетка ниже остаётся запасным путём на случай, если он не отработал. */
 .stats{display:grid;gap:10px;
  grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .st{background:var(--chip);border:1px solid var(--rule);border-radius:12px;
  padding:8px 10px}
+/* Подпись держит ДВЕ строки всегда. У «среднее время в сделке» она
+   переносится, и значение уезжало на 18 px ниже соседних — ряд читался
+   съехавшим, а сам ряд был на 18 px выше остальных. Правило берёт
+   ПЕРВУЮ подпись плитки: у главной плитки открытого pnl вторая (возраст
+   отметки) стоит после значения, и запас там был бы пустотой. */
+.st > .k:first-child{line-height:1.25;min-height:2.5em}
 .st .v{font-size:18px;font-weight:700}
+/* Главные плитки: крупнее и по центру своим рядом (просьба владельца).
+   Правило было написано для панели ядра, где класс `stats main` не
+   стоит ни на одном блоке, — то есть на ЭТОЙ странице главные ничем не
+   отличались от второстепенных, и проверки этого не ловили: они
+   смотрели содержимое, а не размер. */
+.stats.main{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+ margin-bottom:10px}
+.stats.main .st{min-width:0}
+.stats.main .st{padding:14px 16px;text-align:center}
+.stats.main .st .v{font-size:26px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}
 .tab{background:var(--chip);border:1px solid var(--rule);border-radius:999px;
  padding:5px 14px;cursor:pointer;font-size:13px;color:var(--muted)}
@@ -6589,7 +6599,7 @@ function statBlock(st, dep, title, op, grp){
      st.open_dd_share == null ? "&mdash;"
        : two(usd(st.open_dd), fpct(st.open_dd_share)),
      cls(st.open_dd_share), null]];
-  h += "<div class='stats main'>";
+  h += "<div class='stats main' data-min=210>";
   for (const [k, v, c, id] of main) {
     if (v == null) continue;
     h += "<div class=st><div class=k>" + k + "</div><div class='v mono "
@@ -7004,6 +7014,52 @@ function dayTable(st, dep, title){
     "колонка «из них бэктест» говорит, чем именно набран день.</div></div>";
 }
 
+// Колонок столько, чтобы ПОСЛЕДНИЙ РЯД был как можно полнее. Сетка
+// `auto-fit` считает колонки по ширине и о числе плиток не знает:
+// шестнадцать плиток в девять колонок — это ряд из семи и дыра в
+// 336 px, читаемая как оборванный блок. Подбирать вместо этого
+// минимальную ширину колонки нельзя — константа, дающая ноль на одной
+// ширине, даёт дыру в 966 px на соседней (замерено).
+//
+// Колонок берём не больше, чем влезает по ширине, и не меньше чем на
+// три от этого: меньше колонок — ШИРЕ плитка, то есть минимальную
+// ширину правило не нарушает, а запрет уходить далеко не даёт
+// шестнадцати плиткам схлопнуться в две колонки на широком экране.
+function fitGrid(el){
+  const n = el.children.length, w = el.clientWidth;
+  if (!n || !w) return;
+  // Минимальная ширина плитки — СВОЯ у блока: главные крупнее, и общая
+  // константа сжала бы их до второстепенных на узком экране.
+  const min = Number(el.dataset.min) || 150;
+  const per = Math.max(1, Math.floor((w + 10) / (min + 10)));
+  if (n <= per) { el.style.gridTemplateColumns = "repeat(" + n + ",1fr)";
+                  return; }
+  // Одна колонка даёт нулевой хвост ВСЕГДА, поэтому она победила бы
+  // любое сравнение по пустым ячейкам: пять главных плиток при 900 px
+  // выстроились в пять рядов во всю ширину. Ниже двух не опускаемся, и
+  // при равном хвосте остаётся большее число колонок.
+  let best = per, gap = (per - n % per) % per;
+  for (let c = per - 1; c >= Math.max(2, per - 3); c--) {
+    const g = (c - n % c) % c;
+    if (g < gap) { gap = g; best = c; }
+  }
+  el.style.gridTemplateColumns = "repeat(" + best + ",1fr)";
+  // Хвост, который не убирается делением (пять главных плиток — число
+  // простое), дотягивается последней плиткой: ряд заканчивается краем
+  // блока, а не пустым местом. Сброс обязателен — раскладка считается
+  // заново при каждом изменении ширины, и растяжка от прошлой осталась
+  // бы висеть.
+  for (const c of el.children) c.style.gridColumn = "";
+  const tail = (best - n % best) % best;
+  if (tail) el.children[n - 1].style.gridColumn = "span " + (tail + 1);
+}
+function fitGrids(){
+  for (const el of document.querySelectorAll(".stats")) fitGrid(el);
+}
+// Ширина меняется поворотом телефона и мышью — раскладка обязана
+// пересчитаться, иначе она верна ровно в момент отрисовки.
+addEventListener("resize", fitGrids);
+
 function render(){
   const d = DATA, box = document.getElementById("box");
   // Рамка «что это» уехала в МОДАЛКУ (решение владельца 2026-09-04):
@@ -7121,6 +7177,7 @@ function render(){
   document.getElementById("lead").textContent = d.window
     ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")
     : "";
+  fitGrids();
 }
 
 function load(){
@@ -7569,14 +7626,6 @@ a{color:var(--accent)}
  border:1px solid var(--rule);border-radius:14px;padding:11px 13px}
 .st .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 .st .v{font-size:17px;font-weight:600;margin-top:5px}
-/* Главные плитки (просьба владельца): крупнее, по центру и своим
-   рядом. Второстепенные остаются как были — акцент не работает, если
-   выделено всё. */
-.stats.main{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
- justify-content:center;margin-bottom:10px}
-.stats.main .st{padding:16px 18px;text-align:center}
-.stats.main .st .v{font-size:26px;margin-top:8px}
-.stats.main .st .k{font-size:11px}
 .st .s{font-size:10.5px;color:var(--muted);margin-top:4px;
  line-height:1.45}
 .card{background:var(--panel);border:1px solid var(--rule);
