@@ -902,3 +902,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788624555 ==
 [2026-09-05T16:09:16Z] задание dca-take-line-ui: перезапуск сборщика
+
+== сигнал 1788624732 ==
+[2026-09-05T16:12:14Z] задание dca-fav-dry запущено: research/dca_paper/backfill_fav.py
