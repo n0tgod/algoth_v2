@@ -908,3 +908,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788625421 ==
 [2026-09-05T16:23:42Z] задание dca-fav-write запущено: research/dca_paper/backfill_fav.py
+
+== сигнал 1788625484 ==
+[2026-09-05T16:24:45Z] задание deploy-open-chart: перезапуск сборщика

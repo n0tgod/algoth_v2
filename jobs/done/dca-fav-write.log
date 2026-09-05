@@ -33,3 +33,41 @@ sheets.jsonl: ног 923916
   journal-2026-09-03.jsonl: строк 444, дописано 48, ноги нет 0
 итого строк 77965, дописано 8981, обещание не найдено 0
 конец: 2026-09-05T16:23:50Z, код 0
+публикуется в ветку main:
+ jobs/done/dca-fav-dry.log                       |   10 +
+ jobs/done/dca-fav-write.done                    |    1 +
+ jobs/done/dca-fav-write.log                     |   35 +
+ jobs/poke.log                                   |    3 +
+ research/dca_paper/out/journal-2026-08-08.jsonl |  114 +-
+ research/dca_paper/out/journal-2026-08-09.jsonl |  460 +--
+ research/dca_paper/out/journal-2026-08-10.jsonl |   54 +-
+ research/dca_paper/out/journal-2026-08-11.jsonl |   68 +-
+ research/dca_paper/out/journal-2026-08-12.jsonl |   12 +-
+ research/dca_paper/out/journal-2026-08-13.jsonl |  704 ++--
+ research/dca_paper/out/journal-2026-08-14.jsonl |  100 +-
+ research/dca_paper/out/journal-2026-08-15.jsonl |  402 +-
+ research/dca_paper/out/journal-2026-08-16.jsonl |  224 +-
+ research/dca_paper/out/journal-2026-08-17.jsonl |  120 +-
+ research/dca_paper/out/journal-2026-08-18.jsonl |   60 +-
+ research/dca_paper/out/journal-2026-08-19.jsonl | 1824 ++++-----
+ research/dca_paper/out/journal-2026-08-20.jsonl | 4602 +++++++++++-----------
+ research/dca_paper/out/journal-2026-08-21.jsonl | 4730 +++++++++++------------
+ research/dca_paper/out/journal-2026-08-22.jsonl | 2748 ++++++-------
+ research/dca_paper/out/journal-2026-08-23.jsonl |   60 +-
+ research/dca_paper/out/journal-2026-08-24.jsonl |  542 +--
+ research/dca_paper/out/journal-2026-08-25.jsonl |  714 ++--
+ research/dca_paper/out/journal-2026-08-26.jsonl |   76 +-
+ research/dca_paper/out/journal-2026-08-27.jsonl |   60 +-
+ research/dca_paper/out/journal-2026-08-28.jsonl |   48 +-
+ research/dca_paper/out/journal-2026-08-29.jsonl |   12 +-
+ research/dca_paper/out/journal-2026-08-30.jsonl |   24 +-
+ research/dca_paper/out/journal-2026-08-31.jsonl |   24 +-
+ research/dca_paper/out/journal-2026-09-01.jsonl |   48 +-
+ research/dca_paper/out/journal-2026-09-02.jsonl |   36 +-
+ research/dca_paper/out/journal-2026-09-03.jsonl |   96 +-
+ research/s8_loop/out/day_brake.json             |    2 +-
+ 32 files changed, 9031 insertions(+), 8982 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   0727c3b..e739ba3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
