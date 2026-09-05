@@ -280,3 +280,41 @@ sheets.jsonl: ног 937229
 ## Чего эти числа НЕ описывают
 
 Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а не сведён в позицию, то есть маржа и цена ликвидации по-прежнему считаются по каждой позиции отдельно — на бирже они считаются по слитой. Веса модели видели эти часы, поэтому пересчёт читается как оценка СВЕРХУ. Период один и режим рынка один.
+публикуется в ветку main:
+ jobs/done/dca-diag.log                          |    11 +
+ jobs/done/dca-mirror.log                        |   278 +
+ research/dca_paper/out/DCA-paper.json           | 69263 +++++++++++++++++++---
+ research/dca_paper/out/DCA-paper.md             |   137 +-
+ research/dca_paper/out/journal-2026-08-08.jsonl |     9 +
+ research/dca_paper/out/journal-2026-08-09.jsonl |    21 +
+ research/dca_paper/out/journal-2026-08-10.jsonl |    18 +
+ research/dca_paper/out/journal-2026-08-11.jsonl |    48 +
+ research/dca_paper/out/journal-2026-08-12.jsonl |     9 +
+ research/dca_paper/out/journal-2026-08-13.jsonl |    15 +
+ research/dca_paper/out/journal-2026-08-14.jsonl |   108 +
+ research/dca_paper/out/journal-2026-08-17.jsonl |    66 +
+ research/dca_paper/out/journal-2026-08-18.jsonl |    42 +
+ research/dca_paper/out/journal-2026-08-19.jsonl |    51 +
+ research/dca_paper/out/journal-2026-08-20.jsonl |     6 +
+ research/dca_paper/out/journal-2026-08-21.jsonl |    63 +
+ research/dca_paper/out/journal-2026-08-22.jsonl |    84 +
+ research/dca_paper/out/journal-2026-08-23.jsonl |   231 +
+ research/dca_paper/out/journal-2026-08-24.jsonl |    10 +
+ research/dca_paper/out/journal-2026-08-25.jsonl |     5 +
+ research/dca_paper/out/journal-2026-08-27.jsonl |    19 +
+ research/dca_paper/out/journal-2026-08-28.jsonl |     5 +
+ research/dca_paper/out/journal-2026-08-29.jsonl |    20 +
+ research/dca_paper/out/journal-2026-08-30.jsonl |   134 +
+ research/dca_paper/out/journal-2026-08-31.jsonl |    29 +
+ research/dca_paper/out/journal-2026-09-01.jsonl |     5 +
+ research/dca_paper/out/journal-2026-09-02.jsonl |     9 +
+ research/dca_paper/out/journal-2026-09-04.jsonl |     9 +
+ research/dca_paper/out/journal-2026-09-05.jsonl |     5 +
+ research/s8_loop/out/day_brake.json             |     2 +-
+ 30 files changed, 61324 insertions(+), 9388 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   97509da..c32a506  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-05T21:55:04Z, код 0
