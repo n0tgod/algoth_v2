@@ -1,0 +1,42 @@
+== задание dca-diag ==
+строка: run tools/diag_dca.py 30
+начало: 2026-09-05T21:38:29Z
+запускаю: .venv/bin/python tools/diag_dca.py 30
+--- процесс ---
+1493534 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/dca-mirror.log research/dca_paper/run_paper.py
+1493538 .venv/bin/python research/dca_paper/run_paper.py
+--- артефакт ---
+/root/algoth_v2/research/dca_paper/out/DCA-paper.json: обновлён 27.8 мин назад, 317143 байт
+--- хвост /root/algoth_v2/research/dca_paper/out/daily.log ---
+(последняя запись 27.7 мин назад)
+ jobs/poke.log                         |    1 +
+ research/dca_paper/out/DCA-paper.json | 2091 +++++++++++++++++----------------
+ research/dca_paper/out/DCA-paper.md   |   22 +-
+ research/s8_loop/out/day_brake.json   |    2 +-
+ 6 files changed, 1070 insertions(+), 1057 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+   314baa6..010d000  main       -> origin/main
+Created autostash: 3cce360
+error: cannot rebase: You have unstaged changes.
+Rebasing (1/1)
+Applied autostash.
+
+
+Successfully rebased and updated refs/heads/main.
+To github.com:n0tgod/algoth_v2.git
+   010d000..afc30d8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-05T21:38:29Z, код 0
