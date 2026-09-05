@@ -6370,6 +6370,13 @@ let PST = "all", PAGE = 0, SIZE = 20, INTRO = false;
 // журнала (последние строки), потому что закрытых позиций тысячи на
 // книгу, а книг девять; целиком отдаётся ровно одна — по нажатию.
 let FULL = null;
+// Разбивка по суткам: по умолчанию видны последние пять дней (просьба
+// владельца), остальное — по нажатию. Состояние ПОКАЗА, поэтому живёт
+// здесь: страница перерисовывается сама, и выбор, живущий в разметке,
+// сбрасывался бы каждую минуту.
+const DAYS_HEAD = 5;
+let DAYSALL = false;
+function dcaDays(){ DAYSALL = !DAYSALL; render(); }
 const SIZES = [20, 50];
 function dcaState(x){ PST = x; PAGE = 0; render(); }
 function dcaSize(n){ SIZE = Number(n); PAGE = 0; render(); }
@@ -6992,26 +6999,46 @@ function dayTable(st, dep, title){
   // спрятан — прятать наблюдение значит подгонять картину.
   const rs = (st && st.days_rows) || [];
   if (!rs.length) return "";
+  // Накопленный итог считается по ВРЕМЕНИ и только потом порядок строк
+  // переворачивается: пересчитать его сверху вниз на перевёрнутом ряде
+  // значило бы показать другую величину под тем же именем.
+  let acc = 0;
+  const rows = rs.map(r => { acc += Number(r.usd || 0);
+                             return {r: r, acc: acc}; });
+  rows.reverse();
+  // Свежий день и есть то, ради чего страницу открывают, поэтому он
+  // сверху, а хвост свёрнут: двадцать восемь строк вытесняли последнюю.
+  const cut = DAYSALL ? rows.length : Math.min(DAYS_HEAD, rows.length);
+  const hid = rows.length - cut;
   let h = "<div class=panel><div class=cap>" + esc(title) + " &mdash; " +
     rs.length + " суток</div><div class=scroll><table><tr><th>сутки UTC" +
     "<th>позиций<th>из них бэктест<th>деньги<th>к депозиту" +
     "<th>накопленным итогом</tr>";
-  let acc = 0;
-  for (const r of rs){
-    acc += Number(r.usd || 0);
-    const c = r.usd > 0 ? "good" : (r.usd < 0 ? "bad" : "");
+  for (const x of rows.slice(0, cut)){
+    const r = x.r, c = r.usd > 0 ? "good" : (r.usd < 0 ? "bad" : "");
     h += "<tr" + (r.n < 5 ? " class=thin" : "") + "><td class=mono>" +
       esc(r.d) + "<td class=mono>" + r.n +
       "<td class=mono>" + (r.bt == null ? "&mdash;" : r.bt) +
       "<td class='mono " + c + "'>" + usd(r.usd) +
       "<td class='mono " + c + "'>" + (dep ? fpct(r.usd / Number(dep)) :
         "&mdash;") +
-      "<td class='mono " + (acc > 0 ? "good" : "bad") + "'>" + usd(acc) +
-      "</tr>";
+      "<td class='mono " + (x.acc > 0 ? "good" : "bad") + "'>" +
+      usd(x.acc) + "</tr>";
   }
-  return h + "</table></div><div class=k>Накопленный итог идёт по ОБЩЕЙ " +
-    "кривой: бэктест и записанное вперёд ведутся одним счётом, и " +
-    "колонка «из них бэктест» говорит, чем именно набран день.</div></div>";
+  // Кнопка стоит, только если есть что разворачивать; свёрнутое
+  // называется ЧИСЛОМ — иначе таблица выглядит полной историей.
+  const btn = (hid > 0 || DAYSALL)
+    ? " <button class=btn data-days>" + (DAYSALL
+        ? "свернуть до " + DAYS_HEAD
+        : "показать все " + rows.length + " суток") + "</button>"
+    : "";
+  return h + "</table></div><div class=k>Порядок — новые сверху; " +
+    "накопленный итог при этом идёт по ВРЕМЕНИ, то есть сверху вниз " +
+    "убывает. Он считается по ОБЩЕЙ кривой: бэктест и записанное " +
+    "вперёд ведутся одним счётом, и колонка «из них бэктест» говорит, " +
+    "чем именно набран день." +
+    (hid > 0 ? " Показаны последние " + cut + " из " + rows.length +
+     " суток." : "") + btn + "</div></div>";
 }
 
 // Колонок столько, чтобы ПОСЛЕДНИЙ РЯД был как можно полнее. Сетка
@@ -7174,6 +7201,8 @@ function render(){
   // строк, которых никто не смотрит.
   for (const el of box.querySelectorAll("[data-full]"))
     el.onclick = () => dcaFull();
+  for (const el of box.querySelectorAll("[data-days]"))
+    el.onclick = () => dcaDays();
   document.getElementById("lead").textContent = d.window
     ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")
     : "";
