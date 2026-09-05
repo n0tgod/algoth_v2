@@ -5138,6 +5138,45 @@ def test_dca_tiles_line_up_and_fill_the_row():
           "render раскладка описывает прошлую")
 
 
+def test_dca_page_fits_the_phone():
+    """Страница DCA на телефоне: таблицы ложатся карточками.
+
+    До правки мобильных правил у страницы не было НИ ОДНОГО, и в окне
+    500 px самая широкая таблица требовала 1640 px прокрутки вбок
+    (замерено в браузере) — тринадцать колонок строки позиции читались
+    двумя руками. После: 439 px, вбок не едет ничего, строка ложится
+    карточкой 439×342, нижняя панель `fixed`.
+
+    Раскладку харнесс не считает, поэтому здесь — несущие правила в
+    источнике, как у дерева. Ничего не прячем: каждая ячейка остаётся,
+    подписью и значением в столбик, — поэтому `data-l` и его псевдо-
+    элемент тоже несущие.
+    """
+    import web
+    for frag in ("@media (max-width:720px)",
+                 "table,tbody,tr,td{display:block",
+                 "tr.thr{display:none}",
+                 "td[data-l]::before{content:attr(data-l)",
+                 "#dbar{display:flex;position:fixed",
+                 # Карточку ведёт МОНЕТА: строку ищут по имени пары.
+                 # Порядок задан раскладкой, а не разметкой — на
+                 # широком экране колонки обязаны остаться на местах.
+                 "tr.pos{display:flex;flex-direction:column}",
+                 "td.sym{order:-1}"):
+        check(f"мобильное правило DCA на месте: {frag[:42]}",
+              frag in web.DCAPAGE, "правило снято из DCAPAGE")
+    # Имя `hd` занято шапкой раздела (flex). Строка заголовка таблицы с
+    # тем же классом становится флекс-контейнером, и заголовки встают
+    # столбиком — ровно это и случилось при первой сборке.
+    check("монета несёт свой класс в разметке строки",
+          "<td class=sym data-l='монета'>" in web.DCAPAGE,
+          "без класса правилу порядка не за что зацепиться")
+    check("шапка раздела и строка заголовка носят РАЗНЫЕ имена",
+          ".hd{display:flex" in web.DCAPAGE
+          and "<tr class=hd>" not in web.DCAPAGE,
+          "строка заголовка снова взяла класс шапки")
+
+
 def test_tree_scrolls_to_its_left_edge():
     """Первая карточка дерева обязана быть достижима прокруткой.
 
@@ -7495,6 +7534,7 @@ def main():
     test_tree_page_fits_the_phone()
     test_dca_tiles_line_up_and_fill_the_row()
     test_tree_scrolls_to_its_left_edge()
+    test_dca_page_fits_the_phone()
     test_volatility_splits_results_by_regime()
     test_marks_poll_serves_the_book_in_view()
     test_journal_marker_is_parsed_not_basenamed()

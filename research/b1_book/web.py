@@ -6319,6 +6319,121 @@ table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
 .mx{position:absolute;top:6px;right:10px;background:none;border:0;
  color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
 .pg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+/* ---------------------------------------------------------------
+   Дизайн страницы по макетам владельца (десктоп и телефон).
+   Правило одно и держится сквозь весь блок: меняется ТОЛЬКО показ.
+   Ни одной величины здесь не считается — тон плитки берётся из того
+   же знака (`good`/`bad`), которым уже покрашено её число, а нижняя
+   панель телефона печатает числа, ПЕРЕДАННЫЕ ей, а не свои.
+   --------------------------------------------------------------- */
+.panel{border-radius:16px;padding:14px 16px}
+/* Заголовок раздела: точка + название слева, действие справа. Прежде
+   кнопка «показать все» стояла в конце пояснения под таблицей — то
+   есть там, где её не ищут. */
+.hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin-bottom:10px}
+.hd .cap{margin:0;flex:1;min-width:0}
+.cap.dot::before{content:"";display:inline-block;width:7px;height:7px;
+ border-radius:50%;background:var(--accent);margin-right:8px;
+ vertical-align:middle;position:relative;top:-1px}
+.cap.dot.good::before{background:var(--bid)}
+.cap.dot.bad::before{background:var(--ask)}
+/* Фильтры книги — своей панелью: режимы слева, депозит и группа
+   справа. Три голых ряда чипов у левого края читались как один
+   длинный список, в котором оси не различить. */
+.filters{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.filters .fl{flex:1 1 460px;min-width:0}
+.filters .fr{display:flex;flex-direction:column;align-items:flex-end;
+ gap:6px}
+.filters .tabs{margin:0}
+.filters .fr .tabs{justify-content:flex-end}
+/* Тон плитки берётся из знака её же числа: зелёная — заработала,
+   красная — просадка. Второго источника у тона нет, поэтому плитка
+   не может оказаться зелёной при красном числе. */
+.st.pos{background:linear-gradient(180deg,rgba(61,220,127,.13),
+ rgba(61,220,127,.05));border-color:rgba(61,220,127,.42)}
+.st.neg{background:linear-gradient(180deg,rgba(255,100,115,.13),
+ rgba(255,100,115,.05));border-color:rgba(255,100,115,.42)}
+.stats.main .st{border-radius:14px}
+/* Кривая — в своей рамке с шапкой: слева что нарисовано, справа итог
+   тем же числом, что стоит в главной плитке. */
+.chart{background:var(--chip);border:1px solid var(--rule);
+ border-radius:14px;padding:12px 14px;margin-top:12px}
+.chart .hd{margin-bottom:6px}
+.badge{font-size:12px;border:1px solid var(--rule);border-radius:999px;
+ padding:2px 10px;white-space:nowrap}
+.badge.good{border-color:rgba(61,220,127,.45)}
+.badge.bad{border-color:rgba(255,100,115,.45)}
+/* Состояние позиции и суток — фишкой, а не голым словом: в ряду из
+   тринадцати колонок слово теряется. */
+.pill{display:inline-block;font-size:11.5px;border:1px solid var(--rule);
+ border-radius:999px;padding:1px 9px;white-space:nowrap;
+ background:var(--chip)}
+.pill.good{border-color:rgba(61,220,127,.45);color:var(--bid)}
+.pill.bad{border-color:rgba(255,100,115,.45);color:var(--ask)}
+.pill.acc{border-color:var(--accent);color:var(--accent)}
+.opn{display:inline-block;font-size:11.5px;border:1px solid var(--rule);
+ border-radius:999px;padding:1px 10px;color:var(--muted);
+ text-decoration:none;background:var(--chip)}
+.opn:hover{border-color:var(--accent);color:var(--ink)}
+td.dcol{width:1px;white-space:nowrap}
+.daydot{display:inline-block;width:6px;height:6px;border-radius:50%;
+ background:var(--muted);margin-right:8px;vertical-align:middle;
+ position:relative;top:-1px}
+.daydot.good{background:var(--bid)}.daydot.bad{background:var(--ask)}
+/* Нижняя панель телефона (макет владельца): накопленный счёт, сколько
+   открыто из скольких мест, и прыжок к журналу. Числа приходят из тех
+   же полей, что печатают плитки выше, — второй арифметики нет. */
+#dbar{display:none}
+@media (max-width:720px){
+  .wrap{padding:10px 10px 84px}
+  .panel{padding:12px;border-radius:14px;margin:10px 0}
+  .filters{gap:8px}
+  .filters .fl,.filters .fr{flex:1 1 100%}
+  .filters .fr{align-items:stretch}
+  .filters .fr .tabs{justify-content:flex-start}
+  .stats{gap:8px}
+  .st{padding:8px 10px}
+  .stats.main .st{padding:12px;text-align:left}
+  .stats.main .st .v{font-size:22px}
+  /* Правило `fitGrid` считает колонки по ширине и на телефоне даёт
+     одну-две; но подпись плитки в две строки там — пустота на треть
+     экрана, поэтому запас снимается. */
+  .st > .k:first-child{min-height:0}
+  /* Таблицы — карточками. Тринадцать колонок в 500 px требовали
+     1640 px прокрутки вбок (замерено): строку приходилось читать
+     двумя руками. Ничего не прячем — каждая ячейка остаётся, но
+     подписью и значением в столбик. */
+  .scroll{overflow-x:visible}
+  table,tbody,tr,td{display:block;width:auto}
+  tr.thr{display:none}
+  tr.pos,tr.day{background:var(--chip);border:1px solid var(--rule);
+    border-radius:12px;padding:8px 10px;margin:8px 0}
+  tr.pos:hover{background:var(--chip)}
+  td{border-bottom:0;padding:2px 0;white-space:normal;
+    display:flex;gap:10px;align-items:baseline}
+  td[data-l]::before{content:attr(data-l);color:var(--muted);
+    font-size:11.5px;flex:0 0 42%;white-space:nowrap}
+  /* Ведущая ячейка карточки — имя/сутки: крупнее и без подписи.
+     У позиции ведущей стоит МОНЕТА, а не время входа: строку ищут по
+     имени пары. Порядок меняется раскладкой (`order`), а не разметкой
+     — на широком экране колонки обязаны остаться на своих местах. */
+  tr.pos{display:flex;flex-direction:column}
+  td.sym{order:-1}
+  td.lead,td.sym{font-size:15px;font-weight:600;padding-bottom:6px;
+    border-bottom:1px solid var(--rule-soft);margin-bottom:6px}
+  td.sym::before{display:none}
+  tr.sub td{padding:8px 0 0}
+  table.leg td{display:flex}
+  #dbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;
+    gap:12px;align-items:center;padding:8px 12px;
+    background:rgba(19,16,41,.96);border-top:1px solid var(--rule);
+    backdrop-filter:blur(6px)}
+  #dbar .c{min-width:0}
+  #dbar .c .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  #dbar .c .v{font-size:14px;font-weight:700}
+  #dbar .btn{margin-left:auto;flex:0 0 auto}
+}
 """ + NAVCSS + r"""
 </style>
 <div class="wrap">
@@ -6329,12 +6444,23 @@ table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
   <span class="k" id="lead"></span></div>
 <div id="nav"></div>
 <div class="panel" id="why" style="display:none"></div>
-<div class="tabs" id="rtabs"></div>
-<div class="tabs" id="tabs"></div>
-<div class="tabs" id="gtabs"></div>
+<!-- Фильтры книги своей панелью: слева ось режима, справа ось
+     депозита и группа счёта. Оси разные, и стоять они обязаны
+     раздельно — тремя рядами подряд у левого края они читались как
+     один список. -->
+<div class="panel filters" id="filters">
+  <div class="fl"><div class="tabs" id="rtabs"></div></div>
+  <div class="fr"><div class="tabs" id="tabs"></div>
+    <div class="tabs" id="gtabs"></div></div>
+</div>
 <div id="box">&hellip;</div>
 <div id="modal"></div>
 </div>
+<!-- Нижняя панель телефона: накопленный счёт, открытые из мест и
+     прыжок к журналу. Видна только на узком экране (CSS), и числа в
+     неё ПЕРЕДАЮТСЯ те же, что стоят в плитках, — своей арифметики у
+     неё нет. -->
+<div id="dbar"></div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
@@ -6548,7 +6674,16 @@ function curveSvg(st, dep){
     pts.join(" L") + " L" + xx(eq.length - 1).toFixed(1) + "," + base + " Z";
   let h = "<svg viewBox='0 0 " + W + " " + H + "' " +
     "preserveAspectRatio='none' style='width:100%;height:210px;display:block'>";
-  h += "<path d='" + area + "' fill='" + col + "' opacity='0.12'/>";
+  // Заливка градиентом (макет): плотнее у линии, гаснет к базовой.
+  // Идентификатор свой у каждой отрисовки — на странице кривая одна,
+  // но общий id столкнулся бы при появлении второй, и одна из двух
+  // молча взяла бы чужой градиент.
+  const gid = "dcag" + Math.random().toString(36).slice(2, 8);
+  h += "<defs><linearGradient id='" + gid + "' x1='0' y1='0' x2='0' y2='1'>"
+    + "<stop offset='0' stop-color='" + col + "' stop-opacity='0.34'/>"
+    + "<stop offset='1' stop-color='" + col + "' stop-opacity='0.02'/>"
+    + "</linearGradient></defs>";
+  h += "<path d='" + area + "' fill='url(#" + gid + ")'/>";
   h += "<line x1='" + PL + "' y1='" + base + "' x2='" + (W - PR) +
     "' y2='" + base + "' stroke='var(--rule)' stroke-dasharray='4 4'/>";
   h += "<polyline points='" + pts.join(" ") + "' fill='none' stroke='" +
@@ -6567,9 +6702,16 @@ function statBlock(st, dep, title, op, grp){
     "</div><p class=dim>Строк ещё нет. У книги это не пустота показа: " +
     "решение попадает в журнал только после того, как его позиция " +
     "закрылась.</p></div>";
-  let h = "<div class=panel><div class=cap>" + esc(title) +
-    " <span class='tag " + (grp === "fwd" ? "fwd" : "") + "'>" +
-    esc(grp === "fwd" ? "наблюдение" : "общий счёт") + "</span></div>";
+  // Шапка раздела: слева что за счёт, справа метка группы и
+  // доходность. Доходность — ТО ЖЕ поле `st.final`, что стоит в
+  // главной плитке скобкой; второго её счёта здесь нет.
+  let h = "<div class=panel><div class=hd>" +
+    "<div class='cap dot'>" + esc(title) + "</div>" +
+    "<span class='tag " + (grp === "fwd" ? "fwd" : "") + "'>" +
+    esc(grp === "fwd" ? "наблюдение" : "общий счёт") + "</span>" +
+    (st.final == null ? "" : "<span class='k'>доходность</span>" +
+      "<span class='badge mono " + cls(st.final) + "'>" +
+      fpct(st.final) + "</span>") + "</div>";
   // ГЛАВНЫЕ плитки (просьба владельца): что заработала стратегия, что
   // висит открытым и как глубоко книга проседала. Деньги и доля к
   // депозиту — ОДНА плитка: это одна величина в двух единицах, и
@@ -6609,13 +6751,22 @@ function statBlock(st, dep, title, op, grp){
   h += "<div class='stats main' data-min=210>";
   for (const [k, v, c, id] of main) {
     if (v == null) continue;
-    h += "<div class=st><div class=k>" + k + "</div><div class='v mono "
+    // Тон плитки — из ТОГО ЖЕ знака, которым покрашено её число:
+    // зелёная значит заработала, красная — просадка. Второго
+    // источника тона нет, поэтому зелёная плитка с красным числом
+    // невозможна по построению.
+    const tint = c === "good" ? " pos" : (c === "bad" ? " neg" : "");
+    h += "<div class='st" + tint + "'><div class=k>" + k
+      + "</div><div class='v mono "
       + (c || "") + "'" + (id ? " id=" + id : "") + ">" + v + "</div>"
       + (id === "dcamk" ? "<div class=k id=dcamkat></div>" : "")
       + "</div>";
   }
   h += "</div>";
-  h += "<div class=stats>";
+  // Второстепенные плитки собираются в СВОЮ строку, чтобы подпись
+  // могла назвать их ЧИСЛОМ: «шестнадцать параметров» литералом
+  // устарело бы при первой же добавленной плитке.
+  let sec = "", nsec = 0;
   const cells = [
     // ПОЗИЦИЙ, а не сделок: позиция есть лестница, и каждый её долив —
     // свой вход. Числа стоят рядом, чтобы их нельзя было спутать.
@@ -6643,9 +6794,11 @@ function statBlock(st, dep, title, op, grp){
     ["$ без лучшего имени", usd(st.usd_wo_top), cls(st.usd_wo_top)],
     ["$ без 3 лучших дней", st.usd_wo_top3d == null ? "&mdash;" :
       usd(st.usd_wo_top3d), cls(st.usd_wo_top3d)]];
-  for (const [k, v, c] of cells)
-    h += "<div class=st><div class=k>" + k + "</div><div class='v mono " +
+  for (const [k, v, c] of cells) {
+    sec += "<div class=st><div class=k>" + k + "</div><div class='v mono " +
       (c || "") + "'>" + (v == null ? "&mdash;" : v) + "</div></div>";
+    nsec++;
+  }
   // Открытое НИКОГДА не складывается с закрытым: у закрытой позиции
   // исход известен, у открытой это ОТМЕТКА, и до выхода она станет
   // любой. `live_known === false` значит «не считали» — прочерк с
@@ -6657,17 +6810,26 @@ function statBlock(st, dep, title, op, grp){
     // Худшая ОТКРЫТАЯ — просадка, которую книга несёт прямо сейчас.
     // Считает сервер (`rules.open_stats`): страница печатает её дважды,
     // и вторая арифметика разошлась бы с первой.
-    h += "<div class=st><div class=k>худшая открытая</div>" +
+    sec += "<div class=st><div class=k>худшая открытая</div>" +
       "<div class='v mono " + (kn ? cls(op.worst_frac) : "") + "'>" +
       (kn && op.worst_frac != null ? fpct(op.worst_frac) : "&mdash;") +
       "</div></div>";
-    if (kn && cut) h += "<div class=st><div class=k>оборвано записью</div>" +
-      "<div class='v mono'>" + cut + "</div></div>";
+    nsec++;
+    if (kn && cut) { sec += "<div class=st><div class=k>оборвано записью" +
+      "</div><div class='v mono'>" + cut + "</div></div>"; nsec++; }
   }
-  h += "</div>";
+  h += "<div class=hd><div class='cap dot'>метрики и статистика книги" +
+    " (" + nsec + ")</div></div><div class=stats>" + sec + "</div>";
   // Кривая идёт СРАЗУ под числами и по той же группе: подпись говорит,
   // чем она набрана, иначе «одна кривая» читается как живой трек.
-  h += "<div style='margin-top:10px'>" + curveSvg(st, dep) + "</div>";
+  // Кривая — в своей рамке с шапкой: слева что нарисовано, справа
+  // итог. Итог берётся из `st.usd` — того же поля, что печатает
+  // главная плитка; пересчитывать его по точкам кривой значило бы
+  // завести вторую арифметику одной величины.
+  h += "<div class=chart><div class=hd>" +
+    "<div class='cap dot " + cls(st.usd) + "'>динамика счёта (USDT)" +
+    "</div><span class='badge mono " + cls(st.usd) + "'>" + usd(st.usd) +
+    " итогом</span></div>" + curveSvg(st, dep) + "</div>";
   h += "<div class=k>Кривая — накопленный счёт по ЗАКРЫТЫМ позициям от " +
     "депозита; открытые в неё не входят. Группа: " + esc(gname) + ". " +
     "Просадка депозита в плитке считана по этому же ряду, и второго её " +
@@ -6846,15 +7008,19 @@ function posBlock(b, grp){
   // плиткой «закрытых 2095» читалось как одно и то же множество.
   const tot = b.trades_total;
   const cut = tot != null && (b.trades || []).length < tot;
-  let h = "<div class=panel><div class=cap>позиции книги &mdash; " +
-    total + (cut ? " <span class=dim>(хвост журнала)</span>" : "") +
-    "</div>";
+  // Кнопка полного списка — в ШАПКЕ раздела, а не в середине абзаца:
+  // это действие над списком, и искать его в тексте не должно быть
+  // нужно. Сам абзац остаётся — он говорит, ПОЧЕМУ список короче.
+  let h = "<div class=panel id=dcapos><div class=hd><div class='cap dot'>" +
+    "позиции книги &mdash; " + total +
+    (cut ? " <span class=dim>(хвост журнала)</span>" : "") + "</div>" +
+    (cut ? "<button class=btn data-full='1'>показать все " + tot +
+      "</button>" : "") + "</div>";
   if (cut) h += "<p class=k><b>Список &mdash; ХВОСТ журнала:</b> сервер " +
     "отдал последние " + (b.trades || []).length + " закрытых позиций из " +
     tot + ", и плитка «закрытых позиций» выше считает по ВСЕМУ журналу, " +
     "а не по этому списку. Это разные множества, и складывать их " +
-    "нечего. <button class=btn data-full='1'>показать все " + tot +
-    "</button></p>";
+    "нечего.</p>";
   // Переключатель состояния: счётчик стоит В САМОМ чипе, иначе выбрать
   // пустую вкладку можно вслепую.
   h += "<div class=tabs>" + STATES.map(([k, t]) =>
@@ -6911,7 +7077,7 @@ function posBlock(b, grp){
   if (!total) return h + "<p class=dim>В выбранном состоянии («" +
     esc(stTitle(PST)) + "») позиций нет. Это измерено, а не пропуск " +
     "показа: счётчик в переключателе говорит, где они есть.</p></div>";
-  h += "<div class=scroll><table><tr><th>вход<th>выход<th>монета" +
+  h += "<div class=scroll><table><tr class=thr><th>вход<th>выход<th>монета" +
     "<th>плечо<th>маржа<th>контрактов<th>цена входа<th>ТВХ" +
     "<th>цена выхода<th>ход<th>деньги<th>исход<th>график</tr>";
   for (const r of win){
@@ -6925,45 +7091,49 @@ function posBlock(b, grp){
     const id = keyId(key), o = OPEN.has(key);
     const nf = (r.fills || []).length;
     h += "<tr class=pos onclick=\"dcaToggle('" + esc(key) + "')\">" +
-      "<td class=mono><span id='dexp-" + esc(id) + "'>" +
+      // Ведущая ячейка карточки телефона — монета: по ней строку и
+      // ищут. На широком экране порядок колонок не меняется, ведущей
+      // остаётся первая — вход.
+      "<td class=mono data-l='вход'><span id='dexp-" + esc(id) + "'>" +
       (o ? "&#9662;" : "&#9656;") + "</span> " + tsq(r.at) +
       // У открытой и оборванной выхода НЕ СУЩЕСТВУЕТ — прочерк, а не
       // последняя цена записи: выдать отметку за выход значило бы
       // придумать сделке цену, по которой никто не выходил.
-      "<td class=mono>" + (live ? "&mdash;" : tsq(r.exit_ts)) +
-      "<td>" + esc(r.sym) +
+      "<td class=mono data-l='выход'>" + (live ? "&mdash;" : tsq(r.exit_ts)) +
+      "<td class=sym data-l='монета'>" + esc(r.sym) +
       (r.bt ? " <span class=tag>бэктест</span>" : "") +
       // Хвост ленты продолжен серединой стакана: исход посчитан по
       // КОТИРОВКЕ. Молчать об этом нельзя — деньги по котировке и
       // деньги по сделкам суть разные свидетельства.
       (r.tail ? " <span class=tag>по котировке</span>" : "") +
-      "<td class=mono>" + (r.lev == null ? "&mdash;" :
+      "<td class=mono data-l='плечо'>" + (r.lev == null ? "&mdash;" :
         Number(r.lev).toFixed(2) + "&times;") +
-      "<td class=mono>" + (r.margin == null ? "&mdash;" :
+      "<td class=mono data-l='маржа'>" + (r.margin == null ? "&mdash;" :
         Number(r.margin).toFixed(2) + " $") +
       // Контрактов в позиции — сумма всех рунгов лестницы: у DCA
       // позиция набирается частями, и одна цифра «маржа» о размере в
       // монетах не говорит ничего. Считает сервер (`rules.avg_walk` с
       // нотионалом), страница печатает пришедшее.
-      "<td class=mono>" + qtyf((r.walk && r.walk.length)
+      "<td class=mono data-l='контрактов'>" + qtyf((r.walk && r.walk.length)
         ? r.walk[r.walk.length - 1].qty : null) +
-      "<td class=mono>" + (r.entry_px == null ? "&mdash;" :
+      "<td class=mono data-l='цена входа'>" + (r.entry_px == null ? "&mdash;" :
         Number(r.entry_px).toPrecision(6)) +
       // ТВХ — плавающая средняя цена входа: долив опускает её, и по
       // одной цене позицию из четырёх рунгов не прочитать. Приходит
       // готовой с сервера (`rules.avg_walk`).
-      "<td class=mono>" + (r.avg == null ? "&mdash;" :
+      "<td class=mono data-l='ТВХ'>" + (r.avg == null ? "&mdash;" :
         Number(r.avg).toPrecision(6)) +
-      "<td class=mono>" + (live || r.exit_px == null ? "&mdash;" :
+      "<td class=mono data-l='цена выхода'>" +
+        (live || r.exit_px == null ? "&mdash;" :
         Number(r.exit_px).toPrecision(6)) +
       // Открытая переоценивается живьём: ключ ячейки — имя позиции
       // (одна на имя в книге, `ONE_PER_NAME`). Оборванная записью
       // ключа не получает: у неё ряд цен кончился, и живая середина
       // ответила бы на другой вопрос.
-      "<td class='mono " + c + "'" +
+      "<td class='mono " + c + "' data-l='ход'" +
       (r.st === "open" ? " data-dcaf='" + esc(r.sym) + "'" : "") + ">" +
       fpct(frac) +
-      "<td class='mono " + c + "'" +
+      "<td class='mono " + c + "' data-l='деньги'" +
       (r.st === "open" ? " data-dcau='" + esc(r.sym) + "'" : "") + ">" +
       usd(money) +
       (live ? " <span class=tag>отметка</span>" : "") +
@@ -6972,15 +7142,24 @@ function posBlock(b, grp){
       // читается как «правило не работает». Текст приходит с сервера (`tail.cut_reason`,
       // там же лежит и «причина не измерена») — второй его копии здесь
       // нет.
-      "<td>" + (r.st === "cut" ? "<span class=dim>оборвана записью</span>"
-        + (r.cut_why ? " <span class=dim>&middot; " + esc(r.cut_why)
-           + "</span>" : "")
-        : (r.st === "open" ? "открыта" : esc(r.exit || ""))) +
-      (nf > 1 ? " <span class=dim>&middot; рунгов " + nf + "</span>" : "") +
+      // Состояние — фишкой, а не голым словом: в ряду из тринадцати
+      // колонок слово теряется, а на телефоне карточка без него
+      // читается как незаконченная. Тон закрытой берётся из знака её
+      // же денег — того самого `c`, которым покрашены две ячейки
+      // слева, поэтому «зелёная фишка при красных деньгах» невозможна.
+      "<td data-l='исход'>" + (r.st === "cut"
+        ? "<span class=pill>оборвана записью</span>"
+          + (r.cut_why ? " <span class=dim>&middot; " + esc(r.cut_why)
+             + "</span>" : "")
+        : (r.st === "open" ? "<span class='pill acc'>открыта</span>"
+           : "<span class='pill " + c + "'>" + esc(r.exit || "") +
+             "</span>")) +
+      (nf > 1 ? " <span class=pill>рунгов " + nf + "</span>" : "") +
       // График этой позиции: свечи записи, точки доливов и ступенчатая
       // ТВХ. Ключ книги едет в ссылке — без него график молча показал
       // бы выборы модели вместо лестницы.
-      "<td><a href='/chart?k=" + encodeURIComponent(KEY) + "&sym=" +
+      "<td class=dcol data-l='график'><a class=opn href='/chart?k=" +
+      encodeURIComponent(KEY) + "&sym=" +
       encodeURIComponent(r.sym) + "&dca=" +
       encodeURIComponent(RUL + ":" + DEP) + "&hour=" +
       encodeURIComponent(hourKey(r.at)) + "' onclick='event.stopPropagation()'" +
@@ -7010,35 +7189,43 @@ function dayTable(st, dep, title){
   // сверху, а хвост свёрнут: двадцать восемь строк вытесняли последнюю.
   const cut = DAYSALL ? rows.length : Math.min(DAYS_HEAD, rows.length);
   const hid = rows.length - cut;
-  let h = "<div class=panel><div class=cap>" + esc(title) + " &mdash; " +
-    rs.length + " суток</div><div class=scroll><table><tr><th>сутки UTC" +
+  // Кнопка стоит, только если есть что разворачивать; свёрнутое
+  // называется ЧИСЛОМ — иначе таблица выглядит полной историей. Она
+  // переехала В ШАПКУ раздела: в конце пояснения под таблицей её
+  // приходилось искать.
+  const btn = (hid > 0 || DAYSALL)
+    ? "<button class=btn data-days>" + (DAYSALL
+        ? "свернуть до " + DAYS_HEAD
+        : "показать все " + rows.length + " суток") + "</button>"
+    : "";
+  let h = "<div class=panel><div class=hd><div class='cap dot'>" +
+    esc(title) + " &mdash; " + rs.length + " суток</div>" + btn +
+    "</div><div class=scroll><table><tr class=thr><th>сутки UTC" +
     "<th>позиций<th>из них бэктест<th>деньги<th>к депозиту" +
     "<th>накопленным итогом</tr>";
   for (const x of rows.slice(0, cut)){
     const r = x.r, c = r.usd > 0 ? "good" : (r.usd < 0 ? "bad" : "");
-    h += "<tr" + (r.n < 5 ? " class=thin" : "") + "><td class=mono>" +
-      esc(r.d) + "<td class=mono>" + r.n +
-      "<td class=mono>" + (r.bt == null ? "&mdash;" : r.bt) +
-      "<td class='mono " + c + "'>" + usd(r.usd) +
-      "<td class='mono " + c + "'>" + (dep ? fpct(r.usd / Number(dep)) :
-        "&mdash;") +
-      "<td class='mono " + (x.acc > 0 ? "good" : "bad") + "'>" +
-      usd(x.acc) + "</tr>";
+    // Подписи ячеек (`data-l`) нужны телефону: там строка ложится
+    // карточкой, и без подписи число остаётся без имени. На широком
+    // экране они не видны — имя даёт заголовок колонки.
+    h += "<tr class='day" + (r.n < 5 ? " thin" : "") + "'>" +
+      "<td class='mono lead'><span class='daydot " + c + "'></span>" +
+      esc(r.d) + "<td class=mono data-l='позиций'>" + r.n +
+      "<td class=mono data-l='из них бэктест'>" +
+        (r.bt == null ? "&mdash;" : r.bt) +
+      "<td class='mono " + c + "' data-l='деньги'>" + usd(r.usd) +
+      "<td class='mono " + c + "' data-l='к депозиту'>" +
+        (dep ? fpct(r.usd / Number(dep)) : "&mdash;") +
+      "<td class='mono " + (x.acc > 0 ? "good" : "bad") +
+      "' data-l='накопленным итогом'>" + usd(x.acc) + "</tr>";
   }
-  // Кнопка стоит, только если есть что разворачивать; свёрнутое
-  // называется ЧИСЛОМ — иначе таблица выглядит полной историей.
-  const btn = (hid > 0 || DAYSALL)
-    ? " <button class=btn data-days>" + (DAYSALL
-        ? "свернуть до " + DAYS_HEAD
-        : "показать все " + rows.length + " суток") + "</button>"
-    : "";
   return h + "</table></div><div class=k>Порядок — новые сверху; " +
     "накопленный итог при этом идёт по ВРЕМЕНИ, то есть сверху вниз " +
     "убывает. Он считается по ОБЩЕЙ кривой: бэктест и записанное " +
     "вперёд ведутся одним счётом, и колонка «из них бэктест» говорит, " +
     "чем именно набран день." +
     (hid > 0 ? " Показаны последние " + cut + " из " + rows.length +
-     " суток." : "") + btn + "</div></div>";
+     " суток." : "") + "</div></div>";
 }
 
 // Колонок столько, чтобы ПОСЛЕДНИЙ РЯД был как можно полнее. Сетка
@@ -7108,10 +7295,17 @@ function render(){
     why.innerHTML = "<div class=cap>что это</div><p class=dim>" +
       esc((d && d.why) || "нет ответа сборщика") + "</p>";
   const tabs = document.getElementById("tabs");
+  // Панель фильтров прячется ВМЕСТЕ с содержимым: пустая панель на
+  // месте осей читалась бы как «книг нет», тогда как нет ответа
+  // сборщика, и причина названа выше.
+  const flt = document.getElementById("filters");
+  if (flt) flt.style.display = (d && d.present) ? "" : "none";
+  const bar = document.getElementById("dbar");
   if (!d || !d.present){
     tabs.innerHTML = ""; box.innerHTML = "";
     document.getElementById("rtabs").innerHTML = "";
     document.getElementById("gtabs").innerHTML = "";
+    if (bar) bar.innerHTML = "";
     return; }
   const deps = d.deposits || [];
   const ruls = d.rulers || [];
@@ -7206,6 +7400,29 @@ function render(){
   document.getElementById("lead").textContent = d.window
     ? ("окно решений " + d.window.from + " … " + d.window.to + " UTC")
     : "";
+  // Нижняя панель телефона (макет владельца). Числа ПЕРЕДАЮТСЯ те же,
+  // что стоят в плитках выше: накопленный счёт — `st.usd`, открытые —
+  // длина того же списка, места — `b.slots`. Своей арифметики у панели
+  // нет, поэтому разойтись с плитками она не может. Открытое с
+  // закрытым не складывается и здесь: это две ячейки, а не сумма.
+  if (bar) {
+    const kn = op !== undefined && op && op.known !== false;
+    const nop = kn ? (op.positions ? op.positions.length : 0) : null;
+    bar.innerHTML = st
+      ? "<div class=c><div class=k>накопл. счёт</div>" +
+        "<div class='v mono " + cls(st.usd) + "'>" + usd(st.usd) +
+        (st.final == null ? "" : " <span style='font-size:.72em;" +
+          "opacity:.85'>(" + fpct(st.final) + ")</span>") + "</div></div>" +
+        "<div class=c><div class=k>открыто / мест</div>" +
+        "<div class='v mono'>" + (nop == null ? "&mdash;" : nop) + " / " +
+        (b.slots == null ? "&mdash;" : b.slots) + "</div></div>" +
+        "<button class=btn id=dcajump>журнал</button>"
+      : "";
+    const jb = document.getElementById("dcajump");
+    if (jb) jb.onclick = () => {
+      const t = document.getElementById("dcapos");
+      if (t) t.scrollIntoView({behavior: "smooth", block: "start"}); };
+  }
   fitGrids();
 }
 
