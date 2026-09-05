@@ -1,0 +1,145 @@
+== задание n-split-journal ==
+строка: run research/dca_paper/split_journal.py
+начало: 2026-09-05T08:08:07Z
+запускаю: .venv/bin/python research/dca_paper/split_journal.py 
+прочитано 46225 строк; уже в кусках 0; разложить 46225 по 28 суточным файлам
+  journal-2026-08-08.jsonl: +261 (0.06 МБ)
+  journal-2026-08-09.jsonl: +1041 (0.26 МБ)
+  journal-2026-08-10.jsonl: +120 (0.03 МБ)
+  journal-2026-08-11.jsonl: +162 (0.04 МБ)
+  journal-2026-08-12.jsonl: +24 (0.01 МБ)
+  journal-2026-08-13.jsonl: +1999 (0.48 МБ)
+  journal-2026-08-14.jsonl: +395 (0.09 МБ)
+  journal-2026-08-15.jsonl: +1149 (0.28 МБ)
+  journal-2026-08-16.jsonl: +477 (0.12 МБ)
+  journal-2026-08-17.jsonl: +234 (0.06 МБ)
+  journal-2026-08-18.jsonl: +138 (0.03 МБ)
+  journal-2026-08-19.jsonl: +3869 (0.97 МБ)
+  journal-2026-08-20.jsonl: +12038 (3.06 МБ)
+  journal-2026-08-21.jsonl: +12401 (3.15 МБ)
+  journal-2026-08-22.jsonl: +6794 (1.76 МБ)
+  journal-2026-08-23.jsonl: +144 (0.04 МБ)
+  journal-2026-08-24.jsonl: +2146 (0.54 МБ)
+  journal-2026-08-25.jsonl: +1553 (0.39 МБ)
+  journal-2026-08-26.jsonl: +218 (0.05 МБ)
+  journal-2026-08-27.jsonl: +132 (0.03 МБ)
+  journal-2026-08-28.jsonl: +150 (0.04 МБ)
+  journal-2026-08-29.jsonl: +24 (0.01 МБ)
+  journal-2026-08-30.jsonl: +48 (0.01 МБ)
+  journal-2026-08-31.jsonl: +42 (0.01 МБ)
+  journal-2026-09-01.jsonl: +108 (0.03 МБ)
+  journal-2026-09-02.jsonl: +96 (0.02 МБ)
+  journal-2026-09-03.jsonl: +378 (0.09 МБ)
+  journal-2026-09-04.jsonl: +84 (0.02 МБ)
+сверка: решений было 46225, читается 46225, повторов снято 46225, кусков 29 — сошлось
+оригинал НЕ тронут: удаление записи — отдельное решение владельца (ALLOW_DELETE=1)
+конец: 2026-09-05T08:08:09Z, код 0
+публикуется в ветку main:
+ jobs/done/after-dca-list.done                   |     1 +
+ jobs/done/after-dca-list.log                    |    79 +
+ jobs/done/dca-cut-check.done                    |     1 +
+ jobs/done/dca-cut-check.log                     |   159 +
+ jobs/done/dca-list-deploy.done                  |     1 +
+ jobs/done/dca-list-deploy.log                   |    64 +
+ jobs/done/dca-names2.done                       |     1 +
+ jobs/done/dca-names2.log                        |    85 +
+ jobs/done/dca-open-list.done                    |     1 +
+ jobs/done/dca-open-list.log                     |    54 +
+ jobs/done/dca-open-split.done                   |     1 +
+ jobs/done/dca-open-split.log                    |    56 +
+ jobs/done/dca-open-status.done                  |     1 +
+ jobs/done/dca-open-status.log                   |    71 +
+ jobs/done/dca-own-ticket.done                   |     1 +
+ jobs/done/dca-own-ticket.log                    |   160 +
+ jobs/done/dca-page-live.done                    |     1 +
+ jobs/done/dca-page-live.log                     |    46 +
+ jobs/done/dca-page-status.done                  |     1 +
+ jobs/done/dca-page-status.log                   |    60 +
+ jobs/done/dca-restat-shape.done                 |     1 +
+ jobs/done/dca-restat-shape.log                  |   220 +
+ jobs/done/dca-rules4.done                       |     1 +
+ jobs/done/dca-rules4.log                        |   253 +
+ jobs/done/dca-tail-deploy.done                  |     1 +
+ jobs/done/dca-tail-deploy.log                   |    68 +
+ jobs/done/dca-tail-status.done                  |     1 +
+ jobs/done/dca-tail-status.log                   |    82 +
+ jobs/done/dca-two-groups.done                   |     1 +
+ jobs/done/dca-two-groups.log                    |    52 +
+ jobs/done/n-probe-queue.done                    |     1 +
+ jobs/done/n-probe-queue.log                     |   274 +
+ jobs/done/n-split-journal.done                  |     1 +
+ jobs/done/n-split-journal.log                   |    36 +
+ jobs/done/n-status-0905.done                    |     1 +
+ jobs/done/n-status-0905.log                     |    94 +
+ jobs/done/ps-dca-ticket.done                    |     1 +
+ jobs/done/ps-dca-ticket.log                     |    51 +
+ jobs/done/ps-modes.done                         |     1 +
+ jobs/done/ps-modes.log                          |     9 +
+ jobs/poke.log                                   |    61 +
+ research/a2_storage/out/A2-refresh-1m.json      |     6 +-
+ research/a2_storage/out/A2-refresh-1m.md        |     6 +-
+ research/dca_paper/out/DCA-cut-check.json       |  3071 +++
+ research/dca_paper/out/DCA-cut-check.md         |    65 +
+ research/dca_paper/out/DCA-names.json           |   114 +-
+ research/dca_paper/out/DCA-names.md             |    18 +-
+ research/dca_paper/out/DCA-paper.json           |  3676 +++-
+ research/dca_paper/out/DCA-paper.md             |   167 +-
+ research/dca_paper/out/journal-2026-08-08.jsonl |   261 +
+ research/dca_paper/out/journal-2026-08-09.jsonl |  1041 +
+ research/dca_paper/out/journal-2026-08-10.jsonl |   120 +
+ research/dca_paper/out/journal-2026-08-11.jsonl |   162 +
+ research/dca_paper/out/journal-2026-08-12.jsonl |    24 +
+ research/dca_paper/out/journal-2026-08-13.jsonl |  1999 ++
+ research/dca_paper/out/journal-2026-08-14.jsonl |   395 +
+ research/dca_paper/out/journal-2026-08-15.jsonl |  1149 ++
+ research/dca_paper/out/journal-2026-08-16.jsonl |   477 +
+ research/dca_paper/out/journal-2026-08-17.jsonl |   234 +
+ research/dca_paper/out/journal-2026-08-18.jsonl |   138 +
+ research/dca_paper/out/journal-2026-08-19.jsonl |  3869 ++++
+ research/dca_paper/out/journal-2026-08-20.jsonl | 12038 +++++++++++
+ research/dca_paper/out/journal-2026-08-21.jsonl | 12401 +++++++++++
+ research/dca_paper/out/journal-2026-08-22.jsonl |  6794 ++++++
+ research/dca_paper/out/journal-2026-08-23.jsonl |   144 +
+ research/dca_paper/out/journal-2026-08-24.jsonl |  2146 ++
+ research/dca_paper/out/journal-2026-08-25.jsonl |  1553 ++
+ research/dca_paper/out/journal-2026-08-26.jsonl |   218 +
+ research/dca_paper/out/journal-2026-08-27.jsonl |   132 +
+ research/dca_paper/out/journal-2026-08-28.jsonl |   150 +
+ research/dca_paper/out/journal-2026-08-29.jsonl |    24 +
+ research/dca_paper/out/journal-2026-08-30.jsonl |    48 +
+ research/dca_paper/out/journal-2026-08-31.jsonl |    42 +
+ research/dca_paper/out/journal-2026-09-01.jsonl |   108 +
+ research/dca_paper/out/journal-2026-09-02.jsonl |    96 +
+ research/dca_paper/out/journal-2026-09-03.jsonl |   378 +
+ research/dca_paper/out/journal-2026-09-04.jsonl |    84 +
+ research/dca_paper/out/journal.jsonl            | 24070 ++++++++++++++++++++++
+ research/factory/out/FACTORY-day-1m.md          |    30 +-
+ research/factory/out/agents-runs.jsonl          |    18 +
+ research/factory/out/brief.md                   |   807 +-
+ research/factory/out/build.json                 |   167 +-
+ research/factory/out/build_task-prev.md         |    24 +-
+ research/factory/out/build_task.md              |    32 +-
+ research/factory/out/declare.json               |     2 +-
+ research/factory/out/factory-day-1m.json        |  2161 +-
+ research/factory/out/mech_task.json             |     2 +-
+ research/factory/out/mechanisms.jsonl           |     3 +
+ research/factory/out/proposal.json              |    41 +-
+ research/factory/out/proposal.md                |   413 +-
+ research/factory/out/scout.json                 |    91 +-
+ research/factory/out/scout.jsonl                |     3 +
+ research/factory/out/scout.md                   |   323 +-
+ research/factory/out/summary.md                 |   177 +-
+ research/mech_994fc54f/RUNBOOK.md               |    86 +
+ research/mech_994fc54f/bid_survives.py          |   929 +
+ research/mech_994fc54f/controls_check.py        |    93 +
+ research/mech_994fc54f/test_bid_survives.py     |   530 +
+ research/paper_monthly/out/PAPER-30d.json       |    28 +-
+ research/paper_monthly/out/PAPER-30d.md         |     8 +-
+ research/s10_policy/out/V1-tournament.json      |   828 +-
+ research/s10_policy/out/V1-tournament.md        |   158 +-
+ research/s8_loop/out/day_brake.json             |     2 +-
+ 103 files changed, 83258 insertions(+), 3170 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/journal.jsonl (11 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md

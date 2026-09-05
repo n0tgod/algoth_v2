@@ -1,6 +1,6 @@
 {
  "bad_lines": 0,
- "rules": 2,
+ "rules": 3,
  "deposits": [
   1000.0,
   10000.0,
@@ -21,11 +21,11 @@
    "pnl_worst": -0.2979,
    "heavy_loss": 0.0,
    "liq": 0,
-   "load": 0.5817,
+   "load": 0.5824,
    "peak": 0.999,
-   "usd": 83.99,
-   "final": 0.084,
-   "on_load": 0.144
+   "usd": 84.25,
+   "final": 0.0843,
+   "on_load": 0.145
   },
   "optimal:1000": {
    "n": 596,
@@ -36,41 +36,41 @@
    "pnl_worst": -1.0,
    "heavy_loss": 0.0117,
    "liq": 2,
-   "load": 0.5782,
+   "load": 0.5789,
    "peak": 0.9995,
-   "usd": 104.37,
-   "final": 0.1044,
+   "usd": 104.63,
+   "final": 0.1046,
    "on_load": 0.181
   },
   "aggr:1000": {
-   "n": 281,
+   "n": 628,
    "days": 15,
-   "lev_median": 8.72,
-   "pnl_median": 0.0559,
-   "pnl_p05": -0.257,
+   "lev_median": 8.63,
+   "pnl_median": 0.0602,
+   "pnl_p05": -0.1312,
    "pnl_worst": -1.0,
-   "heavy_loss": 0.0391,
-   "liq": 3,
-   "load": 0.1624,
-   "peak": 0.9997,
-   "usd": 248.41,
-   "final": 0.2484,
-   "on_load": 1.53
+   "heavy_loss": 0.0287,
+   "liq": 4,
+   "load": 0.089,
+   "peak": 0.9995,
+   "usd": 206.73,
+   "final": 0.2067,
+   "on_load": 2.324
   },
   "safe:10000": {
    "n": 2208,
    "days": 28,
    "lev_median": 1.61,
    "pnl_median": 0.0113,
-   "pnl_p05": -0.0131,
+   "pnl_p05": -0.013,
    "pnl_worst": -0.2979,
    "heavy_loss": 0.0,
    "liq": 0,
-   "load": 0.1905,
+   "load": 0.1902,
    "peak": 0.9981,
-   "usd": 659.81,
+   "usd": 660.07,
    "final": 0.066,
-   "on_load": 0.346
+   "on_load": 0.347
   },
   "optimal:10000": {
    "n": 2223,
@@ -81,11 +81,11 @@
    "pnl_worst": -1.0,
    "heavy_loss": 0.0076,
    "liq": 4,
-   "load": 0.1951,
+   "load": 0.1948,
    "peak": 0.9999,
-   "usd": 1247.02,
+   "usd": 1247.29,
    "final": 0.1247,
-   "on_load": 0.639
+   "on_load": 0.64
   },
   "aggr:10000": {
    "n": 776,
@@ -96,41 +96,41 @@
    "pnl_worst": -1.0,
    "heavy_loss": 0.0232,
    "liq": 4,
-   "load": 0.0399,
-   "peak": 0.5927,
-   "usd": 1169.42,
-   "final": 0.1169,
-   "on_load": 2.931
+   "load": 0.0449,
+   "peak": 0.6638,
+   "usd": 1312.17,
+   "final": 0.1312,
+   "on_load": 2.924
   },
   "safe:100000": {
    "n": 2270,
    "days": 28,
    "lev_median": 1.61,
    "pnl_median": 0.0114,
-   "pnl_p05": -0.0129,
+   "pnl_p05": -0.0128,
    "pnl_worst": -0.2979,
    "heavy_loss": 0.0,
    "liq": 0,
-   "load": 0.1115,
+   "load": 0.1113,
    "peak": 0.664,
-   "usd": 4004.65,
-   "final": 0.04,
-   "on_load": 0.359
+   "usd": 4006.09,
+   "final": 0.0401,
+   "on_load": 0.36
   },
   "optimal:100000": {
    "n": 2285,
    "days": 28,
    "lev_median": 2.75,
    "pnl_median": 0.0166,
-   "pnl_p05": -0.0178,
+   "pnl_p05": -0.0175,
    "pnl_worst": -1.0,
    "heavy_loss": 0.0074,
    "liq": 4,
-   "load": 0.1126,
+   "load": 0.1124,
    "peak": 0.664,
-   "usd": 7499.91,
+   "usd": 7501.38,
    "final": 0.075,
-   "on_load": 0.666
+   "on_load": 0.667
   },
   "aggr:100000": {
    "n": 776,
@@ -141,11 +141,11 @@
    "pnl_worst": -1.0,
    "heavy_loss": 0.0232,
    "liq": 4,
-   "load": 0.0226,
-   "peak": 0.3437,
-   "usd": 6701.89,
-   "final": 0.067,
-   "on_load": 2.968
+   "load": 0.045,
+   "peak": 0.6662,
+   "usd": 13170.01,
+   "final": 0.1317,
+   "on_load": 2.924
   }
  },
  "book": {
@@ -164,11 +164,11 @@
    "usd_wo_top3d": -71.96
   },
   "aggr:1000": {
-   "max_dd": -0.045,
+   "max_dd": -0.0123,
    "day_green": 0.538,
-   "bite": 9.4,
-   "day_median": 0.00074,
-   "usd_wo_top3d": -121.34
+   "bite": 5.3,
+   "day_median": 0.00012,
+   "usd_wo_top3d": -26.71
   },
   "safe:10000": {
    "max_dd": -0.0041,
@@ -185,11 +185,11 @@
    "usd_wo_top3d": -39.01
   },
   "aggr:10000": {
-   "max_dd": -0.0046,
+   "max_dd": -0.0052,
    "day_green": 0.538,
-   "bite": 4.0,
-   "day_median": 8e-05,
-   "usd_wo_top3d": -90.8
+   "bite": 3.9,
+   "day_median": 9e-05,
+   "usd_wo_top3d": -102.11
   },
   "safe:100000": {
    "max_dd": -0.0024,
@@ -206,11 +206,11 @@
    "usd_wo_top3d": -245.81
   },
   "aggr:100000": {
-   "max_dd": -0.0027,
+   "max_dd": -0.0052,
    "day_green": 0.538,
-   "bite": 4.4,
-   "day_median": 4e-05,
-   "usd_wo_top3d": -519.27
+   "bite": 3.9,
+   "day_median": 9e-05,
+   "usd_wo_top3d": -1024.91
   }
  }
 }

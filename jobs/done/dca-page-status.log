@@ -1,0 +1,60 @@
+== задание dca-page-status ==
+строка: status
+начало: 2026-09-04T19:31:40Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   68G   77G  47% /
+/dev/sdb        147G  125G   15G  90% /mnt/HC_Volume_106683528
+--- процессы ---
+669148 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --arm gbm --capital 300 --interval-sec 5 --clear-halt
+1335212 .venv/bin/python research/b1_book/collect.py --http 8765
+--- статус сбора ---
+{"t": 1788550296.9, "uptime_sec": 88.2, "messages": 361587, "trades": 33535, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 51474, "snapshot_errors": 0, "last_snap_age_sec": 0.7, "snap_pass_sec": 0.231, "writes": {"book": 51474, "trades": 33526, "raw": 2184, "liq": 7}, "write_age_sec": {"book": 0.7, "trades": 0.2, "raw": 0.1, "liq": 0.9}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1992, "ask": 0.1993, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003837, "ask": 0.000384, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1084, "ask": 0.1085, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.01453, "ask": 0.01454, "resets": 0}, "10000SATSUSDT": {"ready": tr
+--- живой исполнитель ---
+{
+  "at_ms": 1788550299184,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-09-04T19:31:40Z
+публикуется в ветку main:
+ jobs/done/dca-names2.done             |     1 +
+ jobs/done/dca-names2.log              |    85 +
+ jobs/done/dca-own-ticket.done         |     1 +
+ jobs/done/dca-own-ticket.log          |   160 +
+ jobs/done/dca-page-live.done          |     1 +
+ jobs/done/dca-page-live.log           |    46 +
+ jobs/done/dca-page-status.log         |    34 +
+ jobs/done/dca-rules4.done             |     1 +
+ jobs/done/dca-rules4.log              |   253 +
+ jobs/done/ps-dca-ticket.done          |     1 +
+ jobs/done/ps-dca-ticket.log           |    51 +
+ jobs/done/ps-modes.done               |     1 +
+ jobs/done/ps-modes.log                |     9 +
+ jobs/poke.log                         |    21 +
+ research/dca_paper/out/DCA-names.json |   114 +-
+ research/dca_paper/out/DCA-names.md   |    18 +-
+ research/dca_paper/out/DCA-paper.json | 33280 +++++++++++++++++++++++++++++++-
+ research/dca_paper/out/DCA-paper.md   |   179 +-
+ research/dca_paper/out/journal.jsonl  | 24070 +++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json   |     2 +-
+ 20 files changed, 57894 insertions(+), 434 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/journal.jsonl (11 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md

@@ -1,0 +1,64 @@
+== задание dca-list-deploy ==
+строка: restart-book
+начало: 2026-09-04T22:14:32Z
+перезапуск сборщика и циклов
+== останавливаю прежний ==
+жду закрытия файлов.......
+== обновляю код ==
+Already up to date.
+== запускаю ==
+== поднялся, хвост журнала ==
+[       4 с] шард 2: подключён, подписываюсь на 120 тем
+[       5 с] шард 3: подключён, подписываюсь на 120 тем
+[       6 с] шард 4: подключён, подписываюсь на 120 тем
+[       7 с] шард 5: подключён, подписываюсь на 120 тем
+[       8 с] шард 6: подключён, подписываюсь на 120 тем
+[      10 с] шард 7: подключён, подписываюсь на 120 тем
+[      11 с] шард 8: подключён, подписываюсь на 120 тем
+[      11 с] очередь сжатия: 1700 файлов
+== перезапускаю циклы обучения ==
+  не запущен: s8_loop/train.py --pretest
+  остановлен, сторож поднимет: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/dca-cut-check.done              |     1 +
+ jobs/done/dca-cut-check.log               |   159 +
+ jobs/done/dca-list-deploy.done            |     1 +
+ jobs/done/dca-list-deploy.log             |    21 +
+ jobs/done/dca-names2.done                 |     1 +
+ jobs/done/dca-names2.log                  |    85 +
+ jobs/done/dca-open-list.done              |     1 +
+ jobs/done/dca-open-list.log               |    54 +
+ jobs/done/dca-open-split.done             |     1 +
+ jobs/done/dca-open-split.log              |    56 +
+ jobs/done/dca-open-status.done            |     1 +
+ jobs/done/dca-open-status.log             |    71 +
+ jobs/done/dca-own-ticket.done             |     1 +
+ jobs/done/dca-own-ticket.log              |   160 +
+ jobs/done/dca-page-live.done              |     1 +
+ jobs/done/dca-page-live.log               |    46 +
+ jobs/done/dca-page-status.done            |     1 +
+ jobs/done/dca-page-status.log             |    60 +
+ jobs/done/dca-restat-shape.done           |     1 +
+ jobs/done/dca-restat-shape.log            |   220 +
+ jobs/done/dca-rules4.done                 |     1 +
+ jobs/done/dca-rules4.log                  |   253 +
+ jobs/done/dca-two-groups.done             |     1 +
+ jobs/done/dca-two-groups.log              |    52 +
+ jobs/done/ps-dca-ticket.done              |     1 +
+ jobs/done/ps-dca-ticket.log               |    51 +
+ jobs/done/ps-modes.done                   |     1 +
+ jobs/done/ps-modes.log                    |     9 +
+ jobs/poke.log                             |    43 +
+ research/dca_paper/out/DCA-cut-check.json |  3071 ++++
+ research/dca_paper/out/DCA-cut-check.md   |    65 +
+ research/dca_paper/out/DCA-names.json     |   114 +-
+ research/dca_paper/out/DCA-names.md       |    18 +-
+ research/dca_paper/out/DCA-paper.json     | 18517 ++++++++++++++++++++-
+ research/dca_paper/out/DCA-paper.md       |   179 +-
+ research/dca_paper/out/journal.jsonl      | 24070 ++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json       |     2 +-
+ 37 files changed, 46956 insertions(+), 434 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/journal.jsonl (11 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md

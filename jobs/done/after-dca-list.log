@@ -1,0 +1,79 @@
+== задание after-dca-list ==
+строка: status
+начало: 2026-09-04T22:23:58Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   68G   77G  47% /
+/dev/sdb        147G  125G   15G  90% /mnt/HC_Volume_106683528
+--- процессы ---
+669148 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --arm gbm --capital 300 --interval-sec 5 --clear-halt
+1350652 .venv/bin/python research/b1_book/collect.py --http 8765
+1350928 .venv/bin/python research/s8_loop/train.py
+--- статус сбора ---
+{"t": 1788560635.0, "uptime_sec": 552.9, "messages": 1913189, "trades": 153391, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 378085, "snapshot_errors": 0, "last_snap_age_sec": 0.9, "snap_pass_sec": 4.2, "writes": {"book": 378085, "trades": 153375, "raw": 7432, "liq": 65, "metrics": 749}, "write_age_sec": {"book": 0.9, "trades": 2.5, "raw": 1.8, "liq": 8.3, "metrics": 251.2}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1921, "ask": 0.1922, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003812, "ask": 0.0003814, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.107, "ask": 0.1071, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.01443, "ask": 0.01445, "res
+--- живой исполнитель ---
+{
+  "at_ms": 1788560635443,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-09-04T22:23:59Z
+публикуется в ветку main:
+ jobs/done/after-dca-list.log              |    35 +
+ jobs/done/dca-cut-check.done              |     1 +
+ jobs/done/dca-cut-check.log               |   159 +
+ jobs/done/dca-list-deploy.done            |     1 +
+ jobs/done/dca-list-deploy.log             |    64 +
+ jobs/done/dca-names2.done                 |     1 +
+ jobs/done/dca-names2.log                  |    85 +
+ jobs/done/dca-open-list.done              |     1 +
+ jobs/done/dca-open-list.log               |    54 +
+ jobs/done/dca-open-split.done             |     1 +
+ jobs/done/dca-open-split.log              |    56 +
+ jobs/done/dca-open-status.done            |     1 +
+ jobs/done/dca-open-status.log             |    71 +
+ jobs/done/dca-own-ticket.done             |     1 +
+ jobs/done/dca-own-ticket.log              |   160 +
+ jobs/done/dca-page-live.done              |     1 +
+ jobs/done/dca-page-live.log               |    46 +
+ jobs/done/dca-page-status.done            |     1 +
+ jobs/done/dca-page-status.log             |    60 +
+ jobs/done/dca-restat-shape.done           |     1 +
+ jobs/done/dca-restat-shape.log            |   220 +
+ jobs/done/dca-rules4.done                 |     1 +
+ jobs/done/dca-rules4.log                  |   253 +
+ jobs/done/dca-two-groups.done             |     1 +
+ jobs/done/dca-two-groups.log              |    52 +
+ jobs/done/ps-dca-ticket.done              |     1 +
+ jobs/done/ps-dca-ticket.log               |    51 +
+ jobs/done/ps-modes.done                   |     1 +
+ jobs/done/ps-modes.log                    |     9 +
+ jobs/poke.log                             |    45 +
+ research/dca_paper/out/DCA-cut-check.json |  3071 ++++
+ research/dca_paper/out/DCA-cut-check.md   |    65 +
+ research/dca_paper/out/DCA-names.json     |   114 +-
+ research/dca_paper/out/DCA-names.md       |    18 +-
+ research/dca_paper/out/DCA-paper.json     | 18517 ++++++++++++++++++++-
+ research/dca_paper/out/DCA-paper.md       |   179 +-
+ research/dca_paper/out/journal.jsonl      | 24070 ++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json       |     2 +-
+ 38 files changed, 47036 insertions(+), 434 deletions(-)
+ОТКАЗ: файл больше 5 МБ: research/dca_paper/out/journal.jsonl (11 МБ)
+  Ряды и записи в git не идут — правила .gitignore этапа.
+
+Проверка сохранности данных: docs/DATA-SAFETY.md
