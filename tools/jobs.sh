@@ -249,6 +249,16 @@ for job in "$JOBS"/*.job; do
                 echo "--- процессы ---"
                 pgrep -af "b1_book/collect.py|s8_loop/train.py|bot live" \
                     2>/dev/null || echo "нет"
+                # Идущие прогоны отдельной строкой. Без них `status`
+                # показывает исправный сервер и молчит о том, считает ли
+                # что-нибудь прямо сейчас: длинное задание снаружи
+                # неотличимо от повисшего, и это уже стоило ложного
+                # диагноза. Список постоянных процессов выше не трогаем —
+                # он отвечает на другой вопрос.
+                echo "--- идущие прогоны ---"
+                pgrep -af "python .*research/.*\.py" 2>/dev/null \
+                    | grep -v "b1_book/collect.py\|s8_loop/train.py" \
+                    || echo "нет"
                 echo "--- статус сбора ---"
                 head -c 700 research/b1_book/out/status.json 2>/dev/null
                 echo; echo "--- живой исполнитель ---"
