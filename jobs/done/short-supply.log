@@ -1,0 +1,6 @@
+== задание short-supply ==
+строка: run research/dca_paper/short_supply.py --tag 1m
+начало: 2026-09-05T21:12:43Z
+запускаю: .venv/bin/python research/dca_paper/short_supply.py --tag 1m
+/root/algoth_v2/research/dca_paper/short_supply.py:42: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+  return dt.datetime.utcfromtimestamp(float(ts)).strftime("%Y-%m-%d")
