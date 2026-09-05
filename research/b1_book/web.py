@@ -3205,7 +3205,7 @@ if (EMBED) {
   }
 }
 let sym = Q.get("sym") || "";
-let data = null, view = null, follow = true, HIT = [];
+let data = null, view = null, follow = true, HIT = [], YMAP = null;
 // Перекрестие: позиция курсора над графиком, null — курсора нет.
 let CROSS = null;
 // Состояния и виды уровней приходят с сервера по-русски: это КЛЮЧИ
@@ -4003,6 +4003,11 @@ function draw() {
     lo = mid - half + off; hi = mid + half + off;
   }
   const y = v => padT + ph*(hi-v)/(hi-lo);
+  // Отображение «цена → пиксель» выносится наружу для прогона без
+  // браузера: холст заглушен, и проверить, ЧТО нарисовано на уровне
+  // такой-то цены, иначе нечем — приходится гадать по длинам линий, а
+  // сетка и полки выглядят так же, как линия сделки.
+  YMAP = y;
   const x = i => padL + pw*(i-i0+0.5)/(i1-i0);
   // Момент кладётся на СВОЮ свечу, а не на долю окна: доля врёт на
   // каждой дыре в ряду. Внутри candles ещё доля минуты — чтобы метка
@@ -4268,11 +4273,17 @@ function draw() {
       promise(pAdv, css("--ask"), "stop");
       promise(pExp, css("--muted"), "expected move against");
     }
-    // Линия входа через спан удержания — сплошная, как у v1.
+    // Линия входа через спан удержания — сплошная, как у v1. У позиции
+    // с ПЛАВАЮЩЕЙ ТВХ её нет вовсе (просьба владельца): линия первого
+    // рунга там утверждает уровень, от которого позиция давно не
+    // считается, а сама эта цена не теряется — первая ступень ТВХ стоит
+    // ровно на ней (`walk[0].avg == entry_px`), и вход помечен точкой.
     g.strokeStyle = col; g.fillStyle = col;
     g.lineWidth = me ? 2 : 1.2;
-    g.beginPath(); g.moveTo(xa, ye); g.lineTo(Math.max(xb, xa+2), ye);
-    g.stroke();
+    if (!segs.length) {
+      g.beginPath(); g.moveTo(xa, ye); g.lineTo(Math.max(xb, xa+2), ye);
+      g.stroke();
+    }
     // Кружки событий v1: белая точка с цветным кольцом. Вход —
     // пурпурное кольцо (акцент), выход — по знаку результата.
     const dot = (x0, y0, ring) => {
@@ -4318,7 +4329,10 @@ function draw() {
     if (ex != null && ex >= lo && ex <= hi) {
       g.save(); g.globalAlpha = base * .6; g.strokeStyle = col;
       g.setLineDash([2,3]);
-      g.beginPath(); g.moveTo(xb, ye); g.lineTo(xb, y(ex)); g.stroke();
+      // от ПОСЛЕДНЕЙ ступени ТВХ: у позиции с доливами вертикаль от
+      // первого рунга висела бы в воздухе — линии там больше нет
+      const yEnd = segs.length ? segs[segs.length - 1][2] : ye;
+      g.beginPath(); g.moveTo(xb, yEnd); g.lineTo(xb, y(ex)); g.stroke();
       g.restore();
       dot(xb, y(ex), col);
       drew = ex;

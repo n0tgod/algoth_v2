@@ -64,6 +64,11 @@ global.__texts = [];
 // проверить. Прозрачность отличает зоны сделки (0.09–0.16) от свечей
 // и полосы объёма, которые рисуются тем же вызовом.
 global.__rects = [];
+// Линии записываются вместе с пунктиром: у сделки линия входа сплошная,
+// а ТВХ пунктирная, и «линия нарисована» без этого различия не отвечает,
+// КАКАЯ именно. Точки копятся от `beginPath` до `stroke`.
+global.__strokes = [];
+let path = [], dash = [], stack = [];
 const cst = {};
 const ctx = new Proxy({}, { get: (t, k) => {
   if (k === "canvas") return { clientWidth: 900 };
@@ -71,6 +76,30 @@ const ctx = new Proxy({}, { get: (t, k) => {
   if (k === "fillText") return (s) => { global.__texts.push(String(s)); };
   if (k === "fillRect") return (x, yv, w, h) => {
     global.__rects.push({x: x, y: yv, w: w, h: h, a: cst.globalAlpha});
+  };
+  // `save`/`restore` эмулируются по-настоящему: без них пунктир,
+  // поставленный внутри save-блока, оставался бы висеть на следующих
+  // линиях, и сплошная линия сделки записывалась бы пунктирной. То есть
+  // заглушка врала бы о том, ЧТО нарисовано.
+  if (k === "save") return () => {
+    stack.push({st: Object.assign({}, cst), d: dash.slice()});
+  };
+  if (k === "restore") return () => {
+    const p = stack.pop();
+    if (p) {
+      for (const q of Object.keys(cst)) delete cst[q];
+      Object.assign(cst, p.st);
+      dash = p.d;
+    }
+  };
+  if (k === "beginPath") return () => { path = []; };
+  if (k === "moveTo" || k === "lineTo")
+    return (x, yv) => { path.push({x: x, y: yv}); };
+  if (k === "setLineDash") return (d) => { dash = d || []; };
+  if (k === "stroke") return () => {
+    if (path.length > 1)
+      global.__strokes.push({pts: path.slice(), dash: dash.slice(),
+                             w: cst.lineWidth});
   };
   if (k in cst) return cst[k];
   return () => undefined;
@@ -1365,7 +1394,20 @@ global.fetch = async (url) => {
                                 hour: "2026-08-03-14"}],
                         exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
                         lev: 2.4, state: "закрыта", exit: "тейк",
-                        depth: 2, bt: true}],
+                        depth: 2, bt: true},
+                       // Позиция БЕЗ доливов: плавающей ТВХ у неё нет, и
+                       // линия входа обязана остаться — иначе уровень
+                       // такой позиции не показан ничем.
+                       {sym: "BTCUSDT", arm: "dca",
+                        hour: "2026-08-03-13", side: "long",
+                        opened_at: T0 - 6600, closes_at: T0 - 4200,
+                        entry_px: 64705.0, exit_px: 64712.0,
+                        avg: 64705.0, lots: 1,
+                        walk: [{at: T0 - 6600, px: 64705.0, w: 0.25,
+                                avg: 64705.0}],
+                        adds: [], exits: [], net_bp: 108.0, pnl: 2.7,
+                        size: 25.0, lev: 2.0, state: "закрыта",
+                        exit: "срок", depth: 1, bt: true}],
                 merged: [{sym: "BTCUSDT", arm: "dca",
                           hour: "2026-08-03-14", side: "long",
                           opened_at: T0 - 7200, closes_at: T0 - 3600,
@@ -1379,7 +1421,17 @@ global.fetch = async (url) => {
                                   hour: "2026-08-03-14"}],
                           exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
                           lev: 2.4, state: "закрыта", exit: "тейк",
-                          depth: 2, bt: true}]}
+                          depth: 2, bt: true},
+                         {sym: "BTCUSDT", arm: "dca",
+                          hour: "2026-08-03-13", side: "long",
+                          opened_at: T0 - 6600, closes_at: T0 - 4200,
+                          entry_px: 64705.0, exit_px: 64712.0,
+                          avg: 64705.0, lots: 1,
+                          walk: [{at: T0 - 6600, px: 64705.0, w: 0.25,
+                                  avg: 64705.0}],
+                          adds: [], exits: [], net_bp: 108.0, pnl: 2.7,
+                          size: 25.0, lev: 2.0, state: "закрыта",
+                          exit: "срок", depth: 1, bt: true}]}
              : url.startsWith("/model_trades")
              ? (r => (!/hz=h24a/.test(url) ? r
                 : /agreesplit=1/.test(SEARCH)
@@ -1899,6 +1951,12 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? () => HIT : null;"
                 + "\nglobal.__barAt = typeof barAt === 'function' "
                 + "? barAt : null;"
+                // Отображение «цена → пиксель» последнего кадра. Холст
+                // заглушен, и без него «что нарисовано на уровне такой-то
+                // цены» проверялось бы гаданием по длинам линий — а
+                // сетка и полки выглядят так же, как линия сделки.
+                + "\nglobal.__ymap = () => (typeof YMAP !== 'undefined' "
+                + "? YMAP : null);"
                 // Слой сделок МОДЕЛИ: рука, найденная сделка и то,
                 // отпущено ли слежение за краем. Проверять его по
                 // разметке нельзя — он рисуется на canvas, а тот
@@ -4608,6 +4666,30 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: граница зон не совпала с линией ТВХ");
     else if (inner.length < 2)
       bad.push("график: граница зон стоит на одной цене, а ТВХ плывёт");
+    // Линии ПЕРВОГО РУНГА у позиции с плавающей ТВХ быть не должно
+    // (просьба владельца): она утверждает уровень, от которого позиция
+    // давно не считается. Сама цена не теряется — первая ступень ТВХ
+    // стоит ровно на ней, и вход помечен точкой. А у позиции БЕЗ
+    // доливов линия обязана остаться: иначе её уровень не показан ничем.
+    //
+    // Обе стороны проверяются ПО ЦЕНЕ, а не по длине линии: сетка и
+    // полки — тоже сплошные горизонтали, а спан сделки бывает во всю
+    // ширину поля, и по длине их не различить.
+    const ym = global.__ymap ? global.__ymap() : null;
+    if (typeof ym !== "function")
+      bad.push("график: отображение цены в пиксели не выведено наружу");
+    else {
+      const at = (px) => (global.__strokes || []).filter(
+        s => !s.dash.length && s.pts.length === 2
+          && Math.abs(s.pts[0].y - s.pts[1].y) < 0.5
+          && Math.abs(s.pts[1].x - s.pts[0].x) > 20
+          && Math.abs(s.pts[0].y - ym(px)) < 1.5).length;
+      if (at(64715.0))
+        bad.push("график: у позиции с плавающей ТВХ нарисована линия "
+                 + "первого рунга");
+      if (!at(64705.0))
+        bad.push("график: у позиции без доливов пропала линия входа");
+    }
     // Уровней у лестницы нет: подпись стопа утверждала бы правило,
     // которого у книги нет
     if (/\bstop\b/.test(tx))
