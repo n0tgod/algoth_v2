@@ -1489,7 +1489,8 @@ def test_short_legs_go_only_into_short_books():
     import run_d6 as D6m
     seen = []
 
-    def fake_one(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
+    def fake_one(g, bars, ts, look, rule, param, hold_h=None,
+                 ckpt_h=None, lev_look=None):
         seen.append(((g.get("side") or "long"), rule, param))
         return dict(_rec(g["at"], sym=g["sym"]), side=g.get("side") or "long")
 
@@ -1516,6 +1517,67 @@ def test_short_legs_go_only_into_short_books():
     assert got["recs"][("depth", 2.0, "long")][0]["sym"] == "AAAUSDT"
     assert got["recs"][("depth", 2.0, "short")][0]["sym"] == "BBBUSDT"
     print("ok  нога идёт только в книгу своей стороны; проход один на обе")
+
+
+def test_venue_cap_is_in_the_replay_signature():
+    """Предел плеча площадки входит в ПОДПИСЬ реплея.
+
+    Без этого правка забора не пересчитала бы ничего: кэш прежних правил
+    прошёл бы сверку и вернул позиции с прежним плечом — отказ, который
+    ничем себя не выдаёт, потому что код забора при этом исправен.
+    """
+    sig = P.cache_sig()
+    assert "lev_cap" in sig, sig
+    print("ok  предел плеча площадки входит в подпись реплея")
+
+
+def test_venue_leverage_cap_reaches_the_fence():
+    """Предел плеча ПЛОЩАДКИ доезжает до забора, а не остаётся правилом.
+
+    Проверяется ДОРОГА, а не сама функция: `L.lev_cap_for_notional`
+    проверена в ядре, а здесь спрашивается ровно то, что было дефектом —
+    доходит ли она до `one_position`. Забор без предела выдавал плечо,
+    которого биржа не даёт: 148 коротких решений из 1021 и 262 длинных из
+    55 958, и 62 из 80 коротких ликвидаций были ровно этими.
+
+    Тиров у имени нет (справочник снят раньше листинга) — предела не
+    знаем, и лямбда обязана честно отдать None: выдуманный чужой потолок
+    хуже отсутствующего.
+    """
+    import run_d6 as D6m
+    seen = {}
+
+    def fake_one(g, bars, ts, look, rule, param, hold_h=None,
+                 ckpt_h=None, lev_look=None):
+        seen[g["sym"]] = lev_look
+        return dict(_rec(g["at"], sym=g["sym"]), side="long")
+
+    class Src:
+        def bars(self, sym, a, b):
+            return [(float(a), 100.0, 100.0, 100.0, 100.0, 1.0)]
+
+    legs = [{"sym": "AAAUSDT", "at": T0, "side": "long", "fwd": 100.0,
+             "rr": 3.0, "fav": 100.0, "adv_q": -50.0},
+            {"sym": "ZZZUSDT", "at": T0, "side": "long", "fwd": 100.0,
+             "rr": 3.0, "fav": 100.0, "adv_q": -50.0}]
+    tiers = {"AAAUSDT": [{"cap": 1000.0, "mmr": 0.1, "max_leverage": 5.0},
+                         {"cap": 1e9, "mmr": 0.2, "max_leverage": 2.0}]}
+    op, ti = D6m.one_position, D6m.D2.instruments_tiers
+    try:
+        D6m.one_position = fake_one
+        D6m.D2.instruments_tiers = lambda: tiers
+        D6m.collect_recs(rulers=[("depth", 2.0, "long")], legs=legs,
+                         src=Src(), log=lambda *a: None)
+    finally:
+        D6m.one_position, D6m.D2.instruments_tiers = op, ti
+    a = seen.get("AAAUSDT")
+    assert a is not None, "предел площадки до забора не доехал"
+    assert abs(a(500.0) - 5.0) < 1e-12, a(500.0)      # первый тир
+    assert abs(a(5000.0) - 2.0) < 1e-12, a(5000.0)    # нотионал глубже тира
+    z = seen.get("ZZZUSDT")
+    assert z is not None and z(500.0) is None, "тиров нет — предела не знаем"
+    print("ok  предел плеча площадки доезжает до забора: 5× у первого тира, "
+          "2× глубже, без тиров — None")
 
 
 def test_replay_cache_asks_only_for_its_own_side():
@@ -1581,6 +1643,32 @@ def test_smoothing_finds_it_and_stays_silent_without_it():
           f"{c2['corr']:+.2f} → нет, одной стороны нет → мерить нечем")
 
 
+def test_smoothing_reads_the_journal_pair():
+    """Дорога замера до журнала, а не только его формула.
+
+    `read_journal` отдаёт ПАРУ (строки, битых), и замер брал её целиком:
+    в список строк попадали список и число, а первая же `r.get` роняла
+    прогон. Формулу (`cell`) проверки звали готовыми словарями, то есть
+    эту дорогу не исполнял никто — ровно тот класс, на котором у нас уже
+    была молчаливая подмена книги.
+    """
+    import smoothing as SM
+    was = SM.R.read_journal
+    rows = _smooth_rows([(10.0, -10.0), (12.0, -8.0), (9.0, -11.0)])
+    try:
+        SM.R.read_journal = lambda *a, **k: (rows, 3)
+        cells, bad = SM.collect()
+    finally:
+        SM.R.read_journal = was
+    assert bad == 3, bad                       # число битых не теряется
+    assert cells and all(isinstance(c, dict) for c in cells), cells
+    one = [c for c in cells if c["mode"] == "optimal"
+           and c["dep"] == 10000.0]
+    assert one and one[0]["n_long"] == 3 and one[0]["n_short"] == 3, one
+    print(f"ok  замер сглаживания читает журнал парой: ячеек {len(cells)}, "
+          f"битых {bad}")
+
+
 def test_smoothing_splits_the_capital_of_two_books():
     """У пары книг капитал ВДВОЕ: их проценты не складываются в один.
 
@@ -1600,10 +1688,13 @@ def test_smoothing_splits_the_capital_of_two_books():
 
 
 TESTS = [test_smoothing_finds_it_and_stays_silent_without_it,
+         test_smoothing_reads_the_journal_pair,
          test_smoothing_splits_the_capital_of_two_books,
          test_short_books_are_declared_as_a_mirror,
          test_take_rule_mirrors_the_promise_side,
          test_short_legs_go_only_into_short_books,
+         test_venue_cap_is_in_the_replay_signature,
+         test_venue_leverage_cap_reaches_the_fence,
          test_replay_cache_asks_only_for_its_own_side,
          test_shape_counts_positions_not_days,
     test_contracts_walk_matches_the_simulation,
@@ -1877,6 +1968,31 @@ def _poison_run_paper(lit, repl, probe):
         importlib.reload(P)
 
 
+def _control_smoothing_takes_the_pair_as_rows():
+    """Пара взята целиком за строки — дорога обязана упасть."""
+    import smoothing as SM
+    was = SM.R.read_journal
+    src_ok = SM.collect
+
+    def broken():
+        rows = was()
+        out = []
+        for mode in [k for k in SM.R.RULER_ORDER
+                     if SM.R.side_of(k) == "long"]:
+            for dep in SM.R.DEPOSITS:
+                out.append(SM.cell(rows, mode, dep))
+        return out, 0
+    SM.collect = broken
+    try:
+        try:
+            test_smoothing_reads_the_journal_pair()
+        except (AssertionError, AttributeError, TypeError):
+            return True
+        return False
+    finally:
+        SM.collect = src_ok
+
+
 def _control_tail_never_reaches_the_core():
     """Хвост построен, но в дорогой проход не подан.
 
@@ -1892,8 +2008,17 @@ def _control_tail_never_reaches_the_core():
 def _control_tail_out_of_the_replay_signature():
     """Подпись реплея не знает хвоста: кэш прежних правил взялся бы молча."""
     return _poison_run_paper(
-        '            "tail": 1}', "            }",
+        '            "tail": 1,\n', "",
         test_tail_reaches_the_core_and_the_replay_signature)
+
+
+def _control_venue_cap_out_of_the_replay_signature():
+    """Подпись реплея не знает предела площадки: кэш, посчитанный забором
+    без предела, взялся бы молча — и книга осталась бы с плечом, которого
+    биржа не даёт, при исправном коде забора."""
+    return _poison_run_paper(
+        '            "lev_cap": 1}', "            }",
+        test_venue_cap_is_in_the_replay_signature)
 
 
 def _control_tail_entry_from_a_quote_allowed():
@@ -1958,7 +2083,57 @@ def _control_cut_reason_by_symbol_not_position():
         TL.cut_reason = was
 
 
+def _control_venue_cap_not_passed():
+    """Забор зовут без предела площадки — дорога обязана упасть.
+
+    Подделка идёт по ИСХОДНИКУ: сам тест подменяет `one_position`, и
+    обёрткой вокруг него правило не отменить — отменяется оно ровно там,
+    где `collect_recs` решает, что передать.
+    """
+    import importlib
+    import shutil
+    import tempfile
+    import run_d6 as D6m
+    path = D6m.__file__
+    src = open(path, encoding="utf-8").read()
+    # Литерал ровно тот, которым `collect_recs` передаёт предел книге:
+    # в файле есть и второй такой вызов (внутри `one_position`), а его
+    # тест подменяет спионом — подделка там ничего бы не значила.
+    lit = ("hold_h=hold_h, ckpt_h=ckpt_h,\n"
+           "                                 lev_look=lev_look)")
+    assert lit in src, "подделка НЕ легла: литерала нет"
+    keep = os.path.join(tempfile.mkdtemp(prefix="run_d6-"), "run_d6.py")
+    shutil.copy(path, keep)
+    cache = os.path.join(os.path.dirname(path), "__pycache__")
+    try:
+        open(path, "w", encoding="utf-8").write(
+            src.replace(lit, "hold_h=hold_h, ckpt_h=ckpt_h)", 1))
+        if os.path.isdir(cache):
+            for f in os.listdir(cache):
+                if f.startswith("run_d6."):
+                    os.remove(os.path.join(cache, f))
+        importlib.reload(D6m)
+        try:
+            test_venue_leverage_cap_reaches_the_fence()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        shutil.copy(keep, path)
+        if os.path.isdir(cache):
+            for f in os.listdir(cache):
+                if f.startswith("run_d6."):
+                    os.remove(os.path.join(cache, f))
+        importlib.reload(D6m)
+
+
 CONTROLS = [("хвост не доезжает до ядра", _control_tail_never_reaches_the_core),
+            ("предел плеча площадки не доезжает",
+             _control_venue_cap_not_passed),
+            ("подпись реплея не знает предела площадки",
+             _control_venue_cap_out_of_the_replay_signature),
+            ("замер сглаживания берёт пару за строки",
+             _control_smoothing_takes_the_pair_as_rows),
             ("подпись реплея не знает хвоста",
              _control_tail_out_of_the_replay_signature),
             ("вход из котировки разрешён",

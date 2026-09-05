@@ -80,6 +80,30 @@ def mmr_for_notional(tiers, notional, flat=None):
     return flat
 
 
+def lev_cap_for_notional(tiers, notional, flat=None):
+    """Предел плеча ТИРА площадки — потолок, который биржа не даст перейти.
+
+    Тот же обход, что у `mmr_for_notional`, и по той же причине: тир
+    выбирается нотионалом, а нотионал зависит от плеча. Тиров нет —
+    плоский `flat`; нет и его — предела не существует (None), и забор
+    тогда ограничен только неравенством безопасности.
+
+    Найдено дефектом 2026-09-05: забор выдавал до 25× символам, у которых
+    базовый тир даёт 5× (BOBA, ASP, PUFFER, ZBCN — `mmr` 0.1). Такая
+    позиция не просто рискованна — она НЕИСПОЛНИМА: площадка её не
+    откроет, а в реплее она ликвидируется в момент открытия, потому что
+    поддерживающая маржа при `mmr = 0.1` съедает капитал уже на входе.
+    """
+    if tiers:
+        for t in tiers:
+            if notional <= t["cap"]:
+                v = t.get("max_leverage")
+                return float(v) if v else None
+        v = tiers[-1].get("max_leverage")
+        return float(v) if v else None
+    return float(flat) if flat else None
+
+
 def fully_loaded(rung_prices, weights, capital, leverage):
     """Состояние ПОЛНОСТЬЮ набранной лестницы при данном плече.
 
@@ -105,7 +129,8 @@ def fully_loaded(rung_prices, weights, capital, leverage):
 
 
 def max_leverage(rung_prices, weights, capital, base_px, d_max,
-                 mmr_lookup, survive_mult, lev_cap=25.0, side="long"):
+                 mmr_lookup, survive_mult, lev_cap=25.0, side="long",
+                 lev_lookup=None):
     """Максимальное плечо, при котором забор §5 выполняется.
 
     Забор: цена ликвидации полностью набранной лестницы ≤ базового входа,
@@ -120,6 +145,14 @@ def max_leverage(rung_prices, weights, capital, base_px, d_max,
 
     Плечо ВЫВОДИТСЯ, а не назначается: двоичный поиск по [1, lev_cap].
 
+    `lev_lookup(notional) -> предел плеча тира` — ПОТОЛОК ПЛОЩАДКИ, а не
+    наша настройка. Без него забор считал только неравенство безопасности
+    и выдавал до 25× там, где биржа даёт 5×: замер 2026-09-05 нашёл такие
+    позиции у 14.2 % коротких решений, и 22 из 28 их ликвидаций были
+    ровно этими. Плечо, которого площадка не даёт, консервативной оценкой
+    не является — позиция просто не открывается. `None` — предела нет
+    (нет справочника), и тогда связывает одно неравенство.
+
     У короткой стороны забор зеркален: ликвидация стоит ВЫШЕ входа, и
     требование — чтобы она была не ближе `survive_mult · d_max` сверху.
     Правило одно, знак разный; ветка лонга не тронута.
@@ -130,7 +163,20 @@ def max_leverage(rung_prices, weights, capital, base_px, d_max,
     def ok(L):
         qty, p_avg, notional = fully_loaded(rung_prices, weights, capital, L)
         mmr = mmr_lookup(notional)
+        # Предел плеча ТИРА площадки. Плечо, которого биржа не даёт, не
+        # является консервативной оценкой — такая позиция не открывается
+        # вовсе, и её исход в реплее описывает сделку, которой не было.
+        if lev_lookup is not None:
+            cap_v = lev_lookup(notional)
+            if cap_v is not None and L > float(cap_v) + 1e-9:
+                return False
         p = liq_price(p_avg, qty, capital, mmr, side)
+        # Ликвидация обязана стоять ПРОТИВ позиции: у лонга ниже средней,
+        # у шорта выше. Иначе поддерживающая маржа съедает капитал уже на
+        # входе, и позиция ликвидирована в момент открытия — это не риск,
+        # а неисполнимая конструкция, и забор такое плечо не выдаёт.
+        if (p >= p_avg) if side == "long" else (p <= p_avg):
+            return False
         return p <= target_liq if side == "long" else p >= target_liq
 
     if not ok(1.0):

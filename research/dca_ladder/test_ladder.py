@@ -92,6 +92,66 @@ def test_max_leverage_derived_from_fence():
           f"40%×2={deep:.2f}")
 
 
+def test_venue_leverage_cap_binds():
+    """Предел плеча ТИРА площадки связывает раньше неравенства безопасности.
+
+    Узкая лестница (10 % глубиной) при дорогом тире (`mmr` 0.1) проходит
+    забор до ~10×, но площадка у такого символа даёт 5×. Плечо, которого
+    биржа не даёт, консервативной оценкой не является — позиция просто не
+    открывается, и её исход описывал бы сделку, которой не было.
+    """
+    rungs = [100.0, 95.0, 90.0]
+    w = [1 / 3] * 3
+    look = lambda n: 0.1                        # noqa: E731  дорогой тир
+    free = L.max_leverage(rungs, w, 1.0, 100.0, 0.10, look, 0.5)
+    capped = L.max_leverage(rungs, w, 1.0, 100.0, 0.10, look, 0.5,
+                            lev_lookup=lambda n: 5.0)
+    assert free > 5.0 + 1e-6, free      # без предела забор пускает больше
+    assert abs(capped - 5.0) < 1e-6, capped
+    # Предел, которого нет (нет справочника), прежнего счёта не двигает.
+    same = L.max_leverage(rungs, w, 1.0, 100.0, 0.10, look, 0.5,
+                          lev_lookup=lambda n: None)
+    assert abs(same - free) < 1e-12, (same, free)
+    # Зеркально у короткой стороны — правило одно, знак разный.
+    srun = [100.0, 105.0, 110.0]
+    s_free = L.max_leverage(srun, w, 1.0, 100.0, 0.10, look, 0.5,
+                            side="short")
+    s_cap = L.max_leverage(srun, w, 1.0, 100.0, 0.10, look, 0.5,
+                           side="short", lev_lookup=lambda n: 5.0)
+    assert s_free > 5.0 + 1e-6 and abs(s_cap - 5.0) < 1e-6, (s_free, s_cap)
+    print(f"ok  предел тира связывает: лонг {free:.2f}→{capped:.2f}, "
+          f"шорт {s_free:.2f}→{s_cap:.2f}")
+
+
+def test_fence_refuses_leverage_dead_at_open():
+    """Ликвидация обязана стоять ПРОТИВ позиции, иначе она мертва на входе.
+
+    Поддерживающая маржа съедает капитал уже при открытии, когда
+    `плечо · mmr ≥ 1`: у лонга цена ликвидации выходит НЕ НИЖЕ средней, у
+    шорта не выше. Это не «рискованно» — такой позиции не существует, и
+    забор такое плечо не выдаёт ни на одной стороне.
+
+    Замер 2026-09-05 по журналу книг: у коротких решений 71 из 1021 несли
+    ровно это, и 47 из 80 их ликвидаций — эти же; у длинных таких нет.
+    """
+    w = [1 / 3] * 3
+    look = lambda n: 0.1                        # noqa: E731  1/mmr = 10×
+    for side, rungs, base in (("long", [100.0, 95.0, 90.0], 100.0),
+                              ("short", [100.0, 105.0, 110.0], 100.0)):
+        # Запас велик намеренно: неравенство безопасности не связывает, и
+        # ограничителем остаётся ровно проверка стороны ликвидации.
+        lev = L.max_leverage(rungs, w, 1.0, base, 0.10, look, 0.01,
+                             side=side)
+        assert lev <= 10.0 + 1e-6, (side, lev)
+        qty, p_avg, notl = L.fully_loaded(rungs, w, 1.0, lev)
+        p = L.liq_price(p_avg, qty, 1.0, look(notl), side)
+        if side == "long":
+            assert p < p_avg, (side, p, p_avg)
+        else:
+            assert p > p_avg, (side, p, p_avg)
+    print("ok  плечо, мёртвое на входе, забор не выдаёт ни одной стороне")
+
+
 def test_max_leverage_refuses_impossible_depth():
     # Если даже 1× нарушает забор — 0.0 (глубину обрезать). Множитель 6 на
     # 20 % лестнице требует ликвидацию на 120 % ниже базы — недостижимо.
@@ -118,6 +178,69 @@ def _control_no_mmr_term():
         return False
     finally:
         L.liq_price = orig
+
+
+def _patch_ladder_source(lit, repl, test):
+    """Подделка ИСХОДНИКА ядра: правило живёт строкой, подменить функцию
+    нечем. Копия кладётся в scratchpad и возвращается копированием —
+    `git checkout` для этого не инструмент (он однажды снёс всю
+    несохранённую работу файла). Кэш байткода удаляется руками: питон
+    считает `.pyc` свежим по паре «mtime в целых секундах, размер», и
+    подделка успевала исполниться ПРЕЖНИМ кодом, то есть контроль врал в
+    обе стороны. Возвращает True, если контроль кусается.
+    """
+    import importlib
+    import shutil
+    import tempfile
+    path = os.path.join(HERE, "ladder.py")
+    src = open(path, encoding="utf-8").read()
+    assert lit in src, "подделка НЕ легла: литерала нет"
+    keep = os.path.join(tempfile.mkdtemp(prefix="ladder-"), "ladder.py")
+    shutil.copy(path, keep)
+    try:
+        open(path, "w", encoding="utf-8").write(src.replace(lit, repl, 1))
+        cache = os.path.join(HERE, "__pycache__")
+        if os.path.isdir(cache):
+            for f in os.listdir(cache):
+                if f.startswith("ladder."):
+                    os.remove(os.path.join(cache, f))
+        importlib.reload(L)
+        try:
+            test()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        shutil.copy(keep, path)
+        importlib.reload(L)
+
+
+def _control_venue_cap_ignored():
+    """Забор, не читающий предел тира — проверка обязана упасть."""
+    orig = L.max_leverage
+
+    def loose(*a, **k):
+        k.pop("lev_lookup", None)
+        return orig(*a, **k)
+
+    L.max_leverage = loose
+    try:
+        try:
+            test_venue_leverage_cap_binds()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.max_leverage = orig
+
+
+def _control_dead_at_open_allowed():
+    """Снять проверку стороны ликвидации — плечо уедет за 1/mmr, и
+    позиция окажется ликвидированной в момент открытия."""
+    return _patch_ladder_source(
+        '        if (p >= p_avg) if side == "long" else (p <= p_avg):\n'
+        '            return False\n', "",
+        test_fence_refuses_leverage_dead_at_open)
 
 
 def _control_leverage_unbounded():
@@ -756,40 +879,9 @@ def test_limit_needs_a_print_market_exit_does_not():
 
 
 def _control_limit_fills_without_a_print():
-    """Правило снято: лимитка заполняется и на минуте без единой сделки.
-
-    Правило живёт СТРОКОЙ внутри цикла, подменить функцию нечем — портим
-    исходник и перезагружаем модуль. Копия кладётся в scratchpad и
-    возвращается копированием: `git checkout` для этого не инструмент
-    (он однажды снёс всю несохранённую работу файла). Кэш байткода
-    удаляется руками: питон считает `.pyc` свежим по паре «mtime в целых
-    секундах, размер», и подделка успевала исполниться прежним кодом.
-    """
-    import importlib
-    import shutil
-    import tempfile
-    path = os.path.join(HERE, "ladder.py")
-    src = open(path, encoding="utf-8").read()
-    lit = "traded = float(vol) > 0"
-    assert lit in src, "подделка НЕ легла: литерала нет"
-    keep = os.path.join(tempfile.mkdtemp(prefix="ladder-"), "ladder.py")
-    shutil.copy(path, keep)
-    try:
-        open(path, "w", encoding="utf-8").write(
-            src.replace(lit, "traded = True", 1))
-        for f in os.listdir(os.path.join(HERE, "__pycache__")) \
-                if os.path.isdir(os.path.join(HERE, "__pycache__")) else []:
-            if f.startswith("ladder."):
-                os.remove(os.path.join(HERE, "__pycache__", f))
-        importlib.reload(L)
-        try:
-            test_limit_needs_a_print_market_exit_does_not()
-        except AssertionError:
-            return True
-        return False
-    finally:
-        shutil.copy(keep, path)
-        importlib.reload(L)
+    """Правило снято: лимитка заполняется и на минуте без единой сделки."""
+    return _patch_ladder_source("traded = float(vol) > 0", "traded = True",
+                                test_limit_needs_a_print_market_exit_does_not)
 
 
 # --- динамический тейк: якорь по ТВХ и трейлинг (D8) -------------------
@@ -1169,6 +1261,8 @@ TESTS = [
     test_fully_loaded_avg_and_notional,
     test_max_leverage_derived_from_fence,
     test_max_leverage_refuses_impossible_depth,
+    test_venue_leverage_cap_binds,
+    test_fence_refuses_leverage_dead_at_open,
     test_sigma_rungs_descend,
     test_short_take_fills_below_entry,
     test_short_rungs_need_the_price_to_rise,
@@ -1210,6 +1304,8 @@ CONTROLS = [
     ("забор шорта сравнивает вниз", _control_short_fence_compares_downwards),
     ("(1−mmr) в цене ликвидации", _control_no_mmr_term),
     ("плечо не ограничено забором", _control_leverage_unbounded),
+    ("предел тира площадки не читается", _control_venue_cap_ignored),
+    ("ликвидация на входе разрешена", _control_dead_at_open_allowed),
     ("ликвидация не проверяется", _control_no_liquidation_check),
     ("рунги не заполняются", _control_rungs_never_fill),
     ("пола капитуляции нет", _control_dca_no_floor),

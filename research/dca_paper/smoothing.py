@@ -118,12 +118,16 @@ def cell(rows, mode, dep):
 
 
 def collect():
-    rows = R.read_journal()
+    # `read_journal` отдаёт ПАРУ (строки, битых): взяв её целиком, замер
+    # получал бы список и число вместо строк и падал на первой же
+    # `r.get`. Дорога до чтения журнала не исполнялась ни одним тестом —
+    # проверки звали `cell` с готовыми словарями.
+    rows, bad = R.read_journal()
     out = []
     for mode in [k for k in R.RULER_ORDER if R.side_of(k) == "long"]:
         for dep in R.DEPOSITS:
             out.append(cell(rows, mode, dep))
-    return out
+    return out, bad
 
 
 def _p(x, d=2):
@@ -200,7 +204,9 @@ def main():
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args()
     os.makedirs(OUT, exist_ok=True)
-    cells = collect()
+    cells, bad = collect()
+    if bad:
+        print(f"битых строк журнала: {bad}")
     for c in cells:
         if c.get("why"):
             print(f"{c['mode']}/{c['dep']:.0f}: {c['why']} "

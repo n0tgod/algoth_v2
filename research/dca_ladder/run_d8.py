@@ -150,13 +150,18 @@ def norm_weights(n):
     return [x / s for x in w] if s > 0 else w
 
 
-def one_position(g, bars, ts, look, rule, param):
+def one_position(g, bars, ts, look, rule, param, lev_look=None):
     """Исход одного решения во ВСЕХ ячейках сетки. None — измерить нечем.
 
     Геометрия (окно, уровни, рунги, σ, плечо) считается ОДИН раз на
     решение: между ячейками различается ровно правило тейка, и пересчёт
     геометрии на каждую означал бы, что ячейки могут разойтись не по той
     причине, ради которой их сравнивают.
+
+    `lev_look` — предел плеча тира ПЛОЩАДКИ, тот же, что у книги
+    (`run_d6`). Ячейка правила книги обязана воспроизводить саму книгу
+    бит в бит, и забор у них поэтому один; умолчание `None` даёт прежний
+    счёт, то есть опубликованный отчёт D8 остаётся тем, чем был.
     """
     rs = D2.split_window(bars, ts, g["at"], D2.BACK_H, D2.HOLD_H)
     if rs is None:
@@ -186,7 +191,8 @@ def one_position(g, bars, ts, look, rule, param):
                   else D2.WEIGHTS[:len(rungs_full)])
         lev, rungs, _b = D5.fence_leverage(rule, param, entry, rungs_full,
                                            look, sigma_bp,
-                                           weights=w_full if norm else None)
+                                           weights=w_full if norm else None,
+                                           lev_look=lev_look)
         w = (norm_weights(len(rungs)) if norm else D2.WEIGHTS[:len(rungs)])
         geo[norm] = (lev, rungs, w)
     out = {}
@@ -245,11 +251,18 @@ def collect(limit=None, src=None, log=print, legs=None):
             continue
         ts = [bb[0] for bb in bars]
         tiers = tiers_all.get(sym) or []
-        look = lambda notl: L.mmr_for_notional(tiers, notl, flat=D2.FLAT_MMR)
+        # Тиры связываются значением по умолчанию, а не замыканием:
+        # `tiers` — переменная ЦИКЛА, и лямбда, пережившая свою
+        # итерацию, отвечала бы по чужому символу. Внутри итерации
+        # разницы нет, но такая лямбда уезжает наружу параметром.
+        look = lambda notl, t=tiers: L.mmr_for_notional(
+            t, notl, flat=D2.FLAT_MMR)
+        lev_look = lambda notl, t=tiers: L.lev_cap_for_notional(t, notl)
         for g in glist:
             got = 0
             for rk, (rule, param) in RULERS.items():
-                o = one_position(g, bars, ts, look, rule, param)
+                o = one_position(g, bars, ts, look, rule, param,
+                                 lev_look=lev_look)
                 if not o:
                     continue
                 got = 1

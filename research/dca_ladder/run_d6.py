@@ -127,7 +127,8 @@ def shares_for(deposit):
     return keep
 
 
-def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
+def one_position(g, bars, ts, look, rule, param, hold_h=None,
+                 ckpt_h=None, lev_look=None):
     """Исход одной позиции при заданной линейке забора. Гейты — D2.
 
     Возвращает запись для раздачи: когда решение, когда выход, доля
@@ -139,6 +140,13 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     этого срока, то есть ровно то, чем кончилась бы симуляция с таким
     сроком. Один проход отвечает на все сроки; проход на каждый срок
     считал бы то же самое заново.
+
+    `lev_look` — предел плеча тира ПЛОЩАДКИ (`L.lev_cap_for_notional` по
+    тем же тирам, что дают `look`). Без него забор выдавал плечо, которого
+    биржа не даёт: замер по журналу книг 2026-09-05 — 148 коротких решений
+    из 1021 (14.5 %) и 262 длинных из 55 958 (0.5 %), а из 80 коротких
+    ликвидаций 62 были ровно эти. Такая позиция не «рискованная», она
+    неисполнимая, и её исход описывает сделку, которой не было.
     """
     # Сторону несёт САМА нога (`legs_from_sheets` размечает её знаком
     # прогноза, как живой сканер). Отдельным параметром её брать нельзя:
@@ -171,7 +179,8 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
                                      D2.N_RUNGS, side=side)
     sigma_bp, _r, _t = D3.window_stats(win, now_i)
     lev, rungs, _binder = D5.fence_leverage(rule, param, entry, rungs_full,
-                                            look, sigma_bp, side=side)
+                                            look, sigma_bp, side=side,
+                                            lev_look=lev_look)
     cps = ([float(g["at"]) + float(h) * HOUR for h in ckpt_h]
            if ckpt_h else None)
     r = L.simulate_dca(hold, rungs, D2.WEIGHTS[:len(rungs)], 1.0, lev,
@@ -616,7 +625,17 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
             continue
         ts = [bb[0] for bb in bars]
         tiers = tiers_all.get(sym) or []
-        look = lambda notl: L.mmr_for_notional(tiers, notl, flat=D2.FLAT_MMR)
+        # Тиры связываются значением по умолчанию, а не замыканием:
+        # `tiers` — переменная ЦИКЛА, и лямбда, пережившая свою
+        # итерацию, отвечала бы по чужому символу. Внутри итерации
+        # разницы нет, но такая лямбда уезжает наружу параметром.
+        look = lambda notl, t=tiers: L.mmr_for_notional(
+            t, notl, flat=D2.FLAT_MMR)
+        # Предел плеча площадки — из ТЕХ ЖЕ тиров, что и MMR: два обхода
+        # одного справочника, второго источника нет. Тиров нет (справочник
+        # снят раньше листинга) — предела не знаем, и связывает наш
+        # собственный потолок 25×; выдумывать чужое число нельзя.
+        lev_look = lambda notl, t=tiers: L.lev_cap_for_notional(t, notl)
         for g in glist:
             got = 0
             g_side = g.get("side") or "long"
@@ -630,7 +649,8 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
                 if (k[2] if len(k) > 2 else "long") != g_side:
                     continue
                 r = one_position(g, bars, ts, look, k[0], k[1],
-                                 hold_h=hold_h, ckpt_h=ckpt_h)
+                                 hold_h=hold_h, ckpt_h=ckpt_h,
+                                 lev_look=lev_look)
                 if r is not None:
                     recs[k].append(r)
                     got = 1
