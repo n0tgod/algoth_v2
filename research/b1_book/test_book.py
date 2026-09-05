@@ -6863,7 +6863,8 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         DR.ARTIFACT = os.path.join(td, "art.json")
         t0 = 1_700_000_000
 
-        def row(rk, usd, sym, legacy=False, back=False, at=None):
+        def row(rk, usd, sym, legacy=False, back=False, at=None,
+                tail=False):
             at = t0 if at is None else at
             # `written_at` и решает, бэктест это или запись вперёд —
             # тем же предикатом, каким книга делит свой счёт
@@ -6876,12 +6877,17 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                  "fills": [[at, 2.0, 0.25], [at + 600, 1.8, 0.25]]}
             if not legacy:
                 r["ruler"] = rk
+            if tail:
+                # исход посчитан по КОТИРОВКЕ: хвост ленты продолжен
+                # серединой стакана — так помечает строку сам прогон
+                r["tail"] = 1
             return r
 
         rows = [row("safe", 1.0, "AAAUSDT"), row("optimal", 4.0, "AAAUSDT"),
                 row(None, 9.0, "BBBUSDT", legacy=True),
                 # пересчёт по прошлому: та же книга, метка бэктеста
-                row("safe", -2.0, "CCCUSDT", back=True, at=t0 + 7200)]
+                row("safe", -2.0, "CCCUSDT", back=True, at=t0 + 7200,
+                    tail=True)]
         with open(DR.JOURNAL, "w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
@@ -6931,6 +6937,12 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         check("DCA: бэктест помечен, запись вперёд — нет",
               {r["usd"]: r["bt"] for r in safe} == {1.0: False, -2.0: True},
               str(safe))
+        # Пометка «посчитано по котировке» доезжает до строки ответа:
+        # деньги по котировке обязаны быть отличимы от денег по сделкам,
+        # и решает это сервер, а не страница.
+        check("DCA: исход по котировке помечен у своей строки",
+              {r["usd"]: r.get("tail") for r in safe}
+              == {1.0: False, -2.0: True}, str(safe))
         # доливы едут вместе со сделкой: без них позиция не
         # разворачивается, а плавающая ТВХ неоткуда взяться
         check("DCA: входы позиции доехали до страницы",
