@@ -180,3 +180,28 @@ sheets.jsonl: ног 907587
 ## Чего эти числа НЕ описывают
 
 Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а не сведён в позицию, то есть маржа и цена ликвидации по-прежнему считаются по каждой позиции отдельно — на бирже они считаются по слитой. Веса модели видели эти часы, поэтому пересчёт читается как оценка СВЕРХУ. Период один и режим рынка один.
+публикуется в ветку main:
+ jobs/done/n-dca-ntail.log                       |    7 +
+ jobs/done/n-dca-why.done                        |    1 +
+ jobs/done/n-dca-why.log                         |  182 +
+ jobs/poke.log                                   |    3 +
+ research/dca_paper/out/DCA-paper.json           | 9314 +++++++----------------
+ research/dca_paper/out/DCA-paper.md             |   90 +-
+ research/dca_paper/out/journal-2026-08-09.jsonl |    6 +
+ research/dca_paper/out/journal-2026-08-13.jsonl |   26 +
+ research/dca_paper/out/journal-2026-08-15.jsonl |    4 +
+ research/dca_paper/out/journal-2026-08-20.jsonl |   12 +
+ research/dca_paper/out/journal-2026-08-21.jsonl |    7 +
+ research/dca_paper/out/journal-2026-08-22.jsonl |   18 +
+ research/dca_paper/out/journal-2026-08-24.jsonl |    4 +
+ research/dca_paper/out/journal-2026-08-27.jsonl |    6 +
+ research/dca_paper/out/journal-2026-08-28.jsonl |    6 +
+ research/dca_paper/out/journal-2026-09-01.jsonl |    6 +
+ research/s8_loop/out/day_brake.json             |    2 +-
+ 17 files changed, 3236 insertions(+), 6458 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   c88a5a5..f560f4c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-05T10:50:36Z, код 0
