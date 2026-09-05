@@ -32,3 +32,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-05T11:53:39Z
+публикуется в ветку main:
+ jobs/done/n-deploy-qty-flat.log | 11 +++++++++++
+ jobs/done/n-status-qty.log      | 34 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log                   |  2 ++
+ 3 files changed, 47 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   2f9f470..1820c30  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
