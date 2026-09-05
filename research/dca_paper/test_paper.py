@@ -886,6 +886,37 @@ def _control_dedup_without_rules_version():
         P.append_journal = orig
 
 
+def _control_contracts_are_money_not_coins():
+    """Контроль: контракты посчитаны ДЕНЬГАМИ рунга, а не монетами.
+
+    Ровно та ошибка единиц, которую эта правка и чинит на графике
+    («0.25 $» вместо «6.25 $» в подсказке долива): доля нотионала без
+    деления на цену выглядит числом и им не является. Тождество с
+    симуляцией обязано упасть.
+    """
+    orig = R.avg_walk
+
+    def money(fills, entry=None, notional=None):
+        out = orig(fills, entry)
+        if notional:
+            q = 0.0
+            for x in out:
+                x["dq"] = x["w"] * float(notional)      # деньги, не монеты
+                q += x["dq"]
+                x["qty"] = q
+        return out
+
+    R.avg_walk = money
+    try:
+        try:
+            test_contracts_walk_matches_the_simulation()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.avg_walk = orig
+
+
 def _control_gate_is_gone():
     """Гейта нет вовсе: третий режим молча становится копией второй книги.
 
@@ -1268,7 +1299,47 @@ def test_cut_position_gets_a_named_reason():
           "причина не приписана")
 
 
+def test_contracts_walk_matches_the_simulation():
+    """Контракты позиции = то, что купила симуляция, а не второй счёт.
+
+    Просьба владельца 2026-09-05: у сделки видеть размер в КОНТРАКТАХ и
+    общее количество в позиции. Считать их страница не вправе — деньги
+    рунга и его цена уже лежат в записи, и второе такое умножение
+    разошлось бы с симуляцией. Проверяется тождество: сумма `dq` по
+    рунгам равна `qty` симуляции (деньги / средняя цена), и последний
+    шаг `qty` равен ей же.
+
+    Рядом — два инварианта показа: без нотионала полей нет вовсе
+    (неизмеримое не есть ноль), и с нотионалом прежние поля не
+    шелохнулись (правка не вправе двигать ТВХ).
+    """
+    import ladder as L
+    # путь: вход 100, низ до 90 (долив), дальше вверх
+    bars = [(0.0, 100.0, 101.0, 100.0, 100.5, 5.0),
+            (60.0, 100.5, 101.0, 89.0, 95.0, 5.0),
+            (120.0, 95.0, 96.0, 94.0, 95.5, 5.0)]
+    cap, lev = 25.0, 4.0
+    r = L.simulate_dca(bars, [100.0, 90.0], [0.5, 0.5], cap, lev, 0.02)
+    nt = cap * lev
+    w = R.avg_walk(r["fills"], r.get("entry_px"), nt)
+    qty_sim = r["filled_notional"] / r["avg"]          # деньги / средняя
+    assert len(w) == 2, w
+    assert abs(sum(x["dq"] for x in w) - qty_sim) < 1e-9, (w, qty_sim)
+    assert abs(w[-1]["qty"] - qty_sim) < 1e-9, (w[-1], qty_sim)
+    # без нотионала — полей нет, и прежние числа бит в бит
+    w0 = R.avg_walk(r["fills"], r.get("entry_px"))
+    assert all("dq" not in x and "qty" not in x for x in w0), w0
+    assert [x["avg"] for x in w0] == [x["avg"] for x in w], (w0, w)
+    # нотионал берётся из записи одной функцией, и запись без плеча
+    # (или без маржи) контрактов не получает
+    assert abs(R.notional_of({"margin": 25.0, "lev": 4.0}) - 100.0) < 1e-12
+    assert R.notional_of({"margin": 25.0}) is None
+    assert R.notional_of({"lev": 4.0}) is None
+    assert R.notional_of({"margin": 0.0, "lev": 4.0}) is None
+
+
 TESTS = [test_shape_counts_positions_not_days,
+    test_contracts_walk_matches_the_simulation,
          test_journal_rotates_by_day_and_reader_takes_every_part,
          test_worst_open_is_measured_and_missing_is_not_zero,
          test_ticket_clears_the_exchange_floor,
@@ -1643,6 +1714,8 @@ CONTROLS = [("хвост не доезжает до ядра", _control_tail_nev
              _control_restat_drops_the_counts),
             ("дедуп не видит версии правил",
              _control_dedup_without_rules_version),
+            ("контракты посчитаны деньгами, а не монетами",
+             _control_contracts_are_money_not_coins),
             ("гейта плеча нет вовсе", _control_gate_is_gone),
             ("гейт назначен всем режимам", _control_gate_on_every_ruler),
             ("пол билета один на все режимы", _control_floor_one_for_everyone),

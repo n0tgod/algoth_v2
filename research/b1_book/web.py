@@ -69,6 +69,23 @@ function lvl(v) {
 }
 """
 
+# Контракты позиции (монеты, а не деньги). Величины разнесены на
+# порядки — 0.0003 BTC против двенадцати миллионов PEPE, — поэтому
+# формат один и зависит от масштаба. Одна реализация на список книги и
+# на график: два формата под одним именем печатали бы разное число
+# монет в одной и той же позиции, и спорить пришлось бы с картинкой.
+QTYJS = r"""
+function qtyf(v) {
+  if (v == null || !isFinite(Number(v))) return "—";
+  const x = Number(v), a = Math.abs(x);
+  if (a >= 1e6) return (x / 1e6).toFixed(2) + " M";
+  if (a >= 1000) return String(Math.round(x))
+      .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  if (a >= 1) return x.toFixed(2);
+  return x.toPrecision(3);
+}
+"""
+
 # Причины выхода в ячейках таблиц — коротким словом. Длинная фраза
 # («price broke the promised adverse path») переносила ячейку
 # состояния на вторую строку, и ряд закрытой сделки распухал —
@@ -3805,7 +3822,7 @@ function shownTrades() {
 }
 // Процент движения цены вместо б.п. — решение владельца. Два знака, при
 // мелких величинах три: иначе мелкое нетто схлопывается в «0.00 %».
-""" + PCTJS + LVLJS + r"""
+""" + PCTJS + LVLJS + QTYJS + r"""
 // Цена выхода у сделки модели своей колонкой не записана: разбор пишет
 // ХОД цены за удержание, а это то же самое число с другой стороны.
 // Считать его здесь — не вторая копия расчёта, а перевод единицы.
@@ -4997,6 +5014,10 @@ function hover(e) {
       + row("price", a.px)
       + row("size", dry ? "0 $ — no cash that hour"
             : a.size == null ? "—" : (+a.size).toFixed(2) + " $")
+      // Контракты долива: у лестницы деньги рунга и монеты рунга —
+      // разные числа, и на монете за 0.0003 $ доллары ничего не говорят
+      // о размере. Поля нет у книг модели — строки тогда не будет вовсе.
+      + (a.qty == null ? "" : row("contracts", qtyf(a.qty)))
       + row("position from", t.hour);
     put();
     return;
@@ -5035,6 +5056,11 @@ function hover(e) {
       + row("entry", new Date(t.opened_at*1000).toISOString().slice(11,16)
             + " UTC" + (t.lag_sec == null ? ""
               : ` (+${Math.round(t.lag_sec/60)} min)`))
+      // Контрактов в позиции: у лестницы DCA их набирают рунгами, и
+      // сумма приходит готовой с сервера (`rules.avg_walk`). У книг
+      // модели шага лестницы нет — поля нет, и строки не будет.
+      + ((t.walk && t.walk.length && t.walk[t.walk.length-1].qty != null)
+         ? row("contracts", qtyf(t.walk[t.walk.length-1].qty)) : "")
       + row("expects", pct(t.expected_bp))
       + row("adverse expected", pct(t.mae_bp))
       // Ход в пользу — второй конец обещания. Пустой у сделок, записанных
@@ -6156,7 +6182,7 @@ table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-""" + NAVJS + PCTJS + LVLJS + r"""
+""" + NAVJS + PCTJS + LVLJS + QTYJS + r"""
 navMount("/dca-page");
 function esc(s){ return String(s == null ? "" : s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
@@ -6490,17 +6516,29 @@ function fillRows(r, key, live){
   // Свёрнутая строка описывает позицию целиком и молчит о том, чем её
   // набирали и по какой цене она в итоге стоит.
   const w = r.walk || [];
+  // Контракты — это МОНЕТЫ, купленные рунгом, и они приходят готовыми с
+  // сервера (`rules.avg_walk` с нотионалом позиции): доля нотионала и
+  // цена рунга лежат в записи, а второе такое умножение на странице
+  // разошлось бы с числом, которое рядом печатает список позиций.
   let h = "<table class=leg style='width:100%'><tr><th>когда<th>нога" +
-    "<th>цена<th>доля<th>ТВХ после<th>что это</tr>";
+    "<th>цена<th>доля<th>куплено<th>стало<th>ТВХ после<th>что это</tr>";
   w.forEach((f, i) => {
     h += "<tr><td class=mono>" + (f.at == null ? "&mdash;" : tsq(f.at)) +
       "<td>" + (i ? "долив " + i : "вход") +
       "<td class=mono>" + Number(f.px).toPrecision(6) +
       "<td class=mono>" + (f.w * 100).toFixed(0) + " %" +
+      // «Куплено» — контракты этого рунга, «стало» — сколько их в
+      // позиции ПОСЛЕ него. Нет нотионала в записи (нет маржи или
+      // плеча) — прочерк, а не ноль: неизмеримое не есть ноль.
+      "<td class=mono>" + qtyf(f.dq) +
+      "<td class=mono>" + qtyf(f.qty) +
       "<td class=mono>" + Number(f.avg).toPrecision(6) +
       "<td class=dim>" + (i ? "цена дошла до структурного уровня" :
         "первый рунг по сигналу модели") + "</tr>";
   });
+  // Контракты позиции целиком: последний шаг лестницы. У закрытой это и
+  // есть «сколько продали» на выходе — лестница выходит одним куском.
+  const qt = w.length ? w[w.length - 1].qty : null;
   // У ОТКРЫТОЙ позиции выхода не существует: последняя строка — не
   // исход, а отметка по последней цене записи, и подписана она так же.
   // Выдать отметку строкой «выход» значило бы придумать сделке цену, по
@@ -6510,6 +6548,10 @@ function fillRows(r, key, live){
     "<td class=mono>&mdash;" +
     "<td class=mono>" + (r.depth == null ? "&mdash;" :
       "рунгов " + r.depth) +
+    // У открытой ПРОДАНО ничего не было: держим `qt` контрактов, и
+    // назвать их проданными значило бы придумать сделке выход.
+    "<td class=mono>&mdash;" +
+    "<td class=mono>" + qtyf(qt) +
     "<td class='mono " + (r.mark_usd > 0 ? "good" : "bad") + "'>" +
     fpct(r.mark_frac) + " &middot; " + usd(r.mark_usd) +
     "<td class=dim>отметка, а не исход</tr></table>";
@@ -6518,13 +6560,18 @@ function fillRows(r, key, live){
       Number(r.exit_px).toPrecision(6)) +
     "<td class=mono>" + (r.depth == null ? "&mdash;" :
       "рунгов " + r.depth) +
+    // Продано на выходе ровно то, что накоплено лестницей: частичных
+    // разгрузок у DCA-книги нет — выход закрывает позицию целиком.
+    "<td class=mono>" + qtyf(qt) +
+    "<td class=mono>0" +
     "<td class='mono " + (r.usd > 0 ? "good" : "bad") + "'>" +
     fpct(r.pnl_frac) + " &middot; " + usd(r.usd) +
     "<td class=dim>" + esc(r.exit || "") + "</tr></table>";
   // Ширина детали равна ширине таблицы: список ОДИН на все состояния,
-  // и колонок в нём двенадцать.
+  // и колонок в нём тринадцать (колонка контрактов добавлена
+  // 2026-09-05 по просьбе владельца — колспан обязан идти следом).
   return "<tr class=sub id='ddet-" + esc(keyId(key)) + "' style='display:" +
-    (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=12>" +
+    (OPEN.has(key) ? "table-row" : "none") + "'><td colspan=13>" +
     h + "</td></tr>";
 }
 
@@ -6645,8 +6692,8 @@ function posBlock(b, grp){
     esc(stTitle(PST)) + "») позиций нет. Это измерено, а не пропуск " +
     "показа: счётчик в переключателе говорит, где они есть.</p></div>";
   h += "<div class=scroll><table><tr><th>вход<th>выход<th>монета" +
-    "<th>плечо<th>маржа<th>цена входа<th>ТВХ<th>цена выхода" +
-    "<th>ход<th>деньги<th>исход<th>график</tr>";
+    "<th>плечо<th>маржа<th>контрактов<th>цена входа<th>ТВХ" +
+    "<th>цена выхода<th>ход<th>деньги<th>исход<th>график</tr>";
   for (const r of win){
     const live = r.st !== "closed";
     // Деньги закрытой — ИСХОД, у остальных ОТМЕТКА. Поля разные, и
@@ -6674,6 +6721,12 @@ function posBlock(b, grp){
         Number(r.lev).toFixed(2) + "&times;") +
       "<td class=mono>" + (r.margin == null ? "&mdash;" :
         Number(r.margin).toFixed(2) + " $") +
+      // Контрактов в позиции — сумма всех рунгов лестницы: у DCA
+      // позиция набирается частями, и одна цифра «маржа» о размере в
+      // монетах не говорит ничего. Считает сервер (`rules.avg_walk` с
+      // нотионалом), страница печатает пришедшее.
+      "<td class=mono>" + qtyf((r.walk && r.walk.length)
+        ? r.walk[r.walk.length - 1].qty : null) +
       "<td class=mono>" + (r.entry_px == null ? "&mdash;" :
         Number(r.entry_px).toPrecision(6)) +
       // ТВХ — плавающая средняя цена входа: долив опускает её, и по

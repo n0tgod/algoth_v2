@@ -3390,6 +3390,35 @@ class Collector:
     # прогон неотличим от работающего, и это уже случалось с турниром.
     PAPER_STALE = 36 * 3600
 
+    @staticmethod
+    def _dca_adds(fills, notional):
+        """Доливы позиции для графика: деньги и контракты, а не доля.
+
+        В записи лежит ДОЛЯ нотионала (`f[2]` = 0.25), и до этой правки
+        она уезжала в подсказку графика полем `size`, которое подписано
+        долларами: точка долива честно печатала «0.25 $» вместо «6.25 $»
+        и попадала под порог «денег в этот час не было» (|size| < 0.005).
+        Тот же класс ошибки единиц, что спред «на ногу» против цикла «на
+        пару ног» в R4: считалось верно, врал показ.
+
+        Нотионала нет (у записи нет маржи или плеча) — деньги и
+        контракты не выдумываются: прочерк, а не ноль.
+        """
+        out = []
+        for f in (fills or []):
+            try:
+                at, px, w = float(f[0]), float(f[1]), float(f[2])
+            except (TypeError, ValueError, IndexError):
+                continue
+            cash = (w * notional) if (notional and px > 0) else None
+            out.append({
+                "at": at, "px": px,
+                "size": None if cash is None else round(cash, 4),
+                "qty": None if cash is None else cash / px,
+                "share": w,
+                "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at))})
+        return out
+
     def dca_trades(self, sym, book):
         """Позиции DCA-книги по одной монете — В ФОРМЕ, ЖДАННОЙ ГРАФИКОМ.
 
@@ -3431,7 +3460,8 @@ class Collector:
         for r in sorted(mine, key=lambda x: float(x.get("at") or 0)):
             at = float(r.get("at") or 0)
             fills = r.get("fills") or []
-            walk = DR.avg_walk(fills, r.get("entry_px"))
+            walk = DR.avg_walk(fills, r.get("entry_px"),
+                               DR.notional_of(r))
             pf = r.get("pnl_frac")
             out.append({
                 "sym": sym, "arm": "dca",
@@ -3443,10 +3473,7 @@ class Collector:
                 "entry_px": r.get("entry_px"), "exit_px": r.get("exit_px"),
                 "avg": r.get("avg"), "walk": walk,
                 "lots": max(1, len(fills)),
-                "adds": [{"at": f[0], "px": f[1], "size": f[2],
-                          "hour": time.strftime("%Y-%m-%d-%H",
-                                                time.gmtime(float(f[0])))}
-                         for f in fills[1:]],
+                "adds": self._dca_adds(fills[1:], DR.notional_of(r)),
                 "exits": [],
                 "net_bp": (None if pf is None else round(float(pf) * 1e4, 2)),
                 "pnl": r.get("usd"), "size": r.get("margin"),
@@ -3483,12 +3510,11 @@ class Collector:
                     "side": "long", "opened_at": at, "closes_at": None,
                     "entry_px": r.get("entry_px"), "exit_px": None,
                     "avg": r.get("avg"),
-                    "walk": DR.avg_walk(fills, r.get("entry_px")),
+                    "walk": DR.avg_walk(fills, r.get("entry_px"),
+                                        DR.notional_of(r)),
                     "lots": max(1, len(fills)),
-                    "adds": [{"at": f[0], "px": f[1], "size": f[2],
-                              "hour": time.strftime(
-                                  "%Y-%m-%d-%H", time.gmtime(float(f[0])))}
-                             for f in fills[1:]],
+                    "adds": self._dca_adds(fills[1:],
+                                           DR.notional_of(r)),
                     "exits": [],
                     "net_bp": (None if mf is None
                                else round(float(mf) * 1e4, 2)),
@@ -3703,7 +3729,8 @@ class Collector:
                     # (`rules.avg_walk`) и едет готовой: вторая её
                     # реализация на странице разошлась бы с симуляцией,
                     # и позиция рисовалась бы не там, где посчитана.
-                    "walk": DR.avg_walk(r.get("fills"), r.get("entry_px")),
+                    "walk": DR.avg_walk(r.get("fills"), r.get("entry_px"),
+                                        DR.notional_of(r)),
                     "bt": bool(id(r) in seen),
                     # Исход посчитан по КОТИРОВКЕ, а не по принтам:
                     # хвост ленты продолжен серединой стакана. Пометка
@@ -3733,8 +3760,9 @@ class Collector:
                     # список закрытых, и вторая её реализация показала бы
                     # позицию не там, где её посчитала книга.
                     def _walk(lst, why=None):
-                        return [dict(q, walk=DR.avg_walk(q.get("fills"),
-                                                         q.get("entry_px")),
+                        return [dict(q, walk=DR.avg_walk(
+                                        q.get("fills"), q.get("entry_px"),
+                                        DR.notional_of(q)),
                                      **({"cut_why": q.get("cut_why") or why}
                                         if why else {}))
                                 for q in (lst or [])]
