@@ -33,3 +33,15 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-05T21:35:55Z
+публикуется в ветку main:
+ jobs/done/dca-mirror.done           |  1 +
+ jobs/done/dca-mirror.log            |  4 ++++
+ jobs/done/deploy-short.log          | 11 +++++++++++
+ jobs/done/st-mirror.log             | 35 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  5 +++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 57 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   524ec7c..4486916  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
