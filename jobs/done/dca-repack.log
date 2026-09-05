@@ -7,3 +7,50 @@
 сверка: решений было 66683, читается 66683, кусков 32 — сошлось
 частей сверх порога осталось: 0
 конец: 2026-09-05T23:18:29Z, код 0
+публикуется в ветку main:
+ jobs/done/dca-levcap.done                          |     1 +
+ jobs/done/dca-levcap.log                           |   365 +
+ jobs/done/dca-repack.done                          |     1 +
+ jobs/done/dca-repack.log                           |     9 +
+ jobs/done/dca-smooth.log                           |    10 +
+ jobs/done/deploy-dca-design.done                   |     1 +
+ jobs/done/deploy-dca-design.log                    |    64 +
+ jobs/poke.log                                      |     6 +
+ research/dca_paper/out/DCA-paper.json              | 14886 +++++++++++--------
+ research/dca_paper/out/DCA-paper.md                |   182 +-
+ research/dca_paper/out/journal-2026-08-08.jsonl    |    66 +
+ research/dca_paper/out/journal-2026-08-09.jsonl    |   211 +
+ research/dca_paper/out/journal-2026-08-10.jsonl    |    45 +
+ research/dca_paper/out/journal-2026-08-11.jsonl    |    77 +
+ research/dca_paper/out/journal-2026-08-12.jsonl    |    15 +
+ research/dca_paper/out/journal-2026-08-13.jsonl    |   277 +
+ research/dca_paper/out/journal-2026-08-14.jsonl    |   145 +
+ research/dca_paper/out/journal-2026-08-15.jsonl    |   175 +
+ research/dca_paper/out/journal-2026-08-16.jsonl    |   106 +
+ research/dca_paper/out/journal-2026-08-17.jsonl    |   126 +
+ research/dca_paper/out/journal-2026-08-18.jsonl    |    72 +
+ research/dca_paper/out/journal-2026-08-19.jsonl    |   959 ++
+ research/dca_paper/out/journal-2026-08-20.01.jsonl |  2295 +++
+ research/dca_paper/out/journal-2026-08-20.jsonl    |     6 +
+ research/dca_paper/out/journal-2026-08-21.01.jsonl |  2782 ++++
+ research/dca_paper/out/journal-2026-08-21.jsonl    |   358 -
+ research/dca_paper/out/journal-2026-08-22.jsonl    |  1410 ++
+ research/dca_paper/out/journal-2026-08-23.jsonl    |   250 +
+ research/dca_paper/out/journal-2026-08-24.jsonl    |   279 +
+ research/dca_paper/out/journal-2026-08-25.jsonl    |   347 +
+ research/dca_paper/out/journal-2026-08-26.jsonl    |    26 +
+ research/dca_paper/out/journal-2026-08-27.jsonl    |    49 +
+ research/dca_paper/out/journal-2026-08-28.jsonl    |    23 +
+ research/dca_paper/out/journal-2026-08-29.jsonl    |    26 +
+ research/dca_paper/out/journal-2026-08-30.jsonl    |   147 +
+ research/dca_paper/out/journal-2026-08-31.jsonl    |    39 +
+ research/dca_paper/out/journal-2026-09-01.jsonl    |    29 +
+ research/dca_paper/out/journal-2026-09-02.jsonl    |    27 +
+ research/dca_paper/out/journal-2026-09-03.jsonl    |    48 +
+ research/dca_paper/out/journal-2026-09-05.jsonl    |     5 +
+ research/s8_loop/out/day_brake.json                |     2 +-
+ 41 files changed, 19343 insertions(+), 6604 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   1181599..1a19b49  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
