@@ -890,3 +890,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788616483 ==
 [2026-09-05T13:54:44Z] задание dca-take-deploy запущено: research/dca_paper/run_paper.py
+
+== сигнал 1788617739 ==
+[2026-09-05T14:15:41Z] задание dca-take-restart: перезапуск сборщика
