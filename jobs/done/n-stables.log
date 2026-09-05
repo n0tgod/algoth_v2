@@ -2,3 +2,14 @@
 строка: run research/probe_stables/probe.py --days 14 --tag 1m
 начало: 2026-09-05T11:30:36Z
 запускаю: .venv/bin/python research/probe_stables/probe.py --days 14 --tag 1m
+публикуется в ветку main:
+ jobs/done/n-cycle-diag.log                 |  14 +
+ research/probe_stables/out/STABLES-1m.json | 779 +++++++++++++++++++++++++++++
+ research/probe_stables/out/STABLES-1m.md   |  46 ++
+ 3 files changed, 839 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   ddcdd72..9d2a90c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+имён 745, ниже порога 4, провал (7.0, 65.05, 9.3), 6.7 с
+конец: 2026-09-05T11:30:45Z, код 0
