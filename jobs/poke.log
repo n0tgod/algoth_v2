@@ -896,3 +896,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788619132 ==
 [2026-09-05T14:38:54Z] задание chart-window: перезапуск сборщика
+
+== сигнал 1788624474 ==
+[2026-09-05T16:07:55Z] задание dca-take-line запущено: research/dca_paper/run_paper.py
