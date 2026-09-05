@@ -1235,12 +1235,19 @@ def test_cut_position_gets_a_named_reason():
     t0 = 1_700_000_000
     last = float(t0 + 2 * H)
     pr = ("sigma", 6.0)
-    a = _rec(t0, hold_h=1.0, sym="AAAUSDT")          # книга дотянулась
+    # книга кончилась ровно там, где кончились бары позиции
+    a = _rec(t0, hold_h=1.0, sym="AAAUSDT")
+    a["end_ts"] = last + 600.0
     b = _rec(t0, hold_h=1.0, sym="BBBUSDT")          # книги нет вовсе
     c = _rec(t0, hold_h=1.0, sym="CCCUSDT")          # баров не читали
-    for r in (a, b, c):
+    # книга у имени есть и ПОЗЖЕ, а в окне этой позиции её не было:
+    # `last_book` держит самую позднюю минуту символа по всему прогону,
+    # и приняв её за ответ, мы назвали бы причину, которой не было
+    e = _rec(t0, hold_h=1.0, sym="AAAUSDT")
+    e["end_ts"] = last - 600.0
+    for r in (a, b, c, e):
         r["state"] = "cut"
-    recs = {pr: [a, b, c]}
+    recs = {pr: [a, b, c, e]}
     got = TL.apply(recs, {"AAAUSDT": last, "BBBUSDT": last},
                    {"AAAUSDT": last + 600.0})
     assert a["cut_why"] == TL.CUT_BOOK_SHORT, a
@@ -1248,15 +1255,17 @@ def test_cut_position_gets_a_named_reason():
     assert b["cut_why"] == TL.CUT_NO_BOOK, b
     assert "book_end" not in b, b
     assert c["cut_why"] == TL.CUT_UNKNOWN, c
+    assert e["cut_why"] == TL.CUT_BOOK_HOLE, e
     assert got["cut_why"] == {TL.CUT_BOOK_SHORT: 1, TL.CUT_NO_BOOK: 1,
-                              TL.CUT_UNKNOWN: 1}, got
+                              TL.CUT_UNKNOWN: 1, TL.CUT_BOOK_HOLE: 1}, got
     # закрытой позиции причина не приписывается: её обрыва не было
     d = _rec(t0, hold_h=1.0, sym="AAAUSDT")
     d["state"] = "closed"
     TL.apply({pr: [d]}, {"AAAUSDT": last}, {"AAAUSDT": last})
     assert "cut_why" not in d, d
-    print("ok  причина обрыва названа: книга кончилась раньше / книги нет "
-          "вовсе / не измерена; закрытой причина не приписана")
+    print("ok  причина обрыва названа ПО ПОЗИЦИИ: книга кончилась раньше / "
+          "книги нет вовсе / книга не в окне / не измерена; закрытой "
+          "причина не приписана")
 
 
 TESTS = [test_shape_counts_positions_not_days,
@@ -1586,6 +1595,28 @@ def _control_cut_reason_is_one_for_all():
         TL.cut_reason = was
 
 
+def _control_cut_reason_by_symbol_not_position():
+    """Причина берётся ПО ИМЕНИ: книга, дотянувшаяся у соседнего окна,
+    объявляется дотянувшейся и здесь. Тогда «книга кончилась раньше
+    планового конца» стоит там, где её в окне не было вовсе."""
+    was = TL.cut_reason
+
+    def broken(r, last_tape, last_book):
+        sym = r["sym"]
+        if sym not in last_tape:
+            return TL.CUT_UNKNOWN
+        return (TL.CUT_BOOK_SHORT if sym in last_book else TL.CUT_NO_BOOK)
+    TL.cut_reason = broken
+    try:
+        try:
+            test_cut_position_gets_a_named_reason()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        TL.cut_reason = was
+
+
 CONTROLS = [("хвост не доезжает до ядра", _control_tail_never_reaches_the_core),
             ("подпись реплея не знает хвоста",
              _control_tail_out_of_the_replay_signature),
@@ -1618,7 +1649,9 @@ CONTROLS = [("хвост не доезжает до ядра", _control_tail_nev
             ("пик билета взят у пула", _control_peak_from_the_pool),
             ("состояние позиции не читается", _control_state_ignored),
             ("причина обрыва одна на всех",
-             _control_cut_reason_is_one_for_all)]
+             _control_cut_reason_is_one_for_all),
+            ("причина обрыва берётся по имени, а не по позиции",
+             _control_cut_reason_by_symbol_not_position)]
 
 
 def main():
