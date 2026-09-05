@@ -1005,6 +1005,15 @@ global.fetch = async (url) => {
              // начинается с `/dca`, и общий префикс молча уводил
              // позиции графика в свод книг — ответ выглядел исправным
              // и был не тот.
+             // Живая переоценка открытых: числа НАРОЧНО другие, чем
+             // в артефакте, — иначе «тайл обновился» неотличимо от
+             // «тайл не трогали». У второй позиции цены нет: прочерк
+             // и ноль — разные ответы.
+             : url.startsWith("/dca_marks")
+             ? {book: "safe:10000", at: T0, known: true, n: 2, priced: 1,
+                mark_usd: 1.25,
+                rows: [{sym: "SUIUSDT", mark_frac: 0.05, mark_usd: 1.25},
+                       {sym: "TIAUSDT", mark_frac: null, mark_usd: null}]}
              : url.startsWith("/dca?") || url === "/dca"
              ? dcaStub(url)
              : url.startsWith("/paper")
@@ -3328,6 +3337,35 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("DCA: неизвестное число открытых показано нулём");
     if (!/это не «открытых нет»/.test(bx))
       bad.push("DCA: список позиций не отличил «не считали» от пустоты");
+  }
+  // Открытый pnl обязан ИДТИ, а не стоять до следующего часового
+  // прогона: артефакт несёт −4.00, живой опрос даёт +1.25, и на экране
+  // обязано быть второе. Ровно это владелец и увидел — замерший тайл.
+  if (isDca && !/dcanolive=1/.test(SEARCH)) {
+    const tile = document.getElementById("dcamk");
+    const txt = tile ? tile.textContent : "";
+    if (!tile) bad.push("DCA: тайла открытого pnl нет вовсе");
+    else if (!/1\.25/.test(txt))
+      bad.push("DCA: открытый pnl не переоценён живьём: " + txt);
+    else if (/4\.00/.test(txt))
+      bad.push("DCA: на экране застывшая отметка артефакта: " + txt);
+    const at = document.getElementById("dcamkat");
+    if (!at || !/переоценено 1 из 2/.test(at.textContent || ""))
+      bad.push("DCA: доля переоценённых не названа числом: "
+               + (at ? at.textContent : "нет"));
+    // Ключ живой отметки проверяется в РАЗМЕТКЕ, а не выборкой:
+    // `querySelectorAll` у заглушки пуст, и «строка обновилась» на нём
+    // прошло бы, ничего не проверив. Тайл выше идёт через
+    // `getElementById` — там обновление настоящее.
+    const bx = flatBox();
+    if (!/data-dcaf='SUIUSDT'/.test(bx))
+      bad.push("DCA: у открытой строки нет ключа живой отметки");
+    if (!/data-dcau='SUIUSDT'/.test(bx))
+      bad.push("DCA: у открытой строки нет ключа отметки в деньгах");
+    // Оборванная записью живьём НЕ переоценивается: у неё ряд цен
+    // кончился, и живая середина ответила бы на другой вопрос.
+    if (/data-dcaf='CUTUSDT'/.test(bx))
+      bad.push("DCA: оборванная записью получила ключ живой отметки");
   }
   if (isDca && /dcastale=1/.test(SEARCH)) {
     const bx = flatBox();

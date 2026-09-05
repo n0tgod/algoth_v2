@@ -7004,6 +7004,80 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         DR.JOURNAL, DR.ARTIFACT = jp0, ap0
 
 
+def test_dca_open_pnl_is_marked_live_not_hourly():
+    """Открытый pnl DCA-книги переоценивается ЖИВОЙ серединой.
+
+    Прогон книги считает отметку по закрытию последнего бара записи и
+    кладёт её в артефакт: между часовыми прогонами она стоит, и владелец
+    видит замерший открытый pnl там, где у книг моделей он идёт. Здесь
+    проверяется дорога `Collector.dca_marks` целиком — и главное, что
+    формула ОДНА с той, которой считает книгу симуляция.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "dca_ladder"))
+    import ladder as LD
+    import rules as DR
+
+    class B:
+        def __init__(self, px):
+            self.px = px
+
+        def best(self):
+            return (self.px * 0.999, self.px * 1.001)
+
+    ap0 = DR.ARTIFACT
+    td = tempfile.mkdtemp()
+    try:
+        DR.ARTIFACT = os.path.join(td, "art.json")
+        t0 = 1_700_000_000
+        rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
+        pos = [{"sym": "AAAUSDT", "at": t0, "lev": 2.0, "margin": 25.0,
+                "avg": 2.0, "entry_px": 2.0, "depth": 2,
+                "mark_frac": -0.5, "mark_usd": -12.5,   # ЗАСТЫВШАЯ отметка
+                "fills": [[t0, 2.2, 0.25], [t0 + 60, 1.8, 0.25]]},
+               {"sym": "NOPXUSDT", "at": t0, "lev": 1.0, "margin": 25.0,
+                "avg": 5.0, "entry_px": 5.0, "depth": 1,
+                "mark_frac": 0.1, "mark_usd": 2.5,
+                "fills": [[t0, 5.0, 0.25]]}]
+        art = {"live": {f"{rk}:{dep}": {"positions": pos, "cut": [],
+                                        "mark_usd": -10.0, "priced": 2}}}
+        with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump(art, f)
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        # У первой позиции живая цена есть, у второй нет — и это разные
+        # ответы, а не одно «ноль».
+        c.books["AAAUSDT"] = B(2.4)
+        d = c.dca_marks(dep=dep, ruler=rk)
+        by = {r["sym"]: r for r in d.get("rows") or []}
+        want = LD.open_mark(2.4, 2.0, 25.0, 2.0, [0.25, 0.25])
+        check("DCA-отметка: считается живой серединой той же формулой",
+              abs(by["AAAUSDT"]["mark_frac"] - round(want, 6)) < 1e-9,
+              f"{by.get('AAAUSDT')} против {want}")
+        check("DCA-отметка: она НЕ застывшая из артефакта",
+              abs(by["AAAUSDT"]["mark_frac"] + 0.5) > 1e-6,
+              str(by.get("AAAUSDT")))
+        check("DCA-отметка: без живой цены прочерк, а не ноль",
+              by["NOPXUSDT"]["mark_frac"] is None
+              and by["NOPXUSDT"]["mark_usd"] is None,
+              str(by.get("NOPXUSDT")))
+        check("DCA-отметка: сумма только по переоценённым, число рядом",
+              d.get("priced") == 1 and d.get("n") == 2
+              and abs(d["mark_usd"] - round(want * 25.0, 2)) < 0.01,
+              str({k: d.get(k) for k in ("priced", "n", "mark_usd")}))
+        # «Не считали» и «открытых нет» — разные ответы: у книги, которой
+        # прогон не касался, `live` нет вовсе.
+        d2 = c.dca_marks(dep=dep, ruler="нетакой")
+        check("DCA-отметка: «не считали» названо, а не показано нулём",
+              d2.get("known") is False and not d2.get("rows"), str(d2))
+    finally:
+        DR.ARTIFACT = ap0
+
+
 def test_dca_trades_speak_the_language_of_the_chart():
     """Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
 
@@ -7155,6 +7229,7 @@ def main():
     test_sit_absorb_now_makes_pnl_immediate()
     test_trade_by_id_finds_across_books()
     test_dca_serves_ruler_and_deposit_as_one_book()
+    test_dca_open_pnl_is_marked_live_not_hourly()
     test_dca_trades_speak_the_language_of_the_chart()
     print("живой детектор")
     test_live_detector_agrees_with_batch()

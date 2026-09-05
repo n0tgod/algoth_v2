@@ -3505,6 +3505,82 @@ class Collector:
                 "deposit": int(dep), "rules_version": DR.RULES,
                 "situational": False, "no_timer": False}
 
+    def dca_marks(self, dep=None, ruler=None):
+        """Живая переоценка открытых позиций DCA-книги — частый опрос.
+
+        Прогон книги считает отметку по закрытию последнего бара записи
+        и кладёт её в артефакт: между часовыми прогонами она СТОИТ, и
+        владелец видит замерший открытый pnl там, где у книг моделей он
+        идёт (`model_marks`, раз в десять секунд).
+
+        Здесь та же величина считается по ЖИВОЙ середине стакана.
+        Формула одна на оба места — `ladder.open_mark`, и её тождество с
+        `pnl_frac` симуляции закреплено тестом: две формулы под одним
+        именем дали бы одно число на экране и другое в книге.
+
+        Нет живой цены — прочерк, а не ноль: ноль объявил бы позицию
+        ровной там, где переоценить нечем. Сколько позиций осталось без
+        цены, говорится числом.
+
+        Артефакт кешируется по времени файла: он весит около мегабайта,
+        а опрос идёт каждые десять секунд.
+        """
+        now = time.time()
+        root = os.path.join(os.path.dirname(HERE), "dca_paper")
+        sys.path.insert(0, root)
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE),
+                                        "dca_ladder"))
+        try:
+            import rules as DR
+            import ladder as LD
+        except Exception as e:                            # noqa: BLE001
+            return {"error": f"модуль не читается: {e}", "rows": []}
+        try:
+            mt = os.path.getmtime(DR.ARTIFACT)
+        except OSError:
+            return {"error": "артефакта нет на этой машине", "rows": []}
+        cmt, art = getattr(self, "_dca_art", (None, None))
+        if art is None or cmt != mt:
+            try:
+                with open(DR.ARTIFACT, encoding="utf-8") as f:
+                    art = json.load(f)
+            except (OSError, ValueError) as e:
+                return {"error": f"артефакт не читается: {e}", "rows": []}
+            self._dca_art = (mt, art)
+        rk = ruler or DR.DEFAULT_RULER
+        d = int(dep or DR.DEPOSITS[0])
+        cell = f"{rk}:{d}"
+        live = (art.get("live") or {}).get(cell)
+        if live is None:
+            # `None` — «не считали», пустой словарь — «считали, и
+            # открытых нет». Смешав их, страница показала бы «открытых
+            # 0» там, где просто не смотрели.
+            return {"book": cell, "at": round(now, 1), "rows": [],
+                    "known": False}
+        rows, total, priced = [], 0.0, 0
+        for q in live.get("positions") or []:
+            sym = q.get("sym")
+            bk = self.books.get(sym)
+            bid, ask = bk.best() if bk else (None, None)
+            mk = None
+            if bid and ask:
+                mk = LD.open_mark((bid + ask) / 2.0, q.get("avg"),
+                                  q.get("margin"), q.get("lev") or 1.0,
+                                  [f[2] for f in (q.get("fills") or [])])
+            row = {"sym": sym, "mark_frac": None, "mark_usd": None}
+            if mk is not None:
+                usd = mk * float(q.get("margin") or 0.0)
+                row["mark_frac"] = round(mk, 6)
+                row["mark_usd"] = round(usd, 4)
+                total += usd
+                priced += 1
+            rows.append(row)
+        return {"book": cell, "at": round(now, 1), "known": True,
+                "rows": rows, "n": len(rows), "priced": priced,
+                # Сумма — только по ПЕРЕОЦЕНЁННЫМ, и их число рядом:
+                # молчаливая сумма по части читалась бы как сумма по всем.
+                "mark_usd": (round(total, 2) if priced else None)}
+
     def dca_paper(self, dep=None, ruler=None, full=None):
         """Бумажные DCA-книги: свод из артефакта, сделки из журнала.
 

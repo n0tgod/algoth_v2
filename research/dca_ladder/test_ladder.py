@@ -652,7 +652,59 @@ def _control_fills_not_logged():
         L._fill_rungs = orig
 
 
+def test_open_mark_equals_the_simulation_pnl():
+    """Живая отметка открытой позиции — та же величина, что pnl симуляции.
+
+    Отметку считают ДВА места: часовой прогон книги (по закрытию бара) и
+    страница (по живой середине, каждые десять секунд). Формул при этом
+    обязана быть одна: разойдись они, владелец видел бы одно число, а
+    книга держала бы другое. Проверяется тождеством, а не сравнением с
+    арифметикой теста.
+    """
+    bars = [(0, 100.0, 100.0, 100.0, 100.0, 1),
+            (60, 100.0, 100.0, 94.0, 95.0, 1),
+            (120, 95.0, 95.0, 89.0, 90.0, 1),
+            (180, 90.0, 92.0, 90.0, 91.5, 1)]
+    rungs = [100.0, 95.0, 90.0, 85.0]
+    w = [0.25, 0.25, 0.25, 0.25]
+    cap, lev = 26.65, 2.0
+    r = L.simulate_dca(bars, rungs, w, cap, lev, 0.02)
+    # Симуляция дошла до конца пути: её pnl и есть отметка на цене
+    # последнего закрытия — на ней тождество и проверяется.
+    px = bars[-1][4]
+    got = L.open_mark(px, r["avg"], cap, lev,
+                      [f[2] for f in r["fills"]])
+    assert got is not None
+    assert abs(got - r["pnl_frac"]) < 1e-12, (got, r["pnl_frac"])
+    # Цена ушла вверх — отметка растёт; вниз — падает (знак, а не модуль)
+    up = L.open_mark(px * 1.01, r["avg"], cap, lev,
+                     [f[2] for f in r["fills"]])
+    dn = L.open_mark(px * 0.99, r["avg"], cap, lev,
+                     [f[2] for f in r["fills"]])
+    assert up > got > dn, (up, got, dn)
+    # Меры нет — None, а не ноль: ноль объявил бы позицию ровной
+    assert L.open_mark(px, 0.0, cap, lev, [0.25]) is None
+    assert L.open_mark(px, r["avg"], 0.0, lev, [0.25]) is None
+    print(f"ok  живая отметка = pnl симуляции ({got:+.6f}), "
+          f"и меры нет — прочерк, а не ноль")
+
+
+def _control_open_mark_forgets_leverage():
+    """Отметка считается без плеча: страница показала бы не те деньги."""
+    orig = L.open_mark
+    L.open_mark = lambda px, avg, cap, lev, wf: orig(px, avg, cap, 1.0, wf)
+    try:
+        try:
+            test_open_mark_equals_the_simulation_pnl()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        L.open_mark = orig
+
+
 TESTS = [
+    test_open_mark_equals_the_simulation_pnl,
     test_liq_price_matches_spec5_table,
     test_one_x_long_cannot_liquidate,
     test_mmr_tier_lookup,
@@ -695,7 +747,9 @@ def main():
     assert _control_track_marks_hour_open(), \
         "контроль отметки по началу часа не кусается"
     assert _control_fills_not_logged(), "контроль записи доливов не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 10 отрицательных контролей "
+    assert _control_open_mark_forgets_leverage(), \
+        "контроль плеча в живой отметке не кусается"
+    print(f"\nвсе {len(TESTS)} проверки прошли; 11 отрицательных контролей "
           f"кусаются")
 
 

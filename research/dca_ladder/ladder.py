@@ -194,6 +194,30 @@ def structural_rungs(entry, level_prices, min_gap, n_rungs):
     return rungs
 
 
+def open_mark(px, avg, capital, leverage, weights_filled):
+    """Отметка ОТКРЫТОЙ лестницы: доля капитала позиции при цене `px`.
+
+    Ровно та величина, которую симуляция зовёт `pnl_frac`, только на
+    живой цене вместо закрытия последнего бара:
+
+        qty = cash / avg,  cash = capital · leverage · Σw
+        pnl = qty · (px − avg) / capital = cash/capital · (px/avg − 1)
+
+    Живёт в ядре и проверена ТОЖДЕСТВОМ с `simulate_dca` не ради
+    красоты: отметка открытой позиции считается в двух местах — часовым
+    прогоном (по бару) и страницей (по живой середине), — и две формулы
+    под одним именем однажды разошлись бы. Тогда владелец видел бы одно
+    число, а книга держала бы другое.
+
+    `avg` или капитал не положительны — меры нет (`None`), а не ноль:
+    ноль объявил бы позицию ровной там, где переоценить нечем.
+    """
+    if not avg or avg <= 0 or not capital or capital <= 0:
+        return None
+    cash = float(capital) * float(leverage) * sum(weights_filled)
+    return cash / float(capital) * (float(px) / float(avg) - 1.0)
+
+
 def _fill_rungs(filled, cash, qty, lo, rung_prices, weights, notional,
                 log=None, bt=None):
     """Заполнить рунги долива вниз, до которых опустился минимум бара `lo`.

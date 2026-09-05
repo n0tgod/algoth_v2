@@ -6130,6 +6130,13 @@ function tsq(t){ return t == null ? "&mdash;"
 // умножение россыпью по вызовам однажды забылось бы в одном из них.
 function fpct(v){ return v == null ? "\u2014" : pct(Number(v) * 1e4); }
 let DATA = null, DEP = null, RUL = null, GRP = "all";
+// Цвет величины — одно объявление на страницу: тайл открытого pnl
+// красится и при отрисовке, и при живой переоценке, и две копии
+// правила однажды разошлись бы.
+const cls = v => v == null ? "" : (v > 0 ? "good" : (v < 0 ? "bad" : ""));
+// Часы:минуты метки отметки — по UTC, как все времена страницы.
+const hhmm = t => !t ? "" :
+  new Date(t * 1000).toISOString().slice(11, 16) + " UTC";
 // Состояние ПОКАЗА списка позиций. Оно живёт здесь, а не в разметке:
 // страница перерисовывается раз в минуту, и выбор, живущий в DOM,
 // сбрасывался бы сам (тот же урок, что разворот позиции).
@@ -6304,7 +6311,6 @@ function statBlock(st, dep, title, op, grp){
     "</div><p class=dim>Строк ещё нет. У книги это не пустота показа: " +
     "решение попадает в журнал только после того, как его позиция " +
     "закрылась.</p></div>";
-  const cls = v => v == null ? "" : (v > 0 ? "good" : (v < 0 ? "bad" : ""));
   let h = "<div class=panel><div class=cap>" + esc(title) +
     " <span class='tag " + (grp === "fwd" ? "fwd" : "") + "'>" +
     esc(grp === "fwd" ? "наблюдение" : "общий счёт") + "</span></div>";
@@ -6351,9 +6357,14 @@ function statBlock(st, dep, title, op, grp){
     const cut = kn && op.cut ? op.cut.length : null;
     h += "<div class=st><div class=k>открытых позиций</div>" +
       "<div class='v mono'>" + (kn ? n : "&mdash;") + "</div></div>";
+    // Отметка ЖИВАЯ: тайл обновляется опросом `/dca_marks` раз в
+    // десять секунд, как у книг моделей. Число из артефакта — то, что
+    // посчитал часовой прогон; между прогонами оно стояло, и владелец
+    // видел замерший открытый pnl.
     h += "<div class=st><div class=k>открытый pnl</div>" +
-      "<div class='v mono " + (kn ? cls(op.mark_usd) : "") + "'>" +
-      (kn ? usd(op.mark_usd) : "&mdash;") + "</div></div>";
+      "<div class='v mono " + (kn ? cls(op.mark_usd) : "") +
+      "' id=dcamk>" + (kn ? usd(op.mark_usd) : "&mdash;") + "</div>" +
+      "<div class=k id=dcamkat></div></div>";
     // Худшая ОТКРЫТАЯ — просадка, которую книга несёт прямо сейчас.
     // Считает сервер (`rules.open_stats`): страница печатает её дважды,
     // и вторая арифметика разошлась бы с первой.
@@ -6616,8 +6627,16 @@ function posBlock(b, grp){
         Number(r.avg).toPrecision(6)) +
       "<td class=mono>" + (live || r.exit_px == null ? "&mdash;" :
         Number(r.exit_px).toPrecision(6)) +
-      "<td class='mono " + c + "'>" + fpct(frac) +
-      "<td class='mono " + c + "'>" + usd(money) +
+      // Открытая переоценивается живьём: ключ ячейки — имя позиции
+      // (одна на имя в книге, `ONE_PER_NAME`). Оборванная записью
+      // ключа не получает: у неё ряд цен кончился, и живая середина
+      // ответила бы на другой вопрос.
+      "<td class='mono " + c + "'" +
+      (r.st === "open" ? " data-dcaf='" + esc(r.sym) + "'" : "") + ">" +
+      fpct(frac) +
+      "<td class='mono " + c + "'" +
+      (r.st === "open" ? " data-dcau='" + esc(r.sym) + "'" : "") + ">" +
+      usd(money) +
       (live ? " <span class=tag>отметка</span>" : "") +
       "<td>" + (r.st === "cut" ? "<span class=dim>оборвана записью</span>"
         : (r.st === "open" ? "открыта" : esc(r.exit || ""))) +
@@ -6792,8 +6811,52 @@ function load(){
     .catch(() => { DATA = {present: false, why:
       "сборщик не отвечает &mdash; это не «книг нет»"}; render(); });
 }
+// Полный свод — раз в минуту, отметка открытых — раз в десять секунд.
+// Тянуть весь свод чаще значит повторить ошибку тяжёлого ответа на
+// частом опросе; а не тянуть отметку вовсе — то, из-за чего открытый
+// pnl стоял между часовыми прогонами книги.
+async function dcaMarks(){
+  let d;
+  try {
+    const r = await fetch("/dca_marks?k=" + encodeURIComponent(KEY)
+      + "&ruler=" + encodeURIComponent(RUL)
+      + "&dep=" + encodeURIComponent(DEP));
+    d = await r.json();
+  } catch (e) { return; }
+  if (!d || d.known === false || d.error) return;
+  const by = {};
+  for (const m of d.rows || []) by[m.sym] = m;
+  document.querySelectorAll("[data-dcaf]").forEach(td => {
+    const m = by[td.dataset.dcaf];
+    if (!m) return;
+    // Нет живой цены — прочерк, а не ноль: ноль объявил бы позицию
+    // ровной там, где переоценить нечем.
+    td.textContent = m.mark_frac == null ? "\u2014" : fpct(m.mark_frac);
+    td.className = "mono " + (m.mark_frac == null ? "" : cls(m.mark_frac));
+  });
+  document.querySelectorAll("[data-dcau]").forEach(td => {
+    const m = by[td.dataset.dcau];
+    if (!m) return;
+    td.textContent = m.mark_usd == null ? "\u2014" : usd(m.mark_usd);
+    td.className = "mono " + (m.mark_usd == null ? "" : cls(m.mark_usd));
+  });
+  const t = document.getElementById("dcamk");
+  if (t && d.mark_usd != null){
+    t.textContent = usd(d.mark_usd);
+    t.className = "v mono " + cls(d.mark_usd);
+  } else if (t && d.priced === 0) {
+    t.textContent = "\u2014";
+  }
+  const a = document.getElementById("dcamkat");
+  // Сумма — только по переоценённым, и их число стоит рядом: молчаливая
+  // сумма по части читалась бы как сумма по всем позициям.
+  if (a) a.textContent = d.n == null ? "" :
+    ("переоценено " + d.priced + " из " + d.n + " \u00b7 " + hhmm(d.at));
+}
 load();
 setInterval(load, 60000);
+dcaMarks();
+setInterval(dcaMarks, 10000);
 </script>
 """
 
@@ -11020,6 +11083,15 @@ def serve(collector, port, token, log):
                     collector.dca_paper(q.get("dep", [None])[0],
                                         q.get("ruler", [None])[0],
                                         q.get("full", [None])[0]),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/dca_marks":
+                # Частый опрос: только переоценка открытых, по живой
+                # середине. Полный свод весит на порядок больше и
+                # ходит раз в минуту — тот же урок, что у `model_marks`.
+                return self._ok(json.dumps(
+                    collector.dca_marks(q.get("dep", [None])[0],
+                                        q.get("ruler", [None])[0]),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/dca_trades":
