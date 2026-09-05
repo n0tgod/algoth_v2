@@ -19,3 +19,13 @@ BrokenPipeError: [Errno 32] Broken pipe
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/tail-deploy.done |  1 +
+ jobs/done/tail-deploy.log  | 21 +++++++++++++++++++++
+ jobs/done/tailcycle.log    | 11 +++++++++++
+ jobs/poke.log              |  3 +++
+ 4 files changed, 36 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   c2be770..3bc9314  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
