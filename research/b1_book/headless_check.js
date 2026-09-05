@@ -1487,10 +1487,19 @@ global.fetch = async (url) => {
                         // окно графика в 24 ч не связывает вовсе, и
                         // проверка «окно идёт за сделкой» прошла бы на
                         // зашитой константе.
-                        opened_at: /dcalong=1/.test(SEARCH)
-                          ? T0 - 70 * 3600 : T0 - 7200,
-                        closes_at: T0 - 3600,
-                        entry_px: 64715.0, exit_px: 64718.0,
+                        opened_at: /dcaopen=1/.test(SEARCH)
+                          ? T0 - 30 * 3600
+                          : /dcalong=1/.test(SEARCH)
+                            ? T0 - 70 * 3600 : T0 - 7200,
+                        // ОТКРЫТАЯ позиция: конца нет вовсе. Окно
+                        // графика у такой сделки кончается «сейчас», и
+                        // прежде оно схлопывалось в сутки — вход
+                        // старше суток уезжал за левый край.
+                        closes_at: /dcaopen=1/.test(SEARCH)
+                          ? null : T0 - 3600,
+                        entry_px: 64715.0,
+                        exit_px: /dcaopen=1/.test(SEARCH)
+                          ? null : 64718.0,
                         avg: 64698.5, lots: 2,
                         walk: dcaw(60.0,
                           [{at: T0 - 7200, px: 64715.0, w: 0.25,
@@ -1506,8 +1515,13 @@ global.fetch = async (url) => {
                         adds: [{at: T0 - 6000, px: 64682.0, size: 15.0,
                                 qty: 15.0 / 64682.0, share: 0.25,
                                 hour: "2026-08-03-14"}],
-                        exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
-                        lev: 2.4, state: "закрыта", exit: "тейк",
+                        exits: [],
+                        net_bp: /dcaopen=1/.test(SEARCH) ? null : 328.0,
+                        pnl: /dcaopen=1/.test(SEARCH) ? null : 8.2,
+                        size: 25.0, lev: 2.4,
+                        state: /dcaopen=1/.test(SEARCH)
+                          ? "открыта" : "закрыта",
+                        exit: /dcaopen=1/.test(SEARCH) ? null : "тейк",
                         depth: 2, bt: true},
                        // Позиция БЕЗ доливов: плавающей ТВХ у неё нет, и
                        // линия входа обязана остаться — иначе уровень
@@ -2059,6 +2073,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "\nglobal.__st = typeof ST !== 'undefined' ? ST : null;"
                 + "\nglobal.__cands = typeof cands === 'function' "
                 + "? cands : null;"
+                // Видимое окно графика: подгонка под сделку живёт в
+                // нём, и «свечи пришли» её не доказывает — вид мог
+                // остаться на хвосте ряда.
+                + "\nglobal.__view = () => typeof view !== 'undefined' "
+                + "? view : null;"
                 + "\nglobal.__rec = typeof pullRec === 'function' "
                 + "? pullRec : null;"
                 + "\nglobal.__REC = typeof REC !== 'undefined' ? REC : null;"
@@ -5080,6 +5099,14 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push(`окно не накрывает 70-часовую позицию: ${long_} ч`);
     if (short_ !== 24)
       bad.push(`у короткой сделки окно не осталось суточным: ${short_} ч`);
+    // У ОТКРЫТОЙ позиции конца нет, и подставлять вместо него вход
+    // нельзя: окно схлопывалось в получас, падало на умолчание в
+    // сутки, и позиция, открытая тридцать часов назад, теряла вход за
+    // левым краем — ровно то, что владелец увидел на ARKUSDT.
+    const open_ = global.__focusHours({opened_at: T0 - 30 * 3600,
+                                       closes_at: null});
+    if (!(open_ >= 31))
+      bad.push(`окно не накрывает открытую позицию 30 ч: ${open_} ч`);
     const asked = seen.filter(u => u.startsWith("/candles"))
       .map(u => (/[?&]hours=(\d+)/.exec(u) || [])[1]).filter(Boolean);
     if (!asked.length) bad.push("график не назвал окно свечей (hours=)");
@@ -5097,6 +5124,28 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     else if (c[0][0] > t.opened_at)
       bad.push("вход длинной позиции остался за левым краем: свечи с "
                + c[0][0] + ", вход " + t.opened_at);
+  }
+  // Открытая позиция: и свечи, и ВИД обязаны доставать до входа.
+  // Свечи — потому что окно кончается «сейчас», а не входом; вид —
+  // потому что подгонка срабатывала только при метке конца, которой у
+  // открытой нет, и график оставался на хвосте ряда.
+  if (isChart && /dcaopen=1/.test(SEARCH) && global.__focused
+      && global.__cands && global.__view) {
+    const t = global.__focused(), c = global.__cands(), v = global.__view();
+    if (!t) bad.push("открытая позиция DCA не найдена");
+    else if (t.closes_at)
+      bad.push("фикстура: позиция не открыта — правило не проверено");
+    else if (!c.length) bad.push("свечей открытой позиции нет вовсе");
+    else if (c[0][0] > t.opened_at)
+      bad.push("вход открытой позиции остался за левым краем свечей: "
+               + "свечи с " + c[0][0] + ", вход " + t.opened_at);
+    else if (!v || !c[v.i0] || c[v.i0][0] > t.opened_at)
+      bad.push("вид открытой позиции не дотянут до входа: левый бар "
+               + (v && c[v.i0] ? c[v.i0][0] : "нет") + ", вход "
+               + t.opened_at);
+    else if (v.i0 + v.n < c.length - 1)
+      bad.push("вид открытой позиции обрывается раньше последней свечи: "
+               + (v.i0 + v.n) + " из " + c.length);
   }
   // Упёрлись в потолок окна — причина называется СВОЯ. Прежде страница
   // при любом промахе входа говорила «запись началась позже», то есть

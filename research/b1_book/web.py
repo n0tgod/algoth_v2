@@ -3269,7 +3269,15 @@ const FOCUS_PAD_S = 1800;
 function focusHours(tr) {
   const t = tr === undefined ? focused() : tr;
   if (!t || !t.opened_at) return 24;
-  const end = (t.closes_at || t.opened_at) + FOCUS_PAD_S;
+  // У ОТКРЫТОЙ позиции конца нет, и брать вместо него вход нельзя:
+  // окно схлопывалось в получас, падало на умолчание в 24 ч, а
+  // `focusEnd` у такой сделки отдаёт 0, то есть сервер берёт последние
+  // часы. Позиция, открытая сутки назад, оказывалась левее края —
+  // ровно то, что владелец увидел на ARKUSDT. Конец открытой — «сейчас»
+  // (часы сборщика, если он отвечает; иначе часы браузера).
+  const end = t.closes_at
+    ? t.closes_at + FOCUS_PAD_S
+    : (ST.since || Date.now() / 1000);
   const span = (end - (t.opened_at - FOCUS_PAD_S)) / 3600;
   return Math.max(24, Math.ceil(span) + 1);
 }
@@ -3418,7 +3426,18 @@ async function pullHistory(s, end) {
       HC.capped = !!h.capped; HC.max = h.max_hours || 0;
       // Окно под сделку ставится ПОСЛЕ того, как пришли её свечи:
       // раньше ставить не на чем — номера баров считаются по ряду.
-      if (want) fitFocus();
+      // У открытой позиции `want` равен нулю (конца нет), и по нему
+      // подгонка не срабатывала вовсе — вид оставался на хвосте ряда,
+      // а вход уезжал за левый край. Флаг держит подгонку разовой:
+      // окно открытой сделки растёт с часами, и без него ручной
+      // масштаб сбрасывался бы каждым новым запросом. Второе
+      // условие — ряд, выросший ВЛЕВО: первое окно приходит суточным
+      // (сделка ещё не известна), подгонка ложится на короткий ряд, и
+      // вход в него не попадает.
+      const c0 = (cands()[0] || [0])[0];
+      if (want || (focused() && (!MDL.fit || c0 < MDL.fit0))) {
+        if (fitFocus()) MDL.fit = true;
+      }
       draw();
     }
   } catch (e) { /* тихо: живые candles всё равно рисуются */ }
@@ -3476,6 +3495,11 @@ async function pullHist() {
 // поэтому.
 const ARMS = [["gbm", "ml"], ["nn", "ai"]];
 const MDL = {trades: [], at: 0, busy: false, sym: "",
+             // `fit0` — левый край ряда, на котором подгонка удалась.
+             // Ряд, выросший ВЛЕВО, означает, что подгонялись по
+             // неполным данным; выросший вправо (окно открытой сделки
+             // растёт с часами) — не означает ничего.
+             fit0: 0,
              arm: (Q.get("arm") === "nn" ? "nn" : "gbm"),
              // Просьба показать одну конкретную сделку: рука и час
              // сигнала из ссылки в таблице. `hz` — книга турнира
@@ -3570,7 +3594,7 @@ async function pullModelTrades() {
       legendLevels();
       MDL.sym = sym; MDL.at = Date.now();
       armButtons();
-      if (focused() && !MDL.fit) { MDL.fit = true; fitFocus(); }
+      if (focused() && !MDL.fit) MDL.fit = fitFocus();
       return;
     }
     // Полная история по монете, а не последние двадцать из состояния:
@@ -3622,7 +3646,7 @@ async function pullModelTrades() {
     MDL.sym = sym; MDL.at = Date.now();
     armButtons();
     // Окно графика под сделку — только когда она нашлась.
-    if (focused() && !MDL.fit) { MDL.fit = true; fitFocus(); }
+    if (focused() && !MDL.fit) MDL.fit = fitFocus();
   } catch (e) { /* тихо: следующий круг попробует снова */ }
   finally { MDL.busy = false; }
 }
@@ -3685,17 +3709,22 @@ function focusEnd() {
 }
 function fitFocus() {
   const t = focused(), c = cands();
-  if (!t || !c.length) return;
+  if (!t || !c.length) return false;
   const a = barAt(c, t.opened_at - 1800);
-  const b = barAt(c, (t.closes_at || t.opened_at) + 1800);
-  if (b <= a) return;
+  // У ОТКРЫТОЙ позиции конца нет, и подставлять вместо него сам вход
+  // нельзя: вид схлопывался в полчаса после входа и прятал всё, что
+  // позиция прожила. Правый край такой сделки — последняя свеча.
+  const b = t.closes_at ? barAt(c, t.closes_at + 1800) : c.length - 1;
+  if (b <= a) return false;
   view = {i0: a, n: Math.max(15, b - a + 1)};
+  MDL.fit0 = c[0][0];
   // Подгонка под сделку возвращает и вертикаль: её задача — показать
   // сделку целиком, а ручной сдвиг цены увёл бы её за край.
   vreset();
   follow = false;
   document.getElementById("live").setAttribute("aria-pressed", "false");
   draw();
+  return true;
 }
 
 async function pull() {
@@ -5233,8 +5262,10 @@ document.getElementById("mrows").onclick = e => {
   p.set("hour", MDL.hour);
   p.set("arm", MDL.arm);
   history.replaceState(null, "", location.pathname + "?" + p.toString());
-  MDL.fit = true;
-  fitFocus();
+  // Флаг — по ФАКТУ подгонки: свечей выбранного часа может ещё не
+  // быть, и «подогнали» при пустом ряде запирало бы вторую попытку
+  // после их прихода (у открытой позиции она единственная).
+  MDL.fit = fitFocus();
   mrows();
 };
 
