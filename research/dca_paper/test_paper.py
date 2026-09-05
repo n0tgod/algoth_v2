@@ -646,8 +646,9 @@ def _cache_run(cache_seed, legs, td):
     """
     seen = {}
 
-    def fake_legs(limit=None, log=print):
-        return list(legs)
+    def fake_legs(limit=None, log=print, side=None):
+        return [g for g in legs
+                if side is None or (g.get("side") or "long") == side]
 
     def fake_collect(rulers=None, legs=None, only=None, **kw):
         # источник баров запоминается: правило хвоста можно проверить
@@ -1441,7 +1442,170 @@ def test_contracts_walk_matches_the_simulation():
     assert R.notional_of({"margin": 0.0, "lev": 4.0}) is None
 
 
-TESTS = [test_shape_counts_positions_not_days,
+# ------------------------------------------------- зеркальные короткие книги
+
+
+def test_short_books_are_declared_as_a_mirror():
+    """Реестр несёт шесть книг, и у коротких сторона объявлена полем."""
+    assert len(R.RULER_ORDER) == 6, R.RULER_ORDER
+    longs = [k for k in R.RULER_ORDER if R.side_of(k) == "long"]
+    shorts = [k for k in R.RULER_ORDER if R.side_of(k) == "short"]
+    assert len(longs) == 3 and len(shorts) == 3, (longs, shorts)
+    for k in longs:
+        # Зеркало отличается СТОРОНОЙ и ничем больше: правило и параметр
+        # обязаны совпасть, иначе книги различались бы двумя правилами и
+        # разницу нельзя было бы приписать стороне.
+        a, b = R.RULERS[k], R.RULERS[k + "_s"]
+        assert (a["rule"], a["param"]) == (b["rule"], b["param"]), (k, a, b)
+        assert R.min_lev_of(k) == R.min_lev_of(k + "_s"), k
+    # Ключ без записи в реестре — длинный: до 2026-09-05 других не было.
+    assert R.side_of("нет такой книги") == "long"
+    print(f"ok  реестр: длинных {len(longs)}, коротких {len(shorts)}; "
+          f"зеркало отличается только стороной")
+
+
+def test_take_rule_mirrors_the_promise_side():
+    """Цель шорта берётся у обещания ВНИЗ; лонг считается прежним числом."""
+    was = R.take_rule(120.0)                       # лонг: обещание вверх
+    assert was and abs(was["frac"] - 0.012 * R.TAKE_MULT) < 1e-12, was
+    assert R.take_rule(120.0, "long") == was       # сторона по умолчанию
+    # у шорта обещание в пользу — ход цены ВНИЗ, то есть отрицательное
+    sh = R.take_rule(-120.0, "short")
+    assert sh and abs(sh["frac"] - was["frac"]) < 1e-12, (sh, was)
+    # обещание не той стороны цели не даёт вовсе — это отсутствие меры
+    assert R.take_rule(120.0, "short") is None
+    assert R.take_rule(-120.0) is None
+    print(f"ok  цель: лонг {was['frac']:.4f} вверх, шорт "
+          f"{sh['frac']:.4f} вниз; обещание не той стороны — не цель")
+
+
+def test_short_legs_go_only_into_short_books():
+    """Нога идёт в книгу СВОЕЙ стороны, и обе стороны считаются одним проходом.
+
+    Проверяется дорога целиком (`collect_recs`), а не правило отдельно:
+    сторона живёт в ключе линейки и в самой ноге, и разъехаться они
+    могут только на этом стыке.
+    """
+    import run_d6 as D6m
+    seen = []
+
+    def fake_one(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
+        seen.append(((g.get("side") or "long"), rule, param))
+        return dict(_rec(g["at"], sym=g["sym"]), side=g.get("side") or "long")
+
+    class Src:
+        def bars(self, sym, a, b):
+            return [(float(a), 100.0, 100.0, 100.0, 100.0, 1.0)]
+
+    legs = [{"sym": "AAAUSDT", "at": T0, "side": "long", "fwd": 100.0,
+             "rr": 3.0, "fav": 100.0, "adv_q": -50.0},
+            {"sym": "BBBUSDT", "at": T0, "side": "short", "fwd": -100.0,
+             "rr": 3.0, "fav": -100.0, "adv_q": 50.0}]
+    op, ti = D6m.one_position, D6m.D2.instruments_tiers
+    try:
+        D6m.one_position = fake_one
+        D6m.D2.instruments_tiers = lambda: {}
+        got = D6m.collect_recs(rulers=[("depth", 2.0, "long"),
+                                       ("depth", 2.0, "short")],
+                               legs=legs, src=Src(), log=lambda *a: None)
+    finally:
+        D6m.one_position, D6m.D2.instruments_tiers = op, ti
+    assert seen == [("long", "depth", 2.0), ("short", "depth", 2.0)], seen
+    assert len(got["recs"][("depth", 2.0, "long")]) == 1
+    assert len(got["recs"][("depth", 2.0, "short")]) == 1
+    assert got["recs"][("depth", 2.0, "long")][0]["sym"] == "AAAUSDT"
+    assert got["recs"][("depth", 2.0, "short")][0]["sym"] == "BBBUSDT"
+    print("ok  нога идёт только в книгу своей стороны; проход один на обе")
+
+
+def test_replay_cache_asks_only_for_its_own_side():
+    """Кэш спрашивают парой СВОЕЙ стороны — иначе пересчёт вечен.
+
+    Дефект был бы молчаливым: у длинной ноги короткой пары в кэше нет
+    никогда, и прогон объявлял бы её непосчитанной каждый час — полный
+    пересчёт всей записи под видом инкрементального.
+    """
+    pairs = [("depth", 2.0, "long"), ("depth", 2.0, "short")]
+    legs = [{"sym": "AAAUSDT", "at": T0, "side": "long"},
+            {"sym": "BBBUSDT", "at": T0, "side": "short"}]
+    cache = {(pairs[0], "AAAUSDT", round(float(T0), 3)):
+             {"state": "closed"},
+             (pairs[1], "BBBUSDT", round(float(T0), 3)):
+             {"state": "closed"}}
+    assert P.needs_replay(cache, legs, pairs) == [], "закрытые не пересчитываются"
+    cache.pop((pairs[1], "BBBUSDT", round(float(T0), 3)))
+    need = P.needs_replay(cache, legs, pairs)
+    assert [g["sym"] for g in need] == ["BBBUSDT"], need
+    print("ok  кэш спрашивают своей стороной: пересчёт только у шорта")
+
+
+def _smooth_rows(pairs, mode="optimal", dep=10000.0):
+    """Журнал из пар «(деньги лонга, деньги шорта)» по суткам."""
+    rows = []
+    for i, (a, b) in enumerate(pairs):
+        t = T0 + i * 24 * H
+        for rk, usd in ((mode, a), (mode + "_s", b)):
+            rows.append({"dep": int(dep), "ruler": rk, "rules": R.RULES,
+                         "at": float(t), "exit_ts": float(t + H),
+                         "sym": f"S{i}USDT", "usd": float(usd),
+                         "written_at": float(t + H) + 1.0,
+                         "fills": [[float(t), 100.0, 1.0]]})
+    return rows
+
+
+def test_smoothing_finds_it_and_stays_silent_without_it():
+    """Калибровка меры: находит сглаживание и молчит на его отсутствии.
+
+    Пара обязательна. Без первой половины «сглаживания нет» неотличимо
+    от сломанной загрузки — этот класс отказа в проекте уже дважды
+    печатал нулевой отчёт как результат. Без второй мера объявляла бы
+    сглаживанием любую вторую книгу.
+    """
+    import smoothing as SM
+    # ВРОЗЬ: короткая зарабатывает ровно в те сутки, когда длинная теряет
+    anti = [(+100.0, -20.0), (-80.0, +90.0), (+60.0, -10.0),
+            (-70.0, +85.0), (+90.0, -15.0), (-60.0, +75.0)]
+    c = SM.cell(_smooth_rows(anti), "optimal", 10000.0)
+    assert c["corr"] is not None and c["corr"] < -0.5, c["corr"]
+    assert c["smoother"] is True, c
+    # ВМЕСТЕ: обе книги теряют и зарабатывают в одни сутки
+    co = [(a, a / 4.0) for a, _b in anti]
+    c2 = SM.cell(_smooth_rows(co), "optimal", 10000.0)
+    assert c2["corr"] is not None and c2["corr"] > 0.9, c2["corr"]
+    assert c2["smoother"] is False, c2
+    # Одной стороны нет вовсе — это «мерить нечем», а не «не сглаживает»
+    only = [r for r in _smooth_rows(anti) if not r["ruler"].endswith("_s")]
+    c3 = SM.cell(only, "optimal", 10000.0)
+    assert c3.get("why") and "smoother" not in c3, c3
+    print(f"ok  сглаживание: врозь {c['corr']:+.2f} → да, вместе "
+          f"{c2['corr']:+.2f} → нет, одной стороны нет → мерить нечем")
+
+
+def test_smoothing_splits_the_capital_of_two_books():
+    """У пары книг капитал ВДВОЕ: их проценты не складываются в один.
+
+    Иначе паре приписывалась бы доходность, которой у неё нет: две книги
+    по $10 тыс. рядом — это $20 тыс. занятых, а не десять.
+    """
+    import smoothing as SM
+    rows = _smooth_rows([(+100.0, +100.0)] * 4)
+    c = SM.cell(rows, "optimal", 10000.0)
+    assert abs(c["long"]["usd"] - 400.0) < 1e-6, c["long"]["usd"]
+    assert abs(c["both"]["usd"] - 800.0) < 1e-6, c["both"]["usd"]
+    # доля обеих = 800 / 20000, а НЕ 800 / 10000
+    assert abs(c["both"]["final"] - 0.04) < 1e-9, c["both"]["final"]
+    assert abs(c["long"]["final"] - 0.04) < 1e-9, c["long"]["final"]
+    print(f"ok  капитал пары вдвое: обе +{c['both']['usd']:.0f} $ = "
+          f"{c['both']['final']*100:.1f} % от $20 тыс.")
+
+
+TESTS = [test_smoothing_finds_it_and_stays_silent_without_it,
+         test_smoothing_splits_the_capital_of_two_books,
+         test_short_books_are_declared_as_a_mirror,
+         test_take_rule_mirrors_the_promise_side,
+         test_short_legs_go_only_into_short_books,
+         test_replay_cache_asks_only_for_its_own_side,
+         test_shape_counts_positions_not_days,
     test_contracts_walk_matches_the_simulation,
          test_journal_rotates_by_day_and_reader_takes_every_part,
          test_worst_open_is_measured_and_missing_is_not_zero,

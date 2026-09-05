@@ -140,6 +140,11 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     сроком. Один проход отвечает на все сроки; проход на каждый срок
     считал бы то же самое заново.
     """
+    # Сторону несёт САМА нога (`legs_from_sheets` размечает её знаком
+    # прогноза, как живой сканер). Отдельным параметром её брать нельзя:
+    # тогда вызывающий мог бы посчитать длинную ногу по короткому
+    # правилу, и запись не выдала бы этого ничем.
+    side = g.get("side") or "long"
     hold_h = D2.HOLD_H if hold_h is None else float(hold_h)
     rs = D2.split_window(bars, ts, g["at"], D2.BACK_H, hold_h)
     if rs is None:
@@ -153,27 +158,36 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     # расстояние в долях обещания. Гейт остался прежним по существу:
     # `take_px > вход` означало ровно `fav > 0`, и `take_rule` возвращает
     # None на том же условии — состав позиций правкой не тронут.
-    take = R_BOOK.take_rule(g["fav"])
+    take = R_BOOK.take_rule(g["fav"], side)
     stop_px = entry * (1 + g["adv_q"] / 1e4)
-    if not (take and 0 < stop_px < entry):
+    # Стоп обязан стоять ПРОТИВ позиции: у лонга ниже входа, у шорта
+    # выше. Проверка зеркальна, а не снята: обещание не той стороны —
+    # это отсутствие меры, и такую ногу книга не берёт вовсе.
+    ok_stop = (0 < stop_px < entry) if side == "long" else (stop_px > entry)
+    if not (take and ok_stop):
         return None
     lv = D2.build_levels(win, now_i)
     rungs_full = D2.structural_rungs(entry, list(lv), D2.MIN_ADD_GAP,
-                                     D2.N_RUNGS)
+                                     D2.N_RUNGS, side=side)
     sigma_bp, _r, _t = D3.window_stats(win, now_i)
     lev, rungs, _binder = D5.fence_leverage(rule, param, entry, rungs_full,
-                                            look, sigma_bp)
+                                            look, sigma_bp, side=side)
     cps = ([float(g["at"]) + float(h) * HOUR for h in ckpt_h]
            if ckpt_h else None)
     r = L.simulate_dca(hold, rungs, D2.WEIGHTS[:len(rungs)], 1.0, lev,
                        look(1.0 * lev), take_rule=take,
                        floor_frac=D2.FLOOR_FRAC, track=True,
-                       checkpoints=cps)
+                       checkpoints=cps, side=side)
     marks, prev = [], 0.0
     for (hr, _cash, pnl) in r["track"]:
         marks.append((hr, pnl - prev))     # приращение отметки за час
         prev = pnl
     out = {"at": float(g["at"]), "exit_ts": float(r["exit_ts"]),
+           # Сторона едет в ЗАПИСЬ: без неё позицию потом не переоценить
+           # (знак хода зеркален) и не отличить короткую книгу от длинной
+           # в общем журнале. Отсутствие поля читается как лонг — все
+           # записи до этой правки длинные по построению.
+           "side": side,
            "pnl": float(r["pnl_frac"]), "lev": float(lev),
            "fwd": abs(float(g["fwd"])), "sym": g["sym"],
            # Обещание модели СЫРЫМ числом: из него выводится доля цели
@@ -533,15 +547,20 @@ def coverage_curve(recs, peak, deps, ticket=None,
     return out
 
 
-def gated_legs(limit=None, log=print):
-    """Гейтованные лонги журнала листов — БЕЗ реплея по барам.
+def gated_legs(limit=None, log=print, side="long"):
+    """Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+
+    `side=None` — обе стороны разом: зеркальным коротким книгам нужны
+    свои ноги, а бары читаются ПО СИМВОЛУ, и второй проход по тем же
+    файлам стоил бы столько же, сколько первый. Сторону каждой ноги
+    несёт она сама, и реплей берёт её оттуда.
 
     Вынесено из `collect_recs`, потому что инкрементальному прогону надо
     знать, какие решения ВООБЩЕ есть, прежде чем решать, какие из них
     считать заново. Чтение журнала листов дёшево, чтение баров — нет.
     """
     legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
-    longs = [g for g in legs if g["side"] == "long"
+    longs = [g for g in legs if (side is None or g["side"] == side)
              and abs(g["fwd"]) >= D2.MIN_EDGE_BP
              and (g["rr"] or 0) >= D2.MIN_RR]
     return longs[:limit] if limit else longs
@@ -573,7 +592,9 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
     for g in longs:
         by_sym.setdefault(g["sym"], []).append(g)
     win = window(longs)
-    log(f"лонгов под гейтом {len(longs)}, символов {len(by_sym)}")
+    n_s = sum(1 for g in longs if (g.get("side") or "long") == "short")
+    log(f"ног под гейтом {len(longs)} (шортов {n_s}), "
+        f"символов {len(by_sym)}")
     if win:
         log(f"окно решений {win['from']} … {win['to']} UTC "
             f"({win['span_d']:g} суток, дат {win['dates']})")
@@ -598,7 +619,16 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
         look = lambda notl: L.mmr_for_notional(tiers, notl, flat=D2.FLAT_MMR)
         for g in glist:
             got = 0
+            g_side = g.get("side") or "long"
             for k in rulers:
+                # Ключ линейки несёт СТОРОНУ третьим полем (зеркальные
+                # короткие книги). Нога чужой стороны в такую линейку не
+                # идёт вовсе: ключ без стороны — длинный, как все записи
+                # до правки. Пропуск здесь, а не в отборе ног, потому что
+                # бары читаются по СИМВОЛУ и делить проход по сторонам
+                # значило бы читать одни файлы дважды.
+                if (k[2] if len(k) > 2 else "long") != g_side:
+                    continue
                 r = one_position(g, bars, ts, look, k[0], k[1],
                                  hold_h=hold_h, ckpt_h=ckpt_h)
                 if r is not None:

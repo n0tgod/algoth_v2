@@ -904,6 +904,156 @@ def test_take_px_and_take_rule_together_are_refused():
     raise AssertionError("два уровня разом приняты молча")
 
 
+# ------------------------------------------------- зеркало короткой стороны
+# Правка стороны опасна ровно тем, что может незаметно сдвинуть числа
+# ДЛИННЫХ книг: у них уже есть записанная история, и «другая мера» под тем
+# же именем — худшее, что может случиться. Поэтому проверок две породы:
+# зеркало считает то, что должно, И лонг не шелохнулся.
+
+
+def test_short_take_fills_below_entry():
+    """Тейк шорта стоит НИЖЕ входа и исполняется низом бара по уровню."""
+    rungs = [100.0, 110.0, 120.0]          # доливы ВВЕРХ
+    w = [1/3, 1/3, 1/3]
+    # Низ второго бара стоит ВЫШЕ обоих доливов (115): по правилу лонга
+    # («рунг не ниже низа бара») лестница не набралась бы вовсе, и только
+    # верх (125) её набирает. Фикстура нарочно такая — иначе проверка
+    # прошла бы и на неверном правиле заполнения.
+    closes = [100.0, 120.0, 94.0]
+    lows = [100.0, 115.0, 94.0]
+    highs = [100.0, 125.0, 120.0]
+    r = L.simulate_dca(_bars(closes, lows, highs, entry=100.0), rungs, w,
+                       capital=1.0, leverage=2.0, mmr=MMR, take_px=96.0,
+                       side="short")
+    assert r["exit"] == "тейк", r["exit"]
+    assert r["depth"] == 3, r["depth"]
+    # средняя ШОРТА = потрачено/куплено, та же формула; выигрыш зеркален
+    exp = (r["filled_notional"] / r["avg"]) * (r["avg"] - 96.0)
+    assert abs(r["pnl_frac"] - exp) < 1e-9, (r["pnl_frac"], exp)
+    assert r["pnl_frac"] > 0, r["pnl_frac"]
+    print(f"ok  шорт: доливы вверх (глубина {r['depth']}), тейк ниже входа "
+          f"по 96.00, +{r['pnl_frac']*100:.1f}%")
+
+
+def test_short_rungs_need_the_price_to_rise():
+    """Лестница шорта не набирается, пока цена НЕ ВЫРОСЛА до рунгов.
+
+    Проверка отдельной фикстурой, а не внутри тейка: заполнение по
+    неверному (длинному) правилу дало бы ту же глубину и ту же среднюю,
+    только раньше по времени — то есть на пути, где цена ДО рунгов
+    доходит, дефект неразличим вовсе. Здесь цена до них не доходит, и
+    правило заполнения становится наблюдаемым.
+    """
+    rungs = [100.0, 110.0, 120.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 104.0, 94.0]
+    lows = [100.0, 99.0, 94.0]
+    highs = [100.0, 105.0, 104.0]          # ни один долив не достигнут
+    r = L.simulate_dca(_bars(closes, lows, highs, entry=100.0), rungs, w,
+                       capital=1.0, leverage=2.0, mmr=MMR, take_px=96.0,
+                       side="short")
+    assert r["exit"] == "тейк", r["exit"]
+    assert r["depth"] == 1, r["depth"]
+    assert abs(r["avg"] - 100.0) < 1e-9, r["avg"]
+    print(f"ok  шорт: рост до рунгов не дошёл → глубина {r['depth']}, "
+          f"ТВХ {r['avg']:.2f}")
+
+
+def test_short_liquidation_is_above_entry():
+    """Шорт ликвидируется ростом цены; у лонга тот же путь безобиден."""
+    rungs = [100.0, 110.0, 120.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 200.0]
+    lows = [100.0, 100.0]
+    highs = [100.0, 240.0]                 # взлёт вдвое с лишним
+    bars = _bars(closes, lows, highs, entry=100.0)
+    sh = L.simulate_dca(bars, rungs, w, capital=1.0, leverage=2.0, mmr=MMR,
+                        take_px=90.0, side="short")
+    assert sh["exit"] == "ликвидация" and sh["pnl_frac"] == -1.0, sh
+    lo_r = L.simulate_dca(bars, [100.0, 90.0, 80.0], w, capital=1.0,
+                          leverage=2.0, mmr=MMR, take_px=110.0)
+    assert lo_r["exit"] == "тейк", lo_r["exit"]
+    print("ok  шорт ликвидируется ростом; лонг на том же пути берёт тейк")
+
+
+def test_short_floor_cuts_above_entry():
+    """Пол капитуляции у шорта срабатывает СВЕРХУ и режет не в −100 %."""
+    rungs = [100.0, 110.0, 120.0]
+    w = [1/3, 1/3, 1/3]
+    closes = [100.0, 120.0, 150.0]
+    lows = [100.0, 100.0, 130.0]
+    highs = [100.0, 121.0, 158.0]
+    r = L.simulate_dca(_bars(closes, lows, highs, entry=100.0), rungs, w,
+                       capital=1.0, leverage=2.0, mmr=MMR, take_px=50.0,
+                       floor_frac=0.10, side="short")
+    assert r["exit"] == "пол", r["exit"]
+    assert -1.0 < r["pnl_frac"] < 0.0, r["pnl_frac"]
+    print(f"ok  шорт: пол сверху режет в минус, не −100 %: "
+          f"{r['pnl_frac']*100:.1f}%")
+
+
+def test_short_take_rule_walks_with_the_average():
+    """Динамический тейк шорта едет ВВЕРХ вместе с ТВХ и стоит ниже неё."""
+    rungs = [100.0, 110.0]
+    w = [0.5, 0.5]
+    # Бар 1 набирает второй рунг (ТВХ уходит вверх), бар 2 берёт цель:
+    # от входа цель была бы 95, от ТВХ (≈104.76) — ≈99.5.
+    closes = [100.0, 110.0, 99.0]
+    lows = [100.0, 100.0, 99.0]
+    highs = [100.0, 111.0, 110.0]
+    tr = {"anchor": "avg", "frac": 0.05}
+    r = L.simulate_dca(_bars(closes, lows, highs, entry=100.0), rungs, w,
+                       capital=1.0, leverage=2.0, mmr=MMR, take_rule=tr,
+                       side="short")
+    assert r["exit"] == "тейк", r["exit"]
+    assert r["depth"] == 2, r["depth"]
+    lvl = r["exit_px"]
+    assert 99.0 <= lvl <= 100.0, lvl          # от ТВХ, а не от входа
+    assert abs(lvl - r["avg"] * 0.95) < 1e-9, (lvl, r["avg"])
+    print(f"ok  шорт: цель от ТВХ {r['avg']:.2f} → {lvl:.2f} "
+          f"(от входа было бы 95.00), +{r['pnl_frac']*100:.1f}%")
+
+
+def test_short_rungs_and_fence_mirror():
+    """Уровни, σ-сетка и забор зеркальны; лонг тем же вызовом не тронут."""
+    up, d_up = L.sigma_rungs(100.0, sigma_frac=0.05, n_rungs=3,
+                             spacing_sig=2.0, side="short")
+    # Сравнение с допуском намеренно: у лонга `100·(1−0.1)` даёт ровно
+    # 90.0, у шорта `100·(1+0.1)` — 110.00000000000001. Бит в бит обязан
+    # совпадать только ЛОНГ (у него есть записанная история), зеркало
+    # обязано совпадать по величине.
+    assert all(abs(a - b) < 1e-9 for a, b in
+               zip(up, [100.0, 110.0, 120.0])), up
+    assert abs(d_up - 0.20) < 1e-9, d_up
+    dn, d_dn = L.sigma_rungs(100.0, sigma_frac=0.05, n_rungs=3,
+                             spacing_sig=2.0)
+    assert dn == [100.0, 90.0, 80.0] and abs(d_dn - 0.20) < 1e-9, (dn, d_dn)
+    lv = [80.0, 90.0, 96.0, 104.0, 112.0, 130.0]
+    rs = L.structural_rungs(100.0, lv, min_gap=0.05, n_rungs=3,
+                            side="short")
+    assert rs == [100.0, 112.0, 130.0], rs      # 104 ближе 5 % — пропущен
+    assert L.structural_rungs(100.0, lv, 0.05, 3) == [100.0, 90.0, 80.0]
+    look = lambda notl: 0.02
+    lev_s = L.max_leverage(rs, [1/3, 1/3, 1/3], 1.0, 100.0, 0.30, look,
+                           survive_mult=1.0, side="short")
+    assert lev_s > 0, lev_s
+    qty, p_avg, notl = L.fully_loaded(rs, [1/3, 1/3, 1/3], 1.0, lev_s)
+    p_liq = L.liq_price(p_avg, qty, 1.0, look(notl), "short")
+    assert p_liq >= 100.0 * (1.0 + 1.0 * 0.30) - 1e-6, (p_liq, lev_s)
+    print(f"ok  зеркало уровней и забора: σ-сетка вверх, уровни {rs}, "
+          f"плечо {lev_s:.2f}× при ликвидации {p_liq:.1f}")
+
+
+def test_short_open_mark_mirrors_the_sign():
+    """Отметка открытого шорта тождественна симуляции и зеркальна знаком."""
+    cap, lev = 25.0, 2.0
+    mk = L.open_mark(90.0, 100.0, cap, lev, [0.5], side="short")
+    assert mk is not None and mk > 0, mk
+    assert abs(mk - L.open_mark(90.0, 100.0, cap, lev, [0.5])) > 1e-9
+    assert abs(mk + L.open_mark(90.0, 100.0, cap, lev, [0.5])) < 1e-12
+    print(f"ok  отметка шорта зеркальна: падение до 90 даёт "
+          f"{mk*100:+.1f}% против {L.open_mark(90.0,100.0,cap,lev,[0.5])*100:+.1f}%")
+
 def _poison_ladder(lit, sub, fn):
     """Подделка строки ядра и прогон проверки. True — контроль кусается."""
     import importlib
@@ -958,11 +1108,11 @@ def _control_trail_arms_and_exits_in_one_bar():
     """Взвод переставлен ПЕРЕД выходом — трейл срабатывает в баре взвода."""
     return _poison_ladder(
         "            if peak is not None:\n"
-        "                stop = peak * (1.0 - trail)",
-        "            if peak is None and traded and hi >= lvl:\n"
-        "                peak = hi\n"
+        "                stop = peak * (1.0 - d * trail)",
+        "            if peak is None and traded and fav >= lvl:\n"
+        "                peak = fav\n"
         "            if peak is not None:\n"
-        "                stop = peak * (1.0 - trail)",
+        "                stop = peak * (1.0 - d * trail)",
         test_trailing_arms_then_exits_below_the_peak)
 
 
@@ -970,10 +1120,45 @@ def _control_trail_peak_grows_on_a_quote_bar():
     """Максимум трейла растёт и на минуте без единого принта."""
     return _poison_ladder(
         "                if traded:\n"
-        "                    peak = max(peak, hi)",
+        "                    peak = max(peak, fav) if side == \"long\" "
+        "else min(peak, fav)",
         "                if True:\n"
-        "                    peak = max(peak, hi)",
+        "                    peak = max(peak, fav) if side == \"long\" "
+        "else min(peak, fav)",
         test_trailing_arms_then_exits_below_the_peak)
+
+
+def _control_short_rungs_fill_by_long_rule():
+    """Доливы шорта ищут НИЗ бара — лестница вверх не набирается."""
+    return _poison_ladder(
+        '        hit = (rung_prices[j] >= lo > 0) if side == "long" else (\n'
+        '            0 < rung_prices[j] <= lo)',
+        "        hit = (rung_prices[j] >= lo > 0)",
+        test_short_rungs_need_the_price_to_rise)
+
+
+def _control_short_take_level_not_mirrored():
+    """Уровень цели считается вверх у обеих сторон."""
+    return _poison_ladder(
+        '               * (1.0 + d * float(take_rule["frac"])))',
+        '               * (1.0 + float(take_rule["frac"])))',
+        test_short_take_rule_walks_with_the_average)
+
+
+def _control_short_pnl_sign_not_mirrored():
+    """Знак исхода не зеркалится — падение цены у шорта в минус."""
+    return _poison_ladder(
+        '                         "pnl_frac": d * qty * (lvl - avg) / capital,',
+        '                         "pnl_frac": qty * (lvl - avg) / capital,',
+        test_short_take_fills_below_entry)
+
+
+def _control_short_fence_compares_downwards():
+    """Забор шорта требует ликвидации СНИЗУ — плечо выходит любым."""
+    return _poison_ladder(
+        '        return p <= target_liq if side == "long" else p >= target_liq',
+        "        return p <= target_liq",
+        test_short_rungs_and_fence_mirror)
 
 
 TESTS = [
@@ -985,6 +1170,13 @@ TESTS = [
     test_max_leverage_derived_from_fence,
     test_max_leverage_refuses_impossible_depth,
     test_sigma_rungs_descend,
+    test_short_take_fills_below_entry,
+    test_short_rungs_need_the_price_to_rise,
+    test_short_liquidation_is_above_entry,
+    test_short_floor_cuts_above_entry,
+    test_short_take_rule_walks_with_the_average,
+    test_short_rungs_and_fence_mirror,
+    test_short_open_mark_mirrors_the_sign,
     test_ladder_beats_hold_on_recovery,
     test_ladder_partial_fill,
     test_liquidation_on_gap,
@@ -1012,6 +1204,10 @@ TESTS = [
 
 
 CONTROLS = [
+    ("доливы шорта по правилу лонга", _control_short_rungs_fill_by_long_rule),
+    ("цель шорта не зеркалится", _control_short_take_level_not_mirrored),
+    ("знак исхода шорта не зеркалится", _control_short_pnl_sign_not_mirrored),
+    ("забор шорта сравнивает вниз", _control_short_fence_compares_downwards),
     ("(1−mmr) в цене ликвидации", _control_no_mmr_term),
     ("плечо не ограничено забором", _control_leverage_unbounded),
     ("ликвидация не проверяется", _control_no_liquidation_check),

@@ -105,7 +105,7 @@ def fully_loaded(rung_prices, weights, capital, leverage):
 
 
 def max_leverage(rung_prices, weights, capital, base_px, d_max,
-                 mmr_lookup, survive_mult, lev_cap=25.0):
+                 mmr_lookup, survive_mult, lev_cap=25.0, side="long"):
     """Максимальное плечо, при котором забор §5 выполняется.
 
     Забор: цена ликвидации полностью набранной лестницы ≤ базового входа,
@@ -119,13 +119,19 @@ def max_leverage(rung_prices, weights, capital, base_px, d_max,
     проходит — 0.0 (лестница такой глубины недопустима: обрезать `d_max`).
 
     Плечо ВЫВОДИТСЯ, а не назначается: двоичный поиск по [1, lev_cap].
+
+    У короткой стороны забор зеркален: ликвидация стоит ВЫШЕ входа, и
+    требование — чтобы она была не ближе `survive_mult · d_max` сверху.
+    Правило одно, знак разный; ветка лонга не тронута.
     """
-    target_liq = base_px * (1.0 - survive_mult * d_max)
+    d = 1.0 if side == "long" else -1.0
+    target_liq = base_px * (1.0 - d * survive_mult * d_max)
 
     def ok(L):
         qty, p_avg, notional = fully_loaded(rung_prices, weights, capital, L)
         mmr = mmr_lookup(notional)
-        return liq_price(p_avg, qty, capital, mmr) <= target_liq
+        p = liq_price(p_avg, qty, capital, mmr, side)
+        return p <= target_liq if side == "long" else p >= target_liq
 
     if not ok(1.0):
         return 0.0                      # даже без плеча забор нарушен
@@ -143,8 +149,8 @@ def max_leverage(rung_prices, weights, capital, base_px, d_max,
 
 # ---------------------------------------------------------- реплей позиции
 
-def sigma_rungs(base_px, sigma_frac, n_rungs, spacing_sig):
-    """Цены рунгов ВНИЗ по σ-сетке: база плюс равные шаги в единицах σ.
+def sigma_rungs(base_px, sigma_frac, n_rungs, spacing_sig, side="long"):
+    """Цены рунгов по σ-сетке: база плюс равные шаги в единицах σ.
 
     `sigma_frac` — волатильность имени долей цены (σ доходности за бар,
     накопленная на окне оценки). Рунг `i` стоит на `i · spacing_sig · σ`
@@ -152,23 +158,27 @@ def sigma_rungs(base_px, sigma_frac, n_rungs, spacing_sig):
     запасной каркас уровней и БАЗА, против которой структурные уровни T4
     судятся нулём §8.6: сначала дешёвое, потом структура.
 
-    Возвращает список цен по УБЫВАНИЮ (рунг 0 = база сверху) и `d_max` —
-    глубину самого нижнего рунга долей базы.
+    Возвращает список цен от базы ПРОЧЬ от неё (рунг 0 = база) и `d_max`
+    — глубину самого дальнего рунга долей базы. У короткой стороны сетка
+    зеркальна: рунги стоят ВЫШЕ базы, `d_max` считается тем же модулем.
     """
     if n_rungs < 1:
         raise ValueError("рунгов меньше одного")
     step = spacing_sig * sigma_frac
-    prices = [base_px * (1.0 - i * step) for i in range(n_rungs)]
+    d = 1.0 if side == "long" else -1.0
+    prices = [base_px * (1.0 - d * i * step) for i in range(n_rungs)]
     if prices[-1] <= 0:
-        raise ValueError("нижний рунг ушёл в ноль или ниже — сетка глубже 100 %")
-    d_max = (base_px - prices[-1]) / base_px
+        raise ValueError("дальний рунг ушёл в ноль или ниже — сетка глубже 100 %")
+    d_max = abs(base_px - prices[-1]) / base_px
     return prices, d_max
 
 
-def structural_rungs(entry, level_prices, min_gap, n_rungs):
-    """Цены рунгов DCA-лонга: вход плюс СТРУКТУРНЫЕ уровни ниже.
+def structural_rungs(entry, level_prices, min_gap, n_rungs, side="long"):
+    """Цены рунгов DCA: вход плюс СТРУКТУРНЫЕ уровни против позиции.
 
-    Берём уровни ниже входа, ближайший первым, каждый обязан стоять не
+    Берём уровни против позиции (лонгу — ниже входа, шорту — выше;
+    у шорта это зеркало, а не другое правило), ближайший первым,
+    каждый обязан стоять не
     ближе `min_gap` (доля цены) от предыдущего рунга — это «запас на
     дальнейший пролив» §R1 и «не дважды на одном уровне». Возвращает
     список по УБЫВАНИЮ (`rungs[0]` = вход), длиной ≤ `n_rungs`; если ни
@@ -184,17 +194,21 @@ def structural_rungs(entry, level_prices, min_gap, n_rungs):
     """
     if entry <= 0:
         return [entry]
-    below = sorted([p for p in level_prices if 0 < p < entry], reverse=True)
+    if side == "long":
+        away = sorted([p for p in level_prices if 0 < p < entry], reverse=True)
+    else:
+        away = sorted([p for p in level_prices if p > entry > 0])
     rungs = [entry]
-    for p in below:
+    for p in away:
         if len(rungs) >= n_rungs:
             break
-        if (rungs[-1] - p) / rungs[-1] >= min_gap:   # ≥min_gap ниже прошлого
+        gap = ((rungs[-1] - p) if side == "long" else (p - rungs[-1]))
+        if gap / rungs[-1] >= min_gap:   # ≥min_gap дальше прошлого рунга
             rungs.append(p)
     return rungs
 
 
-def open_mark(px, avg, capital, leverage, weights_filled):
+def open_mark(px, avg, capital, leverage, weights_filled, side="long"):
     """Отметка ОТКРЫТОЙ лестницы: доля капитала позиции при цене `px`.
 
     Ровно та величина, которую симуляция зовёт `pnl_frac`, только на
@@ -211,16 +225,20 @@ def open_mark(px, avg, capital, leverage, weights_filled):
 
     `avg` или капитал не положительны — меры нет (`None`), а не ноль:
     ноль объявил бы позицию ровной там, где переоценить нечем.
+
+    У шорта знак хода зеркален (`side="short"`) — то же тождество с
+    зеркальной симуляцией; умолчание не тронуто.
     """
     if not avg or avg <= 0 or not capital or capital <= 0:
         return None
+    d = 1.0 if side == "long" else -1.0
     cash = float(capital) * float(leverage) * sum(weights_filled)
-    return cash / float(capital) * (float(px) / float(avg) - 1.0)
+    return d * cash / float(capital) * (float(px) / float(avg) - 1.0)
 
 
 def _fill_rungs(filled, cash, qty, lo, rung_prices, weights, notional,
-                log=None, bt=None):
-    """Заполнить рунги долива вниз, до которых опустился минимум бара `lo`.
+                log=None, bt=None, side="long"):
+    """Заполнить рунги долива, до которых дошёл крайний ход бара `lo`.
 
     Одна копия логики долива на весь модуль: её зовут и потолок D1
     (`simulate_ladder`), и стратегия D2 (`simulate_dca`). Рунг `j` (цена
@@ -233,9 +251,16 @@ def _fill_rungs(filled, cash, qty, lo, rung_prices, weights, notional,
     строку, а разворачивается в свои входы, и средняя цена входа
     («плавающая ТВХ») выводится из этого же списка. Счёт от журнала не
     зависит ни на бит: список только записывает уже случившееся.
+
+    `side="short"` — зеркало: рунги стоят ВЫШЕ базы, и заполняет их верх
+    бара (аргумент `lo` тогда несёт максимум). Ветка лонга оставлена
+    дословно прежней, а не выражена через знак: правка стороны, меняющая
+    числа длинных книг, была бы другой мерой, а не зеркалом.
     """
     for j in range(1, len(rung_prices)):
-        if not filled[j] and rung_prices[j] >= lo > 0:
+        hit = (rung_prices[j] >= lo > 0) if side == "long" else (
+            0 < rung_prices[j] <= lo)
+        if not filled[j] and hit:
             filled[j] = True
             cash += weights[j] * notional
             qty += weights[j] * notional / rung_prices[j]
@@ -352,8 +377,8 @@ def simulate_single(bars, capital, leverage, mmr, take_px=None, stop_px=None,
 
 def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  take_px=None, floor_frac=None, track=False,
-                 checkpoints=None, take_rule=None):
-    """DCA-лонг на РЕАЛЬНЫХ барах: доливы вниз, тейк вверх, пол капитуляции.
+                 checkpoints=None, take_rule=None, side="long"):
+    """DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 
     Вход в `bars[0][1]` (открытие первого бара после решения, next_open) —
     это база; `rung_prices[1:]` — цены доливов ВНИЗ (структурные уровни или
@@ -416,10 +441,25 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     и на баре без принтов, как пол и ликвидация. Исход помечается
     отдельным `"трейл"`, чтобы его нельзя было спутать с тейком.
 
+    `side="short"` — ЗЕРКАЛО той же конструкции, а не другая: доливы
+    вверх, тейк вниз, ликвидация и пол сверху, трейл от достигнутого
+    минимума. Ветки лонга оставлены дословно прежними и выбираются
+    сравнением стороны, а не выражены через знак: правка, меняющая числа
+    длинных книг, была бы другой мерой. Умолчание даёт прежний счёт
+    бит в бит, и это закреплено тестом.
+
+    Асимметрия сторон при этом НЕ является дефектом зеркала и её нельзя
+    терять при чтении: у лонга убыток ограничен нулём цены, у шорта
+    сверху не ограничен ничем — шорт 1× ликвидируется удвоением цены
+    (`liq_price`), а F-серия намерила ноги, терявшие 475–590 % позиции.
+    Значит одинаковые правила дают РАЗНЫЙ хвост, и сравнивать книги надо
+    по форме, а не только по итогу.
+
     Возвращает: exit ("тейк"/"трейл"/"пол"/"ликвидация"/"срок"), pnl_frac
     (доля капитала позиции; ликвидация = −1.0), depth, avg,
     filled_notional.
     """
+    d = 1.0 if side == "long" else -1.0
     n = len(rung_prices)
     if len(weights) != n:
         raise ValueError("рунгов и весов разное число")
@@ -493,30 +533,38 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
         # числа — закреплено тестом. Нулевой объём приносит только хвост,
         # дописанный серединой стакана (`dca_paper/tail.py`).
         traded = float(vol) > 0
+        adverse = lo if side == "long" else hi     # ход ПРОТИВ позиции
+        fav = hi if side == "long" else lo         # ход В ПОЛЬЗУ
         if traded:
-            filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
+            filled, cash, qty = _fill_rungs(filled, cash, qty, adverse,
                                             rung_prices, weights, notional,
-                                            log=fills, bt=float(bt))
+                                            log=fills, bt=float(bt),
+                                            side=side)
         avg = cash / qty
         # Уровень тейка — по ТВХ на НАЧАЛО бара (`avg_prev`), а не по той,
         # что сложилась доливом ЭТОЙ минуты (см. докстроку).
         lvl = (take_px if take_rule is None else
                (entry if take_rule["anchor"] == "entry" else avg_prev)
-               * (1.0 + float(take_rule["frac"])))
-        mark = (qty * cl - cash) / capital
+               * (1.0 + d * float(take_rule["frac"])))
+        mark = d * (qty * cl - cash) / capital
         if tr is not None:
             _mark(bt, mark)
-        p_liq = liq_price(avg, qty, capital, mmr)
-        if lo <= p_liq:
+        p_liq = liq_price(avg, qty, capital, mmr, side)
+        if (adverse <= p_liq) if side == "long" else (adverse >= p_liq):
             return _ret({"exit": "ликвидация", "pnl_frac": -1.0,
                          "exit_ts": bt, "exit_px": p_liq,
                          "depth": sum(filled), "avg": avg,
                          "filled_notional": cash}, bt)
         if floor_frac is not None and all(filled):
+            # Формула пола одна на обе стороны: у лонга ликвидация ниже
+            # входа и пол оказывается между ними, у шорта выше — и пол
+            # снова между. Разный тут только знак срабатывания.
             floor_px = p_liq + floor_frac * (entry - p_liq)
-            if lo <= floor_px:                 # подошли к ликвидации — режем
+            hit = ((adverse <= floor_px) if side == "long"
+                   else (adverse >= floor_px))
+            if hit:                            # подошли к ликвидации — режем
                 return _ret({"exit": "пол",
-                             "pnl_frac": qty * (cl - avg) / capital,
+                             "pnl_frac": d * qty * (cl - avg) / capital,
                              "exit_ts": bt, "exit_px": cl,
                              "depth": sum(filled), "avg": avg,
                              "filled_notional": cash}, bt)
@@ -524,21 +572,23 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                  if take_rule is not None else 0.0)
         if trail > 0:
             if peak is not None:
-                stop = peak * (1.0 - trail)
-                if lo <= stop:               # трейл — РЫНОЧНЫЙ выход
-                    px = min(cl, stop)
+                stop = peak * (1.0 - d * trail)
+                hit = (adverse <= stop) if side == "long" else (adverse >= stop)
+                if hit:                      # трейл — РЫНОЧНЫЙ выход
+                    px = min(cl, stop) if side == "long" else max(cl, stop)
                     return _ret({"exit": "трейл",
-                                 "pnl_frac": qty * (px - avg) / capital,
+                                 "pnl_frac": d * qty * (px - avg) / capital,
                                  "exit_ts": bt, "exit_px": px,
                                  "depth": sum(filled), "avg": avg,
                                  "filled_notional": cash}, bt)
                 if traded:
-                    peak = max(peak, hi)
-            elif traded and hi >= lvl:
-                peak = hi                    # взвели; выход со следующего бара
-        elif traded and lvl is not None and hi >= lvl:
+                    peak = max(peak, fav) if side == "long" else min(peak, fav)
+            elif traded and ((fav >= lvl) if side == "long" else (fav <= lvl)):
+                peak = fav                   # взвели; выход со следующего бара
+        elif traded and lvl is not None and (
+                (fav >= lvl) if side == "long" else (fav <= lvl)):
             return _ret({"exit": "тейк",
-                         "pnl_frac": qty * (lvl - avg) / capital,
+                         "pnl_frac": d * qty * (lvl - avg) / capital,
                          "exit_ts": bt, "exit_px": lvl,
                          "depth": sum(filled), "avg": avg,
                          "filled_notional": cash}, bt)
@@ -547,7 +597,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     lb = bars[-1]
     avg = cash / qty
     return _ret({"exit": "срок",
-                 "pnl_frac": qty * (float(lb[4]) - avg) / capital,
+                 "pnl_frac": d * qty * (float(lb[4]) - avg) / capital,
                  "exit_ts": lb[0], "exit_px": float(lb[4]),
                  "depth": sum(filled), "avg": avg,
                  "filled_notional": cash}, lb[0])

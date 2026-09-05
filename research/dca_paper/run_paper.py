@@ -51,7 +51,10 @@ import tail as TL                                             # noqa: E402
 # Линейки плеча объявлены В ПРАВИЛАХ, а не здесь: их читает и страница
 # наблюдения, и вторая запись однажды разошлась бы с той, по которой
 # книга торгует.
-RULERS = {k: (v["rule"], v["param"]) for k, v in R.RULERS.items()}
+# Пара реплея несёт СТОРОНУ третьим полем: длинная и короткая книги
+# одной линейки считают разные позиции по разным ногам, и общий ключ
+# кэша склеил бы их в одну.
+RULERS = {k: (v["rule"], v["param"], R.side_of(k)) for k, v in R.RULERS.items()}
 
 
 def cache_path():
@@ -148,7 +151,13 @@ def needs_replay(cache, legs, pairs):
     need = []
     for g in legs:
         sym, at = str(g["sym"]), round(float(g["at"]), 3)
+        side = g.get("side") or "long"
         for pr in pairs:
+            # Пара ЧУЖОЙ стороны этой ноге не положена вовсе, и требовать
+            # её в кэше значило бы объявлять каждую ногу непосчитанной
+            # навсегда — полный пересчёт каждый прогон, молча.
+            if (pr[2] if len(pr) > 2 else "long") != side:
+                continue
             r = cache.get((tuple(pr), sym, at))
             if r is None or r.get("state") != "closed":
                 need.append(g)
@@ -882,7 +891,9 @@ def main():
                        else read_cache()))
         if why:
             print(f"кэш реплея не используется: {why}")
-        legs = D6.gated_legs(limit=a.limit)
+        # Обе стороны разом: бары читаются по символу, и второй проход
+        # ради коротких книг стоил бы столько же, сколько первый.
+        legs = D6.gated_legs(limit=a.limit, side=None)
         need = needs_replay(cache, legs, pairs)
         print(f"решений под гейтом {len(legs)}, в кэше "
               f"{len(cache) // max(1, len(pairs))}, считаю заново {len(need)}")

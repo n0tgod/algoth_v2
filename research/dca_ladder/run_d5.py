@@ -142,7 +142,7 @@ def sigma_day(sigma_bp):
 
 
 def fence_leverage(rule, param, entry, rungs_full, look, sigma_bp,
-                   weights=None):
+                   weights=None, side="long"):
     """Плечо по объявленной линейке. Возвращает (плечо, рунги, кто связал).
 
     `depth` — нынешнее правило: запас `param · d_max` (глубины лестницы).
@@ -155,10 +155,14 @@ def fence_leverage(rule, param, entry, rungs_full, look, sigma_bp,
     быть теми же, какими её потом торгуют: посчитав плечо по одним весам
     и заполнив другими, мы получили бы запас, которого нет. Умолчание
     даёт прежний счёт бит в бит.
+
+    `side` — сторона позиции: у шорта лестница уходит ВВЕРХ, ликвидация
+    стоит выше входа, и требуемый запас меряется тем же модулем. Правило
+    одно, зеркалится только знак; лонг не тронут.
     """
     if len(rungs_full) < 2:                    # нет резерва — нет рычага (D2)
         return 1.0, [entry], "нет лестницы"
-    d_max = (entry - rungs_full[-1]) / entry
+    d_max = abs(entry - rungs_full[-1]) / entry
     if d_max <= 0:
         return 1.0, [entry], "нет лестницы"
     if rule == "depth":
@@ -174,7 +178,8 @@ def fence_leverage(rule, param, entry, rungs_full, look, sigma_bp,
         raise ValueError(f"неизвестная линейка: {rule}")
     w = (list(weights) if weights is not None
          else D2.WEIGHTS[:len(rungs_full)])
-    lev = L.max_leverage(rungs_full, w, 1.0, entry, d_max, look, mult)
+    lev = L.max_leverage(rungs_full, w, 1.0, entry, d_max, look, mult,
+                         side=side)
     if lev <= 0:                               # забор отказал лестнице (D2)
         return 1.0, [entry], "забор отказал"
     return lev, rungs_full, binder
