@@ -332,17 +332,26 @@ def append_journal(rows, path=None, log=print):
     # заморозив ВЕСЬ канал публикации на шестнадцать часов. Файл
     # выбирается по МЕТКЕ РЕШЕНИЯ, а не по «сегодня»: пересчёт по
     # прошлому обязан лежать своей датой.
-    shards = {}
+    # Часть суток тоже ограничена по РАЗМЕРУ: одно решение живёт во всех
+    # книгах разом, и суточные куски 20–21 августа доросли до 4.2–4.35 МБ
+    # при защите коммита в 5 МиБ. Пересчёт истории перешагнул бы порог и
+    # заморозил весь канал публикации — это уже стоило шестнадцати часов
+    # тишины. Раскладку по частям считает `R.shard_place`: она знает
+    # размеры на диске, а прогон только пишет.
+    days = {}
     for r in fresh:
-        shards.setdefault(R.shard_of(path, r.get("at")), []).append(r)
+        ln = json.dumps(r, ensure_ascii=False) + "\n"
+        days.setdefault(R.shard_day(r.get("at")), []).append(ln)
+    shards = {}
+    for d in sorted(days):
+        shards.update(R.shard_place(path, d, days[d]))
     if fresh:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         for sh in sorted(shards):
             with open(sh, "a", encoding="utf-8") as f:
-                for r in shards[sh]:
-                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
+                f.write("".join(shards[sh]))
     log(f"журнал: было {len(old)}, дописано {len(fresh)}"
-        + (f" в {len(shards)} суточных файлов" if shards else "")
+        + (f" в {len(shards)} файлов записи" if shards else "")
         + (f", битых строк {bad}" if bad else ""))
     return {"had": len(old), "added": len(fresh), "bad": bad,
             "shards": len(shards)}

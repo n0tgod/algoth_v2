@@ -530,9 +530,64 @@ def shard_of(path, at=None):
     файл значило бы датировать запись моментом счёта.
     """
     base, ext = os.path.splitext(path)
+    return f"{base}-{shard_day(at)}{ext}"
+
+
+def shard_day(at=None):
+    """Дата суток решения строкой — ключ ротации, один на всех."""
     d = (dt.datetime.fromtimestamp(float(at), dt.timezone.utc).date()
          if at is not None else dt.datetime.now(dt.timezone.utc).date())
-    return f"{base}-{d.isoformat()}{ext}"
+    return d.isoformat()
+
+
+# Порог ЧАСТИ суточного файла. Сутки оказались единицей недостаточной:
+# одно решение живёт во всех книгах разом (девять на 2026-09-05,
+# восемнадцать с зеркальными короткими), и куски 20–21 августа доросли
+# до 4.2–4.35 МБ при защите коммита в 5 МиБ. Следующий пересчёт истории
+# перешагнул бы порог и заморозил ВЕСЬ канал публикации — ровно то, что
+# уже стоило шестнадцати часов тишины 4 сентября. Запас до защиты почти
+# мегабайт: одна строка журнала весит сотни байт, и переступить порог
+# между проверкой и записью нечем.
+SHARD_CAP = 4 * 1024 * 1024
+
+
+def shard_parts(path, at=None, day=None):
+    """Части суток по порядку: `journal-<дата>.jsonl`, затем `.01`, `.02`…
+
+    Первая часть без номера намеренно: имя суточного файла не меняется
+    от того, что у суток появилось продолжение, и уже записанные части
+    не переименовываются — журнал write-ahead.
+    """
+    base, ext = os.path.splitext(path)
+    d = day or shard_day(at)
+    first = f"{base}-{d}{ext}"
+    rest = sorted(glob.glob(f"{base}-{d}.[0-9][0-9]{ext}"))
+    return [first] + rest
+
+
+def shard_place(path, day, lines, cap=SHARD_CAP):
+    """Разложить строки суток по частям, не переступая порог.
+
+    Возвращает {файл: [строки]}. Часть, в которую уже не влезает, не
+    дописывается вовсе — заводится следующая; строка длиннее самого
+    порога кладётся в свою часть одна (потерять решение хуже, чем
+    перешагнуть запас).
+    """
+    base, ext = os.path.splitext(path)
+    parts = shard_parts(path, day=day)
+    cur = parts[-1]
+    n = len(parts) - 1                       # номер последней части
+    sz = os.path.getsize(cur) if os.path.exists(cur) else 0
+    out = {}
+    for ln in lines:
+        add = len(ln.encode("utf-8"))
+        if sz and sz + add > cap:
+            n += 1
+            cur = f"{base}-{day}.{n:02d}{ext}"
+            sz = os.path.getsize(cur) if os.path.exists(cur) else 0
+        out.setdefault(cur, []).append(ln)
+        sz += add
+    return out
 
 
 def journal_parts(path=JOURNAL):

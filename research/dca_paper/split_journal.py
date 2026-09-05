@@ -18,6 +18,15 @@
 есть осознанное действие, а не побочный эффект правки. Дедуп на чтении
 (`rules.read_journal`) снимает перекрытие, поэтому числа книг после
 разрезки не меняются — это проверяется прогоном и тестом.
+
+`--repack` — вторая работа того же рода: суточных кусков оказалось
+мало. Одно решение живёт во ВСЕХ книгах разом (девять на 2026-09-05,
+восемнадцать с зеркальными короткими), и куски 20–21 августа доросли до
+4.2–4.35 МБ. Пересчёт истории после смены правил перешагнул бы 5 МиБ и
+заморозил бы канал снова. Перепаковка перекладывает строки СУТОК по
+частям `journal-<дата>.NN`, ни одной не теряя: строки переезжают между
+файлами, число решений у читателя не меняется, и это сверяется тем же
+способом, что у разрезки.
 """
 
 import argparse
@@ -103,12 +112,86 @@ def split(path=None, log=print, apply=True):
     return {"read": len(rows), "written": n, "shards": len(by), "bad": bad}
 
 
+def repack(path=None, cap=None, log=print, apply=True):
+    """Переложить строки суток по частям, не переступая порог размера.
+
+    Работает ПО СУТКАМ и только там, где нужно: день, влезающий в одну
+    часть, не трогается вовсе. Число решений у читателя — инвариант, и
+    он сверяется; расхождение прерывает работу, а не докладывается.
+    """
+    path = path or R.JOURNAL
+    cap = R.SHARD_CAP if cap is None else int(cap)
+    before, _b0 = R.read_journal(path)
+    base, ext = os.path.splitext(path)
+    days = sorted({os.path.basename(f)[len(os.path.basename(base)) + 1:]
+                   .split(".")[0]
+                   for f in R.journal_parts(path) if f != path})
+    moved, touched = 0, 0
+    for d in days:
+        parts = [f for f in R.shard_parts(path, day=d) if os.path.exists(f)]
+        if not parts:
+            continue
+        if all(os.path.getsize(f) <= cap for f in parts):
+            continue                        # день влезает — не трогаем
+        lines = []
+        for f in parts:
+            with open(f, encoding="utf-8") as fh:
+                lines += [ln for ln in fh if ln.strip()]
+        # Раскладка считается на ПУСТЫХ частях: файлы этого дня будут
+        # переписаны целиком, и размер на диске к решению не относится.
+        place, cur, sz, n = {}, f"{base}-{d}{ext}", 0, 0
+        for ln in lines:
+            add = len(ln.encode("utf-8"))
+            if sz and sz + add > cap:
+                n += 1
+                cur = f"{base}-{d}.{n:02d}{ext}"
+                sz = 0
+            place.setdefault(cur, []).append(ln)
+            sz += add
+        touched += 1
+        moved += len(lines)
+        log(f"  {d}: {len(lines)} строк из {len(parts)} частей → "
+            f"{len(place)}")
+        if not apply:
+            continue
+        for f in parts:                     # части дня переписываются
+            if f not in place:
+                open(f, "w", encoding="utf-8").close()
+        for f, ls in place.items():
+            tmp = f + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                fh.write("".join(ls))
+            os.replace(tmp, f)
+    if not apply:
+        log(f"сухой прогон: тронуть {touched} суток, {moved} строк")
+        return {"days": touched, "moved": moved, "applied": False}
+    st = {}
+    after, _b2 = R.read_journal(path, stats=st)
+    ok = len(after) == len(before)
+    log(f"сверка: решений было {len(before)}, читается {len(after)}"
+        f", кусков {st.get('parts')} — "
+        f"{'сошлось' if ok else 'РАСХОЖДЕНИЕ'}")
+    if not ok:
+        raise SystemExit("перепаковка изменила число решений")
+    big = [f for f in R.journal_parts(path)
+           if os.path.getsize(f) > cap and f != path]
+    log(f"частей сверх порога осталось: {len(big)}"
+        + (" — " + ", ".join(os.path.basename(f) for f in big) if big else ""))
+    return {"days": touched, "moved": moved, "applied": True,
+            "over_cap": len(big)}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--journal", default=None)
     ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--repack", action="store_true",
+                    help="переложить части суток по размеру")
     a = ap.parse_args()
-    split(a.journal, apply=not a.dry)
+    if a.repack:
+        repack(a.journal, apply=not a.dry)
+    else:
+        split(a.journal, apply=not a.dry)
 
 
 if __name__ == "__main__":

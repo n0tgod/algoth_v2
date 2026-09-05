@@ -1643,6 +1643,81 @@ def test_smoothing_finds_it_and_stays_silent_without_it():
           f"{c2['corr']:+.2f} → нет, одной стороны нет → мерить нечем")
 
 
+def test_journal_shard_rolls_over_by_size():
+    """Часть суточного файла ограничена по РАЗМЕРУ, и читатель видит все.
+
+    Сутки единицей ротации оказалось мало: одно решение живёт во всех
+    книгах разом, и куски 20–21 августа доросли до 4.2–4.35 МБ при
+    защите коммита в 5 МиБ — следующий пересчёт истории заморозил бы
+    весь канал публикации, как это уже было 4 сентября.
+
+    Проверяется ДОРОГА целиком: запись раскладывается по частям, чтение
+    (`journal_parts` → `read_journal`) собирает их обратно без потерь, и
+    ни одна часть порога не переступает.
+    """
+    d = tempfile.mkdtemp(prefix="shard-")
+    path = os.path.join(d, "journal.jsonl")
+    rows = [{"dep": 10000, "ruler": "optimal", "rules": R.RULES,
+             "at": float(T0), "exit_ts": float(T0 + H), "sym": f"S{i}USDT",
+             "usd": 1.0, "written_at": float(T0 + H) + 1.0,
+             "pad": "x" * 200} for i in range(50)]
+    cap = 2000                                  # порог мелкий намеренно
+    lines = [json.dumps(r, ensure_ascii=False) + "\n" for r in rows]
+    place = R.shard_place(path, R.shard_day(T0), lines, cap=cap)
+    assert len(place) > 1, "порог не связал — раскладка в один файл"
+    for f, ls in place.items():
+        os.makedirs(os.path.dirname(f), exist_ok=True)
+        with open(f, "a", encoding="utf-8") as fh:
+            fh.write("".join(ls))
+    big = [f for f in place if os.path.getsize(f) > cap
+           and len(place[f]) > 1]
+    assert not big, big
+    got, bad = R.read_journal(path)
+    assert bad == 0 and len(got) == len(rows), (len(got), bad)
+    assert {r["sym"] for r in got} == {r["sym"] for r in rows}
+    print(f"ok  части суток по размеру: {len(rows)} решений в "
+          f"{len(place)} файлов, читатель видит все")
+
+
+def test_repack_splits_an_oversized_day():
+    """Перепаковка режет переросшие сутки и не теряет ни одного решения.
+
+    Нужна потому, что суточная ротация писалась под ~320 решений в день,
+    а одно решение живёт во ВСЕХ книгах разом: куски 20–21 августа
+    доросли до 4.2–4.35 МБ при защите коммита в 5 МиБ. Инвариант один и
+    он же сверяется прогоном: число решений у читателя не меняется.
+    """
+    import split_journal as SJ
+    d = tempfile.mkdtemp(prefix="repack-")
+    path = os.path.join(d, "journal.jsonl")
+    day = R.shard_day(T0)
+    rows = [{"dep": 10000, "ruler": "optimal", "rules": R.RULES,
+             "at": float(T0), "exit_ts": float(T0 + H), "sym": f"S{i}USDT",
+             "usd": 1.0, "written_at": float(T0 + H) + 1.0,
+             "pad": "x" * 200} for i in range(60)]
+    part = os.path.join(d, f"journal-{day}.jsonl")
+    with open(part, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    было, _b = R.read_journal(path)
+    cap = 2000
+    st = SJ.repack(path, cap=cap, log=lambda *a: None)
+    assert st["days"] == 1 and st["moved"] == len(rows), st
+    assert st["over_cap"] == 0, st
+    parts = [f for f in R.journal_parts(path) if os.path.exists(f)]
+    assert len(parts) > 1, parts
+    for f in parts:
+        assert os.path.getsize(f) <= cap, (f, os.path.getsize(f))
+    стало, bad = R.read_journal(path)
+    assert bad == 0 and len(стало) == len(было) == len(rows), (
+        len(было), len(стало))
+    # Сутки, влезающие в одну часть, не трогаются вовсе.
+    st2 = SJ.repack(path, cap=10 ** 9, log=lambda *a: None)
+    assert st2["days"] == 0 and st2["moved"] == 0, st2
+    print(f"ok  перепаковка: {len(rows)} решений в {len(parts)} частей, "
+          f"читатель видит все; влезающие сутки не тронуты")
+
+
 def test_smoothing_reads_the_journal_pair():
     """Дорога замера до журнала, а не только его формула.
 
@@ -1688,6 +1763,8 @@ def test_smoothing_splits_the_capital_of_two_books():
 
 
 TESTS = [test_smoothing_finds_it_and_stays_silent_without_it,
+         test_journal_shard_rolls_over_by_size,
+         test_repack_splits_an_oversized_day,
          test_smoothing_reads_the_journal_pair,
          test_smoothing_splits_the_capital_of_two_books,
          test_short_books_are_declared_as_a_mirror,
@@ -1968,6 +2045,47 @@ def _poison_run_paper(lit, repl, probe):
         importlib.reload(P)
 
 
+def _control_shard_ignores_size():
+    """Ротация только суточная — часть перерастает порог."""
+    was = R.shard_place
+
+    def by_day(path, day, lines, cap=None):
+        base, ext = os.path.splitext(path)
+        return {f"{base}-{day}{ext}": list(lines)}
+    R.shard_place = by_day
+    try:
+        try:
+            test_journal_shard_rolls_over_by_size()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.shard_place = was
+
+
+def _control_repack_drops_the_tail():
+    """Перепаковка пишет только первую часть — решения теряются."""
+    import split_journal as SJ
+    was = SJ.repack
+
+    def lossy(path=None, cap=None, log=print, apply=True):
+        st = was(path, cap=cap, log=log, apply=apply)
+        parts = [f for f in R.journal_parts(path or R.JOURNAL)
+                 if os.path.exists(f)]
+        for f in parts[2:]:
+            open(f, "w", encoding="utf-8").close()
+        return st
+    SJ.repack = lossy
+    try:
+        try:
+            test_repack_splits_an_oversized_day()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        SJ.repack = was
+
+
 def _control_smoothing_takes_the_pair_as_rows():
     """Пара взята целиком за строки — дорога обязана упасть."""
     import smoothing as SM
@@ -2134,6 +2252,10 @@ CONTROLS = [("хвост не доезжает до ядра", _control_tail_nev
              _control_venue_cap_out_of_the_replay_signature),
             ("замер сглаживания берёт пару за строки",
              _control_smoothing_takes_the_pair_as_rows),
+            ("часть суток не смотрит на размер",
+             _control_shard_ignores_size),
+            ("перепаковка теряет хвост",
+             _control_repack_drops_the_tail),
             ("подпись реплея не знает хвоста",
              _control_tail_out_of_the_replay_signature),
             ("вход из котировки разрешён",
