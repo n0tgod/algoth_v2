@@ -59,12 +59,22 @@ const FOCUS = /hour=/.test(SEARCH);
 // единственный видимый снаружи след отрисовки — подписи. По ним
 // проверяется вертикаль цены: сдвинулась ли шкала.
 global.__texts = [];
+// Заливки записываются вместе с прозрачностью: подпись говорит, ЧТО
+// нарисовано, а зона — ГДЕ проходит её граница, и по подписям это не
+// проверить. Прозрачность отличает зоны сделки (0.09–0.16) от свечей
+// и полосы объёма, которые рисуются тем же вызовом.
+global.__rects = [];
+const cst = {};
 const ctx = new Proxy({}, { get: (t, k) => {
   if (k === "canvas") return { clientWidth: 900 };
   if (k === "measureText") return () => ({ width: 40 });
   if (k === "fillText") return (s) => { global.__texts.push(String(s)); };
+  if (k === "fillRect") return (x, yv, w, h) => {
+    global.__rects.push({x: x, y: yv, w: w, h: h, a: cst.globalAlpha});
+  };
+  if (k in cst) return cst[k];
   return () => undefined;
-}, set: () => true });
+}, set: (t, k, v) => ((cst[k] = v), true) });
 const mkEl = () => new Proxy({
   style: {}, dataset: {}, clientWidth: 900, clientHeight: 380,
   textContent: "", innerHTML: "", getContext: () => ctx,
@@ -1340,13 +1350,13 @@ global.fetch = async (url) => {
                 rows: [{sym: "BTCUSDT", arm: "dca",
                         hour: "2026-08-03-14", side: "long",
                         opened_at: T0 - 7200, closes_at: T0 - 3600,
-                        entry_px: 62000.0, exit_px: 63000.0,
-                        avg: 61000.0, lots: 2,
-                        walk: [{at: T0 - 7200, px: 62000.0, w: 0.25,
-                                avg: 62000.0},
-                               {at: T0 - 6000, px: 60000.0, w: 0.25,
-                                avg: 60983.6}],
-                        adds: [{at: T0 - 6000, px: 60000.0, size: 0.25,
+                        entry_px: 64715.0, exit_px: 64718.0,
+                        avg: 64698.5, lots: 2,
+                        walk: [{at: T0 - 7200, px: 64715.0, w: 0.25,
+                                avg: 64715.0},
+                               {at: T0 - 6000, px: 64682.0, w: 0.25,
+                                avg: 64698.5}],
+                        adds: [{at: T0 - 6000, px: 64682.0, size: 0.25,
                                 hour: "2026-08-03-14"}],
                         exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
                         lev: 2.4, state: "закрыта", exit: "тейк",
@@ -1354,13 +1364,13 @@ global.fetch = async (url) => {
                 merged: [{sym: "BTCUSDT", arm: "dca",
                           hour: "2026-08-03-14", side: "long",
                           opened_at: T0 - 7200, closes_at: T0 - 3600,
-                          entry_px: 62000.0, exit_px: 63000.0,
-                          avg: 61000.0, lots: 2,
-                          walk: [{at: T0 - 7200, px: 62000.0, w: 0.25,
-                                  avg: 62000.0},
-                                 {at: T0 - 6000, px: 60000.0, w: 0.25,
-                                  avg: 60983.6}],
-                          adds: [{at: T0 - 6000, px: 60000.0, size: 0.25,
+                          entry_px: 64715.0, exit_px: 64718.0,
+                          avg: 64698.5, lots: 2,
+                          walk: [{at: T0 - 7200, px: 64715.0, w: 0.25,
+                                  avg: 64715.0},
+                                 {at: T0 - 6000, px: 64682.0, w: 0.25,
+                                  avg: 64698.5}],
+                          adds: [{at: T0 - 6000, px: 64682.0, size: 0.25,
                                   hour: "2026-08-03-14"}],
                           exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
                           lev: 2.4, state: "закрыта", exit: "тейк",
@@ -4564,8 +4574,30 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("график: ТВХ нарисована одной ступенью, а рунгов два");
     if (!/avg entry/.test(tx))
       bad.push("график: плавающая ТВХ не подписана");
-    if (!/60983|60984/.test(tx))
+    if (!/64698\.5/.test(tx))
       bad.push("график: ТВХ нарисована не по средней после долива");
+    // Граница зелёной и красной зоны обязана идти по ТВХ, а не по
+    // первому рунгу (просьба владельца). Зоны различаются только
+    // цветом, а цвет в заглушке один на всех, поэтому проверяется
+    // ГЕОМЕТРИЯ: внутренние края заливок и есть граница. У лестницы
+    // из двух рунгов таких краёв ДВА разных (до долива средняя равна
+    // первому входу, после ниже), и один обязан совпасть с
+    // нарисованной линией ТВХ. Плоская граница на первом входе дала бы
+    // один край и мимо линии.
+    const zr = (global.__rects || [])
+      .filter(r => r.h > 1 && r.w > 1 && r.a > 0 && r.a < 0.3);
+    const eg = [];
+    zr.forEach(r => eg.push(+r.y.toFixed(1), +(r.y + r.h).toFixed(1)));
+    const zTop = Math.min.apply(null, eg), zBot = Math.max.apply(null, eg);
+    const inner = Array.from(new Set(
+      eg.filter(v => v > zTop + 0.5 && v < zBot - 0.5)));
+    const yAvg = av.length ? av[av.length - 1].y0 + 4 : null;
+    if (!zr.length)
+      bad.push("график: зоны прибыли и убытка не залиты");
+    else if (yAvg == null || !inner.some(v => Math.abs(v - yAvg) < 1.5))
+      bad.push("график: граница зон не совпала с линией ТВХ");
+    else if (inner.length < 2)
+      bad.push("график: граница зон стоит на одной цене, а ТВХ плывёт");
     // Уровней у лестницы нет: подпись стопа утверждала бы правило,
     // которого у книги нет
     if (/\bstop\b/.test(tx))
