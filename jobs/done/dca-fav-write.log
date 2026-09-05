@@ -1,7 +1,7 @@
-== задание dca-fav-dry ==
-строка: run research/dca_paper/backfill_fav.py
-начало: 2026-09-05T16:12:14Z
-запускаю: .venv/bin/python research/dca_paper/backfill_fav.py 
+== задание dca-fav-write ==
+строка: run research/dca_paper/backfill_fav.py --write
+начало: 2026-09-05T16:23:42Z
+запускаю: .venv/bin/python research/dca_paper/backfill_fav.py --write
 sheets.jsonl: ног 923916
 ног в индексе 7332
   journal-2026-08-08.jsonl: строк 330, дописано 57, ноги нет 0
@@ -31,15 +31,5 @@ sheets.jsonl: ног 923916
   journal-2026-09-01.jsonl: строк 150, дописано 24, ноги нет 0
   journal-2026-09-02.jsonl: строк 114, дописано 18, ноги нет 0
   journal-2026-09-03.jsonl: строк 444, дописано 48, ноги нет 0
-итого строк 77965, дописано 8981, обещание не найдено 0  (СУХОЙ прогон, ничего не записано)
-конец: 2026-09-05T16:12:22Z, код 0
-публикуется в ветку main:
- jobs/done/dca-fav-dry.done     |  1 +
- jobs/done/dca-fav-dry.log      | 35 +++++++++++++++++++++++++++++++++++
- jobs/done/dca-take-line-ui.log | 10 ++++++++++
- jobs/poke.log                  |  3 +++
- 4 files changed, 49 insertions(+)
-To github.com:n0tgod/algoth_v2.git
-   ee3b58a..58dfda5  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
+итого строк 77965, дописано 8981, обещание не найдено 0
+конец: 2026-09-05T16:23:50Z, код 0
