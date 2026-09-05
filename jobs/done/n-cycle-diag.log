@@ -139,3 +139,17 @@
 [09-05 11:08:23] обучение пропущено по каденции: весам 10.4 ч при каденции 24; цикл 383 с (сведение часа 276 с, матрица 52 с, книги 55 с, оценка 0 с)
 [09-05 11:08:23] следующая попытка через 53 мин (обучения не было)
 конец: 2026-09-05T11:30:37Z, код 0
+публикуется в ветку main:
+ jobs/done/n-cycle-diag.done         |   1 +
+ jobs/done/n-cycle-diag.log          | 141 ++++++++++++++++++++++++++++++++++++
+ jobs/done/n-stables.done            |   1 +
+ jobs/done/n-stables.log             |   4 +
+ jobs/done/n-status-after-zone.done  |   1 +
+ jobs/done/n-status-after-zone.log   |   9 +++
+ jobs/poke.log                       |   5 ++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 8 files changed, 163 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e925447..ddcdd72  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
