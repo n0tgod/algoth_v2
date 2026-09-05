@@ -4,3 +4,15 @@
 запускаю: .venv/bin/python research/dca_live/probe_levels.py --top 80
 листа нет: /root/algoth_v2/research/s8_loop/out/model/scan_sheet.json — цикл ещё не писал сечение
 конец: 2026-09-05T08:56:40Z, код 1
+публикуется в ветку main:
+ jobs/done/n-dca-lv.done             |  1 +
+ jobs/done/n-dca-lv.log              |  6 ++++++
+ jobs/done/n-deploy-wd.done          |  1 +
+ jobs/done/n-deploy-wd.log           | 10 ++++++++++
+ jobs/poke.log                       |  4 ++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 23 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7adcea7..6a6612e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
