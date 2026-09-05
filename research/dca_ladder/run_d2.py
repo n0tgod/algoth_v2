@@ -103,27 +103,11 @@ def instruments_tiers():
         return json.load(f)
 
 
-def structural_rungs(entry, level_prices, min_gap, n_rungs):
-    """Цены рунгов DCA-лонга: вход плюс структурные уровни НИЖЕ.
-
-    Берём уровни ниже входа, ближайший первым, каждый обязан стоять не
-    ближе `min_gap` (доля цены) от предыдущего рунга — это «запас на
-    дальнейший пролив» §R1 и «не дважды на одном уровне». Возвращает
-    список по УБЫВАНИЮ (rung[0] = вход), длиной ≤ n_rungs; если ни один
-    уровень не годится, вернёт `[entry]` — лестница вырождается в
-    одиночный вход (без доливов), и плечо тогда 1× (нет резерва — нет
-    рычага). Чистая функция.
-    """
-    if entry <= 0:
-        return [entry]
-    below = sorted([p for p in level_prices if 0 < p < entry], reverse=True)
-    rungs = [entry]
-    for p in below:
-        if len(rungs) >= n_rungs:
-            break
-        if (rungs[-1] - p) / rungs[-1] >= min_gap:   # ≥min_gap ниже прошлого
-            rungs.append(p)
-    return rungs
+# Правило цен рунгов переехало в ядро (`ladder.structural_rungs`): те же
+# цены понадобились ЖИВОЙ книге, а сканер живёт в стандартной библиотеке.
+# Имя здесь остаётся, потому что по нему зовут D5, D6 и тесты, — и
+# остаётся ССЫЛКОЙ, а не копией.
+structural_rungs = L.structural_rungs
 
 
 def split_window(bars, ts, at, back_h, fwd_h):

@@ -32,11 +32,16 @@ sys.path.insert(0, os.path.join(RESEARCH, "b1_book"))
 sys.path.insert(0, os.path.join(RESEARCH, "s9_sweep"))
 sys.path.insert(0, os.path.join(RESEARCH, "t4_structure"))
 sys.path.insert(0, os.path.join(RESEARCH, "dca_ladder"))
+sys.path.insert(0, os.path.join(RESEARCH, "s8_loop"))
 import levels as LV                                          # noqa: E402
 import sweep as SW                                           # noqa: E402
+import books as BK                                           # noqa: E402
 
 ROOT = os.path.join(RESEARCH, "b1_book", "out")
-SHEET = os.path.join(RESEARCH, "s8_loop", "out", "model", "scan_sheet.json")
+# Каталог книги берётся из РЕЕСТРА, а не собирается соглашением:
+# «model_<ключ>» уже однажды увело сводку в чужую книгу.
+SHEET = os.path.join(RESEARCH, "s8_loop", "out",
+                     "model" + BK.suffix("sit"), "scan_sheet.json")
 BACK_H = 24                       # то же окно, что у реплея (run_d2.BACK_H)
 N_RUNGS = 4
 MIN_ADD_GAP = 0.015
