@@ -878,3 +878,5 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788609264 ==
 [2026-09-05T11:54:26Z] задание n-cycle-after-flat запущено: tools/diag_cycle.py
+
+== сигнал 1788609303 ==
