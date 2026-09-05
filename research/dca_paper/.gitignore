@@ -7,3 +7,6 @@ out/recs.jsonl
 out/recs.jsonl.tmp
 out/run.log
 out/*smoke*
+
+# Лог суточного прогона сторожа: он растёт на сервере и в git не идёт.
+out/daily.log

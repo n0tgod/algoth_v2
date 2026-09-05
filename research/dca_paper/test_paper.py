@@ -3,6 +3,7 @@
 
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import time
@@ -1044,6 +1045,97 @@ def test_journal_rotates_by_day_and_reader_takes_every_part():
           f"перекрытие снято ({st2['dups']})")
 
 
+def test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted():
+    """Сторож ведёт книгу САМ, и вопрос он задаёт правильный.
+
+    Владелец 2026-09-04 велел запустить книги «в live». Показ это делал
+    с того же дня, а прогон оставался ручным заданием очереди — то есть
+    книга шла только когда её толкали, и открытые позиции не считались
+    сутками.
+
+    Проверяется НАСТОЯЩИЙ блок `tools/watchdog_book.sh` с заглушками,
+    а не пересказ его логики. Главный случай — последний: `--restat`
+    переписывает артефакт, СОХРАНЯЯ `computed_at`, поэтому свежий файл
+    со старой меткой обязан читаться как «давно не считали». Возьми
+    сторож mtime — и одна диагностическая пересборка глушила бы книгу
+    на час, а цепочка их — навсегда.
+    """
+    wd = os.path.join(HERE, os.pardir, os.pardir, "tools",
+                      "watchdog_book.sh")
+    src = open(os.path.abspath(wd), encoding="utf-8").read()
+    a = src.index("# --- бумажные DCA-книги")
+    b = src.index("# --- очередь заданий")
+    block = src[a:b]
+    return _run_watchdog_cases(block)
+
+
+def _run_watchdog_cases(block):
+    d = tempfile.mkdtemp()
+    out = os.path.join(d, "research", "dca_paper", "out")
+    os.makedirs(out)
+    os.makedirs(os.path.join(d, "stubs"))
+    art = os.path.join(out, "DCA-paper.json")
+
+    def stub(name, body):
+        p = os.path.join(d, "stubs", name)
+        with open(p, "w") as f:
+            f.write(body)
+        os.chmod(p, 0o755)
+
+    stub("pgrep", "#!/bin/sh\nexit ${PGREP_RC:-1}\n")
+    stub("setsid", '#!/bin/sh\nshift 2\necho "$@" >> ran.log\n')
+    env = dict(os.environ,
+               PATH=os.path.join(d, "stubs") + os.pathsep + os.environ["PATH"])
+    wrap = "now() { echo T; }\n" + block
+
+    def run(hour, counted_age, busy=False, stamp=True, touch=True):
+        """`counted_age` — возраст ПОСЛЕДНЕГО СЧЁТА; None — артефакта нет."""
+        try:
+            os.remove(os.path.join(d, "ran.log"))
+        except OSError:
+            pass
+        if counted_age is None:
+            if os.path.exists(art):
+                os.remove(art)
+        else:
+            at = time.strftime("%Y-%m-%d %H:%M",
+                               time.gmtime(time.time() - counted_age))
+            body = {"books": {}}
+            if stamp:
+                body["computed_at"] = at
+            with open(art, "w") as f:
+                json.dump(body, f)
+            if not touch:            # артефакт стар и по файлу тоже
+                t = time.time() - counted_age
+                os.utime(art, (t, t))
+        e = dict(env, PGREP_RC=("0" if busy else "1"))
+        stub("date", f'#!/bin/sh\nif [ "$1" = "-u" ] && '
+                     f'[ "$2" = "+%H" ]; then echo {hour}; else '
+                     f'exec /bin/date "$@"; fi\n')
+        subprocess.run(["bash", "-c", wrap], cwd=d, env=e,
+                       capture_output=True)
+        return os.path.exists(os.path.join(d, "ran.log"))
+
+    cases = [
+        ("свежий счёт молчит", ("12", 600), False),
+        ("час прошёл — считает", ("12", 7200), True),
+        ("час 02 отдан турниру", ("02", 7200), False),
+        ("час 06 отдан месячной книге", ("06", 7200), False),
+        ("артефакта нет — считает", ("12", None), True),
+    ]
+    for name, args, want in cases:
+        got = run(*args)
+        assert got == want, f"{name}: запуск {got}, ожидалось {want}"
+    assert run("12", 7200, busy=True) is False, "прогон уже идёт — не второй"
+    assert run("12", 600, stamp=False) is True, \
+        "метки нет — это НЕ «только что считали»"
+    # Тот самый случай: `--restat` минуту назад, а счёт был два часа назад.
+    assert run("12", 7200, touch=True) is True, \
+        "свежий файл со старой меткой обязан читаться как «давно не считали»"
+    print("ok  сторож: книга идёт каждый час, вопрос — когда СЧИТАЛИ, "
+          "а не когда трогали файл")
+    return True
+
 TESTS = [test_shape_counts_positions_not_days,
          test_journal_rotates_by_day_and_reader_takes_every_part,
          test_worst_open_is_measured_and_missing_is_not_zero,
@@ -1065,7 +1157,8 @@ TESTS = [test_shape_counts_positions_not_days,
          test_rules_change_starts_a_fresh_record,
          test_journal_path_is_resolved_at_call_time,
          test_cache_replays_new_and_open_but_not_closed,
-         test_cache_of_other_rules_is_refused_out_loud]
+         test_cache_of_other_rules_is_refused_out_loud,
+         test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted]
 
 def _control_journal_path_frozen():
     """Путь журнала снова берётся значением по умолчанию: прогон с
@@ -1248,7 +1341,33 @@ def _control_missing_mark_reads_as_zero():
         R.open_stats = src
 
 
-CONTROLS = [("доля прибыльных считается по дням", _control_win_counts_days),
+def _control_watchdog_asks_mtime():
+    """Сторож снова смотрит на mtime файла вместо метки счёта.
+
+    Ровно дефект, ради которого триггер и переписан: `--restat` трогает
+    файл, не считая, и по mtime книга выглядела бы посчитанной.
+    """
+    wd = os.path.join(HERE, os.pardir, os.pardir, "tools",
+                      "watchdog_book.sh")
+    src = open(os.path.abspath(wd), encoding="utf-8").read()
+    a = src.index("# --- бумажные DCA-книги")
+    b = src.index("# --- очередь заданий")
+    block = src[a:b]
+    lit = 'dca_at=$(grep -o'
+    assert lit in block, "подделка НЕ легла: литерала нет"
+    broken = block.replace(
+        lit,
+        'dca_at=$(date -u -d "@$(stat -c %Y \"$DCAP\")" '
+        '+"%Y-%m-%d %H:%M"); : $(grep -o', 1)
+    try:
+        _run_watchdog_cases(broken)
+    except AssertionError:
+        return True
+    return False
+
+CONTROLS = [("сторож смотрит mtime вместо метки счёта",
+             _control_watchdog_asks_mtime),
+            ("доля прибыльных считается по дням", _control_win_counts_days),
             ("отметки нет — читается нулём",
              _control_missing_mark_reads_as_zero),
             ("путь журнала замёрз на импорте", _control_journal_path_frozen),
