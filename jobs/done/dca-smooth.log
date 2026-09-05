@@ -1,0 +1,24 @@
+== задание dca-smooth ==
+строка: run research/dca_paper/smoothing.py --tag 1m
+начало: 2026-09-05T21:56:20Z
+запускаю: .venv/bin/python research/dca_paper/smoothing.py --tag 1m
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/dca_paper/smoothing.py", line 221, in <module>
+    main()
+  File "/root/algoth_v2/research/dca_paper/smoothing.py", line 203, in main
+    cells = collect()
+            ^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/smoothing.py", line 125, in collect
+    out.append(cell(rows, mode, dep))
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/smoothing.py", line 92, in cell
+    lo, sh = pair_rows(rows, mode, dep)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/smoothing.py", line 87, in pair_rows
+    return take(mode), take(mode + "_s")
+           ^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/smoothing.py", line 84, in take
+    return [r for r in rows if int(r.get("dep", 0)) == int(dep)
+                                   ^^^^^
+AttributeError: 'list' object has no attribute 'get'
+конец: 2026-09-05T21:56:21Z, код 1
