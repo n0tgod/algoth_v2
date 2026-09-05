@@ -33,3 +33,11 @@ to recover.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/deploy-days.log  | 28 ++++++++++++++++++++++++++++
+ jobs/done/short-supply.log |  8 ++++++++
+ 2 files changed, 36 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   2f6c719..54c2668  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
