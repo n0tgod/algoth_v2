@@ -15,6 +15,8 @@
 требует numpy (уровни, забор, исход), остаётся в `run_paper.py`.
 """
 
+import datetime as dt
+import glob
 import json
 import os
 
@@ -312,21 +314,83 @@ def ahead(decided_at, written_at, hours=AHEAD_H):
     return (float(written_at) - float(decided_at)) <= hours * 3600.0
 
 
-def read_journal(path=JOURNAL):
-    """Строки журнала как есть. Битая строка пропускается со счётом —
-    журнал write-ahead, и оборванная запись не вправе ронять чтение."""
-    rows, bad = [], 0
-    if not os.path.exists(path):
-        return rows, bad
-    with open(path, encoding="utf-8") as f:
-        for ln in f:
-            ln = ln.strip()
-            if not ln:
-                continue
-            try:
-                rows.append(json.loads(ln))
-            except Exception:
-                bad += 1
+def shard_of(path, at=None):
+    """Файл журнала, в который идёт решение: СУТКИ по метке решения.
+
+    Ротация нужна не для порядка, а потому что растущий одним файлом
+    журнал однажды упирается в защиту от опасного коммита (5 МБ) и
+    молча замораживает ВЕСЬ канал публикации: 4 сентября он вырос до
+    11 МБ, и с 12:10 в git не доехало ни одного лога задания, ни
+    ночного отчёта. Сутки выбраны замером: около 320 решений в день,
+    это доли мегабайта на файл.
+
+    Дата берётся из МЕТКИ РЕШЕНИЯ, а не из «сегодня»: пересчёт по
+    прошлому пишется вместе с наблюдением, и класть его в сегодняшний
+    файл значило бы датировать запись моментом счёта.
+    """
+    base, ext = os.path.splitext(path)
+    d = (dt.datetime.fromtimestamp(float(at), dt.timezone.utc).date()
+         if at is not None else dt.datetime.now(dt.timezone.utc).date())
+    return f"{base}-{d.isoformat()}{ext}"
+
+
+def journal_parts(path=JOURNAL):
+    """Все куски журнала: старый цельный файл и суточные, по порядку.
+
+    Старый файл читается первым и навсегда: он ЗАПИСЬ, и перевод на
+    ротацию не вправе сделать вид, что прежних решений не было.
+    """
+    base, ext = os.path.splitext(path)
+    parts = [path] if os.path.exists(path) else []
+    parts += sorted(glob.glob(f"{base}-*{ext}"))
+    return parts
+
+
+def journal_key(r):
+    """Ключ решения: тем же составом, каким дедуплицирует запись.
+
+    Версия правил и линейка входят в ключ по той же причине, что и при
+    записи: строка, писанная другим билетом или другой линейкой, тем же
+    решением не является.
+    """
+    return (int(r.get("rules", 0)), ruler_of(r), r.get("dep"),
+            int(float(r.get("at") or 0)), r.get("sym"))
+
+
+def read_journal(path=JOURNAL, stats=None):
+    """Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
+
+    Битая строка пропускается со счётом: журнал write-ahead, и
+    оборванная запись не вправе ронять чтение.
+
+    Дедуп на чтении нужен ровно из-за ротации: старый цельный файл и
+    суточные куски перекрываются по построению (разрезка не удаляет
+    оригинал — удаление записи есть осознанное действие, а не побочный
+    эффект правки). Считать одно решение дважды означало бы удвоить
+    сделку в счёте, поэтому побеждает ПЕРВОЕ вхождение — старый файл.
+    Число снятых повторов кладётся в `stats`, а не молчит.
+    """
+    rows, bad, seen, dups = [], 0, set(), 0
+    for part in journal_parts(path):
+        with open(part, encoding="utf-8") as f:
+            for ln in f:
+                ln = ln.strip()
+                if not ln:
+                    continue
+                try:
+                    r = json.loads(ln)
+                except Exception:
+                    bad += 1
+                    continue
+                k = journal_key(r)
+                if k in seen:
+                    dups += 1
+                    continue
+                seen.add(k)
+                rows.append(r)
+    if stats is not None:
+        stats["dups"] = dups
+        stats["parts"] = len(journal_parts(path))
     return rows, bad
 
 

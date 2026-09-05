@@ -285,19 +285,27 @@ def append_journal(rows, path=None, log=print):
     # В ключ входит и ВЕРСИЯ ПРАВИЛ: строка, писанная другим билетом,
     # той же строкой не является, и без версии смена правил не дописала
     # бы ни одной записи — книга новых правил осталась бы пустой.
-    seen = {(int(r.get("rules", 0)), R.ruler_of(r), r.get("dep"), _key(r))
-            for r in old}
-    fresh = [r for r in rows
-             if (int(r["rules"]), R.ruler_of(r), r["dep"], _key(r))
-             not in seen]
+    seen = {R.journal_key(r) for r in old}
+    fresh = [r for r in rows if R.journal_key(r) not in seen]
+    # Ротация СУТОЧНАЯ, и она не про порядок: журнал одним файлом
+    # вырос до 11 МБ и упёрся в защиту от опасного коммита (5 МБ),
+    # заморозив ВЕСЬ канал публикации на шестнадцать часов. Файл
+    # выбирается по МЕТКЕ РЕШЕНИЯ, а не по «сегодня»: пересчёт по
+    # прошлому обязан лежать своей датой.
+    shards = {}
+    for r in fresh:
+        shards.setdefault(R.shard_of(path, r.get("at")), []).append(r)
     if fresh:
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "a", encoding="utf-8") as f:
-            for r in fresh:
-                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        for sh in sorted(shards):
+            with open(sh, "a", encoding="utf-8") as f:
+                for r in shards[sh]:
+                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
     log(f"журнал: было {len(old)}, дописано {len(fresh)}"
+        + (f" в {len(shards)} суточных файлов" if shards else "")
         + (f", битых строк {bad}" if bad else ""))
-    return {"had": len(old), "added": len(fresh), "bad": bad}
+    return {"had": len(old), "added": len(fresh), "bad": bad,
+            "shards": len(shards)}
 
 
 def _stats(rows, deposit):

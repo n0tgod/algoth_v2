@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 import rules as R                                             # noqa: E402
 import run_paper as P                                         # noqa: E402
 import run_d6 as D6                                           # noqa: E402
+import split_journal as SPL                                    # noqa: E402
 
 H = 3600
 
@@ -598,7 +599,8 @@ def test_journal_path_is_resolved_at_call_time():
             P.append_journal(rows, log=lambda *a: None)
         finally:
             R.JOURNAL = real
-        assert os.path.exists(mine), "запись ушла мимо подменённого журнала"
+        shard = R.shard_of(mine, t0)
+        assert os.path.exists(shard), "запись ушла мимо подменённого журнала"
         got, _bad = R.read_journal(mine)
         assert [r["sym"] for r in got] == ["AAAUSDT"], got
         after = (os.path.getsize(real) if os.path.exists(real) else None)
@@ -977,7 +979,73 @@ def test_worst_open_is_measured_and_missing_is_not_zero():
           % (st["worst_sym"], st["worst_frac"] * 100))
 
 
+def test_journal_rotates_by_day_and_reader_takes_every_part():
+    """Ротация: запись идёт в СУТОЧНЫЙ файл по метке решения, а чтение
+    берёт все куски и снимает перекрытие.
+
+    Ротация заведена не ради порядка. Журнал одним файлом вырос до
+    11 МБ, упёрся в защиту от опасного коммита (5 МБ) и заморозил ВЕСЬ
+    канал публикации на шестнадцать часов: ни логов заданий, ни ночного
+    отчёта турнира не доехало. Значит проверять надо три вещи — куда
+    легла строка, читается ли старый цельный файл наравне с кусками, и
+    не удваивается ли решение, лежащее в обоих.
+    """
+    td = tempfile.mkdtemp()
+    jp = os.path.join(td, "journal.jsonl")
+    d1 = 1_788_000_000          # 2026-08-29 UTC
+    d2 = d1 + 86400 * 2
+
+    def row(at, sym):
+        return {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym,
+                "usd": 1.0, "written_at": at + 600, "rules": R.RULES,
+                "ruler": "safe", "lev": 2.0, "margin": 25.0,
+                "pnl_frac": 0.04, "exit": "тейк", "entry_px": 2.0,
+                "exit_px": 2.1, "avg": 2.0, "depth": 1,
+                "fills": [[at, 2.0, 0.25]]}
+
+    a1, a2 = row(d1, "AAAUSDT"), row(d2, "BBBUSDT")
+    P.append_journal([a1, a2], jp, log=lambda *_: None)
+    # Строка легла в файл СВОИХ суток, а не сегодняшних: пересчёт по
+    # прошлому обязан лежать своей датой, иначе запись датируется
+    # моментом счёта.
+    s1, s2 = R.shard_of(jp, d1), R.shard_of(jp, d2)
+    assert s1.endswith("journal-2026-08-29.jsonl"), s1
+    assert s1 != s2 and os.path.exists(s1) and os.path.exists(s2), (s1, s2)
+    assert not os.path.exists(jp), "цельный файл снова растёт записью"
+
+    # Старый цельный файл — ЗАПИСЬ, и читается наравне с кусками.
+    old = row(d1 - 86400, "OLDUSDT")
+    with open(jp, "w", encoding="utf-8") as f:
+        f.write(json.dumps(old, ensure_ascii=False) + "\n")
+    st = {}
+    rows, bad = R.read_journal(jp, stats=st)
+    assert sorted(r["sym"] for r in rows) == ["AAAUSDT", "BBBUSDT",
+                                              "OLDUSDT"], rows
+    assert not bad and st.get("parts") == 3, (bad, st)
+
+    # Перекрытие: то же решение лежит и в старом файле, и в куске —
+    # считать его дважды значило бы удвоить сделку в счёте.
+    with open(jp, "a", encoding="utf-8") as f:
+        f.write(json.dumps(a1, ensure_ascii=False) + "\n")
+    st2 = {}
+    rows2, _ = R.read_journal(jp, stats=st2)
+    assert len(rows2) == 3, rows2
+    assert st2.get("dups") == 1, st2
+
+    # Разрезка цельного файла: числа книги от неё не меняются, а
+    # оригинал остаётся на месте — удаление записи есть отдельное
+    # решение владельца, а не побочный эффект правки.
+    res = SPL.split(jp, log=lambda *_: None)
+    rows3, _ = R.read_journal(jp)
+    assert len(rows3) == 3, rows3
+    assert os.path.exists(jp), "разрезка удалила оригинал"
+    assert res["read"] == 2, res
+    print("ok  журнал: суточные куски, старый файл читается, "
+          f"перекрытие снято ({st2['dups']})")
+
+
 TESTS = [test_shape_counts_positions_not_days,
+         test_journal_rotates_by_day_and_reader_takes_every_part,
          test_worst_open_is_measured_and_missing_is_not_zero,
          test_ticket_clears_the_exchange_floor,
          test_ticket_is_squeezed_between_the_floor_and_the_peak,
