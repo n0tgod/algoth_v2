@@ -453,6 +453,13 @@ def test_pages_run_headless():
                 # ДЛИННАЯ позиция DCA (70 ч): окно графика было зашито в
                 # сутки, и её вход уезжал за левый край — владелец
                 # прочёл это как «баров нет», хотя запись была на месте.
+                # Цель лестницы СТУПЕНЧАТА: якорь у неё плавающая ТВХ.
+                # Прогон идёт на широкой полосе цен — на узкой цель в
+                # пяти процентах от ТВХ всегда за краем окна, и проверка
+                # «линия нарисована» шла бы по ветке «off scale».
+                ("график ступенчатой цели DCA", web.CHART,
+                 "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"
+                 "&dcatake=1"),
                 ("график длинной позиции DCA", web.CHART,
                  "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"
                  "&dcalong=1"),
@@ -6904,6 +6911,8 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
             wa = at + (DR.AHEAD_H * 3600 + 600 if back else 600)
             r = {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym,
                  "usd": usd, "written_at": wa, "rules": DR.RULES,
+                 # обещание модели: из него правило выводит долю цели
+                 "fav_bp": 500.0,
                  "lev": 2.0, "margin": 25.0, "pnl_frac": usd / 25.0,
                  "exit": "тейк",
                  "entry_px": 2.0, "exit_px": 2.2, "avg": 1.9, "depth": 2,
@@ -6967,6 +6976,22 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         opt = bs["optimal:1000"]["trades"]
         check("DCA: у безопасной ровно свои сделки",
               sorted(r["usd"] for r in safe) == [-2.0, 1.0], str(safe))
+        # Цель лестницы ступенчата, и решает это ПРАВИЛО от сохранённого
+        # обещания, а не число в записи. У строки без обещания ступеней
+        # нет вовсе — рисовать уровень, которого мы не знаем, значит
+        # утверждать чужое число.
+        wt = [x for r in opt for x in (r.get("walk") or [])]
+        check("DCA: ступени цели пришли с сервера",
+              any(x.get("take") is not None for x in wt),
+              str(wt[:2]))
+        tf = R_TAKE = DR.take_rule(500.0)["frac"]
+        check("DCA: цель считана правилом от обещания",
+              all(abs(x["take"] - x["avg"] * (1 + tf)) < 1e-9
+                  for x in wt if x.get("take") is not None),
+              str([x for x in wt if x.get("take") is not None][:2]))
+        check("DCA: доля цели названа в строке",
+              all(abs(r.get("take_frac") - tf) < 1e-12 for r in opt),
+              str([r.get("take_frac") for r in opt]))
         check("DCA: бэктест помечен, запись вперёд — нет",
               {r["usd"]: r["bt"] for r in safe} == {1.0: False, -2.0: True},
               str(safe))

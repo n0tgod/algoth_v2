@@ -167,12 +167,20 @@ const T0 = Date.UTC(2026, 7, 3, 23, 30) / 1000;
 // (`test_paper.test_contracts_walk_matches_the_simulation`). Одна
 // реализация на обе фикстуры — страницы книги и графика, — иначе один
 // и тот же долив «покупал» бы разное число монет в двух проверках.
-const dcaw = (notional, w) => {
+// Доля цели у книги лестницы: якорь — ПЛАВАЮЩАЯ ТВХ, и уровень едет
+// вместе с ней. Живая доля — два обещания модели (у медианного ≈5 %),
+// поэтому фикстура берёт такой же порядок: на доле в сотые доли шаг
+// цели слился бы с линией ТВХ и проверка «две линии, а не одна»
+// проходила бы вхолостую.
+const DCA_TAKE_FRAC = 0.05;
+const dcaw = (notional, w, takeFrac) => {
   let q = 0;
   return w.map(f => {
     const dq = f.w * notional / f.px;
     q += dq;
-    return Object.assign({}, f, {dq: dq, qty: q});
+    const r = Object.assign({}, f, {dq: dq, qty: q});
+    if (takeFrac != null) r.take = f.avg * (1 + takeFrac);
+    return r;
   });
 };
 const trade = (i, closed) => ({
@@ -183,8 +191,20 @@ const trade = (i, closed) => ({
   pnl_bp: closed ? 20.5 : 0.0, r: closed ? 1.3 : 0.0,
   exit: closed ? 64900 : null, closed_at: closed ? T0 - 400 + i : null,
 });
-const candlesTo = (end, n) => Array.from({length: n}, (_, i) =>
-  [end - (n - i) * 60, 64700, 64720, 64680, 64710, 1234.5]);
+// Полоса цен фикстуры. Узкая (0.06 %) годится живой странице, где окно
+// в минуты, и НЕ годится книге лестницы: её позиция живёт до трёх суток,
+// за которые альт ходит на проценты, а цель стоит в пяти процентах от
+// ТВХ. На узкой полосе цель всегда оказывалась бы за краем окна, и
+// проверка «линия цели нарисована» проходила бы на ветке «off scale» —
+// то есть не проверяла бы линию вовсе.
+const candlesTo = (end, n, wide) => Array.from({length: n}, (_, i) => {
+  const ph = 64700 * (wide ? 1 + 0.06 * ((i % 7) / 6) : 1);
+  const pl = 64700 * (wide ? 1 - 0.04 * ((i % 5) / 4) : 1);
+  return wide
+    ? [end - (n - i) * 60, 64700, Math.max(ph, 64720),
+       Math.min(pl, 64680), 64710, 1234.5]
+    : [end - (n - i) * 60, 64700, 64720, 64680, 64710, 1234.5];
+});
 const candles = n => candlesTo(T0, n);
 const state = (full, n) => ({
   sym: "BTCUSDT", symbols: ["BTCUSDT", "ETHUSDT"], now: T0 + (full ? 0 : 1),
@@ -294,6 +314,12 @@ const dcaStub = (url) => {
     // серединой стакана): число живое, а не ноль — иначе плитка
     // проверялась бы на отсутствии величины
     n_tail: Math.max(1, Math.round(n * 0.1)),
+    // Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ: считает касса по почасовым
+    // отметкам, и она НЕ равна просадке депозита — величина другая, и
+    // фикстура обязана их различать, иначе проверка «две разные плитки»
+    // прошла бы на одном числе.
+    open_dd: Math.round(usd * -0.4 * 100) / 100,
+    open_dd_share: Number((usd * -0.4 / 10000).toFixed(4)),
     win: Number((0.30 + (Math.abs(usd) % 30) / 100).toFixed(3)),
     hold_h: Number((12 + (Math.abs(usd) % 40)).toFixed(1)),
     hold_med_h: Number((10 + (Math.abs(usd) % 30)).toFixed(1)),
@@ -1407,6 +1433,49 @@ global.fetch = async (url) => {
              // Позиции DCA-книги в форме, ждáнной графиком: рука одна
              // (`dca`), уровней нет, у позиции ДВА рунга — ступенчатая
              // ТВХ иначе не проверяется, а ради неё режим и заводился.
+             : (url.startsWith("/dca_trades") && /dcatake=1/.test(SEARCH))
+             // Прогон ступенчатой цели идёт на ЖИВОЙ геометрии: шаг
+             // лестницы у книги не меньше 1.5 % (`MIN_ADD_GAP`), а цель
+             // стоит в пяти процентах от ТВХ. У старой фикстуры рунги
+             // разнесены на 0.05 %, и обе ступени цели сходились в один
+             // пиксель — проверка «цель поехала за ТВХ» проходила бы,
+             // ничего не различая.
+             ? (() => {
+                 const w = [{at: T0 - 7200, px: 64715.0, w: 0.25,
+                             avg: 64715.0},
+                            {at: T0 - 6000, px: 62000.0, w: 0.25,
+                             avg: 63333.99374021097}];
+                 const row = {
+                   sym: "BTCUSDT", arm: "dca", hour: "2026-08-03-14",
+                   side: "long", opened_at: T0 - 7200,
+                   closes_at: T0 - 3600, entry_px: 64715.0,
+                   exit_px: 66500.0, avg: w[1].avg, lots: 2,
+                   walk: dcaw(60.0, w, DCA_TAKE_FRAC),
+                   take_frac: DCA_TAKE_FRAC,
+                   adds: [{at: T0 - 6000, px: 62000.0, size: 15.0,
+                           qty: 15.0 / 62000.0, share: 0.25,
+                           hour: "2026-08-03-14"}],
+                   exits: [], net_bp: 500.0, pnl: 12.5, size: 25.0,
+                   lev: 2.4, state: "закрыта", exit: "тейк",
+                   depth: 2, bt: true};
+                 // Вторая позиция — БЕЗ обещания в записи: ступеней цели
+                 // у неё нет вовсе, и это тоже проверяется.
+                 const bare = {
+                   sym: "BTCUSDT", arm: "dca", hour: "2026-08-03-13",
+                   side: "long", opened_at: T0 - 6600,
+                   closes_at: T0 - 4200, entry_px: 60000.0,
+                   exit_px: 60500.0, avg: 60000.0, lots: 1,
+                   walk: dcaw(50.0, [{at: T0 - 6600, px: 60000.0,
+                                      w: 0.25, avg: 60000.0}]),
+                   adds: [], exits: [], net_bp: 83.0, pnl: 2.1,
+                   size: 25.0, lev: 2.0, state: "закрыта",
+                   exit: "срок", depth: 1, bt: true};
+                 return {present: true, book: "safe:10000", ruler: "safe",
+                         ruler_title: "безопасная", deposit: 10000,
+                         rules_version: 5, situational: false,
+                         no_timer: false, rows: [row, bare],
+                         merged: [row, bare]};
+               })()
              : url.startsWith("/dca_trades")
              ? {present: true, book: "safe:10000", ruler: "safe",
                 ruler_title: "безопасная", deposit: 10000,
@@ -1427,7 +1496,8 @@ global.fetch = async (url) => {
                           [{at: T0 - 7200, px: 64715.0, w: 0.25,
                             avg: 64715.0},
                            {at: T0 - 6000, px: 64682.0, w: 0.25,
-                            avg: 64698.5}]),
+                            avg: 64698.5}], DCA_TAKE_FRAC),
+                         take_frac: DCA_TAKE_FRAC,
                         // Долив в ДЕНЬГАХ и КОНТРАКТАХ, а не долей:
                         // сервер кладёт `size` долларами (доля × нотионал)
                         // и `qty` монетами. Доля лежит рядом (`share`) —
@@ -1462,7 +1532,8 @@ global.fetch = async (url) => {
                             [{at: T0 - 7200, px: 64715.0, w: 0.25,
                               avg: 64715.0},
                              {at: T0 - 6000, px: 64682.0, w: 0.25,
-                              avg: 64698.5}]),
+                              avg: 64698.5}], DCA_TAKE_FRAC),
+                           take_frac: DCA_TAKE_FRAC,
                           adds: [{at: T0 - 6000, px: 64682.0, size: 15.0,
                                   qty: 15.0 / 64682.0, share: 0.25,
                                   hour: "2026-08-03-14"}],
@@ -1965,7 +2036,9 @@ global.fetch = async (url) => {
                    const ask = hm ? +hm[1] : 24;
                    const max = /chartcapped=1/.test(SEARCH) ? 24 : 96;
                    const n = Math.min(ask, max);
-                   return {sym: "BTCUSDT", candles: candlesTo(e, n * 60),
+                   return {sym: "BTCUSDT",
+                           candles: candlesTo(e, n * 60,
+                                              /dcatake=1/.test(SEARCH)),
                            hours: n, asked_hours: ask, capped: ask > max,
                            max_hours: max, end: e};
                  })()
@@ -2103,6 +2176,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // трижды за проект давало холостой контроль.
                 + "\nglobal.__fpct = typeof fpct === 'function' "
                 + "? fpct : null;"
+                + "\nglobal.__usd = typeof usd === 'function' "
+                + "? usd : null;"
                 + "\nglobal.__infoClose = typeof closeInfo === "
                 + "'function' ? closeInfo : null;"
                 + "\nglobal.__mdl = typeof MDL !== 'undefined' ? MDL : null;"
@@ -2118,6 +2193,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 // Окно свечей ЗАДАЁТ СДЕЛКА, а не константа: без этих
                 // двух глаз проверка «окно накрыло позицию» смотрела бы
                 // на нарисованное, а не на то, что мы попросили.
+                // Строки книги, как их отдал сервер: правило «цели нет
+                // у записи без обещания» живёт в ДАННЫХ, и проверять его
+                // по картинке значит мерить масштаб, а не правило.
+                + "\nglobal.__mdlRows = () => typeof MDL !== 'undefined' "
+                + "? (MDL.trades || []) : [];"
                 + "\nglobal.__focusHours = typeof focusHours === 'function' "
                 + "? focusHours : null;"
                 + "\nglobal.__hc = () => typeof HC !== 'undefined' "
@@ -3045,6 +3125,50 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push("DCA: данные не запрошены");
     const flat = () => String(global.__el ? global.__el("box").innerHTML : "")
       .replace(/\s+/g, " ");
+    // Главные плитки (просьба владельца): свой ряд, крупнее и по
+    // центру. Проверяется РАЗМЕТКА, а не текст: «плитка есть где-то»
+    // прошло бы и на прежнем сплошном ряду, где акцента не было.
+    {
+      const bx = flat();
+      const mm = bx.match(/class='stats main'/g) || [];
+      if (!mm.length)
+        bad.push("DCA: главные плитки не выделены своим рядом");
+      // Деньги и доля к депозиту — ОДНА плитка: «x $ (x %)».
+      if (!/стратегия заработала/.test(bx))
+        bad.push("DCA: главная плитка «стратегия заработала» не найдена");
+      if (global.__usd && global.__fpct) {
+        const want = global.__usd(19.8) + " <span style='font-size:.62em;"
+          + "opacity:.85'>(" + global.__fpct(0.00198) + ")</span>";
+        if (bx.indexOf(want) < 0)
+          bad.push("DCA: деньги и доля к депозиту не сведены в одну "
+                   + "плитку: " + want);
+      }
+      // Прежних раздельных плиток быть не должно — иначе величина
+      // печатается дважды и первая же правка их разведёт.
+      if (/<div class=k>деньги<\/div>/.test(bx))
+        bad.push("DCA: осталась отдельная плитка «деньги»");
+      if (/<div class=k>к депозиту<\/div>/.test(bx))
+        bad.push("DCA: осталась отдельная плитка «к депозиту»");
+      // Просадка ДЕПОЗИТА и просадка ОТКРЫТЫХ — разные величины, и
+      // фикстура даёт им разные числа: совпади они, проверка прошла бы
+      // на одном.
+      if (!/просадка открытых/.test(bx))
+        bad.push("DCA: просадки одновременно открытых нет");
+      // Ожидание считается ФОРМАТАМИ САМОЙ СТРАНИЦЫ, а не переписано
+      // сюда по памяти: у денег свой формат, у процента свой (три знака
+      // мельче 10 б.п.), и написанная от руки строка ловит опечатку в
+      // проверке, а не дефект на странице. Этот урок в проекте уже
+      // трижды стоил холостого контроля.
+      if (global.__usd && global.__fpct) {
+        const want = global.__usd(-7.92) + " <span style='font-size:.62em;"
+          + "opacity:.85'>(" + global.__fpct(-0.0008) + ")</span>";
+        if (bx.indexOf(want) < 0)
+          bad.push("DCA: просадка открытых не в деньгах и доле разом: "
+                   + want);
+      }
+      if (!/просадка депозита/.test(bx))
+        bad.push("DCA: просадки депозита нет");
+    }
     // Рамка «что это» уехала в МОДАЛКУ (решение владельца 2026-09-04).
     // Проверяется ОБЕ стороны: без нажатия её на странице нет, по
     // нажатию она есть целиком, по закрытию исчезает. Иначе «скрыли»
@@ -4709,7 +4833,53 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // подогнан под семьдесят часов, и соседняя сорокаминутная сделка
   // сжимается в пиксель — проверять на ней геометрию значит мерить
   // масштаб, а не правило.
-  if (isChart && /dca=/.test(SEARCH) && !/dcalong=1/.test(SEARCH)) {
+  // Цель лестницы — СТУПЕНЧАТАЯ (просьба владельца): якорь у неё та же
+  // плавающая ТВХ, и неподвижная линия утверждала бы уровень, от
+  // которого позиция давно не считается. Проверяются ОБЕ стороны: у
+  // позиции с обещанием ступени нарисованы и стоят на `ТВХ × (1 + доля)`,
+  // у позиции БЕЗ обещания их нет вовсе — рисовать уровень, которого мы
+  // не знаем, значит утверждать чужое число.
+  if (isChart && /dcatake=1/.test(SEARCH)
+      && global.__strokes && global.__ymap) {
+    const ym = global.__ymap();
+    // Ступени цели — ОДИН штриховой путь с несколькими уровнями: ищем
+    // штрих, у которого есть точка на каждом из двух. Уровни разнесены
+    // на живой шаг лестницы, поэтому в пиксель не сходятся.
+    const t1 = 64715.0 * (1 + 0.05);
+    const t2 = 63333.99374021097 * (1 + 0.05);
+    const has = (st, px) => st.pts.some(p => Math.abs(p.y - ym(px)) < 1.5);
+    const tl = (global.__strokes || []).filter(
+      s => s.dash.length && s.pts.length > 2 && has(s, t1));
+    if (!tl.length)
+      bad.push("график: первой ступени цели нет");
+    else if (!tl.some(s => has(s, t2)))
+      bad.push("график: цель не поехала за ТВХ после долива");
+    // У позиции БЕЗ обещания в записи ступеней цели нет вовсе — рисовать
+    // уровень, которого мы не знаем, значит утверждать чужое число.
+    const rows = global.__mdlRows ? global.__mdlRows() : [];
+    const noPromise = rows.filter(r => r.take_frac == null);
+    if (!noPromise.length)
+      bad.push("фикстура: позиции без обещания нет — правило не проверено");
+    if (noPromise.some(r => (r.walk || []).some(x => x.take != null)))
+      bad.push("данные: цель у позиции без обещания в записи");
+    const lg = String(global.__el("lgdca").style.display || "");
+    if (lg === "none")
+      bad.push("легенда: ступенчатая цель не названа");
+  }
+  // Узкое окно цены: цель в пяти процентах от ТВХ за него не влезает.
+  // Молчать нельзя — сделка выглядела бы без цели; ставится метка у
+  // края с ценой и стрелкой, та же честность, что у уровней модели.
+  if (isChart && /dca=/.test(SEARCH) && !/dcalong=1/.test(SEARCH)
+      && !/dcatake=1/.test(SEARCH) && global.__texts) {
+    const off = (global.__texts || []).filter(
+      x => /^take .*off scale/.test(String(x)));
+    if (!off.length)
+      bad.push("график: цель за краем окна не названа меткой");
+  }
+  // Тонкая геометрия лестницы проверяется на СВОЕЙ фикстуре: у прогона
+  // ступенчатой цели свои цены (живой шаг лестницы) и свой масштаб.
+  if (isChart && /dca=/.test(SEARCH) && !/dcalong=1/.test(SEARCH)
+      && !/dcatake=1/.test(SEARCH)) {
     if (!seen.some(u => u.startsWith("/dca_trades")))
       bad.push("график: позиции DCA-книги не запрошены");
     if (!seen.some(u => u.startsWith("/dca_trades") && /book=/.test(u)))

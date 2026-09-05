@@ -204,6 +204,51 @@ def test_backtest_and_live_share_one_curve_and_stay_labelled():
     print("ok  кривая одна: общий счёт +15.00 при группах +10.00 и +5.00")
 
 
+def test_take_steps_follow_the_floating_average():
+    """Цель ступенчата: якорь — плавающая ТВХ, и долив опускает обе.
+
+    Величина считается ТАМ ЖЕ, где ступени ТВХ (`rules.avg_walk`), ровно
+    затем, чтобы две линии на графике не могли разойтись: вторая
+    арифметика однажды нарисовала бы цель от другой средней.
+    """
+    fills = [[1.0, 100.0, 0.25], [2.0, 90.0, 0.25]]
+    f = R.take_rule(500.0)["frac"]          # 2 × обещание 5 %
+    w = R.avg_walk(fills, notional=100.0, take_frac=f)
+    assert len(w) == 2, w
+    for st in w:
+        assert abs(st["take"] - st["avg"] * (1 + f)) < 1e-12, st
+    assert w[1]["take"] < w[0]["take"], w   # долив опустил цель
+    assert w[1]["avg"] < w[0]["avg"], w     # вместе со средней
+    # Без правила поля нет ВОВСЕ: уровень, которого мы не знаем, рисовать
+    # нельзя — это утверждение чужого числа, а не пропуск.
+    bare = R.avg_walk(fills, notional=100.0)
+    assert all("take" not in st for st in bare), bare
+    assert R.avg_walk(fills, notional=100.0, take_frac=0.0)[0].get(
+        "take") is None
+    print(f"ok  цель ступенчата: {w[0]['take']:.3f} → {w[1]['take']:.3f} "
+          f"вслед за ТВХ {w[0]['avg']:.3f} → {w[1]['avg']:.3f} "
+          f"(доля {f*100:.1f} %); без правила поля нет")
+
+
+def test_take_frac_comes_from_the_rule_not_from_the_record():
+    """Доля цели ВЫВОДИТСЯ из обещания правилом, а не хранится числом.
+
+    Сменится множитель — уровень пересчитается сам; записанная доля
+    осталась бы от прежнего правила, и график утверждал бы уровень,
+    которым книга давно не торгует.
+    """
+    was = R.TAKE_MULT
+    try:
+        a = R.take_rule(500.0)["frac"]
+        R.TAKE_MULT = was * 2
+        b = R.take_rule(500.0)["frac"]
+    finally:
+        R.TAKE_MULT = was
+    assert abs(b - 2 * a) < 1e-12, (a, b)
+    print(f"ok  доля цели следует правилу: {a*100:.1f} % → {b*100:.1f} % "
+          "при удвоении множителя")
+
+
 def test_open_position_is_not_a_closed_one():
     """Позиция, чей срок ещё идёт, — открытая, а не «закрыта по сроку».
 
@@ -1358,6 +1403,8 @@ TESTS = [test_shape_counts_positions_not_days,
          test_cut_position_gets_a_named_reason,
          test_one_per_name_applied_before_cash,
          test_backtest_and_live_share_one_curve_and_stay_labelled,
+    test_take_steps_follow_the_floating_average,
+    test_take_frac_comes_from_the_rule_not_from_the_record,
     test_open_position_is_not_a_closed_one, test_journal_appends_only_new,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,

@@ -235,7 +235,7 @@ def notional_of(row):
     return m * lv if (m > 0 and lv > 0) else None
 
 
-def avg_walk(fills, entry=None, notional=None):
+def avg_walk(fills, entry=None, notional=None, take_frac=None):
     """Плавающая ТВХ: средняя цена входа ПОСЛЕ каждого рунга.
 
     Одна реализация на всех — её зовут и страница книги (разворот
@@ -259,6 +259,15 @@ def avg_walk(fills, entry=None, notional=None):
     Контракты к ШАГУ ЛОТА площадки не округляются намеренно: книга
     считает деньги нотионалом без округления, и округлённое количество
     рядом с неокруглёнными деньгами описывало бы две разные позиции.
+
+    `take_frac` добавляет `take` — уровень ТЕЙКА после каждого рунга.
+    Он тоже ступенчатый, потому что якорь цели — ПЛАВАЮЩАЯ ТВХ
+    (`TAKE_ANCHOR`): долив опускает среднюю, и цель едет вместе с ней.
+    Считается ЗДЕСЬ, рядом со ступенями ТВХ, ровно затем, чтобы две
+    линии на графике не могли разойтись: вторая арифметика однажды
+    нарисовала бы цель не от той средней. Без `take_frac` (правило
+    сделки в записи не сохранено) поля не будет вовсе — рисовать
+    уровень, которого мы не знаем, значит утверждать чужое число.
     """
     # ДЕНЬГИ на монеты, а не среднее цен: рунг покупает свою ДОЛЮ
     # нотионала, поэтому средняя цена входа равна «потрачено / куплено»
@@ -273,11 +282,21 @@ def avg_walk(fills, entry=None, notional=None):
     if nt is not None and not (nt > 0):
         nt = None
 
+    tf = None
+    try:
+        tf = float(take_frac) if take_frac is not None else None
+    except (TypeError, ValueError):
+        tf = None
+    if tf is not None and not (tf > 0):
+        tf = None
+
     def _row(at, px, w, avg, coins):
         r = {"at": at, "px": px, "w": w, "avg": avg}
         if nt is not None:
             r["dq"] = w * nt / px          # куплено этим рунгом
             r["qty"] = coins * nt          # стоит в позиции после него
+        if tf is not None:
+            r["take"] = avg * (1.0 + tf)   # цель ОТ ЭТОЙ средней
         return r
 
     out, cash, qty = [], 0.0, 0.0

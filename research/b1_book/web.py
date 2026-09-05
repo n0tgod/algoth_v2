@@ -2717,6 +2717,14 @@ body{background:
  border:1px solid var(--rule);border-radius:14px;padding:11px 13px}
 .st .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 .st .v{font-size:17px;font-weight:600;margin-top:5px}
+/* Главные плитки (просьба владельца): крупнее, по центру и своим
+   рядом. Второстепенные остаются как были — акцент не работает, если
+   выделено всё. */
+.stats.main{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+ justify-content:center;margin-bottom:10px}
+.stats.main .st{padding:16px 18px;text-align:center}
+.stats.main .st .v{font-size:26px;margin-top:8px}
+.stats.main .st .k{font-size:11px}
 .card{background:var(--panel);border:1px solid var(--rule);
  border-radius:16px;padding:14px 16px;margin-bottom:14px}
 .cap{display:flex;justify-content:space-between;align-items:baseline;
@@ -3168,6 +3176,9 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
     beyond it</span>
   <span><span class="sw" style="border-color:var(--bid)"></span>target /
     profit promise</span></span>
+  <span id="lgdca"><span class="sw"
+    style="border-color:var(--bid)"></span>take, stepped: its anchor is the
+    floating average entry, so each add moves it down too</span>
   <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp;
     exit dots</span>
   <span><span class="sw" style="background:rgba(61,220,127,.25);
@@ -3482,8 +3493,11 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
              obs: false,
              // Книга DCA: график показывает ПОЗИЦИИ лестницы, а не
              // выборы модели. Рука у неё одна (лестница не делится на
-             // деревья и сеть), уровней нет — и то и другое приходит
-             // ОТВЕТОМ сервера, а не решается здесь списком ключей.
+             // деревья и сеть), СТОПА нет (убыток ограничивает пол
+             // капитуляции, а не заявка на цене), а цель есть и она
+             // СТУПЕНЧАТАЯ — якорь у неё плавающая ТВХ. Всё это
+             // приходит ОТВЕТОМ сервера, а не решается здесь списком
+             // ключей: список уже однажды рисовал книге чужие уровни.
              dca: Q.get("dca") || "",
              fit: false};
 // Пункты легенды про уровни — только там, где уровни действуют:
@@ -3493,6 +3507,16 @@ const MDL = {trades: [], at: 0, busy: false, sym: "",
 function legendLevels() {
   const lv = document.getElementById("lglv");
   if (lv) lv.style.display = actsOnLevels() ? "" : "none";
+  // Ступенчатая цель — у книги ЛЕСТНИЦЫ, и решает это ОТВЕТ сервера
+  // (пришли ли ступени), а не список ключей на странице: список уже
+  // однажды рисовал книге чужие уровни. Стопа у лестницы нет вовсе —
+  // её убыток ограничивает пол капитуляции, а не заявка на цене.
+  const dl = document.getElementById("lgdca");
+  if (dl) dl.style.display = hasStepTake() ? "" : "none";
+}
+function hasStepTake() {
+  return (MDL.trades || []).some(
+    r => (r.walk || []).some(x => x && x.take != null));
 }
 legendLevels();
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара
@@ -4244,13 +4268,24 @@ function draw() {
     // Считается ОДИН раз: по ней идёт и граница зон, и линия ТВХ ниже.
     // Величина приходит готовой с сервера (`rules.avg_walk`), второй
     // арифметики здесь нет.
-    const segs = [];
+    const segs = [], tseg = [];
     if (wk.length > 1) {
       for (let i = 0; i < wk.length; i++) {
         const x0 = clamp(xt(wk[i].at));
         const x1 = clamp(i + 1 < wk.length ? xt(wk[i + 1].at) : xb);
         segs.push([x0, Math.max(x1, x0), y(wk[i].avg)]);
+        // Цель ступенчата ПО ТОЙ ЖЕ причине, что ТВХ: её якорь —
+        // плавающая средняя, и долив опускает обе разом. Уровень
+        // приходит готовым с сервера (`rules.avg_walk` с долей цели),
+        // второй арифметики здесь нет: посчитай график цель сам, она
+        // однажды встала бы от другой средней, чем считает книга.
+        if (wk[i].take != null)
+          tseg.push([x0, Math.max(x1, x0), wk[i].take]);
       }
+    } else if (wk.length === 1 && wk[0].take != null) {
+      // Позиция без доливов: ступень одна, но она есть — иначе цель
+      // показана только у лестниц, а у остальных её будто нет.
+      tseg.push([xa, Math.max(xb, xa + 2), wk[0].take]);
     }
     g.save();
     // Зоны v1: у лонга прибыль НАД входом (зелёная), убыток под
@@ -4366,6 +4401,40 @@ function draw() {
         const last = seg[seg.length - 1];
         HIT.push({mdl: t, avgline: seg.length, x0: last[0], x1: last[1],
                   y0: last[2] - 4, y1: last[2] + 4});
+      }
+    }
+    // Цель лестницы — СТУПЕНЧАТАЯ, как и ТВХ (просьба владельца):
+    // якорь у неё плавающая средняя, и неподвижная линия утверждала бы
+    // уровень, от которого позиция давно не считается. Ступени в
+    // диапазон цены НЕ втягиваются: цель стоит процентов на пять выше,
+    // и ради неё пришлось бы сжать сами свечи. Ступень вне окна не
+    // рисуется, а у сделки в фокусе целиком ушедшая цель называется
+    // меткой у края — та же честность, что у «уровень off scale».
+    if (tseg.length) {
+      const vis = tseg.filter(([, , pv]) => pv >= lo && pv <= hi);
+      if (vis.length) {
+        g.save();
+        g.strokeStyle = css("--bid"); g.lineWidth = me ? 2 : 1.3;
+        g.setLineDash([6, 3]);
+        g.beginPath();
+        vis.forEach(([x0, x1, pv], i) => {
+          const yv = y(pv);
+          if (i === 0) g.moveTo(x0, yv); else g.lineTo(x0, yv);
+          g.lineTo(x1, yv);
+        });
+        g.stroke(); g.setLineDash([]);
+        if (me) {
+          const lastT = vis[vis.length - 1];
+          g.fillStyle = css("--bid");
+          g.fillText("take " + lastT[2].toFixed(dec),
+                     xa + 4, y(lastT[2]) - 4);
+        }
+        g.restore();
+      } else if (me) {
+        const pv = tseg[tseg.length - 1][2];
+        g.fillStyle = css("--bid");
+        g.fillText(`take ${pv.toFixed(dec)} ${pv > hi ? "↑" : "↓"} off scale`,
+                   xa + 4, pv > hi ? padT + 8 : padT + ph * 0.8);
       }
     }
     let drew = null;
@@ -4667,6 +4736,18 @@ function explainTrade(t) {
       ${pct(t.mae_bp)}${t.mfe_bp != null
       ? `, in favour ${pct(t.mfe_bp)}` : ""} — this book exits by
       time, it has no stop or take`);
+  } else if (t.take_frac != null) {
+    // Лестница: цель ЕСТЬ и она ступенчата, а стопа нет вовсе. Правило
+    // печатается из ответа сервера, а не из константы на странице:
+    // множитель меняется, и вторая его запись однажды разошлась бы с
+    // той, которой книга торгует.
+    const w = t.walk || [], lastw = w.length ? w[w.length - 1] : null;
+    bits.push(`levels: take at <b>${lvl(t.take_frac * 1e4)}</b> from the
+      <b>floating average entry</b>, so every add moves it down with the
+      average${lastw && lastw.take != null
+        ? ` (now ${+lastw.take.toPrecision(6)})` : ""} — the
+      ladder has no stop: its loss is bounded by the capitulation floor
+      near liquidation, not by an order at a price`);
   } else if (t.mae_bp != null) {
     const q = String(t.stop_of || "").indexOf("q_") > 0;
     bits.push(`levels: stop at ${pct(t.mae_bp)}${q
@@ -6441,6 +6522,51 @@ function statBlock(st, dep, title, op, grp){
   let h = "<div class=panel><div class=cap>" + esc(title) +
     " <span class='tag " + (grp === "fwd" ? "fwd" : "") + "'>" +
     esc(grp === "fwd" ? "наблюдение" : "общий счёт") + "</span></div>";
+  // ГЛАВНЫЕ плитки (просьба владельца): что заработала стратегия, что
+  // висит открытым и как глубоко книга проседала. Деньги и доля к
+  // депозиту — ОДНА плитка: это одна величина в двух единицах, и
+  // разносить её по двум значило заставлять читателя складывать их
+  // глазами. Остальное уходит вниз второстепенным: акцент не работает,
+  // если выделено всё.
+  const kn0 = op !== undefined && op && op.known !== false;
+  const two = (a, b2) => a + " <span style='font-size:.62em;opacity:.85'>("
+    + b2 + ")</span>";
+  const main = [
+    ["стратегия заработала",
+     st.final == null ? usd(st.usd) : two(usd(st.usd), fpct(st.final)),
+     cls(st.usd), null],
+    // Отметка ЖИВАЯ: тайл обновляется опросом `/dca_marks` раз в десять
+    // секунд. Число из артефакта — то, что посчитал часовой прогон.
+    ["открытый pnl",
+     op === undefined ? null : (kn0 ? usd(op.mark_usd) : "&mdash;"),
+     op === undefined ? null : (kn0 ? cls(op.mark_usd) : ""),
+     "dcamk"],
+    ["открытых позиций",
+     op === undefined ? null
+       : (kn0 ? (op.positions ? op.positions.length : 0) : "&mdash;"),
+     null, null],
+    // Просадка ДЕПОЗИТА — по закрытым позициям: глубочайший провал
+    // накопленного счёта от его же вершины, по тем же суткам, по
+    // которым нарисована кривая ниже.
+    ["просадка депозита", fpct(st.max_dd), cls(st.max_dd), null],
+    // Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — ДРУГАЯ величина, и путать их
+    // нельзя: она говорит, сколько книга держала под водой на бумаге в
+    // худший момент, тогда как первая считает уже закрытое. Считает
+    // сервер по почасовым отметкам; прочерк значит «прогон этого не
+    // считал» (свод прежнего образца), а не ноль.
+    ["просадка открытых",
+     st.open_dd_share == null ? "&mdash;"
+       : two(usd(st.open_dd), fpct(st.open_dd_share)),
+     cls(st.open_dd_share), null]];
+  h += "<div class='stats main'>";
+  for (const [k, v, c, id] of main) {
+    if (v == null) continue;
+    h += "<div class=st><div class=k>" + k + "</div><div class='v mono "
+      + (c || "") + "'" + (id ? " id=" + id : "") + ">" + v + "</div>"
+      + (id === "dcamk" ? "<div class=k id=dcamkat></div>" : "")
+      + "</div>";
+  }
+  h += "</div>";
   h += "<div class=stats>";
   const cells = [
     // ПОЗИЦИЙ, а не сделок: позиция есть лестница, и каждый её долив —
@@ -6455,12 +6581,6 @@ function statBlock(st, dep, title, op, grp){
     ["из них по котировке", st.n_tail == null ? "&mdash;" : st.n_tail, null],
     ["имён", st.names, null],
     ["дней", st.days, null],
-    ["деньги", usd(st.usd), cls(st.usd)],
-    ["к депозиту", fpct(st.final), cls(st.final)],
-    // Просадка ДЕПОЗИТА по закрытым позициям: глубочайший провал
-    // накопленного счёта от его же вершины. Считается по тем же суткам,
-    // по которым нарисована кривая выше.
-    ["просадка депозита", fpct(st.max_dd), cls(st.max_dd)],
     // Доля прибыльных ПОЗИЦИЙ — не то же, что доля зелёных ДНЕЙ:
     // знаменатели разные, и путать их значит отвечать не на тот вопрос.
     ["прибыльных сделок", st.win == null ? "&mdash;" :
@@ -6485,18 +6605,7 @@ function statBlock(st, dep, title, op, grp){
   // группе: это состояние СЕЙЧАС, а не часть выбранной кривой.
   if (op !== undefined){
     const kn = op && op.known !== false;
-    const n = kn && op.positions ? op.positions.length : null;
     const cut = kn && op.cut ? op.cut.length : null;
-    h += "<div class=st><div class=k>открытых позиций</div>" +
-      "<div class='v mono'>" + (kn ? n : "&mdash;") + "</div></div>";
-    // Отметка ЖИВАЯ: тайл обновляется опросом `/dca_marks` раз в
-    // десять секунд, как у книг моделей. Число из артефакта — то, что
-    // посчитал часовой прогон; между прогонами оно стояло, и владелец
-    // видел замерший открытый pnl.
-    h += "<div class=st><div class=k>открытый pnl</div>" +
-      "<div class='v mono " + (kn ? cls(op.mark_usd) : "") +
-      "' id=dcamk>" + (kn ? usd(op.mark_usd) : "&mdash;") + "</div>" +
-      "<div class=k id=dcamkat></div></div>";
     // Худшая ОТКРЫТАЯ — просадка, которую книга несёт прямо сейчас.
     // Считает сервер (`rules.open_stats`): страница печатает её дважды,
     // и вторая арифметика разошлась бы с первой.
@@ -6513,8 +6622,11 @@ function statBlock(st, dep, title, op, grp){
   h += "<div style='margin-top:10px'>" + curveSvg(st, dep) + "</div>";
   h += "<div class=k>Кривая — накопленный счёт по ЗАКРЫТЫМ позициям от " +
     "депозита; открытые в неё не входят. Группа: " + esc(gname) + ". " +
-    "Просадка в плитке считана по этому же ряду, и второго её счёта на " +
-    "странице нет.</div>";
+    "Просадка депозита в плитке считана по этому же ряду, и второго её " +
+    "счёта на странице нет. <b>Просадка открытых</b> — другая величина: " +
+    "сколько книга держала под водой ОДНОВРЕМЕННО открытыми позициями в " +
+    "худший час; она принадлежит всей книге и по группам не делится, " +
+    "поэтому в группе «без бэктеста» там прочерк.</div>";
   if (op !== undefined && !(op && op.known !== false))
     h += "<div class=k style='margin-top:8px'>Открытых не считали: свод " +
       "пересобран из журнала (<code>--restat</code>), а открытые позиции " +
@@ -7426,6 +7538,14 @@ a{color:var(--accent)}
  border:1px solid var(--rule);border-radius:14px;padding:11px 13px}
 .st .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 .st .v{font-size:17px;font-weight:600;margin-top:5px}
+/* Главные плитки (просьба владельца): крупнее, по центру и своим
+   рядом. Второстепенные остаются как были — акцент не работает, если
+   выделено всё. */
+.stats.main{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+ justify-content:center;margin-bottom:10px}
+.stats.main .st{padding:16px 18px;text-align:center}
+.stats.main .st .v{font-size:26px;margin-top:8px}
+.stats.main .st .k{font-size:11px}
 .st .s{font-size:10.5px;color:var(--muted);margin-top:4px;
  line-height:1.45}
 .card{background:var(--panel);border:1px solid var(--rule);

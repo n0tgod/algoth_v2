@@ -556,6 +556,71 @@ def _control_arrival_order():
         D6.queue = orig
 
 
+def test_open_drawdown_is_not_the_equity_drawdown():
+    """Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — своя величина (вопрос владельца).
+
+    Просадка депозита считает по кривой счёта, где закрытое и открытое
+    сложены; просадка открытых говорит, сколько книга держала под водой
+    НА БУМАГЕ в худший час. Фикстура их разводит намеренно: одна позиция
+    уходит в минус на отметках и возвращается, вторая в тот же час
+    закрывается в плюс ровно на столько же — кривая счёта не шелохнётся,
+    а под водой книга простоит.
+    """
+    H = 3600
+    t0 = 1_700_000_000 - 1_700_000_000 % H
+    deep = {"at": float(t0), "exit_ts": float(t0 + 3 * H), "pnl": 0.02,
+            "lev": 2.0, "fwd": 200.0, "sym": "AAAUSDT",
+            "marks": [(t0, -0.30), (t0 + H, 0.10), (t0 + 2 * H, 0.22)]}
+    quick = {"at": float(t0), "exit_ts": float(t0 + H), "pnl": 0.30,
+             "lev": 2.0, "fwd": 100.0, "sym": "BBBUSDT",
+             "marks": [(t0, 0.30)]}
+    c = D6.ration([deep, quick], 0.1, deposit=1000.0)
+    assert c["taken"] == 2, c
+    # кривая счёта в первый час не двинулась: −30 и +30 сложились
+    assert abs(c["max_dd"]) < 1e-9, c["max_dd"]
+    # а под водой книга стояла на 30 долларов — это и есть вопрос
+    assert abs(c["open_dd"] + 30.0) < 1e-6, c["open_dd"]
+    assert abs(c["open_dd_share"] + 0.03) < 1e-9, c["open_dd_share"]
+    print(f"ok  просадка открытых {c['open_dd']:+.2f} $ "
+          f"({c['open_dd_share']*100:+.2f} %) при просадке депозита "
+          f"{c['max_dd']*100:+.2f} % — величины разные")
+
+
+def _control_open_dd_counts_the_closing_hour():
+    """Час закрытия попал в открытые — реализованное выдано за отметку."""
+    return _poison_d6("            if i < len(mk) - 1:",
+                      "            if True:",
+                      test_open_drawdown_is_not_the_equity_drawdown)
+
+
+def _poison_d6(lit, sub, fn):
+    """Подделка строки `run_d6` и прогон проверки."""
+    import importlib
+    import shutil
+    import tempfile
+    path = os.path.join(HERE, "run_d6.py")
+    src = open(path, encoding="utf-8").read()
+    assert lit in src, f"подделка НЕ легла: литерала нет — {lit}"
+    keep = os.path.join(tempfile.mkdtemp(prefix="d6-"), "run_d6.py")
+    shutil.copy(path, keep)
+    try:
+        open(path, "w", encoding="utf-8").write(src.replace(lit, sub, 1))
+        cache = os.path.join(HERE, "__pycache__")
+        if os.path.isdir(cache):
+            for f in os.listdir(cache):
+                if f.startswith("run_d6."):
+                    os.remove(os.path.join(cache, f))
+        importlib.reload(D6)
+        try:
+            fn()
+        except Exception:
+            return True
+        return False
+    finally:
+        shutil.copy(keep, path)
+        importlib.reload(D6)
+
+
 TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_min_notional_rejects_not_rounds, test_leverage_sets_the_ticket,
          test_best_first_within_a_second, test_deposit_units_and_curve,
@@ -569,6 +634,7 @@ TESTS = [test_budget_is_respected, test_money_returns_before_it_is_spent,
          test_peak_open_separates_lots_from_names,
          test_one_per_name_skips_repeats,
          test_full_cover_takes_every_signal,
+         test_open_drawdown_is_not_the_equity_drawdown,
          test_report_carries_full_cover]
 
 CONTROLS = [("бюджет не вычитается", _control_no_budget),
@@ -579,7 +645,9 @@ CONTROLS = [("бюджет не вычитается", _control_no_budget),
             ("окно замера не названо", _control_no_window),
             ("опора депозита не сверяет", _control_blind_anchor),
             ("билет не от слабейшего плеча", _control_no_full_cover),
-            ("пик лотов выдан за пик имён", _control_lots_as_names)]
+            ("пик лотов выдан за пик имён", _control_lots_as_names),
+            ("час закрытия считается открытым",
+             _control_open_dd_counts_the_closing_hour)]
 
 
 def main():

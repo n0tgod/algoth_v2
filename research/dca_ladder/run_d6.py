@@ -176,6 +176,11 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     out = {"at": float(g["at"]), "exit_ts": float(r["exit_ts"]),
            "pnl": float(r["pnl_frac"]), "lev": float(lev),
            "fwd": abs(float(g["fwd"])), "sym": g["sym"],
+           # Обещание модели СЫРЫМ числом: из него выводится доля цели
+           # (`rules.take_rule`), и хранить надо его, а не готовую долю.
+           # Сменится множитель — уровень пересчитается сам, а
+           # записанная доля осталась бы от прежнего правила.
+           "fav_bp": float(g["fav"]),
            "exit": r["exit"], "marks": marks,
            # Конец ОКНА и плановый конец срока. По их расхождению видно,
            # кончился ли срок или кончилась ЗАПИСЬ: позиция, чей срок ещё
@@ -253,7 +258,7 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
     eps = 1e-9 * float(deposit)
     live = []                       # (exit_ts, маржа, доля капитала, marks)
     taken, no_cash, too_small = 0, 0, 0
-    dH, openN = {}, {}
+    dH, openN, openP = {}, {}, {}
     bysym, best_trade = {}, 0.0
     ids, pnl_taken = [], 0.0
     for r in order:
@@ -286,8 +291,19 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         got = r["pnl"] * margin
         bysym[r["sym"]] = bysym.get(r["sym"], 0.0) + got
         best_trade = max(best_trade, got)
-        for (hr, d) in r["marks"]:
+        # Нереализованное этой позиции на конец каждого часа, пока она
+        # ОТКРЫТА: последний час не в счёт — в нём позиция закрылась, и
+        # её результат уже реализован. Сумма по часам даёт «сколько
+        # книга держала под водой одновременно» — вопрос владельца, и
+        # это НЕ просадка счёта: та считается по кривой эквити, где
+        # закрытое и открытое сложены.
+        cum = 0.0
+        mk = list(r["marks"])
+        for i, (hr, d) in enumerate(mk):
             dH[hr] = dH.get(hr, 0.0) + d * margin
+            cum += d
+            if i < len(mk) - 1:
+                openP[hr] = openP.get(hr, 0.0) + cum * margin
         h0 = now - (now % HOUR)
         h1 = int(r["exit_ts"]) - (int(r["exit_ts"]) % HOUR)
         for hr in range(h0, h1 + HOUR, HOUR):
@@ -307,6 +323,10 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         else np.array([0.0])
     nn = np.array([openN[h] for h in hrs], dtype=float) if hrs \
         else np.array([0.0])
+    # Худший момент по НЕРЕАЛИЗОВАННОМУ: сколько книга держала под водой
+    # одновременно открытыми позициями. Ноль означает «под воду не
+    # уходили», и это законный ответ, а не отсутствие меры.
+    op_dd = min([0.0] + [openP.get(h, 0.0) for h in hrs]) if hrs else 0.0
     total = taken + no_cash + too_small
     return {
         "taken": taken, "no_cash": no_cash, "too_small": too_small,
@@ -320,6 +340,9 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         "open_mean": round(float(np.mean(nn)), 1),
         "open_median": round(float(np.median(nn)), 1),
         "open_max": int(np.max(nn)) if len(nn) else 0,
+        # просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — в деньгах и долей депозита
+        "open_dd": round(float(op_dd), 2),
+        "open_dd_share": round(float(op_dd) / float(deposit), 4),
         "slots": int(round(1.0 / share)),
         "ticket": round(deposit * share, 2),
         # концентрация: вычитание, а не пересчёт (см. отчёт)

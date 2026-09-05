@@ -250,6 +250,9 @@ def build_rows(by_ruler, now=None, log=print):
                         "exit_px": r.get("exit_px"), "avg": r.get("avg"),
                         "depth": r.get("depth"),
                         "fills": r.get("fills"),
+                        # обещание модели: из него выводится уровень цели,
+                        # и он ступенчатый — якорь у цели плавающая ТВХ
+                        "fav_bp": r.get("fav_bp"),
                         "written_at": now, "rules": R.RULES})
                     continue
                 item = {"sym": r["sym"], "at": float(r["at"]),
@@ -260,6 +263,7 @@ def build_rows(by_ruler, now=None, log=print):
                         "mark_usd": round(float(r["pnl"]) * float(margin), 4),
                         "entry_px": r.get("entry_px"), "avg": r.get("avg"),
                         "depth": r.get("depth"), "fills": r.get("fills"),
+                        "fav_bp": r.get("fav_bp"),
                         "last_ts": float(r.get("end_ts") or 0.0),
                         "sched_end": float(r.get("sched_end") or 0.0),
                         # Почему позиция осталась ОБОРВАННОЙ, когда
@@ -908,6 +912,32 @@ def main():
         for (pr, _sym, _at), r in cache.items():
             if pr in by_pair:
                 by_pair[pr].append(r)
+        # Обещание модели у записей ПРЕЖНЕГО образца: кэш их считал, когда
+        # поля ещё не было. Берётся из ТОГО ЖЕ списка ног, которым считает
+        # реплей, — это не восстановление по исходу, а тот же источник.
+        # Без него у старой позиции не было бы уровня цели на графике, и
+        # сказать об этом надо числом: молчаливая половина без линии
+        # читалась бы как «у книги цели нет».
+        fav_of = {}
+        for g in legs:
+            try:
+                fav_of[(g["sym"], round(float(g["at"]), 3))] = float(g["fav"])
+            except (KeyError, TypeError, ValueError):
+                # Нога без обещания правила цели не даёт вовсе, и падать
+                # тут нельзя: добор — удобство, а не условие прогона.
+                continue
+        no_fav = 0
+        for lst in by_pair.values():
+            for r in lst:
+                if r.get("fav_bp") is None:
+                    v = fav_of.get((r["sym"], round(float(r["at"]), 3)))
+                    if v is None:
+                        no_fav += 1
+                    else:
+                        r["fav_bp"] = v
+        if no_fav:
+            print(f"обещание модели не восстановлено у {no_fav} позиций — "
+                  "у них не будет линии цели на графике")
         rows, cells, one, live = build_rows(
             {k: by_pair[tuple(RULERS[k])] for k in keys})
         append_journal(rows)
@@ -930,6 +960,18 @@ def main():
                                               time.gmtime())}
     s = summarize(live=live)
     s.update(extra)
+    # Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ живёт в ячейках кассы (она считается
+    # по почасовым отметкам, которых в журнале нет), а страница читает
+    # свод. Кладётся ТОЛЬКО в общую группу: величина принадлежит всей
+    # книге и по «бэктест/вперёд» не делится — поставить её и туда
+    # значило бы приписать подмножеству чужое число.
+    for k, c in (s.get("cells") or {}).items():
+        b = (s.get("books") or {}).get(k)
+        if not (isinstance(b, dict) and isinstance(b.get("all"), dict)):
+            continue
+        if c.get("open_dd") is not None:
+            b["all"]["open_dd"] = c["open_dd"]
+            b["all"]["open_dd_share"] = c.get("open_dd_share")
     s["secs"] = round(time.time() - t0, 1)
     s["rules"] = {"RULES": R.RULES, "TICKET": R.TICKET_MIN,
                   "TICKET_MIN": R.TICKET_MIN, "PEAK_SEEN": R.PEAK_SEEN,

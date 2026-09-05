@@ -3410,6 +3410,19 @@ class Collector:
     PAPER_STALE = 36 * 3600
 
     @staticmethod
+    def _dca_take_frac(rules_mod, row):
+        """Доля цели у записи позиции. None — правило по ней неизвестно.
+
+        Считается ПРАВИЛОМ книги (`rules.take_rule`) от сохранённого
+        обещания модели, а не берётся готовым числом из записи: сменится
+        множитель — уровень пересчитается сам. Записи прежнего образца
+        обещания не несут, и уровня у них не будет вовсе: рисовать цель,
+        которой мы не знаем, значит утверждать чужое число.
+        """
+        tr = rules_mod.take_rule(row.get("fav_bp"))
+        return None if not tr else float(tr["frac"])
+
+    @staticmethod
     def _dca_adds(fills, notional):
         """Доливы позиции для графика: деньги и контракты, а не доля.
 
@@ -3479,8 +3492,9 @@ class Collector:
         for r in sorted(mine, key=lambda x: float(x.get("at") or 0)):
             at = float(r.get("at") or 0)
             fills = r.get("fills") or []
+            tf = self._dca_take_frac(DR, r)
             walk = DR.avg_walk(fills, r.get("entry_px"),
-                               DR.notional_of(r))
+                               DR.notional_of(r), take_frac=tf)
             pf = r.get("pnl_frac")
             out.append({
                 "sym": sym, "arm": "dca",
@@ -3491,6 +3505,9 @@ class Collector:
                 "closes_at": float(r.get("exit_ts") or at),
                 "entry_px": r.get("entry_px"), "exit_px": r.get("exit_px"),
                 "avg": r.get("avg"), "walk": walk,
+                # Доля цели рядом со ступенями: график печатает правило
+                # словами, а не выводит его обратно из нарисованного.
+                "take_frac": tf,
                 "lots": max(1, len(fills)),
                 "adds": self._dca_adds(fills[1:], DR.notional_of(r)),
                 "exits": [],
@@ -3530,7 +3547,9 @@ class Collector:
                     "entry_px": r.get("entry_px"), "exit_px": None,
                     "avg": r.get("avg"),
                     "walk": DR.avg_walk(fills, r.get("entry_px"),
-                                        DR.notional_of(r)),
+                                        DR.notional_of(r),
+                                        take_frac=self._dca_take_frac(DR, r)),
+                    "take_frac": self._dca_take_frac(DR, r),
                     "lots": max(1, len(fills)),
                     "adds": self._dca_adds(fills[1:],
                                            DR.notional_of(r)),
@@ -3748,8 +3767,13 @@ class Collector:
                     # (`rules.avg_walk`) и едет готовой: вторая её
                     # реализация на странице разошлась бы с симуляцией,
                     # и позиция рисовалась бы не там, где посчитана.
-                    "walk": DR.avg_walk(r.get("fills"), r.get("entry_px"),
-                                        DR.notional_of(r)),
+                    "walk": DR.avg_walk(
+                        r.get("fills"), r.get("entry_px"),
+                        DR.notional_of(r),
+                        take_frac=self._dca_take_frac(DR, r)),
+                    # Доля цели рядом со ступенями: правило печатается
+                    # словами, а не выводится обратно из нарисованного.
+                    "take_frac": self._dca_take_frac(DR, r),
                     "bt": bool(id(r) in seen),
                     # Исход посчитан по КОТИРОВКЕ, а не по принтам:
                     # хвост ленты продолжен серединой стакана. Пометка
@@ -3781,7 +3805,9 @@ class Collector:
                     def _walk(lst, why=None):
                         return [dict(q, walk=DR.avg_walk(
                                         q.get("fills"), q.get("entry_px"),
-                                        DR.notional_of(q)),
+                                        DR.notional_of(q),
+                                        take_frac=self._dca_take_frac(DR, q)),
+                                     take_frac=self._dca_take_frac(DR, q),
                                      **({"cut_why": q.get("cut_why") or why}
                                         if why else {}))
                                 for q in (lst or [])]
