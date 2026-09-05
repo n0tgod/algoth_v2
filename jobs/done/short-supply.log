@@ -23,3 +23,11 @@ sheets.jsonl: ног 934265
 суток: лонг 29, шорт 28, общих 28
 отчёт: /root/algoth_v2/research/dca_paper/out/DCA-short-supply-1m.md
 конец: 2026-09-05T21:12:52Z, код 0
+публикуется в ветку main:
+ jobs/done/deploy-days.log  |  3 ++-
+ jobs/done/short-supply.log | 19 +++++++++++++++++++
+ 2 files changed, 21 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   6ec0257..2f6c719  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

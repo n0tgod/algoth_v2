@@ -5,3 +5,31 @@
 == останавливаю прежний ==
 жду закрытия файлов........
 == обновляю код ==
+warning: fetch updated the current branch head.
+fast-forwarding your working tree from
+commit 6ec02577684f48d064d68cf613e19104f1cd48b5.
+error: Your local changes to the following files would be overwritten by merge:
+	jobs/done/deploy-days.log
+	jobs/done/short-supply.log
+Please commit your changes or stash them before you merge.
+Aborting
+fatal: Cannot fast-forward your working tree.
+After making sure that you saved anything precious from
+$ git diff 6ec02577684f48d064d68cf613e19104f1cd48b5
+output, run
+$ git reset --hard
+to recover.
+ВНИМАНИЕ: git pull не прошёл — запускаю на текущем коде
+== запускаю ==
+== поднялся, хвост журнала ==
+[       2 с] бумажные сделки выключены: направление ленты закрыто замерами, поглощение входит в модель признаками; запись стакана и ленты идёт как шла
+[       3 с] шард 0: подключён, подписываюсь на 120 тем
+[       4 с] шард 1: подключён, подписываюсь на 120 тем
+[       5 с] шард 2: подключён, подписываюсь на 120 тем
+[       6 с] шард 3: подключён, подписываюсь на 120 тем
+[       7 с] шард 4: подключён, подписываюсь на 120 тем
+[       8 с] шард 5: подключён, подписываюсь на 120 тем
+[       9 с] шард 6: подключён, подписываюсь на 120 тем
+== перезапускаю циклы обучения ==
+  не запущен: s8_loop/train.py --pretest
+  остановлен, сторож поднимет: s8_loop/train.py$
