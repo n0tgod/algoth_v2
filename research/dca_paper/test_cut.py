@@ -252,6 +252,31 @@ def test_report_builds_and_shows_both_sides():
           "Прогон не состоялся" in C.report({"error": "кэша нет"}), "")
 
 
+def test_run_refuses_when_the_rule_is_already_in_the_book():
+    """Правило внедрено — замер обязан отказать СЛОВАМИ, а не дать ноль.
+
+    После внедрения этот замер сравнивал бы книгу с книгой, которая хвост
+    уже применила, и напечатал бы нули; ноль здесь читается как «хвост
+    ничего не даёт», то есть ровно наоборот. Признак берётся у самой
+    книги — её подписи правил реплея.
+    """
+    import run_paper as P
+    got = C.run(log=lambda m: None)
+    check("правило в книге — замер отказывает словами",
+          "error" in got and "правил" in got["error"],
+          f"вернулось {got.get('error')!r}")
+    # и это НЕ вечный отказ: сними хвост из подписи книги — замер идёт
+    sig = P.cache_sig
+    P.cache_sig = lambda: {k: v for k, v in sig().items() if k != "tail"}
+    try:
+        got2 = C.run(log=lambda m: None)
+        check("без хвоста в книге замер снова работает",
+              got2.get("error") != got["error"],
+              f"тот же отказ: {got2.get('error')!r}")
+    finally:
+        P.cache_sig = sig
+
+
 def main():
     test_book_bars_are_ohlc_and_gaps_are_absent()
     test_tail_only_prefix_is_untouched()
@@ -260,6 +285,7 @@ def main():
     test_data_end_uses_whole_cache()
     test_state_after_fill_is_closed_by_old_boundary()
     test_report_builds_and_shows_both_sides()
+    test_run_refuses_when_the_rule_is_already_in_the_book()
     print()
     if FAILED:
         print(f"ПРОВАЛЕНО {len(FAILED)}: " + ", ".join(FAILED))

@@ -16,8 +16,10 @@ import rules as R                                             # noqa: E402
 import run_paper as P                                         # noqa: E402
 import run_d6 as D6                                           # noqa: E402
 import split_journal as SPL                                    # noqa: E402
+import tail as TL                                             # noqa: E402
 
 H = 3600
+LAST_RUN = {}          # что видел последний прогон `_cache_run`
 
 
 def _rec(at, hold_h=1.0, pnl=0.10, lev=4.0, fwd=100.0, sym="AAAUSDT",
@@ -545,6 +547,9 @@ def _cache_run(cache_seed, legs, td):
         return list(legs)
 
     def fake_collect(rulers=None, legs=None, only=None, **kw):
+        # источник баров запоминается: правило хвоста можно проверить
+        # прямым вызовом, а доехало ли оно до ядра — только прогоном
+        seen["src"] = kw.get("src")
         seen["only"] = [(str(x[0]), round(float(x[1]), 3))
                         for x in (only or [])]
         recs = {tuple(pr): [] for pr in (rulers or [])}
@@ -575,6 +580,11 @@ def _cache_run(cache_seed, legs, td):
         D6.gated_legs, D6.collect_recs = gl, cr
         R.JOURNAL, R.ARTIFACT, R.OUT = jp, ap, ot
         P.R.OUT = ot
+    # То, чем прогон кормил ядро, остаётся видимым отдельно: список
+    # пересчитанных решений — ответ на свой вопрос, а источник баров —
+    # на другой, и мешать их в одном значении незачем.
+    global LAST_RUN
+    LAST_RUN = seen
     return seen.get("only", [])
 
 
@@ -1136,6 +1146,82 @@ def _run_watchdog_cases(block):
           "а не когда трогали файл")
     return True
 
+def test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote():
+    """Правило хвоста держит ОБЕ границы, и они про разное.
+
+    Исход, случившийся позже последнего бара ленты, посчитан по
+    котировке — он помечается, иначе деньги по котировке потом не
+    отделить от денег по принтам. А решение, чей ВХОД пришёлся бы на
+    минуту без единого принта, выбрасывается целиком и по ВСЕМ линейкам
+    разом: хвост продолжает начатое, а не заводит сделок, которых у книги
+    на ленте не было. Выброшенные считаются числом — молча потерять
+    решение модели нельзя.
+    """
+    t0 = 1_700_000_000
+    last = float(t0 + 2 * H)            # докуда доходит ЛЕНТА у AAAUSDT
+    pairs = [("sigma", 6.0), ("depth", 2.0)]
+    recs = {}
+    for pr in pairs:
+        recs[pr] = [
+            # закрылась внутри ленты — по принтам, пометки нет
+            _rec(t0, hold_h=1.0, sym="AAAUSDT"),
+            # выход позже последнего бара ленты — исход по котировке
+            _rec(t0 + H, hold_h=3.0, sym="AAAUSDT"),
+            # вход позже последнего бара ленты — такого решения книга
+            # не берёт вовсе
+            _rec(t0 + 3 * H, hold_h=1.0, sym="AAAUSDT"),
+            # имя, у которого ленты не читали: границы нет, и правило
+            # молчит — не выдумывать же её
+            _rec(t0, hold_h=1.0, sym="BBBUSDT")]
+    got = TL.apply(recs, {"AAAUSDT": last})
+    assert got["entry_dropped"] == 1, got
+    assert got["marked"] == len(pairs), got          # по одной на линейку
+    for pr in pairs:
+        ats = sorted(float(r["at"]) for r in recs[pr])
+        assert float(t0 + 3 * H) not in ats, ats     # выброшено у ОБЕИХ
+        assert len(recs[pr]) == 3, recs[pr]
+        mk = {(r["sym"], float(r["at"])): r.get("tail") for r in recs[pr]}
+        assert mk[("AAAUSDT", float(t0))] is None, mk
+        assert mk[("AAAUSDT", float(t0 + H))] == 1, mk
+        assert mk[("BBBUSDT", float(t0))] is None, mk
+    print(f"ok  хвост: помечено исходов {got['marked']}, вход из котировки "
+          f"отклонён у {got['entry_dropped']} решений, у имени без границы "
+          f"правило молчит")
+
+
+def test_tail_reaches_the_core_and_the_replay_signature():
+    """Дорога правила до ядра и до кэша — отдельный предмет.
+
+    Само правило проверяется прямым вызовом, а вот подаётся ли хвост в
+    дорогой проход и знает ли о нём подпись кэша — только прогоном:
+    кэш, посчитанный БЕЗ хвоста, описывает другую книгу и обязан быть
+    отвергнут вслух, иначе прежние числа молча выдали бы себя за новые.
+    """
+    t0 = 1_700_000_000
+    legs = [{"sym": "AAAUSDT", "at": float(t0)}]
+    with tempfile.TemporaryDirectory() as td:
+        _cache_run(None, legs, td)
+        src = LAST_RUN.get("src")
+        assert isinstance(src, TL.TailBars), \
+            f"прогон подал в ядро не хвост, а {src!r}"
+        # подпись реплея несёт хвост, и кэш без него не берётся
+        assert "tail" in P.cache_sig(), P.cache_sig()
+        path = os.path.join(td, "recs.jsonl")
+        sig = dict(P.cache_sig())
+        sig.pop("tail")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(json.dumps({"sig": sig}, ensure_ascii=False) + "\n")
+        cache, why = P.read_cache(path)
+        assert cache == {} and why == "правила реплея изменились", (cache, why)
+        # пометка исхода доезжает до СТРОКИ ЖУРНАЛА, а не живёт в кэше
+        rows, _c, _o, _l = P.build_rows(
+            {k: [dict(_rec(t0, sym="AAAUSDT"), tail=1)]
+             for k in R.RULER_ORDER}, now=t0 + 10 * H, log=lambda m: None)
+        assert rows and all(r.get("tail") == 1 for r in rows), rows[:1]
+    print(f"ok  хвост доезжает до ядра ({type(src).__name__}), до подписи "
+          f"кэша и до строки журнала")
+
+
 TESTS = [test_shape_counts_positions_not_days,
          test_journal_rotates_by_day_and_reader_takes_every_part,
          test_worst_open_is_measured_and_missing_is_not_zero,
@@ -1158,7 +1244,9 @@ TESTS = [test_shape_counts_positions_not_days,
          test_journal_path_is_resolved_at_call_time,
          test_cache_replays_new_and_open_but_not_closed,
          test_cache_of_other_rules_is_refused_out_loud,
-         test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted]
+         test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted,
+         test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote,
+         test_tail_reaches_the_core_and_the_replay_signature]
 
 def _control_journal_path_frozen():
     """Путь журнала снова берётся значением по умолчанию: прогон с
@@ -1365,7 +1453,91 @@ def _control_watchdog_asks_mtime():
         return True
     return False
 
-CONTROLS = [("сторож смотрит mtime вместо метки счёта",
+
+def _poison_run_paper(lit, repl, probe):
+    """Прогнать `probe` на ИСПОРЧЕННОМ `run_paper.py` и вернуть файл.
+
+    Правило живёт строкой внутри прогона, подменить функцию нечем.
+    Копия кладётся рядом во временный каталог и возвращается
+    копированием: `git checkout` для этого не инструмент — он однажды
+    снёс всю несохранённую работу файла. Кэш байткода снимается руками:
+    питон считает `.pyc` свежим по паре «mtime в целых секундах,
+    размер», и подделка успевала исполниться прежним кодом.
+    """
+    import importlib
+    import shutil
+    path = os.path.join(HERE, "run_paper.py")
+    src = open(path, encoding="utf-8").read()
+    assert lit in src, f"подделка НЕ легла: литерала нет ({lit!r})"
+    keep = os.path.join(tempfile.mkdtemp(prefix="run-paper-"), "run_paper.py")
+    shutil.copy(path, keep)
+    try:
+        open(path, "w", encoding="utf-8").write(src.replace(lit, repl, 1))
+        pyc = os.path.join(HERE, "__pycache__")
+        if os.path.isdir(pyc):
+            for f in os.listdir(pyc):
+                if f.startswith("run_paper."):
+                    os.remove(os.path.join(pyc, f))
+        importlib.reload(P)
+        try:
+            probe()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        shutil.copy(keep, path)
+        importlib.reload(P)
+
+
+def _control_tail_never_reaches_the_core():
+    """Хвост построен, но в дорогой проход не подан.
+
+    Ровно тот класс, что уже дважды ловился: правило есть, дороги до
+    него нет, и снаружи книга выглядит считающей по хвосту.
+    """
+    return _poison_run_paper(
+        "rulers=pairs, legs=legs, src=src,",
+        "rulers=pairs, legs=legs,",
+        test_tail_reaches_the_core_and_the_replay_signature)
+
+
+def _control_tail_out_of_the_replay_signature():
+    """Подпись реплея не знает хвоста: кэш прежних правил взялся бы молча."""
+    return _poison_run_paper(
+        '            "tail": 1}', "            }",
+        test_tail_reaches_the_core_and_the_replay_signature)
+
+
+def _control_tail_entry_from_a_quote_allowed():
+    """Граница входа снята: хвост заводит сделки, которых у книги не было."""
+    orig = TL.apply
+
+    def loose(recs, last_tape):
+        marked = 0
+        for lst in recs.values():
+            for r in lst:
+                lt = last_tape.get(r["sym"])
+                if lt is not None and float(r.get("exit_ts") or 0.0) > lt:
+                    r["tail"] = 1
+                    marked += 1
+        return {"entry_dropped": 0, "marked": marked}
+
+    TL.apply = loose
+    try:
+        try:
+            test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        TL.apply = orig
+
+CONTROLS = [("хвост не доезжает до ядра", _control_tail_never_reaches_the_core),
+            ("подпись реплея не знает хвоста",
+             _control_tail_out_of_the_replay_signature),
+            ("вход из котировки разрешён",
+             _control_tail_entry_from_a_quote_allowed),
+            ("сторож смотрит mtime вместо метки счёта",
              _control_watchdog_asks_mtime),
             ("доля прибыльных считается по дням", _control_win_counts_days),
             ("отметки нет — читается нулём",

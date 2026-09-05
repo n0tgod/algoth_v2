@@ -198,13 +198,23 @@ def test_liquidation_on_gap():
 
 # --- D2: стратегия на барах -----------------------------------------------
 
-def _bars(closes, lows, highs=None, entry=None):
-    """Собрать OHLC-бары из closes/lows для тестов D2; open первого = entry."""
+def _bars(closes, lows, highs=None, entry=None, vols=None):
+    """Собрать OHLC-бары из closes/lows для тестов D2; open первого = entry.
+
+    Объём по умолчанию ПОЛОЖИТЕЛЕН, потому что таковы живые бары ленты:
+    они рождаются из принтов, и минуты без сделок среди них не бывает
+    вовсе. Прежняя фикстура ставила ноль — то есть не выглядела как
+    живые данные, и правило «лимитка требует принта» на ней читалось бы
+    как поломка (правило проекта: подставные данные обязаны выглядеть
+    живыми). `vols` позволяет собрать бар-КОТИРОВКУ (объём 0) намеренно —
+    ровно такие приносит хвост, дописанный серединой стакана.
+    """
     highs = highs or list(closes)
     bars = []
     for i, (cl, lo, hi) in enumerate(zip(closes, lows, highs)):
         op = entry if (i == 0 and entry is not None) else cl
-        bars.append((i, op, hi, lo, cl, 0.0))
+        v = 1000.0 if vols is None else float(vols[i])
+        bars.append((i, op, hi, lo, cl, v))
     return bars
 
 
@@ -703,6 +713,85 @@ def _control_open_mark_forgets_leverage():
         L.open_mark = orig
 
 
+def test_limit_needs_a_print_market_exit_does_not():
+    """Лимитка на баре БЕЗ принтов не заполняется, рыночный выход — да.
+
+    Хвост, дописанный серединой стакана (`dca_paper/tail.py`), приносит
+    бары с нулевым объёмом: цену КОТИРОВАЛИ, но по ней никто не торговал.
+    Засчитать себе заполнение рунга или тейка значило бы вернуть ошибку
+    движка v1 («касание есть заполнение»). Пол капитуляции, ликвидация и
+    срок — наши собственные (и биржи) рыночные выходы против котировки, и
+    на такой минуте они считаются.
+
+    Бары ленты объём несут всегда, поэтому на прежних данных правило не
+    меняет ни одного числа: этим и служит остальная сюита, где все бары
+    положительны и результаты не изменились.
+    """
+    rungs = [100.0, 90.0]
+    w = [0.5, 0.5]
+    # цена ныряет к рунгу и возвращается выше тейка — но обе минуты без
+    # единого принта
+    closes = [100.0, 90.0, 106.0]
+    lows = [100.0, 89.0, 100.0]
+    highs = [100.0, 100.0, 106.0]
+    quote = _bars(closes, lows, highs, entry=100.0, vols=[1000.0, 0.0, 0.0])
+    q = L.simulate_dca(quote, rungs, w, capital=1.0, leverage=2.0, mmr=MMR,
+                       take_px=105.0)
+    assert q["exit"] == "срок", q
+    assert q["depth"] == 1, q            # рунг на котировке не заполнен
+    # те же бары с принтами: и рунг, и тейк исполняются
+    traded = _bars(closes, lows, highs, entry=100.0)
+    t = L.simulate_dca(traded, rungs, w, capital=1.0, leverage=2.0, mmr=MMR,
+                       take_px=105.0)
+    assert t["exit"] == "тейк" and t["depth"] == 2, t
+    # рыночный выход на котировке считается: разрыв вниз сквозь забор
+    deep = _bars([100.0, 40.0], [100.0, 40.0], entry=100.0,
+                 vols=[1000.0, 0.0])
+    d = L.simulate_dca(deep, [100.0], [1.0], capital=1.0, leverage=10.0,
+                       mmr=MMR)
+    assert d["exit"] == "ликвидация" and d["pnl_frac"] == -1.0, d
+    print(f"ok  лимитка требует принта: котировка → {q['exit']} "
+          f"(глубина {q['depth']}), принты → {t['exit']} "
+          f"(глубина {t['depth']}); ликвидация на котировке считается")
+
+
+def _control_limit_fills_without_a_print():
+    """Правило снято: лимитка заполняется и на минуте без единой сделки.
+
+    Правило живёт СТРОКОЙ внутри цикла, подменить функцию нечем — портим
+    исходник и перезагружаем модуль. Копия кладётся в scratchpad и
+    возвращается копированием: `git checkout` для этого не инструмент
+    (он однажды снёс всю несохранённую работу файла). Кэш байткода
+    удаляется руками: питон считает `.pyc` свежим по паре «mtime в целых
+    секундах, размер», и подделка успевала исполниться прежним кодом.
+    """
+    import importlib
+    import shutil
+    import tempfile
+    path = os.path.join(HERE, "ladder.py")
+    src = open(path, encoding="utf-8").read()
+    lit = "traded = float(vol) > 0"
+    assert lit in src, "подделка НЕ легла: литерала нет"
+    keep = os.path.join(tempfile.mkdtemp(prefix="ladder-"), "ladder.py")
+    shutil.copy(path, keep)
+    try:
+        open(path, "w", encoding="utf-8").write(
+            src.replace(lit, "traded = True", 1))
+        for f in os.listdir(os.path.join(HERE, "__pycache__")) \
+                if os.path.isdir(os.path.join(HERE, "__pycache__")) else []:
+            if f.startswith("ladder."):
+                os.remove(os.path.join(HERE, "__pycache__", f))
+        importlib.reload(L)
+        try:
+            test_limit_needs_a_print_market_exit_does_not()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        shutil.copy(keep, path)
+        importlib.reload(L)
+
+
 TESTS = [
     test_open_mark_equals_the_simulation_pnl,
     test_liq_price_matches_spec5_table,
@@ -729,28 +818,34 @@ TESTS = [
     test_track_last_equals_outcome,
     test_track_marks_hour_close,
     test_fills_describe_the_position_and_its_floating_entry,
+    test_limit_needs_a_print_market_exit_does_not,
+]
+
+
+CONTROLS = [
+    ("(1−mmr) в цене ликвидации", _control_no_mmr_term),
+    ("плечо не ограничено забором", _control_leverage_unbounded),
+    ("ликвидация не проверяется", _control_no_liquidation_check),
+    ("рунги не заполняются", _control_rungs_never_fill),
+    ("пола капитуляции нет", _control_dca_no_floor),
+    ("тейк игнорируется", _control_dca_take_ignored),
+    ("короткий восстанавливается на баре входа",
+     _control_short_recovers_on_entry_bar),
+    ("сторона шорта игнорируется", _control_short_side_ignored),
+    ("отметка по началу часа", _control_track_marks_hour_open),
+    ("доливы не записываются", _control_fills_not_logged),
+    ("плечо забыто в живой отметке", _control_open_mark_forgets_leverage),
+    ("лимитка заполняется без принта", _control_limit_fills_without_a_print),
 ]
 
 
 def main():
     for t in TESTS:
         t()
-    assert _control_no_mmr_term(), "контроль (1−mmr) не кусается"
-    assert _control_leverage_unbounded(), "контроль плеча не кусается"
-    assert _control_no_liquidation_check(), "контроль ликвидации не кусается"
-    assert _control_rungs_never_fill(), "контроль заполнения рунгов не кусается"
-    assert _control_dca_no_floor(), "контроль пола капитуляции не кусается"
-    assert _control_dca_take_ignored(), "контроль тейка не кусается"
-    assert _control_short_recovers_on_entry_bar(), \
-        "контроль бара входа короткого не кусается"
-    assert _control_short_side_ignored(), "контроль стороны шорта не кусается"
-    assert _control_track_marks_hour_open(), \
-        "контроль отметки по началу часа не кусается"
-    assert _control_fills_not_logged(), "контроль записи доливов не кусается"
-    assert _control_open_mark_forgets_leverage(), \
-        "контроль плеча в живой отметке не кусается"
-    print(f"\nвсе {len(TESTS)} проверки прошли; 11 отрицательных контролей "
-          f"кусаются")
+    bad = [nm for nm, fn in CONTROLS if not fn()]
+    assert not bad, f"контроли не кусаются: {bad}"
+    print(f"\nвсе {len(TESTS)} проверки прошли; {len(CONTROLS)} отрицательных "
+          f"контролей кусаются")
 
 
 if __name__ == "__main__":

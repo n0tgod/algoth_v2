@@ -372,7 +372,10 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
     - **срок** — бары кончились.
 
     Порядок в баре: заполнить рунги → ликвидация → пол → тейк
-    (неблагоприятное раньше благоприятного, ничья против нас). Ранняя
+    (неблагоприятное раньше благоприятного, ничья против нас). Рунг и
+    тейк — ЛИМИТКИ, поэтому на баре с нулевым объёмом (минута без единой
+    сделки) они не заполняются вовсе; ликвидация, пол и срок считаются и
+    там — это рыночные выходы против котировки. Ранняя
     капитуляция (рулевой §6) здесь НЕ считается — она мерится против пола
     отдельной рукой (пересчёт), вердикт по «только пол».
 
@@ -439,7 +442,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
             res["ckpt"] = ck
         return res
 
-    for (bt, _o, hi, lo, cl, _v) in bars:
+    for (bt, _o, hi, lo, cl, vol) in bars:
         # Границы срока закрываются ДО обработки бара: бар с `t > метка` в
         # окно этого срока не входит, и переоценка на границе есть
         # закрытие ПОСЛЕДНЕГО бара, который в окно вошёл. Считать после
@@ -447,9 +450,22 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
         while ck_i < len(cps) and cps[ck_i] < bt:
             ck[ck_i] = (cps[ck_i], last[0], last[1]) if last else None
             ck_i += 1
-        filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
-                                        rung_prices, weights, notional,
-                                        log=fills, bt=float(bt))
+        # ЛИМИТКУ ИСПОЛНЯЕТ ЧУЖОЙ ПРИНТ. Бар с нулевым объёмом означает
+        # минуту без единой сделки: рунг и тейк на ней не заполняются —
+        # цену КОТИРОВАЛИ, но никто по ней не торговал, и засчитать себе
+        # исполнение значило бы вернуть ошибку движка v1 («касание есть
+        # заполнение»). Пол капитуляции, ликвидация и срок ниже считаются
+        # и на такой минуте: это наш собственный (и биржи) РЫНОЧНЫЙ выход
+        # против котировки, а не ожидание встречной заявки.
+        # У баров ленты объём положителен всегда (они рождаются из
+        # принтов), поэтому на прежних данных правило не меняет НИ ОДНОГО
+        # числа — закреплено тестом. Нулевой объём приносит только хвост,
+        # дописанный серединой стакана (`dca_paper/tail.py`).
+        traded = float(vol) > 0
+        if traded:
+            filled, cash, qty = _fill_rungs(filled, cash, qty, lo,
+                                            rung_prices, weights, notional,
+                                            log=fills, bt=float(bt))
         avg = cash / qty
         mark = (qty * cl - cash) / capital
         if tr is not None:
@@ -468,7 +484,7 @@ def simulate_dca(bars, rung_prices, weights, capital, leverage, mmr,
                              "exit_ts": bt, "exit_px": cl,
                              "depth": sum(filled), "avg": avg,
                              "filled_notional": cash}, bt)
-        if take_px is not None and hi >= take_px:
+        if traded and take_px is not None and hi >= take_px:
             return _ret({"exit": "тейк",
                          "pnl_frac": qty * (take_px - avg) / capital,
                          "exit_ts": bt, "exit_px": take_px,
