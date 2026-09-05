@@ -819,3 +819,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-09-05T08:36:06Z] задание n-dca-count запущено: research/dca_paper/run_paper.py
 
 == сигнал 1788598035 ==
+[2026-09-05T08:47:19Z] задание n-deploy-wd: состояние снято
+
+== сигнал 1788598598 ==
+[2026-09-05T08:56:40Z] задание n-dca-lv запущено: research/dca_live/probe_levels.py

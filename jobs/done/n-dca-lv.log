@@ -1,0 +1,6 @@
+== задание n-dca-lv ==
+строка: run research/dca_live/probe_levels.py --top 80
+начало: 2026-09-05T08:56:40Z
+запускаю: .venv/bin/python research/dca_live/probe_levels.py --top 80
+листа нет: /root/algoth_v2/research/s8_loop/out/model/scan_sheet.json — цикл ещё не писал сечение
+конец: 2026-09-05T08:56:40Z, код 1
