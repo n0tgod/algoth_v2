@@ -40,3 +40,14 @@ branch 'main' set up to track 'origin/main'.
 опубликовано
 
 конец: 2026-09-05T21:38:29Z, код 0
+публикуется в ветку main:
+ jobs/done/dca-diag.done |  1 +
+ jobs/done/dca-diag.log  | 42 ++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/st-run2.done  |  1 +
+ jobs/done/st-run2.log   | 10 ++++++++++
+ jobs/poke.log           |  4 ++++
+ 5 files changed, 58 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   a567c63..97509da  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
