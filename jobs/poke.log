@@ -869,3 +869,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1788607835 ==
 [2026-09-05T11:30:36Z] задание n-cycle-diag запущено: tools/diag_cycle.py
 [2026-09-05T11:30:36Z] задание n-stables запущено: research/probe_stables/probe.py
+
+== сигнал 1788609132 ==
+[2026-09-05T11:52:13Z] задание n-deploy-qty-flat: перезапуск сборщика
