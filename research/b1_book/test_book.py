@@ -450,6 +450,17 @@ def test_pages_run_headless():
                 # ключей на странице.
                 ("график позиции DCA-книги", web.CHART,
                  "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"),
+                # ДЛИННАЯ позиция DCA (70 ч): окно графика было зашито в
+                # сутки, и её вход уезжал за левый край — владелец
+                # прочёл это как «баров нет», хотя запись была на месте.
+                ("график длинной позиции DCA", web.CHART,
+                 "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"
+                 "&dcalong=1"),
+                # То же окно, но упёршееся в потолок сервера: причина
+                # обязана называться СВОЯ, а не «запись началась позже».
+                ("график длинной позиции у потолка окна", web.CHART,
+                 "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"
+                 "&dcalong=1&chartcapped=1"),
                 # Лига: что ведёт себя лучше и топ сделок.
                 ("лига", web.LEAGUE, "?k=xxx"),
                 # Пара книг, у которой одна сторона ещё без закрытых:
@@ -1771,6 +1782,24 @@ def test_candles_window_can_end_in_the_past():
               ahead and all(c[0] <= now + 60 for c in ahead))
         check("негодное значение окна не роняет ответ",
               a.candles_files("TEST", hours=6, end="завтра") is not None)
+        # Окно ДЛИННОЙ позиции. Предел жизни позиции DCA — 72 ч, а потолок
+        # окна стоял ровно на 72: позиция, прожившая свой срок, в него не
+        # помещалась ни при каком запросе, и её вход уезжал за левый край.
+        # Страница объявляла это отсутствием записи — то есть называла
+        # причину, которой не проверяла.
+        big = a.candles_files("TEST", hours=90, end=now)
+        check(f"окно длиннее прежних 72 ч отдаётся ({big['hours']} ч)",
+              big["hours"] == 91 and big["capped"] is False,
+              f"{big['hours']} ч, capped={big['capped']}")
+        # Потолок ЕСТЬ, и упор в него называется числом: «окно короче
+        # запрошенного» и «записи за это время нет» лечатся разным, а по
+        # пустому левому краю неотличимы.
+        cap = a.candles_files("TEST", hours=500, end=now)
+        check(f"потолок окна назван числом ({cap['max_hours']} ч)",
+              cap["capped"] is True and cap["asked_hours"] == 500
+              and cap["hours"] == cap["max_hours"] + 1,
+              str({k: cap[k] for k in ("hours", "asked_hours", "capped",
+                                       "max_hours")}))
     finally:
         shutil.rmtree(root, ignore_errors=True)
 

@@ -3247,7 +3247,21 @@ const HIST = {trades:[], stats:null, by_rule:{}, by_ver:[], equity:[],
 // trades поднимаются за трое суток — график обрывался там, где кончался
 // буфер, и прошлые trades смотреть было не на чем. Тянется один раз на
 // символ, живые candles ложатся поверх.
-const HC = {sym:"", cand:[], busy:false, hours:24, end:0};
+const HC = {sym:"", cand:[], busy:false, hours:24, end:0,
+            asked:0, capped:false, max:0};
+// Окно свечей ДЛИННОЙ сделки задаётся самой сделкой, а не константой.
+// Прежде оно было зашито в 24 ч, и позиция DCA, живущая до 72 ч, в него
+// не помещалась: вход уезжал за левый край, а страница говорила «записи
+// нет», хотя запись была на месте. Запас по получасу с каждой стороны —
+// тот же, которым `fitFocus` подгоняет вид.
+const FOCUS_PAD_S = 1800;
+function focusHours(tr) {
+  const t = tr === undefined ? focused() : tr;
+  if (!t || !t.opened_at) return 24;
+  const end = (t.closes_at || t.opened_at) + FOCUS_PAD_S;
+  const span = (end - (t.opened_at - FOCUS_PAD_S)) / 3600;
+  return Math.max(24, Math.ceil(span) + 1);
+}
 // Единица кривой счёта: базисные пункты — сколько денег при равном
 // размере позиции, R — сколько при равном риске на сделку. Это разные
 // вопросы, поэтому переключатель, а не выбор раз и навсегда.
@@ -3376,15 +3390,21 @@ function shown() {
 
 async function pullHistory(s, end) {
   const want = Math.round(end || 0);
-  if (HC.busy || (HC.sym === s && HC.end === want)) return;
+  // Часы входят в ключ запроса: сделка сменилась — сменилась и нужная
+  // глубина, и без этого условия график остался бы с окном прошлой.
+  const hrs = focusHours();
+  if (HC.busy || (HC.sym === s && HC.end === want && HC.hours === hrs))
+    return;
   HC.busy = true;
   try {
     const r = await fetch(`/candles?k=${encodeURIComponent(KEY)}&sym=${s}`
-      + `&hours=${HC.hours}` + (want ? `&end=${want}` : ""));
+      + `&hours=${hrs}` + (want ? `&end=${want}` : ""));
     if (!r.ok) throw new Error("HTTP " + r.status);
     const h = await r.json();
     if (h.sym === s) {
       HC.cand = h.candles || []; HC.sym = s; HC.end = want;
+      HC.hours = hrs; HC.asked = h.asked_hours || hrs;
+      HC.capped = !!h.capped; HC.max = h.max_hours || 0;
       // Окно под сделку ставится ПОСЛЕ того, как пришли её свечи:
       // раньше ставить не на чем — номера баров считаются по ряду.
       if (want) fitFocus();
@@ -3393,11 +3413,16 @@ async function pullHistory(s, end) {
   } catch (e) { /* тихо: живые candles всё равно рисуются */ }
   finally { HC.busy = false; }
 }
-function mergeCandles(old, add) {
+// `keep` — сколько баров оставить. Умолчание в сутки бережёт ЖИВОЙ ряд
+// от бесконечного роста, но истории оно не потолок: окно под длинную
+// позицию бывает шире суток, и постоянная обрезка выбрасывала бы ровно
+// то, ради чего окно и просили — вход уезжал за левый край уже ПОСЛЕ
+// того, как свечи пришли.
+function mergeCandles(old, add, keep = 1440) {
   if (!add.length) return old;
   const m = new Map(old.map(c => [c[0], c]));
   for (const c of add) m.set(c[0], c);
-  return [...m.values()].sort((a,b) => a[0]-b[0]).slice(-1440);
+  return [...m.values()].sort((a,b) => a[0]-b[0]).slice(-keep);
 }
 
 // Имя `history` занято браузером, и объявление функции с таким именем
@@ -3802,7 +3827,8 @@ function cands() {
   // один ряд: график молча показал бы «сделку и сегодняшний день»
   // соседними барами, а разрыв в неделю не увидеть никак.
   const use = HC.end ? live.filter(c => c[0] <= HC.end) : live;
-  return mergeCandles(HC.cand, use);
+  // Ничего из принесённой истории не теряем: она и есть окно сделки.
+  return mergeCandles(HC.cand, use, HC.cand.length + use.length);
 }
 function trades() {
   // ФАКТ: что действительно случилось.
@@ -4510,7 +4536,8 @@ function modelNote(MT, first, last) {
   }
   // Пока свечи за это окно не пришли, говорить «записи нет» нельзя:
   // ожидание и отсутствие выглядели бы одинаково.
-  if (HC.busy || HC.end !== Math.round(focusEnd())) {
+  if (HC.busy || HC.end !== Math.round(focusEnd())
+      || HC.hours !== focusHours()) {
     box.innerHTML = "<span>fetching candles for this window…</span>"; return;
   }
   const seen = t.opened_at >= first && t.opened_at <= last;
@@ -4525,8 +4552,15 @@ function modelNote(MT, first, last) {
         ? ` · <span style="color:var(--muted)">from the observation
             record (reward/risk requirement dropped; the bot does not
             trade it)</span>` : ""}</span>`
-    : `<span style="color:var(--ask)">no price record for ${MDL.hour} —
-       recording of this coin started later</span>`;
+    // Причин, по которым вход не попал в окно, ДВЕ, и лечатся они
+    // разным: наш потолок окна либо запись, начатая позже. Называть
+    // вторую, не проверив первую, значит утверждать о данных то, чего
+    // мы не смотрели, — а по пустому левому краю они неотличимы.
+    : HC.capped
+      ? `<span style="color:var(--ask)">the position is longer than the
+         chart window (${HC.max} h): its entry is off the left edge</span>`
+      : `<span style="color:var(--ask)">no price record for ${MDL.hour} —
+         recording of this coin started later</span>`;
 }
 
 function rows() {

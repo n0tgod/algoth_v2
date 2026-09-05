@@ -1028,6 +1028,14 @@ class Collector:
                                         if x.ready),
                            "disk": self.disk_view()}}
 
+    # Потолок окна свечей. 96 ч выведены из САМОЙ ДЛИННОЙ позиции,
+    # которую показывают страницы: у DCA-книги предел жизни 72 ч, и
+    # график обязан вместить её целиком плюс запас с обеих сторон.
+    # Прежние 72 ч упирались ровно в границу — позиция, прожившая свой
+    # срок, не помещалась, и её вход уезжал за левый край. Владелец
+    # прочёл это как «баров нет», хотя запись была на месте.
+    CANDLE_MAX_H = 96
+
     def candles_files(self, sym, hours=12, end=None):
         """Минутные свечи из записей — история глубже памяти сборщика.
 
@@ -1052,9 +1060,14 @@ class Collector:
             anchor = min(float(end), now) if end else now
         except (TypeError, ValueError):
             anchor = now
+        try:
+            want = int(max(1, float(hours)))
+        except (TypeError, ValueError):
+            want = 12
+        n = min(want, self.CANDLE_MAX_H)
         hh = [datetime.fromtimestamp(anchor - i * 3600, timezone.utc)
               .strftime("%Y-%m-%d-%H")
-              for i in range(int(max(1, min(hours, 72))), -1, -1)]
+              for i in range(n, -1, -1)]
         cur = self.w.hour(now)
         out = []
         for h in hh:
@@ -1075,8 +1088,14 @@ class Collector:
         # окно и обязана уметь отличить «записи за это время нет» от
         # «сервер про окно не знает и отдал свежее». Первое — правда о
         # данных, второе — дефект, и по пустому списку они неотличимы.
+        # `capped` отвечает на вопрос, который иначе решался бы гаданием:
+        # окно КОРОЧЕ запрошенного, потому что упёрлось в потолок, — это
+        # не то же самое, что «записи за это время нет». Причины две, и
+        # лечатся они разным: первая — наш потолок, вторая — запись,
+        # начатая позже. По пустому левому краю они неотличимы.
         return {"sym": sym, "candles": out, "hours": len(hh),
-                "end": anchor}
+                "asked_hours": want, "capped": bool(want > n),
+                "max_hours": self.CANDLE_MAX_H, "end": anchor}
 
     def rec_path(self):
         return os.path.join(self.w.root, "recount.json")

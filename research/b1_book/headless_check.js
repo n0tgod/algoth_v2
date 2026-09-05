@@ -1413,7 +1413,14 @@ global.fetch = async (url) => {
                 rules_version: 4, situational: false, no_timer: false,
                 rows: [{sym: "BTCUSDT", arm: "dca",
                         hour: "2026-08-03-14", side: "long",
-                        opened_at: T0 - 7200, closes_at: T0 - 3600,
+                        // Живая позиция DCA доживает до предела в 72 ч, и
+                        // фикстура обязана это уметь: на двухчасовой
+                        // окно графика в 24 ч не связывает вовсе, и
+                        // проверка «окно идёт за сделкой» прошла бы на
+                        // зашитой константе.
+                        opened_at: /dcalong=1/.test(SEARCH)
+                          ? T0 - 70 * 3600 : T0 - 7200,
+                        closes_at: T0 - 3600,
                         entry_px: 64715.0, exit_px: 64718.0,
                         avg: 64698.5, lots: 2,
                         walk: dcaw(60.0,
@@ -1951,8 +1958,16 @@ global.fetch = async (url) => {
                ? (() => {
                    const m = /[?&]end=(\d+)/.exec(url);
                    const e = m ? Math.min(+m[1], T0) : T0;
-                   return {sym: "BTCUSDT", candles: candlesTo(e, 1440),
-                           hours: 24, end: e};
+                   // Часы УВАЖАЮТСЯ, и потолок у заглушки тот же, что у
+                   // сервера: отдавай она всегда сутки, проверка «окно
+                   // идёт за сделкой» проходила бы на зашитых 24 ч.
+                   const hm = /[?&]hours=(\d+)/.exec(url);
+                   const ask = hm ? +hm[1] : 24;
+                   const max = /chartcapped=1/.test(SEARCH) ? 24 : 96;
+                   const n = Math.min(ask, max);
+                   return {sym: "BTCUSDT", candles: candlesTo(e, n * 60),
+                           hours: n, asked_hours: ask, capped: ask > max,
+                           max_hours: max, end: e};
                  })()
                : state(full, 60);
   return {ok: true, json: async () => body};
@@ -2100,6 +2115,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? focused : null;"
                 + "\nglobal.__follow = () => typeof follow !== 'undefined' "
                 + "? follow : null;"
+                // Окно свечей ЗАДАЁТ СДЕЛКА, а не константа: без этих
+                // двух глаз проверка «окно накрыло позицию» смотрела бы
+                // на нарисованное, а не на то, что мы попросили.
+                + "\nglobal.__focusHours = typeof focusHours === 'function' "
+                + "? focusHours : null;"
+                + "\nglobal.__hc = () => typeof HC !== 'undefined' "
+                + "? {hours: HC.hours, capped: HC.capped, max: HC.max} : null;"
                 + "\nglobal.__table = typeof shownTrades === 'function' "
                 + "? shownTrades : (typeof shown === 'function' "
                 + "? () => shown().trades : null);"
@@ -4683,7 +4705,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
   // График позиций DCA-книги: своя дорога данных и своя ТВХ.
   // Проверяется числами, а не наличием блока: у лестницы средняя цена
   // входа ПЛЫВЁТ, и линия входа на первом рунге о позиции молчит.
-  if (isChart && /dca=/.test(SEARCH)) {
+  // Рисунок лестницы проверяется на ОБЫЧНОЙ позиции: у длинной вид
+  // подогнан под семьдесят часов, и соседняя сорокаминутная сделка
+  // сжимается в пиксель — проверять на ней геометрию значит мерить
+  // масштаб, а не правило.
+  if (isChart && /dca=/.test(SEARCH) && !/dcalong=1/.test(SEARCH)) {
     if (!seen.some(u => u.startsWith("/dca_trades")))
       bad.push("график: позиции DCA-книги не запрошены");
     if (!seen.some(u => u.startsWith("/dca_trades") && /book=/.test(u)))
@@ -4869,6 +4895,49 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
           bad.push("сделка из ссылки не попала на график");
       }
     }
+  }
+  // Окно свечей задаёт СДЕЛКА, а не константа. Позиция DCA живёт до
+  // 72 ч, а окно было зашито в 24: её вход уезжал за левый край, и
+  // страница объявляла это отсутствием записи, хотя запись была на
+  // месте. Проверяются обе стороны — правило считает часы по сделке, и
+  // запрос уходит РОВНО с ними.
+  if (isChart && global.__focusHours) {
+    const long_ = global.__focusHours({opened_at: T0 - 70 * 3600,
+                                       closes_at: T0 - 3600});
+    const short_ = global.__focusHours({opened_at: T0 - 600,
+                                        closes_at: T0});
+    if (!(long_ >= 71))
+      bad.push(`окно не накрывает 70-часовую позицию: ${long_} ч`);
+    if (short_ !== 24)
+      bad.push(`у короткой сделки окно не осталось суточным: ${short_} ч`);
+    const asked = seen.filter(u => u.startsWith("/candles"))
+      .map(u => (/[?&]hours=(\d+)/.exec(u) || [])[1]).filter(Boolean);
+    if (!asked.length) bad.push("график не назвал окно свечей (hours=)");
+    const want = String(global.__focusHours());
+    if (asked.length && !asked.includes(want))
+      bad.push(`запрошенное окно не равно нужному сделке: ${asked} `
+               + `против ${want}`);
+  }
+  // Длинная позиция: её вход обязан оказаться ВНУТРИ пришедших свечей.
+  if (isChart && /dcalong=1/.test(SEARCH) && !/chartcapped=1/.test(SEARCH)
+      && global.__cands && global.__focused) {
+    const t = global.__focused(), c = global.__cands();
+    if (!t) bad.push("длинная позиция DCA не найдена");
+    else if (!c.length) bad.push("свечей длинной позиции нет вовсе");
+    else if (c[0][0] > t.opened_at)
+      bad.push("вход длинной позиции остался за левым краем: свечи с "
+               + c[0][0] + ", вход " + t.opened_at);
+  }
+  // Упёрлись в потолок окна — причина называется СВОЯ. Прежде страница
+  // при любом промахе входа говорила «запись началась позже», то есть
+  // утверждала о данных то, чего не смотрела.
+  if (isChart && /chartcapped=1/.test(SEARCH) && global.__el) {
+    const cap = String(global.__el("mleg").innerHTML || "")
+      .replace(/\s+/g, " ");
+    if (!/longer than the chart window/.test(cap))
+      bad.push("потолок окна не назван причиной: " + cap.slice(0, 160));
+    if (/recording of this coin started later/.test(cap))
+      bad.push("потолок окна выдан за отсутствие записи");
   }
   if (isChart && global.__cands) {
     const all = global.__cands();
