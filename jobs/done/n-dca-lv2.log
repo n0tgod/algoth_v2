@@ -9,3 +9,14 @@
 глубина лестницы у 72 имён: 1 ступеней — 18, 2 ступеней — 17, 3 ступеней — 16, 4 ступеней — 21
 НАСТОЯЩАЯ лестница (есть хоть один долив): 54 из 72 (75%)
 конец: 2026-09-05T08:58:12Z, код 0
+публикуется в ветку main:
+ jobs/done/n-dca-lv.log              | 12 ++++++++++++
+ jobs/done/n-dca-lv2.done            |  1 +
+ jobs/done/n-dca-lv2.log             | 11 +++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 28 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   c21fb7f..c736e26  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
