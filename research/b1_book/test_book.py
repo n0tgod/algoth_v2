@@ -5126,16 +5126,82 @@ def test_dca_tiles_line_up_and_fill_the_row():
           in web.DCAPAGE,
           "снят запас под вторую строку подписи: значение при переносе "
           "уедет ниже соседних")
+    # Проверялся ЛИТЕРАЛ правила, и первая же перекраска страницы его
+    # сломала, хотя смысл — «главные крупнее и по центру» — остался.
+    # Теперь сравниваются САМИ РАЗМЕРЫ: рестайл переживает, потеря
+    # правила ловится.
+    import re as _re
+    def _fs(sel):
+        m = _re.search(_re.escape(sel) + r"\{[^}]*font-size:([0-9.]+)px",
+                       web.DCAPAGE)
+        return float(m.group(1)) if m else None
+    big, small = _fs(".stats.main .st .v"), _fs(".st .v")
     check("главные плитки крупнее второстепенных",
-          ".stats.main .st .v{font-size:26px}" in web.DCAPAGE,
-          "правило главных плиток снято со страницы DCA")
+          big is not None and small is not None and big > small,
+          f"размеры главной и второстепенной: {big} против {small}")
     check("главные плитки по центру и с запасом",
-          ".stats.main .st{padding:14px 16px;text-align:center}"
-          in web.DCAPAGE, "снято оформление главных плиток")
+          bool(_re.search(r"\.stats\.main \.st\{[^}]*text-align:center",
+                          web.DCAPAGE))
+          and bool(_re.search(r"\.stats\.main \.st\{[^}]*padding:",
+                              web.DCAPAGE)),
+          "снято оформление главных плиток")
     check("раскладка зовётся после отрисовки",
           "fitGrids();\n}" in web.DCAPAGE,
           "число плиток меняется вместе с книгой — без вызова после "
           "render раскладка описывает прошлую")
+
+
+def test_dca_palette_comes_from_the_mockups():
+    """Цвета страницы DCA взяты из макетов, а не подобраны на глаз.
+
+    Владелец: «цвет фона не тот, неоновых свечений нет, там вообще
+    полностью новая цветовая схема». Первая правка переставила
+    раскладку и оставила прежнюю палитру — это была половина работы.
+    Значения ниже стоят в конфигурации Tailwind самих макетов
+    (`code.html`): фон #080a0f, поверхность #0d1117, карточка #121721,
+    подкарточка #161c27, зелень #00f59b, красный #ff4969, индиго
+    #6366f1. Свечения — те же тени.
+
+    Проверяется ещё три вещи, каждая — правило проекта:
+    внешних загрузок нет (шрифты макета не тянутся из сети — страница
+    обязана быть одним файлом); прежний лиловый фон не остался; и
+    общий блок меню НЕ тронут — перекрашивать весь сайт под просьбу об
+    одной странице нельзя, поэтому меню перекрыто локально.
+    """
+    import web
+    for tok in ("--bg:#080a0f", "--surface:#0d1117", "--panel:#121721",
+                "--chip:#161c27", "--bid:#00f59b", "--ask:#ff4969",
+                "--accent:#6366f1"):
+        check(f"токен макета на месте: {tok}", tok in web.DCAPAGE,
+              "цвет разошёлся с макетом")
+    check("прежний лиловый фон снят",
+          "#0b0820" not in web.DCAPAGE and "radial-gradient" not in
+          web.DCAPAGE.split("</style>")[0],
+          "старая палитра осталась под новой")
+    for glow in ("--glow-green:0 0 24px -4px rgba(0,245,155,.25)",
+                 "text-shadow:0 0 16px rgba(0,245,155,.45)",
+                 "box-shadow:var(--glow-purple)"):
+        check(f"свечение макета на месте: {glow[:34]}",
+              glow in web.DCAPAGE, "неонового свечения нет")
+    # Страница — один файл: v1 умер отчасти на внешних загрузках.
+    body = web.DCAPAGE.split("</style>")[0]
+    check("шрифты и стили не тянутся из сети",
+          "http" not in body and "@import" not in body
+          and "<link" not in web.DCAPAGE,
+          "появилась внешняя загрузка")
+    # Меню общее на четырнадцать страниц: правка общего блока
+    # перекрасила бы весь сайт. Соседняя страница обязана остаться в
+    # прежней палитре.
+    check("общий блок меню не тронут",
+          "#272250" in web.NAVCSS and "#9747ff" in web.NAVCSS,
+          "перекрашен общий NAVCSS, а не страница")
+    check("соседняя страница осталась в прежней палитре",
+          "--bg:#0b0820" in web.TREEPAGE,
+          "перекрашена не только страница DCA")
+    check("меню перекрыто локально ПОСЛЕ общего блока",
+          web.DCAPAGE.index(".navlink.on{border-color:rgba(99,102,241")
+          > web.DCAPAGE.index(".navlink.on{border-color:#9747ff"),
+          "перекрытие стоит до общего блока и им перебивается")
 
 
 def test_dca_page_fits_the_phone():
@@ -7534,6 +7600,7 @@ def main():
     test_tree_page_fits_the_phone()
     test_dca_tiles_line_up_and_fill_the_row()
     test_tree_scrolls_to_its_left_edge()
+    test_dca_palette_comes_from_the_mockups()
     test_dca_page_fits_the_phone()
     test_volatility_splits_results_by_regime()
     test_marks_poll_serves_the_book_in_view()

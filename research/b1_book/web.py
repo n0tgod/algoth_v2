@@ -6238,149 +6238,183 @@ DCAPAGE = r"""<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DCA paper books — three modes × three deposits</title>
 <style>
+/* ===================================================================
+   Палитра и элементы взяты ИЗ САМИХ МАКЕТОВ владельца (их `code.html`,
+   конфигурация Tailwind), а не подобраны на глаз: фон #080a0f,
+   поверхность #0d1117, карточка #121721, подкарточка #161c27, рамки
+   белым с прозрачностью, неоновая зелень #00f59b, красный #ff4969,
+   индиго #6366f1. Свечения — те же значения теней, что в макете.
+
+   Шрифты макета (Inter, JetBrains Mono) НЕ подгружаются из сети:
+   страница обязана быть одним файлом без внешних загрузок — на этом
+   отчасти умер v1. Имена стоят первыми в стеке, поэтому у кого шрифт
+   установлен, тот его и увидит; у остальных честный запасной.
+
+   Меню (`NAVCSS`) общее на все четырнадцать страниц и цвета в нём
+   зашиты. Перекрашено оно НИЖЕ, после NAVCSS, и только на этой
+   странице: править общий блок значило бы перекрасить весь сайт под
+   просьбу об одной странице.
+   =================================================================== */
 :root{color-scheme:dark;
- --bg:#0b0820;--panel:#131029;--chip:#1a1636;--ink:#eceaf6;
- --muted:#8e88ad;--rule:#272250;--rule-soft:#1e1a40;
- --bid:#3ddc7f;--ask:#ff6473;--accent:#9747ff}
+ --bg:#080a0f;--surface:#0d1117;--panel:#121721;--chip:#161c27;
+ --ink:#e1e7f5;--muted:#9aa5be;--dim:#7a8599;
+ --rule:rgba(255,255,255,.08);--rule-soft:rgba(255,255,255,.06);
+ --bid:#00f59b;--ask:#ff4969;--accent:#6366f1;
+ --glow-green:0 0 24px -4px rgba(0,245,155,.25);
+ --glow-purple:0 0 12px rgba(99,102,241,.25);
+ --glow-red:0 0 20px -2px rgba(255,73,105,.25)}
 *{box-sizing:border-box}
-body{margin:0;background:
-  radial-gradient(1100px 480px at 50% -120px,rgba(105,78,240,.22),
-    transparent 65%) fixed,var(--bg);color:var(--ink);
- font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
+/* Фон плоский: лилового свечения макет не несёт вовсе. */
+body{margin:0;background:var(--bg);color:var(--ink);
+ font:12px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
    sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1560px;margin:0 auto;padding:14px 14px 56px}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#1c2433;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#2b354b}
+.wrap{max-width:1720px;margin:0 auto;padding:14px 16px 56px}
 .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
  margin-bottom:12px}
 .brand{font-weight:800;letter-spacing:.24em;font-size:15px;
  color:var(--ink);text-decoration:none}
 .brand b{color:var(--accent)}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace;
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
  font-variant-numeric:tabular-nums}
-.k{color:var(--muted);font-size:12px}
-.dim{color:var(--muted)}
+.k{color:var(--muted);font-size:11px}
+.dim{color:var(--dim)}
 .panel{background:var(--panel);border:1px solid var(--rule);
- border-radius:14px;padding:12px 14px;margin:12px 0}
+ border-radius:16px;padding:14px 16px;margin:12px 0}
 .cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
  color:var(--muted);margin-bottom:8px}
 table{border-collapse:collapse;width:100%}
-td,th{padding:4px 8px;text-align:left;border-bottom:1px solid
- var(--rule-soft);font-size:13px;white-space:nowrap}
-th{color:var(--muted);font-weight:600}
+td,th{padding:6px 8px;text-align:left;font-size:12px;white-space:nowrap}
+/* Шапка таблицы макета: мелкая, разрядкой, на своей подложке. */
+tr.thr th{color:var(--muted);font-weight:500;font-size:10.5px;
+ letter-spacing:.08em;text-transform:uppercase;
+ font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+ background:rgba(255,255,255,.02);
+ border-bottom:1px solid var(--rule-soft)}
+tbody tr,table tr{border-bottom:1px solid var(--rule-soft)}
+tr.pos:hover,tr.day:hover{background:rgba(255,255,255,.03)}
 .good{color:var(--bid)}.bad{color:var(--ask)}
-.thin{color:var(--muted)}
+.thin{color:var(--dim)}
 a{color:var(--accent)}
 .scroll{overflow-x:auto}
-.alarm{border-color:var(--ask);background:rgba(255,100,115,.08)}
+.alarm{border-color:rgba(255,73,105,.35);background:#1a1318;
+ box-shadow:var(--glow-red)}
 /* Плитки сводки. Число колонок ставит `fitGrid` по числу плиток —
    сетка ниже остаётся запасным путём на случай, если он не отработал. */
 .stats{display:grid;gap:10px;
  grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.st{background:var(--chip);border:1px solid var(--rule);border-radius:12px;
- padding:8px 10px}
+.st{background:var(--chip);border:1px solid var(--rule);border-radius:14px;
+ padding:10px 12px}
 /* Подпись держит ДВЕ строки всегда. У «среднее время в сделке» она
    переносится, и значение уезжало на 18 px ниже соседних — ряд читался
-   съехавшим, а сам ряд был на 18 px выше остальных. Правило берёт
-   ПЕРВУЮ подпись плитки: у главной плитки открытого pnl вторая (возраст
-   отметки) стоит после значения, и запас там был бы пустотой. */
+   съехавшим. Правило берёт ПЕРВУЮ подпись плитки: у главной плитки
+   открытого pnl вторая (возраст отметки) стоит после значения. */
 .st > .k:first-child{line-height:1.25;min-height:2.5em}
-.st .v{font-size:18px;font-weight:700}
-/* Главные плитки: крупнее и по центру своим рядом (просьба владельца).
-   Правило было написано для панели ядра, где класс `stats main` не
-   стоит ни на одном блоке, — то есть на ЭТОЙ странице главные ничем не
-   отличались от второстепенных, и проверки этого не ловили: они
-   смотрели содержимое, а не размер. */
+.st .v{font-size:17px;font-weight:700}
+/* Главные плитки: крупнее и по центру своим рядом. */
 .stats.main{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
  margin-bottom:10px}
-.stats.main .st{min-width:0}
-.stats.main .st{padding:14px 16px;text-align:center}
-.stats.main .st .v{font-size:26px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}
-.tab{background:var(--chip);border:1px solid var(--rule);border-radius:999px;
- padding:5px 14px;cursor:pointer;font-size:13px;color:var(--muted)}
-.tab.on{border-color:var(--accent);color:var(--ink)}
-.tag{display:inline-block;font-size:10px;letter-spacing:.1em;
- text-transform:uppercase;border:1px solid var(--rule);border-radius:999px;
- padding:1px 8px;color:var(--muted)}
-.tag.fwd{border-color:var(--accent);color:var(--accent)}
-tr.pos{cursor:pointer}
-tr.pos:hover{background:rgba(151,71,255,.10)}
-tr.sub td{background:rgba(255,255,255,.03);font-size:12px}
-table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
- font-size:12px;padding:3px 8px}
-.btn{background:var(--chip);border:1px solid var(--rule);border-radius:999px;
- padding:4px 12px;cursor:pointer;font-size:12.5px;color:var(--muted)}
-.btn:hover{border-color:var(--accent);color:var(--ink)}
-.btn[disabled]{opacity:.35;cursor:default}
-.mback{position:fixed;inset:0;background:rgba(5,3,18,.66);z-index:40}
-.mbox{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
- z-index:41;width:min(820px,94vw);max-height:84vh;overflow:auto;
- background:var(--panel);border:1px solid var(--accent);
- border-radius:14px;padding:16px 18px}
-.mx{position:absolute;top:6px;right:10px;background:none;border:0;
- color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
-.pg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
-/* ---------------------------------------------------------------
-   Дизайн страницы по макетам владельца (десктоп и телефон).
-   Правило одно и держится сквозь весь блок: меняется ТОЛЬКО показ.
-   Ни одной величины здесь не считается — тон плитки берётся из того
-   же знака (`good`/`bad`), которым уже покрашено её число, а нижняя
-   панель телефона печатает числа, ПЕРЕДАННЫЕ ей, а не свои.
-   --------------------------------------------------------------- */
-.panel{border-radius:16px;padding:14px 16px}
-/* Заголовок раздела: точка + название слева, действие справа. Прежде
-   кнопка «показать все» стояла в конце пояснения под таблицей — то
-   есть там, где её не ищут. */
+.stats.main .st{min-width:0;padding:16px;text-align:center;
+ border-radius:16px}
+.stats.main .st .v{font-size:26px;font-weight:800;letter-spacing:-.02em}
+/* Тон плитки берётся из знака её же числа. Зелёная и красная — те же
+   градиенты, рамки и тени, что в макете; свечение текста тоже оттуда. */
+.st.pos{background:linear-gradient(180deg,#15231e,#101917);
+ border-color:rgba(16,185,129,.30);box-shadow:var(--glow-green)}
+.st.neg{background:#1a1318;border-color:rgba(255,73,105,.20)}
+.stats.main .st.pos .v{text-shadow:0 0 16px rgba(0,245,155,.45)}
+.stats.main .st.neg .v{text-shadow:0 0 16px rgba(255,73,105,.45)}
+/* Заголовок раздела: точка + название слева, действие справа. */
 .hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
  margin-bottom:10px}
 .hd .cap{margin:0;flex:1;min-width:0}
-.cap.dot::before{content:"";display:inline-block;width:7px;height:7px;
+.cap.dot::before{content:"";display:inline-block;width:8px;height:8px;
  border-radius:50%;background:var(--accent);margin-right:8px;
- vertical-align:middle;position:relative;top:-1px}
-.cap.dot.good::before{background:var(--bid)}
-.cap.dot.bad::before{background:var(--ask)}
-/* Фильтры книги — своей панелью: режимы слева, депозит и группа
-   справа. Три голых ряда чипов у левого края читались как один
-   длинный список, в котором оси не различить. */
-.filters{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+ vertical-align:middle;position:relative;top:-1px;
+ box-shadow:0 0 8px var(--accent)}
+.cap.dot.good::before{background:var(--bid);box-shadow:0 0 10px var(--bid)}
+.cap.dot.bad::before{background:var(--ask);box-shadow:0 0 10px var(--ask)}
+/* Фильтры книги — своей панелью на поверхности макета. */
+.filters{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;
+ background:var(--surface);padding:10px 12px}
 .filters .fl{flex:1 1 460px;min-width:0}
 .filters .fr{display:flex;flex-direction:column;align-items:flex-end;
  gap:6px}
 .filters .tabs{margin:0}
 .filters .fr .tabs{justify-content:flex-end}
-/* Тон плитки берётся из знака её же числа: зелёная — заработала,
-   красная — просадка. Второго источника у тона нет, поэтому плитка
-   не может оказаться зелёной при красном числе. */
-.st.pos{background:linear-gradient(180deg,rgba(61,220,127,.13),
- rgba(61,220,127,.05));border-color:rgba(61,220,127,.42)}
-.st.neg{background:linear-gradient(180deg,rgba(255,100,115,.13),
- rgba(255,100,115,.05));border-color:rgba(255,100,115,.42)}
-.stats.main .st{border-radius:14px}
+/* Чипы: активный — индиго с рамкой и свечением, спящий — почти
+   прозрачный. Ровно как в макете (`rounded-xl`, не «таблетка»). */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}
+.tab{background:rgba(255,255,255,.03);border:1px solid var(--rule);
+ border-radius:12px;padding:6px 14px;cursor:pointer;font-size:12px;
+ color:var(--muted);transition:background .15s,color .15s,border-color .15s}
+.tab:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.tab.on{border-color:rgba(99,102,241,.60);background:rgba(79,70,229,.20);
+ color:#fff;font-weight:500;box-shadow:var(--glow-purple)}
+/* Чипы депозита в макете мельче и моноширинные. */
+.filters .fr .tab{border-radius:10px;padding:4px 12px;
+ font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;
+ border-color:transparent;background:transparent}
+.filters .fr .tab.on{background:rgba(79,70,229,.30);
+ border-color:rgba(129,140,248,.30);font-weight:600;box-shadow:none}
+.tag{display:inline-block;font-size:9.5px;letter-spacing:.1em;
+ text-transform:uppercase;border:1px solid var(--rule);border-radius:8px;
+ padding:2px 8px;color:var(--muted);background:rgba(255,255,255,.02)}
+.tag.fwd{border-color:rgba(99,102,241,.45);color:#a5b4fc}
+tr.pos{cursor:pointer}
+tr.sub td{background:rgba(255,255,255,.02);font-size:11.5px}
+table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
+ font-size:11.5px;padding:3px 8px}
+.btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);
+ border-radius:8px;padding:4px 11px;cursor:pointer;font-size:11px;
+ color:var(--muted);transition:background .15s,color .15s}
+.btn:hover{background:rgba(255,255,255,.10);color:#fff}
+.btn.on{background:rgba(255,255,255,.08);color:#fff;
+ border-color:rgba(255,255,255,.10)}
+.btn[disabled]{opacity:.35;cursor:default}
+.mback{position:fixed;inset:0;background:rgba(3,5,10,.72);z-index:40;
+ backdrop-filter:blur(2px)}
+.mbox{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+ z-index:41;width:min(820px,94vw);max-height:84vh;overflow:auto;
+ background:var(--panel);border:1px solid rgba(99,102,241,.45);
+ border-radius:16px;padding:16px 18px;box-shadow:var(--glow-purple)}
+.mx{position:absolute;top:6px;right:10px;background:none;border:0;
+ color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
+.pg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
 /* Кривая — в своей рамке с шапкой: слева что нарисовано, справа итог
    тем же числом, что стоит в главной плитке. */
 .chart{background:var(--chip);border:1px solid var(--rule);
- border-radius:14px;padding:12px 14px;margin-top:12px}
+ border-radius:16px;padding:12px 14px;margin-top:12px}
 .chart .hd{margin-bottom:6px}
-.badge{font-size:12px;border:1px solid var(--rule);border-radius:999px;
- padding:2px 10px;white-space:nowrap}
-.badge.good{border-color:rgba(61,220,127,.45)}
-.badge.bad{border-color:rgba(255,100,115,.45)}
-/* Состояние позиции и суток — фишкой, а не голым словом: в ряду из
-   тринадцати колонок слово теряется. */
-.pill{display:inline-block;font-size:11.5px;border:1px solid var(--rule);
- border-radius:999px;padding:1px 9px;white-space:nowrap;
- background:var(--chip)}
-.pill.good{border-color:rgba(61,220,127,.45);color:var(--bid)}
-.pill.bad{border-color:rgba(255,100,115,.45);color:var(--ask)}
-.pill.acc{border-color:var(--accent);color:var(--accent)}
-.opn{display:inline-block;font-size:11.5px;border:1px solid var(--rule);
- border-radius:999px;padding:1px 10px;color:var(--muted);
- text-decoration:none;background:var(--chip)}
-.opn:hover{border-color:var(--accent);color:var(--ink)}
+.badge{font-size:11px;border:1px solid var(--rule);border-radius:999px;
+ padding:2px 10px;white-space:nowrap;background:rgba(255,255,255,.03)}
+.badge.good{border-color:rgba(0,245,155,.35);color:var(--bid);
+ box-shadow:0 0 10px -2px rgba(0,245,155,.30)}
+.badge.bad{border-color:rgba(255,73,105,.35);color:var(--ask);
+ box-shadow:0 0 10px -2px rgba(255,73,105,.30)}
+/* Состояние позиции и суток — фишкой, а не голым словом. */
+.pill{display:inline-block;font-size:11px;border:1px solid var(--rule);
+ border-radius:8px;padding:2px 9px;white-space:nowrap;
+ background:rgba(255,255,255,.03)}
+.pill.good{border-color:rgba(0,245,155,.30);color:var(--bid);
+ background:rgba(0,245,155,.08)}
+.pill.bad{border-color:rgba(255,73,105,.30);color:var(--ask);
+ background:rgba(255,73,105,.08)}
+.pill.acc{border-color:rgba(99,102,241,.45);color:#a5b4fc;
+ background:rgba(99,102,241,.12)}
+.opn{display:inline-block;font-size:11px;
+ border:1px solid rgba(255,255,255,.10);border-radius:8px;padding:2px 10px;
+ color:var(--muted);text-decoration:none;background:rgba(255,255,255,.05)}
+.opn:hover{background:rgba(255,255,255,.10);color:#fff}
 td.dcol{width:1px;white-space:nowrap}
 .daydot{display:inline-block;width:6px;height:6px;border-radius:50%;
- background:var(--muted);margin-right:8px;vertical-align:middle;
+ background:var(--dim);margin-right:8px;vertical-align:middle;
  position:relative;top:-1px}
-.daydot.good{background:var(--bid)}.daydot.bad{background:var(--ask)}
+.daydot.good{background:var(--bid);box-shadow:0 0 8px var(--bid)}
+.daydot.bad{background:var(--ask);box-shadow:0 0 8px var(--ask)}
 /* Нижняя панель телефона (макет владельца): накопленный счёт, сколько
    открыто из скольких мест, и прыжок к журналу. Числа приходят из тех
    же полей, что печатают плитки выше, — второй арифметики нет. */
@@ -6393,7 +6427,7 @@ td.dcol{width:1px;white-space:nowrap}
   .filters .fr{align-items:stretch}
   .filters .fr .tabs{justify-content:flex-start}
   .stats{gap:8px}
-  .st{padding:8px 10px}
+  .st{padding:10px}
   .stats.main .st{padding:12px;text-align:left}
   .stats.main .st .v{font-size:22px}
   /* Правило `fitGrid` считает колонки по ширине и на телефоне даёт
@@ -6407,34 +6441,44 @@ td.dcol{width:1px;white-space:nowrap}
   .scroll{overflow-x:visible}
   table,tbody,tr,td{display:block;width:auto}
   tr.thr{display:none}
+  tbody tr,table tr{border-bottom:0}
   tr.pos,tr.day{background:var(--chip);border:1px solid var(--rule);
-    border-radius:12px;padding:8px 10px;margin:8px 0}
-  tr.pos:hover{background:var(--chip)}
-  td{border-bottom:0;padding:2px 0;white-space:normal;
+    border-radius:14px;padding:10px 12px;margin:8px 0}
+  tr.pos:hover,tr.day:hover{background:var(--chip)}
+  td{border-bottom:0;padding:3px 0;white-space:normal;
     display:flex;gap:10px;align-items:baseline}
-  td[data-l]::before{content:attr(data-l);color:var(--muted);
-    font-size:11.5px;flex:0 0 42%;white-space:nowrap}
+  td[data-l]::before{content:attr(data-l);color:var(--dim);
+    font-size:11px;flex:0 0 42%;white-space:nowrap}
   /* Ведущая ячейка карточки — имя/сутки: крупнее и без подписи.
      У позиции ведущей стоит МОНЕТА, а не время входа: строку ищут по
      имени пары. Порядок меняется раскладкой (`order`), а не разметкой
      — на широком экране колонки обязаны остаться на своих местах. */
   tr.pos{display:flex;flex-direction:column}
   td.sym{order:-1}
-  td.lead,td.sym{font-size:15px;font-weight:600;padding-bottom:6px;
-    border-bottom:1px solid var(--rule-soft);margin-bottom:6px}
+  td.lead,td.sym{font-size:15px;font-weight:700;padding-bottom:7px;
+    border-bottom:1px solid var(--rule-soft);margin-bottom:7px}
   td.sym::before{display:none}
   tr.sub td{padding:8px 0 0}
   table.leg td{display:flex}
   #dbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;
-    gap:12px;align-items:center;padding:8px 12px;
-    background:rgba(19,16,41,.96);border-top:1px solid var(--rule);
-    backdrop-filter:blur(6px)}
+    gap:12px;align-items:center;padding:10px 12px;
+    background:rgba(13,17,23,.94);border-top:1px solid var(--rule);
+    backdrop-filter:blur(10px)}
   #dbar .c{min-width:0}
-  #dbar .c .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  #dbar .c .k{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
   #dbar .c .v{font-size:14px;font-weight:700}
   #dbar .btn{margin-left:auto;flex:0 0 auto}
 }
 """ + NAVCSS + r"""
+/* Меню перекрашено ПОСЛЕ общего блока и только здесь: `NAVCSS` один на
+   четырнадцать страниц и цвета в нём зашиты, а просьба была об одной
+   странице. Правка общего блока перекрасила бы весь сайт заодно. */
+.navlink{border:1px solid var(--rule);background:rgba(255,255,255,.03);
+ color:var(--muted);border-radius:10px;padding:5px 12px;font-size:11.5px;
+ transition:background .15s,color .15s}
+.navlink:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.navlink.on{border-color:rgba(99,102,241,.60);
+ background:rgba(79,70,229,.20);color:#fff;box-shadow:var(--glow-purple)}
 </style>
 <div class="wrap">
 <div class="top"><a class="brand" href="#" id="home">ALG<b>O</b>TH</a>
