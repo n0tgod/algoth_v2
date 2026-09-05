@@ -249,6 +249,55 @@ def test_take_frac_comes_from_the_rule_not_from_the_record():
           "при удвоении множителя")
 
 
+def test_fav_backfill_adds_a_field_and_nothing_else():
+    """Добор обещания дописывает ОДНО поле и не трогает ничего больше.
+
+    Правило write-ahead запрещает переписывать запись: иначе момент
+    записи можно было бы подвинуть. Здесь не меняется ни `written_at`,
+    ни деньги, ни исход — дописывается производное поле из того же
+    источника, которым считает реплей, и каждая тронутая строка это
+    говорит (`fav_from`). Проверка сторожит именно границу: строка
+    прежнего образца, строка с чужой версией правил и строка, для
+    которой ноги нет, обязаны остаться как были.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "bf", os.path.join(HERE, "backfill_fav.py"))
+    bf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bf)
+    rows = [
+        {"dep": 1000, "at": 100.0, "sym": "AAA", "usd": 1.0,
+         "rules": R.RULES},
+        {"dep": 1000, "at": 200.0, "sym": "BBB", "usd": 2.0,
+         "rules": R.RULES},
+        {"dep": 1000, "at": 300.0, "sym": "CCC", "usd": 3.0,
+         "rules": R.RULES - 1},
+        {"dep": 1000, "at": 400.0, "sym": "DDD", "usd": 4.0,
+         "rules": R.RULES, "fav_bp": 111.0},
+    ]
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "j.jsonl")
+        with open(p, "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        idx = {("AAA", 100.0): 500.0}
+        n, t, m = bf.patch_file(p, idx, write=True)
+        assert (n, t, m) == (4, 1, 1), (n, t, m)
+        got = [json.loads(x) for x in open(p, encoding="utf-8") if x.strip()]
+        assert got[0]["fav_bp"] == 500.0, got[0]
+        assert got[0]["fav_from"] == "legs", got[0]
+        assert got[0]["usd"] == 1.0 and got[0]["at"] == 100.0, got[0]
+        assert "fav_bp" not in got[1], got[1]      # ноги нет — поля нет
+        assert "fav_bp" not in got[2], got[2]      # чужая версия правил
+        assert got[3]["fav_bp"] == 111.0, got[3]   # своё не переписано
+        assert "fav_from" not in got[3], got[3]
+        # повтор ничего не меняет: добор идемпотентен
+        n2, t2, m2 = bf.patch_file(p, idx, write=True)
+        assert (t2, m2) == (0, 1), (t2, m2)
+    print("ok  добор обещания: дописано 1, ноги нет у 1, чужая версия и "
+          "своё поле не тронуты, повтор ничего не меняет")
+
+
 def test_open_position_is_not_a_closed_one():
     """Позиция, чей срок ещё идёт, — открытая, а не «закрыта по сроку».
 
@@ -1405,6 +1454,7 @@ TESTS = [test_shape_counts_positions_not_days,
          test_backtest_and_live_share_one_curve_and_stay_labelled,
     test_take_steps_follow_the_floating_average,
     test_take_frac_comes_from_the_rule_not_from_the_record,
+    test_fav_backfill_adds_a_field_and_nothing_else,
     test_open_position_is_not_a_closed_one, test_journal_appends_only_new,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,
