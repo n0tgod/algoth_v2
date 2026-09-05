@@ -139,3 +139,14 @@
 [09-05 10:08:28] обучение пропущено по каденции: весам 9.4 ч при каденции 24; цикл 388 с (сведение часа 281 с, матрица 51 с, книги 56 с, оценка 0 с)
 [09-05 10:08:28] следующая попытка через 53 мин (обучения не было)
 конец: 2026-09-05T10:08:47Z, код 0
+публикуется в ветку main:
+ jobs/done/dca-tail.log              |   7 ++
+ jobs/done/tailcycle.done            |   1 +
+ jobs/done/tailcycle.log             | 141 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |   3 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 5 files changed, 153 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   2e86832..c107f3c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
