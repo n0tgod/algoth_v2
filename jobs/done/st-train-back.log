@@ -33,3 +33,14 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-05T16:35:00Z
+публикуется в ветку main:
+ jobs/done/st-after-deploy.done      |  1 +
+ jobs/done/st-after-deploy.log       |  9 +++++++++
+ jobs/done/st-train-back.log         | 35 +++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 49 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   981f290..64952ae  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
