@@ -1,0 +1,4 @@
+== задание n-stables ==
+строка: run research/probe_stables/probe.py --days 14 --tag 1m
+начало: 2026-09-05T11:30:36Z
+запускаю: .venv/bin/python research/probe_stables/probe.py --days 14 --tag 1m
