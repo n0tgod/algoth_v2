@@ -7090,6 +7090,67 @@ def test_dca_open_pnl_is_marked_live_not_hourly():
         DR.ARTIFACT = ap0
 
 
+def test_dca_cut_position_carries_its_reason():
+    """Оборванная позиция едет странице С ПРИЧИНОЙ, и текст ОДИН.
+
+    Причину называет само правило хвоста (`tail.cut_reason`), а запись
+    прежнего прогона поля не несёт вовсе — тогда её добирает сервер тем
+    же текстом. Вторая копия текста на странице разошлась бы с правилом,
+    и «оборванных N» осталось бы без объяснения ровно там, где владелец
+    его и спросил.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+    import tail as TL
+
+    ap0, jp0 = DR.ARTIFACT, DR.JOURNAL
+    td = tempfile.mkdtemp()
+    try:
+        DR.ARTIFACT = os.path.join(td, "art.json")
+        DR.JOURNAL = os.path.join(td, "journal.jsonl")
+        t0 = 1_700_000_000
+        rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
+        cut = [{"sym": "AAAUSDT", "at": t0, "lev": 1.0, "margin": 25.0,
+                "avg": 2.0, "entry_px": 2.0, "depth": 1, "state": "cut",
+                "mark_frac": 0.0, "mark_usd": 0.0,
+                "fills": [[t0, 2.0, 0.25]],
+                "cut_why": TL.CUT_NO_BOOK},
+               # запись прежнего прогона: поля нет вовсе
+               {"sym": "BBBUSDT", "at": t0, "lev": 1.0, "margin": 25.0,
+                "avg": 3.0, "entry_px": 3.0, "depth": 1, "state": "cut",
+                "mark_frac": 0.0, "mark_usd": 0.0,
+                "fills": [[t0, 3.0, 0.25]]}]
+        art = {"rules": {"RULES": DR.RULES, "RULERS": DR.RULERS,
+                         "RULER_ORDER": DR.RULER_ORDER,
+                         "DEPOSITS": list(DR.DEPOSITS)},
+               # `open` живёт ВНУТРИ книги — ровно так его кладёт свод
+               # прогона; фикстура обязана выглядеть как живой артефакт,
+               # иначе тест исполняет другую дорогу
+               "books": {f"{rk}:{dep}": {
+                   "ruler": rk, "deposit": dep,
+                   "open": {"positions": [], "cut": cut,
+                            "mark_usd": 0.0, "priced": 0}}}}
+        with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump(art, f)
+        open(DR.JOURNAL, "w", encoding="utf-8").close()
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        d = c.dca_paper(dep=dep, ruler=rk)
+        got = {r["sym"]: r.get("cut_why")
+               for r in ((d.get("books") or {}).get(f"{rk}:{dep}") or {})
+               .get("open", {}).get("cut", [])}
+        check("DCA: причина обрыва доехала до страницы",
+              got.get("AAAUSDT") == TL.CUT_NO_BOOK, str(got))
+        check("DCA: запись без причины добрана текстом правила",
+              got.get("BBBUSDT") == TL.CUT_UNKNOWN, str(got))
+    finally:
+        DR.ARTIFACT, DR.JOURNAL = ap0, jp0
+
+
 def test_dca_trades_speak_the_language_of_the_chart():
     """Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
 
@@ -7242,6 +7303,7 @@ def main():
     test_trade_by_id_finds_across_books()
     test_dca_serves_ruler_and_deposit_as_one_book()
     test_dca_open_pnl_is_marked_live_not_hourly()
+    test_dca_cut_position_carries_its_reason()
     test_dca_trades_speak_the_language_of_the_chart()
     print("живой детектор")
     test_live_detector_agrees_with_batch()

@@ -1222,6 +1222,43 @@ def test_tail_reaches_the_core_and_the_replay_signature():
           f"кэша и до строки журнала")
 
 
+def test_cut_position_gets_a_named_reason():
+    """Оборванная позиция получает ПРИЧИНУ, и причин три разных.
+
+    Правило хвоста снимает не всякий обрыв: если запись книги кончается
+    там же, где лента (имя перестали писать вовсе), дописывать нечем.
+    Тогда «оборванных N» без причины читается как «правило не работает»,
+    и лечатся эти случаи разным. Символа, чьих баров прогон не читал
+    вовсе (запись пришла из кэша), причина НЕ ИЗМЕРЕНА — выдумывать её
+    хуже, чем назвать пропуском.
+    """
+    t0 = 1_700_000_000
+    last = float(t0 + 2 * H)
+    pr = ("sigma", 6.0)
+    a = _rec(t0, hold_h=1.0, sym="AAAUSDT")          # книга дотянулась
+    b = _rec(t0, hold_h=1.0, sym="BBBUSDT")          # книги нет вовсе
+    c = _rec(t0, hold_h=1.0, sym="CCCUSDT")          # баров не читали
+    for r in (a, b, c):
+        r["state"] = "cut"
+    recs = {pr: [a, b, c]}
+    got = TL.apply(recs, {"AAAUSDT": last, "BBBUSDT": last},
+                   {"AAAUSDT": last + 600.0})
+    assert a["cut_why"] == TL.CUT_BOOK_SHORT, a
+    assert a["book_end"] == last + 600.0, a
+    assert b["cut_why"] == TL.CUT_NO_BOOK, b
+    assert "book_end" not in b, b
+    assert c["cut_why"] == TL.CUT_UNKNOWN, c
+    assert got["cut_why"] == {TL.CUT_BOOK_SHORT: 1, TL.CUT_NO_BOOK: 1,
+                              TL.CUT_UNKNOWN: 1}, got
+    # закрытой позиции причина не приписывается: её обрыва не было
+    d = _rec(t0, hold_h=1.0, sym="AAAUSDT")
+    d["state"] = "closed"
+    TL.apply({pr: [d]}, {"AAAUSDT": last}, {"AAAUSDT": last})
+    assert "cut_why" not in d, d
+    print("ok  причина обрыва названа: книга кончилась раньше / книги нет "
+          "вовсе / не измерена; закрытой причина не приписана")
+
+
 TESTS = [test_shape_counts_positions_not_days,
          test_journal_rotates_by_day_and_reader_takes_every_part,
          test_worst_open_is_measured_and_missing_is_not_zero,
@@ -1229,6 +1266,7 @@ TESTS = [test_shape_counts_positions_not_days,
          test_ticket_is_squeezed_between_the_floor_and_the_peak,
     test_ticket_rule_is_one_formula_for_every_mode,
     test_gated_mode_is_deployed_at_its_own_peak,
+         test_cut_position_gets_a_named_reason,
          test_one_per_name_applied_before_cash,
          test_backtest_and_live_share_one_curve_and_stay_labelled,
     test_open_position_is_not_a_closed_one, test_journal_appends_only_new,
@@ -1532,6 +1570,22 @@ def _control_tail_entry_from_a_quote_allowed():
     finally:
         TL.apply = orig
 
+def _control_cut_reason_is_one_for_all():
+    """Причина обрыва одна на всех: «книги нет вовсе» приписывается и
+    тому имени, у которого книга дотянулась дальше ленты. Различить два
+    случая тогда нечем, а лечатся они разным."""
+    was = TL.cut_reason
+    TL.cut_reason = lambda r, last_tape, last_book: TL.CUT_NO_BOOK
+    try:
+        try:
+            test_cut_position_gets_a_named_reason()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        TL.cut_reason = was
+
+
 CONTROLS = [("хвост не доезжает до ядра", _control_tail_never_reaches_the_core),
             ("подпись реплея не знает хвоста",
              _control_tail_out_of_the_replay_signature),
@@ -1562,7 +1616,9 @@ CONTROLS = [("хвост не доезжает до ядра", _control_tail_nev
             ("гейт назначен всем режимам", _control_gate_on_every_ruler),
             ("пол билета один на все режимы", _control_floor_one_for_everyone),
             ("пик билета взят у пула", _control_peak_from_the_pool),
-            ("состояние позиции не читается", _control_state_ignored)]
+            ("состояние позиции не читается", _control_state_ignored),
+            ("причина обрыва одна на всех",
+             _control_cut_reason_is_one_for_all)]
 
 
 def main():

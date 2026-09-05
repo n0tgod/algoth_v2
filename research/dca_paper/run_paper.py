@@ -258,6 +258,15 @@ def build_rows(by_ruler, now=None, log=print):
                         "depth": r.get("depth"), "fills": r.get("fills"),
                         "last_ts": float(r.get("end_ts") or 0.0),
                         "sched_end": float(r.get("sched_end") or 0.0),
+                        # Почему позиция осталась ОБОРВАННОЙ, когда
+                        # правило хвоста уже применено (`tail.apply`).
+                        # Без причины «оборванных N» читается как «хвост
+                        # не работает», а причин две разных и лечатся
+                        # они разным: книги в хвосте нет вовсе (символ
+                        # перестали писать) либо книга кончилась раньше
+                        # планового конца.
+                        "cut_why": r.get("cut_why"),
+                        "book_end": r.get("book_end"),
                         "state": st}
                 (op if st == "open" else cut).append(item)
             c["open_n"], c["cut_n"] = len(op), len(cut)
@@ -460,6 +469,15 @@ def _tail_words(s):
            f"нет и в книге, {t.get('dry', 0)} — такая позиция остаётся "
            f"оборванной, потому что отсутствие свидетельства не есть "
            f"свидетельство отсутствия.")
+    w = t.get("cut_why")
+    if isinstance(w, dict) and w:
+        # Причины считаются по ЗАПИСЯМ (одно решение живёт в обеих
+        # линейках), как и «исходов по котировке» рядом, — иначе два
+        # числа одного прогона мерились бы в разных единицах.
+        out += (" Оборванными остались записи по причинам: "
+                + "; ".join(f"{k} — {v}" for k, v in
+                            sorted(w.items(), key=lambda kv: -kv[1]))
+                + ".")
     if t.get("zero_vol_tape"):
         out += (f" ВНИМАНИЕ: баров ЛЕНТЫ с нулевым объёмом "
                 f"{t['zero_vol_tape']} — признак «принт был» перестал "
@@ -853,7 +871,9 @@ def main():
         src = TL.TailBars(log=print)
         got = D6.collect_recs(rulers=pairs, legs=legs, src=src,
                               only=[(g["sym"], g["at"]) for g in need])
-        tail = dict(src.stats(), **TL.apply(got["recs"], src.last_tape))
+        tail = dict(src.stats(),
+                    **TL.apply(got["recs"], src.last_tape,
+                               src.last_book))
         print(f"хвост: имён с дописанным {tail['syms']}, минут "
               f"{tail['minutes']}, исходов по котировке {tail['marked']}, "
               f"вход из котировки отклонён у {tail['entry_dropped']} решений"

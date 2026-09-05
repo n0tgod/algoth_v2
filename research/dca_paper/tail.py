@@ -124,6 +124,7 @@ class TailBars:
         self.dry = []          # символы, у которых хвоста нет и в книге
         self.span_h = {}       # символ → длина дописанного хвоста, часов
         self.last_tape = {}    # символ → время последнего бара ЛЕНТЫ
+        self.last_book = {}    # символ → последняя ДОПИСАННАЯ минута книги
         self.zero_vol = 0      # баров ленты с нулевым объёмом
 
     def bars(self, sym, t0, t1):
@@ -149,6 +150,10 @@ class TailBars:
         if add:
             self.added[sym] = self.added.get(sym, 0) + len(add)
             self.span_h[sym] = round((t1 - last) / HOUR, 2)
+            # докуда дотянулась КНИГА: по этому числу позиция, оставшаяся
+            # оборванной, называет свою причину, а не молчит
+            self.last_book[sym] = max(self.last_book.get(sym, 0.0),
+                                      float(add[-1][0]))
         else:
             self.dry.append(sym)
         return tape + add
@@ -163,7 +168,7 @@ class TailBars:
                 "zero_vol_tape": self.zero_vol}
 
 
-def apply(recs, last_tape):
+def apply(recs, last_tape, last_book=None):
     """Разметить исходы хвостом и не пустить ВХОД из котировки.
 
     `recs` — словарь «пара линейки → список записей», то, что отдаёт
@@ -179,6 +184,13 @@ def apply(recs, last_tape):
       помечаются `tail = 1`. Пометка едет в журнал и дальше: по ней
       видно, какие деньги книги посчитаны по котировке, а не по принтам.
 
+    Здесь же каждая позиция, оставшаяся ОБОРВАННОЙ, получает причину
+    (`cut_why`). Правило хвоста снимает не всякий обрыв: если запись
+    книги кончается там же, где лента (символ перестали писать вовсе,
+    провал сбора), дописывать нечем — и «оборванных 46» без причины
+    читается как «правило не работает». Причина обязана стоять рядом с
+    числом, как прочерк обязан называть себя.
+
     Возвращает числа для отчёта. Записи правятся на месте — они же лягут
     в кэш реплея, и пометка обязана пережить его.
     """
@@ -188,7 +200,8 @@ def apply(recs, last_tape):
             lt = last_tape.get(r["sym"])
             if lt is not None and float(r["at"]) > float(lt):
                 drop.add((r["sym"], round(float(r["at"]), 3)))
-    marked = 0
+    marked, why_n = 0, {}
+    last_book = last_book or {}
     for k in list(recs):
         keep = []
         for r in recs[k]:
@@ -198,6 +211,36 @@ def apply(recs, last_tape):
             if lt is not None and float(r.get("exit_ts") or 0.0) > float(lt):
                 r["tail"] = 1
                 marked += 1
+            if r.get("state") == "cut":
+                w = cut_reason(r, last_tape, last_book)
+                r["cut_why"] = w
+                bk = last_book.get(r["sym"])
+                if bk is not None:
+                    r["book_end"] = float(bk)
+                why_n[w] = why_n.get(w, 0) + 1
             keep.append(r)
         recs[k] = keep
-    return {"entry_dropped": len(drop), "marked": marked}
+    return {"entry_dropped": len(drop), "marked": marked, "cut_why": why_n}
+
+
+# Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста.
+# Объявлены строками один раз: два дословных текста разошлись бы, и
+# гистограмма отчёта перестала бы сходиться с подписью на странице.
+CUT_NO_BOOK = "книги в хвосте нет вовсе"
+CUT_BOOK_SHORT = "книга кончилась раньше планового конца"
+CUT_UNKNOWN = "причина не измерена"
+
+
+def cut_reason(r, last_tape, last_book):
+    """Почему эта позиция осталась оборванной, когда хвост уже применён.
+
+    Символа нет в границах прогона — значит его баров этот прогон не
+    читал вовсе (запись из кэша), и причина НЕ ИЗМЕРЕНА: выдумывать её
+    хуже, чем назвать пропуском.
+    """
+    sym = r["sym"]
+    if sym not in last_tape:
+        return CUT_UNKNOWN
+    if sym not in last_book:
+        return CUT_NO_BOOK
+    return CUT_BOOK_SHORT

@@ -3617,6 +3617,11 @@ class Collector:
             import rules as DR
         except Exception as e:
             return {"present": False, "why": f"модуль правил не читается: {e}"}
+        try:
+            import tail as DT
+            _CUT_UNK = DT.CUT_UNKNOWN
+        except Exception:
+            _CUT_UNK = None
         out = {"present": False, "journal_present": os.path.exists(DR.JOURNAL)}
         art = None
         if os.path.exists(DR.ARTIFACT):
@@ -3727,12 +3732,20 @@ class Collector:
                     # открытых разворачивается по рунгам так же, как
                     # список закрытых, и вторая её реализация показала бы
                     # позицию не там, где её посчитала книга.
-                    def _walk(lst):
+                    def _walk(lst, why=None):
                         return [dict(q, walk=DR.avg_walk(q.get("fills"),
-                                                         q.get("entry_px")))
+                                                         q.get("entry_px")),
+                                     **({"cut_why": q.get("cut_why") or why}
+                                        if why else {}))
                                 for q in (lst or [])]
+                    # Причина обрыва обязана быть у КАЖДОЙ оборванной
+                    # позиции: «оборванных N» без причины читается как
+                    # «правило хвоста не работает». Запись прежнего
+                    # прогона поля не несёт — подставляется тот же текст,
+                    # которым причину называет само правило (`tail`), а
+                    # не вторая его копия на странице.
                     b["open"] = dict(op, positions=_walk(op.get("positions")),
-                                     cut=_walk(op.get("cut")),
+                                     cut=_walk(op.get("cut"), why=_CUT_UNK),
                                      **DR.open_stats(op.get("positions")))
                 books[k] = b
         out["books"] = books
