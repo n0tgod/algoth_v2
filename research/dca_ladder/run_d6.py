@@ -75,9 +75,11 @@ import time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(HERE))       # корень репозитория
 OUT = os.path.join(HERE, "out")
 
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(ROOT, "research", "dca_paper"))
 import ladder as L                                            # noqa: E402
 import run_d2 as D2                                           # noqa: E402
 import run_d3 as D3                                           # noqa: E402
@@ -86,6 +88,15 @@ import run_d5 as D5                                           # noqa: E402
 import tournament as TNT                                      # noqa: E402
 import sweep as SW                                            # noqa: E402
 import trades as TR                                           # noqa: E402
+import rules as R_BOOK                                        # noqa: E402
+
+# Правила КНИГИ живут в `dca_paper/rules.py`, и часть их продублирована
+# там же константами. Дубли молчаливы, поэтому совпадение доказывается, а
+# не подразумевается: разойдись они, замер считал бы одну книгу, а
+# бумажная торговала бы другую, и обе выглядели бы исправными.
+assert (D2.HOLD_H, D2.N_RUNGS, D2.FLOOR_FRAC, D2.SURVIVE_MULT) == (
+    R_BOOK.HOLD_H, R_BOOK.N_RUNGS, R_BOOK.FLOOR_FRAC,
+    R_BOOK.SURVIVE_MULT), "правила D2 и rules.py разошлись"
 
 ROOT_B1 = D4.ROOT_B1
 HOUR = 3600
@@ -138,9 +149,13 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     entry = float(hold[0][1])
     if entry <= 0:
         return None
-    take_px = entry * (1 + g["fav"] / 1e4)
+    # Тейк — правило КНИГИ (`rules.take_rule`): якорь по плавающей ТВХ и
+    # расстояние в долях обещания. Гейт остался прежним по существу:
+    # `take_px > вход` означало ровно `fav > 0`, и `take_rule` возвращает
+    # None на том же условии — состав позиций правкой не тронут.
+    take = R_BOOK.take_rule(g["fav"])
     stop_px = entry * (1 + g["adv_q"] / 1e4)
-    if not (take_px > entry and 0 < stop_px < entry):
+    if not (take and 0 < stop_px < entry):
         return None
     lv = D2.build_levels(win, now_i)
     rungs_full = D2.structural_rungs(entry, list(lv), D2.MIN_ADD_GAP,
@@ -151,7 +166,7 @@ def one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_h=None):
     cps = ([float(g["at"]) + float(h) * HOUR for h in ckpt_h]
            if ckpt_h else None)
     r = L.simulate_dca(hold, rungs, D2.WEIGHTS[:len(rungs)], 1.0, lev,
-                       look(1.0 * lev), take_px=take_px,
+                       look(1.0 * lev), take_rule=take,
                        floor_frac=D2.FLOOR_FRAC, track=True,
                        checkpoints=cps)
     marks, prev = [], 0.0

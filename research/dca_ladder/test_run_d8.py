@@ -83,13 +83,18 @@ def _with_levels(fn):
         D2.build_levels = orig
 
 
-def test_reference_cell_reproduces_the_book_rule():
-    """`e:fav` == нынешнее правило книги (`D6.one_position`) бит в бит.
+def test_book_cell_reproduces_the_book_rule():
+    """Ячейка правила книги == сама книга (`D6.one_position`) бит в бит.
 
     Один и тот же тейк, посчитанный двумя дорогами, обязан дать один
     исход: иначе у замера своя книга, и сравнивать её ячейки с живой
-    нельзя ни по одной мере.
+    нельзя ни по одной мере. Ключ выводится из правила, а не записан
+    числом, — поэтому проверка переживает смену правила и ловит ровно
+    тот случай, когда сетка перестала содержать то, чем книга торгует.
     """
+    key = D8.book_cell()
+    assert key, ("действующее правило книги вне объявленной сетки D8: "
+                 f"{R.TAKE_ANCHOR} ×{R.TAKE_MULT}")
     bars, at = _dip_then_rise()
     ts = [b[0] for b in bars]
     g = T3._leg(at)
@@ -100,13 +105,48 @@ def test_reference_cell_reproduces_the_book_rule():
         return a, b
     a, b = _with_levels(go)
     assert a is not None and b, (a, b)
-    ref = b[D8.REF]
+    ref = b[key]
     for k in ("exit", "exit_ts", "lev", "depth", "avg"):
         assert a[k] == ref[k], (k, a[k], ref[k])
     assert abs(a["pnl"] - ref["pnl"]) < 1e-12, (a["pnl"], ref["pnl"])
-    print(f"ok  точка отсчёта `{D8.REF}` == правило книги: {ref['exit']} "
+    print(f"ok  ячейка правила книги `{key}` == сама книга: {ref['exit']} "
           f"{ref['pnl']*100:+.2f}%, глубина {ref['depth']}, "
           f"плечо {ref['lev']:.2f}×")
+
+
+def test_take_rule_is_read_from_the_book_not_hardcoded():
+    """Доля цели равна `обещание × TAKE_MULT` — числом, а не на словах.
+
+    Правило живёт одной функцией `rules.take_rule`; заведи её вторую
+    копию, и книга торговала бы не тем, чем её судят.
+    """
+    got = R.take_rule(500.0)
+    assert got == {"anchor": R.TAKE_ANCHOR,
+                   "frac": 0.05 * R.TAKE_MULT}, got
+    assert R.take_rule(0.0) is None and R.take_rule(-100.0) is None
+    assert R.take_rule(None) is None
+    print(f"ok  правило книги: якорь {got['anchor']}, "
+          f"доля {got['frac']*100:.2f} % при обещании 5.00 % "
+          f"(×{R.TAKE_MULT:g}); неположительное обещание цели не даёт")
+
+
+def test_decisions_before_the_rules_change_are_backtest():
+    """Решение старше границы версии правил — бэктест по построению.
+
+    Без границы каждая смена правил молча перекрашивала бы последние
+    `AHEAD_H` часов пересчёта в «записано вперёд»: предикат смотрит на
+    задержку записи, а правило выбрано после того, как эти часы стали
+    видны.
+    """
+    since = R.RULES_SINCE
+    assert since > 0, since
+    old_at = since - 3600.0                       # решение до правки
+    new_at = since + 3600.0                       # решение после правки
+    assert R.ahead(old_at, old_at + 60.0) is False
+    assert R.ahead(new_at, new_at + 60.0) is True
+    assert R.ahead(new_at, new_at + (R.AHEAD_H + 1) * 3600.0) is False
+    print("ok  решение до границы версии правил помечено бэктестом, "
+          "после — вперёд, а просроченная запись всё равно бэктест")
 
 
 def test_avg_anchor_exits_earlier_and_pays_the_filled_notional():
@@ -259,16 +299,34 @@ def _control_sample_is_per_cell():
                    test_common_sample_is_one_for_all_cells, D8)
 
 
-def _control_reference_anchors_on_the_average():
-    """Точка отсчёта считается по ТВХ — то есть книгу не воспроизводит."""
+def _control_grid_ignores_the_anchor():
+    """Сетка строится одним якорем — ячейка книги её не воспроизводит."""
     return _poison(os.path.join(HERE, "run_d8.py"),
                    'out.append((f"{ak}:{tk}", anchor, tk, None, False))',
-                   'out.append((f"{ak}:{tk}", "avg", tk, None, False))',
-                   test_reference_cell_reproduces_the_book_rule, D8)
+                   'out.append((f"{ak}:{tk}", "entry", tk, None, False))',
+                   test_book_cell_reproduces_the_book_rule, D8)
+
+
+def _control_take_multiplier_dropped():
+    """Множитель цели снят — книга торгует не тем, чем её судят."""
+    return _poison(os.path.join(HERE, "..", "dca_paper", "rules.py"),
+                   "    f *= float(TAKE_MULT)",
+                   "    f *= 1.0",
+                   test_take_rule_is_read_from_the_book_not_hardcoded, R)
+
+
+def _control_rules_boundary_ignored():
+    """Граница версии правил снята — пересчёт красится во «вперёд»."""
+    return _poison(os.path.join(HERE, "..", "dca_paper", "rules.py"),
+                   "    if lim and float(decided_at) < lim:",
+                   "    if False:",
+                   test_decisions_before_the_rules_change_are_backtest, R)
 
 
 TESTS = [
-    test_reference_cell_reproduces_the_book_rule,
+    test_book_cell_reproduces_the_book_rule,
+    test_take_rule_is_read_from_the_book_not_hardcoded,
+    test_decisions_before_the_rules_change_are_backtest,
     test_avg_anchor_exits_earlier_and_pays_the_filled_notional,
     test_normalised_weights_deploy_the_whole_notional,
     test_sigma_missing_drops_the_decision_everywhere,
@@ -280,8 +338,9 @@ CONTROLS = [
     ("веса не нормируются", _control_weights_not_normalised),
     ("σ без меры считается нулём", _control_missing_sigma_becomes_zero),
     ("выборка своя у каждой ячейки", _control_sample_is_per_cell),
-    ("точка отсчёта не воспроизводит книгу",
-     _control_reference_anchors_on_the_average),
+    ("сетка строится одним якорем", _control_grid_ignores_the_anchor),
+    ("множитель цели снят", _control_take_multiplier_dropped),
+    ("граница версии правил снята", _control_rules_boundary_ignored),
 ]
 
 

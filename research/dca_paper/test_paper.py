@@ -22,6 +22,15 @@ H = 3600
 LAST_RUN = {}          # что видел последний прогон `_cache_run`
 
 
+# Момент фикстур стоит ПОСЛЕ границы версии правил (`R.RULES_SINCE`):
+# решение старше неё есть бэктест по построению — правило выбрано после
+# того, как эти часы стали видны, — и на фикстуре из прошлого «записано
+# вперёд» не бывало бы вовсе. Такая фикстура перестала бы выглядеть
+# живой, а это правило проекта уже трижды прятало дефект. Час ровный:
+# отметки книги считаются по календарному часу.
+T0 = (int(R.RULES_SINCE) // H + 1) * H
+
+
 def _rec(at, hold_h=1.0, pnl=0.10, lev=4.0, fwd=100.0, sym="AAAUSDT",
          state="closed", exit_="тейк"):
     """Запись позиции, КАК ЕЁ ПИШЕТ живой реплей.
@@ -51,7 +60,7 @@ def test_ticket_clears_the_exchange_floor():
     assert abs(need - 20.0) < 1e-9, need
     assert R.TICKET >= need, (R.TICKET, need)
     # при билете и плече 1 позиция проходит пол, при вдвое меньшем — нет
-    recs = [_rec(1_700_000_000 + i, hold_h=2.0, lev=1.0, sym=f"C{i}USDT")
+    recs = [_rec(T0 + i, hold_h=2.0, lev=1.0, sym=f"C{i}USDT")
             for i in range(5)]
     ok = D6.ration(recs, R.TICKET / 1000.0, deposit=1000.0,
                    min_notional=R.MIN_NOTIONAL)
@@ -143,7 +152,7 @@ def test_gated_mode_is_deployed_at_its_own_peak():
 
 def test_one_per_name_applied_before_cash():
     """Правило биржи не зависит от депозита и применяется ДО раздачи."""
-    t0 = 1_700_000_000
+    t0 = T0
     recs = [_rec(t0, hold_h=5.0, sym="AAAUSDT"),
             _rec(t0 + 60, hold_h=5.0, sym="AAAUSDT"),
             _rec(t0 + 120, hold_h=5.0, sym="BBBUSDT")]
@@ -167,7 +176,7 @@ def test_backtest_and_live_share_one_curve_and_stay_labelled():
     общий счёт равен сумме групп ПО ПОСТРОЕНИЮ, и обе группы при этом
     видны отдельно: без их объёма общая кривая читалась бы треком.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     fresh = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
              "usd": 10.0, "written_at": t0 + 3600, "rules": R.RULES}
     old = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "B",
@@ -204,7 +213,7 @@ def test_open_position_is_not_a_closed_one():
     занятыми до планового конца срока, а отметка стоит отдельно и с
     закрытым счётом не складывается.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     done = _rec(t0, hold_h=2.0, pnl=0.10, sym="AAAUSDT")
     live = _rec(t0 + H, hold_h=1.0, pnl=-0.05, sym="BBBUSDT",
                 state="open", exit_="срок")
@@ -233,7 +242,7 @@ def test_open_position_is_not_a_closed_one():
 
 def test_journal_appends_only_new():
     """Строка write-ahead не переписывается: момент записи подвинуть нельзя."""
-    t0 = 1_700_000_000
+    t0 = T0
     row = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
            "usd": 1.0, "written_at": t0 + 60, "rules": R.RULES}
     with tempfile.TemporaryDirectory() as td:
@@ -334,7 +343,7 @@ def test_two_rulers_are_two_books_and_optimal_is_untouched():
     линейки обязаны совпасть с числами прогона, где линейка была одна, —
     иначе мы молча переписали бы опубликованную книгу.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     recs = [_rec(t0, hold_h=5.0, sym="AAAUSDT", pnl=0.10),
             _rec(t0 + 120, hold_h=5.0, sym="BBBUSDT", pnl=-0.04)]
     # у «безопасной» те же решения, но плечо (а с ним и ход) своё
@@ -389,7 +398,7 @@ def test_aggressive_gate_takes_only_levered_entries():
                - R.MIN_NOTIONAL / R.RUNG_SHARE / 5.0) < 1e-9, R.AGGR_MIN_LEV
     assert R.min_lev_of("aggr") == R.AGGR_MIN_LEV
     assert R.min_lev_of("optimal") is None and R.min_lev_of("safe") is None
-    t0 = 1_700_000_000
+    t0 = T0
     recs = [_rec(t0, hold_h=5.0, sym="LOWUSDT", lev=1.5),
             _rec(t0 + 60, hold_h=5.0, sym="MIDUSDT", lev=3.9),
             _rec(t0 + 120, hold_h=5.0, sym="HIUSDT", lev=4.0),
@@ -425,7 +434,7 @@ def test_declared_peak_is_checked_against_the_measured_one():
     билет велик, и книга берёт не все свои решения, а первые по очереди
     за кассой: отказ меняет и СОСТАВ. Молчать об этом нельзя.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     recs = [_rec(t0 + i * 60, hold_h=5.0, sym=f"S{i}USDT", lev=4.0 + i)
             for i in range(6)]
     _rows, _cells, one, _live = P.build_rows({"aggr": recs}, now=t0 + 10 * H,
@@ -454,7 +463,7 @@ def test_legacy_row_reads_as_the_ruler_it_was_written_with():
     Не «в безопасную» и не в никуда: журнал write-ahead, переписать
     прошлое нечем, поэтому умолчание доказуемо и закреплено числом.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     legacy = {"dep": 1000, "at": t0, "exit_ts": t0 + H, "sym": "A",
               "usd": 7.0, "written_at": t0 + 3600, "rules": R.RULES}
     assert R.ruler_of(legacy) == "optimal", R.ruler_of(legacy)
@@ -507,7 +516,7 @@ def test_cash_refusals_reach_the_report_and_survive_restat():
             R.JOURNAL = os.path.join(td, "j.jsonl")
             R.ARTIFACT = os.path.join(td, "a.json")
             P.R.OUT = td
-            t0 = 1_700_000_000
+            t0 = T0
             with open(R.JOURNAL, "w", encoding="utf-8") as f:
                 f.write(json.dumps({
                     "dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
@@ -600,7 +609,7 @@ def test_journal_path_is_resolved_at_call_time():
     real = R.JOURNAL
     with tempfile.TemporaryDirectory() as td:
         mine = os.path.join(td, "j.jsonl")
-        t0 = 1_700_000_000
+        t0 = T0
         rows = [{"dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
                  "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 1.0,
                  "written_at": t0 + 60, "rules": R.RULES}]
@@ -627,7 +636,7 @@ def test_cache_replays_new_and_open_but_not_closed():
     вместе с ценой, и переиспользовать вчерашнюю значило бы показать
     деньги, которых сейчас нет.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     pairs = []
     for k in R.RULER_ORDER:
         if P.RULERS[k] not in pairs:
@@ -667,7 +676,7 @@ def test_cache_of_other_rules_is_refused_out_loud():
     сверяется, расхождение называется словами и гонит полный пересчёт;
     молчаливое переиспользование выдало бы старую книгу за новую.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     legs = [{"sym": "AAAUSDT", "at": float(t0)},
             {"sym": "BBBUSDT", "at": float(t0 + 3600)}]
     with tempfile.TemporaryDirectory() as td:
@@ -700,7 +709,7 @@ def test_rules_change_starts_a_fresh_record():
     версии в ключе дедупа книга новых правил осталась бы пустой навсегда
     — прогон считал бы её записанной и не дописывал ни строки.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     was = {"dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0,
            "exit_ts": t0 + 3600, "sym": "AAAUSDT", "usd": 5.0,
            "margin": 25.0, "written_at": t0 + 600, "rules": R.RULES - 1}
@@ -1188,7 +1197,7 @@ def test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote():
     на ленте не было. Выброшенные считаются числом — молча потерять
     решение модели нельзя.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     last = float(t0 + 2 * H)            # докуда доходит ЛЕНТА у AAAUSDT
     pairs = [("sigma", 6.0), ("depth", 2.0)]
     recs = {}
@@ -1228,7 +1237,7 @@ def test_tail_reaches_the_core_and_the_replay_signature():
     кэш, посчитанный БЕЗ хвоста, описывает другую книгу и обязан быть
     отвергнут вслух, иначе прежние числа молча выдали бы себя за новые.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     legs = [{"sym": "AAAUSDT", "at": float(t0)}]
     with tempfile.TemporaryDirectory() as td:
         _cache_run(None, legs, td)
@@ -1263,7 +1272,7 @@ def test_cut_position_gets_a_named_reason():
     вовсе (запись пришла из кэша), причина НЕ ИЗМЕРЕНА — выдумывать её
     хуже, чем назвать пропуском.
     """
-    t0 = 1_700_000_000
+    t0 = T0
     last = float(t0 + 2 * H)
     pr = ("sigma", 6.0)
     # книга кончилась ровно там, где кончились бары позиции

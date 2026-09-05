@@ -6861,7 +6861,11 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
     try:
         DR.JOURNAL = os.path.join(td, "journal.jsonl")
         DR.ARTIFACT = os.path.join(td, "art.json")
-        t0 = 1_700_000_000
+        # Момент ПОСЛЕ границы версии правил (`RULES_SINCE`): решение
+        # старше неё есть бэктест по построению, и на фикстуре из
+        # прошлого «записано вперёд» не бывало бы вовсе — она
+        # перестала бы выглядеть живой.
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
 
         def row(rk, usd, sym, legacy=False, back=False, at=None,
                 tail=False):
@@ -7046,7 +7050,11 @@ def test_dca_open_pnl_is_marked_live_not_hourly():
     td = tempfile.mkdtemp()
     try:
         DR.ARTIFACT = os.path.join(td, "art.json")
-        t0 = 1_700_000_000
+        # Момент ПОСЛЕ границы версии правил (`RULES_SINCE`): решение
+        # старше неё есть бэктест по построению, и на фикстуре из
+        # прошлого «записано вперёд» не бывало бы вовсе — она
+        # перестала бы выглядеть живой.
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
         rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
         pos = [{"sym": "AAAUSDT", "at": t0, "lev": 2.0, "margin": 25.0,
                 "avg": 2.0, "entry_px": 2.0, "depth": 2,
@@ -7113,7 +7121,11 @@ def test_dca_cut_position_carries_its_reason():
     try:
         DR.ARTIFACT = os.path.join(td, "art.json")
         DR.JOURNAL = os.path.join(td, "journal.jsonl")
-        t0 = 1_700_000_000
+        # Момент ПОСЛЕ границы версии правил (`RULES_SINCE`): решение
+        # старше неё есть бэктест по построению, и на фикстуре из
+        # прошлого «записано вперёд» не бывало бы вовсе — она
+        # перестала бы выглядеть живой.
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
         rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
         cut = [{"sym": "AAAUSDT", "at": t0, "lev": 1.0, "margin": 25.0,
                 "avg": 2.0, "entry_px": 2.0, "depth": 1, "state": "cut",
@@ -7172,7 +7184,11 @@ def test_dca_trades_speak_the_language_of_the_chart():
     td = tempfile.mkdtemp()
     try:
         DR.JOURNAL = os.path.join(td, "journal.jsonl")
-        t0 = 1_700_000_000
+        # Момент ПОСЛЕ границы версии правил (`RULES_SINCE`): решение
+        # старше неё есть бэктест по построению, и на фикстуре из
+        # прошлого «записано вперёд» не бывало бы вовсе — она
+        # перестала бы выглядеть живой.
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
         row = {"dep": 10000, "ruler": "safe", "at": t0,
                "exit_ts": t0 + 7200, "sym": "AAAUSDT", "usd": 3.0,
                "written_at": t0 + 600, "rules": DR.RULES, "lev": 2.0,
