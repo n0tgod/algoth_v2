@@ -99,9 +99,16 @@ def test_book_cell_reproduces_the_book_rule():
     ts = [b[0] for b in bars]
     g = T3._leg(at)
 
+    # Предел плеча площадки подаётся ОБЕИМ дорогам, и он связывающий:
+    # забор у книги и у замера один, и разойтись им нельзя. Без этого
+    # проверка держала бы паритет только там, где предела нет вовсе.
+    lev_look = lambda notl: 2.0                             # noqa: E731
+
     def go():
-        a = D6.one_position(g, bars, ts, _look, "depth", R.SURVIVE_MULT)
-        b = D8.one_position(g, bars, ts, _look, "depth", R.SURVIVE_MULT)
+        a = D6.one_position(g, bars, ts, _look, "depth", R.SURVIVE_MULT,
+                            lev_look=lev_look)
+        b = D8.one_position(g, bars, ts, _look, "depth", R.SURVIVE_MULT,
+                            lev_look=lev_look)
         return a, b
     a, b = _with_levels(go)
     assert a is not None and b, (a, b)
@@ -109,6 +116,7 @@ def test_book_cell_reproduces_the_book_rule():
     for k in ("exit", "exit_ts", "lev", "depth", "avg"):
         assert a[k] == ref[k], (k, a[k], ref[k])
     assert abs(a["pnl"] - ref["pnl"]) < 1e-12, (a["pnl"], ref["pnl"])
+    assert abs(a["lev"] - 2.0) < 1e-9, ("предел площадки не связал", a["lev"])
     print(f"ok  ячейка правила книги `{key}` == сама книга: {ref['exit']} "
           f"{ref['pnl']*100:+.2f}%, глубина {ref['depth']}, "
           f"плечо {ref['lev']:.2f}×")
