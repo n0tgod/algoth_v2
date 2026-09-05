@@ -4,3 +4,22 @@
 запускаю: .venv/bin/python research/dca_paper/short_supply.py --tag 1m
 /root/algoth_v2/research/dca_paper/short_supply.py:42: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
   return dt.datetime.utcfromtimestamp(float(ts)).strftime("%Y-%m-%d")
+публикуется в ветку main:
+ jobs/done/deploy-days.done                    |  1 +
+ jobs/done/deploy-days.log                     |  6 ++++++
+ jobs/done/short-supply.done                   |  1 +
+ jobs/done/short-supply.log                    |  6 ++++++
+ jobs/poke.log                                 |  6 ++++++
+ jobs/queue-state.md                           |  1 +
+ research/dca_paper/out/DCA-short-supply-1m.md | 15 +++++++++++++++
+ research/s8_loop/out/day_brake.json           |  2 +-
+ 8 files changed, 37 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7c9ad89..6ec0257  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+sheets.jsonl: ног 934265
+ног: лонг 532004, шорт 402261; под гейтом: лонг 8692, шорт 304
+суток: лонг 29, шорт 28, общих 28
+отчёт: /root/algoth_v2/research/dca_paper/out/DCA-short-supply-1m.md
+конец: 2026-09-05T21:12:52Z, код 0
