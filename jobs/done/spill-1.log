@@ -42,3 +42,14 @@
 [22:22:32] после: /dev/sdb        147G   81G   59G  58% /root/algoth_v2/research/b1_book/out
 [22:22:32] после: /dev/sda1       150G  119G   25G  83% /
 конец: 2026-09-06T22:22:32Z, код 0
+публикуется в ветку main:
+ jobs/done/d10-short-3.done          |  1 +
+ jobs/done/d10-short-3.log           | 16 ++++++++++++++++
+ jobs/done/spill-1.log               | 27 +++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 48 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   ac3f8a6..f67a4bf  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
