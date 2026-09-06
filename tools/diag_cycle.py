@@ -83,6 +83,27 @@ def main(argv=None):
     a = age(cp)
     print(f"  collect.py правлен {a / 60:.1f} мин назад"
           if a is not None else "  collect.py не найден")
+    # Память и убийца ядра: цикл, который доходит до сведения часа и
+    # умирает без трассировки, снаружи неотличим от сломанного кода,
+    # а SIGKILL по памяти трассировки не оставляет (2026-09-06: пять
+    # смертей подряд на шаге матрицы при чужом прогоне рядом).
+    print("\n=== память ===")
+    fm = subprocess.run(["free", "-m"], capture_output=True, text=True)
+    print(fm.stdout.strip() or "free недоступен")
+    ps = subprocess.run(["ps", "-eo", "pid,rss,etime,args", "--sort=-rss"],
+                        capture_output=True, text=True)
+    top = [x for x in ps.stdout.splitlines()[1:] if "python" in x
+           or "bot live" in x][:8]
+    print("крупнейшие процессы (RSS МБ, время, команда):")
+    for x in top:
+        f = x.split(None, 3)
+        if len(f) == 4:
+            print(f"  {f[0]:>8} {int(f[1]) // 1024:>6} {f[2]:>12} {f[3][:80]}")
+    dm = subprocess.run(["sh", "-c", "dmesg -T 2>/dev/null | grep -iE "
+                         "'killed process|out of memory' | tail -6"],
+                        capture_output=True, text=True)
+    print("строки ядра об OOM:")
+    print(dm.stdout.strip() or "  нет (или dmesg недоступен)")
     print("\n=== манифест модели ===")
     mp = os.path.join(OUT, "model", "manifest.json")
     a = age(mp)
