@@ -462,6 +462,29 @@ def summarize(path=None, live=None):
     live = live or {}
     out = {"bad_lines": bad, "books": {},
            "rulers": list(R.RULER_ORDER), "deposits": list(R.DEPOSITS)}
+    # Нетто — тем же ядром, что отчёт издержек (`costs.py`), и не второй
+    # копией формулы: комиссия тейкером на рунгах и выходе,
+    # проскальзывание X3 на базовый вход и рыночный выход, funding по
+    # рядам площадки. Импорт ленивый: costs читает этот модуль ради
+    # `_stats`, и импорт на уровне модуля был бы кольцом. Отказ
+    # контекста — словами в каждой книге, не нулями.
+    try:
+        import costs as CO
+        ctx = CO.context()
+    except Exception as e:                                # noqa: BLE001
+        CO, ctx = None, {"error": f"модуль издержек не читается: {e}"[:200]}
+    out["costs"] = {k: ctx.get(k) for k in ("error", "n_funding")}
+    if CO is not None:
+        out["costs"].update({"slip_bp": CO.SLIP_BP, "slip_source": CO.SLIP_SOURCE,
+                             "market_exits": list(CO.MARKET_EXITS)})
+
+    def _net(sub, dep):
+        if CO is None:
+            return {"error": ctx["error"], "n": len(sub)}
+        try:
+            return CO.net_view(sub, dep, ctx, _stats)
+        except Exception as e:                            # noqa: BLE001
+            return {"error": f"нетто не посчитано: {e}"[:200], "n": len(sub)}
     for rk in R.RULER_ORDER:
         for dep in R.DEPOSITS:
             key = _cell(rk, dep)
@@ -475,6 +498,7 @@ def summarize(path=None, live=None):
                  "ticket": R.ticket(dep, rk),
                  "all": _stats(mine, dep),
                  "forward": _stats(fwd, dep), "restored": _stats(back, dep),
+                 "net": {"all": _net(mine, dep), "forward": _net(fwd, dep)},
                  "n_forward": len(fwd), "n_restored": len(back),
                  "live_known": op is not None}
             if op is not None:

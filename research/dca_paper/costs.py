@@ -370,6 +370,77 @@ def gate_arm(rows, dep):
             "median_all": _bp_median(known, "usd")}
 
 
+def context(need=None, log=None):
+    """Справочник комиссий и ряды funding — ОДИН раз на свод книг.
+
+    Страница книг показывает нетто тем же ядром, что отчёт издержек, и
+    контекст грузится один раз на все книги (580 рядов — секунды).
+    Отказ — словами в поле `error`, не пустым словарём: пустой словарь
+    рядов уже однажды читался как «funding есть».
+    """
+    try:
+        assets = universe()
+        to_asset, taker = symbol_maps(assets)
+        need = set(need) if need is not None else set(to_asset.values())
+        funding = FS.load_funding(FUNDING_DIR, assets, need,
+                                  symbol_field="bybit_symbol")
+    except Exception as e:                                # noqa: BLE001
+        return {"error": f"контекст издержек не собран: {e}"[:200]}
+    if funding is None:
+        return {"assets": assets, "to_asset": to_asset, "taker": taker,
+                "funding": None,
+                "error": f"каталога funding нет: {FUNDING_DIR}"}
+    return {"assets": assets, "to_asset": to_asset, "taker": taker,
+            "funding": funding, "n_funding": len(funding)}
+
+
+def net_view(rows, dep, ctx, stats_fn, slip_bp=None):
+    """Нетто-свод подмножества строк книги: форма по дням от денег за
+    вычетом комиссии и проскальзывания и с funding, плюс суммы издержек.
+
+    Считается по позициям, у которых измерены ВСЕ три издержки; сколько
+    их — поле `measured` против `n`, и когда измерено не всё, причина
+    названа словами (`why`). Свод без контекста (нет справочника или
+    рядов) — не нули, а `error`.
+    """
+    slip_bp = SLIP_BP if slip_bp is None else float(slip_bp)
+    closed = [r for r in rows if r.get("exit") is not None
+              and r.get("exit_ts") is not None]
+    base = {"n": len(closed), "slip_bp": slip_bp, "slip_source": SLIP_SOURCE,
+            "market_exits": list(MARKET_EXITS)}
+    if not ctx or ctx.get("error") and not ctx.get("taker"):
+        return dict(base, error=(ctx or {}).get("error") or "контекста нет")
+    rich, miss = enrich(closed, ctx.get("funding"), ctx["to_asset"],
+                        ctx["taker"], log=lambda *a: None, slip_bp=slip_bp)
+    both = [r for r in rich if r.get("fee_usd") is not None
+            and r.get("fund_usd") is not None and r.get("slip_usd") is not None]
+    net_rows = [{"exit_ts": r["exit_ts"], "at": r["at"], "sym": r["sym"],
+                 "written_at": r.get("written_at"),
+                 "usd": float(r["usd"]) - float(r["fee_usd"])
+                 - float(r["slip_usd"]) + float(r["fund_usd"])}
+                for r in both]
+    fee_m, _ = _sum(both, "fee_usd")
+    slip_m, _ = _sum(both, "slip_usd")
+    fund_m, _ = _sum(both, "fund_usd")
+    gross_m, _ = _sum(both, "usd")
+    why = None
+    if closed and not both:
+        why = ("ряды funding не найдены" if ctx.get("funding") is None
+               else "ни у одной позиции не измерены все три издержки")
+    elif miss.get("no_funding_series") or miss.get("funding_uncovered"):
+        why = (f"без ряда funding {miss.get('no_funding_series', 0)}, ряд не "
+               f"покрывает {miss.get('funding_uncovered', 0)}")
+    out = dict(base, measured=len(both),
+               cover=(round(len(both) / len(closed), 3) if closed else None),
+               fee_usd=fee_m, slip_usd=slip_m, fund_usd=fund_m,
+               gross_measured_usd=gross_m,
+               net_usd=(round(gross_m - fee_m - slip_m + fund_m, 2)
+                        if both else None),
+               stats=(stats_fn(net_rows, dep) if net_rows else None),
+               why=why, error=ctx.get("error"))
+    return out
+
+
 def run(rows=None, funding=None, assets=None, log=print, slip_bp=None):
     slip_bp = SLIP_BP if slip_bp is None else float(slip_bp)
     t0 = time.time()

@@ -6753,7 +6753,58 @@ function curveSvg(st, dep){
   return h;
 }
 
-function statBlock(st, dep, title, op, grp){
+function netTiles(nt, dep, meta){
+  // Нетто по замеру издержек (`costs.py`, тот же код, что у отчёта):
+  // комиссия тейкером на каждом рунге и выходе, проскальзывание X3 на
+  // базовый вход и рыночный выход, funding по рядам площадки. Нет поля —
+  // свод прежнего образца, и это сказано; нет контекста — причина;
+  // измерено не всё — сколько именно. Ноль здесь не бывает молчаливым.
+  let h = "<div class='stats main' data-min=210>";
+  const tile = (k, v, c) => "<div class='st" +
+    (c === "good" ? " pos" : (c === "bad" ? " neg" : "")) +
+    "'><div class=k>" + k + "</div><div class='v mono " + (c || "") + "'>" +
+    v + "</div></div>";
+  if (nt === undefined) {
+    return h + tile("нетто по издержкам",
+      "&mdash; <span class=dim>(свод прежнего образца: издержки не считались)</span>",
+      "") + "</div>";
+  }
+  if (nt.error && nt.net_usd == null) {
+    return h + tile("нетто по издержкам",
+      "&mdash; <span class=dim>(" + esc(nt.error) + ")</span>", "") + "</div>";
+  }
+  const two = (a, b2) => a + " <span style='font-size:.62em;opacity:.85'>("
+    + b2 + ")</span>";
+  const nst = nt.stats || {};
+  const costs = (nt.fee_usd || 0) + (nt.slip_usd || 0) - (nt.fund_usd || 0);
+  h += tile("заработала нетто",
+    nt.net_usd == null ? "&mdash;"
+      : two(usd(nt.net_usd), fpct(nt.net_usd / Number(dep || 1))),
+    nt.net_usd == null ? "" : cls(nt.net_usd));
+  h += tile("издержки (комиссия + проскальз. − funding)",
+    nt.net_usd == null ? "&mdash;"
+      : usd(-costs) + " <span style='font-size:.62em;opacity:.85'>(" +
+        usd(-(nt.fee_usd || 0)) + " / " + usd(-(nt.slip_usd || 0)) + " / " +
+        usd(nt.fund_usd || 0) + ")</span>", costs > 0 ? "bad" : "");
+  h += tile("просадка нетто", fpct(nst.max_dd), cls(nst.max_dd));
+  h += tile("медиана дня нетто", fpct(nst.day_median), cls(nst.day_median));
+  h += tile("измерено позиций",
+    (nt.measured == null ? "&mdash;" : nt.measured) + " из " +
+    (nt.n == null ? "&mdash;" : nt.n) +
+    (nt.why ? " <span class=dim>(" + esc(nt.why) + ")</span>" : ""), "");
+  h += "</div><div class=k>Нетто — по замеру издержек тем же кодом, что " +
+    "отчёт `DCA-costs`: комиссия тейкером на каждом рунге и выходе; " +
+    "проскальзывание " + (nt.slip_bp == null ? "&mdash;" : nt.slip_bp) +
+    " б.п. (" + esc(nt.slip_source || (meta && meta.slip_source) || "живой замер X3") +
+    ") на базовый вход и рыночный выход (" +
+    esc((nt.market_exits || []).join(", ")) + "); лимитные рунги и тейк " +
+    "без проскальзывания по построению; funding по рядам площадки. " +
+    "Число проскальзывания снято на 300 $ за имя — у крупных билетов оно " +
+    "больше, нетто здесь нижняя граница издержек.</div>";
+  return h;
+}
+
+function statBlock(st, dep, title, op, grp, nt, meta){
   const gname = grp === "fwd" ? "записанное вперёд" : "бэктест и записанное вперёд";
   if (!st) return "<div class=panel><div class=cap>" + esc(title) +
     "</div><p class=dim>Строк ещё нет. У книги это не пустота показа: " +
@@ -6820,6 +6871,7 @@ function statBlock(st, dep, title, op, grp){
       + "</div>";
   }
   h += "</div>";
+  h += netTiles(nt, dep, meta);
   // Второстепенные плитки собираются в СВОЮ строку, чтобы подпись
   // могла назвать их ЧИСЛОМ: «шестнадцать параметров» литералом
   // устарело бы при первой же добавленной плитке.
@@ -7445,10 +7497,13 @@ function render(){
   const st = GRP === "fwd" ? b.forward : b.all;
   const op = (b.live_known === false) ? {known: false}
     : (b.open ? Object.assign({}, b.open, {known: true}) : undefined);
+  // Нетто едет рядом с той же группой: у «без бэктеста» свои издержки.
+  // Свод прежнего образца поля не несёт — плитки скажут это словами.
+  const nt = b.net ? (GRP === "fwd" ? b.net.forward : b.net.all) : undefined;
   h += statBlock(st, b.deposit || DEP,
                  GRP === "fwd" ? "счёт без бэктеста: записанное вперёд"
                                : "счёт с бэктестом: одна кривая",
-                 op, GRP);
+                 op, GRP, nt, d.costs);
   h += dayTable(st, b.deposit || DEP, "по суткам");
   if (!d.journal_present) h += "<div class=panel><p class=dim>Журнала на " +
     "этой машине нет вовсе &mdash; он живёт там, где книги считаются. " +

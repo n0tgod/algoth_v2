@@ -204,6 +204,68 @@ def test_backtest_and_live_share_one_curve_and_stay_labelled():
     print("ok  кривая одна: общий счёт +15.00 при группах +10.00 и +5.00")
 
 
+def test_net_rides_the_summary_with_reasons_not_zeros():
+    """Нетто на странице считается тем же ядром, что отчёт издержек
+    (`costs.net_view`): с контекстом — числа меньше брутто на издержки,
+    без рядов funding — не нули, а причина словами; свод несёт
+    `costs` с ошибкой контекста, когда её нет."""
+    import numpy as np
+    import costs as CO
+    t0 = T0
+    fills = [[t0 + 60, 100.0, 0.25], [t0 + 7200, 98.0, 0.25]]
+    rows = []
+    for i, sym in enumerate(("AUSDT", "BUSDT")):
+        rows.append({"dep": 1000, "ruler": R.DEFAULT_RULER, "at": t0 + i * 3600,
+                     "exit_ts": t0 + i * 3600 + 30 * 3600, "sym": sym,
+                     "side": "long", "lev": 2.0, "margin": 50.0,
+                     "pnl_frac": 0.1, "usd": 5.0, "exit": "тейк",
+                     "entry_px": 100.0, "exit_px": 110.0, "avg": 99.0,
+                     "depth": 2, "fills": fills, "fav_bp": 500.0,
+                     "written_at": t0 + i * 3600 + 3600, "rules": R.RULES})
+    t = np.array([int((t0 - 3600 * 24 + 3600 * k) * 1000) for k in range(200)],
+                 dtype=np.int64)
+    rates = np.full(200, 0.0001)
+    ctx_ok = {"assets": {}, "to_asset": {"AUSDT": "A", "BUSDT": "B"},
+              "taker": {"AUSDT": 5.5, "BUSDT": 5.5},
+              "funding": {"A": (t, rates), "B": (t, rates)}, "n_funding": 2}
+    ctx_none = {"assets": {}, "to_asset": {"AUSDT": "A", "BUSDT": "B"},
+                "taker": {"AUSDT": 5.5, "BUSDT": 5.5}, "funding": None,
+                "error": "каталога funding нет: /nowhere"}
+    real = CO.context
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "j.jsonl")
+        with open(jp, "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r) + "\n")
+        try:
+            CO.context = lambda **kw: ctx_ok
+            s = P.summarize(jp)
+            b = s["books"][P._cell(R.DEFAULT_RULER, 1000)]
+            nt = b["net"]["all"]
+            assert nt["n"] == 2 and nt["measured"] == 2 and nt["why"] is None, nt
+            assert nt["fee_usd"] > 0 and nt["slip_usd"] > 0, nt
+            assert nt["fund_usd"] < 0, nt            # лонг платит при ставке > 0
+            assert nt["net_usd"] < b["all"]["usd"] == 10.0, (nt, b["all"])
+            assert abs(nt["net_usd"] - round(10.0 - nt["fee_usd"] - nt["slip_usd"]
+                                             + nt["fund_usd"], 2)) < 0.011, nt
+            assert nt["stats"]["usd"] == nt["net_usd"], nt["stats"]
+            assert nt["slip_bp"] == CO.SLIP_BP and s["costs"]["error"] is None
+            assert b["net"]["forward"]["n"] == 2, b["net"]["forward"]
+            # без рядов funding: не нули, а причина словами
+            CO.context = lambda **kw: ctx_none
+            s0 = P.summarize(jp)
+            n0 = s0["books"][P._cell(R.DEFAULT_RULER, 1000)]["net"]["all"]
+            assert n0["n"] == 2 and n0["measured"] == 0, n0
+            assert n0["net_usd"] is None and n0["stats"] is None, n0
+            assert "funding" in (n0["why"] or ""), n0
+            assert "funding" in s0["costs"]["error"], s0["costs"]
+        finally:
+            CO.context = real
+    print(f"ok  нетто в своде: {nt['net_usd']:+.2f} $ при брутто +10.00 "
+          f"(комиссия {nt['fee_usd']:.2f}, проскальз. {nt['slip_usd']:.2f}, "
+          f"funding {nt['fund_usd']:+.2f}); без рядов — причина словами")
+
+
 def test_take_steps_follow_the_floating_average():
     """Цель ступенчата: якорь — плавающая ТВХ, и долив опускает обе.
 
@@ -1842,7 +1904,8 @@ def test_smoothing_splits_the_capital_of_two_books():
           f"{c['both']['final']*100:.1f} % от $20 тыс.")
 
 
-TESTS = [test_smoothing_finds_it_and_stays_silent_without_it,
+TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
+         test_smoothing_finds_it_and_stays_silent_without_it,
          test_journal_shard_rolls_over_by_size,
          test_repack_splits_an_oversized_day,
          test_smoothing_reads_the_journal_pair,

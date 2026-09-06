@@ -7109,6 +7109,20 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                          "RULER_ORDER": list(DR.RULER_ORDER)},
                "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k,
                                        "slots": DR.slots(1000.0, DR.DEFAULT_RULER),
+                                       # нетто по замеру издержек — тем
+                                       # же ключом книги; у безопасной
+                                       # числа, у остальных поля нет
+                                       # (свод прежнего образца)
+                                       **({"net": {"all": {"n": 2, "measured": 2,
+                                                           "fee_usd": 0.4, "slip_usd": 0.1,
+                                                           "fund_usd": -0.05, "net_usd": 7.5,
+                                                           "slip_bp": 4.4,
+                                                           "stats": {"usd": 7.5, "max_dd": 0.0,
+                                                                     "day_median": 0.001}},
+                                                   "forward": {"n": 0, "measured": 0,
+                                                               "net_usd": None, "stats": None,
+                                                               "why": "нет строк"}}}
+                                          if k == "safe" else {}),
                                        # открытые позиции: их пишет
                                        # счётный прогон, а худшую из них
                                        # дописывает сборщик
@@ -7134,6 +7148,14 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               [x["key"] for x in d.get("rulers", [])] == list(DR.RULER_ORDER),
               str(d.get("rulers")))
         bs = d.get("books") or {}
+        # нетто по издержкам едет тем же ключом книги; книга без поля —
+        # свод прежнего образца, и это не превращается в ноль
+        check("DCA: нетто по издержкам доезжает до страницы",
+              (bs.get("safe:1000") or {}).get("net", {}).get("all", {})
+              .get("net_usd") == 7.5, str((bs.get("safe:1000") or {}).get("net")))
+        check("DCA: книга без нетто не получает нулей",
+              "net" not in (bs.get("optimal:1000") or {}),
+              str(list((bs.get("optimal:1000") or {}).keys())))
         check("DCA: книга ключуется линейкой и депозитом",
               set(bs) == {f"{k}:1000" for k in DR.RULER_ORDER}, str(sorted(bs)))
         # Список сделок ОДИН, и бэктест в нём помечен: кривая книги не
