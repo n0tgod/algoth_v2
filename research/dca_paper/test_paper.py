@@ -225,9 +225,47 @@ def test_take_steps_follow_the_floating_average():
     assert all("take" not in st for st in bare), bare
     assert R.avg_walk(fills, notional=100.0, take_frac=0.0)[0].get(
         "take") is None
+    # У ШОРТА цель стоит НИЖЕ средней и едет ВВЕРХ вместе с ней: доливы
+    # идут вверх. Доля та же (правило отдаёт её модулем, знак даёт
+    # сторона — соглашение ядра лестницы); до появления стороны цель
+    # короткой книги считалась длинной геометрией — над средней, куда
+    # шорт не выходит никогда.
+    fs = [[1.0, 100.0, 0.25], [2.0, 110.0, 0.25]]
+    f2 = R.take_rule(-500.0, "short")["frac"]
+    assert abs(f2 - f) < 1e-12, (f2, f)
+    ws = R.avg_walk(fs, notional=100.0, take_frac=f2, side="short")
+    for st in ws:
+        assert abs(st["take"] - st["avg"] * (1 - f2)) < 1e-12, st
+    assert ws[1]["avg"] > ws[0]["avg"] and ws[1]["take"] > ws[0]["take"], ws
+    # умолчание — лонг: записи до 2026-09-05 стороны не несут, и их
+    # числа не сдвигаются ни на бит
+    assert R.avg_walk(fills, notional=100.0, take_frac=f) == w
     print(f"ok  цель ступенчата: {w[0]['take']:.3f} → {w[1]['take']:.3f} "
           f"вслед за ТВХ {w[0]['avg']:.3f} → {w[1]['avg']:.3f} "
-          f"(доля {f*100:.1f} %); без правила поля нет")
+          f"(доля {f*100:.1f} %); у шорта ниже средней "
+          f"{ws[0]['take']:.3f} → {ws[1]['take']:.3f}; без правила поля нет")
+
+
+def test_row_side_is_the_record_then_the_book():
+    """Сторона записи: поле строки, а без него — линейка книги.
+
+    Одно правило на всех читателей (график, список, живая отметка).
+    Записи артефакта ключа книги не несут, поэтому линейка приходит
+    параметром: без него запись короткой книги читалась бы длинной по
+    умолчанию `ruler_of` — ровно тот дефект, по которому владелец увидел
+    лонги в шорт-книге.
+    """
+    assert R.row_side({"side": "short", "ruler": "safe"}) == "short"
+    assert R.row_side({"ruler": "safe_s"}) == "short"
+    assert R.row_side({"ruler": "safe"}) == "long"
+    assert R.row_side({}) == "long"                     # прежний образец
+    # запись артефакта: ключа в строке нет, сторона — у книги
+    assert R.row_side({"sym": "X"}, "optimal_s") == "short"
+    assert R.row_side({"sym": "X"}, "optimal") == "long"
+    # мусор в поле не есть сторона — решает линейка
+    assert R.row_side({"side": "up", "ruler": "aggr_s"}) == "short"
+    print("ok  сторона записи: поле строки, иначе линейка книги; "
+          "у артефакта — по ключу книги")
 
 
 def test_take_frac_comes_from_the_rule_not_from_the_record():
@@ -1021,6 +1059,48 @@ def _control_contracts_are_money_not_coins():
         R.avg_walk = orig
 
 
+def _control_walk_ignores_side():
+    """Контроль: ступени цели считаются без стороны (длинная геометрия).
+
+    Ровно прежнее поведение `avg_walk`: у шорта цель вставала бы НАД
+    средней. Проверка ступеней обязана упасть.
+    """
+    orig = R.avg_walk
+
+    def longonly(fills, entry=None, notional=None, take_frac=None,
+                 side="long"):
+        return orig(fills, entry, notional, take_frac)   # сторона потеряна
+
+    R.avg_walk = longonly
+    try:
+        try:
+            test_take_steps_follow_the_floating_average()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.avg_walk = orig
+
+
+def _control_row_side_ignores_book():
+    """Контроль: сторона артефактной записи берётся умолчанием `ruler_of`,
+    а не переданной книгой — короткая книга читалась бы длинной."""
+    orig = R.row_side
+
+    def noruler(row, ruler=None):
+        return orig(row)
+
+    R.row_side = noruler
+    try:
+        try:
+            test_row_side_is_the_record_then_the_book()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        R.row_side = orig
+
+
 def _control_gate_is_gone():
     """Гейта нет вовсе: третий режим молча становится копией второй книги.
 
@@ -1769,6 +1849,7 @@ TESTS = [test_smoothing_finds_it_and_stays_silent_without_it,
          test_smoothing_splits_the_capital_of_two_books,
          test_short_books_are_declared_as_a_mirror,
          test_take_rule_mirrors_the_promise_side,
+         test_row_side_is_the_record_then_the_book,
          test_short_legs_go_only_into_short_books,
          test_venue_cap_is_in_the_replay_signature,
          test_venue_leverage_cap_reaches_the_fence,
@@ -2283,6 +2364,8 @@ CONTROLS = [("хвост не доезжает до ядра", _control_tail_nev
              _control_dedup_without_rules_version),
             ("контракты посчитаны деньгами, а не монетами",
              _control_contracts_are_money_not_coins),
+            ("ступени цели без стороны", _control_walk_ignores_side),
+            ("сторона артефакта без книги", _control_row_side_ignores_book),
             ("гейта плеча нет вовсе", _control_gate_is_gone),
             ("гейт назначен всем режимам", _control_gate_on_every_ruler),
             ("пол билета один на все режимы", _control_floor_one_for_everyone),

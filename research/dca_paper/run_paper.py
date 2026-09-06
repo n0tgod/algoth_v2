@@ -248,6 +248,11 @@ def build_rows(by_ruler, now=None, log=print):
                 if st == "closed":
                     out.append({
                         "dep": int(dep), "ruler": rk, "at": float(r["at"]),
+                        # сторона — ЗАПИСЬ факта из самой симуляции, а не
+                        # вывод из ключа книги при чтении: до этого поля
+                        # показ приписывал позициям короткой книги лонг,
+                        # и владелец спросил, откуда в шорт-книге лонги
+                        "side": r.get("side") or R.side_of(rk),
                         "exit_ts": float(r["exit_ts"]), "sym": r["sym"],
                         "lev": round(float(r["lev"]), 3),
                         "margin": round(float(margin), 4),
@@ -270,6 +275,7 @@ def build_rows(by_ruler, now=None, log=print):
                         "written_at": now, "rules": R.RULES})
                     continue
                 item = {"sym": r["sym"], "at": float(r["at"]),
+                        "side": r.get("side") or R.side_of(rk),
                         "lev": round(float(r["lev"]), 3),
                         "margin": round(float(margin), 4),
                         # отметка, а не исход: позиция ещё живёт

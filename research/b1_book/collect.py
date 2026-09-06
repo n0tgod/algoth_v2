@@ -3410,7 +3410,7 @@ class Collector:
     PAPER_STALE = 36 * 3600
 
     @staticmethod
-    def _dca_take_frac(rules_mod, row):
+    def _dca_take_frac(rules_mod, row, ruler=None):
         """Доля цели у записи позиции. None — правило по ней неизвестно.
 
         Считается ПРАВИЛОМ книги (`rules.take_rule`) от сохранённого
@@ -3418,8 +3418,15 @@ class Collector:
         множитель — уровень пересчитается сам. Записи прежнего образца
         обещания не несут, и уровня у них не будет вовсе: рисовать цель,
         которой мы не знаем, значит утверждать чужое число.
+
+        Сторона едет в правило ОБЯЗАТЕЛЬНО (`rules.row_side`): у шорта
+        обещание в пользу отрицательно, и правило без стороны честно
+        отвечало «цели нет» — у всей короткой книги на графике не было
+        ни одной цели, а страница молчала. `ruler` нужен записям
+        артефакта (открытым и оборванным): ключа книги в них нет.
         """
-        tr = rules_mod.take_rule(row.get("fav_bp"))
+        tr = rules_mod.take_rule(row.get("fav_bp"),
+                                 rules_mod.row_side(row, ruler))
         return None if not tr else float(tr["frac"])
 
     @staticmethod
@@ -3492,16 +3499,21 @@ class Collector:
         for r in sorted(mine, key=lambda x: float(x.get("at") or 0)):
             at = float(r.get("at") or 0)
             fills = r.get("fills") or []
-            tf = self._dca_take_frac(DR, r)
+            # Сторона — ИЗ ЗАПИСИ (у строк прежнего образца — из ключа
+            # книги), а не константой: «long» всем подряд и было тем
+            # дефектом, по которому владелец увидел лонги в шорт-книге.
+            # Она же задаёт направление цели в ступенях ТВХ.
+            side = DR.row_side(r, rk)
+            tf = self._dca_take_frac(DR, r, rk)
             walk = DR.avg_walk(fills, r.get("entry_px"),
-                               DR.notional_of(r), take_frac=tf)
+                               DR.notional_of(r), take_frac=tf, side=side)
             pf = r.get("pnl_frac")
             out.append({
                 "sym": sym, "arm": "dca",
                 # ключ часа — В ТОМ ЖЕ формате, что у книг модели:
                 # график ищет сделку по нему и печатает его подписью
                 "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at)),
-                "side": "long", "opened_at": at,
+                "side": side, "opened_at": at,
                 "closes_at": float(r.get("exit_ts") or at),
                 "entry_px": r.get("entry_px"), "exit_px": r.get("exit_px"),
                 "avg": r.get("avg"), "walk": walk,
@@ -3540,16 +3552,20 @@ class Collector:
                 at = float(r.get("at") or 0)
                 fills = r.get("fills") or []
                 mf = r.get("mark_frac")
+                # Запись артефакта ключа книги не несёт — сторона
+                # берётся у книги (`rk`), иначе шорт читался бы лонгом
+                side = DR.row_side(r, rk)
+                tf = self._dca_take_frac(DR, r, rk)
                 out.append({
                     "sym": sym, "arm": "dca",
                     "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at)),
-                    "side": "long", "opened_at": at, "closes_at": None,
+                    "side": side, "opened_at": at, "closes_at": None,
                     "entry_px": r.get("entry_px"), "exit_px": None,
                     "avg": r.get("avg"),
                     "walk": DR.avg_walk(fills, r.get("entry_px"),
                                         DR.notional_of(r),
-                                        take_frac=self._dca_take_frac(DR, r)),
-                    "take_frac": self._dca_take_frac(DR, r),
+                                        take_frac=tf, side=side),
+                    "take_frac": tf,
                     "lots": max(1, len(fills)),
                     "adds": self._dca_adds(fills[1:],
                                            DR.notional_of(r)),
@@ -3628,9 +3644,13 @@ class Collector:
             bid, ask = bk.best() if bk else (None, None)
             mk = None
             if bid and ask:
+                # Знак хода у шорта зеркален: отметка считается стороной
+                # КНИГИ (`side_of`), иначе рост цены читался бы прибылью
+                # у позиции, которая на нём теряет.
                 mk = LD.open_mark((bid + ask) / 2.0, q.get("avg"),
                                   q.get("margin"), q.get("lev") or 1.0,
-                                  [f[2] for f in (q.get("fills") or [])])
+                                  [f[2] for f in (q.get("fills") or [])],
+                                  side=DR.row_side(q, rk))
             row = {"sym": sym, "mark_frac": None, "mark_usd": None}
             if mk is not None:
                 usd = mk * float(q.get("margin") or 0.0)
@@ -3755,6 +3775,10 @@ class Collector:
                                 key=lambda r: -float(r.get("exit_ts") or 0))
                 b["trades"] = [{
                     "at": r.get("at"), "exit_ts": r.get("exit_ts"),
+                    # сторона позиции — записью, а у строк прежнего
+                    # образца из ключа книги: без неё список короткой
+                    # книги читался как список лонгов
+                    "side": DR.row_side(r, rk),
                     "sym": r.get("sym"), "lev": r.get("lev"),
                     "margin": r.get("margin"), "usd": r.get("usd"),
                     "pnl_frac": r.get("pnl_frac"), "exit": r.get("exit"),
@@ -3770,10 +3794,11 @@ class Collector:
                     "walk": DR.avg_walk(
                         r.get("fills"), r.get("entry_px"),
                         DR.notional_of(r),
-                        take_frac=self._dca_take_frac(DR, r)),
+                        take_frac=self._dca_take_frac(DR, r, rk),
+                        side=DR.row_side(r, rk)),
                     # Доля цели рядом со ступенями: правило печатается
                     # словами, а не выводится обратно из нарисованного.
-                    "take_frac": self._dca_take_frac(DR, r),
+                    "take_frac": self._dca_take_frac(DR, r, rk),
                     "bt": bool(id(r) in seen),
                     # Исход посчитан по КОТИРОВКЕ, а не по принтам:
                     # хвост ленты продолжен серединой стакана. Пометка
@@ -3803,11 +3828,15 @@ class Collector:
                     # список закрытых, и вторая её реализация показала бы
                     # позицию не там, где её посчитала книга.
                     def _walk(lst, why=None):
-                        return [dict(q, walk=DR.avg_walk(
+                        # Сторона — у КНИГИ: записи артефакта ключа не
+                        # несут, и без `rk` шорт читался бы лонгом.
+                        return [dict(q, side=DR.row_side(q, rk),
+                                     walk=DR.avg_walk(
                                         q.get("fills"), q.get("entry_px"),
                                         DR.notional_of(q),
-                                        take_frac=self._dca_take_frac(DR, q)),
-                                     take_frac=self._dca_take_frac(DR, q),
+                                        take_frac=self._dca_take_frac(DR, q, rk),
+                                        side=DR.row_side(q, rk)),
+                                     take_frac=self._dca_take_frac(DR, q, rk),
                                      **({"cut_why": q.get("cut_why") or why}
                                         if why else {}))
                                 for q in (lst or [])]

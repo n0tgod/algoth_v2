@@ -460,6 +460,12 @@ def test_pages_run_headless():
                 ("график ступенчатой цели DCA", web.CHART,
                  "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"
                  "&dcatake=1"),
+                # КОРОТКАЯ лестница: цель ступенями НИЖЕ средней, доливы
+                # вверх, объяснение говорит короткую геометрию. Сторона
+                # едет ответом сервера — страница её не назначает.
+                ("график короткой позиции DCA", web.CHART,
+                 "?k=xxx&sym=BTCUSDT&dca=safe_s:10000&hour=2026-08-03-14"
+                 "&dcatake=1&dcashort=1"),
                 ("график длинной позиции DCA", web.CHART,
                  "?k=xxx&sym=BTCUSDT&dca=safe:10000&hour=2026-08-03-14"
                  "&dcalong=1"),
@@ -516,6 +522,11 @@ def test_pages_run_headless():
                 # правила. Наблюдение и пересчёт не складываются, пустая
                 # группа называет причину, переключение меняет числа.
                 ("DCA-книги", web.DCAPAGE, "?k=xxx"),
+                # Короткие зеркала: на живом сервере линеек шесть, и у
+                # позиций короткой книги сторона «short» — фишка стороны
+                # и слова лестницы (продано / откуплено) идут за записью
+                ("DCA-книги с короткой книгой", web.DCAPAGE,
+                 "?k=xxx&dcashort=1"),
                 # Суточный прогон не пришёл — страница обязана кричать.
                 ("DCA-книги с устаревшим прогоном", web.DCAPAGE,
                  "?k=xxx&dcastale=1"),
@@ -7076,11 +7087,17 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                 r["tail"] = 1
             return r
 
+        # короткая книга: обещание ВНИЗ, доливы ВВЕРХ — запись обязана
+        # выглядеть как живая запись шорта, а не как лонг с пометкой
+        rs = row("safe_s", 2.0, "SSSUSDT")
+        rs.update({"fav_bp": -500.0, "exit_px": 1.8,
+                   "fills": [[t0, 2.0, 0.25], [t0 + 600, 2.2, 0.25]]})
+        rs["avg"] = DR.avg_walk(rs["fills"])[-1]["avg"]
         rows = [row("safe", 1.0, "AAAUSDT"), row("optimal", 4.0, "AAAUSDT"),
                 row(None, 9.0, "BBBUSDT", legacy=True),
                 # пересчёт по прошлому: та же книга, метка бэктеста
                 row("safe", -2.0, "CCCUSDT", back=True, at=t0 + 7200,
-                    tail=True)]
+                    tail=True), rs]
         with open(DR.JOURNAL, "w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
@@ -7127,6 +7144,28 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         opt = bs["optimal:1000"]["trades"]
         check("DCA: у безопасной ровно свои сделки",
               sorted(r["usd"] for r in safe) == [-2.0, 1.0], str(safe))
+        # Сторона — В СТРОКЕ списка и у открытых: без неё список короткой
+        # книги читался как список лонгов (вопрос владельца). У записи
+        # без поля сторона выводится из линейки, у открытых позиций
+        # артефакта — из ключа книги, потому что своего ключа они не несут.
+        check("DCA: сторона в строках длинной книги — лонг",
+              all(r.get("side") == "long" for r in safe + opt),
+              str([r.get("side") for r in safe + opt]))
+        shs = bs["safe_s:1000"]["trades"]
+        check("DCA: строка короткой книги подписана шортом",
+              len(shs) == 1 and shs[0].get("side") == "short", str(shs))
+        check("DCA: цель шорта в списке стоит ниже средней",
+              bool(shs) and shs[0].get("take_frac") is not None
+              and all(x.get("take") is not None and x["take"] < x["avg"]
+                      for x in shs[0].get("walk") or []),
+              str(shs[0].get("walk") if shs else None))
+        check("DCA: открытые короткой книги подписаны шортом по ключу книги",
+              all(q.get("side") == "short"
+                  for q in bs["safe_s:1000"]["open"]["positions"])
+              and all(q.get("side") == "long"
+                      for q in bs["safe:1000"]["open"]["positions"]),
+              str([q.get("side")
+                   for q in bs["safe_s:1000"]["open"]["positions"]]))
         # Цель лестницы ступенчата, и решает это ПРАВИЛО от сохранённого
         # обещания, а не число в записи. У строки без обещания ступеней
         # нет вовсе — рисовать уровень, которого мы не знаем, значит
@@ -7294,6 +7333,21 @@ def test_dca_open_pnl_is_marked_live_not_hourly():
               d.get("priced") == 1 and d.get("n") == 2
               and abs(d["mark_usd"] - round(want * 25.0, 2)) < 0.01,
               str({k: d.get(k) for k in ("priced", "n", "mark_usd")}))
+        # У КОРОТКОЙ книги знак хода зеркален: та же позиция при той же
+        # живой цене — минус, а не плюс. Сторона берётся у книги
+        # (`row_side` по ключу), записи артефакта её не несут.
+        art["live"][f"safe_s:{dep}"] = {"positions": pos[:1], "cut": [],
+                                        "mark_usd": 0.0, "priced": 1}
+        with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump(art, f)
+        ds = c.dca_marks(dep=dep, ruler="safe_s")
+        bys = {r["sym"]: r for r in ds.get("rows") or []}
+        wants = LD.open_mark(2.4, 2.0, 25.0, 2.0, [0.25, 0.25], side="short")
+        check("DCA-отметка: у короткой книги знак зеркален",
+              wants < 0 < want and bys.get("AAAUSDT", {}).get("mark_frac")
+              is not None
+              and abs(bys["AAAUSDT"]["mark_frac"] - round(wants, 6)) < 1e-9,
+              f"{bys.get('AAAUSDT')} против {wants}")
         # «Не считали» и «открытых нет» — разные ответы: у книги, которой
         # прогон не касался, `live` нет вовсе.
         d2 = c.dca_marks(dep=dep, ruler="нетакой")
@@ -7501,6 +7555,60 @@ def test_dca_trades_speak_the_language_of_the_chart():
             ats = [float(r["opened_at"]) for r in rs]
             check("DCA-график: позиции упорядочены по входу",
                   ats == sorted(ats), str(ats))
+            # СТОРОНА едет из записи, а у записей артефакта — из ключа
+            # книги. До правки график получал `side: "long"` у всех
+            # позиций DCA, и цель короткой книги либо не считалась
+            # вовсе (обещание шорта отрицательно — правило без стороны
+            # отвечало «цели нет»), либо встала бы НАД средней. Владелец
+            # увидел это как «в шорт-книге лонги».
+            check("DCA-график: длинная книга подписана лонгом",
+                  all(r.get("side") == "long" for r in rs),
+                  str([r.get("side") for r in rs]))
+            sh = {"dep": 10000, "ruler": "safe_s", "at": t0,
+                  "exit_ts": t0 + 7200, "sym": "AAAUSDT", "usd": 3.0,
+                  "written_at": t0 + 600, "rules": DR.RULES, "lev": 2.0,
+                  "margin": 25.0, "pnl_frac": 0.12, "exit": "тейк",
+                  "entry_px": 100.0, "exit_px": 92.0, "depth": 2,
+                  "fav_bp": -500.0,        # обещание шорта — ход ВНИЗ
+                  "fills": [[t0, 100.0, 0.25], [t0 + 600, 110.0, 0.25]]}
+            sh["avg"] = DR.avg_walk(sh["fills"])[-1]["avg"]
+            with open(DR.JOURNAL, "a", encoding="utf-8") as f:
+                f.write(json.dumps(sh, ensure_ascii=False) + "\n")
+            with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+                json.dump({"live": {"safe_s:10000": {"positions": [
+                    {"sym": "AAAUSDT", "at": t0 + 20000, "lev": 3.0,
+                     "margin": 25.0, "mark_frac": 0.04, "mark_usd": 1.0,
+                     "entry_px": 50.0, "avg": 50.0, "depth": 1,
+                     "fav_bp": -300.0, "last_ts": t0 + 26000,
+                     "fills": [[t0 + 20000, 50.0, 0.25]]}], "cut": []}}},
+                    f, ensure_ascii=False)
+            d3 = c.dca_trades("AAAUSDT", "safe_s:10000")
+            r3 = d3.get("rows") or []
+            check("DCA-график: короткая книга отдаёт ровно свои позиции",
+                  len(r3) == 2 and all(r.get("side") == "short" for r in r3),
+                  str([(r.get("state"), r.get("side")) for r in r3]))
+            cl = [r for r in r3 if r.get("state") == "закрыта"]
+            op = [r for r in r3 if r.get("state") == "открыта"]
+            tk = cl[0].get("take_frac") if cl else None
+            check("DCA-график: у шорта цель считана правилом от обещания вниз",
+                  tk is not None and abs(tk - 0.05 * DR.TAKE_MULT) < 1e-12,
+                  str(tk))
+            check("DCA-график: ступени цели шорта стоят НИЖЕ средней",
+                  bool(cl) and all(x.get("take") is not None
+                                   and x["take"] < x["avg"]
+                                   for x in cl[0].get("walk") or []),
+                  str(cl[0].get("walk") if cl else None))
+            check("DCA-график: ТВХ шорта растёт с доливом вверх",
+                  bool(cl) and len(cl[0]["walk"]) == 2
+                  and cl[0]["walk"][1]["avg"] > cl[0]["walk"][0]["avg"]
+                  and abs(cl[0]["walk"][-1]["avg"] - sh["avg"]) < 1e-9,
+                  str(cl[0].get("walk") if cl else None))
+            check("DCA-график: открытая позиция шорт-книги подписана шортом "
+                  "по ключу книги",
+                  bool(op) and op[0].get("side") == "short"
+                  and all(x.get("take") is not None and x["take"] < x["avg"]
+                          for x in op[0].get("walk") or []),
+                  str(op[0] if op else None))
         finally:
             DR.ARTIFACT = ap0
     finally:

@@ -180,13 +180,21 @@ const T0 = Date.UTC(2026, 7, 3, 23, 30) / 1000;
 // цели слился бы с линией ТВХ и проверка «две линии, а не одна»
 // проходила бы вхолостую.
 const DCA_TAKE_FRAC = 0.05;
-const dcaw = (notional, w, takeFrac) => {
+// Короткая DCA-книга (`dcashort=1`): та же лестница зеркально — доливы
+// ВВЕРХ, цель НИЖЕ средней. Сторона едет ответом сервера, страница её не
+// назначает; фикстура обязана выглядеть как живая запись короткой книги.
+const DCA_SIDE = /dcashort=1/.test(SEARCH) ? "short" : "long";
+const DCA_SHORT_AVG = 0.5 / (0.25 / 64715.0 + 0.25 / 67500.0);
+const dcaw = (notional, w, takeFrac, side) => {
   let q = 0;
+  // знак цели даёт СТОРОНА, доля всегда положительна — то же соглашение,
+  // что у `rules.avg_walk` и ядра лестницы
+  const d = side === "short" ? -1 : 1;
   return w.map(f => {
     const dq = f.w * notional / f.px;
     q += dq;
     const r = Object.assign({}, f, {dq: dq, qty: q});
-    if (takeFrac != null) r.take = f.avg * (1 + takeFrac);
+    if (takeFrac != null) r.take = f.avg * (1 + d * takeFrac);
     return r;
   });
 };
@@ -347,8 +355,11 @@ const dcaStub = (url) => {
                 {d: "2026-09-05", usd: usd * -0.15, n: 5, bt: 0}]});
   // Нотионал позиции = маржа × плечо (`rules.notional_of`).
   const dcaq = (margin, lev, w) => dcaw(margin * lev, w);
-  const tr = (sym, usd, lev, bt, tail) => ({
+  const tr = (sym, usd, lev, bt, tail, side) => ({
     at: T0 - 7200, exit_ts: T0 - 3600, sym: sym, lev: lev, margin: 25.0,
+    // сторона — ЗАПИСЬ (сервер пишет её из симуляции, у строк прежнего
+    // образца выводит из ключа книги); живой ответ несёт её всегда
+    side: side || "long",
     usd: usd, pnl_frac: usd / 25.0, exit: usd > 0 ? "тейк" : "пол",
     // позиция из ДВУХ рунгов: разворот обязан показать оба входа и ТВХ
     // после каждого, иначе лестницу по строке не прочитать
@@ -379,6 +390,17 @@ const dcaStub = (url) => {
     // двух его нет вовсе — отсутствие и ноль здесь разные значения
     {key: "aggr", title: "агрессивная", min_lev: 4.0,
      plain: "та же глубина плюс гейт входа по плечу."}];
+  // Короткие зеркала (`dcashort=1`): на живом сервере линеек шесть —
+  // три длинных и три коротких, — и у короткой книги сторона записи
+  // «short». Без такой фикстуры страница проверялась бы только на
+  // лонгах, то есть ровно мимо вопроса владельца.
+  const SHORT = /dcashort=1/.test(SEARCH);
+  if (SHORT)
+    for (const k of ["safe", "optimal", "aggr"]) {
+      const b = RUL.find(x => x.key === k);
+      RUL.push(Object.assign({}, b, {key: k + "_s", side: "short",
+                                     title: b.title + " (шорт)"}));
+    }
   const D = {
     present: !/dcaabsent=1/.test(SEARCH),
     why: /dcaabsent=1/.test(SEARCH)
@@ -487,6 +509,22 @@ const dcaStub = (url) => {
                                    1490.0, -70.0),
                       trades_forward: [],
                       trades_restored: [tr("TUTUSDT", 61.0, 6.4)]}}};
+  if (SHORT)
+    D.books["safe_s:1000"] = {
+      deposit: 1000, ruler: "safe_s", ruler_title: "безопасная (шорт)",
+      slots: 40, ticket: 25.0, n_journal: 12, forward: null,
+      restored: mk(12, -3.4, -0.012, -0.006, "TUTUSDT", -1.1, -0.9),
+      trades_forward: [],
+      // короткая позиция: доливы ВВЕРХ, выход ниже входа — фикстура
+      // обязана выглядеть как живая запись, а не как лонг с пометкой
+      trades_restored: [Object.assign(
+        tr("TUTUSDT", 3.0, 1.4, undefined, false, "short"),
+        {entry_px: 2.0, exit_px: 1.9, avg: 2.2,
+         fills: [[T0 - 7200, 2.0, 0.25], [T0 - 5400, 2.4, 0.25]],
+         walk: dcaq(25.0, 1.4, [{at: T0 - 7200, px: 2.0, w: 0.25, avg: 2.0},
+                                 {at: T0 - 5400, px: 2.4, w: 0.25,
+                                  avg: 0.5 / (0.25 / 2.0 + 0.25 / 2.4)}])}),
+        tr("MEUSDT", -1.4, 1.3, undefined, false, "short")]};
   // Свод книги — ОДИН счёт: бэктест и записанное вперёд ведутся общей
   // кривой (решение владельца 2026-09-04), и артефакт несёт его полем
   // `all`. Группы стоят рядом отдельно. Открытые позиции живут в своём
@@ -540,8 +578,12 @@ const dcaStub = (url) => {
     // различать, а порядок «глубже всех сверху» проверяется только
     // тогда, когда отметки разные. ТВХ (`walk`) дописывает СЕРВЕР той
     // же функцией, что закрытым, — заглушка обязана выглядеть живой.
+    // сторона открытых — у КНИГИ (сервер дописывает её по ключу книги:
+    // записи артефакта ключа не несут)
+    const bs = k.split(":")[0].endsWith("_s") ? "short" : "long";
     if (!nolive) b.open = {
       positions: [{sym: "SUIUSDT", at: T0 - 1800, lev: 3.0, margin: 25.0,
+                   side: bs,
                    mark_frac: -0.02, mark_usd: -0.50, entry_px: 1.0,
                    avg: 0.98, depth: 2, state: "open", last_ts: T0 - 60,
                    fills: [[T0 - 1800, 1.0, 0.25], [T0 - 1200, 0.96, 0.25]],
@@ -549,6 +591,7 @@ const dcaStub = (url) => {
                      [{at: T0 - 1800, px: 1.0, w: 0.25, avg: 1.0},
                       {at: T0 - 1200, px: 0.96, w: 0.25, avg: 0.98}])},
                   {sym: "TIAUSDT", at: T0 - 5400, lev: 2.0, margin: 25.0,
+                   side: bs,
                    mark_frac: -0.14, mark_usd: -3.50, entry_px: 4.0,
                    avg: 4.0, depth: 1, state: "open", last_ts: T0 - 60,
                    fills: [[T0 - 5400, 4.0, 0.25]],
@@ -561,6 +604,7 @@ const dcaStub = (url) => {
       // её тоже, иначе проверка «причина названа» шла бы на данных,
       // которых у живого ответа не бывает.
       cut: [{sym: "CUTUSDT", at: T0 - 9000, lev: 1.0, margin: 25.0,
+             side: bs,
              mark_frac: 0.01, mark_usd: 0.25, entry_px: 10.0, avg: 10.0,
              cut_why: "книги в хвосте нет вовсе",
              depth: 1, state: "cut", last_ts: T0 - 3600,
@@ -1457,19 +1501,23 @@ global.fetch = async (url) => {
              // пиксель — проверка «цель поехала за ТВХ» проходила бы,
              // ничего не различая.
              ? (() => {
+                 // У шорта долив стоит ВЫШЕ входа, а средняя — деньги на
+                 // монеты (та же арифметика, что `rules.avg_walk`)
+                 const sh = DCA_SIDE === "short";
+                 const addPx = sh ? 67500.0 : 62000.0;
                  const w = [{at: T0 - 7200, px: 64715.0, w: 0.25,
                              avg: 64715.0},
-                            {at: T0 - 6000, px: 62000.0, w: 0.25,
-                             avg: 63333.99374021097}];
+                            {at: T0 - 6000, px: addPx, w: 0.25,
+                             avg: sh ? DCA_SHORT_AVG : 63333.99374021097}];
                  const row = {
                    sym: "BTCUSDT", arm: "dca", hour: "2026-08-03-14",
-                   side: "long", opened_at: T0 - 7200,
+                   side: DCA_SIDE, opened_at: T0 - 7200,
                    closes_at: T0 - 3600, entry_px: 64715.0,
-                   exit_px: 66500.0, avg: w[1].avg, lots: 2,
-                   walk: dcaw(60.0, w, DCA_TAKE_FRAC),
+                   exit_px: sh ? 62500.0 : 66500.0, avg: w[1].avg, lots: 2,
+                   walk: dcaw(60.0, w, DCA_TAKE_FRAC, DCA_SIDE),
                    take_frac: DCA_TAKE_FRAC,
-                   adds: [{at: T0 - 6000, px: 62000.0, size: 15.0,
-                           qty: 15.0 / 62000.0, share: 0.25,
+                   adds: [{at: T0 - 6000, px: addPx, size: 15.0,
+                           qty: 15.0 / addPx, share: 0.25,
                            hour: "2026-08-03-14"}],
                    exits: [], net_bp: 500.0, pnl: 12.5, size: 25.0,
                    lev: 2.4, state: "закрыта", exit: "тейк",
@@ -1478,7 +1526,7 @@ global.fetch = async (url) => {
                  // у неё нет вовсе, и это тоже проверяется.
                  const bare = {
                    sym: "BTCUSDT", arm: "dca", hour: "2026-08-03-13",
-                   side: "long", opened_at: T0 - 6600,
+                   side: DCA_SIDE, opened_at: T0 - 6600,
                    closes_at: T0 - 4200, entry_px: 60000.0,
                    exit_px: 60500.0, avg: 60000.0, lots: 1,
                    walk: dcaw(50.0, [{at: T0 - 6600, px: 60000.0,
@@ -1486,8 +1534,11 @@ global.fetch = async (url) => {
                    adds: [], exits: [], net_bp: 83.0, pnl: 2.1,
                    size: 25.0, lev: 2.0, state: "закрыта",
                    exit: "срок", depth: 1, bt: true};
-                 return {present: true, book: "safe:10000", ruler: "safe",
-                         ruler_title: "безопасная", deposit: 10000,
+                 return {present: true,
+                         book: sh ? "safe_s:10000" : "safe:10000",
+                         ruler: sh ? "safe_s" : "safe",
+                         ruler_title: sh ? "безопасная (шорт)"
+                                         : "безопасная", deposit: 10000,
                          rules_version: 5, situational: false,
                          no_timer: false, rows: [row, bare],
                          merged: [row, bare]};
@@ -2234,6 +2285,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
                 + "? () => HIT.filter(h => h && h.add).length : null;"
                 + "\nglobal.__focused = typeof focused === 'function' "
                 + "? focused : null;"
+                // Объяснение сделки — фраза страницы, а не пересказ: у
+                // короткой лестницы она обязана говорить «ниже средней»
+                + "\nglobal.__explain = typeof explainTrade === 'function' "
+                + "? explainTrade : null;"
                 + "\nglobal.__follow = () => typeof follow !== 'undefined' "
                 + "? follow : null;"
                 // Окно свечей ЗАДАЁТ СДЕЛКА, а не константа: без этих
@@ -3272,8 +3327,10 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       bad.push(`DCA: переключателей депозита ${nTabs}, а книг три`);
     const rtabs = String(global.__el ? global.__el("rtabs").innerHTML : "");
     const nR = (rtabs.match(/class='tab/g) || []).length;
-    if (nR !== 3)
-      bad.push(`DCA: переключателей режима ${nR}, а их три`);
+    // с короткими зеркалами линеек шесть, как на живом сервере
+    const wantR = /dcashort=1/.test(SEARCH) ? 6 : 3;
+    if (nR !== wantR)
+      bad.push(`DCA: переключателей режима ${nR}, а их ${wantR}`);
     if (!/безопасная/.test(rtabs) || !/оптимальная/.test(rtabs)
         || !/агрессивная/.test(rtabs))
       bad.push("DCA: режимы не подписаны своими именами");
@@ -3342,6 +3399,40 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       if (b1.indexOf("лимитка") < 0)
         bad.push("DCA: легенда не говорит, что лимитка на котировке "
                  + "не заполняется");
+    }
+    // СТОРОНА позиции — фишкой у монеты, ИЗ ОТВЕТА: считается ЧИСЛОМ по
+    // строкам списка, а не «фишка есть где-то». Без поля стороны фишки
+    // нет — назначать сторону на странице значило бы вернуть дефект, по
+    // которому в короткой книге показывались лонги.
+    const sideChips = (h) => ({
+      pos: (h.match(/<tr class=pos /g) || []).length,
+      l: (h.match(/<span class='sd l'/g) || []).length,
+      s: (h.match(/<span class='sd s'/g) || []).length});
+    {
+      const c = sideChips(b1);
+      if (!c.pos || c.l !== c.pos || c.s !== 0)
+        bad.push(`DCA: фишек стороны у длинной книги ${c.l} L / ${c.s} S `
+                 + `при ${c.pos} строках`);
+    }
+    if (/dcashort=1/.test(SEARCH)) {
+      if (global.__dcaSetRuler) global.__dcaSetRuler("safe_s");
+      const hs = flat();
+      const c = sideChips(hs);
+      if (!c.pos || c.s !== c.pos || c.l !== 0)
+        bad.push(`DCA: фишек стороны у короткой книги ${c.s} S / ${c.l} L `
+                 + `при ${c.pos} строках`);
+      // разворот лестницы говорит на языке стороны: рунг шорта ПРОДАЁТ,
+      // выход ОТКУПАЕТ
+      if (!/<th>продано<th>стало/.test(hs))
+        bad.push("DCA: у короткой лестницы колонка рунга не «продано»");
+      if (!/откуплено/.test(hs))
+        bad.push("DCA: выход короткой лестницы не назван откупом");
+      if (!/первый рунг \(шорт\)/.test(hs))
+        bad.push("DCA: первый рунг короткой лестницы не подписан шортом");
+      if (global.__dcaSetRuler) global.__dcaSetRuler("safe");
+      const hl = flat();
+      if (/<th>продано<th>стало/.test(hl) || /откуплено/.test(hl))
+        bad.push("DCA: длинная лестница подписана словами шорта");
     }
     // переключение ЛИНЕЙКИ обязано менять числа, а не только подсветку
     if (global.__dcaSetRuler) global.__dcaSetRuler("optimal");
@@ -5099,8 +5190,13 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     // Ступени цели — ОДИН штриховой путь с несколькими уровнями: ищем
     // штрих, у которого есть точка на каждом из двух. Уровни разнесены
     // на живой шаг лестницы, поэтому в пиксель не сходятся.
-    const t1 = 64715.0 * (1 + 0.05);
-    const t2 = 63333.99374021097 * (1 + 0.05);
+    // У ШОРТА цель стоит НИЖЕ средней: уровни зеркальны, и проверка
+    // ищет их там, где им положено быть у короткой книги, — иначе
+    // прогон с `dcashort=1` проверял бы длинную геометрию на шорте.
+    const sg = DCA_SIDE === "short" ? -1 : 1;
+    const t1 = 64715.0 * (1 + sg * 0.05);
+    const t2 = (DCA_SIDE === "short" ? DCA_SHORT_AVG : 63333.99374021097)
+      * (1 + sg * 0.05);
     const has = (st, px) => st.pts.some(p => Math.abs(p.y - ym(px)) < 1.5);
     const tl = (global.__strokes || []).filter(
       s => s.dash.length && s.pts.length > 2 && has(s, t1));
@@ -5119,6 +5215,36 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const lg = String(global.__el("lgdca").style.display || "");
     if (lg === "none")
       bad.push("легенда: ступенчатая цель не названа");
+  }
+  // КОРОТКАЯ лестница: сторона едет ответом, а не назначается страницей.
+  // Проверяются данные (цель у каждой ступени НИЖЕ средней), фраза
+  // объяснения (короткая геометрия названа словами) и сделка в фокусе.
+  // До правки сервер слал `side: "long"` всем позициям DCA, и владелец
+  // видел лонги в шорт-книге.
+  if (isChart && /dcashort=1/.test(SEARCH)) {
+    const rows = global.__mdlRows ? global.__mdlRows() : [];
+    if (!rows.length || rows.some(r => r.side !== "short"))
+      bad.push("график (шорт): сторона строк не короткая: "
+               + JSON.stringify(rows.map(r => r.side)));
+    const withTake = rows.filter(r => r.take_frac != null);
+    if (!withTake.length)
+      bad.push("график (шорт): позиции с целью в фикстуре нет");
+    for (const r of withTake)
+      for (const st of (r.walk || []))
+        if (!(st.take != null && st.take < st.avg))
+          bad.push("график (шорт): цель ступени не ниже средней: "
+                   + JSON.stringify(st));
+    const f = global.__focused ? global.__focused() : null;
+    if (!f || f.side !== "short")
+      bad.push("график (шорт): сделка в фокусе не короткая");
+    const ex = (f && global.__explain) ? String(global.__explain(f))
+      .replace(/\s+/g, " ") : "";
+    if (!/<b>short<\/b>/.test(ex) || !/below the/.test(ex)
+        || !/moves it up/.test(ex))
+      bad.push("график (шорт): объяснение не называет короткую "
+               + "геометрию (below / moves it up): " + ex.slice(0, 200));
+    if (/moves it down/.test(ex))
+      bad.push("график (шорт): объяснение говорит длинную геометрию");
   }
   // Узкое окно цены: цель в пяти процентах от ТВХ за него не влезает.
   // Молчать нельзя — сделка выглядела бы без цели; ставится метка у

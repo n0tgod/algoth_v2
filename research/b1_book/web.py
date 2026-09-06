@@ -3170,7 +3170,8 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
     profit promise</span></span>
   <span id="lgdca"><span class="sw"
     style="border-color:var(--bid)"></span>take, stepped: its anchor is the
-    floating average entry, so each add moves it down too</span>
+    floating average entry, so each add moves it with the average (long:
+    above it, short: below it)</span>
   <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp;
     exit dots</span>
   <span><span class="sw" style="background:rgba(61,220,127,.25);
@@ -4763,9 +4764,15 @@ function explainTrade(t) {
     // множитель меняется, и вторая его запись однажды разошлась бы с
     // той, которой книга торгует.
     const w = t.walk || [], lastw = w.length ? w[w.length - 1] : null;
-    bits.push(`levels: take at <b>${lvl(t.take_frac * 1e4)}</b> from the
-      <b>floating average entry</b>, so every add moves it down with the
-      average${lastw && lastw.take != null
+    // Сторона решает ГЕОМЕТРИЮ: у шорта доливы идут вверх, цель стоит
+    // НИЖЕ средней и едет вверх вместе с ней. Фраза берёт сторону из
+    // записи — длинная фраза у короткой позиции утверждала бы уровень,
+    // до которого шорт не выходит никогда.
+    const sh = t.side === "short";
+    bits.push(`levels: ${sh ? "<b>short</b> — " : ""}take at <b>${
+      lvl(t.take_frac * 1e4)}</b> ${sh ? "below" : "above"} the
+      <b>floating average entry</b>, so every add moves it ${
+      sh ? "up" : "down"} with the average${lastw && lastw.take != null
         ? ` (now ${+lastw.take.toPrecision(6)})` : ""} — the
       ladder has no stop: its loss is bounded by the capitulation floor
       near liquidation, not by an order at a price`);
@@ -6405,6 +6412,12 @@ table.leg td,table.leg th{border-bottom:1px solid var(--rule-soft);
  background:rgba(255,73,105,.08)}
 .pill.acc{border-color:rgba(99,102,241,.45);color:#a5b4fc;
  background:rgba(99,102,241,.12)}
+/* Сторона позиции — фишкой у монеты: у короткой книги позиции ШОРТ, и
+   без пометки список читался как список лонгов (вопрос владельца). */
+.sd{display:inline-block;font-size:10px;font-weight:700;line-height:1;
+ border-radius:4px;padding:3px 5px;margin-right:6px;vertical-align:1px}
+.sd.l{color:var(--bid);background:rgba(0,245,155,.12)}
+.sd.s{color:var(--ask);background:rgba(255,73,105,.14)}
 .opn{display:inline-block;font-size:11px;
  border:1px solid rgba(255,255,255,.10);border-radius:8px;padding:2px 10px;
  color:var(--muted);text-decoration:none;background:rgba(255,255,255,.05)}
@@ -6937,17 +6950,34 @@ function dcaToggle(key){
   if (b) b.innerHTML = open ? "&#9662;" : "&#9656;";
 }
 
+function sdChip(side){
+  // Фишка стороны. Поля нет — фишки нет: сторона приходит ЗАПИСЬЮ (или
+  // ключом книги у строк прежнего образца), и назначать её на странице
+  // значило бы вернуть тот самый дефект, по которому в короткой книге
+  // показывались лонги.
+  if (side !== "long" && side !== "short") return "";
+  return "<span class='sd " + (side === "short" ? "s" : "l") + "' title='" +
+    (side === "short" ? "шорт: доливы вверх, цель ниже средней"
+                      : "лонг: доливы вниз, цель выше средней") + "'>" +
+    (side === "short" ? "S" : "L") + "</span>";
+}
+
 function fillRows(r, key, live){
   // Раскрытая позиция: КАЖДЫЙ вход своей строкой и ТВХ после него.
   // Свёрнутая строка описывает позицию целиком и молчит о том, чем её
   // набирали и по какой цене она в итоге стоит.
   const w = r.walk || [];
+  // У ШОРТА рунг ПРОДАЁТ, а выход ОТКУПАЕТ: слова колонок идут за
+  // стороной записи, иначе лестница короткой книги читалась бы как
+  // покупки — ровно та подмена, по которой владелец спросил про лонги.
+  const sh = r.side === "short";
   // Контракты — это МОНЕТЫ, купленные рунгом, и они приходят готовыми с
   // сервера (`rules.avg_walk` с нотионалом позиции): доля нотионала и
   // цена рунга лежат в записи, а второе такое умножение на странице
   // разошлось бы с числом, которое рядом печатает список позиций.
   let h = "<table class=leg style='width:100%'><tr><th>когда<th>нога" +
-    "<th>цена<th>доля<th>куплено<th>стало<th>ТВХ после<th>что это</tr>";
+    "<th>цена<th>доля<th>" + (sh ? "продано" : "куплено") +
+    "<th>стало<th>ТВХ после<th>что это</tr>";
   w.forEach((f, i) => {
     h += "<tr><td class=mono>" + (f.at == null ? "&mdash;" : tsq(f.at)) +
       "<td>" + (i ? "долив " + i : "вход") +
@@ -6960,7 +6990,8 @@ function fillRows(r, key, live){
       "<td class=mono>" + qtyf(f.qty) +
       "<td class=mono>" + Number(f.avg).toPrecision(6) +
       "<td class=dim>" + (i ? "цена дошла до структурного уровня" :
-        "первый рунг по сигналу модели") + "</tr>";
+        (sh ? "первый рунг (шорт) по сигналу модели"
+            : "первый рунг по сигналу модели")) + "</tr>";
   });
   // Контракты позиции целиком: последний шаг лестницы. У закрытой это и
   // есть «сколько продали» на выходе — лестница выходит одним куском.
@@ -6988,11 +7019,13 @@ function fillRows(r, key, live){
       "рунгов " + r.depth) +
     // Продано на выходе ровно то, что накоплено лестницей: частичных
     // разгрузок у DCA-книги нет — выход закрывает позицию целиком.
+    // У шорта выход ОТКУПАЕТ те же контракты — подпись идёт за стороной.
     "<td class=mono>" + qtyf(qt) +
     "<td class=mono>0" +
     "<td class='mono " + (r.usd > 0 ? "good" : "bad") + "'>" +
     fpct(r.pnl_frac) + " &middot; " + usd(r.usd) +
-    "<td class=dim>" + esc(r.exit || "") + "</tr></table>";
+    "<td class=dim>" + esc(r.exit || "") +
+    (sh ? " &middot; откуплено" : "") + "</tr></table>";
   // Ширина детали равна ширине таблицы: список ОДИН на все состояния,
   // и колонок в нём тринадцать (колонка контрактов добавлена
   // 2026-09-05 по просьбе владельца — колспан обязан идти следом).
@@ -7144,7 +7177,9 @@ function posBlock(b, grp){
       // последняя цена записи: выдать отметку за выход значило бы
       // придумать сделке цену, по которой никто не выходил.
       "<td class=mono data-l='выход'>" + (live ? "&mdash;" : tsq(r.exit_ts)) +
-      "<td class=sym data-l='монета'>" + esc(r.sym) +
+      // Сторона — фишкой ПЕРЕД монетой, из ответа сервера. Нет поля —
+      // нет фишки: выдумать сторону хуже, чем не назвать её.
+      "<td class=sym data-l='монета'>" + sdChip(r.side) + esc(r.sym) +
       (r.bt ? " <span class=tag>бэктест</span>" : "") +
       // Хвост ленты продолжен серединой стакана: исход посчитан по
       // КОТИРОВКЕ. Молчать об этом нельзя — деньги по котировке и
