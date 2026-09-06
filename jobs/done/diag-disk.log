@@ -1,0 +1,82 @@
+== задание diag-disk ==
+строка: run tools/diag_disk.py
+начало: 2026-09-06T19:18:59Z
+запускаю: .venv/bin/python tools/diag_disk.py 
+=== блочные устройства ===
+NAME      SIZE TYPE FSTYPE MOUNTPOINT               UUID
+sda     152.6G disk                                 
+├─sda1  152.3G part ext4   /                        a35ce43c-27a0-4c33-a73f-8fd68ac82a0c
+├─sda14     1M part                                 
+└─sda15   256M part vfat   /boot/efi                2D67-E502
+sdb       150G disk ext4   /mnt/HC_Volume_106683528 424967e4-f568-4381-bee8-08fe561d6781
+sr0      1024M rom
+
+=== fstab ===
+/dev/disk/by-uuid/a35ce43c-27a0-4c33-a73f-8fd68ac82a0c / ext4 defaults 0 1
+/dev/disk/by-uuid/2D67-E502 /boot/efi vfat defaults 0 1
+/dev/disk/by-id/scsi-0HC_Volume_106683528 /mnt/HC_Volume_106683528 ext4 discard,nofail,defaults 0 0
+/mnt/HC_Volume_106683528/b1_out /root/algoth_v2/research/b1_book/out none bind 0 0
+
+=== все монтирования томов и bind ===
+/mnt/HC_Volume_106683528 /dev/sdb ext4 rw,relatime,discard
+/root/algoth_v2/research/b1_book/out /dev/sdb[/b1_out] ext4 rw,relatime,discard
+
+=== df по всем ФС ===
+Filesystem      Size  Used Avail Use% Mounted on
+efivarfs        256K   21K  231K   9% /sys/firmware/efi/efivars
+/dev/sda1       150G   68G   76G  48% /
+/dev/sda15      253M  146K  252M   1% /boot/efi
+/dev/sdb        147G  131G  8.2G  95% /mnt/HC_Volume_106683528
+
+=== research/b1_book/out ===
+точка монтирования: /root/algoth_v2/research/b1_book/out /dev/sdb[/b1_out] ext4
+df: /dev/sdb        147G  131G  8.2G  95% /root/algoth_v2/research/b1_book/out
+размер: 131G
+
+=== out ===
+каталога нет
+
+=== research/b1_book/out/book ===
+точка монтирования: /root/algoth_v2/research/b1_book/out /dev/sdb[/b1_out] ext4
+df: /dev/sdb        147G  131G  8.2G  95% /root/algoth_v2/research/b1_book/out
+размер: 120G
+
+=== research/s8_loop/out ===
+точка монтирования: / /dev/sda1 ext4
+df: /dev/sda1       150G   68G   76G  48% /
+размер: 944M
+
+=== research/dca_paper/out ===
+точка монтирования: / /dev/sda1 ext4
+df: /dev/sda1       150G   68G   76G  48% /
+размер: 51M
+
+=== свежайшие файлы записи (где лежат на самом деле) ===
+2026-09-06 19:19 9380 /root/algoth_v2/research/b1_book/out/trades/TACUSDT/2026-09-06-19.jsonl
+2026-09-06 19:19 95777 /root/algoth_v2/research/b1_book/out/trades/SUSHIUSDT/2026-09-06-19.jsonl
+2026-09-06 19:19 9686 /root/algoth_v2/research/b1_book/out/trades/BIOUSDT/2026-09-06-19.jsonl
+2026-09-06 19:19 978 /root/algoth_v2/research/b1_book/out/trades/DGAIUSDT/2026-09-06-19.jsonl
+2026-09-06 19:19 99795 /root/algoth_v2/research/b1_book/out/trades/CHIPUSDT/2026-09-06-19.jsonl
+
+=== самые большие каталоги в out записи ===
+108K	/root/algoth_v2/research/b1_book/out/replay.json
+108K	/root/algoth_v2/research/b1_book/out/watchdog.log
+31M	/root/algoth_v2/research/b1_book/out/collect.log
+309M	/root/algoth_v2/research/b1_book/out/liq
+2.1G	/root/algoth_v2/research/b1_book/out/raw
+2.3G	/root/algoth_v2/research/b1_book/out/metrics
+7.0G	/root/algoth_v2/research/b1_book/out/trades
+120G	/root/algoth_v2/research/b1_book/out/book
+
+=== занято корнем вне записи (крупнейшие) ===
+16K	/root/algoth_v2/README.md
+44K	/root/algoth_v2/CLAUDE.md
+56K	/root/algoth_v2/IDEAS.md
+276K	/root/algoth_v2/tools
+2.8M	/root/algoth_v2/docs
+5.5M	/root/algoth_v2/jobs
+197M	/root/algoth_v2/bot
+61G	/root/algoth_v2/research
+
+снято 2026-09-06 19:19:18 UTC
+конец: 2026-09-06T19:19:18Z, код 0
