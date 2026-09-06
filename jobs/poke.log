@@ -1019,3 +1019,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788732326 ==
 [2026-09-06T22:05:28Z] задание spill-1 запущено: tools/spill_book.py
+
+== сигнал 1788732722 ==
+[2026-09-06T22:12:03Z] задание d10-short-3 запущено: research/dca_ladder/run_d10.py
