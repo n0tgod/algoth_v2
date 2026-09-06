@@ -83,3 +83,12 @@ sheets.jsonl: ног 963750
 память: 1290.7 МБ (символ 150/753; предел 1200)
 ОСТАНОВ: память 1290.7 МБ выше предела 1200 МБ (символ 150/753) — рядом сборщик и часовой цикл, прогон снял себя сам, чтобы не убили цикл
 конец: 2026-09-06T19:58:58Z, код 1
+публикуется в ветку main:
+ jobs/done/d10-short-2.log           | 59 +++++++++++++++++++++++++++++++++++++
+ jobs/done/diag-disk.log             | 12 ++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 3 files changed, 72 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   21d64b5..fd0a731  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
