@@ -1013,3 +1013,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788722337 ==
 [2026-09-06T19:18:59Z] задание diag-disk запущено: tools/diag_disk.py
+
+== сигнал 1788732254 ==
+[2026-09-06T22:04:16Z] задание spill-dry запущено: tools/spill_book.py
