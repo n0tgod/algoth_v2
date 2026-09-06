@@ -7,16 +7,16 @@
    "n_fee": 468,
    "fund_usd": -2.92,
    "n_fund": 467,
-   "slip_usd": 4.67,
+   "slip_usd": 18.47,
    "n_slip": 468,
    "fund_cover": 0.998,
    "measured": 467,
    "gross_measured_usd": 326.24,
-   "net_usd": 305.47,
-   "net_pct": 0.30547,
+   "net_usd": 291.75,
+   "net_pct": 0.29175,
    "gross_pct": 0.32328,
    "fee_bp_median": 27.5,
-   "slip_bp_median": 10.1,
+   "slip_bp_median": 39.9,
    "fund_bp_median": -4.2,
    "gross_bp_median": 1174.9,
    "form_gross": {
@@ -27,10 +27,10 @@
     "win": 0.908
    },
    "form_net": {
-    "day_median": 0.00052,
+    "day_median": 0.00048,
     "day_green": 0.625,
-    "bite": 2.5,
-    "max_dd": -0.0132,
+    "bite": 3.0,
+    "max_dd": -0.0136,
     "win": 0.906
    },
    "n_net_form": 467,
@@ -45,16 +45,16 @@
    "n_fee": 632,
    "fund_usd": -18.84,
    "n_fund": 629,
-   "slip_usd": 25.53,
+   "slip_usd": 100.95,
    "n_slip": 632,
    "fund_cover": 0.995,
    "measured": 629,
    "gross_measured_usd": 2140.2,
-   "net_usd": 2019.23,
-   "net_pct": 0.20192,
+   "net_usd": 1944.32,
+   "net_pct": 0.19443,
    "gross_pct": 0.21397,
    "fee_bp_median": 27.9,
-   "slip_bp_median": 9.9,
+   "slip_bp_median": 39.3,
    "fund_bp_median": -4.4,
    "gross_bp_median": 1229.4,
    "form_gross": {
@@ -65,10 +65,10 @@
     "win": 0.915
    },
    "form_net": {
-    "day_median": 0.00023,
+    "day_median": 0.00022,
     "day_green": 0.625,
-    "bite": 2.2,
-    "max_dd": -0.0059,
+    "bite": 3.0,
+    "max_dd": -0.0061,
     "win": 0.913
    },
    "n_net_form": 629,
@@ -83,16 +83,16 @@
    "n_fee": 632,
    "fund_usd": -189.14,
    "n_fund": 629,
-   "slip_usd": 256.27,
+   "slip_usd": 1013.42,
    "n_slip": 632,
    "fund_cover": 0.995,
    "measured": 629,
    "gross_measured_usd": 21482.13,
-   "net_usd": 20267.72,
-   "net_pct": 0.20268,
+   "net_usd": 19515.77,
+   "net_pct": 0.19516,
    "gross_pct": 0.21478,
    "fee_bp_median": 27.9,
-   "slip_bp_median": 9.9,
+   "slip_bp_median": 39.3,
    "fund_bp_median": -4.4,
    "gross_bp_median": 1229.4,
    "form_gross": {
@@ -103,10 +103,10 @@
     "win": 0.915
    },
    "form_net": {
-    "day_median": 0.00023,
+    "day_median": 0.00022,
     "day_green": 0.625,
-    "bite": 2.2,
-    "max_dd": -0.0059,
+    "bite": 3.0,
+    "max_dd": -0.0061,
     "win": 0.913
    },
    "n_net_form": 629,
@@ -121,16 +121,16 @@
    "n_fee": 65,
    "fund_usd": 0.53,
    "n_fund": 59,
-   "slip_usd": 1.87,
+   "slip_usd": 7.39,
    "n_slip": 65,
    "fund_cover": 0.908,
    "measured": 59,
    "gross_measured_usd": -53.89,
-   "net_usd": -59.24,
-   "net_pct": -0.05924,
+   "net_usd": -64.26,
+   "net_pct": -0.06426,
    "gross_pct": -0.04418,
    "fee_bp_median": 101.6,
-   "slip_bp_median": 31.9,
+   "slip_bp_median": 126.2,
    "fund_bp_median": 22.2,
    "gross_bp_median": 500.9,
    "form_gross": {
@@ -141,11 +141,11 @@
     "win": 0.585
    },
    "form_net": {
-    "day_median": -0.00055,
+    "day_median": -0.00117,
     "day_green": 0.412,
-    "bite": 14.4,
-    "max_dd": -0.0674,
-    "win": 0.542
+    "bite": 15.2,
+    "max_dd": -0.0718,
+    "win": 0.492
    },
    "n_net_form": 59,
    "ruler": "aggr_s",
@@ -159,16 +159,16 @@
    "n_fee": 65,
    "fund_usd": 1.24,
    "n_fund": 59,
-   "slip_usd": 4.22,
+   "slip_usd": 16.69,
    "n_slip": 65,
    "fund_cover": 0.908,
    "measured": 59,
    "gross_measured_usd": -121.02,
-   "net_usd": -133.08,
-   "net_pct": -0.01331,
+   "net_usd": -144.43,
+   "net_pct": -0.01444,
    "gross_pct": -0.00989,
    "fee_bp_median": 101.6,
-   "slip_bp_median": 31.9,
+   "slip_bp_median": 126.2,
    "fund_bp_median": 22.2,
    "gross_bp_median": 500.9,
    "form_gross": {
@@ -179,11 +179,11 @@
     "win": 0.585
    },
    "form_net": {
-    "day_median": -0.00013,
+    "day_median": -0.00026,
     "day_green": 0.412,
-    "bite": 14.0,
-    "max_dd": -0.0152,
-    "win": 0.542
+    "bite": 14.8,
+    "max_dd": -0.0162,
+    "win": 0.492
    },
    "n_net_form": 59,
    "ruler": "aggr_s",
@@ -197,16 +197,16 @@
    "n_fee": 65,
    "fund_usd": 12.81,
    "n_fund": 59,
-   "slip_usd": 43.72,
+   "slip_usd": 172.89,
    "n_slip": 65,
    "fund_cover": 0.908,
    "measured": 59,
    "gross_measured_usd": -1253.38,
-   "net_usd": -1378.34,
-   "net_pct": -0.01378,
+   "net_usd": -1495.83,
+   "net_pct": -0.01496,
    "gross_pct": -0.01025,
    "fee_bp_median": 101.6,
-   "slip_bp_median": 31.9,
+   "slip_bp_median": 126.2,
    "fund_bp_median": 22.2,
    "gross_bp_median": 500.9,
    "form_gross": {
@@ -217,11 +217,11 @@
     "win": 0.585
    },
    "form_net": {
-    "day_median": -0.00013,
+    "day_median": -0.00027,
     "day_green": 0.412,
-    "bite": 14.0,
-    "max_dd": -0.0158,
-    "win": 0.542
+    "bite": 14.8,
+    "max_dd": -0.0168,
+    "win": 0.492
    },
    "n_net_form": 59,
    "ruler": "aggr_s",
@@ -235,16 +235,16 @@
    "n_fee": 415,
    "fund_usd": -3.43,
    "n_fund": 373,
-   "slip_usd": 5.74,
+   "slip_usd": 22.7,
    "n_slip": 415,
    "fund_cover": 0.899,
    "measured": 373,
    "gross_measured_usd": 113.43,
-   "net_usd": 90.31,
-   "net_pct": 0.09031,
+   "net_usd": 74.06,
+   "net_pct": 0.07406,
    "gross_pct": 0.11153,
    "fee_bp_median": 5.4,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.7,
    "fund_bp_median": -0.8,
    "gross_bp_median": 82.3,
    "form_gross": {
@@ -255,11 +255,11 @@
     "win": 0.711
    },
    "form_net": {
-    "day_median": 3e-05,
+    "day_median": 1e-05,
     "day_green": 0.517,
-    "bite": 4.7,
-    "max_dd": -0.0466,
-    "win": 0.705
+    "bite": 5.9,
+    "max_dd": -0.0494,
+    "win": 0.7
    },
    "n_net_form": 373,
    "ruler": "optimal",
@@ -273,16 +273,16 @@
    "n_fee": 1666,
    "fund_usd": -18.42,
    "n_fund": 1579,
-   "slip_usd": 25.84,
+   "slip_usd": 102.17,
    "n_slip": 1666,
    "fund_cover": 0.948,
    "measured": 1579,
    "gross_measured_usd": 1812.44,
-   "net_usd": 1698.06,
-   "net_pct": 0.16981,
+   "net_usd": 1623.47,
+   "net_pct": 0.16235,
    "gross_pct": 0.18078,
    "fee_bp_median": 9.1,
-   "slip_bp_median": 3.4,
+   "slip_bp_median": 13.4,
    "fund_bp_median": -1.8,
    "gross_bp_median": 283.8,
    "form_gross": {
@@ -293,11 +293,11 @@
     "win": 0.807
    },
    "form_net": {
-    "day_median": 0.00012,
-    "day_green": 0.552,
-    "bite": 4.9,
-    "max_dd": -0.0057,
-    "win": 0.803
+    "day_median": -3e-05,
+    "day_green": 0.483,
+    "bite": 5.4,
+    "max_dd": -0.0059,
+    "win": 0.797
    },
    "n_net_form": 1579,
    "ruler": "optimal",
@@ -311,16 +311,16 @@
    "n_fee": 1733,
    "fund_usd": -106.31,
    "n_fund": 1638,
-   "slip_usd": 150.22,
+   "slip_usd": 594.06,
    "n_slip": 1733,
    "fund_cover": 0.945,
    "measured": 1638,
    "gross_measured_usd": 10912.29,
-   "net_usd": 10242.8,
-   "net_pct": 0.10243,
+   "net_usd": 9809.9,
+   "net_pct": 0.0981,
    "gross_pct": 0.1093,
    "fee_bp_median": 9.1,
-   "slip_bp_median": 3.4,
+   "slip_bp_median": 13.4,
    "fund_bp_median": -1.9,
    "gross_bp_median": 288.6,
    "form_gross": {
@@ -331,11 +331,11 @@
     "win": 0.81
    },
    "form_net": {
-    "day_median": 7e-05,
-    "day_green": 0.552,
-    "bite": 5.0,
-    "max_dd": -0.0033,
-    "win": 0.806
+    "day_median": -2e-05,
+    "day_green": 0.483,
+    "bite": 5.6,
+    "max_dd": -0.0034,
+    "win": 0.8
    },
    "n_net_form": 1638,
    "ruler": "optimal",
@@ -349,16 +349,16 @@
    "n_fee": 133,
    "fund_usd": 0.61,
    "n_fund": 98,
-   "slip_usd": 6.36,
+   "slip_usd": 25.16,
    "n_slip": 133,
    "fund_cover": 0.737,
    "measured": 98,
    "gross_measured_usd": -227.39,
-   "net_usd": -246.28,
-   "net_pct": -0.24628,
+   "net_usd": -262.78,
+   "net_pct": -0.26278,
    "gross_pct": -0.18964,
    "fee_bp_median": 2.8,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.8,
    "fund_bp_median": 1.7,
    "gross_bp_median": 11.5,
    "form_gross": {
@@ -369,11 +369,11 @@
     "win": 0.541
    },
    "form_net": {
-    "day_median": -0.00036,
+    "day_median": -0.00041,
     "day_green": 0.348,
-    "bite": 21.4,
-    "max_dd": -0.2587,
-    "win": 0.51
+    "bite": 22.7,
+    "max_dd": -0.2732,
+    "win": 0.449
    },
    "n_net_form": 98,
    "ruler": "optimal_s",
@@ -387,16 +387,16 @@
    "n_fee": 179,
    "fund_usd": 1.58,
    "n_fund": 134,
-   "slip_usd": 7.4,
+   "slip_usd": 29.27,
    "n_slip": 179,
    "fund_cover": 0.749,
    "measured": 134,
    "gross_measured_usd": -236.56,
-   "net_usd": -257.98,
-   "net_pct": -0.0258,
+   "net_usd": -277.35,
+   "net_pct": -0.02774,
    "gross_pct": -0.01954,
    "fee_bp_median": 2.8,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.8,
    "fund_bp_median": 2.2,
    "gross_bp_median": 18.7,
    "form_gross": {
@@ -409,9 +409,9 @@
    "form_net": {
     "day_median": -3e-05,
     "day_green": 0.333,
-    "bite": 21.7,
-    "max_dd": -0.0274,
-    "win": 0.545
+    "bite": 24.2,
+    "max_dd": -0.029,
+    "win": 0.5
    },
    "n_net_form": 134,
    "ruler": "optimal_s",
@@ -425,16 +425,16 @@
    "n_fee": 179,
    "fund_usd": 9.25,
    "n_fund": 134,
-   "slip_usd": 43.01,
+   "slip_usd": 170.09,
    "n_slip": 179,
    "fund_cover": 0.749,
    "measured": 134,
    "gross_measured_usd": -1373.79,
-   "net_usd": -1498.19,
-   "net_pct": -0.01498,
+   "net_usd": -1610.72,
+   "net_pct": -0.01611,
    "gross_pct": -0.01134,
    "fee_bp_median": 2.8,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.8,
    "fund_bp_median": 2.2,
    "gross_bp_median": 18.7,
    "form_gross": {
@@ -445,11 +445,11 @@
     "win": 0.575
    },
    "form_net": {
-    "day_median": -1e-05,
+    "day_median": -2e-05,
     "day_green": 0.333,
-    "bite": 21.5,
-    "max_dd": -0.0159,
-    "win": 0.545
+    "bite": 24.0,
+    "max_dd": -0.0169,
+    "win": 0.5
    },
    "n_net_form": 134,
    "ruler": "optimal_s",
@@ -463,16 +463,16 @@
    "n_fee": 399,
    "fund_usd": -1.79,
    "n_fund": 358,
-   "slip_usd": 3.0,
+   "slip_usd": 11.86,
    "n_slip": 399,
    "fund_cover": 0.897,
    "measured": 358,
    "gross_measured_usd": 100.07,
-   "net_usd": 88.87,
-   "net_pct": 0.08887,
+   "net_usd": 80.66,
+   "net_pct": 0.08066,
    "gross_pct": 0.09885,
    "fee_bp_median": 4.6,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.7,
    "fund_bp_median": -0.6,
    "gross_bp_median": 77.0,
    "form_gross": {
@@ -483,11 +483,11 @@
     "win": 0.709
    },
    "form_net": {
-    "day_median": 0.00057,
+    "day_median": 0.00053,
     "day_green": 0.655,
-    "bite": 8.7,
-    "max_dd": -0.0237,
-    "win": 0.701
+    "bite": 9.4,
+    "max_dd": -0.0255,
+    "win": 0.696
    },
    "n_net_form": 358,
    "ruler": "safe",
@@ -501,16 +501,16 @@
    "n_fee": 1657,
    "fund_usd": -9.55,
    "n_fund": 1570,
-   "slip_usd": 12.39,
+   "slip_usd": 49.01,
    "n_slip": 1657,
    "fund_cover": 0.947,
    "measured": 1570,
    "gross_measured_usd": 869.26,
-   "net_usd": 815.79,
-   "net_pct": 0.08158,
+   "net_usd": 780.47,
+   "net_pct": 0.07805,
    "gross_pct": 0.08705,
    "fee_bp_median": 5.9,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.7,
    "fund_bp_median": -1.1,
    "gross_bp_median": 199.4,
    "form_gross": {
@@ -521,11 +521,11 @@
     "win": 0.806
    },
    "form_net": {
-    "day_median": 0.00012,
+    "day_median": 0.0001,
     "day_green": 0.586,
-    "bite": 4.5,
-    "max_dd": -0.0025,
-    "win": 0.801
+    "bite": 5.0,
+    "max_dd": -0.0032,
+    "win": 0.795
    },
    "n_net_form": 1570,
    "ruler": "safe",
@@ -539,16 +539,16 @@
    "n_fee": 1724,
    "fund_usd": -55.61,
    "n_fund": 1629,
-   "slip_usd": 73.11,
+   "slip_usd": 289.1,
    "n_slip": 1724,
    "fund_cover": 0.945,
    "measured": 1629,
    "gross_measured_usd": 5296.62,
-   "net_usd": 4979.25,
-   "net_pct": 0.04979,
+   "net_usd": 4771.33,
+   "net_pct": 0.04771,
    "gross_pct": 0.05315,
    "fee_bp_median": 6.0,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.7,
    "fund_bp_median": -1.1,
    "gross_bp_median": 201.8,
    "form_gross": {
@@ -559,11 +559,11 @@
     "win": 0.81
    },
    "form_net": {
-    "day_median": 7e-05,
+    "day_median": 6e-05,
     "day_green": 0.586,
-    "bite": 4.5,
-    "max_dd": -0.0015,
-    "win": 0.805
+    "bite": 5.0,
+    "max_dd": -0.0018,
+    "win": 0.799
    },
    "n_net_form": 1629,
    "ruler": "safe",
@@ -577,16 +577,16 @@
    "n_fee": 167,
    "fund_usd": -0.87,
    "n_fund": 122,
-   "slip_usd": 5.26,
+   "slip_usd": 20.79,
    "n_slip": 167,
    "fund_cover": 0.731,
    "measured": 122,
    "gross_measured_usd": -143.84,
-   "net_usd": -159.47,
-   "net_pct": -0.15947,
+   "net_usd": -173.13,
+   "net_pct": -0.17313,
    "gross_pct": -0.11465,
    "fee_bp_median": 2.8,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.7,
    "fund_bp_median": 1.3,
    "gross_bp_median": 21.6,
    "form_gross": {
@@ -597,11 +597,11 @@
     "win": 0.593
    },
    "form_net": {
-    "day_median": -0.00014,
+    "day_median": -0.00019,
     "day_green": 0.36,
-    "bite": 12.2,
-    "max_dd": -0.1785,
-    "win": 0.566
+    "bite": 13.1,
+    "max_dd": -0.191,
+    "win": 0.516
    },
    "n_net_form": 122,
    "ruler": "safe_s",
@@ -615,16 +615,16 @@
    "n_fee": 179,
    "fund_usd": -0.36,
    "n_fund": 134,
-   "slip_usd": 5.83,
+   "slip_usd": 23.05,
    "n_slip": 179,
    "fund_cover": 0.749,
    "measured": 134,
    "gross_measured_usd": -164.38,
-   "net_usd": -181.32,
-   "net_pct": -0.01813,
+   "net_usd": -196.58,
+   "net_pct": -0.01966,
    "gross_pct": -0.0133,
    "fee_bp_median": 2.8,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.8,
    "fund_bp_median": 2.2,
    "gross_bp_median": 21.0,
    "form_gross": {
@@ -635,11 +635,11 @@
     "win": 0.581
    },
    "form_net": {
-    "day_median": -1e-05,
+    "day_median": -2e-05,
     "day_green": 0.36,
-    "bite": 17.0,
-    "max_dd": -0.0203,
-    "win": 0.552
+    "bite": 18.4,
+    "max_dd": -0.0217,
+    "win": 0.507
    },
    "n_net_form": 134,
    "ruler": "safe_s",
@@ -653,16 +653,16 @@
    "n_fee": 179,
    "fund_usd": -2.04,
    "n_fund": 134,
-   "slip_usd": 33.86,
+   "slip_usd": 133.89,
    "n_slip": 179,
    "fund_cover": 0.749,
    "measured": 134,
    "gross_measured_usd": -954.79,
-   "net_usd": -1053.15,
-   "net_pct": -0.01053,
+   "net_usd": -1141.8,
+   "net_pct": -0.01142,
    "gross_pct": -0.00772,
    "fee_bp_median": 2.8,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.8,
    "fund_bp_median": 2.2,
    "gross_bp_median": 21.0,
    "form_gross": {
@@ -675,9 +675,9 @@
    "form_net": {
     "day_median": -1e-05,
     "day_green": 0.36,
-    "bite": 17.1,
-    "max_dd": -0.0118,
-    "win": 0.552
+    "bite": 18.4,
+    "max_dd": -0.0126,
+    "win": 0.507
    },
    "n_net_form": 134,
    "ruler": "safe_s",
@@ -698,16 +698,16 @@
     "n_fee": 467,
     "fund_usd": -2.92,
     "n_fund": 467,
-    "slip_usd": 4.64,
+    "slip_usd": 18.36,
     "n_slip": 467,
     "fund_cover": 1.0,
     "measured": 467,
     "gross_measured_usd": 326.24,
-    "net_usd": 305.47,
-    "net_pct": 0.30547,
+    "net_usd": 291.75,
+    "net_pct": 0.29175,
     "gross_pct": 0.32624,
     "fee_bp_median": 27.5,
-    "slip_bp_median": 10.1,
+    "slip_bp_median": 39.9,
     "fund_bp_median": -4.2,
     "gross_bp_median": 1175.7,
     "form_gross": {
@@ -718,10 +718,10 @@
      "win": 0.91
     },
     "form_net": {
-     "day_median": 0.00052,
+     "day_median": 0.00048,
      "day_green": 0.625,
-     "bite": 2.5,
-     "max_dd": -0.0132,
+     "bite": 3.0,
+     "max_dd": -0.0136,
      "win": 0.906
     },
     "n_net_form": 467
@@ -733,16 +733,16 @@
     "n_fee": 25,
     "fund_usd": 0.94,
     "n_fund": 25,
-    "slip_usd": 0.23,
+    "slip_usd": 0.92,
     "n_slip": 25,
     "fund_cover": 1.0,
     "measured": 25,
     "gross_measured_usd": 20.28,
-    "net_usd": 20.3,
-    "net_pct": 0.0203,
+    "net_usd": 19.61,
+    "net_pct": 0.01961,
     "gross_pct": 0.02028,
     "fee_bp_median": 26.4,
-    "slip_bp_median": 9.7,
+    "slip_bp_median": 38.4,
     "fund_bp_median": 0.0,
     "gross_bp_median": 1097.7,
     "form_gross": {
@@ -753,10 +753,10 @@
      "win": 0.92
     },
     "form_net": {
-     "day_median": 0.00139,
+     "day_median": 0.00135,
      "day_green": 0.75,
      "bite": 1.2,
-     "max_dd": -0.0005,
+     "max_dd": -0.0007,
      "win": 0.92
     },
     "n_net_form": 25
@@ -779,16 +779,16 @@
     "n_fee": 629,
     "fund_usd": -18.84,
     "n_fund": 629,
-    "slip_usd": 25.35,
+    "slip_usd": 100.26,
     "n_slip": 629,
     "fund_cover": 1.0,
     "measured": 629,
     "gross_measured_usd": 2140.2,
-    "net_usd": 2019.23,
-    "net_pct": 0.20192,
+    "net_usd": 1944.32,
+    "net_pct": 0.19443,
     "gross_pct": 0.21402,
     "fee_bp_median": 27.9,
-    "slip_bp_median": 9.9,
+    "slip_bp_median": 39.3,
     "fund_bp_median": -4.4,
     "gross_bp_median": 1229.2,
     "form_gross": {
@@ -799,10 +799,10 @@
      "win": 0.916
     },
     "form_net": {
-     "day_median": 0.00023,
+     "day_median": 0.00022,
      "day_green": 0.625,
-     "bite": 2.2,
-     "max_dd": -0.0059,
+     "bite": 3.0,
+     "max_dd": -0.0061,
      "win": 0.913
     },
     "n_net_form": 629
@@ -814,16 +814,16 @@
     "n_fee": 33,
     "fund_usd": 3.77,
     "n_fund": 33,
-    "slip_usd": 1.22,
+    "slip_usd": 4.83,
     "n_slip": 33,
     "fund_cover": 1.0,
     "measured": 33,
     "gross_measured_usd": 131.55,
-    "net_usd": 130.3,
-    "net_pct": 0.01303,
+    "net_usd": 126.69,
+    "net_pct": 0.01267,
     "gross_pct": 0.01316,
     "fee_bp_median": 27.5,
-    "slip_bp_median": 9.6,
+    "slip_bp_median": 38.1,
     "fund_bp_median": -2.0,
     "gross_bp_median": 1200.2,
     "form_gross": {
@@ -834,10 +834,10 @@
      "win": 0.939
     },
     "form_net": {
-     "day_median": 0.00058,
+     "day_median": 0.00057,
      "day_green": 0.75,
      "bite": 1.3,
-     "max_dd": -0.0002,
+     "max_dd": -0.0003,
      "win": 0.939
     },
     "n_net_form": 33
@@ -860,16 +860,16 @@
     "n_fee": 629,
     "fund_usd": -189.14,
     "n_fund": 629,
-    "slip_usd": 254.51,
+    "slip_usd": 1006.46,
     "n_slip": 629,
     "fund_cover": 1.0,
     "measured": 629,
     "gross_measured_usd": 21482.13,
-    "net_usd": 20267.72,
-    "net_pct": 0.20268,
+    "net_usd": 19515.77,
+    "net_pct": 0.19516,
     "gross_pct": 0.21482,
     "fee_bp_median": 27.9,
-    "slip_bp_median": 9.9,
+    "slip_bp_median": 39.3,
     "fund_bp_median": -4.4,
     "gross_bp_median": 1229.2,
     "form_gross": {
@@ -880,10 +880,10 @@
      "win": 0.916
     },
     "form_net": {
-     "day_median": 0.00023,
+     "day_median": 0.00022,
      "day_green": 0.625,
-     "bite": 2.2,
-     "max_dd": -0.0059,
+     "bite": 3.0,
+     "max_dd": -0.0061,
      "win": 0.913
     },
     "n_net_form": 629
@@ -895,16 +895,16 @@
     "n_fee": 33,
     "fund_usd": 37.86,
     "n_fund": 33,
-    "slip_usd": 12.25,
+    "slip_usd": 48.44,
     "n_slip": 33,
     "fund_cover": 1.0,
     "measured": 33,
     "gross_measured_usd": 1320.41,
-    "net_usd": 1307.9,
-    "net_pct": 0.01308,
+    "net_usd": 1271.71,
+    "net_pct": 0.01272,
     "gross_pct": 0.0132,
     "fee_bp_median": 27.5,
-    "slip_bp_median": 9.6,
+    "slip_bp_median": 38.1,
     "fund_bp_median": -2.0,
     "gross_bp_median": 1200.2,
     "form_gross": {
@@ -915,10 +915,10 @@
      "win": 0.939
     },
     "form_net": {
-     "day_median": 0.00058,
+     "day_median": 0.00057,
      "day_green": 0.75,
      "bite": 1.3,
-     "max_dd": -0.0002,
+     "max_dd": -0.0003,
      "win": 0.939
     },
     "n_net_form": 33
@@ -941,16 +941,16 @@
     "n_fee": 59,
     "fund_usd": 0.53,
     "n_fund": 59,
-    "slip_usd": 1.7,
+    "slip_usd": 6.72,
     "n_slip": 59,
     "fund_cover": 1.0,
     "measured": 59,
     "gross_measured_usd": -53.89,
-    "net_usd": -59.24,
-    "net_pct": -0.05924,
+    "net_usd": -64.26,
+    "net_pct": -0.06426,
     "gross_pct": -0.05389,
     "fee_bp_median": 102.8,
-    "slip_bp_median": 32.2,
+    "slip_bp_median": 127.2,
     "fund_bp_median": 22.2,
     "gross_bp_median": 280.0,
     "form_gross": {
@@ -961,11 +961,11 @@
      "win": 0.559
     },
     "form_net": {
-     "day_median": -0.00055,
+     "day_median": -0.00117,
      "day_green": 0.412,
-     "bite": 14.4,
-     "max_dd": -0.0674,
-     "win": 0.542
+     "bite": 15.2,
+     "max_dd": -0.0718,
+     "win": 0.492
     },
     "n_net_form": 59
    },
@@ -976,16 +976,16 @@
     "n_fee": 54,
     "fund_usd": 1.62,
     "n_fund": 54,
-    "slip_usd": 1.59,
+    "slip_usd": 6.3,
     "n_slip": 54,
     "fund_cover": 1.0,
     "measured": 54,
     "gross_measured_usd": -57.56,
-    "net_usd": -61.35,
-    "net_pct": -0.06135,
+    "net_usd": -66.06,
+    "net_pct": -0.06606,
     "gross_pct": -0.05756,
     "fee_bp_median": 104.2,
-    "slip_bp_median": 40.0,
+    "slip_bp_median": 158.1,
     "fund_bp_median": 29.5,
     "gross_bp_median": 241.5,
     "form_gross": {
@@ -996,11 +996,11 @@
      "win": 0.537
     },
     "form_net": {
-     "day_median": -0.00188,
+     "day_median": -0.00215,
      "day_green": 0.375,
-     "bite": 13.3,
-     "max_dd": -0.0678,
-     "win": 0.519
+     "bite": 17.6,
+     "max_dd": -0.0722,
+     "win": 0.463
     },
     "n_net_form": 54
    },
@@ -1022,16 +1022,16 @@
     "n_fee": 59,
     "fund_usd": 1.24,
     "n_fund": 59,
-    "slip_usd": 3.84,
+    "slip_usd": 15.19,
     "n_slip": 59,
     "fund_cover": 1.0,
     "measured": 59,
     "gross_measured_usd": -121.02,
-    "net_usd": -133.08,
-    "net_pct": -0.01331,
+    "net_usd": -144.43,
+    "net_pct": -0.01444,
     "gross_pct": -0.0121,
     "fee_bp_median": 102.8,
-    "slip_bp_median": 32.2,
+    "slip_bp_median": 127.2,
     "fund_bp_median": 22.2,
     "gross_bp_median": 280.0,
     "form_gross": {
@@ -1042,11 +1042,11 @@
      "win": 0.559
     },
     "form_net": {
-     "day_median": -0.00013,
+     "day_median": -0.00026,
      "day_green": 0.412,
-     "bite": 14.0,
-     "max_dd": -0.0152,
-     "win": 0.542
+     "bite": 14.8,
+     "max_dd": -0.0162,
+     "win": 0.492
     },
     "n_net_form": 59
    },
@@ -1057,16 +1057,16 @@
     "n_fee": 54,
     "fund_usd": 3.66,
     "n_fund": 54,
-    "slip_usd": 3.6,
+    "slip_usd": 14.23,
     "n_slip": 54,
     "fund_cover": 1.0,
     "measured": 54,
     "gross_measured_usd": -129.23,
-    "net_usd": -137.83,
-    "net_pct": -0.01378,
+    "net_usd": -148.46,
+    "net_pct": -0.01485,
     "gross_pct": -0.01292,
     "fee_bp_median": 104.2,
-    "slip_bp_median": 40.0,
+    "slip_bp_median": 158.1,
     "fund_bp_median": 29.5,
     "gross_bp_median": 241.5,
     "form_gross": {
@@ -1077,11 +1077,11 @@
      "win": 0.537
     },
     "form_net": {
-     "day_median": -0.00042,
+     "day_median": -0.00048,
      "day_green": 0.375,
-     "bite": 13.2,
-     "max_dd": -0.0153,
-     "win": 0.519
+     "bite": 17.3,
+     "max_dd": -0.0163,
+     "win": 0.463
     },
     "n_net_form": 54
    },
@@ -1103,16 +1103,16 @@
     "n_fee": 59,
     "fund_usd": 12.81,
     "n_fund": 59,
-    "slip_usd": 39.77,
+    "slip_usd": 157.26,
     "n_slip": 59,
     "fund_cover": 1.0,
     "measured": 59,
     "gross_measured_usd": -1253.38,
-    "net_usd": -1378.34,
-    "net_pct": -0.01378,
+    "net_usd": -1495.83,
+    "net_pct": -0.01496,
     "gross_pct": -0.01253,
     "fee_bp_median": 102.8,
-    "slip_bp_median": 32.2,
+    "slip_bp_median": 127.2,
     "fund_bp_median": 22.2,
     "gross_bp_median": 280.0,
     "form_gross": {
@@ -1123,11 +1123,11 @@
      "win": 0.559
     },
     "form_net": {
-     "day_median": -0.00013,
+     "day_median": -0.00027,
      "day_green": 0.412,
-     "bite": 14.0,
-     "max_dd": -0.0158,
-     "win": 0.542
+     "bite": 14.8,
+     "max_dd": -0.0168,
+     "win": 0.492
     },
     "n_net_form": 59
    },
@@ -1138,16 +1138,16 @@
     "n_fee": 54,
     "fund_usd": 37.94,
     "n_fund": 54,
-    "slip_usd": 37.28,
+    "slip_usd": 147.41,
     "n_slip": 54,
     "fund_cover": 1.0,
     "measured": 54,
     "gross_measured_usd": -1338.38,
-    "net_usd": -1427.43,
-    "net_pct": -0.01427,
+    "net_usd": -1537.56,
+    "net_pct": -0.01538,
     "gross_pct": -0.01338,
     "fee_bp_median": 104.2,
-    "slip_bp_median": 40.0,
+    "slip_bp_median": 158.1,
     "fund_bp_median": 29.5,
     "gross_bp_median": 241.5,
     "form_gross": {
@@ -1158,11 +1158,11 @@
      "win": 0.537
     },
     "form_net": {
-     "day_median": -0.00043,
+     "day_median": -0.0005,
      "day_green": 0.375,
-     "bite": 13.2,
-     "max_dd": -0.0158,
-     "win": 0.519
+     "bite": 17.3,
+     "max_dd": -0.0169,
+     "win": 0.463
     },
     "n_net_form": 54
    },
@@ -1184,16 +1184,16 @@
     "n_fee": 380,
     "fund_usd": -3.43,
     "n_fund": 373,
-    "slip_usd": 5.56,
+    "slip_usd": 21.98,
     "n_slip": 380,
     "fund_cover": 0.982,
     "measured": 373,
     "gross_measured_usd": 113.43,
-    "net_usd": 90.31,
-    "net_pct": 0.09031,
+    "net_usd": 74.06,
+    "net_pct": 0.07406,
     "gross_pct": 0.11334,
     "fee_bp_median": 5.7,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": -0.8,
     "gross_bp_median": 93.1,
     "form_gross": {
@@ -1204,11 +1204,11 @@
      "win": 0.718
     },
     "form_net": {
-     "day_median": 3e-05,
+     "day_median": 1e-05,
      "day_green": 0.517,
-     "bite": 4.7,
-     "max_dd": -0.0466,
-     "win": 0.705
+     "bite": 5.9,
+     "max_dd": -0.0494,
+     "win": 0.7
     },
     "n_net_form": 373
    },
@@ -1219,16 +1219,16 @@
     "n_fee": 109,
     "fund_usd": 0.62,
     "n_fund": 108,
-    "slip_usd": 0.65,
+    "slip_usd": 2.57,
     "n_slip": 109,
     "fund_cover": 0.991,
     "measured": 108,
     "gross_measured_usd": 15.97,
-    "net_usd": 14.73,
-    "net_pct": 0.01473,
+    "net_usd": 12.82,
+    "net_pct": 0.01282,
     "gross_pct": 0.016,
     "fee_bp_median": 1.4,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.6,
     "fund_bp_median": 0.0,
     "gross_bp_median": 25.3,
     "form_gross": {
@@ -1239,11 +1239,11 @@
      "win": 0.651
     },
     "form_net": {
-     "day_median": 3e-05,
+     "day_median": 1e-05,
      "day_green": 0.52,
-     "bite": 9.9,
-     "max_dd": -0.0063,
-     "win": 0.63
+     "bite": 10.5,
+     "max_dd": -0.0066,
+     "win": 0.611
     },
     "n_net_form": 108
    },
@@ -1265,16 +1265,16 @@
     "n_fee": 1586,
     "fund_usd": -18.42,
     "n_fund": 1579,
-    "slip_usd": 25.31,
+    "slip_usd": 100.08,
     "n_slip": 1586,
     "fund_cover": 0.996,
     "measured": 1579,
     "gross_measured_usd": 1812.44,
-    "net_usd": 1698.06,
-    "net_pct": 0.16981,
+    "net_usd": 1623.47,
+    "net_pct": 0.16235,
     "gross_pct": 0.18123,
     "fee_bp_median": 9.2,
-    "slip_bp_median": 3.4,
+    "slip_bp_median": 13.6,
     "fund_bp_median": -1.8,
     "gross_bp_median": 312.8,
     "form_gross": {
@@ -1285,11 +1285,11 @@
      "win": 0.813
     },
     "form_net": {
-     "day_median": 0.00012,
-     "day_green": 0.552,
-     "bite": 4.9,
-     "max_dd": -0.0057,
-     "win": 0.803
+     "day_median": -3e-05,
+     "day_green": 0.483,
+     "bite": 5.4,
+     "max_dd": -0.0059,
+     "win": 0.797
     },
     "n_net_form": 1579
    },
@@ -1300,16 +1300,16 @@
     "n_fee": 243,
     "fund_usd": 4.3,
     "n_fund": 242,
-    "slip_usd": 1.99,
+    "slip_usd": 7.85,
     "n_slip": 243,
     "fund_cover": 0.996,
     "measured": 242,
     "gross_measured_usd": 114.84,
-    "net_usd": 112.73,
-    "net_pct": 0.01127,
+    "net_usd": 106.88,
+    "net_pct": 0.01069,
     "gross_pct": 0.01149,
     "fee_bp_median": 1.4,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.6,
     "fund_bp_median": 0.0,
     "gross_bp_median": 59.6,
     "form_gross": {
@@ -1320,11 +1320,11 @@
      "win": 0.687
     },
     "form_net": {
-     "day_median": 9e-05,
+     "day_median": 8e-05,
      "day_green": 0.56,
-     "bite": 5.0,
-     "max_dd": -0.0007,
-     "win": 0.674
+     "bite": 5.5,
+     "max_dd": -0.0008,
+     "win": 0.657
     },
     "n_net_form": 242
    },
@@ -1346,16 +1346,16 @@
     "n_fee": 1645,
     "fund_usd": -106.31,
     "n_fund": 1638,
-    "slip_usd": 146.86,
+    "slip_usd": 580.76,
     "n_slip": 1645,
     "fund_cover": 0.996,
     "measured": 1638,
     "gross_measured_usd": 10912.29,
-    "net_usd": 10242.8,
-    "net_pct": 0.10243,
+    "net_usd": 9809.9,
+    "net_pct": 0.0981,
     "gross_pct": 0.10912,
     "fee_bp_median": 9.2,
-    "slip_bp_median": 3.4,
+    "slip_bp_median": 13.6,
     "fund_bp_median": -1.9,
     "gross_bp_median": 316.5,
     "form_gross": {
@@ -1366,11 +1366,11 @@
      "win": 0.815
     },
     "form_net": {
-     "day_median": 7e-05,
-     "day_green": 0.552,
-     "bite": 5.0,
-     "max_dd": -0.0033,
-     "win": 0.806
+     "day_median": -2e-05,
+     "day_green": 0.483,
+     "bite": 5.6,
+     "max_dd": -0.0034,
+     "win": 0.8
     },
     "n_net_form": 1638
    },
@@ -1381,16 +1381,16 @@
     "n_fee": 253,
     "fund_usd": 25.44,
     "n_fund": 252,
-    "slip_usd": 11.8,
+    "slip_usd": 46.66,
     "n_slip": 253,
     "fund_cover": 0.996,
     "measured": 252,
     "gross_measured_usd": 721.9,
-    "net_usd": 708.97,
-    "net_pct": 0.00709,
+    "net_usd": 674.21,
+    "net_pct": 0.00674,
     "gross_pct": 0.00722,
     "fee_bp_median": 1.4,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.6,
     "fund_bp_median": 0.0,
     "gross_bp_median": 64.7,
     "form_gross": {
@@ -1403,9 +1403,9 @@
     "form_net": {
      "day_median": 5e-05,
      "day_green": 0.56,
-     "bite": 5.0,
+     "bite": 5.4,
      "max_dd": -0.0004,
-     "win": 0.687
+     "win": 0.671
     },
     "n_net_form": 252
    },
@@ -1427,16 +1427,16 @@
     "n_fee": 98,
     "fund_usd": 0.61,
     "n_fund": 98,
-    "slip_usd": 5.58,
+    "slip_usd": 22.08,
     "n_slip": 98,
     "fund_cover": 1.0,
     "measured": 98,
     "gross_measured_usd": -227.39,
-    "net_usd": -246.28,
-    "net_pct": -0.24628,
+    "net_usd": -262.78,
+    "net_pct": -0.26278,
     "gross_pct": -0.22739,
     "fee_bp_median": 4.2,
-    "slip_bp_median": 2.3,
+    "slip_bp_median": 9.0,
     "fund_bp_median": 1.7,
     "gross_bp_median": 5.4,
     "form_gross": {
@@ -1447,11 +1447,11 @@
      "win": 0.531
     },
     "form_net": {
-     "day_median": -0.00036,
+     "day_median": -0.00041,
      "day_green": 0.348,
-     "bite": 21.4,
-     "max_dd": -0.2587,
-     "win": 0.51
+     "bite": 22.7,
+     "max_dd": -0.2732,
+     "win": 0.449
     },
     "n_net_form": 98
    },
@@ -1462,16 +1462,16 @@
     "n_fee": 87,
     "fund_usd": 4.93,
     "n_fund": 87,
-    "slip_usd": 5.08,
+    "slip_usd": 20.08,
     "n_slip": 87,
     "fund_cover": 1.0,
     "measured": 87,
     "gross_measured_usd": -229.25,
-    "net_usd": -241.66,
-    "net_pct": -0.24166,
+    "net_usd": -256.66,
+    "net_pct": -0.25666,
     "gross_pct": -0.22925,
     "fee_bp_median": 2.9,
-    "slip_bp_median": 2.3,
+    "slip_bp_median": 8.9,
     "fund_bp_median": 2.2,
     "gross_bp_median": 4.9,
     "form_gross": {
@@ -1482,11 +1482,11 @@
      "win": 0.529
     },
     "form_net": {
-     "day_median": -0.00014,
+     "day_median": -0.00019,
      "day_green": 0.391,
-     "bite": 16.8,
-     "max_dd": -0.2587,
-     "win": 0.506
+     "bite": 22.2,
+     "max_dd": -0.2728,
+     "win": 0.437
     },
     "n_net_form": 87
    },
@@ -1508,16 +1508,16 @@
     "n_fee": 136,
     "fund_usd": 1.58,
     "n_fund": 134,
-    "slip_usd": 6.57,
+    "slip_usd": 25.97,
     "n_slip": 136,
     "fund_cover": 0.985,
     "measured": 134,
     "gross_measured_usd": -236.56,
-    "net_usd": -257.98,
-    "net_pct": -0.0258,
+    "net_usd": -277.35,
+    "net_pct": -0.02774,
     "gross_pct": -0.02374,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 12.8,
     "form_gross": {
@@ -1530,9 +1530,9 @@
     "form_net": {
      "day_median": -3e-05,
      "day_green": 0.333,
-     "bite": 21.7,
-     "max_dd": -0.0274,
-     "win": 0.545
+     "bite": 24.2,
+     "max_dd": -0.029,
+     "win": 0.5
     },
     "n_net_form": 134
    },
@@ -1543,16 +1543,16 @@
     "n_fee": 125,
     "fund_usd": 5.91,
     "n_fund": 123,
-    "slip_usd": 6.06,
+    "slip_usd": 23.97,
     "n_slip": 125,
     "fund_cover": 0.984,
     "measured": 123,
     "gross_measured_usd": -238.6,
-    "net_usd": -253.51,
-    "net_pct": -0.02535,
+    "net_usd": -271.38,
+    "net_pct": -0.02714,
     "gross_pct": -0.02394,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 12.0,
     "form_gross": {
@@ -1563,11 +1563,11 @@
      "win": 0.56
     },
     "form_net": {
-     "day_median": -1e-05,
+     "day_median": -2e-05,
      "day_green": 0.375,
-     "bite": 20.2,
-     "max_dd": -0.0275,
-     "win": 0.545
+     "bite": 27.0,
+     "max_dd": -0.0291,
+     "win": 0.496
     },
     "n_net_form": 123
    },
@@ -1589,16 +1589,16 @@
     "n_fee": 136,
     "fund_usd": 9.25,
     "n_fund": 134,
-    "slip_usd": 38.15,
+    "slip_usd": 150.88,
     "n_slip": 136,
     "fund_cover": 0.985,
     "measured": 134,
     "gross_measured_usd": -1373.79,
-    "net_usd": -1498.19,
-    "net_pct": -0.01498,
+    "net_usd": -1610.72,
+    "net_pct": -0.01611,
     "gross_pct": -0.01379,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 12.8,
     "form_gross": {
@@ -1609,11 +1609,11 @@
      "win": 0.559
     },
     "form_net": {
-     "day_median": -1e-05,
+     "day_median": -2e-05,
      "day_green": 0.333,
-     "bite": 21.5,
-     "max_dd": -0.0159,
-     "win": 0.545
+     "bite": 24.0,
+     "max_dd": -0.0169,
+     "win": 0.5
     },
     "n_net_form": 134
    },
@@ -1624,16 +1624,16 @@
     "n_fee": 125,
     "fund_usd": 34.37,
     "n_fund": 123,
-    "slip_usd": 35.21,
+    "slip_usd": 139.25,
     "n_slip": 125,
     "fund_cover": 0.984,
     "measured": 123,
     "gross_measured_usd": -1385.65,
-    "net_usd": -1472.33,
-    "net_pct": -0.01472,
+    "net_usd": -1576.18,
+    "net_pct": -0.01576,
     "gross_pct": -0.0139,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 12.0,
     "form_gross": {
@@ -1646,9 +1646,9 @@
     "form_net": {
      "day_median": -1e-05,
      "day_green": 0.375,
-     "bite": 20.3,
-     "max_dd": -0.016,
-     "win": 0.545
+     "bite": 27.1,
+     "max_dd": -0.0169,
+     "win": 0.496
     },
     "n_net_form": 123
    },
@@ -1670,16 +1670,16 @@
     "n_fee": 365,
     "fund_usd": -1.79,
     "n_fund": 358,
-    "slip_usd": 2.83,
+    "slip_usd": 11.19,
     "n_slip": 365,
     "fund_cover": 0.981,
     "measured": 358,
     "gross_measured_usd": 100.07,
-    "net_usd": 88.87,
-    "net_pct": 0.08887,
+    "net_usd": 80.66,
+    "net_pct": 0.08066,
     "gross_pct": 0.10013,
     "fee_bp_median": 5.5,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.7,
     "fund_bp_median": -0.6,
     "gross_bp_median": 87.3,
     "form_gross": {
@@ -1690,11 +1690,11 @@
      "win": 0.715
     },
     "form_net": {
-     "day_median": 0.00057,
+     "day_median": 0.00053,
      "day_green": 0.655,
-     "bite": 8.7,
-     "max_dd": -0.0237,
-     "win": 0.701
+     "bite": 9.4,
+     "max_dd": -0.0255,
+     "win": 0.696
     },
     "n_net_form": 358
    },
@@ -1705,16 +1705,16 @@
     "n_fee": 105,
     "fund_usd": 0.48,
     "n_fund": 104,
-    "slip_usd": 0.49,
+    "slip_usd": 1.95,
     "n_slip": 105,
     "fund_cover": 0.99,
     "measured": 104,
     "gross_measured_usd": 9.08,
-    "net_usd": 8.41,
-    "net_pct": 0.00841,
+    "net_usd": 6.97,
+    "net_pct": 0.00697,
     "gross_pct": 0.00912,
     "fee_bp_median": 1.4,
-    "slip_bp_median": 2.1,
+    "slip_bp_median": 8.5,
     "fund_bp_median": 0.0,
     "gross_bp_median": 22.6,
     "form_gross": {
@@ -1725,11 +1725,11 @@
      "win": 0.648
     },
     "form_net": {
-     "day_median": 0.00013,
+     "day_median": 8e-05,
      "day_green": 0.583,
-     "bite": 2.8,
-     "max_dd": -0.0045,
-     "win": 0.625
+     "bite": 3.0,
+     "max_dd": -0.0047,
+     "win": 0.606
     },
     "n_net_form": 104
    },
@@ -1751,16 +1751,16 @@
     "n_fee": 1577,
     "fund_usd": -9.55,
     "n_fund": 1570,
-    "slip_usd": 12.01,
+    "slip_usd": 47.48,
     "n_slip": 1577,
     "fund_cover": 0.996,
     "measured": 1570,
     "gross_measured_usd": 869.26,
-    "net_usd": 815.79,
-    "net_pct": 0.08158,
+    "net_usd": 780.47,
+    "net_pct": 0.07805,
     "gross_pct": 0.08693,
     "fee_bp_median": 6.1,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": -1.1,
     "gross_bp_median": 211.3,
     "form_gross": {
@@ -1771,11 +1771,11 @@
      "win": 0.812
     },
     "form_net": {
-     "day_median": 0.00012,
+     "day_median": 0.0001,
      "day_green": 0.586,
-     "bite": 4.5,
-     "max_dd": -0.0025,
-     "win": 0.801
+     "bite": 5.0,
+     "max_dd": -0.0032,
+     "win": 0.795
     },
     "n_net_form": 1570
    },
@@ -1786,16 +1786,16 @@
     "n_fee": 243,
     "fund_usd": 0.84,
     "n_fund": 242,
-    "slip_usd": 1.24,
+    "slip_usd": 4.91,
     "n_slip": 243,
     "fund_cover": 0.996,
     "measured": 242,
     "gross_measured_usd": 60.05,
-    "net_usd": 57.41,
-    "net_pct": 0.00574,
+    "net_usd": 53.76,
+    "net_pct": 0.00538,
     "gross_pct": 0.00601,
     "fee_bp_median": 1.4,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.5,
     "fund_bp_median": 0.0,
     "gross_bp_median": 55.7,
     "form_gross": {
@@ -1806,11 +1806,11 @@
      "win": 0.683
     },
     "form_net": {
-     "day_median": 7e-05,
+     "day_median": 6e-05,
      "day_green": 0.583,
      "bite": 1.6,
      "max_dd": -0.0005,
-     "win": 0.669
+     "win": 0.653
     },
     "n_net_form": 242
    },
@@ -1832,16 +1832,16 @@
     "n_fee": 1636,
     "fund_usd": -55.61,
     "n_fund": 1629,
-    "slip_usd": 70.65,
+    "slip_usd": 279.41,
     "n_slip": 1636,
     "fund_cover": 0.996,
     "measured": 1629,
     "gross_measured_usd": 5296.62,
-    "net_usd": 4979.25,
-    "net_pct": 0.04979,
+    "net_usd": 4771.33,
+    "net_pct": 0.04771,
     "gross_pct": 0.05297,
     "fee_bp_median": 6.1,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": -1.1,
     "gross_bp_median": 214.5,
     "form_gross": {
@@ -1852,11 +1852,11 @@
      "win": 0.815
     },
     "form_net": {
-     "day_median": 7e-05,
+     "day_median": 6e-05,
      "day_green": 0.586,
-     "bite": 4.5,
-     "max_dd": -0.0015,
-     "win": 0.805
+     "bite": 5.0,
+     "max_dd": -0.0018,
+     "win": 0.799
     },
     "n_net_form": 1629
    },
@@ -1867,16 +1867,16 @@
     "n_fee": 253,
     "fund_usd": 6.17,
     "n_fund": 252,
-    "slip_usd": 7.47,
+    "slip_usd": 29.53,
     "n_slip": 253,
     "fund_cover": 0.996,
     "measured": 252,
     "gross_measured_usd": 386.66,
-    "net_usd": 371.49,
-    "net_pct": 0.00371,
+    "net_usd": 349.52,
+    "net_pct": 0.0035,
     "gross_pct": 0.00387,
     "fee_bp_median": 1.4,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.5,
     "fund_bp_median": 0.0,
     "gross_bp_median": 59.6,
     "form_gross": {
@@ -1887,11 +1887,11 @@
      "win": 0.696
     },
     "form_net": {
-     "day_median": 4e-05,
+     "day_median": 3e-05,
      "day_green": 0.583,
-     "bite": 1.6,
+     "bite": 1.7,
      "max_dd": -0.0003,
-     "win": 0.683
+     "win": 0.667
     },
     "n_net_form": 252
    },
@@ -1913,16 +1913,16 @@
     "n_fee": 124,
     "fund_usd": -0.87,
     "n_fund": 122,
-    "slip_usd": 4.64,
+    "slip_usd": 18.33,
     "n_slip": 124,
     "fund_cover": 0.984,
     "measured": 122,
     "gross_measured_usd": -143.84,
-    "net_usd": -159.47,
-    "net_pct": -0.15947,
+    "net_usd": -173.13,
+    "net_pct": -0.17313,
     "gross_pct": -0.14456,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 1.3,
     "gross_bp_median": 17.2,
     "form_gross": {
@@ -1933,11 +1933,11 @@
      "win": 0.581
     },
     "form_net": {
-     "day_median": -0.00014,
+     "day_median": -0.00019,
      "day_green": 0.36,
-     "bite": 12.2,
-     "max_dd": -0.1785,
-     "win": 0.566
+     "bite": 13.1,
+     "max_dd": -0.191,
+     "win": 0.516
     },
     "n_net_form": 122
    },
@@ -1948,16 +1948,16 @@
     "n_fee": 113,
     "fund_usd": 3.52,
     "n_fund": 111,
-    "slip_usd": 4.18,
+    "slip_usd": 16.55,
     "n_slip": 113,
     "fund_cover": 0.982,
     "measured": 111,
     "gross_measured_usd": -157.57,
-    "net_usd": -166.92,
-    "net_pct": -0.16692,
+    "net_usd": -179.26,
+    "net_pct": -0.17926,
     "gross_pct": -0.15829,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.1,
     "gross_bp_median": 15.7,
     "form_gross": {
@@ -1968,11 +1968,11 @@
      "win": 0.575
     },
     "form_net": {
-     "day_median": -0.00013,
+     "day_median": -0.00018,
      "day_green": 0.375,
-     "bite": 6.9,
-     "max_dd": -0.1827,
-     "win": 0.559
+     "bite": 11.8,
+     "max_dd": -0.1941,
+     "win": 0.505
     },
     "n_net_form": 111
    },
@@ -1994,16 +1994,16 @@
     "n_fee": 136,
     "fund_usd": -0.36,
     "n_fund": 134,
-    "slip_usd": 5.18,
+    "slip_usd": 20.47,
     "n_slip": 136,
     "fund_cover": 0.985,
     "measured": 134,
     "gross_measured_usd": -164.38,
-    "net_usd": -181.32,
-    "net_pct": -0.01813,
+    "net_usd": -196.58,
+    "net_pct": -0.01966,
     "gross_pct": -0.01652,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 14.6,
     "form_gross": {
@@ -2014,11 +2014,11 @@
      "win": 0.566
     },
     "form_net": {
-     "day_median": -1e-05,
+     "day_median": -2e-05,
      "day_green": 0.36,
-     "bite": 17.0,
-     "max_dd": -0.0203,
-     "win": 0.552
+     "bite": 18.4,
+     "max_dd": -0.0217,
+     "win": 0.507
     },
     "n_net_form": 134
    },
@@ -2029,16 +2029,16 @@
     "n_fee": 125,
     "fund_usd": 4.01,
     "n_fund": 123,
-    "slip_usd": 4.73,
+    "slip_usd": 18.7,
     "n_slip": 125,
     "fund_cover": 0.984,
     "measured": 123,
     "gross_measured_usd": -178.08,
-    "net_usd": -188.77,
-    "net_pct": -0.01888,
+    "net_usd": -202.7,
+    "net_pct": -0.02027,
     "gross_pct": -0.01789,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 12.0,
     "form_gross": {
@@ -2049,11 +2049,11 @@
      "win": 0.56
     },
     "form_net": {
-     "day_median": -1e-05,
+     "day_median": -2e-05,
      "day_green": 0.375,
-     "bite": 8.6,
-     "max_dd": -0.0207,
-     "win": 0.545
+     "bite": 16.6,
+     "max_dd": -0.0219,
+     "win": 0.496
     },
     "n_net_form": 123
    },
@@ -2075,16 +2075,16 @@
     "n_fee": 136,
     "fund_usd": -2.04,
     "n_fund": 134,
-    "slip_usd": 30.07,
+    "slip_usd": 118.92,
     "n_slip": 136,
     "fund_cover": 0.985,
     "measured": 134,
     "gross_measured_usd": -954.79,
-    "net_usd": -1053.15,
-    "net_pct": -0.01053,
+    "net_usd": -1141.8,
+    "net_pct": -0.01142,
     "gross_pct": -0.0096,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 14.6,
     "form_gross": {
@@ -2097,9 +2097,9 @@
     "form_net": {
      "day_median": -1e-05,
      "day_green": 0.36,
-     "bite": 17.1,
-     "max_dd": -0.0118,
-     "win": 0.552
+     "bite": 18.4,
+     "max_dd": -0.0126,
+     "win": 0.507
     },
     "n_net_form": 134
    },
@@ -2110,16 +2110,16 @@
     "n_fee": 125,
     "fund_usd": 23.31,
     "n_fund": 123,
-    "slip_usd": 27.47,
+    "slip_usd": 108.61,
     "n_slip": 125,
     "fund_cover": 0.984,
     "measured": 123,
     "gross_measured_usd": -1034.23,
-    "net_usd": -1096.37,
-    "net_pct": -0.01096,
+    "net_usd": -1177.33,
+    "net_pct": -0.01177,
     "gross_pct": -0.01039,
     "fee_bp_median": 2.8,
-    "slip_bp_median": 2.2,
+    "slip_bp_median": 8.8,
     "fund_bp_median": 2.2,
     "gross_bp_median": 12.0,
     "form_gross": {
@@ -2132,9 +2132,9 @@
     "form_net": {
      "day_median": -1e-05,
      "day_green": 0.375,
-     "bite": 8.6,
-     "max_dd": -0.012,
-     "win": 0.545
+     "bite": 16.7,
+     "max_dd": -0.0128,
+     "win": 0.496
     },
     "n_net_form": 123
    },
@@ -2153,16 +2153,16 @@
    "n_fee": 3955,
    "fund_usd": -46.81,
    "n_fund": 3778,
-   "slip_usd": 63.76,
+   "slip_usd": 252.13,
    "n_slip": 3955,
    "fund_cover": 0.955,
    "measured": 3778,
    "gross_measured_usd": 4821.89,
-   "net_usd": 4533.07,
-   "net_pct": 0.45331,
+   "net_usd": 4348.25,
+   "net_pct": 0.43483,
    "gross_pct": 0.4818,
    "fee_bp_median": 8.9,
-   "slip_bp_median": 3.2,
+   "slip_bp_median": 12.8,
    "fund_bp_median": -1.8,
    "gross_bp_median": 275.9,
    "form_gross": {
@@ -2173,11 +2173,11 @@
     "win": 0.824
    },
    "form_net": {
-    "day_median": -5e-05,
-    "day_green": 0.483,
-    "bite": 3.6,
-    "max_dd": -0.014,
-    "win": 0.821
+    "day_median": -0.0001,
+    "day_green": 0.448,
+    "bite": 5.0,
+    "max_dd": -0.0145,
+    "win": 0.815
    },
    "n_net_form": 3778
   },
@@ -2188,16 +2188,16 @@
    "n_fee": 423,
    "fund_usd": 2.46,
    "n_fund": 327,
-   "slip_usd": 17.45,
+   "slip_usd": 69.02,
    "n_slip": 423,
    "fund_cover": 0.773,
    "measured": 327,
    "gross_measured_usd": -521.96,
-   "net_usd": -572.37,
-   "net_pct": -0.05724,
+   "net_usd": -618.35,
+   "net_pct": -0.06184,
    "gross_pct": -0.04274,
    "fee_bp_median": 2.8,
-   "slip_bp_median": 2.2,
+   "slip_bp_median": 8.9,
    "fund_bp_median": 2.3,
    "gross_bp_median": 21.6,
    "form_gross": {
@@ -2208,11 +2208,11 @@
     "win": 0.579
    },
    "form_net": {
-    "day_median": -7e-05,
+    "day_median": -8e-05,
     "day_green": 0.28,
-    "bite": 12.8,
-    "max_dd": -0.0624,
-    "win": 0.547
+    "bite": 13.6,
+    "max_dd": -0.0666,
+    "win": 0.502
    },
    "n_net_form": 327
   }
@@ -2239,7 +2239,7 @@
   11.0
  ],
  "taker_fallback_bp": 5.5,
- "slip_bp": 4.4,
+ "slip_bp": 17.4,
  "slip_source": "X3: медиана входа 22 заполнений, 2026-08-22…25, потолок 30",
  "market_exits": [
   "пол",
@@ -2254,6 +2254,6 @@
   100000.0
  ],
  "rules_version": 6,
- "secs": 6.6,
- "computed_at": "2026-09-06 22:45"
+ "secs": 6.1,
+ "computed_at": "2026-09-06 22:46"
 }
