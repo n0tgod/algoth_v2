@@ -1,0 +1,108 @@
+== задание diag-cycle-3 ==
+строка: run tools/diag_cycle.py --tail=6
+начало: 2026-09-06T19:12:10Z
+запускаю: .venv/bin/python tools/diag_cycle.py --tail=6
+=== процесс цикла ===
+1627309 .venv/bin/python research/s8_loop/train.py
+
+=== процесс сборщика ===
+  1572752 .venv/bin/python research/b1_book/collect.py --http 8765
+    поднят: Sun Sep  6 10:34:22 2026
+  collect.py правлен 518.0 мин назад
+
+=== память ===
+total        used        free      shared  buff/cache   available
+Mem:            7745        4308         167           4        3584        3437
+Swap:              0           0           0
+крупнейшие процессы (RSS МБ, время, команда):
+   1572752   1502     08:37:47 .venv/bin/python research/b1_book/collect.py --http 8765
+   1627309   1103        17:09 .venv/bin/python research/s8_loop/train.py
+   1628216    812        12:25 .venv/bin/python research/dca_ladder/run_d10.py
+   1630452     16        00:00 .venv/bin/python tools/diag_cycle.py --tail=6
+       961      9  41-05:27:52 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wa
+    669148      4  12-21:44:25 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot
+   1630446      3        00:00 bash -c                      log="$1"; shift                     .venv/bin/pytho
+   1628210      2        12:25 bash -c                      log="$1"; shift                     .venv/bin/pytho
+строки ядра об OOM:
+[Sun Sep  6 18:30:32 2026] Out of memory: Killed process 1623080 (python) total-vm:3128124kB, anon-rss:2909028kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5844kB oom_score_adj:0
+[Sun Sep  6 18:35:26 2026] Out of memory: Killed process 1624678 (python) total-vm:2889824kB, anon-rss:2669932kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:5384kB oom_score_adj:0
+[Sun Sep  6 18:40:45 2026] Out of memory: Killed process 1625343 (python) total-vm:2862608kB, anon-rss:2642836kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5328kB oom_score_adj:0
+[Sun Sep  6 18:46:20 2026] Out of memory: Killed process 1626021 (python) total-vm:2825436kB, anon-rss:2606400kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5256kB oom_score_adj:0
+[Sun Sep  6 18:50:42 2026] Out of memory: Killed process 1626671 (python) total-vm:2705692kB, anon-rss:2485960kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5020kB oom_score_adj:0
+[Sun Sep  6 18:55:27 2026] Out of memory: Killed process 1609538 (python) total-vm:2308980kB, anon-rss:2057408kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:4344kB oom_score_adj:0
+
+=== манифест модели ===
+возраст 10.2 ч
+  trained_at: 2026-09-06T09:02:40+00:00
+  train_seq: 522
+  cycle_sec: 7359.5
+  woke_after_hour_sec: 1.3
+  steps_sec: {'сведение часа': 516.6, 'матрица': 79.7, 'книги': 83.5, 'оценка': 0.3, 'канарейка': 1584.9, 'обучение': 5085.4}
+  canary_ic: 0.0012
+
+=== манифесты книг ===
+  model: 10.16 ч
+  model.rank-floor0: 602.06 ч
+  model.rank-raw: 623.36 ч
+  model_c_h4_r_f30_w5_gl_rrlo_se_b0_a0: 0.06 ч
+  model_c_h4_z_f22_w10_gl_rr0_sv_b0_a1: 106.07 ч
+  model_c_h4_z_f22_w10_gl_rr0_sv_b0_a1.dropped-20260902-095657: 105.25 ч
+  model_c_h4_z_f30_w10_gl_rrhi_se_b0_a1: 106.07 ч
+  model_c_h4_z_f30_w10_gl_rrhi_se_b0_a1.dropped-20260902-095657: 105.25 ч
+  model_c_h4_z_f30_w5_gl_rrlo_se_b0_a0: 0.06 ч
+  model_c_h4_z_f30_w5_gl_rrlo_sr_b0_a0: 0.06 ч
+  model_c_h4_z_f30_w5_gs_rrhi_se_b0_a1: 106.07 ч
+  model_c_h4_z_f30_w5_gs_rrhi_se_b0_a1.dropped-20260902-095657: 105.25 ч
+  model_c_h4_z_f30_w5_gt_rrlo_se_b0_a0: 0.06 ч
+  model_c_h4_z_f30_w5_gt_rrlo_se_b0_a0.overfilled-20260902T083940Z: 106.54 ч
+  model_demo: 816.06 ч
+  model_h1: 601.85 ч
+  model_h1.rank-raw: 625.03 ч
+  model_h24: 0.07 ч
+  model_h24a: 0.06 ч
+  model_h24b: 0.06 ч
+  model_h24bf: 0.06 ч
+  model_h24c: 0.06 ч
+  model_h24z: 0.06 ч
+  model_h24za: 0.06 ч
+  model_pretest: 723.92 ч
+  model_pretest.was-выключен__бета_не_оценима_: 804.10 ч
+  model_probe: 817.70 ч
+  model_sit: 0.06 ч
+  model_sit.rules-v1: 721.43 ч
+  model_sit.rules-v10: 582.83 ч
+  model_sit.rules-v11: 582.01 ч
+  model_sit.rules-v12: 563.56 ч
+  model_sit.rules-v2: 721.14 ч
+  model_sit.rules-v3: 719.01 ч
+  model_sit.rules-v4: 717.93 ч
+  model_sit.rules-v5: 717.10 ч
+  model_sit.rules-v6: 704.84 ч
+  model_sit.rules-v7: 704.10 ч
+  model_sit.rules-v8: 601.06 ч
+  model_sit.rules-v9: 586.04 ч
+  model_sit_lo: 0.06 ч
+  model_sit_obs: 0.06 ч
+  model_sit_obs.rules-v10: 582.83 ч
+  model_sit_obs.rules-v11: 582.01 ч
+  model_sit_obs.rules-v12: 563.56 ч
+  model_sit_obs.rules-v6: 704.84 ч
+  model_sit_obs.rules-v7: 704.10 ч
+  model_sit_obs.rules-v8: 601.05 ч
+  model_sit_obs.rules-v9: 586.04 ч
+  model_sit_r: 0.06 ч
+  model_sit_r.rules-v12: 573.89 ч
+  model_sit_r.rules-v12-1: 572.74 ч
+  model_sit_r.rules-v12-2: 563.56 ч
+  model_sit_r.rules-v13: 548.79 ч
+  model_z: 625.02 ч
+
+=== хвост train.log ===
+возраст 3.4 мин, размер 8502997 Б
+[09-06 19:08:44] ситуационная [nn]: закрыто 1 (PURRUSDT — прогноз развернулся)
+[09-06 19:08:44] ситуационная [nn]: закрыто 1 (UNIUSDT — прогноз развернулся)
+[09-06 19:08:49] живой IC [gbm]: fwd_4h +0.0753 по 1 закрывшимся сечениям
+[09-06 19:08:49] живой IC [nn]: fwd_4h +0.0435 по 1 закрывшимся сечениям
+[09-06 19:08:49] обучение пропущено по каденции: весам 10.1 ч при каденции 24; цикл 409 с (сведение часа 276 с, матрица 67 с, книги 58 с, оценка 0 с)
+[09-06 19:08:49] следующая попытка через 53 мин (обучения не было)
+конец: 2026-09-06T19:12:10Z, код 0
