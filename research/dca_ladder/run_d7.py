@@ -142,12 +142,22 @@ def cell(recs, hold_h, idx, dep):
     """Одна ячейка «срок × депозит»: касса та же, что у бумажной книги."""
     tr = [truncate(r, hold_h, idx) for r in recs]
     tr = [x for x in tr if x is not None]
+    return cell_rows(tr, dep, hold_h=hold_h)
+
+
+def cell_rows(tr, dep, ruler_key=None, hold_h=None):
+    """Ячейка по УЖЕ решённым исходам — касса и форма книги.
+
+    Вынесено из `cell`, потому что читателя стало два: срок (D7) и
+    варианты выхода коротких книг (D9). Второй проход через кассу и
+    форму разошёлся бы с первым. `ruler_key` — режим, чей билет занимаем:
+    пол и пик у режимов свои, и чужой билет дал бы другое число мест.
+    """
+    ruler_key = ruler_key or RULER_KEY
     keep, skipped = D6.one_per_name(tr)
     rows = []
-    # режим у замера один — тот, которым он считает (`RULER`), и билет
-    # берётся ЕГО: пол и пик у режимов свои, и чужой билет дал бы другое
-    # число мест, то есть другую книгу
-    c = D6.ration(keep, R.share(dep, RULER_KEY), deposit=dep,
+    # режим у замера один — тот, которым он считает, и билет берётся ЕГО
+    c = D6.ration(keep, R.share(dep, ruler_key), deposit=dep,
                   min_notional=R.MIN_NOTIONAL, keep_rows=rows)
     # форма считается ТЕМ ЖЕ кодом, что печатает страница наблюдения
     st = PP._stats([{"exit_ts": r["exit_ts"], "sym": r["sym"],
