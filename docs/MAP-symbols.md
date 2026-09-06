@@ -1114,56 +1114,70 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - L424 `simulate_dca(bars, rung_prices, weights, capital, leverage, mmr…` — DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 - L652 `same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notio…` — Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
 
-## research/dca_ladder/run_d10.py · 765 строк
+## research/dca_ladder/run_d10.py · 901 строк
 
 D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 
-- L63 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L64 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L79 `OUT = os.path.join(HERE, 'out')`
-- L80 `HOUR = 3600`
-- L83 `LEVS = [('fence', 'как забор'), ('c3', 'потоло…` — --- сетка объявлена ДО прогона ----------------------------------------
-- L85 `LEV_CAP = {'fence': None, 'c3': 3.0, 'c2': 2.0, '…`
-- L86 `ADDS = [('struct', 'структурные уровни'), ('no…`
-- L88 `TAKES = [('t2', 'обещание ×2', 2.0), ('t1', 'об…`
-- L90 `TAKE_MULT = {k: m for k, _t, m in TAKES}`
-- L91 `SPACING_SIG = 2.0`
-- L93 `GATES = [('rr2', 'RR ≥ 2 (как сейчас)'), ('lo',…` — Гейты входа: подмножества одного прохода. `rr2` — то, чем книга торгует.
-- L95 `REF = 'fence:struct:t2'`
-- L96 `REF_GATE = 'rr2'`
-- L98 `ROUND_COST_BP = float(TR.ROUND_COST_BP)` — Издержки: круг на заполненный нотионал — тейкер на рунге и на выходе.
-- L101 `RULERS = {'safe_s': (R.RULERS['safe_s']['rule'],…` — Книги: линейки забора коротких книг. «Агрессивная» — «оптимальная» плюс гейт плеча режима, из тех же позиций…
-- L104 `BOOK_RULER = {'optimal_s': 'optimal_s', 'safe_s': 's…`
-- L108 `grid()` — Все объявленные ячейки: ключ → (плечо, доливы, цель).
-- L118 `CELLS = grid()`
-- L119 `KEYS = [c[0] for c in CELLS]`
-- L123 `book_cell()` — Ключ ячейки, равной ДЕЙСТВУЮЩЕМУ правилу книги. None — её нет.
-- L135 `gate_of(g)` — Какие гейты нога проходит. Край обязателен у всех (как в книге).
-- L148 `short_legs(limit=None, log=print)` — Короткие ноги журнала листов под ОБЪЕДИНЕНИЕМ гейтов (край ≥ 33).
-- L155 `leverage_for(lk, lev_fence)`
-- L160 `take_for(g, tk)` — Цель ячейки — та же форма, что `rules.take_rule`, с множителем оси.
-- L173 `one_position(g, bars, ts, look, rule, param, lev_look=None)` — Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
-- L246 `collect(limit=None, src=None, log=print, legs=None)` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
-- L314 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
-- L336 `_exits(rows)`
-- L343 `cell(recs, book, dep, gate=REF_GATE, net=False)` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
-- L390 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
-- L403 `halves(rows_by_cell)`
-- L415 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
-- L429 `_rss_mb()`
-- L438 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
-- L456 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
-- L459 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
-- L472 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
-- L475 `run(limit=None, src=None, log=print, legs=None)`
-- L523 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
-- L556 `_p(x, d=2, sign=True)`
-- L562 `_u(x)`
-- L566 `title_of(key)`
-- L572 `_row(key, c, cn, p, mark)`
-- L588 `report(s)`
-- L730 `publish(name)`
-- L736 `main(argv=None)`
+- L64 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L65 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L80 `OUT = os.path.join(HERE, 'out')`
+- L81 `HOUR = 3600`
+- L84 `LEVS = [('fence', 'как забор'), ('c3', 'потоло…` — --- сетка объявлена ДО прогона ----------------------------------------
+- L86 `LEV_CAP = {'fence': None, 'c3': 3.0, 'c2': 2.0, '…`
+- L87 `ADDS = [('struct', 'структурные уровни'), ('no…`
+- L89 `TAKES = [('t2', 'обещание ×2', 2.0), ('t1', 'об…`
+- L91 `TAKE_MULT = {k: m for k, _t, m in TAKES}`
+- L92 `SPACING_SIG = 2.0`
+- L94 `GATES = [('rr2', 'RR ≥ 2 (как сейчас)'), ('lo',…` — Гейты входа: подмножества одного прохода. `rr2` — то, чем книга торгует.
+- L96 `REF = 'fence:struct:t2'`
+- L97 `REF_GATE = 'rr2'`
+- L99 `ROUND_COST_BP = float(TR.ROUND_COST_BP)` — Издержки: круг на заполненный нотионал — тейкер на рунге и на выходе.
+- L102 `RULERS = {'safe_s': (R.RULERS['safe_s']['rule'],…` — Книги: линейки забора коротких книг. «Агрессивная» — «оптимальная» плюс гейт плеча режима, из тех же позиций…
+- L105 `BOOK_RULER = {'optimal_s': 'optimal_s', 'safe_s': 's…`
+- L109 `grid()` — Все объявленные ячейки: ключ → (плечо, доливы, цель).
+- L119 `CELLS = grid()`
+- L120 `KEYS = [c[0] for c in CELLS]`
+- L124 `book_cell()` — Ключ ячейки, равной ДЕЙСТВУЮЩЕМУ правилу книги. None — её нет.
+- L136 `gate_of(g)` — Какие гейты нога проходит. Край обязателен у всех (как в книге).
+- L151 `LEG_KEEP = ('arm', 'sym', 'hour', 'at', 'side', 'f…` — Поля ноги, которые нужны прогону: остальное (px, beta, adv_m, hour…) у 63 тысяч ног — сотни мегабайт словарей…
+- L154 `short_legs(limit=None, log=print, path=None)` — Короткие ноги журнала листов под ОБЪЕДИНЕНИЕМ гейтов (край ≥ 33).
+- L205 `REC_F = ('at', 'exit_ts', 'end_ts', 'pnl', 'pnl…` — --- записи ячеек колонками ------------------------------------------------ 62 925 ног × 72 ячейки (2 правила…
+- L207 `REC_I = ('depth', 'n_rungs')`
+- L208 `GATE_BIT = {'any': 1, 'rr2': 2, 'lo': 4}`
+- L211 `class Store`
+  - L214 `Store.__init__(self)`
+  - L219 `Store.__len__(self)`
+  - L222 `Store.append(self, r)`
+  - L234 `Store.from_rows(cls, rows)`
+  - L240 `Store.key(self, j)`
+  - L243 `Store.row(self, j)`
+  - L253 `Store.rows(self)`
+  - L256 `Store.subset(self, keep)` — Новое хранилище из записей, чей ключ (имя, момент) в `keep`.
+  - L271 `Store.set_states(self, data_end)`
+- L277 `leverage_for(lk, lev_fence)`
+- L282 `take_for(g, tk)` — Цель ячейки — та же форма, что `rules.take_rule`, с множителем оси.
+- L295 `one_position(g, bars, ts, look, rule, param, lev_look=None)` — Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
+- L368 `collect(limit=None, src=None, log=print, legs=None)` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
+- L436 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
+- L461 `_exits(rows)`
+- L468 `cell(recs, book, dep, gate=REF_GATE, net=False)` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
+- L515 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
+- L528 `halves(rows_by_cell)`
+- L540 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
+- L554 `_rss_mb()`
+- L563 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
+- L581 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
+- L584 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
+- L597 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
+- L600 `run(limit=None, src=None, log=print, legs=None)`
+- L659 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
+- L692 `_p(x, d=2, sign=True)`
+- L698 `_u(x)`
+- L702 `title_of(key)`
+- L708 `_row(key, c, cn, p, mark)`
+- L724 `report(s)`
+- L866 `publish(name)`
+- L872 `main(argv=None)`
 
 ## research/dca_ladder/run_d2.py · 656 строк
 

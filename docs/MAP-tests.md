@@ -573,44 +573,45 @@
 - L1300 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
 - L1330 `main()`
 
-## research/dca_ladder/test_run_d10.py · 452 строк
+## research/dca_ladder/test_run_d10.py · 497 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.
 
 - L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L32 `H = 3600`
-- L33 `LEVELS = np.array([98.0, 95.0, 90.0, 102.0, 105.…`
-- L37 `_short_leg(at, sym='SSSUSDT', fwd=60.0, rr=2.0, fav=-500.0)`
-- L44 `_with_levels(fn)`
-- L53 `_cells(bars, at, g=None)` — Все ячейки одного короткого решения на подставных барах.
-- L61 `test_grid_is_declared_before_the_run()`
-- L75 `test_gate_of_splits_legs_by_ratio_and_edge()`
-- L88 `test_ref_cell_reproduces_the_book_short_leg_bit_for_bit()` — Ячейка правила книги — та же позиция, что считает бумажная книга.
-- L108 `test_leverage_cap_binds_and_fence_is_kept()`
-- L125 `test_none_arm_keeps_the_fence_leverage_of_the_ladder()` — Без доливов — то же плечо, что забор выдал ЛЕСТНИЦЕ, не 1×.
-- L141 `test_sigma_rungs_sit_above_entry_for_a_short()`
-- L159 `test_take_axis_orders_the_targets()` — ×1 ближе ×2 ближе ×3: тейк раньше, а дальняя цель на этом пути не достигается вовсе.
-- L177 `test_wrong_side_promise_drops_the_decision()` — Обещание шорта НЕ вниз — цели нет, решения нет (не ноль).
-- L189 `test_net_column_subtracts_the_round_on_filled_notional()`
-- L204 `_rec(sym, at, state='closed')`
-- L210 `test_common_sample_is_one_for_all_cells()`
-- L220 `_legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7))`
-- L231 `test_memory_guard_stops_the_run_above_the_limit()` — Прогон, переросший предел памяти, останавливает себя сам — с числом и причиной, до того как ядро убьёт часово…
-- L258 `test_run_end_to_end_synthetic()` — run → verdict → report на подставных барах: шорт-неудачник и шорт-победитель; гейты делят ноги на три группы.
-- L309 `test_main_writes_smoke_artifacts_and_publishes_by_default()`
-- L339 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L364 `P = os.path.join(HERE, 'run_d10.py')`
-- L367 `_control_cap_ignored()`
-- L373 `_control_none_arm_forced_to_1x()`
-- L379 `_control_sigma_side_flipped()`
-- L385 `_control_net_without_cost()`
-- L391 `_control_gate_ignores_ratio()`
-- L397 `_control_sample_is_per_cell()`
-- L403 `_control_wrong_side_promise_accepted()`
-- L409 `TESTS = [test_grid_is_declared_before_the_run, …`
-- L425 `_control_memory_guard_never_stops()`
-- L430 `CONTROLS = [('сторож памяти не останавливает', _co…`
-- L442 `main()`
+- L33 `H = 3600`
+- L34 `LEVELS = np.array([98.0, 95.0, 90.0, 102.0, 105.…`
+- L38 `_short_leg(at, sym='SSSUSDT', fwd=60.0, rr=2.0, fav=-500.0)`
+- L45 `_with_levels(fn)`
+- L54 `_cells(bars, at, g=None)` — Все ячейки одного короткого решения на подставных барах.
+- L62 `test_grid_is_declared_before_the_run()`
+- L76 `test_gate_of_splits_legs_by_ratio_and_edge()`
+- L89 `test_ref_cell_reproduces_the_book_short_leg_bit_for_bit()` — Ячейка правила книги — та же позиция, что считает бумажная книга.
+- L109 `test_leverage_cap_binds_and_fence_is_kept()`
+- L126 `test_none_arm_keeps_the_fence_leverage_of_the_ladder()` — Без доливов — то же плечо, что забор выдал ЛЕСТНИЦЕ, не 1×.
+- L142 `test_sigma_rungs_sit_above_entry_for_a_short()`
+- L160 `test_take_axis_orders_the_targets()` — ×1 ближе ×2 ближе ×3: тейк раньше, а дальняя цель на этом пути не достигается вовсе.
+- L178 `test_wrong_side_promise_drops_the_decision()` — Обещание шорта НЕ вниз — цели нет, решения нет (не ноль).
+- L190 `test_net_column_subtracts_the_round_on_filled_notional()`
+- L205 `_rec(sym, at, state='closed')`
+- L211 `test_common_sample_is_one_for_all_cells()`
+- L221 `_legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7))`
+- L232 `test_short_legs_stream_equals_the_reference_loader()` — Потоковый читатель листов даёт ТЕ ЖЕ короткие ноги под гейтом и в том же порядке, что `legs_from_sheets` с по…
+- L275 `test_memory_guard_stops_the_run_above_the_limit()` — Прогон, переросший предел памяти, останавливает себя сам — с числом и причиной, до того как ядро убьёт часово…
+- L302 `test_run_end_to_end_synthetic()` — run → verdict → report на подставных барах: шорт-неудачник и шорт-победитель; гейты делят ноги на три группы.
+- L353 `test_main_writes_smoke_artifacts_and_publishes_by_default()`
+- L383 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L408 `P = os.path.join(HERE, 'run_d10.py')`
+- L411 `_control_cap_ignored()`
+- L417 `_control_none_arm_forced_to_1x()`
+- L423 `_control_sigma_side_flipped()`
+- L429 `_control_net_without_cost()`
+- L435 `_control_gate_ignores_ratio()`
+- L441 `_control_sample_is_per_cell()`
+- L447 `_control_wrong_side_promise_accepted()`
+- L453 `TESTS = [test_grid_is_declared_before_the_run, …`
+- L470 `_control_memory_guard_never_stops()`
+- L475 `CONTROLS = [('сторож памяти не останавливает', _co…`
+- L487 `main()`
 
 ## research/dca_ladder/test_run_d2.py · 207 строк
 

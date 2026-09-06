@@ -59,6 +59,7 @@ import sys
 import time
 
 import numpy as np
+from array import array
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -145,11 +146,132 @@ def gate_of(g):
     return out
 
 
-def short_legs(limit=None, log=print):
-    """Короткие ноги журнала листов под ОБЪЕДИНЕНИЕМ гейтов (край ≥ 33)."""
-    legs = TNT.legs_from_sheets([D2.SHEETS], log=log)
-    out = [g for g in legs if g.get("side") == "short" and gate_of(g)]
+# Поля ноги, которые нужны прогону: остальное (px, beta, adv_m, hour…)
+# у 63 тысяч ног — сотни мегабайт словарей ни за что.
+LEG_KEEP = ("arm", "sym", "hour", "at", "side", "fwd", "fz", "adv_q", "fav", "rr")
+
+
+def short_legs(limit=None, log=print, path=None):
+    """Короткие ноги журнала листов под ОБЪЕДИНЕНИЕМ гейтов (край ≥ 33).
+
+    Читается ПОТОКОМ. `legs_from_sheets` собирает все ноги всех сторон —
+    на 900 часах это 800 МБ словарей, две трети предела памяти прогона
+    (замер 2026-09-06: «ноги загружены 796 МБ»), а нужны только короткие
+    под гейтом (62 925). Строка листа → нога тем же `_leg`, что у
+    турнира, → отбор сразу → узкий словарь. Порядок — тот же, что даёт
+    `legs_from_sheets` (час, рука, |σ| прогноза, имя): он правило книги,
+    и подмножество, отсортированное тем же ключом, стоит в том же
+    порядке (сортировка устойчива).
+    """
+    path = path or D2.SHEETS
+    out, n_all = [], 0
+    try:
+        fh = open(path, encoding="utf-8")
+    except OSError:
+        log(f"{path}: журнала нет")
+        return []
+    with fh:
+        for line in fh:
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                continue
+            at = rec.get("written_at") or (
+                (TNT.TR._ts(rec.get("hour")) or 0) + 3600)
+            if not at:
+                continue
+            for arm, rows in (rec.get("arms") or {}).items():
+                for row in rows or []:
+                    lg = TNT._leg(row, arm, rec.get("hour"), float(at))
+                    if lg is None:
+                        continue
+                    n_all += 1
+                    if lg.get("side") != "short" or not gate_of(lg):
+                        continue
+                    out.append({k: lg.get(k) for k in LEG_KEEP})
+    out.sort(key=lambda g: (g["at"], g["arm"],
+                            -abs(g["fz"]) if g["fz"] is not None else 0,
+                            g["sym"]))
+    log(f"листы: ног всего {n_all}, коротких под гейтом {len(out)}")
     return out[:limit] if limit else out
+
+
+# --- записи ячеек колонками ------------------------------------------------
+# 62 925 ног × 72 ячейки (2 правила × 36) = 4.5 млн записей. Словарь на
+# запись — 1.2 КБ, то есть 5 ГБ, и первый прогон умер от памяти (а перед
+# ним — часовой цикл рядом). Колонки `array` держат запись в ~80 байтах;
+# в словари записи разворачиваются по одной ячейке за раз, на время счёта
+# самой ячейки.
+REC_F = ("at", "exit_ts", "end_ts", "pnl", "pnl_net", "lev", "lev_fence", "fwd",
+         "filled")
+REC_I = ("depth", "n_rungs")
+GATE_BIT = {"any": 1, "rr2": 2, "lo": 4}
+
+
+class Store:
+    __slots__ = ("f", "i", "sym", "exit", "gates", "state")
+
+    def __init__(self):
+        self.f = {k: array("d") for k in REC_F}
+        self.i = {k: array("i") for k in REC_I}
+        self.sym, self.exit, self.gates, self.state = [], [], array("B"), []
+
+    def __len__(self):
+        return len(self.sym)
+
+    def append(self, r):
+        for k in REC_F:
+            self.f[k].append(float(r.get(k) or 0.0))
+        for k in REC_I:
+            self.i[k].append(int(r.get(k) or 0))
+        self.sym.append(sys.intern(str(r["sym"])))
+        self.exit.append(sys.intern(str(r.get("exit"))))
+        self.gates.append(sum(GATE_BIT[g] for g in (r.get("gates") or ())
+                              if g in GATE_BIT))
+        self.state.append(r.get("state"))
+
+    @classmethod
+    def from_rows(cls, rows):
+        st = cls()
+        for r in rows:
+            st.append(r)
+        return st
+
+    def key(self, j):
+        return (self.sym[j], round(self.f["at"][j], 3))
+
+    def row(self, j):
+        d = {k: self.f[k][j] for k in REC_F}
+        d.update({k: self.i[k][j] for k in REC_I})
+        bits = self.gates[j]
+        d.update({"sym": self.sym[j], "exit": self.exit[j],
+                  "gates": sorted(g for g, b in GATE_BIT.items() if bits & b),
+                  "state": self.state[j], "side": "short", "marks": [],
+                  "sched_end": d["at"] + D2.HOLD_H * HOUR})
+        return d
+
+    def rows(self):
+        return [self.row(j) for j in range(len(self))]
+
+    def subset(self, keep):
+        """Новое хранилище из записей, чей ключ (имя, момент) в `keep`."""
+        st = Store()
+        for j in range(len(self)):
+            if self.key(j) in keep:
+                for k in REC_F:
+                    st.f[k].append(self.f[k][j])
+                for k in REC_I:
+                    st.i[k].append(self.i[k][j])
+                st.sym.append(self.sym[j])
+                st.exit.append(self.exit[j])
+                st.gates.append(self.gates[j])
+                st.state.append(self.state[j])
+        return st
+
+    def set_states(self, data_end):
+        for j in range(len(self)):
+            self.state[j] = D6.position_state(self.row(j), data_end)
+
 
 
 def leverage_for(lk, lev_fence):
@@ -261,7 +383,7 @@ def collect(limit=None, src=None, log=print, legs=None):
     if win:
         log(f"окно решений {win['from']} … {win['to']} UTC "
             f"({win['span_d']:g} суток, дат {win['dates']})")
-    recs = {rk: {k: [] for k in KEYS} for rk in RULERS}
+    recs = {rk: {k: Store() for k in KEYS} for rk in RULERS}
     mem_guard("ноги загружены", log=log)
     n, skipped = 0, 0
     said, done = time.time(), 0
@@ -299,12 +421,12 @@ def collect(limit=None, src=None, log=print, legs=None):
     data_end = 0.0
     for rk in recs:
         for k in recs[rk]:
-            for r in recs[rk][k]:
-                data_end = max(data_end, float(r.get("end_ts") or 0.0))
+            st = recs[rk][k]
+            if len(st):
+                data_end = max(data_end, max(st.f["end_ts"]))
     for rk in recs:
         for k in recs[rk]:
-            for r in recs[rk][k]:
-                r["state"] = D6.position_state(r, data_end)
+            recs[rk][k].set_states(data_end)
     log(f"запись доходит до "
         f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(data_end))} UTC")
     return {"recs": recs, "positions": n, "skipped": skipped,
@@ -318,17 +440,20 @@ def common_sample(recs, log=print):
     выборку остальным: сравнение идёт по решениям, у которых есть ВСЕ
     ячейки, и это печатается числом.
     """
+    as_lists = any(isinstance(v, list) for v in recs.values())
+    stores = {k: (Store.from_rows(v) if isinstance(v, list) else v)
+              for k, v in recs.items()}
     ok = None
     for k in KEYS:
-        s = {(r["sym"], round(r["at"], 3)) for r in recs[k]
-             if r.get("state") == "closed"}
+        st = stores[k]
+        s = {st.key(j) for j in range(len(st)) if st.state[j] == "closed"}
         ok = s if ok is None else (ok & s)
     ok = ok or set()
     out, lost = {}, 0
     for k in KEYS:
-        kept = [r for r in recs[k] if (r["sym"], round(r["at"], 3)) in ok]
-        lost = max(lost, len(recs[k]) - len(kept))
-        out[k] = kept
+        kept = stores[k].subset(ok)
+        lost = max(lost, len(stores[k]) - len(kept))
+        out[k] = kept.rows() if as_lists else kept
     log(f"общая выборка: {len(ok)} решений, выброшено до {lost}")
     return out, len(ok), lost
 
@@ -482,27 +607,38 @@ def run(limit=None, src=None, log=print, legs=None):
         sample[rk] = {"n": n_ok, "lost": lost}
         got["recs"][rk] = rows
     dep = R.DEPOSITS[1]
+    # Записи разворачиваются в словари по ОДНОЙ ячейке за раз: 72 ячейки
+    # словарями — те же 5 ГБ, от которых ушли колонки.
     for book, rk in BOOK_RULER.items():
-        rows = got["recs"][rk]
+        stores = got["recs"][rk]
+        ref_rows = stores[REF].rows()
         for key in KEYS:
+            rows_k = ref_rows if key == REF else stores[key].rows()
             for d in R.DEPOSITS:
-                cells[f"{key}|{book}|{int(d)}"] = cell(rows[key], book, d)
-            cells[f"{key}|{book}|{int(dep)}|net"] = cell(rows[key], book,
+                cells[f"{key}|{book}|{int(d)}"] = cell(rows_k, book, d)
+            cells[f"{key}|{book}|{int(dep)}|net"] = cell(rows_k, book,
                                                         dep, net=True)
-            pairs[f"{key}|{book}"] = paired(rows[REF], rows[key])
-        for gk, _g in GATES:
-            for key in GATE_KEYS:
-                gate_cells[f"{gk}|{key}|{book}"] = cell(rows[key], book, dep,
-                                                        gate=gk)
-                gate_cells[f"{gk}|{key}|{book}|net"] = cell(
-                    rows[key], book, dep, gate=gk, net=True)
-        split[book] = lev_split([r for r in rows[REF]
+            pairs[f"{key}|{book}"] = paired(ref_rows, rows_k)
+            if key in GATE_KEYS:
+                for gk, _g in GATES:
+                    gate_cells[f"{gk}|{key}|{book}"] = cell(rows_k, book, dep,
+                                                            gate=gk)
+                    gate_cells[f"{gk}|{key}|{book}|net"] = cell(
+                        rows_k, book, dep, gate=gk, net=True)
+        split[book] = lev_split([r for r in ref_rows
                                  if REF_GATE in (r.get("gates") or [])])
+        del ref_rows
         log(f"книга {book}: ячейки посчитаны")
-    mid, ha, hb = halves(got["recs"]["optimal_s"])
+        mem_guard(f"книга {book}", log=log)
+    stores = got["recs"]["optimal_s"]
+    ts = sorted(stores[REF].f["at"])
+    mid = ts[len(ts) // 2] if ts else None
     for key in KEYS:
-        half[f"A:{key}"] = cell(ha[key], "optimal_s", dep)
-        half[f"B:{key}"] = cell(hb[key], "optimal_s", dep)
+        rows_k = stores[key].rows()
+        ha = [r for r in rows_k if mid is not None and float(r["at"]) < mid]
+        hb = [r for r in rows_k if mid is not None and float(r["at"]) >= mid]
+        half[f"A:{key}"] = cell(ha, "optimal_s", dep)
+        half[f"B:{key}"] = cell(hb, "optimal_s", dep)
     return {"cells": cells, "pairs": pairs, "half": half, "half_mid": mid,
             "gate_cells": gate_cells, "gate_keys": GATE_KEYS,
             "gates": [g for g, _ in GATES], "gate_counts": got["gate_counts"],

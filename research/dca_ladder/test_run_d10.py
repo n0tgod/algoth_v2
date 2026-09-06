@@ -21,6 +21,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import run_d10 as D10                                         # noqa: E402
+import tournament as TNT                                      # noqa: E402
 import run_d2 as D2                                           # noqa: E402
 import run_d6 as D6                                           # noqa: E402
 import ladder as L                                            # noqa: E402
@@ -228,6 +229,49 @@ def _legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7)):
     return out
 
 
+def test_short_legs_stream_equals_the_reference_loader():
+    """Потоковый читатель листов даёт ТЕ ЖЕ короткие ноги под гейтом и в
+    том же порядке, что `legs_from_sheets` с последующим отбором, — а
+    памяти держит только их."""
+    tmp = tempfile.mkdtemp(prefix="d10-sheets-")
+    path = os.path.join(tmp, "sheets.jsonl")
+    rows = []
+    for h in range(6):
+        hour = f"2026-09-0{1 + h // 3}-{h % 3:02d}"
+        arms = {}
+        for arm in ("gbm", "nn"):
+            arms[arm] = []
+            for i, sym in enumerate(("AAAUSDT", "BBBUSDT", "CCCUSDT", "DDDUSDT")):
+                fwd = -(35.0 + 10 * i + h) if (i + h) % 3 else (60.0 + i)
+                if i == 3:
+                    fwd = -20.0                            # край ниже 33
+                arms[arm].append({"sym": sym, "fwd": fwd, "px": 10.0 + i,
+                                  # лист: mae — минимум цены (< 0), mfe — максимум;
+                                  # шорту минимум и есть ход в пользу
+                                  "mae": -(90.0 + 20 * i), "mfe": 40.0 + 5 * i,
+                                  "mae_q": -(80.0 + 20 * i), "mfe_q": 35.0 + 5 * i,
+                                  "fwd_z": -0.5 - 0.3 * i, "beta": 1.0})
+        rows.append({"hour": hour, "written_at": 1_788_000_000 + 3600 * h,
+                     "arms": arms})
+    with open(path, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r) + "\n")
+    try:
+        ref = [{k: g.get(k) for k in D10.LEG_KEEP}
+               for g in TNT.legs_from_sheets([path], log=lambda *a: None)
+               if g.get("side") == "short" and D10.gate_of(g)]
+        got = D10.short_legs(log=lambda *a: None, path=path)
+        assert ref and got == ref, (len(ref), len(got))
+        assert all(g["side"] == "short" and D10.gate_of(g) for g in got)
+        assert D10.short_legs(limit=3, log=lambda *a: None, path=path) == ref[:3]
+        assert D10.short_legs(log=lambda *a: None,
+                              path=os.path.join(tmp, "none.jsonl")) == []
+        print(f"ok  потоковый читатель листов: {len(got)} коротких ног под гейтом, "
+              f"те же и в том же порядке, что у эталонного загрузчика")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_memory_guard_stops_the_run_above_the_limit():
     """Прогон, переросший предел памяти, останавливает себя сам — с числом
     и причиной, до того как ядро убьёт часовой цикл рядом (2026-09-06)."""
@@ -417,6 +461,7 @@ TESTS = [
     test_wrong_side_promise_drops_the_decision,
     test_net_column_subtracts_the_round_on_filled_notional,
     test_common_sample_is_one_for_all_cells,
+    test_short_legs_stream_equals_the_reference_loader,
     test_memory_guard_stops_the_run_above_the_limit,
     test_run_end_to_end_synthetic,
     test_main_writes_smoke_artifacts_and_publishes_by_default,
