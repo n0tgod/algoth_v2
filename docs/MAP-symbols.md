@@ -5640,6 +5640,27 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L22 `say()`
 - L24 `staged()`
 
+## tools/spill_book.py · 214 строк
+
+Перелив старых часов записи стакана с полного тома на корень — с символьной ссылкой на месте каждого файла.
+
+- L48 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L49 `SRC = os.path.join(ROOT, 'research', 'b1_book…`
+- L50 `DEST = os.path.join(os.path.dirname(ROOT), 'b1…`
+- L51 `SUBS = ('book', 'trades')`
+- L52 `NAME = re.compile('^(\\d{4}-\\d{2}-\\d{2})-\\d…`
+- L53 `REQUIRE_OTHER_DEV = True`
+- L54 `TAIL_CHECK = 65536`
+- L57 `log(msg)`
+- L61 `free_bytes(path)`
+- L66 `df_line(path)`
+- L74 `candidates(src, upto, subs=SUBS)` — (путь, размер, день) сжатых часов не позже `upto`, старые первыми.
+- L97 `_same_bytes_at_ends(a, b, size)`
+- L110 `copy_verified(src_path, dest_path)` — Копия под временным именем, проверенная размером и концами файла; неполная или отличная копия — исключение, о…
+- L131 `spill_one(src_path, dest_path)` — Перенести один файл; вернуть размер. Оригинал уступает место ссылке только после проверенной копии.
+- L143 `run(src=SRC, dest=DEST, upto=None, max_gb=50.0, min_root_free_g…`
+- L194 `main(argv=None)`
+
 ## tools/stop_run.py · 125 строк
 
 Остановить ИДУЩИЙ прогон очереди по пути скрипта — и ничего кроме него.

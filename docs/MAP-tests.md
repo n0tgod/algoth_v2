@@ -2984,6 +2984,28 @@ X1: исполнитель против подставной биржи.
 - L13 `say()`
 - L14 `check()`
 
+## tools/test_spill_book.py · 226 строк
+
+Проверки `spill_book.py` на подставном дереве записи: переносятся только старые сжатые часы, оригинал уступае…
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `TODAY = datetime.now(timezone.utc).date()`
+- L20 `_day(n)`
+- L24 `_tree()` — Источник: два символа, дни −10…−1, сжатые часы; плюс несжатый старый час и текущий день. Приёмник — отдельный…
+- L50 `_files(src)`
+- L59 `test_moves_only_old_compressed_hours_and_links_them()`
+- L92 `test_dry_run_and_caps_do_not_move()`
+- L122 `test_same_device_is_refused()`
+- L136 `test_truncated_copy_leaves_the_original()`
+- L166 `_poison(path, lit, sub, fn)` — --- отрицательные контроли ------------------------------------------------
+- L189 `P = os.path.join(HERE, 'spill_book.py')`
+- L192 `_control_copy_not_verified()`
+- L197 `_control_same_device_allowed()`
+- L202 `_control_plain_jsonl_moved_too()`
+- L208 `TESTS = [test_moves_only_old_compressed_hours_a…`
+- L211 `CONTROLS = [('копия не проверяется', _control_copy…`
+- L216 `main()`
+
 ## tools/test_stop_run.py · 49 строк
 
 Проверки `stop_run.py`: границы имени и совпадение по пути.
