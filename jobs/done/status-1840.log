@@ -37,3 +37,13 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-06T18:22:41Z
+публикуется в ветку main:
+ jobs/done/cycle-health.done               |   1 +
+ jobs/done/cycle-health.log                |  15 ++++
+ jobs/done/status-1835.done                |   1 +
+ jobs/done/status-1835.log                 |  11 +++
+ jobs/done/status-1840.log                 |  39 ++++++++++
+ jobs/poke.log                             |   4 +
+ research/s8_loop/out/CYCLE-health-1m.md   |  56 +++++++-------
+ research/s8_loop/out/cycle-health-1m.json | 117 +++++++++++++++++++++++++-----
+ 8 files changed, 199 insertions(+), 45 deletions(-)

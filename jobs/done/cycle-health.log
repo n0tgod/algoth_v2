@@ -13,3 +13,5 @@
  research/s8_loop/out/CYCLE-health-1m.md   |  56 +++++++-------
  research/s8_loop/out/cycle-health-1m.json | 117 +++++++++++++++++++++++++-----
  7 files changed, 151 insertions(+), 45 deletions(-)
+fatal: cannot lock ref 'HEAD': is at febf2a8d63b41c82d99aec9a1adc52c4932483cd but expected 249a20843120e49c720c6848207fb3540f0442af
+конец: 2026-09-06T18:22:43Z, код 0
