@@ -1114,7 +1114,7 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - L424 `simulate_dca(bars, rung_prices, weights, capital, leverage, mmr…` — DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 - L652 `same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notio…` — Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
 
-## research/dca_ladder/run_d10.py · 722 строк
+## research/dca_ladder/run_d10.py · 765 строк
 
 D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 
@@ -1144,23 +1144,26 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L160 `take_for(g, tk)` — Цель ячейки — та же форма, что `rules.take_rule`, с множителем оси.
 - L173 `one_position(g, bars, ts, look, rule, param, lev_look=None)` — Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
 - L246 `collect(limit=None, src=None, log=print, legs=None)` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
-- L311 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
-- L333 `_exits(rows)`
-- L340 `cell(recs, book, dep, gate=REF_GATE, net=False)` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
-- L387 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
-- L400 `halves(rows_by_cell)`
-- L412 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
-- L426 `_rss_mb()`
-- L436 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
-- L439 `run(limit=None, src=None, log=print, legs=None)`
-- L487 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
-- L520 `_p(x, d=2, sign=True)`
-- L526 `_u(x)`
-- L530 `title_of(key)`
-- L536 `_row(key, c, cn, p, mark)`
-- L552 `report(s)`
-- L694 `publish(name)`
-- L700 `main(argv=None)`
+- L314 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
+- L336 `_exits(rows)`
+- L343 `cell(recs, book, dep, gate=REF_GATE, net=False)` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
+- L390 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
+- L403 `halves(rows_by_cell)`
+- L415 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
+- L429 `_rss_mb()`
+- L438 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
+- L456 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
+- L459 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
+- L472 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
+- L475 `run(limit=None, src=None, log=print, legs=None)`
+- L523 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
+- L556 `_p(x, d=2, sign=True)`
+- L562 `_u(x)`
+- L566 `title_of(key)`
+- L572 `_row(key, c, cn, p, mark)`
+- L588 `report(s)`
+- L730 `publish(name)`
+- L736 `main(argv=None)`
 
 ## research/dca_ladder/run_d2.py · 656 строк
 

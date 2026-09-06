@@ -228,6 +228,33 @@ def _legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7)):
     return out
 
 
+def test_memory_guard_stops_the_run_above_the_limit():
+    """Прогон, переросший предел памяти, останавливает себя сам — с числом
+    и причиной, до того как ядро убьёт часовой цикл рядом (2026-09-06)."""
+    lo, at = T9._rise_then_fall()
+    src = T3._Src({"SSSUSDT": lo})
+    legs = _legs(at, "SSSUSDT")
+    old = D10.MEM_LIMIT_MB
+    D10.MEM_LIMIT_MB = 1                          # любой процесс тяжелее
+    said = []
+    try:
+        try:
+            _with_levels(lambda: D10.collect(src=src, log=said.append, legs=legs))
+        except SystemExit as e:
+            msg = str(e)
+        else:
+            raise AssertionError("прогон не остановился при пределе 1 МБ")
+    finally:
+        D10.MEM_LIMIT_MB = old
+    assert "ОСТАНОВ" in msg and "выше предела 1 МБ" in msg, msg
+    assert any("память:" in x for x in said), said[-3:]
+    assert D10.MEM_LIMIT_MB == 1200, D10.MEM_LIMIT_MB
+    rss = D10._rss_now_mb()
+    assert rss is not None and rss > 1, rss
+    print(f"ok  сторож памяти: предел 1 МБ остановил прогон словами и числом "
+          f"(RSS {rss} МБ), боевой предел {old} МБ")
+
+
 def test_run_end_to_end_synthetic():
     """run → verdict → report на подставных барах: шорт-неудачник и
     шорт-победитель; гейты делят ноги на три группы."""
@@ -390,11 +417,18 @@ TESTS = [
     test_wrong_side_promise_drops_the_decision,
     test_net_column_subtracts_the_round_on_filled_notional,
     test_common_sample_is_one_for_all_cells,
+    test_memory_guard_stops_the_run_above_the_limit,
     test_run_end_to_end_synthetic,
     test_main_writes_smoke_artifacts_and_publishes_by_default,
 ]
 
+def _control_memory_guard_never_stops():
+    return _poison(P, "if rss is not None and rss > lim:", "if False:",
+                   test_memory_guard_stops_the_run_above_the_limit, D10)
+
+
 CONTROLS = [
+    ("сторож памяти не останавливает", _control_memory_guard_never_stops),
     ("потолок плеча снят", _control_cap_ignored),
     ("рука без доливов принудительно 1×", _control_none_arm_forced_to_1x),
     ("σ-сетка построена длинной стороной", _control_sigma_side_flipped),

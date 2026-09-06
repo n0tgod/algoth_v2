@@ -573,7 +573,7 @@
 - L1300 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
 - L1330 `main()`
 
-## research/dca_ladder/test_run_d10.py · 418 строк
+## research/dca_ladder/test_run_d10.py · 452 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.
 
@@ -595,20 +595,22 @@
 - L204 `_rec(sym, at, state='closed')`
 - L210 `test_common_sample_is_one_for_all_cells()`
 - L220 `_legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7))`
-- L231 `test_run_end_to_end_synthetic()` — run → verdict → report на подставных барах: шорт-неудачник и шорт-победитель; гейты делят ноги на три группы.
-- L282 `test_main_writes_smoke_artifacts_and_publishes_by_default()`
-- L312 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L337 `P = os.path.join(HERE, 'run_d10.py')`
-- L340 `_control_cap_ignored()`
-- L346 `_control_none_arm_forced_to_1x()`
-- L352 `_control_sigma_side_flipped()`
-- L358 `_control_net_without_cost()`
-- L364 `_control_gate_ignores_ratio()`
-- L370 `_control_sample_is_per_cell()`
-- L376 `_control_wrong_side_promise_accepted()`
-- L382 `TESTS = [test_grid_is_declared_before_the_run, …`
-- L397 `CONTROLS = [('потолок плеча снят', _control_cap_ig…`
-- L408 `main()`
+- L231 `test_memory_guard_stops_the_run_above_the_limit()` — Прогон, переросший предел памяти, останавливает себя сам — с числом и причиной, до того как ядро убьёт часово…
+- L258 `test_run_end_to_end_synthetic()` — run → verdict → report на подставных барах: шорт-неудачник и шорт-победитель; гейты делят ноги на три группы.
+- L309 `test_main_writes_smoke_artifacts_and_publishes_by_default()`
+- L339 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L364 `P = os.path.join(HERE, 'run_d10.py')`
+- L367 `_control_cap_ignored()`
+- L373 `_control_none_arm_forced_to_1x()`
+- L379 `_control_sigma_side_flipped()`
+- L385 `_control_net_without_cost()`
+- L391 `_control_gate_ignores_ratio()`
+- L397 `_control_sample_is_per_cell()`
+- L403 `_control_wrong_side_promise_accepted()`
+- L409 `TESTS = [test_grid_is_declared_before_the_run, …`
+- L425 `_control_memory_guard_never_stops()`
+- L430 `CONTROLS = [('сторож памяти не останавливает', _co…`
+- L442 `main()`
 
 ## research/dca_ladder/test_run_d2.py · 207 строк
 

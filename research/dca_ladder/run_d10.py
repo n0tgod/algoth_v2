@@ -262,6 +262,7 @@ def collect(limit=None, src=None, log=print, legs=None):
         log(f"окно решений {win['from']} … {win['to']} UTC "
             f"({win['span_d']:g} суток, дат {win['dates']})")
     recs = {rk: {k: [] for k in KEYS} for rk in RULERS}
+    mem_guard("ноги загружены", log=log)
     n, skipped = 0, 0
     said, done = time.time(), 0
     for sym, glist in by_sym.items():
@@ -269,6 +270,8 @@ def collect(limit=None, src=None, log=print, legs=None):
         if time.time() - said > 30:
             log(f"  символ {done}/{len(by_sym)}  решений {n}")
             said = time.time()
+        if done % 10 == 0:
+            mem_guard(f"символ {done}/{len(by_sym)}", log=log)
         a0 = min(gg["at"] for gg in glist) - D2.BACK_H * HOUR
         b1 = max(gg["at"] for gg in glist) + D2.HOLD_H * HOUR
         bars = get(sym, a0, b1)
@@ -430,6 +433,39 @@ def _rss_mb():
                      / 1024.0, 1)
     except Exception:
         return None
+
+
+def _rss_now_mb():
+    """Текущий RSS процесса в МБ (Linux); None — не прочитать."""
+    try:
+        with open("/proc/self/status", encoding="utf-8") as f:
+            for ln in f:
+                if ln.startswith("VmRSS:"):
+                    return round(int(ln.split()[1]) / 1024.0, 1)
+    except (OSError, ValueError, IndexError):
+        return None
+    return None
+
+
+# Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ,
+# часовой цикл на шаге матрицы 3.3 ГБ; первый прогон D10 вырос до 2.1 ГБ,
+# и ядро убивало ЦИКЛ (2026-09-06 18:07 и при каждом подъёме сторожем),
+# а затем и сам прогон (код 137, 111 минут счёта потеряны). Прогон,
+# перерастающий предел, останавливает себя сам, с числом и словами —
+# это дешевле убитого цикла и неотличимой от тишины смерти.
+MEM_LIMIT_MB = 1200
+
+
+def mem_guard(where, log=print, limit=None):
+    """Печатает RSS в точке `where`; выше предела — останавливает прогон."""
+    lim = MEM_LIMIT_MB if limit is None else limit
+    rss = _rss_now_mb()
+    log(f"память: {rss} МБ ({where}; предел {lim})")
+    if rss is not None and rss > lim:
+        raise SystemExit(f"ОСТАНОВ: память {rss} МБ выше предела {lim} МБ "
+                         f"({where}) — рядом сборщик и часовой цикл, "
+                         "прогон снял себя сам, чтобы не убили цикл")
+    return rss
 
 
 # Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
@@ -704,6 +740,13 @@ def main(argv=None):
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     os.makedirs(OUT, exist_ok=True)          # каталог создаётся ДО счёта
+    # Строки прогресса и памяти обязаны доходить до лога ДО смерти
+    # процесса: буфер stdout при SIGKILL теряется целиком — первый прогон
+    # умер через 111 минут, не оставив ни одной строки.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
     s = run(limit=a.limit)
     tag = a.tag if not a.limit else f"smoke-{a.tag}"
     with open(os.path.join(OUT, f"D10-short-{tag}.json"), "w",
