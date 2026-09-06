@@ -610,7 +610,7 @@ def main(argv=None):
                     help=f"проскальзывание, б.п. (по умолчанию {SLIP_BP}: {SLIP_SOURCE})")
     a = ap.parse_args(argv)
     os.makedirs(OUT, exist_ok=True)
-    s = run()
+    s = run(slip_bp=a.slip_bp)
     with open(os.path.join(OUT, f"DCA-costs-{a.tag}.json"), "w",
               encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)

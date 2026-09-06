@@ -866,7 +866,7 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
-## research/dca_paper/test_costs.py · 448 строк
+## research/dca_paper/test_costs.py · 456 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
@@ -886,26 +886,26 @@
 - L190 `test_run_end_to_end_synthetic()`
 - L253 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
 - L271 `test_main_writes_the_artifact_and_publishes_by_default()`
-- L295 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L320 `P = os.path.join(HERE, 'costs.py')`
-- L323 `_control_exit_fee_dropped()`
-- L328 `_control_funding_sign_flipped()`
-- L334 `_control_open_notional_ignores_time()`
-- L340 `_control_uncovered_counted_as_zero()`
-- L346 `_control_gate_ignores_side()`
-- L352 `_control_rate_at_entry_looks_ahead()`
-- L357 `_control_stale_rate_counts_as_known()`
-- L363 `_control_gate_medians_in_dollars()`
-- L369 `_control_missing_series_reads_as_present()`
-- L375 `_control_old_rules_rows_counted()`
-- L380 `_control_no_fills_in_cover_denominator()`
-- L385 `_control_thin_rest_arm_judged()`
-- L390 `_control_slip_on_take_exit()`
-- L395 `_control_slip_on_every_rung()`
-- L401 `_control_net_ignores_slippage()`
-- L407 `TESTS = [test_commission_charges_every_rung_and…`
-- L419 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L438 `main()`
+- L303 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L328 `P = os.path.join(HERE, 'costs.py')`
+- L331 `_control_exit_fee_dropped()`
+- L336 `_control_funding_sign_flipped()`
+- L342 `_control_open_notional_ignores_time()`
+- L348 `_control_uncovered_counted_as_zero()`
+- L354 `_control_gate_ignores_side()`
+- L360 `_control_rate_at_entry_looks_ahead()`
+- L365 `_control_stale_rate_counts_as_known()`
+- L371 `_control_gate_medians_in_dollars()`
+- L377 `_control_missing_series_reads_as_present()`
+- L383 `_control_old_rules_rows_counted()`
+- L388 `_control_no_fills_in_cover_denominator()`
+- L393 `_control_thin_rest_arm_judged()`
+- L398 `_control_slip_on_take_exit()`
+- L403 `_control_slip_on_every_rung()`
+- L409 `_control_net_ignores_slippage()`
+- L415 `TESTS = [test_commission_charges_every_rung_and…`
+- L427 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L446 `main()`
 
 ## research/dca_paper/test_cut.py · 297 строк
 

@@ -275,8 +275,10 @@ def test_main_writes_the_artifact_and_publishes_by_default():
     o_out, o_pub, o_run = C.OUT, C.publish, C.run
     C.OUT = os.path.join(tmp, "out")
     C.publish = lambda name: calls.append(name)
-    C.run = lambda **kw: o_run(rows=rows, funding=funding, assets=assets,
-                               log=lambda *a: None)
+    seen = []
+    C.run = lambda **kw: (seen.append(kw), o_run(
+        rows=rows, funding=funding, assets=assets, log=lambda *a: None,
+        slip_bp=kw.get("slip_bp")))[1]
     try:
         C.main(["--tag", "test", "--no-publish"])
         assert not calls
@@ -285,6 +287,12 @@ def test_main_writes_the_artifact_and_publishes_by_default():
         assert os.path.exists(os.path.join(C.OUT, "DCA-costs-test.md"))
         C.main(["--tag", "test"])
         assert len(calls) == 1 and "test" in calls[0], calls
+        # --slip-bp доезжает до счёта: стресс p90 X3 считается другим числом
+        C.main(["--tag", "stress", "--no-publish", "--slip-bp", "17.4"])
+        assert seen[-1].get("slip_bp") == 17.4, seen[-1]
+        js = json.load(open(os.path.join(C.OUT, "DCA-costs-stress.json")))
+        assert js["slip_bp"] == 17.4 and js["cells"]["optimal_s:10000"]["slip_usd"] > \
+            j["cells"]["optimal_s:10000"]["slip_usd"] * 3, (js["slip_bp"], js["cells"]["optimal_s:10000"]["slip_usd"])
     finally:
         C.OUT, C.publish, C.run = o_out, o_pub, o_run
         shutil.rmtree(tmp, ignore_errors=True)
