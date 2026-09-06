@@ -181,7 +181,7 @@ def _control_window_per_mode():
 
     def per_mode(path=R.JOURNAL, art=R.ARTIFACT):
         rows, _bad = R.read_journal(path)
-        rows = [r for r in rows if int(r.get("rules", 0)) == R.RULES]
+        rows = [r for r in rows if R.is_current(r)]
         out = {"deposits": list(R.DEPOSITS), "rulers": list(R.RULER_ORDER),
                "cells": {}, "book": {}}
         for dep in R.DEPOSITS:

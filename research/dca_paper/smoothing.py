@@ -82,7 +82,7 @@ def pair_rows(rows, mode, dep):
     """Строки длинной и короткой книг одного режима и депозита."""
     def take(rk):
         return [r for r in rows if int(r.get("dep", 0)) == int(dep)
-                and int(r.get("rules", 0)) == R.RULES
+                and R.is_current(r)
                 and R.ruler_of(r) == rk]
     return take(mode), take(mode + "_s")
 

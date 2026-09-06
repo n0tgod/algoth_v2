@@ -863,38 +863,42 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
-## research/dca_paper/test_costs.py · 341 строк
+## research/dca_paper/test_costs.py · 397 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
-- L20 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L25 `H = 3600`
-- L26 `T0 = 1790000000.0`
-- L27 `FILLS4 = [(T0 + 60, 100.0, 0.25), (T0 + 5 * H, 1…`
-- L31 `_row(sym='SSSUSDT', side='short', at=T0, fills=None, exit_ts=No…`
-- L46 `_series(start, hours, rate_fn)` — Ряд начислений раз в час: (времена мс, ставки), как у загрузчика.
-- L54 `test_commission_charges_every_rung_and_the_exit()`
-- L71 `test_funding_sign_follows_the_side()`
-- L81 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
-- L96 `test_funding_uncovered_is_not_measured()`
-- L108 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
-- L129 `_fixture()`
-- L156 `test_run_end_to_end_synthetic()`
-- L204 `test_main_writes_the_artifact_and_publishes_by_default()`
-- L228 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L253 `P = os.path.join(HERE, 'costs.py')`
-- L256 `_control_exit_fee_dropped()`
-- L261 `_control_funding_sign_flipped()`
-- L267 `_control_open_notional_ignores_time()`
-- L273 `_control_uncovered_counted_as_zero()`
-- L279 `_control_gate_ignores_side()`
-- L285 `_control_rate_at_entry_looks_ahead()`
-- L290 `_control_stale_rate_counts_as_known()`
-- L296 `_control_gate_medians_in_dollars()`
-- L302 `_control_missing_series_reads_as_present()`
-- L308 `TESTS = [test_commission_charges_every_rung_and…`
-- L318 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L331 `main()`
+- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L26 `H = 3600`
+- L27 `T0 = 1790000000.0`
+- L28 `FILLS4 = [(T0 + 60, 100.0, 0.25), (T0 + 5 * H, 1…`
+- L32 `_row(sym='SSSUSDT', side='short', at=T0, fills=None, exit_ts=No…`
+- L47 `_series(start, hours, rate_fn)` — Ряд начислений раз в час: (времена мс, ставки), как у загрузчика.
+- L55 `test_commission_charges_every_rung_and_the_exit()`
+- L72 `test_funding_sign_follows_the_side()`
+- L82 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
+- L97 `test_funding_uncovered_is_not_measured()`
+- L109 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
+- L130 `_fixture()`
+- L163 `test_run_end_to_end_synthetic()`
+- L223 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
+- L241 `test_main_writes_the_artifact_and_publishes_by_default()`
+- L265 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L290 `P = os.path.join(HERE, 'costs.py')`
+- L293 `_control_exit_fee_dropped()`
+- L298 `_control_funding_sign_flipped()`
+- L304 `_control_open_notional_ignores_time()`
+- L310 `_control_uncovered_counted_as_zero()`
+- L316 `_control_gate_ignores_side()`
+- L322 `_control_rate_at_entry_looks_ahead()`
+- L327 `_control_stale_rate_counts_as_known()`
+- L333 `_control_gate_medians_in_dollars()`
+- L339 `_control_missing_series_reads_as_present()`
+- L345 `_control_old_rules_rows_counted()`
+- L350 `_control_no_fills_in_cover_denominator()`
+- L355 `_control_thin_rest_arm_judged()`
+- L360 `TESTS = [test_commission_charges_every_rung_and…`
+- L371 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L387 `main()`
 
 ## research/dca_paper/test_cut.py · 297 строк
 

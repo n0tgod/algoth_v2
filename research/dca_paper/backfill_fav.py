@@ -72,7 +72,7 @@ def patch_file(path, idx, write=False):
         except ValueError:
             out.append(ln)                 # битую строку не трогаем вовсе
             continue
-        if (int(r.get("rules", 0)) == R.RULES
+        if (R.is_current(r)
                 and r.get("fav_bp") is None):
             v = idx.get((r.get("sym"), round(float(r.get("at") or 0), 3)))
             if v is None:

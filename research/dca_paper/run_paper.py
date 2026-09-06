@@ -466,7 +466,7 @@ def summarize(path=None, live=None):
         for dep in R.DEPOSITS:
             key = _cell(rk, dep)
             mine = [r for r in rows if int(r.get("dep", 0)) == int(dep)
-                    and int(r.get("rules", 0)) == R.RULES
+                    and R.is_current(r)
                     and R.ruler_of(r) == rk]
             fwd, back = R.split_rows(mine)
             op = live.get(key)

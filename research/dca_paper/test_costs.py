@@ -14,6 +14,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 
 import numpy as np
 
@@ -150,16 +151,30 @@ def _fixture():
     rows.append(_row("UUUUSDT", "long", at=T0, ruler="optimal", usd=1.0))
     rows.append(_row("LLLUSDT", "long", at=T0, ruler="safe", usd=1.0,
                      dep=1000))
+    # строка без записи рунгов: издержки неизмеримы, брутто — считается
+    rows.append(dict(_row("LLLUSDT", "long", at=T0 + H, ruler="safe",
+                          usd=1.0, dep=1000), fills=None))
+    # строка ПРЕЖНЕЙ версии правил: другая книга, в счёт не входит
+    rows.append(dict(_row("LLLUSDT", "long", at=T0 + 2 * H, ruler="safe",
+                          usd=50.0, dep=1000), rules=R.RULES - 1))
     return assets, funding, rows
 
 
 def test_run_end_to_end_synthetic():
     assets, funding, rows = _fixture()
     s = C.run(rows=rows, funding=funding, assets=assets, log=lambda *a: None)
-    assert s["rows"] == 27 and s["funding_present"], (s["rows"], s["funding_present"])
+    assert s["rows"] == 28 and s["funding_present"], (s["rows"], s["funding_present"])
+    assert s["rows_all"] == 29 and s["rows_with_fills"] == 27, s["rows_all"]
     assert s["miss"]["taker_fallback"] == 1, s["miss"]
     assert s["miss"]["no_funding_series"] == 1, s["miss"]
     assert s["miss"]["funding_uncovered"] == 0, s["miss"]
+    assert s["miss"]["no_fills"] == 1, s["miss"]
+    d = time.strftime("%Y-%m-%d", time.gmtime(T0 + H + 60))
+    assert s["miss"]["no_fills_written"] == [d, d], s["miss"]["no_fills_written"]
+    sf = s["cells"]["safe:1000"]
+    # без рунгов — в брутто есть, в измеренных нет; прежняя версия — нигде
+    assert sf["n"] == 2 and sf["measured"] == 1, sf
+    assert sf["gross_usd"] == 2.0, sf["gross_usd"]
     assert set(s["cells"]) == {"optimal_s:10000", "optimal:10000", "safe:1000"}, \
         set(s["cells"])
     c = s["cells"]["optimal_s:10000"]
@@ -179,13 +194,17 @@ def test_run_end_to_end_synthetic():
     # медианы руки — в б.п. МАРЖИ: usd 3/2/1 $ при марже 100 → 300/200/100
     assert a["median_all"] == 200.0, a["median_all"]
     assert "б.п. маржи" in C.report(s)
+    # покрытие — от строк с рунгами; от всех строк печатается рядом
     assert s["funding_cover"] == round(26 / 27, 3), s["funding_cover"]
+    assert s["funding_cover_all"] == round(26 / 28, 3), s["funding_cover_all"]
     assert s["taker_rates_bp"] == [2.75, 5.5], s["taker_rates_bp"]
     v = C.verdict(s)
     assert v["measurable"] is True
     txt = C.report(s)
     for need in ("По книгам", "По сторонам", "Гейт по знаку ставки",
-                 "Чего замер НЕ говорит", "`optimal_s:10000`", "short"):
+                 "Чего замер НЕ говорит", "`optimal_s:10000`", "short",
+                 "без записи рунгов 1", "в журнале всего 29",
+                 "брутто измеренных $ | нетто $ (измеренные) | funding б.п."):
         assert need in txt, need
     assert "funding НЕ измерен" not in txt
     assert "nan" not in txt.lower()
@@ -201,6 +220,24 @@ def test_run_end_to_end_synthetic():
           f"без рядов — «не измерен»")
 
 
+def test_gate_is_judged_only_with_both_arms_of_size():
+    """Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N
+    позиций в ОБЕИХ руках, иначе книга не попадает ни в «помогает», ни
+    во «вредит»."""
+    n = C.MIN_ARM_N
+    arm = lambda nf, nr: {"n_known": nf + nr, "n_fav": nf, "n_rest": nr,  # noqa: E731
+                          "median_fav": 10.0, "median_rest": 20.0}
+    s = {"funding_present": True, "funding_cover": 1.0, "min_cover": 0.5,
+         "cells": {}, "arms": {"thin_rest": arm(n + 10, n - 1),
+                               "thin_fav": arm(n - 1, n + 10),
+                               "both": arm(n, n)}}
+    v = C.verdict(s)
+    assert v["gate_hurts"] == ["both"], v
+    assert v["gate_helps"] == [], v
+    assert n == 30, n
+    print(f"ok  гейт судится при обеих руках ≥ {n}: тонкая рука — не судится")
+
+
 def test_main_writes_the_artifact_and_publishes_by_default():
     assets, funding, rows = _fixture()
     tmp = tempfile.mkdtemp(prefix="dca-costs-")
@@ -214,7 +251,7 @@ def test_main_writes_the_artifact_and_publishes_by_default():
         C.main(["--tag", "test", "--no-publish"])
         assert not calls
         j = json.load(open(os.path.join(C.OUT, "DCA-costs-test.json")))
-        assert j["rows"] == 27
+        assert j["rows"] == 28
         assert os.path.exists(os.path.join(C.OUT, "DCA-costs-test.md"))
         C.main(["--tag", "test"])
         assert len(calls) == 1 and "test" in calls[0], calls
@@ -305,6 +342,21 @@ def _control_missing_series_reads_as_present():
                    test_run_end_to_end_synthetic, C)
 
 
+def _control_old_rules_rows_counted():
+    return _poison(P, "rows = [r for r in rows if R.is_current(r)]",
+                   "rows = list(rows)", test_run_end_to_end_synthetic, C)
+
+
+def _control_no_fills_in_cover_denominator():
+    return _poison(P, 'n_fills = n_rows - miss["no_fills"]', "n_fills = n_rows",
+                   test_run_end_to_end_synthetic, C)
+
+
+def _control_thin_rest_arm_judged():
+    return _poison(P, 'a.get("n_rest", 0) < MIN_ARM_N', "False",
+                   test_gate_is_judged_only_with_both_arms_of_size, C)
+
+
 TESTS = [
     test_commission_charges_every_rung_and_the_exit,
     test_funding_sign_follows_the_side,
@@ -312,6 +364,7 @@ TESTS = [
     test_funding_uncovered_is_not_measured,
     test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side,
     test_run_end_to_end_synthetic,
+    test_gate_is_judged_only_with_both_arms_of_size,
     test_main_writes_the_artifact_and_publishes_by_default,
 ]
 
@@ -325,6 +378,9 @@ CONTROLS = [
     ("пустой словарь рядов выдан за funding", _control_missing_series_reads_as_present),
     ("устаревшая ставка считается известной", _control_stale_rate_counts_as_known),
     ("медианы руки гейта в долларах", _control_gate_medians_in_dollars),
+    ("строки прежних версий правил в счёте", _control_old_rules_rows_counted),
+    ("строки без рунгов в знаменателе покрытия", _control_no_fills_in_cover_denominator),
+    ("тонкая рука отсечённых судится", _control_thin_rest_arm_judged),
 ]
 
 

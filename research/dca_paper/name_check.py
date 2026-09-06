@@ -101,7 +101,7 @@ def mode_stats(rows, deposit, window=None):
 
 def collect(path=R.JOURNAL, art=R.ARTIFACT):
     rows, bad = R.read_journal(path)
-    rows = [r for r in rows if int(r.get("rules", 0)) == R.RULES]
+    rows = [r for r in rows if R.is_current(r)]
     book = {}
     if os.path.exists(art):
         try:
