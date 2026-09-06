@@ -956,3 +956,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788650358 ==
 [2026-09-05T23:19:20Z] задание dca-smooth2 запущено: research/dca_paper/smoothing.py
+
+== сигнал 1788685741 ==
+[2026-09-06T09:09:02Z] задание dca-d9 запущено: research/dca_ladder/run_d9.py
