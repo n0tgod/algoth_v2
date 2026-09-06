@@ -5540,6 +5540,16 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L29 `tail(path, n=12)`
 - L41 `main()`
 
+## tools/diag_spill.py · 67 строк
+
+Проверка перелива записи: читаются ли перелитые часы ПО ПРЕЖНЕМУ пути.
+
+- L17 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L21 `OUT = os.path.join(ROOT, 'research', 'b1_book…`
+- L22 `SPILL = os.path.join(os.path.dirname(ROOT), 'b1…`
+- L25 `sh(cmd)`
+- L34 `main()`
+
 ## tools/jobs.sh · 284 строк
 
 Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
