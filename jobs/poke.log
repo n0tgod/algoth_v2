@@ -1000,3 +1000,6 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788719461 ==
 [2026-09-06T18:31:03Z] задание diag-cycle запущено: tools/diag_cycle.py
+
+== сигнал 1788719576 ==
+[2026-09-06T18:32:57Z] задание diag-cycle-2 запущено: tools/diag_cycle.py
