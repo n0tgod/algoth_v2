@@ -3,3 +3,13 @@
 начало: 2026-09-06T17:04:43Z
 запускаю: .venv/bin/python research/dca_ladder/run_d10.py 
 конец: 2026-09-06T18:55:56Z, код 137
+публикуется в ветку main:
+ jobs/done/d10-short.log             |  1 +
+ jobs/done/diag-cycle-2.log          | 10 ++++++++++
+ jobs/poke.log                       |  1 +
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 13 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e0c3a3d..21eb9b8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
