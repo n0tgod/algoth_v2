@@ -227,8 +227,10 @@ def enrich(rows, funding, to_asset, taker, log=print):
     miss["no_fills_written"] = ([_day(min(nf_written)), _day(max(nf_written))]
                                 if nf_written else None)
     log(f"строк с исходом {len(out)}; тейкер по умолчанию у "
-        f"{miss['taker_fallback']}, без записи рунгов {miss['no_fills']} "
-        f"(записаны {miss['no_fills_written']}), без комиссии "
+        f"{miss['taker_fallback']}, без записи рунгов {miss['no_fills']}"
+        + (f" (записаны {miss['no_fills_written'][0]} … "
+           f"{miss['no_fills_written'][1]})" if miss["no_fills_written"] else "")
+        + f", без комиссии "
         f"{miss['no_commission']}, "
         f"без ряда funding {miss['no_funding_series']}, ряд не покрывает "
         f"{miss['funding_uncovered']}, ставка на входе неизвестна "

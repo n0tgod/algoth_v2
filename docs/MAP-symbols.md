@@ -1488,7 +1488,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L62 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
 - L107 `main()`
 
-## research/dca_paper/costs.py · 564 строк
+## research/dca_paper/costs.py · 566 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 
@@ -1511,20 +1511,20 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L177 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
 - L184 `_day(ts)`
 - L188 `enrich(rows, funding, to_asset, taker, log=print)` — Строка журнала → строка с издержками. Пропуски считаются числом.
-- L239 `_sum(rows, k)`
-- L244 `_bp_median(rows, k)`
-- L250 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
-- L263 `_stats_gross(rows, dep)`
-- L270 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
-- L303 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
-- L328 `run(rows=None, funding=None, assets=None, log=print)`
-- L386 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
-- L410 `_u(x)`
-- L414 `_p(x, d=2)`
-- L418 `_b(x)`
-- L422 `report(s)`
-- L538 `publish(name)`
-- L544 `main(argv=None)`
+- L241 `_sum(rows, k)`
+- L246 `_bp_median(rows, k)`
+- L252 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
+- L265 `_stats_gross(rows, dep)`
+- L272 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
+- L305 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
+- L330 `run(rows=None, funding=None, assets=None, log=print)`
+- L388 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L412 `_u(x)`
+- L416 `_p(x, d=2)`
+- L420 `_b(x)`
+- L424 `report(s)`
+- L540 `publish(name)`
+- L546 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 
