@@ -80,3 +80,15 @@ df: /dev/sda1       150G   68G   76G  48% /
 
 снято 2026-09-06 19:19:18 UTC
 конец: 2026-09-06T19:19:18Z, код 0
+публикуется в ветку main:
+ jobs/done/d10-short-2.log           |  7 ++++
+ jobs/done/diag-cycle-3.log          | 12 ++++++
+ jobs/done/diag-disk.done            |  1 +
+ jobs/done/diag-disk.log             | 82 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  3 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 106 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   c8f26c1..3f33244  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
