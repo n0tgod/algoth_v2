@@ -314,13 +314,38 @@ def paired(cells_book, dep):
     return out
 
 
+def vs_ref(cells_book, dep, ref_h):
+    """Δ итога КАЖДОЙ ячейки к нынешнему правилу книги — таймеру `ref_h`.
+
+    Парная разность к A:H отвечает «что даёт правило при том же сроке»,
+    а владелец спрашивает про книгу, которая торгует 72 ч: ячейка, лучше
+    своего A:168, бывает хуже нынешних 72 ч, и без этой колонки «+0.40»
+    читалось бы как улучшение книги. Те же позиции, та же касса.
+    """
+    out = {}
+    ref = cells_book.get(f"A:{ref_h}@{int(dep)}") or {}
+    for c in grid():
+        k = cell_key(c)
+        me = cells_book.get(f"{k}@{int(dep)}") or {}
+        if k == f"A:{ref_h}" or me.get("final") is None \
+                or ref.get("final") is None:
+            out[k] = None
+        else:
+            out[k] = round(float(me["final"]) - float(ref["final"]), 4)
+    return out
+
+
 def summarize(s):
     """Числа, из которых выводится вердикт; отчёт печатает их, не прозу."""
     dep = s["deposits"][-1]
+    ref_h = s.get("ref_h", REF_H)
     out = {}
     for k in s["books"]:
         cb = s["cells"][k]
         pd = paired(cb, dep)
+        vr = vs_ref(cb, dep, ref_h)
+        better_ref = [ck for ck, d in vr.items() if d is not None and d > 0]
+        stable_ref = []
         pos_form = [ck for ck in s["grid"]
                     if (cb.get(f"{ck}@{int(dep)}") or {}).get("final")
                     is not None
@@ -331,9 +356,21 @@ def summarize(s):
         hf = (s.get("half") or {}).get(k)
         if hf:
             for c in grid():
+                ck = cell_key(c)
+                if ck != f"A:{ref_h}":
+                    ok = True
+                    for side in ("A", "B"):
+                        me = hf["cells"].get(f"{side}:{ck}") or {}
+                        ref = hf["cells"].get(f"{side}:A:{ref_h}") or {}
+                        if me.get("final") is None \
+                                or ref.get("final") is None \
+                                or float(me["final"]) <= float(ref["final"]):
+                            ok = False
+                    if ok and ck in better_ref:
+                        stable_ref.append(ck)
                 if c[0] == "A":
                     continue
-                ck, b = cell_key(c), base_key(c)
+                b = base_key(c)
                 ok = True
                 for side in ("A", "B"):
                     me = hf["cells"].get(f"{side}:{ck}") or {}
@@ -344,7 +381,9 @@ def summarize(s):
                 if ok and ck in better:
                     stable.append(ck)
         out[k] = {"paired": pd, "pos_form": pos_form, "better": better,
-                  "stable": stable, "n_cond": len(pd)}
+                  "stable": stable, "n_cond": len(pd),
+                  "vs_ref": vr, "better_ref": better_ref,
+                  "stable_ref": stable_ref}
     return out
 
 
@@ -356,12 +395,14 @@ def _n(x, d=2):
     return "—" if x is None else f"{x:.{d}f}"
 
 
-def _cell_row(ck, c, pd, ref):
+def _cell_row(ck, c, pd, ref, vr=None):
     e = c.get("exits") or {}
     d9 = c.get("d9") or {}
     delta = pd.get(ck)
+    dref = (vr or {}).get(ck)
     return (f"| {ck}{ref} | {c['taken']} | {_pct(c['final'])} | "
             + ("—" if delta is None else _pct(delta)) + " | "
+            + ("—" if dref is None else _pct(dref)) + " | "
             f"{_pct(c['max_dd'])} | {_pct(c['day_median'], 3)} | "
             + ("—" if c.get("day_green") is None
                else f"{c['day_green']:.2f}") + " | "
@@ -413,10 +454,11 @@ def report(s):
                   f"≥ {v:g}×" for v in s["min_lev"].values())
               + "), как её собирает бумажная книга; отдельный проход дал "
               "бы те же записи.", ""]
-    hdr = ("| ячейка | взято | итог | Δ к A:H | просадка | медиана дня | "
+    hdr = ("| ячейка | взято | итог | Δ к A:H | Δ к "
+           f"{s['ref_h']} ч | просадка | медиана дня | "
            "зелёных | укус | худший день | худшая позиция | "
            "тейк/пол/ликв/срок | cut/held/level |",
-           "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
+           "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
     for k in s["books"]:
         cb = s["cells"][k]
         pd = sm[k]["paired"]
@@ -428,19 +470,31 @@ def report(s):
             if not cc:
                 continue
             ref = " ←" if ck == f"A:{s['ref_h']}" else ""
-            L.append(_cell_row(ck, cc, pd, ref))
+            L.append(_cell_row(ck, cc, pd, ref, sm[k]["vs_ref"]))
         L += ["", f"Стрелка — нынешнее правило книги (таймер {s['ref_h']} "
-              "ч), точка отсчёта. Последняя колонка — сколько позиций "
-              "вариант закрыл на T по правилу (cut), удержал до H (held) "
-              "и сколько вышли по уровню раньше T (level); считается по "
-              "выборке до кассы.", ""]
+              "ч), точка отсчёта. «Δ к A:H» — парная разность к таймеру "
+              "того же срока H (цена самого правила при тех же позициях), "
+              f"«Δ к {s['ref_h']} ч» — разность к тому, чем книга торгует "
+              "сейчас: ячейка бывает лучше своего A:168 и хуже нынешних "
+              "72 ч разом. Последняя колонка — сколько позиций вариант "
+              "закрыл на T по правилу (cut), удержал до H (held) и сколько "
+              "вышли по уровню раньше T (level); считается по выборке до "
+              "кассы.", ""]
         n_cond = sm[k]["n_cond"]
-        L += [f"Условных ячеек {n_cond}; лучше своего таймера по итогу "
+        has_half = k in (s.get("half") or {})
+        L += [f"Условных ячеек {n_cond}; лучше своего таймера A:H по итогу "
               f"**{len(sm[k]['better'])}**"
               + (f", из них знак разности держится на обеих половинах "
-                 f"окна у **{len(sm[k]['stable'])}**" if k in (s.get("half")
-                                                            or {}) else "")
-              + f"; положительны и по итогу, и по медиане дня "
+                 f"окна у **{len(sm[k]['stable'])}**" if has_half else "")
+              + f". Лучше нынешних {s['ref_h']} ч — "
+              f"**{len(sm[k]['better_ref'])}** ячеек из "
+              f"{len(s['grid']) - 1}"
+              + (f", устойчиво на обеих половинах "
+                 f"**{len(sm[k]['stable_ref'])}**"
+                 + (": " + ", ".join(sm[k]["stable_ref"])
+                    if sm[k]["stable_ref"] else "")
+                 if has_half else "")
+              + f". Положительны и по итогу, и по медиане дня "
               f"{len(sm[k]['pos_form'])} ячеек из {len(s['grid'])}"
               + (": " + ", ".join(sm[k]["pos_form"]) if sm[k]["pos_form"]
                  else "") + ".", ""]
@@ -508,20 +562,76 @@ def report(s):
     tot_stable = sum(len(sm[k]["stable"]) for k in sb)
     tot_cond = sum(sm[k]["n_cond"] for k in sb)
     tot_pos = sum(len(sm[k]["pos_form"]) for k in sb)
+    tot_cells = len(sb) * len(s["grid"])
+    # ячейки, устойчиво лучше НЫНЕШНЕГО правила во всех коротких книгах
+    common_ref = None
+    for k in sb:
+        st = set(sm[k]["stable_ref"])
+        common_ref = st if common_ref is None else (common_ref & st)
+    common_ref = sorted(common_ref or [])
+    lost = s.get("lost_short_record") or {}
+    pos = s.get("positions") or {}
     L += ["## Что из этого следует", "",
-          f"По коротким книгам условных ячеек {tot_cond}, лучше своего "
-          f"таймера {tot_better}, устойчивых по половинам {tot_stable}; "
-          f"положительных по итогу и медиане дня {tot_pos} из "
-          f"{len(sb) * len(s['grid'])}. "
-          + ("**Устойчивого улучшения нет: ни одна условная ячейка не "
-             "держит знак разности на обеих половинах окна** — правило "
-             "времени короткие книги в плюс не выводит, и спорить с этим "
-             "лучшей ячейкой значит совершить ошибку R5."
-             if tot_stable == 0 else
-             f"**Есть направление: {tot_stable} ячеек лучше таймера в "
-             "обеих половинах окна.** Это диагностика на трёх сотнях "
-             "решений, а не вердикт — правило книги меняется только "
-             "решением владельца и судится форвардом."), "",
+          f"По коротким книгам ячеек {tot_cells}, положительных по итогу "
+          f"и медиане дня **{tot_pos}**. "
+          + ("**В плюс короткие книги не выводит ни одна ячейка сетки** — "
+             "ни таймер, ни «резать минус», ни «наоборот»: вопрос "
+             "владельца получает ответ «нет» на всём объявленном "
+             "пространстве, и лучшая ячейка это не отменяет (ошибка R5)."
+             if tot_pos == 0 else
+             f"Положительных ячеек {tot_pos} — направление есть, вердикт "
+             "по форварду.") + "", "",
+          f"Против нынешнего правила ({s['ref_h']} ч): условных ячеек "
+          f"{tot_cond}, лучше своего таймера A:H {tot_better}, из них "
+          f"устойчивых по половинам {tot_stable}; устойчиво лучше нынешних "
+          f"{s['ref_h']} ч сразу во всех коротких книгах — "
+          + (f"**{len(common_ref)}**: " + ", ".join(common_ref)
+             if common_ref else "**ни одной**")
+          + ". Это уменьшение убытка, а не доход, и диагностика на двух "
+          "сотнях решений, а не вердикт — правило книги меняется только "
+          "решением владельца и судится форвардом.", ""]
+    if sb and pos:
+        L += ["Выборка: до конца самого длинного срока (168 ч) не дожили "
+              + ", ".join(f"{k} {lost.get(k)} из {pos.get(k)}"
+                          for k in sb if k in pos)
+              + " решений — короткие решения сгущены к концу записи, и "
+              "последняя неделя окна в выборку не вошла. Это правило D7 "
+              "(одна выборка на все сроки), а не выбор; ячейки с H ≤ 72 ч "
+              "на полной записи считались бы отдельным прогоном.", ""]
+    # Механизм — из чисел раскладки по плечу, фразу выбирает знак.
+    ls = s.get("lev_split") or {}
+    rows_m = []
+    for k in sb:
+        g1 = (ls.get(k) or {}).get("lev1") or {}
+        g2 = (ls.get(k) or {}).get("lev_gt1") or {}
+        if not g2.get("n"):
+            continue
+        s1, s2 = g1.get("pnl_sum"), g2.get("pnl_sum")
+        e2 = g2.get("exits") or {}
+        rows_m.append(
+            f"`{k}`: без лестницы (1×) {g1.get('n', 0)} позиций, Σ "
+            f"{_pct(s1, 1) if s1 is not None else '—'}; с лестницей "
+            f"{g2['n']} позиций при медианном плече "
+            f"{_n(g2.get('lev_median'), 1)}×, Σ {_pct(s2, 1)}, полов "
+            f"{e2.get('пол', 0)}, ликвидаций {e2.get('ликвидация', 0)}")
+    if rows_m:
+        both = all(((ls.get(k) or {}).get("lev1") or {}).get("pnl_sum", 0) > 0
+                   and ((ls.get(k) or {}).get("lev_gt1") or {})
+                   .get("pnl_sum", 0) < 0
+                   for k in sb if ((ls.get(k) or {}).get("lev_gt1") or {})
+                   .get("n") and ((ls.get(k) or {}).get("lev1") or {}).get("n"))
+        L += ["Где убыток (доли маржи позиции, до кассы): "
+              + "; ".join(rows_m) + ". "
+              + ("**Позиции без лестницы в сумме положительны, весь убыток "
+                 "приносит лестница с плечом** — забор выдаёт шорту "
+                 "крупное плечо потому, что его лестница узкая (2·d_max "
+                 "мал), и хвост сидит ровно там. Правило времени этого не "
+                 "трогает; трогает плечо — это рычаг забора, а не выхода, "
+                 "и он в этой сетке не мерился."
+                 if both else
+                 "Знак по группам расходится между книгами — механизм по "
+                 "этой раскладке не назван."), ""]
+    L += [
           "## Чего замер НЕ говорит", "",
           "Шортов под гейтом около трёх сотен на книгу (3.4 % от лонгов), "
           "половины окна шумят вдвое сильнее целого; веса модели видели "
@@ -545,13 +655,22 @@ def main(argv=None):
     ap.add_argument("--tag", default="1m")
     ap.add_argument("--no-control", action="store_true")
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--from-json", default=None,
+                    help="пересобрать отчёт из артефакта прогона, не считая")
     a = ap.parse_args(argv)
     os.makedirs(OUT, exist_ok=True)          # каталог создаётся ДО счёта
-    s = run(limit=a.limit, with_control=not a.no_control)
+    if a.from_json:
+        # Отчёт обязан описывать ТОТ прогон, который породил файл: числа
+        # берутся из артефакта, ничего не пересчитывается.
+        with open(a.from_json, encoding="utf-8") as f:
+            s = json.load(f)
+    else:
+        s = run(limit=a.limit, with_control=not a.no_control)
     tag = a.tag if not a.limit else f"smoke-{a.tag}"
-    with open(os.path.join(OUT, f"D9-exit-{tag}.json"), "w",
-              encoding="utf-8") as f:
-        json.dump(s, f, ensure_ascii=False, indent=1)
+    if not a.from_json:
+        with open(os.path.join(OUT, f"D9-exit-{tag}.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(s, f, ensure_ascii=False, indent=1)
     txt = report(s)
     with open(os.path.join(OUT, f"D9-exit-{tag}.md"), "w",
               encoding="utf-8") as f:

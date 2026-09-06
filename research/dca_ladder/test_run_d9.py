@@ -265,22 +265,27 @@ def test_run_end_to_end_synthetic():
           f"B:24→72 cut/held {b['d9']}, C {c['d9']}")
 
 
-def _stub_summary(flip_c=False):
+def _stub_summary(flip_c=False, neg=False):
     """Свод по образцу живого: одна короткая книга, депозит один."""
     dep = 100000.0
     grid = [D9.cell_key(c) for c in D9.grid()]
     fin = {"A:72": 0.010, "B:24:72:0": 0.030, "C:24:72:0": 0.020}
+    if neg:
+        # все ячейки в минусе: вопрос «в плюс?» получает «нет», а
+        # уменьшение убытка остаётся отдельным числом
+        fin = {k: v - 0.05 for k, v in fin.items()}
     def mk(ck, f):
         return {"taken": 3, "final": f, "max_dd": -0.01, "day_median": 0.0001,
                 "day_green": 0.6, "bite": 2.0, "day_worst": -0.005,
                 "worst_pos": -0.1, "exits": {"срок": 3}, "d9": {"held": 3},
                 "open_mean": 1.0, "liq_share": 0.0, "mode": ck[0],
                 "t": 24, "h": 72, "theta": 0.0}
-    cells = {f"{ck}@{int(dep)}": mk(ck, fin.get(ck, -0.02)) for ck in grid}
+    other = -0.07 if neg else -0.02
+    cells = {f"{ck}@{int(dep)}": mk(ck, fin.get(ck, other)) for ck in grid}
     hc = {}
     for ck in grid:
         for side in ("A", "B"):
-            f = fin.get(ck, -0.02)
+            f = fin.get(ck, other)
             if ck == "B:24:72:0" and side == "B":
                 f = 0.0          # B хуже таймера во второй половине
             if ck == "C:24:72:0" and flip_c and side == "A":
@@ -323,17 +328,34 @@ def test_verdict_is_derived_from_paired_numbers_on_both_halves():
     assert sm["n_cond"] == 15
     txt = D9.report(s)
     for need in ("ошибка R5", "Δ к A:H", "половинах окна",
-                 "устойчивых по половинам 1", "Есть направление",
+                 "устойчивых по половинам 1", "направление есть",
                  "РАЗОШЁЛСЯ", "1× против лестницы"):
         assert need in txt, need
+    # разность к НЫНЕШНЕМУ правилу (A:72) — своя колонка и свой счёт:
+    # B:24:72 и C:24:72 выше A:72 на целом, устойчиво — только C
+    assert abs(sm["vs_ref"]["B:24:72:0"] - 0.02) < 1e-9, sm["vs_ref"]
+    assert sm["vs_ref"]["A:72"] is None
+    assert set(sm["better_ref"]) == {"B:24:72:0", "C:24:72:0"}, sm["better_ref"]
+    assert sm["stable_ref"] == ["C:24:72:0"], sm["stable_ref"]
+    assert "Δ к 72 ч" in txt and "устойчиво лучше нынешних 72 ч" in txt
+    assert "положительных по итогу и медиане дня **3**" in txt
     s2 = _stub_summary(flip_c=True)
     sm2 = D9.summarize(s2)["optimal_s"]
-    assert sm2["stable"] == [], sm2["stable"]
+    assert sm2["stable"] == [] and sm2["stable_ref"] == [], sm2
     txt2 = D9.report(s2)
     assert "устойчивых по половинам 0" in txt2
-    assert "Устойчивого улучшения нет" in txt2 and "Есть направление" not in txt2
-    print("ok  вердикт выведен из чисел: 1 устойчивая → «направление», "
-          "0 → «улучшения нет»")
+    assert "**ни одной**" in txt2 and "**1**: C:24:72:0" not in txt2
+    # все ячейки в минусе: главный ответ — «в плюс не выводит ни одна»
+    s3 = _stub_summary(neg=True)
+    txt3 = D9.report(s3)
+    assert "положительных по итогу и медиане дня **0**" in txt3
+    assert "не выводит ни одна ячейка сетки" in txt3, txt3[-3000:]
+    assert "направление есть" not in txt3
+    assert "не выводит ни одна ячейка сетки" not in txt, "фраза не из чисел"
+    # механизм по плечу — из знаков раскладки: 1× в плюсе, лестница в минусе
+    assert "весь убыток приносит лестница с плечом" in txt3
+    print("ok  вердикт выведен из чисел: «в плюс?» по знаку ячеек, "
+          "«лучше нынешних» по половинам, механизм по знакам плеча")
 
 
 def test_main_publishes_by_default_and_not_with_the_flag():
@@ -349,8 +371,15 @@ def test_main_publishes_by_default_and_not_with_the_flag():
             assert os.path.exists(os.path.join(td, "D9-exit-t.md"))
             D9.main(["--tag", "t"])
             assert len(calls) == 1 and "D9" in calls[0], calls
-            with open(os.path.join(td, "D9-exit-t.json"), encoding="utf-8") as f:
+            jp = os.path.join(td, "D9-exit-t.json")
+            with open(jp, encoding="utf-8") as f:
                 assert json.load(f)["grid"][0] == "A:24"
+            # пересборка отчёта из артефакта: считать не зовёт вовсе
+            D9.run = lambda **kw: (_ for _ in ()).throw(
+                AssertionError("--from-json не должен считать"))
+            os.remove(os.path.join(td, "D9-exit-t.md"))
+            D9.main(["--from-json", jp, "--tag", "t", "--no-publish"])
+            assert os.path.exists(os.path.join(td, "D9-exit-t.md"))
     finally:
         D9.run, D9.publish, D9.OUT = orig_run, orig_pub, orig_out
     print("ok  публикует по умолчанию, молчит по флагу")
@@ -418,6 +447,25 @@ def _control_gate_not_applied():
         D9.book_recs = orig
 
 
+def _control_verdict_ignores_the_sign():
+    """Фраза «в плюс не выводит» стоит литералом, а не выводится из чисел."""
+    orig = D9.report
+
+    def bad(s):
+        # фраза стоит ЛИТЕРАЛОМ при любых числах
+        return orig(s) + "\n\n**В плюс короткие книги не выводит ни одна " \
+            "ячейка сетки**\n"
+    D9.report = bad
+    try:
+        try:
+            test_verdict_is_derived_from_paired_numbers_on_both_halves()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        D9.report = orig
+
+
 def _control_stability_ignores_halves():
     """«Устойчива» = «лучше на целом», половины не спрашиваются."""
     orig = D9.summarize
@@ -453,7 +501,8 @@ CONTROLS = [("θ не читается", _control_theta_ignored),
             ("B режет всё открытое", _control_cut_regardless_of_mark),
             ("уровень раньше T переписан", _control_level_exit_overridden),
             ("гейт плеча не применён", _control_gate_not_applied),
-            ("устойчивость без половин", _control_stability_ignores_halves)]
+            ("устойчивость без половин", _control_stability_ignores_halves),
+            ("вердикт не из знака", _control_verdict_ignores_the_sign)]
 
 
 def main():
