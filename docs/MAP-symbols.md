@@ -5555,14 +5555,14 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L25 `sh(cmd)`
 - L34 `main()`
 
-## tools/diag_queue.py · 65 строк
+## tools/diag_queue.py · 78 строк
 
 Состояние канала заданий и идущих прогонов — одним заданием.
 
-- L17 `ROOT = os.path.dirname(os.path.dirname(os.path…`
-- L20 `run(*cmd)`
-- L29 `tail(path, n=12)`
-- L41 `main()`
+- L18 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L21 `run(*cmd)`
+- L30 `tail(path, n=12)`
+- L42 `main()`
 
 ## tools/diag_spill.py · 67 строк
 

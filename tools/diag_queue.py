@@ -11,6 +11,7 @@
 Читает и печатает, ничего не меняет: ни git, ни файлов.
 """
 import os
+import re
 import subprocess
 import sys
 
@@ -54,6 +55,18 @@ def main():
     print(tail("jobs/poke.log", 20))
     print("\n=== идущие прогоны ===")
     print(run("pgrep", "-af", "python") or "питона не запущено")
+    # Хвост лога КАЖДОГО идущего задания: лог публикуется в git только
+    # по концу задания, а на диске пишется построчно — без этого ход
+    # пятичасового прогона снаружи неотличим от зависшего (2026-09-06).
+    print("\n=== хвосты логов идущих заданий ===")
+    ps = run("pgrep", "-af", "jobs/done/")
+    names = sorted({m for ln in ps.splitlines()
+                    for m in re.findall(r"jobs/done/([A-Za-z0-9._-]+)\.log", ln)})
+    if not names:
+        print("идущих заданий нет")
+    for nm in names:
+        print(f"--- {nm} ---")
+        print(tail(f"jobs/done/{nm}.log", 8))
     print("\n=== склад лесенки ===")
     print(run("ls", "-la", "research/z3_ladder/out/store"))
     print("\n=== хвост лога свёртки ===")
