@@ -81,7 +81,7 @@
 - `venue_funding_diff.py` · 182 строк — A1 — расхождение ставок funding между площадками, выровненное по периодам.
 - тесты: `test_funding_refresh.py` (205), `test_options.py` (286), `test_persistence.py` (217), `test_risk_limit.py` (126), `test_universe.py` (244)
 - документы: `RUNBOOK-vps.md` — Запуск сбора данных на VPS
-- отчёты в `out/` (4): A1-data-report.md, A1-universe-report.md, D0-risk-limits.md, D3-options.md
+- отчёты в `out/` (5): A1-data-report.md, A1-universe-report.md, D0-risk-limits.md, D3-options.md, funding-refresh.md
 
 ## research/a2_storage — A2 — хранилище Parquet, гигиена рядов
 

@@ -1,0 +1,4807 @@
+{
+ "symbols": 949,
+ "added": 440569,
+ "errors": 0,
+ "empty": 0,
+ "end_min": "2022-02-14",
+ "end_median": "2026-09-06",
+ "end_max": "2026-09-06",
+ "today": "2026-09-06",
+ "secs": 184.4,
+ "per_symbol": {
+  "0GUSDT": {
+   "had": 4762,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "10000000AIDOGEUSDT": {
+   "had": 0,
+   "added": 1258,
+   "end": "2025-04-28",
+   "error": null
+  },
+  "1000000BABYDOGEUSDT": {
+   "had": 0,
+   "added": 3993,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000000MOGUSDT": {
+   "had": 4078,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000000PEIPEIUSDT": {
+   "had": 0,
+   "added": 1411,
+   "end": "2025-10-17",
+   "error": null
+  },
+  "1000000VINUUSDT": {
+   "had": 0,
+   "added": 211,
+   "end": "2024-02-06",
+   "error": null
+  },
+  "10000COQUSDT": {
+   "had": 0,
+   "added": 1720,
+   "end": "2025-10-06",
+   "error": null
+  },
+  "10000ELONUSDT": {
+   "had": 0,
+   "added": 2167,
+   "end": "2026-02-06",
+   "error": null
+  },
+  "10000LADYSUSDT": {
+   "had": 0,
+   "added": 2638,
+   "end": "2025-10-06",
+   "error": null
+  },
+  "10000NEXUSDT": {
+   "had": 0,
+   "added": 651,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "10000NFTUSDT": {
+   "had": 0,
+   "added": 2904,
+   "end": "2024-09-18",
+   "error": null
+  },
+  "10000QUBICUSDT": {
+   "had": 0,
+   "added": 1519,
+   "end": "2026-05-14",
+   "error": null
+  },
+  "10000SATSUSDT": {
+   "had": 4367,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "10000STARLUSDT": {
+   "had": 0,
+   "added": 859,
+   "end": "2024-08-01",
+   "error": null
+  },
+  "10000WENUSDT": {
+   "had": 0,
+   "added": 1876,
+   "end": "2025-10-17",
+   "error": null
+  },
+  "1000APUUSDT": {
+   "had": 0,
+   "added": 1159,
+   "end": "2025-07-11",
+   "error": null
+  },
+  "1000BEERUSDT": {
+   "had": 0,
+   "added": 433,
+   "end": "2024-10-22",
+   "error": null
+  },
+  "1000BONKUSDT": {
+   "had": 5567,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000CATSUSDT": {
+   "had": 0,
+   "added": 802,
+   "end": "2025-07-05",
+   "error": null
+  },
+  "1000CATUSDT": {
+   "had": 3719,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000FLOKIUSDT": {
+   "had": 3747,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000IQ50USDT": {
+   "had": 0,
+   "added": 334,
+   "end": "2024-07-08",
+   "error": null
+  },
+  "1000LUNCUSDT": {
+   "had": 4252,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000MUMUUSDT": {
+   "had": 0,
+   "added": 787,
+   "end": "2025-06-12",
+   "error": null
+  },
+  "1000NEIROCTOUSDT": {
+   "had": 0,
+   "added": 3702,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000PEPEUSDT": {
+   "had": 3543,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000RATSUSDT": {
+   "had": 4607,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000TAGUSDT": {
+   "had": 2183,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000TOSHIUSDT": {
+   "had": 5609,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000TURBOUSDT": {
+   "had": 4087,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1000XECUSDT": {
+   "had": 4697,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "1CATUSDT": {
+   "had": 0,
+   "added": 1177,
+   "end": "2025-01-22",
+   "error": null
+  },
+  "1INCHUSDT": {
+   "had": 5081,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "2ZUSDT": {
+   "had": 1786,
+   "added": 280,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "4USDT": {
+   "had": 1750,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "A8USDT": {
+   "had": 0,
+   "added": 2398,
+   "end": "2025-11-21",
+   "error": null
+  },
+  "AALUSDT": {
+   "had": 0,
+   "added": 137,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AAOIUSDT": {
+   "had": 144,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AAPLUSDT": {
+   "had": 270,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AAVEUSDT": {
+   "had": 5702,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ACEUSDT": {
+   "had": 5933,
+   "added": 299,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ACHUSDT": {
+   "had": 6349,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ACTUSDT": {
+   "had": 3542,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ACUUSDT": {
+   "had": 1109,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ACXUSDT": {
+   "had": 3467,
+   "added": 206,
+   "end": "2026-08-30",
+   "error": null
+  },
+  "ADAUSDT": {
+   "had": 5871,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ADBEUSDT": {
+   "had": 84,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AEHRUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AEROUSDT": {
+   "had": 3899,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AEVOUSDT": {
+   "had": 4271,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AGIUSDT": {
+   "had": 0,
+   "added": 3074,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AGLDUSDT": {
+   "had": 4670,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AIGENSYNUSDT": {
+   "had": 528,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AIOUSDT": {
+   "had": 2086,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AIOZUSDT": {
+   "had": 0,
+   "added": 2447,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AIXBTUSDT": {
+   "had": 3425,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AKEUSDT": {
+   "had": 1822,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AKTUSDT": {
+   "had": 3956,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALABUSDT": {
+   "had": 84,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALCHUSDT": {
+   "had": 3114,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALEOUSDT": {
+   "had": 0,
+   "added": 1477,
+   "end": "2026-01-24",
+   "error": null
+  },
+  "ALGOUSDT": {
+   "had": 5304,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALICEUSDT": {
+   "had": 5208,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALLOUSDT": {
+   "had": 1528,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALPINEUSDT": {
+   "had": 2081,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALTUSDT": {
+   "had": 4415,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ALUUSDT": {
+   "had": 0,
+   "added": 2497,
+   "end": "2026-03-06",
+   "error": null
+  },
+  "AMATUSDT": {
+   "had": 156,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AMDSTOCKUSDT": {
+   "had": 0,
+   "added": 305,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AMZNUSDT": {
+   "had": 270,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ANCUSDT": {
+   "had": 180,
+   "added": 55,
+   "end": "2022-06-01",
+   "error": null
+  },
+  "ANIMEUSDT": {
+   "had": 6574,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ANKRUSDT": {
+   "had": 5154,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ANTHROPICUSDT": {
+   "had": 42,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "APEUSDT": {
+   "had": 4776,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "APEXUSDT": {
+   "had": 0,
+   "added": 2060,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "API3USDT": {
+   "had": 10011,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "APLDUSDT": {
+   "had": 0,
+   "added": 155,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "APPSTOCKUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "APRUSDT": {
+   "had": 1660,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "APTUSDT": {
+   "had": 4132,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARBUSDT": {
+   "had": 3666,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARCUSDT": {
+   "had": 3419,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARIAUSDT": {
+   "had": 2122,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARKKUSDT": {
+   "had": 0,
+   "added": 146,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARKMUSDT": {
+   "had": 3286,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARKUSDT": {
+   "had": 5298,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARMUSDT": {
+   "had": 225,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARPAUSDT": {
+   "had": 4676,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARUSDT": {
+   "had": 5039,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ARXUSDT": {
+   "had": 204,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ASMLUSDT": {
+   "had": 93,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ASPUSDT": {
+   "had": 0,
+   "added": 2448,
+   "end": "2026-09-05",
+   "error": null
+  },
+  "ASRUSDT": {
+   "had": 2081,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ASTERUSDT": {
+   "had": 1865,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ASTRUSDT": {
+   "had": 4725,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ASTSUSDT": {
+   "had": 159,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ATHUSDT": {
+   "had": 3737,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ATOMUSDT": {
+   "had": 5250,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ATUSDT": {
+   "had": 1624,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AUCTIONUSDT": {
+   "had": 6721,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AUSDT": {
+   "had": 2549,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AVAAIUSDT": {
+   "had": 3110,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AVAILUSDT": {
+   "had": 0,
+   "added": 1381,
+   "end": "2025-10-26",
+   "error": null
+  },
+  "AVAUSDT": {
+   "had": 3437,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AVAXUSDT": {
+   "had": 5327,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AVGOUSDT": {
+   "had": 228,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AVLUSDT": {
+   "had": 0,
+   "added": 4560,
+   "end": "2026-03-27",
+   "error": null
+  },
+  "AVNTUSDT": {
+   "had": 2513,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AWEUSDT": {
+   "had": 2585,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AXLUSDT": {
+   "had": 9328,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AXSUSDT": {
+   "had": 6366,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AXTIUSDT": {
+   "had": 123,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "AZTECUSDT": {
+   "had": 1110,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "B2USDT": {
+   "had": 2477,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "B3USDT": {
+   "had": 5679,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BABAUSDT": {
+   "had": 225,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BABYUSDT": {
+   "had": 4889,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BANANAS31USDT": {
+   "had": 2915,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BANANAUSDT": {
+   "had": 5024,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BANDUSDT": {
+   "had": 4844,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BANKUSDT": {
+   "had": 2669,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BANUSDT": {
+   "had": 5924,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BARDUSDT": {
+   "had": 5723,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BASEDUSDT": {
+   "had": 713,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BATUSDT": {
+   "had": 5118,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BBUSDT": {
+   "had": 4085,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BBXUSDT": {
+   "had": 102,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BCHUSDT": {
+   "had": 6153,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BEAMUSDT": {
+   "had": 0,
+   "added": 4623,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BEATUSDT": {
+   "had": 2839,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BELUSDT": {
+   "had": 4503,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BENDOGUSDT": {
+   "had": 0,
+   "added": 724,
+   "end": "2025-01-30",
+   "error": null
+  },
+  "BERAUSDT": {
+   "had": 5545,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BEUSDT": {
+   "had": 180,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BICOUSDT": {
+   "had": 5091,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BIGTIMEUSDT": {
+   "had": 4730,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BILLUSDT": {
+   "had": 492,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BILLYUSDT": {
+   "had": 0,
+   "added": 253,
+   "end": "2025-02-19",
+   "error": null
+  },
+  "BIOUSDT": {
+   "had": 5539,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BIRBUSDT": {
+   "had": 1611,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BLASTUSDT": {
+   "had": 0,
+   "added": 2474,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BLENDUSDT": {
+   "had": 0,
+   "added": 783,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BLESSUSDT": {
+   "had": 1835,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BLUAIUSDT": {
+   "had": 1655,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BLUEUSDT": {
+   "had": 0,
+   "added": 331,
+   "end": "2025-04-07",
+   "error": null
+  },
+  "BLURUSDT": {
+   "had": 4816,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BMNRUSDT": {
+   "had": 222,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BMTUSDT": {
+   "had": 3005,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BNBUSDT": {
+   "had": 5562,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BNCUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BNTUSDT": {
+   "had": 3256,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BOBAUSDT": {
+   "had": 0,
+   "added": 4840,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BOBBOBUSDT": {
+   "had": 0,
+   "added": 1651,
+   "end": "2026-07-27",
+   "error": null
+  },
+  "BOMEUSDT": {
+   "had": 4265,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BOTUSDT": {
+   "had": 0,
+   "added": 203,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BPUSDT": {
+   "had": 0,
+   "added": 1047,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BRETTUSDT": {
+   "had": 4139,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BREVUSDT": {
+   "had": 2223,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BROCCOLIUSDT": {
+   "had": 0,
+   "added": 4441,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BRUSDT": {
+   "had": 2962,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BSBUSDT": {
+   "had": 738,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BSPUSDT": {
+   "had": 0,
+   "added": 188,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BSUUSDT": {
+   "had": 0,
+   "added": 1477,
+   "end": "2026-04-30",
+   "error": null
+  },
+  "BSVUSDT": {
+   "had": 6743,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BTCUSDT": {
+   "had": 6944,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BTRUSDT": {
+   "had": 2003,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BTTUSDT": {
+   "had": 62,
+   "added": 217,
+   "end": "2022-02-14",
+   "error": null
+  },
+  "BTWUSDT": {
+   "had": 311,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BUSDT": {
+   "had": 2580,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BUSDUSDT": {
+   "had": 0,
+   "added": 893,
+   "end": "2023-12-08",
+   "error": null
+  },
+  "BUZZUSDT": {
+   "had": 0,
+   "added": 521,
+   "end": "2025-04-19",
+   "error": null
+  },
+  "BXUSDT": {
+   "had": 30,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "BZUSDT": {
+   "had": 225,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "C98USDT": {
+   "had": 5208,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CAKEUSDT": {
+   "had": 4664,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CAMPUSDT": {
+   "had": 0,
+   "added": 1387,
+   "end": "2026-04-16",
+   "error": null
+  },
+  "CANTOUSDT": {
+   "had": 0,
+   "added": 244,
+   "end": "2024-08-12",
+   "error": null
+  },
+  "CAPUSDT": {
+   "had": 169,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CARVUSDT": {
+   "had": 7810,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CATIUSDT": {
+   "had": 3725,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CATSTOCKUSDT": {
+   "had": 0,
+   "added": 200,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CBRSUSDT": {
+   "had": 207,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CCUSDT": {
+   "had": 1612,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CEEKUSDT": {
+   "had": 0,
+   "added": 2445,
+   "end": "2024-10-10",
+   "error": null
+  },
+  "CELOUSDT": {
+   "had": 4991,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CETUSUSDT": {
+   "had": 4383,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CFGUSDT": {
+   "had": 792,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CFXUSDT": {
+   "had": 3757,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CGPTUSDT": {
+   "had": 5870,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CHILLGUYUSDT": {
+   "had": 3512,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CHIPUSDT": {
+   "had": 611,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CHRUSDT": {
+   "had": 5136,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CHZUSDT": {
+   "had": 5247,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CIENUSDT": {
+   "had": 84,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CKBUSDT": {
+   "had": 4868,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CLANKERUSDT": {
+   "had": 2729,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CLOUDUSDT": {
+   "had": 0,
+   "added": 1975,
+   "end": "2026-05-08",
+   "error": null
+  },
+  "CLOUSDT": {
+   "had": 2543,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CLUSDT": {
+   "had": 785,
+   "added": 160,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COAIUSDT": {
+   "had": 4320,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COHRUSDT": {
+   "had": 123,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COINUSDT": {
+   "had": 267,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COMPUSDT": {
+   "had": 5372,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COOKIEUSDT": {
+   "had": 3294,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COOKUSDT": {
+   "had": 0,
+   "added": 1442,
+   "end": "2026-03-27",
+   "error": null
+  },
+  "COREUSDT": {
+   "had": 0,
+   "added": 3917,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COSTUSDT": {
+   "had": 57,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COTIUSDT": {
+   "had": 5091,
+   "added": 602,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "COVALUSDT": {
+   "had": 0,
+   "added": 415,
+   "end": "2024-07-24",
+   "error": null
+  },
+  "COWUSDT": {
+   "had": 5769,
+   "added": 315,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CPOOLUSDT": {
+   "had": 0,
+   "added": 1357,
+   "end": "2025-10-18",
+   "error": null
+  },
+  "CRCLUSDT": {
+   "had": 246,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CRDOUSDT": {
+   "had": 102,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CREAMUSDT": {
+   "had": 0,
+   "added": 1587,
+   "end": "2023-06-30",
+   "error": null
+  },
+  "CRMUSDT": {
+   "had": 12,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CROSSUSDT": {
+   "had": 2291,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CROUSDT": {
+   "had": 0,
+   "added": 5245,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CRVUSDT": {
+   "had": 5208,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CRWDUSDT": {
+   "had": 72,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CRWVUSDT": {
+   "had": 228,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CSCOUSDT": {
+   "had": 204,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CTCUSDT": {
+   "had": 0,
+   "added": 7995,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CTRUSDT": {
+   "had": 287,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CUSDT": {
+   "had": 2261,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CVCUSDT": {
+   "had": 6841,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CVXUSDT": {
+   "had": 6985,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CYBERUSDT": {
+   "had": 4961,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "CYSUSDT": {
+   "had": 1361,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DAOUSDT": {
+   "had": 0,
+   "added": 544,
+   "end": "2024-09-24",
+   "error": null
+  },
+  "DARKUSDT": {
+   "had": 0,
+   "added": 392,
+   "end": "2025-07-01",
+   "error": null
+  },
+  "DASHUSDT": {
+   "had": 5247,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DATAOLD01USDT": {
+   "had": 0,
+   "added": 1,
+   "end": "2026-06-16",
+   "error": null
+  },
+  "DATAUSDT": {
+   "had": 0,
+   "added": 357,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DBRUSDT": {
+   "had": 0,
+   "added": 7820,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DEEPUSDT": {
+   "had": 1944,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DELLUSDT": {
+   "had": 165,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DEXEUSDT": {
+   "had": 3971,
+   "added": 296,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DIAUSDT": {
+   "had": 2213,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DKNGUSDT": {
+   "had": 21,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DOGEUSDT": {
+   "had": 5642,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DOGUSDT": {
+   "had": 0,
+   "added": 2170,
+   "end": "2026-05-28",
+   "error": null
+  },
+  "DOLOUSDT": {
+   "had": 2183,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DOODUSDT": {
+   "had": 5286,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DOP1USDT": {
+   "had": 0,
+   "added": 613,
+   "end": "2025-01-30",
+   "error": null
+  },
+  "DOTUSDT": {
+   "had": 5871,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DRAMUSDT": {
+   "had": 207,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DRIFTUSDT": {
+   "had": 4346,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DUCKUSDT": {
+   "had": 0,
+   "added": 3291,
+   "end": "2025-10-14",
+   "error": null
+  },
+  "DUSKUSDT": {
+   "had": 5049,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DYDXUSDT": {
+   "had": 5250,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "DYMUSDT": {
+   "had": 4656,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EDENUSDT": {
+   "had": 1799,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EDGEUSDT": {
+   "had": 775,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EDUUSDT": {
+   "had": 3537,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EGLDUSDT": {
+   "had": 12344,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EIGENUSDT": {
+   "had": 3830,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ELSAUSDT": {
+   "had": 1754,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ELXUSDT": {
+   "had": 0,
+   "added": 4569,
+   "end": "2025-12-04",
+   "error": null
+  },
+  "ENAUSDT": {
+   "had": 4211,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ENJUSDT": {
+   "had": 12565,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ENSOUSDT": {
+   "had": 3942,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ENSUSDT": {
+   "had": 5154,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EPICUSDT": {
+   "had": 3034,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ERAUSDT": {
+   "had": 6423,
+   "added": 442,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ESPORTSUSDT": {
+   "had": 2534,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ESPUSDT": {
+   "had": 1204,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ESUSDT": {
+   "had": 0,
+   "added": 2155,
+   "end": "2026-07-10",
+   "error": null
+  },
+  "ETCUSDT": {
+   "had": 5562,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ETHBTCUSDT": {
+   "had": 0,
+   "added": 2465,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ETHFIUSDT": {
+   "had": 4256,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ETHUSDT": {
+   "had": 6315,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EULUSDT": {
+   "had": 1715,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EVAAUSDT": {
+   "had": 1696,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EWJUSDT": {
+   "had": 243,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EWTUSDT": {
+   "had": 159,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "EWYUSDT": {
+   "had": 243,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FARTCOINUSDT": {
+   "had": 3425,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FBUSDT": {
+   "had": 0,
+   "added": 1030,
+   "end": "2025-09-03",
+   "error": null
+  },
+  "FDUSDUSDT": {
+   "had": 0,
+   "added": 562,
+   "end": "2025-02-19",
+   "error": null
+  },
+  "FFUSDT": {
+   "had": 4608,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FHEUSDT": {
+   "had": 2335,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FIDAUSDT": {
+   "had": 3723,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FIGHTUSDT": {
+   "had": 1109,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FILUSDT": {
+   "had": 5562,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FIREUSDT": {
+   "had": 0,
+   "added": 940,
+   "end": "2025-03-18",
+   "error": null
+  },
+  "FITFIUSDT": {
+   "had": 0,
+   "added": 2730,
+   "end": "2024-11-05",
+   "error": null
+  },
+  "FLEXUSDT": {
+   "had": 0,
+   "added": 197,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FLNCUSDT": {
+   "had": 123,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FLOCKUSDT": {
+   "had": 8347,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FLOWUSDT": {
+   "had": 13310,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FLRUSDT": {
+   "had": 0,
+   "added": 3810,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FLUIDUSDT": {
+   "had": 1835,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FLUXUSDT": {
+   "had": 3746,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FLYUSDT": {
+   "had": 0,
+   "added": 146,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FOGOUSDT": {
+   "had": 1182,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FOLKSUSDT": {
+   "had": 2744,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FORMUSDT": {
+   "had": 2969,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FOXYUSDT": {
+   "had": 0,
+   "added": 1216,
+   "end": "2025-05-22",
+   "error": null
+  },
+  "FRAGUSDT": {
+   "had": 0,
+   "added": 674,
+   "end": "2025-10-21",
+   "error": null
+  },
+  "FTNUSDT": {
+   "had": 0,
+   "added": 1210,
+   "end": "2025-06-23",
+   "error": null
+  },
+  "FUELUSDT": {
+   "had": 0,
+   "added": 1795,
+   "end": "2025-10-26",
+   "error": null
+  },
+  "FUSDT": {
+   "had": 5002,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FWDIUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "FWOGUSDT": {
+   "had": 0,
+   "added": 1315,
+   "end": "2026-01-24",
+   "error": null
+  },
+  "GALAUSDT": {
+   "had": 5162,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GASUSDT": {
+   "had": 6696,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GEMSUSDT": {
+   "had": 0,
+   "added": 331,
+   "end": "2025-03-25",
+   "error": null
+  },
+  "GENIUSUSDT": {
+   "had": 611,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GEVUSDT": {
+   "had": 0,
+   "added": 176,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GFTUSDT": {
+   "had": 0,
+   "added": 1984,
+   "end": "2024-12-02",
+   "error": null
+  },
+  "GIGAUSDT": {
+   "had": 0,
+   "added": 3325,
+   "end": "2026-07-27",
+   "error": null
+  },
+  "GIGGLEUSDT": {
+   "had": 1744,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GLMUSDT": {
+   "had": 5708,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GLWUSDT": {
+   "had": 100,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GMTUSDT": {
+   "had": 6073,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GMXUSDT": {
+   "had": 4158,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GNOUSDT": {
+   "had": 0,
+   "added": 2251,
+   "end": "2026-06-03",
+   "error": null
+  },
+  "GOATUSDT": {
+   "had": 3599,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GODSUSDT": {
+   "had": 0,
+   "added": 4281,
+   "end": "2026-06-11",
+   "error": null
+  },
+  "GOMININGUSDT": {
+   "had": 0,
+   "added": 742,
+   "end": "2025-06-06",
+   "error": null
+  },
+  "GOOGLUSDT": {
+   "had": 273,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GORKUSDT": {
+   "had": 0,
+   "added": 1016,
+   "end": "2025-10-21",
+   "error": null
+  },
+  "GPSUSDT": {
+   "had": 4931,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GPTUSDT": {
+   "had": 0,
+   "added": 1213,
+   "end": "2024-04-24",
+   "error": null
+  },
+  "GRAMUSDT": {
+   "had": 0,
+   "added": 459,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GRASSUSDT": {
+   "had": 3617,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GRIFFAINUSDT": {
+   "had": 3167,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GRTUSDT": {
+   "had": 5081,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GSTUSDT": {
+   "had": 0,
+   "added": 1338,
+   "end": "2022-07-21",
+   "error": null
+  },
+  "GSUSDT": {
+   "had": 0,
+   "added": 137,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GUNUSDT": {
+   "had": 2896,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "GWEIUSDT": {
+   "had": 582,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HAEDALUSDT": {
+   "had": 2717,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HANAUSDT": {
+   "had": 1696,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HBARUSDT": {
+   "had": 5208,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HEIUSDT": {
+   "had": 3167,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HEMIUSDT": {
+   "had": 1840,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HFTUSDT": {
+   "had": 3693,
+   "added": 118,
+   "end": "2026-08-21",
+   "error": null
+  },
+  "HIMSUSDT": {
+   "had": 72,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HIVEUSDT": {
+   "had": 7072,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HMSTRUSDT": {
+   "had": 3719,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HNTUSDT": {
+   "had": 4934,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HOLOUSDT": {
+   "had": 1942,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HOMEUSDT": {
+   "had": 2972,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HOODUSDT": {
+   "had": 288,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HPEUSDT": {
+   "had": 93,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HPOS10IUSDT": {
+   "had": 0,
+   "added": 1753,
+   "end": "2026-05-28",
+   "error": null
+  },
+  "HUMAUSDT": {
+   "had": 2560,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HUSDT": {
+   "had": 7101,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HYPERUSDT": {
+   "had": 6991,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HYPEUSDT": {
+   "had": 1797,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "HYUNDAIUSDT": {
+   "had": 160,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IBMUSDT": {
+   "had": 156,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ICNTUSDT": {
+   "had": 2333,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ICPUSDT": {
+   "had": 5327,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ICXUSDT": {
+   "had": 4697,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IDUSDT": {
+   "had": 3743,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IGUUSDT": {
+   "had": 0,
+   "added": 75,
+   "end": "2023-12-31",
+   "error": null
+  },
+  "ILVUSDT": {
+   "had": 6784,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IMXUSDT": {
+   "had": 6791,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "INITUSDT": {
+   "had": 3046,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "INJUSDT": {
+   "had": 4470,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "INTCUSDT": {
+   "had": 288,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "INTWUSDT": {
+   "had": 0,
+   "added": 164,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "INUSDT": {
+   "had": 2139,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "INXUSDT": {
+   "had": 1073,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IONQUSDT": {
+   "had": 0,
+   "added": 155,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IOSTUSDT": {
+   "had": 5247,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IOTAUSDT": {
+   "had": 5012,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IOTXUSDT": {
+   "had": 5154,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IOUSDT": {
+   "had": 4001,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IRENUSDT": {
+   "had": 144,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IRYSUSDT": {
+   "had": 1584,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "IWMUSDT": {
+   "had": 222,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "JAILSTOOLUSDT": {
+   "had": 0,
+   "added": 367,
+   "end": "2025-04-16",
+   "error": null
+  },
+  "JASMYUSDT": {
+   "had": 4949,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "JCTUSDT": {
+   "had": 1511,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "JELLYJELLYUSDT": {
+   "had": 3270,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "JSTUSDT": {
+   "had": 4838,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "JTOUSDT": {
+   "had": 4727,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "JUPUSDT": {
+   "had": 4396,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "JUSDT": {
+   "had": 0,
+   "added": 1609,
+   "end": "2025-10-17",
+   "error": null
+  },
+  "KAIAUSDT": {
+   "had": 3572,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KAITOUSDT": {
+   "had": 9239,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KASUSDT": {
+   "had": 4937,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KATUSDT": {
+   "had": 882,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KAVAUSDT": {
+   "had": 4976,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KEEPUSDT": {
+   "had": 273,
+   "added": 10,
+   "end": "2022-02-18",
+   "error": null
+  },
+  "KERNELUSDT": {
+   "had": 2812,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KGENUSDT": {
+   "had": 1756,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KITEUSDT": {
+   "had": 3925,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KLACUSDT": {
+   "had": 93,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KMNOUSDT": {
+   "had": 3641,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KNCUSDT": {
+   "had": 4976,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KORUUSDT": {
+   "had": 95,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KSMUSDT": {
+   "had": 5247,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KSTRUSDT": {
+   "had": 0,
+   "added": 164,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "KUSDT": {
+   "had": 0,
+   "added": 434,
+   "end": "2025-10-19",
+   "error": null
+  },
+  "L3USDT": {
+   "had": 0,
+   "added": 1833,
+   "end": "2026-04-03",
+   "error": null
+  },
+  "LABUSDT": {
+   "had": 2081,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LAIUSDT": {
+   "had": 0,
+   "added": 976,
+   "end": "2025-03-17",
+   "error": null
+  },
+  "LAUNCHCOINUSDT": {
+   "had": 0,
+   "added": 991,
+   "end": "2025-10-26",
+   "error": null
+  },
+  "LAUSDT": {
+   "had": 7355,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LDOUSDT": {
+   "had": 4401,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LFTUSDT": {
+   "had": 0,
+   "added": 159,
+   "end": "2024-07-08",
+   "error": null
+  },
+  "LIGHTUSDT": {
+   "had": 2841,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LINEAUSDT": {
+   "had": 2019,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LINKUSDT": {
+   "had": 6315,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LITEUSDT": {
+   "had": 228,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LITUSDT": {
+   "had": 1253,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LLYUSDT": {
+   "had": 222,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LOOKSUSDT": {
+   "had": 0,
+   "added": 4113,
+   "end": "2025-10-26",
+   "error": null
+  },
+  "LPTUSDT": {
+   "had": 11708,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LQTYUSDT": {
+   "had": 3696,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LRCUSDT": {
+   "had": 6822,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LRCXUSDT": {
+   "had": 100,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LSKUSDT": {
+   "had": 6429,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LTCUSDT": {
+   "had": 6315,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LTOUSDT": {
+   "had": 0,
+   "added": 913,
+   "end": "2025-01-30",
+   "error": null
+  },
+  "LUCEUSDT": {
+   "had": 0,
+   "added": 480,
+   "end": "2025-04-28",
+   "error": null
+  },
+  "LUMIAUSDT": {
+   "had": 3593,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LUNA2USDT": {
+   "had": 6298,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "LUNAUSDT": {
+   "had": 642,
+   "added": 57,
+   "end": "2022-06-01",
+   "error": null
+  },
+  "LYNUSDT": {
+   "had": 1932,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MAGICUSDT": {
+   "had": 7231,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MAGMAUSDT": {
+   "had": 1278,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MAJORUSDT": {
+   "had": 0,
+   "added": 1010,
+   "end": "2025-10-21",
+   "error": null
+  },
+  "MANAUSDT": {
+   "had": 5166,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MANEKIUSDT": {
+   "had": 0,
+   "added": 918,
+   "end": "2025-04-28",
+   "error": null
+  },
+  "MANTAUSDT": {
+   "had": 4436,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MAPOUSDT": {
+   "had": 0,
+   "added": 373,
+   "end": "2024-09-24",
+   "error": null
+  },
+  "MARAUSDT": {
+   "had": 0,
+   "added": 155,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MASAUSDT": {
+   "had": 0,
+   "added": 1546,
+   "end": "2025-10-18",
+   "error": null
+  },
+  "MASKUSDT": {
+   "had": 11160,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MAVIAUSDT": {
+   "had": 4195,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MAVUSDT": {
+   "had": 3375,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MAXUSDT": {
+   "had": 0,
+   "added": 796,
+   "end": "2025-04-28",
+   "error": null
+  },
+  "MCUSDT": {
+   "had": 0,
+   "added": 252,
+   "end": "2023-11-07",
+   "error": null
+  },
+  "MEGAUSDT": {
+   "had": 1660,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MELANIAUSDT": {
+   "had": 3318,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MEMEUSDT": {
+   "had": 5326,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MERLUSDT": {
+   "had": 4819,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "METAUSDT": {
+   "had": 273,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "METISUSDT": {
+   "had": 4481,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "METUSDT": {
+   "had": 1739,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MEUSDT": {
+   "had": 5839,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MEWUSDT": {
+   "had": 4148,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MICHIUSDT": {
+   "had": 0,
+   "added": 908,
+   "end": "2025-06-27",
+   "error": null
+  },
+  "MINAUSDT": {
+   "had": 7735,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MIRAUSDT": {
+   "had": 4728,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MITOUSDT": {
+   "had": 1991,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MMTUSDT": {
+   "had": 3687,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MNTUSDT": {
+   "had": 0,
+   "added": 3213,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MOBILEUSDT": {
+   "had": 0,
+   "added": 1579,
+   "end": "2025-08-01",
+   "error": null
+  },
+  "MOCAUSDT": {
+   "had": 3998,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MONUSDT": {
+   "had": 733,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MOODENGUSDT": {
+   "had": 5138,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MORPHOUSDT": {
+   "had": 3509,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MOTHERUSDT": {
+   "had": 0,
+   "added": 664,
+   "end": "2025-03-18",
+   "error": null
+  },
+  "MOVEUSDT": {
+   "had": 6389,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MOVRUSDT": {
+   "had": 5768,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MRVLUSDT": {
+   "had": 225,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MSFTUSDT": {
+   "had": 273,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MSTRUSDT": {
+   "had": 267,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MTLUSDT": {
+   "had": 4697,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MUBARAKUSDT": {
+   "had": 2982,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MULTIUSDT": {
+   "had": 0,
+   "added": 502,
+   "end": "2024-03-05",
+   "error": null
+  },
+  "MUSDT": {
+   "had": 6525,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MUUSDT": {
+   "had": 243,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MUUUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MVLLUSDT": {
+   "had": 81,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "MVLUSDT": {
+   "had": 0,
+   "added": 970,
+   "end": "2025-10-18",
+   "error": null
+  },
+  "MYRIAUSDT": {
+   "had": 0,
+   "added": 1984,
+   "end": "2025-10-06",
+   "error": null
+  },
+  "MYXUSDT": {
+   "had": 5733,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NAORISUSDT": {
+   "had": 2164,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NBISUSDT": {
+   "had": 186,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NCUSDT": {
+   "had": 0,
+   "added": 1015,
+   "end": "2025-07-05",
+   "error": null
+  },
+  "NEARUSDT": {
+   "had": 5250,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NEOUSDT": {
+   "had": 4917,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NEWTUSDT": {
+   "had": 6919,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NFLXUSDT": {
+   "had": 63,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NIGHTUSDT": {
+   "had": 2806,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NILUSDT": {
+   "had": 2962,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NMRUSDT": {
+   "had": 4845,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NODEUSDT": {
+   "had": 0,
+   "added": 284,
+   "end": "2025-10-21",
+   "error": null
+  },
+  "NOKIAUSDT": {
+   "had": 0,
+   "added": 281,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NOMUSDT": {
+   "had": 1918,
+   "added": 275,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NOTUSDT": {
+   "had": 4093,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NOWUSDT": {
+   "had": 159,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NSUSDT": {
+   "had": 0,
+   "added": 1303,
+   "end": "2026-02-27",
+   "error": null
+  },
+  "NVDAUSDT": {
+   "had": 246,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NVDLUSDT": {
+   "had": 0,
+   "added": 143,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NXPCUSDT": {
+   "had": 2628,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "NYANUSDT": {
+   "had": 0,
+   "added": 799,
+   "end": "2025-02-19",
+   "error": null
+  },
+  "OBTUSDT": {
+   "had": 0,
+   "added": 3837,
+   "end": "2026-02-27",
+   "error": null
+  },
+  "OGNUSDT": {
+   "had": 4772,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "OGUSDT": {
+   "had": 3192,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "OKBUSDT": {
+   "had": 0,
+   "added": 2163,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ONDOUSDT": {
+   "had": 4421,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ONDSUSDT": {
+   "had": 144,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ONGUSDT": {
+   "had": 4589,
+   "added": 515,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ONTUSDT": {
+   "had": 6425,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ONUSDT": {
+   "had": 18,
+   "added": 149,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "OPENAIUSDT": {
+   "had": 42,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "OPENUSDT": {
+   "had": 1930,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "OPGUSDT": {
+   "had": 570,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "OPNUSDT": {
+   "had": 995,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "OPUSDT": {
+   "had": 4550,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ORCAUSDT": {
+   "had": 7542,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ORCLUSDT": {
+   "had": 246,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ORDERUSDT": {
+   "had": 2097,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ORDIUSDT": {
+   "had": 5160,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ORNUSDT": {
+   "had": 0,
+   "added": 661,
+   "end": "2024-10-17",
+   "error": null
+  },
+  "OSMOUSDT": {
+   "had": 0,
+   "added": 1528,
+   "end": "2025-10-21",
+   "error": null
+  },
+  "OUSDT": {
+   "had": 204,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PANWUSDT": {
+   "had": 0,
+   "added": 140,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PARTIUSDT": {
+   "had": 2950,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PAXGUSDT": {
+   "had": 6199,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PEAQUSDT": {
+   "had": 0,
+   "added": 1970,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PENDLEUSDT": {
+   "had": 3354,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PENGSTOCKUSDT": {
+   "had": 0,
+   "added": 140,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PENGUSDT": {
+   "had": 0,
+   "added": 745,
+   "end": "2025-01-30",
+   "error": null
+  },
+  "PENGUUSDT": {
+   "had": 3520,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PEOPLEUSDT": {
+   "had": 5012,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PHAROSUSDT": {
+   "had": 443,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PHAUSDT": {
+   "had": 3776,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PIEVERSEUSDT": {
+   "had": 2391,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PIGGYUSDT": {
+   "had": 0,
+   "added": 234,
+   "end": "2025-12-07",
+   "error": null
+  },
+  "PIPPINUSDT": {
+   "had": 4860,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PIRATEUSDT": {
+   "had": 0,
+   "added": 739,
+   "end": "2025-03-25",
+   "error": null
+  },
+  "PIXELUSDT": {
+   "had": 4363,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PIXFIUSDT": {
+   "had": 0,
+   "added": 268,
+   "end": "2024-11-05",
+   "error": null
+  },
+  "PLAYSOUTUSDT": {
+   "had": 0,
+   "added": 1454,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PLTRUSDT": {
+   "had": 267,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PLUMEUSDT": {
+   "had": 4952,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PNUTUSDT": {
+   "had": 3542,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "POETUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "POLUSDT": {
+   "had": 3743,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "POLYXUSDT": {
+   "had": 4694,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "POPCATUSDT": {
+   "had": 4226,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PORTALUSDT": {
+   "had": 4308,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "POWERUSDT": {
+   "had": 1418,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "POWRUSDT": {
+   "had": 4694,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PRAIUSDT": {
+   "had": 0,
+   "added": 283,
+   "end": "2025-07-05",
+   "error": null
+  },
+  "PRCLUSDT": {
+   "had": 0,
+   "added": 3095,
+   "end": "2025-12-26",
+   "error": null
+  },
+  "PRIMEUSDT": {
+   "had": 0,
+   "added": 1114,
+   "end": "2025-10-06",
+   "error": null
+  },
+  "PRLUSDT": {
+   "had": 834,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PROMPTUSDT": {
+   "had": 2859,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PROSUSDT": {
+   "had": 0,
+   "added": 456,
+   "end": "2025-04-16",
+   "error": null
+  },
+  "PROVEUSDT": {
+   "had": 2167,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PTBUSDT": {
+   "had": 2081,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PUFFERUSDT": {
+   "had": 2040,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PUMPFUNUSDT": {
+   "had": 0,
+   "added": 2542,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PUNDIXUSDT": {
+   "had": 2717,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PUNDUUSDT": {
+   "had": 0,
+   "added": 307,
+   "end": "2024-07-08",
+   "error": null
+  },
+  "PURRUSDT": {
+   "had": 0,
+   "added": 176,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "PYRUSDT": {
+   "had": 0,
+   "added": 4135,
+   "end": "2026-06-11",
+   "error": null
+  },
+  "PYTHUSDT": {
+   "had": 4611,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "QCOMUSDT": {
+   "had": 186,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "QIUSDT": {
+   "had": 0,
+   "added": 1993,
+   "end": "2025-10-06",
+   "error": null
+  },
+  "QNTUSDT": {
+   "had": 3402,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "QNTXUSDT": {
+   "had": 144,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "QQQUSDT": {
+   "had": 243,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "QTUMUSDT": {
+   "had": 5060,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "QUSDT": {
+   "had": 1907,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RAREUSDT": {
+   "had": 5047,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RAVEUSDT": {
+   "had": 1859,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RAYDIUMUSDT": {
+   "had": 0,
+   "added": 4014,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RDWUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RECALLUSDT": {
+   "had": 3447,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "REDUSDT": {
+   "had": 6357,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RENDERUSDT": {
+   "had": 3866,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "REQUSDT": {
+   "had": 0,
+   "added": 4981,
+   "end": "2026-06-03",
+   "error": null
+  },
+  "RESOLVUSDT": {
+   "had": 4362,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "REUSDT": {
+   "had": 232,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "REXUSDT": {
+   "had": 0,
+   "added": 832,
+   "end": "2025-10-13",
+   "error": null
+  },
+  "REZUSDT": {
+   "had": 4103,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RFCUSDT": {
+   "had": 0,
+   "added": 1124,
+   "end": "2025-10-18",
+   "error": null
+  },
+  "RHEAUSDT": {
+   "had": 0,
+   "added": 434,
+   "end": "2025-10-17",
+   "error": null
+  },
+  "RIFSOLUSDT": {
+   "had": 0,
+   "added": 421,
+   "end": "2025-04-07",
+   "error": null
+  },
+  "RIVERUSDT": {
+   "had": 3715,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RIVNUSDT": {
+   "had": 21,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RKLBUSDT": {
+   "had": 204,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RLCUSDT": {
+   "had": 3669,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RLUSDUSDT": {
+   "had": 0,
+   "added": 2072,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ROAMUSDT": {
+   "had": 0,
+   "added": 3043,
+   "end": "2026-07-27",
+   "error": null
+  },
+  "ROBOUSDT": {
+   "had": 911,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RONINUSDT": {
+   "had": 3174,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RONUSDT": {
+   "had": 0,
+   "added": 1024,
+   "end": "2025-01-26",
+   "error": null
+  },
+  "ROSEUSDT": {
+   "had": 4964,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RPLUSDT": {
+   "had": 5584,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RSRUSDT": {
+   "had": 5096,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RSS3USDT": {
+   "had": 0,
+   "added": 4116,
+   "end": "2025-11-26",
+   "error": null
+  },
+  "RUNEUSDT": {
+   "had": 5102,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "RVNUSDT": {
+   "had": 11087,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SAFEUSDT": {
+   "had": 4145,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SAGAUSDT": {
+   "had": 4190,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SAHARAUSDT": {
+   "had": 7094,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SAMSUNGUSDT": {
+   "had": 160,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SANDUSDT": {
+   "had": 5186,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SAPIENUSDT": {
+   "had": 2043,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SAROSUSDT": {
+   "had": 0,
+   "added": 1603,
+   "end": "2026-02-11",
+   "error": null
+  },
+  "SCAUSDT": {
+   "had": 0,
+   "added": 1762,
+   "end": "2025-10-21",
+   "error": null
+  },
+  "SCRTUSDT": {
+   "had": 6412,
+   "added": 242,
+   "end": "2026-09-05",
+   "error": null
+  },
+  "SDUSDT": {
+   "had": 0,
+   "added": 1432,
+   "end": "2026-03-06",
+   "error": null
+  },
+  "SEIUSDT": {
+   "had": 3229,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SENDUSDT": {
+   "had": 0,
+   "added": 1629,
+   "end": "2025-10-18",
+   "error": null
+  },
+  "SENTUSDT": {
+   "had": 2123,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SERAPHUSDT": {
+   "had": 0,
+   "added": 1327,
+   "end": "2025-10-18",
+   "error": null
+  },
+  "SHAZUSDT": {
+   "had": 0,
+   "added": 182,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SHELLUSDT": {
+   "had": 3149,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SHIB1000USDT": {
+   "had": 5223,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SIGNUSDT": {
+   "had": 8395,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SILLYUSDT": {
+   "had": 0,
+   "added": 1201,
+   "end": "2025-01-30",
+   "error": null
+  },
+  "SIRENUSDT": {
+   "had": 2953,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SKHYNIXUSDT": {
+   "had": 160,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SKHYUSDT": {
+   "had": 0,
+   "added": 174,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SKLUSDT": {
+   "had": 4787,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SKRUSDT": {
+   "had": 1191,
+   "added": 359,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SKYAI1USDT": {
+   "had": 0,
+   "added": 627,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SKYUSDT": {
+   "had": 2099,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SLFUSDT": {
+   "had": 0,
+   "added": 1144,
+   "end": "2025-09-19",
+   "error": null
+  },
+  "SLPUSDT": {
+   "had": 12024,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SLXUSDT": {
+   "had": 430,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SMCIUSDT": {
+   "had": 100,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SMHUSDT": {
+   "had": 0,
+   "added": 161,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SNDKUSDT": {
+   "had": 270,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SNOWUSDT": {
+   "had": 0,
+   "added": 176,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SNTUSDT": {
+   "had": 8970,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SNXUSDT": {
+   "had": 5060,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SNXXUSDT": {
+   "had": 0,
+   "added": 164,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOFIUSDT": {
+   "had": 0,
+   "added": 140,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOLAYERUSDT": {
+   "had": 0,
+   "added": 9412,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOLOUSDT": {
+   "had": 0,
+   "added": 886,
+   "end": "2025-10-17",
+   "error": null
+  },
+  "SOLUSDT": {
+   "had": 5922,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOMIUSDT": {
+   "had": 4698,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SONICUSDT": {
+   "had": 6862,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SONYUSDT": {
+   "had": 57,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOONUSDT": {
+   "had": 4735,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOPHUSDT": {
+   "had": 7542,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOSOUSDT": {
+   "had": 0,
+   "added": 2625,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOXLUSDT": {
+   "had": 207,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOXSUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SOXXUSDT": {
+   "had": 0,
+   "added": 143,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SPACEUSDT": {
+   "had": 1108,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SPCXUSDT": {
+   "had": 186,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SPECUSDT": {
+   "had": 0,
+   "added": 1492,
+   "end": "2025-10-06",
+   "error": null
+  },
+  "SPKUSDT": {
+   "had": 2429,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SPORTFUNUSDT": {
+   "had": 1133,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SPXUSDT": {
+   "had": 3581,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SPYUSDT": {
+   "had": 222,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SQDUSDT": {
+   "had": 2465,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SQQQUSDT": {
+   "had": 81,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SSVUSDT": {
+   "had": 3732,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STABLEUSDT": {
+   "had": 1591,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STBLUSDT": {
+   "had": 1877,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STEEMUSDT": {
+   "had": 4692,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STGUSDT": {
+   "had": 4409,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STORJUSDT": {
+   "had": 5123,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STOUSDT": {
+   "had": 3602,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STRKUSDT": {
+   "had": 4337,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STXUSDT": {
+   "had": 13365,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "STXXUSDT": {
+   "had": 96,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SUIUSDT": {
+   "had": 3543,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SUNDOGUSDT": {
+   "had": 0,
+   "added": 1373,
+   "end": "2025-11-26",
+   "error": null
+  },
+  "SUNUSDT": {
+   "had": 6512,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SUPERUSDT": {
+   "had": 7369,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SUSDT": {
+   "had": 3089,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SUSHIUSDT": {
+   "had": 5702,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SWEATUSDT": {
+   "had": 0,
+   "added": 4061,
+   "end": "2025-10-26",
+   "error": null
+  },
+  "SXTUSDT": {
+   "had": 2699,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "SYRUPUSDT": {
+   "had": 2604,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TACUSDT": {
+   "had": 2261,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TAIKOUSDT": {
+   "had": 2390,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TAIUSDT": {
+   "had": 0,
+   "added": 1471,
+   "end": "2026-03-19",
+   "error": null
+  },
+  "TAOUSDT": {
+   "had": 4400,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TAUSDT": {
+   "had": 2225,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TERUSDT": {
+   "had": 0,
+   "added": 200,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "THETAUSDT": {
+   "had": 5372,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "THEUSDT": {
+   "had": 3494,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TIAUSDT": {
+   "had": 4672,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TLMUSDT": {
+   "had": 5123,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TNSRUSDT": {
+   "had": 5985,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TOMIUSDT": {
+   "had": 0,
+   "added": 1177,
+   "end": "2024-11-05",
+   "error": null
+  },
+  "TOWNSUSDT": {
+   "had": 2134,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TQQQUSDT": {
+   "had": 100,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TRBUSDT": {
+   "had": 7394,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TREEUSDT": {
+   "had": 5520,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TRIAUSDT": {
+   "had": 1031,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TRUMPUSDT": {
+   "had": 3329,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TRUSTUSDT": {
+   "had": 3276,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TRUTHUSDT": {
+   "had": 1792,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TRXUSDT": {
+   "had": 5372,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TSEMUSDT": {
+   "had": 0,
+   "added": 155,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TSLAUSDT": {
+   "had": 291,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TSLLUSDT": {
+   "had": 0,
+   "added": 146,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TSMUSDT": {
+   "had": 288,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TSTBSCUSDT": {
+   "had": 0,
+   "added": 3199,
+   "end": "2026-07-27",
+   "error": null
+  },
+  "TTWOUSDT": {
+   "had": 0,
+   "added": 188,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TURTLEUSDT": {
+   "had": 3987,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TUSDT": {
+   "had": 7076,
+   "added": 300,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TUTUSDT": {
+   "had": 2969,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TWTUSDT": {
+   "had": 5715,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TXNUSDT": {
+   "had": 0,
+   "added": 200,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "TZAUSDT": {
+   "had": 0,
+   "added": 158,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "UAIUSDT": {
+   "had": 1511,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "UBUSDT": {
+   "had": 1907,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "UMAUSDT": {
+   "had": 5861,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "UNIUSDT": {
+   "had": 5871,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "UROUSDT": {
+   "had": 0,
+   "added": 250,
+   "end": "2025-03-06",
+   "error": null
+  },
+  "USARUSDT": {
+   "had": 102,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "USD1USDT": {
+   "had": 0,
+   "added": 2505,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "USDCUSDT": {
+   "had": 4588,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "USDEUSDT": {
+   "had": 0,
+   "added": 2282,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "USELESSUSDT": {
+   "had": 2291,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "USTCUSDT": {
+   "had": 4592,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "USTUSDT": {
+   "had": 0,
+   "added": 66,
+   "end": "2022-06-01",
+   "error": null
+  },
+  "USUALUSDT": {
+   "had": 6920,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "USUSDT": {
+   "had": 1361,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "UVXYUSDT": {
+   "had": 96,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VANAUSDT": {
+   "had": 6145,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VANRYUSDT": {
+   "had": 4495,
+   "added": 98,
+   "end": "2026-08-12",
+   "error": null
+  },
+  "VELODROMEUSDT": {
+   "had": 3446,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VELOUSDT": {
+   "had": 0,
+   "added": 2519,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VELVETUSDT": {
+   "had": 2261,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VETUSDT": {
+   "had": 5208,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VGXUSDT": {
+   "had": 0,
+   "added": 1261,
+   "end": "2024-09-24",
+   "error": null
+  },
+  "VINEUSDT": {
+   "had": 3299,
+   "added": 152,
+   "end": "2026-08-21",
+   "error": null
+  },
+  "VIRTUALUSDT": {
+   "had": 3572,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VRAUSDT": {
+   "had": 0,
+   "added": 1762,
+   "end": "2025-05-12",
+   "error": null
+  },
+  "VRTUSDT": {
+   "had": 0,
+   "added": 176,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "VRUSDT": {
+   "had": 0,
+   "added": 823,
+   "end": "2025-10-17",
+   "error": null
+  },
+  "VVVUSDT": {
+   "had": 3270,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WALUSDT": {
+   "had": 9025,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WAVESUSDT": {
+   "had": 4991,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WAXPUSDT": {
+   "had": 4775,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WCTUSDT": {
+   "had": 8562,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WDCUSDT": {
+   "had": 180,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WENSTOCKUSDT": {
+   "had": 0,
+   "added": 146,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WETUSDT": {
+   "had": 2787,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WHITEWHALEUSDT": {
+   "had": 0,
+   "added": 1170,
+   "end": "2026-07-20",
+   "error": null
+  },
+  "WIFUSDT": {
+   "had": 4457,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WLDUSDT": {
+   "had": 3297,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WLFIUSDT": {
+   "had": 2027,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WOOUSDT": {
+   "had": 5162,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "WSMUSDT": {
+   "had": 0,
+   "added": 349,
+   "end": "2024-02-05",
+   "error": null
+  },
+  "WUSDT": {
+   "had": 4208,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XAGUSDT": {
+   "had": 841,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XAIUSDT": {
+   "had": 4460,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XANUSDT": {
+   "had": 1805,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XAUTUSDT": {
+   "had": 2879,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XAUUSDT": {
+   "had": 841,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XBIUSDT": {
+   "had": 0,
+   "added": 161,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XCHUSDT": {
+   "had": 0,
+   "added": 1984,
+   "end": "2026-03-19",
+   "error": null
+  },
+  "XCNUSDT": {
+   "had": 6532,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XDCUSDT": {
+   "had": 0,
+   "added": 3441,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XIONUSDT": {
+   "had": 0,
+   "added": 4853,
+   "end": "2026-06-18",
+   "error": null
+  },
+  "XLEUSDT": {
+   "had": 36,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XLFUSDT": {
+   "had": 0,
+   "added": 143,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XLKUSDT": {
+   "had": 0,
+   "added": 143,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XLMUSDT": {
+   "had": 5372,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XLVUSDT": {
+   "had": 0,
+   "added": 143,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XMRUSDT": {
+   "had": 4964,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XNOUSDT": {
+   "had": 0,
+   "added": 3722,
+   "end": "2026-01-24",
+   "error": null
+  },
+  "XNYUSDT": {
+   "had": 2086,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XPINUSDT": {
+   "had": 1907,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XPLUSDT": {
+   "had": 2033,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XRDUSDT": {
+   "had": 0,
+   "added": 1732,
+   "end": "2025-07-11",
+   "error": null
+  },
+  "XRPUSDT": {
+   "had": 5702,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XTERUSDT": {
+   "had": 0,
+   "added": 1357,
+   "end": "2025-10-18",
+   "error": null
+  },
+  "XTZUSDT": {
+   "had": 11474,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XVGUSDT": {
+   "had": 3354,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "XVSUSDT": {
+   "had": 3159,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "YBUSDT": {
+   "had": 1733,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "YFIUSDT": {
+   "had": 5070,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "YGGUSDT": {
+   "had": 6808,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "YZYUSDT": {
+   "had": 0,
+   "added": 1608,
+   "end": "2026-04-30",
+   "error": null
+  },
+  "ZAMAUSDT": {
+   "had": 1193,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZBCNUSDT": {
+   "had": 0,
+   "added": 2618,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZBCUSDT": {
+   "had": 0,
+   "added": 69,
+   "end": "2023-09-14",
+   "error": null
+  },
+  "ZBTUSDT": {
+   "had": 4135,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZCXUSDT": {
+   "had": 0,
+   "added": 277,
+   "end": "2024-09-24",
+   "error": null
+  },
+  "ZECUSDT": {
+   "had": 5118,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZENTUSDT": {
+   "had": 0,
+   "added": 1120,
+   "end": "2025-12-26",
+   "error": null
+  },
+  "ZENUSDT": {
+   "had": 5112,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZEREBROUSDT": {
+   "had": 3137,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZESTUSDT": {
+   "had": 311,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZETAUSDT": {
+   "had": 6460,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZEUSUSDT": {
+   "had": 0,
+   "added": 2006,
+   "end": "2026-02-06",
+   "error": null
+  },
+  "ZILUSDT": {
+   "had": 5409,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZKCUSDT": {
+   "had": 1888,
+   "added": 307,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZKFUSDT": {
+   "had": 0,
+   "added": 911,
+   "end": "2024-11-15",
+   "error": null
+  },
+  "ZKPUSDT": {
+   "had": 2437,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZKUSDT": {
+   "had": 4430,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZMUSDT": {
+   "had": 30,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZORAUSDT": {
+   "had": 3206,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZROUSDT": {
+   "had": 3974,
+   "added": 250,
+   "end": "2026-09-06",
+   "error": null
+  },
+  "ZRXUSDT": {
+   "had": 5978,
+   "added": 125,
+   "end": "2026-09-06",
+   "error": null
+  }
+ }
+}
