@@ -5508,6 +5508,15 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L17 `ART = os.path.join(ROOT, 'research/dca_paper/…`
 - L20 `main()`
 
+## tools/diag_disk.py · 66 строк
+
+Диски и куда на самом деле пишется запись стакана — одним заданием.
+
+- L20 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L21 `PATHS = ['research/b1_book/out', 'out', 'resear…`
+- L25 `sh(cmd)`
+- L34 `main()`
+
 ## tools/diag_queue.py · 65 строк
 
 Состояние канала заданий и идущих прогонов — одним заданием.
