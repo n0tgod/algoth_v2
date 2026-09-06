@@ -9,3 +9,13 @@
 [22:04:29] после: /dev/sdb        147G  131G  8.9G  94% /root/algoth_v2/research/b1_book/out
 [22:04:29] после: /dev/sda1       150G   68G   76G  48% /
 конец: 2026-09-06T22:04:29Z, код 0
+публикуется в ветку main:
+ jobs/done/spill-dry.done            |  1 +
+ jobs/done/spill-dry.log             | 11 +++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 16 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   bd9b7a7..4e458e5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
