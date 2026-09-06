@@ -218,3 +218,20 @@
 ## Чего эти числа НЕ описывают
 
 Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а не сведён в позицию, то есть маржа и цена ликвидации по-прежнему считаются по каждой позиции отдельно — на бирже они считаются по слитой. Веса модели видели эти часы, поэтому пересчёт читается как оценка СВЕРХУ. Период один и режим рынка один.
+публикуется в ветку main:
+ jobs/done/d10-short-3.log             |    36 +
+ jobs/done/dca-costs-p90b.log          |     7 +
+ jobs/done/dca-restat-net.done         |     1 +
+ jobs/done/dca-restat-net.log          |   220 +
+ jobs/done/restart-net-page.done       |     1 +
+ jobs/done/restart-net-page.log        |     7 +
+ jobs/poke.log                         |     4 +
+ research/dca_paper/out/DCA-paper.json | 16151 ++++++++------------------------
+ research/s8_loop/out/day_brake.json   |     2 +-
+ 9 files changed, 4010 insertions(+), 12419 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   68739f7..5dbf6c9  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-06T23:15:21Z, код 0
