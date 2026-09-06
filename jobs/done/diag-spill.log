@@ -23,3 +23,15 @@ trades: 248868
 
 снято 2026-09-06 22:24:59 UTC
 конец: 2026-09-06T22:24:59Z, код 0
+публикуется в ветку main:
+ jobs/done/d10-short-3.log           |  3 +++
+ jobs/done/diag-spill.done           |  1 +
+ jobs/done/diag-spill.log            | 25 +++++++++++++++++++++++++
+ jobs/done/spill-1.log               | 11 +++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 44 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   87a6c7b..8e5273b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
