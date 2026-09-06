@@ -82,7 +82,21 @@ git add -f research/x/out/big.bin
 check "ряд размером в мегабайты не уходит в git" 1 $?
 git reset -q --hard; rm -f research/x/out/big.bin
 
-# 7. Хук на месте и исполняем.
+# 7. Ядро памяти: разросшийся CLAUDE.md — отказ, короткий — молчит,
+#    осознанный рост — разрешён явным намерением.
+head -c 60000 /dev/zero | tr '\0' 'x' > CLAUDE.md
+git add CLAUDE.md
+"$CHECK" >/dev/null 2>&1
+check "разросшееся ядро памяти останавливает коммит" 1 $?
+ALLOW_BIG_MEMORY=1 "$CHECK" >/dev/null 2>&1
+check "осознанный рост ядра памяти разрешён явным намерением" 0 $?
+head -c 20000 /dev/zero | tr '\0' 'x' > CLAUDE.md
+git add CLAUDE.md
+"$CHECK" >/dev/null 2>&1
+check "короткое ядро памяти проходит" 0 $?
+git reset -q --hard; rm -f CLAUDE.md
+
+# 8. Хук на месте и исполняем.
 cd - >/dev/null || exit 1
 [ -x tools/githooks/pre-commit ]
 check "хук исполняем" 0 $?
