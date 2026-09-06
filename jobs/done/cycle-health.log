@@ -1,0 +1,15 @@
+== задание cycle-health ==
+строка: run research/s8_loop/cycle_health.py
+начало: 2026-09-06T18:22:41Z
+запускаю: .venv/bin/python research/s8_loop/cycle_health.py 
+[18:22:41] строк 385, суток 20: цикл укладывается в час не всегда: за 2026-09-06 1 из 10 прогонов длиннее часа
+[18:22:41] отчёт: /root/algoth_v2/research/s8_loop/out/CYCLE-health-1m.md
+публикуется в ветку main:
+ jobs/done/cycle-health.done               |   1 +
+ jobs/done/cycle-health.log                |   6 ++
+ jobs/done/status-1835.done                |   1 +
+ jobs/done/status-1835.log                 |  11 +++
+ jobs/poke.log                             |   4 +
+ research/s8_loop/out/CYCLE-health-1m.md   |  56 +++++++-------
+ research/s8_loop/out/cycle-health-1m.json | 117 +++++++++++++++++++++++++-----
+ 7 files changed, 151 insertions(+), 45 deletions(-)

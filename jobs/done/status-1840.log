@@ -1,21 +1,23 @@
-== задание status-1835 ==
+== задание status-1840 ==
 строка: status
-начало: 2026-09-06T18:21:03Z
+начало: 2026-09-06T18:22:41Z
 --- диск ---
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/sda1       150G   68G   76G  48% /
-/dev/sdb        147G  131G  8.2G  95% /mnt/HC_Volume_106683528
+/dev/sdb        147G  132G  8.1G  95% /mnt/HC_Volume_106683528
 --- процессы ---
 669148 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --arm gbm --capital 300 --interval-sec 5 --clear-halt
 1572752 .venv/bin/python research/b1_book/collect.py --http 8765
 --- идущие прогоны ---
 1609533 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/d10-short.log research/dca_ladder/run_d10.py
 1609538 .venv/bin/python research/dca_ladder/run_d10.py
+1621326 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/cycle-health.log research/s8_loop/cycle_health.py
+1621332 .venv/bin/python research/s8_loop/cycle_health.py
 --- статус сбора ---
-{"t": 1788718863.3, "uptime_sec": 27999.2, "messages": 108946096, "trades": 12546503, "resets": 0, "last_msg_age_sec": 0.1, "snapshots": 18242844, "snapshot_errors": 0, "last_snap_age_sec": 3.4, "snap_pass_sec": 0.732, "writes": {"book": 18242844, "trades": 12546485, "raw": 1152539, "liq": 2978, "metrics": 68724}, "write_age_sec": {"book": 3.4, "trades": 9.3, "raw": 0.5, "liq": 34.2, "metrics": 66.4}, "symbols": {"0GUSDT": {"ready": false, "bid": null, "ask": null, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": false, "bid": null, "ask": null, "resets": 0}, "1000000MOGUSDT": {"ready": false, "bid": null, "ask": null, "resets": 0}, "10000NEXUSDT": {"ready": false, "bid": null, "ask": null, "r
+{"t": 1788718958.5, "uptime_sec": 28094.5, "messages": 109292529, "trades": 12583389, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 18305330, "snapshot_errors": 0, "last_snap_age_sec": 1.1, "snap_pass_sec": 0.287, "writes": {"book": 18305330, "trades": 12583385, "raw": 1157233, "liq": 2985, "metrics": 68724}, "write_age_sec": {"book": 1.1, "trades": 0.2, "raw": 0.1, "liq": 10.9, "metrics": 161.7}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1979, "ask": 0.198, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004043, "ask": 0.0004045, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1095, "ask": 0.1096, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.01458
 --- живой исполнитель ---
 {
-  "at_ms": 1788718862627,
+  "at_ms": 1788718960941,
   "capital_usd": 300.0,
   "dry": false,
   "entries_paused": false,
@@ -34,15 +36,4 @@ Filesystem      Size  Used Avail Use% Mounted on
     "equity": 284.21345292
   }
 }
-конец: 2026-09-06T18:21:03Z
-публикуется в ветку main:
- jobs/done/status-1830.done          |  1 +
- jobs/done/status-1830.log           |  9 +++++++++
- jobs/done/status-1835.log           | 37 +++++++++++++++++++++++++++++++++++++
- jobs/poke.log                       |  5 +++++
- research/s8_loop/out/day_brake.json |  2 +-
- 5 files changed, 53 insertions(+), 1 deletion(-)
-To github.com:n0tgod/algoth_v2.git
-   db6e5a7..b8474ca  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
+конец: 2026-09-06T18:22:41Z
