@@ -1,0 +1,37 @@
+== задание status-1831 ==
+строка: status
+начало: 2026-09-06T18:29:55Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   68G   76G  48% /
+/dev/sdb        147G  132G  7.6G  95% /mnt/HC_Volume_106683528
+--- процессы ---
+669148 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --arm gbm --capital 300 --interval-sec 5 --clear-halt
+1572752 .venv/bin/python research/b1_book/collect.py --http 8765
+--- идущие прогоны ---
+1609533 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/d10-short.log research/dca_ladder/run_d10.py
+1609538 .venv/bin/python research/dca_ladder/run_d10.py
+--- статус сбора ---
+{"t": 1788719392.9, "uptime_sec": 28528.8, "messages": 110684986, "trades": 12719003, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 18600137, "snapshot_errors": 0, "last_snap_age_sec": 3.3, "snap_pass_sec": 0.276, "writes": {"book": 18600137, "trades": 12718985, "raw": 1174138, "liq": 3041, "metrics": 69471}, "write_age_sec": {"book": 3.3, "trades": 3.0, "raw": 1.5, "liq": 20.9, "metrics": 294.7}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1981, "ask": 0.1982, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004046, "ask": 0.0004049, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1102, "ask": 0.1103, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.0145
+--- живой исполнитель ---
+{
+  "at_ms": 1788719394833,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-09-06T18:29:55Z
