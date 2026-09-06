@@ -2982,6 +2982,15 @@ X1: исполнитель против подставной биржи.
 - L13 `say()`
 - L14 `check()`
 
+## tools/test_stop_run.py · 49 строк
+
+Проверки `stop_run.py`: границы имени и совпадение по пути.
+
+- L9 `PS = ['1572752 .venv/bin/python research/b1_…`
+- L19 `test_protected_names_are_refused()`
+- L30 `test_match_is_by_exact_script_path_of_a_python_process()`
+- L38 `test_main_refuses_and_reports_absence()`
+
 ## tools/test_unstick.py · 87 строк
 
 Проверка размораживателя публикации на ПОДСТАВНОМ репозитории.

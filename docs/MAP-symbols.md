@@ -5628,6 +5628,19 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L22 `say()`
 - L24 `staged()`
 
+## tools/stop_run.py · 125 строк
+
+Остановить ИДУЩИЙ прогон очереди по пути скрипта — и ничего кроме него.
+
+- L26 `PROTECTED = ('b1_book/collect.py', 's8_loop/train.p…`
+- L29 `WAIT_S = 30`
+- L32 `allowed(script)` — Путь, который вообще можно останавливать: research/… или tools/…, оканчивается на .py, без «..», не из защищё…
+- L44 `match(ps_lines, script)` — Строки `ps -eo pid,args` → pid процессов `python <script> …`.
+- L59 `ps_lines()`
+- L65 `alive(pid)`
+- L75 `stop(pids, log=print)`
+- L96 `main(argv=None)`
+
 ## tools/unstick_publish.py · 77 строк
 
 Разморозить публикацию: вернуть разрезанный журнал к версии git.
