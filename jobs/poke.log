@@ -975,3 +975,8 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788715107 ==
 [2026-09-06T17:18:28Z] задание dca-costs-2 запущено: research/dca_paper/costs.py
+
+== сигнал 1788715540 ==
+
+== сигнал 1788715567 ==
+[2026-09-06T17:26:09Z] задание dca-costs-3 запущено: research/dca_paper/costs.py
