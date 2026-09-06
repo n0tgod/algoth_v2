@@ -75,3 +75,17 @@ funding: рядов 584 из 584 нужных активов
 ## Чего замер НЕ говорит
 
 Проскальзывания в числах нет. Funding посчитан по нотионалу рунгов, а не по марк-цене начисления (расхождение — ход цены от рунга до начисления, единицы процентов от самого funding). Комиссия — по сегодняшнему тарифу счёта, прошлых сеток площадка не отдаёт (A1). Гейт по ставке просмотрен ПОСЛЕ прогона книг — правилом он стать может только объявленным заранее и проверенным вперёд.
+публикуется в ветку main:
+ jobs/done/dca-costs-2.done               |    1 +
+ jobs/done/dca-costs-2.log                |   77 +
+ jobs/done/funding-refresh.log            |    7 +
+ jobs/poke.log                            |    3 +
+ research/dca_paper/out/DCA-costs-1m.json | 2780 +++++++++++++++---------------
+ research/dca_paper/out/DCA-costs-1m.md   |   86 +-
+ 6 files changed, 1521 insertions(+), 1433 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3d414c7..d5678de  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-06T17:18:40Z, код 0
