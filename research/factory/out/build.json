@@ -4,105 +4,155 @@
  "tests": "research/mech_63fa406a/test_fence.py",
  "touched": [
   "research/mech_63fa406a/depth.py",
-  "research/mech_63fa406a/controls_check.py"
+  "research/mech_63fa406a/controls_check.py",
+  "research/mech_63fa406a/RUNBOOK.md",
+  "research/mech_63fa406a/.gitignore"
  ],
  "controls": [
-  {"file": "research/mech_63fa406a/depth.py",
+  {
+   "file": "research/mech_63fa406a/depth.py",
    "old": "    return m - int(lookback), m",
    "new": "    return m - int(lookback), m + 1",
-   "expect": "ПРОВАЛ test_window_ends_before_decision"},
-  {"file": "research/mech_63fa406a/depth.py",
+   "expect": "ПРОВАЛ test_window_ends_before_decision"
+  },
+  {
+   "file": "research/mech_63fa406a/depth.py",
    "old": "    v = _finite(sell_row, i0, i1)\n    if len(v) < min_min:",
    "new": "    v = _finite(sell_row, i0, i1)\n    if False:",
-   "expect": "ПРОВАЛ test_unmeasured_is_none_not_zero"},
-  {"file": "research/mech_63fa406a/depth.py",
+   "expect": "ПРОВАЛ test_unmeasured_is_none_not_zero"
+  },
+  {
+   "file": "research/mech_63fa406a/depth.py",
    "old": "    if flow is None or dens is None or dens <= 0 or flow < 0:\n        return None",
    "new": "    if flow is None or dens is None or dens <= 0 or flow < 0:\n        return 0.0",
-   "expect": "ПРОВАЛ test_unmeasured_is_none_not_zero"},
-  {"file": "research/mech_63fa406a/depth.py",
+   "expect": "ПРОВАЛ test_unmeasured_is_none_not_zero"
+  },
+  {
+   "file": "research/mech_63fa406a/depth.py",
    "old": "    v = _finite(sweep_row, i0, i1)\n    v = v[v > 0]",
    "new": "    v = _finite(sweep_row, i0, i1)\n    v = v[v >= 0]",
-   "expect": "ПРОВАЛ test_density_ignores_nonpositive"},
-  {"file": "research/mech_63fa406a/depth.py",
+   "expect": "ПРОВАЛ test_density_ignores_nonpositive"
+  },
+  {
+   "file": "research/mech_63fa406a/depth.py",
    "old": "            p[j] = v[j][rng.permutation(len(j))]",
    "new": "            p[:] = v[rng.permutation(len(v))]",
-   "expect": "ПРОВАЛ test_block_permute_stays_inside_day"},
-  {"file": "research/mech_63fa406a/depth.py",
+   "expect": "ПРОВАЛ test_block_permute_stays_inside_day"
+  },
+  {
+   "file": "research/mech_63fa406a/depth.py",
    "old": "            thin = ~(z2[\"snaps\"] >= MIN_SNAPS)",
    "new": "            thin = np.zeros_like(z2[\"snaps\"], dtype=bool)",
-   "expect": "ПРОВАЛ test_reader_end_to_end_and_calibration"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_reader_end_to_end_and_calibration"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    out[\"book_base\"] = day_series(base_recs)",
    "new": "    out[\"book_base\"] = None",
-   "expect": "ПРОВАЛ test_end_to_end_step1"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_end_to_end_step1"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    if dist is None or not (dist > 0):     # меры нет — рычага нет",
    "new": "    if False:     # меры нет — рычага нет",
-   "expect": "ПРОВАЛ test_fence_degenerate_cases"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_fence_degenerate_cases"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    if lev <= 0:                           # забор отказал лестнице (D2)\n        return 1.0, [entry]",
    "new": "    if lev <= 0:                           # забор отказал лестнице (D2)\n        return lev, list(rungs_full)",
-   "expect": "ПРОВАЛ test_fence_degenerate_cases"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_fence_degenerate_cases"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    bar = D3.family_bar(feats, mask, names)",
    "new": "    bar = D3.family_bar(feats, mask, [x for x in names if \"d_depth\" not in x])",
-   "expect": "ПРОВАЛ test_family_bar_covers_new_columns"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_family_bar_covers_new_columns"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    elif dep <= can:",
    "new": "    elif False:",
-   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"},
-  {"file": "research/mech_63fa406a/run_fence.py",
-   "old": "            if v.get(\"rho\") is not None and abs(v[\"rho\"]) >= SPEARMAN_SAME]",
-   "new": "            if v.get(\"rho\") is not None and abs(v[\"rho\"]) >= 99.0]",
-   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
+   "old": "            and abs(v[\"rho\"]) >= SPEARMAN_SAME]",
+   "new": "            and abs(v[\"rho\"]) >= 99.0]",
+   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "        d = abs(row[\"median\"] - target_lev)",
    "new": "        d = -row[\"median\"]",
-   "expect": "ПРОВАЛ test_choose_by_leverage_not_by_money"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_choose_by_leverage_not_by_money"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "        if liq <= fl + 1e-12 and mean > fm + 1e-12:",
    "new": "        if mean > fm + 1e-12:",
-   "expect": "ПРОВАЛ test_frontier_needs_both_axes"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_frontier_needs_both_axes"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "        if len(live) >= slots:\n            continue",
    "new": "        if False:\n            continue",
-   "expect": "ПРОВАЛ test_book_respects_slots"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_book_respects_slots"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    keep, _skip = D6.one_per_name(recs)",
    "new": "    keep, _skip = list(recs), 0",
-   "expect": "ПРОВАЛ test_book_respects_one_per_name_and_name_cap"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_book_respects_one_per_name_and_name_cap"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    D6.ration(gated, name_cap, deposit=cap, min_notional=0.0,",
    "new": "    D6.ration(gated, 1.0, deposit=cap, min_notional=0.0,",
-   "expect": "ПРОВАЛ test_book_respects_one_per_name_and_name_cap"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_book_respects_one_per_name_and_name_cap"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    daily = {d: v[0] for d, v in TNT.daily(trades).items()}",
    "new": "    daily = {0: sum(t[\"net\"] for t in trades)}",
-   "expect": "ПРОВАЛ test_book_days_are_exit_days"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_book_days_are_exit_days"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "        \"mean\": round(float(np.mean(p)), 4),",
    "new": "        \"mean\": round(float(np.median(p)), 4),",
-   "expect": "ПРОВАЛ test_cell_stats_keeps_median_and_mean_apart"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_cell_stats_keeps_median_and_mean_apart"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "            if k in KILLER2_AGAINST and v.get(\"rho\") is not None",
    "new": "            if v.get(\"rho\") is not None",
-   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "        out.append((hr, pnl - prev))",
    "new": "        out.append((hr, pnl))",
-   "expect": "ПРОВАЛ test_marks_are_increments"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_marks_are_increments"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "            \"above_p95\": bool(float(real) > p95),",
    "new": "            \"above_p95\": True,",
-   "expect": "ПРОВАЛ test_null_stats_reports_percentile_and_sigmas"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_null_stats_reports_percentile_and_sigmas"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "            has_depth.append(dd is not None)",
    "new": "            has_depth.append(True)",
-   "expect": "ПРОВАЛ test_pairing_mask_is_per_position"},
-  {"file": "research/mech_63fa406a/run_fence.py",
+   "expect": "ПРОВАЛ test_pairing_mask_is_per_position"
+  },
+  {
+   "file": "research/mech_63fa406a/run_fence.py",
    "old": "    if not res[\"positions\"]:",
    "new": "    if False:",
-   "expect": "ПРОВАЛ test_end_to_end_refuses_on_empty"}
+   "expect": "ПРОВАЛ test_end_to_end_refuses_on_empty"
+  }
  ],
- "notes": "ЗАПОЛНЯЕТСЯ ПОСЛЕ ПРОГОНА"
+ "notes": "Построено: переменная глубины книги (`depth.py`: d_depth = F/λ, где F — 99-й процентиль минутного нотионала продаж за 24 ч до входа со склада Z2, λ — медиана sweep за то же окно со склада Z3) и замер `run_fence.py` двумя шагами в порядке дешевизны, как велит заявка. Шаг 1 — колонка в портрет хвоста D3 и ранговая связь с σ, d_max, оборотом (убийцы 1 и 2). Шаг 2 — сетка заборов, парная по позициям, блочный нуль внутри суток и дневной ряд книги через stability.stats (мест 6, потолок на имя 10 %, капитал $10 000) — считается только если шаг 1 не убил. Второй копии расчёта нет: забор и реплей — dca_ladder/ladder.py, окно и рунги — run_d2, AUC/планка/ранги — run_d3, раздача кассы — run_d6, день выхода — tournament.daily, форма — factory/stability. Встроенная сверка: на 400 ногах σ-рука воспроизводит run_d3.leg_cells бит в бит (ячейка, признаки, плечо), расхождений 0. 30 проверок, 24 негативных контроля. ЧЕГО НЕ СДЕЛАНО И ПОЧЕМУ: полный прогон. Роль живёт час, шаг 1 на полном населении стоит около получаса, а шаг 2 — на порядок дороже (каждый повтор нуля есть полный реплей по барам: плечо меняет исход нелинейно через ликвидацию, пересчётом из векторов это не берётся); предыдущая сессия строителя была убита пределом времени ровно на прогоне. Отцепленный запуск (setsid) правами роли недоступен, поэтому команда записана в RUNBOOK.md — запускать оператору либо заданием очереди. ПРОГНАНО ЗДЕСЬ: сюита (30/30), все 24 контроля. Один контроль оказался негодным — ссылался на строку, которой в коде нет (модуль правился после записи отчёта), и приёмка честно сказала «подделка НЕ легла»; контроль переписан на порог убийцы 2 там, где он стоит, и проверен точечно — кусается. СМОУК (400 первых ног, out/*smoke*, в git не идёт) сработал обоими убийцами, но вердиктом не является: `--limit N` берёт первые N ног, то есть начало журнала, а не выборку (та же ловушка дважды переворачивала знак в D2), и хвост там 5 позиций при семейственной планке 0.47. ОГОВОРКИ, объявленные до прогона: веса модели видели эти часы — оценка сверху; издержки круга не сняты, всё брутто; обе руки считаются без предела плеча тира (как D3 до правки 2026-09-05), доля позиций сверх предела печатается по каждой; население ограничено сутками, где лежат ОБА склада записи, — это граница данных, а не выбор."
 }
