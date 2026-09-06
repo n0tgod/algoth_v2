@@ -1505,7 +1505,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L62 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
 - L107 `main()`
 
-## research/dca_paper/costs.py · 566 строк
+## research/dca_paper/costs.py · 627 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 
@@ -1519,29 +1519,33 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L64 `MIN_FUNDING_COVER = 0.5`
 - L70 `RATE_MAX_AGE_S = 24 * 3600` — «Последняя известная ставка» годится гейту, только если она свежая: интервал начисления на площадке не длинне…
 - L73 `MIN_ARM_N = 30` — меньше стольких позиций в ЛЮБОЙ из рук гейта — рука не судится: медиана девяти отсечённых есть шум, а не мера
-- L76 `universe()`
-- L82 `symbol_maps(assets)` — Символ Bybit → актив; символ → тейкер б.п. (None — ставки нет).
-- L94 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
-- L107 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
-- L131 `funding_usd(row, series, side)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
-- L164 `rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано или последняя точка старше `max_age_s` (ряд…
-- L177 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
-- L184 `_day(ts)`
-- L188 `enrich(rows, funding, to_asset, taker, log=print)` — Строка журнала → строка с издержками. Пропуски считаются числом.
-- L241 `_sum(rows, k)`
-- L246 `_bp_median(rows, k)`
-- L252 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
-- L265 `_stats_gross(rows, dep)`
-- L272 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
-- L305 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
-- L330 `run(rows=None, funding=None, assets=None, log=print)`
-- L388 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
-- L412 `_u(x)`
-- L416 `_p(x, d=2)`
-- L420 `_b(x)`
-- L424 `report(s)`
-- L540 `publish(name)`
-- L546 `main(argv=None)`
+- L84 `SLIP_BP = 4.4` — Проскальзывание — по ЖИВОМУ замеру X3 (книга sit_lo, 300 $ cross 1×, 2026-08-22…25): медиана входа 4.4 б.п. п…
+- L85 `SLIP_SOURCE = 'X3: медиана входа 22 заполнений, 2026-…`
+- L86 `MARKET_EXITS = ('пол', 'срок', 'трейл', 'стоп')`
+- L89 `universe()`
+- L95 `symbol_maps(assets)` — Символ Bybit → актив; символ → тейкер б.п. (None — ставки нет).
+- L107 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
+- L120 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
+- L144 `slippage_usd(row, slip_bp)` — Проскальзывание позиции в $: базовый вход (первый рунг, рыночный) и рыночный выход — по ставке `slip_bp`; лим…
+- L166 `funding_usd(row, series, side)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
+- L199 `rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано или последняя точка старше `max_age_s` (ряд…
+- L212 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
+- L219 `_day(ts)`
+- L223 `enrich(rows, funding, to_asset, taker, log=print, slip_bp=None)` — Строка журнала → строка с издержками. Пропуски считаются числом.
+- L278 `_sum(rows, k)`
+- L283 `_bp_median(rows, k)`
+- L289 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
+- L303 `_stats_gross(rows, dep)`
+- L310 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
+- L348 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
+- L373 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
+- L435 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L459 `_u(x)`
+- L463 `_p(x, d=2)`
+- L467 `_b(x)`
+- L471 `report(s)`
+- L599 `publish(name)`
+- L605 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 
@@ -1674,6 +1678,24 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L59 `stats(by, gated)`
 - L76 `report(s)`
 - L102 `main()`
+
+## research/dca_paper/slip_x3.py · 170 строк
+
+Распределение проскальзывания живого исполнителя X3 — по его журналу.
+
+- L28 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L29 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L33 `OUT = os.path.join(HERE, 'out')`
+- L34 `LIVE = os.path.join(ROOT, 'bot', 'out', 'live')`
+- L35 `CAP_BP = 30.0`
+- L38 `pair(recs)` — (нога, проскальзывание б.п.) по журналу: решение ↔ открытие.
+- L72 `_q(v, q)`
+- L76 `stats(rows)`
+- L88 `run(jdir=LIVE, log=print)`
+- L107 `_f(x)`
+- L111 `report(s)`
+- L145 `publish(name)`
+- L150 `main(argv=None)`
 
 ## research/dca_paper/smoothing.py · 227 строк
 

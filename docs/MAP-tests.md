@@ -866,7 +866,7 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
-## research/dca_paper/test_costs.py · 397 строк
+## research/dca_paper/test_costs.py · 448 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
@@ -882,26 +882,30 @@
 - L97 `test_funding_uncovered_is_not_measured()`
 - L109 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
 - L130 `_fixture()`
-- L163 `test_run_end_to_end_synthetic()`
-- L223 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
-- L241 `test_main_writes_the_artifact_and_publishes_by_default()`
-- L265 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L290 `P = os.path.join(HERE, 'costs.py')`
-- L293 `_control_exit_fee_dropped()`
-- L298 `_control_funding_sign_flipped()`
-- L304 `_control_open_notional_ignores_time()`
-- L310 `_control_uncovered_counted_as_zero()`
-- L316 `_control_gate_ignores_side()`
-- L322 `_control_rate_at_entry_looks_ahead()`
-- L327 `_control_stale_rate_counts_as_known()`
-- L333 `_control_gate_medians_in_dollars()`
-- L339 `_control_missing_series_reads_as_present()`
-- L345 `_control_old_rules_rows_counted()`
-- L350 `_control_no_fills_in_cover_denominator()`
-- L355 `_control_thin_rest_arm_judged()`
-- L360 `TESTS = [test_commission_charges_every_rung_and…`
-- L371 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L387 `main()`
+- L163 `test_slippage_on_base_entry_and_market_exits_only()` — Проскальзывание X3 берётся с базового входа (первый рунг — рыночный) и с рыночного выхода (пол/срок/трейл/сто…
+- L190 `test_run_end_to_end_synthetic()`
+- L253 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
+- L271 `test_main_writes_the_artifact_and_publishes_by_default()`
+- L295 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L320 `P = os.path.join(HERE, 'costs.py')`
+- L323 `_control_exit_fee_dropped()`
+- L328 `_control_funding_sign_flipped()`
+- L334 `_control_open_notional_ignores_time()`
+- L340 `_control_uncovered_counted_as_zero()`
+- L346 `_control_gate_ignores_side()`
+- L352 `_control_rate_at_entry_looks_ahead()`
+- L357 `_control_stale_rate_counts_as_known()`
+- L363 `_control_gate_medians_in_dollars()`
+- L369 `_control_missing_series_reads_as_present()`
+- L375 `_control_old_rules_rows_counted()`
+- L380 `_control_no_fills_in_cover_denominator()`
+- L385 `_control_thin_rest_arm_judged()`
+- L390 `_control_slip_on_take_exit()`
+- L395 `_control_slip_on_every_rung()`
+- L401 `_control_net_ignores_slippage()`
+- L407 `TESTS = [test_commission_charges_every_rung_and…`
+- L419 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L438 `main()`
 
 ## research/dca_paper/test_cut.py · 297 строк
 
@@ -1039,6 +1043,17 @@
 - L2285 `_control_venue_cap_not_passed()` — Забор зовут без предела площадки — дорога обязана упасть.
 - L2329 `CONTROLS = [('хвост не доезжает до ядра', _control…`
 - L2380 `main()`
+
+## research/dca_paper/test_slip_x3.py · 76 строк
+
+Проверки `slip_x3.py`: решение ↔ открытие по ключу позиции, знак по стороне, отсутствие цены сигнала — пропус…
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `_journal(rows)`
+- L24 `_dec(arm, hour, sym, side, px)`
+- L29 `_open(arm, hour, sym, side, entry_px, notl=100.0)`
+- L34 `test_pairs_and_signs_by_side()`
+- L66 `test_missing_journal_is_named()`
 
 ## research/f1_carry/test_carry.py · 216 строк
 

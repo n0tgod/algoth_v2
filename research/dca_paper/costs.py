@@ -71,6 +71,19 @@ RATE_MAX_AGE_S = 24 * 3600
 # меньше стольких позиций в ЛЮБОЙ из рук гейта — рука не судится:
 # медиана девяти отсечённых есть шум, а не мера
 MIN_ARM_N = 30
+# Проскальзывание — по ЖИВОМУ замеру X3 (книга sit_lo, 300 $ cross 1×,
+# 2026-08-22…25): медиана входа 4.4 б.п. против цены сигнала при потолке
+# 30 (22 заполнения, разброс −15.6…+17.1). Бумажная DCA-книга входит по
+# первому принту после решения — той же «цене сигнала», что и X3.
+# Лестница и тейк — лимитки по сквозному проходу: проскальзывания у них
+# нет по построению (у X3 тейк по уровню 22 из 22); пол капитуляции,
+# трейл и срок — рыночные выходы; ликвидация — цена биржи, не наше
+# проскальзывание. Число одно на все имена и размеры — у билетов DCA-книг
+# в $10k–$100k оно больше, чем у 300 $: нетто крупных депозитов — нижняя
+# граница издержек, и это сказано в отчёте.
+SLIP_BP = 4.4
+SLIP_SOURCE = "X3: медиана входа 22 заполнений, 2026-08-22…25, потолок 30"
+MARKET_EXITS = ("пол", "срок", "трейл", "стоп")
 
 
 def universe():
@@ -126,6 +139,28 @@ def commission_usd(row, taker_bp):
         qty += share * notl / px
     fee += qty * exit_px * rate
     return fee
+
+
+def slippage_usd(row, slip_bp):
+    """Проскальзывание позиции в $: базовый вход (первый рунг, рыночный) и
+    рыночный выход — по ставке `slip_bp`; лимитные рунги и тейк — ноль по
+    построению; ликвидация — не проскальзывание. None — нет нотионала,
+    рунгов или цены выхода: неизмеримое не есть ноль."""
+    notl = R.notional_of(row)
+    fills = fills_of(row)
+    try:
+        exit_px = float(row.get("exit_px"))
+    except (TypeError, ValueError):
+        return None
+    if notl is None or not fills or not exit_px > 0:
+        return None
+    rate = float(slip_bp) / 1e4
+    base_share = float(fills[0][2])
+    cost = base_share * notl * rate
+    if row.get("exit") in MARKET_EXITS:
+        qty = sum(share * notl / px for (_ts, px, share) in fills)
+        cost += qty * exit_px * rate
+    return cost
 
 
 def funding_usd(row, series, side):
@@ -185,8 +220,9 @@ def _day(ts):
     return time.strftime("%Y-%m-%d", time.gmtime(float(ts)))
 
 
-def enrich(rows, funding, to_asset, taker, log=print):
+def enrich(rows, funding, to_asset, taker, log=print, slip_bp=None):
     """Строка журнала → строка с издержками. Пропуски считаются числом."""
+    slip_bp = SLIP_BP if slip_bp is None else float(slip_bp)
     out, miss = [], {"taker_fallback": 0, "no_fills": 0, "no_commission": 0,
                      "no_funding_series": 0, "funding_uncovered": 0,
                      "no_rate_at_entry": 0}
@@ -209,6 +245,7 @@ def enrich(rows, funding, to_asset, taker, log=print):
         fee = commission_usd(row, tb) if fills else None
         if fills and fee is None:
             miss["no_commission"] += 1
+        slip = slippage_usd(row, slip_bp) if fills else None
         asset = to_asset.get(sym)
         series = (funding or {}).get(asset) if asset else None
         fund = None
@@ -222,7 +259,7 @@ def enrich(rows, funding, to_asset, taker, log=print):
         if rate is None:
             miss["no_rate_at_entry"] += 1
         out.append(dict(row, side=side, taker_bp=tb, fee_usd=fee,
-                        fund_usd=fund, rate_entry=rate,
+                        slip_usd=slip, fund_usd=fund, rate_entry=rate,
                         fav_funding=favourable(side, rate)))
     miss["no_fills_written"] = ([_day(min(nf_written)), _day(max(nf_written))]
                                 if nf_written else None)
@@ -253,12 +290,13 @@ def _stats_net(rows, dep):
     """Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding."""
     take = []
     for r in rows:
-        if r.get("fee_usd") is None or r.get("fund_usd") is None:
+        if (r.get("fee_usd") is None or r.get("fund_usd") is None
+                or r.get("slip_usd") is None):
             continue
         take.append({"exit_ts": r["exit_ts"], "at": r["at"], "sym": r["sym"],
                      "written_at": r.get("written_at"),
                      "usd": float(r["usd"]) - float(r["fee_usd"])
-                     + float(r["fund_usd"])})
+                     + float(r["fund_usd"]) - float(r["slip_usd"])})
     return PP._stats(take, dep) or {}, len(take)
 
 
@@ -274,18 +312,22 @@ def book_costs(rows, dep):
     gross, n = _sum(rows, "usd")
     fee, n_fee = _sum(rows, "fee_usd")
     fund, n_fund = _sum(rows, "fund_usd")
+    slip, n_slip = _sum(rows, "slip_usd")
     both = [r for r in rows if r.get("fee_usd") is not None
-            and r.get("fund_usd") is not None]
+            and r.get("fund_usd") is not None
+            and r.get("slip_usd") is not None]
     gross_m, _ = _sum(both, "usd")
     fee_m, _ = _sum(both, "fee_usd")
     fund_m, _ = _sum(both, "fund_usd")
-    net = (round(gross_m - fee_m + fund_m, 2)
+    slip_m, _ = _sum(both, "slip_usd")
+    net = (round(gross_m - fee_m + fund_m - slip_m, 2)
            if both and gross_m is not None else None)
     st_n, n_net = _stats_net(rows, dep)
     st_g = _stats_gross(rows, dep)
     return {"n": n, "gross_usd": gross,
             "fee_usd": fee, "n_fee": n_fee,
             "fund_usd": fund, "n_fund": n_fund,
+            "slip_usd": slip, "n_slip": n_slip,
             "fund_cover": round(n_fund / n, 3) if n else None,
             # нетто — только по позициям, где измерены ОБЕ издержки
             "measured": len(both), "gross_measured_usd": gross_m,
@@ -293,6 +335,7 @@ def book_costs(rows, dep):
             "net_pct": round(net / dep, 5) if net is not None else None,
             "gross_pct": round(gross / dep, 5) if gross is not None else None,
             "fee_bp_median": _bp_median(rows, "fee_usd"),
+            "slip_bp_median": _bp_median(rows, "slip_usd"),
             "fund_bp_median": _bp_median(rows, "fund_usd"),
             "gross_bp_median": _bp_median(rows, "usd"),
             "form_gross": {k: st_g.get(k) for k in
@@ -327,7 +370,8 @@ def gate_arm(rows, dep):
             "median_all": _bp_median(known, "usd")}
 
 
-def run(rows=None, funding=None, assets=None, log=print):
+def run(rows=None, funding=None, assets=None, log=print, slip_bp=None):
+    slip_bp = SLIP_BP if slip_bp is None else float(slip_bp)
     t0 = time.time()
     assets = assets if assets is not None else universe()
     to_asset, taker = symbol_maps(assets)
@@ -350,7 +394,8 @@ def run(rows=None, funding=None, assets=None, log=print):
             log(f"каталога funding нет: {FUNDING_DIR} — funding не измерен")
         else:
             log(f"funding: рядов {len(funding)} из {len(need)} нужных активов")
-    rich, miss = enrich(rows, funding, to_asset, taker, log=log)
+    rich, miss = enrich(rows, funding, to_asset, taker, log=log,
+                        slip_bp=slip_bp)
     books = {}
     for r in rich:
         books.setdefault((R.ruler_of(r), float(r.get("dep") or 0)), []).append(r)
@@ -379,6 +424,8 @@ def run(rows=None, funding=None, assets=None, log=print):
             "funding_present": funding is not None and len(funding) > 0,
             "funding_assets": len(funding or {}),
             "taker_rates_bp": fr, "taker_fallback_bp": TAKER_FALLBACK_BP,
+            "slip_bp": slip_bp, "slip_source": SLIP_SOURCE,
+            "market_exits": list(MARKET_EXITS),
             "min_cover": MIN_FUNDING_COVER,
             "deposits": R.DEPOSITS, "rules_version": R.RULES,
             "secs": round(time.time() - t0, 1),
@@ -439,8 +486,14 @@ def report(s):
          "× нотионал, открытый к этому моменту (по ценам рунгов, марк-цены "
          "в записи нет); лонгу положительная ставка — расход, шорту — доход. "
          "Ряд, не покрывающий жизнь позиции, даёт «не измерено», а не ноль. "
-         "**Проскальзывание не считается** — его нет ни в записи, ни в "
-         "модели; живой замер D1 дал медиану ~4 б.п. на входе.", "",
+         f"**Проскальзывание** — по живому замеру X3 ({s.get('slip_source')}): "
+         f"{s.get('slip_bp')} б.п. на базовый вход (первый рунг — рыночный, по "
+         "первому принту после решения, той же «цене сигнала», что мерил X3) "
+         "и на рыночный выход ("
+         + ", ".join(s.get("market_exits") or MARKET_EXITS)
+         + "); лестница и тейк — лимитки по сквозному проходу, у них "
+         "проскальзывания нет по построению (X3: тейк по уровню 22 из 22); "
+         "ликвидация — цена биржи.", "",
          f"Строк с исходом {s['rows']} — версия правил книг "
          f"{s['rules_version']}, как на странице книг (в журнале всего "
          f"{s.get('rows_all', s['rows'])}; прежние версии писаны другим "
@@ -457,26 +510,28 @@ def report(s):
             "читать нельзя**") + ".",
          ""]
     P += ["## По книгам (суммы в $, медианы на позицию в б.п. МАРЖИ)", "",
-          "| книга | сторона | n | брутто $ | комиссия $ | funding $ | "
-          "измерено | нетто $ (измеренные) | брутто измеренных $ | "
-          "комиссия б.п. | funding б.п. | брутто б.п. | медиана дня брутто → "
-          "нетто | зелёных | укус |",
+          "| книга | сторона | n | брутто $ | комиссия $ | проскальз. $ | "
+          "funding $ | измерено | нетто $ (измеренные) | брутто измеренных $ | "
+          "комиссия б.п. | проскальз. б.п. | funding б.п. | брутто б.п. | "
+          "медиана дня брутто → нетто | зелёных | укус |",
           "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
-          "---:|---:|"]
+          "---:|---:|---:|---:|"]
     for k, c in s["cells"].items():
         fg, fn = c["form_gross"], c["form_net"]
         P.append(
             f"| `{k}` | {c['side']} | {c['n']} | {_u(c['gross_usd'])} | "
             f"{_u(-(c['fee_usd'] or 0) if c['fee_usd'] is not None else None)} | "
+            f"{_u(-(c['slip_usd'] or 0) if c['slip_usd'] is not None else None)} | "
             f"{_u(c['fund_usd'])} | {c['measured']} | {_u(c['net_usd'])} | "
             f"{_u(c['gross_measured_usd'])} | {_b(c['fee_bp_median'])} | "
+            f"{_b(c['slip_bp_median'])} | "
             f"{_b(c['fund_bp_median'])} | {_b(c['gross_bp_median'])} | "
             f"{_p(fg.get('day_median'), 3)} → {_p(fn.get('day_median'), 3)} | "
             f"{_p(fg.get('day_green'), 0)} → {_p(fn.get('day_green'), 0)} | "
             f"{fg.get('bite') if fg.get('bite') is not None else '—'} → "
             f"{fn.get('bite') if fn.get('bite') is not None else '—'} |")
-    P += ["", "Нетто = брутто − комиссия + funding по позициям, у которых "
-          "измерены ОБЕ издержки; «брутто измеренных» — брутто того же "
+    P += ["", "Нетто = брутто − комиссия − проскальзывание + funding по "
+          "позициям, у которых измерены ВСЕ три; «брутто измеренных» — брутто того же "
           "подмножества, чтобы сравнивать одно с одним. Знак после издержек "
           f"держат {len(v['sign_kept'])} книг из "
           f"{len(v['sign_kept']) + len(v['sign_lost'])} с положительным "
@@ -484,16 +539,17 @@ def report(s):
           + (" — теряют: " + ", ".join(f"`{k}`" for k in v["sign_lost"])
              if v["sign_lost"] else "") + ".", ""]
     P += ["## По сторонам (депозит $10 000)", "",
-          "| сторона | n | брутто $ | комиссия $ | funding $ | измерено | "
-          "брутто измеренных $ | нетто $ (измеренные) | "
+          "| сторона | n | брутто $ | комиссия $ | проскальз. $ | funding $ | "
+          "измерено | брутто измеренных $ | нетто $ (измеренные) | "
           "funding б.п. на позицию |",
-          "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+          "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for side, c in s["sides"].items():
         if not c:
-            P.append(f"| {side} | 0 | — | — | — | — | — | — | — |")
+            P.append(f"| {side} | 0 | — | — | — | — | — | — | — | — |")
             continue
         P.append(f"| {side} | {c['n']} | {_u(c['gross_usd'])} | "
                  f"{_u(-(c['fee_usd'] or 0) if c['fee_usd'] is not None else None)} | "
+                 f"{_u(-(c['slip_usd'] or 0) if c['slip_usd'] is not None else None)} | "
                  f"{_u(c['fund_usd'])} | {c['measured']} | "
                  f"{_u(c['gross_measured_usd'])} | {_u(c['net_usd'])} | "
                  f"{_b(c['fund_bp_median'])} |")
@@ -528,7 +584,10 @@ def report(s):
           + f"; книги с меньше чем {MIN_ARM_N} позиций в любой из рук "
           "не судятся.", "",
           "## Чего замер НЕ говорит", "",
-          "Проскальзывания в числах нет. Funding посчитан по нотионалу рунгов, "
+          f"Проскальзывание — одно число ({s.get('slip_bp')} б.п.) на все имена и "
+          "размеры, снятое на 300 $ за имя: у билетов DCA-книг в $10k–$100k оно "
+          "больше, так что нетто крупных депозитов — НИЖНЯЯ граница издержек; "
+          "распределение по живому журналу — `DCA-slip-x3.md`. Funding посчитан по нотионалу рунгов, "
           "а не по марк-цене начисления (расхождение — ход цены от рунга до "
           "начисления, единицы процентов от самого funding). Комиссия — "
           "по сегодняшнему тарифу счёта, прошлых сеток площадка не отдаёт "
@@ -547,6 +606,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="1m")
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--slip-bp", type=float, default=None,
+                    help=f"проскальзывание, б.п. (по умолчанию {SLIP_BP}: {SLIP_SOURCE})")
     a = ap.parse_args(argv)
     os.makedirs(OUT, exist_ok=True)
     s = run()

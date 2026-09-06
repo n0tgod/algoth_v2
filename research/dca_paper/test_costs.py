@@ -160,6 +160,33 @@ def _fixture():
     return assets, funding, rows
 
 
+def test_slippage_on_base_entry_and_market_exits_only():
+    """Проскальзывание X3 берётся с базового входа (первый рунг — рыночный)
+    и с рыночного выхода (пол/срок/трейл/стоп); лимитные рунги и тейк —
+    ноль по построению; ликвидация — не проскальзывание."""
+    slip = 4.4
+    # маржа 100, плечо 2 → нотионал 200; первый рунг 0.25 → 50 $ × 4.4 б.п.
+    base = 0.25 * 200 * slip / 1e4
+    take = C.slippage_usd(dict(_row(), exit="тейк"), slip)
+    assert abs(take - base) < 1e-9, (take, base)
+    qty = sum(0.25 * 200 / px for (_t, px, _s) in FILLS4)
+    for ex in ("пол", "срок", "трейл", "стоп"):
+        got = C.slippage_usd(dict(_row(), exit=ex), slip)
+        want = base + qty * 95.0 * slip / 1e4
+        assert abs(got - want) < 1e-9, (ex, got, want)
+    liq = C.slippage_usd(dict(_row(), exit="ликвидация"), slip)
+    assert abs(liq - base) < 1e-9, liq
+    one = C.slippage_usd(dict(_row(fills=[FILLS4[0]]), exit="тейк"), slip)
+    assert abs(one - base) < 1e-9, one       # один рунг = тот же базовый вход
+    assert C.slippage_usd(dict(_row(), fills=[]), slip) is None
+    assert C.slippage_usd(dict(_row(), exit_px=None), slip) is None
+    assert C.slippage_usd(dict(_row(), exit="пол"), 0.0) == 0.0
+    assert set(C.MARKET_EXITS) == {"пол", "срок", "трейл", "стоп"}
+    print(f"ok  проскальзывание: тейк {take:.4f} $ (только базовый вход), "
+          f"пол {C.slippage_usd(dict(_row(), exit='пол'), slip):.4f} $ (плюс рыночный выход), "
+          "ликвидация как тейк, лимитные рунги — ноль")
+
+
 def test_run_end_to_end_synthetic():
     assets, funding, rows = _fixture()
     s = C.run(rows=rows, funding=funding, assets=assets, log=lambda *a: None)
@@ -180,8 +207,11 @@ def test_run_end_to_end_synthetic():
     c = s["cells"]["optimal_s:10000"]
     assert c["side"] == "short" and c["n"] == 12 and c["measured"] == 12, c
     assert c["fee_usd"] > 0 and c["fund_usd"] is not None
+    assert c["slip_usd"] > 0 and c["n_slip"] == 12, c
     assert abs(c["net_usd"] - round(c["gross_measured_usd"] - c["fee_usd"]
-                                    + c["fund_usd"], 2)) < 0.011, c
+                                    + c["fund_usd"] - c["slip_usd"], 2)) < 0.011, c
+    assert s["slip_bp"] == C.SLIP_BP == 4.4 and "X3" in s["slip_source"], s["slip_bp"]
+    assert "проскальз. $" in C.report(s) and "нижняя граница" in C.report(s).lower()
     assert c["fee_bp_median"] > 0 and c["gross_bp_median"] is not None
     assert c["form_net"]["day_median"] is not None
     lo = s["cells"]["optimal:10000"]
@@ -357,8 +387,26 @@ def _control_thin_rest_arm_judged():
                    test_gate_is_judged_only_with_both_arms_of_size, C)
 
 
+def _control_slip_on_take_exit():
+    return _poison(P, 'if row.get("exit") in MARKET_EXITS:', "if True:",
+                   test_slippage_on_base_entry_and_market_exits_only, C)
+
+
+def _control_slip_on_every_rung():
+    return _poison(P, "base_share = float(fills[0][2])",
+                   "base_share = sum(float(f[2]) for f in fills)",
+                   test_slippage_on_base_entry_and_market_exits_only, C)
+
+
+def _control_net_ignores_slippage():
+    return _poison(P, "net = (round(gross_m - fee_m + fund_m - slip_m, 2)",
+                   "net = (round(gross_m - fee_m + fund_m, 2)",
+                   test_run_end_to_end_synthetic, C)
+
+
 TESTS = [
     test_commission_charges_every_rung_and_the_exit,
+    test_slippage_on_base_entry_and_market_exits_only,
     test_funding_sign_follows_the_side,
     test_funding_follows_the_open_notional_over_time,
     test_funding_uncovered_is_not_measured,
@@ -381,6 +429,9 @@ CONTROLS = [
     ("строки прежних версий правил в счёте", _control_old_rules_rows_counted),
     ("строки без рунгов в знаменателе покрытия", _control_no_fills_in_cover_denominator),
     ("тонкая рука отсечённых судится", _control_thin_rest_arm_judged),
+    ("проскальзывание снимается и с тейка", _control_slip_on_take_exit),
+    ("проскальзывание со всех рунгов", _control_slip_on_every_rung),
+    ("нетто без проскальзывания", _control_net_ignores_slippage),
 ]
 
 
