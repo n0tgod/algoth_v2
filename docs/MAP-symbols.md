@@ -309,6 +309,25 @@ A1 — персистентность funding во времени: призна�
 - L468 `load_all(universe, key, directory, rate_col)`
 - L483 `main()`
 
+## research/a1_universe/funding_refresh.py · 183 строк
+
+Догон рядов funding площадки исполнения до сегодняшнего дня.
+
+- L36 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L37 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L41 `OUT = B.OUT`
+- L42 `OVERLAP_D = 1`
+- L45 `read_rows(path)`
+- L55 `last_day(rows)`
+- L61 `merge(old, new)` — Объединение по ВРЕМЕНИ: новая точка побеждает старую с той же меткой.
+- L69 `refresh_symbol(sym, today, fetch=None, read=None)` — Хвост одного символа. Возвращает (было, добавлено, край, ошибка).
+- L93 `write_tmp(rows, tmp)`
+- L101 `symbols(assets)`
+- L109 `run(syms, today, workers=B.WORKERS, log=print, fetch=None)`
+- L133 `report(s)`
+- L148 `publish(name)`
+- L154 `main(argv=None)`
+
 ## research/a1_universe/report.py · 295 строк
 
 Формирует отчёт A1 по универсуму в markdown из universe.json.
@@ -1469,7 +1488,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L62 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
 - L107 `main()`
 
-## research/dca_paper/costs.py · 505 строк
+## research/dca_paper/costs.py · 517 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 
@@ -1481,28 +1500,29 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L62 `FUNDING_DIR = os.path.join(A1, 'funding')`
 - L63 `TAKER_FALLBACK_BP = float(TR.ROUND_COST_BP) / 2.0`
 - L64 `MIN_FUNDING_COVER = 0.5`
-- L67 `universe()`
-- L73 `symbol_maps(assets)` — Символ Bybit → актив; символ → тейкер б.п. (None — ставки нет).
-- L85 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
-- L98 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
-- L122 `funding_usd(row, series, side)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
-- L155 `rate_at_entry(series, at)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет/рано.
-- L164 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
-- L171 `enrich(rows, funding, to_asset, taker, log=print)` — Строка журнала → строка с издержками. Пропуски считаются числом.
-- L211 `_sum(rows, k)`
-- L216 `_bp_median(rows, k)`
-- L222 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
-- L235 `_stats_gross(rows, dep)`
-- L242 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
-- L275 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
-- L300 `run(rows=None, funding=None, assets=None, log=print)`
-- L346 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
-- L369 `_u(x)`
-- L373 `_p(x, d=2)`
-- L377 `_b(x)`
-- L381 `report(s)`
-- L479 `publish(name)`
-- L485 `main(argv=None)`
+- L70 `RATE_MAX_AGE_S = 24 * 3600` — «Последняя известная ставка» годится гейту, только если она свежая: интервал начисления на площадке не длинне…
+- L73 `universe()`
+- L79 `symbol_maps(assets)` — Символ Bybit → актив; символ → тейкер б.п. (None — ставки нет).
+- L91 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
+- L104 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
+- L128 `funding_usd(row, series, side)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
+- L161 `rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано или последняя точка старше `max_age_s` (ряд…
+- L174 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
+- L181 `enrich(rows, funding, to_asset, taker, log=print)` — Строка журнала → строка с издержками. Пропуски считаются числом.
+- L221 `_sum(rows, k)`
+- L226 `_bp_median(rows, k)`
+- L232 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
+- L245 `_stats_gross(rows, dep)`
+- L252 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
+- L285 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
+- L310 `run(rows=None, funding=None, assets=None, log=print)`
+- L356 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L379 `_u(x)`
+- L383 `_p(x, d=2)`
+- L387 `_b(x)`
+- L391 `report(s)`
+- L491 `publish(name)`
+- L497 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 

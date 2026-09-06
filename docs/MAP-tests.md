@@ -3,6 +3,31 @@
 Генерируется `tools/project_map.py`; руками не править. Имена проверок в проекте описывают поведение словами — это индекс того, что закреплено тестом. Строка — `L<номер>` в файле теста.
 
 
+## research/a1_universe/test_funding_refresh.py · 205 строк
+
+Проверки догона рядов funding (`funding_refresh.py`).
+
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L22 `TODAY = date(2026, 9, 6)`
+- L25 `_iso(d, h=0)`
+- L29 `_write(dirp, sym, rows)`
+- L38 `class _Fetch`
+  - L39 `_Fetch.__init__(self, rows, fail=False)`
+  - L42 `_Fetch.__call__(self, sym, a, b)`
+- L49 `_in_tmp(fn)`
+- L60 `test_merge_dedups_by_time_and_new_wins()`
+- L70 `test_tail_is_fetched_from_the_last_day_with_overlap()`
+- L93 `test_current_symbol_is_not_fetched_and_failure_leaves_the_file()`
+- L112 `test_run_aggregates_and_report_names_failures()`
+- L137 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L161 `P = os.path.join(HERE, 'funding_refresh.py')`
+- L164 `_control_no_overlap()`
+- L170 `_control_old_point_wins()`
+- L176 `_control_current_symbol_refetched()`
+- L181 `TESTS = [test_merge_dedups_by_time_and_new_wins…`
+- L188 `CONTROLS = [('хвост без перекрытия', _control_no_o…`
+- L195 `main()`
+
 ## research/a1_universe/test_options.py · 286 строк
 
 Тесты инвентаря опционов площадки.
@@ -838,7 +863,7 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
-## research/dca_paper/test_costs.py · 318 строк
+## research/dca_paper/test_costs.py · 341 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
@@ -853,21 +878,23 @@
 - L81 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
 - L96 `test_funding_uncovered_is_not_measured()`
 - L108 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
-- L123 `_fixture()`
-- L150 `test_run_end_to_end_synthetic()`
-- L195 `test_main_writes_the_artifact_and_publishes_by_default()`
-- L219 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L244 `P = os.path.join(HERE, 'costs.py')`
-- L247 `_control_exit_fee_dropped()`
-- L252 `_control_funding_sign_flipped()`
-- L258 `_control_open_notional_ignores_time()`
-- L264 `_control_uncovered_counted_as_zero()`
-- L270 `_control_gate_ignores_side()`
-- L276 `_control_rate_at_entry_looks_ahead()`
-- L281 `_control_missing_series_reads_as_present()`
-- L287 `TESTS = [test_commission_charges_every_rung_and…`
-- L297 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L308 `main()`
+- L129 `_fixture()`
+- L156 `test_run_end_to_end_synthetic()`
+- L204 `test_main_writes_the_artifact_and_publishes_by_default()`
+- L228 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L253 `P = os.path.join(HERE, 'costs.py')`
+- L256 `_control_exit_fee_dropped()`
+- L261 `_control_funding_sign_flipped()`
+- L267 `_control_open_notional_ignores_time()`
+- L273 `_control_uncovered_counted_as_zero()`
+- L279 `_control_gate_ignores_side()`
+- L285 `_control_rate_at_entry_looks_ahead()`
+- L290 `_control_stale_rate_counts_as_known()`
+- L296 `_control_gate_medians_in_dollars()`
+- L302 `_control_missing_series_reads_as_present()`
+- L308 `TESTS = [test_commission_charges_every_rung_and…`
+- L318 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L331 `main()`
 
 ## research/dca_paper/test_cut.py · 297 строк
 

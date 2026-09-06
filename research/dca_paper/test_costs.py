@@ -111,6 +111,12 @@ def test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side():
     assert C.rate_at_entry((t, rates), T0) == 0.002
     assert C.rate_at_entry((t, rates), T0 - 3 * H) is None
     assert C.rate_at_entry(None, T0) is None
+    # ставка старше суток — не «известная», а конец ряда или дыра:
+    # первый живой прогон брал июльскую точку для августовских входов
+    one = (t[:1], rates[:1])                     # единственная точка T0−2h
+    assert C.rate_at_entry(one, T0 - 2 * H + C.RATE_MAX_AGE_S - 60) == 0.002
+    assert C.rate_at_entry(one, T0 - 2 * H + C.RATE_MAX_AGE_S + 60) is None
+    assert C.RATE_MAX_AGE_S == 24 * 3600, C.RATE_MAX_AGE_S
     assert C.favourable("long", 0.002) is False
     assert C.favourable("short", 0.002) is True
     assert C.favourable("long", -0.001) is True
@@ -170,6 +176,9 @@ def test_run_end_to_end_synthetic():
     a = s["arms"]["optimal_s:10000"]
     assert a["n_known"] == 12 and 0 < a["n_fav"] < 12, a
     assert a["median_fav"] is not None and a["median_rest"] is not None
+    # медианы руки — в б.п. МАРЖИ: usd 3/2/1 $ при марже 100 → 300/200/100
+    assert a["median_all"] == 200.0, a["median_all"]
+    assert "б.п. маржи" in C.report(s)
     assert s["funding_cover"] == round(26 / 27, 3), s["funding_cover"]
     assert s["taker_rates_bp"] == [2.75, 5.5], s["taker_rates_bp"]
     v = C.verdict(s)
@@ -278,6 +287,18 @@ def _control_rate_at_entry_looks_ahead():
                    test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side, C)
 
 
+def _control_stale_rate_counts_as_known():
+    return _poison(P, "if i < 0 or at_ms - int(t[i]) > max_age_s * 1000:",
+                   "if i < 0:",
+                   test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side, C)
+
+
+def _control_gate_medians_in_dollars():
+    return _poison(P, '"median_all": _bp_median(known, "usd")}',
+                   '"median_all": round(float(np.median([float(r["usd"]) for r in known])), 4)}',
+                   test_run_end_to_end_synthetic, C)
+
+
 def _control_missing_series_reads_as_present():
     return _poison(P, '"funding_present": funding is not None and len(funding) > 0,',
                    '"funding_present": funding is not None,',
@@ -302,6 +323,8 @@ CONTROLS = [
     ("гейт не смотрит на сторону", _control_gate_ignores_side),
     ("ставка на входе берётся из будущего", _control_rate_at_entry_looks_ahead),
     ("пустой словарь рядов выдан за funding", _control_missing_series_reads_as_present),
+    ("устаревшая ставка считается известной", _control_stale_rate_counts_as_known),
+    ("медианы руки гейта в долларах", _control_gate_medians_in_dollars),
 ]
 
 

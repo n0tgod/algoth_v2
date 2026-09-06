@@ -62,6 +62,12 @@ UNIVERSE = os.path.join(A1, "universe.json")
 FUNDING_DIR = os.path.join(A1, "funding")
 TAKER_FALLBACK_BP = float(TR.ROUND_COST_BP) / 2.0     # модальные 5.5 б.п.
 MIN_FUNDING_COVER = 0.5      # доля позиций с покрытым рядом, ниже — не вердикт
+# «Последняя известная ставка» годится гейту, только если она свежая:
+# интервал начисления на площадке не длиннее 8 ч, и точка старше суток
+# означает дыру или конец ряда, а не действующую ставку. Без этого срока
+# первый живой прогон брал в «ставку на входе» июльскую точку для
+# августовских входов — ряды кончились раньше записи книг.
+RATE_MAX_AGE_S = 24 * 3600
 
 
 def universe():
@@ -152,13 +158,17 @@ def funding_usd(row, series, side):
     return pnl
 
 
-def rate_at_entry(series, at):
-    """Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет/рано."""
+def rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S):
+    """Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано
+    или последняя точка старше `max_age_s` (ряд кончился/дыра)."""
     if series is None:
         return None
     t, r = series
-    i = int(np.searchsorted(t, int(float(at) * 1000), "right")) - 1
-    return float(r[i]) if i >= 0 else None
+    at_ms = int(float(at) * 1000)
+    i = int(np.searchsorted(t, at_ms, "right")) - 1
+    if i < 0 or at_ms - int(t[i]) > max_age_s * 1000:
+        return None
+    return float(r[i])
 
 
 def favourable(side, rate):
@@ -282,19 +292,19 @@ def gate_arm(rows, dep):
     fav = [r for r in known if r["fav_funding"]]
     if not known:
         return None
+    rest = [r for r in known if not r["fav_funding"]]
     a_all, a_fav = book_costs(known, dep), book_costs(fav, dep)
-    pn_all = [float(r["usd"]) for r in known]
-    pn_fav = [float(r["usd"]) for r in fav]
-    pn_rest = [float(r["usd"]) for r in known if not r["fav_funding"]]
     return {"n_known": len(known), "n_fav": len(fav),
             "share_fav": round(len(fav) / len(known), 3),
             "all": a_all, "fav": a_fav,
-            "usd_fav": round(float(np.sum(pn_fav)), 2) if pn_fav else 0.0,
-            "usd_rest": round(float(np.sum(pn_rest)), 2) if pn_rest else 0.0,
-            "median_fav": (round(float(np.median(pn_fav)), 4) if pn_fav else None),
-            "median_rest": (round(float(np.median(pn_rest)), 4)
-                            if pn_rest else None),
-            "median_all": round(float(np.median(pn_all)), 4)}
+            "usd_fav": round(float(sum(float(r["usd"]) for r in fav)), 2),
+            "usd_rest": round(float(sum(float(r["usd"]) for r in rest)), 2),
+            # медианы — в б.п. МАРЖИ позиции (`usd / margin`), чтобы книги
+            # разных депозитов читались одной шкалой; доллары здесь
+            # печатались бы как проценты — ошибка единиц первого прогона
+            "median_fav": _bp_median(fav, "usd"),
+            "median_rest": _bp_median(rest, "usd"),
+            "median_all": _bp_median(known, "usd")}
 
 
 def run(rows=None, funding=None, assets=None, log=print):
@@ -443,10 +453,12 @@ def report(s):
                  f"{_b(c['fund_bp_median'])} |")
     P += ["", "## Гейт по знаку ставки на входе (лонг при ставке ≤ 0, "
           "шорт при ≥ 0)", "",
-          "Обе руки — на позициях с ИЗВЕСТНОЙ ставкой на входе; «остальные» "
-          "— те, кого гейт отсёк. Читать по медиане позиции: гейт меняет "
-          "состав, и суммы рук несравнимы по построению.", "",
-          "| книга | известна | прошли гейт | доля | медиана всех | "
+          "Обе руки — на позициях с ИЗВЕСТНОЙ ставкой на входе (последняя "
+          f"точка ряда не старше {RATE_MAX_AGE_S // 3600} ч до входа); "
+          "«отсечённые» — те, кого гейт не пустил. Читать по медиане "
+          "позиции в б.п. маржи: гейт меняет состав, и суммы рук "
+          "несравнимы по построению.", "",
+          "| книга | известна | прошли гейт | доля | медиана всех, б.п. маржи | "
           "медиана прошедших | медиана отсечённых | $ прошедших | "
           "$ отсечённых | нетто прошедших $ |",
           "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
@@ -455,8 +467,8 @@ def report(s):
             P.append(f"| `{k}` | 0 | — | — | — | — | — | — | — | — |")
             continue
         P.append(f"| `{k}` | {a['n_known']} | {a['n_fav']} | "
-                 f"{a['share_fav'] * 100:.0f} % | {_p(a['median_all'])} | "
-                 f"{_p(a['median_fav'])} | {_p(a['median_rest'])} | "
+                 f"{a['share_fav'] * 100:.0f} % | {_b(a['median_all'])} | "
+                 f"{_b(a['median_fav'])} | {_b(a['median_rest'])} | "
                  f"{_u(a['usd_fav'])} | {_u(a['usd_rest'])} | "
                  f"{_u(a['fav']['net_usd'])} |")
     P += ["", f"Гейт помогает по медиане позиции у {len(v['gate_helps'])} книг"
