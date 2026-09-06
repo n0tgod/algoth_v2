@@ -104,3 +104,15 @@ Swap:              0           0           0
 [09-06 22:08:53] обучение пропущено по каденции: весам 13.1 ч при каденции 24; цикл 413 с (сведение часа 279 с, матрица 62 с, книги 62 с, оценка 0 с)
 [09-06 22:08:53] следующая попытка через 53 мин (обучения не было)
 конец: 2026-09-06T22:33:40Z, код 0
+публикуется в ветку main:
+ jobs/done/d10-short-3.log           |  13 +++++
+ jobs/done/diag-cycle-2233.done      |   1 +
+ jobs/done/diag-cycle-2233.log       | 106 ++++++++++++++++++++++++++++++++++++
+ jobs/done/diag-spill.log            |  12 ++++
+ jobs/poke.log                       |   5 ++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 6 files changed, 138 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   5136e05..f5df84d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
