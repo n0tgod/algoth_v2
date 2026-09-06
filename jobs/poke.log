@@ -962,3 +962,7 @@ _: line 3: 910212 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788690850 ==
 [2026-09-06T10:34:12Z] задание restart-dca-side: перезапуск сборщика
+
+== сигнал 1788714282 ==
+[2026-09-06T17:04:43Z] задание d10-short запущено: research/dca_ladder/run_d10.py
+[2026-09-06T17:04:43Z] задание dca-costs запущено: research/dca_paper/costs.py

@@ -548,6 +548,43 @@
 - L1300 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
 - L1330 `main()`
 
+## research/dca_ladder/test_run_d10.py · 418 строк
+
+Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.
+
+- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L32 `H = 3600`
+- L33 `LEVELS = np.array([98.0, 95.0, 90.0, 102.0, 105.…`
+- L37 `_short_leg(at, sym='SSSUSDT', fwd=60.0, rr=2.0, fav=-500.0)`
+- L44 `_with_levels(fn)`
+- L53 `_cells(bars, at, g=None)` — Все ячейки одного короткого решения на подставных барах.
+- L61 `test_grid_is_declared_before_the_run()`
+- L75 `test_gate_of_splits_legs_by_ratio_and_edge()`
+- L88 `test_ref_cell_reproduces_the_book_short_leg_bit_for_bit()` — Ячейка правила книги — та же позиция, что считает бумажная книга.
+- L108 `test_leverage_cap_binds_and_fence_is_kept()`
+- L125 `test_none_arm_keeps_the_fence_leverage_of_the_ladder()` — Без доливов — то же плечо, что забор выдал ЛЕСТНИЦЕ, не 1×.
+- L141 `test_sigma_rungs_sit_above_entry_for_a_short()`
+- L159 `test_take_axis_orders_the_targets()` — ×1 ближе ×2 ближе ×3: тейк раньше, а дальняя цель на этом пути не достигается вовсе.
+- L177 `test_wrong_side_promise_drops_the_decision()` — Обещание шорта НЕ вниз — цели нет, решения нет (не ноль).
+- L189 `test_net_column_subtracts_the_round_on_filled_notional()`
+- L204 `_rec(sym, at, state='closed')`
+- L210 `test_common_sample_is_one_for_all_cells()`
+- L220 `_legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7))`
+- L231 `test_run_end_to_end_synthetic()` — run → verdict → report на подставных барах: шорт-неудачник и шорт-победитель; гейты делят ноги на три группы.
+- L282 `test_main_writes_smoke_artifacts_and_publishes_by_default()`
+- L312 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L337 `P = os.path.join(HERE, 'run_d10.py')`
+- L340 `_control_cap_ignored()`
+- L346 `_control_none_arm_forced_to_1x()`
+- L352 `_control_sigma_side_flipped()`
+- L358 `_control_net_without_cost()`
+- L364 `_control_gate_ignores_ratio()`
+- L370 `_control_sample_is_per_cell()`
+- L376 `_control_wrong_side_promise_accepted()`
+- L382 `TESTS = [test_grid_is_declared_before_the_run, …`
+- L397 `CONTROLS = [('потолок плеча снят', _control_cap_ig…`
+- L408 `main()`
+
 ## research/dca_ladder/test_run_d2.py · 207 строк
 
 Тест чистой логики D2 — построение структурных рунгов.
@@ -800,6 +837,37 @@
 - L110 `_control_empty_returns_zero()` — Если бы measures на n=0 возвращал 0 вместо None, edge-тест упал.
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
+
+## research/dca_paper/test_costs.py · 318 строк
+
+Проверки замера издержек DCA-книг (`costs.py`).
+
+- L20 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L25 `H = 3600`
+- L26 `T0 = 1790000000.0`
+- L27 `FILLS4 = [(T0 + 60, 100.0, 0.25), (T0 + 5 * H, 1…`
+- L31 `_row(sym='SSSUSDT', side='short', at=T0, fills=None, exit_ts=No…`
+- L46 `_series(start, hours, rate_fn)` — Ряд начислений раз в час: (времена мс, ставки), как у загрузчика.
+- L54 `test_commission_charges_every_rung_and_the_exit()`
+- L71 `test_funding_sign_follows_the_side()`
+- L81 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
+- L96 `test_funding_uncovered_is_not_measured()`
+- L108 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
+- L123 `_fixture()`
+- L150 `test_run_end_to_end_synthetic()`
+- L195 `test_main_writes_the_artifact_and_publishes_by_default()`
+- L219 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L244 `P = os.path.join(HERE, 'costs.py')`
+- L247 `_control_exit_fee_dropped()`
+- L252 `_control_funding_sign_flipped()`
+- L258 `_control_open_notional_ignores_time()`
+- L264 `_control_uncovered_counted_as_zero()`
+- L270 `_control_gate_ignores_side()`
+- L276 `_control_rate_at_entry_looks_ahead()`
+- L281 `_control_missing_series_reads_as_present()`
+- L287 `TESTS = [test_commission_charges_every_rung_and…`
+- L297 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L308 `main()`
 
 ## research/dca_paper/test_cut.py · 297 строк
 

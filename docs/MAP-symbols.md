@@ -1095,6 +1095,54 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - L424 `simulate_dca(bars, rung_prices, weights, capital, leverage, mmr…` — DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 - L652 `same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notio…` — Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
 
+## research/dca_ladder/run_d10.py · 722 строк
+
+D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
+
+- L63 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L64 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L79 `OUT = os.path.join(HERE, 'out')`
+- L80 `HOUR = 3600`
+- L83 `LEVS = [('fence', 'как забор'), ('c3', 'потоло…` — --- сетка объявлена ДО прогона ----------------------------------------
+- L85 `LEV_CAP = {'fence': None, 'c3': 3.0, 'c2': 2.0, '…`
+- L86 `ADDS = [('struct', 'структурные уровни'), ('no…`
+- L88 `TAKES = [('t2', 'обещание ×2', 2.0), ('t1', 'об…`
+- L90 `TAKE_MULT = {k: m for k, _t, m in TAKES}`
+- L91 `SPACING_SIG = 2.0`
+- L93 `GATES = [('rr2', 'RR ≥ 2 (как сейчас)'), ('lo',…` — Гейты входа: подмножества одного прохода. `rr2` — то, чем книга торгует.
+- L95 `REF = 'fence:struct:t2'`
+- L96 `REF_GATE = 'rr2'`
+- L98 `ROUND_COST_BP = float(TR.ROUND_COST_BP)` — Издержки: круг на заполненный нотионал — тейкер на рунге и на выходе.
+- L101 `RULERS = {'safe_s': (R.RULERS['safe_s']['rule'],…` — Книги: линейки забора коротких книг. «Агрессивная» — «оптимальная» плюс гейт плеча режима, из тех же позиций…
+- L104 `BOOK_RULER = {'optimal_s': 'optimal_s', 'safe_s': 's…`
+- L108 `grid()` — Все объявленные ячейки: ключ → (плечо, доливы, цель).
+- L118 `CELLS = grid()`
+- L119 `KEYS = [c[0] for c in CELLS]`
+- L123 `book_cell()` — Ключ ячейки, равной ДЕЙСТВУЮЩЕМУ правилу книги. None — её нет.
+- L135 `gate_of(g)` — Какие гейты нога проходит. Край обязателен у всех (как в книге).
+- L148 `short_legs(limit=None, log=print)` — Короткие ноги журнала листов под ОБЪЕДИНЕНИЕМ гейтов (край ≥ 33).
+- L155 `leverage_for(lk, lev_fence)`
+- L160 `take_for(g, tk)` — Цель ячейки — та же форма, что `rules.take_rule`, с множителем оси.
+- L173 `one_position(g, bars, ts, look, rule, param, lev_look=None)` — Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
+- L246 `collect(limit=None, src=None, log=print, legs=None)` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
+- L311 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
+- L333 `_exits(rows)`
+- L340 `cell(recs, book, dep, gate=REF_GATE, net=False)` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
+- L387 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
+- L400 `halves(rows_by_cell)`
+- L412 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
+- L426 `_rss_mb()`
+- L436 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
+- L439 `run(limit=None, src=None, log=print, legs=None)`
+- L487 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
+- L520 `_p(x, d=2, sign=True)`
+- L526 `_u(x)`
+- L530 `title_of(key)`
+- L536 `_row(key, c, cn, p, mark)`
+- L552 `report(s)`
+- L694 `publish(name)`
+- L700 `main(argv=None)`
+
 ## research/dca_ladder/run_d2.py · 656 строк
 
 D2 (спека 14) — DCA-стратегия НА ВЫБОРАХ МОДЕЛИ, а не «где попало».
@@ -1420,6 +1468,41 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L52 `shards()` — Все куски журнала плюс цельный файл прежнего хранения.
 - L62 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
 - L107 `main()`
+
+## research/dca_paper/costs.py · 505 строк
+
+Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
+
+- L49 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L50 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L59 `OUT = os.path.join(HERE, 'out')`
+- L60 `A1 = os.path.join(ROOT, 'research', 'a1_univ…`
+- L61 `UNIVERSE = os.path.join(A1, 'universe.json')`
+- L62 `FUNDING_DIR = os.path.join(A1, 'funding')`
+- L63 `TAKER_FALLBACK_BP = float(TR.ROUND_COST_BP) / 2.0`
+- L64 `MIN_FUNDING_COVER = 0.5`
+- L67 `universe()`
+- L73 `symbol_maps(assets)` — Символ Bybit → актив; символ → тейкер б.п. (None — ставки нет).
+- L85 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
+- L98 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
+- L122 `funding_usd(row, series, side)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
+- L155 `rate_at_entry(series, at)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет/рано.
+- L164 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
+- L171 `enrich(rows, funding, to_asset, taker, log=print)` — Строка журнала → строка с издержками. Пропуски считаются числом.
+- L211 `_sum(rows, k)`
+- L216 `_bp_median(rows, k)`
+- L222 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
+- L235 `_stats_gross(rows, dep)`
+- L242 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
+- L275 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
+- L300 `run(rows=None, funding=None, assets=None, log=print)`
+- L346 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L369 `_u(x)`
+- L373 `_p(x, d=2)`
+- L377 `_b(x)`
+- L381 `report(s)`
+- L479 `publish(name)`
+- L485 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 
