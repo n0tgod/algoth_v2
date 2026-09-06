@@ -1,3 +1,21 @@
 #!/usr/bin/env bash
 # Хук ставится разово: git config core.hooksPath tools/githooks
-exec "$(git rev-parse --show-toplevel)/tools/safety_check.sh"
+#
+# Две обязанности, в этом порядке:
+# 1. Карта кода (docs/MAP*.md) перестраивается из дерева и добавляется
+#    в ЭТОТ ЖЕ коммит — рукописная карта устарела бы молча. Отказ
+#    генератора коммит не останавливает: карта — класс C, а коммит
+#    правки может быть срочным.
+# 2. Проверка сохранности данных (tools/safety_check.sh) — она
+#    останавливает коммит и идёт последней, уже с картой в индексе.
+root="$(git rev-parse --show-toplevel)"
+if command -v python3 >/dev/null 2>&1; then
+    if out="$(python3 "$root/tools/project_map.py" 2>&1)"; then
+        git -C "$root" add -- docs/MAP.md docs/MAP-symbols.md docs/MAP-tests.md
+    else
+        printf 'карта кода не перестроена (коммит идёт без неё): %s\n' "$out" >&2
+    fi
+else
+    printf 'python3 не найден: карта кода не перестроена\n' >&2
+fi
+exec "$root/tools/safety_check.sh"
