@@ -76,3 +76,23 @@ funding: рядов 582 из 582 нужных активов
 ## Чего замер НЕ говорит
 
 Проскальзывание — одно число (4.4 б.п.) на все имена и размеры, снятое на 300 $ за имя: у билетов DCA-книг в $10k–$100k оно больше, так что нетто крупных депозитов — НИЖНЯЯ граница издержек; распределение по живому журналу — `DCA-slip-x3.md`. Funding посчитан по нотионалу рунгов, а не по марк-цене начисления (расхождение — ход цены от рунга до начисления, единицы процентов от самого funding). Комиссия — по сегодняшнему тарифу счёта, прошлых сеток площадка не отдаёт (A1). Гейт по ставке просмотрен ПОСЛЕ прогона книг — правилом он стать может только объявленным заранее и проверенным вперёд.
+публикуется в ветку main:
+ jobs/done/costs-recheck.done                     |    1 +
+ jobs/done/costs-recheck.log                      |   78 +
+ jobs/done/pair-run-3.log                         |    7 +
+ jobs/done/pair-run-4.done                        |    1 +
+ jobs/done/pair-run-4.log                         |   19 +
+ jobs/poke.log                                    |    4 +
+ research/dca_paper/out/DCA-costs-pair-check.json | 2259 ++++++++++++++++++++++
+ research/dca_paper/out/DCA-costs-pair-check.md   |   70 +
+ research/s8_loop/out/day_brake.json              |    2 +-
+ 9 files changed, 2440 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   29ba5c4..defbb86  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-07T18:12:21Z, код 0
+публикуется в ветку main:
+ jobs/done/costs-recheck.log | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
