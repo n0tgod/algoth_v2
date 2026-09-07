@@ -124,3 +124,15 @@ sheets.jsonl: ног 981420
 - Деньги — брутто. Издержки меряет `costs.py`; они пропорциональны обороту и у руки с бо́льшим числом сделок съедят больше.
 - Окно одно и то же для обеих рук, и оно короткое: две трети денег книги сделаны за всплеск 20–22.08. Половины окна печатаются именно поэтому.
 
+публикуется в ветку main:
+ jobs/done/dca-arm-book.log                  | 109 ++++++++
+ jobs/done/dca-arms-3.log                    |   7 +
+ research/dca_paper/out/DCA-arm-book-1m.json | 407 ++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-arm-book-1m.md   |  57 ++++
+ research/s8_loop/out/day_brake.json         |   2 +-
+ 5 files changed, 581 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   69cf414..726bd70  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T07:56:59Z, код 0
