@@ -93,6 +93,29 @@ def test_gate_refuses_by_sign_and_by_ignorance_separately():
           f"{why['ставка неизвестна']} — разные числа")
 
 
+def test_random_control_matches_the_gate_size():
+    """Контроль гейта берёт РОВНО столько же решений, сколько гейт.
+
+    Кусается: без этого контроля «гейт отбирает» неотличимо от «шортов
+    стало меньше», а шорты в минусе — то есть меньше их всегда «лучше».
+    """
+    held = {}
+    syms = [f"S{i}USDT" for i in range(10)]
+    shorts = [TP._short(x, T0 + i * H) for i, x in enumerate(syms)]
+    # половине ставка благоприятна шорту, половине нет
+    ctx = _ctx({x: (0.0002 if i % 2 == 0 else -0.0002)
+                for i, x in enumerate(syms)})
+    on, _w = PG.pick(shorts, held, ctx, "all", "on")
+    rnd, why = PG.pick(shorts, held, ctx, "all", "random")
+    assert len(on) == 5 and len(rnd) == 5, (len(on), len(rnd))
+    assert why["контроль размера"] == 5, why
+    # контроль НЕ обязан совпасть с гейтом по составу — иначе он не
+    # контроль, а его копия
+    assert {r["sym"] for r in rnd} != {r["sym"] for r in on}, (rnd, on)
+    print(f"ok  контроль гейта берёт столько же ({len(rnd)}), но другой "
+          "состав — «отбор» и «меньше сделок» стали различимы")
+
+
 def test_probe_writes_nothing_into_the_book_journal():
     """Замер — проба: журнал книг он не трогает ни строкой."""
     longs = [TP._long(f"L{i}USDT", T0 + i * H) for i in range(6)]
@@ -125,8 +148,9 @@ def test_probe_writes_nothing_into_the_book_journal():
 
 if __name__ == "__main__":
     for t in (test_in_long_is_decided_at_the_moment_of_the_decision,
+              test_random_control_matches_the_gate_size,
               test_name_policies_split_the_decisions_without_loss,
               test_gate_refuses_by_sign_and_by_ignorance_separately,
               test_probe_writes_nothing_into_the_book_journal):
         t()
-    print("\nвсе 4 проверки прошли")
+    print("\nвсе 5 проверок прошли")
