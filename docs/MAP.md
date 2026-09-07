@@ -513,7 +513,7 @@
 - `train.py` · 3865 строк — S8.2: цикл переобучения модели на стакане (спека 08 §5).
 - `why.py` · 141 строк — Почему час не становится сечением — по числам, а не по догадке.
 - тесты: `test_books.py` (263), `test_cycle_health.py` (234), `test_s8.py` (5730), `test_side_split.py` (173)
-- отчёты в `out/` (7): CYCLE-health-1m.md, CYCLE-health-after-deploy2.md, CYCLE-health-deploy0831.md, S8-backfill-live.md, S8-backfill-pretest.md, S8-probe-report.md, negdur-restat-remote.md
+- отчёты в `out/` (8): CYCLE-health-1m.md, CYCLE-health-after-deploy2.md, CYCLE-health-deploy0831.md, S8-backfill-live.md, S8-backfill-pretest.md, S8-probe-report.md, SIDE-split-1m.md, negdur-restat-remote.md
 
 ## research/s9_sweep — S9 — перебор правил ситуационной книги по журналу листов
 
@@ -622,7 +622,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 363, логов `done/*.log`: 363 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 363, логов `done/*.log`: 364 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 

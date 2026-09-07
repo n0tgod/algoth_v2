@@ -1,0 +1,1761 @@
+{
+ "rows": [
+  {
+   "key": "h4",
+   "label": "4 h · per σ",
+   "family": "timer",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 2425,
+   "start": 3000.0,
+   "short": {
+    "n": 1351,
+    "pnl_usd": 20.16,
+    "net_bp_mean": 4.5,
+    "net_bp_median": 40.9,
+    "win": 0.547,
+    "t": 0.21,
+    "days": 27,
+    "day_median": -0.58,
+    "half_a": 235.82,
+    "half_b": -215.66,
+    "half_mid": "2026-08-22",
+    "exits": {
+     "срок": 1339,
+     "встречный сигнал закрыл позицию": 12
+    }
+   },
+   "long": {
+    "n": 1074,
+    "pnl_usd": -45.11,
+    "net_bp_mean": -4.6,
+    "net_bp_median": -12.0,
+    "win": 0.46,
+    "t": -0.31,
+    "days": 27,
+    "day_median": -1.65,
+    "half_a": -16.6,
+    "half_b": -28.51,
+    "half_mid": "2026-08-22",
+    "exits": {
+     "срок": 1061,
+     "встречный сигнал закрыл позицию": 13
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h4",
+   "label": "4 h · per σ",
+   "family": "timer",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 2339,
+   "start": 3000.0,
+   "short": {
+    "n": 1096,
+    "pnl_usd": 110.69,
+    "net_bp_mean": -0.5,
+    "net_bp_median": -1.8,
+    "win": 0.495,
+    "t": -0.02,
+    "days": 27,
+    "day_median": 1.39,
+    "half_a": 256.11,
+    "half_b": -145.42,
+    "half_mid": "2026-08-21",
+    "exits": {
+     "срок": 1038,
+     "встречный сигнал закрыл позицию": 58
+    }
+   },
+   "long": {
+    "n": 1243,
+    "pnl_usd": -681.61,
+    "net_bp_mean": -52.3,
+    "net_bp_median": -28.8,
+    "win": 0.426,
+    "t": -3.22,
+    "days": 27,
+    "day_median": -7.78,
+    "half_a": -294.96,
+    "half_b": -386.65,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "срок": 1192,
+     "встречный сигнал закрыл позицию": 51
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h24",
+   "label": "24 h",
+   "family": "timer",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 3065,
+   "start": 3000.0,
+   "short": {
+    "n": 1584,
+    "pnl_usd": 98.95,
+    "net_bp_mean": 74.9,
+    "net_bp_median": 283.5,
+    "win": 0.601,
+    "t": 1.48,
+    "days": 31,
+    "day_median": 11.76,
+    "half_a": 887.08,
+    "half_b": -788.13,
+    "half_mid": "2026-08-19",
+    "exits": {
+     "срок": 1517,
+     "встречный сигнал закрыл позицию": 67
+    }
+   },
+   "long": {
+    "n": 1481,
+    "pnl_usd": 368.61,
+    "net_bp_mean": 121.8,
+    "net_bp_median": -37.9,
+    "win": 0.475,
+    "t": 2.85,
+    "days": 30,
+    "day_median": -9.72,
+    "half_a": -14.02,
+    "half_b": 382.63,
+    "half_mid": "2026-08-20",
+    "exits": {
+     "срок": 1413,
+     "встречный сигнал закрыл позицию": 68
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h24",
+   "label": "24 h",
+   "family": "timer",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 2596,
+   "start": 3000.0,
+   "short": {
+    "n": 1221,
+    "pnl_usd": 771.24,
+    "net_bp_mean": 366.3,
+    "net_bp_median": 502.7,
+    "win": 0.66,
+    "t": 6.51,
+    "days": 31,
+    "day_median": 8.19,
+    "half_a": 575.02,
+    "half_b": 196.22,
+    "half_mid": "2026-08-17",
+    "exits": {
+     "срок": 1144,
+     "встречный сигнал закрыл позицию": 77
+    }
+   },
+   "long": {
+    "n": 1375,
+    "pnl_usd": -316.29,
+    "net_bp_mean": -125.4,
+    "net_bp_median": -98.5,
+    "win": 0.418,
+    "t": -3.35,
+    "days": 31,
+    "day_median": -11.09,
+    "half_a": -215.4,
+    "half_b": -100.89,
+    "half_mid": "2026-08-21",
+    "exits": {
+     "срок": 1302,
+     "встречный сигнал закрыл позицию": 73
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": true,
+    "shorts_positive_unstable": false,
+    "shorts_only": true,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h24b",
+   "label": "24 h · basket",
+   "family": "basket",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 2222,
+   "start": 3000.0,
+   "short": {
+    "n": 1124,
+    "pnl_usd": -155.93,
+    "net_bp_mean": -23.2,
+    "net_bp_median": 191.4,
+    "win": 0.583,
+    "t": -0.39,
+    "days": 23,
+    "day_median": -4.8,
+    "half_a": 484.94,
+    "half_b": -640.87,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "срок": 886,
+     "корзина дошла до цели": 201,
+     "встречный сигнал закрыл позицию": 37
+    }
+   },
+   "long": {
+    "n": 1098,
+    "pnl_usd": 363.16,
+    "net_bp_mean": 170.7,
+    "net_bp_median": 37.8,
+    "win": 0.525,
+    "t": 4.32,
+    "days": 23,
+    "day_median": -9.06,
+    "half_a": 107.35,
+    "half_b": 255.81,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "срок": 859,
+     "встречный сигнал закрыл позицию": 37,
+     "корзина дошла до цели": 202
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h24b",
+   "label": "24 h · basket",
+   "family": "basket",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 1826,
+   "start": 3000.0,
+   "short": {
+    "n": 794,
+    "pnl_usd": 315.71,
+    "net_bp_mean": 222.5,
+    "net_bp_median": 400.5,
+    "win": 0.639,
+    "t": 3.54,
+    "days": 24,
+    "day_median": 3.93,
+    "half_a": 377.56,
+    "half_b": -61.85,
+    "half_mid": "2026-08-21",
+    "exits": {
+     "срок": 604,
+     "корзина дошла до цели": 135,
+     "встречный сигнал закрыл позицию": 55
+    }
+   },
+   "long": {
+    "n": 1032,
+    "pnl_usd": -95.47,
+    "net_bp_mean": -43.1,
+    "net_bp_median": -67.3,
+    "win": 0.444,
+    "t": -1.04,
+    "days": 24,
+    "day_median": -12.29,
+    "half_a": 7.04,
+    "half_b": -102.51,
+    "half_mid": "2026-08-24",
+    "exits": {
+     "срок": 864,
+     "встречный сигнал закрыл позицию": 35,
+     "корзина дошла до цели": 133
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h24bf",
+   "label": "24 h · basket ± floor",
+   "family": "basket",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 2228,
+   "start": 3000.0,
+   "short": {
+    "n": 1124,
+    "pnl_usd": -99.28,
+    "net_bp_mean": 2.9,
+    "net_bp_median": 166.2,
+    "win": 0.57,
+    "t": 0.05,
+    "days": 23,
+    "day_median": -4.8,
+    "half_a": 486.7,
+    "half_b": -585.98,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "срок": 821,
+     "корзина дошла до цели": 201,
+     "встречный сигнал закрыл позицию": 31,
+     "корзина дошла до предела убытка": 71
+    }
+   },
+   "long": {
+    "n": 1104,
+    "pnl_usd": 361.01,
+    "net_bp_mean": 164.7,
+    "net_bp_median": 37.9,
+    "win": 0.524,
+    "t": 4.14,
+    "days": 23,
+    "day_median": -1.91,
+    "half_a": 97.73,
+    "half_b": 263.28,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "срок": 794,
+     "встречный сигнал закрыл позицию": 37,
+     "корзина дошла до цели": 202,
+     "корзина дошла до предела убытка": 71
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h24bf",
+   "label": "24 h · basket ± floor",
+   "family": "basket",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 1877,
+   "start": 3000.0,
+   "short": {
+    "n": 844,
+    "pnl_usd": 222.97,
+    "net_bp_mean": 160.5,
+    "net_bp_median": 308.8,
+    "win": 0.618,
+    "t": 2.64,
+    "days": 24,
+    "day_median": 3.19,
+    "half_a": 433.72,
+    "half_b": -210.75,
+    "half_mid": "2026-08-22",
+    "exits": {
+     "срок": 594,
+     "корзина дошла до цели": 134,
+     "встречный сигнал закрыл позицию": 54,
+     "корзина дошла до предела убытка": 62
+    }
+   },
+   "long": {
+    "n": 1033,
+    "pnl_usd": -97.79,
+    "net_bp_mean": -42.3,
+    "net_bp_median": -77.2,
+    "win": 0.439,
+    "t": -1.04,
+    "days": 24,
+    "day_median": -12.3,
+    "half_a": 7.42,
+    "half_b": -105.21,
+    "half_mid": "2026-08-24",
+    "exits": {
+     "срок": 803,
+     "встречный сигнал закрыл позицию": 35,
+     "корзина дошла до цели": 133,
+     "корзина дошла до предела убытка": 62
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h24c",
+   "label": "24 h · basket only",
+   "family": "basket",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 618,
+   "start": 3000.0,
+   "short": {
+    "n": 307,
+    "pnl_usd": -43.64,
+    "net_bp_mean": -66.5,
+    "net_bp_median": 13.4,
+    "win": 0.521,
+    "t": -0.99,
+    "days": 6,
+    "day_median": 5.87,
+    "half_a": -71.65,
+    "half_b": 28.01,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "корзина дошла до предела возраста": 306,
+     "встречный сигнал закрыл позицию": 1
+    }
+   },
+   "long": {
+    "n": 311,
+    "pnl_usd": 222.05,
+    "net_bp_mean": 369.6,
+    "net_bp_median": 110.3,
+    "win": 0.582,
+    "t": 4.68,
+    "days": 6,
+    "day_median": 25.32,
+    "half_a": 60.82,
+    "half_b": 161.23,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "корзина дошла до предела возраста": 306,
+     "встречный сигнал закрыл позицию": 5
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h24c",
+   "label": "24 h · basket only",
+   "family": "basket",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 608,
+   "start": 3000.0,
+   "short": {
+    "n": 309,
+    "pnl_usd": -23.08,
+    "net_bp_mean": -25.5,
+    "net_bp_median": 99.1,
+    "win": 0.553,
+    "t": -0.32,
+    "days": 6,
+    "day_median": -0.92,
+    "half_a": 17.62,
+    "half_b": -40.7,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "корзина дошла до предела возраста": 237,
+     "встречный сигнал закрыл позицию": 10,
+     "корзина дошла до предела убытка": 62
+    }
+   },
+   "long": {
+    "n": 299,
+    "pnl_usd": -39.69,
+    "net_bp_mean": -53.9,
+    "net_bp_median": -189.7,
+    "win": 0.341,
+    "t": -0.69,
+    "days": 6,
+    "day_median": -9.78,
+    "half_a": -25.92,
+    "half_b": -13.77,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "корзина дошла до предела возраста": 237,
+     "корзина дошла до предела убытка": 62
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "sit",
+   "label": "situational · per σ",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 1008,
+   "start": 3000.0,
+   "short": {
+    "n": 602,
+    "pnl_usd": -210.96,
+    "net_bp_mean": -9.5,
+    "net_bp_median": -109.2,
+    "win": 0.374,
+    "t": -0.47,
+    "days": 25,
+    "day_median": -15.3,
+    "half_a": -243.02,
+    "half_b": 32.06,
+    "half_mid": "2026-08-26",
+    "exits": {
+     "цена прошла обещанный ход против": 337,
+     "цена дошла до обещанной цели": 116,
+     "прогноз развернулся": 144,
+     "предел возраста": 5
+    }
+   },
+   "long": {
+    "n": 406,
+    "pnl_usd": 452.25,
+    "net_bp_mean": 36.3,
+    "net_bp_median": -40.7,
+    "win": 0.433,
+    "t": 1.59,
+    "days": 25,
+    "day_median": 23.13,
+    "half_a": 254.93,
+    "half_b": 197.32,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "прогноз развернулся": 122,
+     "цена прошла обещанный ход против": 189,
+     "цена дошла до обещанной цели": 90,
+     "предел возраста": 5
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "sit",
+   "label": "situational · per σ",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 1132,
+   "start": 3000.0,
+   "short": {
+    "n": 478,
+    "pnl_usd": -441.56,
+    "net_bp_mean": -33.7,
+    "net_bp_median": -79.6,
+    "win": 0.339,
+    "t": -1.91,
+    "days": 25,
+    "day_median": -22.99,
+    "half_a": -242.19,
+    "half_b": -199.37,
+    "half_mid": "2026-08-25",
+    "exits": {
+     "прогноз развернулся": 119,
+     "цена прошла обещанный ход против": 283,
+     "цена дошла до обещанной цели": 72,
+     "предел возраста": 4
+    }
+   },
+   "long": {
+    "n": 654,
+    "pnl_usd": -36.14,
+    "net_bp_mean": -1.1,
+    "net_bp_median": -59.8,
+    "win": 0.376,
+    "t": -0.11,
+    "days": 25,
+    "day_median": -2.87,
+    "half_a": -33.13,
+    "half_b": -3.01,
+    "half_mid": "2026-08-24",
+    "exits": {
+     "цена прошла обещанный ход против": 338,
+     "цена дошла до обещанной цели": 124,
+     "прогноз развернулся": 188,
+     "предел возраста": 4
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "sit_lo",
+   "label": "situational · low RR",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 476,
+   "start": 3000.0,
+   "short": {
+    "n": 335,
+    "pnl_usd": -89.3,
+    "net_bp_mean": -6.7,
+    "net_bp_median": 39.2,
+    "win": 0.558,
+    "t": -0.22,
+    "days": 16,
+    "day_median": 7.64,
+    "half_a": -53.21,
+    "half_b": -36.09,
+    "half_mid": "2026-08-30",
+    "exits": {
+     "прогноз развернулся": 113,
+     "цена дошла до обещанной цели": 110,
+     "цена прошла обещанный ход против": 107,
+     "предел возраста": 5
+    }
+   },
+   "long": {
+    "n": 141,
+    "pnl_usd": -184.21,
+    "net_bp_mean": -46.6,
+    "net_bp_median": 6.3,
+    "win": 0.511,
+    "t": -1.18,
+    "days": 17,
+    "day_median": 2.05,
+    "half_a": -91.92,
+    "half_b": -92.29,
+    "half_mid": "2026-08-29",
+    "exits": {
+     "прогноз развернулся": 55,
+     "цена прошла обещанный ход против": 37,
+     "цена дошла до обещанной цели": 46,
+     "предел возраста": 3
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "sit_lo",
+   "label": "situational · low RR",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 494,
+   "start": 3000.0,
+   "short": {
+    "n": 277,
+    "pnl_usd": -70.17,
+    "net_bp_mean": -8.6,
+    "net_bp_median": 19.4,
+    "win": 0.556,
+    "t": -0.29,
+    "days": 16,
+    "day_median": -2.66,
+    "half_a": 88.56,
+    "half_b": -158.73,
+    "half_mid": "2026-08-29",
+    "exits": {
+     "цена дошла до обещанной цели": 94,
+     "прогноз развернулся": 109,
+     "цена прошла обещанный ход против": 72,
+     "предел возраста": 2
+    }
+   },
+   "long": {
+    "n": 217,
+    "pnl_usd": -286.82,
+    "net_bp_mean": -46.0,
+    "net_bp_median": -8.9,
+    "win": 0.479,
+    "t": -1.43,
+    "days": 17,
+    "day_median": -17.19,
+    "half_a": -89.67,
+    "half_b": -197.15,
+    "half_mid": "2026-08-30",
+    "exits": {
+     "прогноз развернулся": 80,
+     "цена дошла до обещанной цели": 78,
+     "цена прошла обещанный ход против": 57,
+     "предел возраста": 2
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "sit_r",
+   "label": "situational · fixed risk",
+   "family": "situational",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 457,
+   "start": 3000.0,
+   "short": {
+    "n": 264,
+    "pnl_usd": -210.0,
+    "net_bp_mean": -51.8,
+    "net_bp_median": -221.2,
+    "win": 0.25,
+    "t": -1.41,
+    "days": 23,
+    "day_median": -7.9,
+    "half_a": -118.04,
+    "half_b": -91.96,
+    "half_mid": "2026-08-25",
+    "exits": {
+     "цена прошла обещанный ход против": 198,
+     "цена дошла до обещанной цели": 66
+    }
+   },
+   "long": {
+    "n": 193,
+    "pnl_usd": 124.51,
+    "net_bp_mean": 36.5,
+    "net_bp_median": -147.0,
+    "win": 0.378,
+    "t": 0.85,
+    "days": 25,
+    "day_median": 2.62,
+    "half_a": 21.49,
+    "half_b": 103.02,
+    "half_mid": "2026-08-22",
+    "exits": {
+     "цена прошла обещанный ход против": 120,
+     "цена дошла до обещанной цели": 73
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "sit_r",
+   "label": "situational · fixed risk",
+   "family": "situational",
+   "echo": true,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 411,
+   "start": 3000.0,
+   "short": {
+    "n": 183,
+    "pnl_usd": -78.69,
+    "net_bp_mean": -19.1,
+    "net_bp_median": -171.8,
+    "win": 0.279,
+    "t": -0.43,
+    "days": 24,
+    "day_median": -0.71,
+    "half_a": -39.55,
+    "half_b": -39.14,
+    "half_mid": "2026-08-25",
+    "exits": {
+     "цена прошла обещанный ход против": 133,
+     "цена дошла до обещанной цели": 50
+    }
+   },
+   "long": {
+    "n": 228,
+    "pnl_usd": -116.83,
+    "net_bp_mean": -42.5,
+    "net_bp_median": -137.1,
+    "win": 0.268,
+    "t": -1.68,
+    "days": 23,
+    "day_median": -2.08,
+    "half_a": -42.03,
+    "half_b": -74.8,
+    "half_mid": "2026-08-24",
+    "exits": {
+     "цена прошла обещанный ход против": 167,
+     "цена дошла до обещанной цели": 61
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "z",
+   "label": "24 h · per σ",
+   "family": "sigma",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 2669,
+   "start": 3000.0,
+   "short": {
+    "n": 1464,
+    "pnl_usd": 99.68,
+    "net_bp_mean": 43.1,
+    "net_bp_median": 83.0,
+    "win": 0.577,
+    "t": 1.24,
+    "days": 27,
+    "day_median": 9.15,
+    "half_a": 103.55,
+    "half_b": -3.87,
+    "half_mid": "2026-08-22",
+    "exits": {
+     "срок": 1428,
+     "встречный сигнал закрыл позицию": 36
+    }
+   },
+   "long": {
+    "n": 1205,
+    "pnl_usd": -178.99,
+    "net_bp_mean": -64.2,
+    "net_bp_median": -13.0,
+    "win": 0.437,
+    "t": -2.29,
+    "days": 27,
+    "day_median": -0.49,
+    "half_a": 45.68,
+    "half_b": -224.67,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "срок": 1184,
+     "встречный сигнал закрыл позицию": 21
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "z",
+   "label": "24 h · per σ",
+   "family": "sigma",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 2241,
+   "start": 3000.0,
+   "short": {
+    "n": 1008,
+    "pnl_usd": 32.08,
+    "net_bp_mean": 19.8,
+    "net_bp_median": 134.7,
+    "win": 0.578,
+    "t": 0.36,
+    "days": 27,
+    "day_median": 5.26,
+    "half_a": 366.21,
+    "half_b": -334.13,
+    "half_mid": "2026-08-19",
+    "exits": {
+     "встречный сигнал закрыл позицию": 152,
+     "срок": 856
+    }
+   },
+   "long": {
+    "n": 1233,
+    "pnl_usd": -2.97,
+    "net_bp_mean": -29.1,
+    "net_bp_median": -12.0,
+    "win": 0.466,
+    "t": -0.89,
+    "days": 28,
+    "day_median": -4.25,
+    "half_a": 130.01,
+    "half_b": -132.98,
+    "half_mid": "2026-08-23",
+    "exits": {
+     "срок": 1136,
+     "встречный сигнал закрыл позицию": 97
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h24a",
+   "label": "24 h · agreed",
+   "family": "agree",
+   "echo": true,
+   "agree": true,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 126,
+   "start": 3000.0,
+   "short": {
+    "n": 54,
+    "pnl_usd": 1.69,
+    "net_bp_mean": 13.1,
+    "net_bp_median": 340.6,
+    "win": 0.574,
+    "t": 0.05,
+    "days": 4,
+    "day_median": 18.88,
+    "half_a": -40.08,
+    "half_b": 41.77,
+    "half_mid": "2026-09-05",
+    "exits": {
+     "срок": 54
+    }
+   },
+   "long": {
+    "n": 72,
+    "pnl_usd": 159.38,
+    "net_bp_mean": 694.6,
+    "net_bp_median": -50.5,
+    "win": 0.458,
+    "t": 2.4,
+    "days": 6,
+    "day_median": -22.44,
+    "half_a": 156.0,
+    "half_b": 3.38,
+    "half_mid": "2026-09-04",
+    "exits": {
+     "срок": 72
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h24a",
+   "label": "24 h · agreed",
+   "family": "agree",
+   "echo": true,
+   "agree": true,
+   "traded": true,
+   "arm": "nn",
+   "closed": 126,
+   "start": 3000.0,
+   "short": {
+    "n": 54,
+    "pnl_usd": 2.36,
+    "net_bp_mean": 14.5,
+    "net_bp_median": 339.9,
+    "win": 0.574,
+    "t": 0.06,
+    "days": 4,
+    "day_median": 19.17,
+    "half_a": -39.46,
+    "half_b": 41.82,
+    "half_mid": "2026-09-05",
+    "exits": {
+     "срок": 54
+    }
+   },
+   "long": {
+    "n": 72,
+    "pnl_usd": 159.01,
+    "net_bp_mean": 694.1,
+    "net_bp_median": -50.5,
+    "win": 0.458,
+    "t": 2.4,
+    "days": 6,
+    "day_median": -22.7,
+    "half_a": 155.3,
+    "half_b": 3.71,
+    "half_mid": "2026-09-04",
+    "exits": {
+     "срок": 72
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h24za",
+   "label": "24 h · σ · agreed",
+   "family": "agree",
+   "echo": true,
+   "agree": true,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 69,
+   "start": 3000.0,
+   "short": {
+    "n": 40,
+    "pnl_usd": 36.78,
+    "net_bp_mean": 185.9,
+    "net_bp_median": 200.9,
+    "win": 0.65,
+    "t": 3.14,
+    "days": 6,
+    "day_median": 9.36,
+    "half_a": 21.15,
+    "half_b": 15.63,
+    "half_mid": "2026-09-01",
+    "exits": {
+     "срок": 40
+    }
+   },
+   "long": {
+    "n": 29,
+    "pnl_usd": -8.28,
+    "net_bp_mean": -164.9,
+    "net_bp_median": -68.9,
+    "win": 0.414,
+    "t": -0.61,
+    "days": 7,
+    "day_median": -1.01,
+    "half_a": -77.07,
+    "half_b": 68.79,
+    "half_mid": "2026-09-02",
+    "exits": {
+     "срок": 29
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": true,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h24za",
+   "label": "24 h · σ · agreed",
+   "family": "agree",
+   "echo": true,
+   "agree": true,
+   "traded": true,
+   "arm": "nn",
+   "closed": 69,
+   "start": 3000.0,
+   "short": {
+    "n": 40,
+    "pnl_usd": 36.52,
+    "net_bp_mean": 185.4,
+    "net_bp_median": 200.9,
+    "win": 0.65,
+    "t": 3.14,
+    "days": 6,
+    "day_median": 9.25,
+    "half_a": 21.15,
+    "half_b": 15.37,
+    "half_mid": "2026-09-01",
+    "exits": {
+     "срок": 40
+    }
+   },
+   "long": {
+    "n": 29,
+    "pnl_usd": -7.43,
+    "net_bp_mean": -162.5,
+    "net_bp_median": -61.4,
+    "win": 0.414,
+    "t": -0.6,
+    "days": 7,
+    "day_median": -1.01,
+    "half_a": -76.96,
+    "half_b": 69.53,
+    "half_mid": "2026-09-02",
+    "exits": {
+     "срок": 29
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": true,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "sit_obs",
+   "label": "situational · any RR",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": false,
+   "arm": "gbm",
+   "closed": 3390,
+   "start": 3000.0,
+   "short": {
+    "n": 2094,
+    "pnl_usd": 201.1,
+    "net_bp_mean": 8.0,
+    "net_bp_median": 16.8,
+    "win": 0.521,
+    "t": 0.79,
+    "days": 25,
+    "day_median": 0.23,
+    "half_a": 256.89,
+    "half_b": -55.79,
+    "half_mid": "2026-08-26",
+    "exits": {
+     "цена прошла обещанный ход против": 654,
+     "цена дошла до обещанной цели": 660,
+     "прогноз развернулся": 752,
+     "предел возраста": 28
+    }
+   },
+   "long": {
+    "n": 1296,
+    "pnl_usd": 236.31,
+    "net_bp_mean": 14.0,
+    "net_bp_median": -9.9,
+    "win": 0.477,
+    "t": 1.23,
+    "days": 25,
+    "day_median": 3.15,
+    "half_a": 142.42,
+    "half_b": 93.89,
+    "half_mid": "2026-08-22",
+    "exits": {
+     "прогноз развернулся": 492,
+     "цена прошла обещанный ход против": 393,
+     "цена дошла до обещанной цели": 384,
+     "предел возраста": 27
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "sit_obs",
+   "label": "situational · any RR",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": false,
+   "arm": "nn",
+   "closed": 3767,
+   "start": 3000.0,
+   "short": {
+    "n": 1886,
+    "pnl_usd": -125.99,
+    "net_bp_mean": -6.0,
+    "net_bp_median": 3.5,
+    "win": 0.511,
+    "t": -0.6,
+    "days": 25,
+    "day_median": -10.69,
+    "half_a": 23.39,
+    "half_b": -149.38,
+    "half_mid": "2026-08-26",
+    "exits": {
+     "цена дошла до обещанной цели": 542,
+     "прогноз развернулся": 762,
+     "цена прошла обещанный ход против": 573,
+     "предел возраста": 9
+    }
+   },
+   "long": {
+    "n": 1881,
+    "pnl_usd": -375.86,
+    "net_bp_mean": -16.8,
+    "net_bp_median": -17.7,
+    "win": 0.459,
+    "t": -2.08,
+    "days": 25,
+    "day_median": -21.29,
+    "half_a": -50.3,
+    "half_b": -325.56,
+    "half_mid": "2026-08-24",
+    "exits": {
+     "цена прошла обещанный ход против": 675,
+     "цена дошла до обещанной цели": 538,
+     "прогноз развернулся": 648,
+     "предел возраста": 20
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h4_r_f30_w5_gl_rrlo_se_b0_a0",
+   "label": "горизонт 4 ч, сечение по сырому прогнозу, вход от 30 б.п., ширина 5+5, только уровни, без отмены по времени, отношение не выше 1.5, размер равный доллар, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 118,
+   "start": 1000.0,
+   "short": {
+    "n": 74,
+    "pnl_usd": 23.33,
+    "net_bp_mean": 31.0,
+    "net_bp_median": 148.3,
+    "win": 0.541,
+    "t": 0.5,
+    "days": 6,
+    "day_median": -1.39,
+    "half_a": -1.65,
+    "half_b": 24.98,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 41,
+     "цена прошла обещанный ход против": 31,
+     "предел возраста": 2
+    }
+   },
+   "long": {
+    "n": 44,
+    "pnl_usd": 63.94,
+    "net_bp_mean": 142.0,
+    "net_bp_median": 296.8,
+    "win": 0.682,
+    "t": 1.41,
+    "days": 6,
+    "day_median": 25.6,
+    "half_a": 39.18,
+    "half_b": 24.76,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена прошла обещанный ход против": 13,
+     "цена дошла до обещанной цели": 30,
+     "предел возраста": 1
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h4_r_f30_w5_gl_rrlo_se_b0_a0",
+   "label": "горизонт 4 ч, сечение по сырому прогнозу, вход от 30 б.п., ширина 5+5, только уровни, без отмены по времени, отношение не выше 1.5, размер равный доллар, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 95,
+   "start": 1000.0,
+   "short": {
+    "n": 50,
+    "pnl_usd": 14.42,
+    "net_bp_mean": 31.9,
+    "net_bp_median": 65.9,
+    "win": 0.56,
+    "t": 0.43,
+    "days": 6,
+    "day_median": 10.82,
+    "half_a": -11.56,
+    "half_b": 25.98,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 28,
+     "цена прошла обещанный ход против": 21,
+     "предел возраста": 1
+    }
+   },
+   "long": {
+    "n": 45,
+    "pnl_usd": -9.49,
+    "net_bp_mean": -21.4,
+    "net_bp_median": 141.5,
+    "win": 0.556,
+    "t": -0.3,
+    "days": 6,
+    "day_median": 2.21,
+    "half_a": -27.76,
+    "half_b": 18.27,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 24,
+     "цена прошла обещанный ход против": 20,
+     "предел возраста": 1
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_se_b0_a0",
+   "label": "горизонт 4 ч, сечение по прогнозу в единицах σ монеты, вход от 30 б.п., ширина 5+5, только уровни, без отмены по времени, отношение не выше 1.5, размер равный доллар, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 118,
+   "start": 1000.0,
+   "short": {
+    "n": 74,
+    "pnl_usd": 23.37,
+    "net_bp_mean": 31.1,
+    "net_bp_median": 148.3,
+    "win": 0.541,
+    "t": 0.5,
+    "days": 6,
+    "day_median": -1.38,
+    "half_a": -1.65,
+    "half_b": 25.02,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 41,
+     "цена прошла обещанный ход против": 31,
+     "предел возраста": 2
+    }
+   },
+   "long": {
+    "n": 44,
+    "pnl_usd": 63.96,
+    "net_bp_mean": 142.1,
+    "net_bp_median": 296.8,
+    "win": 0.682,
+    "t": 1.41,
+    "days": 6,
+    "day_median": 25.61,
+    "half_a": 39.2,
+    "half_b": 24.76,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена прошла обещанный ход против": 13,
+     "цена дошла до обещанной цели": 30,
+     "предел возраста": 1
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_se_b0_a0",
+   "label": "горизонт 4 ч, сечение по прогнозу в единицах σ монеты, вход от 30 б.п., ширина 5+5, только уровни, без отмены по времени, отношение не выше 1.5, размер равный доллар, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 95,
+   "start": 1000.0,
+   "short": {
+    "n": 50,
+    "pnl_usd": 14.42,
+    "net_bp_mean": 31.9,
+    "net_bp_median": 65.9,
+    "win": 0.56,
+    "t": 0.43,
+    "days": 6,
+    "day_median": 10.82,
+    "half_a": -11.56,
+    "half_b": 25.98,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 28,
+     "цена прошла обещанный ход против": 21,
+     "предел возраста": 1
+    }
+   },
+   "long": {
+    "n": 45,
+    "pnl_usd": -9.5,
+    "net_bp_mean": -21.4,
+    "net_bp_median": 141.5,
+    "win": 0.556,
+    "t": -0.3,
+    "days": 6,
+    "day_median": 2.21,
+    "half_a": -27.76,
+    "half_b": 18.26,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 24,
+     "цена прошла обещанный ход против": 20,
+     "предел возраста": 1
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": true,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_sr_b0_a0",
+   "label": "горизонт 4 ч, сечение по прогнозу в единицах σ монеты, вход от 30 б.п., ширина 5+5, только уровни, без отмены по времени, отношение не выше 1.5, размер равный риск, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 118,
+   "start": 1000.0,
+   "short": {
+    "n": 74,
+    "pnl_usd": -1.32,
+    "net_bp_mean": 31.1,
+    "net_bp_median": 148.3,
+    "win": 0.541,
+    "t": 0.5,
+    "days": 6,
+    "day_median": -0.46,
+    "half_a": -5.47,
+    "half_b": 4.15,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 41,
+     "цена прошла обещанный ход против": 31,
+     "предел возраста": 2
+    }
+   },
+   "long": {
+    "n": 44,
+    "pnl_usd": 12.35,
+    "net_bp_mean": 142.1,
+    "net_bp_median": 296.8,
+    "win": 0.682,
+    "t": 1.41,
+    "days": 6,
+    "day_median": 4.05,
+    "half_a": 4.58,
+    "half_b": 7.77,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена прошла обещанный ход против": 13,
+     "цена дошла до обещанной цели": 30,
+     "предел возраста": 1
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": false
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gl_rrlo_sr_b0_a0",
+   "label": "горизонт 4 ч, сечение по прогнозу в единицах σ монеты, вход от 30 б.п., ширина 5+5, только уровни, без отмены по времени, отношение не выше 1.5, размер равный риск, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 95,
+   "start": 1000.0,
+   "short": {
+    "n": 50,
+    "pnl_usd": -2.61,
+    "net_bp_mean": 31.8,
+    "net_bp_median": 65.9,
+    "win": 0.56,
+    "t": 0.43,
+    "days": 6,
+    "day_median": 0.76,
+    "half_a": -2.87,
+    "half_b": 0.26,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 28,
+     "цена прошла обещанный ход против": 21,
+     "предел возраста": 1
+    }
+   },
+   "long": {
+    "n": 45,
+    "pnl_usd": -0.23,
+    "net_bp_mean": -21.4,
+    "net_bp_median": 141.5,
+    "win": 0.556,
+    "t": -0.3,
+    "days": 6,
+    "day_median": 1.44,
+    "half_a": -2.07,
+    "half_b": 1.84,
+    "half_mid": "2026-09-03",
+    "exits": {
+     "цена дошла до обещанной цели": 24,
+     "цена прошла обещанный ход против": 20,
+     "предел возраста": 1
+    }
+   },
+   "verdict": {
+    "judged": true,
+    "shorts_positive": false,
+    "shorts_positive_unstable": false,
+    "shorts_only": false,
+    "long_negative": true
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gt_rrlo_se_b0_a0",
+   "label": "горизонт 4 ч, сечение по прогнозу в единицах σ монеты, вход от 30 б.п., ширина 5+5, выход по времени, отношение не выше 1.5, размер равный доллар, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "gbm",
+   "closed": 40,
+   "start": 1000.0,
+   "short": {
+    "n": 20,
+    "pnl_usd": 51.29,
+    "net_bp_mean": 256.7,
+    "net_bp_median": 129.7,
+    "win": 0.7,
+    "t": 1.66,
+    "days": 4,
+    "day_median": 19.17,
+    "half_a": -9.28,
+    "half_b": 60.57,
+    "half_mid": "2026-09-04",
+    "exits": {
+     "предел возраста": 20
+    }
+   },
+   "long": {
+    "n": 20,
+    "pnl_usd": 27.95,
+    "net_bp_mean": 165.1,
+    "net_bp_median": 66.2,
+    "win": 0.55,
+    "t": 0.34,
+    "days": 4,
+    "day_median": -6.65,
+    "half_a": 41.24,
+    "half_b": -13.29,
+    "half_mid": "2026-09-04",
+    "exits": {
+     "предел возраста": 20
+    }
+   },
+   "verdict": {
+    "judged": false,
+    "why": "шортов меньше 30"
+   }
+  },
+  {
+   "key": "h4_z_f30_w5_gt_rrlo_se_b0_a0",
+   "label": "горизонт 4 ч, сечение по прогнозу в единицах σ монеты, вход от 30 б.п., ширина 5+5, выход по времени, отношение не выше 1.5, размер равный доллар, выходы у каждой ноги свои, обе руки · selected",
+   "family": "situational",
+   "echo": false,
+   "agree": false,
+   "traded": true,
+   "arm": "nn",
+   "closed": 40,
+   "start": 1000.0,
+   "short": {
+    "n": 20,
+    "pnl_usd": -32.11,
+    "net_bp_mean": -163.9,
+    "net_bp_median": -186.4,
+    "win": 0.3,
+    "t": -0.82,
+    "days": 4,
+    "day_median": -7.21,
+    "half_a": -45.17,
+    "half_b": 13.06,
+    "half_mid": "2026-09-04",
+    "exits": {
+     "предел возраста": 20
+    }
+   },
+   "long": {
+    "n": 20,
+    "pnl_usd": -1.26,
+    "net_bp_mean": 1.2,
+    "net_bp_median": 102.5,
+    "win": 0.6,
+    "t": 0.01,
+    "days": 4,
+    "day_median": 4.29,
+    "half_a": -9.83,
+    "half_b": 8.57,
+    "half_mid": "2026-09-04",
+    "exits": {
+     "предел возраста": 20
+    }
+   },
+   "verdict": {
+    "judged": false,
+    "why": "шортов меньше 30"
+   }
+  }
+ ],
+ "families": {
+  "timer": {
+   "short_pnl": 1001.04,
+   "long_pnl": -674.4,
+   "short_n": 5252,
+   "long_n": 5173,
+   "books": [
+    "h24",
+    "h4"
+   ]
+  },
+  "situational": {
+   "short_pnl": -646.09,
+   "long_pnl": -46.75,
+   "short_n": 6084,
+   "long_n": 4902,
+   "books": [
+    "h4_r_f30_w5_gl_rrlo_se_b0_a0",
+    "h4_z_f30_w5_gl_rrlo_se_b0_a0",
+    "h4_z_f30_w5_gl_rrlo_sr_b0_a0",
+    "h4_z_f30_w5_gt_rrlo_se_b0_a0",
+    "sit",
+    "sit_lo",
+    "sit_obs"
+   ]
+  },
+  "sigma": {
+   "short_pnl": 131.76,
+   "long_pnl": -181.96,
+   "short_n": 2472,
+   "long_n": 2438,
+   "books": [
+    "z"
+   ]
+  }
+ },
+ "missing": [],
+ "shorts_positive": [
+  "h24/nn",
+  "h24za/gbm",
+  "h24za/nn"
+ ],
+ "shorts_only": [
+  "h24/nn"
+ ],
+ "shorts_positive_unstable": [
+  "h24/gbm",
+  "h24b/nn",
+  "h24bf/nn",
+  "z/gbm",
+  "z/nn",
+  "h24a/gbm",
+  "h24a/nn",
+  "sit_obs/gbm",
+  "h4_r_f30_w5_gl_rrlo_se_b0_a0/nn",
+  "h4_z_f30_w5_gl_rrlo_se_b0_a0/nn"
+ ],
+ "judged": 30,
+ "n_min": 30,
+ "round_cost_bp": 11.0,
+ "secs": 8.7,
+ "computed_at": "2026-09-07 03:35"
+}

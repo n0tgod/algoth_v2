@@ -1050,3 +1050,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788737473 ==
 [2026-09-06T23:31:14Z] задание diag-queue-2331 запущено: tools/diag_queue.py
+
+== сигнал 1788752096 ==
+[2026-09-07T03:34:58Z] задание side-split запущено: research/s8_loop/side_split.py
