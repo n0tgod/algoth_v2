@@ -154,7 +154,7 @@
 - `run_dca.py` · 406 строк — D1 (спека 14) — дешёвый потолок DCA-лестницы: реплей по хранилищу A2.
 - тесты: `test_ladder.py` (1340), `test_run_d10.py` (497), `test_run_d11.py` (110), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (663), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141)
 - документы: `RUNBOOK.md` — D1 — потолок DCA-лестницы: как прогонять
-- отчёты в `out/` (14): D1-dca-1m.md, D1-dca-smoke-1m.md, D10-short-1m.md, D2-dca-1m.md, D2-dca-smoke.md, D3-fence-1m.md, D4-bookhedge-1m.md, D5-ruler-1m.md, D6-cash-1m-d10000.md, D6-cash-1m.md, D7-hold-1m.md, D8-take-1m.md, D8-take-smoke-1m.md, D9-exit-1m.md
+- отчёты в `out/` (16): D1-dca-1m.md, D1-dca-smoke-1m.md, D10-short-1m.md, D11-h24-gbm-h72-1m.md, D11-h24-nn-h24-1m.md, D2-dca-1m.md, D2-dca-smoke.md, D3-fence-1m.md, D4-bookhedge-1m.md, D5-ruler-1m.md, D6-cash-1m-d10000.md, D6-cash-1m.md, D7-hold-1m.md, D8-take-1m.md, D8-take-smoke-1m.md, D9-exit-1m.md
 
 ## research/dca_live — DCA: пробы живых уровней
 
@@ -624,7 +624,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 367, логов `done/*.log`: 365 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 367, логов `done/*.log`: 368 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
