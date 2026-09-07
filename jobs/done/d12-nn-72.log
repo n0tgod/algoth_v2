@@ -107,3 +107,19 @@ h24/nn: часов 576, коротких выборов 1728, ног под кр
 
 Пик измерен на том же окне, что и результат (правило книги, но in-sample); решений в час у источника три на руку — больше имён в час историей не воспроизвести (лист сечения пишется только у ситуационной модели); проскальзывания и funding в нетто нет (круг — комиссия); окно одно.
 
+публикуется в ветку main:
+ jobs/done/d12-nn-24.log                        |    7 +
+ jobs/done/d12-nn-72.log                        |   65 +
+ jobs/done/side-wave-agree.done                 |    1 +
+ jobs/done/side-wave-agree.log                  |    4 +
+ jobs/poke.log                                  |    3 +
+ research/dca_ladder/out/D12-own-nn-h72-1m.json | 9859 ++++++++++++++++++++++++
+ research/dca_ladder/out/D12-own-nn-h72-1m.md   |   41 +
+ research/factory/out/agents-runs.jsonl         |    1 +
+ research/s8_loop/out/day_brake.json            |    2 +-
+ 9 files changed, 9982 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   f597f20..b959d7d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T06:40:24Z, код 0
