@@ -1149,6 +1149,22 @@
 - L94 `_end_to_end(tmp)`
 - L108 `test_family_writes_its_own_journal_and_gates_the_aggressive_boo…`
 
+## research/dca_paper/test_short_why.py · 155 строк
+
+Проверки замера «почему у короткой книги просадка».
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L22 `H = 3600.0`
+- L23 `T0 = 1786320000.0`
+- L26 `_row(sym, at, usd, lev=5.0, exit_='тейк', margin=222.0, hold_h=…`
+- L38 `test_leverage_bands_are_the_declared_ones()`
+- L54 `test_concentration_sees_the_planted_tail()`
+- L72 `test_liquidation_is_its_own_line_with_a_share_of_the_loss()`
+- L85 `test_funding_top_names_the_payers()`
+- L97 `test_grid_reproduces_the_pair_and_flattens_when_the_short_is_th…`
+- L117 `test_end_to_end_reads_the_journal_and_says_its_silence()`
+
 ## research/dca_paper/test_slip_x3.py · 76 строк
 
 Проверки `slip_x3.py`: решение ↔ открытие по ключу позиции, знак по стороне, отсутствие цены сигнала — пропус…

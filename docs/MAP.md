@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 397, строк: 180059, каталогов: 71.
+Модулей кода: 399, строк: 180572, каталогов: 71.
 
 
 ## корень — память проекта, идеи, README
@@ -175,11 +175,12 @@
 - `run_paper.py` · 1358 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 - `run_short.py` · 310 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 - `short_supply.py` · 123 строк — Сколько ШОРТОВ вообще есть в журнале листов под теми же гейтами.
+- `short_why.py` · 358 строк — Почему у короткой книги такая просадка и откуда минус у агрессивной.
 - `slip_x3.py` · 170 строк — Распределение проскальзывания живого исполнителя X3 — по его журналу.
 - `smoothing.py` · 227 строк — Сглаживают ли короткие DCA-книги длинные — замер, а не имя.
 - `split_journal.py` · 198 строк — Разрезать цельный журнал книги на суточные куски.
 - `tail.py` · 257 строк — Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
-- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (456), `test_cut.py` (297), `test_names.py` (227), `test_pair.py` (278), `test_paper.py` (2669), `test_short.py` (163), `test_slip_x3.py` (76)
+- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (456), `test_cut.py` (297), `test_names.py` (227), `test_pair.py` (278), `test_paper.py` (2669), `test_short.py` (163), `test_short_why.py` (155), `test_slip_x3.py` (76)
 - отчёты в `out/` (13): DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-names.md, DCA-pair.md, DCA-paper.md, DCA-short-supply-1m.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
