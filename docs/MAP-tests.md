@@ -1069,6 +1069,21 @@
 - L265 `test_missing_caches_are_a_reason_not_empty_books()`
 - L274 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
 
+## research/dca_paper/test_pair_gate.py · 132 строк
+
+Проверки фильтров короткой стороны.
+
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L19 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L27 `H = 3600.0`
+- L28 `T0 = TP.T0`
+- L31 `_long_row(sym, at, hold_h, dep=10000)`
+- L38 `_ctx(rate_by_sym)`
+- L45 `test_in_long_is_decided_at_the_moment_of_the_decision()`
+- L60 `test_name_policies_split_the_decisions_without_loss()`
+- L79 `test_gate_refuses_by_sign_and_by_ignorance_separately()`
+- L96 `test_probe_writes_nothing_into_the_book_journal()` — Замер — проба: журнал книг он не трогает ни строкой.
+
 ## research/dca_paper/test_paper.py · 2669 строк
 
 Проверки бумажных DCA-книг. Прогон: .venv/bin/python …/test_paper.py
