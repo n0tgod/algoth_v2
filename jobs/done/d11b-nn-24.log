@@ -314,3 +314,19 @@ h24/nn: часов 574, коротких выборов 1722, ног под кр
 
 Правил книг он не меняет — это решение владельца. Веса модели видели эти часы (оценка сверху); окно записи одно, режим рынка один; коротких решений в разы меньше длинных, и часть ячеек стоит на десятках позиций. Проскальзывания и funding в числах нет; хвост шорта не ограничен сверху, и ячейка без единой ликвидации на этом окне не есть ячейка без ликвидаций. Ось гейта меняет состав решений — её ячейки не парны сетке.
 
+публикуется в ветку main:
+ jobs/done/d11b-gbm-72.log                      |    19 +
+ jobs/done/d11b-nn-24.log                       |   295 +
+ jobs/done/d11b-nn-72.log                       |    29 +
+ jobs/done/restart-tsq.log                      |    14 +
+ research/dca_ladder/out/D11-h24-nn-h24-1m.json | 20109 ++++++++++++-----------
+ research/dca_ladder/out/D11-h24-nn-h24-1m.md   |   366 +-
+ research/factory/out/agents-runs.jsonl         |     3 +
+ research/factory/out/mech_task.json            |     2 +-
+ research/s8_loop/out/day_brake.json            |     2 +-
+ 9 files changed, 11116 insertions(+), 9723 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   1e8f050..93f120d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T05:39:49Z, код 0
