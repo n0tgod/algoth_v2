@@ -1,6 +1,6 @@
-== задание pair-gate-3 ==
+== задание pair-gate-4 ==
 строка: run research/dca_paper/pair_gate.py
-начало: 2026-09-07T23:17:15Z
+начало: 2026-09-07T23:18:24Z
 запускаю: .venv/bin/python research/dca_paper/pair_gate.py 
 длинные книги: aggr 7337, optimal 7337, safe 7337
 короткие книги: aggr_h 2945, optimal_h 2945, safe_h 2945
@@ -99,23 +99,3 @@ pair_aggr random/random: коротких решений 9 из 2945, счёт 1
 - Ячейка становится правилом, только будучи объявленной заранее и проверенной вперёд: сетка отвечает на вопрос «есть ли там что-нибудь», а не выбирает победителя.
 - Окно одно и режим рынка один; веса модели видели эти часы, и это оценка СВЕРХУ.
 
-публикуется в ветку main:
- jobs/done/pair-gate-2.log                 |   7 +++
- jobs/done/pair-gate-3.done                |   1 +
- jobs/done/pair-gate-3.log                 | 101 ++++++++++++++++++++++++++++++
- jobs/poke.log                             |   3 +
- research/dca_paper/out/DCA-pair-gate.json |   2 +-
- research/dca_paper/out/DCA-pair-gate.md   |   2 +-
- 6 files changed, 114 insertions(+), 2 deletions(-)
-To github.com:n0tgod/algoth_v2.git
-   8d905fa..3d927dd  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
-конец: 2026-09-07T23:17:35Z, код 0
-публикуется в ветку main:
- jobs/done/pair-gate-3.log | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
-To github.com:n0tgod/algoth_v2.git
-   3d927dd..692ef89  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано

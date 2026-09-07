@@ -1216,3 +1216,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788823034 ==
 [2026-09-07T23:17:15Z] задание pair-gate-3 запущено: research/dca_paper/pair_gate.py
+
+== сигнал 1788823102 ==
+[2026-09-07T23:18:24Z] задание pair-gate-4 запущено: research/dca_paper/pair_gate.py
