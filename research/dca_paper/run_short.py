@@ -59,7 +59,14 @@ CELL = ("fence:none:t2", "fence", "none", "t2")
 # плеча (`rules.min_lev_of`), как у длинных книг.
 BOOKS = {"safe_h": "safe_s", "optimal_h": "optimal_s", "aggr_h": "optimal_s"}
 ARMS = ("gbm", "nn")
-CACHE = os.path.join(R.OUT, "recs-short.jsonl")
+# Кэш реплея лежит ВНЕ публикуемого каталога. `publish.sh` кладёт в
+# историю весь `research/*/out`, и семимегабайтный кэш там упёрся в
+# защиту от опасного коммита, заморозив публикацию на три часа: логи
+# заданий, журнал книг и свод длинных книг не уезжали никуда. Правило
+# игнора это лечит, но лечит ОДИН файл; каталог вне публикации лечит
+# класс. Записи здесь нет: кэш выводится из журнала выборов и правил.
+CACHE_DIR = os.path.join(HERE, "cache")
+CACHE = os.path.join(CACHE_DIR, "recs-short.jsonl")
 
 
 def cache_sig():
@@ -121,6 +128,7 @@ def read_cache(path=None, log=print):
 
 def write_cache(cache, path=None):
     path = path or CACHE
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     RP.write_cache({((rk,), sym, at): r for (rk, sym, at), r in cache.items()},
                    path=path, sig=cache_sig())
 
@@ -279,6 +287,7 @@ def main(argv=None):
     except Exception:                                        # noqa: BLE001
         pass
     os.makedirs(R.OUT, exist_ok=True)
+    os.makedirs(CACHE_DIR, exist_ok=True)
     s = run(limit=a.limit)
     art = R.H24_ARTIFACT if not a.limit else R.H24_ARTIFACT.replace(
         ".json", "-smoke.json")

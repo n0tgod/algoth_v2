@@ -1818,7 +1818,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L954 `publish(name)`
 - L960 `main()`
 
-## research/dca_paper/run_short.py · 299 строк
+## research/dca_paper/run_short.py · 308 строк
 
 Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 
@@ -1827,19 +1827,20 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L56 `CELL = ('fence:none:t2', 'fence', 'none', 't2')` — Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов, цель ×2. Объявлена здесь одним местом…
 - L60 `BOOKS = {'safe_h': 'safe_s', 'optimal_h': 'opti…` — Книга → линейка забора, на которой считается её позиция. «Агрессивная» считается на той же линейке, что «опти…
 - L61 `ARMS = ('gbm', 'nn')`
-- L62 `CACHE = os.path.join(R.OUT, 'recs-short.jsonl')`
-- L65 `cache_sig()` — Подпись настроек, от которых зависит исход позиции.
-- L80 `legs(arms=ARMS, limit=None, log=print, path=None)` — Короткие выборы `h24` ОБЕИХ рук: решение владельца «оставить обе».
-- L95 `needs_replay(cache, legs_)` — Какие решения считать заново: новых нет в кэше, открытые стареют.
-- L108 `read_cache(path=None, log=print)` — Кэш реплея семейства. Непригодный не чинится молча.
-- L122 `write_cache(cache, path=None)`
-- L128 `replay(need, src=None, log=print)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
-- L161 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
-- L211 `_p(x, d=2)`
-- L215 `_u(x)`
-- L219 `report(s)`
-- L266 `publish(name)`
-- L271 `main(argv=None)`
+- L68 `CACHE_DIR = os.path.join(HERE, 'cache')` — Кэш реплея лежит ВНЕ публикуемого каталога. `publish.sh` кладёт в историю весь `research/*/out`, и семимегаба…
+- L69 `CACHE = os.path.join(CACHE_DIR, 'recs-short.jso…`
+- L72 `cache_sig()` — Подпись настроек, от которых зависит исход позиции.
+- L87 `legs(arms=ARMS, limit=None, log=print, path=None)` — Короткие выборы `h24` ОБЕИХ рук: решение владельца «оставить обе».
+- L102 `needs_replay(cache, legs_)` — Какие решения считать заново: новых нет в кэше, открытые стареют.
+- L115 `read_cache(path=None, log=print)` — Кэш реплея семейства. Непригодный не чинится молча.
+- L129 `write_cache(cache, path=None)`
+- L136 `replay(need, src=None, log=print)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
+- L169 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
+- L219 `_p(x, d=2)`
+- L223 `_u(x)`
+- L227 `report(s)`
+- L274 `publish(name)`
+- L279 `main(argv=None)`
 
 ## research/dca_paper/short_supply.py · 123 строк
 
