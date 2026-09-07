@@ -278,3 +278,9 @@ h24/nn: часов 574, коротких выборов 1722, ног под кр
  research/dca_ladder/out/D11-h24-nn-h24-1m.md    |   247 +
  research/s8_loop/out/day_brake.json             |     2 +-
  12 files changed, 39789 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 4651686e29ba1332e507ef28bc131149f2ab72b1 but expected ddff5f64cfcc6f38ab730b7be25eae6677315e25
+конец: 2026-09-07T05:12:29Z, код 0
+публикуется в ветку main:
+ jobs/done/d11-nn-24.log |  2 ++
+ jobs/done/d11-nn-72.log | 16 ++++++++++++++++
+ 2 files changed, 18 insertions(+)

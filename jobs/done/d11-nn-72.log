@@ -265,3 +265,26 @@ h24/nn: часов 574, коротких выборов 1722, ног под кр
 
 Правил книг он не меняет — это решение владельца. Веса модели видели эти часы (оценка сверху); окно записи одно, режим рынка один; коротких решений в разы меньше длинных, и часть ячеек стоит на десятках позиций. Проскальзывания и funding в числах нет; хвост шорта не ограничен сверху, и ячейка без единой ликвидации на этом окне не есть ячейка без ликвидаций. Ось гейта меняет состав решений — её ячейки не парны сетке.
 
+публикуется в ветку main:
+ jobs/done/d11-gbm-72.done                       |     1 +
+ jobs/done/d11-gbm-72.log                        |   275 +
+ jobs/done/d11-nn-24.done                        |     1 +
+ jobs/done/d11-nn-24.log                         |   280 +
+ jobs/done/d11-nn-72.done                        |     1 +
+ jobs/done/d11-nn-72.log                         |   267 +
+ jobs/poke.log                                   |     5 +
+ research/dca_ladder/out/D11-h24-gbm-h72-1m.json | 18691 ++++++++++++++++++++
+ research/dca_ladder/out/D11-h24-gbm-h72-1m.md   |   245 +
+ research/dca_ladder/out/D11-h24-nn-h24-1m.json  | 20047 +++++++++++++++++++++
+ research/dca_ladder/out/D11-h24-nn-h24-1m.md    |   247 +
+ research/dca_ladder/out/D11-h24-nn-h72-1m.json  | 20267 ++++++++++++++++++++++
+ research/dca_ladder/out/D11-h24-nn-h72-1m.md    |   247 +
+ research/s8_loop/out/day_brake.json             |     2 +-
+ 14 files changed, 60575 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 4651686e29ba1332e507ef28bc131149f2ab72b1 but expected ddff5f64cfcc6f38ab730b7be25eae6677315e25
+конец: 2026-09-07T05:12:29Z, код 0
+публикуется в ветку main:
+ docs/MAP.md             |  2 +-
+ jobs/done/d11-nn-24.log |  6 ++++++
+ jobs/done/d11-nn-72.log | 18 ++++++++++++++++++
+ 3 files changed, 25 insertions(+), 1 deletion(-)
