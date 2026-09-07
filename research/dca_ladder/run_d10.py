@@ -292,11 +292,23 @@ def take_for(g, tk):
     return {"anchor": R.TAKE_ANCHOR, "frac": abs(fav) * TAKE_MULT[tk]}
 
 
-def one_position(g, bars, ts, look, rule, param, lev_look=None):
+def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
+                 rich=False):
     """Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
 
     Геометрия считается один раз на решение; между ячейками различаются
     ровно плечо, рунги и цель. Пол капитуляции и срок — как у книги.
+
+    `cells` — подмножество ячеек (тот же кортеж, что в `CELLS`). Нужен
+    книгам семейства `h24`: им нужна ОДНА ячейка каждый час, и считать
+    ради неё все 36 значило бы тратить на книгу тридцать шесть проходов
+    вместо одного. Умолчание — вся сетка, как у замера.
+
+    `rich` добавляет то, что нужно КНИГЕ и не нужно замеру: почасовые
+    отметки (из них касса строит дневную кривую и просадку) и заполнения
+    рунгов (из них страница рисует позицию). У замера их нет намеренно —
+    63 тысячи ног на 36 ячеек, — и молчаливый ноль вместо них у книги
+    читался бы как «под водой не были»; поэтому поле включается явно.
     """
     if (g.get("side") or "long") != "short":
         return None
@@ -337,7 +349,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None):
                 lev_look=lev_look)
             geo["sigma"] = (lev_sig, rungs_sg)
     out = {}
-    for (key, lk, ak, tk) in CELLS:
+    for (key, lk, ak, tk) in (cells if cells is not None else CELLS):
         if ak not in geo:
             continue                      # σ не измерена — ячейки нет
         lev_f, rungs = geo[ak]
@@ -346,7 +358,11 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None):
         tr = take_for(g, tk)
         r = L.simulate_dca(hold, rungs, w, 1.0, lev, look(1.0 * lev),
                            take_rule=tr, floor_frac=D2.FLOOR_FRAC,
-                           side="short")
+                           side="short", track=bool(rich))
+        marks, prev = [], 0.0
+        for (hr, _cash, pnl) in (r.get("track") or ()):
+            marks.append((hr, pnl - prev))
+            prev = pnl
         filled = float(r["filled_notional"])
         out[key] = {
             "at": float(g["at"]), "exit_ts": float(r["exit_ts"]),
@@ -356,17 +372,27 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None):
             "lev": float(lev), "lev_fence": float(lev_f),
             "fwd": abs(float(g["fwd"])), "sym": g["sym"], "side": "short",
             "rr": g.get("rr"), "gates": sorted(gate_of(g)),
-            "exit": r["exit"], "marks": [],
+            "exit": r["exit"], "marks": marks,
             "end_ts": float(hold[-1][0]),
             "sched_end": float(g["at"]) + D2.HOLD_H * HOUR,
             "depth": int(r["depth"]), "n_rungs": len(rungs),
             "avg": float(r["avg"]), "entry_px": entry,
-            "exit_px": float(r["exit_px"]), "filled": filled}
+            "exit_px": float(r["exit_px"]), "filled": filled,
+            "fills": ([[float(a), float(b), float(c)]
+                       for (a, b, c) in (r.get("fills") or ())]
+                      if rich else None)}
     return out
 
 
-def collect(limit=None, src=None, log=print, legs=None):
-    """Дорогой проход: бары символа читаются ОДИН раз на все ячейки."""
+def collect(limit=None, src=None, log=print, legs=None, cells=None,
+            rich=False, raw=False):
+    """Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
+
+    `cells` сужает сетку (книги `h24` считают одну ячейку в час), `rich`
+    добавляет отметки и заполнения, `raw` отдаёт записи словарями вместо
+    колонок: колоночное хранение заведено ради памяти замера (63 тысячи
+    ног × 36 ячеек), а книге нужны поля, которых в колонках нет.
+    """
     get = src.bars if src else (lambda s, a, b: D6.SW.read_bars(
         D6.ROOT_B1, s, a, b))
     tiers_all = D2.instruments_tiers()
@@ -383,7 +409,8 @@ def collect(limit=None, src=None, log=print, legs=None):
     if win:
         log(f"окно решений {win['from']} … {win['to']} UTC "
             f"({win['span_d']:g} суток, дат {win['dates']})")
-    recs = {rk: {k: Store() for k in KEYS} for rk in RULERS}
+    keys = [c[0] for c in (cells if cells is not None else CELLS)]
+    recs = {rk: {k: ([] if raw else Store()) for k in keys} for rk in RULERS}
     mem_guard("ноги загружены", log=log)
     n, skipped = 0, 0
     said, done = time.time(), 0
@@ -410,7 +437,7 @@ def collect(limit=None, src=None, log=print, legs=None):
             got = 0
             for rk, (rule, param) in RULERS.items():
                 o = one_position(g, bars, ts, look, rule, param,
-                                 lev_look=lev_look)
+                                 lev_look=lev_look, cells=cells, rich=rich)
                 if not o:
                     continue
                 got = 1
@@ -422,11 +449,17 @@ def collect(limit=None, src=None, log=print, legs=None):
     for rk in recs:
         for k in recs[rk]:
             st = recs[rk][k]
-            if len(st):
-                data_end = max(data_end, max(st.f["end_ts"]))
+            if not len(st):
+                continue
+            data_end = max(data_end, max(float(r["end_ts"]) for r in st)
+                           if raw else max(st.f["end_ts"]))
     for rk in recs:
         for k in recs[rk]:
-            recs[rk][k].set_states(data_end)
+            if raw:
+                for r in recs[rk][k]:
+                    r["state"] = D6.position_state(r, data_end)
+            else:
+                recs[rk][k].set_states(data_end)
     log(f"запись доходит до "
         f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(data_end))} UTC")
     return {"recs": recs, "positions": n, "skipped": skipped,

@@ -1110,6 +1110,22 @@
 - L2438 `CONTROLS = [('хвост не доезжает до ядра', _control…`
 - L2489 `main()`
 
+## research/dca_paper/test_short.py · 216 строк
+
+Проверки коротких книг на сигнале h24 и общей статистики.
+
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L30 `H = 3600.0`
+- L31 `T0 = 1786320000.0`
+- L34 `_picks(path, hours, arms=('gbm', 'nn'))` — Журнал выборов книги со сроком: у каждой руки своё имя в час.
+- L46 `test_cache_signature_follows_the_cell_and_the_hold()`
+- L64 `test_legs_come_from_both_arms_in_time_order()`
+- L82 `test_needs_replay_asks_for_new_and_open_positions()`
+- L95 `_end_to_end(tmp, long_journal=None)`
+- L110 `test_family_writes_its_own_journal_and_gates_the_aggressive_boo…`
+- L160 `test_portfolio_pairs_the_modes_and_names_its_silence()`
+
 ## research/dca_paper/test_slip_x3.py · 76 строк
 
 Проверки `slip_x3.py`: решение ↔ открытие по ключу позиции, знак по стороне, отсутствие цены сигнала — пропус…

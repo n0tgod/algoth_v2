@@ -95,7 +95,7 @@ def cache_sig():
             "lev_cap": 1}
 
 
-def read_cache(path=None):
+def read_cache(path=None, sig=None):
     """Кэш реплея: (пара, символ, момент) → запись позиции.
 
     Возвращает (кэш, причина непригодности). Непригодный кэш не чинится
@@ -104,7 +104,8 @@ def read_cache(path=None):
     path = path or cache_path()
     if not os.path.exists(path):
         return {}, "кэша нет"
-    want = json.dumps(cache_sig(), sort_keys=True, ensure_ascii=False)
+    want = json.dumps(sig if sig is not None else cache_sig(),
+                      sort_keys=True, ensure_ascii=False)
     out, sig = {}, None
     try:
         with open(path, encoding="utf-8") as f:
@@ -127,13 +128,14 @@ def read_cache(path=None):
     return out, None
 
 
-def write_cache(cache, path=None):
+def write_cache(cache, path=None, sig=None):
     """Кэш пишется ЦЕЛИКОМ и атомарно: дозапись оставила бы в файле
     записи двух подписей разом, а различить их потом нечем."""
     path = path or cache_path()
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        f.write(json.dumps({"sig": cache_sig()}, ensure_ascii=False) + "\n")
+        f.write(json.dumps({"sig": sig if sig is not None else cache_sig()},
+                           ensure_ascii=False) + "\n")
         for (pair, sym, at), r in cache.items():
             r = dict(r, pair=list(pair), sym=sym, at=at)
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
@@ -181,7 +183,7 @@ def _cell(ruler, dep):
     return f"{ruler}:{int(dep)}"
 
 
-def build_rows(by_ruler, now=None, log=print):
+def build_rows(by_ruler, now=None, log=print, keys=None):
     """Решения, взятые каждой книгой, с деньгами в долларах.
 
     Одна позиция на имя применяется ДО раздачи кассы: правило биржи не
@@ -192,7 +194,10 @@ def build_rows(by_ruler, now=None, log=print):
     """
     now = float(now if now is not None else time.time())
     out, cells, one, live = [], {}, {}, {}
-    for rk in R.RULER_ORDER:
+    # Семейство книг передаётся списком: у книг `h24` свой лист и свой
+    # прогон, и молчаливый перебор ВСЕХ ключей заставил бы длинный прогон
+    # считать чужие книги из своих ног.
+    for rk in (keys if keys is not None else R.RULER_ORDER):
         recs = by_ruler.get(rk) or []
         # Гейт плеча — ПЕРВЫМ, до правила одной на имя. Порядок решает
         # состав: у режима с гейтом низкоплечевой ранний вход просто не
@@ -478,7 +483,7 @@ def _stats(rows, deposit):
     }
 
 
-def summarize(path=None, live=None):
+def summarize(path=None, live=None, keys=None):
     """Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
 
     Решение владельца 2026-09-04: бэктест и live не разделять, а вести
@@ -499,8 +504,9 @@ def summarize(path=None, live=None):
     """
     rows, bad = R.read_journal(path or R.JOURNAL)
     live = live or {}
+    keys = list(keys if keys is not None else R.RULER_ORDER)
     out = {"bad_lines": bad, "books": {},
-           "rulers": list(R.RULER_ORDER), "deposits": list(R.DEPOSITS)}
+           "rulers": keys, "deposits": list(R.DEPOSITS)}
     # Нетто — тем же ядром, что отчёт издержек (`costs.py`), и не второй
     # копией формулы: комиссия тейкером на рунгах и выходе,
     # проскальзывание X3 на базовый вход и рыночный выход, funding по
@@ -524,7 +530,7 @@ def summarize(path=None, live=None):
             return CO.net_view(sub, dep, ctx, _stats)
         except Exception as e:                            # noqa: BLE001
             return {"error": f"нетто не посчитано: {e}"[:200], "n": len(sub)}
-    for rk in R.RULER_ORDER:
+    for rk in keys:
         for dep in R.DEPOSITS:
             key = _cell(rk, dep)
             mine = [r for r in rows if int(r.get("dep", 0)) == int(dep)
