@@ -633,6 +633,19 @@
 - L19 `test_peak_and_own_share()`
 - L37 `test_run_end_to_end_pool_vs_own()`
 
+## research/dca_ladder/test_run_d13.py · 104 строк
+
+Проверки D13 (короткая книга рядом с длинной).
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `DAY = 86400.0`
+- L22 `T0 = 1786320000.0`
+- L25 `_row(sym, at, hold_h, usd)`
+- L30 `test_series_and_align_follow_the_calendar_not_the_index()`
+- L49 `test_pair_drawdown_is_taken_from_the_joint_curve()`
+- L64 `test_collision_is_time_overlap_not_a_shared_name()`
+- L79 `test_cell_returns_the_rows_its_result_is_made_of()`
+
 ## research/dca_ladder/test_run_d2.py · 207 строк
 
 Тест чистой логики D2 — построение структурных рунгов.

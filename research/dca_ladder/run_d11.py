@@ -105,8 +105,11 @@ def configure(hold_h=None):
     was = {"ref_gate": D10.REF_GATE, "cell_defaults": D10.cell.__defaults__,
            "hold": D2.HOLD_H}
     D10.REF_GATE = REF_GATE
-    # умолчание аргумента связано при определении функции — меняется явно
-    D10.cell.__defaults__ = (REF_GATE, False, None)     # gate, net, share
+    # Умолчание аргумента связано при определении функции — меняется
+    # явно. Заменяется ТОЛЬКО первое (гейт), остальные берутся у самой
+    # функции: список её аргументов рос уже дважды, и фиксированный
+    # кортеж ломал вызов молча.
+    D10.cell.__defaults__ = (REF_GATE,) + tuple(was["cell_defaults"][1:])
     if hold_h:
         D2.HOLD_H = int(hold_h)
     return was

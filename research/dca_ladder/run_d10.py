@@ -465,11 +465,16 @@ def _exits(rows):
     return out
 
 
-def cell(recs, book, dep, gate=REF_GATE, net=False, share=None):
+def cell(recs, book, dep, gate=REF_GATE, net=False, share=None, rows_out=None):
     """Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
 
     `net=True` считает деньги по `pnl_net` (с кругом издержек) — той же
     кассой; иначе брутто, как у бумажных книг.
+
+    `rows_out` — список, в который кладутся ВЗЯТЫЕ кассой позиции (имя,
+    моменты, деньги). Нужен замеру пары книг (D13): корреляция и
+    совпадения имён считаются по тем же строкам, что дали итог ячейки, а
+    не по второму проходу, который однажды разошёлся бы с первым.
     """
     ml = R.min_lev_of(book)
     sub = [r for r in recs if gate in (r.get("gates") or [])]
@@ -490,6 +495,16 @@ def cell(recs, book, dep, gate=REF_GATE, net=False, share=None):
     levs = sorted(float(r["lev"]) for (r, _m) in rows)
     dep_v = sorted(int(r["depth"]) for (r, _m) in rows)
     ex = _exits(rows)
+    # имя параметра НЕ `keep`: локальная `keep` — это выбор
+    # `one_per_name`, и одноимённый аргумент молча уходил бы в неё
+    if rows_out is not None:
+        for (r, m) in rows:
+            rows_out.append({"sym": r["sym"], "at": float(r["at"]),
+                         "exit_ts": float(r["exit_ts"]),
+                             "usd": round(float(r["pnl"]) * float(m), 4),
+                             "margin": round(float(m), 4),
+                             "lev": round(float(r["lev"]), 3),
+                             "exit": r.get("exit"), "side": "short"})
     n = len(rows) or 1
     return {"book": book, "deposit": dep, "gate": gate, "net": bool(net),
             "taken": c["taken"], "no_cash": c["no_cash"],

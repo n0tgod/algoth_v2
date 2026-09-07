@@ -57,7 +57,7 @@ def test_run_end_to_end_pool_vs_own():
     assert "A" in h and "B" in h and h["mid"] > 0
     v = D12.verdict(s)
     assert set(v) == {"optimal_s", "safe_s"} and isinstance(v["optimal_s"]["held_both_halves"], list)
-    assert D10.REF_GATE == "rr2" and D10.cell.__defaults__ == ("rr2", False, None)
+    assert D10.REF_GATE == "rr2" and D10.cell.__defaults__[0] == "rr2"
     txt = D12.report(s)
     assert "# D12" in txt and "билет пула → свой" in txt and "`c1:none:t2`" in txt
     assert "Чего замер НЕ говорит" in txt
