@@ -91,3 +91,15 @@
 - Он не описывает живую книгу `sit_lo` целиком: у неё свой гейт (RR ≤ 1.5), и здесь она стоит одной колонкой подачи.
 - Он не чинит подачу и не трогает цикл: это чтение журнала листов и отчёт.
 
+публикуется в ветку main:
+ jobs/done/sheet-supply.done               |   1 +
+ jobs/done/sheet-supply.log                |  93 ++++
+ jobs/poke.log                             |   5 +
+ research/s8_loop/out/SHEET-supply-1m.json | 721 ++++++++++++++++++++++++++++++
+ research/s8_loop/out/SHEET-supply-1m.md   |  87 ++++
+ 5 files changed, 907 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   ff3a06c..c481d7c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T07:04:37Z, код 0
