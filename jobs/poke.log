@@ -1170,3 +1170,8 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-09-07T17:55:54Z] задание stop-paper-replay запущено: tools/stop_run.py
 
 == сигнал 1788803771 ==
+
+== сигнал 1788803787 ==
+
+== сигнал 1788803803 ==
+[2026-09-07T17:56:45Z] задание pair-run-2 запущено: research/dca_paper/run_pair.py
