@@ -556,11 +556,17 @@ def _book_costs(rows):
     # Медианы на позицию в б.п. МАРЖИ: суммы зависят от числа сделок и
     # размера билета, и по ним нельзя сказать, дорога ли одна сделка.
     # Единица та же, что в отчёте издержек, — числа сравнимы напрямую.
-    for k, name in (("fee_usd", "fee_bp"), ("slip_usd", "slip_bp"),
-                    ("fund_usd", "fund_bp")):
+    for k, name in (("fee_usd", "fee"), ("slip_usd", "slip"),
+                    ("fund_usd", "fund")):
         v = [float(r[k]) / float(r["margin"]) * 1e4 for r in rows
              if r.get(k) is not None and float(r.get("margin") or 0) > 0]
-        got[name] = (round(float(np.median(v)), 1) if v else None)
+        # Медиана И среднее — оба: расхождение знака или порядка есть
+        # подпись ХВОСТА, и по одной медиане издержка с редкими
+        # огромными значениями (funding на дорогой ставке) читалась бы
+        # как «почти ноль». Урок проекта, стоивший не одного замера.
+        got[name + "_bp"] = (round(float(np.median(v)), 1) if v else None)
+        got[name + "_mean_bp"] = (round(float(np.mean(v)), 1) if v else None)
+        got[name + "_worst_bp"] = (round(float(np.min(v)), 1) if v else None)
     got["cost_usd"] = round(got["fee_usd"] + got["slip_usd"]
                             - got["fund_usd"], 2)
     return got
@@ -718,7 +724,8 @@ def costs_block(s):
           "| книга | депозит | сделок | из них с издержками | комиссия $ | "
           "проскальзывание $ | funding $ | издержки всего $ | брутто $ | "
           "нетто $ | медиана на сделку, б.п. маржи (комиссия / проскальз. / "
-          "funding) |", "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+          "funding) | среднее, б.п. (там же) | худшая сделка по funding, "
+          "б.п. |", "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for dep in R.DEPOSITS:
         for rk in (s.get("rulers") or R.RULER_ORDER):
             b = (s.get("books") or {}).get(_cell(rk, dep)) or {}
@@ -733,6 +740,13 @@ def costs_block(s):
                 f"{bc['net_usd']:+.2f} | "
                 + " / ".join("—" if bc.get(x) is None else f"{bc[x]:+.1f}"
                              for x in ("fee_bp", "slip_bp", "fund_bp"))
+                + " | "
+                + " / ".join("—" if bc.get(x) is None else f"{bc[x]:+.1f}"
+                             for x in ("fee_mean_bp", "slip_mean_bp",
+                                       "fund_mean_bp"))
+                + " | "
+                + ("—" if bc.get("fund_worst_bp") is None
+                   else f"{bc['fund_worst_bp']:+.0f}")
                 + " |")
     notes = []
     if c.get("no_funding"):
@@ -745,6 +759,23 @@ def costs_block(s):
     if c.get("taker_fallback"):
         notes.append(f"у {c['taker_fallback']} сделок ставки тейкера в "
                      "справочнике нет — взята модальная")
+    tails = []
+    for dep in R.DEPOSITS:
+        for rk in (s.get("rulers") or R.RULER_ORDER):
+            bc = ((s.get("books") or {}).get(_cell(rk, dep)) or {}).get("costs") or {}
+            m, a = bc.get("fund_bp"), bc.get("fund_mean_bp")
+            if m is None or a is None:
+                continue
+            if abs(a) > 3 * max(abs(m), 0.5):
+                tails.append(f"{R.ruler_title(rk)} ${int(dep)}: медиана "
+                             f"{m:+.1f}, среднее {a:+.1f}, худшая "
+                             f"{bc.get('fund_worst_bp'):+.0f} б.п.")
+    if tails:
+        L += ["", "**Funding — издержка ХВОСТА, а не средняя**: у "
+              f"{len(tails)} книг среднее на сделку в разы дальше от нуля, "
+              "чем медиана, то есть платят немногие позиции и платят "
+              "много (долгое удержание на дорогой ставке). "
+              + "; ".join(tails[:3]) + ".", ""]
     if notes:
         L += ["", "Чего не удалось измерить: " + "; ".join(notes) + ".", ""]
     else:

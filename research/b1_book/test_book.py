@@ -7377,7 +7377,8 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         check("DCA: издержки учтены в сделках, а не показаны рядом",
               "costTiles(nt, meta)" in page and "netTiles" not in page
               and "издержки вычтены из денег" in page
-              and "деньги выше БРУТТО" in page,
+              and "деньги выше БРУТТО" in page
+              and "на сделку, б.п. маржи" in page and "ct.fund_mean_bp" in page,
               "нет разметки издержек")
         check("DCA: страница объясняет дубли и молчание о них",
               "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page

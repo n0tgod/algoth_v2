@@ -6926,6 +6926,16 @@ function costTiles(ct, meta){
         usd(-(ct.slip_usd || 0)) + ", funding " + usd(ct.fund_usd || 0)),
     (ct.cost_usd || 0) > 0 ? "bad" : "");
   h += tile("было бы брутто", usd(ct.gross_usd), cls(ct.gross_usd));
+  // Медиана И среднее — оба: расхождение есть подпись ХВОСТА, и по
+  // одной медиане funding с редкими огромными значениями читался бы
+  // как «почти ноль».
+  const bp = (x) => (x === null || x === undefined) ? "&mdash;"
+    : ((Number(x) >= 0 ? "+" : "") + Number(x).toFixed(1));
+  h += tile("на сделку, б.п. маржи",
+    "медиана " + bp(ct.fee_bp) + " / " + bp(ct.slip_bp) + " / " + bp(ct.fund_bp) +
+    " <span style='font-size:.62em;opacity:.85'>среднее " + bp(ct.fee_mean_bp) +
+    " / " + bp(ct.slip_mean_bp) + " / " + bp(ct.fund_mean_bp) +
+    "; комиссия / проскальз. / funding</span>", "");
   h += tile("сделок с полными издержками",
     ct.applied + " из " + ct.n +
     (ct.not_measured ? " <span class=dim>(у " + ct.not_measured +

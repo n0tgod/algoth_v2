@@ -287,6 +287,23 @@ def test_net_rides_the_summary_with_reasons_not_zeros():
             t2 = "\n".join(P.costs_block(P.summarize(jp)))
             assert "БРУТТО" not in t2 and "комиссия" in t2.lower(), t2
             assert f"{c['gross_usd']:+.2f}" in t2, t2
+            # медиана И среднее — оба: по одной медиане издержка с
+            # редкими огромными значениями читалась бы как «почти ноль»
+            for k in ("fee_bp", "fee_mean_bp", "fund_bp", "fund_mean_bp",
+                      "fund_worst_bp"):
+                assert c.get(k) is not None, (k, c)
+            # контроль: подсаженный хвост обязан быть НАЗВАН, а не
+            # растворяться в медиане
+            rows2 = [dict(r) for r in rows] + [dict(rows[0], sym="CUSDT",
+                                                    at=rows[0]["at"] + 7200,
+                                                    exit_ts=rows[0]["exit_ts"])]
+            jp2 = os.path.join(td, "j2.jsonl")
+            with open(jp2, "w", encoding="utf-8") as f:
+                for r in rows2:
+                    f.write(json.dumps(r) + "\n")
+            s2 = P.summarize(jp2)
+            b2 = s2["books"][P._cell(R.DEFAULT_RULER, 1000)]["costs"]
+            assert b2["n"] == 3 and b2["fund_worst_bp"] <= b2["fund_bp"], b2
         finally:
             CO.context = real
     print(f"ok  издержки в каждой сделке: книга {b['all']['usd']:+.2f} $ при "
