@@ -2455,6 +2455,17 @@
 - L158 `CONTROLS = [('сторона не различается', _control_si…`
 - L163 `main()`
 
+## research/s8_loop/test_side_wave.py · 102 строк
+
+Проверки `side_wave.py`: волна из закрытий на границах часов, сырой исход = нетто кассы + s·β·волна, без волн…
+
+- L9 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `H0 = '2026-08-10-00'`
+- L15 `T0 = TR.hour_end(H0)`
+- L18 `_bars(drift_bp_per_h, start, hours, px0=100.0)` — Минутные бары с постоянным дрейфом: закрытие часа k = px0·(1+d)^k.
+- L28 `test_wave_and_raw_outcome()`
+- L71 `test_run_end_to_end_with_fake_books()`
+
 ## research/s9_sweep/test_sweep.py · 179 строк
 
 Проверки перебора правил: геометрия сделки и отбор ног.

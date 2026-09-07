@@ -4312,6 +4312,32 @@ S8.1, этап 2: признаки и цели из почасовых свод�
 - L299 `publish(name)`
 - L304 `main(argv=None)`
 
+## research/s8_loop/side_wave.py · 309 строк
+
+Волна окна и сырой исход стороны: что шорты книг сделали бы САМИ ПО СЕБЕ.
+
+- L38 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L39 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L47 `OUT = os.path.join(HERE, 'out')`
+- L48 `ROOT_B1 = os.path.join(ROOT, 'research', 'b1_book…`
+- L49 `BOOKS = ('h24', 'z', 'h4')`
+- L50 `PROXY = ('BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPU…`
+- L54 `MIN_PROXY = 5`
+- L55 `CLOSE_TOL = 1800`
+- L58 `log(msg)`
+- L62 `closes_at(bars, bounds)` — Закрытие последнего бара не старше `CLOSE_TOL` до каждой границы.
+- L76 `wave_table(bounds, horizons, read=None, proxies=PROXY, log=log)` — {H: волна б.п. по границам} — средний ход прокси-имён за H часов.
+- L112 `betas_of(mdir)` — β на час решения из выборов книги: (рука, час, имя, сторона) → β.
+- L124 `side_rows(trades, betas, wave, H, arm, side)` — Сырой исход по сделкам стороны; сделка без волны — пропуск со счётом.
+- L152 `_stat(rows)`
+- L171 `run(root=None, read=None, log=log, books=BOOKS, trades_of=None)`
+- L221 `_u(x)`
+- L225 `_b(x)`
+- L229 `_pc(x)`
+- L233 `report(s)`
+- L281 `publish(name)`
+- L286 `main(argv=None)`
+
 ## research/s8_loop/sit_absorb.py · 245 строк
 
 Живые события ситуационной книги → строки выбора и разбора.
