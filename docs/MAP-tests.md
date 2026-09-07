@@ -886,6 +886,21 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
+## research/dca_paper/test_arm_book.py · 154 строк
+
+Проверки книги одной руки.
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `H = 3600.0`
+- L21 `T0 = 1786320000.0`
+- L24 `_leg(sym, arm, at, fwd, fav, side='long')`
+- L29 `_rec(sym, at, fwd, fav, pnl, lev=3.0, side='long', hold=24 * H)`
+- L39 `test_arm_of_a_record_comes_from_its_numbers()`
+- L63 `test_disputed_record_of_the_other_arm_goes_to_the_replay()`
+- L85 `test_each_arm_gets_its_own_book_and_the_whole_deposit()`
+- L117 `test_memory_guard_stops_the_run_itself()`
+- L133 `test_unusable_cache_says_why(monkey=None)`
+
 ## research/dca_paper/test_arm_split.py · 140 строк
 
 Проверки разреза DCA-книг по руке модели.

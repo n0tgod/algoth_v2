@@ -1532,6 +1532,37 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L68 `build_levels(bars)` — Уровни по последнему бару окна; мало истории — уровней нет.
 - L81 `main()`
 
+## research/dca_paper/arm_book.py · 429 строк
+
+Книга DCA на решениях ОДНОЙ руки: деревья против сети, честно.
+
+- L41 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L42 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L51 `ARMS = ('gbm', 'nn')`
+- L52 `ARM_TITLE = {'gbm': 'деревья', 'nn': 'сеть'}`
+- L53 `MAIN_DEP = 10000`
+- L54 `EPS = 1e-06`
+- L58 `MEM_LIMIT_MB = 1200` — Тяжёлый прогон рядом с часовым циклом убивает не себя, а ЦИКЛ: ядро выбирает жертву по-своему, и D10 уже урон…
+- L61 `_rss_mb()`
+- L70 `guarded(log, limit=MEM_LIMIT_MB, rss=None)` — Лог реплея со сторожем памяти: превысили предел — останавливаемся сами, вслух и с числом, а не ждём, кого выб…
+- L85 `arm_title(arm)`
+- L89 `pairs_of()` — Пары (правило, параметр, сторона) без повторов — как у книги.
+- L99 `key_of(sym, at)`
+- L103 `legs_index(legs)` — (имя, момент) → список ног: рука, |прогноз|, обещание, сторона.
+- L114 `match_arm(rec, cands)` — Чья это запись: сравнение с ногами по прогнозу и обещанию.
+- L142 `split_cache(cache, idx, log=print)` — Записи кэша по рукам плюс счёт причин, по которым рука не вышла.
+- L164 `missing_legs(legs, owned, pairs)` — Ноги, чьей записи у ИХ руки нет: их и надо досчитать.
+- L181 `replay(need, pairs, src=None, log=print)` — Досчёт недостающих ног ТЕМ ЖЕ ядром и тем же хвостом ленты.
+- L202 `_median(xs)`
+- L210 `stats(rows, mid=None)`
+- L238 `run(log=print, limit=None, src=None, legs=None, cache=None)`
+- L295 `verdict(s)` — Кто лучше — по каждой книге отдельно, и только там, где обе руки дали не меньше 30 сделок; иначе вердикта нет.
+- L320 `_p(x, d=2)`
+- L324 `_u(x)`
+- L328 `report(s)`
+- L399 `publish(name)`
+- L404 `main(argv=None)`
+
 ## research/dca_paper/arm_split.py · 393 строк
 
 Разрез бумажных DCA-книг ПО РУКЕ МОДЕЛИ: деревья (`gbm`) и сеть (`nn`).
