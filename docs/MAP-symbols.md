@@ -1563,7 +1563,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L399 `publish(name)`
 - L404 `main(argv=None)`
 
-## research/dca_paper/arm_split.py · 425 строк
+## research/dca_paper/arm_split.py · 429 строк
 
 Разрез бумажных DCA-книг ПО РУКЕ МОДЕЛИ: деревья (`gbm`) и сеть (`nn`).
 
@@ -1587,8 +1587,8 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L293 `_u(x)`
 - L297 `_p(x)`
 - L301 `report(s)`
-- L396 `publish(name)`
-- L401 `main(argv=None)`
+- L400 `publish(name)`
+- L405 `main(argv=None)`
 
 ## research/dca_paper/backfill_fav.py · 127 строк
 
