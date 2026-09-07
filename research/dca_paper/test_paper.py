@@ -266,6 +266,51 @@ def test_net_rides_the_summary_with_reasons_not_zeros():
           f"funding {nt['fund_usd']:+.2f}); без рядов — причина словами")
 
 
+def test_one_name_one_position_is_checked_on_the_journal_and_screams():
+    """Требование владельца («обе руки остаются, сделки не дублируются»)
+    проверяется по ЗАПИСИ и выводится в вердикт из числа.
+
+    Кусается: журнал с пересечением двух позиций по имени обязан дать
+    ненулевое число дублей и крик в отчёте; журнал без пересечения —
+    ноль и спокойную строку; касание встык (вход ровно в секунду выхода)
+    дублем не считается, это повторный вход.
+    """
+    t0 = T0
+    def _row(sym, at, hold_h, dep=1000, usd=1.0):
+        return {"dep": dep, "ruler": R.DEFAULT_RULER, "at": float(at),
+                "exit_ts": float(at + hold_h * H), "sym": sym, "side": "long",
+                "lev": 2.0, "margin": 50.0, "pnl_frac": 0.02, "usd": usd,
+                "exit": "тейк", "entry_px": 100.0, "exit_px": 102.0,
+                "avg": 100.0, "depth": 1, "fills": [[float(at), 100.0, 0.5]],
+                "written_at": at + 3600, "rules": R.RULES}
+    clean = [_row("AUSDT", t0, 2), _row("AUSDT", t0 + 2 * H, 2),   # встык
+             _row("BUSDT", t0, 1)]
+    dirty = clean + [_row("BUSDT", t0 + 1800, 1)]                  # внахлёст
+    key = P._cell(R.DEFAULT_RULER, 1000)
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "j.jsonl")
+        with open(jp, "w", encoding="utf-8") as f:
+            for r in clean:
+                f.write(json.dumps(r) + "\n")
+        s1 = P.summarize(jp)
+        d1 = s1["books"][key]["dups"]
+        assert d1["overlaps"] == 0 and d1["repeats"] == 1, d1
+        assert d1["pause_median_h"] == 0.0 and d1["max_per_name"] == 2, d1
+        t1 = P.report(s1)
+        assert "**Дублей нет ни в одной книге.**" in t1
+        with open(jp, "a", encoding="utf-8") as f:
+            f.write(json.dumps(dirty[-1]) + "\n")
+        s2 = P.summarize(jp)
+        d2 = s2["books"][key]["dups"]
+        assert d2["overlaps"] == 1, d2
+        t2 = P.report(s2)
+        assert "ДУБЛИ ЕСТЬ" in t2 and key in t2 and "one_per_name" in t2
+        assert "**Дублей нет ни в одной книге.**" not in t2
+    print("ok  правило одной позиции на имя судится по журналу: чистый "
+          "журнал — 0 дублей и 1 повтор встык, подделка с нахлёстом "
+          "поднимает крик в отчёте")
+
+
 def test_take_steps_follow_the_floating_average():
     """Цель ступенчата: якорь — плавающая ТВХ, и долив опускает обе.
 
@@ -1928,6 +1973,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
          test_cut_position_gets_a_named_reason,
          test_one_per_name_applied_before_cash,
          test_backtest_and_live_share_one_curve_and_stay_labelled,
+    test_one_name_one_position_is_checked_on_the_journal_and_screams,
     test_take_steps_follow_the_floating_average,
     test_take_frac_comes_from_the_rule_not_from_the_record,
     test_fav_backfill_adds_a_field_and_nothing_else,

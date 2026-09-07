@@ -7123,6 +7123,15 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                                                                "net_usd": None, "stats": None,
                                                                "why": "нет строк"}}}
                                           if k == "safe" else {}),
+                                       # правило «одна позиция на имя»:
+                                       # у безопасной проверено, у
+                                       # остальных поля нет — страница
+                                       # обязана сказать это словами
+                                       **({"dups": {"names": 4, "positions": 7,
+                                                    "overlaps": 0, "repeats": 3,
+                                                    "max_per_name": 3,
+                                                    "pause_median_h": 6.6}}
+                                          if k == "safe" else {}),
                                        # открытые позиции: их пишет
                                        # счётный прогон, а худшую из них
                                        # дописывает сборщик
@@ -7156,6 +7165,22 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         check("DCA: книга без нетто не получает нулей",
               "net" not in (bs.get("optimal:1000") or {}),
               str(list((bs.get("optimal:1000") or {}).keys())))
+        # Требование владельца 2026-09-07 («обе руки, но без дублей»)
+        # обязано доехать до страницы числом: поле есть — вердикт из
+        # него, поля нет — страница говорит «не проверялось», а не «0».
+        check("DCA: правило одной позиции на имя доезжает до страницы",
+              (bs.get("safe:1000") or {}).get("dups", {}).get("overlaps") == 0
+              and (bs["safe:1000"]["dups"].get("repeats") == 3),
+              str((bs.get("safe:1000") or {}).get("dups")))
+        check("DCA: книга без проверки дублей не получает нуля",
+              "dups" not in (bs.get("optimal:1000") or {}),
+              str(list((bs.get("optimal:1000") or {}).keys())))
+        import web as W                                    # noqa: E402
+        page = W.DCAPAGE
+        check("DCA: страница объясняет дубли и молчание о них",
+              "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page
+              and "dupLine(b.dups)" in page,
+              "нет разметки правила одной на имя")
         check("DCA: книга ключуется линейкой и депозитом",
               set(bs) == {f"{k}:1000" for k in DR.RULER_ORDER}, str(sorted(bs)))
         # Список сделок ОДИН, и бэктест в нём помечен: кривая книги не

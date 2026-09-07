@@ -363,6 +363,45 @@ def append_journal(rows, path=None, log=print):
             "shards": len(shards)}
 
 
+def dups(rows):
+    """Правило владельца числом: одно имя — одна позиция ОДНОВРЕМЕННО.
+
+    Решение 2026-09-07: обе руки модели остаются, но сделки не должны
+    дублироваться. Дублем считается ПЕРЕСЕЧЕНИЕ во времени двух позиций
+    книги по одному имени; повторный вход ПОСЛЕ закрытия дублем не
+    является (биржа его допускает, и книга им живёт), но и он считается
+    отдельно — с паузой между выходом и новым входом.
+
+    Считается по журналу, а не по намерению кода: правило живёт в
+    `run_d6.one_per_name`, и проверять его надо по тому, что записано.
+    Пересечений обязано быть НОЛЬ; ненулевое число обязано кричать в
+    отчёте и на странице, а не лежать в логе.
+    """
+    per = {}
+    for r in rows:
+        try:
+            per.setdefault(r["sym"], []).append((float(r["at"]),
+                                                 float(r["exit_ts"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    overlaps, repeats, pauses, worst = 0, 0, [], 0
+    for sym, lst in per.items():
+        lst.sort()
+        worst = max(worst, len(lst))
+        for i in range(1, len(lst)):
+            if lst[i][0] < lst[i - 1][1]:
+                overlaps += 1
+            else:
+                repeats += 1
+                pauses.append((lst[i][0] - lst[i - 1][1]) / 3600.0)
+    pauses.sort()
+    return {"names": len(per), "positions": sum(len(v) for v in per.values()),
+            "overlaps": overlaps, "repeats": repeats,
+            "max_per_name": worst,
+            "pause_median_h": (round(pauses[len(pauses) // 2], 1)
+                               if pauses else None)}
+
+
 def _stats(rows, deposit):
     """Итог, просадка и форма по дням — на ЭТОМ подмножестве строк."""
     if not rows:
@@ -500,6 +539,9 @@ def summarize(path=None, live=None):
                  "forward": _stats(fwd, dep), "restored": _stats(back, dep),
                  "net": {"all": _net(mine, dep), "forward": _net(fwd, dep)},
                  "n_forward": len(fwd), "n_restored": len(back),
+                 # правило «одно имя — одна позиция» проверяется ПО ЗАПИСИ
+                 # каждый прогон: требование владельца, а не намерение кода
+                 "dups": dups(mine),
                  "live_known": op is not None}
             if op is not None:
                 b["open"] = op
@@ -792,6 +834,38 @@ def report(s):
                               else f"{x['usd']:,.2f} ({x['n']})")
             L.append(f"| {d} | " + " | ".join(cells_) + " |")
         L += ["", "В скобках — число закрытых позиций этого дня.", ""]
+    # Требование владельца 2026-09-07 («обе руки остаются, но сделки не
+    # дублируются») проверяется ЧИСЛОМ по записи, и вердикт выводится из
+    # числа, а не стоит рядом с ним.
+    dd = {k: (b.get("dups") or {}) for k, b in (s.get("books") or {}).items()
+          if b.get("dups")}
+    if dd:
+        bad = {k: d for k, d in dd.items() if d.get("overlaps")}
+        L += ["## Одно имя — одна позиция", "",
+              "Решение владельца 2026-09-07: обе руки модели остаются "
+              "(лист пишут и деревья, и сеть), но сделки не должны "
+              "дублироваться. Дубль — это ПЕРЕСЕЧЕНИЕ во времени двух "
+              "позиций книги по одному имени; повторный вход после "
+              "закрытия дублем не считается — биржа его допускает, — но "
+              "печатается рядом со своей паузой, потому что «книга вошла "
+              "в ту же монету через час» и «книга держит её дважды» суть "
+              "разные вещи.", ""]
+        L += [("**Дублей нет ни в одной книге.**" if not bad else
+               "**ДУБЛИ ЕСТЬ, и это дефект правила `one_per_name`: "
+               + ", ".join(f"{k} — {d['overlaps']}" for k, d in sorted(bad.items()))
+               + ".**"), "",
+              "| книга | позиций | имён | дублей | повторов после закрытия | "
+              "медиана паузы, ч | больше всего входов в одно имя |",
+              "|---|--:|--:|--:|--:|--:|--:|"]
+        for k in sorted(dd):
+            d = dd[k]
+            L.append(f"| {k} | {d['positions']} | {d['names']} | "
+                     f"{d['overlaps']} | {d['repeats']} | "
+                     f"{'—' if d['pause_median_h'] is None else d['pause_median_h']} | "
+                     f"{d['max_per_name']} |")
+        L += ["", "Проверка идёт по ЖУРНАЛУ, а не по намерению кода: "
+              "правило живёт в `run_d6.one_per_name`, и убедиться в нём "
+              "можно только по тому, что записано.", ""]
     one = s.get("one_name") or {}
     if one:
         L += ["## Гейт плеча и собственный пик режима", "",
