@@ -1108,3 +1108,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788768822 ==
 [2026-09-07T08:13:44Z] задание deploy-dups: перезапуск сборщика
+
+== сигнал 1788769449 ==
+[2026-09-07T08:24:11Z] задание dca-restat-dups запущено: research/dca_paper/run_paper.py
