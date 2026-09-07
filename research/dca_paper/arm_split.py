@@ -49,6 +49,7 @@ sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
 import rules as R                                             # noqa: E402
 import run_d6 as D6                                           # noqa: E402
+import run_paper as RP                                        # noqa: E402
 
 ARMS = ("gbm", "nn")
 ARM_TITLE = {"gbm": "деревья", "nn": "сеть"}
@@ -80,38 +81,65 @@ def legs_index(legs):
     return idx
 
 
-def author(cands):
-    """Рука-автор решения и причина, если её нет.
+def cache_owners(legs, log=print):
+    """Кто владеет записью реплея — по ЧИСЛАМ самой записи.
 
-    Возвращает (рука, причина). Причина названа всегда, когда руки нет:
-    молчаливый пропуск в разрезе денег неотличим от руки без денег.
+    Спор двух рук за одно имя и час журнал книги не разрешает: в кэше
+    реплея остаётся одна запись из двух, и какая — свойство кода (та,
+    что легла последней), а не правило книги. Поэтому спорные строки
+    приписываются по кэшу, а не по догадке «победил больший прогноз»:
+    догадка уже была, и она могла врать на 6 % строк.
     """
-    if not cands:
-        return None, "нет решения"
-    best = sorted(cands, key=lambda c: -c[1])
-    if len(best) > 1 and best[0][1] == best[1][1] and best[0][0] != best[1][0]:
-        return None, "неразрешимо"
-    return best[0][0], None
+    try:
+        import arm_book as AB
+    except ImportError:                                      # noqa: BLE001
+        return {}, "модуль книги по руке недоступен"
+    cache, why = RP.read_cache()
+    if why:
+        log(f"кэш реплея не читается: {why} — спорные строки останутся без руки")
+        return {}, why
+    idx = AB.legs_index(legs)
+    own = {}
+    for (pair, sym, at), rec in cache.items():
+        arm, _bad = AB.match_arm(rec, idx.get(AB.key_of(sym, at)) or [])
+        if arm is not None:
+            own[(tuple(pair), str(sym), round(float(at), 3))] = arm
+    log(f"кэш реплея: записей {len(cache)}, с восстановленной рукой {len(own)}")
+    return own, None
 
 
-def attribute(rows, idx, log=print):
+def attribute(rows, idx, owners=None, log=print):
     """Каждой строке журнала — рука; счётчики причин рядом, не молча."""
     out = []
-    cnt = {"one": 0, "both": 0, "tie": 0, "no_leg": 0}
+    owners = owners or {}
+    cnt = {"one": 0, "both": 0, "tie": 0, "no_leg": 0, "by_cache": 0}
     for r in rows:
-        cands = idx.get(key_of(r.get("sym"), r.get("side") or R.side_of(R.ruler_of(r)),
-                               r.get("at") or 0)) or []
-        arm, why = author(cands)
+        side = r.get("side") or R.side_of(R.ruler_of(r))
+        cands = idx.get(key_of(r.get("sym"), side, r.get("at") or 0)) or []
+        arm, why = None, None
+        if len({c[0] for c in cands}) > 1:
+            # спор: разрешает кэш реплея, а не правило
+            pr = tuple(RP.RULERS[R.ruler_of(r)])
+            arm = owners.get((pr, str(r.get("sym")),
+                              round(float(r.get("at") or 0), 3)))
+            if arm is None:
+                why = "спор без кэша"
+            else:
+                cnt["by_cache"] += 1
+        elif cands:
+            arm = cands[0][0]
+        else:
+            why = "нет решения"
         if arm is None:
-            cnt["tie" if why == "неразрешимо" else "no_leg"] += 1
+            cnt["tie" if why == "спор без кэша" else "no_leg"] += 1
         else:
             cnt["both" if len({c[0] for c in cands}) > 1 else "one"] += 1
         out.append(dict(r, arm=arm, arm_why=why))
     n = len(rows) or 1
     log(f"рука восстановлена у {cnt['one'] + cnt['both']} строк из {len(rows)} "
         f"({100.0 * (cnt['one'] + cnt['both']) / n:.1f} %): одна рука "
-        f"{cnt['one']}, обе {cnt['both']}; неразрешимо {cnt['tie']}, "
-        f"решения нет {cnt['no_leg']}")
+        f"{cnt['one']}, спор разрешён кэшем {cnt['by_cache']}; спор без кэша "
+        f"{cnt['tie']}, решения нет {cnt['no_leg']}")
     return out, cnt
 
 
@@ -176,7 +204,7 @@ def by_day(legs, rows, ruler=None, dep=None):
     return d
 
 
-def run(rows=None, legs=None, log=print):
+def run(rows=None, legs=None, owners=None, log=print):
     t0 = time.time()
     if legs is None:
         legs = D6.gated_legs(side=None, log=log)
@@ -204,7 +232,10 @@ def run(rows=None, legs=None, log=print):
     log(f"ноги листов: {len(legs)}, решений (имя, сторона, час) {len(pairs)}, "
         f"обе руки на одном решении {both} ({agree['share']} %)")
 
-    rich, cnt = attribute(rows, legs_index(legs), log=log)
+    own_why = None
+    if owners is None:
+        owners, own_why = cache_owners(legs, log=log)
+    rich, cnt = attribute(rows, legs_index(legs), owners=owners, log=log)
     win = window(rich)
     mid = win["mid"] if win else None
     fwd, back = R.split_rows(rich)
@@ -232,6 +263,7 @@ def run(rows=None, legs=None, log=print):
             "rows_all": n_all, "forward": len(fwd), "back": len(back),
             "forward_hours": len(seen), "composition": comp, "agree": agree,
             "attribution": cnt, "window": win, "cells": out,
+            "cache_owners": len(owners), "cache_why": own_why,
             "deposits": [int(d) for d in R.DEPOSITS], "main_dep": MAIN_DEP}
 
 
@@ -294,8 +326,8 @@ def report(s):
     L += ["## Восстановление руки", "",
           "| исход соединения | строк |", "|---|---:|",
           f"| одна рука на решении | {a['one']} |",
-          f"| обе руки, взята с бо́льшим прогнозом | {a['both']} |",
-          f"| прогнозы равны — неразрешимо | {a['tie']} |",
+          f"| обе руки, спор разрешён кэшем реплея | {a.get('by_cache', 0)} |",
+          f"| спор, а кэша нет — руки нет | {a['tie']} |",
           f"| ноги нет (лист старше журнала книги) | {a['no_leg']} |", ""]
     comp = s.get("composition") or {}
     L += ["## Состав ног листа по руке", "",

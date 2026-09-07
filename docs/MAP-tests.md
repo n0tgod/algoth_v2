@@ -901,7 +901,7 @@
 - L117 `test_memory_guard_stops_the_run_itself()`
 - L133 `test_unusable_cache_says_why(monkey=None)`
 
-## research/dca_paper/test_arm_split.py · 140 строк
+## research/dca_paper/test_arm_split.py · 152 строк
 
 Проверки разреза DCA-книг по руке модели.
 
@@ -910,11 +910,11 @@
 - L18 `H = 3600.0`
 - L21 `_leg(sym, arm, at, fwd, side='long')`
 - L25 `_row(sym, at, usd, ruler='optimal', dep=10000, side='long', rul…`
-- L34 `test_author_follows_the_book_rule_not_the_arm_order()`
-- L57 `test_money_of_arms_sums_to_the_book_and_orphans_are_named()`
-- L89 `test_without_the_sheets_journal_nothing_pretends_to_have_an_arm…`
-- L104 `test_halves_split_by_decision_time()`
-- L116 `test_report_names_the_backtest_and_the_daily_activity()`
+- L34 `test_dispute_is_resolved_by_the_cache_or_stays_without_an_arm()`
+- L64 `test_money_of_arms_sums_to_the_book_and_orphans_are_named()`
+- L101 `test_without_the_sheets_journal_nothing_pretends_to_have_an_arm…`
+- L116 `test_halves_split_by_decision_time()`
+- L128 `test_report_names_the_backtest_and_the_daily_activity()`
 
 ## research/dca_paper/test_costs.py · 456 строк
 
