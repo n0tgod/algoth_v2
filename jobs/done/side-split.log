@@ -74,3 +74,17 @@ h4_z_f30_w5_gt_rrlo_se_b0_a0: закрытых 80
 Судимых строк 30. Шорты в плюсе устойчиво (Σ $ > 0, медиана net_bp > 0, медиана дня ≥ 0, обе половины ≥ 0): **3** — `h24/nn`, `h24za/gbm`, `h24za/nn`. Из них плюс ТОЛЬКО по шортам (лонги той же книги ≤ 0): **1** — `h24/nn`. Плюс по сумме, но не на обеих половинах: 10 — `h24/gbm`, `h24b/nn`, `h24bf/nn`, `z/gbm`, `z/nn`, `h24a/gbm`, `h24a/nn`, `sit_obs/gbm`, `h4_r_f30_w5_gl_rrlo_se_b0_a0/nn`, `h4_z_f30_w5_gl_rrlo_se_b0_a0/nn`.
 
 Чего замер НЕ говорит: окно записи одно и режим рынка один — плюс одной стороны при минусе другой у той же модели есть подпись направления окна, а не сигнала; эхо-книги повторяют решения книги-источника; проскальзывание и funding в net_bp не входят (круг — только комиссия).
+публикуется в ветку main:
+ jobs/done/side-split.done               |    1 +
+ jobs/done/side-split.log                |   76 ++
+ jobs/poke.log                           |    3 +
+ research/s8_loop/out/SIDE-split-1m.json | 1761 +++++++++++++++++++++++++++++++
+ research/s8_loop/out/SIDE-split-1m.md   |   56 +
+ research/s8_loop/out/day_brake.json     |    2 +-
+ 6 files changed, 1898 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   b19b568..930290e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-07T03:35:11Z, код 0
