@@ -1141,3 +1141,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788797987 ==
 [2026-09-07T16:19:49Z] задание retire-mirrors-restat запущено: research/dca_paper/run_paper.py
+
+== сигнал 1788798435 ==
+[2026-09-07T16:27:16Z] задание retire-fix-deploy: перезапуск сборщика
