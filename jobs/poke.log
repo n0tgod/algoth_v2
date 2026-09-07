@@ -1076,3 +1076,8 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788763194 ==
 [2026-09-07T06:39:56Z] задание side-wave-agree запущено: research/s8_loop/side_wave.py
+
+== сигнал 1788764196 ==
+
+== сигнал 1788764215 ==
+[2026-09-07T06:56:57Z] задание dca-arms запущено: research/dca_paper/arm_split.py

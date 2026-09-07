@@ -176,7 +176,7 @@
 - `split_journal.py` · 198 строк — Разрезать цельный журнал книги на суточные куски.
 - `tail.py` · 257 строк — Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
 - тесты: `test_arm_split.py` (121), `test_costs.py` (456), `test_cut.py` (297), `test_names.py` (227), `test_paper.py` (2453), `test_slip_x3.py` (76)
-- отчёты в `out/` (8): DCA-costs-1m.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-names.md, DCA-paper.md, DCA-short-supply-1m.md, DCA-slip-x3.md, DCA-smoothing-1m.md
+- отчёты в `out/` (9): DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-names.md, DCA-paper.md, DCA-short-supply-1m.md, DCA-slip-x3.md, DCA-smoothing-1m.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
 
@@ -635,7 +635,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 375, логов `done/*.log`: 375 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 375, логов `done/*.log`: 376 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 

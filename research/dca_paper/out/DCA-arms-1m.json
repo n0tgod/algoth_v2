@@ -1,0 +1,892 @@
+{
+ "at": 1788764227.9739428,
+ "secs": 10.5,
+ "rules": 6,
+ "legs": 9047,
+ "rows": 10615,
+ "rows_all": 67594,
+ "forward": 18,
+ "back": 10597,
+ "forward_hours": 3,
+ "composition": {
+  "long": {
+   "gbm": 3313,
+   "nn": 5382
+  },
+  "short": {
+   "nn": 236,
+   "gbm": 116
+  }
+ },
+ "agree": {
+  "decisions": 7681,
+  "both_arms": 1366,
+  "share": 17.8
+ },
+ "attribution": {
+  "one": 9979,
+  "both": 636,
+  "tie": 0,
+  "no_leg": 0
+ },
+ "window": {
+  "from": "2026-08-08 18:07",
+  "to": "2026-09-06 23:09",
+  "mid": 1787474303.1,
+  "span_d": 29.21
+ },
+ "cells": {
+  "aggr:1000": {
+   "ruler": "aggr",
+   "dep": 1000,
+   "side": "long",
+   "title": "агрессивная",
+   "all": {
+    "n": 468,
+    "usd": 323.28,
+    "pct_median": 11.749,
+    "pct_mean": 10.287,
+    "win": 90.8,
+    "usd_median": 0.7647,
+    "half_a": 318.69,
+    "half_b": 4.58,
+    "n_a": 462,
+    "n_b": 6
+   },
+   "arms": {
+    "gbm": {
+     "n": 147,
+     "usd": 86.14,
+     "pct_median": 12.057,
+     "pct_mean": 9.229,
+     "win": 87.1,
+     "usd_median": 0.7729,
+     "half_a": 86.14,
+     "half_b": null,
+     "n_a": 147,
+     "n_b": 0
+    },
+    "nn": {
+     "n": 321,
+     "usd": 237.14,
+     "pct_median": 11.443,
+     "pct_mean": 10.771,
+     "win": 92.5,
+     "usd_median": 0.7627,
+     "half_a": 232.56,
+     "half_b": 4.58,
+     "n_a": 315,
+     "n_b": 6
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "aggr:10000": {
+   "ruler": "aggr",
+   "dep": 10000,
+   "side": "long",
+   "title": "агрессивная",
+   "all": {
+    "n": 632,
+    "usd": 2139.75,
+    "pct_median": 12.294,
+    "pct_mean": 11.522,
+    "win": 91.5,
+    "usd_median": 3.6212,
+    "half_a": 2120.82,
+    "half_b": 18.94,
+    "n_a": 626,
+    "n_b": 6
+   },
+   "arms": {
+    "gbm": {
+     "n": 191,
+     "usd": 573.76,
+     "pct_median": 12.188,
+     "pct_mean": 10.283,
+     "win": 86.9,
+     "usd_median": 3.5244,
+     "half_a": 573.76,
+     "half_b": null,
+     "n_a": 191,
+     "n_b": 0
+    },
+    "nn": {
+     "n": 441,
+     "usd": 1565.99,
+     "pct_median": 12.312,
+     "pct_mean": 12.059,
+     "win": 93.4,
+     "usd_median": 3.6274,
+     "half_a": 1547.05,
+     "half_b": 18.94,
+     "n_a": 435,
+     "n_b": 6
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "aggr:100000": {
+   "ruler": "aggr",
+   "dep": 100000,
+   "side": "long",
+   "title": "агрессивная",
+   "all": {
+    "n": 632,
+    "usd": 21477.62,
+    "pct_median": 12.294,
+    "pct_mean": 11.522,
+    "win": 91.5,
+    "usd_median": 36.3421,
+    "half_a": 21287.44,
+    "half_b": 190.18,
+    "n_a": 626,
+    "n_b": 6
+   },
+   "arms": {
+    "gbm": {
+     "n": 191,
+     "usd": 5758.98,
+     "pct_median": 12.188,
+     "pct_mean": 10.283,
+     "win": 86.9,
+     "usd_median": 35.3691,
+     "half_a": 5758.98,
+     "half_b": null,
+     "n_a": 191,
+     "n_b": 0
+    },
+    "nn": {
+     "n": 441,
+     "usd": 15718.64,
+     "pct_median": 12.312,
+     "pct_mean": 12.059,
+     "win": 93.4,
+     "usd_median": 36.4156,
+     "half_a": 15528.46,
+     "half_b": 190.18,
+     "n_a": 435,
+     "n_b": 6
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "aggr_s:1000": {
+   "ruler": "aggr_s",
+   "dep": 1000,
+   "side": "short",
+   "title": "агрессивная (шорт)",
+   "all": {
+    "n": 66,
+    "usd": -43.59,
+    "pct_median": 5.061,
+    "pct_mean": -10.556,
+    "win": 59.1,
+    "usd_median": 0.3178,
+    "half_a": -48.48,
+    "half_b": 4.89,
+    "n_a": 48,
+    "n_b": 18
+   },
+   "arms": {
+    "gbm": {
+     "n": 30,
+     "usd": -31.53,
+     "pct_median": -7.678,
+     "pct_mean": -16.949,
+     "win": 46.7,
+     "usd_median": -0.4759,
+     "half_a": -29.25,
+     "half_b": -2.29,
+     "n_a": 25,
+     "n_b": 5
+    },
+    "nn": {
+     "n": 36,
+     "usd": -12.06,
+     "pct_median": 10.296,
+     "pct_mean": -5.228,
+     "win": 69.4,
+     "usd_median": 0.63,
+     "half_a": -19.23,
+     "half_b": 7.17,
+     "n_a": 23,
+     "n_b": 13
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "aggr_s:10000": {
+   "ruler": "aggr_s",
+   "dep": 10000,
+   "side": "short",
+   "title": "агрессивная (шорт)",
+   "all": {
+    "n": 66,
+    "usd": -97.56,
+    "pct_median": 5.061,
+    "pct_mean": -10.556,
+    "win": 59.1,
+    "usd_median": 0.7092,
+    "half_a": -109.11,
+    "half_b": 11.55,
+    "n_a": 48,
+    "n_b": 18
+   },
+   "arms": {
+    "gbm": {
+     "n": 30,
+     "usd": -71.06,
+     "pct_median": -7.678,
+     "pct_mean": -16.949,
+     "win": 46.7,
+     "usd_median": -1.073,
+     "half_a": -65.9,
+     "half_b": -5.16,
+     "n_a": 25,
+     "n_b": 5
+    },
+    "nn": {
+     "n": 36,
+     "usd": -26.5,
+     "pct_median": 10.296,
+     "pct_mean": -5.228,
+     "win": 69.4,
+     "usd_median": 1.4347,
+     "half_a": -43.22,
+     "half_b": 16.72,
+     "n_a": 23,
+     "n_b": 13
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "aggr_s:100000": {
+   "ruler": "aggr_s",
+   "dep": 100000,
+   "side": "short",
+   "title": "агрессивная (шорт)",
+   "all": {
+    "n": 66,
+    "usd": -1010.45,
+    "pct_median": 5.061,
+    "pct_mean": -10.556,
+    "win": 59.1,
+    "usd_median": 7.3464,
+    "half_a": -1130.06,
+    "half_b": 119.61,
+    "n_a": 48,
+    "n_b": 18
+   },
+   "arms": {
+    "gbm": {
+     "n": 30,
+     "usd": -735.95,
+     "pct_median": -7.678,
+     "pct_mean": -16.949,
+     "win": 46.7,
+     "usd_median": -11.1128,
+     "half_a": -682.49,
+     "half_b": -53.46,
+     "n_a": 25,
+     "n_b": 5
+    },
+    "nn": {
+     "n": 36,
+     "usd": -274.5,
+     "pct_median": 10.296,
+     "pct_mean": -5.228,
+     "win": 69.4,
+     "usd_median": 14.8566,
+     "half_a": -447.58,
+     "half_b": 173.07,
+     "n_a": 23,
+     "n_b": 13
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "optimal:1000": {
+   "ruler": "optimal",
+   "dep": 1000,
+   "side": "long",
+   "title": "оптимальная",
+   "all": {
+    "n": 418,
+    "usd": 111.13,
+    "pct_median": 0.814,
+    "pct_mean": 1.132,
+    "win": 70.8,
+    "usd_median": 0.1954,
+    "half_a": 90.18,
+    "half_b": 20.96,
+    "n_a": 328,
+    "n_b": 90
+   },
+   "arms": {
+    "gbm": {
+     "n": 117,
+     "usd": 16.86,
+     "pct_median": 0.632,
+     "pct_mean": 0.751,
+     "win": 68.4,
+     "usd_median": 0.1557,
+     "half_a": 18.23,
+     "half_b": -1.37,
+     "n_a": 109,
+     "n_b": 8
+    },
+    "nn": {
+     "n": 301,
+     "usd": 94.27,
+     "pct_median": 0.835,
+     "pct_mean": 1.281,
+     "win": 71.8,
+     "usd_median": 0.2046,
+     "half_a": 71.95,
+     "half_b": 22.32,
+     "n_a": 219,
+     "n_b": 82
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "optimal:10000": {
+   "ruler": "optimal",
+   "dep": 10000,
+   "side": "long",
+   "title": "оптимальная",
+   "all": {
+    "n": 1672,
+    "usd": 1807.32,
+    "pct_median": 2.824,
+    "pct_mean": 4.122,
+    "win": 80.6,
+    "usd_median": 0.7412,
+    "half_a": 1766.85,
+    "half_b": 40.47,
+    "n_a": 1475,
+    "n_b": 197
+   },
+   "arms": {
+    "gbm": {
+     "n": 440,
+     "usd": 520.31,
+     "pct_median": 3.655,
+     "pct_mean": 4.586,
+     "win": 85.5,
+     "usd_median": 0.9167,
+     "half_a": 521.94,
+     "half_b": -1.63,
+     "n_a": 431,
+     "n_b": 9
+    },
+    "nn": {
+     "n": 1232,
+     "usd": 1287.0,
+     "pct_median": 2.291,
+     "pct_mean": 3.956,
+     "win": 78.8,
+     "usd_median": 0.6083,
+     "half_a": 1244.91,
+     "half_b": 42.1,
+     "n_a": 1044,
+     "n_b": 188
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "optimal:100000": {
+   "ruler": "optimal",
+   "dep": 100000,
+   "side": "long",
+   "title": "оптимальная",
+   "all": {
+    "n": 1739,
+    "usd": 10927.79,
+    "pct_median": 2.845,
+    "pct_mean": 4.21,
+    "win": 80.8,
+    "usd_median": 4.2358,
+    "half_a": 10706.8,
+    "half_b": 220.99,
+    "n_a": 1542,
+    "n_b": 197
+   },
+   "arms": {
+    "gbm": {
+     "n": 447,
+     "usd": 3051.21,
+     "pct_median": 3.654,
+     "pct_mean": 4.616,
+     "win": 85.7,
+     "usd_median": 5.2888,
+     "half_a": 3060.1,
+     "half_b": -8.89,
+     "n_a": 438,
+     "n_b": 9
+    },
+    "nn": {
+     "n": 1292,
+     "usd": 7876.58,
+     "pct_median": 2.316,
+     "pct_mean": 4.07,
+     "win": 79.1,
+     "usd_median": 3.5114,
+     "half_a": 7646.7,
+     "half_b": 229.88,
+     "n_a": 1104,
+     "n_b": 188
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "optimal_s:1000": {
+   "ruler": "optimal_s",
+   "dep": 1000,
+   "side": "short",
+   "title": "оптимальная (шорт)",
+   "all": {
+    "n": 138,
+    "usd": -187.42,
+    "pct_median": 0.118,
+    "pct_mean": -5.523,
+    "win": 55.1,
+    "usd_median": 0.0293,
+    "half_a": -204.74,
+    "half_b": 17.32,
+    "n_a": 116,
+    "n_b": 22
+   },
+   "arms": {
+    "gbm": {
+     "n": 57,
+     "usd": -111.43,
+     "pct_median": -0.037,
+     "pct_mean": -8.169,
+     "win": 43.9,
+     "usd_median": -0.0094,
+     "half_a": -111.24,
+     "half_b": -0.19,
+     "n_a": 55,
+     "n_b": 2
+    },
+    "nn": {
+     "n": 81,
+     "usd": -75.99,
+     "pct_median": 0.314,
+     "pct_mean": -3.661,
+     "win": 63.0,
+     "usd_median": 0.077,
+     "half_a": -93.5,
+     "half_b": 17.51,
+     "n_a": 61,
+     "n_b": 20
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "optimal_s:10000": {
+   "ruler": "optimal_s",
+   "dep": 10000,
+   "side": "short",
+   "title": "оптимальная (шорт)",
+   "all": {
+    "n": 187,
+    "usd": -193.52,
+    "pct_median": 0.157,
+    "pct_mean": -4.146,
+    "win": 57.2,
+    "usd_median": 0.0393,
+    "half_a": -206.0,
+    "half_b": 12.48,
+    "n_a": 120,
+    "n_b": 67
+   },
+   "arms": {
+    "gbm": {
+     "n": 71,
+     "usd": -125.61,
+     "pct_median": -0.046,
+     "pct_mean": -7.107,
+     "win": 43.7,
+     "usd_median": -0.0115,
+     "half_a": -115.71,
+     "half_b": -9.89,
+     "n_a": 58,
+     "n_b": 13
+    },
+    "nn": {
+     "n": 116,
+     "usd": -67.91,
+     "pct_median": 0.372,
+     "pct_mean": -2.333,
+     "win": 65.5,
+     "usd_median": 0.0928,
+     "half_a": -90.28,
+     "half_b": 22.37,
+     "n_a": 62,
+     "n_b": 54
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "optimal_s:100000": {
+   "ruler": "optimal_s",
+   "dep": 100000,
+   "side": "short",
+   "title": "оптимальная (шорт)",
+   "all": {
+    "n": 187,
+    "usd": -1123.14,
+    "pct_median": 0.157,
+    "pct_mean": -4.146,
+    "win": 57.2,
+    "usd_median": 0.228,
+    "half_a": -1196.53,
+    "half_b": 73.4,
+    "n_a": 120,
+    "n_b": 67
+   },
+   "arms": {
+    "gbm": {
+     "n": 71,
+     "usd": -729.86,
+     "pct_median": -0.046,
+     "pct_mean": -7.107,
+     "win": 43.7,
+     "usd_median": -0.0664,
+     "half_a": -672.35,
+     "half_b": -57.51,
+     "n_a": 58,
+     "n_b": 13
+    },
+    "nn": {
+     "n": 116,
+     "usd": -393.28,
+     "pct_median": 0.372,
+     "pct_mean": -2.333,
+     "win": 65.5,
+     "usd_median": 0.5388,
+     "half_a": -524.19,
+     "half_b": 130.91,
+     "n_a": 62,
+     "n_b": 54
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "safe:1000": {
+   "ruler": "safe",
+   "dep": 1000,
+   "side": "long",
+   "title": "безопасная",
+   "all": {
+    "n": 402,
+    "usd": 98.46,
+    "pct_median": 0.737,
+    "pct_mean": 0.96,
+    "win": 70.6,
+    "usd_median": 0.1865,
+    "half_a": 91.02,
+    "half_b": 7.44,
+    "n_a": 315,
+    "n_b": 87
+   },
+   "arms": {
+    "gbm": {
+     "n": 114,
+     "usd": 27.45,
+     "pct_median": 0.579,
+     "pct_mean": 0.958,
+     "win": 68.4,
+     "usd_median": 0.1476,
+     "half_a": 28.81,
+     "half_b": -1.36,
+     "n_a": 106,
+     "n_b": 8
+    },
+    "nn": {
+     "n": 288,
+     "usd": 71.01,
+     "pct_median": 0.779,
+     "pct_mean": 0.961,
+     "win": 71.5,
+     "usd_median": 0.1945,
+     "half_a": 62.21,
+     "half_b": 8.8,
+     "n_a": 209,
+     "n_b": 79
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "safe:10000": {
+   "ruler": "safe",
+   "dep": 10000,
+   "side": "long",
+   "title": "безопасная",
+   "all": {
+    "n": 1663,
+    "usd": 870.07,
+    "pct_median": 1.969,
+    "pct_mean": 2.042,
+    "win": 80.5,
+    "usd_median": 0.5086,
+    "half_a": 852.95,
+    "half_b": 17.12,
+    "n_a": 1471,
+    "n_b": 192
+   },
+   "arms": {
+    "gbm": {
+     "n": 439,
+     "usd": 286.69,
+     "pct_median": 2.417,
+     "pct_mean": 2.563,
+     "win": 85.6,
+     "usd_median": 0.6151,
+     "half_a": 288.19,
+     "half_b": -1.5,
+     "n_a": 430,
+     "n_b": 9
+    },
+    "nn": {
+     "n": 1224,
+     "usd": 583.38,
+     "pct_median": 1.695,
+     "pct_mean": 1.855,
+     "win": 78.6,
+     "usd_median": 0.4477,
+     "half_a": 564.76,
+     "half_b": 18.62,
+     "n_a": 1041,
+     "n_b": 183
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "safe:100000": {
+   "ruler": "safe",
+   "dep": 100000,
+   "side": "long",
+   "title": "безопасная",
+   "all": {
+    "n": 1730,
+    "usd": 5312.36,
+    "pct_median": 2.008,
+    "pct_mean": 2.087,
+    "win": 80.8,
+    "usd_median": 2.9388,
+    "half_a": 5216.11,
+    "half_b": 96.25,
+    "n_a": 1538,
+    "n_b": 192
+   },
+   "arms": {
+    "gbm": {
+     "n": 446,
+     "usd": 1680.83,
+     "pct_median": 2.414,
+     "pct_mean": 2.568,
+     "win": 85.9,
+     "usd_median": 3.5483,
+     "half_a": 1689.28,
+     "half_b": -8.44,
+     "n_a": 437,
+     "n_b": 9
+    },
+    "nn": {
+     "n": 1284,
+     "usd": 3631.52,
+     "pct_median": 1.721,
+     "pct_mean": 1.92,
+     "win": 79.0,
+     "usd_median": 2.595,
+     "half_a": 3526.83,
+     "half_b": 104.69,
+     "n_a": 1101,
+     "n_b": 183
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "safe_s:1000": {
+   "ruler": "safe_s",
+   "dep": 1000,
+   "side": "short",
+   "title": "безопасная (шорт)",
+   "all": {
+    "n": 175,
+    "usd": -112.96,
+    "pct_median": 0.211,
+    "pct_mean": -2.628,
+    "win": 58.9,
+    "usd_median": 0.0516,
+    "half_a": -133.97,
+    "half_b": 21.0,
+    "n_a": 117,
+    "n_b": 58
+   },
+   "arms": {
+    "gbm": {
+     "n": 59,
+     "usd": -75.58,
+     "pct_median": -0.001,
+     "pct_mean": -5.355,
+     "win": 45.8,
+     "usd_median": -0.0003,
+     "half_a": -75.4,
+     "half_b": -0.17,
+     "n_a": 55,
+     "n_b": 4
+    },
+    "nn": {
+     "n": 116,
+     "usd": -37.38,
+     "pct_median": 0.372,
+     "pct_mean": -1.242,
+     "win": 65.5,
+     "usd_median": 0.0883,
+     "half_a": -58.56,
+     "half_b": 21.18,
+     "n_a": 62,
+     "n_b": 54
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "safe_s:10000": {
+   "ruler": "safe_s",
+   "dep": 10000,
+   "side": "short",
+   "title": "безопасная (шорт)",
+   "all": {
+    "n": 187,
+    "usd": -131.16,
+    "pct_median": 0.187,
+    "pct_mean": -2.811,
+    "win": 57.8,
+    "usd_median": 0.0465,
+    "half_a": -139.94,
+    "half_b": 8.78,
+    "n_a": 120,
+    "n_b": 67
+   },
+   "arms": {
+    "gbm": {
+     "n": 71,
+     "usd": -94.96,
+     "pct_median": -0.037,
+     "pct_mean": -5.376,
+     "win": 45.1,
+     "usd_median": -0.0093,
+     "half_a": -79.78,
+     "half_b": -15.18,
+     "n_a": 58,
+     "n_b": 13
+    },
+    "nn": {
+     "n": 116,
+     "usd": -36.2,
+     "pct_median": 0.372,
+     "pct_mean": -1.242,
+     "win": 65.5,
+     "usd_median": 0.0928,
+     "half_a": -60.16,
+     "half_b": 23.96,
+     "n_a": 62,
+     "n_b": 54
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  },
+  "safe_s:100000": {
+   "ruler": "safe_s",
+   "dep": 100000,
+   "side": "short",
+   "title": "безопасная (шорт)",
+   "all": {
+    "n": 187,
+    "usd": -761.38,
+    "pct_median": 0.187,
+    "pct_mean": -2.811,
+    "win": 57.8,
+    "usd_median": 0.2702,
+    "half_a": -812.95,
+    "half_b": 51.57,
+    "n_a": 120,
+    "n_b": 67
+   },
+   "arms": {
+    "gbm": {
+     "n": 71,
+     "usd": -551.9,
+     "pct_median": -0.037,
+     "pct_mean": -5.376,
+     "win": 45.1,
+     "usd_median": -0.0541,
+     "half_a": -463.59,
+     "half_b": -88.31,
+     "n_a": 58,
+     "n_b": 13
+    },
+    "nn": {
+     "n": 116,
+     "usd": -209.48,
+     "pct_median": 0.372,
+     "pct_mean": -1.242,
+     "win": 65.5,
+     "usd_median": 0.5387,
+     "half_a": -349.36,
+     "half_b": 139.88,
+     "n_a": 62,
+     "n_b": 54
+    },
+    "нет руки": {
+     "n": 0
+    }
+   }
+  }
+ },
+ "deposits": [
+  1000,
+  10000,
+  100000
+ ],
+ "main_dep": 10000
+}
