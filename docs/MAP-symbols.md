@@ -1179,23 +1179,23 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L866 `publish(name)`
 - L872 `main(argv=None)`
 
-## research/dca_ladder/run_d11.py · 168 строк
+## research/dca_ladder/run_d11.py · 184 строк
 
 D11 — DCA-лестница на сигнале книги `h24` (24 ч, рука по выбору), шорт.
 
-- L36 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L37 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L38 `RESEARCH = os.path.dirname(HERE)`
-- L47 `OUT = os.path.join(HERE, 'out')`
-- L48 `PICKS = os.path.join(RESEARCH, 's8_loop', 'out'…`
-- L49 `REF_GATE = 'any'`
-- L52 `h24_legs(arm='nn', path=None, limit=None, log=print)` — Короткие ноги из выборов книги h24 (рука `arm`), тем же `_leg`.
-- L87 `configure(hold_h=None)` — Отсчёт по гейту «любой»; срок — по аргументу. Возвращает, что было.
-- L99 `restore(was)`
-- L105 `run(arm='nn', hold_h=None, limit=None, src=None, log=print, leg…`
-- L118 `report(s)`
-- L135 `publish(name)`
-- L140 `main(argv=None)`
+- L35 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L36 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L37 `RESEARCH = os.path.dirname(HERE)`
+- L44 `OUT = os.path.join(HERE, 'out')`
+- L45 `PICKS = os.path.join(RESEARCH, 's8_loop', 'out'…`
+- L46 `REF_GATE = 'any'`
+- L49 `h24_legs(arm='nn', path=None, limit=None, log=print)` — Короткие ноги из выборов книги h24 (рука `arm`).
+- L103 `configure(hold_h=None)` — Отсчёт по гейту «любой»; срок — по аргументу. Возвращает, что было.
+- L115 `restore(was)`
+- L121 `run(arm='nn', hold_h=None, limit=None, src=None, log=print, leg…`
+- L134 `report(s)`
+- L151 `publish(name)`
+- L156 `main(argv=None)`
 
 ## research/dca_ladder/run_d2.py · 656 строк
 

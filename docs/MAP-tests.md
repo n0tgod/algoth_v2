@@ -613,16 +613,16 @@
 - L475 `CONTROLS = [('сторож памяти не останавливает', _co…`
 - L487 `main()`
 
-## research/dca_ladder/test_run_d11.py · 110 строк
+## research/dca_ladder/test_run_d11.py · 112 строк
 
 Проверки D11: ноги из выборов h24 (короткая сторона руки, тем же `_leg`), отсчёт по гейту «любой» и срок — на…
 
 - L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L20 `H = 3600`
 - L23 `_picks(path, hours, arms=('nn', 'gbm'))`
-- L43 `test_legs_come_from_h24_short_picks_of_the_arm()`
-- L66 `test_reference_gate_and_hold_are_set_for_the_run_only()`
-- L80 `test_run_end_to_end_on_synthetic_bars()`
+- L44 `test_legs_come_from_h24_short_picks_of_the_arm()`
+- L68 `test_reference_gate_and_hold_are_set_for_the_run_only()`
+- L82 `test_run_end_to_end_on_synthetic_bars()`
 
 ## research/dca_ladder/test_run_d2.py · 207 строк
 

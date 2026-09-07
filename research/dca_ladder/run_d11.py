@@ -11,9 +11,8 @@
 ячеек на книгу, забор, пол капитуляции, нетто круга, половины, парная
 Δ к правилу книги, ось гейта), но ноги — выборы книги `h24`
 (`s8_loop/out/model_h24/picks.jsonl`, короткая сторона выбранной руки),
-собранные тем же `_leg`, что у турнира и D10: обещание `fav` и риск
-`adv_q` — из `mae/mfe` выбора через `trades.path_fields`, момент решения
-— закрытие часа выбора (`hour_end`). Точка отсчёта — то же правило книги
+обещание `fav` и риск `adv_q` — поля `mfe`/`mae` выбора (они уже в
+терминах позиции), момент решения — закрытие часа выбора (`hour_end`). Точка отсчёта — то же правило книги
 (`fence:struct:t2`), но гейт отсчёта — «любой» (край ≥ 33 б.п.): у
 24-часового сигнала гейт RR книги не правило, а ось.
 
@@ -37,11 +36,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 RESEARCH = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
-sys.path.insert(0, os.path.join(RESEARCH, "s10_policy"))
 sys.path.insert(0, os.path.join(RESEARCH, "s8_loop"))
 import run_d2 as D2                                           # noqa: E402
 import run_d10 as D10                                         # noqa: E402
-import tournament as TNT                                      # noqa: E402
 import trades as TR                                           # noqa: E402
 
 OUT = os.path.join(HERE, "out")
@@ -50,9 +47,19 @@ REF_GATE = "any"                     # отсчёт — все решения с
 
 
 def h24_legs(arm="nn", path=None, limit=None, log=print):
-    """Короткие ноги из выборов книги h24 (рука `arm`), тем же `_leg`."""
+    """Короткие ноги из выборов книги h24 (рука `arm`).
+
+    Строка выбора книги со сроком уже несёт `mae`/`mfe` В ТЕРМИНАХ
+    ПОЗИЦИИ (`path_fields` применён при записи: `mae` — ход против, у
+    шорта > 0; `mfe` — в пользу, у шорта < 0). Применять `_leg` турнира
+    (он зовёт `path_fields` ещё раз) нельзя — двойное применение
+    переставляет стороны у шорта обратно, и первый прогон пропустил 11
+    ног из 1 722 ровно поэтому. Нога собирается прямо: обещание `fav` =
+    `mfe`, риск `adv_q` = `mae`, RR = |fav| / риск, сторона — знак `fwd`,
+    момент — закрытие часа выбора.
+    """
     path = path or PICKS
-    out, n_rows, n_hours = [], 0, 0
+    out, n_rows, n_hours, bad = [], 0, 0, 0
     try:
         fh = open(path, encoding="utf-8")
     except OSError:
@@ -72,15 +79,24 @@ def h24_legs(arm="nn", path=None, limit=None, log=print):
             n_hours += 1
             for row in p.get("short") or []:
                 n_rows += 1
-                lg = TNT._leg(row, arm, p["hour"], float(at))
-                if lg is None or lg.get("side") != "short" or not D10.gate_of(lg):
+                try:
+                    fwd = float(row["fwd"])
+                    fav = float(row["mfe"])
+                    adv = float(row["mae"])
+                except (KeyError, TypeError, ValueError):
+                    bad += 1
                     continue
-                out.append({k: lg.get(k) for k in D10.LEG_KEEP})
-    out.sort(key=lambda g: (g["at"], g["arm"],
-                            -abs(g["fz"]) if g["fz"] is not None else 0,
-                            g["sym"]))
+                if not (fwd < 0 and fav < 0 < adv):
+                    bad += 1
+                    continue
+                g = {"arm": arm, "sym": row.get("sym"), "hour": p["hour"],
+                     "at": float(at), "side": "short", "fwd": fwd,
+                     "fz": None, "adv_q": adv, "fav": fav, "rr": abs(fav) / adv}
+                if D10.gate_of(g):
+                    out.append(g)
+    out.sort(key=lambda g: (g["at"], g["arm"], g["fwd"], g["sym"]))
     log(f"h24/{arm}: часов {n_hours}, коротких выборов {n_rows}, ног под краем "
-        f"{len(out)}")
+        f"{len(out)}, отброшено (нет полей / знак) {bad}")
     return out[:limit] if limit else out
 
 

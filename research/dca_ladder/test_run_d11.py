@@ -25,15 +25,16 @@ def _picks(path, hours, arms=("nn", "gbm")):
         for h in hours:
             for arm in arms:
                 rows_s = [
-                    # лист: mae — минимум цены (< 0), mfe — максимум; шорту
-                    # минимум и есть ход в пользу
+                    # выбор книги со сроком: mae/mfe уже В ТЕРМИНАХ ПОЗИЦИИ
+                    # (path_fields применён при записи): у шорта mae > 0 —
+                    # ход против, mfe < 0 — в пользу
                     {"sym": "SSSUSDT", "fwd": -420.0, "px": 100.0,
-                     "mae": -700.0, "mfe": 120.0, "mae_q": -650.0, "mfe_q": 110.0,
-                     "fwd_z": -1.4, "beta": 1.0},
+                     "mae": 120.0, "mfe": -700.0, "adverse_of": 0.4},
                     {"sym": "TTTUSDT", "fwd": -20.0, "px": 50.0,        # край < 33
-                     "mae": -300.0, "mfe": 80.0, "fwd_z": -0.2},
+                     "mae": 80.0, "mfe": -300.0},
                     {"sym": "LLLUSDT", "fwd": 300.0, "px": 10.0,        # лонг по знаку
-                     "mae": -100.0, "mfe": 500.0, "fwd_z": 1.0}]
+                     "mae": -100.0, "mfe": 500.0},
+                    {"sym": "NNNUSDT", "fwd": -200.0, "px": 5.0}]        # без пути
                 rows_l = [{"sym": "AAAUSDT", "fwd": 250.0, "px": 20.0,
                            "mae": -90.0, "mfe": 400.0}]
                 f.write(json.dumps({"arm": arm, "hour": h, "long": rows_l,
@@ -50,7 +51,8 @@ def test_legs_come_from_h24_short_picks_of_the_arm():
         assert len(legs) == 3, legs            # по одной годной ноге в час
         assert all(g["side"] == "short" and g["sym"] == "SSSUSDT" and g["arm"] == "nn"
                    for g in legs), legs
-        assert all(g["fav"] < 0 < g["adv_q"] for g in legs), legs[0]
+        assert all(g["fav"] == -700.0 and g["adv_q"] == 120.0 for g in legs), legs[0]
+        assert all(abs(g["rr"] - 700.0 / 120.0) < 1e-9 for g in legs)
         assert [g["at"] for g in legs] == [TR.hour_end(h) for h in hours]
         assert all(D10.gate_of(g) for g in legs)
         assert D11.h24_legs("gbm", path=path, limit=2, log=lambda *a: None)[0]["arm"] == "gbm"
