@@ -6756,6 +6756,97 @@ function curveSvg(st, dep){
   return h;
 }
 
+function shortBlock(sh){
+  // Короткие книги на сигнале h24 (решение владельца 2026-09-07): три
+  // режима рядом с длинными и общая статистика, под хедж-режим. Числа
+  // берутся ИЗ СВОДА своего прогона и здесь не пересчитываются: вторая
+  // реализация однажды разошлась бы с отчётом. Прогона не было — это
+  // причина словами, а не пустые книги.
+  if (!sh || !sh.present) return "<div class=panel><h3>Короткие книги " +
+    "(сигнал h24)</h3><p class=dim>" + ((sh && sh.why) ||
+    "блока нет в своде: страница этой машины его не собирала") + "</p></div>";
+  const pc = (x, d) => (x === null || x === undefined) ? "&mdash;"
+    : ((100 * Number(x) >= 0 ? "+" : "") + (100 * Number(x)).toFixed(d === undefined ? 2 : d) + " %");
+  const us = (x) => (x === null || x === undefined) ? "&mdash;"
+    : ((Number(x) >= 0 ? "+" : "") + Number(x).toFixed(2));
+  const sig = sh.signal || {};
+  let h = "<div class=panel><h3>Короткие книги на сигнале h24 " +
+    (sh.hedge ? "(хедж-режим)" : "") + "</h3>";
+  h += "<p class=dim>Вход &mdash; короткие выборы книги со сроком " +
+    "(обе руки модели), срок " + (sig.hold_h || "?") + " ч, доливов нет, " +
+    "цель &mdash; обещание модели &times;2, гейт: " + (sig.gate || "?") +
+    ". Режимы различаются только плечом, как у длинных книг. Хедж-режим " +
+    "значит, что книга не смотрит на длинные позиции: шорт по монете, " +
+    "которую держит длинная книга, разрешён и посчитан отдельной " +
+    "колонкой ниже.</p>";
+  if (sh.stale) h += "<p class=bad>Свод коротких книг старше трёх часов" +
+    (sh.age_h ? " (" + sh.age_h + " ч)" : "") + ": прогон ежечасный, " +
+    "значит он не идёт.</p>";
+  h += "<table class=mtr><tr><th>книга</th><th>депозит</th><th>билет</th>" +
+    "<th>сделок</th><th>Σ $</th><th>итог</th><th>просадка</th>" +
+    "<th>медиана дня</th><th>плюсов</th><th>вперёд / пересчёт</th>" +
+    "<th>дубли</th></tr>";
+  (sh.rulers || []).forEach(r => {
+    (sh.deposits || []).forEach(d => {
+      const b = (sh.books || {})[r.key + ":" + Math.round(d)];
+      if (!b) return;
+      const st = b.all || {};
+      const dd = b.dups;
+      h += "<tr><td>" + (r.title || r.key) + "</td><td class=mono>$" +
+        Math.round(d) + "</td><td class=mono>$" + (b.ticket || "&mdash;") +
+        "</td><td class=mono>" + (st.n || 0) + "</td><td class=mono>" +
+        us(st.usd) + "</td><td class=mono>" + pc(st.final) +
+        "</td><td class=mono>" + pc(st.max_dd) + "</td><td class=mono>" +
+        us(st.day_median) + "</td><td class=mono>" +
+        (st.win === undefined ? "&mdash;" : st.win + " %") +
+        "</td><td class=mono>" + (b.n_forward || 0) + " / " +
+        (b.n_restored || 0) + "</td><td class=mono>" +
+        (!dd ? "не проверялось" : (dd.overlaps ? "<b class=bad>" +
+          dd.overlaps + "</b>" : "нет")) + "</td></tr>";
+    });
+  });
+  h += "</table></div>";
+  return h + portfolioBlock(sh.portfolio);
+}
+
+function portfolioBlock(p){
+  // Общая статистика: длинная книга и короткая рядом. Счета РАЗДЕЛЬНЫЕ,
+  // итог пары считается от суммы депозитов; связь дневных денег и есть
+  // ответ на вопрос «хедж или вторая такая же ставка».
+  if (!p || p.error) return "<div class=panel><h3>Общая статистика</h3>" +
+    "<p class=dim>Не считалась: " + ((p && p.error) ||
+    "блока нет в своде") + ".</p></div>";
+  const dep = Math.round(p.main_dep || 10000);
+  const pc = (x) => (x === null || x === undefined) ? "&mdash;"
+    : ((100 * Number(x) >= 0 ? "+" : "") + (100 * Number(x)).toFixed(2) + " %");
+  const us = (x) => (x === null || x === undefined) ? "&mdash;"
+    : ((Number(x) >= 0 ? "+" : "") + Number(x).toFixed(2));
+  let h = "<div class=panel><h3>Общая статистика: длинная книга и короткая " +
+    "рядом</h3><p class=dim>Счета раздельные: каждой книге $" + dep +
+    ", итог пары &mdash; от $" + (2 * dep) + ". Связь дневных денег около " +
+    "нуля или ниже означает, что стороны ходят врозь и пара мельче суммы " +
+    "по риску; заметно выше нуля &mdash; вторая книга просто удваивает " +
+    "ставку. Совпадения имён законны в хедж-режиме и посчитаны числом.</p>";
+  h += "<table class=mtr><tr><th>режим</th><th>суток</th><th>Σ $ длинная</th>" +
+    "<th>Σ $ короткая</th><th>Σ $ пара</th><th>итог пары</th>" +
+    "<th>просадка длинной</th><th>просадка пары</th><th>связь дней</th>" +
+    "<th>совпадений имён</th></tr>";
+  Object.keys(p.pairs || {}).filter(k => k.endsWith(":" + dep)).forEach(k => {
+    const x = p.pairs[k];
+    const col = x.collisions || {};
+    h += "<tr><td>" + x.mode + "</td><td class=mono>" + x.days +
+      "</td><td class=mono>" + us(x.long_usd) + "</td><td class=mono>" +
+      us(x.short_usd) + "</td><td class=mono>" + us(x.both_usd) +
+      "</td><td class=mono>" + pc(x.both_final) + "</td><td class=mono>" +
+      pc(x.long_dd) + "</td><td class=mono>" + pc(x.both_dd) +
+      "</td><td class=mono>" + (x.corr === null || x.corr === undefined
+        ? "&mdash;" : x.corr) + "</td><td class=mono>" + (col.n || 0) +
+      (col.share ? " (" + (100 * col.share).toFixed(1) + " %)" : "") +
+      "</td></tr>";
+  });
+  return h + "</table></div>";
+}
+
 function dupLine(dd){
   // Требование владельца 2026-09-07: обе руки модели остаются, но сделки
   // не дублируются. Дубль — ПЕРЕСЕЧЕНИЕ во времени двух позиций книги по
@@ -7534,6 +7625,9 @@ function render(){
                  op, GRP, nt, d.costs);
   h += dupLine(b.dups);
   h += dayTable(st, b.deposit || DEP, "по суткам");
+  // Короткие книги семейства h24 и общая статистика идут ОДНИМ блоком
+  // ниже длинной книги: они не её часть и не её настройка.
+  h += shortBlock(d.short);
   if (!d.journal_present) h += "<div class=panel><p class=dim>Журнала на " +
     "этой машине нет вовсе &mdash; он живёт там, где книги считаются. " +
     "Это не то же самое, что «сделок нет».</p></div>";

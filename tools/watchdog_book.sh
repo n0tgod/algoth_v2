@@ -264,6 +264,36 @@ if ! pgrep -f "dca_paper/run_paper.py" >/dev/null; then
     fi
 fi
 
+# --- короткие книги семейства h24 (решение владельца 2026-09-07) -------
+# Три коротких режима рядом с длинными, срок сигнала 24 ч. Прогон свой:
+# другой лист, другой журнал, другой артефакт. Каденция та же часовая и
+# по той же причине — «когда считали», а не «когда трогали файл»; часы
+# обучения (02 и 06 UTC) пропускаются, чтобы не толкаться памятью с
+# циклом. Прогон инкрементальный: закрытые позиции берутся из кэша.
+DCAS=research/dca_paper/out/DCA-short.json
+DCAS_LOG=research/dca_paper/out/short.log
+if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
+    dcs_age=999999999
+    if [ -f "$DCAS" ]; then
+        dcs_at=$(grep -o '"computed_at": *"[^"]*"' "$DCAS" \
+                 | head -1 | cut -d'"' -f4)
+        if [ -n "$dcs_at" ]; then
+            dcs_ts=$(date -u -d "$dcs_at UTC" +%s 2>/dev/null || true)
+            if [ -n "$dcs_ts" ]; then
+                dcs_age=$(( $(date -u +%s) - dcs_ts ))
+            fi
+        fi
+    fi
+    dcs_hh=$(date -u +%H)
+    if [ "$dcs_hh" != "02" ] && [ "$dcs_hh" != "06" ] \
+       && [ "$dcs_age" -gt 3600 ]; then
+        echo "[$(now)] короткие книги h24: последний счёт ${dcs_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 10 .venv/bin/python research/dca_paper/run_short.py \
+                >> $DCAS_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),

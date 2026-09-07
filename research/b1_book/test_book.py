@@ -7176,7 +7176,75 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               "dups" not in (bs.get("optimal:1000") or {}),
               str(list((bs.get("optimal:1000") or {}).keys())))
         import web as W                                    # noqa: E402
+        # Короткие книги семейства h24: свой артефакт, своя свежесть,
+        # общая статистика. Артефакта нет — причина словами, а не пустые
+        # книги; артефакт есть — числа доезжают до страницы как есть.
+        sh0 = c.dca_paper()["short"]
+        check("DCA: без прогона коротких книг страница называет причину",
+              sh0.get("present") is False and "артефакта нет" in (sh0.get("why") or ""),
+              str(sh0))
+        ap_short = getattr(DR, "H24_ARTIFACT", "")
+        DR.H24_ARTIFACT = os.path.join(td, "short.json")
+        DR.H24_JOURNAL = os.path.join(td, "short.jsonl")
+        try:
+            with open(DR.H24_JOURNAL, "w", encoding="utf-8") as f:
+                f.write(json.dumps({"dep": 1000, "ruler": "optimal_h",
+                                    "at": t0, "exit_ts": t0 + 3600,
+                                    "sym": "SSSUSDT", "side": "short",
+                                    "usd": 3.0, "lev": 4.0, "margin": 25.0,
+                                    "pnl_frac": 0.12, "exit": "тейк",
+                                    "written_at": t0 + 600,
+                                    "rules": DR.RULES}) + "\n")
+            with open(DR.H24_ARTIFACT, "w", encoding="utf-8") as f:
+                json.dump({"family": "h24", "hedge": True,
+                           "computed_at": "2026-09-07 10:00",
+                           "signal": {"hold_h": 24, "gate": "край ≥ 33 б.п."},
+                           "rules": {"RULERS": {k: dict(DR.RULERS[k])
+                                                for k in DR.H24_ORDER},
+                                     "RULER_ORDER": list(DR.H24_ORDER),
+                                     "DEPOSITS": [1000.0]},
+                           "books": {"optimal_h:1000": {
+                               "deposit": 1000.0, "ruler": "optimal_h",
+                               "ticket": DR.ticket(1000.0, "optimal_h"),
+                               "all": {"n": 1, "usd": 3.0, "final": 0.003,
+                                       "max_dd": -0.001, "day_median": 3.0,
+                                       "win": 100.0},
+                               "n_forward": 1, "n_restored": 0,
+                               "dups": {"overlaps": 0, "repeats": 0,
+                                        "names": 1, "positions": 1,
+                                        "max_per_name": 1,
+                                        "pause_median_h": None}}},
+                           "portfolio": {"hedge": True, "main_dep": 1000,
+                                         "pairs": {"optimal:1000": {
+                                             "mode": "optimal", "days": 3,
+                                             "long_usd": 5.0, "short_usd": 3.0,
+                                             "both_usd": 8.0,
+                                             "both_final": 0.004,
+                                             "long_dd": -0.002,
+                                             "both_dd": -0.001, "corr": -0.2,
+                                             "collisions": {"n": 1,
+                                                            "share": 0.25}}}}},
+                          f)
+            c._dca_cache = (0.0, {})     # свод кэшируется на 2 минуты
+            sh = c.dca_paper()["short"]
+            check("DCA: короткие книги семейства h24 доезжают до страницы",
+                  sh.get("present") and sh["books"]["optimal_h:1000"]["all"]["usd"] == 3.0
+                  and [x["key"] for x in sh["rulers"]] == list(DR.H24_ORDER),
+                  str(sh)[:200])
+            check("DCA: общая статистика едет тем же блоком",
+                  (sh.get("portfolio") or {}).get("pairs", {}).get("optimal:1000", {})
+                  .get("both_usd") == 8.0 and sh["hedge"] is True,
+                  str(sh.get("portfolio"))[:200])
+            check("DCA: свежесть свода коротких книг считается",
+                  sh.get("age_h") is not None and sh.get("stale") is False,
+                  str((sh.get("age_h"), sh.get("stale"))))
+        finally:
+            DR.H24_ARTIFACT = ap_short
         page = W.DCAPAGE
+        check("DCA: страница показывает короткие книги и общую статистику",
+              "shortBlock(d.short)" in page and "portfolioBlock" in page
+              and "хедж-режим" in page and "Не считалась" in page,
+              "нет разметки коротких книг")
         check("DCA: страница объясняет дубли и молчание о них",
               "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page
               and "dupLine(b.dups)" in page,

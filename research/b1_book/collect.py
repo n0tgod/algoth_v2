@@ -3857,8 +3857,50 @@ class Collector:
             if k in books:
                 out["selected"] = k
         cached[key] = out
+        # Короткие книги на сигнале `h24` — СВОЙ артефакт, своя запись и
+        # свой прогон (решение владельца 2026-09-07). Кладутся отдельным
+        # блоком, а не подмешиваются к длинным: у них другой лист, другой
+        # срок и хедж-режим, и общий список книг склеил бы разные вещи.
+        out["short"] = self._dca_short(DR, now)
         self._dca_cache = (now if now - cat >= 120 else cat, cached)
         return out
+
+    def _dca_short(self, DR, now):
+        """Свод коротких книг семейства `h24` из его артефакта.
+
+        Числа НЕ пересчитываются: их считает прогон книги, и вторая
+        реализация на странице однажды разошлась бы с отчётом. Артефакта
+        нет — это причина словами, а не пустые книги.
+        """
+        art_path = getattr(DR, "H24_ARTIFACT", None)
+        if not art_path:
+            return {"present": False,
+                    "why": "правила этой машины не знают семейства h24"}
+        if not os.path.exists(art_path):
+            return {"present": False,
+                    "why": "прогона коротких книг ещё не было: артефакта нет"}
+        try:
+            with open(art_path, encoding="utf-8") as f:
+                art = json.load(f)
+        except Exception as e:                              # noqa: BLE001
+            return {"present": False, "why": f"артефакт не читается: {e}"}
+        rul = (art.get("rules") or {}).get("RULERS") or {}
+        order = (art.get("rules") or {}).get("RULER_ORDER") or sorted(rul)
+        try:
+            age = round((now - os.path.getmtime(art_path)) / 3600.0, 1)
+        except OSError:
+            age = None
+        return {"present": True,
+                "journal_present": bool(DR.journal_parts(DR.H24_JOURNAL)),
+                "rulers": [dict(rul[k], key=k) for k in order if k in rul],
+                "deposits": (art.get("rules") or {}).get("DEPOSITS")
+                or list(DR.DEPOSITS),
+                "books": art.get("books") or {},
+                "signal": art.get("signal"), "hedge": art.get("hedge"),
+                "portfolio": art.get("portfolio"),
+                "one_name": art.get("one_name"),
+                "computed_at": art.get("computed_at"),
+                "age_h": age, "stale": bool(age is not None and age > 3)}
 
     def paper_book(self, at=None):
         """Бумажная месячная книга: свод из артефакта, транши из журнала.
