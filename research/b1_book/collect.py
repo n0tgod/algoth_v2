@@ -3758,16 +3758,33 @@ class Collector:
         # изменилось (так и вышло). Поэтому семейства собираются ОДНИМ
         # проходом: вторая копия сборки книги однажды разошлась бы с
         # первой, и одна и та же позиция рисовалась бы по-разному.
-        out["short"] = self._dca_short(DR, now)
-        sh = out["short"] or {}
+        out["short"] = self._dca_family(DR, now, "H24_ARTIFACT",
+                                        "H24_JOURNAL", "h24",
+                                        "коротких книг")
+        out["pair"] = self._dca_family(DR, now, "PAIR_ARTIFACT",
+                                       "PAIR_JOURNAL", "pair",
+                                       "общего счёта")
+        sh, pr = out["short"] or {}, out["pair"] or {}
         fams = [(list(out["rulers"]), art_books, rows)]
-        if sh.get("present"):
-            srows, sbad = DR.read_journal(DR.H24_JOURNAL)
-            out["short_bad_lines"] = sbad
-            fams.append((list(sh.get("rulers") or []),
-                         sh.get("books") or {}, srows))
-            out["rulers"] = out["rulers"] + [
-                dict(x, family="h24") for x in (sh.get("rulers") or [])]
+        # Порядок вкладок: ОБЩИЙ СЧЁТ первым. Владелец дважды не нашёл
+        # общую статистику, стоявшую последней, — место на странице есть
+        # часть ответа, а не оформление.
+        head = []
+        for (blk, fam, jattr, badkey) in (
+                (pr, "pair", "PAIR_JOURNAL", "pair_bad_lines"),
+                (sh, "h24", "H24_JOURNAL", "short_bad_lines")):
+            if not blk.get("present"):
+                continue
+            frows, fbad = DR.read_journal(getattr(DR, jattr))
+            out[badkey] = fbad
+            fams.append((list(blk.get("rulers") or []),
+                         blk.get("books") or {}, frows))
+            add = [dict(x, family=fam) for x in (blk.get("rulers") or [])]
+            if fam == "pair":
+                head += add
+            else:
+                out["rulers"] = out["rulers"] + add
+        out["rulers"] = head + out["rulers"]
         for (fam_rulers, fam_art, fam_rows) in fams:
           for rk in [x["key"] for x in fam_rulers]:
             for d in out["deposits"]:
@@ -3878,20 +3895,22 @@ class Collector:
         self._dca_cache = (now if now - cat >= 120 else cat, cached)
         return out
 
-    def _dca_short(self, DR, now):
-        """Свод коротких книг семейства `h24` из его артефакта.
+    def _dca_family(self, DR, now, art_attr, journal_attr, family, what):
+        """Свод СЕМЕЙСТВА книг из его артефакта — одним кодом на все.
 
-        Числа НЕ пересчитываются: их считает прогон книги, и вторая
-        реализация на странице однажды разошлась бы с отчётом. Артефакта
-        нет — это причина словами, а не пустые книги.
+        Семейств три: длинные книги, короткие `h24` и общий счёт. Числа
+        НЕ пересчитываются: их считает прогон книги, и вторая реализация
+        на странице однажды разошлась бы с отчётом. Артефакта нет — это
+        причина словами, а не пустые книги.
         """
-        art_path = getattr(DR, "H24_ARTIFACT", None)
+        art_path = getattr(DR, art_attr, None)
+        journal = getattr(DR, journal_attr, None)
         if not art_path:
             return {"present": False,
-                    "why": "правила этой машины не знают семейства h24"}
+                    "why": f"правила этой машины не знают семейства {family}"}
         if not os.path.exists(art_path):
             return {"present": False,
-                    "why": "прогона коротких книг ещё не было: артефакта нет"}
+                    "why": f"прогона {what} ещё не было: артефакта нет"}
         try:
             with open(art_path, encoding="utf-8") as f:
                 art = json.load(f)
@@ -3903,15 +3922,16 @@ class Collector:
             age = round((now - os.path.getmtime(art_path)) / 3600.0, 1)
         except OSError:
             age = None
-        return {"present": True,
-                "journal_present": bool(DR.journal_parts(DR.H24_JOURNAL)),
+        return {"present": True, "family": family,
+                "journal_present": bool(DR.journal_parts(journal)),
                 "rulers": [dict(rul[k], key=k) for k in order if k in rul],
                 "deposits": (art.get("rules") or {}).get("DEPOSITS")
                 or list(DR.DEPOSITS),
                 "books": art.get("books") or {},
                 "signal": art.get("signal"), "hedge": art.get("hedge"),
                 "portfolio": art.get("portfolio"),
-                "one_name": art.get("one_name"),
+                "one_name": art.get("one_name"), "parts": art.get("parts"),
+                "costs": art.get("costs"), "error": art.get("error"),
                 "computed_at": art.get("computed_at"),
                 "age_h": age, "stale": bool(age is not None and age > 3)}
 

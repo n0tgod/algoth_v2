@@ -1,0 +1,238 @@
+#!/usr/bin/env python3
+"""Проверки общего счёта: длинная книга и короткая на ОДНОМ депозите.
+
+Кусаются: общий счёт берёт МЕНЬШЕ сделок, чем два раздельных на тех же
+решениях (касса одна — это и есть требование владельца, и подмена его
+двумя вызовами кассы проверку роняет); билет остаётся билетом СВОЕЙ
+стороны; совпадения имён и связь сторон считаются внутри самой книги;
+без кэшей реплея — причина словами, а не пустые книги; издержки учтены в
+каждой сделке, как и в отдельных книгах.
+"""
+import json
+import os
+import sys
+import tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
+import rules as R                                             # noqa: E402
+import run_paper as RP                                        # noqa: E402
+import run_pair as PR                                         # noqa: E402
+import test_paper as TP                                       # noqa: E402
+
+H = 3600.0
+T0 = TP.T0
+
+
+def _long(sym, at, pnl=0.10, hold_h=6.0, lev=4.0):
+    return TP._rec(at, hold_h=hold_h, pnl=pnl, lev=lev, sym=sym)
+
+
+def _short(sym, at, pnl=0.10, hold_h=6.0, lev=4.0):
+    r = TP._rec(at, hold_h=hold_h, pnl=pnl, lev=lev, sym=sym)
+    r["side"] = "short"
+    return r
+
+
+def _caches(longs, shorts, lk="safe", sk="safe_h"):
+    """Кэши обеих книг в том виде, в каком их пишут сами прогоны."""
+    lc = {(tuple(RP.RULERS[lk]), r["sym"], round(r["at"], 3)): r
+          for r in longs}
+    base = PR.S.BOOKS[sk]
+    sc = {(base, r["sym"], round(r["at"], 3)): r for r in shorts}
+    return lc, sc
+
+
+def test_pack_marks_the_source_and_keeps_both_sides():
+    longs = {"safe": [_long("AUSDT", T0)], "optimal": [_long("BUSDT", T0)]}
+    shorts = {"safe_h": [_short("CUSDT", T0)]}
+    got = PR.pack(longs, shorts, keys=["pair_safe"])["pair_safe"]
+    assert [g["book"] for g in got] == ["safe", "safe_h"], got
+    assert {g["sym"] for g in got} == {"AUSDT", "CUSDT"}, got
+    # чужой режим в общую книгу не попадает
+    assert "BUSDT" not in {g["sym"] for g in got}
+    print("ok  общая книга собрана из СВОИХ двух книг, у каждой записи "
+          "стоит источник")
+
+
+def test_one_account_takes_less_than_two_separate_ones():
+    """Один счёт — не сумма двух: касса одна, и часть сделок не случается.
+
+    Проверка кусается ровно на требовании владельца: подмени общий счёт
+    двумя вызовами кассы — и взятых станет столько же, сколько врозь.
+    """
+    n = 30
+    longs = [_long(f"L{i}USDT", T0 + i, hold_h=48.0) for i in range(n)]
+    shorts = [_short(f"S{i}USDT", T0 + i, hold_h=48.0) for i in range(n)]
+    packed = PR.pack({"safe": longs}, {"safe_h": shorts}, keys=["pair_safe"])
+    _rows, cells, _one, _live = RP.build_rows(packed, now=T0 + 200 * H,
+                                              keys=["pair_safe"],
+                                              log=lambda *a: None)
+    apart_l, cl, _o, _l = RP.build_rows({"safe": longs}, now=T0 + 200 * H,
+                                        keys=["safe"], log=lambda *a: None)
+    apart_s, cs, _o2, _l2 = RP.build_rows({"safe_h": shorts},
+                                          now=T0 + 200 * H, keys=["safe_h"],
+                                          log=lambda *a: None)
+    dep = int(R.DEPOSITS[0])
+    both = cells[RP._cell("pair_safe", dep)]
+    sep_l = cl[RP._cell("safe", dep)]
+    sep_s = cs[RP._cell("safe_h", dep)]
+    assert sep_l["taken"] + sep_s["taken"] == 2 * n, (sep_l, sep_s)
+    assert both["taken"] < sep_l["taken"] + sep_s["taken"], (both, sep_l, sep_s)
+    assert both["no_cash"] > 0, both
+    # мест и билета у общего счёта одного не существует: у сторон он свой
+    assert both.get("ticket") is None and both.get("share_by_source") is True
+    print(f"ok  общий счёт взял {both['taken']} решений из {2 * n}; врозь "
+          f"те же решения берутся все ({sep_l['taken']} + {sep_s['taken']}), "
+          f"отказов по кассе {both['no_cash']}")
+
+
+def test_ticket_stays_the_ticket_of_its_own_side():
+    """Билет — свойство СТОРОНЫ: у длинной свой, у короткой свой.
+
+    Кусается: общий билет сделал бы маржу сторон равной, а она обязана
+    отличаться ровно во столько раз, во сколько отличаются билеты книг.
+    """
+    dep = 10000.0
+    longs = [_long("AUSDT", T0)]
+    shorts = [_short("BUSDT", T0)]
+    packed = PR.pack({"safe": longs}, {"safe_h": shorts}, keys=["pair_safe"])
+    rows, _c, _o, _l = RP.build_rows(packed, now=T0 + 100 * H,
+                                     keys=["pair_safe"], log=lambda *a: None)
+    mine = {r["sym"]: r for r in rows if int(r["dep"]) == int(dep)}
+    assert set(mine) == {"AUSDT", "BUSDT"}, mine
+    want = R.ticket(dep, "safe_h") / R.ticket(dep, "safe")
+    got = mine["BUSDT"]["margin"] / mine["AUSDT"]["margin"]
+    assert want > 3, want            # книги и правда с разными билетами
+    assert abs(got - want) < 0.02 * want, (got, want, mine)
+    assert mine["AUSDT"].get("book") == "safe"
+    assert mine["BUSDT"].get("book") == "safe_h"
+    print(f"ok  билет по стороне: короткая маржа больше длинной в "
+          f"{got:.1f}× при объявленном отношении {want:.1f}×")
+
+
+def test_collisions_and_link_live_inside_the_book():
+    """Совпадение имён и связь сторон считаются по строкам самой книги."""
+    at = T0
+    rows = []
+    for (sym, side, a, h) in (("XUSDT", "long", at, 10.0),
+                              ("XUSDT", "short", at + 2 * H, 4.0),
+                              ("YUSDT", "long", at, 4.0),
+                              ("YUSDT", "short", at + 4 * H, 4.0)):
+        rows.append({"dep": 1000, "ruler": "pair_safe", "at": a,
+                     "exit_ts": a + h * H, "sym": sym, "side": side,
+                     "book": "safe" if side == "long" else "safe_h",
+                     "lev": 2.0, "margin": 25.0, "pnl_frac": 0.02,
+                     "usd": 1.0, "exit": "тейк", "written_at": a + H,
+                     "rules": R.RULES})
+    col = PR.collisions(rows, "pair_safe")
+    # X: шорт открыт ВНУТРИ длинной — совпадение; Y: шорт открыт ровно в
+    # секунду выхода длинной — касание встык, не совпадение
+    assert col["n"] == 1 and col["names"] == 1, col
+    one_side = PR.collisions([r for r in rows if r["side"] == "long"],
+                             "pair_safe")
+    assert one_side["n"] == 0 and one_side.get("why"), one_side
+    lk = PR.link(rows, "pair_safe")
+    assert lk["corr"] is None and lk.get("why"), lk
+    print(f"ok  совпадений имён {col['n']} (касание встык не считается); "
+          "связь без трёх общих суток — причина словами")
+
+
+def test_memory_guard_stops_the_run_itself():
+    """Прогон останавливается САМ и с числом: OOM выбирает не его.
+
+    На сервере тяжёлый прогон рядом с часовым циклом уже убивал ЦИКЛ, а
+    не себя. Сторож памяти — тот же, что у разреза по рукам.
+    """
+    said = []
+    try:
+        PR.run(long_cache={}, short_cache={}, log=said.append,
+               mem_limit=0.0)
+    except SystemExit as e:
+        assert e.code == 3, e
+    else:
+        raise AssertionError("сторож памяти не сработал: " + str(said))
+    assert any("СТОП: память" in x for x in said), said
+    print("ok  сторож памяти останавливает общий счёт сам и говорит число")
+
+
+def test_missing_caches_are_a_reason_not_empty_books():
+    s = PR.run(long_cache={}, short_cache={}, log=lambda *a: None)
+    assert s.get("error") and not s.get("books"), s
+    txt = PR.report(s)
+    assert "Не посчитан" in txt and s["error"] in txt, txt[:400]
+    print(f"ok  без кэшей общий счёт не считается: «{s['error']}» — "
+          "причина словами, а не пустые книги")
+
+
+def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
+    """Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
+
+    Кусается: строки общей книги НЕ попадают в журналы отдельных книг
+    (иначе их числа посчитались бы дважды), а раздел сравнения берёт
+    деньги раздельных счетов из ИХ журналов.
+    """
+    n = 12
+    longs = [_long(f"L{i}USDT", T0 + i * H, hold_h=6.0) for i in range(n)]
+    shorts = [_short(f"S{i}USDT", T0 + i * H, hold_h=6.0, pnl=-0.05)
+              for i in range(n)]
+    lc, sc = _caches(longs, shorts)
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "pair.jsonl")
+        lj = os.path.join(td, "journal.jsonl")
+        sj = os.path.join(td, "short.jsonl")
+        # журналы отдельных книг — тем же писателем, что у самих книг
+        lrows, _c, _o, _l = RP.build_rows({"safe": longs}, now=T0 + 100 * H,
+                                          keys=["safe"], log=lambda *a: None)
+        srows, _c2, _o2, _l2 = RP.build_rows({"safe_h": shorts},
+                                             now=T0 + 100 * H,
+                                             keys=["safe_h"],
+                                             log=lambda *a: None)
+        RP.append_journal(lrows, path=lj, log=lambda *a: None)
+        RP.append_journal(srows, path=sj, log=lambda *a: None)
+        s = PR.run(long_cache=lc, short_cache=sc, journal=jp,
+                   long_journal=lj, short_journal=sj,
+                   keys=["pair_safe"], now=T0 + 100 * H,
+                   log=lambda *a: None)
+        assert not s.get("error"), s.get("error")
+        dep = int(R.DEPOSITS[1])
+        b = s["books"][RP._cell("pair_safe", dep)]
+        st = b["all"]
+        assert st["n"] == 2 * n, st
+        pr = b["parts"]
+        assert set(pr) == {"safe", "safe_h"}, pr
+        assert pr["safe"]["stats"]["n"] == n == pr["safe_h"]["stats"]["n"]
+        assert pr["safe"]["ticket"] != pr["safe_h"]["ticket"], pr
+        assert b["ticket"] is None and b["slots"] is None, b
+        # издержки считаются той же дорогой, что у отдельных книг
+        assert b["costs"]["n"] == st["n"], b["costs"]
+        # раздельные счета взяты из журналов самих книг
+        sep = b["separate"]
+        assert sep["safe"]["n"] == n and sep["safe_h"]["n"] == n, sep
+        assert abs(st["usd"] - (sep["safe"]["usd"] + sep["safe_h"]["usd"])) \
+            > 1e-9, (st["usd"], sep)
+        # журнал общей книги СВОЙ: в журналах отдельных книг её строк нет
+        prows, _ = R.read_journal(jp)
+        assert {R.ruler_of(r) for r in prows} == {"pair_safe"}, prows[:1]
+        lrows2, _ = R.read_journal(lj)
+        assert all(R.ruler_of(r) == "safe" for r in lrows2)
+        txt = PR.report(s)
+        assert "Один счёт против двух раздельных" in txt
+        assert "Издержки: учтены в каждой сделке" in txt
+        print(f"ok  общий счёт: {st['n']} сделок, {st['usd']:+.2f} $ против "
+              f"{sep['safe']['usd'] + sep['safe_h']['usd']:+.2f} $ у двух "
+              "раздельных; журнал свой")
+
+
+if __name__ == "__main__":
+    for t in (test_pack_marks_the_source_and_keeps_both_sides,
+              test_memory_guard_stops_the_run_itself,
+              test_one_account_takes_less_than_two_separate_ones,
+              test_ticket_stays_the_ticket_of_its_own_side,
+              test_collisions_and_link_live_inside_the_book,
+              test_missing_caches_are_a_reason_not_empty_books,
+              test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts):
+        t()
+    print("\nвсе 7 проверок прошли")

@@ -294,6 +294,36 @@ if ! pgrep -f "dca_paper/run_short.py" >/dev/null; then
     fi
 fi
 
+# --- общий счёт: длинная книга и короткая на одном депозите ------------
+# Требование владельца 2026-09-07: «для общей должен быть один общий
+# счёт». Прогон НИЧЕГО не пересчитывает по барам — берёт исходы из кэшей
+# реплея обеих книг, поэтому он дёшев и идёт той же часовой каденцией,
+# по той же метке «когда считали». Часы обучения пропускаются, как и у
+# остальных книг.
+DCAP=research/dca_paper/out/DCA-pair.json
+DCAP_LOG=research/dca_paper/out/pair.log
+if ! pgrep -f "dca_paper/run_pair.py" >/dev/null; then
+    dcp_age=999999999
+    if [ -f "$DCAP" ]; then
+        dcp_at=$(grep -o '"computed_at": *"[^"]*"' "$DCAP" \
+                 | head -1 | cut -d'"' -f4)
+        if [ -n "$dcp_at" ]; then
+            dcp_ts=$(date -u -d "$dcp_at UTC" +%s 2>/dev/null || true)
+            if [ -n "$dcp_ts" ]; then
+                dcp_age=$(( $(date -u +%s) - dcp_ts ))
+            fi
+        fi
+    fi
+    dcp_hh=$(date -u +%H)
+    if [ "$dcp_hh" != "02" ] && [ "$dcp_hh" != "06" ] \
+       && [ "$dcp_age" -gt 3600 ]; then
+        echo "[$(now)] общий счёт: последний счёт ${dcp_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 10 .venv/bin/python research/dca_paper/run_pair.py \
+                >> $DCAP_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),

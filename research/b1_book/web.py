@@ -6808,45 +6808,64 @@ function shortBlock(sh){
     });
   });
   h += "</table></div>";
-  return h + portfolioBlock(sh.portfolio);
+  return h;
 }
 
-function portfolioBlock(p){
-  // Общая статистика: длинная книга и короткая рядом. Счета РАЗДЕЛЬНЫЕ,
-  // итог пары считается от суммы депозитов; связь дневных денег и есть
-  // ответ на вопрос «хедж или вторая такая же ставка».
-  if (!p || p.error) return "<div class=panel><h3>Общая статистика</h3>" +
-    "<p class=dim>Не считалась: " + ((p && p.error) ||
-    "блока нет в своде") + ".</p></div>";
-  const dep = Math.round(p.main_dep || 10000);
+function pairBlock(b){
+  // Книга ОБЩЕГО СЧЁТА: длинная сторона и короткая на одном депозите.
+  // Обычная книга сюда не попадает вовсе — у неё источник один.
+  const pr = b && b.parts;
+  if (!pr) return "";
   const pc = (x) => (x === null || x === undefined) ? "&mdash;"
     : ((100 * Number(x) >= 0 ? "+" : "") + (100 * Number(x)).toFixed(2) + " %");
   const us = (x) => (x === null || x === undefined) ? "&mdash;"
     : ((Number(x) >= 0 ? "+" : "") + Number(x).toFixed(2));
-  let h = "<div class=panel><h3>Общая статистика: длинная книга и короткая " +
-    "рядом</h3><p class=dim>Счета раздельные: каждой книге $" + dep +
-    ", итог пары &mdash; от $" + (2 * dep) + ". Связь дневных денег около " +
-    "нуля или ниже означает, что стороны ходят врозь и пара мельче суммы " +
-    "по риску; заметно выше нуля &mdash; вторая книга просто удваивает " +
-    "ставку. Совпадения имён законны в хедж-режиме и посчитаны числом.</p>";
-  h += "<table class=mtr><tr><th>режим</th><th>суток</th><th>Σ $ длинная</th>" +
-    "<th>Σ $ короткая</th><th>Σ $ пара</th><th>итог пары</th>" +
-    "<th>просадка длинной</th><th>просадка пары</th><th>связь дней</th>" +
-    "<th>совпадений имён</th></tr>";
-  Object.keys(p.pairs || {}).filter(k => k.endsWith(":" + dep)).forEach(k => {
-    const x = p.pairs[k];
-    const col = x.collisions || {};
-    h += "<tr><td>" + x.mode + "</td><td class=mono>" + x.days +
-      "</td><td class=mono>" + us(x.long_usd) + "</td><td class=mono>" +
-      us(x.short_usd) + "</td><td class=mono>" + us(x.both_usd) +
-      "</td><td class=mono>" + pc(x.both_final) + "</td><td class=mono>" +
-      pc(x.long_dd) + "</td><td class=mono>" + pc(x.both_dd) +
-      "</td><td class=mono>" + (x.corr === null || x.corr === undefined
-        ? "&mdash;" : x.corr) + "</td><td class=mono>" + (col.n || 0) +
-      (col.share ? " (" + (100 * col.share).toFixed(1) + " %)" : "") +
-      "</td></tr>";
+  const lk = b.link || {}, col = b.collisions || {};
+  let h = "<div class=panel><div class=cap>общий счёт: две стороны, одна " +
+    "касса</div><p class=dim>Депозит ОДИН на обе стороны: занятая одной " +
+    "стороной маржа недоступна другой, поэтому сделок здесь меньше, чем " +
+    "у двух раздельных книг, и суммой их чисел этот счёт не является. " +
+    "Билет у каждой стороны свой &mdash; он выведен из пика её " +
+    "одновременных позиций.</p>";
+  h += "<table class=mtr><tr><th>сторона</th><th>билет</th><th>сделок</th>" +
+    "<th>Σ $</th><th>к депозиту</th><th>просадка</th><th>плюсов</th></tr>";
+  Object.keys(pr).forEach(k => {
+    const x = pr[k] || {}, st2 = x.stats || {};
+    h += "<tr><td>" + esc(x.title || k) + "</td><td class=mono>" +
+      (x.ticket == null ? "&mdash;" : "$" + x.ticket) + "</td><td class=mono>" +
+      (st2.n == null ? "&mdash;" : st2.n) + "</td><td class=mono>" +
+      us(st2.usd) + "</td><td class=mono>" + pc(st2.final) +
+      "</td><td class=mono>" + pc(st2.max_dd) + "</td><td class=mono>" +
+      (st2.win == null ? "&mdash;" : st2.win + " %") + "</td></tr>";
   });
-  return h + "</table></div>";
+  h += "</table>";
+  h += "<p class=dim>Связь дневных денег сторон: <b class=mono>" +
+    (lk.corr === null || lk.corr === undefined ? "&mdash;" : lk.corr) +
+    "</b>" + (lk.why ? " <span class=dim>(" + esc(lk.why) + ")</span>" : "") +
+    ". Около нуля или ниже означает, что стороны ходят ВРОЗЬ и общий счёт " +
+    "мельче суммы по риску; заметно выше нуля &mdash; вторая сторона " +
+    "просто удваивает ту же ставку. Совпадений имён (шорт по монете, " +
+    "которую держит длинная сторона): <b class=mono>" + (col.n || 0) +
+    "</b>" + (col.share ? " (" + (100 * col.share).toFixed(1) + " %)" : "") +
+    " &mdash; в хедж-режиме это законно, в одностороннем такой шорт срезал " +
+    "бы длинную позицию.</p>";
+  const sep = b.separate;
+  if (sep) {
+    const keys = Object.keys(sep);
+    let sum = 0, known = 0, cells = [];
+    keys.forEach(k => {
+      const x = sep[k] || {};
+      if (x && x.usd != null) { sum += Number(x.usd); known++; }
+      cells.push(esc(k) + " " + us(x && x.usd) +
+                 " (" + (x && x.n != null ? x.n : "&mdash;") + " сделок)");
+    });
+    h += "<p class=dim>Те же книги на РАЗДЕЛЬНЫХ счетах, как их показывают " +
+      "их собственные вкладки: " + cells.join(", ") +
+      (known ? ", вместе " + us(sum) : "") + ". Капитала там вдвое больше " +
+      "(у каждой книги свой депозит), поэтому сравнивать честно деньги и " +
+      "просадку, а не проценты.</p>";
+  }
+  return h + "</div>";
 }
 
 function dupLine(dd){
@@ -6874,54 +6893,54 @@ function dupLine(dd){
     "биржа его допускает, и книга им живёт.</p></div>";
 }
 
-function netTiles(nt, dep, meta){
-  // Нетто по замеру издержек (`costs.py`, тот же код, что у отчёта):
-  // комиссия тейкером на каждом рунге и выходе, проскальзывание X3 на
-  // базовый вход и рыночный выход, funding по рядам площадки. Нет поля —
-  // свод прежнего образца, и это сказано; нет контекста — причина;
-  // измерено не всё — сколько именно. Ноль здесь не бывает молчаливым.
+function costTiles(ct, meta){
+  // Издержки УЧТЕНЫ В КАЖДОЙ СДЕЛКЕ (требование владельца 2026-09-07):
+  // деньги книги выше — уже нетто, и второй колонки «нетто» здесь нет.
+  // Эти плитки говорят, ЧТО именно вычтено и у скольких сделок вычесть
+  // не удалось. Ноль тут не бывает молчаливым: не измерено — сказано
+  // числом и причиной.
   let h = "<div class='stats main' data-min=210>";
   const tile = (k, v, c) => "<div class='st" +
     (c === "good" ? " pos" : (c === "bad" ? " neg" : "")) +
     "'><div class=k>" + k + "</div><div class='v mono " + (c || "") + "'>" +
     v + "</div></div>";
-  if (nt === undefined) {
-    return h + tile("нетто по издержкам",
-      "&mdash; <span class=dim>(свод прежнего образца: издержки не считались)</span>",
-      "") + "</div>";
+  if (ct === undefined || ct === null) {
+    return h + tile("издержки",
+      "&mdash; <span class=dim>(свод прежнего образца: издержки не считались, " +
+      "деньги выше БРУТТО)</span>", "") + "</div>";
   }
-  if (nt.error && nt.net_usd == null) {
-    return h + tile("нетто по издержкам",
-      "&mdash; <span class=dim>(" + esc(nt.error) + ")</span>", "") + "</div>";
+  if (!ct.applied) {
+    return h + tile("издержки",
+      "&mdash; <span class=dim>(не вычтены" +
+      ((meta && meta.error) ? ": " + esc(meta.error) : "") +
+      "; деньги выше БРУТТО)</span>", "bad") + "</div>";
   }
-  const two = (a, b2) => a + " <span style='font-size:.62em;opacity:.85'>("
+  const two = (a2, b2) => a2 + " <span style='font-size:.62em;opacity:.85'>("
     + b2 + ")</span>";
-  const nst = nt.stats || {};
-  const costs = (nt.fee_usd || 0) + (nt.slip_usd || 0) - (nt.fund_usd || 0);
-  h += tile("заработала нетто",
-    nt.net_usd == null ? "&mdash;"
-      : two(usd(nt.net_usd), fpct(nt.net_usd / Number(dep || 1))),
-    nt.net_usd == null ? "" : cls(nt.net_usd));
-  h += tile("издержки (комиссия + проскальз. − funding)",
-    nt.net_usd == null ? "&mdash;"
-      : usd(-costs) + " <span style='font-size:.62em;opacity:.85'>(" +
-        usd(-(nt.fee_usd || 0)) + " / " + usd(-(nt.slip_usd || 0)) + " / " +
-        usd(nt.fund_usd || 0) + ")</span>", costs > 0 ? "bad" : "");
-  h += tile("просадка нетто", fpct(nst.max_dd), cls(nst.max_dd));
-  h += tile("медиана дня нетто", fpct(nst.day_median), cls(nst.day_median));
-  h += tile("измерено позиций",
-    (nt.measured == null ? "&mdash;" : nt.measured) + " из " +
-    (nt.n == null ? "&mdash;" : nt.n) +
-    (nt.why ? " <span class=dim>(" + esc(nt.why) + ")</span>" : ""), "");
-  h += "</div><div class=k>Нетто — по замеру издержек тем же кодом, что " +
-    "отчёт `DCA-costs`: комиссия тейкером на каждом рунге и выходе; " +
-    "проскальзывание " + (nt.slip_bp == null ? "&mdash;" : nt.slip_bp) +
-    " б.п. (" + esc(nt.slip_source || (meta && meta.slip_source) || "живой замер X3") +
+  h += tile("издержки вычтены из денег",
+    two(usd(-(ct.cost_usd || 0)),
+        "комиссия " + usd(-(ct.fee_usd || 0)) + ", проскальз. " +
+        usd(-(ct.slip_usd || 0)) + ", funding " + usd(ct.fund_usd || 0)),
+    (ct.cost_usd || 0) > 0 ? "bad" : "");
+  h += tile("было бы брутто", usd(ct.gross_usd), cls(ct.gross_usd));
+  h += tile("сделок с полными издержками",
+    ct.applied + " из " + ct.n +
+    (ct.not_measured ? " <span class=dim>(у " + ct.not_measured +
+      " нет записи рунгов &mdash; их деньги брутто)</span>" : ""),
+    ct.not_measured ? "bad" : "");
+  if (ct.no_funding) h += tile("без funding",
+    ct.no_funding + " <span class=dim>(ряд не покрывает позицию &mdash; " +
+    "funding им НЕ начислен, это прочерк, а не ноль)</span>", "");
+  h += "</div><div class=k>Комиссия тейкером на каждом рунге и выходе; " +
+    "проскальзывание " + ((meta && meta.slip_bp) == null ? "&mdash;" : meta.slip_bp) +
+    " б.п. (" + esc((meta && meta.slip_source) || "живой замер X3") +
     ") на базовый вход и рыночный выход (" +
-    esc((nt.market_exits || []).join(", ")) + "); лимитные рунги и тейк " +
-    "без проскальзывания по построению; funding по рядам площадки. " +
-    "Число проскальзывания снято на 300 $ за имя — у крупных билетов оно " +
-    "больше, нетто здесь нижняя граница издержек.</div>";
+    esc(((meta && meta.market_exits) || []).join(", ")) + "); лимитные рунги " +
+    "и тейк проскальзывания не платят по построению; funding по рядам " +
+    "площадки исполнения. Число проскальзывания снято на 300 $ за имя &mdash; " +
+    "у крупных билетов оно больше, поэтому нетто крупных депозитов есть " +
+    "НИЖНЯЯ граница издержек. Отметка открытой позиции остаётся брутто: " +
+    "выхода ещё не было.</div>";
   return h;
 }
 
@@ -6992,7 +7011,7 @@ function statBlock(st, dep, title, op, grp, nt, meta){
       + "</div>";
   }
   h += "</div>";
-  h += netTiles(nt, dep, meta);
+  h += costTiles(nt, meta);
   // Второстепенные плитки собираются в СВОЮ строку, чтобы подпись
   // могла назвать их ЧИСЛОМ: «шестнадцать параметров» литералом
   // устарело бы при первой же добавленной плитке.
@@ -7598,10 +7617,11 @@ function render(){
     "пришёл</b>, артефакту " + (d.age_h == null ? "&mdash;" : d.age_h) +
     " ч. Числа ниже описывают ТОТ прогон, а не сегодняшний день.</div>";
   const rmeta = (ruls.find(r => r.key === RUL) || {});
-  // Общая статистика идёт ПЕРВОЙ: это ответ на вопрос «что даёт короткая
-  // книга рядом с длинной», и ниже плиток книги её не находят — владелец
-  // спросил «где общая» дважды подряд.
-  h += portfolioBlock((d.short || {}).portfolio);
+  // Общий счёт — не отдельный блок внизу, а КНИГА: те же вкладки, те же
+  // плитки, та же кривая (требование владельца 2026-09-07 «общая должна
+  // выводиться в таком же формате»). Прежний блок общей статистики,
+  // складывавший два РАЗДЕЛЬНЫХ счёта, снят: две «общих» с разными
+  // числами на одной странице — это не два взгляда, а путаница.
   h += "<div class=panel><div class=cap>книга</div><div class=stats>" +
     "<div class=st><div class=k>режим</div><div class='v'>" +
     esc(rmeta.title || RUL || "&mdash;") + "</div></div>" +
@@ -7619,12 +7639,14 @@ function render(){
   // кривой, «без бэктеста» — только записанное вперёд. Третьей группы
   // («пересчёт по прошлому») больше нет: она есть первая минус вторая,
   // и держать её отдельным блоком значило приглашать сложить их.
+  h += pairBlock(b);
   const st = GRP === "fwd" ? b.forward : b.all;
   const op = (b.live_known === false) ? {known: false}
     : (b.open ? Object.assign({}, b.open, {known: true}) : undefined);
-  // Нетто едет рядом с той же группой: у «без бэктеста» свои издержки.
-  // Свод прежнего образца поля не несёт — плитки скажут это словами.
-  const nt = b.net ? (GRP === "fwd" ? b.net.forward : b.net.all) : undefined;
+  // Издержки книги: они уже ВЫЧТЕНЫ из денег выше, и плитки говорят,
+  // что именно вычтено. Свод прежнего образца поля не несёт — плитки
+  // скажут это словами, а не покажут ноль.
+  const nt = b.costs;
   h += statBlock(st, b.deposit || DEP,
                  GRP === "fwd" ? "счёт без бэктеста: записанное вперёд"
                                : "счёт с бэктестом: одна кривая",

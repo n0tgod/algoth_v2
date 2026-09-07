@@ -23,7 +23,7 @@
 имени, которое длинная держит, разрешён. На бирже это законно только в
 хедж-режиме позиции; в одностороннем такой шорт закрыл бы часть длинной,
 и это разница ПРАВИЛ СЧЁТА, а не показа. Сколько таких совпадений — не
-догадка, а число: считает `portfolio.py` и печатает отчёт.
+догадка, а число: считает книга общего счёта (`run_pair.py`).
 
 Внутри семейства правило прежнее: одна позиция на имя (`D6.one_per_name`),
 дубли проверяет тот же инвариант, что у длинных (`run_paper.dups`).
@@ -44,7 +44,6 @@ sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
 import rules as R                                             # noqa: E402
 import run_paper as RP                                        # noqa: E402
-import portfolio as PF                                        # noqa: E402
 import run_d2 as D2                                           # noqa: E402
 import run_d10 as D10                                         # noqa: E402
 import run_d11 as D11                                         # noqa: E402
@@ -167,7 +166,7 @@ def replay(need, src=None, log=print):
 
 
 def run(limit=None, src=None, log=print, legs_=None, journal=None,
-        cache_path=None, now=None, long_journal=None):
+        cache_path=None, now=None):
     t0 = time.time()
     legs_ = legs(limit=limit, log=log) if legs_ is None else list(legs_)
     cache, _why = read_cache(cache_path, log=log)
@@ -209,10 +208,11 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                         "TICKET": R.TICKET,
                         "RULERS": {k: dict(R.RULERS[k]) for k in R.H24_ORDER},
                         "RULER_ORDER": list(R.H24_ORDER)}})
-    # Общая статистика — режим, названный владельцем: длинные и короткие
-    # книги на одной кривой, связь дневных денег и совпадения имён.
-    s["portfolio"] = PF.build(long_path=long_journal,
-                              short_path=journal or R.H24_JOURNAL, log=log)
+    # Общий счёт (длинная книга и короткая на ОДНОМ депозите) считает
+    # `run_pair.py` своей книгой и своим журналом. Прежний блок «общая
+    # статистика» складывал два РАЗДЕЛЬНЫХ счёта и снят: владелец
+    # попросил один общий счёт, а две «общих» с разными числами на одной
+    # странице — это путаница, а не два взгляда.
     return s
 
 
@@ -256,12 +256,14 @@ def report(s):
           f"{R.AHEAD_H} ч после самого решения; остальное — пересчёт "
           "истории по нынешним правилам, и складывать их в один вердикт "
           "нельзя.", ""]
-    L += PF.report_block(s.get("portfolio"))
     L += ["## Чего замер НЕ говорит", "",
           "- Живого исполнения здесь нет: исходы считаются реплеем по "
           "барам записи. Проскальзывание, очередь в стакане и задержка "
           "входа не моделируются; издержки круга учтены в `pnl_net`, "
           "отдельный замер издержек — `costs.py`.",
+          "- Общий счёт с длинной книгой считает `run_pair.py`: там "
+          "депозит один на обе стороны, и числа его книг не равны сумме "
+          "этой книги и длинной.",
           "- Хедж-режим есть ПРАВИЛО СЧЁТА этой книги: она не смотрит на "
           "длинные позиции. На бирже так можно только в хедж-режиме; в "
           "одностороннем совпадающий шорт резал бы длинную позицию, и "

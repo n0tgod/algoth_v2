@@ -205,10 +205,16 @@ def test_backtest_and_live_share_one_curve_and_stay_labelled():
 
 
 def test_net_rides_the_summary_with_reasons_not_zeros():
-    """Нетто на странице считается тем же ядром, что отчёт издержек
-    (`costs.net_view`): с контекстом — числа меньше брутто на издержки,
-    без рядов funding — не нули, а причина словами; свод несёт
-    `costs` с ошибкой контекста, когда её нет."""
+    """Издержки учтены В КАЖДОЙ СДЕЛКЕ: деньги книги — нетто.
+
+    Требование владельца 2026-09-07 («издержки не нужно считать отдельно,
+    они должны быть учтены в каждой сделке»). Кусается трижды: с полным
+    контекстом деньги книги МЕНЬШЕ брутто ровно на издержки и совпадают
+    с суммой по строкам; без рядов funding сделки остаются в книге, но
+    их число стоит в `no_funding` — funding не подменяется нулём молча;
+    без контекста вовсе деньги остаются брутто и причина названа
+    словами, а не тишиной.
+    """
     import numpy as np
     import costs as CO
     t0 = T0
@@ -241,29 +247,52 @@ def test_net_rides_the_summary_with_reasons_not_zeros():
             CO.context = lambda **kw: ctx_ok
             s = P.summarize(jp)
             b = s["books"][P._cell(R.DEFAULT_RULER, 1000)]
-            nt = b["net"]["all"]
-            assert nt["n"] == 2 and nt["measured"] == 2 and nt["why"] is None, nt
-            assert nt["fee_usd"] > 0 and nt["slip_usd"] > 0, nt
-            assert nt["fund_usd"] < 0, nt            # лонг платит при ставке > 0
-            assert nt["net_usd"] < b["all"]["usd"] == 10.0, (nt, b["all"])
-            assert abs(nt["net_usd"] - round(10.0 - nt["fee_usd"] - nt["slip_usd"]
-                                             + nt["fund_usd"], 2)) < 0.011, nt
-            assert nt["stats"]["usd"] == nt["net_usd"], nt["stats"]
-            assert nt["slip_bp"] == CO.SLIP_BP and s["costs"]["error"] is None
-            assert b["net"]["forward"]["n"] == 2, b["net"]["forward"]
-            # без рядов funding: не нули, а причина словами
+            c = b["costs"]
+            assert c["n"] == 2 and c["applied"] == 2 and c["not_measured"] == 0, c
+            assert c["fee_usd"] > 0 and c["slip_usd"] > 0, c
+            assert c["fund_usd"] < 0, c          # лонг платит при ставке > 0
+            assert c["gross_usd"] == 10.0, c
+            # деньги книги — это нетто, и они выведены из тех же чисел
+            assert b["all"]["usd"] == c["net_usd"] < 10.0, (b["all"], c)
+            assert abs(b["all"]["usd"] - (10.0 - c["fee_usd"] - c["slip_usd"]
+                                          + c["fund_usd"])) < 0.011, (b, c)
+            assert s["costs"]["applied"] == 2 and s["costs"]["error"] is None
+            assert s["costs"]["slip_bp"] == CO.SLIP_BP
+            net_with_funding = b["all"]["usd"]
+            # без рядов funding: сделки остаются, funding НЕ учтён, и это
+            # число, а не тишина
             CO.context = lambda **kw: ctx_none
             s0 = P.summarize(jp)
-            n0 = s0["books"][P._cell(R.DEFAULT_RULER, 1000)]["net"]["all"]
-            assert n0["n"] == 2 and n0["measured"] == 0, n0
-            assert n0["net_usd"] is None and n0["stats"] is None, n0
-            assert "funding" in (n0["why"] or ""), n0
-            assert "funding" in s0["costs"]["error"], s0["costs"]
+            b0 = s0["books"][P._cell(R.DEFAULT_RULER, 1000)]
+            c0 = b0["costs"]
+            assert c0["applied"] == 2 and c0["no_funding"] == 2, c0
+            assert c0["fund_usd"] == 0.0 and b0["all"]["n"] == 2, (c0, b0["all"])
+            assert b0["all"]["usd"] > net_with_funding, (b0["all"],
+                                                         net_with_funding)
+            assert "funding" in (s0["costs"]["error"] or ""), s0["costs"]
+            # контекста нет вовсе: деньги брутто, причина словами
+            CO.context = lambda **kw: {"error": "справочника нет"}
+            s1 = P.summarize(jp)
+            b1 = s1["books"][P._cell(R.DEFAULT_RULER, 1000)]
+            assert b1["all"]["usd"] == 10.0, b1["all"]
+            assert b1["costs"]["applied"] == 0, b1["costs"]
+            assert b1["costs"]["not_measured"] == 2, b1["costs"]
+            assert "справочника нет" in (s1["costs"]["error"] or ""), s1["costs"]
+            # отчёт обязан говорить то же самое, что свод: без контекста
+            # он называет деньги БРУТТО, с контекстом — печатает, что
+            # вычтено. Фраза выводится из числа, а не стоит рядом.
+            t1 = "\n".join(P.costs_block(s1))
+            assert "БРУТТО" in t1 and "справочника нет" in t1, t1
+            CO.context = lambda **kw: ctx_ok
+            t2 = "\n".join(P.costs_block(P.summarize(jp)))
+            assert "БРУТТО" not in t2 and "комиссия" in t2.lower(), t2
+            assert f"{c['gross_usd']:+.2f}" in t2, t2
         finally:
             CO.context = real
-    print(f"ok  нетто в своде: {nt['net_usd']:+.2f} $ при брутто +10.00 "
-          f"(комиссия {nt['fee_usd']:.2f}, проскальз. {nt['slip_usd']:.2f}, "
-          f"funding {nt['fund_usd']:+.2f}); без рядов — причина словами")
+    print(f"ok  издержки в каждой сделке: книга {b['all']['usd']:+.2f} $ при "
+          f"брутто +10.00 (комиссия {c['fee_usd']:.2f}, проскальз. "
+          f"{c['slip_usd']:.2f}, funding {c['fund_usd']:+.2f}); без рядов — "
+          "сделки на месте, funding назван неучтённым; без контекста — брутто")
 
 
 def test_one_name_one_position_is_checked_on_the_journal_and_screams():
@@ -1469,11 +1498,16 @@ def test_watchdog_runs_short_books_by_the_same_rule():
                       "watchdog_book.sh")
     src = open(os.path.abspath(wd), encoding="utf-8").read()
     a = src.index("# --- короткие книги семейства h24")
-    b = src.index("# --- очередь заданий")
+    b = src.index("# --- общий счёт")
     ok = _run_watchdog_cases(src[a:b], art_name="DCA-short.json")
-    print("ok  сторож поднимает короткие книги тем же правилом: "
-          "свежий счёт молчит, часовой запускает, часы обучения "
-          "пропускаются, идущий прогон не дублируется")
+    # Общий счёт поднимается ТЕМ ЖЕ правилом и своим артефактом: без
+    # этой проверки он мог бы стоять в сторожe строкой, которая никогда
+    # не срабатывает, и страница молча показывала бы вчерашние числа.
+    c = src.index("# --- очередь заданий")
+    ok = _run_watchdog_cases(src[b:c], art_name="DCA-pair.json") and ok
+    print("ok  сторож поднимает короткие книги и общий счёт тем же "
+          "правилом: свежий счёт молчит, часовой запускает, часы "
+          "обучения пропускаются, идущий прогон не дублируется")
     return ok
 
 

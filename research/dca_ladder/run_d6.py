@@ -272,7 +272,14 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
     Порядок объявлен: деньги возвращаются раньше, чем тратятся, а внутри
     секунды достаются лучшим по |прогноз|. Отказы считаются по причинам
     раздельно — «нет кассы» и «мельче минимума биржи» лечатся разным.
+
+    `share` — доля счёта на позицию: число либо ФУНКЦИЯ от записи. Функция
+    нужна ОБЩЕМУ счёту (длинная книга и короткая на одном депозите,
+    решение владельца 2026-09-07): билет у сторон свой, а касса одна, и
+    считать их двумя вызовами значило бы снова развести деньги по двум
+    счетам — ровно то, чего просили не делать.
     """
+    share_of = share if callable(share) else (lambda _r: share)
     order = queue(recs)
     equity, free = float(deposit), float(deposit)
     # допуск кассы ОТНОСИТЕЛЕН счёту: абсолютный 1e-9 при разных депозитах
@@ -296,7 +303,7 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
                 still.append(p)
         live = still
         # 2. размер по доле ТЕКУЩЕГО счёта
-        margin = equity * share
+        margin = equity * float(share_of(r))
         notional = margin * r["lev"]
         if notional * RUNG_SHARE < min_notional:
             too_small += 1
@@ -366,8 +373,13 @@ def ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,
         # просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — в деньгах и долей депозита
         "open_dd": round(float(op_dd), 2),
         "open_dd_share": round(float(op_dd) / float(deposit), 4),
-        "slots": int(round(1.0 / share)),
-        "ticket": round(deposit * share, 2),
+        # Мест и билет — величины ОДНОЙ доли. Когда доля своя у каждого
+        # источника (общий счёт двух книг), одного числа не существует, и
+        # ставить сюда «какое-нибудь» значило бы выдать долю одной стороны
+        # за общую: прочерк с признаком честнее.
+        "slots": (None if callable(share) else int(round(1.0 / share))),
+        "ticket": (None if callable(share) else round(deposit * share, 2)),
+        "share_by_source": bool(callable(share)),
         # концентрация: вычитание, а не пересчёт (см. отчёт)
         # отпечаток ВЗЯТОГО набора: без него «ячейки разошлись» неотличимо
         # от «взяли разные сделки», а лечится это разным

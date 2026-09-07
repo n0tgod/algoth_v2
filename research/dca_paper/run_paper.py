@@ -199,16 +199,40 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
     # считать чужие книги из своих ног.
     for rk in (keys if keys is not None else R.RULER_ORDER):
         recs = by_ruler.get(rk) or []
-        # Гейт плеча — ПЕРВЫМ, до правила одной на имя. Порядок решает
-        # состав: у режима с гейтом низкоплечевой ранний вход просто не
-        # случается, значит имя свободно, и позже по нему может открыться
-        # рычажный. Применив гейт после, мы отдали бы слот входу, который
-        # этот режим не берёт вовсе.
+        # ИСТОЧНИК записи. У обычной книги он один — она сама; у ОБЩЕЙ
+        # (решение владельца 2026-09-07 «один общий счёт») их два:
+        # длинная книга и короткая. Гейт плеча, правило одной на имя и
+        # билет — свойства ИСТОЧНИКА, а не общего счёта: применив их к
+        # смеси, мы запретили бы шорт по имени, которое держит длинная
+        # (это законный хедж), и выдали бы обеим сторонам чужой билет.
+        parts = {}
+        for r in recs:
+            parts.setdefault(r.get("book") or rk, []).append(r)
+        keep, gated_n, skipped, part_info = [], 0, 0, {}
+        for sk in sorted(parts):
+            sub = parts[sk]
+            # Гейт плеча — ПЕРВЫМ, до правила одной на имя. Порядок решает
+            # состав: у режима с гейтом низкоплечевой ранний вход просто не
+            # случается, значит имя свободно, и позже по нему может открыться
+            # рычажный. Применив гейт после, мы отдали бы слот входу, который
+            # этот режим не берёт вовсе.
+            ml_s = R.min_lev_of(sk)
+            g = ([r for r in sub if float(r["lev"]) >= ml_s]
+                 if ml_s is not None else list(sub))
+            k, sk_skip = (D6.one_per_name(g) if R.ONE_PER_NAME
+                          else (list(g), 0))
+            # источник едет С ЗАПИСЬЮ: билет общего счёта выбирается по
+            # нему же, и вывести его потом из ключа книги было бы нечем
+            keep += [dict(r, book=sk) for r in k]
+            gated_n += len(g)
+            skipped += sk_skip
+            part_info[sk] = {"positions": len(sub), "kept": len(k),
+                             "gate_dropped": len(sub) - len(g),
+                             "min_lev": ml_s, "skipped_repeats": sk_skip,
+                             "side": R.side_of(sk),
+                             "ticket": {str(int(d)): R.ticket(d, sk)
+                                        for d in R.DEPOSITS}}
         ml = R.min_lev_of(rk)
-        gated = ([r for r in recs if float(r["lev"]) >= ml]
-                 if ml is not None else list(recs))
-        keep, skipped = (D6.one_per_name(gated) if R.ONE_PER_NAME
-                         else (list(gated), 0))
         # Пик СВОЕЙ книги: из него и считается билет режима. Измеренный
         # печатается рядом с объявленным — объявленный ниже измеренного
         # означает, что билет велик и часть решений уходит по кассе.
@@ -217,7 +241,8 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
         seen = pk.get("names_max")
         one[rk] = {"positions": len(recs), "kept": len(keep),
                    "skipped_repeats": skipped,
-                   "min_lev": ml, "gate_dropped": len(recs) - len(gated),
+                   "parts": (part_info if len(part_info) > 1 else None),
+                   "min_lev": ml, "gate_dropped": len(recs) - gated_n,
                    "peak_names": seen,
                    "peak_declared": R.peak_of(rk),
                    "floor": round(R.floor_of(rk), 4),
@@ -230,8 +255,8 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                    "lev_median": (round(levs[len(levs) // 2], 2)
                                   if levs else None)}
         log(f"линейка {R.ruler_title(rk)} ({rk}): позиций {len(recs)}"
-            + (f", гейт плеча ≥{ml:g}× отсеял {len(recs) - len(gated)}"
-               if ml is not None else "")
+            + (f", гейт плеча отсеял {len(recs) - gated_n}"
+               if len(recs) != gated_n else "")
             + f", после правила одной на имя {len(keep)}")
         # Живая позиция держит деньги до ПЛАНОВОГО конца срока, а не до
         # последнего бара записи: касса возвращает маржу по `exit_ts`, и
@@ -244,14 +269,18 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                 for r in keep]
         for dep in R.DEPOSITS:
             rows = []
-            c = D6.ration(plan, R.share(dep, rk), deposit=dep,
+            # доля счёта — ПО ИСТОЧНИКУ записи: у общего счёта стороны
+            # входят своими билетами, а касса одна
+            c = D6.ration(plan, (lambda r, _d=dep, _rk=rk:
+                                 R.share(_d, r.get("book") or _rk)),
+                          deposit=dep,
                           min_notional=R.MIN_NOTIONAL, keep_rows=rows)
             c["slots"] = R.slots(dep, rk)
             op, cut = [], []
             for (r, margin) in rows:
                 st = r.get("state", "closed")
                 if st == "closed":
-                    out.append({
+                    row = {
                         "dep": int(dep), "ruler": rk, "at": float(r["at"]),
                         # сторона — ЗАПИСЬ факта из самой симуляции, а не
                         # вывод из ключа книги при чтении: до этого поля
@@ -277,10 +306,18 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                         # обещание модели: из него выводится уровень цели,
                         # и он ступенчатый — якорь у цели плавающая ТВХ
                         "fav_bp": r.get("fav_bp"),
-                        "written_at": now, "rules": R.RULES})
+                        "written_at": now, "rules": R.RULES}
+                    # книга-источник пишется только там, где она НЕ равна
+                    # книге строки: у обычной книги это было бы лишним
+                    # полем в каждой строке журнала
+                    if r.get("book") and r["book"] != rk:
+                        row["book"] = r["book"]
+                    out.append(row)
                     continue
                 item = {"sym": r["sym"], "at": float(r["at"]),
                         "side": r.get("side") or R.side_of(rk),
+                        "book": (r.get("book") if r.get("book") != rk
+                                 else None),
                         "lev": round(float(r["lev"]), 3),
                         "margin": round(float(margin), 4),
                         # отметка, а не исход: позиция ещё живёт
@@ -483,6 +520,37 @@ def _stats(rows, deposit):
     }
 
 
+def _book_costs(rows):
+    """Что вычтено у книги: суммы издержек и число неизмеренных сделок.
+
+    Считается по ТЕМ ЖЕ строкам, из которых собраны деньги книги, и
+    только по полям, которые проставил `costs.apply_to_rows`. Строк без
+    полей это не превращает в нули: они считаются отдельно и называются
+    причиной.
+    """
+    got = {"n": len(rows), "applied": 0, "not_measured": 0, "no_funding": 0,
+           "fee_usd": 0.0, "slip_usd": 0.0, "fund_usd": 0.0,
+           "gross_usd": 0.0, "net_usd": 0.0}
+    for r in rows:
+        got["gross_usd"] += float(r.get("usd_gross", r.get("usd") or 0.0))
+        got["net_usd"] += float(r.get("usd") or 0.0)
+        if r.get("fee_usd") is None or r.get("slip_usd") is None:
+            got["not_measured"] += 1
+            continue
+        got["applied"] += 1
+        got["fee_usd"] += float(r["fee_usd"])
+        got["slip_usd"] += float(r["slip_usd"])
+        if r.get("fund_usd") is None:
+            got["no_funding"] += 1
+        else:
+            got["fund_usd"] += float(r["fund_usd"])
+    for k in ("fee_usd", "slip_usd", "fund_usd", "gross_usd", "net_usd"):
+        got[k] = round(got[k], 2)
+    got["cost_usd"] = round(got["fee_usd"] + got["slip_usd"]
+                            - got["fund_usd"], 2)
+    return got
+
+
 def summarize(path=None, live=None, keys=None):
     """Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
 
@@ -507,29 +575,30 @@ def summarize(path=None, live=None, keys=None):
     keys = list(keys if keys is not None else R.RULER_ORDER)
     out = {"bad_lines": bad, "books": {},
            "rulers": keys, "deposits": list(R.DEPOSITS)}
-    # Нетто — тем же ядром, что отчёт издержек (`costs.py`), и не второй
-    # копией формулы: комиссия тейкером на рунгах и выходе,
-    # проскальзывание X3 на базовый вход и рыночный выход, funding по
-    # рядам площадки. Импорт ленивый: costs читает этот модуль ради
-    # `_stats`, и импорт на уровне модуля был бы кольцом. Отказ
-    # контекста — словами в каждой книге, не нулями.
+    # ИЗДЕРЖКИ УЧТЕНЫ В КАЖДОЙ СДЕЛКЕ (требование владельца 2026-09-07).
+    # Деньги книги отсюда и до конца — нетто: комиссия тейкером на
+    # каждом рунге и выходе, проскальзывание X3 на базовый вход и
+    # рыночный выход, funding по рядам площадки. Второй колонки «нетто»
+    # больше нет: две величины с одним именем «заработала» читатель
+    # складывал глазами. Ядро одно — `costs.py`; импорт ленивый, потому
+    # что costs читает этот модуль ради `_stats`, и импорт на уровне
+    # модуля был бы кольцом. Отказ контекста — словами, не нулями: тогда
+    # деньги остаются брутто, и это сказано в своде и на странице.
     try:
         import costs as CO
         ctx = CO.context()
     except Exception as e:                                # noqa: BLE001
         CO, ctx = None, {"error": f"модуль издержек не читается: {e}"[:200]}
-    out["costs"] = {k: ctx.get(k) for k in ("error", "n_funding")}
-    if CO is not None:
-        out["costs"].update({"slip_bp": CO.SLIP_BP, "slip_source": CO.SLIP_SOURCE,
-                             "market_exits": list(CO.MARKET_EXITS)})
-
-    def _net(sub, dep):
-        if CO is None:
-            return {"error": ctx["error"], "n": len(sub)}
+    if CO is None:
+        cost_sum = {"error": ctx["error"], "n": len(rows), "applied": 0}
+    else:
         try:
-            return CO.net_view(sub, dep, ctx, _stats)
+            rows, cost_sum = CO.apply_to_rows(rows, ctx)
         except Exception as e:                            # noqa: BLE001
-            return {"error": f"нетто не посчитано: {e}"[:200], "n": len(sub)}
+            cost_sum = {"error": f"издержки не посчитаны: {e}"[:200],
+                        "n": len(rows), "applied": 0}
+    cost_sum["n_funding"] = ctx.get("n_funding")
+    out["costs"] = cost_sum
     for rk in keys:
         for dep in R.DEPOSITS:
             key = _cell(rk, dep)
@@ -538,12 +607,28 @@ def summarize(path=None, live=None, keys=None):
                     and R.ruler_of(r) == rk]
             fwd, back = R.split_rows(mine)
             op = live.get(key)
+            # Общий счёт собран из ДВУХ книг, и одного билета у него не
+            # существует: у сторон он свой. Ставить сюда билет одной
+            # стороны значило бы объявить её билет общим — прочерк с
+            # расшифровкой по сторонам честнее.
+            parts = R.parts_of(rk)
             b = {"deposit": dep, "ruler": rk, "ruler_title": R.ruler_title(rk),
-                 "slots": R.slots(dep, rk),
-                 "ticket": R.ticket(dep, rk),
+                 "slots": (None if parts else R.slots(dep, rk)),
+                 "ticket": (None if parts else R.ticket(dep, rk)),
+                 "parts": ({p: {"title": R.ruler_title(p),
+                                "side": R.side_of(p),
+                                "ticket": R.ticket(dep, p),
+                                "slots": R.slots(dep, p),
+                                "stats": _stats([r for r in mine
+                                                 if (r.get("book") or rk) == p],
+                                                dep)}
+                            for p in parts} if parts else None),
                  "all": _stats(mine, dep),
                  "forward": _stats(fwd, dep), "restored": _stats(back, dep),
-                 "net": {"all": _net(mine, dep), "forward": _net(fwd, dep)},
+                 # что именно вычтено у ЭТОЙ книги: сумма комиссии,
+                 # проскальзывания и funding и число сделок, у которых
+                 # издержки измерить не удалось
+                 "costs": _book_costs(mine),
                  "n_forward": len(fwd), "n_restored": len(back),
                  # правило «одно имя — одна позиция» проверяется ПО ЗАПИСИ
                  # каждый прогон: требование владельца, а не намерение кода
@@ -592,6 +677,63 @@ def _tail_words(s):
                 f"{t['zero_vol_tape']} — признак «принт был» перестал "
                 f"различать, и правило лимитки надо перепроверить.")
     return out
+
+
+def costs_block(s):
+    """Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
+
+    Владелец 2026-09-07: «издержки не нужно считать отдельно, они должны
+    быть учтены в каждой сделке». Поэтому здесь не вторая колонка денег,
+    а расшифровка того, что уже вычтено, и число сделок, у которых
+    вычесть не удалось.
+    """
+    c = s.get("costs") or {}
+    L = ["## Издержки: учтены в каждой сделке", ""]
+    if c.get("error") and not c.get("applied"):
+        return L + [f"НЕ учтены: {c['error']}. Деньги ниже — БРУТТО, и это "
+                    "не то же самое, что «издержек нет».", ""]
+    L += [f"Комиссия тейкером на каждом рунге и выходе, проскальзывание "
+          f"{c.get('slip_bp')} б.п. ({c.get('slip_source')}) на базовый вход "
+          f"и рыночный выход ({', '.join(c.get('market_exits') or [])}), "
+          "funding по рядам площадки исполнения. Лимитные рунги и тейк "
+          "проскальзывания не платят по построению.", "",
+          "| книга | депозит | сделок | из них с издержками | комиссия $ | "
+          "проскальзывание $ | funding $ | издержки всего $ | брутто $ | "
+          "нетто $ |", "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+    for dep in R.DEPOSITS:
+        for rk in (s.get("rulers") or R.RULER_ORDER):
+            b = (s.get("books") or {}).get(_cell(rk, dep)) or {}
+            bc = b.get("costs") or {}
+            if not bc.get("n"):
+                continue
+            L.append(
+                f"| {R.ruler_title(rk)} | ${dep:,.0f} | {bc['n']} | "
+                f"{bc['applied']} | {-bc['fee_usd']:+.2f} | "
+                f"{-bc['slip_usd']:+.2f} | {bc['fund_usd']:+.2f} | "
+                f"{-bc['cost_usd']:+.2f} | {bc['gross_usd']:+.2f} | "
+                f"{bc['net_usd']:+.2f} |")
+    notes = []
+    if c.get("no_funding"):
+        notes.append(f"у {c['no_funding']} сделок ряд funding не покрывает "
+                     "жизнь позиции — funding им НЕ начислен (это прочерк, "
+                     "а не ноль: он мал и разного знака, но не измерен)")
+    if c.get("no_fills"):
+        notes.append(f"у {c['no_fills']} сделок нет записи рунгов — издержки "
+                     "не вычтены вовсе, их деньги брутто")
+    if c.get("taker_fallback"):
+        notes.append(f"у {c['taker_fallback']} сделок ставки тейкера в "
+                     "справочнике нет — взята модальная")
+    if notes:
+        L += ["", "Чего не удалось измерить: " + "; ".join(notes) + ".", ""]
+    else:
+        L += ["", "Неизмеренных издержек нет: у всех сделок вычтены все три.",
+              ""]
+    L += ["Проскальзывание снято на 300 $ за имя (живой замер X3): у "
+          "крупных билетов оно больше, поэтому нетто крупных депозитов — "
+          "НИЖНЯЯ граница издержек. Отметка открытой позиции остаётся "
+          "брутто: выхода ещё не было, и комиссию выхода вычитать не из "
+          "чего.", ""]
+    return L
 
 
 def report(s):
@@ -745,6 +887,7 @@ def report(s):
           + " Имена — ярлыки, а не вердикт: какой режим лучше, покажет "
           "форвард, и все три ведутся параллельно ровно затем, чтобы "
           "вопрос решали числа, а не выбор задним числом.", ""]
+    L += costs_block(s)
     for name, key in (("Общий счёт: бэктест и live вместе", "all"),
                       ("Из него записано вперёд (live)", "forward"),
                       ("Из него пересчёт по прошлому (бэктест)", "restored")):

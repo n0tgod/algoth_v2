@@ -5,8 +5,8 @@
 считала бы чужие исходы своими); ноги берутся у ОБЕИХ рук и стоят по
 времени; книга «агрессивная» отличается от «оптимальной» ровно гейтом
 плеча; журнал и артефакт семейства СВОИ (в журнал длинных книг не
-попадает ни строки); общая статистика без журнала коротких — причина
-словами, а не нули.
+попадает ни строки). Общий счёт двух книг проверяет `test_pair.py`: он
+считается своей книгой, а не блоком этого прогона.
 """
 import json
 import os
@@ -20,7 +20,6 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 import rules as R                                             # noqa: E402
 import run_short as S                                         # noqa: E402
-import portfolio as PF                                        # noqa: E402
 import run_d10 as D10                                         # noqa: E402
 import run_d2 as D2                                           # noqa: E402
 import test_run_d3 as T3                                      # noqa: E402
@@ -92,7 +91,7 @@ def test_needs_replay_asks_for_new_and_open_positions():
           "закрытые берутся из кэша")
 
 
-def _end_to_end(tmp, long_journal=None):
+def _end_to_end(tmp):
     lo, at = T9._rise_then_fall()
     wn, _ = T9._drift_down()
     src = T3._Src({"SSSUSDT": lo, "TTTUSDT": wn})
@@ -102,8 +101,7 @@ def _end_to_end(tmp, long_journal=None):
     jp = os.path.join(tmp, "short.jsonl")
     cp = os.path.join(tmp, "recs.jsonl")
     s = T10._with_levels(lambda: S.run(legs_=legs, src=src, journal=jp,
-                                       cache_path=cp, log=lambda *a: None,
-                                       long_journal=long_journal))
+                                       cache_path=cp, log=lambda *a: None))
     return s, jp, cp, legs
 
 
@@ -157,60 +155,9 @@ def test_family_writes_its_own_journal_and_gates_the_aggressive_book():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def test_portfolio_pairs_the_modes_and_names_its_silence():
-    tmp = tempfile.mkdtemp(prefix="short-")
-    try:
-        # без журнала коротких книг — причина словами, а не нули
-        empty = PF.build(long_path=os.path.join(tmp, "нет.jsonl"),
-                         short_path=os.path.join(tmp, "нет2.jsonl"),
-                         log=lambda *a: None)
-        assert empty.get("error") and "нет" in empty["error"], empty
-        block = PF.report_block(empty)
-        assert "Не считалась" in "\n".join(block)
-        # короткая книга — свой прогон, длинная — подставной журнал НА ТЕХ
-        # ЖЕ сутках: пара без общего окна ничего не говорит, и проверка,
-        # где окна разошлись, молча проверяла бы нули
-        s, jp, _cp, _legs = _end_to_end(tmp)
-        dep = int(R.DEPOSITS[1])
-        srows = [r for r in R.read_journal(jp)[0]
-                 if R.ruler_of(r) == "optimal_h" and int(r["dep"]) == dep]
-        assert srows, "короткая книга пуста — паре не из чего считаться"
-        first = min(srows, key=lambda r: float(r["at"]))
-        lp = os.path.join(tmp, "journal.jsonl")
-        with open(lp, "w", encoding="utf-8") as f:
-            # первая строка ПЕРЕСЕКАЕТСЯ с короткой по имени и времени —
-            # это и есть совпадение хедж-режима; вторая по чужому имени
-            for i, (sym, at, ex) in enumerate((
-                    (first["sym"], float(first["at"]) - H,
-                     float(first["exit_ts"]) + H),
-                    ("ZZZUSDT", float(first["at"]), float(first["at"]) + 5 * H))):
-                f.write(json.dumps({
-                    "dep": dep, "ruler": "optimal", "at": at, "exit_ts": ex,
-                    "sym": sym, "side": "long", "lev": 2.0, "margin": 50.0,
-                    "pnl_frac": 0.02, "usd": 1.0 + i, "exit": "тейк",
-                    "written_at": at + H, "rules": R.RULES}) + "\n")
-        pf = PF.build(long_path=lp, short_path=jp, log=lambda *a: None)
-        p = pf["pairs"][f"optimal:{dep}"]
-        assert p["days"] >= 1 and p["n_long"] == 2 and p["n_short"] >= 1, p
-        assert p["long_usd"] == 3.0, p            # обе длинные в окне
-        assert p["both_usd"] == round(p["long_usd"] + p["short_usd"], 2), p
-        col = p["collisions"]
-        assert col["n"] >= 1 and col["names"] >= 1, col
-        s["portfolio"] = pf
-        txt = PF.report_block(s["portfolio"])
-        assert "Общая статистика" in txt[0] and any("оптимальная" in x
-                                                   for x in txt)
-        print(f"ok  общая статистика: длинная {p['long_usd']:+.2f} $, "
-              f"короткая {p['short_usd']:+.2f} $, пара {p['both_usd']:+.2f} $, "
-              f"совпадений имён {col['n']}; без журнала — причина словами")
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
-
 if __name__ == "__main__":
     test_cache_signature_follows_the_cell_and_the_hold()
     test_legs_come_from_both_arms_in_time_order()
     test_needs_replay_asks_for_new_and_open_positions()
     test_family_writes_its_own_journal_and_gates_the_aggressive_book()
-    test_portfolio_pairs_the_modes_and_names_its_silence()
-    print("\nвсе 5 проверок прошли")
+    print("\nвсе 4 проверки прошли")

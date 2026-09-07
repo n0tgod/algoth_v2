@@ -19,3 +19,4 @@ out/*smoke*
 # Логи прогонов сторожа: растут на сервере и в git не идут.
 out/daily.log
 out/short.log
+out/pair.log

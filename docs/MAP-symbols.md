@@ -668,7 +668,7 @@ A3 — кандидаты в пары на момент окна.
   - L169 `Book._sample(self, ladder=LADDER, bands=BANDS)`
 - L202 `parse_trades(msg)` — Сделки темы `publicTrade` в компактный вид.
 
-## research/b1_book/collect.py · 7320 строк
+## research/b1_book/collect.py · 7340 строк
 
 Сбор стакана и ленты площадки исполнения живьём.
 
@@ -778,57 +778,57 @@ A3 — кандидаты в пары на момент окна.
   - L3461 `Collector.dca_trades(self, sym, book)` — Позиции DCA-книги по одной монете — В ФОРМЕ, ЖДАННОЙ ГРАФИКОМ.
   - L3588 `Collector.dca_marks(self, dep=None, ruler=None)` — Живая переоценка открытых позиций DCA-книги — частый опрос.
   - L3668 `Collector.dca_paper(self, dep=None, ruler=None, full=None)` — Бумажные DCA-книги: свод из артефакта, сделки из журнала.
-  - L3881 `Collector._dca_short(self, DR, now)` — Свод коротких книг семейства `h24` из его артефакта.
-  - L3918 `Collector.paper_book(self, at=None)` — Бумажная месячная книга: свод из артефакта, транши из журнала.
-  - L4005 `Collector.learning(self)` — Умнеет ли модель и переходит ли это в деньги — по дням.
-  - L4103 `Collector.book_days(self, hz)` — Дневная статистика ОДНОЙ книги — по просьбе владельца.
-  - L4220 `Collector._day_cell(rows)` — Числа одной клетки «день × рука». Одно определение на день, на итог и на обе руки: три реализации одного счёт…
-  - L4252 `Collector.market_vol(self)` — Волатильность рынка по часам — из наших же почасовых сводок.
-  - L4345 `Collector.vol_vs_models(self)` — Влияет ли волатильность рынка на результат книг.
-  - L4500 `Collector.model_glossary(self)` — Справочник: какие ситуации модель вообще способна читать.
-  - L4605 `Collector.model_tournament(self)` — Полный лист турнира политик: все 72 ветки и селектор.
-  - L4679 `Collector._run_row(r, now)` — Строка прогона для показа: заметка урезается, не выбрасывается.
-  - L4696 `Collector._produced(root, rel, now)` — Файл, который роль обязана была оставить.
-  - L4718 `Collector.owner_asks(self)` — Чего система ждёт ОТ ВЛАДЕЛЬЦА, и чем это подтверждено.
-  - L4760 `Collector.agents_state(self)` — Автономная система: конвейер, границы и что уже построено.
-  - L4948 `Collector._cand_live(self, cid)` — Живая книга кандидата: закрытые сделки и деньги по рукам.
-  - L4989 `Collector.factory_built(self)` — Что автономная система объявила: механика в корне, книги ветками.
-  - L5165 `Collector._cand_decisions(self, cid, rec)` — Множество РЕШЕНИЙ живой книги кандидата.
-  - L5186 `Collector.factory_strategy(self, cid)` — Полная карточка ОДНОЙ стратегии автономной системы.
-  - L5326 `Collector.model_tree(self)` — Дерево моделей: две руки и их книги, с логикой каждой ветки.
-  - L5506 `Collector.entry_px(self, picks)` — Цены входа для выборов, которые их не несут.
-  - L5523 `Collector.paths(self, trades, hold_h=None)` — Просадка по каждой сделке — из тех же почасовых сводок.
-  - L5544 `Collector.dd_money(trades)` — Просадку в деньги и в доли депозита — ПОСЛЕ расчёта счёта.
-  - L5555 `Collector.marks(self, trades)` — Текущая середина по символам открытых сделок.
-  - L5573 `Collector.model_marks(self, hz=None)` — Только переоценка открытых сделок — для частого опроса.
-  - L5630 `Collector.trade_by_id(self, tid)` — Сделка по короткому id — поиск по всем книгам разом.
-  - L5704 `Collector._jsonl(path)`
-  - L5761 `Collector._jsonl_trim()`
-  - L5771 `Collector.trades(self, sym=None)` — История бумажных сделок и сводка — по требованию, не в опросе.
-  - L5799 `Collector.disk_view(self)` — Диск в человеческих единицах, с запасом хода в сутках.
-  - L5822 `Collector.diskstat(self)` — Сколько занято, с какой скоростью растёт и надолго ли хватит.
-  - L5854 `Collector.statuser(self)`
-  - L5874 `Collector.reporter(self)` — Строка в журнал раз в минуту: прогон, который молчит, неотличим от повисшего.
-  - L5898 `Collector.metrics_poll(self)` — Funding, открытый интерес и базис — раз в 5 минут, один запрос на все символы. Ставка и интерес доказали ценн…
-  - L5922 `Collector.sit_load_positions(self, books)` — Открытые позиции КАЖДОЙ книги сканера, без исключений.
-  - L5941 `Collector.sit_watch(self)` — Живой сторож выходов ситуационной книги.
-  - L6109 `Collector.sit_noise(self, sym, now)` — Живой шум монеты: минутный размах середины, б.п. (v12).
-  - L6176 `Collector.sit_absorb_now(self, mdir)` — Живое поглощение событий книги: pnl сразу после закрытия.
-  - L6220 `Collector._sit_scan(self, root, sheet, want, books, now, armed)` — Один тик сканера входов: лист сечения против живых цен.
-  - L6544 `Collector.brake_watch(self)` — Дневной тормоз: реализованный день торгуемых книг против порога −1 % суммарного капитала (`trades.DAY_BRAKE_S…
-  - L6608 `Collector.run(self, hours)`
-- L6644 `sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc, n…` — Живой вход по ситуации: якорим прогноз листа к живой цене.
-- L6789 `sit_cross(side, entry_px, adv, mid, fav=None, hi=None, lo=None)` — Дошёл ли живой ход цены до обещанного уровня.
-- L6845 `take_limit_fill(side, entry_px, fav, hi, lo)` — Цена исполнения тейка-лимитки, если принты прошли уровень.
-- L6881 `sit_exit_event(pos, mid, hi, lo, now)` — Событие живого выхода по уровню — или None.
-- L6914 `sit_watched(want, root)` — Каталоги книг, у которых 5-секундный сторож ведёт УРОВНИ.
-- L6932 `sit_open_levels(picks, reviews, entries=None)` — Открытые позиции ситуационной книги с уровнями против.
-- L6982 `_unfinished(rows)` — Записи об открытии, у которых нет парного закрытия.
-- L6994 `warm_start(root, symbols, collector, log, hours=4, trade_hours=…` — Поднять историю из собственных файлов сборщика.
-- L7095 `stable_token(root)` — Ключ доступа, переживающий перезапуск.
-- L7123 `selftest(root)` — Прогнать поддельный поток через путь записи и показать итог.
-- L7163 `dropped_symbols(root, syms, days=3)` — Символы, по которым на диске есть свежие ряды, а в запуске их нет.
-- L7206 `main()`
+  - L3898 `Collector._dca_family(self, DR, now, art_attr, journal_attr, family, what)` — Свод СЕМЕЙСТВА книг из его артефакта — одним кодом на все.
+  - L3938 `Collector.paper_book(self, at=None)` — Бумажная месячная книга: свод из артефакта, транши из журнала.
+  - L4025 `Collector.learning(self)` — Умнеет ли модель и переходит ли это в деньги — по дням.
+  - L4123 `Collector.book_days(self, hz)` — Дневная статистика ОДНОЙ книги — по просьбе владельца.
+  - L4240 `Collector._day_cell(rows)` — Числа одной клетки «день × рука». Одно определение на день, на итог и на обе руки: три реализации одного счёт…
+  - L4272 `Collector.market_vol(self)` — Волатильность рынка по часам — из наших же почасовых сводок.
+  - L4365 `Collector.vol_vs_models(self)` — Влияет ли волатильность рынка на результат книг.
+  - L4520 `Collector.model_glossary(self)` — Справочник: какие ситуации модель вообще способна читать.
+  - L4625 `Collector.model_tournament(self)` — Полный лист турнира политик: все 72 ветки и селектор.
+  - L4699 `Collector._run_row(r, now)` — Строка прогона для показа: заметка урезается, не выбрасывается.
+  - L4716 `Collector._produced(root, rel, now)` — Файл, который роль обязана была оставить.
+  - L4738 `Collector.owner_asks(self)` — Чего система ждёт ОТ ВЛАДЕЛЬЦА, и чем это подтверждено.
+  - L4780 `Collector.agents_state(self)` — Автономная система: конвейер, границы и что уже построено.
+  - L4968 `Collector._cand_live(self, cid)` — Живая книга кандидата: закрытые сделки и деньги по рукам.
+  - L5009 `Collector.factory_built(self)` — Что автономная система объявила: механика в корне, книги ветками.
+  - L5185 `Collector._cand_decisions(self, cid, rec)` — Множество РЕШЕНИЙ живой книги кандидата.
+  - L5206 `Collector.factory_strategy(self, cid)` — Полная карточка ОДНОЙ стратегии автономной системы.
+  - L5346 `Collector.model_tree(self)` — Дерево моделей: две руки и их книги, с логикой каждой ветки.
+  - L5526 `Collector.entry_px(self, picks)` — Цены входа для выборов, которые их не несут.
+  - L5543 `Collector.paths(self, trades, hold_h=None)` — Просадка по каждой сделке — из тех же почасовых сводок.
+  - L5564 `Collector.dd_money(trades)` — Просадку в деньги и в доли депозита — ПОСЛЕ расчёта счёта.
+  - L5575 `Collector.marks(self, trades)` — Текущая середина по символам открытых сделок.
+  - L5593 `Collector.model_marks(self, hz=None)` — Только переоценка открытых сделок — для частого опроса.
+  - L5650 `Collector.trade_by_id(self, tid)` — Сделка по короткому id — поиск по всем книгам разом.
+  - L5724 `Collector._jsonl(path)`
+  - L5781 `Collector._jsonl_trim()`
+  - L5791 `Collector.trades(self, sym=None)` — История бумажных сделок и сводка — по требованию, не в опросе.
+  - L5819 `Collector.disk_view(self)` — Диск в человеческих единицах, с запасом хода в сутках.
+  - L5842 `Collector.diskstat(self)` — Сколько занято, с какой скоростью растёт и надолго ли хватит.
+  - L5874 `Collector.statuser(self)`
+  - L5894 `Collector.reporter(self)` — Строка в журнал раз в минуту: прогон, который молчит, неотличим от повисшего.
+  - L5918 `Collector.metrics_poll(self)` — Funding, открытый интерес и базис — раз в 5 минут, один запрос на все символы. Ставка и интерес доказали ценн…
+  - L5942 `Collector.sit_load_positions(self, books)` — Открытые позиции КАЖДОЙ книги сканера, без исключений.
+  - L5961 `Collector.sit_watch(self)` — Живой сторож выходов ситуационной книги.
+  - L6129 `Collector.sit_noise(self, sym, now)` — Живой шум монеты: минутный размах середины, б.п. (v12).
+  - L6196 `Collector.sit_absorb_now(self, mdir)` — Живое поглощение событий книги: pnl сразу после закрытия.
+  - L6240 `Collector._sit_scan(self, root, sheet, want, books, now, armed)` — Один тик сканера входов: лист сечения против живых цен.
+  - L6564 `Collector.brake_watch(self)` — Дневной тормоз: реализованный день торгуемых книг против порога −1 % суммарного капитала (`trades.DAY_BRAKE_S…
+  - L6628 `Collector.run(self, hours)`
+- L6664 `sit_scan_entry(row, mid, wave_bp, min_edge, min_rr, min_disc, n…` — Живой вход по ситуации: якорим прогноз листа к живой цене.
+- L6809 `sit_cross(side, entry_px, adv, mid, fav=None, hi=None, lo=None)` — Дошёл ли живой ход цены до обещанного уровня.
+- L6865 `take_limit_fill(side, entry_px, fav, hi, lo)` — Цена исполнения тейка-лимитки, если принты прошли уровень.
+- L6901 `sit_exit_event(pos, mid, hi, lo, now)` — Событие живого выхода по уровню — или None.
+- L6934 `sit_watched(want, root)` — Каталоги книг, у которых 5-секундный сторож ведёт УРОВНИ.
+- L6952 `sit_open_levels(picks, reviews, entries=None)` — Открытые позиции ситуационной книги с уровнями против.
+- L7002 `_unfinished(rows)` — Записи об открытии, у которых нет парного закрытия.
+- L7014 `warm_start(root, symbols, collector, log, hours=4, trade_hours=…` — Поднять историю из собственных файлов сборщика.
+- L7115 `stable_token(root)` — Ключ доступа, переживающий перезапуск.
+- L7143 `selftest(root)` — Прогнать поддельный поток через путь записи и показать итог.
+- L7183 `dropped_symbols(root, syms, days=3)` — Символы, по которым на диске есть свежие ряды, а в запуске их нет.
+- L7226 `main()`
 
 ## research/b1_book/layout_check.py · 148 строк
 
@@ -946,7 +946,7 @@ A3 — кандидаты в пары на момент окна.
 - L246 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L265 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12094 строк
+## research/b1_book/web.py · 12116 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -966,18 +966,18 @@ A3 — кандидаты в пары на момент окна.
 - L5760 `LEARNPAGE = '<!doctype html><meta charset="utf-8">\…` — Справочник — просьба владельца: страница со всеми «стратегиями» модели и подробным объяснением каждой простым…
 - L5932 `BOOKDAYS = '<!doctype html><meta charset="utf-8">\…` — Дневная статистика ОДНОЙ книги — просьба владельца: «кликаем на 4-hour book, и открывается страница, где стат…
 - L6244 `DCAPAGE = '<!doctype html><meta charset="utf-8">\…` — Бумажная месячная книга (`research/paper_monthly`). Своего показа у неё не было вовсе: книга писала отчёт фай…
-- L7752 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8083 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8522 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8767 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
-- L9021 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
-- L9518 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
-- L9923 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
-- L10253 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
-- L10609 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11036 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11204 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11734 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L7774 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8105 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8544 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8789 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
+- L9043 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
+- L9540 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
+- L9945 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
+- L10275 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
+- L10631 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11058 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11226 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11756 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
@@ -1373,7 +1373,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1102 строк
+## research/dca_ladder/run_d6.py · 1114 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1395,24 +1395,24 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L237 `position_state(r, data_end)` — Закрыта / открыта / оборвана записью. Правило одно на всех.
 - L257 `queue(recs)` — Очередь за деньгами: по секунде решения, внутри секунды — лучшие.
 - L268 `ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,…` — Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
-- L385 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
-- L406 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
-- L445 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
-- L465 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
-- L539 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
-- L559 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L578 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L677 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L730 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L770 `_anchor_block(a)`
-- L809 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L904 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L911 `_pct(x, d=2)`
-- L915 `report(s)`
-- L1015 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1035 `_window_line(w)`
-- L1050 `publish(name)`
-- L1057 `main()`
+- L397 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
+- L418 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
+- L457 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
+- L477 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
+- L551 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
+- L571 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L590 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L689 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L742 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L782 `_anchor_block(a)`
+- L821 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L916 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L923 `_pct(x, d=2)`
+- L927 `report(s)`
+- L1027 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1047 `_window_line(w)`
+- L1062 `publish(name)`
+- L1069 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 
@@ -1630,7 +1630,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L62 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
 - L107 `main()`
 
-## research/dca_paper/costs.py · 698 строк
+## research/dca_paper/costs.py · 776 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 
@@ -1664,15 +1664,16 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L310 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
 - L348 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
 - L373 `context(need=None, log=None)` — Справочник комиссий и ряды funding — ОДИН раз на свод книг.
-- L397 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
-- L444 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
-- L506 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
-- L530 `_u(x)`
-- L534 `_p(x, d=2)`
-- L538 `_b(x)`
-- L542 `report(s)`
-- L670 `publish(name)`
-- L676 `main(argv=None)`
+- L397 `apply_to_rows(rows, ctx, slip_bp=None)` — Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
+- L475 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
+- L522 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
+- L584 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L608 `_u(x)`
+- L612 `_p(x, d=2)`
+- L616 `_b(x)`
+- L620 `report(s)`
+- L748 `publish(name)`
+- L754 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 
@@ -1707,23 +1708,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L217 `publish(name)`
 - L223 `main()`
 
-## research/dca_paper/portfolio.py · 176 строк
-
-Общая статистика: длинная книга и короткая на одной кривой (хедж-режим).
-
-- L34 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L35 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L43 `PAIRS = [('safe', 'safe', 'safe_h'), ('optimal'…` — Пары «режим → (длинная книга, короткая книга)» — по именам режимов, один раз и одним местом.
-- L45 `MAIN_DEP = 10000.0`
-- L48 `rows_of(path, ruler, dep)` — Строки книги ТЕКУЩЕЙ версии правил из её журнала.
-- L56 `pair_stats(long_rows, short_rows, dep=MAIN_DEP)` — Одна пара: деньги врозь, деньги вместе, связь и совпадения имён.
-- L79 `build(long_path=None, short_path=None, deps=None, log=print)` — Общая статистика по всем режимам и депозитам.
-- L109 `verdict(p)` — Пара против длинной книги ОДНОЙ: деньги и просадка.
-- L122 `_p(x, d=2)`
-- L126 `_u(x)`
-- L130 `report_block(s)` — Раздел отчёта. Нет чисел — сказано причиной, а не пустой таблицей.
-
-## research/dca_paper/rules.py · 809 строк
+## research/dca_paper/rules.py · 856 строк
 
 Правила бумажных DCA-книг: три депозита, одни правила.
 
@@ -1757,46 +1742,73 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L326 `RULER_ORDER_ALL = ['safe', 'optimal', 'aggr', 'safe_s', '…` — Полный исторический порядок книг ситуационного листа. Он НЕ сокращается никогда: журнал и отчёты обязаны чита…
 - L331 `H24_ORDER = ['safe_h', 'optimal_h', 'aggr_h']` — Семейство `h24` идёт СВОИМ порядком и своим прогоном: его книги считает `run_short.py` по другому листу, и по…
 - L335 `H24_HOLD_H = 24`
-- L346 `RETIRED_AT = {'safe_s': '2026-09-07', 'optimal_s': '…` — --- снятые книги (решение владельца 2026-09-07) ------------------------ Зеркала `*_s` на ситуационном листе…
-- L350 `retired(key)` — Снята ли книга. Дата снятия — в `RETIRED_AT`, одним местом.
-- L359 `RULER_ORDER = [k for k in RULER_ORDER_ALL if not reti…` — Действующий порядок: снятая книга выпадает отсюда, и ВСЕ читатели — прогон, свод, отчёт, страница — перестают…
-- L362 `family_of(key)` — Семейство книги: `sit` — по листу ситуационной, `h24` — по `h24`.
-- L367 `order_of(family='sit', with_retired=False)` — Порядок книг семейства — один список на всех читателей.
-- L378 `hold_of(key)` — Срок удержания книги, ч. Не объявлен — общий срок книг.
-- L383 `DEFAULT_RULER = 'optimal'` — Запись БЕЗ поля `ruler` писана этой линейкой: до 2026-09-04 книга была одна и считалась глубиной. Умолчание д…
-- L386 `ruler_of(row)` — Линейка строки журнала; у строк прежнего образца поля нет.
-- L392 `notional_of(row)` — Нотионал позиции = маржа × плечо; None, если чего-то из двух нет.
-- L408 `avg_walk(fills, entry=None, notional=None, take_frac=None, side…` — Плавающая ТВХ: средняя цена входа ПОСЛЕ каждого рунга.
-- L503 `open_stats(positions)` — ХУДШАЯ из открытых позиций — та, что просела глубже всех СЕЙЧАС.
-- L530 `ruler_title(key)`
-- L534 `side_of(key)` — Сторона книги. Ключ без поля — длинная: до 2026-09-05 других нет.
-- L545 `row_side(row, ruler=None)` — Сторона ЗАПИСИ позиции — одно правило на всех читателей.
-- L565 `min_lev_of(key)` — Порог входа по плечу у режима; НЕТ поля — гейта нет вовсе.
-- L583 `ONE_PER_NAME = True` — --- биржевое правило, которое реплей D-серии НЕ соблюдал --------------- На одном счёте в одностороннем режим…
-- L592 `AHEAD_H = HOLD_H + 48` — --- «записано вперёд» --------------------------------------------------- Решение считается записанным ВПЕРЁД…
-- L594 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L595 `OUT = os.path.join(HERE, 'out')`
-- L596 `JOURNAL = os.path.join(OUT, 'journal.jsonl')`
-- L597 `ARTIFACT = os.path.join(OUT, 'DCA-paper.json')`
-- L601 `H24_JOURNAL = os.path.join(OUT, 'short.jsonl')` — Журнал и артефакт семейства `h24` — СВОИ. Имя не «journal-…»: ротация длинной книги глобит `journal-*.jsonl`,…
-- L602 `H24_ARTIFACT = os.path.join(OUT, 'DCA-short.json')`
-- L605 `floor_of(ruler)` — Пол билета РЕЖИМА: биржевой минимум, переведённый в маржу.
-- L617 `peak_of(ruler)` — Пик РЕЖИМА, измеренный по журналу. Неизвестный режим — пик пула.
-- L627 `ticket(deposit, ruler)` — Билет книги: не меньше пола режима и не больше доли на все места.
-- L640 `slots(deposit, ruler)` — Сколько мест помещается в депозит при билете этой книги.
-- L645 `share(deposit, ruler)` — Доля счёта на позицию — ровно билет, выраженный долей.
-- L650 `ahead(decided_at, written_at, hours=AHEAD_H, since=None)` — Записано ли решение вперёд, а не восстановлено пересчётом.
-- L668 `shard_of(path, at=None)` — Файл журнала, в который идёт решение: СУТКИ по метке решения.
-- L686 `shard_day(at=None)` — Дата суток решения строкой — ключ ротации, один на всех.
-- L701 `SHARD_CAP = 4 * 1024 * 1024` — Порог ЧАСТИ суточного файла. Сутки оказались единицей недостаточной: одно решение живёт во всех книгах разом…
-- L704 `shard_parts(path, at=None, day=None)` — Части суток по порядку: `journal-<дата>.jsonl`, затем `.01`, `.02`…
-- L718 `shard_place(path, day, lines, cap=SHARD_CAP)` — Разложить строки суток по частям, не переступая порог.
-- L743 `journal_parts(path=JOURNAL)` — Все куски журнала: старый цельный файл и суточные, по порядку.
-- L755 `journal_key(r)` — Ключ решения: тем же составом, каким дедуплицирует запись.
-- L766 `read_journal(path=JOURNAL, stats=None)` — Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
-- L803 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
+- L350 `PAIR_PARTS = {'pair_safe': ('safe', 'safe_h'), 'pair…` — --- общий счёт: длинная книга и короткая на ОДНОМ депозите ------------- Требование владельца 2026-09-07: «дл…
+- L353 `PAIR_ORDER = list(PAIR_PARTS)`
+- L354 `_PAIR_NOTE = 'Общий счёт: длинная книга режима и кор…`
+- L373 `parts_of(key)` — Из каких книг собран общий счёт. Обычная книга — источник один.
+- L386 `RETIRED_AT = {'safe_s': '2026-09-07', 'optimal_s': '…` — --- снятые книги (решение владельца 2026-09-07) ------------------------ Зеркала `*_s` на ситуационном листе…
+- L390 `retired(key)` — Снята ли книга. Дата снятия — в `RETIRED_AT`, одним местом.
+- L399 `RULER_ORDER = [k for k in RULER_ORDER_ALL if not reti…` — Действующий порядок: снятая книга выпадает отсюда, и ВСЕ читатели — прогон, свод, отчёт, страница — перестают…
+- L402 `family_of(key)` — Семейство книги: `sit` — по листу ситуационной, `h24` — по `h24`.
+- L407 `order_of(family='sit', with_retired=False)` — Порядок книг семейства — один список на всех читателей.
+- L419 `hold_of(key)` — Срок удержания книги, ч. Не объявлен — общий срок книг.
+- L424 `DEFAULT_RULER = 'optimal'` — Запись БЕЗ поля `ruler` писана этой линейкой: до 2026-09-04 книга была одна и считалась глубиной. Умолчание д…
+- L427 `ruler_of(row)` — Линейка строки журнала; у строк прежнего образца поля нет.
+- L433 `notional_of(row)` — Нотионал позиции = маржа × плечо; None, если чего-то из двух нет.
+- L449 `avg_walk(fills, entry=None, notional=None, take_frac=None, side…` — Плавающая ТВХ: средняя цена входа ПОСЛЕ каждого рунга.
+- L544 `open_stats(positions)` — ХУДШАЯ из открытых позиций — та, что просела глубже всех СЕЙЧАС.
+- L571 `ruler_title(key)`
+- L575 `side_of(key)` — Сторона книги. Ключ без поля — длинная: до 2026-09-05 других нет.
+- L586 `row_side(row, ruler=None)` — Сторона ЗАПИСИ позиции — одно правило на всех читателей.
+- L606 `min_lev_of(key)` — Порог входа по плечу у режима; НЕТ поля — гейта нет вовсе.
+- L624 `ONE_PER_NAME = True` — --- биржевое правило, которое реплей D-серии НЕ соблюдал --------------- На одном счёте в одностороннем режим…
+- L633 `AHEAD_H = HOLD_H + 48` — --- «записано вперёд» --------------------------------------------------- Решение считается записанным ВПЕРЁД…
+- L635 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L636 `OUT = os.path.join(HERE, 'out')`
+- L637 `JOURNAL = os.path.join(OUT, 'journal.jsonl')`
+- L638 `ARTIFACT = os.path.join(OUT, 'DCA-paper.json')`
+- L642 `H24_JOURNAL = os.path.join(OUT, 'short.jsonl')` — Журнал и артефакт семейства `h24` — СВОИ. Имя не «journal-…»: ротация длинной книги глобит `journal-*.jsonl`,…
+- L643 `H24_ARTIFACT = os.path.join(OUT, 'DCA-short.json')`
+- L648 `PAIR_JOURNAL = os.path.join(OUT, 'pair.jsonl')` — Общий счёт — тоже своё семейство со своим журналом: строки его книг ДРУГИЕ (та же сделка получает другую марж…
+- L649 `PAIR_ARTIFACT = os.path.join(OUT, 'DCA-pair.json')`
+- L652 `floor_of(ruler)` — Пол билета РЕЖИМА: биржевой минимум, переведённый в маржу.
+- L664 `peak_of(ruler)` — Пик РЕЖИМА, измеренный по журналу. Неизвестный режим — пик пула.
+- L674 `ticket(deposit, ruler)` — Билет книги: не меньше пола режима и не больше доли на все места.
+- L687 `slots(deposit, ruler)` — Сколько мест помещается в депозит при билете этой книги.
+- L692 `share(deposit, ruler)` — Доля счёта на позицию — ровно билет, выраженный долей.
+- L697 `ahead(decided_at, written_at, hours=AHEAD_H, since=None)` — Записано ли решение вперёд, а не восстановлено пересчётом.
+- L715 `shard_of(path, at=None)` — Файл журнала, в который идёт решение: СУТКИ по метке решения.
+- L733 `shard_day(at=None)` — Дата суток решения строкой — ключ ротации, один на всех.
+- L748 `SHARD_CAP = 4 * 1024 * 1024` — Порог ЧАСТИ суточного файла. Сутки оказались единицей недостаточной: одно решение живёт во всех книгах разом…
+- L751 `shard_parts(path, at=None, day=None)` — Части суток по порядку: `journal-<дата>.jsonl`, затем `.01`, `.02`…
+- L765 `shard_place(path, day, lines, cap=SHARD_CAP)` — Разложить строки суток по частям, не переступая порог.
+- L790 `journal_parts(path=JOURNAL)` — Все куски журнала: старый цельный файл и суточные, по порядку.
+- L802 `journal_key(r)` — Ключ решения: тем же составом, каким дедуплицирует запись.
+- L813 `read_journal(path=JOURNAL, stats=None)` — Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
+- L850 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
 
-## research/dca_paper/run_paper.py · 1162 строк
+## research/dca_paper/run_pair.py · 343 строк
+
+Общий счёт: длинная книга и короткая на ОДНОМ депозите.
+
+- L47 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L48 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L61 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. На VPS 7.7 ГБ без свопа, и тяжёлый прогон рядом с часовым циклом убивает НЕ СЕБЯ (OOM…
+- L64 `long_recs(cache=None, log=print)` — Позиции длинных книг из кэша реплея `run_paper`, по книгам.
+- L87 `short_recs(cache=None, log=print)` — Позиции коротких книг `h24` из их кэша, по книгам семейства.
+- L105 `pack(longs, shorts, keys=None)` — Решения общей книги: обе стороны в одном списке, с меткой источника.
+- L121 `collisions(rows, ruler)` — Имена, которые общий счёт держит РАЗОМ длинной и короткой.
+- L138 `_side_series(rows, ruler, side)`
+- L142 `link(rows, ruler)` — Связь дневных денег сторон ВНУТРИ общего счёта.
+- L158 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
+- L173 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
+- L224 `_p(x, d=2)`
+- L228 `_u(x)`
+- L232 `report(s)`
+- L314 `publish(name)`
+- L319 `main(argv=None)`
+
+## research/dca_paper/run_paper.py · 1305 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
@@ -1811,40 +1823,42 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L175 `_key(r)` — Ключ решения: имя плюс секунда входа. Ими и дедуплицируется.
 - L180 `_cell(ruler, dep)` — Ключ книги: линейка и депозит. Одно решение живёт в обеих книгах, и склеив их одним ключом, мы потеряли бы вт…
 - L186 `build_rows(by_ruler, now=None, log=print, keys=None)` — Решения, взятые каждой книгой, с деньгами в долларах.
-- L318 `append_journal(rows, path=None, log=print)` — Дописывает только НОВЫЕ решения. Запись write-ahead: строка, однажды попавшая в журнал, не переписывается — и…
-- L371 `dups(rows)` — Правило владельца числом: одно имя — одна позиция ОДНОВРЕМЕННО.
-- L410 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
-- L486 `summarize(path=None, live=None, keys=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
-- L558 `_pct(x, d=2)`
-- L562 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
-- L597 `report(s)`
-- L954 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
-- L983 `publish(name)`
-- L989 `main()`
+- L355 `append_journal(rows, path=None, log=print)` — Дописывает только НОВЫЕ решения. Запись write-ahead: строка, однажды попавшая в журнал, не переписывается — и…
+- L408 `dups(rows)` — Правило владельца числом: одно имя — одна позиция ОДНОВРЕМЕННО.
+- L447 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
+- L523 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
+- L554 `summarize(path=None, live=None, keys=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
+- L643 `_pct(x, d=2)`
+- L647 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
+- L682 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
+- L739 `report(s)`
+- L1097 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
+- L1126 `publish(name)`
+- L1132 `main()`
 
-## research/dca_paper/run_short.py · 308 строк
+## research/dca_paper/run_short.py · 310 строк
 
 Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 
 - L40 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L41 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L56 `CELL = ('fence:none:t2', 'fence', 'none', 't2')` — Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов, цель ×2. Объявлена здесь одним местом…
-- L60 `BOOKS = {'safe_h': 'safe_s', 'optimal_h': 'opti…` — Книга → линейка забора, на которой считается её позиция. «Агрессивная» считается на той же линейке, что «опти…
-- L61 `ARMS = ('gbm', 'nn')`
-- L68 `CACHE_DIR = os.path.join(HERE, 'cache')` — Кэш реплея лежит ВНЕ публикуемого каталога. `publish.sh` кладёт в историю весь `research/*/out`, и семимегаба…
-- L69 `CACHE = os.path.join(CACHE_DIR, 'recs-short.jso…`
-- L72 `cache_sig()` — Подпись настроек, от которых зависит исход позиции.
-- L87 `legs(arms=ARMS, limit=None, log=print, path=None)` — Короткие выборы `h24` ОБЕИХ рук: решение владельца «оставить обе».
-- L102 `needs_replay(cache, legs_)` — Какие решения считать заново: новых нет в кэше, открытые стареют.
-- L115 `read_cache(path=None, log=print)` — Кэш реплея семейства. Непригодный не чинится молча.
-- L129 `write_cache(cache, path=None)`
-- L136 `replay(need, src=None, log=print)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
-- L169 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
+- L55 `CELL = ('fence:none:t2', 'fence', 'none', 't2')` — Ячейка сетки D10, которой торгует семейство: плечо забора, без доливов, цель ×2. Объявлена здесь одним местом…
+- L59 `BOOKS = {'safe_h': 'safe_s', 'optimal_h': 'opti…` — Книга → линейка забора, на которой считается её позиция. «Агрессивная» считается на той же линейке, что «опти…
+- L60 `ARMS = ('gbm', 'nn')`
+- L67 `CACHE_DIR = os.path.join(HERE, 'cache')` — Кэш реплея лежит ВНЕ публикуемого каталога. `publish.sh` кладёт в историю весь `research/*/out`, и семимегаба…
+- L68 `CACHE = os.path.join(CACHE_DIR, 'recs-short.jso…`
+- L71 `cache_sig()` — Подпись настроек, от которых зависит исход позиции.
+- L86 `legs(arms=ARMS, limit=None, log=print, path=None)` — Короткие выборы `h24` ОБЕИХ рук: решение владельца «оставить обе».
+- L101 `needs_replay(cache, legs_)` — Какие решения считать заново: новых нет в кэше, открытые стареют.
+- L114 `read_cache(path=None, log=print)` — Кэш реплея семейства. Непригодный не чинится молча.
+- L128 `write_cache(cache, path=None)`
+- L135 `replay(need, src=None, log=print)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
+- L168 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
 - L219 `_p(x, d=2)`
 - L223 `_u(x)`
 - L227 `report(s)`
-- L274 `publish(name)`
-- L279 `main(argv=None)`
+- L276 `publish(name)`
+- L281 `main(argv=None)`
 
 ## research/dca_paper/short_supply.py · 123 строк
 
@@ -6086,7 +6100,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L31 `REL = 'research/dca_paper/out/journal.jsonl'`
 - L34 `main()`
 
-## tools/watchdog_book.sh · 305 строк
+## tools/watchdog_book.sh · 335 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

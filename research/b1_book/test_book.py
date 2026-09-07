@@ -7068,6 +7068,9 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         h24a0, h24j0 = DR.H24_ARTIFACT, DR.H24_JOURNAL
         DR.H24_ARTIFACT = os.path.join(td, "short-art.json")
         DR.H24_JOURNAL = os.path.join(td, "short.jsonl")
+        pra0, prj0 = DR.PAIR_ARTIFACT, DR.PAIR_JOURNAL
+        DR.PAIR_ARTIFACT = os.path.join(td, "pair-art.json")
+        DR.PAIR_JOURNAL = os.path.join(td, "pair.jsonl")
         # Момент ПОСЛЕ границы версии правил (`RULES_SINCE`): решение
         # старше неё есть бэктест по построению, и на фикстуре из
         # прошлого «записано вперёд» не бывало бы вовсе — она
@@ -7234,16 +7237,7 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                                         "names": 1, "positions": 1,
                                         "max_per_name": 1,
                                         "pause_median_h": None}}},
-                           "portfolio": {"hedge": True, "main_dep": 1000,
-                                         "pairs": {"optimal:1000": {
-                                             "mode": "optimal", "days": 3,
-                                             "long_usd": 5.0, "short_usd": 3.0,
-                                             "both_usd": 8.0,
-                                             "both_final": 0.004,
-                                             "long_dd": -0.002,
-                                             "both_dd": -0.001, "corr": -0.2,
-                                             "collisions": {"n": 1,
-                                                            "share": 0.25}}}}},
+                           },
                           f)
             c._dca_cache = (0.0, {})     # свод кэшируется на 2 минуты
             sh = c.dca_paper()["short"]
@@ -7251,16 +7245,92 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                   sh.get("present") and sh["books"]["optimal_h:1000"]["all"]["usd"] == 3.0
                   and [x["key"] for x in sh["rulers"]] == list(DR.H24_ORDER),
                   str(sh)[:200])
-            check("DCA: общая статистика едет тем же блоком",
-                  (sh.get("portfolio") or {}).get("pairs", {}).get("optimal:1000", {})
-                  .get("both_usd") == 8.0 and sh["hedge"] is True,
-                  str(sh.get("portfolio"))[:200])
             d2 = c.dca_paper()
             check("DCA: короткие книги стоят вкладкой рядом с длинными",
                   [x["key"] for x in d2["rulers"]][-3:] == list(DR.H24_ORDER)
                   and all(x.get("family") == "h24"
                           for x in d2["rulers"][-3:]),
                   str([x["key"] for x in d2["rulers"]]))
+            # Общий счёт — КНИГА того же формата: своя вкладка, свои
+            # плитки, свои сделки. Артефакта нет — причина словами.
+            pr0 = c.dca_paper()["pair"]
+            check("DCA: без прогона общего счёта страница называет причину",
+                  pr0.get("present") is False
+                  and "артефакта нет" in (pr0.get("why") or ""), str(pr0))
+            with open(DR.PAIR_JOURNAL, "w", encoding="utf-8") as f:
+                for (sym, side, book, usd) in (("LLLUSDT", "long", "optimal",
+                                                4.0),
+                                               ("SSSUSDT", "short",
+                                                "optimal_h", -1.0)):
+                    f.write(json.dumps({
+                        "dep": 1000, "ruler": "pair_optimal", "at": t0,
+                        "exit_ts": t0 + 3600, "sym": sym, "side": side,
+                        "book": book, "usd": usd, "lev": 4.0,
+                        "margin": 25.0, "pnl_frac": 0.1, "exit": "тейк",
+                        "written_at": t0 + 600, "fav_bp": 500.0,
+                        "entry_px": 2.0, "exit_px": 2.2, "avg": 2.0,
+                        "depth": 2,
+                        "fills": [[t0, 2.0, 0.25], [t0 + 600, 2.1, 0.25]],
+                        "rules": DR.RULES}) + "\n")
+            with open(DR.PAIR_ARTIFACT, "w", encoding="utf-8") as f:
+                json.dump({"family": "pair", "hedge": True,
+                           "computed_at": "2026-09-07 10:00",
+                           "parts": {k: DR.parts_of(k)
+                                     for k in DR.PAIR_ORDER},
+                           "rules": {"RULERS": {k: dict(DR.RULERS[k])
+                                                for k in DR.PAIR_ORDER},
+                                     "RULER_ORDER": list(DR.PAIR_ORDER),
+                                     "DEPOSITS": [1000.0]},
+                           "books": {"pair_optimal:1000": {
+                               "deposit": 1000.0, "ruler": "pair_optimal",
+                               "ticket": None, "slots": None,
+                               "all": {"n": 2, "usd": 3.0, "final": 0.003,
+                                       "max_dd": -0.002, "day_median": 3.0,
+                                       "win": 50.0},
+                               "parts": {"optimal": {
+                                   "title": DR.ruler_title("optimal"),
+                                   "side": "long",
+                                   "ticket": DR.ticket(1000.0, "optimal"),
+                                   "stats": {"n": 1, "usd": 4.0}},
+                                   "optimal_h": {
+                                   "title": DR.ruler_title("optimal_h"),
+                                   "side": "short",
+                                   "ticket": DR.ticket(1000.0, "optimal_h"),
+                                   "stats": {"n": 1, "usd": -1.0}}},
+                               "link": {"corr": -0.4, "days": 5},
+                               "collisions": {"n": 1, "names": 1,
+                                              "share": 0.5},
+                               "separate": {"optimal": {"n": 3, "usd": 9.0},
+                                            "optimal_h": {"n": 2,
+                                                          "usd": -2.0}},
+                               "costs": {"n": 2, "applied": 2,
+                                         "not_measured": 0, "no_funding": 0,
+                                         "fee_usd": 0.4, "slip_usd": 0.1,
+                                         "fund_usd": -0.05, "cost_usd": 0.55,
+                                         "gross_usd": 3.55, "net_usd": 3.0},
+                               "n_forward": 2, "n_restored": 0}}}, f)
+            c._dca_cache = (0.0, {})
+            d3 = c.dca_paper()
+            check("DCA: общий счёт стоит ПЕРВЫМИ вкладками",
+                  [x["key"] for x in d3["rulers"]][:3] == list(DR.PAIR_ORDER)
+                  and all(x.get("family") == "pair"
+                          for x in d3["rulers"][:3]),
+                  str([x["key"] for x in d3["rulers"]]))
+            bp = (d3.get("books") or {}).get("pair_optimal:1000") or {}
+            check("DCA: у общего счёта стороны, связь и совпадения имён",
+                  set(bp.get("parts") or {}) == {"optimal", "optimal_h"}
+                  and (bp.get("link") or {}).get("corr") == -0.4
+                  and (bp.get("collisions") or {}).get("n") == 1
+                  and (bp.get("separate") or {}).get("optimal", {}).get("usd") == 9.0,
+                  str({k: bp.get(k) for k in ("parts", "link", "collisions")})[:200])
+            check("DCA: у общего счёта билета одного не существует",
+                  bp.get("ticket") is None and bp.get("slots") is None,
+                  str((bp.get("ticket"), bp.get("slots"))))
+            check("DCA: сделки общего счёта берутся из ЕГО журнала",
+                  bp.get("n_journal") == 2
+                  and {t.get("sym") for t in (bp.get("trades") or [])}
+                  == {"LLLUSDT", "SSSUSDT"},
+                  str(bp.get("n_journal")) + " " + str(bp.get("trades"))[:120])
             bh = (d2.get("books") or {}).get("optimal_h:1000") or {}
             check("DCA: у книги семейства свои сделки из своего журнала",
                   bh.get("n_journal") == 1 and len(bh.get("trades") or []) == 1
@@ -7281,17 +7351,31 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                   str((sh.get("age_h"), sh.get("stale"))))
         finally:
             DR.H24_ARTIFACT, DR.H24_JOURNAL = h24a0, h24j0
+            DR.PAIR_ARTIFACT, DR.PAIR_JOURNAL = pra0, prj0
         page = W.DCAPAGE
-        check("DCA: страница показывает короткие книги и общую статистику",
-              "shortBlock(d.short)" in page and "portfolioBlock" in page
-              and "хедж-режим" in page and "Не считалась" in page,
+        check("DCA: страница показывает короткие книги",
+              "shortBlock(d.short)" in page and "хедж-режим" in page,
               "нет разметки коротких книг")
-        # Общая статистика обязана стоять ВЫШЕ таблицы по суткам: внизу
-        # страницы её не находят (замечание владельца 07.09).
-        check("DCA: общая статистика стоит первым блоком страницы",
-              page.index("portfolioBlock((d.short")
-              < page.index('h += "<div class=panel><div class=cap>книга'),
+        # Общий счёт показывается КНИГОЙ того же формата, а не отдельным
+        # блоком внизу: требование владельца 07.09. Прежнего блока общей
+        # статистики (два раздельных счёта) на странице больше нет —
+        # двух «общих» с разными числами быть не должно.
+        check("DCA: общий счёт показан книгой, а не блоком в конце",
+              "pairBlock(b)" in page and "portfolioBlock" not in page
+              and "общий счёт: две стороны" in page
+              and "Депозит ОДИН на обе стороны" in page,
+              "нет разметки общего счёта")
+        check("DCA: стороны общего счёта стоят выше таблицы по суткам",
+              page.index("h += pairBlock(b);")
+              < page.index('h += dayTable(st,'),
               "порядок блоков не тот")
+        # Издержки вычтены из денег книги, и плитки говорят ЧТО вычтено;
+        # второй колонки «нетто» на странице нет.
+        check("DCA: издержки учтены в сделках, а не показаны рядом",
+              "costTiles(nt, meta)" in page and "netTiles" not in page
+              and "издержки вычтены из денег" in page
+              and "деньги выше БРУТТО" in page,
+              "нет разметки издержек")
         check("DCA: страница объясняет дубли и молчание о них",
               "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page
               and "dupLine(b.dups)" in page,

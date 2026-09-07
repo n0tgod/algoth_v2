@@ -394,6 +394,84 @@ def context(need=None, log=None):
             "funding": funding, "n_funding": len(funding)}
 
 
+def apply_to_rows(rows, ctx, slip_bp=None):
+    """Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
+
+    Требование владельца 2026-09-07: «издержки не нужно считать отдельно,
+    они должны быть учтены в каждой сделке». До этой правки книга
+    считалась брутто, а нетто стояло рядом второй колонкой — читатель
+    складывал их глазами, и две величины с одним именем «заработала»
+    расходились на странице. Теперь деньги книги одни, и они нетто.
+
+    Что происходит со строкой:
+
+    * `usd_gross` — брутто, как записано в журнале. Журнал НЕ
+      переписывается: он есть запись сделки, а издержки — производная от
+      справочника комиссий и рядов площадки, и догнанный ряд funding
+      обязан улучшать числа задним числом, а не оставаться в прошлом;
+    * `usd` — брутто − комиссия − проскальзывание + funding;
+    * `costs_why` — что именно не измерено. Неизмеримое НЕ обнуляется:
+      строке без записи рунгов издержки не вычитаются вовсе, и число
+      таких строк стоит в своде. Это прочерк с причиной, а не ноль.
+
+    Возвращает (строки, свод). Свод — то, что показывает страница вместо
+    прежней колонки нетто: сколько вычтено и у скольких сделок.
+    """
+    slip_bp = SLIP_BP if slip_bp is None else float(slip_bp)
+    base = {"n": len(rows), "slip_bp": slip_bp, "slip_source": SLIP_SOURCE,
+            "market_exits": list(MARKET_EXITS), "applied": 0, "no_fills": 0,
+            "no_funding": 0, "fee_usd": None, "slip_usd": None,
+            "fund_usd": None}
+    if not ctx or (ctx.get("error") and not ctx.get("taker")):
+        return list(rows), dict(base, error=(ctx or {}).get("error")
+                                or "контекста издержек нет")
+    # `enrich` считает только закрытые позиции. Строку без исхода нельзя
+    # ПОТЕРЯТЬ по дороге: книга недосчиталась бы сделки молча, а это тот
+    # самый отказ, неотличимый от тишины. Она идёт дальше как есть.
+    closed, open_ = [], []
+    for r in rows:
+        (closed if r.get("exit") is not None and r.get("exit_ts") is not None
+         else open_).append(r)
+    rich, miss = enrich(closed, ctx.get("funding"), ctx["to_asset"],
+                        ctx["taker"], log=lambda *a: None, slip_bp=slip_bp)
+    out = [dict(r, costs_why="исхода нет") for r in open_]
+    fee_s, slip_s, fund_s, applied, no_fund = 0.0, 0.0, 0.0, 0, 0
+    for r in rich:
+        fee, slip, fund = r.get("fee_usd"), r.get("slip_usd"), r.get("fund_usd")
+        gross = float(r["usd"])
+        if fee is None or slip is None:
+            # рунгов или цены выхода нет — издержки этой сделки
+            # неизмеримы; вычесть «примерно» значило бы выдать догадку за
+            # замер, а обнулить — за отсутствие издержек
+            out.append(dict(r, usd_gross=gross,
+                            costs_why="рунгов или цены выхода нет"))
+            continue
+        net = gross - float(fee) - float(slip)
+        why = None
+        if fund is None:
+            no_fund += 1
+            why = "ряд funding не покрывает позицию — funding не учтён"
+        else:
+            net += float(fund)
+            fund_s += float(fund)
+        fee_s += float(fee)
+        slip_s += float(slip)
+        applied += 1
+        out.append(dict(r, usd_gross=gross, usd=round(net, 4),
+                        costs_why=why))
+    n_fund = applied - no_fund
+    return out, dict(base, applied=applied,
+                     no_fills=int(miss.get("no_fills", 0)),
+                     no_funding=no_fund,
+                     n_funding_rows=n_fund,
+                     taker_fallback=int(miss.get("taker_fallback", 0)),
+                     fee_usd=round(fee_s, 2), slip_usd=round(slip_s, 2),
+                     fund_usd=round(fund_s, 2),
+                     cost_usd=round(fee_s + slip_s - fund_s, 2),
+                     cover=(round(applied / len(rows), 3) if rows else None),
+                     error=ctx.get("error"))
+
+
 def net_view(rows, dep, ctx, stats_fn, slip_bp=None):
     """Нетто-свод подмножества строк книги: форма по дням от денег за
     вычетом комиссии и проскальзывания и с funding, плюс суммы издержек.
