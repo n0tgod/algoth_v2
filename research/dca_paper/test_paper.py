@@ -1396,17 +1396,69 @@ def test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted():
                       "watchdog_book.sh")
     src = open(os.path.abspath(wd), encoding="utf-8").read()
     a = src.index("# --- бумажные DCA-книги")
-    b = src.index("# --- очередь заданий")
+    # Граница — начало СЛЕДУЮЩЕГО блока сторожа, а не «очередь заданий»:
+    # между ними появились короткие книги, и срез до очереди тащил бы их
+    # прогон в проверку длинных (первый прогон так и упал).
+    b = src.index("# --- короткие книги семейства h24")
     block = src[a:b]
     return _run_watchdog_cases(block)
 
 
-def _run_watchdog_cases(block):
+def test_retired_books_stop_trading_but_keep_their_record():
+    """Снятая книга не торгует и не показывается, но её ЗАПИСЬ цела.
+
+    Кусается: свод живых книг снятую не содержит, свод со снятыми —
+    содержит вместе с деньгами; удаление записи вместо снятия убило бы
+    доказательство отрицательного результата (D9, D10 по зеркалам).
+    """
+    assert R.retired("optimal_s") and not R.retired("optimal")
+    assert not R.retired("optimal_h"), "новое семейство снятым не бывает"
+    live = R.order_of("sit")
+    assert "optimal_s" not in live and "optimal" in live, live
+    assert "optimal_s" in R.order_of("sit", with_retired=True)
+    t0 = T0
+    rows = [{"dep": 1000, "ruler": rk, "at": t0 + i * H,
+             "exit_ts": t0 + i * H + 3600.0, "sym": f"S{i}USDT",
+             "side": R.side_of(rk), "lev": 2.0, "margin": 25.0,
+             "pnl_frac": 0.04, "usd": 1.0, "exit": "тейк",
+             "written_at": t0 + i * H + 600, "rules": R.RULES}
+            for i, rk in enumerate(("optimal", "optimal_s"))]
+    with tempfile.TemporaryDirectory() as td:
+        jp = os.path.join(td, "j.jsonl")
+        with open(jp, "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r) + "\n")
+        s_live = P.summarize(jp, keys=R.order_of("sit"))
+        s_all = P.summarize(jp, keys=R.order_of("sit", with_retired=True))
+        assert "optimal_s:1000" not in s_live["books"], list(s_live["books"])
+        b = s_all["books"]["optimal_s:1000"]
+        assert (b["all"] or {}).get("usd") == 1.0, b["all"]
+    print("ok  снятая книга ушла из живого свода, а её запись читается "
+          "полностью: деньги на месте")
+
+
+def test_watchdog_runs_short_books_by_the_same_rule():
+    """Короткие книги семейства h24 поднимаются тем же правилом: по метке
+    «когда считали», раз в час, кроме часов обучения, и не вторым
+    процессом поверх идущего."""
+    wd = os.path.join(HERE, os.pardir, os.pardir, "tools",
+                      "watchdog_book.sh")
+    src = open(os.path.abspath(wd), encoding="utf-8").read()
+    a = src.index("# --- короткие книги семейства h24")
+    b = src.index("# --- очередь заданий")
+    ok = _run_watchdog_cases(src[a:b], art_name="DCA-short.json")
+    print("ok  сторож поднимает короткие книги тем же правилом: "
+          "свежий счёт молчит, часовой запускает, часы обучения "
+          "пропускаются, идущий прогон не дублируется")
+    return ok
+
+
+def _run_watchdog_cases(block, art_name="DCA-paper.json"):
     d = tempfile.mkdtemp()
     out = os.path.join(d, "research", "dca_paper", "out")
     os.makedirs(out)
     os.makedirs(os.path.join(d, "stubs"))
-    art = os.path.join(out, "DCA-paper.json")
+    art = os.path.join(out, art_name)
 
     def stub(name, body):
         p = os.path.join(d, "stubs", name)
@@ -1991,6 +2043,8 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
          test_cache_replays_new_and_open_but_not_closed,
          test_cache_of_other_rules_is_refused_out_loud,
          test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted,
+    test_retired_books_stop_trading_but_keep_their_record,
+    test_watchdog_runs_short_books_by_the_same_rule,
          test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote,
          test_tail_reaches_the_core_and_the_replay_signature]
 

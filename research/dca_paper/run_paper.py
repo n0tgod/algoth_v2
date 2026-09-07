@@ -997,7 +997,10 @@ def main():
         except (OSError, ValueError):
             extra = {}
     if not a.restat:
-        keys = list(R.RULER_ORDER)
+        # Список книг семейства БЕЗ снятых: снятая книга новых позиций не
+        # открывает (решение владельца 2026-09-07 по зеркалам `*_s`), а
+        # её журнал остаётся — запись не удаляется.
+        keys = R.order_of("sit")
         # Пары (правило, параметр) у режимов повторяются: «агрессивная»
         # считает ту же глубину, что «оптимальная», и отличается ГЕЙТОМ.
         # Дубль в списке заставил бы дорогой проход дописать исходы в тот
@@ -1017,7 +1020,13 @@ def main():
             print(f"кэш реплея не используется: {why}")
         # Обе стороны разом: бары читаются по символу, и второй проход
         # ради коротких книг стоил бы столько же, сколько первый.
-        legs = D6.gated_legs(limit=a.limit, side=None)
+        # Стороны берутся из ЖИВЫХ книг семейства: сняв короткие зеркала,
+        # прогон перестаёт и читать их ноги — иначе дорогой проход считал
+        # бы исходы, которые никуда не идут.
+        sides = {R.side_of(k) for k in keys}
+        legs = D6.gated_legs(limit=a.limit,
+                             side=(None if len(sides) > 1 else
+                                   next(iter(sides), "long")))
         need = needs_replay(cache, legs, pairs)
         print(f"решений под гейтом {len(legs)}, в кэше "
               f"{len(cache) // max(1, len(pairs))}, считаю заново {len(need)}")
@@ -1093,7 +1102,7 @@ def main():
                               closed_all=len(rows)),
                  "computed_at": time.strftime("%Y-%m-%d %H:%M",
                                               time.gmtime())}
-    s = summarize(live=live)
+    s = summarize(live=live, keys=R.order_of("sit"))
     s.update(extra)
     # Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ живёт в ячейках кассы (она считается
     # по почасовым отметкам, которых в журнале нет), а страница читает

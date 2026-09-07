@@ -7112,8 +7112,8 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                          "DEPOSITS": [1000.0], "AHEAD_H": DR.AHEAD_H,
                          "HOLD_H": DR.HOLD_H,
                          "RULERS": {k: dict(DR.RULERS[k])
-                                    for k in DR.RULER_ORDER},
-                         "RULER_ORDER": list(DR.RULER_ORDER)},
+                                    for k in DR.order_of("sit")},
+                         "RULER_ORDER": list(DR.order_of("sit"))},
                "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k,
                                        "slots": DR.slots(1000.0, DR.DEFAULT_RULER),
                                        # нетто по замеру издержек — тем
@@ -7160,9 +7160,15 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
 
         c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
         d = c.dca_paper()
+        # Снятые книги (`*_s`, решение владельца 07.09) в артефакт не
+        # пишутся и во вкладках не стоят: они не торгуют. Журнал их
+        # остаётся — это проверяет `test_paper`.
         check("DCA: линейки взяты из артефакта",
-              [x["key"] for x in d.get("rulers", [])] == list(DR.RULER_ORDER),
-              str(d.get("rulers")))
+              [x["key"] for x in d.get("rulers", [])] == list(DR.order_of("sit")),
+              str([x["key"] for x in d.get("rulers", [])]))
+        check("DCA: снятых книг во вкладках нет",
+              not any(DR.retired(x["key"]) for x in d.get("rulers", [])),
+              str([x["key"] for x in d.get("rulers", [])]))
         bs = d.get("books") or {}
         # нетто по издержкам едет тем же ключом книги; книга без поля —
         # свод прежнего образца, и это не превращается в ноль
@@ -7192,13 +7198,17 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               str(sh0))
         try:
             with open(DR.H24_JOURNAL, "w", encoding="utf-8") as f:
-                f.write(json.dumps({"dep": 1000, "ruler": "optimal_h",
-                                    "at": t0, "exit_ts": t0 + 3600,
-                                    "sym": "SSSUSDT", "side": "short",
-                                    "usd": 3.0, "lev": 4.0, "margin": 25.0,
-                                    "pnl_frac": 0.12, "exit": "тейк",
-                                    "written_at": t0 + 600,
-                                    "rules": DR.RULES}) + "\n")
+                f.write(json.dumps({
+                    "dep": 1000, "ruler": "optimal_h", "at": t0,
+                    "exit_ts": t0 + 3600, "sym": "SSSUSDT", "side": "short",
+                    "usd": 3.0, "lev": 4.0, "margin": 25.0, "pnl_frac": 0.12,
+                    "exit": "тейк", "written_at": t0 + 600,
+                    # обещание ВНИЗ и входы позиции: без них ступени цели
+                    # не считаются, и правило шорта нечем проверить
+                    "fav_bp": -500.0, "entry_px": 2.0, "exit_px": 1.8,
+                    "avg": 2.0, "depth": 2,
+                    "fills": [[t0, 2.0, 0.25], [t0 + 600, 2.2, 0.25]],
+                    "rules": DR.RULES}) + "\n")
             with open(DR.H24_ARTIFACT, "w", encoding="utf-8") as f:
                 json.dump({"family": "h24", "hedge": True,
                            "computed_at": "2026-09-07 10:00",
@@ -7251,6 +7261,15 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                   and (bh["trades"][0] or {}).get("side") == "short"
                   and bh["trades"][0].get("sym") == "SSSUSDT",
                   str(bh.get("trades"))[:200])
+            # Цель шорта ступенчата и стоит НИЖЕ средней — то же правило,
+            # что у зеркал; проверяется теперь на живой короткой книге.
+            tr = (bh.get("trades") or [{}])[0]
+            check("DCA: цель шорта в списке стоит ниже средней",
+                  tr.get("take_frac") is not None
+                  and bool(tr.get("walk"))
+                  and all(x.get("take") is not None and x["take"] < x["avg"]
+                          for x in tr.get("walk") or []),
+                  str(tr.get("walk")))
             check("DCA: свежесть свода коротких книг считается",
                   sh.get("age_h") is not None and sh.get("stale") is False,
                   str((sh.get("age_h"), sh.get("stale"))))
@@ -7263,15 +7282,17 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               "нет разметки коротких книг")
         # Общая статистика обязана стоять ВЫШЕ таблицы по суткам: внизу
         # страницы её не находят (замечание владельца 07.09).
-        check("DCA: общая статистика стоит выше таблицы по суткам",
-              page.index("portfolioBlock((d.short") < page.index('h += dayTable(st,'),
+        check("DCA: общая статистика стоит первым блоком страницы",
+              page.index("portfolioBlock((d.short")
+              < page.index('h += "<div class=panel><div class=cap>книга'),
               "порядок блоков не тот")
         check("DCA: страница объясняет дубли и молчание о них",
               "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page
               and "dupLine(b.dups)" in page,
               "нет разметки правила одной на имя")
         check("DCA: книга ключуется линейкой и депозитом",
-              set(bs) == {f"{k}:1000" for k in DR.RULER_ORDER}, str(sorted(bs)))
+              set(bs) == {f"{k}:1000" for k in DR.order_of("sit")},
+              str(sorted(bs)))
         # Список сделок ОДИН, и бэктест в нём помечен: кривая книги не
         # делится (решение владельца 2026-09-04), а числа групп стоят
         # рядом отдельно. Два списка означали бы два источника одной
@@ -7287,21 +7308,13 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         check("DCA: сторона в строках длинной книги — лонг",
               all(r.get("side") == "long" for r in safe + opt),
               str([r.get("side") for r in safe + opt]))
-        shs = bs["safe_s:1000"]["trades"]
-        check("DCA: строка короткой книги подписана шортом",
-              len(shs) == 1 and shs[0].get("side") == "short", str(shs))
-        check("DCA: цель шорта в списке стоит ниже средней",
-              bool(shs) and shs[0].get("take_frac") is not None
-              and all(x.get("take") is not None and x["take"] < x["avg"]
-                      for x in shs[0].get("walk") or []),
-              str(shs[0].get("walk") if shs else None))
-        check("DCA: открытые короткой книги подписаны шортом по ключу книги",
-              all(q.get("side") == "short"
-                  for q in bs["safe_s:1000"]["open"]["positions"])
-              and all(q.get("side") == "long"
-                      for q in bs["safe:1000"]["open"]["positions"]),
-              str([q.get("side")
-                   for q in bs["safe_s:1000"]["open"]["positions"]]))
+        # Короткая сторона проверяется на ЖИВОЙ короткой книге (семейство
+        # h24, ниже в этом же тесте): зеркала `*_s` сняты решением
+        # владельца и во вкладках их нет, а строки их журнала целы.
+        check("DCA: строки снятой книги в журнале есть, а книги на странице нет",
+              "safe_s:1000" not in bs
+              and any(DR.ruler_of(r) == "safe_s" for r in DR.read_journal(DR.JOURNAL)[0]),
+              str(sorted(bs)))
         # Цель лестницы ступенчата, и решает это ПРАВИЛО от сохранённого
         # обещания, а не число в записи. У строки без обещания ступеней
         # нет вовсе — рисовать уровень, которого мы не знаем, значит
