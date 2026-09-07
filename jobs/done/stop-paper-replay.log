@@ -6,3 +6,48 @@
 TERM → 1791407
 остановлено: 1791407
 конец: 2026-09-07T17:55:56Z, код 0
+публикуется в ветку main:
+ jobs/done/pair-first-run.done                |   1 +
+ jobs/done/pair-first-run.log                 |  19 +
+ jobs/done/pair-fix-deploy.done               |   1 +
+ jobs/done/pair-fix-deploy.log                |   6 +
+ jobs/done/stop-paper-replay.done             |   1 +
+ jobs/done/stop-paper-replay.log              |   8 +
+ jobs/poke.log                                |   9 +
+ jobs/queue-state.md                          |  12 +-
+ research/dca_paper/out/pair-2026-08-08.jsonl | 216 +++++++
+ research/dca_paper/out/pair-2026-08-09.jsonl | 338 ++++++++++
+ research/dca_paper/out/pair-2026-08-10.jsonl | 149 +++++
+ research/dca_paper/out/pair-2026-08-11.jsonl | 221 +++++++
+ research/dca_paper/out/pair-2026-08-12.jsonl | 210 +++++++
+ research/dca_paper/out/pair-2026-08-13.jsonl | 353 +++++++++++
+ research/dca_paper/out/pair-2026-08-14.jsonl | 216 +++++++
+ research/dca_paper/out/pair-2026-08-15.jsonl | 260 ++++++++
+ research/dca_paper/out/pair-2026-08-16.jsonl | 235 +++++++
+ research/dca_paper/out/pair-2026-08-17.jsonl | 201 ++++++
+ research/dca_paper/out/pair-2026-08-18.jsonl | 124 ++++
+ research/dca_paper/out/pair-2026-08-19.jsonl | 432 +++++++++++++
+ research/dca_paper/out/pair-2026-08-20.jsonl | 734 ++++++++++++++++++++++
+ research/dca_paper/out/pair-2026-08-21.jsonl | 896 +++++++++++++++++++++++++++
+ research/dca_paper/out/pair-2026-08-22.jsonl | 588 ++++++++++++++++++
+ research/dca_paper/out/pair-2026-08-23.jsonl | 175 ++++++
+ research/dca_paper/out/pair-2026-08-24.jsonl | 242 ++++++++
+ research/dca_paper/out/pair-2026-08-25.jsonl | 325 ++++++++++
+ research/dca_paper/out/pair-2026-08-26.jsonl | 188 ++++++
+ research/dca_paper/out/pair-2026-08-27.jsonl | 164 +++++
+ research/dca_paper/out/pair-2026-08-28.jsonl | 162 +++++
+ research/dca_paper/out/pair-2026-08-29.jsonl | 164 +++++
+ research/dca_paper/out/pair-2026-08-30.jsonl |  81 +++
+ research/dca_paper/out/pair-2026-08-31.jsonl |  72 +++
+ research/dca_paper/out/pair-2026-09-01.jsonl |  84 +++
+ research/dca_paper/out/pair-2026-09-02.jsonl | 237 +++++++
+ research/dca_paper/out/pair-2026-09-03.jsonl | 295 +++++++++
+ research/dca_paper/out/pair-2026-09-04.jsonl | 137 ++++
+ research/dca_paper/out/pair-2026-09-05.jsonl | 121 ++++
+ research/dca_paper/out/pair-2026-09-06.jsonl | 150 +++++
+ research/s8_loop/out/day_brake.json          |   2 +-
+ 39 files changed, 7824 insertions(+), 5 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   3154baa..bc9b827  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
