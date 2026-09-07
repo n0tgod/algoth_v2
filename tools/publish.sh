@@ -47,6 +47,11 @@ git reset -q -- 'research/*/out/*.log' 2>/dev/null || true
 finish_rebase() {
   local i p unmerged bad
   for i in 1 2 3 4 5; do
+    # Карта кода генерируется хуком на ОБЕИХ сторонах, поэтому её
+    # конфликт механический и разрешается пересборкой, а не выбором
+    # версии. Без этого публикация останавливалась на `docs/MAP.md`,
+    # оставляла коммит локально — и очередь заданий замирала целиком.
+    tools/resolve_maps.sh || true
     unmerged="$(git diff --name-only --diff-filter=U)"
     if [ -n "$unmerged" ]; then
       bad=0

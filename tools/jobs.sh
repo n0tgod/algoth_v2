@@ -112,7 +112,12 @@ if [ "${JOBS_NO_FETCH:-0}" != "1" ]; then
         # и замирать навсегда нельзя: очередь пробует ОПУБЛИКОВАТЬ
         # застрявшее (ровно то, что сделала бы `publish.sh`), и только
         # не сумев — сдаётся.
-        if git pull -q --rebase --autostash origin main 2>/dev/null \
+        # Конфликт на генерируемой карте кода — не расхождение работы:
+        # её правит хук на обеих сторонах. Он снимается пересборкой, и
+        # только после этого очередь имеет право сдаться.
+        if { git pull -q --rebase --autostash origin main 2>/dev/null \
+             || { tools/resolve_maps.sh >/dev/null 2>&1 \
+                  && GIT_EDITOR=true git rebase --continue >/dev/null 2>&1; }; } \
            && git push -q origin main 2>/dev/null; then
             note "дерево расходилось с origin/main: застрявший коммит опубликован"
         else
