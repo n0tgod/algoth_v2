@@ -1745,7 +1745,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L217 `publish(name)`
 - L223 `main()`
 
-## research/dca_paper/pair_gate.py · 322 строк
+## research/dca_paper/pair_gate.py · 367 строк
 
 Два входных фильтра короткой стороны общего счёта — на одной сетке.
 
@@ -1754,17 +1754,18 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L58 `NAMES = ('all', 'only_long', 'not_long', 'rando…`
 - L63 `GATES = ('off', 'on', 'random')` — Третье состояние оси — КОНТРОЛЬ РАЗМЕРА гейта: случайное подмножество ровно того размера, что оставляет гейт,…
 - L64 `SEED = 20260907`
-- L67 `held_intervals(rows, dep)` — Что длинная книга ДЕРЖАЛА: имя → список (вход, выход).
-- L85 `in_long(held, sym, at)` — Держала ли длинная книга это имя В МОМЕНТ решения.
-- L97 `gate_rate(rec, ctx)` — Ставка площадки на входе и годится ли она шорту.
-- L115 `pick(shorts, held, ctx, names='all', gate='off', seed=SEED)` — Короткие решения после обоих фильтров плюс счётчики отказов.
-- L156 `cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None)` — Общий счёт на этих решениях: деньги НЕТТО, просадка, состав.
-- L179 `run(dep=None, log=print, ctx=None, long_cache=None, short_cache…`
-- L217 `_u(x)`
-- L221 `_p(x, d=1)`
-- L225 `report(s)`
-- L291 `publish(name)`
-- L296 `main(argv=None)`
+- L69 `SEEDS = 20` — Контроль размера считается на МНОЖЕСТВЕ зёрен: одна случайная выборка сама по себе шум — на первом прогоне дв…
+- L72 `held_intervals(rows, dep)` — Что длинная книга ДЕРЖАЛА: имя → список (вход, выход).
+- L90 `in_long(held, sym, at)` — Держала ли длинная книга это имя В МОМЕНТ решения.
+- L102 `gate_rate(rec, ctx)` — Ставка площадки на входе и годится ли она шорту.
+- L120 `pick(shorts, held, ctx, names='all', gate='off', seed=SEED)` — Короткие решения после обоих фильтров плюс счётчики отказов.
+- L161 `cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None)` — Общий счёт на этих решениях: деньги НЕТТО, просадка, состав.
+- L184 `run(dep=None, log=print, ctx=None, long_cache=None, short_cache…`
+- L256 `_u(x)`
+- L260 `_p(x, d=1)`
+- L264 `report(s)`
+- L336 `publish(name)`
+- L341 `main(argv=None)`
 
 ## research/dca_paper/rules.py · 925 строк
 

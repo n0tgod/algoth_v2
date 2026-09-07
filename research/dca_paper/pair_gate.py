@@ -62,6 +62,11 @@ NAMES = ("all", "only_long", "not_long", "random")
 # меньше, а шорты в минусе» — а это разные выводы и лечатся они разным.
 GATES = ("off", "on", "random")
 SEED = 20260907          # объявлен здесь, а не выбран после прогона
+# Контроль размера считается на МНОЖЕСТВЕ зёрен: одна случайная выборка
+# сама по себе шум — на первом прогоне два контроля почти одного размера
+# дали +1836 и +270 $, и по такому «нулю» судить нельзя. Двадцать зёрен
+# дают медиану, полосу и долю выборок, которые бьют гейт.
+SEEDS = 20
 
 
 def held_intervals(rows, dep):
@@ -202,6 +207,40 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
                                                            in held.values())}
         for nm in NAMES:
             for g in GATES:
+                if g == "random" and nm in ("all", "not_long"):
+                    # Контроль размера — РАСПРЕДЕЛЕНИЕМ по зёрнам, а не
+                    # одной выборкой: одна ничего не говорит. У узких
+                    # политик имён гейт почти не меняет состав, и там
+                    # контролю нечего судить.
+                    got = []
+                    for k in range(SEEDS):
+                        keep, why = pick(srec, held, ctx, nm, g,
+                                         seed=SEED + 100 * k)
+                        got.append(cell(lrec, keep, pk, dep, ctx, now=now))
+                    base = out["cells"].get(f"{pk}|{nm}|on") or {}
+                    usd = [x["usd"] or 0.0 for x in got]
+                    sh = [x["usd_short"] or 0.0 for x in got]
+                    dd = [x["max_dd"] or 0.0 for x in got]
+                    beat = (None if base.get("usd") is None
+                            else round(float(np.mean(np.array(usd)
+                                                     >= base["usd"])), 3))
+                    out["cells"][f"{pk}|{nm}|{g}"] = {
+                        "pair": pk, "names": nm, "gate": g, "seeds": SEEDS,
+                        "offered": len(srec), "kept": len(keep), "drops": why,
+                        "usd": round(float(np.median(usd)), 2),
+                        "usd_p10": round(float(np.quantile(usd, 0.1)), 2),
+                        "usd_p90": round(float(np.quantile(usd, 0.9)), 2),
+                        "usd_short": round(float(np.median(sh)), 2),
+                        "max_dd": round(float(np.median(dd)), 4),
+                        "final": round(float(np.median(usd)) / dep, 4),
+                        "n": int(np.median([x["n"] or 0 for x in got])),
+                        "n_short": int(np.median([x["n_short"] or 0
+                                                  for x in got])),
+                        "beat_gate": beat}
+                    log(f"{pk} {nm}/контроль ({SEEDS} зёрен): медиана "
+                        f"{out['cells'][f'{pk}|{nm}|{g}']['usd']} $, "
+                        f"бьют гейт {beat}")
+                    continue
                 keep, why = pick(srec, held, ctx, nm, g)
                 c = cell(lrec, keep, pk, dep, ctx, now=now)
                 out["cells"][f"{pk}|{nm}|{g}"] = dict(
@@ -255,9 +294,14 @@ def report(s):
                        "random": "случайно столько же"}[g]
                     + f" | {c['kept']} из {c['offered']} | "
                     f"{c.get('n_short') or 0} | {c.get('n') or 0} | "
-                    f"{_u(c.get('usd'))} | {_p(c.get('final'), 2)} | "
+                    f"{_u(c.get('usd'))}"
+                    + (f" ({_u(c['usd_p10'])}…{_u(c['usd_p90'])})"
+                       if c.get("seeds") else "")
+                    + f" | {_p(c.get('final'), 2)} | "
                     f"{_p(c.get('max_dd'))} | {_u(c.get('usd_short'))} | "
-                    f"{_u(c.get('usd_long'))} |")
+                    + (f"бьют гейт {100 * c['beat_gate']:.0f} %"
+                       if c.get("beat_gate") is not None
+                       else _u(c.get('usd_long'))) + " |")
     L += ["", "Отказы по причинам (на ячейку «все имена, гейт»): ", ""]
     for pk in R.PAIR_ORDER:
         c = (s.get("cells") or {}).get(f"{pk}|all|on")
@@ -272,11 +316,12 @@ def report(s):
           "столько же коротких решений, сколько «только те, что в лонге», "
           "на объявленном зерне. Без неё «лучше отбор» и «меньше сделок» "
           "неразличимы.",
-          "- Строка «случайно столько же» — КОНТРОЛЬ гейта: она берёт "
-          "ровно столько коротких решений, сколько оставляет гейт, но "
-          "выбирает их без всякой ставки. Гейт что-то отбирает только "
-          "тогда, когда он лучше этой строки; иначе он просто уменьшает "
-          "число шортов.",
+          f"- Строка «случайно столько же» — КОНТРОЛЬ гейта на {SEEDS} "
+          "зёрнах: столько же коротких решений, сколько оставляет гейт, "
+          "но выбранных без всякой ставки. Печатается медиана, полоса "
+          "p10…p90 и доля выборок, которые ГЕЙТ НЕ ПОБИЛ. Гейт отбирает "
+          "только там, где эта доля мала; по одной случайной выборке "
+          "вывода нет.",
           "- Гейт по ставке отказывает и тогда, когда ставка неизвестна: "
           "это отказ по незнанию, он считается отдельной колонкой и НЕ "
           "смешивается с отказом по знаку.",
