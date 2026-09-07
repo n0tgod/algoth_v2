@@ -1,0 +1,546 @@
+{
+ "positions": 400,
+ "legs": 400,
+ "skipped": 0,
+ "secs": 156.4,
+ "rss_mb": 925,
+ "draws": 20,
+ "seed": 20260907,
+ "no_ladder": 311,
+ "degenerate_2": 37,
+ "gp_thin_gap": 0,
+ "draw_failed": 0,
+ "sigma_mismatch": 0,
+ "sigma_missing": 12,
+ "no_grid_why": {
+  "сетка глубже 100 %": 31,
+  "нет σ": 12
+ },
+ "sigma_day_median": 0.0474,
+ "k_hist": {
+  "1": 311,
+  "2": 37,
+  "3": 25,
+  "4": 27
+ },
+ "day_hist": {
+  "2026-08-08": 34,
+  "2026-08-09": 86,
+  "2026-08-11": 12,
+  "2026-08-14": 49,
+  "2026-08-10": 25,
+  "2026-08-12": 5,
+  "2026-08-13": 160,
+  "2026-08-15": 29
+ },
+ "top3_day_share": 0.738,
+ "params": {
+  "BACK_H": 24,
+  "HOLD_H": 72,
+  "N_RUNGS": 4,
+  "MIN_GAP": 0.015,
+  "SURVIVE_MULT": 2.0,
+  "FLOOR_FRAC": 0.1,
+  "SPACING_SIG": 2.0,
+  "SIG_FLOOR_Q": 0.1,
+  "NULL_Q": 95.0,
+  "GRID_BAND": 0.001
+ },
+ "arms": {
+  "S": {
+   "n": 400,
+   "median": 0.00208,
+   "mean": -0.02818,
+   "green": 0.642,
+   "worst": -1.0,
+   "bite": 243.0,
+   "liq_freq": 0.0025,
+   "median_lev": 1.0,
+   "frac_1x": 0.777,
+   "over_tier": 0.0,
+   "exits": {
+    "тейк": 226,
+    "срок": 161,
+    "пол": 12,
+    "ликвидация": 1
+   }
+  },
+  "G": {
+   "n": 357,
+   "median": 0.00516,
+   "mean": -0.00214,
+   "green": 0.653,
+   "worst": -0.5044,
+   "bite": 66.77,
+   "liq_freq": 0.0,
+   "median_lev": 2.11,
+   "frac_1x": 0.118,
+   "over_tier": 0.0,
+   "exits": {
+    "тейк": 203,
+    "срок": 154
+   }
+  },
+  "GP": {
+   "n": 400,
+   "median": 0.0021,
+   "mean": -0.02873,
+   "green": 0.645,
+   "worst": -1.0,
+   "bite": 241.96,
+   "liq_freq": 0.0025,
+   "median_lev": 1.0,
+   "frac_1x": 0.777,
+   "over_tier": 0.0,
+   "exits": {
+    "тейк": 226,
+    "срок": 161,
+    "пол": 12,
+    "ликвидация": 1
+   }
+  },
+  "R": {
+   "n": 400,
+   "median": 0.0021,
+   "mean": -0.02876,
+   "green": 0.645,
+   "worst": -1.0,
+   "bite": 241.96,
+   "liq_freq": 0.0025,
+   "median_lev": 1.0,
+   "frac_1x": 0.777,
+   "over_tier": 0.0
+  }
+ },
+ "median_draw": 10,
+ "null_bite_n": 52,
+ "null_ladder_n": 89,
+ "null": {
+  "bite": {
+   "n": 52,
+   "draws": 20,
+   "real": {
+    "n": 52,
+    "median": -0.01176,
+    "mean": -0.21928,
+    "green": 0.481,
+    "worst": -1.0,
+    "bite": 32.49
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": -0.01176,
+     "mean": -0.00903,
+     "edge": -0.00755,
+     "min": -0.01498,
+     "max": -0.00732,
+     "beats": false,
+     "rank": 0.05,
+     "sigmas": -1.77,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": -0.21928,
+     "mean": -0.22133,
+     "edge": -0.2164,
+     "min": -0.2302,
+     "max": -0.21299,
+     "beats": false,
+     "rank": 0.75,
+     "sigmas": 0.54,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 32.49,
+     "mean": 33.6775,
+     "edge": 24.4855,
+     "min": 22.31,
+     "max": 50.85,
+     "beats": false,
+     "rank": 0.4,
+     "sigmas": -0.17,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": -0.00883,
+   "draw_median_of_means": -0.22102
+  },
+  "ladder": {
+   "n": 89,
+   "draws": 20,
+   "real": {
+    "n": 89,
+    "median": 0.0053,
+    "mean": -0.1281,
+    "green": 0.551,
+    "worst": -1.0,
+    "bite": 52.66
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.0053,
+     "mean": 0.00532,
+     "edge": 0.00532,
+     "min": 0.0053,
+     "max": 0.00532,
+     "beats": false,
+     "rank": 0.0,
+     "sigmas": -4.36,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": -0.1281,
+     "mean": -0.1293,
+     "edge": -0.12642,
+     "min": -0.13448,
+     "max": -0.12443,
+     "beats": false,
+     "rank": 0.75,
+     "sigmas": 0.54,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 52.66,
+     "mean": 50.3215,
+     "edge": 42.4,
+     "min": 42.4,
+     "max": 59.7,
+     "beats": false,
+     "rank": 0.3,
+     "sigmas": 0.5,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00532,
+   "draw_median_of_means": -0.12912
+  }
+ },
+ "verdict_null": {
+  "killed": true,
+  "why": [
+   "убийца 1 (нуль §8.6): структурные уровни не выше 95-го процентиля случайных по median, mean, bite — «стратегический уровень» есть украшение"
+  ],
+  "parts": [
+   "median: -0.01176 против границы -0.00755 (НЕ выше), -1.77 σ от среднего розыгрышей",
+   "mean: -0.21928 против границы -0.21640 (НЕ выше), 0.54 σ от среднего розыгрышей",
+   "bite: +32.49000 против границы +24.48550 (НЕ кусает слабее), -0.17 σ от среднего розыгрышей"
+  ],
+  "fails": [
+   "median",
+   "mean",
+   "bite"
+  ]
+ },
+ "grid_n": 357,
+ "grid": {
+  "median": -0.0008,
+  "mean": -0.0018,
+  "frac_S_above": 0.333,
+  "median_lev_S": 1.0,
+  "median_lev_G": 2.11
+ },
+ "verdict_grid": {
+  "killed": false,
+  "why": [
+   "медиана S − G -0.080 % капитала (внутри полосы ±0.10 %), S выше G у 33.3 % выборов (вне полосы 0.45–0.55) на 357 позициях — каркасы различимы хотя бы по одной из двух величин"
+  ],
+  "in_band": true,
+  "in_frac": false
+ },
+ "even": {
+  "n": 89,
+  "median": 0.0,
+  "mean": 0.00249,
+  "frac_S_above": 0.157
+ },
+ "form": {
+  "S": {
+   "days": 11,
+   "green": 0.364,
+   "med": -1.23,
+   "med_green": 2.13,
+   "worst": -37.49,
+   "bite": 17.6,
+   "dd": -53.1,
+   "under": 10,
+   "red": 4,
+   "tot": -50.34,
+   "thin": false,
+   "taken": 200,
+   "offered": 400,
+   "skipped_same_name": 200,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -4.58,
+   "no_top3_days": -58.12,
+   "no_best_name": -54.65,
+   "best_name": "STXXUSDT"
+  },
+  "G": {
+   "days": 11,
+   "green": 0.455,
+   "med": -0.98,
+   "med_green": 2.84,
+   "worst": -12.44,
+   "bite": 4.4,
+   "dd": -14.2,
+   "under": 8,
+   "red": 3,
+   "tot": -2.77,
+   "thin": false,
+   "taken": 186,
+   "offered": 357,
+   "skipped_same_name": 171,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -0.25,
+   "no_top3_days": -22.1,
+   "no_best_name": -3.72,
+   "best_name": "CRCLUSDT"
+  },
+  "GP": {
+   "days": 11,
+   "green": 0.364,
+   "med": -1.16,
+   "med_green": 2.1,
+   "worst": -35.65,
+   "bite": 17.0,
+   "dd": -50.7,
+   "under": 10,
+   "red": 4,
+   "tot": -47.78,
+   "thin": false,
+   "taken": 200,
+   "offered": 400,
+   "skipped_same_name": 200,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -4.34,
+   "no_top3_days": -55.62,
+   "no_best_name": -52.22,
+   "best_name": "STXXUSDT"
+  },
+  "R": {
+   "days": 11,
+   "green": 0.364,
+   "med": -1.12,
+   "med_green": 2.09,
+   "worst": -34.73,
+   "bite": 16.6,
+   "dd": -50.1,
+   "under": 10,
+   "red": 4,
+   "tot": -46.86,
+   "thin": false,
+   "taken": 200,
+   "offered": 400,
+   "skipped_same_name": 200,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -4.26,
+   "no_top3_days": -55.0,
+   "no_best_name": -51.61,
+   "best_name": "STXXUSDT"
+  }
+ },
+ "verdict_form": {
+  "killed": true,
+  "why": [
+   "убийца 3 (дневная форма): S не лучше σ-сетки и медианного розыгрыша НИ ПО ОДНОЙ из четырёх мер — «где усреднять» не покупает формы, по которой судит владелец"
+  ],
+  "parts": [
+   "med: S -1.23 против G -0.98, R -1.12 — не лучше обеих",
+   "green: S 0.364 против G 0.455, R 0.364 — не лучше обеих",
+   "bite: S 17.6 против G 4.4, R 16.6 — не лучше обеих",
+   "dd: S -53.1 против G -14.2, R -50.1 — не лучше обеих"
+  ],
+  "wins": []
+ },
+ "boot": {
+  "S_minus_G": {
+   "days": 11,
+   "median": -0.30241,
+   "mean": -4.32501,
+   "lo": -9.35149,
+   "hi": 0.65686,
+   "covers_zero": true
+  },
+  "S_minus_R": {
+   "days": 11,
+   "median": 0.0,
+   "mean": -0.31674,
+   "lo": -0.25357,
+   "hi": 0.0,
+   "covers_zero": true
+  }
+ },
+ "calibration": {
+  "planted": {
+   "n": 20,
+   "draws": 20,
+   "real": {
+    "n": 20,
+    "median": 0.2933,
+    "mean": 0.3028,
+    "green": 1.0,
+    "worst": 0.2425,
+    "bite": 0.83
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.2933,
+     "mean": 0.19988,
+     "edge": 0.24285,
+     "min": 0.1424,
+     "max": 0.24363,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 3.45,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": 0.3028,
+     "mean": 0.20464,
+     "edge": 0.22767,
+     "min": 0.17361,
+     "max": 0.23138,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 5.7,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 0.83,
+     "mean": 0.379,
+     "edge": 0.1595,
+     "min": 0.15,
+     "max": 0.62,
+     "beats": false,
+     "rank": 0.0,
+     "sigmas": 3.0,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.19809,
+   "draw_median_of_means": 0.20492
+  },
+  "noise": {
+   "n": 60,
+   "draws": 20,
+   "real": {
+    "n": 60,
+    "median": 0.01864,
+    "mean": 0.00478,
+    "green": 0.65,
+    "worst": -0.369,
+    "bite": 14.99
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.01864,
+     "mean": 0.01843,
+     "edge": 0.01915,
+     "min": 0.01732,
+     "max": 0.01952,
+     "beats": false,
+     "rank": 0.5,
+     "sigmas": 0.43,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": 0.00478,
+     "mean": 0.00455,
+     "edge": 0.00651,
+     "min": 0.00232,
+     "max": 0.00716,
+     "beats": false,
+     "rank": 0.6,
+     "sigmas": 0.19,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 14.99,
+     "mean": 14.1085,
+     "edge": 12.3605,
+     "min": 11.42,
+     "max": 15.9,
+     "beats": false,
+     "rank": 0.25,
+     "sigmas": 0.78,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.0185,
+   "draw_median_of_means": 0.00439
+  },
+  "geom": {
+   "n": 60,
+   "draws": 20,
+   "real": {
+    "n": 60,
+    "median": 0.01386,
+    "mean": 0.00567,
+    "green": 0.617,
+    "worst": -0.1704,
+    "bite": 5.8
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.01386,
+     "mean": 0.00976,
+     "edge": 0.01359,
+     "min": 0.00577,
+     "max": 0.01386,
+     "beats": true,
+     "rank": 0.95,
+     "sigmas": 1.72,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": 0.00567,
+     "mean": 0.00413,
+     "edge": 0.00603,
+     "min": 0.00156,
+     "max": 0.00609,
+     "beats": false,
+     "rank": 0.9,
+     "sigmas": 1.27,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 5.8,
+     "mean": 4.7235,
+     "edge": 3.177,
+     "min": 3.12,
+     "max": 7.32,
+     "beats": false,
+     "rank": 0.3,
+     "sigmas": 0.84,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00891,
+   "draw_median_of_means": 0.00388
+  },
+  "planted_n": 20,
+  "noise_n": 60,
+  "geom_n": 60,
+  "found": true,
+  "quiet": true
+ }
+}

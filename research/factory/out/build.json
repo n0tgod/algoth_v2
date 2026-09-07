@@ -1,158 +1,158 @@
 {
  "built": true,
- "module": "research/mech_63fa406a/run_fence.py",
- "tests": "research/mech_63fa406a/test_fence.py",
+ "module": "research/mech_49b535f8/run_place.py",
+ "tests": "research/mech_49b535f8/test_place.py",
  "touched": [
-  "research/mech_63fa406a/depth.py",
-  "research/mech_63fa406a/controls_check.py",
-  "research/mech_63fa406a/RUNBOOK.md",
-  "research/mech_63fa406a/.gitignore"
+  "research/mech_49b535f8/place.py",
+  "research/mech_49b535f8/controls_check.py",
+  "research/mech_49b535f8/RUNBOOK.md",
+  "research/mech_49b535f8/.gitignore"
  ],
  "controls": [
   {
-   "file": "research/mech_63fa406a/depth.py",
-   "old": "    return m - int(lookback), m",
-   "new": "    return m - int(lookback), m + 1",
-   "expect": "ПРОВАЛ test_window_ends_before_decision"
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    px = [float(entry * math.exp(-x)) for x in u[:-1]]",
+   "new": "    px = [float(entry * math.exp(-x)) for x in u]",
+   "expect": "ПРОВАЛ test_draw_keeps_depth_and_form"
   },
   {
-   "file": "research/mech_63fa406a/depth.py",
-   "old": "    v = _finite(sell_row, i0, i1)\n    if len(v) < min_min:",
-   "new": "    v = _finite(sell_row, i0, i1)\n    if False:",
-   "expect": "ПРОВАЛ test_unmeasured_is_none_not_zero"
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    u = np.cumsum(step + c)",
+   "new": "    u = np.cumsum(step)",
+   "expect": "ПРОВАЛ test_draw_respects_min_gap"
   },
   {
-   "file": "research/mech_63fa406a/depth.py",
-   "old": "    if flow is None or dens is None or dens <= 0 or flow < 0:\n        return None",
-   "new": "    if flow is None or dens is None or dens <= 0 or flow < 0:\n        return 0.0",
-   "expect": "ПРОВАЛ test_unmeasured_is_none_not_zero"
-  },
-  {
-   "file": "research/mech_63fa406a/depth.py",
-   "old": "    v = _finite(sweep_row, i0, i1)\n    v = v[v > 0]",
-   "new": "    v = _finite(sweep_row, i0, i1)\n    v = v[v >= 0]",
-   "expect": "ПРОВАЛ test_density_ignores_nonpositive"
-  },
-  {
-   "file": "research/mech_63fa406a/depth.py",
-   "old": "            p[j] = v[j][rng.permutation(len(j))]",
-   "new": "            p[:] = v[rng.permutation(len(v))]",
-   "expect": "ПРОВАЛ test_block_permute_stays_inside_day"
-  },
-  {
-   "file": "research/mech_63fa406a/depth.py",
-   "old": "            thin = ~(z2[\"snaps\"] >= MIN_SNAPS)",
-   "new": "            thin = np.zeros_like(z2[\"snaps\"], dtype=bool)",
-   "expect": "ПРОВАЛ test_reader_end_to_end_and_calibration"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    out[\"book_base\"] = day_series(base_recs)",
-   "new": "    out[\"book_base\"] = None",
-   "expect": "ПРОВАЛ test_end_to_end_step1"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    if dist is None or not (dist > 0):     # меры нет — рычага нет",
-   "new": "    if False:     # меры нет — рычага нет",
-   "expect": "ПРОВАЛ test_fence_degenerate_cases"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    if lev <= 0:                           # забор отказал лестнице (D2)\n        return 1.0, [entry]",
-   "new": "    if lev <= 0:                           # забор отказал лестнице (D2)\n        return lev, list(rungs_full)",
-   "expect": "ПРОВАЛ test_fence_degenerate_cases"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    bar = D3.family_bar(feats, mask, names)",
-   "new": "    bar = D3.family_bar(feats, mask, [x for x in names if \"d_depth\" not in x])",
-   "expect": "ПРОВАЛ test_family_bar_covers_new_columns"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    elif dep <= can:",
-   "new": "    elif False:",
-   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "            and abs(v[\"rho\"]) >= SPEARMAN_SAME]",
-   "new": "            and abs(v[\"rho\"]) >= 99.0]",
-   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "        d = abs(row[\"median\"] - target_lev)",
-   "new": "        d = -row[\"median\"]",
-   "expect": "ПРОВАЛ test_choose_by_leverage_not_by_money"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "        if liq <= fl + 1e-12 and mean > fm + 1e-12:",
-   "new": "        if mean > fm + 1e-12:",
-   "expect": "ПРОВАЛ test_frontier_needs_both_axes"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "        if len(live) >= slots:\n            continue",
-   "new": "        if False:\n            continue",
-   "expect": "ПРОВАЛ test_book_respects_slots"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    keep, _skip = D6.one_per_name(recs)",
-   "new": "    keep, _skip = list(recs), 0",
-   "expect": "ПРОВАЛ test_book_respects_one_per_name_and_name_cap"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    D6.ration(gated, name_cap, deposit=cap, min_notional=0.0,",
-   "new": "    D6.ration(gated, 1.0, deposit=cap, min_notional=0.0,",
-   "expect": "ПРОВАЛ test_book_respects_one_per_name_and_name_cap"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    daily = {d: v[0] for d, v in TNT.daily(trades).items()}",
-   "new": "    daily = {0: sum(t[\"net\"] for t in trades)}",
-   "expect": "ПРОВАЛ test_book_days_are_exit_days"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "        \"mean\": round(float(np.mean(p)), 4),",
-   "new": "        \"mean\": round(float(np.median(p)), 4),",
-   "expect": "ПРОВАЛ test_cell_stats_keeps_median_and_mean_apart"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "            if k in KILLER2_AGAINST and v.get(\"rho\") is not None",
-   "new": "            if v.get(\"rho\") is not None",
-   "expect": "ПРОВАЛ test_verdict_reads_the_numbers"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "        out.append((hr, pnl - prev))",
-   "new": "        out.append((hr, pnl))",
-   "expect": "ПРОВАЛ test_marks_are_increments"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "            \"above_p95\": bool(float(real) > p95),",
-   "new": "            \"above_p95\": True,",
-   "expect": "ПРОВАЛ test_null_stats_reports_percentile_and_sigmas"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "            has_depth.append(dd is not None)",
-   "new": "            has_depth.append(True)",
-   "expect": "ПРОВАЛ test_pairing_mask_is_per_position"
-  },
-  {
-   "file": "research/mech_63fa406a/run_fence.py",
-   "old": "    if not res[\"positions\"]:",
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    if rem < -1e-12:",
    "new": "    if False:",
-   "expect": "ПРОВАЛ test_end_to_end_refuses_on_empty"
+   "expect": "ПРОВАЛ test_draw_impossible_form_is_none"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "           \"degenerate\": k < 3, \"no_ladder\": k < 2}",
+   "new": "           \"degenerate\": k < 2, \"no_ladder\": k < 2}",
+   "expect": "ПРОВАЛ test_two_rung_draw_is_identical_to_structure"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    if k < 3:\n        # Два рунга",
+   "new": "    if k < 2:\n        # Два рунга",
+   "expect": "ПРОВАЛ test_two_rung_draw_is_identical_to_structure"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "        res[\"g_why\"] = (\"нет σ\" if sig_day is None or not (sig_day > 0)\n                        else \"сетка глубже 100 %\")",
+   "new": "        res[\"g_why\"] = \"сетка глубже 100 %\"",
+   "expect": "ПРОВАЛ test_no_sigma_is_dash_not_zero"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    p = np.asarray([x for x in pnl if x == x], dtype=float)",
+   "new": "    p = np.asarray([0.0 if x != x else x for x in pnl], dtype=float)",
+   "expect": "ПРОВАЛ test_no_sigma_is_dash_not_zero"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    return float(max(float(np.quantile(v, q)), abs_floor))",
+   "new": "    return float(abs_floor)",
+   "expect": "ПРОВАЛ test_sigma_floor_comes_from_section"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    qq = (100.0 - q) if lower_is_better else q",
+   "new": "    qq = q",
+   "expect": "ПРОВАЛ test_null_place_bite_direction"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    need = (\"median\", \"mean\", \"bite\")",
+   "new": "    need = (\"median\",)",
+   "expect": "ПРОВАЛ test_verdict_null_needs_all_three"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    killed = bool(in_band and in_frac)",
+   "new": "    killed = bool(in_band or in_frac)",
+   "expect": "ПРОВАЛ test_verdict_grid_band"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "            ok = ok and better",
+   "new": "            ok = ok or better",
+   "expect": "ПРОВАЛ test_verdict_form_needs_better_than_both"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "    if r.ndim != 2 or r.shape[0] != len(s_pnl):",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ test_draw_pool_is_a_book_per_draw"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "        st = cell_stats(r[:, j])",
+   "new": "        st = cell_stats(r[j % r.shape[0], :])",
+   "expect": "ПРОВАЛ test_draw_pool_is_a_book_per_draw"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "        res[\"GP\"] = sim(hold, gp, lev_s, look, take_px)",
+   "new": "        res[\"GP\"] = sim(hold, gp, 1.0, look, take_px)",
+   "expect": "ПРОВАЛ test_arms_hold_leverage_where_they_must"
+  },
+  {
+   "file": "research/mech_49b535f8/place.py",
+   "old": "                       sim(hold, rg, lev_s, look, take_px))",
+   "new": "                       sim(hold, rg, 1.0, look, take_px))",
+   "expect": "ПРОВАЛ test_arms_hold_leverage_where_they_must"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "    lv = D2.build_levels(win, now_i)",
+   "new": "    lv = D2.build_levels(win, min(now_i + 120, len(win) - 1))",
+   "expect": "ПРОВАЛ test_no_lookahead_in_setup"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "    rungs = D2.structural_rungs(entry, list(lv), D2.MIN_ADD_GAP, D2.N_RUNGS)\n    s_bp, _rng, _turn = D3.window_stats(win, now_i)",
+   "new": "    rungs = D2.structural_rungs(entry, list(lv), D2.MIN_ADD_GAP, D2.N_RUNGS)\n    s_bp, _rng, _turn = D3.window_stats(win, max(0, now_i - 30))",
+   "expect": "ПРОВАЛ test_sigma_narrow_window_equals_wide"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "    trades = [{\"exit\": float(r[\"exit_ts\"]), \"net\": float(r[\"pnl\"]) * tk}",
+   "new": "    trades = [{\"exit\": float(r[\"at\"]), \"net\": float(r[\"pnl\"]) * tk}",
+   "expect": "ПРОВАЛ test_day_form_uses_exit_day_and_book_ticket"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "    keep, skip = D6.one_per_name(recs)",
+   "new": "    keep, skip = list(recs), 0",
+   "expect": "ПРОВАЛ test_day_form_uses_exit_day_and_book_ticket"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "    top3 = sorted(by_day.values(), reverse=True)[:3]",
+   "new": "    top3 = []",
+   "expect": "ПРОВАЛ test_concentration_columns_bite"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "        if cur and t - cur[0] > span_h * 3600:",
+   "new": "        if False:",
+   "expect": "ПРОВАЛ test_clusters_glue_reads"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "    if d.get(\"v\") != SIG_CACHE_V or d.get(\"back_h\") != D2.BACK_H:",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ test_sigma_cache_roundtrip"
+  },
+  {
+   "file": "research/mech_49b535f8/run_place.py",
+   "old": "    n = len(keep)\n    if not n:",
+   "new": "    n = len(keep)\n    if False:",
+   "expect": "ПРОВАЛ test_run_refuses_on_empty_input"
   }
  ],
- "notes": "Построено: переменная глубины книги (`depth.py`: d_depth = F/λ, где F — 99-й процентиль минутного нотионала продаж за 24 ч до входа со склада Z2, λ — медиана sweep за то же окно со склада Z3) и замер `run_fence.py` двумя шагами в порядке дешевизны, как велит заявка. Шаг 1 — колонка в портрет хвоста D3 и ранговая связь с σ, d_max, оборотом (убийцы 1 и 2). Шаг 2 — сетка заборов, парная по позициям, блочный нуль внутри суток и дневной ряд книги через stability.stats (мест 6, потолок на имя 10 %, капитал $10 000) — считается только если шаг 1 не убил. Второй копии расчёта нет: забор и реплей — dca_ladder/ladder.py, окно и рунги — run_d2, AUC/планка/ранги — run_d3, раздача кассы — run_d6, день выхода — tournament.daily, форма — factory/stability. Встроенная сверка: на 400 ногах σ-рука воспроизводит run_d3.leg_cells бит в бит (ячейка, признаки, плечо), расхождений 0. 30 проверок, 24 негативных контроля. ЧЕГО НЕ СДЕЛАНО И ПОЧЕМУ: полный прогон. Роль живёт час, шаг 1 на полном населении стоит около получаса, а шаг 2 — на порядок дороже (каждый повтор нуля есть полный реплей по барам: плечо меняет исход нелинейно через ликвидацию, пересчётом из векторов это не берётся); предыдущая сессия строителя была убита пределом времени ровно на прогоне. Отцепленный запуск (setsid) правами роли недоступен, поэтому команда записана в RUNBOOK.md — запускать оператору либо заданием очереди. ПРОГНАНО ЗДЕСЬ: сюита (30/30), все 24 контроля. Один контроль оказался негодным — ссылался на строку, которой в коде нет (модуль правился после записи отчёта), и приёмка честно сказала «подделка НЕ легла»; контроль переписан на порог убийцы 2 там, где он стоит, и проверен точечно — кусается. СМОУК (400 первых ног, out/*smoke*, в git не идёт) сработал обоими убийцами, но вердиктом не является: `--limit N` берёт первые N ног, то есть начало журнала, а не выборку (та же ловушка дважды переворачивала знак в D2), и хвост там 5 позиций при семейственной планке 0.47. ОГОВОРКИ, объявленные до прогона: веса модели видели эти часы — оценка сверху; издержки круга не сняты, всё брутто; обе руки считаются без предела плеча тира (как D3 до правки 2026-09-05), доля позиций сверх предела печатается по каждой; население ограничено сутками, где лежат ОБА склада записи, — это граница данных, а не выбор."
+ "notes": "Построена механика 49b535f8 целиком: place.py (чистые правила — розыгрыш нуля §8.6, σ-каркас, забор, сводки, три вердикта, калибровочная пара), run_place.py (два прохода по барам, дневная форма книги кассой бумажных книг, отчёт), test_place.py (30 проверок), RUNBOOK.md, controls_check.py (своя копия приёмочной машины). Сюита зелена; все 24 подделки проверены той же дорогой, что у приёмки, и все кусаются. Смоук на живых данных прошёл дважды (первый — 120 ног, второй — 400 ног за 161 с, пик 925 МБ, пропущено 0): население, руки, три вердикта, парный бутстрап и калибровка печатаются числами; калибровка находит подсаженное место долива (+4.4 σ по медиане, +7.2 σ по среднему) и молчит на обмениваемых данных (ранг S 0.45 и 0.53). РЕШЕНИЯ-ТОЛКОВАНИЯ, каждое названо и в коде, и в отчёте прогона, а не выбрано молча. (1) При ДВУХ рунгах розыгрыш ТОЖДЕСТВЕН структурной лестнице (нижний рунг закреплён на её глубине, промежуточных мест нет) — пара даёт ровно ноль. Такие позиции тянут любую разность к нулю, то есть дарят ожидаемый вердикт «украшение», поэтому нуль §8.6 судится на кусающемся населении (рунгов ≥ 3), а строка по всем позициям с лестницей печатается рядом. Это применение правила самого задания («обе руки вырождаются — в парное сравнение не входят»), а не новый порог. (2) Структурное правило берёт БЛИЖАЙШИЕ уровни первыми, розыгрыш равномерен по допустимому множеству — рунги S систематически выше, и часть любой разности S − R принадлежит этой геометрии, а не «структурности» уровней. Сдвиг измерен третьей половиной калибровки (структурное правило на чистом блуждании со случайными уровнями) и напечатан рангом. (3) G′ («σ-сетка, обрезанная к d_max структурной») построена как приведение равного шага сетки к глубине S: шаг σ-сетки равный, приведение равного шага снова даёт равный, σ у G′ не остаётся ни в одном числе. Прочтение «отрезать глубокие рунги» отвергнуто — оно меняло бы число рунгов, веса и плечо, а вопрос G′ только про место при том же плече. (4) Пол σ — из сечения СУТОК (run_dca.SIG_FLOOR_Q; абсолютный пол 0.005 повторён числом, потому что у run_dca он литерал внутри функции). Внутри суток это лёгкое заглядывание вперёд по вспомогательной величине; на руки S, R и G′ она не влияет ни одним числом. (5) Предел плеча тира площадки не применяется ни к одной руке — как D2/D3 до правки ядра 2026-09-05, ради совпадения состава с опубликованными числами; доля позиций сверх предела печатается по каждой руке. (6) Отсутствие σ-каркаса разложено на две названные причины («нет σ» и «сетка глубже 100 % цены» — при шаге 2 σ и суточной σ выше 16.7 % сетки не существует) и доезжает прочерком, а не нулём. НАЙДЕНО ПРИ ПОСТРОЙКЕ, числами. (а) Население журнала лежит в трёх сутках: 20.08 — 3908 ног, 21.08 — 2270, 22.08 — 1039 из 8695 (83 %). Смоук «первые N ног» описывает тихую неделю 08–15 августа, где структурной лестницы нет у 78 % выборов против 23 % у D2 на полном населении, — поэтому у прогона появился ключ --stride (умолчание 1, полное население не тронуто), а в отчёт добавлена строка о концентрации САМОГО НАСЕЛЕНИЯ во времени. Для вердикта это значит: дневная форма опишет прежде всего 20–22 августа, и колонка «без 3 лучших дней» — единственный способ увидеть правило отдельно от эпизода. (б) Цена прогона: симуляция одной позиции — 4.3 мс на пути в 4320 баров (замер), то есть 100 розыгрышей × 8695 позиций ≈ 870 тыс. симуляций плюс ДВА прохода по барам (D2 одной рукой стоил 1148 с). «Весь прогон ≤ 1 ч» из заявки не выполнится — считать надо часами, и запускать из очереди заданий. (в) «nice −19» заявки читается как ПОВЫШЕНИЕ приоритета над сборщиком; беру +19, самый низкий, как очередь заданий (nice 15). ЧЕГО НЕ СДЕЛАНО: полный прогон на всём населении не запускался — строитель строит, а прогон длиннее его вызова; представительный смоук со --stride 21 (легли по всему месяцу) остановлен намеренно: у разнесённой по времени выборки пролёт по барам стоит месяца чтения на символ, то есть дороже боевого прогона, где ноги слиплись в трёх сутках. Запуск: run research/mech_49b535f8/run_place.py (RUNBOOK.md). Просьб к владельцу нет: данные, ядро лестницы, уровни и тиры — свои и уже на диске."
 }
