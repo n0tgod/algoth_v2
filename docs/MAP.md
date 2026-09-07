@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 399, строк: 180720, каталогов: 71.
+Модулей кода: 401, строк: 181121, каталогов: 71.
 
 
 ## корень — память проекта, идеи, README
@@ -167,8 +167,9 @@
 - `arm_book.py` · 429 строк — Книга DCA на решениях ОДНОЙ руки: деревья против сети, честно.
 - `arm_split.py` · 429 строк — Разрез бумажных DCA-книг ПО РУКЕ МОДЕЛИ: деревья (`gbm`) и сеть (`nn`).
 - `backfill_fav.py` · 127 строк — Добор обещания модели (`fav_bp`) в уже записанные строки журнала.
-- `costs.py` · 776 строк — Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
+- `costs.py` · 785 строк — Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 - `cut_check.py` · 402 строк — Позиции «оборвано записью» — досчитать по НАБЛЮДЁННЫМ ценам.
+- `fund_check.py` · 281 строк — Проверка величины funding: сколько начислений, с каким шагом и почему.
 - `name_check.py` · 242 строк — Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).
 - `rules.py` · 925 строк — Правила бумажных DCA-книг: три депозита, одни правила.
 - `run_pair.py` · 428 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
@@ -180,7 +181,7 @@
 - `smoothing.py` · 227 строк — Сглаживают ли короткие DCA-книги длинные — замер, а не имя.
 - `split_journal.py` · 198 строк — Разрезать цельный журнал книги на суточные куски.
 - `tail.py` · 257 строк — Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
-- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (456), `test_cut.py` (297), `test_names.py` (227), `test_pair.py` (362), `test_paper.py` (2669), `test_short.py` (163), `test_short_why.py` (155), `test_slip_x3.py` (76)
+- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (456), `test_cut.py` (297), `test_fund_check.py` (111), `test_names.py` (227), `test_pair.py` (362), `test_paper.py` (2669), `test_short.py` (163), `test_short_why.py` (155), `test_slip_x3.py` (76)
 - отчёты в `out/` (14): DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-names.md, DCA-pair.md, DCA-paper.md, DCA-short-supply-1m.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)

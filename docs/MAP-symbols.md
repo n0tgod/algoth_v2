@@ -1630,7 +1630,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L62 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
 - L107 `main()`
 
-## research/dca_paper/costs.py · 776 строк
+## research/dca_paper/costs.py · 785 строк
 
 Издержки бумажных DCA-книг: комиссия площадки, funding, гейт по знаку ставки.
 
@@ -1652,28 +1652,28 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L107 `fills_of(row)` — Рунги записи: (момент, цена, доля нотионала). Пусто — записи нет.
 - L120 `commission_usd(row, taker_bp)` — Комиссия позиции в долларах: каждый рунг и выход, тейкером.
 - L144 `slippage_usd(row, slip_bp)` — Проскальзывание позиции в $: базовый вход (первый рунг, рыночный) и рыночный выход — по ставке `slip_bp`; лим…
-- L166 `funding_usd(row, series, side)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
-- L199 `rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано или последняя точка старше `max_age_s` (ряд…
-- L212 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
-- L219 `_day(ts)`
-- L223 `enrich(rows, funding, to_asset, taker, log=print, slip_bp=None)` — Строка журнала → строка с издержками. Пропуски считаются числом.
-- L278 `_sum(rows, k)`
-- L283 `_bp_median(rows, k)`
-- L289 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
-- L303 `_stats_gross(rows, dep)`
-- L310 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
-- L348 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
-- L373 `context(need=None, log=None)` — Справочник комиссий и ряды funding — ОДИН раз на свод книг.
-- L397 `apply_to_rows(rows, ctx, slip_bp=None)` — Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
-- L475 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
-- L522 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
-- L584 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
-- L608 `_u(x)`
-- L612 `_p(x, d=2)`
-- L616 `_b(x)`
-- L620 `report(s)`
-- L748 `publish(name)`
-- L754 `main(argv=None)`
+- L166 `funding_usd(row, series, side, detail=False)` — Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
+- L208 `rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S)` — Последняя ИЗВЕСТНАЯ на момент входа ставка; None — ряда нет, рано или последняя точка старше `max_age_s` (ряд…
+- L221 `favourable(side, rate)` — Гейт входа по знаку ставки: лонгу ставка ≤ 0, шорту ≥ 0.
+- L228 `_day(ts)`
+- L232 `enrich(rows, funding, to_asset, taker, log=print, slip_bp=None)` — Строка журнала → строка с издержками. Пропуски считаются числом.
+- L287 `_sum(rows, k)`
+- L292 `_bp_median(rows, k)`
+- L298 `_stats_net(rows, dep)` — Форма книги нетто: те же `_stats`, деньги = брутто − комиссия + funding.
+- L312 `_stats_gross(rows, dep)`
+- L319 `book_costs(rows, dep)` — Издержки книги: суммы, медианы на позицию (б.п. маржи), форма нетто.
+- L357 `gate_arm(rows, dep)` — Рука «вход только при благоприятной ставке» против всех — парно.
+- L382 `context(need=None, log=None)` — Справочник комиссий и ряды funding — ОДИН раз на свод книг.
+- L406 `apply_to_rows(rows, ctx, slip_bp=None)` — Издержки — В КАЖДУЮ СДЕЛКУ: деньги строки становятся нетто.
+- L484 `net_view(rows, dep, ctx, stats_fn, slip_bp=None)` — Нетто-свод подмножества строк книги: форма по дням от денег за вычетом комиссии и проскальзывания и с funding…
+- L531 `run(rows=None, funding=None, assets=None, log=print, slip_bp=No…`
+- L593 `verdict(s)` — Из чисел: у каких книг знак держится после комиссии и funding, и помогает ли гейт по ставке (парно, по медиан…
+- L617 `_u(x)`
+- L621 `_p(x, d=2)`
+- L625 `_b(x)`
+- L629 `report(s)`
+- L757 `publish(name)`
+- L763 `main(argv=None)`
 
 ## research/dca_paper/cut_check.py · 402 строк
 
@@ -1692,6 +1692,24 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L257 `_pct(v)`
 - L261 `report(s)`
 - L382 `main()`
+
+## research/dca_paper/fund_check.py · 281 строк
+
+Проверка величины funding: сколько начислений, с каким шагом и почему.
+
+- L37 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L38 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L44 `DEP = 10000.0`
+- L45 `TOP = 6`
+- L48 `series_health(funding, assets=None)` — Шаг ряда, повторы и разброс ставок — по каждому активу.
+- L68 `steps_overview(health)` — Сводка по шагу: сколько активов с каким интервалом начислений.
+- L78 `dedup(funding)` — Тот же ряд без повторов по времени (последнее значение).
+- L98 `book_funding(rows, funding, to_asset)` — Сумма funding книги на ЭТОМ ряду — тем же ядром, что издержки.
+- L113 `explain_top(rows, funding, to_asset, k=TOP)` — Самые дорогие по funding позиции — с каждым начислением отдельно.
+- L145 `run(dep=DEP, log=print, short_path=None, ctx=None)`
+- L185 `report(s)`
+- L250 `publish(name)`
+- L255 `main(argv=None)`
 
 ## research/dca_paper/name_check.py · 242 строк
 

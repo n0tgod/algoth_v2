@@ -163,7 +163,7 @@ def slippage_usd(row, slip_bp):
     return cost
 
 
-def funding_usd(row, series, side):
+def funding_usd(row, series, side, detail=False):
     """Funding позиции как ВКЛАД в pnl (минус — платим). None — не измерено.
 
     `series` — `(времена_мс, ставки)` актива. На каждом начислении в
@@ -189,11 +189,20 @@ def funding_usd(row, series, side):
     i1 = int(np.searchsorted(t, int(exit_ts * 1000), "left"))
     sign = 1.0 if side == "long" else -1.0
     pnl = 0.0
+    events = []
     for i in range(i0, i1):
         tm = float(t[i]) / 1000.0
         open_notl = sum(share * notl for (ts, _px, share) in fills if ts <= tm)
-        pnl -= sign * float(r[i]) * open_notl
-    return pnl
+        got = -sign * float(r[i]) * open_notl
+        pnl += got
+        if detail:
+            # Показать НАЧИСЛЕНИЯ по одному — единственный способ
+            # проверить величину: «funding большой» и «начислений больше,
+            # чем бывает» снаружи неотличимы, а лечатся разным.
+            events.append({"ts": tm, "rate": float(r[i]),
+                           "open_notional": round(open_notl, 2),
+                           "usd": round(got, 4)})
+    return (pnl, events) if detail else pnl
 
 
 def rate_at_entry(series, at, max_age_s=RATE_MAX_AGE_S):

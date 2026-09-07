@@ -993,6 +993,21 @@
 - L255 `test_run_refuses_when_the_rule_is_already_in_the_book()` — Правило внедрено — замер обязан отказать СЛОВАМИ, а не дать ноль.
 - L280 `main()`
 
+## research/dca_paper/test_fund_check.py · 111 строк
+
+Проверки проверки funding.
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L22 `H = 3600.0`
+- L23 `T0 = 1786320000.0`
+- L26 `_series(step_h, n, rate, start=T0 - 3600.0, dup=0)`
+- L37 `_row(sym='AAAUSDT', hold_h=24.0, margin=400.0, lev=20.0, side='…`
+- L46 `test_step_of_the_series_is_measured_not_assumed()`
+- L55 `test_duplicates_are_counted_and_double_the_charge()`
+- L73 `test_events_add_up_to_what_the_core_counts()`
+- L93 `test_no_series_is_a_reason_not_a_zero()`
+
 ## research/dca_paper/test_names.py · 227 строк
 
 Проверки замера соответствия имён режимов.
