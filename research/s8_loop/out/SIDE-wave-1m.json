@@ -1,0 +1,263 @@
+{
+ "present": true,
+ "books": {
+  "h24": {
+   "H": 24,
+   "arms": {
+    "gbm": {
+     "long": {
+      "n": 1481,
+      "net_mean": 121.8,
+      "net_median": -37.9,
+      "raw_mean": 261.6,
+      "raw_median": 26.3,
+      "pnl_usd": 368.61,
+      "pnl_raw_usd": 841.63,
+      "wave_mean": 139.7,
+      "wave_neg_share": 0.427,
+      "raw_win": 0.512,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1481
+     },
+     "short": {
+      "n": 1584,
+      "net_mean": 74.9,
+      "net_median": 283.5,
+      "raw_mean": -50.2,
+      "raw_median": 219.8,
+      "pnl_usd": 98.95,
+      "pnl_raw_usd": -340.7,
+      "wave_mean": 125.1,
+      "wave_neg_share": 0.447,
+      "raw_win": 0.56,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1584
+     }
+    },
+    "nn": {
+     "long": {
+      "n": 1375,
+      "net_mean": -125.4,
+      "net_median": -98.5,
+      "raw_mean": 11.4,
+      "raw_median": -81.3,
+      "pnl_usd": -316.29,
+      "pnl_raw_usd": 157.29,
+      "wave_mean": 136.8,
+      "wave_neg_share": 0.436,
+      "raw_win": 0.455,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1375
+     },
+     "short": {
+      "n": 1221,
+      "net_mean": 366.3,
+      "net_median": 502.7,
+      "raw_mean": 264.4,
+      "raw_median": 436.3,
+      "pnl_usd": 771.24,
+      "pnl_raw_usd": 461.32,
+      "wave_mean": 101.8,
+      "wave_neg_share": 0.491,
+      "raw_win": 0.655,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1221
+     }
+    }
+   }
+  },
+  "z": {
+   "H": 24,
+   "arms": {
+    "gbm": {
+     "long": {
+      "n": 1205,
+      "net_mean": -64.2,
+      "net_median": -13.0,
+      "raw_mean": 81.8,
+      "raw_median": 9.5,
+      "pnl_usd": -178.99,
+      "pnl_raw_usd": 193.64,
+      "wave_mean": 146.0,
+      "wave_neg_share": 0.406,
+      "raw_win": 0.505,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1205
+     },
+     "short": {
+      "n": 1464,
+      "net_mean": 43.1,
+      "net_median": 83.0,
+      "raw_mean": -104.1,
+      "raw_median": 63.3,
+      "pnl_usd": 99.68,
+      "pnl_raw_usd": -299.18,
+      "wave_mean": 147.3,
+      "wave_neg_share": 0.415,
+      "raw_win": 0.531,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1464
+     }
+    },
+    "nn": {
+     "long": {
+      "n": 1233,
+      "net_mean": -29.1,
+      "net_median": -12.0,
+      "raw_mean": 132.6,
+      "raw_median": 47.1,
+      "pnl_usd": -2.97,
+      "pnl_raw_usd": 479.66,
+      "wave_mean": 161.7,
+      "wave_neg_share": 0.398,
+      "raw_win": 0.528,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1233
+     },
+     "short": {
+      "n": 1007,
+      "net_mean": 19.7,
+      "net_median": 134.8,
+      "raw_mean": -113.0,
+      "raw_median": 65.0,
+      "pnl_usd": 31.77,
+      "pnl_raw_usd": -285.35,
+      "wave_mean": 132.7,
+      "wave_neg_share": 0.448,
+      "raw_win": 0.534,
+      "beta_mean": 1.0,
+      "no_wave": 1,
+      "no_beta": 1007
+     }
+    }
+   }
+  },
+  "h4": {
+   "H": 4,
+   "arms": {
+    "gbm": {
+     "long": {
+      "n": 1074,
+      "net_mean": -4.6,
+      "net_median": -12.0,
+      "raw_mean": 23.5,
+      "raw_median": 4.6,
+      "pnl_usd": -45.11,
+      "pnl_raw_usd": 342.44,
+      "wave_mean": 28.1,
+      "wave_neg_share": 0.406,
+      "raw_win": 0.507,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1074
+     },
+     "short": {
+      "n": 1351,
+      "net_mean": 4.5,
+      "net_median": 40.9,
+      "raw_mean": -21.9,
+      "raw_median": 19.0,
+      "pnl_usd": 20.16,
+      "pnl_raw_usd": -351.17,
+      "wave_mean": 26.4,
+      "wave_neg_share": 0.406,
+      "raw_win": 0.521,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1351
+     }
+    },
+    "nn": {
+     "long": {
+      "n": 1243,
+      "net_mean": -52.3,
+      "net_median": -28.8,
+      "raw_mean": -22.8,
+      "raw_median": -17.5,
+      "pnl_usd": -681.61,
+      "pnl_raw_usd": -285.07,
+      "wave_mean": 29.5,
+      "wave_neg_share": 0.393,
+      "raw_win": 0.474,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1243
+     },
+     "short": {
+      "n": 1096,
+      "net_mean": -0.5,
+      "net_median": -1.8,
+      "raw_mean": -27.1,
+      "raw_median": -25.0,
+      "pnl_usd": 110.69,
+      "pnl_raw_usd": -176.9,
+      "wave_mean": 26.6,
+      "wave_neg_share": 0.411,
+      "raw_win": 0.467,
+      "beta_mean": 1.0,
+      "no_wave": 0,
+      "no_beta": 1096
+     }
+    }
+   }
+  }
+ },
+ "wave_meta": {
+  "proxies": 19,
+  "bounds": 607,
+  "cover": {
+   "4": 607,
+   "24": 592
+  }
+ },
+ "proxies": [
+  "BTCUSDT",
+  "ETHUSDT",
+  "SOLUSDT",
+  "XRPUSDT",
+  "BNBUSDT",
+  "DOGEUSDT",
+  "ADAUSDT",
+  "AVAXUSDT",
+  "LINKUSDT",
+  "DOTUSDT",
+  "TRXUSDT",
+  "TONUSDT",
+  "SUIUSDT",
+  "LTCUSDT",
+  "BCHUSDT",
+  "NEARUSDT",
+  "APTUSDT",
+  "UNIUSDT",
+  "ARBUSDT",
+  "OPUSDT"
+ ],
+ "hours": 607,
+ "window": [
+  "2026-08-08-09",
+  "2026-09-06-21"
+ ],
+ "market": {
+  "4": {
+   "hours_with_wave": 607,
+   "median_bp": 13.7,
+   "mean_bp": 19.8,
+   "neg_share": 0.433
+  },
+  "24": {
+   "hours_with_wave": 592,
+   "median_bp": 20.9,
+   "mean_bp": 118.1,
+   "neg_share": 0.448
+  }
+ },
+ "secs": 759.3,
+ "computed_at": "2026-09-07 03:55"
+}

@@ -1,0 +1,8 @@
+== задание side-wave ==
+строка: run research/s8_loop/side_wave.py
+начало: 2026-09-07T03:42:57Z
+запускаю: .venv/bin/python research/s8_loop/side_wave.py 
+[03:52:55]   волна: TONUSDT без баров в окне
+/root/algoth_v2/research/s8_loop/side_wave.py:103: RuntimeWarning: Mean of empty slice
+  w = np.nanmean(m, axis=0)
+[03:55:37] волна: прокси с барами 19/20, границ 607, 4 ч: 607 с волной, 24 ч: 592 с волной
