@@ -1,0 +1,407 @@
+{
+ "at": 1788767816.1537971,
+ "secs": 296.9,
+ "legs": 9047,
+ "cache": 15362,
+ "owned": 15362,
+ "replayed": 2732,
+ "why": {
+  "нет ноги": 0,
+  "нога не сошлась": 0,
+  "руки неразличимы": 0
+ },
+ "disputed": {
+  "gbm": 0,
+  "nn": 2732
+ },
+ "mid": 1787479689.4,
+ "dep": 10000,
+ "books": {
+  "gbm": {
+   "safe": {
+    "stats": {
+     "n": 875,
+     "usd": 618.8,
+     "pct_median": 2.64,
+     "win": 87.9,
+     "worst": -7.45,
+     "best": 6.83,
+     "exits": {
+      "тейк": 696,
+      "срок": 179
+     },
+     "days": 24,
+     "day_median": -0.13,
+     "half_a": 619.73,
+     "half_b": -0.93,
+     "n_a": 863,
+     "n_b": 12
+    },
+    "final": 0.0618,
+    "max_dd": -0.0257,
+    "taken": 887,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 349,
+    "peak_declared": 457,
+    "kept": 887,
+    "positions": 3313
+   },
+   "optimal": {
+    "stats": {
+     "n": 877,
+     "usd": 1208.9,
+     "pct_median": 3.894,
+     "win": 87.5,
+     "worst": -27.89,
+     "best": 23.43,
+     "exits": {
+      "тейк": 694,
+      "срок": 173,
+      "пол": 9,
+      "ликвидация": 1
+     },
+     "days": 24,
+     "day_median": -0.06,
+     "half_a": 1209.88,
+     "half_b": -0.99,
+     "n_a": 865,
+     "n_b": 12
+    },
+    "final": 0.1209,
+    "max_dd": -0.0651,
+    "taken": 889,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 349,
+    "peak_declared": 457,
+    "kept": 889,
+    "positions": 3313
+   },
+   "aggr": {
+    "stats": {
+     "n": 406,
+     "usd": 1333.14,
+     "pct_median": 12.277,
+     "win": 91.6,
+     "worst": -31.64,
+     "best": 26.26,
+     "exits": {
+      "срок": 36,
+      "пол": 11,
+      "тейк": 357,
+      "ликвидация": 2
+     },
+     "days": 10,
+     "day_median": 1.01,
+     "half_a": 1333.14,
+     "half_b": null,
+     "n_a": 406,
+     "n_b": 0
+    },
+    "final": 0.133,
+    "max_dd": -0.0727,
+    "taken": 408,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 175,
+    "peak_declared": 237,
+    "kept": 408,
+    "positions": 3313
+   },
+   "safe_s": {
+    "stats": {
+     "n": 75,
+     "usd": -113.68,
+     "pct_median": -0.046,
+     "win": 42.7,
+     "worst": -24.94,
+     "best": 5.85,
+     "exits": {
+      "тейк": 13,
+      "срок": 54,
+      "пол": 7,
+      "ликвидация": 1
+     },
+     "days": 19,
+     "day_median": -0.05,
+     "half_a": -113.51,
+     "half_b": -0.17,
+     "n_a": 70,
+     "n_b": 5
+    },
+    "final": -0.0114,
+    "max_dd": -0.0129,
+    "taken": 81,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 43,
+    "peak_declared": 457,
+    "kept": 81,
+    "positions": 116
+   },
+   "optimal_s": {
+    "stats": {
+     "n": 75,
+     "usd": -144.57,
+     "pct_median": -0.072,
+     "win": 41.3,
+     "worst": -24.98,
+     "best": 18.97,
+     "exits": {
+      "тейк": 13,
+      "срок": 50,
+      "пол": 10,
+      "ликвидация": 2
+     },
+     "days": 19,
+     "day_median": -0.05,
+     "half_a": -144.4,
+     "half_b": -0.17,
+     "n_a": 70,
+     "n_b": 5
+    },
+    "final": -0.0145,
+    "max_dd": -0.0175,
+    "taken": 81,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 43,
+    "peak_declared": 457,
+    "kept": 81,
+    "positions": 116
+   },
+   "aggr_s": {
+    "stats": {
+     "n": 31,
+     "usd": -81.34,
+     "pct_median": -10.947,
+     "win": 45.2,
+     "worst": -13.99,
+     "best": 10.63,
+     "exits": {
+      "тейк": 4,
+      "срок": 15,
+      "пол": 10,
+      "ликвидация": 2
+     },
+     "days": 11,
+     "day_median": -0.97,
+     "half_a": -81.34,
+     "half_b": null,
+     "n_a": 31,
+     "n_b": 0
+    },
+    "final": -0.0081,
+    "max_dd": -0.0098,
+    "taken": 31,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 19,
+    "peak_declared": 457,
+    "kept": 31,
+    "positions": 116
+   }
+  },
+  "nn": {
+   "safe": {
+    "stats": {
+     "n": 1487,
+     "usd": 724.87,
+     "pct_median": 1.833,
+     "win": 80.6,
+     "worst": -5.07,
+     "best": 5.35,
+     "exits": {
+      "тейк": 1026,
+      "срок": 461
+     },
+     "days": 30,
+     "day_median": 1.15,
+     "half_a": 707.09,
+     "half_b": 17.78,
+     "n_a": 1302,
+     "n_b": 185
+    },
+    "final": 0.0724,
+    "max_dd": -0.0287,
+    "taken": 1513,
+    "no_cash": 56,
+    "too_small": 0,
+    "peak": 453,
+    "peak_declared": 457,
+    "kept": 1569,
+    "positions": 5382
+   },
+   "optimal": {
+    "stats": {
+     "n": 1493,
+     "usd": 1557.46,
+     "pct_median": 2.48,
+     "win": 80.7,
+     "worst": -28.27,
+     "best": 34.38,
+     "exits": {
+      "тейк": 1030,
+      "срок": 456,
+      "пол": 4,
+      "ликвидация": 3
+     },
+     "days": 30,
+     "day_median": 1.15,
+     "half_a": 1517.96,
+     "half_b": 39.5,
+     "n_a": 1306,
+     "n_b": 187
+    },
+    "final": 0.156,
+    "max_dd": -0.0767,
+    "taken": 1519,
+    "no_cash": 56,
+    "too_small": 0,
+    "peak": 453,
+    "peak_declared": 457,
+    "kept": 1575,
+    "positions": 5382
+   },
+   "aggr": {
+    "stats": {
+     "n": 527,
+     "usd": 1770.36,
+     "pct_median": 12.224,
+     "win": 93.0,
+     "worst": -32.51,
+     "best": 39.62,
+     "exits": {
+      "тейк": 464,
+      "пол": 9,
+      "срок": 50,
+      "ликвидация": 4
+     },
+     "days": 13,
+     "day_median": 7.42,
+     "half_a": 1752.03,
+     "half_b": 18.33,
+     "n_a": 521,
+     "n_b": 6
+    },
+    "final": 0.1774,
+    "max_dd": -0.0804,
+    "taken": 529,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 232,
+    "peak_declared": 237,
+    "kept": 529,
+    "positions": 5382
+   },
+   "safe_s": {
+    "stats": {
+     "n": 123,
+     "usd": -35.83,
+     "pct_median": 0.328,
+     "win": 65.0,
+     "worst": -25.01,
+     "best": 16.01,
+     "exits": {
+      "срок": 66,
+      "тейк": 51,
+      "пол": 4,
+      "ликвидация": 2
+     },
+     "days": 26,
+     "day_median": -0.08,
+     "half_a": -60.26,
+     "half_b": 24.44,
+     "n_a": 68,
+     "n_b": 55
+    },
+    "final": -0.0041,
+    "max_dd": -0.0097,
+    "taken": 160,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 42,
+    "peak_declared": 457,
+    "kept": 160,
+    "positions": 236
+   },
+   "optimal_s": {
+    "stats": {
+     "n": 123,
+     "usd": -67.42,
+     "pct_median": 0.328,
+     "win": 65.0,
+     "worst": -25.0,
+     "best": 15.96,
+     "exits": {
+      "тейк": 52,
+      "пол": 8,
+      "срок": 61,
+      "ликвидация": 2
+     },
+     "days": 26,
+     "day_median": -0.0,
+     "half_a": -90.32,
+     "half_b": 22.89,
+     "n_a": 68,
+     "n_b": 55
+    },
+    "final": -0.0073,
+    "max_dd": -0.0123,
+    "taken": 160,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 42,
+    "peak_declared": 457,
+    "kept": 160,
+    "positions": 236
+   },
+   "aggr_s": {
+    "stats": {
+     "n": 36,
+     "usd": -26.41,
+     "pct_median": 10.296,
+     "win": 69.4,
+     "worst": -14.01,
+     "best": 8.98,
+     "exits": {
+      "тейк": 17,
+      "пол": 7,
+      "срок": 10,
+      "ликвидация": 2
+     },
+     "days": 18,
+     "day_median": 1.82,
+     "half_a": -43.24,
+     "half_b": 16.84,
+     "n_a": 23,
+     "n_b": 13
+    },
+    "final": -0.0027,
+    "max_dd": -0.0066,
+    "taken": 40,
+    "no_cash": 0,
+    "too_small": 0,
+    "peak": 7,
+    "peak_declared": 457,
+    "kept": 40,
+    "positions": 236
+   }
+  }
+ },
+ "tail": {
+  "syms": 74,
+  "minutes": 390,
+  "dry": 262,
+  "span_med_h": 0.03,
+  "zero_vol_tape": 0,
+  "entry_dropped": 0,
+  "marked": 29,
+  "cut_why": {
+   "книга есть, но не в окне этой позиции": 18,
+   "книги в хвосте нет вовсе": 8
+  }
+ },
+ "rules": 6
+}
