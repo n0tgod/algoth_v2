@@ -1437,6 +1437,30 @@ def test_retired_books_stop_trading_but_keep_their_record():
           "полностью: деньги на месте")
 
 
+def test_rules_snapshot_carries_only_living_books():
+    """Свод несёт ДЕЙСТВУЮЩИЙ список книг — тем же кодом, что и прогон.
+
+    Кусается дважды. Первое: страница строит вкладки из `RULER_ORDER`
+    свода, и снятая книга там означала бы вкладку без сделок. Второе:
+    писатель проверяется САМ, а не через подставной свод тестов
+    страницы — тот однажды уже собирался новым правилом, пока живой
+    писатель писал старым, и проверка молчала (так снятые зеркала и
+    доехали до страницы после деплоя).
+    """
+    snap = P.rules_snapshot()
+    assert snap["RULER_ORDER"] == R.order_of("sit"), snap["RULER_ORDER"]
+    assert not any(R.retired(k) for k in snap["RULER_ORDER"]), snap
+    for field in ("RULERS", "TICKETS", "FLOORS", "PEAKS"):
+        assert set(snap[field]) == set(snap["RULER_ORDER"]), (field,
+                                                             snap[field])
+    # отрицательный контроль: попроси свод со снятыми — он их отдаст,
+    # значит проверка выше меряет правило, а не пустоту
+    full = P.rules_snapshot(keys=R.order_of("sit", with_retired=True))
+    assert "optimal_s" in full["RULER_ORDER"] and "optimal_s" in full["RULERS"]
+    print(f"ok  свод несёт только живые книги {snap['RULER_ORDER']}, "
+          "а по требованию отдаёт и снятые")
+
+
 def test_watchdog_runs_short_books_by_the_same_rule():
     """Короткие книги семейства h24 поднимаются тем же правилом: по метке
     «когда считали», раз в час, кроме часов обучения, и не вторым
@@ -1685,10 +1709,18 @@ def test_contracts_walk_matches_the_simulation():
 
 
 def test_short_books_are_declared_as_a_mirror():
-    """Реестр несёт шесть книг, и у коротких сторона объявлена полем."""
-    assert len(R.RULER_ORDER) == 6, R.RULER_ORDER
-    longs = [k for k in R.RULER_ORDER if R.side_of(k) == "long"]
-    shorts = [k for k in R.RULER_ORDER if R.side_of(k) == "short"]
+    """Реестр несёт шесть книг, и у коротких сторона объявлена полем.
+
+    Зеркала сняты 2026-09-07, поэтому реестр читается ПОЛНЫМ списком
+    (`RULER_ORDER_ALL`): снятие убирает книгу из торговли и с показа, а
+    не из записи — иначе проверка правила зеркала исчезла бы вместе с
+    самим зеркалом.
+    """
+    assert len(R.RULER_ORDER_ALL) == 6, R.RULER_ORDER_ALL
+    longs = [k for k in R.RULER_ORDER_ALL if R.side_of(k) == "long"]
+    shorts = [k for k in R.RULER_ORDER_ALL if R.side_of(k) == "short"]
+    # живой список — только длинные: зеркала сняты
+    assert R.RULER_ORDER == longs, (R.RULER_ORDER, longs)
     assert len(longs) == 3 and len(shorts) == 3, (longs, shorts)
     for k in longs:
         # Зеркало отличается СТОРОНОЙ и ничем больше: правило и параметр
@@ -2044,6 +2076,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
          test_cache_of_other_rules_is_refused_out_loud,
          test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted,
     test_retired_books_stop_trading_but_keep_their_record,
+    test_rules_snapshot_carries_only_living_books,
     test_watchdog_runs_short_books_by_the_same_rule,
          test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote,
          test_tail_reaches_the_core_and_the_replay_signature]

@@ -318,7 +318,13 @@ for _k in ("safe", "optimal", "aggr"):
                    f"«{RULERS[_k]['title']}».")
     RULERS[_k + "_h"] = _v
 
-RULER_ORDER = ["safe", "optimal", "aggr", "safe_s", "optimal_s", "aggr_s"]
+# Полный исторический порядок книг ситуационного листа. Он НЕ
+# сокращается никогда: журнал и отчёты обязаны читать снятую книгу
+# целиком, иначе отрицательный результат исчезнет вместе с записью.
+# Действующий список — `RULER_ORDER` ниже, он и есть единственный
+# ответ на вопрос «какие книги торгуют и показываются».
+RULER_ORDER_ALL = ["safe", "optimal", "aggr",
+                   "safe_s", "optimal_s", "aggr_s"]
 # Семейство `h24` идёт СВОИМ порядком и своим прогоном: его книги считает
 # `run_short.py` по другому листу, и попади они в `RULER_ORDER`, длинный
 # прогон стал бы считать их из чужих ног молча.
@@ -346,6 +352,13 @@ def retired(key):
     return key in RETIRED_AT
 
 
+# Действующий порядок: снятая книга выпадает отсюда, и ВСЕ читатели —
+# прогон, свод, отчёт, страница — перестают её видеть одним движением.
+# Второго списка живых книг в проекте нет: он уже жил в восьми местах и
+# разошёлся.
+RULER_ORDER = [k for k in RULER_ORDER_ALL if not retired(k)]
+
+
 def family_of(key):
     """Семейство книги: `sit` — по листу ситуационной, `h24` — по `h24`."""
     return (RULERS.get(key) or {}).get("family") or "sit"
@@ -358,7 +371,7 @@ def order_of(family="sit", with_retired=False):
     `with_retired=True` возвращает их обратно — этим читают журнал и
     отчёты, где запись обязана остаться целиком.
     """
-    out = list(H24_ORDER if family == "h24" else RULER_ORDER)
+    out = list(H24_ORDER if family == "h24" else RULER_ORDER_ALL)
     return out if with_retired else [k for k in out if not retired(k)]
 
 

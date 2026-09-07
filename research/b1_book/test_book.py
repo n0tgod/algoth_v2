@@ -7053,7 +7053,9 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
     root = os.path.join(os.path.dirname(HERE), "dca_paper")
     sys.path.insert(0, root)
     import rules as DR
+    import run_paper as DP
 
+    _snap = DP.rules_snapshot()
     jp0, ap0 = DR.JOURNAL, DR.ARTIFACT
     td = tempfile.mkdtemp()
     try:
@@ -7111,9 +7113,13 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         art = {"rules": {"RULES": DR.RULES, "TICKET": DR.TICKET,
                          "DEPOSITS": [1000.0], "AHEAD_H": DR.AHEAD_H,
                          "HOLD_H": DR.HOLD_H,
-                         "RULERS": {k: dict(DR.RULERS[k])
-                                    for k in DR.order_of("sit")},
-                         "RULER_ORDER": list(DR.order_of("sit"))},
+                         # список книг берётся у ЖИВОГО писателя свода,
+                         # а не собирается здесь: подставной свод,
+                         # собранный своим правилом, однажды уже прошёл
+                         # проверку, пока прогон писал старым списком, и
+                         # снятые книги доехали до страницы
+                         "RULERS": _snap["RULERS"],
+                         "RULER_ORDER": list(_snap["RULER_ORDER"])},
                "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k,
                                        "slots": DR.slots(1000.0, DR.DEFAULT_RULER),
                                        # нетто по замеру издержек — тем

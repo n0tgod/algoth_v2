@@ -105,7 +105,16 @@ def test_each_arm_gets_its_own_book_and_the_whole_deposit():
     assert abs(n["final"] / g["final"] - 4.0) < 0.6, (g["final"], n["final"])
     v = AB.verdict(s)
     assert v["optimal"]["winner"] == "nn", v["optimal"]
-    assert v["safe_s"]["why"].startswith("сделок меньше 30"), v["safe_s"]
+    # книга с малой выборкой вердикта НЕ получает, и это сказано
+    # причиной, а не тишиной: зеркала `*_s` сняты 07.09, поэтому
+    # короткая проверяется искусственно урезанной книгой
+    thin = dict(s, books={a: dict(s["books"][a],
+                                  safe=dict(s["books"][a]["safe"],
+                                            stats={"n": 5}))
+                          for a in AB.ARMS})
+    assert AB.verdict(thin)["safe"]["why"].startswith("сделок меньше 30"), \
+        AB.verdict(thin)["safe"]
+    assert "why" not in v["safe"], v["safe"]
     txt = AB.report(s)
     assert "Чего замер НЕ говорит" in txt and "Сложить два итога нельзя" in txt
     assert "| `optimal` (оптимальная) | сеть |" in txt

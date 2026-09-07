@@ -951,6 +951,35 @@ def report(s):
     return "\n".join(L)
 
 
+def rules_snapshot(keys=None):
+    """Правила прогона в свод: страница описывает ИМИ то, что видит.
+
+    Список книг здесь — ДЕЙСТВУЮЩИЙ (`R.RULER_ORDER`): снятая книга не
+    попадает ни в порядок, ни в описания, и страница перестаёт рисовать
+    её вкладку. Проверка этого места отдельная: подставной свод в тестах
+    страницы однажды уже был собран новым правилом, пока живой писатель
+    писал старым, и проверка молчала.
+    """
+    keys = list(keys if keys is not None else R.RULER_ORDER)
+    return {"RULES": R.RULES, "TICKET": R.TICKET_MIN,
+            "TICKET_MIN": R.TICKET_MIN, "PEAK_SEEN": R.PEAK_SEEN,
+            "PEAK_MARGIN": R.PEAK_MARGIN,
+            "TICKETS": {rk: {str(int(d)): R.ticket(d, rk)
+                             for d in R.DEPOSITS} for rk in keys},
+            "FLOORS": {rk: R.floor_of(rk) for rk in keys},
+            "PEAKS": {rk: R.peak_of(rk) for rk in keys},
+            "DEPOSITS": R.DEPOSITS, "AHEAD_H": R.AHEAD_H,
+            "TAKE_ANCHOR": R.TAKE_ANCHOR, "TAKE_MULT": R.TAKE_MULT,
+            "RULES_SINCE": R.RULES_SINCE,
+            "HOLD_H": R.HOLD_H, "ONE_PER_NAME": R.ONE_PER_NAME,
+            "MIN_EDGE_BP": R.MIN_EDGE_BP, "MIN_RR": R.MIN_RR,
+            "SURVIVE_MULT": R.SURVIVE_MULT,
+            "AGGR_MIN_LEV": R.AGGR_MIN_LEV,
+            "FLOOR_FRAC": R.FLOOR_FRAC,
+            "RULERS": {k: dict(R.RULERS[k]) for k in keys},
+            "RULER_ORDER": keys}
+
+
 def publish(name):
     sh = os.path.join(ROOT, "tools", "publish.sh")
     if os.path.exists(sh):
@@ -1117,24 +1146,7 @@ def main():
             b["all"]["open_dd"] = c["open_dd"]
             b["all"]["open_dd_share"] = c.get("open_dd_share")
     s["secs"] = round(time.time() - t0, 1)
-    s["rules"] = {"RULES": R.RULES, "TICKET": R.TICKET_MIN,
-                  "TICKET_MIN": R.TICKET_MIN, "PEAK_SEEN": R.PEAK_SEEN,
-                  "PEAK_MARGIN": R.PEAK_MARGIN,
-                  "TICKETS": {rk: {str(int(d)): R.ticket(d, rk)
-                                   for d in R.DEPOSITS}
-                              for rk in R.RULER_ORDER},
-                  "FLOORS": {rk: R.floor_of(rk) for rk in R.RULER_ORDER},
-                  "PEAKS": {rk: R.peak_of(rk) for rk in R.RULER_ORDER},
-                  "DEPOSITS": R.DEPOSITS, "AHEAD_H": R.AHEAD_H,
-                  "TAKE_ANCHOR": R.TAKE_ANCHOR, "TAKE_MULT": R.TAKE_MULT,
-                  "RULES_SINCE": R.RULES_SINCE,
-                  "HOLD_H": R.HOLD_H, "ONE_PER_NAME": R.ONE_PER_NAME,
-                  "MIN_EDGE_BP": R.MIN_EDGE_BP, "MIN_RR": R.MIN_RR,
-                  "SURVIVE_MULT": R.SURVIVE_MULT,
-                  "AGGR_MIN_LEV": R.AGGR_MIN_LEV,
-                  "FLOOR_FRAC": R.FLOOR_FRAC,
-                  "RULERS": {k: dict(R.RULERS[k]) for k in R.RULER_ORDER},
-                  "RULER_ORDER": list(R.RULER_ORDER)}
+    s["rules"] = rules_snapshot()
     with open(R.ARTIFACT, "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
     txt = report(s)
