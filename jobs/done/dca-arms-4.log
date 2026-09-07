@@ -120,3 +120,16 @@ sheets.jsonl: ног 981420
 - Деньги — брутто журнала. Издержки меряет `costs.py`; они пропорциональны обороту, знак разреза не переставляют, но и не вычтены здесь.
 - Строки без ноги («лист старше журнала книги») деньгами не приписаны никому и стоят отдельной строкой «нет руки» — их молчаливое зачисление в любую руку было бы подделкой разреза.
 
+публикуется в ветку main:
+ jobs/done/dca-arm-book.log              |   7 ++
+ jobs/done/dca-arms-4.done               |   1 +
+ jobs/done/dca-arms-4.log                | 122 ++++++++++++++++++++++++++++++++
+ jobs/poke.log                           |   5 ++
+ research/dca_paper/out/DCA-arms-1m.json |   4 +-
+ research/dca_paper/out/DCA-arms-1m.md   |   2 +-
+ 6 files changed, 138 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   f8d6059..33e6530  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T07:58:21Z, код 0
