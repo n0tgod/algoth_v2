@@ -1097,3 +1097,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788767558 ==
 [2026-09-07T07:52:39Z] задание diag-q-armbook запущено: tools/diag_queue.py
+
+== сигнал 1788767754 ==
+[2026-09-07T07:55:56Z] задание dca-arms-3 запущено: research/dca_paper/arm_split.py
