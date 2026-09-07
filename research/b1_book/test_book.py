@@ -7374,11 +7374,15 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               "порядок блоков не тот")
         # Издержки вычтены из денег книги, и плитки говорят ЧТО вычтено;
         # второй колонки «нетто» на странице нет.
-        check("DCA: издержки учтены в сделках, а не показаны рядом",
-              "costTiles(nt, meta)" in page and "netTiles" not in page
-              and "издержки вычтены из денег" in page
-              and "деньги выше БРУТТО" in page
-              and "на сделку, б.п. маржи" in page and "ct.fund_mean_bp" in page,
+        # Издержки сидят в результате и СВОИХ полей на странице не имеют
+        # (владелец 07.09: «не нужно было ничего нового добавлять»).
+        # Молчание кончается ровно там, где что-то не измерено.
+        check("DCA: издержки учтены в сделках и своих плиток не имеют",
+              "costsWarn(nt, meta)" in page and "costTiles" not in page
+              and "netTiles" not in page
+              and "издержки вычтены из денег" not in page
+              and "Числа выше &mdash; БРУТТО" in page
+              and "funding им не " in page,
               "нет разметки издержек")
         check("DCA: страница объясняет дубли и молчание о них",
               "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page
