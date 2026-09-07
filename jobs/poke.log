@@ -1182,3 +1182,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1788804730 ==
 [2026-09-07T18:12:12Z] задание costs-recheck запущено: research/dca_paper/costs.py
 [2026-09-07T18:12:12Z] задание pair-run-4 запущено: research/dca_paper/run_pair.py
+
+== сигнал 1788804967 ==
+[2026-09-07T18:16:09Z] задание pair-run-5 запущено: research/dca_paper/run_pair.py
