@@ -886,7 +886,7 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
-## research/dca_paper/test_arm_split.py · 121 строк
+## research/dca_paper/test_arm_split.py · 140 строк
 
 Проверки разреза DCA-книг по руке модели.
 
@@ -899,6 +899,7 @@
 - L57 `test_money_of_arms_sums_to_the_book_and_orphans_are_named()`
 - L89 `test_without_the_sheets_journal_nothing_pretends_to_have_an_arm…`
 - L104 `test_halves_split_by_decision_time()`
+- L116 `test_report_names_the_backtest_and_the_daily_activity()`
 
 ## research/dca_paper/test_costs.py · 456 строк
 

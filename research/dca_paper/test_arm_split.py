@@ -113,9 +113,28 @@ def test_halves_split_by_decision_time():
           f"B {g['half_b']:+.2f} $")
 
 
+def test_report_names_the_backtest_and_the_daily_activity():
+    legs = [_leg("AAAUSDT", "gbm", T0, 300.0),
+            _leg("BBBUSDT", "nn", T0 + 26 * H, 300.0)]
+    rows = [_row("AAAUSDT", T0, +4.0), _row("BBBUSDT", T0 + 26 * H, -6.0)]
+    s = A.run(rows=rows, legs=legs, log=lambda *a: None)
+    # обе строки писаны через 4 ч после решения, но правила v6 моложе их
+    assert s["forward"] == 0 and s["back"] == 2, (s["forward"], s["back"])
+    assert len(s["days"]) == 2, s["days"]
+    d = s["days"][sorted(s["days"])[0]]
+    assert (d["gbm"], d["nn"], d["rows"]) == (1, 0, 1), d
+    txt = A.report(s)
+    assert "вперёд записано всего 0 строк" in txt and "БЭКТЕСТ" in txt
+    assert "## Активность по суткам" in txt
+    assert sorted(s["days"])[1] in txt
+    print(f"ok  отчёт называет пересчёт ({s['back']} строк) и раскладывает "
+          f"активность по {len(s['days'])} суткам")
+
+
 if __name__ == "__main__":
     test_author_follows_the_book_rule_not_the_arm_order()
     test_money_of_arms_sums_to_the_book_and_orphans_are_named()
     test_without_the_sheets_journal_nothing_pretends_to_have_an_arm()
     test_halves_split_by_decision_time()
-    print("\nвсе 4 проверки прошли")
+    test_report_names_the_backtest_and_the_daily_activity()
+    print("\nвсе 5 проверок прошли")

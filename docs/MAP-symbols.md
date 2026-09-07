@@ -1532,7 +1532,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L68 `build_levels(bars)` — Уровни по последнему бару окна; мало истории — уровней нет.
 - L81 `main()`
 
-## research/dca_paper/arm_split.py · 350 строк
+## research/dca_paper/arm_split.py · 393 строк
 
 Разрез бумажных DCA-книг ПО РУКЕ МОДЕЛИ: деревья (`gbm`) и сеть (`nn`).
 
@@ -1550,13 +1550,14 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L118 `_median(xs)`
 - L126 `stats(rows, mid=None)` — Деньги руки: сумма, медиана позиции в % маржи, доля плюсов, половины.
 - L146 `window(rows)`
-- L156 `run(rows=None, legs=None, log=print)`
-- L213 `verdict(s)` — По книге на главном депозите: у какой руки плюс и держится ли он на обеих половинах окна. Меньше `N_MIN` сдел…
-- L236 `_u(x)`
-- L240 `_p(x)`
-- L244 `report(s)`
-- L321 `publish(name)`
-- L326 `main(argv=None)`
+- L156 `by_day(legs, rows, ruler=None, dep=None)` — Активность по суткам: решения листа по руке и строки книги.
+- L179 `run(rows=None, legs=None, log=print)`
+- L238 `verdict(s)` — По книге на главном депозите: у какой руки плюс и держится ли он на обеих половинах окна. Меньше `N_MIN` сдел…
+- L261 `_u(x)`
+- L265 `_p(x)`
+- L269 `report(s)`
+- L364 `publish(name)`
+- L369 `main(argv=None)`
 
 ## research/dca_paper/backfill_fav.py · 127 строк
 

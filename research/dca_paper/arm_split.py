@@ -153,6 +153,29 @@ def window(rows):
             "span_d": round((max(ats) - min(ats)) / 86400.0, 2)}
 
 
+def by_day(legs, rows, ruler=None, dep=None):
+    """Активность по суткам: решения листа по руке и строки книги.
+
+    Нужна затем, что сумма за окно молчит о том, РОВНО ЛИ книга работала:
+    месяц с недельным всплеском и месяц с ежедневной торговлей дают одну
+    и ту же строку итога. Сутки берутся по МОМЕНТУ РЕШЕНИЯ (не записи) —
+    вопрос в том, когда сигнал был, а не когда его посчитали.
+    """
+    d = {}
+    for g in legs:
+        k = time.strftime("%Y-%m-%d", time.gmtime(float(g.get("at") or 0)))
+        cell = d.setdefault(k, {"gbm": 0, "nn": 0, "rows": 0})
+        cell[(g.get("arm") or "gbm")] = cell.get(g.get("arm") or "gbm", 0) + 1
+    for r in rows:
+        if ruler is not None and R.ruler_of(r) != ruler:
+            continue
+        if dep is not None and int(float(r.get("dep") or 0)) != int(dep):
+            continue
+        k = time.strftime("%Y-%m-%d", time.gmtime(float(r.get("at") or 0)))
+        d.setdefault(k, {"gbm": 0, "nn": 0, "rows": 0})["rows"] += 1
+    return d
+
+
 def run(rows=None, legs=None, log=print):
     t0 = time.time()
     if legs is None:
@@ -202,7 +225,9 @@ def run(rows=None, legs=None, log=print):
         out[key] = {"ruler": rk, "dep": dep, "side": R.side_of(rk),
                     "title": R.ruler_title(rk), "all": stats(rs, mid),
                     "arms": arms}
+    days = by_day(legs, rich, ruler="optimal", dep=MAIN_DEP)
     return {"at": time.time(), "secs": round(time.time() - t0, 1),
+            "days": days, "rules_since": R.RULES_SINCE,
             "rules": R.RULES, "legs": len(legs), "rows": len(rows),
             "rows_all": n_all, "forward": len(fwd), "back": len(back),
             "forward_hours": len(seen), "composition": comp, "agree": agree,
@@ -258,6 +283,13 @@ def report(s):
           f"листов: {s['legs']}, решений {s['agree']['decisions']}, из них "
           f"обе руки на одном имени и часе — {s['agree']['both_arms']} "
           f"({s['agree']['share']} %).", ""]
+    since = time.strftime("%Y-%m-%d", time.gmtime(float(s.get("rules_since") or 0)))
+    L += [f"**Наблюдение против пересчёта.** Правила версии {s['rules']} "
+          f"действуют с {since}, поэтому вперёд записано всего "
+          f"{s['forward']} строк ({s['forward_hours']} ч), а {s['back']} — "
+          "пересчёт истории по нынешним правилам. Весь разрез ниже есть "
+          "БЭКТЕСТ по построению, и читать его как результат книги, "
+          "проверенной вперёд, нельзя.", ""]
     a = s["attribution"]
     L += ["## Восстановление руки", "",
           "| исход соединения | строк |", "|---|---:|",
@@ -288,6 +320,17 @@ def report(s):
         L += [f"| `{c['ruler']}` ({c['title']}) | **вся книга** | {st['n']} | "
               f"{_u(st.get('usd'))} | {_p(st.get('pct_median'))} | {st.get('win')} % | "
               f"{_u(st.get('half_a'))} | {_u(st.get('half_b'))} |"]
+    days = s.get("days") or {}
+    if days:
+        L += ["", "## Активность по суткам (решения листа по руке; строки "
+              f"книги `optimal` на ${s['main_dep']})", "",
+              "| сутки | деревья | сеть | строк книги |", "|---|---:|---:|---:|"]
+        for k in sorted(days):
+            c = days[k]
+            L += [f"| {k} | {c.get('gbm', 0)} | {c.get('nn', 0)} | {c.get('rows', 0)} |"]
+        L += ["", "Ровность работы книги видна только здесь: итог за окно "
+              "одинаков у месяца ежедневной торговли и у месяца с одним "
+              "всплеском, а решения о размере и о доверии к книге — разные.", ""]
     L += ["", "## Вердикт", "",
           f"Вердикт ставится книге на ${s['main_dep']} и только руке с "
           f"{N_MIN}+ сделками; «плюс на обеих половинах» — единственная "
