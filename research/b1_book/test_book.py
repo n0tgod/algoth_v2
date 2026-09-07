@@ -7365,6 +7365,9 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               and "общий счёт: две стороны" in page
               and "Депозит ОДИН на обе стороны" in page,
               "нет разметки общего счёта")
+        check("DCA: односторонняя общая книга кричит об этом",
+              "Одной стороны в книге" in page and "b.one_sided" in page,
+              "нет предупреждения об односторонней книге")
         check("DCA: стороны общего счёта стоят выше таблицы по суткам",
               page.index("h += pairBlock(b);")
               < page.index('h += dayTable(st,'),

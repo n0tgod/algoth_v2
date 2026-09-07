@@ -73,11 +73,17 @@ def long_recs(cache=None, log=print):
     if why:
         log(f"кэш длинных книг не используется: {why}")
         return {}, why
-    want = {tuple(RP.RULERS[k]): k for k in R.order_of("sit")}
+    # Одна пара линейки кормит НЕСКОЛЬКО книг: «оптимальная» и
+    # «агрессивная» считаются на одной геометрии и различаются гейтом
+    # плеча. Словарь «пара → книга» терял вторую из них молча, и общая
+    # книга режима оставалась вовсе без длинной стороны — ноль, который
+    # выглядел как книга.
+    want = {}
+    for k in R.order_of("sit"):
+        want.setdefault(tuple(RP.RULERS[k]), []).append(k)
     out = {}
     for (pr, _sym, _at), r in cache.items():
-        k = want.get(tuple(pr))
-        if k is not None:
+        for k in want.get(tuple(pr), ()):
             out.setdefault(k, []).append(r)
     log("длинные книги: " + ", ".join(f"{k} {len(v)}"
                                       for k, v in sorted(out.items())))
@@ -170,6 +176,20 @@ def separate(rows_by_book, dep):
     return out
 
 
+def one_sided(book, lk, sk):
+    """Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
+
+    Односторонняя «общая» книга выглядит как обычная и врёт молча:
+    первый живой прогон показал «общую (оптимальную)» без единой длинной
+    сделки — и она читалась как книга, а не как дефект. Отсюда поле,
+    из которого выводится фраза отчёта и строка страницы.
+    """
+    pr = book.get("parts") or {}
+    out = [p for p in (lk, sk)
+           if not (((pr.get(p) or {}).get("stats") or {}).get("n") or 0)]
+    return out or None
+
+
 def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
         long_journal=None, short_journal=None, keys=None, mem_limit=None):
     t0 = time.time()
@@ -208,6 +228,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
             if not b:
                 continue
             sub = [r for r in mine if int(r.get("dep", 0)) == int(dep)]
+            b["one_sided"] = one_sided(b, lk, sk)
             b["collisions"] = collisions(sub, pk)
             b["link"] = link(sub, pk)
             b["separate"] = separate(
@@ -268,6 +289,19 @@ def report(s):
                 f"{col.get('n', 0)}"
                 + (f" ({100 * col['share']:.1f} %)" if col.get("share")
                    else "") + " |")
+    bad = []
+    for pk in (s.get("rulers") or R.PAIR_ORDER):
+        for dep in R.DEPOSITS:
+            b = (s.get("books") or {}).get(RP._cell(pk, dep)) or {}
+            if b.get("one_sided"):
+                bad.append(f"{R.ruler_title(pk)} ${int(dep)}: нет стороны "
+                           + ", ".join(R.ruler_title(x)
+                                       for x in b["one_sided"]))
+    if bad:
+        L += ["", "**ВНИМАНИЕ: общий счёт не собран из двух сторон** — "
+              + "; ".join(bad) + ". Односторонняя книга выглядит как "
+              "обычная и молчит о том, что половины решений в ней нет; "
+              "числа выше по этим книгам читать нельзя.", ""]
     L += ["", "## Один счёт против двух раздельных", "",
           "Слева общий счёт: депозит один на обе стороны. Справа те же "
           "книги, как их показывают собственные вкладки: у каждой свой "

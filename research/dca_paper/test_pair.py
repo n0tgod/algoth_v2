@@ -140,6 +140,29 @@ def test_collisions_and_link_live_inside_the_book():
           "связь без трёх общих суток — причина словами")
 
 
+def test_books_sharing_one_geometry_both_get_their_positions():
+    """Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
+
+    «Оптимальная» и «агрессивная» считаются на одной геометрии и
+    различаются гейтом плеча. Словарь «пара → книга» оставлял только
+    последнюю, и общая книга режима выходила БЕЗ ДЛИННОЙ СТОРОНЫ: ноль,
+    выглядящий как книга (поймано первым же живым прогоном — «длинных
+    0» при 7336 позициях в кэше).
+    """
+    share = [k for k in R.order_of("sit")
+             if tuple(RP.RULERS[k]) == tuple(RP.RULERS["optimal"])]
+    assert len(share) > 1, ("проверка потеряла смысл: геометрию больше "
+                            "никто не делит", share)
+    rec = _long("AUSDT", T0)
+    cache = {(tuple(RP.RULERS["optimal"]), "AUSDT", round(T0, 3)): rec}
+    got, why = PR.long_recs(cache, log=lambda *a: None)
+    assert not why, why
+    assert set(got) == set(share), (sorted(got), share)
+    assert all(len(v) == 1 for v in got.values()), got
+    print(f"ok  общую геометрию делят {len(share)} книги ({', '.join(share)}), "
+          "и позиции достаются каждой")
+
+
 def test_memory_guard_stops_the_run_itself():
     """Прогон останавливается САМ и с числом: OOM выбирает не его.
 
@@ -208,6 +231,15 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
         assert b["ticket"] is None and b["slots"] is None, b
         # издержки считаются той же дорогой, что у отдельных книг
         assert b["costs"]["n"] == st["n"], b["costs"]
+        # обе стороны на месте — и это сказано полем, а не подразумевается
+        assert b["one_sided"] is None, b["one_sided"]
+        # контроль: книга без одной стороны обязана назвать её
+        half = dict(b, parts={"safe": pr["safe"],
+                              "safe_h": dict(pr["safe_h"], stats=None)})
+        assert PR.one_sided(half, "safe", "safe_h") == ["safe_h"], half["parts"]
+        bad_txt = PR.report(dict(s, books={RP._cell("pair_safe", dep):
+                                           dict(half, one_sided=["safe_h"])}))
+        assert "ВНИМАНИЕ: общий счёт не собран из двух сторон" in bad_txt
         # раздельные счета взяты из журналов самих книг
         sep = b["separate"]
         assert sep["safe"]["n"] == n and sep["safe_h"]["n"] == n, sep
@@ -228,6 +260,7 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
 
 if __name__ == "__main__":
     for t in (test_pack_marks_the_source_and_keeps_both_sides,
+              test_books_sharing_one_geometry_both_get_their_positions,
               test_memory_guard_stops_the_run_itself,
               test_one_account_takes_less_than_two_separate_ones,
               test_ticket_stays_the_ticket_of_its_own_side,
@@ -235,4 +268,4 @@ if __name__ == "__main__":
               test_missing_caches_are_a_reason_not_empty_books,
               test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts):
         t()
-    print("\nвсе 7 проверок прошли")
+    print("\nвсе 8 проверок прошли")
