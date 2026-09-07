@@ -1466,6 +1466,37 @@ def test_retired_books_stop_trading_but_keep_their_record():
           "полностью: деньги на месте")
 
 
+def test_replay_signature_ignores_books_that_do_not_replay():
+    """Подпись кэша реплея описывает то, что реплей СЧИТАЕТ.
+
+    Кусается в обе стороны: книга общего счёта (она ничего не считает по
+    барам — берёт готовые исходы обеих книг) подпись менять НЕ должна, а
+    книга, которая реплеится, — обязана. Первый заход этого не различал,
+    и заведение общего счёта объявило весь кэш негодным: прогон ушёл бы
+    в полный пересчёт истории молча, рядом с часовым циклом, на машине
+    без свопа.
+    """
+    was = P.cache_sig()
+    P.RULERS["pair_zzz"] = ("fence", "zzz", "both")
+    R.RULERS["pair_zzz"] = {"rule": "fence", "param": "zzz", "side": "both",
+                            "family": "pair", "title": "общая (проверка)"}
+    try:
+        assert P.cache_sig() == was, (P.cache_sig()["rulers"], was["rulers"])
+    finally:
+        del P.RULERS["pair_zzz"], R.RULERS["pair_zzz"]
+    # контроль: книга СВОЕГО реплея подпись обязана менять — иначе
+    # проверка выше меряла бы не правило, а безразличие
+    P.RULERS["zzz"] = ("fence", "zzz", "long")
+    R.RULERS["zzz"] = {"rule": "fence", "param": "zzz", "side": "long"}
+    try:
+        assert P.cache_sig() != was, "подпись не заметила новой линейки реплея"
+    finally:
+        del P.RULERS["zzz"], R.RULERS["zzz"]
+    assert P.cache_sig() == was
+    print(f"ok  подпись кэша: {len(was['rulers'])} линеек реплея; книга "
+          "общего счёта её не трогает, книга своего реплея — меняет")
+
+
 def test_rules_snapshot_carries_only_living_books():
     """Свод несёт ДЕЙСТВУЮЩИЙ список книг — тем же кодом, что и прогон.
 
@@ -2111,6 +2142,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
          test_watchdog_runs_the_book_hourly_and_asks_when_it_last_counted,
     test_retired_books_stop_trading_but_keep_their_record,
     test_rules_snapshot_carries_only_living_books,
+    test_replay_signature_ignores_books_that_do_not_replay,
     test_watchdog_runs_short_books_by_the_same_rule,
          test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote,
          test_tail_reaches_the_core_and_the_replay_signature]

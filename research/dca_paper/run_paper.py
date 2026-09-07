@@ -79,7 +79,14 @@ def cache_sig():
             "back_h": D2.BACK_H, "rungs": D2.N_RUNGS,
             "weights": list(D2.WEIGHTS), "gap": D2.MIN_ADD_GAP,
             "floor": D2.FLOOR_FRAC, "survive": R.SURVIVE_MULT,
-            "sigma_mult": R.SIGMA_MULT, "rulers": sorted(RULERS.values()),
+            "sigma_mult": R.SIGMA_MULT,
+            # Линейки, которые ЭТОТ реплей считает. Семейство общего
+            # счёта сюда не входит: оно ничего не считает по барам, а
+            # берёт готовые исходы обеих книг. Попав в подпись, оно
+            # объявило бы весь кэш негодным — и первый же прогон после
+            # его заведения ушёл в полный пересчёт истории молча.
+            "rulers": sorted(v for k, v in RULERS.items()
+                             if R.family_of(k) != "pair"),
             # Тейк — правило ИСХОДА, а не ускорение: кэш, посчитанный на
             # прежней цели, описывает другую книгу и обязан быть отвергнут
             # вслух (правка 2026-09-05, замер D8).
