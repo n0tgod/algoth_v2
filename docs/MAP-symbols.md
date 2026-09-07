@@ -2728,6 +2728,110 @@ M2: каркас walk-forward — чистая математика без чт�
 - L223 `nonoverlap(eval_idx, h)` — Каждое h-е оценочное сечение — статистика без перекрытия форвардов (урок R2).
 - L229 `parse_day(s)`
 
+## research/mech_49b535f8/controls_check.py · 97 строк
+
+Своя машинка проверки негативных контролей — до сдачи отчёта.
+
+- L30 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L31 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L32 `REPORT = os.path.join(ROOT, 'research', 'factory…`
+- L35 `run_tests(tests)`
+- L49 `main()`
+
+## research/mech_49b535f8/place.py · 740 строк
+
+Механика 49b535f8 — ГДЕ усреднять: места доливов DCA-лестницы.
+
+- L69 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L70 `RESEARCH = os.path.dirname(HERE)`
+- L91 `N_RUNGS = D2.N_RUNGS` — --- объявленная сетка: чужие величины берутся У ХОЗЯЕВ ------------------- Ни одно из этих чисел не назначено…
+- L92 `WEIGHTS = D2.WEIGHTS`
+- L93 `MIN_GAP = D2.MIN_ADD_GAP`
+- L94 `SURVIVE_MULT = D2.SURVIVE_MULT`
+- L95 `FLOOR_FRAC = D2.FLOOR_FRAC`
+- L96 `FLAT_MMR = D2.FLAT_MMR`
+- L97 `SPACING_SIG = D1.SPACING_SIG`
+- L98 `SIG_FLOOR_Q = D1.SIG_FLOOR_Q`
+- L103 `ABS_SIG_FLOOR = 0.005` — Абсолютный пол σ. В `run_dca.py` он стоит литералом внутри `run` (`floor = max(floor, 0.005)`) и импортируемо…
+- L109 `NULL_Q = 95.0` — --- пороги вердикта: чужие, объявлены до прогона ------------------------- Убийца (1) — правило §9 спеки 14 д…
+- L117 `GRID_BAND = 0.001` — Укус — величина ПЛОХОГО: |худшая| / медиана прибыльной. «Выше по укусу» у меры плохого означает МЕНЬШЕ, поэто…
+- L118 `GRID_FRAC_LO = 0.45`
+- L119 `GRID_FRAC_HI = 0.55`
+- L121 `DRAWS = 100`
+- L122 `SEED = 20260907`
+- L123 `BOOT = 2000`
+- L128 `log_gap(min_gap)` — Минимальный зазор в логарифме цены: p ≤ p_prev·(1 − зазор).
+- L133 `gap_ok(rungs, min_gap=MIN_GAP, tol=1e-09)` — Лестница соблюдает зазор §R1 — тем же неравенством, что ядро.
+- L149 `depth_of(entry, rungs)` — Глубина лестницы долей цены входа. Один рунг — глубины нет (0).
+- L156 `draw_rungs(entry, k, d_max, rng, min_gap=MIN_GAP)` — Случайная лестница ТОЙ ЖЕ глубины и формы (нуль §8.6).
+- L187 `draws_for(entry, k, d_max, n_draws, leg_id, seed=SEED, min_gap=…` — Розыгрыши позиции, назначенные ЗАРАНЕЕ парой (зерно, номер ноги).
+- L202 `even_rungs(entry, k, d_max)` — σ-каркас, приведённый к чужой глубине: равный шаг по цене (G′).
+- L215 `sigma_grid(entry, sig_day, n_rungs=N_RUNGS, spacing=SPACING_SIG)` — σ-сетка своей глубины (рука G). Нет σ — НЕТ РУКИ, а не ноль.
+- L234 `sigma_day_of(sigma_bp)` — Суточная σ долей цены из минутной σ в б.п. — линейкой D5.
+- L239 `sigma_floor(sigmas, q=SIG_FLOOR_Q, abs_floor=ABS_SIG_FLOOR)` — Пол σ ИЗ САМОГО СЕЧЕНИЯ (урок S1), не из головы.
+- L254 `fence_lev(rungs, entry, d_max, look, mult=SURVIVE_MULT, weights…` — Плечо забора §5 и лестница, которую оно допускает.
+- L273 `sim(hold, rungs, lev, look, take_px)` — Реплей одной руки ЯДРОМ. Единственная дорога до `simulate_dca`.
+- L280 `over_tier(tiers, lev)` — Плечо выше предела тира площадки? Нет справочника — не знаем (None).
+- L296 `position_arms(hold, entry, rungs_s, take_px, look, sig_day, n_d…` — Все руки одной позиции. Возвращает словарь величин, а не отчёт.
+- L372 `cell_stats(pnl, liq=None, lev=None, over=None, exits=None)` — Сводка руки. Медиана И среднее рядом — одной из них мало.
+- L410 `null_place(real, draws, lower_is_better=False, q=NULL_Q)` — Где стоит рука S среди розыгрышей: процентиль И расстояние в σ.
+- L445 `draw_pool(s_pnl, r_pnl)` — Сводка S и РАСПРЕДЕЛЕНИЕ розыгрышей по трём величинам вердикта.
+- L483 `paired_day_boot(days_a, days_b, n_boot=BOOT, seed=SEED)` — Парный бутстрап по СУТКАМ: интервал разности итогов дня.
+- L509 `verdict_null(nulls)` — Убийца (1) — правило §9 дословно, собранное ИЗ ЧИСЕЛ.
+- L545 `verdict_grid(med_diff, frac_better, n)` — Убийца (2) — каркасы неразличимы: полоса задана заданием.
+- L574 `FORM_BETTER_HIGH = {'med': True, 'green': True, 'bite': Fa…` — Что у меры считается «лучше»: у медианы дня, доли зелёных и просадки — больше, у укуса — меньше. Таблица объя…
+- L577 `verdict_form(st_s, others)` — Убийца (3) — дневная форма: S не лучше ни по одной из четырёх мер.
+- L620 `_bars(prices, t0=1770000000, vol=1000.0, wick=0.0005)` — Минутные бары из ряда цен: (t, open, high, low, close, объём).
+- L630 `_path_bounce(entry, bounce_px, take, hold_n=600)` — Путь, отскакивающий РОВНО от подсаженного уровня и уходящий в тейк.
+- L644 `_walk(rng, n, sigma=0.0015, start=100.0)`
+- L648 `calibrate(n_draws=DRAWS, seed=SEED, planted_n=20, noise_n=60, h…` — Калибровочная пара: найти подсаженное и промолчать на шуме.
+- L736 `_net_beats(nulls)` — S бьёт розыгрыши по НЕТТО — и по медиане, и по среднему.
+
+## research/mech_49b535f8/run_place.py · 1019 строк
+
+Механика 49b535f8 — ГДЕ усреднять: структурные уровни T4 против случайных уровней той же глубины (нуль §8.6 с…
+
+- L97 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L98 `RESEARCH = os.path.dirname(HERE)`
+- L99 `ROOT = os.path.dirname(RESEARCH)`
+- L100 `OUT = os.path.join(HERE, 'out')`
+- L101 `CACHE = os.path.join(HERE, '.cache_sigma')`
+- L124 `BOOK_CAP = RB.DEPOSITS[1]` — --- касса дневной формы: ЧУЖИЕ величины у своих хозяев -------------------
+- L125 `BOOK_RULER = 'optimal'`
+- L126 `ARMS = ('S', 'G', 'GP', 'R')`
+- L127 `ARM_NAMES = {'S': 'S структурные уровни', 'G': 'G σ…`
+- L130 `CLUSTER_H = 24`
+- L131 `SIG_CACHE_V = 1`
+- L132 `MEM_NEED_MB = 1300`
+- L133 `MEM_SHARE = 0.85`
+- L134 `PROGRESS_S = 30`
+- L137 `log_(m)`
+- L141 `peak_rss_mb()`
+- L145 `mem_available_mb()` — Свободная память машины, МБ. Не прочитали — None, а не ноль.
+- L157 `mem_guard(need_mb=MEM_NEED_MB, share=MEM_SHARE, log=log_)` — Отказаться ГРОМКО, если прогон не влезает рядом со сбором.
+- L179 `state(tag, **kw)` — Состояние прогона файлом: молчащий прогон неотличим от повисшего.
+- L193 `load_legs(limit=None, log=log_, stride=1)` — Гейтованные ЛОНГИ журнала листов — тем же гейтом, что D2/D3.
+- L221 `by_symbol(longs)`
+- L230 `_cache_path(sym)`
+- L234 `cache_read(sym)`
+- L245 `cache_write(sym, sig)`
+- L255 `clusters(ats, span_h=CLUSTER_H)` — Разбить моменты решений на группы под ОДНО чтение окна назад.
+- L273 `sigma_pass(longs, src=None, log=log_, tag='1m')` — σ каждой позиции ДО входа. Нужна одному — полу сечения.
+- L333 `day_of(at)`
+- L337 `floors_by_day(longs, sig_bp)` — Пол σ на каждые сутки — из сечения ЭТИХ суток (урок S1).
+- L353 `setup(g, bars, ts)` — Разбор ноги до забора: окно, вход, тейк, уровни, структурные рунги.
+- L379 `run(limit=None, draws=P.DRAWS, seed=P.SEED, src=None, log=log_,…` — Полный проход. `legs`/`src` подставляются ТОЛЬКО проверками.
+- L508 `concentration(recs, ticket)` — Колонки концентрации: без трёх лучших суток и без лучшего имени.
+- L532 `day_form(recs, cap=BOOK_CAP, ruler=BOOK_RULER)` — Дневная форма руки: касса бумажных книг, форма — `stability.stats`.
+- L567 `measures(longs, keep, acc, r_pnl, r_exit, r_liq, k_hist, no_lad…`
+- L716 `_pct(v, nd=2)`
+- L720 `_num(v, nd=1)`
+- L724 `_money(v)`
+- L728 `_freq(v, nd=2)` — Частота — доля без знака: «+0.00 %» у частоты читается неверно.
+- L733 `report(s, tag='1m')`
+- L981 `publish(name)`
+- L986 `main(argv=None)`
+
 ## research/mech_994fc54f/bid_survives.py · 929 строк
 
 Механика 994fc54f — поглощение после падения со ЗНАМЕНАТЕЛЕМ.

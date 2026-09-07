@@ -187,3 +187,4 @@
 {"at": 1788759002.063, "role": "build", "status": "start", "started": 1788759002.0, "ended": 1788759002.063, "dry": false, "pid": 1700299}
 {"at": 1788762603.63, "role": "build", "status": "fail", "started": 1788759002.0, "ended": 1788762603.63, "dry": false, "note": "модель opus, убит по времени: предел 3600 с"}
 {"at": 1788762901.4, "role": "build", "status": "start", "started": 1788762901.0, "ended": 1788762901.4, "dry": false, "pid": 1708739}
+{"at": 1788763530.796, "role": "build", "status": "ok", "started": 1788762901.0, "ended": 1788763530.796, "dry": false, "note": "модель opus, усилие xhigh"}

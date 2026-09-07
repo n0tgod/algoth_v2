@@ -1,0 +1,541 @@
+{
+ "positions": 150,
+ "legs": 150,
+ "skipped": 0,
+ "secs": 123.9,
+ "rss_mb": 925,
+ "draws": 20,
+ "seed": 20260907,
+ "no_ladder": 71,
+ "degenerate_2": 32,
+ "gp_thin_gap": 0,
+ "draw_failed": 0,
+ "sigma_mismatch": 0,
+ "sigma_missing": 0,
+ "no_grid_why": {
+  "сетка глубже 100 %": 29
+ },
+ "sigma_day_median": 0.0504,
+ "k_hist": {
+  "1": 71,
+  "2": 32,
+  "3": 22,
+  "4": 25
+ },
+ "day_hist": {
+  "2026-08-08": 34,
+  "2026-08-09": 86,
+  "2026-08-11": 5,
+  "2026-08-10": 25
+ },
+ "top3_day_share": 0.967,
+ "params": {
+  "BACK_H": 24,
+  "HOLD_H": 72,
+  "N_RUNGS": 4,
+  "MIN_GAP": 0.015,
+  "SURVIVE_MULT": 2.0,
+  "FLOOR_FRAC": 0.1,
+  "SPACING_SIG": 2.0,
+  "SIG_FLOOR_Q": 0.1,
+  "NULL_Q": 95.0,
+  "GRID_BAND": 0.001
+ },
+ "arms": {
+  "S": {
+   "n": 150,
+   "median": 0.00113,
+   "mean": -0.0766,
+   "green": 0.58,
+   "worst": -1.0,
+   "bite": 188.06,
+   "liq_freq": 0.00667,
+   "median_lev": 1.53,
+   "frac_1x": 0.473,
+   "over_tier": 0.0,
+   "exits": {
+    "тейк": 73,
+    "срок": 64,
+    "пол": 12,
+    "ликвидация": 1
+   }
+  },
+  "G": {
+   "n": 121,
+   "median": 0.00503,
+   "mean": -0.0101,
+   "green": 0.628,
+   "worst": -0.5044,
+   "bite": 65.23,
+   "liq_freq": 0.0,
+   "median_lev": 2.11,
+   "frac_1x": 0.017,
+   "over_tier": 0.0,
+   "exits": {
+    "тейк": 62,
+    "срок": 59
+   }
+  },
+  "GP": {
+   "n": 150,
+   "median": 0.00131,
+   "mean": -0.07814,
+   "green": 0.587,
+   "worst": -1.0,
+   "bite": 188.02,
+   "liq_freq": 0.00667,
+   "median_lev": 1.53,
+   "frac_1x": 0.473,
+   "over_tier": 0.0,
+   "exits": {
+    "тейк": 73,
+    "срок": 64,
+    "пол": 12,
+    "ликвидация": 1
+   }
+  },
+  "R": {
+   "n": 150,
+   "median": 0.00131,
+   "mean": -0.0783,
+   "green": 0.587,
+   "worst": -1.0,
+   "bite": 188.02,
+   "liq_freq": 0.00667,
+   "median_lev": 1.53,
+   "frac_1x": 0.473,
+   "over_tier": 0.0
+  }
+ },
+ "median_draw": 10,
+ "null_bite_n": 47,
+ "null_ladder_n": 79,
+ "null": {
+  "bite": {
+   "n": 47,
+   "draws": 20,
+   "real": {
+    "n": 47,
+    "median": -0.03734,
+    "mean": -0.24639,
+    "green": 0.447,
+    "worst": -1.0,
+    "bite": 32.49
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": -0.03734,
+     "mean": -0.03075,
+     "edge": -0.02623,
+     "min": -0.0385,
+     "max": -0.02614,
+     "beats": false,
+     "rank": 0.05,
+     "sigmas": -1.75,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": -0.24639,
+     "mean": -0.24889,
+     "edge": -0.24315,
+     "min": -0.25864,
+     "max": -0.23954,
+     "beats": false,
+     "rank": 0.75,
+     "sigmas": 0.59,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 32.49,
+     "mean": 33.638,
+     "edge": 24.446,
+     "min": 21.52,
+     "max": 50.85,
+     "beats": false,
+     "rank": 0.4,
+     "sigmas": -0.16,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": -0.03043,
+   "draw_median_of_means": -0.24857
+  },
+  "ladder": {
+   "n": 79,
+   "draws": 20,
+   "real": {
+    "n": 79,
+    "median": 0.00392,
+    "mean": -0.14724,
+    "green": 0.519,
+    "worst": -1.0,
+    "bite": 52.66
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.00392,
+     "mean": 0.00466,
+     "edge": 0.0047,
+     "min": 0.00392,
+     "max": 0.0047,
+     "beats": false,
+     "rank": 0.0,
+     "sigmas": -4.36,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": -0.14724,
+     "mean": -0.14873,
+     "edge": -0.14532,
+     "min": -0.15453,
+     "max": -0.14317,
+     "beats": false,
+     "rank": 0.75,
+     "sigmas": 0.59,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 52.66,
+     "mean": 49.718,
+     "edge": 38.59,
+     "min": 38.59,
+     "max": 59.7,
+     "beats": false,
+     "rank": 0.3,
+     "sigmas": 0.53,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.0047,
+   "draw_median_of_means": -0.14854
+  }
+ },
+ "verdict_null": {
+  "killed": true,
+  "why": [
+   "убийца 1 (нуль §8.6): структурные уровни не выше 95-го процентиля случайных по median, mean, bite — «стратегический уровень» есть украшение"
+  ],
+  "parts": [
+   "median: -0.03734 против границы -0.02623 (НЕ выше), -1.75 σ от среднего розыгрышей",
+   "mean: -0.24639 против границы -0.24315 (НЕ выше), 0.59 σ от среднего розыгрышей",
+   "bite: +32.49000 против границы +24.44600 (НЕ кусает слабее), -0.16 σ от среднего розыгрышей"
+  ],
+  "fails": [
+   "median",
+   "mean",
+   "bite"
+  ]
+ },
+ "grid_n": 121,
+ "grid": {
+  "median": -0.00053,
+  "mean": -0.00304,
+  "frac_S_above": 0.438,
+  "median_lev_S": 1.53,
+  "median_lev_G": 2.11
+ },
+ "verdict_grid": {
+  "killed": false,
+  "why": [
+   "медиана S − G -0.053 % капитала (внутри полосы ±0.10 %), S выше G у 43.8 % выборов (вне полосы 0.45–0.55) на 121 позициях — каркасы различимы хотя бы по одной из двух величин"
+  ],
+  "in_band": true,
+  "in_frac": false
+ },
+ "even": {
+  "n": 79,
+  "median": 0.0,
+  "mean": 0.00291,
+  "frac_S_above": 0.177
+ },
+ "form": {
+  "S": {
+   "days": 7,
+   "green": 0.143,
+   "med": -2.53,
+   "med_green": 0.06,
+   "worst": -37.55,
+   "bite": 654.0,
+   "dd": -57.3,
+   "under": 6,
+   "red": 6,
+   "tot": -57.22,
+   "thin": true,
+   "taken": 61,
+   "offered": 150,
+   "skipped_same_name": 89,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -8.17,
+   "no_top3_days": -54.0,
+   "no_best_name": -59.62,
+   "best_name": "MAVIAUSDT"
+  },
+  "G": {
+   "days": 7,
+   "green": 0.429,
+   "med": -1.81,
+   "med_green": 2.84,
+   "worst": -12.59,
+   "bite": 4.4,
+   "dd": -21.4,
+   "under": 4,
+   "red": 4,
+   "tot": -14.2,
+   "thin": true,
+   "taken": 56,
+   "offered": 121,
+   "skipped_same_name": 65,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -2.03,
+   "no_top3_days": -21.37,
+   "no_best_name": -14.81,
+   "best_name": "ANIMEUSDT"
+  },
+  "GP": {
+   "days": 7,
+   "green": 0.143,
+   "med": -2.45,
+   "med_green": 0.06,
+   "worst": -35.71,
+   "bite": 622.1,
+   "dd": -54.9,
+   "under": 6,
+   "red": 6,
+   "tot": -54.85,
+   "thin": true,
+   "taken": 61,
+   "offered": 150,
+   "skipped_same_name": 89,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -7.84,
+   "no_top3_days": -51.63,
+   "no_best_name": -57.22,
+   "best_name": "CHRUSDT"
+  },
+  "R": {
+   "days": 7,
+   "green": 0.143,
+   "med": -2.54,
+   "med_green": 0.06,
+   "worst": -34.79,
+   "bite": 606.0,
+   "dd": -54.3,
+   "under": 6,
+   "red": 6,
+   "tot": -54.29,
+   "thin": true,
+   "taken": 61,
+   "offered": 150,
+   "skipped_same_name": 89,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -7.76,
+   "no_top3_days": -51.07,
+   "no_best_name": -56.66,
+   "best_name": "MAVIAUSDT"
+  }
+ },
+ "verdict_form": {
+  "killed": true,
+  "why": [
+   "убийца 3 (дневная форма): S не лучше σ-сетки и медианного розыгрыша НИ ПО ОДНОЙ из четырёх мер — «где усреднять» не покупает формы, по которой судит владелец"
+  ],
+  "parts": [
+   "med: S -2.53 против G -1.81, R -2.54 — не лучше обеих",
+   "green: S 0.143 против G 0.429, R 0.143 — не лучше обеих",
+   "bite: S 654.0 против G 4.4, R 606.0 — не лучше обеих",
+   "dd: S -57.3 против G -21.4, R -54.3 — не лучше обеих"
+  ],
+  "wins": []
+ },
+ "boot": {
+  "S_minus_G": {
+   "days": 7,
+   "median": -1.03488,
+   "mean": -6.14573,
+   "lo": -13.91151,
+   "hi": 0.0145,
+   "covers_zero": true
+  },
+  "S_minus_R": {
+   "days": 7,
+   "median": 0.0,
+   "mean": -0.41874,
+   "lo": -0.25357,
+   "hi": 0.00281,
+   "covers_zero": true
+  }
+ },
+ "calibration": {
+  "planted": {
+   "n": 20,
+   "draws": 20,
+   "real": {
+    "n": 20,
+    "median": 0.2933,
+    "mean": 0.3028,
+    "green": 1.0,
+    "worst": 0.2425,
+    "bite": 0.83
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.2933,
+     "mean": 0.19988,
+     "edge": 0.24285,
+     "min": 0.1424,
+     "max": 0.24363,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 3.45,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": 0.3028,
+     "mean": 0.20464,
+     "edge": 0.22767,
+     "min": 0.17361,
+     "max": 0.23138,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 5.7,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 0.83,
+     "mean": 0.379,
+     "edge": 0.1595,
+     "min": 0.15,
+     "max": 0.62,
+     "beats": false,
+     "rank": 0.0,
+     "sigmas": 3.0,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.19809,
+   "draw_median_of_means": 0.20492
+  },
+  "noise": {
+   "n": 60,
+   "draws": 20,
+   "real": {
+    "n": 60,
+    "median": 0.01864,
+    "mean": 0.00478,
+    "green": 0.65,
+    "worst": -0.369,
+    "bite": 14.99
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.01864,
+     "mean": 0.01843,
+     "edge": 0.01915,
+     "min": 0.01732,
+     "max": 0.01952,
+     "beats": false,
+     "rank": 0.5,
+     "sigmas": 0.43,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": 0.00478,
+     "mean": 0.00455,
+     "edge": 0.00651,
+     "min": 0.00232,
+     "max": 0.00716,
+     "beats": false,
+     "rank": 0.6,
+     "sigmas": 0.19,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 14.99,
+     "mean": 14.1085,
+     "edge": 12.3605,
+     "min": 11.42,
+     "max": 15.9,
+     "beats": false,
+     "rank": 0.25,
+     "sigmas": 0.78,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.0185,
+   "draw_median_of_means": 0.00439
+  },
+  "geom": {
+   "n": 60,
+   "draws": 20,
+   "real": {
+    "n": 60,
+    "median": 0.01386,
+    "mean": 0.00567,
+    "green": 0.617,
+    "worst": -0.1704,
+    "bite": 5.8
+   },
+   "nulls": {
+    "median": {
+     "reps": 20,
+     "real": 0.01386,
+     "mean": 0.00976,
+     "edge": 0.01359,
+     "min": 0.00577,
+     "max": 0.01386,
+     "beats": true,
+     "rank": 0.95,
+     "sigmas": 1.72,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 20,
+     "real": 0.00567,
+     "mean": 0.00413,
+     "edge": 0.00603,
+     "min": 0.00156,
+     "max": 0.00609,
+     "beats": false,
+     "rank": 0.9,
+     "sigmas": 1.27,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 20,
+     "real": 5.8,
+     "mean": 4.7235,
+     "edge": 3.177,
+     "min": 3.12,
+     "max": 7.32,
+     "beats": false,
+     "rank": 0.3,
+     "sigmas": 0.84,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00891,
+   "draw_median_of_means": 0.00388
+  },
+  "planted_n": 20,
+  "noise_n": 60,
+  "geom_n": 60,
+  "found": true,
+  "quiet": true
+ }
+}

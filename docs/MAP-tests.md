@@ -1453,6 +1453,57 @@
 - L351 `test_nonoverlap()`
 - L356 `main()`
 
+## research/mech_49b535f8/test_place.py · 633 строк
+
+Проверки механики 49b535f8 — «где усреднять».
+
+- L38 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L47 `MIN = 60`
+- L48 `HOUR = 3600`
+- L49 `T0 = 1786000000 // HOUR * HOUR`
+- L52 `look(notl)`
+- L58 `bars_from(prices, t0=T0, vol=1000.0, wick=0.0008)`
+- L66 `saw(n, base=100.0, amp=0.004, period=20, phase=0)` — Пила: даёт структуре, из чего строить уровни.
+- L78 `leg(at, sym='AAA', i=0, fav=300.0, adv=-400.0)`
+- L85 `class Src` — Подставной источник баров: ряд на символ, нарезается как живой.
+  - L94 `Src.__init__(self, series)`
+  - L98 `Src.bars(self, sym, t0, t1)`
+- L104 `make_series(sym_n=3, hours=200, seed=7)` — Ряды нескольких имён: пила в прошлом, блуждание дальше.
+- L119 `test_draw_keeps_depth_and_form()`
+- L133 `test_draw_respects_min_gap()` — Зазор §R1 у розыгрыша тот же, что у ядра, и предикат один.
+- L151 `test_draw_impossible_form_is_none()` — Лестницы такой формы не существует — None, а не короче и не тише.
+- L160 `test_draws_assigned_by_seed_not_by_order()`
+- L170 `test_two_rung_draw_is_identical_to_structure()` — При двух рунгах розыгрыш совпадает с S — и это НЕ прячется.
+- L187 `test_even_rungs_same_depth_and_count()`
+- L195 `test_sigma_floor_comes_from_section()`
+- L209 `test_no_sigma_is_dash_not_zero()`
+- L228 `test_sigma_day_uses_d5_ruler()`
+- L236 `_leg_and_bars(fut_mult=1.0)` — Нога и её бары; `fut_mult` переписывает БУДУЩЕЕ после решения.
+- L261 `test_no_lookahead_in_setup()` — Переписать будущее — прошлое не шелохнётся.
+- L276 `test_sigma_narrow_window_equals_wide()` — Узкое окно σ-прохода — ПРЕФИКС широкого, бит в бит.
+- L296 `test_arms_hold_leverage_where_they_must()` — R и G′ идут с плечом S, у G плечо своё: иначе место мешается с рычагом.
+- L321 `test_arm_S_is_core_replay()` — Рука S — ровно `ladder.simulate_dca`, второй копии реплея нет.
+- L334 `test_place_changes_money_when_it_should()` — Дорога живая: у лестницы, чьи рунги стоят иначе, и деньги иные.
+- L351 `test_cell_stats_keeps_median_and_mean_apart()`
+- L359 `test_draw_pool_is_a_book_per_draw()` — Розыгрыш — целая книга: сводка считается ВНУТРИ розыгрыша.
+- L376 `test_null_place_bite_direction()` — У меры ПЛОХОГО «выше» значит МЕНЬШЕ — и это проверяется знаком.
+- L394 `test_verdict_null_needs_all_three()`
+- L413 `test_verdict_null_reads_the_numbers()` — Фраза выводится ИЗ величин: подвинь число — сменится вердикт.
+- L427 `test_verdict_grid_band()`
+- L436 `test_verdict_form_needs_better_than_both()`
+- L448 `test_paired_day_boot_is_paired()`
+- L460 `test_calibration_finds_planted_and_stays_quiet()` — Пара обязательна: найти подсаженное место и промолчать на шуме.
+- L473 `_fake_run(draws=6, hours=200, sym_n=3, per_sym=6, src=None)`
+- L485 `test_end_to_end_gives_numbers_not_promises()`
+- L500 `test_run_refuses_on_empty_input()` — Ноль позиций при непустом входе — отказ, а не отчёт с прочерками.
+- L509 `test_report_prints_the_numbers_it_judges_by()`
+- L520 `test_day_form_uses_exit_day_and_book_ticket()`
+- L546 `test_concentration_columns_bite()`
+- L558 `test_clusters_glue_reads()`
+- L565 `test_sigma_cache_roundtrip()`
+- L580 `TESTS = [test_draw_keeps_depth_and_form, test_d…`
+- L614 `main()`
+
 ## research/mech_994fc54f/test_bid_survives.py · 530 строк
 
 Тесты механики 994fc54f — поглощение после падения.
