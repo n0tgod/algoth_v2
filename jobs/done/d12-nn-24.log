@@ -102,3 +102,25 @@ h24/nn: часов 576, коротких выборов 1728, ног под кр
 
 Пик измерен на том же окне, что и результат (правило книги, но in-sample); решений в час у источника три на руку — больше имён в час историей не воспроизвести (лист сечения пишется только у ситуационной модели); проскальзывания и funding в нетто нет (круг — комиссия); окно одно.
 
+публикуется в ветку main:
+ jobs/done/d12-nn-24.done                           |    1 +
+ jobs/done/d12-nn-24.log                            |  104 +
+ jobs/done/d12-nn-72.done                           |    1 +
+ jobs/done/d12-nn-72.log                            |   44 +
+ jobs/poke.log                                      |    4 +
+ research/dca_ladder/out/D12-own-nn-h24-1m.json     | 9750 ++++++++++++++++++++
+ research/dca_ladder/out/D12-own-nn-h24-1m.md       |   41 +
+ research/factory/out/agents-runs.jsonl             |    1 +
+ research/factory/out/build.json                    |  206 +-
+ research/mech_49b535f8/out/PLACE-levels-probe.json |  521 +-
+ research/mech_49b535f8/out/PLACE-levels-probe.md   |   85 +-
+ research/mech_49b535f8/out/PLACE-levels-smoke.json |  546 ++
+ research/mech_49b535f8/out/PLACE-levels-smoke.md   |   84 +
+ research/mech_49b535f8/out/state-smoke.json        |    1 +
+ research/s8_loop/out/day_brake.json                |    2 +-
+ 15 files changed, 10694 insertions(+), 697 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   218a84e..70e14c2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T06:34:59Z, код 0
