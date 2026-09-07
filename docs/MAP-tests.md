@@ -1008,6 +1008,23 @@
 - L73 `test_events_add_up_to_what_the_core_counts()`
 - L93 `test_no_series_is_a_reason_not_a_zero()`
 
+## research/dca_paper/test_fund_probe.py · 94 строк
+
+Проверки сверки ряда funding с площадкой.
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L20 `H = 3600.0`
+- L21 `T0 = 1786320000.0`
+- L24 `class _Api` — Площадка-подделка: отвечает ровно тем, что ей положили.
+  - L28 `_Api.__init__(self, interval=60, rows=None, fail=False)`
+  - L31 `_Api.api_get(self, path, params, key)`
+  - L36 `_Api.collect_funding_symbol(self, symbol, d0, d1)`
+- L47 `_ctx(points)`
+- L53 `test_window_and_match_are_decided_by_numbers()`
+- L66 `test_an_extra_point_of_ours_breaks_the_match()`
+- L77 `test_venue_silence_is_a_reason_not_a_match()`
+
 ## research/dca_paper/test_names.py · 227 строк
 
 Проверки замера соответствия имён режимов.

@@ -1711,6 +1711,25 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L250 `publish(name)`
 - L255 `main(argv=None)`
 
+## research/dca_paper/fund_probe.py · 238 строк
+
+Сверка нашего ряда funding с ПЛОЩАДКОЙ по тем же символам и окнам.
+
+- L32 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L33 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L40 `CHECK_ART = os.path.join(HERE, 'out', 'DCA-fund-che…`
+- L43 `_api()`
+- L48 `declared_interval(symbol, api=None)` — Интервал начислений символа по справочнику площадки, минуты.
+- L64 `venue_window(symbol, t0, t1, api=None)` — Начисления площадки в окне [t0, t1) — момент и ставка.
+- L78 `ours_window(series, t0, t1)` — То же окно из НАШЕГО ряда.
+- L89 `_stat(rows)`
+- L100 `compare(cases, ctx, api=None, log=print)` — Сверка по каждому случаю: наш ряд против площадки.
+- L131 `cases_from_check(path=None, k=3)` — Окна самых дорогих позиций — из отчёта проверки величины.
+- L158 `run(log=print, ctx=None, api=None, cases=None)`
+- L173 `report(s)`
+- L208 `publish(name)`
+- L213 `main(argv=None)`
+
 ## research/dca_paper/name_check.py · 242 строк
 
 Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).
