@@ -81,3 +81,34 @@
 - Общий счёт — ХЕДЖ-режим: шорт по имени, которое держит длинная сторона, разрешён. В одностороннем режиме биржи он срезал бы длинную позицию, и число совпадений выше есть цена режима.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/costs-recheck.log          | 20 +++++++++++
+ jobs/done/pair-run-4.log             | 64 ++++++++++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-pair.json |  2 +-
+ research/dca_paper/out/DCA-pair.md   | 42 +++++++++++------------
+ 4 files changed, 106 insertions(+), 22 deletions(-)
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   jobs/done/pair-run-4.log
+	modified:   research/paper_monthly/out/daily.log
+	modified:   research/s10_policy/out/tournament.log
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	bot/out/
+	research/a1_universe/.cache_opts/
+	research/a1_universe/.cache_risk/
+	research/mech_63fa406a/
+	research/mech_fcbd3542/.cache_ann/
+	research/mech_fcbd3542/.smoke.sh
+	"research/mech_fcbd3542/.\320\275\320\265\321\202/"
+	research/probe_fshift/.gitignore
+	research/s8_loop/books_extra.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
+конец: 2026-09-07T18:12:24Z, код 0
