@@ -1,0 +1,167 @@
+== задание diag-q-short ==
+строка: run tools/diag_queue.py
+начало: 2026-09-07T12:48:49Z
+запускаю: .venv/bin/python tools/diag_queue.py 
+=== ветка и расхождение ===
+## main...origin/main
+UU docs/MAP.md
+A  jobs/done/short-books-1.done
+A  jobs/done/short-books-1.log
+M  jobs/poke.log
+ M jobs/queue-state.md
+A  research/dca_paper/out/DCA-short.json
+A  research/dca_paper/out/DCA-short.md
+A  research/dca_paper/out/recs-short.jsonl
+A  research/dca_paper/out/short-2026-08-08.jsonl
+A  research/dca_paper/out/short-2026-08-09.jsonl
+A  research/dca_paper/out/short-2026-08-10.jsonl
+A  research/dca_paper/out/short-2026-08-11.jsonl
+A  research/dca_paper/out/short-2026-08-12.jsonl
+A  research/dca_paper/out/short-2026-08-13.jsonl
+A  research/dca_paper/out/short-2026-08-14.jsonl
+A  research/dca_paper/out/short-2026-08-15.jsonl
+A  research/dca_paper/out/short-2026-08-16.jsonl
+A  research/dca_paper/out/short-2026-08-17.jsonl
+A  research/dca_paper/out/short-2026-08-18.jsonl
+A  research/dca_paper/out/short-2026-08-19.jsonl
+A  research/dca_paper/out/short-2026-08-20.jsonl
+A  research/dca_paper/out/short-2026-08-21.jsonl
+A  research/dca_paper/out/short-2026-08-22.jsonl
+A  research/dca_paper/out/short-2026-08-23.jsonl
+A  research/dca_paper/out/short-2026-08-24.jsonl
+A  research/dca_paper/out/short-2026-08-25.jsonl
+A  research/dca_paper/out/short-2026-08-26.jsonl
+A  research/dca_paper/out/short-2026-08-27.jsonl
+A  research/dca_paper/out/short-2026-08-28.jsonl
+A  research/dca_paper/out/short-2026-08-29.jsonl
+A  research/dca_paper/out/short-2026-08-30.jsonl
+A  research/dca_paper/out/short-2026-08-31.jsonl
+A  research/dca_paper/out/short-2026-09-01.jsonl
+A  research/dca_paper/out/short-2026-09-02.jsonl
+A  research/dca_paper/out/short-2026-09-03.jsonl
+A  research/dca_paper/out/short-2026-09-04.jsonl
+A  research/dca_paper/out/short-2026-09-05.jsonl
+A  research/dca_paper/out/short-2026-09-06.jsonl
+M  research/paper_monthly/out/daily.log
+M  research/s10_policy/out/tournament.log
+M  research/s8_loop/out/day_brake.json
+?? bot/out/
+?? jobs/done/diag-q-short.done
+?? jobs/done/diag-q-short.log
+?? research/a1_universe/.cache_opts/
+?? research/a1_universe/.cache_risk/
+?? research/mech_63fa406a/
+?? research/mech_fcbd3542/.cache_ann/
+?? research/mech_fcbd3542/.smoke.sh
+?? "research/mech_fcbd3542/.\320\275\320\265\321\202/"
+?? research/probe_fshift/.gitignore
+?? research/s8_loop/books_extra.json
+
+=== последние коммиты ===
+c0c0018 [research] страница: короткие книги h24 и общая статистика; сторож поднимает их ежечасно
+6f277a6 [research] три короткие книги на сигнале h24 и общая статистика в хедж-режиме
+e39c323 DCA: бумажные книги, три режима × три депозита
+e5d1d73 DCA: бумажные книги, три режима × три депозита
+bab97f4 DCA: бумажные книги, три режима × три депозита
+
+=== впереди / позади origin/main ===
+впереди: 0
+позади:  0
+
+=== git fetch (проверка доступа) ===
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+
+=== состояние очереди ===
+2026-08-28T01:50:04Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
+2026-08-30T22:43:52Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+2026-08-30T22:45:04Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+2026-09-01T20:40:02Z · роль занята, задание zzz-scout-run4 ждёт следующей развёртки
+2026-09-01T20:45:03Z · роль занята, задание zzz-scout-run4 ждёт следующей развёртки
+2026-09-02T14:35:03Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
+2026-09-05T21:10:43Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+2026-09-07T12:48:49Z · дерево расходилось с origin/main: застрявший коммит опубликован
+
+=== хвост журнала сигнала ===
+
+== сигнал 1788768822 ==
+[2026-09-07T08:13:44Z] задание deploy-dups: перезапуск сборщика
+
+== сигнал 1788769449 ==
+[2026-09-07T08:24:11Z] задание dca-restat-dups запущено: research/dca_paper/run_paper.py
+
+== сигнал 1788769671 ==
+[2026-09-07T08:27:56Z] задание status-after-dups: состояние снято
+
+== сигнал 1788770396 ==
+[2026-09-07T08:39:58Z] задание d13-pair-nn24 запущено: research/dca_ladder/run_d13.py
+
+== сигнал 1788771554 ==
+[2026-09-07T08:59:16Z] задание d13-pair-nn24b запущено: research/dca_ladder/run_d13.py
+
+== сигнал 1788783809 ==
+[2026-09-07T12:23:31Z] задание short-books-1 запущено: research/dca_paper/run_short.py
+
+== сигнал 1788785325 ==
+
+=== идущие прогоны ===
+961 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+1726919 .venv/bin/python research/b1_book/collect.py --http 8765
+1727106 .venv/bin/python research/s8_loop/train.py
+1756769 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/diag-q-short.log tools/diag_queue.py
+1756774 .venv/bin/python tools/diag_queue.py
+
+=== хвосты логов идущих заданий ===
+--- diag-q-short ---
+== задание diag-q-short ==
+строка: run tools/diag_queue.py
+начало: 2026-09-07T12:48:49Z
+запускаю: .venv/bin/python tools/diag_queue.py 
+
+=== склад лесенки ===
+total 533236
+drwxr-xr-x 2 root root     4096 Aug 28 12:15 .
+drwxr-xr-x 3 root root     4096 Aug 28 08:22 ..
+-rw-r--r-- 1 root root 21783799 Aug 26 10:32 2026-08-04.npz
+-rw-r--r-- 1 root root 22023972 Aug 26 12:35 2026-08-05.npz
+-rw-r--r-- 1 root root 22123385 Aug 26 14:41 2026-08-06.npz
+-rw-r--r-- 1 root root 21750539 Aug 26 16:45 2026-08-07.npz
+-rw-r--r-- 1 root root 20288879 Aug 26 18:45 2026-08-08.npz
+-rw-r--r-- 1 root root 21076377 Aug 26 20:39 2026-08-09.npz
+-rw-r--r-- 1 root root 21321631 Aug 26 22:38 2026-08-10.npz
+-rw-r--r-- 1 root root 21220589 Aug 27 00:51 2026-08-11.npz
+-rw-r--r-- 1 root root 21248771 Aug 27 04:22 2026-08-12.npz
+-rw-r--r-- 1 root root 25076741 Aug 27 06:59 2026-08-13.npz
+-rw-r--r-- 1 root root 27499100 Aug 27 09:34 2026-08-14.npz
+-rw-r--r-- 1 root root 26786884 Aug 27 12:32 2026-08-15.npz
+-rw-r--r-- 1 root root 26598821 Aug 27 15:12 2026-08-16.npz
+-rw-r--r-- 1 root root 27680334 Aug 27 17:53 2026-08-17.npz
+-rw-r--r-- 1 root root 27721791 Aug 27 20:16 2026-08-18.npz
+-rw-r--r-- 1 root root 27836842 Aug 27 22:28 2026-08-19.npz
+-rw-r--r-- 1 root root 26741407 Aug 28 00:25 2026-08-20.npz
+-rw-r--r-- 1 root root 27094201 Aug 28 02:27 2026-08-21.npz
+-rw-r--r-- 1 root root 26764617 Aug 28 04:53 2026-08-22.npz
+-rw-r--r-- 1 root root 27750890 Aug 28 07:32 2026-08-23.npz
+-rw-r--r-- 1 root root 27448021 Aug 28 09:52 2026-08-24.npz
+-rw-r--r-- 1 root root 28135815 Aug 28 12:15 2026-08-25.npz
+-rw-r--r-- 1 root root     2273 Aug 28 12:15 Z3-store.md
+
+=== хвост лога свёртки ===
+(попытка 1 из 4)
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+ветка разошлась и свести автоматически не вышло.
+коммит на месте; разобрать вручную: git pull --rebase origin main
+конец: 2026-09-07T12:48:51Z, код 0
+ОТКАЗ: в публикуемых файлах остались маркеры конфликта (3).
+Разберите руками: git diff --cached | grep -n '<<<<<<<'
