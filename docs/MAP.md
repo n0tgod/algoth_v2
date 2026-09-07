@@ -184,7 +184,7 @@
 - `split_journal.py` · 198 строк — Разрезать цельный журнал книги на суточные куски.
 - `tail.py` · 257 строк — Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
 - тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (456), `test_cut.py` (297), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_names.py` (227), `test_pair.py` (362), `test_pair_gate.py` (132), `test_paper.py` (2669), `test_short.py` (163), `test_short_why.py` (155), `test_slip_x3.py` (76)
-- отчёты в `out/` (16): DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-names.md, DCA-pair.md, DCA-paper.md, DCA-short-supply-1m.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md
+- отчёты в `out/` (17): DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-names.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-short-supply-1m.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
 
@@ -644,7 +644,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 412, логов `done/*.log`: 412 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 412, логов `done/*.log`: 413 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
