@@ -209,16 +209,42 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
     packed = pack(longs, shorts, keys)
     rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
     RP.append_journal(rows, path=journal or R.PAIR_JOURNAL, log=log)
-    s = RP.summarize(path=journal or R.PAIR_JOURNAL, live=live, keys=keys)
+    # Контекст издержек собирается ОДИН раз на все три журнала: общий
+    # счёт, длинная книга и короткая считаются одними и теми же
+    # комиссией, проскальзыванием и funding.
+    ctx = None
+    try:
+        import costs as CO
+        ctx = CO.context()
+    except Exception as e:                                # noqa: BLE001
+        CO, ctx = None, {"error": f"модуль издержек не читается: {e}"[:200]}
+    s = RP.summarize(path=journal or R.PAIR_JOURNAL, live=live, keys=keys,
+                     ctx=ctx)
     jrows, _bad = R.read_journal(journal or R.PAIR_JOURNAL)
     jrows = [r for r in jrows if R.is_current(r)]
     # Раздельные счета — из журналов самих книг, тем же ядром: это ровно
     # то, что показывают их вкладки, и сравнение общего счёта с ними есть
     # ответ на вопрос владельца «что даёт один счёт вместо двух».
+    # ИЗДЕРЖКИ ИМ ВЫЧИТАЮТСЯ ТОЖЕ: колонка нетто против колонки брутто —
+    # разные единицы в одной таблице, и такая ошибка в проекте ловилась
+    # пять раз.
     lrows, _ = R.read_journal(long_journal or R.JOURNAL)
     srows, _ = R.read_journal(short_journal or R.H24_JOURNAL)
     lrows = [r for r in lrows if R.is_current(r)]
     srows = [r for r in srows if R.is_current(r)]
+    sep_costs = {"applied": 0, "n": len(lrows) + len(srows)}
+    if CO is not None:
+        try:
+            lrows, cl = CO.apply_to_rows(lrows, ctx)
+            srows, cs = CO.apply_to_rows(srows, ctx)
+            sep_costs = {"applied": cl.get("applied", 0) + cs.get("applied", 0),
+                         "n": len(lrows) + len(srows),
+                         "error": cl.get("error") or cs.get("error")}
+        except Exception as e:                            # noqa: BLE001
+            sep_costs = {"applied": 0, "n": len(lrows) + len(srows),
+                         "error": f"издержки раздельных счетов: {e}"[:200]}
+    log(f"раздельные счета: издержки вычтены у {sep_costs['applied']} "
+        f"строк из {sep_costs['n']}")
     for pk in keys:
         lk, sk = R.parts_of(pk)
         mine = [r for r in jrows if R.ruler_of(r) == pk]
@@ -235,6 +261,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
                 {lk: [r for r in lrows if R.ruler_of(r) == lk],
                  sk: [r for r in srows if R.ruler_of(r) == sk]}, dep)
     s.update({"family": "pair", "hedge": True, "cells": cells,
+              "separate_costs": sep_costs,
               "one_name": one, "parts": {k: R.parts_of(k) for k in keys},
               "secs": round(time.time() - t0, 1),
               "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
@@ -306,7 +333,11 @@ def report(s):
           "Слева общий счёт: депозит один на обе стороны. Справа те же "
           "книги, как их показывают собственные вкладки: у каждой свой "
           "депозит, то есть капитала вдвое больше. Поэтому сравниваются "
-          "ДЕНЬГИ и просадка, а проценты у них от разных капиталов.", "",
+          "ДЕНЬГИ и просадка, а проценты у них от разных капиталов. "
+          "Обе стороны таблицы — НЕТТО: издержки вычтены и там, и там "
+          "(у раздельных счетов " + str((s.get("separate_costs") or {})
+                                        .get("applied", 0)) + " строк из "
+          + str((s.get("separate_costs") or {}).get("n", 0)) + ").", "",
           "| книга | депозит | Σ $ общий счёт | просадка общего | "
           "Σ $ длинная отдельно | Σ $ короткая отдельно | Σ $ двух счетов | "
           "сделок общий / врозь |", "|---|--:|--:|--:|--:|--:|--:|--:|"]

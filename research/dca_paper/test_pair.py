@@ -240,7 +240,14 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
         bad_txt = PR.report(dict(s, books={RP._cell("pair_safe", dep):
                                            dict(half, one_sided=["safe_h"])}))
         assert "ВНИМАНИЕ: общий счёт не собран из двух сторон" in bad_txt
-        # раздельные счета взяты из журналов самих книг
+        # раздельные счета взяты из журналов самих книг и посчитаны
+        # ТЕМ ЖЕ ядром издержек: колонка нетто против колонки брутто в
+        # одной таблице — ошибка единиц, и она в проекте уже ловилась
+        sc = s["separate_costs"]
+        # строк обеих книг по ВСЕМ депозитам, и все прошли через то же
+        # ядро издержек (здесь рядов funding нет — тогда «применено»
+        # считает те, у кого измеримы комиссия и проскальзывание)
+        assert sc["n"] == 2 * n * len(R.DEPOSITS), sc
         sep = b["separate"]
         assert sep["safe"]["n"] == n and sep["safe_h"]["n"] == n, sep
         assert abs(st["usd"] - (sep["safe"]["usd"] + sep["safe_h"]["usd"])) \

@@ -1014,7 +1014,7 @@
 - L211 `CONTROLS = [('загрузка по доле сделок', _control_l…`
 - L217 `main()`
 
-## research/dca_paper/test_pair.py · 271 строк
+## research/dca_paper/test_pair.py · 278 строк
 
 Проверки общего счёта: длинная книга и короткая на ОДНОМ депозите.
 

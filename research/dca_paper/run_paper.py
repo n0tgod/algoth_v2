@@ -553,12 +553,20 @@ def _book_costs(rows):
             got["fund_usd"] += float(r["fund_usd"])
     for k in ("fee_usd", "slip_usd", "fund_usd", "gross_usd", "net_usd"):
         got[k] = round(got[k], 2)
+    # Медианы на позицию в б.п. МАРЖИ: суммы зависят от числа сделок и
+    # размера билета, и по ним нельзя сказать, дорога ли одна сделка.
+    # Единица та же, что в отчёте издержек, — числа сравнимы напрямую.
+    for k, name in (("fee_usd", "fee_bp"), ("slip_usd", "slip_bp"),
+                    ("fund_usd", "fund_bp")):
+        v = [float(r[k]) / float(r["margin"]) * 1e4 for r in rows
+             if r.get(k) is not None and float(r.get("margin") or 0) > 0]
+        got[name] = (round(float(np.median(v)), 1) if v else None)
     got["cost_usd"] = round(got["fee_usd"] + got["slip_usd"]
                             - got["fund_usd"], 2)
     return got
 
 
-def summarize(path=None, live=None, keys=None):
+def summarize(path=None, live=None, keys=None, ctx=None):
     """Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
 
     Решение владельца 2026-09-04: бэктест и live не разделять, а вести
@@ -593,7 +601,10 @@ def summarize(path=None, live=None, keys=None):
     # деньги остаются брутто, и это сказано в своде и на странице.
     try:
         import costs as CO
-        ctx = CO.context()
+        # Контекст можно передать снаружи: общий счёт считает рядом ещё
+        # два журнала теми же издержками, и второй разбор справочника и
+        # рядов площадки был бы лишней памятью на машине без свопа.
+        ctx = CO.context() if ctx is None else ctx
     except Exception as e:                                # noqa: BLE001
         CO, ctx = None, {"error": f"модуль издержек не читается: {e}"[:200]}
     if CO is None:
@@ -706,7 +717,8 @@ def costs_block(s):
           "проскальзывания не платят по построению.", "",
           "| книга | депозит | сделок | из них с издержками | комиссия $ | "
           "проскальзывание $ | funding $ | издержки всего $ | брутто $ | "
-          "нетто $ |", "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+          "нетто $ | медиана на сделку, б.п. маржи (комиссия / проскальз. / "
+          "funding) |", "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for dep in R.DEPOSITS:
         for rk in (s.get("rulers") or R.RULER_ORDER):
             b = (s.get("books") or {}).get(_cell(rk, dep)) or {}
@@ -718,7 +730,10 @@ def costs_block(s):
                 f"{bc['applied']} | {-bc['fee_usd']:+.2f} | "
                 f"{-bc['slip_usd']:+.2f} | {bc['fund_usd']:+.2f} | "
                 f"{-bc['cost_usd']:+.2f} | {bc['gross_usd']:+.2f} | "
-                f"{bc['net_usd']:+.2f} |")
+                f"{bc['net_usd']:+.2f} | "
+                + " / ".join("—" if bc.get(x) is None else f"{bc[x]:+.1f}"
+                             for x in ("fee_bp", "slip_bp", "fund_bp"))
+                + " |")
     notes = []
     if c.get("no_funding"):
         notes.append(f"у {c['no_funding']} сделок ряд funding не покрывает "
