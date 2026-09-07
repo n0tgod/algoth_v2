@@ -80,3 +80,15 @@
 - Общий счёт — ХЕДЖ-режим: шорт по имени, которое держит длинная сторона, разрешён. В одностороннем режиме биржи он срезал бы длинную позицию, и число совпадений выше есть цена режима.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/pair-fix-deploy.log        |  9 ++++
+ jobs/done/pair-run-2.done            |  1 +
+ jobs/done/pair-run-2.log             | 82 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                        |  5 +++
+ research/dca_paper/out/DCA-pair.json |  2 +-
+ 5 files changed, 98 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   b424162..9691682  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T17:56:58Z, код 0
