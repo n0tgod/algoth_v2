@@ -2435,6 +2435,26 @@
 - L5499 `test_agree_echo_book()` — Согласное эхо: у источника остаётся ровно пересечение рук.
 - L5626 `main()`
 
+## research/s8_loop/test_side_split.py · 173 строк
+
+Проверки `side_split.py`: сделки собираются ядром кассы, стороны не смешиваются, вердикт держит порог и полов…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `H0 = '2026-08-10-00'`
+- L17 `T0 = 1786320000`
+- L20 `_hour(i)`
+- L26 `_book(root, dirname, n_hours, short_got, long_got, situational=…` — Книга: каждый час один лонг и один шорт; исходы — функциями часа.
+- L51 `_registry()`
+- L67 `test_sides_are_split_by_the_ledger_and_judged_by_numbers()`
+- L112 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
+- L136 `P = os.path.join(HERE, 'side_split.py')`
+- L139 `_control_side_ignored()`
+- L145 `_control_halves_not_required()`
+- L151 `_control_echo_summed_into_family()`
+- L157 `TESTS = [test_sides_are_split_by_the_ledger_and…`
+- L158 `CONTROLS = [('сторона не различается', _control_si…`
+- L163 `main()`
+
 ## research/s9_sweep/test_sweep.py · 179 строк
 
 Проверки перебора правил: геометрия сделки и отбор ног.

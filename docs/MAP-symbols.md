@@ -4289,6 +4289,29 @@ S8.1, этап 2: признаки и цели из почасовых свод�
 - L88 `write(d, out_path)` — Собрать отчёт по каталогу артефактов. Возвращает путь.
 - L299 `main()`
 
+## research/s8_loop/side_split.py · 324 строк
+
+Разрез ВСЕХ книг моделей по стороне: где шорты в плюсе и есть ли сигнал, который в плюсе только по шортам.
+
+- L44 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L45 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L50 `OUT = os.path.join(HERE, 'out')`
+- L51 `ARMS = ('gbm', 'nn')`
+- L52 `N_MIN = 30`
+- L55 `jlines(path)`
+- L72 `book_hold(mman, default_h=TR.HOLD_H)` — То же правило, что у сборщика (`collect.book_hold`).
+- L79 `load_trades(mdir, log=print)` — Сделки книги тем же ядром, что страница; None — книги нет.
+- L107 `_day(t)`
+- L112 `side_stats(closed, side)` — Статистика одной стороны по закрытым сделкам.
+- L152 `judge(short, long_)` — Вердикт стороны из чисел; None — не судится (мало сделок).
+- L168 `run(books=None, root=None, log=print)`
+- L232 `_u(x)`
+- L236 `_b(x)`
+- L240 `_pc(x)`
+- L244 `report(s)`
+- L299 `publish(name)`
+- L304 `main(argv=None)`
+
 ## research/s8_loop/sit_absorb.py · 245 строк
 
 Живые события ситуационной книги → строки выбора и разбора.
