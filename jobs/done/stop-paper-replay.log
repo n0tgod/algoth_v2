@@ -1,0 +1,8 @@
+== задание stop-paper-replay ==
+строка: run tools/stop_run.py research/dca_paper/run_paper.py
+начало: 2026-09-07T17:55:54Z
+запускаю: .venv/bin/python tools/stop_run.py research/dca_paper/run_paper.py
+найдено 1: 1791407
+TERM → 1791407
+остановлено: 1791407
+конец: 2026-09-07T17:55:56Z, код 0
