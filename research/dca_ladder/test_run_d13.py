@@ -14,6 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import run_d13 as D13                                        # noqa: E402
 import run_d10 as D10                                        # noqa: E402
+import rules as R                                            # noqa: E402
 import test_run_d3 as T3                                     # noqa: E402
 import test_run_d9 as T9                                     # noqa: E402
 import test_run_d10 as T10                                   # noqa: E402
@@ -96,9 +97,41 @@ def test_cell_returns_the_rows_its_result_is_made_of():
           f"{got_usd:+.2f} $ — ровно её итог")
 
 
+def test_short_cells_end_to_end_on_synthetic_bars():
+    """Сквозной проход короткой стороны: пик — ЧИСЛО (`run_d12.peak_open`),
+    билет считается от него, строки ячейки доезжают наружу.
+
+    Кусается: первый прогон на сервере упал здесь — рядом живут две
+    функции `peak_open` (D6 отдаёт словарь, D12 число), и подмена одной
+    другой видна только в проходе целиком.
+    """
+    lo, at = T9._rise_then_fall()
+    wn, _ = T9._drift_down()
+    src = T3._Src({"SSSUSDT": lo, "TTTUSDT": wn})
+    legs = T10._legs(at, "SSSUSDT") + T10._legs(at, "TTTUSDT")
+    for g in legs:
+        g["arm"] = "nn"
+    out, sig = T10._with_levels(
+        lambda: D13.short_cells(arm="nn", hold_h=24, src=src, legs=legs,
+                                log=lambda *a: None,
+                                keys=["fence:none:t2", "c3:none:t2"]))
+    assert sig["hold_h"] == 24 and sig["legs"] == len(legs), sig
+    assert set(out) <= {"fence:none:t2", "c3:none:t2"} and out, list(out)
+    for key, v in out.items():
+        assert isinstance(v["peak"], int) and v["peak"] >= 1, (key, v["peak"])
+        assert v["ticket"] and v["ticket"] >= R.floor_of(D13.SHORT_BOOK)
+        assert len(v["rows"]) == v["cell"]["taken"], (key, len(v["rows"]))
+    assert D10.REF_GATE == "rr2" and D10.D2.HOLD_H == 72     # восстановлено
+    k = sorted(out)[0]
+    print(f"ok  сквозная короткая сторона: ячеек {len(out)}, пик "
+          f"{out[k]['peak']}, билет ${out[k]['ticket']}, строк "
+          f"{len(out[k]['rows'])}")
+
+
 if __name__ == "__main__":
     test_series_and_align_follow_the_calendar_not_the_index()
     test_pair_drawdown_is_taken_from_the_joint_curve()
     test_collision_is_time_overlap_not_a_shared_name()
     test_cell_returns_the_rows_its_result_is_made_of()
-    print("\nвсе 4 проверки прошли")
+    test_short_cells_end_to_end_on_synthetic_bars()
+    print("\nвсе 5 проверок прошли")

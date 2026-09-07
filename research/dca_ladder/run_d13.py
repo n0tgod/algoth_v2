@@ -182,12 +182,15 @@ def short_cells(arm="nn", hold_h=24, limit=None, src=None, log=print,
             recs = [st.row(i) for i in range(len(st))]
             sub = [r for r in recs if D10.REF_GATE in (r.get("gates") or [])]
             keep, _sk = D10.D6.one_per_name(sub)
+            # `D12.peak_open` возвращает ЧИСЛО (пик одновременных), а не
+            # словарь `D6.peak_open`: две функции одного имени в соседних
+            # модулях, и путать их нельзя — первый прогон упал ровно тут.
             pk = D12.peak_open(keep)
-            sh = D12.own_share(DEP, (pk or {}).get("names_max"), SHORT_BOOK)
+            sh = D12.own_share(DEP, pk, SHORT_BOOK)
             rows = []
             c = D10.cell(recs, SHORT_BOOK, DEP, net=True, share=sh, rows_out=rows)
             out[key] = {"cell": c, "rows": rows, "share": sh,
-                        "peak": (pk or {}).get("names_max"),
+                        "peak": pk,
                         "ticket": round(DEP * sh, 2) if sh else None}
             log(f"ячейка {key}: взято {c['taken']}, итог {100 * (c['final'] or 0):+.2f} %, "
                 f"билет ${out[key]['ticket']}")

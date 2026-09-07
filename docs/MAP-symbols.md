@@ -1217,7 +1217,7 @@ D12 — билет от СОБСТВЕННОГО пика: сколько даё
 - L228 `publish(name)`
 - L233 `main(argv=None)`
 
-## research/dca_ladder/run_d13.py · 373 строк
+## research/dca_ladder/run_d13.py · 376 строк
 
 D13 — короткая книга РЯДОМ с длинной: что даёт пара, а не половина.
 
@@ -1237,13 +1237,13 @@ D13 — короткая книга РЯДОМ с длинной: что даё�
 - L123 `collisions(short_rows, long_rows)` — Шорт по имени, которое длинная книга держит В ТО ЖЕ ВРЕМЯ.
 - L150 `long_rows(dep=DEP, books=LONG_BOOKS, path=None, log=print)` — Строки длинных книг ИЗ ЖУРНАЛА — той записи, что ведётся вперёд.
 - L165 `short_cells(arm='nn', hold_h=24, limit=None, src=None, log=prin…` — Короткие книги-кандидаты: те же ноги и та же касса, что у D12.
-- L200 `run(arm='nn', hold_h=24, limit=None, src=None, log=print, legs=…`
-- L238 `verdict(s)` — Что стоит рядом с длинной книгой: пара обязана быть лучше длинной ОДНОЙ по деньгам и не хуже по просадке, а с…
-- L255 `_p(x, d=2)`
-- L259 `_u(x)`
-- L263 `report(s)`
-- L340 `publish(name)`
-- L345 `main(argv=None)`
+- L203 `run(arm='nn', hold_h=24, limit=None, src=None, log=print, legs=…`
+- L241 `verdict(s)` — Что стоит рядом с длинной книгой: пара обязана быть лучше длинной ОДНОЙ по деньгам и не хуже по просадке, а с…
+- L258 `_p(x, d=2)`
+- L262 `_u(x)`
+- L266 `report(s)`
+- L343 `publish(name)`
+- L348 `main(argv=None)`
 
 ## research/dca_ladder/run_d2.py · 656 строк
 
