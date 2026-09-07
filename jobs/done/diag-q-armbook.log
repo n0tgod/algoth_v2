@@ -1,0 +1,141 @@
+== задание diag-q-armbook ==
+строка: run tools/diag_queue.py
+начало: 2026-09-07T07:52:39Z
+запускаю: .venv/bin/python tools/diag_queue.py 
+=== ветка и расхождение ===
+## main...origin/main
+ M jobs/done/sheet-supply.log
+ M jobs/poke.log
+ M research/paper_monthly/out/daily.log
+ M research/s10_policy/out/tournament.log
+ M research/s8_loop/out/day_brake.json
+?? bot/out/
+?? jobs/done/dca-arm-book.done
+?? jobs/done/dca-arm-book.log
+?? jobs/done/diag-q-armbook.done
+?? jobs/done/diag-q-armbook.log
+?? research/a1_universe/.cache_opts/
+?? research/a1_universe/.cache_risk/
+?? research/mech_63fa406a/
+?? research/mech_fcbd3542/.cache_ann/
+?? research/mech_fcbd3542/.smoke.sh
+?? "research/mech_fcbd3542/.\320\275\320\265\321\202/"
+?? research/probe_fshift/.gitignore
+?? research/s8_loop/books_extra.json
+
+=== последние коммиты ===
+152d4a3 job: diag-q-armbook
+6188458 [research] книга DCA на решениях одной руки: деревья против сети на равных правилах
+3cfb53f [research] ядро: руки моделей в книгах DCA и подача листа
+8479f73 [research] журнал: разрез DCA по руке модели и подача листа — рынок стих, гейт RR душит книгу
+cbd3cf6 job: sheet-supply
+
+=== впереди / позади origin/main ===
+впереди: 0
+позади:  0
+
+=== git fetch (проверка доступа) ===
+From github.com:n0tgod/algoth_v2
+ * branch            main       -> FETCH_HEAD
+
+=== состояние очереди ===
+2026-08-28T01:50:04Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
+2026-08-30T22:43:52Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+2026-08-30T22:45:04Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+2026-09-01T20:40:02Z · роль занята, задание zzz-scout-run4 ждёт следующей развёртки
+2026-09-01T20:45:03Z · роль занята, задание zzz-scout-run4 ждёт следующей развёртки
+2026-09-02T14:35:03Z · origin/main не получен (сеть или доступ) — задания могут быть не видны
+2026-09-05T21:10:43Z · дерево разошлось с origin/main и свести не вышло — не трогаю
+
+=== хвост журнала сигнала ===
+== сигнал 1788764196 ==
+
+== сигнал 1788764215 ==
+[2026-09-07T06:56:57Z] задание dca-arms запущено: research/dca_paper/arm_split.py
+
+== сигнал 1788764415 ==
+
+== сигнал 1788764428 ==
+[2026-09-07T07:00:29Z] задание dca-arms-2 запущено: research/dca_paper/arm_split.py
+
+== сигнал 1788764653 ==
+
+== сигнал 1788764666 ==
+[2026-09-07T07:04:28Z] задание sheet-supply запущено: research/s8_loop/sheet_supply.py
+
+== сигнал 1788767517 ==
+[2026-09-07T07:51:58Z] задание dca-arm-book запущено: research/dca_paper/arm_book.py
+
+== сигнал 1788767558 ==
+[2026-09-07T07:52:39Z] задание diag-q-armbook запущено: tools/diag_queue.py
+
+=== идущие прогоны ===
+961 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+1699598 .venv/bin/python research/b1_book/collect.py --http 8765
+1699781 .venv/bin/python research/s8_loop/train.py
+1721512 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/dca-arm-book.log research/dca_paper/arm_book.py --tag 1m
+1721516 .venv/bin/python research/dca_paper/arm_book.py --tag 1m
+1722027 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/diag-q-armbook.log tools/diag_queue.py
+1722031 .venv/bin/python tools/diag_queue.py
+
+=== хвосты логов идущих заданий ===
+--- dca-arm-book ---
+начало: 2026-09-07T07:51:58Z
+запускаю: .venv/bin/python research/dca_paper/arm_book.py --tag 1m
+sheets.jsonl: ног 981420
+кэш: записей 15362, разобрано 15362, без руки 0 ({'нет ноги': 0, 'нога не сошлась': 0, 'руки неразличимы': 0})
+спорные решения (обе руки на имени и часе) достались: деревья 0, сеть 2732
+ног всего 9047, досчитать надо 1366
+ног под гейтом 1366 (шортов 6), символов 336
+окно решений 2026-08-10 00:09 … 2026-09-06 00:08 UTC (27 суток, дат 9)
+--- diag-q-armbook ---
+== задание diag-q-armbook ==
+строка: run tools/diag_queue.py
+начало: 2026-09-07T07:52:39Z
+запускаю: .venv/bin/python tools/diag_queue.py 
+
+=== склад лесенки ===
+total 533236
+drwxr-xr-x 2 root root     4096 Aug 28 12:15 .
+drwxr-xr-x 3 root root     4096 Aug 28 08:22 ..
+-rw-r--r-- 1 root root 21783799 Aug 26 10:32 2026-08-04.npz
+-rw-r--r-- 1 root root 22023972 Aug 26 12:35 2026-08-05.npz
+-rw-r--r-- 1 root root 22123385 Aug 26 14:41 2026-08-06.npz
+-rw-r--r-- 1 root root 21750539 Aug 26 16:45 2026-08-07.npz
+-rw-r--r-- 1 root root 20288879 Aug 26 18:45 2026-08-08.npz
+-rw-r--r-- 1 root root 21076377 Aug 26 20:39 2026-08-09.npz
+-rw-r--r-- 1 root root 21321631 Aug 26 22:38 2026-08-10.npz
+-rw-r--r-- 1 root root 21220589 Aug 27 00:51 2026-08-11.npz
+-rw-r--r-- 1 root root 21248771 Aug 27 04:22 2026-08-12.npz
+-rw-r--r-- 1 root root 25076741 Aug 27 06:59 2026-08-13.npz
+-rw-r--r-- 1 root root 27499100 Aug 27 09:34 2026-08-14.npz
+-rw-r--r-- 1 root root 26786884 Aug 27 12:32 2026-08-15.npz
+-rw-r--r-- 1 root root 26598821 Aug 27 15:12 2026-08-16.npz
+-rw-r--r-- 1 root root 27680334 Aug 27 17:53 2026-08-17.npz
+-rw-r--r-- 1 root root 27721791 Aug 27 20:16 2026-08-18.npz
+-rw-r--r-- 1 root root 27836842 Aug 27 22:28 2026-08-19.npz
+-rw-r--r-- 1 root root 26741407 Aug 28 00:25 2026-08-20.npz
+-rw-r--r-- 1 root root 27094201 Aug 28 02:27 2026-08-21.npz
+-rw-r--r-- 1 root root 26764617 Aug 28 04:53 2026-08-22.npz
+-rw-r--r-- 1 root root 27750890 Aug 28 07:32 2026-08-23.npz
+-rw-r--r-- 1 root root 27448021 Aug 28 09:52 2026-08-24.npz
+-rw-r--r-- 1 root root 28135815 Aug 28 12:15 2026-08-25.npz
+-rw-r--r-- 1 root root     2273 Aug 28 12:15 Z3-store.md
+
+=== хвост лога свёртки ===
+(попытка 1 из 4)
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+fatal: No rebase in progress?
+ветка разошлась и свести автоматически не вышло.
+коммит на месте; разобрать вручную: git pull --rebase origin main
+конец: 2026-09-07T07:52:41Z, код 0
