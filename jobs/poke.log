@@ -1201,3 +1201,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788821234 ==
 [2026-09-07T22:47:16Z] задание short-why-2 запущено: research/dca_paper/short_why.py
+
+== сигнал 1788821726 ==
+[2026-09-07T22:55:28Z] задание fund-check-1 запущено: research/dca_paper/fund_check.py
