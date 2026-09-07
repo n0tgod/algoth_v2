@@ -465,7 +465,7 @@ def _exits(rows):
     return out
 
 
-def cell(recs, book, dep, gate=REF_GATE, net=False):
+def cell(recs, book, dep, gate=REF_GATE, net=False, share=None):
     """Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
 
     `net=True` считает деньги по `pnl_net` (с кругом издержек) — той же
@@ -479,7 +479,9 @@ def cell(recs, book, dep, gate=REF_GATE, net=False):
     fld = "pnl_net" if net else "pnl"
     plan = [dict(r, pnl=float(r[fld])) for r in keep]
     rows = []
-    c = D6.ration(plan, R.share(dep, book), deposit=dep,
+    # `share` — доля счёта на позицию; по умолчанию билет книги. Замер
+    # билета от собственного пика (D12) передаёт свою долю явно.
+    c = D6.ration(plan, R.share(dep, book) if share is None else float(share), deposit=dep,
                   min_notional=R.MIN_NOTIONAL, keep_rows=rows)
     st = PP._stats([{"exit_ts": r["exit_ts"], "at": r["at"], "sym": r["sym"],
                      "usd": float(r["pnl"]) * float(m)}

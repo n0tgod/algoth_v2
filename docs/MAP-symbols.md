@@ -1114,7 +1114,7 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - L424 `simulate_dca(bars, rung_prices, weights, capital, leverage, mmr…` — DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 - L652 `same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notio…` — Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
 
-## research/dca_ladder/run_d10.py · 901 строк
+## research/dca_ladder/run_d10.py · 903 строк
 
 D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 
@@ -1160,24 +1160,24 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L368 `collect(limit=None, src=None, log=print, legs=None)` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
 - L436 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
 - L461 `_exits(rows)`
-- L468 `cell(recs, book, dep, gate=REF_GATE, net=False)` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
-- L515 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
-- L528 `halves(rows_by_cell)`
-- L540 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
-- L554 `_rss_mb()`
-- L563 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
-- L581 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
-- L584 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
-- L597 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
-- L600 `run(limit=None, src=None, log=print, legs=None)`
-- L659 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
-- L692 `_p(x, d=2, sign=True)`
-- L698 `_u(x)`
-- L702 `title_of(key)`
-- L708 `_row(key, c, cn, p, mark)`
-- L724 `report(s)`
-- L866 `publish(name)`
-- L872 `main(argv=None)`
+- L468 `cell(recs, book, dep, gate=REF_GATE, net=False, share=None)` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
+- L517 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
+- L530 `halves(rows_by_cell)`
+- L542 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
+- L556 `_rss_mb()`
+- L565 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
+- L583 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
+- L586 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
+- L599 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
+- L602 `run(limit=None, src=None, log=print, legs=None)`
+- L661 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
+- L694 `_p(x, d=2, sign=True)`
+- L700 `_u(x)`
+- L704 `title_of(key)`
+- L710 `_row(key, c, cn, p, mark)`
+- L726 `report(s)`
+- L868 `publish(name)`
+- L874 `main(argv=None)`
 
 ## research/dca_ladder/run_d11.py · 184 строк
 
@@ -1196,6 +1196,26 @@ D11 — DCA-лестница на сигнале книги `h24` (24 ч, рук
 - L134 `report(s)`
 - L151 `publish(name)`
 - L156 `main(argv=None)`
+
+## research/dca_ladder/run_d12.py · 261 строк
+
+D12 — билет от СОБСТВЕННОГО пика: сколько даёт сигнал h24 (шорт), когда депозит делится на места ЭТОЙ книги,…
+
+- L42 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L43 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L50 `OUT = os.path.join(HERE, 'out')`
+- L51 `KEYS = ['fence:struct:t2', 'fence:none:t2', 'c…`
+- L54 `BOOKS = ('optimal_s', 'safe_s')`
+- L55 `PEAK_MARGIN = float(R.PEAK_MARGIN)`
+- L58 `peak_open(rows)` — Пик одновременно открытых позиций по (вход, выход) — заметающая прямая; None — записей нет.
+- L75 `own_share(dep, peak, book)` — Доля счёта на позицию от собственного пика, не ниже пола режима.
+- L83 `run(arm='nn', hold_h=None, limit=None, src=None, log=print, leg…`
+- L144 `verdict(s)` — Из чисел: при своём билете нетто > 0 на $10k, медиана дня ≥ 0 и обе половины ≥ 0 — «держится»; печатается спи…
+- L163 `_p(x, d=2)`
+- L167 `_u(x)`
+- L171 `report(s)`
+- L228 `publish(name)`
+- L233 `main(argv=None)`
 
 ## research/dca_ladder/run_d2.py · 656 строк
 

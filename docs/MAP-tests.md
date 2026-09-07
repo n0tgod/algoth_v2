@@ -624,6 +624,15 @@
 - L68 `test_reference_gate_and_hold_are_set_for_the_run_only()`
 - L82 `test_run_end_to_end_on_synthetic_bars()`
 
+## research/dca_ladder/test_run_d12.py · 72 строк
+
+Проверки D12: пик одновременно открытых, билет от своего пика не ниже пола, ячейки «пул → свой» на подставных…
+
+- L7 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `H = 3600`
+- L19 `test_peak_and_own_share()`
+- L37 `test_run_end_to_end_pool_vs_own()`
+
 ## research/dca_ladder/test_run_d2.py · 207 строк
 
 Тест чистой логики D2 — построение структурных рунгов.

@@ -106,7 +106,7 @@ def configure(hold_h=None):
            "hold": D2.HOLD_H}
     D10.REF_GATE = REF_GATE
     # умолчание аргумента связано при определении функции — меняется явно
-    D10.cell.__defaults__ = (REF_GATE, False)
+    D10.cell.__defaults__ = (REF_GATE, False, None)     # gate, net, share
     if hold_h:
         D2.HOLD_H = int(hold_h)
     return was
