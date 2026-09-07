@@ -64,3 +64,15 @@ Traceback (most recent call last):
                             ^^^^^^^^^^^^^^
 AttributeError: 'int' object has no attribute 'get'
 конец: 2026-09-07T08:57:53Z, код 1
+публикуется в ветку main:
+ jobs/done/d13-pair-nn24.done        |  1 +
+ jobs/done/d13-pair-nn24.log         | 66 +++++++++++++++++++++++++++++++++++++
+ jobs/done/status-after-dups.done    |  1 +
+ jobs/done/status-after-dups.log     |  9 +++++
+ jobs/poke.log                       |  4 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 82 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   1a46970..c1e1959  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

@@ -1117,3 +1117,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788770396 ==
 [2026-09-07T08:39:58Z] задание d13-pair-nn24 запущено: research/dca_ladder/run_d13.py
+
+== сигнал 1788771554 ==
+[2026-09-07T08:59:16Z] задание d13-pair-nn24b запущено: research/dca_ladder/run_d13.py
