@@ -376,3 +376,17 @@ aggr_h: funding -4058.66 $ (без повторов -4058.66 $) на 389 поз�
 - Повторы в ряду были бы ошибкой ДАННЫХ, и их влияние на итог стоит числом выше: ноль означает, что удвоения нет.
 - Ставка площадки нормирована на свой интервал: 0.0001 при часовом шаге за сутки даёт столько же, сколько 0.0008 при восьмичасовом, и сравнивать надо сумму ставок за жизнь позиции, а не отдельную ставку.
 
+публикуется в ветку main:
+ jobs/done/fund-check-1.done                |   1 +
+ jobs/done/fund-check-1.log                 | 378 +++++++++++++++++++++++++++++
+ jobs/done/short-why-2.log                  |   7 +
+ jobs/poke.log                              |   3 +
+ research/dca_paper/out/DCA-fund-check.json |   1 +
+ research/dca_paper/out/DCA-fund-check.md   | 369 ++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json        |   2 +-
+ 7 files changed, 760 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   339d266..1a4fadd  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-07T22:55:41Z, код 0
