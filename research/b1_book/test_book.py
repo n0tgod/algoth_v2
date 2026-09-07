@@ -7059,6 +7059,13 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
     try:
         DR.JOURNAL = os.path.join(td, "journal.jsonl")
         DR.ARTIFACT = os.path.join(td, "art.json")
+        # Семейство коротких книг тоже уводится в песочницу: иначе
+        # проверка читала бы НАСТОЯЩИЙ свод с этой машины и меняла бы
+        # ответ вместе с ним (первый прогон ровно так и уронил три
+        # проверки).
+        h24a0, h24j0 = DR.H24_ARTIFACT, DR.H24_JOURNAL
+        DR.H24_ARTIFACT = os.path.join(td, "short-art.json")
+        DR.H24_JOURNAL = os.path.join(td, "short.jsonl")
         # Момент ПОСЛЕ границы версии правил (`RULES_SINCE`): решение
         # старше неё есть бэктест по построению, и на фикстуре из
         # прошлого «записано вперёд» не бывало бы вовсе — она
@@ -7183,9 +7190,6 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         check("DCA: без прогона коротких книг страница называет причину",
               sh0.get("present") is False and "артефакта нет" in (sh0.get("why") or ""),
               str(sh0))
-        ap_short = getattr(DR, "H24_ARTIFACT", "")
-        DR.H24_ARTIFACT = os.path.join(td, "short.json")
-        DR.H24_JOURNAL = os.path.join(td, "short.jsonl")
         try:
             with open(DR.H24_JOURNAL, "w", encoding="utf-8") as f:
                 f.write(json.dumps({"dep": 1000, "ruler": "optimal_h",
@@ -7235,16 +7239,33 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                   (sh.get("portfolio") or {}).get("pairs", {}).get("optimal:1000", {})
                   .get("both_usd") == 8.0 and sh["hedge"] is True,
                   str(sh.get("portfolio"))[:200])
+            d2 = c.dca_paper()
+            check("DCA: короткие книги стоят вкладкой рядом с длинными",
+                  [x["key"] for x in d2["rulers"]][-3:] == list(DR.H24_ORDER)
+                  and all(x.get("family") == "h24"
+                          for x in d2["rulers"][-3:]),
+                  str([x["key"] for x in d2["rulers"]]))
+            bh = (d2.get("books") or {}).get("optimal_h:1000") or {}
+            check("DCA: у книги семейства свои сделки из своего журнала",
+                  bh.get("n_journal") == 1 and len(bh.get("trades") or []) == 1
+                  and (bh["trades"][0] or {}).get("side") == "short"
+                  and bh["trades"][0].get("sym") == "SSSUSDT",
+                  str(bh.get("trades"))[:200])
             check("DCA: свежесть свода коротких книг считается",
                   sh.get("age_h") is not None and sh.get("stale") is False,
                   str((sh.get("age_h"), sh.get("stale"))))
         finally:
-            DR.H24_ARTIFACT = ap_short
+            DR.H24_ARTIFACT, DR.H24_JOURNAL = h24a0, h24j0
         page = W.DCAPAGE
         check("DCA: страница показывает короткие книги и общую статистику",
               "shortBlock(d.short)" in page and "portfolioBlock" in page
               and "хедж-режим" in page and "Не считалась" in page,
               "нет разметки коротких книг")
+        # Общая статистика обязана стоять ВЫШЕ таблицы по суткам: внизу
+        # страницы её не находят (замечание владельца 07.09).
+        check("DCA: общая статистика стоит выше таблицы по суткам",
+              page.index("portfolioBlock((d.short") < page.index('h += dayTable(st,'),
+              "порядок блоков не тот")
         check("DCA: страница объясняет дубли и молчание о них",
               "Дублей нет." in page and "НЕ ПРОВЕРЯЛОСЬ" in page
               and "dupLine(b.dups)" in page,

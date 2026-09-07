@@ -3751,14 +3751,32 @@ class Collector:
         rules_v = out["rules"].get("RULES", DR.RULES)
         books = {}
         art_books = art.get("books") or {}
-        for rk in [x["key"] for x in out["rulers"]]:
+        # Короткие книги на сигнале `h24` — своё семейство: свой лист,
+        # свой журнал, свой артефакт (решение владельца 2026-09-07). На
+        # странице они обязаны стоять ВКЛАДКОЙ РЯДОМ с длинными, иначе
+        # владелец видит старые зеркала и считает, что ничего не
+        # изменилось (так и вышло). Поэтому семейства собираются ОДНИМ
+        # проходом: вторая копия сборки книги однажды разошлась бы с
+        # первой, и одна и та же позиция рисовалась бы по-разному.
+        out["short"] = self._dca_short(DR, now)
+        sh = out["short"] or {}
+        fams = [(list(out["rulers"]), art_books, rows)]
+        if sh.get("present"):
+            srows, sbad = DR.read_journal(DR.H24_JOURNAL)
+            out["short_bad_lines"] = sbad
+            fams.append((list(sh.get("rulers") or []),
+                         sh.get("books") or {}, srows))
+            out["rulers"] = out["rulers"] + [
+                dict(x, family="h24") for x in (sh.get("rulers") or [])]
+        for (fam_rulers, fam_art, fam_rows) in fams:
+          for rk in [x["key"] for x in fam_rulers]:
             for d in out["deposits"]:
                 k = f"{rk}:{int(d)}"
-                b = dict(art_books.get(k) or {})
+                b = dict(fam_art.get(k) or {})
                 if not b and rk == DR.DEFAULT_RULER:
                     # свод прежнего образца ключевался одним депозитом
-                    b = dict(art_books.get(str(int(d))) or {})
-                mine = [r for r in rows if int(r.get("dep", 0)) == int(d)
+                    b = dict(fam_art.get(str(int(d))) or {})
+                mine = [r for r in fam_rows if int(r.get("dep", 0)) == int(d)
                         and int(r.get("rules", 0)) == rules_v
                         and DR.ruler_of(r) == rk]
                 fwd, back = DR.split_rows(mine, ahead_h)
@@ -3857,11 +3875,6 @@ class Collector:
             if k in books:
                 out["selected"] = k
         cached[key] = out
-        # Короткие книги на сигнале `h24` — СВОЙ артефакт, своя запись и
-        # свой прогон (решение владельца 2026-09-07). Кладутся отдельным
-        # блоком, а не подмешиваются к длинным: у них другой лист, другой
-        # срок и хедж-режим, и общий список книг склеил бы разные вещи.
-        out["short"] = self._dca_short(DR, now)
         self._dca_cache = (now if now - cat >= 120 else cat, cached)
         return out
 
