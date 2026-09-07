@@ -7365,6 +7365,10 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
               and "общий счёт: две стороны" in page
               and "Депозит ОДИН на обе стороны" in page,
               "нет разметки общего счёта")
+        check("DCA: правило доли билета видно числом на странице",
+              "x.ticket_own" in page and "share_mult" in page
+              and "из $" in page,
+              "нет разметки доли билета стороны")
         check("DCA: односторонняя общая книга кричит об этом",
               "Одной стороны в книге" in page and "b.one_sided" in page,
               "нет предупреждения об односторонней книге")

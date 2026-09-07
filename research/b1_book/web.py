@@ -6834,8 +6834,16 @@ function pairBlock(b){
     "<th>Σ $</th><th>к депозиту</th><th>просадка</th><th>плюсов</th></tr>";
   Object.keys(pr).forEach(k => {
     const x = pr[k] || {}, st2 = x.stats || {};
+    // Билет, которым сторона ВХОДИТ в этот счёт, и рядом её
+    // собственный, когда правило доли его уменьшило: правило обязано
+    // быть видно числом, а не подразумеваться.
+    const tk = (x.ticket == null ? "&mdash;" : "$" + x.ticket) +
+      ((x.ticket_own != null && x.ticket_own !== x.ticket)
+        ? " <span style='font-size:.62em;opacity:.85'>из $" + x.ticket_own +
+          " (" + (x.share_mult == null ? "" : x.share_mult + "×") + ")</span>"
+        : "");
     h += "<tr><td>" + esc(x.title || k) + "</td><td class=mono>" +
-      (x.ticket == null ? "&mdash;" : "$" + x.ticket) + "</td><td class=mono>" +
+      tk + "</td><td class=mono>" +
       (st2.n == null ? "&mdash;" : st2.n) + "</td><td class=mono>" +
       us(st2.usd) + "</td><td class=mono>" + pc(st2.final) +
       "</td><td class=mono>" + pc(st2.max_dd) + "</td><td class=mono>" +

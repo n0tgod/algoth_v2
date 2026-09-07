@@ -276,10 +276,13 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                 for r in keep]
         for dep in R.DEPOSITS:
             rows = []
-            # доля счёта — ПО ИСТОЧНИКУ записи: у общего счёта стороны
-            # входят своими билетами, а касса одна
+            # Доля счёта — ПО ИСТОЧНИКУ записи: у общего счёта стороны
+            # входят каждая своим билетом, а касса одна. Билет стороны
+            # может быть УМЕНЬШЕН объявленным правилом семейства
+            # (`rules.share_in`) — так владелец 07.09 задал долю короткой
+            # стороны 0.25 у общей оптимальной и общей агрессивной.
             c = D6.ration(plan, (lambda r, _d=dep, _rk=rk:
-                                 R.share(_d, r.get("book") or _rk)),
+                                 R.share_in(_rk, r.get("book") or _rk, _d)),
                           deposit=dep,
                           min_notional=R.MIN_NOTIONAL, keep_rows=rows)
             c["slots"] = R.slots(dep, rk)
@@ -319,6 +322,13 @@ def build_rows(by_ruler, now=None, log=print, keys=None):
                     # полем в каждой строке журнала
                     if r.get("book") and r["book"] != rk:
                         row["book"] = r["book"]
+                    # Версия правил СЕМЕЙСТВА: у книги, чьи правила
+                    # сменились, прежние строки остаются в журнале, но в
+                    # счёт не идут. Семейство без своей версии поля не
+                    # получает — журнал длинных книг не меняет формы.
+                    fr = R.family_rules(rk)
+                    if fr is not None:
+                        row["book_rules"] = int(fr)
                     out.append(row)
                     continue
                 item = {"sym": r["sym"], "at": float(r["at"]),
@@ -641,7 +651,12 @@ def summarize(path=None, live=None, keys=None, ctx=None):
                  "ticket": (None if parts else R.ticket(dep, rk)),
                  "parts": ({p: {"title": R.ruler_title(p),
                                 "side": R.side_of(p),
-                                "ticket": R.ticket(dep, p),
+                                # билет, которым сторона ВХОДИТ в этот
+                                # счёт, и рядом её собственный: правило
+                                # доли видно числом, а не подразумевается
+                                "ticket": R.ticket_in(rk, p, dep),
+                                "ticket_own": R.ticket(dep, p),
+                                "share_mult": R.pair_share_mult(rk, p),
                                 "slots": R.slots(dep, p),
                                 "stats": _stats([r for r in mine
                                                  if (r.get("book") or rk) == p],

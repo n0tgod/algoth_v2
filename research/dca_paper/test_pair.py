@@ -113,6 +113,87 @@ def test_ticket_stays_the_ticket_of_its_own_side():
           f"{got:.1f}× при объявленном отношении {want:.1f}×")
 
 
+def test_short_side_enters_with_the_declared_share():
+    """Билет короткой стороны в общем счёте — объявленная доля своего.
+
+    Решение владельца 2026-09-07 по замеру `short_why`: 0.25 у общей
+    оптимальной и общей агрессивной, у безопасной без изменений.
+    Кусается на дороге целиком: маржа строки короткой стороны обязана
+    быть вчетверо меньше её собственного билета там, где доля
+    объявлена, и равна ему там, где не объявлена.
+    """
+    dep = 10000.0
+    longs = [_long("AUSDT", T0)]
+    shorts = [_short("BUSDT", T0)]
+    got = {}
+    for pk in ("pair_safe", "pair_optimal"):
+        lk, sk = R.parts_of(pk)
+        packed = PR.pack({lk: longs}, {sk: shorts}, keys=[pk])
+        rows, _c, one, _l = RP.build_rows(packed, now=T0 + 100 * H,
+                                          keys=[pk], log=lambda *a: None)
+        mine = {r["sym"]: r for r in rows if int(r["dep"]) == int(dep)}
+        got[pk] = (mine["BUSDT"]["margin"], R.ticket(dep, sk),
+                   (one[pk]["parts"][sk]["ticket"][str(int(dep))]))
+    m_safe, own_safe, _t = got["pair_safe"]
+    m_opt, own_opt, _t2 = got["pair_optimal"]
+    assert abs(m_safe - own_safe) < 0.02 * own_safe, got["pair_safe"]
+    assert abs(m_opt - 0.25 * own_opt) < 0.02 * own_opt, got["pair_optimal"]
+    assert R.pair_share_mult("pair_optimal", "optimal_h") == 0.25
+    assert R.pair_share_mult("pair_optimal", "optimal") == 1.0, "лонг не режем"
+    assert R.pair_share_mult("pair_safe", "safe_h") == 1.0
+    print(f"ok  короткая сторона входит объявленной долей: у безопасной "
+          f"${m_safe:.0f} из ${own_safe:.0f}, у оптимальной ${m_opt:.0f} "
+          f"из ${own_opt:.0f}")
+
+
+def test_the_share_never_dives_under_the_exchange_floor():
+    """Доля не вправе опустить билет под биржевой минимум.
+
+    Иначе правило не уменьшало бы риск, а вычёркивало сделки молча:
+    касса отказала бы им «мельче минимума». На депозите $1k билеты и так
+    стоят на полу — там доля не кусается, и это видно числом.
+    """
+    small = R.DEPOSITS[0]
+    sk = R.parts_of("pair_optimal")[1]
+    got = R.ticket_in("pair_optimal", sk, small)
+    assert got == R.floor_of(sk), (got, R.floor_of(sk))
+    assert got > R.ticket(small, sk) * 0.25, (got, R.ticket(small, sk))
+    # на $10k пол не мешает, и доля кусается полностью
+    big = R.DEPOSITS[1]
+    assert abs(R.ticket_in("pair_optimal", sk, big)
+               - 0.25 * R.ticket(big, sk)) < 1e-9
+    print(f"ok  доля билета не ныряет под пол биржи: на ${int(small)} "
+          f"билет остаётся ${got:g}, на ${int(big)} режется до "
+          f"${R.ticket_in('pair_optimal', sk, big):g}")
+
+
+def test_family_rules_retire_the_old_rows_without_touching_other_books():
+    """Смена правил СЕМЕЙСТВА не трогает запись остальных книг.
+
+    Кусается: строка общего счёта прежней версии (без поля) в счёт не
+    идёт, но остаётся читаемой; строка длинной книги без того же поля —
+    идёт, потому что у её семейства своей версии нет; ключ дедупа
+    различает версии, иначе решение, пересчитанное по новому правилу, не
+    записалось бы никогда.
+    """
+    old = {"dep": 1000, "ruler": "pair_safe", "at": T0, "exit_ts": T0 + H,
+           "sym": "AUSDT", "side": "short", "usd": 1.0, "lev": 2.0,
+           "margin": 25.0, "pnl_frac": 0.04, "exit": "тейк",
+           "written_at": T0 + H, "rules": R.RULES}
+    new = dict(old, book_rules=R.FAMILY_RULES["pair"])
+    plain = dict(old, ruler="safe", side="long")
+    assert not R.is_current(old), "строка прежней версии семейства учтена"
+    assert R.is_current(new), "строка нынешней версии не учтена"
+    assert R.is_current(plain), "у длинной книги своей версии нет"
+    assert R.journal_key(old) != R.journal_key(new), "версии не различены"
+    # запись не пропала: журнал читается целиком
+    rows = [old, new]
+    assert len([r for r in rows if R.ruler_of(r) == "pair_safe"]) == 2
+    print(f"ok  версия правил семейства {R.FAMILY_RULES['pair']}: строки "
+          "прежней версии остаются в журнале и в счёт не идут, книги "
+          "других семейств не тронуты")
+
+
 def test_collisions_and_link_live_inside_the_book():
     """Совпадение имён и связь сторон считаются по строкам самой книги."""
     at = T0
@@ -268,6 +349,9 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
 if __name__ == "__main__":
     for t in (test_pack_marks_the_source_and_keeps_both_sides,
               test_books_sharing_one_geometry_both_get_their_positions,
+              test_short_side_enters_with_the_declared_share,
+              test_the_share_never_dives_under_the_exchange_floor,
+              test_family_rules_retire_the_old_rows_without_touching_other_books,
               test_memory_guard_stops_the_run_itself,
               test_one_account_takes_less_than_two_separate_ones,
               test_ticket_stays_the_ticket_of_its_own_side,
@@ -275,4 +359,4 @@ if __name__ == "__main__":
               test_missing_caches_are_a_reason_not_empty_books,
               test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts):
         t()
-    print("\nвсе 8 проверок прошли")
+    print("\nвсе 11 проверок прошли")
