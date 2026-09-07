@@ -1532,6 +1532,32 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L68 `build_levels(bars)` — Уровни по последнему бару окна; мало истории — уровней нет.
 - L81 `main()`
 
+## research/dca_paper/arm_split.py · 350 строк
+
+Разрез бумажных DCA-книг ПО РУКЕ МОДЕЛИ: деревья (`gbm`) и сеть (`nn`).
+
+- L45 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L46 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L53 `ARMS = ('gbm', 'nn')`
+- L54 `ARM_TITLE = {'gbm': 'деревья', 'nn': 'сеть'}`
+- L55 `MAIN_DEP = 10000`
+- L56 `N_MIN = 30`
+- L59 `arm_title(arm)`
+- L63 `key_of(sym, side, at)` — Ключ соединения: имя, сторона, момент решения с точностью записи.
+- L73 `legs_index(legs)` — (имя, сторона, момент) → список (рука, модуль прогноза).
+- L83 `author(cands)` — Рука-автор решения и причина, если её нет.
+- L97 `attribute(rows, idx, log=print)` — Каждой строке журнала — рука; счётчики причин рядом, не молча.
+- L118 `_median(xs)`
+- L126 `stats(rows, mid=None)` — Деньги руки: сумма, медиана позиции в % маржи, доля плюсов, половины.
+- L146 `window(rows)`
+- L156 `run(rows=None, legs=None, log=print)`
+- L213 `verdict(s)` — По книге на главном депозите: у какой руки плюс и держится ли он на обеих половинах окна. Меньше `N_MIN` сдел…
+- L236 `_u(x)`
+- L240 `_p(x)`
+- L244 `report(s)`
+- L321 `publish(name)`
+- L326 `main(argv=None)`
+
 ## research/dca_paper/backfill_fav.py · 127 строк
 
 Добор обещания модели (`fav_bp`) в уже записанные строки журнала.

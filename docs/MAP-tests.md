@@ -886,6 +886,20 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
+## research/dca_paper/test_arm_split.py · 121 строк
+
+Проверки разреза DCA-книг по руке модели.
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `T0 = 1786320000.0`
+- L18 `H = 3600.0`
+- L21 `_leg(sym, arm, at, fwd, side='long')`
+- L25 `_row(sym, at, usd, ruler='optimal', dep=10000, side='long', rul…`
+- L34 `test_author_follows_the_book_rule_not_the_arm_order()`
+- L57 `test_money_of_arms_sums_to_the_book_and_orphans_are_named()`
+- L89 `test_without_the_sheets_journal_nothing_pretends_to_have_an_arm…`
+- L104 `test_halves_split_by_decision_time()`
+
 ## research/dca_paper/test_costs.py · 456 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
