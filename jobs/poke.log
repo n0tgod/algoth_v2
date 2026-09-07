@@ -1191,3 +1191,7 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788812061 ==
 [2026-09-07T20:14:23Z] задание short-why-1 запущено: research/dca_paper/short_why.py
+
+== сигнал 1788818270 ==
+[2026-09-07T21:57:52Z] задание pair-share-deploy: перезапуск сборщика
+[2026-09-07T21:57:52Z] задание pair-share-run запущено: research/dca_paper/run_pair.py
