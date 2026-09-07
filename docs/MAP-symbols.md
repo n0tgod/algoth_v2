@@ -4458,6 +4458,31 @@ S8.1, этап 2: признаки и цели из почасовых свод�
 - L88 `write(d, out_path)` — Собрать отчёт по каталогу артефактов. Возвращает путь.
 - L299 `main()`
 
+## research/s8_loop/sheet_supply.py · 256 строк
+
+Подача листа сечения по суткам и по руке: сколько решений вообще есть.
+
+- L38 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L39 `RESEARCH = os.path.dirname(HERE)`
+- L40 `ROOT = os.path.dirname(RESEARCH)`
+- L46 `OUT = os.path.join(HERE, 'out')`
+- L47 `SHEETS = os.path.join(HERE, 'out', 'model_sit', …`
+- L48 `EDGE_BP = 33.0`
+- L49 `MIN_RR = 2.0`
+- L50 `LO_RR = 1.5`
+- L51 `ARMS = ('gbm', 'nn')`
+- L52 `ARM_TITLE = {'gbm': 'деревья', 'nn': 'сеть'}`
+- L55 `_median(xs)`
+- L63 `blank()`
+- L68 `scan(path=None, log=print, limit=None)` — Журнал листов → сутки × рука × числа подачи.
+- L116 `summarize(days)`
+- L132 `diagnose(s, tail_days=7, head_days=7)` — Три причины провала подачи, разделённые числом.
+- L158 `run(path=None, log=print, limit=None)`
+- L168 `_n(x)`
+- L172 `report(s)`
+- L226 `publish(name)`
+- L231 `main(argv=None)`
+
 ## research/s8_loop/side_split.py · 324 строк
 
 Разрез ВСЕХ книг моделей по стороне: где шорты в плюсе и есть ли сигнал, который в плюсе только по шортам.

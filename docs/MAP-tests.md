@@ -2521,6 +2521,19 @@
 - L5499 `test_agree_echo_book()` — Согласное эхо: у источника остаётся ровно пересечение рук.
 - L5626 `main()`
 
+## research/s8_loop/test_sheet_supply.py · 117 строк
+
+Проверки подачи листа: гейты считаются той же геометрией, что у ног; строка с переставленным знаком пути в сч…
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `DAY = 86400.0`
+- L17 `T0 = 1786320000.0`
+- L20 `_row(sym, fwd, mae, mfe, px=100.0)`
+- L25 `_sheet(path, recs)`
+- L34 `test_gates_are_counted_by_the_same_geometry_as_the_legs()`
+- L58 `test_diagnosis_compares_the_edges_of_the_window_not_the_best_da…`
+- L92 `test_short_window_says_why_instead_of_zeros()`
+
 ## research/s8_loop/test_side_split.py · 173 строк
 
 Проверки `side_split.py`: сделки собираются ядром кассы, стороны не смешиваются, вердикт держит порог и полов…
