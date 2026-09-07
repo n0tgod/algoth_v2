@@ -4350,7 +4350,7 @@ S8.1, этап 2: признаки и цели из почасовых свод�
 - L299 `publish(name)`
 - L304 `main(argv=None)`
 
-## research/s8_loop/side_wave.py · 309 строк
+## research/s8_loop/side_wave.py · 317 строк
 
 Волна окна и сырой исход стороны: что шорты книг сделали бы САМИ ПО СЕБЕ.
 
@@ -4369,12 +4369,12 @@ S8.1, этап 2: признаки и цели из почасовых свод�
 - L124 `side_rows(trades, betas, wave, H, arm, side)` — Сырой исход по сделкам стороны; сделка без волны — пропуск со счётом.
 - L152 `_stat(rows)`
 - L171 `run(root=None, read=None, log=log, books=BOOKS, trades_of=None)`
-- L221 `_u(x)`
-- L225 `_b(x)`
-- L229 `_pc(x)`
-- L233 `report(s)`
-- L281 `publish(name)`
-- L286 `main(argv=None)`
+- L225 `_u(x)`
+- L229 `_b(x)`
+- L233 `_pc(x)`
+- L237 `report(s)`
+- L287 `publish(name)`
+- L292 `main(argv=None)`
 
 ## research/s8_loop/sit_absorb.py · 245 строк
 

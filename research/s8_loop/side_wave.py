@@ -184,8 +184,12 @@ def run(root=None, read=None, log=log, books=BOOKS, trades_of=None):
         if tr is None:
             log(f"{k}: книги нет")
             continue
+        closed_h = sorted(t.get("hour") for t in tr if t.get("hour")
+                          and t.get("state") == "закрыта")
         loaded[k] = {"trades": tr, "H": SS.book_hold(mman or {}) or TR.HOLD_H,
-                     "betas": betas_of(mdir) if not trades_of else {}}
+                     "betas": betas_of(mdir) if not trades_of else {},
+                     "window": [closed_h[0], closed_h[-1]] if closed_h else None,
+                     "names": len({t.get("sym") for t in tr if t.get("state") == "закрыта"})}
     hours = sorted({t.get("hour") for v in loaded.values() for t in v["trades"]
                     if t.get("hour") and t.get("state") == "закрыта"})
     if not hours:
@@ -204,7 +208,7 @@ def run(root=None, read=None, log=log, books=BOOKS, trades_of=None):
                                  "neg_share": round(float(np.mean(ok < 0)), 3) if len(ok) else None}
     for k, v in loaded.items():
         wave = {h: float(wt[v["H"]][i]) for i, h in enumerate(hours)}
-        bk = {"H": v["H"], "arms": {}}
+        bk = {"H": v["H"], "arms": {}, "window": v.get("window"), "names": v.get("names")}
         for arm in SS.ARMS:
             bk["arms"][arm] = {}
             for side in ("long", "short"):
@@ -256,6 +260,8 @@ def report(s):
           "доля падающих | β ср | без волны | без β |",
           "|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for k, bk in s["books"].items():
+        w = bk.get("window") or ["—", "—"]
+        P.append(f"| `{k}` окно {w[0]} … {w[1]}, имён {bk.get('names')} | | | | | | | | | | | | | | |")
         for arm, sides in bk["arms"].items():
             for side, st in sides.items():
                 if not st.get("n"):
@@ -286,13 +292,15 @@ def publish(name):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="волна окна и сырой исход стороны")
     ap.add_argument("--tag", default="1m")
+    ap.add_argument("--books", action="append", default=None,
+                    help="ключ книги; повторяемый (по умолчанию h24, z, h4)")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     try:
         os.nice(10)
     except Exception:                                     # noqa: BLE001
         pass
-    s = run()
+    s = run(books=tuple(a.books) if a.books else BOOKS)
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, f"SIDE-wave-{a.tag}.json"), "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False, indent=1)
