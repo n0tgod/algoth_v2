@@ -1066,3 +1066,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 [2026-09-07T05:14:47Z] задание d11b-gbm-72 запущено: research/dca_ladder/run_d11.py
 [2026-09-07T05:14:47Z] задание d11b-nn-24 запущено: research/dca_ladder/run_d11.py
 [2026-09-07T05:14:47Z] задание d11b-nn-72 запущено: research/dca_ladder/run_d11.py
+
+== сигнал 1788758622 ==
+[2026-09-07T05:23:45Z] задание restart-tsq: перезапуск сборщика
