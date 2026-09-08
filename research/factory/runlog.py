@@ -447,8 +447,12 @@ PROPOSAL_MIN_WHY = 120
 
 
 def check_proposal(text, root, ledger_ids=(), space=None,
-                   closed_ids=()):
+                   closed_ids=(), caps=None):
     """Предложение проверяемо? Возвращает (годно, список бед).
+
+    `caps` — разбор содержимого листа сечения (`horizon.sheet_caps`):
+    исполнимость строки судится тем, что в листе ЛЕЖИТ. Не подан —
+    судим по объявленному образцу, и отказ говорит об этом словами.
 
     Предложение — это заявка на ИСПЫТАНИЕ, и каждое испытание тратит
     бюджет доказательства. Поэтому форма жёсткая: что утверждается,
@@ -543,7 +547,7 @@ def check_proposal(text, root, ledger_ids=(), space=None,
             if why:
                 bad.append(f"правило вне объявленного пространства: {why}")
             else:
-                un = space.unavailable(rule)
+                un = space.unavailable(rule, caps)
                 if un:
                     bad.append(f"строка сегодня неисполнима: {un}")
                 k = space.key(rule)
@@ -889,9 +893,19 @@ def check_role(role, root, since=None, out=None, record=False):
                       if r.get("verdict") == CL.CLOSED and r.get("id")]
         except Exception:                                 # noqa: BLE001
             closed = []
+        # Что лист сечения несёт СЕЙЧАС — по содержимому журнала листов,
+        # а не по объявленному образцу: иначе строка на цели, которую
+        # цикл уже пишет, отвергалась бы как неисполнимая до тех пор,
+        # пока кто-нибудь не вспомнит поправить константу.
+        caps = None
+        try:
+            import horizon as HZ
+            caps = HZ.sheet_caps(HZ.SHEETS)
+        except Exception:                                 # noqa: BLE001
+            caps = None
         ok, why = check_proposal(
             texts.get("research/factory/out/proposal.json", ""),
-            root, ledger_ids=ids, space=SP, closed_ids=closed)
+            root, ledger_ids=ids, space=SP, closed_ids=closed, caps=caps)
         if not ok:
             bad.append("proposal.json: " + "; ".join(why))
         else:

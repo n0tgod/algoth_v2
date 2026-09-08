@@ -31,6 +31,7 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import horizon as HZ                                      # noqa: E402
 import ledger as LG                                       # noqa: E402
 import run_day as RD                                      # noqa: E402
 import space as SP                                        # noqa: E402
@@ -110,6 +111,7 @@ def main(argv=None):
                     help="каталог реестра (по умолчанию --out)")
     ap.add_argument("--tag", default="1m")
     ap.add_argument("--seed", type=int, default=None)
+    ap.add_argument("--sheets", default=HZ.SHEETS)
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     log = print
@@ -137,8 +139,14 @@ def main(argv=None):
     else:
         log(f"объявлять нечего — {why}")
 
+    # Жребий контрольной руки тянет из ТОГО ЖЕ исполнимого, что и
+    # отобранные, а исполнимое решает содержимое листа: появись в нём
+    # вторая цель, случайная рука обязана начать тянуть и её сочетания
+    # тем же прогоном, а не после ручной правки константы.
+    caps = HZ.sheet_caps(a.sheets)
+    log(f"лист сечения: {HZ.phrase(caps)}")
     declared = RD.declare_rules(base, now, seed, fresh, log=log,
-                                source="ceiling")
+                                source="ceiling", caps=caps)
     res = {"at": now, "declared": declared,
            "candidate": None if rule is None else SP.key(rule),
            "why": why,

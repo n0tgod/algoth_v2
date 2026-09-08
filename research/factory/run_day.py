@@ -40,6 +40,7 @@ for _p in (os.path.join(RESEARCH, "s10_policy"),
         sys.path.insert(0, _p)
 
 import candidate as CD                                     # noqa: E402
+import horizon as HZ                                       # noqa: E402
 import ledger as LG                                        # noqa: E402
 import pool as PL                                          # noqa: E402
 import space as SP                                         # noqa: E402
@@ -95,7 +96,7 @@ def read_proposals(path=None):
     return out, bad
 
 
-def pending_rule(state, path):
+def pending_rule(state, path, caps=None):
     """Заявка, которую судит потолок: (правило, причина отсутствия).
 
     Правило возвращается ТОЛЬКО если оно годно как строка объявленного
@@ -122,7 +123,7 @@ def pending_rule(state, path):
     why = SP.validate(rule)
     if why:
         return None, f"правило заявки негодно: {why}"
-    why = SP.unavailable(rule)
+    why = SP.unavailable(rule, caps)
     if why:
         return None, f"заявка неисполнима: {why}"
     k = SP.key(rule)
@@ -145,8 +146,13 @@ def run_pending(rule, legs, outs):
             "daily": CD.daily_net(tr)}
 
 
-def declare_today(base, now, seed, log=print, per_day=None):
-    """Объявить предложенных и добрать контрольную руку жребием."""
+def declare_today(base, now, seed, log=print, per_day=None, caps=None):
+    """Объявить предложенных и добрать контрольную руку жребием.
+
+    `caps` — разбор содержимого листа сечения (`horizon.sheet_caps`):
+    исполнимость предложения судится тем, что в листе ЛЕЖИТ, а не тем,
+    что было объявлено образцом в день заведения пространства.
+    """
     per_day = PL.PER_DAY if per_day is None else per_day
     rows, bad = LG.read(base)
     st = LG.state(rows)
@@ -161,7 +167,7 @@ def declare_today(base, now, seed, log=print, per_day=None):
         if why:
             log(f"предложение отвергнуто: {why}")
             continue
-        why = SP.unavailable(rule)
+        why = SP.unavailable(rule, caps)
         if why:
             log(f"предложение неисполнимо: {why}")
             continue
@@ -170,11 +176,11 @@ def declare_today(base, now, seed, log=print, per_day=None):
             continue
         fresh.append((rule, note))
     return declare_rules(base, now, seed, fresh, log=log, per_day=per_day,
-                         source="assistant")
+                         source="assistant", caps=caps)
 
 
 def declare_rules(base, now, seed, fresh, log=print, per_day=None,
-                  source="assistant"):
+                  source="assistant", caps=None):
     """Объявить названные правила и добрать контрольную руку жребием.
 
     Одна реализация на оба канала объявления — ручной список и вердикт
@@ -202,7 +208,11 @@ def declare_rules(base, now, seed, fresh, log=print, per_day=None,
                       source=source, note=note) is None:
             declared.append((k, "selected"))
     taken = set(LG.state(LG.read(base)[0]))
-    for rule in SP.draw(seed, n_ctl_new, exclude=taken):
+    # Жребий тянет из ТОГО ЖЕ множества исполнимого, что и отобранные:
+    # появись в листе вторая цель, случайная рука обязана начать тянуть
+    # и её сочетания — иначе полосы сравнивались бы на разных
+    # пространствах, а разница читалась бы как качество отбора.
+    for rule in SP.draw(seed, n_ctl_new, exclude=taken, caps=caps):
         k = SP.key(rule)
         if LG.declare(k, rule, "control", seed=seed, at=now,
                       base=base, source="draw") is None:
@@ -258,12 +268,20 @@ def record_days(legs):
     return len({int(g["at"] // DAY) for g in legs if g.get("at")})
 
 
-def load_legs(sheets, log=print):
+def load_legs(sheets, log=print, caps=None, stats=None):
+    """Ноги журнала листов — по каждой цели, которую лист несёт.
+
+    Цель берётся из оси `target` правила, а набор полей — из таблицы
+    горизонта (`horizon.FIELDS`); одна строка листа порождает по ноге на
+    каждую цель, и `id` их различает. При листе прежнего образца всё
+    остаётся дословно прежним: собирается одна базовая цель тем же
+    вызовом, каким её собирал турнир.
+    """
     paths = [sheets] if os.path.isfile(sheets) else []
     if not paths:
         log(f"журнала листов нет: {sheets}")
         return []
-    return TN.legs_from_sheets(paths, log=log)
+    return HZ.legs_from_sheets(paths, caps=caps, log=log, stats=stats)
 
 
 def outcomes_for(legs, root, geoms, log=print):
@@ -325,18 +343,35 @@ def geometries():
 LAST_TRADES = 40
 
 
-def run_candidates(state, legs, outs, log=print):
+def run_candidates(state, legs, outs, log=print, caps=None):
     """Сделки и дневной нетто по каждому живому кандидату.
+
+    Возвращает пару: числа кандидатов и словарь «кого нечем реплеить».
+
+    Второе появилось вместе со второй целью листа (механика 12cc2578).
+    Кандидат объявляется только на исполнимую цель, но лист может
+    перестать её нести — и тогда книга даёт ноль сделок. Ноль этот НАШ,
+    а не рыночный: пусти его в общий счёт, и правило вылета отставило бы
+    кандидата за «простой», то есть наша дыра стала бы вердиктом о его
+    правиле. Поэтому такие книги считаются отдельно, называются
+    причиной и в отсев не идут.
 
     В артефакт едет и ХВОСТ сделок: без него страница может показать
     только суммы, а «книга заработала» без сделок нечем оспорить —
     владелец не увидит ни имён, ни сторон, ни причин выхода.
     """
-    res = {}
+    res, blocked = {}, {}
     for cid, rec in sorted(LG.active(state).items()):
         rule = rec.get("rule") or {}
         if SP.validate(rule):
             log(f"{cid}: правило в реестре негодно — пропуск")
+            continue
+        gap = SP.unavailable(rule, caps)
+        if gap:
+            log(f"{cid}: реплеить нечем — {gap}")
+            blocked[cid] = {"why": gap, "lane": rec.get("lane"),
+                            "rule": rule,
+                            "declared_at": rec.get("declared_at")}
             continue
         tr = CD.simulate(legs, outs, CD.with_geometry(rule))
         last = [{"at": t["at"], "exit": t["exit"], "sym": t["sym"],
@@ -348,7 +383,7 @@ def run_candidates(state, legs, outs, log=print):
                     "declared_at": rec.get("declared_at"),
                     "note": rec.get("note"),
                     "lane": rec.get("lane"), "rule": rule}
-    return res
+    return res, blocked
 
 
 # --- нуль ------------------------------------------------------------
@@ -368,9 +403,15 @@ def null_daily(legs, outs, rule, seeds=NULL_SEEDS):
     правила и проверяется контрольной рукой, которая тянет из
     пространства целиком.
     """
+    # Перестановка идёт внутри часа, руки И ГОРИЗОНТА: исход
+    # 24-часовой ноги, попавший на четырёхчасовую, есть не другой нуль,
+    # а другая книга — сторона там определена другим прогнозом, а
+    # длина удержания другой мерой. Нуль обязан оставаться той же
+    # книгой с переставленным будущим.
     by_hour = {}
     for lg in legs:
-        by_hour.setdefault((lg["at"], lg["arm"]), []).append(lg)
+        by_hour.setdefault((lg["at"], lg["arm"], HZ.leg_target(lg)),
+                           []).append(lg)
     out = []
     for s in range(seeds):
         rnd = random.Random(1000003 + s)
@@ -441,7 +482,8 @@ def verdict(sel, ctl, n_days):
             f"б.п. — предъявлять можно только вместе с числом испытаний")
 
 
-def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
+def write_report(path, meta, cands, st, nulls_med, log=print, pending=None,
+                 caps=None, blocked=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     sp = LG.spent(st)
     sel = [c for c in cands.values() if c["lane"] == "selected"]
@@ -468,7 +510,13 @@ def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
     L.append(f"| эффективное N | {n_eff:.1f} |")
     L.append(f"| средняя связь дневных денег | {mean_r:+.3f} |")
     L.append(f"| пространство объявлено | {SP.TOTAL} |")
-    L.append(f"| из него исполнимо сегодня | {SP.available_total()} |")
+    # Знаменатель исполнимого считается по СОДЕРЖИМОМУ листа, а не по
+    # объявленному образцу: появись в листе вторая цель, число обязано
+    # вырасти в тот же прогон, а не тогда, когда кто-нибудь вспомнит
+    # поправить константу.
+    L.append(f"| из него исполнимо сегодня | {SP.available_total(caps)} |")
+    L.append(f"| исполнимо по объявленному образцу листа | "
+             f"{SP.available_total()} |")
     rec = meta.get("record_days")
     L.append(f"| суток записи в журнале листов | "
              f"{'—' if rec is None else rec} |")
@@ -482,6 +530,26 @@ def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
     L.append("Эффективное `N` меряется, а не считается номинально: "
              "параметрические соседи — почти одна ставка, и сто книг со "
              "связью 0.9 несут информации меньше десяти независимых.\n")
+    L += HZ.report_lines(caps)
+    if meta.get("legs_by_target"):
+        L.append("| цель | ног в журнале |")
+        L.append("|---|--:|")
+        for t, n in sorted(meta["legs_by_target"].items()):
+            L.append(f"| `{t}` | {n} |")
+        L.append("")
+    if blocked:
+        L.append("## Кандидаты, которых нечем реплеить\n")
+        L.append("| ключ | полоса | почему |")
+        L.append("|---|---|---|")
+        for cid, b in sorted(blocked.items()):
+            L.append(f"| `{cid}` | {b.get('lane') or '—'} | {b['why']} |")
+        L.append("")
+        L.append("Эти книги дали бы ноль сделок, и ноль был бы НАШ, а не "
+                 "рыночный: пусти его в счёт, и правило вылета отставило "
+                 "бы кандидата за простой — то есть наша дыра стала бы "
+                 "вердиктом о его правиле. В полосы и в отсев они не "
+                 "входят, и это прочерк с названной причиной, а не "
+                 "ноль.\n")
     L.append("## Полосы против нуля\n")
     L.append("| полоса | книг | медиана нетто | максимум | минимум |")
     L.append("|---|--:|--:|--:|--:|")
@@ -559,6 +627,10 @@ def write_report(path, meta, cands, st, nulls_med, log=print, pending=None):
             "mean_r": round(mean_r, 4), "days": n_days,
             "record_days": meta.get("record_days"),
             "verdict": verdict(sel_net, ctl_net, n_days),
+            "available": SP.available_total(caps),
+            "available_declared": SP.available_total(),
+            "sheet": HZ.phrase(caps),
+            "blocked": {k: v["why"] for k, v in (blocked or {}).items()},
             "null_median": nulls_med}
 
 
@@ -580,8 +652,11 @@ def publish(path, log=print, msg="фабрика: суточный прогон"
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sheets", default=os.path.join(
-        RESEARCH, "s8_loop", "out", "model_sit", "sheets.jsonl"))
+    # Путь к журналу листов ОДИН на всех (`horizon.SHEETS`): исполнимость
+    # судится по содержимому того самого файла, из которого потом
+    # собираются ноги. Своя копия пути у каждого читателя однажды
+    # развела бы «по какому листу судили» и «по какому реплеили».
+    ap.add_argument("--sheets", default=HZ.SHEETS)
     ap.add_argument("--root", default=os.path.join(
         RESEARCH, "b1_book", "out"))
     ap.add_argument("--out", default=OUT)
@@ -598,20 +673,36 @@ def main(argv=None):
     now = time.time()
     log = print
     seed = a.seed if a.seed is not None else int(now // DAY)
+    # Что лист несёт СЕЙЧАС — первым шагом и одним разбором на весь
+    # прогон: по нему судится исполнимость заявки, объявляются
+    # кандидаты, тянется жребий и собираются ноги. Два разбора одного
+    # файла в одном прогоне разошлись бы ровно тогда, когда цикл
+    # допишет лист посередине.
+    caps = HZ.sheet_caps(a.sheets)
+    log(f"лист сечения: {HZ.phrase(caps)}")
     declared = []
     if not a.no_declare:
-        declared = declare_today(a.base, now, seed, log=log)
+        declared = declare_today(a.base, now, seed, log=log, caps=caps)
         log(f"объявлено: {len(declared)} "
             f"({sum(1 for _k, l in declared if l == 'control')} случайных)")
     st = LG.state(LG.read(a.base)[0])
     if not LG.active(st):
         log("живых кандидатов нет — прогонять нечего")
-    legs = load_legs(a.sheets, log=log)
-    log(f"ног из журнала листов: {len(legs)}")
+    by_target = {}
+    legs = load_legs(a.sheets, log=log, caps=caps, stats=by_target)
+    log(f"ног из журнала листов: {len(legs)} ({by_target})")
+    gap = HZ.supply_gap(caps, by_target)
+    if gap:
+        # Цель в листе есть, а ног из неё ноль: это поломка чтения, а не
+        # тихий рынок. Отчёт не пишется — пустота не вправе выдавать
+        # себя за прогон (тот же класс, что «исходов нет ни у одной
+        # ноги» ниже).
+        log(gap + "; отчёт не пишется")
+        return 1
     rules = [CD.with_geometry(v["rule"]) for v in LG.active(st).values()
              if v.get("rule") and not SP.validate(v["rule"])]
     pend_rule, pend_why = pending_rule(
-        st, a.proposal or os.path.join(a.out, PROPOSAL_NAME))
+        st, a.proposal or os.path.join(a.out, PROPOSAL_NAME), caps=caps)
     log(f"заявка: {SP.key(pend_rule) if pend_rule else pend_why}")
     # Гейты заявки могут быть шире гейтов живых, и без её правила
     # `needed_legs` отсекла бы её собственные ноги — заявка вышла бы
@@ -636,7 +727,8 @@ def main(argv=None):
         log("исходов нет ни у одной ноги — чтение баров сломано; "
             "отчёт не пишется, чтобы пустота не выдала себя за прогон")
         return 1
-    cands = run_candidates(st, legs, outs, log=log) if outs else {}
+    cands, blocked = (run_candidates(st, legs, outs, log=log, caps=caps)
+                      if outs else ({}, {}))
     pending = (run_pending(pend_rule, legs, outs)
                if pend_rule is not None and outs else None)
     if pending:
@@ -654,6 +746,12 @@ def main(argv=None):
     if cands:
         daily_by_id = {cid: c["daily"] for cid, c in cands.items()}
         for cid, why in PL.sweep(st, daily_by_id, now, nmed):
+            # Кандидат, которого нечем реплеить, из отсева ИСКЛЮЧЁН: его
+            # молчание — наша дыра в листе, а не его простой, и вылет по
+            # ней был бы вердиктом о правиле, которого никто не мерил.
+            if cid in blocked:
+                log(f"{cid}: отсев пропущен — {blocked[cid]['why']}")
+                continue
             if LG.retire(cid, why, at=now, base=a.base) is None:
                 retired.append((cid, why))
         if retired:
@@ -661,10 +759,11 @@ def main(argv=None):
     st = LG.state(LG.read(a.base)[0])
     meta = {"at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime(now)),
             "legs": len(legs), "record_days": rec_days,
+            "legs_by_target": by_target,
             "declared": declared, "retired": retired}
     path = os.path.join(a.out, f"FACTORY-day-{a.tag}.md")
     summary = write_report(path, meta, cands, st, nmed, log=log,
-                           pending=pending)
+                           pending=pending, caps=caps, blocked=blocked)
     with open(os.path.join(a.out, f"factory-day-{a.tag}.json"), "w",
               encoding="utf-8") as f:
         # Дневной ряд едет в артефакт целиком: потолок мерит СВЯЗЬ
@@ -676,6 +775,11 @@ def main(argv=None):
                    "null_median": nmed,
                    "pending": pending,
                    "pending_why": pend_why,
+                   # Разбор листа едет числами, а не прозой: страницы
+                   # обязаны читать величины — разбор прозы стареет
+                   # молча при первой же правке формулировки.
+                   "sheet_caps": caps,
+                   "blocked": blocked,
                    "candidates": {k: {"lane": v["lane"],
                                       "trades": v["trades"],
                                       "net": sum(v["daily"].values()),

@@ -39,6 +39,7 @@ for _p in (os.path.join(RESEARCH, "s10_policy"),
 
 import tournament as TN                                   # noqa: E402
 import trades as TR                                       # noqa: E402
+import horizon as HZ                                      # noqa: E402
 import space as SP                                        # noqa: E402
 
 DAY = 86400.0
@@ -51,7 +52,18 @@ RR_HI_MIN = 2.0
 
 
 def passes(lg, rule):
-    """Проходит ли нога гейты правила (без учёта мест и согласия)."""
+    """Проходит ли нога гейты правила (без учёта мест и согласия).
+
+    Первым спрашивается ГОРИЗОНТ, и это не гейт, а состав вселенной:
+    одна строка листа порождает по ноге на каждую цель, которую она
+    несёт (`horizon.legs_from_sheets`), и книга на 24 ч не вправе взять
+    ногу, посчитанную по четырёхчасовым полям. Проверка стоит здесь,
+    потому что читателей у неё двое — сама книга (`simulate`) и отбор
+    ног под оценку баров (`run_day.needed_legs`); вторая копия однажды
+    разошлась бы с первой, и состав сделок изменился бы молча.
+    """
+    if HZ.leg_target(lg) != rule.get("target"):
+        return False
     if abs(lg["fwd"]) < float(rule["floor_bp"]):
         return False
     rr = lg.get("rr")
@@ -66,15 +78,22 @@ def passes(lg, rule):
 
 
 def agreed_keys(legs):
-    """Ключи (час, имя, сторона), которые выбрали ОБЕ руки.
+    """Ключи (цель, час, имя, сторона), которые выбрали ОБЕ руки.
 
     Согласие считается по листу, а не по сделкам: сделок у второй руки
     может не быть из-за мест, и тогда «согласие» означало бы «первой
     руке хватило места», а не «обе руки увидели одно».
+
+    Горизонт входит в ключ, потому что согласие есть свойство ОДНОГО
+    прогноза: рука `gbm` на 4 ч и рука `nn` на 24 ч, попавшие в одно
+    имя, — не согласие двух рук, а совпадение двух разных вопросов.
+    Без цели в ключе книга 24 ч брала бы имена по согласию, половина
+    которого измерена другим горизонтом, и +441 б.п. заявки мерились бы
+    не тем фильтром, который объявлен.
     """
     seen = {}
     for lg in legs:
-        k = (lg.get("hour"), lg["sym"], lg["side"])
+        k = (HZ.leg_target(lg), lg.get("hour"), lg["sym"], lg["side"])
         seen.setdefault(k, set()).add(lg["arm"])
     return {k for k, arms in seen.items() if len(arms) > 1}
 
@@ -152,7 +171,7 @@ def simulate(legs, outs, rule):
     for lg in legs:
         if not passes(lg, rule):
             continue
-        if need_agree and (lg.get("hour"), lg["sym"],
+        if need_agree and (HZ.leg_target(lg), lg.get("hour"), lg["sym"],
                            lg["side"]) not in ok_keys:
             continue
         if order_value(lg, rule) is None:

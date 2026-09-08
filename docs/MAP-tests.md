@@ -1607,6 +1607,52 @@
 - L351 `test_nonoverlap()`
 - L356 `main()`
 
+## research/mech_12cc2578/test_horizon.py · 793 строк
+
+Проверки механики 12cc2578 — «вторая цель в листе сечения».
+
+- L43 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L44 `RESEARCH = os.path.dirname(HERE)`
+- L45 `ROOT = os.path.dirname(RESEARCH)`
+- L46 `FACTORY = os.path.join(RESEARCH, 'factory')`
+- L59 `FAILED = []`
+- L60 `H = 3600.0`
+- L61 `DAY = 86400.0`
+- L62 `T0 = 1780000000`
+- L65 `check(name, ok, got='')`
+- L81 `row(sym, fwd, fwd24=None, q=True, mae=-40.0, mfe=120.0, mae24=-…`
+- L96 `write_sheet(path, records)`
+- L103 `rec_at(h, rows, arms=('gbm', 'nn'))`
+- L108 `sheet(tmp, hours=4, with24=True, mirror=True, name='sheets.json…` — Журнал листов. `mirror` — цель 24 ч зеркалит 4 ч (подсадка).
+- L123 `rule(**kw)`
+- L131 `outs_for(legs, move=100.0)`
+- L137 `caps24(z=True, q=False, rows=12, records=4)` — Разбор листа, несущего обе цели, — руками, без чтения файла.
+- L148 `test_sheet_caps_reads_content_not_constant()`
+- L188 `test_caps_read_the_tail_not_the_head()` — Отвечает СВЕЖИЙ лист: цель, появившаяся час назад, исполнима, а пропавшая час назад — нет, и оба случая надо…
+- L213 `test_report_phrase_comes_from_the_numbers()` — Фраза о листе ВЫВОДИТСЯ из чисел, а не стоит рядом литералом.
+- L229 `test_old_sheet_is_refused_aloud_not_replayed_as_4h()` — Лист без полей 24 ч — «цели нет», а не молчаливый реплей на 4 ч.
+- L255 `test_horizon_changes_the_leg_set()` — Подмена горизонта обязана менять СОСТАВ ног, иначе ось не решает ничего, а проверка этого не видит.
+- L289 `test_ids_distinguish_horizon()` — Одна строка листа — две ноги, и `id` у них разные.
+- L322 `test_quantile_fields_do_not_leak_across_horizons()` — Чужие поля пути в ногу не протекают.
+- L350 `test_calibration_planted_and_copy()` — Калибровочная пара.
+- L401 `test_no_lookahead_future_does_not_move_the_past()` — Переписанное будущее не двигает ни одной ноги прошлого.
+- L428 `test_supply_gap_is_a_refusal_not_a_dash()` — Цель в листе есть, а ног ноль — поломка чтения, а не тихий рынок.
+- L442 `test_quantile_geometry_is_refused_on_24h()` — Стоп и тейк на 24 ч реплеить нечем, и это сказано словами.
+- L457 `test_risk_sizing_is_refused_on_24h()` — Равный риск считается от ИСПОЛНЯЕМОГО стопа, которого на 24 ч нет.
+- L473 `test_sigma_rank_needs_the_z_field()` — Порядок в σ требует поля прогноза в единицах σ у ЭТОЙ цели.
+- L487 `test_available_total_counts_content_not_the_constant()` — Знаменатель исполнимого растёт в тот же прогон, что и лист.
+- L512 `test_draw_reaches_the_second_horizon()` — Жребий тянет из того же исполнимого, что и отобранные.
+- L528 `test_book_takes_only_its_own_horizon()` — Нога без поля цели — базовая: она читала её поля.
+- L545 `test_agreement_is_within_one_horizon()` — Согласие рук есть свойство ОДНОГО прогноза.
+- L570 `test_null_permutes_within_the_horizon()` — Нуль переставляет исходы внутри часа, руки И горизонта.
+- L597 `fake_bars(sym_up=('C0USDT',))`
+- L611 `run_day_on(tmp, sheets, extra_declare=(), argv=())` — Суточный прогон на синтетике, с подменёнными барами и публикацией.
+- L641 `test_run_day_replays_both_horizons()` — Сквозная дорога: прогон исполняет обе цели и печатает числа.
+- L674 `test_run_refuses_when_a_target_gives_no_legs()` — Цель в листе есть, а ног ноль — прогон ОТКАЗЫВАЕТСЯ.
+- L698 `test_blocked_candidate_is_named_and_not_swept()` — Книгу, которую нечем реплеить, правило вылета НЕ судит.
+- L730 `TESTS = [test_sheet_caps_reads_content_not_cons…`
+- L755 `main()` — Имя УПАВШЕГО блока печатается отдельной строкой `ПРОВАЛ <имя>`.
+
 ## research/mech_49b535f8/test_place.py · 633 строк
 
 Проверки механики 49b535f8 — «где усреднять».
