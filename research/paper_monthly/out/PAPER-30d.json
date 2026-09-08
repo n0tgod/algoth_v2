@@ -1,35 +1,35 @@
 {
- "run_at": "2026-09-07 06:00 UTC",
+ "run_at": "2026-09-08 06:00 UTC",
  "rules": 1,
  "k": 14,
  "h": 30,
  "width": 0.1,
  "cost_bp": 11.0,
  "decisions": 26,
- "resolutions": 8,
+ "resolutions": 9,
  "summary": {
   "ahead": {
    "tranches": 0
   },
   "backfilled": {
-   "tranches": 8,
+   "tranches": 9,
    "from": "2026-08-01",
-   "to": "2026-08-08",
-   "gross_mean_bp": -108.6,
-   "net_mean_bp": -121.0,
-   "net_median_bp": -94.4,
-   "net_pos_share": 0.375,
-   "t_naive": -0.96,
-   "t_nw": -2.62,
+   "to": "2026-08-09",
+   "gross_mean_bp": -53.8,
+   "net_mean_bp": -72.9,
+   "net_median_bp": -32.0,
+   "net_pos_share": 0.444,
+   "t_naive": -0.6,
+   "t_nw": -1.29,
    "independent": 1,
    "t_independent": null,
    "net_mean_independent_bp": -32.0,
-   "funding_mean_bp": 1.3,
-   "truncated_legs_total": 558,
-   "elapsed_median": 0.7687,
-   "coverage_median": 0.748
+   "funding_mean_bp": 8.1,
+   "truncated_legs_total": 626,
+   "elapsed_median": 0.752,
+   "coverage_median": 0.732
   }
  },
- "verdict": "настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 8 — кривая восстановленной части есть бэктест, а не трек",
+ "verdict": "настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 9 — кривая восстановленной части есть бэктест, а не трек",
  "took_min": 0.5
 }
