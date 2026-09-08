@@ -100,15 +100,22 @@ def _end_to_end(tmp):
         g["arm"] = "nn" if i % 2 else "gbm"
     jp = os.path.join(tmp, "short.jsonl")
     cp = os.path.join(tmp, "recs.jsonl")
+    # Справочник листингов подаётся ЯВНО: с 08.09 у книг есть правило
+    # возраста имени, и молча взять боевой файл значило бы судить
+    # выдуманные символы чужими датами (все — «возраст неизвестен»).
+    t_first = min(float(g["at"]) for g in legs)
+    launch = {sym: t_first - 90 * 86400.0
+              for sym in ("SSSUSDT", "TTTUSDT")}
     s = T10._with_levels(lambda: S.run(legs_=legs, src=src, journal=jp,
-                                       cache_path=cp, log=lambda *a: None))
-    return s, jp, cp, legs
+                                       cache_path=cp, launch=launch,
+                                       log=lambda *a: None))
+    return s, jp, cp, legs, launch
 
 
 def test_family_writes_its_own_journal_and_gates_the_aggressive_book():
     tmp = tempfile.mkdtemp(prefix="short-")
     try:
-        s, jp, cp, legs = _end_to_end(tmp)
+        s, jp, cp, legs, launch = _end_to_end(tmp)
         assert s["family"] == "h24" and s["hedge"] is True
         assert s["signal"]["hold_h"] == R.H24_HOLD_H == 24
         assert s["rules"]["RULER_ORDER"] == list(R.H24_ORDER)
@@ -132,14 +139,16 @@ def test_family_writes_its_own_journal_and_gates_the_aggressive_book():
             R.RULERS["aggr_h"]["min_lev"] = 999.0
             s2 = T10._with_levels(lambda: S.run(
                 legs_=legs, src=T3._Src({}), journal=os.path.join(tmp, "g.jsonl"),
-                cache_path=cp, log=lambda *a: None))
+                cache_path=cp, launch=launch, log=lambda *a: None))
             assert s2["one_name"]["aggr_h"]["kept"] == 0, s2["one_name"]["aggr_h"]
             assert s2["one_name"]["optimal_h"]["kept"] > 0
         finally:
             R.RULERS["aggr_h"]["min_lev"] = was_gate
         # билет книги — из объявленного пика режима
         b = s["books"][f"optimal_h:{int(R.DEPOSITS[1])}"]
-        assert b["ticket"] == R.ticket(R.DEPOSITS[1], "optimal_h")
+        # билет — С ДОЛЕЙ, объявленной для книги, а не «свой» билет режима
+        assert b["ticket"] == R.ticket_in("optimal_h", "optimal_h",
+                                          R.DEPOSITS[1]), b["ticket"]
         assert (b.get("dups") or {}).get("overlaps") == 0, b.get("dups")
         # кэш пригоден для следующего прогона: второй прогон не считает заново
         cache, why = S.read_cache(cp, log=lambda *a: None)
@@ -155,9 +164,61 @@ def test_family_writes_its_own_journal_and_gates_the_aggressive_book():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_age_rule_of_the_book_bites_and_counts_the_unknown_apart():
+    """Правило возраста имени — правило самой книги с 2026-09-08.
+
+    Кусается: молодое имя в книгу не входит, имя без даты листинга не
+    входит тоже и считается ОТДЕЛЬНЫМ числом, справочника нет вовсе —
+    книга идёт без фильтра и говорит причину, а не встаёт молча.
+    """
+    tmp = tempfile.mkdtemp(prefix="short-age-")
+    try:
+        s, jp, cp, legs, launch = _end_to_end(tmp)
+        a = (s.get("ages") or {}).get("safe_h") or {}
+        assert a.get("applied") and a["kept"] == a["offered"], a
+        assert R.min_age_days("safe_h") >= 7, R.MIN_AGE_DAYS
+        assert R.FAMILY_RULES["h24"] >= 1, R.FAMILY_RULES
+        base = s["books"][f"safe_h:{int(R.DEPOSITS[1])}"]["all"]["n"]
+        # те же ноги, но имена листнуты вчера — книга обязана опустеть
+        young = {k: min(float(g["at"]) for g in legs) - 86400.0
+                 for k in launch}
+        s2 = T10._with_levels(lambda: S.run(
+            legs_=legs, src=T3._Src({}),
+            journal=os.path.join(tmp, "y.jsonl"), cache_path=cp,
+            launch=young, log=lambda *a: None))
+        a2 = s2["ages"]["safe_h"]
+        assert a2["kept"] == 0 and a2["моложе порога"] == a2["offered"], a2
+        # даты неизвестны — отказ ТОТ ЖЕ, но причина считается отдельно
+        s3 = T10._with_levels(lambda: S.run(
+            legs_=legs, src=T3._Src({}),
+            journal=os.path.join(tmp, "u.jsonl"), cache_path=cp,
+            launch={"ЧУЖОЙUSDT": 1.0}, log=lambda *a: None))
+        a3 = s3["ages"]["safe_h"]
+        assert a3["kept"] == 0 and a3["возраст неизвестен"] == a3["offered"]
+        assert a3["моложе порога"] == 0, a3
+        # справочника нет вовсе — книга идёт БЕЗ фильтра, с причиной
+        s4 = T10._with_levels(lambda: S.run(
+            legs_=legs, src=T3._Src({}),
+            journal=os.path.join(tmp, "n.jsonl"), cache_path=cp,
+            launch={}, log=lambda *a: None))
+        a4 = s4["ages"]["safe_h"]
+        assert a4.get("applied") is False and a4.get("why"), a4
+        assert a4["kept"] == a4["offered"], a4
+        txt = S.report(s)
+        assert "возраст неизвестен" in txt and "доля билета" in txt
+        print(f"ok  правило возраста книги: старые имена дают {base} "
+              f"сделок, молодые — {a2['kept']} решений (причина «моложе "
+              f"порога» {a2['моложе порога']}), без даты — "
+              f"{a3['возраст неизвестен']} по своей причине, без "
+              "справочника книга идёт без фильтра вслух")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     test_cache_signature_follows_the_cell_and_the_hold()
     test_legs_come_from_both_arms_in_time_order()
     test_needs_replay_asks_for_new_and_open_positions()
     test_family_writes_its_own_journal_and_gates_the_aggressive_book()
-    print("\nвсе 4 проверки прошли")
+    test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()
+    print("\nвсе 5 проверок прошли")

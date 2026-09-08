@@ -1217,7 +1217,7 @@
 - L2619 `CONTROLS = [('хвост не доезжает до ядра', _control…`
 - L2670 `main()`
 
-## research/dca_paper/test_short.py · 163 строк
+## research/dca_paper/test_short.py · 224 строк
 
 Проверки коротких книг на сигнале h24 и общей статистики.
 
@@ -1230,7 +1230,8 @@
 - L63 `test_legs_come_from_both_arms_in_time_order()`
 - L81 `test_needs_replay_asks_for_new_and_open_positions()`
 - L94 `_end_to_end(tmp)`
-- L108 `test_family_writes_its_own_journal_and_gates_the_aggressive_boo…`
+- L115 `test_family_writes_its_own_journal_and_gates_the_aggressive_boo…`
+- L167 `test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()` — Правило возраста имени — правило самой книги с 2026-09-08.
 
 ## research/dca_paper/test_short_age.py · 100 строк
 

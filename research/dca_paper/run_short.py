@@ -42,7 +42,9 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
+sys.path.insert(0, os.path.join(ROOT, "research", "a1_universe"))
 import rules as R                                             # noqa: E402
+import instruments_refresh as IR                              # noqa: E402
 import run_paper as RP                                        # noqa: E402
 import run_d2 as D2                                           # noqa: E402
 import run_d10 as D10                                         # noqa: E402
@@ -166,7 +168,7 @@ def replay(need, src=None, log=print):
 
 
 def run(limit=None, src=None, log=print, legs_=None, journal=None,
-        cache_path=None, now=None):
+        cache_path=None, now=None, launch=None):
     t0 = time.time()
     legs_ = legs(limit=limit, log=log) if legs_ is None else list(legs_)
     cache, _why = read_cache(cache_path, log=log)
@@ -189,12 +191,23 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
             r["fav_bp"] = fav.get((sym, at))
         by_ruler.setdefault(rk, []).append(r)
     packed = {bk: list(by_ruler.get(rk) or []) for bk, rk in BOOKS.items()}
+    # ВОЗРАСТ ИМЕНИ на входе — правило книги с 2026-09-08 (решение
+    # владельца «сделать такую же логику, как в общих»). Порог и доля
+    # билета объявлены одной картой на все счета (`rules.MIN_AGE_DAYS`,
+    # `rules.SHORT_SHARE`), применяет их одно ядро (`run_paper`).
+    # Справочник читается ОДИН раз на прогон: его спрашивают все три
+    # книги на каждое решение.
+    launch = IR.launches() if launch is None else launch
+    ages = {}
+    for bk in list(packed):
+        packed[bk], ages[bk] = RP.age_shorts(packed[bk], bk, launch=launch,
+                                             log=log, now=now)
     rows, cells, one, live = RP.build_rows(packed, now=now,
                                            keys=R.H24_ORDER, log=log)
     RP.append_journal(rows, path=journal or R.H24_JOURNAL, log=log)
     s = RP.summarize(path=journal or R.H24_JOURNAL, live=live,
                      keys=R.H24_ORDER)
-    s.update({"family": "h24", "cells": cells, "one_name": one,
+    s.update({"family": "h24", "cells": cells, "one_name": one, "ages": ages,
               "signal": {"book": "h24", "arms": list(ARMS), "cell": CELL[0],
                          "hold_h": R.H24_HOLD_H, "legs": len(legs_),
                          "gate": "край ≥ 33 б.п., отношение любое"},
@@ -237,6 +250,32 @@ def report(s):
          f"{s.get('positions')}, из них пересчитано в этом прогоне "
          f"{s.get('replayed')}. Правила версии {s['rules']['RULES']}; "
          f"прогон {s.get('secs')} с.", "",
+         "**Правила счёта** (решение владельца 2026-09-08 «сделать такую "
+         "же логику, как и в общих»; объявлены ДО прогона, оба взяты у "
+         "общего счёта и заново не подбирались):", "",
+         "* **возраст имени** — книга не входит в имя, торгующееся "
+         "меньше порога на момент решения; возраст неизвестен — входа "
+         "тоже нет, и это своё число;",
+         "* **доля билета** — "
+         + ", ".join(f"{R.ruler_title(k)} {R.SHORT_SHARE.get(k, 1.0):g}×"
+                     for k in R.H24_ORDER)
+         + ", не ниже биржевого пола (на депозите $1 000 билеты и так "
+         "стоят на полу, и доля там не кусается).", "",
+         "| книга | порог | решений предложено | взято | моложе порога | "
+         "возраст неизвестен | справочнику часов |",
+         "|---|---|--:|--:|--:|--:|--:|"]
+    for rk in R.H24_ORDER:
+        a = (s.get("ages") or {}).get(rk) or {}
+        fr = a.get("справочнику часов")
+        L.append(f"| {R.ruler_title(rk)} | "
+                 + ("нет" if not a.get("age")
+                    else f"≥{float(a.get('days') or 0):g} сут")
+                 + (f" ({a['why']})" if a.get("why") else "")
+                 + f" | {a.get('offered', 0)} | {a.get('kept', 0)} | "
+                 f"{a.get('моложе порога', 0)} | "
+                 f"{a.get('возраст неизвестен', 0)} | "
+                 + ("—" if fr is None else f"{fr:g}") + " |")
+    L += ["",
          "## Книги", "",
          "| книга | депозит | билет | сделок | Σ $ | итог | просадка | "
          "медиана дня | плюсов | вперёд / пересчёт |",
@@ -247,7 +286,7 @@ def report(s):
             st = b.get("all") or {}
             L.append(
                 f"| `{rk}` ({R.ruler_title(rk)}) | ${int(dep)} | "
-                f"${R.ticket(dep, rk)} | {st.get('n', 0)} | "
+                f"${R.ticket_in(rk, rk, dep):g} | {st.get('n', 0)} | "
                 f"{_u(st.get('usd'))} | {_p(st.get('final'))} | "
                 f"{_p(st.get('max_dd'))} | {_u(st.get('day_median'))} | "
                 f"{st.get('win', '—')} % | {b.get('n_forward', 0)} / "

@@ -255,14 +255,14 @@ def test_age_rule_refuses_young_names_and_counts_the_unknown_apart():
               _short("XXXUSDT", T0),
               # молодое НА МОМЕНТ РЕШЕНИЯ: листинг за сутки до входа
               _short("EDGEUSDT", T0 - 29 * day)]
-    keep, why = PR.age_shorts(shorts, "pair_safe", launch=launch,
+    keep, why = RP.age_shorts(shorts, "pair_safe", launch=launch,
                               log=lambda *a: None, now=T0)
     assert [r["sym"] for r in keep] == ["OLDUSDT"], keep
     assert why["моложе порога"] == 2, why
     assert why["возраст неизвестен"] == 1, why
     assert why["applied"] is True and why["days"] == R.min_age_days("pair_safe")
     # справочника нет — не «никто не входит», а причина словами
-    none_, w2 = PR.age_shorts(shorts, "pair_safe", launch={},
+    none_, w2 = RP.age_shorts(shorts, "pair_safe", launch={},
                               log=lambda *a: None, now=T0)
     assert len(none_) == 4 and w2.get("applied") is False and w2.get("why")
     # правило объявлено во ВСЕХ трёх книгах общего счёта и записано

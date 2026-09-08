@@ -44,7 +44,9 @@ ROOT = os.path.dirname(os.path.dirname(HERE))      # корень репозит
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
+sys.path.insert(0, os.path.join(ROOT, "research", "a1_universe"))
 import rules as R                                             # noqa: E402
+import instruments_refresh as IR                              # noqa: E402
 import run_d6 as D6                                           # noqa: E402
 import tail as TL                                             # noqa: E402
 
@@ -188,6 +190,62 @@ def _cell(ruler, dep):
     """Ключ книги: линейка и депозит. Одно решение живёт в обеих книгах,
     и склеив их одним ключом, мы потеряли бы вторую целиком."""
     return f"{ruler}:{int(dep)}"
+
+
+def age_shorts(shorts, pk, launch=None, log=print, now=None):
+    """Короткие решения под фильтром возраста имени — правило СЧЁТА.
+
+    Счётом может быть общий счёт (`pair_*`) или сама короткая книга
+    (`*_h`): правило у них одно, объявлено одной картой, и применяет его
+    одна эта функция — вторая копия однажды разошлась бы с первой.
+
+    Вход разрешён, только если имя торгуется на площадке дольше порога
+    (`rules.MIN_AGE_DAYS`) НА МОМЕНТ РЕШЕНИЯ. Возраст неизвестен —
+    входа нет, и это считается ОТДЕЛЬНЫМ числом: «не измерено» и «не
+    подходит» лечатся разным, и именно смешение этих двух причин
+    подделало результат гейта по ставке.
+
+    Справочника нет вовсе — судить нечем, и книга входит БЕЗ фильтра с
+    названной причиной: остановить книгу молча из-за отсутствия файла
+    хуже, чем не применить правило вслух.
+    """
+    need = R.min_age_days(pk)
+    if not need:
+        return list(shorts), {"age": False, "kept": len(shorts),
+                              "offered": len(shorts)}
+    launch = IR.launches() if launch is None else launch
+    if not launch:
+        log("фильтр возраста не применён: справочник инструментов пуст")
+        return list(shorts), {"age": True, "applied": False, "days": need,
+                              "why": "справочник инструментов пуст",
+                              "kept": len(shorts), "offered": len(shorts)}
+    keep, young, unknown = [], 0, 0
+    for r in shorts:
+        a = IR.age_days(launch, r.get("sym"), r.get("at"))
+        if a is None:
+            unknown += 1
+            continue
+        if a < need:
+            young += 1
+            continue
+        keep.append(r)
+    # Свежесть самого справочника — число, а не вера: устаревший файл
+    # делает «возраст неизвестен» у каждого нового имени, и тогда
+    # правило тихо превращается в другое.
+    fresh_h = None
+    try:
+        fresh_h = round((float(now if now is not None else time.time())
+                         - os.path.getmtime(IR.PATH)) / 3600.0, 1)
+    except OSError:
+        pass
+    got = {"age": True, "applied": True, "days": need,
+           "offered": len(shorts), "kept": len(keep),
+           "моложе порога": young, "возраст неизвестен": unknown,
+           "справочнику часов": fresh_h}
+    log(f"{pk}: фильтр возраста ≥{need:g} сут оставил {len(keep)} из "
+        f"{len(shorts)} (моложе порога {young}, возраст неизвестен "
+        f"{unknown})")
+    return keep, got
 
 
 def build_rows(by_ruler, now=None, log=print, keys=None):
@@ -648,7 +706,11 @@ def summarize(path=None, live=None, keys=None, ctx=None):
             parts = R.parts_of(rk)
             b = {"deposit": dep, "ruler": rk, "ruler_title": R.ruler_title(rk),
                  "slots": (None if parts else R.slots(dep, rk)),
-                 "ticket": (None if parts else R.ticket(dep, rk)),
+                 # Билет книги — ТОТ, которым она торгует: с долей, если
+                 # доля объявлена (`rules.SHORT_SHARE`). Показав здесь
+                 # билет без доли, страница называла бы число, которого
+                 # в кассе не было.
+                 "ticket": (None if parts else R.ticket_in(rk, rk, dep)),
                  "parts": ({p: {"title": R.ruler_title(p),
                                 "side": R.side_of(p),
                                 # билет, которым сторона ВХОДИТ в этот

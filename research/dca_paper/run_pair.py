@@ -174,58 +174,6 @@ def gate_shorts(shorts, pk, ctx, log=print):
     return keep, got
 
 
-def age_shorts(shorts, pk, launch=None, log=print, now=None):
-    """Короткие решения под фильтром возраста имени — правило книги.
-
-    Вход разрешён, только если имя торгуется на площадке дольше порога
-    (`rules.MIN_AGE_DAYS`) НА МОМЕНТ РЕШЕНИЯ. Возраст неизвестен —
-    входа нет, и это считается ОТДЕЛЬНЫМ числом: «не измерено» и «не
-    подходит» лечатся разным, и именно смешение этих двух причин
-    подделало результат гейта по ставке.
-
-    Справочника нет вовсе — судить нечем, и книга входит БЕЗ фильтра с
-    названной причиной: остановить книгу молча из-за отсутствия файла
-    хуже, чем не применить правило вслух.
-    """
-    need = R.min_age_days(pk)
-    if not need:
-        return list(shorts), {"age": False, "kept": len(shorts),
-                              "offered": len(shorts)}
-    launch = IR.launches() if launch is None else launch
-    if not launch:
-        log("фильтр возраста не применён: справочник инструментов пуст")
-        return list(shorts), {"age": True, "applied": False, "days": need,
-                              "why": "справочник инструментов пуст",
-                              "kept": len(shorts), "offered": len(shorts)}
-    keep, young, unknown = [], 0, 0
-    for r in shorts:
-        a = IR.age_days(launch, r.get("sym"), r.get("at"))
-        if a is None:
-            unknown += 1
-            continue
-        if a < need:
-            young += 1
-            continue
-        keep.append(r)
-    # Свежесть самого справочника — число, а не вера: устаревший файл
-    # делает «возраст неизвестен» у каждого нового имени, и тогда
-    # правило тихо превращается в другое.
-    fresh_h = None
-    try:
-        fresh_h = round((float(now if now is not None else time.time())
-                         - os.path.getmtime(IR.PATH)) / 3600.0, 1)
-    except OSError:
-        pass
-    got = {"age": True, "applied": True, "days": need,
-           "offered": len(shorts), "kept": len(keep),
-           "моложе порога": young, "возраст неизвестен": unknown,
-           "справочнику часов": fresh_h}
-    log(f"{pk}: фильтр возраста ≥{need:g} сут оставил {len(keep)} из "
-        f"{len(shorts)} (моложе порога {young}, возраст неизвестен "
-        f"{unknown})")
-    return keep, got
-
-
 def collisions(rows, ruler):
     """Имена, которые общий счёт держит РАЗОМ длинной и короткой.
 
@@ -328,7 +276,8 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
         mine = [r for r in packed[pk] if (r.get("book") or pk) == sk]
         kept, why = gate_shorts(mine, pk, ctx, log=log)
         gates[pk] = why
-        kept, why_age = age_shorts(kept, pk, launch=launch, log=log, now=now)
+        kept, why_age = RP.age_shorts(kept, pk, launch=launch,
+                                      log=log, now=now)
         ages[pk] = why_age
         packed[pk] = [r for r in packed[pk]
                       if (r.get("book") or pk) == lk] + kept
