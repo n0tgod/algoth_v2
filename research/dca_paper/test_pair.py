@@ -267,7 +267,7 @@ def test_age_rule_refuses_young_names_and_counts_the_unknown_apart():
     assert len(none_) == 4 and w2.get("applied") is False and w2.get("why")
     # правило объявлено во ВСЕХ трёх книгах общего счёта и записано
     # своей версией: строки прежних правил в счёт не идут
-    assert all(R.min_age_days(k) >= 7 for k in R.PAIR_ORDER), R.PAIR_MIN_AGE_DAYS
+    assert all(R.min_age_days(k) >= 7 for k in R.PAIR_ORDER), R.MIN_AGE_DAYS
     assert R.FAMILY_RULES["pair"] >= 5, R.FAMILY_RULES
     # и оно видно на самой странице книги, а не только в отчёте
     assert "моложе" in R.RULERS["pair_safe"]["plain"]
