@@ -194,7 +194,7 @@ def test_family_rules_retire_the_old_rows_without_touching_other_books():
           "других семейств не тронуты")
 
 
-def test_short_side_enters_only_under_the_declared_rate_gate():
+def test_rate_gate_machinery_works_and_the_rule_is_off_now():
     """Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
 
     Кусается: шорт со ставкой не в его пользу не входит, со ставкой в
@@ -209,29 +209,34 @@ def test_short_side_enters_only_under_the_declared_rate_gate():
            "funding": {"A": (t, np.asarray([0.0002])),      # шорту в пользу
                        "B": (t, np.asarray([-0.0002]))}}    # против
     shorts = [_short("AUSDT", T0), _short("BUSDT", T0), _short("CUSDT", T0)]
-    keep, why = PR.gate_shorts(shorts, "pair_safe", ctx, log=lambda *a: None)
-    assert [r["sym"] for r in keep] == ["AUSDT"], keep
-    assert why["по ставке"] == 1 and why["ставка неизвестна"] == 1, why
-    assert why["applied"] is True and why["max_age_h"] > 0, why
-    # книга без объявленного гейта берёт всё
+    # Машинерия проверяется при ВКЛЮЧЁННОМ гейте: само правило снято
+    # 08.09 (его результат держался на «ставке неизвестна»), но код
+    # остаётся — он понадобится, если гейт вернётся другим порогом.
     was = R.PAIR_SHORT_GATE["pair_safe"]
     try:
-        R.PAIR_SHORT_GATE["pair_safe"] = False
-        off, w2 = PR.gate_shorts(shorts, "pair_safe", ctx,
-                                 log=lambda *a: None)
-        assert len(off) == 3 and w2["gate"] is False, (off, w2)
+        R.PAIR_SHORT_GATE["pair_safe"] = True
+        keep, why = PR.gate_shorts(shorts, "pair_safe", ctx,
+                                   log=lambda *a: None)
+        assert [r["sym"] for r in keep] == ["AUSDT"], keep
+        assert why["по ставке"] == 1 and why["ставка неизвестна"] == 1, why
+        assert why["applied"] is True and why["max_age_h"] > 0, why
+        # рядов нет вовсе — не «никто не входит», а причина словами
+        none_, w3 = PR.gate_shorts(shorts, "pair_safe", {"to_asset": {}},
+                                   log=lambda *a: None)
+        assert len(none_) == 3 and w3.get("applied") is False and w3.get("why")
     finally:
         R.PAIR_SHORT_GATE["pair_safe"] = was
-    # рядов нет вовсе — не «никто не входит», а причина словами
-    none_, w3 = PR.gate_shorts(shorts, "pair_safe", {"to_asset": {}},
-                               log=lambda *a: None)
-    assert len(none_) == 3 and w3.get("applied") is False and w3.get("why")
-    # версия правил семейства поднята вместе с правилом
-    assert R.FAMILY_RULES["pair"] >= 3, R.FAMILY_RULES
-    print(f"ok  гейт по ставке: взят {len(keep)} из {len(shorts)} "
+    # книга без объявленного гейта берёт всё — и сейчас объявлено именно
+    # это, во всех трёх книгах
+    off, w2 = PR.gate_shorts(shorts, "pair_safe", ctx, log=lambda *a: None)
+    assert len(off) == 3 and w2["gate"] is False, (off, w2)
+    assert not any(R.short_gate_on(k) for k in R.PAIR_ORDER), R.PAIR_SHORT_GATE
+    # каждая смена правила семейства — новая версия записи
+    assert R.FAMILY_RULES["pair"] >= 4, R.FAMILY_RULES
+    print(f"ok  машинерия гейта: взят {len(keep)} из {len(shorts)} "
           f"(по знаку {why['по ставке']}, неизвестна "
-          f"{why['ставка неизвестна']}); без рядов книга идёт без гейта "
-          "и говорит причину")
+          f"{why['ставка неизвестна']}); само правило сейчас СНЯТО во "
+          f"всех книгах, версия записи {R.FAMILY_RULES['pair']}")
 
 
 def test_collisions_and_link_live_inside_the_book():
@@ -390,7 +395,7 @@ if __name__ == "__main__":
     for t in (test_pack_marks_the_source_and_keeps_both_sides,
               test_books_sharing_one_geometry_both_get_their_positions,
               test_short_side_enters_with_the_declared_share,
-              test_short_side_enters_only_under_the_declared_rate_gate,
+              test_rate_gate_machinery_works_and_the_rule_is_off_now,
               test_the_share_never_dives_under_the_exchange_floor,
               test_family_rules_retire_the_old_rows_without_touching_other_books,
               test_memory_guard_stops_the_run_itself,

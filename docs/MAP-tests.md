@@ -28,6 +28,16 @@
 - L188 `CONTROLS = [('хвост без перекрытия', _control_no_o…`
 - L195 `main()`
 
+## research/a1_universe/test_instruments_refresh.py · 69 строк
+
+Проверки догона справочника инструментов.
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `DAY = 86400.0`
+- L21 `test_merge_keeps_the_old_and_counts_kinds_apart()`
+- L34 `test_age_is_counted_from_the_launch_moment()`
+- L49 `test_venue_silence_leaves_the_file_alone()`
+
 ## research/a1_universe/test_options.py · 286 строк
 
 Тесты инвентаря опционов площадки.
@@ -1047,7 +1057,7 @@
 - L211 `CONTROLS = [('загрузка по доле сделок', _control_l…`
 - L217 `main()`
 
-## research/dca_paper/test_pair.py · 403 строк
+## research/dca_paper/test_pair.py · 408 строк
 
 Проверки общего счёта: длинная книга и короткая на ОДНОМ депозите.
 
@@ -1064,12 +1074,27 @@
 - L116 `test_short_side_enters_with_the_declared_share()` — Билет короткой стороны в общем счёте — объявленная доля своего.
 - L149 `test_the_share_never_dives_under_the_exchange_floor()` — Доля не вправе опустить билет под биржевой минимум.
 - L170 `test_family_rules_retire_the_old_rows_without_touching_other_bo…` — Смена правил СЕМЕЙСТВА не трогает запись остальных книг.
-- L197 `test_short_side_enters_only_under_the_declared_rate_gate()` — Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
-- L237 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
-- L264 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
-- L287 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
-- L305 `test_missing_caches_are_a_reason_not_empty_books()`
-- L314 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
+- L197 `test_rate_gate_machinery_works_and_the_rule_is_off_now()` — Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
+- L242 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
+- L269 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
+- L292 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
+- L310 `test_missing_caches_are_a_reason_not_empty_books()`
+- L319 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
+
+## research/dca_paper/test_pair_age.py · 108 строк
+
+Проверки фильтра по возрасту имени.
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L24 `H = 3600.0`
+- L25 `DAY = 86400.0`
+- L26 `T0 = TP.T0`
+- L29 `_launch(**kw)`
+- L33 `test_age_is_measured_at_the_moment_of_the_decision()`
+- L44 `test_unknown_age_is_its_own_refusal()`
+- L59 `test_control_takes_the_same_count()`
+- L71 `test_end_to_end_reads_launches_and_writes_no_journal()`
 
 ## research/dca_paper/test_pair_gate.py · 179 строк
 

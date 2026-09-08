@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 409, строк: 183885, каталогов: 72.
+Модулей кода: 413, строк: 184503, каталогов: 72.
 
 
 ## корень — память проекта, идеи, README
@@ -76,10 +76,11 @@
 - `data_report.py` · 904 строк — A1 — отчёт о загруженных данных.
 - `funding_persistence.py` · 587 строк — A1 — персистентность funding во времени: признак отбора или только издержка.
 - `funding_refresh.py` · 222 строк — Догон рядов funding площадки исполнения до сегодняшнего дня.
+- `instruments_refresh.py` · 152 строк — Догон справочника инструментов площадки: моменты листинга.
 - `report.py` · 295 строк — Формирует отчёт A1 по универсуму в markdown из universe.json.
 - `universe.py` · 392 строк — A1 — универсум площадки исполнения на момент времени.
 - `venue_funding_diff.py` · 182 строк — A1 — расхождение ставок funding между площадками, выровненное по периодам.
-- тесты: `test_funding_refresh.py` (205), `test_options.py` (286), `test_persistence.py` (217), `test_risk_limit.py` (126), `test_universe.py` (244)
+- тесты: `test_funding_refresh.py` (205), `test_instruments_refresh.py` (69), `test_options.py` (286), `test_persistence.py` (217), `test_risk_limit.py` (126), `test_universe.py` (244)
 - документы: `RUNBOOK-vps.md` — Запуск сбора данных на VPS
 - отчёты в `out/` (5): A1-data-report.md, A1-universe-report.md, D0-risk-limits.md, D3-options.md, funding-refresh.md
 
@@ -172,8 +173,9 @@
 - `fund_check.py` · 281 строк — Проверка величины funding: сколько начислений, с каким шагом и почему.
 - `fund_probe.py` · 238 строк — Сверка нашего ряда funding с ПЛОЩАДКОЙ по тем же символам и окнам.
 - `name_check.py` · 242 строк — Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).
+- `pair_age.py` · 273 строк — Возраст имени как фильтр входа короткой стороны общего счёта.
 - `pair_gate.py` · 405 строк — Два входных фильтра короткой стороны общего счёта — на одной сетке.
-- `rules.py` · 953 строк — Правила бумажных DCA-книг: три депозита, одни правила.
+- `rules.py` · 964 строк — Правила бумажных DCA-книг: три депозита, одни правила.
 - `run_pair.py` · 505 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 - `run_paper.py` · 1373 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 - `run_short.py` · 310 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
@@ -183,7 +185,7 @@
 - `smoothing.py` · 227 строк — Сглаживают ли короткие DCA-книги длинные — замер, а не имя.
 - `split_journal.py` · 198 строк — Разрезать цельный журнал книги на суточные куски.
 - `tail.py` · 257 строк — Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
-- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_names.py` (227), `test_pair.py` (403), `test_pair_gate.py` (179), `test_paper.py` (2680), `test_short.py` (163), `test_short_why.py` (155), `test_slip_x3.py` (76)
+- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_names.py` (227), `test_pair.py` (408), `test_pair_age.py` (108), `test_pair_gate.py` (179), `test_paper.py` (2680), `test_short.py` (163), `test_short_why.py` (155), `test_slip_x3.py` (76)
 - отчёты в `out/` (17): DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-names.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-short-supply-1m.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
