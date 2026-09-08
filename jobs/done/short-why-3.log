@@ -161,3 +161,17 @@ aggr_h: сделок 499, нетто -3431.11 $, просадка -66.1 %
 - Пороги действующих книг задним числом не меняются: выбранная по этой таблице доля станет правилом, только будучи объявленной и проверенной вперёд.
 - Окно одно и режим рынка один; веса модели видели эти часы.
 
+публикуется в ветку main:
+ jobs/done/pair-rule-2.log                 |   7 ++
+ jobs/done/short-why-3.done                |   1 +
+ jobs/done/short-why-3.log                 | 163 ++++++++++++++++++++++++++++++
+ jobs/poke.log                             |   5 +
+ research/dca_paper/out/DCA-short-why.json |   2 +-
+ research/dca_paper/out/DCA-short-why.md   |  92 ++++++++---------
+ research/s8_loop/out/day_brake.json       |   2 +-
+ 7 files changed, 224 insertions(+), 48 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   2cc8700b..e4a2db43  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-08T08:58:44Z, код 0
