@@ -100,3 +100,14 @@ pair_aggr random/random: коротких решений 9 из 2959, счёт 2
 - Ячейка становится правилом, только будучи объявленной заранее и проверенной вперёд: сетка отвечает на вопрос «есть ли там что-нибудь», а не выбирает победителя.
 - Окно одно и режим рынка один; веса модели видели эти часы, и это оценка СВЕРХУ.
 
+публикуется в ветку main:
+ jobs/done/pair-gate-full.log              | 83 +++++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-pair-gate.json |  2 +-
+ research/dca_paper/out/DCA-pair-gate.md   | 78 ++++++++++++++---------------
+ research/s8_loop/out/day_brake.json       |  2 +-
+ 4 files changed, 124 insertions(+), 41 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   d637a559..15a9f083  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-08T06:40:03Z, код 0
