@@ -190,3 +190,13 @@
 {"at": 1788763530.796, "role": "build", "status": "ok", "started": 1788762901.0, "ended": 1788763530.796, "dry": false, "note": "модель opus, усилие xhigh"}
 {"at": 1788763801.961, "role": "task", "status": "start", "started": 1788763801.959, "ended": 1788763801.961, "dry": false, "pid": 1711897}
 {"at": 1788763802.212, "role": "task", "status": "ok", "started": 1788763801.959, "ended": 1788763802.212, "dry": false, "note": "код возврата 0"}
+{"at": 1788832801.833, "role": "scout", "status": "start", "started": 1788832801.0, "ended": 1788832801.833, "dry": false, "pid": 1855543}
+{"at": 1788832805.644, "role": "scout", "status": "fail", "started": 1788832801.0, "ended": 1788832805.644, "dry": false, "note": "модель claude-fable-5-1, код 1: You've reached your Fable limit. Switch to another model, or manage usage credits at claude.ai/settings/usage?from=cc_cli_limit_message, to continue. "}
+{"at": 1788833101.374, "role": "scout", "status": "start", "started": 1788833101.0, "ended": 1788833101.374, "dry": false, "pid": 1856173}
+{"at": 1788833106.707, "role": "scout", "status": "fail", "started": 1788833101.0, "ended": 1788833106.707, "dry": false, "note": "модель claude-fable-5-1, код 1: You've reached your Fable limit. Switch to another model, or manage usage credits at claude.ai/settings/usage?from=cc_cli_limit_message, to continue. "}
+{"at": 1788833401.422, "role": "scout", "status": "start", "started": 1788833401.0, "ended": 1788833401.422, "dry": false, "pid": 1856800}
+{"at": 1788833406.424, "role": "scout", "status": "fail", "started": 1788833401.0, "ended": 1788833406.424, "dry": false, "note": "модель claude-fable-5-1, код 1: You've reached your Fable limit. Switch to another model, or manage usage credits at claude.ai/settings/usage?from=cc_cli_limit_message, to continue. "}
+{"at": 1788833701.906, "role": "brief", "status": "start", "started": 1788833701.0, "ended": 1788833701.906, "dry": false, "pid": 1857451}
+{"at": 1788834067.792, "role": "brief", "status": "contract", "started": 1788833701.0, "ended": 1788834067.792, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: research/factory/out/summary.md: нет раздела «Что открыто»: без него открытые углы проекта до предлагающего не доходят вовсе, и заявка неизбежно окажется пересказом чуж"}
+{"at": 1788834301.524, "role": "brief", "status": "start", "started": 1788834301.0, "ended": 1788834301.524, "dry": false, "pid": 1858778}
+{"at": 1788834464.077, "role": "brief", "status": "ok", "started": 1788834301.0, "ended": 1788834464.077, "dry": false, "note": "модель opus, усилие medium"}
