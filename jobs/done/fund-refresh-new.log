@@ -5,3 +5,26 @@
 площадка торгует сейчас: 751 перпов USDT
 торгуются, но в универсуме их нет: 109 (1000BTTUSDT, ADIUSDT, AEONUSDT, AMCUSDT, AMGNUSDT, ANETUSDT, BACUSDT, BIIBUSDT…) — ряды им качаются тоже
 funding: догон 1058 символов по 2026-09-08
+публикуется в ветку main:
+ jobs/done/fund-refresh-new.done               |    1 +
+ jobs/done/fund-refresh-new.log                |    7 +
+ jobs/done/pair-gate-rule-1.log                |    7 +
+ jobs/poke.log                                 |    3 +
+ research/a1_universe/out/funding-refresh.json | 3870 +++----------------------
+ research/a1_universe/out/funding-refresh.md   |    2 +-
+ research/factory/out/build.json               |    2 +-
+ research/s8_loop/out/day_brake.json           |    2 +-
+ 8 files changed, 348 insertions(+), 3546 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   1f7598b..0c41184  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+# Догон рядов funding площадки исполнения
+
+Прогон 2026-09-08: символов 1058, добавлено точек 13912, отказов сети 0, пустых рядов 0, 9.3 с.
+
+Край рядов после догона: минимум 2022-02-14, медиана 2026-09-08, максимум 2026-09-08. Ряд, край которого старше сегодняшнего дня, у площадки кончился (контракт снят) либо отказал сетью — отказы поимённо ниже.
+
+Отказов нет.
+
+конец: 2026-09-08T06:32:21Z, код 0
