@@ -120,10 +120,23 @@ def test_supply_separates_a_quiet_sheet_from_a_biting_rule():
     assert d2["моложе порога"] == 3, d2
     assert d2["взято"] == 0 and d2["взято без правила"] > 0, d2
     assert b["n"] < b["n_free"], b
+    # ОТКРЫТАЯ позиция — тоже вход. Считать одни закрытые значило бы
+    # показывать ноль у каждых свежих суток (срок книги 24 ч), и владелец
+    # читал бы это как «шорты не открываются».
+    live = TP._short("OLIVEUSDT", noon + 2 * day, hold_h=24.0)
+    live["state"] = "open"
+    live["sched_end"] = live["at"] + 24 * H
+    launch[live["sym"]] = noon - 300 * day
+    b2 = SA.supply(old_ + young + [live], "safe_h", {"error": "рядов нет"},
+                   launch, days=14, dep=R.DEPOSITS[1],
+                   now=noon + 2 * day + 2 * H)
+    d3 = b2["days"][time.strftime("%Y-%m-%d", time.gmtime(noon + 2 * day))]
+    assert d3["предложено"] == 1 and d3["взято"] == 1, d3
+    assert b2.get("open") == 1, b2
     print(f"ok  подача по суткам: старые сутки {d1['взято']} сделок "
           f"(правило не тронуло), молодые {d2['взято']} против "
           f"{d2['взято без правила']} — видно, что режет ПРАВИЛО, а не "
-          "подача")
+          "подача; открытый вход считается входом")
 
 
 if __name__ == "__main__":

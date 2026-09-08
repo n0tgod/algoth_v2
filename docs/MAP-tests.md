@@ -1233,7 +1233,7 @@
 - L115 `test_family_writes_its_own_journal_and_gates_the_aggressive_boo…`
 - L167 `test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()` — Правило возраста имени — правило самой книги с 2026-09-08.
 
-## research/dca_paper/test_short_age.py · 135 строк
+## research/dca_paper/test_short_age.py · 148 строк
 
 Проверки пробы «правила общего счёта на отдельных коротких книгах».
 

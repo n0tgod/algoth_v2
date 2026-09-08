@@ -71,9 +71,9 @@ def cell(recs, bk, dep, ctx, share=1.0, now=None):
     was, had = R.SHORT_SHARE.get(bk), (bk in R.SHORT_SHARE)
     try:
         R.SHORT_SHARE[bk] = float(share)
-        rows, cells, _one, _live = RP.build_rows({bk: recs}, now=now,
-                                                 keys=[bk],
-                                                 log=lambda *a: None)
+        rows, cells, _one, live = RP.build_rows({bk: recs}, now=now,
+                                                keys=[bk],
+                                                log=lambda *a: None)
         # Билет считается ПОД той же долей, что и книга: посчитав его
         # после возврата карты правил, отчёт показал бы билет, которым
         # ячейка не торговала.
@@ -96,7 +96,13 @@ def cell(recs, bk, dep, ctx, share=1.0, now=None):
     return {"n": st.get("n"), "usd": st.get("usd"), "final": fin,
             "max_dd": dd, "win": st.get("win"), "ratio": ratio,
             "no_cash": c.get("no_cash"), "taken": c.get("taken"),
-            "ticket": ticket, "rows": mine}
+            "ticket": ticket, "rows": mine,
+            # ОТКРЫТЫЕ позиции — тоже входы, просто ещё не закрытые.
+            # Считать «взято» одними закрытыми значило бы показывать ноль
+            # у каждых свежих суток: срок книги 24 ч, и вчерашний вход
+            # закрывается только сегодня.
+            "open": ((live.get(RP._cell(bk, dep)) or {}).get("positions")
+                     or [])}
 
 
 def supply(recs, bk, ctx, launch, days=14, dep=None, now=None):
@@ -126,14 +132,16 @@ def supply(recs, bk, ctx, launch, days=14, dep=None, now=None):
         elif a < need:
             b["моложе порога"] += 1
     for tag, c in (("взято", with_), ("взято без правила", without)):
-        for r in (c.get("rows") or []):
+        for r in list(c.get("rows") or []) + list(c.get("open") or []):
             d = time.strftime("%Y-%m-%d", time.gmtime(float(r.get("at", 0))))
             if d in got:
                 got[d][tag] += 1
     last = sorted(got)[-int(days):]
     return {"dep": int(dep), "days": {d: got[d] for d in last},
             "min_days": need,
-            "n": with_.get("n"), "n_free": without.get("n")}
+            "n": with_.get("n"), "n_free": without.get("n"),
+            "open": len(with_.get("open") or []),
+            "open_free": len(without.get("open") or [])}
 
 
 def run(log=print, ctx=None, cache=None, keys=None, now=None, seeds=None,
@@ -249,8 +257,13 @@ def supply_report(s):
         if not b:
             continue
         L += [f"## {R.ruler_title(bk)} (порог ≥{b['min_days']:g} сут)", "",
-              f"Всего сделок под правилом {b['n']}, без правила "
-              f"{b['n_free']}.", "",
+              f"Всего закрытых сделок под правилом {b['n']}, без "
+              f"правила {b['n_free']}; открытых сейчас {b.get('open')} "
+              f"против {b.get('open_free')}. В таблице «взято» — ВХОДЫ "
+              "(и закрытые, и ещё открытые): вход книги со сроком 24 ч "
+              "закрывается только на следующие сутки, и считать одни "
+              "закрытые значило бы показывать ноль у каждых свежих "
+              "суток.", "",
               "| сутки | решений на листе | моложе порога | возраст "
               "неизвестен | взято книгой | взято было бы без правила |",
               "|---|--:|--:|--:|--:|--:|"]
