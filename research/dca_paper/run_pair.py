@@ -124,6 +124,54 @@ def pack(longs, shorts, keys=None):
     return out
 
 
+def gate_shorts(shorts, pk, ctx, log=print):
+    """Короткие решения под гейтом по ставке funding — правило книги.
+
+    Вход разрешён, только если последняя известная ставка площадки
+    благоприятна шорту (положительная: лонги платят шортам) и она свежая
+    (срок — `costs.RATE_MAX_AGE_S`, второго числа для него нет). Ставка
+    неизвестна — входа нет, и это считается ОТДЕЛЬНО от отказа по знаку:
+    «не измерено» и «не подходит» лечатся разным.
+
+    Гейта нет у книги — список возвращается как есть, и это тоже
+    сказано числом (`gate: false`).
+    """
+    if not R.short_gate_on(pk):
+        return list(shorts), {"gate": False, "kept": len(shorts),
+                              "offered": len(shorts)}
+    import costs as CO
+    to_asset = (ctx or {}).get("to_asset") or {}
+    funding = (ctx or {}).get("funding") or {}
+    if not funding:
+        # Рядов нет вовсе — гейт судить нечем. Отказать ВСЕМ значило бы
+        # остановить книгу молча из-за отсутствия данных, поэтому книга
+        # входит без гейта, а причина едет числом и в отчёт.
+        log("гейт по ставке не применён: рядов funding нет")
+        return list(shorts), {"gate": True, "applied": False,
+                              "why": "рядов funding нет",
+                              "kept": len(shorts), "offered": len(shorts)}
+    keep, bad_sign, unknown = [], 0, 0
+    for r in shorts:
+        a2 = to_asset.get(r.get("sym"))
+        ser = funding.get(a2) if a2 else None
+        rate = (CO.rate_at_entry(ser, r.get("at")) if ser is not None
+                else None)
+        if rate is None:
+            unknown += 1
+            continue
+        if not CO.favourable("short", rate):
+            bad_sign += 1
+            continue
+        keep.append(r)
+    got = {"gate": True, "applied": True, "offered": len(shorts),
+           "kept": len(keep), "по ставке": bad_sign,
+           "ставка неизвестна": unknown,
+           "max_age_h": round(CO.RATE_MAX_AGE_S / 3600.0, 1)}
+    log(f"{pk}: гейт по ставке оставил {len(keep)} из {len(shorts)} "
+        f"(по знаку отказано {bad_sign}, ставка неизвестна {unknown})")
+    return keep, got
+
+
 def collisions(rows, ruler):
     """Имена, которые общий счёт держит РАЗОМ длинной и короткой.
 
@@ -206,18 +254,27 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
         return {"family": "pair", "error": why, "books": {},
                 "rulers": keys, "deposits": list(R.DEPOSITS),
                 "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime())}
-    packed = pack(longs, shorts, keys)
-    rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
-    RP.append_journal(rows, path=journal or R.PAIR_JOURNAL, log=log)
-    # Контекст издержек собирается ОДИН раз на все три журнала: общий
-    # счёт, длинная книга и короткая считаются одними и теми же
-    # комиссией, проскальзыванием и funding.
+    # Контекст издержек собирается ОДИН раз и ДО сборки книг: на нём
+    # держатся и гейт по ставке (правило входа короткой стороны), и
+    # издержки в каждой сделке. Один и тот же справочник, один разбор.
     ctx = None
     try:
         import costs as CO
         ctx = CO.context()
     except Exception as e:                                # noqa: BLE001
         CO, ctx = None, {"error": f"модуль издержек не читается: {e}"[:200]}
+    packed = pack(longs, shorts, keys)
+    gates = {}
+    for pk in keys:
+        lk, sk = R.parts_of(pk)
+        kept, why = gate_shorts([r for r in packed[pk]
+                                 if (r.get("book") or pk) == sk], pk, ctx,
+                                log=log)
+        gates[pk] = why
+        packed[pk] = [r for r in packed[pk]
+                      if (r.get("book") or pk) == lk] + kept
+    rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
+    RP.append_journal(rows, path=journal or R.PAIR_JOURNAL, log=log)
     s = RP.summarize(path=journal or R.PAIR_JOURNAL, live=live, keys=keys,
                      ctx=ctx)
     jrows, _bad = R.read_journal(journal or R.PAIR_JOURNAL)
@@ -261,7 +318,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
                 {lk: [r for r in lrows if R.ruler_of(r) == lk],
                  sk: [r for r in srows if R.ruler_of(r) == sk]}, dep)
     s.update({"family": "pair", "hedge": True, "cells": cells,
-              "separate_costs": sep_costs,
+              "separate_costs": sep_costs, "gates": gates,
               "one_name": one, "parts": {k: R.parts_of(k) for k in keys},
               "secs": round(time.time() - t0, 1),
               "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
@@ -289,6 +346,26 @@ def report(s):
          "одновременных позиций), гейт плеча и правило «одна позиция на "
          "имя» — тоже правила стороны. Издержки учтены в каждой сделке, "
          "как и в отдельных книгах.", "",
+         "**Гейт по ставке funding на входе шорта** (решение владельца "
+         "2026-09-08, объявлено ДО прогона): короткая сторона входит, "
+         "только если последняя известная ставка площадки благоприятна "
+         "шорту и она свежая; ставка неизвестна — входа нет. Основание: "
+         "отношение доход/просадка у общего счёта без гейта 1.0–1.7, с "
+         "гейтом 2.7–4.7, но случайная половина того же размера даёт "
+         "1.5–2.3 и бьёт гейт в 8–27 % случаев — порога 5 % правило не "
+         "проходит и потому судится ВПЕРЁД. Отдельные короткие книги "
+         "гейта не получают: они контроль на том же листе.", "",
+         "| книга | гейт | решений предложено | взято | отказ по знаку | "
+         "ставка неизвестна |", "|---|---|--:|--:|--:|--:|"]
+    for pk in (s.get("rulers") or R.PAIR_ORDER):
+        g = (s.get("gates") or {}).get(pk) or {}
+        L.append(f"| {R.ruler_title(pk)} | "
+                 + ("да" if g.get("gate") else "нет")
+                 + (f" ({g['why']})" if g.get("why") else "")
+                 + f" | {g.get('offered', 0)} | {g.get('kept', 0)} | "
+                 f"{g.get('по ставке', 0)} | "
+                 f"{g.get('ставка неизвестна', 0)} |")
+    L += ["",
          "**Доля билета короткой стороны** (решение владельца 2026-09-07 "
          "по замеру `short_why`, объявлено ДО прогона): "
          + ", ".join(f"{R.ruler_title(pk)} {R.PAIR_SHORT_SHARE.get(pk, 1.0):g}×"

@@ -194,6 +194,46 @@ def test_family_rules_retire_the_old_rows_without_touching_other_books():
           "других семейств не тронуты")
 
 
+def test_short_side_enters_only_under_the_declared_rate_gate():
+    """Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
+
+    Кусается: шорт со ставкой не в его пользу не входит, со ставкой в
+    пользу входит, без ставки не входит вовсе, и оба отказа считаются
+    РАЗНЫМИ числами. Длинная сторона гейта не видит. Рядов нет вовсе —
+    книга не останавливается молча: она идёт без гейта и говорит это
+    причиной.
+    """
+    import numpy as np
+    t = np.asarray([int((T0 - 3600.0) * 1000)], dtype=np.int64)
+    ctx = {"to_asset": {"AUSDT": "A", "BUSDT": "B", "CUSDT": "C"},
+           "funding": {"A": (t, np.asarray([0.0002])),      # шорту в пользу
+                       "B": (t, np.asarray([-0.0002]))}}    # против
+    shorts = [_short("AUSDT", T0), _short("BUSDT", T0), _short("CUSDT", T0)]
+    keep, why = PR.gate_shorts(shorts, "pair_safe", ctx, log=lambda *a: None)
+    assert [r["sym"] for r in keep] == ["AUSDT"], keep
+    assert why["по ставке"] == 1 and why["ставка неизвестна"] == 1, why
+    assert why["applied"] is True and why["max_age_h"] > 0, why
+    # книга без объявленного гейта берёт всё
+    was = R.PAIR_SHORT_GATE["pair_safe"]
+    try:
+        R.PAIR_SHORT_GATE["pair_safe"] = False
+        off, w2 = PR.gate_shorts(shorts, "pair_safe", ctx,
+                                 log=lambda *a: None)
+        assert len(off) == 3 and w2["gate"] is False, (off, w2)
+    finally:
+        R.PAIR_SHORT_GATE["pair_safe"] = was
+    # рядов нет вовсе — не «никто не входит», а причина словами
+    none_, w3 = PR.gate_shorts(shorts, "pair_safe", {"to_asset": {}},
+                               log=lambda *a: None)
+    assert len(none_) == 3 and w3.get("applied") is False and w3.get("why")
+    # версия правил семейства поднята вместе с правилом
+    assert R.FAMILY_RULES["pair"] >= 3, R.FAMILY_RULES
+    print(f"ok  гейт по ставке: взят {len(keep)} из {len(shorts)} "
+          f"(по знаку {why['по ставке']}, неизвестна "
+          f"{why['ставка неизвестна']}); без рядов книга идёт без гейта "
+          "и говорит причину")
+
+
 def test_collisions_and_link_live_inside_the_book():
     """Совпадение имён и связь сторон считаются по строкам самой книги."""
     at = T0
@@ -350,6 +390,7 @@ if __name__ == "__main__":
     for t in (test_pack_marks_the_source_and_keeps_both_sides,
               test_books_sharing_one_geometry_both_get_their_positions,
               test_short_side_enters_with_the_declared_share,
+              test_short_side_enters_only_under_the_declared_rate_gate,
               test_the_share_never_dives_under_the_exchange_floor,
               test_family_rules_retire_the_old_rows_without_touching_other_books,
               test_memory_guard_stops_the_run_itself,
@@ -359,4 +400,4 @@ if __name__ == "__main__":
               test_missing_caches_are_a_reason_not_empty_books,
               test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts):
         t()
-    print("\nвсе 11 проверок прошли")
+    print("\nвсе 12 проверок прошли")
