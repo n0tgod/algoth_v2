@@ -116,6 +116,28 @@ def test_random_control_matches_the_gate_size():
           "состав — «отбор» и «меньше сделок» стали различимы")
 
 
+def test_ratio_is_per_sample_not_a_ratio_of_medians():
+    """Доход на просадку считается НА КАЖДОЙ выборке.
+
+    Кусается: частное медиан — не медиана частных, и на выборках с
+    разным местом лучшего дня оно описывает книгу, которой нет.
+    Проверяется тождеством на подставных ячейках.
+    """
+    import numpy as np
+    cells = [{"final": 0.20, "max_dd": -0.05, "ratio": 4.0},
+             {"final": 0.10, "max_dd": -0.02, "ratio": 5.0},
+             {"final": 0.02, "max_dd": -0.20, "ratio": 0.1}]
+    per = float(np.median([c["ratio"] for c in cells]))
+    of_med = (float(np.median([c["final"] for c in cells]))
+              / abs(float(np.median([c["max_dd"] for c in cells]))))
+    assert abs(per - 4.0) < 1e-9, per
+    assert abs(of_med - 2.0) < 1e-9, of_med
+    assert abs(per - of_med) > 1.0, (per, of_med)
+    print(f"ok  отношение по выборкам {per:.2f} против частного медиан "
+          f"{of_med:.2f} — считаем первое, второе описывает книгу, "
+          "которой нет")
+
+
 def test_probe_writes_nothing_into_the_book_journal():
     """Замер — проба: журнал книг он не трогает ни строкой."""
     longs = [TP._long(f"L{i}USDT", T0 + i * H) for i in range(6)]
@@ -149,8 +171,9 @@ def test_probe_writes_nothing_into_the_book_journal():
 if __name__ == "__main__":
     for t in (test_in_long_is_decided_at_the_moment_of_the_decision,
               test_random_control_matches_the_gate_size,
+              test_ratio_is_per_sample_not_a_ratio_of_medians,
               test_name_policies_split_the_decisions_without_loss,
               test_gate_refuses_by_sign_and_by_ignorance_separately,
               test_probe_writes_nothing_into_the_book_journal):
         t()
-    print("\nвсе 5 проверок прошли")
+    print("\nвсе 6 проверок прошли")

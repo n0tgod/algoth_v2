@@ -172,8 +172,13 @@ def cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None):
     side = {k: RP._stats([r for r in mine if (r.get("book") or pk) == k], dep)
             for k in (lk, sk)}
     c = cells.get(RP._cell(pk, dep)) or {}
+    # Доход НА ПРОСАДКУ — то, чем читается книга: 20 % при −5 % и 20 %
+    # при −20 % это разные книги. Просадки нет — отношения не
+    # существует, и это прочерк, а не бесконечность.
+    fin, dd = st.get("final"), st.get("max_dd")
+    ratio = (None if not fin or not dd else round(float(fin) / abs(float(dd)), 2))
     return {"n": st.get("n"), "usd": st.get("usd"), "final": st.get("final"),
-            "max_dd": st.get("max_dd"), "win": st.get("win"),
+            "max_dd": st.get("max_dd"), "win": st.get("win"), "ratio": ratio,
             "n_long": (side[lk] or {}).get("n"),
             "n_short": (side[sk] or {}).get("n"),
             "usd_long": (side[lk] or {}).get("usd"),
@@ -224,6 +229,13 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
                     beat = (None if base.get("usd") is None
                             else round(float(np.mean(np.array(usd)
                                                      >= base["usd"])), 3))
+                    # То же по ОТНОШЕНИЮ доход/просадка: замечание
+                    # владельца о том, что гейт «выглядит лучше», — это
+                    # про него, и проверяется он тем же контролем.
+                    rt = [x["ratio"] for x in got if x.get("ratio") is not None]
+                    beat_r = (None if not rt or base.get("ratio") is None
+                              else round(float(np.mean(np.array(rt)
+                                                       >= base["ratio"])), 3))
                     out["cells"][f"{pk}|{nm}|{g}"] = {
                         "pair": pk, "names": nm, "gate": g, "seeds": SEEDS,
                         "offered": len(srec), "kept": len(keep), "drops": why,
@@ -236,10 +248,16 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
                         "n": int(np.median([x["n"] or 0 for x in got])),
                         "n_short": int(np.median([x["n_short"] or 0
                                                   for x in got])),
-                        "beat_gate": beat}
+                        "ratio": (round(float(np.median(rt)), 2) if rt else None),
+                        "ratio_p10": (round(float(np.quantile(rt, 0.1)), 2)
+                                      if rt else None),
+                        "ratio_p90": (round(float(np.quantile(rt, 0.9)), 2)
+                                      if rt else None),
+                        "beat_gate": beat, "beat_gate_ratio": beat_r}
                     log(f"{pk} {nm}/контроль ({SEEDS} зёрен): медиана "
                         f"{out['cells'][f'{pk}|{nm}|{g}']['usd']} $, "
-                        f"бьют гейт {beat}")
+                        f"бьют гейт по деньгам {beat}, по отношению "
+                        f"{beat_r}")
                     continue
                 keep, why = pick(srec, held, ctx, nm, g)
                 c = cell(lrec, keep, pk, dep, ctx, now=now)
@@ -277,8 +295,9 @@ def report(s):
               "брутто.", ""]
     L += ["| книга | имена | ставка | коротких взято | из них длинных | "
           "сделок | Σ $ (у контроля медиана и полоса p10…p90) | "
-          "к депозиту | просадка | Σ $ шорта | Σ $ лонга / доля контроля |",
-          "|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|"]
+          "к депозиту | просадка | **доход на просадку** | Σ $ шорта | "
+          "доля контроля (деньги / отношение) |",
+          "|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     для_имени = {"all": "все", "only_long": "только те, что в лонге",
                  "not_long": "кроме тех, что в лонге",
                  "random": "случайные (столько же, сколько «только»)"}
@@ -298,8 +317,14 @@ def report(s):
                     + (f" ({_u(c['usd_p10'])}…{_u(c['usd_p90'])})"
                        if c.get("seeds") else "")
                     + f" | {_p(c.get('final'), 2)} | "
-                    f"{_p(c.get('max_dd'))} | {_u(c.get('usd_short'))} | "
-                    + (f"бьют гейт {100 * c['beat_gate']:.0f} %"
+                    f"{_p(c.get('max_dd'))} | "
+                    + ("—" if c.get("ratio") is None else f"{c['ratio']:.2f}")
+                    + (f" ({c['ratio_p10']:.2f}…{c['ratio_p90']:.2f})"
+                       if c.get("ratio_p10") is not None else "")
+                    + f" | {_u(c.get('usd_short'))} | "
+                    + (f"{100 * c['beat_gate']:.0f} % / "
+                       + ("—" if c.get("beat_gate_ratio") is None
+                          else f"{100 * c['beat_gate_ratio']:.0f} %")
                        if c.get("beat_gate") is not None
                        else _u(c.get('usd_long'))) + " |")
     L += ["", "Отказы по причинам (на ячейку «все имена, гейт»): ", ""]
@@ -319,9 +344,13 @@ def report(s):
           f"- Строка «случайно столько же» — КОНТРОЛЬ гейта на {SEEDS} "
           "зёрнах: столько же коротких решений, сколько оставляет гейт, "
           "но выбранных без всякой ставки. Печатается медиана, полоса "
-          "p10…p90 и доля выборок, которые ГЕЙТ НЕ ПОБИЛ. Гейт отбирает "
+          "p10…p90 и доля выборок, которые ГЕЙТ НЕ ПОБИЛ — отдельно по "
+          "деньгам и отдельно по ОТНОШЕНИЮ доход/просадка. Гейт отбирает "
           "только там, где эта доля мала; по одной случайной выборке "
           "вывода нет.",
+          "- Отношение доход/просадка считается на КАЖДОЙ выборке, а не "
+          "как частное медиан: медиана денег и медиана просадки бывают у "
+          "разных выборок, и их частное не описывает ни одну книгу.",
           "- Гейт по ставке отказывает и тогда, когда ставка неизвестна: "
           "это отказ по незнанию, он считается отдельной колонкой и НЕ "
           "смешивается с отказом по знаку.",

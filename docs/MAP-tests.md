@@ -1069,7 +1069,7 @@
 - L265 `test_missing_caches_are_a_reason_not_empty_books()`
 - L274 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
 
-## research/dca_paper/test_pair_gate.py · 156 строк
+## research/dca_paper/test_pair_gate.py · 179 строк
 
 Проверки фильтров короткой стороны.
 
@@ -1083,7 +1083,8 @@
 - L60 `test_name_policies_split_the_decisions_without_loss()`
 - L79 `test_gate_refuses_by_sign_and_by_ignorance_separately()`
 - L96 `test_random_control_matches_the_gate_size()` — Контроль гейта берёт РОВНО столько же решений, сколько гейт.
-- L119 `test_probe_writes_nothing_into_the_book_journal()` — Замер — проба: журнал книг он не трогает ни строкой.
+- L119 `test_ratio_is_per_sample_not_a_ratio_of_medians()` — Доход на просадку считается НА КАЖДОЙ выборке.
+- L141 `test_probe_writes_nothing_into_the_book_journal()` — Замер — проба: журнал книг он не трогает ни строкой.
 
 ## research/dca_paper/test_paper.py · 2669 строк
 
