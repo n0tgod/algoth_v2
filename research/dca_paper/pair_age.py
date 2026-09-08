@@ -44,6 +44,7 @@ import rules as R                                             # noqa: E402
 import costs as CO                                            # noqa: E402
 import run_pair as PR                                         # noqa: E402
 import pair_gate as PG                                        # noqa: E402
+import instruments_refresh as IR                              # noqa: E402
 
 DAYS = (0, 3, 7, 14, 30, 60)
 # Полосы возраста для разреза «почему»: те же границы, что у порогов,
@@ -57,37 +58,17 @@ UNKNOWN = "возраст неизвестен"
 TAIL_EXITS = ("пол", "ликвидация")
 SEEDS = 200
 SEED = 20260908
-INSTR = os.path.join(ROOT, "research", "a1_universe", "out",
-                     "instruments.json")
+INSTR = IR.PATH
 
 
 def launches(path=None):
-    """Символ → момент листинга (секунды). Нет файла — пустая карта."""
-    path = path or INSTR
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-    except (OSError, ValueError):
-        return {}
-    out = {}
-    for sym, v in data.items():
-        try:
-            lt = float(v.get("launch_time")) / 1000.0
-        except (TypeError, ValueError):
-            continue
-        if lt > 0:
-            out[sym] = lt
-    return out
+    """Символ → момент листинга. Читает ЯДРО справочника, своей копии нет."""
+    return IR.launches(path)
 
 
 def age_days(launch, sym, at):
     """Возраст имени на момент решения, сутки. Нет даты — None."""
-    lt = launch.get(sym)
-    if not lt:
-        return None
-    return (float(at) - float(lt)) / 86400.0
+    return IR.age_days(launch, sym, at)
 
 
 def band_of(age):

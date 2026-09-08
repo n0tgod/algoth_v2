@@ -48,7 +48,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
+sys.path.insert(0, os.path.join(ROOT, "research", "a1_universe"))
 import rules as R                                             # noqa: E402
+import instruments_refresh as IR                              # noqa: E402
 import run_paper as RP                                        # noqa: E402
 import run_short as S                                         # noqa: E402
 import run_d13 as D13                                         # noqa: E402
@@ -172,6 +174,58 @@ def gate_shorts(shorts, pk, ctx, log=print):
     return keep, got
 
 
+def age_shorts(shorts, pk, launch=None, log=print, now=None):
+    """Короткие решения под фильтром возраста имени — правило книги.
+
+    Вход разрешён, только если имя торгуется на площадке дольше порога
+    (`rules.PAIR_MIN_AGE_DAYS`) НА МОМЕНТ РЕШЕНИЯ. Возраст неизвестен —
+    входа нет, и это считается ОТДЕЛЬНЫМ числом: «не измерено» и «не
+    подходит» лечатся разным, и именно смешение этих двух причин
+    подделало результат гейта по ставке.
+
+    Справочника нет вовсе — судить нечем, и книга входит БЕЗ фильтра с
+    названной причиной: остановить книгу молча из-за отсутствия файла
+    хуже, чем не применить правило вслух.
+    """
+    need = R.min_age_days(pk)
+    if not need:
+        return list(shorts), {"age": False, "kept": len(shorts),
+                              "offered": len(shorts)}
+    launch = IR.launches() if launch is None else launch
+    if not launch:
+        log("фильтр возраста не применён: справочник инструментов пуст")
+        return list(shorts), {"age": True, "applied": False, "days": need,
+                              "why": "справочник инструментов пуст",
+                              "kept": len(shorts), "offered": len(shorts)}
+    keep, young, unknown = [], 0, 0
+    for r in shorts:
+        a = IR.age_days(launch, r.get("sym"), r.get("at"))
+        if a is None:
+            unknown += 1
+            continue
+        if a < need:
+            young += 1
+            continue
+        keep.append(r)
+    # Свежесть самого справочника — число, а не вера: устаревший файл
+    # делает «возраст неизвестен» у каждого нового имени, и тогда
+    # правило тихо превращается в другое.
+    fresh_h = None
+    try:
+        fresh_h = round((float(now if now is not None else time.time())
+                         - os.path.getmtime(IR.PATH)) / 3600.0, 1)
+    except OSError:
+        pass
+    got = {"age": True, "applied": True, "days": need,
+           "offered": len(shorts), "kept": len(keep),
+           "моложе порога": young, "возраст неизвестен": unknown,
+           "справочнику часов": fresh_h}
+    log(f"{pk}: фильтр возраста ≥{need:g} сут оставил {len(keep)} из "
+        f"{len(shorts)} (моложе порога {young}, возраст неизвестен "
+        f"{unknown})")
+    return keep, got
+
+
 def collisions(rows, ruler):
     """Имена, которые общий счёт держит РАЗОМ длинной и короткой.
 
@@ -239,7 +293,8 @@ def one_sided(book, lk, sk):
 
 
 def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
-        long_journal=None, short_journal=None, keys=None, mem_limit=None):
+        long_journal=None, short_journal=None, keys=None, mem_limit=None,
+        launch=None):
     t0 = time.time()
     log = AB.guarded(log, limit=(MEM_LIMIT_MB if mem_limit is None
                                  else mem_limit))
@@ -264,13 +319,17 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
     except Exception as e:                                # noqa: BLE001
         CO, ctx = None, {"error": f"модуль издержек не читается: {e}"[:200]}
     packed = pack(longs, shorts, keys)
-    gates = {}
+    # Справочник читается ОДИН раз на прогон: фильтр возраста спрашивает
+    # его на каждое короткое решение всех трёх книг.
+    launch = IR.launches() if launch is None else launch
+    gates, ages = {}, {}
     for pk in keys:
         lk, sk = R.parts_of(pk)
-        kept, why = gate_shorts([r for r in packed[pk]
-                                 if (r.get("book") or pk) == sk], pk, ctx,
-                                log=log)
+        mine = [r for r in packed[pk] if (r.get("book") or pk) == sk]
+        kept, why = gate_shorts(mine, pk, ctx, log=log)
         gates[pk] = why
+        kept, why_age = age_shorts(kept, pk, launch=launch, log=log, now=now)
+        ages[pk] = why_age
         packed[pk] = [r for r in packed[pk]
                       if (r.get("book") or pk) == lk] + kept
     rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
@@ -318,7 +377,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
                 {lk: [r for r in lrows if R.ruler_of(r) == lk],
                  sk: [r for r in srows if R.ruler_of(r) == sk]}, dep)
     s.update({"family": "pair", "hedge": True, "cells": cells,
-              "separate_costs": sep_costs, "gates": gates,
+              "separate_costs": sep_costs, "gates": gates, "ages": ages,
               "one_name": one, "parts": {k: R.parts_of(k) for k in keys},
               "secs": round(time.time() - t0, 1),
               "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
@@ -346,25 +405,38 @@ def report(s):
          "одновременных позиций), гейт плеча и правило «одна позиция на "
          "имя» — тоже правила стороны. Издержки учтены в каждой сделке, "
          "как и в отдельных книгах.", "",
-         "**Гейт по ставке funding на входе шорта** (решение владельца "
-         "2026-09-08, объявлено ДО прогона): короткая сторона входит, "
-         "только если последняя известная ставка площадки благоприятна "
-         "шорту и она свежая; ставка неизвестна — входа нет. Основание: "
-         "отношение доход/просадка у общего счёта без гейта 1.0–1.7, с "
-         "гейтом 2.7–4.7, но случайная половина того же размера даёт "
-         "1.5–2.3 и бьёт гейт в 8–27 % случаев — порога 5 % правило не "
-         "проходит и потому судится ВПЕРЁД. Отдельные короткие книги "
-         "гейта не получают: они контроль на том же листе.", "",
-         "| книга | гейт | решений предложено | взято | отказ по знаку | "
-         "ставка неизвестна |", "|---|---|--:|--:|--:|--:|"]
+         "**Возраст имени на входе шорта** (решение владельца "
+         "2026-09-08, объявлено ДО прогона): короткая сторона не входит "
+         "в имя, торгующееся на площадке меньше "
+         + ", ".join(f"{R.min_age_days(pk):g} сут" for pk in R.PAIR_ORDER[:1])
+         + "; возраст неизвестен — входа тоже нет, и это своё число. "
+         "Основание: на объявленной сетке (0, 3, 7, 14, 30, 60 суток) "
+         "отношение доход/просадка растёт с 1.24 / 1.19 / 0.95 до "
+         "3.26 / 3.00 / 2.36 уже на семи сутках, а случайная выборка "
+         "ровно того же размера бьёт фильтр лишь в 2–9 % случаев из 200 "
+         "зёрен. Механизм назван: плюс книги делают имена старше 60 "
+         "суток, моложе недели — минус с худшей медианой сделки и "
+         "большей долей хвостовых исходов; funding тут ни при чём — у "
+         "молодых имён он шорту благоприятен. Порог взят наименьший из "
+         "работающих, а не лучшая ячейка: различить 7, 30 и 60 суток "
+         "данные одного окна не позволяют. Отдельные короткие книги "
+         "фильтра не получают: они контроль на том же листе. Гейт по "
+         "ставке funding снят 2026-09-08 (держался на «ставка "
+         "неизвестна»); его машинерия проверена и оставлена.", "",
+         "| книга | порог | решений предложено | взято | моложе порога | "
+         "возраст неизвестен | справочнику часов |",
+         "|---|---|--:|--:|--:|--:|--:|"]
     for pk in (s.get("rulers") or R.PAIR_ORDER):
-        g = (s.get("gates") or {}).get(pk) or {}
+        a = (s.get("ages") or {}).get(pk) or {}
+        fresh = a.get("справочнику часов")
         L.append(f"| {R.ruler_title(pk)} | "
-                 + ("да" if g.get("gate") else "нет")
-                 + (f" ({g['why']})" if g.get("why") else "")
-                 + f" | {g.get('offered', 0)} | {g.get('kept', 0)} | "
-                 f"{g.get('по ставке', 0)} | "
-                 f"{g.get('ставка неизвестна', 0)} |")
+                 + ("нет" if not a.get("age")
+                    else f"≥{float(a.get('days') or 0):g} сут")
+                 + (f" ({a['why']})" if a.get("why") else "")
+                 + f" | {a.get('offered', 0)} | {a.get('kept', 0)} | "
+                 f"{a.get('моложе порога', 0)} | "
+                 f"{a.get('возраст неизвестен', 0)} | "
+                 + ("—" if fresh is None else f"{fresh:g}") + " |")
     L += ["",
          "**Доля билета короткой стороны** (решение владельца 2026-09-07 "
          "по замеру `short_why`, объявлено ДО прогона): "

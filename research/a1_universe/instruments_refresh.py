@@ -70,6 +70,34 @@ def write(data, path=None):
     os.replace(tmp, path)
 
 
+def launches(path=None):
+    """Символ → момент листинга (секунды). Одно место на весь проект.
+
+    Возраст имени спрашивают и проба (`dca_paper/pair_age.py`), и
+    ПРАВИЛО книги (`dca_paper/run_pair.py`). Вторая копия чтения
+    справочника однажды разошлась бы с первой — читает только это.
+    Нет файла или он битый — пустая карта, и звать её «возраст всем
+    неизвестен» обязан вызывающий, а не подменять нулём здесь.
+    """
+    out = {}
+    for sym, v in (read_old(path) or {}).items():
+        try:
+            lt = float(v.get("launch_time")) / 1000.0
+        except (TypeError, ValueError):
+            continue
+        if lt > 0:
+            out[sym] = lt
+    return out
+
+
+def age_days(launch, sym, at):
+    """Возраст имени на МОМЕНТ РЕШЕНИЯ, сутки. Нет даты — None, не ноль."""
+    lt = (launch or {}).get(sym)
+    if not lt:
+        return None
+    return (float(at) - float(lt)) / 86400.0
+
+
 def launch_days(data, at=None):
     """Символ → возраст в сутках на момент `at`. Нет даты — символа нет."""
     at = float(at if at is not None else time.time())

@@ -353,6 +353,31 @@ if ! pgrep -f "a1_universe/funding_refresh.py" >/dev/null; then
     fi
 fi
 
+# --- справочник инструментов площадки ---------------------------------
+# Возраст имени стал ПРАВИЛОМ входа короткой стороны общего счёта
+# (08.09, порог 7 суток), а дату листинга даёт только справочник.
+# Справочник, скачанный однажды, стареет молча: у каждого нового имени
+# возраст «неизвестен», правило отказывает всем подряд и выглядит при
+# этом исправным. Каденция суточная, час 05 UTC — между обучением в 02
+# и 06, рядом с догоном рядов funding в 04.
+INSTR=research/a1_universe/out/instruments-refresh.json
+INSTR_LOG=research/a1_universe/out/instruments.log
+if ! pgrep -f "a1_universe/instruments_refresh.py" >/dev/null; then
+    i_age=999999999
+    if [ -f "$INSTR" ]; then
+        i_ts=$(date -u -r "$INSTR" +%s 2>/dev/null || echo 0)
+        [ "$i_ts" -gt 0 ] && i_age=$(( $(date -u +%s) - i_ts ))
+    fi
+    i_hh=$(date -u +%H)
+    if [ "$i_hh" = "05" ] && [ "$i_age" -gt 72000 ]; then
+        echo "[$(now)] справочник инструментов: последний догон ${i_age} с назад — прогон"
+        setsid nohup bash -c "
+            nice -n 15 .venv/bin/python \
+                research/a1_universe/instruments_refresh.py \
+                >> $INSTR_LOG 2>&1" &
+    fi
+fi
+
 # --- очередь заданий (docs/00-INDEX.md) -------------------------------
 # Ассистент кладёт задание файлом в git, сервер его выполняет: прямого
 # доступа к серверу у ассистента нет (наружу открыты только 80 и 443),

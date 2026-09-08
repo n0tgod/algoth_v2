@@ -239,6 +239,45 @@ def test_rate_gate_machinery_works_and_the_rule_is_off_now():
           f"всех книгах, версия записи {R.FAMILY_RULES['pair']}")
 
 
+def test_age_rule_refuses_young_names_and_counts_the_unknown_apart():
+    """Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
+
+    Кусается: возраст считается на МОМЕНТ РЕШЕНИЯ (имя, молодое в день
+    входа, не спасается тем, что сегодня оно старое); имя без даты
+    листинга не входит и считается ОТДЕЛЬНЫМ числом; длинная сторона
+    правила не видит; справочника нет вовсе — книга идёт без фильтра и
+    говорит причину, а не встаёт молча.
+    """
+    day = 86400.0
+    launch = {"OLDUSDT": T0 - 100 * day, "NEWUSDT": T0 - 2 * day,
+              "EDGEUSDT": T0 - 30 * day}
+    shorts = [_short("OLDUSDT", T0), _short("NEWUSDT", T0),
+              _short("XXXUSDT", T0),
+              # молодое НА МОМЕНТ РЕШЕНИЯ: листинг за сутки до входа
+              _short("EDGEUSDT", T0 - 29 * day)]
+    keep, why = PR.age_shorts(shorts, "pair_safe", launch=launch,
+                              log=lambda *a: None, now=T0)
+    assert [r["sym"] for r in keep] == ["OLDUSDT"], keep
+    assert why["моложе порога"] == 2, why
+    assert why["возраст неизвестен"] == 1, why
+    assert why["applied"] is True and why["days"] == R.min_age_days("pair_safe")
+    # справочника нет — не «никто не входит», а причина словами
+    none_, w2 = PR.age_shorts(shorts, "pair_safe", launch={},
+                              log=lambda *a: None, now=T0)
+    assert len(none_) == 4 and w2.get("applied") is False and w2.get("why")
+    # правило объявлено во ВСЕХ трёх книгах общего счёта и записано
+    # своей версией: строки прежних правил в счёт не идут
+    assert all(R.min_age_days(k) >= 7 for k in R.PAIR_ORDER), R.PAIR_MIN_AGE_DAYS
+    assert R.FAMILY_RULES["pair"] >= 5, R.FAMILY_RULES
+    # и оно видно на самой странице книги, а не только в отчёте
+    assert "моложе" in R.RULERS["pair_safe"]["plain"]
+    print(f"ok  фильтр возраста ≥{why['days']:g} сут: взят "
+          f"{len(keep)} из {len(shorts)}, моложе порога "
+          f"{why['моложе порога']} (одно — по дате РЕШЕНИЯ), возраст "
+          f"неизвестен {why['возраст неизвестен']}; версия записи "
+          f"{R.FAMILY_RULES['pair']}")
+
+
 def test_collisions_and_link_live_inside_the_book():
     """Совпадение имён и связь сторон считаются по строкам самой книги."""
     at = T0
@@ -341,10 +380,16 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
                                              log=lambda *a: None)
         RP.append_journal(lrows, path=lj, log=lambda *a: None)
         RP.append_journal(srows, path=sj, log=lambda *a: None)
+        # Справочник листингов подаётся явно: правило возраста стоит на
+        # входе короткой стороны, и молча брать боевой файл значило бы
+        # мерить сквозной прогон чужими датами.
+        launch = {f"S{i}USDT": T0 - 200 * 86400.0 for i in range(n)}
         s = PR.run(long_cache=lc, short_cache=sc, journal=jp,
                    long_journal=lj, short_journal=sj,
                    keys=["pair_safe"], now=T0 + 100 * H,
-                   log=lambda *a: None)
+                   launch=launch, log=lambda *a: None)
+        a = (s.get("ages") or {}).get("pair_safe") or {}
+        assert a.get("applied") and a.get("kept") == n, a
         assert not s.get("error"), s.get("error")
         dep = int(R.DEPOSITS[1])
         b = s["books"][RP._cell("pair_safe", dep)]
@@ -396,6 +441,7 @@ if __name__ == "__main__":
               test_books_sharing_one_geometry_both_get_their_positions,
               test_short_side_enters_with_the_declared_share,
               test_rate_gate_machinery_works_and_the_rule_is_off_now,
+              test_age_rule_refuses_young_names_and_counts_the_unknown_apart,
               test_the_share_never_dives_under_the_exchange_floor,
               test_family_rules_retire_the_old_rows_without_touching_other_books,
               test_memory_guard_stops_the_run_itself,
@@ -405,4 +451,4 @@ if __name__ == "__main__":
               test_missing_caches_are_a_reason_not_empty_books,
               test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts):
         t()
-    print("\nвсе 12 проверок прошли")
+    print("\nвсе 13 проверок прошли")
