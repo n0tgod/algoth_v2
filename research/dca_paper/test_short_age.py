@@ -10,6 +10,7 @@
 import os
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -92,9 +93,43 @@ def test_age_filter_cuts_the_book_and_control_takes_the_same_count():
           "книг не тронут")
 
 
+def test_supply_separates_a_quiet_sheet_from_a_biting_rule():
+    """Две тишины различимы числом: подачи нет — или правило режет.
+
+    Кусается: сутки, где лист подал только МОЛОДЫЕ имена, показывают
+    «взято 0» при «взято без правила» больше нуля (виновато правило), а
+    сутки без решений вовсе показывают нули в обеих колонках (виновата
+    подача). Перепутать их отчёт не может — обе колонки печатаются.
+    """
+    day = 86400.0
+    # Полдень UTC: сутки отчёта — календарные, и решения, разложенные от
+    # произвольного часа, разъехались бы по двум колонкам.
+    noon = (T0 // day) * day + 12 * H
+    # сутки 1: три СТАРЫХ имени, сутки 2: три МОЛОДЫХ
+    old_ = [TP._short(f"O{i}USDT", noon + i * H) for i in range(3)]
+    young = [TP._short(f"Y{i}USDT", noon + day + i * H) for i in range(3)]
+    launch = {r["sym"]: noon - 200 * day for r in old_}
+    launch.update({r["sym"]: noon + day - 1 * day for r in young})
+    b = SA.supply(old_ + young, "safe_h", {"error": "рядов нет"}, launch,
+                  days=14, dep=R.DEPOSITS[1], now=noon + 40 * day)
+    days = b["days"]
+    d1 = days[time.strftime("%Y-%m-%d", time.gmtime(noon))]
+    d2 = days[time.strftime("%Y-%m-%d", time.gmtime(noon + day))]
+    assert d1["моложе порога"] == 0 and d1["взято"] == d1["взято без правила"]
+    assert d1["взято"] > 0, d1
+    assert d2["моложе порога"] == 3, d2
+    assert d2["взято"] == 0 and d2["взято без правила"] > 0, d2
+    assert b["n"] < b["n_free"], b
+    print(f"ok  подача по суткам: старые сутки {d1['взято']} сделок "
+          f"(правило не тронуло), молодые {d2['взято']} против "
+          f"{d2['взято без правила']} — видно, что режет ПРАВИЛО, а не "
+          "подача")
+
+
 if __name__ == "__main__":
     for t in (test_share_comes_from_the_declared_map_and_is_put_back,
               test_smaller_ticket_lets_more_decisions_in,
-              test_age_filter_cuts_the_book_and_control_takes_the_same_count):
+              test_age_filter_cuts_the_book_and_control_takes_the_same_count,
+              test_supply_separates_a_quiet_sheet_from_a_biting_rule):
         t()
-    print("\nвсе 3 проверки прошли")
+    print("\nвсе 4 проверки прошли")

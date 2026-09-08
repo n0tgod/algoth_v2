@@ -1233,20 +1233,21 @@
 - L115 `test_family_writes_its_own_journal_and_gates_the_aggressive_boo…`
 - L167 `test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()` — Правило возраста имени — правило самой книги с 2026-09-08.
 
-## research/dca_paper/test_short_age.py · 100 строк
+## research/dca_paper/test_short_age.py · 135 строк
 
 Проверки пробы «правила общего счёта на отдельных коротких книгах».
 
-- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L15 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L23 `H = 3600.0`
-- L24 `DAY = 86400.0`
-- L25 `T0 = TP.T0`
-- L26 `DEP = R.DEPOSITS[1]`
-- L29 `_shorts(n=8, at=None)`
-- L33 `test_share_comes_from_the_declared_map_and_is_put_back()`
-- L48 `test_smaller_ticket_lets_more_decisions_in()`
-- L65 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L24 `H = 3600.0`
+- L25 `DAY = 86400.0`
+- L26 `T0 = TP.T0`
+- L27 `DEP = R.DEPOSITS[1]`
+- L30 `_shorts(n=8, at=None)`
+- L34 `test_share_comes_from_the_declared_map_and_is_put_back()`
+- L49 `test_smaller_ticket_lets_more_decisions_in()`
+- L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
+- L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
 ## research/dca_paper/test_short_why.py · 155 строк
 

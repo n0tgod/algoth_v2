@@ -96,7 +96,44 @@ def cell(recs, bk, dep, ctx, share=1.0, now=None):
     return {"n": st.get("n"), "usd": st.get("usd"), "final": fin,
             "max_dd": dd, "win": st.get("win"), "ratio": ratio,
             "no_cash": c.get("no_cash"), "taken": c.get("taken"),
-            "ticket": ticket}
+            "ticket": ticket, "rows": mine}
+
+
+def supply(recs, bk, ctx, launch, days=14, dep=None, now=None):
+    """Подача листа по суткам: что предложено, что срезал возраст, что взято.
+
+    Сетка выше судит книгу целиком, а владелец смотрит на живой график и
+    видит ТИШИНУ последних дней. Тишина бывает двух родов: листа не
+    подают — или правило режет то, что подали. Это разные болезни, и
+    отличать их надо числом по суткам, а не средним за месяц.
+    """
+    dep = float(dep or CTRL_DEP)
+    now = float(now if now is not None else time.time())
+    need = R.min_age_days(bk)
+    keep, _drops = PA.pick(recs, launch, need)
+    with_, without = cell(keep, bk, dep, ctx, now=now), cell(recs, bk, dep,
+                                                            ctx, now=now)
+    got = {}
+    for r in recs:
+        d = time.strftime("%Y-%m-%d", time.gmtime(float(r.get("at", 0))))
+        b = got.setdefault(d, {"предложено": 0, "моложе порога": 0,
+                               "возраст неизвестен": 0, "взято": 0,
+                               "взято без правила": 0})
+        b["предложено"] += 1
+        a = IR.age_days(launch, r.get("sym"), r.get("at"))
+        if a is None:
+            b["возраст неизвестен"] += 1
+        elif a < need:
+            b["моложе порога"] += 1
+    for tag, c in (("взято", with_), ("взято без правила", without)):
+        for r in (c.get("rows") or []):
+            d = time.strftime("%Y-%m-%d", time.gmtime(float(r.get("at", 0))))
+            if d in got:
+                got[d][tag] += 1
+    last = sorted(got)[-int(days):]
+    return {"dep": int(dep), "days": {d: got[d] for d in last},
+            "min_days": need,
+            "n": with_.get("n"), "n_free": without.get("n")}
 
 
 def run(log=print, ctx=None, cache=None, keys=None, now=None, seeds=None,
@@ -128,6 +165,9 @@ def run(log=print, ctx=None, cache=None, keys=None, now=None, seeds=None,
             for sh in shares:
                 for dep in deps:
                     c = cell(keep, bk, dep, ctx, share=sh, now=now)
+                    # Строки книги в артефакт не идут: это книга целиком,
+                    # а не сводка.
+                    c.pop("rows", None)
                     out["cells"][f"{bk}|{d}|{sh}|{int(dep)}"] = dict(
                         c, book=bk, min_days=d, share=sh, dep=int(dep),
                         offered=len(recs), kept=len(keep), drops=drops)
@@ -143,7 +183,9 @@ def run(log=print, ctx=None, cache=None, keys=None, now=None, seeds=None,
             for k in range(seeds):
                 rk_, _w = PA.pick(recs, launch, d, seed=SEED + 100 * k,
                                   n_random=len(keep))
-                got.append(cell(rk_, bk, CTRL_DEP, ctx, share=1.0, now=now))
+                x = cell(rk_, bk, CTRL_DEP, ctx, share=1.0, now=now)
+                x.pop("rows", None)
+                got.append(x)
             usd = [x["usd"] or 0.0 for x in got]
             rt = [x["ratio"] for x in got if x.get("ratio") is not None]
             base = out["cells"][f"{bk}|{d}|1.0|{int(CTRL_DEP)}"]
@@ -169,6 +211,62 @@ def run(log=print, ctx=None, cache=None, keys=None, now=None, seeds=None,
                 f"бьют фильтр {r['beat_usd']}")
     out["secs"] = round(time.time() - t0, 1)
     return out
+
+
+def run_supply(log=print, ctx=None, cache=None, keys=None, now=None,
+               launch=None, days=14, dep=None):
+    """Подача по суткам у всех книг семейства."""
+    keys = list(keys or R.H24_ORDER)
+    ctx = ctx if ctx is not None else CO.context()
+    launch = IR.launches() if launch is None else launch
+    shorts, why = PR.short_recs(cache, log=log)
+    if why or not shorts:
+        why = why or "позиций коротких книг нет"
+        log(f"подача не считается: {why}")
+        return {"error": why}
+    out = {"books": {}, "launch_known": len(launch),
+           "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime())}
+    for bk in keys:
+        out["books"][bk] = supply(shorts.get(bk) or [], bk, ctx, launch,
+                                  days=days, dep=dep, now=now)
+        b = out["books"][bk]
+        log(f"{bk}: сделок под правилом {b['n']}, без правила {b['n_free']}")
+    return out
+
+
+def supply_report(s):
+    L = ["# Подача листа коротких книг по суткам", "",
+         "Вопрос владельца 2026-09-08: «шорт-сделки не открываются на "
+         "графике». Тишина бывает двух родов, и это разные болезни: "
+         "листа не подают — или правило режет то, что подали. Здесь "
+         "считается и то, и другое, по суткам, на депозите "
+         + (f"${(s.get('books') or {}).get(R.H24_ORDER[0], {}).get('dep', 0)}"
+            if s.get("books") else "$10000") + ".", ""]
+    if s.get("error"):
+        return "\n".join(L + [f"**Не посчитано:** {s['error']}.", ""])
+    for bk in R.H24_ORDER:
+        b = (s.get("books") or {}).get(bk)
+        if not b:
+            continue
+        L += [f"## {R.ruler_title(bk)} (порог ≥{b['min_days']:g} сут)", "",
+              f"Всего сделок под правилом {b['n']}, без правила "
+              f"{b['n_free']}.", "",
+              "| сутки | решений на листе | моложе порога | возраст "
+              "неизвестен | взято книгой | взято было бы без правила |",
+              "|---|--:|--:|--:|--:|--:|"]
+        for d, v in sorted((b.get("days") or {}).items()):
+            L.append(f"| {d} | {v['предложено']} | {v['моложе порога']} | "
+                     f"{v['возраст неизвестен']} | {v['взято']} | "
+                     f"{v['взято без правила']} |")
+        L.append("")
+    L += ["## Как читать", "",
+          "- «Решений на листе» — что подала модель за эти сутки. Мало "
+          "здесь — молчит подача, и правило ни при чём.",
+          "- «Взято книгой» против «взято было бы без правила» — цена "
+          "самого правила, в сделках, а не в процентах за месяц.",
+          "- Считается на кэше решений: прошлое не пересчитывается, "
+          "числа те же, которыми живёт книга.", ""]
+    return "\n".join(L)
 
 
 def _u(x):
@@ -258,12 +356,30 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="правила общего счёта на "
                                              "отдельных коротких книгах")
     ap.add_argument("--seeds", type=int, default=None)
+    # Отдельный вопрос владельца («шорт-сделки не открываются»): сетка на
+    # него не отвечает — она судит месяц целиком. Подача считается по
+    # СУТКАМ и стоит секунды, поэтому у неё свой режим.
+    ap.add_argument("--only-supply", action="store_true",
+                    help="только подача листа по суткам, без сетки")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except Exception:                                        # noqa: BLE001
         pass
     os.makedirs(R.OUT, exist_ok=True)
+    if a.only_supply:
+        s = run_supply()
+        art = os.path.join(R.OUT, "DCA-short-supply.json")
+        with open(art + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(s, f, ensure_ascii=False)
+        os.replace(art + ".tmp", art)
+        txt = supply_report(s)
+        with open(os.path.join(R.OUT, "DCA-short-supply.md"), "w",
+                  encoding="utf-8") as f:
+            f.write(txt)
+        print(txt)
+        publish("подача листа коротких книг по суткам")
+        return 0
     s = run(seeds=a.seeds)
     art = os.path.join(R.OUT, "DCA-short-age.json")
     with open(art + ".tmp", "w", encoding="utf-8") as f:

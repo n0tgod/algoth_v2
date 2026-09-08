@@ -1979,7 +1979,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L315 `publish(name)`
 - L320 `main(argv=None)`
 
-## research/dca_paper/short_age.py · 282 строк
+## research/dca_paper/short_age.py · 398 строк
 
 Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.
 
@@ -1991,12 +1991,15 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L57 `SEED = 20260908`
 - L61 `CTRL_DEP = 10000.0` — Депозит, на котором считается контроль: 200 зёрен × три книги — это 600 пересборок книги, и делать их на всех…
 - L64 `cell(recs, bk, dep, ctx, share=1.0, now=None)` — Книга на этих решениях при этой доле билета. Деньги НЕТТО.
-- L102 `run(log=print, ctx=None, cache=None, keys=None, now=None, seeds…`
-- L174 `_u(x)`
-- L178 `_p(x, d=1)`
-- L182 `report(s)`
-- L252 `publish(name)`
-- L257 `main(argv=None)`
+- L102 `supply(recs, bk, ctx, launch, days=14, dep=None, now=None)` — Подача листа по суткам: что предложено, что срезал возраст, что взято.
+- L139 `run(log=print, ctx=None, cache=None, keys=None, now=None, seeds…`
+- L216 `run_supply(log=print, ctx=None, cache=None, keys=None, now=None…` — Подача по суткам у всех книг семейства.
+- L237 `supply_report(s)`
+- L272 `_u(x)`
+- L276 `_p(x, d=1)`
+- L280 `report(s)`
+- L350 `publish(name)`
+- L355 `main(argv=None)`
 
 ## research/dca_paper/short_supply.py · 123 строк
 
