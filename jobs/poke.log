@@ -1285,3 +1285,7 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 
 == сигнал 1788870768 ==
 [2026-09-08T12:32:49Z] задание short-supply-3 запущено: research/dca_paper/short_age.py
+
+== сигнал 1788871128 ==
+[2026-09-08T12:38:50Z] задание deploy-since-1: перезапуск сборщика
+[2026-09-08T12:38:50Z] задание paper-since-1 запущено: research/dca_paper/run_paper.py
