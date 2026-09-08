@@ -200,3 +200,10 @@
 {"at": 1788834067.792, "role": "brief", "status": "contract", "started": 1788833701.0, "ended": 1788834067.792, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: research/factory/out/summary.md: нет раздела «Что открыто»: без него открытые углы проекта до предлагающего не доходят вовсе, и заявка неизбежно окажется пересказом чуж"}
 {"at": 1788834301.524, "role": "brief", "status": "start", "started": 1788834301.0, "ended": 1788834301.524, "dry": false, "pid": 1858778}
 {"at": 1788834464.077, "role": "brief", "status": "ok", "started": 1788834301.0, "ended": 1788834464.077, "dry": false, "note": "модель opus, усилие medium"}
+{"at": 1788834601.884, "role": "propose", "status": "start", "started": 1788834601.0, "ended": 1788834601.884, "dry": false, "pid": 1859607}
+{"at": 1788834606.576, "role": "propose", "status": "fail", "started": 1788834601.0, "ended": 1788834606.576, "dry": false, "note": "модель claude-fable-5-1, код 1: You've reached your Fable limit. Switch to another model, or manage usage credits at claude.ai/settings/usage?from=cc_cli_limit_message, to continue. "}
+{"at": 1788834902.113, "role": "propose", "status": "start", "started": 1788834901.0, "ended": 1788834902.113, "dry": false, "pid": 1860236}
+{"at": 1788834907.059, "role": "propose", "status": "fail", "started": 1788834901.0, "ended": 1788834907.059, "dry": false, "note": "модель claude-fable-5-1, код 1: You've reached your Fable limit. Switch to another model, or manage usage credits at claude.ai/settings/usage?from=cc_cli_limit_message, to continue. "}
+{"at": 1788835201.325, "role": "propose", "status": "start", "started": 1788835201.0, "ended": 1788835201.325, "dry": false, "pid": 1860865}
+{"at": 1788835206.237, "role": "propose", "status": "fail", "started": 1788835201.0, "ended": 1788835206.237, "dry": false, "note": "модель claude-fable-5-1, код 1: You've reached your Fable limit. Switch to another model, or manage usage credits at claude.ai/settings/usage?from=cc_cli_limit_message, to continue. "}
+{"at": 1788835501.441, "role": "judge", "status": "start", "started": 1788835501.44, "ended": 1788835501.441, "dry": false, "pid": 1861496}
