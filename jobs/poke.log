@@ -1232,3 +1232,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1788848762 ==
 [2026-09-08T06:26:04Z] задание fund-refresh-now запущено: research/a1_universe/funding_refresh.py
 [2026-09-08T06:26:04Z] задание gate-deploy: перезапуск сборщика
+
+== сигнал 1788848866 ==
+[2026-09-08T06:27:47Z] задание pair-gate-rule-1 запущено: research/dca_paper/run_pair.py
