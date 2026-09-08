@@ -9,3 +9,19 @@
 
 Старые записи не удаляются: делистнутый символ остаётся с последним известным состоянием, иначе история потеряет имена, которыми книги торговали.
 
+публикуется в ветку main:
+ jobs/done/instr-refresh-1.done                    |     1 +
+ jobs/done/instr-refresh-1.log                     |    11 +
+ jobs/done/pair-rollback-1.done                    |     1 +
+ jobs/done/pair-rollback-1.log                     |     4 +
+ jobs/poke.log                                     |     4 +
+ research/a1_universe/out/instruments-refresh.json |    11 +
+ research/a1_universe/out/instruments-refresh.md   |     5 +
+ research/a1_universe/out/instruments.json         | 25248 +-------------------
+ research/s8_loop/out/day_brake.json               |     2 +-
+ 9 files changed, 39 insertions(+), 25248 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   5e5f66d0..21e9b089  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-08T07:22:35Z, код 0
