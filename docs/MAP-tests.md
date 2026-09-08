@@ -28,7 +28,7 @@
 - L188 `CONTROLS = [('хвост без перекрытия', _control_no_o…`
 - L195 `main()`
 
-## research/a1_universe/test_instruments_refresh.py · 69 строк
+## research/a1_universe/test_instruments_refresh.py · 87 строк
 
 Проверки догона справочника инструментов.
 
@@ -36,7 +36,8 @@
 - L18 `DAY = 86400.0`
 - L21 `test_merge_keeps_the_old_and_counts_kinds_apart()`
 - L34 `test_age_is_counted_from_the_launch_moment()`
-- L49 `test_venue_silence_leaves_the_file_alone()`
+- L49 `test_cache_key_carries_the_day_of_the_run()` — Догон обязан СПРОСИТЬ площадку, а не вернуть вчерашний ответ.
+- L66 `test_venue_silence_leaves_the_file_alone()`
 
 ## research/a1_universe/test_options.py · 286 строк
 

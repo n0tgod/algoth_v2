@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 413, строк: 184503, каталогов: 72.
+Модулей кода: 413, строк: 184528, каталогов: 72.
 
 
 ## корень — память проекта, идеи, README
@@ -70,17 +70,17 @@
 
 - `binance_funding.py` · 256 строк — A1 — история ставок funding с Binance.
 - `binance_klines.py` · 402 строк — A1 — загрузка свечей Binance по универсуму на момент времени.
-- `bybit_api.py` · 402 строк — A1 — сбор того, что доступно только через API v5 Bybit.
+- `bybit_api.py` · 406 строк — A1 — сбор того, что доступно только через API v5 Bybit.
 - `bybit_options.py` · 356 строк — Инвентарь опционов площадки исполнения — выпуклый инструмент, есть ли он.
 - `bybit_risk_limit.py` · 217 строк — D0 (спека 14) — таблица maintenance margin площадки исполнения.
 - `data_report.py` · 904 строк — A1 — отчёт о загруженных данных.
 - `funding_persistence.py` · 587 строк — A1 — персистентность funding во времени: признак отбора или только издержка.
 - `funding_refresh.py` · 222 строк — Догон рядов funding площадки исполнения до сегодняшнего дня.
-- `instruments_refresh.py` · 152 строк — Догон справочника инструментов площадки: моменты листинга.
+- `instruments_refresh.py` · 155 строк — Догон справочника инструментов площадки: моменты листинга.
 - `report.py` · 295 строк — Формирует отчёт A1 по универсуму в markdown из universe.json.
 - `universe.py` · 392 строк — A1 — универсум площадки исполнения на момент времени.
 - `venue_funding_diff.py` · 182 строк — A1 — расхождение ставок funding между площадками, выровненное по периодам.
-- тесты: `test_funding_refresh.py` (205), `test_instruments_refresh.py` (69), `test_options.py` (286), `test_persistence.py` (217), `test_risk_limit.py` (126), `test_universe.py` (244)
+- тесты: `test_funding_refresh.py` (205), `test_instruments_refresh.py` (87), `test_options.py` (286), `test_persistence.py` (217), `test_risk_limit.py` (126), `test_universe.py` (244)
 - документы: `RUNBOOK-vps.md` — Запуск сбора данных на VPS
 - отчёты в `out/` (6): A1-data-report.md, A1-universe-report.md, D0-risk-limits.md, D3-options.md, funding-refresh.md, instruments-refresh.md
 

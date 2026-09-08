@@ -46,12 +46,29 @@ def test_age_is_counted_from_the_launch_moment():
           f"{ages['B']:.0f}; без даты — не считается")
 
 
+def test_cache_key_carries_the_day_of_the_run():
+    """Догон обязан СПРОСИТЬ площадку, а не вернуть вчерашний ответ.
+
+    Кусается: первый живой прогон отработал за 0.1 с и объявил «новых
+    0» — ключ кэша ответов не нёс дня, и справочник пришёл из
+    августовского снимка. Проверяется, что метка доезжает до вызова.
+    """
+    seen = []
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "instruments.json")
+        IR.run(log=lambda *a: None, path=p,
+               collect=lambda tag="": (seen.append(tag) or {"A": {"symbol": "A"}}))
+    assert seen and seen[0].startswith("_20"), seen
+    assert len(seen[0]) == 11, seen        # «_ГГГГ-ММ-ДД»
+    print(f"ok  ключ кэша несёт день прогона: метка «{seen[0]}»")
+
+
 def test_venue_silence_leaves_the_file_alone():
     with tempfile.TemporaryDirectory() as td:
         p = os.path.join(td, "instruments.json")
         with open(p, "w", encoding="utf-8") as f:
             json.dump({"A": {"symbol": "A"}}, f)
-        def boom():
+        def boom(tag=""):
             raise RuntimeError("нет сети")
         s = IR.run(log=lambda *a: None, collect=boom, path=p)
         assert s.get("error") and s["had"] == 1, s
@@ -63,7 +80,8 @@ def test_venue_silence_leaves_the_file_alone():
 
 if __name__ == "__main__":
     for t in (test_merge_keeps_the_old_and_counts_kinds_apart,
+              test_cache_key_carries_the_day_of_the_run,
               test_age_is_counted_from_the_launch_moment,
               test_venue_silence_leaves_the_file_alone):
         t()
-    print("\nвсе 3 проверки прошли")
+    print("\nвсе 4 проверки прошли")

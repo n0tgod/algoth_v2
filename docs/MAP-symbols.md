@@ -184,7 +184,7 @@ A1 — загрузка свечей Binance по универсуму на мо
 - L270 `plan(manifest, interval)` — Какие символо-месяцы нужны: от начала истории Binance до смерти на Bybit.
 - L290 `main()`
 
-## research/a1_universe/bybit_api.py · 402 строк
+## research/a1_universe/bybit_api.py · 406 строк
 
 A1 — сбор того, что доступно только через API v5 Bybit.
 
@@ -199,16 +199,16 @@ A1 — сбор того, что доступно только через API v5
 - L71 `WORKERS = 4`
 - L72 `PAUSE_S = 0.05`
 - L75 `api_get(path, params, cache_key)`
-- L86 `collect_instruments()` — Полный справочник линейных контрактов, включая неторгуемые сейчас.
-- L107 `_collect_instruments_status(status)`
-- L142 `_ms(d)`
-- L146 `collect_funding_symbol(symbol, start_day, end_day)` — Вся история funding по символу. Эндпоинт отдаёт назад во времени.
-- L181 `write_funding(symbol, rows)`
-- L191 `summarize(symbol, rows)`
-- L232 `check_credentials()` — Ключ и секрет на месте и различны. Зовётся до сбора, а не после.
-- L258 `collect_fees()` — Ставки комиссий по ключу API. Раздел 5.1: из живого API, не по памяти.
-- L287 `preflight()` — Проверить доступ до начала сбора и объяснить отказ по-человечески.
-- L307 `main()`
+- L86 `collect_instruments(cache_tag='')` — Полный справочник линейных контрактов, включая неторгуемые сейчас.
+- L107 `_collect_instruments_status(status, cache_tag='')`
+- L146 `_ms(d)`
+- L150 `collect_funding_symbol(symbol, start_day, end_day)` — Вся история funding по символу. Эндпоинт отдаёт назад во времени.
+- L185 `write_funding(symbol, rows)`
+- L195 `summarize(symbol, rows)`
+- L236 `check_credentials()` — Ключ и секрет на месте и различны. Зовётся до сбора, а не после.
+- L262 `collect_fees()` — Ставки комиссий по ключу API. Раздел 5.1: из живого API, не по памяти.
+- L291 `preflight()` — Проверить доступ до начала сбора и объяснить отказ по-человечески.
+- L311 `main()`
 
 ## research/a1_universe/bybit_options.py · 356 строк
 
@@ -329,7 +329,7 @@ A1 — персистентность funding во времени: призна�
 - L179 `publish(name)`
 - L185 `main(argv=None)`
 
-## research/a1_universe/instruments_refresh.py · 152 строк
+## research/a1_universe/instruments_refresh.py · 155 строк
 
 Догон справочника инструментов площадки: моменты листинга.
 
@@ -342,9 +342,9 @@ A1 — персистентность funding во времени: призна�
 - L64 `write(data, path=None)` — Класс B: сперва временный файл, потом атомарная замена.
 - L73 `launch_days(data, at=None)` — Символ → возраст в сутках на момент `at`. Нет даты — символа нет.
 - L87 `run(log=print, collect=None, path=None)`
-- L108 `report(s)`
-- L123 `publish(name)`
-- L128 `main(argv=None)`
+- L111 `report(s)`
+- L126 `publish(name)`
+- L131 `main(argv=None)`
 
 ## research/a1_universe/report.py · 295 строк
 

@@ -87,8 +87,11 @@ def launch_days(data, at=None):
 def run(log=print, collect=None, path=None):
     t0 = time.time()
     old = read_old(path)
+    # Метка дня в ключе кэша: без неё ответ площадки берётся из кэша
+    # прошлого прогона, и догон объявляет «новых 0», ничего не спросив.
+    tag = "_" + datetime.now(timezone.utc).date().isoformat()
     try:
-        fresh = (collect or B.collect_instruments)()
+        fresh = (collect(tag) if collect else B.collect_instruments(tag))
     except Exception as e:                                    # noqa: BLE001
         log(f"справочник не получен: {e}")
         return {"error": f"справочник не получен: {e}"[:200],

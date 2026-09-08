@@ -83,7 +83,7 @@ def api_get(path, params, cache_key):
 
 # ------------------------------------------------------------ справочник
 
-def collect_instruments():
+def collect_instruments(cache_tag=""):
     """Полный справочник линейных контрактов, включая неторгуемые сейчас.
 
     Обход идёт по статусам. Без параметра `status` эндпоинт отдаёт только
@@ -100,18 +100,22 @@ def collect_instruments():
     """
     out = {}
     for status in ("Trading", "PreLaunch", "Delivering", "Closed"):
-        out.update(_collect_instruments_status(status))
+        out.update(_collect_instruments_status(status, cache_tag))
     return out
 
 
-def _collect_instruments_status(status):
+def _collect_instruments_status(status, cache_tag=""):
     out, cursor, page = {}, "", 0
     while True:
         params = {"category": CATEGORY, "status": status, "limit": 1000}
         if cursor:
             params["cursor"] = cursor
+        # Ключ кэша несёт МЕТКУ вызова: без неё догон справочника вернул
+        # августовский снимок за 0.1 с и объявил «новых 0» — ровно тот
+        # отказ, что неотличим от исправности. Сборщик A1 зовёт без
+        # метки и по-прежнему пользуется кэшем.
         res = api_get("/v5/market/instruments-info", params,
-                      f"instr_{status.lower()}_{page}")
+                      f"instr_{status.lower()}_{page}{cache_tag}")
         for it in res.get("list", []):
             pf = it.get("priceFilter", {})
             lf = it.get("lotSizeFilter", {})
