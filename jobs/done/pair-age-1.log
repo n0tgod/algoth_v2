@@ -71,3 +71,26 @@ pair_aggr ≥60 сут: коротких 2145 из 2969, счёт 2531.32 $, о�
 - «Возраст неизвестен» — своя колонка: именно её молчаливое превращение в отказ и создало ложный результат гейта по ставке.
 - Ячейка становится правилом только объявленной заранее и проверенной вперёд; окно одно, веса модели эти часы видели.
 
+публикуется в ветку main:
+ jobs/done/instr-refresh-2.log            |  7 +++
+ jobs/done/pair-age-1.done                |  1 +
+ jobs/done/pair-age-1.log                 | 73 ++++++++++++++++++++++++++++++++
+ jobs/poke.log                            |  3 ++
+ research/dca_paper/out/DCA-pair-age.json |  1 +
+ research/dca_paper/out/DCA-pair-age.md   | 33 +++++++++++++++
+ research/s8_loop/out/day_brake.json      |  2 +-
+ 7 files changed, 119 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+ ! [rejected]          main -> main (fetch first)
+error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push не прошёл, подтягиваю ветку и пробую снова 
+(попытка 1 из 4)
+From github.com:n0tgod/algoth_v2
+ * branch              main       -> FETCH_HEAD
+   d3cb92cb..716fed45  main       -> origin/main
+конец: 2026-09-08T07:36:44Z, код 0
