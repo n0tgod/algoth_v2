@@ -1745,7 +1745,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L217 `publish(name)`
 - L223 `main()`
 
-## research/dca_paper/pair_gate.py · 396 строк
+## research/dca_paper/pair_gate.py · 405 строк
 
 Два входных фильтра короткой стороны общего счёта — на одной сетке.
 
@@ -1761,11 +1761,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L120 `pick(shorts, held, ctx, names='all', gate='off', seed=SEED)` — Короткие решения после обоих фильтров плюс счётчики отказов.
 - L161 `cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None)` — Общий счёт на этих решениях: деньги НЕТТО, просадка, состав.
 - L189 `run(dep=None, log=print, ctx=None, long_cache=None, short_cache…`
-- L274 `_u(x)`
-- L278 `_p(x, d=1)`
-- L282 `report(s)`
-- L365 `publish(name)`
-- L370 `main(argv=None)`
+- L279 `_u(x)`
+- L283 `_p(x, d=1)`
+- L287 `report(s)`
+- L371 `publish(name)`
+- L376 `main(argv=None)`
 
 ## research/dca_paper/rules.py · 925 строк
 

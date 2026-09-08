@@ -187,9 +187,13 @@ def cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None):
 
 
 def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
-        long_journal=None, keys=None, now=None):
+        long_journal=None, keys=None, now=None, seeds=None):
     t0 = time.time()
     dep = float(dep or R.DEPOSITS[1])
+    # Число зёрен контроля — параметр прогона: на двадцати доля «бьют
+    # гейт» гуляла на десятки процентов между соседними прогонами, а
+    # разрешение доли и есть 1/зёрна.
+    seeds = int(seeds or SEEDS)
     keys = list(keys or R.PAIR_ORDER)
     ctx = ctx if ctx is not None else CO.context()
     longs, why_l = PR.long_recs(long_cache, log=log)
@@ -200,7 +204,8 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
         return {"error": why, "dep": dep}
     jrows, _bad = R.read_journal(long_journal or R.JOURNAL)
     jrows = [r for r in jrows if R.is_current(r)]
-    out = {"dep": dep, "seed": SEED, "cells": {}, "drops": {},
+    out = {"dep": dep, "seed": SEED, "seeds": seeds, "cells": {},
+           "drops": {},
            "costs_error": (ctx or {}).get("error"),
            "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime())}
     for pk in keys:
@@ -218,7 +223,7 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
                     # политик имён гейт почти не меняет состав, и там
                     # контролю нечего судить.
                     got = []
-                    for k in range(SEEDS):
+                    for k in range(seeds):
                         keep, why = pick(srec, held, ctx, nm, g,
                                          seed=SEED + 100 * k)
                         got.append(cell(lrec, keep, pk, dep, ctx, now=now))
@@ -237,7 +242,7 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
                               else round(float(np.mean(np.array(rt)
                                                        >= base["ratio"])), 3))
                     out["cells"][f"{pk}|{nm}|{g}"] = {
-                        "pair": pk, "names": nm, "gate": g, "seeds": SEEDS,
+                        "pair": pk, "names": nm, "gate": g, "seeds": seeds,
                         "offered": len(srec), "kept": len(keep), "drops": why,
                         "usd": round(float(np.median(usd)), 2),
                         "usd_p10": round(float(np.quantile(usd, 0.1)), 2),
@@ -254,7 +259,7 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
                         "ratio_p90": (round(float(np.quantile(rt, 0.9)), 2)
                                       if rt else None),
                         "beat_gate": beat, "beat_gate_ratio": beat_r}
-                    log(f"{pk} {nm}/контроль ({SEEDS} зёрен): медиана "
+                    log(f"{pk} {nm}/контроль ({seeds} зёрен): медиана "
                         f"{out['cells'][f'{pk}|{nm}|{g}']['usd']} $, "
                         f"бьют гейт по деньгам {beat}, по отношению "
                         f"{beat_r}")
@@ -341,7 +346,8 @@ def report(s):
           "столько же коротких решений, сколько «только те, что в лонге», "
           "на объявленном зерне. Без неё «лучше отбор» и «меньше сделок» "
           "неразличимы.",
-          f"- Строка «случайно столько же» — КОНТРОЛЬ гейта на {SEEDS} "
+          f"- Строка «случайно столько же» — КОНТРОЛЬ гейта на "
+          f"{s.get('seeds') or SEEDS} "
           "зёрнах: столько же коротких решений, сколько оставляет гейт, "
           "но выбранных без всякой ставки. Печатается медиана, полоса "
           "p10…p90 и доля выборок, которые ГЕЙТ НЕ ПОБИЛ — отдельно по "
@@ -370,6 +376,9 @@ def publish(name):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="фильтры короткой стороны")
     ap.add_argument("--dep", type=float, default=None)
+    ap.add_argument("--seeds", type=int, default=None,
+                    help="зёрен контроля; доля «бьют гейт» разрешается "
+                         "с точностью 1/зёрна")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     try:
@@ -377,7 +386,7 @@ def main(argv=None):
     except Exception:                                        # noqa: BLE001
         pass
     os.makedirs(R.OUT, exist_ok=True)
-    s = run(dep=a.dep)
+    s = run(dep=a.dep, seeds=a.seeds)
     art = os.path.join(R.OUT, "DCA-pair-gate.json")
     with open(art + ".tmp", "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False)
