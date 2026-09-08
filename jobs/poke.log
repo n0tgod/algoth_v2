@@ -1248,3 +1248,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1788852148 ==
 [2026-09-08T07:22:30Z] задание instr-refresh-1 запущено: research/a1_universe/instruments_refresh.py
 [2026-09-08T07:22:30Z] задание pair-rollback-1 запущено: research/dca_paper/run_pair.py
+
+== сигнал 1788852263 ==
+[2026-09-08T07:24:25Z] задание instr-refresh-2 запущено: research/a1_universe/instruments_refresh.py
