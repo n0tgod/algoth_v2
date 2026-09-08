@@ -82,7 +82,7 @@
 - `venue_funding_diff.py` · 182 строк — A1 — расхождение ставок funding между площадками, выровненное по периодам.
 - тесты: `test_funding_refresh.py` (205), `test_instruments_refresh.py` (69), `test_options.py` (286), `test_persistence.py` (217), `test_risk_limit.py` (126), `test_universe.py` (244)
 - документы: `RUNBOOK-vps.md` — Запуск сбора данных на VPS
-- отчёты в `out/` (5): A1-data-report.md, A1-universe-report.md, D0-risk-limits.md, D3-options.md, funding-refresh.md
+- отчёты в `out/` (6): A1-data-report.md, A1-universe-report.md, D0-risk-limits.md, D3-options.md, funding-refresh.md, instruments-refresh.md
 
 ## research/a2_storage — A2 — хранилище Parquet, гигиена рядов
 
@@ -654,7 +654,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 426, логов `done/*.log`: 425 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 426, логов `done/*.log`: 427 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
