@@ -113,3 +113,16 @@ aggr_h ≥7 сут, билет 0.25×: решений 2439 из 2984, $10000 →
 - Контроль отвечает на один вопрос: отбор это или просто меньше сделок. Возраст что-то отбирает только там, где доля «бьют фильтр» мала.
 - Ячейка становится правилом только объявленной заранее и проверенной вперёд; окно одно, веса модели эти часы видели.
 
+публикуется в ветку main:
+ jobs/done/short-age-1.done                |   1 +
+ jobs/done/short-age-1.log                 | 115 ++++++++++++++++++++++++++++++
+ jobs/poke.log                             |   3 +
+ research/dca_paper/out/DCA-short-age.json |   1 +
+ research/dca_paper/out/DCA-short-age.md   |  88 +++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json       |   2 +-
+ 6 files changed, 209 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   af2ac8cb..88108856  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-08T10:14:11Z, код 0
