@@ -501,8 +501,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 27.4257,
-      "mark_frac": -0.016144,
-      "mark_usd": -0.4428,
+      "mark_frac": -0.014558,
+      "mark_usd": -0.3993,
       "entry_px": 2.679,
       "avg": 2.679,
       "depth": 1,
@@ -514,8 +514,86 @@
        ]
       ],
       "fav_bp": 163.67,
-      "last_ts": 1788889200.0,
+      "last_ts": 1788892800.0,
       "sched_end": 1789045774.7,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SAMSUNGEMUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.4507,
+      "mark_frac": -8e-06,
+      "mark_usd": -0.0002,
+      "entry_px": 1039.13,
+      "avg": 1039.13,
+      "depth": 1,
+      "fills": [
+       [
+        1788891480.0,
+        1039.13,
+        0.25
+       ]
+      ],
+      "fav_bp": 99.05,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "ANETUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.4507,
+      "mark_frac": 8.2e-05,
+      "mark_usd": 0.0023,
+      "entry_px": 197.4,
+      "avg": 197.4,
+      "depth": 1,
+      "fills": [
+       [
+        1788891840.0,
+        197.4,
+        0.25
+       ]
+      ],
+      "fav_bp": 184.8,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SSPCUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.4507,
+      "mark_frac": -0.00225,
+      "mark_usd": -0.0618,
+      "entry_px": 8.89,
+      "avg": 8.89,
+      "depth": 1,
+      "fills": [
+       [
+        1788891120.0,
+        8.89,
+        0.25
+       ]
+      ],
+      "fav_bp": 129.83,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
       "cut_why": null,
       "book_end": null,
       "state": "open"
@@ -545,7 +623,7 @@
       "last_ts": 1786474860.0,
       "sched_end": 1786475556.7,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -571,7 +649,7 @@
       "last_ts": 1786498980.0,
       "sched_end": 1786500500.2,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -597,7 +675,7 @@
       "last_ts": 1786993260.0,
       "sched_end": 1786994135.8,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -623,7 +701,7 @@
       "last_ts": 1787428680.0,
       "sched_end": 1787430205.4,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -653,9 +731,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.44,
-    "priced": 1,
-    "at": 1788889214.7286682
+    "mark_usd": -0.46,
+    "priced": 4,
+    "at": 1788892815.6903117
    }
   },
   "safe:10000": {
@@ -1158,8 +1236,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 27.1679,
-      "mark_frac": -0.016144,
-      "mark_usd": -0.4386,
+      "mark_frac": -0.014558,
+      "mark_usd": -0.3955,
       "entry_px": 2.679,
       "avg": 2.679,
       "depth": 1,
@@ -1171,8 +1249,86 @@
        ]
       ],
       "fav_bp": 163.67,
-      "last_ts": 1788889200.0,
+      "last_ts": 1788892800.0,
       "sched_end": 1789045774.7,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SAMSUNGEMUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.1704,
+      "mark_frac": -8e-06,
+      "mark_usd": -0.0002,
+      "entry_px": 1039.13,
+      "avg": 1039.13,
+      "depth": 1,
+      "fills": [
+       [
+        1788891480.0,
+        1039.13,
+        0.25
+       ]
+      ],
+      "fav_bp": 99.05,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "ANETUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.1704,
+      "mark_frac": 8.2e-05,
+      "mark_usd": 0.0022,
+      "entry_px": 197.4,
+      "avg": 197.4,
+      "depth": 1,
+      "fills": [
+       [
+        1788891840.0,
+        197.4,
+        0.25
+       ]
+      ],
+      "fav_bp": 184.8,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SSPCUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.1704,
+      "mark_frac": -0.00225,
+      "mark_usd": -0.0611,
+      "entry_px": 8.89,
+      "avg": 8.89,
+      "depth": 1,
+      "fills": [
+       [
+        1788891120.0,
+        8.89,
+        0.25
+       ]
+      ],
+      "fav_bp": 129.83,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
       "cut_why": null,
       "book_end": null,
       "state": "open"
@@ -1202,7 +1358,7 @@
       "last_ts": 1786474860.0,
       "sched_end": 1786475556.7,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -1228,7 +1384,7 @@
       "last_ts": 1786498980.0,
       "sched_end": 1786500500.2,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -1254,7 +1410,7 @@
       "last_ts": 1786993260.0,
       "sched_end": 1786994135.8,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -1280,33 +1436,7 @@
       "last_ts": 1787428680.0,
       "sched_end": 1787430205.4,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
-      "state": "cut"
-     },
-     {
-      "sym": "RLUSDUSDT",
-      "at": 1787199915.0,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 25.0048,
-      "mark_frac": -0.0001,
-      "mark_usd": -0.0025,
-      "entry_px": 1.0004,
-      "avg": 1.0004,
-      "depth": 1,
-      "fills": [
-       [
-        1787200260.0,
-        1.0004,
-        0.25
-       ]
-      ],
-      "fav_bp": 155.6,
-      "last_ts": 1787458620.0,
-      "sched_end": 1787459115.0,
-      "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -1336,9 +1466,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.44,
-    "priced": 1,
-    "at": 1788889214.7286682
+    "mark_usd": -0.45,
+    "priced": 4,
+    "at": 1788892815.6903117
    }
   },
   "safe:100000": {
@@ -1841,8 +1971,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 152.6786,
-      "mark_frac": -0.016144,
-      "mark_usd": -2.4649,
+      "mark_frac": -0.014558,
+      "mark_usd": -2.2226,
       "entry_px": 2.679,
       "avg": 2.679,
       "depth": 1,
@@ -1854,8 +1984,86 @@
        ]
       ],
       "fav_bp": 163.67,
-      "last_ts": 1788889200.0,
+      "last_ts": 1788892800.0,
       "sched_end": 1789045774.7,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SAMSUNGEMUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 152.6868,
+      "mark_frac": -8e-06,
+      "mark_usd": -0.0013,
+      "entry_px": 1039.13,
+      "avg": 1039.13,
+      "depth": 1,
+      "fills": [
+       [
+        1788891480.0,
+        1039.13,
+        0.25
+       ]
+      ],
+      "fav_bp": 99.05,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "ANETUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 152.6868,
+      "mark_frac": 8.2e-05,
+      "mark_usd": 0.0126,
+      "entry_px": 197.4,
+      "avg": 197.4,
+      "depth": 1,
+      "fills": [
+       [
+        1788891840.0,
+        197.4,
+        0.25
+       ]
+      ],
+      "fav_bp": 184.8,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SSPCUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 152.6868,
+      "mark_frac": -0.00225,
+      "mark_usd": -0.3435,
+      "entry_px": 8.89,
+      "avg": 8.89,
+      "depth": 1,
+      "fills": [
+       [
+        1788891120.0,
+        8.89,
+        0.25
+       ]
+      ],
+      "fav_bp": 129.83,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
       "cut_why": null,
       "book_end": null,
       "state": "open"
@@ -1885,7 +2093,7 @@
       "last_ts": 1786474860.0,
       "sched_end": 1786475556.7,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -1911,7 +2119,7 @@
       "last_ts": 1786498980.0,
       "sched_end": 1786500500.2,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -1937,7 +2145,7 @@
       "last_ts": 1786993260.0,
       "sched_end": 1786994135.8,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -1963,33 +2171,7 @@
       "last_ts": 1787428680.0,
       "sched_end": 1787430205.4,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
-      "state": "cut"
-     },
-     {
-      "sym": "RLUSDUSDT",
-      "at": 1787199915.0,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 145.0163,
-      "mark_frac": -0.0001,
-      "mark_usd": -0.0145,
-      "entry_px": 1.0004,
-      "avg": 1.0004,
-      "depth": 1,
-      "fills": [
-       [
-        1787200260.0,
-        1.0004,
-        0.25
-       ]
-      ],
-      "fav_bp": 155.6,
-      "last_ts": 1787458620.0,
-      "sched_end": 1787459115.0,
-      "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -2019,9 +2201,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -2.46,
-    "priced": 1,
-    "at": 1788889214.7286682
+    "mark_usd": -2.55,
+    "priced": 4,
+    "at": 1788892815.6903117
    }
   },
   "optimal:1000": {
@@ -2524,8 +2706,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 27.7327,
-      "mark_frac": -0.016144,
-      "mark_usd": -0.4477,
+      "mark_frac": -0.014558,
+      "mark_usd": -0.4037,
       "entry_px": 2.679,
       "avg": 2.679,
       "depth": 1,
@@ -2537,8 +2719,86 @@
        ]
       ],
       "fav_bp": 163.67,
-      "last_ts": 1788889200.0,
+      "last_ts": 1788892800.0,
       "sched_end": 1789045774.7,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SAMSUNGEMUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.8236,
+      "mark_frac": -8e-06,
+      "mark_usd": -0.0002,
+      "entry_px": 1039.13,
+      "avg": 1039.13,
+      "depth": 1,
+      "fills": [
+       [
+        1788891480.0,
+        1039.13,
+        0.25
+       ]
+      ],
+      "fav_bp": 99.05,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "ANETUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.8236,
+      "mark_frac": 8.2e-05,
+      "mark_usd": 0.0023,
+      "entry_px": 197.4,
+      "avg": 197.4,
+      "depth": 1,
+      "fills": [
+       [
+        1788891840.0,
+        197.4,
+        0.25
+       ]
+      ],
+      "fav_bp": 184.8,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SSPCUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 27.8236,
+      "mark_frac": -0.00225,
+      "mark_usd": -0.0626,
+      "entry_px": 8.89,
+      "avg": 8.89,
+      "depth": 1,
+      "fills": [
+       [
+        1788891120.0,
+        8.89,
+        0.25
+       ]
+      ],
+      "fav_bp": 129.83,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
       "cut_why": null,
       "book_end": null,
       "state": "open"
@@ -2568,7 +2828,7 @@
       "last_ts": 1786474860.0,
       "sched_end": 1786475556.7,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -2594,7 +2854,7 @@
       "last_ts": 1786498980.0,
       "sched_end": 1786500500.2,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -2620,7 +2880,7 @@
       "last_ts": 1786993260.0,
       "sched_end": 1786994135.8,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -2646,7 +2906,7 @@
       "last_ts": 1787428680.0,
       "sched_end": 1787430205.4,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -2676,9 +2936,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.45,
-    "priced": 1,
-    "at": 1788889214.7286682
+    "mark_usd": -0.46,
+    "priced": 4,
+    "at": 1788892815.6903117
    }
   },
   "optimal:10000": {
@@ -3181,8 +3441,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 29.5107,
-      "mark_frac": -0.016144,
-      "mark_usd": -0.4764,
+      "mark_frac": -0.014558,
+      "mark_usd": -0.4296,
       "entry_px": 2.679,
       "avg": 2.679,
       "depth": 1,
@@ -3194,8 +3454,86 @@
        ]
       ],
       "fav_bp": 163.67,
-      "last_ts": 1788889200.0,
+      "last_ts": 1788892800.0,
       "sched_end": 1789045774.7,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SAMSUNGEMUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 29.5205,
+      "mark_frac": -8e-06,
+      "mark_usd": -0.0002,
+      "entry_px": 1039.13,
+      "avg": 1039.13,
+      "depth": 1,
+      "fills": [
+       [
+        1788891480.0,
+        1039.13,
+        0.25
+       ]
+      ],
+      "fav_bp": 99.05,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "ANETUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 29.5205,
+      "mark_frac": 8.2e-05,
+      "mark_usd": 0.0024,
+      "entry_px": 197.4,
+      "avg": 197.4,
+      "depth": 1,
+      "fills": [
+       [
+        1788891840.0,
+        197.4,
+        0.25
+       ]
+      ],
+      "fav_bp": 184.8,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SSPCUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 29.5205,
+      "mark_frac": -0.00225,
+      "mark_usd": -0.0664,
+      "entry_px": 8.89,
+      "avg": 8.89,
+      "depth": 1,
+      "fills": [
+       [
+        1788891120.0,
+        8.89,
+        0.25
+       ]
+      ],
+      "fav_bp": 129.83,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
       "cut_why": null,
       "book_end": null,
       "state": "open"
@@ -3225,7 +3563,7 @@
       "last_ts": 1786474860.0,
       "sched_end": 1786475556.7,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -3251,7 +3589,7 @@
       "last_ts": 1786498980.0,
       "sched_end": 1786500500.2,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -3277,7 +3615,7 @@
       "last_ts": 1786993260.0,
       "sched_end": 1786994135.8,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -3303,33 +3641,7 @@
       "last_ts": 1787428680.0,
       "sched_end": 1787430205.4,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
-      "state": "cut"
-     },
-     {
-      "sym": "RLUSDUSDT",
-      "at": 1787199915.0,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 24.9207,
-      "mark_frac": -0.0001,
-      "mark_usd": -0.0025,
-      "entry_px": 1.0004,
-      "avg": 1.0004,
-      "depth": 1,
-      "fills": [
-       [
-        1787200260.0,
-        1.0004,
-        0.25
-       ]
-      ],
-      "fav_bp": 155.6,
-      "last_ts": 1787458620.0,
-      "sched_end": 1787459115.0,
-      "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -3359,9 +3671,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.48,
-    "priced": 1,
-    "at": 1788889214.7286682
+    "mark_usd": -0.49,
+    "priced": 4,
+    "at": 1788892815.6903117
    }
   },
   "optimal:100000": {
@@ -3864,8 +4176,8 @@
       "book": null,
       "lev": 1.0,
       "margin": 160.8201,
-      "mark_frac": -0.016144,
-      "mark_usd": -2.5963,
+      "mark_frac": -0.014558,
+      "mark_usd": -2.3412,
       "entry_px": 2.679,
       "avg": 2.679,
       "depth": 1,
@@ -3877,8 +4189,86 @@
        ]
       ],
       "fav_bp": 163.67,
-      "last_ts": 1788889200.0,
+      "last_ts": 1788892800.0,
       "sched_end": 1789045774.7,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SAMSUNGEMUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 160.8511,
+      "mark_frac": -8e-06,
+      "mark_usd": -0.0014,
+      "entry_px": 1039.13,
+      "avg": 1039.13,
+      "depth": 1,
+      "fills": [
+       [
+        1788891480.0,
+        1039.13,
+        0.25
+       ]
+      ],
+      "fav_bp": 99.05,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "ANETUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 160.8511,
+      "mark_frac": 8.2e-05,
+      "mark_usd": 0.0132,
+      "entry_px": 197.4,
+      "avg": 197.4,
+      "depth": 1,
+      "fills": [
+       [
+        1788891840.0,
+        197.4,
+        0.25
+       ]
+      ],
+      "fav_bp": 184.8,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
+      "cut_why": null,
+      "book_end": null,
+      "state": "open"
+     },
+     {
+      "sym": "SSPCUSDT",
+      "at": 1788890949.8,
+      "side": "long",
+      "book": null,
+      "lev": 1.0,
+      "margin": 160.8511,
+      "mark_frac": -0.00225,
+      "mark_usd": -0.3619,
+      "entry_px": 8.89,
+      "avg": 8.89,
+      "depth": 1,
+      "fills": [
+       [
+        1788891120.0,
+        8.89,
+        0.25
+       ]
+      ],
+      "fav_bp": 129.83,
+      "last_ts": 1788892800.0,
+      "sched_end": 1789150149.8,
       "cut_why": null,
       "book_end": null,
       "state": "open"
@@ -3908,7 +4298,7 @@
       "last_ts": 1786474860.0,
       "sched_end": 1786475556.7,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -3934,7 +4324,7 @@
       "last_ts": 1786498980.0,
       "sched_end": 1786500500.2,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -3960,7 +4350,7 @@
       "last_ts": 1786993260.0,
       "sched_end": 1786994135.8,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787459100.0,
       "state": "cut"
      },
      {
@@ -3986,33 +4376,7 @@
       "last_ts": 1787428680.0,
       "sched_end": 1787430205.4,
       "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787437380.0,
-      "state": "cut"
-     },
-     {
-      "sym": "RLUSDUSDT",
-      "at": 1787199915.0,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 144.7338,
-      "mark_frac": -0.0001,
-      "mark_usd": -0.0145,
-      "entry_px": 1.0004,
-      "avg": 1.0004,
-      "depth": 1,
-      "fills": [
-       [
-        1787200260.0,
-        1.0004,
-        0.25
-       ]
-      ],
-      "fav_bp": 155.6,
-      "last_ts": 1787458620.0,
-      "sched_end": 1787459115.0,
-      "cut_why": "книга есть, но не в окне этой позиции",
-      "book_end": 1787473560.0,
+      "book_end": 1787433900.0,
       "state": "cut"
      },
      {
@@ -4042,9 +4406,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -2.6,
-    "priced": 1,
-    "at": 1788889214.7286682
+    "mark_usd": -2.69,
+    "priced": 4,
+    "at": 1788892815.6903117
    }
   },
   "aggr:1000": {
@@ -4346,7 +4710,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1788889214.7286682
+    "at": 1788892815.6903117
    }
   },
   "aggr:10000": {
@@ -4648,7 +5012,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1788889214.7286682
+    "at": 1788892815.6903117
    }
   },
   "aggr:100000": {
@@ -4950,7 +5314,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1788889214.7286682
+    "at": 1788892815.6903117
    }
   }
  },
@@ -4987,24 +5351,24 @@
   "error": null,
   "n_funding": 1058
  },
- "positions": 7337,
- "replayed": 19,
+ "positions": 7340,
+ "replayed": 23,
  "skipped": 0,
  "window": {
   "from": "2026-08-08 18:07",
-  "to": "2026-09-07 17:10",
+  "to": "2026-09-08 18:09",
   "from_ts": 1786212452.7,
-  "to_ts": 1788801059.6,
-  "span_h": 719.1,
-  "span_d": 30.0,
-  "dates": 31
+  "to_ts": 1788890949.8,
+  "span_h": 744.0,
+  "span_d": 31.0,
+  "dates": 32
  },
  "cells": {
   "safe:1000": {
-   "taken": 423,
+   "taken": 426,
    "no_cash": 1340,
    "too_small": 0,
-   "take_share": 0.2399,
+   "take_share": 0.2412,
    "final": 0.0976,
    "max_dd": -0.086,
    "day_median": 0.00025,
@@ -5019,28 +5383,28 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "10d432e3ce43",
-   "pnl_taken": 3.8202,
-   "names": 301,
+   "fp": "19ea14daa377",
+   "pnl_taken": 3.8196,
+   "names": 303,
    "top_sym": "CAKEUSDT",
    "top_pnl": 5.83,
-   "final_wo_top": 0.0918,
+   "final_wo_top": 0.0917,
    "top_trade": 4.96,
-   "open_n": 1,
+   "open_n": 4,
    "cut_n": 5
   },
   "safe:10000": {
-   "taken": 1696,
+   "taken": 1699,
    "no_cash": 67,
    "too_small": 0,
-   "take_share": 0.962,
+   "take_share": 0.9621,
    "final": 0.0868,
    "max_dd": -0.0375,
    "day_median": 8e-05,
    "day_worst": -0.0096,
    "day_green": 0.656,
    "days": 32,
-   "open_mean": 83.0,
+   "open_mean": 82.9,
    "open_median": 39.0,
    "open_max": 411,
    "open_dd": -379.88,
@@ -5048,18 +5412,18 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "8b8529f92894",
-   "pnl_taken": 33.8682,
-   "names": 613,
+   "fp": "dfdbf96b7a7d",
+   "pnl_taken": 33.8676,
+   "names": 614,
    "top_sym": "SKLUSDT",
    "top_pnl": 9.95,
    "final_wo_top": 0.0858,
    "top_trade": 6.91,
-   "open_n": 1,
-   "cut_n": 6
+   "open_n": 4,
+   "cut_n": 5
   },
   "safe:100000": {
-   "taken": 1763,
+   "taken": 1766,
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
@@ -5069,7 +5433,7 @@
    "day_worst": -0.0054,
    "day_green": 0.656,
    "days": 32,
-   "open_mean": 85.7,
+   "open_mean": 85.6,
    "open_median": 39.0,
    "open_max": 474,
    "open_dd": -2194.72,
@@ -5077,21 +5441,21 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "40ad446a5c6b",
-   "pnl_taken": 36.0102,
-   "names": 630,
+   "fp": "74e79fce6278",
+   "pnl_taken": 36.0096,
+   "names": 631,
    "top_sym": "SKLUSDT",
    "top_pnl": 56.75,
    "final_wo_top": 0.0524,
    "top_trade": 39.5,
-   "open_n": 1,
-   "cut_n": 6
+   "open_n": 4,
+   "cut_n": 5
   },
   "optimal:1000": {
-   "taken": 438,
+   "taken": 441,
    "no_cash": 1334,
    "too_small": 0,
-   "take_share": 0.2472,
+   "take_share": 0.2485,
    "final": 0.1125,
    "max_dd": -0.2628,
    "day_median": 0.00062,
@@ -5106,28 +5470,28 @@
    "slots": 40,
    "ticket": null,
    "share_by_source": true,
-   "fp": "05765761c41d",
-   "pnl_taken": 4.7755,
-   "names": 306,
+   "fp": "d4cedfe105a5",
+   "pnl_taken": 4.7749,
+   "names": 308,
    "top_sym": "EIGENUSDT",
    "top_pnl": 15.41,
    "final_wo_top": 0.0971,
    "top_trade": 14.84,
-   "open_n": 1,
+   "open_n": 4,
    "cut_n": 5
   },
   "optimal:10000": {
-   "taken": 1705,
+   "taken": 1708,
    "no_cash": 67,
    "too_small": 0,
-   "take_share": 0.9622,
+   "take_share": 0.9623,
    "final": 0.1808,
    "max_dd": -0.0965,
    "day_median": 0.00013,
    "day_worst": -0.0288,
    "day_green": 0.625,
    "days": 32,
-   "open_mean": 82.8,
+   "open_mean": 82.7,
    "open_median": 38.0,
    "open_max": 412,
    "open_dd": -917.18,
@@ -5135,18 +5499,18 @@
    "slots": 400,
    "ticket": null,
    "share_by_source": true,
-   "fp": "bad66df2cd06",
-   "pnl_taken": 68.917,
-   "names": 613,
+   "fp": "710042ffc92c",
+   "pnl_taken": 68.9164,
+   "names": 614,
    "top_sym": "ENAUSDT",
    "top_pnl": 35.85,
    "final_wo_top": 0.1772,
    "top_trade": 35.2,
-   "open_n": 1,
-   "cut_n": 6
+   "open_n": 4,
+   "cut_n": 5
   },
   "optimal:100000": {
-   "taken": 1772,
+   "taken": 1775,
    "no_cash": 0,
    "too_small": 0,
    "take_share": 1.0,
@@ -5156,7 +5520,7 @@
    "day_worst": -0.016,
    "day_green": 0.625,
    "days": 32,
-   "open_mean": 85.5,
+   "open_mean": 85.4,
    "open_median": 38.0,
    "open_max": 474,
    "open_dd": -5141.41,
@@ -5164,15 +5528,15 @@
    "slots": 689,
    "ticket": null,
    "share_by_source": true,
-   "fp": "7a6495fbb921",
-   "pnl_taken": 73.216,
-   "names": 630,
+   "fp": "91909b2dde3a",
+   "pnl_taken": 73.2154,
+   "names": 631,
    "top_sym": "GRTUSDT",
    "top_pnl": 200.27,
    "final_wo_top": 0.1073,
    "top_trade": 193.35,
-   "open_n": 1,
-   "cut_n": 6
+   "open_n": 4,
+   "cut_n": 5
   },
   "aggr:1000": {
    "taken": 471,
@@ -5264,8 +5628,8 @@
  },
  "one_name": {
   "safe": {
-   "positions": 7337,
-   "kept": 1763,
+   "positions": 7340,
+   "kept": 1766,
    "skipped_repeats": 5574,
    "parts": null,
    "min_lev": null,
@@ -5282,8 +5646,8 @@
    "lev_median": 1.56
   },
   "optimal": {
-   "positions": 7337,
-   "kept": 1772,
+   "positions": 7340,
+   "kept": 1775,
    "skipped_repeats": 5565,
    "parts": null,
    "min_lev": null,
@@ -5297,15 +5661,15 @@
     "100000": 145.0
    },
    "peak_over": true,
-   "lev_median": 2.39
+   "lev_median": 2.31
   },
   "aggr": {
-   "positions": 7337,
+   "positions": 7340,
    "kept": 635,
    "skipped_repeats": 1317,
    "parts": null,
    "min_lev": 4.0,
-   "gate_dropped": 5385,
+   "gate_dropped": 5388,
    "peak_names": 245,
    "peak_declared": 237,
    "floor": 6.25,
@@ -5320,10 +5684,10 @@
  },
  "states": {
   "closed": 4,
-  "open": 4,
-  "cut": 30
+  "open": 16,
+  "cut": 26
  },
- "data_end": 1788889200.0,
+ "data_end": 1788892800.0,
  "live": {
   "safe:1000": {
    "positions": [
@@ -5334,8 +5698,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 27.4257,
-     "mark_frac": -0.016144,
-     "mark_usd": -0.4428,
+     "mark_frac": -0.014558,
+     "mark_usd": -0.3993,
      "entry_px": 2.679,
      "avg": 2.679,
      "depth": 1,
@@ -5347,8 +5711,86 @@
       ]
      ],
      "fav_bp": 163.67,
-     "last_ts": 1788889200.0,
+     "last_ts": 1788892800.0,
      "sched_end": 1789045774.7,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SAMSUNGEMUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.4507,
+     "mark_frac": -8e-06,
+     "mark_usd": -0.0002,
+     "entry_px": 1039.13,
+     "avg": 1039.13,
+     "depth": 1,
+     "fills": [
+      [
+       1788891480.0,
+       1039.13,
+       0.25
+      ]
+     ],
+     "fav_bp": 99.05,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "ANETUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.4507,
+     "mark_frac": 8.2e-05,
+     "mark_usd": 0.0023,
+     "entry_px": 197.4,
+     "avg": 197.4,
+     "depth": 1,
+     "fills": [
+      [
+       1788891840.0,
+       197.4,
+       0.25
+      ]
+     ],
+     "fav_bp": 184.8,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SSPCUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.4507,
+     "mark_frac": -0.00225,
+     "mark_usd": -0.0618,
+     "entry_px": 8.89,
+     "avg": 8.89,
+     "depth": 1,
+     "fills": [
+      [
+       1788891120.0,
+       8.89,
+       0.25
+      ]
+     ],
+     "fav_bp": 129.83,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
      "cut_why": null,
      "book_end": null,
      "state": "open"
@@ -5378,7 +5820,7 @@
      "last_ts": 1786474860.0,
      "sched_end": 1786475556.7,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -5404,7 +5846,7 @@
      "last_ts": 1786498980.0,
      "sched_end": 1786500500.2,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -5430,7 +5872,7 @@
      "last_ts": 1786993260.0,
      "sched_end": 1786994135.8,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -5456,7 +5898,7 @@
      "last_ts": 1787428680.0,
      "sched_end": 1787430205.4,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -5486,9 +5928,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.44,
-   "priced": 1,
-   "at": 1788889214.7286682
+   "mark_usd": -0.46,
+   "priced": 4,
+   "at": 1788892815.6903117
   },
   "safe:10000": {
    "positions": [
@@ -5499,8 +5941,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 27.1679,
-     "mark_frac": -0.016144,
-     "mark_usd": -0.4386,
+     "mark_frac": -0.014558,
+     "mark_usd": -0.3955,
      "entry_px": 2.679,
      "avg": 2.679,
      "depth": 1,
@@ -5512,8 +5954,86 @@
       ]
      ],
      "fav_bp": 163.67,
-     "last_ts": 1788889200.0,
+     "last_ts": 1788892800.0,
      "sched_end": 1789045774.7,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SAMSUNGEMUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.1704,
+     "mark_frac": -8e-06,
+     "mark_usd": -0.0002,
+     "entry_px": 1039.13,
+     "avg": 1039.13,
+     "depth": 1,
+     "fills": [
+      [
+       1788891480.0,
+       1039.13,
+       0.25
+      ]
+     ],
+     "fav_bp": 99.05,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "ANETUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.1704,
+     "mark_frac": 8.2e-05,
+     "mark_usd": 0.0022,
+     "entry_px": 197.4,
+     "avg": 197.4,
+     "depth": 1,
+     "fills": [
+      [
+       1788891840.0,
+       197.4,
+       0.25
+      ]
+     ],
+     "fav_bp": 184.8,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SSPCUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.1704,
+     "mark_frac": -0.00225,
+     "mark_usd": -0.0611,
+     "entry_px": 8.89,
+     "avg": 8.89,
+     "depth": 1,
+     "fills": [
+      [
+       1788891120.0,
+       8.89,
+       0.25
+      ]
+     ],
+     "fav_bp": 129.83,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
      "cut_why": null,
      "book_end": null,
      "state": "open"
@@ -5543,7 +6063,7 @@
      "last_ts": 1786474860.0,
      "sched_end": 1786475556.7,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -5569,7 +6089,7 @@
      "last_ts": 1786498980.0,
      "sched_end": 1786500500.2,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -5595,7 +6115,7 @@
      "last_ts": 1786993260.0,
      "sched_end": 1786994135.8,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -5621,33 +6141,7 @@
      "last_ts": 1787428680.0,
      "sched_end": 1787430205.4,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
-     "state": "cut"
-    },
-    {
-     "sym": "RLUSDUSDT",
-     "at": 1787199915.0,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 25.0048,
-     "mark_frac": -0.0001,
-     "mark_usd": -0.0025,
-     "entry_px": 1.0004,
-     "avg": 1.0004,
-     "depth": 1,
-     "fills": [
-      [
-       1787200260.0,
-       1.0004,
-       0.25
-      ]
-     ],
-     "fav_bp": 155.6,
-     "last_ts": 1787458620.0,
-     "sched_end": 1787459115.0,
-     "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -5677,9 +6171,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.44,
-   "priced": 1,
-   "at": 1788889214.7286682
+   "mark_usd": -0.45,
+   "priced": 4,
+   "at": 1788892815.6903117
   },
   "safe:100000": {
    "positions": [
@@ -5690,8 +6184,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 152.6786,
-     "mark_frac": -0.016144,
-     "mark_usd": -2.4649,
+     "mark_frac": -0.014558,
+     "mark_usd": -2.2226,
      "entry_px": 2.679,
      "avg": 2.679,
      "depth": 1,
@@ -5703,8 +6197,86 @@
       ]
      ],
      "fav_bp": 163.67,
-     "last_ts": 1788889200.0,
+     "last_ts": 1788892800.0,
      "sched_end": 1789045774.7,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SAMSUNGEMUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 152.6868,
+     "mark_frac": -8e-06,
+     "mark_usd": -0.0013,
+     "entry_px": 1039.13,
+     "avg": 1039.13,
+     "depth": 1,
+     "fills": [
+      [
+       1788891480.0,
+       1039.13,
+       0.25
+      ]
+     ],
+     "fav_bp": 99.05,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "ANETUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 152.6868,
+     "mark_frac": 8.2e-05,
+     "mark_usd": 0.0126,
+     "entry_px": 197.4,
+     "avg": 197.4,
+     "depth": 1,
+     "fills": [
+      [
+       1788891840.0,
+       197.4,
+       0.25
+      ]
+     ],
+     "fav_bp": 184.8,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SSPCUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 152.6868,
+     "mark_frac": -0.00225,
+     "mark_usd": -0.3435,
+     "entry_px": 8.89,
+     "avg": 8.89,
+     "depth": 1,
+     "fills": [
+      [
+       1788891120.0,
+       8.89,
+       0.25
+      ]
+     ],
+     "fav_bp": 129.83,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
      "cut_why": null,
      "book_end": null,
      "state": "open"
@@ -5734,7 +6306,7 @@
      "last_ts": 1786474860.0,
      "sched_end": 1786475556.7,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -5760,7 +6332,7 @@
      "last_ts": 1786498980.0,
      "sched_end": 1786500500.2,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -5786,7 +6358,7 @@
      "last_ts": 1786993260.0,
      "sched_end": 1786994135.8,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -5812,33 +6384,7 @@
      "last_ts": 1787428680.0,
      "sched_end": 1787430205.4,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
-     "state": "cut"
-    },
-    {
-     "sym": "RLUSDUSDT",
-     "at": 1787199915.0,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 145.0163,
-     "mark_frac": -0.0001,
-     "mark_usd": -0.0145,
-     "entry_px": 1.0004,
-     "avg": 1.0004,
-     "depth": 1,
-     "fills": [
-      [
-       1787200260.0,
-       1.0004,
-       0.25
-      ]
-     ],
-     "fav_bp": 155.6,
-     "last_ts": 1787458620.0,
-     "sched_end": 1787459115.0,
-     "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -5868,9 +6414,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -2.46,
-   "priced": 1,
-   "at": 1788889214.7286682
+   "mark_usd": -2.55,
+   "priced": 4,
+   "at": 1788892815.6903117
   },
   "optimal:1000": {
    "positions": [
@@ -5881,8 +6427,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 27.7327,
-     "mark_frac": -0.016144,
-     "mark_usd": -0.4477,
+     "mark_frac": -0.014558,
+     "mark_usd": -0.4037,
      "entry_px": 2.679,
      "avg": 2.679,
      "depth": 1,
@@ -5894,8 +6440,86 @@
       ]
      ],
      "fav_bp": 163.67,
-     "last_ts": 1788889200.0,
+     "last_ts": 1788892800.0,
      "sched_end": 1789045774.7,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SAMSUNGEMUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.8236,
+     "mark_frac": -8e-06,
+     "mark_usd": -0.0002,
+     "entry_px": 1039.13,
+     "avg": 1039.13,
+     "depth": 1,
+     "fills": [
+      [
+       1788891480.0,
+       1039.13,
+       0.25
+      ]
+     ],
+     "fav_bp": 99.05,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "ANETUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.8236,
+     "mark_frac": 8.2e-05,
+     "mark_usd": 0.0023,
+     "entry_px": 197.4,
+     "avg": 197.4,
+     "depth": 1,
+     "fills": [
+      [
+       1788891840.0,
+       197.4,
+       0.25
+      ]
+     ],
+     "fav_bp": 184.8,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SSPCUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 27.8236,
+     "mark_frac": -0.00225,
+     "mark_usd": -0.0626,
+     "entry_px": 8.89,
+     "avg": 8.89,
+     "depth": 1,
+     "fills": [
+      [
+       1788891120.0,
+       8.89,
+       0.25
+      ]
+     ],
+     "fav_bp": 129.83,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
      "cut_why": null,
      "book_end": null,
      "state": "open"
@@ -5925,7 +6549,7 @@
      "last_ts": 1786474860.0,
      "sched_end": 1786475556.7,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -5951,7 +6575,7 @@
      "last_ts": 1786498980.0,
      "sched_end": 1786500500.2,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -5977,7 +6601,7 @@
      "last_ts": 1786993260.0,
      "sched_end": 1786994135.8,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -6003,7 +6627,7 @@
      "last_ts": 1787428680.0,
      "sched_end": 1787430205.4,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -6033,9 +6657,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.45,
-   "priced": 1,
-   "at": 1788889214.7286682
+   "mark_usd": -0.46,
+   "priced": 4,
+   "at": 1788892815.6903117
   },
   "optimal:10000": {
    "positions": [
@@ -6046,8 +6670,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 29.5107,
-     "mark_frac": -0.016144,
-     "mark_usd": -0.4764,
+     "mark_frac": -0.014558,
+     "mark_usd": -0.4296,
      "entry_px": 2.679,
      "avg": 2.679,
      "depth": 1,
@@ -6059,8 +6683,86 @@
       ]
      ],
      "fav_bp": 163.67,
-     "last_ts": 1788889200.0,
+     "last_ts": 1788892800.0,
      "sched_end": 1789045774.7,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SAMSUNGEMUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 29.5205,
+     "mark_frac": -8e-06,
+     "mark_usd": -0.0002,
+     "entry_px": 1039.13,
+     "avg": 1039.13,
+     "depth": 1,
+     "fills": [
+      [
+       1788891480.0,
+       1039.13,
+       0.25
+      ]
+     ],
+     "fav_bp": 99.05,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "ANETUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 29.5205,
+     "mark_frac": 8.2e-05,
+     "mark_usd": 0.0024,
+     "entry_px": 197.4,
+     "avg": 197.4,
+     "depth": 1,
+     "fills": [
+      [
+       1788891840.0,
+       197.4,
+       0.25
+      ]
+     ],
+     "fav_bp": 184.8,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SSPCUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 29.5205,
+     "mark_frac": -0.00225,
+     "mark_usd": -0.0664,
+     "entry_px": 8.89,
+     "avg": 8.89,
+     "depth": 1,
+     "fills": [
+      [
+       1788891120.0,
+       8.89,
+       0.25
+      ]
+     ],
+     "fav_bp": 129.83,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
      "cut_why": null,
      "book_end": null,
      "state": "open"
@@ -6090,7 +6792,7 @@
      "last_ts": 1786474860.0,
      "sched_end": 1786475556.7,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -6116,7 +6818,7 @@
      "last_ts": 1786498980.0,
      "sched_end": 1786500500.2,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -6142,7 +6844,7 @@
      "last_ts": 1786993260.0,
      "sched_end": 1786994135.8,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -6168,33 +6870,7 @@
      "last_ts": 1787428680.0,
      "sched_end": 1787430205.4,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
-     "state": "cut"
-    },
-    {
-     "sym": "RLUSDUSDT",
-     "at": 1787199915.0,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 24.9207,
-     "mark_frac": -0.0001,
-     "mark_usd": -0.0025,
-     "entry_px": 1.0004,
-     "avg": 1.0004,
-     "depth": 1,
-     "fills": [
-      [
-       1787200260.0,
-       1.0004,
-       0.25
-      ]
-     ],
-     "fav_bp": 155.6,
-     "last_ts": 1787458620.0,
-     "sched_end": 1787459115.0,
-     "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -6224,9 +6900,9 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.48,
-   "priced": 1,
-   "at": 1788889214.7286682
+   "mark_usd": -0.49,
+   "priced": 4,
+   "at": 1788892815.6903117
   },
   "optimal:100000": {
    "positions": [
@@ -6237,8 +6913,8 @@
      "book": null,
      "lev": 1.0,
      "margin": 160.8201,
-     "mark_frac": -0.016144,
-     "mark_usd": -2.5963,
+     "mark_frac": -0.014558,
+     "mark_usd": -2.3412,
      "entry_px": 2.679,
      "avg": 2.679,
      "depth": 1,
@@ -6250,8 +6926,86 @@
       ]
      ],
      "fav_bp": 163.67,
-     "last_ts": 1788889200.0,
+     "last_ts": 1788892800.0,
      "sched_end": 1789045774.7,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SAMSUNGEMUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 160.8511,
+     "mark_frac": -8e-06,
+     "mark_usd": -0.0014,
+     "entry_px": 1039.13,
+     "avg": 1039.13,
+     "depth": 1,
+     "fills": [
+      [
+       1788891480.0,
+       1039.13,
+       0.25
+      ]
+     ],
+     "fav_bp": 99.05,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "ANETUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 160.8511,
+     "mark_frac": 8.2e-05,
+     "mark_usd": 0.0132,
+     "entry_px": 197.4,
+     "avg": 197.4,
+     "depth": 1,
+     "fills": [
+      [
+       1788891840.0,
+       197.4,
+       0.25
+      ]
+     ],
+     "fav_bp": 184.8,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
+     "cut_why": null,
+     "book_end": null,
+     "state": "open"
+    },
+    {
+     "sym": "SSPCUSDT",
+     "at": 1788890949.8,
+     "side": "long",
+     "book": null,
+     "lev": 1.0,
+     "margin": 160.8511,
+     "mark_frac": -0.00225,
+     "mark_usd": -0.3619,
+     "entry_px": 8.89,
+     "avg": 8.89,
+     "depth": 1,
+     "fills": [
+      [
+       1788891120.0,
+       8.89,
+       0.25
+      ]
+     ],
+     "fav_bp": 129.83,
+     "last_ts": 1788892800.0,
+     "sched_end": 1789150149.8,
      "cut_why": null,
      "book_end": null,
      "state": "open"
@@ -6281,7 +7035,7 @@
      "last_ts": 1786474860.0,
      "sched_end": 1786475556.7,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -6307,7 +7061,7 @@
      "last_ts": 1786498980.0,
      "sched_end": 1786500500.2,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -6333,7 +7087,7 @@
      "last_ts": 1786993260.0,
      "sched_end": 1786994135.8,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787459100.0,
      "state": "cut"
     },
     {
@@ -6359,33 +7113,7 @@
      "last_ts": 1787428680.0,
      "sched_end": 1787430205.4,
      "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787437380.0,
-     "state": "cut"
-    },
-    {
-     "sym": "RLUSDUSDT",
-     "at": 1787199915.0,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 144.7338,
-     "mark_frac": -0.0001,
-     "mark_usd": -0.0145,
-     "entry_px": 1.0004,
-     "avg": 1.0004,
-     "depth": 1,
-     "fills": [
-      [
-       1787200260.0,
-       1.0004,
-       0.25
-      ]
-     ],
-     "fav_bp": 155.6,
-     "last_ts": 1787458620.0,
-     "sched_end": 1787459115.0,
-     "cut_why": "книга есть, но не в окне этой позиции",
-     "book_end": 1787473560.0,
+     "book_end": 1787433900.0,
      "state": "cut"
     },
     {
@@ -6415,49 +7143,49 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -2.6,
-   "priced": 1,
-   "at": 1788889214.7286682
+   "mark_usd": -2.69,
+   "priced": 4,
+   "at": 1788892815.6903117
   },
   "aggr:1000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1788889214.7286682
+   "at": 1788892815.6903117
   },
   "aggr:10000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1788889214.7286682
+   "at": 1788892815.6903117
   },
   "aggr:100000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1788889214.7286682
+   "at": 1788892815.6903117
   }
  },
  "tail": {
-  "syms": 4,
-  "minutes": 29,
+  "syms": 10,
+  "minutes": 304,
   "dry": 1,
-  "span_med_h": 0.29,
+  "span_med_h": 71.75,
   "zero_vol_tape": 0,
-  "entry_dropped": 0,
-  "marked": 8,
+  "entry_dropped": 3,
+  "marked": 14,
   "cut_why": {
-   "книга есть, но не в окне этой позиции": 26,
+   "книга есть, но не в окне этой позиции": 22,
    "книга кончилась раньше планового конца": 4
   },
-  "closed_tail": 850,
-  "closed_all": 9498
+  "closed_tail": 854,
+  "closed_all": 9502
  },
- "computed_at": "2026-09-08 17:40",
- "secs": 24.5,
+ "computed_at": "2026-09-08 18:40",
+ "secs": 25.9,
  "rules": {
   "RULES": 6,
   "TICKET": 25.0,
