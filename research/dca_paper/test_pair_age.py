@@ -68,6 +68,49 @@ def test_control_takes_the_same_count():
     print(f"ok  контроль берёт столько же ({len(rnd)}), но другой состав")
 
 
+def test_bands_name_the_mechanism_and_do_not_zero_the_unmeasured():
+    launch = _launch(NEWUSDT=1.0, MIDUSDT=10.0, OLDUSDT=200.0)
+    rows = [
+        # молодое имя: хвостовой исход, большое плечо, дорогой funding
+        {"sym": "NEWUSDT", "at": T0, "usd": -300.0, "margin": 200.0,
+         "lev": 25.0, "exit": "ликвидация", "fund_usd": -40.0},
+        {"sym": "NEWUSDT", "at": T0, "usd": -100.0, "margin": 200.0,
+         "lev": 25.0, "exit": "пол", "fund_usd": -20.0},
+        # старые имена: обычные исходы, funding у одного НЕ ИЗМЕРЕН
+        {"sym": "OLDUSDT", "at": T0, "usd": +10.0, "margin": 200.0,
+         "lev": 2.0, "exit": "срок", "fund_usd": -2.0},
+        {"sym": "OLDUSDT", "at": T0, "usd": +30.0, "margin": 200.0,
+         "lev": 2.0, "exit": "тейк", "fund_usd": None},
+        {"sym": "МОЛЧУНUSDT", "at": T0, "usd": -5.0, "margin": 100.0,
+         "lev": 3.0, "exit": "срок", "fund_usd": None}]
+    b = PA.bands(rows, launch)
+    assert set(b) == {"<3 сут", "≥60 сут", PA.UNKNOWN}, sorted(b)
+    young, old = b["<3 сут"], b["≥60 сут"]
+    assert young["n"] == 2 and young["tail_share"] == 1.0, young
+    assert old["n"] == 2 and old["tail_share"] == 0.0, old
+    assert young["usd"] == -400.0 and old["usd"] == 40.0, (young, old)
+    assert young["lev"] == 25.0 and old["lev"] == 2.0, (young, old)
+    # funding: у старых измерена ОДНА сделка из двух — среднее считается
+    # по ней, а не по нулю за вторую
+    assert old["fund_n"] == 1 and old["fund_bp"] == -100.0, old
+    assert b[PA.UNKNOWN]["fund_n"] == 0 and b[PA.UNKNOWN]["fund_bp"] is None
+    # молодая полоса дороже по funding в б.п. маржи — это и есть механизм
+    assert young["fund_bp"] < old["fund_bp"], (young, old)
+    print(f"ok  разрез по возрасту: молодые {young['n']} сделки "
+          f"{young['usd']:+.0f} $, хвостом {100 * young['tail_share']:.0f} %, "
+          f"плечо {young['lev']}×; старые {old['usd']:+.0f} $ при "
+          f"{100 * old['tail_share']:.0f} %; неизмеренный funding — прочерк")
+
+
+def test_band_of_puts_the_unknown_apart_from_the_old():
+    assert PA.band_of(None) == PA.UNKNOWN
+    assert PA.band_of(0.0) == "<3 сут" and PA.band_of(2.99) == "<3 сут"
+    assert PA.band_of(3.0) == "3–7 сут" and PA.band_of(59.9) == "30–60 сут"
+    assert PA.band_of(60.0) == "≥60 сут" and PA.band_of(5000.0) == "≥60 сут"
+    print("ok  границы полос: 3 сут — уже не «моложе трёх», а возраст "
+          "неизвестен — не «старое»")
+
+
 def test_end_to_end_reads_launches_and_writes_no_journal():
     longs = [TP._long(f"L{i}USDT", T0 + i * H) for i in range(6)]
     shorts = [TP._short(f"S{i}USDT", T0 + i * H) for i in range(6)]
@@ -92,8 +135,13 @@ def test_end_to_end_reads_launches_and_writes_no_journal():
         ctl = s["cells"]["pair_safe|30|random"]
         assert ctl["seeds"] == 3 and ctl["kept"] == 3, ctl
         assert ctl["beat_usd"] is not None
+        # строки книги в артефакт не попадают, а разрез по возрасту есть
+        assert "rows" not in base and "rows" not in cut, base
+        bnd = (s.get("bands") or {}).get("pair_safe") or {}
+        assert bnd and sum(v["n"] for v in bnd.values()) == base["n_short"], bnd
         txt = PA.report(s)
         assert "возраст неизвестен" in txt and "бьют фильтр" in txt
+        assert "где живёт минус" in txt, "разрез механизма не напечатан"
         print(f"ok  прогон целиком: без фильтра {base['kept']} решений, "
               f"порог 30 сут оставляет {cut['kept']}, контроль на "
               f"{ctl['seeds']} зёрнах; журнал книг не тронут")
@@ -103,6 +151,8 @@ if __name__ == "__main__":
     for t in (test_age_is_measured_at_the_moment_of_the_decision,
               test_unknown_age_is_its_own_refusal,
               test_control_takes_the_same_count,
+              test_bands_name_the_mechanism_and_do_not_zero_the_unmeasured,
+              test_band_of_puts_the_unknown_apart_from_the_old,
               test_end_to_end_reads_launches_and_writes_no_journal):
         t()
-    print("\nвсе 4 проверки прошли")
+    print("\nвсе 6 проверок прошли")

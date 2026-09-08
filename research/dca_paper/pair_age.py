@@ -46,6 +46,15 @@ import run_pair as PR                                         # noqa: E402
 import pair_gate as PG                                        # noqa: E402
 
 DAYS = (0, 3, 7, 14, 30, 60)
+# Полосы возраста для разреза «почему»: те же границы, что у порогов,
+# чтобы таблица фильтра и таблица механизма читались одна через другую.
+BAND_EDGES = (0.0, 3.0, 7.0, 14.0, 30.0, 60.0, float("inf"))
+BAND_NAMES = ("<3 сут", "3–7 сут", "7–14 сут", "14–30 сут", "30–60 сут",
+              "≥60 сут")
+UNKNOWN = "возраст неизвестен"
+# Исходы, которые и делают хвост короткой стороны (замер `short_why`):
+# пол капитуляции и ликвидация. Тейк и срок — не хвост.
+TAIL_EXITS = ("пол", "ликвидация")
 SEEDS = 200
 SEED = 20260908
 INSTR = os.path.join(ROOT, "research", "a1_universe", "out",
@@ -79,6 +88,62 @@ def age_days(launch, sym, at):
     if not lt:
         return None
     return (float(at) - float(lt)) / 86400.0
+
+
+def band_of(age):
+    """Полоса возраста. Нет даты листинга — своя полоса, а не «старое»."""
+    if age is None:
+        return UNKNOWN
+    for i, name in enumerate(BAND_NAMES):
+        if BAND_EDGES[i] <= float(age) < BAND_EDGES[i + 1]:
+            return name
+    return UNKNOWN
+
+
+def bands(rows, launch):
+    """Исполненные короткие сделки по возрасту имени — механизм фильтра.
+
+    Сетка выше говорит только «стало лучше», а лучше становится и от
+    того, что сделок меньше. Механизм называется здесь: если минус
+    живёт в молодых именах и его делают пол с ликвидацией на большом
+    плече и дорогом funding — это свойство имени, а не удачная ячейка.
+    """
+    out = {}
+    for r in rows:
+        b = out.setdefault(
+            band_of(age_days(launch, r.get("sym"), r.get("at"))),
+            {"n": 0, "usd": 0.0, "margin": 0.0, "tail": 0, "vals": [],
+             "lev": [], "fund_bp": []})
+        b["n"] += 1
+        b["usd"] += float(r.get("usd") or 0.0)
+        m = float(r.get("margin") or 0.0)
+        b["margin"] += m
+        b["vals"].append(float(r.get("usd") or 0.0))
+        b["lev"].append(float(r.get("lev") or 0.0))
+        if (r.get("exit") or "") in TAIL_EXITS:
+            b["tail"] += 1
+        fu = r.get("fund_usd")
+        # funding не измерен — прочерк, а не ноль: ряд площадки мог
+        # кончиться раньше сделки, и нулём это подменять нельзя.
+        if fu is not None and m > 0:
+            b["fund_bp"].append(float(fu) / m * 1e4)
+    for b in out.values():
+        v = np.array(b.pop("vals"), dtype=float)
+        lv = np.array(b.pop("lev"), dtype=float)
+        fb = np.array(b.pop("fund_bp") or [], dtype=float)
+        b["usd"] = round(b["usd"], 2)
+        b["median"] = round(float(np.median(v)), 2)
+        b["worst"] = round(float(np.min(v)), 2)
+        b["lev"] = round(float(np.median(lv)), 1)
+        b["tail_share"] = round(b["tail"] / b["n"], 3)
+        b["per_margin"] = (round(b["usd"] / b["margin"], 4)
+                           if b["margin"] > 0 else None)
+        b["margin"] = round(b["margin"], 2)
+        b["fund_n"] = int(fb.size)
+        b["fund_bp"] = (round(float(np.median(fb)), 0) if fb.size else None)
+        b["fund_bp_mean"] = (round(float(np.mean(fb)), 0) if fb.size else None)
+        b["fund_bp_worst"] = (round(float(np.min(fb)), 0) if fb.size else None)
+    return out
 
 
 def pick(shorts, launch, min_days, seed=SEED, n_random=None):
@@ -127,7 +192,7 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
     if not launch:
         log("справочник инструментов не читается — возраст неизвестен всем")
     out = {"dep": dep, "days": list(days), "seeds": seeds, "cells": {},
-           "launch_known": len(launch),
+           "bands": {}, "launch_known": len(launch),
            "costs_error": (ctx or {}).get("error"),
            "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime())}
     for pk in keys:
@@ -135,13 +200,21 @@ def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
         lrec, srec = longs.get(lk) or [], shorts.get(sk) or []
         for d in days:
             keep, why = pick(srec, launch, d)
-            c = PG.cell(lrec, keep, pk, dep, ctx, now=now)
+            c = PG.cell(lrec, keep, pk, dep, ctx, now=now, want_rows=(d == 0))
+            # Строки нужны один раз — на разрез механизма; в артефакт
+            # они не идут (это книга целиком, а не сводка).
+            rws = c.pop("rows", [])
             out["cells"][f"{pk}|{d}"] = dict(c, pair=pk, min_days=d,
                                              offered=len(srec),
                                              kept=len(keep), drops=why)
             log(f"{pk} ≥{d} сут: коротких {len(keep)} из {len(srec)}, "
                 f"счёт {c.get('usd')} $, отношение {c.get('ratio')}")
             if d == 0:
+                out["bands"][pk] = bands(
+                    [r for r in rws if (r.get("book") or pk) == sk], launch)
+                for nm, b in out["bands"][pk].items():
+                    log(f"   {pk} {nm}: сделок {b['n']}, {b['usd']:+.0f} $, "
+                        f"хвостом кончились {100 * b['tail_share']:.0f} %")
                 continue
             got = []
             for k in range(seeds):
@@ -227,6 +300,35 @@ def report(s):
                    else f"{100 * r['beat_usd']:.0f} % / "
                         + ("—" if r.get("beat_ratio") is None
                            else f"{100 * r['beat_ratio']:.0f} %")) + " |")
+    bs = s.get("bands") or {}
+    if bs:
+        L += ["", "## Почему: где живёт минус короткой стороны", "",
+              "Разрез ИСПОЛНЕННЫХ коротких сделок без всякого фильтра по "
+              "возрасту имени на момент входа. Сетка выше говорит только "
+              "«стало лучше» — лучше становится и просто от меньшего "
+              "числа сделок; полоса называет причину. Хвост — исходы "
+              "«пол» и «ликвидация»; funding в б.п. вложенной маржи, "
+              "прочерк — ряда площадки на эти часы нет.", ""]
+        for pk in R.PAIR_ORDER:
+            b = bs.get(pk)
+            if not b:
+                continue
+            L += [f"### {R.ruler_title(pk)}", "",
+                  "| возраст имени | сделок | Σ $ | медиана | худшая | "
+                  "хвостом | медиана плеча | funding медиана / среднее "
+                  "б.п. |", "|---|--:|--:|--:|--:|--:|--:|--:|"]
+            for nm in list(BAND_NAMES) + [UNKNOWN]:
+                v = b.get(nm)
+                if not v:
+                    continue
+                L.append(
+                    f"| {nm} | {v['n']} | {_u(v['usd'])} | "
+                    f"{_u(v['median'])} | {_u(v['worst'])} | "
+                    f"{100 * v['tail_share']:.0f} % | {v['lev']}× | "
+                    + ("—" if v.get("fund_bp") is None
+                       else f"{v['fund_bp']:+.0f} / {v['fund_bp_mean']:+.0f}")
+                    + " |")
+            L.append("")
     L += ["", "## Как читать", "",
           "- Строка «нет» — как сейчас, фильтра нет; с ней и сравнивается "
           "всё остальное.",
@@ -249,19 +351,26 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="возраст имени как фильтр")
     ap.add_argument("--dep", type=float, default=None)
     ap.add_argument("--seeds", type=int, default=None)
+    # Разрез механизма считается по ячейке без фильтра: сетка с
+    # контролем на 200 зёрнах идёт 11 минут, а «почему» — секунды.
+    ap.add_argument("--only-why", action="store_true",
+                    help="только разрез по возрасту, без сетки и контроля")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except Exception:                                        # noqa: BLE001
         pass
     os.makedirs(R.OUT, exist_ok=True)
-    s = run(dep=a.dep, seeds=a.seeds)
-    art = os.path.join(R.OUT, "DCA-pair-age.json")
+    s = run(dep=a.dep, seeds=a.seeds,
+            days=((0,) if a.only_why else None))
+    art = os.path.join(R.OUT, "DCA-pair-age" + ("-why" if a.only_why else "")
+                       + ".json")
     with open(art + ".tmp", "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False)
     os.replace(art + ".tmp", art)
     txt = report(s)
-    with open(os.path.join(R.OUT, "DCA-pair-age.md"), "w",
+    with open(os.path.join(R.OUT, "DCA-pair-age"
+                           + ("-why" if a.only_why else "") + ".md"), "w",
               encoding="utf-8") as f:
         f.write(txt)
     print(txt)

@@ -158,7 +158,8 @@ def pick(shorts, held, ctx, names="all", gate="off", seed=SEED):
     return keep, why
 
 
-def cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None):
+def cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None,
+         want_rows=False):
     """Общий счёт на этих решениях: деньги НЕТТО, просадка, состав."""
     packed = PR.pack({R.parts_of(pk)[0]: longs},
                      {R.parts_of(pk)[1]: shorts}, keys=[pk])
@@ -183,7 +184,8 @@ def cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None):
             "n_short": (side[sk] or {}).get("n"),
             "usd_long": (side[lk] or {}).get("usd"),
             "usd_short": (side[sk] or {}).get("usd"),
-            "no_cash": c.get("no_cash"), "taken": c.get("taken")}
+            "no_cash": c.get("no_cash"), "taken": c.get("taken"),
+            **({"rows": mine} if want_rows else {})}
 
 
 def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,

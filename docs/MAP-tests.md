@@ -1082,7 +1082,7 @@
 - L310 `test_missing_caches_are_a_reason_not_empty_books()`
 - L319 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
 
-## research/dca_paper/test_pair_age.py · 108 строк
+## research/dca_paper/test_pair_age.py · 158 строк
 
 Проверки фильтра по возрасту имени.
 
@@ -1095,7 +1095,9 @@
 - L33 `test_age_is_measured_at_the_moment_of_the_decision()`
 - L44 `test_unknown_age_is_its_own_refusal()`
 - L59 `test_control_takes_the_same_count()`
-- L71 `test_end_to_end_reads_launches_and_writes_no_journal()`
+- L71 `test_bands_name_the_mechanism_and_do_not_zero_the_unmeasured()`
+- L105 `test_band_of_puts_the_unknown_apart_from_the_old()`
+- L114 `test_end_to_end_reads_launches_and_writes_no_journal()`
 
 ## research/dca_paper/test_pair_gate.py · 179 строк
 

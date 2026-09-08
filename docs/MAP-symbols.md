@@ -1764,27 +1764,33 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L217 `publish(name)`
 - L223 `main()`
 
-## research/dca_paper/pair_age.py · 273 строк
+## research/dca_paper/pair_age.py · 382 строк
 
 Возраст имени как фильтр входа короткой стороны общего счёта.
 
 - L37 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L38 `ROOT = os.path.dirname(os.path.dirname(HERE))`
 - L48 `DAYS = (0, 3, 7, 14, 30, 60)`
-- L49 `SEEDS = 200`
-- L50 `SEED = 20260908`
-- L51 `INSTR = os.path.join(ROOT, 'research', 'a1_univ…`
-- L55 `launches(path=None)` — Символ → момент листинга (секунды). Нет файла — пустая карта.
-- L76 `age_days(launch, sym, at)` — Возраст имени на момент решения, сутки. Нет даты — None.
-- L84 `pick(shorts, launch, min_days, seed=SEED, n_random=None)` — Решения после фильтра возраста плюс счётчики отказов.
-- L112 `run(dep=None, log=print, ctx=None, long_cache=None, short_cache…`
-- L179 `_u(x)`
-- L183 `_p(x, d=1)`
-- L187 `report(s)`
-- L243 `publish(name)`
-- L248 `main(argv=None)`
+- L51 `BAND_EDGES = (0.0, 3.0, 7.0, 14.0, 30.0, 60.0, float…` — Полосы возраста для разреза «почему»: те же границы, что у порогов, чтобы таблица фильтра и таблица механизма…
+- L52 `BAND_NAMES = ('<3 сут', '3–7 сут', '7–14 сут', '14–3…`
+- L54 `UNKNOWN = 'возраст неизвестен'`
+- L57 `TAIL_EXITS = ('пол', 'ликвидация')` — Исходы, которые и делают хвост короткой стороны (замер `short_why`): пол капитуляции и ликвидация. Тейк и сро…
+- L58 `SEEDS = 200`
+- L59 `SEED = 20260908`
+- L60 `INSTR = os.path.join(ROOT, 'research', 'a1_univ…`
+- L64 `launches(path=None)` — Символ → момент листинга (секунды). Нет файла — пустая карта.
+- L85 `age_days(launch, sym, at)` — Возраст имени на момент решения, сутки. Нет даты — None.
+- L93 `band_of(age)` — Полоса возраста. Нет даты листинга — своя полоса, а не «старое».
+- L103 `bands(rows, launch)` — Исполненные короткие сделки по возрасту имени — механизм фильтра.
+- L149 `pick(shorts, launch, min_days, seed=SEED, n_random=None)` — Решения после фильтра возраста плюс счётчики отказов.
+- L177 `run(dep=None, log=print, ctx=None, long_cache=None, short_cache…`
+- L252 `_u(x)`
+- L256 `_p(x, d=1)`
+- L260 `report(s)`
+- L345 `publish(name)`
+- L350 `main(argv=None)`
 
-## research/dca_paper/pair_gate.py · 405 строк
+## research/dca_paper/pair_gate.py · 407 строк
 
 Два входных фильтра короткой стороны общего счёта — на одной сетке.
 
@@ -1798,13 +1804,13 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L90 `in_long(held, sym, at)` — Держала ли длинная книга это имя В МОМЕНТ решения.
 - L102 `gate_rate(rec, ctx)` — Ставка площадки на входе и годится ли она шорту.
 - L120 `pick(shorts, held, ctx, names='all', gate='off', seed=SEED)` — Короткие решения после обоих фильтров плюс счётчики отказов.
-- L161 `cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None)` — Общий счёт на этих решениях: деньги НЕТТО, просадка, состав.
-- L189 `run(dep=None, log=print, ctx=None, long_cache=None, short_cache…`
-- L279 `_u(x)`
-- L283 `_p(x, d=1)`
-- L287 `report(s)`
-- L371 `publish(name)`
-- L376 `main(argv=None)`
+- L161 `cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None…` — Общий счёт на этих решениях: деньги НЕТТО, просадка, состав.
+- L191 `run(dep=None, log=print, ctx=None, long_cache=None, short_cache…`
+- L281 `_u(x)`
+- L285 `_p(x, d=1)`
+- L289 `report(s)`
+- L373 `publish(name)`
+- L378 `main(argv=None)`
 
 ## research/dca_paper/rules.py · 964 строк
 
