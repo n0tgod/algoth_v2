@@ -1058,7 +1058,7 @@
 - L211 `CONTROLS = [('загрузка по доле сделок', _control_l…`
 - L217 `main()`
 
-## research/dca_paper/test_pair.py · 454 строк
+## research/dca_paper/test_pair.py · 478 строк
 
 Проверки общего счёта: длинная книга и короткая на ОДНОМ депозите.
 
@@ -1076,12 +1076,13 @@
 - L149 `test_the_share_never_dives_under_the_exchange_floor()` — Доля не вправе опустить билет под биржевой минимум.
 - L170 `test_family_rules_retire_the_old_rows_without_touching_other_bo…` — Смена правил СЕМЕЙСТВА не трогает запись остальных книг.
 - L197 `test_rate_gate_machinery_works_and_the_rule_is_off_now()` — Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
-- L242 `test_age_rule_refuses_young_names_and_counts_the_unknown_apart()` — Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
-- L281 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
-- L308 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
-- L331 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
-- L349 `test_missing_caches_are_a_reason_not_empty_books()`
-- L358 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
+- L242 `test_every_family_version_carries_the_day_it_changed()` — Смена версии семейства обнуляет «записанное вперёд».
+- L265 `test_age_rule_refuses_young_names_and_counts_the_unknown_apart()` — Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
+- L304 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
+- L331 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
+- L354 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
+- L372 `test_missing_caches_are_a_reason_not_empty_books()`
+- L381 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
 
 ## research/dca_paper/test_pair_age.py · 158 строк
 

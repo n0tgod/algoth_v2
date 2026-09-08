@@ -239,6 +239,29 @@ def test_rate_gate_machinery_works_and_the_rule_is_off_now():
           f"всех книгах, версия записи {R.FAMILY_RULES['pair']}")
 
 
+def test_every_family_version_carries_the_day_it_changed():
+    """Смена версии семейства обнуляет «записанное вперёд».
+
+    Кусается: у каждого семейства с версией правил обязан быть день
+    смены, и он обязан доехать до страницы сводом. Без даты короткая
+    запись вперёд читается как «книга перестала торговать» — владелец
+    так её и прочитал 08.09.
+    """
+    assert set(R.FAMILY_RULES) <= set(R.FAMILY_SINCE), (R.FAMILY_RULES,
+                                                        R.FAMILY_SINCE)
+    for fam, day in R.FAMILY_SINCE.items():
+        assert len(str(day)) == 10 and str(day)[4] == "-", (fam, day)
+    assert R.family_since("safe_h") == R.FAMILY_SINCE["h24"]
+    assert R.family_since("pair_safe") == R.FAMILY_SINCE["pair"]
+    assert R.family_since("safe") is None, "у длинных книг версии нет"
+    snap = RP.rules_snapshot(keys=list(R.PAIR_ORDER))
+    assert snap["FAMILY_SINCE"] == R.FAMILY_SINCE, snap.get("FAMILY_SINCE")
+    assert snap["FAMILY_RULES"] == R.FAMILY_RULES, snap.get("FAMILY_RULES")
+    print("ok  у каждого семейства с версией есть день смены "
+          f"({', '.join(f'{k} {v}' for k, v in R.FAMILY_SINCE.items())}), "
+          "и он едет на страницу сводом")
+
+
 def test_age_rule_refuses_young_names_and_counts_the_unknown_apart():
     """Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
 
@@ -442,6 +465,7 @@ if __name__ == "__main__":
               test_short_side_enters_with_the_declared_share,
               test_rate_gate_machinery_works_and_the_rule_is_off_now,
               test_age_rule_refuses_young_names_and_counts_the_unknown_apart,
+              test_every_family_version_carries_the_day_it_changed,
               test_the_share_never_dives_under_the_exchange_floor,
               test_family_rules_retire_the_old_rows_without_touching_other_books,
               test_memory_guard_stops_the_run_itself,
@@ -451,4 +475,4 @@ if __name__ == "__main__":
               test_missing_caches_are_a_reason_not_empty_books,
               test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts):
         t()
-    print("\nвсе 13 проверок прошли")
+    print("\nвсе 14 проверок прошли")

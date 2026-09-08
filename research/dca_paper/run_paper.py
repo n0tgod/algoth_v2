@@ -1250,6 +1250,11 @@ def rules_snapshot(keys=None):
             "AGGR_MIN_LEV": R.AGGR_MIN_LEV,
             "FLOOR_FRAC": R.FLOOR_FRAC,
             "RULERS": {k: dict(R.RULERS[k]) for k in keys},
+            # Версия правил семейства и ДЕНЬ её смены: страница обязана
+            # сказать, почему «записанное вперёд» начинается не с начала
+            # книги, иначе смена правил читается как остановка.
+            "FAMILY_RULES": dict(R.FAMILY_RULES),
+            "FAMILY_SINCE": dict(R.FAMILY_SINCE),
             "RULER_ORDER": keys}
 
 
