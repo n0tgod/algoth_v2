@@ -19,3 +19,16 @@ Already up to date.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   не запущен: s8_loop/train.py$
+публикуется в ветку main:
+ jobs/done/fund-refresh-now.done     |   1 +
+ jobs/done/fund-refresh-now.log      |   5 +
+ jobs/done/gate-deploy.done          |   1 +
+ jobs/done/gate-deploy.log           |  21 ++++
+ jobs/poke.log                       |   4 +
+ research/factory/out/build.json     | 201 ++++++++++++++++--------------------
+ research/s8_loop/out/day_brake.json |   2 +-
+ 7 files changed, 123 insertions(+), 112 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   c20e04a..6e73335  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
