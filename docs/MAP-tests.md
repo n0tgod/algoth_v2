@@ -930,7 +930,7 @@
 - L116 `test_halves_split_by_decision_time()`
 - L128 `test_report_names_the_backtest_and_the_daily_activity()`
 
-## research/dca_paper/test_costs.py · 456 строк
+## research/dca_paper/test_costs.py · 479 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
@@ -967,9 +967,10 @@
 - L398 `_control_slip_on_take_exit()`
 - L403 `_control_slip_on_every_rung()`
 - L409 `_control_net_ignores_slippage()`
-- L415 `TESTS = [test_commission_charges_every_rung_and…`
-- L427 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L446 `main()`
+- L415 `test_symbols_outside_the_universe_still_get_their_series()` — Имя, торгуемое после снимка универсума, не теряет ряд funding.
+- L437 `TESTS = [test_commission_charges_every_rung_and…`
+- L450 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L469 `main()`
 
 ## research/dca_paper/test_cut.py · 297 строк
 

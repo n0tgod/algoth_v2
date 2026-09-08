@@ -12,7 +12,10 @@
 копии разбора страниц нет.
 Справочник инструментов и сводку A1 не трогает.
 
-Символы: все `bybit_symbol` универсума плюс те, у кого уже есть файл.
+Символы: все `bybit_symbol` универсума, те, у кого уже есть файл, и те,
+что площадка торгует СЕЙЧАС (универсум — снимок на момент времени, и
+листинги после него в нём не появляются: 45 имён живых книг на 08.09
+были именно такими, и ставка на входе у них была «неизвестна»).
 Ряд — класс B (`docs/DATA-SAFETY.md`): переписывается ЦЕЛИКОМ из
 объединения старого и нового, сперва во временный файл, потом атомарной
 заменой; неудача сети у символа оставляет прежний файл нетронутым и
@@ -98,11 +101,39 @@ def write_tmp(rows, tmp):
         w.writerows(rows)
 
 
-def symbols(assets):
+def traded_now(log=print):
+    """Символы, которые площадка торгует СЕЙЧАС.
+
+    Универсум — снимок на момент времени, и листинги после него в нём не
+    появляются сами: на 2026-09-08 книги торговали 45 именами, которых в
+    универсуме нет вовсе, и ряда funding у них не было ни одного. Для
+    правила, читающего ставку на входе (гейт короткой стороны общего
+    счёта), отсутствие ряда означает «ставка неизвестна» — то есть
+    отставший справочник закрывал бы книгу молча.
+
+    Отказ сети — не пустой список, а причина словами: пустой список
+    здесь читался бы как «площадка ничего не торгует».
+    """
+    try:
+        res = B.api_get("/v5/market/instruments-info",
+                        {"category": B.CATEGORY, "status": "Trading",
+                         "limit": 1000},
+                        f"instr_trading_{date.today().isoformat()}")
+    except Exception as e:                                # noqa: BLE001
+        log(f"справочник торгуемых не получен: {e}")
+        return set()
+    got = {it["symbol"] for it in (res.get("list") or [])
+           if str(it.get("symbol", "")).endswith("USDT")}
+    log(f"площадка торгует сейчас: {len(got)} перпов USDT")
+    return got
+
+
+def symbols(assets, extra=None):
     out = {v["bybit_symbol"] for v in assets.values() if v.get("bybit_symbol")}
     if os.path.isdir(B.FUNDING_DIR):
         out |= {f[:-len(".csv.gz")] for f in os.listdir(B.FUNDING_DIR)
                 if f.endswith(".csv.gz")}
+    out |= set(extra or ())
     return sorted(out)
 
 
@@ -160,7 +191,15 @@ def main(argv=None):
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, "universe.json"), encoding="utf-8") as f:
         assets = json.load(f)["assets"]
-    syms = symbols(assets)
+    live = traded_now(log=lambda m: print(m, flush=True))
+    syms = symbols(assets, extra=live)
+    known = {v["bybit_symbol"] for v in assets.values()
+             if v.get("bybit_symbol")}
+    new = sorted(live - known)
+    if new:
+        print(f"торгуются, но в универсуме их нет: {len(new)} "
+              f"({', '.join(new[:8])}{'…' if len(new) > 8 else ''}) — "
+              "ряды им качаются тоже", flush=True)
     if a.limit:
         syms = syms[:a.limit]
     today = datetime.now(timezone.utc).date()

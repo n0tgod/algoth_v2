@@ -412,6 +412,28 @@ def _control_net_ignores_slippage():
                    test_run_end_to_end_synthetic, C)
 
 
+def test_symbols_outside_the_universe_still_get_their_series():
+    """Имя, торгуемое после снимка универсума, не теряет ряд funding.
+
+    Кусается: файл ряда назван символом, а сопоставление идёт через
+    универсум — без добавки такой символ не грузился бы вовсе, и ставка
+    на входе читалась бы как «неизвестна». Это молчаливый отказ: правило
+    входа (гейт короткой стороны) на нём закрывало бы книгу.
+    """
+    import tempfile
+    d = tempfile.mkdtemp(prefix="fund-")
+    try:
+        for name in ("AAAUSDT.csv.gz", "NEWUSDT.csv.gz", "прочее.txt"):
+            open(os.path.join(d, name), "wb").close()
+        got = C.extra_assets({"AAAUSDT": "A"}, funding_dir=d)
+        assert got == ["NEWUSDT"], got
+        # каталога нет — пустой список, а не падение
+        assert C.extra_assets({}, funding_dir=os.path.join(d, "нет")) == []
+        print(f"ok  имена вне универсума получают свой ряд: {got}")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 TESTS = [
     test_commission_charges_every_rung_and_the_exit,
     test_slippage_on_base_entry_and_market_exits_only,
@@ -422,6 +444,7 @@ TESTS = [
     test_run_end_to_end_synthetic,
     test_gate_is_judged_only_with_both_arms_of_size,
     test_main_writes_the_artifact_and_publishes_by_default,
+    test_symbols_outside_the_universe_still_get_their_series,
 ]
 
 CONTROLS = [

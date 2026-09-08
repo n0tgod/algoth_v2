@@ -379,6 +379,25 @@ def gate_arm(rows, dep):
             "median_all": _bp_median(known, "usd")}
 
 
+def extra_assets(to_asset, funding_dir=None):
+    """Символы с рядом funding, которых НЕТ в универсуме.
+
+    Универсум — снимок на момент времени; листинг после него в нём не
+    появляется, а книги такими именами торгуют (на 2026-09-08 их было 45
+    из 275). Ряд площадки у них есть — файл назван символом, — но
+    сопоставление «файл → актив» идёт через универсум, и без этой
+    добавки ряд не грузился бы вовсе, а ставка на входе читалась бы как
+    «неизвестна». Символ становится собственным активом: ставка у него
+    своя, комиссия — модальная (её отсутствие уже считается числом).
+    """
+    d = funding_dir or FUNDING_DIR
+    if not os.path.isdir(d):
+        return []
+    return sorted(f[:-len(".csv.gz")] for f in os.listdir(d)
+                  if f.endswith(".csv.gz")
+                  and f[:-len(".csv.gz")] not in to_asset)
+
+
 def context(need=None, log=None):
     """Справочник комиссий и ряды funding — ОДИН раз на свод книг.
 
@@ -390,6 +409,16 @@ def context(need=None, log=None):
     try:
         assets = universe()
         to_asset, taker = symbol_maps(assets)
+        # Имена, торгуемые после снимка универсума: ряд у них есть, а
+        # записи в справочнике нет. Без них ставка на входе была бы
+        # «неизвестна» у каждой такой позиции — молчаливый отказ.
+        extra = extra_assets(to_asset)
+        if extra:
+            assets = dict(assets)
+            for sym in extra:
+                assets[sym] = {"bybit_symbol": sym}
+                to_asset[sym] = sym
+                taker.setdefault(sym, None)
         need = set(need) if need is not None else set(to_asset.values())
         funding = FS.load_funding(FUNDING_DIR, assets, need,
                                   symbol_field="bybit_symbol")
@@ -400,7 +429,8 @@ def context(need=None, log=None):
                 "funding": None,
                 "error": f"каталога funding нет: {FUNDING_DIR}"}
     return {"assets": assets, "to_asset": to_asset, "taker": taker,
-            "funding": funding, "n_funding": len(funding)}
+            "funding": funding, "n_funding": len(funding),
+            "extra_symbols": len(extra)}
 
 
 def apply_to_rows(rows, ctx, slip_bp=None):
