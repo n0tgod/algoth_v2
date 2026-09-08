@@ -82,3 +82,17 @@ pair_aggr ≥0 сут: коротких 2969 из 2969, счёт 1642.76 $, от
 - «Возраст неизвестен» — своя колонка: именно её молчаливое превращение в отказ и создало ложный результат гейта по ставке.
 - Ячейка становится правилом только объявленной заранее и проверенной вперёд; окно одно, веса модели эти часы видели.
 
+публикуется в ветку main:
+ jobs/done/pair-age-1.log                     |  7 +++
+ jobs/done/pair-age-why-1.done                |  1 +
+ jobs/done/pair-age-why-1.log                 | 84 ++++++++++++++++++++++++++++
+ jobs/poke.log                                |  3 +
+ research/dca_paper/out/DCA-pair-age-why.json |  1 +
+ research/dca_paper/out/DCA-pair-age-why.md   | 56 +++++++++++++++++++
+ research/s8_loop/out/day_brake.json          |  2 +-
+ 7 files changed, 153 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   4ce4d39b..3328b9f6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-08T07:43:46Z, код 0
