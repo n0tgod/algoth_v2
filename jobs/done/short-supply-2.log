@@ -79,3 +79,16 @@ aggr_h: сделок под правилом 450, без правила 501
 - «Взято книгой» против «взято было бы без правила» — цена самого правила, в сделках, а не в процентах за месяц.
 - Считается на кэше решений: прошлое не пересчитывается, числа те же, которыми живёт книга.
 
+публикуется в ветку main:
+ jobs/done/short-supply-2.done                |  1 +
+ jobs/done/short-supply-2.log                 | 81 ++++++++++++++++++++++++++++
+ jobs/poke.log                                |  3 ++
+ research/dca_paper/out/DCA-short-supply.json |  1 +
+ research/dca_paper/out/DCA-short-supply.md   | 72 +++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json          |  2 +-
+ 6 files changed, 159 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   9b90a975..ff05366e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-08T12:31:10Z, код 0
