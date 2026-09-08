@@ -1,6 +1,6 @@
-== задание pair-rule-1 ==
+== задание pair-rule-2 ==
 строка: run research/dca_paper/run_pair.py
-начало: 2026-09-08T08:17:47Z
+начало: 2026-09-08T08:21:16Z
 запускаю: .venv/bin/python research/dca_paper/run_pair.py 
 длинные книги: aggr 7337, optimal 7337, safe 7337
 короткие книги: aggr_h 2974, optimal_h 2974, safe_h 2974
@@ -19,7 +19,7 @@ pair_aggr: фильтр возраста ≥7 сут оставил 2432 из 29
   депозит $1,000: мест 40, взято 853, нет кассы 241, мельче $5 0, открытых 6, оборванных записью 2
   депозит $10,000: мест 400, взято 1094, нет кассы 0, мельче $5 0, открытых 6, оборванных записью 2
   депозит $100,000: мест 393, взято 1094, нет кассы 0, мельче $5 0, открытых 6, оборванных записью 2
-журнал: было 46277, дописано 11699 в 33 файлов записи
+журнал: было 57976, дописано 0
 раздельные счета: издержки вычтены у 16112 строк из 16112
 # Общий счёт: длинная книга и короткая на одном депозите
 
@@ -109,56 +109,3 @@ pair_aggr: фильтр возраста ≥7 сут оставил 2432 из 29
 - Общий счёт — ХЕДЖ-режим: шорт по имени, которое держит длинная сторона, разрешён. В одностороннем режиме биржи он срезал бы длинную позицию, и число совпадений выше есть цена режима.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
-публикуется в ветку main:
- jobs/done/pair-rule-1.done                      |    1 +
- jobs/done/pair-rule-1.log                       |  111 ++
- jobs/poke.log                                   |    3 +
- research/dca_paper/out/DCA-pair.json            |    2 +-
- research/dca_paper/out/DCA-pair.md              |   72 +-
- research/dca_paper/out/pair-2026-08-08.jsonl    |  246 +++
- research/dca_paper/out/pair-2026-08-09.jsonl    |  428 ++++++
- research/dca_paper/out/pair-2026-08-10.jsonl    |  159 ++
- research/dca_paper/out/pair-2026-08-11.jsonl    |  233 +++
- research/dca_paper/out/pair-2026-08-12.jsonl    |  213 +++
- research/dca_paper/out/pair-2026-08-13.jsonl    |  569 +++++++
- research/dca_paper/out/pair-2026-08-14.jsonl    |  239 +++
- research/dca_paper/out/pair-2026-08-15.jsonl    |  362 +++++
- research/dca_paper/out/pair-2026-08-16.jsonl    |  281 ++++
- research/dca_paper/out/pair-2026-08-17.jsonl    |  221 +++
- research/dca_paper/out/pair-2026-08-18.jsonl    |  129 ++
- research/dca_paper/out/pair-2026-08-19.jsonl    |  873 +++++++++++
- research/dca_paper/out/pair-2026-08-20.jsonl    | 1820 ++++++++++++++++++++++
- research/dca_paper/out/pair-2026-08-21.01.jsonl |  193 +++
- research/dca_paper/out/pair-2026-08-21.jsonl    | 1864 +++++++++++++++++++++++
- research/dca_paper/out/pair-2026-08-22.jsonl    | 1228 +++++++++++++++
- research/dca_paper/out/pair-2026-08-23.jsonl    |  196 +++
- research/dca_paper/out/pair-2026-08-24.jsonl    |  377 +++++
- research/dca_paper/out/pair-2026-08-25.jsonl    |  461 ++++++
- research/dca_paper/out/pair-2026-08-26.jsonl    |  197 +++
- research/dca_paper/out/pair-2026-08-27.jsonl    |  167 ++
- research/dca_paper/out/pair-2026-08-28.jsonl    |  117 ++
- research/dca_paper/out/pair-2026-08-29.jsonl    |  128 ++
- research/dca_paper/out/pair-2026-08-30.jsonl    |   78 +
- research/dca_paper/out/pair-2026-08-31.jsonl    |   75 +
- research/dca_paper/out/pair-2026-09-01.jsonl    |   63 +
- research/dca_paper/out/pair-2026-09-02.jsonl    |  147 ++
- research/dca_paper/out/pair-2026-09-03.jsonl    |  233 +++
- research/dca_paper/out/pair-2026-09-04.jsonl    |  113 ++
- research/dca_paper/out/pair-2026-09-05.jsonl    |   99 ++
- research/dca_paper/out/pair-2026-09-06.jsonl    |  139 ++
- research/dca_paper/out/pair-2026-09-07.jsonl    |   48 +
- research/dca_paper/out/pair-2026-09-08.jsonl    |    3 +
- research/s8_loop/out/day_brake.json             |    2 +-
- 39 files changed, 11852 insertions(+), 38 deletions(-)
-To github.com:n0tgod/algoth_v2.git
-   f94f6c92..683be846  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
-конец: 2026-09-08T08:18:08Z, код 0
-публикуется в ветку main:
- jobs/done/pair-rule-1.log | 46 ++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 46 insertions(+)
-To github.com:n0tgod/algoth_v2.git
-   683be846..f6edeff1  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
