@@ -111,3 +111,15 @@ To github.com:n0tgod/algoth_v2.git
 branch 'main' set up to track 'origin/main'.
 опубликовано
 конец: 2026-09-08T06:40:03Z, код 0
+публикуется в ветку main:
+ jobs/done/pair-gate-full.log            | 11 +++++++++++
+ research/factory/out/agents-runs.jsonl  |  2 ++
+ research/factory/out/build_task-prev.md | 32 ++++++++++++++++----------------
+ research/factory/out/build_task.md      | 32 ++++++++++++++++----------------
+ research/factory/out/mech_task.json     |  2 +-
+ research/factory/out/mechanisms.jsonl   |  1 +
+ 6 files changed, 47 insertions(+), 33 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   15a9f083..18e18060  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
