@@ -218,3 +218,11 @@
 {"at": 1788849393.863, "role": "build", "status": "ok", "started": 1788847201.0, "ended": 1788849393.863, "dry": false, "note": "модель opus, усилие xhigh"}
 {"at": 1788849601.782, "role": "task", "status": "start", "started": 1788849601.779, "ended": 1788849601.782, "dry": false, "pid": 1899086}
 {"at": 1788849601.986, "role": "task", "status": "ok", "started": 1788849601.779, "ended": 1788849601.986, "dry": false, "note": "код возврата 0"}
+{"at": 1788919201.597, "role": "scout", "status": "start", "started": 1788919201.0, "ended": 1788919201.597, "dry": false, "pid": 2041970}
+{"at": 1788919211.56, "role": "scout", "status": "fail", "started": 1788919201.0, "ended": 1788919211.56, "dry": false, "note": "модель claude-fable-5-1, код 1: Failed to refresh OAuth token: another Claude Code process is refreshing it or exited mid-refresh. This is usually transient; retry in a minute, and if it persists close other Claude Code processes or sign in again "}
+{"at": 1788919502.099, "role": "scout", "status": "start", "started": 1788919502.0, "ended": 1788919502.099, "dry": false, "pid": 2042589}
+{"at": 1788919511.889, "role": "scout", "status": "fail", "started": 1788919502.0, "ended": 1788919511.889, "dry": false, "note": "модель claude-fable-5-1, код 1: Failed to refresh OAuth token: another Claude Code process is refreshing it or exited mid-refresh. This is usually transient; retry in a minute, and if it persists close other Claude Code processes or sign in again "}
+{"at": 1788919801.925, "role": "scout", "status": "start", "started": 1788919801.0, "ended": 1788919801.925, "dry": false, "pid": 2043182}
+{"at": 1788919805.159, "role": "scout", "status": "fail", "started": 1788919801.0, "ended": 1788919805.159, "dry": false, "note": "модель claude-fable-5-1, код 1: You've reached your Fable limit. Switch to another model, or manage usage credits at claude.ai/settings/usage?from=cc_cli_limit_message, to continue. "}
+{"at": 1788920101.686, "role": "brief", "status": "start", "started": 1788920101.0, "ended": 1788920101.686, "dry": false, "pid": 2043809}
+{"at": 1788920431.499, "role": "brief", "status": "ok", "started": 1788920101.0, "ended": 1788920431.499, "dry": false, "note": "модель opus, усилие medium"}
