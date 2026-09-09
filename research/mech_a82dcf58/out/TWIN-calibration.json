@@ -1,0 +1,990 @@
+{
+ "planted_move": 0.2,
+ "planted_laid": true,
+ "planted": {
+  "positions": 8,
+  "legs": 8,
+  "skipped": 0,
+  "draws": 30,
+  "seed": 20260909,
+  "secs": 0.7,
+  "peak_rss_mb": 129,
+  "assign": {
+   "no_decile": 0,
+   "no_pool": 0
+  },
+  "mmr_from": "pick",
+  "params": {
+   "MIN_EDGE_BP": 33.0,
+   "MIN_RR": 2.0,
+   "BACK_H": 24,
+   "HOLD_H": 72,
+   "N_RUNGS": 4,
+   "MIN_ADD_GAP": 0.015,
+   "SURVIVE_MULT": 2.0,
+   "FLOOR_FRAC": 0.1,
+   "N_DEC": 10,
+   "COVER_MIN": 0.8,
+   "NULL_Q": 95.0
+  },
+  "cover": 1.0,
+  "cover_pairs": 240,
+  "cover_measured": 240,
+  "verdict_cover": {
+   "ok": true,
+   "cover": 1.0,
+   "pairs": 240,
+   "why": [
+    "двойник найден и имеет бары у 100.0 % пар «позиция × розыгрыш» (240) при пороге 80 % — покрытие достаточное"
+   ]
+  },
+  "null_t1s": {
+   "n": 8,
+   "draws": 30,
+   "real": {
+    "n": 8,
+    "median": 0.0088,
+    "mean": 0.00857,
+    "green": 1.0,
+    "worst": 0.0068,
+    "bite": 0.77
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": 0.0088,
+     "mean": 0.00234,
+     "edge": 0.00599,
+     "min": -0.00454,
+     "max": 0.00689,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 2.52,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": 0.00857,
+     "mean": -0.00019,
+     "edge": 0.00475,
+     "min": -0.00527,
+     "max": 0.00621,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 3.01,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 0.77,
+     "mean": 4.18633,
+     "edge": 0.512,
+     "min": 0.26,
+     "max": 9.6,
+     "beats": false,
+     "rank": 0.9,
+     "sigmas": -1.32,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.0023,
+   "draw_median_of_means": -0.00086
+  },
+  "null_t1": {
+   "n": 8,
+   "draws": 30,
+   "real": {
+    "n": 8,
+    "median": 0.0088,
+    "mean": 0.00857,
+    "green": 1.0,
+    "worst": 0.0068,
+    "bite": 0.77
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": 0.0088,
+     "mean": 0.00102,
+     "edge": 0.00522,
+     "min": -0.00454,
+     "max": 0.00708,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 3.1,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": 0.00857,
+     "mean": -0.00045,
+     "edge": 0.00316,
+     "min": -0.01216,
+     "max": 0.00474,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 2.71,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 0.77,
+     "mean": 6.567,
+     "edge": 0.5145,
+     "min": 0.17,
+     "max": 51.97,
+     "beats": false,
+     "rank": 0.933,
+     "sigmas": -0.55,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00093,
+   "draw_median_of_means": -4e-05
+  },
+  "null_t2": {
+   "n": 8,
+   "draws": 30,
+   "real": {
+    "n": 8,
+    "median": 0.0088,
+    "mean": 0.00857,
+    "green": 1.0,
+    "worst": 0.0068,
+    "bite": 0.77
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": 0.0088,
+     "mean": 0.00262,
+     "edge": 0.00408,
+     "min": -0.00373,
+     "max": 0.00468,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 3.54,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": 0.00857,
+     "mean": 0.00186,
+     "edge": 0.00553,
+     "min": -0.00166,
+     "max": 0.00673,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 3.09,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 0.77,
+     "mean": 3.80467,
+     "edge": 0.4255,
+     "min": 0.27,
+     "max": 5.83,
+     "beats": false,
+     "rank": 0.867,
+     "sigmas": -1.86,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00296,
+   "draw_median_of_means": 0.00149
+  },
+  "arm_S": {
+   "n": 8,
+   "median": 0.0088,
+   "mean": 0.00857,
+   "green": 1.0,
+   "worst": 0.0068,
+   "bite": 0.77,
+   "median_lev": 1.0,
+   "frac_1x": 0.625
+  },
+  "exits_S": {
+   "тейк": 8
+  },
+  "liq_twin_m": 0,
+  "liq_twin_p": 0,
+  "t2_why": {},
+  "mmr_diff_share": 0.0,
+  "sigma_price": 0.00137,
+  "null_ladder": {
+   "n": 3,
+   "draws": 30,
+   "real": {
+    "n": 3,
+    "median": 0.00862,
+    "mean": 0.00904,
+    "green": 1.0,
+    "worst": 0.0082,
+    "bite": 0.95
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": 0.00862,
+     "mean": 0.00372,
+     "edge": 0.00823,
+     "min": -0.00054,
+     "max": 0.00823,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 1.4,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": 0.00904,
+     "mean": 0.00107,
+     "edge": 0.00699,
+     "min": -0.00715,
+     "max": 0.00699,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 1.59,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 0.95,
+     "mean": 4.234,
+     "edge": 0.0825,
+     "min": 0.06,
+     "max": 23.48,
+     "beats": false,
+     "rank": 0.5,
+     "sigmas": -0.51,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00313,
+   "draw_median_of_means": 0.00206
+  },
+  "n_ladder": 3,
+  "null_no_ladder": {
+   "n": 5,
+   "draws": 30,
+   "real": {
+    "n": 5,
+    "median": 0.00897,
+    "mean": 0.00828,
+    "green": 1.0,
+    "worst": 0.0068,
+    "bite": 0.75
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": 0.00897,
+     "mean": 0.00182,
+     "edge": 0.00675,
+     "min": -0.00768,
+     "max": 0.00675,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 2.22,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": 0.00828,
+     "mean": -0.00095,
+     "edge": 0.00506,
+     "min": -0.0085,
+     "max": 0.00574,
+     "beats": true,
+     "rank": 1.0,
+     "sigmas": 3.13,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 0.75,
+     "mean": 3.65833,
+     "edge": 0.4185,
+     "min": 0.36,
+     "max": 6.76,
+     "beats": false,
+     "rank": 0.867,
+     "sigmas": -1.51,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00254,
+   "draw_median_of_means": -0.00093
+  },
+  "n_no_ladder": 5,
+  "book_S": {
+   "days": 3,
+   "green": 1.0,
+   "med": 0.56,
+   "med_green": 0.56,
+   "worst": 0.26,
+   "bite": 0.5,
+   "dd": 0.0,
+   "under": 0,
+   "red": 0,
+   "tot": 1.71,
+   "thin": true,
+   "taken": 8,
+   "offered": 8,
+   "skipped_same_name": 0,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": 0.57,
+   "no_top3_days": 0.0,
+   "no_best_name": 1.46,
+   "best_name": "PIK007USDT"
+  },
+  "book_draws": 30,
+  "form_nulls": {
+   "med": {
+    "reps": 30,
+    "real": 0.56,
+    "mean": -0.093,
+    "edge": 0.2515,
+    "min": -0.98,
+    "max": 0.42,
+    "beats": true,
+    "rank": 1.0,
+    "sigmas": 2.1,
+    "lower_is_better": false
+   },
+   "worst": {
+    "reps": 30,
+    "real": 0.26,
+    "mean": -0.39033,
+    "edge": 0.171,
+    "min": -1.07,
+    "max": 0.19,
+    "beats": true,
+    "rank": 1.0,
+    "sigmas": 2.02,
+    "lower_is_better": false
+   },
+   "bite": {
+    "reps": 25,
+    "real": 0.5,
+    "mean": 1.7,
+    "edge": 0.32,
+    "min": 0.2,
+    "max": 5.2,
+    "beats": false,
+    "rank": 0.8,
+    "sigmas": -0.78,
+    "lower_is_better": true
+   }
+  },
+  "conc_S": {
+   "tot": 1.71,
+   "no_top3_days": 0.0,
+   "no_best_name": 1.46
+  },
+  "conc_nulls": {
+   "tot": {
+    "reps": 30,
+    "real": 1.71,
+    "mean": -0.07467,
+    "edge": 0.786,
+    "min": -0.98,
+    "max": 1.05,
+    "beats": true,
+    "rank": 1.0,
+    "sigmas": 3.6,
+    "lower_is_better": false
+   },
+   "no_top3_days": {
+    "reps": 30,
+    "real": 0.0,
+    "mean": 0.0,
+    "edge": 0.0,
+    "min": 0.0,
+    "max": 0.0,
+    "beats": false,
+    "rank": 0.0,
+    "sigmas": null,
+    "lower_is_better": false
+   },
+   "no_best_name": {
+    "reps": 30,
+    "real": 1.46,
+    "mean": -0.26367,
+    "edge": 0.5705,
+    "min": -1.07,
+    "max": 0.84,
+    "beats": true,
+    "rank": 1.0,
+    "sigmas": 3.67,
+    "lower_is_better": false
+   }
+  },
+  "median_draw": 3,
+  "pair_pos": {
+   "n": 8,
+   "median": 0.00601,
+   "mean": 0.00711,
+   "s_beats_t": 1.0,
+   "same_sign": true
+  },
+  "pair_day": {
+   "n": 1,
+   "median": 0.04144,
+   "mean": 0.04144,
+   "s_beats_t": 1.0,
+   "same_sign": true
+  },
+  "boot": null,
+  "killers": {
+   "choice": {
+    "killed": false,
+    "parts": [
+     "median: S +0.00880 против 95-го процентиля +0.00599 (30 розыгрышей, среднее +0.00234, 2.52 σ) — выше",
+     "mean: S +0.00857 против 95-го процентиля +0.00475 (30 розыгрышей, среднее -0.00019, 3.01 σ) — выше"
+    ],
+    "why": [
+     "S выше 95-го процентиля двойников И по медиане, И по среднему — выбор имени несёт что-то сверх часа"
+    ]
+   },
+   "pair": {
+    "killed": true,
+    "parts": [
+     "по позициям (8): медиана +0.00601, среднее +0.00711, S выше T в 100.0 %",
+     "по суткам (1): медиана +0.04144, среднее +0.04144"
+    ],
+    "why": [
+     "парная разность вердикта не даёт: бутстрапа нет: суток меньше трёх"
+    ]
+   },
+   "form": {
+    "killed": true,
+    "parts": [
+     "med: S +0.56000 против края +0.25150 — лучше",
+     "worst: S +0.26000 против края +0.17100 — лучше",
+     "bite: S +0.50000 против края +0.32000 (лучше — меньше) — НЕ лучше"
+    ],
+    "why": [
+     "дневная форма выбора не лучше формы двойников по: bite"
+    ]
+   },
+   "conc": {
+    "killed": true,
+    "parts": [
+     "без 3 лучших суток: S +0.00 $ против края +0.00 $ — НЕ выше",
+     "без лучшего имени: S +1.46 $ против края +0.57 $ — выше"
+    ],
+    "why": [
+     "без трёх лучших суток превышение S над двойниками уходит в полосу нуля — выбор стоил одного эпизода"
+    ]
+   }
+  },
+  "verdict": {
+   "killed": true,
+   "head": "УБИТА: сработало убийц 3 из 4 названных заявкой",
+   "why": [
+    "S выше 95-го процентиля двойников И по медиане, И по среднему — выбор имени несёт что-то сверх часа",
+    "парная разность вердикта не даёт: бутстрапа нет: суток меньше трёх",
+    "дневная форма выбора не лучше формы двойников по: bite",
+    "без трёх лучших суток превышение S над двойниками уходит в полосу нуля — выбор стоил одного эпизода"
+   ]
+  }
+ },
+ "noise": {
+  "positions": 8,
+  "legs": 8,
+  "skipped": 0,
+  "draws": 30,
+  "seed": 20260909,
+  "secs": 350.5,
+  "peak_rss_mb": 138,
+  "assign": {
+   "no_decile": 0,
+   "no_pool": 0
+  },
+  "mmr_from": "pick",
+  "params": {
+   "MIN_EDGE_BP": 33.0,
+   "MIN_RR": 2.0,
+   "BACK_H": 24,
+   "HOLD_H": 72,
+   "N_RUNGS": 4,
+   "MIN_ADD_GAP": 0.015,
+   "SURVIVE_MULT": 2.0,
+   "FLOOR_FRAC": 0.1,
+   "N_DEC": 10,
+   "COVER_MIN": 0.8,
+   "NULL_Q": 95.0
+  },
+  "cover": 1.0,
+  "cover_pairs": 240,
+  "cover_measured": 240,
+  "verdict_cover": {
+   "ok": true,
+   "cover": 1.0,
+   "pairs": 240,
+   "why": [
+    "двойник найден и имеет бары у 100.0 % пар «позиция × розыгрыш» (240) при пороге 80 % — покрытие достаточное"
+   ]
+  },
+  "null_t1s": {
+   "n": 8,
+   "draws": 30,
+   "real": {
+    "n": 8,
+    "median": -0.00036,
+    "mean": -9e-05,
+    "green": 0.5,
+    "worst": -0.0098,
+    "bite": 2.83
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": -0.00036,
+     "mean": 0.00234,
+     "edge": 0.00599,
+     "min": -0.00454,
+     "max": 0.00689,
+     "beats": false,
+     "rank": 0.133,
+     "sigmas": -1.05,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": -9e-05,
+     "mean": -0.00019,
+     "edge": 0.00475,
+     "min": -0.00527,
+     "max": 0.00621,
+     "beats": false,
+     "rank": 0.567,
+     "sigmas": 0.04,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 2.83,
+     "mean": 4.18633,
+     "edge": 0.512,
+     "min": 0.26,
+     "max": 9.6,
+     "beats": false,
+     "rank": 0.633,
+     "sigmas": -0.52,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.0023,
+   "draw_median_of_means": -0.00086
+  },
+  "null_t1": {
+   "n": 8,
+   "draws": 30,
+   "real": {
+    "n": 8,
+    "median": -0.00036,
+    "mean": -9e-05,
+    "green": 0.5,
+    "worst": -0.0098,
+    "bite": 2.83
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": -0.00036,
+     "mean": 0.00102,
+     "edge": 0.00522,
+     "min": -0.00454,
+     "max": 0.00708,
+     "beats": false,
+     "rank": 0.233,
+     "sigmas": -0.55,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": -9e-05,
+     "mean": -0.00045,
+     "edge": 0.00316,
+     "min": -0.01216,
+     "max": 0.00474,
+     "beats": false,
+     "rank": 0.467,
+     "sigmas": 0.11,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 2.83,
+     "mean": 6.567,
+     "edge": 0.5145,
+     "min": 0.17,
+     "max": 51.97,
+     "beats": false,
+     "rank": 0.467,
+     "sigmas": -0.36,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00093,
+   "draw_median_of_means": -4e-05
+  },
+  "null_t2": {
+   "n": 8,
+   "draws": 30,
+   "real": {
+    "n": 8,
+    "median": -0.00036,
+    "mean": -9e-05,
+    "green": 0.5,
+    "worst": -0.0098,
+    "bite": 2.83
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": -0.00036,
+     "mean": 0.00262,
+     "edge": 0.00408,
+     "min": -0.00373,
+     "max": 0.00468,
+     "beats": false,
+     "rank": 0.067,
+     "sigmas": -1.7,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": -9e-05,
+     "mean": 0.00186,
+     "edge": 0.00553,
+     "min": -0.00166,
+     "max": 0.00673,
+     "beats": false,
+     "rank": 0.233,
+     "sigmas": -0.9,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 2.83,
+     "mean": 3.80467,
+     "edge": 0.4255,
+     "min": 0.27,
+     "max": 5.83,
+     "beats": false,
+     "rank": 0.767,
+     "sigmas": -0.6,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00296,
+   "draw_median_of_means": 0.00149
+  },
+  "arm_S": {
+   "n": 8,
+   "median": -0.00036,
+   "mean": -9e-05,
+   "green": 0.5,
+   "worst": -0.0098,
+   "bite": 2.83,
+   "median_lev": 1.0,
+   "frac_1x": 0.625
+  },
+  "exits_S": {
+   "срок": 7,
+   "тейк": 1
+  },
+  "liq_twin_m": 0,
+  "liq_twin_p": 0,
+  "t2_why": {},
+  "mmr_diff_share": 0.0,
+  "sigma_price": 0.00137,
+  "null_ladder": {
+   "n": 3,
+   "draws": 30,
+   "real": {
+    "n": 3,
+    "median": 0.00011,
+    "mean": 0.00264,
+    "green": 0.667,
+    "worst": -0.0008,
+    "bite": 0.19
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": 0.00011,
+     "mean": 0.00372,
+     "edge": 0.00823,
+     "min": -0.00054,
+     "max": 0.00823,
+     "beats": false,
+     "rank": 0.2,
+     "sigmas": -1.03,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": 0.00264,
+     "mean": 0.00107,
+     "edge": 0.00699,
+     "min": -0.00715,
+     "max": 0.00699,
+     "beats": false,
+     "rank": 0.533,
+     "sigmas": 0.31,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 0.19,
+     "mean": 4.234,
+     "edge": 0.0825,
+     "min": 0.06,
+     "max": 23.48,
+     "beats": false,
+     "rank": 0.9,
+     "sigmas": -0.62,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00313,
+   "draw_median_of_means": 0.00206
+  },
+  "n_ladder": 3,
+  "null_no_ladder": {
+   "n": 5,
+   "draws": 30,
+   "real": {
+    "n": 5,
+    "median": -0.0027,
+    "mean": -0.00173,
+    "green": 0.4,
+    "worst": -0.0098,
+    "bite": 2.83
+   },
+   "nulls": {
+    "median": {
+     "reps": 30,
+     "real": -0.0027,
+     "mean": 0.00182,
+     "edge": 0.00675,
+     "min": -0.00768,
+     "max": 0.00675,
+     "beats": false,
+     "rank": 0.067,
+     "sigmas": -1.4,
+     "lower_is_better": false
+    },
+    "mean": {
+     "reps": 30,
+     "real": -0.00173,
+     "mean": -0.00095,
+     "edge": 0.00506,
+     "min": -0.0085,
+     "max": 0.00574,
+     "beats": false,
+     "rank": 0.4,
+     "sigmas": -0.26,
+     "lower_is_better": false
+    },
+    "bite": {
+     "reps": 30,
+     "real": 2.83,
+     "mean": 3.65833,
+     "edge": 0.4185,
+     "min": 0.36,
+     "max": 6.76,
+     "beats": false,
+     "rank": 0.7,
+     "sigmas": -0.43,
+     "lower_is_better": true
+    }
+   },
+   "draw_median_of_medians": 0.00254,
+   "draw_median_of_means": -0.00093
+  },
+  "n_no_ladder": 5,
+  "book_S": {
+   "days": 2,
+   "green": 0.5,
+   "med": -0.01,
+   "med_green": 0.22,
+   "worst": -0.23,
+   "bite": 1.1,
+   "dd": -0.2,
+   "under": 1,
+   "red": 1,
+   "tot": -0.02,
+   "thin": true,
+   "taken": 8,
+   "offered": 8,
+   "skipped_same_name": 0,
+   "ticket": 25.0,
+   "capital": 10000.0,
+   "mean_day": -0.01,
+   "no_top3_days": 0.0,
+   "no_best_name": -0.23,
+   "best_name": "PIK001USDT"
+  },
+  "book_draws": 30,
+  "form_nulls": {
+   "med": {
+    "reps": 30,
+    "real": -0.01,
+    "mean": -0.093,
+    "edge": 0.2515,
+    "min": -0.98,
+    "max": 0.42,
+    "beats": false,
+    "rank": 0.467,
+    "sigmas": 0.27,
+    "lower_is_better": false
+   },
+   "worst": {
+    "reps": 30,
+    "real": -0.23,
+    "mean": -0.39033,
+    "edge": 0.171,
+    "min": -1.07,
+    "max": 0.19,
+    "beats": false,
+    "rank": 0.733,
+    "sigmas": 0.5,
+    "lower_is_better": false
+   },
+   "bite": {
+    "reps": 25,
+    "real": 1.1,
+    "mean": 1.7,
+    "edge": 0.32,
+    "min": 0.2,
+    "max": 5.2,
+    "beats": false,
+    "rank": 0.4,
+    "sigmas": -0.39,
+    "lower_is_better": true
+   }
+  },
+  "conc_S": {
+   "tot": -0.02,
+   "no_top3_days": 0.0,
+   "no_best_name": -0.23
+  },
+  "conc_nulls": {
+   "tot": {
+    "reps": 30,
+    "real": -0.02,
+    "mean": -0.07467,
+    "edge": 0.786,
+    "min": -0.98,
+    "max": 1.05,
+    "beats": false,
+    "rank": 0.5,
+    "sigmas": 0.11,
+    "lower_is_better": false
+   },
+   "no_top3_days": {
+    "reps": 30,
+    "real": 0.0,
+    "mean": 0.0,
+    "edge": 0.0,
+    "min": 0.0,
+    "max": 0.0,
+    "beats": false,
+    "rank": 0.0,
+    "sigmas": null,
+    "lower_is_better": false
+   },
+   "no_best_name": {
+    "reps": 30,
+    "real": -0.23,
+    "mean": -0.26367,
+    "edge": 0.5705,
+    "min": -1.07,
+    "max": 0.84,
+    "beats": false,
+    "rank": 0.5,
+    "sigmas": 0.07,
+    "lower_is_better": false
+   }
+  },
+  "median_draw": 3,
+  "pair_pos": {
+   "n": 8,
+   "median": -0.00239,
+   "mean": -0.00155,
+   "s_beats_t": 0.375,
+   "same_sign": true
+  },
+  "pair_day": {
+   "n": 1,
+   "median": -0.11763,
+   "mean": -0.11763,
+   "s_beats_t": 0.0,
+   "same_sign": true
+  },
+  "boot": null,
+  "killers": {
+   "choice": {
+    "killed": true,
+    "parts": [
+     "median: S -0.00036 против 95-го процентиля +0.00599 (30 розыгрышей, среднее +0.00234, -1.05 σ) — НЕ выше",
+     "mean: S -0.00009 против 95-го процентиля +0.00475 (30 розыгрышей, среднее -0.00019, 0.04 σ) — НЕ выше"
+    ],
+    "why": [
+     "выбор модели НЕ бьёт одновременную кросс-секцию своего часа: median, mean не выше 95-го процентиля двойников — имя есть украшение, деньги принадлежат часу, лестнице и плечу"
+    ]
+   },
+   "pair": {
+    "killed": true,
+    "parts": [
+     "по позициям (8): медиана -0.00239, среднее -0.00155, S выше T в 37.5 %",
+     "по суткам (1): медиана -0.11763, среднее -0.11763"
+    ],
+    "why": [
+     "парная разность вердикта не даёт: разность по позициям не положительна; бутстрапа нет: суток меньше трёх"
+    ]
+   },
+   "form": {
+    "killed": true,
+    "parts": [
+     "med: S -0.01000 против края +0.25150 — НЕ лучше",
+     "worst: S -0.23000 против края +0.17100 — НЕ лучше",
+     "bite: S +1.10000 против края +0.32000 (лучше — меньше) — НЕ лучше"
+    ],
+    "why": [
+     "дневная форма выбора не лучше формы двойников по: med, worst, bite"
+    ]
+   },
+   "conc": {
+    "killed": true,
+    "parts": [
+     "без 3 лучших суток: S +0.00 $ против края +0.00 $ — НЕ выше",
+     "без лучшего имени: S -0.23 $ против края +0.57 $ — НЕ выше"
+    ],
+    "why": [
+     "без трёх лучших суток превышение S над двойниками уходит в полосу нуля — выбор стоил одного эпизода"
+    ]
+   }
+  },
+  "verdict": {
+   "killed": true,
+   "head": "УБИТА: сработало убийц 4 из 4 названных заявкой",
+   "why": [
+    "выбор модели НЕ бьёт одновременную кросс-секцию своего часа: median, mean не выше 95-го процентиля двойников — имя есть украшение, деньги принадлежат часу, лестнице и плечу",
+    "парная разность вердикта не даёт: разность по позициям не положительна; бутстрапа нет: суток меньше трёх",
+    "дневная форма выбора не лучше формы двойников по: med, worst, bite",
+    "без трёх лучших суток превышение S над двойниками уходит в полосу нуля — выбор стоил одного эпизода"
+   ]
+  }
+ },
+ "found": true,
+ "quiet": true,
+ "ok": true
+}
