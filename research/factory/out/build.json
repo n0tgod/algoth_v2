@@ -1,145 +1,153 @@
 {
  "built": true,
- "module": "research/factory/horizon.py",
- "tests": "research/mech_12cc2578/test_horizon.py",
- "touched": [
-  "research/factory/space.py",
-  "research/factory/candidate.py",
-  "research/factory/run_day.py",
-  "research/factory/declare.py",
-  "research/factory/runlog.py",
-  "research/mech_12cc2578/controls_check.py",
-  "research/mech_12cc2578/RUNBOOK.md",
-  "research/mech_12cc2578/_ask.py"
- ],
+ "module": "research/mech_a82dcf58/run_twin.py",
+ "tests": "research/mech_a82dcf58/test_twin.py",
+ "touched": [],
  "controls": [
   {
-   "file": "research/factory/horizon.py",
-   "old": "            caps[\"targets\"] = got",
-   "new": "            caps[\"targets\"] = dict(SP.DECLARED_SHEET[\"targets\"])",
-   "expect": "ПРОВАЛ test_sheet_caps_reads_content_not_constant"
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    return {\"off\": [float(p) / entry - 1.0 for p in rungs],",
+   "new": "    return {\"off\": [float(p) - entry for p in rungs],",
+   "expect": "ПРОВАЛ test_geometry_is_in_fractions_of_entry"
   },
   {
-   "file": "research/factory/horizon.py",
-   "old": "    out = {k: v for k, v in row.items() if k not in CANON}",
-   "new": "    out = dict(row)",
-   "expect": "ПРОВАЛ test_quantile_fields_do_not_leak_across_horizons"
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "            \"take\": float(take_px) / entry - 1.0,",
+   "new": "            \"take\": float(take_px) - entry,",
+   "expect": "ПРОВАЛ test_take_travels_as_a_fraction"
   },
   {
-   "file": "research/factory/horizon.py",
-   "old": "        if any(row.get(names[k]) is None for k in REQUIRED):",
-   "new": "        if False:",
-   "expect": "ПРОВАЛ test_old_sheet_is_refused_aloud_not_replayed_as_4h"
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "        if s in gated or s in non_crypto:",
+   "new": "        if s in non_crypto:",
+   "expect": "ПРОВАЛ test_pool_excludes_gated_picks"
   },
   {
-   "file": "research/factory/horizon.py",
-   "old": "    \"fwd_24h\": {\"fwd\": \"fwd_24h\", \"fwd_z\": \"fwd_24h_z\", \"mae\": \"mae_24h\",\n                \"mfe\": \"mfe_24h\"},",
-   "new": "    \"fwd_24h\": {\"fwd\": \"fwd\", \"fwd_z\": \"fwd_z\", \"mae\": \"mae\",\n                \"mfe\": \"mfe\"},",
-   "expect": "ПРОВАЛ test_horizon_changes_the_leg_set"
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "        if s in gated or s in non_crypto:",
+   "new": "        if s in gated:",
+   "expect": "ПРОВАЛ test_pool_excludes_non_crypto"
   },
   {
-   "file": "research/factory/horizon.py",
-   "old": "    legs.sort(key=_order)\n    for i, lg in enumerate(legs):\n        lg[\"id\"] = i",
-   "new": "    legs.sort(key=_order)\n    _seen = {}\n    for lg in legs:\n        _t = leg_target(lg)\n        lg[\"id\"] = _seen[_t] = _seen.get(_t, -1) + 1",
-   "expect": "ПРОВАЛ test_ids_distinguish_horizon"
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "            and pick_dec is not None and d == pick_dec]",
+   "new": "            ]",
+   "expect": "ПРОВАЛ test_twins_come_from_the_pick_decile"
   },
   {
-   "file": "research/factory/horizon.py",
-   "old": "        at = rec.get(\"written_at\") or (\n            (TN.TR._ts(rec.get(\"hour\")) or 0) + 3600)",
-   "new": "        at = (rec.get(\"written_at\") or (\n            (TN.TR._ts(rec.get(\"hour\")) or 0) + 3600)) + 60",
-   "expect": "ПРОВАЛ test_calibration_planted_and_copy"
-  },
-  {
-   "file": "research/factory/horizon.py",
-   "old": "        if rows and not (stats or {}).get(t):",
-   "new": "        if False:",
-   "expect": "ПРОВАЛ test_supply_gap_is_a_refusal_not_a_dash"
-  },
-  {
-   "file": "research/factory/space.py",
-   "old": "    if rule.get(\"geom\") != \"timer\" and not have.get(\"q\"):",
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    if len(v) < int(n):",
    "new": "    if False:",
-   "expect": "ПРОВАЛ test_quantile_geometry_is_refused_on_24h"
+   "expect": "ПРОВАЛ test_decile_of_sigma_inside_the_hour"
   },
   {
-   "file": "research/factory/space.py",
-   "old": "    if rule.get(\"sizing\") == \"risk\" and not have.get(\"q\"):",
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    if edges is None or x is None or x != x:",
+   "new": "    if edges is None or x is None:",
+   "expect": "ПРОВАЛ test_decile_of_sigma_inside_the_hour"
+  },
+  {
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    return np.random.default_rng([int(seed), int(draw), int(leg_id)])",
+   "new": "    return np.random.default_rng()",
+   "expect": "ПРОВАЛ test_draws_are_assigned_in_advance_by_seed"
+  },
+  {
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    s_bp, _rng, _turn = D3.window_stats(win, now_i)",
+   "new": "    s_bp, _rng, _turn = D3.window_stats(win, len(win) - 1)",
+   "expect": "ПРОВАЛ test_sigma_does_not_look_into_the_future"
+  },
+  {
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    lv = D2.build_levels(win, now_i)",
+   "new": "    lv = D2.build_levels(win, len(win) - 1)",
+   "expect": "ПРОВАЛ test_own_geometry_does_not_look_into_the_future"
+  },
+  {
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    if not (fav is not None and float(fav) > 0):",
    "new": "    if False:",
-   "expect": "ПРОВАЛ test_risk_sizing_is_refused_on_24h"
+   "expect": "ПРОВАЛ test_own_geometry_says_why_it_is_absent"
   },
   {
-   "file": "research/factory/space.py",
-   "old": "    if rule.get(\"rank\") == \"sigma\" and not have.get(\"z\"):",
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    ok = cover >= COVER_MIN",
+   "new": "    ok = True",
+   "expect": "ПРОВАЛ test_coverage_gates_the_verdict_with_a_number"
+  },
+  {
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    fails = [k for k in need if not have[k][\"beats\"]]",
+   "new": "    fails = []",
+   "expect": "ПРОВАЛ test_verdict_choice_is_derived_from_numbers"
+  },
+  {
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    if not pos[\"same_sign\"]:",
    "new": "    if False:",
-   "expect": "ПРОВАЛ test_sigma_rank_needs_the_z_field"
+   "expect": "ПРОВАЛ test_pair_killer_needs_both_median_and_mean"
   },
   {
-   "file": "research/factory/space.py",
-   "old": "        if not unavailable(index_to_rule(i), caps):",
-   "new": "        if not unavailable(index_to_rule(i)):",
-   "expect": "ПРОВАЛ test_available_total_counts_content_not_the_constant"
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    for key, low in ((\"med\", False), (\"worst\", False), (\"bite\", True)):",
+   "new": "    for key, low in ((\"med\", False), (\"worst\", False), (\"bite\", False)):",
+   "expect": "ПРОВАЛ test_form_killer_reads_bite_the_right_way"
   },
   {
-   "file": "research/factory/space.py",
-   "old": "                + (\"\" if read else \" (по объявленному образцу — \"",
-   "new": "                + (\"\" if read else \" (цели нет: \"",
-   "expect": "ПРОВАЛ test_available_total_counts_content_not_the_constant"
+   "file": "research/mech_a82dcf58/twin.py",
+   "old": "    a = (nulls or {}).get(\"no_top3_days\")",
+   "new": "    a = (nulls or {}).get(\"tot\")",
+   "expect": "ПРОВАЛ test_concentration_killer_uses_no_top3_days"
   },
   {
-   "file": "research/factory/space.py",
-   "old": "        if available_only and unavailable(rule, caps):",
-   "new": "        if available_only and unavailable(rule):",
-   "expect": "ПРОВАЛ test_draw_reaches_the_second_horizon"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "            res = memo[r] = T.sim(hold, rungs, st[\"lev\"], mmr, take)",
+   "new": "            res = memo[r] = T.sim(hold, rungs, 1.0, mmr, take)",
+   "expect": "ПРОВАЛ test_twin_gets_the_pick_leverage_and_tier"
   },
   {
-   "file": "research/factory/candidate.py",
-   "old": "    if HZ.leg_target(lg) != rule.get(\"target\"):\n        return False",
-   "new": "    if False:\n        return False",
-   "expect": "ПРОВАЛ test_book_takes_only_its_own_horizon"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "            mmr = st[\"mmr\"] if mmr_from == \"pick\" else float(",
+   "new": "            mmr = T.FLAT_MMR if mmr_from == \"pick\" else float(",
+   "expect": "ПРОВАЛ test_twin_mmr_comes_from_the_pick_not_from_its_own_tier"
   },
   {
-   "file": "research/factory/candidate.py",
-   "old": "        k = (HZ.leg_target(lg), lg.get(\"hour\"), lg[\"sym\"], lg[\"side\"])",
-   "new": "        k = (lg.get(\"hour\"), lg[\"sym\"], lg[\"side\"])",
-   "expect": "ПРОВАЛ test_agreement_is_within_one_horizon"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "            rungs, take = T.transplant(st[\"geo\"], e_t)",
+   "new": "            rungs, take = T.transplant(st[\"geo\"], st[\"entry\"])",
+   "expect": "ПРОВАЛ test_twin_gets_the_pick_leverage_and_tier"
   },
   {
-   "file": "research/factory/run_day.py",
-   "old": "        by_hour.setdefault((lg[\"at\"], lg[\"arm\"], HZ.leg_target(lg)),",
-   "new": "        by_hour.setdefault((lg[\"at\"], lg[\"arm\"]),",
-   "expect": "ПРОВАЛ test_null_permutes_within_the_horizon"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "    R_M = np.full((n, d), np.nan, dtype=np.float64)",
+   "new": "    R_M = np.zeros((n, d), dtype=np.float64)",
+   "expect": "ПРОВАЛ test_missing_twin_bars_are_a_dash_not_zero"
   },
   {
-   "file": "research/factory/run_day.py",
-   "old": "        gap = SP.unavailable(rule, caps)",
-   "new": "        gap = None",
-   "expect": "ПРОВАЛ test_blocked_candidate_is_named_and_not_swept"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "    if not n:\n        out[\"refused\"] = (",
+   "new": "    if False:\n        out[\"refused\"] = (",
+   "expect": "ПРОВАЛ test_refuses_instead_of_reporting_emptiness"
   },
   {
-   "file": "research/factory/run_day.py",
-   "old": "            if cid in blocked:",
-   "new": "            if False:",
-   "expect": "ПРОВАЛ test_blocked_candidate_is_named_and_not_swept"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "    if int(draws) < T.MIN_DRAWS:",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ test_refuses_when_draws_are_too_few"
   },
   {
-   "file": "research/factory/run_day.py",
-   "old": "    L += HZ.report_lines(caps)",
-   "new": "    L += []",
-   "expect": "ПРОВАЛ test_run_day_replays_both_horizons"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "    for name, m in ((\"ladder\", kk >= 2), (\"no_ladder\", kk < 2)):",
+   "new": "    for name, m in ((\"ladder\", kk >= 2),):",
+   "expect": "ПРОВАЛ test_no_ladder_positions_are_counted_apart"
   },
   {
-   "file": "research/factory/run_day.py",
-   "old": "    gap = HZ.supply_gap(caps, by_target)",
-   "new": "    gap = None",
-   "expect": "ПРОВАЛ test_run_refuses_when_a_target_gives_no_legs"
+   "file": "research/mech_a82dcf58/run_twin.py",
+   "old": "            px = T.lift_to_take([x[4] for x in b], i_at, up=up)",
+   "new": "            px = [x[4] for x in b]",
+   "expect": "ПРОВАЛ test_calibration_finds_the_planted_move_and_is_quiet_on_noise"
   }
  ],
- "notes": "Построен шаг (2) задания — реплей и исполнимость по горизонту цели. Модуль лежит в research/factory/, потому что задание велит строить именно там («Строитель, в research/factory/»): горизонт нужен ЖИВОМУ суточному прогону, а копия в каталоге механики означала бы, что конвейер второй цели так и не увидел. Тесты, RUNBOOK и своя машинка контролей — в каталоге механики research/mech_12cc2578/; оба каталога свои и для приёмки, и для публикации. Сделано: цель берётся из оси target (horizon.FIELDS), одна строка листа даёт по ноге на цель, id различает горизонт; space.unavailable и available_total решают по СОДЕРЖИМОМУ листа (horizon.sheet_caps читает хвост журнала), константа осталась объявленным образцом и отказ по ней ГОВОРИТ, что содержимое не читалось; на 24 ч исполнимы только geom=timer и размер, отличный от risk, — словами, а не подстановкой 4-часовых уровней; квантильные концы 4 ч в ногу 24 ч не протекают; согласие рук считается внутри одного горизонта (иначе gbm на 4 ч и nn на 24 ч засчитывались бы как согласие); нуль переставляет исходы внутри часа, руки И горизонта; жребий контрольной руки видит вторую цель тем же прогоном; цель есть, а ног ноль — прогон отказывается с числом строк; кандидат, которого нечем реплеить, назван причиной в отчёте и артефакте и ИСКЛЮЧЁН из правила вылета (иначе наша дыра в листе стала бы вердиктом о его правиле). Числа: исполнимо сегодня 1296 из 5184 — как было; после шага fix станет 1584 (прибавка 288 — только 24 ч, только выход по времени, не равным риском). Проверено не рассуждением: на срезе ЖИВОГО журнала (6 листов, 8927 ног) новый загрузчик даёт ноги, совпадающие с прежним ПОЛЕ В ПОЛЕ, включая id; на полном живом журнале (269 МБ) разбор листа занимает 0.3 с и отвечает «лист несёт fwd_4h — строк 1494, листов из 24: 24», то есть цель 24 ч отвергается вслух. Сюита 21 блок, 20 контролей, все кусаются на названном блоке. НЕ построено и построено быть не может здесь: шаг (1) — правка research/s8_loop/train.py, чтобы цикл писал fwd_24h, fwd_24h_z, mae_24h, mfe_24h в scan_sheet.json и sheets.jsonl; каталог строителю недоступен, роль fix назначает владелец. Просьба об этом уже подана и открыта (asks.jsonl, ключ 4c923cf1, от предлагающего) — второй раз не задаю, чтобы не плодить дубль на странице владельца. Имена полей взяты дословно из задания; разойдись они с тем, что напишет fix, механика не сломается молча — цель просто не появится в разборе листа, и это видно строкой отчёта, а лечится одной таблицей horizon.FIELDS. Открытые концы вне моего каталога: страница сборщика (research/b1_book/collect.py, space_available) печатает исполнимое по объявленному образцу и после шага fix разойдётся с суточным отчётом — правка на строку, роли fix; живой книги-сестры 24-часовая строка не получает (live_books.rule_gap отказывает словами, и это верно: живой сканер ранжирует по четырёхчасовому прогнозу), поэтому её форвард меряется реплеем от дня объявления, а не живой книгой. Просьба владельцу подана ДОСЛОВНЫМ повтором уже открытой (asks.jsonl, 4c923cf1, от предлагающего): ключ просьбы есть хеш её текста, поэтому дословный повтор новой строки на странице не создаёт (проверено на копии журнала: новых просьб 0), а механика встаёт в очереди как «ждёт владельца», а не «построена», — что и есть правда, пока шага fix нет. Текст воспроизведён скриптом research/mech_12cc2578/_ask.py, а не руками, чтобы совпадение было побайтовым. Чужие сюиты после правок зелены: test_candidate 8/8, test_run_day 6/6, test_ceiling 34/34, s10_policy/test_tournament — все. test_factory: 53 или 54 из 54 — блок «построенное задание гейт закрывает» МИГАЕТ от прогона к прогону (проверено пятью прогонами: падал и до единой моей правки, на чистом дереве). Причина не в механике: гейт круга сравнивает mtime очереди механик с mtime задания строгим «больше» (cycle.done_today, AFTER['task']), а тест дописывает очередь в ту же отметку времени, что и задание, — исход решает разрешение mtime, а не код. Это дефект теста, чужой и найденный по дороге; чинить его в этом задании я не стал, чтобы не править чужую проверку под свою постройку.",
- "needs_owner": [
-  {
-   "what": "Назначить роль fix: цикл обучения (research/s8_loop/train.py) пишет в лист сечения — scan_sheet.json и журнал sheets.jsonl — цели 24-часового горизонта fwd_24h, fwd_24h_z, mae_24h, mfe_24h рядом с полями 4 ч; лист прежнего образца без этих полей читается как «цели нет», а не как ноль",
-   "why": "Шаг (2) задания построен и проверен (research/factory/horizon.py, 21 блок проверок, 20 кусающихся контролей), но шаг (1) — правка research/s8_loop/train.py — строителю недоступен: каталог не его, роль fix назначает владелец. Пока полей 24 ч в листе нет, реплей строки h24_z_f30_w5_gt_rr0_se_b0_a1 даёт ноль ног, и это сказано вслух («лист сечения не несёт fwd_24h: в нём fwd_4h»), а не молча нулём. После правки исполнимых сочетаний станет 1584 из 5184 вместо 1296, и строку можно объявлять тем же кругом.",
-   "unblocks": "объявление первой строки на 24-часовой цели (h24_z_f30_w5_gt_rr0_se_b0_a1 и близнец без согласия), рост эффективного N пула, случайная контрольная рука на обоих горизонтах"
-  }
- ]
+ "notes": "черновик — заполняется после прогона машины контролей"
 }
