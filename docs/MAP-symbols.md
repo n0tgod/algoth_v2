@@ -3272,6 +3272,119 @@ M2: каркас walk-forward — чистая математика без чт�
 - L37 `run()` — Код возврата и ИМЕНА упавших проверок, а не только код.
 - L52 `main(report)`
 
+## research/mech_a82dcf58/controls_check.py · 105 строк
+
+Машина негативных контролей механики a82dcf58: подделка — сюита падает.
+
+- L36 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L37 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L38 `SUITE = 'research/mech_a82dcf58/test_twin.py'`
+- L44 `sha(p)`
+- L49 `run_suite()` — (прошло, вывод) — ровно так, как это делает приёмка.
+- L58 `main()`
+
+## research/mech_a82dcf58/run_twin.py · 1188 строк
+
+Механика a82dcf58 — прогон: DCA-лестница на СЛУЧАЙНОМ ИМЕНИ того же часа как одновременная кросс-секция.
+
+- L63 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L64 `RESEARCH = os.path.dirname(HERE)`
+- L65 `ROOT = os.path.dirname(RESEARCH)`
+- L66 `OUT = os.path.join(HERE, 'out')`
+- L67 `CACHE = os.path.join(HERE, '.cache_sigma')`
+- L80 `SIG_CACHE_V = 1`
+- L81 `MEM_NEED_MB = 1300`
+- L82 `MEM_SHARE = 0.6`
+- L83 `PROGRESS_S = 30`
+- L86 `log_(m)`
+- L90 `peak_rss_mb()`
+- L94 `mem_available_mb()` — Свободная память машины, МБ. Не прочитали — None, а не ноль.
+- L106 `mem_guard(need_mb=MEM_NEED_MB, share=MEM_SHARE, log=log_)` — Отказаться ГРОМКО, если прогон не влезает рядом со сборщиком.
+- L127 `mem_limit_mb(share=MEM_SHARE, log=log_)` — Предел РАБОЧЕЙ памяти прогона: доля доступной, взятая на старте.
+- L142 `mem_stop(limit, where, log=log_)` — Выше предела — прогон снимает СЕБЯ, с числом и словами.
+- L160 `state(tag, **kw)` — Состояние файлом: молчащий прогон неотличим от повисшего.
+- L174 `load(limit=None, stride=1, log=log_, legs=None)` — Выборы книги и СЕЧЕНИЯ их часов из журнала листов.
+- L238 `_cache_path(sym)`
+- L242 `cache_read(sym)`
+- L253 `cache_write(sym, sig)`
+- L264 `needs(picks, pools)` — Что у кого нужно: символ → моменты решений (σ) и его выборы.
+- L276 `pass_one(picks, sig_need, pick_by, get, tiers_all, log=log_, ta…` — σ каждого кандидата каждого часа и рука S каждого выбора.
+- L367 `assign(picks, pools, sig, setups, draws=T.DRAWS, seed=T.SEED, l…` — Двойники всех розыгрышей, назначенные ЗАРАНЕЕ. Чистый шаг.
+- L423 `_one_twin(k, lo, hi, rows, cols, kind, names, setups, bars, ts,…` — Все задания ОДНОГО двойника (имя × час): окно нарезается один раз.
+- L485 `pass_two(setups, MT, PT, names, get, tiers_all, log=log_, tag='…` — Двойники: бары каждого имени читаются ОДИН раз на все розыгрыши.
+- L569 `CONC_KEYS = ('tot', 'no_top3_days', 'no_best_name')`
+- L572 `book_pick(picks, setups, ok)` — Дневная форма руки S при ОДНОЙ кассе.
+- L590 `book_draws(picks, names, IDX, R, X, ok)` — Дневная форма КАЖДОГО розыгрыша — той же кассой, что рука S.
+- L615 `conc_of(st)` — Колонки концентрации книги: итог, без 3 лучших суток, без лучшего имени. Нет книги — прочерки, а не нули.
+- L621 `paired_days(day_a, day_b)` — Парная разность по СУТКАМ: медиана и среднее рядом.
+- L633 `median_draw(R)` — Номер МЕДИАННОГО розыгрыша по медиане исхода позиции.
+- L653 `measures(picks, setups, MT, PT, names, res, draws, seed, secs, …`
+- L771 `core(picks, pools, get, tiers_all, draws=T.DRAWS, seed=T.SEED, …` — Вся дорога от населения до вердикта. Калибровка идёт ЕЮ ЖЕ.
+- L796 `run(limit=None, stride=1, draws=T.DRAWS, seed=T.SEED, src=None,…`
+- L813 `class FakeSource` — Синтетический источник баров и тиров для калибровки и проверок.
+  - L816 `FakeSource.__init__(self, series, tiers=None)`
+  - L820 `FakeSource.bars(self, sym, t0, t1)`
+- L825 `synth(n_pool=28, n_hours=8, hold_n=6000, step_h=6, seed=T.SEED,…` — Синтетический час: сечение имён, выборы книги и их бары.
+- L887 `calibrate(draws=30, seed=T.SEED, log=log_, up=0.2)` — Калибровочная пара: найти подсаженное и промолчать на шуме.
+- L925 `_pct(v, nd=2)`
+- L929 `_num(v, nd=2)`
+- L933 `_money(v)`
+- L937 `_null_row(name, nl)`
+- L945 `report(s, tag='1m')`
+- L1109 `cal_report(c)`
+- L1137 `publish(name)`
+- L1142 `main(argv=None)`
+
+## research/mech_a82dcf58/twin.py · 568 строк
+
+Механика a82dcf58 — двойник по ИМЕНИ: чьи это деньги, выбор модели или час рынка.
+
+- L48 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L49 `RESEARCH = os.path.dirname(HERE)`
+- L66 `MIN_EDGE_BP = D2.MIN_EDGE_BP` — --- объявленная сетка: чужие величины берутся У ХОЗЯЕВ -------------------- Ячейка вердикта — базовая ячейка…
+- L67 `MIN_RR = D2.MIN_RR`
+- L68 `BACK_H = D2.BACK_H`
+- L69 `HOLD_H = D2.HOLD_H`
+- L70 `N_RUNGS = D2.N_RUNGS`
+- L71 `MIN_ADD_GAP = D2.MIN_ADD_GAP`
+- L72 `WEIGHTS = D2.WEIGHTS`
+- L73 `SURVIVE_MULT = D2.SURVIVE_MULT`
+- L74 `FLOOR_FRAC = D2.FLOOR_FRAC`
+- L75 `FLAT_MMR = D2.FLAT_MMR`
+- L78 `DRAWS = 100` — --- своё, объявлено ДО прогона -------------------------------------------
+- L79 `MIN_DRAWS = 20`
+- L80 `SEED = 20260909`
+- L81 `BOOT = P.BOOT`
+- L82 `NULL_Q = P.NULL_Q`
+- L83 `N_DEC = 10`
+- L84 `COVER_MIN = 0.8`
+- L93 `MMR_FROM = 'pick'` — Тир двойника. Пересаживается ВСЯ конструкция позиции, включая ставку поддерживающей маржи выбора: заявка гово…
+- L96 `day_of(at)`
+- L102 `geometry(entry, rungs, take_px, lev)` — Геометрия позиции В ДОЛЯХ цены входа: смещения рунгов, тейк, плечо.
+- L121 `transplant(geo, entry)` — Та же геометрия на ДРУГОЙ цене входа: цены рунгов и цена тейка.
+- L136 `sim(hold, rungs, lev, mmr, take_px)` — Единственная дорога до ядра лестницы. Второй копии нет.
+- L143 `sigma_at(bars, ts, at, back_h=BACK_H)` — σ окна ДО решения — та же линейка, что у D3/D5.
+- L162 `twin_window(bars, ts, at, back_h=BACK_H, hold_h=HOLD_H)` — Окно двойника на тот же момент решения. None — баров нет.
+- L172 `own_geometry(win, now_i, fav, look)` — Своя геометрия двойника (диагностическая рука T2).
+- L202 `pool_mask(syms, gated, non_crypto)` — Кого час допускает в двойники: булева маска по именам сечения.
+- L221 `decile_edges(vals, n=N_DEC)` — Границы децилей σ внутри часа. Меньше `n` измеренных — децилей нет.
+- L234 `decile_of(x, edges)` — Номер дециля значения. NaN или нет границ — None, а не ноль.
+- L242 `draw_rng(seed, draw, leg_id)` — Генератор РОЗЫГРЫША, а не прогона: имя двойника назначено заранее.
+- L253 `assign_twins(pool_idx, pool_dec, pick_dec, n_draws, leg_id, see…` — Имена двойников на каждый розыгрыш: подобранный по σ и без подбора.
+- L275 `beats_both(nulls)` — Рука выше 95-го процентиля розыгрышей И по медиане, И по среднему.
+- L287 `paired(s_pnl, t_pnl)` — Парная разность S − T по ПОЗИЦИЯМ: медиана и среднее рядом.
+- L307 `form_nulls(st_s, st_draws)` — Где стоит дневная форма S среди форм книг-двойников.
+- L323 `conc_nulls(c_s, c_draws)` — Колонки концентрации против розыгрышей: без 3 лучших суток и без лучшего имени.
+- L347 `verdict_choice(nulls)` — Убийца (1): имя выбора против имён того же часа.
+- L381 `verdict_pair(pos, days, boot)` — Убийца (2): парная разность S − T.
+- L425 `verdict_form(nulls)` — Убийца (3): дневная форма при ОДНОЙ кассе.
+- L455 `verdict_conc(nulls)` — Убийца (4): колонка «без 3 лучших суток».
+- L481 `verdict_cover(cover, n_pairs)` — Измеримость — РАНЬШЕ четырёх убийц.
+- L501 `verdict(cover, killers)` — Общий ответ механики, собранный из четырёх убийц и измеримости.
+- L536 `bars_of(prices, t0, vol=1000.0, wick=0.0005, step=60)` — Минутные бары из ряда цен: (t, open, high, low, close, объём).
+- L546 `walk(rng, n, sigma=0.0015, start=100.0)` — Случайное блуждание — нуль честной формы.
+- L551 `lift_to_take(prices, at_i, up=0.12, span=60)` — Подсаженный ход: с бара `at_i` цена идёт ВВЕРХ до тейка за час.
+
 ## research/mech_fcbd3542/run_halves.py · 1311 строк
 
 Механика `fcbd3542` — отскок первых секунд по половинам универсума.

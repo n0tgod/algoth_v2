@@ -1794,6 +1794,50 @@
 - L455 `test_end_to_end_refuses_when_there_are_no_events()` — Ноль наблюдений при непустом входе — отказ, а не пустой отчёт.
 - L494 `main()`
 
+## research/mech_a82dcf58/test_twin.py · 533 строк
+
+Проверки механики a82dcf58 — двойник по ИМЕНИ.
+
+- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `H = 3600`
+- L30 `quiet(_m)`
+- L36 `_bars(prices, t0=1786000000)`
+- L40 `_flat_then(n_pre, tail, start=100.0, jitter=0.0007, seed=3, dip…` — Живой на вид ряд: дрожание до решения, заданный путь после.
+- L61 `_setup(entry, offs, take_frac, lev, mmr=0.005, k=None, pnl=0.0,…`
+- L71 `class _Src`
+  - L72 `_Src.__init__(self, series, tiers=None)`
+  - L76 `_Src.bars(self, sym, t0, t1)`
+- L82 `test_geometry_is_in_fractions_of_entry()`
+- L97 `test_take_travels_as_a_fraction()`
+- L109 `test_pool_excludes_gated_picks()`
+- L119 `test_pool_excludes_non_crypto()`
+- L129 `test_decile_of_sigma_inside_the_hour()`
+- L141 `test_twins_come_from_the_pick_decile()`
+- L153 `test_draws_are_assigned_in_advance_by_seed()`
+- L167 `test_sigma_does_not_look_into_the_future()`
+- L182 `test_own_geometry_does_not_look_into_the_future()`
+- L203 `test_own_geometry_says_why_it_is_absent()`
+- L215 `_twin_case(tail, lev=3.0, mmr=0.005, offs=(0.0, -0.03, -0.07, -…` — Один выбор, один двойник, один розыгрыш — на подставных барах.
+- L233 `test_twin_gets_the_pick_leverage_and_tier()` — Плечо и ставка тира ПЕРЕСАЖИВАЮТСЯ, а не считаются заново.
+- L254 `test_twin_mmr_comes_from_the_pick_not_from_its_own_tier()`
+- L275 `test_missing_twin_bars_are_a_dash_not_zero()`
+- L290 `_run_synth(planted=False, draws=20, **kw)`
+- L297 `test_end_to_end_names_hours_and_books()`
+- L317 `test_no_ladder_positions_are_counted_apart()`
+- L326 `test_refuses_instead_of_reporting_emptiness()`
+- L338 `test_refuses_when_draws_are_too_few()`
+- L349 `_nulls(real_med, real_mean, edge)`
+- L356 `test_verdict_choice_is_derived_from_numbers()`
+- L368 `test_pair_killer_needs_both_median_and_mean()`
+- L384 `test_form_killer_reads_bite_the_right_way()`
+- L397 `test_concentration_killer_uses_no_top3_days()`
+- L409 `test_coverage_gates_the_verdict_with_a_number()`
+- L422 `test_calibration_finds_the_planted_move_and_is_quiet_on_noise()`
+- L439 `test_concentration_columns_stand_at_every_arm()` — Колонки концентрации обязаны стоять у КАЖДОЙ руки, не у одной.
+- L454 `test_memory_self_stop_names_the_number()` — Выше предела прогон снимает СЕБЯ, и говорит число, а не молчит.
+- L476 `test_report_prints_both_median_and_mean_and_the_verdict()`
+- L488 `CHECKS = [test_geometry_is_in_fractions_of_entry…`
+
 ## research/mech_fcbd3542/test_halves.py · 721 строк
 
 Проверки механики `fcbd3542`: метка tick/σ и замер по половинам.
