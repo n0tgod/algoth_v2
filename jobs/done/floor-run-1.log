@@ -197,3 +197,49 @@ aggr_h: фильтр возраста ≥7 сут оставил 2637 из 3214 
 - Хедж-режим есть ПРАВИЛО СЧЁТА этой книги: она не смотрит на длинные позиции. На бирже так можно только в хедж-режиме; в одностороннем совпадающий шорт резал бы длинную позицию, и число таких совпадений стоит выше.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/fix-paper-catchup2.log              |   7 +
+ jobs/done/floor-run-1.log                     | 119 ++++++++++++
+ research/dca_paper/out/DCA-short.json         |   2 +-
+ research/dca_paper/out/DCA-short.md           |  26 +--
+ research/dca_paper/out/short-2026-08-08.jsonl | 195 ++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-09.jsonl | 246 +++++++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-10.jsonl | 144 +++++++++++++++
+ research/dca_paper/out/short-2026-08-11.jsonl | 240 ++++++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-12.jsonl | 216 ++++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-13.jsonl | 204 +++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-14.jsonl | 204 +++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-15.jsonl | 168 +++++++++++++++++
+ research/dca_paper/out/short-2026-08-16.jsonl | 201 ++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-17.jsonl | 204 +++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-18.jsonl | 135 ++++++++++++++
+ research/dca_paper/out/short-2026-08-19.jsonl | 253 ++++++++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-20.jsonl | 207 +++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-21.jsonl | 204 +++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-22.jsonl | 231 +++++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-23.jsonl | 232 +++++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-24.jsonl | 207 +++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-25.jsonl | 159 ++++++++++++++++
+ research/dca_paper/out/short-2026-08-26.jsonl | 205 +++++++++++++++++++++
+ research/dca_paper/out/short-2026-08-27.jsonl | 153 ++++++++++++++++
+ research/dca_paper/out/short-2026-08-28.jsonl |  96 ++++++++++
+ research/dca_paper/out/short-2026-08-29.jsonl | 129 +++++++++++++
+ research/dca_paper/out/short-2026-08-30.jsonl |  72 ++++++++
+ research/dca_paper/out/short-2026-08-31.jsonl |  63 +++++++
+ research/dca_paper/out/short-2026-09-01.jsonl |  33 ++++
+ research/dca_paper/out/short-2026-09-02.jsonl | 129 +++++++++++++
+ research/dca_paper/out/short-2026-09-03.jsonl | 147 +++++++++++++++
+ research/dca_paper/out/short-2026-09-04.jsonl |  96 ++++++++++
+ research/dca_paper/out/short-2026-09-05.jsonl |  75 ++++++++
+ research/dca_paper/out/short-2026-09-06.jsonl | 141 ++++++++++++++
+ research/dca_paper/out/short-2026-09-07.jsonl | 114 ++++++++++++
+ research/dca_paper/out/short-2026-09-08.jsonl | 111 +++++++++++
+ research/dca_paper/out/short-2026-09-09.jsonl |  96 ++++++++++
+ research/dca_paper/out/short-2026-09-10.jsonl |   9 +
+ research/s8_loop/out/day_brake.json           |   2 +-
+ 39 files changed, 5460 insertions(+), 15 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   f7489661..c78db6f2  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-10T22:59:27Z, код 0
