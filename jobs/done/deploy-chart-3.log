@@ -1,6 +1,6 @@
-== задание deploy-chart-2 ==
+== задание deploy-chart-3 ==
 строка: restart-book
-начало: 2026-09-10T11:35:43Z
+начало: 2026-09-10T11:48:19Z
 перезапуск сборщика и циклов
 == останавливаю прежний ==
 жду закрытия файлов.........
@@ -8,8 +8,8 @@
 Already up to date.
 == запускаю ==
 == поднялся, хвост журнала ==
-[     766 с] шард 17: соединение закрыто: None None
-[     766 с] шард 18: соединение закрыто: None None
+[     748 с] шард 17: соединение закрыто: None None
+[     748 с] шард 18: соединение закрыто: None None
 [       1 с] справочник площадки: 758 торгуемых USDT-перпов, пишутся все (не-крипто торгует только ситуационная книга)
 [       1 с] символов 758: 0GUSDT, 1000000BABYDOGEUSDT, 1000000MOGUSDT, 10000NEXUSDT, 10000SATSUSDT, 1000BONKUSDT, 1000BTTUSDT, 1000CATUSDT, 1000FLOKIUSDT, 1000LUNCUSDT, 1000NEIROCTOUSDT, 1000PEPEUSDT, 1000RATSUSDT, 1000TAGUSDT, 1000TOSHIUSDT, 1000TURBOUSDT, 1000XECUSDT, 1INCHUSDT, 2ZUSDT, 4STOCKUSDT, 4USDT, AALUSDT, AAOIUSDT, AAPLUSDT, AAVEUSDT, ACEUSDT, ACHUSDT, ACTUSDT, ACUUSDT, ADAUSDT, … ещё 728 (полный список в status.json)
 [       1 с] сырой поток пишется для: ARBUSDT
@@ -19,14 +19,3 @@ Already up to date.
 == перезапускаю циклы обучения ==
   не запущен: s8_loop/train.py --pretest
   остановлен, сторож поднимет: s8_loop/train.py$
-публикуется в ветку main:
- jobs/done/deploy-chart-1.log        |  9 +++++++++
- jobs/done/deploy-chart-2.done       |  1 +
- jobs/done/deploy-chart-2.log        | 21 +++++++++++++++++++++
- jobs/poke.log                       |  3 +++
- research/s8_loop/out/day_brake.json |  2 +-
- 5 files changed, 35 insertions(+), 1 deletion(-)
-To github.com:n0tgod/algoth_v2.git
-   cf38c123..2fc8c9a8  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
