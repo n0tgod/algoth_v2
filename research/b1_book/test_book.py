@@ -7866,6 +7866,99 @@ def test_dca_trades_speak_the_language_of_the_chart():
         DR.JOURNAL = jp0
 
 
+def test_dca_chart_reads_the_journal_of_its_own_family():
+    """График берёт позиции из журнала СВОЕГО семейства, а не длинного.
+
+    Кусается тем, на чём дефект и держался: строка короткой книги лежит
+    ТОЛЬКО в журнале `h24`, строка общего счёта — ТОЛЬКО в своём, и в
+    журнале длинных книг их нет вовсе. Читатель, знающий один журнал,
+    отдаёт графику пустоту — владелец 2026-09-10 увидел ровно это
+    («сделки общих стратегий не показываются на графике»). Заодно
+    проверяется версия правил СЕМЕЙСТВА: строка прежней версии в счёт
+    книги не идёт, и на графике её быть не должно.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+
+    jp0, hp0, pp0 = DR.JOURNAL, DR.H24_JOURNAL, DR.PAIR_JOURNAL
+    ap0, ha0, pa0 = DR.ARTIFACT, DR.H24_ARTIFACT, DR.PAIR_ARTIFACT
+    td = tempfile.mkdtemp()
+    try:
+        DR.JOURNAL = os.path.join(td, "journal.jsonl")
+        DR.H24_JOURNAL = os.path.join(td, "short.jsonl")
+        DR.PAIR_JOURNAL = os.path.join(td, "pair.jsonl")
+        DR.ARTIFACT = os.path.join(td, "DCA-paper.json")
+        DR.H24_ARTIFACT = os.path.join(td, "DCA-short.json")
+        DR.PAIR_ARTIFACT = os.path.join(td, "DCA-pair.json")
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
+
+        def _row(rk, at, px=100.0):
+            r = {"dep": 10000, "ruler": rk, "at": at, "exit_ts": at + 7200,
+                 "sym": "AAAUSDT", "usd": 3.0, "written_at": at + 600,
+                 "rules": DR.RULES, "lev": 2.0, "margin": 25.0,
+                 "pnl_frac": 0.12, "exit": "тейк", "entry_px": px,
+                 "exit_px": px * 1.1, "depth": 1,
+                 "side": DR.side_of(rk),
+                 "fills": [[at, px, 0.25]]}
+            fr = DR.family_rules(rk)
+            if fr is not None:
+                r["book_rules"] = int(fr)
+            r["avg"] = DR.avg_walk(r["fills"])[-1]["avg"]
+            return r
+
+        # журнал длинных книг существует и СВОИХ строк по монете не имеет
+        with open(DR.JOURNAL, "w", encoding="utf-8") as f:
+            f.write(json.dumps(_row("safe", t0, 7.0), ensure_ascii=False)
+                    .replace('"AAAUSDT"', '"ZZZUSDT"') + "\n")
+        sh = _row("safe_h", t0 + 3600)
+        # строка ПРЕЖНЕЙ версии правил семейства: в счёт книги не идёт,
+        # значит и на графике её быть не должно
+        old_v = dict(sh, at=t0 + 7200, book_rules=0, entry_px=55.0)
+        with open(DR.H24_JOURNAL, "w", encoding="utf-8") as f:
+            for r in (sh, old_v):
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        pr = _row("pair_safe", t0 + 10800, 200.0)
+        with open(DR.PAIR_JOURNAL, "w", encoding="utf-8") as f:
+            f.write(json.dumps(pr, ensure_ascii=False) + "\n")
+        # открытая позиция общего счёта живёт в АРТЕФАКТЕ своего семейства
+        with open(DR.PAIR_ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump({"live": {"pair_safe:10000": {"positions": [
+                {"sym": "AAAUSDT", "at": t0 + 14400, "lev": 3.0,
+                 "margin": 25.0, "mark_frac": 0.04, "mark_usd": 1.0,
+                 "entry_px": 300.0, "avg": 300.0, "depth": 1,
+                 "fav_bp": 300.0, "last_ts": t0 + 15000,
+                 "fills": [[t0 + 14400, 300.0, 0.25]]}], "cut": []}}},
+                f, ensure_ascii=False)
+
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        d_sh = c.dca_trades("AAAUSDT", "safe_h:10000")
+        r_sh = d_sh.get("rows") or []
+        check("DCA-график: короткая книга читает СВОЙ журнал",
+              len(r_sh) == 1 and r_sh[0].get("entry_px") == 100.0,
+              str([(r.get("entry_px"), r.get("state")) for r in r_sh]))
+        check("DCA-график: строка прежней версии правил семейства не "
+              "попадает на график",
+              all(r.get("entry_px") != 55.0 for r in r_sh),
+              str([r.get("entry_px") for r in r_sh]))
+        d_pr = c.dca_trades("AAAUSDT", "pair_safe:10000")
+        r_pr = d_pr.get("rows") or []
+        check("DCA-график: общий счёт читает СВОЙ журнал и СВОЙ артефакт",
+              len(r_pr) == 2
+              and sorted(x.get("entry_px") for x in r_pr) == [200.0, 300.0],
+              str([(r.get("entry_px"), r.get("state")) for r in r_pr]))
+        d_lo = c.dca_trades("AAAUSDT", "safe:10000")
+        check("DCA-график: длинная книга чужих строк не показывает",
+              (d_lo.get("rows") or []) == [], str(d_lo.get("rows")))
+    finally:
+        DR.JOURNAL, DR.H24_JOURNAL, DR.PAIR_JOURNAL = jp0, hp0, pp0
+        DR.ARTIFACT, DR.H24_ARTIFACT, DR.PAIR_ARTIFACT = ap0, ha0, pa0
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -7906,6 +7999,7 @@ def main():
     test_dca_open_pnl_is_marked_live_not_hourly()
     test_dca_cut_position_carries_its_reason()
     test_dca_trades_speak_the_language_of_the_chart()
+    test_dca_chart_reads_the_journal_of_its_own_family()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()

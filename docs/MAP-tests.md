@@ -287,7 +287,7 @@
 - L620 `paperStub()`
 - L755 `bookDaysStub()`
 
-## research/b1_book/test_book.py · 8006 строк
+## research/b1_book/test_book.py · 8100 строк
 
 Тесты стакана. Закрывают место, где ошибка портит все данные молча.
 
@@ -417,7 +417,8 @@
 - L7518 `test_dca_open_pnl_is_marked_live_not_hourly()` — Открытый pnl DCA-книги переоценивается ЖИВОЙ серединой.
 - L7611 `test_dca_cut_position_carries_its_reason()` — Оборванная позиция едет странице С ПРИЧИНОЙ, и текст ОДИН.
 - L7676 `test_dca_trades_speak_the_language_of_the_chart()` — Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
-- L7869 `main()`
+- L7869 `test_dca_chart_reads_the_journal_of_its_own_family()` — График берёт позиции из журнала СВОЕГО семейства, а не длинного.
+- L7962 `main()`
 
 ## research/d1_seconds/test_detect.py · 803 строк
 

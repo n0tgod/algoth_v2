@@ -3485,15 +3485,23 @@ class Collector:
         if rk not in DR.RULERS or not dep.isdigit():
             return {"present": False, "why": f"книга «{book}» не опознана",
                     "rows": [], "merged": []}
-        if not os.path.exists(DR.JOURNAL):
+        # Журнал — СВОЙ У СЕМЕЙСТВА (`rules.journal_of`): у коротких
+        # книг и общего счёта он отдельный, и чтение журнала длинных
+        # книг для любой книги отдавало графику пустоту — позиции этих
+        # книг на графике не рисовались вовсе.
+        jp = DR.journal_of(rk)
+        if not os.path.exists(jp):
             return {"present": False, "rows": [], "merged": [],
                     "why": "журнала нет на этой машине — он живёт там, "
                            "где книги считаются"}
-        rows, _bad = DR.read_journal(DR.JOURNAL)
+        rows, _bad = DR.read_journal(jp)
+        # Версия строки — тем же одним местом, что у книги: у семейства
+        # своя версия правил, и сравнение только с `RULES` показало бы
+        # на графике строки, которые сама книга в счёт не берёт.
         mine = [r for r in rows
                 if str(r.get("sym", "")).upper() == sym
                 and int(r.get("dep", 0)) == int(dep)
-                and int(r.get("rules", 0)) == DR.RULES
+                and DR.is_current(r)
                 and DR.ruler_of(r) == rk]
         out = []
         for r in sorted(mine, key=lambda x: float(x.get("at") or 0)):
@@ -3537,9 +3545,10 @@ class Collector:
         # Выхода у них не существует: `closes_at` пуст, деньги идут
         # ОТМЕТКОЙ (`net_bp`/`pnl` по `mark_*`), состояние названо словом.
         live = {}
-        if os.path.exists(DR.ARTIFACT):
+        ap = DR.artifact_of(rk)
+        if os.path.exists(ap):
             try:
-                with open(DR.ARTIFACT, encoding="utf-8") as f:
+                with open(ap, encoding="utf-8") as f:
                     live = (json.load(f).get("live") or {})
             except (OSError, ValueError):
                 live = {}

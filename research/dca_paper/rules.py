@@ -825,6 +825,32 @@ PAIR_JOURNAL = os.path.join(OUT, "pair.jsonl")
 PAIR_ARTIFACT = os.path.join(OUT, "DCA-pair.json")
 
 
+def journal_of(key):
+    """Журнал СЕМЕЙСТВА книги. Одно место на всех читателей.
+
+    Журналов три, и выбирать между ними по памяти — способ однажды
+    показать пустую книгу: страница графика читала журнал длинных книг
+    для ЛЮБОЙ книги, и позиции коротких и общих на графике не
+    рисовались вовсе (владелец 2026-09-10: «пустой график»).
+    """
+    fam = family_of(key)
+    if fam == "h24":
+        return H24_JOURNAL
+    if fam == "pair":
+        return PAIR_JOURNAL
+    return JOURNAL
+
+
+def artifact_of(key):
+    """Артефакт СЕМЕЙСТВА книги: открытые позиции живут в нём, не в журнале."""
+    fam = family_of(key)
+    if fam == "h24":
+        return H24_ARTIFACT
+    if fam == "pair":
+        return PAIR_ARTIFACT
+    return ARTIFACT
+
+
 def floor_of(ruler):
     """Пол билета РЕЖИМА: биржевой минимум, переведённый в маржу.
 
