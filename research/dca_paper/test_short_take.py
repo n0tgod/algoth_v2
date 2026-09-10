@@ -97,10 +97,42 @@ def test_cell_stats_applies_the_book_rules_and_writes_nothing():
           f"исходы {sorted(c['exits'])}")
 
 
+def test_merge_keeps_cells_of_earlier_runs_and_names_the_missing():
+    """Ось считается частями — артефакт сливается, а отчёт это говорит.
+
+    Кусается: ячейка прежнего прогона не теряется и сохраняет СВОЮ дату;
+    заново посчитанная перекрывает старую; ячейки, которых ещё нет,
+    названы в отчёте — «не считали» не выдаётся за «не бывает».
+    """
+    with tempfile.TemporaryDirectory() as td:
+        art = os.path.join(td, "DCA-short-take.json")
+        first = {"cells": {"t05": {"a": 1}}, "computed_at": "2026-09-10 10:00",
+                 "takes": [{"key": "t05", "mult": 0.5}]}
+        got = ST.merge_artifact(dict(first), art)
+        import json as _j
+        with open(art, "w", encoding="utf-8") as f:
+            _j.dump(got, f, ensure_ascii=False)
+        second = {"cells": {"t1": {"a": 2}}, "computed_at": "2026-09-10 14:00",
+                  "takes": [{"key": "t1", "mult": 1.0}], "hold_h": 24}
+        m = ST.merge_artifact(dict(second), art)
+        assert set(m["cells"]) == {"t05", "t1"}, sorted(m["cells"])
+        assert m["cell_at"]["t05"] == "2026-09-10 10:00", m["cell_at"]
+        assert m["cell_at"]["t1"] == "2026-09-10 14:00", m["cell_at"]
+        assert [t["key"] for t in m["takes"]] == ["t05", "t1"], m["takes"]
+        txt = ST.report(m)
+        assert "Ось посчитана не целиком" in txt, txt[:400]
+        for mult in ("×1.5", "×2", "×3"):
+            assert mult in txt, mult
+        assert "РАЗНЫМИ прогонами" in txt
+    print("ok  слияние оси: ячейки прежних прогонов целы со своими датами, "
+          "недостающие названы в отчёте")
+
+
 if __name__ == "__main__":
     for t in (test_axis_lands_in_the_grid_of_the_replay,
               test_axis_does_not_leak_into_the_book_rule,
               test_pack_uses_the_map_of_the_run,
-              test_cell_stats_applies_the_book_rules_and_writes_nothing):
+              test_cell_stats_applies_the_book_rules_and_writes_nothing,
+              test_merge_keeps_cells_of_earlier_runs_and_names_the_missing):
         t()
-    print("\nвсе 4 проверки прошли")
+    print("\nвсе 5 проверок прошли")

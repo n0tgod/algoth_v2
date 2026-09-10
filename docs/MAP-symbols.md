@@ -2025,24 +2025,25 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L76 `report(s)`
 - L102 `main()`
 
-## research/dca_paper/short_take.py · 279 строк
+## research/dca_paper/short_take.py · 338 строк
 
 Множитель тейка на коротком листе `h24`: ось объявлена до прогона.
 
-- L44 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L45 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L64 `TAKES = (('t05', 0.5), ('t1', 1.0), ('t15', 1.5…` — Ось. Ключ ячейки — тот же язык, что у D10 (`плечо:доливы:цель`), и множители кладутся в ЕГО карту: цель счита…
-- L66 `MEM_LIMIT_MB = 1200`
-- L69 `cells(takes=TAKES)` — Ячейки оси в форме D10 и регистрация множителей в его карте.
-- L75 `replay(legs_, cl, src=None, log=print)` — Один проход по барам на ВСЕ ячейки оси: бары символа читаются раз.
-- L92 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
-- L98 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None)` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
-- L137 `run(limit=None, src=None, log=print, legs_=None, ctx=None, now=…`
-- L172 `_u(x)`
-- L176 `_p(x, d=1)`
-- L180 `report(s)`
-- L247 `publish(name)`
-- L253 `main(argv=None)`
+- L52 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L53 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L72 `TAKES = (('t05', 0.5), ('t1', 1.0), ('t15', 1.5…` — Ось. Ключ ячейки — тот же язык, что у D10 (`плечо:доливы:цель`), и множители кладутся в ЕГО карту: цель счита…
+- L74 `MEM_LIMIT_MB = 1200`
+- L77 `cells(takes=TAKES)` — Ячейки оси в форме D10 и регистрация множителей в его карте.
+- L83 `replay(legs_, cl, src=None, log=print)` — Один проход по барам на ВСЕ ячейки оси: бары символа читаются раз.
+- L100 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
+- L106 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None)` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
+- L145 `run(limit=None, src=None, log=print, legs_=None, ctx=None, now=…`
+- L180 `merge_artifact(s, path)` — Слить ячейки этого прогона с уже посчитанными.
+- L208 `_u(x)`
+- L212 `_p(x, d=1)`
+- L216 `report(s)`
+- L299 `publish(name)`
+- L305 `main(argv=None)`
 
 ## research/dca_paper/short_why.py · 358 строк
 

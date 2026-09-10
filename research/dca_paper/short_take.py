@@ -29,9 +29,17 @@
 эти часы видели, ось просмотрена целиком — оговорки те же, что у D10.
 
 Прогон читает БАРЫ (это не пересчёт кэша: другой тейк — другой исход
-позиции), поэтому он долгий и идёт со сторожем памяти.
+позиции), поэтому он долгий и идёт со сторожем памяти. Память растёт
+ЛИНЕЙНО с числом записей (решения × ячейки): вся ось разом на месячном
+листе упирается в предел, и первый прогон был остановлен на трети
+именно поэтому. Поэтому ось можно считать ЧАСТЯМИ (`--take`), а
+артефакт СЛИВАЕТСЯ: ячейка, посчитанная прежним прогоном, остаётся с
+собственной датой, а отчёт печатает, каких ячеек ещё нет. Ось от этого
+не меняется — меняется только порядок счёта.
 
-Запуск: `run research/dca_paper/short_take.py`. Смоук: `--limit 200`.
+Запуск: `run research/dca_paper/short_take.py` (вся ось) или частями:
+`run research/dca_paper/short_take.py --take t05 --take t1 --take t15`.
+Смоук: `--limit 200`.
 """
 import argparse
 import collections
@@ -169,6 +177,34 @@ def run(limit=None, src=None, log=print, legs_=None, ctx=None, now=None,
     return out
 
 
+def merge_artifact(s, path):
+    """Слить ячейки этого прогона с уже посчитанными.
+
+    Ось объявлена целиком, а считаться может частями (память): ячейка
+    прежнего прогона остаётся со СВОЕЙ датой, и отчёт не выдаёт разные
+    прогоны за один. Ячейка, посчитанная заново, перекрывает старую.
+    """
+    now = s.get("computed_at")
+    s["cell_at"] = {k: now for k in (s.get("cells") or {})}
+    if s.get("error") or not os.path.exists(path):
+        s["takes_all"] = [{"key": k, "mult": float(m)} for k, m in TAKES]
+        return s
+    try:
+        with open(path, encoding="utf-8") as f:
+            old = json.load(f)
+    except (OSError, ValueError):
+        old = {}
+    cells_ = dict(old.get("cells") or {})
+    at = dict(old.get("cell_at") or {})
+    cells_.update(s.get("cells") or {})
+    at.update(s["cell_at"])
+    s["cells"], s["cell_at"] = cells_, at
+    s["takes"] = [{"key": k, "mult": float(m)} for k, m in TAKES
+                  if k in cells_]
+    s["takes_all"] = [{"key": k, "mult": float(m)} for k, m in TAKES]
+    return s
+
+
 def _u(x):
     return "—" if x is None else f"{float(x):+.2f}"
 
@@ -199,6 +235,22 @@ def report(s):
           + f"; прогон {s.get('secs')} с.", ""]
     if s.get("costs_error"):
         L += [f"**Издержки не вычтены:** {s['costs_error']}.", ""]
+    have = {t["key"] for t in s.get("takes", [])}
+    miss = [t for t in s.get("takes_all", s.get("takes", []))
+            if t["key"] not in have]
+    if miss:
+        L += ["**Ось посчитана не целиком:** нет ячеек "
+              + ", ".join(f"×{t['mult']:g}" for t in miss)
+              + ". Это не «их не бывает» — их ещё не считали (память "
+              "прогона: ось идёт частями). Сравнивать можно только то, "
+              "что в таблице.", ""]
+    ca = s.get("cell_at") or {}
+    if len(set(ca.values())) > 1:
+        L += ["Ячейки считаны РАЗНЫМИ прогонами: "
+              + ", ".join(f"×{t['mult']:g} — {ca.get(t['key'], '—')}"
+                          for t in s.get("takes", []))
+              + ". Лист и правила у них одни, но окно записи у более "
+              "позднего прогона длиннее.", ""]
     deps = list(R.DEPOSITS)
     for bk in R.H24_ORDER:
         L += [f"## {R.ruler_title(bk)}", "",
@@ -253,6 +305,11 @@ def publish(name):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="множитель тейка на листе h24")
     ap.add_argument("--limit", type=int, default=None)
+    # Ось частями: аргументы очереди — только латиница, поэтому флаг
+    # повторяется, а не перечисляется запятыми.
+    ap.add_argument("--take", action="append", default=None,
+                    choices=[k for k, _m in TAKES],
+                    help="считать только эти ячейки оси (можно повторять)")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
     try:
@@ -260,8 +317,10 @@ def main(argv=None):
     except Exception:                                        # noqa: BLE001
         pass
     os.makedirs(R.OUT, exist_ok=True)
-    s = run(limit=a.limit)
+    want = ([t for t in TAKES if t[0] in set(a.take)] if a.take else TAKES)
+    s = run(limit=a.limit, takes=want)
     art = os.path.join(R.OUT, "DCA-short-take.json")
+    s = merge_artifact(s, art)
     with open(art + ".tmp", "w", encoding="utf-8") as f:
         json.dump(s, f, ensure_ascii=False)
     os.replace(art + ".tmp", art)

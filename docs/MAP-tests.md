@@ -1252,7 +1252,7 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
-## research/dca_paper/test_short_take.py · 106 строк
+## research/dca_paper/test_short_take.py · 138 строк
 
 Проверки замера множителя тейка на коротком листе.
 
@@ -1266,6 +1266,7 @@
 - L53 `test_axis_does_not_leak_into_the_book_rule()` — Ось замера не меняет правило книги: множитель книги остаётся своим.
 - L68 `test_pack_uses_the_map_of_the_run()`
 - L82 `test_cell_stats_applies_the_book_rules_and_writes_nothing()`
+- L100 `test_merge_keeps_cells_of_earlier_runs_and_names_the_missing()` — Ось считается частями — артефакт сливается, а отчёт это говорит.
 
 ## research/dca_paper/test_short_why.py · 155 строк
 
