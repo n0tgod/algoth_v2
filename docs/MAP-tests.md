@@ -1251,6 +1251,21 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
+## research/dca_paper/test_short_take.py · 106 строк
+
+Проверки замера множителя тейка на коротком листе.
+
+- L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L15 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L24 `H = 3600.0`
+- L25 `DAY = 86400.0`
+- L26 `T0 = TP.T0`
+- L27 `DEP = R.DEPOSITS[1]`
+- L30 `test_axis_lands_in_the_grid_of_the_replay()`
+- L53 `test_axis_does_not_leak_into_the_book_rule()` — Ось замера не меняет правило книги: множитель книги остаётся своим.
+- L68 `test_pack_uses_the_map_of_the_run()`
+- L82 `test_cell_stats_applies_the_book_rules_and_writes_nothing()`
+
 ## research/dca_paper/test_short_why.py · 155 строк
 
 Проверки замера «почему у короткой книги просадка».
