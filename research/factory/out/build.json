@@ -1,158 +1,128 @@
 {
  "built": true,
- "module": "research/mech_a82dcf58/run_twin.py",
- "tests": "research/mech_a82dcf58/test_twin.py",
- "touched": [
-  "research/mech_a82dcf58/twin.py",
-  "research/mech_a82dcf58/controls_check.py",
-  "research/mech_a82dcf58/RUNBOOK.md",
-  "research/mech_a82dcf58/.gitignore"
- ],
+ "module": "research/mech_13a67a67/age_mode.py",
+ "tests": "research/mech_13a67a67/test_age_mode.py",
  "controls": [
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    return {\"off\": [float(p) / entry - 1.0 for p in rungs],",
-   "new": "    return {\"off\": [float(p) - entry for p in rungs],",
-   "expect": "test_geometry_is_in_fractions_of_entry"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "            \"take\": float(take_px) / entry - 1.0,",
-   "new": "            \"take\": float(take_px) - entry,",
-   "expect": "test_take_travels_as_a_fraction"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "        if s in gated or s in non_crypto:",
-   "new": "        if s in non_crypto:",
-   "expect": "test_pool_excludes_gated_picks"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "        if s in gated or s in non_crypto:",
-   "new": "        if s in gated:",
-   "expect": "test_pool_excludes_non_crypto"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "            and pick_dec is not None and d == pick_dec]",
-   "new": "            ]",
-   "expect": "test_twins_come_from_the_pick_decile"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    if edges is None or x is None or x != x:",
-   "new": "    if edges is None or x is None:",
-   "expect": "test_decile_of_sigma_inside_the_hour"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    return np.random.default_rng([int(seed), int(draw), int(leg_id)])",
-   "new": "    return np.random.default_rng()",
-   "expect": "test_draws_are_assigned_in_advance_by_seed"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    s_bp, _rng, _turn = D3.window_stats(win, now_i)",
-   "new": "    s_bp, _rng, _turn = D3.window_stats(win, len(win) - 1)",
-   "expect": "test_sigma_does_not_look_into_the_future"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    lv = D2.build_levels(win, now_i)",
-   "new": "    lv = D2.build_levels(win, len(win) - 1)",
-   "expect": "test_own_geometry_does_not_look_into_the_future"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    if not (fav is not None and float(fav) > 0):",
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    return TR.hour_end((line or {}).get(\"hour\"))",
+   "new": "    return (line or {}).get(\"at_ts\")",
+   "expect": "ПРОВАЛ будущее_не_меняет_прошлого"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    return float(got) if side == \"long\" else -float(got)",
+   "new": "    return float(got)",
+   "expect": "ПРОВАЛ знак_стороны_у_хода"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    return None if v.size == 0 else float(np.mean(v > 0))",
+   "new": "    return None if v.size == 0 else float(np.mean(v >= 0))",
+   "expect": "ПРОВАЛ ничья_не_попадание"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "        return {\"n\": 0, \"hit\": None, \"hit_raw\": None, \"fav_med\": None,\n                \"fav_mean\": None, \"got_med\": None, \"got_mean\": None,\n                \"net_n\": 0, \"net_med\": None, \"net_mean\": None}",
+   "new": "        return {\"n\": 0, \"hit\": 0.0, \"hit_raw\": 0.0, \"fav_med\": 0.0,\n                \"fav_mean\": 0.0, \"got_med\": 0.0, \"got_mean\": 0.0,\n                \"net_n\": 0, \"net_med\": 0.0, \"net_mean\": 0.0}",
+   "expect": "ПРОВАЛ пустая_ячейка_прочерк"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    if why[\"строк\"] and not out:",
    "new": "    if False:",
-   "expect": "test_own_geometry_says_why_it_is_absent"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    ok = cover >= COVER_MIN",
+   "expect": "ПРОВАЛ отказ_вместо_пустоты"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    if age is None:\n        return None",
+   "new": "    if age is None:\n        return YOUNG",
+   "expect": "ПРОВАЛ возраст_неизвестен_своя_полоса"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "YOUNG_MAX_D = BAND_EDGES[2]                       # 7 суток",
+   "new": "YOUNG_MAX_D = 14.0                                # 7 суток",
+   "expect": "ПРОВАЛ полосы_вердикта_объявлены"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    res = {\"n_young\": ny, \"n_old\": no, \"measured\": ny >= MIN_CHOICES\n           and no >= MIN_CHOICES, \"alive\": False, \"killer\": None,",
+   "new": "    res = {\"n_young\": ny, \"n_old\": no, \"measured\": True,\n           \"alive\": False, \"killer\": None,",
+   "expect": "ПРОВАЛ порог_измеримости_кусается"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    if diff < MIN_DIFF_PP:",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ разность_ниже_порога_убивает"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    covers = [b for b in boots if b.get(\"covers_zero\") is not False]",
+   "new": "    covers = []",
+   "expect": "ПРОВАЛ интервал_поверх_нуля_убивает"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    covers = [b for b in boots if b.get(\"covers_zero\") is not False]",
+   "new": "    covers = [b for b in boots if b.get(\"covers_zero\") is True]",
+   "expect": "ПРОВАЛ интервала_нет_не_значит_нуля"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    if len(vals) < BOOT_MIN_USED * int(reps):",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ слабый_бутстрап_прочерк"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    if dm < 0.0 < da:",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ лотерея_вердикта_не_выносит"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "            idx = rng.integers(0, n, n)",
+   "new": "            idx = np.arange(n)",
+   "expect": "ПРОВАЛ час_единица_независимости"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "        f\"{100 * old_cell['hit']:.1f} % против {100 * young_cell['hit']:.1f} % \"",
+   "new": "        \"60.0 % против 50.0 % \"",
+   "expect": "ПРОВАЛ фраза_вердикта_из_чисел"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "        if band_key(c.get(\"age\")) == YOUNG:",
+   "new": "        if False:",
+   "expect": "ПРОВАЛ калибровка_подсадка_переворачивает"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "                     got=float(c[\"got\"])\n                     + (float(bp) if c[\"side\"] == \"long\" else -float(bp)))",
+   "new": "                     got=float(c[\"got\"]) + float(bp))",
+   "expect": "ПРОВАЛ калибровка_подсадка_ложится"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "        by.setdefault(c[\"hour\"], []).append(i)\n    out = [dict(c) for c in chs]",
+   "new": "        by.setdefault(\"всё разом\", []).append(i)\n    out = [dict(c) for c in chs]",
+   "expect": "ПРОВАЛ калибровка_перемешивание_внутри_часа"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "        perm = rng.permutation(len(idx))",
+   "new": "        perm = np.arange(len(idx))",
+   "expect": "ПРОВАЛ калибровка_перемешивание_уравнивает"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    mine = [r for r in recs if r.get(\"side\") == side]\n    other = [r for r in recs if r.get(\"side\") != side]",
+   "new": "    mine = list(recs)\n    other = []",
+   "expect": "ПРОВАЛ сторона_фильтра_не_трогает_чужую"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    keep, why = PA.pick(mine, launch, min_days, seed=seed,\n                        n_random=n_random)",
+   "new": "    keep, why = PA.pick(recs, launch, min_days, seed=seed,\n                        n_random=n_random)",
+   "expect": "ПРОВАЛ контроль_размера_из_своей_стороны"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    return round(float(np.mean(np.array(v, dtype=float) >= float(base))), 3)",
+   "new": "    return round(float(np.mean(np.array(v, dtype=float) > float(base))), 3)",
+   "expect": "ПРОВАЛ ничья_контроля_фильтру_не_в_зачёт"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    if not fin or not dd:\n        return None",
+   "new": "    if not fin or not dd:\n        return 0.0",
+   "expect": "ПРОВАЛ отношение_без_просадки_прочерк"},
+
+  {"file": "research/mech_13a67a67/age_mode.py",
+   "old": "    ok = worst[\"beat_ratio\"] < max_beat",
    "new": "    ok = True",
-   "expect": "test_coverage_gates_the_verdict_with_a_number"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    fails = [k for k in need if not have[k][\"beats\"]]",
-   "new": "    fails = []",
-   "expect": "test_verdict_choice_is_derived_from_numbers"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    if not pos[\"same_sign\"]:",
-   "new": "    if False:",
-   "expect": "test_pair_killer_needs_both_median_and_mean"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    for key, low in ((\"med\", False), (\"worst\", False), (\"bite\", True)):",
-   "new": "    for key, low in ((\"med\", False), (\"worst\", False), (\"bite\", False)):",
-   "expect": "test_form_killer_reads_bite_the_right_way"
-  },
-  {
-   "file": "research/mech_a82dcf58/twin.py",
-   "old": "    a = (nulls or {}).get(\"no_top3_days\")",
-   "new": "    a = (nulls or {}).get(\"tot\")",
-   "expect": "test_concentration_killer_uses_no_top3_days"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "            res = memo[r] = T.sim(hold, rungs, st[\"lev\"], mmr, take)",
-   "new": "            res = memo[r] = T.sim(hold, rungs, 1.0, mmr, take)",
-   "expect": "test_twin_gets_the_pick_leverage_and_tier"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "            mmr = st[\"mmr\"] if mmr_from == \"pick\" else float(",
-   "new": "            mmr = T.FLAT_MMR if mmr_from == \"pick\" else float(",
-   "expect": "test_twin_mmr_comes_from_the_pick_not_from_its_own_tier"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "    R_M = np.full((n, d), np.nan, dtype=np.float64)",
-   "new": "    R_M = np.zeros((n, d), dtype=np.float64)",
-   "expect": "test_missing_twin_bars_are_a_dash_not_zero"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "    if not n:\n        out[\"refused\"] = (",
-   "new": "    if False:\n        out[\"refused\"] = (",
-   "expect": "test_refuses_instead_of_reporting_emptiness"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "    if int(draws) < T.MIN_DRAWS:",
-   "new": "    if False:",
-   "expect": "test_refuses_when_draws_are_too_few"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "    for name, m in ((\"ladder\", kk >= 2), (\"no_ladder\", kk < 2)):",
-   "new": "    for name, m in ((\"ladder\", kk >= 2),):",
-   "expect": "test_no_ladder_positions_are_counted_apart"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "            px = T.lift_to_take([x[4] for x in b], i_at, up=up)",
-   "new": "            px = [x[4] for x in b]",
-   "expect": "test_calibration_finds_the_planted_move_and_is_quiet_on_noise"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "    if rss > limit:",
-   "new": "    if False:",
-   "expect": "test_memory_self_stop_names_the_number"
-  },
-  {
-   "file": "research/mech_a82dcf58/run_twin.py",
-   "old": "    for key, IDX, RR, XX in ((\"t1\", PT, res[\"R_P\"], res[\"X_P\"]),\n                             (\"t2\", MT, res[\"R_2\"], res[\"X_2\"])):",
-   "new": "    for key, IDX, RR, XX in ((\"t1\", PT, res[\"R_P\"], res[\"X_P\"]),):",
-   "expect": "test_concentration_columns_stand_at_every_arm"
-  }
+   "expect": "ПРОВАЛ вердикт_переноса_из_чисел"}
  ],
- "notes": "ПОСТРОЕНО ЦЕЛИКОМ. Ядро `twin.py` (чистые функции: геометрия в долях цены входа и её пересадка, пул часа с двумя запретами, децили σ, заранее назначенные розыгрыши, четыре убийцы, калибровочная пара), прогон `run_twin.py` (журнал листов, два прохода по записи, касса, нуль по розыгрышам, отчёт), сюита `test_twin.py` (26 проверок, 4.6 с), повторяемая машина контролей `controls_check.py`, `RUNBOOK.md`. Второй копии ядра нет: деньги позиции — `ladder.simulate_dca`; нуль по розыгрышам, парный бутстрап и сводка руки — `mech_49b535f8/place`; σ — `run_d3.window_stats`; уровни — `run_d2.build_levels`; касса всех рук одна — `mech_49b535f8/run_place.day_form` (билет `dca_paper/rules`, одна позиция на имя `run_d6`, форма `factory/stability`); не-крипто — `common/universe_filter`. Пороги ячейки вердикта взяты У ХОЗЯЕВ (D2), заново не назначались. КОНТРОЛИ: 24 из 24 кусаются, каждый роняет ИМЕННО названную проверку (≈190 с всего, при бюджете приёмки 1800 с); файлы после машины восстановлены, остаточных подделок ноль. КАЛИБРОВКА пройдена (`out/TWIN-calibration.md`): подделка легла на +20 %, подсаженное найдено (S медиана +0.880 % против края +0.599 %, среднее +0.857 % против +0.475 %), на шуме молчит (−0.036 % и −0.009 %, оба не выше края). НАЙДЕНО И ПОЧИНЕНО: прошлый заход строителя оборвался ПОСРЕДИ машины контролей, и `finally` не отработал — `twin.py` остался в подделанном виде (`verdict_conc` читала колонку `tot` вместо `no_top3_days`, то есть убийца 4 судил бы ИТОГ, называя его «без 3 лучших суток»). Строка восстановлена, сюита зелёная; остальные 23 подделки проверены на месте — residue был один. ВТОРОЙ ДЕФЕКТ, найденный и починенный: машина контролей механики расходилась с приёмкой и расходилась в ПОДДАТЛИВУЮ сторону. Приёмка (`runlog._run_tests`) смотрит ПОСЛЕДНИЕ 4000 символов вывода сюиты, а своя копия запускалки — весь вывод; сюита печатает 11 418 символов, и `expect` вида «ПРОВАЛ имя», стоящий в середине, в окно приёмки не попадал. Контроль 20 своя машина объявляла кусающимся, приёмка — «упало не то»; подделка при этом кусалась по-настоящему (код возврата 1, падала ровно названная проверка), лгало сравнение. Починено двумя ходами: `controls_check.run_suite` теперь ЗОВЁТ `runlog._run_tests`, а не повторяет его (второй копии правила нет), и все 24 `expect` переписаны на ГОЛОЕ имя проверки — итоговая строка сюиты «провалено N из M: имена» печатается последней и в окно попадает всегда, а различать контроли она позволяет так же строго (перечислены ровно упавшие). После правки обе машины согласны: 24 из 24 кусаются, `runlog.check_build` отвечает ПРИНЯТО. ТРАКТОВКИ, названные словами, а не выбранные молча: (1) ставка тира двойника — заявка говорит «меняется только имя с его ЦЕНОВЫМ ПУТЁМ», а MMR путём не является, поэтому ячейка вердикта пересаживает MMR ВЫБОРА (`MMR_FROM = \"pick\"`), доля пар с расходящейся ставкой печатается числом, а ключ `--mmr own` считает вторую версию ТЕМ ЖЕ кодом; (2) издержки не снимаются (как в D2) — у S и двойника они одинаковы по построению, пару не двигают, и абсолютные числа рук поэтому брутто, что сказано в отчёте; (3) `touched` несёт остальные файлы своего каталога — так же, как у принятой постройки 49b535f8, иначе `publish_build` оставил бы `twin.py`-соседей на сервере. ЧЕГО НЕТ: боевой прогон не запускался. По RUNBOOK он стоит 2–2.5 ч (два прохода по 4.5 ГБ записи принтов) — это больше «≤ 2 ч» заявки, и число печатается отчётом по факту (`secs`), а не берётся из прозы. Рядом сейчас идут сборщик стакана и суточный турнир, а тяжёлый прогон убивает не себя, а ЦИКЛ: у прогона есть свой предел памяти (0.6 доступной) и самоостанов, команда запуска — в RUNBOOK. ДОРОГА НА НАСТОЯЩИХ ДАННЫХ проверена ЧАСТИЧНО, и вот чем именно. Смоук (`--stride 40 --draws 20`) прочитал настоящий журнал листов и напечатал состав: ног 1 039 542, лонгов под гейтом книги 8 704, после прорежения 218, сечений часов 146, кандидатов после запретов 65 221 (не-крипто в справочнике 184); сторож памяти пропустил прогон числом (нужно ~1300 МБ, доступно 3610), предел прогона выведен (1783 МБ). Дальше проход 1 дошёл до символа 21 из 585, и я СНЯЛ прогон: под `nice 19` рядом с суточным турниром выходило по символу за ~2 минуты, то есть 3–4 часа на СМОУК, а тяжёлый прогон рядом с часовым циклом убивает не себя, а цикл (урок 2026-09-06). Что дорога проходится целиком, показывает состояние ПРОШЛОГО захода, найденное на диске: `out/state-smoke.json` стоял на шаге `twins` — проход 2, символ 302 из 515, измеримых пар 353, — то есть проход 1 на настоящих данных отработал полностью, а проход 2 шёл. НЕ пройдена на настоящих данных последняя ступень (сводки, нуль по розыгрышам, касса, вердикт, отчёт); она закрыта сквозным тестом на синтетике (`test_end_to_end`: 8 позиций, покрытие 100 %, 20 книг-двойников, касса $10 000 / билет $25, вердикт и отчёт на 5 816 символов). Кэш σ (515 файлов) держит всего по 8 меток времени от раннего малого зонда, поэтому промахи смоука законны — ключ (версия меры, BACK_H) совпадает, не совпадают часы. Боевой прогон запускать при тихой машине, команда — в RUNBOOK."
+ "touched": [],
+ "notes": "Построено целиком: ядро research/mech_13a67a67/age_mode.py (чистые функции: разбор журналов разбора в выборы, доля попаданий, бутстрап разности двумя единицами, три убийцы вердикта, калибровочная пара, сторона у фильтра возраста), прогон run_age_mode.py (шаг 1 — ячейки и вердикт, шаг 2 — перенос на длинную сторону с контролем случайной выборки того же размера на 200 зёрнах, отчёт, публикация, сторож памяти, состояние файлом, отцепленный запуск), сюита test_age_mode.py (33 проверки, 1 с), машина подделок controls_check.py и RUNBOOK.md. Приёмка runlog.check_role('build') выполнена, все 24 контроля кусаются (45 с на круг).\n\nДВЕ ПОПРАВКИ К ЗАДАНИЮ, и обе с числами, а не с мнением. (1) Задание велит брать возраст «на момент at_ts строки», но at_ts — момент, когда разбор ЗАПИСАН (s8_loop/train.py: «Момент записи разбора»), то есть уже после горизонта книги; у ситуационного листа строки живого сторожа кладут туда time.time() момента ВЫХОДА (s8_loop/sit_absorb.py:192). Возраст по at_ts есть возраст из будущего: на текущей записи полосу сменил бы 191 выбор из 14503, а в спорной полосе у коротких h24 226 превратились бы в 128. Момент решения взят из метки часа через trades.hour_end(hour) — то же, что называют словами и задание, и заявка («НА МОМЕНТ РЕШЕНИЯ»). На этом стоит проверка заглядывания в будущее (переписать at_ts — ни одно число не шелохнётся) и её негативный контроль. (2) Задание называет мерой буквальное P(got > 0), но got журнала разбора — СЫРОЙ ход цены (train.py:1123 got = y[i, j]); знак стороны появляется только в net = (1 если long иначе -1) * got - ROUND_COST_BP. У шортов буквальная формула мерила бы долю ПРОМАХОВ: на листе h24 она даёт 33.6 % там, где по стороне 66.4 % (и в плюсе шорты h24 у проекта уже измерены кассой, side_split +771 $). Слова задания и заявки («ход в сторону прогноза», «б.п. цены в сторону сделки») противоречат их же формуле — взяты слова, а буквальная доля печатается ОТДЕЛЬНОЙ колонкой в каждой ячейке, чтобы расхождение было видно числом.\n\nЧЕГО НЕ СДЕЛАНО ТАК, КАК ВЕЛЕНО, и почему. Задание требует «расширить pair_age.pick параметром стороны, не копировать». Прямо править research/dca_paper/pair_age.py нельзя: публикация роли (research/factory/publish_build.py, ALLOWED_PREFIX плюс каталог механики) выпускает только research/factory/ и research/mech_13a67a67/, и правка dca_paper осталась бы на сервере — прогон был бы, а в ветке пусто (тот самый отказ 03.09). Сторона добавлена обёрткой age_mode.pick_side: она делит записи по стороне и отдаёт сам фильтр возраста и контроль размера НЕИЗМЕННОМУ pair_age.pick — второй копии правила не заведено, и два контроля («сторона_фильтра_не_трогает_чужую», «контроль_размера_из_своей_стороны») кусаются именно на этом. Если владелец захочет параметр в самом pair_age.pick, это правка роли fix в каталоге dca_paper, и она сводится к переносу трёх строк обёртки.\n\nЧЕГО НЕ ПОСТРОЕНО. Шаг 3 (IC полной кросс-секции по полосам возраста из журнала листов) не построен — заявка объявила его диагностикой, а не вердиктом, и велела считать только если шаги 1–2 выжили; он требует баров и дороги двойника mech_a82dcf58. Это отложено, а не пропущено молча: отчёт печатает строку о том, что шаг 3 не считался.\n\nТРАКТОВКА, КОТОРУЮ РОЛЬ НЕ ВЫБИРАЛА МОЛЧА. Заявка объявила перенос следствием утверждения «прогноз не несёт информации НИ НА ОДНОЙ стороне», но перенос трогает только ДЛИННУЮ сторону. Мыслимы двое ворот: обе стороны разом или одна длинная. Реализованы первые (буквальное чтение), а второе печатается рядом числом в самом отчёте; на сегодняшней записи обе трактовки закрыты одинаково, так что выбор ничего не решает. Флаг --force-transfer считает шаг 2 вопреки вердикту (проверка дороги), и отчёт помечает такие числа отдельной строкой как непригодные для правила.\n\nДЫМОВОЙ ПРОГОН, НЕ ВЕРДИКТ (боевой прогон — задание очереди, отчёт пишет он). Шаг 1 на настоящих журналах идёт 8 с и 280 МБ; выборов 14503, возраст неизвестен у 0, калибровочная пара годна на обеих сторонах. Числа дороги не публикуются ролью строителя и здесь приведены только как доказательство, что дорога считает: лонги 6343/232 выбора, шорты 5852/579 — обе стороны выше порога измеримости 100. Шаг 2 на 3 зёрнах и --force-transfer проходит целиком (три режима, 7348 длинных решений, снято по возрасту 17).\n\nЧЕГО МЕХАНИКА НЕ ТРОГАЕТ: книги не заводит, в пул кандидатов не входит, ключей биржи, живого исполнителя, записи стакана, журнала объявлений и белого списка живых денег не касается; журналы разбора и кэши реплея только читает. Просьб к владельцу нет — все данные на диске."
 }
