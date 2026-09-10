@@ -12,3 +12,18 @@
 готово: /root/algoth_v2/research/a2_storage/out/A2-refresh-1m.json (0.3 мин)
   край хранилища НЕ сдвинулся (2026-08-26) при 0 скачанных файлах — докачка не дошла до партиций
 публикую отчёт
+публикуется в ветку main:
+ jobs/done/diag-a2-edge.done                |  1 +
+ jobs/done/diag-a2-edge.log                 | 14 ++++++++++++++
+ jobs/done/floor-run-1.done                 |  1 +
+ jobs/done/floor-run-1.log                  | 27 +++++++++++++++++++++++++++
+ jobs/poke.log                              |  6 ++++++
+ research/a2_storage/out/A2-refresh-1m.json |  4 ++--
+ research/a2_storage/out/A2-refresh-1m.md   |  4 ++--
+ research/s8_loop/out/day_brake.json        |  2 +-
+ 8 files changed, 54 insertions(+), 5 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   41aa3750..fa34fb44  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-10T22:15:25Z, код 0
