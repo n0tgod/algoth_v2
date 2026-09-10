@@ -1310,3 +1310,6 @@ _: line 3: 1609538 Killed                  .venv/bin/python "$@" >> "$log" 2>&1
 == сигнал 1789048135 ==
 [2026-09-10T13:48:56Z] задание stop-take-1 запущено: tools/stop_run.py
 Terminated
+
+== сигнал 1789048235 ==
+[2026-09-10T13:50:37Z] задание short-take-a запущено: research/dca_paper/short_take.py
