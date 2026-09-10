@@ -151,3 +151,14 @@ h24/nn: часов 639, коротких выборов 1917, ног под кр
 - Ячейка правилом НЕ назначается: лучшая из просмотренных — ошибка R5. Правилом станет только объявленное заранее и проверенное вперёд.
 - Окно одно, веса модели эти часы видели: это оценка сверху.
 
+публикуется в ветку main:
+ jobs/done/short-take-b.log                 | 113 +++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-short-take.json |   2 +-
+ research/dca_paper/out/DCA-short-take.md   |  31 +++++++-
+ research/s8_loop/out/day_brake.json        |   2 +-
+ 4 files changed, 144 insertions(+), 4 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   5f5cebe6..7734cad8  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-10T14:44:45Z, код 0
