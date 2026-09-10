@@ -123,6 +123,57 @@ def test_live_symbols_snapshot_horizon_is_not_a_death_date():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_liquidity_refresh_is_part_of_the_chain():
+    """Свежие бары без свежей ликвидности — тот же мёртвый контур.
+
+    Второй слой отказа 31.08–10.09: край починили, а решения всё равно
+    умирали «живых и ликвидных имён меньше пола», потому что таблица
+    ликвидности — тоже снимок. Проверяются и сама команда пересборки,
+    и ДОРОГА до вызова (урок сторожа ядра: функция без дороги — отказ,
+    неотличимый от тишины): main обязан позвать пересборку, когда
+    скачал файлы, и не звать, когда качать было нечего.
+    """
+    calls = []
+    ok = RF.refresh_liquidity("1m", run=lambda c: calls.append(c) or 0,
+                              log=lambda m: None)
+    check("команда пересборки — liquidity.py нужного интервала",
+          ok and calls and calls[0][1].endswith("liquidity.py")
+          and calls[0][-1] == "1m", f"{calls}")
+    said = []
+    RF.refresh_liquidity("1m", run=lambda c: 1, log=said.append)
+    check("отказ пересборки кричит про книгу",
+          any("НЕ ПЕРЕСОБРАНА" in m for m in said), f"{said}")
+
+    # Дорога: main зовёт пересборку после успешной докачки.
+    tmp = tempfile.mkdtemp()
+    was = dict(fetch=RF.fetch_all, edge=RF.storage_edge,
+               rb=RF.rebuild, liq=RF.refresh_liquidity,
+               syms=RF.live_symbols, pub=RF.R.publish)
+    hit = []
+    try:
+        RF.storage_edge = lambda *a, **k: date.today() - timedelta(days=3)
+        RF.live_symbols = lambda **k: ["AAAUSDT"]
+        RF.fetch_all = lambda *a, **k: (5, 0)
+        RF.rebuild = lambda *a, **k: None
+        RF.refresh_liquidity = lambda iv, **k: hit.append(iv) or True
+        old_argv = sys.argv
+        sys.argv = ["refresh.py", "--out", tmp, "--no-publish"]
+        RF.main()
+        check("докачка с файлами пересобирает ликвидность",
+              hit == ["1m"], f"{hit}")
+        hit.clear()
+        RF.storage_edge = lambda *a, **k: date.today() - timedelta(days=1)
+        RF.main()
+        check("свежее хранилище ликвидность не трогает",
+              hit == [], f"{hit}")
+    finally:
+        sys.argv = old_argv
+        RF.fetch_all, RF.storage_edge = was["fetch"], was["edge"]
+        RF.rebuild, RF.refresh_liquidity = was["rb"], was["liq"]
+        RF.live_symbols, RF.R.publish = was["syms"], was["pub"]
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def make_zip(path, rows):
     """Суточный/месячный архив в формате Binance."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -370,6 +421,7 @@ def main():
     test_max_days_guard()
     test_live_symbols_skips_the_dead()
     test_live_symbols_snapshot_horizon_is_not_a_death_date()
+    test_liquidity_refresh_is_part_of_the_chain()
     print("готовность партиции")
     test_readiness_accounts_for_new_files()
     print("край хранилища")

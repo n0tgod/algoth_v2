@@ -237,6 +237,35 @@ def report(art, path):
     open(path, "w", encoding="utf-8").write("\n".join(L) + "\n")
 
 
+def refresh_liquidity(interval, run=None, log=print):
+    """Пересобрать подневную ликвидность после сдвига края.
+
+    Книга отбирает сечение через `daily_liquidity_*.csv.gz`, и эта
+    таблица — ТОЖЕ снимок: свежие бары без свежей ликвидности двигают
+    край, а решения всё равно умирают через несколько дней отказом
+    «живых и ликвидных имён меньше пола» (staleness растворяет долю
+    торговавшихся дней в 90-дневном окне). Ровно так контур встал
+    вторым слоем 31.08–10.09 сразу после починки первого. Докачка
+    обязана оставлять данные ГОТОВЫМИ ДЛЯ КНИГИ, а не только полными.
+
+    Отказ пересборки не роняет докачку — бары уже на диске и край
+    сдвинут, — но печатается громко: молчаливый пропуск этого шага
+    и есть бомба, которую он обезвреживает.
+    """
+    import subprocess
+    cmd = [sys.executable,
+           os.path.join(RESEARCH, "asset_groups", "liquidity.py"),
+           "--interval", interval]
+    run = run or (lambda c: subprocess.run(c, cwd=RESEARCH).returncode)
+    rc = run(cmd)
+    if rc == 0:
+        log("  ликвидность пересобрана до свежего края")
+    else:
+        log(f"  ЛИКВИДНОСТЬ НЕ ПЕРЕСОБРАНА (код {rc}) — книга "
+            f"перестанет записывать решения через несколько дней")
+    return rc == 0
+
+
 def main():
     R.unbuffer_output()
     ap = argparse.ArgumentParser()
@@ -268,6 +297,10 @@ def main():
         months = {d.isoformat()[:7] for d in days}
         print(f"скачано {got}, нет в архиве {missing}")
         rebuild(months, a.interval)
+        # Ликвидность — ЧАСТЬ готовности данных для книги, не довесок:
+        # без неё свежий край бесполезен (отказ «имён меньше пола»).
+        if got:
+            refresh_liquidity(a.interval)
 
     edge2 = storage_edge(a.interval)
     moved = edge2 is not None and edge is not None and edge2 > edge

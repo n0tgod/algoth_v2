@@ -459,7 +459,7 @@ A2 — отчёт о гигиене данных.
 - L343 `quantiles(vals, qs=(0.05, 0.25, 0.5, 0.75, 0.95))`
 - L350 `main()`
 
-## research/a2_storage/refresh.py · 303 строк
+## research/a2_storage/refresh.py · 336 строк
 
 Ежедневная докачка хранилища A2 свежими барами Binance.
 
@@ -478,7 +478,8 @@ A2 — отчёт о гигиене данных.
 - L165 `fetch_all(symbols, days, interval, workers=WORKERS, log=print)` — Скачать суточные файлы. Возвращает (скачано, отсутствует).
 - L190 `rebuild(months, interval, log=print)` — Пересобрать партиции месяцев ТЕМ ЖЕ `build.py`.
 - L211 `report(art, path)`
-- L240 `main()`
+- L240 `refresh_liquidity(interval, run=None, log=print)` — Пересобрать подневную ликвидность после сдвига края.
+- L269 `main()`
 
 ## research/a2_storage/report.py · 295 строк
 

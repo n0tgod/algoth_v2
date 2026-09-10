@@ -155,7 +155,7 @@
   - L234 `Normalize.test_largest_multiplier_wins(self)`
   - L239 `Normalize.test_plain_symbol(self)`
 
-## research/a2_storage/test_refresh.py · 391 строк
+## research/a2_storage/test_refresh.py · 443 строк
 
 Тесты докачки хранилища A2.
 
@@ -167,15 +167,16 @@
 - L57 `test_max_days_guard()` — Предохранитель: докачка не превращается в повторный прогон A1.
 - L63 `test_live_symbols_skips_the_dead()`
 - L92 `test_live_symbols_snapshot_horizon_is_not_a_death_date()` — Дефект, остановивший докачку на второй день её жизни.
-- L126 `make_zip(path, rows)` — Суточный/месячный архив в формате Binance.
-- L139 `build_store(tmp, interval='1m', extra_day=False, gap_day=False)` — Сырьё месяца и сборка партиции НАСТОЯЩИМ build.py.
-- L169 `test_readiness_accounts_for_new_files()` — Дозакачанный день ОБЯЗАН вызвать пересборку партиции.
-- L216 `test_storage_edge_reads_a_real_partition()` — Край читается с НАСТОЯЩЕЙ партиции и без сторонних модулей.
-- L242 `test_edge_is_the_end_of_CONTINUOUS_coverage()` — Край — конец НЕПРЕРЫВНОГО покрытия, а не максимальная метка.
-- L266 `test_days_pilot_takes_the_FIRST_days()` — Пилот берёт дни ОТ КРАЯ, а не с конца: иначе он сам делает дыру.
-- L274 `test_watchdog_daily_window()` — Секция сторожа гоняется НАСТОЯЩИМ блоком скрипта с заглушками.
-- L358 `test_verdict_says_when_edge_did_not_move()` — Неподвижный край при непустой докачке — отказ, и он называется.
-- L367 `main()`
+- L126 `test_liquidity_refresh_is_part_of_the_chain()` — Свежие бары без свежей ликвидности — тот же мёртвый контур.
+- L177 `make_zip(path, rows)` — Суточный/месячный архив в формате Binance.
+- L190 `build_store(tmp, interval='1m', extra_day=False, gap_day=False)` — Сырьё месяца и сборка партиции НАСТОЯЩИМ build.py.
+- L220 `test_readiness_accounts_for_new_files()` — Дозакачанный день ОБЯЗАН вызвать пересборку партиции.
+- L267 `test_storage_edge_reads_a_real_partition()` — Край читается с НАСТОЯЩЕЙ партиции и без сторонних модулей.
+- L293 `test_edge_is_the_end_of_CONTINUOUS_coverage()` — Край — конец НЕПРЕРЫВНОГО покрытия, а не максимальная метка.
+- L317 `test_days_pilot_takes_the_FIRST_days()` — Пилот берёт дни ОТ КРАЯ, а не с конца: иначе он сам делает дыру.
+- L325 `test_watchdog_daily_window()` — Секция сторожа гоняется НАСТОЯЩИМ блоком скрипта с заглушками.
+- L409 `test_verdict_says_when_edge_did_not_move()` — Неподвижный край при непустой докачке — отказ, и он называется.
+- L418 `main()`
 
 ## research/a4_cointegration/test_coint.py · 193 строк
 
