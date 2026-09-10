@@ -7217,6 +7217,10 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                     "fav_bp": -500.0, "entry_px": 2.0, "exit_px": 1.8,
                     "avg": 2.0, "depth": 2,
                     "fills": [[t0, 2.0, 0.25], [t0 + 600, 2.2, 0.25]],
+                    # версия правил СЕМЕЙСТВА — так пишет живой прогон
+                    # (`run_paper`): фикстура без неё выглядела бы
+                    # строкой прежних правил и в книгу бы не вошла
+                    "book_rules": DR.family_rules("optimal_h"),
                     "rules": DR.RULES}) + "\n")
             with open(DR.H24_ARTIFACT, "w", encoding="utf-8") as f:
                 json.dump({"family": "h24", "hedge": True,
@@ -7271,6 +7275,7 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
                         "entry_px": 2.0, "exit_px": 2.2, "avg": 2.0,
                         "depth": 2,
                         "fills": [[t0, 2.0, 0.25], [t0 + 600, 2.1, 0.25]],
+                        "book_rules": DR.family_rules("pair_optimal"),
                         "rules": DR.RULES}) + "\n")
             with open(DR.PAIR_ARTIFACT, "w", encoding="utf-8") as f:
                 json.dump({"family": "pair", "hedge": True,
@@ -8021,6 +8026,81 @@ def test_dca_chart_reads_the_journal_of_its_own_family():
         DR.ARTIFACT, DR.H24_ARTIFACT, DR.PAIR_ARTIFACT = ap0, ha0, pa0
 
 
+def test_dca_list_counts_rules_of_the_family_not_of_the_project():
+    """Список сделок книги живёт по версии правил СВОЕГО семейства.
+
+    Кусается на разошедшейся копии проверки: у страницы она была своя
+    («версия правил проекта совпала»), у денег — общая
+    (`rules.is_current`, глава про семейство). После объявления пола
+    капитуляции 10.09 это разошлось видимо: деньги книги считались по
+    новому полу (ликвидаций нет), а список и счётчик сделок показывали
+    позиции прежнего пола — с ликвидациями. Строка прежней версии
+    семейства остаётся в журнале намеренно, но книгой не является.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+
+    hp0, ha0 = DR.H24_JOURNAL, DR.H24_ARTIFACT
+    td = tempfile.mkdtemp()
+    try:
+        DR.H24_JOURNAL = os.path.join(td, "short.jsonl")
+        DR.H24_ARTIFACT = os.path.join(td, "short-art.json")
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
+        fr = int(DR.family_rules("optimal_h"))
+
+        def _row(sym, at, book_rules, exit_="пол"):
+            return {"dep": 1000, "ruler": "optimal_h", "at": at,
+                    "exit_ts": at + 3600, "sym": sym, "side": "short",
+                    "usd": -1.0, "lev": 4.0, "margin": 25.0,
+                    "pnl_frac": -0.04, "exit": exit_,
+                    "written_at": at + 600, "fav_bp": -500.0,
+                    "entry_px": 2.0, "exit_px": 2.1, "avg": 2.0, "depth": 1,
+                    "fills": [[at, 2.0, 0.25]],
+                    "book_rules": int(book_rules), "rules": DR.RULES}
+
+        rows = [_row("NEWUSDT", t0, fr),
+                # прежняя версия правил семейства: тот же журнал, тот же
+                # проект, исход СТАРОГО правила
+                _row("OLDUSDT", t0 + 3600, fr - 1, exit_="ликвидация")]
+        with open(DR.H24_JOURNAL, "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        with open(DR.H24_ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump({"family": "h24", "hedge": True,
+                       "computed_at": "2026-09-10 23:00",
+                       "signal": {"hold_h": 24, "gate": "край ≥ 33 б.п."},
+                       "rules": {"RULERS": {k: dict(DR.RULERS[k])
+                                            for k in DR.H24_ORDER},
+                                 "RULER_ORDER": list(DR.H24_ORDER),
+                                 "DEPOSITS": [1000.0]},
+                       "books": {"optimal_h:1000": {
+                           "deposit": 1000.0, "ruler": "optimal_h",
+                           "ticket": DR.ticket(1000.0, "optimal_h"),
+                           "all": {"n": 1, "usd": -1.0, "final": -0.001,
+                                   "max_dd": -0.001, "day_median": -1.0,
+                                   "win": 0.0},
+                           "n_forward": 1, "n_restored": 0}}}, f)
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        c._dca_cache = (0.0, {})
+        # книга живёт в общем списке книг страницы — там же, где её
+        # берёт разметка: блок семейства даёт вкладки, а не сделки
+        b = (c.dca_paper().get("books") or {}).get("optimal_h:1000") or {}
+        syms = [t.get("sym") for t in (b.get("trades") or [])]
+        check("DCA: строка прежней версии правил семейства не стоит в "
+              "списке сделок книги",
+              syms == ["NEWUSDT"], str(syms))
+        check("DCA: счётчик сделок книги считает по правилам семейства",
+              b.get("n_journal") == 1 and b.get("trades_total") == 1,
+              str((b.get("n_journal"), b.get("trades_total"))))
+    finally:
+        DR.H24_JOURNAL, DR.H24_ARTIFACT = hp0, ha0
+
+
 def main():
     print("книга")
     test_snapshot_then_delta()
@@ -8062,6 +8142,7 @@ def main():
     test_dca_cut_position_carries_its_reason()
     test_dca_trades_speak_the_language_of_the_chart()
     test_dca_chart_reads_the_journal_of_its_own_family()
+    test_dca_list_counts_rules_of_the_family_not_of_the_project()
     test_dca_chart_carries_the_liquidation_of_the_book()
     print("живой детектор")
     test_live_detector_agrees_with_batch()

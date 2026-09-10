@@ -3777,7 +3777,6 @@ class Collector:
         # пропущенное окно
         out["stale"] = bool(out["age_h"] is not None and out["age_h"] > 36)
         ahead_h = out["rules"].get("AHEAD_H") or DR.AHEAD_H
-        rules_v = out["rules"].get("RULES", DR.RULES)
         books = {}
         art_books = art.get("books") or {}
         # Короткие книги на сигнале `h24` — своё семейство: свой лист,
@@ -3822,9 +3821,13 @@ class Collector:
                 if not b and rk == DR.DEFAULT_RULER:
                     # свод прежнего образца ключевался одним депозитом
                     b = dict(fam_art.get(str(int(d))) or {})
+                # Версия правил спрашивается ОДНИМ предикатом
+                # (`rules.is_current`): у семейства она СВОЯ, и вторая
+                # копия проверки уже соврала — список сделок короткой
+                # книги показывал позиции прежнего пола (с
+                # ликвидациями), пока деньги считались по нынешнему.
                 mine = [r for r in fam_rows if int(r.get("dep", 0)) == int(d)
-                        and int(r.get("rules", 0)) == rules_v
-                        and DR.ruler_of(r) == rk]
+                        and DR.is_current(r) and DR.ruler_of(r) == rk]
                 fwd, back = DR.split_rows(mine, ahead_h)
                 b["n_journal"] = len(mine)
                 b.setdefault("ruler", rk)
