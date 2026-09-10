@@ -1220,7 +1220,7 @@
 - L2619 `CONTROLS = [('хвост не доезжает до ядра', _control…`
 - L2670 `main()`
 
-## research/dca_paper/test_short.py · 224 строк
+## research/dca_paper/test_short.py · 298 строк
 
 Проверки коротких книг на сигнале h24 и общей статистики.
 
@@ -1234,7 +1234,9 @@
 - L81 `test_needs_replay_asks_for_new_and_open_positions()`
 - L94 `_end_to_end(tmp)`
 - L115 `test_family_writes_its_own_journal_and_gates_the_aggressive_boo…`
-- L167 `test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()` — Правило возраста имени — правило самой книги с 2026-09-08.
+- L167 `test_floor_is_per_book_and_the_cache_knows_it()` — Пол капитуляции — свой у книги, и кэш обязан это знать.
+- L205 `test_replay_gives_each_ruler_its_own_floor()` — Симуляция линейки видит ИМЕННО её пол — проверка на самой дороге.
+- L239 `test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()` — Правило возраста имени — правило самой книги с 2026-09-08.
 
 ## research/dca_paper/test_short_age.py · 148 строк
 

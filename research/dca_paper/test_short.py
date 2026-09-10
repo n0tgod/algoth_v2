@@ -164,6 +164,78 @@ def test_family_writes_its_own_journal_and_gates_the_aggressive_book():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_floor_is_per_book_and_the_cache_knows_it():
+    """Пол капитуляции — свой у книги, и кэш обязан это знать.
+
+    Кусается трижды: линейки раскладываются по СВОЕМУ полу; линейка,
+    кормящая книги с разным полом, — отказ словами, а не молчаливый
+    выбор первой доли; подпись кэша меняется вместе с полом — иначе
+    прогон подставил бы исходы ДРУГОЙ книги, ведь ключ записи от пола
+    не зависит.
+    """
+    import run_d2 as D2
+
+    g = S.floor_groups()
+    assert g == {0.10: ["safe_s"], 0.50: ["optimal_s"]}, g
+    assert R.floor_frac_of("safe_h", D2.FLOOR_FRAC) == 0.10
+    assert R.floor_frac_of("aggr_h", D2.FLOOR_FRAC) == 0.50
+    # длинные книги не тронуты: у них своей доли нет вовсе
+    assert R.floor_frac_of("safe", D2.FLOOR_FRAC) == D2.FLOOR_FRAC
+    was = dict(R.FLOOR_FRAC_BY_BOOK)
+    a = S.cache_sig()
+    try:
+        R.FLOOR_FRAC_BY_BOOK["aggr_h"] = 0.25
+        try:
+            S.floor_groups()
+            raise AssertionError("линейка с двумя полами прошла молча")
+        except ValueError as e:
+            assert "разным полом" in str(e), str(e)
+        R.FLOOR_FRAC_BY_BOOK["aggr_h"] = 0.50
+        R.FLOOR_FRAC_BY_BOOK["safe_h"] = 0.75
+        b = S.cache_sig()
+        assert a != b, (a["floor"], b["floor"])
+    finally:
+        R.FLOOR_FRAC_BY_BOOK.clear()
+        R.FLOOR_FRAC_BY_BOOK.update(was)
+    assert S.cache_sig() == a, "подпись не вернулась к объявленной"
+    print(f"ok  пол по книгам: {g}; линейка с двумя полами — отказ "
+          "словами; подпись кэша меняется вместе с полом")
+
+
+def test_replay_gives_each_ruler_its_own_floor():
+    """Симуляция линейки видит ИМЕННО её пол — проверка на самой дороге."""
+    import run_d2 as D2
+
+    tmp = tempfile.mkdtemp(prefix="short-floor-")
+    try:
+        lo, at = T9._rise_then_fall()
+        wn, _ = T9._drift_down()
+
+        class Spy(T3._Src):
+            def __init__(self, data):
+                super().__init__(data)
+                self.saw = []
+
+            def bars(self, sym, a, b):
+                self.saw.append(D2.FLOOR_FRAC)
+                return super().bars(sym, a, b)
+
+        src = Spy({"SSSUSDT": lo, "TTTUSDT": wn})
+        legs = T10._legs(at, "SSSUSDT")
+        was = D2.FLOOR_FRAC
+        out, _tail = T10._with_levels(
+            lambda: S.replay(legs, src=src, log=lambda *a: None))
+        assert D2.FLOOR_FRAC == was, D2.FLOOR_FRAC
+        assert set(src.saw) == {0.10, 0.50}, src.saw
+        rulers = {rk for (rk, _s, _a) in out}
+        assert rulers <= {"safe_s", "optimal_s"}, rulers
+        print(f"ok  реплей отдал каждой линейке свой пол: симуляция видела "
+              f"{sorted(set(src.saw))}, линейки {sorted(rulers)}; "
+              f"глобальный пол после прогона на месте ({was:g})")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_age_rule_of_the_book_bites_and_counts_the_unknown_apart():
     """Правило возраста имени — правило самой книги с 2026-09-08.
 
@@ -221,4 +293,6 @@ if __name__ == "__main__":
     test_needs_replay_asks_for_new_and_open_positions()
     test_family_writes_its_own_journal_and_gates_the_aggressive_book()
     test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()
-    print("\nвсе 5 проверок прошли")
+    test_floor_is_per_book_and_the_cache_knows_it()
+    test_replay_gives_each_ruler_its_own_floor()
+    print("\nвсе 7 проверок прошли")

@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 426, строк: 190535, каталогов: 74.
+Модулей кода: 426, строк: 190696, каталогов: 74.
 
 
 ## корень — память проекта, идеи, README
@@ -175,10 +175,10 @@
 - `name_check.py` · 242 строк — Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).
 - `pair_age.py` · 363 строк — Возраст имени как фильтр входа короткой стороны общего счёта.
 - `pair_gate.py` · 407 строк — Два входных фильтра короткой стороны общего счёта — на одной сетке.
-- `rules.py` · 1138 строк — Правила бумажных DCA-книг: три депозита, одни правила.
+- `rules.py` · 1180 строк — Правила бумажных DCA-книг: три депозита, одни правила.
 - `run_pair.py` · 526 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 - `run_paper.py` · 1440 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
-- `run_short.py` · 349 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
+- `run_short.py` · 394 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 - `short_age.py` · 411 строк — Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.
 - `short_grid.py` · 181 строк — Общая машинерия замеров ОСИ на коротком листе `h24`.
 - `short_stop.py` · 225 строк — Пол капитуляции как СТОП: где резать позицию против хода.
@@ -189,7 +189,7 @@
 - `smoothing.py` · 227 строк — Сглаживают ли короткие DCA-книги длинные — замер, а не имя.
 - `split_journal.py` · 198 строк — Разрезать цельный журнал книги на суточные куски.
 - `tail.py` · 257 строк — Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
-- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_names.py` (227), `test_pair.py` (478), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (2680), `test_short.py` (224), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76)
+- тесты: `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_names.py` (227), `test_pair.py` (478), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (2680), `test_short.py` (298), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76)
 - отчёты в `out/` (23): DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-short-age.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
@@ -672,7 +672,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 451, логов `done/*.log`: 452 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 452, логов `done/*.log`: 452 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 

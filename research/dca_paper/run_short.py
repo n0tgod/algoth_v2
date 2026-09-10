@@ -81,7 +81,13 @@ def cache_sig():
     return {"cell": CELL[0], "hold_h": R.H24_HOLD_H, "edge": D2.MIN_EDGE_BP,
             "back_h": D2.BACK_H, "rungs": D2.N_RUNGS,
             "weights": list(D2.WEIGHTS), "gap": D2.MIN_ADD_GAP,
-            "floor": D2.FLOOR_FRAC, "take": R.TAKE_MULT,
+            # Пол капитуляции — СВОЙ У КНИГИ (решение владельца 10.09):
+            # в подписи он картой, а не одним числом. Кэш, не знающий
+            # про смену пола, отдал бы прогону исходы ДРУГОЙ книги —
+            # молча, потому что ключ записи от пола не зависит.
+            "floor": {bk: R.floor_frac_of(bk, D2.FLOOR_FRAC)
+                      for bk in sorted(BOOKS)},
+            "take": R.TAKE_MULT,
             "cost_bp": D10.ROUND_COST_BP, "books": sorted(set(BOOKS.values()))}
 
 
@@ -134,20 +140,59 @@ def write_cache(cache, path=None):
                    path=path, sig=cache_sig())
 
 
+def floor_groups():
+    """Линейки D10 по ПОЛУ капитуляции: {доля: [линейки]}.
+
+    Пол — свойство КНИГИ, а симуляция знает линейку, поэтому книги
+    сначала переводятся в свои линейки. Линейка, кормящая две книги с
+    РАЗНЫМ полом, была бы неразрешимой — и это проверяется, а не
+    подразумевается: молча взять первую попавшуюся долю значило бы
+    торговать книгой, которой нет.
+    """
+    out = {}
+    for bk, rk in BOOKS.items():
+        f = R.floor_frac_of(bk, D2.FLOOR_FRAC)
+        for other, prev in out.items():
+            if rk in prev and abs(other - f) > 1e-12:
+                raise ValueError(
+                    f"линейка {rk} кормит книги с разным полом "
+                    f"({other:g} и {f:g}) — симуляция не может дать оба")
+        out.setdefault(f, [])
+        if rk not in out[f]:
+            out[f].append(rk)
+    return out
+
+
 def replay(need, src=None, log=print):
     """Досчёт недостающих решений: одна ячейка, отметки и заполнения.
 
     Срок и гейт отсчёта ставятся НА ВРЕМЯ прогона (`run_d11.configure`) и
     возвращаются обратно: те же модули читает замер, и оставленный
     globally срок 24 ч сделал бы его другим замером молча.
+
+    Пол капитуляции у книг РАЗНЫЙ (0.10 у безопасной, 0.50 у остальных),
+    а в симуляции он глобален — поэтому проход идёт по группам пола, и
+    в каждой группе считаются только СВОИ линейки. Один проход на все
+    книги отдал бы двум из трёх чужой пол.
     """
     if not need:
         return {}, {}
     was = D11.configure(R.H24_HOLD_H)
     try:
         src = src or TL.TailBars(log=log)
-        got = D10.collect(legs=need, cells=[CELL], rich=True, raw=True,
-                          src=src, log=log)
+        got = {"recs": {}}
+        was_floor = D2.FLOOR_FRAC
+        try:
+            for frac, rulers in sorted(floor_groups().items()):
+                D2.FLOOR_FRAC = float(frac)
+                log(f"пол капитуляции {frac:g} — линейки "
+                    + ", ".join(rulers))
+                part = D10.collect(legs=need, cells=[CELL], rich=True,
+                                   raw=True, src=src, log=log)
+                for rk in rulers:
+                    got["recs"][rk] = (part.get("recs") or {}).get(rk) or {}
+        finally:
+            D2.FLOOR_FRAC = was_floor
         # Хвост ленты — правило книги, и применяется он там, где источник
         # умеет его отдать. Источник без хвоста (проверка на подставных
         # барах) не превращается в «хвост не сработал»: причина называется.
