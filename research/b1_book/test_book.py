@@ -7866,6 +7866,54 @@ def test_dca_trades_speak_the_language_of_the_chart():
         DR.JOURNAL = jp0
 
 
+def test_dca_chart_carries_the_liquidation_of_the_book():
+    """У ступеней позиции есть цена ликвидации — ядром, а не копией.
+
+    Кусается: уровень равен `ladder.liq_price` на тех же числах (второй
+    арифметики нет); у ШОРТА ликвидация ВЫШЕ средней, у лонга ниже;
+    долив двигает её вместе с ТВХ; записи без плеча уровня не получают
+    вовсе — рисовать ликвидацию, которой мы не знаем, нельзя.
+    """
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    sys.path.insert(0, os.path.join(os.path.dirname(HERE), "dca_ladder"))
+    import rules as DR
+    import ladder as L
+
+    fills = [[1000.0, 10.0, 0.25], [2000.0, 8.0, 0.25]]
+    walk = DR.avg_walk(fills, 10.0, 1000.0, take_frac=0.2, side="short")
+    DR.liq_walk(walk, 5.0, "short", mmr=0.02)
+    check("график: ликвидация есть у каждой ступени",
+          all(x.get("liq") for x in walk), str(walk))
+    check("график: у шорта ликвидация ВЫШЕ средней",
+          all(x["liq"] > x["avg"] for x in walk),
+          str([(x["avg"], x["liq"]) for x in walk]))
+    # то же ядро, что у симуляции: числа обязаны совпасть бит в бит
+    s0 = walk[0]
+    want = L.liq_price(s0["avg"], s0["qty"],
+                       s0["qty"] * s0["avg"] / 5.0, 0.02, "short")
+    check("график: уровень считан ядром лестницы, а не копией формулы",
+          abs(s0["liq"] - want) < 1e-12, f"{s0['liq']} против {want}")
+    check("график: долив двигает ликвидацию вместе с ТВХ",
+          walk[1]["liq"] < walk[0]["liq"] and walk[1]["avg"] < walk[0]["avg"],
+          str([(x["avg"], x["liq"]) for x in walk]))
+    lw = DR.avg_walk(fills, 10.0, 1000.0, take_frac=0.2, side="long")
+    DR.liq_walk(lw, 5.0, "long", mmr=0.02)
+    check("график: у лонга ликвидация НИЖЕ средней",
+          all(x["liq"] < x["avg"] for x in lw),
+          str([(x["avg"], x["liq"]) for x in lw]))
+    nolev = DR.avg_walk(fills, 10.0, 1000.0, take_frac=0.2, side="short")
+    DR.liq_walk(nolev, None, "short", mmr=0.02)
+    check("график: без плеча уровня нет вовсе, а не ноль",
+          all("liq" not in x for x in nolev), str(nolev))
+    # ставка маржи берётся у ТИРОВ площадки, одним читателем на проект
+    look = DR.mmr_look("BTCUSDT")
+    check("график: ставка маржи из тиров площадки, плоская — только без них",
+          look(1000.0) > 0 and DR.mmr_look("НЕТТАКОГОUSDT")(1000.0)
+          == L.FLAT_MMR,
+          f"{look(1000.0)} / {DR.mmr_look('НЕТТАКОГОUSDT')(1000.0)}")
+
+
 def test_dca_chart_reads_the_journal_of_its_own_family():
     """График берёт позиции из журнала СВОЕГО семейства, а не длинного.
 
@@ -8014,6 +8062,7 @@ def main():
     test_dca_cut_position_carries_its_reason()
     test_dca_trades_speak_the_language_of_the_chart()
     test_dca_chart_reads_the_journal_of_its_own_family()
+    test_dca_chart_carries_the_liquidation_of_the_book()
     print("живой детектор")
     test_live_detector_agrees_with_batch()
     test_metrics_explain_refusal()

@@ -3507,6 +3507,9 @@ class Collector:
                 and int(r.get("dep", 0)) == int(dep)
                 and DR.is_current(r)
                 and DR.ruler_of(r) == rk]
+        # Тиры площадки читаются ОДИН раз на ответ: имя одно, а позиций
+        # по нему может быть много.
+        liq_look = DR.mmr_look(sym)
         out = []
         for r in sorted(mine, key=lambda x: float(x.get("at") or 0)):
             at = float(r.get("at") or 0)
@@ -3519,6 +3522,11 @@ class Collector:
             tf = self._dca_take_frac(DR, r, rk)
             walk = DR.avg_walk(fills, r.get("entry_px"),
                                DR.notional_of(r), take_frac=tf, side=side)
+            # Цена ликвидации — рядом с ТВХ и целью, тем же ядром
+            # (`rules.liq_walk` → `ladder.liq_price`) и по тирам площадки
+            # этого имени: график обязан показывать ту ликвидацию, по
+            # которой книга считала позицию, а не близкое к ней число.
+            DR.liq_walk(walk, r.get("lev"), side, look=liq_look)
             pf = r.get("pnl_frac")
             out.append({
                 "sym": sym, "arm": "dca",
@@ -3581,9 +3589,11 @@ class Collector:
                     "side": side, "opened_at": at, "closes_at": None,
                     "entry_px": r.get("entry_px"), "exit_px": None,
                     "avg": r.get("avg"),
-                    "walk": DR.avg_walk(fills, r.get("entry_px"),
-                                        DR.notional_of(r),
-                                        take_frac=tf, side=side),
+                    "walk": DR.liq_walk(
+                        DR.avg_walk(fills, r.get("entry_px"),
+                                    DR.notional_of(r),
+                                    take_frac=tf, side=side),
+                        r.get("lev"), side, look=liq_look),
                     "take_frac": tf,
                     "lots": max(1, len(fills)),
                     "adds": self._dca_adds(fills[1:],

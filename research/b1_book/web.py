@@ -3172,6 +3172,10 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
     style="border-color:var(--bid)"></span>take, stepped: its anchor is the
     floating average entry, so each add moves it with the average (long:
     above it, short: below it)</span>
+  <span id="lgliq"><span class="sw"
+    style="border-color:var(--ask)"></span>liquidation, stepped: the price
+    at which the position is gone &mdash; from the same average and the
+    venue&rsquo;s margin tiers the book itself used</span>
   <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp;
     exit dots</span>
   <span><span class="sw" style="background:rgba(61,220,127,.25);
@@ -3530,10 +3534,19 @@ function legendLevels() {
   // её убыток ограничивает пол капитуляции, а не заявка на цене.
   const dl = document.getElementById("lgdca");
   if (dl) dl.style.display = hasStepTake() ? "" : "none";
+  // Линия ликвидации объявляется в легенде ровно тогда, когда сервер
+  // прислал её уровни: у записи без плеча или без тиров её нет, и
+  // обещать в легенде то, чего на картинке не будет, нельзя.
+  const ql = document.getElementById("lgliq");
+  if (ql) ql.style.display = hasStepLiq() ? "" : "none";
 }
 function hasStepTake() {
   return (MDL.trades || []).some(
     r => (r.walk || []).some(x => x && x.take != null));
+}
+function hasStepLiq() {
+  return (MDL.trades || []).some(
+    r => (r.walk || []).some(x => x && x.liq != null && x.liq > 0));
 }
 legendLevels();
 // Сделка, ради которой страницу открыли. Ищется по руке и часу: пара
@@ -4290,7 +4303,7 @@ function draw() {
     // Считается ОДИН раз: по ней идёт и граница зон, и линия ТВХ ниже.
     // Величина приходит готовой с сервера (`rules.avg_walk`), второй
     // арифметики здесь нет.
-    const segs = [], tseg = [];
+    const segs = [], tseg = [], qseg = [];
     if (wk.length > 1) {
       for (let i = 0; i < wk.length; i++) {
         const x0 = clamp(xt(wk[i].at));
@@ -4303,12 +4316,21 @@ function draw() {
         // однажды встала бы от другой средней, чем считает книга.
         if (wk[i].take != null)
           tseg.push([x0, Math.max(x1, x0), wk[i].take]);
+        // Ликвидация — ступенчата по той же причине: она считается от
+        // средней позиции, и долив двигает её вместе с ТВХ. Уровень
+        // приходит готовым с сервера (`rules.liq_walk` → ядро лестницы
+        // по тирам площадки): посчитай график её сам, он однажды взял
+        // бы другую ставку маржи, чем считала книга.
+        if (wk[i].liq != null && wk[i].liq > 0)
+          qseg.push([x0, Math.max(x1, x0), wk[i].liq]);
       }
     } else if (wk.length === 1 && wk[0].take != null) {
       // Позиция без доливов: ступень одна, но она есть — иначе цель
       // показана только у лестниц, а у остальных её будто нет.
       tseg.push([xa, Math.max(xb, xa + 2), wk[0].take]);
     }
+    if (wk.length === 1 && wk[0].liq != null && wk[0].liq > 0)
+      qseg.push([xa, Math.max(xb, xa + 2), wk[0].liq]);
     g.save();
     // Зоны v1: у лонга прибыль НАД входом (зелёная), убыток под
     // (красная); у шорта зеркально.
@@ -4457,6 +4479,38 @@ function draw() {
         g.fillStyle = css("--bid");
         g.fillText(`take ${pv.toFixed(dec)} ${pv > hi ? "↑" : "↓"} off scale`,
                    xa + 4, pv > hi ? padT + 8 : padT + ph * 0.8);
+      }
+    }
+    // ЛИКВИДАЦИЯ — той же ступенчатой линией и по тем же правилам
+    // показа, что цель: она считается от средней позиции и едет с ней.
+    // Цвет — цвет убытка: это не уровень выхода по решению книги, а
+    // цена, на которой позиции не станет.
+    if (qseg.length) {
+      const vq = qseg.filter(([, , pv]) => pv >= lo && pv <= hi);
+      if (vq.length) {
+        g.save();
+        g.strokeStyle = css("--ask"); g.lineWidth = me ? 2 : 1.3;
+        g.setLineDash([2, 4]);
+        g.beginPath();
+        vq.forEach(([x0, x1, pv], i) => {
+          const yv = y(pv);
+          if (i === 0) g.moveTo(x0, yv); else g.lineTo(x0, yv);
+          g.lineTo(x1, yv);
+        });
+        g.stroke(); g.setLineDash([]);
+        if (me) {
+          const lastQ = vq[vq.length - 1];
+          g.fillStyle = css("--ask");
+          g.fillText("liq " + lastQ[2].toFixed(dec),
+                     xa + 4, y(lastQ[2]) + 12);
+        }
+        g.restore();
+      } else if (me) {
+        // Ликвидация за окном — не «её нет»: метка у края с числом.
+        const pv = qseg[qseg.length - 1][2];
+        g.fillStyle = css("--ask");
+        g.fillText(`liq ${pv.toFixed(dec)} ${pv > hi ? "↑" : "↓"} off scale`,
+                   xa + 4, pv > hi ? padT + 20 : padT + ph * 0.9);
       }
     }
     let drew = null;

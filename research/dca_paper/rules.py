@@ -825,6 +825,85 @@ PAIR_JOURNAL = os.path.join(OUT, "pair.jsonl")
 PAIR_ARTIFACT = os.path.join(OUT, "DCA-pair.json")
 
 
+# Таблица риск-лимитов площадки (тиры maintenance margin) — данные
+# ПЛОЩАДКИ, не правило книги, но читаются они отсюда: цену ликвидации
+# считает и симуляция замеров, и линия на графике, а два читателя с
+# двумя путями однажды разойдутся. `run_d2.instruments_tiers` остаётся
+# ссылкой на это же место.
+RISK_LIMITS = os.path.join(os.path.dirname(HERE), "a1_universe", "out",
+                           "risk_limits.json")
+_TIERS = {"at": None, "data": {}}
+
+
+def risk_tiers(path=None):
+    """Тиры площадки: символ → ступени. Перечитывается по времени файла."""
+    path = path or RISK_LIMITS
+    try:
+        at = os.path.getmtime(path)
+    except OSError:
+        return {}
+    if _TIERS["at"] != (path, at):
+        try:
+            with open(path, encoding="utf-8") as f:
+                _TIERS["data"] = json.load(f)
+        except (OSError, ValueError):
+            _TIERS["data"] = {}
+        _TIERS["at"] = (path, at)
+    return _TIERS["data"]
+
+
+def _ladder():
+    """Ядро лестницы. Импорт ленивый: страница не тянет его без нужды."""
+    import sys
+    p = os.path.join(os.path.dirname(HERE), "dca_ladder")
+    if p not in sys.path:
+        sys.path.insert(0, p)
+    import ladder as L
+    return L
+
+
+def mmr_look(sym, path=None):
+    """Функция «нотионал → ставка поддерживающей маржи» для имени.
+
+    Тиров у имени нет — плоская ставка ядра (`ladder.FLAT_MMR`), и это
+    названо здесь одним местом: справочник тиров отстаёт от волны
+    листингов, и молчаливый ноль на его месте нарисовал бы ликвидацию
+    там, где её нет.
+    """
+    L = _ladder()
+    tiers = (risk_tiers(path) or {}).get(str(sym or "").upper()) or []
+    return lambda notl, _t=tiers: L.mmr_for_notional(_t, notl,
+                                                     flat=L.FLAT_MMR)
+
+
+def liq_walk(steps, lev, side="long", look=None, mmr=None):
+    """Цена ликвидации ПОСЛЕ каждого рунга — ядром лестницы, не копией.
+
+    Ступени те же, что у ТВХ и у цели: долив двигает среднюю, а с ней и
+    ликвидацию. Капитал позиции на ступени — её нотионал, делённый на
+    плечо (маржа, внесённая под этот нотионал), ставка — из тиров
+    площадки по этому же нотионалу.
+
+    Нет плеча или количества контрактов — поля не будет вовсе: рисовать
+    ликвидацию, которой мы не знаем, значит утверждать чужое число.
+    """
+    try:
+        lv = float(lev)
+    except (TypeError, ValueError):
+        return steps
+    if not lv > 0 or (look is None and mmr is None):
+        return steps
+    L = _ladder()
+    for st in (steps or []):
+        q, a = st.get("qty"), st.get("avg")
+        if q is None or not a:
+            continue
+        notl = float(q) * float(a)
+        m = float(look(notl)) if look is not None else float(mmr)
+        st["liq"] = L.liq_price(float(a), float(q), notl / lv, m, side)
+    return steps
+
+
 def journal_of(key):
     """Журнал СЕМЕЙСТВА книги. Одно место на всех читателей.
 
