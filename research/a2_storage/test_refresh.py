@@ -61,20 +61,64 @@ def test_max_days_guard():
 
 
 def test_live_symbols_skips_the_dead():
+    # Фикстура выглядит как живой снимок универсума: у ЖИВОГО имени
+    # last_trading_day — это горизонт данных снимка (у BTC в живом
+    # файле стоит 2026-07-26 при delisted: False), у мёртвого — день
+    # смерти при delisted: True. Прежняя фикстура поля delisted не
+    # несла вовсе, и тест проходил на правиле, которое на живом
+    # снимке счёл мёртвым весь универсум.
     tmp = tempfile.mkdtemp()
     try:
         p = os.path.join(tmp, "u.json")
         with open(p, "w", encoding="utf-8") as f:
             json.dump({"assets": {
-                "AAA": {"binance_symbol": "AAAUSDT",
-                        "last_trading_day": "2026-12-31"},
-                "DEAD": {"binance_symbol": "DEADUSDT",
+                "AAA": {"binance_symbol": "AAAUSDT", "delisted": False,
+                        "last_trading_day": "2026-07-26"},
+                "DEAD": {"binance_symbol": "DEADUSDT", "delisted": True,
                          "last_trading_day": "2025-01-01"},
-                "NOSYM": {"last_trading_day": "2026-12-31"},
+                "FRESH_DEAD": {"binance_symbol": "FRESHUSDT",
+                               "delisted": True,
+                               "last_trading_day": "2026-09-01"},
+                "NOSYM": {"delisted": False,
+                          "last_trading_day": "2026-07-26"},
             }}, f)
         got = RF.live_symbols(p, on_day=date(2026, 7, 1))
-        check("живой взят, мёртвый и бессимвольный — нет",
-              got == ["AAAUSDT"], f"{got}")
+        check("живой взят, давно мёртвый и бессимвольный — нет",
+              got == ["AAAUSDT", "FRESHUSDT"], f"{got}")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_live_symbols_snapshot_horizon_is_not_a_death_date():
+    """Дефект, остановивший докачку на второй день её жизни.
+
+    `last_trading_day` живого имени — это горизонт ДАННЫХ СНИМКА
+    (последний день, который видел построивший универсум прогон), а
+    не день смерти инструмента: у BTC в живом файле стоит 2026-07-26.
+    Прежнее правило `last < день` при крае хранилища ЗА горизонтом
+    снимка считало мёртвым весь универсум — «символов 0, файлов к
+    обходу 0», — и суточный контур молча стоял 15 дней, рапортуя
+    успешные прогоны. Первый запуск (край 2026-06-30, ДО горизонта)
+    при этом работал, поэтому дефект не был виден при сдаче.
+
+    Мёртвым имя делает только явный `delisted: True` вместе с датой;
+    поле снимка само по себе — не свойство мира.
+    """
+    tmp = tempfile.mkdtemp()
+    try:
+        p = os.path.join(tmp, "u.json")
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"assets": {
+                "BTC": {"binance_symbol": "BTCUSDT", "delisted": False,
+                        "last_trading_day": "2026-07-26"},
+                "DEAD": {"binance_symbol": "DEADUSDT", "delisted": True,
+                         "last_trading_day": "2026-07-10"},
+            }}, f)
+        # Край хранилища уехал ЗА горизонт снимка — ровно живое
+        # состояние 2026-08-28…09-10.
+        got = RF.live_symbols(p, on_day=date(2026, 8, 26))
+        check("живое имя не умирает вместе с горизонтом снимка",
+              got == ["BTCUSDT"], f"{got}")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -242,7 +286,11 @@ def test_watchdog_daily_window():
     wd = os.path.join(RESEARCH, os.pardir, "tools", "watchdog_book.sh")
     src = open(os.path.abspath(wd), encoding="utf-8").read()
     a = src.index("# --- свежие данные и бумажная месячная книга")
-    b = src.index("# --- очередь заданий")
+    # Конец вырезки — СЛЕДУЮЩИЙ маркер секции, а не имя конкретной:
+    # вырезка «до очереди заданий» захватила чужие секции, когда между
+    # книгой и очередью встали DCA-блоки других сессий, и их ежечасный
+    # запуск ронял проверку «вне окна молчит» на исправном стороже.
+    b = src.index("\n# --- ", a + 1)
     block = src[a:b]
     d = tempfile.mkdtemp()
     try:
@@ -321,6 +369,7 @@ def main():
     test_days_stop_before_today()
     test_max_days_guard()
     test_live_symbols_skips_the_dead()
+    test_live_symbols_snapshot_horizon_is_not_a_death_date()
     print("готовность партиции")
     test_readiness_accounts_for_new_files()
     print("край хранилища")

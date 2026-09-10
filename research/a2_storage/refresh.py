@@ -118,6 +118,15 @@ def live_symbols(universe_path=None, on_day=None):
     Мёртвые не качаются: их суточных файлов нет, и обход тратил бы
     время на 404. Новые листинги после снимка универсума докачка не
     видит — их приносит полный прогон A1, и это записано оговоркой.
+
+    Мёртвым имя делает ТОЛЬКО явный `delisted: True` вместе с датой.
+    `last_trading_day` живого имени — это горизонт данных снимка
+    (у BTC в снимке стоит дата его сборки), а не день смерти: правило
+    `last < день` при крае хранилища за горизонтом снимка считало
+    мёртвым весь универсум — «символов 0», — и докачка молча стояла
+    15 дней, рапортуя успешные прогоны. Первый запуск (край до
+    горизонта) при этом работал, поэтому дефект не был виден при
+    сдаче. Поле снимка — не свойство мира.
     """
     p = universe_path or os.path.join(A1, "out", "universe.json")
     with open(p, encoding="utf-8") as f:
@@ -129,7 +138,7 @@ def live_symbols(universe_path=None, on_day=None):
         if not s:
             continue
         last = v.get("last_trading_day")
-        if last and last < day:
+        if v.get("delisted") and last and last < day:
             continue
         out.append(s)
     return sorted(set(out))

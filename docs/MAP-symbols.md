@@ -459,7 +459,7 @@ A2 — отчёт о гигиене данных.
 - L343 `quantiles(vals, qs=(0.05, 0.25, 0.5, 0.75, 0.95))`
 - L350 `main()`
 
-## research/a2_storage/refresh.py · 294 строк
+## research/a2_storage/refresh.py · 303 строк
 
 Ежедневная докачка хранилища A2 свежими барами Binance.
 
@@ -474,11 +474,11 @@ A2 — отчёт о гигиене данных.
 - L63 `storage_edge(interval='1m', months=EDGE_MONTHS)` — Конец НЕПРЕРЫВНОГО покрытия хранилища. `None` — хранилища нет.
 - L105 `limit_days(days, n)` — Пилот берёт дни ОТ КРАЯ, а не с конца.
 - L115 `live_symbols(universe_path=None, on_day=None)` — Символы Binance, живые на площадке исполнения в этот день.
-- L138 `days_to_fetch(edge, today=None, max_days=MAX_DAYS)` — Дни от края хранилища до вчера включительно.
-- L156 `fetch_all(symbols, days, interval, workers=WORKERS, log=print)` — Скачать суточные файлы. Возвращает (скачано, отсутствует).
-- L181 `rebuild(months, interval, log=print)` — Пересобрать партиции месяцев ТЕМ ЖЕ `build.py`.
-- L202 `report(art, path)`
-- L231 `main()`
+- L147 `days_to_fetch(edge, today=None, max_days=MAX_DAYS)` — Дни от края хранилища до вчера включительно.
+- L165 `fetch_all(symbols, days, interval, workers=WORKERS, log=print)` — Скачать суточные файлы. Возвращает (скачано, отсутствует).
+- L190 `rebuild(months, interval, log=print)` — Пересобрать партиции месяцев ТЕМ ЖЕ `build.py`.
+- L211 `report(art, path)`
+- L240 `main()`
 
 ## research/a2_storage/report.py · 295 строк
 
