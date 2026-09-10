@@ -130,3 +130,21 @@ h24/nn: часов 646, коротких выборов 1938, ног под кр
 - Ликвидации при раннем стопе обязаны исчезать: стоп стоит перед ней. Если они остаются — значит цена доходит до ликвидации ВНУТРИ бара, минуя пол, и это свойство разрыва, а не правила.
 - Ячейка правилом не назначается: окно одно, веса модели эти часы видели.
 
+публикуется в ветку main:
+ jobs/done/stop-f10.log                          |   8 ++
+ jobs/done/stop-f25.log                          |   4 +
+ jobs/done/stop-f50.done                         |   1 +
+ jobs/done/stop-f50.log                          | 132 ++++++++++++++++++++
+ jobs/done/stop-f75.done                         |   1 +
+ jobs/done/stop-f75.log                          | 156 ++++++++++++++++++++++++
+ jobs/poke.log                                   |   4 +
+ research/dca_paper/out/DCA-short-stop.json      |   2 +-
+ research/dca_paper/out/DCA-short-stop.json.lock |   0
+ research/dca_paper/out/DCA-short-stop.md        |  20 ++-
+ research/s8_loop/out/day_brake.json             |   2 +-
+ 11 files changed, 327 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   d9d85669..7d5af8ae  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-10T21:58:35Z, код 0
