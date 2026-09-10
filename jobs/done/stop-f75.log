@@ -154,3 +154,36 @@ remove the file manually to continue.
 нечего публиковать: в индекс не попало ни одного файла.
 что git видит в артефактах (?? не отслеживается, !! погашен
 .gitignore, пусто — файла нет вовсе):
+ M research/dca_paper/out/DCA-short-stop.json
+ M research/dca_paper/out/DCA-short-stop.md
+ M research/paper_monthly/out/daily.log
+ M research/s10_policy/out/tournament.log
+ M research/s8_loop/out/day_brake.json
+?? research/dca_paper/out/DCA-short-stop.json.lock
+!! research/a1_universe/out/cache_api/
+!! research/a1_universe/out/funding/
+!! research/a1_universe/out/funding_binance/
+!! research/a1_universe/out/instruments.log
+!! research/a1_universe/out/klines/
+!! research/a1_universe/out/klines_1m.log
+!! research/a1_universe/out/refresh.log
+!! research/a2_storage/out/build_1m.log
+!! research/a2_storage/out/hygiene_1m.log
+!! research/a2_storage/out/parquet/
+!! research/a2_storage/out/restat_1m.log
+!! research/a4_cointegration/out/sweep_run.log
+!! research/a4_cointegration/out/walkforward_null1_run.log
+!! research/a4_cointegration/out/walkforward_run.log
+!! research/a4_cointegration/out/windows/
+!! research/a4_cointegration/out/windows_null1/
+!! research/asset_groups/out/daily_liquidity_1m.csv.gz
+!! research/b1_book/out/book/
+!! research/b1_book/out/collect.log
+!! research/b1_book/out/liq/
+!! research/b1_book/out/market_vol.json
+!! research/b1_book/out/metrics/
+!! research/b1_book/out/raw/
+!! research/b1_book/out/selftest/
+нет строк выше — прогон писал не в этот каталог;
+строки с !! — правило .gitignore этапа гасит отчёт.
+конец: 2026-09-10T21:58:39Z, код 0
