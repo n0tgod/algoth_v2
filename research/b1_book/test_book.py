@@ -7935,14 +7935,18 @@ def test_dca_chart_reads_the_journal_of_its_own_family():
         pr = _row("pair_safe", t0 + 10800, 200.0)
         with open(_shard(DR.PAIR_JOURNAL, day), "w", encoding="utf-8") as f:
             f.write(json.dumps(pr, ensure_ascii=False) + "\n")
-        # открытая позиция общего счёта живёт в АРТЕФАКТЕ своего семейства
+        # Открытая позиция живёт в АРТЕФАКТЕ своего семейства и лежит
+        # У КНИГИ — ровно в той форме, в какой её пишет прогон
+        # (`books[<книга>].open`), а не в общем блоке `live`: подставной
+        # артефакт обязан выглядеть как живой, иначе проверка молчит о
+        # том, что читатель смотрит не туда.
         with open(DR.PAIR_ARTIFACT, "w", encoding="utf-8") as f:
-            json.dump({"live": {"pair_safe:10000": {"positions": [
+            json.dump({"books": {"pair_safe:10000": {"open": {"positions": [
                 {"sym": "AAAUSDT", "at": t0 + 14400, "lev": 3.0,
                  "margin": 25.0, "mark_frac": 0.04, "mark_usd": 1.0,
                  "entry_px": 300.0, "avg": 300.0, "depth": 1,
                  "fav_bp": 300.0, "last_ts": t0 + 15000,
-                 "fills": [[t0 + 14400, 300.0, 0.25]]}], "cut": []}}},
+                 "fills": [[t0 + 14400, 300.0, 0.25]]}], "cut": []}}}},
                 f, ensure_ascii=False)
 
         c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)

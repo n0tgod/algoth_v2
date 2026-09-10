@@ -3548,15 +3548,21 @@ class Collector:
         # без своей позиции — молчаливое обещание вместо ответа.
         # Выхода у них не существует: `closes_at` пуст, деньги идут
         # ОТМЕТКОЙ (`net_bp`/`pnl` по `mark_*`), состояние названо словом.
-        live = {}
+        art = {}
         ap = DR.artifact_of(rk)
         if os.path.exists(ap):
             try:
                 with open(ap, encoding="utf-8") as f:
-                    live = (json.load(f).get("live") or {})
+                    art = json.load(f)
             except (OSError, ValueError):
-                live = {}
-        cell = (live.get(f"{rk}:{int(dep)}") or {})
+                art = {}
+        # Открытые позиции лежат у КНИГИ (`books[<книга>].open`) — так их
+        # пишут все три семейства. Прежний общий блок `live` остался
+        # только у длинного артефакта, и читать его одного значило
+        # потерять открытые позиции коротких книг и общего счёта.
+        cellk = f"{rk}:{int(dep)}"
+        cell = ((((art.get("books") or {}).get(cellk) or {}).get("open"))
+                or ((art.get("live") or {}).get(cellk) or {}))
         for st, lst in (("открыта", cell.get("positions") or []),
                         ("оборвана записью", cell.get("cut") or [])):
             for r in lst:
