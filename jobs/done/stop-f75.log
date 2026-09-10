@@ -187,3 +187,11 @@ remove the file manually to continue.
 нет строк выше — прогон писал не в этот каталог;
 строки с !! — правило .gitignore этапа гасит отчёт.
 конец: 2026-09-10T21:58:39Z, код 0
+публикуется в ветку main:
+ jobs/done/stop-f50.log |  7 +++++++
+ jobs/done/stop-f75.log | 33 +++++++++++++++++++++++++++++++++
+ 2 files changed, 40 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   089f76c0..6a21c96d  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
