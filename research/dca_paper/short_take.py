@@ -230,19 +230,14 @@ def main(argv=None):
     os.makedirs(R.OUT, exist_ok=True)
     want = ([t for t in TAKES if t[0] in set(a.take)] if a.take else TAKES)
     s = run(limit=a.limit, takes=want)
-    art = os.path.join(R.OUT, "DCA-short-take.json")
-    s = G.merge_artifact(s, art, [(k, m) for k, m in TAKES])
-    s["takes"] = [{"key": a["key"], "mult": a["value"]} for a in s["axis"]]
-    s["takes_all"] = [{"key": a["key"], "mult": a["value"]}
-                      for a in s["axis_all"]]
-    with open(art + ".tmp", "w", encoding="utf-8") as f:
-        json.dump(s, f, ensure_ascii=False)
-    os.replace(art + ".tmp", art)
-    txt = report(s)
-    with open(os.path.join(R.OUT, "DCA-short-take.md"), "w",
-              encoding="utf-8") as f:
-        f.write(txt)
-    print(txt)
+    def _rep(x):
+        x["takes"] = [{"key": a["key"], "mult": a["value"]}
+                      for a in x.get("axis", [])]
+        x["takes_all"] = [{"key": a["key"], "mult": a["value"]}
+                          for a in x.get("axis_all", [])]
+        return report(x)
+    G.merge_and_write(s, "DCA-short-take", [(k, m) for k, m in TAKES],
+                      _rep, log=print)
     if not a.no_publish:
         publish("множитель тейка на коротком листе h24")
     return 0

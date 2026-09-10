@@ -1252,7 +1252,7 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
-## research/dca_paper/test_short_stop.py · 87 строк
+## research/dca_paper/test_short_stop.py · 129 строк
 
 Проверки замера «пол капитуляции как стоп».
 
@@ -1262,6 +1262,7 @@
 - L33 `test_floor_is_put_back_after_the_run()`
 - L47 `test_earlier_floor_cuts_the_position_earlier()` — На тех же барах ранний пол режет раньше и дешевле — ядром лестницы.
 - L69 `test_report_names_the_missing_cells()`
+- L81 `test_parallel_cells_do_not_lose_each_other()` — Ячейки оси считаются параллельно — артефакт обязан пережить это.
 
 ## research/dca_paper/test_short_take.py · 143 строк
 

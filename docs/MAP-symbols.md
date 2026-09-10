@@ -2012,7 +2012,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L363 `publish(name)`
 - L368 `main(argv=None)`
 
-## research/dca_paper/short_grid.py · 146 строк
+## research/dca_paper/short_grid.py · 181 строк
 
 Общая машинерия замеров ОСИ на коротком листе `h24`.
 
@@ -2023,25 +2023,27 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L54 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
 - L60 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None)` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
 - L99 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
-- L131 `write(s, name, report_fn, title, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
-- L145 `stamp()`
+- L131 `_lock(path)` — Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
+- L152 `merge_and_write(s, name, axis, report_fn, log=print)` — Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
+- L166 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
+- L180 `stamp()`
 
-## research/dca_paper/short_stop.py · 228 строк
+## research/dca_paper/short_stop.py · 225 строк
 
 Пол капитуляции как СТОП: где резать позицию против хода.
 
 - L50 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L51 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L69 `FLOORS = (('f10', 0.1), ('f25', 0.25), ('f50', 0…` — Ось объявлена до прогона. Ключ — для очереди (латиница), значение — доля расстояния «вход → ликвидация».
-- L72 `CELL = ('fence:none:t2', 'fence', 'none', 't2')` — Ячейка книги: плечо забора, доливов нет, цель ×2 — то, чем книги торгуют. Ключ в языке D10, чтобы реплей счит…
-- L73 `ART = 'DCA-short-stop'`
-- L76 `eaten(frac)` — Сколько маржи съедено к моменту пола, долей. Обратная сторона оси.
-- L81 `run(floor_key, limit=None, src=None, log=print, legs_=None, ctx…`
-- L122 `_u(x)`
-- L126 `_p(x, d=1)`
-- L130 `report(s)`
-- L200 `publish(name)`
-- L206 `main(argv=None)`
+- L68 `FLOORS = (('f10', 0.1), ('f25', 0.25), ('f50', 0…` — Ось объявлена до прогона. Ключ — для очереди (латиница), значение — доля расстояния «вход → ликвидация».
+- L71 `CELL = ('fence:none:t2', 'fence', 'none', 't2')` — Ячейка книги: плечо забора, доливов нет, цель ×2 — то, чем книги торгуют. Ключ в языке D10, чтобы реплей счит…
+- L72 `ART = 'DCA-short-stop'`
+- L75 `eaten(frac)` — Сколько маржи съедено к моменту пола, долей. Обратная сторона оси.
+- L80 `run(floor_key, limit=None, src=None, log=print, legs_=None, ctx…`
+- L121 `_u(x)`
+- L125 `_p(x, d=1)`
+- L129 `report(s)`
+- L199 `publish(name)`
+- L205 `main(argv=None)`
 
 ## research/dca_paper/short_supply.py · 123 строк
 
@@ -2056,7 +2058,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L76 `report(s)`
 - L102 `main()`
 
-## research/dca_paper/short_take.py · 252 строк
+## research/dca_paper/short_take.py · 247 строк
 
 Множитель тейка на коротком листе `h24`: ось объявлена до прогона.
 

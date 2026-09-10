@@ -128,7 +128,42 @@ def merge_artifact(s, path, axis):
     return s
 
 
-def write(s, name, report_fn, title, log=print):
+def _lock(path):
+    """Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
+
+    Задания очереди идут параллельно, а артефакт у оси один: без замка
+    два прогона читают его одновременно и второй затирает ячейку
+    первого — молча, потому что каждый по отдельности отработал верно.
+    """
+    import fcntl
+    import contextlib
+
+    @contextlib.contextmanager
+    def held():
+        with open(path + ".lock", "a+") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+    return held()
+
+
+def merge_and_write(s, name, axis, report_fn, log=print):
+    """Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
+
+    Чтение старого артефакта и запись нового обязаны быть неделимы:
+    между ними и живёт гонка параллельных ячеек.
+    """
+    art = os.path.join(R.OUT, f"{name}.json")
+    os.makedirs(R.OUT, exist_ok=True)
+    with _lock(art):
+        s = merge_artifact(s, art, axis)
+        write(s, name, report_fn, log=log)
+    return s
+
+
+def write(s, name, report_fn, log=print):
     """Артефакт и отчёт замера — одним местом, с публикацией прогоном."""
     os.makedirs(R.OUT, exist_ok=True)
     art = os.path.join(R.OUT, f"{name}.json")

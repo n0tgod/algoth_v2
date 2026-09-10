@@ -78,10 +78,52 @@ def test_report_names_the_missing_cells():
     print("ok  отчёт называет ячейки, которых ещё нет")
 
 
+def test_parallel_cells_do_not_lose_each_other():
+    """Ячейки оси считаются параллельно — артефакт обязан пережить это.
+
+    Кусается на самой гонке: два процесса сливают СВОЮ ячейку в один
+    артефакт одновременно. Без замка второй читает файл до записи
+    первого и затирает его ячейку — молча, потому что по отдельности
+    каждый отработал верно.
+    """
+    import json
+    import multiprocessing as mp
+    import tempfile
+    import short_grid as G
+
+    def one(outdir, key, val, ready, go):
+        G.R.OUT = outdir
+        ready.put(key)
+        go.wait()
+        s = {"cells": {key: {"v": val}}, "computed_at": f"дата-{key}"}
+        G.merge_and_write(s, "ось", [(k, v) for k, v in SS.FLOORS],
+                          lambda x: "отчёт", log=lambda *a: None)
+
+    with tempfile.TemporaryDirectory() as td:
+        ctx = mp.get_context("fork")
+        ready, go = ctx.Queue(), ctx.Event()
+        ps = [ctx.Process(target=one, args=(td, k, v, ready, go))
+              for k, v in (("f50", 0.5), ("f75", 0.75))]
+        for p_ in ps:
+            p_.start()
+        for _ in ps:
+            ready.get(timeout=30)
+        go.set()
+        for p_ in ps:
+            p_.join(timeout=60)
+        with open(os.path.join(td, "ось.json"), encoding="utf-8") as f:
+            got = json.load(f)
+    assert set(got.get("cells") or {}) == {"f50", "f75"}, got.get("cells")
+    assert set(got.get("cell_at") or {}) == {"f50", "f75"}, got.get("cell_at")
+    print(f"ok  параллельные ячейки не теряют друг друга: в артефакте "
+          f"{sorted(got['cells'])}")
+
+
 if __name__ == "__main__":
     for t in (test_axis_reads_as_eaten_margin,
               test_floor_is_put_back_after_the_run,
               test_earlier_floor_cuts_the_position_earlier,
-              test_report_names_the_missing_cells):
+              test_report_names_the_missing_cells,
+              test_parallel_cells_do_not_lose_each_other):
         t()
-    print("\nвсе 4 проверки прошли")
+    print("\nвсе 5 проверок прошли")

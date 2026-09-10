@@ -62,7 +62,6 @@ import arm_book as AB                                         # noqa: E402
 import short_grid as G                                        # noqa: E402
 import instruments_refresh as IR                              # noqa: E402
 import subprocess                                             # noqa: E402
-import json                                                   # noqa: E402
 
 # Ось объявлена до прогона. Ключ — для очереди (латиница), значение —
 # доля расстояния «вход → ликвидация».
@@ -216,9 +215,7 @@ def main(argv=None):
     except Exception:                                        # noqa: BLE001
         pass
     s = run(a.floor, limit=a.limit)
-    art = os.path.join(R.OUT, f"{ART}.json")
-    s = G.merge_artifact(s, art, [(k, v) for k, v in FLOORS])
-    G.write(s, ART, report, "пол капитуляции", log=print)
+    G.merge_and_write(s, ART, [(k, v) for k, v in FLOORS], report, log=print)
     if not a.no_publish:
         publish("пол капитуляции как стоп: где резать против хода")
     return 0
