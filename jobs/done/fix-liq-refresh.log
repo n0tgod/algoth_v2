@@ -90,3 +90,16 @@
   "path": "daily_liquidity_1m.csv.gz"
 }
 конец: 2026-09-10T22:33:31Z, код 0
+публикуется в ветку main:
+ jobs/done/fix-liq-refresh.done              |  1 +
+ jobs/done/fix-liq-refresh.log               | 92 +++++++++++++++++++++++++++++
+ jobs/done/fix-paper-catchup.log             |  7 +++
+ jobs/done/floor-run-1.log                   | 17 ++++++
+ jobs/poke.log                               |  3 +
+ research/asset_groups/out/liquidity_1m.json |  4 +-
+ research/s8_loop/out/day_brake.json         |  2 +-
+ 7 files changed, 123 insertions(+), 3 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   244f20c2..135970d4  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
