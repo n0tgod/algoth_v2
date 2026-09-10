@@ -41,3 +41,11 @@ h24/nn: часов 638, коротких выборов 1914, ног под кр
   символ 106/290  решений 1933
 память: 508.9 МБ (символ 110/290; предел 1200)
 конец: 2026-09-10T13:48:56Z, код 143
+публикуется в ветку main:
+ jobs/done/deploy-liq-1.log          | 11 +++++++++++
+ jobs/done/short-take-1.log          | 25 +++++++++++++++++++++++++
+ jobs/done/stop-take-1.done          |  1 +
+ jobs/done/stop-take-1.log           |  4 ++++
+ jobs/poke.log                       |  6 ++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 48 insertions(+), 1 deletion(-)
