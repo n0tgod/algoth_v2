@@ -2012,6 +2012,37 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L363 `publish(name)`
 - L368 `main(argv=None)`
 
+## research/dca_paper/short_grid.py · 146 строк
+
+Общая машинерия замеров ОСИ на коротком листе `h24`.
+
+- L20 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L35 `MEM_LIMIT_MB = 1200`
+- L38 `replay(legs_, cells, src=None, log=print)` — Проход по барам на эти ячейки: бары символа читаются один раз.
+- L54 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
+- L60 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None)` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
+- L99 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
+- L131 `write(s, name, report_fn, title, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
+- L145 `stamp()`
+
+## research/dca_paper/short_stop.py · 228 строк
+
+Пол капитуляции как СТОП: где резать позицию против хода.
+
+- L50 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L51 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L69 `FLOORS = (('f10', 0.1), ('f25', 0.25), ('f50', 0…` — Ось объявлена до прогона. Ключ — для очереди (латиница), значение — доля расстояния «вход → ликвидация».
+- L72 `CELL = ('fence:none:t2', 'fence', 'none', 't2')` — Ячейка книги: плечо забора, доливов нет, цель ×2 — то, чем книги торгуют. Ключ в языке D10, чтобы реплей счит…
+- L73 `ART = 'DCA-short-stop'`
+- L76 `eaten(frac)` — Сколько маржи съедено к моменту пола, долей. Обратная сторона оси.
+- L81 `run(floor_key, limit=None, src=None, log=print, legs_=None, ctx…`
+- L122 `_u(x)`
+- L126 `_p(x, d=1)`
+- L130 `report(s)`
+- L200 `publish(name)`
+- L206 `main(argv=None)`
+
 ## research/dca_paper/short_supply.py · 123 строк
 
 Сколько ШОРТОВ вообще есть в журнале листов под теми же гейтами.
@@ -2025,25 +2056,21 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L76 `report(s)`
 - L102 `main()`
 
-## research/dca_paper/short_take.py · 338 строк
+## research/dca_paper/short_take.py · 252 строк
 
 Множитель тейка на коротком листе `h24`: ось объявлена до прогона.
 
 - L52 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L53 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L72 `TAKES = (('t05', 0.5), ('t1', 1.0), ('t15', 1.5…` — Ось. Ключ ячейки — тот же язык, что у D10 (`плечо:доливы:цель`), и множители кладутся в ЕГО карту: цель счита…
-- L74 `MEM_LIMIT_MB = 1200`
-- L77 `cells(takes=TAKES)` — Ячейки оси в форме D10 и регистрация множителей в его карте.
-- L83 `replay(legs_, cl, src=None, log=print)` — Один проход по барам на ВСЕ ячейки оси: бары символа читаются раз.
-- L100 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
-- L106 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None)` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
-- L145 `run(limit=None, src=None, log=print, legs_=None, ctx=None, now=…`
-- L180 `merge_artifact(s, path)` — Слить ячейки этого прогона с уже посчитанными.
-- L208 `_u(x)`
-- L212 `_p(x, d=1)`
-- L216 `report(s)`
-- L299 `publish(name)`
-- L305 `main(argv=None)`
+- L73 `TAKES = (('t05', 0.5), ('t1', 1.0), ('t15', 1.5…` — Ось. Ключ ячейки — тот же язык, что у D10 (`плечо:доливы:цель`), и множители кладутся в ЕГО карту: цель счита…
+- L75 `MEM_LIMIT_MB = G.MEM_LIMIT_MB`
+- L78 `cells(takes=TAKES)` — Ячейки оси в форме D10 и регистрация множителей в его карте.
+- L84 `run(limit=None, src=None, log=print, legs_=None, ctx=None, now=…`
+- L119 `_u(x)`
+- L123 `_p(x, d=1)`
+- L127 `report(s)`
+- L210 `publish(name)`
+- L216 `main(argv=None)`
 
 ## research/dca_paper/short_why.py · 358 строк
 

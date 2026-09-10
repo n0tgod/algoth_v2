@@ -1252,21 +1252,32 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
-## research/dca_paper/test_short_take.py · 138 строк
+## research/dca_paper/test_short_stop.py · 87 строк
+
+Проверки замера «пол капитуляции как стоп».
+
+- L13 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L24 `test_axis_reads_as_eaten_margin()`
+- L33 `test_floor_is_put_back_after_the_run()`
+- L47 `test_earlier_floor_cuts_the_position_earlier()` — На тех же барах ранний пол режет раньше и дешевле — ядром лестницы.
+- L69 `test_report_names_the_missing_cells()`
+
+## research/dca_paper/test_short_take.py · 143 строк
 
 Проверки замера множителя тейка на коротком листе.
 
 - L14 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L15 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L24 `H = 3600.0`
-- L25 `DAY = 86400.0`
-- L26 `T0 = TP.T0`
-- L27 `DEP = R.DEPOSITS[1]`
-- L30 `test_axis_lands_in_the_grid_of_the_replay()`
-- L53 `test_axis_does_not_leak_into_the_book_rule()` — Ось замера не меняет правило книги: множитель книги остаётся своим.
-- L68 `test_pack_uses_the_map_of_the_run()`
-- L82 `test_cell_stats_applies_the_book_rules_and_writes_nothing()`
-- L100 `test_merge_keeps_cells_of_earlier_runs_and_names_the_missing()` — Ось считается частями — артефакт сливается, а отчёт это говорит.
+- L25 `H = 3600.0`
+- L26 `DAY = 86400.0`
+- L27 `T0 = TP.T0`
+- L28 `DEP = R.DEPOSITS[1]`
+- L31 `test_axis_lands_in_the_grid_of_the_replay()`
+- L54 `test_axis_does_not_leak_into_the_book_rule()` — Ось замера не меняет правило книги: множитель книги остаётся своим.
+- L69 `test_pack_uses_the_map_of_the_run()`
+- L83 `test_cell_stats_applies_the_book_rules_and_writes_nothing()`
+- L101 `test_merge_keeps_cells_of_earlier_runs_and_names_the_missing()` — Ось считается частями — артефакт сливается, а отчёт это говорит.
 
 ## research/dca_paper/test_short_why.py · 155 строк
 

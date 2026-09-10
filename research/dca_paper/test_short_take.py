@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 import rules as R                                             # noqa: E402
 import run_d10 as D10                                         # noqa: E402
 import short_take as ST                                       # noqa: E402
+import short_grid as G                                        # noqa: E402
 import test_pair as TP                                        # noqa: E402
 
 H = 3600.0
@@ -69,8 +70,8 @@ def test_pack_uses_the_map_of_the_run():
     key = "fence:none:t2"
     recs = {"safe_s": {key: [{"sym": "AUSDT"}]},
             "optimal_s": {key: [{"sym": "BUSDT"}, {"sym": "CUSDT"}]}}
-    got = ST.pack(recs, key)
-    assert set(got) == set(ST.S.BOOKS), sorted(got)
+    got = G.pack(recs, key)
+    assert set(got) == set(G.S.BOOKS), sorted(got)
     assert len(got["safe_h"]) == 1 and len(got["optimal_h"]) == 2
     # «агрессивная» считается на той же линейке, что «оптимальная»
     assert len(got["aggr_h"]) == 2, got["aggr_h"]
@@ -86,7 +87,7 @@ def test_cell_stats_applies_the_book_rules_and_writes_nothing():
             TP._short(young, T0 + H, hold_h=6.0)]
     launch = {old_: T0 - 200 * day, young: T0 - 1 * day}
     with tempfile.TemporaryDirectory() as td:
-        st = ST.cell_stats({"safe_h": recs}, {"error": "рядов нет"}, launch,
+        st = G.cell_stats({"safe_h": recs}, {"error": "рядов нет"}, launch,
                            now=T0 + 100 * H)
         assert sorted(os.listdir(td)) == [], "написал лишнее"
     c = st[f"safe_h:{int(DEP)}"]
@@ -108,17 +109,21 @@ def test_merge_keeps_cells_of_earlier_runs_and_names_the_missing():
         art = os.path.join(td, "DCA-short-take.json")
         first = {"cells": {"t05": {"a": 1}}, "computed_at": "2026-09-10 10:00",
                  "takes": [{"key": "t05", "mult": 0.5}]}
-        got = ST.merge_artifact(dict(first), art)
+        axis = [(k, m) for k, m in ST.TAKES]
+        got = G.merge_artifact(dict(first), art, axis)
         import json as _j
         with open(art, "w", encoding="utf-8") as f:
             _j.dump(got, f, ensure_ascii=False)
         second = {"cells": {"t1": {"a": 2}}, "computed_at": "2026-09-10 14:00",
                   "takes": [{"key": "t1", "mult": 1.0}], "hold_h": 24}
-        m = ST.merge_artifact(dict(second), art)
+        m = G.merge_artifact(dict(second), art, axis)
         assert set(m["cells"]) == {"t05", "t1"}, sorted(m["cells"])
         assert m["cell_at"]["t05"] == "2026-09-10 10:00", m["cell_at"]
         assert m["cell_at"]["t1"] == "2026-09-10 14:00", m["cell_at"]
-        assert [t["key"] for t in m["takes"]] == ["t05", "t1"], m["takes"]
+        assert [a["key"] for a in m["axis"]] == ["t05", "t1"], m["axis"]
+        m["takes"] = [{"key": a["key"], "mult": a["value"]} for a in m["axis"]]
+        m["takes_all"] = [{"key": a["key"], "mult": a["value"]}
+                          for a in m["axis_all"]]
         txt = ST.report(m)
         assert "Ось посчитана не целиком" in txt, txt[:400]
         for mult in ("×1.5", "×2", "×3"):
