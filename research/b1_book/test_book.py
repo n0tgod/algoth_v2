@@ -7911,6 +7911,15 @@ def test_dca_chart_reads_the_journal_of_its_own_family():
             r["avg"] = DR.avg_walk(r["fills"])[-1]["avg"]
             return r
 
+        # ЖУРНАЛ ЖИВЁТ СУТОЧНЫМИ КУСКАМИ: цельного файла у семейств
+        # `h24` и `pair` на сервере нет вовсе, и первая же починка
+        # споткнулась ровно об это — проверка «файл существует»
+        # объявила их журнал отсутствующим. Фикстура кладёт строки так
+        # же, как их кладёт книга: суточным куском.
+        def _shard(path, day):
+            base, ext = os.path.splitext(path)
+            return f"{base}-{day}{ext}"
+
         # журнал длинных книг существует и СВОИХ строк по монете не имеет
         with open(DR.JOURNAL, "w", encoding="utf-8") as f:
             f.write(json.dumps(_row("safe", t0, 7.0), ensure_ascii=False)
@@ -7919,11 +7928,12 @@ def test_dca_chart_reads_the_journal_of_its_own_family():
         # строка ПРЕЖНЕЙ версии правил семейства: в счёт книги не идёт,
         # значит и на графике её быть не должно
         old_v = dict(sh, at=t0 + 7200, book_rules=0, entry_px=55.0)
-        with open(DR.H24_JOURNAL, "w", encoding="utf-8") as f:
+        day = time.strftime("%Y-%m-%d", time.gmtime(t0))
+        with open(_shard(DR.H24_JOURNAL, day), "w", encoding="utf-8") as f:
             for r in (sh, old_v):
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
         pr = _row("pair_safe", t0 + 10800, 200.0)
-        with open(DR.PAIR_JOURNAL, "w", encoding="utf-8") as f:
+        with open(_shard(DR.PAIR_JOURNAL, day), "w", encoding="utf-8") as f:
             f.write(json.dumps(pr, ensure_ascii=False) + "\n")
         # открытая позиция общего счёта живёт в АРТЕФАКТЕ своего семейства
         with open(DR.PAIR_ARTIFACT, "w", encoding="utf-8") as f:
