@@ -556,6 +556,25 @@ def test_report_names_what_is_not_modelled():
 
 
 
+def table_shape(txt, needle):
+    """Форма markdown-таблицы, в шапке которой стоит `needle`.
+
+    Возвращает (клеток в шапке, клеток в разделителе, клетки строк).
+    Таблица с разъехавшимся числом колонок НЕ ломается: markdown молча
+    склеивает соседние столбцы, и на странице пропадает колонка — ровно
+    тот класс отказа, что неотличим от исправности.
+    """
+    lines = txt.splitlines()
+    i = next(k for k, l in enumerate(lines) if needle in l and l.startswith("|"))
+    cells = lambda l: len([c for c in l.strip().strip("|").split("|")])
+    rows = []
+    for l in lines[i + 2:]:
+        if not l.startswith("|"):
+            break
+        rows.append(cells(l))
+    return cells(lines[i]), cells(lines[i + 1]), rows
+
+
 def test_day_concentration_is_measured_and_not_faked():
     """Один эпизод раздаёт деньги многим именам — колонка по именам слепа.
 

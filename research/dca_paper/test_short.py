@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 import rules as R                                             # noqa: E402
 import run_short as S                                         # noqa: E402
 import run_paper as RP                                        # noqa: E402
+import test_paper as TP                                        # noqa: E402
 import run_d10 as D10                                         # noqa: E402
 import run_d2 as D2                                           # noqa: E402
 import test_run_d3 as T3                                      # noqa: E402
@@ -333,6 +334,9 @@ def test_report_shows_what_the_money_is_made_of():
     assert "$ без 3 лучших дней" in txt, txt[:400]
     assert "просадка без худшего дня" in txt, txt[:400]
     assert "-10.00" in txt, [x for x in txt.splitlines() if "optimal_h" in x]
+    # колонки обязаны сойтись числом: markdown склеивает столбцы молча
+    head, sep, rows_ = TP.table_shape(txt, "без 3 лучших дней")
+    assert head == sep and set(rows_) == {head}, (head, sep, rows_)
     print(f"ok  отчёт коротких книг называет концентрацию: итог "
           f"{st['usd']:+.0f} $, без 3 лучших дней {st['usd_wo_top3d']:+.0f} $, "
           f"просадка {100 * st['max_dd']:.1f} % → без худшего дня "

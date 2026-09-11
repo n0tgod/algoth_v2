@@ -494,6 +494,8 @@ def test_report_shows_what_the_money_is_made_of():
     assert "просадка без худшего дня" in txt, txt[:300]
     line = [x for x in txt.splitlines() if "-10.00" in x]
     assert line, [x for x in txt.splitlines() if "pair" in x.lower()][:3]
+    head, sep, rows_ = TP.table_shape(txt, "без 3 лучших дней")
+    assert head == sep and set(rows_) == {head}, (head, sep, rows_)
     print(f"ok  отчёт общего счёта называет концентрацию: без 3 лучших дней "
           f"{st['usd_wo_top3d']:+.0f} $ при итоге {st['usd']:+.0f} $")
 
