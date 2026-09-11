@@ -112,3 +112,19 @@ pair_aggr: фильтр возраста ≥7 сут оставил 2686 из 32
 - Общий счёт — ХЕДЖ-режим: шорт по имени, которое держит длинная сторона, разрешён. В одностороннем режиме биржи он срезал бы длинную позицию, и число совпадений выше есть цена режима.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/conc-pair.done                     |   1 +
+ jobs/done/conc-pair.log                      | 114 +++++++++++++++++++++++++++
+ jobs/done/conc-short.done                    |   1 +
+ jobs/done/conc-short.log                     |  12 +++
+ jobs/poke.log                                |   4 +
+ research/dca_paper/out/DCA-pair.json         |   2 +-
+ research/dca_paper/out/DCA-pair.md           |  73 +++++++++--------
+ research/dca_paper/out/pair-2026-09-10.jsonl |   9 +++
+ research/s8_loop/out/day_brake.json          |   2 +-
+ 9 files changed, 181 insertions(+), 37 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   398a0e85..5b7d330e  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-11T14:48:54Z, код 0
