@@ -401,6 +401,18 @@ const dcaStub = (url) => {
       RUL.push(Object.assign({}, b, {key: k + "_s", side: "short",
                                      title: b.title + " (шорт)"}));
     }
+  // Общий счёт (`dcapair=1`): книга ТОГО ЖЕ формата, но билета и числа
+  // мест у неё нет — они свойства СТОРОНЫ, и приходят в `parts`. Без
+  // такой фикстуры плитки общего счёта не исполнялись headless ни разу,
+  // и прочерк на них владелец увидел раньше проверки.
+  const PAIR = /dcapair=1/.test(SEARCH);
+  if (PAIR)
+    // в фикстуре линейка стоит ПОСЛЕДНЕЙ: порядок вкладок — свойство
+    // живого свода, а здесь он сдвинул бы книгу по умолчанию и
+    // проверки соседних чисел мерили бы другую книгу
+    RUL.push({key: "pair_safe", title: "общая (безопасная)",
+              family: "pair",
+              plain: "длинная книга режима и короткая на одном депозите."});
   const D = {
     present: !/dcaabsent=1/.test(SEARCH),
     why: /dcaabsent=1/.test(SEARCH)
@@ -436,6 +448,51 @@ const dcaStub = (url) => {
       // безопасная: та же запись, но плечо меньше — денег меньше, хвост
       // мельче. Числа нарочно РАЗНЫЕ у линеек: совпади они, проверка
       // «переключение что-то меняет» прошла бы на сломанном ключе
+      // Общий счёт: свой билет у КАЖДОЙ стороны, у счёта его нет
+      // вовсе (`ticket`/`slots` пусты, `parts` полны). Короткая входит
+      // долей от собственного билета — доля едет числом, а не словом.
+      "pair_safe:1000": {
+        deposit: 1000, ruler: "pair_safe", ruler_title: "общая (безопасная)",
+        slots: null, ticket: null, n_journal: 420, forward: null,
+        parts: {safe: {title: "безопасная", side: "long", ticket: 25.0,
+                       ticket_own: 25.0, share_mult: 1.0, slots: 40,
+                       stats: {n: 300, usd: 19.8}},
+                safe_h: {title: "безопасная (шорт h24)", side: "short",
+                         ticket: 6.25, ticket_own: 25.0, share_mult: 0.25,
+                         slots: 16, stats: {n: 120, usd: 8.1}}},
+        link: {corr: -0.41, days: 21}, collisions: {n: 3, names: 2,
+                                                    share: 0.014},
+        restored: mk(420, 33.9, -0.031, -0.010, "TUTUSDT", 21.0, -5.0),
+        trades_forward: [],
+        trades_restored: [tr("TUTUSDT", 6.2, 1.5)]},
+      "pair_safe:10000": {
+        deposit: 10000, ruler: "pair_safe", ruler_title: "общая (безопасная)",
+        slots: null, ticket: null, n_journal: 3100, forward: null,
+        parts: {safe: {title: "безопасная", side: "long", ticket: 25.0,
+                       ticket_own: 25.0, share_mult: 1.0, slots: 400,
+                       stats: {n: 2200, usd: 302.0}},
+                safe_h: {title: "безопасная (шорт h24)", side: "short",
+                         ticket: 55.5, ticket_own: 222.0, share_mult: 0.25,
+                         slots: 45, stats: {n: 900, usd: 96.0}}},
+        link: {corr: -0.38, days: 30}, collisions: {n: 7, names: 5,
+                                                    share: 0.021},
+        restored: mk(3100, 398.0, -0.028, -0.009, "TUTUSDT", 260.0, -12.0),
+        trades_forward: [],
+        trades_restored: [tr("TUTUSDT", 11.0, 1.6)]},
+      "pair_safe:100000": {
+        deposit: 100000, ruler: "pair_safe", ruler_title: "общая (безопасная)",
+        slots: null, ticket: null, n_journal: 5200, forward: null,
+        parts: {safe: {title: "безопасная", side: "long", ticket: 145.0,
+                       ticket_own: 145.0, share_mult: 1.0, slots: 689,
+                       stats: {n: 3600, usd: 620.0}},
+                safe_h: {title: "безопасная (шорт h24)", side: "short",
+                         ticket: 555.5, ticket_own: 2222.0, share_mult: 0.25,
+                         slots: 37, stats: {n: 1600, usd: 180.0}}},
+        link: {corr: -0.36, days: 30}, collisions: {n: 9, names: 6,
+                                                    share: 0.019},
+        restored: mk(5200, 800.0, -0.022, -0.008, "TUTUSDT", 540.0, -22.0),
+        trades_forward: [],
+        trades_restored: [tr("TUTUSDT", 15.0, 1.6)]},
       "safe:1000": {deposit: 1000, ruler: "safe", ruler_title: "безопасная",
                     slots: 40, ticket: 25.0, n_journal: 300, forward: null,
                     restored: mk(300, 19.8, -0.028, -0.009, "TUTUSDT", 11.2,
@@ -3328,7 +3385,8 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     const rtabs = String(global.__el ? global.__el("rtabs").innerHTML : "");
     const nR = (rtabs.match(/class='tab/g) || []).length;
     // с короткими зеркалами линеек шесть, как на живом сервере
-    const wantR = /dcashort=1/.test(SEARCH) ? 6 : 3;
+    const wantR = (/dcashort=1/.test(SEARCH) ? 6 : 3)
+      + (/dcapair=1/.test(SEARCH) ? 1 : 0);
     if (nR !== wantR)
       bad.push(`DCA: переключателей режима ${nR}, а их ${wantR}`);
     if (!/безопасная/.test(rtabs) || !/оптимальная/.test(rtabs)
@@ -3433,6 +3491,30 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       const hl = flat();
       if (/<th>продано<th>стало/.test(hl) || /откуплено/.test(hl))
         bad.push("DCA: длинная лестница подписана словами шорта");
+    }
+    // Общий счёт: билета и мест у СЧЁТА нет, они есть у каждой
+    // СТОРОНЫ. Плитка обязана показать сторону числом, а не прочерк:
+    // прочерк без причины читается как потерянное число (владелец
+    // 2026-09-11 «в общих не показывает мест и билет»).
+    if (/dcapair=1/.test(SEARCH)) {
+      if (global.__dcaSetRuler) global.__dcaSetRuler("pair_safe");
+      const hp = flat();
+      if (!/мест длинной/.test(hp) || !/мест короткой/.test(hp))
+        bad.push("DCA: у общего счёта нет плиток мест по сторонам");
+      if (!/билет длинной/.test(hp) || !/билет короткой/.test(hp))
+        bad.push("DCA: у общего счёта нет плиток билета по сторонам");
+      if (!/\$25/.test(hp) || !/\$6\.25/.test(hp))
+        bad.push("DCA: билеты сторон общего счёта не показаны числом");
+      if (!/40/.test(hp) || !/16/.test(hp))
+        bad.push("DCA: число мест по сторонам общего счёта не показано");
+      if (!/Общего билета у счёта НЕ СУЩЕСТВУЕТ/.test(hp))
+        bad.push("DCA: общий счёт не объясняет, почему билет один не бывает");
+      if (!/0\.25× от собственного билета/.test(hp))
+        bad.push("DCA: доля билета короткой стороны не названа числом");
+      if (global.__dcaSetRuler) global.__dcaSetRuler("safe");
+      const hl = flat();
+      if (/мест длинной/.test(hl))
+        bad.push("DCA: обычная книга подписана плитками сторон");
     }
     // переключение ЛИНЕЙКИ обязано менять числа, а не только подсветку
     if (global.__dcaSetRuler) global.__dcaSetRuler("optimal");

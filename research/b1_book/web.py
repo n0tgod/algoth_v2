@@ -6865,6 +6865,32 @@ function shortBlock(sh){
   return h;
 }
 
+function sideTiles(b){
+  // Билет и число мест — свойства СТОРОНЫ, а не счёта. У общей книги
+  // своего билета не существует вовсе: длинная считает его от своего
+  // пика одновременных позиций, короткая берёт долю от собственного.
+  // Пока на этих плитках стоял прочерк, владелец прочёл его как «не
+  // показывает» — и был прав: прочерк без причины неотличим от
+  // потерянного числа. Поэтому у общего счёта здесь ЧЕТЫРЕ плитки, по
+  // стороне на величину, а у обычной книги — прежние две.
+  const one = (k, v) => "<div class=st><div class=k>" + k +
+    "</div><div class='v mono'>" + v + "</div></div>";
+  const pr = (b || {}).parts;
+  const ks = pr ? Object.keys(pr) : [];
+  if (!ks.length)
+    return one("мест", (b && b.slots != null) ? b.slots : "&mdash;") +
+      one("билет", (b && b.ticket != null) ? "$" + b.ticket : "&mdash;");
+  const nm = p => (p && p.side === "short") ? "короткой" : "длинной";
+  let h = "";
+  for (const k of ks)
+    h += one("мест " + nm(pr[k]),
+             (pr[k] && pr[k].slots != null) ? pr[k].slots : "&mdash;");
+  for (const k of ks)
+    h += one("билет " + nm(pr[k]),
+             (pr[k] && pr[k].ticket != null) ? "$" + pr[k].ticket : "&mdash;");
+  return h;
+}
+
 function pairBlock(b){
   // Общий счёт показан КНИГОЙ: те же плитки, та же кривая, та же
   // таблица по суткам. Своей панели у него нет — владелец 2026-09-07:
@@ -6874,11 +6900,24 @@ function pairBlock(b){
   //
   // Молчание кончается ровно на дефекте: книга без одной стороны
   // выглядит как обычная и врёт молча — про это страница говорит.
-  if (!b || !b.parts || !b.one_sided) return "";
-  return "<div class=panel><p class=bad><b>В общем счёте нет одной " +
-    "стороны</b> (" + esc(b.one_sided.join(", ")) + "): числа этой книги " +
-    "описывают половину замысла, а выглядят как целая книга. Читать их " +
-    "нельзя, пока сторона не появится.</p></div>";
+  if (!b || !b.parts) return "";
+  const ks = Object.keys(b.parts);
+  const sh = ks.map(k => b.parts[k]).find(p => p && p.side === "short") || {};
+  const share = (sh.share_mult == null) ? "свою долю"
+    : (Number(sh.share_mult) >= 1 ? "свой билет целиком"
+       : Number(sh.share_mult) + "× от собственного билета");
+  let h = "";
+  if (ks.length) h += "<div class=panel><p class=dim>Общего билета у счёта " +
+    "НЕ СУЩЕСТВУЕТ: размер позиции считает каждая сторона своим правилом " +
+    "&mdash; длинная от своего пика одновременных позиций, короткая берёт " +
+    share + ". Деньги при этом одни: занятая одной стороной маржа " +
+    "недоступна другой, и часть сделок поэтому не случается вовсе.</p></div>";
+  if (b.one_sided) h += "<div class=panel><p class=bad>" +
+    "<b>В общем счёте нет одной стороны</b> (" +
+    esc(b.one_sided.join(", ")) + "): числа этой " +
+    "книги описывают половину замысла, а выглядят как целая книга. Читать " +
+    "их нельзя, пока сторона не появится.</p></div>";
+  return h;
 }
 
 function dupLine(dd){
@@ -7614,10 +7653,7 @@ function render(){
     esc(rmeta.title || RUL || "&mdash;") + "</div></div>" +
     "<div class=st><div class=k>депозит</div><div class='v mono'>$" +
     Number(b.deposit || DEP).toLocaleString("en-US") + "</div></div>" +
-    "<div class=st><div class=k>мест</div><div class='v mono'>" +
-    (b.slots == null ? "&mdash;" : b.slots) + "</div></div>" +
-    "<div class=st><div class=k>билет</div><div class='v mono'>" +
-    (b.ticket == null ? "&mdash;" : "$" + b.ticket) + "</div></div>" +
+    sideTiles(b) +
     "<div class=st><div class=k>строк в журнале</div><div class='v mono'>" +
     (b.n_journal == null ? "&mdash;" : b.n_journal) + "</div></div>" +
     "</div></div>";
