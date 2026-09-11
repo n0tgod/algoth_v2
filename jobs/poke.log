@@ -1364,3 +1364,9 @@ Terminated
 
 == сигнал 1789141878 ==
 [2026-09-11T15:51:20Z] задание deploy-bar-slots: перезапуск сборщика
+
+== сигнал 1789143171 ==
+[2026-09-11T16:12:53Z] задание deploy-day-sides: перезапуск сборщика
+[2026-09-11T16:12:53Z] задание sides-pair запущено: research/dca_paper/run_pair.py
+[2026-09-11T16:12:53Z] задание sides-paper запущено: research/dca_paper/run_paper.py
+[2026-09-11T16:12:53Z] задание sides-short запущено: research/dca_paper/run_short.py
