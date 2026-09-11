@@ -601,6 +601,51 @@ def test_day_concentration_is_measured_and_not_faked():
           % (st["usd_wo_top"], st["usd_wo_top3d"], st["usd"]))
 
 
+def test_drawdown_says_whether_one_day_made_it():
+    """Просадка одним днём и просадка месяцем сползания — разные книги.
+
+    Кусается на том, ради чего колонка заведена: две записи с ОДИНАКОВОЙ
+    просадкой, у одной она вся в единственном дне, у другой размазана.
+    Число просадки у них совпадает, «без худшего дня» — обязано
+    разойтись. Считается той же формулой, что и сама просадка
+    (`run_paper._dd`), иначе колонки стояли бы рядом посчитанные
+    по-разному.
+    """
+    D = 86400
+    t0 = 1_767_225_600
+
+    def _rows(daily):
+        out = []
+        for i, usd in enumerate(daily):
+            out.append({"dep": 1000, "rules": R.RULES, "sym": f"X{i}USDT",
+                        "at": t0 + i * D, "exit_ts": t0 + i * D + 60,
+                        "usd": float(usd), "written_at": t0 + i * D + 120,
+                        "lev": 1.0, "margin": 25.0, "pnl_frac": 0.0,
+                        "exit": "срок"})
+        return out
+
+    # обвал одним днём: −60 $ на депозите 1000 и ровный фон
+    one = P._stats(_rows([2, 2, 2, -60, 2, 2, 2, 2]), 1000.0)
+    # то же суммарно, но сползанием: шесть дней по −10
+    slow = P._stats(_rows([2, -10, -10, -10, -10, -10, -10, 2]), 1000.0)
+    assert abs(one["max_dd"] - slow["max_dd"]) < 0.002, (one["max_dd"],
+                                                         slow["max_dd"])
+    # у обвала без худшего дня просадки практически не остаётся
+    assert one["max_dd_wo_worst"] > -0.005, one["max_dd_wo_worst"]
+    # у сползания — остаётся почти вся
+    assert slow["max_dd_wo_worst"] < -0.045, slow["max_dd_wo_worst"]
+    assert one["worst_day"] == time.strftime("%Y-%m-%d",
+                                             time.gmtime(t0 + 3 * D))
+    # день у книги один — вычитать нечего, и это прочерк, а не ноль
+    solo = P._stats(_rows([-5.0]), 1000.0)
+    assert solo["max_dd_wo_worst"] is None, solo["max_dd_wo_worst"]
+    assert solo["max_dd_wo_top3d"] is None, solo["max_dd_wo_top3d"]
+    print("ok  просадка: обвал %.2f %% → без худшего дня %.2f %%, "
+          "сползание %.2f %% → %.2f %%"
+          % (100 * one["max_dd"], 100 * one["max_dd_wo_worst"],
+             100 * slow["max_dd"], 100 * slow["max_dd_wo_worst"]))
+
+
 def test_short_record_says_not_measured_not_zero():
     """Три дня из трёх вычитать нечем: прочерк, а не ноль."""
     D = 86400
@@ -2157,6 +2202,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
     test_open_position_is_not_a_closed_one, test_journal_appends_only_new,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,
+         test_drawdown_says_whether_one_day_made_it,
          test_short_record_says_not_measured_not_zero,
          test_two_rulers_are_two_books_and_optimal_is_untouched,
          test_aggressive_gate_takes_only_levered_entries,

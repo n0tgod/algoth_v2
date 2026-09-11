@@ -459,6 +459,45 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
               "раздельных; журнал свой")
 
 
+def test_report_shows_what_the_money_is_made_of():
+    """Концентрация обязана стоять и в отчёте общего счёта.
+
+    Те же колонки, что у длинных книг: одна разогнанная монета, один
+    рыночный эпизод, один день просадки. Кусается на подставной книге, у
+    которой три дня несут ВСЁ: без них итог уходит в минус, и это должно
+    быть видно строкой таблицы. Числа считает то же ядро
+    (`run_paper._stats`), проверка смотрит на дорогу до показа.
+    """
+    D = 86400
+    rows = []
+    for i in range(10):
+        rows.append({"dep": 10000, "rules": R.RULES, "sym": f"T{i}USDT",
+                     "at": T0 + i * D, "exit_ts": T0 + i * D + 60,
+                     "usd": -1.0, "written_at": T0 + i * D + 120,
+                     "lev": 4.0, "margin": 25.0, "pnl_frac": -0.04,
+                     "exit": "срок"})
+    for j in range(3):
+        for k in range(4):
+            rows.append({"dep": 10000, "rules": R.RULES,
+                         "sym": f"F{j}{k}USDT", "at": T0 + (20 + j) * D,
+                         "exit_ts": T0 + (20 + j) * D + 60, "usd": 5.0,
+                         "written_at": T0 + (20 + j) * D + 120, "lev": 4.0,
+                         "margin": 25.0, "pnl_frac": 0.2, "exit": "тейк"})
+    st = RP._stats(rows, 10000.0)
+    s = {"books": {RP._cell("pair_safe", 10000): {
+            "deposit": 10000.0, "ruler": "pair_safe", "all": st,
+            "parts": {}, "n_forward": 0, "n_restored": len(rows)}},
+         "rulers": ["pair_safe"], "ages": {},
+         "rules": RP.rules_snapshot(), "computed_at": "2026-09-11 10:00"}
+    txt = PR.report(s)
+    assert "$ без 3 лучших дней" in txt, txt[:300]
+    assert "просадка без худшего дня" in txt, txt[:300]
+    line = [x for x in txt.splitlines() if "-10.00" in x]
+    assert line, [x for x in txt.splitlines() if "pair" in x.lower()][:3]
+    print(f"ok  отчёт общего счёта называет концентрацию: без 3 лучших дней "
+          f"{st['usd_wo_top3d']:+.0f} $ при итоге {st['usd']:+.0f} $")
+
+
 if __name__ == "__main__":
     for t in (test_pack_marks_the_source_and_keeps_both_sides,
               test_books_sharing_one_geometry_both_get_their_positions,
@@ -473,6 +512,7 @@ if __name__ == "__main__":
               test_ticket_stays_the_ticket_of_its_own_side,
               test_collisions_and_link_live_inside_the_book,
               test_missing_caches_are_a_reason_not_empty_books,
-              test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts):
+              test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts,
+              test_report_shows_what_the_money_is_made_of):
         t()
-    print("\nвсе 14 проверок прошли")
+    print("\nвсе 15 проверок прошли")

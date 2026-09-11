@@ -20,6 +20,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 import rules as R                                             # noqa: E402
 import run_short as S                                         # noqa: E402
+import run_paper as RP                                        # noqa: E402
 import run_d10 as D10                                         # noqa: E402
 import run_d2 as D2                                           # noqa: E402
 import test_run_d3 as T3                                      # noqa: E402
@@ -287,6 +288,57 @@ def test_age_rule_of_the_book_bites_and_counts_the_unknown_apart():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_report_shows_what_the_money_is_made_of():
+    """Отчёт книги обязан называть концентрацию, а не только итог.
+
+    Колонки «без лучшего имени», «без 3 лучших дней» и «просадка без
+    худшего дня» стояли только у длинных книг: правила короткой стороны
+    объявлялись по числам, ни разу не проверенным на вопрос «не сделан
+    ли плюс тремя днями». Кусается на подставной книге, у которой три
+    дня несут ВСЁ: без них итог обязан уйти в минус и это обязано быть
+    видно в строке таблицы, а не только в json.
+    """
+    D = 86400
+    t0 = 1_767_225_600
+    rows = []
+    for i in range(10):                       # десять тощих дней
+        rows.append({"dep": 10000, "rules": R.RULES, "sym": f"T{i}USDT",
+                     "at": t0 + i * D, "exit_ts": t0 + i * D + 60,
+                     "usd": -1.0, "written_at": t0 + i * D + 120,
+                     "lev": 4.0, "margin": 25.0, "pnl_frac": -0.04,
+                     "exit": "срок"})
+    for j in range(3):                        # три жирных, разными именами
+        for k in range(4):
+            rows.append({"dep": 10000, "rules": R.RULES,
+                         "sym": f"F{j}{k}USDT",
+                         "at": t0 + (20 + j) * D,
+                         "exit_ts": t0 + (20 + j) * D + 60,
+                         "usd": 5.0, "written_at": t0 + (20 + j) * D + 120,
+                         "lev": 4.0, "margin": 25.0, "pnl_frac": 0.2,
+                         "exit": "тейк"})
+    st = RP._stats(rows, 10000.0)
+    assert abs(st["usd"] - 50.0) < 1e-6, st["usd"]
+    assert abs(st["usd_wo_top3d"] + 10.0) < 1e-6, st["usd_wo_top3d"]
+    s = {"books": {f"optimal_h:10000": {"deposit": 10000.0,
+                                        "ruler": "optimal_h", "all": st,
+                                        "n_forward": 0,
+                                        "n_restored": len(rows)}},
+         "computed_at": "2026-09-11 10:00", "legs": len(rows),
+         "rulers": list(R.H24_ORDER), "ages": {},
+         # свод, который пишет ЖИВОЙ прогон: версия правил, срок и
+         # сигнал — без них отчёт не собирается вовсе
+         "rules": RP.rules_snapshot(), "hold_h": R.H24_HOLD_H,
+         "positions": len(rows), "secs": 1.0}
+    txt = S.report(s)
+    assert "$ без 3 лучших дней" in txt, txt[:400]
+    assert "просадка без худшего дня" in txt, txt[:400]
+    assert "-10.00" in txt, [x for x in txt.splitlines() if "optimal_h" in x]
+    print(f"ok  отчёт коротких книг называет концентрацию: итог "
+          f"{st['usd']:+.0f} $, без 3 лучших дней {st['usd_wo_top3d']:+.0f} $, "
+          f"просадка {100 * st['max_dd']:.1f} % → без худшего дня "
+          f"{100 * st['max_dd_wo_worst']:.1f} %")
+
+
 if __name__ == "__main__":
     test_cache_signature_follows_the_cell_and_the_hold()
     test_legs_come_from_both_arms_in_time_order()
@@ -295,4 +347,5 @@ if __name__ == "__main__":
     test_age_rule_of_the_book_bites_and_counts_the_unknown_apart()
     test_floor_is_per_book_and_the_cache_knows_it()
     test_replay_gives_each_ruler_its_own_floor()
-    print("\nвсе 7 проверок прошли")
+    test_report_shows_what_the_money_is_made_of()
+    print("\nвсе 8 проверок прошли")

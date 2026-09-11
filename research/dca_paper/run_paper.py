@@ -519,6 +519,46 @@ def dups(rows):
                                if pauses else None)}
 
 
+def _dd(v, deposit):
+    """Просадка по дневному ряду — ОДНОЙ формулой на ВСЕ разрезы.
+
+    Разрезов у просадки теперь несколько (вся, без худшего дня, без трёх
+    лучших), и вторая копия формулы развела бы их молча: колонки стояли
+    бы рядом, посчитанные по-разному.
+    """
+    eq = float(deposit) + np.cumsum(np.asarray(v, dtype=float))
+    return float(np.min(eq / np.maximum.accumulate(eq) - 1.0))
+
+
+# Колонки концентрации — ОДНИМ местом на все три семейства. У длинных
+# книг они стоят с 04.09, а у коротких и общего счёта их не было вовсе:
+# правила короткой стороны (возраст, доля билета, пол капитуляции)
+# объявлялись по числам, которые НИ РАЗУ не были проверены на вопрос
+# «не сделан ли плюс тремя днями». Вторая копия колонок разошлась бы
+# хотя бы конвенцией прочерка.
+CONC_HEAD = ("$ без лучшего имени | $ без 3 лучших дней | "
+             "просадка без худшего дня")
+
+
+def conc_cells(st):
+    """Три клетки концентрации по статистике книги — в языке таблиц.
+
+    Величина, которой НЕ измерить (книга моложе двух дней — нечего
+    вычитать, моложе четырёх — нет трёх лучших), идёт прочерком, а не
+    нулём: ноль здесь читался бы как «концентрации нет».
+    """
+    st = st or {}
+
+    def _m(x):
+        return "—" if x is None else f"{float(x):+.2f}"
+
+    def _pc(x):
+        return "—" if x is None else f"{100.0 * float(x):+.1f} %"
+
+    return (f" {_m(st.get('usd_wo_top'))} | {_m(st.get('usd_wo_top3d'))} | "
+            f"{_pc(st.get('max_dd_wo_worst'))} |")
+
+
 def _stats(rows, deposit):
     """Итог, просадка и форма по дням — на ЭТОМ подмножестве строк."""
     if not rows:
@@ -535,8 +575,7 @@ def _stats(rows, deposit):
             bt[d] = bt.get(d, 0) + 1
     ks = sorted(day)
     v = np.array([day[k] for k in ks], dtype=float)
-    eq = float(deposit) + np.cumsum(v)
-    dd = float(np.min(eq / np.maximum.accumulate(eq) - 1.0))
+    dd = _dd(v, deposit)
     pos = [x for x in v if x > 0]
     # Доля прибыльных ПОЗИЦИЙ и среднее время в сделке. Ничья (ровно
     # ноль) прибыльной не считается — конвенция проекта разрешает её не
@@ -554,6 +593,12 @@ def _stats(rows, deposit):
     # величина НЕ измерена, а не равна нулю.
     top3 = sorted(v, reverse=True)[:3]
     wo3d = (round(float(v.sum() - sum(top3)), 2) if len(ks) > 3 else None)
+    # ИЗ ЧЕГО сделана просадка — тот же вопрос, что «из чего сделан
+    # плюс», и без него концентрация рассказана наполовину: книга,
+    # у которой вся просадка есть ОДИН день, и книга, которая сползает
+    # месяц, живут по-разному, а число просадки у них одно.
+    i_worst = int(np.argmin(v))
+    top3i = list(np.argsort(v)[-3:]) if len(ks) > 3 else []
     return {
         "n": len(rows), "days": len(ks),
         "usd": round(float(v.sum()), 2),
@@ -575,6 +620,12 @@ def _stats(rows, deposit):
         "usd_wo_top": round(wo, 2),
         "top_day": ks[int(np.argmax(v))],
         "usd_wo_top3d": wo3d,
+        "worst_day": ks[i_worst],
+        # «не измерено» ≠ ноль: одного дня вычитать не из чего
+        "max_dd_wo_worst": (round(_dd(np.delete(v, i_worst), deposit), 4)
+                            if len(ks) > 1 else None),
+        "max_dd_wo_top3d": (round(_dd(np.delete(v, top3i), deposit), 4)
+                            if top3i else None),
         "names": len({r["sym"] for r in rows}),
         # Входов больше, чем позиций: позиция есть лестница, и каждый её
         # долив — свой вход. Считаются числом, чтобы «позиций» и «сделок»
