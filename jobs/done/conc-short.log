@@ -82,3 +82,15 @@ aggr_h: фильтр возраста ≥7 сут оставил 2686 из 3273 
 - Хедж-режим есть ПРАВИЛО СЧЁТА этой книги: она не смотрит на длинные позиции. На бирже так можно только в хедж-режиме; в одностороннем совпадающий шорт резал бы длинную позицию, и число таких совпадений стоит выше.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/conc-pair.log               |  7 ++++
+ jobs/done/conc-short.log              | 72 +++++++++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-short.json |  2 +-
+ research/dca_paper/out/DCA-short.md   | 33 ++++++++--------
+ research/s8_loop/out/day_brake.json   |  2 +-
+ 5 files changed, 99 insertions(+), 17 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   b2c410ed..0c071d58  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-11T14:50:28Z, код 0
