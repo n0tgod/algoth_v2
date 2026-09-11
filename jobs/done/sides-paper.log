@@ -233,3 +233,39 @@ sheets.jsonl: ног 1122085
 ## Чего эти числа НЕ описывают
 
 Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а не сведён в позицию, то есть маржа и цена ликвидации по-прежнему считаются по каждой позиции отдельно — на бирже они считаются по слитой. Веса модели видели эти часы, поэтому пересчёт читается как оценка СВЕРХУ. Период один и режим рынка один.
+публикуется в ветку main:
+ jobs/done/deploy-day-sides.log        |   16 +
+ jobs/done/sides-pair.log              |    8 +
+ jobs/done/sides-paper.log             |  231 ++
+ research/dca_paper/out/DCA-paper.json | 3834 +++++++++++++++++++++++++--------
+ research/dca_paper/out/DCA-paper.md   |   16 +-
+ 5 files changed, 3188 insertions(+), 917 deletions(-)
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   jobs/done/sides-paper.log
+	modified:   research/paper_monthly/out/daily.log
+	modified:   research/s10_policy/out/tournament.log
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	bot/out/
+	research/a1_universe/.cache_opts/
+	research/a1_universe/.cache_risk/
+	research/mech_13a67a67/RUNBOOK.md
+	research/mech_13a67a67/controls_check.py
+	research/mech_13a67a67/run_age_mode.py
+	research/mech_63fa406a/
+	research/mech_fcbd3542/.cache_ann/
+	research/mech_fcbd3542/.smoke.sh
+	"research/mech_fcbd3542/.\320\275\320\265\321\202/"
+	research/probe_fshift/.gitignore
+	research/s8_loop/books_extra.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+конец: 2026-09-11T16:13:28Z, код 0
