@@ -967,7 +967,7 @@ A3 — кандидаты в пары на момент окна.
 - L246 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L265 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12164 строк
+## research/b1_book/web.py · 12180 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -987,18 +987,18 @@ A3 — кандидаты в пары на момент окна.
 - L5814 `LEARNPAGE = '<!doctype html><meta charset="utf-8">\…` — Справочник — просьба владельца: страница со всеми «стратегиями» модели и подробным объяснением каждой простым…
 - L5986 `BOOKDAYS = '<!doctype html><meta charset="utf-8">\…` — Дневная статистика ОДНОЙ книги — просьба владельца: «кликаем на 4-hour book, и открывается страница, где стат…
 - L6298 `DCAPAGE = '<!doctype html><meta charset="utf-8">\…` — Бумажная месячная книга (`research/paper_monthly`). Своего показа у неё не было вовсе: книга писала отчёт фай…
-- L7822 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8153 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8592 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8837 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
-- L9091 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
-- L9588 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
-- L9993 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
-- L10323 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
-- L10679 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11106 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11274 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11804 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L7838 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8169 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8608 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8853 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
+- L9107 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
+- L9604 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
+- L10009 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
+- L10339 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
+- L10695 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11122 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11290 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11820 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
@@ -1940,7 +1940,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L508 `publish(name)`
 - L513 `main(argv=None)`
 
-## research/dca_paper/run_paper.py · 1494 строк
+## research/dca_paper/run_paper.py · 1516 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
@@ -1962,15 +1962,15 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L542 `CONC_HEAD = '$ без лучшего имени | $ без 3 лучших д…` — Колонки концентрации — ОДНИМ местом на все три семейства. У длинных книг они стоят с 04.09, а у коротких и об…
 - L546 `conc_cells(st)` — Три клетки концентрации по статистике книги — в языке таблиц.
 - L565 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
-- L652 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
-- L697 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
-- L798 `_pct(x, d=2)`
-- L802 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
-- L837 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
-- L923 `report(s)`
-- L1281 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
-- L1315 `publish(name)`
-- L1321 `main()`
+- L674 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
+- L719 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
+- L820 `_pct(x, d=2)`
+- L824 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
+- L859 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
+- L945 `report(s)`
+- L1303 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
+- L1337 `publish(name)`
+- L1343 `main()`
 
 ## research/dca_paper/run_short.py · 401 строк
 

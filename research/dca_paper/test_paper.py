@@ -620,6 +620,57 @@ def test_day_concentration_is_measured_and_not_faked():
           % (st["usd_wo_top"], st["usd_wo_top3d"], st["usd"]))
 
 
+def test_day_says_what_each_side_brought():
+    """День делится по СТОРОНАМ, и сторона без сделок — прочерк.
+
+    Требование владельца 2026-09-11: «в разбивке по дням нужно отдельно
+    писать, сколько принёс лонг и шорт». У общего счёта это главный
+    вопрос дня — какая сторона заплатила за другую, и итог дня о нём
+    молчит: +10 $ бывает и «обе по +5», и «лонг +60, шорт −50».
+
+    Кусается на дне, где стороны тянут в РАЗНЫЕ стороны: сумма дня одна
+    и та же, а разбивка обязана их различить. Отдельно проверяется день
+    одной стороны: там у второй прочерк с числом сделок 0, а не ноль
+    денег — «сделок не было» и «были, вышли в ноль» разные состояния.
+    """
+    D = 86400
+    t0 = 1_767_225_600
+
+    def _row(sym, at, usd, side):
+        return {"dep": 1000, "rules": R.RULES, "sym": sym, "at": at,
+                "exit_ts": at + 60, "usd": float(usd), "side": side,
+                "written_at": at + 120, "lev": 2.0, "margin": 25.0,
+                "pnl_frac": usd / 25.0, "exit": "срок"}
+
+    rows = [_row("AAAUSDT", t0, 60.0, "long"),
+            _row("BBBUSDT", t0 + 30, -50.0, "short"),
+            # второй день — только лонги
+            _row("CCCUSDT", t0 + D, 4.0, "long")]
+    st = P._stats(rows, 1000.0)
+    d0, d1 = st["days_rows"][0], st["days_rows"][1]
+    assert abs(d0["usd"] - 10.0) < 1e-6, d0
+    assert abs(d0["long"] - 60.0) < 1e-6 and abs(d0["short"] + 50.0) < 1e-6, d0
+    assert d0["n_long"] == 1 and d0["n_short"] == 1, d0
+    # день без шортов: прочерк и ноль СДЕЛОК, а не ноль денег
+    assert d1["short"] is None and d1["n_short"] == 0, d1
+    assert abs(d1["long"] - 4.0) < 1e-6 and d1["n_long"] == 1, d1
+    # сумма сторон обязана сходиться с деньгами дня — иначе таблица
+    # спорит сама с собой
+    for d in st["days_rows"]:
+        got = (d["long"] or 0.0) + (d["short"] or 0.0)
+        assert abs(got - d["usd"]) < 0.01, d
+    # строка прежнего образца (без поля стороны) читается линейкой, а не
+    # назначается лонгом на глаз
+    old = dict(_row("DDDUSDT", t0 + 2 * D, -3.0, "long"), ruler="safe_h")
+    old.pop("side")
+    st2 = P._stats([old], 1000.0)
+    d2 = st2["days_rows"][0]
+    assert d2["short"] is not None and d2["long"] is None, d2
+    print("ok  день по сторонам: лонг %+.0f при шорте %+.0f и итоге %+.0f; "
+          "день одной стороны — прочерк, строка прежнего образца читается "
+          "линейкой" % (d0["long"], d0["short"], d0["usd"]))
+
+
 def test_drawdown_says_whether_one_day_made_it():
     """Просадка одним днём и просадка месяцем сползания — разные книги.
 
@@ -2222,6 +2273,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,
          test_drawdown_says_whether_one_day_made_it,
+         test_day_says_what_each_side_brought,
          test_short_record_says_not_measured_not_zero,
          test_two_rulers_are_two_books_and_optimal_is_untouched,
          test_aggressive_gate_takes_only_levered_entries,

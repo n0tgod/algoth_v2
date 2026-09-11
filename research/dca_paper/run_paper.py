@@ -567,10 +567,23 @@ def _stats(rows, deposit):
     if not rows:
         return None
     day, cnt, bt = {}, {}, {}
+    # Деньги дня ПО СТОРОНАМ (требование владельца 2026-09-11: «в
+    # разбивке по дням нужно отдельно писать, сколько принёс лонг и
+    # шорт»). У общего счёта это главный вопрос дня — какая сторона
+    # заплатила за другую; у односторонней книги одна из колонок
+    # ПРОЧЕРК, и это её честное состояние, а не ноль. Сторона берётся
+    # тем же правилом, что у всех читателей (`rules.row_side`): вторая
+    # его копия однажды разошлась бы, и день делился бы не так, как
+    # книга торгует.
+    side_usd, side_n = {}, {}
     for r in rows:
         d = time.strftime("%Y-%m-%d", time.gmtime(float(r["exit_ts"])))
         day[d] = day.get(d, 0.0) + float(r["usd"])
         cnt[d] = cnt.get(d, 0) + 1
+        sd = R.row_side(r)
+        side_usd.setdefault(d, {})[sd] = (side_usd.get(d, {}).get(sd, 0.0)
+                                          + float(r["usd"]))
+        side_n.setdefault(d, {})[sd] = side_n.get(d, {}).get(sd, 0) + 1
         # Сколько строк дня — пересчёт по прошлому. Предикат ТОТ ЖЕ, что
         # делит книгу (`R.ahead`), а не его копия: разойдись они, день
         # в таблице был бы помечен не тем, чем помечен в своде.
@@ -638,7 +651,16 @@ def _stats(rows, deposit):
         # молчит о том, КОГДА — сумма за месяц может стоять на одном дне.
         "days_rows": [{"d": k, "usd": round(float(day[k]), 2),
                        "n": int(cnt.get(k, 0)),
-                       "bt": int(bt.get(k, 0))} for k in ks],
+                       "bt": int(bt.get(k, 0)),
+                       # сторона без сделок этого дня — прочерк с
+                       # названным числом сделок (0), а не ноль денег
+                       "long": (None if not side_n.get(k, {}).get("long")
+                                else round(side_usd[k]["long"], 2)),
+                       "short": (None if not side_n.get(k, {}).get("short")
+                                 else round(side_usd[k]["short"], 2)),
+                       "n_long": int(side_n.get(k, {}).get("long", 0)),
+                       "n_short": int(side_n.get(k, {}).get("short", 0))}
+                      for k in ks],
         "n_bt": int(sum(bt.values())),
         # Сколько сделок книги закрыто по КОТИРОВКЕ (хвост ленты
         # продолжен серединой стакана, `tail.py`). Считается там же, где

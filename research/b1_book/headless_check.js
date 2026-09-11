@@ -316,7 +316,22 @@ const dcaStub = (url) => {
   // Позиций и ВХОДОВ разное число: позиция есть лестница, и каждый её
   // долив — свой вход. Разбивка по суткам несёт долю бэктеста: день
   // обязан говорить, чем он набран.
-  const mk = (n, usd, dd, wd, top, wo, wo3, bt) => ({
+  // Деньги дня ПО СТОРОНАМ пишет живой прогон ВСЕГДА: у книги одной
+  // стороны вторая колонка прочерк (сделок стороны в дне не было), у
+  // общего счёта числа стоят обе. Заглушка обязана выглядеть так же —
+  // иначе колонки сторон проверялись бы на отсутствии величины.
+  const sidesLong = st => {
+    for (const r of (st.days_rows || [])) {
+      r.long = r.usd; r.n_long = r.n; r.short = null; r.n_short = 0; }
+    return st; };
+  const sidesBoth = (st, share) => {
+    for (const r of (st.days_rows || [])) {
+      r.long = Math.round(r.usd * share * 100) / 100;
+      r.short = Math.round((r.usd - r.long) * 100) / 100;
+      r.n_long = Math.max(1, Math.round(r.n * share));
+      r.n_short = Math.max(1, r.n - r.n_long); }
+    return st; };
+  const mk = (n, usd, dd, wd, top, wo, wo3, bt) => sidesLong({
     n: n, names: Math.max(1, Math.round(n * 0.8)), days: 6, usd: usd,
     fills: Math.round(n * 1.6), n_bt: bt === undefined ? n : bt,
     final: usd / 10000, max_dd: dd, day_median: 0.0012, day_worst: wd,
@@ -462,7 +477,8 @@ const dcaStub = (url) => {
                          slots: 16, stats: {n: 120, usd: 8.1}}},
         link: {corr: -0.41, days: 21}, collisions: {n: 3, names: 2,
                                                     share: 0.014},
-        restored: mk(420, 33.9, -0.031, -0.010, "TUTUSDT", 21.0, -5.0),
+        restored: sidesBoth(mk(420, 33.9, -0.031, -0.010, "TUTUSDT",
+                              21.0, -5.0), 0.6),
         trades_forward: [],
         trades_restored: [tr("TUTUSDT", 6.2, 1.5)]},
       "pair_safe:10000": {
@@ -476,7 +492,8 @@ const dcaStub = (url) => {
                          slots: 45, stats: {n: 900, usd: 96.0}}},
         link: {corr: -0.38, days: 30}, collisions: {n: 7, names: 5,
                                                     share: 0.021},
-        restored: mk(3100, 398.0, -0.028, -0.009, "TUTUSDT", 260.0, -12.0),
+        restored: sidesBoth(mk(3100, 398.0, -0.028, -0.009, "TUTUSDT",
+                              260.0, -12.0), 0.6),
         trades_forward: [],
         trades_restored: [tr("TUTUSDT", 11.0, 1.6)]},
       "pair_safe:100000": {
@@ -490,7 +507,8 @@ const dcaStub = (url) => {
                          slots: 37, stats: {n: 1600, usd: 180.0}}},
         link: {corr: -0.36, days: 30}, collisions: {n: 9, names: 6,
                                                     share: 0.019},
-        restored: mk(5200, 800.0, -0.022, -0.008, "TUTUSDT", 540.0, -22.0),
+        restored: sidesBoth(mk(5200, 800.0, -0.022, -0.008, "TUTUSDT",
+                              540.0, -22.0), 0.6),
         trades_forward: [],
         trades_restored: [tr("TUTUSDT", 15.0, 1.6)]},
       "safe:1000": {deposit: 1000, ruler: "safe", ruler_title: "безопасная",
@@ -590,7 +608,12 @@ const dcaStub = (url) => {
   for (const k of Object.keys(D.books)) {
     const b = D.books[k];
     const f = b.forward, r = b.restored;
-    b.all = mk((f ? f.n : 0) + (r ? r.n : 0),
+    // Общий счёт торгует ДВУМЯ сторонами, и его свод обязан нести обе:
+    // собранный длинным `mk`, он показывал бы у шорта прочерк — то
+    // есть проверял бы колонки сторон на отсутствии величины.
+    const bothSides = /^pair_/.test(b.ruler || "");
+    b.all = (bothSides ? x => sidesBoth(x, 0.6) : x => x)(
+            mk((f ? f.n : 0) + (r ? r.n : 0),
                ((f ? f.usd : 0) + (r ? r.usd : 0)),
                Math.min(f ? f.max_dd : 0, r ? r.max_dd : 0),
                Math.min(f ? f.day_worst : 0, r ? r.day_worst : 0),
@@ -598,7 +621,7 @@ const dcaStub = (url) => {
                ((f ? f.usd_wo_top : 0) + (r ? r.usd_wo_top : 0)),
                ((f ? (f.usd_wo_top3d || 0) : 0)
                 + (r ? (r.usd_wo_top3d || 0) : 0)),
-               r ? r.n : 0);
+               r ? r.n : 0));
     b.trades = (b.trades_forward || []).map(x => Object.assign({}, x,
                                                                {bt: false}))
       .concat((b.trades_restored || []).map(x => Object.assign({}, x,
@@ -3512,6 +3535,15 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       if (!/0\.25× от собственного билета/.test(hp))
         bad.push("DCA: доля билета короткой стороны не названа числом");
       // нижняя панель телефона: мест у счёта два числа, а не прочерк
+      // Деньги дня ПО СТОРОНАМ (владелец 2026-09-11): у общего счёта в
+      // разбивке по дням обязаны стоять обе колонки числами.
+      if (!/<th>лонг<th>шорт/.test(hp))
+        bad.push("DCA: в разбивке по дням нет колонок сторон");
+      const dayr = (hp.match(/<tr class='day[^]*?<\/tr>/g) || [])[0] || "";
+      if (!/data-l='лонг'>[^<]*[0-9]/.test(dayr)
+          || !/data-l='шорт'>[^<]*[0-9]/.test(dayr))
+        bad.push("DCA: деньги сторон в дне общего счёта не числами: "
+                 + dayr.slice(0, 220));
       const barp = String(global.__el ? global.__el("dbar").innerHTML : "");
       if (!/40 \+ 16/.test(barp))
         bad.push("DCA: в нижней панели мест общего счёта не по сторонам: "
@@ -3830,11 +3862,16 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
       // страница не пишет, и последняя ячейка тянет за собой всю
       // подпись под таблицей.
       const money = t => (/[-+\u2212][\d.,]+ \$/.exec(t || "") || [""])[0];
-      if (cs.length < 6)
+      // Колонок в строке восемь: сутки, позиций, бэктест, деньги, лонг,
+      // шорт, к депозиту, накопленным итогом. Индексы берутся ОТ КОНЦА
+      // и от начала по смыслу, а не по счёту: новая колонка сдвигает
+      // номера, и проверка молча начинает мерить соседнюю величину.
+      const acc = cs[cs.length - 1];
+      if (cs.length < 8)
         bad.push("DCA: строка суток разобрана не целиком: " + cs.length);
-      else if (!money(cs[3]) || money(cs[3]) !== money(cs[5]))
+      else if (!money(cs[3]) || money(cs[3]) !== money(acc))
         bad.push("DCA: накопленный итог считан по строкам, а не по "
-                 + "времени: " + money(cs[3]) + " против " + money(cs[5]));
+                 + "времени: " + money(cs[3]) + " против " + money(acc));
       global.__dcaDays();
       if (dayCells().length !== 5)
         bad.push("DCA: повторное нажатие не свернуло разбивку");

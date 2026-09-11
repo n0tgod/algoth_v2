@@ -7482,6 +7482,20 @@ function posBlock(b, grp){
   return h + "</table></div></div>";
 }
 
+function daySideCell(v, n, name){
+  // Деньги дня ПО СТОРОНЕ (владелец 2026-09-11). У общего счёта это
+  // главный вопрос дня: какая сторона заплатила за другую. У книги,
+  // торгующей одной стороной, вторая колонка стоит ПРОЧЕРКОМ — сделок
+  // этой стороны в дне не было, и ноль денег сказал бы, что были и
+  // ничего не принесли. Число сделок стороны идёт рядом мелким: без
+  // него прочерк и «сделки были, вышли в ноль» неотличимы.
+  if (v == null || v === undefined)
+    return "<td class=mono data-l='" + name + "'>&mdash;";
+  const c = v > 0 ? "good" : (v < 0 ? "bad" : "");
+  return "<td class='mono " + c + "' data-l='" + name + "'>" + usd(v) +
+    (n ? " <span style='font-size:.62em;opacity:.7'>(" + n + ")</span>" : "");
+}
+
 function dayTable(st, dep, title){
   // Итог книги отвечает «сколько всего» и молчит о том, КОГДА: сумма за
   // месяц может стоять на одном дне. Тонкий день приглушён, но НЕ
@@ -7511,8 +7525,8 @@ function dayTable(st, dep, title){
   let h = "<div class=panel><div class=hd><div class='cap dot'>" +
     esc(title) + " &mdash; " + rs.length + " суток</div>" + btn +
     "</div><div class=scroll><table><tr class=thr><th>сутки UTC" +
-    "<th>позиций<th>из них бэктест<th>деньги<th>к депозиту" +
-    "<th>накопленным итогом</tr>";
+    "<th>позиций<th>из них бэктест<th>деньги<th>лонг<th>шорт" +
+    "<th>к депозиту<th>накопленным итогом</tr>";
   for (const x of rows.slice(0, cut)){
     const r = x.r, c = r.usd > 0 ? "good" : (r.usd < 0 ? "bad" : "");
     // Подписи ячеек (`data-l`) нужны телефону: там строка ложится
@@ -7524,6 +7538,8 @@ function dayTable(st, dep, title){
       "<td class=mono data-l='из них бэктест'>" +
         (r.bt == null ? "&mdash;" : r.bt) +
       "<td class='mono " + c + "' data-l='деньги'>" + usd(r.usd) +
+      daySideCell(r.long, r.n_long, "лонг") +
+      daySideCell(r.short, r.n_short, "шорт") +
       "<td class='mono " + c + "' data-l='к депозиту'>" +
         (dep ? fpct(r.usd / Number(dep)) : "&mdash;") +
       "<td class='mono " + (x.acc > 0 ? "good" : "bad") +
