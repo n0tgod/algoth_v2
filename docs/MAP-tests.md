@@ -272,7 +272,7 @@
   - L166 `RealGroups.test_groups_file_parses_and_is_disjoint(self)`
   - L173 `RealGroups.test_unlabeled_are_not_in_groups(self)`
 
-## research/b1_book/headless_check.js · 6403 строк
+## research/b1_book/headless_check.js · 6408 строк
 
 Прогон логики живых страниц без браузера: DOM, canvas и сеть
 

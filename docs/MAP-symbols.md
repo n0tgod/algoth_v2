@@ -967,7 +967,7 @@ A3 — кандидаты в пары на момент окна.
 - L246 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L265 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12151 строк
+## research/b1_book/web.py · 12164 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -987,18 +987,18 @@ A3 — кандидаты в пары на момент окна.
 - L5814 `LEARNPAGE = '<!doctype html><meta charset="utf-8">\…` — Справочник — просьба владельца: страница со всеми «стратегиями» модели и подробным объяснением каждой простым…
 - L5986 `BOOKDAYS = '<!doctype html><meta charset="utf-8">\…` — Дневная статистика ОДНОЙ книги — просьба владельца: «кликаем на 4-hour book, и открывается страница, где стат…
 - L6298 `DCAPAGE = '<!doctype html><meta charset="utf-8">\…` — Бумажная месячная книга (`research/paper_monthly`). Своего показа у неё не было вовсе: книга писала отчёт фай…
-- L7809 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8140 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8579 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8824 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
-- L9078 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
-- L9575 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
-- L9980 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
-- L10310 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
-- L10666 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11093 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11261 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11791 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L7822 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8153 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8592 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8837 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
+- L9091 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
+- L9588 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
+- L9993 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
+- L10323 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
+- L10679 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11106 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11274 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11804 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 

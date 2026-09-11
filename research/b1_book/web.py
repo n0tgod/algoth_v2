@@ -6865,6 +6865,19 @@ function shortBlock(sh){
   return h;
 }
 
+function slotsText(b){
+  // Мест у общего счёта два числа, а не одно: касса общая, но очередь
+  // своя у каждой стороны. Панель телефона своей арифметики не имеет —
+  // берёт те же числа, что плитки выше, и печатает их СУММОЙ СТОРОН, а
+  // не прочерком: прочерк здесь читался бы как «мест не считали».
+  const pr = (b || {}).parts;
+  const ks = pr ? Object.keys(pr) : [];
+  if (!ks.length) return (b && b.slots != null) ? String(b.slots) : "&mdash;";
+  const v = ks.map(k => (pr[k] || {}).slots);
+  if (v.some(x => x == null)) return "&mdash;";
+  return v.join(" + ");
+}
+
 function sideTiles(b){
   // Билет и число мест — свойства СТОРОНЫ, а не счёта. У общей книги
   // своего билета не существует вовсе: длинная считает его от своего
@@ -7739,7 +7752,7 @@ function render(){
           "opacity:.85'>(" + fpct(st.final) + ")</span>") + "</div></div>" +
         "<div class=c><div class=k>открыто / мест</div>" +
         "<div class='v mono'>" + (nop == null ? "&mdash;" : nop) + " / " +
-        (b.slots == null ? "&mdash;" : b.slots) + "</div></div>" +
+        slotsText(b) + "</div></div>" +
         "<button class=btn id=dcajump>журнал</button>"
       : "";
     const jb = document.getElementById("dcajump");

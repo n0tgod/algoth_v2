@@ -3511,6 +3511,11 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
         bad.push("DCA: общий счёт не объясняет, почему билет один не бывает");
       if (!/0\.25× от собственного билета/.test(hp))
         bad.push("DCA: доля билета короткой стороны не названа числом");
+      // нижняя панель телефона: мест у счёта два числа, а не прочерк
+      const barp = String(global.__el ? global.__el("dbar").innerHTML : "");
+      if (!/40 \+ 16/.test(barp))
+        bad.push("DCA: в нижней панели мест общего счёта не по сторонам: "
+                 + barp.slice(0, 200));
       if (global.__dcaSetRuler) global.__dcaSetRuler("safe");
       const hl = flat();
       if (/мест длинной/.test(hl))
