@@ -291,3 +291,5 @@
 {"at": 1789181401.142, "role": "judge", "status": "start", "started": 1789181401.141, "ended": 1789181401.142, "dry": false, "pid": 2600831}
 {"at": 1789190388.41, "role": "judge", "status": "ok", "started": 1789181401.141, "ended": 1789190388.41, "dry": false, "note": "код возврата 0"}
 {"at": 1789190401.975, "role": "ceiling", "status": "start", "started": 1789190401.972, "ended": 1789190401.975, "dry": false, "pid": 2621979}
+{"at": 1789190406.154, "role": "ceiling", "status": "ok", "started": 1789190401.972, "ended": 1789190406.154, "dry": false, "note": "код возврата 0"}
+{"at": 1789190701.522, "role": "declare", "status": "start", "started": 1789190701.52, "ended": 1789190701.522, "dry": false, "pid": 2622706}
