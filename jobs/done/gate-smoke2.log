@@ -137,3 +137,15 @@
 - Запас до пола и теснота — РАЗНЫЕ вопросы: первый про геометрию нашей позиции, второй про то, во что мы входим. Оси считаются независимо и складывать их нельзя.
 
 конец: 2026-09-12T22:56:57Z, код 0
+публикуется в ветку main:
+ jobs/done/gate-smoke.log                   |  13 +++
+ jobs/done/gate-smoke2.done                 |   1 +
+ jobs/done/gate-smoke2.log                  | 139 +++++++++++++++++++++++++++++
+ jobs/poke.log                              |   5 ++
+ research/dca_paper/out/DCA-entry-gate.json |   2 +-
+ research/dca_paper/out/DCA-entry-gate.md   |  84 ++++++++---------
+ 6 files changed, 202 insertions(+), 42 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   b3713304..fbb3aad1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
