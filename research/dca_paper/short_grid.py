@@ -57,7 +57,8 @@ def pack(recs, key):
             for bk, rk in S.BOOKS.items()}
 
 
-def cell_stats(packed, ctx, launch, now=None, log=lambda *a: None):
+def cell_stats(packed, ctx, launch, now=None, log=lambda *a: None,
+               keys=None, deps=None):
     """Книги семейства на этих записях: деньги НЕТТО, состав исходов.
 
     Правила книги применяются ТЕ ЖЕ и в том же порядке, что в прогоне
@@ -68,11 +69,13 @@ def cell_stats(packed, ctx, launch, now=None, log=lambda *a: None):
     for bk in list(packed):
         packed[bk], _why = RP.age_shorts(packed[bk], bk, launch=launch,
                                          log=log, now=now)
+    keys = list(keys if keys is not None else R.H24_ORDER)
+    deps = list(deps if deps is not None else R.DEPOSITS)
     rows, cells_, _one, _live = RP.build_rows(packed, now=now,
-                                              keys=R.H24_ORDER, log=log)
+                                              keys=keys, log=log)
     out = {}
-    for bk in R.H24_ORDER:
-        for dep in R.DEPOSITS:
+    for bk in keys:
+        for dep in deps:
             mine = [r for r in rows if R.ruler_of(r) == bk
                     and int(r.get("dep", 0)) == int(dep)]
             if ctx is not None and not ctx.get("error"):

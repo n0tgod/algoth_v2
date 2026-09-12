@@ -1583,6 +1583,34 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L68 `build_levels(bars)` — Уровни по последнему бару окна; мало истории — уровней нет.
 - L81 `main()`
 
+## research/dca_paper/agree_book.py · 378 строк
+
+Книги DCA на СОГЛАСИИ рук: что было бы, если лист брать пересечением.
+
+- L43 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L44 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L60 `ARMS = ('gbm', 'nn')`
+- L61 `ART = 'DCA-agree-book'`
+- L62 `SEEDS = 200`
+- L63 `MAIN_DEP = 10000`
+- L66 `agreed_of(legs)` — Согласные решения листа и состав рук на каждом.
+- L84 `keys_of(cache)` — Решения кэша: (имя, час, сторона) — по одному на все линейки.
+- L92 `keep(cache, want)` — Записи кэша, чьё решение попало в `want`. Кэш не меняется.
+- L102 `packed_long(cache, keys=None)` — Записи длинных книг по книгам — тем же реестром, что у прогона.
+- L111 `packed_short(cache)` — Записи коротких книг по книгам семейства `h24`.
+- L119 `stats_of(packed, ctx, launch, keys, deps=None, now=None)` — Книги на этих записях — ТЕМ ЖЕ ядром, что считает прогон.
+- L125 `control(cache, all_keys_, n_keep, packer, ctx, launch, keys, se…` — Случайные выборки ТОГО ЖЕ размера: фильтр против своей же доли.
+- L154 `beat_share(draws, value, field)` — Доля зёрен, у которых случайная выборка не хуже названной величины.
+- L163 `run_family(name, cache, legs_, packer, keys, ctx, launch, seeds…` — Одна семья книг: обе ветки листа, состав решений и контроль.
+- L182 `run_pair_family(long_cache, short_cache, long_keep, short_keep,…` — Общий счёт: те же кэши, но урезанные согласием. Журнал — временный.
+- L215 `run(limit=None, seeds=SEEDS, log=print, now=None, launch=None, …`
+- L253 `_u(x)`
+- L257 `_p(x, d=1)`
+- L261 `_r(x)`
+- L265 `report(s)`
+- L354 `publish(name)`
+- L360 `main(argv=None)`
+
 ## research/dca_paper/arm_book.py · 429 строк
 
 Книга DCA на решениях ОДНОЙ руки: деревья против сети, честно.
@@ -2019,7 +2047,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L363 `publish(name)`
 - L368 `main(argv=None)`
 
-## research/dca_paper/short_grid.py · 181 строк
+## research/dca_paper/short_grid.py · 184 строк
 
 Общая машинерия замеров ОСИ на коротком листе `h24`.
 
@@ -2028,12 +2056,12 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L35 `MEM_LIMIT_MB = 1200`
 - L38 `replay(legs_, cells, src=None, log=print)` — Проход по барам на эти ячейки: бары символа читаются один раз.
 - L54 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
-- L60 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None)` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
-- L99 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
-- L131 `_lock(path)` — Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
-- L152 `merge_and_write(s, name, axis, report_fn, log=print)` — Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
-- L166 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
-- L180 `stamp()`
+- L60 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None, …` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
+- L102 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
+- L134 `_lock(path)` — Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
+- L155 `merge_and_write(s, name, axis, report_fn, log=print)` — Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
+- L169 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
+- L183 `stamp()`
 
 ## research/dca_paper/short_stop.py · 225 строк
 
