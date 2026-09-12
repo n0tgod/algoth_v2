@@ -95,6 +95,10 @@ def cell_stats(packed, ctx, launch, now=None, log=lambda *a: None,
                           else round(float(fin) / abs(float(dd)), 2)),
                 "exits": {k: {"n": v, "usd": round(usd[k], 2)}
                           for k, v in by.items()},
+                # Разбивка по суткам едет вместе с итогом: вопрос «а в
+                # этот день?» итогу не задать, а считать дни второй раз
+                # своим кодом — завести вторую копию разбивки.
+                "days": st.get("days_rows"),
                 "no_cash": c.get("no_cash"), "taken": c.get("taken")}
     return out
 

@@ -130,6 +130,36 @@ def test_report_reconciles_the_branch_with_the_live_book():
           "отсутствие свода названо причиной")
 
 
+def test_day_table_puts_both_branches_on_the_same_days():
+    """Вопрос «а в этот день?» итогу не задать — нужны сутки обеих веток.
+
+    Кусается на дне, который есть у одной ветки и отсутствует у другой:
+    у согласной книги в этот день сделок могло не быть вовсе, и это
+    ПРОЧЕРК, а не ноль. Даты берутся объединением: показать только свои
+    дни значило бы сравнивать разные окна.
+    """
+    dep = int(R.DEPOSITS[1])
+    s = {"families": [{"name": "короткие книги h24", "keys": ["safe_h"],
+                       "decisions": 100, "agreed": 30, "one_arm": 70,
+                       "all": {f"safe_h:{dep}": {"days": [
+                           {"d": "2026-09-11", "usd": -388.0},
+                           {"d": "2026-09-12", "usd": -1173.0}]}},
+                       "agree": {f"safe_h:{dep}": {"days": [
+                           {"d": "2026-09-12", "usd": -40.0}]}},
+                       "control": {}}],
+         "seeds": 0, "main_dep": dep, "computed_at": "2026-09-12 23:00"}
+    txt = A.report(s)
+    line = [x for x in txt.splitlines() if "согласие" in x and "|" in x]
+    assert any("-40" in x for x in line), line
+    assert any("-1173" in x and "-388" in x for x in txt.splitlines()), \
+        [x for x in txt.splitlines() if "обе руки" in x]
+    # день, которого у согласной ветки нет, — прочерк, а не ноль
+    ag = [x for x in line if "-40" in x][0]
+    assert "—" in ag, ag
+    print("ok  сутки обеих веток: даты объединением, день без сделок "
+          "стороны — прочерк, а не ноль")
+
+
 def test_report_names_both_branches_and_the_control():
     s = {"families": [{"name": "длинные книги", "keys": ["safe"],
                        "decisions": 100, "agreed": 30, "one_arm": 70,
@@ -160,6 +190,7 @@ if __name__ == "__main__":
               test_agreed_sheet_is_a_subset_and_keeps_every_ruler,
               test_control_takes_the_same_size_and_says_when_it_cannot,
               test_beat_share_counts_ties_against_the_filter,
+              test_day_table_puts_both_branches_on_the_same_days,
               test_report_names_both_branches_and_the_control):
         t()
-    print("\nвсе 6 проверок прошли")
+    print("\nвсе 7 проверок прошли")

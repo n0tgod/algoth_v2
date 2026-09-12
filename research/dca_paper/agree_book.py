@@ -230,6 +230,7 @@ def run_pair_family(long_cache, short_cache, long_keep, short_keep, tmp,
                 got[f"{pk}:{int(dep)}"] = {
                     "n": a.get("n"), "usd": a.get("usd"), "final": fin,
                     "max_dd": dd, "day_median": a.get("day_median"),
+                    "days": a.get("days_rows"),
                     "ratio": (None if not fin or not dd
                               else round(float(fin) / abs(float(dd)), 2))}
         out[br] = got
@@ -285,6 +286,41 @@ def _p(x, d=1):
 
 def _r(x):
     return "—" if x is None else f"{float(x):.2f}"
+
+
+def _days_map(cell):
+    """Деньги по суткам одной книги: дата → доллары."""
+    out = {}
+    for r in (cell or {}).get("days") or []:
+        try:
+            out[str(r["d"])] = float(r["usd"])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
+def _day_table(s, dep, last=7):
+    """Последние сутки обеих веток по каждой книге, рядом."""
+    rows, dates = [], set()
+    for f in s.get("families") or []:
+        for bk in f.get("keys") or []:
+            a = _days_map((f.get("all") or {}).get(f"{bk}:{dep}"))
+            g = _days_map((f.get("agree") or {}).get(f"{bk}:{dep}"))
+            if not a and not g:
+                continue
+            rows.append((bk, a, g))
+            dates |= set(a) | set(g)
+    if not rows:
+        return []
+    ks = sorted(dates)[-int(last):]
+    L = ["| книга | ветка | " + " | ".join(ks) + " |",
+         "|---|---|" + "--:|" * len(ks)]
+    for bk, a, g in rows:
+        for ttl, m in (("обе руки", a), ("согласие", g)):
+            L.append(f"| {R.ruler_title(bk)} | {ttl} | "
+                     + " | ".join("—" if m.get(k) is None
+                                  else f"{m[k]:+.0f}" for k in ks) + " |")
+    return L + [""]
 
 
 def report(s):
@@ -388,6 +424,14 @@ def report(s):
                      + ("—" if sh_r is None else f"{100 * sh_r:.0f} % "
                                                  f"из {n_r}") + " |")
         L.append("")
+    L += [f"## Последние сутки: обе ветки рядом (депозит ${dep})", "",
+          "Итог месяца молчит о том, КОГДА книга потеряла. Здесь деньги "
+          "каждого дня у обеих веток: согласный лист либо проходит "
+          "плохой день мягче, либо теряет так же — и это разные ответы "
+          "на вопрос, зачем он нужен.", ""]
+    days = _day_table(s, dep)
+    L += days if days else ["Дней у веток нет: разбивка по суткам не "
+                            "посчитана.", ""]
     L += ["## Как читать", "",
           "- Согласие РЕЖЕТ число решений, а книга на меньшем листе "
           "меняется сама по себе: случайная выборка того же размера "

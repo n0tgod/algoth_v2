@@ -1583,7 +1583,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L68 `build_levels(bars)` — Уровни по последнему бару окна; мало истории — уровней нет.
 - L81 `main()`
 
-## research/dca_paper/agree_book.py · 427 строк
+## research/dca_paper/agree_book.py · 471 строк
 
 Книги DCA на СОГЛАСИИ рук: что было бы, если лист брать пересечением.
 
@@ -1604,13 +1604,15 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L164 `live_of(path, keys, dep=MAIN_DEP)` — Числа ЖИВОЙ книги из её свода — для сверки с веткой «обе руки».
 - L187 `run_family(name, cache, legs_, packer, keys, ctx, launch, seeds…` — Одна семья книг: обе ветки листа, состав решений и контроль.
 - L207 `run_pair_family(long_cache, short_cache, long_keep, short_keep,…` — Общий счёт: те же кэши, но урезанные согласием. Журнал — временный.
-- L240 `run(limit=None, seeds=SEEDS, log=print, now=None, launch=None, …`
-- L278 `_u(x)`
-- L282 `_p(x, d=1)`
-- L286 `_r(x)`
-- L290 `report(s)`
-- L403 `publish(name)`
-- L409 `main(argv=None)`
+- L241 `run(limit=None, seeds=SEEDS, log=print, now=None, launch=None, …`
+- L279 `_u(x)`
+- L283 `_p(x, d=1)`
+- L287 `_r(x)`
+- L291 `_days_map(cell)` — Деньги по суткам одной книги: дата → доллары.
+- L302 `_day_table(s, dep, last=7)` — Последние сутки обеих веток по каждой книге, рядом.
+- L326 `report(s)`
+- L447 `publish(name)`
+- L453 `main(argv=None)`
 
 ## research/dca_paper/arm_book.py · 429 строк
 
@@ -2048,7 +2050,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L363 `publish(name)`
 - L368 `main(argv=None)`
 
-## research/dca_paper/short_grid.py · 184 строк
+## research/dca_paper/short_grid.py · 188 строк
 
 Общая машинерия замеров ОСИ на коротком листе `h24`.
 
@@ -2058,11 +2060,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L38 `replay(legs_, cells, src=None, log=print)` — Проход по барам на эти ячейки: бары символа читаются один раз.
 - L54 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
 - L60 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None, …` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
-- L102 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
-- L134 `_lock(path)` — Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
-- L155 `merge_and_write(s, name, axis, report_fn, log=print)` — Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
-- L169 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
-- L183 `stamp()`
+- L106 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
+- L138 `_lock(path)` — Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
+- L159 `merge_and_write(s, name, axis, report_fn, log=print)` — Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
+- L173 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
+- L187 `stamp()`
 
 ## research/dca_paper/short_stop.py · 225 строк
 
