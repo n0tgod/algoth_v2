@@ -1747,6 +1747,37 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L261 `report(s)`
 - L382 `main()`
 
+## research/dca_paper/entry_gate.py · 429 строк
+
+Гейты ВХОДА книг DCA: запас до пола и теснота стакана.
+
+- L54 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L55 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L72 `ART = 'DCA-entry-gate'`
+- L73 `SEEDS = 200`
+- L74 `MAIN_DEP = 10000`
+- L76 `FLOOR_GAPS = (('g03', 0.03), ('g05', 0.05), ('g08', …` — Ось A: минимальный запас до пола, доля цены от входа.
+- L78 `TIGHT_CAPS = (('t5', 5.0), ('t2', 2.0), ('t1', 1.0),…` — Ось B: потолок «наш нотионал к долларам у лучшей цены своей стороны».
+- L79 `SUMMARY_DIR = os.path.join(ROOT, 'research', 's8_loop…`
+- L82 `floor_gap(rec, book, look=None)` — Доля цены от входа до ПОЛА капитуляции. Нет данных — None.
+- L111 `class Depth` — Доллары у лучшей цены на час решения — из часовых сводок стакана.
+  - L119 `Depth.__init__(self, root=SUMMARY_DIR, log=print)`
+  - L126 `Depth._load(self, sym, day)`
+  - L148 `Depth.touch_usd(self, rec)` — Доллары у лучшей цены СВОЕЙ стороны входа. Нет записи — None.
+  - L173 `Depth.tightness(self, rec)` — Наш нотионал к долларам у лучшей цены. Нет записи — None.
+  - L184 `Depth.why(self)`
+- L189 `gate_records(recs, book, keep_fn)` — Записи книги, прошедшие гейт. Величина неизвестна — ПРОПУСКАЕМ.
+- L207 `branch(packed, book_gate, ctx, launch, keys, now=None)` — Одна ветка оси: гейт по каждой книге, затем правила книг и деньги.
+- L217 `control_rows(packed, sizes, ctx, launch, keys, seeds=SEEDS, dep…` — Случайные выборки ТОГО ЖЕ размера — по каждой книге своя.
+- L244 `run_axis(name, axis, packed, gate_of, ctx, launch, keys, seeds=…` — Ось целиком: ветка «как сейчас» плюс по ветке на порог.
+- L267 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
+- L308 `_u(x)`
+- L312 `_p(x, d=1)`
+- L316 `_r(x)`
+- L320 `report(s)`
+- L406 `publish(name)`
+- L412 `main(argv=None)`
+
 ## research/dca_paper/fund_check.py · 281 строк
 
 Проверка величины funding: сколько начислений, с каким шагом и почему.
