@@ -63,15 +63,19 @@ def test_tightness_reads_the_side_the_entry_hits():
         f.write(json.dumps({"hour": hour, "best_b": 1000.0,
                             "best_a": 4000.0, "spread_bp": 5.0}) + "\n")
     d = E.Depth(root=td, log=lambda *a: None)
-    sh = d.tightness(_rec(side="short", lev=10.0, margin=100.0))
-    lo = d.tightness(_rec(side="long", lev=10.0, margin=100.0))
-    # нотионал 100 × 10 = 1000: у шорта ровно бид (1.0), у лонга четверть
-    assert abs(sh - 1.0) < 1e-9 and abs(lo - 0.25) < 1e-9, (sh, lo)
+    # нотионал = БИЛЕТ книги × плечо: маржи у записи кэша нет вовсе
+    tick = float(R.ticket_in("safe_h", "safe_h", E.MAIN_DEP))
+    sh = d.tightness(_rec(side="short", lev=10.0), "safe_h")
+    lo = d.tightness(_rec(side="long", lev=10.0), "safe_h")
+    assert abs(sh - tick * 10.0 / 1000.0) < 1e-9, (sh, tick)
+    assert abs(lo - tick * 10.0 / 4000.0) < 1e-9, (lo, tick)
+    assert abs(sh / lo - 4.0) < 1e-9, (sh, lo)
     # часа нет в записи — НЕ измерено
-    assert d.tightness(dict(_rec(), at=T0 + 86400 * 5)) is None
+    assert d.tightness(dict(_rec(), at=T0 + 86400 * 5), "safe_h") is None
     assert d.why()["измерено"] == 2 and d.why()["нет файла записи"] == 1
-    print(f"ok  теснота: шорт меряется бидом ({sh:g}), лонг аском "
-          f"({lo:g}); часа нет — прочерк, и он посчитан")
+    print(f"ok  теснота от билета книги ${tick:g}: шорт меряется бидом "
+          f"({sh:.2f}), лонг аском ({lo:.2f}); часа нет — прочерк, и он "
+          "посчитан")
 
 
 def test_unknown_is_not_a_filter():

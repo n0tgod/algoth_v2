@@ -1025,7 +1025,7 @@
 - L255 `test_run_refuses_when_the_rule_is_already_in_the_book()` — Правило внедрено — замер обязан отказать СЛОВАМИ, а не дать ноль.
 - L280 `main()`
 
-## research/dca_paper/test_entry_gate.py · 149 строк
+## research/dca_paper/test_entry_gate.py · 153 строк
 
 Проверки замера «гейты входа книг DCA».
 
@@ -1035,9 +1035,9 @@
 - L30 `_rec(sym='AAAUSDT', lev=10.0, px=100.0, side='short', margin=10…`
 - L37 `test_floor_gap_falls_with_leverage_and_follows_the_book()` — Запас до пола — ядром лестницы, доля пола — правилом КНИГИ.
 - L55 `test_tightness_reads_the_side_the_entry_hits()` — Шорт бьёт в БИД, лонг в аск: теснота меряется своей стороной.
-- L77 `test_unknown_is_not_a_filter()` — Решение без величины гейт пропускает и считает отдельно.
-- L89 `test_control_samples_each_book_to_its_own_size()` — Выборка того же размера — ПО КАЖДОЙ книге своя.
-- L112 `test_report_names_axes_thresholds_and_the_control()`
+- L81 `test_unknown_is_not_a_filter()` — Решение без величины гейт пропускает и считает отдельно.
+- L93 `test_control_samples_each_book_to_its_own_size()` — Выборка того же размера — ПО КАЖДОЙ книге своя.
+- L116 `test_report_names_axes_thresholds_and_the_control()`
 
 ## research/dca_paper/test_fund_check.py · 111 строк
 

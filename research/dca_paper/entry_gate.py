@@ -79,7 +79,24 @@ TIGHT_CAPS = (("t5", 5.0), ("t2", 2.0), ("t1", 1.0), ("t05", 0.5))
 SUMMARY_DIR = os.path.join(ROOT, "research", "s8_loop", "out", "summary")
 
 
-def floor_gap(rec, book, look=None):
+def notional_at(rec, book, dep=MAIN_DEP):
+    """Нотионал позиции книги: билет книги × плечо записи.
+
+    У ЗАПИСИ КЭША маржи нет вовсе — её назначает касса при сборке книги
+    (`build_rows`), и у одной записи она разная у трёх книг и трёх
+    депозитов. Поэтому геометрия считается от БИЛЕТА книги на названном
+    депозите, а не от поля записи: первый прогон спрашивал `margin` и
+    получал прочерк на каждом решении.
+    """
+    try:
+        lev = float(rec.get("lev"))
+        tick = float(R.ticket_in(book, book, dep))
+    except (TypeError, ValueError):
+        return None
+    return None if not (lev > 0 and tick > 0) else tick * lev
+
+
+def floor_gap(rec, book, look=None, dep=MAIN_DEP):
     """Доля цены от входа до ПОЛА капитуляции. Нет данных — None.
 
     Геометрия берётся ядром лестницы, а не своей формулой: пол книги
@@ -94,8 +111,10 @@ def floor_gap(rec, book, look=None):
     if not entry > 0 or not lev > 0:
         return None
     side = rec.get("side") or "long"
-    fills = rec.get("fills") or [[rec.get("at"), entry, 1.0]]
-    walk = R.avg_walk(fills, entry, R.notional_of(rec), side=side)
+    notl = notional_at(rec, book, dep)
+    if notl is None:
+        return None
+    walk = R.avg_walk([[rec.get("at"), entry, 1.0]], entry, notl, side=side)
     if not walk:
         return None
     look = look if look is not None else R.mmr_look(rec.get("sym"))
@@ -170,16 +189,18 @@ class Depth:
         self.hit += 1
         return v if v > 0 else None
 
-    def tightness(self, rec):
-        """Наш нотионал к долларам у лучшей цены. Нет записи — None."""
+    def tightness(self, rec, book, dep=MAIN_DEP):
+        """Наш нотионал к долларам у лучшей цены. Нет записи — None.
+
+        Нотионал берётся от БИЛЕТА книги (`notional_at`): у записи кэша
+        маржи нет, её назначает касса. Значит теснота есть величина
+        книги И депозита — и объявлена она на среднем депозите.
+        """
         usd = self.touch_usd(rec)
         if usd is None:
             return None
-        try:
-            notl = float(R.notional_of(rec))
-        except (TypeError, ValueError):
-            return None
-        return None if not notl > 0 else notl / usd
+        notl = notional_at(rec, book, dep)
+        return None if not notl or not notl > 0 else notl / usd
 
     def why(self):
         return {"измерено": self.hit, "нет файла записи": self.miss_file,
@@ -294,8 +315,8 @@ def run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None,
                          ctx, launch, keys, seeds=seeds, now=now, log=log),
                 run_axis("теснота входа", TIGHT_CAPS, packed,
                          lambda v: (lambda r, bk: (
-                             None if dep_src.tightness(r) is None
-                             else dep_src.tightness(r) <= v)),
+                             lambda t: None if t is None else t <= v)(
+                                 dep_src.tightness(r, bk))),
                          ctx, launch, keys, seeds=seeds, now=now, log=log)]
         fams.append({"name": fname, "keys": list(keys), "axes": axes,
                      "live": AG.live_of(live_path, keys)})
@@ -328,7 +349,13 @@ def report(s):
          "цены и **теснота** — наш нотионал к долларам у лучшей цены "
          "своей стороны, потолок 5 / 2 / 1 / 0.5×. Гейт решает, входить "
          "ли; исход входа он не меняет, и обе ветки считаются на одних и "
-         "тех же записях.", ""]
+         "тех же записях.", "",
+         "**Геометрия считается от БИЛЕТА книги** на среднем депозите: у "
+         "записи реплея маржи нет вовсе — её назначает касса при сборке "
+         "книги, и у одной записи она разная у трёх книг и трёх "
+         "депозитов. Значит теснота есть величина книги и депозита, а "
+         "не свойство решения; на депозите крупнее тот же вход "
+         "плотнее.", ""]
     if s.get("error"):
         return "\n".join(L + [f"**Не посчитано:** {s['error']}.", ""])
     if s.get("costs_error"):
