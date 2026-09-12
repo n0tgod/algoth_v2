@@ -153,3 +153,15 @@ pair_aggr: фильтр возраста ≥7 сут оставил 178 из 178
 - Книга здесь не заводится: это ответ на «что было бы», а не предложение правила.
 
 конец: 2026-09-12T21:57:10Z, код 0
+публикуется в ветку main:
+ jobs/done/agree-smoke.done                 |   1 +
+ jobs/done/agree-smoke.log                  | 155 +++++++++++++++++++++++++++++
+ jobs/poke.log                              |   3 +
+ research/dca_paper/out/DCA-agree-book.json |   1 +
+ research/dca_paper/out/DCA-agree-book.md   | 105 +++++++++++++++++++
+ research/s8_loop/out/day_brake.json        |   2 +-
+ 6 files changed, 266 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   8ca9bb5c..d7fd10ec  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
