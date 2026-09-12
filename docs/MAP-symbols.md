@@ -1583,33 +1583,34 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L68 `build_levels(bars)` — Уровни по последнему бару окна; мало истории — уровней нет.
 - L81 `main()`
 
-## research/dca_paper/agree_book.py · 378 строк
+## research/dca_paper/agree_book.py · 427 строк
 
 Книги DCA на СОГЛАСИИ рук: что было бы, если лист брать пересечением.
 
-- L43 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L44 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L60 `ARMS = ('gbm', 'nn')`
-- L61 `ART = 'DCA-agree-book'`
-- L62 `SEEDS = 200`
-- L63 `MAIN_DEP = 10000`
-- L66 `agreed_of(legs)` — Согласные решения листа и состав рук на каждом.
-- L84 `keys_of(cache)` — Решения кэша: (имя, час, сторона) — по одному на все линейки.
-- L92 `keep(cache, want)` — Записи кэша, чьё решение попало в `want`. Кэш не меняется.
-- L102 `packed_long(cache, keys=None)` — Записи длинных книг по книгам — тем же реестром, что у прогона.
-- L111 `packed_short(cache)` — Записи коротких книг по книгам семейства `h24`.
-- L119 `stats_of(packed, ctx, launch, keys, deps=None, now=None)` — Книги на этих записях — ТЕМ ЖЕ ядром, что считает прогон.
-- L125 `control(cache, all_keys_, n_keep, packer, ctx, launch, keys, se…` — Случайные выборки ТОГО ЖЕ размера: фильтр против своей же доли.
-- L154 `beat_share(draws, value, field)` — Доля зёрен, у которых случайная выборка не хуже названной величины.
-- L163 `run_family(name, cache, legs_, packer, keys, ctx, launch, seeds…` — Одна семья книг: обе ветки листа, состав решений и контроль.
-- L182 `run_pair_family(long_cache, short_cache, long_keep, short_keep,…` — Общий счёт: те же кэши, но урезанные согласием. Журнал — временный.
-- L215 `run(limit=None, seeds=SEEDS, log=print, now=None, launch=None, …`
-- L253 `_u(x)`
-- L257 `_p(x, d=1)`
-- L261 `_r(x)`
-- L265 `report(s)`
-- L354 `publish(name)`
-- L360 `main(argv=None)`
+- L44 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L45 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L61 `ARMS = ('gbm', 'nn')`
+- L62 `ART = 'DCA-agree-book'`
+- L63 `SEEDS = 200`
+- L64 `MAIN_DEP = 10000`
+- L67 `agreed_of(legs)` — Согласные решения листа и состав рук на каждом.
+- L85 `keys_of(cache)` — Решения кэша: (имя, час, сторона) — по одному на все линейки.
+- L93 `keep(cache, want)` — Записи кэша, чьё решение попало в `want`. Кэш не меняется.
+- L103 `packed_long(cache, keys=None)` — Записи длинных книг по книгам — тем же реестром, что у прогона.
+- L112 `packed_short(cache)` — Записи коротких книг по книгам семейства `h24`.
+- L120 `stats_of(packed, ctx, launch, keys, deps=None, now=None)` — Книги на этих записях — ТЕМ ЖЕ ядром, что считает прогон.
+- L126 `control(cache, all_keys_, n_keep, packer, ctx, launch, keys, se…` — Случайные выборки ТОГО ЖЕ размера: фильтр против своей же доли.
+- L155 `beat_share(draws, value, field)` — Доля зёрен, у которых случайная выборка не хуже названной величины.
+- L164 `live_of(path, keys, dep=MAIN_DEP)` — Числа ЖИВОЙ книги из её свода — для сверки с веткой «обе руки».
+- L187 `run_family(name, cache, legs_, packer, keys, ctx, launch, seeds…` — Одна семья книг: обе ветки листа, состав решений и контроль.
+- L207 `run_pair_family(long_cache, short_cache, long_keep, short_keep,…` — Общий счёт: те же кэши, но урезанные согласием. Журнал — временный.
+- L240 `run(limit=None, seeds=SEEDS, log=print, now=None, launch=None, …`
+- L278 `_u(x)`
+- L282 `_p(x, d=1)`
+- L286 `_r(x)`
+- L290 `report(s)`
+- L403 `publish(name)`
+- L409 `main(argv=None)`
 
 ## research/dca_paper/arm_book.py · 429 строк
 

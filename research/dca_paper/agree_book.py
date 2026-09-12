@@ -34,6 +34,7 @@
 Запуск: `run research/dca_paper/agree_book.py`. Смоук: `--limit 400`.
 """
 import argparse
+import json
 import os
 import random
 import subprocess
@@ -160,8 +161,31 @@ def beat_share(draws, value, field):
     return round(n / len(vals), 3), len(vals)
 
 
+def live_of(path, keys, dep=MAIN_DEP):
+    """Числа ЖИВОЙ книги из её свода — для сверки с веткой «обе руки».
+
+    Ветка «обе руки» обязана воспроизводить живую книгу: она считается
+    на том же кэше теми же правилами. Разойдись они — замер отвечает не
+    про ту книгу, что стоит на странице, и молчать об этом нельзя.
+    Сверка идёт ЧИСЛОМ и едет в отчёт, а не остаётся в логе.
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            a = json.load(f)
+    except (OSError, ValueError) as e:                      # noqa: BLE001
+        return {"why": f"свод не прочитан: {str(e)[:80]}"}
+    out = {}
+    for bk in keys:
+        b = ((a.get("books") or {}).get(f"{bk}:{int(dep)}") or {})
+        st = b.get("all") or {}
+        if st:
+            out[bk] = {"n": st.get("n"), "usd": st.get("usd"),
+                       "final": st.get("final"), "max_dd": st.get("max_dd")}
+    return out
+
+
 def run_family(name, cache, legs_, packer, keys, ctx, launch, seeds=SEEDS,
-               now=None, log=print):
+               now=None, log=print, live_path=None):
     """Одна семья книг: обе ветки листа, состав решений и контроль."""
     agreed, arms_map = agreed_of(legs_)
     have = keys_of(cache)
@@ -172,11 +196,12 @@ def run_family(name, cache, legs_, packer, keys, ctx, launch, seeds=SEEDS,
         f"({100.0 * len(mine) / max(1, len(have)):.1f} %)")
     ctl = control(cache, have, len(mine), packer, ctx, launch, keys,
                   seeds=seeds, now=now, log=log) if seeds else {}
+    live = live_of(live_path, keys) if live_path else {}
     return {"name": name, "keys": list(keys),
             "decisions": len(have), "agreed": len(mine),
             "legs": len(legs_ or []),
             "one_arm": sum(1 for k, a in arms_map.items() if len(a) == 1),
-            "all": st_all, "agree": st_ag, "control": ctl}
+            "all": st_all, "agree": st_ag, "control": ctl, "live": live}
 
 
 def run_pair_family(long_cache, short_cache, long_keep, short_keep, tmp,
@@ -229,10 +254,10 @@ def run(limit=None, seeds=SEEDS, log=print, now=None, launch=None, ctx=None,
     slegs = S.legs(limit=limit, log=log)
     fams = [run_family("длинные книги", lcache, llegs, packed_long,
                        list(R.RULER_ORDER), ctx, launch, seeds=seeds,
-                       now=now, log=log),
+                       now=now, log=log, live_path=R.ARTIFACT),
             run_family("короткие книги h24", scache, slegs, packed_short,
                        list(R.H24_ORDER), ctx, launch, seeds=seeds,
-                       now=now, log=log)]
+                       now=now, log=log, live_path=R.H24_ARTIFACT)]
     # Общий счёт считается СВОИМ прогоном на тех же урезанных кэшах.
     import tempfile
     tmp = tmp or tempfile.mkdtemp(prefix="agree-")
@@ -295,6 +320,30 @@ def report(s):
           "книги семьи сразу. У общего счёта состав считает его "
           "собственный прогон на тех же урезанных кэшах.", ""]
     dep = int(s.get("main_dep") or MAIN_DEP)
+    rows = []
+    for f in s.get("families") or []:
+        live = f.get("live") or {}
+        if live.get("why"):
+            rows.append(f"| {f['name']} | — | — | {live['why']} |")
+            continue
+        for bk in f.get("keys") or []:
+            lv, br = live.get(bk), (f.get("all") or {}).get(f"{bk}:{dep}")
+            if not lv or not br:
+                continue
+            d = (None if lv.get("usd") is None or br.get("usd") is None
+                 else float(br["usd"]) - float(lv["usd"]))
+            rows.append(
+                f"| {R.ruler_title(bk)} | {lv.get('n')} / {br.get('n')} | "
+                f"{_u(lv.get('usd'))} / {_u(br.get('usd'))} | "
+                + ("—" if d is None else f"{d:+.2f}") + " |")
+    if rows:
+        L += ["## Сверка ветки «обе руки» с живой книгой", "",
+              f"Ветка «обе руки» обязана воспроизводить живую книгу: тот "
+              f"же кэш, те же правила, депозит ${dep}. Расхождение "
+              "значит, что замер отвечает не про ту книгу, что стоит на "
+              "странице, — и тогда числа ниже читать нельзя.", "",
+              "| книга | сделок: живая / замер | Σ $: живая / замер | "
+              "разница |", "|---|--:|--:|--:|"] + rows + [""]
     for f in s.get("families") or []:
         L += [f"## {f['name'].capitalize()}", "",
               "| книга | депозит | ветка | сделок | Σ $ | итог | просадка | "

@@ -916,7 +916,7 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
-## research/dca_paper/test_agree_book.py · 126 строк
+## research/dca_paper/test_agree_book.py · 165 строк
 
 Проверки замера «книги DCA на согласии рук».
 
@@ -927,7 +927,8 @@
 - L44 `test_agreed_sheet_is_a_subset_and_keeps_every_ruler()` — Урезание идёт по РЕШЕНИЮ, а не по записи: линейки не расходятся.
 - L62 `test_control_takes_the_same_size_and_says_when_it_cannot()` — Выборка того же размера — или причина словами, а не пустой ответ.
 - L85 `test_beat_share_counts_ties_against_the_filter()`
-- L95 `test_report_names_both_branches_and_the_control()`
+- L95 `test_report_reconciles_the_branch_with_the_live_book()` — Ветка «обе руки» обязана сверяться с живой книгой ЧИСЛОМ.
+- L133 `test_report_names_both_branches_and_the_control()`
 
 ## research/dca_paper/test_arm_book.py · 163 строк
 

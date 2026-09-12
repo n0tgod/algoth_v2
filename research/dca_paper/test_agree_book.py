@@ -92,6 +92,44 @@ def test_beat_share_counts_ties_against_the_filter():
           "без величины — прочерк, а не ноль")
 
 
+def test_report_reconciles_the_branch_with_the_live_book():
+    """Ветка «обе руки» обязана сверяться с живой книгой ЧИСЛОМ.
+
+    Замер считает книгу заново на кэше: разойдись он с живым сводом —
+    отвечал бы про другую книгу, а числа выглядели бы как ответ на
+    вопрос владельца. Сверка идёт в отчёт строкой, а не в лог.
+    """
+    import json
+    import tempfile
+
+    td = tempfile.mkdtemp()
+    art = os.path.join(td, "art.json")
+    dep = int(R.DEPOSITS[1])
+    with open(art, "w", encoding="utf-8") as f:
+        json.dump({"books": {f"safe:{dep}": {"all": {
+            "n": 100, "usd": 250.0, "final": 0.025, "max_dd": -0.01}}}}, f)
+    got = A.live_of(art, ["safe"], dep=dep)
+    assert got["safe"]["usd"] == 250.0, got
+    s = {"families": [{"name": "длинные книги", "keys": ["safe"],
+                       "decisions": 10, "agreed": 3, "one_arm": 7,
+                       "all": {f"safe:{dep}": {"n": 90, "usd": 100.0,
+                                               "final": 0.01,
+                                               "max_dd": -0.02}},
+                       "agree": {}, "control": {}, "live": got}],
+         "seeds": 0, "main_dep": dep, "computed_at": "2026-09-12 10:00"}
+    txt = A.report(s)
+    assert "Сверка ветки" in txt, txt[:400]
+    assert "100 / 90" in txt and "-150.00" in txt, \
+        [x for x in txt.splitlines() if "/" in x][:6]
+    # свода нет — причина словами, а не тишина
+    why = A.live_of(os.path.join(td, "нет.json"), ["safe"])
+    assert "не прочитан" in (why.get("why") or ""), why
+    txt2 = A.report(dict(s, families=[dict(s["families"][0], live=why)]))
+    assert "не прочитан" in txt2, txt2[:400]
+    print("ok  сверка с живой книгой: расхождение -150.00 $ напечатано, "
+          "отсутствие свода названо причиной")
+
+
 def test_report_names_both_branches_and_the_control():
     s = {"families": [{"name": "длинные книги", "keys": ["safe"],
                        "decisions": 100, "agreed": 30, "one_arm": 70,
@@ -118,9 +156,10 @@ def test_report_names_both_branches_and_the_control():
 
 if __name__ == "__main__":
     for t in (test_agreement_needs_both_arms_and_the_same_side,
+              test_report_reconciles_the_branch_with_the_live_book,
               test_agreed_sheet_is_a_subset_and_keeps_every_ruler,
               test_control_takes_the_same_size_and_says_when_it_cannot,
               test_beat_share_counts_ties_against_the_filter,
               test_report_names_both_branches_and_the_control):
         t()
-    print("\nвсе 5 проверок прошли")
+    print("\nвсе 6 проверок прошли")
