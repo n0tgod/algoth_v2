@@ -116,7 +116,12 @@
   {"file": "research/mech_d71203f0/run_unprovoked.py",
    "old": "    if len(days) < 2:",
    "new": "    if False:",
-   "expect": "одни сутки — отказ"}
+   "expect": "одни сутки — отказ"},
+
+  {"file": "research/mech_d71203f0/unprovoked.py",
+   "old": "    if got != want:",
+   "new": "    if False:",
+   "expect": "чужой тёзка опознаётся отказом"}
  ],
  "touched": [],
  "notes": "Черновой отчёт: контроли ещё не прогнаны машиной."

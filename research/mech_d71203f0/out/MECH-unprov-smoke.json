@@ -1,0 +1,257 @@
+{
+ "prints": 51,
+ "events_glued": 37,
+ "long_mark": "Buy",
+ "long_mark_why": "доля Sell 0.204 из 108 принтов: в падениях доминирует Buy — он и маркирует ликвидацию лонга",
+ "calib_sell": 22,
+ "calib_buy": 86,
+ "events_side": 13,
+ "events_unprovoked": 3,
+ "events_provoked": 7,
+ "events_unclassified": 3,
+ "events_per_day": {
+  "2026-09-12": 3
+ },
+ "events_per_day_median": 3.0,
+ "days_live": 1,
+ "dead_days": 0,
+ "days_sigma_only": 1,
+ "cost_round_bp": 17.45,
+ "cost_src": "комиссия 11 + спред 6.8/6.1 б.п., измеренный по записи",
+ "horizons": [
+  900,
+  300,
+  1800
+ ],
+ "split": {
+  "неспровоцированные": {
+   "events": 3,
+   "episodes": 3,
+   "mean_bp": 51.67,
+   "median_bp": 32.13,
+   "share_pos": 0.667,
+   "names": 2
+  },
+  "спровоцированные": {
+   "events": 7,
+   "episodes": 5,
+   "mean_bp": 37.36,
+   "median_bp": 17.38,
+   "share_pos": 0.8,
+   "names": 5
+  }
+ },
+ "ceiling_bp": 141.79,
+ "null": {
+  "seeds": 10,
+  "pct95_bp": 80.46,
+  "mean_bp": 38.58,
+  "sd_bp": 26.7
+ },
+ "no_best_name": {
+  "events": 1,
+  "episodes": 1,
+  "mean_bp": -24.74,
+  "median_bp": -24.74,
+  "share_pos": 0.0,
+  "names": 1
+ },
+ "best_name": "AKEUSDT",
+ "no_best_days": {
+  "events": 0,
+  "episodes": 0,
+  "mean_bp": null,
+  "median_bp": null,
+  "share_pos": null,
+  "names": 0
+ },
+ "best_days": [
+  "2026-09-12"
+ ],
+ "terciles": [],
+ "form": {
+  "days": 1,
+  "green": 1.0,
+  "med": 0.31,
+  "med_green": 0.31,
+  "worst": 0.31,
+  "bite": 1.0,
+  "dd": 0.0,
+  "under": 0,
+  "red": 0,
+  "tot": 0.3,
+  "thin": true
+ },
+ "daily": {
+  "20708": 0.314869
+ },
+ "live_corr": null,
+ "live_corr_with": null,
+ "live_corr_days": 0,
+ "diagnostics": {
+  "удержание 5 мин": {
+   "неспровоцированные": {
+    "events": 3,
+    "episodes": 3,
+    "mean_bp": 54.9,
+    "median_bp": 25.78,
+    "share_pos": 0.667,
+    "names": 2
+   },
+   "спровоцированные": {
+    "events": 7,
+    "episodes": 6,
+    "mean_bp": 86.25,
+    "median_bp": 12.29,
+    "share_pos": 0.667,
+    "names": 5
+   }
+  },
+  "удержание 30 мин": {
+   "неспровоцированные": {
+    "events": 3,
+    "episodes": 3,
+    "mean_bp": 141.79,
+    "median_bp": 218.86,
+    "share_pos": 0.667,
+    "names": 2
+   },
+   "спровоцированные": {
+    "events": 7,
+    "episodes": 5,
+    "mean_bp": 135.91,
+    "median_bp": 37.41,
+    "share_pos": 0.8,
+    "names": 5
+   }
+  },
+  "порог тишины 2σ": {
+   "неспровоцированные": {
+    "events": 4,
+    "episodes": 4,
+    "mean_bp": 40.25,
+    "median_bp": 19.07,
+    "share_pos": 0.75,
+    "names": 3
+   },
+   "спровоцированные": {
+    "events": 6,
+    "episodes": 4,
+    "mean_bp": 45.2,
+    "median_bp": 19.36,
+    "share_pos": 0.75,
+    "names": 4
+   }
+  },
+  "вторая сторона (Sell): ликвидация шорта": {
+   "неспровоцированные": {
+    "events": 2,
+    "episodes": 2,
+    "mean_bp": -3.24,
+    "median_bp": -3.24,
+    "share_pos": 0.5,
+    "names": 2
+   },
+   "спровоцированные": {
+    "events": 11,
+    "episodes": 7,
+    "mean_bp": -88.48,
+    "median_bp": -94.19,
+    "share_pos": 0.286,
+    "names": 5
+   }
+  },
+  "первая половина записи": {
+   "неспровоцированные": {
+    "events": 0,
+    "episodes": 0,
+    "mean_bp": null,
+    "median_bp": null,
+    "share_pos": null,
+    "names": 0
+   },
+   "спровоцированные": {
+    "events": 0,
+    "episodes": 0,
+    "mean_bp": null,
+    "median_bp": null,
+    "share_pos": null,
+    "names": 0
+   }
+  },
+  "вторая половина записи": {
+   "неспровоцированные": {
+    "events": 3,
+    "episodes": 3,
+    "mean_bp": 51.67,
+    "median_bp": 32.13,
+    "share_pos": 0.667,
+    "names": 2
+   },
+   "спровоцированные": {
+    "events": 7,
+    "episodes": 5,
+    "mean_bp": 37.36,
+    "median_bp": 17.38,
+    "share_pos": 0.8,
+    "names": 5
+   }
+  },
+  "калибровка стороны по половинам записи (доля Sell — в колонке «доля > 0»)": {
+   "первая половина": {
+    "events": 104,
+    "episodes": 0,
+    "mean_bp": null,
+    "median_bp": null,
+    "share_pos": 0.192,
+    "names": 0,
+    "mark": "Buy",
+    "why": "доля Sell 0.192 из 104 принтов: в падениях доминирует Buy — он и маркирует ликвидацию лонга"
+   },
+   "вторая половина": {
+    "events": 4,
+    "episodes": 0,
+    "mean_bp": null,
+    "median_bp": null,
+    "share_pos": 0.5,
+    "names": 0,
+    "mark": null,
+    "why": "принтов в окнах падений 4 при минимуме 30 — метка НЕ ИЗМЕРЕНА"
+   }
+  }
+ },
+ "thresholds": {
+  "windows_sec": [
+   60,
+   300,
+   3600
+  ],
+  "k_sigma": 1.0,
+  "glue_sec": 60,
+  "entry_sec": 5,
+  "horizon_sec": 900,
+  "need_mean_bp": 17.4,
+  "need_gross_bp": 34.8,
+  "min_events_per_day": 10,
+  "null_seeds": 10,
+  "null_seed0": 20260912,
+  "min_sigma_pts": 500,
+  "cross_step_sec": 10
+ },
+ "killers": {
+  "1. объём": "неспровоцированных событий в медианные сутки 3.0 при минимуме 10 (живых суток 1, молчала лента 0) — СРАБОТАЛ: класса нет либо поток его не видит",
+  "2. экономика": "среднее превышение +51.7 б.п. при круге тейкера 17.4 — не сработал",
+  "3. механизм": "неспровоцированные +51.7 против +37.4 б.п. у спровоцированных — не сработал",
+  "4. нуль": "неспровоцированные +51.7 против 95-го процентиля нуля +80.5 б.п. по 10 зёрнам — СРАБОТАЛ: случайная секунда того же часа даёт не меньше",
+  "планка D1 §7 (не убийца)": "валовые +51.7 при требуемых 34.8 — взята",
+  "без лучшего имени": "-24.7 б.п. без имени AKEUSDT (было +51.7) — плюс жил в одном имени",
+  "без 3 лучших суток": "не измерено"
+ },
+ "reading": "**Закрыто объёмом.** Неспровоцированных принтов ликвидации лонга в медианные сутки 3.0 при минимуме 10: класса нет либо поток его не видит. Доходность считать не на чем, и остальные числа отчёта — диагностика записи, а не рынка.",
+ "run_at": "2026-09-12 06:25 UTC",
+ "days": 2,
+ "day_from": "2026-09-11",
+ "day_to": "2026-09-12",
+ "symbols": 60,
+ "took_min": 0.9
+}
