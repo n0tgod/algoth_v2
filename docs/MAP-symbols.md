@@ -3495,6 +3495,94 @@ M2: каркас walk-forward — чистая математика без чт�
 - L546 `walk(rng, n, sigma=0.0015, start=100.0)` — Случайное блуждание — нуль честной формы.
 - L551 `lift_to_take(prices, at_i, up=0.12, span=60)` — Подсаженный ход: с бара `at_i` цена идёт ВВЕРХ до тейка за час.
 
+## research/mech_d71203f0/controls_check.py · 111 строк
+
+Машина негативных контролей механики d71203f0.
+
+- L34 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L36 `SUITE = 'research/mech_d71203f0/test_unprovoked…`
+- L42 `sha(p)`
+- L47 `run()` — (прошла, хвост вывода) — ровно так, как это делает приёмка.
+- L52 `main(report)`
+
+## research/mech_d71203f0/run_unprovoked.py · 583 строк
+
+Механика d71203f0 — прогон по записи B1. Потолок заявки, не вердикт.
+
+- L48 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L49 `RESEARCH = os.path.dirname(HERE)`
+- L50 `OUT = os.path.join(HERE, 'out')`
+- L76 `MEM_SLACK = 1.3` — Запас к объявленной потребности: сторож ловит РОСТ сверх состава, а не сам состав. Ниже потребности предел оз…
+- L86 `log_(m)`
+- L94 `prints_of_day(root, syms, hours, t0, lo, hi)` — Принты всех имён за сутки и события после склейки 60 с.
+- L123 `calibrate_day(P, t0, raw, drop_seen, lo, hi, log=print)` — Стороны принтов в окнах падений на 3 %: `(Sell, Buy)` числом.
+- L152 `null_second(seed, row, j, t0, lo, hi)` — Случайная секунда ТОГО ЖЕ имени и ТОГО ЖЕ часа. `-1` — нет такой.
+- L173 `measure_day(root, syms, day, jobs, state, log=print, mem_limit=…` — Сутки: события, тишина, превышение, нуль.
+- L288 `live_daily(path)` — Дневные деньги живых кандидатов пула. Нет файла — пустой словарь.
+- L304 `summarise(rows, live_days, dead_days, state, live_path, sigma_o…` — Все числа отчёта. Порядок — от самого дешёвого убийцы к прочим.
+- L367 `diagnostics(rows, main, mark, other, state)` — Ячейки, которые считаются рядом и предъявлять которые запрещено.
+- L410 `write_status(out, tag, status)` — Состояние прогона отдельным файлом, атомарно, после КАЖДЫХ суток.
+- L424 `_LAST = {}`
+- L427 `main()` — Точка входа. Падение обязано САМО СЕБЯ доложить.
+- L448 `_run()`
+
+## research/mech_d71203f0/unprovoked.py · 882 строк
+
+Механика d71203f0 — неспровоцированный принт ликвидации.
+
+- L77 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L78 `RESEARCH = os.path.dirname(HERE)`
+- L90 `module_origin(mod)` — Каталог, из которого модуль пришёл НА САМОМ ДЕЛЕ.
+- L95 `check_origin(mod, want)` — Модуль из нужного каталога? Чужой тёзка — отказ, а не работа.
+- L111 `_from_file(name, *parts)` — Модуль по ТОЧНОМУ пути, а не по имени из `sys.path`.
+- L128 `CE = _from_file('factory_ceiling', 'factory'…`
+- L135 `WINDOWS_SEC = (60, 300, 3600)` — --- объявлено заданием ДО прогона, после результата не меняется -------
+- L136 `K_SIGMA = 1.0`
+- L137 `K_SIGMA_DIAG = 2.0`
+- L138 `GLUE_SEC = 60`
+- L139 `ENTRY_SEC = 5`
+- L140 `HORIZON_SEC = 15 * 60`
+- L141 `DIAG_HORIZONS = (5 * 60, 30 * 60)`
+- L142 `NEED_MEAN_BP = 17.4`
+- L143 `NEED_GROSS_BP = 34.8`
+- L144 `MIN_EVENTS_PER_DAY = 10`
+- L145 `NULL_SEEDS = 10`
+- L146 `NULL_SEED0 = 20260912`
+- L147 `BEST_DAYS = 3`
+- L148 `DROP = D.VERDICT_CELL['drop']`
+- L151 `CROSS_STEP_SEC = 10` — --- служебные допуски: свойства записи, а не гипотезы ------------------
+- L152 `CROSS_CHUNK = 1024`
+- L153 `MIN_SIGMA_PTS = 500`
+- L154 `SIDE_MARGIN = 0.05`
+- L155 `MIN_CALIB_PRINTS = 30`
+- L156 `DAY_SEC = 86400`
+- L158 `GROUPS = ('неспровоцированные', 'спровоцированны…`
+- L159 `SIDE_TITLE = {'long': 'ликвидация лонга', 'short': '…`
+- L166 `glue_prints(ts, usd, gap=GLUE_SEC)` — Принты одного имени в пределах `gap` — ОДНО событие.
+- L191 `long_mark(n_sell, n_buy, margin=SIDE_MARGIN, min_prints=MIN_CAL…` — Какая метка `side` означает «ликвидация лонга». Решают ДАННЫЕ.
+- L223 `other_side(mark)` — Метка второй стороны. Диагностика «ликвидации шортов».
+- L236 `sigma_of(x, min_pts=MIN_SIGMA_PTS)` — σ ряда ходов за сутки. `None` — НЕ ИЗМЕРЕНА, а не ноль.
+- L256 `quiet_of(own, cross, sig_own, sig_cross, k=K_SIGMA, windows=WIN…` — Спокойны ли ШЕСТЬ окон. `True` / `False` / `None` — не измерено.
+- L287 `scan_day(P, lo, hi, ev_by_row, windows=WINDOWS_SEC, step=CROSS_…` — Один проход по строкам суток: σ, кросс-сечение и ходы в событиях.
+- L349 `cross_at(cross_med, j, step=CROSS_STEP_SEC, windows=WINDOWS_SEC)` — Медианный ход сечения на сетке НЕ ПОЗЖЕ секунды `j`.
+- L373 `_empty(names=0, events=0)`
+- L378 `group_stats(rows, key='exc')` — Сводка подмножества: среднее и медиана ПО ЭПИЗОДАМ.
+- L404 `split_by_quiet(rows, key='exc', flag='quiet')` — Две группы заявки: неспровоцированные и спровоцированные.
+- L412 `_by(rows, field)`
+- L419 `drop_best_name(rows, key='exc')` — То же число без ОДНОГО имени, давшего больше всех.
+- L441 `drop_best_days(rows, key='exc', k=BEST_DAYS)` — То же число без `k` лучших СУТОК записи.
+- L463 `terciles(rows, key='exc', size='usd')` — Трети по нотионалу принта. Довода за концентрацию в крупных нет.
+- L485 `ceiling_bp(rows, keys)` — Потолок: лучший горизонт ПРИ ИДЕАЛЬНОМ ЗНАНИИ будущего.
+- L500 `null_stats(rows, seeds=NULL_SEEDS, key='null')` — Нуль: та же мера в СЛУЧАЙНУЮ секунду того же имени и того же часа.
+- L530 `daily_series(rows, cost_bp, key='own', hold=HORIZON_SEC, entry=…` — Сутки реплея: `{номер суток от эпохи: средняя нетто-позиция, %}`.
+- L561 `form_stats(daily)` — Форма книги по суткам — ОБЩЕЙ мерой проекта, а не своей.
+- L575 `live_corr(daily, live)` — Связь дневных денег реплея с живыми книгами пула.
+- L601 `_num(v, fmt='+.1f')` — Величины, которой нет, — прочерк. Ноль означает «измерено».
+- L606 `killers(art)` — Четыре убийцы заявки и планка D1. Каждый выводится ИЗ ЧИСЛА.
+- L668 `reading(art)` — Вывод одной фразой. Выводится ИЗ ЧИСЛА, а не стоит рядом с ним.
+- L735 `_grp_table(L, split, title)`
+- L749 `report(art, path)`
+
 ## research/mech_fcbd3542/run_halves.py · 1311 строк
 
 Механика `fcbd3542` — отскок первых секунд по половинам универсума.

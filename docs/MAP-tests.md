@@ -1929,6 +1929,70 @@
 - L476 `test_report_prints_both_median_and_mean_and_the_verdict()`
 - L488 `CHECKS = [test_geometry_is_in_fractions_of_entry…`
 
+## research/mech_d71203f0/test_unprovoked.py · 795 строк
+
+Тесты механики d71203f0 — неспровоцированный принт ликвидации.
+
+- L43 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L44 `RESEARCH = os.path.dirname(HERE)`
+- L60 `FAILED = []`
+- L63 `check(name, cond, detail='')`
+- L71 `run_test(fn)` — Прогнать проверку так, чтобы её ПАДЕНИЕ было сосчитано, а не оборвало сюиту.
+- L100 `test_glue()`
+- L122 `test_side_calibration()` — Assert на долю: 0.34 у LIQSPLIT означает метку `Buy` у лонга.
+- L148 `test_sigma_refuses_instead_of_zero()`
+- L169 `SIG = {60: 0.001, 300: 0.002, 3600: 0.004}`
+- L172 `_mv(v, **over)`
+- L179 `test_quiet_six_windows()`
+- L205 `SPAN = 8000`
+- L206 `STEP = 5`
+- L207 `NSYM = 55`
+- L208 `N_SEC = R.DAY_SEC + 2 * R.PAD_SEC`
+- L209 `PAD = R.PAD_SEC`
+- L210 `J_A = PAD + 5400`
+- L211 `J_B = PAD + 6000`
+- L212 `J_C0 = PAD + 600`
+- L213 `J_C1 = PAD + 1500`
+- L214 `J_D = J_A`
+- L215 `FALLERS = (2, 3, 4, 5)`
+- L216 `LOUD_ROW = 7`
+- L217 `JITTER = 0.0002`
+- L220 `_grid()`
+- L224 `calm_matrix(seed=11)` — Спокойные сутки: цена дрожит, из этого дрожания и считается σ.
+- L234 `event_matrix(tail=150.0, tail0=100.5)` — Сутки события: две тихие строки с подсаженным откатом и шумные.
+- L263 `_scan(P, ev)`
+- L267 `test_future_does_not_move_the_past()` — Переписали будущее — прошлое не шелохнулось.
+- L294 `test_cross_is_taken_not_later_than_the_event()` — Кросс-секция берётся с сетки НЕ ПОЗЖЕ секунды события.
+- L307 `test_scan_refuses_frozen_rows()` — Замороженная строка не попадает в тихие через нулевую σ.
+- L326 `_rows(vals, quiet=True, t0=1700000000.0, gap=1.0, day='2026-08-…`
+- L333 `test_group_counts_episodes_not_events()`
+- L346 `test_ceiling_is_the_best_horizon()`
+- L356 `test_concentration_columns()`
+- L377 `test_null_takes_the_95th_percentile()`
+- L394 `test_calibration_pair()` — Подсаженный откат мера находит; перемешанные стороны — молчит.
+- L432 `test_one_position_per_name()`
+- L451 `test_form_uses_the_project_measure()`
+- L460 `test_modules_come_from_where_they_should()` — Чужой тёзка на пути импорта опознаётся отказом, а не работой.
+- L484 `test_live_corr_is_a_dash_when_nothing_to_compare()`
+- L499 `_art(mean_unp, mean_prov=-10.0, med=50.0, n95=0.0, ceil=None)`
+- L512 `test_absent_value_is_a_dash_not_zero()`
+- L517 `test_reading_is_derived_from_the_number()`
+- L538 `test_killers_are_named_by_number()`
+- L555 `DAY1 = '2026-08-05'`
+- L556 `DAY2 = '2026-08-06'`
+- L557 `DAY3 = '2026-08-07'`
+- L558 `DAYS = (DAY1, DAY2, DAY3)`
+- L561 `build_store(tmp, with_liq=True, sides=None)` — Каталог записи: пустые файлы книги и НАСТОЯЩИЕ файлы ликвидаций.
+- L602 `fake_load_day(root, syms, day, jobs=1, log=print)` — Матрица суток вместо чтения снимков. Форма — как у `load_day`.
+- L610 `run_main(root, out, days=0, extra=())`
+- L630 `_E2E = {}`
+- L633 `e2e()`
+- L645 `test_end_to_end()`
+- L690 `test_end_to_end_refuses_on_empty_tape()` — Ноль принтов при живой записи — отказ, а не отчёт с прочерками.
+- L709 `test_undetermined_side_is_refused()` — Долю Sell у половины выбрать нечем — прогон ОТКАЗЫВАЕТСЯ.
+- L733 `test_one_day_is_refused()` — Одни сутки — σ прошлых суток взять неоткуда, и это отказ.
+- L752 `main()`
+
 ## research/mech_fcbd3542/test_halves.py · 721 строк
 
 Проверки механики `fcbd3542`: метка tick/σ и замер по половинам.
