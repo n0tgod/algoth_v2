@@ -171,3 +171,16 @@ pair_aggr: фильтр возраста ≥7 сут оставил 467 из 525
 - Веса модели видели эти часы у ОБЕИХ веток одинаково: сравнение честное, но обе ветки — оценка сверху.
 - Книга здесь не заводится: это ответ на «что было бы», а не предложение правила.
 
+публикуется в ветку main:
+ jobs/done/agree-check.log                  |  12 ++
+ jobs/done/agree-final.done                 |   1 +
+ jobs/done/agree-final.log                  | 173 +++++++++++++++++++++++++++++
+ jobs/poke.log                              |   3 +
+ research/dca_paper/out/DCA-agree-book.json |   2 +-
+ research/dca_paper/out/DCA-agree-book.md   |  16 +++
+ 6 files changed, 206 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   e5c1d9a6..a2eba29c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-12T22:06:03Z, код 0
