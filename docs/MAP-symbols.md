@@ -1747,7 +1747,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L261 `report(s)`
 - L382 `main()`
 
-## research/dca_paper/entry_gate.py · 456 строк
+## research/dca_paper/entry_gate.py · 477 строк
 
 Гейты ВХОДА книг DCA: запас до пола и теснота стакана.
 
@@ -1775,9 +1775,10 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L329 `_u(x)`
 - L333 `_p(x, d=1)`
 - L337 `_r(x)`
-- L341 `report(s)`
-- L433 `publish(name)`
-- L439 `main(argv=None)`
+- L341 `_n(x)` — Число сделок. Поле ЕСТЬ и равно None — порог не пропустил никого, и это прочерк, а не слово `None` в таблице.
+- L347 `report(s)`
+- L439 `publish(name)`
+- L445 `main(argv=None)`
 
 ## research/dca_paper/fund_check.py · 281 строк
 

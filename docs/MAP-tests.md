@@ -1025,7 +1025,7 @@
 - L255 `test_run_refuses_when_the_rule_is_already_in_the_book()` — Правило внедрено — замер обязан отказать СЛОВАМИ, а не дать ноль.
 - L280 `main()`
 
-## research/dca_paper/test_entry_gate.py · 153 строк
+## research/dca_paper/test_entry_gate.py · 160 строк
 
 Проверки замера «гейты входа книг DCA».
 

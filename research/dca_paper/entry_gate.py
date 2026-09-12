@@ -338,6 +338,12 @@ def _r(x):
     return "—" if x is None else f"{float(x):.2f}"
 
 
+def _n(x):
+    """Число сделок. Поле ЕСТЬ и равно None — порог не пропустил никого,
+    и это прочерк, а не слово `None` в таблице."""
+    return "—" if x is None else str(x)
+
+
 def report(s):
     L = ["# Гейты входа книг DCA: запас до пола и теснота стакана", "",
          "Просьба владельца 2026-09-12 отбирать плохие сделки. Разбор "
@@ -396,7 +402,7 @@ def report(s):
             for bk in f["keys"]:
                 b = (ax.get("base") or {}).get(f"{bk}:{dep}") or {}
                 L.append(f"| {R.ruler_title(bk)} | как сейчас | "
-                         f"{b.get('n', '—')} | {_u(b.get('usd'))} | "
+                         f"{_n(b.get('n'))} | {_u(b.get('usd'))} | "
                          f"{_p(b.get('final'))} | {_p(b.get('max_dd'))} | "
                          f"{_r(b.get('ratio'))} | — |")
                 for a in ax.get("axis") or []:
@@ -408,7 +414,7 @@ def report(s):
                     shr, nr = AG.beat_share(draws, st.get("ratio"), "ratio")
                     L.append(
                         f"| {R.ruler_title(bk)} | {a['value']:g} | "
-                        f"{st.get('n', '—')} | {_u(st.get('usd'))} | "
+                        f"{_n(st.get('n'))} | {_u(st.get('usd'))} | "
                         f"{_p(st.get('final'))} | {_p(st.get('max_dd'))} | "
                         f"{_r(st.get('ratio'))} | "
                         + ("—" if sh is None
@@ -439,8 +445,23 @@ def publish(name):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="гейты входа книг DCA")
     ap.add_argument("--seeds", type=int, default=SEEDS)
+    ap.add_argument("--render", action="store_true",
+                    help="перерисовать отчёт из готового артефакта: "
+                         "правка показа не есть повод считать заново")
     ap.add_argument("--no-publish", action="store_true")
     a = ap.parse_args(argv)
+    if a.render:
+        path = os.path.join(R.OUT, f"{ART}.json")
+        try:
+            with open(path, encoding="utf-8") as f:
+                s = json.load(f)
+        except (OSError, ValueError) as e:                  # noqa: BLE001
+            print(f"перерисовать нечего: {str(e)[:120]}")
+            return 3
+        G.write(s, ART, report, log=print)
+        if not a.no_publish:
+            publish("гейты входа книг DCA: перерисовка отчёта")
+        return 0
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except Exception:                                        # noqa: BLE001

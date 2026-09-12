@@ -137,6 +137,13 @@ def test_report_names_axes_thresholds_and_the_control():
     assert "итог 50 % из 2" in txt, [x for x in txt.splitlines()
                                      if "%" in x][:8]
     assert "не измерено" in txt.lower(), txt[:800]
+    # порог, не пропустивший НИКОГО: прочерк, а не слово None
+    empty = dict(s, families=[dict(s["families"][0], axes=[dict(
+        ax, cells={"g05": {"value": 0.05, "unknown": 0, "stats": {
+            f"safe_h:{dep}": {"n": None, "usd": None, "final": None,
+                              "max_dd": None, "ratio": None}}}})])])
+    t2 = E.report(empty)
+    assert "None" not in t2, [x for x in t2.splitlines() if "None" in x]
     bad = E.report({"error": "кэш реплея непригоден: подпись чужая"})
     assert "Не посчитано" in bad and "подпись чужая" in bad, bad[:200]
     print("ok  отчёт: обе ветки порога, доля зёрен числом, запись "
