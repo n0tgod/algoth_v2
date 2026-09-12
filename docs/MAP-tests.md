@@ -1346,6 +1346,20 @@
 - L34 `test_pairs_and_signs_by_side()`
 - L66 `test_missing_journal_is_named()`
 
+## research/dca_paper/test_tail_screen.py · 179 строк
+
+Проверки скрина хвоста коротких книг.
+
+- L20 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L29 `AT = 1789084800.0 + 3600.0` — ровный час UTC, чтобы граница суток была в 24 часах позади
+- L32 `_hour(ts)`
+- L36 `_write_hours(root, sym, start_ts, n, fn)` — n часов сводок подряд, каждый — из `fn(i)`; файлы по дням.
+- L51 `test_features_come_from_the_entry_hour_and_the_day_before()`
+- L99 `test_calibration_pair_finds_the_planted_signal_and_stays_silent…` — Подсаженное обязано найтись, шум обязан молчать — иначе сломанная загрузка неотличима от «эффекта нет».
+- L125 `test_portrait_ranks_the_worst_against_everyone()`
+- L143 `test_report_names_the_screen_the_null_and_the_false_positive_bu…`
+
 ## research/f1_carry/test_carry.py · 216 строк
 
 Тесты ядра F1 на известных ответах.

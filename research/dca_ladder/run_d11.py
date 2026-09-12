@@ -92,6 +92,14 @@ def h24_legs(arm="nn", path=None, limit=None, log=print):
                 g = {"arm": arm, "sym": row.get("sym"), "hour": p["hour"],
                      "at": float(at), "side": "short", "fwd": fwd,
                      "fz": None, "adv_q": adv, "fav": fav, "rr": abs(fav) / adv}
+                # Поля модели, которые выбор УЖЕ несёт, а нога прежде
+                # теряла: новизна вектора признаков (`odd`), бета к
+                # волне, прогноз в σ. Реплею они не нужны, скрину хвоста
+                # (`dca_paper/tail_screen`) — нужны; считать их второй раз
+                # неоткуда, лист их не хранит.
+                for k in ("odd", "beta", "fwd_z", "mae_q", "mfe_q", "px"):
+                    if row.get(k) is not None:
+                        g[k] = row[k]
                 if D10.gate_of(g):
                     out.append(g)
     out.sort(key=lambda g: (g["at"], g["arm"], g["fwd"], g["sym"]))

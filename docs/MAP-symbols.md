@@ -1202,7 +1202,7 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L916 `publish(name)`
 - L922 `main(argv=None)`
 
-## research/dca_ladder/run_d11.py · 187 строк
+## research/dca_ladder/run_d11.py · 195 строк
 
 D11 — DCA-лестница на сигнале книги `h24` (24 ч, рука по выбору), шорт.
 
@@ -1213,12 +1213,12 @@ D11 — DCA-лестница на сигнале книги `h24` (24 ч, рук
 - L45 `PICKS = os.path.join(RESEARCH, 's8_loop', 'out'…`
 - L46 `REF_GATE = 'any'`
 - L49 `h24_legs(arm='nn', path=None, limit=None, log=print)` — Короткие ноги из выборов книги h24 (рука `arm`).
-- L103 `configure(hold_h=None)` — Отсчёт по гейту «любой»; срок — по аргументу. Возвращает, что было.
-- L118 `restore(was)`
-- L124 `run(arm='nn', hold_h=None, limit=None, src=None, log=print, leg…`
-- L137 `report(s)`
-- L154 `publish(name)`
-- L159 `main(argv=None)`
+- L111 `configure(hold_h=None)` — Отсчёт по гейту «любой»; срок — по аргументу. Возвращает, что было.
+- L126 `restore(was)`
+- L132 `run(arm='nn', hold_h=None, limit=None, src=None, log=print, leg…`
+- L145 `report(s)`
+- L162 `publish(name)`
+- L167 `main(argv=None)`
 
 ## research/dca_ladder/run_d12.py · 261 строк
 
@@ -2231,6 +2231,42 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L231 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
 - L232 `CUT_UNKNOWN = 'причина не измерена'`
 - L235 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
+
+## research/dca_paper/tail_screen.py · 516 строк
+
+Портрет хвоста коротких книг: что общего у минусовых сделок.
+
+- L52 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L53 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L64 `ART = 'DCA-tail-screen'`
+- L65 `PERMS = 200`
+- L66 `HIGH_LEV = 15.0`
+- L67 `QUANT = 5`
+- L68 `TAIL_EXITS = ('пол', 'ликвидация')`
+- L69 `SUMMARY_DIR = os.path.join(ROOT, 'research', 's8_loop…`
+- L70 `HOUR = 3600.0`
+- L72 `RULERS = tuple(dict.fromkeys(S.BOOKS.values()))` — Линейки коротких книг: безопасная (пол 0.10) и оптимальная (пол 0.50).
+- L75 `FEATURES = (('spread_bp', 'спред, б.п.', 'стакан')…` — Признаки объявлены ДО просмотра — (ключ, подпись, откуда).
+- L114 `_f(x)`
+- L122 `class Hours` — Часовые сводки по имени с оглядкой назад — файл дня читается раз.
+  - L125 `Hours.__init__(self, root=SUMMARY_DIR)`
+  - L131 `Hours._load(self, sym, day)`
+  - L153 `Hours.row(self, sym, ts)` — Сводка часа, в который попадает момент `ts`.
+  - L163 `Hours.back(self, sym, ts, n)` — Сводки n предыдущих часов, старые сначала; пропуски — None.
+- L168 `_med(xs)`
+- L173 `features_of(rec, leg, hours)` — Портрет ОДНОГО решения — признаки момента входа и суток до него.
+- L238 `is_tail(rec)`
+- L242 `quintile_spread(x, y, q=QUANT)` — Доля хвоста в верхнем квинтиле признака минус в нижнем.
+- L259 `perm_share(x, y, spread, perms=PERMS, seed=7)` — Доля перестановок меток, давших разрыв не меньше наблюдаемого.
+- L273 `screen(rows, perms=PERMS)` — Таблица скрина по признакам: разрыв квинтилей и его нуль.
+- L302 `portrait(rows, k=20)` — Худшие сделки окна и ранг каждого их признака среди всех сделок.
+- L340 `run(perms=PERMS, log=print, summary_dir=None, mem_limit=None)`
+- L379 `_p(x, d=1)`
+- L383 `_v(x)`
+- L394 `_table(rows, perms)`
+- L417 `report(s)`
+- L493 `publish(name)`
+- L499 `main(argv=None)`
 
 ## research/f1_carry/carry.py · 169 строк
 

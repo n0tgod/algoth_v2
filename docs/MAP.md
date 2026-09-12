@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 434, строк: 195130, каталогов: 75.
+Модулей кода: 436, строк: 195833, каталогов: 75.
 
 
 ## корень — память проекта, идеи, README
@@ -143,7 +143,7 @@
 
 - `ladder.py` · 699 строк — DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - `run_d10.py` · 951 строк — D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
-- `run_d11.py` · 187 строк — D11 — DCA-лестница на сигнале книги `h24` (24 ч, рука по выбору), шорт.
+- `run_d11.py` · 195 строк — D11 — DCA-лестница на сигнале книги `h24` (24 ч, рука по выбору), шорт.
 - `run_d12.py` · 261 строк — D12 — билет от СОБСТВЕННОГО пика: сколько даёт сигнал h24 (шорт), когда депозит делится на места ЭТОЙ книги,…
 - `run_d13.py` · 376 строк — D13 — короткая книга РЯДОМ с длинной: что даёт пара, а не половина.
 - `run_d2.py` · 656 строк — D2 (спека 14) — DCA-стратегия НА ВЫБОРАХ МОДЕЛИ, а не «где попало».
@@ -191,7 +191,8 @@
 - `smoothing.py` · 227 строк — Сглаживают ли короткие DCA-книги длинные — замер, а не имя.
 - `split_journal.py` · 198 строк — Разрезать цельный журнал книги на суточные куски.
 - `tail.py` · 257 строк — Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_names.py` (227), `test_pair.py` (520), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (2797), `test_short.py` (355), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76)
+- `tail_screen.py` · 516 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_names.py` (227), `test_pair.py` (520), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (2797), `test_short.py` (355), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76), `test_tail_screen.py` (179)
 - отчёты в `out/` (25): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-short-age.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
