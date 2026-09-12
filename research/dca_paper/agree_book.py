@@ -289,11 +289,17 @@ def _r(x):
 
 
 def _days_map(cell):
-    """Деньги по суткам одной книги: дата → доллары."""
+    """Сутки одной книги: дата → (деньги, сделок).
+
+    Число сделок дня едет рядом с деньгами не для красоты: ветки держат
+    РАЗНОЕ число позиций, и без него «потеряла вчетверо меньше» не
+    отличить от «держала вчетверо меньше». Деньги НА СДЕЛКУ и есть
+    ответ на вопрос, был ли отбор.
+    """
     out = {}
     for r in (cell or {}).get("days") or []:
         try:
-            out[str(r["d"])] = float(r["usd"])
+            out[str(r["d"])] = (float(r["usd"]), int(r.get("n") or 0))
         except (KeyError, TypeError, ValueError):
             continue
     return out
@@ -313,14 +319,23 @@ def _day_table(s, dep, last=7):
     if not rows:
         return []
     ks = sorted(dates)[-int(last):]
+    def _cell(m, k):
+        v = m.get(k)
+        if v is None:
+            return "—"
+        usd, n = v
+        return (f"{usd:+.0f}" if not n
+                else f"{usd:+.0f} ({n}·{usd / n:+.0f})")
+
     L = ["| книга | ветка | " + " | ".join(ks) + " |",
          "|---|---|" + "--:|" * len(ks)]
     for bk, a, g in rows:
         for ttl, m in (("обе руки", a), ("согласие", g)):
             L.append(f"| {R.ruler_title(bk)} | {ttl} | "
-                     + " | ".join("—" if m.get(k) is None
-                                  else f"{m[k]:+.0f}" for k in ks) + " |")
-    return L + [""]
+                     + " | ".join(_cell(m, k) for k in ks) + " |")
+    return L + ["", "В скобках: сделок дня и деньги НА СДЕЛКУ. Если на "
+                "сделку обе ветки теряют одинаково, согласие плохой день "
+                "не отобрало — оно просто держало меньше позиций.", ""]
 
 
 def report(s):

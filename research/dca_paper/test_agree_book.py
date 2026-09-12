@@ -142,10 +142,10 @@ def test_day_table_puts_both_branches_on_the_same_days():
     s = {"families": [{"name": "короткие книги h24", "keys": ["safe_h"],
                        "decisions": 100, "agreed": 30, "one_arm": 70,
                        "all": {f"safe_h:{dep}": {"days": [
-                           {"d": "2026-09-11", "usd": -388.0},
-                           {"d": "2026-09-12", "usd": -1173.0}]}},
+                           {"d": "2026-09-11", "usd": -388.0, "n": 12},
+                           {"d": "2026-09-12", "usd": -1173.0, "n": 18}]}},
                        "agree": {f"safe_h:{dep}": {"days": [
-                           {"d": "2026-09-12", "usd": -40.0}]}},
+                           {"d": "2026-09-12", "usd": -40.0, "n": 4}]}},
                        "control": {}}],
          "seeds": 0, "main_dep": dep, "computed_at": "2026-09-12 23:00"}
     txt = A.report(s)
@@ -156,6 +156,11 @@ def test_day_table_puts_both_branches_on_the_same_days():
     # день, которого у согласной ветки нет, — прочерк, а не ноль
     ag = [x for x in line if "-40" in x][0]
     assert "—" in ag, ag
+    # деньги НА СДЕЛКУ: без них «потеряла меньше» не отличить от
+    # «держала меньше» — ради этого числа таблица и заведена
+    assert "(4·-10)" in ag, ag
+    assert any("(18·-65)" in x for x in txt.splitlines()), \
+        [x for x in txt.splitlines() if "обе руки" in x]
     print("ok  сутки обеих веток: даты объединением, день без сделок "
           "стороны — прочерк, а не ноль")
 

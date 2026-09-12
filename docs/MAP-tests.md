@@ -916,7 +916,7 @@
 - L116 `TESTS = [test_daily_sigma_known, test_daily_sig…`
 - L127 `main()`
 
-## research/dca_paper/test_agree_book.py · 196 строк
+## research/dca_paper/test_agree_book.py · 201 строк
 
 Проверки замера «книги DCA на согласии рук».
 
@@ -929,7 +929,7 @@
 - L85 `test_beat_share_counts_ties_against_the_filter()`
 - L95 `test_report_reconciles_the_branch_with_the_live_book()` — Ветка «обе руки» обязана сверяться с живой книгой ЧИСЛОМ.
 - L133 `test_day_table_puts_both_branches_on_the_same_days()` — Вопрос «а в этот день?» итогу не задать — нужны сутки обеих веток.
-- L163 `test_report_names_both_branches_and_the_control()`
+- L168 `test_report_names_both_branches_and_the_control()`
 
 ## research/dca_paper/test_arm_book.py · 163 строк
 
