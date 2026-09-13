@@ -1880,6 +1880,60 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L373 `publish(name)`
 - L378 `main(argv=None)`
 
+## research/dca_paper/path_screen.py · 706 строк
+
+Дорога сделки коротких книг: что происходит ПОСЛЕ входа и можно ли выйти раньше.
+
+- L42 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L43 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L59 `ART = 'DCA-path-screen'`
+- L60 `SEEDS = 200`
+- L61 `PERMS = 200`
+- L62 `MAIN_DEP = 10000`
+- L63 `HOUR = 3600.0`
+- L64 `K_LIST = (1, 2, 3, 4, 6, 8, 12, 18)`
+- L65 `PEAKS = (0.1, 0.25, 0.5)`
+- L66 `DEEP = 0.25`
+- L67 `BETA_H = 72`
+- L68 `BETA_MIN = 48`
+- L69 `PROXY = SWV.PROXY`
+- L70 `MIN_PROXY = SWV.MIN_PROXY`
+- L71 `BOOK_KEYS = list(S.BOOKS)`
+- L73 `AXES = (('loss', 'стоп по убытку: выйти, когда…` — оси выхода: (ключ, название, значения) — объявлены до прогона
+- L82 `MKT_FEATURES = (('beta', 'β к волне за 72 ч до входа',…` — признаки связи с рынком на входе — часть C
+- L92 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
+- L116 `class Market` — Цены из часовых сводок: ход имени, волна прокси-имён, β до входа.
+  - L119 `Market.__init__(self, hours, proxies=PROXY, min_proxy=MIN_PROXY)`
+  - L126 `Market.px(self, sym, ts)`
+  - L134 `Market.move(self, sym, t0, t1)`
+  - L138 `Market.wave(self, t0, t1)` — Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет.
+  - L150 `Market.beta_pre(self, sym, at, n=BETA_H, min_n=BETA_MIN)` — β и ρ имени к волне по часовым доходностям ДО входа.
+- L172 `view_of(rec, mkt)` — Одна сделка: путь по отметкам, рынок по часам, связь на входе.
+- L203 `_share(flags)`
+- L208 `_med(xs)`
+- L213 `_q(xs, q)`
+- L218 `anatomy(views, k_list=K_LIST, deep=DEEP)` — К часу k среди ещё открытых: где хвост, где остальные, что рынок.
+- L251 `peaks(views, thresholds=PEAKS)` — Бывал ли хвост в плюсе: доля с пиком ≥ порога, медиана пика, час выхода.
+- L265 `trigger(v, axis, val)` — Час срабатывания оси СТРОГО до фактического выхода, иначе None.
+- L296 `exit_at(rec, k, why='правило выхода')` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
+- L317 `apply_axis(cache, views, axis, val)` — Кэш с выходами по оси и {ключ: час} изменённых сделок.
+- L330 `deltas(cache, views, changed)` — Сумма приращений pnl (долей маржи) и состав изменённых сделок.
+- L344 `open_index(views)` — {линейка: {k: [ключи сделок, открытых после часа k]}} — для контроля.
+- L355 `control_exits(cache, views, changed, ctx, launch, seeds=SEEDS, …` — Случайные выходы ТОГО ЖЕ числа сделок в ТЕ ЖЕ часы среди открытых.
+- L404 `run_axes(cache, views, ctx, launch, seeds=SEEDS, dep=MAIN_DEP, …`
+- L438 `market_screen(views, perms=PERMS, features=MKT_FEATURES)` — Часть C: признаки связи с рынком на входе тем же разрывом квинтилей.
+- L467 `run(seeds=SEEDS, perms=PERMS, log=print, summary_dir=None, mem_…`
+- L522 `_p(x, d=1)`
+- L526 `_pp(x, d=1)`
+- L530 `_f(x, d=2)`
+- L534 `_anatomy_table(rows, deep)`
+- L554 `_peaks_table(pk, thresholds)`
+- L569 `_i(x)`
+- L573 `_axes_tables(s)`
+- L613 `report(s)`
+- L685 `publish(name)`
+- L691 `main(argv=None)`
+
 ## research/dca_paper/rules.py · 1180 строк
 
 Правила бумажных DCA-книг: три депозита, одни правила.
