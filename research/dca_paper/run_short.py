@@ -88,6 +88,10 @@ def cache_sig():
             "floor": {bk: R.floor_frac_of(bk, D2.FLOOR_FRAC)
                       for bk in sorted(BOOKS)},
             "take": R.TAKE_MULT,
+            # Охраны рынком (`rules.WAVE_GUARD_PCT`) в подписи НЕТ намеренно:
+            # кэш хранит исход позиции БЕЗ охраны, а охрана — вид над
+            # записью по отметкам ядра (равенство отметки усечению
+            # доказано `wave_guard`). Смена порога кэш не портит.
             "cost_bp": D10.ROUND_COST_BP, "books": sorted(set(BOOKS.values()))}
 
 
@@ -244,16 +248,20 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
     # Справочник читается ОДИН раз на прогон: его спрашивают все три
     # книги на каждое решение.
     launch = IR.launches() if launch is None else launch
-    ages = {}
+    ages, guards = {}, {}
     for bk in list(packed):
         packed[bk], ages[bk] = RP.age_shorts(packed[bk], bk, launch=launch,
                                              log=log, now=now)
+        # охрана рынком — после возраста и до кассы: правило ВЫХОДА
+        packed[bk], guards[bk] = RP.guard_shorts(packed[bk], bk, log=log,
+                                                 now=now)
     rows, cells, one, live = RP.build_rows(packed, now=now,
                                            keys=R.H24_ORDER, log=log)
     RP.append_journal(rows, path=journal or R.H24_JOURNAL, log=log)
     s = RP.summarize(path=journal or R.H24_JOURNAL, live=live,
                      keys=R.H24_ORDER)
     s.update({"family": "h24", "cells": cells, "one_name": one, "ages": ages,
+              "guards": guards,
               "signal": {"book": "h24", "arms": list(ARMS), "cell": CELL[0],
                          "hold_h": R.H24_HOLD_H, "legs": len(legs_),
                          "gate": "край ≥ 33 б.п., отношение любое"},
@@ -321,6 +329,19 @@ def report(s):
                  f"{a.get('моложе порога', 0)} | "
                  f"{a.get('возраст неизвестен', 0)} | "
                  + ("—" if fr is None else f"{fr:g}") + " |")
+    L += ["", "**Охрана рынком** (правило 2026-09-13, спека 14 §13): позиция "
+          "закрывается по закрытию часа, когда средний ход крупных имён рынка "
+          "с момента входа ≥ порога; исход «рынок». Час без волны (сводки нет) "
+          "триггером не бывает и стоит отдельным числом.", "",
+          "| книга | порог | позиций | закрыто рынком | из них открытых | "
+          "часов без волны | без отметок |", "|---|--:|--:|--:|--:|--:|--:|"]
+    for rk in R.H24_ORDER:
+        g = (s.get("guards") or {}).get(rk) or {}
+        L.append(f"| {R.ruler_title(rk)} | "
+                 + (f"≥ {g['pct']:g} %" if g.get("guard") else "нет")
+                 + f" | {g.get('offered', 0)} | {g.get('closed_by_market', 0)} "
+                 f"| {g.get('open_closed', 0)} | {g.get('hours_no_wave', 0)} "
+                 f"| {g.get('no_marks', 0)} |")
     L += ["",
          "## Книги", "",
          "| книга | депозит | билет | сделок | Σ $ | итог | просадка | "

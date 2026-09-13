@@ -69,6 +69,7 @@ def cell_stats(packed, ctx, launch, now=None, log=lambda *a: None,
     for bk in list(packed):
         packed[bk], _why = RP.age_shorts(packed[bk], bk, launch=launch,
                                          log=log, now=now)
+        packed[bk], _g = RP.guard_shorts(packed[bk], bk, log=log, now=now)
     keys = list(keys if keys is not None else R.H24_ORDER)
     deps = list(deps if deps is not None else R.DEPOSITS)
     rows, cells_, _one, _live = RP.build_rows(packed, now=now,

@@ -54,7 +54,7 @@ import agree_book as AG                                       # noqa: E402
 import arm_book as AB                                         # noqa: E402
 import instruments_refresh as IR                              # noqa: E402
 import tail_screen as T                                       # noqa: E402
-import side_wave as SWV                                       # noqa: E402
+import wave as WV                                             # noqa: E402
 
 ART = "DCA-path-screen"
 SEEDS = 200                       # объявлено до прогона
@@ -66,8 +66,8 @@ PEAKS = (0.10, 0.25, 0.50)                   # «бывал в плюсе на �
 DEEP = 0.25                                  # «глубоко под водой» — четверть маржи
 BETA_H = 72                                  # часов до входа для β
 BETA_MIN = 48                                # меньше пар — β не измерена
-PROXY = SWV.PROXY                            # волна — ТОТ ЖЕ список, что у S8
-MIN_PROXY = SWV.MIN_PROXY
+PROXY = WV.PROXY                             # волна — ТОТ ЖЕ список, что у S8
+MIN_PROXY = WV.MIN_PROXY
 BOOK_KEYS = list(S.BOOKS)
 # оси выхода: (ключ, название, значения) — объявлены до прогона
 AXES = (
@@ -89,90 +89,9 @@ MKT_FEATURES = (
 )
 
 
-def path_of(rec):
-    """Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
-
-    k = 1 — конец первого часа после входа (`at` — конец часа решения,
-    отметка часа несёт его начало). Час без бара наследует прошлую отметку.
-    """
-    marks = rec.get("marks") or []
-    if not marks:
-        return None
-    at = float(rec["at"])
-    cum, raw = 0.0, {}
-    for hr, d in marks:
-        cum += float(d)
-        k = max(1, int(round((float(hr) - at) / HOUR)) + 1)
-        raw[k] = cum
-    K = max(raw)
-    # до первого бара позиция стоит по цене входа — pnl 0, как у самого
-    # ядра (у тонкой ленты первый час бывает без единого бара)
-    out, last, lead = {}, 0.0, 0
-    first = min(raw)
-    for k in range(1, K + 1):
-        if k in raw:
-            last = raw[k]
-        elif k < first:
-            lead += 1
-        out[k] = last
-    return {"cum": out, "K": K, "peak": max(out.values()), "final": out[K],
-            "lead_gap": lead}
-
-
-class Market:
-    """Цены из часовых сводок: ход имени, волна прокси-имён, β до входа."""
-
-    def __init__(self, hours, proxies=PROXY, min_proxy=MIN_PROXY):
-        self.h = hours
-        self.proxies = tuple(proxies)
-        self.min_proxy = int(min_proxy)
-        self._px, self._wave = {}, {}
-        self.wave_none = 0
-
-    def px(self, sym, ts):
-        key = (sym, int(float(ts) // HOUR))
-        if key not in self._px:
-            r = self.h.row(sym, ts)
-            v = r.get("mid_close") if r else None
-            self._px[key] = float(v) if v else None
-        return self._px[key]
-
-    def move(self, sym, t0, t1):
-        a, b = self.px(sym, t0), self.px(sym, t1)
-        return (b / a - 1.0) if (a and b) else None
-
-    def wave(self, t0, t1):
-        """Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет."""
-        key = (int(float(t0) // HOUR), int(float(t1) // HOUR))
-        if key not in self._wave:
-            ms = [m for m in (self.move(p, t0, t1) for p in self.proxies)
-                  if m is not None]
-            w = float(np.mean(ms)) if len(ms) >= self.min_proxy else None
-            if w is None:
-                self.wave_none += 1
-            self._wave[key] = w
-        return self._wave[key]
-
-    def beta_pre(self, sym, at, n=BETA_H, min_n=BETA_MIN):
-        """β и ρ имени к волне по часовым доходностям ДО входа."""
-        xs, ys = [], []
-        t_in = float(at) - 1.0
-        for j in range(int(n)):
-            t1 = t_in - j * HOUR
-            w, o = self.wave(t1 - HOUR, t1), self.move(sym, t1 - HOUR, t1)
-            if w is None or o is None:
-                continue
-            xs.append(w)
-            ys.append(o)
-        if len(xs) < min_n:
-            return None, None, len(xs)
-        x, y = np.array(xs), np.array(ys)
-        vx = float(x.var())
-        if vx <= 0 or float(y.var()) <= 0:
-            return None, None, len(xs)
-        b = float(((x - x.mean()) * (y - y.mean())).mean() / vx)
-        rho = float(np.corrcoef(x, y)[0, 1])
-        return b, rho, len(xs)
+# Путь позиции, цены и волна — из библиотеки волны (одно ядро с книгами).
+path_of = WV.path_of
+Market = WV.Market
 
 
 def view_of(rec, mkt):
@@ -300,24 +219,8 @@ def trigger(v, axis, val):
 
 
 def exit_at(rec, k, why="правило выхода"):
-    """Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
-
-    Издержки те же (круг на заполненный нотионал), funding кассе даст
-    короткий срок сам. Цена выхода — из pnl и плеча, для показа.
-    """
-    p = path_of(rec)
-    c = p["cum"][k]
-    at = float(rec["at"])
-    marks = [m for m in rec["marks"]
-             if int(round((float(m[0]) - at) / HOUR)) + 1 <= k]
-    new = dict(rec, pnl=float(c), exit_ts=at + k * HOUR - 1.0, exit=why,
-               marks=marks, state="closed")
-    lev, e = float(rec.get("lev") or 0), rec.get("entry_px")
-    if e and lev:
-        new["exit_px"] = float(e) * (1.0 - float(c) / lev)      # шорт
-    if rec.get("pnl_net") is not None:
-        new["pnl_net"] = float(c) - (float(rec["pnl"]) - float(rec["pnl_net"]))
-    return new
+    """Та же запись, закрытая на отметке часа k — библиотекой волны."""
+    return WV.guard_record(rec, k, why=why)
 
 
 def apply_axis(cache, views, axis, val):

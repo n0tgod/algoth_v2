@@ -1880,7 +1880,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L373 `publish(name)`
 - L378 `main(argv=None)`
 
-## research/dca_paper/path_screen.py · 716 строк
+## research/dca_paper/path_screen.py · 619 строк
 
 Дорога сделки коротких книг: что происходит ПОСЛЕ входа и можно ли выйти раньше.
 
@@ -1896,45 +1896,38 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L66 `DEEP = 0.25`
 - L67 `BETA_H = 72`
 - L68 `BETA_MIN = 48`
-- L69 `PROXY = SWV.PROXY`
-- L70 `MIN_PROXY = SWV.MIN_PROXY`
+- L69 `PROXY = WV.PROXY`
+- L70 `MIN_PROXY = WV.MIN_PROXY`
 - L71 `BOOK_KEYS = list(S.BOOKS)`
 - L73 `AXES = (('loss', 'стоп по убытку: выйти, когда…` — оси выхода: (ключ, название, значения) — объявлены до прогона
 - L82 `MKT_FEATURES = (('beta', 'β к волне за 72 ч до входа',…` — признаки связи с рынком на входе — часть C
-- L92 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
-- L122 `class Market` — Цены из часовых сводок: ход имени, волна прокси-имён, β до входа.
-  - L125 `Market.__init__(self, hours, proxies=PROXY, min_proxy=MIN_PROXY)`
-  - L132 `Market.px(self, sym, ts)`
-  - L140 `Market.move(self, sym, t0, t1)`
-  - L144 `Market.wave(self, t0, t1)` — Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет.
-  - L156 `Market.beta_pre(self, sym, at, n=BETA_H, min_n=BETA_MIN)` — β и ρ имени к волне по часовым доходностям ДО входа.
-- L178 `view_of(rec, mkt)` — Одна сделка: путь по отметкам, рынок по часам, связь на входе.
-- L209 `_share(flags)`
-- L214 `_med(xs)`
-- L219 `_q(xs, q)`
-- L224 `anatomy(views, k_list=K_LIST, deep=DEEP)` — К часу k среди ещё открытых: где хвост, где остальные, что рынок.
-- L257 `peaks(views, thresholds=PEAKS)` — Бывал ли хвост в плюсе: доля с пиком ≥ порога, медиана пика, час выхода.
-- L271 `trigger(v, axis, val)` — Час срабатывания оси СТРОГО до фактического выхода, иначе None.
-- L302 `exit_at(rec, k, why='правило выхода')` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
-- L323 `apply_axis(cache, views, axis, val)` — Кэш с выходами по оси и {ключ: час} изменённых сделок.
-- L336 `deltas(cache, views, changed)` — Сумма приращений pnl (долей маржи) и состав изменённых сделок.
-- L350 `open_index(views)` — {линейка: {k: [ключи сделок, открытых после часа k]}} — для контроля.
-- L361 `control_exits(cache, views, changed, ctx, launch, seeds=SEEDS, …` — Случайные выходы ТОГО ЖЕ числа сделок в ТЕ ЖЕ часы среди открытых.
-- L410 `run_axes(cache, views, ctx, launch, seeds=SEEDS, dep=MAIN_DEP, …`
-- L444 `market_screen(views, perms=PERMS, features=MKT_FEATURES)` — Часть C: признаки связи с рынком на входе тем же разрывом квинтилей.
-- L473 `run(seeds=SEEDS, perms=PERMS, log=print, summary_dir=None, mem_…`
-- L530 `_p(x, d=1)`
-- L534 `_pp(x, d=1)`
-- L538 `_f(x, d=2)`
-- L542 `_anatomy_table(rows, deep)`
-- L562 `_peaks_table(pk, thresholds)`
-- L577 `_i(x)`
-- L581 `_axes_tables(s)`
-- L621 `report(s)`
-- L695 `publish(name)`
-- L701 `main(argv=None)`
+- L97 `view_of(rec, mkt)` — Одна сделка: путь по отметкам, рынок по часам, связь на входе.
+- L128 `_share(flags)`
+- L133 `_med(xs)`
+- L138 `_q(xs, q)`
+- L143 `anatomy(views, k_list=K_LIST, deep=DEEP)` — К часу k среди ещё открытых: где хвост, где остальные, что рынок.
+- L176 `peaks(views, thresholds=PEAKS)` — Бывал ли хвост в плюсе: доля с пиком ≥ порога, медиана пика, час выхода.
+- L190 `trigger(v, axis, val)` — Час срабатывания оси СТРОГО до фактического выхода, иначе None.
+- L221 `exit_at(rec, k, why='правило выхода')` — Та же запись, закрытая на отметке часа k — библиотекой волны.
+- L226 `apply_axis(cache, views, axis, val)` — Кэш с выходами по оси и {ключ: час} изменённых сделок.
+- L239 `deltas(cache, views, changed)` — Сумма приращений pnl (долей маржи) и состав изменённых сделок.
+- L253 `open_index(views)` — {линейка: {k: [ключи сделок, открытых после часа k]}} — для контроля.
+- L264 `control_exits(cache, views, changed, ctx, launch, seeds=SEEDS, …` — Случайные выходы ТОГО ЖЕ числа сделок в ТЕ ЖЕ часы среди открытых.
+- L313 `run_axes(cache, views, ctx, launch, seeds=SEEDS, dep=MAIN_DEP, …`
+- L347 `market_screen(views, perms=PERMS, features=MKT_FEATURES)` — Часть C: признаки связи с рынком на входе тем же разрывом квинтилей.
+- L376 `run(seeds=SEEDS, perms=PERMS, log=print, summary_dir=None, mem_…`
+- L433 `_p(x, d=1)`
+- L437 `_pp(x, d=1)`
+- L441 `_f(x, d=2)`
+- L445 `_anatomy_table(rows, deep)`
+- L465 `_peaks_table(pk, thresholds)`
+- L480 `_i(x)`
+- L484 `_axes_tables(s)`
+- L524 `report(s)`
+- L598 `publish(name)`
+- L604 `main(argv=None)`
 
-## research/dca_paper/rules.py · 1180 строк
+## research/dca_paper/rules.py · 1212 строк
 
 Правила бумажных DCA-книг: три депозита, одни правила.
 
@@ -1978,64 +1971,67 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L472 `min_age_days(pair_key)` — Порог возраста имени для короткой стороны. Ноль — фильтра нет.
 - L498 `FLOOR_FRAC_BY_BOOK = {'safe_h': 0.1, 'optimal_h': 0.5, 'aggr…` — Правила СТОРОНЫ говорятся на самой странице книги: объяснение, живущее в отчёте, соседнюю страницу не защищае…
 - L501 `floor_frac_of(key, default=None)` — Доля пола капитуляции у книги. Нет своей — умолчание ядра.
-- L543 `FAMILY_RULES = {'pair': 6, 'h24': 2}` — Версия правил СЕМЕЙСТВА. Общая версия `RULES` тут не годится: её смена обнулила бы запись длинных и коротких…
-- L549 `FAMILY_SINCE = {'pair': '2026-09-10', 'h24': '2026-09-…` — ДЕНЬ смены правил семейства. Смена версии обнуляет «записанное вперёд»: решения, писанные другими правилами,…
-- L552 `family_since(key)` — С какого дня у семейства книги идёт запись вперёд. Нет — None.
-- L557 `family_rules(key)` — Версия правил семейства книги. Нет версии — нет и поля в строке.
-- L562 `pair_share_mult(pair_key, book_key)` — Во сколько раз билет СТОРОНЫ меньше её собственного в общем счёте.
-- L573 `ticket_in(pair_key, book_key, deposit)` — Билет стороны в общем счёте: свой билет × доля, но НЕ НИЖЕ пола.
-- L586 `share_in(pair_key, book_key, deposit)` — Доля счёта на позицию стороны в общем счёте.
-- L591 `parts_of(key)` — Из каких книг собран общий счёт. Обычная книга — источник один.
-- L604 `RETIRED_AT = {'safe_s': '2026-09-07', 'optimal_s': '…` — --- снятые книги (решение владельца 2026-09-07) ------------------------ Зеркала `*_s` на ситуационном листе…
-- L608 `retired(key)` — Снята ли книга. Дата снятия — в `RETIRED_AT`, одним местом.
-- L617 `RULER_ORDER = [k for k in RULER_ORDER_ALL if not reti…` — Действующий порядок: снятая книга выпадает отсюда, и ВСЕ читатели — прогон, свод, отчёт, страница — перестают…
-- L620 `family_of(key)` — Семейство книги: `sit` — по листу ситуационной, `h24` — по `h24`.
-- L625 `order_of(family='sit', with_retired=False)` — Порядок книг семейства — один список на всех читателей.
-- L637 `hold_of(key)` — Срок удержания книги, ч. Не объявлен — общий срок книг.
-- L642 `DEFAULT_RULER = 'optimal'` — Запись БЕЗ поля `ruler` писана этой линейкой: до 2026-09-04 книга была одна и считалась глубиной. Умолчание д…
-- L645 `ruler_of(row)` — Линейка строки журнала; у строк прежнего образца поля нет.
-- L651 `notional_of(row)` — Нотионал позиции = маржа × плечо; None, если чего-то из двух нет.
-- L667 `avg_walk(fills, entry=None, notional=None, take_frac=None, side…` — Плавающая ТВХ: средняя цена входа ПОСЛЕ каждого рунга.
-- L762 `open_stats(positions)` — ХУДШАЯ из открытых позиций — та, что просела глубже всех СЕЙЧАС.
-- L789 `ruler_title(key)`
-- L793 `side_of(key)` — Сторона книги. Ключ без поля — длинная: до 2026-09-05 других нет.
-- L804 `row_side(row, ruler=None)` — Сторона ЗАПИСИ позиции — одно правило на всех читателей.
-- L824 `min_lev_of(key)` — Порог входа по плечу у режима; НЕТ поля — гейта нет вовсе.
-- L842 `ONE_PER_NAME = True` — --- биржевое правило, которое реплей D-серии НЕ соблюдал --------------- На одном счёте в одностороннем режим…
-- L851 `AHEAD_H = HOLD_H + 48` — --- «записано вперёд» --------------------------------------------------- Решение считается записанным ВПЕРЁД…
-- L853 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L854 `OUT = os.path.join(HERE, 'out')`
-- L855 `JOURNAL = os.path.join(OUT, 'journal.jsonl')`
-- L856 `ARTIFACT = os.path.join(OUT, 'DCA-paper.json')`
-- L860 `H24_JOURNAL = os.path.join(OUT, 'short.jsonl')` — Журнал и артефакт семейства `h24` — СВОИ. Имя не «journal-…»: ротация длинной книги глобит `journal-*.jsonl`,…
-- L861 `H24_ARTIFACT = os.path.join(OUT, 'DCA-short.json')`
-- L866 `PAIR_JOURNAL = os.path.join(OUT, 'pair.jsonl')` — Общий счёт — тоже своё семейство со своим журналом: строки его книг ДРУГИЕ (та же сделка получает другую марж…
-- L867 `PAIR_ARTIFACT = os.path.join(OUT, 'DCA-pair.json')`
-- L875 `RISK_LIMITS = os.path.join(os.path.dirname(HERE), 'a1…` — Таблица риск-лимитов площадки (тиры maintenance margin) — данные ПЛОЩАДКИ, не правило книги, но читаются они…
-- L877 `_TIERS = {'at': None, 'data': {}}`
-- L880 `risk_tiers(path=None)` — Тиры площадки: символ → ступени. Перечитывается по времени файла.
-- L897 `_ladder()` — Ядро лестницы. Импорт ленивый: страница не тянет его без нужды.
-- L907 `mmr_look(sym, path=None)` — Функция «нотионал → ставка поддерживающей маржи» для имени.
-- L921 `liq_walk(steps, lev, side='long', look=None, mmr=None)` — Цена ликвидации ПОСЛЕ каждого рунга — ядром лестницы, не копией.
-- L949 `journal_of(key)` — Журнал СЕМЕЙСТВА книги. Одно место на всех читателей.
-- L965 `artifact_of(key)` — Артефакт СЕМЕЙСТВА книги: открытые позиции живут в нём, не в журнале.
-- L975 `floor_of(ruler)` — Пол билета РЕЖИМА: биржевой минимум, переведённый в маржу.
-- L987 `peak_of(ruler)` — Пик РЕЖИМА, измеренный по журналу. Неизвестный режим — пик пула.
-- L997 `ticket(deposit, ruler)` — Билет книги: не меньше пола режима и не больше доли на все места.
-- L1010 `slots(deposit, ruler)` — Сколько мест помещается в депозит при билете этой книги.
-- L1015 `share(deposit, ruler)` — Доля счёта на позицию — ровно билет, выраженный долей.
-- L1020 `ahead(decided_at, written_at, hours=AHEAD_H, since=None)` — Записано ли решение вперёд, а не восстановлено пересчётом.
-- L1038 `shard_of(path, at=None)` — Файл журнала, в который идёт решение: СУТКИ по метке решения.
-- L1056 `shard_day(at=None)` — Дата суток решения строкой — ключ ротации, один на всех.
-- L1071 `SHARD_CAP = 4 * 1024 * 1024` — Порог ЧАСТИ суточного файла. Сутки оказались единицей недостаточной: одно решение живёт во всех книгах разом…
-- L1074 `shard_parts(path, at=None, day=None)` — Части суток по порядку: `journal-<дата>.jsonl`, затем `.01`, `.02`…
-- L1088 `shard_place(path, day, lines, cap=SHARD_CAP)` — Разложить строки суток по частям, не переступая порог.
-- L1113 `journal_parts(path=JOURNAL)` — Все куски журнала: старый цельный файл и суточные, по порядку.
-- L1125 `journal_key(r)` — Ключ решения: тем же составом, каким дедуплицирует запись.
-- L1137 `read_journal(path=JOURNAL, stats=None)` — Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
-- L1174 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
+- L515 `WAVE_GUARD_PCT = {'safe_h': 2.0, 'optimal_h': 2.0, 'aggr…` — ОХРАНА РЫНКОМ — правило выхода коротких книг h24 и короткой стороны общего счёта (решение владельца 2026-09-1…
+- L516 `GUARD_EXIT = 'рынок'`
+- L519 `wave_guard_of(key)` — Порог охраны рынком у книги (у общего счёта — у её короткой стороны), в процентах волны. Нет порога — охраны…
+- L575 `FAMILY_RULES = {'pair': 7, 'h24': 3}` — Версия правил СЕМЕЙСТВА. Общая версия `RULES` тут не годится: её смена обнулила бы запись длинных и коротких…
+- L581 `FAMILY_SINCE = {'pair': '2026-09-13', 'h24': '2026-09-…` — ДЕНЬ смены правил семейства. Смена версии обнуляет «записанное вперёд»: решения, писанные другими правилами,…
+- L584 `family_since(key)` — С какого дня у семейства книги идёт запись вперёд. Нет — None.
+- L589 `family_rules(key)` — Версия правил семейства книги. Нет версии — нет и поля в строке.
+- L594 `pair_share_mult(pair_key, book_key)` — Во сколько раз билет СТОРОНЫ меньше её собственного в общем счёте.
+- L605 `ticket_in(pair_key, book_key, deposit)` — Билет стороны в общем счёте: свой билет × доля, но НЕ НИЖЕ пола.
+- L618 `share_in(pair_key, book_key, deposit)` — Доля счёта на позицию стороны в общем счёте.
+- L623 `parts_of(key)` — Из каких книг собран общий счёт. Обычная книга — источник один.
+- L636 `RETIRED_AT = {'safe_s': '2026-09-07', 'optimal_s': '…` — --- снятые книги (решение владельца 2026-09-07) ------------------------ Зеркала `*_s` на ситуационном листе…
+- L640 `retired(key)` — Снята ли книга. Дата снятия — в `RETIRED_AT`, одним местом.
+- L649 `RULER_ORDER = [k for k in RULER_ORDER_ALL if not reti…` — Действующий порядок: снятая книга выпадает отсюда, и ВСЕ читатели — прогон, свод, отчёт, страница — перестают…
+- L652 `family_of(key)` — Семейство книги: `sit` — по листу ситуационной, `h24` — по `h24`.
+- L657 `order_of(family='sit', with_retired=False)` — Порядок книг семейства — один список на всех читателей.
+- L669 `hold_of(key)` — Срок удержания книги, ч. Не объявлен — общий срок книг.
+- L674 `DEFAULT_RULER = 'optimal'` — Запись БЕЗ поля `ruler` писана этой линейкой: до 2026-09-04 книга была одна и считалась глубиной. Умолчание д…
+- L677 `ruler_of(row)` — Линейка строки журнала; у строк прежнего образца поля нет.
+- L683 `notional_of(row)` — Нотионал позиции = маржа × плечо; None, если чего-то из двух нет.
+- L699 `avg_walk(fills, entry=None, notional=None, take_frac=None, side…` — Плавающая ТВХ: средняя цена входа ПОСЛЕ каждого рунга.
+- L794 `open_stats(positions)` — ХУДШАЯ из открытых позиций — та, что просела глубже всех СЕЙЧАС.
+- L821 `ruler_title(key)`
+- L825 `side_of(key)` — Сторона книги. Ключ без поля — длинная: до 2026-09-05 других нет.
+- L836 `row_side(row, ruler=None)` — Сторона ЗАПИСИ позиции — одно правило на всех читателей.
+- L856 `min_lev_of(key)` — Порог входа по плечу у режима; НЕТ поля — гейта нет вовсе.
+- L874 `ONE_PER_NAME = True` — --- биржевое правило, которое реплей D-серии НЕ соблюдал --------------- На одном счёте в одностороннем режим…
+- L883 `AHEAD_H = HOLD_H + 48` — --- «записано вперёд» --------------------------------------------------- Решение считается записанным ВПЕРЁД…
+- L885 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L886 `OUT = os.path.join(HERE, 'out')`
+- L887 `JOURNAL = os.path.join(OUT, 'journal.jsonl')`
+- L888 `ARTIFACT = os.path.join(OUT, 'DCA-paper.json')`
+- L892 `H24_JOURNAL = os.path.join(OUT, 'short.jsonl')` — Журнал и артефакт семейства `h24` — СВОИ. Имя не «journal-…»: ротация длинной книги глобит `journal-*.jsonl`,…
+- L893 `H24_ARTIFACT = os.path.join(OUT, 'DCA-short.json')`
+- L898 `PAIR_JOURNAL = os.path.join(OUT, 'pair.jsonl')` — Общий счёт — тоже своё семейство со своим журналом: строки его книг ДРУГИЕ (та же сделка получает другую марж…
+- L899 `PAIR_ARTIFACT = os.path.join(OUT, 'DCA-pair.json')`
+- L907 `RISK_LIMITS = os.path.join(os.path.dirname(HERE), 'a1…` — Таблица риск-лимитов площадки (тиры maintenance margin) — данные ПЛОЩАДКИ, не правило книги, но читаются они…
+- L909 `_TIERS = {'at': None, 'data': {}}`
+- L912 `risk_tiers(path=None)` — Тиры площадки: символ → ступени. Перечитывается по времени файла.
+- L929 `_ladder()` — Ядро лестницы. Импорт ленивый: страница не тянет его без нужды.
+- L939 `mmr_look(sym, path=None)` — Функция «нотионал → ставка поддерживающей маржи» для имени.
+- L953 `liq_walk(steps, lev, side='long', look=None, mmr=None)` — Цена ликвидации ПОСЛЕ каждого рунга — ядром лестницы, не копией.
+- L981 `journal_of(key)` — Журнал СЕМЕЙСТВА книги. Одно место на всех читателей.
+- L997 `artifact_of(key)` — Артефакт СЕМЕЙСТВА книги: открытые позиции живут в нём, не в журнале.
+- L1007 `floor_of(ruler)` — Пол билета РЕЖИМА: биржевой минимум, переведённый в маржу.
+- L1019 `peak_of(ruler)` — Пик РЕЖИМА, измеренный по журналу. Неизвестный режим — пик пула.
+- L1029 `ticket(deposit, ruler)` — Билет книги: не меньше пола режима и не больше доли на все места.
+- L1042 `slots(deposit, ruler)` — Сколько мест помещается в депозит при билете этой книги.
+- L1047 `share(deposit, ruler)` — Доля счёта на позицию — ровно билет, выраженный долей.
+- L1052 `ahead(decided_at, written_at, hours=AHEAD_H, since=None)` — Записано ли решение вперёд, а не восстановлено пересчётом.
+- L1070 `shard_of(path, at=None)` — Файл журнала, в который идёт решение: СУТКИ по метке решения.
+- L1088 `shard_day(at=None)` — Дата суток решения строкой — ключ ротации, один на всех.
+- L1103 `SHARD_CAP = 4 * 1024 * 1024` — Порог ЧАСТИ суточного файла. Сутки оказались единицей недостаточной: одно решение живёт во всех книгах разом…
+- L1106 `shard_parts(path, at=None, day=None)` — Части суток по порядку: `journal-<дата>.jsonl`, затем `.01`, `.02`…
+- L1120 `shard_place(path, day, lines, cap=SHARD_CAP)` — Разложить строки суток по частям, не переступая порог.
+- L1145 `journal_parts(path=JOURNAL)` — Все куски журнала: старый цельный файл и суточные, по порядку.
+- L1157 `journal_key(r)` — Ключ решения: тем же составом, каким дедуплицирует запись.
+- L1169 `read_journal(path=JOURNAL, stats=None)` — Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
+- L1206 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
 
-## research/dca_paper/run_pair.py · 537 строк
+## research/dca_paper/run_pair.py · 551 строк
 
 Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 
@@ -2052,45 +2048,49 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L214 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
 - L229 `one_sided(book, lk, sk)` — Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
 - L243 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
-- L337 `_p(x, d=2)`
-- L341 `_u(x)`
-- L345 `report(s)`
-- L508 `publish(name)`
-- L513 `main(argv=None)`
+- L340 `_p(x, d=2)`
+- L344 `_u(x)`
+- L348 `report(s)`
+- L522 `publish(name)`
+- L527 `main(argv=None)`
 
-## research/dca_paper/run_paper.py · 1516 строк
+## research/dca_paper/run_paper.py · 1563 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
 - L42 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L43 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L59 `RULERS = {k: (v['rule'], v['param'], R.side_of(k…` — Линейки плеча объявлены В ПРАВИЛАХ, а не здесь: их читает и страница наблюдения, и вторая запись однажды разо…
-- L62 `cache_path()` — Путь кэша разрешается В МОМЕНТ ВЫЗОВА, а не на импорте.
-- L71 `cache_sig()` — Подпись настроек, ОТ КОТОРЫХ ЗАВИСИТ РЕПЛЕЙ.
-- L107 `read_cache(path=None, sig=None)` — Кэш реплея: (пара, символ, момент) → запись позиции.
-- L140 `write_cache(cache, path=None, sig=None)` — Кэш пишется ЦЕЛИКОМ и атомарно: дозапись оставила бы в файле записи двух подписей разом, а различить их потом…
-- L154 `needs_replay(cache, legs, pairs)` — Какие решения обязан пересчитать этот прогон.
-- L184 `_key(r)` — Ключ решения: имя плюс секунда входа. Ими и дедуплицируется.
-- L189 `_cell(ruler, dep)` — Ключ книги: линейка и депозит. Одно решение живёт в обеих книгах, и склеив их одним ключом, мы потеряли бы вт…
-- L195 `age_shorts(shorts, pk, launch=None, log=print, now=None)` — Короткие решения под фильтром возраста имени — правило СЧЁТА.
-- L251 `build_rows(by_ruler, now=None, log=print, keys=None)` — Решения, взятые каждой книгой, с деньгами в долларах.
-- L430 `append_journal(rows, path=None, log=print)` — Дописывает только НОВЫЕ решения. Запись write-ahead: строка, однажды попавшая в журнал, не переписывается — и…
-- L483 `dups(rows)` — Правило владельца числом: одно имя — одна позиция ОДНОВРЕМЕННО.
-- L522 `_dd(v, deposit)` — Просадка по дневному ряду — ОДНОЙ формулой на ВСЕ разрезы.
-- L542 `CONC_HEAD = '$ без лучшего имени | $ без 3 лучших д…` — Колонки концентрации — ОДНИМ местом на все три семейства. У длинных книг они стоят с 04.09, а у коротких и об…
-- L546 `conc_cells(st)` — Три клетки концентрации по статистике книги — в языке таблиц.
-- L565 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
-- L674 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
-- L719 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
-- L820 `_pct(x, d=2)`
-- L824 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
-- L859 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
-- L945 `report(s)`
-- L1303 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
-- L1337 `publish(name)`
-- L1343 `main()`
+- L60 `RULERS = {k: (v['rule'], v['param'], R.side_of(k…` — Линейки плеча объявлены В ПРАВИЛАХ, а не здесь: их читает и страница наблюдения, и вторая запись однажды разо…
+- L63 `cache_path()` — Путь кэша разрешается В МОМЕНТ ВЫЗОВА, а не на импорте.
+- L72 `cache_sig()` — Подпись настроек, ОТ КОТОРЫХ ЗАВИСИТ РЕПЛЕЙ.
+- L108 `read_cache(path=None, sig=None)` — Кэш реплея: (пара, символ, момент) → запись позиции.
+- L141 `write_cache(cache, path=None, sig=None)` — Кэш пишется ЦЕЛИКОМ и атомарно: дозапись оставила бы в файле записи двух подписей разом, а различить их потом…
+- L155 `needs_replay(cache, legs, pairs)` — Какие решения обязан пересчитать этот прогон.
+- L185 `_key(r)` — Ключ решения: имя плюс секунда входа. Ими и дедуплицируется.
+- L190 `_cell(ruler, dep)` — Ключ книги: линейка и депозит. Одно решение живёт в обеих книгах, и склеив их одним ключом, мы потеряли бы вт…
+- L196 `age_shorts(shorts, pk, launch=None, log=print, now=None)` — Короткие решения под фильтром возраста имени — правило СЧЁТА.
+- L252 `_MARKET = None`
+- L255 `market(root=None)` — Цены и волна рынка из часовых сводок — один разбор на прогон.
+- L267 `reset_market()`
+- L272 `guard_shorts(shorts, pk, log=print, now=None, mkt=None)` — Охрана рынком — правило ВЫХОДА короткой стороны (спека 14 §13).
+- L298 `build_rows(by_ruler, now=None, log=print, keys=None)` — Решения, взятые каждой книгой, с деньгами в долларах.
+- L477 `append_journal(rows, path=None, log=print)` — Дописывает только НОВЫЕ решения. Запись write-ahead: строка, однажды попавшая в журнал, не переписывается — и…
+- L530 `dups(rows)` — Правило владельца числом: одно имя — одна позиция ОДНОВРЕМЕННО.
+- L569 `_dd(v, deposit)` — Просадка по дневному ряду — ОДНОЙ формулой на ВСЕ разрезы.
+- L589 `CONC_HEAD = '$ без лучшего имени | $ без 3 лучших д…` — Колонки концентрации — ОДНИМ местом на все три семейства. У длинных книг они стоят с 04.09, а у коротких и об…
+- L593 `conc_cells(st)` — Три клетки концентрации по статистике книги — в языке таблиц.
+- L612 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
+- L721 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
+- L766 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
+- L867 `_pct(x, d=2)`
+- L871 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
+- L906 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
+- L992 `report(s)`
+- L1350 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
+- L1384 `publish(name)`
+- L1390 `main()`
 
-## research/dca_paper/run_short.py · 402 строк
+## research/dca_paper/run_short.py · 423 строк
 
 Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 
@@ -2102,18 +2102,18 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L69 `CACHE_DIR = os.path.join(HERE, 'cache')` — Кэш реплея лежит ВНЕ публикуемого каталога. `publish.sh` кладёт в историю весь `research/*/out`, и семимегаба…
 - L70 `CACHE = os.path.join(CACHE_DIR, 'recs-short.jso…`
 - L73 `cache_sig()` — Подпись настроек, от которых зависит исход позиции.
-- L94 `legs(arms=ARMS, limit=None, log=print, path=None)` — Короткие выборы `h24` ОБЕИХ рук: решение владельца «оставить обе».
-- L109 `needs_replay(cache, legs_)` — Какие решения считать заново: новых нет в кэше, открытые стареют.
-- L122 `read_cache(path=None, log=print)` — Кэш реплея семейства. Непригодный не чинится молча.
-- L136 `write_cache(cache, path=None)`
-- L143 `floor_groups()` — Линейки D10 по ПОЛУ капитуляции: {доля: [линейки]}.
-- L166 `replay(need, src=None, log=print, ckpt_hours=None)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
-- L216 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
-- L278 `_p(x, d=2)`
-- L282 `_u(x)`
-- L286 `report(s)`
-- L368 `publish(name)`
-- L373 `main(argv=None)`
+- L98 `legs(arms=ARMS, limit=None, log=print, path=None)` — Короткие выборы `h24` ОБЕИХ рук: решение владельца «оставить обе».
+- L113 `needs_replay(cache, legs_)` — Какие решения считать заново: новых нет в кэше, открытые стареют.
+- L126 `read_cache(path=None, log=print)` — Кэш реплея семейства. Непригодный не чинится молча.
+- L140 `write_cache(cache, path=None)`
+- L147 `floor_groups()` — Линейки D10 по ПОЛУ капитуляции: {доля: [линейки]}.
+- L170 `replay(need, src=None, log=print, ckpt_hours=None)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
+- L220 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
+- L286 `_p(x, d=2)`
+- L290 `_u(x)`
+- L294 `report(s)`
+- L389 `publish(name)`
+- L394 `main(argv=None)`
 
 ## research/dca_paper/short_age.py · 411 строк
 
@@ -2137,7 +2137,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L363 `publish(name)`
 - L368 `main(argv=None)`
 
-## research/dca_paper/short_grid.py · 188 строк
+## research/dca_paper/short_grid.py · 189 строк
 
 Общая машинерия замеров ОСИ на коротком листе `h24`.
 
@@ -2147,11 +2147,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L38 `replay(legs_, cells, src=None, log=print)` — Проход по барам на эти ячейки: бары символа читаются один раз.
 - L54 `pack(recs, key)` — Записи ячейки по книгам семейства — той же картой, что у прогона.
 - L60 `cell_stats(packed, ctx, launch, now=None, log=lambda *a: None, …` — Книги семейства на этих записях: деньги НЕТТО, состав исходов.
-- L106 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
-- L138 `_lock(path)` — Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
-- L159 `merge_and_write(s, name, axis, report_fn, log=print)` — Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
-- L173 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
-- L187 `stamp()`
+- L107 `merge_artifact(s, path, axis)` — Слить ячейки этого прогона с уже посчитанными.
+- L139 `_lock(path)` — Замок на артефакт оси: ячейки считаются РАЗНЫМИ прогонами.
+- L160 `merge_and_write(s, name, axis, report_fn, log=print)` — Слить ось с уже посчитанным и записать — ПОД ЗАМКОМ, одним шагом.
+- L174 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
+- L188 `stamp()`
 
 ## research/dca_paper/short_stop.py · 225 строк
 
@@ -2286,41 +2286,63 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L232 `CUT_UNKNOWN = 'причина не измерена'`
 - L235 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
 
-## research/dca_paper/tail_screen.py · 536 строк
+## research/dca_paper/tail_screen.py · 495 строк
 
 Портрет хвоста коротких книг: что общего у минусовых сделок.
 
 - L52 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L53 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L64 `ART = 'DCA-tail-screen'`
-- L65 `PERMS = 200`
-- L66 `HIGH_LEV = 15.0`
-- L67 `QUANT = 5`
-- L68 `TAIL_EXITS = ('пол', 'ликвидация')`
-- L69 `SUMMARY_DIR = os.path.join(ROOT, 'research', 's8_loop…`
-- L70 `HOUR = 3600.0`
-- L72 `RULERS = tuple(dict.fromkeys(S.BOOKS.values()))` — Линейки коротких книг: безопасная (пол 0.10) и оптимальная (пол 0.50).
-- L75 `FEATURES = (('spread_bp', 'спред, б.п.', 'стакан')…` — Признаки объявлены ДО просмотра — (ключ, подпись, откуда).
-- L114 `_f(x)`
-- L122 `class Hours` — Часовые сводки по имени с оглядкой назад — файл дня читается раз.
-  - L125 `Hours.__init__(self, root=SUMMARY_DIR)`
-  - L131 `Hours._load(self, sym, day)`
-  - L153 `Hours.row(self, sym, ts)` — Сводка часа, в который попадает момент `ts`.
-  - L163 `Hours.back(self, sym, ts, n)` — Сводки n предыдущих часов, старые сначала; пропуски — None.
-- L168 `_med(xs)`
-- L173 `features_of(rec, leg, hours)` — Портрет ОДНОГО решения — признаки момента входа и суток до него.
-- L238 `is_tail(rec)`
-- L242 `quintile_spread(x, y, q=QUANT, seed=11)` — Доля хвоста в верхнем квинтиле признака минус в нижнем.
-- L263 `perm_share(x, y, spread, perms=PERMS, seed=7)` — Доля перестановок меток, давших разрыв не меньше наблюдаемого.
-- L277 `screen(rows, perms=PERMS)` — Таблица скрина по признакам: разрыв квинтилей и его нуль.
-- L313 `portrait(rows, k=20)` — Худшие сделки окна и ранг каждого их признака среди всех сделок.
-- L351 `run(perms=PERMS, log=print, summary_dir=None, mem_limit=None)`
-- L390 `_p(x, d=1)`
-- L394 `_v(x)`
-- L405 `_table(rows, perms)`
-- L437 `report(s)`
-- L513 `publish(name)`
-- L519 `main(argv=None)`
+- L65 `ART = 'DCA-tail-screen'`
+- L66 `PERMS = 200`
+- L67 `HIGH_LEV = 15.0`
+- L68 `QUANT = 5`
+- L69 `TAIL_EXITS = ('пол', 'ликвидация')`
+- L70 `SUMMARY_DIR = WV.SUMMARY_DIR`
+- L71 `HOUR = 3600.0`
+- L73 `RULERS = tuple(dict.fromkeys(S.BOOKS.values()))` — Линейки коротких книг: безопасная (пол 0.10) и оптимальная (пол 0.50).
+- L76 `FEATURES = (('spread_bp', 'спред, б.п.', 'стакан')…` — Признаки объявлены ДО просмотра — (ключ, подпись, откуда).
+- L115 `_f(x)`
+- L127 `_med(xs)`
+- L132 `features_of(rec, leg, hours)` — Портрет ОДНОГО решения — признаки момента входа и суток до него.
+- L197 `is_tail(rec)`
+- L201 `quintile_spread(x, y, q=QUANT, seed=11)` — Доля хвоста в верхнем квинтиле признака минус в нижнем.
+- L222 `perm_share(x, y, spread, perms=PERMS, seed=7)` — Доля перестановок меток, давших разрыв не меньше наблюдаемого.
+- L236 `screen(rows, perms=PERMS)` — Таблица скрина по признакам: разрыв квинтилей и его нуль.
+- L272 `portrait(rows, k=20)` — Худшие сделки окна и ранг каждого их признака среди всех сделок.
+- L310 `run(perms=PERMS, log=print, summary_dir=None, mem_limit=None)`
+- L349 `_p(x, d=1)`
+- L353 `_v(x)`
+- L364 `_table(rows, perms)`
+- L396 `report(s)`
+- L472 `publish(name)`
+- L478 `main(argv=None)`
+
+## research/dca_paper/wave.py · 246 строк
+
+Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
+
+- L28 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L29 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L33 `SUMMARY_DIR = os.path.join(ROOT, 'research', 's8_loop…`
+- L34 `HOUR = 3600.0`
+- L35 `PROXY = SWV.PROXY`
+- L36 `MIN_PROXY = SWV.MIN_PROXY`
+- L37 `GUARD_EXIT = 'рынок'`
+- L40 `class Hours` — Часовые сводки по имени с оглядкой назад — файл дня читается раз.
+  - L43 `Hours.__init__(self, root=SUMMARY_DIR)`
+  - L49 `Hours._load(self, sym, day)`
+  - L71 `Hours.row(self, sym, ts)` — Сводка часа, в который попадает момент `ts`.
+  - L81 `Hours.back(self, sym, ts, n)` — Сводки n предыдущих часов, старые сначала; пропуски — None.
+- L86 `class Market` — Цены из часовых сводок: ход имени, волна прокси-имён, β до входа, час срабатывания охраны.
+  - L90 `Market.__init__(self, hours=None, proxies=PROXY, min_proxy=MIN_PROXY)`
+  - L97 `Market.px(self, sym, ts)`
+  - L105 `Market.move(self, sym, t0, t1)`
+  - L109 `Market.wave(self, t0, t1)` — Средний ход прокси-имён за [t0, t1]; меньше MIN_PROXY цен — нет.
+  - L121 `Market.beta_pre(self, sym, at, n=72, min_n=48)` — β и ρ имени к волне по часовым доходностям ДО входа.
+  - L142 `Market.k_star(self, at, pct, kmax)` — Первый час k ≤ kmax, к концу которого волна с входа ≥ pct %.
+- L164 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
+- L193 `guard_record(rec, k, why=GUARD_EXIT)` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
+- L214 `apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT)` — Охрана рынком над записями ОДНОЙ книги.
 
 ## research/dca_paper/wave_guard.py · 488 строк
 

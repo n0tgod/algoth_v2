@@ -270,7 +270,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
     # Справочник читается ОДИН раз на прогон: фильтр возраста спрашивает
     # его на каждое короткое решение всех трёх книг.
     launch = IR.launches() if launch is None else launch
-    gates, ages = {}, {}
+    gates, ages, guards = {}, {}, {}
     for pk in keys:
         lk, sk = R.parts_of(pk)
         mine = [r for r in packed[pk] if (r.get("book") or pk) == sk]
@@ -279,6 +279,8 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
         kept, why_age = RP.age_shorts(kept, pk, launch=launch,
                                       log=log, now=now)
         ages[pk] = why_age
+        # охрана рынком — правило ВЫХОДА короткой стороны (спека 14 §13)
+        kept, guards[pk] = RP.guard_shorts(kept, pk, log=log, now=now)
         packed[pk] = [r for r in packed[pk]
                       if (r.get("book") or pk) == lk] + kept
     rows, cells, one, live = RP.build_rows(packed, now=now, keys=keys, log=log)
@@ -327,6 +329,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
                  sk: [r for r in srows if R.ruler_of(r) == sk]}, dep)
     s.update({"family": "pair", "hedge": True, "cells": cells,
               "separate_costs": sep_costs, "gates": gates, "ages": ages,
+              "guards": guards,
               "one_name": one, "parts": {k: R.parts_of(k) for k in keys},
               "secs": round(time.time() - t0, 1),
               "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
@@ -388,6 +391,17 @@ def report(s):
                  f"{a.get('моложе порога', 0)} | "
                  f"{a.get('возраст неизвестен', 0)} | "
                  + ("—" if fresh is None else f"{fresh:g}") + " |")
+    L += ["", "**Охрана рынком у короткой стороны** (правило 2026-09-13, спека 14 "
+          "§13): короткая позиция закрывается по закрытию часа, когда средний "
+          "ход крупных имён рынка с момента входа ≥ порога; исход «рынок».", "",
+          "| книга | порог | коротких позиций | закрыто рынком | из них открытых | "
+          "часов без волны |", "|---|--:|--:|--:|--:|--:|"]
+    for pk in (s.get("rulers") or R.PAIR_ORDER):
+        g = (s.get("guards") or {}).get(pk) or {}
+        L.append(f"| {R.ruler_title(pk)} | "
+                 + (f"≥ {g['pct']:g} %" if g.get("guard") else "нет")
+                 + f" | {g.get('offered', 0)} | {g.get('closed_by_market', 0)} "
+                 f"| {g.get('open_closed', 0)} | {g.get('hours_no_wave', 0)} |")
     L += ["",
          "**Доля билета короткой стороны** (решение владельца 2026-09-07 "
          "по замеру `short_why`, объявлено ДО прогона): "

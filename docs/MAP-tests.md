@@ -1071,6 +1071,22 @@
 - L66 `test_an_extra_point_of_ours_breaks_the_match()`
 - L77 `test_venue_silence_is_a_reason_not_a_match()`
 
+## research/dca_paper/test_guard.py · 153 строк
+
+Проверки охраны рынком — правила выхода коротких книг (спека 14 §13).
+
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L26 `H = 3600.0`
+- L27 `AT = 1789002000.0`
+- L30 `class FakeMarket` — Волна по номеру часа от входа — без сводок; логика k_star настоящая.
+  - L33 `FakeMarket.__init__(self, waves)`
+  - L37 `FakeMarket.wave(self, t0, t1)`
+- L45 `_rec(marks, state='closed', sym='AAAUSDT', exit='срок', lev=20.…`
+- L52 `test_guard_closes_strictly_before_the_exit_and_only_in_lived_ho…`
+- L83 `test_rule_is_declared_for_short_books_with_versions_and_page_te…`
+- L106 `test_guard_shorts_reads_the_summaries_end_to_end()`
+- L138 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
+
 ## research/dca_paper/test_names.py · 227 строк
 
 Проверки замера соответствия имён режимов.

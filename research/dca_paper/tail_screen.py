@@ -60,13 +60,14 @@ import rules as R                                             # noqa: E402
 import run_short as S                                         # noqa: E402
 import short_grid as G                                        # noqa: E402
 import arm_book as AB                                         # noqa: E402
+import wave as WV                                             # noqa: E402
 
 ART = "DCA-tail-screen"
 PERMS = 200                       # объявлено до прогона
 HIGH_LEV = 15.0                   # полоса, где живёт хвост
 QUANT = 5                         # квинтили признака
 TAIL_EXITS = ("пол", "ликвидация")
-SUMMARY_DIR = os.path.join(ROOT, "research", "s8_loop", "out", "summary")
+SUMMARY_DIR = WV.SUMMARY_DIR
 HOUR = 3600.0
 # Линейки коротких книг: безопасная (пол 0.10) и оптимальная (пол 0.50).
 RULERS = tuple(dict.fromkeys(S.BOOKS.values()))
@@ -119,50 +120,8 @@ def _f(x):
     return v if math.isfinite(v) else None
 
 
-class Hours:
-    """Часовые сводки по имени с оглядкой назад — файл дня читается раз."""
-
-    def __init__(self, root=SUMMARY_DIR):
-        self.root = root
-        self._day = {}
-        self.miss = 0
-        self.hit = 0
-
-    def _load(self, sym, day):
-        key = (sym, day)
-        if key in self._day:
-            return self._day[key]
-        rows = {}
-        try:
-            with open(os.path.join(self.root, sym, day + ".jsonl"),
-                      encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        r = json.loads(line)
-                    except ValueError:
-                        continue
-                    if r.get("hour"):
-                        rows[r["hour"]] = r
-        except OSError:
-            rows = {}
-        if len(self._day) > 6000:
-            self._day.clear()
-        self._day[key] = rows
-        return rows
-
-    def row(self, sym, ts):
-        """Сводка часа, в который попадает момент `ts`."""
-        hour = time.strftime("%Y-%m-%d-%H", time.gmtime(float(ts)))
-        r = self._load(sym, hour[:10]).get(hour)
-        if r is None:
-            self.miss += 1
-        else:
-            self.hit += 1
-        return r
-
-    def back(self, sym, ts, n):
-        """Сводки n предыдущих часов, старые сначала; пропуски — None."""
-        return [self.row(sym, float(ts) - k * HOUR) for k in range(n, 0, -1)]
+# Чтение часовых сводок живёт в библиотеке волны — одно на книги и замеры.
+Hours = WV.Hours
 
 
 def _med(xs):

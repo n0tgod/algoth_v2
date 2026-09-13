@@ -46,6 +46,7 @@ sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 sys.path.insert(0, os.path.join(ROOT, "research", "s8_loop"))
 sys.path.insert(0, os.path.join(ROOT, "research", "a1_universe"))
 import rules as R                                             # noqa: E402
+import wave as WV                                             # noqa: E402
 import instruments_refresh as IR                              # noqa: E402
 import run_d6 as D6                                           # noqa: E402
 import tail as TL                                             # noqa: E402
@@ -246,6 +247,52 @@ def age_shorts(shorts, pk, launch=None, log=print, now=None):
         f"{len(shorts)} (моложе порога {young}, возраст неизвестен "
         f"{unknown})")
     return keep, got
+
+
+_MARKET = None
+
+
+def market(root=None):
+    """Цены и волна рынка из часовых сводок — один разбор на прогон.
+
+    Сводки читаются лениво и кэшируются по дням; замеры с сотнями зёрен
+    иначе перечитывали бы одни и те же файлы на каждое зерно.
+    """
+    global _MARKET
+    if _MARKET is None or (root is not None and _MARKET.h.root != root):
+        _MARKET = WV.Market(WV.Hours(root=root or WV.SUMMARY_DIR))
+    return _MARKET
+
+
+def reset_market():
+    global _MARKET
+    _MARKET = None
+
+
+def guard_shorts(shorts, pk, log=print, now=None, mkt=None):
+    """Охрана рынком — правило ВЫХОДА короткой стороны (спека 14 §13).
+
+    Как и возраст, применяется одной функцией для общего счёта и для
+    отдельных коротких книг: порог берётся картой `rules.WAVE_GUARD_PCT`
+    через `rules.wave_guard_of`. Исход — отметка ядра за час триггера;
+    кэш реплея при этом хранит исход БЕЗ охраны (равенство отметки
+    усечению доказано, `wave_guard`), поэтому подпись кэша не меняется.
+
+    Час без волны (сводки нет, имён с ценой меньше пяти) триггером не
+    бывает и считается отдельным числом: «не измерено» ≠ «рынок не рос».
+    """
+    pct = R.wave_guard_of(pk)
+    if not pct:
+        return list(shorts), {"guard": False, "offered": len(shorts)}
+    mkt = mkt if mkt is not None else market()
+    out, st = WV.apply_guard(shorts, pct, mkt, kmax=R.H24_HOLD_H - 1,
+                             why=R.GUARD_EXIT)
+    st.update({"guard": True, "pct": float(pct)})
+    log(f"{pk}: охрана рынком ≥ {pct:g} % закрыла {st['closed_by_market']} из "
+        f"{len(shorts)} позиций (из них открытых {st['open_closed']}); "
+        f"часов без волны {st['hours_no_wave']}, записей без отметок "
+        f"{st['no_marks']}")
+    return out, st
 
 
 def build_rows(by_ruler, now=None, log=print, keys=None):
