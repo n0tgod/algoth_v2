@@ -47,6 +47,10 @@ def test_path_from_core_marks_with_gaps():
     assert abs(p["cum"][4] + 0.70) < 1e-12 and abs(p["final"] + 0.70) < 1e-12
     assert p["peak"] == 0.10
     assert P.path_of(_rec(marks=[])) is None
+    # первый бар только на третьем часе: до него позиция стоит по входу (0), не None
+    p2 = P.path_of(_rec(marks=[(AT + 2 * H, -0.4), (AT + 3 * H, -0.1)]))
+    assert p2["cum"][1] == 0.0 and p2["cum"][2] == 0.0 and p2["lead_gap"] == 2, p2
+    assert p2["K"] == 4 and abs(p2["final"] + 0.5) < 1e-12 and p2["peak"] == 0.0
     print("ok  путь: отметки ядра → pnl по часам, дыра наследует прошлую "
           f"отметку, пик {p['peak']:+.2f}, исход {p['final']:+.2f}")
 

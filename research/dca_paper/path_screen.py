@@ -105,12 +105,18 @@ def path_of(rec):
         k = max(1, int(round((float(hr) - at) / HOUR)) + 1)
         raw[k] = cum
     K = max(raw)
-    out, last = {}, None
+    # до первого бара позиция стоит по цене входа — pnl 0, как у самого
+    # ядра (у тонкой ленты первый час бывает без единого бара)
+    out, last, lead = {}, 0.0, 0
+    first = min(raw)
     for k in range(1, K + 1):
         if k in raw:
             last = raw[k]
+        elif k < first:
+            lead += 1
         out[k] = last
-    return {"cum": out, "K": K, "peak": max(out.values()), "final": out[K]}
+    return {"cum": out, "K": K, "peak": max(out.values()), "final": out[K],
+            "lead_gap": lead}
 
 
 class Market:
@@ -479,19 +485,21 @@ def run(seeds=SEEDS, perms=PERMS, log=print, summary_dir=None, mem_limit=None,
     mkt = Market(hours)
     closed = {key: r for key, r in cache.items()
               if key[0] in T.RULERS and r.get("state", "closed") == "closed"}
-    views, no_marks, mismatch = {}, 0, 0
+    views, no_marks, mismatch, lead = {}, 0, 0, 0
     for i, (key, r) in enumerate(sorted(closed.items(), key=lambda kv: kv[0][2])):
         v = view_of(r, mkt)
         if v["path"] is None:
             no_marks += 1
         elif abs(v["path"]["final"] - float(r["pnl"])) > 1e-6:
             mismatch += 1
+        lead += 1 if (v["path"] and v["path"]["lead_gap"]) else 0
         views[key] = v
         if i and i % 1000 == 0:
             log(f"дорога: {i} сделок из {len(closed)}, {time.time() - t0:.0f} с")
     n_beta = sum(1 for v in views.values() if v["beta"] is not None)
     log(f"сделок {len(views)}, без отметок {no_marks}, отметка ≠ исходу "
-        f"{mismatch}, β измерена у {n_beta}; волна не собралась "
+        f"{mismatch}, первый час без бара у {lead}, β измерена у {n_beta}; "
+        "волна не собралась "
         f"{mkt.wave_none} раз; сводок есть/нет {hours.hit}/{hours.miss}")
     rulers = []
     for rk in T.RULERS:
@@ -511,7 +519,7 @@ def run(seeds=SEEDS, perms=PERMS, log=print, summary_dir=None, mem_limit=None,
             "peaks": list(PEAKS), "deep": DEEP, "beta_h": BETA_H,
             "proxies": len(PROXY), "books": BOOK_KEYS,
             "diag": {"n": len(views), "no_marks": no_marks,
-                     "mismatch": mismatch, "beta": n_beta,
+                     "mismatch": mismatch, "lead_gap": lead, "beta": n_beta,
                      "wave_none": mkt.wave_none,
                      "hours": {"есть сводка": hours.hit,
                                "нет сводки": hours.miss}},
@@ -631,6 +639,8 @@ def report(s):
     dg = s.get("diag") or {}
     L += [f"Сделок {dg.get('n')}, без отметок ядра {dg.get('no_marks')}, "
           f"последняя отметка ≠ исходу у {dg.get('mismatch')} (обязано быть 0), "
+          f"первый час после входа без бара у {dg.get('lead_gap')} (там pnl 0 до "
+          "первой отметки), "
           f"β к волне измерена у {dg.get('beta')} (нужно ≥ {BETA_MIN} часов из "
           f"{s.get('beta_h')}); волна — средний ход {s.get('proxies')} прокси-имён, "
           f"не собралась {dg.get('wave_none')} раз; сводок стакана есть/нет: "

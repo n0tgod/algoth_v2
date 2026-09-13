@@ -1256,7 +1256,7 @@
 - L2736 `CONTROLS = [('хвост не доезжает до ядра', _control…`
 - L2787 `main()`
 
-## research/dca_paper/test_path_screen.py · 240 строк
+## research/dca_paper/test_path_screen.py · 244 строк
 
 Проверки замера «дорога сделки» коротких книг.
 
@@ -1265,11 +1265,11 @@
 - L26 `H = 3600.0`
 - L29 `_rec(sym='AAAUSDT', at=AT, marks=None, pnl=None, lev=20.0, exit…`
 - L41 `test_path_from_core_marks_with_gaps()`
-- L54 `test_wave_and_beta_recover_the_planted_link()`
-- L83 `test_axes_fire_strictly_before_the_real_exit_and_records_stay_c…`
-- L115 `test_control_picks_trades_open_at_the_assigned_hour_without_rep…`
-- L159 `test_anatomy_calibration_planted_separation_found_noise_silent()`
-- L188 `test_report_names_the_hour_caveat_the_control_and_prints_no_non…`
+- L58 `test_wave_and_beta_recover_the_planted_link()`
+- L87 `test_axes_fire_strictly_before_the_real_exit_and_records_stay_c…`
+- L119 `test_control_picks_trades_open_at_the_assigned_hour_without_rep…`
+- L163 `test_anatomy_calibration_planted_separation_found_noise_silent()`
+- L192 `test_report_names_the_hour_caveat_the_control_and_prints_no_non…`
 
 ## research/dca_paper/test_short.py · 355 строк
 
