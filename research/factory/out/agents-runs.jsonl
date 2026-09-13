@@ -302,3 +302,7 @@
 {"at": 1789198090.691, "role": "build", "status": "ok", "started": 1789195201.0, "ended": 1789198090.691, "dry": false, "note": "модель opus, усилие xhigh"}
 {"at": 1789198201.437, "role": "task", "status": "start", "started": 1789198201.434, "ended": 1789198201.437, "dry": false, "pid": 2643747}
 {"at": 1789198201.698, "role": "task", "status": "ok", "started": 1789198201.434, "ended": 1789198201.698, "dry": false, "note": "код возврата 0"}
+{"at": 1789264802.325, "role": "scout", "status": "start", "started": 1789264802.0, "ended": 1789264802.325, "dry": false, "pid": 2796713}
+{"at": 1789264814.996, "role": "scout", "status": "fail", "started": 1789264802.0, "ended": 1789264814.996, "dry": false, "note": "модель claude-fable-5-1, код 1: Failed to refresh OAuth token: another Claude Code process is refreshing it or exited mid-refresh. This is usually transient; retry in a minute, and if it persists close other Claude Code processes or sign in again "}
+{"at": 1789265102.036, "role": "scout", "status": "start", "started": 1789265102.0, "ended": 1789265102.036, "dry": false, "pid": 2797506}
+{"at": 1789265683.187, "role": "scout", "status": "ok", "started": 1789265102.0, "ended": 1789265683.187, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
