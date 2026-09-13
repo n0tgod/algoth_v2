@@ -1,0 +1,12 @@
+{
+ "built": true,
+ "module": "research/mech_a47008e1/guard_sister.py",
+ "tests": "research/mech_a47008e1/test_guard_sister.py",
+ "controls": [
+  {"file": "research/mech_a47008e1/guard_sister.py",
+   "old": "    d = float(days) * 86400.0",
+   "new": "    d = 0.0",
+   "expect": "нуль_сдвига_волны"}
+ ],
+ "notes": "проверка ОДНОЙ подделки, на которую не хватило места в списке из 24: сдвиг нуля в ноль обязан ронять проверку нуля"
+}
