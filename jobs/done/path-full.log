@@ -221,3 +221,18 @@ optimal_s: сделок 3300, хвостовых 625
 - Ось, чья Σ долей маржи не лучше случайных выходов в те же часы, не есть правило: она просто укорачивает сделки.
 - Ось с выигрышем по Σ маржи и проигрышем по итогу книги режет мотор: спасённые хвосты дешевле срезанных победителей.
 - Расчёт: 2026-09-13 00:33, 581.8 с.
+публикуется в ветку main:
+ jobs/done/path-full.done                    |   1 +
+ jobs/done/path-full.log                     | 223 ++++++++++++++++++++++++++++
+ jobs/done/path-smoke2.log                   |  11 ++
+ jobs/poke.log                               |   3 +
+ research/dca_paper/out/DCA-path-screen.json |   2 +-
+ research/dca_paper/out/DCA-path-screen.md   |  70 ++++-----
+ research/s8_loop/out/day_brake.json         |   2 +-
+ 7 files changed, 275 insertions(+), 37 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   360563ee..a3be2949  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-09-13T00:33:19Z, код 0
