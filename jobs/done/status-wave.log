@@ -1,0 +1,41 @@
+== задание status-wave ==
+строка: status
+начало: 2026-09-13T03:58:42Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G  121G   24G  84% /
+/dev/sdb        147G  107G   33G  77% /mnt/HC_Volume_106683528
+--- процессы ---
+669148 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --arm gbm --capital 300 --interval-sec 5 --clear-halt
+2804417 .venv/bin/python research/b1_book/collect.py --http 8765
+--- идущие прогоны ---
+2796723 bash -c              nice -n 10 .venv/bin/python research/s10_policy/tournament.py                 >> research/s10_policy/out/tournament.log 2>&1             && tools/publish.sh 'V1: суточный прогон турнира политик'                 >> research/s10_policy/out/tournament.log 2>&1
+2796726 .venv/bin/python research/s10_policy/tournament.py
+2806006 /root/algoth_v2/.venv/bin/python /root/algoth_v2/research/factory/mech_run.py judge 1789268102.149 -- /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+2806009 /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+2812901 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/wave-full.log research/dca_paper/wave_guard.py
+2812907 .venv/bin/python research/dca_paper/wave_guard.py
+--- статус сбора ---
+{"t": 1789271917.4, "uptime_sec": 4320.6, "messages": 13724116, "trades": 2952266, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 2492331, "snapshot_errors": 0, "last_snap_age_sec": 0.4, "snap_pass_sec": 0.394, "writes": {"book": 2492331, "trades": 2952265, "raw": 77964, "liq": 7356, "metrics": 10654}, "write_age_sec": {"book": 0.4, "trades": 0.3, "raw": 0.1, "liq": 29.1, "metrics": 44.5}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.1966, "ask": 0.1968, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0003826, "ask": 0.0003827, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1064, "ask": 0.1065, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.00991, "ask":
+--- живой исполнитель ---
+{
+  "at_ms": 1789271922231,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-09-13T03:58:42Z

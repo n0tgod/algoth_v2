@@ -150,3 +150,15 @@ h24/nn: часов 670, коротких выборов 2010, ног под кр
 - Расчёт: 2026-09-13 03:36, 159.0 с.
 
 конец: 2026-09-13T03:36:56Z, код 0
+публикуется в ветку main:
+ jobs/done/wave-smoke.done                  |   1 +
+ jobs/done/wave-smoke.log                   | 152 +++++++++++++++++++++++++++++
+ jobs/poke.log                              |   3 +
+ research/dca_paper/out/DCA-wave-guard.json |   1 +
+ research/dca_paper/out/DCA-wave-guard.md   | 122 +++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json        |   2 +-
+ 6 files changed, 280 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   4296bfa2..0f929e1b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
