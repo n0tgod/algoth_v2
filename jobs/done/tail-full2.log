@@ -297,3 +297,15 @@ optimal_s: сделок 3296, хвостовых 625 (19.0 %)
 - Признак, работающий на всех сделках и молчащий внутри полосы плеча ≥ 15×, есть переодетое плечо: хвост у него оттого, что пол ближе, а не оттого, что стакан что-то знал.
 - Веса модели видели эти часы; окно одно; хвостовых событий у оптимальной линейки больше, чем у безопасной, потому что её пол 0.50 ближе к входу — это свойство правила, а не рынка.
 
+публикуется в ветку main:
+ jobs/done/tail-full2.done                   |   1 +
+ jobs/done/tail-full2.log                    | 299 ++++++++++++++++++++++++++++
+ jobs/poke.log                               |   3 +
+ research/dca_paper/out/DCA-tail-screen.json |   2 +-
+ research/dca_paper/out/DCA-tail-screen.md   |  86 ++++----
+ 5 files changed, 348 insertions(+), 43 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   b65c9905..08e23179  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-13T00:02:01Z, код 0
