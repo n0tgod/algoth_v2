@@ -123,3 +123,54 @@ pair_aggr: охрана рынком ≥ 2 % закрыла 738 из 2741 поз
 - Общий счёт — ХЕДЖ-режим: шорт по имени, которое держит длинная сторона, разрешён. В одностороннем режиме биржи он срезал бы длинную позицию, и число совпадений выше есть цена режима.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/guard-pair.done                       |    1 +
+ jobs/done/guard-pair.log                        |  125 ++
+ jobs/done/guard-short.done                      |    1 +
+ jobs/done/guard-short.log                       |   13 +
+ jobs/poke.log                                   |    4 +
+ research/dca_paper/out/DCA-pair.json            |    2 +-
+ research/dca_paper/out/DCA-pair.md              |   74 +-
+ research/dca_paper/out/pair-2026-08-08.jsonl    |  270 +++
+ research/dca_paper/out/pair-2026-08-09.jsonl    |  440 ++++
+ research/dca_paper/out/pair-2026-08-10.jsonl    |  173 ++
+ research/dca_paper/out/pair-2026-08-11.jsonl    |  260 +++
+ research/dca_paper/out/pair-2026-08-12.jsonl    |  222 +++
+ research/dca_paper/out/pair-2026-08-13.jsonl    |  597 ++++++
+ research/dca_paper/out/pair-2026-08-14.jsonl    |  265 +++
+ research/dca_paper/out/pair-2026-08-15.jsonl    |  380 ++++
+ research/dca_paper/out/pair-2026-08-16.jsonl    |  302 +++
+ research/dca_paper/out/pair-2026-08-17.jsonl    |  246 +++
+ research/dca_paper/out/pair-2026-08-18.jsonl    |  146 ++
+ research/dca_paper/out/pair-2026-08-19.jsonl    | 1239 ++++++++++++
+ research/dca_paper/out/pair-2026-08-20.01.jsonl | 2007 +++++++++++++++++++
+ research/dca_paper/out/pair-2026-08-21.01.jsonl | 2432 +++++++++++++++++++++++
+ research/dca_paper/out/pair-2026-08-22.jsonl    | 1428 +++++++++++++
+ research/dca_paper/out/pair-2026-08-23.jsonl    |  214 ++
+ research/dca_paper/out/pair-2026-08-24.jsonl    |  339 ++++
+ research/dca_paper/out/pair-2026-08-25.jsonl    |  479 +++++
+ research/dca_paper/out/pair-2026-08-26.jsonl    |  208 ++
+ research/dca_paper/out/pair-2026-08-27.jsonl    |  224 +++
+ research/dca_paper/out/pair-2026-08-28.jsonl    |  118 ++
+ research/dca_paper/out/pair-2026-08-29.jsonl    |  132 ++
+ research/dca_paper/out/pair-2026-08-30.jsonl    |   84 +
+ research/dca_paper/out/pair-2026-08-31.jsonl    |   87 +
+ research/dca_paper/out/pair-2026-09-01.jsonl    |   72 +
+ research/dca_paper/out/pair-2026-09-02.jsonl    |  159 ++
+ research/dca_paper/out/pair-2026-09-03.jsonl    |  304 +++
+ research/dca_paper/out/pair-2026-09-04.jsonl    |  123 ++
+ research/dca_paper/out/pair-2026-09-05.jsonl    |  152 ++
+ research/dca_paper/out/pair-2026-09-06.jsonl    |  170 ++
+ research/dca_paper/out/pair-2026-09-07.jsonl    |  120 ++
+ research/dca_paper/out/pair-2026-09-08.jsonl    |  147 ++
+ research/dca_paper/out/pair-2026-09-09.jsonl    |  138 ++
+ research/dca_paper/out/pair-2026-09-10.jsonl    |  101 +
+ research/dca_paper/out/pair-2026-09-11.jsonl    |  191 ++
+ research/dca_paper/out/pair-2026-09-12.jsonl    |   57 +
+ research/dca_paper/out/pair-2026-09-13.jsonl    |   39 +
+ 44 files changed, 14251 insertions(+), 34 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   bc296d79..2b17422a  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-13T08:04:20Z, код 0
