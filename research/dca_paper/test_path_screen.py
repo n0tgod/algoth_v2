@@ -219,7 +219,7 @@ def test_report_names_the_hour_caveat_the_control_and_prints_no_none():
               "beat": {"safe_h": {"final": 0.5, "ratio": None}, "sum": 0.0}},
              {"val": 0.5, "delta": {"sum": 0.0, "n": 0, "tails": 0, "cut_worse": 0}}]}],
          "k_list": [4, 18], "peaks": [0.1, 0.25, 0.5], "deep": 0.25, "beta_h": 72,
-         "proxies": 20, "diag": {"n": 100, "no_marks": 0, "mismatch": 0, "beta": 95,
+         "proxies": 20, "diag": {"n": 100, "no_marks": 0, "mismatch": 0, "lead_gap": 2, "beta": 95,
                                  "wave_none": 3, "hours": {"есть сводка": 1, "нет сводки": 0}},
          "computed_at": "2026-09-13 01:00", "secs": 12.0}
     txt = P.report(s)
