@@ -3,3 +3,13 @@
 начало: 2026-09-13T04:05:18Z
 запускаю: .venv/bin/python research/dca_paper/wave_guard.py --seeds 1 --sample 150 --art DCA-wave-guard-faith --no-publish
 конец: 2026-09-13T04:27:36Z, код 0
+публикуется в ветку main:
+ jobs/done/wave-faith.log                         |   1 +
+ research/dca_paper/out/DCA-wave-guard-faith.json |   1 +
+ research/dca_paper/out/DCA-wave-guard-faith.md   | 131 +++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json              |   2 +-
+ 4 files changed, 134 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   3ff1cee9..a4d249d7  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
