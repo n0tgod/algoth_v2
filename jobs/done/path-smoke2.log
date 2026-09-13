@@ -184,3 +184,14 @@ optimal_s: сделок 3300, хвостовых 625
 - Расчёт: 2026-09-13 00:22, 26.3 с.
 
 конец: 2026-09-13T00:22:51Z, код 0
+публикуется в ветку main:
+ jobs/done/path-smoke2.done                  |   1 +
+ jobs/done/path-smoke2.log                   | 186 ++++++++++++++++++++++++++++
+ jobs/poke.log                               |   3 +
+ research/dca_paper/out/DCA-path-screen.json |   1 +
+ research/dca_paper/out/DCA-path-screen.md   | 158 +++++++++++++++++++++++
+ 5 files changed, 349 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   2102a6b0..30dfd5c3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
