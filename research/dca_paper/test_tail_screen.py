@@ -114,12 +114,30 @@ def test_calibration_pair_finds_the_planted_signal_and_stays_silent_on_noise():
     assert p["perm"] == 0.0, p["perm"]
     assert q["spread"] is not None and abs(q["spread"]) < 0.08, q["spread"]
     assert q["perm"] > 0.2, q["perm"]
-    # признаки без значений — «сделок с признаком мало», а не ноль
-    assert got["odd"].get("why"), got["odd"]
+    # поле, которого нет ни у одной сделки, — «лист не несёт», а не ноль
+    assert got["odd"].get("why") == "лист этих полей не несёт", got["odd"]
+    assert got["spread_bp"]["distinct"] == n, got["spread_bp"]["distinct"]
     print(f"ok  калибровочная пара: подсаженный признак найден (разрыв "
           f"{100 * p['spread']:+.0f} п.п., перестановок не меньше 0 %), шум "
           f"молчит (разрыв {100 * q['spread']:+.0f} п.п., перестановок "
           f"{100 * q['perm']:.0f} %)")
+
+
+def test_ties_are_broken_at_random_not_by_record_order():
+    """Плечо в полосе ≥ 15× почти у всех 25×: устойчивая сортировка
+    раскладывала бы равные по порядку записи (по времени), и квинтиль
+    мерил бы дату. Хвост, собранный в НАЧАЛЕ записи, при равном признаке
+    разрыва давать не должен; признак помечается в отчёте."""
+    n = 500
+    rows = [{"rec": {"pnl": -1.0 if i < 100 else 0.1, "at": AT, "sym": "X"},
+             "tail": i < 100, "f": {"lev": 25.0}} for i in range(n)]
+    d = {x["key"]: x for x in T.screen(rows, perms=20)}["lev"]
+    assert d["distinct"] == 1, d["distinct"]
+    assert d["spread"] is not None and abs(d["spread"]) < 0.15, d["spread"]
+    txt = "\n".join(T._table([d], 20))
+    assert "плечо †" in txt and "квинтили условны" in txt, txt
+    print(f"ok  связи: при равном плече хвост в начале записи даёт разрыв "
+          f"{100 * d['spread']:+.0f} п.п. (не −100), признак помечен †")
 
 
 def test_portrait_ranks_the_worst_against_everyone():
@@ -173,7 +191,8 @@ def test_report_names_the_screen_the_null_and_the_false_positive_budget():
 if __name__ == "__main__":
     for t in (test_features_come_from_the_entry_hour_and_the_day_before,
               test_calibration_pair_finds_the_planted_signal_and_stays_silent_on_noise,
+              test_ties_are_broken_at_random_not_by_record_order,
               test_portrait_ranks_the_worst_against_everyone,
               test_report_names_the_screen_the_null_and_the_false_positive_budget):
         t()
-    print("\nвсе 4 проверки прошли")
+    print("\nвсе 5 проверок прошли")

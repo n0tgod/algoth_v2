@@ -2232,7 +2232,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L232 `CUT_UNKNOWN = 'причина не измерена'`
 - L235 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
 
-## research/dca_paper/tail_screen.py · 516 строк
+## research/dca_paper/tail_screen.py · 536 строк
 
 Портрет хвоста коротких книг: что общего у минусовых сделок.
 
@@ -2256,17 +2256,17 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L168 `_med(xs)`
 - L173 `features_of(rec, leg, hours)` — Портрет ОДНОГО решения — признаки момента входа и суток до него.
 - L238 `is_tail(rec)`
-- L242 `quintile_spread(x, y, q=QUANT)` — Доля хвоста в верхнем квинтиле признака минус в нижнем.
-- L259 `perm_share(x, y, spread, perms=PERMS, seed=7)` — Доля перестановок меток, давших разрыв не меньше наблюдаемого.
-- L273 `screen(rows, perms=PERMS)` — Таблица скрина по признакам: разрыв квинтилей и его нуль.
-- L302 `portrait(rows, k=20)` — Худшие сделки окна и ранг каждого их признака среди всех сделок.
-- L340 `run(perms=PERMS, log=print, summary_dir=None, mem_limit=None)`
-- L379 `_p(x, d=1)`
-- L383 `_v(x)`
-- L394 `_table(rows, perms)`
-- L417 `report(s)`
-- L493 `publish(name)`
-- L499 `main(argv=None)`
+- L242 `quintile_spread(x, y, q=QUANT, seed=11)` — Доля хвоста в верхнем квинтиле признака минус в нижнем.
+- L263 `perm_share(x, y, spread, perms=PERMS, seed=7)` — Доля перестановок меток, давших разрыв не меньше наблюдаемого.
+- L277 `screen(rows, perms=PERMS)` — Таблица скрина по признакам: разрыв квинтилей и его нуль.
+- L313 `portrait(rows, k=20)` — Худшие сделки окна и ранг каждого их признака среди всех сделок.
+- L351 `run(perms=PERMS, log=print, summary_dir=None, mem_limit=None)`
+- L390 `_p(x, d=1)`
+- L394 `_v(x)`
+- L405 `_table(rows, perms)`
+- L437 `report(s)`
+- L513 `publish(name)`
+- L519 `main(argv=None)`
 
 ## research/f1_carry/carry.py · 169 строк
 

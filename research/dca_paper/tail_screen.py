@@ -81,7 +81,7 @@ FEATURES = (
     ("n_trades", "сделок за час", "лента"),
     ("imb", "перекос покупок к продажам, −1…+1", "лента"),
     ("vol_max_1s", "пик объёма за секунду", "лента"),
-    ("reach_bp", "досягаемость цены за час, б.п.", "лента"),
+    ("reach_bp", "охват записи стакана, б.п.", "стакан"),
     ("upd", "обновлений стакана в секунду", "стакан"),
     ("range_bp", "размах часа, б.п.", "цена"),
     ("fr", "ставка funding", "площадка"),
@@ -239,18 +239,22 @@ def is_tail(rec):
     return (rec.get("exit") or "") in TAIL_EXITS
 
 
-def quintile_spread(x, y, q=QUANT):
+def quintile_spread(x, y, q=QUANT, seed=11):
     """Доля хвоста в верхнем квинтиле признака минус в нижнем.
 
-    Квинтили по рангу с случайным разрывом связей не нужны: связи у
-    признаков стакана редки, а у часа суток квинтили заведомо грубы —
-    об этом сказано в отчёте, а не спрятано в формуле.
+    Связи рвутся СЛУЧАЙНО (зерно одно на скрин), а не порядком записи:
+    у плеча, часа суток и ликвидаций значения повторяются массово (у
+    плеча в полосе ≥ 15× почти все — 25×), и устойчивая сортировка
+    раскладывала бы равные по времени — квинтиль мерил бы дату входа, а
+    не признак. Порядок от `y` не зависит, поэтому перестановочный нуль
+    видит те же квинтили.
     """
     x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
     n = len(x)
     if n < 5 * q:
         return None, None, None
-    order = np.argsort(x, kind="stable")
+    jit = np.random.default_rng(seed).random(n)
+    order = np.lexsort((jit, x))
     bins = np.array_split(order, q)
     shares = [float(y[b].mean()) if len(b) else None for b in bins]
     return shares[-1] - shares[0], shares, n
@@ -279,15 +283,22 @@ def screen(rows, perms=PERMS):
         have = [(x, t) for x, t in xs if x is not None]
         n_miss = len(xs) - len(have)
         if len(have) < 5 * QUANT:
+            # причина словами: поле, которого лист не несёт вовсе (бета и
+            # прогноз в σ пишет только ситуационный лист), не то же, что
+            # редкое поле
             out.append({"key": key, "title": title, "src": src,
                         "n": len(have), "missing": n_miss,
-                        "why": "сделок с признаком мало"})
+                        "why": ("лист этих полей не несёт" if not have
+                                else "сделок с признаком мало")})
             continue
         x = np.array([h[0] for h in have])
         y = np.array([1.0 if h[1] else 0.0 for h in have])
         sp, shares, n = quintile_spread(x, y)
         out.append({"key": key, "title": title, "src": src, "n": n,
                     "missing": n_miss,
+                    # разных значений: меньше 2·q — квинтили условны,
+                    # признак помечается в отчёте
+                    "distinct": int(len(np.unique(x))),
                     "tail_share": float(y.mean()),
                     "med_tail": (float(np.median(x[y > 0])) if (y > 0).any()
                                  else None),
@@ -396,6 +407,7 @@ def _table(rows, perms):
          "медиана остальных | хвост в нижнем квинтиле | в верхнем | "
          "разрыв | доля перестановок не меньше |",
          "|---|---|--:|--:|--:|--:|--:|--:|--:|"]
+    ties = False
     for d in rows:
         if d.get("why"):
             L.append(f"| {d['title']} | {d['src']} | {d['n']} ({d['missing']}) "
@@ -407,10 +419,18 @@ def _table(rows, perms):
         sp = d.get("spread")
         sp_s = "—" if sp is None else f"{100.0 * sp:+.1f} п.п."
         pm_s = "—" if pm is None else f"{100.0 * pm:.1f} %"
-        L.append(f"| {mark}{d['title']}{mark} | {d['src']} | {d['n']} "
+        dist = d.get("distinct")
+        tie = dist is not None and dist < 2 * QUANT
+        ties = ties or tie
+        L.append(f"| {mark}{d['title']}{mark}{' †' if tie else ''} | "
+                 f"{d['src']} | {d['n']} "
                  f"({d['missing']}) | {_v(d.get('med_tail'))} | "
                  f"{_v(d.get('med_rest'))} | {_p(sh[0])} | {_p(sh[-1])} | "
                  f"{sp_s} | {pm_s} |")
+    if ties:
+        L += ["", f"† разных значений меньше {2 * QUANT}: связи рвутся "
+              "случайно, квинтили условны — читать по медианам хвоста и "
+              "остальных, а не по разрыву."]
     return L
 
 
