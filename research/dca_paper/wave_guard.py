@@ -177,7 +177,7 @@ def compare_ckpt(fresh, cache, ks=KS, tol=1e-9):
     """
     out = {"records": 0, "outcome_diff": 0, "points": 0, "max_diff": 0.0,
            "point_diff": 0, "none_where_open": 0, "value_where_closed": 0,
-           "no_ckpt": 0, "misaligned": 0, "lag": []}
+           "no_ckpt": 0, "misaligned": 0, "lag": [], "diffs": []}
     for key, f in fresh.items():
         r = cache.get(key)
         if r is None:
@@ -191,6 +191,14 @@ def compare_ckpt(fresh, cache, ks=KS, tol=1e-9):
         out["records"] += 1
         if abs(float(f["pnl"]) - float(r["pnl"])) > tol or f.get("exit") != r.get("exit"):
             out["outcome_diff"] += 1
+            # расхождение исхода — не равенство точек, а воспроизводимость
+            # кэша; называется поимённо, с признаком исхода по котировке
+            out["diffs"].append({
+                "key": list(key), "cache": {"pnl": float(r["pnl"]), "exit": r.get("exit"),
+                                            "tail": r.get("tail"),
+                                            "exit_ts": r.get("exit_ts")},
+                "fresh": {"pnl": float(f["pnl"]), "exit": f.get("exit"),
+                          "tail": f.get("tail"), "exit_ts": f.get("exit_ts")}})
         ck = f.get("ckpt")
         if not ck:
             out["no_ckpt"] += 1
@@ -358,8 +366,10 @@ def _faith_text(f):
         return ["Проверка равенства ядру не запускалась (`--sample 0`)."]
     if f.get("why"):
         return [f"Проверка равенства ядру: {f['why']}."]
-    ok = (f.get("outcome_diff") == 0 and f.get("point_diff") == 0
-          and f.get("none_where_open") == 0 and f.get("value_where_closed") == 0)
+    # равенство «отметка = усечение» судится по точкам; исход реплея против
+    # кэша — отдельный вопрос воспроизводимости, и он печатается отдельно
+    ok = (f.get("point_diff") == 0 and f.get("none_where_open") == 0
+          and f.get("value_where_closed") == 0 and (f.get("points") or 0) > 0)
     verdict = ("**равенство держится**" if ok
                else "**РАСХОЖДЕНИЕ — охрану по отметкам читать нельзя**")
     return [f"Реплей ядром {f.get('legs')} ног ({f.get('sample')} решений, "
@@ -372,7 +382,29 @@ def _faith_text(f):
             f"{f.get('value_where_closed')} раз; записей без точек {f.get('no_ckpt')}, "
             f"с входом не на границе часа {f.get('misaligned')}. "
             f"{verdict}.", "",
+            _diffs_text(f), "",
             _lag_text(f.get("lag") or {})]
+
+
+def _diffs_text(f):
+    ds = f.get("diffs") or []
+    if not ds:
+        return ("Исход сегодняшнего реплея равен исходу в кэше у всех сверенных "
+                "записей — кэш воспроизводим.")
+    L = [f"**Исход реплея разошёлся с кэшем у {len(ds)} записей** — это "
+         "воспроизводимость кэша, а не равенство точек; поимённо (исход в "
+         "кэше → в реплее; «котировка» — исход был посчитан по котировке "
+         "хвоста ленты, а не по принтам):", "",
+         "| запись | вход | в кэше | в реплее |", "|---|---|---|---|"]
+    for d in ds:
+        k = d["key"]
+        c, fr = d["cache"], d["fresh"]
+        at = time.strftime("%m-%d %H:%M", time.gmtime(float(k[2])))
+        L.append(f"| {k[0]} {k[1]} | {at} | {100 * c['pnl']:+.1f} % {c['exit']}"
+                 f"{' (котировка)' if c.get('tail') else ''} | "
+                 f"{100 * fr['pnl']:+.1f} % {fr['exit']}"
+                 f"{' (котировка)' if fr.get('tail') else ''} |")
+    return "\n".join(L)
 
 
 def _lag_text(lg):
@@ -441,11 +473,13 @@ def main(argv=None):
     ap.add_argument("--seeds", type=int, default=SEEDS)
     ap.add_argument("--sample", type=int, default=SAMPLE)
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--art", default=ART,
+                    help="имя артефакта (диагностический прогон не затирает основной)")
     a = ap.parse_args(argv)
     s = run(seeds=a.seeds, sample=a.sample, log=print)
     if s.get("error"):
         print(s["error"])
-    G.write(s, ART, report, log=print)
+    G.write(s, a.art, report, log=print)
     if not a.no_publish:
         publish("охрана рынком коротких книг: концентрация, депозиты, равенство ядру")
 

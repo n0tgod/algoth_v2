@@ -2322,7 +2322,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L513 `publish(name)`
 - L519 `main(argv=None)`
 
-## research/dca_paper/wave_guard.py · 454 строк
+## research/dca_paper/wave_guard.py · 488 строк
 
 Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
 
@@ -2348,20 +2348,21 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L114 `evaluate(cache, views, ctx, launch, seeds=SEEDS, now=None, log=…`
 - L154 `sample_keys(cache, n)` — Ровно n решений, равномерно по времени, из закрытых с отметками.
 - L167 `compare_ckpt(fresh, cache, ks=KS, tol=1e-09)` — Сверка реплея с контрольными точками против записей кэша.
-- L219 `lag_stats(lag)` — Цена задержки на один бар: медиана, среднее, края, доля ненулевых.
-- L231 `faithfulness(cache, legs_, sample=SAMPLE, log=print)` — Реплей выборки решений с контрольными точками и сверка с кэшем.
-- L246 `run(seeds=SEEDS, sample=SAMPLE, log=print, summary_dir=None, me…`
-- L282 `_pp(x, d=1)`
-- L286 `_p(x, d=0)`
-- L290 `_usd(x)`
-- L294 `_cell_table(s, y, cell)`
-- L323 `_deposits_table(s, cell)`
-- L338 `_days_table(cell, books)`
-- L356 `_faith_text(f)`
-- L378 `_lag_text(lg)`
-- L390 `report(s)`
-- L433 `publish(name)`
-- L439 `main(argv=None)`
+- L227 `lag_stats(lag)` — Цена задержки на один бар: медиана, среднее, края, доля ненулевых.
+- L239 `faithfulness(cache, legs_, sample=SAMPLE, log=print)` — Реплей выборки решений с контрольными точками и сверка с кэшем.
+- L254 `run(seeds=SEEDS, sample=SAMPLE, log=print, summary_dir=None, me…`
+- L290 `_pp(x, d=1)`
+- L294 `_p(x, d=0)`
+- L298 `_usd(x)`
+- L302 `_cell_table(s, y, cell)`
+- L331 `_deposits_table(s, cell)`
+- L346 `_days_table(cell, books)`
+- L364 `_faith_text(f)`
+- L389 `_diffs_text(f)`
+- L410 `_lag_text(lg)`
+- L422 `report(s)`
+- L465 `publish(name)`
+- L471 `main(argv=None)`
 
 ## research/f1_carry/carry.py · 169 строк
 

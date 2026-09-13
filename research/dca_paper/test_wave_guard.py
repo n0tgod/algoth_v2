@@ -82,7 +82,11 @@ def test_comparison_bites_on_a_poisoned_mark_and_a_changed_outcome():
     bad = W.compare_ckpt({key: dict(fresh, ckpt=poisoned)}, {key: rec})
     assert bad["point_diff"] == 1 and bad["max_diff"] > 0.009, bad
     bad2 = W.compare_ckpt({key: dict(fresh, pnl=-0.4)}, {key: rec})
-    assert bad2["outcome_diff"] == 1, bad2
+    assert bad2["outcome_diff"] == 1 and bad2["point_diff"] == 0, bad2
+    assert bad2["diffs"][0]["cache"]["pnl"] == -0.5 and bad2["diffs"][0]["fresh"]["pnl"] == -0.4
+    # расхождение исхода — не расхождение точек: вердикт равенства держится, запись названа
+    txt = "\n".join(W._faith_text(dict(bad2, lag=W.lag_stats(bad2["lag"]), sample=1, legs=1, secs=1.0)))
+    assert "**равенство держится**" in txt and "разошёлся с кэшем у 1" in txt and "-50.0 % срок" in txt, txt
     late = W.compare_ckpt({key: dict(fresh, ckpt=[c if c else (0, 0, 0.0) for c in ck])},
                           {key: rec})
     assert late["value_where_closed"] == len(W.KS) - 3, late
@@ -134,13 +138,14 @@ def test_report_names_the_verdict_and_prints_no_none():
          "seeds": 2, "dep": dep, "deps": [1000, dep, 100000], "books": W.BOOK_KEYS,
          "faith": {"records": 300, "outcome_diff": 0, "points": 4000, "point_diff": 0,
                    "max_diff": 0.0, "none_where_open": 0, "value_where_closed": 0,
-                   "no_ckpt": 0, "misaligned": 0, "sample": 150, "legs": 300, "secs": 120.0,
+                   "no_ckpt": 0, "misaligned": 0, "diffs": [], "sample": 150, "legs": 300, "secs": 120.0,
                    "lag": {"n": 4000, "median": -0.0004, "mean": -0.0006,
                            "p05": -0.02, "p95": 0.015, "nonzero": 0.9}},
          "n": 6593, "wave_none": 1, "proxies": 20, "computed_at": "2026-09-13 02:00",
          "secs": 400.0}
     txt = W.report(s)
     assert "**равенство держится**" in txt and "середина ОБЪЯВЛЕННОЙ оси" in txt, txt[:800]
+    assert "кэш воспроизводим" in txt
     assert "Задержка исполнения на один бар" in txt and "-0.040 % маржи" in txt, txt
     # «$ всего» −200 → +150; «без 3 лучших дней» при двух днях — 0 у обеих
     assert "| -200 $ → +150 $ | +0 $ → **+0 $** |" in txt, [l for l in txt.splitlines() if " $ | " in l][:3]

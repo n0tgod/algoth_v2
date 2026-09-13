@@ -1376,7 +1376,7 @@
 - L143 `test_portrait_ranks_the_worst_against_everyone()`
 - L161 `test_report_names_the_screen_the_null_and_the_false_positive_bu…`
 
-## research/dca_paper/test_wave_guard.py · 161 строк
+## research/dca_paper/test_wave_guard.py · 166 строк
 
 Проверки охраны рынком.
 
@@ -1385,8 +1385,8 @@
 - L24 `H = 3600.0`
 - L27 `test_checkpoints_reach_the_record_and_equal_the_hourly_marks()`
 - L60 `test_comparison_bites_on_a_poisoned_mark_and_a_changed_outcome()`
-- L93 `test_concentration_and_day_diff_come_from_the_cash_days()`
-- L115 `test_report_names_the_verdict_and_prints_no_none()`
+- L97 `test_concentration_and_day_diff_come_from_the_cash_days()`
+- L119 `test_report_names_the_verdict_and_prints_no_none()`
 
 ## research/f1_carry/test_carry.py · 216 строк
 
