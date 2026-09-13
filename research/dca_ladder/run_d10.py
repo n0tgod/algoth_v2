@@ -293,7 +293,7 @@ def take_for(g, tk):
 
 
 def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
-                 rich=False):
+                 rich=False, checkpoints=None):
     """Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
 
     Геометрия считается один раз на решение; между ячейками различаются
@@ -356,9 +356,13 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
         lev = leverage_for(lk, lev_f)
         w = D2.WEIGHTS[:len(rungs)]
         tr = take_for(g, tk)
+        # `checkpoints` — абсолютные метки времени: ядро отдаёт на каждой
+        # исход усечённой до неё симуляции (замер выхода по времени
+        # считается одним проходом, а не проходом на каждый час)
         r = L.simulate_dca(hold, rungs, w, 1.0, lev, look(1.0 * lev),
                            take_rule=tr, floor_frac=D2.FLOOR_FRAC,
-                           side="short", track=bool(rich))
+                           side="short", track=bool(rich),
+                           checkpoints=checkpoints)
         marks, prev = [], 0.0
         for (hr, _cash, pnl) in (r.get("track") or ()):
             marks.append((hr, pnl - prev))
@@ -373,6 +377,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
             "fwd": abs(float(g["fwd"])), "sym": g["sym"], "side": "short",
             "rr": g.get("rr"), "gates": sorted(gate_of(g)),
             "exit": r["exit"], "marks": marks,
+            "ckpt": (r.get("ckpt") if checkpoints else None),
             "end_ts": float(hold[-1][0]),
             "sched_end": float(g["at"]) + D2.HOLD_H * HOUR,
             "depth": int(r["depth"]), "n_rungs": len(rungs),
@@ -385,7 +390,7 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
 
 
 def collect(limit=None, src=None, log=print, legs=None, cells=None,
-            rich=False, raw=False):
+            rich=False, raw=False, ckpt_hours=None):
     """Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
 
     `cells` сужает сетку (книги `h24` считают одну ячейку в час), `rich`
@@ -436,8 +441,11 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
         for g in glist:
             got = 0
             for rk, (rule, param) in RULERS.items():
+                cps = ([float(g["at"]) + k * HOUR for k in ckpt_hours]
+                       if ckpt_hours else None)
                 o = one_position(g, bars, ts, look, rule, param,
-                                 lev_look=lev_look, cells=cells, rich=rich)
+                                 lev_look=lev_look, cells=cells, rich=rich,
+                                 checkpoints=cps)
                 if not o:
                     continue
                 got = 1

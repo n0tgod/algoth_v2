@@ -163,7 +163,7 @@ def floor_groups():
     return out
 
 
-def replay(need, src=None, log=print):
+def replay(need, src=None, log=print, ckpt_hours=None):
     """Досчёт недостающих решений: одна ячейка, отметки и заполнения.
 
     Срок и гейт отсчёта ставятся НА ВРЕМЯ прогона (`run_d11.configure`) и
@@ -188,7 +188,8 @@ def replay(need, src=None, log=print):
                 log(f"пол капитуляции {frac:g} — линейки "
                     + ", ".join(rulers))
                 part = D10.collect(legs=need, cells=[CELL], rich=True,
-                                   raw=True, src=src, log=log)
+                                   raw=True, src=src, log=log,
+                                   ckpt_hours=ckpt_hours)
                 for rk in rulers:
                     got["recs"][rk] = (part.get("recs") or {}).get(rk) or {}
         finally:
