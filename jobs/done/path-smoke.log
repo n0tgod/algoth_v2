@@ -1,0 +1,24 @@
+== задание path-smoke ==
+строка: run research/dca_paper/path_screen.py --seeds 3 --perms 5 --no-publish
+начало: 2026-09-13T00:20:54Z
+запускаю: .venv/bin/python research/dca_paper/path_screen.py --seeds 3 --perms 5 --no-publish
+дорога: 1000 сделок из 6584, 10 с
+дорога: 2000 сделок из 6584, 11 с
+дорога: 3000 сделок из 6584, 12 с
+Traceback (most recent call last):
+  File "/root/algoth_v2/research/dca_paper/path_screen.py", line 706, in <module>
+    main()
+  File "/root/algoth_v2/research/dca_paper/path_screen.py", line 697, in main
+    s = run(seeds=a.seeds, perms=a.perms, log=print)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/path_screen.py", line 484, in run
+    v = view_of(r, mkt)
+        ^^^^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/path_screen.py", line 174, in view_of
+    p = path_of(rec)
+        ^^^^^^^^^^^^
+  File "/root/algoth_v2/research/dca_paper/path_screen.py", line 113, in path_of
+    return {"cum": out, "K": K, "peak": max(out.values()), "final": out[K]}
+                                        ^^^^^^^^^^^^^^^^^
+TypeError: '>' not supported between instances of 'NoneType' and 'NoneType'
+конец: 2026-09-13T00:21:07Z, код 1
