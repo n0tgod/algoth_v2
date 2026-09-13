@@ -3578,6 +3578,98 @@ M2: каркас walk-forward — чистая математика без чт�
 - L37 `run()` — Код возврата и ИМЕНА упавших проверок, а не только код.
 - L52 `main(report)`
 
+## research/mech_a47008e1/.smoke.py · 37 строк
+
+ЧЕРНОВИК: проверка машины реплея на живых данных, НЕ результат.
+
+
+## research/mech_a47008e1/controls_check.py · 93 строк
+
+Машина негативных контролей механики a47008e1: подделка — сюита падает.
+
+- L26 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L28 `SUITE = 'research/mech_a47008e1/test_guard_sist…`
+- L34 `sha(p)`
+- L39 `run_suite()` — (прошло, вывод) — ровно так, как это делает приёмка.
+- L44 `main()`
+
+## research/mech_a47008e1/guard_sister.py · 1293 строк
+
+Механика a47008e1 — охрана рынком как правило ВЫХОДА короткой книги h24.
+
+- L72 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L73 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L74 `OUT = os.path.join(HERE, 'out')`
+- L99 `load_from(rel, name)` — Модуль ИМЕННО из этого файла, а не первый одноимённый на пути.
+- L118 `CE = load_from('research/factory/ceiling.py'…`
+- L120 `ART = 'GUARD-sister'`
+- L121 `MECH = 'a47008e1'`
+- L123 `BOOK = 'safe_h'` — --- объявлено ЗАДАНИЕМ, а не этим файлом ---------------------------------
+- L124 `RULER = S.BOOKS[BOOK]`
+- L125 `DEP = 10000.0`
+- L126 `GRID = WG.wave_axis()`
+- L127 `THRESH = WG.middle(GRID)`
+- L128 `WORST_DAY = '2026-09-12'`
+- L129 `SEEDS = P.SEEDS`
+- L130 `HOUR = 3600.0`
+- L131 `MINUTE = 60.0`
+- L132 `HOLD_MIN = int(R.H24_HOLD_H * 60)`
+- L133 `LAG_MIN = 1`
+- L134 `EXIT_LABEL = WG.EXIT_LABEL`
+- L135 `PROXY = SWV.PROXY`
+- L136 `MIN_PROXY = SWV.MIN_PROXY`
+- L142 `BATCH = 100` — Ног в пачке реплея. Число ИЗМЕРЕНО, а не назначено: при 300 выборка в 400 позиций дошла до 1.19 ГБ против пре…
+- L143 `CTL_TRIES = 20`
+- L144 `SEED_BASE = 1000`
+- L146 `COLS = (('usd', '$ всего'), ('usd_wo_top3d', '…` — Колонки, о которых спорит заявка. Порядок — порядок показа.
+- L153 `VERDICT_COL = 'usd_wo_top3d'` — Колонка, по которой судится убийца 1. Одна, названа здесь.
+- L155 `NULL_SHIFT_D = 7` — Сдвиг волны для НУЛЯ, суток. Объявлен до прогона и не подбирается.
+- L157 `BEAT_MAX = 0.05` — Доля зёрен, при которой контроль убивает ячейку (объявлено заданием).
+- L160 `_quiet(*_a)`
+- L164 `log_line(msg)`
+- L170 `book_form(cache, ctx, launch, dep=DEP, book=BOOK, now=None, log…` — Форма книги на этих записях — ТЕМИ ЖЕ функциями, что касса.
+- L210 `columns(st, named_day=WORST_DAY)` — Колонки спора из формы книги. Чего нет — прочерк, а не ноль.
+- L245 `hours_of(changed)` — {линейка: [часы]} правила — в том же порядке, что у path_screen.
+- L253 `draw(cache, cand, changed, seed, cut, tries=CTL_TRIES)` — Случайные выходы ТОГО ЖЕ числа в ТЕ ЖЕ моменты среди открытых.
+- L286 `control(cache, cand, changed, cut, ctx, launch, seeds=SEEDS, de…` — Колонки книги на случайных выходах: по зерну — своя строка.
+- L302 `beat(draws, value, field)` — Доля зёрен, где случайные выходы НЕ ХУЖЕ величины — одной мерой.
+- L312 `_med(xs)`
+- L317 `cells_axis(cache, views, ctx, launch, base, grid=GRID, seeds=SE…` — Ячейки оси волны по часам: колонки правила и контроль по ним.
+- L361 `shifted_views(views, mkt, days=NULL_SHIFT_D)` — Те же позиции, но волна взята на `days` суток в сторону — НУЛЬ.
+- L388 `class MinuteWave` — Волна рынка на минутной сетке: средний ход прокси-имён записи.
+  - L402 `MinuteWave.__init__(self, t0, t1, read=None, proxies=PROXY, min_proxy=MIN_…`
+  - L419 `MinuteWave.j(self, ts)` — Номер минуты в сетке; вне сетки — None, а не край.
+  - L424 `MinuteWave.build(self)`
+  - L454 `MinuteWave.path(self, at, n)` — Ход волны с входа по минутам 1…n. Минута без волны — NaN.
+  - L483 `MinuteWave.cross(self, at, n, thresh)` — Первая минута (1…n), где волна ≥ порога, иначе None.
+- L501 `cut_at(rec, ts, pnl, why=EXIT_LABEL)` — Запись, закрытая в момент `ts` с исходом `pnl` (доля маржи).
+- L532 `ckpt_offsets(n=HOLD_MIN)` — Метки ядра: середина каждой минуты удержания, в часах от входа.
+- L543 `minute_path(rec, n=HOLD_MIN)` — Исходы ядра по минутам из `ckpt`: (pnl, время бара) или NaN.
+- L566 `by_symbol(legs, size=BATCH)` — Пачки ног, не рвущие символ: бары имени читаются один раз на пачку.
+- L586 `replay_paths(legs, keys=None, size=BATCH, n=HOLD_MIN, log=_quie…` — Минутные пути позиций: ядро с метками на каждой минуте удержания.
+- L623 `guard_minutes(cache, wave, paths, thresh=THRESH, lag=LAG_MIN, n…` — Минута выхода по охране у каждой позиции и почему её нет.
+- L666 `open_minutes(cache, paths, n=HOLD_MIN)` — (линейка, минута) → ключи позиций, ОТКРЫТЫХ в эту минуту.
+- L685 `sister_cache(cache, got)` — Кэш сестры: те же записи, у изменённых — выход по охране.
+- L693 `replay_cell(cache, wave, paths, ctx, launch, thresh=THRESH, lag…` — Сестра на минутных выходах и её контроль — те же колонки.
+- L733 `killer_one(base, cell, col=VERDICT_COL, beat_max=BEAT_MAX)` — Убийца 1: потолок на записи по объявленной колонке.
+- L770 `killer_two(base, cell, beat_max=BEAT_MAX)` — Убийца 2: реплей внутри часа против базы на тех же сутках.
+- L800 `forward_why(st, declared_at=None)` — Правило вылета пула на ряду книги — с пометкой, чем судится.
+- L828 `live_link(st, book=BOOK, dep=DEP)` — Связь дневных денег сестры с живой книгой того же семейства.
+- L864 `window_of(ats)` — Окно записи, нужное волне: час до первого входа и срок после последнего.
+- L877 `run(seeds=SEEDS, limit=None, do_replay=False, sample=None, forc…`
+- L1008 `_u(x)`
+- L1012 `_pp(x, d=1)`
+- L1016 `_p(x, d=0)`
+- L1020 `_n(x)`
+- L1024 `_col(f, v)`
+- L1034 `_cols_table(rows)` — Колонки спора: строка на книгу. Прочерк значит «не измерено».
+- L1047 `_control_table(cell)`
+- L1065 `report(s)`
+- L1238 `write(s, name=ART, out=None)`
+- L1251 `publish(name)`
+- L1257 `main(argv=None)`
+
 ## research/mech_a82dcf58/controls_check.py · 105 строк
 
 Машина негативных контролей механики a82dcf58: подделка — сюита падает.
