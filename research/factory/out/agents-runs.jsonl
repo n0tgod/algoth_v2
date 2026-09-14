@@ -335,3 +335,5 @@
 {"at": 1789353001.499, "role": "propose", "status": "start", "started": 1789353001.0, "ended": 1789353001.499, "dry": false, "pid": 3009224}
 {"at": 1789353914.958, "role": "propose", "status": "ok", "started": 1789353001.0, "ended": 1789353914.958, "dry": false, "note": "модель claude-fable-5-1, усилие xhigh"}
 {"at": 1789354201.808, "role": "judge", "status": "start", "started": 1789354201.808, "ended": 1789354201.808, "dry": false, "pid": 3012599}
+{"at": 1789358276.823, "role": "judge", "status": "ok", "started": 1789354201.808, "ended": 1789358276.823, "dry": false, "note": "код возврата 0"}
+{"at": 1789358401.207, "role": "ceiling", "status": "start", "started": 1789358401.207, "ended": 1789358401.207, "dry": false, "pid": 3022372}
