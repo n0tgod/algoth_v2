@@ -3428,6 +3428,110 @@ M2: каркас walk-forward — чистая математика без чт�
 - L561 `beat_share(base, vals)` — Доля значений контроля, которые ДОСТАЮТ до фильтра или бьют его.
 - L574 `transfer_verdict(rows, max_beat=MAX_BEAT, seeds=SEEDS)` — Вердикт переноса из чисел: убийца (3) заявки.
 
+## research/mech_258a860c/budget_book.py · 1516 строк
+
+Механика 258a860c — БЮДЖЕТ МАРЖИ короткой книги h24.
+
+- L72 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L73 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L74 `OUT = os.path.join(HERE, 'out')`
+- L93 `MECH = '258a860c'`
+- L94 `ART = 'BUDGET-book'`
+- L97 `BOOK = 'safe_h'` — --- объявлено ЗАДАНИЕМ, а не этим файлом --------------------------------
+- L98 `RULER = S.BOOKS[BOOK]`
+- L99 `DEP = 10000.0`
+- L100 `GRID = (0.1, 0.2, 0.3)`
+- L101 `VERDICT_B = 0.2`
+- L106 `DEPS = (10000.0, 100000.0)` — Депозиты замера. $1k исключён заданием: там билет стоит на биржевом полу ($25 = `rules.floor_of`), и уменьшит…
+- L107 `DEP_SKIP = 1000.0`
+- L108 `DEP_SKIP_WHY = 'билет стоит на биржевом полу — бюджет …`
+- L111 `HALF = 2.0` — Делитель остатка из формулы заявки: «не больше ПОЛОВИНЫ остатка».
+- L112 `SEEDS = AG.SEEDS`
+- L114 `BEAT_MAX = 0.1` — Убийца 2: перемешанные множители не хуже бюджета в ≥ 10 % зёрен.
+- L116 `LOAD_MAX = 0.2` — Убийца 3: средняя загрузка базы ≥ 0.20 — ячейка режет каждый день.
+- L119 `FLOOR_SHARE_MAX = 0.05` — Доля «ниже пола билета» от взятых, выше которой правило читается как отбор по времени и требует другого контр…
+- L121 `NAMED_DAYS = ('2026-09-12', '2026-09-13')` — Худшие дни базы — названы заданием, деньги за них идут отдельной строкой.
+- L123 `CALIB_MULT = 0.5` — Множитель равномерной калибровки: любой, лишь бы не единица.
+- L125 `PLANT_N = 25` — Подсаженный тесный час: сколько позиций и с каким исходом (задание).
+- L126 `PLANT_PNL = -0.9`
+- L127 `HOUR = 3600.0`
+- L130 `COLS = (('usd', '$ всего', False), ('ratio', '…` — Колонки спора. Порядок — порядок показа; `low` значит «меньше лучше».
+- L142 `_quiet(*_a)`
+- L146 `log_line(msg)`
+- L152 `class Sizer` — Читатель решений кассы: сколько книга держит открытыми СЕЙЧАС.
+  - L167 `Sizer.__init__(self, deposit, rows, base_share, floor)`
+  - L188 `Sizer.sync(self, now)` — Вобрать новые взятые записи и вернуть деньги вышедших.
+  - L213 `Sizer.desk_margin(self, r)` — Маржа, которую касса назначила бы БЕЗ правила.
+  - L217 `Sizer.record(self, r, mult)` — Множитель этого решения — и списком (порядок очереди), и картой.
+  - L231 `Sizer.share(self, r)`
+  - L244 `Sizer.decide(self, r, _held)`
+  - L248 `Sizer.emit(self, r, want)` — Перевести желаемую маржу в долю счёта, соблюдая пол билета.
+  - L272 `Sizer.finish(self, c)` — Свой счёт эквити против итога кассы. Расхождение — отказ.
+- L292 `class Budget` — Правило заявки: маржа = min(билет, остаток / 2).
+  - L295 `Budget.__init__(self, b, deposit, rows, base_share, floor, half=HALF)`
+  - L301 `Budget.decide(self, r, held)`
+- L306 `class Uniform` — Калибровка: ТЕ ЖЕ позиции с маржой, умноженной на один множитель.
+  - L321 `Uniform.__init__(self, mult, base_margin, deposit, rows, base_share, fl…`
+  - L326 `Uniform.decide(self, r, _held)`
+- L336 `class Shuffle` — Контроль: те же множители, розданные позициям случайно.
+  - L346 `Shuffle.__init__(self, mults, deposit, rows, base_share, floor)`
+  - L350 `Shuffle.decide(self, r, _held)`
+- L359 `key_of(r)` — Ключ решения: имя и секунда. Тот же, что у кэша реплея.
+- L364 `class sized` — Касса с размером от правила — на время одного вызова, и обратно.
+  - L374 `sized.__init__(self, make)`
+  - L379 `sized.__enter__(self)`
+  - L403 `sized.__exit__(self, *_a)`
+- L408 `budget_maker(b, book=BOOK, half=HALF)` — Бюджет как свойство СТОРОНЫ: пол билета берётся у книги.
+- L415 `plain_maker(book=BOOK)` — Обёртка без правила: та же книга, только с измерением загрузки.
+- L424 `book_form(cache, ctx, launch, dep=DEP, book=BOOK, maker=None, n…` — Форма книги на этих записях — ТЕМИ ЖЕ функциями, что касса.
+- L454 `agrees_with_cell(cache, ctx, launch, dep=DEP, book=BOOK, now=No…` — Сверка с ячейкой семейства: те же деньги теми же правилами.
+- L479 `load_of(sizer, deposit, hour=HOUR)` — Загрузка книги: доля депозита в марже открытых позиций по ЧАСАМ.
+- L513 `columns(st, cell=None, sizer=None, named=NAMED_DAYS)` — Колонки спора. Чего нет — прочерк, а не ноль.
+- L563 `_ts_of(day)`
+- L570 `base_margins(sizer)` — Маржа базы по решениям: {(имя, момент): маржа}.
+- L577 `calib_uniform(cache, ctx, launch, base_cols, base_sizer, mult=C…` — Нога «молчать на шуме»: равномерное уменьшение не меняет формы.
+- L641 `class NoMarket` — Рынок, которого в калибровке нет: охрана не срабатывает ни разу.
+  - L649 `NoMarket.__init__(self)`
+  - L652 `NoMarket.k_star(self, _at, _pct, _last)`
+- L657 `planted(cache, b=VERDICT_B, dep=DEP, n=PLANT_N, pnl=PLANT_PNL, …` — Копия данных с подсаженным ТЕСНЫМ ЧАСОМ: n позиций разом.
+- L709 `calib_planted(cache, dep=DEP, b=VERDICT_B, book=BOOK, now=None,…` — Нога «найти подсаженное»: тесный час обязан быть срезан бюджетом.
+- L774 `shuffle_cell(cache, ctx, launch, mults, seed, dep=DEP, book=BOO…` — Одно зерно контроля: те же множители, розданные случайно.
+- L789 `sample_cell(cache, ctx, launch, pool, n_keep, seed, dep=DEP, bo…` — Одно зерно контроля выборкой: `n_keep` решений базы наугад.
+- L809 `control_kind(floor_share, limit=FLOOR_SHARE_MAX)` — Какой контроль обязан считаться — решает ЧИСЛО, а не автор.
+- L831 `control(cache, ctx, launch, mults, seeds=SEEDS, dep=DEP, book=B…` — Контроль на `seeds` зёрнах — тем розыгрышем, который выбрало число.
+- L862 `taken_keys(sizer)` — Решения, которые касса ВЗЯЛА: (имя, момент, сторона).
+- L874 `beat(draws, value, field)` — Доля зёрен, где случайная раскладка НЕ ХУЖЕ — мерой проекта.
+- L879 `_med(xs)`
+- L886 `killer_one(base, cell)` — Потолок на записи: ячейка вердикта против базы на тех же сутках.
+- L921 `killer_two(cell, ctl, beat_max=BEAT_MAX)` — Контроль: выигрыш от ЗАНЯТОСТИ книги или от случайности.
+- L954 `killer_three(load, cell, load_max=LOAD_MAX, b=VERDICT_B)` — Загрузка: режет ли ячейка каждый день.
+- L981 `killer_four(cell, declared_at=None)` — Форвард: правило вылета пула по ряду суток — с пометкой, чем судится.
+- L1012 `bite_table(packed, ctx, launch, dep=DEP, now=None, log=_quiet)` — Укус коротких книг — число, которого нет нигде, и печатается оно ПЕРВЫМ.
+- L1040 `run(seeds=SEEDS, limit=None, grid=GRID, b_verdict=VERDICT_B, de…`
+- L1176 `_verd(x)`
+- L1182 `_u(x)`
+- L1186 `_pp(x, d=1)`
+- L1190 `_p(x, d=1)`
+- L1194 `_n(x)`
+- L1198 `_r(x)`
+- L1202 `_col(f, v)`
+- L1214 `_cols_table(rows)`
+- L1226 `_taken_line(base, cell, limit)` — Число взятых обязано СОЙТИСЬ или разница названа — числом, не прозой.
+- L1265 `_named_table(rows)`
+- L1279 `_load_table(rows)`
+- L1293 `report(s)`
+- L1483 `_verdict_cell(s)`
+- L1490 `main(argv=None)`
+
+## research/mech_258a860c/controls_check.py · 37 строк
+
+Проверить СВОИ негативные контроли той же машиной, что приёмка.
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L21 `OUT = os.path.join(ROOT, 'research', 'factory…`
+- L24 `main()`
+
 ## research/mech_49b535f8/controls_check.py · 97 строк
 
 Своя машинка проверки негативных контролей — до сдачи отчёта.

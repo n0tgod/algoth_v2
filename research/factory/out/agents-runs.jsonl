@@ -343,3 +343,4 @@
 {"at": 1789359001.192, "role": "task", "status": "start", "started": 1789359001.189, "ended": 1789359001.192, "dry": false, "pid": 3024098}
 {"at": 1789359001.517, "role": "task", "status": "ok", "started": 1789359001.189, "ended": 1789359001.517, "dry": false, "note": "код возврата 0"}
 {"at": 1789359301.898, "role": "build", "status": "start", "started": 1789359301.0, "ended": 1789359301.898, "dry": false, "pid": 3024715}
+{"at": 1789362170.605, "role": "build", "status": "ok", "started": 1789359301.0, "ended": 1789362170.605, "dry": false, "note": "модель opus, усилие xhigh"}
