@@ -2190,6 +2190,61 @@
 - L733 `test_one_day_is_refused()` — Одни сутки — σ прошлых суток взять неоткуда, и это отказ.
 - L752 `main()`
 
+## research/mech_dc3b6317/test_fence_floor.py · 875 строк
+
+Проверки механики dc3b6317 — пол забора из размаха суток.
+
+- L35 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L36 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L54 `H = 3600.0`
+- L55 `T0 = 1786320000.0`
+- L56 `FLAT_MMR = 0.005`
+- L60 `LEVELS = [101.6, 103.3, 105.0]` — Уровни ВЫШЕ входа: у шорта лестница идёт вверх. Шаг 1.6 % — чуть больше `MIN_ADD_GAP`, чтобы рунги приняло яд…
+- L64 `_look(notl)`
+- L68 `_with_levels(fn, levels=None)`
+- L77 `_leg(at, sym='SSSUSDT', fwd=60.0, rr=2.0, fav=-500.0)`
+- L82 `_bars_from(prices, t0=T0 - 1440 * 60, spread=0.0, vol=1000.0)` — Минутные бары из ряда цен: верх и низ на `spread` вокруг цены.
+- L90 `_frozen(n_pre=1440, n_post=1440, px=100.0, step_bp=1.0, spike=0…` — ЗАМОРОЖЕННЫЙ ряд: котировка стоит, один тик и один всплеск верхом.
+- L109 `_walk(seed=1, n_pre=1440, n_post=1440, px=100.0, sigma_day=0.03)` — Случайное блуждание с ИЗВЕСТНОЙ σ: у него размах ≈ 1.6 σ_сут.
+- L123 `test_units_of_the_range_floor()` — Размах в б.п. → доля цены. Литералом, а не «как-нибудь».
+- L136 `test_floor_equals_the_depth_ruler()` — Пол в `param · d_max` обязан дать линейке `depth` ТО ЖЕ плечо.
+- L155 `test_floor_binds_only_below_the_ruler()` — `min` двух плеч и есть «запас = max(запас линейки, размах)».
+- L183 `test_two_readings_of_the_claim_are_both_counted()` — Пол на лестнице забора и пол на позиции, которой книга торгует.
+- L225 `test_partial_note_is_derived_from_the_numbers()`
+- L242 `test_declared_reading_decides_what_is_judged()`
+- L263 `test_floor_refuses_instead_of_guessing()` — Нечем считать — причина словами, а не молчаливое плечо.
+- L280 `_window(bars, at)`
+- L285 `test_calibration_pair_finds_the_frozen_row_and_stays_silent_on_…` — Подсаженное — найти, на шуме — молчать. Обе половины с литералами.
+- L335 `test_segment_is_the_same_one_window_stats_uses()` — Доля минут без движения считается на ТОМ ЖЕ отрезке, что σ.
+- L352 `_one(bench, g, bars, cells=None, rich=True)`
+- L359 `test_future_does_not_touch_the_floor_but_does_touch_the_ceiling…` — Переписать будущее — прошлое не шелохнётся; потолок обязан дрогнуть.
+- L390 `test_the_ceiling_reaches_neither_the_floor_nor_liquidation()` — Запас потолка выводится из реализованного хода и пола капитуляции.
+- L423 `test_patch_is_put_back_in_any_outcome()`
+- L442 `test_foreign_window_is_a_refusal_not_a_stale_floor()` — Забор о ЧУЖОМ окне — отказ вслух, а не пол от прошлой позиции.
+- L460 `test_plan_gives_each_variant_its_own_leverage()`
+- L483 `test_uniform_control_may_only_reduce_leverage()`
+- L499 `_rows(n=40, seed=5)`
+- L515 `test_seed_control_keeps_the_size_and_the_multiset()`
+- L536 `test_uniform_controls_hit_the_target_mean_leverage()`
+- L550 `test_better_needs_both_numbers_and_both_directions()`
+- L562 `_table(ratio, flat=0.9, n=100, lev_after=3.0)`
+- L576 `test_sigma_verdict_is_derived_from_the_number()`
+- L589 `test_inertness_verdict_is_derived_from_the_numbers()`
+- L602 `test_shape_verdict_is_derived_from_the_numbers()`
+- L618 `test_seed_verdict_counts_the_share_of_seeds()`
+- L646 `_fake_market(tmp)`
+- L651 `_recs(n=12, seed=2)` — Записи позиций в форме ядра — достаточные для кассы и формы.
+- L672 `test_book_stats_walks_the_same_road_as_the_axis_measures()` — Та же касса и те же правила, что у `short_grid.cell_stats`.
+- L710 `test_tail_share_by_band_counts_the_tail_outcomes()`
+- L724 `class _Src` — Подставной источник баров: тот же контракт, что у `sweep.read_bars`.
+  - L727 `_Src.__init__(self, by_sym)`
+  - L730 `_Src.bars(self, sym, a, b)`
+- L734 `_world()` — Три имени: замороженное (пол связывает), шумное и растущее.
+- L750 `test_run_end_to_end_on_synthetic_bars()` — Сквозь всё: проход A → план → проход B → касса → шаги → отчёт.
+- L811 `test_empty_result_is_a_refusal_not_a_report_with_dashes()` — Ноль позиций при непустом листе — отказ словами.
+- L827 `test_report_prints_dashes_for_what_is_not_measured()`
+- L843 `TESTS = (test_units_of_the_range_floor, test_fl…`
+
 ## research/mech_fcbd3542/test_halves.py · 721 строк
 
 Проверки механики `fcbd3542`: метка tick/σ и замер по половинам.

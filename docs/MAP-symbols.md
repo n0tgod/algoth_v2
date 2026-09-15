@@ -3997,6 +3997,114 @@ M2: каркас walk-forward — чистая математика без чт�
 - L735 `_grp_table(L, split, title)`
 - L749 `report(art, path)`
 
+## research/mech_dc3b6317/controls_check.py · 36 строк
+
+Проверить СВОИ негативные контроли той же машиной, что приёмка.
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L20 `OUT = os.path.join(ROOT, 'research', 'factory…`
+- L23 `main()`
+
+## research/mech_dc3b6317/fence_floor.py · 1842 строк
+
+Забор не ближе вчерашнего размаха: пол запаса коротких книг `h24`.
+
+- L86 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L87 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L113 `_by_path(name, rel, need)` — Модуль по ПУТИ, а не по имени: одноимённые файлы в проекте есть.
+- L133 `CE = _by_path('factory_ceiling', 'research/f…`
+- L135 `OUT = os.path.join(HERE, 'out')`
+- L136 `ART = 'FLOOR-range'`
+- L137 `HOUR = 3600.0`
+- L145 `RANGE_MULT = 1.0`
+- L146 `DIAG_MULTS = (0.5, 2.0)`
+- L147 `HONEST_RATIO = 3.0`
+- L148 `DEFECT_RATIO = 10.0`
+- L149 `BROWN_RATIO = 1.6`
+- L150 `INERT_SHARE = 0.05`
+- L151 `INERT_LEV = 15.0`
+- L152 `CLAIM_SHARE = 0.15`
+- L153 `CLAIM_TAIL = 0.04`
+- L154 `SEED_KILL = 0.1`
+- L155 `SEEDS = 200`
+- L156 `BASE_WO3D_SHARE = 0.52`
+- L157 `ORACLE_EPS_BP = 1.0`
+- L160 `VERDICT_BOOK = 'safe_h'` — Ячейка вердикта одна и названа заданием.
+- L161 `VERDICT_DEP = 10000.0`
+- L169 `FLOOR_VARIANTS = {'fence': ('floor', 'пол на лестнице за…` — ДВЕ ТРАКТОВКИ заявки, и выбор между ними — не за строителем. `fence` — буквально по заданию: пол как параметр…
+- L172 `VERDICT_VARIANT = 'fence'`
+- L175 `after_of(row, variant=VERDICT_VARIANT)` — Плечо после пола в объявленной трактовке.
+- L180 `moved_of(row, variant=VERDICT_VARIANT)` — Связал ли пол эту позицию в объявленной трактовке.
+- L184 `DAYS_NAMED = ('2026-08-13', '2026-09-12', '2026-09-1…` — Дни, которые задание требует отдельными строками.
+- L187 `CELL = S.CELL` — Ячейка D10, которой торгует семейство: плечо забора, без доливов, цель ×2. Берётся у самого прогона книг, а н…
+- L188 `CELL_KEY = CELL[0]`
+- L189 `SIDE = 'short'`
+- L191 `BANDS = (('1x', 'ровно 1×'), ('1-5', '1–5×'), (…`
+- L193 `BAND_TITLE = dict(BANDS)`
+- L197 `LEV_CAP = float(inspect.signature(L.max_leverage)…` — Потолок плеча берётся У САМОГО ЯДРА (умолчание `ladder.max_leverage`), а не повторяется числом: полоса «ровно…
+- L201 `band_of(lev)` — Полоса плеча — те же пять, которыми заявка читает книгу.
+- L215 `ruler_of(rule, param)` — Линейка книги по паре (правило, параметр) — картой САМОГО замера D10, а не своим списком: разойдись они, диаг…
+- L227 `range_frac(rng_bp, mult=RANGE_MULT)` — Пол запаса ДОЛЕЙ ЦЕНЫ из размаха в б.п. Нет меры — None.
+- L247 `depth_frac(entry, rungs_full)` — Глубина лестницы долей цены — ТЕМ ЖЕ выражением, что у забора.
+- L262 `floor_leverage(entry, rungs_full, look, rng_bp, mult=RANGE_MULT…` — Плечо, при котором запас равен ровно размаху. (плечо, почему).
+- L288 `under_floor(lev_ruler, lev_floor)` — Плечо под полом и кто его связал.
+- L304 `flat_floor_leverage(entry, look, rng_bp, mult=RANGE_MULT, side=…` — Пол на ТОЙ позиции, которой книга торгует: один вход, без доливов.
+- L347 `liq_gap(entry, rungs_full, lev, look, side=SIDE, weights=None)` — Расстояние «вход → ликвидация» долей цены, ядром лестницы.
+- L362 `oracle_frac(adv_frac, floor_frac, eps_bp=ORACLE_EPS_BP)` — Запас потолка с идеальным знанием будущего, долей цены.
+- L384 `seg_closes(win, now_i)` — Закрытия окна ДО входа — ТЕМ ЖЕ отрезком, что `window_stats`.
+- L400 `flat_share(win, now_i)` — Доля минут БЕЗ движения цены в окне до входа. Нет окна — None.
+- L415 `adverse_frac(win, now_i, side=SIDE)` — Реализованный ход ПРОТИВ позиции за удержание, долей цены.
+- L437 `class Stale` — Забор спросили о ЧУЖОМ окне: пол считать не из чего.
+- L448 `_same(a, b)` — Равенство чисел, где NaN равен NaN: σ бывает не измерена.
+- L458 `class Bench` — Перехват дороги реплея: то же ядро, другое ПЛЕЧО.
+  - L473 `Bench.__init__(self, plan=None, oracle=False, mults=(RANGE_MULT,), ru…`
+  - L493 `Bench._window_stats(self, orig)`
+  - L508 `Bench._fence(self, orig)`
+  - L572 `Bench._resolve(self, spec, b, entry, rungs_full, look, side, lev_look)` — Плечо варианта. Умолчание — плечо самого забора.
+  - L609 `Bench._one_position(self, orig)`
+  - L647 `Bench._note(self, key, b)` — Строка диагностики позиции. Забора не было — считать нечем.
+- L685 `_num(x)` — Число или прочерк: NaN — это «не измерено», а не значение.
+- L694 `bound(bench)` — Перехват на время прохода. Возврат — в любом исходе.
+- L713 `scan(legs_, src=None, log=print, oracle=True, mults=None, ruler…` — Проход A: окно, σ, размах и плечо КАЖДОЙ позиции. Без симуляции.
+- L735 `sim(legs_, plan, src=None, log=print, oracle=True, books=None)` — Проход B: исход позиции на плече КАЖДОГО варианта.
+- L795 `mean_lev(rows, field='lev')`
+- L800 `solve_scale(rows, want)` — Множитель `k`, при котором среднее плечо равно `want`.
+- L825 `solve_cap(rows, want)` — Плоский потолок `c`, при котором среднее плечо равно `want`.
+- L845 `seed_picks(rows, n_seeds=SEEDS, variant=VERDICT_VARIANT)` — Случайные подмножества ТОГО ЖЕ размера с тем же мультимножеством.
+- L879 `build_plan(rows, scale=None, cap=None, picks=None, oracle=True)` — План прохода B: что считать на каждой позиции.
+- L914 `book_stats(by_ruler, ctx, launch, now=None, keys=None, deps=Non…` — Книги семейства на этих записях: правила книги, деньги НЕТТО.
+- L965 `_exits(rows)`
+- L977 `TAIL_EXITS = ('пол', 'ликвидация')`
+- L980 `_by_band(rows)` — Сделки книги по полосам плеча: доля хвостовых исходов и деньги.
+- L995 `daily_of(st)` — Ряд «сутки → нетто» из разбивки книги. Нет разбивки — нет ряда.
+- L1000 `daily_by_no(st)` — Тот же ряд НОМЕРАМИ суток: правило вылета пула считает по ним.
+- L1015 `shape_of(st)` — Форма книги — мерой проекта (`factory/stability.stats`).
+- L1020 `wo_top3d_share(st)` — Доля итога, остающаяся без трёх лучших суток. Нечего вычитать — None.
+- L1030 `_med_mean(v)`
+- L1038 `bands_table(rows, variant=VERDICT_VARIANT)` — Шаг 0: σ забора против размаха, по полосам плеча.
+- L1079 `partial_note(rows, band='25x')` — Чем забор СЧИТАЕТ позицию полосы — и чем её торгуют. Из чисел.
+- L1118 `sigma_verdict(table)` — Вердикт шага 0 — ИЗ ЧИСЛА, а не рядом с ним.
+- L1149 `inert_verdict(rows, table, variant=VERDICT_VARIANT)` — Шаг 1: связывает ли пол хоть что-нибудь.
+- L1178 `claims_check(rows, cells, variant=VERDICT_VARIANT)` — Следствия, объявленные ДО счёта: сбылись или нет — числом.
+- L1201 `better(a, b)` — Лучше ли книга `a`, чем `b`, по укусу И по доходу на просадку.
+- L1214 `pack_cell(st)` — Клетка сравнения: укус, доход на просадку, форма и концентрация.
+- L1241 `uniform_verdict(cells, vkey='floor')` — Шаг 3: не «меньше плеча в новом костюме» ли это.
+- L1271 `oracle_verdict(cells, vkey='floor')` — Шаг 2: верхняя граница любой переменной забора.
+- L1301 `seed_verdict(floor_cell, seed_cells)` — Шаг 4: случайная выборка того же размера.
+- L1341 `shape_verdict(cell)` — Шаг 5: форма на записи.
+- L1369 `forward_note(st_floor, st_base)` — Шаг 6: правило вылета пула — и честная оговорка о том, что это.
+- L1387 `_f(x, d=2)`
+- L1391 `_u(x)`
+- L1395 `_p(x, d=1)`
+- L1399 `_s(x, d=0)`
+- L1405 `run(limit=None, src=None, log=print, legs_=None, ctx=None, laun…`
+- L1549 `_thin(st)` — Книга в артефакт БЕЗ построчной разбивки: суточный ряд остаётся.
+- L1559 `report(s)`
+- L1789 `publish(name)`
+- L1795 `write(s, name=ART, log=print)`
+- L1808 `main(argv=None)`
+
 ## research/mech_fcbd3542/run_halves.py · 1311 строк
 
 Механика `fcbd3542` — отскок первых секунд по половинам универсума.
