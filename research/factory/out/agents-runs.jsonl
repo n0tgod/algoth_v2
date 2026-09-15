@@ -352,3 +352,5 @@
 {"at": 1789438638.397, "role": "brief", "status": "contract", "started": 1789438201.0, "ended": 1789438638.397, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: research/factory/out/summary.md: нет раздела «Что открыто»: без него открытые углы проекта до предлагающего не доходят вовсе, и заявка неизбежно окажется пересказом чуж"}
 {"at": 1789438801.322, "role": "brief", "status": "start", "started": 1789438801.0, "ended": 1789438801.322, "dry": false, "pid": 3206720}
 {"at": 1789439037.646, "role": "brief", "status": "ok", "started": 1789438801.0, "ended": 1789439037.646, "dry": false, "note": "модель opus, усилие medium"}
+{"at": 1789439102.131, "role": "propose", "status": "start", "started": 1789439101.0, "ended": 1789439102.131, "dry": false, "pid": 3207621}
+{"at": 1789441160.407, "role": "propose", "status": "ok", "started": 1789439101.0, "ended": 1789441160.407, "dry": false, "note": "модель claude-fable-5-1, усилие xhigh"}
