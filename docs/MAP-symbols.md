@@ -3428,6 +3428,89 @@ M2: каркас walk-forward — чистая математика без чт�
 - L561 `beat_share(base, vals)` — Доля значений контроля, которые ДОСТАЮТ до фильтра или бьют его.
 - L574 `transfer_verdict(rows, max_beat=MAX_BEAT, seeds=SEEDS)` — Вердикт переноса из чисел: убийца (3) заявки.
 
+## research/mech_1d5e7287/controls_check.py · 36 строк
+
+Проверить СВОИ негативные контроли той же машиной, что приёмка.
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L20 `OUT = os.path.join(ROOT, 'research', 'factory…`
+- L23 `main()`
+
+## research/mech_1d5e7287/rr_supply.py · 1505 строк
+
+Механика 1d5e7287 — гейт RR ≥ 2 у длинной лестницы: заслонка ПОДАЧИ или фильтр КАЧЕСТВА.
+
+- L104 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L105 `RESEARCH = os.path.dirname(HERE)`
+- L106 `ROOT = os.path.dirname(RESEARCH)`
+- L107 `OUT = os.path.join(HERE, 'out')`
+- L134 `BAND = 'lo'` — --- объявлено ДО прогона ------------------------------------------------ Ни одно число здесь не назначено эт…
+- L135 `GATE = 'hi'`
+- L136 `RULER = 'safe'`
+- L137 `DEPOSIT = 10000.0`
+- L138 `SEED = 20260916`
+- L139 `SEEDS = 200`
+- L140 `SAMPLE_MULT = 3`
+- L141 `WIN_SHARE = 0.95`
+- L142 `DAY_SHARE = 1.0 / 3.0`
+- L143 `HOLD_H = R.HOLD_H`
+- L144 `MEM_LIMIT_MB = D10.MEM_LIMIT_MB`
+- L147 `TAIL_EXITS = ('пол', 'ликвидация')` — Хвостовой исход позиции: пол капитуляции и ликвидация. Тейк и срок хвостом не являются — это выход по правилу.
+- L149 `SUB_BANDS = (('RR < 1', None, 1.0), ('RR 1…1.5', 1.…` — Подполосы RR — ДИАГНОСТИКА, ячейки вердикта в них нет.
+- L156 `LEV_BANDS = (('ровно 1×', 1.0, 1.0, False), ('выше …` — Полосы плеча — приём портрета хвоста (`DCA-tail-screen.md`): различие, исчезающее внутри полос плеча, есть пе…
+- L160 `LOAD_CAPS = (0.25, 0.5)` — Загрузка, ограниченная долей депозита, — ДИАГНОСТИКА без выбора ячейки.
+- L163 `BASE_WORST_DAY = '2026-08-12'` — Сутки базы, названные заявкой отдельной строкой: худший день базы (−25.11 $ при 28 позициях, `research/dca_pa…
+- L166 `CAL_SHIFT = -0.05`
+- L167 `CAL_SHIFT_MIN = 0.95`
+- L172 `CHECK_N = 200` — Сколько гейтованных решений реплеить СВОИМ проходом, чтобы сверить его с живым кэшем бит в бит. Число объявле…
+- L177 `MEM_RATIO = 10.0` — Во сколько раз разобранная в память запись дороже своей строки в кэше. Измерено на живом кэше книг (24.9 МБ н…
+- L180 `estimate(n_recs, path=None)` — Чего будет стоить реплей: память и время, названные ДО счёта.
+- L212 `pair_of(ruler)` — Пара реплея линейки: (правило, параметр, сторона) — ключ кэша.
+- L219 `band_bounds(band)` — Границы полосы RR. Читаются у оси `rr_band` пространства фабрики.
+- L233 `in_band(rr, band)` — Отношение попадает в полосу? `None` — НЕ попадает ни в какую.
+- L252 `leg_keep(band, side='long', edge_bp=None)` — Предикат отбора ног: край книги плюс полоса. Одна формула на все полосы — гейт книг есть частный случай `band…
+- L266 `pick_legs(legs, band, side='long', edge_bp=None)` — Ноги полосы из уже прочитанного списка.
+- L274 `stream_legs(paths, keep=None, log=print, limit_hours=None)` — Ноги журнала листов ПОТОКОМ, геометрией `tournament._leg`.
+- L327 `_median(xs)`
+- L335 `day_of(ts)`
+- L339 `supply_table(legs, edge_bp=None)` — Подполосы RR по суткам и рукам — шаг 0, печатается ПЕРВЫМ.
+- L386 `measurable(table, days_total)` — Измеримость шага 0: решений полосы меньше чем в трети суток — судить нечего, и вердикт этот выводится из ЧИСЛ…
+- L408 `declared_sample(legs, n_gate, mult=SAMPLE_MULT, seed=SEED)` — Объявленная выборка полосы: `mult × n_gate` ног, равномерно, зерно номером. Полоса меньше выборки — берётся ц…
+- L428 `cache_path(band=BAND)` — Кэш СЕСТРЫ — свой файл. Живой кэш книг не трогается ни при каком исходе: он описывает другой состав, и подпис…
+- L434 `cache_sig(band=BAND)` — Подпись кэша сестры: подпись живого реплея плюс ПОЛОСА.
+- L445 `replay(legs, ruler=RULER, src=None, log=print, path=None, band=…` — Исходы решений — ТЕМ ЖЕ проходом, что у живых длинных книг.
+- L490 `live_recs(ruler=RULER, log=print)` — Исходы ГЕЙТОВАННЫХ решений — из живого кэша книг, только чтение.
+- L500 `cache_check(mine, live)` — Реплей гейтованных ног обязан воспроизводить живой кэш БИТ В БИТ.
+- L559 `rows_from(taken, deposit, ruler, now=None)` — Записи реплея с выданной маржой → строки журнальной формы.
+- L590 `net(rows, ctx, log=print)` — Издержки — в КАЖДУЮ сделку, тем же ядром, что у живых книг.
+- L598 `net_frac(rows)` — Нетто-исход решения в долях маржи — только у ПОЛНОСТЬЮ измеренных.
+- L617 `decision_rows(recs, ctx, ruler=RULER, deposit=DEPOSIT, log=prin…` — Псевдо-строки «одно решение — один билет»: кассы здесь нет вовсе.
+- L633 `outcome_stats(rows, name='')` — Мера исходов набора решений: медиана и среднее нетто в долях маржи, доля хвостовых исходов, глубина лестницы.
+- L664 `_med_tail(rows)` — Пара «медиана нетто, доля хвоста» для одного набора строк.
+- L673 `seed_test(gate_rows, band_rows, seeds=SEEDS, seed0=SEED)` — Гейт против СЛУЧАЙНОЙ выборки того же размера из «полоса ∪ гейт».
+- L719 `gate_verdict(st, win=WIN_SHARE)` — Вердикт шага 1б — ВЫВЕДЕН из чисел, а не поставлен рядом с ними.
+- L737 `lev_split(gate_rows, band_rows, seeds=SEEDS, seed0=SEED)` — То же сравнение ВНУТРИ полос плеча: различие, исчезающее внутри полос, есть переодетое плечо.
+- L763 `mech_check(gate_st, band_st)` — Проверка НАЗВАННОГО механизма: у полосы доливов обязано быть больше.
+- L789 `calibration(gate_rows, seeds=SEEDS, seed0=SEED, mult=SAMPLE_MUL…` — Найти подсаженное и промолчать на копии. Литералы объявлены выше.
+- L836 `book_rows(recs, ruler=RULER, deposit=DEPOSIT, ctx=None, log=pri…` — Книга на записи: касса и колонки — кодом ЖИВЫХ длинных книг.
+- L852 `book_stats(rows, deposit=DEPOSIT)` — Форма книги — `run_paper._stats`, та же, которой судят живые.
+- L857 `daily_usd(rows)` — День ВЫХОДА → нетто в долларах. День — когда деньги стали известны.
+- L866 `daily_no(rows)` — Тот же ряд, но ключом НОМЕР суток: правило вылета пула и связь книг считаются по номерам, а не по датам строк…
+- L876 `ratio(st)` — Доход на просадку книги. Просадки нет — величина НЕ СУЩЕСТВУЕТ, и прочерк здесь честнее бесконечности.
+- L887 `book_seed_test(sister_rows, base_rows, deposit=DEPOSIT, seeds=S…` — База против СЛУЧАЙНЫХ подмножеств решений сестры того же числа.
+- L928 `cap_rows(recs, ruler=RULER, deposit=DEPOSIT, pot=None)` — Книга ТОЙ ЖЕ кассой (`run_d6.ration`) при заданном размере кассы.
+- L951 `load_caps(recs, ruler=RULER, deposit=DEPOSIT, caps=LOAD_CAPS, c…` — Форма при загрузке, ограниченной долей депозита — ДИАГНОСТИКА.
+- L978 `shape(rows, deposit=DEPOSIT, declared_at=None)` — Правило вылета пула по форме — `pool.shape_why`, оно же у кандидатов.
+- L1008 `run(limit=None, seeds=SEEDS, steps=(0, 1, 2, 3), src=None, log=…`
+- L1235 `_p(x, d=2)`
+- L1239 `_u(x)`
+- L1243 `_n(x)`
+- L1247 `_st_row(name, st)`
+- L1258 `report(s)`
+- L1462 `publish(name)`
+- L1467 `main(argv=None)`
+
 ## research/mech_258a860c/budget_book.py · 1516 строк
 
 Механика 258a860c — БЮДЖЕТ МАРЖИ короткой книги h24.

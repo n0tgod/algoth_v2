@@ -1,108 +1,157 @@
 {
-  "built": true,
-  "module": "research/mech_dc3b6317/fence_floor.py",
-  "tests": "research/mech_dc3b6317/test_fence_floor.py",
-  "touched": [
-    "research/mech_dc3b6317/RUNBOOK.md",
-    "research/mech_dc3b6317/controls_check.py"
-  ],
-  "controls": [
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    return v / 1e4 * float(mult)",
-     "new": "    return v * float(mult)",
-     "expect": "test_units_of_the_range_floor"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if v != v or v <= 0:",
-     "new": "    if v is None:",
-     "expect": "test_units_of_the_range_floor"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    d = abs(float(entry) - float(rungs_full[-1])) / float(entry)",
-     "new": "    d = float(rungs_full[-1]) / float(entry)",
-     "expect": "test_floor_equals_the_depth_ruler"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if float(lev_floor) < float(lev_ruler) - 1e-9:",
-     "new": "    if False:",
-     "expect": "test_floor_binds_only_below_the_ruler"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "        if gap(mid) >= rf:",
-     "new": "        if gap(mid) < rf:",
-     "expect": "test_two_readings_of_the_claim_are_both_counted"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "            if r.get(\"w_sum\") is not None and r[\"w_sum\"] < 1.0 - 1e-9]",
-     "new": "            if r.get(\"w_sum\") is not None and False]",
-     "expect": "test_partial_note_is_derived_from_the_numbers"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    return row[\"lev_after_flat\"] if variant == \"flat\" else row[\"lev_after\"]",
-     "new": "    return row[\"lev_after\"]",
-     "expect": "test_declared_reading_decides_what_is_judged"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if lev <= 0:\n        return None, \"пол недостижим\"",
-     "new": "    if lev < 0:\n        return None, \"пол недостижим\"",
-     "expect": "test_floor_refuses_instead_of_guessing"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    seg = win[:now_i + 1]",
-     "new": "    seg = win",
-     "expect": "test_segment_is_the_same_one_window_stats_uses"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    hold = win[now_i:]",
-     "new": "    hold = win[:now_i + 1]",
-     "expect": "test_future_does_not_touch_the_floor_but_does_touch_the_ceiling"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    return (a + float(eps_bp) / 1e4) / (1.0 - f)",
-     "new": "    return (a + float(eps_bp) / 1e4)",
-     "expect": "test_the_ceiling_reaches_neither_the_floor_nor_liquidation"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "        D3.window_stats, D5.fence_leverage, D10.one_position = ws, fl, op",
-     "new": "        pass",
-     "expect": "test_patch_is_put_back_in_any_outcome"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "            if not _same(b.get(\"entry\"), entry) or \\\n                    not _same(b.get(\"sigma_bp\"), sigma_bp):",
-     "new": "            if False:",
-     "expect": "test_foreign_window_is_a_refusal_not_a_stale_floor"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "            if v > 1.0 + 1e-12:",
-     "new": "            if False:",
-     "expect": "test_uniform_control_may_only_reduce_leverage"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "            return max(1.0, lev0 * v)",
-     "new": "            return lev0",
-     "expect": "test_plan_gives_each_variant_its_own_leverage"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    pool = [r for r in rows if float(r[\"lev\"]) > 1.0 + 1e-9]",
-     "new": "    pool = list(rows)",
-     "expect": "test_seed_control_keeps_the_size_and_the_multiset"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if mean_at(hi) <= want + 1e-12:",
-     "new": "    if True:",
-     "expect": "test_uniform_controls_hit_the_target_mean_leverage"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    return (float(ba) <= float(bb)) and (float(ra) >= float(rb))",
-     "new": "    return (float(ba) <= float(bb)) or (float(ra) >= float(rb))",
-     "expect": "test_better_needs_both_numbers_and_both_directions"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if ratio >= DEFECT_RATIO:",
-     "new": "    if False:",
-     "expect": "test_sigma_verdict_is_derived_from_the_number"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if lev25 is not None and lev25 >= INERT_LEV:",
-     "new": "    if False:",
-     "expect": "test_inertness_verdict_is_derived_from_the_numbers"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if float(wo3) <= 0:",
-     "new": "    if False:",
-     "expect": "test_shape_verdict_is_derived_from_the_numbers"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if not measured:",
-     "new": "    if False:",
-     "expect": "test_seed_verdict_counts_the_share_of_seeds"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "                    and int(r.get(\"dep\", 0)) == int(dep)]",
-     "new": "                    and True]",
-     "expect": "test_book_stats_walks_the_same_road_as_the_axis_measures"},
-    {"file": "research/mech_dc3b6317/fence_floor.py",
-     "old": "    if not rows:",
-     "new": "    if False:",
-     "expect": "test_empty_result_is_a_refusal_not_a_report_with_dashes"}
-  ],
-  "notes": "ПОСТРОЕНО ЦЕЛИКОМ: правило (пол запаса из размаха суток), оба прохода по барам, все шесть убийц по порядку, касса и форма живым кодом, отчёт с публикацией самим прогоном. 27 проверок, 24 кусающихся контроля (проверено той же машиной, что приёмка: research/mech_dc3b6317/controls_check.py). Второй копии ядра нет: плечо выводит ladder.max_leverage, исход считает ladder.simulate_dca, позицию собирает run_d10.one_position, правила книги применяет run_paper (возраст -> охрана рынком -> касса), издержки costs.apply_to_rows, форму factory/stability.stats, правило вылета factory/pool.shape_why, связь книг factory/ceiling.pair_corr. Пол входит в счёт ПЕРЕХВАТОМ этих же функций (bound: window_stats/fence_leverage/one_position) и снимается в любом исходе; живой кэш dca_paper/cache/recs-short.jsonl не трогается вовсе, своего кэша замер не ведёт, правил книг не меняет. Множитель размаха объявлен в коде до прогона и равен 1.0; 0.5 и 2.0 — диагностика. | НЕПОНЯТНОЕ МЕСТО ЗАДАНИЯ НЕ ВЫБРАНО МОЛЧА, а построено дважды и названо. Задание говорит «пол как параметр fence_leverage», то есть на ПОЛНОСТЬЮ НАБРАННОЙ лестнице; сама заявка говорит «расстояние вход -> ликвидация у КАЖДОЙ позиции», а книги h24 торгуют ячейку fence:none:t2 и доливов не делают вовсе. Посчитаны обе (--verdict fence|flat, умолчание fence — буквально по заданию), вторая печатается диагностикой без вердикта: выбрать её после просмотра чисел было бы ошибкой R5. Решение о трактовке — за предлагающим и владельцем, а не за строителем. | ЧТО НАШЁЛ ШАГ 0 НА СМОУКЕ (80 решений, двое суток, контейнер сборки — числа не вердикт, дорога проверена): полосу 25× делает НЕ σ. Отношение размах/σ_сут у неё 1.9 при 1.6 у случайного блуждания, то есть σ честна, и предсказанного заявкой дефекта меры (>=10) нет. Зато у 9 из 9 позиций полосы лестница НЕПОЛНАЯ: рунгов 2 из 4, сумма весов 0.5, и ladder.fully_loaded делит весь нотионал на количество, набранное половиной весов, — средняя цена «полностью набранной» лестницы выходит в 2.02 раза выше входа, а запас до ликвидации, из которого забор выводит плечо, равен 107 % цены. У позиции БЕЗ ДОЛИВОВ, которой книга торгует на самом деле, запас на том же плече 2.0 % при размахе суток 23 %. То есть забор выдаёт 25× шорту, считая запас в полсотни раз больший, чем у позиции есть. Это третье объяснение, которого заявка не называла, и класс его тот же, что «не измерено != ноль»: правило считает не ту позицию, которой торгуют. Печатается первой таблицей отчёта (колонки «запас забора» и «запас без доливов», рунги, сумма весов) и отдельной строкой partial_note, фраза выводится из чисел. Следствие для заявки: в трактовке fence пол этих позиций не связывает ПО ПОСТРОЕНИЮ (на смоуке тронуто 0 из 49, шаг 1 закрыл механику), в трактовке flat связывает (среднее плечо 9.98× -> 3.17×). Починка самого забора — роль fix и решение владельца о версии правил живых книг; заявка остаётся правилом ПОВЕРХ починенного забора, а не заменой починки. | ЧЕГО НЕ СДЕЛАНО. Прогона нет: в контейнере сборки записи стакана почти нет (нашлось 22 символа за двое суток из 38), и судить замер здесь нельзя — нужен прогон через очередь на сервере (run research/mech_dc3b6317/fence_floor.py, смоук --limit 200 --seeds 20; RUNBOOK.md). Новой просьбы владельцу не подаю: заявка прямо говорит, что открытая просьба от 12.09 о том, кто прогоняет построенные механики, покрывает и эту. Шаг 6 (вперёд) считается по ПЕРЕСЧЁТУ и вердикта не несёт — суток форварда у книги-сестры нет вовсе, и отчёт говорит это строкой. Контроль зёрен строится только под ОБЪЯВЛЕННУЮ трактовку: судить вторую можно лишь объявив её заранее ключом --verdict. | МЕЛОЧИ. Отчёт публикует себя сам (tools/publish.sh); предел памяти short_grid.MEM_LIMIT_MB, прогон снимает себя сам и печатает RSS строчно; каталог артефактов создаётся до счёта. В touched названы RUNBOOK.md и controls_check.py — это мои же файлы в моём каталоге, но без объявления publish_build.py их не опубликует, и работа осталась бы на сервере. Черновики _uniq.py и _dbg_scan.py оставлены в каталоге с докстроками «прогоном не является»; в отчёте не объявлены и не публикуются. Смоук-артефакт FLOOR-range-smoke.* успел попасть в коммит b44b2e0e чужой публикацией (publish.sh кладёт research/*/out целиком) — перезаписан пустышкой с причиной, а не удалён: удалений publish.sh не пишет, и пропавшее имя читалось бы как «прогона не было»."
+ "built": true,
+ "module": "research/mech_1d5e7287/rr_supply.py",
+ "tests": "research/mech_1d5e7287/test_rr_supply.py",
+ "controls": [
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    return LB.RR_BAND[band]",
+   "new": "    return (0.0, 999.0)",
+   "expect": "ПРОВАЛ: полоса-из-оси"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    if hi is not None and float(rr) > float(hi):\n        return False",
+   "new": "    if hi is not None and float(rr) >= float(hi):\n        return False",
+   "expect": "ПРОВАЛ: границы-полосы-включительно"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    if rr is None:\n        return False\n    lo, hi = band_bounds(band)",
+   "new": "    if rr is None:\n        return True\n    lo, hi = band_bounds(band)",
+   "expect": "ПРОВАЛ: не-измерено-не-фильтр"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "        if abs(float(g[\"fwd\"])) < edge:\n            return False\n        return in_band(g.get(\"rr\"), band)",
+   "new": "        if abs(float(g[\"fwd\"])) < -1.0:\n            return False\n        return in_band(g.get(\"rr\"), band)",
+   "expect": "ПРОВАЛ: край-режет-обе-полосы"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    out.sort(key=lambda g: (g[\"at\"], g[\"arm\"],\n                            -abs(g[\"fz\"]) if g[\"fz\"] is not None else 0,\n                            g[\"sym\"]))",
+   "new": "    out.sort(key=lambda g: (g[\"sym\"], g[\"at\"]))",
+   "expect": "ПРОВАЛ: читатель-тот-же"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    idx = sorted(random.Random(int(seed)).sample(range(len(legs)), want))",
+   "new": "    idx = sorted(random.Random(int(seed) + 1).sample(range(len(legs)), want))",
+   "expect": "ПРОВАЛ: выборка-объявлена"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "            \"usd\": round(float(r[\"pnl\"]) * float(margin), 4),",
+   "new": "            \"usd\": round(float(r[\"pnl\"]) * float(margin) * 1.01, 4),",
+   "expect": "ПРОВАЛ: сборка-как-у-книг"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "HOLD_H = R.HOLD_H              # срок позиции — у правил книги, не свой",
+   "new": "HOLD_H = R.HOLD_H * 8          # срок позиции — у правил книги, не свой",
+   "expect": "ПРОВАЛ: будущее-не-влияет"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "CAL_FLAT_LO, CAL_FLAT_HI = 0.30, 0.70     # копия гейта: доля зёрен «около ½»",
+   "new": "CAL_FLAT_LO, CAL_FLAT_HI = 0.0, 1.0       # копия гейта: доля зёрен «около ½»",
+   "expect": "ПРОВАЛ: литералы-объявлены"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "CAL_SHIFT = -0.05                          # сдвиг исходов вниз, доли маржи",
+   "new": "CAL_SHIFT = -0.0                           # сдвиг исходов вниз, доли маржи",
+   "expect": "ПРОВАЛ: калибровка-ловит-сдвиг"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "        med_win += (1.0 if g_med > m else (0.5 if g_med == m else 0.0))",
+   "new": "        med_win += 0.0",
+   "expect": "ПРОВАЛ: калибровка-молчит-на-копии"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    k = len(gate_rows)\n    if k < 1 or len(union) <= k:",
+   "new": "    k = max(1, len(gate_rows) // 2)\n    if k < 1 or len(union) <= k:",
+   "expect": "ПРОВАЛ: выборка-того-же-размера"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    if mw >= win or tw >= win:",
+   "new": "    if mw >= 2.0 or tw >= 2.0:",
+   "expect": "ПРОВАЛ: вердикт-из-числа"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    if rows and not vals:\n        raise SystemExit(",
+   "new": "    if False and not vals:\n        raise SystemExit(",
+   "expect": "ПРОВАЛ: отказ-вместо-пустоты"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "        if r.get(\"costs_why\") is not None or m <= 0:",
+   "new": "        if m <= 0:",
+   "expect": "ПРОВАЛ: брутто-не-в-нетто"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "TAIL_EXITS = (\"пол\", \"ликвидация\")",
+   "new": "TAIL_EXITS = (\"пол\",)",
+   "expect": "ПРОВАЛ: хвост-это-пол-и-ликвидация"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    if dd >= -1e-12:\n        return None",
+   "new": "    if dd >= -1e-12:\n        return 0.0",
+   "expect": "ПРОВАЛ: прочерк-а-не-ноль"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    ok = with_band >= need",
+   "new": "    ok = True",
+   "expect": "ПРОВАЛ: измеримость-из-числа"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "                        f\"против {a:.1%} у гейта (+{d:.1%})\" if d > 0 else",
+   "new": "                        f\"против {a:.1%} у гейта (+{d:.1%})\" if d > -9 else",
+   "expect": "ПРОВАЛ: механизм-по-доливам"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    why = PL.shape_why(dl, declared_at)",
+   "new": "    why = None",
+   "expect": "ПРОВАЛ: форма-правилом-пула"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    return os.path.join(OUT, f\"recs-{band}.jsonl\")",
+   "new": "    return RP.cache_path()",
+   "expect": "ПРОВАЛ: свой-кэш-живое-не-трогаем"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "        if r.get(\"tail\") or o.get(\"tail\"):\n            tailish += 1\n            continue",
+   "new": "        if False:\n            tailish += 1\n            continue",
+   "expect": "ПРОВАЛ: сверка-ядра-кусается"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "                if lo is not None and (lv <= lo + 1e-9 if strict\n                                       else lv < lo - 1e-9):",
+   "new": "                if lo is not None and lv < lo - 1e-9:",
+   "expect": "ПРОВАЛ: полосы-плеча-дизъюнктны"
+  },
+  {
+   "file": "research/mech_1d5e7287/rr_supply.py",
+   "old": "    keep, _skip = (D6.one_per_name(list(recs)) if R.ONE_PER_NAME",
+   "new": "    keep, _skip = ((list(recs), 0) if R.ONE_PER_NAME",
+   "expect": "ПРОВАЛ: одна-на-имя"
+  }
+ ],
+ "touched": [
+  "research/mech_1d5e7287/RUNBOOK.md",
+  "research/mech_1d5e7287/controls_check.py",
+  "research/mech_1d5e7287/.gitignore"
+ ],
+ "notes": "ПОСТРОЕНО: research/mech_1d5e7287/rr_supply.py — механика целиком, четыре шага одним прогоном и по отдельности (--steps). Шаг 0 (подача) печатается ПЕРВЫМ и читается без заявки; шаг 1 — решение к решению с 200 зёрнами; шаг 2 — книга-сестра на кассе живых длинных книг; шаг 3 — форма правилом вылета пула. Проверок 26, негативных контролей 24 — все кусаются (controls_check.py, та же машина, что приёмка).\n\nВТОРОЙ КОПИИ ЯДРА НЕТ, и каждое место закрыто проверкой, а не прозой: полоса — параметр того же фильтра ног (границы у live_books.RR_BAND, край у run_d2.MIN_EDGE_BP; тест требует, чтобы полоса `hi` дала РОВНО те же ноги, что живой run_d6.gated_legs); геометрия ноги — tournament._leg; исход — run_d6.collect_recs → ladder.simulate_dca, правила v6 из dca_paper/rules.py; касса и колонки — run_paper.build_rows и run_paper._stats; издержки — costs.apply_to_rows; форма — factory/stability.stats и pool.shape_why; связь книг — ceiling.pair_corr.\n\nОДНО ОТСТУПЛЕНИЕ ОТ ЗАДАНИЯ, названное прямо. Задание описывало шаг 2 как «реплеится только решение, которое касса взяла». Это неисполнимо без второй кассы: чтобы решить, брать ли решение, касса обязана знать его плечо и момент выхода, то есть уже посчитанный исход того самого решения. Сделано иначе: реплеится ВСЯ полоса тем же проходом, что у живых книг, а цена прогона называется ЧИСЛОМ до реплея (оценка памяти из измеренной стоимости записи) — прогон снимает себя сам, если перейдён предел. Чтение журнала листов при этом сделано потоковым: канонический legs_from_sheets материализует 1.26 млн ног и стоит 1033 МБ RSS при пределе прогона 1200 МБ, потоковый отбор той же функцией — 107 МБ; тождество двух читателей проверено тестом, поле id потоковый не проставляет намеренно.\n\nЧЕГО ПОСТРОЙКА НЕ ДЕЛАЕТ. Книга-сестра НЕ заведена в живом реестре (rules.RULER_ORDER) — это правка живого цикла, роль fix, и заявка сама отправляет её туда же, куда две уже открытые просьбы в asks.jsonl. Сестра считается как линейка `safe` на решениях полосы: своей геометрии у неё нет, различие ровно одно — подача. Живой журнал книг и живой кэш реплея прогон не пишет (кэш сестры — свой файл со своей подписью), и это закреплено проверкой по времени правки файлов.\n\nЦЕНА ПРОГОНА, измеренная здесь 2026-09-16. Шаг 0: 12 с, 107 МБ. Подача — лонгов с краем ≥ 33 б.п. 90 146, полоса (RR ≤ 1.5) 72 935 на 764 именах за 40 суток, гейт (RR ≥ 2) 8 772 на 635 именах за 39 суток, отношение 8.3×. Объявленная выборка шага 1 — 3 × 8 772 = 26 316 ног. Шаг 2 на ВСЕЙ полосе упирается в память: разобранная запись стоит ≈ ×10 своей строки кэша (1 670 Б), то есть ≈ 1.2 ГБ при пределе 1 200 МБ. Поэтому у прогона есть --mem-limit (поднимать осознанно и в тихий час: рядом сборщик 1.5 ГБ и часовой цикл до 3.3 ГБ) и --band-limit; любой урезанный прогон помечает себя в отчёте словами «ячейка вердикта НЕ заполнена». Разумная дорога очереди: сперва --steps 0,1 (выборка втрое меньше полосы), затем шаг 2 отдельным заданием.\n\nНАЙДЕНО ПРИ ПОСТРОЙКЕ, роль fix, предметом заявки не является: живой кэш реплея книг воспроизводим НЕ бит в бит, а с точностью до состава инкрементального прохода. Правило хвоста (dca_paper/tail.py) продолжает ленту серединой стакана после последнего бара ЗАПРОШЕННОГО окна, а окно символа задаёт набор ног, попавший в проход (run_d6.collect_recs группирует по символу уже после фильтра `only`). Сверка нашла позицию RUNEUSDT 2026-08-08: живой кэш даёт выход 1786479060, самостоятельный проход — 1786479120, деньги расходятся на 0.5 %. Класс «отказ, неотличимый от тишины»: расходятся не ядра, а окна, и по числам этого не видно. В модуле такие записи считаются отдельным числом и в сверку не идут; остальные 143 из 143 совпали бит в бит.\n\nВЕРДИКТА ЗДЕСЬ НЕТ. Смоук (--limit 400) прогнан только чтобы показать, что дорога работает от чтения журнала до отчёта; его числа помечены как незаполненная ячейка и в git не идут (.gitignore). Судить механику обязан полный прогон через очередь — по открытой с 12.09 просьбе владельца о том, кто прогоняет построенные механики.\n\nВ touched названы не правки чужого, а СВОИ файлы сверх модуля и тестов (runbook, самопроверка контролей, .gitignore кэша и смоука): иначе publish_build.py их не опубликует, а .gitignore обязан лечь в ветку раньше первого полного прогона — tools/publish.sh кладёт в историю весь research/*/out, и один кэш реплея уже замораживал канал публикации."
 }
