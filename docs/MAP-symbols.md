@@ -3428,6 +3428,91 @@ M2: каркас walk-forward — чистая математика без чт�
 - L561 `beat_share(base, vals)` — Доля значений контроля, которые ДОСТАЮТ до фильтра или бьют его.
 - L574 `transfer_verdict(rows, max_beat=MAX_BEAT, seeds=SEEDS)` — Вердикт переноса из чисел: убийца (3) заявки.
 
+## research/mech_193cbb87/controls_check.py · 36 строк
+
+Проверить СВОИ негативные контроли той же машиной, что приёмка.
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L20 `OUT = os.path.join(ROOT, 'research', 'factory…`
+- L23 `main()`
+
+## research/mech_193cbb87/name_pause.py · 1460 строк
+
+Механика 193cbb87 — ПАУЗА ПО ИМЕНИ после хвостового выхода.
+
+- L80 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L81 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L82 `OUT = os.path.join(HERE, 'out')`
+- L100 `MECH = '193cbb87'`
+- L101 `ART = 'PAUSE-name'`
+- L102 `HOUR = 3600.0`
+- L105 `BOOK = 'safe_h'` — --- объявлено ЗАДАНИЕМ, а не этим файлом --------------------------------
+- L106 `DEP = 10000.0`
+- L107 `BOOKS = tuple(R.H24_ORDER)`
+- L108 `DEPS = tuple((float(d) for d in R.DEPOSITS))`
+- L109 `PAUSE_GRID_H = (6.0, 12.0, 24.0)`
+- L112 `VERDICT_P_H = PAUSE_GRID_H[len(PAUSE_GRID_H) // 2]` — Ячейка вердикта — СЕРЕДИНА оси, как у охраны рынком (1/2/3 % → 2 %). Выводится из оси, а не стоит числом: лит…
+- L114 `TRIGGER_EXITS = tuple(TS.TAIL_EXITS)` — Исходы-триггеры берутся у скрина хвоста, где объявлены ДО просмотра.
+- L119 `TAKE_EXIT = 'тейк'` — Плацебо: та же пауза после ПРИБЫЛЬНОГО выхода. Метка исхода — та, которой её пишет ядро лестницы (`dca_ladder…
+- L120 `PLACEBO_EXITS = (TAKE_EXIT,)`
+- L122 `MARKET_EXIT = R.GUARD_EXIT` — Вариант триггера с добавленным исходом охраны — диагностика.
+- L123 `SEEDS = AG.SEEDS`
+- L124 `PERMS = TS.PERMS`
+- L125 `HIGH_LEV = TS.HIGH_LEV`
+- L131 `MIN_REPEATS = 20` — Убийца шага 0: правило инертно — судить нечего. Задание объявило его на САМОЙ ШИРОКОЙ ячейке оси («вход не по…
+- L132 `MIN_SHARE = 0.03`
+- L133 `KILL_P_H = max(PAUSE_GRID_H)`
+- L134 `KILL_MODE = 'tail'`
+- L136 `BEAT_MAX = 0.05` — Убийца шагов 1а–1в: случайное урезание не хуже правила в ≥ 5 % зёрен.
+- L138 `PERM_MAX = 0.05` — Убийца шага 1г: перестановки дают такой же разрыв в ≥ 5 % случаев.
+- L140 `NAMED_DAY = '2026-09-12'` — Худший день базы — назван заданием, деньги за него идут отдельной строкой.
+- L142 `PLANT_PNL = -0.9` — Калибровка: подсаженным повторам переписывается исход.
+- L144 `MAX_STEPS = 2000` — Предел шагов состава: больше — это не пауза, а другая книга.
+- L147 `CTL_FIELDS = ('usd_wo_top3d', 'ratio', 'day_worst')` — Величины спора — порядок показа; первая и есть та, по которой судят.
+- L148 `MAIN_FIELD = 'usd_wo_top3d'`
+- L149 `FIELD_TITLE = {'usd_wo_top3d': '$ без 3 лучших дней',…`
+- L154 `_quiet(*_a)`
+- L160 `closed_of(recs)` — Закрытые записи: у открытой позиции исхода нет вовсе.
+- L170 `taken_of(rows, book, dep)` — Позиции, которые книга ВЗЯЛА на этом депозите — строками кассы.
+- L184 `blocked_of(recs, taken, pause_h, exits=TRIGGER_EXITS, mode='pre…` — Записи, которых книга НЕ берёт: пауза после своего хвостового выхода.
+- L238 `prepare(packed, launch, books=BOOKS, now=None, mkt=None, log=_q…` — Правила счёта ДО кассы: возраст имени, затем охрана рынком.
+- L262 `only(dep)` — Касса считается на ОДНОМ депозите — ради скорости, не ради чисел.
+- L280 `sister(packed, dep, pause_h, books=BOOKS, exits=TRIGGER_EXITS, …` — Состав книги с паузой: записи снимаются ПО ОДНОЙ, в порядке времени.
+- L335 `form_of(rows, dep, ctx, book, cells=None)` — Форма книги на строках кассы: деньги НЕТТО, концентрация, дни.
+- L394 `agrees_with_cell(packed, ctx, launch, dep=DEP, book=BOOK, now=N…` — Сверка с ячейкой семейства: те же деньги теми же правилами.
+- L422 `cut_draws(packed, pool, sizes, dep, ctx, books=BOOKS, seeds=SEE…` — Случайные урезания ТОГО ЖЕ размера — по каждой книге своё.
+- L453 `_median_of(draws, field)`
+- L459 `beats(draws, form, fields=CTL_FIELDS)` — Доля зёрен, где СЛУЧАЙНОЕ урезание не хуже правила — по каждой величине спора. Считается общей мерой (`agree_…
+- L470 `verdict_of(share, beat_max=BEAT_MAX)` — Фраза вердикта ВЫВОДИТСЯ из доли зёрен, а не стоит рядом с ней.
+- L485 `repeats_of(taken, grid=PAUSE_GRID_H, exits=TRIGGER_EXITS)` — Шаг 0: сколько повторов у книги, чего они стоят и где лежат.
+- L533 `step0_killer(rep, p=KILL_P_H, mode=KILL_MODE, min_n=MIN_REPEATS…` — Убийца шага 0: правило инертно — судить нечего, заявка закрыта.
+- L558 `lev_perm(taken, rep_keys, perms=PERMS, high=HIGH_LEV, exits=TRI…` — Доля хвостовых исходов у повторов против остальных В ПОЛОСЕ ПЛЕЧА.
+- L593 `shuffled(packed, books=BOOKS, seed=101, exits=TRIGGER_EXITS)` — Копия записей с ПЕРЕМЕШАННЫМИ метками исходов.
+- L617 `planted(packed, keys, pnl=PLANT_PNL, books=BOOKS)` — Копия записей, где ПОВТОРАМ переписан исход на `pnl` долей маржи.
+- L646 `cache_locked()` — Кэш реплея только ЧИТАЕТСЯ: писатель подменяется отказом.
+- L669 `base_of(packed, dep, ctx, books=BOOKS, now=None, log=_quiet)` — База: касса на подготовленных записях и форма каждой книги.
+- L679 `branch(packed, base, dep, ctx, pause_h, books=BOOKS, exits=TRIG…` — Одна ветка: состав с паузой, его форма и контроль того же размера.
+- L714 `run(seeds=SEEDS, perms=PERMS, dep=DEP, deps=DEPS, books=BOOKS, …` — Механика целиком, в объявленном заданием порядке.
+- L868 `killer_of(control, book, title, beat_max=BEAT_MAX, field=MAIN_F…` — Убийца шагов 1а–1б: случайное урезание не хуже правила.
+- L890 `placebo_killer(s, book, beat_max=BEAT_MAX, field=MAIN_FIELD)` — Убийца 1в: плацебо (пауза после ТЕЙКА) даёт то же или лучше.
+- L927 `lev_killer(lev, perm_max=PERM_MAX)` — Убийца 1г: разрыв принадлежит оси плеча.
+- L944 `ceiling(packed, base, dep, ctx, books=BOOKS, seeds=SEEDS, p=VER…` — Шаг 1а: потолок с ИДЕАЛЬНЫМ ЗНАНИЕМ БУДУЩЕГО.
+- L982 `calibrate(packed, base, dep, ctx, books=BOOKS, seeds=SEEDS, now…` — Калибровочная пара: найти подсаженное и промолчать на шуме.
+- L1055 `forward_of(s, now=None)` — Шаг 3: правило вылета пула и то, чего пока не измерить.
+- L1088 `overall(s)` — Итог механики — из того, какой убийца сработал ПЕРВЫМ.
+- L1106 `_u(x, d=2)`
+- L1110 `_p(x, d=1)`
+- L1114 `_s(x, d=1)` — Доля без знака: доли, где знак бессмыслен (зелёные, доля зёрен).
+- L1119 `_r(x)`
+- L1123 `_n(x)`
+- L1127 `_share_cell(c)`
+- L1133 `FORM_HEAD = '| ветка | сделок | взято кассой | Σ $ …`
+- L1137 `FORM_SEP = '|---|--:|--:|--:|--:|--:|--:|--:|--:|-…`
+- L1141 `form_row(title, f)` — Строка формы — обязательные колонки заявки, все в одном месте.
+- L1160 `report(s)`
+- L1421 `main(argv=None)`
+
 ## research/mech_1d5e7287/controls_check.py · 36 строк
 
 Проверить СВОИ негативные контроли той же машиной, что приёмка.

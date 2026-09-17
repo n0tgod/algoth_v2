@@ -3,99 +3,148 @@
   "module": "research/mech_193cbb87/name_pause.py",
   "tests": "research/mech_193cbb87/test_name_pause.py",
   "controls": [
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        if ts is None or float(ts) > at:",
-     "new": "        if ts is None:",
-     "expect": "ПРОВАЛ не_заглядывает_в_будущее"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        if not (gap < float(pause_h) * HOUR):",
-     "new": "        if not (gap <= float(pause_h) * HOUR):",
-     "expect": "ПРОВАЛ пауза_кончается_ровно_через_P_часов"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        if (ex or \"\") not in exits:",
-     "new": "        if False:",
-     "expect": "ПРОВАЛ срок_и_тейк_паузы_не_дают"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "            if mode == \"tail\" and (t.get(\"exit\") or \"\") not in exits:",
-     "new": "            if False:",
-     "expect": "ПРОВАЛ две_трактовки_триггера_различаются"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "                src = (closed_of(cur[bk]) if trigger == \"cache\"\n                       else taken_of(r_, bk, dep))",
-     "new": "                src = closed_of(cur[bk])",
-     "expect": "ПРОВАЛ триггер_только_взятая_позиция"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "                first = b[0]",
-     "new": "                first = b[-1]",
-     "expect": "ПРОВАЛ повторы_снимаются_по_порядку_времени"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "                if steps[bk] > max_steps:",
-     "new": "                if False:",
-     "expect": "ПРОВАЛ отказ_вместо_тишины_при_переполнении"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "    R.DEPOSITS = [float(dep)]",
-     "new": "    R.DEPOSITS = [float(dep) * 2.0]",
-     "expect": "ПРОВАЛ ускорение_сверяется_бит_в_бит"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        mine, cst = CO.apply_to_rows(mine, ctx)",
-     "new": "        cst = {\"error\": \"издержки не вычитались\"}",
-     "expect": "ПРОВАЛ издержки_вычитаются_в_каждой_сделке"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "                      and abs(float(a) - float(b)) <= 1e-9)}",
-     "new": "                      and True)}",
-     "expect": "ПРОВАЛ сверка_с_ячейкой_семейства_кусается"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "    cut_taken = {bk: [k for k in cut_keys[bk] if k in base_keys[bk]]",
-     "new": "    cut_taken = {bk: [k for k in cut_keys[bk]]",
-     "expect": "ПРОВАЛ размер_контроля_равен_вычеркнутым_взятым"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        sh, n = AG.beat_share(draws, (form or {}).get(f), f)",
-     "new": "        sh, n = AG.beat_share(draws, (form or {}).get(\"n\"), \"n\")",
-     "expect": "ПРОВАЛ спор_идёт_о_названной_величине"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "    return (\"правило бьёт случайное урезание того же размера\"\n            if float(share) < float(beat_max)\n            else \"правило неотличимо от случайного урезания того же размера\")",
-     "new": "    return \"правило бьёт случайное урезание того же размера\"",
-     "expect": "ПРОВАЛ вердикт_выводится_из_числа"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "    inert = (int(n) < int(min_n) or float(share) < float(min_share))",
-     "new": "    inert = (int(n) < int(min_n))",
-     "expect": "ПРОВАЛ шаг_0_закрывает_инертное_правило"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "                \"perm\": None, \"why\": \"в полосе плеча нет обеих групп\"}",
-     "new": "                \"perm\": 0.0, \"why\": \"в полосе плеча нет обеих групп\"}",
-     "expect": "ПРОВАЛ непосчитанное_идёт_прочерком"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        if g >= gap:",
-     "new": "        if g >= gap + 1.0:",
-     "expect": "ПРОВАЛ перестановка_меток_кусается"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        if not any(packed0.get(bk) for bk in books):",
-     "new": "        if False:",
-     "expect": "ПРОВАЛ пустота_не_выдаёт_себя_за_результат"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        if not base[\"taken\"].get(BOOK):",
-     "new": "        if False:",
-     "expect": "ПРОВАЛ книга_вердикта_без_позиций_есть_отказ"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "    S.write_cache = refuse",
-     "new": "    pass",
-     "expect": "ПРОВАЛ кэш_реплея_не_переписывается"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "VERDICT_P_H = PAUSE_GRID_H[len(PAUSE_GRID_H) // 2]",
-     "new": "VERDICT_P_H = 6.0",
-     "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "TRIGGER_EXITS = tuple(TS.TAIL_EXITS)",
-     "new": "TRIGGER_EXITS = (\"пол\", \"ликвидация\", \"срок\")",
-     "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "PLACEBO_EXITS = (TAKE_EXIT,)",
-     "new": "PLACEBO_EXITS = TRIGGER_EXITS",
-     "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"},
-    {"file": "research/mech_193cbb87/name_pause.py",
-     "old": "        placebo_why = (None if TAKE_EXIT in seen\n                       else f\"исхода «{TAKE_EXIT}» в книге нет вовсе\")",
-     "new": "        placebo_why = None",
-     "expect": "ПРОВАЛ метка_тейка_проверяется_на_данных"}
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        if ts is None or float(ts) > at:",
+      "new": "        if ts is None:",
+      "expect": "ПРОВАЛ не_заглядывает_в_будущее"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        if not (gap < float(pause_h) * HOUR):",
+      "new": "        if not (gap <= float(pause_h) * HOUR):",
+      "expect": "ПРОВАЛ пауза_кончается_ровно_через_P_часов"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        if (ex or \"\") not in exits:",
+      "new": "        if False:",
+      "expect": "ПРОВАЛ срок_и_тейк_паузы_не_дают"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "            if mode == \"tail\" and (t.get(\"exit\") or \"\") not in exits:",
+      "new": "            if False:",
+      "expect": "ПРОВАЛ две_трактовки_триггера_различаются"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "                src = (closed_of(cur[bk]) if trigger == \"cache\"\n                       else taken_of(r_, bk, dep))",
+      "new": "                src = closed_of(cur[bk])",
+      "expect": "ПРОВАЛ триггер_только_взятая_позиция"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "                first = b[0]",
+      "new": "                first = b[-1]",
+      "expect": "ПРОВАЛ повторы_снимаются_по_порядку_времени"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "                if steps[bk] > max_steps:",
+      "new": "                if False:",
+      "expect": "ПРОВАЛ отказ_вместо_тишины_при_переполнении"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "    R.DEPOSITS = [float(dep)]",
+      "new": "    R.DEPOSITS = [float(dep) * 2.0]",
+      "expect": "ПРОВАЛ ускорение_сверяется_бит_в_бит"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        mine, cst = CO.apply_to_rows(mine, ctx)",
+      "new": "        cst = {\"error\": \"издержки не вычитались\"}",
+      "expect": "ПРОВАЛ издержки_вычитаются_в_каждой_сделке"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "                      and abs(float(a) - float(b)) <= 1e-9)}",
+      "new": "                      and True)}",
+      "expect": "ПРОВАЛ сверка_с_ячейкой_семейства_кусается"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "    cut_taken = {bk: [k for k in cut_keys[bk] if k in base_keys[bk]]",
+      "new": "    cut_taken = {bk: [k for k in cut_keys[bk]]",
+      "expect": "ПРОВАЛ размер_контроля_равен_вычеркнутым_взятым"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        sh, n = AG.beat_share(draws, (form or {}).get(f), f)",
+      "new": "        sh, n = AG.beat_share(draws, (form or {}).get(\"n\"), \"n\")",
+      "expect": "ПРОВАЛ спор_идёт_о_названной_величине"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "    return (\"правило бьёт случайное урезание того же размера\"\n            if float(share) < float(beat_max)\n            else \"правило неотличимо от случайного урезания того же размера\")",
+      "new": "    return \"правило бьёт случайное урезание того же размера\"",
+      "expect": "ПРОВАЛ вердикт_выводится_из_числа"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "    inert = (int(n) < int(min_n) or float(share) < float(min_share))",
+      "new": "    inert = (int(n) < int(min_n))",
+      "expect": "ПРОВАЛ шаг_0_закрывает_инертное_правило"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "                \"perm\": None, \"why\": \"в полосе плеча нет обеих групп\"}",
+      "new": "                \"perm\": 0.0, \"why\": \"в полосе плеча нет обеих групп\"}",
+      "expect": "ПРОВАЛ непосчитанное_идёт_прочерком"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        if g >= gap:",
+      "new": "        if g >= gap + 1.0:",
+      "expect": "ПРОВАЛ перестановка_меток_кусается"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        if not any(packed0.get(bk) for bk in books):",
+      "new": "        if False:",
+      "expect": "ПРОВАЛ пустота_не_выдаёт_себя_за_результат"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        if not base[\"taken\"].get(BOOK):",
+      "new": "        if False:",
+      "expect": "ПРОВАЛ книга_вердикта_без_позиций_есть_отказ"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "    S.write_cache = refuse",
+      "new": "    pass",
+      "expect": "ПРОВАЛ кэш_реплея_не_переписывается"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "VERDICT_P_H = PAUSE_GRID_H[len(PAUSE_GRID_H) // 2]",
+      "new": "VERDICT_P_H = 6.0",
+      "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "TRIGGER_EXITS = tuple(TS.TAIL_EXITS)",
+      "new": "TRIGGER_EXITS = (\"пол\", \"ликвидация\", \"срок\")",
+      "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "PLACEBO_EXITS = (TAKE_EXIT,)",
+      "new": "PLACEBO_EXITS = TRIGGER_EXITS",
+      "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"
+    },
+    {
+      "file": "research/mech_193cbb87/name_pause.py",
+      "old": "        placebo_why = (None if TAKE_EXIT in seen\n                       else f\"исхода «{TAKE_EXIT}» в книге нет вовсе\")",
+      "new": "        placebo_why = None",
+      "expect": "ПРОВАЛ метка_тейка_проверяется_на_данных"
+    }
   ],
-  "touched": [],
-  "notes": "заполняется после прогона контролей"
+  "touched": [
+    "research/mech_193cbb87/RUNBOOK.md",
+    "research/mech_193cbb87/controls_check.py"
+  ],
+  "notes": "ПОСТРОЕНО. Модуль `name_pause.py` — пауза по имени как фильтр СОСТАВА книги в слоте после возраста имени и охраны рынком и до кассы (порядок `run_short.run`). Состав считается последовательно: триггер — собственная ВЗЯТАЯ позиция книги, а кто взят, знает только касса, поэтому на каждом шаге касса пересчитывается и снимается самая ранняя запрещённая запись (касса причинна, значит снятие в момент t не меняет решений до t). Второй копии ядра нет: возраст, охрана, касса, издержки, статистика, устойчивость и доля зёрен — существующие функции (`run_paper.age_shorts` / `guard_shorts` / `build_rows` / `_stats`, `costs.apply_to_rows`, `stability.stats`, `agree_book.beat_share`), исходы-триггеры — `tail_screen.TAIL_EXITS`, а не своя копия. Равенство ячейке семейства (`short_grid.cell_stats`) проверяется числом и стоит первой таблицей отчёта: все семь полей сошлись. Кэш реплея только читается — писатель на время прогона подменён отказом (`cache_locked`), подпись кэша не трогается. Ось P, ячейка вердикта, книга, депозит, пороги убийц, число зёрен и названный день перенесены из задания именованными постоянными и в коде объявлены до прогона. Рядом: `test_name_pause.py` (25 проверок), `RUNBOOK.md`, `controls_check.py`.\n\nСОСТОЯНИЕ, В КОТОРОМ НАЙДЕНА РАБОТА. Предыдущий вызов строителя оборвался внутри `controls_check`: в модуле осталась применённой одна подделка (`PLACEBO_EXITS = TRIGGER_EXITS`) — восстановление в `finally` не отработало, — и тесты шли 24/25. Строка возвращена к объявленной (`PLACEBO_EXITS = (TAKE_EXIT,)`); после этого 25/25 проверок проходят, все 23 подделки кусаются (машина приёмки `runlog.check_build`), а файлы модуля и тестов после прогона контролей побайтно те же (sha256 сверен до и после). Отчёт постройки оставался с заглушкой в `notes` — дописан здесь.\n\nПРОГОН СДЕЛАН. Вопреки предположению задания, кэш реплея в этом контейнере ЕСТЬ (`research/dca_paper/cache/recs-short.jsonl`, 9.3 МБ), поэтому механика посчитана целиком объявленными параметрами: `--seeds 200 --perms 200`, 372 с, память ~270 МБ. Лежавший в `out/` отчёт был СМОУКОМ (3 зерна, 20 перестановок) и вдобавок сделан более ранней редакцией модуля — его число шага 0 (16, трактовка «prev») не отвечает нынешнему коду (21, трактовка «tail»); он перезаписан полным прогоном. Флаг `--no-publish` намеренно: публикация в ветку из контейнера — не дело строителя, отчёт `out/PAUSE-name.json`/`.md` уезжает обычной публикацией `research/*/out`.\n\nИТОГ ЗАМЕРА — ЗАЯВКА ЗАКРЫТА НА ШАГЕ 0, и это ровно тот конец, который предлагающий назвал самым вероятным. При нынешних правилах (возраст ≥ 7 суток, пол 0.10, охрана 2 %) у книги вердикта `safe_h` на $10 000 повторов за 24 ч 21 при пороге 20 и 2.8 % сделок при пороге 3 % — правило инертно, резать нечего. Остальные четыре убийцы сработали бы тоже, и все на 200 зёрнах: потолок с идеальным знанием будущего (вычёркивает у `safe_h` ОДНУ позицию) не бьёт случайное урезание того же размера в 95 % зёрен, само правило P = 12 ч — в 56 %, плацебо «пауза после тейка» с уравненным числом сделок не хуже правила в 27 %, а в полосе плеча ≥ 15× перестановки дают такой же разрыв в 34 %. Калибровочная пара сошлась: на перемешанных метках исходов правило неотличимо от случайного урезания (51 % зёрен), подсаженные повторы (исход −0.9 доли маржи) находятся (0 % зёрен), пауза 0 ч равна базе бит в бит.\n\nЧИСЛО, КОТОРОЕ СТОИТ ЗАБРАТЬ ИЗ ОТЧЁТА. Сработала ОБРАТНАЯ ловушка, названная заявкой до счёта: деньги повторов ПОЛОЖИТЕЛЬНЫ во всех трёх книгах (+315 $ у `safe_h` при P = 12 ч, +513 у `optimal_h`, +1135 у `aggr_h`) — при том что у агрессивной книги повторы несут 34 % хвоста. То есть вычёркиваются не только потери; ставка на разворот параболы платит. Вторая видимая вещь: инертна именно книга ВЕРДИКТА (2.1 % повторов), тогда как у диагностических `optimal_h` и `aggr_h` их 11 % и 22 %. Ячейка вердикта объявлена до прогона и после просмотра не двигалась — переносить вердикт на агрессивную книгу было бы ошибкой R5; если владелец захочет судить её, это ОТДЕЛЬНОЕ объявленное испытание.\n\nЧЕГО НЕ ПОСТРОЕНО: ничего из заданного. Известный предел одной диагностики назван здесь, а не умолчан: в варианте триггера «любое решение имени (кэш реплея)» вместе с трактовкой «tail» защита от заглядывания в будущее (`exit_ts > at`) отбрасывает запись целиком, если САМЫЙ ПОЗДНИЙ хвостовой выход имени к моменту решения ещё не закрыт, — более ранний закрытый выход при этом не подставляется, и число повторов у этого варианта оценка СНИЗУ. Вердикта это не касается: он считается по взятым позициям книги, где правило «одна на имя» перекрытий не допускает вовсе."
 }
