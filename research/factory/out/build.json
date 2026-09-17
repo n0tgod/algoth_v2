@@ -1,157 +1,101 @@
 {
- "built": true,
- "module": "research/mech_1d5e7287/rr_supply.py",
- "tests": "research/mech_1d5e7287/test_rr_supply.py",
- "controls": [
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    return LB.RR_BAND[band]",
-   "new": "    return (0.0, 999.0)",
-   "expect": "ПРОВАЛ: полоса-из-оси"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    if hi is not None and float(rr) > float(hi):\n        return False",
-   "new": "    if hi is not None and float(rr) >= float(hi):\n        return False",
-   "expect": "ПРОВАЛ: границы-полосы-включительно"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    if rr is None:\n        return False\n    lo, hi = band_bounds(band)",
-   "new": "    if rr is None:\n        return True\n    lo, hi = band_bounds(band)",
-   "expect": "ПРОВАЛ: не-измерено-не-фильтр"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "        if abs(float(g[\"fwd\"])) < edge:\n            return False\n        return in_band(g.get(\"rr\"), band)",
-   "new": "        if abs(float(g[\"fwd\"])) < -1.0:\n            return False\n        return in_band(g.get(\"rr\"), band)",
-   "expect": "ПРОВАЛ: край-режет-обе-полосы"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    out.sort(key=lambda g: (g[\"at\"], g[\"arm\"],\n                            -abs(g[\"fz\"]) if g[\"fz\"] is not None else 0,\n                            g[\"sym\"]))",
-   "new": "    out.sort(key=lambda g: (g[\"sym\"], g[\"at\"]))",
-   "expect": "ПРОВАЛ: читатель-тот-же"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    idx = sorted(random.Random(int(seed)).sample(range(len(legs)), want))",
-   "new": "    idx = sorted(random.Random(int(seed) + 1).sample(range(len(legs)), want))",
-   "expect": "ПРОВАЛ: выборка-объявлена"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "            \"usd\": round(float(r[\"pnl\"]) * float(margin), 4),",
-   "new": "            \"usd\": round(float(r[\"pnl\"]) * float(margin) * 1.01, 4),",
-   "expect": "ПРОВАЛ: сборка-как-у-книг"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "HOLD_H = R.HOLD_H              # срок позиции — у правил книги, не свой",
-   "new": "HOLD_H = R.HOLD_H * 8          # срок позиции — у правил книги, не свой",
-   "expect": "ПРОВАЛ: будущее-не-влияет"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "CAL_FLAT_LO, CAL_FLAT_HI = 0.30, 0.70     # копия гейта: доля зёрен «около ½»",
-   "new": "CAL_FLAT_LO, CAL_FLAT_HI = 0.0, 1.0       # копия гейта: доля зёрен «около ½»",
-   "expect": "ПРОВАЛ: литералы-объявлены"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "CAL_SHIFT = -0.05                          # сдвиг исходов вниз, доли маржи",
-   "new": "CAL_SHIFT = -0.0                           # сдвиг исходов вниз, доли маржи",
-   "expect": "ПРОВАЛ: калибровка-ловит-сдвиг"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "        med_win += (1.0 if g_med > m else (0.5 if g_med == m else 0.0))",
-   "new": "        med_win += 0.0",
-   "expect": "ПРОВАЛ: калибровка-молчит-на-копии"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    k = len(gate_rows)\n    if k < 1 or len(union) <= k:",
-   "new": "    k = max(1, len(gate_rows) // 2)\n    if k < 1 or len(union) <= k:",
-   "expect": "ПРОВАЛ: выборка-того-же-размера"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    if mw >= win or tw >= win:",
-   "new": "    if mw >= 2.0 or tw >= 2.0:",
-   "expect": "ПРОВАЛ: вердикт-из-числа"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    if rows and not vals:\n        raise SystemExit(",
-   "new": "    if False and not vals:\n        raise SystemExit(",
-   "expect": "ПРОВАЛ: отказ-вместо-пустоты"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "        if r.get(\"costs_why\") is not None or m <= 0:",
-   "new": "        if m <= 0:",
-   "expect": "ПРОВАЛ: брутто-не-в-нетто"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "TAIL_EXITS = (\"пол\", \"ликвидация\")",
-   "new": "TAIL_EXITS = (\"пол\",)",
-   "expect": "ПРОВАЛ: хвост-это-пол-и-ликвидация"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    if dd >= -1e-12:\n        return None",
-   "new": "    if dd >= -1e-12:\n        return 0.0",
-   "expect": "ПРОВАЛ: прочерк-а-не-ноль"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    ok = with_band >= need",
-   "new": "    ok = True",
-   "expect": "ПРОВАЛ: измеримость-из-числа"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "                        f\"против {a:.1%} у гейта (+{d:.1%})\" if d > 0 else",
-   "new": "                        f\"против {a:.1%} у гейта (+{d:.1%})\" if d > -9 else",
-   "expect": "ПРОВАЛ: механизм-по-доливам"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    why = PL.shape_why(dl, declared_at)",
-   "new": "    why = None",
-   "expect": "ПРОВАЛ: форма-правилом-пула"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    return os.path.join(OUT, f\"recs-{band}.jsonl\")",
-   "new": "    return RP.cache_path()",
-   "expect": "ПРОВАЛ: свой-кэш-живое-не-трогаем"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "        if r.get(\"tail\") or o.get(\"tail\"):\n            tailish += 1\n            continue",
-   "new": "        if False:\n            tailish += 1\n            continue",
-   "expect": "ПРОВАЛ: сверка-ядра-кусается"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "                if lo is not None and (lv <= lo + 1e-9 if strict\n                                       else lv < lo - 1e-9):",
-   "new": "                if lo is not None and lv < lo - 1e-9:",
-   "expect": "ПРОВАЛ: полосы-плеча-дизъюнктны"
-  },
-  {
-   "file": "research/mech_1d5e7287/rr_supply.py",
-   "old": "    keep, _skip = (D6.one_per_name(list(recs)) if R.ONE_PER_NAME",
-   "new": "    keep, _skip = ((list(recs), 0) if R.ONE_PER_NAME",
-   "expect": "ПРОВАЛ: одна-на-имя"
-  }
- ],
- "touched": [
-  "research/mech_1d5e7287/RUNBOOK.md",
-  "research/mech_1d5e7287/controls_check.py",
-  "research/mech_1d5e7287/.gitignore"
- ],
- "notes": "ПОСТРОЕНО: research/mech_1d5e7287/rr_supply.py — механика целиком, четыре шага одним прогоном и по отдельности (--steps). Шаг 0 (подача) печатается ПЕРВЫМ и читается без заявки; шаг 1 — решение к решению с 200 зёрнами; шаг 2 — книга-сестра на кассе живых длинных книг; шаг 3 — форма правилом вылета пула. Проверок 26, негативных контролей 24 — все кусаются (controls_check.py, та же машина, что приёмка).\n\nВТОРОЙ КОПИИ ЯДРА НЕТ, и каждое место закрыто проверкой, а не прозой: полоса — параметр того же фильтра ног (границы у live_books.RR_BAND, край у run_d2.MIN_EDGE_BP; тест требует, чтобы полоса `hi` дала РОВНО те же ноги, что живой run_d6.gated_legs); геометрия ноги — tournament._leg; исход — run_d6.collect_recs → ladder.simulate_dca, правила v6 из dca_paper/rules.py; касса и колонки — run_paper.build_rows и run_paper._stats; издержки — costs.apply_to_rows; форма — factory/stability.stats и pool.shape_why; связь книг — ceiling.pair_corr.\n\nОДНО ОТСТУПЛЕНИЕ ОТ ЗАДАНИЯ, названное прямо. Задание описывало шаг 2 как «реплеится только решение, которое касса взяла». Это неисполнимо без второй кассы: чтобы решить, брать ли решение, касса обязана знать его плечо и момент выхода, то есть уже посчитанный исход того самого решения. Сделано иначе: реплеится ВСЯ полоса тем же проходом, что у живых книг, а цена прогона называется ЧИСЛОМ до реплея (оценка памяти из измеренной стоимости записи) — прогон снимает себя сам, если перейдён предел. Чтение журнала листов при этом сделано потоковым: канонический legs_from_sheets материализует 1.26 млн ног и стоит 1033 МБ RSS при пределе прогона 1200 МБ, потоковый отбор той же функцией — 107 МБ; тождество двух читателей проверено тестом, поле id потоковый не проставляет намеренно.\n\nЧЕГО ПОСТРОЙКА НЕ ДЕЛАЕТ. Книга-сестра НЕ заведена в живом реестре (rules.RULER_ORDER) — это правка живого цикла, роль fix, и заявка сама отправляет её туда же, куда две уже открытые просьбы в asks.jsonl. Сестра считается как линейка `safe` на решениях полосы: своей геометрии у неё нет, различие ровно одно — подача. Живой журнал книг и живой кэш реплея прогон не пишет (кэш сестры — свой файл со своей подписью), и это закреплено проверкой по времени правки файлов.\n\nЦЕНА ПРОГОНА, измеренная здесь 2026-09-16. Шаг 0: 12 с, 107 МБ. Подача — лонгов с краем ≥ 33 б.п. 90 146, полоса (RR ≤ 1.5) 72 935 на 764 именах за 40 суток, гейт (RR ≥ 2) 8 772 на 635 именах за 39 суток, отношение 8.3×. Объявленная выборка шага 1 — 3 × 8 772 = 26 316 ног. Шаг 2 на ВСЕЙ полосе упирается в память: разобранная запись стоит ≈ ×10 своей строки кэша (1 670 Б), то есть ≈ 1.2 ГБ при пределе 1 200 МБ. Поэтому у прогона есть --mem-limit (поднимать осознанно и в тихий час: рядом сборщик 1.5 ГБ и часовой цикл до 3.3 ГБ) и --band-limit; любой урезанный прогон помечает себя в отчёте словами «ячейка вердикта НЕ заполнена». Разумная дорога очереди: сперва --steps 0,1 (выборка втрое меньше полосы), затем шаг 2 отдельным заданием.\n\nНАЙДЕНО ПРИ ПОСТРОЙКЕ, роль fix, предметом заявки не является: живой кэш реплея книг воспроизводим НЕ бит в бит, а с точностью до состава инкрементального прохода. Правило хвоста (dca_paper/tail.py) продолжает ленту серединой стакана после последнего бара ЗАПРОШЕННОГО окна, а окно символа задаёт набор ног, попавший в проход (run_d6.collect_recs группирует по символу уже после фильтра `only`). Сверка нашла позицию RUNEUSDT 2026-08-08: живой кэш даёт выход 1786479060, самостоятельный проход — 1786479120, деньги расходятся на 0.5 %. Класс «отказ, неотличимый от тишины»: расходятся не ядра, а окна, и по числам этого не видно. В модуле такие записи считаются отдельным числом и в сверку не идут; остальные 143 из 143 совпали бит в бит.\n\nВЕРДИКТА ЗДЕСЬ НЕТ. Смоук (--limit 400) прогнан только чтобы показать, что дорога работает от чтения журнала до отчёта; его числа помечены как незаполненная ячейка и в git не идут (.gitignore). Судить механику обязан полный прогон через очередь — по открытой с 12.09 просьбе владельца о том, кто прогоняет построенные механики.\n\nВ touched названы не правки чужого, а СВОИ файлы сверх модуля и тестов (runbook, самопроверка контролей, .gitignore кэша и смоука): иначе publish_build.py их не опубликует, а .gitignore обязан лечь в ветку раньше первого полного прогона — tools/publish.sh кладёт в историю весь research/*/out, и один кэш реплея уже замораживал канал публикации."
+  "built": true,
+  "module": "research/mech_193cbb87/name_pause.py",
+  "tests": "research/mech_193cbb87/test_name_pause.py",
+  "controls": [
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        if ts is None or float(ts) > at:",
+     "new": "        if ts is None:",
+     "expect": "ПРОВАЛ не_заглядывает_в_будущее"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        if not (gap < float(pause_h) * HOUR):",
+     "new": "        if not (gap <= float(pause_h) * HOUR):",
+     "expect": "ПРОВАЛ пауза_кончается_ровно_через_P_часов"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        if (ex or \"\") not in exits:",
+     "new": "        if False:",
+     "expect": "ПРОВАЛ срок_и_тейк_паузы_не_дают"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "            if mode == \"tail\" and (t.get(\"exit\") or \"\") not in exits:",
+     "new": "            if False:",
+     "expect": "ПРОВАЛ две_трактовки_триггера_различаются"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "                src = (closed_of(cur[bk]) if trigger == \"cache\"\n                       else taken_of(r_, bk, dep))",
+     "new": "                src = closed_of(cur[bk])",
+     "expect": "ПРОВАЛ триггер_только_взятая_позиция"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "                first = b[0]",
+     "new": "                first = b[-1]",
+     "expect": "ПРОВАЛ повторы_снимаются_по_порядку_времени"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "                if steps[bk] > max_steps:",
+     "new": "                if False:",
+     "expect": "ПРОВАЛ отказ_вместо_тишины_при_переполнении"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "    R.DEPOSITS = [float(dep)]",
+     "new": "    R.DEPOSITS = [float(dep) * 2.0]",
+     "expect": "ПРОВАЛ ускорение_сверяется_бит_в_бит"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        mine, cst = CO.apply_to_rows(mine, ctx)",
+     "new": "        cst = {\"error\": \"издержки не вычитались\"}",
+     "expect": "ПРОВАЛ издержки_вычитаются_в_каждой_сделке"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "                      and abs(float(a) - float(b)) <= 1e-9)}",
+     "new": "                      and True)}",
+     "expect": "ПРОВАЛ сверка_с_ячейкой_семейства_кусается"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "    cut_taken = {bk: [k for k in cut_keys[bk] if k in base_keys[bk]]",
+     "new": "    cut_taken = {bk: [k for k in cut_keys[bk]]",
+     "expect": "ПРОВАЛ размер_контроля_равен_вычеркнутым_взятым"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        sh, n = AG.beat_share(draws, (form or {}).get(f), f)",
+     "new": "        sh, n = AG.beat_share(draws, (form or {}).get(\"n\"), \"n\")",
+     "expect": "ПРОВАЛ спор_идёт_о_названной_величине"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "    return (\"правило бьёт случайное урезание того же размера\"\n            if float(share) < float(beat_max)\n            else \"правило неотличимо от случайного урезания того же размера\")",
+     "new": "    return \"правило бьёт случайное урезание того же размера\"",
+     "expect": "ПРОВАЛ вердикт_выводится_из_числа"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "    inert = (int(n) < int(min_n) or float(share) < float(min_share))",
+     "new": "    inert = (int(n) < int(min_n))",
+     "expect": "ПРОВАЛ шаг_0_закрывает_инертное_правило"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "                \"perm\": None, \"why\": \"в полосе плеча нет обеих групп\"}",
+     "new": "                \"perm\": 0.0, \"why\": \"в полосе плеча нет обеих групп\"}",
+     "expect": "ПРОВАЛ непосчитанное_идёт_прочерком"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        if g >= gap:",
+     "new": "        if g >= gap + 1.0:",
+     "expect": "ПРОВАЛ перестановка_меток_кусается"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        if not any(packed0.get(bk) for bk in books):",
+     "new": "        if False:",
+     "expect": "ПРОВАЛ пустота_не_выдаёт_себя_за_результат"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        if not base[\"taken\"].get(BOOK):",
+     "new": "        if False:",
+     "expect": "ПРОВАЛ книга_вердикта_без_позиций_есть_отказ"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "    S.write_cache = refuse",
+     "new": "    pass",
+     "expect": "ПРОВАЛ кэш_реплея_не_переписывается"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "VERDICT_P_H = PAUSE_GRID_H[len(PAUSE_GRID_H) // 2]",
+     "new": "VERDICT_P_H = 6.0",
+     "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "TRIGGER_EXITS = tuple(TS.TAIL_EXITS)",
+     "new": "TRIGGER_EXITS = (\"пол\", \"ликвидация\", \"срок\")",
+     "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "PLACEBO_EXITS = (TAKE_EXIT,)",
+     "new": "PLACEBO_EXITS = TRIGGER_EXITS",
+     "expect": "ПРОВАЛ ось_и_ячейка_объявлены_заданием"},
+    {"file": "research/mech_193cbb87/name_pause.py",
+     "old": "        placebo_why = (None if TAKE_EXIT in seen\n                       else f\"исхода «{TAKE_EXIT}» в книге нет вовсе\")",
+     "new": "        placebo_why = None",
+     "expect": "ПРОВАЛ метка_тейка_проверяется_на_данных"}
+  ],
+  "touched": [],
+  "notes": "заполняется после прогона контролей"
 }
