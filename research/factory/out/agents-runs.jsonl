@@ -412,3 +412,5 @@
 {"at": 1789697704.9, "role": "scout", "status": "ok", "started": 1789696801.0, "ended": 1789697704.9, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
 {"at": 1789698002.179, "role": "brief", "status": "start", "started": 1789698002.0, "ended": 1789698002.179, "dry": false, "pid": 3790820}
 {"at": 1789698421.989, "role": "brief", "status": "ok", "started": 1789698002.0, "ended": 1789698421.989, "dry": false, "note": "модель opus, усилие medium"}
+{"at": 1789698601.669, "role": "propose", "status": "start", "started": 1789698601.0, "ended": 1789698601.669, "dry": false, "pid": 3792525}
+{"at": 1789699708.831, "role": "propose", "status": "ok", "started": 1789698601.0, "ended": 1789699708.831, "dry": false, "note": "модель claude-fable-5-1, усилие xhigh"}
