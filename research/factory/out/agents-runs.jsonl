@@ -420,3 +420,7 @@
 {"at": 1789704008.884, "role": "ceiling", "status": "ok", "started": 1789704001.454, "ended": 1789704008.884, "dry": false, "note": "код возврата 0"}
 {"at": 1789704304.223, "role": "declare", "status": "start", "started": 1789704304.222, "ended": 1789704304.223, "dry": false, "pid": 3806861}
 {"at": 1789704310.56, "role": "declare", "status": "ok", "started": 1789704304.222, "ended": 1789704310.56, "dry": false, "note": "код возврата 0"}
+{"at": 1789704602.094, "role": "task", "status": "start", "started": 1789704602.093, "ended": 1789704602.094, "dry": false, "pid": 3807752}
+{"at": 1789704602.402, "role": "task", "status": "ok", "started": 1789704602.093, "ended": 1789704602.402, "dry": false, "note": "код возврата 0"}
+{"at": 1789704901.695, "role": "build", "status": "start", "started": 1789704901.0, "ended": 1789704901.695, "dry": false, "pid": 3808382}
+{"at": 1789707187.314, "role": "build", "status": "ok", "started": 1789704901.0, "ended": 1789707187.314, "dry": false, "note": "модель opus, усилие xhigh"}

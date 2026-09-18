@@ -3872,6 +3872,77 @@ M2: каркас walk-forward — чистая математика без чт�
 - L37 `run()` — Код возврата и ИМЕНА упавших проверок, а не только код.
 - L52 `main(report)`
 
+## research/mech_9dd65163/_probe.py · 34 строк
+
+Черновик постройки: есть ли на машине то, без чего потолок не считается.
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L21 `main()`
+
+## research/mech_9dd65163/controls_check.py · 95 строк
+
+Машина негативных контролей механики 9dd65163: подделка — сюита падает.
+
+- L27 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L28 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L29 `SUITE = 'research/mech_9dd65163/test_funding_ma…`
+- L35 `sha(p)`
+- L40 `run_suite()` — (прошло, вывод) — ровно так, как это делает приёмка.
+- L45 `main()`
+
+## research/mech_9dd65163/funding_margin.py · 1050 строк
+
+Механика 9dd65163, шаг 1: funding ВНУТРИ пути позиции — потолок на кэше.
+
+- L77 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L78 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L93 `OUT = os.path.join(HERE, 'out')`
+- L94 `ART = 'FUND-margin'`
+- L95 `HOUR = WV.HOUR`
+- L96 `MAIN_DEP = 10000`
+- L97 `BOOK_KEYS = list(S.BOOKS)`
+- L106 `SCALE = 1000000.0` — Маржа подставной строки, на которой считаются начисления. Единица не годится: `costs.funding_usd(detail=True)…
+- L113 `MIN_COVER = CO.MIN_FUNDING_COVER` — Порог, ниже которого вердикт НЕ выносится: ряд, не покрывающий журнал, даёт заниженный funding и выдаёт его з…
+- L116 `FULL_COVER = 0.9` — Между этим покрытием и полным вердикт выносится С ОГОВОРКОЙ, и непокрытые позиции печатаются отдельной строко…
+- L120 `DEAD_SHIFT_SHARE = 0.01` — Пороги «мертво» объявлены ЗАЯВКОЙ до прогона (`kills_it`, шаг 1) и здесь только прочитаны. Назначать их тому,…
+- L121 `DEAD_BITE = 0.5`
+- L122 `DEAD_POSTPONED_SHARE = 0.01`
+- L126 `ALIVE_SHIFT_SHARE = 0.01` — Пороги «живо» шага 2 (реплей по барам). Здесь они НЕ выносят вердикт — потолок недооценивает, — но печатаются…
+- L127 `ALIVE_WORST_FRAC = 0.1`
+- L128 `ALIVE_BITE = 0.5`
+- L129 `ALIVE_LIQ = 3`
+- L132 `floor_by_ruler()` — Линейка кэша → пол капитуляции её книг, из реестра правил.
+- L147 `books_of(ruler)` — Книги семейства, которые кормит эта линейка.
+- L152 `accruals(rec, series)` — Начисления позиции: `(F, [(момент, dF)])` долей МАРЖИ; None — нет меры.
+- L174 `accrued_to(events, t)` — Накопленный funding к моменту `t`, долей маржи — СТРОГО до него.
+- L189 `shift_of(rec, events, floor, path=None)` — Первый час, на котором пол или ликвидация СРАБОТАЛИ БЫ раньше записи.
+- L217 `capped_liq_pnl(rec, total)` — Ценовой pnl ликвидированной позиции с крышкой −100 % маржи.
+- L233 `close_at(rec, k, why, pnl=None)` — Запись, закрытая на часе k, — библиотекой волны; `pnl` заменяет исход.
+- L257 `repnl(rec, pnl)` — Та же запись с другим ЦЕНОВЫМ pnl (крышка −100 %), тот же выход.
+- L270 `_postponed(rec, total, floor)` — Следствие «б»: отодвинул ли ПОЛУЧЕННЫЙ funding пол этой записи.
+- L295 `screen(cache, ctx, floors=None, log=print)` — Потолок по всему кэшу: покрытие, сдвиги, крышка, следствие «б».
+- L427 `_wo3d(days)` — Деньги книги без ТРЁХ лучших суток; меньше четырёх суток — прочерк.
+- L441 `form_of(cell)` — Форма книги: устойчивость по суткам + деньги без трёх лучших дней.
+- L459 `_d(a, b)`
+- L463 `compare(base, corr, dep=MAIN_DEP, keys=None)` — Книга до и после поправки: деньги, форма, число ликвидаций.
+- L490 `checks(s, postponed='upper')` — Четыре порога «мертво» по каждой книге — числом и со своим итогом.
+- L530 `_state(chk)`
+- L535 `verdict(s)` — Вердикт ИЗ ЧИСЕЛ: блок по покрытию, «мертво», «есть что править».
+- L588 `run(log=print, cache_path=None, ctx=None, launch=None, now=None…` — Шаг 1 целиком: покрытие → потолок → деньги двух счётов → вердикт.
+- L631 `_flip_series(ctx)` — Те же ряды с ЗНАКОМ НАОБОРОТ: расход становится доходом.
+- L636 `_shuffle_series(ctx, seed)` — Ряды, ПЕРЕМЕШАННЫЕ между именами: у имени чужая история ставок.
+- L645 `sense_controls(cache, ctx, floors=None, seeds=200, log=print)` — Два контроля смысла, объявленные заявкой, — числами.
+- L700 `_flat_series(ctx, rate)` — Ряды тех же имён и тех же МОМЕНТОВ с подставленной ставкой.
+- L713 `calibrate(log=print, cache_path=None, ctx=None, limit=None, cac…` — Найти подсаженное и промолчать на нуле — обе ноги числами.
+- L796 `_u(x, d=2)`
+- L800 `_p(x, d=2)`
+- L804 `_s(x, d=2)`
+- L808 `_n(x)`
+- L812 `report(s)`
+- L996 `write(s, name=ART, report_fn=report, log=print)` — Артефакт и отчёт — в СВОЙ каталог out/, который публикуется.
+- L1015 `publish(name)`
+- L1021 `main(argv=None)`
+
 ## research/mech_a47008e1/.smoke.py · 37 строк
 
 ЧЕРНОВИК: проверка машины реплея на живых данных, НЕ результат.
