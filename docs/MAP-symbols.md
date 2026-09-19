@@ -3700,6 +3700,115 @@ M2: каркас walk-forward — чистая математика без чт�
 - L21 `OUT = os.path.join(ROOT, 'research', 'factory…`
 - L24 `main()`
 
+## research/mech_357a7c60/controls_check.py · 47 строк
+
+Негативные контроли механики 357a7c60 — СУДИТ САМА ПРИЁМКА.
+
+- L22 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L27 `DEFAULT = os.path.join('research', 'factory', 'ou…`
+- L30 `main(report=None)`
+
+## research/mech_357a7c60/controls_run.py · 80 строк
+
+Кусаются ли подделки правил ПРОГОНА (`run_squeeze.py`).
+
+- L23 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L24 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L28 `TESTS = 'research/mech_357a7c60/test_squeeze_fu…`
+- L29 `FILE = 'research/mech_357a7c60/run_squeeze.py'`
+- L31 `CONTROLS = [{'old': ' if not side.get("ok"):', 'ne…`
+- L41 `main()`
+
+## research/mech_357a7c60/run_squeeze.py · 346 строк
+
+Прогон механики 357a7c60 — топливо сквиза по ходу позиции.
+
+- L34 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L35 `RESEARCH = os.path.dirname(HERE)`
+- L36 `ROOT = os.path.dirname(RESEARCH)`
+- L57 `OUT = os.path.join(HERE, 'out')`
+- L58 `ART = 'MECH-squeeze'`
+- L59 `BOOK_KEYS = P.BOOK_KEYS`
+- L60 `MAIN_DEP = P.MAIN_DEP`
+- L61 `_LAST = {}`
+- L68 `summary_names(root)`
+- L76 `read_name(root, sym)` — Все часовые строки одного имени. Битая строка пропускается.
+- L94 `name_rows(root, names, log=print, every=100)` — Генератор (имя, строки) — по одному имени в памяти за раз.
+- L108 `write_status(out, tag, status)` — Состояние файлом: прогон, убитый ядром, не пишет ничего, и снаружи это неотличимо от «не запускали».
+- L119 `publish(name)`
+- L129 `money_cell(cache, views, changed, ctx, launch, base, seeds, idx…` — Деньги одной ячейки оси: правило, контроль, концентрация, дни.
+- L167 `run(seeds=P.SEEDS, perm_seeds=SQ.PERM_SEEDS, axis=SQ.AXIS_S, su…`
+- L287 `main(argv=None)`
+
+## research/mech_357a7c60/squeeze_fuel.py · 1138 строк
+
+Механика 357a7c60 — топливо сквиза по ходу позиции.
+
+- L81 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L82 `RESEARCH = os.path.dirname(HERE)`
+- L83 `ROOT = os.path.dirname(RESEARCH)`
+- L107 `HOUR = WV.HOUR`
+- L109 `AXIS_S = (0.005, 0.01, 0.02)` — --- объявлено заданием ДО прогона, после результата не меняется -------
+- L110 `MIN_USD = 1000.0`
+- L111 `MIN_MARKED = 30`
+- L112 `SIDE_BAND = 0.1`
+- L113 `COVER_BLOCK = 0.5`
+- L114 `COVER_WARN = 0.9`
+- L115 `DIAG_MIN = 0.5`
+- L116 `BEAT_MAX = 0.1`
+- L117 `CTL_SEEDS = P.SEEDS`
+- L118 `BOOKS_NEED = 2`
+- L119 `TAIL_CUT = 0.25`
+- L120 `PERM_SEEDS = 200`
+- L121 `LOSS_STOP = 0.25`
+- L128 `MIN_CALIB_USD = 1000000.0` — --- служебные допуски: свойства записи, а не гипотезы ------------------ Пол калибровки отделяет «НЕ ИЗМЕРЕНО…
+- L129 `MARK_COLUMN = {'Buy': 'liq_short', 'Sell': 'liq_long'}`
+- L130 `LIQ_FIELDS = ('liq_short', 'liq_long')`
+- L131 `EXIT_LABEL = 'поток'`
+- L132 `PERM_SEED0 = 3570000`
+- L135 `middle(axis=AXIS_S)` — Судимая ячейка — СЕРЕДИНА объявленной оси, а не лучшая.
+- L144 `hour_measured(row)` — Час измерим? Сводка есть, поля ликвидаций и оборота заполнены.
+- L161 `flow_of(row, field)` — (доллары потока, оборот часа) либо (None, None) — НЕ ИЗМЕРЕНО.
+- L168 `fold_calib(rows, acc=None)` — Доллары каждой метки в часах роста и падения — по ОДНОМУ имени.
+- L203 `hour_no(hour)` — Номер календарного часа из метки сводки «ГГГГ-ММ-ДД-ЧЧ».
+- L214 `_zero_marks()`
+- L218 `new_calib()`
+- L224 `decide_side(usd, band=SIDE_BAND, min_usd=MIN_CALIB_USD)` — Какая метка означает «выбит ШОРТ». Решают ДАННЫЕ.
+- L303 `calib_halves(acc, band=SIDE_BAND, min_usd=MIN_CALIB_USD)` — Та же сторона на половинах записи: кодировка обязана НЕ МЕНЯТЬСЯ.
+- L335 `calibrate(name_rows, band=SIDE_BAND, min_usd=MIN_CALIB_USD)` — Сторона по всей записи сводок. `name_rows` — пары (имя, строки).
+- L359 `views_of(cache, rulers=None)` — Лёгкий взгляд на записи: путь ядра, хвост, сама запись.
+- L377 `live_hours(view)` — Часы, в которые правило вправе смотреть: СТРОГО до выхода.
+- L391 `hour_key(at, k)` — Календарный час k-го часа жизни позиции.
+- L401 `flow_cells(views, hours, field)` — {(имя, номер часа): (доллары потока, оборот)} по часам жизни.
+- L424 `is_marked(val, turn, s, min_usd=MIN_USD)` — Час помечен? Доля выкупа шортов в обороте часа ≥ `s` ПРИ потоке не меньше `min_usd`.
+- L442 `marked_hour(view, cells, s, min_usd=MIN_USD)` — Первый помеченный час позиции либо None; рядом — что измерено.
+- L458 `mark_all(views, cells, s, min_usd=MIN_USD)` — {ключ сделки: час выхода} по всем записям — и счёт измеримости.
+- L471 `apply_flow(cache, changed, why=EXIT_LABEL)` — Кэш с выходами по потоку: та же запись, закрытая отметкой часа k.
+- L486 `refuse_if_empty(n_names, side, root='')` — Ноль строк при непустом каталоге сводок — ОТКАЗ, а не вердикт.
+- L500 `coverage(views, cells)` — Покрытие журнала сводками: у скольких позиций измерим КАЖДЫЙ час.
+- L544 `marked_share(views, cells, s, min_usd=MIN_USD)` — Доля часов жизни, помеченных правилом, — среди ИЗМЕРИМЫХ часов.
+- L566 `by_book(views, changed, books)` — Помеченные позиции по КНИГАМ: линейка кормит книгу, не наоборот.
+- L584 `worst_hour(path)` — Час худшей отметки пути; при повторе минимума — ПЕРВЫЙ из них.
+- L598 `before_worst(views, changed, tail_only=True)` — Всплеск РАНЬШЕ худшей отметки хотя бы на час — доля от хвоста.
+- L626 `shuffle_cells(cells, rnd)` — Тот же поток, розданный ДРУГИМ именам ТОГО ЖЕ часа.
+- L647 `permuted_marks(views, cells, s, seeds=PERM_SEEDS, min_usd=MIN_U…` — Поток, ПЕРЕМЕШАННЫЙ между именами тех же часов — диагностика.
+- L670 `perm_stats(real, draws)` — Настоящий поток против перемешанного: доля зёрен не хуже.
+- L685 `guard_cross(views, changed, mkt, pct, kmax)` — Пересечение с охраной рынком: кого закрывают ОБА правила.
+- L718 `shape_of(stats_cell)` — Форма по дням — мерой проекта (`stability.stats`), не своей.
+- L730 `_cell_of(art, s)`
+- L737 `verdict(art)` — Убийцы по порядку; сработавший закрывает заявку.
+- L886 `reading(art)` — Одна фраза итога — ВЫВЕДЕННАЯ из строк вердикта, а не дописанная.
+- L903 `_pct(x, d=1)`
+- L907 `_pp(x, d=1)`
+- L911 `_usd(x)`
+- L915 `_i(x)`
+- L919 `_f(x, d=2)`
+- L923 `_side_table(side)`
+- L935 `_e(x)`
+- L939 `_cells_table(art)`
+- L966 `_money_table(art, cell)`
+- L995 `report(art)` — Отчёт. Каждое число, которого нет, — прочерк с причиной.
+
 ## research/mech_49b535f8/controls_check.py · 97 строк
 
 Своя машинка проверки негативных контролей — до сдачи отчёта.

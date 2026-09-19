@@ -2030,6 +2030,66 @@
 - L550 `ось_и_ячейка_объявлены_заданием()` — Ось, ячейка вердикта и пороги — из задания, а не выбраны здесь.
 - L559 `main()`
 
+## research/mech_357a7c60/test_squeeze_fuel.py · 1151 строк
+
+Тесты механики 357a7c60 — топливо сквиза по ходу позиции.
+
+- L45 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L46 `RESEARCH = os.path.dirname(HERE)`
+- L47 `ROOT = os.path.dirname(RESEARCH)`
+- L62 `FAILED = []`
+- L63 `CHECKS = [0]`
+- L64 `HOUR = 3600.0`
+- L67 `BASE_TS = 1778000000.0 - 1778000000.0 % HOUR` — Живые даты, но ДО начала записи сводок (01.08.2026): журнал подставной, и рынок ему взять неоткуда — см. `emp…
+- L70 `check(name, cond, detail='')`
+- L79 `run_test(fn)` — Прогнать проверку так, чтобы её ПАДЕНИЕ было сосчитано, а не оборвало сюиту.
+- L103 `summary_row(idx, mid, buy, sell, liq_buy, liq_sell, rnd, liq=Tr…` — Строка часовой сводки — теми же полями, что пишет живой писатель.
+- L143 `class FakeHours` — `wave.Hours` на словаре: {(имя, номер часа): строка сводки}.
+  - L146 `FakeHours.__init__(self, rows)`
+  - L150 `FakeHours.row(self, sym, ts)`
+- L159 `record(sym, at, marks, exit_='срок', rnd=None, ruler='safe_s')` — Запись кэша реплея — поля ровно те, что пишет живой прогон.
+- L184 `journal(n_tail=12, n_rest=28, seed=11, stagger=True, rulers=('s…` — Подставной журнал: хвост (пол) и обычные сделки, с дрожанием.
+- L209 `quiet_cells(views, usd=100.0, turn=1000000.0)` — Поток, которого почти нет: доля 0.01 % — ниже любой ячейки оси.
+- L219 `plant(cells, views, hour=1, usd=50000.0, turn=1000000.0, only_t…` — Подсадить всплеск в час `hour` у хвостовых позиций.
+- L234 `_EMPTY = {}`
+- L237 `empty_market()` — Увести рынок книг в ПУСТОЙ каталог сводок.
+- L253 `money(cache, launch, dep=None)` — Деньги книг настоящей кассой; издержки не применяются намеренно.
+- L266 `calib_stream(days=8, names=6, seed=5, swap=False, half_swap=Fal…` — Поток сводок, в котором ШОРТОВ выбивает рост, а лонгов — падение.
+- L308 `test_side_is_decided_by_data()` — Метка, чьи доллары лежат в падениях, — ЛОНГ; вторая — наш шорт.
+- L322 `test_side_survives_swapped_columns()` — Колонки переставлены — метка ДРУГАЯ, поток ТОТ ЖЕ.
+- L361 `test_side_refuses_inside_the_band()` — Доля внутри полосы 0.4–0.6 — ОТКАЗ, а не выбор наугад.
+- L380 `test_side_refuses_when_halves_disagree()` — Сторона, разная на половинах записи, — уже не кодировка площадки.
+- L398 `test_side_needs_dollars_to_be_measured()` — Долларов меньше пола — НЕ ИЗМЕРЕНО, а не «поровну».
+- L412 `test_unmeasured_hours_are_not_a_move()` — Час без полей ликвидаций не даёт ни хода, ни долларов.
+- L422 `test_gap_hours_do_not_make_a_move()` — Сосед берётся во ВРЕМЕНИ: через дыру хода не бывает.
+- L440 `_one_view(K=10, exit_='пол')`
+- L446 `test_rule_needs_both_share_and_floor()` — Доля И пол в долларах — оба, иначе правило метит тишину.
+- L476 `test_first_marked_hour_wins()` — Помечается ПЕРВЫЙ подходящий час, а не лучший.
+- L487 `test_missing_hour_is_a_dash_not_zero()` — Час без сводки не метится, не обнуляется и СЧИТАЕТСЯ прочерком.
+- L508 `test_coverage_separates_none_from_partial()` — Покрытие различает «ни одного часа», «часть» и «все».
+- L533 `test_future_does_not_move_the_past()` — Переписать будущее — прошлое обязано не шелохнуться.
+- L572 `test_live_hours_stop_before_the_exit()` — Часы жизни кончаются на K−1: час K — тот, в котором закрыло ядро.
+- L586 `test_calibration_pair_finds_planted_and_is_quiet_on_noise()` — Подсаженное — найти, на шуме — промолчать.
+- L624 `test_permutation_keeps_the_hour_and_moves_the_name()` — Перемешивается ИМЯ, а не час: набор пар внутри часа тот же.
+- L656 `test_zero_flow_reproduces_the_base_bit_for_bit()` — Обнулённый поток — база БИТ В БИТ по семи полям кассы.
+- L681 `test_planted_spike_exits_at_hour_one_by_the_core_mark()` — Подсаженный всплеск в час 1 — выход в час 1 ПО ОТМЕТКЕ ЯДРА.
+- L718 `test_exit_record_is_the_library_one()` — Закрытие записи — библиотечное (`wave.guard_record`), не своё.
+- L733 `test_before_worst_needs_a_whole_hour_earlier()` — Всплеск в час худшей отметки — НЕ раньше её: это кульминация.
+- L751 `test_before_worst_is_a_dash_when_no_tail_is_marked()` — Ни одной хвостовой позиции с всплеском — доля НЕ ИЗМЕРЕНА.
+- L767 `write_summaries(root, streams)` — Разложить сводки по диску так, как их пишет живой писатель: `<корень>/<имя>/<сутки>.jsonl`, одна строка — оди…
+- L789 `journal_streams(views, spike_hour=2, usd=50000.0, quiet=100.0, …` — Сводки на часы жизни подставного журнала: тишина плюс один всплеск.
+- L811 `run_with_spy(summary_dir, cache, launch, **kw)` — Прогнать `run_squeeze.run` на подделке, считая вызовы ДЕНЕГ.
+- L851 `test_run_counts_money_only_after_side_and_coverage()` — Порядок убийц: пока сторона и покрытие не измерены, кассы нет.
+- L919 `_art(**over)` — Артефакт, у которого пройдены ВСЕ убийцы, — основа для подмен.
+- L948 `_state(art, key)`
+- L955 `test_verdict_is_derived_from_the_numbers()` — Каждая строка вердикта следует из своего числа, а не из мнения.
+- L1022 `test_thin_event_is_not_a_dead_rule()` — Меньше 30 помеченных на книгу — «нечем судить», а не «не работает».
+- L1036 `test_report_prints_a_dash_and_the_derived_phrase()` — Величины, которой нет, — прочерк; фраза итога — из числа.
+- L1058 `test_empty_read_is_a_refusal_not_a_report()` — Ноль строк при непустом каталоге — ОТКАЗ, а не отчёт с прочерками.
+- L1077 `test_middle_of_the_axis_is_judged()` — Судит середина объявленной оси, а не лучшая ячейка.
+- L1084 `test_modules_come_from_where_they_should()` — Чужой модуль под знакомым именем — отказ, а не работа.
+- L1094 `main()`
+
 ## research/mech_49b535f8/test_place.py · 633 строк
 
 Проверки механики 49b535f8 — «где усреднять».
