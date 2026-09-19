@@ -446,3 +446,5 @@
 {"at": 1789796103.223, "role": "build", "status": "fail", "started": 1789792502.0, "ended": 1789796103.223, "dry": false, "note": "модель opus, убит по времени: предел 3600 с"}
 {"at": 1789796401.434, "role": "build", "status": "start", "started": 1789796401.0, "ended": 1789796401.434, "dry": false, "pid": 4028312}
 {"at": 1789798745.626, "role": "build", "status": "ok", "started": 1789796401.0, "ended": 1789798745.626, "dry": false, "note": "модель opus, усилие xhigh"}
+{"at": 1789798801.94, "role": "task", "status": "start", "started": 1789798801.94, "ended": 1789798801.94, "dry": false, "pid": 4035778}
+{"at": 1789798802.201, "role": "task", "status": "ok", "started": 1789798801.94, "ended": 1789798802.201, "dry": false, "note": "код возврата 0"}
