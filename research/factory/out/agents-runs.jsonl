@@ -450,3 +450,7 @@
 {"at": 1789798802.201, "role": "task", "status": "ok", "started": 1789798801.94, "ended": 1789798802.201, "dry": false, "note": "код возврата 0"}
 {"at": 1789869601.416, "role": "scout", "status": "start", "started": 1789869601.0, "ended": 1789869601.416, "dry": false, "pid": 20914}
 {"at": 1789870037.499, "role": "scout", "status": "ok", "started": 1789869601.0, "ended": 1789870037.499, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
+{"at": 1789870201.421, "role": "brief", "status": "start", "started": 1789870201.0, "ended": 1789870201.421, "dry": false, "pid": 22600}
+{"at": 1789870484.381, "role": "brief", "status": "contract", "started": 1789870201.0, "ended": 1789870484.381, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: research/factory/out/summary.md: указателей 0, а нужно не меньше 1: утверждение без ссылки нечем оспорить"}
+{"at": 1789870501.559, "role": "brief", "status": "start", "started": 1789870501.0, "ended": 1789870501.559, "dry": false, "pid": 23538}
+{"at": 1789871023.368, "role": "brief", "status": "ok", "started": 1789870501.0, "ended": 1789871023.368, "dry": false, "note": "модель opus, усилие medium"}
