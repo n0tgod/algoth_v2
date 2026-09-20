@@ -2331,6 +2331,64 @@
 - L476 `test_report_prints_both_median_and_mean_and_the_verdict()`
 - L488 `CHECKS = [test_geometry_is_in_fractions_of_entry…`
 
+## research/mech_bb7c3581/test_storm.py · 1152 строк
+
+Тесты механики bb7c3581 — буря выкупа шортов по рынку.
+
+- L52 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L53 `RESEARCH = os.path.dirname(HERE)`
+- L54 `ROOT = os.path.dirname(RESEARCH)`
+- L72 `FAILED = []`
+- L73 `CHECKS = [0]`
+- L74 `HOUR = 3600.0`
+- L77 `BASE_TS = 1778000000.0 - 1778000000.0 % HOUR` — Живые даты, но ДО начала записи сводок (01.08.2026): журнал подставной, и рынок ему взять неоткуда — см. `emp…
+- L78 `BASE_HK = int((BASE_TS - 1.0) // HOUR)`
+- L81 `check(name, cond, detail='')`
+- L90 `run_test(fn)` — Прогнать проверку так, чтобы её ПАДЕНИЕ было сосчитано, а не оборвало сюиту.
+- L114 `summary_row(idx, mid, buy, sell, liq_buy, liq_sell, rnd, liq=Tr…` — Строка часовой сводки — теми же полями, что пишет живой писатель.
+- L154 `record(sym, at, marks, exit_='срок', rnd=None, ruler='safe_s')` — Запись кэша реплея — поля ровно те, что пишет живой прогон.
+- L179 `journal(n_tail=12, n_rest=28, seed=11, stagger=True, rulers=('s…` — Подставной журнал: хвост (пол) и обычные сделки, с дрожанием.
+- L203 `_EMPTY = {}`
+- L206 `empty_market()` — Увести рынок книг в ПУСТОЙ каталог сводок.
+- L221 `books_of(cache, launch, now=None)` — База механики: книги С охраной рынком, ключ несёт КНИГУ.
+- L229 `money(gcache, launch, dep=None)` — Деньги книг настоящей кассой; издержки не применяются намеренно.
+- L242 `width_of(hours_marked, names=200, s_flow=50000.0, turn=1000000.…` — Счётчики ширины на выдуманном рынке: {час: сколько имён помечено}.
+- L262 `storm_at(views, hours)` — Календарные часы бури из часов ЖИЗНИ (для подсадки в тестах).
+- L276 `test_mark_is_the_parent_judged_cell()` — Метка имени — константы РОДИТЕЛЯ, а не переписанное число.
+- L293 `test_width_is_a_dash_below_min_names()` — Час с малым числом имён — ПРОЧЕРК, а не ноль ширины.
+- L319 `test_width_counts_only_marked_names()` — Считается имя, ПОМЕЧЕННОЕ правилом родителя, а не любое живое.
+- L346 `test_unmeasured_hour_is_never_a_storm()` — Прочерк бурей НЕ БЫВАЕТ, даже если помеченных имён много.
+- L367 `test_storm_hours_need_the_declared_width()` — Бурный час — тот, чья ширина ≥ q объявленной оси.
+- L394 `test_swapped_columns_change_the_storm_hours()` — Сторону решают ДАННЫЕ: другая колонка — другое множество бурь.
+- L418 `test_rows_without_liquidations_are_a_dash_not_zero()` — Час без полей ликвидаций или с нулевым оборотом — не измерен.
+- L431 `test_width_does_not_double_count_a_name()` — Две строки одного имени на один час — одно имя, а не два.
+- L451 `test_rule_closes_every_open_short_in_the_storm_hour()` — В бурный час закрывается ВСЁ, что открыто, — и только оно.
+- L476 `test_first_storm_hour_wins()` — Помечается ПЕРВЫЙ бурный час жизни, а не лучший и не последний.
+- L491 `test_rule_never_touches_the_exit_hour()` — Час K — тот, в котором позицию закрыли ядро или охрана.
+- L514 `test_future_does_not_move_the_past()` — Переписать будущее — прошлое обязано не шелохнуться.
+- L551 `test_no_storm_reproduces_the_base_bit_for_bit()` — Бурь нет — касса книг БИТ В БИТ по семи полям.
+- L580 `test_planted_storm_closes_the_book_by_the_core_mark()` — Подсаженный бурный час — выход ПО ОТМЕТКЕ ЯДРА в этот час.
+- L615 `test_closing_is_the_library_record()` — Закрытие записи — библиотечное (`wave.guard_record`), не своё.
+- L632 `guard_market(views, pct=3.0)` — Каталог сводок, в котором волна двадцати прокси-имён РАСТЁТ.
+- L662 `test_base_is_the_book_with_the_market_guard()` — База — книги КАК СЕЙЧАС, то есть С охраной рынком.
+- L703 `test_key_carries_the_book_not_the_ruler()` — Ключ несёт КНИГУ: две книги на одной линейке — две записи.
+- L734 `test_control_keeps_the_hour_of_day()` — Случайные часы — с ТЕМ ЖЕ мультимножеством часа суток.
+- L767 `test_control_refuses_when_the_pool_is_too_small()` — Часов суток не хватило — ОТКАЗ С ПРИЧИНОЙ, а не выборка поменьше.
+- L783 `test_hour_pool_respects_the_journal_window()` — Пул часов ограничен сроком журнала и не берёт прочерки.
+- L799 `test_control_storm_runs_the_same_road_as_the_rule()` — Контроль считается ТОЙ ЖЕ дорогой: закрытие книги, та же касса.
+- L826 `test_shifted_series_moves_the_positions()` — Ряд ширины, сдвинутый на сутки, даёт ДРУГОЕ множество позиций.
+- L850 `test_quiet_share_is_a_dash_without_a_wave()` — Волна не измерена — ПРОЧЕРК, а не «рынок стоял».
+- L860 `test_cover_separates_none_from_partial()` — Покрытие различает «ни одного часа», «часть» и «все».
+- L882 `test_before_worst_is_the_parent_diagnostic()` — «Раньше худшей отметки» — диагностика РОДИТЕЛЯ, не своя копия.
+- L907 `_art(**over)` — Артефакт, у которого пройдены ВСЕ убийцы, — основа для подмен.
+- L940 `_state(art, key)`
+- L947 `test_verdict_is_derived_from_the_numbers()` — Каждая строка вердикта следует из своего числа, а не из мнения.
+- L1015 `test_thin_change_is_the_guard_already_covering()` — Меньше 30 изменённых на книгу — «охрана уже покрывает».
+- L1037 `test_report_prints_a_dash_and_the_derived_phrase()` — Величины, которой нет, — прочерк; фраза итога — из числа.
+- L1061 `test_empty_read_is_a_refusal_not_a_report()` — Ноль строк при непустом каталоге — ОТКАЗ, а не отчёт с прочерками.
+- L1080 `test_modules_come_from_where_they_should()` — Чужой модуль под знакомым именем — отказ, а не работа.
+- L1095 `main()`
+
 ## research/mech_d71203f0/test_unprovoked.py · 795 строк
 
 Тесты механики d71203f0 — неспровоцированный принт ликвидации.

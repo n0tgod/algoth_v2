@@ -4257,6 +4257,97 @@ M2: каркас walk-forward — чистая математика без чт�
 - L546 `walk(rng, n, sigma=0.0015, start=100.0)` — Случайное блуждание — нуль честной формы.
 - L551 `lift_to_take(prices, at_i, up=0.12, span=60)` — Подсаженный ход: с бара `at_i` цена идёт ВВЕРХ до тейка за час.
 
+## research/mech_bb7c3581/controls_check.py · 47 строк
+
+Негативные контроли механики bb7c3581 — СУДИТ САМА ПРИЁМКА.
+
+- L22 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L27 `DEFAULT = os.path.join('research', 'factory', 'ou…`
+- L30 `main(report=None)`
+
+## research/mech_bb7c3581/run_storm.py · 363 строк
+
+Прогон механики bb7c3581 — буря выкупа шортов по рынку.
+
+- L33 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L34 `RESEARCH = os.path.dirname(HERE)`
+- L35 `ROOT = os.path.dirname(RESEARCH)`
+- L59 `OUT = os.path.join(HERE, 'out')`
+- L60 `ART = 'MECH-storm'`
+- L61 `BOOK_KEYS = STM.BOOK_KEYS`
+- L62 `MAIN_DEP = STM.MAIN_DEP`
+- L69 `scan(root, names, width, log=print, every=100)` — Генератор (имя, строки) для калибровки, попутно считающий ширину.
+- L88 `write_status(out, tag, status)` — Состояние файлом: прогон, убитый ядром, не пишет ничего, и снаружи это неотличимо от «не запускали».
+- L98 `publish(name)`
+- L108 `money_cell(gcache, views, changed, base, pool, real, ctx, launc…` — Деньги одной ячейки: правило, контроль случайными часами, дни.
+- L149 `run(seeds=STM.CTL_SEEDS, axis=STM.AXIS_Q, summary_dir=None, nam…`
+- L303 `main(argv=None)`
+
+## research/mech_bb7c3581/storm.py · 953 строк
+
+Механика bb7c3581 — буря выкупа шортов ПО РЫНКУ.
+
+- L73 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L74 `RESEARCH = os.path.dirname(HERE)`
+- L75 `ROOT = os.path.dirname(RESEARCH)`
+- L104 `HOUR = WV.HOUR`
+- L105 `BOOK_KEYS = list(P.BOOK_KEYS)`
+- L106 `MAIN_DEP = P.MAIN_DEP`
+- L109 `AXIS_Q = (0.01, 0.02, 0.03)` — --- объявлено заданием ДО прогона, после результата не меняется -------
+- L110 `MIN_NAMES = 100`
+- L111 `MIN_CHANGED = 30`
+- L112 `COVER_BLOCK = SQ.COVER_BLOCK`
+- L113 `COVER_WARN = SQ.COVER_WARN`
+- L114 `DIAG_MIN = SQ.DIAG_MIN`
+- L115 `BEAT_MAX = SQ.BEAT_MAX`
+- L116 `BOOKS_NEED = SQ.BOOKS_NEED`
+- L117 `CTL_SEEDS = P.SEEDS`
+- L118 `SHIFT_H = 24`
+- L119 `QUIET_WAVE = 0.01`
+- L126 `MARK_S = SQ.middle(SQ.AXIS_S)` — --- константы РОДИТЕЛЯ: метка имени, а не ось этой механики ----------- Ось родителя объявлена до его прогона…
+- L127 `MIN_USD = SQ.MIN_USD`
+- L128 `LIQ_FIELDS = SQ.LIQ_FIELDS`
+- L130 `EXIT_LABEL = 'буря'`
+- L131 `CTL_SEED0 = 8830000`
+- L134 `middle(axis=AXIS_Q)` — Судимая ячейка — СЕРЕДИНА объявленной оси, а не лучшая.
+- L143 `new_width()`
+- L148 `fold_width(rows, acc=None, s=MARK_S, min_usd=MIN_USD)` — Счётчики ширины по календарному часу — по ОДНОМУ имени за проход.
+- L191 `width_series(acc, field, min_names=MIN_NAMES)` — {номер часа: ширина} — ПРОЧЕРК у часа с малым числом имён.
+- L205 `width_stats(series)` — Распределение ширины: медиана, p90, p95, p99, максимум.
+- L225 `storm_hours(series, q)` — Календарные часы, в которых ширина ≥ q. Прочерк бурей НЕ БЫВАЕТ.
+- L236 `days_of(hours)` — Суток, в которых стоит хотя бы один такой час.
+- L241 `hod_hist(hours)` — Гистограмма часа суток (UTC): номер часа записи и есть его час.
+- L246 `shifted(series, hours=SHIFT_H)` — Тот же ряд ширины, сдвинутый во ВРЕМЕНИ на `hours` часов.
+- L256 `hour_wave(mkt, hk)` — Волна двадцати прокси-имён ЗА час `hk` (ход от конца прошлого).
+- L269 `guarded_books(cache, launch, now=None, log=lambda *a: None)` — Записи каждой книги так, как они приходят в кассу.
+- L291 `keyed(packed)` — {(книга, имя, момент): запись} — ключ несёт КНИГУ, а не линейку.
+- L306 `repack(gcache)` — Обратно в {книга: [записи]} — то, что ест касса семейства.
+- L318 `hours_of(view)` — {календарный час: час жизни k} — часы, в которые правило вправе закрыть позицию.
+- L331 `storm_exit(view, storms)` — Первый бурный час жизни позиции либо None.
+- L341 `apply_storm(views, storms)` — {ключ сделки: час выхода} — ВСЕ открытые шорты, застигнутые бурей.
+- L358 `close_storm(gcache, changed, why=EXIT_LABEL)` — Кэш книг с выходами по буре: та же запись, отметка ядра часа k.
+- L372 `by_book(views, changed)` — Изменённых позиций по книгам — самый дешёвый убийца заявки.
+- L383 `cover_of(views, series)` — Покрытие журнала РЯДОМ ШИРИНЫ: у скольких позиций измерим каждый час жизни.
+- L417 `guard_cross(views, changed, storms, guard_exit=None)` — Пересечение с охраной рынком — числом, а не «по построению».
+- L442 `quiet_share(waves, lim=QUIET_WAVE)` — Доля бурных часов, в которые волна мажоров стояла на месте.
+- L462 `hour_pool(series, lo=None, hi=None)` — Измеримые часы записи, разложенные по часу суток.
+- L481 `control_hours(real, pool, rnd)` — Столько же закрытий книги в СЛУЧАЙНЫХ часах с тем же часом суток.
+- L501 `control_storm(gcache, views, real, pool, ctx, launch, seeds=CTL…` — Контроль правила ВСЕЙ книги: те же закрытия в случайных часах.
+- L539 `shape_of(stats_cell)` — Форма по дням — мерой проекта (`stability.stats`), не своей.
+- L548 `_cell_of(art, q)`
+- L555 `verdict(art)` — Убийцы по порядку; сработавший закрывает заявку.
+- L702 `reading(art)` — Одна фраза итога — ВЫВЕДЕННАЯ из строк вердикта, а не дописанная.
+- L719 `_pct(x, d=1)`
+- L723 `_pp(x, d=1)`
+- L727 `_usd(x)`
+- L731 `_i(x)`
+- L735 `_f(x, d=2)`
+- L739 `_e(x)`
+- L743 `_side_table(side)`
+- L755 `_axis_table(art)`
+- L772 `_money_table(art, cell)`
+- L803 `report(art)` — Отчёт. Каждое число, которого нет, — прочерк с причиной.
+
 ## research/mech_d71203f0/controls_check.py · 111 строк
 
 Машина негативных контролей механики d71203f0.
