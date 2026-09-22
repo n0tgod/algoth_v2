@@ -7973,31 +7973,48 @@ def test_dca_chart_carries_the_liquidation_of_the_book():
     import rules as DR
     import ladder as L
 
+    # нотионал 1000 при плече 5 — маржа позиции 200, и она резервируется
+    # ЦЕЛИКОМ при первом рунге (так считает касса книги)
     fills = [[1000.0, 10.0, 0.25], [2000.0, 8.0, 0.25]]
     walk = DR.avg_walk(fills, 10.0, 1000.0, take_frac=0.2, side="short")
-    DR.liq_walk(walk, 5.0, "short", mmr=0.02)
+    DR.liq_walk(walk, 200.0, "short", mmr=0.02)
     check("график: ликвидация есть у каждой ступени",
           all(x.get("liq") for x in walk), str(walk))
     check("график: у шорта ликвидация ВЫШЕ средней",
           all(x["liq"] > x["avg"] for x in walk),
           str([(x["avg"], x["liq"]) for x in walk]))
-    # то же ядро, что у симуляции: числа обязаны совпасть бит в бит
+    # то же ядро и ТОТ ЖЕ капитал, что у симуляции: вся маржа позиции,
+    # а не маржа заполненных рунгов — числа обязаны совпасть бит в бит
     s0 = walk[0]
-    want = L.liq_price(s0["avg"], s0["qty"],
-                       s0["qty"] * s0["avg"] / 5.0, 0.02, "short")
+    want = L.liq_price(s0["avg"], s0["qty"], 200.0, 0.02, "short")
     check("график: уровень считан ядром лестницы, а не копией формулы",
           abs(s0["liq"] - want) < 1e-12, f"{s0['liq']} против {want}")
+    rung_only = L.liq_price(s0["avg"], s0["qty"],
+                            s0["qty"] * s0["avg"] / 5.0, 0.02, "short")
+    check("график: у позиции глубины 1 линия ДАЛЬШЕ, чем дала бы маржа "
+          "одного рунга", s0["liq"] > rung_only * 1.05,
+          f"{s0['liq']} против {rung_only}")
+    # Живые числа дефекта (владелец, PHAUSDT, шорт 2026-09-21 13:00):
+    # маржа 50.6917 при плече 20, один рунг по 0.05779, тир 2.5 %. Книга
+    # держит ликвидацию на 0.0677 (+17 %); линия по марже рунга стояла
+    # на 0.0592 (+2.4 %), и цена, дошедшая до 0.0598, «пробивала» её.
+    pha = DR.avg_walk([[1789995600.0, 0.05779, 0.25]], 0.05779,
+                      50.6917 * 20.0, side="short")
+    DR.liq_walk(pha, 50.6917, "short", mmr=0.025)
+    check("график: PHAUSDT — ликвидация книги 0.0677, а не 0.0592 рунга",
+          abs(pha[0]["liq"] - 0.0676566) < 1e-6 and pha[0]["liq"] > 0.0598,
+          str(pha[0].get("liq")))
     check("график: долив двигает ликвидацию вместе с ТВХ",
           walk[1]["liq"] < walk[0]["liq"] and walk[1]["avg"] < walk[0]["avg"],
           str([(x["avg"], x["liq"]) for x in walk]))
     lw = DR.avg_walk(fills, 10.0, 1000.0, take_frac=0.2, side="long")
-    DR.liq_walk(lw, 5.0, "long", mmr=0.02)
+    DR.liq_walk(lw, 200.0, "long", mmr=0.02)
     check("график: у лонга ликвидация НИЖЕ средней",
           all(x["liq"] < x["avg"] for x in lw),
           str([(x["avg"], x["liq"]) for x in lw]))
     nolev = DR.avg_walk(fills, 10.0, 1000.0, take_frac=0.2, side="short")
     DR.liq_walk(nolev, None, "short", mmr=0.02)
-    check("график: без плеча уровня нет вовсе, а не ноль",
+    check("график: без маржи уровня нет вовсе, а не ноль",
           all("liq" not in x for x in nolev), str(nolev))
     # ставка маржи берётся у ТИРОВ площадки, одним читателем на проект
     look = DR.mmr_look("BTCUSDT")

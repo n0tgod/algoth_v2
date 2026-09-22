@@ -3174,8 +3174,10 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
     above it, short: below it)</span>
   <span id="lgliq"><span class="sw"
     style="border-color:var(--ask)"></span>liquidation, stepped: the price
-    at which the position is gone &mdash; from the same average and the
-    venue&rsquo;s margin tiers the book itself used</span>
+    at which the position is gone &mdash; from the same average, the
+    venue&rsquo;s margin tiers and the WHOLE margin of the position, as the
+    book reserves it from the first rung (not the margin of the filled
+    rungs alone)</span>
   <span><span class="sw" style="border-color:var(--ink)"></span>entry &amp;
     exit dots</span>
   <span><span class="sw" style="background:rgba(61,220,127,.25);

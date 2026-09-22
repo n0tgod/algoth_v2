@@ -3555,7 +3555,10 @@ class Collector:
             # (`rules.liq_walk` → `ladder.liq_price`) и по тирам площадки
             # этого имени: график обязан показывать ту ликвидацию, по
             # которой книга считала позицию, а не близкое к ней число.
-            DR.liq_walk(walk, r.get("lev"), side, look=liq_look)
+            # Капитал — ВСЯ маржа позиции, как у симуляции: маржа одних
+            # заполненных рунгов рисовала линию вчетверо ближе у позиции
+            # глубины 1 (владелец, PHAUSDT 2026-09-21).
+            DR.liq_walk(walk, r.get("margin"), side, look=liq_look)
             pf = r.get("pnl_frac")
             out.append({
                 "sym": sym, "arm": "dca",
@@ -3622,7 +3625,7 @@ class Collector:
                         DR.avg_walk(fills, r.get("entry_px"),
                                     DR.notional_of(r),
                                     take_frac=tf, side=side),
-                        r.get("lev"), side, look=liq_look),
+                        r.get("margin"), side, look=liq_look),
                     "take_frac": tf,
                     "lots": max(1, len(fills)),
                     "adds": self._dca_adds(fills[1:],
