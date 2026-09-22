@@ -95,3 +95,16 @@ aggr_h: охрана рынком ≥ 2 % закрыла 915 из 3081 пози�
 - Хедж-режим есть ПРАВИЛО СЧЁТА этой книги: она не смотрит на длинные позиции. На бирже так можно только в хедж-режиме; в одностороннем совпадающий шорт резал бы длинную позицию, и число таких совпадений стоит выше.
 - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
 
+публикуется в ветку main:
+ jobs/done/backfill-fav-write.log      | 55 ++++++++++++++++++++
+ jobs/done/short-fav-now.done          |  1 +
+ jobs/done/short-fav-now.log           | 97 +++++++++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-short.json |  2 +-
+ research/dca_paper/out/DCA-short.md   | 14 ++---
+ research/s8_loop/out/day_brake.json   |  2 +-
+ 6 files changed, 162 insertions(+), 9 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   1cdedc7a..ccb5d15c  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+конец: 2026-09-22T12:12:16Z, код 0
