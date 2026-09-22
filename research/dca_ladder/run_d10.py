@@ -375,6 +375,10 @@ def one_position(g, bars, ts, look, rule, param, lev_look=None, cells=None,
             "pnl_net": float(r["pnl_frac"]) - filled * ROUND_COST_BP / 1e4,
             "lev": float(lev), "lev_fence": float(lev_f),
             "fwd": abs(float(g["fwd"])), "sym": g["sym"], "side": "short",
+            # Обещание модели СЫРЫМ числом, как у длинной записи (`run_d6`):
+            # из него правило книги выводит уровень цели. Запись без него
+            # оставляла общий счёт без цели у ВСЕХ коротких (2026-09-22).
+            "fav_bp": float(g["fav"]),
             "rr": g.get("rr"), "gates": sorted(gate_of(g)),
             "exit": r["exit"], "marks": marks,
             "ckpt": (r.get("ckpt") if checkpoints else None),

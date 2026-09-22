@@ -500,6 +500,38 @@ def test_report_shows_what_the_money_is_made_of():
           f"{st['usd_wo_top3d']:+.0f} $ при итоге {st['usd']:+.0f} $")
 
 
+def test_short_recs_count_the_records_without_a_promise():
+    """Короткая запись без обещания модели считается ВСЛУХ, а не молчит.
+
+    2026-09-22: все короткие строки общего счёта стояли с `fav_bp: null`
+    (кэш коротких писался до добора), и график не рисовал цель ни одной —
+    молча. Число называется в журнале прогона; записи с обещанием едут в
+    книгу как есть.
+    """
+    a = _short("AUSDT", T0)
+    a["fav_bp"] = -500.0
+    b = _short("BUSDT", T0 + H)
+    b.pop("fav_bp", None)
+    c = _short("CUSDT", T0 + 2 * H)
+    c["fav_bp"] = None
+    _lc, sc = _caches([], [a, b, c], sk="optimal_h")
+    said = []
+    got, why = PR.short_recs(sc, log=said.append)
+    assert not why, why
+    recs = [r for lst in got.values() for r in lst]
+    assert {r["sym"] for r in recs} == {"AUSDT", "BUSDT", "CUSDT"}, recs
+    assert all(r["fav_bp"] == -500.0 for r in recs if r["sym"] == "AUSDT")
+    line = [x for x in said if "без обещания" in x]
+    assert line and "2" in line[0], said
+    # контроль: у записей с обещанием строки нет вовсе
+    said2 = []
+    _lc, sc2 = _caches([], [a], sk="optimal_h")
+    PR.short_recs(sc2, log=said2.append)
+    assert not [x for x in said2 if "без обещания" in x], said2
+    print("ok  общий счёт называет короткие записи без обещания числом "
+          "(2 из 3) и молчит, когда обещание есть у всех")
+
+
 if __name__ == "__main__":
     for t in (test_pack_marks_the_source_and_keeps_both_sides,
               test_books_sharing_one_geometry_both_get_their_positions,
@@ -515,6 +547,7 @@ if __name__ == "__main__":
               test_collisions_and_link_live_inside_the_book,
               test_missing_caches_are_a_reason_not_empty_books,
               test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts,
-              test_report_shows_what_the_money_is_made_of):
+              test_report_shows_what_the_money_is_made_of,
+              test_short_recs_count_the_records_without_a_promise):
         t()
-    print("\nвсе 15 проверок прошли")
+    print("\nвсе 16 проверок прошли")

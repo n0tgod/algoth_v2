@@ -343,6 +343,69 @@ def test_report_shows_what_the_money_is_made_of():
           f"{100 * st['max_dd_wo_worst']:.1f} %")
 
 
+def test_short_record_carries_the_promise_from_birth_and_the_cache_keeps_it():
+    """Обещание модели (`fav_bp`) едет В ЗАПИСИ короткой позиции и в КЭШЕ.
+
+    Дефект 2026-09-22 (вопрос владельца «а где тейк у этой позиции»):
+    короткая запись рождалась без поля обещания (длинная в `run_d6` его
+    несёт), `run_short` дописывал его в память ПОСЛЕ записи кэша на диск,
+    а общий счёт (`run_pair`) читает именно кэш — все 6 872 короткие
+    строки журнала `pair` стояли с `fav_bp: null`, и график не рисовал
+    цель ни одной из них. Класс: «поле, живущее в одном читателе из
+    двух». Здесь кэш читается С ДИСКА, как его читает общий счёт.
+    """
+    import run_pair as PR
+    tmp = tempfile.mkdtemp(prefix="short-fav-")
+    try:
+        s, jp, cp, legs, launch = _end_to_end(tmp)
+        want = {(g["sym"], round(float(g["at"]), 3)): float(g["fav"])
+                for g in legs}
+        cache, why = S.read_cache(cp, log=lambda *a: None)
+        assert not why and cache, why
+        miss = [(k, r.get("fav_bp")) for k, r in cache.items()
+                if r.get("fav_bp") != want[(k[1], k[2])]]
+        assert not miss, ("кэш на диске без обещания модели", miss[:3])
+        # дорога общего счёта — тот же кэш, тот же читатель
+        got, why = PR.short_recs(cache, log=lambda *a: None)
+        assert not why and got, why
+        recs = [r for lst in got.values() for r in lst]
+        assert all(r.get("fav_bp") is not None for r in recs), recs[:1]
+        # и правило цели из него выводится: обещание ×2 в долях
+        fr = R.take_rule(recs[0]["fav_bp"], "short")["frac"]
+        assert abs(fr - abs(recs[0]["fav_bp"]) / 1e4 * R.TAKE_MULT) < 1e-12
+        # Кэш ПРЕЖНЕГО образца (записи без поля) — добор на следующем
+        # прогоне ложится на диск, а не в память: иначе общий счёт вечно
+        # читал бы пустоту. Запись, чьей ноги в списке нет, остаётся без
+        # поля — обещание не выдумывается (ноги нет — поля нет).
+        legacy = {}
+        for k, r in cache.items():
+            r = dict(r)
+            r.pop("fav_bp", None)
+            legacy[k] = r
+        orphan = dict(next(iter(cache.values())))
+        orphan.pop("fav_bp", None)
+        orphan["sym"], orphan["state"] = "ZZZUSDT", "closed"
+        legacy[(next(iter(cache))[0], "ZZZUSDT", 1.0)] = orphan
+        S.write_cache(legacy, cp)
+        again, why = S.read_cache(cp, log=lambda *a: None)
+        assert not why and all("fav_bp" not in r for r in again.values()), \
+            "подделка не легла: кэш прежнего образца должен быть без поля"
+        T10._with_levels(lambda: S.run(
+            legs_=legs, src=T3._Src({}), journal=os.path.join(tmp, "g.jsonl"),
+            cache_path=cp, launch=launch, log=lambda *a: None))
+        after, why = S.read_cache(cp, log=lambda *a: None)
+        assert not why, why
+        assert after[(next(iter(cache))[0], "ZZZUSDT", 1.0)].get("fav_bp") is None
+        miss = [k for k, r in after.items()
+                if k[1] != "ZZZUSDT" and r.get("fav_bp") != want[(k[1], k[2])]]
+        assert not miss, ("добор не лёг на диск", miss[:3])
+        print(f"ok  обещание модели в записи с рождения и в кэше на диске "
+              f"({len(cache)} записей), общий счёт его видит; кэш прежнего "
+              f"образца добирается на диск, чужая запись без ноги — без поля")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     test_cache_signature_follows_the_cell_and_the_hold()
     test_legs_come_from_both_arms_in_time_order()
@@ -352,4 +415,5 @@ if __name__ == "__main__":
     test_floor_is_per_book_and_the_cache_knows_it()
     test_replay_gives_each_ruler_its_own_floor()
     test_report_shows_what_the_money_is_made_of()
-    print("\nвсе 8 проверок прошли")
+    test_short_record_carries_the_promise_from_birth_and_the_cache_keeps_it()
+    print("\nвсе 9 проверок прошли")

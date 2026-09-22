@@ -227,18 +227,14 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
         f"считаю заново {len(need)}")
     fresh, tail = replay(need, src=src, log=log)
     cache.update(fresh)
+    # Обещание модели у записей прежнего образца — ДО записи кэша: общий
+    # счёт читает кэш с диска, и добор в памяти он не видел никогда
+    # (2026-09-22: все короткие строки `pair` без цели). Новая запись
+    # несёт его с рождения (`run_d10`); ядро добора одно — `run_paper`.
+    RP.attach_fav(cache.values(), legs_, log=log)
     write_cache(cache, cache_path)
-    # обещание модели у записей: из тех же ног, что кормят реплей
-    fav = {}
-    for g in legs_:
-        try:
-            fav[(g["sym"], round(float(g["at"]), 3))] = float(g["fav"])
-        except (KeyError, TypeError, ValueError):
-            continue
     by_ruler = {}
-    for (rk, sym, at), r in cache.items():
-        if r.get("fav_bp") is None:
-            r["fav_bp"] = fav.get((sym, at))
+    for (rk, _sym, _at), r in cache.items():
         by_ruler.setdefault(rk, []).append(r)
     packed = {bk: list(by_ruler.get(rk) or []) for bk, rk in BOOKS.items()}
     # ВОЗРАСТ ИМЕНИ на входе — правило книги с 2026-09-08 (решение

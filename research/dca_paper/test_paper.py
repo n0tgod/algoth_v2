@@ -449,7 +449,9 @@ def test_fav_backfill_adds_a_field_and_nothing_else():
     источника, которым считает реплей, и каждая тронутая строка это
     говорит (`fav_from`). Проверка сторожит именно границу: строка
     прежнего образца, строка с чужой версией правил и строка, для
-    которой ноги нет, обязаны остаться как были.
+    которой ноги нет, обязаны остаться как были. Индекс несёт СТОРОНУ
+    (2026-09-22, журнал общего счёта): строка с `fav_bp: null` от
+    записи общего счёта добирается, а обещание чужой стороны не берётся.
     """
     import importlib.util
     spec = importlib.util.spec_from_file_location(
@@ -465,15 +467,23 @@ def test_fav_backfill_adds_a_field_and_nothing_else():
          "rules": R.RULES - 1},
         {"dep": 1000, "at": 400.0, "sym": "DDD", "usd": 4.0,
          "rules": R.RULES, "fav_bp": 111.0},
+        # строка общего счёта: поле ЕСТЬ и пусто, сторона в записи
+        {"dep": 1000, "at": 500.0, "sym": "EEE", "usd": 5.0,
+         "rules": R.RULES, "side": "short", "fav_bp": None},
+        # короткая строка, у которой в индексе есть только ДЛИННАЯ нога
+        {"dep": 1000, "at": 600.0, "sym": "FFF", "usd": 6.0,
+         "rules": R.RULES, "side": "short", "fav_bp": None},
     ]
     with tempfile.TemporaryDirectory() as td:
         p = os.path.join(td, "j.jsonl")
         with open(p, "w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-        idx = {("AAA", 100.0): 500.0}
+        idx = {("long", "AAA", 100.0): 500.0,
+               ("short", "EEE", 500.0): -700.0,
+               ("long", "FFF", 600.0): 900.0}
         n, t, m = bf.patch_file(p, idx, write=True)
-        assert (n, t, m) == (4, 1, 1), (n, t, m)
+        assert (n, t, m) == (6, 2, 2), (n, t, m)
         got = [json.loads(x) for x in open(p, encoding="utf-8") if x.strip()]
         assert got[0]["fav_bp"] == 500.0, got[0]
         assert got[0]["fav_from"] == "legs", got[0]
@@ -482,11 +492,51 @@ def test_fav_backfill_adds_a_field_and_nothing_else():
         assert "fav_bp" not in got[2], got[2]      # чужая версия правил
         assert got[3]["fav_bp"] == 111.0, got[3]   # своё не переписано
         assert "fav_from" not in got[3], got[3]
+        assert got[4]["fav_bp"] == -700.0 and got[4]["fav_from"] == "legs", \
+            got[4]                                   # null общего счёта добран
+        assert got[4]["side"] == "short" and got[4]["usd"] == 5.0, got[4]
+        assert got[5]["fav_bp"] is None and "fav_from" not in got[5], \
+            got[5]                                   # чужая сторона не берётся
         # повтор ничего не меняет: добор идемпотентен
         n2, t2, m2 = bf.patch_file(p, idx, write=True)
-        assert (t2, m2) == (0, 1), (t2, m2)
-    print("ok  добор обещания: дописано 1, ноги нет у 1, чужая версия и "
-          "своё поле не тронуты, повтор ничего не меняет")
+        assert (t2, m2) == (0, 2), (t2, m2)
+        # Кусок, в который в тот же час дописывает прогон книги, не
+        # переписывается: строка, легшая между чтением и записью, иначе
+        # терялась бы. Подделка: сторож видит кусок изменившимся.
+        with open(p, "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        assert "fav_from" not in json.loads(
+            open(p, encoding="utf-8").readline()), "подделка не легла"
+        real_unchanged = bf._unchanged
+        bf._unchanged = lambda path, sig: False
+        try:
+            n3, t3, m3 = bf.patch_file(p, idx, write=True)
+        finally:
+            bf._unchanged = real_unchanged
+        assert (n3, t3, m3) == (6, 0, 2), (n3, t3, m3)
+        assert all("fav_from" not in json.loads(x)
+                   for x in open(p, encoding="utf-8") if x.strip()), \
+            "кусок переписан, хотя менялся во время добора"
+        # Контроль сверки: подмена ДРУГОГО поля под видом добора роняет
+        # прогон, а не проходит молча.
+        bad = [json.dumps(dict(r, usd=99.0)) for r in rows[:1]]
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("\n".join(bad) + "\n")
+        assert json.loads(open(p, encoding="utf-8").readline())["usd"] == 99.0
+        real_dumps = bf.json.dumps
+        bf.json.dumps = lambda r, **kw: real_dumps(dict(r, usd=1.0), **kw)
+        try:
+            bf.patch_file(p, idx, write=True)
+            raise AssertionError("сверка пропустила подмену поля usd")
+        except SystemExit as e:
+            assert "не только полем" in str(e), e
+        finally:
+            bf.json.dumps = real_dumps
+    print("ok  добор обещания: дописано 2 (в том числе null общего счёта), "
+          "ноги нет у 2 (одна — чужой стороны), чужая версия и своё поле "
+          "не тронуты, повтор ничего не меняет, подмена поля роняет прогон, "
+          "изменившийся кусок не пишется")
 
 
 def test_open_position_is_not_a_closed_one():

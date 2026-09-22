@@ -295,6 +295,47 @@ def guard_shorts(shorts, pk, log=print, now=None, mkt=None):
     return out, st
 
 
+def attach_fav(recs, legs, log=print):
+    """Обещание модели (`fav_bp`) — в записи, у которых его нет.
+
+    Одно ядро на обе книги. Длинная (`run_paper`) и короткая (`run_short`)
+    добирали его каждая своим циклом, и обе — ПОСЛЕ записи кэша: поле
+    жило в памяти одного прогона, на диск не попадало, а общий счёт
+    (`run_pair`) читает именно кэш и не видел его ни у одной короткой
+    записи (2026-09-22: все 6 872 короткие строки `pair` с `fav_bp:
+    null`, график без цели). Источник — ТОТ ЖЕ список ног, которым
+    считает реплей, а не восстановление по исходу. Ноги нет — поля нет:
+    обещание не выдумывается, а число таких записей называется вслух
+    (без него у позиции не будет линии цели на графике).
+
+    Возвращает число записей, оставшихся без обещания.
+    """
+    fav = {}
+    for g in legs or ():
+        try:
+            fav[(g["sym"], round(float(g["at"]), 3))] = float(g["fav"])
+        except (KeyError, TypeError, ValueError):
+            # нога без обещания правила цели не даёт вовсе, и падать тут
+            # нельзя: добор — удобство показа, а не условие прогона
+            continue
+    missing = 0
+    for r in recs:
+        if r.get("fav_bp") is not None:
+            continue
+        try:
+            v = fav.get((r["sym"], round(float(r["at"]), 3)))
+        except (KeyError, TypeError, ValueError):
+            v = None
+        if v is None:
+            missing += 1
+        else:
+            r["fav_bp"] = v
+    if missing:
+        log(f"обещание модели не восстановлено у {missing} позиций — "
+            "у них не будет линии цели на графике")
+    return missing
+
+
 def build_rows(by_ruler, now=None, log=print, keys=None):
     """Решения, взятые каждой книгой, с деньгами в долларах.
 
@@ -1481,37 +1522,17 @@ def main():
         for pr, lst in got["recs"].items():
             for r in lst:
                 cache[(tuple(pr), r["sym"], round(float(r["at"]), 3))] = r
+        # Обещание модели у записей ПРЕЖНЕГО образца (кэш их считал, когда
+        # поля ещё не было) добирается ДО записи кэша: в памяти оно жило
+        # бы один прогон, а общий счёт читает кэш с диска и не видел бы
+        # его никогда (дефект 2026-09-22 у коротких записей). Ядро одно
+        # на обе книги — `attach_fav`.
+        attach_fav(cache.values(), legs, log=print)
         write_cache(cache)
         by_pair = {tuple(pr): [] for pr in pairs}
         for (pr, _sym, _at), r in cache.items():
             if pr in by_pair:
                 by_pair[pr].append(r)
-        # Обещание модели у записей ПРЕЖНЕГО образца: кэш их считал, когда
-        # поля ещё не было. Берётся из ТОГО ЖЕ списка ног, которым считает
-        # реплей, — это не восстановление по исходу, а тот же источник.
-        # Без него у старой позиции не было бы уровня цели на графике, и
-        # сказать об этом надо числом: молчаливая половина без линии
-        # читалась бы как «у книги цели нет».
-        fav_of = {}
-        for g in legs:
-            try:
-                fav_of[(g["sym"], round(float(g["at"]), 3))] = float(g["fav"])
-            except (KeyError, TypeError, ValueError):
-                # Нога без обещания правила цели не даёт вовсе, и падать
-                # тут нельзя: добор — удобство, а не условие прогона.
-                continue
-        no_fav = 0
-        for lst in by_pair.values():
-            for r in lst:
-                if r.get("fav_bp") is None:
-                    v = fav_of.get((r["sym"], round(float(r["at"]), 3)))
-                    if v is None:
-                        no_fav += 1
-                    else:
-                        r["fav_bp"] = v
-        if no_fav:
-            print(f"обещание модели не восстановлено у {no_fav} позиций — "
-                  "у них не будет линии цели на графике")
         rows, cells, one, live = build_rows(
             {k: by_pair[tuple(RULERS[k])] for k in keys})
         append_journal(rows)

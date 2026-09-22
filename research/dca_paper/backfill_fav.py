@@ -21,6 +21,13 @@
 прежней ВО ВСЕХ полях, кроме двух добавленных. Иначе это была бы
 перезапись под видом добора.
 
+Журналы — все три (длинных книг, коротких `h24`, общего счёта `pair`):
+2026-09-22 все короткие строки общего счёта стояли с `fav_bp: null` —
+кэш коротких записей писался ДО добора обещания. Ключ индекса несёт
+СТОРОНУ: одно имя в один час может стоять и в длинном листе, и в
+коротком, с разным обещанием, и брать обещание чужой стороны значило бы
+рисовать чужую цель.
+
 Прогон: `run research/dca_paper/backfill_fav.py` (по умолчанию сухой,
 `--write` пишет).
 """
@@ -36,31 +43,58 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "research", "dca_ladder"))
 import rules as R                                             # noqa: E402
 import run_d6 as D6                                           # noqa: E402
+import run_short as S                                         # noqa: E402
+
+JOURNALS = (R.JOURNAL, R.H24_JOURNAL, R.PAIR_JOURNAL)
 
 
 def legs_index(log=print):
-    """Обещание модели по ключу решения — из ТОГО ЖЕ списка ног."""
+    """Обещание модели по ключу решения (сторона, имя, момент) — из ТЕХ ЖЕ
+    списков ног, что кормят реплей: длинные — листы ситуационной книги
+    (`run_d6`), короткие — выборы `h24` обеих рук (`run_short`)."""
     out = {}
     for g in D6.gated_legs(log=log):
+        if (g.get("side") or "long") != "long":
+            continue
         try:
-            out[(g["sym"], round(float(g["at"]), 3))] = float(g["fav"])
+            out[("long", g["sym"], round(float(g["at"]), 3))] = float(g["fav"])
+        except (KeyError, TypeError, ValueError):
+            continue
+    for g in S.legs(log=log):
+        try:
+            out[("short", g["sym"], round(float(g["at"]), 3))] = float(g["fav"])
         except (KeyError, TypeError, ValueError):
             continue
     return out
 
 
-def shards():
-    """Все куски журнала плюс цельный файл прежнего хранения."""
-    import glob
-    base, ext = os.path.splitext(R.JOURNAL)
-    got = sorted(glob.glob(f"{base}-*{ext}"))
-    if os.path.exists(R.JOURNAL):
-        got.append(R.JOURNAL)
+def shards(journals=JOURNALS):
+    """Все куски каждого журнала — тем же читателем, что их читает книга."""
+    got = []
+    for j in journals:
+        got.extend(R.journal_parts(j))
     return got
 
 
+def _sig(path):
+    st = os.stat(path)
+    return (st.st_mtime_ns, st.st_size)
+
+
+def _unchanged(path, sig):
+    """Кусок не менялся с момента чтения — иначе писать его нельзя."""
+    return _sig(path) == sig
+
+
 def patch_file(path, idx, write=False):
-    """Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги)."""
+    """Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
+
+    Кусок сегодняшнего дня в тот же час ДОПИСЫВАЕТ прогон книги; переписать
+    его поверх свежей строки значило бы потерять запись write-ahead. Поэтому
+    перед записью кусок сверяется с тем, каким был прочитан: изменился —
+    не пишется вовсе, и это сказано вслух (повтор идемпотентен).
+    """
+    sig = _sig(path)
     src = open(path, encoding="utf-8").read().splitlines()
     out, touched, miss = [], 0, 0
     for ln in src:
@@ -74,7 +108,9 @@ def patch_file(path, idx, write=False):
             continue
         if (R.is_current(r)
                 and r.get("fav_bp") is None):
-            v = idx.get((r.get("sym"), round(float(r.get("at") or 0), 3)))
+            # сторона — одним правилом на всех читателей записи
+            v = idx.get((R.row_side(r), r.get("sym"),
+                         round(float(r.get("at") or 0), 3)))
             if v is None:
                 miss += 1
             else:
@@ -86,17 +122,23 @@ def patch_file(path, idx, write=False):
         out.append(ln)
     if len(out) != len(src):
         raise SystemExit(f"{path}: строк стало {len(out)} против {len(src)}")
-    # Сверка: кроме двух добавленных полей не сдвинулось НИЧЕГО.
+    # Сверка: кроме двух полей обещания не сдвинулось НИЧЕГО, и оба они
+    # до добора были пусты (поля не было или стояло `null` — так пишет
+    # строку общий счёт).
     for a, b in zip(src, out):
         if a == b:
             continue
         ra, rb = json.loads(a), json.loads(b)
-        add = set(rb) - set(ra)
-        if add != {"fav_bp", "fav_from"} or any(
-                ra[k] != rb[k] for k in ra):
+        changed = {k for k in set(ra) | set(rb) if ra.get(k) != rb.get(k)}
+        if (changed != {"fav_bp", "fav_from"} or ra.get("fav_bp") is not None
+                or "fav_from" in ra):
             raise SystemExit(f"{path}: строка изменилась не только полем "
-                             f"обещания: {sorted(add)}")
+                             f"обещания: {sorted(changed)}")
     if write and touched:
+        if not _unchanged(path, sig):
+            print(f"  {os.path.basename(path)}: изменился во время добора — "
+                  "НЕ записан, повторить прогон")
+            return len(src), 0, miss
         tmp = path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             f.write("\n".join(out) + "\n")
@@ -109,7 +151,9 @@ def main():
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
     idx = legs_index()
-    print(f"ног в индексе {len(idx)}")
+    print(f"ног в индексе {len(idx)}: длинных "
+          f"{sum(1 for k in idx if k[0] == 'long')}, коротких "
+          f"{sum(1 for k in idx if k[0] == 'short')}")
     tot = tou = mis = 0
     for p in shards():
         n, t, m = patch_file(p, idx, write=a.write)

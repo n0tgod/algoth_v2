@@ -1138,7 +1138,7 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - L431 `simulate_dca(bars, rung_prices, weights, capital, leverage, mmr…` — DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 - L659 `same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notio…` — Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
 
-## research/dca_ladder/run_d10.py · 959 строк
+## research/dca_ladder/run_d10.py · 963 строк
 
 D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 
@@ -1181,27 +1181,27 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L277 `leverage_for(lk, lev_fence)`
 - L282 `take_for(g, tk)` — Цель ячейки — та же форма, что `rules.take_rule`, с множителем оси.
 - L295 `one_position(g, bars, ts, look, rule, param, lev_look=None, cel…` — Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
-- L392 `collect(limit=None, src=None, log=print, legs=None, cells=None,…` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
-- L477 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
-- L502 `_exits(rows)`
-- L509 `cell(recs, book, dep, gate=REF_GATE, net=False, share=None, row…` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
-- L573 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
-- L586 `halves(rows_by_cell)`
-- L598 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
-- L612 `_rss_mb()`
-- L621 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
-- L639 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
-- L642 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
-- L655 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
-- L658 `run(limit=None, src=None, log=print, legs=None)`
-- L717 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
-- L750 `_p(x, d=2, sign=True)`
-- L756 `_u(x)`
-- L760 `title_of(key)`
-- L766 `_row(key, c, cn, p, mark)`
-- L782 `report(s)`
-- L924 `publish(name)`
-- L930 `main(argv=None)`
+- L396 `collect(limit=None, src=None, log=print, legs=None, cells=None,…` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
+- L481 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
+- L506 `_exits(rows)`
+- L513 `cell(recs, book, dep, gate=REF_GATE, net=False, share=None, row…` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
+- L577 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
+- L590 `halves(rows_by_cell)`
+- L602 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
+- L616 `_rss_mb()`
+- L625 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
+- L643 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
+- L646 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
+- L659 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
+- L662 `run(limit=None, src=None, log=print, legs=None)`
+- L721 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
+- L754 `_p(x, d=2, sign=True)`
+- L760 `_u(x)`
+- L764 `title_of(key)`
+- L770 `_row(key, c, cn, p, mark)`
+- L786 `report(s)`
+- L928 `publish(name)`
+- L934 `main(argv=None)`
 
 ## research/dca_ladder/run_d11.py · 195 строк
 
@@ -1673,16 +1673,19 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L400 `publish(name)`
 - L405 `main(argv=None)`
 
-## research/dca_paper/backfill_fav.py · 127 строк
+## research/dca_paper/backfill_fav.py · 171 строк
 
 Добор обещания модели (`fav_bp`) в уже записанные строки журнала.
 
-- L33 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L34 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L41 `legs_index(log=print)` — Обещание модели по ключу решения — из ТОГО ЖЕ списка ног.
-- L52 `shards()` — Все куски журнала плюс цельный файл прежнего хранения.
-- L62 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
-- L107 `main()`
+- L40 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L41 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L48 `JOURNALS = (R.JOURNAL, R.H24_JOURNAL, R.PAIR_JOURN…`
+- L51 `legs_index(log=print)` — Обещание модели по ключу решения (сторона, имя, момент) — из ТЕХ ЖЕ списков ног, что кормят реплей: длинные —…
+- L71 `shards(journals=JOURNALS)` — Все куски каждого журнала — тем же читателем, что их читает книга.
+- L79 `_sig(path)`
+- L84 `_unchanged(path, sig)` — Кусок не менялся с момента чтения — иначе писать его нельзя.
+- L89 `patch_file(path, idx, write=False)` — Дописать поле в один кусок. Возвращает (строк, тронуто, без ноги).
+- L149 `main()`
 
 ## research/dca_paper/costs.py · 815 строк
 
@@ -2033,7 +2036,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L1218 `read_journal(path=JOURNAL, stats=None, keep=None, cache=None)` — Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
 - L1288 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
 
-## research/dca_paper/run_pair.py · 551 строк
+## research/dca_paper/run_pair.py · 562 строк
 
 Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 
@@ -2042,21 +2045,21 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L63 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. На VPS 7.7 ГБ без свопа, и тяжёлый прогон рядом с часовым циклом убивает НЕ СЕБЯ (OOM…
 - L66 `long_recs(cache=None, log=print)` — Позиции длинных книг из кэша реплея `run_paper`, по книгам.
 - L95 `short_recs(cache=None, log=print)` — Позиции коротких книг `h24` из их кэша, по книгам семейства.
-- L113 `pack(longs, shorts, keys=None)` — Решения общей книги: обе стороны в одном списке, с меткой источника.
-- L129 `gate_shorts(shorts, pk, ctx, log=print)` — Короткие решения под гейтом по ставке funding — правило книги.
-- L177 `collisions(rows, ruler)` — Имена, которые общий счёт держит РАЗОМ длинной и короткой.
-- L194 `_side_series(rows, ruler, side)`
-- L198 `link(rows, ruler)` — Связь дневных денег сторон ВНУТРИ общего счёта.
-- L214 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
-- L229 `one_sided(book, lk, sk)` — Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
-- L243 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
-- L340 `_p(x, d=2)`
-- L344 `_u(x)`
-- L348 `report(s)`
-- L522 `publish(name)`
-- L527 `main(argv=None)`
+- L124 `pack(longs, shorts, keys=None)` — Решения общей книги: обе стороны в одном списке, с меткой источника.
+- L140 `gate_shorts(shorts, pk, ctx, log=print)` — Короткие решения под гейтом по ставке funding — правило книги.
+- L188 `collisions(rows, ruler)` — Имена, которые общий счёт держит РАЗОМ длинной и короткой.
+- L205 `_side_series(rows, ruler, side)`
+- L209 `link(rows, ruler)` — Связь дневных денег сторон ВНУТРИ общего счёта.
+- L225 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
+- L240 `one_sided(book, lk, sk)` — Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
+- L254 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
+- L351 `_p(x, d=2)`
+- L355 `_u(x)`
+- L359 `report(s)`
+- L533 `publish(name)`
+- L538 `main(argv=None)`
 
-## research/dca_paper/run_paper.py · 1563 строк
+## research/dca_paper/run_paper.py · 1584 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
@@ -2075,24 +2078,25 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L255 `market(root=None)` — Цены и волна рынка из часовых сводок — один разбор на прогон.
 - L267 `reset_market()`
 - L272 `guard_shorts(shorts, pk, log=print, now=None, mkt=None)` — Охрана рынком — правило ВЫХОДА короткой стороны (спека 14 §13).
-- L298 `build_rows(by_ruler, now=None, log=print, keys=None)` — Решения, взятые каждой книгой, с деньгами в долларах.
-- L477 `append_journal(rows, path=None, log=print)` — Дописывает только НОВЫЕ решения. Запись write-ahead: строка, однажды попавшая в журнал, не переписывается — и…
-- L530 `dups(rows)` — Правило владельца числом: одно имя — одна позиция ОДНОВРЕМЕННО.
-- L569 `_dd(v, deposit)` — Просадка по дневному ряду — ОДНОЙ формулой на ВСЕ разрезы.
-- L589 `CONC_HEAD = '$ без лучшего имени | $ без 3 лучших д…` — Колонки концентрации — ОДНИМ местом на все три семейства. У длинных книг они стоят с 04.09, а у коротких и об…
-- L593 `conc_cells(st)` — Три клетки концентрации по статистике книги — в языке таблиц.
-- L612 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
-- L721 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
-- L766 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
-- L867 `_pct(x, d=2)`
-- L871 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
-- L906 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
-- L992 `report(s)`
-- L1350 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
-- L1384 `publish(name)`
-- L1390 `main()`
+- L298 `attach_fav(recs, legs, log=print)` — Обещание модели (`fav_bp`) — в записи, у которых его нет.
+- L339 `build_rows(by_ruler, now=None, log=print, keys=None)` — Решения, взятые каждой книгой, с деньгами в долларах.
+- L518 `append_journal(rows, path=None, log=print)` — Дописывает только НОВЫЕ решения. Запись write-ahead: строка, однажды попавшая в журнал, не переписывается — и…
+- L571 `dups(rows)` — Правило владельца числом: одно имя — одна позиция ОДНОВРЕМЕННО.
+- L610 `_dd(v, deposit)` — Просадка по дневному ряду — ОДНОЙ формулой на ВСЕ разрезы.
+- L630 `CONC_HEAD = '$ без лучшего имени | $ без 3 лучших д…` — Колонки концентрации — ОДНИМ местом на все три семейства. У длинных книг они стоят с 04.09, а у коротких и об…
+- L634 `conc_cells(st)` — Три клетки концентрации по статистике книги — в языке таблиц.
+- L653 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
+- L762 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
+- L807 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
+- L908 `_pct(x, d=2)`
+- L912 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
+- L947 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
+- L1033 `report(s)`
+- L1391 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
+- L1425 `publish(name)`
+- L1431 `main()`
 
-## research/dca_paper/run_short.py · 423 строк
+## research/dca_paper/run_short.py · 419 строк
 
 Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 
@@ -2111,11 +2115,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L147 `floor_groups()` — Линейки D10 по ПОЛУ капитуляции: {доля: [линейки]}.
 - L170 `replay(need, src=None, log=print, ckpt_hours=None)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
 - L220 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
-- L286 `_p(x, d=2)`
-- L290 `_u(x)`
-- L294 `report(s)`
-- L389 `publish(name)`
-- L394 `main(argv=None)`
+- L282 `_p(x, d=2)`
+- L286 `_u(x)`
+- L290 `report(s)`
+- L385 `publish(name)`
+- L390 `main(argv=None)`
 
 ## research/dca_paper/short_age.py · 411 строк
 
