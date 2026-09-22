@@ -3458,6 +3458,34 @@ class Collector:
                 "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at))})
         return out
 
+    def _dca_rows(self, DR, path, acc=None):
+        """Строки журнала DCA-книг ТЕКУЩИХ правил — через кеш кусков
+        сборщика.
+
+        Дефект (владелец, 2026-09-22: «страница DCA грузится 5–10
+        секунд»): каждый промах двухминутного кеша `dca_paper` и каждый
+        клик по позиции (`dca_trades`) разбирали все три журнала заново
+        — 200 653 строки, 70 МБ, 3.9 с из 5.9 холодного ответа, — хотя
+        журнал write-ahead и старые куски не меняются никогда. Кеш
+        кусков живёт здесь (сборщик — единственный долгоживущий
+        читатель), правило чтения и дедупа — одно, в `rules.read_journal`.
+
+        Отбор `is_current` идёт при разборе: все читатели сборщика
+        берут только строки текущих правил, и держать остальные — это
+        490 МБ вместо 90. Строки кеша общие между ответами: их не
+        правят, ответы собираются копиями (`dict(r, …)`).
+        """
+        cache = getattr(self, "_dca_parts", None)
+        if cache is None:
+            cache = self._dca_parts = {}
+        st = {}
+        rows, bad = DR.read_journal(path, stats=st, keep=DR.is_current,
+                                    cache=cache)
+        if acc is not None:
+            for k in ("parsed", "cached", "parts", "dups"):
+                acc[k] = acc.get(k, 0) + st.get(k, 0)
+        return rows, bad
+
     def dca_trades(self, sym, book):
         """Позиции DCA-книги по одной монете — В ФОРМЕ, ЖДАННОЙ ГРАФИКОМ.
 
@@ -3498,7 +3526,8 @@ class Collector:
             return {"present": False, "rows": [], "merged": [],
                     "why": "журнала нет на этой машине — он живёт там, "
                            "где книги считаются"}
-        rows, _bad = DR.read_journal(jp)
+        acc = {}
+        rows, _bad = self._dca_rows(DR, jp, acc)
         # Версия строки — тем же одним местом, что у книги: у семейства
         # своя версия правил, и сравнение только с `RULES` показало бы
         # на графике строки, которые сама книга в счёт не берёт.
@@ -3606,7 +3635,7 @@ class Collector:
                     "exit": None, "depth": r.get("depth"), "bt": False,
                 })
         out.sort(key=lambda x: float(x.get("opened_at") or 0))
-        return {"present": True, "rows": out,
+        return {"present": True, "rows": out, "read": acc,
                 # слитой считается позиция С ДОЛИВАМИ — ровно как у книг
                 # модели: у остальных сливать нечего
                 "merged": [t for t in out if t["lots"] > 1],
@@ -3749,7 +3778,8 @@ class Collector:
             cached[key] = out
             self._dca_cache = (now if now - cat >= 120 else cat, cached)
             return out
-        rows, bad = DR.read_journal(DR.JOURNAL)
+        acc = {}
+        rows, bad = self._dca_rows(DR, DR.JOURNAL, acc)
         out["present"] = True
         out["bad_lines"] = bad
         out["rules"] = art.get("rules") or {}
@@ -3803,7 +3833,7 @@ class Collector:
                 (sh, "h24", "H24_JOURNAL", "short_bad_lines")):
             if not blk.get("present"):
                 continue
-            frows, fbad = DR.read_journal(getattr(DR, jattr))
+            frows, fbad = self._dca_rows(DR, getattr(DR, jattr), acc)
             out[badkey] = fbad
             fams.append((list(blk.get("rulers") or []),
                          blk.get("books") or {}, frows))
@@ -3918,6 +3948,10 @@ class Collector:
                                      **DR.open_stats(op.get("positions")))
                 books[k] = b
         out["books"] = books
+        # Цена ответа — числом в самом ответе: сколько строк разобрано
+        # ЭТИМ вызовом и сколько кусков взято из кеша. Тихий ответ за
+        # шесть секунд неотличим от тихого за полсекунды.
+        out["read"] = dict(acc, sec=round(time.time() - now, 3))
         rk0 = ruler if ruler in {x["key"] for x in out["rulers"]} else None
         if dep is not None and rk0:
             k = f"{rk0}:{int(float(dep))}"

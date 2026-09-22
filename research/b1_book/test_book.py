@@ -7526,6 +7526,88 @@ def test_dca_serves_ruler_and_deposit_as_one_book():
         DR.JOURNAL, DR.ARTIFACT = jp0, ap0
 
 
+def test_dca_page_does_not_reparse_an_unchanged_journal():
+    """Свод и график DCA не разбирают журнал заново, пока он не менялся.
+
+    Дефект (владелец, 2026-09-22: «страница DCA грузится 5–10 секунд»):
+    каждый промах двухминутного кеша `dca_paper` и каждый клик по
+    позиции (`dca_trades`) разбирали три журнала целиком — 200 653
+    строки, 3.9 с из 5.9 холодного ответа. Дорога проверяется на
+    НАСТОЯЩЕМ `Collector`: кеш кусков живёт у него, и правило чтения
+    (`rules.read_journal`) само по себе страницу не защищает — защищает
+    то, что оба читателя сборщика ходят через один кеш.
+    """
+    import tempfile
+
+    import collect as C
+
+    root = os.path.join(os.path.dirname(HERE), "dca_paper")
+    sys.path.insert(0, root)
+    import rules as DR
+    import run_paper as DP
+
+    _snap = DP.rules_snapshot()
+    keep = {k: getattr(DR, k) for k in (
+        "JOURNAL", "ARTIFACT", "H24_JOURNAL", "H24_ARTIFACT",
+        "PAIR_JOURNAL", "PAIR_ARTIFACT")}
+    td = tempfile.mkdtemp()
+    try:
+        # Все три семейства — в песочницу: иначе сборщик прочёл бы
+        # НАСТОЯЩИЕ своды этой машины (первый прогон соседней проверки
+        # ровно так и упал).
+        for k in keep:
+            setattr(DR, k, os.path.join(td, k.lower() + ".json"
+                                        if "ARTIFACT" in k else k.lower() + ".jsonl"))
+        t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
+
+        def row(sym, at):
+            return {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym,
+                    "usd": 1.0, "written_at": at + 600, "rules": DR.RULES,
+                    "ruler": "safe", "fav_bp": 500.0, "lev": 2.0,
+                    "margin": 25.0, "pnl_frac": 0.04, "exit": "тейк",
+                    "entry_px": 2.0, "exit_px": 2.1, "avg": 2.0, "depth": 1,
+                    "fills": [[at, 2.0, 0.25]]}
+
+        DP.append_journal([row("AAAUSDT", t0), row("BBBUSDT", t0 + 86400)],
+                          DR.JOURNAL, log=lambda *_: None)
+        art = {"rules": {"RULES": DR.RULES, "DEPOSITS": [1000.0],
+                         "AHEAD_H": DR.AHEAD_H, "HOLD_H": DR.HOLD_H,
+                         "RULERS": _snap["RULERS"],
+                         "RULER_ORDER": list(_snap["RULER_ORDER"])},
+               "books": {f"{k}:1000": {"deposit": 1000.0, "ruler": k}
+                         for k in DR.RULER_ORDER}}
+        with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+            json.dump(art, f)
+
+        c = C.Collector(["TEST"], [], tempfile.mkdtemp(), lambda m: None)
+        d1 = c.dca_paper()
+        r1 = d1["read"]
+        assert r1["parsed"] == 2 and r1["cached"] == 0 and r1["parts"] == 2, r1
+        assert d1["books"]["safe:1000"]["n_journal"] == 2, d1["books"]["safe:1000"]
+
+        # Кеш страницы истёк — журнал НЕ разбирается, книги те же.
+        c._dca_cache = (0.0, {})
+        d2 = c.dca_paper()
+        assert d2["read"]["parsed"] == 0 and d2["read"]["cached"] == 2, d2["read"]
+        assert d2["books"] == d1["books"], "книги разошлись между чтениями"
+        # График той же книги — через тот же кеш, а не своим чтением.
+        t = c.dca_trades("AAAUSDT", "safe:1000")
+        assert t["present"] and len(t["rows"]) == 1, t
+        assert t["read"]["parsed"] == 0 and t["read"]["cached"] == 2, t["read"]
+
+        # Дописанные сутки разбираются — и только они.
+        DP.append_journal([row("CCCUSDT", t0 + 2 * 86400)], DR.JOURNAL,
+                          log=lambda *_: None)
+        c._dca_cache = (0.0, {})
+        d3 = c.dca_paper()
+        assert d3["read"]["parsed"] == 1 and d3["read"]["cached"] == 2, d3["read"]
+        assert d3["books"]["safe:1000"]["n_journal"] == 3, d3["books"]["safe:1000"]
+        assert "sec" in d3["read"], d3["read"]
+    finally:
+        for k, v in keep.items():
+            setattr(DR, k, v)
+
+
 def test_dca_open_pnl_is_marked_live_not_hourly():
     """Открытый pnl DCA-книги переоценивается ЖИВОЙ серединой.
 
@@ -8149,6 +8231,7 @@ def main():
     test_dca_trades_speak_the_language_of_the_chart()
     test_dca_chart_reads_the_journal_of_its_own_family()
     test_dca_list_counts_rules_of_the_family_not_of_the_project()
+    test_dca_page_does_not_reparse_an_unchanged_journal()
     test_dca_chart_carries_the_liquidation_of_the_book()
     print("живой детектор")
     test_live_detector_agrees_with_batch()

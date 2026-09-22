@@ -1166,7 +1166,43 @@ def journal_key(r):
             int(float(r.get("at") or 0)), r.get("sym"))
 
 
-def read_journal(path=JOURNAL, stats=None):
+def _parse_part(part, keep=None):
+    """Один кусок журнала: строки, их ключи дедупа, число битых и
+    разобранных.
+
+    Ключ считается ЗДЕСЬ, один раз на строку, и едет рядом с ней: дедуп
+    по кускам и чтение из кеша берут его готовым, а не считают заново.
+
+    `keep` — отбор строк при разборе (у сборщика это `is_current`):
+    строки вне отбора не возвращаются вовсе и в кеше не лежат — так
+    сборщик держит в памяти 34 тысячи строк текущих правил, а не все
+    178 тысяч (90 МБ против 490). Отбирать ДО дедупа законно только
+    потому, что всё, от чего зависит `is_current`, — версия правил,
+    версия семейства, линейка — входит в сам ключ: у двух строк с одним
+    ключом отбор даёт один ответ, и «первое вхождение» среди отобранных
+    есть первое вхождение вообще. Предикат, смотрящий на поле вне
+    ключа, менял бы, какое вхождение побеждает, — сюда его не подавать.
+    """
+    rows, keys, bad, n = [], [], 0, 0
+    with open(part, encoding="utf-8") as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln:
+                continue
+            n += 1
+            try:
+                r = json.loads(ln)
+            except Exception:
+                bad += 1
+                continue
+            if keep is not None and not keep(r):
+                continue
+            rows.append(r)
+            keys.append(journal_key(r))
+    return rows, keys, bad, n
+
+
+def read_journal(path=JOURNAL, stats=None, keep=None, cache=None):
     """Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
 
     Битая строка пропускается со счётом: журнал write-ahead, и
@@ -1178,28 +1214,61 @@ def read_journal(path=JOURNAL, stats=None):
     эффект правки). Считать одно решение дважды означало бы удвоить
     сделку в счёте, поэтому побеждает ПЕРВОЕ вхождение — старый файл.
     Число снятых повторов кладётся в `stats`, а не молчит.
+
+    `cache` — словарь ВЫЗЫВАЮЩЕГО: {кусок: (подпись, строки, ключи,
+    битых)}. Кусок с той же подписью (mtime_ns, размер) не разбирается
+    заново: журнал write-ahead, старые куски меняются только
+    переразрезкой, а она меняет и подпись. Подпись снимается ДО чтения:
+    дописанное между чтением и подписью тогда разберётся лишний раз, а
+    не потеряется до следующей дописи. Кому держать память, решает
+    вызывающий: сборщик отвечает страницам каждые две минуты и держит,
+    прогон книги читает раз и уходит. Без кеша каждый промах
+    двухминутного кеша страницы DCA заново разбирал 200 653 строки трёх
+    журналов (70 МБ) — 3.9 с из 5.9 у холодного ответа (владелец,
+    2026-09-22: «жду по 5–10 секунд»). Строки из кеша ОБЩИЕ между
+    вызовами — читать, не править; один словарь — один `keep`.
+
+    `stats`: `dups`, `parts`, `parsed` (строк разобрано ЭТИМ вызовом),
+    `cached` (кусков взято из кеша).
     """
-    rows, bad, seen, dups = [], 0, set(), 0
-    for part in journal_parts(path):
-        with open(part, encoding="utf-8") as f:
-            for ln in f:
-                ln = ln.strip()
-                if not ln:
-                    continue
-                try:
-                    r = json.loads(ln)
-                except Exception:
-                    bad += 1
-                    continue
-                k = journal_key(r)
-                if k in seen:
-                    dups += 1
-                    continue
-                seen.add(k)
-                rows.append(r)
+    rows, bad, seen, dups, parsed, hits = [], 0, set(), 0, 0, 0
+    parts = journal_parts(path)
+    if cache is not None:
+        # Кусок, которого больше нет (переразрезка переименовала), из
+        # кеша уходит — но только СВОЕГО журнала: словарь у сборщика
+        # один на три семейства.
+        base = os.path.splitext(path)[0] + "-"
+        for k in [k for k in cache
+                  if (k == path or k.startswith(base)) and k not in parts]:
+            del cache[k]
+    for part in parts:
+        hit = None
+        if cache is not None:
+            st = os.stat(part)
+            sig = (st.st_mtime_ns, st.st_size)
+            hit = cache.get(part)
+            if hit is not None and hit[0] != sig:
+                hit = None
+        if hit is None:
+            prow, pkeys, pbad, n = _parse_part(part, keep)
+            parsed += n
+            if cache is not None:
+                cache[part] = (sig, prow, pkeys, pbad)
+        else:
+            _, prow, pkeys, pbad = hit
+            hits += 1
+        bad += pbad
+        for r, k in zip(prow, pkeys):
+            if k in seen:
+                dups += 1
+                continue
+            seen.add(k)
+            rows.append(r)
     if stats is not None:
         stats["dups"] = dups
-        stats["parts"] = len(journal_parts(path))
+        stats["parts"] = len(parts)
+        stats["parsed"] = parsed
+        stats["cached"] = hits
     return rows, bad
 
 

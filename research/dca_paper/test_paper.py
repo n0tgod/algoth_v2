@@ -2158,6 +2158,102 @@ def test_journal_shard_rolls_over_by_size():
           f"{len(place)} файлов, читатель видит все")
 
 
+def test_journal_reader_parses_only_changed_parts():
+    """Читатель журнала разбирает кусок ОДИН раз, пока кусок не менялся.
+
+    Дефект (владелец, 2026-09-22: «страница DCA грузится 5–10 секунд»):
+    каждый промах двухминутного кеша страницы заново разбирал все три
+    журнала — 200 653 строки, 70 МБ, 3.9 с из 5.9 у холодного ответа, —
+    хотя журнал write-ahead и старые куски не меняются никогда. Кеш
+    кусков живёт у вызывающего (сборщик держит, прогон читает раз и
+    уходит), правило чтения и дедупа — здесь, одно.
+
+    Проверяется в обе стороны: неизменный кусок не разбирается, а
+    дописанный, переписанный и исчезнувший — замечаются. И отбор при
+    разборе (`keep=is_current`) обязан давать ровно то же, что отбор
+    ПОСЛЕ дедупа, — иначе кеш держал бы не ту книгу.
+    """
+    td = tempfile.mkdtemp()
+    jp = os.path.join(td, "journal.jsonl")
+    d1 = 1_788_000_000          # 2026-08-29 UTC
+    d2 = d1 + 86400 * 2
+
+    def row(at, sym, rules=None):
+        return {"dep": 1000, "at": at, "exit_ts": at + 3600, "sym": sym,
+                "usd": 1.0, "written_at": at + 600,
+                "rules": R.RULES if rules is None else rules,
+                "ruler": "safe", "lev": 2.0, "margin": 25.0,
+                "pnl_frac": 0.04, "exit": "тейк", "entry_px": 2.0,
+                "exit_px": 2.1, "avg": 2.0, "depth": 1,
+                "fills": [[at, 2.0, 0.25]]}
+
+    a1, a2 = row(d1, "AAAUSDT"), row(d2, "BBBUSDT")
+    P.append_journal([a1, a2], jp, log=lambda *_: None)
+    # Старый цельный файл: строка ПРЕЖНИХ правил и повтор строки куска —
+    # ровно то перекрытие, которое дедуп обязан снять и с кешем тоже.
+    with open(jp, "w", encoding="utf-8") as f:
+        f.write(json.dumps(row(d1 - 86400, "OLDUSDT", rules=R.RULES - 1),
+                           ensure_ascii=False) + "\n")
+        f.write(json.dumps(a1, ensure_ascii=False) + "\n")
+
+    cache, st = {}, {}
+    rows1, bad = R.read_journal(jp, stats=st, cache=cache)
+    plain, _ = R.read_journal(jp)
+    syms = lambda rs: [r["sym"] for r in rs]
+    assert syms(rows1) == syms(plain) == ["OLDUSDT", "AAAUSDT", "BBBUSDT"], \
+        (syms(rows1), syms(plain))
+    assert not bad and st["parsed"] == 4 and st["cached"] == 0 \
+        and st["dups"] == 1 and st["parts"] == 3, st
+
+    # Второе чтение: ни одной разобранной строки — и тот же ответ.
+    st2 = {}
+    rows2, _ = R.read_journal(jp, stats=st2, cache=cache)
+    assert st2["parsed"] == 0 and st2["cached"] == 3, st2
+    assert rows2 == rows1 and st2["dups"] == 1, st2
+
+    # Дописали свежие сутки: разбирается ТОЛЬКО их кусок.
+    P.append_journal([row(d2 + 3600, "CCCUSDT")], jp, log=lambda *_: None)
+    st3 = {}
+    rows3, _ = R.read_journal(jp, stats=st3, cache=cache)
+    assert syms(rows3) == ["OLDUSDT", "AAAUSDT", "BBBUSDT", "CCCUSDT"], \
+        syms(rows3)
+    assert st3["parsed"] == 2 and st3["cached"] == 2, st3
+
+    # Переписанный кусок (так делает переразрезка: меняется размер) —
+    # разбирается заново, ответ прежний.
+    part = R.shard_of(jp, d1)
+    with open(part, encoding="utf-8") as f:
+        txt = f.read()
+    with open(part, "w", encoding="utf-8") as f:
+        f.write(txt + "\n")
+    st4 = {}
+    rows4, _ = R.read_journal(jp, stats=st4, cache=cache)
+    assert st4["parsed"] == 1 and st4["cached"] == 2, st4
+    assert rows4 == rows3
+
+    # Отбор ПРИ разборе тождествен отбору ПОСЛЕ дедупа, и в кеше лежат
+    # только отобранные строки — это и есть память сборщика.
+    kc, stk = {}, {}
+    cur, _ = R.read_journal(jp, stats=stk, keep=R.is_current, cache=kc)
+    assert syms(cur) == syms([r for r in rows4 if R.is_current(r)]) \
+        == ["AAAUSDT", "BBBUSDT", "CCCUSDT"], syms(cur)
+    assert stk["dups"] == 1 and stk["parsed"] == 5, stk
+    # Кеш хранит кусок КАК ЕСТЬ — повтор AAA лежит в двух кусках (4
+    # строки на 3 решения), снимает его чтение; а строки прежних правил
+    # в кеше нет вовсе — это и есть память сборщика.
+    held = [r for v in kc.values() for r in v[1]]
+    assert len(held) == 4 and all(R.is_current(r) for r in held), \
+        {k: [r["sym"] for r in v[1]] for k, v in kc.items()}
+
+    # Исчезнувший кусок уходит и из ответа, и из кеша.
+    os.remove(R.shard_of(jp, d2))
+    st5 = {}
+    rows5, _ = R.read_journal(jp, stats=st5, cache=cache)
+    assert syms(rows5) == ["OLDUSDT", "AAAUSDT"], syms(rows5)
+    assert R.shard_of(jp, d2) not in cache and st5["parsed"] == 0, \
+        (list(cache), st5)
+
+
 def test_repack_splits_an_oversized_day():
     """Перепаковка режет переросшие сутки и не теряет ни одного решения.
 
@@ -2257,6 +2353,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
          test_shape_counts_positions_not_days,
     test_contracts_walk_matches_the_simulation,
          test_journal_rotates_by_day_and_reader_takes_every_part,
+         test_journal_reader_parses_only_changed_parts,
          test_worst_open_is_measured_and_missing_is_not_zero,
          test_ticket_clears_the_exchange_floor,
          test_ticket_is_squeezed_between_the_floor_and_the_peak,
