@@ -3809,6 +3809,92 @@ M2: каркас walk-forward — чистая математика без чт�
 - L966 `_money_table(art, cell)`
 - L995 `report(art)` — Отчёт. Каждое число, которого нет, — прочерк с причиной.
 
+## research/mech_374e2591/controls_check.py · 95 строк
+
+Машина негативных контролей механики 374e2591: подделка — сюита падает.
+
+- L26 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L28 `SUITE = 'research/mech_374e2591/test_floor_sist…`
+- L34 `sha(p)`
+- L39 `run_suite()` — (прошло, вывод) — ровно так, как это делает приёмка.
+- L44 `main()`
+
+## research/mech_374e2591/floor_sister.py · 1220 строк
+
+Механика 374e2591 — пол капитуляции 0.75 у безопасной короткой книги h24.
+
+- L77 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L78 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L79 `OUT = os.path.join(HERE, 'out')`
+- L80 `CACHE_DIR = os.path.join(HERE, 'cache')`
+- L103 `ART = 'FLOOR-sister'`
+- L104 `MECH = '374e2591'`
+- L106 `BOOK = 'safe_h'` — --- назначено ЗАДАНИЕМ, а не этим файлом --------------------------------
+- L107 `RULER = S.BOOKS[BOOK]`
+- L108 `DEP = 10000.0`
+- L109 `FLOOR_KEY = 'f75'`
+- L111 `FLOOR = dict(SS.FLOORS)[FLOOR_KEY]` — --- взято у объявленных источников, а не назначено здесь ----------------
+- L112 `BASE_FLOOR = R.floor_frac_of(BOOK, D2.FLOOR_FRAC)`
+- L113 `GUARD = R.wave_guard_of(BOOK)`
+- L114 `AGE_D = R.min_age_days(BOOK)`
+- L115 `SEEDS = P.SEEDS`
+- L116 `EXIT = 'пол'`
+- L117 `TAIL_EXITS = T.TAIL_EXITS`
+- L122 `WORST_SHARE = 2.0 / 3.0` — --- пороги убийц, объявленные ЗАДАНИЕМ до прогона ----------------------- (А) худший день сестры не глубже эт…
+- L124 `BEAT_MAX = 0.05` — (Б) доля зёрен, при которой случайные выходы убивают правило.
+- L126 `MIN_FWD_DAYS = 10` — (Г) суток со сделками, начиная с которых судит правило формы пула.
+- L128 `LIQ_TOL_BP = 1.0` — Сколько долей маржи считать расхождением при сверке цены ликвидации.
+- L129 `HOUR = 3600.0`
+- L130 `EPS = 1e-09`
+- L133 `_quiet(*_a)`
+- L137 `log_line(msg)`
+- L143 `floor_level(rec, frac=None)` — Цена пола и pnl на ней для ОДНОЙ записи. Не посчитать — причина.
+- L188 `levels_of(views, frac=None)` — Уровни пола по записям: {ключ: pnl пола} и диагностика.
+- L212 `liq_check(views, p_liq, tol_bp=LIQ_TOL_BP)` — Сверка выведенной ликвидации с записью — калибровка вывода.
+- L242 `views_of(cache, ruler=RULER, limit=None)` — Лёгкие виды закрытых записей линейки: путь ядра и хвостовой исход.
+- L265 `hits(views, levels)` — Час пореза каждой позиции: {ключ: час} — осью `path_screen`.
+- L285 `cut_record(rec, k, pnl=None, why=EXIT)` — Запись, срезанная полом на часе k. Цена выхода — двумя способами.
+- L311 `apply_floor(cache, changed, levels=None)` — Кэш, в котором сработавшие позиции срезаны полом.
+- L331 `in_window(rows, since)` — Строки, вышедшие не раньше `since`. Окно — ПОКАЗ, а не счёт.
+- L338 `book_form(cache, ctx, launch, dep=DEP, book=BOOK, now=None, log…` — Форма книги на этих записях — ТЕМИ ЖЕ функциями, что касса.
+- L392 `columns(st, dep=DEP)` — Колонки спора из формы книги. Чего нет — ПРОЧЕРК, а не ноль.
+- L419 `verdict_worst(base, sis, share=WORST_SHARE)` — Убийца (А): худший день сестры против доли худшего дня базовой.
+- L437 `verdict_control(beat, seeds, n_changed, max_beat=BEAT_MAX)` — Убийца (Б): Σ приращения pnl против случайных выходов.
+- L452 `verdict_shape(sis)` — Убийца (В): обычный день и «без 3 лучших дней» у сестры.
+- L474 `verdict_forward(fwd_days, min_days=MIN_FWD_DAYS)` — Убийца (Г): форвард. У необъявленной сестры его НЕТ.
+- L493 `verdicts(base, sis, beat, seeds, n_changed, fwd_days=0)` — Все объявленные убийцы — по порядку, фразами из чисел.
+- L499 `summary_of(vs, step)` — Одна строка итога: мертва — по каким убийцам, иначе по каким жива.
+- L518 `run_marks(seeds=SEEDS, limit=None, log=log_line, now=None, ctx=…` — Потолок: пол по отметкам ядра, два варианта цены, контроль.
+- L600 `_quant(xs)` — Квантили ряда — прочерк, а не ноль, когда ряда нет.
+- L610 `_ctl_stats(ctl)`
+- L618 `_window_of(cache, ctx, launch, changed, levels, now, mkt)` — Окно с даты правил семейства: ПЕРЕСЧЁТ, а не наблюдение.
+- L641 `sister_sig(frac=None)` — Подпись кэша СЕСТРЫ: подпись семейства плюс её собственный пол.
+- L656 `cache_path(frac=None)`
+- L661 `read_sister_cache(frac=None, log=_quiet)`
+- L673 `write_sister_cache(cache, frac=None)`
+- L681 `need_legs(cache, legs_)` — Решения, которых в кэше сестры нет либо они ещё не закрыты.
+- L691 `replay_floor(legs_, frac=None, src=None, log=log_line)` — Реплей ядром с ЧУЖИМ полом — тем же способом, что у `short_stop`.
+- L714 `gap_of(views, levels)` — Насколько исход хвоста ПРОШЁЛ пол разрывом внутри бара.
+- L741 `replay_changed(base_cache, sister, base_views)` — Позиции, чей исход изменил ПОЛ, и час их выхода — для контроля.
+- L771 `replay_delta(base_cache, sister, changed)` — Σ приращения pnl (долей маржи) по изменённым позициям — по ИСХОДУ.
+- L793 `run_replay(limit=None, seeds=SEEDS, log=log_line, now=None, ctx…` — Реплей ядром: сестра на своих исходах рядом с базовой книгой.
+- L875 `_u(x, d=0)`
+- L879 `_p(x, d=1)`
+- L883 `_sh(x, d=1)` — Доля — БЕЗ знака: у доли знака не бывает, а «+66 %» читается как прирост. Движение со знаком и доля без знака…
+- L890 `_n(x)`
+- L894 `COLS = (('usd', '$ всего', _u), ('final', 'ито…`
+- L907 `_cols_table(pairs)` — Таблица «величина | книга | книга …» — колонки спора построчно.
+- L920 `_exits_table(pairs)`
+- L937 `_verdict_lines(vs)`
+- L946 `report(s)`
+- L1011 `_step1(m)`
+- L1094 `_step2(r)`
+- L1147 `merge(new, path)` — Слить шаги: посчитанный шаг перекрывает прежний, другой остаётся.
+- L1169 `write(s, name=ART, log=print)`
+- L1183 `publish(name)`
+- L1189 `main(argv=None)`
+
 ## research/mech_49b535f8/controls_check.py · 97 строк
 
 Своя машинка проверки негативных контролей — до сдачи отчёта.
