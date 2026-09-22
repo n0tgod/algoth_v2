@@ -1,80 +1,163 @@
 {
  "built": true,
- "module": "research/mech_bb7c3581/storm.py",
- "tests": "research/mech_bb7c3581/test_storm.py",
+ "module": "research/mech_374e2591/floor_sister.py",
+ "tests": "research/mech_374e2591/test_floor_sister.py",
  "controls": [
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "        out[int(hk)] = (c[\"marked\"][field] / n) if n >= int(min_names) else None",
-   "new": "        out[int(hk)] = (c[\"marked\"][field] / n) if n >= 0 else None",
-   "expect": "ПАДЕНИЕ измеримость: час с малым числом имён — прочерк"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "    for hk, w in sorted((series or {}).items()):\n        if w is None:\n            continue",
-   "new": "    for hk, w in sorted((series or {}).items()):\n        if w is None:\n            w = 1.0",
-   "expect": "ПАДЕНИЕ прочерк: бурей не стал"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "        if float(w) >= float(q):",
-   "new": "        if float(w) >= 0.0:",
-   "expect": "ПАДЕНИЕ порог 1 %: часы 2, 3, 4"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "            if SQ.is_marked(v, t, s, min_usd=min_usd):",
-   "new": "            if v is not None:",
-   "expect": "ПАДЕНИЕ метка: помечены только настоящие всплески"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "            v, t = SQ.flow_of(r, f)",
-   "new": "            v, t = SQ.flow_of(r, LIQ_FIELDS[0])",
-   "expect": "ПАДЕНИЕ сторона: множества бурь РАЗНЫЕ"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "    return {SQ.hour_key(at, k): k for k in SQ.live_hours(view)}",
-   "new": "    return {SQ.hour_key(at, k): k for k in range(1, int(view[\"path\"][\"K\"]) + 12)}",
-   "expect": "ПАДЕНИЕ будущее: бури ПОСЛЕ выхода не метят ничего"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "    return {SQ.hour_key(at, k): k for k in SQ.live_hours(view)}",
-   "new": "    return {SQ.hour_key(at, k): k for k in range(1, int(view[\"path\"][\"K\"]) + 1)}",
-   "expect": "ПАДЕНИЕ час выхода: буря в нём ничего не меняет"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "    return min(ks) if ks else None",
-   "new": "    return max(ks) if ks else None",
-   "expect": "ПАДЕНИЕ первый бурный час"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "        k = storm_exit(v, storms)",
-   "new": "        k = storm_exit(v, storms) or (1 if SQ.live_hours(v) else None)",
-   "expect": "ПАДЕНИЕ тишина: не изменено ни одной позиции"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "        recs, g = RP.guard_shorts(recs, bk, log=log, now=now)",
-   "new": "        recs, g = list(recs), {\"guard\": False, \"offered\": len(recs)}",
-   "expect": "ПАДЕНИЕ охрана: применена и закрыла позиции"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "            out[(bk, r[\"sym\"], round(float(r[\"at\"]), 3))] = r",
-   "new": "            out[(r[\"pair\"][0], r[\"sym\"], round(float(r[\"at\"]), 3))] = r",
-   "expect": "ПАДЕНИЕ ключ: все три книги семейства на месте"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "        cand = list((pool or {}).get(h) or [])",
-   "new": "        cand = sorted(x for v in (pool or {}).values() for x in v)",
-   "expect": "ПАДЕНИЕ контроль: час суток сохранён на всех зёрнах"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "        if len(cand) < need:",
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    px = p_liq + frac * (entry - p_liq)",
+   "new": "    px = p_liq + 0.25 * (entry - p_liq)",
+   "expect": "ПРОВАЛ уровень_пола_формулой_ядра"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    pnl = L.open_mark(px, avg, 1.0, lev, ws, \"short\")",
+   "new": "    pnl = -(1.0 - frac)",
+   "expect": "ПРОВАЛ уровень_зависит_от_плеча"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    if filled is not None and abs(float(filled) - cash) > 1e-6 * max(1.0, cash):",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ запись_без_рунгов_не_считается"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "        if not got[\"pnl\"] < 0:",
    "new": "        if False:",
-   "expect": "ПАДЕНИЕ test_control_refuses_when_the_pool_is_too_small"},
-
-  {"file": "research/mech_bb7c3581/storm.py",
-   "old": "    return {int(hk) + int(hours): w for hk, w in (series or {}).items()}",
-   "new": "    return {int(hk): w for hk, w in (series or {}).items()}",
-   "expect": "ПАДЕНИЕ сдвиг: часы сдвинулись ровно на сутки"}
+   "expect": "ПРОВАЛ уровень_не_отрицателен_выбывает"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "        if d > float(tol_bp):",
+   "new": "        if False:",
+   "expect": "ПРОВАЛ сверка_ликвидации_кусается"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "FLOOR = dict(SS.FLOORS)[FLOOR_KEY]",
+   "new": "FLOOR = 0.75",
+   "expect": "ПРОВАЛ правила_берутся_у_книги"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "GUARD = R.wave_guard_of(BOOK)",
+   "new": "GUARD = 2.0",
+   "expect": "ПРОВАЛ правила_берутся_у_книги"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "        k = P.trigger(v, \"loss\", -lvl)",
+   "new": "        k = P.trigger(dict(v, path=dict(v[\"path\"], K=v[\"path\"][\"K\"] + 1)), \"loss\", -lvl)",
+   "expect": "ПРОВАЛ час_среза_строго_до_выхода"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "        k = P.trigger(v, \"loss\", -lvl)",
+   "new": "        k = P.trigger(v, \"loss\", lvl)",
+   "expect": "ПРОВАЛ калибровочная_пара"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    mk = [list(m) for m in (rec.get(\"marks\") or [])\n          if int(round((float(m[0]) - at) / HOUR)) + 1 <= k]",
+   "new": "    mk = [list(m) for m in (rec.get(\"marks\") or [])\n          if int(round((float(m[0]) - at) / HOUR)) + 1 <= k + 1]",
+   "expect": "ПРОВАЛ порез_по_уровню_равен_полу"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    rows, cells, _one, _live = RP.build_rows({book: recs}, now=now,",
+   "new": "    rows, cells, _one, _live = RP.build_rows({book: in_window(recs, since)}, now=now,",
+   "expect": "ПРОВАЛ окно_показа_не_пересчитывает_кассу"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    recs, guard = RP.guard_shorts(recs, book, log=log, now=now, mkt=mkt)",
+   "new": "    guard = {\"guard\": False}",
+   "expect": "ПРОВАЛ форма_равна_кассе"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    if not changed:",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ ноль_не_выдаёт_себя_за_результат"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    out[\"day_worst_usd\"] = (None if st.get(\"day_worst\") is None\n                            else round(float(st[\"day_worst\"]) * dep, 2))",
+   "new": "    out[\"day_worst_usd\"] = round(float(st.get(\"day_worst\") or 0.0) * dep, 2)",
+   "expect": "ПРОВАЛ величина_которой_нет_прочерк"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    thr = float(share) * float(bw)",
+   "new": "    thr = -540.0",
+   "expect": "ПРОВАЛ порог_убийцы_А_доля_измеренного"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    dead = float(sw) <= thr",
+   "new": "    dead = False",
+   "expect": "ПРОВАЛ вердикт_выводится_из_числа"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    dead = float(beat) >= float(max_beat)",
+   "new": "    dead = float(beat) > 1.0",
+   "expect": "ПРОВАЛ убийца_Б_из_доли_зёрен"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    dead = (med < 0) or (float(wo3) < 0)",
+   "new": "    dead = (med < 0)",
+   "expect": "ПРОВАЛ убийца_В_обе_половины"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    if not fwd_days:",
+   "new": "    if False:",
+   "expect": "ПРОВАЛ убийца_Г_прочерк_без_форварда"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    sig[\"floor\"] = dict(sig.get(\"floor\") or {}, **{BOOK: float(frac)})",
+   "new": "    sig[\"floor\"] = dict(sig.get(\"floor\") or {})",
+   "expect": "ПРОВАЛ кэш_сестры_свой_и_с_полом"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    return os.path.join(CACHE_DIR, f\"recs-floor{int(round(100 * frac)):d}.jsonl\")",
+   "new": "    return \"/tmp/recs-floor.jsonl\"",
+   "expect": "ПРОВАЛ кэш_сестры_свой_и_с_полом"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "    finally:\n        D2.FLOOR_FRAC = was\n    out = {}",
+   "new": "    finally:\n        pass\n    out = {}",
+   "expect": "ПРОВАЛ пол_возвращается_после_реплея"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "        below += 1 if d < -EPS else 0",
+   "new": "        below += 1 if d < 1.0 else 0",
+   "expect": "ПРОВАЛ разрыв_через_пол_считается"
+  },
+  {
+   "file": "research/mech_374e2591/floor_sister.py",
+   "old": "        if float(r[\"exit_ts\"]) >= float(b[\"exit_ts\"]):",
+   "new": "        if False:",
+   "expect": "ПРОВАЛ изменённые_позиции_по_реплею"
+  }
  ],
- "touched": ["research/mech_bb7c3581/run_storm.py",
-             "research/mech_bb7c3581/RUNBOOK.md",
-             "research/mech_bb7c3581/controls_check.py"],
- "notes": "Построена механика bb7c3581 целиком: мера research/mech_bb7c3581/storm.py, прогон research/mech_bb7c3581/run_storm.py, сюита research/mech_bb7c3581/test_storm.py (115 проверок), RUNBOOK.md и машина контролей controls_check.py (зовёт саму приёмку runlog.check_build, своей копии судьи нет). ЧУЖИХ файлов не правил ни одного; в touched названы ТРИ СВОИХ НОВЫХ файла в каталоге механики — прогон, RUNBOOK и машина контролей: publish_build.py публикует только module, tests, файлы контролей и touched, и неназванный прогон остался бы на сервере, то есть мера уехала бы в ветку без того, чем её запускают (ровно дефект 03.09, против которого поле и заведено). Оба пути лежат внутри своего каталога, который приёмке назначает машина. Новое: таблица ширины по КАЛЕНДАРНОМУ часу (имя измеримо при живой сводке с полями ликвидаций и оборотом > 0; час измерим при >= 100 именах, иначе ПРОЧЕРК), множество бурных часов на каждую точку объявленной оси 1/2/3 % (судит середина 2 %), применение правила к КНИГЕ ЦЕЛИКОМ (все открытые шорты трёх книг h24, первый бурный час, строго раньше базового выхода) и брат control_exits — контроль столькими же закрытиями книги в СЛУЧАЙНЫХ часах с тем же мультимножеством часа суток (control_storm), плюс диагностика: ряд ширины со сдвигом +-24 ч, доля бурных часов с |волной мажоров| < 1 %, пересечение с охраной, переставленные колонки стороны. Второй копии ядра нет: метка часа, сторона, hour_key/live_hours/before_worst/worst_hour — родитель squeeze_fuel; путь, отметки и закрытие записи — wave.guard_record через path_screen.exit_at; деньги, дельты, концентрация, дни, форма — agree_book/wave_guard/stability. БАЗА — книги КАК СЕЙЧАС, то есть С охраной рынком: кэш реплея хранит исход БЕЗ неё, поэтому охрана применяется тем же кодом, что у прогона книги (run_paper.age_shorts -> guard_shorts), а совпадение с кассой, считающей из кэша, печатается числом (base_matches). Проверено на живых данных разовым проходом (research/mech_bb7c3581/_probe.py, 63 с): 778 имён, 811 990 строк сводок, сторона liq_long (доля Buy в падениях 0.804), 1149 часов, измеримых 1148, медиана ширины 0.279 %, p90 0.92 %, p95 1.24 %, p99 3.07 %, максимум 21.7 %; бурных часов при q = 1/2/3 % — 83/27/13 в 33/13/6 сутках; верхние часы 02.09 21:00 (21.7 %) и 13.09 03:00 (19.5 %) — то есть таблица ширины воспроизвела числа заявки. Смоук ВСЕЙ дороги прогнан на живых данных (--seeds 3 --tag smoke, 222 с, артефакт research/mech_bb7c3581/out/MECH-storm-smoke.json): сторона измерена, убийцы 0а–0г пройдены (изменённых позиций 391/342/342 при минимуме 30), base_matches true — база, собранная мной, совпала с кассой, считающей прямо из кэша, значит охрана применена тем же кодом и не дважды. Вердиктом смоук НЕ ЯВЛЯЕТСЯ и сам это говорит: на трёх зёрнах планка 10 % не измерима, строка 1а стоит «нечем судить». Полный прогон (200 зёрен, ≈ 40 минут расчётом от смоука) — отдельный шаг по RUNBOOK: роль строителя строит, а не судит. Контроль идёт ТОЛЬКО на судимой ячейке (--edge-seeds по умолчанию 0): края объявлены непричастными к вердикту, и платить за них тройную цену не за что; ячейка без контроля отдаёт ПРОЧЕРК, и вердикт на прочерке говорит «нечем судить», а не «пройдено». Чего построить не удалось: шаг 2 (внутричасовой реплей по ленте research/b1_book/out/liq) — он объявлен заявкой ТОЛЬКО если шаг 1 жив, и до прогона шага 1 строить его значило бы строить наугад; лента ликвидаций к тому же лежит на сервере, а не в рабочем дереве. Трактовка, выбранная НЕ молча (см. RUNBOOK, раздел «Что понято не буквально»): убийца 0б задания говорит про покрытие 'часов жизни позиций со сводкой, полями ликвидаций и оборотом > 0' — эта формулировка перенесена от родителя, который читал поток в СОБСТВЕННОМ имени; здесь правило читает ширину по всему рынку, поэтому покрытие считается по ряду ШИРИНЫ (доля позиций, у которых каждый час жизни измерим), а не по сводке имени позиции, и обе величины названы в отчёте своими словами."
+ "touched": [
+  "research/mech_374e2591/controls_check.py",
+  "research/mech_374e2591/RUNBOOK.md"
+ ],
+ "needs_owner": [
+  {
+   "what": "объявить сестру бумажной книгой рядом с `safe_h`: ключ `safe_h75` в `research/dca_paper/rules.py` (линейка σ 6, билет 1×, возраст ≥ 7 суток, охрана 2 %, `FLOOR_FRAC_BY_BOOK` 0.75), свой ключ линейки реплея у `run_short.BOOKS` и место на `/dca-page` с объявленной числом версией правил",
+   "why": "убийца (Г) заявки судится ТОЛЬКО записью ВПЕРЁД, а у необъявленной сестры форвардных суток ноль по построению: все её сутки — пересчёт по прошлому, и назвать их наблюдением значило бы выдать бэктест за форвард. Правка лежит в `research/dca_paper/rules.py`, `run_short.py` и на странице книг, то есть ВНЕ каталога механики: роль строителя туда не пишет, а неопубликованная правка осталась бы на сервере (публикуются только объявленные пути своего каталога, `research/factory/publish_build.py`). Само объявление живой книги есть решение владельца, а не строителя",
+   "unblocks": "суд сестры правилом формы пула вперёд (медиана дня и укус при ≥ 10 сутках со сделками) — единственный из четырёх объявленных убийц, который на записи не проверяется ничем"
+  }
+ ],
+ "notes": "ЧЕРНОВИК — переписывается после полного прогона шага 1."
 }
