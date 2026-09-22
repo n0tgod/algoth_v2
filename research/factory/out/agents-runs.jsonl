@@ -490,3 +490,4 @@
 {"at": 1790044210.633, "role": "brief", "status": "ok", "started": 1790043671.0, "ended": 1790044210.633, "dry": false, "note": "модель opus, усилие medium"}
 {"at": 1790044501.459, "role": "propose", "status": "start", "started": 1790044501.0, "ended": 1790044501.459, "dry": false, "pid": 441896}
 {"at": 1790045624.54, "role": "propose", "status": "ok", "started": 1790044501.0, "ended": 1790045624.54, "dry": false, "note": "модель claude-fable-5-1, усилие xhigh"}
+{"at": 1790045702.0, "role": "judge", "status": "start", "started": 1790045701.999, "ended": 1790045702.0, "dry": false, "pid": 445159}
