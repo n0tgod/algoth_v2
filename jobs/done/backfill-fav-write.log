@@ -1,7 +1,7 @@
-== задание backfill-fav-dry ==
-строка: run research/dca_paper/backfill_fav.py
-начало: 2026-09-22T12:00:04Z
-запускаю: .venv/bin/python research/dca_paper/backfill_fav.py 
+== задание backfill-fav-write ==
+строка: run research/dca_paper/backfill_fav.py --write
+начало: 2026-09-22T12:05:03Z
+запускаю: .venv/bin/python research/dca_paper/backfill_fav.py --write
 sheets.jsonl: ног 1368010
 h24/gbm: часов 750, коротких выборов 2250, ног под краем 2234, отброшено (нет полей / знак) 10
 h24/nn: часов 750, коротких выборов 2250, ног под краем 2089, отброшено (нет полей / знак) 149
@@ -52,22 +52,5 @@ h24/nn: часов 750, коротких выборов 2250, ног под кр
   pair-2026-09-19.jsonl: строк 200, дописано 142, ноги нет 0
   pair-2026-09-20.jsonl: строк 111, дописано 99, ноги нет 0
   pair-2026-09-21.jsonl: строк 12, дописано 12, ноги нет 0
-итого строк 200653, дописано 6872, обещание не найдено 0  (СУХОЙ прогон, ничего не записано)
-конец: 2026-09-22T12:00:28Z, код 0
-публикуется в ветку main:
- jobs/done/backfill-fav-dry.done     |  1 +
- jobs/done/backfill-fav-dry.log      | 56 +++++++++++++++++++++++++++++++++++++
- jobs/done/restart-dca-chart.log     |  9 ++++++
- research/s8_loop/out/day_brake.json |  2 +-
- 4 files changed, 67 insertions(+), 1 deletion(-)
-fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
-
-Another git process seems to be running in this repository, e.g.
-an editor opened by 'git commit'. Please make sure all processes
-are terminated then try again. If it still fails, a git process
-may have crashed in this repository earlier:
-remove the file manually to continue.
-To github.com:n0tgod/algoth_v2.git
-   d64d4a14..0144cd78  main -> main
-branch 'main' set up to track 'origin/main'.
-опубликовано
+итого строк 200653, дописано 6872, обещание не найдено 0
+конец: 2026-09-22T12:05:20Z, код 0
