@@ -9,27 +9,27 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 493,
+    "n": 494,
     "days": 44,
-    "usd": 132.02,
-    "final": 0.132,
+    "usd": 131.65,
+    "final": 0.1316,
     "max_dd": -0.0269,
     "day_median": 0.00065,
     "day_worst": -0.0236,
-    "day_green": 0.705,
-    "win": 0.684,
-    "hold_h": 43.4,
-    "hold_med_h": 51.0,
-    "bite": 11.7,
+    "day_green": 0.682,
+    "win": 0.682,
+    "hold_h": 43.5,
+    "hold_med_h": 51.2,
+    "bite": 11.1,
     "top_sym": "EIGENUSDT",
-    "usd_wo_top": 128.08,
+    "usd_wo_top": 127.7,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 34.81,
+    "usd_wo_top3d": 34.44,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0241,
     "max_dd_wo_top3d": -0.0269,
-    "names": 334,
-    "fills": 660,
+    "names": 335,
+    "fills": 661,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -463,42 +463,42 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.21,
-      "n": 2,
+      "usd": -0.16,
+      "n": 3,
       "bt": 0,
-      "long": 0.21,
+      "long": -0.16,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 420,
-    "n_tail": 103,
+    "n_tail": 104,
     "open_dd": -86.43,
     "open_dd_share": -0.0864
    },
    "forward": {
-    "n": 73,
+    "n": 74,
     "days": 14,
-    "usd": 46.33,
-    "final": 0.0463,
+    "usd": 45.96,
+    "final": 0.046,
     "max_dd": -0.0009,
     "day_median": 0.00048,
     "day_worst": -0.0007,
-    "day_green": 0.857,
-    "win": 0.753,
-    "hold_h": 51.3,
-    "hold_med_h": 67.4,
-    "bite": 0.8,
+    "day_green": 0.786,
+    "win": 0.743,
+    "hold_h": 51.6,
+    "hold_med_h": 67.5,
+    "bite": 0.7,
     "top_sym": "STRKUSDT",
-    "usd_wo_top": 42.18,
+    "usd_wo_top": 41.8,
     "top_day": "2026-09-21",
-    "usd_wo_top3d": 9.51,
+    "usd_wo_top3d": 9.14,
     "worst_day": "2026-09-10",
     "max_dd_wo_worst": -0.0002,
     "max_dd_wo_top3d": -0.0009,
-    "names": 70,
-    "fills": 96,
+    "names": 71,
+    "fills": 97,
     "days_rows": [
      {
       "d": "2026-09-06",
@@ -632,17 +632,17 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.21,
-      "n": 2,
+      "usd": -0.16,
+      "n": 3,
       "bt": 0,
-      "long": 0.21,
+      "long": -0.16,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 16
+    "n_tail": 17
    },
    "restored": {
     "n": 420,
@@ -982,17 +982,17 @@
     "n_tail": 87
    },
    "costs": {
-    "n": 493,
-    "applied": 493,
+    "n": 494,
+    "applied": 494,
     "not_measured": 0,
-    "no_funding": 2,
+    "no_funding": 3,
     "fee_usd": 8.3,
-    "slip_usd": 3.66,
+    "slip_usd": 3.67,
     "fund_usd": 1.32,
-    "gross_usd": 142.65,
-    "net_usd": 132.02,
-    "fee_bp": 4.4,
-    "fee_mean_bp": 6.5,
+    "gross_usd": 142.29,
+    "net_usd": 131.64,
+    "fee_bp": 4.3,
+    "fee_mean_bp": 6.4,
     "fee_worst_bp": 1.3,
     "slip_bp": 2.2,
     "slip_mean_bp": 2.8,
@@ -1000,13 +1000,13 @@
     "fund_bp": -0.4,
     "fund_mean_bp": 0.9,
     "fund_worst_bp": -38.2,
-    "cost_usd": 10.64
+    "cost_usd": 10.65
    },
-   "n_forward": 73,
+   "n_forward": 74,
    "n_restored": 420,
    "dups": {
-    "names": 334,
-    "positions": 493,
+    "names": 335,
+    "positions": 494,
     "overlaps": 0,
     "repeats": 159,
     "max_per_name": 5,
@@ -1014,34 +1014,7 @@
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "TZAUSDT",
-      "at": 1789841968.3,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 27.6666,
-      "mark_frac": -0.012617,
-      "mark_usd": -0.3491,
-      "entry_px": 44.98,
-      "avg": 44.98,
-      "depth": 1,
-      "fills": [
-       [
-        1789844400.0,
-        44.98,
-        0.25
-       ]
-      ],
-      "fav_bp": 91.95,
-      "last_ts": 1790099760.0,
-      "sched_end": 1790101168.3,
-      "cut_why": null,
-      "book_end": null,
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -1122,9 +1095,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.35,
-    "priced": 1,
-    "at": 1790099993.6398463
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1790103742.1247852
    }
   },
   "safe:10000": {
@@ -1135,27 +1108,27 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 1766,
+    "n": 1767,
     "days": 44,
-    "usd": 858.76,
-    "final": 0.0859,
+    "usd": 858.39,
+    "final": 0.0858,
     "max_dd": -0.0026,
     "day_median": 8e-05,
     "day_worst": -0.0025,
-    "day_green": 0.659,
-    "win": 0.784,
+    "day_green": 0.636,
+    "win": 0.783,
     "hold_h": 36.1,
-    "hold_med_h": 23.8,
-    "bite": 11.4,
+    "hold_med_h": 23.9,
+    "bite": 9.7,
     "top_sym": "SANDUSDT",
-    "usd_wo_top": 850.76,
+    "usd_wo_top": 850.39,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 86.22,
+    "usd_wo_top3d": 85.85,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0025,
     "max_dd_wo_top3d": -0.0027,
     "names": 624,
-    "fills": 2373,
+    "fills": 2374,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -1589,42 +1562,42 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.21,
-      "n": 2,
+      "usd": -0.16,
+      "n": 3,
       "bt": 0,
-      "long": 0.21,
+      "long": -0.16,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 1693,
-    "n_tail": 183,
+    "n_tail": 184,
     "open_dd": -379.88,
     "open_dd_share": -0.038
    },
    "forward": {
-    "n": 73,
+    "n": 74,
     "days": 14,
-    "usd": 45.81,
-    "final": 0.0046,
+    "usd": 45.45,
+    "final": 0.0045,
     "max_dd": -0.0001,
     "day_median": 5e-05,
     "day_worst": -0.0001,
-    "day_green": 0.857,
-    "win": 0.753,
-    "hold_h": 51.3,
-    "hold_med_h": 67.4,
-    "bite": 0.8,
+    "day_green": 0.786,
+    "win": 0.743,
+    "hold_h": 51.6,
+    "hold_med_h": 67.5,
+    "bite": 0.7,
     "top_sym": "STRKUSDT",
-    "usd_wo_top": 41.68,
+    "usd_wo_top": 41.32,
     "top_day": "2026-09-21",
-    "usd_wo_top3d": 9.45,
+    "usd_wo_top3d": 9.08,
     "worst_day": "2026-09-10",
     "max_dd_wo_worst": -0.0,
     "max_dd_wo_top3d": -0.0001,
-    "names": 70,
-    "fills": 96,
+    "names": 71,
+    "fills": 97,
     "days_rows": [
      {
       "d": "2026-09-06",
@@ -1758,17 +1731,17 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.21,
-      "n": 2,
+      "usd": -0.16,
+      "n": 3,
       "bt": 0,
-      "long": 0.21,
+      "long": -0.16,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 16
+    "n_tail": 17
    },
    "restored": {
     "n": 1693,
@@ -2108,15 +2081,15 @@
     "n_tail": 167
    },
    "costs": {
-    "n": 1766,
-    "applied": 1766,
+    "n": 1767,
+    "applied": 1767,
     "not_measured": 0,
-    "no_funding": 3,
-    "fee_usd": 34.2,
-    "slip_usd": 13.17,
+    "no_funding": 4,
+    "fee_usd": 34.21,
+    "slip_usd": 13.18,
     "fund_usd": -6.17,
-    "gross_usd": 912.3,
-    "net_usd": 858.76,
+    "gross_usd": 911.94,
+    "net_usd": 858.39,
     "fee_bp": 5.8,
     "fee_mean_bp": 7.5,
     "fee_worst_bp": 1.3,
@@ -2126,48 +2099,21 @@
     "fund_bp": -1.0,
     "fund_mean_bp": -1.4,
     "fund_worst_bp": -40.0,
-    "cost_usd": 53.54
+    "cost_usd": 53.56
    },
-   "n_forward": 73,
+   "n_forward": 74,
    "n_restored": 1693,
    "dups": {
     "names": 624,
-    "positions": 1766,
+    "positions": 1767,
     "overlaps": 0,
-    "repeats": 1142,
+    "repeats": 1143,
     "max_per_name": 8,
     "pause_median_h": 7.6
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "TZAUSDT",
-      "at": 1789841968.3,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 27.1918,
-      "mark_frac": -0.012617,
-      "mark_usd": -0.3431,
-      "entry_px": 44.98,
-      "avg": 44.98,
-      "depth": 1,
-      "fills": [
-       [
-        1789844400.0,
-        44.98,
-        0.25
-       ]
-      ],
-      "fav_bp": 91.95,
-      "last_ts": 1790099760.0,
-      "sched_end": 1790101168.3,
-      "cut_why": null,
-      "book_end": null,
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -2248,9 +2194,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.34,
-    "priced": 1,
-    "at": 1790099993.6398463
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1790103742.1247852
    }
   },
   "safe:100000": {
@@ -2261,27 +2207,27 @@
    "ticket": 145.0,
    "parts": null,
    "all": {
-    "n": 1833,
+    "n": 1834,
     "days": 44,
-    "usd": 5230.85,
+    "usd": 5228.79,
     "final": 0.0523,
     "max_dd": -0.0015,
     "day_median": 5e-05,
     "day_worst": -0.0015,
-    "day_green": 0.659,
-    "win": 0.788,
-    "hold_h": 35.8,
+    "day_green": 0.636,
+    "win": 0.787,
+    "hold_h": 35.9,
     "hold_med_h": 23.6,
-    "bite": 11.7,
+    "bite": 9.9,
     "top_sym": "SANDUSDT",
-    "usd_wo_top": 5184.94,
+    "usd_wo_top": 5182.88,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 448.14,
+    "usd_wo_top3d": 446.08,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0014,
     "max_dd_wo_top3d": -0.0015,
     "names": 641,
-    "fills": 2469,
+    "fills": 2470,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -2715,42 +2661,42 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 1.18,
-      "n": 2,
+      "usd": -0.88,
+      "n": 3,
       "bt": 0,
-      "long": 1.18,
+      "long": -0.88,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 1760,
-    "n_tail": 187,
+    "n_tail": 188,
     "open_dd": -2194.72,
     "open_dd_share": -0.0219
    },
    "forward": {
-    "n": 73,
+    "n": 74,
     "days": 14,
-    "usd": 257.44,
+    "usd": 255.39,
     "final": 0.0026,
     "max_dd": -0.0001,
     "day_median": 3e-05,
     "day_worst": -0.0,
-    "day_green": 0.857,
-    "win": 0.753,
-    "hold_h": 51.3,
-    "hold_med_h": 67.4,
-    "bite": 0.8,
+    "day_green": 0.786,
+    "win": 0.743,
+    "hold_h": 51.6,
+    "hold_med_h": 67.5,
+    "bite": 0.7,
     "top_sym": "STRKUSDT",
-    "usd_wo_top": 234.23,
+    "usd_wo_top": 232.17,
     "top_day": "2026-09-21",
-    "usd_wo_top3d": 53.11,
+    "usd_wo_top3d": 51.05,
     "worst_day": "2026-09-10",
     "max_dd_wo_worst": -0.0,
     "max_dd_wo_top3d": -0.0001,
-    "names": 70,
-    "fills": 96,
+    "names": 71,
+    "fills": 97,
     "days_rows": [
      {
       "d": "2026-09-06",
@@ -2884,17 +2830,17 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 1.18,
-      "n": 2,
+      "usd": -0.88,
+      "n": 3,
       "bt": 0,
-      "long": 1.18,
+      "long": -0.88,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 16
+    "n_tail": 17
    },
    "restored": {
     "n": 1760,
@@ -3234,15 +3180,15 @@
     "n_tail": 171
    },
    "costs": {
-    "n": 1833,
-    "applied": 1833,
+    "n": 1834,
+    "applied": 1834,
     "not_measured": 0,
-    "no_funding": 3,
-    "fee_usd": 204.6,
-    "slip_usd": 77.52,
+    "no_funding": 4,
+    "fee_usd": 204.62,
+    "slip_usd": 77.56,
     "fund_usd": -36.27,
-    "gross_usd": 5549.24,
-    "net_usd": 5230.85,
+    "gross_usd": 5547.24,
+    "net_usd": 5228.79,
     "fee_bp": 5.8,
     "fee_mean_bp": 7.5,
     "fee_worst_bp": 1.3,
@@ -3252,48 +3198,21 @@
     "fund_bp": -1.0,
     "fund_mean_bp": -1.3,
     "fund_worst_bp": -40.0,
-    "cost_usd": 318.39
+    "cost_usd": 318.45
    },
-   "n_forward": 73,
+   "n_forward": 74,
    "n_restored": 1760,
    "dups": {
     "names": 641,
-    "positions": 1833,
+    "positions": 1834,
     "overlaps": 0,
-    "repeats": 1192,
+    "repeats": 1193,
     "max_per_name": 8,
     "pause_median_h": 7.6
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "TZAUSDT",
-      "at": 1789841968.3,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 152.7566,
-      "mark_frac": -0.012617,
-      "mark_usd": -1.9273,
-      "entry_px": 44.98,
-      "avg": 44.98,
-      "depth": 1,
-      "fills": [
-       [
-        1789844400.0,
-        44.98,
-        0.25
-       ]
-      ],
-      "fav_bp": 91.95,
-      "last_ts": 1790099760.0,
-      "sched_end": 1790101168.3,
-      "cut_why": null,
-      "book_end": null,
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -3374,9 +3293,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -1.93,
-    "priced": 1,
-    "at": 1790099993.6398463
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1790103742.1247852
    }
   },
   "optimal:1000": {
@@ -3387,27 +3306,27 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 515,
+    "n": 516,
     "days": 45,
-    "usd": 204.93,
-    "final": 0.2049,
+    "usd": 204.54,
+    "final": 0.2045,
     "max_dd": -0.0673,
-    "day_median": 0.00014,
+    "day_median": 7e-05,
     "day_worst": -0.042,
-    "day_green": 0.556,
-    "win": 0.683,
-    "hold_h": 41.9,
-    "hold_med_h": 46.4,
-    "bite": 9.2,
+    "day_green": 0.533,
+    "win": 0.682,
+    "hold_h": 42.0,
+    "hold_med_h": 46.5,
+    "bite": 8.8,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 123.37,
+    "usd_wo_top": 122.98,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": -47.2,
+    "usd_wo_top3d": -47.59,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0498,
     "max_dd_wo_top3d": -0.0762,
-    "names": 339,
-    "fills": 714,
+    "names": 340,
+    "fills": 715,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -3851,42 +3770,42 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.22,
-      "n": 2,
+      "usd": -0.16,
+      "n": 3,
       "bt": 0,
-      "long": 0.22,
+      "long": -0.16,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 436,
-    "n_tail": 102,
+    "n_tail": 103,
     "open_dd": -208.16,
     "open_dd_share": -0.2082
    },
    "forward": {
-    "n": 79,
+    "n": 80,
     "days": 15,
-    "usd": 116.13,
-    "final": 0.1161,
+    "usd": 115.74,
+    "final": 0.1157,
     "max_dd": -0.0583,
-    "day_median": 0.00022,
+    "day_median": 0.00011,
     "day_worst": -0.042,
-    "day_green": 0.667,
-    "win": 0.722,
-    "hold_h": 48.4,
-    "hold_med_h": 59.7,
-    "bite": 15.1,
+    "day_green": 0.6,
+    "win": 0.713,
+    "hold_h": 48.7,
+    "hold_med_h": 61.3,
+    "bite": 9.3,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 34.56,
+    "usd_wo_top": 34.18,
     "top_day": "2026-09-19",
-    "usd_wo_top3d": -51.61,
+    "usd_wo_top3d": -52.0,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0163,
     "max_dd_wo_top3d": -0.0583,
-    "names": 71,
-    "fills": 126,
+    "names": 72,
+    "fills": 127,
     "days_rows": [
      {
       "d": "2026-09-06",
@@ -4030,17 +3949,17 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.22,
-      "n": 2,
+      "usd": -0.16,
+      "n": 3,
       "bt": 0,
-      "long": 0.22,
+      "long": -0.16,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 16
+    "n_tail": 17
    },
    "restored": {
     "n": 436,
@@ -4380,15 +4299,15 @@
     "n_tail": 86
    },
    "costs": {
-    "n": 515,
-    "applied": 515,
+    "n": 516,
+    "applied": 516,
     "not_measured": 0,
-    "no_funding": 2,
+    "no_funding": 3,
     "fee_usd": 18.08,
-    "slip_usd": 7.07,
+    "slip_usd": 7.08,
     "fund_usd": 20.34,
-    "gross_usd": 209.73,
-    "net_usd": 204.93,
+    "gross_usd": 209.36,
+    "net_usd": 204.54,
     "fee_bp": 5.4,
     "fee_mean_bp": 13.3,
     "fee_worst_bp": 1.3,
@@ -4398,13 +4317,13 @@
     "fund_bp": -0.6,
     "fund_mean_bp": 14.4,
     "fund_worst_bp": -92.7,
-    "cost_usd": 4.81
+    "cost_usd": 4.82
    },
-   "n_forward": 79,
+   "n_forward": 80,
    "n_restored": 436,
    "dups": {
-    "names": 339,
-    "positions": 515,
+    "names": 340,
+    "positions": 516,
     "overlaps": 0,
     "repeats": 176,
     "max_per_name": 6,
@@ -4412,34 +4331,7 @@
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "TZAUSDT",
-      "at": 1789841968.3,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 28.6354,
-      "mark_frac": -0.012617,
-      "mark_usd": -0.3613,
-      "entry_px": 44.98,
-      "avg": 44.98,
-      "depth": 1,
-      "fills": [
-       [
-        1789844400.0,
-        44.98,
-        0.25
-       ]
-      ],
-      "fav_bp": 91.95,
-      "last_ts": 1790099760.0,
-      "sched_end": 1790101168.3,
-      "cut_why": null,
-      "book_end": null,
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -4494,9 +4386,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.36,
-    "priced": 1,
-    "at": 1790099993.6398463
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1790103742.1247852
    }
   },
   "optimal:10000": {
@@ -4507,27 +4399,27 @@
    "ticket": 25.0,
    "parts": null,
    "all": {
-    "n": 1781,
+    "n": 1782,
     "days": 45,
-    "usd": 1822.14,
+    "usd": 1821.74,
     "final": 0.1822,
     "max_dd": -0.0059,
-    "day_median": 2e-05,
+    "day_median": 1e-05,
     "day_worst": -0.0046,
-    "day_green": 0.556,
-    "win": 0.784,
+    "day_green": 0.533,
+    "win": 0.783,
     "hold_h": 35.8,
     "hold_med_h": 23.5,
-    "bite": 6.0,
+    "bite": 5.8,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 1732.69,
+    "usd_wo_top": 1732.29,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 205.83,
+    "usd_wo_top3d": 205.43,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0059,
     "max_dd_wo_top3d": -0.0068,
     "names": 624,
-    "fills": 2448,
+    "fills": 2449,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -4971,42 +4863,42 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.23,
-      "n": 2,
+      "usd": -0.17,
+      "n": 3,
       "bt": 0,
-      "long": 0.23,
+      "long": -0.17,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 1702,
-    "n_tail": 182,
+    "n_tail": 183,
     "open_dd": -917.18,
     "open_dd_share": -0.0917
    },
    "forward": {
-    "n": 79,
+    "n": 80,
     "days": 15,
-    "usd": 130.97,
+    "usd": 130.57,
     "final": 0.0131,
     "max_dd": -0.0063,
-    "day_median": 2e-05,
+    "day_median": 1e-05,
     "day_worst": -0.0046,
-    "day_green": 0.667,
-    "win": 0.722,
-    "hold_h": 48.4,
-    "hold_med_h": 59.7,
-    "bite": 14.3,
+    "day_green": 0.6,
+    "win": 0.713,
+    "hold_h": 48.7,
+    "hold_med_h": 61.3,
+    "bite": 8.7,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 41.52,
+    "usd_wo_top": 41.12,
     "top_day": "2026-09-19",
-    "usd_wo_top3d": -54.31,
+    "usd_wo_top3d": -54.71,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0017,
     "max_dd_wo_top3d": -0.0063,
-    "names": 71,
-    "fills": 126,
+    "names": 72,
+    "fills": 127,
     "days_rows": [
      {
       "d": "2026-09-06",
@@ -5150,17 +5042,17 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 0.23,
-      "n": 2,
+      "usd": -0.17,
+      "n": 3,
       "bt": 0,
-      "long": 0.23,
+      "long": -0.17,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 16
+    "n_tail": 17
    },
    "restored": {
     "n": 1702,
@@ -5500,15 +5392,15 @@
     "n_tail": 166
    },
    "costs": {
-    "n": 1781,
-    "applied": 1781,
+    "n": 1782,
+    "applied": 1782,
     "not_measured": 0,
-    "no_funding": 3,
-    "fee_usd": 75.95,
-    "slip_usd": 27.49,
+    "no_funding": 4,
+    "fee_usd": 75.96,
+    "slip_usd": 27.5,
     "fund_usd": 7.56,
-    "gross_usd": 1918.03,
-    "net_usd": 1822.14,
+    "gross_usd": 1917.64,
+    "net_usd": 1821.74,
     "fee_bp": 9.0,
     "fee_mean_bp": 15.9,
     "fee_worst_bp": 1.3,
@@ -5518,48 +5410,21 @@
     "fund_bp": -1.6,
     "fund_mean_bp": 1.1,
     "fund_worst_bp": -110.9,
-    "cost_usd": 95.88
+    "cost_usd": 95.9
    },
-   "n_forward": 79,
+   "n_forward": 80,
    "n_restored": 1702,
    "dups": {
     "names": 624,
-    "positions": 1781,
+    "positions": 1782,
     "overlaps": 0,
-    "repeats": 1157,
+    "repeats": 1158,
     "max_per_name": 8,
     "pause_median_h": 7.6
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "TZAUSDT",
-      "at": 1789841968.3,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 29.6159,
-      "mark_frac": -0.012617,
-      "mark_usd": -0.3737,
-      "entry_px": 44.98,
-      "avg": 44.98,
-      "depth": 1,
-      "fills": [
-       [
-        1789844400.0,
-        44.98,
-        0.25
-       ]
-      ],
-      "fav_bp": 91.95,
-      "last_ts": 1790099760.0,
-      "sched_end": 1790101168.3,
-      "cut_why": null,
-      "book_end": null,
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -5614,9 +5479,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -0.37,
-    "priced": 1,
-    "at": 1790099993.6398463
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1790103742.1247852
    }
   },
   "optimal:100000": {
@@ -5627,27 +5492,27 @@
    "ticket": 145.0,
    "parts": null,
    "all": {
-    "n": 1848,
+    "n": 1849,
     "days": 45,
-    "usd": 10961.81,
+    "usd": 10959.64,
     "final": 0.1096,
     "max_dd": -0.0034,
-    "day_median": 1e-05,
+    "day_median": 0.0,
     "day_worst": -0.0026,
-    "day_green": 0.556,
-    "win": 0.787,
-    "hold_h": 35.5,
+    "day_green": 0.533,
+    "win": 0.786,
+    "hold_h": 35.6,
     "hold_med_h": 23.5,
-    "bite": 5.8,
+    "bite": 5.7,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 10473.68,
+    "usd_wo_top": 10471.51,
     "top_day": "2026-08-21",
-    "usd_wo_top3d": 1049.88,
+    "usd_wo_top3d": 1047.71,
     "worst_day": "2026-08-12",
     "max_dd_wo_worst": -0.0034,
     "max_dd_wo_top3d": -0.0037,
     "names": 641,
-    "fills": 2544,
+    "fills": 2545,
     "days_rows": [
      {
       "d": "2026-08-09",
@@ -6091,42 +5956,42 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 1.24,
-      "n": 2,
+      "usd": -0.93,
+      "n": 3,
       "bt": 0,
-      "long": 1.24,
+      "long": -0.93,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 1769,
-    "n_tail": 186,
+    "n_tail": 187,
     "open_dd": -5141.41,
     "open_dd_share": -0.0514
    },
    "forward": {
-    "n": 79,
+    "n": 80,
     "days": 15,
-    "usd": 715.61,
-    "final": 0.0072,
+    "usd": 713.44,
+    "final": 0.0071,
     "max_dd": -0.0034,
     "day_median": 1e-05,
     "day_worst": -0.0025,
-    "day_green": 0.667,
-    "win": 0.722,
-    "hold_h": 48.4,
-    "hold_med_h": 59.7,
-    "bite": 14.3,
+    "day_green": 0.6,
+    "win": 0.713,
+    "hold_h": 48.7,
+    "hold_med_h": 61.3,
+    "bite": 8.7,
     "top_sym": "BRUSDT",
-    "usd_wo_top": 227.49,
+    "usd_wo_top": 225.32,
     "top_day": "2026-09-19",
-    "usd_wo_top3d": -295.79,
+    "usd_wo_top3d": -297.96,
     "worst_day": "2026-09-15",
     "max_dd_wo_worst": -0.0009,
     "max_dd_wo_top3d": -0.0034,
-    "names": 71,
-    "fills": 126,
+    "names": 72,
+    "fills": 127,
     "days_rows": [
      {
       "d": "2026-09-06",
@@ -6270,17 +6135,17 @@
      },
      {
       "d": "2026-09-22",
-      "usd": 1.24,
-      "n": 2,
+      "usd": -0.93,
+      "n": 3,
       "bt": 0,
-      "long": 1.24,
+      "long": -0.93,
       "short": null,
-      "n_long": 2,
+      "n_long": 3,
       "n_short": 0
      }
     ],
     "n_bt": 0,
-    "n_tail": 16
+    "n_tail": 17
    },
    "restored": {
     "n": 1769,
@@ -6620,15 +6485,15 @@
     "n_tail": 170
    },
    "costs": {
-    "n": 1848,
-    "applied": 1848,
+    "n": 1849,
+    "applied": 1849,
     "not_measured": 0,
-    "no_funding": 3,
-    "fee_usd": 446.78,
-    "slip_usd": 159.34,
+    "no_funding": 4,
+    "fee_usd": 446.8,
+    "slip_usd": 159.38,
     "fund_usd": 35.7,
-    "gross_usd": 11532.23,
-    "net_usd": 10961.81,
+    "gross_usd": 11530.11,
+    "net_usd": 10959.64,
     "fee_bp": 9.0,
     "fee_mean_bp": 16.0,
     "fee_worst_bp": 1.3,
@@ -6638,48 +6503,21 @@
     "fund_bp": -1.6,
     "fund_mean_bp": 1.0,
     "fund_worst_bp": -110.9,
-    "cost_usd": 570.42
+    "cost_usd": 570.48
    },
-   "n_forward": 79,
+   "n_forward": 80,
    "n_restored": 1769,
    "dups": {
     "names": 641,
-    "positions": 1848,
+    "positions": 1849,
     "overlaps": 0,
-    "repeats": 1207,
+    "repeats": 1208,
     "max_per_name": 8,
     "pause_median_h": 7.6
    },
    "live_known": true,
    "open": {
-    "positions": [
-     {
-      "sym": "TZAUSDT",
-      "at": 1789841968.3,
-      "side": "long",
-      "book": null,
-      "lev": 1.0,
-      "margin": 161.1541,
-      "mark_frac": -0.012617,
-      "mark_usd": -2.0332,
-      "entry_px": 44.98,
-      "avg": 44.98,
-      "depth": 1,
-      "fills": [
-       [
-        1789844400.0,
-        44.98,
-        0.25
-       ]
-      ],
-      "fav_bp": 91.95,
-      "last_ts": 1790099760.0,
-      "sched_end": 1790101168.3,
-      "cut_why": null,
-      "book_end": null,
-      "state": "open"
-     }
-    ],
+    "positions": [],
     "cut": [
      {
       "sym": "ACXUSDT",
@@ -6734,9 +6572,9 @@
       "state": "cut"
      }
     ],
-    "mark_usd": -2.03,
-    "priced": 1,
-    "at": 1790099993.6398463
+    "mark_usd": 0,
+    "priced": 0,
+    "at": 1790103742.1247852
    }
   },
   "aggr:1000": {
@@ -7366,7 +7204,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1790099993.6398463
+    "at": 1790103742.1247852
    }
   },
   "aggr:10000": {
@@ -7996,7 +7834,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1790099993.6398463
+    "at": 1790103742.1247852
    }
   },
   "aggr:100000": {
@@ -8626,7 +8464,7 @@
     "cut": [],
     "mark_usd": 0,
     "priced": 0,
-    "at": 1790099993.6398463
+    "at": 1790103742.1247852
    }
   }
  },
@@ -8641,7 +8479,7 @@
   100000.0
  ],
  "costs": {
-  "n": 68289,
+  "n": 68295,
   "slip_bp": 4.4,
   "slip_source": "X3: медиана входа 22 заполнений, 2026-08-22…25, потолок 30",
   "market_exits": [
@@ -8650,15 +8488,15 @@
    "трейл",
    "стоп"
   ],
-  "applied": 33790,
+  "applied": 33796,
   "no_fills": 34499,
-  "no_funding": 25,
-  "fee_usd": 5862.91,
-  "slip_usd": 2061.22,
+  "no_funding": 31,
+  "fee_usd": 5862.97,
+  "slip_usd": 2061.31,
   "fund_usd": -657.89,
   "n_funding_rows": 33765,
   "taker_fallback": 3351,
-  "cost_usd": 8582.02,
+  "cost_usd": 8582.17,
   "cover": 0.495,
   "error": null,
   "n_funding": 1082
@@ -8696,13 +8534,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "dac93091707b",
-   "pnl_taken": 5.3058,
+   "pnl_taken": 5.3053,
    "names": 337,
    "top_sym": "MORPHOUSDT",
    "top_pnl": 6.34,
    "final_wo_top": 0.1321,
    "top_trade": 4.96,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 3
   },
   "safe:10000": {
@@ -8716,7 +8554,7 @@
    "day_worst": -0.0096,
    "day_green": 0.63,
    "days": 46,
-   "open_mean": 60.9,
+   "open_mean": 60.8,
    "open_median": 20.0,
    "open_max": 411,
    "open_dd": -379.88,
@@ -8725,13 +8563,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "3c53c3822b90",
-   "pnl_taken": 35.3539,
+   "pnl_taken": 35.3534,
    "names": 624,
    "top_sym": "SKLUSDT",
    "top_pnl": 9.95,
    "final_wo_top": 0.0898,
    "top_trade": 6.91,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 3
   },
   "safe:100000": {
@@ -8754,13 +8592,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "f27f71a80f7c",
-   "pnl_taken": 37.4958,
+   "pnl_taken": 37.4953,
    "names": 641,
    "top_sym": "SKLUSDT",
    "top_pnl": 56.75,
    "final_wo_top": 0.0547,
    "top_trade": 39.5,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 3
   },
   "optimal:1000": {
@@ -8783,13 +8621,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "b6b9b96d6602",
-   "pnl_taken": 8.5148,
+   "pnl_taken": 8.5143,
    "names": 341,
    "top_sym": "BRUSDT",
    "top_pnl": 82.45,
    "final_wo_top": 0.1262,
    "top_trade": 96.69,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:10000": {
@@ -8812,13 +8650,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "e771def7c587",
-   "pnl_taken": 72.6563,
+   "pnl_taken": 72.6558,
    "names": 624,
    "top_sym": "BRUSDT",
    "top_pnl": 90.41,
    "final_wo_top": 0.1827,
    "top_trade": 105.52,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "optimal:100000": {
@@ -8841,13 +8679,13 @@
    "ticket": null,
    "share_by_source": true,
    "fp": "7d74e116d2c2",
-   "pnl_taken": 76.9553,
+   "pnl_taken": 76.9548,
    "names": 641,
    "top_sym": "BRUSDT",
    "top_pnl": 493.38,
    "final_wo_top": 0.1103,
    "top_trade": 575.7,
-   "open_n": 1,
+   "open_n": 0,
    "cut_n": 2
   },
   "aggr:1000": {
@@ -8995,41 +8833,14 @@
   }
  },
  "states": {
-  "closed": 1,
-  "open": 2,
+  "closed": 3,
+  "open": 0,
   "cut": 7
  },
- "data_end": 1790099760.0,
+ "data_end": 1790101140.0,
  "live": {
   "safe:1000": {
-   "positions": [
-    {
-     "sym": "TZAUSDT",
-     "at": 1789841968.3,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 27.6666,
-     "mark_frac": -0.012617,
-     "mark_usd": -0.3491,
-     "entry_px": 44.98,
-     "avg": 44.98,
-     "depth": 1,
-     "fills": [
-      [
-       1789844400.0,
-       44.98,
-       0.25
-      ]
-     ],
-     "fav_bp": 91.95,
-     "last_ts": 1790099760.0,
-     "sched_end": 1790101168.3,
-     "cut_why": null,
-     "book_end": null,
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -9110,39 +8921,12 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.35,
-   "priced": 1,
-   "at": 1790099993.6398463
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1790103742.1247852
   },
   "safe:10000": {
-   "positions": [
-    {
-     "sym": "TZAUSDT",
-     "at": 1789841968.3,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 27.1918,
-     "mark_frac": -0.012617,
-     "mark_usd": -0.3431,
-     "entry_px": 44.98,
-     "avg": 44.98,
-     "depth": 1,
-     "fills": [
-      [
-       1789844400.0,
-       44.98,
-       0.25
-      ]
-     ],
-     "fav_bp": 91.95,
-     "last_ts": 1790099760.0,
-     "sched_end": 1790101168.3,
-     "cut_why": null,
-     "book_end": null,
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -9223,39 +9007,12 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.34,
-   "priced": 1,
-   "at": 1790099993.6398463
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1790103742.1247852
   },
   "safe:100000": {
-   "positions": [
-    {
-     "sym": "TZAUSDT",
-     "at": 1789841968.3,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 152.7566,
-     "mark_frac": -0.012617,
-     "mark_usd": -1.9273,
-     "entry_px": 44.98,
-     "avg": 44.98,
-     "depth": 1,
-     "fills": [
-      [
-       1789844400.0,
-       44.98,
-       0.25
-      ]
-     ],
-     "fav_bp": 91.95,
-     "last_ts": 1790099760.0,
-     "sched_end": 1790101168.3,
-     "cut_why": null,
-     "book_end": null,
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -9336,39 +9093,12 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -1.93,
-   "priced": 1,
-   "at": 1790099993.6398463
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1790103742.1247852
   },
   "optimal:1000": {
-   "positions": [
-    {
-     "sym": "TZAUSDT",
-     "at": 1789841968.3,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 28.6354,
-     "mark_frac": -0.012617,
-     "mark_usd": -0.3613,
-     "entry_px": 44.98,
-     "avg": 44.98,
-     "depth": 1,
-     "fills": [
-      [
-       1789844400.0,
-       44.98,
-       0.25
-      ]
-     ],
-     "fav_bp": 91.95,
-     "last_ts": 1790099760.0,
-     "sched_end": 1790101168.3,
-     "cut_why": null,
-     "book_end": null,
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -9423,39 +9153,12 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.36,
-   "priced": 1,
-   "at": 1790099993.6398463
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1790103742.1247852
   },
   "optimal:10000": {
-   "positions": [
-    {
-     "sym": "TZAUSDT",
-     "at": 1789841968.3,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 29.6159,
-     "mark_frac": -0.012617,
-     "mark_usd": -0.3737,
-     "entry_px": 44.98,
-     "avg": 44.98,
-     "depth": 1,
-     "fills": [
-      [
-       1789844400.0,
-       44.98,
-       0.25
-      ]
-     ],
-     "fav_bp": 91.95,
-     "last_ts": 1790099760.0,
-     "sched_end": 1790101168.3,
-     "cut_why": null,
-     "book_end": null,
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -9510,39 +9213,12 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -0.37,
-   "priced": 1,
-   "at": 1790099993.6398463
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1790103742.1247852
   },
   "optimal:100000": {
-   "positions": [
-    {
-     "sym": "TZAUSDT",
-     "at": 1789841968.3,
-     "side": "long",
-     "book": null,
-     "lev": 1.0,
-     "margin": 161.1541,
-     "mark_frac": -0.012617,
-     "mark_usd": -2.0332,
-     "entry_px": 44.98,
-     "avg": 44.98,
-     "depth": 1,
-     "fills": [
-      [
-       1789844400.0,
-       44.98,
-       0.25
-      ]
-     ],
-     "fav_bp": 91.95,
-     "last_ts": 1790099760.0,
-     "sched_end": 1790101168.3,
-     "cut_why": null,
-     "book_end": null,
-     "state": "open"
-    }
-   ],
+   "positions": [],
    "cut": [
     {
      "sym": "ACXUSDT",
@@ -9597,49 +9273,49 @@
      "state": "cut"
     }
    ],
-   "mark_usd": -2.03,
-   "priced": 1,
-   "at": 1790099993.6398463
+   "mark_usd": 0,
+   "priced": 0,
+   "at": 1790103742.1247852
   },
   "aggr:1000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1790099993.6398463
+   "at": 1790103742.1247852
   },
   "aggr:10000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1790099993.6398463
+   "at": 1790103742.1247852
   },
   "aggr:100000": {
    "positions": [],
    "cut": [],
    "mark_usd": 0,
    "priced": 0,
-   "at": 1790099993.6398463
+   "at": 1790103742.1247852
   }
  },
  "tail": {
-  "syms": 3,
-  "minutes": 18,
-  "dry": 2,
+  "syms": 4,
+  "minutes": 19,
+  "dry": 1,
   "span_med_h": 0.29,
   "zero_vol_tape": 0,
   "entry_dropped": 0,
-  "marked": 6,
+  "marked": 8,
   "cut_why": {
    "книга кончилась раньше планового конца": 6,
    "книги в хвосте нет вовсе": 1
   },
-  "closed_tail": 977,
-  "closed_all": 10021
+  "closed_tail": 983,
+  "closed_all": 10027
  },
- "computed_at": "2026-09-22 17:59",
- "secs": 304.9,
+ "computed_at": "2026-09-22 19:02",
+ "secs": 153.0,
  "rules": {
   "RULES": 6,
   "TICKET": 25.0,
