@@ -272,7 +272,7 @@
   - L166 `RealGroups.test_groups_file_parses_and_is_disjoint(self)`
   - L173 `RealGroups.test_unlabeled_are_not_in_groups(self)`
 
-## research/b1_book/headless_check.js · 6445 строк
+## research/b1_book/headless_check.js · 6485 строк
 
 Прогон логики живых страниц без браузера: DOM, canvas и сеть
 
@@ -289,7 +289,7 @@
 - L700 `paperStub()`
 - L835 `bookDaysStub()`
 
-## research/b1_book/test_book.py · 8350 строк
+## research/b1_book/test_book.py · 8371 строк
 
 Тесты стакана. Закрывают место, где ошибка портит все данные молча.
 
@@ -420,10 +420,10 @@
 - L7611 `test_dca_open_pnl_is_marked_live_not_hourly()` — Открытый pnl DCA-книги переоценивается ЖИВОЙ серединой.
 - L7704 `test_dca_cut_position_carries_its_reason()` — Оборванная позиция едет странице С ПРИЧИНОЙ, и текст ОДИН.
 - L7769 `test_dca_trades_speak_the_language_of_the_chart()` — Позиции DCA-книги едут графику В ЕГО ФОРМЕ, и ТВХ приходит готовой.
-- L7962 `test_dca_chart_carries_the_liquidation_of_the_book()` — У ступеней позиции есть цена ликвидации — ядром, а не копией.
-- L8027 `test_dca_chart_reads_the_journal_of_its_own_family()` — График берёт позиции из журнала СВОЕГО семейства, а не длинного.
-- L8134 `test_dca_list_counts_rules_of_the_family_not_of_the_project()` — Список сделок книги живёт по версии правил СВОЕГО семейства.
-- L8209 `main()`
+- L7983 `test_dca_chart_carries_the_liquidation_of_the_book()` — У ступеней позиции есть цена ликвидации — ядром, а не копией.
+- L8048 `test_dca_chart_reads_the_journal_of_its_own_family()` — График берёт позиции из журнала СВОЕГО семейства, а не длинного.
+- L8155 `test_dca_list_counts_rules_of_the_family_not_of_the_project()` — Список сделок книги живёт по версии правил СВОЕГО семейства.
+- L8230 `main()`
 
 ## research/d1_seconds/test_detect.py · 803 строк
 

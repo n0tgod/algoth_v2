@@ -1684,10 +1684,22 @@ global.fetch = async (url) => {
                         adds: [], exits: [], net_bp: 108.0, pnl: 2.7,
                         size: 25.0, lev: 2.0, state: "закрыта",
                         exit: "срок", depth: 1, bt: true}],
+                // Слитая запись той же позиции: сервер строит `merged`
+                // из ТЕХ ЖЕ строк, и открытая позиция в ней открыта —
+                // график рисует именно её. Фикстура, где `merged`
+                // оставалась закрытой при открытой строке, показывала
+                // проверкам закрытую позицию под видом открытой.
                 merged: [{sym: "BTCUSDT", arm: "dca",
                           hour: "2026-08-03-14", side: "long",
-                          opened_at: T0 - 7200, closes_at: T0 - 3600,
-                          entry_px: 64715.0, exit_px: 64718.0,
+                          opened_at: /dcaopen=1/.test(SEARCH)
+                            ? T0 - 30 * 3600
+                            : /dcalong=1/.test(SEARCH)
+                              ? T0 - 70 * 3600 : T0 - 7200,
+                          closes_at: /dcaopen=1/.test(SEARCH)
+                            ? null : T0 - 3600,
+                          entry_px: 64715.0,
+                          exit_px: /dcaopen=1/.test(SEARCH)
+                            ? null : 64718.0,
                           avg: 64698.5, lots: 2,
                           walk: dcaw(60.0,
                             [{at: T0 - 7200, px: 64715.0, w: 0.25,
@@ -1698,8 +1710,13 @@ global.fetch = async (url) => {
                           adds: [{at: T0 - 6000, px: 64682.0, size: 15.0,
                                   qty: 15.0 / 64682.0, share: 0.25,
                                   hour: "2026-08-03-14"}],
-                          exits: [], net_bp: 328.0, pnl: 8.2, size: 25.0,
-                          lev: 2.4, state: "закрыта", exit: "тейк",
+                          exits: [],
+                          net_bp: /dcaopen=1/.test(SEARCH) ? null : 328.0,
+                          pnl: /dcaopen=1/.test(SEARCH) ? null : 8.2,
+                          size: 25.0, lev: 2.4,
+                          state: /dcaopen=1/.test(SEARCH)
+                            ? "открыта" : "закрыта",
+                          exit: /dcaopen=1/.test(SEARCH) ? null : "тейк",
                           depth: 2, bt: true},
                          {sym: "BTCUSDT", arm: "dca",
                           hour: "2026-08-03-13", side: "long",
@@ -5631,6 +5648,29 @@ new Function(js + "\nglobal.__step = typeof tick !== 'undefined' "
     else if (v.i0 + v.n < c.length - 1)
       bad.push("вид открытой позиции обрывается раньше последней свечи: "
                + (v.i0 + v.n) + " из " + c.length);
+  }
+  // Подсказка ОТКРЫТОЙ позиции DCA: срока в записи может не быть, и
+  // тогда «closes in» — прочерк. До правки печаталось «NaN h»
+  // (владелец, PHAUSDT 2026-09-21): NaN на экране есть пропуск,
+  // выдающий себя за число, — тот же класс, что нули в узлах дерева.
+  if (isChart && /dcaopen=1/.test(SEARCH) && global.__hit && global.__hover
+      && global.__el) {
+    const hop = (global.__hit() || []).find(
+      h => h.mdl && !h.add && !h.ex && h.mdl.state === "открыта");
+    const tipO = global.__el("tip");
+    if (!hop)
+      bad.push("график: открытая позиция DCA не попала в карту наведения");
+    else if (tipO) {
+      global.__hover({clientX: (hop.x0 + hop.x1) / 2,
+                      clientY: (hop.y0 + hop.y1) / 2});
+      const tpo = String(tipO.innerHTML || "").replace(/\s+/g, " ");
+      if (/NaN/.test(tpo))
+        bad.push("график: подсказка открытой позиции печатает NaN: "
+                 + tpo.slice(0, 160));
+      if (!/closes in/.test(tpo) || !/\u2014|&mdash;/.test(tpo))
+        bad.push("график: у открытой позиции без срока «closes in» не "
+                 + "прочерк: " + tpo.slice(0, 160));
+    }
   }
   // Упёрлись в потолок окна — причина называется СВОЯ. Прежде страница
   // при любом промахе входа говорила «запись началась позже», то есть

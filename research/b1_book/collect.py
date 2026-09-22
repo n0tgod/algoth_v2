@@ -3603,6 +3603,7 @@ class Collector:
         cellk = f"{rk}:{int(dep)}"
         cell = ((((art.get("books") or {}).get(cellk) or {}).get("open"))
                 or ((art.get("live") or {}).get(cellk) or {}))
+        now = time.time()
         for st, lst in (("открыта", cell.get("positions") or []),
                         ("оборвана записью", cell.get("cut") or [])):
             for r in lst:
@@ -3610,6 +3611,16 @@ class Collector:
                     continue
                 at = float(r.get("at") or 0)
                 fills = r.get("fills") or []
+                # Срок у ОТКРЫТОЙ есть — плановый конец записи
+                # (`sched_end`, предел жизни позиции); без него поля
+                # нет, и подсказка печатает прочерк. До правки поля не
+                # было вовсе, и график печатал «closes in NaN h»
+                # (владелец, PHAUSDT 2026-09-21): NaN на экране — тот же
+                # молчаливый пропуск, что нули в узлах дерева.
+                try:
+                    cis = float(r["sched_end"]) - now
+                except (KeyError, TypeError, ValueError):
+                    cis = None
                 mf = r.get("mark_frac")
                 # Запись артефакта ключа книги не несёт — сторона
                 # берётся у книги (`rk`), иначе шорт читался бы лонгом
@@ -3619,6 +3630,7 @@ class Collector:
                     "sym": sym, "arm": "dca",
                     "hour": time.strftime("%Y-%m-%d-%H", time.gmtime(at)),
                     "side": side, "opened_at": at, "closes_at": None,
+                    "closes_in_sec": (None if cis is None else round(cis, 1)),
                     "entry_px": r.get("entry_px"), "exit_px": None,
                     "avg": r.get("avg"),
                     "walk": DR.liq_walk(

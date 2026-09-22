@@ -5274,8 +5274,11 @@ function hover(e) {
            + row("P&L", (t.pnl>0?"+":"") + t.pnl + " $",
                  t.pnl>0?"buy":"sell")
          : t.state === "открыта"
-           ? row("closes in",
-                 (t.closes_in_sec/3600).toFixed(1) + " h")
+           // Срока может не быть (позиция DCA без планового конца в
+           // записи): прочерк, а не NaN — NaN на экране есть пропуск,
+           // выдающий себя за число (владелец, PHAUSDT 2026-09-21).
+           ? row("closes in", t.closes_in_sec == null ? "\u2014"
+                 : (t.closes_in_sec/3600).toFixed(1) + " h")
            : row("no outcome", "hour not summarised yet"));
     tip.style.display="block";
     tip.style.left = Math.max(4, Math.min(px.clientWidth-tip.offsetWidth-4,

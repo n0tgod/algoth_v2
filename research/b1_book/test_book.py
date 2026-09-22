@@ -7869,12 +7869,21 @@ def test_dca_trades_speak_the_language_of_the_chart():
         try:
             DR.ARTIFACT = os.path.join(td, "art.json")
             with open(DR.ARTIFACT, "w", encoding="utf-8") as f:
+                # Плановый конец записи (`sched_end`) — как пишет прогон:
+                # у AAAUSDT он есть, у CCCUSDT (запись прежнего
+                # образца) — нет
                 json.dump({"live": {"safe:10000": {"positions": [
                     {"sym": "AAAUSDT", "at": t0 + 20000, "lev": 3.0,
                      "margin": 25.0, "mark_frac": -0.04, "mark_usd": -1.0,
                      "entry_px": 50.0, "avg": 50.0, "depth": 1,
                      "last_ts": t0 + 26000,
-                     "fills": [[t0 + 20000, 50.0, 0.25]]}], "cut": []}}},
+                     "sched_end": time.time() + 20 * 3600,
+                     "fills": [[t0 + 20000, 50.0, 0.25]]},
+                    {"sym": "CCCUSDT", "at": t0 + 21000, "lev": 3.0,
+                     "margin": 25.0, "mark_frac": 0.01, "mark_usd": 0.25,
+                     "entry_px": 5.0, "avg": 5.0, "depth": 1,
+                     "last_ts": t0 + 26000,
+                     "fills": [[t0 + 21000, 5.0, 0.25]]}], "cut": []}}},
                     f, ensure_ascii=False)
             d2 = c.dca_trades("AAAUSDT", "safe:10000")
             rs = d2.get("rows") or []
@@ -7891,6 +7900,18 @@ def test_dca_trades_speak_the_language_of_the_chart():
             check("DCA-график: деньги открытой взяты отметкой",
                   t2.get("pnl") == -1.0 and t2.get("net_bp") == -400.0,
                   str((t2.get("pnl"), t2.get("net_bp"))))
+            # Срок открытой — из планового конца записи, а без него —
+            # ПУСТО (не ноль): до правки поля не было, и подсказка
+            # графика печатала «closes in NaN h»
+            cis = t2.get("closes_in_sec")
+            check("DCA-график: срок открытой считан от планового конца",
+                  cis is not None and abs(cis - 20 * 3600) < 120, str(cis))
+            t3 = [r for r in (c.dca_trades("CCCUSDT", "safe:10000")
+                                .get("rows") or [])
+                  if r.get("state") == "открыта"]
+            check("DCA-график: без планового конца срок пуст, а не NaN",
+                  len(t3) == 1 and t3[0].get("closes_in_sec") is None,
+                  str([r.get("closes_in_sec") for r in t3]))
             check("DCA-график: закрытая позиция при этом не потерялась",
                   any(r.get("state") == "закрыта" for r in rs),
                   str([r.get("state") for r in rs]))
