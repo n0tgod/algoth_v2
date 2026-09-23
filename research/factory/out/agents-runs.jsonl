@@ -504,3 +504,7 @@
 {"at": 1790055339.31, "role": "task", "status": "ok", "started": 1790055339.083, "ended": 1790055339.31, "dry": false, "note": "код возврата 0"}
 {"at": 1790128802.168, "role": "scout", "status": "start", "started": 1790128802.0, "ended": 1790128802.168, "dry": false, "pid": 649472}
 {"at": 1790129946.55, "role": "scout", "status": "ok", "started": 1790128802.0, "ended": 1790129946.55, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
+{"at": 1790130002.093, "role": "brief", "status": "start", "started": 1790130002.0, "ended": 1790130002.093, "dry": false, "pid": 652444}
+{"at": 1790130516.261, "role": "brief", "status": "contract", "started": 1790130002.0, "ended": 1790130516.261, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: research/factory/out/summary.md: нет раздела «Что открыто»: без него открытые углы проекта до предлагающего не доходят вовсе, и заявка неизбежно окажется пересказом чуж"}
+{"at": 1790130601.252, "role": "brief", "status": "start", "started": 1790130601.0, "ended": 1790130601.252, "dry": false, "pid": 653935}
+{"at": 1790131192.671, "role": "brief", "status": "ok", "started": 1790130601.0, "ended": 1790131192.671, "dry": false, "note": "модель opus, усилие medium"}
