@@ -15,3 +15,4 @@
 {"ev": "declare", "id": "h4_r_f0_w3_gs_rrhi_se_b0_a1", "at": 1789190701.932901, "rule": {"agree": "yes", "basket": "no", "sizing": "equal", "rr_band": "hi", "geom": "stop_take", "width": 3, "floor_bp": 0, "rank": "raw", "target": "fwd_4h"}, "lane": "control", "seed": 20708, "source": "draw", "note": null}
 {"ev": "retire", "id": "h4_z_f30_w5_gt_rrlo_se_b0_a0", "at": 1789268102.619308, "why": "обычный день отрицателен: медиана -14.23 по 14 суткам форварда, прибыльных суток 0.50 — книга теряет не редким срывом, а каждый день"}
 {"ev": "retire", "id": "h4_r_f30_w5_gs_rrhi_sr_b0_a1", "at": 1790134201.899872, "why": "нетто за 10 суток -76.20 ниже медианы нуля -73.10"}
+{"ev": "declare", "id": "h4_z_f44_w5_gt_rrhi_se_b0_a1", "at": 1790141701.855993, "rule": {"agree": "yes", "basket": "no", "sizing": "equal", "rr_band": "hi", "geom": "timer", "width": 5, "floor_bp": 44, "rank": "sigma", "target": "fwd_4h"}, "lane": "control", "seed": 20719, "source": "draw", "note": null}
