@@ -1713,11 +1713,14 @@ def test_watchdog_runs_short_books_by_the_same_rule():
     a = src.index("# --- короткие книги семейства h24")
     b = src.index("# --- общий счёт")
     ok = _run_watchdog_cases(src[a:b], art_name="DCA-short.json")
-    # Общий счёт поднимается ТЕМ ЖЕ правилом и своим артефактом: без
-    # этой проверки он мог бы стоять в сторожe строкой, которая никогда
-    # не срабатывает, и страница молча показывала бы вчерашние числа.
+    # Общий счёт поднимается НЕ своим таймером, а после книг-источников
+    # (2026-09-24): свой час давал ему читать кэш прошлого часа, и
+    # страница показывала ноль шортов при двух у коротких книг. Без этой
+    # проверки блок мог бы стоять в стороже строкой, которая никогда не
+    # срабатывает, и страница молча показывала бы вчерашние числа.
     c = src.index("# --- догон рядов funding")
-    ok = _run_watchdog_cases(src[b:c], art_name="DCA-pair.json") and ok
+    fns = src[src.index("computed_ts() {"):src.index("# --- сборщик")]
+    ok = _run_pair_cases(fns + src[b:c]) and ok
     # Догон рядов funding: без него ставка стареет, а для гейта старая
     # ставка есть «неизвестна» — то есть устаревший ряд закрывал бы
     # книгу молча. Проверяется, что строка сторожа существует и зовёт
@@ -1801,6 +1804,76 @@ def _run_watchdog_cases(block, art_name="DCA-paper.json"):
     print("ok  сторож: книга идёт каждый час, вопрос — когда СЧИТАЛИ, "
           "а не когда трогали файл")
     return True
+
+def _run_pair_cases(block):
+    """Блок общего счёта: считает, когда ОБА источника свежее его самого."""
+    d = tempfile.mkdtemp()
+    out = os.path.join(d, "research", "dca_paper", "out")
+    os.makedirs(out)
+    os.makedirs(os.path.join(d, "stubs"))
+
+    def stub(name, body):
+        p = os.path.join(d, "stubs", name)
+        with open(p, "w") as f:
+            f.write(body)
+        os.chmod(p, 0o755)
+
+    stub("pgrep", "#!/bin/sh\nexit ${PGREP_RC:-1}\n")
+    stub("setsid", '#!/bin/sh\nshift 2\necho "$@" >> ran.log\n')
+    env = dict(os.environ,
+               PATH=os.path.join(d, "stubs") + os.pathsep + os.environ["PATH"])
+    wrap = "now() { echo T; }\n" + block
+
+    def art(name, age):
+        p = os.path.join(out, name)
+        if age is None:
+            if os.path.exists(p):
+                os.remove(p)
+            return
+        at = time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() - age))
+        with open(p, "w") as f:
+            json.dump({"computed_at": at, "books": {}}, f)
+
+    def run(pair_age, short_age, paper_age, busy=False):
+        try:
+            os.remove(os.path.join(d, "ran.log"))
+        except OSError:
+            pass
+        art("DCA-pair.json", pair_age)
+        art("DCA-short.json", short_age)
+        art("DCA-paper.json", paper_age)
+        e = dict(env, PGREP_RC=("0" if busy else "1"))
+        r = subprocess.run(["bash", "-c", wrap], cwd=d, env=e,
+                           capture_output=True, text=True)
+        ran = os.path.exists(os.path.join(d, "ran.log"))
+        if ran:
+            body = open(os.path.join(d, "ran.log")).read()
+            assert "run_pair.py" in body, body
+        return ran, r.stdout
+
+    cases = [
+        ("оба источника свежее — считает", (3600, 600, 600), True),
+        ("короткие старее общего — ждёт (случай 23.09)", (600, 3600, 300), False),
+        ("длинные старее общего — ждёт", (600, 300, 3600), False),
+        ("свой час прошёл, источники старые — ждёт", (7200, 9000, 9000), False),
+        ("общего счёта нет, источники есть — считает", (None, 600, 600), True),
+        ("источника нет — ждёт", (3600, None, 600), False),
+    ]
+    for name, args, want in cases:
+        got, _ = run(*args)
+        assert got == want, f"{name}: запуск {got}, ожидалось {want}"
+    assert run(3600, 600, 600, busy=True)[0] is False, \
+        "идёт прогон книги или свой — не второй процесс"
+    # Ожидание дольше двух часов — вслух, а не молча: тишина источника
+    # неотличима от порядка.
+    _, said = run(9000, 12000, 12000)
+    assert "ждёт книг-источников" in said, said
+    _, quiet = run(3600, 5400, 5400)
+    assert "ждёт книг-источников" not in quiet, quiet
+    print("ok  сторож: общий счёт идёт после обоих источников, ждёт старых, "
+          "не дублирует идущий, о долгом ожидании говорит вслух")
+    return True
+
 
 def test_tail_marks_outcomes_and_refuses_an_entry_from_a_quote():
     """Правило хвоста держит ОБЕ границы, и они про разное.

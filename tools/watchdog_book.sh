@@ -33,6 +33,27 @@ STATUS=research/b1_book/out/status.json
 STALE_SEC=180
 now() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 
+# Момент счёта артефакта книги (`computed_at`), секундами; 0 — файла нет
+# или метка не читается. Триггер книг — этот момент, а не mtime файла.
+computed_ts() {
+    local at
+    at=$(grep -o '"computed_at": *"[^"]*"' "$1" 2>/dev/null \
+         | head -1 | cut -d'"' -f4)
+    [ -n "$at" ] && date -u -d "$at UTC" +%s 2>/dev/null || echo 0
+}
+
+# Общий счёт считается ПОСЛЕ книг, из которых он читает: его кэши пишут
+# прогоны коротких и длинных книг, и свой таймер давал ему читать кэш
+# ПРОШЛОГО часа (2026-09-23: короткие книги показали два новых шорта,
+# общий счёт — ноль, потому что считался на 16 минут раньше них).
+# Должен — когда ОБА артефакта-источника новее его собственного.
+#   $1 общий счёт, $2 короткие книги, $3 длинные книги
+pair_due() {
+    local p s l
+    p=$(computed_ts "$1"); s=$(computed_ts "$2"); l=$(computed_ts "$3")
+    [ "$s" -gt "$p" ] && [ "$l" -gt "$p" ]
+}
+
 # --- сборщик ---------------------------------------------------------
 need_restart=""
 if ! pgrep -f "b1_book/collect.py" >/dev/null; then
@@ -302,25 +323,30 @@ fi
 # остальных книг.
 DCAP=research/dca_paper/out/DCA-pair.json
 DCAP_LOG=research/dca_paper/out/pair.log
-if ! pgrep -f "dca_paper/run_pair.py" >/dev/null; then
-    dcp_age=999999999
-    if [ -f "$DCAP" ]; then
-        dcp_at=$(grep -o '"computed_at": *"[^"]*"' "$DCAP" \
-                 | head -1 | cut -d'"' -f4)
-        if [ -n "$dcp_at" ]; then
-            dcp_ts=$(date -u -d "$dcp_at UTC" +%s 2>/dev/null || true)
-            if [ -n "$dcp_ts" ]; then
-                dcp_age=$(( $(date -u +%s) - dcp_ts ))
-            fi
-        fi
-    fi
-    dcp_hh=$(date -u +%H)
-    if [ "$dcp_hh" != "02" ] && [ "$dcp_hh" != "06" ] \
-       && [ "$dcp_age" -gt 3600 ]; then
-        echo "[$(now)] общий счёт: последний счёт ${dcp_age} с назад — прогон"
+# источники общего счёта — своими именами, а не переменными чужих блоков
+PAIR_SRC_SHORT=research/dca_paper/out/DCA-short.json
+PAIR_SRC_LONG=research/dca_paper/out/DCA-paper.json
+if ! pgrep -f "dca_paper/run_pair.py" >/dev/null \
+   && ! pgrep -f "dca_paper/run_short.py" >/dev/null \
+   && ! pgrep -f "dca_paper/run_paper.py" >/dev/null; then
+    # Не по своему таймеру, а ПОСЛЕ обоих прогонов-источников (см.
+    # `pair_due`); идущий прогон книги — ждать следующего такта, иначе
+    # кэш читался бы на середине записи. Часы обучения книги пропускают
+    # сами, общий счёт за ними.
+    if pair_due "$DCAP" "$PAIR_SRC_SHORT" "$PAIR_SRC_LONG"; then
+        echo "[$(now)] общий счёт: книги-источники свежее — прогон"
         setsid nohup bash -c "
             nice -n 10 .venv/bin/python research/dca_paper/run_pair.py \
                 >> $DCAP_LOG 2>&1" &
+    else
+        # Ожидание длиннее двух часов — уже не порядок, а тишина
+        # источника: сказать вслух, а не молчать в стороже.
+        dcp_age=$(( $(date -u +%s) - $(computed_ts "$DCAP") ))
+        if [ "$dcp_age" -gt 7200 ]; then
+            echo "[$(now)] общий счёт ждёт книг-источников ${dcp_age} с:" \
+                 "короткие $(( $(date -u +%s) - $(computed_ts "$PAIR_SRC_SHORT") )) с," \
+                 "длинные $(( $(date -u +%s) - $(computed_ts "$PAIR_SRC_LONG") )) с назад"
+        fi
     fi
 fi
 
