@@ -2034,6 +2034,64 @@
 - L550 `ось_и_ячейка_объявлены_заданием()` — Ось, ячейка вердикта и пороги — из задания, а не выбраны здесь.
 - L559 `main()`
 
+## research/mech_2859b3d4/test_drift.py · 825 строк
+
+Проверки механики «дрейф после экстремального начисления funding».
+
+- L34 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L40 `MS = DR.MS_S`
+- L41 `T0 = 1789876800000`
+- L42 `DAY0 = T0 // DR.MS_D * DR.MS_D`
+- L45 `eq(a, b, tol=1e-06, what='')`
+- L51 `snap(ts, px, spread_bp=2.0, levels=12, usd=300.0, step_bp=5.0, …` — Снимок стакана той же формы, что пишет сборщик.
+- L69 `tape(t_ms, mids, step_ms=2000, **kw)` — Список снимков по ряду середин с шагом `step_ms` от `t_ms`.
+- L74 `flat_tape(t_ms, px=100.0, lo_s=-60, hi_s=1900, step_ms=2000, **…`
+- L81 `test_bands_by_number()` — Границы полос — числами, включая саму границу.
+- L101 `test_side_by_number()` — Сторона ячейки — ШОРТ, и это закреплено числом.
+- L116 `test_legs_by_side()` — Шорт продаёт в биды и выкупает с асков, лонг наоборот.
+- L124 `test_entry_not_before_third_second()` — Вход — первый снимок НЕ РАНЬШЕ третьей секунды.
+- L140 `test_entry_window_upper_bound_bites()` — Дыра записи на входе — событие НЕПОКРЫТО, а не вход попозже.
+- L158 `test_exit_horizon_is_half_an_hour()` — Выход — первый снимок не раньше T+1800 с.
+- L168 `test_exit_window_upper_bound_bites()` — Дыра записи на выходе — событие НЕПОКРЫТО, а не цена из другого часа.
+- L178 `test_no_lookahead_past_exit()` — Переписать будущее — прошлое не шелохнётся.
+- L211 `test_snapshots_must_be_sorted()` — Снимки не по возрастанию — громкий отказ, а не тихая чепуха.
+- L224 `test_position_never_spans_accrual()` — Позиция, которая прошла бы через расчёт, сделкой не становится.
+- L241 `test_take_bp_numbers()` — Взятие — числами, обе стороны, с кругом и без.
+- L251 `test_cost_model_numbers()` — Круг 19.8 б.п. = комиссия 11 + проскальзывание X3 4.4 × 2 ноги.
+- L266 `test_flow_sign_by_number()` — Перевес продаж — величина ПОЛОЖИТЕЛЬНАЯ, и это число.
+- L281 `test_empty_tape_is_dash_not_zero()` — Ленты нет — прочерк. Ноль означал бы «мерили и вышло поровну».
+- L289 `test_walk_numbers()` — Проход по лесенке — числами, и он ХУЖЕ лучшей цены.
+- L308 `test_walk_ignores_input_order()` — Порядок уровней наводится модулем, а не предполагается.
+- L324 `test_thin_ladder_is_a_dash_not_zero()` — Лесенки не хватило на билет — прочерк, а не частичное исполнение.
+- L342 `test_depth_is_field_of_record()` — Глубина в 25 б.п. — ПОЛЕ записи, а не наш пересчёт среза.
+- L352 `test_empty_is_refusal_not_zero()` — Ноль наблюдений при непустом входе — отказ, а не нули.
+- L368 `test_zeroed_rates_give_no_event_not_zero()` — Обнулённая ставка даёт ПУСТОЕ множество событий, а не нулевое.
+- L386 `_row(ts, cover=True, used=True, bp=10.0, sym='AAAUSDT', why=Non…`
+- L395 `test_k0_phrase_follows_number()` — Вердиктовая фраза выведена ИЗ ЧИСЛА, а не стоит рядом с ним.
+- L415 `test_k0_denominator_is_what_the_record_covers()` — Начисление имени, которого запись не вела, — НЕ брак сборщика.
+- L444 `test_k1_control_share_rule()` — Мертва, если случайная не хуже в ≥ 5 % зёрен хотя бы по одной величине. Порог — тот, что объявлен заявкой, и…
+- L461 `test_k1_compares_same_size_sample()` — Выборка контроля ТОГО ЖЕ размера: событие без пула выбывает.
+- L477 `test_percentile_zero_is_half()` — Нуль перцентиля — 0.5, и это проверено числом.
+- L488 `_name_day(seed, planted_bp=0.0, hours=24, ev_hour=12, step_ms=4…` — Сутки одного имени: 24 границы часа, у одной подсажен дрейф.
+- L520 `test_calibration_finds_planted_drift()` — Подсаженный дрейф −50 б.п. за полчаса — перцентиль РОВНО 1.
+- L538 `test_calibration_silent_on_noise()` — Чистый шум — перцентиль у 0.5, и замер молчит.
+- L557 `test_k2_rule_and_thin_ladder()` — Мертва при медиане взятия ≤ 0 либо медиане дня < 0; событие без прохода считается ОТДЕЛЬНО, а не нулём.
+- L575 `test_k3_placebo_rule()` — Мертва, если медиана события НЕ ВЫШЕ p95 плацебо-медиан.
+- L592 `test_k4_waits_for_calendar()` — До календаря вердикта НЕТ ВОВСЕ: не измерено не есть провал.
+- L601 `test_k4_judges_by_pool_rule()` — Форму судит ПРАВИЛО ПУЛА, а не своя копия укуса.
+- L617 `test_k4_without_top_days_rule()` — Третья граница заявки: без трёх лучших дней сумма обязана остаться положительной — иначе ожидание живёт в эпи…
+- L634 `test_without_top_days_and_halves()` — Колонки концентрации — числами.
+- L647 `test_form_uses_project_bite()` — Форма считается мерой проекта, а не своей копией укуса.
+- L658 `test_daily_skips_uncovered()` — Непокрытое событие не есть убыточный день: сделки не было вовсе.
+- L668 `test_verdict_order_and_unmeasured()` — Порядок обязателен; «не измерено» — отдельный исход.
+- L689 `test_measure_event_end_to_end_numbers()` — Сделка целиком — числами, на записи с известным ходом.
+- L721 `test_first_after_measures_the_hole_not_the_count()` — «Событие непокрыто» обязано быть ВЕЛИЧИНОЙ, а не счётом.
+- L750 `test_k0_judges_the_entry_snapshot_it_was_declared_on()` — K0 судит ВХОД, а не сделку: это две разные беды.
+- L768 `test_profile_to_next_is_a_dash_without_next()` — Профиль до следующего начисления: доли пути, а не «через 4 часа».
+- L789 `test_lag_stats_measure_the_collector()` — Дыра записи у границы часа считается по покрытым событиям.
+- L801 `ALL = [v for k, v in sorted(globals().items()…`
+- L804 `main()`
+
 ## research/mech_357a7c60/test_squeeze_fuel.py · 1151 строк
 
 Тесты механики 357a7c60 — топливо сквиза по ходу позиции.

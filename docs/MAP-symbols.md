@@ -3706,6 +3706,140 @@ M2: каркас walk-forward — чистая математика без чт�
 - L21 `OUT = os.path.join(ROOT, 'research', 'factory…`
 - L24 `main()`
 
+## research/mech_2859b3d4/controls_check.py · 103 строк
+
+Машина негативных контролей этой механики: подделка → сюита падает.
+
+- L35 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L37 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L38 `SUITE = 'research/mech_2859b3d4/test_drift.py'`
+- L39 `REPORT = 'research/factory/out/build.json'`
+- L42 `sha(p)`
+- L47 `run()` — Код возврата и ИМЕНА провалившихся проверок, а не только код.
+- L58 `main(report=None)`
+
+## research/mech_2859b3d4/drift.py · 1033 строк
+
+Дрейф после экстремального начисления funding: ядро механики.
+
+- L74 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L75 `RESEARCH = os.path.dirname(HERE)`
+- L76 `ROOT = os.path.dirname(RESEARCH)`
+- L89 `MS_S = 1000`
+- L90 `MS_H = 3600000`
+- L91 `MS_D = 86400000`
+- L95 `ENTRY_LAG_S = 3`
+- L96 `ENTRY_MAX_LAG_S = 10`
+- L97 `EXIT_S = 1800`
+- L106 `EXIT_MAX_LAG_S = ENTRY_MAX_LAG_S` — Допуск выхода. Заявка говорит «первый снимок ≥ T+1800 с» и верхней границы не называет. Без границы дыра в за…
+- L107 `TICKET_USD = 1000.0`
+- L108 `LEVERAGE = 1.0`
+- L111 `VERDICT_BAND = 'lt1'` — Полосы ставки. Судит первая, остальные печатаются рядом и не судят.
+- L112 `BANDS = (('lt1', None, -0.01, -1), ('m1_m05', -…`
+- L119 `BAND_TITLE = {'lt1': '< −1 %', 'm1_m05': '−1…−0.5 %'…`
+- L125 `COMMISSION_BP = float(TR.ROUND_COST_BP)` — Издержки. Оба числа ВВЕЗЕНЫ, а не повторены: круг тейкера живёт в `trades.ROUND_COST_BP`, живое проскальзыван…
+- L126 `SLIP_BP = float(CO.SLIP_BP)`
+- L127 `FLAT_COST_BP = COMMISSION_BP + 2 * SLIP_BP`
+- L130 `WALK_COST_BP = COMMISSION_BP` — Проход по лесенке САМ несёт проскальзывание — константу к нему не добавляют, иначе одно и то же заплачено два…
+- L133 `SEEDS = 200` — Контроли и нули
+- L134 `RNG_SEED = 0`
+- L135 `MIN_COVER = 0.7`
+- L136 `K1_MAX_SHARE = 0.05`
+- L137 `CONTROL_GAP_H = 2`
+- L138 `CONTROL_MAX_RATE = 0.002`
+- L139 `TOP_DAYS = 3`
+- L140 `K4_MIN_EVENTS = 30`
+- L141 `FORWARD_FROM = '2026-09-24'`
+- L144 `PROFILE_POINTS = (-60, -2, 0, 1, 3, 60, 300, 900, 1800)` — Профиль середины. Диагностика, не вердикт.
+- L145 `PROFILE_BASE_S = -60`
+- L146 `PROFILE_TOL_S = 60`
+- L150 `NEXT_FRACTIONS = (0.25, 0.5, 0.75, 1.0)` — Профиль ДО СЛЕДУЮЩЕГО начисления: долями интервала, потому что шаг у площадки разный (1, 2, 4 и 8 ч), и «чере…
+- L151 `FLOW_WINDOW_S = 60`
+- L155 `DIAG_CAP_S = 180` — Сплошное диагностическое окно после расчёта: в нём меряется дыра записи. Прогон обязан прочитать ровно его; д…
+- L156 `DEPTH_FIELD = '0025'`
+- L159 `class Empty` — Ноль наблюдений при непустом входе.
+- L170 `band_of(rate)` — Полоса ставки или None — «вне объявленных полос».
+- L198 `side_of_band(band)` — Сторона позиции полосы. −1 шорт, +1 лонг, None — полосы нет.
+- L215 `legs_of(side)` — Какие стороны стакана ест сделка: (вход, выход).
+- L225 `snapshot_index(ts_list, lo_ms, hi_ms)` — Индекс ПЕРВОГО снимка в окне [lo, hi] либо None.
+- L240 `first_after_s(ts_list, t_ms, lag_s=ENTRY_LAG_S, cap_s=DIAG_CAP_…` — Задержка ПЕРВОГО снимка не раньше T+`lag_s`, секундами.
+- L263 `entry_exit(ts_list, t_ms, entry_lag_s=ENTRY_LAG_S, entry_max_s=…` — (индекс входа, индекс выхода, причина непокрытия).
+- L290 `ladder(snap, kind)` — Уровни стороны стакана, от ЛУЧШЕЙ цены. `kind` — 'b' либо 'a'.
+- L309 `walk_open(levels, usd)` — Открыть на `usd` долларов нотионала проходом по лесенке.
+- L329 `walk_close(levels, coins)` — Закрыть ровно `coins` монет проходом по лесенке.
+- L346 `depth_usd(snap, kind, field=DEPTH_FIELD)` — Глубина в 25 б.п. от лучшей цены, долларами. None — поля нет.
+- L365 `take_bp(p_in, p_out, side, cost_bp)` — Взятие позиции нетто, в базисных пунктах.
+- L378 `mid(snap)` — Середина стакана. None — цены нет.
+- L386 `spread_bp(snap)` — Спред снимка в базисных пунктах середины. None — цены нет.
+- L394 `best_prices(s_in, s_out, side)` — Цены тейкера по лучшим ценам: (вход, выход). Спред внутри.
+- L401 `flow_usd(prints, t0_ms, t1_ms)` — Лента за окно: продано минус куплено, долларами.
+- L429 `measure_event(snaps, t_ms, side, ticket_usd=TICKET_USD, prints=…` — Одна сделка ячейки. Возвращает строку замера (словарь).
+- L534 `usd_of(row, field='flat_bp')` — Деньги строки: базисные пункты × билет. None — прочерк.
+- L542 `profile_bp(snaps, t_ms, points=PROFILE_POINTS, base_s=PROFILE_B…` — Ход середины от T+`base_s`, в базисных пунктах, по точкам.
+- L566 `profile_to_next(snaps, t_ms, next_ms, fracs=NEXT_FRACTIONS, bas…` — Ход середины от T+`base_s` ДО следующего начисления, долями пути.
+- L598 `lag_stats(rows)` — Дыра записи у границы часа: задержка входа и выхода, секундами.
+- L622 `_finite(xs)`
+- L626 `stat_block(vals)` — Медиана, среднее, перцентили, доля выше круга. Пусто — отказ.
+- L647 `day_no(ts_ms)`
+- L651 `daily_usd(rows, field='flat_bp')` — {номер суток: деньги за эти сутки}. Непокрытые строки не считаются.
+- L667 `without_top_days(daily, k=TOP_DAYS)` — Сумма без `k` лучших суток. Колонка обязательная: концентрация переворачивает знак, и без неё эпизод читается…
+- L674 `by_name(rows, field='flat_bp')` — {имя: деньги}. Имя берётся из строки замера.
+- L686 `halves(rows, field='flat_bp')` — Деньги первой и второй половин окна по КАЛЕНДАРЮ, не по числу сделок: половина, в которой сделок вдвое больше…
+- L701 `form(rows, field='flat_bp', top=TOP_DAYS)` — Форма по суткам — ТОЙ ЖЕ мерой, которой судят живые книги.
+- L729 `k0(rows, min_share=MIN_COVER)` — Доля событий со снимком входа и выхода. Печатается ПЕРВОЙ.
+- L799 `control_times(hours, accruals, events, gap_h=CONTROL_GAP_H, max…` — Границы часа, годные в контроль.
+- L823 `seed_shares(ev_vals, pools, seeds=SEEDS, rng_seed=RNG_SEED)` — Доля зёрен, где случайная выборка ТОГО ЖЕ размера не хуже события.
+- L859 `k1(sh, max_share=K1_MAX_SHARE)` — Вердикт контроля. Мертва, если случайная не хуже в ≥ 5 % зёрен хотя бы по ОДНОЙ из двух величин.
+- L875 `percentile_among(x, xs)` — Перцентиль значения среди контролей. None — сравнивать не с чем.
+- L887 `calib_percentile(ev_rows, ctl_rows_by_key, key_of, field='flat_…` — Средний и медианный перцентиль события среди СВОИХ контролей.
+- L910 `placebo_shares(ev_med, pool_vals, n, seeds=SEEDS, rng_seed=RNG_…` — Метка события, поставленная случайным начислениям тех же имён.
+- L928 `k3(sh)` — Мертва, если медиана события НЕ ВЫШЕ p95 плацебо-медиан.
+- L942 `k2(rows, field='walk_bp')` — Реплей проходом по лесенке. Мертва, если медиана взятия нетто ≤ 0 либо медиана дня < 0.
+- L972 `forward_day(day=FORWARD_FROM)` — Номер суток, с которых начинается форвард.
+- L977 `k4(rows, field='flat_bp', from_day=None, min_events=K4_MIN_EVEN…` — Суд вперёд правилом пула. До календаря вердикта НЕТ ВОВСЕ.
+- L1010 `KILLERS = ('K0', 'K1', 'K2', 'K3', 'K4')`
+- L1013 `verdict(res)` — Порядок обязателен, сработавший убийца закрывает.
+
+## research/mech_2859b3d4/run_drift.py · 894 строк
+
+Прогон механики «дрейф после экстремального начисления funding».
+
+- L55 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L56 `RESEARCH = os.path.dirname(HERE)`
+- L57 `ROOT = os.path.dirname(RESEARCH)`
+- L71 `OUT = os.path.join(HERE, 'out')`
+- L72 `BOOK = os.path.join(RESEARCH, 'b1_book', 'out'…`
+- L73 `TRADES = os.path.join(RESEARCH, 'b1_book', 'out'…`
+- L74 `FUNDING = os.path.join(RESEARCH, 'a1_universe', '…`
+- L75 `REPORT = os.path.join(OUT, 'MECH-drift-1m.md')`
+- L76 `DATA = os.path.join(OUT, 'drift.json')`
+- L77 `STATE = os.path.join(OUT, 'state.json')`
+- L78 `LOG = os.path.join(OUT, 'run.log')`
+- L79 `PUBLISH = os.path.join(ROOT, 'tools', 'publish.sh…`
+- L83 `EXIT_HORIZONS = (60, 300, 900, 1800)` — Горизонты выхода. Судит 1800 с (ячейка вердикта), остальные — чувствительность и только.
+- L86 `ENTRY_LAGS = (3, 10, 30)` — Задержки входа, которые печатаются рядом: заявка объявила 3 с и спрашивает, насколько число держится, если оп…
+- L89 `QUIET_SAMPLE = 900` — Тихих начислений в окне сотни тысяч; контролю нужна выборка, и её размер объявлен здесь, а не подобран: столь…
+- L93 `PLACEBO_MULT = 20` — Пул плацебо: во сколько раз больше числа событий. Каждое зерно тянет из него выборку размером с событие, поэт…
+- L98 `CLOCK_SKEW_MS = 120000` — Запас на расхождение часов: файл назван по часам сборщика, метка снимка — биржевая. Две минуты — заведомо бол…
+- L101 `_hour(ms)` — Имя часового файла записи. Раскладку задаёт сам сборщик.
+- L106 `ts_of_line(line)` — Метка снимка без разбора всей строки.
+- L128 `_keeper(windows)` — Разбор, оставляющий только строки нужных окон.
+- L145 `read_snaps(sym, windows)` — Снимки имени в окнах, по возрастанию метки.
+- L176 `read_prints(sym, t0, t1)` — Лента имени в окне, кортежами `(метка, сторона, цена, объём)`.
+- L193 `load_rates(sym)` — Ряд начислений имени: (метки мс, ставки). Пусто — ряда нет.
+- L226 `collect_events(symbols, lo_ms, hi_ms, log=print)` — Начисления всех имён записи в окне: список строк-событий.
+- L254 `event_windows(t_ms, horizons=EXIT_HORIZONS, lags=ENTRY_LAGS, pr…` — Окна записи, нужные одному событию.
+- L286 `measure_one(ev, ticket, horizons=EXIT_HORIZONS, lags=ENTRY_LAGS…` — Событие целиком: сделка ячейки, соседние горизонты, профиль, лента.
+- L322 `measure_plain(sym, t_ms, side, ticket, next_ms=None)` — Сделка ячейки без диагностики — контроль и плацебо.
+- L339 `control_plan(events, accrual_by_sym, gap_h=DR.CONTROL_GAP_H)` — {(имя, сутки): [границы часа]} — что мерить контролем.
+- L361 `_fmt(v, d=2, dash='—', suffix='')`
+- L367 `_plain(v, d=1, dash='—')`
+- L375 `band_table(rows_by_band, ticket)` — Взятие по горизонтам и полосам, нетто, в базисных пунктах.
+- L397 `profile_table(rows_by_band)` — Ход середины от T−60 с, б.п., медиана / среднее.
+- L419 `report(res, at)` — Отчёт. Каждая вердиктовая фраза ВЫВЕДЕНА из своего числа.
+- L622 `state(step, **kw)`
+- L629 `main(argv=None)`
+
 ## research/mech_357a7c60/controls_check.py · 47 строк
 
 Негативные контроли механики 357a7c60 — СУДИТ САМА ПРИЁМКА.
