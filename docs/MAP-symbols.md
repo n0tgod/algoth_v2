@@ -1138,7 +1138,7 @@ DCA-лестница с забором по §5 — ЯДРО (спека 14).
 - L431 `simulate_dca(bars, rung_prices, weights, capital, leverage, mmr…` — DCA на РЕАЛЬНЫХ барах: доливы против хода, тейк по ходу, пол.
 - L659 `same_coin_short(bars, trigger_px, exit_ts, exit_px, short_notio…` — Короткий на ТОЙ ЖЕ монете, включаемый в просадке (вариант а).
 
-## research/dca_ladder/run_d10.py · 963 строк
+## research/dca_ladder/run_d10.py · 966 строк
 
 D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: плечо, доливы, цель, гейт.
 
@@ -1182,26 +1182,26 @@ D10 — чем вывести КОРОТКИЕ DCA-книги в плюс: пл�
 - L282 `take_for(g, tk)` — Цель ячейки — та же форма, что `rules.take_rule`, с множителем оси.
 - L295 `one_position(g, bars, ts, look, rule, param, lev_look=None, cel…` — Исход одного КОРОТКОГО решения во всех ячейках. None — нечем мерить.
 - L396 `collect(limit=None, src=None, log=print, legs=None, cells=None,…` — Дорогой проход: бары символа читаются ОДИН раз на все ячейки.
-- L481 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
-- L506 `_exits(rows)`
-- L513 `cell(recs, book, dep, gate=REF_GATE, net=False, share=None, row…` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
-- L577 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
-- L590 `halves(rows_by_cell)`
-- L602 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
-- L616 `_rss_mb()`
-- L625 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
-- L643 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
-- L646 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
-- L659 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
-- L662 `run(limit=None, src=None, log=print, legs=None)`
-- L721 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
-- L754 `_p(x, d=2, sign=True)`
-- L760 `_u(x)`
-- L764 `title_of(key)`
-- L770 `_row(key, c, cn, p, mark)`
-- L786 `report(s)`
-- L928 `publish(name)`
-- L934 `main(argv=None)`
+- L484 `common_sample(recs, log=print)` — Решения, ЗАКРЫТЫЕ при каждой ячейке (правило D8). Потери — числом.
+- L509 `_exits(rows)`
+- L516 `cell(recs, book, dep, gate=REF_GATE, net=False, share=None, row…` — Ячейка «правило × книга × депозит × гейт»: касса и форма книги.
+- L580 `paired(rows_ref, rows_cell)` — Парная разность исходов к точке отсчёта на ОБЩИХ решениях (доли маржи).
+- L593 `halves(rows_by_cell)`
+- L605 `lev_split(rows)` — Диагностика D9 на этой выборке: без лестницы против лестницы.
+- L619 `_rss_mb()`
+- L628 `_rss_now_mb()` — Текущий RSS процесса в МБ (Linux); None — не прочитать.
+- L646 `MEM_LIMIT_MB = 1200` — Предел памяти прогона. Машина 7.7 ГБ без свопа: сборщик держит 1.5 ГБ, часовой цикл на шаге матрицы 3.3 ГБ; п…
+- L649 `mem_guard(where, log=print, limit=None)` — Печатает RSS в точке `where`; выше предела — останавливает прогон.
+- L662 `GATE_KEYS = [REF, 'c1:struct:t2', 'c1:none:t2', 'c1…` — Ячейки, по которым читается ось гейта: правило книги и три ячейки 1×.
+- L665 `run(limit=None, src=None, log=print, legs=None)`
+- L724 `verdict(s)` — Вердикт из ЧИСЕЛ: положительные ячейки (брутто и нетто), устойчивые к половинам, и лучше ли они нынешнего пра…
+- L757 `_p(x, d=2, sign=True)`
+- L763 `_u(x)`
+- L767 `title_of(key)`
+- L773 `_row(key, c, cn, p, mark)`
+- L789 `report(s)`
+- L931 `publish(name)`
+- L937 `main(argv=None)`
 
 ## research/dca_ladder/run_d11.py · 195 строк
 
@@ -1396,7 +1396,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1114 строк
+## research/dca_ladder/run_d6.py · 1133 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1415,27 +1415,28 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L130 `one_position(g, bars, ts, look, rule, param, hold_h=None, ckpt_…` — Исход одной позиции при заданной линейке забора. Гейты — D2.
 - L233 `SCHED_TOL = 120.0` — Допуски классификации. `SCHED_TOL` — тот же, что у D7: бар не встаёт ровно на границу срока, и больше двух ми…
 - L234 `FRESH_TOL = 2 * HOUR`
-- L237 `position_state(r, data_end)` — Закрыта / открыта / оборвана записью. Правило одно на всех.
-- L257 `queue(recs)` — Очередь за деньгами: по секунде решения, внутри секунды — лучшие.
-- L268 `ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,…` — Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
-- L397 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
-- L418 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
-- L457 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
-- L477 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
-- L551 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
-- L571 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L590 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L689 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L742 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L782 `_anchor_block(a)`
-- L821 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L916 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L923 `_pct(x, d=2)`
-- L927 `report(s)`
-- L1027 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1047 `_window_line(w)`
-- L1062 `publish(name)`
-- L1069 `main()`
+- L237 `record_end_of(src)` — Конец записи по источнику баров; 0.0, если источник его не знает.
+- L249 `position_state(r, data_end)` — Закрыта / открыта / оборвана записью. Правило одно на всех.
+- L269 `queue(recs)` — Очередь за деньгами: по секунде решения, внутри секунды — лучшие.
+- L280 `ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,…` — Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
+- L409 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
+- L430 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
+- L469 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
+- L489 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
+- L563 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
+- L583 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L602 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L708 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L761 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L801 `_anchor_block(a)`
+- L840 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L935 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L942 `_pct(x, d=2)`
+- L946 `report(s)`
+- L1046 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1066 `_window_line(w)`
+- L1081 `publish(name)`
+- L1088 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 
@@ -2271,26 +2272,27 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L115 `repack(path=None, cap=None, log=print, apply=True)` — Переложить строки суток по частям, не переступая порог размера.
 - L184 `main()`
 
-## research/dca_paper/tail.py · 257 строк
+## research/dca_paper/tail.py · 278 строк
 
 Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
 
-- L57 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L58 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L69 `ROOT_B1 = D6.ROOT_B1`
-- L70 `HOUR = 3600.0`
-- L71 `MINUTE = 60.0`
-- L74 `book_minute_bars(root, sym, t0, t1, log=None)` — Минутные бары по СЕРЕДИНЕ стакана в окне `[t0, t1]`.
-- L105 `class TailBars` — Бары ленты, продолженные серединой стакана ПОСЛЕ последнего принта.
-  - L120 `TailBars.__init__(self, root=ROOT_B1, log=None)`
-  - L130 `TailBars.bars(self, sym, t0, t1)`
-  - L161 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
-- L171 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
-- L229 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
-- L230 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
-- L231 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
-- L232 `CUT_UNKNOWN = 'причина не измерена'`
-- L235 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
+- L58 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L59 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L70 `ROOT_B1 = D6.ROOT_B1`
+- L71 `HOUR = 3600.0`
+- L72 `MINUTE = 60.0`
+- L75 `book_minute_bars(root, sym, t0, t1, log=None)` — Минутные бары по СЕРЕДИНЕ стакана в окне `[t0, t1]`.
+- L106 `class TailBars` — Бары ленты, продолженные серединой стакана ПОСЛЕ последнего принта.
+  - L121 `TailBars.__init__(self, root=ROOT_B1, log=None)`
+  - L131 `TailBars.bars(self, sym, t0, t1)`
+  - L162 `TailBars.record_end(self)` — Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
+  - L182 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
+- L192 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
+- L250 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
+- L251 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
+- L252 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
+- L253 `CUT_UNKNOWN = 'причина не измерена'`
+- L256 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
 
 ## research/dca_paper/tail_screen.py · 495 строк
 
@@ -7821,8 +7823,10 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L31 `REL = 'research/dca_paper/out/journal.jsonl'`
 - L34 `main()`
 
-## tools/watchdog_book.sh · 389 строк
+## tools/watchdog_book.sh · 415 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
 - L34 `now()`
+- L38 `computed_ts()` — Момент счёта артефакта книги (`computed_at`), секундами; 0 — файла нет или метка не читается. Триггер книг —…
+- L51 `pair_due()` — Общий счёт считается ПОСЛЕ книг, из которых он читает: его кэши пишут прогоны коротких и длинных книг, и свой…
