@@ -518,3 +518,5 @@
 {"at": 1790141706.918, "role": "declare", "status": "ok", "started": 1790141701.456, "ended": 1790141706.918, "dry": false, "note": "код возврата 0"}
 {"at": 1790142002.002, "role": "task", "status": "start", "started": 1790142002.002, "ended": 1790142002.002, "dry": false, "pid": 680503}
 {"at": 1790142002.321, "role": "task", "status": "ok", "started": 1790142002.002, "ended": 1790142002.321, "dry": false, "note": "код возврата 0"}
+{"at": 1790215215.039, "role": "scout", "status": "start", "started": 1790215215.0, "ended": 1790215215.039, "dry": false, "pid": 846464}
+{"at": 1790215932.548, "role": "scout", "status": "ok", "started": 1790215215.0, "ended": 1790215932.548, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
