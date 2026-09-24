@@ -524,3 +524,5 @@
 {"at": 1790216354.178, "role": "brief", "status": "contract", "started": 1790216114.0, "ended": 1790216354.178, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: research/factory/out/summary.md: указателей 0, а нужно не меньше 1: утверждение без ссылки нечем оспорить"}
 {"at": 1790216415.315, "role": "brief", "status": "start", "started": 1790216415.0, "ended": 1790216415.315, "dry": false, "pid": 849500}
 {"at": 1790216635.052, "role": "brief", "status": "ok", "started": 1790216415.0, "ended": 1790216635.052, "dry": false, "note": "модель opus, усилие medium"}
+{"at": 1790216714.804, "role": "propose", "status": "start", "started": 1790216714.0, "ended": 1790216714.804, "dry": false, "pid": 850491}
+{"at": 1790218353.984, "role": "propose", "status": "ok", "started": 1790216714.0, "ended": 1790218353.984, "dry": false, "note": "модель claude-fable-5-1, усилие xhigh"}
