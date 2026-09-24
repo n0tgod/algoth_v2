@@ -18,3 +18,13 @@
 [12:50:42] после: /dev/sdb        147G  133G  6.4G  96% /root/algoth_v2/research/b1_book/out
 [12:50:42] после: /dev/sda1       150G  135G  9.1G  94% /
 конец: 2026-09-24T12:50:43Z, код 0
+публикуется в ветку main:
+ jobs/done/spill-fall.done  |  1 +
+ jobs/done/spill-fall.log   | 20 ++++++++++++++++++++
+ jobs/done/status-fall.done |  1 +
+ jobs/done/status-fall.log  |  7 +++++++
+ 4 files changed, 29 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   55fae794..53f4aea0  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
