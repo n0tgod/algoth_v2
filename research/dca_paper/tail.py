@@ -50,6 +50,7 @@
 через `src=`), меняется только то, ЧЕМ оно накормлено в хвосте.
 """
 
+import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -157,6 +158,26 @@ class TailBars:
         else:
             self.dry.append(sym)
         return tape + add
+
+    def record_end(self):
+        """Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
+
+        Сборщик пишет `status.json` каждые пять секунд с полем `now`, и
+        это единственное место, где конец записи известен целиком, а не
+        по одному имени. Выводить его из пересчитанных записей нельзя:
+        инкрементальный прогон пересчитывает только незакрытые, и когда
+        новых решений нет неделю, «конец записи» съезжает к концу самой
+        старой оборванной позиции (MTLUSDT «открыта» шестые сутки,
+        2026-09-24). Файла нет или он не читается — None: вызывающий
+        вернётся к прежнему выводу, и «не измерено» не станет нулём.
+        """
+        try:
+            with open(os.path.join(self.root, "status.json"),
+                      encoding="utf-8") as f:
+                v = json.load(f).get("now")
+            return float(v) if v else None
+        except (OSError, ValueError, TypeError, AttributeError):
+            return None
 
     def stats(self):
         """Числа правила: их печатает отчёт, а не пересказ прогона."""

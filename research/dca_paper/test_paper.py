@@ -2121,6 +2121,69 @@ def test_short_legs_go_only_into_short_books():
     print("ok  нога идёт только в книгу своей стороны; проход один на обе")
 
 
+def test_record_end_comes_from_the_source_not_from_the_replayed_subset():
+    """Позиция, чьи бары кончились давно, не «открыта» из-за тихой книги.
+
+    Дефект 2026-09-24: MTLUSDT (вход 15.09, срок 72 ч) стояла «открытой»
+    на шестые сутки в длинных книгах и в общем счёте. Конец записи
+    выводился из ПЕРЕСЧИТАННОГО подмножества (инкрементальный прогон
+    считает заново только незакрытые), ситуационная книга с 19.09 решений
+    не давала, и «запись доходит до» равнялось концу самой старой
+    оборванной записи — 18.09 06:21, на 126 часов позади сборщика.
+    Класс: «мера, выведенная из того, что ею меряют». Источник баров
+    знает, докуда доходит запись (`record_end`); без этого знания —
+    прежний вывод, и контроль это показывает.
+    """
+    import run_d6 as D6m
+    far = T0 + 10 * 86400.0                     # сборщик пишет и сейчас
+
+    def fake_one(g, bars, ts, look, rule, param, hold_h=None,
+                 ckpt_h=None, lev_look=None):
+        r = dict(_rec(g["at"], sym=g["sym"]), side="long", exit="срок")
+        # бары кончились через час после входа, срок 72 ч
+        r["end_ts"] = float(g["at"]) + 3600.0
+        r["sched_end"] = float(g["at"]) + 72 * 3600.0
+        if g["sym"] == "LIVEUSDT":
+            r["end_ts"] = far - 600.0            # пишется до сих пор
+        return r
+
+    class Src:
+        def bars(self, sym, a, b):
+            return [(float(a), 100.0, 100.0, 100.0, 100.0, 1.0)]
+
+        def record_end(self):
+            return far
+
+    class Blind(Src):
+        record_end = None                        # источник без знания
+
+    legs = [{"sym": "DEADUSDT", "at": T0, "side": "long", "fwd": 100.0,
+             "rr": 3.0, "fav": 100.0, "adv_q": -50.0},
+            {"sym": "LIVEUSDT", "at": far - 7200.0, "side": "long",
+             "fwd": 100.0, "rr": 3.0, "fav": 100.0, "adv_q": -50.0}]
+    op, ti = D6m.one_position, D6m.D2.instruments_tiers
+    try:
+        D6m.one_position = fake_one
+        D6m.D2.instruments_tiers = lambda: {}
+        got = D6m.collect_recs(rulers=[("depth", 2.0, "long")], legs=legs,
+                               src=Src(), log=lambda *a: None)
+        st = {r["sym"]: r["state"] for r in got["recs"][("depth", 2.0, "long")]}
+        assert got["data_end"] == far, got["data_end"]
+        assert st == {"DEADUSDT": "cut", "LIVEUSDT": "open"}, st
+        # Контроль: источник без знания о конце записи — прежний вывод из
+        # подмножества, и мёртвая позиция снова «открыта». Проверка
+        # различает дороги, а не проходит на любой.
+        blind = D6m.collect_recs(rulers=[("depth", 2.0, "long")],
+                                 legs=legs[:1], src=Blind(),
+                                 log=lambda *a: None)
+        assert blind["recs"][("depth", 2.0, "long")][0]["state"] == "open"
+        assert blind["data_end"] == T0 + 3600.0, blind["data_end"]
+    finally:
+        D6m.one_position, D6m.D2.instruments_tiers = op, ti
+    print("ok  конец записи — у источника: оборванная 10 суток назад — "
+          "«оборвана», живая — «открыта»; источник без знания — прежний вывод")
+
+
 def test_venue_cap_is_in_the_replay_signature():
     """Предел плеча площадки входит в ПОДПИСЬ реплея.
 
@@ -2477,6 +2540,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
     test_contracts_walk_matches_the_simulation,
          test_journal_rotates_by_day_and_reader_takes_every_part,
          test_journal_reader_parses_only_changed_parts,
+         test_record_end_comes_from_the_source_not_from_the_replayed_subset,
          test_worst_open_is_measured_and_missing_is_not_zero,
          test_ticket_clears_the_exchange_floor,
          test_ticket_is_squeezed_between_the_floor_and_the_peak,

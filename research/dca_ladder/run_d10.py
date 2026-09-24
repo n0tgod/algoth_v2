@@ -457,7 +457,10 @@ def collect(limit=None, src=None, log=print, legs=None, cells=None,
                     recs[rk][k].append(r)
             n += got
             skipped += (1 - got)
-    data_end = 0.0
+    # Конец записи — у источника (`run_d6.record_end_of`), а не у
+    # пересчитанного подмножества: одни оборванные записи в подмножестве
+    # делали бы мёртвую позицию «открытой» (2026-09-24, длинные книги).
+    data_end = D6.record_end_of(src)
     for rk in recs:
         for k in recs[rk]:
             st = recs[rk][k]

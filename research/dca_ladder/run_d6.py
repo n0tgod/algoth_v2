@@ -234,6 +234,18 @@ SCHED_TOL = 120.0
 FRESH_TOL = 2 * HOUR
 
 
+def record_end_of(src):
+    """Конец записи по источнику баров; 0.0, если источник его не знает."""
+    fn = getattr(src, "record_end", None) if src is not None else None
+    if fn is None:
+        return 0.0
+    try:
+        v = fn()
+    except Exception:                                    # noqa: BLE001
+        return 0.0
+    return float(v) if v else 0.0
+
+
 def position_state(r, data_end):
     """Закрыта / открыта / оборвана записью. Правило одно на всех.
 
@@ -668,7 +680,14 @@ def collect_recs(limit=None, src=None, log=print, rulers=None,
                     got = 1
             n += got
             skipped += (1 - got)
-    data_end = 0.0
+    # Докуда доходит ЗАПИСЬ — спрашивается у ИСТОЧНИКА, а не выводится из
+    # пересчитанного подмножества. Инкрементальный прогон считает заново
+    # только новые и незакрытые решения; когда новых нет неделю, в
+    # подмножестве остаются одни оборванные, и «конец записи» становится
+    # концом самой старой из них — позиция, чьи бары кончились пять
+    # суток назад, читается «открытой» (MTLUSDT, 2026-09-24). Источник
+    # без такого знания (подставной) — прежний вывод из записей.
+    data_end = record_end_of(src)
     for k in rulers:
         for r in recs[k]:
             if r.get("end_ts"):

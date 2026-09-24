@@ -272,6 +272,44 @@ def test_short_legs_stream_equals_the_reference_loader():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_record_end_of_the_source_marks_a_dead_short_as_cut_not_open():
+    """Короткая позиция с оборванными барами — «оборвана», а не «открыта».
+
+    Та же дорога, что у длинных (2026-09-24): конец записи берётся у
+    источника, а не у пересчитанного подмножества. Подставные бары
+    кончаются через два часа после входа при сроке 24 ч; источник,
+    знающий конец записи (десять суток спустя), даёт «оборвана»;
+    слепой источник — прежний вывод «открыта» (контроль).
+    """
+    lo, at = T9._rise_then_fall()
+    cut = [b for b in lo if b[0] <= at + 2 * H]
+    far = at + 10 * 86400.0
+
+    class Knowing(T3._Src):
+        def record_end(self):
+            return far
+
+    legs = _legs(at, "SSSUSDT", n=1)
+    cells = [D10.CELLS[0]]
+    got = _with_levels(lambda: D10.collect(src=Knowing({"SSSUSDT": cut}),
+                                           legs=legs, cells=cells, raw=True,
+                                           rich=True, log=lambda *a: None))
+    recs = [r for rk in got["recs"] for k in got["recs"][rk]
+            for r in got["recs"][rk][k]]
+    assert recs, "подставная нога не дала позиции — проверка холостая"
+    assert got["data_end"] == far, got["data_end"]
+    assert {r["state"] for r in recs} == {"cut"}, [r["state"] for r in recs]
+    blind = _with_levels(lambda: D10.collect(src=T3._Src({"SSSUSDT": cut}),
+                                             legs=legs, cells=cells, raw=True,
+                                             rich=True, log=lambda *a: None))
+    brecs = [r for rk in blind["recs"] for k in blind["recs"][rk]
+             for r in blind["recs"][rk][k]]
+    assert {r["state"] for r in brecs} == {"open"}, [r["state"] for r in brecs]
+    assert blind["data_end"] < far, blind["data_end"]
+    print(f"ok  конец записи у источника: {len(recs)} оборванных коротких "
+          "позиций; слепой источник читает их открытыми (контроль)")
+
+
 def test_memory_guard_stops_the_run_above_the_limit():
     """Прогон, переросший предел памяти, останавливает себя сам — с числом
     и причиной, до того как ядро убьёт часовой цикл рядом (2026-09-06)."""
@@ -463,6 +501,7 @@ TESTS = [
     test_common_sample_is_one_for_all_cells,
     test_short_legs_stream_equals_the_reference_loader,
     test_memory_guard_stops_the_run_above_the_limit,
+    test_record_end_of_the_source_marks_a_dead_short_as_cut_not_open,
     test_run_end_to_end_synthetic,
     test_main_writes_smoke_artifacts_and_publishes_by_default,
 ]
