@@ -1,163 +1,113 @@
 {
  "built": true,
- "module": "research/mech_374e2591/floor_sister.py",
- "tests": "research/mech_374e2591/test_floor_sister.py",
+ "module": "research/mech_2859b3d4/drift.py",
+ "tests": "research/mech_2859b3d4/test_drift.py",
  "controls": [
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    px = p_liq + frac * (entry - p_liq)",
-   "new": "    px = p_liq + 0.25 * (entry - p_liq)",
-   "expect": "ПРОВАЛ уровень_пола_формулой_ядра"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    pnl = L.open_mark(px, avg, 1.0, lev, ws, \"short\")",
-   "new": "    pnl = -(1.0 - frac)",
-   "expect": "ПРОВАЛ уровень_зависит_от_плеча"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    if filled is not None and abs(float(filled) - cash) > 1e-6 * max(1.0, cash):",
-   "new": "    if False:",
-   "expect": "ПРОВАЛ запись_без_рунгов_не_считается"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "        if not got[\"pnl\"] < 0:",
-   "new": "        if False:",
-   "expect": "ПРОВАЛ уровень_не_отрицателен_выбывает"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "        if d > float(tol_bp):",
-   "new": "        if False:",
-   "expect": "ПРОВАЛ сверка_ликвидации_кусается"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "FLOOR = dict(SS.FLOORS)[FLOOR_KEY]",
-   "new": "FLOOR = 0.75",
-   "expect": "ПРОВАЛ правила_берутся_у_книги"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "GUARD = R.wave_guard_of(BOOK)",
-   "new": "GUARD = 2.0",
-   "expect": "ПРОВАЛ правила_берутся_у_книги"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "        k = P.trigger(v, \"loss\", -lvl)",
-   "new": "        k = P.trigger(dict(v, path=dict(v[\"path\"], K=v[\"path\"][\"K\"] + 1)), \"loss\", -lvl)",
-   "expect": "ПРОВАЛ час_среза_строго_до_выхода"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "        k = P.trigger(v, \"loss\", -lvl)",
-   "new": "        k = P.trigger(v, \"loss\", lvl)",
-   "expect": "ПРОВАЛ калибровочная_пара"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    mk = [list(m) for m in (rec.get(\"marks\") or [])\n          if int(round((float(m[0]) - at) / HOUR)) + 1 <= k]",
-   "new": "    mk = [list(m) for m in (rec.get(\"marks\") or [])\n          if int(round((float(m[0]) - at) / HOUR)) + 1 <= k + 1]",
-   "expect": "ПРОВАЛ порез_по_уровню_равен_полу"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    rows, cells, _one, _live = RP.build_rows({book: recs}, now=now,",
-   "new": "    rows, cells, _one, _live = RP.build_rows({book: in_window(recs, since)}, now=now,",
-   "expect": "ПРОВАЛ окно_показа_не_пересчитывает_кассу"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    recs, guard = RP.guard_shorts(recs, book, log=log, now=now, mkt=mkt)",
-   "new": "    guard = {\"guard\": False}",
-   "expect": "ПРОВАЛ форма_равна_кассе"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    if not changed:",
-   "new": "    if False:",
-   "expect": "ПРОВАЛ ноль_не_выдаёт_себя_за_результат"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    out[\"day_worst_usd\"] = (None if st.get(\"day_worst\") is None\n                            else round(float(st[\"day_worst\"]) * dep, 2))",
-   "new": "    out[\"day_worst_usd\"] = round(float(st.get(\"day_worst\") or 0.0) * dep, 2)",
-   "expect": "ПРОВАЛ величина_которой_нет_прочерк"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    thr = float(share) * float(bw)",
-   "new": "    thr = -540.0",
-   "expect": "ПРОВАЛ порог_убийцы_А_доля_измеренного"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    dead = float(sw) <= thr",
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    (\"lt1\", None, -0.01, -1),",
+   "new": "    (\"lt1\", None, -0.005, -1),",
+   "expect": "test_bands_by_number"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "        if name == band:\n            return side",
+   "new": "        if name == band:\n            return -side",
+   "expect": "test_side_by_number"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "ENTRY_LAG_S = 3           # вход не раньше третьей секунды после расчёта",
+   "new": "ENTRY_LAG_S = 0           # вход не раньше третьей секунды после расчёта",
+   "expect": "test_entry_not_before_third_second"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "ENTRY_MAX_LAG_S = 10      # позже — событие НЕ ПОКРЫТО записью",
+   "new": "ENTRY_MAX_LAG_S = 100000  # позже — событие НЕ ПОКРЫТО записью",
+   "expect": "test_entry_window_upper_bound_bites"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "EXIT_S = 1800             # выход через тридцать минут",
+   "new": "EXIT_S = 900              # выход через тридцать минут",
+   "expect": "test_exit_horizon_is_half_an_hour"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "EXIT_MAX_LAG_S = ENTRY_MAX_LAG_S",
+   "new": "EXIT_MAX_LAG_S = 100000",
+   "expect": "test_exit_window_upper_bound_bites"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    s_in, s_out = snaps[i_in], snaps[i_out]",
+   "new": "    s_in, s_out = snaps[i_in], snaps[-1]",
+   "expect": "test_no_lookahead_past_exit"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    if next_accrual_ms is not None and int(next_accrual_ms) <= exit_ts:",
+   "new": "    if next_accrual_ms is not None and False:",
+   "expect": "test_position_never_spans_accrual"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "        - float(cost_bp)",
+   "new": "        - 0.0 * float(cost_bp)",
+   "expect": "test_take_bp_numbers"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "FLAT_COST_BP = COMMISSION_BP + 2 * SLIP_BP       # 19.8 б.п.",
+   "new": "FLAT_COST_BP = COMMISSION_BP + 0 * SLIP_BP       # 19.8 б.п.",
+   "expect": "test_cost_model_numbers"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "WALK_COST_BP = COMMISSION_BP",
+   "new": "WALK_COST_BP = FLAT_COST_BP",
+   "expect": "test_cost_model_numbers"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "            s -= float(side) * float(p) * float(v)",
+   "new": "            s += float(side) * float(p) * float(v)",
+   "expect": "test_flow_sign_by_number"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    return (s, n) if n else (None, 0)",
+   "new": "    return (s, n)",
+   "expect": "test_empty_tape_is_dash_not_zero"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    out.sort(key=(lambda x: -x[0]) if kind == \"b\" else (lambda x: x[0]))",
+   "new": "    out = list(out)",
+   "expect": "test_walk_ignores_input_order"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "            return usd / coins, coins",
+   "new": "            return levels[0][0], coins",
+   "expect": "test_walk_numbers"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    return None                      # лесенки записи не хватило на билет",
+   "new": "    return (levels[-1][0], coins)    # лесенки записи не хватило на билет",
+   "expect": "test_thin_ladder_is_a_dash_not_zero"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "        raise Empty(\"ни одного взятия при непустом входе\")",
+   "new": "        return {\"n\": 0, \"med\": 0.0, \"mean\": 0.0}",
+   "expect": "test_empty_is_refusal_not_zero"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    ok = share >= min_share",
+   "new": "    ok = True",
+   "expect": "test_k0_phrase_follows_number"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    dead = (sh[\"share_sum\"] >= max_share) or (sh[\"share_med\"] >= max_share)",
+   "new": "    dead = (sh[\"share_sum\"] > 1.0) or (sh[\"share_med\"] > 1.0)",
+   "expect": "test_k1_control_share_rule"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    pairs = [(v, p) for v, p in zip(ev_vals, pools)\n             if v is not None and np.isfinite(v) and p]",
+   "new": "    pairs = [(v, p) for v, p in zip(ev_vals, pools)\n             if v is not None and np.isfinite(v)]",
+   "expect": "test_k1_compares_same_size_sample"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    dead = (med <= 0) or (med_day < 0)",
    "new": "    dead = False",
-   "expect": "ПРОВАЛ вердикт_выводится_из_числа"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    dead = float(beat) >= float(max_beat)",
-   "new": "    dead = float(beat) > 1.0",
-   "expect": "ПРОВАЛ убийца_Б_из_доли_зёрен"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    dead = (med < 0) or (float(wo3) < 0)",
-   "new": "    dead = (med < 0)",
-   "expect": "ПРОВАЛ убийца_В_обе_половины"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    if not fwd_days:",
+   "expect": "test_k2_rule_and_thin_ladder"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    dead = sh[\"ev_med\"] <= sh[\"p95\"]",
+   "new": "    dead = False",
+   "expect": "test_k3_placebo_rule"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    if len(fwd) < min_events or n_days < SB.MIN_DAYS:",
    "new": "    if False:",
-   "expect": "ПРОВАЛ убийца_Г_прочерк_без_форварда"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    sig[\"floor\"] = dict(sig.get(\"floor\") or {}, **{BOOK: float(frac)})",
-   "new": "    sig[\"floor\"] = dict(sig.get(\"floor\") or {})",
-   "expect": "ПРОВАЛ кэш_сестры_свой_и_с_полом"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    return os.path.join(CACHE_DIR, f\"recs-floor{int(round(100 * frac)):d}.jsonl\")",
-   "new": "    return \"/tmp/recs-floor.jsonl\"",
-   "expect": "ПРОВАЛ кэш_сестры_свой_и_с_полом"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "    finally:\n        D2.FLOOR_FRAC = was\n    out = {}",
-   "new": "    finally:\n        pass\n    out = {}",
-   "expect": "ПРОВАЛ пол_возвращается_после_реплея"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "        below += 1 if d < -EPS else 0",
-   "new": "        below += 1 if d < 1.0 else 0",
-   "expect": "ПРОВАЛ разрыв_через_пол_считается"
-  },
-  {
-   "file": "research/mech_374e2591/floor_sister.py",
-   "old": "        if float(r[\"exit_ts\"]) >= float(b[\"exit_ts\"]):",
+   "expect": "test_k4_waits_for_calendar"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    if why is None and wt <= 0:",
+   "new": "    if False:",
+   "expect": "test_k4_without_top_days_rule"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "        if r.get(\"ok\") is None:",
    "new": "        if False:",
-   "expect": "ПРОВАЛ изменённые_позиции_по_реплею"
-  }
+   "expect": "test_verdict_order_and_unmeasured"},
+  {"file": "research/mech_2859b3d4/drift.py",
+   "old": "    row[\"flat_bp\"] = take_bp(p_in, p_out, side, FLAT_COST_BP)",
+   "new": "    row[\"flat_bp\"] = take_bp(p_in, p_in, side, FLAT_COST_BP)",
+   "expect": "test_calibration_finds_planted_drift"}
  ],
- "touched": [
-  "research/mech_374e2591/controls_check.py",
-  "research/mech_374e2591/RUNBOOK.md"
- ],
- "needs_owner": [
-  {
-   "what": "объявить сестру бумажной книгой рядом с `safe_h`: ключ `safe_h75` в `research/dca_paper/rules.py` (линейка σ 6, билет 1×, возраст ≥ 7 суток, охрана 2 %, `FLOOR_FRAC_BY_BOOK` 0.75), свой ключ линейки реплея у `run_short.BOOKS` и место на `/dca-page` с объявленной числом версией правил",
-   "why": "убийца (Г) заявки судится ТОЛЬКО записью ВПЕРЁД, а у необъявленной сестры форвардных суток ноль по построению: все её сутки — пересчёт по прошлому, и назвать их наблюдением значило бы выдать бэктест за форвард. Правка лежит в `research/dca_paper/rules.py`, `run_short.py` и на странице книг, то есть ВНЕ каталога механики: роль строителя туда не пишет, а неопубликованная правка осталась бы на сервере (публикуются только объявленные пути своего каталога, `research/factory/publish_build.py`). Само объявление живой книги есть решение владельца, а не строителя",
-   "unblocks": "суд сестры правилом формы пула вперёд (медиана дня и укус при ≥ 10 сутках со сделками) — единственный из четырёх объявленных убийц, который на записи не проверяется ничем"
-  }
- ],
- "notes": "Построена механика 374e2591 целиком: модуль research/mech_374e2591/floor_sister.py (два шага — потолок по почасовым отметкам и реплей ядром), сюита research/mech_374e2591/test_floor_sister.py (27 проверок, 0.6 с), машина контролей controls_check.py (зовёт саму приёмку runlog._run_tests, своей копии судьи нет) и RUNBOOK.md. ЧУЖИХ файлов не правил ни одного: все пути — в каталоге механики, назначенном машиной, плюс сам отчёт в research/factory/out. Негативных контролей 24 (предел приёмки), все кусаются и роняют ИМЕННО названную проверку — 21 с на круг.\n\nЧТО ПОСТРОЕНО. Сестра книги safe_h отличается ОДНИМ правилом — полом капитуляции 0.75 вместо 0.10, — и считается не второй кассой, а теми же функциями в том же порядке, что касса семейства (run_paper.age_shorts → guard_shorts → build_rows → costs.apply_to_rows → _stats); равенство short_grid.cell_stats на общих полях закреплено проверкой «форма_равна_кассе». Своя функция формы нужна потому, что ячейка кассы не отдаёт колонок концентрации, укуса и худшего дня, а спор заявки идёт ровно о них, дописать же поля в чужой short_grid.py нельзя: публикация постройки несёт только свой каталог. Ни одно число правила в модуле не назначено: доля пола берётся у объявленной оси short_stop.FLOORS[f75], пол базовой книги — у rules.floor_frac_of, порог охраны — у rules.wave_guard_of, возраст — у rules.min_age_days, зёрна — у path_screen.SEEDS; проверка «правила_берутся_у_книги» держит это ПОДМЕНОЙ источника и перезагрузкой модуля, а не сверкой значения с самим собой (литерал такую сверку прошёл бы).\n\nНОВОЕ ПО СУЩЕСТВУ — уровень пола выводится ФОРМУЛОЙ ЯДРА от чисел самой позиции (ladder.liq_price + ladder.open_mark на капитале 1.0 и долях рунгов записи), а не плоскими −25 % маржи: доля съеденной маржи на полу есть функция плеча (у 3× −0.2439, у 25× −0.214), и плоский порог торговал бы другим правилом. Вывод КАЛИБРОВАН по самой записи: у позиций, кончившихся ликвидацией, выведенная цена ликвидации обязана совпасть с exit_px записи — на живых данных расхождений 0 из 22, худшее 0.0 б.п. Час пореза ищет path_screen.trigger осью «стоп по убытку» на своём уровне каждой позиции — та же функция и то же правило «строго до фактического выхода», что у всех осей выхода коротких книг; своего обхода пути нет, потому что обход, смотрящий на час выхода, и есть заглядывание в будущее.\n\nЦЕНА ВЫХОДА ВЗЯТА В ВИЛКУ, и это главная оговорка шага 1: «по отметке» — позиция закрыта отметкой часа (wave.guard_record, тот же срез, что у охраны рынком), «по уровню» — ровно на полу, то есть в предположении, что разрыва внутри бара нет. Правда между ними ПО ЦЕНЕ, но НЕ ПО СОСТАВУ: отметки не видят ни касания внутри часа, после которого позиция отскочила (ядро режет — отметки молчат, сестра выглядит лучше, чем есть), ни хвоста, родившегося в последний час (ядро режет — а час выхода в счёт не идёт, сестра выглядит хуже). Поэтому вердикт шага 1 помечен предварительным, и шаг 2 не отменяется им.\n\nПОРЯДОК ПОЛА И ОХРАНЫ выходит правильным сам и проверен: пол применяется к записям, а охрану кладёт касса тем же кодом, что у прогона книги, поэтому срезанная запись живёт до часа пореза, охрана может сработать только РАНЬШЕ него, а ничья остаётся за полом (он срабатывает внутри часа, охрана — по его закрытию). Обе работают в сестре одновременно, как и требует заявка («поверх охраны рынком»).\n\nШАГ 2 (реплей ядром) построен и ПРОВЕРЕН НА ЖИВЫХ ДАННЫХ смоуком (--limit 300: 600 ног, 87 имён, окно 08–14.08, 330 с, RSS 550 МБ), полного прогона ЗДЕСЬ не делалось: он ставится заданием очереди, отцепленно (команда в RUNBOOK), и по смоуку видно, что полный лист стоит десятки минут, а не 400–700 с, как прикидывало задание, — измеренное число записано в RUNBOOK вместо чужой прикидки. Смоук пишет в ОТДЕЛЬНЫЙ артефакт FLOOR-sister-smoke и кричит строкой, что он смоук: выборочные числа, положенные рядом с полными, через день становятся полными молча. Пол ставится параметром симуляции на время прогона и возвращается в finally (проверка «пол_возвращается_после_реплея» — стоп реплея не оставляет живой книге чужой пол). Записи сестры пишутся в СВОЙ кэш research/mech_374e2591/cache/recs-floor75.jsonl со СВОЕЙ подписью, в которой стоит пол: кэш живой книги не трогается ни при каком исходе (проверка «кэш_сестры_свой_и_с_полом»). Только шаг 2 видит разрыв через пол — в отчёте это отдельный блок (сколько хвостов ушло НИЖЕ уровня и насколько), и именно его в заявке названо неизмеримым ничем иным. Контроль убийцы (Б) на шаге 2 считается по ИСХОДАМ (разность исходов сестры и базовой на тех же решениях) против случайных выходов того же числа в те же часы среди открытых; асимметрия названа в отчёте: у правила цена выхода внутри бара, у контроля — на границе часа.\n\nЧТО УЖЕ ПОСЧИТАНО (шаг 1, вся запись, 200 зёрен, 22.09): 3716 закрытых записей линейки safe_s, пол сработал у 290 (7.8 %), из них хвостовых 89, а 132 позиции срезаны в минус там, где без пола они вышли лучше. Σ приращения pnl правила +5.62 долей маржи против медианы случайных выходов −0.84; случайные не хуже правила в 0.5 % из 200 зёрен. Книга ($10k, нетто): база +3258 $ (просадка −11.3 %, худший день −811 $ 13.09, укус 3.9), сестра по отметке +3569 $ (−6.5 %, худший день −605 $ 02.09, укус 3.4), сестра по уровню +5782 $ (−4.5 %, −547 $, укус 2.7). Ликвидации 4 → 0. Два дня, породившие заявку, чинятся: 13.09 −811 → −451, 12.09 −722 → −348; но по дням правило хуже в 26 сутках из 45 и лучше в 19 — премия спокойных дней видна, и новым худшим днём становится 02.09 (−431 → −605).\n\nЧТО ПОКАЗАЛ СМОУК ШАГА 2 (окно 08–14.08, 121 сделка базовой — числа предварительные, и отчёт говорит это строкой): ядро режет 49 позиций, Σ приращения pnl −5.94 маржи, то есть ХУЖЕ базовой книги, а случайные выходы того же числа в те же часы не хуже правила в 100 % из 20 зёрен. Это ровно та разница, о которой предупреждает вилка шага 1: ядро видит касания ВНУТРИ часа, после которых позиция отскакивала бы, а отметки их не видят. Направление названо ДО полного прогона, а не после него. Разрыв через пол там же: из 51 хвостового исхода 21 (41 %) ушёл ниже уровня пола, медиана разности +0.005 маржи, край −0.063.\n\nВЕРДИКТ ШАГА 1 СОБРАН МАШИНОЙ ИЗ ЧИСЕЛ, а не написан прозой: (А) МЕРТВА — худший день сестры −605 $ при пороге −541 $ (2/3 худшего дня базовой, порог объявлен заданием как ДОЛЯ и считается от измеренного числа, а не литералом); (Б) жива — 0.5 % зёрен при пороге 5 %; (В) жива — медиана дня +109 $, «без 3 лучших дней» +2192 $; (Г) НЕ ИЗМЕРЕНО — прочерк с причиной: у необъявленной сестры форвардных суток ноль по построению. Окно с 13.09 посчитано рядом и помечено ПЕРЕСЧЁТОМ (база −482 $ при укусе 10.4, сестра −83 $ при укусе 6.0) — форвардом оно не является.\n\nЧЕГО НЕ ПОСТРОЕНО И ПОЧЕМУ. Объявление сестры бумажной книгой (ключ safe_h75 в research/dca_paper/rules.py, свой ключ линейки в run_short.BOOKS, место на /dca-page, версия правил числом) — это правка ЧУЖИХ файлов вне каталога механики: роль строителя туда не пишет, а неопубликованная правка осталась бы на сервере (publish_build публикует только объявленные пути своего каталога). Без объявления убийца (Г) непроверяем ничем, поэтому просьба записана в needs_owner, а не спрятана в прозу. Пункт задания про run_short.floor_groups (линейка, кормящая книги с разным полом) на замере не встаёт вовсе: сестра считается своим прогоном и своим кэшем, а отказ floor_groups живёт на дороге ЖИВОЙ книги — он и есть часть той же просьбы владельцу."
+ "touched": [],
+ "notes": "черновик отчёта; заполняется после прогона машины контролей"
 }
