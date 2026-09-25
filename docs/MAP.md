@@ -197,7 +197,7 @@
 - `wave.py` · 246 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
 - тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (153), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (553), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3081), `test_path_screen.py` (244), `test_short.py` (419), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
-- отчёты в `out/` (29): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-short-age.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md
+- отчёты в `out/` (30): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-forward.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-short-age.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
 
@@ -773,7 +773,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 501, логов `done/*.log`: 501 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 501, логов `done/*.log`: 502 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 
