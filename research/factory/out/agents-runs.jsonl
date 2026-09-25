@@ -544,3 +544,7 @@
 {"at": 1790301612.053, "role": "scout", "status": "fail", "started": 1790301601.0, "ended": 1790301612.053, "dry": false, "note": "модель claude-fable-5-1, код 1: Failed to refresh OAuth token: another Claude Code process is refreshing it or exited mid-refresh. This is usually transient; retry in a minute, and if it persists close other Claude Code processes or sign in again "}
 {"at": 1790301901.255, "role": "scout", "status": "start", "started": 1790301901.0, "ended": 1790301901.255, "dry": false, "pid": 1048928}
 {"at": 1790302530.058, "role": "scout", "status": "ok", "started": 1790301901.0, "ended": 1790302530.058, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
+{"at": 1790302801.534, "role": "brief", "status": "start", "started": 1790302801.0, "ended": 1790302801.534, "dry": false, "pid": 1051143}
+{"at": 1790303380.804, "role": "brief", "status": "contract", "started": 1790302801.0, "ended": 1790303380.804, "dry": false, "note": "модель opus, контракт не выполнен: КОНТРАКТ: research/factory/out/summary.md: нет раздела «Что открыто»: без него открытые углы проекта до предлагающего не доходят вовсе, и заявка неизбежно окажется пересказом чуж"}
+{"at": 1790303401.61, "role": "brief", "status": "start", "started": 1790303401.0, "ended": 1790303401.61, "dry": false, "pid": 1052758}
+{"at": 1790303512.663, "role": "brief", "status": "ok", "started": 1790303401.0, "ended": 1790303512.663, "dry": false, "note": "модель opus, усилие medium"}
