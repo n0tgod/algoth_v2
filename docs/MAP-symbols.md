@@ -1822,6 +1822,26 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L208 `publish(name)`
 - L213 `main(argv=None)`
 
+## research/dca_paper/guard_forward.py · 166 строк
+
+Охрана рынком ВПЕРЁД: те же решения с охраной и без неё — с дня смены правил.
+
+- L22 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L23 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L38 `ART = 'DCA-guard-forward'`
+- L39 `MAIN_DEP = W.MAIN_DEP`
+- L40 `BOOK_KEYS = W.BOOK_KEYS`
+- L41 `SINCE = R.FAMILY_SINCE.get('h24') or '2026-09-1…`
+- L44 `since_ts(day)`
+- L48 `forward_cache(cache, since)` — Записи решений с дня `since` (00:00 UTC) — то, чего замер не видел.
+- L54 `stats_both(cache, ctx, launch, now=None, dep=MAIN_DEP)` — Касса дважды на одних записях: без охраны (карта пуста) и с ней.
+- L69 `run(since=SINCE, log=print, now=None, launch=None, ctx=None, me…`
+- L91 `_pp(x, d=1)`
+- L95 `_usd(x)`
+- L99 `report(s)`
+- L146 `publish(name)`
+- L152 `main(argv=None)`
+
 ## research/dca_paper/name_check.py · 242 строк
 
 Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).

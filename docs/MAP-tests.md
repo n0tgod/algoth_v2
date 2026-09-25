@@ -1089,6 +1089,15 @@
 - L106 `test_guard_shorts_reads_the_summaries_end_to_end()`
 - L138 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
 
+## research/dca_paper/test_guard_forward.py · 67 строк
+
+Проверки замера «охрана рынком вперёд».
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L17 `test_forward_cache_starts_at_midnight_of_the_day()`
+- L27 `test_off_branch_clears_the_guard_and_restores_it()`
+- L46 `test_report_has_both_branches_and_no_none()`
+
 ## research/dca_paper/test_names.py · 227 строк
 
 Проверки замера соответствия имён режимов.
