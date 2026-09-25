@@ -555,3 +555,6 @@
 {"at": 1790311501.255, "role": "ceiling", "status": "start", "started": 1790311501.255, "ended": 1790311501.255, "dry": false, "pid": 1072756}
 {"at": 1790311506.761, "role": "ceiling", "status": "ok", "started": 1790311501.255, "ended": 1790311506.761, "dry": false, "note": "код возврата 0"}
 {"at": 1790311801.688, "role": "declare", "status": "start", "started": 1790311801.686, "ended": 1790311801.688, "dry": false, "pid": 1073503}
+{"at": 1790311806.806, "role": "declare", "status": "ok", "started": 1790311801.686, "ended": 1790311806.806, "dry": false, "note": "код возврата 0"}
+{"at": 1790312102.01, "role": "task", "status": "start", "started": 1790312102.009, "ended": 1790312102.01, "dry": false, "pid": 1074262}
+{"at": 1790312102.333, "role": "task", "status": "ok", "started": 1790312102.009, "ended": 1790312102.333, "dry": false, "note": "код возврата 0"}
