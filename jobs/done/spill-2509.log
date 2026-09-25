@@ -14,3 +14,14 @@
 [20:28:40] после: /dev/sdb        147G  133G  6.3G  96% /root/algoth_v2/research/b1_book/out
 [20:28:40] после: /dev/sda1       150G  139G  5.7G  97% /
 конец: 2026-09-25T20:28:41Z, код 0
+публикуется в ветку main:
+ jobs/done/spill-2509.done           |  1 +
+ jobs/done/spill-2509.log            | 16 ++++++++++++++++
+ jobs/done/status-disk-2509.done     |  1 +
+ jobs/done/status-disk-2509.log      |  8 ++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 27 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   abe40867..1752c2ac  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
