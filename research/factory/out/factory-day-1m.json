@@ -1,10 +1,10 @@
 {
  "meta": {
-  "at": "2026-09-24 02:55 UTC",
-  "legs": 24000,
+  "at": "2026-09-25 03:00 UTC",
+  "legs": 24086,
   "record_days": 48,
   "legs_by_target": {
-   "fwd_4h": 1370061
+   "fwd_4h": 1383822
   },
   "declared": [],
   "retired": []
@@ -26,18 +26,18 @@
   "verdict": "вердикта нет: отобранных книг в пуле ещё нет — фабрика судится ПАРНЫМ сравнением полос, и одной полосой оно не считается",
   "available": 1296,
   "available_declared": 1296,
-  "sheet": "fwd_4h — строк 1544, листов из 24: 24, порядок в σ есть, квантильные концы есть",
+  "sheet": "fwd_4h — строк 1542, листов из 24: 24, порядок в σ есть, квантильные концы есть",
   "blocked": {},
-  "null_median": -99.49714285714285
+  "null_median": -81.11142857142858
  },
- "null_median": -99.49714285714285,
+ "null_median": -81.11142857142858,
  "pending": null,
  "pending_why": "в заявке нет правила",
  "sheet_caps": {
   "path": "/root/algoth_v2/research/s8_loop/out/model_sit/sheets.jsonl",
   "targets": {
    "fwd_4h": {
-    "rows": 1544,
+    "rows": 1542,
     "z": true,
     "q": true
    }
@@ -46,8 +46,8 @@
   "recent": {
    "fwd_4h": 24
   },
-  "at": 1790208584.7,
-  "hour": "2026-09-23-23",
+  "at": 1790280819.3,
+  "hour": "2026-09-24-19",
   "why": null
  },
  "blocked": {},
