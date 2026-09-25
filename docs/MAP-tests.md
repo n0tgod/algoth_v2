@@ -4208,6 +4208,22 @@ X1: исполнитель против подставной биржи.
 - L186 `test_hook_end_to_end()` — Дорога до вызова: не функция, а сам хук в настоящем коммите.
 - L234 `main()`
 
+## tools/test_record_ship.py · 150 строк
+
+Проверки выгрузки записи: md5 и HEAD на каждый файл, день закрывается только целиком, несжатое и свежее не ух…
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L19 `FAILED = []`
+- L22 `check(name, cond, detail='')`
+- L29 `class FakeS3` — Подставное хранилище: проверяет Content-MD5, как настоящее.
+  - L32 `FakeS3.__init__(self, lie_size=False)`
+  - L37 `FakeS3.put_object(self, Bucket, Key, Body, ContentMD5=None, ContentLen…`
+  - L47 `FakeS3.head_object(self, Bucket, Key)`
+- L53 `_root(days, syms=('AAAUSDT', 'BBBUSDT'), spill=None)`
+- L76 `_SPILL = {}`
+- L79 `spill_dir(spill)`
+- L83 `main()`
+
 ## tools/test_resolve_maps.sh · 77 строк
 
 Проверка проверки: сведение конфликта на генерируемой карте кода.

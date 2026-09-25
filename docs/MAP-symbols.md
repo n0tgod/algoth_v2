@@ -7790,6 +7790,33 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L28 `code_files(rel_dir)` — Код каталога: без `out/` (его публикует общая публикация).
 - L43 `main(argv=None)`
 
+## tools/record_ship.py · 357 строк
+
+Выгрузка закрытых суток записи стакана в объектное хранилище (S3).
+
+- L48 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L49 `SRC = os.path.join(ROOT, 'research', 'b1_book…`
+- L50 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
+- L51 `ENV = os.path.expanduser('~/.hetzner/s3.env')`
+- L52 `PREFIX = 'b1'`
+- L53 `NAME = re.compile('^(\\d{4}-\\d{2}-\\d{2})-(\\…`
+- L56 `log(msg)`
+- L61 `load_env(path=ENV)` — Ключи хранилища; отсутствие — отказ словами, с путём.
+- L82 `client(env)` — Клиент S3 под Hetzner: virtual-hosted, подпись v4, без новых контрольных сумм boto3 (хранилище их не принимае…
+- L99 `free_bytes(path)` — ------------------------------------------------------------------ файлы
+- L104 `df_line(path)`
+- L111 `day_files(root, day, subs=SUBS)` — Файлы одних суток: (ключ, путь, размер) по всем подкаталогам.
+- L135 `closed_days(root, upto, subs=SUBS)` — Дни записи не позже `upto` (ГГГГ-ММ-ДД), у которых есть сжатые часы.
+- L153 `md5_of(path)`
+- L161 `ship_dir(root)`
+- L168 `put_verified(s3, bucket, key, path)` — Положить файл и сверить: md5 заголовком, HEAD по размеру и ETag.
+- L187 `ship_day(s3, bucket, root, day, dry_run=False, budget=None, log…` — Выгрузить один день. Возвращает сводку дня; `budget` — остаток байт.
+- L252 `_save_part(path, day, done)`
+- L259 `shipped_days(root)`
+- L265 `prune(root, keep_days, today=None, dry_run=False, log=log)` — Снять местные копии дней старше `keep_days` — только выгруженных.
+- L306 `run(root=SRC, upto=None, max_gb=20.0, dry_run=False, prune_days…` — --------------------------------------------------------------------- main
+- L343 `main(argv=None)`
+
 ## tools/repair_model_dir.sh · 78 строк
 
 Вернуть МОДЕЛЬ из архива книги — разовая починка после дефекта,
