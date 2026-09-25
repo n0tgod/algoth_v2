@@ -1,15 +1,30 @@
 {
- "run_at": "2026-09-24 06:04 UTC",
+ "run_at": "2026-09-25 06:04 UTC",
  "rules": 1,
  "k": 14,
  "h": 30,
  "width": 0.1,
  "cost_bp": 11.0,
- "decisions": 53,
- "resolutions": 25,
+ "decisions": 54,
+ "resolutions": 26,
  "summary": {
   "ahead": {
-   "tranches": 0
+   "tranches": 1,
+   "from": "2026-08-26",
+   "to": "2026-08-26",
+   "gross_mean_bp": -708.6,
+   "net_mean_bp": -867.6,
+   "net_median_bp": -867.6,
+   "net_pos_share": 0.0,
+   "t_naive": null,
+   "t_nw": null,
+   "independent": 1,
+   "t_independent": null,
+   "net_mean_independent_bp": -867.6,
+   "funding_mean_bp": 148.0,
+   "truncated_legs_total": 70,
+   "elapsed_median": 0.0521,
+   "coverage_median": 0.965
   },
   "backfilled": {
    "tranches": 25,
@@ -30,6 +45,6 @@
    "coverage_median": 0.965
   }
  },
- "verdict": "настоящих наблюдений пока НЕТ: записано вперёд 0 траншей, восстановлено задним числом 25 — кривая восстановленной части есть бэктест, а не трек",
- "took_min": 0.3
+ "verdict": "записано вперёд 1 траншей (2026-08-26 … 2026-08-26), нетто -867.6 б.п. в среднем, независимых сечений 1 — копим календарь, вердикта нет",
+ "took_min": 0.5
 }
