@@ -7738,6 +7738,19 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L25 `sh(cmd)`
 - L34 `main()`
 
+## tools/disk_alarm.py · 88 строк
+
+Тревога по заполнению дисков — ДО того, как умрёт сборщик.
+
+- L26 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `ROOT = os.path.dirname(HERE)`
+- L30 `RECORD = os.path.join(ROOT, 'research', 'b1_book…`
+- L31 `ASKS_OUT = os.path.join(ROOT, 'research', 'factory…`
+- L32 `PCT = 90`
+- L35 `usage(path, statvfs=os.statvfs)` — Заполнение диска под путём в процентах и свободные ГБ.
+- L45 `check(paths, pct=PCT, asks_out=ASKS_OUT, statvfs=os.statvfs, no…` — Возвращает список путей над порогом; просьба пишется один раз.
+- L78 `main(argv=None, asks_out=ASKS_OUT, paths=None)`
+
 ## tools/jobs.sh · 289 строк
 
 Очередь заданий: сессия кладёт задание в git, сервер его выполняет.

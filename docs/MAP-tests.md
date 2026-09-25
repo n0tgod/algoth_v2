@@ -4194,6 +4194,16 @@ X1: исполнитель против подставной биржи.
 - L291 `такт_демона_пишет_статус_и_не_молчит_об_ошибке`
 - L375 `which_python`
 
+## tools/test_disk_alarm.py · 64 строк
+
+Проверка тревоги по диску: над порогом — просьба один раз, ниже — тишина.
+
+- L10 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L14 `FAILED = []`
+- L15 `ST = namedtuple('st', 'f_blocks f_frsize f_b…`
+- L18 `check(name, cond, detail='')`
+- L25 `main()`
+
 ## tools/test_jobs.sh · 236 строк
 
 Проверка очереди заданий: она выполняет объявленное и отвергает всё
