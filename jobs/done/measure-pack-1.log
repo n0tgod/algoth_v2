@@ -61,3 +61,14 @@ gzip на диске 9.7 МБ в выборке; zstd-19 — доля 0.75.
 Посчитано 2026-09-25 20:15 UTC.
 
 конец: 2026-09-25T20:15:58Z, код 0
+публикуется в ветку main:
+ jobs/done/measure-pack-1.log           |  51 +++++++++++++
+ research/b1_book/out/measure-pack.json | 128 +++++++++++++++++++++++++++++++++
+ research/b1_book/out/measure-pack.md   |  30 ++++++++
+ research/factory/out/asks.jsonl        |   2 +
+ research/s8_loop/out/day_brake.json    |   2 +-
+ 5 files changed, 212 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   fb427060..2c13f9a6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
