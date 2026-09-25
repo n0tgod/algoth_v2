@@ -129,7 +129,7 @@
 - `store.py` · 336 строк — Хранение потока: запись без потерь и чтение через порчу.
 - `web.py` · 12185 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
 - тесты: `headless_check.js` (6485), `test_book.py` (8371), `test_measure_pack.py` (133), `test_remote.py` (140)
-- отчёты в `out/` (1): B1-feature-audit.md
+- отчёты в `out/` (2): B1-feature-audit.md, measure-pack.md
 
 ## research/d1_seconds — D1 — первые секунды после падения (гипотеза 7)
 

@@ -1,0 +1,128 @@
+{
+ "day": "2026-09-22",
+ "names": [
+  "BTCUSDT",
+  "ETHUSDT",
+  "MUBARAKUSDT",
+  "TAOUSDT",
+  "NEARUSDT",
+  "PENGUUSDT",
+  "XRPUSDT",
+  "DOGEUSDT",
+  "USELESSUSDT",
+  "ENAUSDT",
+  "TUSDT",
+  "BANANAS31USDT",
+  "MIRAUSDT",
+  "GLMUSDT",
+  "PIXELUSDT",
+  "AVAAIUSDT",
+  "WAXPUSDT",
+  "PLTRUSDT",
+  "RVNUSDT",
+  "VANAUSDT",
+  "USDEUSDT",
+  "XLPUSDT",
+  "SMICUSDT",
+  "HUAHONGUSDT",
+  "ARKKUSDT",
+  "BIIBUSDT",
+  "MOUSDT",
+  "LENOVOUSDT",
+  "CORZUSDT",
+  "XLFUSDT"
+ ],
+ "hours": [
+  0,
+  4,
+  8,
+  12,
+  16,
+  20
+ ],
+ "level": 19,
+ "zstd": true,
+ "secs": 935.4,
+ "rows": 395605,
+ "raw_bytes": 858947254,
+ "ladder_share": 0.8595391318405682,
+ "book": [
+  {
+   "key": "disk_gz",
+   "title": "gzip, как на диске",
+   "bytes": 64695927,
+   "ratio": 1.0,
+   "day_gb": 3.216487981379032,
+   "missing_hours": 0
+  },
+  {
+   "key": "gzip9",
+   "title": "gzip-9 заново (контроль)",
+   "bytes": 64691067,
+   "ratio": 0.9999248793513694,
+   "day_gb": 3.2162463567155584,
+   "missing_hours": 0
+  },
+  {
+   "key": "xz6",
+   "title": "xz-6",
+   "bytes": 45393752,
+   "ratio": 0.7016477559707893,
+   "day_gb": 2.2568415742416117,
+   "missing_hours": 0
+  },
+  {
+   "key": "zstd",
+   "title": "zstd-19",
+   "bytes": 45599751,
+   "ratio": 0.7048318667726949,
+   "day_gb": 2.2670832283673206,
+   "missing_hours": 0
+  },
+  {
+   "key": "zstd_dict",
+   "title": "zstd-19 + словарь",
+   "bytes": 47789727,
+   "ratio": 0.7386821584610729,
+   "day_gb": 2.375962284749163,
+   "missing_hours": 0
+  },
+  {
+   "key": "deltas_zstd",
+   "title": "дельты уровней + zstd-19",
+   "bytes": 49491833,
+   "ratio": 0.7649914808392807,
+   "day_gb": 2.4605859039768947,
+   "missing_hours": 0
+  },
+  {
+   "key": "top10_zstd",
+   "title": "10 уровней + zstd-19",
+   "bytes": 17708639,
+   "ratio": 0.27372107984479455,
+   "day_gb": 0.8804205635708721,
+   "missing_hours": 0
+  },
+  {
+   "key": "scalars_zstd",
+   "title": "скаляры без лесенки + zstd-19",
+   "bytes": 9689514,
+   "ratio": 0.1497700774888039,
+   "day_gb": 0.48173365421294406,
+   "missing_hours": 0
+  }
+ ],
+ "trades": {
+  "disk_gz": 10121033,
+  "zstd": 7608540,
+  "ratio": 0.7517552803157543,
+  "missing_hours": 0
+ },
+ "day_on_disk": {
+  "book_gb": 3.216487981379032,
+  "trades_gb": 0.16875078342854977,
+  "files_book": 18576,
+  "files_trades": 18270
+ },
+ "computed_at": "2026-09-25 20:15"
+}
