@@ -1,0 +1,7 @@
+== задание venv-zstd-boto ==
+строка: run tools/venv_add.py zstandard boto3
+начало: 2026-09-25T19:55:04Z
+запускаю: .venv/bin/python tools/venv_add.py zstandard boto3
+пакет zstandard: версия 0.25.0
+пакет boto3: версия 1.43.103
+конец: 2026-09-25T19:55:07Z, код 0
