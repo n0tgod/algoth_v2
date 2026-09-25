@@ -4246,6 +4246,16 @@ X1: исполнитель против подставной биржи.
 - L18 `ROOT = os.path.dirname(os.path.dirname(os.path…`
 - L25 `main()`
 
+## tools/test_venv_add.py · 64 строк
+
+Проверка установщика пакетов очереди: забор имён, отказ pip, версия.
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L12 `FAILED = []`
+- L15 `check(name, cond, detail='')`
+- L22 `fake_pip(d, rc=0)`
+- L30 `main()`
+
 ## tools/test_watchdog_pair.sh · 49 строк
 
 Проверка правила сторожа: общий счёт считается ПОСЛЕ книг-источников.

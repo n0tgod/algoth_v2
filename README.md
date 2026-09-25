@@ -125,7 +125,7 @@ git не идут — публикуются только код и отчёты
 ```bash
 cd ~/algoth_v2
 [ -d .venv ] || python3 -m venv .venv
-.venv/bin/pip install -q numpy pyarrow duckdb websocket-client
+.venv/bin/pip install -q numpy pyarrow duckdb websocket-client zstandard boto3
 ```
 
 Дальше **все прогоны идут через `.venv/bin/python`, а не через

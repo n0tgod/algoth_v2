@@ -7843,6 +7843,18 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L31 `REL = 'research/dca_paper/out/journal.jsonl'`
 - L34 `main()`
 
+## tools/venv_add.py · 75 строк
+
+Установка пакетов в окружение сервера через очередь заданий.
+
+- L25 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L26 `PIP = os.path.join(ROOT, '.venv', 'bin', 'pip…`
+- L27 `PY = os.path.join(ROOT, '.venv', 'bin', 'pyt…`
+- L28 `NAME = re.compile('^[A-Za-z0-9][A-Za-z0-9._-]*…`
+- L31 `bad_names(names)`
+- L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
+- L45 `main(argv=None, pip=PIP, py=PY, log=print)`
+
 ## tools/watchdog_book.sh · 415 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
