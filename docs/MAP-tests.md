@@ -438,6 +438,21 @@
 - L77 `test_measure_on_a_synthetic_day()`
 - L109 `test_without_zstd_the_variants_are_unmeasured_not_zero()`
 
+## research/b1_book/test_remote.py · 140 строк
+
+Проверки чтения часа из хранилища: промах на диске → скачано в кэш и сверено по md5; повтор — из кэша; «нет в…
+
+- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L22 `FAILED = []`
+- L25 `check(name, cond, detail='')`
+- L32 `class NoKey`
+  - L33 `NoKey.__init__(self)`
+- L38 `class FakeS3`
+  - L39 `FakeS3.__init__(self, objs, lie=False)`
+  - L42 `FakeS3.get_object(self, Bucket, Key)`
+- L52 `gz(rows)`
+- L60 `main()`
+
 ## research/d1_seconds/test_detect.py · 803 строк
 
 Тесты ядра решения D1. Каждая проверка закрывает место, где ошибка была бы невидимой в результате: числа печа…

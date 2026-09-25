@@ -7,3 +7,11 @@ __pycache__/
 
 # служебный замок очереди
 jobs/.lock
+
+# запись стакана и её служебные каталоги: кэш часов из хранилища,
+# частичный ход выгрузки, состояние замера — не в git (publish.sh
+# добавляет research/*/out целиком)
+research/b1_book/out/cache/
+research/b1_book/out/ship/*.part.json
+research/b1_book/out/ship/*.tmp
+research/b1_book/out/*.state

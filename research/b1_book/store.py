@@ -205,8 +205,25 @@ def read_jsonl(path, log=None, parse=json.loads):
     return rows
 
 
+# Хранилище часов, которых на диске уже нет (`remote.Remote`). Ставится
+# ЯВНО тем, кто читает историю (реплей, замеры); сборщик и страница его
+# не включают никогда. None — читается только диск, как всегда.
+REMOTE = None
+
+
+def use_remote(remote):
+    """Включить чтение из хранилища на промахе; None выключает."""
+    global REMOTE
+    REMOTE = remote
+    return remote
+
+
 def read_hour(dirpath, hour, log=None, parse=json.loads):
     """Записи одного часа: простой файл, сжатый или оба сразу.
+
+    Ни того ни другого нет и включено хранилище — час берётся оттуда в
+    местный кэш (`remote.Remote.get`), сверенный по md5; нет и там —
+    пустой час, как прежде.
 
     Оба сразу бывают по двум разным причинам. Сжатие прервали между
     переименованием и удалением исходника — тогда содержимое совпадает
@@ -222,6 +239,10 @@ def read_hour(dirpath, hour, log=None, parse=json.loads):
     log = log or (lambda m: None)
     have = [p for p in (os.path.join(dirpath, f"{hour}.jsonl" + s)
                         for s in ("", ".gz")) if os.path.exists(p)]
+    if not have and REMOTE is not None:
+        got = REMOTE.get(dirpath, hour)
+        if got:
+            have = [got]
     seen = set() if len(have) > 1 else None
     rows, dup = [], 0
     for p in have:

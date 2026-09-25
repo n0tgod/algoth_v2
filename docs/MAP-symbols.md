@@ -917,6 +917,26 @@ A3 — кандидаты в пары на момент окна.
 - L89 `by_rule(trades)` — Сводка по каждому правилу отдельно.
 - L95 `equity(trades)` — Кривая счёта по времени закрытия: `(момент, б.п., R)`.
 
+## research/b1_book/remote.py · 164 строк
+
+Чтение часа записи из объектного хранилища, когда на диске его нет.
+
+- L31 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L32 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L35 `ROOT_B1 = os.path.join(HERE, 'out')`
+- L36 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
+- L37 `PREFIX = 'b1'`
+- L38 `CACHE_GB = 2.0`
+- L41 `class Remote`
+  - L42 `Remote.__init__(self, s3, bucket, root=ROOT_B1, cache_gb=CACHE_GB, pre…`
+  - L54 `Remote.key(self, dirpath, hour)` — Ключ в бакете по каталогу часа; None — каталог не из записи.
+  - L62 `Remote.get(self, dirpath, hour)` — Местный путь скачанного часа или None (нет / не сошёлся / отказ).
+  - L113 `Remote._walk(self)` — --- кэш ---------------------------------------------------------------
+  - L125 `Remote._cache_size(self)`
+  - L128 `Remote._evict(self)` — Снять самые старые по обращению до 90 % предела.
+  - L148 `Remote.stats(self)`
+- L154 `from_env(env_path=None, root=ROOT_B1, cache_gb=CACHE_GB, log=No…` — Хранилище по ключам сервера; None и одна строка — если ключей нет.
+
 ## research/b1_book/replay.py · 360 строк
 
 Прогон записанного потока через тот же детектор.
@@ -981,7 +1001,7 @@ A3 — кандидаты в пары на момент окна.
   - L720 `Signals.view(self, sym, since=0.0)`
   - L726 `Signals.history(self, sym)` — Сделки, что держим в памяти, — закрытые И ОТКРЫТЫЕ.
 
-## research/b1_book/store.py · 315 строк
+## research/b1_book/store.py · 336 строк
 
 Хранение потока: запись без потерь и чтение через порчу.
 
@@ -998,9 +1018,11 @@ A3 — кандидаты в пары на момент окна.
   - L149 `Writer.close(self)`
   - L155 `Writer.pack_stale(self, keep_hour=None)` — Сжать простые файлы прошлых часов, оставшиеся от прошлых запусков: иначе они так и лежали бы несжатыми.
 - L168 `read_jsonl(path, log=None, parse=json.loads)` — Прочитать файл записей: простой, сжатый или сжатый с порчей.
-- L208 `read_hour(dirpath, hour, log=None, parse=json.loads)` — Записи одного часа: простой файл, сжатый или оба сразу.
-- L246 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
-- L265 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
+- L211 `REMOTE = None` — Хранилище часов, которых на диске уже нет (`remote.Remote`). Ставится ЯВНО тем, кто читает историю (реплей, з…
+- L214 `use_remote(remote)` — Включить чтение из хранилища на промахе; None выключает.
+- L221 `read_hour(dirpath, hour, log=None, parse=json.loads)` — Записи одного часа: простой файл, сжатый или оба сразу.
+- L267 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
+- L286 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
 ## research/b1_book/web.py · 12185 строк
 
@@ -2326,27 +2348,27 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L115 `repack(path=None, cap=None, log=print, apply=True)` — Переложить строки суток по частям, не переступая порог размера.
 - L184 `main()`
 
-## research/dca_paper/tail.py · 278 строк
+## research/dca_paper/tail.py · 286 строк
 
 Хвост ленты, продолженный серединой стакана: ПРАВИЛО книги.
 
 - L58 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L59 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L70 `ROOT_B1 = D6.ROOT_B1`
-- L71 `HOUR = 3600.0`
-- L72 `MINUTE = 60.0`
-- L75 `book_minute_bars(root, sym, t0, t1, log=None)` — Минутные бары по СЕРЕДИНЕ стакана в окне `[t0, t1]`.
-- L106 `class TailBars` — Бары ленты, продолженные серединой стакана ПОСЛЕ последнего принта.
-  - L121 `TailBars.__init__(self, root=ROOT_B1, log=None)`
-  - L131 `TailBars.bars(self, sym, t0, t1)`
-  - L162 `TailBars.record_end(self)` — Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
-  - L182 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
-- L192 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
-- L250 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
-- L251 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
-- L252 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
-- L253 `CUT_UNKNOWN = 'причина не измерена'`
-- L256 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
+- L72 `ROOT_B1 = D6.ROOT_B1`
+- L73 `HOUR = 3600.0`
+- L74 `MINUTE = 60.0`
+- L77 `book_minute_bars(root, sym, t0, t1, log=None)` — Минутные бары по СЕРЕДИНЕ стакана в окне `[t0, t1]`.
+- L108 `class TailBars` — Бары ленты, продолженные серединой стакана ПОСЛЕ последнего принта.
+  - L123 `TailBars.__init__(self, root=ROOT_B1, log=None, remote=None)`
+  - L139 `TailBars.bars(self, sym, t0, t1)`
+  - L170 `TailBars.record_end(self)` — Докуда доходит ЗАПИСЬ: момент последнего такта сборщика.
+  - L190 `TailBars.stats(self)` — Числа правила: их печатает отчёт, а не пересказ прогона.
+- L200 `apply(recs, last_tape, last_book=None)` — Разметить исходы хвостом и не пустить ВХОД из котировки.
+- L258 `CUT_NO_BOOK = 'книги в хвосте нет вовсе'` — Причины, по которым позиция остаётся оборванной ПОСЛЕ правила хвоста. Объявлены строками один раз: два дослов…
+- L259 `CUT_BOOK_SHORT = 'книга кончилась раньше планового конца'`
+- L260 `CUT_BOOK_HOLE = 'книга есть, но не в окне этой позиции'`
+- L261 `CUT_UNKNOWN = 'причина не измерена'`
+- L264 `cut_reason(r, last_tape, last_book)` — Почему эта позиция осталась оборванной, когда хвост уже применён.
 
 ## research/dca_paper/tail_screen.py · 495 строк
 
@@ -7916,7 +7938,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 415 строк
+## tools/watchdog_book.sh · 423 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 

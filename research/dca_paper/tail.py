@@ -65,6 +65,8 @@ sys.path.insert(0, os.path.join(ROOT, "research", "b1_book"))
 import run_d6 as D6                                           # noqa: E402
 import sweep as SW                                            # noqa: E402
 import bookfeat2 as BF                                        # noqa: E402
+import remote as RM                                           # noqa: E402
+import store                                                  # noqa: E402
 from store import read_hour                                   # noqa: E402
 
 ROOT_B1 = D6.ROOT_B1
@@ -118,9 +120,15 @@ class TailBars:
     признак «принт был» перестал различать).
     """
 
-    def __init__(self, root=ROOT_B1, log=None):
+    def __init__(self, root=ROOT_B1, log=None, remote=None):
         self.root = root
         self.log = log
+        # Часы, которых на диске уже нет (выгружены в хранилище и сняты),
+        # читаются из хранилища в кэш — включается здесь, у читателя
+        # истории, а не в сборщике. Ключей нет — одна строка и только диск.
+        if store.REMOTE is None:
+            store.use_remote(remote if remote is not None
+                             else RM.from_env(root=root, log=log))
         self.added = {}        # символ → число дописанных минут
         self.dry = []          # символы, у которых хвоста нет и в книге
         self.span_h = {}       # символ → длина дописанного хвоста, часов
