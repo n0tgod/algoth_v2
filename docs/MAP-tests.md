@@ -425,6 +425,19 @@
 - L8155 `test_dca_list_counts_rules_of_the_family_not_of_the_project()` — Список сделок книги живёт по версии правил СВОЕГО семейства.
 - L8230 `main()`
 
+## research/b1_book/test_measure_pack.py · 133 строк
+
+Проверки замера форматов записи: выбор имён, дельты без потерь, порядок вариантов, «не измерено» без zstd, ко…
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `DAY = '2026-09-22'`
+- L19 `_rows(seed, n=90, depth=8)`
+- L43 `_write(root, sub, sym, hh, lines)`
+- L51 `_root()`
+- L63 `test_deltas_are_lossless_and_a_broken_stream_is_caught()`
+- L77 `test_measure_on_a_synthetic_day()`
+- L109 `test_without_zstd_the_variants_are_unmeasured_not_zero()`
+
 ## research/d1_seconds/test_detect.py · 803 строк
 
 Тесты ядра решения D1. Каждая проверка закрывает место, где ошибка была бы невидимой в результате: числа печа…

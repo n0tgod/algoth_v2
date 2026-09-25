@@ -867,6 +867,40 @@ A3 — кандидаты в пары на момент окна.
 - L105 `measure(path, width)`
 - L118 `main()`
 
+## research/b1_book/measure_pack.py · 405 строк
+
+Замер: сколько весит запись стакана в разных форматах — на ЖИВЫХ часах.
+
+- L46 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L47 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L56 `ROOT_B1 = os.path.join(HERE, 'out')`
+- L57 `OUT_JSON = os.path.join(HERE, 'out', 'measure-pack…`
+- L58 `OUT_MD = os.path.join(HERE, 'out', 'measure-pack…`
+- L59 `HOURS = (0, 4, 8, 12, 16, 20)`
+- L60 `ZLEVEL = 19`
+- L61 `TOP_LEVELS = 10`
+- L62 `KEYFRAME = 60`
+- L65 `log(msg)`
+- L70 `day_files(root, sub, day)` — Файлы одних суток: (имя, час, путь, размер) — по всем именам.
+- L89 `pick_names(files, n, hour=12)` — Треть тяжёлых, треть из середины, треть лёгких — по книге часа `hour`.
+- L109 `lines_of(path)` — ------------------------------------------------------------------ форматы
+- L113 `strip_ladder(r)`
+- L117 `dumps(o)`
+- L121 `encode_deltas(rows, keyframe=KEYFRAME)` — Ключевой кадр раз в `keyframe` строк, дальше — изменившиеся уровни.
+- L145 `decode_deltas(items)`
+- L170 `same_rows(a, b)` — Снимки равны: скаляры и лесенка (лесенка — как множество уровней).
+- L183 `zc(level=ZLEVEL, dict_data=None)`
+- L191 `zsize(comp, data)`
+- L195 `measure_book_hour(lines, on_disk, dict_data=None, level=ZLEVEL,…` — Размеры одного часа книги по вариантам; None — не измерено.
+- L228 `train_dict(samples, size=112 * 1024)`
+- L238 `VARIANTS = (('disk_gz', 'gzip, как на диске'), ('g…`
+- L246 `measure(root, day, names=30, hours=HOURS, level=ZLEVEL, with_xz…`
+- L310 `_result(day, syms, hours, level, tot, miss, tr_tot, ladder, row…`
+- L338 `_write_state(path, day, syms, tot, miss, tr_tot, ladder, rows_n…`
+- L345 `_p(x, d=2)`
+- L349 `report(res)`
+- L381 `main(argv=None)`
+
 ## research/b1_book/paper.py · 111 строк
 
 Разбор бумажных сделок: история и сводка.
