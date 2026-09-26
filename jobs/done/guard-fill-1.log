@@ -1,0 +1,6 @@
+== задание guard-fill-1 ==
+строка: run research/dca_paper/guard_fill.py
+начало: 2026-09-26T20:36:24Z
+запускаю: .venv/bin/python research/dca_paper/guard_fill.py 
+[20:36:24] журнал /root/algoth_v2/research/dca_paper/out/short.jsonl: строк 23974, битых 0
+[20:36:24] выходов «рынок» 2810 строк, уникальных 450

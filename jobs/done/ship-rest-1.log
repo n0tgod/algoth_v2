@@ -1,0 +1,6 @@
+== задание ship-rest-1 ==
+строка: run tools/record_ship.py --max-gb 200 --prune-days 21 --workers 6
+начало: 2026-09-26T20:36:24Z
+запускаю: .venv/bin/python tools/record_ship.py --max-gb 200 --prune-days 21 --workers 6
+[20:36:24] до: /root/algoth_v2/research/b1_book/out: свободно 58.7 ГБ; /root: свободно 71.9 ГБ
+[20:36:32] дней к выгрузке (не позже 2026-09-24, без отметки): 20 — 2026-08-28 … 2026-09-24; предел за прогон 200 ГБ
