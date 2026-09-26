@@ -81,3 +81,13 @@ pair pair_aggr     $100000 lev 25.00 entry 0.016194 exit рынок 2026-09-25 2
   bar_at      : 2026-09-26 00:00:00 close 0.015838  -164.6 б.п. к записанной
   first_after : 2026-09-26 00:01:00 open 0.015842  -162.1 б.п. к записанной
 конец: 2026-09-26T20:30:08Z, код 0
+публикуется в ветку main:
+ jobs/done/probe-rare.done           |  1 +
+ jobs/done/probe-rare.log            | 83 +++++++++++++++++++++++++++++++++++++
+ jobs/done/ship-to-0905.log          | 58 ++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 143 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   0c3ab7ee..47213bf1  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
