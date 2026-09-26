@@ -1880,23 +1880,24 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L208 `publish(name)`
 - L213 `main(argv=None)`
 
-## research/dca_paper/guard_fill.py · 193 строк
+## research/dca_paper/guard_fill.py · 206 строк
 
 Замер: цена выхода охраны рынком — закрытие часа против первой цены после границы.
 
-- L39 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L40 `ROOT = os.path.dirname(os.path.dirname(HERE))`
-- L50 `ROOT_B1 = RM.ROOT_B1`
-- L51 `OUT_JSON = os.path.join(HERE, 'out', 'DCA-guard-fi…`
-- L52 `OUT_MD = os.path.join(HERE, 'out', 'DCA-guard-fi…`
-- L53 `WINDOW_S = 15 * 60.0`
-- L56 `log(msg)`
-- L60 `candidates(bars, boundary, window=WINDOW_S)` — (закрытие до границы, открытие первого бара на/после границы).
-- L68 `side_sign(side)`
-- L72 `measure(rows, bars_of=None, log=log, root=ROOT_B1, remote=None)` — rows — строки журнала; bars_of(sym, t0, t1) — бары принтов.
-- L136 `_p(x, d=1)`
-- L140 `report(res)`
-- L172 `main(argv=None)`
+- L42 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L43 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L53 `ROOT_B1 = RM.ROOT_B1`
+- L54 `OUT_JSON = os.path.join(HERE, 'out', 'DCA-guard-fi…`
+- L55 `OUT_MD = os.path.join(HERE, 'out', 'DCA-guard-fi…`
+- L56 `WINDOW_S = 15 * 60.0`
+- L59 `log(msg)`
+- L63 `candidates(bars, boundary, window=WINDOW_S)` — (закрытие до границы, открытие первого бара на/после границы).
+- L71 `side_sign(side)`
+- L75 `filled_share(row)` — Заполненная доля билета по `fills` строки; нет заполнений — 1.0.
+- L85 `measure(rows, bars_of=None, log=log, root=ROOT_B1, remote=None)` — rows — строки журнала; bars_of(sym, t0, t1) — бары принтов.
+- L149 `_p(x, d=1)`
+- L153 `report(res)`
+- L185 `main(argv=None)`
 
 ## research/dca_paper/guard_forward.py · 166 строк
 
@@ -2434,7 +2435,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L472 `publish(name)`
 - L478 `main(argv=None)`
 
-## research/dca_paper/wave.py · 246 строк
+## research/dca_paper/wave.py · 280 строк
 
 Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 
@@ -2458,8 +2459,9 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
   - L121 `Market.beta_pre(self, sym, at, n=72, min_n=48)` — β и ρ имени к волне по часовым доходностям ДО входа.
   - L142 `Market.k_star(self, at, pct, kmax)` — Первый час k ≤ kmax, к концу которого волна с входа ≥ pct %.
 - L164 `path_of(rec)` — Путь позиции по часам из отметок ядра: {k: pnl долей маржи}.
-- L193 `guard_record(rec, k, why=GUARD_EXIT)` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
-- L214 `apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT)` — Охрана рынком над записями ОДНОЙ книги.
+- L193 `exit_px_of(rec, pnl, end_ts)` — Цена, при которой позиция стоит `pnl` долей маржи, — из ЗАПОЛНЕНИЙ.
+- L226 `guard_record(rec, k, why=GUARD_EXIT)` — Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
+- L248 `apply_guard(recs, pct, mkt, kmax, why=GUARD_EXIT)` — Охрана рынком над записями ОДНОЙ книги.
 
 ## research/dca_paper/wave_guard.py · 488 строк
 

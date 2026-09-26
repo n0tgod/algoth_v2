@@ -144,10 +144,58 @@ def test_cache_signature_does_not_carry_the_guard_on_purpose():
           "версия семейства выросла")
 
 
+def test_guard_exit_price_comes_from_the_fills_not_from_the_whole_margin():
+    """Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
+
+    Дефект 2026-09-26 (RAREUSDT, шорт 25.09 16:00, выход «рынок» на k=8):
+    в записи 0.016103, закрытие часа по принтам 0.01583. Отметка ядра —
+    pnl на ВСЮ зарезервированную маржу, а заполнена одна ступень из
+    четырёх; прежняя формула делила pnl на плечо целиком и восстанавливала
+    ход цены вчетверо меньше настоящего — на всех 24 отметках (проба).
+    Точка выхода на графике вставала там, где цены не было. Класс:
+    «показ, выведенный из числа не в тех единицах».
+    """
+    at, entry, lev = 1790352000.0, 0.016194, 25.0
+    cum = {1: -0.04091, 2: -0.04863, 3: -0.28406, 4: -0.04516, 5: 0.24855,
+           6: 0.19374, 7: 0.13817, 8: 0.14048, 9: 0.46777}
+    marks, prev = [], 0.0
+    for k in sorted(cum):
+        marks.append((at + (k - 1) * H, cum[k] - prev))
+        prev = cum[k]
+    rec = {"sym": "RAREUSDT", "at": at, "side": "short", "lev": lev,
+           "entry_px": entry, "avg": entry, "exit_ts": at + 24 * H,
+           "exit": "срок", "exit_px": 0.022397, "pnl": 0.5, "state": "closed",
+           "marks": marks, "fills": [[at, entry, 0.25]], "n_rungs": 1, "depth": 1}
+    g = WV.guard_record(rec, 8)
+    assert abs(g["exit_px"] - 0.01583) < 2e-6, g["exit_px"]     # закрытие часа по принтам
+    assert g["exit_ts"] == at + 8 * H - 1 and abs(g["pnl"] - 0.14048) < 1e-9
+    # контроль: прежняя формула даёт цену, которой не было (ход вчетверо меньше)
+    old = entry * (1 - 0.14048 / lev)
+    assert abs(old - 0.016103) < 2e-6 and abs(g["exit_px"] - old) > 2e-4, (old, g["exit_px"])
+    # две ступени — цена из суммарного заполнения (тождество ядра)
+    cash = 0.25 * lev + 0.25 * lev
+    qty = 0.25 * lev / 100.0 + 0.25 * lev / 102.0
+    g2 = WV.guard_record(dict(rec, fills=[[at, 100.0, 0.25], [at + H, 102.0, 0.25]]), 8)
+    assert abs(g2["exit_px"] - (cash - 0.14048) / qty) < 1e-12, g2["exit_px"]
+    # ступень, заполненная ПОСЛЕ выхода, в цену не входит
+    g3 = WV.guard_record(dict(rec, fills=[[at, entry, 0.25], [at + 10 * H, entry * 1.05, 0.25]]), 8)
+    assert abs(g3["exit_px"] - g["exit_px"]) < 1e-12
+    # лонг: знак хода в другую сторону — цена выше входа при плюсе
+    gl = WV.guard_record(dict(rec, side="long"), 8)
+    assert gl["exit_px"] > entry and abs((gl["exit_px"] - entry) - (entry - g["exit_px"])) < 1e-9
+    # без заполнений — None, а не цена чужого выхода записи
+    r4 = dict(rec)
+    r4.pop("fills")
+    assert WV.guard_record(r4, 8)["exit_px"] is None
+    print("ok  цена выхода охраны — из заполнений: 0.01583 вместо 0.016103; две ступени, "
+          "поздняя ступень, лонг, без заполнений — None")
+
+
 if __name__ == "__main__":
     for t in (test_guard_closes_strictly_before_the_exit_and_only_in_lived_hours,
               test_rule_is_declared_for_short_books_with_versions_and_page_text,
               test_guard_shorts_reads_the_summaries_end_to_end,
-              test_cache_signature_does_not_carry_the_guard_on_purpose):
+              test_cache_signature_does_not_carry_the_guard_on_purpose,
+              test_guard_exit_price_comes_from_the_fills_not_from_the_whole_margin):
         t()
-    print("\nвсе 4 проверки прошли")
+    print("\nвсе 5 проверок прошли")

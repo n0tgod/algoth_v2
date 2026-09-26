@@ -1102,7 +1102,7 @@
 - L66 `test_an_extra_point_of_ours_breaks_the_match()`
 - L77 `test_venue_silence_is_a_reason_not_a_match()`
 
-## research/dca_paper/test_guard.py · 153 строк
+## research/dca_paper/test_guard.py · 201 строк
 
 Проверки охраны рынком — правила выхода коротких книг (спека 14 §13).
 
@@ -1117,15 +1117,16 @@
 - L83 `test_rule_is_declared_for_short_books_with_versions_and_page_te…`
 - L106 `test_guard_shorts_reads_the_summaries_end_to_end()`
 - L138 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
+- L147 `test_guard_exit_price_comes_from_the_fills_not_from_the_whole_m…` — Цена выхода охраны — из заполненных ступеней, а не «вся маржа на плече».
 
-## research/dca_paper/test_guard_fill.py · 72 строк
+## research/dca_paper/test_guard_fill.py · 75 строк
 
 Проверки замера цены выхода охраны: кандидаты на границе, знак пользы шорта, деньги через плечо и маржу, «нет…
 
 - L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
 - L13 `H = 3600.0`
 - L14 `T0 = 1790000000.0 - 1790000000.0 % H`
-- L17 `_row(rk, dep, sym, at, exit_ts, px, lev, margin, usd)`
+- L17 `_row(rk, dep, sym, at, exit_ts, px, lev, margin, usd, w=1.0)`
 - L24 `bar(t, o, h, l, c, v=1000.0)`
 - L28 `test_candidates_and_money()`
 

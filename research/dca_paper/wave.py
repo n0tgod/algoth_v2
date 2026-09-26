@@ -190,11 +190,45 @@ def path_of(rec):
             "lead_gap": lead}
 
 
+def exit_px_of(rec, pnl, end_ts):
+    """Цена, при которой позиция стоит `pnl` долей маржи, — из ЗАПОЛНЕНИЙ.
+
+    Отметка ядра — pnl на всю зарезервированную маржу, а работает в ней
+    только заполненный объём: у книги без доливов это одна ступень из
+    четырёх, четверть. Прежняя формула «вход × (1 − pnl/плечо)» считала,
+    что работает вся маржа, и восстанавливала ход цены вчетверо меньше
+    настоящего: RAREUSDT 25.09 — выход «рынок» показан по 0.016103, а
+    закрытие часа было 0.01583 (−170 б.п.); на всех 24 отметках ход из
+    формулы ровно в 4 раза меньше хода принтов (проба 26.09). Точка
+    выхода вставала там, где цены не было.
+
+    Тождество ядра: pnl = d·(qty·px − cash)/capital при capital = 1,
+    cash = Σ w·lev, qty = Σ w·lev/цена по ступеням, заполненным к
+    `end_ts`; отсюда px = (cash + d·pnl)/qty. Заполнений нет — None:
+    цену не выдумываем.
+    """
+    lev = float(rec.get("lev") or 0)
+    fills = [f for f in (rec.get("fills") or ())
+             if f and float(f[0]) <= float(end_ts)]
+    if not lev or not fills:
+        return None
+    try:
+        cash = sum(float(w) * lev for _t, _p, w in fills)
+        qty = sum(float(w) * lev / float(p) for _t, p, w in fills)
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+    if qty <= 0:
+        return None
+    d = -1.0 if (rec.get("side") or "long") == "short" else 1.0
+    return (cash + d * float(pnl)) / qty
+
+
 def guard_record(rec, k, why=GUARD_EXIT):
     """Та же запись, закрытая на отметке часа k: pnl ядра, срез отметок.
 
     Издержки те же (круг на заполненный нотионал), funding кассе даст
-    короткий срок сам. Цена выхода — из pnl и плеча, для показа.
+    короткий срок сам. Цена выхода — из pnl и ЗАПОЛНЕНИЙ (`exit_px_of`),
+    для показа; без заполнений поле не пишется.
     """
     p = path_of(rec)
     c = float(p["cum"][k])
@@ -203,9 +237,9 @@ def guard_record(rec, k, why=GUARD_EXIT):
              if int(round((float(m[0]) - at) / HOUR)) + 1 <= k]
     new = dict(rec, pnl=c, exit_ts=at + k * HOUR - 1.0, exit=why,
                marks=marks, state="closed")
-    lev, e = float(rec.get("lev") or 0), rec.get("entry_px")
-    if e and lev:
-        new["exit_px"] = float(e) * (1.0 - c / lev)      # шорт
+    # цена выхода — из заполнений; неизвестна — None, а не цена ЧУЖОГО
+    # выхода записи (срок, пол), которая стояла бы в поле по наследству
+    new["exit_px"] = exit_px_of(rec, c, new["exit_ts"])
     if rec.get("pnl_net") is not None:
         new["pnl_net"] = c - (float(rec["pnl"]) - float(rec["pnl_net"]))
     return new
