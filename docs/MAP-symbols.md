@@ -2010,6 +2010,19 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L598 `publish(name)`
 - L604 `main(argv=None)`
 
+## research/dca_paper/probe_exit.py · 130 строк
+
+Разбор одного выхода: где стояла цена по записи и что видит график.
+
+- L27 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L28 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L39 `MIN = 60.0`
+- L42 `ts(t)`
+- L46 `hour_ts(s)`
+- L51 `rows_for(path, sym, at)`
+- L57 `candidates(bars, boundary)` — Три цены на границе часа из списка баров [t, o, h, l, c, v].
+- L67 `main(argv=None)`
+
 ## research/dca_paper/rules.py · 1294 строк
 
 Правила бумажных DCA-книг: три депозита, одни правила.
