@@ -32,3 +32,13 @@
 Первая цена после границы — открытие первой минуты с принтом; живой выход мог быть и хуже (очередь, объём), и лучше (лимитка). Разница считается только там, где принт после границы есть в 15 минут; выходы без принта — числом в колонке. Правило этим замером не меняется — решение владельца; смена цены выхода есть смена исхода и версии правил.
 
 конец: 2026-09-26T20:45:58Z, код 0
+публикуется в ветку main:
+ jobs/done/exitpx-dry.log                   |  13 +++
+ jobs/done/guard-fill-2.log                 |  28 ++++++
+ research/dca_paper/out/DCA-guard-fill.json | 148 ++++++++++++++---------------
+ research/dca_paper/out/DCA-guard-fill.md   |  22 ++---
+ 4 files changed, 126 insertions(+), 85 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   596ba5ba..669e6f1b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
