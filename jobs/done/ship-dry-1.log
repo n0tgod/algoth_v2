@@ -64,3 +64,12 @@
 [17:44:08] после: /root/algoth_v2/research/b1_book/out: свободно 2.8 ГБ; /root: свободно 5.6 ГБ; 244 с
 [17:44:08] итого отправлено 0.00 ГБ, дней закрыто 0 из 57
 конец: 2026-09-26T17:44:08Z, код 0
+публикуется в ветку main:
+ jobs/done/ship-dry-1.done           |  1 +
+ jobs/done/ship-dry-1.log            | 66 +++++++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 3 files changed, 68 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7a1aef6f..28e98477  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
