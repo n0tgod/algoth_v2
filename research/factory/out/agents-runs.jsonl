@@ -560,3 +560,5 @@
 {"at": 1790312102.333, "role": "task", "status": "ok", "started": 1790312102.009, "ended": 1790312102.333, "dry": false, "note": "код возврата 0"}
 {"at": 1790388002.157, "role": "scout", "status": "start", "started": 1790388002.0, "ended": 1790388002.157, "dry": false, "pid": 1250665}
 {"at": 1790388957.384, "role": "scout", "status": "ok", "started": 1790388002.0, "ended": 1790388957.384, "dry": false, "note": "модель claude-fable-5-1, усилие high"}
+{"at": 1790389201.308, "role": "brief", "status": "start", "started": 1790389201.0, "ended": 1790389201.308, "dry": false, "pid": 1253501}
+{"at": 1790389675.798, "role": "brief", "status": "ok", "started": 1790389201.0, "ended": 1790389675.798, "dry": false, "note": "модель opus, усилие medium"}
