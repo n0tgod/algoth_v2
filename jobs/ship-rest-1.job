@@ -1,0 +1,1 @@
+run tools/record_ship.py --max-gb 200 --prune-days 21 --workers 6
