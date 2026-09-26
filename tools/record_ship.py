@@ -50,7 +50,9 @@ import re
 import sys
 import tarfile
 import tempfile
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -221,9 +223,30 @@ def put_verified(s3, bucket, key, path):
     return size, hexd, (etag == hexd)
 
 
+def _ship_one(s3, bucket, key, members, tmp_dir):
+    """Один архив: собрать, положить, сверить. Возвращает запись манифеста."""
+    fd, tmp = tempfile.mkstemp(prefix="ship-", suffix=".tar", dir=tmp_dir)
+    os.close(fd)
+    try:
+        mem = build_tar(members, tmp)
+        size, hexd, etag_ok = put_verified(s3, bucket, key, tmp)
+        return {"size": size, "md5": hexd, "etag_ok": etag_ok, "members": mem}
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
 def ship_day(s3, bucket, root, day, dry_run=False, budget=None, log=log,
-             progress_s=30.0, tmp_dir=None):
-    """Выгрузить один день архивами; `budget` — остаток байт за прогон."""
+             progress_s=30.0, tmp_dir=None, workers=6):
+    """Выгрузить один день архивами; `budget` — остаток байт за прогон.
+
+    Архивы дня идут ПАРАЛЛЕЛЬНО (`workers` потоков): у ранних дней это
+    тысячи крошечных архивов, и три запроса на каждый подряд давали
+    8 архивов в секунду — вся история заняла бы часы, которых у полного
+    тома нет. Дни — по порядку, день закрывается только целиком.
+    """
     arcs = day_archives(root, day)
     sd = ship_dir(root)
     ok_path = os.path.join(sd, f"{day}.ok")
@@ -241,44 +264,48 @@ def ship_day(s3, bucket, root, day, dry_run=False, budget=None, log=log,
     if dry_run:
         st["stopped"] = "сухой прогон"
         return st
-    t0, last = time.time(), time.time()
+    # предел за прогон — по оценке ДО отправки, чтобы не превысить его
+    # параллельно: архивы сверх остатка в этот день не берутся вовсе
+    take = []
     for key, members in todo:
         size_est = sum(sz for _n, _p, sz in members)
         if budget is not None and budget[0] - size_est < 0:
             st["stopped"] = "предел за прогон"
             break
-        fd, tmp = tempfile.mkstemp(prefix="ship-", suffix=".tar", dir=tmp_dir)
-        os.close(fd)
-        try:
-            mem = build_tar(members, tmp)
-            size, hexd, etag_ok = put_verified(s3, bucket, key, tmp)
-        except Exception as e:                                # noqa: BLE001
-            st["errors"] += 1
-            log(f"  ОТКАЗ {key}: {str(e)[:200]}")
-            if st["errors"] >= 20:
-                st["stopped"] = "20 отказов — прогон остановлен"
-                break
-            continue
-        finally:
-            try:
-                os.remove(tmp)
-            except OSError:
-                pass
-        done[key] = {"size": size, "md5": hexd, "etag_ok": etag_ok,
-                     "members": mem}
-        if not etag_ok:
-            st["etag_mismatch"] += 1
-        st["sent"] += 1
-        st["sent_bytes"] += size
         if budget is not None:
-            budget[0] -= size
-        if time.time() - last > progress_s:
-            last = time.time()
-            _save_part(part_path, day, done)
-            el = time.time() - t0
-            log(f"  {day}: {st['sent']}/{len(todo)} архивов, "
-                f"{st['sent_bytes'] / 2**30:.2f} ГБ, {el:.0f} с")
+            budget[0] -= size_est
+        take.append((key, members))
+    t0, last = time.time(), time.time()
+    lock = threading.Lock()
+
+    def work(item):
+        key, members = item
+        try:
+            return key, _ship_one(s3, bucket, key, members, tmp_dir), None
+        except Exception as e:                                # noqa: BLE001
+            return key, None, str(e)[:200]
+
+    with ThreadPoolExecutor(max_workers=max(1, int(workers))) as ex:
+        for key, rec, err in ex.map(work, take):
+            with lock:
+                if err is not None:
+                    st["errors"] += 1
+                    log(f"  ОТКАЗ {key}: {err}")
+                    continue
+                done[key] = rec
+                if not rec["etag_ok"]:
+                    st["etag_mismatch"] += 1
+                st["sent"] += 1
+                st["sent_bytes"] += rec["size"]
+                if time.time() - last > progress_s:
+                    last = time.time()
+                    _save_part(part_path, day, done)
+                    el = time.time() - t0
+                    log(f"  {day}: {st['sent']}/{len(take)} архивов, "
+                        f"{st['sent_bytes'] / 2**30:.2f} ГБ, {el:.0f} с")
     _save_part(part_path, day, done)
+    if st["errors"] >= 20:
+        st["stopped"] = f"{st['errors']} отказов — прогон остановлен"
     # день закрыт, только когда сверен КАЖДЫЙ архив дня
     if arcs and all(k in done for k, _m in arcs) and not st["errors"]:
         manifest = {"day": day, "archives": {k: done[k] for k, _m in arcs},
@@ -354,7 +381,7 @@ def prune(root, keep_days, today=None, dry_run=False, log=log):
 
 # --------------------------------------------------------------------- main
 def run(root=SRC, upto=None, max_gb=20.0, dry_run=False, prune_days=None,
-        env_path=ENV, s3=None, bucket=None, log=log, today=None):
+        env_path=ENV, s3=None, bucket=None, log=log, today=None, workers=6):
     t0 = time.time()
     today = today or datetime.now(timezone.utc).date()
     upto = upto or (today - timedelta(days=2)).strftime("%Y-%m-%d")
@@ -369,7 +396,8 @@ def run(root=SRC, upto=None, max_gb=20.0, dry_run=False, prune_days=None,
     budget = [max_gb * 2**30]
     summary = []
     for day in days:
-        st = ship_day(s3, bucket, root, day, dry_run=dry_run, budget=budget, log=log)
+        st = ship_day(s3, bucket, root, day, dry_run=dry_run, budget=budget,
+                      log=log, workers=workers)
         summary.append(st)
         log(f"{day}: архивов {st['archives']} из {st['files']} файлов, "
             f"{st['bytes'] / 2**30:.2f} ГБ, отправлено {st['sent']} (было "
@@ -398,9 +426,10 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--prune-days", type=int, default=None)
     ap.add_argument("--root", default=SRC)
+    ap.add_argument("--workers", type=int, default=6)
     a = ap.parse_args(argv)
     run(root=a.root, upto=a.upto, max_gb=a.max_gb, dry_run=a.dry_run,
-        prune_days=a.prune_days)
+        prune_days=a.prune_days, workers=a.workers)
     return 0
 
 

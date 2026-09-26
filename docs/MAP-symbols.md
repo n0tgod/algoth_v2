@@ -7827,34 +7827,35 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L28 `code_files(rel_dir)` — Код каталога: без `out/` (его публикует общая публикация).
 - L43 `main(argv=None)`
 
-## tools/record_ship.py · 408 строк
+## tools/record_ship.py · 437 строк
 
 Выгрузка закрытых суток записи стакана в объектное хранилище (S3).
 
-- L56 `ROOT = os.path.dirname(os.path.dirname(os.path…`
-- L57 `SRC = os.path.join(ROOT, 'research', 'b1_book…`
-- L58 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
-- L59 `ENV = os.path.expanduser('~/.hetzner/s3.env')`
-- L60 `PREFIX = 'b1'`
-- L61 `NAME = re.compile('^(\\d{4}-\\d{2}-\\d{2})-(\\…`
-- L64 `log(msg)`
-- L69 `load_env(path=ENV)` — Ключи хранилища; отсутствие — отказ словами, с путём.
-- L90 `client(env)` — Клиент S3 под Hetzner: virtual-hosted, подпись v4, без новых контрольных сумм boto3 (хранилище их не принимае…
-- L107 `free_bytes(path)` — ------------------------------------------------------------------ файлы
-- L112 `df_line(path)`
-- L119 `day_files(root, day, subs=SUBS)` — Файлы одних суток: (ключ, путь, размер) по всем подкаталогам.
-- L143 `closed_days(root, upto, subs=SUBS)` — Дни записи не позже `upto` (ГГГГ-ММ-ДД), у которых есть сжатые часы.
-- L161 `md5_of(path)`
-- L169 `day_archives(root, day, subs=SUBS)` — Архивы одних суток: (ключ, [(имя члена, путь, размер), …]) по именам.
-- L178 `build_tar(members, dst)` — tar без сжатия из часовых файлов; в манифест — md5 каждого члена.
-- L198 `ship_dir(root)`
-- L205 `put_verified(s3, bucket, key, path)` — Положить файл и сверить: md5 заголовком, HEAD по размеру и ETag.
-- L224 `ship_day(s3, bucket, root, day, dry_run=False, budget=None, log…` — Выгрузить один день архивами; `budget` — остаток байт за прогон.
-- L302 `_save_part(path, day, done)`
-- L309 `shipped_days(root)`
-- L315 `prune(root, keep_days, today=None, dry_run=False, log=log)` — Снять местные копии дней старше `keep_days` — только выгруженных.
-- L356 `run(root=SRC, upto=None, max_gb=20.0, dry_run=False, prune_days…` — --------------------------------------------------------------------- main
-- L394 `main(argv=None)`
+- L58 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L59 `SRC = os.path.join(ROOT, 'research', 'b1_book…`
+- L60 `SUBS = ('book', 'trades', 'raw', 'liq', 'metri…`
+- L61 `ENV = os.path.expanduser('~/.hetzner/s3.env')`
+- L62 `PREFIX = 'b1'`
+- L63 `NAME = re.compile('^(\\d{4}-\\d{2}-\\d{2})-(\\…`
+- L66 `log(msg)`
+- L71 `load_env(path=ENV)` — Ключи хранилища; отсутствие — отказ словами, с путём.
+- L92 `client(env)` — Клиент S3 под Hetzner: virtual-hosted, подпись v4, без новых контрольных сумм boto3 (хранилище их не принимае…
+- L109 `free_bytes(path)` — ------------------------------------------------------------------ файлы
+- L114 `df_line(path)`
+- L121 `day_files(root, day, subs=SUBS)` — Файлы одних суток: (ключ, путь, размер) по всем подкаталогам.
+- L145 `closed_days(root, upto, subs=SUBS)` — Дни записи не позже `upto` (ГГГГ-ММ-ДД), у которых есть сжатые часы.
+- L163 `md5_of(path)`
+- L171 `day_archives(root, day, subs=SUBS)` — Архивы одних суток: (ключ, [(имя члена, путь, размер), …]) по именам.
+- L180 `build_tar(members, dst)` — tar без сжатия из часовых файлов; в манифест — md5 каждого члена.
+- L200 `ship_dir(root)`
+- L207 `put_verified(s3, bucket, key, path)` — Положить файл и сверить: md5 заголовком, HEAD по размеру и ETag.
+- L226 `_ship_one(s3, bucket, key, members, tmp_dir)` — Один архив: собрать, положить, сверить. Возвращает запись манифеста.
+- L241 `ship_day(s3, bucket, root, day, dry_run=False, budget=None, log…` — Выгрузить один день архивами; `budget` — остаток байт за прогон.
+- L329 `_save_part(path, day, done)`
+- L336 `shipped_days(root)`
+- L342 `prune(root, keep_days, today=None, dry_run=False, log=log)` — Снять местные копии дней старше `keep_days` — только выгруженных.
+- L383 `run(root=SRC, upto=None, max_gb=20.0, dry_run=False, prune_days…` — --------------------------------------------------------------------- main
+- L422 `main(argv=None)`
 
 ## tools/repair_model_dir.sh · 78 строк
 
