@@ -1118,6 +1118,17 @@
 - L106 `test_guard_shorts_reads_the_summaries_end_to_end()`
 - L138 `test_cache_signature_does_not_carry_the_guard_on_purpose()`
 
+## research/dca_paper/test_guard_fill.py · 72 строк
+
+Проверки замера цены выхода охраны: кандидаты на границе, знак пользы шорта, деньги через плечо и маржу, «нет…
+
+- L8 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L13 `H = 3600.0`
+- L14 `T0 = 1790000000.0 - 1790000000.0 % H`
+- L17 `_row(rk, dep, sym, at, exit_ts, px, lev, margin, usd)`
+- L24 `bar(t, o, h, l, c, v=1000.0)`
+- L28 `test_candidates_and_money()`
+
 ## research/dca_paper/test_guard_forward.py · 67 строк
 
 Проверки замера «охрана рынком вперёд».

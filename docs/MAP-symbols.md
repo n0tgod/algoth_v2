@@ -1880,6 +1880,24 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L208 `publish(name)`
 - L213 `main(argv=None)`
 
+## research/dca_paper/guard_fill.py · 193 строк
+
+Замер: цена выхода охраны рынком — закрытие часа против первой цены после границы.
+
+- L39 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L40 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L50 `ROOT_B1 = RM.ROOT_B1`
+- L51 `OUT_JSON = os.path.join(HERE, 'out', 'DCA-guard-fi…`
+- L52 `OUT_MD = os.path.join(HERE, 'out', 'DCA-guard-fi…`
+- L53 `WINDOW_S = 15 * 60.0`
+- L56 `log(msg)`
+- L60 `candidates(bars, boundary, window=WINDOW_S)` — (закрытие до границы, открытие первого бара на/после границы).
+- L68 `side_sign(side)`
+- L72 `measure(rows, bars_of=None, log=log, root=ROOT_B1, remote=None)` — rows — строки журнала; bars_of(sym, t0, t1) — бары принтов.
+- L136 `_p(x, d=1)`
+- L140 `report(res)`
+- L172 `main(argv=None)`
+
 ## research/dca_paper/guard_forward.py · 166 строк
 
 Охрана рынком ВПЕРЁД: те же решения с охраной и без неё — с дня смены правил.
@@ -2010,7 +2028,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L598 `publish(name)`
 - L604 `main(argv=None)`
 
-## research/dca_paper/probe_exit.py · 130 строк
+## research/dca_paper/probe_exit.py · 168 строк
 
 Разбор одного выхода: где стояла цена по записи и что видит график.
 

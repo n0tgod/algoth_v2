@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 493, строк: 224212, каталогов: 85.
+Модулей кода: 495, строк: 224515, каталогов: 85.
 
 
 ## корень — память проекта, идеи, README
@@ -176,12 +176,13 @@
 - `entry_gate.py` · 477 строк — Гейты ВХОДА книг DCA: запас до пола и теснота стакана.
 - `fund_check.py` · 281 строк — Проверка величины funding: сколько начислений, с каким шагом и почему.
 - `fund_probe.py` · 238 строк — Сверка нашего ряда funding с ПЛОЩАДКОЙ по тем же символам и окнам.
+- `guard_fill.py` · 193 строк — Замер: цена выхода охраны рынком — закрытие часа против первой цены после границы.
 - `guard_forward.py` · 166 строк — Охрана рынком ВПЕРЁД: те же решения с охраной и без неё — с дня смены правил.
 - `name_check.py` · 242 строк — Соответствуют ли режимы DCA своим именам (вопрос владельца 2026-09-04).
 - `pair_age.py` · 363 строк — Возраст имени как фильтр входа короткой стороны общего счёта.
 - `pair_gate.py` · 407 строк — Два входных фильтра короткой стороны общего счёта — на одной сетке.
 - `path_screen.py` · 619 строк — Дорога сделки коротких книг: что происходит ПОСЛЕ входа и можно ли выйти раньше.
-- `probe_exit.py` · 130 строк — Разбор одного выхода: где стояла цена по записи и что видит график.
+- `probe_exit.py` · 168 строк — Разбор одного выхода: где стояла цена по записи и что видит график.
 - `rules.py` · 1294 строк — Правила бумажных DCA-книг: три депозита, одни правила.
 - `run_pair.py` · 562 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 - `run_paper.py` · 1584 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
@@ -199,7 +200,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 246 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (153), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (553), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3081), `test_path_screen.py` (244), `test_short.py` (419), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_costs.py` (479), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (153), `test_guard_fill.py` (72), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (553), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3081), `test_path_screen.py` (244), `test_short.py` (419), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
 - отчёты в `out/` (30): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-forward.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-short-age.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
