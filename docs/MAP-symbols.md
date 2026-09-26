@@ -1732,6 +1732,20 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L400 `publish(name)`
 - L405 `main(argv=None)`
 
+## research/dca_paper/backfill_exit_px.py · 132 строк
+
+Добор верной цены выхода охраны рынком в уже записанные строки журналов.
+
+- L27 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L32 `JOURNALS = (R.H24_JOURNAL, R.PAIR_JOURNAL)`
+- L33 `FIELDS = {'exit_px', 'exit_px_was', 'exit_px_fro…`
+- L34 `TOL = 1e-12`
+- L37 `_sig(path)`
+- L42 `_unchanged(path, sig)`
+- L46 `fixed_px(row)` — Верная цена выхода для строки «рынок»; None — не пересчитать.
+- L58 `patch_file(path, write=False)` — (строк, тронуто, без заполнений); кусок, изменившийся за время добора, не пишется.
+- L112 `main(argv=None)`
+
 ## research/dca_paper/backfill_fav.py · 171 строк
 
 Добор обещания модели (`fav_bp`) в уже записанные строки журнала.

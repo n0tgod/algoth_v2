@@ -992,6 +992,17 @@
 - L116 `test_halves_split_by_decision_time()`
 - L128 `test_report_names_the_backtest_and_the_daily_activity()`
 
+## research/dca_paper/test_backfill_exit_px.py · 80 строк
+
+Добор цены выхода охраны: исправляется только поле показа с сохранением прежнего, деньги не тронуты, чужой вы…
+
+- L11 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `BX = importlib.util.module_from_spec(spec)`
+- L19 `AT = 1790352000.0`
+- L20 `H = 3600.0`
+- L23 `_row(**kw)`
+- L32 `main()`
+
 ## research/dca_paper/test_costs.py · 479 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
