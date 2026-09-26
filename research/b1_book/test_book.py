@@ -7820,6 +7820,19 @@ def test_dca_trades_speak_the_language_of_the_chart():
         check("DCA-график: спан позиции от входа до выхода",
               (t.get("opened_at"), t.get("closes_at")) == (t0, t0 + 7200),
               str((t.get("opened_at"), t.get("closes_at"))))
+        # Id сделки — тот же, что у сделок модели (`trades.tid_of`, семь
+        # знаков base32 из полей записи): колонка «id» таблицы у DCA
+        # стояла прочерком — вопрос владельца 26.09. Одно решение в
+        # другой книге получает тот же id, другое имя — другой.
+        import trades as TRD
+        tid = t.get("tid")
+        check("DCA-график: у сделки есть id в формате модели",
+              isinstance(tid, str) and len(tid) == 7
+              and tid == TRD.tid_of(t), str(tid))
+        d2 = c.dca_trades("BBBUSDT", "safe:10000")
+        t2 = (d2.get("rows") or [{}])[0]
+        check("DCA-график: другому имени — другой id",
+              t2.get("tid") and t2.get("tid") != tid, str(t2.get("tid")))
         # ТВХ — готовая, и её последний шаг равен средней записи:
         # вторая арифметика на странице разошлась бы с симуляцией
         walk = t.get("walk") or []

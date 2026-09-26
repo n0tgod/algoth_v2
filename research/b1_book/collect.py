@@ -3650,6 +3650,13 @@ class Collector:
                     "exit": None, "depth": r.get("depth"), "bt": False,
                 })
         out.sort(key=lambda x: float(x.get("opened_at") or 0))
+        # Id сделки — тот же, что у сделок модели (`trades.tid_of`): из
+        # полей самой строки, семь знаков base32. Без него колонка «id»
+        # таблицы у DCA стояла прочерком (вопрос владельца 26.09); одно
+        # решение в другой книге носит тот же id — это одна сделка.
+        import trades as TR
+        for t in out:
+            t["tid"] = TR.tid_of(t)
         return {"present": True, "rows": out, "read": acc,
                 # слитой считается позиция С ДОЛИВАМИ — ровно как у книг
                 # модели: у остальных сливать нечего
