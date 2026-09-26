@@ -69,6 +69,8 @@ def main(argv=None):
     ap.add_argument("--sym", required=True)
     ap.add_argument("--at", required=True, help="час решения ГГГГ-ММ-ДД-ЧЧ")
     ap.add_argument("--minutes", type=int, default=10)
+    ap.add_argument("--replay", action="store_true",
+                    help="реплей решения заново тем же кодом, что у книги")
     a = ap.parse_args(argv)
     at = hour_ts(a.at)
     print(f"# {a.sym} — решение {ts(at)} UTC")
@@ -113,6 +115,42 @@ def main(argv=None):
         mark = " ← граница" if bb[0] == boundary else ""
         print(f"{ts(bb[0])}  {bb[1]:<9.6g} {bb[2]:<9.6g} {bb[3]:<9.6g} {bb[4]:<9.6g} "
               f"{bb[5]:<8.0f} {src_}{mark}")
+    # закрытия часов по принтам на всём сроке — против цен из отметок
+    hold_h = R.H24_HOLD_H
+    full = SW.read_bars(TL.ROOT_B1, a.sym, at, at + (hold_h + 1) * 3600.0)
+    print(f"\nзакрытия часов по принтам (срок {hold_h} ч) — против цены из отметки кэша:")
+    cache_cum = {}
+    for k, r in recs:
+        p = WV.path_of(r)
+        lev, e = float(r.get("lev") or 0), r.get("entry_px")
+        if p and e and lev:
+            cache_cum[k[0]] = {k_: float(e) * (1.0 - v / lev) for k_, v in p["cum"].items()}
+    for h in range(1, hold_h + 1):
+        h_end = at + h * 3600.0
+        in_h = [b for b in full if h_end - 3600.0 <= b[0] < h_end]
+        last_b = in_h[-1] if in_h else None
+        marks = " ".join(f"{rk}:{cc.get(h, float('nan')):.6f}" for rk, cc in cache_cum.items())
+        print(f"  k={h:2d} {ts(h_end - 1)}  принты: "
+              + (f"последний бар {ts(last_b[0])[11:]} close {last_b[4]:.6g}, баров {len(in_h)}"
+                 if last_b else "баров нет")
+              + f"  | из отметок: {marks}")
+    if a.replay:
+        # тот же код, что кормит книгу: реплей одного решения заново
+        legs_ = [g for g in S.legs(log=lambda m: None)
+                 if g["sym"] == a.sym and abs(float(g["at"]) - at) < 1]
+        print(f"\nреплей заново: ног {len(legs_)}")
+        if legs_:
+            fresh, _tail = S.replay(legs_[:1], src=TL.TailBars(log=lambda m: None),
+                                    log=lambda m: None)
+            for k, r in fresh.items():
+                p = WV.path_of(r)
+                lev, e = float(r.get("lev") or 0), r.get("entry_px")
+                print(f"  свежий {k[0]}: exit {r.get('exit')} {ts(r['exit_ts'])} px {r.get('exit_px')} "
+                      f"state {r.get('state')} entry {e}")
+                if p and e and lev:
+                    print("    цены из свежих отметок: "
+                          + ", ".join(f"k={k_}: {float(e) * (1.0 - v / lev):.6f}"
+                                      for k_, v in sorted(p["cum"].items())[:12]))
     c = candidates(tape, boundary)
     px = float(jr[0]["exit_px"]) if jr and jr[0].get("exit_px") else None
     print("\nкандидаты цены на границе (принты):")
