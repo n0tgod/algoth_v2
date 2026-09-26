@@ -11,10 +11,12 @@
 - включается ЯВНО (`store.use_remote(...)`): сборщик и страница в
   хранилище не ходят никогда — задержка страницы и трафик на каждом
   запросе;
-- скачанный файл сверяется по md5 (ETag хранилища или `md5` из
-  метаданных, которые пишет выгрузка) и только потом кладётся в кэш
-  `out/cache/<sub>/<SYM>/<час>.jsonl.gz`; несошедшийся — не кладётся и
-  считается;
+- в хранилище лежат АРХИВЫ имени за сутки (`b1/<sub>/<SYM>/<день>.tar`,
+  `tools/record_ship.py`): промах одного часа тянет архив дня, он
+  сверяется по md5 (ETag хранилища или `md5` из метаданных выгрузки) и
+  только потом распаковывается в кэш `out/cache/<sub>/<SYM>/<час>.jsonl.gz`
+  — все часы дня разом, соседние часы реплея берутся уже с диска;
+  несошедшийся архив не распаковывается и считается;
 - предел кэша — гигабайты; сверх него снимаются самые старые по
   обращению;
 - «в хранилище нет» запоминается на процесс (отрицательный кэш): повтор
@@ -26,6 +28,8 @@
 import hashlib
 import os
 import sys
+import tarfile
+import tempfile
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -52,19 +56,22 @@ class Remote:
 
     # --- дорога до ключа --------------------------------------------------
     def key(self, dirpath, hour):
-        """Ключ в бакете по каталогу часа; None — каталог не из записи."""
+        """Ключ АРХИВА дня в бакете по каталогу часа; None — не запись."""
         rel = os.path.relpath(os.path.abspath(dirpath), self.root)
         parts = rel.split(os.sep)
         if len(parts) != 2 or parts[0] not in SUBS or parts[0] == "cache":
             return None
-        return f"{self.prefix}/{parts[0]}/{parts[1]}/{hour}.jsonl.gz"
+        if len(hour) < 10:
+            return None
+        return f"{self.prefix}/{parts[0]}/{parts[1]}/{hour[:10]}.tar"
 
     def get(self, dirpath, hour):
-        """Местный путь скачанного часа или None (нет / не сошёлся / отказ)."""
+        """Местный путь часа из кэша или None (нет / не сошёлся / отказ)."""
         key = self.key(dirpath, hour)
         if key is None or key in self.missing:
             return None
-        local = os.path.join(self.cache, *key.split("/")[1:])
+        _pre, sub, sym, _day = key.split("/")
+        local = os.path.join(self.cache, sub, sym, f"{hour}.jsonl.gz")
         if os.path.exists(local):
             self.hits += 1
             try:
@@ -72,6 +79,35 @@ class Remote:
             except OSError:
                 pass
             return local
+        miss_key = key + "#" + hour
+        if miss_key in self.missing:
+            return None
+        dest = os.path.join(self.cache, sub, sym)
+        members = self._members(dest, hour[:10])
+        if members is None:                      # архив дня ещё не тянули
+            if not self._fetch_archive(key, dest):
+                return None
+            members = self._members(dest, hour[:10]) or set()
+        if os.path.basename(local) not in members or not os.path.exists(local):
+            # архив дня есть, а этого часа в нём нет (или вытеснен и его
+            # не было) — запомнить час, не день; состав дня лежит маркером
+            self.missing.add(miss_key)
+            self.misses += 1
+            return None
+        return local
+
+    @staticmethod
+    def _members(dest, day):
+        """Состав скачанного архива дня — маркер в кэше; None — не тянули."""
+        p = os.path.join(dest, f"{day}.members")
+        try:
+            with open(p, encoding="utf-8") as f:
+                return {ln.strip() for ln in f if ln.strip()}
+        except OSError:
+            return None
+
+    def _fetch_archive(self, key, dest):
+        """Скачать архив дня, сверить md5, распаковать в `dest`. True — есть."""
         try:
             r = self.s3.get_object(Bucket=self.bucket, Key=key)
         except Exception as e:                                  # noqa: BLE001
@@ -84,30 +120,56 @@ class Remote:
                 self.errors += 1
                 if self.errors <= 3:
                     self.log(f"хранилище: отказ на {key}: {str(e)[:160]}")
-            return None
-        os.makedirs(os.path.dirname(local), exist_ok=True)
-        tmp = local + ".tmp"
-        h = hashlib.md5()
-        n = 0
-        with open(tmp, "wb") as f:
-            body = r["Body"]
-            for chunk in iter(lambda: body.read(1 << 20), b""):
-                h.update(chunk)
-                f.write(chunk)
-                n += len(chunk)
-        want = str((r.get("Metadata") or {}).get("md5") or "").lower() \
-            or str(r.get("ETag", "")).strip('"').lower()
-        if want and want != h.hexdigest():
-            os.remove(tmp)
-            self.bad += 1
-            self.log(f"хранилище: {key} не сошёлся по md5 — не взят")
-            return None
-        os.replace(tmp, local)
-        self.fetched += 1
-        self.size += n
-        if self.size > self.cap:
-            self._evict()
-        return local
+            return False
+        fd, tmp = tempfile.mkstemp(prefix="b1-", suffix=".tar")
+        os.close(fd)
+        try:
+            h = hashlib.md5()
+            with open(tmp, "wb") as f:
+                body = r["Body"]
+                for chunk in iter(lambda: body.read(1 << 20), b""):
+                    h.update(chunk)
+                    f.write(chunk)
+            want = str((r.get("Metadata") or {}).get("md5") or "").lower() \
+                or str(r.get("ETag", "")).strip('"').lower()
+            if want and want != h.hexdigest():
+                self.bad += 1
+                self.log(f"хранилище: {key} не сошёлся по md5 — не взят")
+                return False
+            os.makedirs(dest, exist_ok=True)
+            n, names = 0, []
+            with tarfile.open(tmp, "r:") as tf:
+                for m in tf.getmembers():
+                    name = os.path.basename(m.name)
+                    if not m.isfile() or not name.endswith(".jsonl.gz") \
+                            or name != m.name:
+                        continue                      # чужой путь в архиве
+                    src = tf.extractfile(m)
+                    out = os.path.join(dest, name)
+                    with open(out + ".tmp", "wb") as f:
+                        for chunk in iter(lambda: src.read(1 << 20), b""):
+                            f.write(chunk)
+                    os.replace(out + ".tmp", out)
+                    n += m.size
+                    names.append(name)
+            day = os.path.basename(key)[:-4]
+            with open(os.path.join(dest, f"{day}.members"), "w",
+                      encoding="utf-8") as f:
+                f.write("\n".join(names) + ("\n" if names else ""))
+            self.fetched += 1
+            self.size += n
+            if self.size > self.cap:
+                self._evict()
+            return True
+        except (tarfile.TarError, OSError) as e:
+            self.errors += 1
+            self.log(f"хранилище: архив {key} не распакован: {e}")
+            return False
+        finally:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
 
     # --- кэш ---------------------------------------------------------------
     def _walk(self):
@@ -134,10 +196,21 @@ class Remote:
         for _m, sz, p in files:
             if total <= goal:
                 break
+            if p.endswith(".members"):
+                continue
             try:
                 os.remove(p)
                 total -= sz
                 removed += 1
+            except OSError:
+                pass
+            # маркер дня снимается, когда снят последний его час: иначе
+            # вытесненный час читался бы как «его нет в архиве»
+            day = os.path.basename(p)[:10]
+            d = os.path.dirname(p)
+            try:
+                if not any(fn.startswith(day + "-") for fn in os.listdir(d)):
+                    os.remove(os.path.join(d, f"{day}.members"))
             except OSError:
                 pass
         self.size = total

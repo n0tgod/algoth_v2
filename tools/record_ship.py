@@ -9,17 +9,22 @@
 Что уходит. Сжатые часы `<sub>/<SYM>/ГГГГ-ММ-ДД-ЧЧ.jsonl.gz` за дни не
 позже `--upto` (умолчание — позавчера, как у перелива: текущий и
 вчерашний день — зона сборщика и его сжатия). Несжатый `.jsonl` не
-уходит никогда. Ключ в бакете — `b1/<sub>/<SYM>/<день>-<ЧЧ>.jsonl.gz`,
-тот же путь, что на диске.
+уходит никогда. Часы одного имени за сутки складываются в ОДИН архив
+`b1/<sub>/<SYM>/<день>.tar` (tar без сжатия: члены уже gzip): в сутках
+37 тысяч часовых файлов, половина легче 64 кБ, а хранилище считает
+объект не меньше 64 кБ — по файлам выгрузка стоила бы на 40 % дороже,
+чем весит; архивов выходит ≈ 1 500 в сутки, и старые часы читаются
+подряд одним запросом.
 
-Проверка КАЖДОГО файла. md5 считается местно и уходит заголовком
-`Content-MD5` — хранилище отвергает несовпадение; после — HEAD: размер
-обязан совпасть, ETag сверяется с md5 (расхождение ETag при совпавшем
-размере считается отдельным числом, а не молчит). День помечается
-выгруженным (`out/ship/<день>.ok`) только когда сверены ВСЕ его файлы;
-частичный ход дня лежит в `out/ship/<день>.part.json`, и повтор
-продолжает с него. Манифест дня (файлы, размеры, md5) кладётся в бакет
-рядом: `b1/manifest/<день>.json` — по нему запись можно проверить и
+Проверка КАЖДОГО архива и КАЖДОГО члена. md5 архива считается местно и
+уходит заголовком `Content-MD5` — хранилище отвергает несовпадение;
+после — HEAD: размер обязан совпасть, ETag сверяется с md5
+(расхождение ETag при совпавшем размере считается отдельным числом, а
+не молчит). В манифесте дня у каждого члена свой размер и md5. День
+помечается выгруженным (`out/ship/<день>.ok`) только когда сверены
+ВСЕ его архивы; частичный ход дня лежит в `out/ship/<день>.part.json`,
+и повтор продолжает с него. Манифест дня кладётся в бакет рядом:
+`b1/manifest/<день>.json` — по нему запись можно проверить и
 восстановить без этого сервера.
 
 Удаление местной копии — ОТДЕЛЬНЫЙ шаг `--prune-days N`: только дни
@@ -38,10 +43,13 @@
 import argparse
 import base64
 import hashlib
+import io
 import json
 import os
 import re
 import sys
+import tarfile
+import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -158,6 +166,35 @@ def md5_of(path):
     return h.hexdigest()
 
 
+def day_archives(root, day, subs=SUBS):
+    """Архивы одних суток: (ключ, [(имя члена, путь, размер), …]) по именам."""
+    by = {}
+    for key, path, sz in day_files(root, day, subs):
+        _pre, sub, sym, name = key.split("/")
+        by.setdefault(f"{PREFIX}/{sub}/{sym}/{day}.tar", []).append((name, path, sz))
+    return sorted(by.items())
+
+
+def build_tar(members, dst):
+    """tar без сжатия из часовых файлов; в манифест — md5 каждого члена.
+
+    Порядок членов — по имени часа; метаданные tar фиксированы (mtime 0,
+    root), чтобы один и тот же день давал один и тот же архив и md5.
+    """
+    mem = {}
+    with tarfile.open(dst, "w", format=tarfile.GNU_FORMAT) as tf:
+        for name, path, sz in sorted(members):
+            info = tarfile.TarInfo(name)
+            info.size = sz
+            info.mtime = 0
+            info.uid = info.gid = 0
+            info.uname = info.gname = "root"
+            with open(path, "rb") as f:
+                tf.addfile(info, f)
+            mem[name] = {"size": sz, "md5": md5_of(path)}
+    return mem
+
+
 def ship_dir(root):
     d = os.path.join(root, "ship")
     os.makedirs(d, exist_ok=True)
@@ -185,39 +222,50 @@ def put_verified(s3, bucket, key, path):
 
 
 def ship_day(s3, bucket, root, day, dry_run=False, budget=None, log=log,
-             progress_s=30.0):
-    """Выгрузить один день. Возвращает сводку дня; `budget` — остаток байт."""
-    files = day_files(root, day)
+             progress_s=30.0, tmp_dir=None):
+    """Выгрузить один день архивами; `budget` — остаток байт за прогон."""
+    arcs = day_archives(root, day)
     sd = ship_dir(root)
     ok_path = os.path.join(sd, f"{day}.ok")
     part_path = os.path.join(sd, f"{day}.part.json")
     done = {}
     if os.path.exists(part_path):
         with open(part_path, encoding="utf-8") as f:
-            done = json.load(f).get("files") or {}
-    todo = [(k, p, sz) for k, p, sz in files if k not in done]
-    st = {"day": day, "files": len(files), "bytes": sum(sz for *_, sz in files),
+            done = json.load(f).get("archives") or {}
+    todo = [(k, m) for k, m in arcs if k not in done]
+    n_files = sum(len(m) for _k, m in arcs)
+    st = {"day": day, "archives": len(arcs), "files": n_files,
+          "bytes": sum(sz for _k, m in arcs for _n, _p, sz in m),
           "already": len(done), "sent": 0, "sent_bytes": 0,
-          "etag_mismatch": 0, "errors": 0, "complete": False,
-          "stopped": None}
+          "etag_mismatch": 0, "errors": 0, "complete": False, "stopped": None}
     if dry_run:
         st["stopped"] = "сухой прогон"
         return st
     t0, last = time.time(), time.time()
-    for key, path, sz in todo:
-        if budget is not None and budget[0] - sz < 0:
+    for key, members in todo:
+        size_est = sum(sz for _n, _p, sz in members)
+        if budget is not None and budget[0] - size_est < 0:
             st["stopped"] = "предел за прогон"
             break
+        fd, tmp = tempfile.mkstemp(prefix="ship-", suffix=".tar", dir=tmp_dir)
+        os.close(fd)
         try:
-            size, hexd, etag_ok = put_verified(s3, bucket, key, path)
+            mem = build_tar(members, tmp)
+            size, hexd, etag_ok = put_verified(s3, bucket, key, tmp)
         except Exception as e:                                # noqa: BLE001
             st["errors"] += 1
             log(f"  ОТКАЗ {key}: {str(e)[:200]}")
             if st["errors"] >= 20:
-                st["stopped"] = "20 отказов подряд — прогон остановлен"
+                st["stopped"] = "20 отказов — прогон остановлен"
                 break
             continue
-        done[key] = {"size": size, "md5": hexd, "etag_ok": etag_ok}
+        finally:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+        done[key] = {"size": size, "md5": hexd, "etag_ok": etag_ok,
+                     "members": mem}
         if not etag_ok:
             st["etag_mismatch"] += 1
         st["sent"] += 1
@@ -228,20 +276,22 @@ def ship_day(s3, bucket, root, day, dry_run=False, budget=None, log=log,
             last = time.time()
             _save_part(part_path, day, done)
             el = time.time() - t0
-            log(f"  {day}: {st['sent']}/{len(todo)} файлов, "
+            log(f"  {day}: {st['sent']}/{len(todo)} архивов, "
                 f"{st['sent_bytes'] / 2**30:.2f} ГБ, {el:.0f} с")
     _save_part(part_path, day, done)
-    # день закрыт, только когда сверен КАЖДЫЙ файл дня
-    if files and all(k in done for k, *_ in files) and not st["errors"]:
-        manifest = {"day": day, "files": {k: done[k] for k, *_ in files},
-                    "bytes": st["bytes"], "n": len(files),
+    # день закрыт, только когда сверен КАЖДЫЙ архив дня
+    if arcs and all(k in done for k, _m in arcs) and not st["errors"]:
+        manifest = {"day": day, "archives": {k: done[k] for k, _m in arcs},
+                    "bytes": st["bytes"], "n_archives": len(arcs),
+                    "n_files": n_files,
                     "shipped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
         body = json.dumps(manifest, ensure_ascii=False).encode("utf-8")
         s3.put_object(Bucket=bucket, Key=f"{PREFIX}/manifest/{day}.json",
-                      Body=body, ContentLength=len(body),
+                      Body=io.BytesIO(body), ContentLength=len(body),
                       ContentMD5=base64.b64encode(hashlib.md5(body).digest()).decode())
         with open(ok_path, "w", encoding="utf-8") as f:
-            json.dump({"day": day, "n": len(files), "bytes": st["bytes"],
+            json.dump({"day": day, "n_archives": len(arcs), "n_files": n_files,
+                       "bytes": st["bytes"],
                        "etag_mismatch": sum(1 for v in done.values()
                                             if not v.get("etag_ok")),
                        "at": manifest["shipped_at"]}, f, ensure_ascii=False)
@@ -252,7 +302,7 @@ def ship_day(s3, bucket, root, day, dry_run=False, budget=None, log=log,
 def _save_part(path, day, done):
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump({"day": day, "files": done}, f, ensure_ascii=False)
+        json.dump({"day": day, "archives": done}, f, ensure_ascii=False)
     os.replace(tmp, path)
 
 
@@ -321,8 +371,9 @@ def run(root=SRC, upto=None, max_gb=20.0, dry_run=False, prune_days=None,
     for day in days:
         st = ship_day(s3, bucket, root, day, dry_run=dry_run, budget=budget, log=log)
         summary.append(st)
-        log(f"{day}: файлов {st['files']}, {st['bytes'] / 2**30:.2f} ГБ, "
-            f"отправлено {st['sent']} (было {st['already']}), отказов {st['errors']}, "
+        log(f"{day}: архивов {st['archives']} из {st['files']} файлов, "
+            f"{st['bytes'] / 2**30:.2f} ГБ, отправлено {st['sent']} (было "
+            f"{st['already']}), отказов {st['errors']}, "
             f"ETag не совпал у {st['etag_mismatch']}, "
             f"{'ЗАКРЫТ' if st['complete'] else 'не закрыт'}"
             + (f" — {st['stopped']}" if st["stopped"] else ""))

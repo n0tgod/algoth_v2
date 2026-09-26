@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Проверки выгрузки записи: md5 и HEAD на каждый файл, день закрывается
-только целиком, несжатое и свежее не уходит, снятие только выгруженного,
-ссылка перелива снимается с целью, без ключей — отказ с путём."""
+"""Проверки выгрузки записи: архив на имя и сутки, md5 и HEAD на каждый
+архив и член, день закрывается только целиком, несжатое и свежее не уходит,
+снятие только выгруженного, ссылка перелива снимается с целью, без
+ключей — отказ с путём."""
 import base64
 import gzip
 import hashlib
+import io
 import json
 import os
 import shutil
 import sys
+import tarfile
 import tempfile
 from datetime import date
 
@@ -96,16 +99,27 @@ def main():
             check("без ключей — отказ с путём", "nope.env" in str(e), str(e))
         # выгрузка: позавчера и старше, несжатое не уходит
         res = RS.run(root=root, s3=s3, bucket="b", log=said.append, today=today)
-        shipped = sorted({k.split("/")[3][:10] for k in s3.objs if "/manifest/" not in k})
+        arcs = [k for k in s3.objs if "/manifest/" not in k]
+        shipped = sorted({k.split("/")[3][:10] for k in arcs})
         check("уходят дни не позже позавчера", shipped == ["2026-09-20", "2026-09-21", "2026-09-23"], shipped)
-        check("несжатый час не уходит", not any(k.endswith(".jsonl") for k in s3.objs))
+        check("один архив на имя и сутки", all(k.endswith(".tar") for k in arcs)
+              and len(arcs) == 3 * 2 * 2, arcs)
+        tar = tarfile.open(fileobj=io.BytesIO(s3.objs["b1/book/AAAUSDT/2026-09-21.tar"]), mode="r:")
+        names = sorted(m.name for m in tar.getmembers())
+        check("в архиве часы дня, несжатый час не уходит",
+              names == ["2026-09-21-00.jsonl.gz", "2026-09-21-01.jsonl.gz"], names)
+        inner = gzip.decompress(tar.extractfile("2026-09-21-01.jsonl.gz").read())
+        check("член архива — тот же файл", json.loads(inner)["h"] == 1)
         check("день закрыт целиком, манифест в бакете",
               all(s["complete"] for s in res["days"])
               and "b1/manifest/2026-09-21.json" in s3.objs, res["days"])
         man = json.loads(s3.objs["b1/manifest/2026-09-21.json"])
-        check("манифест несёт md5 каждого файла",
-              man["n"] == 8 and all(len(v["md5"]) == 32 for v in man["files"].values()), man)
-        check("перелитый файл ушёл по ссылке", "b1/book/AAAUSDT/2026-09-20-00.jsonl.gz" in s3.objs)
+        check("манифест несёт md5 архивов и каждого члена",
+              man["n_archives"] == 4 and man["n_files"] == 8
+              and all(len(v["md5"]) == 32 and len(v["members"]) == 2
+                      and all(len(mm["md5"]) == 32 for mm in v["members"].values())
+                      for v in man["archives"].values()), man)
+        check("перелитый файл ушёл по ссылке", "b1/book/AAAUSDT/2026-09-20.tar" in s3.objs)
         check("отметки дней", RS.shipped_days(root) == ["2026-09-20", "2026-09-21", "2026-09-23"])
         # повтор ничего не шлёт
         n = s3.puts

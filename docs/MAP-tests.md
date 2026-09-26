@@ -438,20 +438,21 @@
 - L77 `test_measure_on_a_synthetic_day()`
 - L109 `test_without_zstd_the_variants_are_unmeasured_not_zero()`
 
-## research/b1_book/test_remote.py · 140 строк
+## research/b1_book/test_remote.py · 162 строк
 
-Проверки чтения часа из хранилища: промах на диске → скачано в кэш и сверено по md5; повтор — из кэша; «нет в…
+Проверки чтения часа из хранилища: промах на диске → архив дня скачан, сверен по md5 и распакован в кэш; сосе…
 
-- L16 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L22 `FAILED = []`
-- L25 `check(name, cond, detail='')`
-- L32 `class NoKey`
-  - L33 `NoKey.__init__(self)`
-- L38 `class FakeS3`
-  - L39 `FakeS3.__init__(self, objs, lie=False)`
-  - L42 `FakeS3.get_object(self, Bucket, Key)`
-- L52 `gz(rows)`
-- L60 `main()`
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L24 `FAILED = []`
+- L27 `check(name, cond, detail='')`
+- L34 `class NoKey`
+  - L35 `NoKey.__init__(self)`
+- L40 `class FakeS3`
+  - L41 `FakeS3.__init__(self, objs, lie=False)`
+  - L44 `FakeS3.get_object(self, Bucket, Key)`
+- L54 `gz(rows)`
+- L62 `tar_of(members)` — Архив дня, как его пишет выгрузка: {имя члена: байты}.
+- L73 `main()`
 
 ## research/d1_seconds/test_detect.py · 803 строк
 
@@ -4233,21 +4234,21 @@ X1: исполнитель против подставной биржи.
 - L186 `test_hook_end_to_end()` — Дорога до вызова: не функция, а сам хук в настоящем коммите.
 - L234 `main()`
 
-## tools/test_record_ship.py · 150 строк
+## tools/test_record_ship.py · 164 строк
 
-Проверки выгрузки записи: md5 и HEAD на каждый файл, день закрывается только целиком, несжатое и свежее не ух…
+Проверки выгрузки записи: архив на имя и сутки, md5 и HEAD на каждый архив и член, день закрывается только це…
 
-- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L19 `FAILED = []`
-- L22 `check(name, cond, detail='')`
-- L29 `class FakeS3` — Подставное хранилище: проверяет Content-MD5, как настоящее.
-  - L32 `FakeS3.__init__(self, lie_size=False)`
-  - L37 `FakeS3.put_object(self, Bucket, Key, Body, ContentMD5=None, ContentLen…`
-  - L47 `FakeS3.head_object(self, Bucket, Key)`
-- L53 `_root(days, syms=('AAAUSDT', 'BBBUSDT'), spill=None)`
-- L76 `_SPILL = {}`
-- L79 `spill_dir(spill)`
-- L83 `main()`
+- L18 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L22 `FAILED = []`
+- L25 `check(name, cond, detail='')`
+- L32 `class FakeS3` — Подставное хранилище: проверяет Content-MD5, как настоящее.
+  - L35 `FakeS3.__init__(self, lie_size=False)`
+  - L40 `FakeS3.put_object(self, Bucket, Key, Body, ContentMD5=None, ContentLen…`
+  - L50 `FakeS3.head_object(self, Bucket, Key)`
+- L56 `_root(days, syms=('AAAUSDT', 'BBBUSDT'), spill=None)`
+- L79 `_SPILL = {}`
+- L82 `spill_dir(spill)`
+- L86 `main()`
 
 ## tools/test_resolve_maps.sh · 77 строк
 

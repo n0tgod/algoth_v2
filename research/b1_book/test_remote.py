@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Проверки чтения часа из хранилища: промах на диске → скачано в кэш и
-сверено по md5; повтор — из кэша; «нет в хранилище» — раз; несошедшийся
-md5 не берётся; предел кэша вытесняет старое; чужой каталог — без
-запроса; без ключей — только диск; источник реплея включает хранилище."""
+"""Проверки чтения часа из хранилища: промах на диске → архив дня скачан,
+сверен по md5 и распакован в кэш; соседний час — из кэша; «нет в
+хранилище» — раз; несошедшийся md5 не берётся; предел кэша вытесняет
+старое; чужой каталог — без запроса; без ключей — только диск; источник
+реплея включает хранилище."""
 import gzip
 import hashlib
 import io
@@ -10,6 +11,7 @@ import json
 import os
 import shutil
 import sys
+import tarfile
 import tempfile
 import time
 
@@ -57,11 +59,25 @@ def gz(rows):
     return b.getvalue()
 
 
+def tar_of(members):
+    """Архив дня, как его пишет выгрузка: {имя члена: байты}."""
+    b = io.BytesIO()
+    with tarfile.open(fileobj=b, mode="w", format=tarfile.GNU_FORMAT) as tf:
+        for name, data in sorted(members.items()):
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tf.addfile(info, io.BytesIO(data))
+    return b.getvalue()
+
+
 def main():
     root = tempfile.mkdtemp(prefix="remote-")
     try:
-        objs = {"b1/book/AAAUSDT/2026-09-01-12.jsonl.gz": gz([{"h": 12}, {"h": 12}]),
-                "b1/trades/AAAUSDT/2026-09-01-12.jsonl.gz": gz([{"t": 1}])}
+        objs = {"b1/book/AAAUSDT/2026-09-01.tar": tar_of({
+                    "2026-09-01-12.jsonl.gz": gz([{"h": 12}, {"h": 12}]),
+                    "2026-09-01-15.jsonl.gz": gz([{"h": 15}])}),
+                "b1/trades/AAAUSDT/2026-09-01.tar": tar_of({
+                    "2026-09-01-12.jsonl.gz": gz([{"t": 1}])})}
         s3 = FakeS3(objs)
         rm = RM.Remote(s3, "b", root=root, cache_gb=0.001, log=lambda m: None)
         d = os.path.join(root, "book", "AAAUSDT")
@@ -71,15 +87,20 @@ def main():
         check("без хранилища — пусто", store.read_hour(d, "2026-09-01-12") == [])
         store.use_remote(rm)
         rows = store.read_hour(d, "2026-09-01-12")
-        check("промах на диске — час из хранилища", rows == [{"h": 12}, {"h": 12}], rows)
+        check("промах на диске — час из архива дня", rows == [{"h": 12}, {"h": 12}], rows)
         cached = os.path.join(root, "cache", "book", "AAAUSDT", "2026-09-01-12.jsonl.gz")
-        check("скачанное лежит в кэше", os.path.exists(cached))
+        check("архив распакован в кэш целиком", os.path.exists(cached)
+              and os.path.exists(cached.replace("-12.", "-15.")))
         n = s3.gets
-        store.read_hour(d, "2026-09-01-12")
-        check("повтор — из кэша, без запроса", s3.gets == n and rm.stats()["hits"] == 1)
-        check("нет в хранилище — пусто и запомнено",
-              store.read_hour(d, "2026-09-01-13") == [] and s3.gets == n + 1
-              and store.read_hour(d, "2026-09-01-13") == [] and s3.gets == n + 1)
+        check("соседний час дня — из кэша, без запроса",
+              store.read_hour(d, "2026-09-01-15") == [{"h": 15}] and s3.gets == n
+              and rm.stats()["hits"] == 1)
+        check("часа нет в архиве — пусто без нового запроса",
+              store.read_hour(d, "2026-09-01-13") == [] and s3.gets == n
+              and store.read_hour(d, "2026-09-01-13") == [] and s3.gets == n)
+        check("дня нет в хранилище — пусто и запомнено",
+              store.read_hour(d, "2026-09-02-13") == [] and s3.gets == n + 1
+              and store.read_hour(d, "2026-09-02-14") == [] and s3.gets == n + 1)
         # местный файл важнее хранилища
         with gzip.open(os.path.join(d, "2026-09-01-14.jsonl.gz"), "wt") as f:
             f.write(json.dumps({"local": 1}) + "\n")
@@ -101,19 +122,20 @@ def main():
               and not os.path.exists(os.path.join(root, "cache", "trades", "AAAUSDT",
                                                   "2026-09-01-12.jsonl.gz")), got)
         # предел кэша: самое старое по обращению снимается
-        big = {f"b1/book/BBBUSDT/2026-09-01-{h:02d}.jsonl.gz": gz([{"x": "y" * 200}] * 200)
-               for h in range(6)}
+        one = gz([{"x": "y" * 200}] * 200)
+        big = {f"b1/book/BBBUSDT/2026-09-0{dd}.tar": tar_of({f"2026-09-0{dd}-00.jsonl.gz": one})
+               for dd in range(1, 7)}
         s3b = FakeS3(big)
-        rm3 = RM.Remote(s3b, "b", root=root, cache_gb=len(gz([{"x": "y" * 200}] * 200)) * 3.5 / 2**30,
+        rm3 = RM.Remote(s3b, "b", root=root, cache_gb=len(one) * 3.5 / 2**30,
                         log=lambda m: None)
         store.use_remote(rm3)
         db = os.path.join(root, "book", "BBBUSDT")
         os.makedirs(db, exist_ok=True)
-        for h in range(6):
-            store.read_hour(db, f"2026-09-01-{h:02d}")
+        for dd in range(1, 7):
+            store.read_hour(db, f"2026-09-0{dd}-00")
             time.sleep(0.01)
         left = sorted(os.listdir(os.path.join(root, "cache", "book", "BBBUSDT")))
-        check("предел кэша вытесняет старое", 0 < len(left) < 6 and "2026-09-01-05.jsonl.gz" in left
+        check("предел кэша вытесняет старое", 0 < len(left) < 6 and "2026-09-06-00.jsonl.gz" in left
               and "2026-09-01-00.jsonl.gz" not in left, left)
         # без ключей — None и слова
         said = []
