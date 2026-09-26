@@ -414,6 +414,25 @@ if [ -x tools/jobs.sh ]; then
     tools/jobs.sh
 fi
 
+# --- выгрузка записи в хранилище: раз в сутки в тихий час --------------
+# Решение владельца 2026-09-25: закрытые сутки — в Hetzner Object Storage,
+# местная копия — 21 сутки. Прогон идёт в 03 UTC (обучение — 02 и 06),
+# когда позавчерашний день ещё не отмечен выгруженным; идущий прогон не
+# дублируется; без ключей блок молчит — тревога по диску скажет за него.
+SHIP_OK_DIR=research/b1_book/out/ship
+SHIP_LOG=research/b1_book/out/ship.log
+if [ -f "$HOME/.hetzner/s3.env" ] \
+   && ! pgrep -f "tools/record_ship.py" >/dev/null; then
+    ship_hh=$(date -u +%H)
+    ship_day=$(date -u -d "2 days ago" +%Y-%m-%d)
+    if [ "$ship_hh" = "03" ] && [ ! -f "$SHIP_OK_DIR/$ship_day.ok" ]; then
+        echo "[$(now)] выгрузка записи: день $ship_day не выгружен — прогон"
+        setsid nohup bash -c "
+            nice -n 10 .venv/bin/python tools/record_ship.py --prune-days 21 \
+                >> $SHIP_LOG 2>&1" &
+    fi
+fi
+
 # --- диски: тревога ДО смерти сборщика (2026-09-24: том 100 %, 12 часов
 # без записи и без единого слова). Порог 90 %; просьба владельцу идёт в
 # журнал «нужно от вас» один раз, сторожу — строка каждый такт, пока
