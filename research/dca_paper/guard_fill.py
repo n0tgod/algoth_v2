@@ -19,9 +19,12 @@
   - `first_after` — открытие первого бара с началом НА границе или
     позже, не дальше 15 минут: первая цена, по которой шорт можно было
     закрыть после решения; нет принта 15 минут — прочерк, а не ноль.
-Разница — в б.п. цены СО ЗНАКОМ пользы шорта (положительно = живьём
-вышли бы лучше) и в деньгах книги: доля маржи = разница × плечо, деньги
-= доля × маржа строки. Итог по каждой книге и депозиту: сколько выходов,
+Разница `first_after` против `close_before` — в б.п. цены СО ЗНАКОМ
+пользы шорта (положительно = живьём вышли бы лучше) и в деньгах книги:
+доля маржи = разница × плечо × заполненная доля билета (из `fills`
+строки: у книги без доливов это четверть), деньги = доля × маржа
+строки. База — закрытие часа по принтам, а не записанная цена: та
+восстанавливалась из отметки с ошибкой (проба 26.09, RAREUSDT). Итог по каждой книге и депозиту: сколько выходов,
 у скольких есть цена после, медиана/среднее/p10/p90 разницы, доля с
 |разницей| > 50 б.п., сумма денег и её отношение к итогу этих сделок.
 
@@ -69,6 +72,16 @@ def side_sign(side):
     return -1.0 if side == "short" else 1.0
 
 
+def filled_share(row):
+    """Заполненная доля билета по `fills` строки; нет заполнений — 1.0."""
+    fills = row.get("fills") or ()
+    try:
+        w = sum(float(f[2]) for f in fills)
+    except (TypeError, ValueError, IndexError):
+        w = 0.0
+    return w if w > 0 else 1.0
+
+
 def measure(rows, bars_of=None, log=log, root=ROOT_B1, remote=None):
     """rows — строки журнала; bars_of(sym, t0, t1) — бары принтов."""
     bars_of = bars_of or (lambda s, a, b: read_bars(root, s, a, b))
@@ -96,11 +109,11 @@ def measure(rows, bars_of=None, log=log, root=ROOT_B1, remote=None):
                                      "usd": 0.0, "usd_trades": 0.0, "big": 0})
             p["n"] += 1
             p["usd_trades"] += float(r.get("usd") or 0.0)
-            if first_after is None:
+            if first_after is None or close_before is None:
                 continue
             side = R.row_side(r)
-            d_bp = side_sign(side) * (first_after - px) / px * 1e4
-            frac = d_bp / 1e4 * float(r["lev"])
+            d_bp = side_sign(side) * (first_after - close_before) / close_before * 1e4
+            frac = d_bp / 1e4 * float(r["lev"]) * filled_share(r)
             p["with_after"] += 1
             p["deltas"].append(d_bp)
             p["usd"] += frac * float(r["margin"])
