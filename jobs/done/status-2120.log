@@ -37,3 +37,13 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-28T21:25:04Z
+публикуется в ветку main:
+ jobs/done/loggrep-2120.done         |  1 +
+ jobs/done/loggrep-2120.log          | 22 +++++++++++++++++++++
+ jobs/done/memtop-2030.log           | 11 +++++++++++
+ jobs/done/memtop-2120.done          |  1 +
+ jobs/done/memtop-2120.log           |  4 ++++
+ jobs/done/status-2120.log           | 39 +++++++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 7 files changed, 79 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 15d88ba9cc2299a5dd4b4fa62e749a75741b2250 but expected 693402ed54caa7453837213923293ca9a5813f17
