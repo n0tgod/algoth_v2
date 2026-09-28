@@ -1,35 +1,60 @@
-== задание memtop-2809b ==
-строка: run tools/memtop.py --day 2026-09-28 --tail 6
-начало: 2026-09-28T17:30:30Z
-запускаю: .venv/bin/python tools/memtop.py --day 2026-09-28 --tail 6
-== free -m (2026-09-28 17:30:30 UTC) ==
+== задание memtop-2709 ==
+строка: run tools/memtop.py --day 2026-09-27 --tail 2
+начало: 2026-09-28T17:35:04Z
+запускаю: .venv/bin/python tools/memtop.py --day 2026-09-27 --tail 2
+== free -m (2026-09-28 17:35:04 UTC) ==
                  total        used        free      shared  buff/cache   available
-  Mem:            7745        1501        3932           4        2848        6243
+  Mem:            7745        5192         639           4        2380        2553
   Swap:              0           0           0
 
 == процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
-  всего памяти у первых 18: 857 МБ
-     21675    14604    353 1506:52  claude --continue
-   1796214        1    348   00:00  .venv/bin/python research/b1_book/collect.py --http 8765
-   1796246  1796106     39   00:00  .venv/bin/python research/s8_loop/train.py
-   2637243        1     26  394:42  /sbin/multipathd -d -s
-   2637231        1     19  394:42  /usr/lib/systemd/systemd-journald
-   1796641  1796637     12   00:00  .venv/bin/python tools/memtop.py --day 2026-09-28 --tail 6
-         1        0     10 1515:46  /usr/lib/systemd/systemd --system --deserialize=75
-       961        1      9 1515:46  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
-   2637242        1      7  394:42  /usr/lib/systemd/systemd-resolved
-    691277        1      5  130:45  /usr/sbin/rsyslogd -n -iNONE
-   1496656        1      4   35:27  /usr/lib/polkit-1/polkitd --no-debug
-   1796672  1796641      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
-   2637234        1      4  394:42  /usr/lib/systemd/systemd-timesyncd
-   2637281        1      4  394:42  /usr/lib/systemd/systemd-networkd
-   2637600        1      4  394:42  sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
-       922        1      3 1515:46  /usr/lib/systemd/systemd-logind
-    669148        1      3  836:02  bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --
-    888036        1      3  106:47  /usr/sbin/qemu-ga
+  всего памяти у первых 18: 4613 МБ
+   1796246        1   3407   00:04  .venv/bin/python research/s8_loop/train.py
+   1796214        1    731   00:04  .venv/bin/python research/b1_book/collect.py --http 8765
+     21675    14604    357 1506:57  claude --continue
+   2637243        1     26  394:46  /sbin/multipathd -d -s
+   2637231        1     19  394:46  /usr/lib/systemd/systemd-journald
+   1797484  1797481     12   00:00  .venv/bin/python tools/memtop.py --day 2026-09-27 --tail 2
+         1        0     10 1515:51  /usr/lib/systemd/systemd --system --deserialize=75
+       961        1      9 1515:50  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   2637242        1      7  394:46  /usr/lib/systemd/systemd-resolved
+    691277        1      5  130:49  /usr/sbin/rsyslogd -n -iNONE
+   2637281        1      5  394:46  /usr/lib/systemd/systemd-networkd
+   1496656        1      4   35:32  /usr/lib/polkit-1/polkitd --no-debug
+   1797515  1797484      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
+   2637234        1      4  394:46  /usr/lib/systemd/systemd-timesyncd
+   2637600        1      4  394:46  sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+       922        1      3 1515:50  /usr/lib/systemd/systemd-logind
+    669148        1      3  836:07  bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --
+    888036        1      3  106:51  /usr/sbin/qemu-ga
 
-== убийства ядра с 2026-09-28 00:00 UTC ==
-  строк 175
+== убийства ядра с 2026-09-27 00:00 UTC ==
+  строк 340
+  2026-09-27T19:06:53+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1607416 (python) total-vm:5163688kB, anon-rss:4943772kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9828kB oom_score_adj:0
+  2026-09-27T19:11:58+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1608066 (python) total-vm:5145052kB, anon-rss:4925764kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9792kB oom_score_adj:0
+  2026-09-27T19:21:06+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1608727 (python) total-vm:5188500kB, anon-rss:4968840kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9884kB oom_score_adj:0
+  2026-09-27T20:00:14+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1609540 (python) total-vm:4555192kB, anon-rss:4160580kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  2026-09-27T20:12:13+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1615367 (python) total-vm:5311204kB, anon-rss:5091488kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10120kB oom_score_adj:0
+  2026-09-27T20:19:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1616790 (python) total-vm:5322696kB, anon-rss:5102752kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10140kB oom_score_adj:0
+  2026-09-27T20:23:49+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1617446 (python) total-vm:5322700kB, anon-rss:5102936kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:10144kB oom_score_adj:0
+  2026-09-27T20:28:28+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1618146 (python) total-vm:5334232kB, anon-rss:5114264kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10160kB oom_score_adj:0
+  2026-09-27T20:34:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1618893 (python) total-vm:5334656kB, anon-rss:5115592kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10164kB oom_score_adj:0
+  2026-09-27T20:39:05+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1619707 (python) total-vm:5309876kB, anon-rss:5089848kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10120kB oom_score_adj:0
+  2026-09-27T21:05:14+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1620590 (python) total-vm:4565520kB, anon-rss:4174468kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:8452kB oom_score_adj:0
+  2026-09-27T21:14:37+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1624851 (python) total-vm:5383252kB, anon-rss:5163708kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10260kB oom_score_adj:0
+  2026-09-27T21:16:59+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1625659 (python) total-vm:5457232kB, anon-rss:5237060kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:10408kB oom_score_adj:0
+  2026-09-27T21:22:05+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1626408 (python) total-vm:5361780kB, anon-rss:5142632kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10220kB oom_score_adj:0
+  2026-09-27T21:29:03+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1627186 (python) total-vm:5344304kB, anon-rss:5124716kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10188kB oom_score_adj:0
+  2026-09-27T21:32:56+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1627986 (python) total-vm:5231608kB, anon-rss:5011932kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9960kB oom_score_adj:0
+  2026-09-27T21:37:41+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1628773 (python) total-vm:5202728kB, anon-rss:4982916kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9908kB oom_score_adj:0
+  2026-09-27T21:43:08+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1629562 (python) total-vm:5233292kB, anon-rss:5013880kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9964kB oom_score_adj:0
+  2026-09-27T21:47:18+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1630345 (python) total-vm:5218584kB, anon-rss:4999116kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9936kB oom_score_adj:0
+  2026-09-27T21:51:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1631139 (python) total-vm:5145088kB, anon-rss:4925780kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9796kB oom_score_adj:0
+  2026-09-27T21:58:58+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1631907 (python) total-vm:5201480kB, anon-rss:4982032kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9904kB oom_score_adj:0
+  2026-09-27T22:06:06+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1632676 (python) total-vm:5168204kB, anon-rss:4948884kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9836kB oom_score_adj:0
+  2026-09-27T22:11:20+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1634181 (python) total-vm:3803528kB, anon-rss:3583780kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:7168kB oom_score_adj:0
+  2026-09-27T23:15:12+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1636109 (python) total-vm:4570416kB, anon-rss:4296968kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:8704kB oom_score_adj:0
+  2026-09-27T23:24:56+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1644364 (python) total-vm:5306996kB, anon-rss:5088104kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:10108kB oom_score_adj:0
   2026-09-28T00:20:12+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1646025 (python) total-vm:4576444kB, anon-rss:4259008kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:8632kB oom_score_adj:0
   2026-09-28T00:30:42+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1653330 (python) total-vm:5343052kB, anon-rss:5123476kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:10184kB oom_score_adj:0
   2026-09-28T00:37:38+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1654714 (python) total-vm:5443180kB, anon-rss:5222860kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10380kB oom_score_adj:0
@@ -206,93 +231,48 @@
   2026-09-28T17:17:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1793551 (python) total-vm:5431184kB, anon-rss:5211364kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10356kB oom_score_adj:0
   2026-09-28T17:26:15+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1794450 (python) total-vm:5450276kB, anon-rss:5231088kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10396kB oom_score_adj:0
 
-== research/s8_loop/out/train.log (хвост 6) ==
-  строк всего 70260
-  [09-28 16:50:18] сводка: символов с записью 778, новых часов 0, 17 с
-  [09-28 16:55:19] сводка: символов с записью 778, новых часов 0, 17 с
-  [09-28 17:05:19] сводка: символов с записью 778, новых часов 0, 17 с
-  [09-28 17:10:18] сводка: символов с записью 778, новых часов 0, 17 с
-  [09-28 17:15:16] сводка: символов с записью 778, новых часов 0, 15 с
-  [09-28 17:20:28] сводка: символов с записью 778, новых часов 0, 26 с
+== research/s8_loop/out/train.log (хвост 2) ==
+  строк всего 70280
+  [09-28 17:33:54]   h4_z_f44_w5_gt_rrhi_se_b0_a1: живой книги нет — полоса control: живая книга заводится только прошедшим проверки и отбор (решение владельца); случайная рука остаётся в суточном реплее, где и живёт сравн
+  [09-28 17:34:10] переобучаю: весам 101.8 ч при каденции 24
 
-== research/dca_paper/out/short.log (хвост 6) ==
+== research/dca_paper/out/short.log (хвост 2) ==
   строк всего 42246
-  
-  Successfully rebased and updated refs/heads/main.
-  To github.com:n0tgod/algoth_v2.git
-     7191bd37..abb8a77d  main -> main
   branch 'main' set up to track 'origin/main'.
   опубликовано
 
-== research/dca_paper/out/daily.log (хвост 6) ==
+== research/dca_paper/out/daily.log (хвост 2) ==
   строк всего 121694
-   4 files changed, 732 insertions(+), 722 deletions(-)
-  To github.com:n0tgod/algoth_v2.git
-     b20c1a71..fb68bfd7  main -> main
-  branch 'main' set up to track 'origin/main'.
   опубликовано
   
 
-== research/dca_paper/out/pair.log (хвост 6) ==
+== research/dca_paper/out/pair.log (хвост 2) ==
   строк всего 56850
-  
-  Successfully rebased and updated refs/heads/main.
-  To github.com:n0tgod/algoth_v2.git
-     5a2cec1d..7036ff9d  main -> main
   branch 'main' set up to track 'origin/main'.
   опубликовано
 
-== research/b1_book/out/collect.log (хвост 6) ==
-  строк всего 1022956
-  [      10 с] шард 3: подключён, подписываюсь на 120 тем
-  [      11 с] шард 4: подключён, подписываюсь на 120 тем
-  [      12 с] шард 5: подключён, подписываюсь на 120 тем
-  [      13 с] шард 6: подключён, подписываюсь на 120 тем
-  [      14 с] ВНИМАНИЕ: полный проход снимков занял 2.53 с при шаге 1 с — снимков в часе будет около 1421, не 3600
-  [      14 с] шард 7: подключён, подписываюсь на 120 тем
+== research/b1_book/out/collect.log (хвост 2) ==
+  строк всего 1022981
+  [     286 с] ситуационная [gbm]: 1 живых входов часа 2026-09-28-10 записаны в книгу
+  [     289 с] ситуационная [nn]: 5 живых входов часа 2026-09-28-10 записаны в книгу
 
-== research/b1_book/out/watchdog.log (хвост 6) ==
-  строк всего 7839
-  [      11 с] шард 4: подключён, подписываюсь на 120 тем
-  == перезапускаю циклы обучения ==
-    не запущен: s8_loop/train.py --pretest
-    не запущен: s8_loop/train.py$
-  [2026-09-28T17:30:28Z] цикл обучения не найден — поднимаю
-  [2026-09-28T17:30:30Z] задание memtop-2809b запущено: tools/memtop.py
+== research/b1_book/out/watchdog.log (хвост 2) ==
+  строк всего 7841
+  [2026-09-28T17:30:34Z] задание status-2809c: состояние снято
+  [2026-09-28T17:35:04Z] задание memtop-2709 запущено: tools/memtop.py
 
-== research/b1_book/out/ship.log (хвост 6) ==
+== research/b1_book/out/ship.log (хвост 2) ==
   строк всего 35
-  [03:15:04] до: /root/algoth_v2/research/b1_book/out: свободно 67.4 ГБ; /root: свободно 71.8 ГБ
-  [03:15:05] дней к выгрузке (не позже 2026-09-26, без отметки): 1 — 2026-09-26 … 2026-09-26; предел за прогон 20 ГБ
-  [03:15:11] 2026-09-26: архивов 2676 из 56354 файлов, 2.84 ГБ, отправлено 2 (было 2674), отказов 0, ETag не совпал у 0, ЗАКРЫТ
-  [03:15:11] снятие местных копий старше 21 сут:
   [03:15:12] после: /root/algoth_v2/research/b1_book/out: свободно 67.4 ГБ; /root: свободно 71.8 ГБ; 8 с
   [03:15:12] итого отправлено 0.01 ГБ, дней закрыто 1 из 1
 
-== research/a1_universe/out/refresh.log (хвост 6) ==
+== research/a1_universe/out/refresh.log (хвост 2) ==
   строк всего 12689
-  Прогон 2026-09-28: символов 1085, добавлено точек 3525, отказов сети 0, пустых рядов 0, 58.2 с.
-  
-  Край рядов после догона: минимум 2022-02-14, медиана 2026-09-28, максимум 2026-09-28. Ряд, край которого старше сегодняшнего дня, у площадки кончился (контракт снят) либо отказал сетью — отказы поимённо ниже.
-  
   Отказов нет.
   
 
-== research/a1_universe/out/instruments.log (хвост 6) ==
+== research/a1_universe/out/instruments.log (хвост 2) ==
   строк всего 414
-   research/s8_loop/out/day_brake.json               |   2 +-
-   10 files changed, 1154 insertions(+), 110 deletions(-)
-  To github.com:n0tgod/algoth_v2.git
-     5fb4ff58..9e2b4c9b  main -> main
   branch 'main' set up to track 'origin/main'.
   опубликовано
-конец: 2026-09-28T17:30:32Z, код 0
-публикуется в ветку main:
- jobs/done/logtail-block-start.log   |   7 +
- jobs/done/memtop-2809.log           |   4 +
- jobs/done/memtop-2809b.done         |   1 +
- jobs/done/memtop-2809b.log          | 289 ++++++++++++++++++++++++++++++++++++
- jobs/done/status-2809c.log          |  45 ++++++
- research/s8_loop/out/day_brake.json |   2 +-
- 6 files changed, 347 insertions(+), 1 deletion(-)
-fatal: cannot lock ref 'HEAD': is at 38a3144ee5a0f9fa4b817a697c2ab91e7a6476eb but expected 5fae2c7c0f92fb8fd651ddf3f64d29f9d24974ad
+конец: 2026-09-28T17:35:06Z, код 0
