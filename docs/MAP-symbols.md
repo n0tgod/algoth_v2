@@ -7970,6 +7970,17 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L71 `role_busy()` — --- подтянуть задания ------------------------------------------------ Только перемотка вперёд: расхождение о…
 - L87 `note()`
 
+## tools/logtail.py · 88 строк
+
+Выдержка логов сервера за окно времени — через очередь заданий.
+
+- L20 `ROOT = os.path.dirname(os.path.dirname(os.path…`
+- L21 `LOGS = ('research/b1_book/out/watchdog.log', '…`
+- L23 `STAMP = re.compile('(\\d{4}-\\d{2}-\\d{2})[T ](…`
+- L26 `hour(s)`
+- L30 `in_window(line, a, b)`
+- L42 `main(argv=None)`
+
 ## tools/probe_cli_models.py · 56 строк
 
 Какие модели принимает CLI НА ЭТОЙ машине.
