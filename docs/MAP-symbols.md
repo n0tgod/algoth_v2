@@ -4266,6 +4266,168 @@ M2: каркас walk-forward — чистая математика без чт�
 - L981 `publish(name)`
 - L986 `main(argv=None)`
 
+## research/mech_59653014/bars.py · 247 строк
+
+Минутные бары из архива A1 — чтение, дедупликация, доступ по метке.
+
+- L44 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L45 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L46 `ARCHIVE = os.path.join(ROOT, 'research', 'a1_univ…`
+- L47 `CACHE = os.path.join(HERE, 'cache')`
+- L49 `MIN_MS = 60000`
+- L57 `class Bars` — Минутный ряд одного символа: метки и поля в numpy, доступ по метке.
+  - L64 `Bars.__init__(self, symbol, ts, op, cl, vol, tbv)`
+  - L74 `Bars.__len__(self)`
+  - L77 `Bars.index(self, ts_ms)` — Номер бара с ТОЧНО этой меткой; такого бара нет — None.
+  - L84 `Bars.at_open(self, ts_ms)` — Цена открытия минуты `ts_ms` — цена в момент `ts_ms`.
+  - L92 `Bars.at_close(self, ts_ms)` — Цена закрытия минуты, ЗАКОНЧИВШЕЙСЯ в `ts_ms`.
+  - L102 `Bars.window(self, lo_ms, hi_ms)` — Номера баров в полуинтервале [lo, hi) — как срез (a, b).
+  - L108 `Bars.bytes(self)`
+- L113 `_zips(symbol, interval)`
+- L122 `_stamp(paths, symbol, interval, lo_ms, hi_ms)` — Состав кеша: чем он отличается от кеша другого окна или прогона.
+- L130 `_read_zips(paths, lo_ms, hi_ms, log)` — Разбор архива в `array`, а не в списки, и это про ПАМЯТЬ.
+- L163 `load(symbol, lo_ms, hi_ms, interval='1m', use_cache=True, log=p…` — Ряд символа в полуинтервале [lo_ms, hi_ms). Пусто — ОТКАЗ.
+- L213 `from_rows(symbol, rows)` — Ряд из списка `(ts_ms, open, close, volume, taker_buy)` — для тестов.
+- L224 `coverage(b, lo_ms, hi_ms)` — Доля минут окна, покрытых барами. Покрытие — число ДО вердикта.
+- L233 `main()`
+
+## research/mech_59653014/etf_rebal.py · 677 строк
+
+Ребаланс плечевых крипто-ETF в последний час Нью-Йорка: ядро механики.
+
+- L69 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L70 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L79 `ET = ZoneInfo('America/New_York')`
+- L80 `MIN_MS = BR.MIN_MS`
+- L81 `HOUR_MS = 3600000`
+- L86 `QUAL_ABS_R = 0.02` — Квалификация суток: |ход дня| не меньше двух процентов.
+- L88 `MIN_QUAL_DAYS = 200` — Меньше этого числа квалифицированных дней — «не измерено», не вердикт.
+- L91 `K1_FLOOR_BP = ROUND_COST_BP` — K1: круг ОДНОЙ ноги. Число живёт в расчётном ядре проекта, и второй копии у него быть не должно.
+- L93 `K2_MIN_T = 2.0` — K2 и K4: разность окон и разность календарей значима при t ≥ 2.
+- L94 `K4_MIN_T = 2.0`
+- L96 `K3_PCT = 95.0` — K3: час-вердикт обязан быть выше p95 распределения по остальным часам.
+- L97 `VERDICT_HOUR = 15`
+- L99 `K5_MIN_SLOPE = 0.0` — K5: наклон хода со знаком на |ход дня| обязан быть положительным.
+- L102 `BOOTSTRAP = 2000` — Бутстрап по дням: дни независимы, перекрытия здесь нет.
+- L103 `BOOTSTRAP_SEED = 20260928`
+- L106 `RISK_PER_HOUR = 0.005` — Размер позиции: доля депозита = min(1, целевой риск / σ̂ часа).
+- L107 `SIGMA_LOOKBACK_MIN = 1440`
+- L110 `SIGMA_MIN_MINUTES = 1200` — Ниже этого покрытия окна σ̂ — ПРОЧЕРК, а не «σ маленькая». Обратная волатильность без пола есть замороженный…
+- L115 `FUND_START_DECLARED = {'BTCUSDT': dt.date(2023, 6, 27), 'ETHU…` — Окна. Даты запуска фондов объявлены заявкой и сверяются `fund_dates.py` по страницам фондов; сверенная дата п…
+- L119 `FUND_END = dt.date(2026, 9, 25)`
+- L120 `PLACEBO_LO = dt.date(2021, 1, 1)`
+- L121 `PLACEBO_HI = dt.date(2023, 6, 26)`
+- L123 `REF_PREV_SESSION = 'prev_session'`
+- L124 `REF_PREV_CALENDAR = 'prev_calendar'`
+- L126 `UNMEASURED = 'не измерено'`
+- L127 `DEAD = 'мертво'`
+- L128 `ALIVE = 'жив'`
+- L133 `et_instant(day, hour)` — Момент (мс UTC) стенных часов Нью-Йорка `hour:00` на `day`.
+- L157 `sig_price(b, ms)` — Цена сигнала: последняя цена, известная строго ДО момента `ms`.
+- L162 `fill_price(b, ms)` — Цена исполнения: первая цена ПОСЛЕ момента `ms`.
+- L169 `sigma_hour(b, ms)` — Реализованная σ минутных ходов за сутки до `ms`, приведённая к часу.
+- L191 `size_frac(sig_h)` — Доля депозита в нотионале: min(1, риск на час / σ̂ часа).
+- L205 `hour_row(b, cal, day, hour=VERDICT_HOUR, ref_mode=REF_PREV_SESS…` — Один день при сдвиге часов `hour`. Возвращает (строка, причина).
+- L259 `_extras(b, day, hour, sign, t_sig, t_out)` — Столбцы, которые вердикта не выносят: полчаса, откат, размер, лента.
+- L279 `aggressor_signed_pp(b, t0, t1, sign)` — Перевес агрессора-покупателя в окне, со знаком хода дня, в п.п.
+- L299 `usd_volume(b, t0, t1)` — Оборот окна в долларах: объём минуты на её цену. Пусто — прочерк.
+- L314 `day_table(b, cal, days, hour=VERDICT_HOUR, ref_mode=REF_PREV_SE…` — Строки по списку дней. Ноль строк при непустом входе — ОТКАЗ.
+- L337 `qualified(rows)` — Квалифицированные строки: |ход дня| ≥ порога и знак не ноль.
+- L344 `stat(values)` — Среднее, t по наблюдениям, бутстрап-интервал. Пусто — прочерк.
+- L368 `welch_t(a, b)` — t разности средних двух независимых выборок. Мало данных — прочерк.
+- L379 `slope_on_abs_r(rows)` — Наклон хода со знаком (б.п.) на |ход дня| (%) и его t.
+- L403 `plant_bars(b, cal, days, bp=30.0, frac=0.5, seed=7, shape='flat…` — Подсадить ход `bp` б.п. в час h → h+1 на доле `frac` квалифицированных дней, ПРЯМО В ЦЕНЫ. Возвращает (новый…
+- L440 `shuffle_signs(rows, seed=11)` — Перемешать знаки хода дня по дням, оставив ходы на местах.
+- L464 `_cmp_phrase(value, thr, dead, unit, what)` — Фраза убийцы, выведенная ИЗ ЧИСЛА.
+- L478 `killers(rows_fund, rows_placebo, rows_nontrade, by_hour)` — K1–K5 числами и фразами. Каждая фраза выведена из своего числа.
+- L536 `verdict(ks, n_qual)` — Вердикт заявке: живо, мертво или не измерено. Выводится из чисел.
+- L559 `money(rows, cost_bp=ROUND_COST_BP)` — Счёт сделки на квалифицированных днях, в процентах депозита.
+- L593 `windows(symbol, fund_start=None, fund_end=None)` — Окна имени: фонд, плацебо. Дата запуска — сверенная либо объявленная.
+- L604 `by_hour_means(b, cal, lo, hi, log=None)` — Среднее м по квалифицированным дням для каждого из 24 часов.
+- L623 `measure_symbol(b, cal, fund_start=None, fund_end=None, log=None)` — Полный замер имени: строки окон, K1–K5, вердикт, деньги, покрытие.
+- L665 `BUCKETS = ((0.01, 0.02), (0.02, 0.03), (0.03, 0.0…`
+- L668 `buckets(rows)` — Ход со знаком по корзинам |ход дня|. Пустая корзина — прочерк.
+
+## research/mech_59653014/fund_dates.py · 215 строк
+
+Сверка дат запуска плечевых фондов по их собственным страницам.
+
+- L35 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L36 `OUT = os.path.join(HERE, 'out')`
+- L37 `PATH = os.path.join(OUT, 'fund_dates.json')`
+- L39 `TIMEOUT = 25`
+- L40 `UA = 'algoth-mech-59653014/1.0 (fund incepti…`
+- L45 `FUNDS = [{'ticker': 'BITX', 'symbol': 'BTCUSDT'…` — Фонды и их страницы. Источники — записи разведчика (`research/factory/out/scout.jsonl`, at 1790475243.616). С…
+- L57 `MONTHS = {m: i for i, m in enumerate(['january',…`
+- L63 `DATE_LABELS = ('inception date', 'fund inception', 'i…` — Ярлыки, рядом с которыми на странице фонда стоит дата запуска. Список закрытый: «любое число рядом со словом…
+- L65 `AUM_LABELS = ('total net assets', 'net assets', 'fun…`
+- L69 `text_of(body)`
+- L75 `parse_date(s)` — Дата из строки в виде ISO. Не разобралась — None, не «сегодня».
+- L98 `find_value(t, labels, parser, take=120)` — Ярлык, хвост за ним и разобранное значение. Ничего — (None, None, None).
+- L122 `AUM_MIN_USD = 1000000.0` — Активы фонда ниже этого — не активы фонда, а число, схваченное мимо ярлыка. Разобранное неправдоподобное знач…
+- L125 `parse_money(s)` — Сумма в долларах: `$1,320,640,709.94`, `$1.32 billion`. Нет — None.
+- L146 `check(fund, log=print)`
+- L178 `read(path=PATH)` — Сверенные даты: {символ: (ISO-дата, тикер, откуда)}. Нет файла — пусто.
+- L199 `main()`
+
+## research/mech_59653014/nyse_cal.py · 252 строк
+
+Календарь торговых дней NYSE 2021–2026 — кодом, а не списком.
+
+- L59 `TRADE = 'trade'`
+- L60 `EARLY = 'early'`
+- L61 `HOLIDAY = 'holiday'`
+- L62 `WEEKEND = 'weekend'`
+- L65 `CLOSE_H = 16` — Закрытие полной сессии и ранней, часы Нью-Йорка.
+- L66 `EARLY_CLOSE_H = 13`
+- L71 `FIRST_YEAR = 2020` — Годы, на которые календарь объявлен. Дата вне этого диапазона — ОТКАЗ, а не «наверное, торговый день»: молчал…
+- L72 `LAST_YEAR = 2026`
+- L77 `SPECIAL_CLOSED = {dt.date(2025, 1, 9): 'национальный тра…` — Внеплановые закрытия: объявляются биржей, правилом не выводятся. Каждая строка — дата и причина; причина нужн…
+- L82 `easter(year)` — Католическая Пасха (анонимный григорианский алгоритм).
+- L97 `nth_weekday(year, month, weekday, n)` — n-й `weekday` (0 = понедельник) месяца; n < 0 — считая с конца.
+- L111 `_observed(d)` — Перенос праздника с выходного: суббота → пятница, воскресенье → понедельник. Новый год пользуется своим прави…
+- L121 `holidays(year)` — Полные закрытия NYSE в году: {дата: имя}.
+- L146 `early_closes(year)` — Дни ранней сессии (13:00 ET) в году: {дата: имя}.
+- L164 `class Calendar` — Категория каждого дня в объявленном диапазоне лет.
+  - L172 `Calendar.__init__(self, first_year=FIRST_YEAR, last_year=LAST_YEAR)`
+  - L180 `Calendar.kind(self, d)`
+  - L193 `Calendar.close_hour(self, d)` — Час закрытия сессии по Нью-Йорку; у неторгового дня — прочерк.
+  - L202 `Calendar.why(self, d)` — Почему день неторговый: имя праздника или имя ранней сессии.
+  - L206 `Calendar.sessions(self)` — Все дни с сессией (TRADE и EARLY) по порядку.
+  - L218 `Calendar.prev_session(self, d)` — Предыдущий день с сессией; до начала диапазона — прочерк.
+  - L225 `Calendar.days(self, lo, hi, kinds)` — Дни диапазона [lo, hi] названных категорий, по порядку.
+- L235 `main()` — Печать календаря — чтобы правило можно было прочитать глазами.
+
+## research/mech_59653014/run_ceiling.py · 486 строк
+
+Потолок механики «ребаланс плечевых крипто-ETF в последний час Нью-Йорка».
+
+- L34 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L35 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L36 `OUT = os.path.join(HERE, 'out')`
+- L46 `SYMBOLS = ('BTCUSDT', 'ETHUSDT')`
+- L47 `TITLE = {'BTCUSDT': 'BTC', 'ETHUSDT': 'ETH'}`
+- L48 `ARCHIVE_LO = dt.date(2021, 1, 1)`
+- L49 `ARCHIVE_HI = dt.date(2026, 9, 25)`
+- L50 `SHUFFLE_SEEDS = 8`
+- L51 `PLANT_BP = 30.0`
+- L52 `PLANT_FRAC = 0.5`
+- L56 `PLANT_SCAN_BP = (30.0, 60.0, 120.0, 240.0)` — Развёртка силы замера: величина подсадки, не порог. Нужна, чтобы отрицательный результат читался — стенд, не…
+- L57 `REPORT = os.path.join(OUT, 'MECH-etf-rebal.md')`
+- L58 `DATA = os.path.join(OUT, 'etf_rebal.json')`
+- L59 `STATE = os.path.join(OUT, 'state.json')`
+- L62 `num(v, fmt='{:.2f}', dash='—')` — Число или ПРОЧЕРК. Ноль тут не появляется никогда: он значит «измерено и равно нулю», а не «нечем измерить».
+- L68 `state(step, **kw)`
+- L75 `plant_killers(b, cal, days, fund_start, fund_end, bp, shape)` — K1–K5 на ряду с подсадкой. Возвращает (сводка, число дней).
+- L97 `calibrate(b, cal, fund_start, fund_end, log)` — Калибровочная пара на НАСТОЯЩЕМ ряду: подсадка, развёртка силы, нуль.
+- L155 `run_symbol(sym, cal, checked, log, use_cache=True)`
+- L187 `killers_table(res)`
+- L207 `hours_table(res)`
+- L216 `report(results, checked, started)` — Отчёт. Первая строка после заголовка — покрытие числом.
+- L423 `BOOT_N = ER.BOOTSTRAP`
+- L426 `res_m(r)` — Измеренное м имени — чтобы фраза о силе замера стояла на ЧИСЛЕ.
+- L431 `main()`
+
 ## research/mech_994fc54f/bid_survives.py · 929 строк
 
 Механика 994fc54f — поглощение после падения со ЗНАМЕНАТЕЛЕМ.

@@ -2318,6 +2318,66 @@
 - L580 `TESTS = [test_draw_keeps_depth_and_form, test_d…`
 - L614 `main()`
 
+## research/mech_59653014/test_etf_rebal.py · 800 строк
+
+Проверки механики «ребаланс плечевых ETF в последний час Нью-Йорка».
+
+- L44 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L53 `D = dt.date`
+- L54 `MIN = BR.MIN_MS`
+- L57 `eq(a, b, tol=1e-09, what='')`
+- L64 `class Tape` — Лента по часовым границам Нью-Йорка: только нужные минуты.
+  - L71 `Tape.__init__(self, symbol='BTCUSDT')`
+  - L75 `Tape.put(self, ts, op=None, cl=None, vol=1000.0, tbv=500.0)`
+  - L84 `Tape.hour(self, day, hour, sig=None, fill=None, vol=1000.0, tbv=500.…` — Цена сигнала в `hour:00` (закрытие предыдущей минуты) и цена исполнения в `hour:00` (открытие этой минуты).
+  - L95 `Tape.bars(self)`
+- L101 `walk_tape(lo, hi, hour_sd_bp=25.0, day_lo=2.0, day_hi=6.0, seed…` — Лента, у которой ход дня и ход часа заданы по отдельности.
+- L129 `_CACHE = {}`
+- L132 `calib_bars(**kw)` — Лента калибровки на полном диапазоне окон. Считается один раз.
+- L140 `cal_()`
+- L146 `test_calendar_matches_known_nyse_dates()` — Правила календаря дают ИЗВЕСТНЫЕ даты, а не правдоподобные.
+- L174 `test_calendar_refuses_a_year_it_was_not_declared_for()` — Год, чьи правила не сверены, — ОТКАЗ, а не «наверное, торговый».
+- L188 `test_early_close_day_is_its_own_category()` — Ранняя сессия закрывается в 13:00, и это не 16:00 и не выходной.
+- L200 `test_new_york_hour_moves_with_daylight_saving()` — 16:00 ET — это 20:00 UTC летом и 21:00 зимой, а не одно число.
+- L209 `test_missing_and_doubled_hour_of_the_dst_switch_are_dashes()` — Час, которого нет, и час, которых два, — прочерк, не молчаливый выбор.
+- L218 `test_signal_is_the_previous_minute_close_and_fill_is_this_minut…` — Сигнал — закрытие минуты ДО момента, исполнение — открытие минуты С него.
+- L231 `test_missing_minute_is_a_dash_not_a_neighbour()` — Минуты, которой в архиве нет, не существует: None, не соседний бар.
+- L241 `test_duplicate_bars_from_daily_files_are_dropped()` — Суточный файл приносит день целиком — дубли снимаются по метке.
+- L281 `test_load_refuses_an_empty_window()` — Ноль баров при существующем архиве — ОТКАЗ загрузки, не пустой рынок.
+- L305 `test_coverage_is_a_number_before_the_verdict()` — Покрытие окна — число; окно нулевой длины — прочерк, не единица.
+- L315 `_one_day_tape(day, r_day=0.03, move_bp=40.0, prev=None, hour=15)`
+- L329 `test_day_row_signs_the_hour_move_by_the_day_move()` — Ход часа берётся СО ЗНАКОМ хода дня — и на падении тоже.
+- L340 `test_qualification_gate_uses_the_declared_two_percent()` — Квалификация — объявленные 2 % по |ход дня|, и порог не подбирается.
+- L351 `test_early_close_day_is_not_a_full_session()` — В ранний день пай считают к 13:00 — часа 15–16 у фонда нет.
+- L360 `test_day_after_early_close_is_skipped_with_a_named_reason()` — У дня после ранней сессии отсчёт хода дня лежит в 13:00, не в 16:00.
+- L369 `test_non_trading_day_needs_the_calendar_reference()` — У выходного нет предыдущего дня фонда — отсчёт календарный, и это сказано.
+- L382 `test_day_table_refuses_zero_rows_on_a_non_empty_input()` — Ноль строк при непустом списке дней — исключение, не отчёт с прочерками.
+- L395 `test_skips_are_counted_by_named_reason()` — Выпавший день считается с названной причиной: пропуск ≠ ноль.
+- L413 `test_signal_does_not_read_the_future()` — Переписать всё с 15:00 — сигнал не шелохнётся, а исполнение изменится.
+- L456 `test_the_future_rewrite_test_is_not_hollow()` — Правка ЦЕНЫ ВЫХОДА обязана менять ход часа — тест не холостой.
+- L475 `test_sigma_needs_its_minutes_else_a_dash()` — Недобор окна σ̂ — прочерк, а не «σ маленькая».
+- L493 `test_size_is_capped_at_the_deposit()` — Тихий час не даёт плеча: доля депозита не превышает единицы.
+- L504 `test_money_counts_only_days_with_a_size()` — День без размера в счёт не входит и считается отдельно.
+- L522 `test_stat_is_a_dash_on_emptiness_not_a_zero()` — Пустая выборка — прочерки; ноль означает «измерено и равно нулю».
+- L532 `test_slope_measures_growth_with_the_move()` — K5 меряет рост выплаты с |ход дня|: поток фонда есть 2·A·r.
+- L547 `_ks(m_bp=30.0, n=250, placebo_bp=0.0, nontrade_bp=0.0, hour15=3…`
+- L566 `test_k1_compares_with_the_round_of_one_leg()` — Порог K1 — круг ОДНОЙ ноги из расчётного ядра, а не своя копия числа.
+- L574 `test_k3_compares_the_verdict_hour_with_the_other_hours_p95()` — Час 15–16 судится против p95 ОСТАЛЬНЫХ часов, а не против себя.
+- L583 `test_too_few_days_is_unmeasured_not_a_verdict()` — Дней меньше объявленного минимума — «не измерено», и покрытие первым.
+- L594 `test_verdict_phrase_follows_the_number()` — Фраза вердикта выведена из чисел: подделка числа её переворачивает.
+- L605 `test_killer_phrase_flips_with_the_number()` — И знак сравнения, и слово убийцы считаются от значения, а не стоят рядом.
+- L616 `test_verdict_hour_is_the_same_code_as_the_hour_sweep()` — Час 15–16 в K3 обязан быть тем же числом, что измеряемая сделка.
+- L635 `_measure(b, **kw)`
+- L639 `test_random_walk_stays_silent()` — На случайном блуждании замер обязан МОЛЧАТЬ: K1 мертво.
+- L649 `test_planted_move_in_prices_passes_the_killers()` — Подсадка ∝ |ход дня| в ЦЕНЫ обязана пройти K1–K5.
+- L668 `test_flat_plant_passes_k1_to_k4_and_leaves_k5_to_the_shape()` — Ровная подсадка обязана пройти K1–K4 — и НЕ обязана проходить K5.
+- L686 `test_shuffled_signs_kill_k1_and_flatten_the_slope()` — Перемешанные знаки хода дня обязаны уронить K1 и обнулить наклон.
+- L731 `test_aggressor_share_is_a_dash_on_zero_volume()` — Нулевой объём — прочерк, а не 0.5: «не измерено» ≠ ноль.
+- L746 `test_fund_date_parsers_refuse_a_wrong_catch()` — Разборщик страницы фонда молчит там, где схватил не то.
+- L765 `test_fund_window_prefers_the_checked_date()` — Сверенная дата побеждает объявленную, а её отсутствие — прочерк.
+- L775 `ALL = [v for k, v in sorted(globals().items()…`
+- L778 `main()`
+
 ## research/mech_994fc54f/test_bid_survives.py · 530 строк
 
 Тесты механики 994fc54f — поглощение после падения.
