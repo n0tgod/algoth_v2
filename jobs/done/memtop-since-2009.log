@@ -123,3 +123,13 @@
   {"kind": "books", "seq": 527, "hour": "2026-09-24-18", "at": "09-24 19:54", "sections": 1199, "symbols": 784, "train_why": "весам 8.2 ч при каденции 24", "steps_sec": {"сведение часа": 45.6, "матрица": 89.8, "книги": 96.
   {"kind": "books", "seq": 527, "hour": "2026-09-24-19", "at": "09-24 20:13", "sections": 1200, "symbols": 784, "train_why": "весам 8.5 ч при каденции 24", "steps_sec": {"сведение часа": 44.0, "матрица": 98.3, "книги": 76.
 конец: 2026-09-28T17:40:12Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-2709.log           |  11 ++++
+ jobs/done/memtop-since-2009.done    |   1 +
+ jobs/done/memtop-since-2009.log     | 125 ++++++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 4 files changed, 138 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   8a082cbc..1b53ce84  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
