@@ -7995,18 +7995,19 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L30 `in_window(line, a, b)`
 - L42 `main(argv=None)`
 
-## tools/memtop.py · 121 строк
+## tools/memtop.py · 138 строк
 
 Кто держит память на сервере — через очередь заданий.
 
 - L21 `ROOT = os.path.dirname(os.path.dirname(os.path…`
 - L22 `LOGS = ('research/s8_loop/out/train.log', 'res…`
 - L32 `PS_TOP = 18`
-- L33 `ARGS_W = 150`
-- L36 `sh(cmd, timeout=60)` — stdout команды строками; ошибка — одной строкой с причиной.
-- L48 `ps_rows(lines, top=PS_TOP, width=ARGS_W)` — Строки `ps -eo pid,ppid,rss,etimes,args` → (pid, ppid, МБ, возраст, args).
-- L71 `tail_lines(path, n)`
-- L80 `main(argv=None)`
+- L36 `DU_DIRS = ('research/b1_book/out/cache', 'researc…` — Каталоги, чей размер спрашивается по `--du`: кэш чтения из бакета (предел `remote.cache_gb`), сводки цикла, с…
+- L40 `ARGS_W = 150`
+- L43 `sh(cmd, timeout=60)` — stdout команды строками; ошибка — одной строкой с причиной.
+- L55 `ps_rows(lines, top=PS_TOP, width=ARGS_W)` — Строки `ps -eo pid,ppid,rss,etimes,args` → (pid, ppid, МБ, возраст, args).
+- L78 `tail_lines(path, n)`
+- L87 `main(argv=None)`
 
 ## tools/probe_cli_models.py · 56 строк
 

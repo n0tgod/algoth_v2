@@ -30,6 +30,13 @@ LOGS = ("research/s8_loop/out/train.log",
         "research/a1_universe/out/instruments.log",
         "research/s8_loop/out/model/train_log.jsonl")
 PS_TOP = 18
+# Каталоги, чей размер спрашивается по `--du`: кэш чтения из бакета
+# (предел `remote.cache_gb`), сводки цикла, сырой поток записи. Полная
+# запись (миллионы файлов) сюда не входит — `du` по ней идёт минуты.
+DU_DIRS = ("research/b1_book/out/cache", "research/b1_book/out/raw",
+           "research/b1_book/out/liq", "research/b1_book/out/metrics",
+           "research/s8_loop/out/summary", "research/s8_loop/out/model",
+           "research/dca_paper/out", "research/b1_book/out/ship")
 ARGS_W = 150
 
 
@@ -82,6 +89,7 @@ def main(argv=None):
     ap.add_argument("--day", default=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                     help="ГГГГ-ММ-ДД UTC — убийства ядра с начала этого дня")
     ap.add_argument("--tail", type=int, default=40, help="строк хвоста на лог")
+    ap.add_argument("--du", action="store_true", help="размер каталогов из списка")
     a = ap.parse_args(argv)
     print(f"== free -m ({datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC) ==")
     for ln in sh(["free", "-m"]):
@@ -104,6 +112,15 @@ def main(argv=None):
         print("  последнее: " + kills[-1][:220])
     for ln in got[-30:]:
         print("  " + ln[:220])
+    if a.du:
+        print("\n== размер каталогов (du -sh) ==")
+        for rel in DU_DIRS:
+            p = os.path.join(ROOT, rel)
+            if not os.path.isdir(p):
+                print(f"  {rel}: (нет)")
+                continue
+            got = sh(["du", "-sh", p], timeout=120)
+            print(f"  {rel}: {(got[0].split()[0] if got and got[0].split() else '?')}")
     for rel in LOGS:
         p = os.path.join(ROOT, rel)
         print(f"\n== {rel} (хвост {a.tail}) ==")

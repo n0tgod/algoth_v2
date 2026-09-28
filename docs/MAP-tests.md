@@ -4308,7 +4308,7 @@ X1: исполнитель против подставной биржи.
 - L27 `test_preset_cycle_matches_milestones()`
 - L36 `test_main_without_file()`
 
-## tools/test_memtop.py · 60 строк
+## tools/test_memtop.py · 61 строк
 
 Проверка `tools/memtop.py`: разбор `ps`, хвост лога, отсутствующий файл.
 

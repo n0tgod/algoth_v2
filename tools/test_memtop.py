@@ -45,12 +45,13 @@ def test_main_runs_without_server_logs(capsys=None):
     from contextlib import redirect_stdout
     buf = io.StringIO()
     with redirect_stdout(buf):
-        rc = M.main(["--day", "2026-09-28", "--tail", "3"])
+        rc = M.main(["--day", "2026-09-28", "--tail", "3", "--du"])
     out = buf.getvalue()
     assert rc == 0
     assert "== free -m" in out and "== процессы по памяти" in out
     assert "убийств 0" in out or "убийств " in out, out
     assert out.count("(файла нет)") + out.count("строк всего") == len(M.LOGS), out
+    assert "== размер каталогов" in out and out.count(": (нет)") + out.count("K\n") + out.count("M\n") + out.count("G\n") >= len(M.DU_DIRS) - 1, out
 
 
 if __name__ == "__main__":
