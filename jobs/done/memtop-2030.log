@@ -133,3 +133,14 @@
   {"kind": "books", "seq": 527, "hour": "2026-09-24-18", "at": "09-24 19:54", "sections": 1199, "symbols": 784, "train_why": "весам 8.2 ч при каденции 24", "steps_sec": {"сведение часа": 45.6, "матрица": 89.8, "книги": 96.
   {"kind": "books", "seq": 527, "hour": "2026-09-24-19", "at": "09-24 20:13", "sections": 1200, "symbols": 784, "train_why": "весам 8.5 ч при каденции 24", "steps_sec": {"сведение часа": 44.0, "матрица": 98.3, "книги": 76.
 конец: 2026-09-28T20:35:15Z, код 0
+публикуется в ветку main:
+ docs/MAP.md                |   2 +-
+ jobs/done/loggrep-2030.log |   1 +
+ jobs/done/memtop-2030.log  | 131 +++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/status-2030.done |   1 +
+ jobs/done/status-2030.log  |  12 +++++
+ 5 files changed, 146 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   a8c1fc82..9dc54dd6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

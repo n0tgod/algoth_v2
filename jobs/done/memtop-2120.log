@@ -1,0 +1,4 @@
+== задание memtop-2120 ==
+строка: run tools/memtop.py --day 2026-09-28 --tail 3 --du
+начало: 2026-09-28T21:25:03Z
+запускаю: .venv/bin/python tools/memtop.py --day 2026-09-28 --tail 3 --du
