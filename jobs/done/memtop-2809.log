@@ -1,0 +1,406 @@
+  2026-09-28T15:51:36+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1783231 (python) total-vm:4442800kB, anon-rss:4223464kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  2026-09-28T15:59:20+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1783820 (python) total-vm:4455828kB, anon-rss:4236520kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8440kB oom_score_adj:0
+  2026-09-28T16:01:04+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1784410 (python) total-vm:4435352kB, anon-rss:4215396kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  2026-09-28T16:06:47+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1784997 (python) total-vm:4443020kB, anon-rss:4223976kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  2026-09-28T16:15:59+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1785580 (python) total-vm:4463080kB, anon-rss:4243308kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8460kB oom_score_adj:0
+  2026-09-28T16:21:00+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1786759 (python) total-vm:4432412kB, anon-rss:4212588kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8408kB oom_score_adj:0
+  2026-09-28T16:28:49+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1787346 (python) total-vm:4449916kB, anon-rss:4230124kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  2026-09-28T16:34:27+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1787936 (python) total-vm:4445624kB, anon-rss:4226096kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  2026-09-28T16:36:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1788535 (python) total-vm:4431084kB, anon-rss:4211172kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  2026-09-28T16:45:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1789115 (python) total-vm:4441184kB, anon-rss:4221292kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:8416kB oom_score_adj:0
+  2026-09-28T16:46:50+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1789704 (python) total-vm:4424192kB, anon-rss:4204908kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  2026-09-28T16:53:14+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1790294 (python) total-vm:4422700kB, anon-rss:4203500kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1790894 (python) total-vm:4437048kB, anon-rss:4217708kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8412kB oom_score_adj:0
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1792054 (python) total-vm:4384928kB, anon-rss:4165352kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1792635 (python) total-vm:4403968kB, anon-rss:4184556kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8340kB oom_score_adj:0
+  2026-09-28T17:17:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1793551 (python) total-vm:5431184kB, anon-rss:5211364kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10356kB oom_score_adj:0
+  2026-09-28T17:26:15+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1794450 (python) total-vm:5450276kB, anon-rss:5231088kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10396kB oom_score_adj:0
+
+== research/s8_loop/out/train.log (хвост 40) ==
+  строк всего 70260
+  [09-28 14:00:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 14:05:31]   сводка: 663/784 символов, новых часов 0
+  [09-28 14:05:36] сводка: символов с записью 778, новых часов 0, 35 с
+  [09-28 14:10:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 14:15:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 14:25:17] сводка: символов с записью 778, новых часов 0, 16 с
+  [09-28 14:30:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 14:35:19] сводка: символов с записью 778, новых часов 0, 18 с
+  [09-28 14:40:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 14:45:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 14:50:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 14:55:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 15:00:18] сводка: символов с записью 778, новых часов 0, 16 с
+  [09-28 15:05:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 15:15:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 15:20:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 15:25:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 15:30:31]   сводка: 667/784 символов, новых часов 0
+  [09-28 15:30:37] сводка: символов с записью 778, новых часов 0, 36 с
+  [09-28 15:35:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 15:45:19] сводка: символов с записью 778, новых часов 0, 18 с
+  [09-28 15:50:31]   сводка: 703/784 символов, новых часов 0
+  [09-28 15:50:35] сводка: символов с записью 778, новых часов 0, 34 с
+  [09-28 15:55:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:00:27] сводка: символов с записью 778, новых часов 0, 26 с
+  [09-28 16:05:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:10:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:20:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:25:17] сводка: символов с записью 778, новых часов 0, 16 с
+  [09-28 16:30:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:35:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:40:17] сводка: символов с записью 778, новых часов 0, 15 с
+  [09-28 16:45:31]   сводка: 761/784 символов, новых часов 0
+  [09-28 16:45:32] сводка: символов с записью 778, новых часов 0, 31 с
+  [09-28 16:50:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:55:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 17:05:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 17:10:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 17:15:16] сводка: символов с записью 778, новых часов 0, 15 с
+  [09-28 17:20:28] сводка: символов с записью 778, новых часов 0, 26 с
+
+== research/dca_paper/out/short.log (хвост 40) ==
+  строк всего 42246
+  **Колонки концентрации отвечают на разные вопросы.** «Без лучшего имени» ловит одну разогнанную монету; «без 3 лучших дней» ловит рыночный эпизод, который раздаёт деньги десяткам имён разом, и первой колонке он невидим; 
+  
+  
+  Вперёд — решения, записанные в течение 120 ч после самого решения; остальное — пересчёт истории по нынешним правилам, и складывать их в один вердикт нельзя.
+  
+  ## Чего замер НЕ говорит
+  
+  - Живого исполнения здесь нет: исходы считаются реплеем по барам записи. Проскальзывание, очередь в стакане и задержка входа не моделируются; издержки круга учтены в `pnl_net`, отдельный замер издержек — `costs.py`.
+  - Общий счёт с длинной книгой считает `run_pair.py`: там депозит один на обе стороны, и числа его книг не равны сумме этой книги и длинной.
+  - Хедж-режим есть ПРАВИЛО СЧЁТА этой книги: она не смотрит на длинные позиции. На бирже так можно только в хедж-режиме; в одностороннем совпадающий шорт резал бы длинную позицию, и число таких совпадений стоит выше.
+  - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
+  
+  публикуется в ветку main:
+   research/dca_paper/out/DCA-short.json         |  2 +-
+   research/dca_paper/out/DCA-short.md           | 26 +++++++++++++-------------
+   research/dca_paper/out/short-2026-09-28.jsonl |  6 ++++++
+   3 files changed, 20 insertions(+), 14 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+   ! [rejected]          main -> main (fetch first)
+  error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+  hint: Updates were rejected because the remote contains work that you do not
+  hint: have locally. This is usually caused by another repository pushing to
+  hint: the same ref. If you want to integrate the remote changes, use
+  hint: 'git pull' before pushing again.
+  hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+  push не прошёл, подтягиваю ветку и пробую снова
+  (попытка 1 из 4)
+  From github.com:n0tgod/algoth_v2
+   * branch              main       -> FETCH_HEAD
+     fb68bfd7..7191bd37  main       -> origin/main
+  Created autostash: b00ef53f
+  Rebasing (1/1)
+  Applied autostash.
+  
+  
+  Successfully rebased and updated refs/heads/main.
+  To github.com:n0tgod/algoth_v2.git
+     7191bd37..abb8a77d  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/dca_paper/out/daily.log (хвост 40) ==
+  строк всего 121694
+  Гейт стоит ПЕРВЫМ, до правила одной на имя: у режима с гейтом низкоплечевой ранний вход не случается вовсе, и имя остаётся свободным для рычажного. Пик считается по тому, что режим ВЗЯЛ, и стоит рядом с объявленным — тем
+  
+  | режим | решений | отсеял гейт | после одной на имя | медиана плеча | свой пик позиций | объявлен |
+  |---|--:|--:|--:|--:|--:|--:|
+  | безопасная | 7503 | нет гейта | 1846 | 1.55× | 464 | 457 ⚠ ниже измеренного |
+  | оптимальная | 7503 | нет гейта | 1860 | 1.94× | 464 | 457 ⚠ ниже измеренного |
+  | агрессивная | 7503 | 5517 (плечо < 4×) | 650 | 8.62× | 245 | 237 ⚠ ниже измеренного |
+  
+  **Объявленный пик ниже измеренного у режимов: безопасная, оптимальная, агрессивная.** Значит билет посчитан от заниженного пика и велик: книга берёт не все свои решения, а первые по очереди за кассой, то есть отказ меняе
+  
+  ## Что связывает депозит
+  
+  Числа счётного прогона 2026-09-28 17:12. Касса раздаёт деньги по очереди решений, поэтому книга, которой не хватает мест, берёт не лучшие сигналы, а первые: отказ по кассе меняет не только объём, но и СОСТАВ.
+  
+  | режим | депозит | мест | взято | нет кассы | мельче пола |
+  |---|---|--:|--:|--:|--:|
+  | безопасная | $1,000 | 40 | 506 | 1340 | 0 |
+  | оптимальная | $1,000 | 40 | 526 | 1334 | 0 |
+  | агрессивная | $1,000 | 160 | 486 | 164 | 0 |
+  | безопасная | $10,000 | 400 | 1779 | 67 | 0 |
+  | оптимальная | $10,000 | 400 | 1793 | 67 | 0 |
+  | агрессивная | $10,000 | 357 | 650 | 0 | 0 |
+  | безопасная | $100,000 | 689 | 1846 | 0 | 0 |
+  | оптимальная | $100,000 | 689 | 1860 | 0 | 0 |
+  | агрессивная | $100,000 | 355 | 650 | 0 | 0 |
+  
+  ## Чего эти числа НЕ описывают
+  
+  Живого исполнения здесь нет: сделки считаются реплеем по барам записи, а не сканером на живой цене. Значит не моделируются проскальзывание, очередь в стакане и задержка входа; долив лотов в одно имя запрещён правилом, а 
+  публикуется в ветку main:
+   jobs/done/status-fall-2809.done       |    1 +
+   jobs/done/status-fall-2809.log        |    9 +
+   research/dca_paper/out/DCA-paper.json | 1428 ++++++++++++++++-----------------
+   research/dca_paper/out/DCA-paper.md   |   16 +-
+   4 files changed, 732 insertions(+), 722 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+     b20c1a71..fb68bfd7  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+  
+
+== research/dca_paper/out/pair.log (хвост 40) ==
+  строк всего 56850
+  
+  ## Чего эти числа НЕ говорят
+  
+  - Живого исполнения здесь нет: исходы позиций взяты из кэшей реплея обеих книг, посчитанных по барам записи. Очередь в стакане и задержка входа не моделируются.
+  - Внутри одной секунды деньги достаются лучшему по |прогнозу| решению — правило очереди объявлено до прогона и одно на обе стороны. Другое правило дало бы другой состав, и это ось для отдельного замера, а не свойство рын
+  - Общий счёт — ХЕДЖ-режим: шорт по имени, которое держит длинная сторона, разрешён. В одностороннем режиме биржи он срезал бы длинную позицию, и число совпадений выше есть цена режима.
+  - Веса модели видели эти часы: пересчёт истории читается как оценка СВЕРХУ. Судит форвард.
+  
+  публикуется в ветку main:
+   jobs/done/logtail-block.log                  |  8 +++++
+   jobs/done/status-after-unblock.done          |  1 +
+   jobs/done/status-after-unblock.log           |  4 +++
+   research/dca_paper/out/DCA-pair.json         |  2 +-
+   research/dca_paper/out/DCA-pair.md           | 52 ++++++++++++++--------------
+   research/dca_paper/out/pair-2026-09-28.jsonl |  6 ++++
+   research/s8_loop/out/day_brake.json          |  2 +-
+   7 files changed, 47 insertions(+), 28 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+   ! [rejected]          main -> main (fetch first)
+  error: failed to push some refs to 'github.com:n0tgod/algoth_v2.git'
+  hint: Updates were rejected because the remote contains work that you do not
+  hint: have locally. This is usually caused by another repository pushing to
+  hint: the same ref. If you want to integrate the remote changes, use
+  hint: 'git pull' before pushing again.
+  hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+  push не прошёл, подтягиваю ветку и пробую снова
+  (попытка 1 из 4)
+  From github.com:n0tgod/algoth_v2
+   * branch              main       -> FETCH_HEAD
+     2b390f00..5a2cec1d  main       -> origin/main
+  Created autostash: 0bc78af8
+  Rebasing (1/1)
+  Applied autostash.
+  
+  
+  Successfully rebased and updated refs/heads/main.
+  To github.com:n0tgod/algoth_v2.git
+     5a2cec1d..7036ff9d  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/b1_book/out/collect.log (хвост 40) ==
+  строк всего 1020909
+  [   22433 с] шард 5: не отправилась подписка orderbook.50.CSOPSAMSUNG2LUSDT: socket is already closed.
+  [   22432 с] шард 19: не отправилась подписка orderbook.50.YFIUSDT: socket is already closed.
+  [   22433 с] шард 11: не отправилась подписка publicTrade.MOODENGUSDT: socket is already closed.
+  [   22433 с] шард 10: не отправилась подписка allLiquidation.LTCUSDT: socket is already closed.
+  [   22433 с] шард 12: не отправилась подписка allLiquidation.NVOUSDT: socket is already closed.
+  [   22432 с] шард 1: не отправилась подписка orderbook.50.AIOUSDT: socket is already closed.
+  [   22433 с] шард 15: не отправилась подписка orderbook.50.SOSOUSDT: socket is already closed.
+  [   22433 с] шард 9: не отправилась подписка allLiquidation.IWMUSDT: socket is already closed.
+  [   22434 с] шард 9: не отправилась подписка orderbook.50.JASMYUSDT: socket is already closed.
+  [   22434 с] шард 9: не отправилась подписка publicTrade.JASMYUSDT: socket is already closed.
+  [   22434 с] шард 9: не отправилась подписка allLiquidation.JASMYUSDT: socket is already closed.
+  [   22434 с] шард 9: не отправилась подписка orderbook.50.JCTUSDT: socket is already closed.
+  [   22433 с] шард 8: не отправилась подписка allLiquidation.HNTUSDT: socket is already closed.
+  [   22432 с] шард 4: не отправилась подписка orderbook.50.CGNXUSDT: [SSL: BAD_LENGTH] bad length (_ssl.c:2417)
+  [   22433 с] шард 13: не отправилась подписка allLiquidation.PONSUSDT: [SSL: BAD_LENGTH] bad length (_ssl.c:2417)
+  [   22433 с] шард 7: не отправилась подписка publicTrade.GBPUSDUSDT: socket is already closed.
+  [   22433 с] шард 3: переподключение через 30 с
+  [   22434 с] шард 15: не отправилась подписка publicTrade.SOSOUSDT: socket is already closed.
+  [   22434 с] шард 9: не отправилась подписка publicTrade.JCTUSDT: [SSL: BAD_LENGTH] bad length (_ssl.c:2417)
+  [   22433 с] шард 18: не отправилась подписка publicTrade.WAVESUSDT: socket is already closed.
+  [   22433 с] шард 14: не отправилась подписка publicTrade.RLUSDUSDT: socket is already closed.
+  [   22433 с] шард 17: не отправилась подписка allLiquidation.TSLAUSDT: socket is already closed.
+  [   22433 с] шард 11: не отправилась подписка allLiquidation.MOODENGUSDT: socket is already closed.
+  [   22433 с] шард 10: не отправилась подписка orderbook.50.LUMIAUSDT: socket is already closed.
+  [   22434 с] шард 12: не отправилась подписка orderbook.50.NXPCUSDT: socket is already closed.
+  [   22434 с] шард 12: не отправилась подписка publicTrade.NXPCUSDT: [SSL: BAD_LENGTH] bad length (_ssl.c:2417)
+  [   22434 с] шард 7: не отправилась подписка allLiquidation.GBPUSDUSDT: socket is already closed.
+  [   22434 с] шард 15: не отправилась подписка allLiquidation.SOSOUSDT: socket is already closed.
+  [   22434 с] шард 9: не отправилась подписка allLiquidation.JCTUSDT: socket is already closed.
+  [   22434 с] шард 5: не отправилась подписка publicTrade.CSOPSAMSUNG2LUSDT: socket is already closed.
+  [   22434 с] шард 5: не отправилась подписка allLiquidation.CSOPSAMSUNG2LUSDT: socket is already closed.
+  [   22434 с] шард 8: не отправилась подписка orderbook.50.HOLOUSDT: socket is already closed.
+  [   22434 с] шард 8: не отправилась подписка publicTrade.HOLOUSDT: [SSL: BAD_LENGTH] bad length (_ssl.c:2417)
+  [   22433 с] шард 2: не отправилась подписка orderbook.50.ATOMUSDT: socket is already closed.
+  [   22434 с] шард 2: не отправилась подписка publicTrade.ATOMUSDT: socket is already closed.
+  [   22434 с] шард 19: не отправилась подписка publicTrade.YFIUSDT: [SSL: BAD_LENGTH] bad length (_ssl.c:2417)
+  [   22434 с] шард 19: не отправилась подписка allLiquidation.YFIUSDT: socket is already closed.
+  [   22434 с] шард 0: не отправилась подписка orderbook.50.1000000BABYDOGEUSDT: socket is already closed.
+  [   22434 с] шард 0: не отправилась подписка publicTrade.1000000BABYDOGEUSDT: socket is already closed.
+  [   22434 с] шард 14: не отправилась подписка allLiquidation.RLUSDUSDT: socket is already closed.
+
+== research/b1_book/out/watchdog.log (хвост 40) ==
+  строк всего 7808
+  [2026-09-28T16:05:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:07:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  /root/algoth_v2/tools/watchdog_book.sh: line 415: 1784997 Killed                  setsid nohup .venv/bin/python research/s8_loop/train.py >> research/s8_loop/out/train.log 2>&1
+  [2026-09-28T16:10:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:12:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:18:13Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:20:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:22:14Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  /root/algoth_v2/tools/watchdog_book.sh: line 415: 1786759 Killed                  setsid nohup .venv/bin/python research/s8_loop/train.py >> research/s8_loop/out/train.log 2>&1
+  [2026-09-28T16:25:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:27:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:30:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:32:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:35:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:37:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  /root/algoth_v2/tools/watchdog_book.sh: line 415: 1788535 Killed                  setsid nohup .venv/bin/python research/s8_loop/train.py >> research/s8_loop/out/train.log 2>&1
+  [2026-09-28T16:40:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:42:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:45:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:47:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  /root/algoth_v2/tools/watchdog_book.sh: line 415: 1789704 Killed                  setsid nohup .venv/bin/python research/s8_loop/train.py >> research/s8_loop/out/train.log 2>&1
+  [2026-09-28T16:50:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:52:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  /root/algoth_v2/tools/watchdog_book.sh: line 442: 1790294 Killed                  setsid nohup .venv/bin/python research/s8_loop/train.py >> research/s8_loop/out/train.log 2>&1
+  [2026-09-28T16:55:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:57:16Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T17:03:12Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T17:05:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:07:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  /root/algoth_v2/tools/watchdog_book.sh: line 415: 1792054 Killed                  setsid nohup .venv/bin/python research/s8_loop/train.py >> research/s8_loop/out/train.log 2>&1
+  [2026-09-28T17:10:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:11:16Z] задание status-fall-2809: состояние снято
+  /root/algoth_v2/tools/watchdog_book.sh: line 415: 1792635 Killed                  setsid nohup .venv/bin/python research/s8_loop/train.py >> research/s8_loop/out/train.log 2>&1
+  [2026-09-28T17:15:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:15:03Z] задание logtail-block запущено: tools/logtail.py
+  [2026-09-28T17:15:07Z] задание status-after-unblock: состояние снято
+  [2026-09-28T17:20:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:20:02Z] общий счёт: книги-источники свежее — прогон
+  [2026-09-28T17:26:15Z] задание logtail-block-start запущено: tools/logtail.py
+  [2026-09-28T17:26:15Z] задание memtop-2809 запущено: tools/memtop.py
+
+== research/b1_book/out/ship.log (хвост 40) ==
+  строк всего 35
+  [03:00:03] до: /root/algoth_v2/research/b1_book/out: свободно 59.8 ГБ; /root: свободно 71.9 ГБ
+  [03:00:09] дней к выгрузке (не позже 2026-09-25, без отметки): 1 — 2026-09-25 … 2026-09-25; предел за прогон 20 ГБ
+  [03:00:44]   2026-09-25: 98/2728 архивов, 0.35 ГБ, 32 с
+  [03:01:21]   2026-09-25: 298/2728 архивов, 1.04 ГБ, 69 с
+  [03:01:55]   2026-09-25: 484/2728 архивов, 1.64 ГБ, 104 с
+  [03:02:43]   2026-09-25: 719/2728 архивов, 2.41 ГБ, 152 с
+  [03:03:24]   2026-09-25: 967/2728 архивов, 2.64 ГБ, 193 с
+  [03:04:04]   2026-09-25: 1464/2728 архивов, 2.65 ГБ, 233 с
+  [03:04:42]   2026-09-25: 1598/2728 архивов, 2.66 ГБ, 271 с
+  [03:08:18]   2026-09-25: 1645/2728 архивов, 2.66 ГБ, 487 с
+  [03:08:39] 2026-09-25: архивов 2728 из 57337 файлов, 2.82 ГБ, отправлено 2728 (было 0), отказов 0, ETag не совпал у 0, ЗАКРЫТ
+  [03:08:39] снятие местных копий старше 21 сут:
+  [03:08:43]   2026-09-06: снято 55187 файлов, 3.73 ГБ, из них перелитых 0
+  [03:08:43] после: /root/algoth_v2/research/b1_book/out: свободно 66.6 ГБ; /root: свободно 71.9 ГБ; 520 с
+  [03:08:43] итого отправлено 2.88 ГБ, дней закрыто 1 из 1
+  [03:00:04] до: /root/algoth_v2/research/b1_book/out: свободно 61.2 ГБ; /root: свободно 71.8 ГБ
+  [03:00:19] дней к выгрузке (не позже 2026-09-26, без отметки): 1 — 2026-09-26 … 2026-09-26; предел за прогон 20 ГБ
+  [03:00:53]   2026-09-26: 36/2676 архивов, 0.15 ГБ, 31 с
+  [03:01:51]   2026-09-26: 164/2676 архивов, 0.62 ГБ, 89 с
+  [03:07:43]   ОТКАЗ b1/book/FIGHTUSDT/2026-09-26.tar: An error occurred (GatewayTimeout) when calling the PutObject operation (reached max retries: 5): The server did not respond in time.
+  [03:07:43]   2026-09-26: 265/2676 архивов, 0.98 ГБ, 441 с
+  [03:09:01]   ОТКАЗ b1/book/TMXUSDT/2026-09-26.tar: An error occurred (GatewayTimeout) when calling the PutObject operation (reached max retries: 5): The server did not respond in time.
+  [03:09:01]   2026-09-26: 665/2676 архивов, 2.28 ГБ, 520 с
+  [03:10:03]   2026-09-26: 1149/2676 архивов, 2.68 ГБ, 581 с
+  [03:10:32] 2026-09-26: архивов 2676 из 56354 файлов, 2.84 ГБ, отправлено 2674 (было 0), отказов 2, ETag не совпал у 0, не закрыт
+  [03:10:32] снятие местных копий старше 21 сут:
+  [03:11:24]   2026-09-07: снято 55787 файлов, 3.84 ГБ, из них перелитых 0
+  [03:11:24] после: /root/algoth_v2/research/b1_book/out: свободно 67.6 ГБ; /root: свободно 71.8 ГБ; 681 с
+  [03:11:24] итого отправлено 2.89 ГБ, дней закрыто 0 из 1
+  [03:15:04] до: /root/algoth_v2/research/b1_book/out: свободно 67.4 ГБ; /root: свободно 71.8 ГБ
+  [03:15:05] дней к выгрузке (не позже 2026-09-26, без отметки): 1 — 2026-09-26 … 2026-09-26; предел за прогон 20 ГБ
+  [03:15:11] 2026-09-26: архивов 2676 из 56354 файлов, 2.84 ГБ, отправлено 2 (было 2674), отказов 0, ETag не совпал у 0, ЗАКРЫТ
+  [03:15:11] снятие местных копий старше 21 сут:
+  [03:15:12] после: /root/algoth_v2/research/b1_book/out: свободно 67.4 ГБ; /root: свободно 71.8 ГБ; 8 с
+  [03:15:12] итого отправлено 0.01 ГБ, дней закрыто 1 из 1
+
+== research/a1_universe/out/refresh.log (хвост 40) ==
+  строк всего 12689
+    1069/1085
+    1070/1085
+    1071/1085
+    1072/1085
+    1073/1085
+    1074/1085
+    1075/1085
+    1076/1085
+    1077/1085
+    1078/1085
+    1079/1085
+    1080/1085
+    1081/1085
+    1082/1085
+    1083/1085
+    1084/1085
+    1085/1085
+  публикуется в ветку main:
+   research/a1_universe/out/funding-refresh.json | 3136 ++++++++++++-------------
+   research/a1_universe/out/funding-refresh.md   |    4 +-
+   research/factory/out/agents-runs.jsonl        |    4 +
+   research/factory/out/build_task-prev.md       |   32 +-
+   research/factory/out/build_task.md            |   32 +-
+   research/factory/out/mech_task.json           |    2 +-
+   research/factory/out/mechanisms.jsonl         |    1 +
+   research/mech_59653014/out/fund_dates.json    |   51 +
+   research/s8_loop/out/day_brake.json           |    2 +-
+   9 files changed, 1660 insertions(+), 1604 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+     714b8da6..1c2c8e0c  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+  # Догон рядов funding площадки исполнения
+  
+  Прогон 2026-09-28: символов 1085, добавлено точек 3525, отказов сети 0, пустых рядов 0, 58.2 с.
+  
+  Край рядов после догона: минимум 2022-02-14, медиана 2026-09-28, максимум 2026-09-28. Ряд, край которого старше сегодняшнего дня, у площадки кончился (контракт снят) либо отказал сетью — отказы поимённо ниже.
+  
+  Отказов нет.
+  
+
+== research/a1_universe/out/instruments.log (хвост 40) ==
+  строк всего 414
+  справочник: было 1892, пришло 1892, новых 0, обновлённых 2, всего 1892; с датой листинга 1892
+  # Догон справочника инструментов
+  
+  Прогон 2026-09-27 05:00: было 1892 символов, пришло 1892, новых **0**, обновлённых 2, всего 1892; с моментом листинга 1892, из них моложе 30 суток 87. Прогон 2.1 с.
+  
+  Старые записи не удаляются: делистнутый символ остаётся с последним известным состоянием, иначе история потеряет имена, которыми книги торговали.
+  
+  публикуется в ветку main:
+   research/a1_universe/out/instruments-refresh.json | 12 ++++++------
+   research/a1_universe/out/instruments-refresh.md   |  2 +-
+   research/a1_universe/out/instruments.json         |  2 +-
+   research/s8_loop/out/day_brake.json               |  2 +-
+   4 files changed, 9 insertions(+), 9 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+     cb49a069..74df31be  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+  справочник: было 1892, пришло 1892, новых 0, обновлённых 1, всего 1892; с датой листинга 1892
+  # Догон справочника инструментов
+  
+  Прогон 2026-09-28 05:00: было 1892 символов, пришло 1892, новых **0**, обновлённых 1, всего 1892; с моментом листинга 1892, из них моложе 30 суток 78. Прогон 2.6 с.
+  
+  Старые записи не удаляются: делистнутый символ остаётся с последним известным состоянием, иначе история потеряет имена, которыми книги торговали.
+  
+  публикуется в ветку main:
+   research/a1_universe/out/instruments-refresh.json |   8 +-
+   research/a1_universe/out/instruments-refresh.md   |   2 +-
+   research/a1_universe/out/instruments.json         |   2 +-
+   research/factory/out/agents-runs.jsonl            |   2 +
+   research/factory/out/build.json                   | 202 +++---
+   research/mech_59653014/out/MECH-etf-rebal.md      | 216 ++++++
+   research/mech_59653014/out/etf_rebal.json         | 817 ++++++++++++++++++++++
+   research/mech_59653014/out/fund_dates.json        |   8 +-
+   research/mech_59653014/out/state.json             |   5 +
+   research/s8_loop/out/day_brake.json               |   2 +-
+   10 files changed, 1154 insertions(+), 110 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+     5fb4ff58..9e2b4c9b  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+конец: 2026-09-28T17:26:17Z, код 0
+публикуется в ветку main:
+ jobs/done/logtail-block-start.done |   1 +
+ jobs/done/logtail-block-start.log  |   4 +
+ jobs/done/memtop-2809.done         |   1 +
+ jobs/done/memtop-2809.log          | 400 +++++++++++++++++++++++++++++++++++++
+ 4 files changed, 406 insertions(+)

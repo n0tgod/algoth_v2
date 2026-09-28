@@ -1,0 +1,400 @@
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel:  exc_page_fault+0x83/0x1b0
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel:  asm_exc_page_fault+0x27/0x30
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: RIP: 0033:0x7a97e4795584
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Code: Unable to access opcode bytes at 0x7a97e479555a.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: RSP: 002b:00007ffd8ff975a0 EFLAGS: 00010202
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: RAX: 0000000000000002 RBX: 00005dfb596f5630 RCX: 0000000000000000
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: RDX: 00005dfb596f8150 RSI: 00005dfb596f8150 RDI: 00007a97e4641c88
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: RBP: 00007ffd8ff975f0 R08: 0000000000000000 R09: 00007a97e488c380
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: R10: 00005dfb596f7c90 R11: 0000000000000246 R12: 0000000000001000
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: R13: 00007ffd8ff97608 R14: 00007ffd8ff97610 R15: 0000000000000000
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel:  </TASK>
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Mem-Info:
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: active_anon:857301 inactive_anon:966893 isolated_anon:0
+                                                       active_file:60 inactive_file:66 isolated_file:0
+                                                       unevictable:7831 dirty:0 writeback:0
+                                                       slab_reclaimable:73571 slab_unreclaimable:26755
+                                                       mapped:2186 shmem:1227 pagetables:4710
+                                                       sec_pagetables:0 bounce:0
+                                                       kernel_misc_reclaimable:0
+                                                       free:26943 free_pcp:10042 free_cma:0
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 active_anon:3429204kB inactive_anon:3867572kB active_file:240kB inactive_file:264kB unevictable:31324kB isolated(anon):0kB isolated(file):0kB mapped:8744kB dirty
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA free:14336kB boost:0kB min:128kB low:160kB high:192kB reserved_highatomic:0KB active_anon:0kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 1934 7692 7692 7692
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA32 free:36864kB boost:0kB min:16956kB low:21192kB high:25428kB reserved_highatomic:0KB active_anon:1133448kB inactive_anon:739032kB active_file:508kB inactive
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 0 5758 5758 5758
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 Normal free:57580kB boost:0kB min:50492kB low:63112kB high:75732kB reserved_highatomic:10240KB active_anon:2301976kB inactive_anon:3122320kB active_file:448kB in
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 0 0 0 0
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA: 0*4kB 0*8kB 0*16kB 0*32kB 0*64kB 0*128kB 0*256kB 0*512kB 0*1024kB 1*2048kB (M) 3*4096kB (M) = 14336kB
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA32: 144*4kB (UME) 105*8kB (UME) 132*16kB (UE) 164*32kB (UE) 108*64kB (UE) 50*128kB (UME) 29*256kB (UE) 11*512kB (UM) 2*1024kB (M) 0*2048kB 0*4096kB = 37192kB
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 Normal: 1880*4kB (UME) 968*8kB (UME) 403*16kB (UME) 384*32kB (UME) 236*64kB (UME) 97*128kB (UME) 8*256kB (UE) 2*512kB (M) 0*1024kB 0*2048kB 0*4096kB = 64592kB
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=1048576kB
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: 3547 total pagecache pages
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages in swap cache
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Free swap  = 0kB
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Total swap = 0kB
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: 2046792 pages RAM
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages HighMem/MovableOnly
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: 63890 pages reserved
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages hwpoisoned
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1755316 (python) total-vm:4493700kB, anon-rss:4273896kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8516kB oom_score_adj:0
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755302 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755304 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755305 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755349 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755353 (git) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755354 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 (cron)[1755355]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+
+== journalctl sshd/cron ==
+  строк 4234
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751798 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751800 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751844 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751848 (git) in control group while starting unit. Ignoring.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751849 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 (cron)[1751850]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 cron[1751850]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 cron[1751850]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T11:27:17+00:00 ubuntu-8gb-nbg1-2 CRON[1751796]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:30:01+00:00 ubuntu-8gb-nbg1-2 CRON[1752380]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:30:01+00:00 ubuntu-8gb-nbg1-2 CRON[1752381]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752380 (cron) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752381 (sh) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752382 (bash) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752392 (python) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752425 (bash) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752429 (git) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752430 (ssh) remains running after unit stopped.
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 1min 33.653s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 218.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752380 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752381 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752382 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752392 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752425 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752429 (git) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752430 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 (cron)[1752434]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 cron[1752434]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T11:31:23+00:00 ubuntu-8gb-nbg1-2 cron[1752434]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T11:32:16+00:00 ubuntu-8gb-nbg1-2 CRON[1752380]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[1752963]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[1752964]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[1752965]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-09-28T11:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[1752966]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T11:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[1752963]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752964 (cron) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752966 (sh) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752968 (bash) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1752978 (python) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753011 (bash) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753015 (git) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753016 (ssh) remains running after unit stopped.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 1min 44.594s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 219.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752964 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752966 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752968 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1752978 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753011 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753015 (git) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753016 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 (cron)[1753018]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 cron[1753018]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 cron[1753018]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T11:37:15+00:00 ubuntu-8gb-nbg1-2 CRON[1752964]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:40:01+00:00 ubuntu-8gb-nbg1-2 CRON[1753546]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:40:01+00:00 ubuntu-8gb-nbg1-2 CRON[1753547]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753546 (cron) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753547 (sh) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753548 (bash) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753558 (python) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753591 (bash) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753595 (git) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1753596 (ssh) remains running after unit stopped.
+  2026-09-28T11:41:30+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 1min 42.778s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 220.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753546 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753547 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753548 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753558 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753591 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753595 (git) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1753596 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 (cron)[1753601]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 cron[1753601]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 cron[1753601]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T11:42:18+00:00 ubuntu-8gb-nbg1-2 CRON[1753546]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:45:01+00:00 ubuntu-8gb-nbg1-2 CRON[1754130]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:45:01+00:00 ubuntu-8gb-nbg1-2 CRON[1754129]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:45:01+00:00 ubuntu-8gb-nbg1-2 CRON[1754132]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-09-28T11:45:01+00:00 ubuntu-8gb-nbg1-2 CRON[1754131]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T11:45:01+00:00 ubuntu-8gb-nbg1-2 CRON[1754129]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754130 (cron) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754131 (sh) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754134 (bash) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754144 (python) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754177 (bash) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754181 (git) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754182 (ssh) remains running after unit stopped.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 1min 43.998s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 221.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754130 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754131 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754134 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754144 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754177 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754181 (git) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754182 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 (cron)[1754184]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 cron[1754184]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 cron[1754184]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T11:47:17+00:00 ubuntu-8gb-nbg1-2 CRON[1754130]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:50:01+00:00 ubuntu-8gb-nbg1-2 CRON[1754712]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:50:01+00:00 ubuntu-8gb-nbg1-2 CRON[1754713]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754712 (cron) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754713 (sh) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754714 (bash) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754724 (python) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1754757 (bash) remains running after unit stopped.
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 2min 47.930s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 222.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754712 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754713 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754714 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754724 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1754757 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755157 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 (cron)[1755159]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 cron[1755159]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 cron[1755159]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T11:53:09+00:00 ubuntu-8gb-nbg1-2 CRON[1754712]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:55:01+00:00 ubuntu-8gb-nbg1-2 CRON[1755301]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:55:01+00:00 ubuntu-8gb-nbg1-2 CRON[1755302]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T11:55:01+00:00 ubuntu-8gb-nbg1-2 CRON[1755303]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-09-28T11:55:01+00:00 ubuntu-8gb-nbg1-2 CRON[1755304]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T11:55:01+00:00 ubuntu-8gb-nbg1-2 CRON[1755301]: pam_unix(cron:session): session closed for user root
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1755302 (cron) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1755304 (sh) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1755305 (bash) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1755316 (python) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1755349 (bash) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1755353 (git) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1755354 (ssh) remains running after unit stopped.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 1min 5.145s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 223.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755302 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755304 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755305 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755349 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755353 (git) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1755354 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 (cron)[1755355]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 cron[1755355]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 cron[1755355]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T11:57:15+00:00 ubuntu-8gb-nbg1-2 CRON[1755302]: pam_unix(cron:session): session closed for user root
+
+== dmesg -T (память, диск, сеть) ==
+  строк 28
+  [Mon Sep 28 14:45:29 2026] Out of memory: Killed process 1775620 (python) total-vm:4279560kB, anon-rss:4060268kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8100kB oom_score_adj:0
+  [Mon Sep 28 14:50:24 2026] Out of memory: Killed process 1776203 (python) total-vm:4275000kB, anon-rss:4055532kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8092kB oom_score_adj:0
+  [Mon Sep 28 14:55:33 2026] Out of memory: Killed process 1776791 (python) total-vm:4273708kB, anon-rss:4054636kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8092kB oom_score_adj:0
+  [Mon Sep 28 15:00:19 2026] Out of memory: Killed process 1777372 (python) total-vm:4263224kB, anon-rss:4043112kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8072kB oom_score_adj:0
+  [Mon Sep 28 15:10:56 2026] Out of memory: Killed process 1777958 (python) total-vm:4285084kB, anon-rss:4065384kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8112kB oom_score_adj:0
+  [Mon Sep 28 15:15:21 2026] Out of memory: Killed process 1779128 (python) total-vm:4380384kB, anon-rss:4160620kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8296kB oom_score_adj:0
+  [Mon Sep 28 15:22:47 2026] Out of memory: Killed process 1779712 (python) total-vm:4386292kB, anon-rss:4166508kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8312kB oom_score_adj:0
+  [Mon Sep 28 15:29:05 2026] Out of memory: Killed process 1780301 (python) total-vm:4385028kB, anon-rss:4165864kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
+  [Mon Sep 28 15:30:28 2026] Out of memory: Killed process 1780888 (python) total-vm:4361920kB, anon-rss:4142700kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8260kB oom_score_adj:0
+  [Mon Sep 28 15:39:34 2026] Out of memory: Killed process 1781474 (python) total-vm:4383524kB, anon-rss:4164456kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8304kB oom_score_adj:0
+  [Mon Sep 28 15:48:36 2026] Out of memory: Killed process 1782643 (python) total-vm:4453108kB, anon-rss:4233964kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8436kB oom_score_adj:0
+  [Mon Sep 28 15:50:51 2026] Out of memory: Killed process 1783231 (python) total-vm:4442800kB, anon-rss:4223464kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  [Mon Sep 28 15:58:35 2026] Out of memory: Killed process 1783820 (python) total-vm:4455828kB, anon-rss:4236520kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8440kB oom_score_adj:0
+  [Mon Sep 28 16:00:19 2026] Out of memory: Killed process 1784410 (python) total-vm:4435352kB, anon-rss:4215396kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  [Mon Sep 28 16:06:01 2026] Out of memory: Killed process 1784997 (python) total-vm:4443020kB, anon-rss:4223976kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  [Mon Sep 28 16:15:14 2026] Out of memory: Killed process 1785580 (python) total-vm:4463080kB, anon-rss:4243308kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8460kB oom_score_adj:0
+  [Mon Sep 28 16:20:15 2026] Out of memory: Killed process 1786759 (python) total-vm:4432412kB, anon-rss:4212588kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8408kB oom_score_adj:0
+  [Mon Sep 28 16:28:03 2026] Out of memory: Killed process 1787346 (python) total-vm:4449916kB, anon-rss:4230124kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  [Mon Sep 28 16:33:41 2026] Out of memory: Killed process 1787936 (python) total-vm:4445624kB, anon-rss:4226096kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  [Mon Sep 28 16:35:15 2026] Out of memory: Killed process 1788535 (python) total-vm:4431084kB, anon-rss:4211172kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  [Mon Sep 28 16:44:16 2026] Out of memory: Killed process 1789115 (python) total-vm:4441184kB, anon-rss:4221292kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:8416kB oom_score_adj:0
+  [Mon Sep 28 16:46:05 2026] Out of memory: Killed process 1789704 (python) total-vm:4424192kB, anon-rss:4204908kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  [Mon Sep 28 16:52:29 2026] Out of memory: Killed process 1790294 (python) total-vm:4422700kB, anon-rss:4203500kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  [Mon Sep 28 17:00:13 2026] Out of memory: Killed process 1790894 (python) total-vm:4437048kB, anon-rss:4217708kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8412kB oom_score_adj:0
+  [Mon Sep 28 17:05:05 2026] Out of memory: Killed process 1792054 (python) total-vm:4384928kB, anon-rss:4165352kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
+  [Mon Sep 28 17:10:12 2026] Out of memory: Killed process 1792635 (python) total-vm:4403968kB, anon-rss:4184556kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8340kB oom_score_adj:0
+  [Mon Sep 28 17:16:39 2026] Out of memory: Killed process 1793551 (python) total-vm:5431184kB, anon-rss:5211364kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10356kB oom_score_adj:0
+  [Mon Sep 28 17:25:30 2026] Out of memory: Killed process 1794450 (python) total-vm:5450276kB, anon-rss:5231088kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10396kB oom_score_adj:0
+конец: 2026-09-28T17:26:18Z, код 0
