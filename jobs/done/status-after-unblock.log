@@ -36,3 +36,8 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-09-28T17:15:03Z
+публикуется в ветку main:
+ jobs/done/logtail-block.done       |  1 +
+ jobs/done/logtail-block.log        | 72 ++++++++++++++++++++++++++++++++++++++
+ jobs/done/status-after-unblock.log | 38 ++++++++++++++++++++
+ 3 files changed, 111 insertions(+)

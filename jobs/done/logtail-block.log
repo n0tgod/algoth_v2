@@ -1,23 +1,3 @@
-== задание logtail-block ==
-строка: run tools/logtail.py --since 2026-09-28-09 --until 2026-09-28-18
-начало: 2026-09-28T17:15:03Z
-запускаю: .venv/bin/python tools/logtail.py --since 2026-09-28-09 --until 2026-09-28-18
-
-== research/b1_book/out/watchdog.log ==
-  строк в окне 167
-  [2026-09-28T12:02:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
-  [2026-09-28T12:05:01Z] цикл обучения не найден — поднимаю
-  [2026-09-28T12:07:16Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
-  [2026-09-28T12:10:01Z] цикл обучения не найден — поднимаю
-  [2026-09-28T12:12:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
-  [2026-09-28T12:15:01Z] цикл обучения не найден — поднимаю
-  [2026-09-28T12:17:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
-  [2026-09-28T12:20:01Z] цикл обучения не найден — поднимаю
-  [2026-09-28T12:22:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
-  [2026-09-28T12:25:01Z] цикл обучения не найден — поднимаю
-  [2026-09-28T12:27:16Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
-  [2026-09-28T12:30:01Z] цикл обучения не найден — поднимаю
-  [2026-09-28T12:32:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
   [2026-09-28T12:35:01Z] цикл обучения не найден — поднимаю
   [2026-09-28T12:37:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
   [2026-09-28T12:40:01Z] цикл обучения не найден — поднимаю
@@ -70,3 +50,351 @@
   [2026-09-28T14:45:01Z] цикл обучения не найден — поднимаю
   [2026-09-28T14:47:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
   [2026-09-28T14:50:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T14:52:16Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T14:55:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T14:57:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:00:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:02:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:05:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:07:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:13:54Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:15:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:17:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:20:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:22:14Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:25:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:27:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:30:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:32:16Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:35:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:37:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:42:35Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:45:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:47:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:50:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:52:16Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T15:55:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T15:57:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:00:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:02:14Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:05:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:07:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:10:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:12:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:18:13Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:20:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:22:14Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:25:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:27:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:30:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:32:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:35:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:37:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:40:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:42:15Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:45:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:47:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:50:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:52:17Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T16:55:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T16:57:16Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T17:03:12Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T17:05:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:07:18Z] задания: origin/main не получен (сеть или доступ) — задания могут быть не видны
+  [2026-09-28T17:10:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:11:16Z] задание status-fall-2809: состояние снято
+  [2026-09-28T17:15:01Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:15:03Z] задание logtail-block запущено: tools/logtail.py
+
+== research/b1_book/out/ship.log ==
+  строк в окне 0
+
+== research/b1_book/out/collect.log ==
+  строк в окне 0
+
+== research/dca_paper/out/short.log ==
+  строк в окне 6
+  запись доходит до 2026-09-28 09:11 UTC
+  запись доходит до 2026-09-28 09:12 UTC
+  запись доходит до 2026-09-28 10:16 UTC
+  запись доходит до 2026-09-28 10:17 UTC
+  запись доходит до 2026-09-28 17:13 UTC
+  запись доходит до 2026-09-28 17:14 UTC
+
+== journalctl (warning и выше) ==
+  строк 7093
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792040 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792041 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792043 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792054 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792087 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792091 (git) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792092 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 (cron)[1792094]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: python invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: CPU: 3 PID: 1792635 Comm: python Not tainted 6.8.0-100-generic #100-Ubuntu
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Hardware name: Hetzner vServer/Standard PC (Q35 + ICH9, 2009), BIOS 20171111 11/11/2017
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Call Trace:
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  <TASK>
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  dump_stack_lvl+0x76/0xa0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  dump_stack+0x10/0x20
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  dump_header+0x49/0x210
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  oom_kill_process+0x118/0x280
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  ? oom_evaluate_task+0x143/0x1e0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  out_of_memory+0x103/0x350
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  __alloc_pages_may_oom+0x10c/0x1d0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  __alloc_pages_slowpath.constprop.0+0x4df/0xa20
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  __alloc_pages+0x31f/0x350
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  alloc_pages_mpol+0x91/0x210
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  alloc_pages+0x5b/0xd0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  folio_alloc+0x15/0x40
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  filemap_alloc_folio+0xf4/0x100
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  __filemap_get_folio+0x199/0x2e0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  filemap_fault+0x15c/0x8e0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  __do_fault+0x3a/0x190
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  do_read_fault+0x133/0x200
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  do_fault+0xf0/0x260
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  handle_pte_fault+0x114/0x1d0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  __handle_mm_fault+0x654/0x790
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  handle_mm_fault+0x18a/0x380
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  do_user_addr_fault+0x169/0x670
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  exc_page_fault+0x83/0x1b0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  asm_exc_page_fault+0x27/0x30
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: RIP: 0033:0x607abb
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Code: Unable to access opcode bytes at 0x607a91.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: RSP: 002b:00007ffff0d4ff30 EFLAGS: 00010297
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: RAX: 0000000000000000 RBX: 000070fb701b2b80 RCX: 1559fc55e07fdd66
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: RDX: 07aeb835fef3e95e RSI: 0600000000000000 RDI: 18b8b235e0e5fe4a
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: RBP: 00007ffff0d4ff50 R08: 0000000000000001 R09: 0553ea56f76fd778
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: R10: 0000000000000006 R11: 000070fb701b2ba8 R12: 000070fb701b2b80
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: R13: 000070fb701b2b80 R14: 000070fb701b2b80 R15: ffffffffffffffff
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel:  </TASK>
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Mem-Info:
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: active_anon:707014 inactive_anon:1120154 isolated_anon:0
+                                                       active_file:55 inactive_file:104 isolated_file:0
+                                                       unevictable:7831 dirty:0 writeback:0
+                                                       slab_reclaimable:73478 slab_unreclaimable:26822
+                                                       mapped:2200 shmem:1227 pagetables:4737
+                                                       sec_pagetables:0 bounce:0
+                                                       kernel_misc_reclaimable:0
+                                                       free:27184 free_pcp:6327 free_cma:0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 active_anon:2828056kB inactive_anon:4480616kB active_file:220kB inactive_file:416kB unevictable:31324kB isolated(anon):0kB isolated(file):0kB mapped:8800kB dirty
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA free:14336kB boost:0kB min:128kB low:160kB high:192kB reserved_highatomic:0KB active_anon:0kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 1934 7692 7692 7692
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA32 free:38792kB boost:0kB min:16956kB low:21192kB high:25428kB reserved_highatomic:0KB active_anon:600360kB inactive_anon:1280024kB active_file:432kB inactive
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 0 5758 5758 5758
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 Normal free:55608kB boost:0kB min:50492kB low:63112kB high:75732kB reserved_highatomic:10240KB active_anon:2228084kB inactive_anon:3200204kB active_file:544kB in
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 0 0 0 0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA: 0*4kB 0*8kB 0*16kB 0*32kB 0*64kB 0*128kB 0*256kB 0*512kB 0*1024kB 1*2048kB (M) 3*4096kB (M) = 14336kB
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA32: 163*4kB (UME) 176*8kB (UME) 100*16kB (UME) 100*32kB (UME) 79*64kB (UE) 26*128kB (UE) 27*256kB (UE) 9*512kB (UE) 10*1024kB (UME) 1*2048kB (M) 0*4096kB = 39
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 Normal: 2053*4kB (UE) 866*8kB (UE) 265*16kB (UME) 180*32kB (UME) 198*64kB (UME) 123*128kB (UME) 9*256kB (U) 0*512kB 0*1024kB 0*2048kB 0*4096kB = 55860kB
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=1048576kB
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: 3599 total pagecache pages
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages in swap cache
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Free swap  = 0kB
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Total swap = 0kB
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: 2046792 pages RAM
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages HighMem/MovableOnly
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: 63890 pages reserved
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages hwpoisoned
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1792635 (python) total-vm:4403968kB, anon-rss:4184556kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8340kB oom_score_adj:0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792623 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792624 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792625 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792635 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792668 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792672 (git) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792673 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 (cron)[1792690]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+
+== journalctl sshd/cron ==
+  строк 6725
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1790894 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1791461 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1791462 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1791463 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1791492 (pgrep) in control group while starting unit. Ignoring.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 (cron)[1791493]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 cron[1791493]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 cron[1791493]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T17:03:13+00:00 ubuntu-8gb-nbg1-2 CRON[1791461]: pam_unix(cron:session): session closed for user root
+  2026-09-28T17:05:01+00:00 ubuntu-8gb-nbg1-2 CRON[1792040]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T17:05:01+00:00 ubuntu-8gb-nbg1-2 CRON[1792039]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T17:05:01+00:00 ubuntu-8gb-nbg1-2 CRON[1792042]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-09-28T17:05:01+00:00 ubuntu-8gb-nbg1-2 CRON[1792041]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T17:05:01+00:00 ubuntu-8gb-nbg1-2 CRON[1792039]: pam_unix(cron:session): session closed for user root
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792040 (cron) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792041 (sh) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792043 (bash) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792054 (python) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792087 (bash) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792091 (git) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792092 (ssh) remains running after unit stopped.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 1min 6.055s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 278.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792040 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792041 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792043 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792054 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792087 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792091 (git) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792092 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 (cron)[1792094]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 cron[1792094]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 cron[1792094]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T17:07:19+00:00 ubuntu-8gb-nbg1-2 CRON[1792040]: pam_unix(cron:session): session closed for user root
+  2026-09-28T17:10:01+00:00 ubuntu-8gb-nbg1-2 CRON[1792623]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T17:10:01+00:00 ubuntu-8gb-nbg1-2 CRON[1792624]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: A process of this unit has been killed by the OOM killer.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1749916 (python) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751225 (bash) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751227 (python) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751237 (bash) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1751239 (python) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792623 (cron) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792624 (sh) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792625 (bash) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792635 (python) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792668 (bash) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792672 (git) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Unit process 1792673 (ssh) remains running after unit stopped.
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Consumed 1min 18.591s CPU time, 6.8G memory peak, 0B memory swap peak.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Scheduled restart job, restart counter is at 279.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1749916 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751225 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751227 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751237 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1751239 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792623 (cron) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792624 (sh) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792625 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792635 (python) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792668 (bash) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792672 (git) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 1792673 (ssh) in control group while starting unit. Ignoring.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 systemd[1]: Started cron.service - Regular background program processing daemon.
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 (cron)[1792690]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 cron[1792690]: (CRON) INFO (pidfile fd = 3)
+  2026-09-28T17:10:58+00:00 ubuntu-8gb-nbg1-2 cron[1792690]: (CRON) INFO (Skipping @reboot jobs -- not system startup)
+  2026-09-28T17:11:12+00:00 ubuntu-8gb-nbg1-2 sshd[1793217]: Connection closed by 193.33.189.41 port 35977
+  2026-09-28T17:11:16+00:00 ubuntu-8gb-nbg1-2 CRON[1792623]: pam_unix(cron:session): session closed for user root
+  2026-09-28T17:15:01+00:00 ubuntu-8gb-nbg1-2 CRON[1793537]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T17:15:01+00:00 ubuntu-8gb-nbg1-2 CRON[1793536]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-09-28T17:15:01+00:00 ubuntu-8gb-nbg1-2 CRON[1793538]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-09-28T17:15:01+00:00 ubuntu-8gb-nbg1-2 CRON[1793539]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-09-28T17:15:01+00:00 ubuntu-8gb-nbg1-2 CRON[1793536]: pam_unix(cron:session): session closed for user root
+
+== dmesg -T (память, диск, сеть) ==
+  строк 28
+  [Mon Sep 28 14:37:40 2026] Out of memory: Killed process 1774086 (python) total-vm:4295464kB, anon-rss:4075752kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:8136kB oom_score_adj:0
+  [Mon Sep 28 14:40:45 2026] Out of memory: Killed process 1775031 (python) total-vm:4279480kB, anon-rss:4060008kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8100kB oom_score_adj:0
+  [Mon Sep 28 14:45:29 2026] Out of memory: Killed process 1775620 (python) total-vm:4279560kB, anon-rss:4060268kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8100kB oom_score_adj:0
+  [Mon Sep 28 14:50:24 2026] Out of memory: Killed process 1776203 (python) total-vm:4275000kB, anon-rss:4055532kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8092kB oom_score_adj:0
+  [Mon Sep 28 14:55:33 2026] Out of memory: Killed process 1776791 (python) total-vm:4273708kB, anon-rss:4054636kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8092kB oom_score_adj:0
+  [Mon Sep 28 15:00:19 2026] Out of memory: Killed process 1777372 (python) total-vm:4263224kB, anon-rss:4043112kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8072kB oom_score_adj:0
+  [Mon Sep 28 15:10:56 2026] Out of memory: Killed process 1777958 (python) total-vm:4285084kB, anon-rss:4065384kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8112kB oom_score_adj:0
+  [Mon Sep 28 15:15:21 2026] Out of memory: Killed process 1779128 (python) total-vm:4380384kB, anon-rss:4160620kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8296kB oom_score_adj:0
+  [Mon Sep 28 15:22:47 2026] Out of memory: Killed process 1779712 (python) total-vm:4386292kB, anon-rss:4166508kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8312kB oom_score_adj:0
+  [Mon Sep 28 15:29:05 2026] Out of memory: Killed process 1780301 (python) total-vm:4385028kB, anon-rss:4165864kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
+  [Mon Sep 28 15:30:28 2026] Out of memory: Killed process 1780888 (python) total-vm:4361920kB, anon-rss:4142700kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8260kB oom_score_adj:0
+  [Mon Sep 28 15:39:34 2026] Out of memory: Killed process 1781474 (python) total-vm:4383524kB, anon-rss:4164456kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8304kB oom_score_adj:0
+  [Mon Sep 28 15:48:36 2026] Out of memory: Killed process 1782643 (python) total-vm:4453108kB, anon-rss:4233964kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8436kB oom_score_adj:0
+  [Mon Sep 28 15:50:51 2026] Out of memory: Killed process 1783231 (python) total-vm:4442800kB, anon-rss:4223464kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  [Mon Sep 28 15:58:35 2026] Out of memory: Killed process 1783820 (python) total-vm:4455828kB, anon-rss:4236520kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8440kB oom_score_adj:0
+  [Mon Sep 28 16:00:19 2026] Out of memory: Killed process 1784410 (python) total-vm:4435352kB, anon-rss:4215396kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  [Mon Sep 28 16:06:01 2026] Out of memory: Killed process 1784997 (python) total-vm:4443020kB, anon-rss:4223976kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  [Mon Sep 28 16:15:14 2026] Out of memory: Killed process 1785580 (python) total-vm:4463080kB, anon-rss:4243308kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8460kB oom_score_adj:0
+  [Mon Sep 28 16:20:15 2026] Out of memory: Killed process 1786759 (python) total-vm:4432412kB, anon-rss:4212588kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8408kB oom_score_adj:0
+  [Mon Sep 28 16:28:03 2026] Out of memory: Killed process 1787346 (python) total-vm:4449916kB, anon-rss:4230124kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  [Mon Sep 28 16:33:41 2026] Out of memory: Killed process 1787936 (python) total-vm:4445624kB, anon-rss:4226096kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  [Mon Sep 28 16:35:15 2026] Out of memory: Killed process 1788535 (python) total-vm:4431084kB, anon-rss:4211172kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  [Mon Sep 28 16:44:16 2026] Out of memory: Killed process 1789115 (python) total-vm:4441184kB, anon-rss:4221292kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:8416kB oom_score_adj:0
+  [Mon Sep 28 16:46:05 2026] Out of memory: Killed process 1789704 (python) total-vm:4424192kB, anon-rss:4204908kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  [Mon Sep 28 16:52:29 2026] Out of memory: Killed process 1790294 (python) total-vm:4422700kB, anon-rss:4203500kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  [Mon Sep 28 17:00:13 2026] Out of memory: Killed process 1790894 (python) total-vm:4437048kB, anon-rss:4217708kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8412kB oom_score_adj:0
+  [Mon Sep 28 17:05:05 2026] Out of memory: Killed process 1792054 (python) total-vm:4384928kB, anon-rss:4165352kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
+  [Mon Sep 28 17:10:12 2026] Out of memory: Killed process 1792635 (python) total-vm:4403968kB, anon-rss:4184556kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8340kB oom_score_adj:0
+конец: 2026-09-28T17:15:06Z, код 0
