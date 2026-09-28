@@ -398,3 +398,11 @@
   [Mon Sep 28 17:05:05 2026] Out of memory: Killed process 1792054 (python) total-vm:4384928kB, anon-rss:4165352kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
   [Mon Sep 28 17:10:12 2026] Out of memory: Killed process 1792635 (python) total-vm:4403968kB, anon-rss:4184556kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8340kB oom_score_adj:0
 конец: 2026-09-28T17:15:06Z, код 0
+публикуется в ветку main:
+ jobs/done/logtail-block.log        | 370 ++++++++++++++++++++++++++++++++++---
+ jobs/done/status-after-unblock.log |   5 +
+ 2 files changed, 354 insertions(+), 21 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   9bbb3965..2b390f00  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
