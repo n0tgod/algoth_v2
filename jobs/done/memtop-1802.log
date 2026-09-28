@@ -133,3 +133,11 @@
   {"kind": "books", "seq": 527, "hour": "2026-09-24-18", "at": "09-24 19:54", "sections": 1199, "symbols": 784, "train_why": "весам 8.2 ч при каденции 24", "steps_sec": {"сведение часа": 45.6, "матрица": 89.8, "книги": 96.
   {"kind": "books", "seq": 527, "hour": "2026-09-24-19", "at": "09-24 20:13", "sections": 1200, "symbols": 784, "train_why": "весам 8.5 ч при каденции 24", "steps_sec": {"сведение часа": 44.0, "матрица": 98.3, "книги": 76.
 конец: 2026-09-28T18:05:06Z, код 0
+публикуется в ветку main:
+ jobs/done/loggrep-train.log         |  10 +++
+ jobs/done/memtop-1802.done          |   1 +
+ jobs/done/memtop-1802.log           | 135 ++++++++++++++++++++++++++++++++++++
+ jobs/done/status-1802.log           |  46 ++++++++++++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 5 files changed, 193 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 2ea488fc02cebcf2ff232beaa7323f2849dbd2ee but expected 295cb84071365fd68b22783f161b671879e71bbc
