@@ -113,3 +113,11 @@
   {"kind": "books", "seq": 527, "hour": "2026-09-24-18", "at": "09-24 19:54", "sections": 1199, "symbols": 784, "train_why": "весам 8.2 ч при каденции 24", "steps_sec": {"сведение часа": 45.6, "матрица": 89.8, "книги": 96.
   {"kind": "books", "seq": 527, "hour": "2026-09-24-19", "at": "09-24 20:13", "sections": 1200, "symbols": 784, "train_why": "весам 8.5 ч при каденции 24", "steps_sec": {"сведение часа": 44.0, "матрица": 98.3, "книги": 76.
 конец: 2026-09-28T19:55:07Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-1950.log | 111 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/status-1950.log |   8 ++++
+ 2 files changed, 119 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   5ec12615..9e31424b  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

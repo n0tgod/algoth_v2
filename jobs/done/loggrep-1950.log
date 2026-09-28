@@ -19,3 +19,4 @@
  jobs/done/memtop-1950.log           |  4 ++++
  research/s8_loop/out/day_brake.json |  2 +-
  5 files changed, 21 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 5ec12615d61abc1abb592da2a73376e110c12f31 but expected 364f2a264b7f4eaf1da0f2c19b3789bb25d56c9b
