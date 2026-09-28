@@ -251,9 +251,20 @@ for job in "$JOBS"/*.job; do
         status)
             {
                 echo "--- диск ---"; df -h / /mnt/HC_Volume_* 2>/dev/null
-                echo "--- процессы ---"
-                pgrep -af "b1_book/collect.py|s8_loop/train.py|bot live" \
-                    2>/dev/null || echo "нет"
+                echo "--- процессы (возраст с) ---"
+                # Возраст обязателен: 28.09 ядро убивало часовой цикл по
+                # памяти 175 раз за сутки, сторож поднимал его каждые
+                # 5 минут, и список без возраста показывал живой процесс
+                # — отказ, неотличимый от исправности. Процесс моложе
+                # тика сторожа и убийства ядра ниже — это и есть петля.
+                for p in $(pgrep -f "b1_book/collect.py|s8_loop/train.py|bot live" 2>/dev/null); do
+                    ps -o pid=,etimes=,args= -p "$p" 2>/dev/null | cut -c1-160
+                done
+                pgrep -f "b1_book/collect.py|s8_loop/train.py|bot live" >/dev/null 2>&1 || echo "нет"
+                echo "--- убийства ядра по памяти за сутки ---"
+                n_oom=$(journalctl -k --since "24 hours ago" --no-pager 2>/dev/null \
+                    | grep -c "Out of memory: Killed" || true)
+                echo "${n_oom:-0} (подробно: run tools/memtop.py)"
                 # Идущие прогоны отдельной строкой. Без них `status`
                 # показывает исправный сервер и молчит о том, считает ли
                 # что-нибудь прямо сейчас: длинное задание снаружи

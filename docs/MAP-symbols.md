@@ -7964,7 +7964,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L45 `check(paths, pct=PCT, asks_out=ASKS_OUT, statvfs=os.statvfs, no…` — Возвращает список путей над порогом; просьба пишется один раз.
 - L78 `main(argv=None, asks_out=ASKS_OUT, paths=None)`
 
-## tools/jobs.sh · 289 строк
+## tools/jobs.sh · 300 строк
 
 Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
 
