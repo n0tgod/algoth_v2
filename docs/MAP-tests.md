@@ -4297,6 +4297,15 @@ X1: исполнитель против подставной биржи.
 - L13 `has()`
 - L35 `run()`
 
+## tools/test_memtop.py · 59 строк
+
+Проверка `tools/memtop.py`: разбор `ps`, хвост лога, отсутствующий файл.
+
+- L11 `test_ps_rows_sorts_by_rss_and_converts_units()`
+- L25 `test_ps_rows_cuts_args()`
+- L30 `test_tail_lines_and_missing()`
+- L42 `test_main_runs_without_server_logs(capsys=None)`
+
 ## tools/test_project_map.py · 246 строк
 
 Проверка генератора карты кода и хука, который её перестраивает.
