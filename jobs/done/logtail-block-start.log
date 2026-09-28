@@ -398,3 +398,10 @@
   [Mon Sep 28 17:16:39 2026] Out of memory: Killed process 1793551 (python) total-vm:5431184kB, anon-rss:5211364kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10356kB oom_score_adj:0
   [Mon Sep 28 17:25:30 2026] Out of memory: Killed process 1794450 (python) total-vm:5450276kB, anon-rss:5231088kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10396kB oom_score_adj:0
 конец: 2026-09-28T17:26:18Z, код 0
+публикуется в ветку main:
+ jobs/done/logtail-block-start.done |   1 +
+ jobs/done/logtail-block-start.log  | 400 ++++++++++++++++++++++++++++++++++++
+ jobs/done/memtop-2809.done         |   1 +
+ jobs/done/memtop-2809.log          | 406 +++++++++++++++++++++++++++++++++++++
+ 4 files changed, 808 insertions(+)
+fatal: cannot lock ref 'HEAD': is at 27a2dc0a3526307832ffa25dfeff7c32c794fff6 but expected 7036ff9d3729916f914b5945e3477493edd0dc16

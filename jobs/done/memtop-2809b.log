@@ -1,0 +1,289 @@
+== задание memtop-2809b ==
+строка: run tools/memtop.py --day 2026-09-28 --tail 6
+начало: 2026-09-28T17:30:30Z
+запускаю: .venv/bin/python tools/memtop.py --day 2026-09-28 --tail 6
+== free -m (2026-09-28 17:30:30 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        1501        3932           4        2848        6243
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 857 МБ
+     21675    14604    353 1506:52  claude --continue
+   1796214        1    348   00:00  .venv/bin/python research/b1_book/collect.py --http 8765
+   1796246  1796106     39   00:00  .venv/bin/python research/s8_loop/train.py
+   2637243        1     26  394:42  /sbin/multipathd -d -s
+   2637231        1     19  394:42  /usr/lib/systemd/systemd-journald
+   1796641  1796637     12   00:00  .venv/bin/python tools/memtop.py --day 2026-09-28 --tail 6
+         1        0     10 1515:46  /usr/lib/systemd/systemd --system --deserialize=75
+       961        1      9 1515:46  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   2637242        1      7  394:42  /usr/lib/systemd/systemd-resolved
+    691277        1      5  130:45  /usr/sbin/rsyslogd -n -iNONE
+   1496656        1      4   35:27  /usr/lib/polkit-1/polkitd --no-debug
+   1796672  1796641      4   00:00  ps -eo pid,ppid,rss,etimes,args --no-headers
+   2637234        1      4  394:42  /usr/lib/systemd/systemd-timesyncd
+   2637281        1      4  394:42  /usr/lib/systemd/systemd-networkd
+   2637600        1      4  394:42  sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+       922        1      3 1515:46  /usr/lib/systemd/systemd-logind
+    669148        1      3  836:02  bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.com --
+    888036        1      3  106:47  /usr/sbin/qemu-ga
+
+== убийства ядра с 2026-09-28 00:00 UTC ==
+  строк 175
+  2026-09-28T00:20:12+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1646025 (python) total-vm:4576444kB, anon-rss:4259008kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:8632kB oom_score_adj:0
+  2026-09-28T00:30:42+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1653330 (python) total-vm:5343052kB, anon-rss:5123476kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:10184kB oom_score_adj:0
+  2026-09-28T00:37:38+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1654714 (python) total-vm:5443180kB, anon-rss:5222860kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10380kB oom_score_adj:0
+  2026-09-28T00:43:05+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1655375 (python) total-vm:5469252kB, anon-rss:5247052kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10428kB oom_score_adj:0
+  2026-09-28T00:48:35+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1656039 (python) total-vm:5383756kB, anon-rss:5164636kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10264kB oom_score_adj:0
+  2026-09-28T00:52:31+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1656723 (python) total-vm:5451896kB, anon-rss:5225884kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10384kB oom_score_adj:0
+  2026-09-28T00:57:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1657410 (python) total-vm:5460504kB, anon-rss:5237140kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10408kB oom_score_adj:0
+  2026-09-28T01:06:14+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1658089 (python) total-vm:5456696kB, anon-rss:5234060kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10400kB oom_score_adj:0
+  2026-09-28T01:12:59+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1659411 (python) total-vm:5412916kB, anon-rss:5193608kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10324kB oom_score_adj:0
+  2026-09-28T01:18:15+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1660076 (python) total-vm:5418748kB, anon-rss:5199324kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10328kB oom_score_adj:0
+  2026-09-28T01:21:24+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1660740 (python) total-vm:5376624kB, anon-rss:5157076kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10244kB oom_score_adj:0
+  2026-09-28T01:28:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1661410 (python) total-vm:4097532kB, anon-rss:3878148kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:7744kB oom_score_adj:0
+  2026-09-28T01:33:49+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1662207 (python) total-vm:5421728kB, anon-rss:5202288kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10340kB oom_score_adj:0
+  2026-09-28T01:38:24+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1662968 (python) total-vm:5456656kB, anon-rss:5237268kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10404kB oom_score_adj:0
+  2026-09-28T01:44:30+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1663651 (python) total-vm:5418936kB, anon-rss:5199536kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10332kB oom_score_adj:0
+  2026-09-28T01:48:48+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1664331 (python) total-vm:5447924kB, anon-rss:5227124kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10388kB oom_score_adj:0
+  2026-09-28T01:55:04+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1665029 (python) total-vm:5408456kB, anon-rss:5188792kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10308kB oom_score_adj:0
+  2026-09-28T02:01:52+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1665741 (python) total-vm:4365700kB, anon-rss:3800616kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:7720kB oom_score_adj:0
+  2026-09-28T02:08:03+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1667272 (python) total-vm:3874556kB, anon-rss:3655152kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:7308kB oom_score_adj:0
+  2026-09-28T02:11:26+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1667951 (python) total-vm:3458492kB, anon-rss:3239276kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6500kB oom_score_adj:0
+  2026-09-28T02:16:00+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1668637 (python) total-vm:3527536kB, anon-rss:3307628kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:6632kB oom_score_adj:0
+  2026-09-28T02:21:09+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1669383 (python) total-vm:3718716kB, anon-rss:3499116kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:7004kB oom_score_adj:0
+  2026-09-28T02:26:30+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1670232 (python) total-vm:3633320kB, anon-rss:3413904kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:6836kB oom_score_adj:0
+  2026-09-28T02:31:49+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1670922 (python) total-vm:3644692kB, anon-rss:3425004kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6864kB oom_score_adj:0
+  2026-09-28T02:36:56+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1671798 (python) total-vm:3659128kB, anon-rss:3439108kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:6884kB oom_score_adj:0
+  2026-09-28T02:41:54+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1672591 (python) total-vm:3633372kB, anon-rss:3414248kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6840kB oom_score_adj:0
+  2026-09-28T02:46:02+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1673389 (python) total-vm:3621852kB, anon-rss:3402844kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6812kB oom_score_adj:0
+  2026-09-28T02:51:53+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1674263 (python) total-vm:4957316kB, anon-rss:4737608kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:9428kB oom_score_adj:0
+  2026-09-28T02:56:26+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1675198 (python) total-vm:4011972kB, anon-rss:3792876kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:7580kB oom_score_adj:0
+  2026-09-28T03:05:08+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1675939 (python) total-vm:2694964kB, anon-rss:2475392kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:5000kB oom_score_adj:0
+  2026-09-28T03:06:33+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1676798 (python) total-vm:2709656kB, anon-rss:2490680kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:5028kB oom_score_adj:0
+  2026-09-28T03:10:53+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1677594 (python) total-vm:3809604kB, anon-rss:3590120kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:7180kB oom_score_adj:0
+  2026-09-28T03:16:09+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1678408 (python) total-vm:3871648kB, anon-rss:3652016kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:7304kB oom_score_adj:0
+  2026-09-28T03:21:48+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1679170 (python) total-vm:3834192kB, anon-rss:3615116kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:7232kB oom_score_adj:0
+  2026-09-28T03:27:34+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1680004 (python) total-vm:5039684kB, anon-rss:4820212kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9584kB oom_score_adj:0
+  2026-09-28T03:36:05+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1680847 (python) total-vm:5071288kB, anon-rss:4851680kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:9652kB oom_score_adj:0
+  2026-09-28T03:41:37+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1682387 (python) total-vm:4779652kB, anon-rss:4560488kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9080kB oom_score_adj:0
+  2026-09-28T03:48:46+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1683221 (python) total-vm:4938424kB, anon-rss:4718444kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9396kB oom_score_adj:0
+  2026-09-28T03:54:52+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1683946 (python) total-vm:4930136kB, anon-rss:4711040kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9372kB oom_score_adj:0
+  2026-09-28T03:57:50+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1684641 (python) total-vm:4986076kB, anon-rss:4766568kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9484kB oom_score_adj:0
+  2026-09-28T04:06:21+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1685345 (python) total-vm:4989244kB, anon-rss:4769928kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:9488kB oom_score_adj:0
+  2026-09-28T04:11:15+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1686886 (python) total-vm:3779336kB, anon-rss:3560172kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:7128kB oom_score_adj:0
+  2026-09-28T04:20:48+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1687616 (python) total-vm:4977556kB, anon-rss:4758480kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9468kB oom_score_adj:0
+  2026-09-28T04:27:16+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1688534 (python) total-vm:5400072kB, anon-rss:5124576kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:10312kB oom_score_adj:0
+  2026-09-28T04:31:48+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1689993 (python) total-vm:5115940kB, anon-rss:4896356kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9732kB oom_score_adj:0
+  2026-09-28T04:38:17+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1690760 (python) total-vm:5159584kB, anon-rss:4940160kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9828kB oom_score_adj:0
+  2026-09-28T04:41:38+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1691534 (python) total-vm:5486544kB, anon-rss:5262196kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:10456kB oom_score_adj:0
+  2026-09-28T04:48:40+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1692285 (python) total-vm:5285272kB, anon-rss:5065144kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10068kB oom_score_adj:0
+  2026-09-28T04:53:42+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1693224 (python) total-vm:5267664kB, anon-rss:5047684kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:10036kB oom_score_adj:0
+  2026-09-28T04:56:23+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1694005 (python) total-vm:5160964kB, anon-rss:4941928kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9824kB oom_score_adj:0
+  2026-09-28T05:04:03+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1694990 (python) total-vm:5406536kB, anon-rss:5187272kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10312kB oom_score_adj:0
+  2026-09-28T05:06:58+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1696086 (python) total-vm:5390688kB, anon-rss:5171440kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10276kB oom_score_adj:0
+  2026-09-28T05:12:37+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1697096 (python) total-vm:5308580kB, anon-rss:5089380kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10116kB oom_score_adj:0
+  2026-09-28T05:17:59+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1697896 (python) total-vm:4321252kB, anon-rss:4101968kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8180kB oom_score_adj:0
+  2026-09-28T05:23:27+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1698704 (python) total-vm:5482160kB, anon-rss:5262488kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10456kB oom_score_adj:0
+  2026-09-28T05:26:11+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1699498 (python) total-vm:5525940kB, anon-rss:5300084kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10536kB oom_score_adj:0
+  2026-09-28T05:31:07+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1700136 (python) total-vm:5534696kB, anon-rss:5315156kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10556kB oom_score_adj:0
+  2026-09-28T05:36:02+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1700819 (python) total-vm:5517192kB, anon-rss:5295464kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10524kB oom_score_adj:0
+  2026-09-28T05:41:44+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1701486 (python) total-vm:5473404kB, anon-rss:5249364kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10432kB oom_score_adj:0
+  2026-09-28T05:46:02+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1702176 (python) total-vm:5534644kB, anon-rss:5311000kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10552kB oom_score_adj:0
+  2026-09-28T05:51:07+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1702890 (python) total-vm:5525820kB, anon-rss:5306280kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10544kB oom_score_adj:0
+  2026-09-28T05:56:41+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1703562 (python) total-vm:5428296kB, anon-rss:5209188kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10348kB oom_score_adj:0
+  2026-09-28T06:04:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1704242 (python) total-vm:4837044kB, anon-rss:4617280kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9192kB oom_score_adj:0
+  2026-09-28T06:06:33+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1705137 (python) total-vm:5381948kB, anon-rss:5162512kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10260kB oom_score_adj:0
+  2026-09-28T06:12:16+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1705869 (python) total-vm:5460168kB, anon-rss:5236052kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10416kB oom_score_adj:0
+  2026-09-28T06:17:42+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1706620 (python) total-vm:5477688kB, anon-rss:5252984kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10440kB oom_score_adj:0
+  2026-09-28T06:22:47+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1707381 (python) total-vm:5451412kB, anon-rss:5231768kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10392kB oom_score_adj:0
+  2026-09-28T06:27:34+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1708190 (python) total-vm:5477820kB, anon-rss:5252256kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10436kB oom_score_adj:0
+  2026-09-28T06:32:38+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1708947 (python) total-vm:5486516kB, anon-rss:5266992kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10464kB oom_score_adj:0
+  2026-09-28T06:37:08+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1709716 (python) total-vm:5477692kB, anon-rss:5258056kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10448kB oom_score_adj:0
+  2026-09-28T06:42:03+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1710483 (python) total-vm:5486448kB, anon-rss:5265876kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10468kB oom_score_adj:0
+  2026-09-28T06:47:40+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1711231 (python) total-vm:5486496kB, anon-rss:5261756kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10456kB oom_score_adj:0
+  2026-09-28T06:52:11+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1711981 (python) total-vm:5477740kB, anon-rss:5254768kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10444kB oom_score_adj:0
+  2026-09-28T06:57:02+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1712702 (python) total-vm:5486452kB, anon-rss:5259476kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10444kB oom_score_adj:0
+  2026-09-28T07:05:43+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1713534 (python) total-vm:5240500kB, anon-rss:5021136kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9980kB oom_score_adj:0
+  2026-09-28T07:12:47+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1715234 (python) total-vm:5242000kB, anon-rss:5022564kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9980kB oom_score_adj:0
+  2026-09-28T07:18:35+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1715957 (python) total-vm:5239152kB, anon-rss:5019736kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9980kB oom_score_adj:0
+  2026-09-28T07:23:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1716685 (python) total-vm:5249472kB, anon-rss:5030392kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10000kB oom_score_adj:0
+  2026-09-28T07:28:29+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1717421 (python) total-vm:5224732kB, anon-rss:5005748kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9948kB oom_score_adj:0
+  2026-09-28T07:34:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1718143 (python) total-vm:5262412kB, anon-rss:5043116kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10028kB oom_score_adj:0
+  2026-09-28T07:37:41+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1718869 (python) total-vm:5234636kB, anon-rss:5014884kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:9968kB oom_score_adj:0
+  2026-09-28T07:43:20+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1719592 (python) total-vm:5211424kB, anon-rss:4991484kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9924kB oom_score_adj:0
+  2026-09-28T07:47:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1720286 (python) total-vm:5208704kB, anon-rss:4988812kB, file-rss:4096kB, shmem-rss:0kB, UID:0 pgtables:9924kB oom_score_adj:0
+  2026-09-28T07:58:54+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1720980 (python) total-vm:5275116kB, anon-rss:5055848kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10048kB oom_score_adj:0
+  2026-09-28T08:05:12+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1722384 (python) total-vm:5273348kB, anon-rss:5053432kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10040kB oom_score_adj:0
+  2026-09-28T08:12:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1723906 (python) total-vm:5213204kB, anon-rss:4993900kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9920kB oom_score_adj:0
+  2026-09-28T08:17:10+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1724700 (python) total-vm:5242020kB, anon-rss:5022732kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9984kB oom_score_adj:0
+  2026-09-28T08:24:21+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1725414 (python) total-vm:5267692kB, anon-rss:5047884kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10032kB oom_score_adj:0
+  2026-09-28T08:28:54+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1726151 (python) total-vm:5244988kB, anon-rss:5025504kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9992kB oom_score_adj:0
+  2026-09-28T08:33:09+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1726885 (python) total-vm:5240628kB, anon-rss:5021304kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:9984kB oom_score_adj:0
+  2026-09-28T08:38:40+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1727586 (python) total-vm:5214360kB, anon-rss:4994708kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9928kB oom_score_adj:0
+  2026-09-28T08:43:37+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1728294 (python) total-vm:5234632kB, anon-rss:5015068kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:9968kB oom_score_adj:0
+  2026-09-28T08:48:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1729003 (python) total-vm:5230232kB, anon-rss:5010776kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9964kB oom_score_adj:0
+  2026-09-28T08:53:30+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1729701 (python) total-vm:5225972kB, anon-rss:5006456kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9952kB oom_score_adj:0
+  2026-09-28T08:58:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1730391 (python) total-vm:5227492kB, anon-rss:5007816kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9956kB oom_score_adj:0
+  2026-09-28T09:05:54+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1731081 (python) total-vm:5228920kB, anon-rss:5009888kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:9952kB oom_score_adj:0
+  2026-09-28T09:11:18+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1732525 (python) total-vm:3804852kB, anon-rss:3585128kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:7168kB oom_score_adj:0
+  2026-09-28T09:20:16+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1733392 (python) total-vm:5249076kB, anon-rss:5029352kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:10000kB oom_score_adj:0
+  2026-09-28T10:15:12+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1734374 (python) total-vm:4623928kB, anon-rss:4288216kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:8668kB oom_score_adj:0
+  2026-09-28T10:24:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1743311 (python) total-vm:5237256kB, anon-rss:5017152kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9976kB oom_score_adj:0
+  2026-09-28T10:28:07+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1744026 (python) total-vm:5302512kB, anon-rss:5083272kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:10104kB oom_score_adj:0
+  2026-09-28T10:34:36+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1744702 (python) total-vm:5290692kB, anon-rss:5071096kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:10088kB oom_score_adj:0
+  2026-09-28T10:38:24+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1745381 (python) total-vm:5282396kB, anon-rss:5063112kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10064kB oom_score_adj:0
+  2026-09-28T10:43:45+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1746065 (python) total-vm:5247552kB, anon-rss:5027944kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:9992kB oom_score_adj:0
+  2026-09-28T10:49:13+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1746736 (python) total-vm:5257868kB, anon-rss:5038656kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10012kB oom_score_adj:0
+  2026-09-28T10:51:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1747368 (python) total-vm:5256348kB, anon-rss:5036752kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:10016kB oom_score_adj:0
+  2026-09-28T10:57:04+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1748003 (python) total-vm:5250728kB, anon-rss:5031784kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10004kB oom_score_adj:0
+  2026-09-28T11:03:28+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1748628 (python) total-vm:5241912kB, anon-rss:5022100kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:9984kB oom_score_adj:0
+  2026-09-28T11:06:33+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1749260 (python) total-vm:5256408kB, anon-rss:5036524kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:10016kB oom_score_adj:0
+  2026-09-28T11:20:08+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1749927 (python) total-vm:5404900kB, anon-rss:5024304kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:10112kB oom_score_adj:0
+  2026-09-28T11:26:16+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1751811 (python) total-vm:4518300kB, anon-rss:4298856kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8568kB oom_score_adj:0
+  2026-09-28T11:31:22+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1752392 (python) total-vm:4515284kB, anon-rss:4296040kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8564kB oom_score_adj:0
+  2026-09-28T11:36:31+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1752978 (python) total-vm:4512488kB, anon-rss:4293356kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8552kB oom_score_adj:0
+  2026-09-28T11:41:31+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1753558 (python) total-vm:4503632kB, anon-rss:4283752kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8544kB oom_score_adj:0
+  2026-09-28T11:46:32+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1754144 (python) total-vm:4513816kB, anon-rss:4294248kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8556kB oom_score_adj:0
+  2026-09-28T11:53:08+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1754724 (python) total-vm:4503656kB, anon-rss:4284140kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8540kB oom_score_adj:0
+  2026-09-28T11:55:59+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1755316 (python) total-vm:4493700kB, anon-rss:4273896kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8516kB oom_score_adj:0
+  2026-09-28T12:01:37+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1755896 (python) total-vm:4490760kB, anon-rss:4271724kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8512kB oom_score_adj:0
+  2026-09-28T12:06:47+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1756483 (python) total-vm:4495008kB, anon-rss:4275556kB, file-rss:3968kB, shmem-rss:0kB, UID:0 pgtables:8524kB oom_score_adj:0
+  2026-09-28T12:12:50+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1757067 (python) total-vm:4493440kB, anon-rss:4273900kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8516kB oom_score_adj:0
+  2026-09-28T12:16:05+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1757660 (python) total-vm:4474764kB, anon-rss:4255720kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8484kB oom_score_adj:0
+  2026-09-28T12:21:05+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1758243 (python) total-vm:4470364kB, anon-rss:4250728kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8472kB oom_score_adj:0
+  2026-09-28T12:26:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1758828 (python) total-vm:4476212kB, anon-rss:4256748kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8488kB oom_score_adj:0
+  2026-09-28T12:31:09+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1759412 (python) total-vm:4464640kB, anon-rss:4245480kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8460kB oom_score_adj:0
+  2026-09-28T12:36:37+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1759999 (python) total-vm:4464640kB, anon-rss:4245352kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8464kB oom_score_adj:0
+  2026-09-28T12:43:45+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1760580 (python) total-vm:4470364kB, anon-rss:4250860kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8472kB oom_score_adj:0
+  2026-09-28T12:46:48+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1761173 (python) total-vm:4538136kB, anon-rss:4318312kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8604kB oom_score_adj:0
+  2026-09-28T12:51:52+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1761756 (python) total-vm:4538016kB, anon-rss:4318188kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8608kB oom_score_adj:0
+  2026-09-28T12:57:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1762342 (python) total-vm:4543976kB, anon-rss:4324456kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8612kB oom_score_adj:0
+  2026-09-28T13:01:45+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1762928 (python) total-vm:4538016kB, anon-rss:4318184kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8608kB oom_score_adj:0
+  2026-09-28T13:06:53+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1763518 (python) total-vm:4542812kB, anon-rss:4323816kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8612kB oom_score_adj:0
+  2026-09-28T13:11:29+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1764102 (python) total-vm:4539572kB, anon-rss:4319468kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8612kB oom_score_adj:0
+  2026-09-28T13:16:33+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1764687 (python) total-vm:4534000kB, anon-rss:4314728kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8600kB oom_score_adj:0
+  2026-09-28T13:26:15+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1765271 (python) total-vm:4559784kB, anon-rss:4340072kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8648kB oom_score_adj:0
+  2026-09-28T13:35:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1766446 (python) total-vm:4552516kB, anon-rss:4332912kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8636kB oom_score_adj:0
+  2026-09-28T13:43:03+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1767626 (python) total-vm:4330224kB, anon-rss:4111212kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8196kB oom_score_adj:0
+  2026-09-28T13:45:56+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1768219 (python) total-vm:4302632kB, anon-rss:4082536kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8144kB oom_score_adj:0
+  2026-09-28T13:54:05+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1768799 (python) total-vm:4330264kB, anon-rss:4111240kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8204kB oom_score_adj:0
+  2026-09-28T13:56:23+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1769391 (python) total-vm:4312592kB, anon-rss:4092816kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8168kB oom_score_adj:0
+  2026-09-28T14:04:09+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1769976 (python) total-vm:4320252kB, anon-rss:4101224kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8176kB oom_score_adj:0
+  2026-09-28T14:08:33+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1770572 (python) total-vm:4325764kB, anon-rss:4106220kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8192kB oom_score_adj:0
+  2026-09-28T14:11:52+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1771161 (python) total-vm:4299884kB, anon-rss:4080872kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8144kB oom_score_adj:0
+  2026-09-28T14:20:54+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1771751 (python) total-vm:4318732kB, anon-rss:4099560kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8176kB oom_score_adj:0
+  2026-09-28T14:28:35+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1772916 (python) total-vm:4299884kB, anon-rss:4080748kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8140kB oom_score_adj:0
+  2026-09-28T14:30:54+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1773500 (python) total-vm:4286772kB, anon-rss:4067820kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8116kB oom_score_adj:0
+  2026-09-28T14:38:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1774086 (python) total-vm:4295464kB, anon-rss:4075752kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:8136kB oom_score_adj:0
+  2026-09-28T14:41:30+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1775031 (python) total-vm:4279480kB, anon-rss:4060008kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8100kB oom_score_adj:0
+  2026-09-28T14:46:14+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1775620 (python) total-vm:4279560kB, anon-rss:4060268kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8100kB oom_score_adj:0
+  2026-09-28T14:51:10+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1776203 (python) total-vm:4275000kB, anon-rss:4055532kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8092kB oom_score_adj:0
+  2026-09-28T14:56:18+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1776791 (python) total-vm:4273708kB, anon-rss:4054636kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8092kB oom_score_adj:0
+  2026-09-28T15:01:04+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1777372 (python) total-vm:4263224kB, anon-rss:4043112kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8072kB oom_score_adj:0
+  2026-09-28T15:11:41+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1777958 (python) total-vm:4285084kB, anon-rss:4065384kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8112kB oom_score_adj:0
+  2026-09-28T15:16:07+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1779128 (python) total-vm:4380384kB, anon-rss:4160620kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8296kB oom_score_adj:0
+  2026-09-28T15:23:32+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1779712 (python) total-vm:4386292kB, anon-rss:4166508kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8312kB oom_score_adj:0
+  2026-09-28T15:29:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1780301 (python) total-vm:4385028kB, anon-rss:4165864kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
+  2026-09-28T15:31:13+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1780888 (python) total-vm:4361920kB, anon-rss:4142700kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8260kB oom_score_adj:0
+  2026-09-28T15:40:19+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1781474 (python) total-vm:4383524kB, anon-rss:4164456kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8304kB oom_score_adj:0
+  2026-09-28T15:49:21+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1782643 (python) total-vm:4453108kB, anon-rss:4233964kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8436kB oom_score_adj:0
+  2026-09-28T15:51:36+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1783231 (python) total-vm:4442800kB, anon-rss:4223464kB, file-rss:2176kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  2026-09-28T15:59:20+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1783820 (python) total-vm:4455828kB, anon-rss:4236520kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8440kB oom_score_adj:0
+  2026-09-28T16:01:04+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1784410 (python) total-vm:4435352kB, anon-rss:4215396kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  2026-09-28T16:06:47+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1784997 (python) total-vm:4443020kB, anon-rss:4223976kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8424kB oom_score_adj:0
+  2026-09-28T16:15:59+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1785580 (python) total-vm:4463080kB, anon-rss:4243308kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8460kB oom_score_adj:0
+  2026-09-28T16:21:00+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1786759 (python) total-vm:4432412kB, anon-rss:4212588kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8408kB oom_score_adj:0
+  2026-09-28T16:28:49+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1787346 (python) total-vm:4449916kB, anon-rss:4230124kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  2026-09-28T16:34:27+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1787936 (python) total-vm:4445624kB, anon-rss:4226096kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8432kB oom_score_adj:0
+  2026-09-28T16:36:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1788535 (python) total-vm:4431084kB, anon-rss:4211172kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:8400kB oom_score_adj:0
+  2026-09-28T16:45:01+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1789115 (python) total-vm:4441184kB, anon-rss:4221292kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:8416kB oom_score_adj:0
+  2026-09-28T16:46:50+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1789704 (python) total-vm:4424192kB, anon-rss:4204908kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  2026-09-28T16:53:14+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1790294 (python) total-vm:4422700kB, anon-rss:4203500kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8384kB oom_score_adj:0
+  2026-09-28T17:00:58+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1790894 (python) total-vm:4437048kB, anon-rss:4217708kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:8412kB oom_score_adj:0
+  2026-09-28T17:05:51+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1792054 (python) total-vm:4384928kB, anon-rss:4165352kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8308kB oom_score_adj:0
+  2026-09-28T17:10:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1792635 (python) total-vm:4403968kB, anon-rss:4184556kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:8340kB oom_score_adj:0
+  2026-09-28T17:17:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1793551 (python) total-vm:5431184kB, anon-rss:5211364kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:10356kB oom_score_adj:0
+  2026-09-28T17:26:15+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 1794450 (python) total-vm:5450276kB, anon-rss:5231088kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:10396kB oom_score_adj:0
+
+== research/s8_loop/out/train.log (хвост 6) ==
+  строк всего 70260
+  [09-28 16:50:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 16:55:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 17:05:19] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 17:10:18] сводка: символов с записью 778, новых часов 0, 17 с
+  [09-28 17:15:16] сводка: символов с записью 778, новых часов 0, 15 с
+  [09-28 17:20:28] сводка: символов с записью 778, новых часов 0, 26 с
+
+== research/dca_paper/out/short.log (хвост 6) ==
+  строк всего 42246
+  
+  Successfully rebased and updated refs/heads/main.
+  To github.com:n0tgod/algoth_v2.git
+     7191bd37..abb8a77d  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/dca_paper/out/daily.log (хвост 6) ==
+  строк всего 121694
+   4 files changed, 732 insertions(+), 722 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+     b20c1a71..fb68bfd7  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+  
+
+== research/dca_paper/out/pair.log (хвост 6) ==
+  строк всего 56850
+  
+  Successfully rebased and updated refs/heads/main.
+  To github.com:n0tgod/algoth_v2.git
+     5a2cec1d..7036ff9d  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/b1_book/out/collect.log (хвост 6) ==
+  строк всего 1022956
+  [      10 с] шард 3: подключён, подписываюсь на 120 тем
+  [      11 с] шард 4: подключён, подписываюсь на 120 тем
+  [      12 с] шард 5: подключён, подписываюсь на 120 тем
+  [      13 с] шард 6: подключён, подписываюсь на 120 тем
+  [      14 с] ВНИМАНИЕ: полный проход снимков занял 2.53 с при шаге 1 с — снимков в часе будет около 1421, не 3600
+  [      14 с] шард 7: подключён, подписываюсь на 120 тем
+
+== research/b1_book/out/watchdog.log (хвост 6) ==
+  строк всего 7839
+  [      11 с] шард 4: подключён, подписываюсь на 120 тем
+  == перезапускаю циклы обучения ==
+    не запущен: s8_loop/train.py --pretest
+    не запущен: s8_loop/train.py$
+  [2026-09-28T17:30:28Z] цикл обучения не найден — поднимаю
+  [2026-09-28T17:30:30Z] задание memtop-2809b запущено: tools/memtop.py
+
+== research/b1_book/out/ship.log (хвост 6) ==
+  строк всего 35
+  [03:15:04] до: /root/algoth_v2/research/b1_book/out: свободно 67.4 ГБ; /root: свободно 71.8 ГБ
+  [03:15:05] дней к выгрузке (не позже 2026-09-26, без отметки): 1 — 2026-09-26 … 2026-09-26; предел за прогон 20 ГБ
+  [03:15:11] 2026-09-26: архивов 2676 из 56354 файлов, 2.84 ГБ, отправлено 2 (было 2674), отказов 0, ETag не совпал у 0, ЗАКРЫТ
+  [03:15:11] снятие местных копий старше 21 сут:
+  [03:15:12] после: /root/algoth_v2/research/b1_book/out: свободно 67.4 ГБ; /root: свободно 71.8 ГБ; 8 с
+  [03:15:12] итого отправлено 0.01 ГБ, дней закрыто 1 из 1
+
+== research/a1_universe/out/refresh.log (хвост 6) ==
+  строк всего 12689
+  Прогон 2026-09-28: символов 1085, добавлено точек 3525, отказов сети 0, пустых рядов 0, 58.2 с.
+  
+  Край рядов после догона: минимум 2022-02-14, медиана 2026-09-28, максимум 2026-09-28. Ряд, край которого старше сегодняшнего дня, у площадки кончился (контракт снят) либо отказал сетью — отказы поимённо ниже.
+  
+  Отказов нет.
+  
+
+== research/a1_universe/out/instruments.log (хвост 6) ==
+  строк всего 414
+   research/s8_loop/out/day_brake.json               |   2 +-
+   10 files changed, 1154 insertions(+), 110 deletions(-)
+  To github.com:n0tgod/algoth_v2.git
+     5fb4ff58..9e2b4c9b  main -> main
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+конец: 2026-09-28T17:30:32Z, код 0
