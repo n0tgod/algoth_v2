@@ -27,7 +27,8 @@ LOGS = ("research/s8_loop/out/train.log",
         "research/b1_book/out/watchdog.log",
         "research/b1_book/out/ship.log",
         "research/a1_universe/out/refresh.log",
-        "research/a1_universe/out/instruments.log")
+        "research/a1_universe/out/instruments.log",
+        "research/s8_loop/out/model/train_log.jsonl")
 PS_TOP = 18
 ARGS_W = 150
 
@@ -94,8 +95,14 @@ def main(argv=None):
     got = [ln for ln in sh(["journalctl", "-k", "--utc", "--since", f"{a.day} 00:00:00",
                             "--no-pager", "-o", "short-iso"], timeout=120)
            if "Out of memory" in ln or "oom_reaper" in ln]
-    print(f"  строк {len(got)}")
-    for ln in got[-200:]:
+    kills = [ln for ln in got if "Out of memory: Killed" in ln]
+    print(f"  строк {len(got)}, убийств {len(kills)}")
+    # Первое и последнее убийство — всегда, даже когда список обрезан:
+    # по ним видно, КОГДА началась петля, а не только что она есть.
+    if kills:
+        print("  первое: " + kills[0][:220])
+        print("  последнее: " + kills[-1][:220])
+    for ln in got[-30:]:
         print("  " + ln[:220])
     for rel in LOGS:
         p = os.path.join(ROOT, rel)

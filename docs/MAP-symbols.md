@@ -7983,18 +7983,18 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L30 `in_window(line, a, b)`
 - L42 `main(argv=None)`
 
-## tools/memtop.py · 114 строк
+## tools/memtop.py · 121 строк
 
 Кто держит память на сервере — через очередь заданий.
 
 - L21 `ROOT = os.path.dirname(os.path.dirname(os.path…`
 - L22 `LOGS = ('research/s8_loop/out/train.log', 'res…`
-- L31 `PS_TOP = 18`
-- L32 `ARGS_W = 150`
-- L35 `sh(cmd, timeout=60)` — stdout команды строками; ошибка — одной строкой с причиной.
-- L47 `ps_rows(lines, top=PS_TOP, width=ARGS_W)` — Строки `ps -eo pid,ppid,rss,etimes,args` → (pid, ppid, МБ, возраст, args).
-- L70 `tail_lines(path, n)`
-- L79 `main(argv=None)`
+- L32 `PS_TOP = 18`
+- L33 `ARGS_W = 150`
+- L36 `sh(cmd, timeout=60)` — stdout команды строками; ошибка — одной строкой с причиной.
+- L48 `ps_rows(lines, top=PS_TOP, width=ARGS_W)` — Строки `ps -eo pid,ppid,rss,etimes,args` → (pid, ppid, МБ, возраст, args).
+- L71 `tail_lines(path, n)`
+- L80 `main(argv=None)`
 
 ## tools/probe_cli_models.py · 56 строк
 

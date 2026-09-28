@@ -49,6 +49,7 @@ def test_main_runs_without_server_logs(capsys=None):
     out = buf.getvalue()
     assert rc == 0
     assert "== free -m" in out and "== процессы по памяти" in out
+    assert "убийств 0" in out or "убийств " in out, out
     assert out.count("(файла нет)") + out.count("строк всего") == len(M.LOGS), out
 
 
