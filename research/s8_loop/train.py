@@ -353,6 +353,35 @@ def think(prev_man, man, ic_rows, picks):
     return out
 
 
+def summary_files(sum_dir):
+    """Файлы сводок в порядке чтения: символы по имени, внутри — дни.
+
+    Порядок и есть правило «пересведённый час стоит позже исходного и
+    побеждает»: он общий для обоих проходов `load_matrices`.
+    """
+    try:
+        symbols = sorted(os.listdir(sum_dir))
+    except OSError:
+        return []
+    out = []
+    for sym in symbols:
+        sdir = os.path.join(sum_dir, sym)
+        for fn in sorted(os.listdir(sdir)):
+            if fn.endswith(".jsonl"):
+                out.append((sym, os.path.join(sdir, fn)))
+    return out
+
+
+def _summary_rows(path):
+    """Строки одного файла сводок по одной; битая строка пропускается."""
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            try:
+                yield json.loads(line)
+            except ValueError:
+                continue
+
+
 def load_matrices(sum_dir):
     """Сводки всех символов → словарь матриц (символы, часы).
 
@@ -360,35 +389,31 @@ def load_matrices(sum_dir):
     дыра записи — колонка NaN, а не выпавшая колонка. Склей мы только
     имеющиеся часы, форвард через дыру склеил бы вечер с утром — тот же
     дефект, что `diff` по дырявым барам, закрытый в R1.
+
+    Два прохода по файлам вместо одного со всеми строками в памяти.
+    Прежний вариант держал КАЖДУЮ строку сводки словарём до конца
+    сборки: ~950 тысяч словарей по 45 полей на 725 именах × 55 суток —
+    больше 3 ГБ на машине с 7.7 без свопа, и с ростом записи цикл
+    перерос машину сам: 28.09 ядро убивало его на 4.2 ГБ при каждом
+    подъёме сторожем. Первый проход собирает часы и состав полей,
+    второй заполняет матрицы строкой за строкой. Состав полей — по
+    ВСЕМ строкам: сводка расширялась по ходу записи, и поле, которого
+    нет в первой строке, иначе выпало бы молча. Результат — бит в бит
+    прежний (`test_load_matrices_streams_bit_for_bit`).
     """
-    rows_by_sym = {}
+    files = summary_files(sum_dir)
     hours = set()
-    fields_seen = set()
-    try:
-        symbols = sorted(os.listdir(sum_dir))
-    except OSError:
-        return None, [], []
-    for sym in symbols:
-        rr = []
-        sdir = os.path.join(sum_dir, sym)
-        for fn in sorted(os.listdir(sdir)):
-            if not fn.endswith(".jsonl"):
+    fields = set()
+    seen = set()
+    for sym, path in files:
+        for r in _summary_rows(path):
+            h = r.get("hour")
+            if h is None:
                 continue
-            with open(os.path.join(sdir, fn), encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        r = json.loads(line)
-                        rr.append(r)
-                        hours.add(r["hour"])
-                        # Состав полей — по ВСЕМ строкам: сводка
-                        # расширялась по ходу записи, и поле, которого
-                        # нет в первой строке, иначе выпало бы молча.
-                        fields_seen.update(r)
-                    except (ValueError, KeyError):
-                        continue
-        if rr:
-            rows_by_sym[sym] = rr
-    if not rows_by_sym:
+            hours.add(h)
+            fields.update(r)
+            seen.add(sym)
+    if not seen:
         return None, [], []
     h0 = min(hours)
     h1 = max(hours)
@@ -399,20 +424,22 @@ def load_matrices(sum_dir):
         grid.append(t.strftime("%Y-%m-%d-%H"))
         t = datetime.fromtimestamp(t.timestamp() + 3600, timezone.utc)
     idx = {h: i for i, h in enumerate(grid)}
-    syms = sorted(rows_by_sym)
-    fields = fields_seen
+    syms = sorted(seen)
     fields.discard("hour")
     mats = {f: np.full((len(syms), len(grid)), np.nan) for f in fields}
-    for si, sym in enumerate(syms):
+    si_of = {s: i for i, s in enumerate(syms)}
+    for sym, path in files:
+        si = si_of.get(sym)
+        if si is None:
+            continue
         # Строки идут в порядке дозаписи; пересведённый час стоит позже
         # исходного и побеждает — на это опирается summary --redo.
-        for r in rows_by_sym[sym]:
-            j = idx.get(r["hour"])
+        for r in _summary_rows(path):
+            j = idx.get(r.get("hour"))
             if j is None:
                 continue
-            for f in fields:
-                v = r.get(f)
-                if isinstance(v, (int, float)):
+            for f, v in r.items():
+                if f != "hour" and isinstance(v, (int, float)):
                     mats[f][si, j] = v
     mats.update(context_mats(syms, grid))
     return mats, syms, grid

@@ -4406,6 +4406,162 @@ def test_load_matrices_grid_is_continuous():
           and mats["mid_close"][0, 5] == 2.0)
 
 
+def _load_matrices_reference(sum_dir):
+    """Прежний `load_matrices` (до 28.09) — эталон для сверки бит в бит.
+
+    Копия намеренно: правило «строки в памяти целиком» и есть то, от
+    чего уходим, и сверять новый вариант можно только с ним.
+    """
+    import train as T
+    rows_by_sym = {}
+    hours = set()
+    fields_seen = set()
+    for sym in sorted(os.listdir(sum_dir)):
+        rr = []
+        sdir = os.path.join(sum_dir, sym)
+        for fn in sorted(os.listdir(sdir)):
+            if not fn.endswith(".jsonl"):
+                continue
+            with open(os.path.join(sdir, fn), encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        r = json.loads(line)
+                        rr.append(r)
+                        hours.add(r["hour"])
+                        fields_seen.update(r)
+                    except (ValueError, KeyError):
+                        continue
+        if rr:
+            rows_by_sym[sym] = rr
+    if not rows_by_sym:
+        return None, [], []
+    h0, h1 = min(hours), max(hours)
+    grid = []
+    t = datetime.strptime(h0, "%Y-%m-%d-%H").replace(tzinfo=timezone.utc)
+    end = datetime.strptime(h1, "%Y-%m-%d-%H").replace(tzinfo=timezone.utc)
+    while t <= end:
+        grid.append(t.strftime("%Y-%m-%d-%H"))
+        t = datetime.fromtimestamp(t.timestamp() + 3600, timezone.utc)
+    idx = {h: i for i, h in enumerate(grid)}
+    syms = sorted(rows_by_sym)
+    fields = fields_seen
+    fields.discard("hour")
+    mats = {f: np.full((len(syms), len(grid)), np.nan) for f in fields}
+    for si, sym in enumerate(syms):
+        for r in rows_by_sym[sym]:
+            j = idx.get(r["hour"])
+            if j is None:
+                continue
+            for f in fields:
+                v = r.get(f)
+                if isinstance(v, (int, float)):
+                    mats[f][si, j] = v
+    mats.update(T.context_mats(syms, grid))
+    return mats, syms, grid
+
+
+def _write_summary_fixture(d, n_syms=1, hours=None, seed=7):
+    """Сводки с живыми особенностями записи.
+
+    Дозапись того же часа (побеждает поздняя), поле, появившееся не с
+    первой строки, null, bool, строка вместо числа, битая строка,
+    файл не-.jsonl рядом, пустой символ, дыра в часах.
+    """
+    import random
+    rnd = random.Random(seed)
+    hours = hours or ["2026-08-01-00", "2026-08-01-01", "2026-08-01-03",
+                      "2026-08-02-00"]
+    for i in range(n_syms):
+        sym = f"S{i:03d}USDT"
+        os.makedirs(os.path.join(d, sym))
+        by_day = {}
+        for h in hours:
+            r = {"hour": h, "mid_close": round(rnd.random() * 10, 4),
+                 "n_snap": rnd.randint(100, 3600),
+                 "spread_bp": rnd.random() if rnd.random() > 0.2 else None,
+                 "flag": rnd.random() > 0.5}
+            if h >= "2026-08-01-03":
+                r["late_field"] = round(rnd.random(), 3)   # поле не с первой строки
+            if h == "2026-08-01-01":
+                r["mid_close"] = "abc"                     # строка — не число
+            by_day.setdefault(h[:10], []).append(json.dumps(r))
+        by_day["2026-08-01"].append("{битая строка")
+        # Пересведённый час — позже в файле и с другим значением.
+        by_day["2026-08-01"].append(json.dumps(
+            {"hour": "2026-08-01-00", "mid_close": 99.5, "n_snap": 1}))
+        # И ещё раз тот же час — в файле ПОЗДНЕГО дня: порядок файлов по
+        # имени тоже часть правила «поздняя запись побеждает».
+        by_day[max(by_day)].append(json.dumps(
+            {"hour": "2026-08-01-00", "mid_close": 77.7}))
+        for day, lines in by_day.items():
+            with open(os.path.join(d, sym, f"{day}.jsonl"), "w") as f:
+                f.write("\n".join(lines) + "\n")
+        with open(os.path.join(d, sym, "заметка.txt"), "w") as f:
+            f.write("не сводка\n")
+    os.makedirs(os.path.join(d, "EMPTYUSDT"))
+    with open(os.path.join(d, "EMPTYUSDT", "2026-08-01.jsonl"), "w") as f:
+        f.write("")
+
+
+def test_load_matrices_streams_bit_for_bit():
+    """Потоковый `load_matrices` даёт прежний результат и не держит строки.
+
+    Повод 28.09: цикл держал все строки сводок словарями (>3 ГБ на 55
+    сутках записи), и ядро убивало его при каждом подъёме сторожем.
+    Сверка с копией прежнего кода на записи с живыми особенностями;
+    память — tracemalloc, пик нового обязан быть заметно ниже.
+    """
+    import tracemalloc
+    import train as T
+
+    d = tempfile.mkdtemp()
+    _write_summary_fixture(d, n_syms=3)
+    ref_m, ref_s, ref_g = _load_matrices_reference(d)
+    # Фикстура жива: дозапись победила, bool стал 1/0, строка — NaN,
+    # позднее поле есть, пустой символ выпал.
+    i0 = ref_g.index("2026-08-01-00")
+    check("фикстура: пересведённый час победил, и поздний файл — позже",
+          ref_m["mid_close"][0, i0] == 77.7 and ref_m["n_snap"][0, i0] == 1.0,
+          f"{ref_m['mid_close'][0, i0]} {ref_m['n_snap'][0, i0]}")
+    check("фикстура: bool записан числом",
+          ref_m["flag"][0, i0] in (0.0, 1.0), str(ref_m["flag"][0]))
+    check("фикстура: строка вместо числа — NaN",
+          np.isnan(ref_m["mid_close"][0, ref_g.index("2026-08-01-01")]))
+    check("фикстура: позднее поле в составе", "late_field" in ref_m
+          and np.isfinite(ref_m["late_field"][0, ref_g.index("2026-08-02-00")]))
+    check("фикстура: пустой символ выпал, сетка с дырой",
+          ref_s == ["S000USDT", "S001USDT", "S002USDT"] and len(ref_g) == 25,
+          f"{ref_s} {len(ref_g)}")
+
+    new_m, new_s, new_g = T.load_matrices(d)
+    check("символы и сетка прежние", new_s == ref_s and new_g == ref_g)
+    check("состав матриц прежний", set(new_m) == set(ref_m),
+          f"лишние {set(new_m) - set(ref_m)}, потеряны {set(ref_m) - set(new_m)}")
+    diff = [f for f in ref_m if f in new_m and not np.array_equal(
+        np.asarray(new_m[f], dtype=float), np.asarray(ref_m[f], dtype=float),
+        equal_nan=True)]
+    check("матрицы бит в бит", not diff, f"расходятся {diff}")
+    check("пустой каталог — прежний ответ",
+          T.load_matrices(tempfile.mkdtemp()) == (None, [], []))
+
+    # Память: на записи побольше пик нового заметно ниже эталона.
+    d2 = tempfile.mkdtemp()
+    hours = [f"2026-08-{1 + k // 24:02d}-{k % 24:02d}" for k in range(240)]
+    _write_summary_fixture(d2, n_syms=40, hours=hours)
+    tracemalloc.start()
+    _load_matrices_reference(d2)
+    _, peak_ref = tracemalloc.get_traced_memory()
+    tracemalloc.reset_peak()
+    T.load_matrices(d2)
+    _, peak_new = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    check("пик памяти нового вдвое ниже эталона",
+          peak_new * 2 < peak_ref,
+          f"новый {peak_new // 1024} КБ, эталон {peak_ref // 1024} КБ")
+    shutil.rmtree(d)
+    shutil.rmtree(d2)
+
+
 def test_sigma_targets_exist_on_every_horizon():
     """Порядок сечения нельзя задать целью, которой не существует.
 
@@ -5706,6 +5862,7 @@ def main():
     test_nn_learns_and_sees_missing()
     test_think_words()
     test_load_matrices_grid_is_continuous()
+    test_load_matrices_streams_bit_for_bit()
     test_live_ic_survives_hourly_retraining()
     test_live_ic_shown_as_median_not_last_hour()
     test_declared_candidate_gets_a_live_book()

@@ -3605,7 +3605,7 @@
 - L169 `test_e2e_report()`
 - L215 `main()`
 
-## research/s8_loop/test_s8.py · 5730 строк
+## research/s8_loop/test_s8.py · 5887 строк
 
 Тесты S8.1. Главные — заглядывание (один тест на ВСЕ признаки, правило M1) и правильность пути (MFE/MAE): на…
 
@@ -3684,25 +3684,28 @@
 - L4309 `test_nn_learns_and_sees_missing()` — Сеть учится и видит пропуск флагом, а не затиркой.
 - L4362 `test_think_words()` — Мысли — чистая функция от чисел; слова обязаны следовать за числами, а не украшать их.
 - L4391 `test_load_matrices_grid_is_continuous()`
-- L4409 `test_sigma_targets_exist_on_every_horizon()` — Порядок сечения нельзя задать целью, которой не существует.
-- L4439 `test_book_archives_when_the_order_changes()` — Книга, упорядоченная иначе, — ДРУГАЯ книга.
-- L4524 `test_repair_returns_the_model_and_leaves_the_book()` — Разбор последствий: модель возвращается, книга остаётся в архиве.
-- L4590 `test_adopting_the_same_book_keeps_its_history()` — Книга, которой главная СТАЛА, уже существовала — её и продолжаем.
-- L4684 `test_non_crypto_split_by_book_kind()` — Не-крипто: часовые книги не видят, ситуационная вправе.
-- L4720 `test_entry_floor_gates_the_main_book()` — Пол входа: тихий час не торгуется, смена пола отставляет книгу.
-- L4782 `test_books_order_by_their_own_sigma()` — Порядок сечения — свойство книги, и он один на весь цикл.
-- L4804 `test_fixed_risk_sizing_equalises_dollar_risk()` — Рука равного риска: стоп всегда −R, тейк при RR r — +r·R.
-- L4851 `test_no_outcome_returns_principal()` — Деньги сделки «без исхода» возвращаются принципалом.
-- L4901 `test_basket_echo_books()` — Корзинные книги-эхо: копия выборов, порог суммы, закрытие разом.
-- L5027 `test_basket_only_book()` — h24c: ни одного отдельного выхода — таймерные разборы источника не копируются вовсе, закрывает только корзина…
-- L5138 `test_fresh_sit_version_for_echo_books()` — `version=1` у эха: решает словарь правил, а не версия v13.
-- L5180 `test_sit_absorb_lives_in_one_module()` — Поглощение живых событий: и сборщик, и цикл зовут один код.
-- L5252 `test_trade_ids_are_stable()` — Id сделки: выводится из полей записи и переживает пересборку.
-- L5288 `test_day_brake_math_and_activation()` — Арифметика дневного тормоза и правило «действует сейчас».
-- L5323 `test_training_runs_on_a_cadence_not_every_hour()` — Обучение ушло из ЧАСОВОГО пути на объявленную каденцию.
-- L5432 `test_day_brake_blocks_entries_not_reviews()` — Сквозной цикл: тормоз закрывает ВХОДЫ часовых книг, не разбор.
-- L5499 `test_agree_echo_book()` — Согласное эхо: у источника остаётся ровно пересечение рук.
-- L5626 `main()`
+- L4409 `_load_matrices_reference(sum_dir)` — Прежний `load_matrices` (до 28.09) — эталон для сверки бит в бит.
+- L4463 `_write_summary_fixture(d, n_syms=1, hours=None, seed=7)` — Сводки с живыми особенностями записи.
+- L4506 `test_load_matrices_streams_bit_for_bit()` — Потоковый `load_matrices` даёт прежний результат и не держит строки.
+- L4565 `test_sigma_targets_exist_on_every_horizon()` — Порядок сечения нельзя задать целью, которой не существует.
+- L4595 `test_book_archives_when_the_order_changes()` — Книга, упорядоченная иначе, — ДРУГАЯ книга.
+- L4680 `test_repair_returns_the_model_and_leaves_the_book()` — Разбор последствий: модель возвращается, книга остаётся в архиве.
+- L4746 `test_adopting_the_same_book_keeps_its_history()` — Книга, которой главная СТАЛА, уже существовала — её и продолжаем.
+- L4840 `test_non_crypto_split_by_book_kind()` — Не-крипто: часовые книги не видят, ситуационная вправе.
+- L4876 `test_entry_floor_gates_the_main_book()` — Пол входа: тихий час не торгуется, смена пола отставляет книгу.
+- L4938 `test_books_order_by_their_own_sigma()` — Порядок сечения — свойство книги, и он один на весь цикл.
+- L4960 `test_fixed_risk_sizing_equalises_dollar_risk()` — Рука равного риска: стоп всегда −R, тейк при RR r — +r·R.
+- L5007 `test_no_outcome_returns_principal()` — Деньги сделки «без исхода» возвращаются принципалом.
+- L5057 `test_basket_echo_books()` — Корзинные книги-эхо: копия выборов, порог суммы, закрытие разом.
+- L5183 `test_basket_only_book()` — h24c: ни одного отдельного выхода — таймерные разборы источника не копируются вовсе, закрывает только корзина…
+- L5294 `test_fresh_sit_version_for_echo_books()` — `version=1` у эха: решает словарь правил, а не версия v13.
+- L5336 `test_sit_absorb_lives_in_one_module()` — Поглощение живых событий: и сборщик, и цикл зовут один код.
+- L5408 `test_trade_ids_are_stable()` — Id сделки: выводится из полей записи и переживает пересборку.
+- L5444 `test_day_brake_math_and_activation()` — Арифметика дневного тормоза и правило «действует сейчас».
+- L5479 `test_training_runs_on_a_cadence_not_every_hour()` — Обучение ушло из ЧАСОВОГО пути на объявленную каденцию.
+- L5588 `test_day_brake_blocks_entries_not_reviews()` — Сквозной цикл: тормоз закрывает ВХОДЫ часовых книг, не разбор.
+- L5655 `test_agree_echo_book()` — Согласное эхо: у источника остаётся ровно пересечение рук.
+- L5782 `main()`
 
 ## research/s8_loop/test_sheet_supply.py · 117 строк
 
