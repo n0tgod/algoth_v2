@@ -23,3 +23,13 @@
   [09-28 17:42:18] матрица: 784 символов × 1436 часов, сечений с ≥30 именами: 1257, признаков 50
   [09-28 17:44:03] переобучаю: весам 102.0 ч при каденции 24
 конец: 2026-09-28T17:45:03Z, код 0
+публикуется в ветку main:
+ jobs/done/loggrep-train.done        |  1 +
+ jobs/done/loggrep-train.log         | 25 +++++++++++++++++++++++++
+ jobs/done/memtop-since-2009.log     | 10 ++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 37 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   7487bd9a..53564b18  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
