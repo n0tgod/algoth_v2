@@ -4300,6 +4300,14 @@ X1: исполнитель против подставной биржи.
 - L13 `has()`
 - L35 `run()`
 
+## tools/test_loggrep.py · 49 строк
+
+Проверка `tools/loggrep.py`: счёт по дням в обоих форматах меток, окно дней.
+
+- L11 `test_scan_counts_by_day_in_both_stamp_formats()`
+- L27 `test_preset_cycle_matches_milestones()`
+- L36 `test_main_without_file()`
+
 ## tools/test_memtop.py · 60 строк
 
 Проверка `tools/memtop.py`: разбор `ps`, хвост лога, отсутствующий файл.
