@@ -1,4692 +1,4698 @@
 {
- "symbols": 1085,
- "added": 3525,
+ "symbols": 1086,
+ "added": 3491,
  "errors": 0,
  "empty": 0,
  "end_min": "2022-02-14",
- "end_median": "2026-09-28",
- "end_max": "2026-09-28",
- "today": "2026-09-28",
- "secs": 58.2,
+ "end_median": "2026-09-29",
+ "end_max": "2026-09-29",
+ "today": "2026-09-29",
+ "secs": 54.4,
  "per_symbol": {
   "0GUSDT": {
-   "had": 5135,
+   "had": 5141,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000000BABYDOGEUSDT": {
-   "had": 4116,
+   "had": 4122,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000000MOGUSDT": {
-   "had": 4451,
+   "had": 4457,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "10000NEXUSDT": {
-   "had": 774,
+   "had": 780,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "10000SATSUSDT": {
-   "had": 4740,
+   "had": 4746,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000BONKUSDT": {
-   "had": 5940,
+   "had": 5946,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000BTTUSDT": {
-   "had": 5024,
+   "had": 5027,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000CATUSDT": {
-   "had": 4092,
+   "had": 4098,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000FLOKIUSDT": {
-   "had": 3933,
+   "had": 3936,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000LUNCUSDT": {
-   "had": 4438,
+   "had": 4441,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000NEIROCTOUSDT": {
-   "had": 3825,
+   "had": 3831,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000PEPEUSDT": {
-   "had": 3729,
+   "had": 3732,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000RATSUSDT": {
-   "had": 4980,
+   "had": 4986,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000TAGUSDT": {
-   "had": 2556,
+   "had": 2562,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000TOSHIUSDT": {
-   "had": 5982,
+   "had": 5988,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000TURBOUSDT": {
-   "had": 4460,
+   "had": 4466,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1000XECUSDT": {
-   "had": 4883,
+   "had": 4886,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "1INCHUSDT": {
-   "had": 5267,
+   "had": 5270,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "2ZUSDT": {
-   "had": 2192,
-   "added": 24,
-   "end": "2026-09-28",
+   "had": 2216,
+   "added": 8,
+   "end": "2026-09-29",
    "error": null
   },
   "4STOCKUSDT": {
-   "had": 108,
+   "had": 114,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "4USDT": {
-   "had": 2123,
+   "had": 2129,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AALUSDT": {
-   "had": 198,
+   "had": 201,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AAOIUSDT": {
-   "had": 330,
+   "had": 333,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AAPLUSDT": {
-   "had": 456,
+   "had": 459,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AAVEUSDT": {
-   "had": 5888,
+   "had": 5891,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ACEUSDT": {
-   "had": 6355,
+   "had": 6361,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ACHUSDT": {
-   "had": 6722,
+   "had": 6728,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ACTUSDT": {
-   "had": 3915,
+   "had": 3921,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ACUUSDT": {
-   "had": 1482,
+   "had": 1488,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ADAUSDT": {
-   "had": 6057,
+   "had": 6060,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ADBEUSDT": {
-   "had": 270,
+   "had": 273,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ADIUSDT": {
-   "had": 117,
+   "had": 120,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AEHRUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AEONUSDT": {
-   "had": 270,
+   "had": 276,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AEROUSDT": {
-   "had": 4272,
+   "had": 4278,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AEVOUSDT": {
-   "had": 4644,
+   "had": 4650,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AGIUSDT": {
-   "had": 3135,
+   "had": 3138,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AGLDUSDT": {
-   "had": 4856,
+   "had": 4859,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AIGENSYNUSDT": {
-   "had": 901,
+   "had": 907,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AIOUSDT": {
-   "had": 2459,
+   "had": 2465,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AIOZUSDT": {
-   "had": 2508,
+   "had": 2511,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AIXBTUSDT": {
-   "had": 3798,
+   "had": 3804,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AKEUSDT": {
-   "had": 2238,
+   "had": 2244,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AKTUSDT": {
-   "had": 4329,
+   "had": 4335,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ALABUSDT": {
-   "had": 270,
+   "had": 273,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ALCHUSDT": {
-   "had": 3487,
+   "had": 3493,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ALGOUSDT": {
-   "had": 5490,
+   "had": 5493,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ALICEUSDT": {
-   "had": 5394,
+   "had": 5397,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ALLOUSDT": {
-   "had": 1901,
+   "had": 1907,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ALPINEUSDT": {
-   "had": 2454,
+   "had": 2460,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ALTUSDT": {
-   "had": 4788,
+   "had": 4794,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AMATUSDT": {
-   "had": 342,
+   "had": 345,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AMCUSDT": {
-   "had": 186,
+   "had": 189,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AMDSTOCKUSDT": {
-   "had": 366,
+   "had": 369,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AMGNUSDT": {
-   "had": 174,
+   "had": 177,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AMZNUSDT": {
-   "had": 456,
+   "had": 459,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AMZUUSDT": {
-   "had": 27,
+   "had": 30,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ANETUSDT": {
-   "had": 114,
+   "had": 117,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ANIMEUSDT": {
-   "had": 6947,
+   "had": 6953,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ANKRUSDT": {
-   "had": 5340,
+   "had": 5343,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ANTHROPICUSDT": {
-   "had": 228,
+   "had": 231,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "APEUSDT": {
-   "had": 4962,
+   "had": 4965,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "APEXUSDT": {
-   "had": 2183,
+   "had": 2189,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "API3USDT": {
-   "had": 10384,
+   "had": 10390,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "APLDUSDT": {
-   "had": 216,
+   "had": 219,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "APPSTOCKUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "APRUSDT": {
-   "had": 2033,
+   "had": 2039,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "APTUSDT": {
-   "had": 4318,
+   "had": 4321,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARBUSDT": {
-   "had": 3852,
+   "had": 3855,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARCUSDT": {
-   "had": 3792,
+   "had": 3798,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARIAUSDT": {
-   "had": 2495,
+   "had": 2501,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARKKUSDT": {
-   "had": 207,
+   "had": 210,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARKMUSDT": {
-   "had": 3472,
+   "had": 3475,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARKUSDT": {
-   "had": 5704,
+   "had": 5710,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARMUSDT": {
-   "had": 411,
+   "had": 414,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARPAUSDT": {
-   "had": 4862,
+   "had": 4865,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARUSDT": {
-   "had": 5225,
+   "had": 5228,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ARXUSDT": {
-   "had": 577,
+   "had": 583,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ASMLUSDT": {
-   "had": 279,
+   "had": 282,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ASRUSDT": {
-   "had": 2454,
+   "had": 2460,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ASTERUSDT": {
-   "had": 2238,
+   "had": 2244,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ASTRUSDT": {
-   "had": 4911,
+   "had": 4914,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ASTSUSDT": {
-   "had": 345,
+   "had": 348,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ATHUSDT": {
-   "had": 4110,
+   "had": 4116,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ATOMUSDT": {
-   "had": 5436,
+   "had": 5439,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ATUSDT": {
-   "had": 1997,
+   "had": 2003,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AUCTIONUSDT": {
-   "had": 7094,
+   "had": 7100,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AUSDT": {
-   "had": 2922,
+   "had": 2928,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AVAAIUSDT": {
-   "had": 3483,
+   "had": 3489,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AVAUSDT": {
-   "had": 3810,
+   "had": 3816,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AVAXUSDT": {
-   "had": 5513,
+   "had": 5516,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AVGOUSDT": {
-   "had": 414,
+   "had": 417,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AVNTUSDT": {
-   "had": 2886,
+   "had": 2892,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AWEUSDT": {
-   "had": 2958,
+   "had": 2964,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AXLUSDT": {
-   "had": 9701,
+   "had": 9707,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AXSUSDT": {
-   "had": 6552,
+   "had": 6555,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AXTIUSDT": {
-   "had": 309,
+   "had": 312,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "AZTECUSDT": {
-   "had": 1483,
+   "had": 1489,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "B2USDT": {
-   "had": 2850,
+   "had": 2856,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "B3USDT": {
-   "had": 6238,
-   "added": 21,
-   "end": "2026-09-28",
+   "had": 6259,
+   "added": 6,
+   "end": "2026-09-29",
    "error": null
   },
   "BABAUSDT": {
-   "had": 411,
+   "had": 414,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BABYUSDT": {
-   "had": 5262,
+   "had": 5268,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BACUSDT": {
-   "had": 162,
+   "had": 165,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BANANAS31USDT": {
-   "had": 3288,
+   "had": 3294,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BANANAUSDT": {
-   "had": 5397,
+   "had": 5403,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BANDUSDT": {
-   "had": 5030,
+   "had": 5033,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BANKUSDT": {
-   "had": 3042,
+   "had": 3048,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BANUSDT": {
-   "had": 6297,
+   "had": 6303,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BARDUSDT": {
-   "had": 6096,
+   "had": 6102,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BASEDUSDT": {
-   "had": 1086,
+   "had": 1092,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BATUSDT": {
-   "had": 5304,
+   "had": 5307,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BBUSDT": {
-   "had": 4458,
+   "had": 4464,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BBXUSDT": {
-   "had": 288,
+   "had": 291,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BCHUSDT": {
-   "had": 6339,
+   "had": 6342,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BEAMUSDT": {
-   "had": 4746,
+   "had": 4752,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BEATUSDT": {
-   "had": 3212,
+   "had": 3218,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BELUSDT": {
-   "had": 4689,
+   "had": 4692,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BERAUSDT": {
-   "had": 5918,
+   "had": 5924,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BEUSDT": {
-   "had": 366,
+   "had": 369,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BICOUSDT": {
-   "had": 5277,
+   "had": 5280,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BIGTIMEUSDT": {
-   "had": 5103,
+   "had": 5109,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BIIBUSDT": {
-   "had": 159,
+   "had": 162,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BILLUSDT": {
-   "had": 865,
+   "had": 871,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BIOUSDT": {
-   "had": 5912,
+   "had": 5918,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BIRBUSDT": {
-   "had": 1984,
+   "had": 1990,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BITOUSDT": {
-   "had": 186,
+   "had": 189,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BLASTUSDT": {
-   "had": 2535,
+   "had": 2538,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BLENDUSDT": {
-   "had": 906,
+   "had": 912,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BLESSUSDT": {
-   "had": 2208,
+   "had": 2214,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BLUAIUSDT": {
-   "had": 2028,
+   "had": 2034,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BLURUSDT": {
-   "had": 5002,
+   "had": 5005,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BMNRUSDT": {
-   "had": 408,
+   "had": 411,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BMTUSDT": {
-   "had": 3378,
+   "had": 3384,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BNBUSDT": {
-   "had": 5748,
+   "had": 5751,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BNCUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BNTUSDT": {
-   "had": 3442,
+   "had": 3445,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BOBAUSDT": {
-   "had": 4901,
+   "had": 4904,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BOMEUSDT": {
-   "had": 4638,
+   "had": 4644,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BOTUSDT": {
-   "had": 264,
+   "had": 267,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BPUSDT": {
-   "had": 1170,
+   "had": 1176,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BRETTUSDT": {
-   "had": 4512,
+   "had": 4518,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BREVUSDT": {
-   "had": 2596,
+   "had": 2602,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BRKBUSDT": {
-   "had": 177,
+   "had": 180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BROCCOLIUSDT": {
-   "had": 4564,
+   "had": 4570,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BRUSDT": {
-   "had": 3335,
+   "had": 3341,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BSBUSDT": {
-   "had": 1111,
+   "had": 1117,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BSPUSDT": {
-   "had": 249,
+   "had": 252,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BSVUSDT": {
-   "had": 7116,
+   "had": 7122,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BTCUSDT": {
-   "had": 7130,
+   "had": 7133,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BTDRUSDT": {
-   "had": 51,
+   "had": 54,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BTRUSDT": {
-   "had": 2376,
+   "had": 2382,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BTWUSDT": {
-   "had": 684,
+   "had": 690,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BUSDT": {
-   "had": 2953,
+   "had": 2959,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BXUSDT": {
-   "had": 216,
+   "had": 219,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BYDUSDT": {
-   "had": 61,
+   "had": 64,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "BZUSDT": {
-   "had": 411,
+   "had": 414,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "C98USDT": {
-   "had": 5394,
+   "had": 5397,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CAKEUSDT": {
-   "had": 5037,
+   "had": 5043,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CAPUSDT": {
-   "had": 542,
+   "had": 548,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CARVUSDT": {
-   "had": 8183,
+   "had": 8189,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CASHCATUSDT": {
-   "had": 318,
+   "had": 324,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CATIUSDT": {
-   "had": 4098,
+   "had": 4104,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CATSTOCKUSDT": {
-   "had": 261,
+   "had": 264,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CBRSUSDT": {
-   "had": 393,
+   "had": 396,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CCUSDT": {
-   "had": 1985,
+   "had": 1991,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CELOUSDT": {
-   "had": 5177,
+   "had": 5180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CETUSUSDT": {
-   "had": 4756,
+   "had": 4762,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CFGUSDT": {
-   "had": 1165,
+   "had": 1171,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CFXUSDT": {
-   "had": 3943,
+   "had": 3946,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CGNXUSDT": {
-   "had": 51,
+   "had": 54,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CGPTUSDT": {
-   "had": 6243,
+   "had": 6249,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CHILLGUYUSDT": {
-   "had": 3885,
+   "had": 3891,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CHIPUSDT": {
-   "had": 984,
+   "had": 990,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CHRUSDT": {
-   "had": 5322,
+   "had": 5325,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CHZUSDT": {
-   "had": 5433,
+   "had": 5436,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CIENUSDT": {
-   "had": 270,
+   "had": 273,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CIFRUSDT": {
-   "had": 153,
+   "had": 156,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CKBUSDT": {
-   "had": 5054,
+   "had": 5057,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CLANKERUSDT": {
-   "had": 3102,
+   "had": 3108,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CLOUSDT": {
-   "had": 2916,
+   "had": 2922,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CLSKUSDT": {
-   "had": 162,
+   "had": 165,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CLUSDT": {
-   "had": 1006,
+   "had": 1009,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COAIUSDT": {
-   "had": 4693,
+   "had": 4699,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COHRUSDT": {
-   "had": 309,
+   "had": 312,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COINUSDT": {
-   "had": 453,
+   "had": 456,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COMPUSDT": {
-   "had": 5558,
+   "had": 5561,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CONLUSDT": {
-   "had": 33,
+   "had": 36,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COOKIEUSDT": {
-   "had": 3667,
+   "had": 3673,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COREUSDT": {
-   "had": 3978,
+   "had": 3981,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CORZUSDT": {
-   "had": 27,
+   "had": 30,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COSTUSDT": {
-   "had": 243,
+   "had": 246,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COTIUSDT": {
-   "had": 5829,
+   "had": 5832,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "COWUSDT": {
-   "had": 6207,
+   "had": 6213,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CPUSDT": {
-   "had": 138,
+   "had": 144,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CRCLUSDT": {
-   "had": 432,
+   "had": 435,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CRDOUSDT": {
-   "had": 288,
+   "had": 291,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CRMUSDT": {
-   "had": 198,
+   "had": 201,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CROSSUSDT": {
-   "had": 2664,
+   "had": 2670,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CROUSDT": {
-   "had": 5306,
+   "had": 5309,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CRVUSDT": {
-   "had": 5394,
+   "had": 5397,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CRWDUSDT": {
-   "had": 258,
+   "had": 261,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CRWVUSDT": {
-   "had": 414,
+   "had": 417,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CSCOUSDT": {
-   "had": 390,
+   "had": 393,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CSOPSAMSUNG2LUSDT": {
-   "had": 142,
+   "had": 145,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CSOPSKHYNIX2LUSDT": {
-   "had": 142,
+   "had": 145,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CTCUSDT": {
-   "had": 8118,
+   "had": 8124,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CTRUSDT": {
-   "had": 660,
+   "had": 666,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CUSDT": {
-   "had": 2634,
+   "had": 2640,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CVCUSDT": {
-   "had": 7237,
+   "had": 7240,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CVXSTOCKUSDT": {
-   "had": 72,
+   "had": 75,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CVXUSDT": {
-   "had": 7358,
+   "had": 7364,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CXMTUSDT": {
-   "had": 186,
+   "had": 189,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CYBERUSDT": {
-   "had": 5334,
+   "had": 5340,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CYPHUSDT": {
-   "had": 18,
+   "had": 21,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "CYSUSDT": {
-   "had": 1734,
+   "had": 1740,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DASHUSDT": {
-   "had": 5433,
+   "had": 5436,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DATAUSDT": {
-   "had": 480,
+   "had": 486,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DBRUSDT": {
-   "had": 7943,
+   "had": 7949,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DDOGUSDT": {
-   "had": 120,
+   "had": 123,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DEEPUSDT": {
-   "had": 2130,
+   "had": 2133,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DELLUSDT": {
-   "had": 351,
+   "had": 354,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DEXEUSDT": {
-   "had": 4390,
+   "had": 4396,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DGAIUSDT": {
-   "had": 139,
+   "had": 145,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DIAUSDT": {
-   "had": 2586,
+   "had": 2592,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DJTUSDT": {
-   "had": 99,
+   "had": 102,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DKNGUSDT": {
-   "had": 207,
+   "had": 210,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DOGEUSDT": {
-   "had": 5828,
+   "had": 5831,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DOLOUSDT": {
-   "had": 2556,
+   "had": 2562,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DOODUSDT": {
-   "had": 5659,
+   "had": 5665,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DOSUSDT": {
-   "had": 277,
+   "had": 283,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DOTUSDT": {
-   "had": 6057,
+   "had": 6060,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DRAMUSDT": {
-   "had": 393,
+   "had": 396,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DRIFTUSDT": {
-   "had": 4719,
+   "had": 4725,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DUSKUSDT": {
-   "had": 5235,
+   "had": 5238,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DYDXUSDT": {
-   "had": 5436,
+   "had": 5439,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "DYMUSDT": {
-   "had": 5029,
+   "had": 5035,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EBAYUSDT": {
-   "had": 153,
+   "had": 156,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EDENUSDT": {
-   "had": 2172,
+   "had": 2178,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EDGEUSDT": {
-   "had": 1148,
+   "had": 1154,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EDUUSDT": {
-   "had": 3723,
+   "had": 3726,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EGLDUSDT": {
-   "had": 12530,
+   "had": 12533,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EIGENUSDT": {
-   "had": 4203,
+   "had": 4209,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ELSAUSDT": {
-   "had": 2127,
+   "had": 2133,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ENAUSDT": {
-   "had": 4584,
+   "had": 4590,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ENJUSDT": {
-   "had": 12751,
+   "had": 12754,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ENSOUSDT": {
-   "had": 4315,
+   "had": 4321,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ENSUSDT": {
-   "had": 5340,
+   "had": 5343,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EPICUSDT": {
-   "had": 3407,
+   "had": 3413,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ERAUSDT": {
-   "had": 6988,
+   "had": 6994,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ESPORTSUSDT": {
-   "had": 2907,
+   "had": 2913,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ESPUSDT": {
-   "had": 1577,
+   "had": 1583,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ETCUSDT": {
-   "had": 5748,
+   "had": 5751,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ETHBTCUSDT": {
-   "had": 2526,
+   "had": 2529,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ETHFIUSDT": {
-   "had": 4629,
+   "had": 4635,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ETHUSDT": {
-   "had": 6501,
+   "had": 6504,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EULUSDT": {
-   "had": 2088,
+   "had": 2094,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EURUSDUSDT": {
-   "had": 57,
+   "had": 60,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EVAAUSDT": {
-   "had": 2069,
+   "had": 2075,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EWJUSDT": {
-   "had": 429,
+   "had": 432,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EWTUSDT": {
-   "had": 345,
+   "had": 348,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EWYUSDT": {
-   "had": 429,
+   "had": 432,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "EWZUSDT": {
-   "had": 81,
+   "had": 84,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FARTCOINUSDT": {
-   "had": 3798,
+   "had": 3804,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FFUSDT": {
-   "had": 4981,
+   "had": 4987,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FHEUSDT": {
-   "had": 2708,
+   "had": 2714,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FIDAUSDT": {
-   "had": 4096,
+   "had": 4102,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FIGHTUSDT": {
-   "had": 1482,
+   "had": 1488,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FILUSDT": {
-   "had": 5748,
+   "had": 5751,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLEXUSDT": {
-   "had": 258,
+   "had": 261,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLNCUSDT": {
-   "had": 309,
+   "had": 312,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLOCKUSDT": {
-   "had": 8720,
+   "had": 8726,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLOWUSDT": {
-   "had": 13496,
+   "had": 13499,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLRUSDT": {
-   "had": 3871,
+   "had": 3874,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLUIDUSDT": {
-   "had": 2208,
+   "had": 2214,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLUXUSDT": {
-   "had": 4119,
+   "had": 4125,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FLYUSDT": {
-   "had": 207,
+   "had": 210,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FOGOUSDT": {
-   "had": 1555,
+   "had": 1561,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FOLKSUSDT": {
-   "had": 3117,
+   "had": 3123,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FORMSTOCKUSDT": {
-   "had": 51,
+   "had": 54,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FORMUSDT": {
-   "had": 3342,
+   "had": 3348,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FUSDT": {
-   "had": 5375,
+   "had": 5381,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FUTUUSDT": {
-   "had": 114,
+   "had": 117,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "FWDIUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GALAUSDT": {
-   "had": 5348,
+   "had": 5351,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GASUSDT": {
-   "had": 7069,
+   "had": 7075,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GBPUSDUSDT": {
-   "had": 57,
+   "had": 60,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GDXUSDT": {
-   "had": 186,
+   "had": 189,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GENIUSUSDT": {
-   "had": 984,
+   "had": 990,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GEUSDT": {
-   "had": 174,
+   "had": 177,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GEVUSDT": {
-   "had": 237,
+   "had": 240,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GIGADEVICEUSDT": {
-   "had": 183,
+   "had": 186,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GIGGLEUSDT": {
-   "had": 2117,
+   "had": 2123,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GILDUSDT": {
-   "had": 174,
+   "had": 177,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GLMUSDT": {
-   "had": 6081,
+   "had": 6087,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GLWUSDT": {
-   "had": 286,
+   "had": 289,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GMESTOCKUSDT": {
-   "had": 186,
+   "had": 189,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GMTUSDT": {
-   "had": 6259,
+   "had": 6262,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GMXUSDT": {
-   "had": 4344,
+   "had": 4347,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GOATUSDT": {
-   "had": 3972,
+   "had": 3978,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GOOGLUSDT": {
-   "had": 459,
+   "had": 462,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GPROUSDT": {
-   "had": 75,
+   "had": 78,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GPSUSDT": {
-   "had": 5304,
+   "had": 5310,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GRAMUSDT": {
-   "had": 582,
+   "had": 588,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GRASSUSDT": {
-   "had": 3990,
+   "had": 3996,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GRIFFAINUSDT": {
-   "had": 3540,
+   "had": 3546,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GRTUSDT": {
-   "had": 5267,
+   "had": 5270,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GRVTUSDT": {
-   "had": 347,
+   "had": 353,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GSUSDT": {
-   "had": 198,
+   "had": 201,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GTLBUSDT": {
-   "had": 27,
+   "had": 30,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GUNUSDT": {
-   "had": 3269,
+   "had": 3275,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "GWEIUSDT": {
-   "had": 955,
+   "had": 961,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HAEDALUSDT": {
-   "had": 3090,
+   "had": 3096,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HAJIMIUSDT": {
-   "had": 120,
+   "had": 126,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HANAUSDT": {
-   "had": 2069,
+   "had": 2075,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HANMIUSDT": {
-   "had": 132,
+   "had": 135,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HBARUSDT": {
-   "had": 5394,
+   "had": 5397,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HDUSDT": {
-   "had": 117,
+   "had": 120,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HEIUSDT": {
-   "had": 3540,
+   "had": 3546,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HEMIUSDT": {
-   "had": 2213,
+   "had": 2219,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HIMSUSDT": {
-   "had": 258,
+   "had": 261,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HIVEUSDT": {
-   "had": 7445,
+   "had": 7451,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HMSTRUSDT": {
-   "had": 4092,
+   "had": 4098,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HNTUSDT": {
-   "had": 5120,
+   "had": 5123,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HOLOUSDT": {
-   "had": 2315,
+   "had": 2321,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HOMEUSDT": {
-   "had": 3345,
+   "had": 3351,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HOODUSDT": {
-   "had": 474,
+   "had": 477,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HORIZONUSDT": {
-   "had": 49,
+   "had": 52,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HPEUSDT": {
-   "had": 279,
+   "had": 282,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HUAHONGUSDT": {
-   "had": 61,
+   "had": 64,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HUMAUSDT": {
-   "had": 2933,
+   "had": 2939,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HUSDT": {
-   "had": 7474,
+   "had": 7480,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HUTUSDT": {
-   "had": 18,
+   "had": 21,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HYPERUSDT": {
-   "had": 7364,
+   "had": 7370,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HYPEUSDT": {
-   "had": 1983,
+   "had": 1986,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "HYUNDAIUSDT": {
-   "had": 346,
+   "had": 349,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IBITUSDT": {
-   "had": 33,
+   "had": 36,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IBMUSDT": {
-   "had": 342,
+   "had": 345,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ICNTUSDT": {
-   "had": 2706,
+   "had": 2712,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ICPUSDT": {
-   "had": 5513,
+   "had": 5516,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IDUSDT": {
-   "had": 3929,
+   "had": 3932,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ILVUSDT": {
-   "had": 7157,
+   "had": 7163,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IMXUSDT": {
-   "had": 7164,
+   "had": 7170,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INFQUSDT": {
-   "had": 96,
+   "had": 99,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INITUSDT": {
-   "had": 3419,
+   "had": 3425,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INJUSDT": {
-   "had": 4656,
+   "had": 4659,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INTCUSDT": {
-   "had": 474,
+   "had": 477,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INTUUSDT": {
-   "had": 99,
+   "had": 102,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INTWUSDT": {
-   "had": 225,
+   "had": 228,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INUSDT": {
-   "had": 2512,
+   "had": 2518,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "INXUSDT": {
-   "had": 1446,
+   "had": 1452,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IONQUSDT": {
-   "had": 216,
+   "had": 219,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IOSTUSDT": {
-   "had": 5554,
+   "had": 5557,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IOTAUSDT": {
-   "had": 5198,
+   "had": 5201,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IOTXUSDT": {
-   "had": 5340,
+   "had": 5343,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IOUSDT": {
-   "had": 4374,
+   "had": 4380,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IRENUSDT": {
-   "had": 330,
+   "had": 333,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IRYSUSDT": {
-   "had": 1957,
+   "had": 1963,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ISRGUSDT": {
-   "had": 120,
+   "had": 123,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "IWMUSDT": {
-   "had": 408,
+   "had": 411,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JASMYUSDT": {
-   "had": 5135,
+   "had": 5138,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JCTUSDT": {
-   "had": 1884,
+   "had": 1890,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JDUSDT": {
-   "had": 112,
+   "had": 115,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JELLYJELLYUSDT": {
-   "had": 3643,
+   "had": 3649,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JNJUSDT": {
-   "had": 165,
+   "had": 168,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JPMUSDT": {
-   "had": 174,
+   "had": 177,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JSTUSDT": {
-   "had": 5024,
+   "had": 5027,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JTOUSDT": {
-   "had": 5100,
+   "had": 5106,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "JUPUSDT": {
-   "had": 4769,
+   "had": 4775,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KAIAUSDT": {
-   "had": 3945,
+   "had": 3951,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KAITOUSDT": {
-   "had": 9612,
+   "had": 9618,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KASUSDT": {
-   "had": 5310,
+   "had": 5316,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KATUSDT": {
-   "had": 1255,
+   "had": 1261,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KAVAUSDT": {
-   "had": 5162,
+   "had": 5165,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KERNELUSDT": {
-   "had": 3185,
+   "had": 3191,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KGENUSDT": {
-   "had": 2129,
+   "had": 2135,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
+   "error": null
+  },
+  "KIIUSDT": {
+   "had": 0,
+   "added": 6,
+   "end": "2026-09-29",
    "error": null
   },
   "KITEUSDT": {
-   "had": 4298,
+   "had": 4304,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KLACUSDT": {
-   "had": 279,
+   "had": 282,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KMNOUSDT": {
-   "had": 4014,
+   "had": 4020,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KNCUSDT": {
-   "had": 5162,
+   "had": 5165,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KODEX200USDT": {
-   "had": 132,
+   "had": 135,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KORUUSDT": {
-   "had": 281,
+   "had": 284,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KOUSDT": {
-   "had": 177,
+   "had": 180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KSMUSDT": {
-   "had": 5433,
+   "had": 5436,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KSTRUSDT": {
-   "had": 225,
+   "had": 228,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "KUAISHOUUSDT": {
-   "had": 142,
+   "had": 145,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LABUSDT": {
-   "had": 2454,
+   "had": 2460,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LAOPUUSDT": {
-   "had": 75,
+   "had": 78,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LAUSDT": {
-   "had": 7728,
+   "had": 7734,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LDOUSDT": {
-   "had": 4587,
+   "had": 4590,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LENOVOUSDT": {
-   "had": 61,
+   "had": 64,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LGELECTRONICSUSDT": {
-   "had": 132,
+   "had": 135,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LIGHTUSDT": {
-   "had": 3214,
+   "had": 3220,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LINEAUSDT": {
-   "had": 2392,
+   "had": 2398,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LINKUSDT": {
-   "had": 6501,
+   "had": 6504,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LITEUSDT": {
-   "had": 414,
+   "had": 417,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LITUSDT": {
-   "had": 1626,
+   "had": 1632,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LLYUSDT": {
-   "had": 408,
+   "had": 411,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LONGXIAUSDT": {
-   "had": 78,
+   "had": 84,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LPTUSDT": {
-   "had": 12081,
+   "had": 12087,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LQTYUSDT": {
-   "had": 3882,
+   "had": 3885,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LRCUSDT": {
-   "had": 7008,
+   "had": 7011,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LRCXUSDT": {
-   "had": 286,
+   "had": 289,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LSKUSDT": {
-   "had": 7048,
-   "added": 24,
-   "end": "2026-09-28",
+   "had": 7072,
+   "added": 15,
+   "end": "2026-09-29",
    "error": null
   },
   "LTCUSDT": {
-   "had": 6501,
+   "had": 6504,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LUMIAUSDT": {
-   "had": 3966,
+   "had": 3972,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LUNA2USDT": {
-   "had": 6484,
+   "had": 6487,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LYNUSDT": {
-   "had": 2305,
+   "had": 2311,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "LYTEUSDT": {
-   "had": 135,
+   "had": 138,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MAGICUSDT": {
-   "had": 7604,
+   "had": 7610,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MAGMAUSDT": {
-   "had": 1651,
+   "had": 1657,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MAGSUSDT": {
-   "had": 117,
+   "had": 120,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MANAUSDT": {
-   "had": 5352,
+   "had": 5355,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MANTAUSDT": {
-   "had": 4809,
+   "had": 4815,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MARAUSDT": {
-   "had": 216,
+   "had": 219,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MARSCOINUSDT": {
-   "had": 156,
+   "had": 162,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MASKUSDT": {
-   "had": 11533,
+   "had": 11539,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MAUSDT": {
-   "had": 177,
+   "had": 180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MAVIAUSDT": {
-   "had": 4568,
+   "had": 4574,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MAVUSDT": {
-   "had": 3561,
+   "had": 3564,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MCDUSDT": {
-   "had": 93,
+   "had": 96,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MDBUSDT": {
-   "had": 72,
+   "had": 75,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MEGAUSDT": {
-   "had": 2033,
+   "had": 2039,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MEITUANUSDT": {
-   "had": 142,
+   "had": 145,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MEITUUSDT": {
-   "had": 49,
+   "had": 52,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MELANIAUSDT": {
-   "had": 3691,
+   "had": 3697,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MEMEUSDT": {
-   "had": 5699,
+   "had": 5705,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MERLUSDT": {
-   "had": 5005,
+   "had": 5008,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "METAUSDT": {
-   "had": 459,
+   "had": 462,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "METISUSDT": {
-   "had": 4854,
+   "had": 4860,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "METUSDT": {
-   "had": 2112,
+   "had": 2118,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MEUSDT": {
-   "had": 6212,
+   "had": 6218,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MEWUSDT": {
-   "had": 4521,
+   "had": 4527,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MINAUSDT": {
-   "had": 8108,
+   "had": 8114,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MINIMAXUSDT": {
-   "had": 183,
+   "had": 186,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MIRAUSDT": {
-   "had": 5101,
+   "had": 5107,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MITOUSDT": {
-   "had": 2364,
+   "had": 2370,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MMTUSDT": {
-   "had": 4060,
+   "had": 4066,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MNSTUSDT": {
-   "had": 120,
+   "had": 123,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MNTUSDT": {
-   "had": 3274,
+   "had": 3277,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MOCAUSDT": {
-   "had": 4371,
+   "had": 4377,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MONUSDT": {
-   "had": 919,
+   "had": 922,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MOODENGUSDT": {
-   "had": 5511,
+   "had": 5517,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MORPHOUSDT": {
-   "had": 3882,
+   "had": 3888,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MOUSDT": {
-   "had": 153,
+   "had": 156,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MOVEUSDT": {
-   "had": 6762,
+   "had": 6768,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MOVRUSDT": {
-   "had": 6141,
+   "had": 6147,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MRKUSDT": {
-   "had": 112,
+   "had": 115,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MRNAUSDT": {
-   "had": 115,
+   "had": 118,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MRVLUSDT": {
-   "had": 411,
+   "had": 414,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MSFTUSDT": {
-   "had": 459,
+   "had": 462,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MSFUUSDT": {
-   "had": 33,
+   "had": 36,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MSTRUSDT": {
-   "had": 453,
+   "had": 456,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MSTUUSDT": {
-   "had": 96,
+   "had": 99,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MTLUSDT": {
-   "had": 4992,
+   "had": 4995,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MUBARAKUSDT": {
-   "had": 3355,
+   "had": 3361,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MUSDT": {
-   "had": 6898,
+   "had": 6904,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MUUSDT": {
-   "had": 429,
+   "had": 432,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MUUUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MVLLUSDT": {
-   "had": 267,
+   "had": 270,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "MYXUSDT": {
-   "had": 6106,
+   "had": 6112,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NAORISUSDT": {
-   "had": 2537,
+   "had": 2543,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NAVERUSDT": {
-   "had": 132,
+   "had": 135,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NBISUSDT": {
-   "had": 372,
+   "had": 375,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NCLDUSDT": {
-   "had": 135,
+   "had": 138,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NEARUSDT": {
-   "had": 5436,
+   "had": 5439,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NEOUSDT": {
-   "had": 5103,
+   "had": 5106,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NESAUSDT": {
-   "had": 308,
+   "had": 314,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NETUSDT": {
-   "had": 156,
+   "had": 159,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NEWTUSDT": {
-   "had": 7292,
+   "had": 7298,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NFLXUSDT": {
-   "had": 249,
+   "had": 252,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NIGHTUSDT": {
-   "had": 3179,
+   "had": 3185,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NILUSDT": {
-   "had": 3335,
+   "had": 3341,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NIULAIUSDT": {
-   "had": 181,
+   "had": 187,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NMRUSDT": {
-   "had": 5218,
+   "had": 5224,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NOKIAUSDT": {
-   "had": 342,
+   "had": 345,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NOMUSDT": {
-   "had": 2316,
+   "had": 2322,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NOTUSDT": {
-   "had": 4466,
+   "had": 4472,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NOWUSDT": {
-   "had": 345,
+   "had": 348,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NVDAUSDT": {
-   "had": 432,
+   "had": 435,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NVDLUSDT": {
-   "had": 204,
+   "had": 207,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NVOUSDT": {
-   "had": 156,
+   "had": 159,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "NXPCUSDT": {
-   "had": 3001,
+   "had": 3007,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OGNUSDT": {
-   "had": 4958,
+   "had": 4961,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OGUSDT": {
-   "had": 3378,
+   "had": 3381,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OKBUSDT": {
-   "had": 2286,
+   "had": 2292,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OKLOUSDT": {
-   "had": 15,
+   "had": 18,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OKTAUSDT": {
-   "had": 81,
+   "had": 84,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ONDOUSDT": {
-   "had": 4794,
+   "had": 4800,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ONDSUSDT": {
-   "had": 330,
+   "had": 333,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ONGUSDT": {
-   "had": 5247,
+   "had": 5253,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ONTUSDT": {
-   "had": 6798,
+   "had": 6804,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ONUSDT": {
-   "had": 228,
+   "had": 231,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OPENAIUSDT": {
-   "had": 228,
+   "had": 231,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OPENUSDT": {
-   "had": 2303,
+   "had": 2309,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OPGUSDT": {
-   "had": 943,
+   "had": 949,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OPNUSDT": {
-   "had": 1368,
+   "had": 1374,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OPUSDT": {
-   "had": 4736,
+   "had": 4739,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ORCAUSDT": {
-   "had": 7915,
+   "had": 7921,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ORCLUSDT": {
-   "had": 432,
+   "had": 435,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ORDERUSDT": {
-   "had": 2283,
+   "had": 2286,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ORDIUSDT": {
-   "had": 5533,
+   "had": 5539,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OUSDT": {
-   "had": 577,
+   "had": 583,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "OUSTUSDT": {
-   "had": 144,
+   "had": 147,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PANWUSDT": {
-   "had": 201,
+   "had": 204,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PARTIUSDT": {
-   "had": 3323,
+   "had": 3329,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PATHUSDT": {
-   "had": 18,
+   "had": 21,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PAXGUSDT": {
-   "had": 6572,
+   "had": 6578,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PDDUSDT": {
-   "had": 112,
+   "had": 115,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PEAQUSDT": {
-   "had": 2031,
+   "had": 2034,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PENDLEUSDT": {
-   "had": 3540,
+   "had": 3543,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PENGSTOCKUSDT": {
-   "had": 201,
+   "had": 204,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PENGUUSDT": {
-   "had": 3893,
+   "had": 3899,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PEOPLEUSDT": {
-   "had": 5198,
+   "had": 5201,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PEPUSDT": {
-   "had": 177,
+   "had": 180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PHAROSUSDT": {
-   "had": 816,
+   "had": 822,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PHAUSDT": {
-   "had": 4149,
+   "had": 4155,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PIEVERSEUSDT": {
-   "had": 2764,
+   "had": 2770,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PIPPINUSDT": {
-   "had": 5233,
+   "had": 5239,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PIXELUSDT": {
-   "had": 4736,
+   "had": 4742,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PLAYSOUTUSDT": {
-   "had": 1577,
+   "had": 1583,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PLTRUSDT": {
-   "had": 453,
+   "had": 456,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PLUMEUSDT": {
-   "had": 5325,
+   "had": 5331,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PNUTUSDT": {
-   "had": 3915,
+   "had": 3921,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "POETUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "POLUSDT": {
-   "had": 4116,
+   "had": 4122,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "POLYXUSDT": {
-   "had": 5067,
+   "had": 5073,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PONSUSDT": {
-   "had": 162,
+   "had": 168,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "POPCATUSDT": {
-   "had": 4599,
+   "had": 4605,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "POPMARTUSDT": {
-   "had": 183,
+   "had": 186,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PORTALUSDT": {
-   "had": 4681,
+   "had": 4687,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "POWERUSDT": {
-   "had": 1791,
+   "had": 1797,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "POWRUSDT": {
-   "had": 5067,
+   "had": 5073,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PRLUSDT": {
-   "had": 1207,
+   "had": 1213,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PROMPTUSDT": {
-   "had": 3232,
+   "had": 3238,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PROVEUSDT": {
-   "had": 2540,
+   "had": 2546,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PTBUSDT": {
-   "had": 2454,
+   "had": 2460,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PUFFERUSDT": {
-   "had": 2226,
+   "had": 2229,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PUMPFUNUSDT": {
-   "had": 2665,
+   "had": 2671,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PUNDIXUSDT": {
-   "had": 3090,
+   "had": 3096,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PURRUSDT": {
-   "had": 237,
+   "had": 240,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PYPLUSDT": {
-   "had": 177,
+   "had": 180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "PYTHUSDT": {
-   "had": 4984,
+   "had": 4990,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "QCOMUSDT": {
-   "had": 372,
+   "had": 375,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "QNTUSDT": {
-   "had": 3588,
+   "had": 3591,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "QNTXUSDT": {
-   "had": 330,
+   "had": 333,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "QQQUSDT": {
-   "had": 429,
+   "had": 432,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "QTUMUSDT": {
-   "had": 5246,
+   "had": 5249,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "QUSDT": {
-   "had": 2280,
+   "had": 2286,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RAMUSDT": {
-   "had": 99,
+   "had": 102,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RAREUSDT": {
-   "had": 5420,
+   "had": 5426,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RAVEUSDT": {
-   "had": 2232,
+   "had": 2238,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RAYDIUMUSDT": {
-   "had": 4137,
+   "had": 4143,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RDDTUSDT": {
-   "had": 162,
+   "had": 165,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RDWUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RECALLUSDT": {
-   "had": 3820,
+   "had": 3826,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "REDUSDT": {
-   "had": 6730,
+   "had": 6736,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "REGNUSDT": {
-   "had": 174,
+   "had": 177,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RENDERUSDT": {
-   "had": 4239,
+   "had": 4245,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RESOLVUSDT": {
-   "had": 4735,
+   "had": 4741,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "REUSDT": {
-   "had": 605,
+   "had": 611,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "REZUSDT": {
-   "had": 4476,
+   "had": 4482,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RIOTUSDT": {
-   "had": 138,
+   "had": 141,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RIVERUSDT": {
-   "had": 4088,
+   "had": 4094,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RIVNUSDT": {
-   "had": 207,
+   "had": 210,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RKLBUSDT": {
-   "had": 390,
+   "had": 393,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RLCUSDT": {
-   "had": 3855,
+   "had": 3858,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RLUSDUSDT": {
-   "had": 2195,
+   "had": 2201,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ROBOUSDT": {
-   "had": 1284,
+   "had": 1290,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RONINUSDT": {
-   "had": 3547,
+   "had": 3553,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ROSEUSDT": {
-   "had": 5150,
+   "had": 5153,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RPLUSDT": {
-   "had": 5957,
+   "had": 5963,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RSRUSDT": {
-   "had": 5282,
+   "had": 5285,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RUNEUSDT": {
-   "had": 5288,
+   "had": 5291,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "RVNUSDT": {
-   "had": 11460,
+   "had": 11466,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SAFEUSDT": {
-   "had": 4518,
+   "had": 4524,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SAGAUSDT": {
-   "had": 4563,
+   "had": 4569,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SAHARAUSDT": {
-   "had": 7467,
+   "had": 7473,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SAMSUNGEMUSDT": {
-   "had": 132,
+   "had": 135,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SAMSUNGUSDT": {
-   "had": 346,
+   "had": 349,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SANDUSDT": {
-   "had": 5372,
+   "had": 5375,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SAPIENUSDT": {
-   "had": 2416,
+   "had": 2422,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SDGRUSDT": {
-   "had": 15,
+   "had": 18,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SECZUSDT": {
-   "had": 27,
+   "had": 30,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SEIUSDT": {
-   "had": 3415,
+   "had": 3418,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SENSETIMEUSDT": {
-   "had": 49,
+   "had": 52,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SENTUSDT": {
-   "had": 2496,
+   "had": 2502,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SHAZUSDT": {
-   "had": 243,
+   "had": 246,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SHEINUSDT": {
-   "had": 93,
+   "had": 96,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SHELLUSDT": {
-   "had": 3522,
+   "had": 3528,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SHIB1000USDT": {
-   "had": 5409,
+   "had": 5412,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SHOPUSDT": {
-   "had": 159,
+   "had": 162,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SIGNUSDT": {
-   "had": 8768,
+   "had": 8774,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SIRENUSDT": {
-   "had": 3326,
+   "had": 3332,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKDDUSDT": {
-   "had": 144,
+   "had": 147,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKHYNIXUSDT": {
-   "had": 346,
+   "had": 349,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKHYUSDT": {
-   "had": 235,
+   "had": 238,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKLUSDT": {
-   "had": 4973,
+   "had": 4976,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKRUSDT": {
-   "had": 1691,
+   "had": 1697,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKUUUSDT": {
-   "had": 144,
+   "had": 147,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKYAI1USDT": {
-   "had": 750,
+   "had": 756,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SKYUSDT": {
-   "had": 2472,
+   "had": 2478,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SLPUSDT": {
-   "had": 12210,
+   "had": 12213,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SLXUSDT": {
-   "had": 803,
+   "had": 809,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SMCIUSDT": {
-   "had": 286,
+   "had": 289,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SMHUSDT": {
-   "had": 222,
+   "had": 225,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SMICUSDT": {
-   "had": 138,
+   "had": 141,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SNDKUSDT": {
-   "had": 456,
+   "had": 459,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SNOWUSDT": {
-   "had": 237,
+   "had": 240,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SNTUSDT": {
-   "had": 9343,
+   "had": 9349,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SNXUSDT": {
-   "had": 5246,
+   "had": 5249,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SNXXUSDT": {
-   "had": 225,
+   "had": 228,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOFIUSDT": {
-   "had": 201,
+   "had": 204,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOLAYERUSDT": {
-   "had": 9535,
+   "had": 9541,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOLUSDT": {
-   "had": 6108,
+   "had": 6111,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOMIUSDT": {
-   "had": 5071,
+   "had": 5077,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SONICUSDT": {
-   "had": 7235,
+   "had": 7241,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SONYUSDT": {
-   "had": 243,
+   "had": 246,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOONUSDT": {
-   "had": 5108,
+   "had": 5114,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOPHUSDT": {
-   "had": 7931,
+   "had": 7937,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOSOUSDT": {
-   "had": 2748,
+   "had": 2754,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOXLUSDT": {
-   "had": 393,
+   "had": 396,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOXSUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SOXXUSDT": {
-   "had": 204,
+   "had": 207,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPACEUSDT": {
-   "had": 1481,
+   "had": 1487,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPCHUSDT": {
-   "had": 114,
+   "had": 117,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPCXUSDT": {
-   "had": 372,
+   "had": 375,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPKUSDT": {
-   "had": 2802,
+   "had": 2808,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPORTFUNUSDT": {
-   "had": 1506,
+   "had": 1512,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPOTUSDT": {
-   "had": 165,
+   "had": 168,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPXLUSDT": {
-   "had": 96,
+   "had": 99,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPXUSDT": {
-   "had": 3954,
+   "had": 3960,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SPYUSDT": {
-   "had": 408,
+   "had": 411,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SQDUSDT": {
-   "had": 2838,
+   "had": 2844,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SQQQUSDT": {
-   "had": 267,
+   "had": 270,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SSPCUSDT": {
-   "had": 190,
+   "had": 193,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SSVUSDT": {
-   "had": 3918,
+   "had": 3921,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STABLEUSDT": {
-   "had": 1964,
+   "had": 1970,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STBLUSDT": {
-   "had": 2250,
+   "had": 2256,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STEEMUSDT": {
-   "had": 5065,
+   "had": 5071,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STGUSDT": {
-   "had": 4595,
+   "had": 4598,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STONKUSDT": {
-   "had": 54,
+   "had": 60,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STORJUSDT": {
-   "had": 5362,
+   "had": 5365,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STOUSDT": {
-   "had": 3975,
+   "had": 3981,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STRKUSDT": {
-   "had": 4710,
+   "had": 4716,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STXUSDT": {
-   "had": 13551,
+   "had": 13554,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "STXXUSDT": {
-   "had": 282,
+   "had": 285,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SUIUSDT": {
-   "had": 3729,
+   "had": 3732,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SUNUSDT": {
-   "had": 6885,
+   "had": 6891,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SUPERUSDT": {
-   "had": 7742,
+   "had": 7748,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SUSDT": {
-   "had": 3462,
+   "had": 3468,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SUSHIUSDT": {
-   "had": 5888,
+   "had": 5891,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SXTUSDT": {
-   "had": 3072,
+   "had": 3078,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "SYRUPUSDT": {
-   "had": 2977,
+   "had": 2983,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TACUSDT": {
-   "had": 2634,
+   "had": 2640,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TAIKOUSDT": {
-   "had": 2576,
+   "had": 2579,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TAOUSDT": {
-   "had": 4773,
+   "had": 4779,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TAUSDT": {
-   "had": 2598,
+   "had": 2604,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TBTUSDT": {
-   "had": 180,
+   "had": 183,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TEAMUSDT": {
-   "had": 72,
+   "had": 75,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TEMUSDT": {
-   "had": 81,
+   "had": 84,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TENCENTUSDT": {
-   "had": 183,
+   "had": 186,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TERUSDT": {
-   "had": 261,
+   "had": 264,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "THETAUSDT": {
-   "had": 5558,
+   "had": 5561,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "THEUSDT": {
-   "had": 3867,
+   "had": 3873,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TIAUSDT": {
-   "had": 5045,
+   "had": 5051,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TLMUSDT": {
-   "had": 5309,
+   "had": 5312,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TLTUSDT": {
-   "had": 27,
+   "had": 30,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TMFUSDT": {
-   "had": 180,
+   "had": 183,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TMXUSDT": {
-   "had": 192,
+   "had": 198,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TNSRUSDT": {
-   "had": 6358,
+   "had": 6364,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TOWNSUSDT": {
-   "had": 2507,
+   "had": 2513,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TQQQUSDT": {
-   "had": 286,
+   "had": 289,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TRBUSDT": {
-   "had": 7767,
+   "had": 7773,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TREEUSDT": {
-   "had": 5893,
+   "had": 5899,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TRIAUSDT": {
-   "had": 1404,
+   "had": 1410,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TRUMPUSDT": {
-   "had": 3702,
+   "had": 3708,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TRUSTUSDT": {
-   "had": 3649,
+   "had": 3655,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TRUTHUSDT": {
-   "had": 2165,
+   "had": 2171,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TRXUSDT": {
-   "had": 5558,
+   "had": 5561,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TSEMUSDT": {
-   "had": 216,
+   "had": 219,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TSLAUSDT": {
-   "had": 477,
+   "had": 480,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TSLLUSDT": {
-   "had": 207,
+   "had": 210,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TSMUSDT": {
-   "had": 474,
+   "had": 477,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TTWOUSDT": {
-   "had": 249,
+   "had": 252,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TURTLEUSDT": {
-   "had": 4360,
+   "had": 4366,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TUSDT": {
-   "had": 7527,
+   "had": 7533,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TUTUSDT": {
-   "had": 3342,
+   "had": 3348,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TWTUSDT": {
-   "had": 6088,
+   "had": 6094,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TXNUSDT": {
-   "had": 261,
+   "had": 264,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "TZAUSDT": {
-   "had": 219,
+   "had": 222,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UAIUSDT": {
-   "had": 1884,
+   "had": 1890,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UBERUSDT": {
-   "had": 156,
+   "had": 159,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UBUSDT": {
-   "had": 2280,
+   "had": 2286,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UMAUSDT": {
-   "had": 6234,
+   "had": 6240,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UNHUSDT": {
-   "had": 174,
+   "had": 177,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UNITREEUSDT": {
-   "had": 166,
+   "had": 169,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UNIUSDT": {
-   "had": 6057,
+   "had": 6060,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "URNMUSDT": {
-   "had": 15,
+   "had": 18,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USARUSDT": {
-   "had": 288,
+   "had": 291,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USD1USDT": {
-   "had": 2628,
+   "had": 2634,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USDCUSDT": {
-   "had": 4774,
+   "had": 4777,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USDEUSDT": {
-   "had": 2343,
+   "had": 2346,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USDJPYUSDT": {
-   "had": 57,
+   "had": 60,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USELESSUSDT": {
-   "had": 2664,
+   "had": 2670,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USTCUSDT": {
-   "had": 4965,
+   "had": 4971,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USUALUSDT": {
-   "had": 7293,
+   "had": 7299,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "USUSDT": {
-   "had": 1734,
+   "had": 1740,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "UVXYUSDT": {
-   "had": 282,
+   "had": 285,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VANAUSDT": {
-   "had": 6518,
+   "had": 6524,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VELODROMEUSDT": {
-   "had": 3819,
+   "had": 3825,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VELOUSDT": {
-   "had": 2580,
+   "had": 2583,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VELVETUSDT": {
-   "had": 2634,
+   "had": 2640,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VETUSDT": {
-   "had": 5394,
+   "had": 5397,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VIRTUALUSDT": {
-   "had": 3945,
+   "had": 3951,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VRTUSDT": {
-   "had": 237,
+   "had": 240,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VRTXSTOCKUSDT": {
-   "had": 159,
+   "had": 162,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VSTUSDT": {
-   "had": 135,
+   "had": 138,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VUSDT": {
-   "had": 186,
+   "had": 189,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "VVVUSDT": {
-   "had": 3643,
+   "had": 3649,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WALUSDT": {
-   "had": 9398,
+   "had": 9404,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WAVESUSDT": {
-   "had": 5177,
+   "had": 5180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WAXPUSDT": {
-   "had": 5148,
+   "had": 5154,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WCTUSDT": {
-   "had": 8935,
+   "had": 8941,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WDCUSDT": {
-   "had": 366,
+   "had": 369,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WENSTOCKUSDT": {
-   "had": 207,
+   "had": 210,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WETUSDT": {
-   "had": 3160,
+   "had": 3166,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WIFUSDT": {
-   "had": 4830,
+   "had": 4836,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WLDUSDT": {
-   "had": 3483,
+   "had": 3486,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WLFIUSDT": {
-   "had": 2400,
+   "had": 2406,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WMTUSDT": {
-   "had": 177,
+   "had": 180,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WOOUSDT": {
-   "had": 5348,
+   "had": 5351,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "WUSDT": {
-   "had": 4581,
+   "had": 4587,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XAGUSDT": {
-   "had": 1214,
+   "had": 1220,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XAIUSDT": {
-   "had": 4833,
+   "had": 4839,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XANUSDT": {
-   "had": 2178,
+   "had": 2184,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XAUTUSDT": {
-   "had": 3252,
+   "had": 3258,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XAUUSDT": {
-   "had": 1214,
+   "had": 1220,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XBIUSDT": {
-   "had": 222,
+   "had": 225,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XCNUSDT": {
-   "had": 6905,
+   "had": 6911,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XDCUSDT": {
-   "had": 3564,
+   "had": 3570,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XIAOMIUSDT": {
-   "had": 138,
+   "had": 141,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XLEUSDT": {
-   "had": 222,
+   "had": 225,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XLFUSDT": {
-   "had": 204,
+   "had": 207,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XLKUSDT": {
-   "had": 204,
+   "had": 207,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XLMUSDT": {
-   "had": 5558,
+   "had": 5561,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XLPUSDT": {
-   "had": 93,
+   "had": 96,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XLUUSDT": {
-   "had": 93,
+   "had": 96,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XLVUSDT": {
-   "had": 204,
+   "had": 207,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XMRUSDT": {
-   "had": 5150,
+   "had": 5153,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XNYUSDT": {
-   "had": 2459,
+   "had": 2465,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XOMUSDT": {
-   "had": 165,
+   "had": 168,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XPINUSDT": {
-   "had": 2280,
+   "had": 2286,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XPLUSDT": {
-   "had": 2406,
+   "had": 2412,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XRPUSDT": {
-   "had": 5888,
+   "had": 5891,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XTZUSDT": {
-   "had": 11847,
+   "had": 11853,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XVGUSDT": {
-   "had": 3540,
+   "had": 3543,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "XVSUSDT": {
-   "had": 3345,
+   "had": 3348,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "YBUSDT": {
-   "had": 2106,
+   "had": 2112,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "YFIUSDT": {
-   "had": 5256,
+   "had": 5259,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "YGGUSDT": {
-   "had": 7181,
+   "had": 7187,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "YOFCUSDT": {
-   "had": 75,
+   "had": 78,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZAMAUSDT": {
-   "had": 1566,
+   "had": 1572,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZBCNUSDT": {
-   "had": 2679,
+   "had": 2682,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZBTUSDT": {
-   "had": 4508,
+   "had": 4514,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZECUSDT": {
-   "had": 5304,
+   "had": 5307,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZENUSDT": {
-   "had": 5298,
+   "had": 5301,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZEREBROUSDT": {
-   "had": 3510,
+   "had": 3516,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZESTUSDT": {
-   "had": 684,
+   "had": 690,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZETAUSDT": {
-   "had": 6833,
+   "had": 6839,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZHIPUUSDT": {
-   "had": 183,
+   "had": 186,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZHONGJIUSDT": {
-   "had": 132,
+   "had": 135,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZILUSDT": {
-   "had": 5595,
+   "had": 5598,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZKCUSDT": {
-   "had": 2318,
+   "had": 2324,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZKPUSDT": {
-   "had": 2810,
+   "had": 2816,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZKUSDT": {
-   "had": 4803,
+   "had": 4809,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZMUSDT": {
-   "had": 216,
+   "had": 219,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZORAUSDT": {
-   "had": 3579,
+   "had": 3585,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZROUSDT": {
-   "had": 4347,
+   "had": 4353,
    "added": 6,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZRXUSDT": {
-   "had": 6164,
+   "had": 6167,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   },
   "ZSUSDT": {
-   "had": 27,
+   "had": 30,
    "added": 3,
-   "end": "2026-09-28",
+   "end": "2026-09-29",
    "error": null
   }
  }
