@@ -1,0 +1,39 @@
+== задание status-2909 ==
+строка: status
+начало: 2026-09-29T06:10:04Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   73G   72G  51% /
+/dev/sdb        147G   71G   69G  51% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3055338 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+1796214   45587 .venv/bin/python research/b1_book/collect.py --http 8765
+1797854   45002 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+112 (подробно: run tools/memtop.py)
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1790662200.8, "uptime_sec": 45582.4, "messages": 202064728, "trades": 20583639, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 29937171, "snapshot_errors": 0, "last_snap_age_sec": 0.8, "snap_pass_sec": 0.426, "writes": {"book": 29937171, "trades": 20583622, "raw": 1002180, "liq": 5207, "metrics": 115922}, "write_age_sec": {"book": 0.8, "trades": 0.7, "raw": 0.4, "liq": 22.9, "metrics": 201.7}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.3031, "ask": 0.3032, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.000415, "ask": 0.0004152, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1195, "ask": 0.1197, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.0084
+--- живой исполнитель ---
+{
+  "at_ms": 1790662201225,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-09-29T06:10:04Z
