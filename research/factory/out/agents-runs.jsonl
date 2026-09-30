@@ -634,3 +634,22 @@
 {"at": 1790651705.648, "role": "declare", "status": "ok", "started": 1790651701.205, "ended": 1790651705.648, "dry": false, "note": "код возврата 0"}
 {"at": 1790652001.53, "role": "task", "status": "start", "started": 1790652001.529, "ended": 1790652001.53, "dry": false, "pid": 1884834}
 {"at": 1790652001.727, "role": "task", "status": "ok", "started": 1790652001.529, "ended": 1790652001.727, "dry": false, "note": "код возврата 0"}
+{"at": 1790733601.861, "role": "scout", "status": "start", "started": 1790733601.0, "ended": 1790733601.861, "dry": false, "pid": 2084245}
+{"at": 1790733602.864, "role": "scout", "status": "no-auth", "started": 1790733601.0, "ended": 1790733602.864, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790733902.064, "role": "scout", "status": "start", "started": 1790733901.0, "ended": 1790733902.064, "dry": false, "pid": 2085038}
+{"at": 1790733902.863, "role": "scout", "status": "no-auth", "started": 1790733901.0, "ended": 1790733902.863, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790734201.709, "role": "scout", "status": "start", "started": 1790734201.0, "ended": 1790734201.709, "dry": false, "pid": 2085805}
+{"at": 1790734202.238, "role": "scout", "status": "no-auth", "started": 1790734201.0, "ended": 1790734202.238, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790734501.315, "role": "brief", "status": "start", "started": 1790734501.0, "ended": 1790734501.315, "dry": false, "pid": 2086580}
+{"at": 1790734501.988, "role": "brief", "status": "no-auth", "started": 1790734501.0, "ended": 1790734501.988, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790734801.468, "role": "brief", "status": "start", "started": 1790734801.0, "ended": 1790734801.468, "dry": false, "pid": 2087366}
+{"at": 1790734802.265, "role": "brief", "status": "no-auth", "started": 1790734801.0, "ended": 1790734802.265, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790735102.088, "role": "brief", "status": "start", "started": 1790735102.0, "ended": 1790735102.088, "dry": false, "pid": 2088144}
+{"at": 1790735102.949, "role": "brief", "status": "no-auth", "started": 1790735102.0, "ended": 1790735102.949, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790735401.475, "role": "propose", "status": "start", "started": 1790735401.0, "ended": 1790735401.475, "dry": false, "pid": 2088907}
+{"at": 1790735402.15, "role": "propose", "status": "no-auth", "started": 1790735401.0, "ended": 1790735402.15, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790735701.879, "role": "propose", "status": "start", "started": 1790735701.0, "ended": 1790735701.879, "dry": false, "pid": 2089680}
+{"at": 1790735702.417, "role": "propose", "status": "no-auth", "started": 1790735701.0, "ended": 1790735702.417, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790736001.95, "role": "propose", "status": "start", "started": 1790736001.0, "ended": 1790736001.95, "dry": false, "pid": 2090437}
+{"at": 1790736002.717, "role": "propose", "status": "no-auth", "started": 1790736001.0, "ended": 1790736002.717, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790736301.541, "role": "judge", "status": "start", "started": 1790736301.537, "ended": 1790736301.541, "dry": false, "pid": 2091221}
