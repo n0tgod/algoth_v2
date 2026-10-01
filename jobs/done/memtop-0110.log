@@ -125,3 +125,15 @@
   {"kind": "books", "seq": 529, "hour": "2026-10-01-06", "at": "10-01 07:11", "sections": 1317, "symbols": 789, "train_why": "весам 22.6 ч при каденции 24", "steps_sec": {"сведение часа": 337.7, "матрица": 138.5, "книги": 
   {"kind": "books", "seq": 529, "hour": "2026-10-01-07", "at": "10-01 08:10", "sections": 1318, "symbols": 789, "train_why": "весам 23.5 ч при каденции 24", "steps_sec": {"сведение часа": 247.7, "матрица": 149.9, "книги": 
 конец: 2026-10-01T22:55:22Z, код 0
+публикуется в ветку main:
+ jobs/done/cycle-0110.log            |   1 +
+ jobs/done/memtop-0110.done          |   1 +
+ jobs/done/memtop-0110.log           | 127 ++++++++++++++++++++++++++++++++++++
+ jobs/done/status-0110.done          |   1 +
+ jobs/done/status-0110.log           |  10 +++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 6 files changed, 141 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   265728cb..f7b5ae39  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
