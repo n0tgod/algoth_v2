@@ -804,6 +804,40 @@ def _book_costs(rows):
     return got
 
 
+def attach_open_dd(s):
+    """Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — в группы «всего» и «вперёд».
+
+    Величина живёт в ячейках кассы (`run_d6.ration`): она считается по
+    почасовым отметкам, которых в журнале нет, а страница читает свод.
+    Группе «всего» идёт число кассы как есть. Группе «вперёд» — та же
+    просадка, но по ОКНУ времени: часы с первого решения, записанного
+    вперёд (`forward_since` свода), по почасовому ряду `open_hours` той
+    же раздачи. Это не «часть позиций», а «часть часов»: касса одна, и
+    позиция, стоявшая под водой в эти часы, в счёт идёт независимо от
+    того, как помечена её строка. Нет группы «вперёд» или нет ряда —
+    поля нет, страница ставит прочерк (не измерено ≠ ноль). Одно ядро
+    на три прогона: бумажные книги, короткие, общий счёт.
+    """
+    for k, c in (s.get("cells") or {}).items():
+        b = (s.get("books") or {}).get(k)
+        if not isinstance(b, dict) or c.get("open_dd") is None:
+            continue
+        if isinstance(b.get("all"), dict):
+            b["all"]["open_dd"] = c["open_dd"]
+            b["all"]["open_dd_share"] = c.get("open_dd_share")
+        since = b.get("forward_since")
+        fw = b.get("forward")
+        hours = c.get("open_hours")
+        if since is None or not isinstance(fw, dict) or hours is None:
+            continue
+        h0 = int(since) - int(since) % D6.HOUR
+        dd = min([0.0] + [float(v) for h, v in hours if int(h) >= h0])
+        dep = float(b.get("deposit") or 0.0)
+        fw["open_dd"] = round(dd, 2)
+        fw["open_dd_share"] = round(dd / dep, 4) if dep else None
+        fw["open_dd_since"] = float(since)
+
+
 def summarize(path=None, live=None, keys=None, ctx=None):
     """Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
 
@@ -890,6 +924,11 @@ def summarize(path=None, live=None, keys=None, ctx=None):
                             for p in parts} if parts else None),
                  "all": _stats(mine, dep),
                  "forward": _stats(fwd, dep), "restored": _stats(back, dep),
+                 # С какого момента у ЭТОЙ книги идёт запись вперёд: первое
+                 # решение группы. По нему касса режет окно для просадки
+                 # открытых «вперёд» (`attach_open_dd`); нет группы — None.
+                 "forward_since": (min(float(r["at"]) for r in fwd)
+                                   if fwd else None),
                  # что именно вычтено у ЭТОЙ книги: сумма комиссии,
                  # проскальзывания и funding и число сделок, у которых
                  # издержки измерить не удалось
@@ -1555,18 +1594,7 @@ def main():
                                               time.gmtime())}
     s = summarize(live=live, keys=R.order_of("sit"))
     s.update(extra)
-    # Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ живёт в ячейках кассы (она считается
-    # по почасовым отметкам, которых в журнале нет), а страница читает
-    # свод. Кладётся ТОЛЬКО в общую группу: величина принадлежит всей
-    # книге и по «бэктест/вперёд» не делится — поставить её и туда
-    # значило бы приписать подмножеству чужое число.
-    for k, c in (s.get("cells") or {}).items():
-        b = (s.get("books") or {}).get(k)
-        if not (isinstance(b, dict) and isinstance(b.get("all"), dict)):
-            continue
-        if c.get("open_dd") is not None:
-            b["all"]["open_dd"] = c["open_dd"]
-            b["all"]["open_dd_share"] = c.get("open_dd_share")
+    attach_open_dd(s)
     s["secs"] = round(time.time() - t0, 1)
     s["rules"] = rules_snapshot()
     with open(R.ARTIFACT, "w", encoding="utf-8") as f:

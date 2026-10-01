@@ -581,6 +581,10 @@ def test_open_drawdown_is_not_the_equity_drawdown():
     # а под водой книга стояла на 30 долларов — это и есть вопрос
     assert abs(c["open_dd"] + 30.0) < 1e-6, c["open_dd"]
     assert abs(c["open_dd_share"] + 0.03) < 1e-9, c["open_dd_share"]
+    # Почасовой ряд «под водой» — только часы с минусом, и его минимум
+    # есть та же просадка: по нему свод режет окно «вперёд».
+    assert c["open_hours"] == [[t0, -30.0], [t0 + H, -20.0]], c["open_hours"]
+    assert min(v for _h, v in c["open_hours"]) == c["open_dd"]
     print(f"ok  просадка открытых {c['open_dd']:+.2f} $ "
           f"({c['open_dd_share']*100:+.2f} %) при просадке депозита "
           f"{c['max_dd']*100:+.2f} % — величины разные")

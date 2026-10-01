@@ -197,6 +197,8 @@ def test_backtest_and_live_share_one_curve_and_stay_labelled():
         assert b["restored"]["usd"] == 5.0, b["restored"]
         assert b["all"]["usd"] == 15.0, b["all"]
         assert b["all"]["n"] == 2, b["all"]
+        # начало записи вперёд у книги — первое решение группы «вперёд»
+        assert b["forward_since"] == float(t0), b["forward_since"]
         txt = P.report(s)
         assert "бэктест и live" in txt.lower(), txt[:900]
         assert "15.00" in txt, txt          # общий счёт напечатан
@@ -1180,6 +1182,68 @@ def test_rules_change_starts_a_fresh_record():
         assert b["forward"]["n"] == 1, b["forward"]
         assert b["forward"]["usd"] == 29.0, b["forward"]
     print("ok  смена правил: запись начата заново, прежняя не считается")
+
+
+def test_open_dd_forward_is_the_window_not_the_whole_book():
+    """Просадка открытых у среза «вперёд» — по часам с начала записи.
+
+    Вопрос владельца 2026-10-01: у «без бэктеста» стоял прочерк. Число
+    группы — минимум почасового ряда кассы по часам с первого решения,
+    записанного вперёд; худший час книги ДО этой границы в срез не
+    идёт. Книга без группы «вперёд» поля не получает — прочерк, не ноль.
+    """
+    t0 = T0 - T0 % H
+    key = P._cell(R.DEFAULT_RULER, 1000)
+    key2 = P._cell(R.DEFAULT_RULER, 10000)
+    s = {"cells": {key: {"open_dd": -50.0, "open_dd_share": -0.05,
+                         "open_hours": [[t0, -50.0], [t0 + H, -10.0],
+                                        [t0 + 2 * H, -30.0]]},
+                   key2: {"open_dd": -7.0, "open_dd_share": -0.0007,
+                          "open_hours": [[t0, -7.0]]}},
+         "books": {key: {"deposit": 1000, "all": {}, "forward": {},
+                         # первое решение вперёд — внутри часа t0+H
+                         "forward_since": float(t0 + H + 600)},
+                   key2: {"deposit": 10000, "all": {}, "forward": {},
+                          "forward_since": None}}}
+    P.attach_open_dd(s)
+    a, f = s["books"][key]["all"], s["books"][key]["forward"]
+    assert a["open_dd"] == -50.0 and a["open_dd_share"] == -0.05, a
+    # окно вперёд: часы t0+H и t0+2H → худший −30, а не −50 всей книги
+    assert f["open_dd"] == -30.0, f
+    assert abs(f["open_dd_share"] + 0.03) < 1e-12, f
+    assert f["open_dd_since"] == float(t0 + H + 600), f
+    b2 = s["books"][key2]
+    assert b2["all"]["open_dd"] == -7.0, b2
+    assert "open_dd" not in b2["forward"], b2["forward"]
+    # ряд без минусов после границы — ноль: «под воду не уходили»
+    s3 = {"cells": {key: {"open_dd": -50.0, "open_dd_share": -0.05,
+                          "open_hours": [[t0, -50.0]]}},
+          "books": {key: {"deposit": 1000, "all": {}, "forward": {},
+                          "forward_since": float(t0 + H)}}}
+    P.attach_open_dd(s3)
+    assert s3["books"][key]["forward"]["open_dd"] == 0.0, s3["books"][key]
+    print("ok  просадка открытых «вперёд» считается по окну часов")
+
+
+def _control_open_dd_forward_copies_the_whole_book():
+    """Свод, отдающий срезу число всей книги, — то, от чего защищаемся."""
+    orig = P.attach_open_dd
+
+    def fake(s):
+        orig(s)
+        for k, c in s["cells"].items():
+            fw = s["books"][k].get("forward")
+            if isinstance(fw, dict) and "open_dd" in fw:
+                fw["open_dd"] = c["open_dd"]
+    P.attach_open_dd = fake
+    try:
+        try:
+            test_open_dd_forward_is_the_window_not_the_whole_book()
+        except AssertionError:
+            return True
+        return False
+    finally:
+        P.attach_open_dd = orig
 
 
 def _control_no_split():
@@ -2554,6 +2618,7 @@ TESTS = [test_net_rides_the_summary_with_reasons_not_zeros,
     test_take_frac_comes_from_the_rule_not_from_the_record,
     test_fav_backfill_adds_a_field_and_nothing_else,
     test_open_position_is_not_a_closed_one, test_journal_appends_only_new,
+    test_open_dd_forward_is_the_window_not_the_whole_book,
          test_report_names_what_is_not_modelled,
          test_day_concentration_is_measured_and_not_faked,
          test_drawdown_says_whether_one_day_made_it,
@@ -3018,6 +3083,8 @@ def _control_venue_cap_not_passed():
 
 
 CONTROLS = [("хвост не доезжает до ядра", _control_tail_never_reaches_the_core),
+            ("просадка открытых «вперёд» равна всей книге",
+             _control_open_dd_forward_copies_the_whole_book),
             ("предел плеча площадки не доезжает",
              _control_venue_cap_not_passed),
             ("подпись реплея не знает предела площадки",

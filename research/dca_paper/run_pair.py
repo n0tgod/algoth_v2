@@ -345,6 +345,7 @@ def run(log=print, now=None, journal=None, long_cache=None, short_cache=None,
               "secs": round(time.time() - t0, 1),
               "computed_at": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
               "rules": RP.rules_snapshot(keys=keys)})
+    RP.attach_open_dd(s)
     return s
 
 

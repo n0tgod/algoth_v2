@@ -271,6 +271,7 @@ def run(limit=None, src=None, log=print, legs_=None, journal=None,
                         "TICKET": R.TICKET,
                         "RULERS": {k: dict(R.RULERS[k]) for k in R.H24_ORDER},
                         "RULER_ORDER": list(R.H24_ORDER)}})
+    RP.attach_open_dd(s)
     # Общий счёт (длинная книга и короткая на ОДНОМ депозите) считает
     # `run_pair.py` своей книгой и своим журналом. Прежний блок «общая
     # статистика» складывал два РАЗДЕЛЬНЫХ счёта и снят: владелец
