@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 508, строк: 228147, каталогов: 86.
+Модулей кода: 508, строк: 228258, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -127,7 +127,7 @@
 - `replay.py` · 360 строк — Прогон записанного потока через тот же детектор.
 - `signals.py` · 743 строк — Живой детектор: уровни, события поглощения и бумажные сделки.
 - `store.py` · 336 строк — Хранение потока: запись без потерь и чтение через порчу.
-- `web.py` · 12185 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
+- `web.py` · 12189 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
 - тесты: `headless_check.js` (6485), `test_book.py` (8384), `test_measure_pack.py` (133), `test_remote.py` (162)
 - отчёты в `out/` (2): B1-feature-audit.md, measure-pack.md
 
@@ -152,12 +152,12 @@
 - `run_d3.py` · 813 строк — D3 (спека 14) — три замера ОДНИМ проходом по тем же выборам, что D2.
 - `run_d4.py` · 479 строк — D4 (спека 14) — хедж на уровне КНИГИ, а не позиции.
 - `run_d5.py` · 691 строк — D5 (спека 14) — ЛИНЕЙКА забора: глубины лестницы против движений монеты.
-- `run_d6.py` · 1133 строк — D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
+- `run_d6.py` · 1139 строк — D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 - `run_d7.py` · 387 строк — D7 — замер СРОКА удержания DCA-книги (вопрос владельца 2026-09-04).
 - `run_d8.py` · 657 строк — D8 — замер ТЕЙКА DCA-книги (вопрос владельца 2026-09-05).
 - `run_d9.py` · 684 строк — D9 — варианты ВЫХОДА коротких DCA-книг (вопрос владельца 2026-09-05).
 - `run_dca.py` · 406 строк — D1 (спека 14) — дешёвый потолок DCA-лестницы: реплей по хранилищу A2.
-- тесты: `test_ladder.py` (1340), `test_run_d10.py` (536), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (663), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141)
+- тесты: `test_ladder.py` (1340), `test_run_d10.py` (536), `test_run_d11.py` (112), `test_run_d12.py` (72), `test_run_d13.py` (137), `test_run_d2.py` (207), `test_run_d3.py` (427), `test_run_d4.py` (266), `test_run_d5.py` (486), `test_run_d6.py` (667), `test_run_d7.py` (283), `test_run_d8.py` (365), `test_run_d9.py` (518), `test_run_dca.py` (141)
 - документы: `RUNBOOK.md` — D1 — потолок DCA-лестницы: как прогонять
 - отчёты в `out/` (20): D1-dca-1m.md, D1-dca-smoke-1m.md, D10-short-1m.md, D11-h24-gbm-h72-1m.md, D11-h24-nn-h24-1m.md, D11-h24-nn-h72-1m.md, D12-own-nn-h24-1m.md, D12-own-nn-h72-1m.md, D13-pair-nn-h24-1m.md, D2-dca-1m.md, D2-dca-smoke.md, D3-fence-1m.md, D4-bookhedge-1m.md, D5-ruler-1m.md, D6-cash-1m-d10000.md, D6-cash-1m.md, D7-hold-1m.md, D8-take-1m.md, D8-take-smoke-1m.md, D9-exit-1m.md
 
@@ -185,9 +185,9 @@
 - `path_screen.py` · 619 строк — Дорога сделки коротких книг: что происходит ПОСЛЕ входа и можно ли выйти раньше.
 - `probe_exit.py` · 168 строк — Разбор одного выхода: где стояла цена по записи и что видит график.
 - `rules.py` · 1294 строк — Правила бумажных DCA-книг: три депозита, одни правила.
-- `run_pair.py` · 562 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
-- `run_paper.py` · 1584 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
-- `run_short.py` · 419 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
+- `run_pair.py` · 563 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
+- `run_paper.py` · 1612 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
+- `run_short.py` · 420 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 - `short_age.py` · 411 строк — Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.
 - `short_grid.py` · 189 строк — Общая машинерия замеров ОСИ на коротком листе `h24`.
 - `short_stop.py` · 225 строк — Пол капитуляции как СТОП: где резать позицию против хода.
@@ -201,7 +201,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 280 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_costs.py` (479), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (553), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3081), `test_path_screen.py` (244), `test_short.py` (419), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_costs.py` (479), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (553), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3148), `test_path_screen.py` (244), `test_short.py` (419), `test_short_age.py` (148), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (155), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
 - отчёты в `out/` (31): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-fill.md, DCA-guard-forward.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-short-age.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
@@ -788,7 +788,7 @@
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 
 - документы: `README.md` — Очередь заданий, `queue-state.md` — 
-- заданий `.job`: 540, логов `done/*.log`: 541 (в карту не перечисляются — их читают по имени)
+- заданий `.job`: 542, логов `done/*.log`: 541 (в карту не перечисляются — их читают по имени)
 
 ## tools — команды сервера, защита коммитов, хуки
 

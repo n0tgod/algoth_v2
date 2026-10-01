@@ -1026,7 +1026,7 @@ A3 — кандидаты в пары на момент окна.
 - L267 `_parse(f, parse=json.loads)` — Разобрать построчно. Возвращает `(записи, дочитано ли до конца)`.
 - L286 `_salvage(path, log, parse=json.loads)` — Разобрать сжатый файл по членам, пропуская испорченные.
 
-## research/b1_book/web.py · 12185 строк
+## research/b1_book/web.py · 12189 строк
 
 Страница наблюдения: стакан, лента, глубина и журнал живьём.
 
@@ -1046,18 +1046,18 @@ A3 — кандидаты в пары на момент окна.
 - L5819 `LEARNPAGE = '<!doctype html><meta charset="utf-8">\…` — Справочник — просьба владельца: страница со всеми «стратегиями» модели и подробным объяснением каждой простым…
 - L5991 `BOOKDAYS = '<!doctype html><meta charset="utf-8">\…` — Дневная статистика ОДНОЙ книги — просьба владельца: «кликаем на 4-hour book, и открывается страница, где стат…
 - L6303 `DCAPAGE = '<!doctype html><meta charset="utf-8">\…` — Бумажная месячная книга (`research/paper_monthly`). Своего показа у неё не было вовсе: книга писала отчёт фай…
-- L7843 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8174 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8613 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L8858 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
-- L9112 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
-- L9609 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
-- L10014 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
-- L10344 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
-- L10700 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11127 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11295 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
-- L11825 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
+- L7847 `PAPERPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8178 `LIVEPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8617 `VOLPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L8862 `GLOSSARY_PAGE = '<!doctype html><meta charset="utf-8">\…`
+- L9116 `TREEPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница дерева моделей — просьба владельца: разветвление от основных ML и AI, и по каждой ветке простыми сло…
+- L9613 `TOURPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница турнира политик — просьба владельца: весь лист веток и подветок отдельной страницей. Данные — артефа…
+- L10018 `LEAGUE = '<!doctype html><meta charset="utf-8">\…` — Страница лиги — просьба владельца: наблюдение за каждой стратегией и моделью отдельно (что ведёт себя лучше)…
+- L10348 `BUILTPAGE = '<!doctype html><meta charset="utf-8">\…` — Страница автономной системы: конвейер ролей и механических шагов, границы и то, что уже построено. Тексты — и…
+- L10704 `STRATPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11131 `ASKSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11299 `AGENTSPAGE = '<!doctype html><meta charset="utf-8">\…`
+- L11829 `serve(collector, port, token, log)` — Поднять сервер наблюдения в отдельном потоке.
 
 ## research/d1_seconds/detect.py · 367 строк
 
@@ -1454,7 +1454,7 @@ D5 (спека 14) — ЛИНЕЙКА забора: глубины лестни�
 - L663 `publish(name)`
 - L670 `main()`
 
-## research/dca_ladder/run_d6.py · 1133 строк
+## research/dca_ladder/run_d6.py · 1139 строк
 
 D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных мест или много мелких.
 
@@ -1477,24 +1477,24 @@ D6 (спека 14) — НОРМИРОВКА КАССЫ: мало крупных 
 - L249 `position_state(r, data_end)` — Закрыта / открыта / оборвана записью. Правило одно на всех.
 - L269 `queue(recs)` — Очередь за деньгами: по секунде решения, внутри секунды — лучшие.
 - L280 `ration(recs, share, deposit=DEPOSIT, min_notional=MIN_NOTIONAL,…` — Хронологическая раздача кассы. Возвращает сводку и кривую счёта.
-- L409 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
-- L430 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
-- L469 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
-- L489 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
-- L563 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
-- L583 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
-- L602 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
-- L708 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
-- L761 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
-- L801 `_anchor_block(a)`
-- L840 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
-- L935 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
-- L942 `_pct(x, d=2)`
-- L946 `report(s)`
-- L1046 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
-- L1066 `_window_line(w)`
-- L1081 `publish(name)`
-- L1088 `main()`
+- L415 `window(longs)` — Окно замера ПО РЕШЕНИЯМ, а не по календарю запуска.
+- L436 `peak_open(recs)` — Пик одновременности — В ЛОТАХ и В ИМЕНАХ, и это РАЗНЫЕ числа.
+- L475 `one_per_name(recs)` — Строгое биржевое правило: второй выбор по открытому имени пропущен.
+- L495 `full_cover(recs, min_notional=MIN_NOTIONAL, rung=RUNG_SHARE, lo…` — Депозит, при котором НИ ОДИН сигнал не отвергнут.
+- L569 `coverage_curve(recs, peak, deps, ticket=None, min_notional=MIN_…` — Сколько сигналов берётся при депозите меньше полного охвата.
+- L589 `gated_legs(limit=None, log=print, side='long')` — Гейтованные ноги журнала листов — БЕЗ реплея по барам.
+- L608 `collect_recs(limit=None, src=None, log=print, rulers=None, hold…` — Дорогой проход: исход КАЖДОГО гейтованного лонга при каждой линейке.
+- L714 `run(limit=None, src=None, log=print, deposit=DEPOSIT, anchor_de…`
+- L767 `anchor_deposit(s)` — Опора по депозиту — встроенная проверка меры, считается В ОДНОМ прогоне на ОДНИХ исходах.
+- L807 `_anchor_block(a)`
+- L846 `_full_block(s)` — Депозит, при котором берётся каждый сигнал, и что тогда выходит.
+- L941 `_shares_of(s)` — Доли берутся из АРТЕФАКТА, а не из констант: отчёт обязан описывать тот прогон, который породил файл (урок R1…
+- L948 `_pct(x, d=2)`
+- L952 `report(s)`
+- L1052 `_restat_window(s, log=print)` — Окно дописывается в готовый артефакт, ЧИСЕЛ не трогая.
+- L1072 `_window_line(w)`
+- L1087 `publish(name)`
+- L1094 `main()`
 
 ## research/dca_ladder/run_d7.py · 387 строк
 
@@ -2161,7 +2161,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L1218 `read_journal(path=JOURNAL, stats=None, keep=None, cache=None)` — Строки журнала как есть — из ВСЕХ его кусков, БЕЗ повторов.
 - L1288 `split_rows(rows, hours=AHEAD_H)` — Наблюдение и пересчёт — ДВА списка, и складывать их нельзя.
 
-## research/dca_paper/run_pair.py · 562 строк
+## research/dca_paper/run_pair.py · 563 строк
 
 Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 
@@ -2178,13 +2178,13 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L225 `separate(rows_by_book, dep)` — Те же книги на РАЗДЕЛЬНЫХ счетах — для сравнения с общим.
 - L240 `one_sided(book, lk, sk)` — Какой стороны в общем счёте НЕТ. Пусто — обе на месте.
 - L254 `run(log=print, now=None, journal=None, long_cache=None, short_c…`
-- L351 `_p(x, d=2)`
-- L355 `_u(x)`
-- L359 `report(s)`
-- L533 `publish(name)`
-- L538 `main(argv=None)`
+- L352 `_p(x, d=2)`
+- L356 `_u(x)`
+- L360 `report(s)`
+- L534 `publish(name)`
+- L539 `main(argv=None)`
 
-## research/dca_paper/run_paper.py · 1584 строк
+## research/dca_paper/run_paper.py · 1612 строк
 
 Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 
@@ -2212,16 +2212,17 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L634 `conc_cells(st)` — Три клетки концентрации по статистике книги — в языке таблиц.
 - L653 `_stats(rows, deposit)` — Итог, просадка и форма по дням — на ЭТОМ подмножестве строк.
 - L762 `_book_costs(rows)` — Что вычтено у книги: суммы издержек и число неизмеренных сделок.
-- L807 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
-- L908 `_pct(x, d=2)`
-- L912 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
-- L947 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
-- L1033 `report(s)`
-- L1391 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
-- L1425 `publish(name)`
-- L1431 `main()`
+- L807 `attach_open_dd(s)` — Просадка ОДНОВРЕМЕННО ОТКРЫТЫХ — в группы «всего» и «вперёд».
+- L841 `summarize(path=None, live=None, keys=None, ctx=None)` — Свод по книгам: ОДНА кривая, и в ней помечено, что бэктест.
+- L947 `_pct(x, d=2)`
+- L951 `_tail_words(s)` — Числа хвоста словами. Нет чисел — так и сказано, а не ноль.
+- L986 `costs_block(s)` — Раздел «издержки» — ОДИН на весь отчёт: деньги ниже уже нетто.
+- L1072 `report(s)`
+- L1430 `rules_snapshot(keys=None)` — Правила прогона в свод: страница описывает ИМИ то, что видит.
+- L1464 `publish(name)`
+- L1470 `main()`
 
-## research/dca_paper/run_short.py · 419 строк
+## research/dca_paper/run_short.py · 420 строк
 
 Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
 
@@ -2240,11 +2241,11 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L147 `floor_groups()` — Линейки D10 по ПОЛУ капитуляции: {доля: [линейки]}.
 - L170 `replay(need, src=None, log=print, ckpt_hours=None)` — Досчёт недостающих решений: одна ячейка, отметки и заполнения.
 - L220 `run(limit=None, src=None, log=print, legs_=None, journal=None, …`
-- L282 `_p(x, d=2)`
-- L286 `_u(x)`
-- L290 `report(s)`
-- L385 `publish(name)`
-- L390 `main(argv=None)`
+- L283 `_p(x, d=2)`
+- L287 `_u(x)`
+- L291 `report(s)`
+- L386 `publish(name)`
+- L391 `main(argv=None)`
 
 ## research/dca_paper/short_age.py · 411 строк
 
