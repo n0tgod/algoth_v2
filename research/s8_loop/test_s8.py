@@ -5542,6 +5542,7 @@ def test_training_runs_on_a_cadence_not_every_hour():
                 orig_nn(x, y, seed, epochs=4, **kw))
     T.ARMS = (("gbm", T.gbm.fit), ("nn", T.nn.fit))
     md_was = T.MODEL_DIR
+    mem_was = T.mem_available_mb
     try:
         # Предикат — числом, четырьмя ветками. Час назад при каденции
         # 24 — рано, 25 часов назад — пора; будущее время обязано
@@ -5562,6 +5563,21 @@ def test_training_runs_on_a_cadence_not_every_hour():
               T.train_due(None, now, 24) == (
                   True, "весов прошлого цикла нет"),
               str(T.train_due(None, now, 24)))
+        # Гейт памяти — тем же предикатом: ниже порога обучение
+        # откладывается с причиной, мера отсутствует — идём и говорим.
+        check("память ниже порога — обучение отложено, причина с числами",
+              T.train_mem_ok(1500, 3072) == (
+                  False, "память: доступно 1500 МБ при пороге 3072 — рядом "
+                         "другие прогоны, обучение отложено на час"),
+              str(T.train_mem_ok(1500, 3072)))
+        check("памяти хватает — идём",
+              T.train_mem_ok(3072, 3072)[0] is True)
+        check("меры нет — идём без гейта, и это сказано",
+              T.train_mem_ok(None, 3072) == (
+                  True, "память не измерена (/proc недоступен) — иду без гейта"))
+        check("порог читается из модуля в момент вызова",
+              T.train_mem_ok(T.TRAIN_MEM_MIN_MB - 1)[0] is False
+              and T.train_mem_ok(T.TRAIN_MEM_MIN_MB)[0] is True)
         check("время обучения в будущем — пора",
               T.train_due(at(-5), now, 24)[0] is True,
               str(T.train_due(at(-5), now, 24)))
@@ -5614,6 +5630,24 @@ def test_training_runs_on_a_cadence_not_every_hour():
             timezone.utc).isoformat(timespec="seconds")
         with open(mp, "w", encoding="utf-8") as f:
             json.dump(man2, f)
+        # Пора по каденции, но памяти нет: обучение ОТКЛАДЫВАЕТСЯ, книги
+        # часа при этом записаны, причина — числом в исходе. Это гейт
+        # 02.10: без него попытка стоила 50 минут и смерти цикла от ядра.
+        _write_summaries(sd, D=320)
+        T.mem_available_mb = lambda: 100
+        ok3 = T.cycle(sd, lambda m: None, book_root=None)
+        check("без памяти обучение отложено, цикл жив", ok3 is False, str(ok3))
+        lr = json.load(open(os.path.join(T.MODEL_DIR, "last_run.json"),
+                            encoding="utf-8"))
+        check("исход назвал отложенное по памяти обучение числом",
+              lr.get("train_deferred_mem") is True
+              and "доступно 100 МБ" in str(lr.get("train_why")), str(lr))
+        check("веса при откладывании не тронуты",
+              json.load(open(mp, encoding="utf-8"))["train_seq"]
+              == man1["train_seq"])
+        n3 = sum(1 for _ in open(pf, encoding="utf-8"))
+        check("книги часа при откладывании записаны", n3 > n2, f"{n3} / {n2}")
+        T.mem_available_mb = mem_was
         _write_summaries(sd, D=340)
         check("состарившиеся веса возвращают обучение",
               T.cycle(sd, lambda m: None, book_root=None))
@@ -5624,6 +5658,7 @@ def test_training_runs_on_a_cadence_not_every_hour():
     finally:
         T.gbm.fit, T.nn.fit, T.ARMS = orig_fit, orig_nn, orig_arms
         T.MODEL_DIR = md_was
+        T.mem_available_mb = mem_was
         shutil.rmtree(d, ignore_errors=True)
 
 

@@ -3607,7 +3607,7 @@
 - L169 `test_e2e_report()`
 - L215 `main()`
 
-## research/s8_loop/test_s8.py · 5930 строк
+## research/s8_loop/test_s8.py · 5965 строк
 
 Тесты S8.1. Главные — заглядывание (один тест на ВСЕ признаки, правило M1) и правильность пути (MFE/MAE): на…
 
@@ -3706,9 +3706,9 @@
 - L5450 `test_trade_ids_are_stable()` — Id сделки: выводится из полей записи и переживает пересборку.
 - L5486 `test_day_brake_math_and_activation()` — Арифметика дневного тормоза и правило «действует сейчас».
 - L5521 `test_training_runs_on_a_cadence_not_every_hour()` — Обучение ушло из ЧАСОВОГО пути на объявленную каденцию.
-- L5630 `test_day_brake_blocks_entries_not_reviews()` — Сквозной цикл: тормоз закрывает ВХОДЫ часовых книг, не разбор.
-- L5697 `test_agree_echo_book()` — Согласное эхо: у источника остаётся ровно пересечение рук.
-- L5824 `main()`
+- L5665 `test_day_brake_blocks_entries_not_reviews()` — Сквозной цикл: тормоз закрывает ВХОДЫ часовых книг, не разбор.
+- L5732 `test_agree_echo_book()` — Согласное эхо: у источника остаётся ровно пересечение рук.
+- L5859 `main()`
 
 ## research/s8_loop/test_sheet_supply.py · 117 строк
 

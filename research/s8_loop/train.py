@@ -2433,6 +2433,47 @@ def log_cycle(row, log_):
         log_(f"журнал обучений не дописан: {e}")
 
 
+# Обучение начинается, только когда в машине есть под него место.
+# Замер 02.10 (строки «память» в train.log): база цикла после матрицы
+# 1.6 ГБ, оценка прежних весов — всплеск до 3.7 ГБ пиком, обучение
+# рук — 2.5–2.8 ГБ, то есть сверх базы нужно ≈ 2 ГБ; рядом ходят
+# часовые прогоны книг (≈ 1 ГБ на минуты). Порог — доступная память
+# ядра (MemAvailable) не меньше 3 ГБ. Ниже порога обучение ОТКЛАДЫВАЕТСЯ
+# на следующий час с причиной в логе и исходе; часовой контур (книги,
+# лист, живой IC) идёт как обычно. Без гейта попытка стоила ~50 минут
+# счёта и смерти цикла от ядра — 13 раз за 01.10, по разу в час, когда
+# рядом стояли турнир (1.5 ГБ) и фабрика.
+TRAIN_MEM_MIN_MB = 3072
+
+
+def mem_available_mb():
+    """MemAvailable ядра в МБ; None — если /proc не читается."""
+    try:
+        with open("/proc/meminfo") as f:
+            for ln in f:
+                if ln.startswith("MemAvailable:"):
+                    return int(ln.split()[1]) // 1024
+    except (OSError, ValueError, IndexError):
+        pass
+    return None
+
+
+def train_mem_ok(avail_mb, min_mb=None):
+    """Хватает ли памяти на обучение: (да/нет, причина словами).
+
+    `None` (меры нет) пропускает: отсутствие меры не повод стоять, но
+    и не повод молчать — причина называет это.
+    """
+    if min_mb is None:
+        min_mb = TRAIN_MEM_MIN_MB
+    if avail_mb is None:
+        return True, "память не измерена (/proc недоступен) — иду без гейта"
+    if avail_mb < min_mb:
+        return False, (f"память: доступно {avail_mb} МБ при пороге {min_mb} "
+                       f"— рядом другие прогоны, обучение отложено на час")
+    return True, f"память: доступно {avail_mb} МБ при пороге {min_mb}"
+
+
 def train_due(prev_man, now_ts, every_h=None):
     """Пора ли переобучать: (да/нет, причина словами).
 
@@ -3413,12 +3454,23 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
     # отказал (первый запуск, смена признаков или версии), веса нужны
     # прямо сейчас — иначе книга этого часа не будет посчитана ничем.
     due, why = train_due(prev_used, time.time())
+    deferred = False
+    if due and booked is not None:
+        # Пора по каденции — но есть ли место. Гейт стоит ПОСЛЕ раннего
+        # шага книг: откладывается только обучение, час книг записан.
+        mem_ok, mem_why = train_mem_ok(mem_available_mb())
+        log_(mem_why)
+        if not mem_ok:
+            due, why, deferred = False, mem_why, True
     if not due and booked is not None:
         cyc = round(time.time() - t0, 1)
-        log_(f"обучение пропущено по каденции: {why}; цикл {cyc:.0f} с ("
+        log_((f"обучение отложено по памяти: {why}" if deferred
+              else f"обучение пропущено по каденции: {why}")
+             + f"; цикл {cyc:.0f} с ("
              + ", ".join(f"{k} {v:.0f} с" for k, v in steps.items()) + ")")
         write_outcome("часовой цикл без обучения", last_hour=grid[-1],
                       sections=n_sections, train_due=False,
+                      train_deferred_mem=deferred,
                       train_why=why, steps_sec=steps, cycle_sec=cyc,
                       woke_after_hour_sec=round(t0 % 3600, 1))
         log_cycle({"kind": "books", "seq": prev_seq,
