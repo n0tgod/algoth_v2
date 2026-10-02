@@ -91,3 +91,11 @@
   {"kind": "books", "seq": 529, "hour": "2026-10-01-06", "at": "10-01 07:11", "sections": 1317, "symbols": 789, "train_why": "весам 22.6 ч при каденции 24", "steps_sec": {"сведение часа": 337.7, "матрица": 138.5, "книги": 
   {"kind": "books", "seq": 529, "hour": "2026-10-01-07", "at": "10-01 08:10", "sections": 1318, "symbols": 789, "train_why": "весам 23.5 ч при каденции 24", "steps_sec": {"сведение часа": 247.7, "матрица": 149.9, "книги": 
 конец: 2026-10-02T04:05:06Z, код 0
+публикуется в ветку main:
+ jobs/done/cycle-0400.done           |  1 +
+ jobs/done/cycle-0400.log            | 23 +++++++++
+ jobs/done/memtop-0400.done          |  1 +
+ jobs/done/memtop-0400.log           | 93 +++++++++++++++++++++++++++++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 119 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 97c7be42e66529fe5164c99f36368251b269e1f2 but expected 3fc67c668f9ce2d7a947427e5d10aa173b520977
