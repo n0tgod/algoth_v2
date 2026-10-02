@@ -1,0 +1,32 @@
+== задание cycle-0240 ==
+строка: run tools/loggrep.py --file train --preset cycle --days 1 --last 5
+начало: 2026-10-02T02:45:04Z
+запускаю: .venv/bin/python tools/loggrep.py --file train --preset cycle --days 1 --last 5
+== research/s8_loop/out/train.log по образцу /матрица:|обучение пропущено по каденции|переобучаю:|цикл закончен/ за 1 сут ==
+  совпадений 11
+  2026-10-02: 11
+  [10-02 02:22:44] матрица: 790 символов × 1522 часов, сечений с ≥30 именами: 1336, признаков 50
+  [10-02 02:25:07] переобучаю: весам 41.8 ч при каденции 24
+  [10-02 02:32:39] матрица: 790 символов × 1522 часов, сечений с ≥30 именами: 1336, признаков 50
+  [10-02 02:35:31] переобучаю: весам 42.0 ч при каденции 24
+  [10-02 02:42:33] матрица: 790 символов × 1522 часов, сечений с ≥30 именами: 1336, признаков 50
+конец: 2026-10-02T02:45:04Z, код 0
+публикуется в ветку main:
+ jobs/done/cycle-0150.log               | 11 +++++++++++
+ jobs/done/cycle-0240.done              |  1 +
+ jobs/done/cycle-0240.log               | 13 +++++++++++++
+ jobs/done/mem-0150.log                 |  8 ++++++++
+ jobs/done/mem-0240.done                |  1 +
+ jobs/done/mem-0240.log                 |  4 ++++
+ jobs/done/memtop-0240.done             |  1 +
+ jobs/done/memtop-0240.log              |  4 ++++
+ research/factory/out/agents-runs.jsonl | 19 +++++++++++++++++++
+ research/s8_loop/out/day_brake.json    |  2 +-
+ 10 files changed, 63 insertions(+), 1 deletion(-)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.

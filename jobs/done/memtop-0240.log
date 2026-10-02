@@ -1,0 +1,91 @@
+== задание memtop-0240 ==
+строка: run tools/memtop.py --day 2026-10-02 --tail 2
+начало: 2026-10-02T02:45:04Z
+запускаю: .venv/bin/python tools/memtop.py --day 2026-10-02 --tail 2
+== free -m (2026-10-02 02:45:04 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        6176         186           4        1697        1569
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 5753 МБ
+   2481552        1   1938   03:44  .venv/bin/python research/b1_book/collect.py --http 8765
+   2513191        1   1723   00:05  .venv/bin/python research/s8_loop/train.py
+   2507555  2507553   1505   00:45  .venv/bin/python research/s10_policy/tournament.py
+     21675    14604    307 1588:07  claude --continue
+   2513908  2513905    149   00:00  /root/algoth_v2/.venv/bin/python research/factory/run_day.py --tag 1m --no-declare
+   2637243        1     26  475:56  /sbin/multipathd -d -s
+   2329852        1     23   20:21  /usr/lib/systemd/systemd-journald
+   2513905        1     12   00:00  /root/algoth_v2/.venv/bin/python /root/algoth_v2/research/factory/mech_run.py judge 1790909102.118 -- /root/algoth_v2/.venv/bin/python research/factor
+   2514325  2514316     12   00:00  .venv/bin/python tools/loggrep.py --file train --preset mem --days 1 --last 8
+   2514336  2514327     12   00:00  .venv/bin/python tools/memtop.py --day 2026-10-02 --tail 2
+         1        0     10 1597:01  /usr/lib/systemd/systemd --system --deserialize=89
+       961        1      9 1597:00  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   2329846        1      6   20:21  /usr/lib/systemd/systemd-resolved
+    691277        1      5  211:59  /usr/sbin/rsyslogd -n -iNONE
+       922        1      4 1597:00  /usr/lib/systemd/systemd-logind
+   1496656        1      4  116:42  /usr/lib/polkit-1/polkitd --no-debug
+   2329847        1      4   20:21  /usr/lib/systemd/systemd-timesyncd
+   2329848        1      4   20:21  sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+
+== убийства ядра с 2026-10-02 00:00 UTC ==
+  строк 6, убийств 6
+  первое: 2026-10-02T00:20:23+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2484011 (python) total-vm:3250664kB, anon-rss:3016372kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6232kB oom_score_adj:0
+  последнее: 2026-10-02T02:37:40+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2511784 (python) total-vm:3401220kB, anon-rss:3033012kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6212kB oom_score_adj:0
+  2026-10-02T00:20:23+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2484011 (python) total-vm:3250664kB, anon-rss:3016372kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6232kB oom_score_adj:0
+  2026-10-02T01:25:23+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2494110 (python) total-vm:3277032kB, anon-rss:3047040kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6256kB oom_score_adj:0
+  2026-10-02T02:02:57+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2503241 (python) total-vm:3204504kB, anon-rss:2926756kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6016kB oom_score_adj:0
+  2026-10-02T02:17:19+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2508253 (python) total-vm:3433540kB, anon-rss:3144100kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:6396kB oom_score_adj:0
+  2026-10-02T02:27:18+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2510358 (python) total-vm:3383940kB, anon-rss:3031696kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6224kB oom_score_adj:0
+  2026-10-02T02:37:40+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2511784 (python) total-vm:3401220kB, anon-rss:3033012kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6212kB oom_score_adj:0
+
+== research/s8_loop/out/train.log (хвост 2) ==
+  строк всего 73630
+  [10-02 02:43:38] корзина model_h24b/gbm: корзина дошла до цели (+154.59 $ по 126 позициям) — закрыта целиком
+  [10-02 02:44:11] корзина model_h24bf/gbm: корзина дошла до цели (+152.31 $ по 78 позициям) — закрыта целиком
+
+== research/dca_paper/out/short.log (хвост 2) ==
+  строк всего 49887
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/dca_paper/out/daily.log (хвост 2) ==
+  строк всего 140167
+  опубликовано
+  
+
+== research/dca_paper/out/pair.log (хвост 2) ==
+  строк всего 66129
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/b1_book/out/collect.log (хвост 2) ==
+  строк всего 1059810
+  [   13415 с] сообщений 56,715,679 (+242,906), сделок 4,620,890 (+15,912), книг готово 783/783, тем принято 2349/2349, сбросов 0
+  [   13475 с] сообщений 56,955,477 (+239,792), сделок 4,637,772 (+16,882), книг готово 783/783, тем принято 2349/2349, сбросов 0
+
+== research/b1_book/out/watchdog.log (хвост 2) ==
+  строк всего 8151
+  [2026-10-02T02:45:04Z] задание mem-0240 запущено: tools/loggrep.py
+  [2026-10-02T02:45:04Z] задание memtop-0240 запущено: tools/memtop.py
+
+== research/b1_book/out/ship.log (хвост 2) ==
+  строк всего 87
+  [03:21:02] после: /root/algoth_v2/research/b1_book/out: свободно 67.4 ГБ; /root: свободно 71.3 ГБ; 59 с
+  [03:21:02] итого отправлено 0.00 ГБ, дней закрыто 1 из 1
+
+== research/a1_universe/out/refresh.log (хвост 2) ==
+  строк всего 14369
+  Отказов нет.
+  
+
+== research/a1_universe/out/instruments.log (хвост 2) ==
+  строк всего 465
+  branch 'main' set up to track 'origin/main'.
+  опубликовано
+
+== research/s8_loop/out/model/train_log.jsonl (хвост 2) ==
+  строк всего 547
+  {"kind": "books", "seq": 529, "hour": "2026-10-01-06", "at": "10-01 07:11", "sections": 1317, "symbols": 789, "train_why": "весам 22.6 ч при каденции 24", "steps_sec": {"сведение часа": 337.7, "матрица": 138.5, "книги": 
+  {"kind": "books", "seq": 529, "hour": "2026-10-01-07", "at": "10-01 08:10", "sections": 1318, "symbols": 789, "train_why": "весам 23.5 ч при каденции 24", "steps_sec": {"сведение часа": 247.7, "матрица": 149.9, "книги": 
+конец: 2026-10-02T02:45:07Z, код 0

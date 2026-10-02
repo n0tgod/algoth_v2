@@ -9,3 +9,11 @@
   [10-02 01:41:05] память 1694 МБ, пик 1959 (перед оценкой прежних весов)
   [10-02 01:44:11] память 1720 МБ, пик 3692 (прежние веса оценены)
 конец: 2026-10-02T01:55:03Z, код 0
+публикуется в ветку main:
+ jobs/done/cycle-0150.done           |  1 +
+ jobs/done/cycle-0150.log            | 17 +++++++++++++++++
+ jobs/done/mem-0150.done             |  1 +
+ jobs/done/mem-0150.log              | 11 +++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 31 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at b3bee5f138196925eba7423dfbf2577c9e320c34 but expected be763e1907bdd4313653e2f8fc78eddbc01f1748

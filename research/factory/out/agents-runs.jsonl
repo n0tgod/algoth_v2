@@ -686,3 +686,22 @@
 {"at": 1790824506.537, "role": "declare", "status": "ok", "started": 1790824501.577, "ended": 1790824506.537, "dry": false, "note": "код возврата 0"}
 {"at": 1790824801.853, "role": "task", "status": "start", "started": 1790824801.853, "ended": 1790824801.853, "dry": false, "pid": 2303148}
 {"at": 1790824802.032, "role": "task", "status": "ok", "started": 1790824801.853, "ended": 1790824802.032, "dry": false, "note": "код возврата 0"}
+{"at": 1790906402.181, "role": "scout", "status": "start", "started": 1790906402.0, "ended": 1790906402.181, "dry": false, "pid": 2507543}
+{"at": 1790906403.126, "role": "scout", "status": "no-auth", "started": 1790906402.0, "ended": 1790906403.126, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790906701.65, "role": "scout", "status": "start", "started": 1790906701.0, "ended": 1790906701.65, "dry": false, "pid": 2508261}
+{"at": 1790906702.475, "role": "scout", "status": "no-auth", "started": 1790906701.0, "ended": 1790906702.475, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790907001.976, "role": "scout", "status": "start", "started": 1790907001.0, "ended": 1790907001.976, "dry": false, "pid": 2508947}
+{"at": 1790907002.497, "role": "scout", "status": "no-auth", "started": 1790907001.0, "ended": 1790907002.497, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790907301.614, "role": "brief", "status": "start", "started": 1790907301.0, "ended": 1790907301.614, "dry": false, "pid": 2509654}
+{"at": 1790907302.475, "role": "brief", "status": "no-auth", "started": 1790907301.0, "ended": 1790907302.475, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790907601.641, "role": "brief", "status": "start", "started": 1790907601.0, "ended": 1790907601.641, "dry": false, "pid": 2510366}
+{"at": 1790907602.419, "role": "brief", "status": "no-auth", "started": 1790907601.0, "ended": 1790907602.419, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790907902.175, "role": "brief", "status": "start", "started": 1790907902.0, "ended": 1790907902.175, "dry": false, "pid": 2511079}
+{"at": 1790907903.012, "role": "brief", "status": "no-auth", "started": 1790907902.0, "ended": 1790907903.012, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790908201.385, "role": "propose", "status": "start", "started": 1790908201.0, "ended": 1790908201.385, "dry": false, "pid": 2511792}
+{"at": 1790908202.141, "role": "propose", "status": "no-auth", "started": 1790908201.0, "ended": 1790908202.141, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790908501.902, "role": "propose", "status": "start", "started": 1790908501.0, "ended": 1790908501.902, "dry": false, "pid": 2512504}
+{"at": 1790908502.774, "role": "propose", "status": "no-auth", "started": 1790908501.0, "ended": 1790908502.774, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790908801.672, "role": "propose", "status": "start", "started": 1790908801.0, "ended": 1790908801.672, "dry": false, "pid": 2513199}
+{"at": 1790908802.473, "role": "propose", "status": "no-auth", "started": 1790908801.0, "ended": 1790908802.473, "dry": false, "note": "авторизации нет ни одним путём: либо claude auth login (подписка), либо ключ в /root/.anthropic/key (права 600)"}
+{"at": 1790909102.119, "role": "judge", "status": "start", "started": 1790909102.118, "ended": 1790909102.119, "dry": false, "pid": 2513905}
