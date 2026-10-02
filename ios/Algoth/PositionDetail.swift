@@ -6,6 +6,8 @@ struct PositionDetail: View {
     let p: Pos
     @ObservedObject var m: DCAModel
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var cm = TradeChartModel()
+    @State private var full = false
 
     var body: some View {
         let r = p.r
@@ -15,7 +17,7 @@ struct PositionDetail: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     PosCard(p: p, mark: nil)
-                    PositionChart(p: p, book: m.bookKey)
+                    preview
                     Cap(text: "лестница позиции")
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 10)],
                               spacing: 10) {
@@ -28,6 +30,8 @@ struct PositionDetail: View {
                 .padding(16)
             }
             .background(Theme.bg.ignoresSafeArea())
+            .task { await cm.load(p: p, book: m.bookKey) }
+            .fullScreenCover(isPresented: $full) { TradeChartScreen(p: p, cm: cm) }
             .navigationTitle(r["sym"].text)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -36,6 +40,28 @@ struct PositionDetail: View {
                 }
             }
         }
+    }
+
+    /// Превью графика в карточке; касание — на весь экран.
+    private var preview: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Cap(text: "график позиции")
+                Spacer()
+                Button { full = true } label: {
+                    Label("на весь экран", systemImage: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 12))
+                }
+            }
+            ChartBody(cm: cm, interactive: false)
+                .frame(height: 300)
+                .contentShape(Rectangle())
+                .onTapGesture { full = true }
+        }
+        .padding(12)
+        .background(Theme.chip)
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.rule))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
     private func leg(_ f: J, _ i: Int, _ short: Bool) -> some View {
