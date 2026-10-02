@@ -36,6 +36,19 @@ jobs:
       - name: Xcode and XcodeGen
         run: |
           set -euo pipefail
+          # App Store Connect принимает только сборки на SDK iOS 26+
+          # (Xcode 26): сборка на Xcode 16.4 прошла подпись и была
+          # отвергнута на проверке загрузки (02.10). Берём самый новый
+          # установленный Xcode 26.x; нет его — отказ словами, а не
+          # сборка, которую Apple всё равно не примет.
+          ls -d /Applications/Xcode_*.app
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null \
+                | grep -v -i beta | sort -V | tail -n 1 || true)
+          if [ -z "$XC" ]; then
+            echo "::error::На раннере нет Xcode 26 — App Store Connect не примет сборку"
+            exit 1
+          fi
+          sudo xcode-select -s "$XC/Contents/Developer"
           xcodebuild -version
           brew install xcodegen
           cd ios && xcodegen generate
