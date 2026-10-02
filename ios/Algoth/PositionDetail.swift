@@ -1,4 +1,3 @@
-import SafariServices
 import SwiftUI
 
 /// Раскрытая позиция: КАЖДЫЙ вход своей строкой, ТВХ после него и выход
@@ -7,7 +6,6 @@ struct PositionDetail: View {
     let p: Pos
     @ObservedObject var m: DCAModel
     @Environment(\.dismiss) private var dismiss
-    @State private var chart: URL?
 
     var body: some View {
         let r = p.r
@@ -17,6 +15,7 @@ struct PositionDetail: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     PosCard(p: p, mark: nil)
+                    PositionChart(p: p, book: m.bookKey)
                     Cap(text: "лестница позиции")
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 10)],
                               spacing: 10) {
@@ -24,15 +23,6 @@ struct PositionDetail: View {
                             leg(walk[i], i, short)
                         }
                         finalLeg(r, walk.last?["qty"].double, short)
-                    }
-                    if let url = chartURL {
-                        Button {
-                            chart = url
-                        } label: {
-                            Label("график позиции", systemImage: "chart.xyaxis.line")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
                     }
                 }
                 .padding(16)
@@ -46,19 +36,6 @@ struct PositionDetail: View {
                 }
             }
         }
-        .sheet(item: Binding(get: { chart.map(IdentURL.init) },
-                             set: { chart = $0?.url })) { u in
-            SafariView(url: u.url).ignoresSafeArea()
-        }
-    }
-
-    /// График этой позиции — страница свечей записи с точками доливов.
-    /// Ключ книги едет в адресе: без него график показал бы выборы модели.
-    private var chartURL: URL? {
-        guard let sym = p.r["sym"].string, let at = p.r["at"].double,
-              let book = m.bookKey else { return nil }
-        return Server.url("/chart", ["sym": sym, "dca": book,
-                                     "hour": F.hourKey(at)])
     }
 
     private func leg(_ f: J, _ i: Int, _ short: Bool) -> some View {
@@ -118,23 +95,6 @@ struct PositionDetail: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.rule))
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
-}
-
-struct IdentURL: Identifiable {
-    let url: URL
-    var id: String { url.absoluteString }
-}
-
-struct SafariView: UIViewControllerRepresentable {
-    let url: URL
-    func makeUIViewController(context: Context) -> SFSafariViewController {
-        let vc = SFSafariViewController(url: url)
-        vc.preferredBarTintColor = UIColor(red: 8 / 255, green: 10 / 255,
-                                           blue: 15 / 255, alpha: 1)
-        vc.preferredControlTintColor = .white
-        return vc
-    }
-    func updateUIViewController(_ vc: SFSafariViewController, context: Context) {}
 }
 
 /// «Что это»: режимы и числа правил — с сервера, не литералами.
