@@ -210,6 +210,32 @@ def log(m):
           flush=True)
 
 
+def mem_mb():
+    """(RSS сейчас, пик) в МБ — память шага, а не процесса вообще.
+
+    Ядро убивает по памяти без следа в логе прогона (SIGKILL), и где
+    именно обучение подошло к пределу — после смерти не узнать. Строка
+    с числом у каждого дорогого шага делает смерть читаемой по
+    последней записи (02.10: 13 убийств по 3.0 ГБ без единого слова).
+    """
+    try:
+        with open("/proc/self/statm") as f:
+            cur = int(f.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") // 2**20
+    except (OSError, ValueError, IndexError):
+        cur = -1
+    try:
+        import resource
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+    except Exception:                                      # noqa: BLE001
+        peak = -1
+    return cur, peak
+
+
+def mem_line(where):
+    cur, peak = mem_mb()
+    return f"память {cur} МБ, пик {peak} ({where})"
+
+
 # --- мысли модели: перевод её состояния в трейдерские слова ------------
 # Это НЕ речь модели (бустинг не говорит), а честный пересказ трёх
 # измеримых вещей: чему она верит (важности), как сбылись её прошлые
@@ -3274,6 +3300,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         return False
     x, names, targets, elig = assemble(mats)
     ts = step("матрица", ts)
+    log_(mem_line("матрица собрана"))
     per_hour = elig.sum(axis=0)
     n_sections = int((per_hour >= FB.MIN_SECTION).sum())
     log_(f"матрица: {len(syms)} символов × {len(grid)} часов, "
@@ -3404,8 +3431,10 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
         return False
     if due and prev_used:
         log_(f"переобучаю: {why}")
+    log_(mem_line("перед оценкой прежних весов"))
 
     ic_rows += eval_previous(x, targets, elig, grid, log_)
+    log_(mem_line("прежние веса оценены"))
 
     # Проверка на течь и наличие главной цели — РАЗНЫЕ вопросы, и
     # слив их в один стоил ровно того, ради чего проба и делалась:
@@ -3442,6 +3471,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
            "canary_spread": round(spread, 4), "canary_seeds": nseed,
            "canary_vals": cvals}
     ts = step("канарейка", ts)
+    log_(mem_line("канарейка"))
     verdict = canary_verdict(med)
     if verdict == "не считалась":
         log_(f"канарейка не считается: ни одна цель не набирает строк. "
@@ -3514,6 +3544,7 @@ def cycle(sum_dir, log_, book_root=SM.BOOK_ROOT):
                            seed=SEED0 + 10_000 * ai + 100 * ti + len(grid),
                            **kw)
             models[(arm, tgt)] = model
+            log_(mem_line(f"{arm}/{tgt} обучена, строк {len(ys)}"))
             tot = model.importance.sum() or 1.0
             imp = {names[j]: round(float(model.importance[j] / tot), 4)
                    for j in np.argsort(model.importance)[::-1][:10]}

@@ -31,6 +31,10 @@ def test_preset_cycle_matches_milestones():
              "[09-24 20:13:00] цикл закончен за 1200 с, веса v5"]
     by_day, hits = L.scan(lines, L.PRESETS["cycle"], 10, today=date(2026, 9, 28))
     assert by_day == {"2026-09-28": 2, "2026-09-24": 1}, by_day
+    mem = ["[09-28 17:45:00] память 2876 МБ, пик 2901 (gbm/fwd_4h обучена, строк 900000)",
+           "[09-28 17:46:00] памяти нет — не та строка"]
+    by_day, hits = L.scan(mem, L.PRESETS["mem"], 10, today=date(2026, 9, 28))
+    assert by_day == {"2026-09-28": 1} and len(hits) == 1, (by_day, hits)
 
 
 def test_main_without_file():
