@@ -1,0 +1,92 @@
+# Приложение DCA для iPhone/iPad (`ios/`) → TestFlight.
+#
+# Каждый пуш, трогающий `ios/`, собирает приложение под симулятор без
+# подписи: это проверка, что код компилируется, и ей не нужны ключи.
+# Если в настройках репозитория заведены секреты Apple (список — в
+# `ios/README.md`), та же сборка подписывается облачной подписью Xcode
+# и уходит в App Store Connect; через 10–20 минут обработки она видна
+# в TestFlight у внутренних тестировщиков. Номер сборки — номер прогона,
+# поэтому две загрузки не столкнутся.
+name: iOS TestFlight
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-testflight.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode and XcodeGen
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          brew install xcodegen
+          cd ios && xcodegen generate
+
+      - name: Compile for simulator (no signing)
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/AlgothDCA.xcodeproj -scheme AlgothDCA \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 40
+
+      - name: Secrets present?
+        id: gate
+        run: |
+          missing=""
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 APPLE_TEAM_ID IOS_BUNDLE_ID; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            # Не молчать: без секретов загрузки НЕ было, и это должно
+            # читаться в сводке прогона, а не угадываться по зелёной галке.
+            echo "::warning::TestFlight upload skipped, missing secrets:$missing"
+            echo "upload=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Archive, sign and upload to TestFlight
+        if: steps.gate.outputs.upload == 'yes'
+        run: |
+          set -euo pipefail
+          KEY="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          printf '%s\n' "$ASC_KEY_P8" > "$KEY"
+          AUTH=(-allowProvisioningUpdates
+                -authenticationKeyPath "$KEY"
+                -authenticationKeyID "$ASC_KEY_ID"
+                -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          ARCHIVE="$RUNNER_TEMP/AlgothDCA.xcarchive"
+          xcodebuild -project ios/AlgothDCA.xcodeproj -scheme AlgothDCA \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            "${AUTH[@]}" archive | tail -n 40
+          cp ios/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
+          plutil -replace teamID -string "$APPLE_TEAM_ID" \
+            "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive -archivePath "$ARCHIVE" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}"
+          rm -f "$KEY"
+          echo "### Build $GITHUB_RUN_NUMBER uploaded to App Store Connect" >> "$GITHUB_STEP_SUMMARY"

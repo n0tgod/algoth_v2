@@ -1,0 +1,4 @@
+# генерируется XcodeGen из project.yml
+*.xcodeproj/
+build/
+DerivedData/

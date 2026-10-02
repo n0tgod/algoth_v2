@@ -5260,6 +5260,43 @@ def test_dca_page_fits_the_phone():
           "строка заголовка снова взяла класс шапки")
 
 
+def test_dca_page_fits_the_tablet_and_the_app():
+    """Страница DCA на iPad и в приложении для iPhone/iPad (`ios/`).
+
+    До правки iPad получал широкую таблицу: позиции требовали 876 px
+    прокрутки вбок в окне 820 (вертикально) и 516 в окне 1180 — замерено
+    Chromium с сенсорным вводом на заглушке харнесса. После: 0 на обеих
+    ширинах, карточки сеткой в две и три колонки; десктоп мышью — прежняя
+    таблица (высота и ширины таблиц бит в бит).
+
+    Раскладку харнесс не считает — здесь несущие правила в источнике.
+    """
+    import web
+    for frag in ("viewport-fit=cover",
+                 "@media (max-width:720px),(pointer:coarse){",
+                 "@media (pointer:coarse) and (min-width:721px){",
+                 "tbody:has(> tr.pos),tbody:has(> tr.day){display:grid;",
+                 "tr.sub{grid-column:1/-1}",
+                 "table.leg{display:table;width:100%}",
+                 "calc(10px + env(safe-area-inset-bottom))",
+                 "-webkit-text-size-adjust:100%",
+                 ".app #nav{display:none}"):
+        check(f"правило планшета/приложения на месте: {frag[:42]}",
+              frag in web.DCAPAGE, "правило снято из DCAPAGE")
+    # Приложение узнаёт себя по `app=1` и зовёт настройки сообщением
+    # `algoth`; имя обязано совпасть с тем, что слушает `ios/`.
+    check("страница зовёт настройки приложения тем же именем",
+          "messageHandlers.algoth.postMessage(\"settings\")"
+          in web.DCAPAGE, "имя обработчика разошлось с приложением")
+    import os
+    swift = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "..", "..", "ios", "AlgothDCA", "WebView.swift")
+    if os.path.exists(swift):
+        src = open(swift, encoding="utf-8").read()
+        check("приложение слушает `algoth` и открывает `app=1`",
+              'name: "algoth"' in src and '"app", value: "1"' in src,
+              "приложение и страница говорят разными именами")
+
 def test_tree_scrolls_to_its_left_edge():
     """Первая карточка дерева обязана быть достижима прокруткой.
 
@@ -8339,6 +8376,7 @@ def main():
     test_tree_scrolls_to_its_left_edge()
     test_dca_palette_comes_from_the_mockups()
     test_dca_page_fits_the_phone()
+    test_dca_page_fits_the_tablet_and_the_app()
     test_volatility_splits_results_by_regime()
     test_marks_poll_serves_the_book_in_view()
     test_journal_marker_is_parsed_not_basenamed()

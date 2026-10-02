@@ -1,0 +1,31 @@
+# Проект Xcode генерируется из этого файла (XcodeGen) — сам
+# `.xcodeproj` в git не лежит: его формат руками не пишется и в
+# слиянии конфликтует на каждой строке. Сборка — `.github/workflows/
+# ios-testflight.yml`; на маке: `brew install xcodegen && xcodegen`.
+name: AlgothDCA
+options:
+  bundleIdPrefix: com.algoth
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  AlgothDCA:
+    type: application
+    platform: iOS
+    sources:
+      - path: AlgothDCA
+    settings:
+      base:
+        PRODUCT_NAME: AlgothDCA
+        PRODUCT_BUNDLE_IDENTIFIER: com.algoth.dca
+        INFOPLIST_FILE: AlgothDCA/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_PREVIEWS: NO

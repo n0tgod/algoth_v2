@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 510, строк: 228598, каталогов: 86.
+Модулей кода: 510, строк: 228692, каталогов: 87.
 
 
 ## корень — память проекта, идеи, README
@@ -128,8 +128,8 @@
 - `replay.py` · 360 строк — Прогон записанного потока через тот же детектор.
 - `signals.py` · 743 строк — Живой детектор: уровни, события поглощения и бумажные сделки.
 - `store.py` · 336 строк — Хранение потока: запись без потерь и чтение через порчу.
-- `web.py` · 12189 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
-- тесты: `headless_check.js` (6485), `test_book.py` (8384), `test_measure_pack.py` (133), `test_remote.py` (162)
+- `web.py` · 12245 строк — Страница наблюдения: стакан, лента, глубина и журнал живьём.
+- тесты: `headless_check.js` (6485), `test_book.py` (8422), `test_measure_pack.py` (133), `test_remote.py` (162)
 - отчёты в `out/` (2): B1-feature-audit.md, measure-pack.md
 
 ## research/d1_seconds — D1 — первые секунды после падения (гипотеза 7)
@@ -785,6 +785,11 @@
 ## bot/tests — интеграционные тесты ядра
 
 - тесты: `e1.rs` (333), `e2.rs` (357), `gen_parity.py` (256), `live_x1.rs` (1429), `watchdog.rs` (382)
+
+## ios
+
+- документы: `README.md` — Algoth DCA — приложение для iPhone и iPad
+- прочее: `AlgothDCA/Assets.xcassets/AppIcon.appiconset/Contents.json`, `AlgothDCA/Assets.xcassets/Contents.json`, `AlgothDCA/Assets.xcassets/LaunchBackground.colorset/Contents.json`
 
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 

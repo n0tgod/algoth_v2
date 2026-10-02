@@ -6301,7 +6301,7 @@ setInterval(load, 60000);
 # считает деньги живых книг: вторая реализация однажды разойдётся с
 # первой, и экран будет утверждать не то, что опубликовано отчётом.
 DCAPAGE = r"""<!doctype html><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DCA paper books — three modes × three deposits</title>
 <style>
 /* ===================================================================
@@ -6333,7 +6333,14 @@ DCAPAGE = r"""<!doctype html><meta charset="utf-8">
 /* Фон плоский: лилового свечения макет не несёт вовсе. */
 body{margin:0;background:var(--bg);color:var(--ink);
  font:12px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,
-   sans-serif;-webkit-font-smoothing:antialiased}
+   sans-serif;-webkit-font-smoothing:antialiased;
+ /* iOS без этого раздувает шрифт при повороте в альбомную, а отступы
+    безопасных зон (вырез, полоса «домой») в браузере равны нулю и
+    ничего не меняют; в приложении (`viewport-fit=cover`) они держат
+    текст вне выреза. */
+ -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+ padding:env(safe-area-inset-top) env(safe-area-inset-right) 0
+   env(safe-area-inset-left)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:#1c2433;border-radius:4px}
@@ -6491,7 +6498,11 @@ td.dcol{width:1px;white-space:nowrap}
    открыто из скольких мест, и прыжок к журналу. Числа приходят из тех
    же полей, что печатают плитки выше, — второй арифметики нет. */
 #dbar{display:none}
-@media (max-width:720px){
+/* Карточки — на узком экране И на любом сенсорном (iPad): на iPad
+   вертикально таблица позиций требовала 876 px прокрутки вбок при
+   окне 820, горизонтально — 516 (замерено браузером). Мышь на широком
+   экране получает прежнюю таблицу. */
+@media (max-width:720px),(pointer:coarse){
   .wrap{padding:10px 10px 84px}
   .panel{padding:12px;border-radius:14px;margin:10px 0}
   .filters{gap:8px}
@@ -6532,8 +6543,12 @@ td.dcol{width:1px;white-space:nowrap}
   td.sym::before{display:none}
   tr.sub td{padding:8px 0 0}
   table.leg td{display:flex}
+  .wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
   #dbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;
     gap:12px;align-items:center;padding:10px 12px;
+    padding:10px calc(12px + env(safe-area-inset-right))
+      calc(10px + env(safe-area-inset-bottom))
+      calc(12px + env(safe-area-inset-left));
     background:rgba(13,17,23,.94);border-top:1px solid var(--rule);
     backdrop-filter:blur(10px)}
   #dbar .c{min-width:0}
@@ -6541,6 +6556,37 @@ td.dcol{width:1px;white-space:nowrap}
   #dbar .c .v{font-size:14px;font-weight:700}
   #dbar .btn{margin-left:auto;flex:0 0 auto}
 }
+/* Планшет: те же карточки, но сеткой — две колонки вертикально, три
+   горизонтально; поля и главные плитки — как на широком экране.
+   Раскрытая позиция (`tr.sub`) встаёт на всю ширину сразу под своей
+   карточкой. Сетка — только у таблиц позиций и суток (`:has`):
+   справочные таблицы остаются столбиком. */
+@media (pointer:coarse) and (min-width:721px){
+  .wrap{padding:16px 20px calc(88px + env(safe-area-inset-bottom))}
+  .filters .fl{flex:1 1 360px}
+  .filters .fr{flex:0 1 auto;align-items:flex-end}
+  .filters .fr .tabs{justify-content:flex-end}
+  .stats.main .st{padding:16px;text-align:center}
+  .stats.main .st .v{font-size:26px}
+  .st > .k:first-child{min-height:2.5em}
+  tbody:has(> tr.pos),tbody:has(> tr.day){display:grid;column-gap:10px;
+    grid-template-columns:repeat(2,minmax(0,1fr))}
+  tr.sub{grid-column:1/-1}
+  /* Лестница раскрытой позиции — восемь узких колонок — на планшете
+     помещается таблицей; столбиком она шла ячейка на строку без имён. */
+  table.leg{display:table;width:100%}
+  table.leg tbody{display:table-row-group}
+  table.leg tr{display:table-row}
+  table.leg td,table.leg th{display:table-cell;padding:4px 8px}
+  table.leg th{white-space:nowrap}
+}
+@media (pointer:coarse) and (min-width:1100px){
+  tbody:has(> tr.pos),tbody:has(> tr.day){
+    grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+/* Приложение (`?app=1`): страница там одна, меню соседних страниц
+   ведёт мимо неё — убрано; логотип открывает настройки приложения. */
+.app #nav{display:none}
 """ + NAVCSS + r"""
 /* Меню перекрашено ПОСЛЕ общего блока и только здесь: `NAVCSS` один на
    четырнадцать страниц и цвета в нём зашиты, а просьба была об одной
@@ -6579,7 +6625,17 @@ td.dcol{width:1px;white-space:nowrap}
 <div id="dbar"></div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
+// Открыта приложением для iPhone/iPad (`ios/`): оно добавляет `app=1`
+// и слушает сообщение `algoth`. Логотип там ведёт в настройки (адрес
+// сервера и ключ), а не на обзор, которого в приложении нет.
+const APP = new URLSearchParams(location.search).get("app") === "1";
+if (APP) document.documentElement.classList.add("app");
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
+if (APP) document.getElementById("home").onclick = e => {
+  e.preventDefault();
+  try { window.webkit.messageHandlers.algoth.postMessage("settings"); }
+  catch (_) {}
+};
 """ + NAVJS + PCTJS + LVLJS + QTYJS + r"""
 navMount("/dca-page");
 function esc(s){ return String(s == null ? "" : s)
