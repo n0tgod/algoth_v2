@@ -1,0 +1,226 @@
+== задание logtail-0700 ==
+строка: run tools/logtail.py --since 2026-10-02-06 --until 2026-10-02-08 --max 80
+начало: 2026-10-02T07:40:04Z
+запускаю: .venv/bin/python tools/logtail.py --since 2026-10-02-06 --until 2026-10-02-08 --max 80
+
+== research/b1_book/out/watchdog.log ==
+  строк в окне 9
+  [2026-10-02T06:00:01Z] книга: артефакту 86140 с — докачка и прогон
+  [2026-10-02T07:00:01Z] DCA-книги: последний счёт 6481 с назад — прогон
+  [2026-10-02T07:00:01Z] короткие книги h24: последний счёт 6421 с назад — прогон
+  [2026-10-02T07:05:01Z] цикл обучения не найден — поднимаю
+  [2026-10-02T07:05:01Z] общий счёт: книги-источники свежее — прогон
+  [2026-10-02T07:35:03Z] задание cycle-0730 запущено: tools/loggrep.py
+  [2026-10-02T07:35:04Z] задание mem-0730 запущено: tools/loggrep.py
+  [2026-10-02T07:35:04Z] задание memtop-0730 запущено: tools/memtop.py
+  [2026-10-02T07:40:04Z] задание logtail-0700 запущено: tools/logtail.py
+
+== research/b1_book/out/ship.log ==
+  строк в окне 0
+
+== research/b1_book/out/collect.log ==
+  строк в окне 0
+
+== research/dca_paper/out/short.log ==
+  строк в окне 2
+  запись доходит до 2026-10-02 07:01 UTC
+  запись доходит до 2026-10-02 07:03 UTC
+
+== journalctl (warning и выше) ==
+  строк 142
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel:  __handle_mm_fault+0x654/0x790
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel:  handle_mm_fault+0x18a/0x380
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel:  do_user_addr_fault+0x169/0x670
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel:  exc_page_fault+0x83/0x1b0
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel:  asm_exc_page_fault+0x27/0x30
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: RIP: 0033:0x37d3f10
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Code: Unable to access opcode bytes at 0x37d3ee6.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: RSP: 002b:00007ffd2bf99578 EFLAGS: 00010202
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: RAX: 000000000057f501 RBX: 0000058031780000 RCX: 000000000057f5ec
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: RDX: 00147adce5980ddf RSI: 00007ffd2bf99590 RDI: 0000058031900000
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: RBP: 00007ffd2bf99600 R08: 0000000000000000 R09: 0000000000000000
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: R10: 0000000000000000 R11: 0000000000000000 R12: 00007ffd2bf99590
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: R13: 0000000000000000 R14: 0000058031900000 R15: 00000580316c0000
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel:  </TASK>
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Mem-Info:
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: active_anon:1049414 inactive_anon:740317 isolated_anon:0
+                                                       active_file:113 inactive_file:1009 isolated_file:0
+                                                       unevictable:7831 dirty:869 writeback:41
+                                                       slab_reclaimable:98090 slab_unreclaimable:28836
+                                                       mapped:2271 shmem:1228 pagetables:4636
+                                                       sec_pagetables:0 bounce:0
+                                                       kernel_misc_reclaimable:0
+                                                       free:28714 free_pcp:48 free_cma:0
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 active_anon:4197656kB inactive_anon:2961268kB active_file:452kB inactive_file:4036kB unevictable:31324kB isolated(anon):0kB isolated(file):0kB mapped:9084kB dirt
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA free:14336kB boost:0kB min:128kB low:160kB high:192kB reserved_highatomic:0KB active_anon:0kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 1934 7692 7692 7692
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA32 free:39920kB boost:0kB min:16956kB low:21192kB high:25428kB reserved_highatomic:0KB active_anon:1200800kB inactive_anon:632900kB active_file:0kB inactive_f
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 0 5758 5758 5758
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 Normal free:60600kB boost:0kB min:50492kB low:63112kB high:75732kB reserved_highatomic:10240KB active_anon:2996856kB inactive_anon:2328368kB active_file:0kB inac
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: lowmem_reserve[]: 0 0 0 0 0
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA: 0*4kB 0*8kB 0*16kB 0*32kB 0*64kB 0*128kB 0*256kB 0*512kB 0*1024kB 1*2048kB (M) 3*4096kB (M) = 14336kB
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 DMA32: 573*4kB (UME) 489*8kB (UME) 319*16kB (UME) 323*32kB (UME) 165*64kB (UME) 65*128kB (UM) 1*256kB (M) 0*512kB 0*1024kB 0*2048kB 0*4096kB = 40780kB
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 Normal: 1216*4kB (UME) 896*8kB (UME) 489*16kB (UME) 511*32kB (UME) 215*64kB (UME) 83*128kB (UME) 2*256kB (M) 0*512kB 0*1024kB 0*2048kB 0*4096kB = 61104kB
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=1048576kB
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: 4693 total pagecache pages
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages in swap cache
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Free swap  = 0kB
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Total swap = 0kB
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: 2046792 pages RAM
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages HighMem/MovableOnly
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: 63890 pages reserved
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: 0 pages hwpoisoned
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2536110 (python) total-vm:3438980kB, anon-rss:3162540kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6504kB oom_score_adj:0
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Failed with result 'oom-kill'.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 2514937 (python) in control group while starting unit. Ignoring.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 2536110 (python) in control group while starting unit. Ignoring.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 2553068 (bash) in control group while starting unit. Ignoring.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 2553070 (python) in control group while starting unit. Ignoring.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 2553080 (bash) in control group while starting unit. Ignoring.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: Found left-over process 2553082 (python) in control group while starting unit. Ignoring.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 systemd[1]: cron.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+  2026-10-02T07:00:29+00:00 ubuntu-8gb-nbg1-2 (cron)[2553695]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+  2026-10-02T07:01:55+00:00 ubuntu-8gb-nbg1-2 sshd[2553745]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:02:03+00:00 ubuntu-8gb-nbg1-2 sshd[2553749]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:04:37+00:00 ubuntu-8gb-nbg1-2 sshd[2554012]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:12:36+00:00 ubuntu-8gb-nbg1-2 sshd[2555659]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:12:43+00:00 ubuntu-8gb-nbg1-2 sshd[2555662]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:14:16+00:00 ubuntu-8gb-nbg1-2 sshd[2555716]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:14:22+00:00 ubuntu-8gb-nbg1-2 sshd[2555721]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:17:13+00:00 ubuntu-8gb-nbg1-2 sshd[2556460]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:17:22+00:00 ubuntu-8gb-nbg1-2 sshd[2556465]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:20:42+00:00 ubuntu-8gb-nbg1-2 sshd[2557221]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:20:52+00:00 ubuntu-8gb-nbg1-2 sshd[2557224]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:22:11+00:00 ubuntu-8gb-nbg1-2 sshd[2557269]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:23:31+00:00 ubuntu-8gb-nbg1-2 sshd[2557325]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:26:20+00:00 ubuntu-8gb-nbg1-2 sshd[2558074]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:28:16+00:00 ubuntu-8gb-nbg1-2 sshd[2558088]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:30:20+00:00 ubuntu-8gb-nbg1-2 sshd[2558752]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:30:28+00:00 ubuntu-8gb-nbg1-2 sshd[2558753]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:31:58+00:00 ubuntu-8gb-nbg1-2 sshd[2558766]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:36:04+00:00 ubuntu-8gb-nbg1-2 sshd[2559769]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:36:14+00:00 ubuntu-8gb-nbg1-2 sshd[2559770]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:39:41+00:00 ubuntu-8gb-nbg1-2 sshd[2559798]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:39:47+00:00 ubuntu-8gb-nbg1-2 sshd[2559799]: error: kex_exchange_identification: read: Connection reset by peer
+
+== journalctl sshd/cron ==
+  строк 4705
+  2026-10-02T07:34:29+00:00 ubuntu-8gb-nbg1-2 sshd[2558784]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:34:31+00:00 ubuntu-8gb-nbg1-2 sshd[2558784]: Failed password for root from 185.213.174.233 port 57206 ssh2
+  2026-10-02T07:34:38+00:00 ubuntu-8gb-nbg1-2 sshd[2558784]: Connection closed by authenticating user root 185.213.174.233 port 57206 [preauth]
+  2026-10-02T07:34:59+00:00 ubuntu-8gb-nbg1-2 sshd[2558792]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=92.118.39.49  user=root
+  2026-10-02T07:35:00+00:00 ubuntu-8gb-nbg1-2 sshd[2558794]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=223.123.92.102  user=root
+  2026-10-02T07:35:01+00:00 ubuntu-8gb-nbg1-2 sshd[2558792]: Failed password for root from 92.118.39.49 port 50222 ssh2
+  2026-10-02T07:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[2558797]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-02T07:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[2558796]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-02T07:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[2558798]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-10-02T07:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[2558799]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+  2026-10-02T07:35:01+00:00 ubuntu-8gb-nbg1-2 CRON[2558796]: pam_unix(cron:session): session closed for user root
+  2026-10-02T07:35:03+00:00 ubuntu-8gb-nbg1-2 sshd[2558794]: Failed password for root from 223.123.92.102 port 57064 ssh2
+  2026-10-02T07:35:03+00:00 ubuntu-8gb-nbg1-2 sshd[2558794]: Connection closed by authenticating user root 223.123.92.102 port 57064 [preauth]
+  2026-10-02T07:35:04+00:00 ubuntu-8gb-nbg1-2 CRON[2558797]: pam_unix(cron:session): session closed for user root
+  2026-10-02T07:35:05+00:00 ubuntu-8gb-nbg1-2 sshd[2558792]: Connection closed by authenticating user root 92.118.39.49 port 50222 [preauth]
+  2026-10-02T07:35:10+00:00 ubuntu-8gb-nbg1-2 sshd[2558790]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:35:11+00:00 ubuntu-8gb-nbg1-2 sshd[2558790]: Failed password for root from 185.213.174.233 port 50338 ssh2
+  2026-10-02T07:35:17+00:00 ubuntu-8gb-nbg1-2 sshd[2558790]: Connection closed by authenticating user root 185.213.174.233 port 50338 [preauth]
+  2026-10-02T07:35:52+00:00 ubuntu-8gb-nbg1-2 sshd[2559766]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:35:53+00:00 ubuntu-8gb-nbg1-2 sshd[2559766]: Failed password for root from 185.213.174.233 port 35264 ssh2
+  2026-10-02T07:35:58+00:00 ubuntu-8gb-nbg1-2 sshd[2559766]: Connection closed by authenticating user root 185.213.174.233 port 35264 [preauth]
+  2026-10-02T07:36:04+00:00 ubuntu-8gb-nbg1-2 sshd[2559769]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:36:04+00:00 ubuntu-8gb-nbg1-2 sshd[2559769]: Connection reset by 185.213.174.233 port 51890
+  2026-10-02T07:36:14+00:00 ubuntu-8gb-nbg1-2 sshd[2559770]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:36:14+00:00 ubuntu-8gb-nbg1-2 sshd[2559770]: Connection reset by 185.213.174.233 port 57760
+  2026-10-02T07:36:41+00:00 ubuntu-8gb-nbg1-2 sshd[2559776]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:36:42+00:00 ubuntu-8gb-nbg1-2 sshd[2559776]: Failed password for root from 185.213.174.233 port 36742 ssh2
+  2026-10-02T07:36:52+00:00 ubuntu-8gb-nbg1-2 sshd[2559776]: Connection closed by authenticating user root 185.213.174.233 port 36742 [preauth]
+  2026-10-02T07:37:22+00:00 ubuntu-8gb-nbg1-2 sshd[2559779]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:37:24+00:00 ubuntu-8gb-nbg1-2 sshd[2559779]: Failed password for root from 185.213.174.233 port 37768 ssh2
+  2026-10-02T07:37:32+00:00 ubuntu-8gb-nbg1-2 sshd[2559779]: Connection closed by authenticating user root 185.213.174.233 port 37768 [preauth]
+  2026-10-02T07:37:40+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=62.60.130.201  user=root
+  2026-10-02T07:37:42+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: Failed password for root from 62.60.130.201 port 32492 ssh2
+  2026-10-02T07:37:44+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: Failed password for root from 62.60.130.201 port 32492 ssh2
+  2026-10-02T07:37:46+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: Failed password for root from 62.60.130.201 port 32492 ssh2
+  2026-10-02T07:37:49+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: Failed password for root from 62.60.130.201 port 32492 ssh2
+  2026-10-02T07:37:53+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: Failed password for root from 62.60.130.201 port 32492 ssh2
+  2026-10-02T07:37:54+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: Invalid user masen from 2.57.121.112 port 53682
+  2026-10-02T07:37:54+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-02T07:37:54+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=2.57.121.112
+  2026-10-02T07:37:54+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: Connection reset by authenticating user root 62.60.130.201 port 32492 [preauth]
+  2026-10-02T07:37:54+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: PAM 4 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=62.60.130.201  user=root
+  2026-10-02T07:37:54+00:00 ubuntu-8gb-nbg1-2 sshd[2559783]: PAM service(sshd) ignoring max retries; 5 > 3
+  2026-10-02T07:37:55+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: Failed password for invalid user masen from 2.57.121.112 port 53682 ssh2
+  2026-10-02T07:37:57+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-02T07:37:58+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: Failed password for invalid user masen from 2.57.121.112 port 53682 ssh2
+  2026-10-02T07:38:00+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-02T07:38:02+00:00 ubuntu-8gb-nbg1-2 sshd[2559781]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:38:02+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: Failed password for invalid user masen from 2.57.121.112 port 53682 ssh2
+  2026-10-02T07:38:02+00:00 ubuntu-8gb-nbg1-2 sshd[2559787]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=223.123.92.102  user=root
+  2026-10-02T07:38:03+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-02T07:38:04+00:00 ubuntu-8gb-nbg1-2 sshd[2559789]: Invalid user masen from 2.57.121.112 port 9452
+  2026-10-02T07:38:04+00:00 ubuntu-8gb-nbg1-2 sshd[2559789]: pam_unix(sshd:auth): check pass; user unknown
+  2026-10-02T07:38:04+00:00 ubuntu-8gb-nbg1-2 sshd[2559789]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=2.57.121.112
+  2026-10-02T07:38:04+00:00 ubuntu-8gb-nbg1-2 sshd[2559781]: Failed password for root from 185.213.174.233 port 51072 ssh2
+  2026-10-02T07:38:05+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: Failed password for invalid user masen from 2.57.121.112 port 53682 ssh2
+  2026-10-02T07:38:05+00:00 ubuntu-8gb-nbg1-2 sshd[2559787]: Failed password for root from 223.123.92.102 port 49540 ssh2
+  2026-10-02T07:38:05+00:00 ubuntu-8gb-nbg1-2 sshd[2559789]: Failed password for invalid user masen from 2.57.121.112 port 9452 ssh2
+  2026-10-02T07:38:06+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: Connection closed by invalid user masen 2.57.121.112 port 53682 [preauth]
+  2026-10-02T07:38:06+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: PAM 3 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=2.57.121.112
+  2026-10-02T07:38:06+00:00 ubuntu-8gb-nbg1-2 sshd[2559785]: PAM service(sshd) ignoring max retries; 4 > 3
+  2026-10-02T07:38:07+00:00 ubuntu-8gb-nbg1-2 sshd[2559789]: Connection closed by invalid user masen 2.57.121.112 port 9452 [preauth]
+  2026-10-02T07:38:08+00:00 ubuntu-8gb-nbg1-2 sshd[2559787]: Connection closed by authenticating user root 223.123.92.102 port 49540 [preauth]
+  2026-10-02T07:38:11+00:00 ubuntu-8gb-nbg1-2 sshd[2559781]: Connection closed by authenticating user root 185.213.174.233 port 51072 [preauth]
+  2026-10-02T07:38:46+00:00 ubuntu-8gb-nbg1-2 sshd[2559791]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:38:47+00:00 ubuntu-8gb-nbg1-2 sshd[2559793]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=92.118.39.49  user=root
+  2026-10-02T07:38:47+00:00 ubuntu-8gb-nbg1-2 sshd[2559791]: Failed password for root from 185.213.174.233 port 39004 ssh2
+  2026-10-02T07:38:49+00:00 ubuntu-8gb-nbg1-2 sshd[2559793]: Failed password for root from 92.118.39.49 port 52388 ssh2
+  2026-10-02T07:38:52+00:00 ubuntu-8gb-nbg1-2 sshd[2559791]: Connection closed by authenticating user root 185.213.174.233 port 39004 [preauth]
+  2026-10-02T07:38:52+00:00 ubuntu-8gb-nbg1-2 sshd[2559793]: Connection closed by authenticating user root 92.118.39.49 port 52388 [preauth]
+  2026-10-02T07:39:27+00:00 ubuntu-8gb-nbg1-2 sshd[2559795]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.213.174.233  user=root
+  2026-10-02T07:39:29+00:00 ubuntu-8gb-nbg1-2 sshd[2559795]: Failed password for root from 185.213.174.233 port 34536 ssh2
+  2026-10-02T07:39:33+00:00 ubuntu-8gb-nbg1-2 sshd[2559795]: Connection closed by authenticating user root 185.213.174.233 port 34536 [preauth]
+  2026-10-02T07:39:41+00:00 ubuntu-8gb-nbg1-2 sshd[2559798]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:39:41+00:00 ubuntu-8gb-nbg1-2 sshd[2559798]: Connection reset by 185.213.174.233 port 49306
+  2026-10-02T07:39:47+00:00 ubuntu-8gb-nbg1-2 sshd[2559799]: error: kex_exchange_identification: read: Connection reset by peer
+  2026-10-02T07:39:47+00:00 ubuntu-8gb-nbg1-2 sshd[2559799]: Connection reset by 185.213.174.233 port 33868
+  2026-10-02T07:40:01+00:00 ubuntu-8gb-nbg1-2 CRON[2559802]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+  2026-10-02T07:40:01+00:00 ubuntu-8gb-nbg1-2 CRON[2559803]: (root) CMD (/root/algoth_v2/tools/watchdog_book.sh >> /root/algoth_v2/research/b1_book/out/watchdog.log 2>&1)
+  2026-10-02T07:40:04+00:00 ubuntu-8gb-nbg1-2 CRON[2559802]: pam_unix(cron:session): session closed for user root
+
+== dmesg -T (память, диск, сеть) ==
+  строк 29
+  [Wed Sep 30 02:16:53 2026] Out of memory: Killed process 2085030 (python) total-vm:3303232kB, anon-rss:2937428kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:5992kB oom_score_adj:0
+  [Wed Sep 30 02:26:33 2026] Out of memory: Killed process 2087358 (python) total-vm:2929852kB, anon-rss:2598116kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:5364kB oom_score_adj:0
+  [Wed Sep 30 02:36:49 2026] Out of memory: Killed process 2088899 (python) total-vm:3283344kB, anon-rss:2873768kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:5900kB oom_score_adj:0
+  [Wed Sep 30 02:44:42 2026] Out of memory: Killed process 1796214 (python) total-vm:4455620kB, anon-rss:2323220kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:5220kB oom_score_adj:0
+  [Wed Sep 30 02:59:28 2026] Out of memory: Killed process 2092085 (python) total-vm:3144200kB, anon-rss:2873092kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:5940kB oom_score_adj:0
+  [Wed Sep 30 05:12:14 2026] Out of memory: Killed process 2094600 (python) total-vm:3243232kB, anon-rss:3031352kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:6188kB oom_score_adj:0
+  [Thu Oct  1 10:14:33 2026] Out of memory: Killed process 2112734 (python) total-vm:3246184kB, anon-rss:3047924kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6316kB oom_score_adj:0
+  [Thu Oct  1 11:19:33 2026] Out of memory: Killed process 2365770 (python) total-vm:3264988kB, anon-rss:3023812kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6208kB oom_score_adj:0
+  [Thu Oct  1 12:24:34 2026] Out of memory: Killed process 2375182 (python) total-vm:3265100kB, anon-rss:2944864kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6048kB oom_score_adj:0
+  [Thu Oct  1 13:29:22 2026] Out of memory: Killed process 2384624 (python) total-vm:3280020kB, anon-rss:2961940kB, file-rss:4864kB, shmem-rss:0kB, UID:0 pgtables:6092kB oom_score_adj:0
+  [Thu Oct  1 14:34:32 2026] Out of memory: Killed process 2393569 (python) total-vm:3270648kB, anon-rss:3027672kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6216kB oom_score_adj:0
+  [Thu Oct  1 15:39:31 2026] Out of memory: Killed process 2403039 (python) total-vm:3268992kB, anon-rss:2943852kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6056kB oom_score_adj:0
+  [Thu Oct  1 16:44:30 2026] Out of memory: Killed process 2413823 (python) total-vm:3254016kB, anon-rss:3035044kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6240kB oom_score_adj:0
+  [Thu Oct  1 17:49:35 2026] Out of memory: Killed process 2423843 (python) total-vm:3009084kB, anon-rss:2641004kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:5476kB oom_score_adj:0
+  [Thu Oct  1 18:54:30 2026] Out of memory: Killed process 2433657 (python) total-vm:3275652kB, anon-rss:2982712kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:6156kB oom_score_adj:0
+  [Thu Oct  1 19:59:29 2026] Out of memory: Killed process 2443401 (python) total-vm:3280480kB, anon-rss:3036452kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6232kB oom_score_adj:0
+  [Thu Oct  1 21:04:28 2026] Out of memory: Killed process 2454347 (python) total-vm:3288464kB, anon-rss:3066584kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6280kB oom_score_adj:0
+  [Thu Oct  1 22:09:28 2026] Out of memory: Killed process 2463593 (python) total-vm:3289248kB, anon-rss:3027944kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6220kB oom_score_adj:0
+  [Thu Oct  1 23:16:01 2026] Out of memory: Killed process 2481731 (python) total-vm:4140244kB, anon-rss:3438488kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6988kB oom_score_adj:0
+  [Fri Oct  2 00:19:35 2026] Out of memory: Killed process 2484011 (python) total-vm:3250664kB, anon-rss:3016372kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6232kB oom_score_adj:0
+  [Fri Oct  2 01:24:35 2026] Out of memory: Killed process 2494110 (python) total-vm:3277032kB, anon-rss:3047040kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6256kB oom_score_adj:0
+  [Fri Oct  2 02:02:08 2026] Out of memory: Killed process 2503241 (python) total-vm:3204504kB, anon-rss:2926756kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6016kB oom_score_adj:0
+  [Fri Oct  2 02:16:31 2026] Out of memory: Killed process 2508253 (python) total-vm:3433540kB, anon-rss:3144100kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:6396kB oom_score_adj:0
+  [Fri Oct  2 02:26:30 2026] Out of memory: Killed process 2510358 (python) total-vm:3383940kB, anon-rss:3031696kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6224kB oom_score_adj:0
+  [Fri Oct  2 02:36:52 2026] Out of memory: Killed process 2511784 (python) total-vm:3401220kB, anon-rss:3033012kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6212kB oom_score_adj:0
+  [Fri Oct  2 02:44:35 2026] Out of memory: Killed process 2481552 (python) total-vm:4440072kB, anon-rss:1974924kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:4396kB oom_score_adj:0
+  [Fri Oct  2 02:57:17 2026] Out of memory: Killed process 2514954 (python) total-vm:3954792kB, anon-rss:3744980kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:7644kB oom_score_adj:0
+  [Fri Oct  2 05:09:36 2026] Out of memory: Killed process 2516343 (python) total-vm:3400988kB, anon-rss:3180840kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6504kB oom_score_adj:0
+  [Fri Oct  2 06:59:40 2026] Out of memory: Killed process 2536110 (python) total-vm:3438980kB, anon-rss:3162540kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6504kB oom_score_adj:0
+конец: 2026-10-02T07:40:07Z, код 0
