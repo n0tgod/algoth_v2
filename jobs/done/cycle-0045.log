@@ -1,0 +1,15 @@
+== задание cycle-0045 ==
+строка: run tools/loggrep.py --file train --preset cycle --days 1 --last 5
+начало: 2026-10-02T00:50:03Z
+запускаю: .venv/bin/python tools/loggrep.py --file train --preset cycle --days 1 --last 5
+== research/s8_loop/out/train.log по образцу /матрица:|обучение пропущено по каденции|переобучаю:|цикл закончен/ за 1 сут ==
+  совпадений 2
+  2026-10-02: 2
+  [10-02 00:32:30] матрица: 790 символов × 1520 часов, сечений с ≥30 именами: 1334, признаков 50
+  [10-02 00:35:47] переобучаю: весам 40.0 ч при каденции 24
+конец: 2026-10-02T00:50:03Z, код 0
+публикуется в ветку main:
+ jobs/done/cycle-0045.done           |  1 +
+ jobs/done/cycle-0045.log            | 10 ++++++++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 3 files changed, 12 insertions(+), 1 deletion(-)
