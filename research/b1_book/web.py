@@ -6336,8 +6336,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
    sans-serif;-webkit-font-smoothing:antialiased;
  /* iOS без этого раздувает шрифт при повороте в альбомную, а отступы
     безопасных зон (вырез, полоса «домой») в браузере равны нулю и
-    ничего не меняют; в приложении (`viewport-fit=cover`) они держат
-    текст вне выреза. */
+    ничего не меняют; на экране «Домой» (`viewport-fit=cover`) они
+    держат текст вне выреза. */
  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
  padding:env(safe-area-inset-top) env(safe-area-inset-right) 0
    env(safe-area-inset-left)}
@@ -6584,9 +6584,6 @@ td.dcol{width:1px;white-space:nowrap}
   tbody:has(> tr.pos),tbody:has(> tr.day){
     grid-template-columns:repeat(3,minmax(0,1fr))}
 }
-/* Приложение (`?app=1`): страница там одна, меню соседних страниц
-   ведёт мимо неё — убрано; логотип открывает настройки приложения. */
-.app #nav{display:none}
 """ + NAVCSS + r"""
 /* Меню перекрашено ПОСЛЕ общего блока и только здесь: `NAVCSS` один на
    четырнадцать страниц и цвета в нём зашиты, а просьба была об одной
@@ -6625,17 +6622,7 @@ td.dcol{width:1px;white-space:nowrap}
 <div id="dbar"></div>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "";
-// Открыта приложением для iPhone/iPad (`ios/`): оно добавляет `app=1`
-// и слушает сообщение `algoth`. Логотип там ведёт в настройки (адрес
-// сервера и ключ), а не на обзор, которого в приложении нет.
-const APP = new URLSearchParams(location.search).get("app") === "1";
-if (APP) document.documentElement.classList.add("app");
 document.getElementById("home").href = "/?k=" + encodeURIComponent(KEY);
-if (APP) document.getElementById("home").onclick = e => {
-  e.preventDefault();
-  try { window.webkit.messageHandlers.algoth.postMessage("settings"); }
-  catch (_) {}
-};
 """ + NAVJS + PCTJS + LVLJS + QTYJS + r"""
 navMount("/dca-page");
 function esc(s){ return String(s == null ? "" : s)

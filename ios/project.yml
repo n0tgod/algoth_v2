@@ -29,3 +29,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
         ENABLE_PREVIEWS: NO
+        # Адрес сервера наблюдения и ключ его страниц. Ключ в git не
+        # идёт: сборка в CI подставляет его из секрета ALGOTH_PAGE_KEY.
+        ALGOTH_SERVER: 116.203.146.99
+        ALGOTH_PAGE_KEY: ""

@@ -24,12 +24,18 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- Сервер и ключ страницы подставляет сборка (project.yml и секрет
+	     ALGOTH_PAGE_KEY в .github/workflows/ios-testflight.yml); в git
+	     ключа нет. -->
+	<key>AlgothServer</key>
+	<string>$(ALGOTH_SERVER)</string>
+	<key>AlgothPageKey</key>
+	<string>$(ALGOTH_PAGE_KEY)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<!-- Сервер отдаёт страницы по http на голом адресе (наружу
-		     открыты 80 и 443, сертификата нет). Исключение — только для
-		     веб-содержимого, остальная сеть приложения под ATS. -->
-		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<!-- Сервер наблюдения отдаёт данные по http на голом адресе
+		     (сертификата нет). -->
+		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
 	<key>UIApplicationSceneManifest</key>

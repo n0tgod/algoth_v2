@@ -30,6 +30,7 @@ jobs:
       ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+      ALGOTH_PAGE_KEY: ${{ secrets.ALGOTH_PAGE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -65,7 +66,7 @@ jobs:
         id: gate
         run: |
           missing=""
-          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 APPLE_TEAM_ID IOS_BUNDLE_ID; do
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 APPLE_TEAM_ID IOS_BUNDLE_ID ALGOTH_PAGE_KEY; do
             [ -n "${!v}" ] || missing="$missing $v"
           done
           if [ -n "$missing" ]; then
@@ -94,6 +95,7 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            ALGOTH_PAGE_KEY="$ALGOTH_PAGE_KEY" \
             "${AUTH[@]}" archive | tail -n 40
           cp ios/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
           plutil -replace teamID -string "$APPLE_TEAM_ID" \
