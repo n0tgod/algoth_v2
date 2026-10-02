@@ -2,9 +2,9 @@
 # `.xcodeproj` в git не лежит: его формат руками не пишется и в
 # слиянии конфликтует на каждой строке. Сборка — `.github/workflows/
 # ios-testflight.yml`; на маке: `brew install xcodegen && xcodegen`.
-name: AlgothDCA
+name: Algoth
 options:
-  bundleIdPrefix: com.algoth
+  bundleIdPrefix: pl.mdsauto
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
@@ -14,16 +14,16 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
 targets:
-  AlgothDCA:
+  Algoth:
     type: application
     platform: iOS
     sources:
-      - path: AlgothDCA
+      - path: Algoth
     settings:
       base:
-        PRODUCT_NAME: AlgothDCA
-        PRODUCT_BUNDLE_IDENTIFIER: com.algoth.dca
-        INFOPLIST_FILE: AlgothDCA/Info.plist
+        PRODUCT_NAME: Algoth
+        PRODUCT_BUNDLE_IDENTIFIER: pl.mdsauto.algoth
+        INFOPLIST_FILE: Algoth/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

@@ -1,9 +1,15 @@
-# Algoth DCA — приложение для iPhone и iPad
+# Algoth — приложение для iPhone и iPad
 
-Оболочка страницы `/dca-page` сборщика B1. Страница в приложение **не
-копируется**: её код один (`research/b1_book/web.py`, `DCAPAGE`), приложение
-открывает её с сервера с параметром `app=1`. Поэтому любая правка страницы
-видна в приложении после `restart-book`, без новой сборки.
+Приложение проекта целиком; начинается с одного раздела — страницы DCA
+(`/dca-page`). Разделы — страницы сервера наблюдения, открытые в приложении.
+Страницы **не копируются**: их код один (`research/b1_book/web.py`),
+приложение открывает их с сервера с параметром `app=1`. Поэтому правка
+страницы видна в приложении после `restart-book`, без новой сборки.
+
+**Новый раздел** — одна строка в `AppSection.all` (`Algoth/AlgothApp.swift`):
+название, значок, путь страницы. Со вторым разделом сама появится панель
+вкладок (на iPad — сверху). Саму страницу нужно довести так же, как DCA:
+правила под `app=1`, безопасные зоны, карточки на сенсорном экране.
 
 Что даёт приложение сверх вкладки Safari:
 
@@ -12,7 +18,7 @@
   перезагружается сама (в фоне iOS её опрос останавливает);
 - отказ словами: «ключ не подошёл (403)», «сервер не отвечает» — с кнопками
   «Повторить» и «Настройки»; белого экрана нет;
-- меню соседних страниц спрятано, логотип ALGOTH открывает настройки;
+- меню соседних страниц спрятано (разделы — вкладками приложения), логотип ALGOTH открывает настройки;
 - жест «назад» от графика сделки к списку;
 - iPhone: отступы под вырез и полосу «домой»; iPad: позиции и сутки
   карточками в две колонки вертикально и в три горизонтально (раньше таблица
@@ -23,18 +29,21 @@
 Собирает и отправляет в TestFlight GitHub Actions на маке
 (`.github/workflows/ios-testflight.yml`); своего мака не нужно.
 
-1. **Apple Developer Program** (99 $ в год) — без неё TestFlight недоступен.
+1. **Apple Developer Program** — аккаунт организации MDS Auto (sp. z o.o.).
+   Для TestFlight с внутренним тестированием компания ничего не меняет: имя
+   продавца видно только при публикации в App Store. Ключ API с ролью Admin
+   создаёт только Account Holder или Admin команды.
 2. **Идентификатор приложения.** developer.apple.com → Certificates,
    Identifiers & Profiles → Identifiers → «+» → App IDs → App → описание
-   «Algoth DCA», Bundle ID явный, например `com.<ваше-имя>.algothdca`.
+   «Algoth», Bundle ID явный: `pl.mdsauto.algoth`.
 3. **Запись приложения.** appstoreconnect.apple.com → Apps → «+» → New App:
-   платформа iOS, имя «Algoth DCA» (если занято — любое), язык русский,
-   Bundle ID из шага 2, SKU любой (`algothdca`).
+   платформа iOS, имя «Algoth» (если занято — например «Algoth Trading»), язык русский,
+   Bundle ID из шага 2, SKU любой (`algoth`).
 4. **Ключ API.** App Store Connect → Users and Access → Integrations →
    App Store Connect API → Team Keys → «+», роль **Admin** (меньшая роль не
    даёт облачной подписи). Скачать `.p8` (дают один раз), записать Key ID и
    Issuer ID.
-5. **Team ID** — developer.apple.com → Membership details, 10 знаков.
+5. **Team ID** команды MDS Auto — developer.apple.com → Membership details, 10 знаков.
 6. **Секреты репозитория** — github.com/n0tgod/algoth_v2 → Settings →
    Secrets and variables → Actions → New repository secret, пять штук:
 
@@ -44,14 +53,16 @@
    | `ASC_ISSUER_ID` | Issuer ID из шага 4 |
    | `ASC_KEY_P8` | содержимое файла `.p8` целиком, с строками BEGIN/END |
    | `APPLE_TEAM_ID` | Team ID из шага 5 |
-   | `IOS_BUNDLE_ID` | Bundle ID из шага 2 |
+   | `IOS_BUNDLE_ID` | `pl.mdsauto.algoth` |
 
 7. **Запуск.** GitHub → Actions → iOS TestFlight → Run workflow (или любой
    пуш в `ios/`). Прогон ~10 минут, затем Apple обрабатывает сборку ещё
    10–20 минут.
 8. **TestFlight.** App Store Connect → приложение → TestFlight → Internal
    Testing → «+» группа → добавить себя. На iPhone и iPad поставить
-   TestFlight из App Store, войти тем же Apple ID → «Algoth DCA» → Install.
+   TestFlight из App Store, войти тем же Apple ID → «Algoth» → Install.
+   Внутренние тестировщики — только пользователи команды MDS Auto в App
+   Store Connect.
 9. **Первый запуск.** Сервер уже подставлен (`http://116.203.146.99`),
    ввести ключ страницы — тот же, что после `?k=` в адресе страниц.
 
@@ -69,9 +80,9 @@ TestFlight живёт 90 дней — дальше новый прогон.
 | файл | что |
 |---|---|
 | `project.yml` | проект Xcode для XcodeGen; `.xcodeproj` генерируется и в git не идёт |
-| `AlgothDCA/AlgothDCAApp.swift` | вход, корневой вид, перезагрузка после фона, экран отказа |
-| `AlgothDCA/WebView.swift` | `WKWebView`: адрес страницы с `app=1`, 403/сеть словами, свои/чужие ссылки, потянуть-обновить, сообщение `algoth` |
-| `AlgothDCA/Settings.swift` | адрес сервера и ключ (связка ключей) |
+| `Algoth/AlgothApp.swift` | вход, разделы (`AppSection.all`), вкладки, перезагрузка после фона, экран отказа |
+| `Algoth/WebView.swift` | `WKWebView`: адрес страницы с `app=1`, 403/сеть словами, свои/чужие ссылки, потянуть-обновить, сообщение `algoth` |
+| `Algoth/Settings.swift` | адрес сервера и ключ (связка ключей) |
 | `ExportOptions.plist` | выгрузка в App Store Connect, только внутреннее тестирование |
 
 Уговор страницы и приложения (`app=1`, сообщение `algoth`) проверяет

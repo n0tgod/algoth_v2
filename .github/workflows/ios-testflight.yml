@@ -1,4 +1,4 @@
-# Приложение DCA для iPhone/iPad (`ios/`) → TestFlight.
+# Приложение Algoth для iPhone/iPad (`ios/`) → TestFlight.
 #
 # Каждый пуш, трогающий `ios/`, собирает приложение под симулятор без
 # подписи: это проверка, что код компилируется, и ей не нужны ключи.
@@ -43,7 +43,7 @@ jobs:
       - name: Compile for simulator (no signing)
         run: |
           set -euo pipefail
-          xcodebuild -project ios/AlgothDCA.xcodeproj -scheme AlgothDCA \
+          xcodebuild -project ios/Algoth.xcodeproj -scheme Algoth \
             -configuration Debug -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO build | tail -n 40
@@ -74,8 +74,8 @@ jobs:
                 -authenticationKeyPath "$KEY"
                 -authenticationKeyID "$ASC_KEY_ID"
                 -authenticationKeyIssuerID "$ASC_ISSUER_ID")
-          ARCHIVE="$RUNNER_TEMP/AlgothDCA.xcarchive"
-          xcodebuild -project ios/AlgothDCA.xcodeproj -scheme AlgothDCA \
+          ARCHIVE="$RUNNER_TEMP/Algoth.xcarchive"
+          xcodebuild -project ios/Algoth.xcodeproj -scheme Algoth \
             -configuration Release -destination 'generic/platform=iOS' \
             -archivePath "$ARCHIVE" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \

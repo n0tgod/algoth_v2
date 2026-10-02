@@ -2,18 +2,18 @@ import SwiftUI
 import UIKit
 import WebKit
 
-/// Адрес страницы DCA для приложения.
+/// Адрес страницы сервера для приложения.
 ///
-/// `app=1` — уговор со страницей (`DCAPAGE` в `web.py`): по нему она
-/// прячет меню соседних страниц и отдаёт логотип настройкам через
+/// `app=1` — уговор со страницей (у DCA — `DCAPAGE` в `web.py`): по нему
+/// она прячет меню соседних страниц и отдаёт логотип настройкам через
 /// сообщение `algoth`. Имена проверяет `test_book.py`
 /// (`test_dca_page_fits_the_tablet_and_the_app`).
-func dcaPageURL(server: String, key: String) -> URL? {
+func pageURL(server: String, key: String, path: String) -> URL? {
     var s = server.trimmingCharacters(in: .whitespacesAndNewlines)
     if s.isEmpty || key.isEmpty { return nil }
     if !s.contains("://") { s = "http://" + s }
     guard var c = URLComponents(string: s), c.host != nil else { return nil }
-    c.path = "/dca-page"
+    c.path = path
     c.queryItems = [URLQueryItem(name: "k", value: key),
                     URLQueryItem(name: "app", value: "1")]
     return c.url
@@ -28,6 +28,9 @@ final class PageModel: NSObject, ObservableObject {
     }
 
     @Published private(set) var phase: Phase = .loading
+    /// Адрес раздела, загруженный последним, — чтобы возврат на вкладку
+    /// не перезагружал страницу.
+    private(set) var loadedURL: URL?
     var onSettings: (() -> Void)?
     let webView: WKWebView
     private var url: URL?
@@ -36,7 +39,7 @@ final class PageModel: NSObject, ObservableObject {
         let cfg = WKWebViewConfiguration()
         // Сервер видит приложение в строке агента — для логов, не для
         // доступа: доступ даёт только ключ.
-        cfg.applicationNameForUserAgent = "AlgothDCA"
+        cfg.applicationNameForUserAgent = "Algoth"
         let ucc = WKUserContentController()
         cfg.userContentController = ucc
         webView = WKWebView(frame: .zero, configuration: cfg)
@@ -64,6 +67,7 @@ final class PageModel: NSObject, ObservableObject {
 
     func load(_ url: URL) {
         self.url = url
+        loadedURL = url
         phase = .loading
         webView.load(URLRequest(url: url,
                                 cachePolicy: .reloadIgnoringLocalCacheData,

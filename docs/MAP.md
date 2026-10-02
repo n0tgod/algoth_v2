@@ -788,8 +788,8 @@
 
 ## ios
 
-- документы: `README.md` — Algoth DCA — приложение для iPhone и iPad
-- прочее: `AlgothDCA/Assets.xcassets/AppIcon.appiconset/Contents.json`, `AlgothDCA/Assets.xcassets/Contents.json`, `AlgothDCA/Assets.xcassets/LaunchBackground.colorset/Contents.json`
+- документы: `README.md` — Algoth — приложение для iPhone и iPad
+- прочее: `Algoth/Assets.xcassets/AppIcon.appiconset/Contents.json`, `Algoth/Assets.xcassets/Contents.json`, `Algoth/Assets.xcassets/LaunchBackground.colorset/Contents.json`
 
 ## jobs — очередь заданий серверу (файл = задание, done/ = лог)
 

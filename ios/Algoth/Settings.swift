@@ -18,7 +18,12 @@ final class AppSettings: ObservableObject {
         key = Keychain.read("page-key") ?? ""
     }
 
-    var pageURL: URL? { dcaPageURL(server: server, key: key) }
+    /// Есть ли с чем идти на сервер: адрес разбирается и ключ не пуст.
+    var isConfigured: Bool { url(for: "/") != nil }
+
+    func url(for path: String) -> URL? {
+        pageURL(server: server, key: key, path: path)
+    }
 
     func save(server: String, key: String) {
         let s = server.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -31,7 +36,7 @@ final class AppSettings: ObservableObject {
 }
 
 enum Keychain {
-    private static let service = "algoth.dca"
+    private static let service = "algoth"
 
     private static func query(_ account: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
@@ -91,10 +96,10 @@ struct SettingsView: View {
                     settings.save(server: server, key: key)
                     if !firstRun { dismiss() }
                 }
-                .disabled(dcaPageURL(server: server, key: key) == nil)
+                .disabled(pageURL(server: server, key: key, path: "/") == nil)
             }
         }
-        .navigationTitle(firstRun ? "Algoth DCA" : "Настройки")
+        .navigationTitle(firstRun ? "Algoth" : "Настройки")
         .toolbar {
             if !firstRun {
                 ToolbarItem(placement: .cancellationAction) {

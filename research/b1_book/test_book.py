@@ -5290,7 +5290,7 @@ def test_dca_page_fits_the_tablet_and_the_app():
           in web.DCAPAGE, "имя обработчика разошлось с приложением")
     import os
     swift = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         "..", "..", "ios", "AlgothDCA", "WebView.swift")
+                         "..", "..", "ios", "Algoth", "WebView.swift")
     if os.path.exists(swift):
         src = open(swift, encoding="utf-8").read()
         check("приложение слушает `algoth` и открывает `app=1`",
