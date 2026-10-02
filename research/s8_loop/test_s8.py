@@ -4306,6 +4306,48 @@ def test_books_run_before_training_on_prev_weights():
         T.load_prev_models = orig_load
 
 
+def test_nn_zpack_bit_for_bit():
+    """Вход сети без лишних копий равен прежней формуле бит в бит.
+
+    Эталон — прежняя запись дословно: склейка разности и флагов. Данные
+    с пропусками, с колонкой целиком из NaN и с нулевым разбросом —
+    ветки `med`/`sd` обязаны пройти те же, что в `fit`.
+    """
+    import nn as N
+
+    r = np.random.default_rng(11)
+    x = r.normal(0, 3, (5000, 7))
+    x[r.random(x.shape) < 0.2] = np.nan
+    x[:, 3] = np.nan                       # признак без записи
+    x[:, 5] = 2.5                          # нулевой разброс
+    with np.errstate(all="ignore"):
+        med = np.nanmedian(x, axis=0)
+    med = np.where(np.isfinite(med), med, 0.0)
+    miss = ~np.isfinite(x)
+    xi = np.where(miss, med[None, :], x)
+    mu, sd = xi.mean(axis=0), xi.std(axis=0)
+    sd[sd == 0] = 1.0
+    ref = np.hstack([(xi - mu) / sd, miss.astype(np.float64)])
+    got = N.zpack(xi, miss, mu, sd)
+    check("вход сети бит в бит с прежней формулой",
+          got.shape == ref.shape and np.array_equal(got, ref),
+          f"расходятся {int((got != ref).sum()) if got.shape == ref.shape else 'формой'}")
+    check("исходная матрица не тронута", np.array_equal(
+        np.where(miss, med[None, :], x), xi))
+    # Та же сеть на тех же данных: предсказание бит в бит с обучением
+    # по прежнему пути (эталон — вызов через прежнюю формулу).
+    y = 1.5 * np.nan_to_num(x[:, 0]) + r.normal(0, 0.3, len(x))
+    m = N.fit(x[:4000], y[:4000], seed=5, epochs=3)
+    p1 = m.predict(x[4000:])
+    z_ref = np.hstack([(np.where(~np.isfinite(x[4000:]), m.med[None, :],
+                                 x[4000:]) - m.mu) / m.sd,
+                       (~np.isfinite(x[4000:])).astype(np.float64)])
+    check("подготовка предсказания бит в бит",
+          np.array_equal(m._prep(x[4000:]), z_ref))
+    check("предсказание детерминировано", np.array_equal(
+        p1, N.fit(x[:4000], y[:4000], seed=5, epochs=3).predict(x[4000:])))
+
+
 def test_nn_learns_and_sees_missing():
     """Сеть учится и видит пропуск флагом, а не затиркой."""
     import nn as N
@@ -5859,6 +5901,7 @@ def main():
     test_pretest_runs_where_live_refuses_and_stays_apart()
     test_probe_never_touches_live_model()
     test_novelty_measure()
+    test_nn_zpack_bit_for_bit()
     test_nn_learns_and_sees_missing()
     test_think_words()
     test_load_matrices_grid_is_continuous()

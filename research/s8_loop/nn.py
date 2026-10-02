@@ -26,6 +26,28 @@ BATCH = 4096
 L2 = 1e-5
 
 
+def zpack(xi, miss, mu, sd):
+    """Вход сети: [(xi − mu) / sd | флаги пропуска] — без лишних копий.
+
+    Прежняя запись `np.hstack([(xi - mu) / sd, miss.astype(float)])`
+    держала разом четыре массива размером с обучающую матрицу (две
+    разности, флаги числом, склейку), и на 1 520 часах записи обучение
+    S8 упиралось в память машины (3.0 ГБ, ядро убивало его каждый час,
+    02.10). Здесь склейка размечается сразу, вычитание и деление идут на
+    месте: те же операции над теми же числами в том же порядке — бит в
+    бит прежний результат (`test_nn_zpack_bit_for_bit`), а лишних
+    копий нет.
+    """
+    n, f = xi.shape
+    z = np.empty((n, 2 * f))
+    zl = z[:, :f]
+    np.copyto(zl, xi)
+    zl -= mu
+    zl /= sd
+    z[:, f:] = miss
+    return z
+
+
 class NN:
     def __init__(self, ws, bs, mu, sd, med, base):
         self.ws, self.bs = ws, bs
@@ -38,8 +60,7 @@ class NN:
     def _prep(self, x):
         miss = ~np.isfinite(x)
         xi = np.where(miss, self.med[None, :], x)
-        z = (xi - self.mu) / self.sd
-        return np.hstack([z, miss.astype(np.float64)])
+        return zpack(xi, miss, self.mu, self.sd)
 
     def predict(self, x):
         a = self._prep(x)
@@ -75,7 +96,8 @@ def fit(x, y, seed, epochs=EPOCHS, tau=None):
     уровень стопа есть квантиль. У сети замена дешёвая — меняется
     только градиент выхода и начальный уровень."""
     ok = np.isfinite(y)
-    x, y = x[ok], y[ok]
+    if not ok.all():                 # копия нужна только когда есть что выкинуть
+        x, y = x[ok], y[ok]
     with warnings.catch_warnings():
         # Колонка целиком из NaN законна (признак, чья запись ещё не
         # началась) и обработана строкой ниже — предупреждение лишнее.
@@ -87,7 +109,7 @@ def fit(x, y, seed, epochs=EPOCHS, tau=None):
     mu = xi.mean(axis=0)
     sd = xi.std(axis=0)
     sd[sd == 0] = 1.0
-    z = np.hstack([(xi - mu) / sd, miss.astype(np.float64)])
+    z = zpack(xi, miss, mu, sd)
     base = float(y.mean() if tau is None else np.quantile(y, tau))
     yc = y - base
 
