@@ -224,3 +224,15 @@
   [Fri Oct  2 05:09:36 2026] Out of memory: Killed process 2516343 (python) total-vm:3400988kB, anon-rss:3180840kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6504kB oom_score_adj:0
   [Fri Oct  2 06:59:40 2026] Out of memory: Killed process 2536110 (python) total-vm:3438980kB, anon-rss:3162540kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6504kB oom_score_adj:0
 конец: 2026-10-02T07:40:07Z, код 0
+публикуется в ветку main:
+ jobs/done/cycle-0730.log            |   4 +
+ jobs/done/logtail-0700.done         |   1 +
+ jobs/done/logtail-0700.log          | 226 ++++++++++++++++++++++++++++++++++++
+ jobs/done/mem-0730.log              |   1 +
+ jobs/done/memtop-0730.log           |  10 ++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 6 files changed, 243 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   be36c1fc..f90da8cc  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
