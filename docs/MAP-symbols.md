@@ -8191,6 +8191,19 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L75 `stop(pids, log=print)`
 - L96 `main(argv=None)`
 
+## tools/swap_on.py · 104 строк
+
+Файл подкачки на корневом диске — одной строкой очереди, по решению владельца.
+
+- L25 `SWAPFILE = '/swapfile'`
+- L26 `FSTAB = '/etc/fstab'`
+- L27 `FSTAB_LINE = f'{SWAPFILE} none swap sw 0 0'`
+- L28 `MIN_FREE_GB_AFTER = 20`
+- L31 `sh(cmd)`
+- L36 `state()` — Что есть сейчас: активные свопы, файл, строка fstab, место на корне.
+- L52 `plan(st, size_gb, persist)` — Шаги, которые нужны; пустой список — делать нечего.
+- L72 `main(argv=None)`
+
 ## tools/unstick_publish.py · 77 строк
 
 Разморозить публикацию: вернуть разрезанный журнал к версии git.

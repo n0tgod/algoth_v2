@@ -4400,6 +4400,13 @@ X1: исполнитель против подставной биржи.
 - L30 `test_match_is_by_exact_script_path_of_a_python_process()`
 - L38 `test_main_refuses_and_reports_absence()`
 
+## tools/test_swap_on.py · 47 строк
+
+Проверка `tools/swap_on.py`: план по состоянию, отказы, без `--apply` ничего не меняется.
+
+- L10 `test_plan_branches()`
+- L26 `test_dry_run_changes_nothing(tmp=None)`
+
 ## tools/test_unstick.py · 87 строк
 
 Проверка размораживателя публикации на ПОДСТАВНОМ репозитории.

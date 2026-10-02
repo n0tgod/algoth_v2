@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 508, строк: 228447, каталогов: 86.
+Модулей кода: 510, строк: 228598, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -819,7 +819,8 @@
 - `safety_check.sh` · 107 строк — Проверка перед коммитом: то, что нельзя записать в историю случайно.
 - `spill_book.py` · 214 строк — Перелив старых часов записи стакана с полного тома на корень — с символьной ссылкой на месте каждого файла.
 - `stop_run.py` · 125 строк — Остановить ИДУЩИЙ прогон очереди по пути скрипта — и ничего кроме него.
+- `swap_on.py` · 104 строк — Файл подкачки на корневом диске — одной строкой очереди, по решению владельца.
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
 - `watchdog_book.sh` · 442 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
-- тесты: `test_disk_alarm.py` (64), `test_jobs.sh` (238), `test_loggrep.py` (53), `test_memtop.py` (61), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)
+- тесты: `test_disk_alarm.py` (64), `test_jobs.sh` (238), `test_loggrep.py` (53), `test_memtop.py` (61), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)
