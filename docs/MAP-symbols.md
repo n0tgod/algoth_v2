@@ -2285,6 +2285,31 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L174 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
 - L188 `stamp()`
 
+## research/dca_paper/short_size.py · 218 строк
+
+Стабильность безопасной короткой книги: размер билета и плечо забора — кассой.
+
+- L31 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L32 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L48 `ART = 'DCA-short-size'`
+- L49 `BOOK = 'safe_h'`
+- L50 `SEEDS = 200`
+- L51 `MAIN_DEP = 10000`
+- L52 `SHARE = 0.5`
+- L53 `MIN_LEV = 5.0`
+- L54 `CELLS = (('as_is', 'как сейчас'), ('ticket', f'…`
+- L58 `lev_gate(recs, min_lev=MIN_LEV)` — Записи с плечом забора ≥ порога; плечо неизвестно — остаётся и считается.
+- L72 `with_share(book, share, fn)` — Доля билета книги на время счёта — и назад, что бы ни случилось.
+- L85 `day_sigma(days)` — σ дня и отношение средний день / σ — по дням кассы.
+- L94 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
+- L137 `_pp(x, d=1)`
+- L141 `_usd(x)`
+- L145 `_f(x, d=2)`
+- L149 `_sd(x)`
+- L153 `report(s)`
+- L198 `publish(name)`
+- L204 `main(argv=None)`
+
 ## research/dca_paper/short_stop.py · 225 строк
 
 Пол капитуляции как СТОП: где резать позицию против хода.

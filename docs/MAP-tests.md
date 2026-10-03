@@ -1392,6 +1392,15 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
+## research/dca_paper/test_short_size.py · 65 строк
+
+Проверки замера «билет и плечо забора» безопасной короткой книги.
+
+- L12 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L18 `test_lev_gate_keeps_sized_positions_and_counts_the_unknown()`
+- L26 `test_share_is_applied_for_the_count_and_restored()`
+- L41 `test_day_sigma_and_report()`
+
 ## research/dca_paper/test_short_stop.py · 129 строк
 
 Проверки замера «пол капитуляции как стоп».
