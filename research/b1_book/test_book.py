@@ -11,6 +11,7 @@
     python3 research/b1_book/test_book.py
 """
 
+import calendar
 import json
 import os
 import shutil
@@ -5342,12 +5343,21 @@ def test_volatility_splits_results_by_regime():
                 ("2026-08-01-11", "BUSDT", -40.0),
                 ("2026-08-02-12", "AUSDT", 90.0),
                 ("2026-09-09-09", "BUSDT", 10.0)]
+        def _decided(h):
+            # Момент решения — закрытие часа `h`, как у живого писателя.
+            # Один момент на сделки РАЗНЫХ часов ставил все входы в одну
+            # секунду, и потолок имени кассы (10 % капитала) давал
+            # второму входу по тому же имени размер 0: деньги корзины
+            # читались нулём не из разбора, а из подставного времени.
+            return float(calendar.timegm(time.strptime(h, "%Y-%m-%d-%H"))) + 3600.0
+
         for hour, sym, got in plan:
-            picks.append({"arm": "gbm", "hour": hour, "at_ts": now - 7000,
+            t_in = _decided(hour)
+            picks.append({"arm": "gbm", "hour": hour, "at_ts": t_in,
                           "long": [{"sym": sym, "px": 100.0, "fwd": 40.0,
                                     "mae": -20.0}], "short": []})
             revs.append({"arm": "gbm", "hour": hour, "cost_bp": 11.0,
-                         "at_ts": now - 3600,
+                         "at_ts": t_in + 4 * 3600.0 + 60.0,
                          "rows": [{"sym": sym, "side": "long", "got": got,
                                    "net": got - 11.0}]})
         with open(os.path.join(mdir, "picks.jsonl"), "w",
