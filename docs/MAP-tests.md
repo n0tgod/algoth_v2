@@ -1392,6 +1392,21 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
+## research/dca_paper/test_short_levers.py · 185 строк
+
+Проверки скрина рычагов коротких книг.
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L20 `AT = TP.AT`
+- L21 `H = 3600.0`
+- L24 `_view(marks, exit='срок')`
+- L30 `test_hold_closes_only_positions_alive_at_that_hour()`
+- L47 `test_trail_arms_at_threshold_and_exits_on_giveback_from_peak()`
+- L63 `test_cooldown_counts_the_window_from_own_exits_and_tells_floor_…`
+- L82 `test_arm_map_from_legs_and_unknown_is_not_measured()`
+- L96 `test_vol_target_uses_past_sigma_only_and_clips()`
+- L112 `test_run_wiring_with_stub_cash_and_report_without_none()`
+
 ## research/dca_paper/test_short_rules_1003.py · 62 строк
 
 Правила 03.10 у безопасной короткой книги: билет 0.5.

@@ -2287,6 +2287,55 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L174 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
 - L188 `stamp()`
 
+## research/dca_paper/short_levers.py · 576 строк
+
+Рычаги коротких книг, которых стенд ещё не мерил: один скрин, оси до прогона.
+
+- L44 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L45 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L66 `ART = 'DCA-short-levers'`
+- L67 `SEEDS = 200`
+- L68 `MAIN_DEP = 10000`
+- L69 `HOUR = 3600.0`
+- L70 `BOOK_KEYS = list(S.BOOKS)`
+- L71 `TAIL_EXITS = T.TAIL_EXITS`
+- L73 `HOLD_H = (12, 18)` — Оси — объявлены здесь, до прогона (ошибка R5 — выбрать ячейку после).
+- L74 `TRAILS = ((0.25, 0.15), (0.5, 0.25))`
+- L75 `COOL_H = (6, 12, 24)`
+- L76 `COOL_KINDS = (('tail', 'после пола/ликвидации'), ('a…`
+- L77 `ARMS = ('nn', 'gbm')`
+- L78 `VOL_REF_DAYS = 20`
+- L79 `VOL_CLIP = (0.5, 1.5)`
+- L80 `TRAIL_EXIT = 'трейл (отметка)'`
+- L83 `closed_views(cache)` — Закрытые записи линеек коротких книг с путём по отметкам — без рынка.
+- L94 `hold_trigger(v, hours)` — Безусловный срок: выход на отметке часа `hours`, если позиция ещё жива.
+- L102 `trail_trigger(v, arm, give)` — Трейлинг по отметкам: взвод при cum ≥ arm, выход при cum ≤ пик − give.
+- L125 `apply_rule(cache, views, fn, why)` — Кэш с выходами по правилу `fn(view) → час | None` и {ключ: час}.
+- L138 `ruled(packed, launch, now=None)` — Записи под правилами книги — тем же порядком, что касса (`cell_stats`).
+- L149 `taken_rows(ruled_packed, now=None, dep=MAIN_DEP)` — Позиции, которые книги на $dep ВЗЯЛИ, по книгам — окна паузы берутся из них.
+- L163 `cooldown(recs, taken, hours, kind)` — Записи вне окна паузы: имя закрыто `hours` часов после своего выхода.
+- L185 `arm_map(legs_)` — {(имя, момент): {руки}} из ног листа — у записи кэша руки нет.
+- L193 `arm_select(recs, amap, arm)` — Записи, которые выбрала рука `arm` (обе руки — тоже); без ноги — не измерено.
+- L206 `vol_target(days, ref_days=VOL_REF_DAYS, clip=VOL_CLIP)` — Дни книги под вол-таргетом: множитель дня из σ ПРОШЛЫХ дней, без заглядывания.
+- L229 `summ(c)` — Сводка ячейки кассы: деньги, форма дня, хвост.
+- L238 `summ_days(days, dep, n=None)` — Та же сводка из ряда дней (вол-таргет): просадка — формулой кассы.
+- L251 `verdict_sel(beat)` — Фраза из числа: доля зёрен, где случайная выборка не хуже правила.
+- L263 `_beat(ctl_books, st, bk, dep)`
+- L268 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
+- L400 `_pp(x, d=1)`
+- L404 `_usd(x)`
+- L408 `_f(x, d=2)`
+- L412 `_sd(x)`
+- L416 `_i(x)`
+- L420 `_dsig(c, b)` — σ дня против опоры, в процентах — число, из которого читается стабильность.
+- L427 `CELL_HEAD = 'сделок | итог | просадка | $ без 3 луч…`
+- L428 `CELL_SEP = '--:|--:|--:|--:|--:|--:|--:|--:'`
+- L431 `_cells(c, b)`
+- L437 `_ctl(c)`
+- L442 `report(s)`
+- L556 `publish(name)`
+- L562 `main(argv=None)`
+
 ## research/dca_paper/short_size.py · 218 строк
 
 Стабильность безопасной короткой книги: размер билета и плечо забора — кассой.
