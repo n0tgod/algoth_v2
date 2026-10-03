@@ -38,3 +38,12 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-10-03T15:18:59Z
+публикуется в ветку main:
+ jobs/done/levcap-status.log         | 40 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  2 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 3 files changed, 43 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   1d7efd5a..455a26b3  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
