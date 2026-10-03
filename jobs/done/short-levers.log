@@ -148,3 +148,17 @@ D рука gbm: записей safe_h 2651, optimal_h 2651, aggr_h 2651; без 
 - «Лучше случайной» — случайная выборка того же размера не хуже правила не более чем в 5 % зёрен по итогу И по доходу/просадке; «в шуме» — всё остальное.
 - Срок и трейлинг меняют исход записей по отметкам ядра (отметка часа = усечение срока бит в бит); трейлинг внутри часа не виден — оговорка названа.
 - Расчёт: 2026-10-03 11:49, 809.0 с.
+публикуется в ветку main:
+ jobs/done/short-levers.done                  |   1 +
+ jobs/done/short-levers.log                   | 150 +++++++++++++++++++++++++++
+ jobs/poke.log                                |   3 +
+ research/dca_paper/out/DCA-short-levers.json |   1 +
+ research/dca_paper/out/DCA-short-levers.md   |  99 ++++++++++++++++++
+ research/s8_loop/out/day_brake.json          |   2 +-
+ 6 files changed, 255 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   d3d3015c..ca782bcd  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-10-03T11:49:54Z, код 0
