@@ -1,0 +1,40 @@
+== задание levcap-status ==
+строка: status
+начало: 2026-10-03T15:18:59Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   73G   72G  51% /
+/dev/sdb        147G   77G   63G  55% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3433873 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+2733787   44935 .venv/bin/python research/b1_book/collect.py --http 8765
+2782876   25737 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+6 (подробно: run tools/memtop.py)
+--- идущие прогоны ---
+2846574 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/short-levcap.log research/dca_paper/short_levcap.py
+2846579 .venv/bin/python research/dca_paper/short_levcap.py
+--- статус сбора ---
+{"t": 1791040737.1, "uptime_sec": 44932.5, "messages": 159417673, "trades": 14827086, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 33301865, "snapshot_errors": 0, "last_snap_age_sec": 0.3, "snap_pass_sec": 0.222, "writes": {"book": 33301865, "trades": 14827085, "raw": 661834, "liq": 4070, "metrics": 115884}, "write_age_sec": {"book": 0.3, "trades": 0.2, "raw": 0.5, "liq": 15.0, "metrics": 33.2}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2981, "ask": 0.2982, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004072, "ask": 0.0004075, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1164, "ask": 0.1166, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.00835
+--- живой исполнитель ---
+{
+  "at_ms": 1791040735260,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-03T15:18:59Z
