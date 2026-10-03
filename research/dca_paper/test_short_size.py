@@ -26,12 +26,13 @@ def test_lev_gate_keeps_sized_positions_and_counts_the_unknown():
 def test_share_is_applied_for_the_count_and_restored():
     was = R.SHORT_SHARE.get("safe_h")
     t_full = R.ticket_in("safe_h", "safe_h", 10000)
-    seen = Z.with_share("safe_h", 0.5, lambda: (R.SHORT_SHARE["safe_h"],
-                                                R.ticket_in("safe_h", "safe_h", 10000)))
-    assert seen[0] == 0.5 and abs(seen[1] - max(R.floor_of("safe_h"), t_full * 0.5)) < 1e-9, (seen, t_full)
+    own = R.ticket(10000, "safe_h")
+    seen = Z.with_share("safe_h", 0.25, lambda: (R.SHORT_SHARE["safe_h"],
+                                                 R.ticket_in("safe_h", "safe_h", 10000)))
+    assert seen[0] == 0.25 and abs(seen[1] - max(R.floor_of("safe_h"), own * 0.25)) < 1e-9, (seen, own)
     assert R.SHORT_SHARE.get("safe_h") == was and R.ticket_in("safe_h", "safe_h", 10000) == t_full
     try:
-        Z.with_share("safe_h", 0.5, lambda: 1 / 0)
+        Z.with_share("safe_h", 0.25, lambda: 1 / 0)
     except ZeroDivisionError:
         pass
     assert R.SHORT_SHARE.get("safe_h") == was

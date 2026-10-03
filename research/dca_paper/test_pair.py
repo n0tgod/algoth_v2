@@ -103,7 +103,8 @@ def test_ticket_stays_the_ticket_of_its_own_side():
                                      keys=["pair_safe"], log=lambda *a: None)
     mine = {r["sym"]: r for r in rows if int(r["dep"]) == int(dep)}
     assert set(mine) == {"AUSDT", "BUSDT"}, mine
-    want = R.ticket(dep, "safe_h") / R.ticket(dep, "safe")
+    # билет стороны — свой билет × объявленная доля (у безопасной 0.5 с 03.10)
+    want = R.ticket_in("pair_safe", "safe_h", dep) / R.ticket_in("pair_safe", "safe", dep)
     got = mine["BUSDT"]["margin"] / mine["AUSDT"]["margin"]
     assert want > 3, want            # книги и правда с разными билетами
     assert abs(got - want) < 0.02 * want, (got, want, mine)
@@ -117,7 +118,7 @@ def test_short_side_enters_with_the_declared_share():
     """Билет короткой стороны в общем счёте — объявленная доля своего.
 
     Решение владельца 2026-09-07 по замеру `short_why`: 0.25 у общей
-    оптимальной и общей агрессивной, у безопасной без изменений.
+    оптимальной и общей агрессивной, у безопасной 0.5 с 2026-10-03.
     Кусается на дороге целиком: маржа строки короткой стороны обязана
     быть вчетверо меньше её собственного билета там, где доля
     объявлена, и равна ему там, где не объявлена.
@@ -136,11 +137,11 @@ def test_short_side_enters_with_the_declared_share():
                    (one[pk]["parts"][sk]["ticket"][str(int(dep))]))
     m_safe, own_safe, _t = got["pair_safe"]
     m_opt, own_opt, _t2 = got["pair_optimal"]
-    assert abs(m_safe - own_safe) < 0.02 * own_safe, got["pair_safe"]
+    assert abs(m_safe - 0.5 * own_safe) < 0.02 * own_safe, got["pair_safe"]   # 0.5 с 2026-10-03
     assert abs(m_opt - 0.25 * own_opt) < 0.02 * own_opt, got["pair_optimal"]
     assert R.pair_share_mult("pair_optimal", "optimal_h") == 0.25
     assert R.pair_share_mult("pair_optimal", "optimal") == 1.0, "лонг не режем"
-    assert R.pair_share_mult("pair_safe", "safe_h") == 1.0
+    assert R.pair_share_mult("pair_safe", "safe_h") == 0.5
     print(f"ok  короткая сторона входит объявленной долей: у безопасной "
           f"${m_safe:.0f} из ${own_safe:.0f}, у оптимальной ${m_opt:.0f} "
           f"из ${own_opt:.0f}")
