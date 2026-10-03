@@ -360,25 +360,29 @@ struct EquityCurve: View {
     /// последнего). Числа — поля той же строки `days_rows`, что в таблице.
     private func header(_ p: Pt, picked: Bool) -> some View {
         let r = p.r
-        let usd = r["usd"].double
+        let usd: Double? = r["usd"].double
+        let tone: Color = Tone(usd).color
+        let day: String = r["d"].text
+        let money: String = F.usd(usd)
+        let share: String = dep > 0 ? F.fpct((usd ?? 0) / dep) : ""
+        let bal: String = "счёт $" + String(format: "%.2f", p.eq)
+        var pos: String = "позиций " + r["n"].text
+        if let l = r["long"].double { pos += " · L " + F.us(l) }
+        if let s = r["short"].double { pos += " · S " + F.us(s) }
         return HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(r["d"].text)
+            Text(day)
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
                 .foregroundStyle(picked ? Theme.ink : Theme.muted)
-            Text(F.usd(usd))
+            Text(money)
                 .font(.system(size: 20, weight: .heavy, design: .monospaced))
-                .foregroundStyle(Tone(usd).color)
-            if dep > 0 {
-                Text(F.fpct((usd ?? 0) / dep))
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(Tone(usd).color)
-            }
+                .foregroundStyle(tone)
+            Text(share)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(tone)
             Spacer(minLength: 4)
             VStack(alignment: .trailing, spacing: 1) {
-                Text("счёт $" + String(format: "%.2f", p.eq))
-                Text("позиций \(r["n"].text)"
-                     + (r["long"].double.map { " · L " + F.us($0) } ?? "")
-                     + (r["short"].double.map { " · S " + F.us($0) } ?? ""))
+                Text(bal)
+                Text(pos)
             }
             .font(.system(size: 11, design: .monospaced))
             .foregroundStyle(Theme.muted)
