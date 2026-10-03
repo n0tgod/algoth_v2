@@ -2287,7 +2287,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L174 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
 - L188 `stamp()`
 
-## research/dca_paper/short_levers.py · 576 строк
+## research/dca_paper/short_levers.py · 693 строк
 
 Рычаги коротких книг, которых стенд ещё не мерил: один скрин, оси до прогона.
 
@@ -2322,19 +2322,23 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L251 `verdict_sel(beat)` — Фраза из числа: доля зёрен, где случайная выборка не хуже правила.
 - L263 `_beat(ctl_books, st, bk, dep)`
 - L268 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
-- L400 `_pp(x, d=1)`
-- L404 `_usd(x)`
-- L408 `_f(x, d=2)`
-- L412 `_sd(x)`
-- L416 `_i(x)`
-- L420 `_dsig(c, b)` — σ дня против опоры, в процентах — число, из которого читается стабильность.
-- L427 `CELL_HEAD = 'сделок | итог | просадка | $ без 3 луч…`
-- L428 `CELL_SEP = '--:|--:|--:|--:|--:|--:|--:|--:'`
-- L431 `_cells(c, b)`
-- L437 `_ctl(c)`
-- L442 `report(s)`
-- L556 `publish(name)`
-- L562 `main(argv=None)`
+- L398 `halves(base_days, rule_days)` — Разница «правило − опора» по половинам календаря дней.
+- L420 `hold_robust(cache, views, ctx, launch, deps, now=None, log=prin…` — Срок 12 / 18 ч на всех депозитах и по половинам окна — та же ячейка, не новая ось.
+- L443 `run_hold(log=print, now=None, launch=None, ctx=None, mem_limit=…` — Только ось срока — устойчивость единственной положительной ячейки скрина.
+- L463 `_pp(x, d=1)`
+- L467 `_usd(x)`
+- L471 `_f(x, d=2)`
+- L475 `_sd(x)`
+- L479 `_i(x)`
+- L483 `_dsig(c, b)` — σ дня против опоры, в процентах — число, из которого читается стабильность.
+- L490 `CELL_HEAD = 'сделок | итог | просадка | $ без 3 луч…`
+- L491 `CELL_SEP = '--:|--:|--:|--:|--:|--:|--:|--:'`
+- L494 `_cells(c, b)`
+- L500 `_ctl(c)`
+- L505 `report(s)`
+- L619 `report_hold(s)`
+- L663 `publish(name)`
+- L669 `main(argv=None)`
 
 ## research/dca_paper/short_size.py · 218 строк
 

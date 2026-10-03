@@ -1392,7 +1392,7 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
-## research/dca_paper/test_short_levers.py · 185 строк
+## research/dca_paper/test_short_levers.py · 225 строк
 
 Проверки скрина рычагов коротких книг.
 
@@ -1406,6 +1406,7 @@
 - L82 `test_arm_map_from_legs_and_unknown_is_not_measured()`
 - L96 `test_vol_target_uses_past_sigma_only_and_clips()`
 - L112 `test_run_wiring_with_stub_cash_and_report_without_none()`
+- L177 `test_halves_split_and_hold_run_report_without_none()`
 
 ## research/dca_paper/test_short_rules_1003.py · 62 строк
 

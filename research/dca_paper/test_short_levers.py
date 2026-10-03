@@ -174,12 +174,52 @@ def test_run_wiring_with_stub_cash_and_report_without_none():
     print(f"ok  сборка: пять осей на подставной кассе, срок 12 ч изменил {s['hold'][0]['delta']['n']} записей, отчёт без None")
 
 
+def test_halves_split_and_hold_run_report_without_none():
+    base = [{"d": f"2026-09-{i + 1:02d}", "usd": 10.0} for i in range(8)]
+    rule = [{"d": f"2026-09-{i + 1:02d}", "usd": (30.0 if i < 4 else 0.0)} for i in range(8)]
+    hv = L.halves(base, rule)
+    assert hv["first"] == {"days": 4, "from": "2026-09-01", "to": "2026-09-04", "sum": 80.0,
+                           "better": 4, "worse": 0}, hv
+    assert hv["second"]["sum"] == -40.0 and hv["second"]["worse"] == 4 and hv["second"]["better"] == 0
+    assert L.halves(base[:3], rule[:3]) is None
+    cache = {}
+    for i in range(6):
+        marks = [(AT + i * H + j * H, (0.05 if j % 3 else -0.1)) for j in range(24)]
+        r = TP._rec(sym=f"S{i}USDT", at=AT + i * H, marks=marks)
+        cache[("safe_s", r["sym"], r["at"])] = r
+    days = [{"d": f"2026-09-{i + 1:02d}", "usd": float((-1) ** i * (50 + i))} for i in range(25)]
+
+    def _stats(packed, ctx, launch, keys, deps=None, now=None):
+        return {f"{bk}:{int(d)}": {"n": len(packed.get(bk) or []), "final": 0.01, "max_dd": -0.02,
+                                   "usd": 10.0, "ratio": 0.5, "days": days, "exits": {}}
+                for bk in keys for d in deps}
+
+    saved = (L.S.read_cache, L.CO.context, L.IR.launches, L.AG.stats_of)
+    L.S.read_cache = lambda log=print: (cache, None)
+    L.CO.context = lambda: {}
+    L.IR.launches = lambda: {}
+    L.AG.stats_of = _stats
+    try:
+        s = L.run_hold(log=lambda *a: None, mem_limit=10 ** 6)
+    finally:
+        L.S.read_cache, L.CO.context, L.IR.launches, L.AG.stats_of = saved
+    assert not s.get("error") and s["deps"] == [1000, 10000, 100000] and s["main"] == "10000", s.get("deps")
+    assert [h["hours"] for h in s["hold"]] == [12, 18] and s["hold"][0]["delta"]["n"] == 6
+    assert set(s["hold"][0]["by_dep"]) == {"1000", "10000", "100000"}
+    assert s["hold"][0]["halves"]["safe_h"]["first"]["days"] == 12
+    txt = L.report_hold(s)
+    assert "None" not in txt and "| 24 ч (опора) |" in txt and "## По половинам окна, $10,000" in txt, txt
+    assert "Не посчитано" in L.report_hold({"error": "кэша нет"})
+    print("ok  половины окна: разница по дням на каждой; прогон срока на трёх депозитах, отчёт без None")
+
+
 if __name__ == "__main__":
     for t in (test_hold_closes_only_positions_alive_at_that_hour,
               test_trail_arms_at_threshold_and_exits_on_giveback_from_peak,
               test_cooldown_counts_the_window_from_own_exits_and_tells_floor_from_any,
               test_arm_map_from_legs_and_unknown_is_not_measured,
               test_vol_target_uses_past_sigma_only_and_clips,
-              test_run_wiring_with_stub_cash_and_report_without_none):
+              test_run_wiring_with_stub_cash_and_report_without_none,
+              test_halves_split_and_hold_run_report_without_none):
         t()
-    print("\nвсе 6 проверок прошли")
+    print("\nвсе 7 проверок прошли")

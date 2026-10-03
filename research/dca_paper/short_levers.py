@@ -395,6 +395,69 @@ def run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, mem_limit=None,
             "computed_at": G.stamp(), "secs": round(time.time() - t0, 1)}
 
 
+def halves(base_days, rule_days):
+    """Разница «правило − опора» по половинам календаря дней.
+
+    Единственная положительная ячейка скрина обязана стоять на обеих
+    половинах окна, иначе это эпизод; мало дней — не измерено.
+    """
+    b = {d["d"]: float(d.get("usd") or 0.0) for d in (base_days or [])}
+    r = {d["d"]: float(d.get("usd") or 0.0) for d in (rule_days or [])}
+    ds = sorted(set(b) | set(r))
+    if len(ds) < 4:
+        return None
+    mid = len(ds) // 2
+    out = {}
+    for name, part in (("first", ds[:mid]), ("second", ds[mid:])):
+        diffs = [r.get(d, 0.0) - b.get(d, 0.0) for d in part]
+        out[name] = {"days": len(part), "from": part[0], "to": part[-1],
+                     "sum": round(sum(diffs), 2),
+                     "better": sum(1 for x in diffs if x > 0),
+                     "worse": sum(1 for x in diffs if x < 0)}
+    return out
+
+
+def hold_robust(cache, views, ctx, launch, deps, now=None, log=print):
+    """Срок 12 / 18 ч на всех депозитах и по половинам окна — та же ячейка, не новая ось."""
+    deps = [float(d) for d in deps]
+    main = str(int(MAIN_DEP if MAIN_DEP in [int(d) for d in deps] else deps[0]))
+    base_st = AG.stats_of(AG.packed_short(cache), ctx, launch, BOOK_KEYS, deps=deps, now=now)
+    base = {str(int(d)): {bk: summ(base_st.get(f"{bk}:{int(d)}") or {}) for bk in BOOK_KEYS}
+            for d in deps}
+    out = {"deps": [int(d) for d in deps], "main": main, "base": base, "hold": []}
+    for h in HOLD_H:
+        mod, changed = apply_rule(cache, views, lambda v, h=h: hold_trigger(v, h),
+                                  why=f"срок {h} ч")
+        d = P.deltas(cache, views, changed)
+        st = AG.stats_of(AG.packed_short(mod), ctx, launch, BOOK_KEYS, deps=deps, now=now)
+        by = {str(int(dp)): {bk: summ(st.get(f"{bk}:{int(dp)}") or {}) for bk in BOOK_KEYS}
+              for dp in deps}
+        hv = {bk: halves(base[main][bk]["days"], by[main][bk]["days"]) for bk in BOOK_KEYS}
+        log(f"A срок {h} ч: изменено {d['n']}, Σ маржи {d['sum']:+.2f}; "
+            + ", ".join(f"{bk} ${int(dp):,} {_pp(by[str(int(dp))][bk]['final'])}"
+                        for dp in deps for bk in BOOK_KEYS))
+        out["hold"].append({"hours": h, "delta": d, "by_dep": by, "halves": hv})
+    return out
+
+
+def run_hold(log=print, now=None, launch=None, ctx=None, mem_limit=None, deps=None):
+    """Только ось срока — устойчивость единственной положительной ячейки скрина."""
+    t0 = time.time()
+    log = AB.guarded(log, limit=(G.MEM_LIMIT_MB if mem_limit is None else mem_limit))
+    cache, why = S.read_cache(log=log)
+    if why:
+        return {"error": f"кэш реплея непригоден: {why}"}
+    ctx = ctx if ctx is not None else CO.context()
+    launch = IR.launches() if launch is None else launch
+    views = closed_views(cache)
+    s = hold_robust(cache, views, ctx, launch, deps or R.DEPOSITS, now=now, log=log)
+    s.update({"books": BOOK_KEYS, "axes": {"hold_h": list(HOLD_H)},
+              "diag": {"records": len(cache), "closed": len(views)},
+              "costs_error": (ctx or {}).get("error"),
+              "computed_at": G.stamp(), "secs": round(time.time() - t0, 1)})
+    return s
+
+
 # ---------------------------------------------------------------- отчёт
 
 def _pp(x, d=1):
@@ -553,6 +616,50 @@ def report(s):
     return "\n".join(L)
 
 
+def report_hold(s):
+    L = ["# Срок 12 / 18 ч у коротких книг: устойчивость по депозитам и половинам окна", "",
+         "Проверка единственной ячейки скрина рычагов (`DCA-short-levers`), где касса "
+         "на $10k дала больше денег при меньшей σ дня у оптимальной и агрессивной книги. "
+         "Это та же объявленная ось (12 / 18 ч), не новый порог: вопрос — стоит ли "
+         "ячейка на всех депозитах и на обеих половинах календаря, или это эпизод. "
+         "Деньги нетто, касса семейства.", ""]
+    if s.get("error"):
+        return "\n".join(L + [f"**Не посчитано:** {s['error']}.", ""])
+    if s.get("costs_error"):
+        L += [f"**Издержки:** {s['costs_error']} — деньги ниже без этой части.", ""]
+    books = s.get("books") or BOOK_KEYS
+    base = s.get("base") or {}
+    L += [f"| книга | депозит | срок | {CELL_HEAD} |", f"|---|--:|---|{CELL_SEP}|"]
+    for dp in s.get("deps") or []:
+        k = str(int(dp))
+        for bk in books:
+            b = (base.get(k) or {}).get(bk) or {}
+            L.append(f"| {R.ruler_title(bk)} | ${int(dp):,} | 24 ч (опора) | {_cells(b, b)} |")
+            for h in s.get("hold") or []:
+                c = ((h.get("by_dep") or {}).get(k) or {}).get(bk) or {}
+                L.append(f"| {R.ruler_title(bk)} | ${int(dp):,} | {h['hours']} ч | {_cells(c, b)} |")
+    main = s.get("main") or str(MAIN_DEP)
+    L += ["", f"## По половинам окна, ${int(main):,}", "",
+          "Разница «срок − опора» по дням: первая половина календаря и вторая. Ячейка, "
+          "стоящая на одной половине, — эпизод.", "",
+          "| книга | срок | 1-я половина | дней лучше / хуже | разница | 2-я половина | "
+          "дней лучше / хуже | разница |", "|---|---|---|--:|--:|---|--:|--:|"]
+    for h in s.get("hold") or []:
+        for bk in books:
+            hv = (h.get("halves") or {}).get(bk) or {}
+            f, g = hv.get("first") or {}, hv.get("second") or {}
+            L.append(f"| {R.ruler_title(bk)} | {h['hours']} ч | {f.get('from', '—')} … {f.get('to', '—')} | "
+                     f"{_i(f.get('better'))} / {_i(f.get('worse'))} | {_usd(f.get('sum'))} | "
+                     f"{g.get('from', '—')} … {g.get('to', '—')} | {_i(g.get('better'))} / "
+                     f"{_i(g.get('worse'))} | {_usd(g.get('sum'))} |")
+    L += ["", "## Как читать", "",
+          "- Срок — не отбор, контроля случайной выборкой нет; судится по депозитам, "
+          "половинам окна, σ дня и деньгам без 3 лучших дней.",
+          "- Знак разницы, разный на половинах или на депозитах, — эпизод, не правило.",
+          f"- Расчёт: {s.get('computed_at')}, {s.get('secs')} с.", ""]
+    return "\n".join(L)
+
+
 def publish(name):
     sh = os.path.join(ROOT, "tools", "publish.sh")
     if os.path.exists(sh):
@@ -563,7 +670,17 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--seeds", type=int, default=SEEDS)
     ap.add_argument("--no-publish", action="store_true")
+    ap.add_argument("--hold-only", action="store_true",
+                    help="только ось срока: депозиты и половины окна (артефакт -hold)")
     a = ap.parse_args(argv)
+    if a.hold_only:
+        s = run_hold(log=print)
+        if s.get("error"):
+            print(s["error"])
+        G.write(s, ART + "-hold", report_hold, log=print)
+        if not a.no_publish:
+            publish("срок 12/18 ч у коротких книг: депозиты и половины окна")
+        return
     s = run(seeds=a.seeds, log=print)
     if s.get("error"):
         print(s["error"])
