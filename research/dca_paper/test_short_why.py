@@ -24,12 +24,15 @@ T0 = 1786320000.0
 
 
 def _row(sym, at, usd, lev=5.0, exit_="тейк", margin=222.0, hold_h=24.0,
-         fund=None):
-    r = {"dep": 10000, "ruler": "safe_h", "at": float(at),
+         fund=None, ruler="safe_h"):
+    # версия правил СЕМЕЙСТВА — как пишет живой писатель (`run_paper`):
+    # без неё строка «писана до появления поля» и в счёт не идёт
+    r = {"dep": 10000, "ruler": ruler, "at": float(at),
          "exit_ts": float(at) + hold_h * H, "sym": sym, "side": "short",
          "lev": float(lev), "margin": float(margin),
          "pnl_frac": round(usd / margin, 6), "usd": float(usd),
-         "exit": exit_, "written_at": float(at) + H, "rules": R.RULES}
+         "exit": exit_, "written_at": float(at) + H, "rules": R.RULES,
+         "book_rules": R.FAMILY_RULES.get(R.family_of(ruler))}
     if fund is not None:
         r["fund_usd"] = float(fund)
     return r
@@ -124,8 +127,8 @@ def test_end_to_end_reads_the_journal_and_says_its_silence():
                                         10.0 if i % 4 else -70.0)) + "\n")
         with open(lp, "w", encoding="utf-8") as f:
             for i in range(20):
-                r = _row(f"L{i}", T0 + i * 12 * H, 5.0, margin=25.0)
-                r.update({"ruler": "safe", "side": "long"})
+                r = _row(f"L{i}", T0 + i * 12 * H, 5.0, margin=25.0, ruler="safe")
+                r["side"] = "long"
                 f.write(json.dumps(r) + "\n")
         s = SW.run(short_path=sp, long_path=lp, log=lambda *a: None,
                    ctx={"error": "рядов нет"})
