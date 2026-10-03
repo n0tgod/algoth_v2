@@ -398,3 +398,11 @@ are terminated then try again. If it still fails, a git process
 may have crashed in this repository earlier:
 remove the file manually to continue.
 конец: 2026-10-03T10:38:59Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-1003.log                  |  13 +++
+ jobs/done/stop2-f10.log                    | 161 ++++++++++++++++++++++++-----
+ jobs/done/stop2-f75.log                    | 115 +++++++++++++++++++++
+ research/dca_paper/out/DCA-short-stop.json |   2 +-
+ research/dca_paper/out/DCA-short-stop.md   |  38 +++----
+ research/s8_loop/out/day_brake.json        |   2 +-
+ 6 files changed, 283 insertions(+), 48 deletions(-)

@@ -1,9 +1,3 @@
-== задание stop2-f75 ==
-строка: run research/dca_paper/short_stop.py --floor f75
-начало: 2026-10-03T09:25:33Z
-запускаю: .venv/bin/python research/dca_paper/short_stop.py --floor f75
-h24/gbm: часов 888, коротких выборов 2664, ног под краем 2648, отброшено (нет полей / знак) 10
-h24/nn: часов 888, коротких выборов 2664, ног под краем 2487, отброшено (нет полей / знак) 165
 ног обеих рук: 5135
 пол капитуляции на время замера: 0.75 (≈ съедено 25 % маржи), было 0.1
 коротких ног (край ≥ 33) 5135: rr2 428, lo 4297, any 5135; символов 391
@@ -402,3 +396,5 @@ h24/nn: часов 888, коротких выборов 2664, ног под кр
  research/dca_paper/out/DCA-short-stop.md   |  20 +++---
  research/s8_loop/out/day_brake.json        |   2 +-
  6 files changed, 171 insertions(+), 12 deletions(-)
+fatal: cannot lock ref 'HEAD': is at dd717c34aa0f076b6cb856796426c9d0394a3036 but expected 712a97d52c9593fce6862319205d3cd304baacbf
+конец: 2026-10-03T10:39:01Z, код 0
