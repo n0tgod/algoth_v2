@@ -1824,7 +1824,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L261 `report(s)`
 - L382 `main()`
 
-## research/dca_paper/entry_gate.py · 477 строк
+## research/dca_paper/entry_gate.py · 481 строк
 
 Гейты ВХОДА книг DCA: запас до пола и теснота стакана.
 
@@ -1838,24 +1838,24 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L79 `SUMMARY_DIR = os.path.join(ROOT, 'research', 's8_loop…`
 - L82 `notional_at(rec, book, dep=MAIN_DEP)` — Нотионал позиции книги: билет книги × плечо записи.
 - L99 `floor_gap(rec, book, look=None, dep=MAIN_DEP)` — Доля цены от входа до ПОЛА капитуляции. Нет данных — None.
-- L130 `class Depth` — Доллары у лучшей цены на час решения — из часовых сводок стакана.
-  - L138 `Depth.__init__(self, root=SUMMARY_DIR, log=print)`
-  - L145 `Depth._load(self, sym, day)`
-  - L167 `Depth.touch_usd(self, rec)` — Доллары у лучшей цены СВОЕЙ стороны входа. Нет записи — None.
-  - L192 `Depth.tightness(self, rec, book, dep=MAIN_DEP)` — Наш нотионал к долларам у лучшей цены. Нет записи — None.
-  - L205 `Depth.why(self)`
-- L210 `gate_records(recs, book, keep_fn)` — Записи книги, прошедшие гейт. Величина неизвестна — ПРОПУСКАЕМ.
-- L228 `branch(packed, book_gate, ctx, launch, keys, now=None)` — Одна ветка оси: гейт по каждой книге, затем правила книг и деньги.
-- L238 `control_rows(packed, sizes, ctx, launch, keys, seeds=SEEDS, dep…` — Случайные выборки ТОГО ЖЕ размера — по каждой книге своя.
-- L265 `run_axis(name, axis, packed, gate_of, ctx, launch, keys, seeds=…` — Ось целиком: ветка «как сейчас» плюс по ветке на порог.
-- L288 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
-- L329 `_u(x)`
-- L333 `_p(x, d=1)`
-- L337 `_r(x)`
-- L341 `_n(x)` — Число сделок. Поле ЕСТЬ и равно None — порог не пропустил никого, и это прочерк, а не слово `None` в таблице.
-- L347 `report(s)`
-- L439 `publish(name)`
-- L445 `main(argv=None)`
+- L134 `class Depth` — Доллары у лучшей цены на час решения — из часовых сводок стакана.
+  - L142 `Depth.__init__(self, root=SUMMARY_DIR, log=print)`
+  - L149 `Depth._load(self, sym, day)`
+  - L171 `Depth.touch_usd(self, rec)` — Доллары у лучшей цены СВОЕЙ стороны входа. Нет записи — None.
+  - L196 `Depth.tightness(self, rec, book, dep=MAIN_DEP)` — Наш нотионал к долларам у лучшей цены. Нет записи — None.
+  - L209 `Depth.why(self)`
+- L214 `gate_records(recs, book, keep_fn)` — Записи книги, прошедшие гейт. Величина неизвестна — ПРОПУСКАЕМ.
+- L232 `branch(packed, book_gate, ctx, launch, keys, now=None)` — Одна ветка оси: гейт по каждой книге, затем правила книг и деньги.
+- L242 `control_rows(packed, sizes, ctx, launch, keys, seeds=SEEDS, dep…` — Случайные выборки ТОГО ЖЕ размера — по каждой книге своя.
+- L269 `run_axis(name, axis, packed, gate_of, ctx, launch, keys, seeds=…` — Ось целиком: ветка «как сейчас» плюс по ветке на порог.
+- L292 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
+- L333 `_u(x)`
+- L337 `_p(x, d=1)`
+- L341 `_r(x)`
+- L345 `_n(x)` — Число сделок. Поле ЕСТЬ и равно None — порог не пропустил никого, и это прочерк, а не слово `None` в таблице.
+- L351 `report(s)`
+- L443 `publish(name)`
+- L449 `main(argv=None)`
 
 ## research/dca_paper/fund_check.py · 281 строк
 

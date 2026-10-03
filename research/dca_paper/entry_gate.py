@@ -118,7 +118,11 @@ def floor_gap(rec, book, look=None, dep=MAIN_DEP):
     if not walk:
         return None
     look = look if look is not None else R.mmr_look(rec.get("sym"))
-    R.liq_walk(walk, lev, side, look=look)
+    # Капитал ступени у ядра — МАРЖА позиции (`liq_walk(steps, margin, …)`),
+    # не плечо: билет книги = нотионал / плечо. С плечом на месте маржи
+    # запас до пола переставал зависеть от плеча (3× и 25× давали одно
+    # число) — смена смысла аргумента ядра 25.09 сюда не доехала.
+    R.liq_walk(walk, notl / lev, side, look=look)
     liq = (walk[0] or {}).get("liq")
     if liq is None:
         return None

@@ -1341,7 +1341,7 @@
 - L3085 `CONTROLS = [('хвост не доезжает до ядра', _control…`
 - L3138 `main()`
 
-## research/dca_paper/test_path_screen.py · 244 строк
+## research/dca_paper/test_path_screen.py · 247 строк
 
 Проверки замера «дорога сделки» коротких книг.
 
@@ -1349,12 +1349,12 @@
 - L25 `AT = TT.AT`
 - L26 `H = 3600.0`
 - L29 `_rec(sym='AAAUSDT', at=AT, marks=None, pnl=None, lev=20.0, exit…`
-- L41 `test_path_from_core_marks_with_gaps()`
-- L58 `test_wave_and_beta_recover_the_planted_link()`
-- L87 `test_axes_fire_strictly_before_the_real_exit_and_records_stay_c…`
-- L119 `test_control_picks_trades_open_at_the_assigned_hour_without_rep…`
-- L163 `test_anatomy_calibration_planted_separation_found_noise_silent()`
-- L192 `test_report_names_the_hour_caveat_the_control_and_prints_no_non…`
+- L44 `test_path_from_core_marks_with_gaps()`
+- L61 `test_wave_and_beta_recover_the_planted_link()`
+- L90 `test_axes_fire_strictly_before_the_real_exit_and_records_stay_c…`
+- L122 `test_control_picks_trades_open_at_the_assigned_hour_without_rep…`
+- L166 `test_anatomy_calibration_planted_separation_found_noise_silent()`
+- L195 `test_report_names_the_hour_caveat_the_control_and_prints_no_non…`
 
 ## research/dca_paper/test_short.py · 419 строк
 
@@ -1454,7 +1454,7 @@
 - L83 `test_cell_stats_applies_the_book_rules_and_writes_nothing()`
 - L101 `test_merge_keeps_cells_of_earlier_runs_and_names_the_missing()` — Ось считается частями — артефакт сливается, а отчёт это говорит.
 
-## research/dca_paper/test_short_why.py · 155 строк
+## research/dca_paper/test_short_why.py · 158 строк
 
 Проверки замера «почему у короткой книги просадка».
 
@@ -1463,12 +1463,12 @@
 - L22 `H = 3600.0`
 - L23 `T0 = 1786320000.0`
 - L26 `_row(sym, at, usd, lev=5.0, exit_='тейк', margin=222.0, hold_h=…`
-- L38 `test_leverage_bands_are_the_declared_ones()`
-- L54 `test_concentration_sees_the_planted_tail()`
-- L72 `test_liquidation_is_its_own_line_with_a_share_of_the_loss()`
-- L85 `test_funding_top_names_the_payers()`
-- L97 `test_grid_reproduces_the_pair_and_flattens_when_the_short_is_th…`
-- L117 `test_end_to_end_reads_the_journal_and_says_its_silence()`
+- L41 `test_leverage_bands_are_the_declared_ones()`
+- L57 `test_concentration_sees_the_planted_tail()`
+- L75 `test_liquidation_is_its_own_line_with_a_share_of_the_loss()`
+- L88 `test_funding_top_names_the_payers()`
+- L100 `test_grid_reproduces_the_pair_and_flattens_when_the_short_is_th…`
+- L120 `test_end_to_end_reads_the_journal_and_says_its_silence()`
 
 ## research/dca_paper/test_slip_x3.py · 76 строк
 
