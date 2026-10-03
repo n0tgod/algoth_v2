@@ -1,30 +1,3 @@
-== задание stop2-f10 ==
-строка: run research/dca_paper/short_stop.py --floor f10
-начало: 2026-10-03T09:25:33Z
-запускаю: .venv/bin/python research/dca_paper/short_stop.py --floor f10
-h24/gbm: часов 888, коротких выборов 2664, ног под краем 2648, отброшено (нет полей / знак) 10
-h24/nn: часов 888, коротких выборов 2664, ног под краем 2487, отброшено (нет полей / знак) 165
-ног обеих рук: 5135
-пол капитуляции на время замера: 0.1 (≈ съедено 90 % маржи), было 0.1
-коротких ног (край ≥ 33) 5135: rr2 428, lo 4297, any 5135; символов 391
-окно решений 2026-08-08 10:00 … 2026-10-03 09:00 UTC (56 суток, дат 57)
-память: 124.6 МБ (ноги загружены; предел 1200)
-хранилище: архив b1/trades/POWERUSDT/2026-08-22.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-08-22-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-08-22-00.jsonl.gz'
-хранилище: архив b1/trades/POWERUSDT/2026-09-11.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-11-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-11-00.jsonl.gz'
-  символ 5/391  решений 95
-хранилище: архив b1/trades/TUTUSDT/2026-08-29.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/TUTUSDT/2026-08-29-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/TUTUSDT/2026-08-29-00.jsonl.gz'
-  символ 6/391  решений 160
-хранилище: архив b1/trades/DUSKUSDT/2026-08-07.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/DUSKUSDT/2026-08-07-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/DUSKUSDT/2026-08-07-00.jsonl.gz'
-хранилище: архив b1/trades/DUSKUSDT/2026-09-03.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/DUSKUSDT/2026-09-03-23.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/DUSKUSDT/2026-09-03-23.jsonl.gz'
-хранилище: архив b1/book/SIRENUSDT/2026-08-09.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/book/SIRENUSDT/2026-08-09-02.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/book/SIRENUSDT/2026-08-09-02.jsonl.gz'
-хранилище: архив b1/trades/ARCUSDT/2026-08-25.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/ARCUSDT/2026-08-25-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/ARCUSDT/2026-08-25-00.jsonl.gz'
-хранилище: архив b1/trades/ARCUSDT/2026-08-26.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/ARCUSDT/2026-08-26-01.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/ARCUSDT/2026-08-26-01.jsonl.gz'
-хранилище: архив b1/trades/PHAROSUSDT/2026-08-07.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/PHAROSUSDT/2026-08-07-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/PHAROSUSDT/2026-08-07-00.jsonl.gz'
-хранилище: архив b1/trades/PHAROSUSDT/2026-08-15.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/PHAROSUSDT/2026-08-15-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/PHAROSUSDT/2026-08-15-00.jsonl.gz'
-хранилище: архив b1/trades/PHAROSUSDT/2026-08-17.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/PHAROSUSDT/2026-08-17-23.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/PHAROSUSDT/2026-08-17-23.jsonl.gz'
-  символ 10/391  решений 179
-память: 345.9 МБ (символ 10/391; предел 1200)
-хранилище: архив b1/trades/PTBUSDT/2026-08-09.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/PTBUSDT/2026-08-09-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/PTBUSDT/2026-08-09-00.jsonl.gz'
 хранилище: архив b1/trades/RAVEUSDT/2026-09-06.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/RAVEUSDT/2026-09-06-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/RAVEUSDT/2026-09-06-00.jsonl.gz'
   символ 15/391  решений 226
 хранилище: архив b1/trades/MERLUSDT/2026-08-07.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/MERLUSDT/2026-08-07-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/MERLUSDT/2026-08-07-00.jsonl.gz'
@@ -291,3 +264,137 @@ h24/nn: часов 888, коротких выборов 2664, ног под кр
 хранилище: архив b1/trades/XCNUSDT/2026-09-06.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/XCNUSDT/2026-09-06-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/XCNUSDT/2026-09-06-00.jsonl.gz'
 хранилище: архив b1/trades/XCNUSDT/2026-09-09.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/XCNUSDT/2026-09-09-07.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/XCNUSDT/2026-09-09-07.jsonl.gz'
 хранилище: архив b1/trades/AZTECUSDT/2026-09-06.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/AZTECUSDT/2026-09-06-07.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/AZTECUSDT/2026-09-06-07.jsonl.gz'
+хранилище: архив b1/trades/PEAQUSDT/2026-09-04.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/PEAQUSDT/2026-09-04-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/PEAQUSDT/2026-09-04-00.jsonl.gz'
+память: 513.4 МБ (символ 270/391; предел 1200)
+  символ 271/391  решений 4203
+хранилище: архив b1/trades/RAYDIUMUSDT/2026-09-08.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/RAYDIUMUSDT/2026-09-08-03.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/RAYDIUMUSDT/2026-09-08-03.jsonl.gz'
+хранилище: архив b1/trades/SOLAYERUSDT/2026-09-05.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/SOLAYERUSDT/2026-09-05-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/SOLAYERUSDT/2026-09-05-00.jsonl.gz'
+хранилище: архив b1/trades/METISUSDT/2026-09-12.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/METISUSDT/2026-09-12-18.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/METISUSDT/2026-09-12-18.jsonl.gz'
+память: 513.4 МБ (символ 280/391; предел 1200)
+  символ 282/391  решений 4326
+хранилище: архив b1/trades/HUAHONGUSDT/2026-09-16.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/HUAHONGUSDT/2026-09-16-01.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/HUAHONGUSDT/2026-09-16-01.jsonl.gz'
+хранилище: архив b1/trades/HUAHONGUSDT/2026-09-17.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/HUAHONGUSDT/2026-09-17-08.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/HUAHONGUSDT/2026-09-17-08.jsonl.gz'
+память: 513.4 МБ (символ 290/391; предел 1200)
+кэш хранилища: снято 2229 файлов, осталось 1.80 ГБ при пределе 2
+  символ 292/391  решений 4386
+хранилище: архив b1/trades/KNCUSDT/2026-09-10.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/KNCUSDT/2026-09-10-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/KNCUSDT/2026-09-10-00.jsonl.gz'
+хранилище: архив b1/trades/BTDRUSDT/2026-09-13.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/BTDRUSDT/2026-09-13-01.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/BTDRUSDT/2026-09-13-01.jsonl.gz'
+хранилище: архив b1/trades/BTDRUSDT/2026-09-15.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/BTDRUSDT/2026-09-15-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/BTDRUSDT/2026-09-15-00.jsonl.gz'
+память: 513.4 МБ (символ 300/391; предел 1200)
+  символ 305/391  решений 4457
+память: 513.4 МБ (символ 310/391; предел 1200)
+  символ 314/391  решений 4583
+хранилище: архив b1/trades/MSFUUSDT/2026-09-21.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/MSFUUSDT/2026-09-21-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/MSFUUSDT/2026-09-21-00.jsonl.gz'
+хранилище: архив b1/trades/MSFUUSDT/2026-09-30.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/MSFUUSDT/2026-09-30-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/MSFUUSDT/2026-09-30-00.jsonl.gz'
+память: 513.4 МБ (символ 320/391; предел 1200)
+хранилище: архив b1/trades/CONLUSDT/2026-09-24.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/CONLUSDT/2026-09-24-12.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/CONLUSDT/2026-09-24-12.jsonl.gz'
+  символ 326/391  решений 4683
+хранилище: архив b1/trades/SKYUSDT/2026-09-28.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/SKYUSDT/2026-09-28-19.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/SKYUSDT/2026-09-28-19.jsonl.gz'
+память: 513.4 МБ (символ 330/391; предел 1200)
+  символ 336/391  решений 4746
+память: 513.4 МБ (символ 340/391; предел 1200)
+память: 513.4 МБ (символ 350/391; предел 1200)
+  символ 353/391  решений 4792
+  символ 358/391  решений 4802
+память: 513.4 МБ (символ 360/391; предел 1200)
+память: 513.4 МБ (символ 370/391; предел 1200)
+  символ 372/391  решений 4882
+память: 513.4 МБ (символ 380/391; предел 1200)
+память: 513.4 МБ (символ 390/391; предел 1200)
+запись доходит до 2026-10-03 10:38 UTC
+пол 0.1: безопасная $10000 → 3097.31 $, просадка -0.1134, полом 22, ликвидаций 5 из 1025
+# Пол капитуляции как стоп: где резать против хода
+
+Просьба владельца 2026-09-10. Ось объявлена ДО прогона: доля расстояния «вход → ликвидация», на которой стоит пол — 0.10 (как сейчас) / 0.25 / 0.50 / 0.75. В съеденной марже это «режем при ~90 / 75 / 50 / 25 % съеденной маржи»: чем больше доля, тем РАНЬШЕ стоп. Формула пола — ядра лестницы, ось двигает её параметр.
+
+Остальное — как книги торгуют сегодня: плечо забора, доливов нет, цель ×2, срок 24 ч, гейт края, возраст ≥ 7 суток, доля билета; деньги НЕТТО.
+
+Ячейки считаны разными прогонами: 0.1 — 2026-10-03 10:38, 0.25 — 2026-09-10 21:30, 0.5 — 2026-09-10 21:58, 0.75 — 2026-10-03 10:38.
+
+## безопасная (шорт h24)
+
+| пол | съедено маржи | депозит | сделок | Σ $ | итог | просадка | доход/просадка | тейк | срок | пол | ликвидация |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 0.1 | ~90 % | $1000 | 1016 | +315.98 | +31.6 % | -12.9 % | 2.45 | 56 (6 %) +326 $ | 508 (50 %) +653 $ | 22 (2 %) -609 $ | 5 (0 %) -188 $ |
+| 0.1 | ~90 % | $10000 | 1025 | +3097.31 | +31.0 % | -11.3 % | 2.73 | 57 (6 %) +3174 $ | 511 (50 %) +5723 $ | 22 (2 %) -5299 $ | 5 (0 %) -1628 $ |
+| 0.1 | ~90 % | $100000 | 1025 | +31003.18 | +31.0 % | -11.3 % | 2.73 | 57 (6 %) +31780 $ | 511 (50 %) +57289 $ | 22 (2 %) -53057 $ | 5 (0 %) -16297 $ |
+| 0.25 | ~75 % | $1000 | 588 | +216.64 | +21.7 % | -18.1 % | 1.20 | 34 (6 %) +155 $ | 516 (88 %) +886 $ | 36 (6 %) -755 $ | 2 (0 %) -69 $ |
+| 0.25 | ~75 % | $10000 | 597 | +1887.95 | +18.9 % | -16.3 % | 1.16 | 34 (6 %) +1355 $ | 525 (88 %) +7666 $ | 36 (6 %) -6537 $ | 2 (0 %) -595 $ |
+| 0.25 | ~75 % | $100000 | 597 | +18896.26 | +18.9 % | -16.3 % | 1.16 | 34 (6 %) +13559 $ | 525 (88 %) +76739 $ | 36 (6 %) -65443 $ | 2 (0 %) -5959 $ |
+| 0.5 | ~50 % | $1000 | 610 | +111.12 | +11.1 % | -13.8 % | 0.80 | 35 (6 %) +152 $ | 515 (84 %) +725 $ | 60 (10 %) -766 $ | — |
+| 0.5 | ~50 % | $10000 | 613 | +987.98 | +9.9 % | -12.2 % | 0.81 | 35 (6 %) +1337 $ | 518 (85 %) +6370 $ | 60 (10 %) -6719 $ | — |
+| 0.5 | ~50 % | $100000 | 613 | +9888.29 | +9.9 % | -12.3 % | 0.81 | 35 (6 %) +13380 $ | 518 (85 %) +63760 $ | 60 (10 %) -67252 $ | — |
+| 0.75 | ~25 % | $1000 | 1072 | +105.20 | +10.5 % | -16.9 % | 0.62 | 55 (5 %) +254 $ | 471 (44 %) +652 $ | 138 (13 %) -1024 $ | — |
+| 0.75 | ~25 % | $10000 | 1077 | +986.40 | +9.9 % | -14.9 % | 0.66 | 55 (5 %) +2200 $ | 474 (44 %) +5710 $ | 138 (13 %) -8850 $ | — |
+| 0.75 | ~25 % | $100000 | 1077 | +9870.97 | +9.9 % | -14.9 % | 0.66 | 55 (5 %) +22022 $ | 474 (44 %) +57157 $ | 138 (13 %) -88594 $ | — |
+
+## оптимальная (шорт h24)
+
+| пол | съедено маржи | депозит | сделок | Σ $ | итог | просадка | доход/просадка | тейк | срок | пол | ликвидация |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 0.1 | ~90 % | $1000 | 1016 | +454.96 | +45.5 % | -31.0 % | 1.47 | 54 (5 %) +1193 $ | 469 (46 %) +1852 $ | 63 (6 %) -2224 $ | 24 (2 %) -1066 $ |
+| 0.1 | ~90 % | $10000 | 1067 | +977.28 | +9.8 % | -6.1 % | 1.61 | 58 (5 %) +1828 $ | 486 (46 %) +3030 $ | 65 (6 %) -3281 $ | 25 (2 %) -1616 $ |
+| 0.1 | ~90 % | $100000 | 1067 | +9781.61 | +9.8 % | -6.1 % | 1.61 | 58 (5 %) +18296 $ | 486 (46 %) +30325 $ | 65 (6 %) -32846 $ | 25 (2 %) -16175 $ |
+| 0.25 | ~75 % | $1000 | 568 | +507.87 | +50.8 % | -29.0 % | 1.75 | 31 (5 %) +508 $ | 462 (81 %) +1966 $ | 73 (13 %) -1896 $ | 2 (0 %) -70 $ |
+| 0.25 | ~75 % | $10000 | 623 | +1002.20 | +10.0 % | -6.7 % | 1.49 | 34 (5 %) +868 $ | 507 (81 %) +3465 $ | 80 (13 %) -3211 $ | 2 (0 %) -120 $ |
+| 0.25 | ~75 % | $100000 | 623 | +10031.23 | +10.0 % | -6.7 % | 1.49 | 34 (5 %) +8693 $ | 507 (81 %) +34682 $ | 80 (13 %) -32138 $ | 2 (0 %) -1206 $ |
+| 0.5 | ~50 % | $1000 | 619 | +436.14 | +43.6 % | -20.1 % | 2.18 | 33 (5 %) +569 $ | 467 (75 %) +1800 $ | 119 (19 %) -1933 $ | — |
+| 0.5 | ~50 % | $10000 | 655 | +792.18 | +7.9 % | -4.3 % | 1.82 | 35 (5 %) +952 $ | 495 (76 %) +3156 $ | 125 (19 %) -3316 $ | — |
+| 0.5 | ~50 % | $100000 | 655 | +7929.09 | +7.9 % | -4.3 % | 1.82 | 35 (5 %) +9532 $ | 495 (76 %) +31591 $ | 125 (19 %) -33194 $ | — |
+| 0.75 | ~25 % | $1000 | 1197 | -78.49 | -7.8 % | -37.5 % | -0.21 | 47 (4 %) +623 $ | 423 (35 %) +1624 $ | 342 (29 %) -3077 $ | — |
+| 0.75 | ~25 % | $10000 | 1215 | +86.14 | +0.9 % | -7.7 % | 0.11 | 48 (4 %) +1046 $ | 431 (35 %) +2887 $ | 345 (28 %) -5030 $ | — |
+| 0.75 | ~25 % | $100000 | 1215 | +861.59 | +0.9 % | -7.7 % | 0.11 | 48 (4 %) +10471 $ | 431 (35 %) +28902 $ | 345 (28 %) -50354 $ | — |
+
+## агрессивная (шорт h24)
+
+| пол | съедено маржи | депозит | сделок | Σ $ | итог | просадка | доход/просадка | тейк | срок | пол | ликвидация |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 0.1 | ~90 % | $1000 | 769 | +134.13 | +13.4 % | -11.5 % | 1.17 | 40 (5 %) +267 $ | 309 (40 %) +594 $ | 97 (13 %) -571 $ | 47 (6 %) -355 $ |
+| 0.1 | ~90 % | $10000 | 769 | +1373.50 | +13.7 % | -11.7 % | 1.17 | 40 (5 %) +2745 $ | 309 (40 %) +6095 $ | 97 (13 %) -5865 $ | 47 (6 %) -3647 $ |
+| 0.1 | ~90 % | $100000 | 769 | +13767.15 | +13.8 % | -11.8 % | 1.17 | 40 (5 %) +27520 $ | 309 (40 %) +61105 $ | 97 (13 %) -58805 $ | 47 (6 %) -36565 $ |
+| 0.25 | ~75 % | $1000 | 487 | +155.47 | +15.6 % | -9.4 % | 1.66 | 26 (5 %) +147 $ | 325 (67 %) +689 $ | 130 (27 %) -634 $ | 6 (1 %) -46 $ |
+| 0.25 | ~75 % | $10000 | 487 | +1591.88 | +15.9 % | -9.6 % | 1.66 | 26 (5 %) +1505 $ | 325 (67 %) +7066 $ | 130 (27 %) -6507 $ | 6 (1 %) -472 $ |
+| 0.25 | ~75 % | $100000 | 487 | +15956.00 | +16.0 % | -9.6 % | 1.66 | 26 (5 %) +15085 $ | 325 (67 %) +70842 $ | 130 (27 %) -65241 $ | 6 (1 %) -4730 $ |
+| 0.5 | ~50 % | $1000 | 536 | +161.59 | +16.2 % | -6.4 % | 2.51 | 26 (5 %) +167 $ | 299 (56 %) +682 $ | 210 (39 %) -680 $ | 1 (0 %) -8 $ |
+| 0.5 | ~50 % | $10000 | 536 | +1655.59 | +16.6 % | -6.6 % | 2.52 | 26 (5 %) +1717 $ | 299 (56 %) +7000 $ | 210 (39 %) -6980 $ | 1 (0 %) -81 $ |
+| 0.5 | ~50 % | $100000 | 536 | +16595.73 | +16.6 % | -6.6 % | 2.52 | 26 (5 %) +17212 $ | 299 (56 %) +70177 $ | 210 (39 %) -69977 $ | 1 (0 %) -817 $ |
+| 0.75 | ~25 % | $1000 | 998 | +20.61 | +2.1 % | -9.3 % | 0.22 | 33 (3 %) +176 $ | 220 (22 %) +544 $ | 548 (55 %) -942 $ | — |
+| 0.75 | ~25 % | $10000 | 998 | +207.71 | +2.1 % | -9.5 % | 0.22 | 33 (3 %) +1805 $ | 220 (22 %) +5576 $ | 548 (55 %) -9665 $ | — |
+| 0.75 | ~25 % | $100000 | 998 | +2078.57 | +2.1 % | -9.5 % | 0.22 | 33 (3 %) +18091 $ | 220 (22 %) +55904 $ | 548 (55 %) -96898 $ | — |
+
+## Как читать
+
+- Ранний стоп обязан двигать ДВА числа сразу: долю хвостовых исходов вниз и просадку вниз. Если просадка падает, а деньги падают вместе с ней — это не защита, а уменьшение книги, и то же самое даёт доля билета, только без потери сделок.
+- Ликвидации при раннем стопе обязаны исчезать: стоп стоит перед ней. Если они остаются — значит цена доходит до ликвидации ВНУТРИ бара, минуя пол, и это свойство разрыва, а не правила.
+- Ячейка правилом не назначается: окно одно, веса модели эти часы видели.
+
+git add отказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+git add сказал: fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+публикуется в ветку main:
+ jobs/done/memtop-1003.log                  |  13 ++++
+ jobs/done/stop2-f10.log                    |  39 +++++++++++
+ jobs/done/stop2-f75.log                    | 107 +++++++++++++++++++++++++++++
+ research/dca_paper/out/DCA-short-stop.json |   2 +-
+ research/dca_paper/out/DCA-short-stop.md   |  20 +++---
+ research/s8_loop/out/day_brake.json        |   2 +-
+ 6 files changed, 171 insertions(+), 12 deletions(-)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+конец: 2026-10-03T10:38:59Z, код 0

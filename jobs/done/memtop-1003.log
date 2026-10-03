@@ -398,3 +398,16 @@
   {"kind": "books", "seq": 529, "hour": "2026-10-03-08", "at": "10-03 09:12", "sections": 1365, "symbols": 790, "train_why": "память: доступно 1579 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
   {"kind": "books", "seq": 529, "hour": "2026-10-03-09", "at": "10-03 10:13", "sections": 1366, "symbols": 790, "train_why": "память: доступно 1937 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
 конец: 2026-10-03T10:33:07Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-1003.done  |   1 +
+ jobs/done/memtop-1003.log   | 400 ++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/status-stop3.done |   1 +
+ jobs/done/status-stop3.log  |  11 ++
+ jobs/done/stop2-f10.log     |  10 ++
+ jobs/done/stop2-f75.log     |   7 +
+ jobs/poke.log               |   4 +
+ 7 files changed, 434 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   5da6310d..712a97d5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
