@@ -1,0 +1,17 @@
+== задание stop2-f75 ==
+строка: run research/dca_paper/short_stop.py --floor f75
+начало: 2026-10-03T09:25:33Z
+запускаю: .venv/bin/python research/dca_paper/short_stop.py --floor f75
+h24/gbm: часов 888, коротких выборов 2664, ног под краем 2648, отброшено (нет полей / знак) 10
+h24/nn: часов 888, коротких выборов 2664, ног под краем 2487, отброшено (нет полей / знак) 165
+ног обеих рук: 5135
+пол капитуляции на время замера: 0.75 (≈ съедено 25 % маржи), было 0.1
+коротких ног (край ≥ 33) 5135: rr2 428, lo 4297, any 5135; символов 391
+окно решений 2026-08-08 10:00 … 2026-10-03 09:00 UTC (56 суток, дат 57)
+память: 124.6 МБ (ноги загружены; предел 1200)
+хранилище: архив b1/trades/POWERUSDT/2026-08-30.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-08-30-21.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-08-30-21.jsonl.gz'
+хранилище: архив b1/trades/POWERUSDT/2026-09-02.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-02-02.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-02-02.jsonl.gz'
+хранилище: архив b1/trades/POWERUSDT/2026-09-08.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-08-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-08-00.jsonl.gz'
+хранилище: архив b1/trades/POWERUSDT/2026-09-09.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-09-00.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-09-00.jsonl.gz'
+хранилище: архив b1/trades/POWERUSDT/2026-09-24.tar не распакован: [Errno 2] No such file or directory: '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-24-22.jsonl.gz.tmp' -> '/root/algoth_v2/research/b1_book/out/cache/trades/POWERUSDT/2026-09-24-22.jsonl.gz'
+  символ 5/391  решений 95

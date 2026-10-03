@@ -1442,3 +1442,10 @@ Terminated
 
 == сигнал 1790365060 ==
 [2026-09-25T19:37:48Z] задание guard-fwd запущено: research/dca_paper/guard_forward.py
+
+== сигнал 1791019531 ==
+[2026-10-03T09:25:33Z] задание stop2-f10 запущено: research/dca_paper/short_stop.py
+[2026-10-03T09:25:33Z] задание stop2-f75 запущено: research/dca_paper/short_stop.py
+
+== сигнал 1791019677 ==
+[2026-10-03T09:27:59Z] задание size-safe запущено: research/dca_paper/short_size.py
