@@ -359,3 +359,15 @@ h24/nn: часов 893, коротких выборов 2679, ног под кр
 - Ожидание в долях маржи при меньшем плече меньше арифметически — это не вердикт, вердикт читается в цене и в доле плюсовых.
 - Пустая книга при потолке — гейт её плеча выше потолка (агрессивная ≥ 4×), и это названо прочерком, а не нулём.
 - Расчёт: 2026-10-03 16:28, 7137.8 с.
+публикуется в ветку main:
+ jobs/done/short-levcap.log                   | 234 ++++++++++++++++++++++++++-
+ research/dca_paper/out/DCA-short-levcap.json |   1 +
+ research/dca_paper/out/DCA-short-levcap.md   |  72 +++++++++
+ research/s8_loop/out/day_brake.json          |   2 +-
+ 4 files changed, 307 insertions(+), 2 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   584a867e..ac60d859  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-10-03T16:28:27Z, код 0
