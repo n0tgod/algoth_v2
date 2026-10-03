@@ -239,6 +239,8 @@ struct EquityCurve: View {
     @State private var pinchBase: ClosedRange<Double>?
     @State private var panBase: ClosedRange<Double>?
     @State private var sel: Int?
+    /// Счётчик захватов — повод для толчка при зажатии.
+    @State private var grabs = 0
 
     private struct Pt: Identifiable {
         let id: Int
@@ -313,6 +315,11 @@ struct EquityCurve: View {
             .chartPlotStyle { $0.clipped() }
             .chartOverlay { proxy in gestures(proxy) }
             .frame(height: 220)
+            // Вибрация системным механизмом iOS 17: толчок при захвате и
+            // щелчок на каждом новом дне. На iPad вибромотора нет — там
+            // она не срабатывает ни у одного приложения.
+            .sensoryFeedback(.impact(weight: .medium), trigger: grabs)
+            .sensoryFeedback(.selection, trigger: sel) { _, new in new != nil }
             // Результат каждого дня столбиком — та же ось суток.
             Chart {
                 ForEach(vis) { p in
@@ -402,7 +409,7 @@ struct EquityCurve: View {
                         .onChanged { v in
                             switch v {
                             case .first(true):
-                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                grabs += 1
                             case .second(true, let d):
                                 if let d { pick(proxy, x: d.location.x - plot.minX) }
                             default: break
@@ -438,7 +445,6 @@ struct EquityCurve: View {
         let i = min(max(Int(v.rounded()), 0), rows.count - 1)
         if i != sel {
             sel = i
-            UISelectionFeedbackGenerator().selectionChanged()
         }
     }
 
