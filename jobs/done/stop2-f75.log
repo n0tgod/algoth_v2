@@ -398,3 +398,11 @@
  6 files changed, 171 insertions(+), 12 deletions(-)
 fatal: cannot lock ref 'HEAD': is at dd717c34aa0f076b6cb856796426c9d0394a3036 but expected 712a97d52c9593fce6862319205d3cd304baacbf
 конец: 2026-10-03T10:39:01Z, код 0
+публикуется в ветку main:
+ jobs/done/stop2-f10.log | 8 ++++++++
+ jobs/done/stop2-f75.log | 8 ++------
+ 2 files changed, 10 insertions(+), 6 deletions(-)
+To github.com:n0tgod/algoth_v2.git
+   dd717c34..4b3d2de4  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
