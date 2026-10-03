@@ -40,3 +40,15 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-10-03T09:50:50Z
+публикуется в ветку main:
+ jobs/done/size-safe.log             |  7 +++
+ jobs/done/status-stop2.log          | 42 ++++++++++++++++++
+ jobs/done/stop2-f10.log             | 88 +++++++++++++++++++++++++++++++++++++
+ jobs/done/stop2-f75.log             | 83 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  2 +
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 223 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   b3440a09..c0eb7eed  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
