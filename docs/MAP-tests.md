@@ -619,46 +619,47 @@
 - L1300 `CONTROLS = [('доливы шорта по правилу лонга', _con…`
 - L1330 `main()`
 
-## research/dca_ladder/test_run_d10.py · 536 строк
+## research/dca_ladder/test_run_d10.py · 553 строк
 
 Проверки замера D10 — короткие DCA-книги: плечо, доливы, цель, гейт.
 
-- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L33 `H = 3600`
-- L34 `LEVELS = np.array([98.0, 95.0, 90.0, 102.0, 105.…`
-- L38 `_short_leg(at, sym='SSSUSDT', fwd=60.0, rr=2.0, fav=-500.0)`
-- L45 `_with_levels(fn)`
-- L54 `_cells(bars, at, g=None)` — Все ячейки одного короткого решения на подставных барах.
-- L62 `test_grid_is_declared_before_the_run()`
-- L76 `test_gate_of_splits_legs_by_ratio_and_edge()`
-- L89 `test_ref_cell_reproduces_the_book_short_leg_bit_for_bit()` — Ячейка правила книги — та же позиция, что считает бумажная книга.
-- L109 `test_leverage_cap_binds_and_fence_is_kept()`
-- L126 `test_none_arm_keeps_the_fence_leverage_of_the_ladder()` — Без доливов — то же плечо, что забор выдал ЛЕСТНИЦЕ, не 1×.
-- L142 `test_sigma_rungs_sit_above_entry_for_a_short()`
-- L160 `test_take_axis_orders_the_targets()` — ×1 ближе ×2 ближе ×3: тейк раньше, а дальняя цель на этом пути не достигается вовсе.
-- L178 `test_wrong_side_promise_drops_the_decision()` — Обещание шорта НЕ вниз — цели нет, решения нет (не ноль).
-- L190 `test_net_column_subtracts_the_round_on_filled_notional()`
-- L205 `_rec(sym, at, state='closed')`
-- L211 `test_common_sample_is_one_for_all_cells()`
-- L221 `_legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7))`
-- L232 `test_short_legs_stream_equals_the_reference_loader()` — Потоковый читатель листов даёт ТЕ ЖЕ короткие ноги под гейтом и в том же порядке, что `legs_from_sheets` с по…
-- L275 `test_record_end_of_the_source_marks_a_dead_short_as_cut_not_ope…` — Короткая позиция с оборванными барами — «оборвана», а не «открыта».
-- L313 `test_memory_guard_stops_the_run_above_the_limit()` — Прогон, переросший предел памяти, останавливает себя сам — с числом и причиной, до того как ядро убьёт часово…
-- L340 `test_run_end_to_end_synthetic()` — run → verdict → report на подставных барах: шорт-неудачник и шорт-победитель; гейты делят ноги на три группы.
-- L391 `test_main_writes_smoke_artifacts_and_publishes_by_default()`
-- L421 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L446 `P = os.path.join(HERE, 'run_d10.py')`
-- L449 `_control_cap_ignored()`
-- L455 `_control_none_arm_forced_to_1x()`
-- L461 `_control_sigma_side_flipped()`
-- L467 `_control_net_without_cost()`
-- L473 `_control_gate_ignores_ratio()`
-- L479 `_control_sample_is_per_cell()`
-- L485 `_control_wrong_side_promise_accepted()`
-- L491 `TESTS = [test_grid_is_declared_before_the_run, …`
-- L509 `_control_memory_guard_never_stops()`
-- L514 `CONTROLS = [('сторож памяти не останавливает', _co…`
-- L526 `main()`
+- L22 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L34 `H = 3600`
+- L35 `LEVELS = np.array([98.0, 95.0, 90.0, 102.0, 105.…`
+- L39 `_short_leg(at, sym='SSSUSDT', fwd=60.0, rr=2.0, fav=-500.0)`
+- L46 `_with_levels(fn)`
+- L55 `_cells(bars, at, g=None)` — Все ячейки одного короткого решения на подставных барах.
+- L63 `test_grid_is_declared_before_the_run()`
+- L77 `test_gate_of_splits_legs_by_ratio_and_edge()`
+- L90 `test_ref_cell_reproduces_the_book_short_leg_bit_for_bit()` — Ячейка правила книги — та же позиция, что считает бумажная книга.
+- L110 `test_leverage_cap_binds_and_fence_is_kept()`
+- L127 `test_none_arm_keeps_the_fence_leverage_of_the_ladder()` — Без доливов — то же плечо, что забор выдал ЛЕСТНИЦЕ, не 1×.
+- L143 `test_sigma_rungs_sit_above_entry_for_a_short()`
+- L161 `test_take_axis_orders_the_targets()` — ×1 ближе ×2 ближе ×3: тейк раньше, а дальняя цель на этом пути не достигается вовсе.
+- L179 `test_wrong_side_promise_drops_the_decision()` — Обещание шорта НЕ вниз — цели нет, решения нет (не ноль).
+- L191 `test_net_column_subtracts_the_round_on_filled_notional()`
+- L206 `_rec(sym, at, state='closed')`
+- L212 `test_common_sample_is_one_for_all_cells()`
+- L222 `_legs(at, sym, n=10, rr_cycle=(2.0, 1.2, 1.7))`
+- L233 `test_short_legs_stream_equals_the_reference_loader()` — Потоковый читатель листов даёт ТЕ ЖЕ короткие ноги под гейтом и в том же порядке, что `legs_from_sheets` с по…
+- L276 `test_record_end_of_the_source_marks_a_dead_short_as_cut_not_ope…` — Короткая позиция с оборванными барами — «оборвана», а не «открыта».
+- L314 `test_memory_guard_stops_the_run_above_the_limit()` — Прогон, переросший предел памяти, останавливает себя сам — с числом и причиной, до того как ядро убьёт часово…
+- L341 `test_run_end_to_end_synthetic()` — run → verdict → report на подставных барах: шорт-неудачник и шорт-победитель; гейты делят ноги на три группы.
+- L392 `test_main_writes_smoke_artifacts_and_publishes_by_default()`
+- L422 `_drop_pyc(path)` — Байткод модуля — где бы он ни лежал: рядом в `__pycache__` или в каталоге `PYTHONPYCACHEPREFIX` (свой каталог…
+- L441 `_poison(path, lit, sub, fn, mod)`
+- L463 `P = os.path.join(HERE, 'run_d10.py')`
+- L466 `_control_cap_ignored()`
+- L472 `_control_none_arm_forced_to_1x()`
+- L478 `_control_sigma_side_flipped()`
+- L484 `_control_net_without_cost()`
+- L490 `_control_gate_ignores_ratio()`
+- L496 `_control_sample_is_per_cell()`
+- L502 `_control_wrong_side_promise_accepted()`
+- L508 `TESTS = [test_grid_is_declared_before_the_run, …`
+- L526 `_control_memory_guard_never_stops()`
+- L531 `CONTROLS = [('сторож памяти не останавливает', _co…`
+- L543 `main()`
 
 ## research/dca_ladder/test_run_d11.py · 112 строк
 
@@ -1003,47 +1004,48 @@
 - L23 `_row(**kw)`
 - L32 `main()`
 
-## research/dca_paper/test_costs.py · 479 строк
+## research/dca_paper/test_costs.py · 496 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
 
-- L21 `HERE = os.path.dirname(os.path.abspath(__file_…`
-- L26 `H = 3600`
-- L27 `T0 = 1790000000.0`
-- L28 `FILLS4 = [(T0 + 60, 100.0, 0.25), (T0 + 5 * H, 1…`
-- L32 `_row(sym='SSSUSDT', side='short', at=T0, fills=None, exit_ts=No…`
-- L47 `_series(start, hours, rate_fn)` — Ряд начислений раз в час: (времена мс, ставки), как у загрузчика.
-- L55 `test_commission_charges_every_rung_and_the_exit()`
-- L72 `test_funding_sign_follows_the_side()`
-- L82 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
-- L97 `test_funding_uncovered_is_not_measured()`
-- L109 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
-- L130 `_fixture()`
-- L163 `test_slippage_on_base_entry_and_market_exits_only()` — Проскальзывание X3 берётся с базового входа (первый рунг — рыночный) и с рыночного выхода (пол/срок/трейл/сто…
-- L190 `test_run_end_to_end_synthetic()`
-- L253 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
-- L271 `test_main_writes_the_artifact_and_publishes_by_default()`
-- L303 `_poison(path, lit, sub, fn, mod)` — --- отрицательные контроли ------------------------------------------------
-- L328 `P = os.path.join(HERE, 'costs.py')`
-- L331 `_control_exit_fee_dropped()`
-- L336 `_control_funding_sign_flipped()`
-- L342 `_control_open_notional_ignores_time()`
-- L348 `_control_uncovered_counted_as_zero()`
-- L354 `_control_gate_ignores_side()`
-- L360 `_control_rate_at_entry_looks_ahead()`
-- L365 `_control_stale_rate_counts_as_known()`
-- L371 `_control_gate_medians_in_dollars()`
-- L377 `_control_missing_series_reads_as_present()`
-- L383 `_control_old_rules_rows_counted()`
-- L388 `_control_no_fills_in_cover_denominator()`
-- L393 `_control_thin_rest_arm_judged()`
-- L398 `_control_slip_on_take_exit()`
-- L403 `_control_slip_on_every_rung()`
-- L409 `_control_net_ignores_slippage()`
-- L415 `test_symbols_outside_the_universe_still_get_their_series()` — Имя, торгуемое после снимка универсума, не теряет ряд funding.
-- L437 `TESTS = [test_commission_charges_every_rung_and…`
-- L450 `CONTROLS = [('комиссия выхода снята', _control_exi…`
-- L469 `main()`
+- L22 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L27 `H = 3600`
+- L28 `T0 = 1790000000.0`
+- L29 `FILLS4 = [(T0 + 60, 100.0, 0.25), (T0 + 5 * H, 1…`
+- L33 `_row(sym='SSSUSDT', side='short', at=T0, fills=None, exit_ts=No…`
+- L48 `_series(start, hours, rate_fn)` — Ряд начислений раз в час: (времена мс, ставки), как у загрузчика.
+- L56 `test_commission_charges_every_rung_and_the_exit()`
+- L73 `test_funding_sign_follows_the_side()`
+- L83 `test_funding_follows_the_open_notional_over_time()` — До долива платит четверть, после — половина: нотионал по времени.
+- L98 `test_funding_uncovered_is_not_measured()`
+- L110 `test_rate_at_entry_is_the_last_known_and_the_gate_is_by_side()`
+- L131 `_fixture()`
+- L164 `test_slippage_on_base_entry_and_market_exits_only()` — Проскальзывание X3 берётся с базового входа (первый рунг — рыночный) и с рыночного выхода (пол/срок/трейл/сто…
+- L191 `test_run_end_to_end_synthetic()`
+- L254 `test_gate_is_judged_only_with_both_arms_of_size()` — Медиана девяти отсечённых — шум: рука судится при ≥ MIN_ARM_N позиций в ОБЕИХ руках, иначе книга не попадает…
+- L272 `test_main_writes_the_artifact_and_publishes_by_default()`
+- L304 `_drop_pyc(path)` — Байткод модуля — где бы он ни лежал: рядом в `__pycache__` или в каталоге `PYTHONPYCACHEPREFIX` (свой каталог…
+- L323 `_poison(path, lit, sub, fn, mod)`
+- L345 `P = os.path.join(HERE, 'costs.py')`
+- L348 `_control_exit_fee_dropped()`
+- L353 `_control_funding_sign_flipped()`
+- L359 `_control_open_notional_ignores_time()`
+- L365 `_control_uncovered_counted_as_zero()`
+- L371 `_control_gate_ignores_side()`
+- L377 `_control_rate_at_entry_looks_ahead()`
+- L382 `_control_stale_rate_counts_as_known()`
+- L388 `_control_gate_medians_in_dollars()`
+- L394 `_control_missing_series_reads_as_present()`
+- L400 `_control_old_rules_rows_counted()`
+- L405 `_control_no_fills_in_cover_denominator()`
+- L410 `_control_thin_rest_arm_judged()`
+- L415 `_control_slip_on_take_exit()`
+- L420 `_control_slip_on_every_rung()`
+- L426 `_control_net_ignores_slippage()`
+- L432 `test_symbols_outside_the_universe_still_get_their_series()` — Имя, торгуемое после снимка универсума, не теряет ряд funding.
+- L454 `TESTS = [test_commission_charges_every_rung_and…`
+- L467 `CONTROLS = [('комиссия выхода снята', _control_exi…`
+- L486 `main()`
 
 ## research/dca_paper/test_cut.py · 297 строк
 
