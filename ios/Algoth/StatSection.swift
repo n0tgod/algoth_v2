@@ -1,5 +1,6 @@
 import Charts
 import SwiftUI
+import UIKit
 
 /// Счёт книги: главные плитки, издержки, метрики, кривая (`statBlock`).
 struct StatSection: View {
@@ -232,16 +233,18 @@ struct EquityCurve: View {
     let rows: [J]
     let dep: Double
 
-    /// Сколько суток видно разом; щипок меняет, палец листает.
-    @State private var visible: Double = 30
-    @State private var pinchBase: Double?
-    @State private var scrollX = 0.0
-    @State private var sel: Double?
+    /// Видимое окно по суткам (номера, дробные). `nil` — вся история:
+    /// так график и открывается, целиком в своих границах.
+    @State private var window: ClosedRange<Double>?
+    @State private var pinchBase: ClosedRange<Double>?
+    @State private var panBase: ClosedRange<Double>?
+    @State private var sel: Int?
 
     private struct Pt: Identifiable {
         let id: Int
         let eq: Double
         let r: J
+        var usd: Double { r["usd"].double ?? 0 }
     }
 
     var body: some View {
@@ -253,24 +256,29 @@ struct EquityCurve: View {
         }
     }
 
+    private var full: ClosedRange<Double> { -0.5...(Double(rows.count) - 0.5) }
+
     private var content: some View {
         let pts = points
+        let dom = window ?? full
+        let vis = pts.filter { Double($0.id) >= dom.lowerBound - 1
+                               && Double($0.id) <= dom.upperBound + 1 }
         let last = pts.last?.eq ?? dep
         let col = last >= dep ? Theme.bid : Theme.ask
-        let lo = min(dep, pts.map(\.eq).min() ?? dep)
-        let hi = max(dep, pts.map(\.eq).max() ?? dep)
+        // Шкала — по видимым суткам: приблизили — кривая на всю высоту.
+        var lo = vis.map(\.eq).min() ?? dep, hi = vis.map(\.eq).max() ?? dep
+        if window == nil { lo = min(lo, dep); hi = max(hi, dep) }
         let pad = max((hi - lo) * 0.08, 0.01)
-        let n = Double(pts.count)
-        let len = min(max(visible, 5), n)
-        let picked = sel.flatMap { v -> Pt? in
-            let i = Int(v.rounded())
-            return pts.indices.contains(i) ? pts[i] : nil
-        }
-        return VStack(spacing: 6) {
+        let ydom = (lo - pad)...(hi + pad)
+        let base = min(max(dep, ydom.lowerBound), ydom.upperBound)
+        let bmax = max(vis.map { abs($0.usd) }.max() ?? 1, 0.01)
+        let shown = sel.flatMap { i in pts.indices.contains(i) ? pts[i] : nil } ?? pts.last
+        return VStack(alignment: .leading, spacing: 6) {
+            if let p = shown { header(p, picked: sel != nil) }
             Chart {
-                ForEach(pts) { p in
+                ForEach(vis) { p in
                     AreaMark(x: .value("сутки", Double(p.id)),
-                             yStart: .value("депозит", dep),
+                             yStart: .value("база", base),
                              yEnd: .value("счёт", p.eq))
                         .foregroundStyle(LinearGradient(
                             colors: [col.opacity(0.34), col.opacity(0.02)],
@@ -279,66 +287,67 @@ struct EquityCurve: View {
                         .foregroundStyle(col)
                         .lineStyle(StrokeStyle(lineWidth: 2))
                 }
-                RuleMark(y: .value("депозит", dep))
-                    .foregroundStyle(Theme.rule)
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                if let p = picked {
-                    RuleMark(x: .value("сутки", Double(p.id)))
-                        .foregroundStyle(Color.white.opacity(0.45))
+                if ydom.contains(dep) {
+                    RuleMark(y: .value("депозит", dep))
+                        .foregroundStyle(Theme.rule)
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                }
+                if let i = sel, pts.indices.contains(i) {
+                    RuleMark(x: .value("сутки", Double(i)))
+                        .foregroundStyle(Color.white.opacity(0.5))
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
-                        .annotation(position: .top, spacing: 4,
-                                    overflowResolution: .init(x: .fit(to: .chart),
-                                                              y: .disabled)) {
-                            dayCard(p)
-                        }
-                    PointMark(x: .value("сутки", Double(p.id)), y: .value("счёт", p.eq))
-                        .symbolSize(70)
+                    PointMark(x: .value("сутки", Double(i)), y: .value("счёт", pts[i].eq))
+                        .symbolSize(80)
                         .foregroundStyle(col)
                 }
             }
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 5)) { v in
-                    AxisGridLine().foregroundStyle(Theme.rule)
-                    AxisValueLabel {
-                        if let d = v.as(Double.self), pts.indices.contains(Int(d.rounded())) {
-                            let i = Int(d.rounded())
-                            Text(String(pts[i].r["d"].text.dropFirst(5)))
-                                .foregroundStyle(Theme.dim)
-                        }
-                    }
-                }
-            }
+            .chartXScale(domain: dom)
+            .chartYScale(domain: ydom)
+            .chartXAxis(.hidden)
             .chartYAxis {
                 AxisMarks(position: .trailing) { _ in
                     AxisGridLine().foregroundStyle(Theme.rule)
                     AxisValueLabel().foregroundStyle(Theme.dim)
                 }
             }
-            .chartYScale(domain: (lo - pad)...(hi + pad))
-            .chartXScale(domain: -0.5...(n - 0.5))
-            .chartScrollableAxes(.horizontal)
-            .chartXVisibleDomain(length: len)
-            .chartScrollPosition(x: $scrollX)
-            // Зажать и вести — линия по дням с карточкой дня.
-            .chartXSelection(value: $sel)
-            .simultaneousGesture(
-                MagnifyGesture()
-                    .onChanged { g in
-                        if pinchBase == nil { pinchBase = len }
-                        visible = min(max((pinchBase ?? len) / Double(g.magnification), 5), n)
-                    }
-                    .onEnded { _ in pinchBase = nil })
-            .frame(height: 240)
-            .onAppear {
-                // Открывается на последних сутках: свежий день и есть то,
-                // ради чего смотрят.
-                visible = min(30, n)
-                scrollX = max(0, n - visible) - 0.5
+            .chartPlotStyle { $0.clipped() }
+            .chartOverlay { proxy in gestures(proxy) }
+            .frame(height: 220)
+            // Результат каждого дня столбиком — та же ось суток.
+            Chart {
+                ForEach(vis) { p in
+                    BarMark(x: .value("сутки", Double(p.id)), y: .value("день", p.usd),
+                            width: .ratio(0.7))
+                        .foregroundStyle((p.usd >= 0 ? Theme.bid : Theme.ask)
+                            .opacity(sel == nil || sel == p.id ? 0.85 : 0.35))
+                }
+                RuleMark(y: .value("ноль", 0)).foregroundStyle(Theme.rule)
             }
+            .chartXScale(domain: dom)
+            .chartYScale(domain: -bmax...bmax)
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5)) { v in
+                    AxisValueLabel {
+                        if let d = v.as(Double.self), pts.indices.contains(Int(d.rounded())) {
+                            Text(String(pts[Int(d.rounded())].r["d"].text.dropFirst(5)))
+                                .foregroundStyle(Theme.dim)
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .trailing, values: [-bmax, 0, bmax]) { _ in
+                    AxisValueLabel().foregroundStyle(Theme.dim)
+                }
+            }
+            .chartPlotStyle { $0.clipped() }
+            .chartOverlay { proxy in gestures(proxy) }
+            .frame(height: 90)
             HStack {
                 Text((rows.first?["d"].text ?? "") + " · " + F.dollars(dep))
                 Spacer()
-                Text("зажмите — сутки · щипок — масштаб")
+                Text(window == nil ? "зажмите — итог дня · щипок — масштаб"
+                                   : "сдвиг пальцем · разведите до конца — вся история")
                     .foregroundStyle(Theme.dim)
                 Spacer()
                 Text((rows.last?["d"].text ?? "") + " · $" + String(format: "%.2f", last))
@@ -347,34 +356,104 @@ struct EquityCurve: View {
         }
     }
 
-    /// Карточка дня: те же поля, что строка таблицы суток.
-    private func dayCard(_ p: Pt) -> some View {
+    /// Строка над графиком: итог выбранного дня крупно (по умолчанию —
+    /// последнего). Числа — поля той же строки `days_rows`, что в таблице.
+    private func header(_ p: Pt, picked: Bool) -> some View {
         let r = p.r
         let usd = r["usd"].double
-        return VStack(alignment: .leading, spacing: 3) {
-            Text(r["d"].text).font(.system(size: 12, weight: .bold, design: .monospaced))
-            Text("счёт $" + String(format: "%.2f", p.eq)
-                 + "  (" + F.fpct(dep > 0 ? (p.eq - dep) / dep : nil) + ")")
-            Text("за день " + F.usd(usd)
-                 + (dep > 0 ? "  (" + F.fpct((usd ?? 0) / dep) + ")" : ""))
+        return HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text(r["d"].text)
+                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .foregroundStyle(picked ? Theme.ink : Theme.muted)
+            Text(F.usd(usd))
+                .font(.system(size: 20, weight: .heavy, design: .monospaced))
                 .foregroundStyle(Tone(usd).color)
-            Text("позиций \(r["n"].text)"
-                 + (r["bt"].isNil ? "" : " · бэктест \(r["bt"].text)"))
-            if let l = r["long"].double {
-                Text("лонг " + F.usd(l) + " (\(r["n_long"].text))")
-                    .foregroundStyle(Tone(l).color)
+            if dep > 0 {
+                Text(F.fpct((usd ?? 0) / dep))
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(Tone(usd).color)
             }
-            if let s = r["short"].double {
-                Text("шорт " + F.usd(s) + " (\(r["n_short"].text))")
-                    .foregroundStyle(Tone(s).color)
+            Spacer(minLength: 4)
+            VStack(alignment: .trailing, spacing: 1) {
+                Text("счёт $" + String(format: "%.2f", p.eq))
+                Text("позиций \(r["n"].text)"
+                     + (r["long"].double.map { " · L " + F.us($0) } ?? "")
+                     + (r["short"].double.map { " · S " + F.us($0) } ?? ""))
             }
+            .font(.system(size: 11, design: .monospaced))
+            .foregroundStyle(Theme.muted)
         }
-        .font(.system(size: 11, design: .monospaced))
-        .foregroundStyle(Theme.ink)
-        .padding(8)
-        .background(Color(hex: 0x1c2333))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.rule))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    /// Жесты: зажатие — выбор дня с вибрацией на каждом новом дне; щипок —
+    /// масштаб; сдвиг пальцем — только в приближении (иначе мешал бы
+    /// листать страницу).
+    private func gestures(_ proxy: ChartProxy) -> some View {
+        GeometryReader { g in
+            let plot = proxy.plotFrame.map { g[$0] } ?? CGRect(origin: .zero, size: g.size)
+            Rectangle().fill(Color.clear).contentShape(Rectangle())
+                .gesture(
+                    LongPressGesture(minimumDuration: 0.2)
+                        .sequenced(before: DragGesture(minimumDistance: 0))
+                        .onChanged { v in
+                            switch v {
+                            case .first(true):
+                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            case .second(true, let d):
+                                if let d { pick(proxy, x: d.location.x - plot.minX) }
+                            default: break
+                            }
+                        }
+                        .onEnded { _ in sel = nil })
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 14)
+                        .onChanged { v in
+                            guard sel == nil, let w = window else { return }
+                            if panBase == nil { panBase = w }
+                            let b = panBase ?? w
+                            let per = (b.upperBound - b.lowerBound) / max(Double(plot.width), 1)
+                            shift(b, by: -Double(v.translation.width) * per)
+                        }
+                        .onEnded { _ in panBase = nil },
+                    including: window == nil ? .none : .all)
+                .simultaneousGesture(
+                    MagnifyGesture()
+                        .onChanged { m in
+                            let b = pinchBase ?? (window ?? full)
+                            if pinchBase == nil { pinchBase = b }
+                            let ax = b.lowerBound + (b.upperBound - b.lowerBound)
+                                * Double(m.startAnchor.x)
+                            zoom(b, around: ax, by: Double(m.magnification))
+                        }
+                        .onEnded { _ in pinchBase = nil })
+        }
+    }
+
+    private func pick(_ proxy: ChartProxy, x: CGFloat) {
+        guard let v: Double = proxy.value(atX: x) else { return }
+        let i = min(max(Int(v.rounded()), 0), rows.count - 1)
+        if i != sel {
+            sel = i
+            UISelectionFeedbackGenerator().selectionChanged()
+        }
+    }
+
+    private func zoom(_ b: ClosedRange<Double>, around ax: Double, by k: Double) {
+        let f = full
+        let span = min(max((b.upperBound - b.lowerBound) / max(k, 0.01), 5),
+                       f.upperBound - f.lowerBound)
+        if span >= f.upperBound - f.lowerBound - 0.01 { window = nil; return }
+        let t = (ax - b.lowerBound) / (b.upperBound - b.lowerBound)
+        var lo = ax - span * t
+        lo = min(max(lo, f.lowerBound), f.upperBound - span)
+        window = lo...(lo + span)
+    }
+
+    private func shift(_ b: ClosedRange<Double>, by d: Double) {
+        let f = full
+        let span = b.upperBound - b.lowerBound
+        let lo = min(max(b.lowerBound + d, f.lowerBound), f.upperBound - span)
+        window = lo...(lo + span)
     }
 
     private var points: [Pt] {
