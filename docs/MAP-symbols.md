@@ -2287,6 +2287,51 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L174 `write(s, name, report_fn, log=print)` — Артефакт и отчёт замера — одним местом, с публикацией прогоном.
 - L188 `stamp()`
 
+## research/dca_paper/short_levcap.py · 460 строк
+
+Потолок плеча у коротких книг: держится ли эдж НА СДЕЛКУ без мотора.
+
+- L43 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L44 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L64 `ART = 'DCA-short-levcap'`
+- L65 `CAPS = (2.0, 6.0)`
+- L66 `VERIFY_N = 120`
+- L67 `VERIFY_SEED = 7`
+- L68 `TOL = 1e-09`
+- L69 `MAIN_DEP = 10000`
+- L70 `BOOK_KEYS = list(S.BOOKS)`
+- L71 `TAIL_EXITS = T.TAIL_EXITS`
+- L72 `CELL_KEYS = ('base',) + tuple((f'{c:g}' for c in CA…`
+- L75 `scale_record(r, cap)` — Запись при плече `cap`, когда исход от плеча не зависел: pnl линеен.
+- L91 `plan(cache, cap)` — Разметка записей под потолок: без изменений / масштаб / реплей ядром.
+- L106 `verify_keys(keys, n=VERIFY_N, seed=VERIFY_SEED)` — Воспроизводимая выборка записей цели/срока на сверку с ядром.
+- L113 `legs_for(keys, legs_)` — Ноги листа для (имя, момент) — одна на решение; без ноги — посчитано.
+- L133 `with_cap(cap, fn)` — Потолок плеча забора на время счёта — и назад, что бы ни случилось.
+- L143 `compare(scaled, replayed, tol=TOL)` — Масштаб против ядра на тех же записях: число расхождений и худшее.
+- L162 `build_cap(cache, cap, legs_, log=print, src=None, verify_n=VERI…` — Кэш при потолке плеча: масштаб + реплей хвоста + сверка на выборке.
+- L195 `trade_stats(pairs)` — Доля плюсовых, средний выигрыш/проигрыш, RR, ожидание — долями маржи и нотионала.
+- L216 `record_pairs(recs, book)` — Пары (pnl_net маржи, pnl_net нотионала) по закрытым записям книги с её гейтом плеча.
+- L231 `cash_rows(packed, ctx, launch, now=None, dep=MAIN_DEP)` — Строки кассы на $dep по книгам, нетто — тем же порядком, что `cell_stats`.
+- L244 `row_pairs(rows)`
+- L256 `tails_share(recs_or_rows)`
+- L262 `cell_of(cache, ctx, launch, now=None, dep=MAIN_DEP)` — Сводка ячейки: по записям и по кассе, на книгу.
+- L283 `run(caps=CAPS, log=print, now=None, launch=None, ctx=None, mem_…`
+- L312 `_pp(x, d=1)`
+- L316 `_pu(x, d=0)`
+- L320 `_bp(x)`
+- L324 `_f(x, d=2)`
+- L328 `_usd(x)`
+- L332 `_sd(x)`
+- L336 `_i(x)`
+- L340 `_title(key)`
+- L344 `_trade_row(label, ts, tail_share, tails)`
+- L352 `TRADE_HEAD = '| ячейка | сделок | плюсовых | ср. выи…`
+- L354 `TRADE_SEP = '|---|--:|--:|--:|--:|--:|--:|--:|--:|'`
+- L357 `verdict(base, cell)` — Фраза из числа: ожидание на сделку В ЦЕНЕ при потолке против опоры.
+- L373 `report(s)`
+- L437 `publish(name)`
+- L443 `main(argv=None)`
+
 ## research/dca_paper/short_levers.py · 693 строк
 
 Рычаги коротких книг, которых стенд ещё не мерил: один скрин, оси до прогона.

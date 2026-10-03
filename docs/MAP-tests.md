@@ -1394,6 +1394,20 @@
 - L66 `test_age_filter_cuts_the_book_and_control_takes_the_same_count()`
 - L96 `test_supply_separates_a_quiet_sheet_from_a_biting_rule()` — Две тишины различимы числом: подачи нет — или правило режет.
 
+## research/dca_paper/test_short_levcap.py · 193 строк
+
+Проверки замера «потолок плеча у коротких книг».
+
+- L17 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L22 `AT = TP.AT`
+- L23 `H = 3600.0`
+- L26 `_rec(sym, lev, exit, marks=None, at=AT, state='closed', pnl_net…`
+- L35 `test_scale_is_linear_and_keeps_outcome()`
+- L47 `test_plan_sends_only_high_leverage_tails_to_the_core()`
+- L67 `test_compare_flags_divergence_and_cap_is_restored()`
+- L89 `test_trade_stats_in_two_units_and_book_gate()`
+- L110 `test_run_wiring_with_stub_core_and_report_without_none()`
+
 ## research/dca_paper/test_short_levers.py · 225 строк
 
 Проверки скрина рычагов коротких книг.
