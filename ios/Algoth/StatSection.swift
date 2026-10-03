@@ -232,9 +232,16 @@ struct EquityCurve: View {
     let rows: [J]
     let dep: Double
 
+    /// Сколько суток видно разом; щипок меняет, палец листает.
+    @State private var visible: Double = 30
+    @State private var pinchBase: Double?
+    @State private var scrollX = 0.0
+    @State private var sel: Double?
+
     private struct Pt: Identifiable {
         let id: Int
         let eq: Double
+        let r: J
     }
 
     var body: some View {
@@ -242,54 +249,139 @@ struct EquityCurve: View {
             Note(text: "Кривой ещё нет: суток в этой группе \(rows.count). Из одной "
                  + "точки линии не бывает — это не «книга стоит на месте».")
         } else {
-            let pts = points
-            let last = pts.last?.eq ?? dep
-            let col = last >= dep ? Theme.bid : Theme.ask
-            let lo = min(dep, pts.map(\.eq).min() ?? dep)
-            let hi = max(dep, pts.map(\.eq).max() ?? dep)
-            let pad = max((hi - lo) * 0.05, 0.01)
-            VStack(spacing: 4) {
-                Chart {
-                    ForEach(pts) { p in
-                        AreaMark(x: .value("сутки", p.id),
-                                 yStart: .value("депозит", dep),
-                                 yEnd: .value("счёт", p.eq))
-                            .foregroundStyle(LinearGradient(
-                                colors: [col.opacity(0.34), col.opacity(0.02)],
-                                startPoint: .top, endPoint: .bottom))
-                        LineMark(x: .value("сутки", p.id), y: .value("счёт", p.eq))
-                            .foregroundStyle(col)
-                            .lineStyle(StrokeStyle(lineWidth: 2))
+            content
+        }
+    }
+
+    private var content: some View {
+        let pts = points
+        let last = pts.last?.eq ?? dep
+        let col = last >= dep ? Theme.bid : Theme.ask
+        let lo = min(dep, pts.map(\.eq).min() ?? dep)
+        let hi = max(dep, pts.map(\.eq).max() ?? dep)
+        let pad = max((hi - lo) * 0.08, 0.01)
+        let n = Double(pts.count)
+        let len = min(max(visible, 5), n)
+        let picked = sel.flatMap { v -> Pt? in
+            let i = Int(v.rounded())
+            return pts.indices.contains(i) ? pts[i] : nil
+        }
+        return VStack(spacing: 6) {
+            Chart {
+                ForEach(pts) { p in
+                    AreaMark(x: .value("сутки", Double(p.id)),
+                             yStart: .value("депозит", dep),
+                             yEnd: .value("счёт", p.eq))
+                        .foregroundStyle(LinearGradient(
+                            colors: [col.opacity(0.34), col.opacity(0.02)],
+                            startPoint: .top, endPoint: .bottom))
+                    LineMark(x: .value("сутки", Double(p.id)), y: .value("счёт", p.eq))
+                        .foregroundStyle(col)
+                        .lineStyle(StrokeStyle(lineWidth: 2))
+                }
+                RuleMark(y: .value("депозит", dep))
+                    .foregroundStyle(Theme.rule)
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                if let p = picked {
+                    RuleMark(x: .value("сутки", Double(p.id)))
+                        .foregroundStyle(Color.white.opacity(0.45))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                        .annotation(position: .top, spacing: 4,
+                                    overflowResolution: .init(x: .fit(to: .chart),
+                                                              y: .disabled)) {
+                            dayCard(p)
+                        }
+                    PointMark(x: .value("сутки", Double(p.id)), y: .value("счёт", p.eq))
+                        .symbolSize(70)
+                        .foregroundStyle(col)
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5)) { v in
+                    AxisGridLine().foregroundStyle(Theme.rule)
+                    AxisValueLabel {
+                        if let d = v.as(Double.self), pts.indices.contains(Int(d.rounded())) {
+                            let i = Int(d.rounded())
+                            Text(String(pts[i].r["d"].text.dropFirst(5)))
+                                .foregroundStyle(Theme.dim)
+                        }
                     }
-                    RuleMark(y: .value("депозит", dep))
-                        .foregroundStyle(Theme.rule)
-                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 }
-                .chartXAxis(.hidden)
-                .chartYAxis {
-                    AxisMarks(position: .trailing) { _ in
-                        AxisGridLine().foregroundStyle(Theme.rule)
-                        AxisValueLabel().foregroundStyle(Theme.dim)
+            }
+            .chartYAxis {
+                AxisMarks(position: .trailing) { _ in
+                    AxisGridLine().foregroundStyle(Theme.rule)
+                    AxisValueLabel().foregroundStyle(Theme.dim)
+                }
+            }
+            .chartYScale(domain: (lo - pad)...(hi + pad))
+            .chartXScale(domain: -0.5...(n - 0.5))
+            .chartScrollableAxes(.horizontal)
+            .chartXVisibleDomain(length: len)
+            .chartScrollPosition(x: $scrollX)
+            // Зажать и вести — линия по дням с карточкой дня.
+            .chartXSelection(value: $sel)
+            .simultaneousGesture(
+                MagnifyGesture()
+                    .onChanged { g in
+                        if pinchBase == nil { pinchBase = len }
+                        visible = min(max((pinchBase ?? len) / Double(g.magnification), 5), n)
                     }
-                }
-                .chartYScale(domain: (lo - pad)...(hi + pad))
-                .frame(height: 210)
-                HStack {
-                    Text((rows.first?["d"].text ?? "") + " · " + F.dollars(dep))
-                    Spacer()
-                    Text((rows.last?["d"].text ?? "") + " · $"
-                         + String(format: "%.2f", last))
-                }
-                .font(.system(size: 11)).foregroundStyle(Theme.muted)
+                    .onEnded { _ in pinchBase = nil })
+            .frame(height: 240)
+            .onAppear {
+                // Открывается на последних сутках: свежий день и есть то,
+                // ради чего смотрят.
+                visible = min(30, n)
+                scrollX = max(0, n - visible) - 0.5
+            }
+            HStack {
+                Text((rows.first?["d"].text ?? "") + " · " + F.dollars(dep))
+                Spacer()
+                Text("зажмите — сутки · щипок — масштаб")
+                    .foregroundStyle(Theme.dim)
+                Spacer()
+                Text((rows.last?["d"].text ?? "") + " · $" + String(format: "%.2f", last))
+            }
+            .font(.system(size: 11)).foregroundStyle(Theme.muted)
+        }
+    }
+
+    /// Карточка дня: те же поля, что строка таблицы суток.
+    private func dayCard(_ p: Pt) -> some View {
+        let r = p.r
+        let usd = r["usd"].double
+        return VStack(alignment: .leading, spacing: 3) {
+            Text(r["d"].text).font(.system(size: 12, weight: .bold, design: .monospaced))
+            Text("счёт $" + String(format: "%.2f", p.eq)
+                 + "  (" + F.fpct(dep > 0 ? (p.eq - dep) / dep : nil) + ")")
+            Text("за день " + F.usd(usd)
+                 + (dep > 0 ? "  (" + F.fpct((usd ?? 0) / dep) + ")" : ""))
+                .foregroundStyle(Tone(usd).color)
+            Text("позиций \(r["n"].text)"
+                 + (r["bt"].isNil ? "" : " · бэктест \(r["bt"].text)"))
+            if let l = r["long"].double {
+                Text("лонг " + F.usd(l) + " (\(r["n_long"].text))")
+                    .foregroundStyle(Tone(l).color)
+            }
+            if let s = r["short"].double {
+                Text("шорт " + F.usd(s) + " (\(r["n_short"].text))")
+                    .foregroundStyle(Tone(s).color)
             }
         }
+        .font(.system(size: 11, design: .monospaced))
+        .foregroundStyle(Theme.ink)
+        .padding(8)
+        .background(Color(hex: 0x1c2333))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.rule))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var points: [Pt] {
         var acc = 0.0
         return rows.enumerated().map { i, r in
             acc += r["usd"].double ?? 0
-            return Pt(id: i, eq: dep + acc)
+            return Pt(id: i, eq: dep + acc, r: r)
         }
     }
 }
