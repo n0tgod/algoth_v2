@@ -27,3 +27,15 @@
   [10-04 21:10:00] матрица: 790 символов × 1589 часов, сечений с ≥30 именами: 1400, признаков 50
   [10-04 21:12:15] обучение отложено по памяти: память: доступно 2762 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; цикл 616 с (сведение часа 347 с, матрица 133 с, книги 127 с, оценка 0 с)
 конец: 2026-10-04T21:29:19Z, код 0
+публикуется в ветку main:
+ jobs/done/heat-cycle.log   | 11 +++++++++++
+ jobs/done/heat-status.done |  1 +
+ jobs/done/heat-status.log  |  8 ++++++++
+ jobs/done/heat-train.done  |  1 +
+ jobs/done/heat-train.log   | 29 +++++++++++++++++++++++++++++
+ jobs/poke.log              |  4 ++++
+ 6 files changed, 54 insertions(+)
+To github.com:n0tgod/algoth_v2.git
+   c6100be0..d63e1540  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
