@@ -398,3 +398,16 @@
   {"kind": "books", "seq": 529, "hour": "2026-10-04-19", "at": "10-04 20:12", "sections": 1399, "symbols": 790, "train_why": "память: доступно 2838 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
   {"kind": "books", "seq": 529, "hour": "2026-10-04-20", "at": "10-04 21:12", "sections": 1400, "symbols": 790, "train_why": "память: доступно 2762 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
 конец: 2026-10-04T21:36:29Z, код 0
+публикуется в ветку main:
+ jobs/done/heat-deploy.done          |   1 +
+ jobs/done/heat-deploy.log           |   6 +
+ jobs/done/heat-memtop.done          |   1 +
+ jobs/done/heat-memtop.log           | 400 ++++++++++++++++++++++++++++++++++++
+ jobs/done/heat-train.log            |  12 ++
+ jobs/poke.log                       |   4 +
+ research/s8_loop/out/day_brake.json |   2 +-
+ 7 files changed, 425 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   11b8fb1c..6fda0707  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
