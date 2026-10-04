@@ -1005,6 +1005,26 @@
 - L23 `_row(**kw)`
 - L32 `main()`
 
+## research/dca_paper/test_boost.py · 154 строк
+
+Тесты разгонного профиля ($100, крупный билет): касса, путь, подмена.
+
+- L15 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L16 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L25 `FAILED = []`
+- L28 `check(name, cond, detail='')`
+- L36 `rec(sym, at, exit_ts, pnl, lev=2.0, book=None)` — Запись кэша, как её пишет реплей книги: поля живого образца.
+- L46 `DAY = 86400.0`
+- L47 `T0 = 1757000000.0`
+- L48 `CTX = {'error': 'тестовый контекст: издержки …`
+- L51 `test_day_series_and_geo()`
+- L67 `test_perm_path_depends_order_not_total()`
+- L84 `test_with_overrides_restores_even_on_error()`
+- L94 `test_share_reaches_the_real_cash()` — Дорога: доля билета доезжает до ration через build_rows.
+- L118 `test_none_share_is_bitwise_standard()`
+- L130 `test_fwd_slice_filters_by_decision_time()`
+- L139 `main()`
+
 ## research/dca_paper/test_costs.py · 496 строк
 
 Проверки замера издержек DCA-книг (`costs.py`).
@@ -1174,7 +1194,7 @@
 - L211 `CONTROLS = [('загрузка по доле сделок', _control_l…`
 - L217 `main()`
 
-## research/dca_paper/test_pair.py · 554 строк
+## research/dca_paper/test_pair.py · 571 строк
 
 Проверки общего счёта: длинная книга и короткая на ОДНОМ депозите.
 
@@ -1190,17 +1210,17 @@
 - L92 `test_ticket_stays_the_ticket_of_its_own_side()` — Билет — свойство СТОРОНЫ: у длинной свой, у короткой свой.
 - L117 `test_short_side_enters_with_the_declared_share()` — Билет короткой стороны в общем счёте — объявленная доля своего.
 - L150 `test_the_share_never_dives_under_the_exchange_floor()` — Доля не вправе опустить билет под биржевой минимум.
-- L171 `test_family_rules_retire_the_old_rows_without_touching_other_bo…` — Смена правил СЕМЕЙСТВА не трогает запись остальных книг.
-- L198 `test_rate_gate_machinery_works_and_the_rule_is_off_now()` — Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
-- L243 `test_every_family_version_carries_the_day_it_changed()` — Смена версии семейства обнуляет «записанное вперёд».
-- L266 `test_age_rule_refuses_young_names_and_counts_the_unknown_apart()` — Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
-- L305 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
-- L332 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
-- L355 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
-- L373 `test_missing_caches_are_a_reason_not_empty_books()`
-- L382 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
-- L463 `test_report_shows_what_the_money_is_made_of()` — Концентрация обязана стоять и в отчёте общего счёта.
-- L504 `test_short_recs_count_the_records_without_a_promise()` — Короткая запись без обещания модели считается ВСЛУХ, а не молчит.
+- L175 `test_family_rules_retire_the_old_rows_without_touching_other_bo…` — Смена правил СЕМЕЙСТВА не трогает запись остальных книг.
+- L202 `test_rate_gate_machinery_works_and_the_rule_is_off_now()` — Гейт по ставке — правило входа КОРОТКОЙ стороны общего счёта.
+- L247 `test_every_family_version_carries_the_day_it_changed()` — Смена версии семейства обнуляет «записанное вперёд».
+- L270 `test_age_rule_refuses_young_names_and_counts_the_unknown_apart()` — Возраст имени — объявленное правило входа КОРОТКОЙ стороны.
+- L309 `test_collisions_and_link_live_inside_the_book()` — Совпадение имён и связь сторон считаются по строкам самой книги.
+- L336 `test_books_sharing_one_geometry_both_get_their_positions()` — Одна пара линейки кормит НЕСКОЛЬКО книг, и обе обязаны их получить.
+- L359 `test_memory_guard_stops_the_run_itself()` — Прогон останавливается САМ и с числом: OOM выбирает не его.
+- L377 `test_missing_caches_are_a_reason_not_empty_books()`
+- L386 `test_end_to_end_writes_its_own_journal_and_compares_with_two_ac…` — Прогон целиком: свой журнал, свой свод, сравнение с раздельными.
+- L480 `test_report_shows_what_the_money_is_made_of()` — Концентрация обязана стоять и в отчёте общего счёта.
+- L521 `test_short_recs_count_the_records_without_a_promise()` — Короткая запись без обещания модели считается ВСЛУХ, а не молчит.
 
 ## research/dca_paper/test_pair_age.py · 158 строк
 
@@ -1388,7 +1408,7 @@
 - L24 `H = 3600.0`
 - L25 `DAY = 86400.0`
 - L26 `T0 = TP.T0`
-- L27 `DEP = R.DEPOSITS[1]`
+- L27 `DEP = R.DEP_MAIN`
 - L30 `_shorts(n=8, at=None)`
 - L34 `test_share_comes_from_the_declared_map_and_is_put_back()`
 - L49 `test_smaller_ticket_lets_more_decisions_in()`
@@ -1464,7 +1484,7 @@
 - L25 `H = 3600.0`
 - L26 `DAY = 86400.0`
 - L27 `T0 = TP.T0`
-- L28 `DEP = R.DEPOSITS[1]`
+- L28 `DEP = R.DEP_MAIN`
 - L31 `test_axis_lands_in_the_grid_of_the_replay()`
 - L54 `test_axis_does_not_leak_into_the_book_rule()` — Ось замера не меняет правило книги: множитель книги остаётся своим.
 - L69 `test_pack_uses_the_map_of_the_run()`
