@@ -239,8 +239,6 @@ struct EquityCurve: View {
     @State private var pinchBase: ClosedRange<Double>?
     @State private var panBase: ClosedRange<Double>?
     @State private var sel: Int?
-    /// Счётчик захватов — повод для толчка при зажатии.
-    @State private var grabs = 0
 
     private struct Pt: Identifiable {
         let id: Int
@@ -315,11 +313,10 @@ struct EquityCurve: View {
             .chartPlotStyle { $0.clipped() }
             .chartOverlay { proxy in gestures(proxy) }
             .frame(height: 220)
-            // Вибрация системным механизмом iOS 17: толчок при захвате и
-            // щелчок на каждом новом дне. На iPad вибромотора нет — там
-            // она не срабатывает ни у одного приложения.
-            .sensoryFeedback(.impact(weight: .medium), trigger: grabs)
-            .sensoryFeedback(.selection, trigger: sel) { _, new in new != nil }
+            // Вибрация: толчок при захвате и щелчок на каждом новом дне
+            // (`ChartTouchLayer`). На iPad вибромотора нет.
+            .sensoryFeedback(.selection, trigger: sel) { old, new in
+                old != nil && new != nil && old != new }
             // Результат каждого дня столбиком — та же ось суток.
             Chart {
                 ForEach(vis) { p in
@@ -402,41 +399,27 @@ struct EquityCurve: View {
     private func gestures(_ proxy: ChartProxy) -> some View {
         GeometryReader { g in
             let plot = proxy.plotFrame.map { g[$0] } ?? CGRect(origin: .zero, size: g.size)
-            Rectangle().fill(Color.clear).contentShape(Rectangle())
-                .gesture(
-                    LongPressGesture(minimumDuration: 0.2)
-                        .sequenced(before: DragGesture(minimumDistance: 0))
-                        .onChanged { v in
-                            switch v {
-                            case .first(true):
-                                grabs += 1
-                            case .second(true, let d):
-                                if let d { pick(proxy, x: d.location.x - plot.minX) }
-                            default: break
-                            }
-                        }
-                        .onEnded { _ in sel = nil })
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 14)
-                        .onChanged { v in
-                            guard sel == nil, let w = window else { return }
-                            if panBase == nil { panBase = w }
-                            let b = panBase ?? w
-                            let per = (b.upperBound - b.lowerBound) / max(Double(plot.width), 1)
-                            shift(b, by: -Double(v.translation.width) * per)
-                        }
-                        .onEnded { _ in panBase = nil },
-                    including: window == nil ? .none : .all)
-                .simultaneousGesture(
-                    MagnifyGesture()
-                        .onChanged { m in
-                            let b = pinchBase ?? (window ?? full)
-                            if pinchBase == nil { pinchBase = b }
-                            let ax = b.lowerBound + (b.upperBound - b.lowerBound)
-                                * Double(m.startAnchor.x)
-                            zoom(b, around: ax, by: Double(m.magnification))
-                        }
-                        .onEnded { _ in pinchBase = nil })
+            ChartTouchLayer(
+                panEnabled: window != nil,
+                onPick: { x in pick(proxy, x: x - plot.minX) },
+                onPickEnd: { sel = nil },
+                onPinch: { scale, ax, ended in
+                    if ended { pinchBase = nil; return }
+                    let b = pinchBase ?? (window ?? full)
+                    if pinchBase == nil { pinchBase = b }
+                    let frac = Double((ax * g.size.width - plot.minX) / max(plot.width, 1))
+                    let anchor = b.lowerBound + (b.upperBound - b.lowerBound)
+                        * min(max(frac, 0), 1)
+                    zoom(b, around: anchor, by: Double(scale))
+                },
+                onPan: { dx, ended in
+                    if ended { panBase = nil; return }
+                    guard sel == nil, let w = window else { return }
+                    if panBase == nil { panBase = w }
+                    let b = panBase ?? w
+                    let per = (b.upperBound - b.lowerBound) / max(Double(plot.width), 1)
+                    shift(b, by: -Double(dx) * per)
+                })
         }
     }
 
