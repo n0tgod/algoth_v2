@@ -131,24 +131,21 @@ struct Filters: View {
                     }
                 }
             }
-            // 3. Депозит и учёт бэктеста.
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(m.deposits, id: \.self) { x in
-                        let k = String(Int(x))
-                        Chip(title: F.dollars(x), on: k == m.dep) { m.setDep(k) }
-                    }
-                    Divider().frame(height: 20).overlay(Theme.rule)
-                    // Умолчание — «с бэктестом»: это общий счёт книги, одна
-                    // кривая; «без бэктеста» снимает пересчёт одним нажатием.
-                    Chip(title: "с бэктестом", on: m.grp == "all") {
-                        m.grp = "all"; m.page = 0
-                    }
-                    Chip(title: "без бэктеста", on: m.grp == "fwd") {
-                        m.grp = "fwd"; m.page = 0
-                    }
+            // 3. Депозит — тремя равными кнопками.
+            HStack(spacing: 8) {
+                ForEach(m.deposits, id: \.self) { x in
+                    let k = String(Int(x))
+                    Chip(title: F.dollars(x), on: k == m.dep, fill: true) { m.setDep(k) }
                 }
             }
+            // 4. Учёт: весь счёт с пересчётом прошлого или только записанное
+            // вперёд. Умолчание — с бэктестом: это одна кривая книги.
+            Picker("учёт", selection: Binding(get: { m.grp },
+                                              set: { m.grp = $0; m.page = 0 })) {
+                Text("с бэктестом").tag("all")
+                Text("без бэктеста").tag("fwd")
+            }
+            .pickerStyle(.segmented)
         }
         .padding(10)
         .background(Theme.surface)
