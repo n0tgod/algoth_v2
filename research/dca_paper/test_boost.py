@@ -136,6 +136,25 @@ def test_fwd_slice_filters_by_decision_time():
           c["taken"] == 1 and c["n"] == 1, f"{c}")
 
 
+def test_report_names_the_unmeasured_full_share_cell():
+    """Строка «1 сделка» без причины — молчаливая ложь ячейки.
+
+    Отчёт обязан словами сказать, что долю 1.0 касса семейства не
+    измеряет (свободные деньги не зачисляют прибыль), и молчать, когда
+    такой ячейки в прогоне нет.
+    """
+    base = {"books": ["safe"], "anchors": {}, "fwd": [],
+            "seeds": 1, "since_h": "", "floor_usd": 25.0}
+    cell = {"book": "safe", "share": 1.0, "ticket": 100.0, "n": 1,
+            "no_cash": 1887, "too_small": 0, "perm": None}
+    txt = B.report(dict(base, cells=[cell]))
+    check("ячейка с долей 1.0 названа неизмеренной свойством кассы",
+          "не измерены" in txt and "свойство КАССЫ" in txt, txt[-300:])
+    txt2 = B.report(dict(base, cells=[dict(cell, share=0.5)]))
+    check("без доли 1.0 оговорка молчит — вечная тревога не сигнал",
+          "не измерены" not in txt2, "")
+
+
 def main():
     test_day_series_and_geo()
     test_perm_path_depends_order_not_total()
@@ -143,6 +162,7 @@ def main():
     test_share_reaches_the_real_cash()
     test_none_share_is_bitwise_standard()
     test_fwd_slice_filters_by_decision_time()
+    test_report_names_the_unmeasured_full_share_cell()
     print()
     if FAILED:
         print(f"ПАДЕНИЙ: {len(FAILED)} — {', '.join(FAILED)}")
