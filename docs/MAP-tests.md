@@ -1005,7 +1005,7 @@
 - L23 `_row(**kw)`
 - L32 `main()`
 
-## research/dca_paper/test_boost.py · 154 строк
+## research/dca_paper/test_boost.py · 174 строк
 
 Тесты разгонного профиля ($100, крупный билет): касса, путь, подмена.
 
@@ -1023,7 +1023,8 @@
 - L94 `test_share_reaches_the_real_cash()` — Дорога: доля билета доезжает до ration через build_rows.
 - L118 `test_none_share_is_bitwise_standard()`
 - L130 `test_fwd_slice_filters_by_decision_time()`
-- L139 `main()`
+- L139 `test_report_names_the_unmeasured_full_share_cell()` — Строка «1 сделка» без причины — молчаливая ложь ячейки.
+- L158 `main()`
 
 ## research/dca_paper/test_costs.py · 496 строк
 
