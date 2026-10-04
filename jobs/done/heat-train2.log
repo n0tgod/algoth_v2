@@ -21,3 +21,13 @@
   [10-04 21:42:18] матрица: 790 символов × 1589 часов, сечений с ≥30 именами: 1400, признаков 50
   [10-04 21:45:59] переобучаю: весам 109.1 ч при каденции 24
 конец: 2026-10-04T22:21:23Z, код 0
+публикуется в ветку main:
+ jobs/done/heat-train2.done          |  1 +
+ jobs/done/heat-train2.log           | 23 +++++++++++++++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 28 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   58fb9e55..2ebd3328  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
