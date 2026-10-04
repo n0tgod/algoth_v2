@@ -1,0 +1,16 @@
+== задание heat-cycle ==
+строка: run tools/loggrep.py --preset cycle
+начало: 2026-10-04T21:27:18Z
+запускаю: .venv/bin/python tools/loggrep.py --preset cycle
+usage: loggrep.py [-h] --file {collect,daily,pair,ship,short,train,watchdog}
+                  [--pattern PATTERN] [--preset {cycle,mem,oom,raise}]
+                  [--days DAYS] [--last LAST]
+loggrep.py: error: the following arguments are required: --file
+конец: 2026-10-04T21:27:18Z, код 2
+публикуется в ветку main:
+ jobs/done/heat-cycle.done           |  1 +
+ jobs/done/heat-cycle.log            |  9 +++++++++
+ jobs/done/heat-status.log           | 12 ++++++++++++
+ jobs/poke.log                       |  5 +++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 28 insertions(+), 1 deletion(-)
