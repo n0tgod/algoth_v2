@@ -226,7 +226,6 @@ struct BookTiles: View {
         Panel {
             Cap(text: "книга", dot: false)
             TileGrid {
-                Tile(label: "режим", value: title)
                 Tile(label: "депозит",
                      value: F.dollars(b["deposit"].double ?? Double(dep ?? "")))
                 ForEach(sideTiles, id: \.0) { t in
