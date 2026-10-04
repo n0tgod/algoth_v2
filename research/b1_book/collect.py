@@ -52,6 +52,7 @@
 import argparse
 import gzip
 import json
+import math
 import os
 import subprocess
 import random
@@ -163,6 +164,69 @@ def _median(xs):
     s = sorted(xs)
     n = len(s)
     return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
+
+
+HEAT_BIN_BP = 5.0        # корзина тепловой карты: 5 б.п. от опорной цены часа
+HEAT_LEVELS = 50         # уровней лесенки на сторону — глубже запись не хранит
+
+
+def _nice(x):
+    """Округление до двух значащих цифр: корзина цены читается с оси."""
+    if not x > 0:
+        return x
+    e = math.floor(math.log10(x))
+    return round(x, 1 - e)
+
+
+def heat_minutes(rows, levels=HEAT_LEVELS):
+    """Снимки стакана часа → покоящийся нотионал по минутам и корзинам цены.
+
+    Величина клетки — СРЕДНИЙ по снимкам минуты нотионал (цена × размер,
+    $), стоящий в ценовой корзине шириной `HEAT_BIN_BP` от опорной цены
+    часа (медиана цен лесенки в первую минуту). Делится на число снимков
+    ИМЕННО ЭТОЙ минуты: минута с двадцатью снимками (дыра в записи) иначе
+    выглядела бы втрое тише минуты с шестьюдесятью. Минута без снимков в
+    ответ не входит вовсе — отсутствие записи не есть пустой стакан.
+
+    Возвращает (rows, n_snaps): rows — [[минута, корзина, k0, [v…]]], где
+    v — доллары в корзинах k0, k0+1, … подряд (нули — корзины без
+    уровней внутри охвата лесенки), n_snaps — снимков всего.
+    """
+    grid, snaps = {}, {}
+    for r in rows:
+        t = r.get("t")
+        if t is None:
+            ts = r.get("ts")
+            t = (ts / 1000.0 if ts and ts > 1e11 else ts)
+        b, a = r.get("b"), r.get("a")
+        if t is None or not b or not a:
+            continue
+        m = int(float(t) // 60) * 60
+        snaps[m] = snaps.get(m, 0) + 1
+        g = grid.setdefault(m, {})
+        for side in (b, a):
+            for lv in side[:levels]:
+                try:
+                    px, q = float(lv[0]), float(lv[1])
+                except (TypeError, ValueError, IndexError):
+                    continue
+                if px > 0 and q > 0:
+                    g[px] = g.get(px, 0.0) + px * q
+    if not grid:
+        return [], 0
+    m0 = min(grid)
+    ps = sorted(grid[m0])
+    dp = _nice(ps[len(ps) // 2] * HEAT_BIN_BP / 1e4)
+    out = []
+    for m in sorted(grid):
+        n = snaps.get(m) or 1
+        bins = {}
+        for px, tot in grid[m].items():
+            k = int(math.floor(px / dp + 1e-9))   # 99.90/0.05 = 1997.999…: без эпсилона уровень уезжает в соседнюю корзину
+            bins[k] = bins.get(k, 0.0) + tot / n
+        k0, k1 = min(bins), max(bins)
+        out.append([m, dp, k0, [int(round(bins.get(k, 0.0))) for k in range(k0, k1 + 1)]])
+    return out, sum(snaps.values())
 
 
 def minute_bars(rows):
@@ -720,6 +784,7 @@ class Collector:
         self.disk = {}
         self.samples = deque(maxlen=90)   # (момент, байт)
         self.ccache = {}                  # свечи закрытых часов
+        self.hcache = {}                  # тепловая карта закрытых часов
         # Встречный пересчёт живёт на ДИСКЕ, а не только в памяти.
         # Держали в памяти — и он пропадал при каждом перезапуске
         # сборщика, а на странице гас при каждой перезагрузке: владельцу
@@ -1096,6 +1161,65 @@ class Collector:
         return {"sym": sym, "candles": out, "hours": len(hh),
                 "asked_hours": want, "capped": bool(want > n),
                 "max_hours": self.CANDLE_MAX_H, "end": anchor}
+
+    def heat_files(self, sym, hours=12, end=None):
+        """Тепловая карта лесенки стакана под свечи: записи, не память.
+
+        Просьба владельца 2026-10-04 («давай тепловую карту»): увидеть
+        глазами, стоит ли объём на цене вокруг входа и выхода позиции и
+        восполняется ли он перед сквизом — скрин хвоста по агрегатам
+        сказал «стакан молчит», а агрегат не кодирует форму. Окно и
+        потолок — те же, что у свечей (`candles_files`): карта лежит
+        ПОД теми же барами и обязана кончаться там же. Закрытый час
+        считается один раз и кладётся в память компактно (минута ×
+        корзины), текущий — каждый запрос. Час без записи считается
+        числом, а не нулём: `empty_hours`.
+        """
+        sym = sym if sym in self.books else self.symbols[0]
+        now = time.time()
+        try:
+            anchor = min(float(end), now) if end else now
+        except (TypeError, ValueError):
+            anchor = now
+        try:
+            want = int(max(1, float(hours)))
+        except (TypeError, ValueError):
+            want = 12
+        n = min(want, self.CANDLE_MAX_H)
+        hh = [datetime.fromtimestamp(anchor - i * 3600, timezone.utc)
+              .strftime("%Y-%m-%d-%H")
+              for i in range(n, -1, -1)]
+        cur = self.w.hour(now)
+        rows, snaps, empty = [], 0, 0
+        for h in hh:
+            key = (sym, h)
+            got = self.hcache.get(key)
+            if got is None or h == cur:
+                got = heat_minutes(read_hour(os.path.join(self.w.root, "book", sym), h))
+                if h != cur:
+                    self.hcache[key] = got
+                    # Потолок ниже, чем у свечей: час карты — сотни чисел
+                    # на минуту, а память машины делит с обучением S8
+                    # (порог 3 ГБ; 04.10 обучение откладывалось по памяти
+                    # шесть часов подряд). 300 часов — дюжина графиков.
+                    if len(self.hcache) > 300:
+                        for k in list(self.hcache)[:100]:
+                            self.hcache.pop(k, None)
+            if not got[1]:
+                empty += 1
+            rows += got[0]
+            snaps += got[1]
+        rows.sort(key=lambda r: r[0])
+        vals = sorted(v for r in rows for v in r[3] if v > 0)
+        return {"sym": sym, "dt": 60, "bin_bp": HEAT_BIN_BP, "levels": HEAT_LEVELS,
+                "rows": rows, "minutes": len(rows), "n_snaps": snaps,
+                "empty_hours": empty, "hours": len(hh), "asked_hours": want,
+                "capped": bool(want > n), "max_hours": self.CANDLE_MAX_H,
+                "end": anchor,
+                # Нормировка цвета — 95-й процентиль, не максимум: одна
+                # стена в десять раз выше остальных иначе гасила бы карту.
+                "max": (vals[-1] if vals else None),
+                "p95": (vals[int(0.95 * (len(vals) - 1))] if vals else None)}
 
     def rec_path(self):
         return os.path.join(self.w.root, "recount.json")
