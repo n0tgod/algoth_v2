@@ -104,7 +104,7 @@ def test_report_reconciles_the_branch_with_the_live_book():
 
     td = tempfile.mkdtemp()
     art = os.path.join(td, "art.json")
-    dep = int(R.DEPOSITS[1])
+    dep = int(R.DEP_MAIN)
     with open(art, "w", encoding="utf-8") as f:
         json.dump({"books": {f"safe:{dep}": {"all": {
             "n": 100, "usd": 250.0, "final": 0.025, "max_dd": -0.01}}}}, f)
@@ -138,7 +138,7 @@ def test_day_table_puts_both_branches_on_the_same_days():
     ПРОЧЕРК, а не ноль. Даты берутся объединением: показать только свои
     дни значило бы сравнивать разные окна.
     """
-    dep = int(R.DEPOSITS[1])
+    dep = int(R.DEP_MAIN)
     s = {"families": [{"name": "короткие книги h24", "keys": ["safe_h"],
                        "decisions": 100, "agreed": 30, "one_arm": 70,
                        "all": {f"safe_h:{dep}": {"days": [
@@ -168,15 +168,15 @@ def test_day_table_puts_both_branches_on_the_same_days():
 def test_report_names_both_branches_and_the_control():
     s = {"families": [{"name": "длинные книги", "keys": ["safe"],
                        "decisions": 100, "agreed": 30, "one_arm": 70,
-                       "all": {f"safe:{int(R.DEPOSITS[1])}": {
+                       "all": {f"safe:{int(R.DEP_MAIN)}": {
                            "n": 100, "usd": 50.0, "final": 0.005,
                            "max_dd": -0.01, "ratio": 0.5}},
-                       "agree": {f"safe:{int(R.DEPOSITS[1])}": {
+                       "agree": {f"safe:{int(R.DEP_MAIN)}": {
                            "n": 30, "usd": 40.0, "final": 0.004,
                            "max_dd": -0.005, "ratio": 0.8}},
                        "control": {"safe": [{"final": 0.003, "ratio": 0.4},
                                             {"final": 0.006, "ratio": 0.9}]}}],
-         "seeds": 2, "main_dep": int(R.DEPOSITS[1]),
+         "seeds": 2, "main_dep": int(R.DEP_MAIN),
          "computed_at": "2026-09-12 10:00"}
     txt = A.report(s)
     assert "обе руки" in txt and "согласие" in txt, txt[:400]

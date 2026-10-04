@@ -121,7 +121,7 @@ import sweep as SW                                           # noqa: E402
 import tournament as TNT                                     # noqa: E402
 
 # --- касса дневной формы: ЧУЖИЕ величины у своих хозяев -------------------
-BOOK_CAP = RB.DEPOSITS[1]                  # $10 000 — средний депозит книг
+BOOK_CAP = RB.DEP_MAIN                     # $10 000 — главный депозит книг
 BOOK_RULER = "optimal"                     # режим, чей билет берём
 ARMS = ("S", "G", "GP", "R")
 ARM_NAMES = {"S": "S структурные уровни", "G": "G σ-сетка (своя глубина)",

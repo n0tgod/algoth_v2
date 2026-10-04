@@ -450,7 +450,13 @@ def run_hold(log=print, now=None, launch=None, ctx=None, mem_limit=None, deps=No
     ctx = ctx if ctx is not None else CO.context()
     launch = IR.launches() if launch is None else launch
     views = closed_views(cache)
-    s = hold_robust(cache, views, ctx, launch, deps or R.DEPOSITS, now=now, log=log)
+    # Ось депозитов замера ОБЪЯВЛЕНА (1k/10k/100k) и не плывёт вместе с
+    # глобальным списком: $100 добавлен в конвейер 2026-10-04, а отчёт
+    # этого замера уже опубликован по трём — унаследованный список молча
+    # сменил бы оси опубликованного прогона.
+    s = hold_robust(cache, views, ctx, launch,
+                    deps or (R.DEP_PAGE, R.DEP_MAIN, R.DEP_BIG),
+                    now=now, log=log)
     s.update({"books": BOOK_KEYS, "axes": {"hold_h": list(HOLD_H)},
               "diag": {"records": len(cache), "closed": len(views)},
               "costs_error": (ctx or {}).get("error"),

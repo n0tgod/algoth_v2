@@ -671,7 +671,7 @@ def run(limit=None, src=None, log=print, legs=None):
         rows, n_ok, lost = common_sample(got["recs"][rk], log=log)
         sample[rk] = {"n": n_ok, "lost": lost}
         got["recs"][rk] = rows
-    dep = R.DEPOSITS[1]
+    dep = R.DEP_MAIN
     # Записи разворачиваются в словари по ОДНОЙ ячейке за раз: 72 ячейки
     # словарями — те же 5 ГБ, от которых ушли колонки.
     for book, rk in BOOK_RULER.items():

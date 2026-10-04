@@ -75,7 +75,7 @@ def test_one_account_takes_less_than_two_separate_ones():
     apart_s, cs, _o2, _l2 = RP.build_rows({"safe_h": shorts},
                                           now=T0 + 200 * H, keys=["safe_h"],
                                           log=lambda *a: None)
-    dep = int(R.DEPOSITS[0])
+    dep = int(R.DEP_PAGE)
     both = cells[RP._cell("pair_safe", dep)]
     sep_l = cl[RP._cell("safe", dep)]
     sep_s = cs[RP._cell("safe_h", dep)]
@@ -154,13 +154,17 @@ def test_the_share_never_dives_under_the_exchange_floor():
     касса отказала бы им «мельче минимума». На депозите $1k билеты и так
     стоят на полу — там доля не кусается, и это видно числом.
     """
-    small = R.DEPOSITS[0]
+    # Депозиты ЛИТЕРАЛАМИ, а не индексами списка: вставка нового
+    # депозита (например $100, 2026-10-04) сдвигала индексы, и «большим»
+    # становился $1k, у которого билет сам стоит на полу — тест падал на
+    # верных правилах. Смысл: на малом связывает пол, на большом — доля.
+    small = 1000.0
     sk = R.parts_of("pair_optimal")[1]
     got = R.ticket_in("pair_optimal", sk, small)
     assert got == R.floor_of(sk), (got, R.floor_of(sk))
     assert got > R.ticket(small, sk) * 0.25, (got, R.ticket(small, sk))
     # на $10k пол не мешает, и доля кусается полностью
-    big = R.DEPOSITS[1]
+    big = 10000.0
     assert abs(R.ticket_in("pair_optimal", sk, big)
                - 0.25 * R.ticket(big, sk)) < 1e-9
     print(f"ok  доля билета не ныряет под пол биржи: на ${int(small)} "
@@ -415,7 +419,7 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
         a = (s.get("ages") or {}).get("pair_safe") or {}
         assert a.get("applied") and a.get("kept") == n, a
         assert not s.get("error"), s.get("error")
-        dep = int(R.DEPOSITS[1])
+        dep = int(R.DEP_MAIN)
         b = s["books"][RP._cell("pair_safe", dep)]
         st = b["all"]
         assert st["n"] == 2 * n, st
@@ -441,8 +445,21 @@ def test_end_to_end_writes_its_own_journal_and_compares_with_two_accounts():
         sc = s["separate_costs"]
         # строк обеих книг по ВСЕМ депозитам, и все прошли через то же
         # ядро издержек (здесь рядов funding нет — тогда «применено»
-        # считает те, у кого измеримы комиссия и проскальзывание)
-        assert sc["n"] == 2 * n * len(R.DEPOSITS), sc
+        # считает те, у кого измеримы комиссия и проскальзывание).
+        # Ожидание — из САМИХ журналов книг, а не 2·n·депозиты: на $100
+        # (добавлен 2026-10-04) касса законно отказывает части позиций,
+        # и строк там меньше, чем позиций, — это свойство депозита
+        lrows, _ = R.read_journal(lj)
+        srows, _ = R.read_journal(sj)
+        assert sc["n"] == len(lrows) + len(srows), (sc, len(lrows), len(srows))
+        # на депозитах от $1k касса в этой фикстуре не связывает: по n
+        # строк у каждой книги на каждом; на $100 строк МЕНЬШЕ — отказы
+        big = [d for d in R.DEPOSITS if d >= R.DEP_PAGE]
+        n_small_l = len([r for r in lrows if int(r.get("dep")) == 100])
+        n_small_s = len([r for r in srows if int(r.get("dep")) == 100])
+        assert len(lrows) == n * len(big) + n_small_l, (len(lrows), n)
+        assert len(srows) == n * len(big) + n_small_s, (len(srows), n)
+        assert n_small_l < n or n_small_s < n, (n_small_l, n_small_s, n)
         sep = b["separate"]
         assert sep["safe"]["n"] == n and sep["safe_h"]["n"] == n, sep
         assert abs(st["usd"] - (sep["safe"]["usd"] + sep["safe_h"]["usd"])) \

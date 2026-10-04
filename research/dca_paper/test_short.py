@@ -147,10 +147,10 @@ def test_family_writes_its_own_journal_and_gates_the_aggressive_book():
         finally:
             R.RULERS["aggr_h"]["min_lev"] = was_gate
         # билет книги — из объявленного пика режима
-        b = s["books"][f"optimal_h:{int(R.DEPOSITS[1])}"]
+        b = s["books"][f"optimal_h:{int(R.DEP_MAIN)}"]
         # билет — С ДОЛЕЙ, объявленной для книги, а не «свой» билет режима
         assert b["ticket"] == R.ticket_in("optimal_h", "optimal_h",
-                                          R.DEPOSITS[1]), b["ticket"]
+                                          R.DEP_MAIN), b["ticket"]
         assert (b.get("dups") or {}).get("overlaps") == 0, b.get("dups")
         # кэш пригоден для следующего прогона: второй прогон не считает заново
         cache, why = S.read_cache(cp, log=lambda *a: None)
@@ -252,7 +252,7 @@ def test_age_rule_of_the_book_bites_and_counts_the_unknown_apart():
         assert a.get("applied") and a["kept"] == a["offered"], a
         assert R.min_age_days("safe_h") >= 7, R.MIN_AGE_DAYS
         assert R.FAMILY_RULES["h24"] >= 1, R.FAMILY_RULES
-        base = s["books"][f"safe_h:{int(R.DEPOSITS[1])}"]["all"]["n"]
+        base = s["books"][f"safe_h:{int(R.DEP_MAIN)}"]["all"]["n"]
         # те же ноги, но имена листнуты вчера — книга обязана опустеть
         young = {k: min(float(g["at"]) for g in legs) - 86400.0
                  for k in launch}

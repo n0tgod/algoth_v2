@@ -148,7 +148,7 @@ def test_probe_writes_nothing_into_the_book_journal():
         with open(lj, "w", encoding="utf-8") as f:
             f.write(json.dumps(_long_row("S1USDT", T0, 50.0)) + "\n")
         before = sorted(os.listdir(td))
-        s = PG.run(dep=R.DEPOSITS[1], long_cache=lc, short_cache=sc,
+        s = PG.run(dep=R.DEP_MAIN, long_cache=lc, short_cache=sc,
                    long_journal=lj, keys=["pair_safe"],
                    ctx={"error": "рядов нет"}, now=T0 + 200 * H,
                    log=lambda *a: None)

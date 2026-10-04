@@ -352,7 +352,7 @@ def test_run_end_to_end_synthetic():
         assert s["sample"][rk]["n"] == 20, s["sample"]
     want = 36 * 3 * len(R.DEPOSITS) + 36 * 3
     assert len(s["cells"]) == want, (len(s["cells"]), want)
-    dep = int(R.DEPOSITS[1])
+    dep = int(R.DEP_MAIN)
     ref = s["cells"][f"{D10.REF}|optimal_s|{dep}"]
     assert ref["taken"] == 2, ref                 # одно имя — одна позиция
     assert ref["gate"] == "rr2" and ref["net"] is False

@@ -24,7 +24,7 @@ import test_pair as TP                                        # noqa: E402
 H = 3600.0
 DAY = 86400.0
 T0 = TP.T0
-DEP = R.DEPOSITS[1]
+DEP = R.DEP_MAIN
 
 
 def _shorts(n=8, at=None):
@@ -111,7 +111,7 @@ def test_supply_separates_a_quiet_sheet_from_a_biting_rule():
     launch = {r["sym"]: noon - 200 * day for r in old_}
     launch.update({r["sym"]: noon + day - 1 * day for r in young})
     b = SA.supply(old_ + young, "safe_h", {"error": "рядов нет"}, launch,
-                  days=14, dep=R.DEPOSITS[1], now=noon + 40 * day)
+                  days=14, dep=R.DEP_MAIN, now=noon + 40 * day)
     days = b["days"]
     d1 = days[time.strftime("%Y-%m-%d", time.gmtime(noon))]
     d2 = days[time.strftime("%Y-%m-%d", time.gmtime(noon + day))]
@@ -128,7 +128,7 @@ def test_supply_separates_a_quiet_sheet_from_a_biting_rule():
     live["sched_end"] = live["at"] + 24 * H
     launch[live["sym"]] = noon - 300 * day
     b2 = SA.supply(old_ + young + [live], "safe_h", {"error": "рядов нет"},
-                   launch, days=14, dep=R.DEPOSITS[1],
+                   launch, days=14, dep=R.DEP_MAIN,
                    now=noon + 2 * day + 2 * H)
     d3 = b2["days"][time.strftime("%Y-%m-%d", time.gmtime(noon + 2 * day))]
     assert d3["предложено"] == 1 and d3["взято"] == 1, d3

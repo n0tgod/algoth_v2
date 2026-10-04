@@ -241,7 +241,7 @@ def test_run_end_to_end_synthetic():
     assert s["control_book"] == "optimal"
     assert s["sample"]["optimal_s"] == 20 and s["sample"]["optimal"] == 10, \
         s["sample"]
-    dep = int(R.DEPOSITS[-1])
+    dep = int(R.DEP_BIG)
     for k in s["books"]:
         assert len(s["cells"][k]) == 20 * len(R.DEPOSITS), k
     cb = s["cells"]["optimal_s"]

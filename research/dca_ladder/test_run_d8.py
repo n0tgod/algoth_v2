@@ -243,7 +243,7 @@ def test_run_end_to_end_synthetic():
     assert s["positions"] == 60, s["positions"]
     want = len(D8.CELLS) * len(D8.BOOK_RULER) * len(R.DEPOSITS)
     assert len(s["cells"]) == want, (len(s["cells"]), want)
-    dep = int(R.DEPOSITS[1])
+    dep = int(R.DEP_MAIN)
     ref = s["cells"][f"{D8.REF}|optimal|{dep}"]
     assert ref["taken"] > 0 and ref["pnl_median"] is not None, ref
     assert s["diag"].get("optimal"), s["diag"]

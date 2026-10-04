@@ -3832,7 +3832,7 @@ class Collector:
                 return {"error": f"артефакт не читается: {e}", "rows": []}
             self._dca_art = (mt, art)
         rk = ruler or DR.DEFAULT_RULER
-        d = int(dep or DR.DEPOSITS[0])
+        d = int(dep or DR.DEP_PAGE)
         cell = f"{rk}:{d}"
         live = (art.get("live") or {}).get(cell)
         if live is None:

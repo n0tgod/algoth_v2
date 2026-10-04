@@ -55,7 +55,7 @@ def test_verdict_follows_the_numbers_both_ways():
     Недогруженный режим обязан быть назван недогруженным, а сопоставимый
     — не обязан: фраза, которая печатается всегда, ничего не сообщает.
     """
-    dep = int(R.DEPOSITS[-1])
+    dep = int(R.DEP_BIG)
     rk = R.RULER_ORDER
     win = (float(T0), float(T0 + 10 * H))       # окно ОДНО на оба режима
     thin = {"deposits": [float(dep)], "rulers": list(rk), "book": {},

@@ -25,7 +25,7 @@ import test_pair as TP                                        # noqa: E402
 H = 3600.0
 DAY = 86400.0
 T0 = TP.T0
-DEP = R.DEPOSITS[1]
+DEP = R.DEP_MAIN
 
 
 def test_axis_lands_in_the_grid_of_the_replay():

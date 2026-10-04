@@ -7740,7 +7740,7 @@ def test_dca_open_pnl_is_marked_live_not_hourly():
         # прошлого «записано вперёд» не бывало бы вовсе — она
         # перестала бы выглядеть живой.
         t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
-        rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
+        rk, dep = DR.DEFAULT_RULER, int(DR.DEP_PAGE)
         pos = [{"sym": "AAAUSDT", "at": t0, "lev": 2.0, "margin": 25.0,
                 "avg": 2.0, "entry_px": 2.0, "depth": 2,
                 "mark_frac": -0.5, "mark_usd": -12.5,   # ЗАСТЫВШАЯ отметка
@@ -7826,7 +7826,7 @@ def test_dca_cut_position_carries_its_reason():
         # прошлого «записано вперёд» не бывало бы вовсе — она
         # перестала бы выглядеть живой.
         t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
-        rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
+        rk, dep = DR.DEFAULT_RULER, int(DR.DEP_PAGE)
         cut = [{"sym": "AAAUSDT", "at": t0, "lev": 1.0, "margin": 25.0,
                 "avg": 2.0, "entry_px": 2.0, "depth": 1, "state": "cut",
                 "mark_frac": 0.0, "mark_usd": 0.0,

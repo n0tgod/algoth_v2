@@ -436,14 +436,14 @@ def run(limit=None, src=None, log=print, legs=None):
         for key in (c[0] for c in CELLS):
             for dep in R.DEPOSITS:
                 cells[f"{key}|{book}|{int(dep)}"] = cell(rows[key], book, dep)
-        d = diagnosis(rows[REF], book, R.DEPOSITS[1])
+        d = diagnosis(rows[REF], book, R.DEP_MAIN)
         if d:
             diag[book] = d
         log(f"книга {book}: ячейки посчитаны")
     mid, ha, hb = halves(got["recs"]["optimal"])
     for key in (c[0] for c in CELLS):
-        half[f"A:{key}"] = cell(ha[key], "optimal", R.DEPOSITS[1])
-        half[f"B:{key}"] = cell(hb[key], "optimal", R.DEPOSITS[1])
+        half[f"A:{key}"] = cell(ha[key], "optimal", R.DEP_MAIN)
+        half[f"B:{key}"] = cell(hb[key], "optimal", R.DEP_MAIN)
     return {"cells": cells, "diag": diag, "half": half, "half_mid": mid,
             "keys": [c[0] for c in CELLS], "ref": REF,
             "book_cell": book_cell(),
