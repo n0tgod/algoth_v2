@@ -99,6 +99,68 @@ final class DCAModel: ObservableObject {
     }
 
     func setRuler(_ k: String) { rul = k; picked() }
+
+    // MARK: оси книги — сторона и режим
+    //
+    // Список книг даёт сервер (`rulers`), сторона — его поле `side`
+    // (`long` по умолчанию, `short`, `both` у общего счёта). Режим — ключ
+    // без приставки общего счёта и без хвоста короткой книги: `pair_safe`,
+    // `safe_h` и `safe` — одна линейка плеча «безопасная» на трёх сторонах.
+
+    static let sideOrder: [(String, String)] = [("both", "Both"), ("long", "Long"),
+                                                ("short", "Short")]
+    static let modeOrder = ["safe", "optimal", "aggr"]
+
+    static func side(of r: J) -> String {
+        if let s = r["side"].string, !s.isEmpty { return s }
+        let k = r["key"].string ?? ""
+        if k.hasPrefix("pair_") { return "both" }
+        if k.hasSuffix("_h") { return "short" }
+        return "long"
+    }
+
+    static func mode(of key: String) -> String {
+        var k = key
+        if k.hasPrefix("pair_") { k.removeFirst(5) }
+        if k.hasSuffix("_h") { k.removeLast(2) }
+        return k
+    }
+
+    var curSide: String {
+        rulers.first { $0["key"].string == rul }.map(Self.side) ?? "long"
+    }
+
+    /// Стороны, у которых есть книги, — в порядке Both / Long / Short.
+    var sides: [(String, String)] {
+        let have = Set(rulers.map(Self.side))
+        return Self.sideOrder.filter { have.contains($0.0) }
+    }
+
+    /// Режимы выбранной стороны: (ключ книги, название режима).
+    var modes: [(String, String)] {
+        let mine = rulers.filter { Self.side(of: $0) == curSide }
+        let named: [(String, String)] = mine.compactMap { r in
+            guard let k = r["key"].string else { return nil }
+            return (k, modeTitle(Self.mode(of: k)))
+        }
+        return named.sorted {
+            (Self.modeOrder.firstIndex(of: Self.mode(of: $0.0)) ?? 9)
+                < (Self.modeOrder.firstIndex(of: Self.mode(of: $1.0)) ?? 9)
+        }
+    }
+
+    /// Название режима — у длинной книги того же ключа; её нет — ключ.
+    func modeTitle(_ mode: String) -> String {
+        rulers.first { $0["key"].string == mode }?["title"].string ?? mode
+    }
+
+    /// Смена стороны держит режим: была «оптимальная» — останется она.
+    func setSide(_ side: String) {
+        let want = Self.mode(of: rul ?? "")
+        let cand = rulers.filter { Self.side(of: $0) == side }
+        let same = cand.first { Self.mode(of: $0["key"].string ?? "") == want }
+        if let k = (same ?? cand.first)?["key"].string { setRuler(k) }
+    }
     func setDep(_ k: String) { dep = k; picked() }
 
     private func picked() {

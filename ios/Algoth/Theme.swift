@@ -128,12 +128,14 @@ struct Chip: View {
     let title: String
     var count: String? = nil
     let on: Bool
+    /// Растянуть чип на ширину своей доли ряда (режимы — тремя равными).
+    var fill = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Text(title)
+                Text(title).lineLimit(1).minimumScaleFactor(0.75)
                 if let count {
                     Text(count).foregroundStyle(on ? Color.white.opacity(0.7)
                                                    : Theme.dim)
@@ -141,7 +143,8 @@ struct Chip: View {
             }
             .font(.system(size: 13, weight: on ? .semibold : .regular))
             .foregroundStyle(on ? Color.white : Theme.muted)
-            .padding(.horizontal, 14)
+            .frame(maxWidth: fill ? .infinity : nil)
+            .padding(.horizontal, fill ? 8 : 14)
             .padding(.vertical, 8)
             .background(on ? Color(hex: 0x4f46e5).opacity(0.25)
                         : Color.white.opacity(0.03))

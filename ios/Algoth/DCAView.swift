@@ -116,18 +116,22 @@ struct Filters: View {
     @ObservedObject var m: DCAModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(m.rulers.indices, id: \.self) { i in
-                        let r = m.rulers[i]
-                        let k = r["key"].string ?? ""
-                        Chip(title: r["title"].string ?? k, on: k == m.rul) {
-                            m.setRuler(k)
-                        }
+        VStack(alignment: .leading, spacing: 10) {
+            // 1. Сторона: общий счёт, только лонги, только шорты.
+            Picker("сторона", selection: Binding(get: { m.curSide },
+                                                 set: { m.setSide($0) })) {
+                ForEach(m.sides, id: \.0) { s in Text(s.1).tag(s.0) }
+            }
+            .pickerStyle(.segmented)
+            // 2. Режим плеча внутри стороны.
+            HStack(spacing: 8) {
+                ForEach(m.modes, id: \.0) { md in
+                    Chip(title: md.1, on: md.0 == m.rul, fill: true) {
+                        m.setRuler(md.0)
                     }
                 }
             }
+            // 3. Депозит и учёт бэктеста.
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(m.deposits, id: \.self) { x in
