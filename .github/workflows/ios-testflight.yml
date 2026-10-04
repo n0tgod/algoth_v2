@@ -88,6 +88,11 @@ jobs:
                 -authenticationKeyPath "$KEY"
                 -authenticationKeyID "$ASC_KEY_ID"
                 -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          # Архив — БЕЗ подписи. С автоподписью каждый прогон на чистом
+          # раннере заводил новый сертификат разработчика «Created via
+          # API», и на сборке 15 (04.10) аккаунт упёрся в лимит Apple.
+          # Подписывает только выгрузка — облачным сертификатом
+          # распространения, который в аккаунте не копится.
           ARCHIVE="$RUNNER_TEMP/Algoth.xcarchive"
           xcodebuild -project ios/Algoth.xcodeproj -scheme Algoth \
             -configuration Release -destination 'generic/platform=iOS' \
@@ -96,7 +101,9 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             ALGOTH_PAGE_KEY="$ALGOTH_PAGE_KEY" \
-            "${AUTH[@]}" archive | tail -n 40
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive | tail -n 40
           cp ios/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
           plutil -replace teamID -string "$APPLE_TEAM_ID" \
             "$RUNNER_TEMP/ExportOptions.plist"
