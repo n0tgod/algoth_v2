@@ -37,3 +37,11 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-10-04T21:27:18Z
+публикуется в ветку main:
+ jobs/done/heat-cycle.done           |  1 +
+ jobs/done/heat-cycle.log            | 16 +++++++++++++++
+ jobs/done/heat-status.log           | 39 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  5 +++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 62 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at f8d79043e6764743bc09c8114a3bdc37990192f7 but expected 5ef2b4251737887453c813aea99155c33809ca58
