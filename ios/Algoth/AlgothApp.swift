@@ -18,52 +18,27 @@ struct AlgothApp: App {
     }
 }
 
-/// Вкладки приложения. Модель одна на все: один опрос сервера, и сводка
-/// коротких книг описывает тот же ответ, что экран DCA.
+/// Вкладки приложения. Модель одна на все: один опрос сервера, и рейтинг
+/// описывает тот же ответ, что экран DCA.
 struct RootTabs: View {
     @StateObject private var m = DCAModel()
+    @State private var tab = "dca"
 
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             DCAView(m: m)
                 .tabItem { Label("DCA", systemImage: "chart.line.uptrend.xyaxis") }
-            ShortBooksScreen(m: m)
-                .tabItem { Label("Шорты h24", systemImage: "arrow.down.right.circle") }
+                .tag("dca")
+            RatingScreen(m: m) { rul, dep in
+                // Строка рейтинга открывает свою книгу на экране DCA.
+                m.dep = dep
+                m.setRuler(rul)
+                tab = "dca"
+            }
+            .tabItem { Label("Рейтинг", systemImage: "list.number") }
+            .tag("rating")
         }
         .tint(Theme.accent)
         .task { await m.run() }
-    }
-}
-
-/// Сводка коротких книг h24 — все режимы и депозиты разом.
-struct ShortBooksScreen: View {
-    @ObservedObject var m: DCAModel
-    @Environment(\.horizontalSizeClass) private var hsc
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    if let f = m.failure {
-                        FailureCard(failure: f, hasData: m.data != nil,
-                                    loadedAt: m.loadedAt) { Task { await m.load() } }
-                    }
-                    if let d = m.data {
-                        ShortBooks(sh: d["short"])
-                    } else if m.failure == nil {
-                        HStack { Spacer(); ProgressView().tint(.white).padding(40); Spacer() }
-                    }
-                }
-                .padding(.horizontal, hsc == .regular ? 24 : 12)
-                .padding(.vertical, 12)
-                .frame(maxWidth: 1500)
-                .frame(maxWidth: .infinity)
-            }
-            .refreshable { await m.load() }
-            .background(Theme.bg.ignoresSafeArea())
-            .navigationTitle("Шорты h24")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Theme.surface, for: .navigationBar)
-        }
     }
 }
