@@ -8456,7 +8456,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L35 `version_of(py, name)` — Версия установленного дистрибутива; None — не установлен.
 - L45 `main(argv=None, pip=PIP, py=PY, log=print)`
 
-## tools/watchdog_book.sh · 484 строк
+## tools/watchdog_book.sh · 488 строк
 
 Сторож сбора: поднимает умершее и перезапускает зависшее.
 
