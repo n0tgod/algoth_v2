@@ -1,4 +1,16 @@
 import SwiftUI
+import UIKit
+
+/// Лёгкий отклик на нажатие кнопки или переключателя — один на всё
+/// приложение. На iPad без вибромотора молчит сам.
+@MainActor
+enum Haptic {
+    private static let gen = UIImpactFeedbackGenerator(style: .light)
+    static func tap() {
+        gen.impactOccurred(intensity: 0.7)
+        gen.prepare()
+    }
+}
 
 /// Палитра страницы DCA (макеты владельца): тот же фон, карточки, неон.
 enum Theme {
@@ -133,7 +145,7 @@ struct Chip: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button { Haptic.tap(); action() } label: {
             HStack(spacing: 6) {
                 Text(title).lineLimit(1).minimumScaleFactor(0.75)
                 if let count {

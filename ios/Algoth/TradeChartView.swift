@@ -463,7 +463,7 @@ struct TradeChartScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                Button { dismiss() } label: {
+                Button { Haptic.tap(); dismiss() } label: {
                     Image(systemName: "xmark").font(.system(size: 15, weight: .semibold))
                         .frame(width: 34, height: 34)
                 }
@@ -473,7 +473,7 @@ struct TradeChartScreen: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(TradeChartModel.frames, id: \.0) { fr in
-                            Button(fr.1) { cm.setFrame(fr.0) }
+                            Button(fr.1) { Haptic.tap(); cm.setFrame(fr.0) }
                                 .font(.system(size: 13, weight: cm.tf == fr.0 ? .bold : .regular))
                                 .foregroundStyle(cm.tf == fr.0 ? Color.white : Theme.muted)
                                 .padding(.horizontal, 10).padding(.vertical, 6)
@@ -484,6 +484,7 @@ struct TradeChartScreen: View {
                 }
                 .fixedSize(horizontal: true, vertical: false)
                 Button {
+                    Haptic.tap()
                     withAnimation(.easeOut(duration: 0.2)) { cm.fitTrade() }
                 } label: {
                     Image(systemName: "scope").frame(width: 34, height: 34)

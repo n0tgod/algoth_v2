@@ -24,7 +24,7 @@ struct DaysSection: View {
                     if all.count > DCAModel.daysHead {
                         Button(m.daysAll ? "свернуть до \(DCAModel.daysHead)"
                                          : "все \(all.count)") {
-                            withAnimation { m.daysAll.toggle() }
+                            Haptic.tap(); withAnimation { m.daysAll.toggle() }
                         }
                         .buttonStyle(.bordered).controlSize(.small)
                     }
@@ -119,7 +119,7 @@ struct PositionsSection: View {
                 Cap(text: "позиции книги — \(total)" + (cut ? " (хвост журнала)" : ""))
                 Spacer()
                 if cut {
-                    Button("все \(tot!)") { m.requestFull() }
+                    Button("все \(tot!)") { Haptic.tap(); m.requestFull() }
                         .buttonStyle(.bordered).controlSize(.small)
                 }
             }
@@ -157,7 +157,7 @@ struct PositionsSection: View {
                           spacing: 10) {
                     ForEach(win) { p in
                         PosCard(p: p, mark: mark(for: p))
-                            .onTapGesture { onPick(p) }
+                            .onTapGesture { Haptic.tap(); onPick(p) }
                     }
                 }
                 if pages > 1 { pager(total: total, pages: pages, pg: pg, from: from) }
@@ -172,12 +172,12 @@ struct PositionsSection: View {
                 Chip(title: String(n), on: m.size == n) { m.size = n; m.page = 0 }
             }
             Spacer()
-            Button { m.page = max(0, pg - 1) } label: { Image(systemName: "chevron.left") }
+            Button { Haptic.tap(); m.page = max(0, pg - 1) } label: { Image(systemName: "chevron.left") }
                 .disabled(pg <= 0)
             Text("\(total == 0 ? 0 : from + 1)–\(min(total, from + m.size)) из \(total)")
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(Theme.muted)
-            Button { m.page = pg + 1 } label: { Image(systemName: "chevron.right") }
+            Button { Haptic.tap(); m.page = pg + 1 } label: { Image(systemName: "chevron.right") }
                 .disabled(pg >= pages - 1)
         }
     }

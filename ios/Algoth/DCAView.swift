@@ -42,7 +42,7 @@ struct DCAView: View {
             .toolbarBackground(Theme.surface, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showIntro = true } label: {
+                    Button { Haptic.tap(); showIntro = true } label: {
                         Image(systemName: "info.circle")
                     }
                     .disabled(m.data?["present"].truthy != true)
@@ -105,7 +105,7 @@ struct FailureCard: View {
                 Note(text: "Ниже — числа прошлого ответа, "
                      + F.hhmm(t.timeIntervalSince1970) + ".", tone: .bad)
             }
-            Button("Повторить", action: retry).buttonStyle(.borderedProminent)
+            Button("Повторить") { Haptic.tap(); retry() }.buttonStyle(.borderedProminent)
         }
     }
 }
@@ -118,7 +118,7 @@ struct Filters: View {
         VStack(alignment: .leading, spacing: 10) {
             // 1. Сторона: общий счёт, только лонги, только шорты.
             Picker("сторона", selection: Binding(get: { m.curSide },
-                                                 set: { m.setSide($0) })) {
+                                                 set: { Haptic.tap(); m.setSide($0) })) {
                 ForEach(m.sides, id: \.0) { s in Text(s.1).tag(s.0) }
             }
             .pickerStyle(.segmented)
@@ -140,7 +140,7 @@ struct Filters: View {
             // 4. Учёт: весь счёт с пересчётом прошлого или только записанное
             // вперёд. Умолчание — с бэктестом: это одна кривая книги.
             Picker("учёт", selection: Binding(get: { m.grp },
-                                              set: { m.grp = $0; m.page = 0 })) {
+                                              set: { if m.grp != $0 { Haptic.tap() }; m.grp = $0; m.page = 0 })) {
                 Text("с бэктестом").tag("all")
                 Text("без бэктеста").tag("fwd")
             }
@@ -364,7 +364,7 @@ struct BottomBar: View {
                     .foregroundStyle(Theme.ink)
             }
             Spacer()
-            Button("журнал", action: jump).buttonStyle(.bordered).controlSize(.small)
+            Button("журнал") { Haptic.tap(); jump() }.buttonStyle(.bordered).controlSize(.small)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

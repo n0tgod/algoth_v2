@@ -115,7 +115,8 @@ struct RatingScreen: View {
                     Chip(title: F.dollars(x), on: k == curDep, fill: true) { dep = k }
                 }
             }
-            Picker("учёт", selection: $grp) {
+            Picker("учёт", selection: Binding(get: { grp },
+                                              set: { if grp != $0 { Haptic.tap() }; grp = $0 })) {
                 Text("с бэктестом").tag("all")
                 Text("без бэктеста").tag("fwd")
             }
@@ -155,7 +156,7 @@ struct RatingScreen: View {
             }
             VStack(spacing: 8) {
                 ForEach(Array(rs.enumerated()), id: \.element.id) { i, r in
-                    Button { open(r.id, curDep ?? "") } label: {
+                    Button { Haptic.tap(); open(r.id, curDep ?? "") } label: {
                         RatingRow(place: r.n > 0 ? i + 1 : nil, r: r, by: by)
                     }
                     .buttonStyle(.plain)

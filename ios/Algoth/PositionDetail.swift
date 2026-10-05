@@ -36,7 +36,7 @@ struct PositionDetail: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Готово") { dismiss() }
+                    Button("Готово") { Haptic.tap(); dismiss() }
                 }
             }
         }
@@ -48,7 +48,7 @@ struct PositionDetail: View {
             HStack {
                 Cap(text: "график позиции")
                 Spacer()
-                Button { full = true } label: {
+                Button { Haptic.tap(); full = true } label: {
                     Label("на весь экран", systemImage: "arrow.up.left.and.arrow.down.right")
                         .font(.system(size: 12))
                 }
@@ -56,7 +56,7 @@ struct PositionDetail: View {
             ChartBody(cm: cm, interactive: false)
                 .frame(height: 300)
                 .contentShape(Rectangle())
-                .onTapGesture { full = true }
+                .onTapGesture { Haptic.tap(); full = true }
         }
         .padding(12)
         .background(Theme.chip)
@@ -171,7 +171,7 @@ struct IntroView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Готово") { dismiss() }
+                    Button("Готово") { Haptic.tap(); dismiss() }
                 }
             }
         }
