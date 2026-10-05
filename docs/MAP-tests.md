@@ -4454,6 +4454,13 @@ X1: исполнитель против подставной биржи.
 
 - L16 `check()`
 
+## tools/test_restart_book.sh · 79 строк
+
+Проверка `tools/restart_book.sh --keep-cycle`: перезапуск сборщика по
+
+- L44 `check()`
+- L45 `run()`
+
 ## tools/test_safety.sh · 110 строк
 
 Проверка проверки: safety_check обязан кусаться на каждом случае,
