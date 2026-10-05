@@ -4401,14 +4401,15 @@ X1: исполнитель против подставной биржи.
 - L27 `test_preset_cycle_matches_milestones()`
 - L40 `test_main_without_file()`
 
-## tools/test_memtop.py · 61 строк
+## tools/test_memtop.py · 73 строк
 
 Проверка `tools/memtop.py`: разбор `ps`, хвост лога, отсутствующий файл.
 
 - L11 `test_ps_rows_sorts_by_rss_and_converts_units()`
 - L25 `test_ps_rows_cuts_args()`
 - L30 `test_tail_lines_and_missing()`
-- L42 `test_main_runs_without_server_logs(capsys=None)`
+- L42 `test_tail_zero_prints_nothing_not_everything()`
+- L54 `test_main_runs_without_server_logs(capsys=None)`
 
 ## tools/test_project_map.py · 246 строк
 

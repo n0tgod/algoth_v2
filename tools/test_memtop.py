@@ -39,6 +39,18 @@ def test_tail_lines_and_missing():
         assert lines is None and note.startswith("не читается")
 
 
+def test_tail_zero_prints_nothing_not_everything():
+    # Дефект 04.10: `--tail 0` печатал ВЕСЬ лог (срез `[-0:]` — это весь
+    # список), и таблица памяти тонула в тысячах строк журнала обучений.
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "a.log")
+        with open(p, "w") as f:
+            f.write("\n".join(f"строка {i}" for i in range(1000)) + "\n")
+        lines, note = M.tail_lines(p, 0)
+        assert lines == [], f"ноль строк хвоста обязан быть нулём, а не {len(lines)}"
+        assert note == "строк всего 1000", note
+
+
 def test_main_runs_without_server_logs(capsys=None):
     # На стенде логов нет: каждый источник печатает «(файла нет)», а не падает.
     import io

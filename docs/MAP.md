@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 521, строк: 232207, каталогов: 86.
+Модулей кода: 521, строк: 232226, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -808,7 +808,7 @@
 - `jobs.sh` · 300 строк — Очередь заданий: сессия кладёт задание в git, сервер его выполняет.
 - `loggrep.py` · 94 строк — Строки лога по образцу, счётом по дням — через очередь заданий.
 - `logtail.py` · 88 строк — Выдержка логов сервера за окно времени — через очередь заданий.
-- `memtop.py` · 138 строк — Кто держит память на сервере — через очередь заданий.
+- `memtop.py` · 145 строк — Кто держит память на сервере — через очередь заданий.
 - `probe_cli_models.py` · 56 строк — Какие модели принимает CLI НА ЭТОЙ машине.
 - `project_map.py` · 546 строк — Карта кода проекта — из самих файлов, не руками.
 - `publish.sh` · 169 строк — Опубликовать артефакты прогона: отчёты и сводки — в git.
@@ -828,4 +828,4 @@
 - `unstick_publish.py` · 77 строк — Разморозить публикацию: вернуть разрезанный журнал к версии git.
 - `venv_add.py` · 75 строк — Установка пакетов в окружение сервера через очередь заданий.
 - `watchdog_book.sh` · 442 строк — Сторож сбора: поднимает умершее и перезапускает зависшее.
-- тесты: `test_disk_alarm.py` (64), `test_jobs.sh` (238), `test_loggrep.py` (53), `test_memtop.py` (61), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)
+- тесты: `test_disk_alarm.py` (64), `test_jobs.sh` (238), `test_loggrep.py` (53), `test_memtop.py` (73), `test_project_map.py` (246), `test_record_ship.py` (164), `test_resolve_maps.sh` (77), `test_safety.sh` (110), `test_spill_book.py` (226), `test_stop_run.py` (49), `test_swap_on.py` (47), `test_unstick.py` (87), `test_venv_add.py` (64), `test_watchdog_pair.sh` (49), `test_watchdog_ship.sh` (49)

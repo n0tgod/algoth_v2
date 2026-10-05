@@ -76,12 +76,19 @@ def ps_rows(lines, top=PS_TOP, width=ARGS_W):
 
 
 def tail_lines(path, n):
+    """Последние `n` строк файла и заметка о его длине.
+
+    `n = 0` — ноль строк, а не весь файл: срез `got[-0:]` равен `got[0:]`,
+    и `--tail 0` печатал каждый лог целиком — ровно тот вызов, которым
+    хотели сберечь место под таблицу памяти (04.10).
+    """
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             got = f.readlines()
     except OSError as e:
         return None, f"не читается: {e}"
-    return [ln.rstrip() for ln in got[-n:]], f"строк всего {len(got)}"
+    kept = got[-n:] if n > 0 else []
+    return [ln.rstrip() for ln in kept], f"строк всего {len(got)}"
 
 
 def main(argv=None):

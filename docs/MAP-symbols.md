@@ -8210,7 +8210,7 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L30 `in_window(line, a, b)`
 - L42 `main(argv=None)`
 
-## tools/memtop.py · 138 строк
+## tools/memtop.py · 145 строк
 
 Кто держит память на сервере — через очередь заданий.
 
@@ -8221,8 +8221,8 @@ Z3 — скрин по лесенке: снятие, смерть и воспо�
 - L40 `ARGS_W = 150`
 - L43 `sh(cmd, timeout=60)` — stdout команды строками; ошибка — одной строкой с причиной.
 - L55 `ps_rows(lines, top=PS_TOP, width=ARGS_W)` — Строки `ps -eo pid,ppid,rss,etimes,args` → (pid, ppid, МБ, возраст, args).
-- L78 `tail_lines(path, n)`
-- L87 `main(argv=None)`
+- L78 `tail_lines(path, n)` — Последние `n` строк файла и заметка о его длине.
+- L94 `main(argv=None)`
 
 ## tools/probe_cli_models.py · 56 строк
 
