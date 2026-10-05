@@ -107,8 +107,8 @@ def run(limit=None, src=None, log=print, legs_=None, ctx=None, now=None,
         st = G.cell_stats(G.pack(got.get("recs") or {}, key), ctx,
                           launch, now=now, log=lambda *a: None)
         out["cells"][k] = st
-        ref = st.get(f"safe_h:{int(R.DEPOSITS[1])}") or {}
-        log(f"цель ×{m:g}: безопасная ${int(R.DEPOSITS[1])} → "
+        ref = st.get(f"safe_h:{int(R.DEP_MAIN)}") or {}
+        log(f"цель ×{m:g}: безопасная ${int(R.DEP_MAIN)} → "
             f"{ref.get('usd')} $, просадка {ref.get('max_dd')}, "
             f"тейков {(ref.get('exits') or {}).get('тейк', {}).get('n', 0)} "
             f"из {ref.get('n')}")

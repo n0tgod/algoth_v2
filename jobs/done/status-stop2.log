@@ -1,0 +1,54 @@
+== задание status-stop2 ==
+строка: status
+начало: 2026-10-03T09:50:50Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   73G   72G  51% /
+/dev/sdb        147G   78G   62G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3414184 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+2733787   25246 .venv/bin/python research/b1_book/collect.py --http 8765
+2782876    6048 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+9 (подробно: run tools/memtop.py)
+--- идущие прогоны ---
+2794589 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/stop2-f10.log research/dca_paper/short_stop.py --floor f10
+2794593 .venv/bin/python research/dca_paper/short_stop.py --floor f10
+2794598 bash -c                      log="$1"; shift                     .venv/bin/python "$@" >> "$log" 2>&1                     rc=$?                     echo "конец: $(date -u +%FT%TZ), код $rc" >> "$log"                     # В git уходит ХВОСТ: зонд печатает прогресс                     # тысячами строк, и целиком он там не нужен.                     tail -n 400 "$log" > "$log.t" && mv "$log.t" "$log"                     tools/publish.sh "job: $(basename "$log" .log)" \                         >> "$log" 2>&1                  _ jobs/done/stop2-f75.log research/dca_paper/short_stop.py --floor f75
+2794602 .venv/bin/python research/dca_paper/short_stop.py --floor f75
+--- статус сбора ---
+{"t": 1791021048.6, "uptime_sec": 25243.9, "messages": 89291926, "trades": 8212731, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 18718117, "snapshot_errors": 0, "last_snap_age_sec": 0.7, "snap_pass_sec": 0.299, "writes": {"book": 18718117, "trades": 8212724, "raw": 364013, "liq": 2451, "metrics": 64989}, "write_age_sec": {"book": 0.7, "trades": 0.2, "raw": 0.1, "liq": 4.8, "metrics": 101.1}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2976, "ask": 0.2977, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004028, "ask": 0.0004029, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1148, "ask": 0.115, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.00836, "as
+--- живой исполнитель ---
+{
+  "at_ms": 1791021047720,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-03T09:50:50Z
+публикуется в ветку main:
+ jobs/done/size-safe.log             |  7 +++
+ jobs/done/status-stop2.log          | 42 ++++++++++++++++++
+ jobs/done/stop2-f10.log             | 88 +++++++++++++++++++++++++++++++++++++
+ jobs/done/stop2-f75.log             | 83 ++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  2 +
+ research/s8_loop/out/day_brake.json |  2 +-
+ 6 files changed, 223 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   b3440a09..c0eb7eed  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

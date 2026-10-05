@@ -114,7 +114,7 @@ def test_control_samples_each_book_to_its_own_size():
 
 
 def test_report_names_axes_thresholds_and_the_control():
-    dep = int(R.DEPOSITS[1])
+    dep = int(R.DEP_MAIN)
     ax = {"name": "запас до пола", "keys": ["safe_h"],
           "axis": [{"key": "g05", "value": 0.05}],
           "base": {f"safe_h:{dep}": {"n": 600, "usd": 1000.0,

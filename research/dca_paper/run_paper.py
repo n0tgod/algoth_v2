@@ -1294,7 +1294,7 @@ def report(s):
                          f"{len(op.get('cut') or [])} |")
         L.append("")
     # --- разбивка по суткам: средний депозит, три режима рядом ----------
-    mid = R.DEPOSITS[len(R.DEPOSITS) // 2]
+    mid = R.DEP_MAIN
     rows_by = {}
     for rk in R.RULER_ORDER:
         st = ((books.get(_cell(rk, mid)) or {}).get("all") or {})

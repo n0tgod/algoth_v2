@@ -105,9 +105,9 @@ def run(floor_key, limit=None, src=None, log=print, legs_=None, ctx=None,
         D2.FLOOR_FRAC = was
     st = G.cell_stats(G.pack(got.get("recs") or {}, CELL[0]), ctx, launch,
                       now=now, log=lambda *a: None)
-    ref = st.get(f"safe_h:{int(R.DEPOSITS[1])}") or {}
+    ref = st.get(f"safe_h:{int(R.DEP_MAIN)}") or {}
     ex = ref.get("exits") or {}
-    log(f"пол {val:g}: безопасная ${int(R.DEPOSITS[1])} → {ref.get('usd')} $, "
+    log(f"пол {val:g}: безопасная ${int(R.DEP_MAIN)} → {ref.get('usd')} $, "
         f"просадка {ref.get('max_dd')}, полом {ex.get('пол', {}).get('n', 0)}, "
         f"ликвидаций {ex.get('ликвидация', {}).get('n', 0)} из {ref.get('n')}")
     return {"cells": {floor_key: st}, "cell": CELL[0], "legs": len(legs_),

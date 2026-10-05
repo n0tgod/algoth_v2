@@ -51,6 +51,9 @@ OUT = os.path.join(HERE, "out")
 KEYS = ["fence:struct:t2", "fence:none:t2", "c3:none:t2", "c2:none:t2",
         "c1:none:t2", "c3:struct:t2", "c1:struct:t2", "fence:none:t1",
         "c1:none:t1"]
+# Ось депозитов замера объявлена и не плывёт вместе с конвейером:
+# $100 добавлен туда 2026-10-04, отчёт D12 опубликован по трём.
+DEPS = (R.DEP_PAGE, R.DEP_MAIN, R.DEP_BIG)
 BOOKS = ("optimal_s", "safe_s")
 PEAK_MARGIN = float(R.PEAK_MARGIN)          # тот же запас, что у книг
 
@@ -88,7 +91,7 @@ def run(arm="nn", hold_h=None, limit=None, src=None, log=print, legs=None):
         got = D10.collect(src=src, log=log, legs=legs)
         out = {"signal": {"book": "h24", "arm": arm, "hold_h": D10.D2.HOLD_H,
                           "ref_gate": D11.REF_GATE, "legs": len(legs)},
-               "keys": KEYS, "books": list(BOOKS), "deposits": R.DEPOSITS,
+               "keys": KEYS, "books": list(BOOKS), "deposits": list(DEPS),
                "peak_margin": PEAK_MARGIN, "cells": {}, "peaks": {},
                "window": got["window"], "positions": got["positions"],
                "sample": {}}
@@ -107,7 +110,7 @@ def run(arm="nn", hold_h=None, limit=None, src=None, log=print, legs=None):
                 keep, _sk = D10.D6.one_per_name(gated)
                 peak = peak_open(keep)
                 out["peaks"][f"{key}|{book}"] = peak
-                for dep in R.DEPOSITS:
+                for dep in DEPS:
                     sh = own_share(dep, peak, book)
                     for net in (False, True):
                         tag = "net" if net else "gross"
@@ -120,7 +123,7 @@ def run(arm="nn", hold_h=None, limit=None, src=None, log=print, legs=None):
                             "own_ticket": (round(sh * dep, 2) if sh else None),
                             "pool_ticket": round(R.ticket(dep, book), 2)}
                 # половины — по времени входа, при СВОЁМ билете, $10k
-                dep = R.DEPOSITS[1]
+                dep = R.DEP_MAIN
                 sh = own_share(dep, peak, book)
                 ts = sorted(float(r["at"]) for r in rows)
                 if ts and sh is not None:

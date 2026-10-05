@@ -124,7 +124,7 @@ def test_end_to_end_reads_launches_and_writes_no_journal():
                        for k, v in launch.items()}, f)
         got = PA.launches(p)
         assert set(got) == set(launch), got
-        s = PA.run(dep=R.DEPOSITS[1], long_cache=lc, short_cache=sc,
+        s = PA.run(dep=R.DEP_MAIN, long_cache=lc, short_cache=sc,
                    keys=["pair_safe"], days=(0, 30), seeds=3,
                    launch=got, ctx={"error": "рядов нет"},
                    now=T0 + 200 * H, log=lambda *a: None)

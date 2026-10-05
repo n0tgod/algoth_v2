@@ -1,0 +1,27 @@
+== задание heat-cycle ==
+строка: run tools/loggrep.py --preset cycle
+начало: 2026-10-04T21:27:18Z
+запускаю: .venv/bin/python tools/loggrep.py --preset cycle
+usage: loggrep.py [-h] --file {collect,daily,pair,ship,short,train,watchdog}
+                  [--pattern PATTERN] [--preset {cycle,mem,oom,raise}]
+                  [--days DAYS] [--last LAST]
+loggrep.py: error: the following arguments are required: --file
+конец: 2026-10-04T21:27:18Z, код 2
+публикуется в ветку main:
+ jobs/done/heat-cycle.done           |  1 +
+ jobs/done/heat-cycle.log            |  9 +++++++++
+ jobs/done/heat-status.log           | 12 ++++++++++++
+ jobs/poke.log                       |  5 +++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 28 insertions(+), 1 deletion(-)
+fatal: Unable to create '/root/algoth_v2/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+To github.com:n0tgod/algoth_v2.git
+   5ef2b425..f8d79043  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

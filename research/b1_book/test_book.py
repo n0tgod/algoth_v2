@@ -11,6 +11,7 @@
     python3 research/b1_book/test_book.py
 """
 
+import calendar
 import json
 import os
 import shutil
@@ -1833,6 +1834,93 @@ def test_candles_window_can_end_in_the_past():
               and cap["hours"] == cap["max_hours"] + 1,
               str({k: cap[k] for k in ("hours", "asked_hours", "capped",
                                        "max_hours")}))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_heat_grid_from_book_snapshots():
+    """Тепловая карта лесенки: клетка — средний покоящийся $ за минуту в корзине цены.
+
+    Настоящим кодом на настоящих файлах записи книги. Три минуты снимков с
+    лесенкой вокруг 100, одна из них с половиной снимков (дыра в записи):
+    среднее НА СНИМОК не зависит от их числа, иначе дыра читалась бы как
+    пустой стакан. Корзина — 5 б.п. опорной цены, округлённые до двух
+    значащих (0.05); минута без снимков в ответ не входит; окно в прошлом
+    без записи — пусто, и часы без записи названы числом; потолок окна —
+    потолок свечей (карта лежит под теми же барами); страница несёт
+    выключатель карты и её подпись числом.
+    """
+    import math
+    import shutil
+    import tempfile
+    import time as _time
+    import collect as C
+    import web
+
+    root = tempfile.mkdtemp()
+    try:
+        now = int(_time.time())
+        a = C.Collector(["TEST"], [], root, lambda m: None, paper=True)
+        m0 = (now // 60) * 60 - 600
+
+        def snap(ts, bid=99.95, ask=100.05, qb=10.0, qa=20.0):
+            return {"s": "TEST", "ts": int(ts * 1000), "t": round(ts, 3), "u": 1,
+                    "bid": bid, "ask": ask, "bid_sz": qb, "ask_sz": qa, "upd": 1,
+                    "b": [[bid, qb], [round(bid - 0.05, 2), qb], [round(bid - 0.10, 2), qb]],
+                    "a": [[ask, qa], [round(ask + 0.05, 2), qa]],
+                    "reach_b": 10.0, "reach_a": 5.0}
+
+        for i in range(60):
+            a.w.write("book", "TEST", snap(m0 + i), ts=m0 + i)
+        for i in range(30):                              # дыра: половина снимков
+            a.w.write("book", "TEST", snap(m0 + 60 + i), ts=m0 + 60 + i)
+        for i in range(60):                              # лесенка ушла на 1 % вверх
+            a.w.write("book", "TEST", snap(m0 + 120 + i, bid=100.95, ask=101.05),
+                      ts=m0 + 120 + i)
+        a.w.close()
+
+        h = a.heat_files("TEST", hours=1, end=now)
+        rows = {r[0]: r for r in h["rows"]}
+        check("карта: три минуты с записью, минут без снимков в ответе нет",
+              sorted(rows) == [m0, m0 + 60, m0 + 120] and h["minutes"] == 3
+              and h["n_snaps"] == 150,
+              str((sorted(rows), h["minutes"], h["n_snaps"])))
+        dp = h["rows"][0][1] if h["rows"] else None
+        check("корзина — 5 б.п. опорной цены, округлённые до двух значащих",
+              dp is not None and abs(dp - 0.05) < 1e-12, str(dp))
+
+        def cell(r, px):
+            k = int(math.floor(px / r[1] + 1e-9))
+            j = k - r[2]
+            return r[3][j] if 0 <= j < len(r[3]) else None
+
+        r0 = rows.get(m0) or [m0, 0.05, 0, []]
+        check("клетка бида — средний покоящийся $ на снимок (99.95 × 10)",
+              cell(r0, 99.95) == 1000, str(cell(r0, 99.95)))
+        check("клетка аска — 100.05 × 20 и выше бида",
+              cell(r0, 100.05) == 2001 and 100.05 > 99.95, str(cell(r0, 100.05)))
+        check("дыра в снимках не делает минуту тише: среднее на снимок",
+              rows.get(m0 + 60) is not None and cell(rows[m0 + 60], 99.95) == cell(r0, 99.95),
+              str(cell(rows[m0 + 60], 99.95) if rows.get(m0 + 60) else None))
+        r2 = rows.get(m0 + 120) or [m0, 0.05, 0, []]
+        check("сдвиг лесенки на 1 % уводит клетки в другие корзины",
+              cell(r2, 100.95) == 1010 and cell(r2, 99.95) in (None, 0),
+              str((cell(r2, 100.95), cell(r2, 99.95))))
+        check("нормировка цвета — p95 не выше максимума, оба числом",
+              h["p95"] is not None and h["max"] is not None and h["max"] >= h["p95"],
+              str((h["p95"], h["max"])))
+        old = a.heat_files("TEST", hours=1, end=m0 - 7200)
+        check("окно в прошлом без записи — пусто, часы без записи названы числом",
+              old["rows"] == [] and old["empty_hours"] == old["hours"] and old["p95"] is None,
+              str((old["minutes"], old["empty_hours"], old["hours"])))
+        cap = a.heat_files("TEST", hours=500, end=now)
+        check("потолок окна карты — потолок свечей",
+              cap["capped"] and cap["hours"] == C.Collector.CANDLE_MAX_H + 1
+              and cap["max_hours"] == C.Collector.CANDLE_MAX_H,
+              str((cap["capped"], cap["hours"])))
+        check("на графике есть выключатель карты, подпись и запрос /heat",
+              'id="heaton"' in web.CHART and 'id="heatcap"' in web.CHART
+              and "/heat?k=" in web.CHART, "")
     finally:
         shutil.rmtree(root, ignore_errors=True)
 
@@ -4147,7 +4235,7 @@ def test_collector_keeps_its_public_methods():
 
     need = ["run", "sit_watch", "_sit_scan", "sampler", "statuser",
             "reporter", "diskstat", "metrics_poll", "model_state",
-            "model_trades", "candles_files", "model_marks"]
+            "model_trades", "candles_files", "heat_files", "model_marks"]
     miss = [m for m in need if not hasattr(C.Collector, m)]
     check("точки входа сборщика на месте", not miss, str(miss))
     import inspect
@@ -5366,12 +5454,21 @@ def test_volatility_splits_results_by_regime():
                 ("2026-08-01-11", "BUSDT", -40.0),
                 ("2026-08-02-12", "AUSDT", 90.0),
                 ("2026-09-09-09", "BUSDT", 10.0)]
+        def _decided(h):
+            # Момент решения — закрытие часа `h`, как у живого писателя.
+            # Один момент на сделки РАЗНЫХ часов ставил все входы в одну
+            # секунду, и потолок имени кассы (10 % капитала) давал
+            # второму входу по тому же имени размер 0: деньги корзины
+            # читались нулём не из разбора, а из подставного времени.
+            return float(calendar.timegm(time.strptime(h, "%Y-%m-%d-%H"))) + 3600.0
+
         for hour, sym, got in plan:
-            picks.append({"arm": "gbm", "hour": hour, "at_ts": now - 7000,
+            t_in = _decided(hour)
+            picks.append({"arm": "gbm", "hour": hour, "at_ts": t_in,
                           "long": [{"sym": sym, "px": 100.0, "fwd": 40.0,
                                     "mae": -20.0}], "short": []})
             revs.append({"arm": "gbm", "hour": hour, "cost_bp": 11.0,
-                         "at_ts": now - 3600,
+                         "at_ts": t_in + 4 * 3600.0 + 60.0,
                          "rows": [{"sym": sym, "side": "long", "got": got,
                                    "net": got - 11.0}]})
         with open(os.path.join(mdir, "picks.jsonl"), "w",
@@ -7667,7 +7764,7 @@ def test_dca_open_pnl_is_marked_live_not_hourly():
         # прошлого «записано вперёд» не бывало бы вовсе — она
         # перестала бы выглядеть живой.
         t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
-        rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
+        rk, dep = DR.DEFAULT_RULER, int(DR.DEP_PAGE)
         pos = [{"sym": "AAAUSDT", "at": t0, "lev": 2.0, "margin": 25.0,
                 "avg": 2.0, "entry_px": 2.0, "depth": 2,
                 "mark_frac": -0.5, "mark_usd": -12.5,   # ЗАСТЫВШАЯ отметка
@@ -7753,7 +7850,7 @@ def test_dca_cut_position_carries_its_reason():
         # прошлого «записано вперёд» не бывало бы вовсе — она
         # перестала бы выглядеть живой.
         t0 = (int(DR.RULES_SINCE) // 3600 + 1) * 3600
-        rk, dep = DR.DEFAULT_RULER, int(DR.DEPOSITS[0])
+        rk, dep = DR.DEFAULT_RULER, int(DR.DEP_PAGE)
         cut = [{"sym": "AAAUSDT", "at": t0, "lev": 1.0, "margin": 25.0,
                 "avg": 2.0, "entry_px": 2.0, "depth": 1, "state": "cut",
                 "mark_frac": 0.0, "mark_usd": 0.0,
@@ -8392,6 +8489,7 @@ def main():
     test_health_is_one_definition()
     test_collected_symbols_are_not_lost()
     test_candles_window_can_end_in_the_past()
+    test_heat_grid_from_book_snapshots()
     test_recount_survives_restart()
     test_factory_built_splits_forward_from_replay()
     test_strategy_card_shows_applied_beside_declared_and_twins()

@@ -3155,7 +3155,10 @@ tbody tr:hover td{background:rgba(151,71,255,.04)}
       zooms time, pinch up-down / shift+wheel (or wheel over the
       price axis) zooms price · double click or double tap resets
       the price scale</span>
-    <span id="cap2" class="mono"></span></div>
+    <span id="cap2" class="mono"></span>
+    <label class="mono" style="margin-left:10px;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="heaton"> depth heat</label>
+    <span id="heatcap" class="mono"></span></div>
   <canvas id="px" height="420"></canvas>
   <div id="tip" class="mono"></div>
 </div>
@@ -3259,6 +3262,60 @@ const HIST = {trades:[], stats:null, by_rule:{}, by_ver:[], equity:[],
 // символ, живые candles ложатся поверх.
 const HC = {sym:"", cand:[], busy:false, hours:24, end:0,
             asked:0, capped:false, max:0};
+// Тепловая карта лесенки стакана под свечами (просьба владельца
+// 2026-10-04): покоящийся $ в корзине цены, средний за минуту. Данные
+// с диска тем же окном, что свечи; выключатель переживает перезагрузку.
+const HEAT = {on: true, data: null, sym: "", end: 0, hours: 0, busy: false};
+try { HEAT.on = (localStorage.getItem("chart.heat") ?? "1") === "1"; }
+catch (e) { /* хранилища нет — карта включена */ }
+async function pullHeat(s, end) {
+  const want = Math.round(end || 0), hrs = focusHours();
+  if (!HEAT.on || HEAT.busy
+      || (HEAT.sym === s && HEAT.end === want && HEAT.hours === hrs)) return;
+  HEAT.busy = true;
+  try {
+    const r = await fetch(`/heat?k=${encodeURIComponent(KEY)}&sym=${s}`
+      + `&hours=${hrs}` + (want ? `&end=${want}` : ""));
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const h = await r.json();
+    if (h.sym === s) {
+      HEAT.data = h; HEAT.sym = s; HEAT.end = want; HEAT.hours = hrs;
+      heatCap();
+      draw();
+    }
+  } catch (e) { /* тихо: свечи рисуются и без карты */ }
+  finally { HEAT.busy = false; }
+}
+// Подпись карты — ЧИСЛОМ: что значит тёмная клетка, и чем нормирован
+// цвет. Карта без подписи читалась бы как украшение.
+function heatCap() {
+  const el = document.getElementById("heatcap");
+  if (!el) return;
+  const h = HEAT.data;
+  if (!HEAT.on) { el.textContent = ""; return; }
+  if (!h || !h.rows || !h.rows.length) {
+    el.textContent = h ? "depth heat: no book record in this window" : "";
+    return;
+  }
+  const pct = ((h.bin_bp || 5) / 100).toFixed(2);
+  el.textContent = `depth heat: resting $ per ${pct} % price bin, 1-min avg`
+    + ` · darkest ≈ $${Math.round(h.p95 || h.max || 0).toLocaleString("en-US")}`
+    + (h.empty_hours ? ` · ${h.empty_hours} h without record` : "");
+}
+{
+  const hb = document.getElementById("heaton");
+  if (hb) {
+    hb.checked = HEAT.on;
+    hb.addEventListener("change", () => {
+      HEAT.on = !!hb.checked;
+      try { localStorage.setItem("chart.heat", HEAT.on ? "1" : "0"); }
+      catch (e) { /* хранилища нет */ }
+      heatCap();
+      if (HEAT.on && (!HEAT.data || HEAT.sym !== sym)) pullHeat(sym, HC.end);
+      draw();
+    });
+  }
+}
 // Окно свечей ДЛИННОЙ сделки задаётся самой сделкой, а не константой.
 // Прежде оно было зашито в 24 ч, и позиция DCA, живущая до 72 ч, в него
 // не помещалась: вход уезжал за левый край, а страница говорила «записи
@@ -3438,6 +3495,9 @@ async function pullHistory(s, end) {
         if (fitFocus()) MDL.fit = true;
       }
       draw();
+      // Карта стакана — тем же окном, следом за свечами: сначала бары,
+      // чтобы график не ждал тяжёлого чтения записи.
+      pullHeat(s, want);
     }
   } catch (e) { /* тихо: живые candles всё равно рисуются */ }
   finally { HC.busy = false; }
@@ -4153,6 +4213,28 @@ function draw() {
     g.fillText(stamp(t0), padL, H - 10);
     g.textAlign = "right"; g.fillText(stamp(t1), W - padR, H - 10);
     g.textAlign = "left";
+  }
+  // Тепловая карта лесенки — ПОД уровнями и свечами: клетка — минута ×
+  // корзина цены, тьма — покоящийся $ (один оттенок, светлее → темнее,
+  // логарифм от p95: одна стена не гасит остальное). Минута без свечи
+  // ложится на ближайший бар по времени — ряд дыряв.
+  if (HEAT.on && HEAT.data && HEAT.data.rows && HEAT.data.rows.length) {
+    const hm = HEAT.data, norm = Math.log1p(hm.p95 || hm.max || 1);
+    const bw = pw / (i1 - i0);
+    for (const row of hm.rows) {
+      const t = row[0];
+      if (t < t0 - 60 || t > t1 + 60) continue;
+      const xl = x(barAt(c, t)) - bw / 2, dp = row[1], k0 = row[2], vals = row[3];
+      for (let j = 0; j < vals.length; j++) {
+        const v = vals[j];
+        if (!v) continue;
+        const pl = (k0 + j) * dp, pu = pl + dp;
+        if (pu < lo || pl > hi) continue;
+        const a = Math.min(0.85, 0.06 + 0.79 * Math.log1p(v) / norm);
+        g.fillStyle = `rgba(151,71,255,${a.toFixed(3)})`;
+        g.fillRect(xl, y(pu), Math.max(1, bw), Math.max(1, y(pl) - y(pu)));
+      }
+    }
   }
   for (const l of lv) {
     if (l.p<lo||l.p>hi) continue;
@@ -11956,6 +12038,21 @@ def serve(collector, port, token, log):
                 return self._ok(json.dumps(
                     collector.candles_files(q.get("sym", [None])[0], n,
                                             end=end),
+                    ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8")
+            if u.path == "/heat":
+                # Тепловая карта лесенки под свечи: окно и потолок — те же,
+                # что у `/candles`, иначе карта кончалась бы не там, где бары.
+                try:
+                    n = int(float(q.get("hours", ["12"])[0]))
+                except ValueError:
+                    n = 12
+                try:
+                    end = float(q.get("end", [""])[0])
+                except ValueError:
+                    end = None
+                return self._ok(json.dumps(
+                    collector.heat_files(q.get("sym", [None])[0], n, end=end),
                     ensure_ascii=False).encode("utf-8"),
                     "application/json; charset=utf-8")
             if u.path == "/trades":

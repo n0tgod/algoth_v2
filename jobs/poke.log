@@ -1442,3 +1442,63 @@ Terminated
 
 == сигнал 1790365060 ==
 [2026-09-25T19:37:48Z] задание guard-fwd запущено: research/dca_paper/guard_forward.py
+
+== сигнал 1791019531 ==
+[2026-10-03T09:25:33Z] задание stop2-f10 запущено: research/dca_paper/short_stop.py
+[2026-10-03T09:25:33Z] задание stop2-f75 запущено: research/dca_paper/short_stop.py
+
+== сигнал 1791019677 ==
+[2026-10-03T09:27:59Z] задание size-safe запущено: research/dca_paper/short_size.py
+
+== сигнал 1791021048 ==
+[2026-10-03T09:50:54Z] задание status-stop2: состояние снято
+
+== сигнал 1791023525 ==
+[2026-10-03T10:32:11Z] задание status-stop3: состояние снято
+
+== сигнал 1791023584 ==
+[2026-10-03T10:33:06Z] задание memtop-1003 запущено: tools/memtop.py
+
+== сигнал 1791024285 ==
+[2026-10-03T10:44:47Z] задание ticket-pair запущено: research/dca_paper/run_pair.py
+[2026-10-03T10:44:47Z] задание ticket-short запущено: research/dca_paper/run_short.py
+
+== сигнал 1791027379 ==
+[2026-10-03T11:36:21Z] задание short-levers запущено: research/dca_paper/short_levers.py
+
+== сигнал 1791028438 ==
+[2026-10-03T11:54:00Z] задание short-levers-hold запущено: research/dca_paper/short_levers.py
+
+== сигнал 1791037762 ==
+[2026-10-03T14:29:24Z] задание short-levcap запущено: research/dca_paper/short_levcap.py
+
+== сигнал 1791040737 ==
+[2026-10-03T15:19:03Z] задание levcap-status: состояние снято
+
+== сигнал 1791149204 ==
+
+== сигнал 1791149236 ==
+[2026-10-04T21:27:18Z] задание heat-cycle запущено: tools/loggrep.py
+[2026-10-04T21:27:20Z] задание heat-status: состояние снято
+
+== сигнал 1791149358 ==
+[2026-10-04T21:29:19Z] задание heat-train запущено: tools/loggrep.py
+
+== сигнал 1791149785 ==
+[2026-10-04T21:36:27Z] задание heat-deploy: перезапуск сборщика
+[2026-10-04T21:36:27Z] задание heat-memtop запущено: tools/memtop.py
+
+== сигнал 1791150157 ==
+[2026-10-04T21:42:42Z] задание heat-status2: состояние снято
+
+== сигнал 1791150313 ==
+[2026-10-04T21:45:15Z] задание heat-memtop2 запущено: tools/memtop.py
+
+== сигнал 1791150766 ==
+[2026-10-04T21:52:48Z] задание boost-100 запущено: research/dca_paper/boost.py
+
+== сигнал 1791150979 ==
+[2026-10-04T21:56:21Z] задание boost-100b запущено: research/dca_paper/boost.py
+
+== сигнал 1791152481 ==
+[2026-10-04T22:21:23Z] задание heat-train2 запущено: tools/loggrep.py

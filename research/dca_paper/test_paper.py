@@ -80,11 +80,11 @@ def test_ticket_is_squeezed_between_the_floor_and_the_peak():
     мелкий депозит наполнить НЕЛЬЗЯ: у него связывает пол биржи.
     """
     got = {rk: [R.ticket(d, rk) for d in R.DEPOSITS] for rk in R.RULER_ORDER}
-    assert got["safe"] == [25.0, 25.0, 145.0], got
-    assert got["optimal"] == [25.0, 25.0, 145.0], got
-    assert got["aggr"] == [6.25, 28.0, 281.0], got
-    assert [R.slots(d, "optimal") for d in R.DEPOSITS] == [40, 400, 689]
-    assert [R.slots(d, "aggr") for d in R.DEPOSITS] == [160, 357, 355]
+    assert got["safe"] == [25.0, 25.0, 25.0, 145.0], got
+    assert got["optimal"] == [25.0, 25.0, 25.0, 145.0], got
+    assert got["aggr"] == [6.25, 6.25, 28.0, 281.0], got
+    assert [R.slots(d, "optimal") for d in R.DEPOSITS] == [4, 40, 400, 689]
+    assert [R.slots(d, "aggr") for d in R.DEPOSITS] == [16, 160, 357, 355]
     # у книги без гейта на первых двух депозитах связал ПОЛ
     for d in (1000.0, 10000.0):
         assert d / (R.peak_of("optimal") * R.PEAK_MARGIN) < R.TICKET_MIN, d

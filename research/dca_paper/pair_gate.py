@@ -191,7 +191,7 @@ def cell(longs, shorts, pk, dep, ctx, now=None, log=lambda *a: None,
 def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
         long_journal=None, keys=None, now=None, seeds=None):
     t0 = time.time()
-    dep = float(dep or R.DEPOSITS[1])
+    dep = float(dep or R.DEP_MAIN)
     # Число зёрен контроля — параметр прогона: на двадцати доля «бьют
     # гейт» гуляла на десятки процентов между соседними прогонами, а
     # разрешение доли и есть 1/зёрна.

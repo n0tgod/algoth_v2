@@ -1,0 +1,47 @@
+== задание heat-status ==
+строка: status
+начало: 2026-10-04T21:27:18Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   73G   72G  51% /
+/dev/sdb        147G   78G   62G  56% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3542372 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+2959295   67034 .venv/bin/python research/b1_book/collect.py --http 8765
+3075744   20536 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+9 (подробно: run tools/memtop.py)
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1791149237.2, "uptime_sec": 67032.6, "messages": 230025143, "trades": 18259697, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 50090190, "snapshot_errors": 0, "last_snap_age_sec": 0.5, "snap_pass_sec": 0.325, "writes": {"book": 50090190, "trades": 18259683, "raw": 1267320, "liq": 4561, "metrics": 172095}, "write_age_sec": {"book": 0.5, "trades": 0.3, "raw": 0.2, "liq": 16.2, "metrics": 56.0}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.296, "ask": 0.2961, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004225, "ask": 0.000423, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1166, "ask": 0.1167, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.00824,
+--- живой исполнитель ---
+{
+  "at_ms": 1791149234404,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-04T21:27:18Z
+публикуется в ветку main:
+ jobs/done/heat-cycle.done           |  1 +
+ jobs/done/heat-cycle.log            | 16 +++++++++++++++
+ jobs/done/heat-status.log           | 39 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  5 +++++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 62 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at f8d79043e6764743bc09c8114a3bdc37990192f7 but expected 5ef2b4251737887453c813aea99155c33809ca58

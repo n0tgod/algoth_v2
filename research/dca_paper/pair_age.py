@@ -158,7 +158,7 @@ def pick(shorts, launch, min_days, seed=SEED, n_random=None):
 def run(dep=None, log=print, ctx=None, long_cache=None, short_cache=None,
         keys=None, now=None, seeds=None, days=None, launch=None):
     t0 = time.time()
-    dep = float(dep or R.DEPOSITS[1])
+    dep = float(dep or R.DEP_MAIN)
     keys = list(keys or R.PAIR_ORDER)
     days = tuple(days or DAYS)
     seeds = int(seeds or SEEDS)

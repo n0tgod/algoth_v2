@@ -1,0 +1,49 @@
+== задание heat-status2 ==
+строка: status
+начало: 2026-10-04T21:42:39Z
+--- диск ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   73G   72G  51% /
+/dev/sdb        147G   79G   61G  57% /mnt/HC_Volume_106683528
+--- процессы (возраст с) ---
+ 669148 3543294 bot/target/release/bot live --s8 research/s8_loop/out/model_sit_lo --journal bot/out/live --keys /root/.bybit/live.env --base https://api.bybit.
+3131881     353 .venv/bin/python research/b1_book/collect.py --http 8765
+3132096     158 .venv/bin/python research/s8_loop/train.py
+--- убийства ядра по памяти за сутки ---
+9 (подробно: run tools/memtop.py)
+--- идущие прогоны ---
+нет
+--- статус сбора ---
+{"t": 1791150159.4, "uptime_sec": 351.5, "messages": 1062450, "trades": 71356, "resets": 0, "last_msg_age_sec": 0.0, "snapshots": 237130, "snapshot_errors": 0, "last_snap_age_sec": 0.9, "snap_pass_sec": 0.255, "writes": {"book": 237130, "trades": 71356, "raw": 4142, "liq": 24, "metrics": 782}, "write_age_sec": {"book": 0.9, "trades": 0.1, "raw": 0.3, "liq": 31.7, "metrics": 49.6}, "symbols": {"0GUSDT": {"ready": true, "bid": 0.2955, "ask": 0.2956, "resets": 0}, "1000000BABYDOGEUSDT": {"ready": true, "bid": 0.0004218, "ask": 0.0004222, "resets": 0}, "1000000MOGUSDT": {"ready": true, "bid": 0.1164, "ask": 0.1165, "resets": 0}, "10000NEXUSDT": {"ready": true, "bid": 0.00824, "ask": 0.00827, "re
+--- живой исполнитель ---
+{
+  "at_ms": 1791150158784,
+  "capital_usd": 300.0,
+  "dry": false,
+  "entries_paused": false,
+  "halted": "часовой цикл молчит 3.0 ч при пределе 3 ч (§5) — позиции без сканера не управляет никто",
+  "lev_errors": null,
+  "limits_off": true,
+  "note": null,
+  "positions": [],
+  "realized_today_usd": 0.0,
+  "realized_total_usd": -21.265818699799986,
+  "rejects_row": 0,
+  "stale_entries_skipped": 79,
+  "tp_errors": null,
+  "wallet": {
+    "balance": 284.21345292,
+    "equity": 284.21345292
+  }
+}
+конец: 2026-10-04T21:42:39Z
+публикуется в ветку main:
+ jobs/done/heat-deploy.log           |  9 +++++++++
+ jobs/done/heat-status2.log          | 39 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  2 ++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 4 files changed, 51 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   30403802..b397bfca  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано

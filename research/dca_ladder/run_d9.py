@@ -263,7 +263,7 @@ def run(limit=None, src=None, log=print, with_control=True):
                 f"{len(base[k])} из {len(base[b])}")
     order = [k for k in SHORT_BOOKS + [CONTROL_BOOK] if k in base]
     cells, halves = {}, {}
-    dep_h = R.DEPOSITS[-1]
+    dep_h = R.DEP_BIG
     for k in order:
         cells[k] = {}
         for c in grid():

@@ -595,8 +595,8 @@ def run(rows=None, funding=None, assets=None, log=print, slip_bp=None):
         arms[key] = gate_arm(rs, dep)
     for side in ("long", "short"):
         rs = [r for r in rich if r["side"] == side
-              and float(r.get("dep") or 0) == R.DEPOSITS[1]]
-        sides[side] = book_costs(rs, R.DEPOSITS[1]) if rs else None
+              and float(r.get("dep") or 0) == R.DEP_MAIN]
+        sides[side] = book_costs(rs, R.DEP_MAIN) if rs else None
     n_rows = len(rich)
     # покрытие — от строк, у которых издержки измеримы в принципе (есть
     # запись рунгов); доля строк без рунгов печатается рядом с причиной

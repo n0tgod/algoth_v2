@@ -87,19 +87,19 @@ def test_rule_is_declared_for_short_books_with_versions_and_page_text():
         assert R.wave_guard_of(pk) == 2.0, pk          # короткая сторона общего счёта
     for lk in ("safe", "optimal", "aggr"):
         assert R.wave_guard_of(lk) is None, lk         # длинные не трогаются
-    assert R.FAMILY_RULES == {"pair": 7, "h24": 3}, R.FAMILY_RULES
-    assert R.FAMILY_SINCE == {"pair": "2026-09-13", "h24": "2026-09-13"}, R.FAMILY_SINCE
+    assert R.FAMILY_RULES == {"pair": 8, "h24": 4}, R.FAMILY_RULES
+    assert R.FAMILY_SINCE == {"pair": "2026-10-03", "h24": "2026-10-03"}, R.FAMILY_SINCE
     # строка прежней версии в счёт не идёт, текущей — идёт
-    old = {"rules": R.RULES, "book_rules": 2, "ruler": "safe_h"}
-    new = {"rules": R.RULES, "book_rules": 3, "ruler": "safe_h"}
+    old = {"rules": R.RULES, "book_rules": 3, "ruler": "safe_h"}
+    new = {"rules": R.RULES, "book_rules": 4, "ruler": "safe_h"}
     assert not R.is_current(old) and R.is_current(new)
-    assert not R.is_current({"rules": R.RULES, "book_rules": 6, "ruler": "pair_safe"})
+    assert not R.is_current({"rules": R.RULES, "book_rules": 7, "ruler": "pair_safe"})
     for k in ("safe_h", "pair_optimal"):
         plain = R.RULERS[k]["plain"]
         assert "охрана рынком" in plain and "≥ 2 %" in plain, (k, plain[-200:])
     assert "охрана рынком" not in R.RULERS["safe"]["plain"]
     print("ok  правило объявлено: порог 2 % у трёх коротких книг и короткой стороны "
-          "общего счёта, версии h24 3 / pair 7 с 2026-09-13, прежние строки не в счёт, "
+          "общего счёта, версии h24 4 / pair 8 с 2026-10-03, прежние строки не в счёт, "
           "текст на вкладке")
 
 

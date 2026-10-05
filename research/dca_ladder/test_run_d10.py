@@ -10,6 +10,7 @@
 """
 
 import importlib
+import importlib.util
 import json
 import os
 import shutil
@@ -351,7 +352,7 @@ def test_run_end_to_end_synthetic():
         assert s["sample"][rk]["n"] == 20, s["sample"]
     want = 36 * 3 * len(R.DEPOSITS) + 36 * 3
     assert len(s["cells"]) == want, (len(s["cells"]), want)
-    dep = int(R.DEPOSITS[1])
+    dep = int(R.DEP_MAIN)
     ref = s["cells"][f"{D10.REF}|optimal_s|{dep}"]
     assert ref["taken"] == 2, ref                 # одно имя — одна позиция
     assert ref["gate"] == "rr2" and ref["net"] is False
@@ -418,6 +419,25 @@ def test_main_writes_smoke_artifacts_and_publishes_by_default():
 
 
 # --- отрицательные контроли ------------------------------------------------
+def _drop_pyc(path):
+    """Байткод модуля — где бы он ни лежал: рядом в `__pycache__` или в
+    каталоге `PYTHONPYCACHEPREFIX` (свой каталог на прогон — правило
+    проекта). Подделка той же длины, записанная в ту же секунду, что
+    чистый файл, иначе невидима: Python сверяет лишь размер и секунду
+    mtime и отдаёт байткод ЧИСТОГО источника — контроль молчит, хотя
+    яд лёг (знак funding, 03.10)."""
+    cands = [importlib.util.cache_from_source(path)]
+    cache = os.path.join(os.path.dirname(path), "__pycache__")
+    base = os.path.basename(path).split(".")[0]
+    if os.path.isdir(cache):
+        cands += [os.path.join(cache, f) for f in os.listdir(cache)
+                  if f.startswith(base + ".")]
+    for f in cands:
+        if os.path.exists(f):
+            os.remove(f)
+    importlib.invalidate_caches()
+
+
 def _poison(path, lit, sub, fn, mod):
     src = open(path, encoding="utf-8").read()
     assert src.count(lit) == 1, f"подделка НЕ легла: литерал не один — {lit}"
@@ -426,13 +446,9 @@ def _poison(path, lit, sub, fn, mod):
     shutil.copy(path, keep)
     try:
         open(path, "w", encoding="utf-8").write(src.replace(lit, sub, 1))
-        cache = os.path.join(os.path.dirname(path), "__pycache__")
-        base = os.path.basename(path).split(".")[0]
-        if os.path.isdir(cache):
-            for f in os.listdir(cache):
-                if f.startswith(base + "."):
-                    os.remove(os.path.join(cache, f))
+        _drop_pyc(path)
         importlib.reload(mod)
+        assert lit not in open(path, encoding="utf-8").read()
         try:
             fn()
         except Exception:
@@ -440,6 +456,7 @@ def _poison(path, lit, sub, fn, mod):
         return False
     finally:
         shutil.copy(keep, path)
+        _drop_pyc(path)                 # иначе чистый reload отдаст ЯД той же длины
         importlib.reload(mod)
 
 

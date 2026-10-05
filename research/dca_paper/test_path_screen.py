@@ -35,6 +35,9 @@ def _rec(sym="AAAUSDT", at=AT, marks=None, pnl=None, lev=20.0, exit="срок",
             "lev": lev, "pnl": final if pnl is None else pnl,
             "pnl_net": (final if pnl is None else pnl) - 0.01,
             "exit": exit, "marks": marks, "entry_px": entry_px, "state": "closed",
+            # заполнения — как у живой записи ядра: одна ступень на весь
+            # нотионал в момент входа; цена выхода считается ИЗ НИХ (26.09)
+            "fills": [[at, entry_px, 1.0]],
             "fwd": 40.0, "rr": 1.0}
 
 

@@ -212,7 +212,7 @@ def run(limit=None, src=None, log=print):
     # связывает вовсе, значит различие половин принадлежит правилу, а не
     # нехватке денег.
     mid, ha, hb = halves(base)
-    dep_h = R.DEPOSITS[-1]
+    dep_h = R.DEP_BIG
     half = {"mid_ts": mid, "n_a": len(ha), "n_b": len(hb),
             "deposit": dep_h, "cells": {}}
     for i, h in enumerate(HOLDS_H):
@@ -299,11 +299,11 @@ def report(s):
           "| срок | тейк | пол | ликвидация | срок вышел |",
           "|---|--:|--:|--:|--:|"]
     for h in s.get("holds_h") or []:
-        c = cells.get(f"{h}:{int(R.DEPOSITS[-1])}") or {}
+        c = cells.get(f"{h}:{int(R.DEP_BIG)}") or {}
         e = c.get("exits") or {}
         L.append(f"| {h} ч | {e.get('тейк', 0)} | {e.get('пол', 0)} | "
                  f"{e.get('ликвидация', 0)} | {e.get('срок', 0)} |")
-    L += ["", f"(по книге ${R.DEPOSITS[-1]:,.0f} — там касса связывает "
+    L += ["", f"(по книге ${R.DEP_BIG:,.0f} — там касса связывает "
           "меньше всего, то есть раскладка описывает сигнал, а не нехватку "
           "денег)", ""]
     hf = s.get("half") or {}
