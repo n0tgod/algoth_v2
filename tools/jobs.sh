@@ -265,6 +265,11 @@ for job in "$JOBS"/*.job; do
                 n_oom=$(journalctl -k --since "24 hours ago" --no-pager 2>/dev/null \
                     | grep -c "Out of memory: Killed" || true)
                 echo "${n_oom:-0} (подробно: run tools/memtop.py)"
+                # Обучение S8 — возраст весов и причина последнего
+                # цикла: живой процесс выше ничего об этом не говорит
+                # (109 ч без обучения при живом цикле, 30.09 → 04.10).
+                echo "--- обучение S8 ---"
+                .venv/bin/python tools/train_alarm.py --print 2>&1 || true
                 # Идущие прогоны отдельной строкой. Без них `status`
                 # показывает исправный сервер и молчит о том, считает ли
                 # что-нибудь прямо сейчас: длинное задание снаружи
