@@ -6,7 +6,7 @@ import SwiftUI
 /// метрики, кривая), сутки, короткие книги, позиции. iPhone — одна
 /// колонка и нижняя панель; iPad — сетки плиток и карточек шире.
 struct DCAView: View {
-    @StateObject private var m = DCAModel()
+    @ObservedObject var m: DCAModel
     @State private var showIntro = false
     @State private var detail: Pos?
     @Environment(\.horizontalSizeClass) private var hsc
@@ -50,7 +50,6 @@ struct DCAView: View {
             }
         }
         .tint(Theme.accent)
-        .task { await m.run() }
         .onChange(of: scenePhase) { phase in
             // В фоне iOS опрос останавливает: по возвращении — свежий свод,
             // а не числа часовой давности под видом текущих.
@@ -190,7 +189,6 @@ struct BookBody: View {
         DupNote(dd: b["dups"])
         DaysSection(m: m, st: st, dep: b["deposit"].double
                     ?? Double(m.dep ?? "") ?? 0)
-        ShortBooks(sh: d["short"])
         if d["journal_present"].raw as? Bool == false {
             Panel {
                 Note(text: "Журнала на этой машине нет вовсе — он живёт там, "

@@ -116,12 +116,27 @@ struct ShortBooks: View {
                          + (sh["age_h"].truthy ? " (\(sh["age_h"].text) ч)" : "")
                          + ": прогон ежечасный, значит он не идёт.", tone: .bad)
                 }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 10)],
-                          spacing: 10) {
-                    ForEach(rows, id: \.0) { row in card(row.1, row.2, row.3) }
+                // По режиму — свой раздел; внутри депозиты по возрастанию.
+                ForEach(sections, id: \.0) { sec in
+                    Cap(text: sec.1).padding(.top, 6)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 10)],
+                              spacing: 10) {
+                        ForEach(sec.2, id: \.0) { row in card(row.1, row.2, row.3) }
+                    }
                 }
             }
         }
+    }
+
+    /// Разделы: (ключ режима, название, карточки депозитов).
+    private var sections: [(String, String, [(String, String, Double, J)])] {
+        var out: [(String, String, [(String, String, Double, J)])] = []
+        for r in sh["rulers"].array {
+            let key = r["key"].string ?? ""
+            let mine = rows.filter { $0.0.hasPrefix(key + ":") }
+            if !mine.isEmpty { out.append((key, r["title"].string ?? key, mine)) }
+        }
+        return out
     }
 
     private var rows: [(String, String, Double, J)] {
@@ -143,10 +158,12 @@ struct ShortBooks: View {
         let dd = b["dups"]
         return VStack(alignment: .leading, spacing: 5) {
             HStack {
-                Text(title).font(.system(size: 14, weight: .bold))
+                Text(F.dollars(dep)).font(.system(size: 15, weight: .bold,
+                                                  design: .monospaced))
                 Spacer()
-                Text(F.dollars(dep)).font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(Theme.muted)
+                Text(F.pc(st["final"].double))
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Tone(st["final"].double).color)
             }
             Divider().overlay(Theme.rule)
             KV(label: "билет", value: b["ticket"].truthy ? "$" + b["ticket"].text : F.dash)
