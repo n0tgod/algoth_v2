@@ -2289,6 +2289,45 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L386 `publish(name)`
 - L391 `main(argv=None)`
 
+## research/dca_paper/short_adds.py · 433 строк
+
+Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру.
+
+- L45 `HERE = os.path.dirname(os.path.abspath(__file_…`
+- L46 `ROOT = os.path.dirname(os.path.dirname(HERE))`
+- L65 `ART = 'DCA-short-adds'`
+- L66 `SEEDS = 200`
+- L67 `MAIN_DEP = 10000`
+- L68 `HOUR = 3600.0`
+- L69 `BOOK_KEYS = list(S.BOOKS)`
+- L70 `TAIL_EXITS = T.TAIL_EXITS`
+- L71 `PROFIT = (0.1, 0.25, 0.5)`
+- L72 `WEAK = (0.01, 0.02)`
+- L73 `BASE_SHARE = 0.25`
+- L74 `CELLS = [('P', f'прибыль ≥ +{int(100 * x)} %', …`
+- L79 `share_of(rec)` — Доля нотионала базовой ступени — из заполнений записи.
+- L89 `view_lite(rec, mkt)` — Путь по отметкам и ход имени против волны рынка по часам — без β.
+- L104 `repeats_of(cache, legs_)` — {ключ родителя: [часы повторных выборов]} — лист выбрал то же имя при открытой позиции.
+- L125 `trigger(v, kind, val, reps=None)` — Первый час долива СТРОГО до выхода родителя, иначе None.
+- L151 `add_pnl(v, k)` — pnl долива долями зарезервированной маржи родителя: приращение отметок от часа k до выхода, не ниже −доли (св…
+- L165 `stats(adds)` — Сводка доливов: среднее и медиана, доля плюсовых, худшие 5 %, в цене.
+- L181 `control(views, changed, idx, seeds=SEEDS, log=print)` — Случайные позиции, открытые в те же часы, с тем же доливом — средний net по зёрнам.
+- L209 `beat(ctl_means, value)`
+- L216 `by_book(views, changed)` — Доливы по книгам (линейка → книги семейства).
+- L227 `with_repeats(fn)` — Правило «одна на имя» снято на время счёта — и возвращено, что бы ни случилось.
+- L237 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
+- L310 `_pp(x, d=1)`
+- L314 `_pu(x, d=0)`
+- L318 `_bp(x)`
+- L322 `_usd(x)`
+- L326 `_sd(x)`
+- L330 `_i(x)`
+- L334 `_f(x, d=2)`
+- L338 `verdict(cell)`
+- L352 `report(s)`
+- L413 `publish(name)`
+- L419 `main(argv=None)`
+
 ## research/dca_paper/short_age.py · 411 строк
 
 Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.

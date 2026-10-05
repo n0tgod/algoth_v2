@@ -4,7 +4,7 @@
 
 Как пользоваться: этот файл отвечает «где что лежит и что делает». Точное место — `docs/MAP-symbols.md` (функции, классы, константы со строками; искать грепом по имени), что закреплено тестами — `docs/MAP-tests.md`. История решений и уроки — `docs/memory/README.md`.
 
-Модулей кода: 519, строк: 231458, каталогов: 86.
+Модулей кода: 521, строк: 232058, каталогов: 86.
 
 
 ## корень — память проекта, идеи, README
@@ -190,6 +190,7 @@
 - `run_pair.py` · 563 строк — Общий счёт: длинная книга и короткая на ОДНОМ депозите.
 - `run_paper.py` · 1612 строк — Бумажные DCA-книги: одни правила, три депозита ($1k / $10k / $100k).
 - `run_short.py` · 420 строк — Короткие книги на сигнале `h24`: три режима рядом с длинными, хедж.
+- `short_adds.py` · 433 строк — Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру.
 - `short_age.py` · 411 строк — Правила общего счёта на ОТДЕЛЬНЫХ коротких книгах: возраст и билет.
 - `short_grid.py` · 189 строк — Общая машинерия замеров ОСИ на коротком листе `h24`.
 - `short_levcap.py` · 460 строк — Потолок плеча у коротких книг: держится ли эдж НА СДЕЛКУ без мотора.
@@ -206,7 +207,7 @@
 - `tail_screen.py` · 495 строк — Портрет хвоста коротких книг: что общего у минусовых сделок.
 - `wave.py` · 280 строк — Волна рынка и охрана рынком — ОДНА библиотека для книг и замеров.
 - `wave_guard.py` · 488 строк — Охрана рынком для коротких книг h24: концентрация, состав выходов, депозиты, равенство ядру.
-- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_costs.py` (496), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (571), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3148), `test_path_screen.py` (247), `test_short.py` (419), `test_short_age.py` (148), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (62), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
+- тесты: `test_agree_book.py` (201), `test_arm_book.py` (163), `test_arm_split.py` (152), `test_backfill_exit_px.py` (80), `test_boost.py` (174), `test_costs.py` (496), `test_cut.py` (297), `test_entry_gate.py` (160), `test_fund_check.py` (111), `test_fund_probe.py` (94), `test_guard.py` (201), `test_guard_fill.py` (75), `test_guard_forward.py` (67), `test_names.py` (227), `test_pair.py` (571), `test_pair_age.py` (158), `test_pair_gate.py` (179), `test_paper.py` (3148), `test_path_screen.py` (247), `test_short.py` (419), `test_short_adds.py` (167), `test_short_age.py` (148), `test_short_levcap.py` (193), `test_short_levers.py` (225), `test_short_rules_1003.py` (62), `test_short_size.py` (66), `test_short_stop.py` (129), `test_short_take.py` (143), `test_short_why.py` (158), `test_slip_x3.py` (76), `test_tail_screen.py` (198), `test_wave_guard.py` (166)
 - отчёты в `out/` (36): DCA-agree-book.md, DCA-arm-book-1m.md, DCA-arms-1m.md, DCA-boost-100.md, DCA-costs-1m.md, DCA-costs-pair-check.md, DCA-costs-slip-p90.md, DCA-cut-check.md, DCA-entry-gate.md, DCA-fund-check.md, DCA-fund-probe.md, DCA-guard-fill.md, DCA-guard-forward.md, DCA-names.md, DCA-pair-age-why.md, DCA-pair-age.md, DCA-pair-gate.md, DCA-pair.md, DCA-paper.md, DCA-path-screen.md, DCA-short-age.md, DCA-short-levcap.md, DCA-short-levers-hold.md, DCA-short-levers.md, DCA-short-size.md, DCA-short-stop.md, DCA-short-supply-1m.md, DCA-short-supply.md, DCA-short-take.md, DCA-short-why.md, DCA-short.md, DCA-slip-x3.md, DCA-smoothing-1m.md, DCA-tail-screen.md, DCA-wave-guard-faith.md, DCA-wave-guard.md
 
 ## research/f1_carry — F1 — carry на funding: разложение брутто (гипотеза 3)
