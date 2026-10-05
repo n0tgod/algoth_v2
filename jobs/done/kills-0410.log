@@ -2,3 +2,80 @@
 строка: run tools/memtop.py --day 2026-10-04 --tail 0
 начало: 2026-10-05T22:59:06Z
 запускаю: .venv/bin/python tools/memtop.py --day 2026-10-04 --tail 0
+(хвосты логов — первыми, таблицы памяти — в конце: очередь заданий хранит последние 400 строк)
+
+== research/s8_loop/out/train.log (хвост 0) ==
+  строк всего 77689
+
+== research/dca_paper/out/short.log (хвост 0) ==
+  строк всего 58957
+
+== research/dca_paper/out/daily.log (хвост 0) ==
+  строк всего 161985
+
+== research/dca_paper/out/pair.log (хвост 0) ==
+  строк всего 77083
+
+== research/b1_book/out/collect.log (хвост 0) ==
+  строк всего 1089831
+
+== research/b1_book/out/watchdog.log (хвост 0) ==
+  строк всего 8505
+
+== research/b1_book/out/ship.log (хвост 0) ==
+  строк всего 180
+
+== research/a1_universe/out/refresh.log (хвост 0) ==
+  строк всего 16619
+
+== research/a1_universe/out/instruments.log (хвост 0) ==
+  строк всего 533
+
+== research/s8_loop/out/model/train_log.jsonl (хвост 0) ==
+  строк всего 615
+
+== убийства ядра с 2026-10-04 00:00 UTC ==
+  строк 10, убийств 10
+  первое: 2026-10-04T02:45:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2733787 (python) total-vm:4549952kB, anon-rss:2409320kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:5392kB oom_score_adj:0
+  последнее: 2026-10-04T22:10:18+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 3132096 (python) total-vm:3409736kB, anon-rss:3134468kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6436kB oom_score_adj:0
+  2026-10-04T02:45:25+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2733787 (python) total-vm:4549952kB, anon-rss:2409320kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:5392kB oom_score_adj:0
+  2026-10-04T04:05:22+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2959313 (python) total-vm:3395512kB, anon-rss:3155260kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:6556kB oom_score_adj:0
+  2026-10-04T05:10:21+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2973418 (python) total-vm:3407500kB, anon-rss:3004348kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6152kB oom_score_adj:0
+  2026-10-04T07:00:24+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 2983296 (python) total-vm:3413172kB, anon-rss:3196620kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6532kB oom_score_adj:0
+  2026-10-04T10:15:24+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 3000161 (python) total-vm:3422136kB, anon-rss:3196000kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6568kB oom_score_adj:0
+  2026-10-04T11:20:24+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 3028251 (python) total-vm:3423140kB, anon-rss:3203044kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6580kB oom_score_adj:0
+  2026-10-04T13:30:22+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 3038311 (python) total-vm:3521940kB, anon-rss:3291456kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6724kB oom_score_adj:0
+  2026-10-04T14:35:23+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 3057143 (python) total-vm:3397088kB, anon-rss:3171216kB, file-rss:2688kB, shmem-rss:0kB, UID:0 pgtables:6512kB oom_score_adj:0
+  2026-10-04T15:40:20+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 3066478 (python) total-vm:3432252kB, anon-rss:3162876kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6484kB oom_score_adj:0
+  2026-10-04T22:10:18+00:00 ubuntu-8gb-nbg1-2 kernel: Out of memory: Killed process 3132096 (python) total-vm:3409736kB, anon-rss:3134468kB, file-rss:2816kB, shmem-rss:0kB, UID:0 pgtables:6436kB oom_score_adj:0
+
+== free -m (2026-10-05 22:59:08 UTC) ==
+                 total        used        free      shared  buff/cache   available
+  Mem:            7745        4586         450           4        3079        3159
+  Swap:              0           0           0
+
+== процессы по памяти (RSS, МБ; возраст чч:мм; первые 18) ==
+  всего памяти у первых 18: 4122 МБ
+   3131881        1   2448   25:22  .venv/bin/python research/b1_book/collect.py --http 8765
+   3140733        1   1126   24:44  .venv/bin/python research/s8_loop/train.py
+     21675    14604    320 1680:21  claude --continue
+   2329852        1     54  112:35  /usr/lib/systemd/systemd-journald
+   3402886  3402885     47   00:00  python3 /root/algoth_v2/tools/project_map.py
+   3402624  3402620     29   00:00  .venv/bin/python tools/memtop.py --day 2026-10-04 --tail 0
+   2637243        1     26  568:10  /sbin/multipathd -d -s
+         1        0     10 1689:15  /usr/lib/systemd/systemd --system --deserialize=89
+       961        1      9 1689:14  /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   3402323  2329848      9   00:00  sshd: root [priv]
+   3402952  3402951      8   00:00  /usr/bin/ssh git@github.com git-receive-pack 'n0tgod/algoth_v2.git'
+   3402870  3402844      7   00:00  git commit -q -m job: status-0510b
+   2329846        1      6  112:35  /usr/lib/systemd/systemd-resolved
+   3402454  3402323      6   00:00  sshd: root [net]
+    691277        1      5  304:13  /usr/sbin/rsyslogd -n -iNONE
+       922        1      4 1689:14  /usr/lib/systemd/systemd-logind
+   1496656        1      4  208:56  /usr/lib/polkit-1/polkitd --no-debug
+   2329847        1      4  112:35  /usr/lib/systemd/systemd-timesyncd
+конец: 2026-10-05T22:59:08Z, код 0
+публикуется в ветку main:
+ jobs/done/kills-0410.log   | 73 ++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/done/status-0510b.log | 11 +++++++
+ 2 files changed, 84 insertions(+)

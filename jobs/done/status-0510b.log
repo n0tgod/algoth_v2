@@ -39,3 +39,15 @@ Filesystem      Size  Used Avail Use% Mounted on
   }
 }
 конец: 2026-10-05T22:59:06Z
+публикуется в ветку main:
+ jobs/done/books-0510.done           |  1 +
+ jobs/done/books-0510.log            | 29 ++++++++++++++++++++++++++
+ jobs/done/cycle-0510.log            | 11 ++++++++++
+ jobs/done/kills-0410.done           |  1 +
+ jobs/done/kills-0410.log            |  4 ++++
+ jobs/done/status-0510b.log          | 41 +++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |  4 ++++
+ research/factory/out/asks.jsonl     |  1 +
+ research/s8_loop/out/day_brake.json |  2 +-
+ 9 files changed, 93 insertions(+), 1 deletion(-)
+fatal: cannot lock ref 'HEAD': is at 6439d14a342f088f6862d4b36b2b58fa8ea405a8 but expected aa1f618de9b0fb12c280414a041e575b753cf974
