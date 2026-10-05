@@ -84,3 +84,17 @@ M в плюсе и слабее рынка на ≥ 2 %: доливов 6797, с
 - Триггер по прибыли судится против случайного открытого, потому что любая живая позиция в среднем дотягивает в плюс: вопрос — выбирает ли триггер продолжение ЛУЧШЕ среднего.
 - Правилом ничего не назначается: это первый взгляд по отметкам; второй шаг — ядро с общим полом и касса на заполнении ступеней.
 - Расчёт: 2026-10-05 22:00, 41.4 с.
+публикуется в ветку main:
+ jobs/done/short-adds.done                  |  1 +
+ jobs/done/short-adds.log                   | 86 ++++++++++++++++++++++++++++++
+ jobs/poke.log                              |  3 ++
+ research/dca_paper/out/DCA-short-adds.json |  1 +
+ research/dca_paper/out/DCA-short-adds.md   | 46 ++++++++++++++++
+ research/s8_loop/out/day_brake.json        |  2 +-
+ 6 files changed, 138 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   02f93edb..24b594b5  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
+
+конец: 2026-10-05T22:00:46Z, код 0
