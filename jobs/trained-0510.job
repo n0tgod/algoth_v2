@@ -1,0 +1,1 @@
+run tools/loggrep.py --file train --preset train --days 3 --last 14
