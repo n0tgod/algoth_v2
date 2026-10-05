@@ -4466,7 +4466,7 @@ X1: исполнитель против подставной биржи.
 
 - L16 `check()`
 
-## tools/test_restart_book.sh · 79 строк
+## tools/test_restart_book.sh · 82 строк
 
 Проверка `tools/restart_book.sh --keep-cycle`: перезапуск сборщика по
 

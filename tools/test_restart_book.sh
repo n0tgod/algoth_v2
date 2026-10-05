@@ -51,6 +51,7 @@ run() {   # $@ — аргументы скрипта; вывод в out.log, к�
 run
 check "обычный перезапуск: сборщик остановлен и поднят" \
       '[ "$rc" = 0 ] && grep -q "pkill -f b1_book/collect.py" "$tmp/calls.log" && grep -q "python research/b1_book/collect.py --http 8765" "$tmp/calls.log"'
+check "обычный перезапуск подтягивает код (деплой)" 'grep -q "git pull --rebase --autostash" "$tmp/calls.log"'
 check "обычный перезапуск останавливает цикл обучения (деплой)" \
       'grep -qF "pkill -f s8_loop/train.py\$" "$tmp/calls.log" && grep -q "перезапускаю циклы обучения" "$tmp/out.log"'
 
@@ -60,6 +61,8 @@ check "--keep-cycle: сборщик остановлен и поднят" \
 check "--keep-cycle: цикл обучения НЕ тронут" \
       '! grep -q "train.py" "$tmp/calls.log" && [ ! -f "$tmp/killed_train" ]'
 check "--keep-cycle: причина названа в выводе" 'grep -q "не трогаю" "$tmp/out.log"'
+check "--keep-cycle: код НЕ подтягивается (не деплой)" \
+      '! grep -q "git pull" "$tmp/calls.log" && grep -q "код не подтягиваю" "$tmp/out.log"'
 
 run --deploy-all
 check "неизвестный аргумент — отказ, ничего не остановлено" \
