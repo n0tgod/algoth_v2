@@ -1,0 +1,4 @@
+== задание kills-0410 ==
+строка: run tools/memtop.py --day 2026-10-04 --tail 0
+начало: 2026-10-05T22:59:06Z
+запускаю: .venv/bin/python tools/memtop.py --day 2026-10-04 --tail 0

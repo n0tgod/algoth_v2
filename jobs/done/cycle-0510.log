@@ -19,3 +19,14 @@
   [10-05 22:10:32] матрица: 790 символов × 1614 часов, сечений с ≥30 именами: 1425, признаков 50
   [10-05 22:13:26] обучение отложено по памяти: память: доступно 2403 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час; цикл 687 с (сведение часа 360 с, матрица 153 с, книги 163 с, оценка 0 с)
 конец: 2026-10-05T22:55:50Z, код 0
+публикуется в ветку main:
+ jobs/done/cycle-0510.done           |  1 +
+ jobs/done/cycle-0510.log            | 21 +++++++++++++++++++++
+ jobs/done/memtop-rss1.log           | 10 ++++++++++
+ jobs/poke.log                       |  3 +++
+ research/s8_loop/out/day_brake.json |  2 +-
+ 5 files changed, 36 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   9ab8930a..52dc9c9a  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
