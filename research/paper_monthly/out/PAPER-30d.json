@@ -1,12 +1,12 @@
 {
- "run_at": "2026-10-04 06:03 UTC",
+ "run_at": "2026-10-05 06:03 UTC",
  "rules": 1,
  "k": 14,
  "h": 30,
  "width": 0.1,
  "cost_bp": 11.0,
- "decisions": 63,
- "resolutions": 35,
+ "decisions": 64,
+ "resolutions": 36,
  "summary": {
   "ahead": {
    "tranches": 1,
@@ -27,21 +27,21 @@
    "coverage_median": 0.965
   },
   "backfilled": {
-   "tranches": 34,
+   "tranches": 35,
    "from": "2026-08-01",
-   "to": "2026-09-04",
-   "gross_mean_bp": 177.2,
-   "net_mean_bp": 97.2,
-   "net_median_bp": -57.2,
-   "net_pos_share": 0.471,
-   "t_naive": 0.89,
-   "t_nw": 0.63,
+   "to": "2026-09-05",
+   "gross_mean_bp": 175.1,
+   "net_mean_bp": 96.5,
+   "net_median_bp": -32.0,
+   "net_pos_share": 0.486,
+   "t_naive": 0.91,
+   "t_nw": 0.65,
    "independent": 2,
    "t_independent": -1.11,
    "net_mean_independent_bp": -323.3,
-   "funding_mean_bp": 69.0,
-   "truncated_legs_total": 2275,
-   "elapsed_median": 0.425,
+   "funding_mean_bp": 67.5,
+   "truncated_legs_total": 2347,
+   "elapsed_median": 0.4187,
    "coverage_median": 0.965
   }
  },
