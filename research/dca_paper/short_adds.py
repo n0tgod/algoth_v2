@@ -191,6 +191,57 @@ def add_outcome(v, k, floor_pnl):
             "px_bp": ((cj - ck) / (share * lev) * 1e4) if (share > 0 and lev > 0) else None}
 
 
+def record_with_add(rec, k, floor_pnl):
+    """Запись кэша, как если бы на часе k заполнилась вторая ступень.
+
+    Отметки после k удваиваются (две ступени), позиция закрывается на
+    часе общего пола, если он достигнут раньше своего выхода (исход
+    «пол»); заполнение добавляется по цене отметки часа k (из pnl и
+    заполнений — `wave.exit_px_of`), чтобы касса сняла комиссию,
+    проскальзывание и funding с ОБЕИХ ступеней своим кодом.
+    """
+    p = WV.path_of(rec)
+    cum, K = p["cum"], p["K"]
+    at = float(rec["at"])
+    share = share_of(rec)
+    ck = float(cum[k])
+    j_exit, floored = K, False
+    for j in range(k + 1, K + 1):
+        c = cum.get(j)
+        if c is not None and 2.0 * float(c) - ck <= float(floor_pnl):
+            j_exit, floored = j, True
+            break
+    marks, prev = [], 0.0
+    for hr, d in rec["marks"]:
+        kk = int(round((float(hr) - at) / HOUR)) + 1
+        if kk > j_exit:
+            break
+        marks.append((hr, float(d) * (2.0 if kk > k else 1.0)))
+        prev += float(d)
+    total = 2.0 * float(cum[j_exit]) - ck
+    t_k = at + k * HOUR - 1.0
+    px_k = WV.exit_px_of(rec, ck, t_k)
+    new = dict(rec, pnl=total, marks=marks, state="closed", add_hour=k, add_floor=bool(floored and j_exit < K))
+    if rec.get("pnl_net") is not None:
+        lev = float(rec.get("lev") or 0.0)
+        new["pnl_net"] = float(rec["pnl_net"]) - float(rec["pnl"]) + total - share * lev * D10.ROUND_COST_BP / 1e4
+    if floored and j_exit < K:
+        new["exit_ts"] = at + j_exit * HOUR - 1.0
+        new["exit"] = "пол"
+    if px_k is not None:
+        new["fills"] = [list(f) for f in (rec.get("fills") or [])] + [[t_k, float(px_k), share]]
+    new["exit_px"] = WV.exit_px_of(new, total, float(new["exit_ts"]))
+    return new
+
+
+def cache_with_adds(cache, views, changed):
+    """Кэш, где у изменённых записей заполнена вторая ступень."""
+    mod = dict(cache)
+    for key, k in changed.items():
+        mod[key] = record_with_add(views[key]["rec"], k, floor_of_ruler(key[0]))
+    return mod
+
+
 def outcome(views, key, k):
     return add_outcome(views[key], k, floor_of_ruler(key[0]))
 
@@ -314,7 +365,7 @@ def run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, mem_limit=None,
         st = stats(list(adds.values()))
         cell = {"kind": kind, "title": title, "val": val, "n": len(changed), "stats": st,
                 "books": by_book(views, changed), "control": None, "beat": None,
-                "control_plus": None, "beat_plus": None,
+                "control_plus": None, "beat_plus": None, "_changed": changed,
                 "tails_after": sum(1 for key in changed if views[key]["tail"])}
         if changed:
             ctl = control(views, changed, idx, seeds=seeds, log=log)
@@ -334,8 +385,19 @@ def run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, mem_limit=None,
     cash_rep = with_repeats(stats_fn)
     cash = {bk: {"base": L.summ(cash_base.get(f"{bk}:{int(dep)}") or {}),
                  "repeats": L.summ(cash_rep.get(f"{bk}:{int(dep)}") or {})} for bk in BOOK_KEYS}
+    # касса: вторая ступень заполнена по триггеру — те же записи, деньги и издержки обеих ступеней
+    for c in cells:
+        ch = c.pop("_changed", {})
+        if not ch:
+            continue
+        st = AG.stats_of(AG.packed_short(cache_with_adds(cache, views, ch)), ctx, launch,
+                         BOOK_KEYS, deps=[dep], now=now)
+        for bk in BOOK_KEYS:
+            cash[bk][c["title"]] = L.summ(st.get(f"{bk}:{int(dep)}") or {})
+        log(f"касса со ступенью «{c['title']}»: " + ", ".join(
+            f"{bk} {_pp(cash[bk][c['title']].get('final'))}" for bk in BOOK_KEYS))
     for bk in BOOK_KEYS:
-        for k in ("base", "repeats"):
+        for k in list(cash[bk]):
             cash[bk][k].pop("days", None)
     return {"dep": dep, "seeds": int(seeds), "books": BOOK_KEYS, "cells": cells,
             "base": {"sum": base_sum, "n": base_n}, "cash": cash,
@@ -444,6 +506,23 @@ def report(s):
             c = ((s.get("cash") or {}).get(bk) or {}).get(key) or {}
             L_.append(f"| {R.ruler_title(bk)} | {title} | {_i(c.get('n'))} | {_pp(c.get('final'))} | "
                       f"{_pp(c.get('max_dd'))} | {_sd(c.get('sigma_day'))} | {_usd(c.get('wo3'))} | {_i(c.get('tails'))} |")
+    L_ += ["", "## Касса $10 000: вторая ступень заполнена по триггеру", "",
+           "То, о чём спрашивал владелец: позиция из двух входов на той же зарезервированной марже. "
+           "Записи те же, после долива отметки идут вдвое быстрее, общий пол — по отметкам; касса снимает "
+           "комиссию, проскальзывание и funding с обеих ступеней своим кодом. Доход/просадка — главная колонка.", "",
+           "| книга | ячейка | сделок | итог | просадка | доход/просадка | σ дня | $ без 3 лучших дней | хвостовых |",
+           "|---|---|--:|--:|--:|--:|--:|--:|--:|"]
+    titles = ["base"] + [c["title"] for c in s.get("cells") or []]
+    for bk in s.get("books") or BOOK_KEYS:
+        for key in titles:
+            c = ((s.get("cash") or {}).get(bk) or {}).get(key)
+            if c is None:
+                continue
+            ratio = (None if not c.get("final") or not c.get("max_dd")
+                     else float(c["final"]) / abs(float(c["max_dd"])))
+            L_.append(f"| {R.ruler_title(bk)} | {'как сейчас' if key == 'base' else key} | {_i(c.get('n'))} | "
+                      f"{_pp(c.get('final'))} | {_pp(c.get('max_dd'))} | {_f(ratio)} | {_sd(c.get('sigma_day'))} | "
+                      f"{_usd(c.get('wo3'))} | {_i(c.get('tails'))} |")
     L_ += ["", "## Как читать", "",
            "- Долив имеет смысл, если приращение денег позиции в плюсе ПОСЛЕ издержек, случайный открытый "
            "В ПЛЮСЕ в те же часы не хуже редко (≤ 5 % зёрен), а добитых доливом и худших 5 % книга переживёт.",

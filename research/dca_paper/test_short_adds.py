@@ -66,7 +66,17 @@ def test_add_outcome_is_the_whole_position_with_a_shared_floor():
     safe = A.add_outcome(v2, 2, -0.9)              # пол −0.9 не достигнут: 2·0.4 − 0.3 = 0.5 против 0.4
     assert not safe["early_floor"] and abs(safe["delta"] - 0.1) < 1e-12
     assert A.floor_of_ruler("safe_s") < A.floor_of_ruler("optimal_s") < 0
-    print(f"ok  долив: вся позиция с общим полом — добитая раньше выхода считается отдельно; круг {cost:.4f}")
+    # запись для кассы: вторая ступень по цене отметки, отметки после k удвоены, выход по общему полу
+    nr = A.record_with_add(rec2, 2, -0.5)
+    assert nr["exit"] == "пол" and nr["add_floor"] and abs(nr["pnl"] + 0.6) < 1e-12
+    assert nr["exit_ts"] == rec2["at"] + 3 * H - 1 and len(nr["marks"]) == 3
+    assert [round(d, 6) for _h, d in nr["marks"]] == [0.1, 0.2, -0.9]          # третий час удвоен
+    assert len(nr["fills"]) == 2 and abs(nr["fills"][1][2] - 0.25) < 1e-12
+    assert abs(nr["fills"][1][1] - 100.0 * (1 - 0.3 / 5.0)) < 1e-9              # шорт в плюсе: цена ниже входа
+    assert abs(nr["pnl_net"] - (rec2["pnl_net"] - rec2["pnl"] - 0.6 - cost)) < 1e-12
+    ok = A.record_with_add(rec2, 2, -0.9)
+    assert ok["exit"] == rec2["exit"] and not ok["add_floor"] and abs(ok["pnl"] - 0.5) < 1e-12 and len(ok["marks"]) == 5
+    print(f"ok  долив: вся позиция с общим полом — добитая раньше выхода считается отдельно; запись для кассы согласована; круг {cost:.4f}")
 
 
 def test_triggers_fire_strictly_before_exit_by_their_own_rule():
@@ -152,7 +162,7 @@ def test_run_wiring_with_stub_market_and_cash():
             pass
     finally:
         A.S.read_cache, A.S.legs, A.CO.context, A.IR.launches, A.AG.stats_of = saved
-    assert A.R.ONE_PER_NAME == was and seen == [True, False], seen
+    assert A.R.ONE_PER_NAME == was and seen[:2] == [True, False] and all(seen[2:]), seen
     assert not s.get("error") and len(s["cells"]) == len(A.CELLS)
     cells = {c["title"]: c for c in s["cells"]}
     p10 = cells["прибыль ≥ +10 %"]
@@ -161,6 +171,7 @@ def test_run_wiring_with_stub_market_and_cash():
     assert cells["в плюсе и слабее рынка на ≥ 1 %"]["n"] == 24      # и «плохие» в плюсе на часе 1 при имени слабее рынка
     assert s["diag"]["repeats"] == 2 and s["diag"]["share_median"] == 0.25
     assert s["cash"]["safe_h"]["repeats"]["final"] == 0.02 and "days" not in s["cash"]["safe_h"]["base"]
+    assert s["cash"]["safe_h"]["прибыль ≥ +10 %"]["n"] == 12 and "_changed" not in s["cells"][0]
     txt = A.report(s)
     assert "None" not in txt, [ln for ln in txt.splitlines() if "None" in ln]
     assert "| прибыль ≥ +10 % |" in txt and "повторы разрешены" in txt and "## По книгам" in txt

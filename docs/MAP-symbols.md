@@ -2289,7 +2289,7 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L386 `publish(name)`
 - L391 `main(argv=None)`
 
-## research/dca_paper/short_adds.py · 481 строк
+## research/dca_paper/short_adds.py · 560 строк
 
 Доливы в прибыльный шорт: заполнить зарезервированные ступени по триггеру.
 
@@ -2311,24 +2311,26 @@ D1 (спека 14) — дешёвый потолок DCA-лестницы: ре�
 - L128 `trigger(v, kind, val, reps=None)` — Первый час долива СТРОГО до выхода родителя, иначе None.
 - L154 `floor_of_ruler(rk)` — Пол капитуляции линейки долями маржи: −(1 − доля пола), как у ядра в терминах съеденной маржи.
 - L162 `add_outcome(v, k, floor_pnl)` — Позиция с доливом второй ступени на часе k против позиции без него.
-- L194 `outcome(views, key, k)`
-- L198 `stats(adds)` — Сводка доливов: среднее и медиана приращения, доля плюсовых, худшие 5 %, добитые, в цене.
-- L214 `control(views, changed, idx, seeds=SEEDS, log=print, in_profit=…` — Случайные позиции, открытые в те же часы (при `in_profit` — и в плюсе на этом часе), с тем же доливом — средн…
-- L246 `beat(ctl_means, value)`
-- L253 `by_book(views, changed)` — Доливы по книгам (линейка → книги семейства).
-- L264 `with_repeats(fn)` — Правило «одна на имя» снято на время счёта — и возвращено, что бы ни случилось.
-- L274 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
-- L352 `_pp(x, d=1)`
-- L356 `_pu(x, d=0)`
-- L360 `_bp(x)`
-- L364 `_usd(x)`
-- L368 `_sd(x)`
-- L372 `_i(x)`
-- L376 `_f(x, d=2)`
-- L380 `verdict(cell)` — Фраза из чисел: среднее нетто и доля зёрен, где случайный открытый В ПЛЮСЕ не хуже.
-- L395 `report(s)`
-- L461 `publish(name)`
-- L467 `main(argv=None)`
+- L194 `record_with_add(rec, k, floor_pnl)` — Запись кэша, как если бы на часе k заполнилась вторая ступень.
+- L237 `cache_with_adds(cache, views, changed)` — Кэш, где у изменённых записей заполнена вторая ступень.
+- L245 `outcome(views, key, k)`
+- L249 `stats(adds)` — Сводка доливов: среднее и медиана приращения, доля плюсовых, худшие 5 %, добитые, в цене.
+- L265 `control(views, changed, idx, seeds=SEEDS, log=print, in_profit=…` — Случайные позиции, открытые в те же часы (при `in_profit` — и в плюсе на этом часе), с тем же доливом — средн…
+- L297 `beat(ctl_means, value)`
+- L304 `by_book(views, changed)` — Доливы по книгам (линейка → книги семейства).
+- L315 `with_repeats(fn)` — Правило «одна на имя» снято на время счёта — и возвращено, что бы ни случилось.
+- L325 `run(seeds=SEEDS, log=print, now=None, launch=None, ctx=None, me…`
+- L414 `_pp(x, d=1)`
+- L418 `_pu(x, d=0)`
+- L422 `_bp(x)`
+- L426 `_usd(x)`
+- L430 `_sd(x)`
+- L434 `_i(x)`
+- L438 `_f(x, d=2)`
+- L442 `verdict(cell)` — Фраза из чисел: среднее нетто и доля зёрен, где случайный открытый В ПЛЮСЕ не хуже.
+- L457 `report(s)`
+- L540 `publish(name)`
+- L546 `main(argv=None)`
 
 ## research/dca_paper/short_age.py · 411 строк
 
