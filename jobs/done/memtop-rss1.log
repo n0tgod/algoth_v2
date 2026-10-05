@@ -101,3 +101,13 @@
   {"kind": "books", "seq": 529, "hour": "2026-10-05-20", "at": "10-05 21:12", "sections": 1424, "symbols": 790, "train_why": "память: доступно 2623 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
   {"kind": "books", "seq": 529, "hour": "2026-10-05-21", "at": "10-05 22:13", "sections": 1425, "symbols": 790, "train_why": "память: доступно 2403 МБ при пороге 3072 — рядом другие прогоны, обучение отложено на час", "ste
 конец: 2026-10-05T22:42:51Z, код 0
+публикуется в ветку main:
+ jobs/done/memtop-rss1.done          |   1 +
+ jobs/done/memtop-rss1.log           | 103 ++++++++++++++++++++++++++++++++++++
+ jobs/poke.log                       |   3 ++
+ research/s8_loop/out/day_brake.json |   2 +-
+ 4 files changed, 108 insertions(+), 1 deletion(-)
+To github.com:n0tgod/algoth_v2.git
+   4814e428..a1d7e9f6  main -> main
+branch 'main' set up to track 'origin/main'.
+опубликовано
